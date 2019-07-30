@@ -2,22 +2,22 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_JOINT_SLIDER_VIEW_H
-#define CNOID_BODYPLUGIN_JOINT_SLIDER_VIEW_H
+#ifndef CNOID_BODYPLUGIN_JOINT_DISPLACEMENT_VIEW_H
+#define CNOID_BODYPLUGIN_JOINT_DISPLACEMENT_VIEW_H
 
 #include <cnoid/View>
 
 namespace cnoid {
 
-class JointSliderViewImpl;
+class JointDisplacementViewImpl;
         
-class JointSliderView : public cnoid::View
+class JointDisplacementView : public cnoid::View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
         
-    JointSliderView();
-    virtual ~JointSliderView();
+    JointDisplacementView();
+    virtual ~JointDisplacementView();
 
 protected:
     virtual void onActivated() override;
@@ -27,7 +27,7 @@ private:
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
-    JointSliderViewImpl* impl;
+    JointDisplacementViewImpl* impl;
 };
 
 }

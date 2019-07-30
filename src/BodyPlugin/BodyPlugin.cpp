@@ -24,7 +24,7 @@
 #include "LinkPropertyView.h"
 #include "LinkPositionView.h"
 #include "BodyLinkView.h"
-#include "JointSliderView.h"
+#include "JointDisplacementView.h"
 #include "JointStateView.h"
 #include "BodyStateView.h"
 #include "JointGraphView.h"
@@ -101,7 +101,7 @@ public:
         LinkPropertyView::initializeClass(this);
         LinkPositionView::initializeClass(this);
         BodyLinkView::initializeClass(this);
-        JointSliderView::initializeClass(this);
+        JointDisplacementView::initializeClass(this);
         JointStateView::initializeClass(this);
         BodyStateView::initializeClass(this);
         JointGraphView::initializeClass(this);

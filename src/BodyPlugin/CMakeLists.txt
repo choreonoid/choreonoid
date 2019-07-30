@@ -37,7 +37,7 @@ set(sources
   LinkPropertyView.cpp
   LinkPositionView.cpp
   BodyLinkView.cpp
-  JointSliderView.cpp
+  JointDisplacementView.cpp
   JointStateView.cpp
   BodyStateView.cpp
   JointGraphView.cpp

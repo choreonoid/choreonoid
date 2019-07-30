@@ -2,7 +2,7 @@
     \author Shin'ichiro Nakaoka
 */
 
-#include "JointSliderView.h"
+#include "JointDisplacementView.h"
 #include "BodyItem.h"
 #include "BodyBar.h"
 #include "LinkSelectionView.h"
@@ -42,10 +42,10 @@ const double resolution = 100000.0;
 
 namespace cnoid {
 
-class JointSliderViewImpl : public QObject
+class JointDisplacementViewImpl : public QObject
 {
 public:
-    JointSliderView* self;
+    JointDisplacementView* self;
             
     ToolButton menuButton;
     MenuManager menuManager;
@@ -73,8 +73,8 @@ public:
     QWidget sliderGridBase;
     QGridLayout sliderGrid;
 
-    JointSliderViewImpl(JointSliderView* self);
-    ~JointSliderViewImpl();
+    JointDisplacementViewImpl(JointDisplacementView* self);
+    ~JointDisplacementViewImpl();
     void createPanel();
     void createOptionMenu();
     void onMenuButtonClicked();
@@ -104,7 +104,7 @@ namespace {
 class SliderUnit
 {
 public:
-    JointSliderViewImpl* viewImpl;
+    JointDisplacementViewImpl* viewImpl;
     int index;
     QLabel idLabel;
     QLabel nameLabel;
@@ -116,7 +116,7 @@ public:
     SpinBox phaseSpin;
     double unitConversionRatio;
 
-    SliderUnit(JointSliderViewImpl* viewImpl, int index)
+    SliderUnit(JointDisplacementViewImpl* viewImpl, int index)
         : viewImpl(viewImpl),
           index(index),
           idLabel(&viewImpl->sliderGridBase),
@@ -311,20 +311,22 @@ public:
 }
 
 
-void JointSliderView::initializeClass(ExtensionManager* ext)
+void JointDisplacementView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<JointSliderView>(
-        "JointSliderView", N_("Joint Sliders"), ViewManager::SINGLE_DEFAULT);
+    auto& vm = ext->viewManager();
+    vm.registerClass<JointDisplacementView>(
+        "JointDisplacementView", N_("Joint Displacement"), ViewManager::SINGLE_DEFAULT);
+    vm.registerClassAlias("JointSliderView", "JointDisplacementView");
 }
 
 
-JointSliderView::JointSliderView()
+JointDisplacementView::JointDisplacementView()
 {
-    impl = new JointSliderViewImpl(this);
+    impl = new JointDisplacementViewImpl(this);
 }
 
 
-JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
+JointDisplacementViewImpl::JointDisplacementViewImpl(JointDisplacementView* self) :
     self(self)
 {
     self->setDefaultLayoutArea(View::CENTER);
@@ -332,13 +334,13 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
 }
 
 
-JointSliderView::~JointSliderView()
+JointDisplacementView::~JointDisplacementView()
 {
     delete impl;
 }
 
 
-JointSliderViewImpl::~JointSliderViewImpl()
+JointDisplacementViewImpl::~JointDisplacementViewImpl()
 {
     for(size_t i=0; i < jointSliders.size(); ++i){
         delete jointSliders[i];
@@ -346,7 +348,7 @@ JointSliderViewImpl::~JointSliderViewImpl()
 }
 
 
-void JointSliderViewImpl::createPanel()
+void JointDisplacementViewImpl::createPanel()
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
@@ -404,7 +406,7 @@ void JointSliderViewImpl::createPanel()
 }
 
 
-void JointSliderViewImpl::createOptionMenu()
+void JointDisplacementViewImpl::createOptionMenu()
 {
     menuManager.setNewPopupMenu(self);
 
@@ -436,7 +438,7 @@ void JointSliderViewImpl::createOptionMenu()
 }
 
 
-void JointSliderView::onActivated()
+void JointDisplacementView::onActivated()
 {
     auto bb = BodyBar::instance();
     impl->bodyBarConnection =
@@ -454,20 +456,20 @@ void JointSliderView::onActivated()
 }
 
 
-void JointSliderView::onDeactivated()
+void JointDisplacementView::onDeactivated()
 {
     impl->bodyBarConnection.disconnect();
     impl->setBodyItem(nullptr);
 }
 
 
-void JointSliderViewImpl::onMenuButtonClicked()
+void JointDisplacementViewImpl::onMenuButtonClicked()
 {
     menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
 }
 
 
-void JointSliderViewImpl::onSelectedBodyItemsChanged(const ItemList<BodyItem>& selected)
+void JointDisplacementViewImpl::onSelectedBodyItemsChanged(const ItemList<BodyItem>& selected)
 {
     for(auto& item : selected){
         if(item->body()->numJoints() > 0){
@@ -478,7 +480,7 @@ void JointSliderViewImpl::onSelectedBodyItemsChanged(const ItemList<BodyItem>& s
 }
 
 
-void JointSliderViewImpl::setBodyItem(BodyItem* bodyItem)
+void JointDisplacementViewImpl::setBodyItem(BodyItem* bodyItem)
 {
     if(bodyItem != currentBodyItem){
 
@@ -501,7 +503,7 @@ void JointSliderViewImpl::setBodyItem(BodyItem* bodyItem)
 }
 
 
-void JointSliderViewImpl::updateSliderGrid()
+void JointDisplacementViewImpl::updateSliderGrid()
 {
     if(!currentBodyItem){
         self->setEnabled(false);
@@ -556,7 +558,7 @@ void JointSliderViewImpl::updateSliderGrid()
 }
 
 
-void JointSliderViewImpl::attachSliderUnits(SliderUnit* unit, int row, int col)
+void JointDisplacementViewImpl::attachSliderUnits(SliderUnit* unit, int row, int col)
 {
     sliderGrid.addWidget(&unit->spin, row, col);
     sliderGrid.addWidget(&unit->lowerLimitLabel,row, col + 1);
@@ -566,7 +568,7 @@ void JointSliderViewImpl::attachSliderUnits(SliderUnit* unit, int row, int col)
 }
 
 
-void JointSliderViewImpl::initializeSliders(int num)
+void JointDisplacementViewImpl::initializeSliders(int num)
 {
     int prevNum = jointSliders.size();
 
@@ -588,13 +590,13 @@ void JointSliderViewImpl::initializeSliders(int num)
 }
 
 
-void JointSliderViewImpl::onNumColumnsChanged(int n)
+void JointDisplacementViewImpl::onNumColumnsChanged(int n)
 {
     callLater([&](){ updateSliderGrid(); });
 }
 
 
-void JointSliderViewImpl::onUnitChanged()
+void JointDisplacementViewImpl::onUnitChanged()
 {
     BodyPtr body = currentBodyItem->body();
     for(size_t i=0; i < activeJointIds.size(); ++i){
@@ -604,7 +606,7 @@ void JointSliderViewImpl::onUnitChanged()
 }
 
 
-bool JointSliderViewImpl::eventFilter(QObject* object, QEvent* event)
+bool JointDisplacementViewImpl::eventFilter(QObject* object, QEvent* event)
 {
     Slider* slider = dynamic_cast<Slider*>(object);
     if(slider && (event->type() == QEvent::KeyPress)){
@@ -619,7 +621,7 @@ bool JointSliderViewImpl::eventFilter(QObject* object, QEvent* event)
     return QObject::eventFilter(object, event);
 }
 
-bool JointSliderViewImpl::onSliderKeyPressEvent(Slider* slider, QKeyEvent* event)
+bool JointDisplacementViewImpl::onSliderKeyPressEvent(Slider* slider, QKeyEvent* event)
 {
     int index = slider->property("JointSliderIndex").toInt();
     
@@ -644,7 +646,7 @@ bool JointSliderViewImpl::onSliderKeyPressEvent(Slider* slider, QKeyEvent* event
 }
 
 
-bool JointSliderViewImpl::onDialKeyPressEvent(Dial* dial, QKeyEvent* event)
+bool JointDisplacementViewImpl::onDialKeyPressEvent(Dial* dial, QKeyEvent* event)
 {
     int index = dial->property("JointDialIndex").toInt();
 
@@ -669,7 +671,7 @@ bool JointSliderViewImpl::onDialKeyPressEvent(Dial* dial, QKeyEvent* event)
 }
 
 
-void JointSliderViewImpl::focusSlider(int index)
+void JointDisplacementViewImpl::focusSlider(int index)
 {
     if(index >= 0 && index < static_cast<int>(jointSliders.size())){
         Slider& slider = jointSliders[index]->slider;
@@ -679,7 +681,7 @@ void JointSliderViewImpl::focusSlider(int index)
 }
 
 
-void JointSliderViewImpl::focusDial(int index)
+void JointDisplacementViewImpl::focusDial(int index)
 {
     if(index >= 0 && index < static_cast<int>(jointSliders.size())){
         Dial& dial = jointSliders[index]->dial;
@@ -689,7 +691,7 @@ void JointSliderViewImpl::focusDial(int index)
 }
 
         
-void JointSliderViewImpl::onJointSliderChanged(int sliderIndex)
+void JointDisplacementViewImpl::onJointSliderChanged(int sliderIndex)
 {
     int jointId = activeJointIds[sliderIndex];
     Link* joint = currentBodyItem->body()->joint(jointId);
@@ -701,7 +703,7 @@ void JointSliderViewImpl::onJointSliderChanged(int sliderIndex)
 }
 
 
-void JointSliderViewImpl::updateJointPositions()
+void JointDisplacementViewImpl::updateJointPositions()
 {
     BodyPtr body = currentBodyItem->body();
     for(size_t i=0; i < activeJointIds.size(); ++i){
@@ -711,13 +713,13 @@ void JointSliderViewImpl::updateJointPositions()
 }
 
 
-bool JointSliderView::storeState(Archive& archive)
+bool JointDisplacementView::storeState(Archive& archive)
 {
     return impl->storeState(archive);
 }
 
 
-bool JointSliderViewImpl::storeState(Archive& archive)
+bool JointDisplacementViewImpl::storeState(Archive& archive)
 {
     archive.write("showSelectedJoints", selectedJointsOnlyCheck->isChecked());
     archive.write("showJointIDs", jointIdCheck->isChecked());
@@ -731,13 +733,13 @@ bool JointSliderViewImpl::storeState(Archive& archive)
 }
 
 
-bool JointSliderView::restoreState(const Archive& archive)
+bool JointDisplacementView::restoreState(const Archive& archive)
 {
     return impl->restoreState(archive);
 }
 
 
-bool JointSliderViewImpl::restoreState(const Archive& archive)
+bool JointDisplacementViewImpl::restoreState(const Archive& archive)
 {
     bool on;
     if(archive.read("showSelectedJoints", on)){
@@ -773,7 +775,7 @@ bool JointSliderViewImpl::restoreState(const Archive& archive)
 }
 
 
-void JointSliderViewImpl::restoreCurrentBodyItem(const Archive& archive)
+void JointDisplacementViewImpl::restoreCurrentBodyItem(const Archive& archive)
 {
     setBodyItem(archive.findItem<BodyItem>("currentBodyItem"));
 }

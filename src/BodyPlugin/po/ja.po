@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-29 14:59+0900\n"
+"POT-Creation-Date: 2019-07-30 15:35+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -458,7 +458,7 @@ msgstr "有効"
 msgid "Link Properties"
 msgstr "リンクプロパティ"
 
-#: LinkPropertyView.cpp:152 JointSliderView.cpp:359
+#: LinkPropertyView.cpp:152
 msgid "Name"
 msgstr "名前"
 
@@ -606,79 +606,79 @@ msgstr "CollisionSeqを読み込む機能は実装されていません．"
 msgid "Link Position"
 msgstr "リンク位置"
 
-#: LinkPositionView.cpp:187
+#: LinkPositionView.cpp:191 JointSliderView.cpp:378
 msgid "Option"
 msgstr "オプション"
 
-#: LinkPositionView.cpp:197
+#: LinkPositionView.cpp:201
 msgid "Fetch"
 msgstr "取込"
 
-#: LinkPositionView.cpp:200 FilterDialogs.cpp:108 FilterDialogs.cpp:212
+#: LinkPositionView.cpp:204 FilterDialogs.cpp:108 FilterDialogs.cpp:212
 msgid "Apply"
 msgstr "適用"
 
-#: LinkPositionView.cpp:208
+#: LinkPositionView.cpp:212
 msgid "Coordinate:"
 msgstr "座標:"
 
-#: LinkPositionView.cpp:209 LinkPositionView.cpp:329
+#: LinkPositionView.cpp:213 LinkPositionView.cpp:333
 msgid "World"
 msgstr "ワールド"
 
-#: LinkPositionView.cpp:213 LinkPositionView.cpp:328
+#: LinkPositionView.cpp:217 LinkPositionView.cpp:332
 msgid "Base"
 msgstr "ベース"
 
-#: LinkPositionView.cpp:216
+#: LinkPositionView.cpp:220
 msgid "Parent"
 msgstr "親"
 
-#: LinkPositionView.cpp:219
+#: LinkPositionView.cpp:223
 msgid "Object"
 msgstr "オブジェクト"
 
-#: LinkPositionView.cpp:331 LinkPositionView.cpp:336
+#: LinkPositionView.cpp:335 LinkPositionView.cpp:340
 msgid "Edit"
 msgstr "編集"
 
-#: LinkPositionView.cpp:333
+#: LinkPositionView.cpp:337
 msgid "Target"
 msgstr "対象"
 
-#: LinkPositionView.cpp:334
+#: LinkPositionView.cpp:338
 msgid "Link Origin"
 msgstr "リンク原点"
 
-#: LinkPositionView.cpp:338
+#: LinkPositionView.cpp:342
 msgid "Config"
 msgstr "コンフィグ"
 
-#: LinkPositionView.cpp:347
+#: LinkPositionView.cpp:351
 msgid "Require"
 msgstr "必須"
 
-#: LinkPositionView.cpp:359
+#: LinkPositionView.cpp:363
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: LinkPositionView.cpp:364
+#: LinkPositionView.cpp:368
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: LinkPositionView.cpp:370
+#: LinkPositionView.cpp:374
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-#: LinkPositionView.cpp:590
+#: LinkPositionView.cpp:594
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionView.cpp:716
+#: LinkPositionView.cpp:720
 msgid "Solved"
 msgstr "解有り"
 
-#: LinkPositionView.cpp:720
+#: LinkPositionView.cpp:724
 msgid "Not Solved"
 msgstr "解無し"
 
@@ -828,73 +828,33 @@ msgid ""
 "selected."
 msgstr "{}はこのワールドの他のシミュレータも選択されているため処理出来ません．"
 
-#: JointSliderView.cpp:322
-msgid "Joint Sliders"
-msgstr "関節スライダ"
+#: JointSliderView.cpp:318
+msgid "Joint Displacement"
+msgstr "関節変位"
 
-#: JointSliderView.cpp:345
-msgid "All"
-msgstr "全関節"
-
-#: JointSliderView.cpp:346
-msgid "Show all the joints including unselected ones"
-msgstr "全関節を表示"
-
-#: JointSliderView.cpp:352 LinkTreeWidget.cpp:279
-msgid "ID"
-msgstr ""
-
-#: JointSliderView.cpp:353
-msgid "Show joint IDs"
-msgstr "関節IDを表示"
-
-#: JointSliderView.cpp:360
-msgid "Show joint names"
-msgstr "関節名の表示"
-
-#: JointSliderView.cpp:366
-msgid "Numerical"
-msgstr "数値"
-
-#: JointSliderView.cpp:367
-msgid "Show spin entries for numerical input"
-msgstr "数値入力ボックスの表示"
-
-#: JointSliderView.cpp:373
-msgid "Slider"
-msgstr "スライダ"
-
-#: JointSliderView.cpp:374
-msgid "Show sliders for chaning joint positions"
-msgstr "スライダを表示"
-
-#: JointSliderView.cpp:380
-msgid "Dial"
-msgstr "ダイヤル"
-
-#: JointSliderView.cpp:381
-msgid "Show dials for chaning joint positions"
-msgstr "ダイヤルを表示"
-
-#: JointSliderView.cpp:387
-msgid "IL"
-msgstr "一列"
-
-#: JointSliderView.cpp:388
-msgid "Put all the components for each joint in-line"
-msgstr "各関節を一列に表示"
-
-#: JointSliderView.cpp:398
-msgid "The number of columns"
-msgstr "カラム数"
-
-#: JointSliderView.cpp:410
-msgid "Deg."
-msgstr "度"
+#: JointSliderView.cpp:413 FilterDialogs.cpp:53
+msgid "Selected joints only"
+msgstr "選択関節のみ"
 
 #: JointSliderView.cpp:417
-msgid "Rad."
-msgstr "ラジアン"
+msgid "Joint IDs"
+msgstr "関節ID"
+
+#: JointSliderView.cpp:421
+msgid "Joint names"
+msgstr "関節名"
+
+#: JointSliderView.cpp:426
+msgid "Overlap joint names"
+msgstr "関節名を上に表示"
+
+#: JointSliderView.cpp:430
+msgid "Sliders"
+msgstr "スライダ"
+
+#: JointSliderView.cpp:435
+msgid "Dials"
+msgstr "ダイヤル"
 
 #: LeggedBodyBar.cpp:41
 msgid "LeggedBodyBar"
@@ -942,10 +902,6 @@ msgstr "{}の重心を指定の位置まで移動できません\n"
 msgid "Velocity Limiting Filter"
 msgstr "速度制限フィルタ"
 
-#: FilterDialogs.cpp:53
-msgid "Selected joints only"
-msgstr "選択関節のみ"
-
 #: FilterDialogs.cpp:69
 msgid "Pollard method"
 msgstr "Pollard手法"
@@ -977,6 +933,10 @@ msgstr "マージン"
 #: FilterDialogs.cpp:310
 msgid "Merge selected MultiValueSeqItems (Temporary version)"
 msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
+
+#: LinkTreeWidget.cpp:279
+msgid "ID"
+msgstr ""
 
 #: LinkTreeWidget.cpp:300
 msgid "Link List"
