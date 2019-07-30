@@ -24,10 +24,10 @@ using namespace cnoid;
 
 namespace {
 
-MainWindow* mainWindow = 0;
-Menu* showViewMenu = 0;
-Menu* createViewMenu = 0;
-Menu* deleteViewMenu = 0;
+MainWindow* mainWindow = nullptr;
+Menu* showViewMenu = nullptr;
+Menu* createViewMenu = nullptr;
+Menu* deleteViewMenu = nullptr;
 
 Signal<void(View* view)> sigViewCreated_;
 Signal<void(View* view)> sigViewActivated_;
@@ -132,7 +132,7 @@ public:
         
     View* createView(const string& name, bool setTranslatedNameToWindowTitle = false){
         if(name.empty()){
-            return 0;
+            return nullptr;
         }
         View* view = createView();
         view->setName(name);
@@ -152,7 +152,7 @@ public:
                     return (*p)->view;
                 }
             }
-            return 0;
+            return nullptr;
         }
     }
 
@@ -182,6 +182,8 @@ typedef std::shared_ptr<ClassNameToViewInfoMap> ClassNameToViewInfoMapPtr;
 
 typedef map<string, ClassNameToViewInfoMapPtr> ModuleNameToClassNameToViewInfoMap;
 ModuleNameToClassNameToViewInfoMap moduleNameToClassNameToViewInfoMap;
+
+map<string, string> classNameAliasMap;
 
 }
 
@@ -246,7 +248,7 @@ void InstanceInfo::remove()
         ViewManagerImpl::notifySigRemoved(view);
         sigViewRemoved_(view);
         delete view;
-        view = 0;
+        view = nullptr;
     }
     viewInfo->instances.erase(iterInViewInfo);
     iterInViewInfo = viewInfo->instances.end();
@@ -379,7 +381,7 @@ void onViewMenuAboutToShow(Menu* menu)
             InstanceInfoList& instances = viewInfo->instances;
 
             if(menu == showViewMenu){
-                View* view = 0;
+                View* view = nullptr;
                 if(instances.empty()){
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
@@ -513,13 +515,19 @@ View* ViewManager::registerClassSub
         mainWindow->viewArea()->addView(view);
         return view;
     }
-    return 0;
+    return nullptr;
+}
+
+
+void ViewManager::registerClassAlias(const std::string& alias, const std::string& orgClassName)
+{
+    classNameAliasMap[alias] = orgClassName;
 }
 
 
 ViewClass* ViewManager::viewClass(const std::type_info& view_type_info)
 {
-    ViewClass* viewClass = 0;
+    ViewClass* viewClass = nullptr;
     TypeToViewInfoMap::iterator p = typeToViewInfoMap.find(&view_type_info);
     if(p != typeToViewInfoMap.end()){
         viewClass = p->second.get();
@@ -531,11 +539,17 @@ ViewClass* ViewManager::viewClass(const std::type_info& view_type_info)
 namespace {
 ViewInfo* findViewInfo(const std::string& moduleName, const std::string& className)
 {
-    ViewInfo* info = 0;
-    ModuleNameToClassNameToViewInfoMap::iterator p = moduleNameToClassNameToViewInfoMap.find(moduleName);
+    ViewInfo* info = nullptr;
+    auto p = moduleNameToClassNameToViewInfoMap.find(moduleName);
     if(p != moduleNameToClassNameToViewInfoMap.end()){
-        ClassNameToViewInfoMap& infoMap = *p->second;
-        ClassNameToViewInfoMap::iterator q = infoMap.find(className);
+        auto& infoMap = *p->second;
+        auto q = infoMap.find(className);
+        if(q == infoMap.end()){
+            auto r = classNameAliasMap.find(className);
+            if(r != classNameAliasMap.end()){
+                q = infoMap.find(r->second);
+            }
+        }
         if(q != infoMap.end()){
             info = q->second.get();
         }
@@ -551,7 +565,7 @@ View* ViewManager::getOrCreateView(const std::string& moduleName, const std::str
     if(info){
         return info->getOrCreateView();
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -561,7 +575,7 @@ View* ViewManager::getOrCreateView(const std::string& moduleName, const std::str
     if(info){
         return info->getOrCreateView(instanceName);
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -577,7 +591,7 @@ View* ViewManager::getOrCreateViewOfDefaultName(const std::string& defaultName)
             return info.getOrCreateView();
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -622,7 +636,7 @@ View* ViewManager::getOrCreateSpecificTypeView
             return info.getOrCreateView(instanceName, doMountCreatedView);
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -633,7 +647,7 @@ View* ViewManager::findSpecificTypeView(const std::type_info& view_type_info, co
         ViewInfo& info = *p->second;
         return info.findView(instanceName);
     }
-    return 0;
+    return nullptr;
 }    
 
 
@@ -750,7 +764,7 @@ struct ViewState {
 
 ViewManager::ViewStateInfo::ViewStateInfo()
 {
-    data = 0;
+    data = nullptr;
 }
 
 
@@ -764,7 +778,7 @@ ViewManager::ViewStateInfo::~ViewStateInfo()
 
 static View* restoreView(Archive* archive, const string& moduleName, const string& className, ViewInfoToViewsMap& remainingViewsMap)
 {
-    View* view = 0;
+    View* view = nullptr;
     string instanceName;
                     
     if(!archive->read("name", instanceName)){
