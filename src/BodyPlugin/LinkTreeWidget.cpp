@@ -280,7 +280,7 @@ void LinkTreeWidgetImpl::initialize()
     self->setColumnDataFunction(jointIdColumn, &jointIdData);
     header->setSectionResizeMode(jointIdColumn, QHeaderView::ResizeToContents);
     
-    headerItem->setTextAlignment(jointIdColumn, Qt::AlignHCenter);
+    headerItem->setTextAlignment(jointIdColumn, Qt::AlignCenter);
     self->moveVisualColumnIndex(jointIdColumn, 0);
 
     QObject::connect(self, SIGNAL(itemChanged(QTreeWidgetItem*, int)),

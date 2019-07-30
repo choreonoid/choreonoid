@@ -1,5 +1,5 @@
-/** \file
-    \author Shin'ichiro Nakaoka
+/**
+   \author Shin'ichiro Nakaoka
 */
 
 #include "JointDisplacementView.h"
@@ -14,23 +14,25 @@
 #include <cnoid/SpinBox>
 #include <cnoid/Slider>
 #include <cnoid/Dial>
-#include <cnoid/Separator>
 #include <cnoid/LazyCaller>
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/RootItem>
+#include <cnoid/MathUtil>
 #include <QGridLayout>
 #include <QScrollArea>
 #include <QKeyEvent>
 #include <QStyle>
 #include "gettext.h"
 
+#include <iostream>
+
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-class SliderUnit;
+class JointIndicator;
 
 /**
    Slider resolution.
@@ -47,8 +49,15 @@ class JointDisplacementViewImpl : public QObject
 public:
     JointDisplacementView* self;
             
-    ToolButton menuButton;
-    MenuManager menuManager;
+    vector<int> activeJointIds;
+    vector<JointIndicator*> jointIndicators;
+    BodyItemPtr currentBodyItem;
+            
+    ScopedConnection kinematicStateChangeConnection;
+    ScopedConnection bodyBarConnection;
+    ScopedConnection linkSelectionChangeConnection;
+    LazyCaller updateJointDisplacementsLater;
+
     QLabel targetLabel;
     Action* selectedJointsOnlyCheck;
     Action* jointIdCheck;
@@ -56,22 +65,14 @@ public:
     Action* overlapJointNameCheck;
     Action* sliderCheck;
     Action* dialCheck;
+    Action* phaseCheck;
             
-    vector<int> activeJointIds;
-    vector<SliderUnit*> jointSliders;
-    BodyItemPtr currentBodyItem;
-            
-    ScopedConnection kinematicStateChangeConnection;
-    ScopedConnection bodyBarConnection;
-    
-    LazyCaller updateJointPositionsLater;
-        
-    Connection connectionOfBodyItemDetachedFromRoot;
-    Connection connectionOfLinkSelectionChanged;
-
     QScrollArea scrollArea;
-    QWidget sliderGridBase;
-    QGridLayout sliderGrid;
+    QWidget gridBase;
+    QGridLayout grid;
+
+    ToolButton menuButton;
+    MenuManager menuManager;
 
     JointDisplacementViewImpl(JointDisplacementView* self);
     ~JointDisplacementViewImpl();
@@ -80,9 +81,8 @@ public:
     void onMenuButtonClicked();
     void onSelectedBodyItemsChanged(const ItemList<BodyItem>& selected);
     void setBodyItem(BodyItem* bodyItem);
-    void updateSliderGrid();
-    void attachSliderUnits(SliderUnit* unit, int row, int col);
-    void initializeSliders(int num);
+    void updateIndicatorGrid();
+    void initializeIndicators(int num);
     void onNumColumnsChanged(int n);
     void onUnitChanged();
     bool eventFilter(QObject* object, QEvent* event);
@@ -90,8 +90,8 @@ public:
     void focusSlider(int index);
     bool onDialKeyPressEvent(Dial* dial, QKeyEvent* event);
     void focusDial(int index);
-    void onJointSliderChanged(int sliderIndex);
-    void updateJointPositions();
+    void notifyJointDisplacementInput();
+    void updateJointDisplacements();
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
     void restoreCurrentBodyItem(const Archive& archive);
@@ -101,31 +101,29 @@ public:
 
 namespace {
     
-class SliderUnit
+class JointIndicator
 {
 public:
     JointDisplacementViewImpl* viewImpl;
     int index;
-    QLabel idLabel;
-    QLabel nameLabel;
+    Link* joint;
+    double unitConversionRatio;
     DoubleSpinBox spin;
-    QLabel lowerLimitLabel;
     Slider slider;
-    QLabel upperLimitLabel;
     Dial dial;
     SpinBox phaseSpin;
-    double unitConversionRatio;
+    int minPhase;
+    int maxPhase;
+    QLabel idLabel;
+    QLabel nameLabel;
+    QLabel lowerLimitLabel;
+    QLabel upperLimitLabel;
 
-    SliderUnit(JointDisplacementViewImpl* viewImpl, int index)
+    JointIndicator(JointDisplacementViewImpl* viewImpl, int index)
         : viewImpl(viewImpl),
           index(index),
-          idLabel(&viewImpl->sliderGridBase),
-          nameLabel(&viewImpl->sliderGridBase),
-          spin(&viewImpl->sliderGridBase),
-          lowerLimitLabel(&viewImpl->sliderGridBase),
-          slider(Qt::Horizontal, &viewImpl->sliderGridBase),
-          upperLimitLabel(&viewImpl->sliderGridBase),
-          dial(&viewImpl->sliderGridBase)
+          joint(nullptr),
+          slider(Qt::Horizontal)
     {
         idLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         nameLabel.setAlignment(Qt::AlignCenter);
@@ -134,17 +132,45 @@ public:
         upperLimitLabel.setAlignment(Qt::AlignCenter);
             
         spin.setAlignment(Qt::AlignCenter);
-        spin.sigValueChanged().connect([&](double v){ onSpinValueChanged(v); });
+        spin.sigValueChanged().connect(
+            [=](double v){ onDisplacementInput(v); });
             
         slider.setSingleStep(0.1 * resolution);
         slider.setProperty("JointSliderIndex", index);
         slider.installEventFilter(viewImpl);
-        slider.sigValueChanged().connect([&](double v){ onSliderValueChanged(v); });
+        slider.sigValueChanged().connect(
+            [=](int v){ onDisplacementInput(v / resolution); });
 
         dial.setSingleStep(0.1 * resolution);
         dial.setProperty("JointDialIndex", index);
         dial.installEventFilter(viewImpl);
-        dial.sigValueChanged().connect([&](double v){ onDialValueChanged(v); });
+        dial.sigValueChanged().connect(
+            [=](int v){ onDisplacementInput(v / resolution); });
+
+        phaseSpin.sigValueChanged().connect(
+            [=](int v){ onPhaseInput(v); });
+
+        phaseSpin.setPrefix("T");
+        phaseSpin.setRange(0, 0);
+    }
+
+    int attachTo(QGridLayout& grid, int row, int col, bool overlapJointName)
+    {
+        if(overlapJointName){
+            grid.addWidget(&nameLabel, row++, col, 1, 6);
+            grid.addWidget(&idLabel, row, col);
+        } else {
+            grid.addWidget(&idLabel, row, col);
+            grid.addWidget(&nameLabel, row, col++);
+        }
+        grid.addWidget(&spin, row, col++);
+        grid.addWidget(&lowerLimitLabel, row, col++);
+        grid.addWidget(&slider, row, col++);
+        grid.addWidget(&upperLimitLabel, row, col++);
+        grid.addWidget(&dial, row, col++);
+        grid.addWidget(&phaseSpin, row, col++);
+
+        return row + 1;
     }
 
     bool isDegreeMode() const { return true; }
@@ -165,20 +191,20 @@ public:
 
     void initialize(Link* joint)
     {
+        this->joint = joint;
+        
+        idLabel.setText(QString("%1:").arg(joint->jointId()));
+        idLabel.setVisible(viewImpl->jointIdCheck->isChecked());
+
+        nameLabel.setText(joint->name().c_str());
+        nameLabel.setVisible(viewImpl->jointNameCheck->isChecked());
+
         spin.show();
 
         bool on = viewImpl->sliderCheck->isChecked();
         lowerLimitLabel.setVisible(on);
         slider.setVisible(on);
         upperLimitLabel.setVisible(on);
-
-        dial.setVisible(viewImpl->dialCheck->isChecked());
-
-        nameLabel.setText(joint->name().c_str());
-        nameLabel.setVisible(viewImpl->jointNameCheck->isChecked());
-
-        idLabel.setText(QString("%1:").arg(joint->jointId()));
-        idLabel.setVisible(viewImpl->jointIdCheck->isChecked());
 
         unitConversionRatio = 1.0;
         double max;
@@ -193,9 +219,12 @@ public:
         double lower = unitConversionRatio * (joint->q_lower() < -max ? -max : joint->q_lower());
         double upper = unitConversionRatio * (joint->q_upper() > max ? max : joint->q_upper());
 
+        dial.setVisible(viewImpl->dialCheck->isChecked());
+
         slider.blockSignals(true);
         spin.blockSignals(true);
         dial.blockSignals(true);
+        phaseSpin.blockSignals(true);
 
         slider.setRange(lower * resolution, upper * resolution);
 
@@ -214,9 +243,9 @@ public:
             deci = 0.0001;
         }
         double v = unitConversionRatio * joint->q();
-        if( v<spin.minimum() || v>spin.maximum()){
-            int v0 = v<0.0? (int)-v : (int)v;
-            double max = pow(10, (int)log10(v0)+1)-deci;
+        if(v < spin.minimum() || v > spin.maximum()){
+            int v0 = v < 0.0? (int)-v : (int)v;
+            double max = pow(10, (int)log10(v0) + 1)-deci;
             spin.setRange(-max, max);
         }
 
@@ -231,69 +260,99 @@ public:
             dial.setRange(lower * resolution, upper * resolution);
         }
 
+        bool hasPhases = false;
+        if(viewImpl->phaseCheck->isChecked()){
+            minPhase = 0;
+            maxPhase = 0;
+            double q0 = joint->q_initial();
+            if((joint->q_upper() - q0) > M_PI){
+                maxPhase = 1 + trunc((joint->q_upper() - q0 - M_PI) / (2.0 * M_PI));
+                hasPhases = true;
+            }
+            if((joint->q_lower() - q0) < -M_PI){
+                minPhase = -1 + trunc((joint->q_lower() - q0 + M_PI) / (2.0 * M_PI));
+                hasPhases = true;
+            }
+            phaseSpin.setRange(minPhase, maxPhase);
+        }
+        phaseSpin.setVisible(hasPhases);
+
         spin.blockSignals(false);
         slider.blockSignals(false);
         dial.blockSignals(false);
+        phaseSpin.blockSignals(false);
 
-        updatePosition(joint);
-    }
-        
-    double value() const
-    {
-        return spin.value() / unitConversionRatio;
+        updateDisplacement(true);
     }
 
-    void updatePosition(Link* joint)
+    void updateDisplacement(bool forceUpdate)
     {
         double v = unitConversionRatio * joint->q();
-        if(v != spin.value()){
-            slider.blockSignals(true);
+
+        if(forceUpdate || v != spin.value()){
+
             spin.blockSignals(true);
-            dial.blockSignals(true);
+            if(v > spin.maximum()){
+                spin.setRange(spin.minimum(), v);
+            } else if(v < spin.minimum()){
+                spin.setRange(v, spin.maximum());
+            }
             spin.setValue(v);
-            slider.setValue(v * resolution);
-            dial.setValue(v * resolution);
             spin.blockSignals(false);
-            slider.blockSignals(false);
-            dial.blockSignals(false);
+
+            if(slider.isVisible()){
+                slider.blockSignals(true);
+                slider.setValue(v * resolution);
+                slider.blockSignals(false);
+            }
+            if(dial.isVisible()){
+                dial.blockSignals(true);
+                dial.setValue(v * resolution);
+                dial.blockSignals(false);
+            }
+            if(phaseSpin.isVisible()){
+                phaseSpin.blockSignals(true);
+                int phase = getCurrentPhase();
+                int currentMinPhase = minPhase;
+                int currentMaxPhase = maxPhase;
+                if(joint->q() - 2.0 * M_PI < joint->q_lower() && phase > minPhase){
+                    ++currentMinPhase;
+                }
+                if(joint->q() + 2.0 * M_PI > joint->q_upper() && phase < maxPhase){
+                    --currentMaxPhase;
+                }
+                phaseSpin.setRange(currentMinPhase, currentMaxPhase);
+                phaseSpin.setValue(phase);
+                phaseSpin.blockSignals(false);
+            }
         }
     }
 
-    void onSliderValueChanged(double value)
-    {
-        spin.blockSignals(true);
-        spin.setValue(value / resolution);
-        spin.blockSignals(false);
-        dial.blockSignals(true);
-        dial.setValue(value);
-        dial.blockSignals(false);
-        viewImpl->onJointSliderChanged(index);
-    }
-
-    void onDialValueChanged(double value)
-    {
-        spin.blockSignals(true);
-        double v = value / resolution;
-        if(v > spin.maximum() || v < spin.minimum() ) {
-            spin.setRange(spin.minimum()*10, spin.maximum()*10);
+    int getCurrentPhase()
+    {        
+        int phase = 0;
+        double q0 = joint->q_initial();
+        if((joint->q() - q0) > M_PI){
+            phase = 1 + trunc((joint->q() - q0 - M_PI) / (2.0 * M_PI));
+        } else if((joint->q() - q0) < -M_PI){
+            phase = -1 + trunc((joint->q() - q0 + M_PI) / (2.0 * M_PI));
         }
-        spin.setValue(v);
-        spin.blockSignals(false);
-        slider.blockSignals(true);
-        slider.setValue(value);
-        slider.blockSignals(false);
-        viewImpl->onJointSliderChanged(index);
+        return phase;
     }
 
-    void onSpinValueChanged(double value)
+    void onDisplacementInput(double value)
     {
-        slider.blockSignals(true);
-        slider.setValue(value * resolution);
-        slider.blockSignals(false);
-        dial.blockSignals(true);
-        dial.setValue(value* resolution);
-        dial.blockSignals(false);
-        viewImpl->onJointSliderChanged(index);
+        joint->q() = value / unitConversionRatio;
+        updateDisplacement(true);
+        viewImpl->notifyJointDisplacementInput();
+    }
+
+    void onPhaseInput(int phase)
+    {
+        int currentPhase = getCurrentPhase();
+        joint->q() += (phase - currentPhase) * 2.0 * M_PI;
+        updateDisplacement(true);
+        viewImpl->notifyJointDisplacementInput();
     }
 
     void removeWidgesFrom(QGridLayout& grid)
@@ -342,8 +401,8 @@ JointDisplacementView::~JointDisplacementView()
 
 JointDisplacementViewImpl::~JointDisplacementViewImpl()
 {
-    for(size_t i=0; i < jointSliders.size(); ++i){
-        delete jointSliders[i];
+    for(size_t i=0; i < jointIndicators.size(); ++i){
+        delete jointIndicators[i];
     }
 }
 
@@ -383,26 +442,26 @@ void JointDisplacementViewImpl::createPanel()
 
     createOptionMenu();
     
-    auto sliderVBox = new QVBoxLayout;
-    sliderVBox->setContentsMargins(lmargin / 2, 0, rmargin / 2, 0);
-    sliderGridBase.setLayout(sliderVBox);
-    sliderGrid.setHorizontalSpacing(hspacing / 2);
-    sliderGrid.setVerticalSpacing(vspacing / 2);
-    sliderVBox->addLayout(&sliderGrid);
-    sliderVBox->addStretch();
+    auto gridvbox = new QVBoxLayout;
+    gridvbox->setContentsMargins(lmargin / 2, 0, rmargin / 2, 0);
+    gridBase.setLayout(gridvbox);
+    grid.setHorizontalSpacing(hspacing / 2);
+    grid.setVerticalSpacing(vspacing / 2);
+    gridvbox->addLayout(&grid);
+    gridvbox->addStretch();
     
     scrollArea.setFrameShape(QFrame::NoFrame);
     scrollArea.setWidgetResizable(true);
     scrollArea.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea.setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scrollArea.setWidget(&sliderGridBase);
+    scrollArea.setWidget(&gridBase);
 
     vbox->addWidget(&scrollArea, 1);
 
-    updateSliderGrid();
+    updateIndicatorGrid();
 
-    updateJointPositionsLater.setFunction([&](){ updateJointPositions(); });
-    updateJointPositionsLater.setPriority(LazyCaller::PRIORITY_LOW);
+    updateJointDisplacementsLater.setFunction([&](){ updateJointDisplacements(); });
+    updateJointDisplacementsLater.setPriority(LazyCaller::PRIORITY_LOW);
 }
 
 
@@ -412,29 +471,33 @@ void JointDisplacementViewImpl::createOptionMenu()
 
     selectedJointsOnlyCheck = menuManager.addCheckItem(_("Selected joints only"));
     selectedJointsOnlyCheck->sigToggled().connect(
-        [&](bool){ updateSliderGrid(); });
+        [&](bool){ updateIndicatorGrid(); });
 
-    jointIdCheck = menuManager.addCheckItem(_("Joint IDs"));
+    jointIdCheck = menuManager.addCheckItem(_("Joint ID"));
     jointIdCheck->sigToggled().connect(
-        [&](bool){ updateSliderGrid(); });
+        [&](bool){ updateIndicatorGrid(); });
 
-    jointNameCheck = menuManager.addCheckItem(_("Joint names"));
+    jointNameCheck = menuManager.addCheckItem(_("Joint name"));
     jointNameCheck->setChecked(true);
     jointNameCheck->sigToggled().connect(
-        [&](bool){ updateSliderGrid(); });
+        [&](bool){ updateIndicatorGrid(); });
 
-    overlapJointNameCheck = menuManager.addCheckItem(_("Overlap joint names"));
+    overlapJointNameCheck = menuManager.addCheckItem(_("Overlap joint name"));
     overlapJointNameCheck->sigToggled().connect(
-        [&](bool){ updateSliderGrid(); });
+        [&](bool){ updateIndicatorGrid(); });
 
-    sliderCheck = menuManager.addCheckItem(_("Sliders"));
+    sliderCheck = menuManager.addCheckItem(_("Slider"));
     sliderCheck->setChecked(true);
     sliderCheck->sigToggled().connect(
-        [&](bool){ updateSliderGrid(); });
+        [&](bool){ updateIndicatorGrid(); });
 
-    dialCheck = menuManager.addCheckItem(_("Dials"));
+    dialCheck = menuManager.addCheckItem(_("Dial"));
     dialCheck->sigToggled().connect(
-        [&](bool){ updateSliderGrid(); });
+        [&](bool){ updateIndicatorGrid(); });
+
+    phaseCheck = menuManager.addCheckItem(_("Phase"));
+    phaseCheck->sigToggled().connect(
+        [&](bool){ updateIndicatorGrid(); });
 }
 
 
@@ -484,31 +547,31 @@ void JointDisplacementViewImpl::setBodyItem(BodyItem* bodyItem)
 {
     if(bodyItem != currentBodyItem){
 
-        connectionOfLinkSelectionChanged.disconnect();
+        linkSelectionChangeConnection.disconnect();
         kinematicStateChangeConnection.disconnect();
 
         currentBodyItem = bodyItem;
-        updateSliderGrid();
+        updateIndicatorGrid();
 
         if(bodyItem){
-            connectionOfLinkSelectionChanged =
+            linkSelectionChangeConnection =
                 LinkSelectionView::mainInstance()->sigSelectionChanged(bodyItem).connect(
-                    [&](){ updateSliderGrid(); });
+                    [&](){ updateIndicatorGrid(); });
             
             kinematicStateChangeConnection =
-                bodyItem->sigKinematicStateChanged().connect(updateJointPositionsLater);
-            updateJointPositions();
+                bodyItem->sigKinematicStateChanged().connect(updateJointDisplacementsLater);
+            updateJointDisplacements();
         }
     }
 }
 
 
-void JointDisplacementViewImpl::updateSliderGrid()
+void JointDisplacementViewImpl::updateIndicatorGrid()
 {
     if(!currentBodyItem){
         self->setEnabled(false);
         targetLabel.setText("------");
-        initializeSliders(0);
+        initializeIndicators(0);
 
     } else {
         self->setEnabled(true);
@@ -535,64 +598,43 @@ void JointDisplacementViewImpl::updateSliderGrid()
         }
 
         int n = activeJointIds.size();
-        
-        initializeSliders(n);
+        initializeIndicators(n);
 
         int row = 0;
         for(int i=0; i < n; ++i){
-            SliderUnit* unit = jointSliders[i];
-            unit->initialize(body->joint(activeJointIds[i]));
-            if(overlapJointNameCheck->isChecked()){
-                sliderGrid.addWidget(&unit->nameLabel, row, 0, 1, 6);
-                sliderGrid.addWidget(&unit->idLabel, row + 1, 0);
-                attachSliderUnits(unit, row + 1, 1);
-                row += 2;
-            } else {
-                sliderGrid.addWidget(&unit->idLabel,row, 0);
-                sliderGrid.addWidget(&unit->nameLabel,row, 1);
-                attachSliderUnits(unit, row, 2);
-                row += 1;
-            }
+            auto indicator = jointIndicators[i];
+            indicator->initialize(body->joint(activeJointIds[i]));
+            row = indicator->attachTo(grid, row, 0, overlapJointNameCheck->isChecked());
         }
     }
 }
 
 
-void JointDisplacementViewImpl::attachSliderUnits(SliderUnit* unit, int row, int col)
+void JointDisplacementViewImpl::initializeIndicators(int num)
 {
-    sliderGrid.addWidget(&unit->spin, row, col);
-    sliderGrid.addWidget(&unit->lowerLimitLabel,row, col + 1);
-    sliderGrid.addWidget(&unit->slider, row, col + 2);
-    sliderGrid.addWidget(&unit->upperLimitLabel,row, col + 3);
-    sliderGrid.addWidget(&unit->dial, row, col + 4);
-}
-
-
-void JointDisplacementViewImpl::initializeSliders(int num)
-{
-    int prevNum = jointSliders.size();
+    int prevNum = jointIndicators.size();
 
     for(int i=0; i < prevNum; ++i){
-        jointSliders[i]->removeWidgesFrom(sliderGrid);
+        jointIndicators[i]->removeWidgesFrom(grid);
     }
 
     if(num > prevNum){
         for(int i=prevNum; i < num; ++i){
-            int index = jointSliders.size();
-            jointSliders.push_back(new SliderUnit(this, index));
+            int index = jointIndicators.size();
+            jointIndicators.push_back(new JointIndicator(this, index));
         }
     } else if(num < prevNum){
         for(int i=num; i < prevNum; ++i){
-            delete jointSliders[i];
+            delete jointIndicators[i];
         }
-        jointSliders.resize(num);
+        jointIndicators.resize(num);
     }
 }
 
 
 void JointDisplacementViewImpl::onNumColumnsChanged(int n)
 {
-    callLater([&](){ updateSliderGrid(); });
+    callLater([&](){ updateIndicatorGrid(); });
 }
 
 
@@ -601,7 +643,7 @@ void JointDisplacementViewImpl::onUnitChanged()
     BodyPtr body = currentBodyItem->body();
     for(size_t i=0; i < activeJointIds.size(); ++i){
         int jointId = activeJointIds[i];
-        jointSliders[jointId]->initialize(body->joint(jointId));
+        jointIndicators[jointId]->initialize(body->joint(jointId));
     }
 }
 
@@ -673,8 +715,8 @@ bool JointDisplacementViewImpl::onDialKeyPressEvent(Dial* dial, QKeyEvent* event
 
 void JointDisplacementViewImpl::focusSlider(int index)
 {
-    if(index >= 0 && index < static_cast<int>(jointSliders.size())){
-        Slider& slider = jointSliders[index]->slider;
+    if(index >= 0 && index < static_cast<int>(jointIndicators.size())){
+        Slider& slider = jointIndicators[index]->slider;
         slider.setFocus(Qt::OtherFocusReason);
         scrollArea.ensureWidgetVisible(&slider);
     }
@@ -683,32 +725,26 @@ void JointDisplacementViewImpl::focusSlider(int index)
 
 void JointDisplacementViewImpl::focusDial(int index)
 {
-    if(index >= 0 && index < static_cast<int>(jointSliders.size())){
-        Dial& dial = jointSliders[index]->dial;
+    if(index >= 0 && index < static_cast<int>(jointIndicators.size())){
+        Dial& dial = jointIndicators[index]->dial;
         dial.setFocus(Qt::OtherFocusReason);
         scrollArea.ensureWidgetVisible(&dial);
     }
 }
 
         
-void JointDisplacementViewImpl::onJointSliderChanged(int sliderIndex)
+void JointDisplacementViewImpl::notifyJointDisplacementInput()
 {
-    int jointId = activeJointIds[sliderIndex];
-    Link* joint = currentBodyItem->body()->joint(jointId);
-    joint->q() = jointSliders[sliderIndex]->value();
-
     kinematicStateChangeConnection.block();
     currentBodyItem->notifyKinematicStateChange(true);
     kinematicStateChangeConnection.unblock();
 }
 
 
-void JointDisplacementViewImpl::updateJointPositions()
+void JointDisplacementViewImpl::updateJointDisplacements()
 {
-    BodyPtr body = currentBodyItem->body();
     for(size_t i=0; i < activeJointIds.size(); ++i){
-        int jointId = activeJointIds[i];
-        jointSliders[i]->updatePosition(body->joint(jointId));
+        jointIndicators[i]->updateDisplacement(false);
     }
 }
 
@@ -727,6 +763,7 @@ bool JointDisplacementViewImpl::storeState(Archive& archive)
     archive.write("overlapJointNames", overlapJointNameCheck->isChecked());
     archive.write("showSliders", sliderCheck->isChecked());
     archive.write("showDials", dialCheck->isChecked());
+    archive.write("showPhases", phaseCheck->isChecked());
     archive.writeItemId("currentBodyItem", currentBodyItem);
     
     return true;
@@ -767,6 +804,9 @@ bool JointDisplacementViewImpl::restoreState(const Archive& archive)
     if(archive.read("showDials", on) ||
        archive.read("dials", on)){
         dialCheck->setChecked(on);
+    }
+    if(archive.read("showPhases", on)){
+        phaseCheck->setChecked(on);
     }
 
     archive.addPostProcess([&](){ restoreCurrentBodyItem(archive); });

@@ -109,6 +109,7 @@ set(headers
   StringUtil.h
   Tokenizer.h
   FileUtil.h
+  MathUtil.h
   ExecutablePath.h
   ParametricPathProcessor.h
   UTF8.h

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-30 15:35+0900\n"
+"POT-Creation-Date: 2019-07-30 16:50+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -606,7 +606,7 @@ msgstr "CollisionSeqを読み込む機能は実装されていません．"
 msgid "Link Position"
 msgstr "リンク位置"
 
-#: LinkPositionView.cpp:191 JointSliderView.cpp:378
+#: LinkPositionView.cpp:191 JointDisplacementView.cpp:398
 msgid "Option"
 msgstr "オプション"
 
@@ -828,34 +828,6 @@ msgid ""
 "selected."
 msgstr "{}はこのワールドの他のシミュレータも選択されているため処理出来ません．"
 
-#: JointSliderView.cpp:318
-msgid "Joint Displacement"
-msgstr "関節変位"
-
-#: JointSliderView.cpp:413 FilterDialogs.cpp:53
-msgid "Selected joints only"
-msgstr "選択関節のみ"
-
-#: JointSliderView.cpp:417
-msgid "Joint IDs"
-msgstr "関節ID"
-
-#: JointSliderView.cpp:421
-msgid "Joint names"
-msgstr "関節名"
-
-#: JointSliderView.cpp:426
-msgid "Overlap joint names"
-msgstr "関節名を上に表示"
-
-#: JointSliderView.cpp:430
-msgid "Sliders"
-msgstr "スライダ"
-
-#: JointSliderView.cpp:435
-msgid "Dials"
-msgstr "ダイヤル"
-
 #: LeggedBodyBar.cpp:41
 msgid "LeggedBodyBar"
 msgstr "脚型ボディバー"
@@ -901,6 +873,10 @@ msgstr "{}の重心を指定の位置まで移動できません\n"
 #: FilterDialogs.cpp:46 FilterDialogs.cpp:303
 msgid "Velocity Limiting Filter"
 msgstr "速度制限フィルタ"
+
+#: FilterDialogs.cpp:53 JointDisplacementView.cpp:433
+msgid "Selected joints only"
+msgstr "選択関節のみ"
 
 #: FilterDialogs.cpp:69
 msgid "Pollard method"
@@ -1575,4 +1551,32 @@ msgstr "遠クリッピング距離"
 #: BodyTrackingCameraItem.cpp:263
 msgid "field Of View"
 msgstr "視野角"
+
+#: JointDisplacementView.cpp:338
+msgid "Joint Displacement"
+msgstr "関節変位"
+
+#: JointDisplacementView.cpp:437
+msgid "Joint ID"
+msgstr "関節ID"
+
+#: JointDisplacementView.cpp:441
+msgid "Joint name"
+msgstr "関節名"
+
+#: JointDisplacementView.cpp:446
+msgid "Overlap joint name"
+msgstr "関節名を上に表示"
+
+#: JointDisplacementView.cpp:450
+msgid "Slider"
+msgstr "スライダ"
+
+#: JointDisplacementView.cpp:455
+msgid "Dial"
+msgstr "ダイヤル"
+
+#: JointDisplacementView.cpp:459
+msgid "Phase"
+msgstr "位相"
 

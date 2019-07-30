@@ -68,9 +68,8 @@ public:
     QLabel targetLabel;
     QLabel configurationLabel;
     QLabel resultLabel;
-    enum { WORLD_COORD, BASE_COORD, PARENT_COORD, OBJECT_COORD };
+    enum { BASE_COORD, PARENT_COORD, OBJECT_COORD };
     ButtonGroup coordinateModeGroup;
-    RadioButton worldCoordRadio;
     RadioButton baseCoordRadio;
     RadioButton parentCoordRadio;
     RadioButton objectCoordRadio;
@@ -210,10 +209,6 @@ void LinkPositionViewImpl::createPanel()
 
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Coordinate:")));
-    worldCoordRadio.setText(_("World"));
-    worldCoordRadio.setChecked(true);
-    hbox->addWidget(&worldCoordRadio);
-    coordinateModeGroup.addButton(&worldCoordRadio, WORLD_COORD);
     baseCoordRadio.setText(_("Base"));
     hbox->addWidget(&baseCoordRadio);
     coordinateModeGroup.addButton(&baseCoordRadio, BASE_COORD);
