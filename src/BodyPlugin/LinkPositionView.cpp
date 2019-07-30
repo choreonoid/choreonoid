@@ -161,15 +161,19 @@ LinkPositionViewImpl::~LinkPositionViewImpl()
 
 void LinkPositionViewImpl::createPanel()
 {
-    const int margin = 8;
-    
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+
+    auto style = self->style();
+    int lmargin = style->pixelMetric(QStyle::PM_LayoutLeftMargin);
+    int rmargin = style->pixelMetric(QStyle::PM_LayoutRightMargin);
+    int tmargin = style->pixelMetric(QStyle::PM_LayoutTopMargin);
+    int bmargin = style->pixelMetric(QStyle::PM_LayoutBottomMargin);
     
     auto topvbox = new QVBoxLayout;
     self->setLayout(topvbox);
     
     auto mainvbox = new QVBoxLayout;
-    mainvbox->setContentsMargins(margin, margin, margin, margin);
+    mainvbox->setContentsMargins(lmargin / 2, rmargin / 2, tmargin / 2, bmargin / 2);
     topvbox->addLayout(mainvbox);
 
     auto hbox = new QHBoxLayout;
