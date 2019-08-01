@@ -269,7 +269,6 @@ public:
 
     void renderGroup(SgGroup* group);
     void renderSwitch(SgSwitch* node);
-    void renderInvariantGroup(SgInvariantGroup* group);
     void renderTransform(SgTransform* transform);
     void renderShape(SgShape* shape);
     void renderUnpickableGroup(SgUnpickableGroup* group);
@@ -376,8 +375,6 @@ void GL1SceneRendererImpl::initialize()
 
     renderingFunctions.setFunction<SgGroup>(
         [&](SgGroup* node){ renderGroup(node); });
-    renderingFunctions.setFunction<SgInvariantGroup>(
-        [&](SgInvariantGroup* node){ renderInvariantGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
     renderingFunctions.setFunction<SgSwitch>(
@@ -939,12 +936,6 @@ void GL1SceneRendererImpl::renderSwitch(SgSwitch* node)
 }
 
 
-void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
-{
-    renderGroup(group);
-}
-
-
 void GL1SceneRendererImpl::renderTransform(SgTransform* transform)
 {
     Affine3 T;
@@ -1173,6 +1164,7 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
                               potWidth, potHeight, GL_UNSIGNED_BYTE, &tmpbuf->scaledImageBuf.front());
                 glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0,
                              format, GL_UNSIGNED_BYTE, &tmpbuf->scaledImageBuf.front());
+                tmpbuf->used = true;
             }
         } 
     }
@@ -1330,9 +1322,6 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         break;
     }
         
-    enableCullFace(doCullFace);
-    setLightModelTwoSide(!doCullFace);
-
     MeshResource* resource;
     auto it = currentResourceMap->find(mesh);
     if(it != currentResourceMap->end()){
@@ -1352,6 +1341,9 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
     const GLvoid* offset = 0;
 
     glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+
+    enableCullFace(doCullFace);
+    setLightModelTwoSide(!doCullFace);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
@@ -1418,7 +1410,6 @@ MeshResource* GL1SceneRendererImpl::createMeshResource(SgMesh* mesh, bool hasTex
         
     SgVertexArray& orgVertices = *mesh->vertices();
     SgIndexArray& orgTriangleVertices = mesh->triangleVertices();
-    const size_t numTriangles = mesh->numTriangles();
     const size_t totalNumVertices = orgTriangleVertices.size();
 
     auto vertices = tmpbuf->vertices;
@@ -1443,38 +1434,36 @@ MeshResource* GL1SceneRendererImpl::createMeshResource(SgMesh* mesh, bool hasTex
         pTexCoords->clear();
         pTexCoords->reserve(totalNumVertices);
     }
-    
+    tmpbuf->used = true;
+
     int faceVertexIndex = 0;
     
-    for(size_t i=0; i < numTriangles; ++i){
-        for(size_t j=0; j < 3; ++j){
-            const int orgVertexIndex = orgTriangleVertices[faceVertexIndex];
-            vertices.push_back(orgVertices[orgVertexIndex]);
-            if(pNormals){
-                if(mesh->normalIndices().empty()){
-                    pNormals->push_back(mesh->normals()->at(orgVertexIndex));
-                } else {
-                    const int normalIndex = mesh->normalIndices()[faceVertexIndex];
-                    pNormals->push_back(mesh->normals()->at(normalIndex));
-                }
+    for(size_t i=0; i < totalNumVertices; ++i){
+        const int orgVertexIndex = orgTriangleVertices[i];
+        vertices.push_back(orgVertices[orgVertexIndex]);
+        if(pNormals){
+            if(mesh->normalIndices().empty()){
+                pNormals->push_back(mesh->normals()->at(orgVertexIndex));
+            } else {
+                const int normalIndex = mesh->normalIndices()[i];
+                pNormals->push_back(mesh->normals()->at(normalIndex));
             }
-            if(pColors){
-                if(mesh->colorIndices().empty()){
-                    pColors->push_back(createColorWithAlpha(mesh->colors()->at(faceVertexIndex)));
-                } else {
-                    const int colorIndex = mesh->colorIndices()[faceVertexIndex];
-                    pColors->push_back(createColorWithAlpha(mesh->colors()->at(colorIndex)));
-                }
+        }
+        if(pColors){
+            if(mesh->colorIndices().empty()){
+                pColors->push_back(createColorWithAlpha(mesh->colors()->at(i)));
+            } else {
+                const int colorIndex = mesh->colorIndices()[i];
+                pColors->push_back(createColorWithAlpha(mesh->colors()->at(colorIndex)));
             }
-            if(pTexCoords){
-                if(mesh->texCoordIndices().empty()){
-                    pTexCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
-                } else {
-                    const int texCoordIndex = mesh->texCoordIndices()[faceVertexIndex];
-                    pTexCoords->push_back(mesh->texCoords()->at(texCoordIndex));
-                }
+        }
+        if(pTexCoords){
+            if(mesh->texCoordIndices().empty()){
+                pTexCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
+            } else {
+                const int texCoordIndex = mesh->texCoordIndices()[i];
+                pTexCoords->push_back(mesh->texCoords()->at(texCoordIndex));
             }
-            ++faceVertexIndex;
         }
     }
 
@@ -1498,6 +1487,8 @@ MeshResource* GL1SceneRendererImpl::createMeshResource(SgMesh* mesh, bool hasTex
         glBufferData(GL_ARRAY_BUFFER, pTexCoords->size() * sizeof(Vector2f), pTexCoords->data(), GL_STATIC_DRAW);
     }
 
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the buffer
+
     resource->size = vertices.size();
 
     return resource;
@@ -1518,6 +1509,7 @@ void GL1SceneRendererImpl::renderNormalVisualizationLines(SgMesh* mesh, MeshReso
         const auto& indices = mesh->triangleVertices();
         const int numVertices = indices.size();
         auto& lines = tmpbuf->vertices;
+        tmpbuf->used = true;
         lines.clear();
         lines.reserve(numVertices * 2);
         for(size_t i=0; i < numVertices; ++i){
@@ -1583,6 +1575,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
         
         const SgNormalArray& orgNormals = *plot->normals();
         SgNormalArray& normals = tmpbuf->normals;
+        tmpbuf->used = true;
         const SgIndexArray& normalIndices = plot->normalIndices();
         if(normalIndices.empty()){
             normals = orgNormals;
@@ -1602,6 +1595,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
     if(plot->hasColors() && !isPicking){
         const SgColorArray& orgColors = *plot->colors();
         ColorArray& colors = tmpbuf->colors;
+        tmpbuf->used = true;
         colors.clear();
         colors.reserve(expandedVertices.size());
         const SgIndexArray& colorIndices = plot->colorIndices();
@@ -1647,6 +1641,7 @@ void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 
     const SgVertexArray& orgVertices = *lineSet->vertices();
     SgVertexArray& vertices = tmpbuf->vertices;
+    tmpbuf->used = true;
     vertices.clear();
     vertices.reserve(n * 2);
     for(int i=0; i < n; ++i){
@@ -1732,13 +1727,9 @@ void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
     isRenderingOutline = wasRenderingOutlineGroup;
 
     setLineWidth(orgLineWidth);
-
     enableColorMaterial(false);
-    setLineWidth(lineWidth);
     glPopAttrib();
-
     glDisable(GL_STENCIL_TEST);
-
     clearGLState();
 }
 
