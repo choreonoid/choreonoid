@@ -122,19 +122,19 @@ public:
     DoubleSpinBox worldLightIntensitySpin;
     DoubleSpinBox worldLightAmbientSpin;
     CheckBox additionalLightsCheck;
+    CheckBox textureCheck;
+    CheckBox fogCheck;
     struct Shadow {
         CheckBox check;
         SpinBox lightSpin;
     };
     Shadow shadows[NUM_SHADOWS];
     CheckBox shadowAntiAliasingCheck;
-    CheckBox fogCheck;
     CheckBox gridCheck[3];
     DoubleSpinBox gridSpanSpin[3];
     DoubleSpinBox gridIntervalSpin[3];
     PushButton backgroundColorButton;
     CheckBox coordinateAxesCheck;
-    CheckBox textureCheck;
     PushButton defaultColorButton;
     DoubleSpinBox pointSizeSpin;
     DoubleSpinBox lineWidthSpin;
@@ -146,7 +146,6 @@ public:
     CheckBox fpsCheck;
     PushButton fpsTestButton;
     SpinBox fpsTestIterationSpin;
-    CheckBox newDisplayListDoubleRenderingCheck;
     CheckBox collisionVisualizationButtonsCheck;
     CheckBox upsideDownCheck;
 
@@ -385,7 +384,6 @@ public:
     void onEntityRemoved(SgNode* node);
 
     void showPickingBufferImageWindow();
-    void onNewDisplayListDoubleRenderingToggled(bool on);
     void onUpsideDownToggled(bool on);
         
     void updateLatestEvent(QKeyEvent* event);
@@ -1145,14 +1143,6 @@ void SceneWidgetImpl::showPickingBufferImageWindow()
             pickingBufferImageWindow = new ImageWindow(vp[2], vp[3]);
         }
         pickingBufferImageWindow->show();
-    }
-}
-
-
-void SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled(bool on)
-{
-    if(GL1SceneRenderer* gl1Renderer = dynamic_cast<GL1SceneRenderer*>(renderer)){
-        gl1Renderer->setNewDisplayListDoubleRenderingEnabled(on);
     }
 }
 
@@ -2525,12 +2515,6 @@ void SceneWidget::setCoordinateAxes(bool on)
 }
 
 
-void SceneWidget::setNewDisplayListDoubleRenderingEnabled(bool on)
-{
-    impl->config->newDisplayListDoubleRenderingCheck.setChecked(on);
-}
-
-
 void SceneWidget::setBackgroundColor(const Vector3& color)
 {
     impl->renderer->setBackgroundColor(color.cast<float>());
@@ -3187,6 +3171,19 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(grid);
 
     hbox = new QHBoxLayout;
+    textureCheck.setText(_("Texture"));
+    textureCheck.setChecked(true);
+    textureCheck.sigToggled().connect([=](bool on){ impl->onTextureToggled(on); });
+    hbox->addWidget(&textureCheck);
+
+    fogCheck.setText(_("Fog"));
+    fogCheck.setChecked(true);
+    fogCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
+    hbox->addWidget(&fogCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+    
+    hbox = new QHBoxLayout;
     for(int i=0; i < NUM_SHADOWS; ++i){
         Shadow& shadow = shadows[i];
         shadow.check.setText(QString(_("Shadow %1")).arg(i+1));
@@ -3207,19 +3204,6 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout;
-    fogCheck.setText(_("Fog"));
-    fogCheck.setChecked(true);
-    fogCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
-    hbox->addWidget(&fogCheck);
-
-    textureCheck.setText(_("Texture"));
-    textureCheck.setChecked(true);
-    textureCheck.sigToggled().connect([=](bool on){ impl->onTextureToggled(on); });
-    hbox->addWidget(&textureCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-    
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Background"))));
 
     grid = new QGridLayout;
@@ -3356,14 +3340,6 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
-    newDisplayListDoubleRenderingCheck.setText(_("Do double rendering when a new display list is created (fixed shader)."));
-    newDisplayListDoubleRenderingCheck.sigToggled().connect(
-        [=](bool on){ impl->onNewDisplayListDoubleRenderingToggled(on); });
-    hbox->addWidget(&newDisplayListDoubleRenderingCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-
-    hbox = new QHBoxLayout;
     collisionVisualizationButtonsCheck.setText(_("Show collision visualization button set"));
     collisionVisualizationButtonsCheck.setChecked(false);
     collisionVisualizationButtonsCheck.sigToggled().connect(
@@ -3454,7 +3430,6 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("coordinateAxes", coordinateAxesCheck.isChecked());
     archive.write("fpsTestIteration", fpsTestIterationSpin.value());
     archive.write("showFPS", fpsCheck.isChecked());
-    archive.write("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked());
     archive.write("upsideDown", upsideDownCheck.isChecked());
 }
 
@@ -3518,7 +3493,5 @@ void ConfigDialog::restoreState(const Archive& archive)
 
     fpsTestIterationSpin.setValue(archive.get("fpsTestIteration", fpsTestIterationSpin.value()));
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
-    newDisplayListDoubleRenderingCheck.setChecked(
-        archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     upsideDownCheck.setChecked(archive.get("upsideDown", upsideDownCheck.isChecked()));
 }
