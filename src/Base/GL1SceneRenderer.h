@@ -60,7 +60,6 @@ public:
   protected:
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;
-    virtual void onImageUpdated(SgImage* image) override;
     
   private:
     GL1SceneRendererImpl* impl;

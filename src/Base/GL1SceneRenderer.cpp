@@ -63,6 +63,7 @@ public:
     GLuint bufferNames[5];
     GLuint size;
     GLuint normalVisualizationSize;
+    ScopedConnection updateConnection;
 
     MeshResource() {
         for(int i=0; i < 5; ++i){
@@ -94,6 +95,7 @@ public:
     int width;
     int height;
     int numComponents;
+    ScopedConnection updateConnection;
         
     TextureResource(){
         isBound = false;
@@ -155,6 +157,8 @@ public:
     ResourceMap resourceMaps[2];
     ResourceMap* currentResourceMap;
     ResourceMap* nextResourceMap;
+    vector<SgObject*> updatedSceneObjects;
+
     int currentResourceMapIndex;
 
     int numSystemLights;
@@ -472,6 +476,7 @@ void GL1SceneRendererImpl::beginRendering()
     if(isResourceClearRequested){
         resourceMaps[0].clear();
         resourceMaps[1].clear();
+        updatedSceneObjects.clear();
         hasValidNextResourceMap = false;
         isCheckingUnusedResources = false;
         isResourceClearRequested = false;
@@ -479,6 +484,12 @@ void GL1SceneRendererImpl::beginRendering()
     if(hasValidNextResourceMap){
         currentResourceMapIndex = 1 - currentResourceMapIndex;
         currentResourceMap = &resourceMaps[currentResourceMapIndex];
+
+        for(auto& object : updatedSceneObjects){
+            currentResourceMap->erase(object);
+        }
+        updatedSceneObjects.clear();
+
         nextResourceMap = &resourceMaps[1 - currentResourceMapIndex];
         hasValidNextResourceMap = false;
     }
@@ -1082,13 +1093,18 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     bool doLoadTexImage = false;
     bool doReloadTexImage = false;
 
-    auto p = currentResourceMap->find(sgImage);
     TextureResource* resource;
-    if(p != currentResourceMap->end()){
-        resource = static_cast<TextureResource*>(p->second.get());
+    auto it = currentResourceMap->find(sgImage);
+    if(it != currentResourceMap->end()){
+        resource = static_cast<TextureResource*>(it->second.get());
     } else {
         resource = new TextureResource;
-        currentResourceMap->insert(ResourceMap::value_type(sgImage, resource));
+        it = currentResourceMap->insert(ResourceMap::value_type(sgImage, resource)).first;
+        resource->updateConnection =
+            sgImage->sigUpdated().connect(
+                [resource](const SgUpdate& update){
+                    resource->isImageUpdateNeeded = true;
+                });
     }
     if(resource->isBound){
         glBindTexture(GL_TEXTURE_2D, resource->textureName);
@@ -1103,7 +1119,7 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
         doLoadTexImage = true;
     }
     if(isCheckingUnusedResources){
-        nextResourceMap->insert(ResourceMap::value_type(sgImage, resource));
+        nextResourceMap->insert(*it);
     }
     resource->width = width;
     resource->height = height;
@@ -1185,17 +1201,6 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     }
 
     return true;
-}
-
-
-void GL1SceneRenderer::onImageUpdated(SgImage* image)
-{
-    ResourceMap* resourceMap = impl->hasValidNextResourceMap ? impl->nextResourceMap : impl->currentResourceMap;
-    auto p = resourceMap->find(image);
-    if(p != resourceMap->end()){
-        TextureResource* resource = static_cast<TextureResource*>(p->second.get());
-        resource->isImageUpdateNeeded = true;
-    }
 }
 
 
@@ -1329,6 +1334,11 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
     } else {
         resource = createMeshResource(mesh, hasTexture);
         it = currentResourceMap->insert(ResourceMap::value_type(mesh, resource)).first;
+        resource->updateConnection =
+            mesh->sigUpdated().connect(
+                [&, mesh](const SgUpdate& update){
+                    updatedSceneObjects.push_back(mesh);
+                });
     }
     if(isCheckingUnusedResources){
         nextResourceMap->insert(*it);

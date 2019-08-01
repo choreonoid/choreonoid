@@ -116,6 +116,12 @@ void GLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 }
 
 
+void GLSceneRenderer::onImageUpdated(SgImage*)
+{
+
+}
+
+
 const Vector3f& GLSceneRenderer::backgroundColor() const
 {
     return impl->backgroundColor;

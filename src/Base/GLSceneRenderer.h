@@ -103,7 +103,7 @@ public:
 
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update) override;
-    virtual void onImageUpdated(SgImage* image) = 0;
+    virtual void onImageUpdated(SgImage* image);
 
 private:
     GLSceneRendererImpl* impl;
