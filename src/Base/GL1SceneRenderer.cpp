@@ -10,6 +10,7 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
+#include <fmt/format.h>
 #include <bitset>
 #include <unordered_map>
 #include <iostream>
@@ -21,6 +22,8 @@
 #include "gl_1_5.h"
 
 #include <GL/glu.h>
+
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -432,7 +435,6 @@ void GL1SceneRenderer::setOutputStream(std::ostream& os)
 
 bool GL1SceneRenderer::initializeGL()
 {
-    GLSceneRenderer::initializeGL();
     return impl->initializeGL();
 }
 
@@ -443,6 +445,12 @@ bool GL1SceneRendererImpl::initializeGL()
         return false;
     }
 
+    const GLubyte* version = glGetString(GL_VERSION);
+    const GLubyte* vendor = glGetString(GL_VENDOR);
+    const GLubyte* renderer = glGetString(GL_RENDERER);
+    os() << fmt::format(_("OpenGL {0} ({1} {2}) is available for the \"{3}\" view."),
+                        version, vendor, renderer, self->name()) << endl;
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
     setFrontCCW(true);
@@ -464,6 +472,13 @@ bool GL1SceneRendererImpl::initializeGL()
 void GL1SceneRenderer::flush()
 {
     glFlush();
+}
+
+
+void GL1SceneRenderer::setViewport(int x, int y, int width, int height)
+{
+    glViewport(x, y, width, height);
+    updateViewportInformation(x, y, width, height);
 }
 
 

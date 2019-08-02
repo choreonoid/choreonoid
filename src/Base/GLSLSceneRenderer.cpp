@@ -11,11 +11,13 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
+#include <fmt/format.h>
 #include <GL/glu.h>
 #include <unordered_map>
 #include <mutex>
 #include <iostream>
 #include <stdexcept>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -622,7 +624,6 @@ void GLSLSceneRendererImpl::updateDefaultFramebufferObject()
 
 bool GLSLSceneRenderer::initializeGL()
 {
-    GLSceneRenderer::initializeGL();
     return impl->initializeGL();
 }
 
@@ -633,6 +634,15 @@ bool GLSLSceneRendererImpl::initializeGL()
         return false;
     }
 
+    GLint major, minor;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    const GLubyte* vendor = glGetString(GL_VENDOR);
+    const GLubyte* renderer = glGetString(GL_RENDERER);
+    const GLubyte* glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    os() << fmt::format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view."),
+                        major, minor, vendor, renderer, glsl, self->name()) << endl;
+    
     updateDefaultFramebufferObject();
 
     try {
@@ -671,6 +681,13 @@ void GLSLSceneRenderer::flush()
        may be bounded in the renderer.
     */
     glBindFramebuffer(GL_FRAMEBUFFER, impl->defaultFBO);
+}
+
+
+void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
+{
+    glViewport(x, y, width, height);
+    updateViewportInformation(x, y, width, height);
 }
 
 

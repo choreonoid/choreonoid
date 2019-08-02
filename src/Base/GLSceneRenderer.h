@@ -26,14 +26,10 @@ public:
     virtual SgGroup* sceneRoot() override;
     virtual SgGroup* scene() override;
 
-    virtual bool initializeGL();
+    virtual bool initializeGL() = 0;
     virtual void flush() = 0;
-
-    // The following functions cannot be called bofore calling the initializeGL() function.
-    bool setSwapInterval(int interval);
-    int getSwapInterval() const;
-
-    void setViewport(int x, int y, int width, int height);
+    
+    virtual void setViewport(int x, int y, int width, int height) = 0;
     void updateViewportInformation(int x, int y, int width, int height);
     Array4i viewport() const;
     void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;

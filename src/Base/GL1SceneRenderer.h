@@ -29,6 +29,7 @@ public:
     virtual const Matrix4& projectionMatrix() const override;
     virtual bool initializeGL() override;
     virtual void flush() override;
+    virtual void setViewport(int x, int y, int width, int height) override;
 
     virtual const Vector3& pickedPoint() const override;
     virtual const SgNodePath& pickedNodePath() const override;

@@ -8,17 +8,9 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/NullOut>
-#include <fmt/format.h>
-#include <iostream>
-#ifdef _WIN32
-#include <windows.h>
-#endif
-#include <GL/gl.h>
-#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -31,7 +23,7 @@ public:
     SgGroupPtr sceneRoot;
     SgGroupPtr scene;
     Array4i viewport;
-    GLfloat aspectRatio; // width / height;
+    float aspectRatio; // width / height;
     Vector3f backgroundColor;
     Vector3f defaultColor;
     GLSceneRenderer::PolygonMode polygonMode;
@@ -159,13 +151,6 @@ GLSceneRenderer::PolygonMode GLSceneRenderer::polygonMode() const
 }
 
 
-void GLSceneRenderer::setViewport(int x, int y, int width, int height)
-{
-    glViewport(x, y, width, height);
-    updateViewportInformation(x, y, width, height);
-}
-
-
 void GLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
     if(height > 0){
@@ -193,65 +178,6 @@ void GLSceneRenderer::getViewport(int& out_x, int& out_y, int& out_width, int& o
 double GLSceneRenderer::aspectRatio() const
 {
     return impl->aspectRatio;
-}
-
-
-bool GLSceneRenderer::initializeGL()
-{
-#ifndef _WIN32
-    const GLubyte* vendor = glGetString(GL_VENDOR);
-    const GLubyte* renderer = glGetString(GL_RENDERER);
-    GLint major, minor;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
-
-    if(major >= 2){
-        const GLubyte* glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
-        impl->os() << format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view."),
-                             major, minor, vendor, renderer, glsl, name()) << endl;
-    } else {
-        impl->os() << format(_("OpenGL {0}.{1} ({2} {3}) is available for the \"{4}\" view."),
-                             major, minor, vendor, renderer, name()) << endl;
-    }
-    
-#endif
-    
-    return true;
-}
-
-
-bool GLSceneRenderer::setSwapInterval(int interval)
-{
-#if 0
-#ifdef _WIN32
-    DISPLAY_DEVICE device;
-    device.cb = sizeof(DISPLAY_DEVICE);
-    for (unsigned int i = 0; EnumDisplayDevices(NULL, i, &device, NULL); i++) {
-        if (strstr(device.DeviceString, "VirtualBox") != NULL){
-            return false;
-        }
-    }
-
-    if(!wglGetProcAddress("wglGetExtensionsStringEXT"))
-        return false;
-    if( strstr(wglGetExtensionsStringEXT(), "WGL_EXT_swap_control" ) == 0 )
-        return false;
-
-    return wglSwapIntervalEXT(interval);
-#endif
-#endif
-    return false;
-}
-
-
-int GLSceneRenderer::getSwapInterval() const
-{
-#if 0
-#ifdef _WIN32
-    return wglGetSwapIntervalEXT();
-#endif
-#endif
-    return -1;
 }
 
 
