@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-02 22:53+0900\n"
+"POT-Creation-Date: 2019-08-02 23:56+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -972,6 +972,10 @@ msgstr "リトライ"
 msgid "Vertical Layout"
 msgstr "縦配置"
 
+#: GLSLSceneRenderer.cpp:643
+msgid "OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view."
+msgstr "OpenGL {0}.{1} ({2} {3}, GLSL {4}) が \"{5}\" ビューで利用可能です．"
+
 #: GeneralSliderView.cpp:218
 msgid "General Sliders"
 msgstr "汎用スライダ"
@@ -1159,6 +1163,10 @@ msgstr "プログラムの有効化に失敗しました"
 #: GLSLProgram.cpp:169
 msgid "Shader has not been linked."
 msgstr "シェーダがリンクされていません．"
+
+#: GL1SceneRenderer.cpp:451
+msgid "OpenGL {0} ({1} {2}) is available for the \"{3}\" view."
+msgstr "OpenGL {0} ({1} {2}) が \"{3}\" ビューで利用可能です．"
 
 #: ItemPropertyView.cpp:282
 msgid "Select File"
@@ -1799,14 +1807,6 @@ msgstr "シーンアイテム"
 #: SceneItem.cpp:178
 msgid "Lightweight rendering"
 msgstr "軽量レンダリング"
-
-#: GLSceneRenderer.cpp:210
-msgid "OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view."
-msgstr "OpenGL {0}.{1} ({2} {3}, GLSL {4}) が \"{5}\" ビューで利用可能です．"
-
-#: GLSceneRenderer.cpp:213
-msgid "OpenGL {0}.{1} ({2} {3}) is available for the \"{4}\" view."
-msgstr "OpenGL {0}.{1} ({2} {3}) が \"{5}\" ビューで利用可能です．"
 
 #: MultiSE3MatrixSeqItem.cpp:15
 msgid "MultiSE3MatrixSeqItem"
