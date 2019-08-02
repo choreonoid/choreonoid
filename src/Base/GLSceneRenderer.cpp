@@ -14,6 +14,7 @@
 #include <windows.h>
 #endif
 #include <GL/gl.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -198,15 +199,23 @@ double GLSceneRenderer::aspectRatio() const
 bool GLSceneRenderer::initializeGL()
 {
 #ifndef _WIN32
+    const GLubyte* vendor = glGetString(GL_VENDOR);
+    const GLubyte* renderer = glGetString(GL_RENDERER);
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
-    impl->os() << format("OpenGL version of \"{0}\" is {1}.{2}.", name(), major, minor);
+
     if(major >= 2){
-        impl->os() << format(" (GLSL version is {0}.)", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
+        const GLubyte* glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
+        impl->os() << format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view."),
+                             major, minor, vendor, renderer, glsl, name()) << endl;
+    } else {
+        impl->os() << format(_("OpenGL {0}.{1} ({2} {3}) is available for the \"{4}\" view."),
+                             major, minor, vendor, renderer, name()) << endl;
     }
-    impl->os() << endl;
+    
 #endif
+    
     return true;
 }
 

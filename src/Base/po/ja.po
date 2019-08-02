@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-02 21:45+0900\n"
+"POT-Creation-Date: 2019-08-02 22:53+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -1800,24 +1800,14 @@ msgstr "シーンアイテム"
 msgid "Lightweight rendering"
 msgstr "軽量レンダリング"
 
+#: GLSceneRenderer.cpp:210
+msgid "OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view."
+msgstr "OpenGL {0}.{1} ({2} {3}, GLSL {4}) が \"{5}\" ビューで利用可能です．"
+
+#: GLSceneRenderer.cpp:213
+msgid "OpenGL {0}.{1} ({2} {3}) is available for the \"{4}\" view."
+msgstr "OpenGL {0}.{1} ({2} {3}) が \"{5}\" ビューで利用可能です．"
+
 #: MultiSE3MatrixSeqItem.cpp:15
 msgid "MultiSE3MatrixSeqItem"
 msgstr ""
-
-#~ msgid "Show the floor grid"
-#~ msgstr "床グリッド線の表示"
-
-#~ msgid "Show the xz plane grid"
-#~ msgstr "xz平面グリッド線の表示"
-
-#~ msgid "Show the yz plane grid"
-#~ msgstr "ｙｚ平面グリッド線の表示"
-
-#~ msgid "Show FPS"
-#~ msgstr "フレームレートの表示"
-
-#~ msgid "Test"
-#~ msgstr "テスト"
-
-#~ msgid "Do double rendering when a new display list is created."
-#~ msgstr "新規ディスプレイリスト生成時に二重にレンダリングを行う"
