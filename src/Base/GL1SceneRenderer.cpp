@@ -57,20 +57,20 @@ typedef std::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
 /*
   A set of variables associated with a scene node
 */
-class MeshResource : public Referenced
+class VertexResource : public Referenced
 {
 public:
     GLuint bufferNames[5];
-    GLuint size;
+    GLuint numVertices;
     GLuint normalVisualizationSize;
     ScopedConnection updateConnection;
 
-    MeshResource() {
+    VertexResource() {
         for(int i=0; i < 5; ++i){
             bufferNames[i] = GL_INVALID_VALUE;
         }
     }
-    ~MeshResource() {
+    ~VertexResource() {
         for(int i=0; i < 5; ++i){
             if(bufferNames[i] != GL_INVALID_VALUE){
                 glDeleteBuffers(1, &bufferNames[i]);
@@ -83,7 +83,7 @@ public:
     GLuint& texCoordBufferName() { return bufferNames[3]; }
     GLuint& normalVisualizationVertexBufferName(){ return bufferNames[4]; }
 };
-typedef ref_ptr<MeshResource> MeshResourcePtr;
+typedef ref_ptr<VertexResource> VertexResourcePtr;
 
 
 class TextureResource : public Referenced
@@ -280,12 +280,16 @@ public:
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void renderTransparentShapes();
     void putMeshData(SgMesh* mesh);
+    VertexResource* findOrCreateVertexResource(SgObject* object, bool& out_found);
     void renderMesh(SgMesh* mesh, bool hasTexture);
-    MeshResource* createMeshResource(SgMesh* mesh, bool hasTexture);
-    void renderNormalVisualizationLines(SgMesh* mesh, MeshResource* resource);
+    void setupMeshResource(SgMesh* mesh, VertexResource* resource, bool hasTexture);
+    void renderNormalVisualizationLines(SgMesh* mesh, VertexResource* resource);
     void renderPointSet(SgPointSet* pointSet);
-    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
-    void renderLineSet(SgLineSet* lineSet);        
+    void setupPointSetResource(SgPointSet* lineSet, VertexResource* resource);
+    void renderLineSet(SgLineSet* lineSet);
+    void setupLineSetResource(SgLineSet* lineSet, VertexResource* resource);
+    void renderPlot(
+        SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource);
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
@@ -1307,6 +1311,30 @@ void GL1SceneRendererImpl::putMeshData(SgMesh* mesh)
 }
 
 
+VertexResource* GL1SceneRendererImpl::findOrCreateVertexResource(SgObject* object, bool& out_found)
+{
+    VertexResource* resource;
+    auto it = currentResourceMap->find(object);
+    if(it != currentResourceMap->end()){
+        resource = static_cast<VertexResource*>(it->second.get());
+        out_found = true;
+    } else {
+        resource = new VertexResource;
+        it = currentResourceMap->insert(ResourceMap::value_type(object, resource)).first;
+        resource->updateConnection =
+            object->sigUpdated().connect(
+                [this, object](const SgUpdate& update){
+                    updatedSceneObjects.push_back(object);
+                });
+        out_found = false;
+    }
+    if(isCheckingUnusedResources){
+        nextResourceMap->insert(*it);
+    }
+    return resource;
+}
+    
+
 void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
 {
     if(false){
@@ -1326,26 +1354,11 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         doCullFace = true;
         break;
     }
-        
-    MeshResource* resource;
-    auto it = currentResourceMap->find(mesh);
-    if(it != currentResourceMap->end()){
-        resource = static_cast<MeshResource*>(it->second.get());
-    } else {
-        resource = createMeshResource(mesh, hasTexture);
-        it = currentResourceMap->insert(ResourceMap::value_type(mesh, resource)).first;
-        resource->updateConnection =
-            mesh->sigUpdated().connect(
-                [&, mesh](const SgUpdate& update){
-                    updatedSceneObjects.push_back(mesh);
-                });
-    }
-    if(isCheckingUnusedResources){
-        nextResourceMap->insert(*it);
-    }
 
-    if(resource->vertexBufferName() == GL_INVALID_VALUE){
-        return;
+    bool found;
+    auto resource = findOrCreateVertexResource(mesh, found);
+    if(!found){
+        setupMeshResource(mesh, resource, hasTexture);
     }
 
     const GLvoid* offset = 0;
@@ -1359,12 +1372,11 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
     glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
     glVertexPointer(3, GL_FLOAT, 0, offset);
 
-    bool doLighting = defaultLighting && !isPicking && !isRenderingOutline;
     bool isNormalArrayActive = false;
     bool isColorArrayActive = false;
     bool isTextureActive = false;
         
-    if(doLighting){
+    if(isLightingEnabled){
         if(resource->normalBufferName() != GL_INVALID_VALUE){
             glEnableClientState(GL_NORMAL_ARRAY);
             glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
@@ -1388,7 +1400,7 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         }
     }
     
-    glDrawArrays(GL_TRIANGLES, 0, resource->size);
+    glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
 
     if(isColorArrayActive){
         glDisable(GL_COLOR_MATERIAL);
@@ -1414,14 +1426,12 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
 }
 
 
-MeshResource* GL1SceneRendererImpl::createMeshResource(SgMesh* mesh, bool hasTexture)
+void GL1SceneRendererImpl::setupMeshResource(SgMesh* mesh, VertexResource* resource, bool hasTexture)
 {
-    auto resource = new MeshResource;
-        
-    SgVertexArray& orgVertices = *mesh->vertices();
     SgIndexArray& orgTriangleVertices = mesh->triangleVertices();
     const size_t totalNumVertices = orgTriangleVertices.size();
 
+    SgVertexArray& orgVertices = *mesh->vertices();
     auto vertices = tmpbuf->vertices;
     vertices.clear();
     vertices.reserve(totalNumVertices);
@@ -1446,8 +1456,6 @@ MeshResource* GL1SceneRendererImpl::createMeshResource(SgMesh* mesh, bool hasTex
     }
     tmpbuf->used = true;
 
-    int faceVertexIndex = 0;
-    
     for(size_t i=0; i < totalNumVertices; ++i){
         const int orgVertexIndex = orgTriangleVertices[i];
         vertices.push_back(orgVertices[orgVertexIndex]);
@@ -1480,6 +1488,7 @@ MeshResource* GL1SceneRendererImpl::createMeshResource(SgMesh* mesh, bool hasTex
     glGenBuffers(1, &resource->vertexBufferName());
     glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    resource->numVertices = vertices.size();
 
     if(pNormals){
         glGenBuffers(1, &resource->normalBufferName());
@@ -1498,14 +1507,10 @@ MeshResource* GL1SceneRendererImpl::createMeshResource(SgMesh* mesh, bool hasTex
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the buffer
-
-    resource->size = vertices.size();
-
-    return resource;
 }
 
 
-void GL1SceneRendererImpl::renderNormalVisualizationLines(SgMesh* mesh, MeshResource* resource)
+void GL1SceneRendererImpl::renderNormalVisualizationLines(SgMesh* mesh, VertexResource* resource)
 {
     auto& bufferName = resource->normalVisualizationVertexBufferName();
 
@@ -1555,60 +1560,54 @@ void GL1SceneRendererImpl::renderPointSet(SgPointSet* pointSet)
     if(s > 0.0){
         setPointSize(s);
     }
-    renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
+
+    renderPlot(
+        pointSet, (GLenum)GL_POINTS,
+        [this, pointSet](VertexResource* resource){
+            setupPointSetResource(pointSet, resource);
+        });
+    
     if(s > 0.0){
-        setPointSize(s);
+        setPointSize(defaultPointSize);
     }
 }
 
 
-void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode)
+void GL1SceneRendererImpl::setupPointSetResource(SgPointSet* pointSet, VertexResource* resource)
 {
-    glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
-        
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, expandedVertices.data());
+    const SgVertexArray& vertices = *pointSet->vertices();
+    glGenBuffers(1, &resource->vertexBufferName());
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    resource->numVertices = vertices.size();
     
-    SgMaterial* material = plot->material() ? plot->material() : defaultMaterial.get();
-    
-    if(!plot->hasNormals()){
-        enableLighting(false);
-        //glDisableClientState(GL_NORMAL_ARRAY);
-        lastAlpha = 1.0;
-        if(!plot->hasColors()){
-            setColor(material->diffuseColor() + material->emissiveColor());
-        }
-    } else if(!isPicking){
-        enableCullFace(false);
-        setLightModelTwoSide(true);
-        renderMaterial(material);
-        
-        const SgNormalArray& orgNormals = *plot->normals();
-        SgNormalArray& normals = tmpbuf->normals;
-        tmpbuf->used = true;
-        const SgIndexArray& normalIndices = plot->normalIndices();
+    if(pointSet->hasNormals()){
+        SgNormalArray* pNormals;
+        const auto& normalIndices = pointSet->normalIndices();
         if(normalIndices.empty()){
-            normals = orgNormals;
+            pNormals = pointSet->normals();
         } else {
-            normals.clear();
-            normals.reserve(normalIndices.size());
+            pNormals = &tmpbuf->normals;
+            pNormals->clear();
+            pNormals->reserve(normalIndices.size());
+            tmpbuf->used = true;
+            const auto& orgNormals = *pointSet->normals();
             for(size_t i=0; i < normalIndices.size(); ++i){
-                normals.push_back(orgNormals[normalIndices[i]]);
+                pNormals->push_back(orgNormals[normalIndices[i]]);
             }
         }
-        glEnableClientState(GL_NORMAL_ARRAY);
-        glNormalPointer(GL_FLOAT, 0, normals.data());
+        glGenBuffers(1, &resource->normalBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pNormals->size() * sizeof(Vector3f), pNormals->data(), GL_STATIC_DRAW);
     }
 
-    bool isColorMaterialEnabled = false;
-
-    if(plot->hasColors() && !isPicking){
-        const SgColorArray& orgColors = *plot->colors();
+    if(pointSet->hasColors()){
+        const auto& colorIndices = pointSet->colorIndices();
+        const SgColorArray& orgColors = *pointSet->colors();
         ColorArray& colors = tmpbuf->colors;
         tmpbuf->used = true;
         colors.clear();
-        colors.reserve(expandedVertices.size());
-        const SgIndexArray& colorIndices = plot->colorIndices();
+        colors.reserve(vertices.size());
         if(colorIndices.empty()){
             for(size_t i=0; i < orgColors.size(); ++i){
                 colors.push_back(createColorWithAlpha(orgColors[i]));
@@ -1618,20 +1617,156 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
                 colors.push_back(createColorWithAlpha(orgColors[colorIndices[i]]));
             }
         }
-        if(plot->hasNormals()){
+        glGenBuffers(1, &resource->colorBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
+        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(ColorArray::value_type), colors.data(), GL_STATIC_DRAW);
+    }
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the buffer
+}
+
+
+void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
+{
+    if(!lineSet->hasVertices() || (lineSet->numLines() <= 0)){
+        return;
+    }
+
+    const double w = lineSet->lineWidth();
+    if(w > 0.0){
+        setLineWidth(w);
+    }
+    
+    renderPlot(
+        lineSet, (GLenum)GL_LINES,
+        [this, lineSet](VertexResource* resource){
+            setupLineSetResource(lineSet, resource);
+        });
+
+    if(w > 0.0){
+        setLineWidth(defaultLineWidth);
+    }
+}
+
+
+void GL1SceneRendererImpl::setupLineSetResource(SgLineSet* lineSet, VertexResource* resource)
+{
+    const auto& lineVertices = lineSet->lineVertices();
+    const int totalNumVertices = lineVertices.size();
+
+    const SgVertexArray& orgVertices = *lineSet->vertices();
+    SgVertexArray& vertices = tmpbuf->vertices;
+    vertices.clear();
+    vertices.reserve(totalNumVertices);
+    tmpbuf->used = true;
+
+    SgNormalArray* pNormals = nullptr;
+    if(lineSet->hasNormals()){
+        pNormals = &tmpbuf->normals;
+        pNormals->clear();
+        pNormals->reserve(totalNumVertices);
+    }
+    ColorArray* pColors = nullptr;
+    if(lineSet->hasColors()){
+        pColors = &tmpbuf->colors;
+        pColors->clear();
+        pColors->reserve(totalNumVertices);
+    }
+
+    for(size_t i=0; i < totalNumVertices; ++i){
+        const int orgVertexIndex = lineVertices[i];
+        vertices.push_back(orgVertices[orgVertexIndex]);
+        if(pNormals){
+            if(lineSet->normalIndices().empty()){
+                pNormals->push_back(lineSet->normals()->at(orgVertexIndex));
+            } else {
+                const int normalIndex = lineSet->normalIndices()[i];
+                pNormals->push_back(lineSet->normals()->at(normalIndex));
+            }
+        }
+        if(pColors){
+            if(lineSet->colorIndices().empty()){
+                pColors->push_back(createColorWithAlpha(lineSet->colors()->at(i)));
+            } else {
+                const int colorIndex = lineSet->colorIndices()[i];
+                pColors->push_back(createColorWithAlpha(lineSet->colors()->at(colorIndex)));
+            }
+        }
+    }
+
+    glGenBuffers(1, &resource->vertexBufferName());
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    resource->numVertices = vertices.size();
+
+    if(pNormals){
+        glGenBuffers(1, &resource->normalBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pNormals->size() * sizeof(Vector3f), pNormals->data(), GL_STATIC_DRAW);
+    }
+    if(pColors){
+        glGenBuffers(1, &resource->colorBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pColors->size() * sizeof(ColorArray::value_type), pColors->data(), GL_STATIC_DRAW);
+    }
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the buffer
+}
+
+
+void GL1SceneRendererImpl::renderPlot
+(SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource)
+{
+    bool found;
+    auto resource = findOrCreateVertexResource(plot, found);
+
+    if(!found){
+        setupVertexResource(resource);
+    }
+
+    glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+
+    const GLvoid* offset = 0;
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
+    glVertexPointer(3, GL_FLOAT, 0, offset);
+
+    bool hasNormalArray = (resource->normalBufferName() != GL_INVALID_VALUE);
+    bool doLighting = hasNormalArray && isLightingEnabled;
+    SgMaterial* material = plot->material() ? plot->material() : defaultMaterial.get();
+
+    if(!doLighting){
+        enableLighting(false);
+        lastAlpha = 1.0;
+        if(!plot->hasColors()){
+            setColor(material->diffuseColor() + material->emissiveColor());
+        }
+    } else {
+        enableCullFace(false);
+        setLightModelTwoSide(true);
+        renderMaterial(material);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
+        glNormalPointer(GL_FLOAT, 0, offset);
+    }
+
+    bool isColorMaterialEnabled = false;
+    if(resource->colorBufferName() != GL_INVALID_VALUE && !isPicking){
+        glEnableClientState(GL_COLOR_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
+        glColorPointer(4, GL_FLOAT, 0, offset);
+        if(doLighting){
             glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
             glEnable(GL_COLOR_MATERIAL);
             isColorMaterialEnabled = true;
         }
-        glEnableClientState(GL_COLOR_ARRAY);
-        glColorPointer(4, GL_FLOAT, 0, &colors[0][0]);
     }
-    
+
     pushPickName(plot);
-    glDrawArrays(primitiveMode, 0, expandedVertices.size());
+    glDrawArrays(primitiveMode, 0, resource->numVertices);
     popPickName();
 
-    if(!plot->hasNormals()){
+    if(!doLighting){
         enableLighting(true);
     } else if(isColorMaterialEnabled){
         glDisable(GL_COLOR_MATERIAL);
@@ -1639,35 +1774,6 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
     }
 
     glPopClientAttrib();
-}
-
-
-void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
-{
-    const int n = lineSet->numLines();
-    if(!lineSet->hasVertices() || (n <= 0)){
-        return;
-    }
-
-    const SgVertexArray& orgVertices = *lineSet->vertices();
-    SgVertexArray& vertices = tmpbuf->vertices;
-    tmpbuf->used = true;
-    vertices.clear();
-    vertices.reserve(n * 2);
-    for(int i=0; i < n; ++i){
-        SgLineSet::LineRef line = lineSet->line(i);
-        vertices.push_back(orgVertices[line[0]]);
-        vertices.push_back(orgVertices[line[1]]);
-    }
-
-    const double w = lineSet->lineWidth();
-    if(w > 0.0){
-        setLineWidth(w);
-    }
-    renderPlot(lineSet, vertices, GL_LINES);
-    if(w > 0.0){
-        setLineWidth(defaultLineWidth);
-    }
 }
 
 
