@@ -641,20 +641,24 @@ bool GLSLSceneRendererImpl::initializeGL()
     os() << fmt::format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view.\n"),
                         major, minor, vendor, renderer, glsl, self->name());
 
+    // Check if the GPU driver is Nouveau
+    if(regex_match((const char*)vendor, regex(".*nouveau.*"))){
+        isShadowCastingEnabled = false;
+    }
+        
     // Check the version of Linux Intel GPU driver (Mesa version)
-    std::cmatch match;
-    if(regex_match((const char*)version, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
-        int mesaMajor = stoi(match.str(1));
-        if(mesaMajor >= 19){
-            // Disable the shadow casting because it makes rendering not work well with the driver
-            isShadowCastingEnabled = false;
-            
+    if(isShadowCastingEnabled){
+        std::cmatch match;
+        if(regex_match((const char*)version, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
+            int mesaMajor = stoi(match.str(1));
+            if(mesaMajor >= 19){
+                isShadowCastingEnabled = false;
+            }
         }
     }
 
     // Check if the GPU is AMD's Radeon GPU
     if(isShadowCastingEnabled && regex_match((const char*)renderer, regex("^AMD Radeon.*"))){
-        // Disable the shadow casting because it makes rendering not work well with Radeon
         isShadowCastingEnabled = false;
     }
 
