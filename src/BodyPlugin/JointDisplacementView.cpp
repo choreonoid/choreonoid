@@ -123,7 +123,14 @@ public:
         : viewImpl(viewImpl),
           index(index),
           joint(nullptr),
-          slider(Qt::Horizontal)
+          spin(&viewImpl->gridBase),
+          slider(Qt::Horizontal, &viewImpl->gridBase),
+          dial(&viewImpl->gridBase),
+          phaseSpin(&viewImpl->gridBase),
+          idLabel(&viewImpl->gridBase),
+          nameLabel(&viewImpl->gridBase),
+          lowerLimitLabel(&viewImpl->gridBase),
+          upperLimitLabel(&viewImpl->gridBase)
     {
         idLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         nameLabel.setAlignment(Qt::AlignCenter);
@@ -364,6 +371,7 @@ public:
         grid.removeWidget(&slider);
         grid.removeWidget(&upperLimitLabel);
         grid.removeWidget(&dial);
+        grid.removeWidget(&phaseSpin);
     }
 };
 
