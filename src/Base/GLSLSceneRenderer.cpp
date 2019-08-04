@@ -633,18 +633,35 @@ bool GLSLSceneRendererImpl::initializeGL()
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
+    const GLubyte* version = glGetString(GL_VERSION);
     const GLubyte* vendor = glGetString(GL_VENDOR);
     const GLubyte* renderer = glGetString(GL_RENDERER);
     const GLubyte* glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
+
     os() << fmt::format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view.\n"),
                         major, minor, vendor, renderer, glsl, self->name());
 
-    // Check if the GPU is AMD's Radeon GPU'
-    if(regex_match((const char*)renderer, regex("^AMD Radeon.*"))){
+    // Check the version of Linux Intel GPU driver (Mesa version)
+    std::cmatch match;
+    if(regex_match((const char*)version, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
+        int mesaMajor = stoi(match.str(1));
+        if(mesaMajor >= 19){
+            // Disable the shadow casting because it makes rendering not work well with the driver
+            isShadowCastingEnabled = false;
+            
+        }
+    }
+
+    // Check if the GPU is AMD's Radeon GPU
+    if(isShadowCastingEnabled && regex_match((const char*)renderer, regex("^AMD Radeon.*"))){
         // Disable the shadow casting because it makes rendering not work well with Radeon
         isShadowCastingEnabled = false;
+    }
+
+    if(!isShadowCastingEnabled){
         os() << fmt::format(_(" Shadow casting is disabled for this GPU due to some problems.\n"));
     }
+    
     os().flush();
     
     updateDefaultFramebufferObject();
