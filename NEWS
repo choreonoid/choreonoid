@@ -20,7 +20,9 @@ Changes since 1.7.0:
 * Support Ubuntu 19.04
 * Add LinkPositionView
 * Modify the default material colors
-* Fix a bug in piking objects on SceneView when a high DPI display is used
+* Fix a bug in picking objects on SceneView when a high DPI display is used
+* Improve JointSliderView and rename it to JointDisplacementView
+* The GLSL scene renderer is used by default
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

@@ -4,6 +4,8 @@
 */
 
 #include "GLSceneRenderer.h"
+#include "GL1SceneRenderer.h"
+#include "GLSLSceneRenderer.h"
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
@@ -11,6 +13,12 @@
 
 using namespace std;
 using namespace cnoid;
+
+namespace {
+
+int rendererType_ = GLSceneRenderer::GLSL_RENDERER;
+
+}
 
 namespace cnoid {
 
@@ -38,16 +46,37 @@ public:
 }
 
 
-GLSceneRenderer::GLSceneRenderer()
+void GLSceneRenderer::initializeClass()
 {
-    SgGroup* sceneRoot = new SgGroup;
-    sceneRoot->setName("Root");
-    impl = new GLSceneRendererImpl(this, sceneRoot);
+    char* CNOID_USE_GLSL = getenv("CNOID_USE_GLSL");
+    if(CNOID_USE_GLSL && (strcmp(CNOID_USE_GLSL, "0") == 0)){
+        rendererType_ = GL1_RENDERER;
+    }
+}
+
+
+int GLSceneRenderer::rendererType()
+{
+    return rendererType_;
+}
+
+
+GLSceneRenderer* GLSceneRenderer::create(SgGroup* root)
+{
+    if(rendererType_ == GL1_RENDERER){
+        return new GL1SceneRenderer(root);
+    } else {
+        return new GLSLSceneRenderer(root);
+    }
 }
 
 
 GLSceneRenderer::GLSceneRenderer(SgGroup* sceneRoot)
 {
+    if(!sceneRoot){
+        sceneRoot = new SgGroup;
+        sceneRoot->setName("Root");
+    }
     impl = new GLSceneRendererImpl(this, sceneRoot);
 }
 

@@ -17,8 +17,13 @@ class Image;
 class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
 {
 public:
-    GLSceneRenderer();
-    GLSceneRenderer(SgGroup* root);
+    static void initializeClass();
+
+    enum RendererType { GL1_RENDERER, GLSL_RENDERER };
+    static int rendererType();
+    static GLSceneRenderer* create(SgGroup* root = nullptr);
+    
+    GLSceneRenderer(SgGroup* root = nullptr);
     virtual ~GLSceneRenderer();
 
     virtual void setOutputStream(std::ostream& os);

@@ -317,13 +317,6 @@ public:
 }
 
 
-GL1SceneRenderer::GL1SceneRenderer()
-{
-    impl = new GL1SceneRendererImpl(this);
-    impl->initialize();
-}
-
-
 GL1SceneRenderer::GL1SceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {

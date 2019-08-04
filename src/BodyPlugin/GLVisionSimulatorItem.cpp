@@ -232,7 +232,6 @@ public:
     vector<SensorRenderer*> renderersInRendering;
     vector<SensorRenderer*> renderersToTurnOff;
 
-    bool useGLSL;
     bool useQueueThreadForAllSensors;
     bool useThreadsForSensors;
     bool useThreadsForScreens;
@@ -313,7 +312,6 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     rangeSensorPrecisionRatio = 2.0;
     depthError = 0.0;
 
-    useGLSL = (getenv("CNOID_USE_GLSL") != 0);
     isVisionDataRecordingEnabled = false;
     isBestEffortModeProperty = false;
     isHeadLightEnabled = true;
@@ -344,7 +342,6 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 {
     simulatorItem = nullptr;
 
-    useGLSL = org.useGLSL;
     isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
     rangeSensorPrecisionRatio = org.rangeSensorPrecisionRatio;
     depthError = org.depthError;
@@ -920,11 +917,14 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
 void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
 {
     glContext = new QOpenGLContext;
+
     QSurfaceFormat format;
     format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    if(simImpl->useGLSL){
+    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GLSL_RENDERER){
         format.setProfile(QSurfaceFormat::CoreProfile);
         format.setVersion(3, 3);
+    } else {
+        format.setVersion(1, 5);
     }
     glContext->setFormat(format);
     glContext->create();
@@ -936,11 +936,7 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     frameBuffer->bind();
 
     if(!renderer){
-        if(simImpl->useGLSL){
-            renderer = new GLSLSceneRenderer;
-        } else {
-            renderer = new GL1SceneRenderer;
-        }
+        renderer = GLSceneRenderer::create();
     }
 
     renderer->initializeGL();

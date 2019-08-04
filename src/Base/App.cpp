@@ -20,6 +20,12 @@
 #include "SceneItem.h"
 #include "PointSetItem.h"
 #include "MultiPointSetItem.h"
+#include "LightingItem.h"
+#include "MessageLogItem.h"
+#include "MultiValueSeqItem.h"
+#include "MultiSE3SeqItem.h"
+#include "MultiSE3MatrixSeqItem.h"
+#include "Vector3SeqItem.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -35,20 +41,15 @@
 #include "GraphBar.h"
 #include "MultiValueSeqGraphView.h"
 #include "MultiSE3SeqGraphView.h"
-#include "MultiValueSeqItem.h"
-#include "MultiSE3SeqItem.h"
-#include "MultiSE3MatrixSeqItem.h"
-#include "Vector3SeqItem.h"
-#include "PathVariableEditor.h"
-#include "Licenses.h"
-#include "MovieRecorder.h"
-#include "LazyCaller.h"
 #include "TextEditView.h"
 #include "GeneralSliderView.h"
 #include "VirtualJoystickView.h"
+#include "PathVariableEditor.h"
+#include "GLSceneRenderer.h"
+#include "Licenses.h"
+#include "MovieRecorder.h"
+#include "LazyCaller.h"
 #include "DescriptionDialog.h"
-#include "MessageLogItem.h"
-#include "LightingItem.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/CnoidUtil>
@@ -143,12 +144,18 @@ AppImpl::AppImpl(App* self, int& argc, char**& argv)
     QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
 
     // OpenGL settings
+    GLSceneRenderer::initializeClass();
     QSurfaceFormat format;
-    bool useGLSL = (getenv("CNOID_USE_GLSL") != 0);
-    if(useGLSL){
+    switch(GLSceneRenderer::rendererType()){
+    case GLSceneRenderer::GLSL_RENDERER:
         format.setVersion(3, 3);
         //format.setVersion(4, 4);
         format.setProfile(QSurfaceFormat::CoreProfile);
+        break;
+    case GLSceneRenderer::GL1_RENDERER:
+    default:
+        format.setVersion(1, 5);
+        break;
     }
     QSurfaceFormat::setDefaultFormat(format);
 

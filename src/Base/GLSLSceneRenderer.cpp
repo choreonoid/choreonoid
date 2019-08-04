@@ -419,13 +419,6 @@ public:
 }
 
 
-GLSLSceneRenderer::GLSLSceneRenderer()
-{
-    impl = new GLSLSceneRendererImpl(this);
-    impl->initialize();
-}
-
-
 GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {

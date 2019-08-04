@@ -16,8 +16,7 @@ class GL1SceneRendererImpl;
 class CNOID_EXPORT GL1SceneRenderer : public GLSceneRenderer
 {
 public:
-    GL1SceneRenderer();
-    GL1SceneRenderer(SgGroup* root);
+    GL1SceneRenderer(SgGroup* root = nullptr);
     virtual ~GL1SceneRenderer();
 
     virtual void setOutputStream(std::ostream& os) override;

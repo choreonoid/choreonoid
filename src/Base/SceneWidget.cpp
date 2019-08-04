@@ -144,7 +144,7 @@ public:
     CheckBox normalVisualizationCheck;
     DoubleSpinBox normalLengthSpin;
     CheckBox lightweightViewChangeCheck;
-    CheckBox fpsCheck;
+    //CheckBox fpsCheck;
     PushButton fpsTestButton;
     SpinBox fpsTestIterationSpin;
     CheckBox collisionVisualizationButtonsCheck;
@@ -152,7 +152,7 @@ public:
 
     LazyCaller updateDefaultLightsLater;
 
-    ConfigDialog(SceneWidgetImpl* impl, bool useGLSL);
+    ConfigDialog(SceneWidgetImpl* impl);
     void showEvent(QShowEvent* event);
     void updateBuiltinCameraConfig();
     void storeState(Archive& archive);
@@ -332,7 +332,7 @@ public:
     static void onOpenGLVSyncToggled(bool on, bool doConfigOutput);
     static void onLowMemoryConsumptionModeChanged(bool on, bool doConfigOutput);
 
-    SceneWidgetImpl(SceneWidget* self, bool useGLSL);
+    SceneWidgetImpl(SceneWidget* self);
     ~SceneWidgetImpl();
 
     void onVSyncModeChanged();
@@ -535,8 +535,7 @@ void SceneWidget::forEachInstance(SgNode* node, std::function<void(SceneWidget* 
 
 SceneWidget::SceneWidget()
 {
-    bool useGLSL = (getenv("CNOID_USE_GLSL") != 0);
-    impl = new SceneWidgetImpl(this, useGLSL);
+    impl = new SceneWidgetImpl(this);
 
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->setContentsMargins(0, 0, 0, 0);
@@ -547,7 +546,7 @@ SceneWidget::SceneWidget()
 }
 
 
-SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
+SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     : QOpenGLWidget(self),
       self(self),
       os(MessageView::mainInstance()->cout()),
@@ -558,14 +557,11 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
 {
     setFocusPolicy(Qt::WheelFocus);
 
-    if(useGLSL){
-        auto r = new GLSLSceneRenderer(sceneRoot);
-        r->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode);
-        renderer = r;
-    } else {
-        renderer = new GL1SceneRenderer(sceneRoot);
+    renderer = GLSceneRenderer::create(sceneRoot);
+    if(auto glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer)){
+        glslRenderer->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode);
     }
-    
+        
     renderer->setOutputStream(os);
     renderer->enableUnusedResourceCheck(true);
     renderer->sigRenderingRequest().connect([&](){ update(); });
@@ -640,7 +636,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     timerToRenderNormallyAfterInteractiveCameraPositionChange.sigTimeout().connect(
         [&](){ tryToResumeNormalRendering(); });
 
-    config = new ConfigDialog(this, useGLSL);
+    config = new ConfigDialog(this);
     config->updateBuiltinCameraConfig();
 
     worldLight = new SgDirectionalLight;
@@ -667,12 +663,12 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
 
     updateGrids();
 
-    if(!useGLSL){
-        fpsTimer.sigTimeout().connect([&](){ onFPSUpdateRequest(); });
-        fpsRenderingTimer.setSingleShot(true);
-        fpsRenderingTimer.sigTimeout().connect([&](){ onFPSRenderingRequest(); });
-    }
+    /*
+    fpsTimer.sigTimeout().connect([&](){ onFPSUpdateRequest(); });
+    fpsRenderingTimer.setSingleShot(true);
+    fpsRenderingTimer.sigTimeout().connect([&](){ onFPSRenderingRequest(); });
     isDoingFPSTest = false;
+    */
 
     sigVSyncModeChanged.connect([&](){ onVSyncModeChanged(); });
     sigLowMemoryConsumptionModeChanged.connect(
@@ -3016,7 +3012,7 @@ void SceneWidgetImpl::activateSystemNode(SgNode* node, bool on)
 }
 
 
-ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
+ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     : sceneWidgetImpl(impl),
       lightingMode(3, CNOID_GETTEXT_DOMAIN_NAME),
       cullingMode(GLSceneRenderer::N_CULLING_MODES, CNOID_GETTEXT_DOMAIN_NAME)
@@ -3320,11 +3316,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     /*
     fpsCheck.setText(_("Show FPS"));
-    fpsCheck.setEnabled(!useGLSL);
     fpsCheck.setChecked(false);
-    if(!useGLSL){
-        fpsCheck.sigToggled().connect([=](bool on){ impl->showFPS(on); });
-    }
+    fpsCheck.sigToggled().connect([=](bool on){ impl->showFPS(on); });
     hbox->addWidget(&fpsCheck);
     */
 
@@ -3448,7 +3441,7 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("lightweightViewChange", lightweightViewChangeCheck.isChecked());
     archive.write("coordinateAxes", coordinateAxesCheck.isChecked());
     archive.write("fpsTestIteration", fpsTestIterationSpin.value());
-    archive.write("showFPS", fpsCheck.isChecked());
+    //archive.write("showFPS", fpsCheck.isChecked());
     archive.write("upsideDown", upsideDownCheck.isChecked());
 }
 
@@ -3511,6 +3504,6 @@ void ConfigDialog::restoreState(const Archive& archive)
     lightweightViewChangeCheck.setChecked(archive.get("lightweightViewChange", lightweightViewChangeCheck.isChecked()));
 
     fpsTestIterationSpin.setValue(archive.get("fpsTestIteration", fpsTestIterationSpin.value()));
-    fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
+    //fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
     upsideDownCheck.setChecked(archive.get("upsideDown", upsideDownCheck.isChecked()));
 }

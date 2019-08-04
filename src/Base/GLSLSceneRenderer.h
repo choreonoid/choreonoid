@@ -18,8 +18,7 @@ class LightingProgram;
 class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 {
   public:
-    GLSLSceneRenderer();
-    GLSLSceneRenderer(SgGroup* root);
+    GLSLSceneRenderer(SgGroup* root = nullptr);
     virtual ~GLSLSceneRenderer();
 
     static void addExtension(std::function<void(GLSLSceneRenderer* renderer)> func);
