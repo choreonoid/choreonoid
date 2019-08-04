@@ -294,3 +294,10 @@ bool GLSceneRenderer::getPickingBufferImage(Image&)
 {
     return false;
 }
+
+
+bool GLSceneRenderer::isShadowCastingAvailable() const
+{
+    return false;
+}
+

@@ -15,6 +15,7 @@
 #include <GL/glu.h>
 #include <unordered_map>
 #include <mutex>
+#include <regex>
 #include <iostream>
 #include <stdexcept>
 #include "gettext.h"
@@ -252,6 +253,7 @@ public:
     bool isActuallyRendering;
     bool isPicking;
     bool isPickingBufferImageOutputEnabled;
+    bool isShadowCastingEnabled;
     bool isRenderingShadowMap;
     bool isLightweightRenderingBeingProcessed;
     bool isLowMemoryConsumptionMode;
@@ -461,6 +463,7 @@ void GLSLSceneRendererImpl::initialize()
     isActuallyRendering = false;
     isPicking = false;
     isPickingBufferImageOutputEnabled = false;
+    isShadowCastingEnabled = true;
     isRenderingShadowMap = false;
     isLowMemoryConsumptionMode = false;
     isBoundingBoxRenderingMode = false;
@@ -642,6 +645,12 @@ bool GLSLSceneRendererImpl::initializeGL()
     const GLubyte* glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
     os() << fmt::format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view."),
                         major, minor, vendor, renderer, glsl, self->name()) << endl;
+
+    // Check if the GPU is AMD's Radeon GPU'
+    if(regex_match((const char*)renderer, regex("^AMD Radeon.*"))){
+        // Disable the shadow casting because it makes rendering not work well with Radeon
+        isShadowCastingEnabled = false;
+    }
     
     updateDefaultFramebufferObject();
 
@@ -821,7 +830,7 @@ void GLSLSceneRendererImpl::doRender()
     } else {
         isTextureBeingRendered = isTextureEnabled;
 
-        if(shadowLightIndices.empty()){
+        if(shadowLightIndices.empty() || !isShadowCastingEnabled){
             // FULL_LIGHTING without shadows
             pushProgram(phongLightingProgram);
             
@@ -1139,7 +1148,8 @@ void GLSLSceneRendererImpl::renderLights(LightingProgram* program)
         Affine3 T;
         self->getLightInfo(i, light, T);
         if(light->on()){
-            bool isCastingShadow = (shadowLightIndices.find(i) != shadowLightIndices.end());
+            bool isCastingShadow =
+                isShadowCastingEnabled && (shadowLightIndices.find(i) != shadowLightIndices.end());
             if(program->setLight(lightIndex, light, T, viewTransform, isCastingShadow)){
                 ++lightIndex;
             }
@@ -2555,4 +2565,10 @@ void GLSLSceneRenderer::setLowMemoryConsumptionMode(bool on)
         impl->isLowMemoryConsumptionMode = on;
         requestToClearResources();
     }
+}
+
+
+bool GLSLSceneRenderer::isShadowCastingAvailable() const
+{
+    return impl->isShadowCastingEnabled;
 }

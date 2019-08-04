@@ -152,6 +152,7 @@ public:
     LazyCaller updateDefaultLightsLater;
 
     ConfigDialog(SceneWidgetImpl* impl, bool useGLSL);
+    void showEvent(QShowEvent* event);
     void updateBuiltinCameraConfig();
     void storeState(Archive& archive);
     void restoreState(const Archive& archive);
@@ -3371,6 +3372,20 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 }
 
 
+void ConfigDialog::showEvent(QShowEvent* event)
+{
+    if(!sceneWidgetImpl->renderer->isShadowCastingAvailable()){
+        for(int i=0; i < NUM_SHADOWS; ++i){
+            auto& check = shadows[i].check;
+            check.setEnabled(false);
+            check.setChecked(false);
+            shadows[i].lightSpin.setEnabled(false);
+        }
+        shadowAntiAliasingCheck.setEnabled(false);
+    }
+}
+            
+    
 void ConfigDialog::updateBuiltinCameraConfig()
 {
     auto persCamera = sceneWidgetImpl->builtinPersCamera;

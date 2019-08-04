@@ -83,6 +83,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void setPickingBufferImageOutputEnabled(bool on) override;
     virtual bool getPickingBufferImage(Image& out_image) override;
 
+    virtual bool isShadowCastingAvailable() const override;
+
   protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update) override;
     virtual void doRender() override;
