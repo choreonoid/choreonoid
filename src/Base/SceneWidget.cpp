@@ -126,6 +126,7 @@ public:
     CheckBox fogCheck;
     struct Shadow {
         CheckBox check;
+        QLabel lightLabel;
         SpinBox lightSpin;
     };
     Shadow shadows[NUM_SHADOWS];
@@ -3191,7 +3192,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         shadow.check.setChecked(false);
         shadow.check.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
         hbox->addWidget(&shadow.check);
-        hbox->addWidget(new QLabel(_("Light")));
+        shadow.lightLabel.setText(_("Light"));
+        hbox->addWidget(&shadow.lightLabel);
         shadow.lightSpin.setRange(0, 99);
         shadow.lightSpin.setValue(0);
         shadow.lightSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
@@ -3376,10 +3378,12 @@ void ConfigDialog::showEvent(QShowEvent* event)
 {
     if(!sceneWidgetImpl->renderer->isShadowCastingAvailable()){
         for(int i=0; i < NUM_SHADOWS; ++i){
-            auto& check = shadows[i].check;
+            auto& shadow = shadows[i];
+            auto& check = shadow.check;
             check.setEnabled(false);
             check.setChecked(false);
-            shadows[i].lightSpin.setEnabled(false);
+            shadow.lightLabel.setEnabled(false);
+            shadow.lightSpin.setEnabled(false);
         }
         shadowAntiAliasingCheck.setEnabled(false);
     }
