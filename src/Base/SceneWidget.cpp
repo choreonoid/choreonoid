@@ -667,8 +667,9 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     fpsTimer.sigTimeout().connect([&](){ onFPSUpdateRequest(); });
     fpsRenderingTimer.setSingleShot(true);
     fpsRenderingTimer.sigTimeout().connect([&](){ onFPSRenderingRequest(); });
-    isDoingFPSTest = false;
     */
+
+    isDoingFPSTest = false;
 
     sigVSyncModeChanged.connect([&](){ onVSyncModeChanged(); });
     sigLowMemoryConsumptionModeChanged.connect(
