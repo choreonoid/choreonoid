@@ -77,6 +77,7 @@ public:
     RadioButton objectCoordRadio;
     DoubleSpinBox xyzSpin[3];
     Action* rpyCheck;
+    Action* uniqueRpyCheck;
     DoubleSpinBox rpySpin[3];
     vector<QWidget*> rpyWidgets;
     Action* quaternionCheck;
@@ -257,7 +258,7 @@ void LinkPositionViewImpl::createPanel()
         grid->setColumnStretch(i * 2 + 1, 10);
     }
 
-    static const char* rpyLabelChar[] = {"RX", "RY", "RZ"};
+    static const char* rpyLabelChar[] = { "R", "P", "Y" };
     for(int i=0; i < 3; ++i){
         // Roll-pitch-yaw spin boxes
         rpySpin[i].setAlignment(Qt::AlignCenter);
@@ -272,7 +273,7 @@ void LinkPositionViewImpl::createPanel()
                 [this, s](double){ onPositionInputRpy(s); }));
 
         auto label = new QLabel(rpyLabelChar[i]);
-        grid->addWidget(label, 1, i * 2, Qt::AlignRight);
+        grid->addWidget(label, 1, i * 2, Qt::AlignCenter);
         rpyWidgets.push_back(label);
         grid->addWidget(&rpySpin[i], 1, i * 2 + 1);
         rpyWidgets.push_back(&rpySpin[i]);
@@ -375,6 +376,12 @@ void LinkPositionViewImpl::createPanel()
     settingConnections.add(
         rpyCheck->sigToggled().connect(
             [&](bool on){ setRpySpinsVisible(on); }));
+
+    uniqueRpyCheck = menuManager.addCheckItem(_("Fetch as a unique RPY value"));
+    uniqueRpyCheck->setChecked(false);
+    settingConnections.add(
+        uniqueRpyCheck->sigToggled().connect(
+            [&](bool on){ updatePanel(); }));
     
     quaternionCheck = menuManager.addCheckItem(_("Quoternion"));
     quaternionCheck->setChecked(false);
@@ -580,12 +587,14 @@ void LinkPositionViewImpl::updatePanel()
             for(int i=0; i < 3; ++i){
                 prevRPY[i] = radian(rpySpin[i].value());
             }
-            Vector3 rpy = rpyFromRot(R, prevRPY);
+            Vector3 rpy;
+            if(uniqueRpyCheck->isChecked()){
+                rpy = rpyFromRot(R);
+            } else {
+                rpy = rpyFromRot(R, prevRPY);
+            }
             for(int i=0; i < 3; ++i){
-                auto& spin = rpySpin[i];
-                //if(!spin.hasFocus()){
-                    spin.setValue(degree(rpy[i]));
-                    //}
+                rpySpin[i].setValue(degree(rpy[i]));
             }
         }
         if(quaternionCheck->isChecked()){
@@ -757,6 +766,7 @@ bool LinkPositionViewImpl::storeState(Archive& archive)
 {
     archive.write("coordinateMode", coordinateMode.selectedSymbol());
     archive.write("showRPY", rpyCheck->isChecked());
+    archive.write("uniqueRPY", uniqueRpyCheck->isChecked());
     archive.write("showQuoternion", quaternionCheck->isChecked());
     archive.write("showRotationMatrix", rotationMatrixCheck->isChecked());
     archive.write("configuration", configurationCombo.currentText().toStdString());
@@ -784,6 +794,7 @@ bool LinkPositionViewImpl::restoreState(const Archive& archive)
         }
     }
     rpyCheck->setChecked(archive.get("showRPY", rpyCheck->isChecked()));
+    uniqueRpyCheck->setChecked(archive.get("uniqueRPY", uniqueRpyCheck->isChecked()));
     quaternionCheck->setChecked(archive.get("showQuoternion", quaternionCheck->isChecked()));
     rotationMatrixCheck->setChecked(archive.get("showRotationMatrix", rotationMatrixCheck->isChecked()));
 
