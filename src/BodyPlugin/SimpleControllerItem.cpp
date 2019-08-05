@@ -85,6 +85,7 @@ public:
     filesystem::path controllerDirectory;
     QLibrary controllerModule;
     bool doReloading;
+    bool isSymbolExportEnabled;
     Selection baseDirectoryType;
 
     enum BaseDirectoryType {
@@ -111,6 +112,7 @@ public:
     void onOutputDeviceStateChanged(int deviceIndex);
     void output();
     bool onReloadingChanged(bool on);
+    bool setSymbolExportEnabled(bool on);
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -171,6 +173,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     isOldTargetVariableMode = false;
     mv = MessageView::instance();
     doReloading = false;
+    isSymbolExportEnabled = false;
 
     controllerDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller";
 
@@ -201,6 +204,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
     isOldTargetVariableMode = org.isOldTargetVariableMode;
     mv = MessageView::instance();
     doReloading = org.doReloading;
+    isSymbolExportEnabled = org.isSymbolExportEnabled;
 }
 
 
@@ -906,6 +910,24 @@ bool SimpleControllerItemImpl::onReloadingChanged(bool on)
 }
 
 
+bool SimpleControllerItemImpl::setSymbolExportEnabled(bool on)
+{
+    if(on != isSymbolExportEnabled){
+        if(on){
+            if(controllerModule.isLoaded()){
+                unloadController();
+            }
+            controllerModule.setLoadHints(QLibrary::ExportExternalSymbolsHint);
+        } else {
+            // You cannot actually disable the symbol export after enabling it
+            // without restarting Choreonoid.
+        }
+        isSymbolExportEnabled = on;
+    }
+    return true;
+}
+
+
 void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     ControllerItem::doPutProperties(putProperty);
@@ -931,6 +953,8 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });
 
+    putProperty(_("Export symbols"), isSymbolExportEnabled, [&](bool on){ return setSymbolExportEnabled(on); });
+
     putProperty(_("Old target value variable mode"), isOldTargetVariableMode, changeProperty(isOldTargetVariableMode));
 }
 
@@ -949,6 +973,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("reloading", doReloading);
+    archive.write("exportSymbols", isSymbolExportEnabled);
     archive.write("isOldTargetVariableMode", isOldTargetVariableMode);
     return true;
 }
@@ -972,6 +997,11 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
         baseDirectoryType.select(value);
     }
     archive.read("reloading", doReloading);
+
+    bool on;
+    if(archive.read("exportSymbols", on)){
+        setSymbolExportEnabled(on);
+    }
 
     if(archive.read("controller", value)){
         controllerModuleName = archive.expandPathVariables(value);
