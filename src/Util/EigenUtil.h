@@ -23,22 +23,8 @@ inline float degree(float rad) { return (float)TO_DEGREE * rad; }
 inline float radian(float deg) { return (float)TO_RADIAN * deg; }
 inline double radian(int deg) { return TO_RADIAN * deg; }
 
-/*
-  Since version 3.2, the behavior of Eigen's eulerAngles function was slightly modified;
-  The returned angles are in the ranges [0:pi]x[0:pi]x[-pi:pi].
-  This is not good for using the returned angles to interpolate attitdues.
-  Now our own implementation is used for getting R-P-Y angles.
-*/
-/*
-  template<typename Derived>
-  inline Eigen::Matrix<typename Eigen::MatrixBase<Derived>::Scalar, 3, 1>
-  rpyFromRot(const Eigen::MatrixBase<Derived>& R) {
-  Vector3 ea = R.eulerAngles(2, 1, 0);
-  return Vector3(ea[2], ea[1], ea[0]); // exchange element order to be our conventional one !
-  }
-*/
-
 CNOID_EXPORT Vector3 rpyFromRot(const Matrix3& R);
+CNOID_EXPORT Vector3 rpyFromRot(const Matrix3& R, const Vector3& prevRPY);
 
 CNOID_EXPORT Matrix3 rotFromRpy(double r, double p, double y);
 

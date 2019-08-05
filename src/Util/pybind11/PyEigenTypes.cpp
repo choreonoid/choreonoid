@@ -14,7 +14,7 @@ namespace cnoid {
 
 void exportPyEigenTypes(py::module& m)
 {
-    m.def("rpyFromRot", &cnoid::rpyFromRot);
+    m.def("rpyFromRot", (Vector3 (*)(const Matrix3&)) &cnoid::rpyFromRot);
     m.def("rotFromRpy", (Matrix3 (*)(const Vector3&)) &cnoid::rotFromRpy);
     m.def("rotFromRpy", (Matrix3 (*)(double, double, double)) &cnoid::rotFromRpy);
     m.def("rotFromRpy44", [](const Vector3& v){ return Affine3(rotFromRpy(v)); });

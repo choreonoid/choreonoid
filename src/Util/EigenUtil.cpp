@@ -1,6 +1,10 @@
 #include "EigenUtil.h"
 #include <fmt/format.h>
 
+#include <iostream>
+using namespace std;
+
+
 namespace {
 
 const bool USE_OLD_RPY_FROM_ROT_IMPLEMENTATION = false;
@@ -79,6 +83,102 @@ Vector3 rpyFromRot(const Matrix3& R)
             roll = atan2(sa * R(0,2) - ca * R(1,2), -sa * R(0,1) + ca * R(1,1));
         }
     }
+
+    return Vector3(roll, pitch, yaw);
+}
+
+
+static double getPhase0(double x)
+{
+    double x0 = fmod(x, 2.0 * M_PI);
+    if(x0 >= M_PI){
+        x0 -= 2.0 * M_PI;
+    } else if(x0 < -M_PI){
+        x0 += 2.0 * M_PI;
+    }
+    return x0;
+}
+
+
+static double adjustPhase(double x, double x_ref)
+{
+    double adjusted = x;
+    double diff = x_ref - x;
+    if(diff > 0.0){
+        while(diff > M_PI){
+            adjusted += 2.0 * M_PI;
+            diff = x_ref - adjusted;
+        }
+    } else {
+        while(diff < -M_PI){
+            adjusted -= 2.0 * M_PI;
+            diff = x_ref - adjusted;
+        }
+    }
+    return adjusted;
+}
+
+
+static double calcPhasedAngleDistance(double x, double y)
+{
+    return fabs(y - adjustPhase(x, y));
+}
+
+
+Vector3 rpyFromRot(const Matrix3& R, const Vector3& prev)
+{
+    cout << "rpyFromRot:\n";
+    cout << " R =\n" << R << "\n";
+    cout << " prev = " << prev << endl;
+    
+    const double epsilon = 1.0e-6;
+    double roll, pitch, yaw;
+
+    Vector3 prev0;
+    for(int i=0; i < 3; ++i){
+        prev0[i] = getPhase0(prev[i]);
+    }
+    
+    double a = sqrt(R(2,1) * R(2,1) + R(2,2) * R(2,2));
+
+    double p1 = atan2(-R(2,0), a);
+    double p2 = atan2(-R(2,0), -a);
+    bool use_p1;
+    
+    if(calcPhasedAngleDistance(p1, prev0.y()) <= calcPhasedAngleDistance(p2, prev0.y())){
+        pitch = p1;
+        use_p1 = true;
+    } else {
+        pitch = p2;
+        use_p1 = false;
+    }
+    if(p1 > M_PI / 2.0 - epsilon){
+        double b = atan2(-R(1, 2), R(1, 1));
+        roll = 0.5 * (prev0.x() + prev0.z() + b);
+        yaw = roll - b;
+
+    } else if(p1 < -M_PI / 2.0 + epsilon){
+        double b = atan2(-R(1, 2), R(1, 1));
+        roll = -0.5 * (prev0.z() - prev0.x() - b);
+        yaw = b - roll;
+    } else {
+        double cy = cos(pitch);
+        roll = atan2(R(2,1) / cy, R(2,2) / cy);
+        yaw = atan2(R(1,0) / cy, R(0,0) / cy);
+        if(!use_p1){
+            roll = -roll;
+            yaw = -yaw;
+        }
+    }
+
+    cout << "solution before adjust phase: " << roll << ", " << pitch << "," << yaw << endl;
+   
+    // find the phases closest to the previous position
+    roll = adjustPhase(roll, prev.x());
+    pitch = adjustPhase(pitch, prev.y());
+    yaw = adjustPhase(yaw, prev.z());
+
+    cout << "solution after adjust phase: " << roll << ", " << pitch << "," << yaw << endl;
     
     return Vector3(roll, pitch, yaw);
 }
