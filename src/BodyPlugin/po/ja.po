@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-30 16:50+0900\n"
+"POT-Creation-Date: 2019-08-05 15:26+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -518,83 +518,83 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
-#: GLVisionSimulatorItem.cpp:293
+#: GLVisionSimulatorItem.cpp:292
 msgid "GLVisionSimulatorItem"
 msgstr "GLビジョンシミュレータアイテム"
 
-#: GLVisionSimulatorItem.cpp:323
+#: GLVisionSimulatorItem.cpp:321
 msgid "Single"
 msgstr "単一"
 
-#: GLVisionSimulatorItem.cpp:324
+#: GLVisionSimulatorItem.cpp:322
 msgid "Sensor"
 msgstr "センサ"
 
-#: GLVisionSimulatorItem.cpp:325
+#: GLVisionSimulatorItem.cpp:323
 msgid "Screen"
 msgstr "スクリーン"
 
-#: GLVisionSimulatorItem.cpp:521
+#: GLVisionSimulatorItem.cpp:518
 msgid "{0} detected vision sensor \"{1}\" of {2} as a target."
 msgstr "{0}は{2}の \"{1}\" を対象視覚センサとして検出しました．"
 
-#: GLVisionSimulatorItem.cpp:531
+#: GLVisionSimulatorItem.cpp:528
 msgid "{} has no target sensors"
 msgstr "{}は対象センサを有していません"
 
-#: GLVisionSimulatorItem.cpp:556
+#: GLVisionSimulatorItem.cpp:553
 msgid "{0}: Target sensor \"{1}\" cannot be initialized."
 msgstr "{0}: 対象センサ \"{1}\" の初期化に失敗しました．"
 
-#: GLVisionSimulatorItem.cpp:1794
+#: GLVisionSimulatorItem.cpp:1790
 msgid "Target bodies"
 msgstr "対象ボディ"
 
-#: GLVisionSimulatorItem.cpp:1796
+#: GLVisionSimulatorItem.cpp:1792
 msgid "Target sensors"
 msgstr "対象センサ"
 
-#: GLVisionSimulatorItem.cpp:1798
+#: GLVisionSimulatorItem.cpp:1794
 msgid "Max frame rate"
 msgstr "最大フレームレート"
 
-#: GLVisionSimulatorItem.cpp:1799
+#: GLVisionSimulatorItem.cpp:1795
 msgid "Max latency [s]"
 msgstr "最大レイテンシ[秒]"
 
-#: GLVisionSimulatorItem.cpp:1800
+#: GLVisionSimulatorItem.cpp:1796
 msgid "Record vision data"
 msgstr "ビジョンデータの記録"
 
-#: GLVisionSimulatorItem.cpp:1801
+#: GLVisionSimulatorItem.cpp:1797
 msgid "Thread mode"
 msgstr "スレッドモード"
 
-#: GLVisionSimulatorItem.cpp:1802
+#: GLVisionSimulatorItem.cpp:1798
 msgid "Best effort"
 msgstr "ベストエフォート"
 
-#: GLVisionSimulatorItem.cpp:1803
+#: GLVisionSimulatorItem.cpp:1799
 msgid "All scene objects"
 msgstr "全てのシーンオブジェクト"
 
-#: GLVisionSimulatorItem.cpp:1804
+#: GLVisionSimulatorItem.cpp:1800
 msgid "Precision ratio of range sensors"
 msgstr "レンジセンサ精度係数"
 
-#: GLVisionSimulatorItem.cpp:1806
+#: GLVisionSimulatorItem.cpp:1802
 msgid "Depth error"
 msgstr "深度エラー"
 
-#: GLVisionSimulatorItem.cpp:1807
+#: GLVisionSimulatorItem.cpp:1803
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: GLVisionSimulatorItem.cpp:1808
+#: GLVisionSimulatorItem.cpp:1804
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: GLVisionSimulatorItem.cpp:1809
+#: GLVisionSimulatorItem.cpp:1805
 msgid "Anti-aliasing"
 msgstr "アンチエイリアシング"
 
@@ -602,83 +602,83 @@ msgstr "アンチエイリアシング"
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
 
-#: LinkPositionView.cpp:129
+#: LinkPositionView.cpp:128
 msgid "Link Position"
 msgstr "リンク位置"
 
-#: LinkPositionView.cpp:191 JointDisplacementView.cpp:398
+#: LinkPositionView.cpp:190 JointDisplacementView.cpp:445
 msgid "Option"
 msgstr "オプション"
 
-#: LinkPositionView.cpp:201
+#: LinkPositionView.cpp:200
 msgid "Fetch"
 msgstr "取込"
 
-#: LinkPositionView.cpp:204 FilterDialogs.cpp:108 FilterDialogs.cpp:212
+#: LinkPositionView.cpp:203 FilterDialogs.cpp:108 FilterDialogs.cpp:212
 msgid "Apply"
 msgstr "適用"
 
-#: LinkPositionView.cpp:212
+#: LinkPositionView.cpp:211
 msgid "Coordinate:"
 msgstr "座標:"
 
-#: LinkPositionView.cpp:213 LinkPositionView.cpp:333
-msgid "World"
-msgstr "ワールド"
-
-#: LinkPositionView.cpp:217 LinkPositionView.cpp:332
+#: LinkPositionView.cpp:212 LinkPositionView.cpp:327
 msgid "Base"
 msgstr "ベース"
 
-#: LinkPositionView.cpp:220
-msgid "Parent"
-msgstr "親"
+#: LinkPositionView.cpp:215
+msgid "Root"
+msgstr "ルート"
 
-#: LinkPositionView.cpp:223
+#: LinkPositionView.cpp:218
 msgid "Object"
 msgstr "オブジェクト"
 
-#: LinkPositionView.cpp:335 LinkPositionView.cpp:340
+#: LinkPositionView.cpp:328
+msgid "World"
+msgstr "ワールド"
+
+#: LinkPositionView.cpp:330 LinkPositionView.cpp:335
 msgid "Edit"
 msgstr "編集"
 
-#: LinkPositionView.cpp:337
+#: LinkPositionView.cpp:332
 msgid "Target"
 msgstr "対象"
 
-#: LinkPositionView.cpp:338
+#: LinkPositionView.cpp:333
 msgid "Link Origin"
 msgstr "リンク原点"
 
-#: LinkPositionView.cpp:342
+#: LinkPositionView.cpp:337
 msgid "Config"
 msgstr "コンフィグ"
 
-#: LinkPositionView.cpp:351
+#: LinkPositionView.cpp:346
 msgid "Require"
 msgstr "必須"
 
-#: LinkPositionView.cpp:363
+#: LinkPositionView.cpp:358
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: LinkPositionView.cpp:368
+#: LinkPositionView.cpp:363
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: LinkPositionView.cpp:374
+#: LinkPositionView.cpp:369
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-#: LinkPositionView.cpp:594
+#: LinkPositionView.cpp:589
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionView.cpp:720
+#: LinkPositionView.cpp:715
 msgid "Solved"
 msgstr "解有り"
 
-#: LinkPositionView.cpp:724
+#: LinkPositionView.cpp:719
 msgid "Not Solved"
 msgstr "解無し"
 
@@ -874,7 +874,7 @@ msgstr "{}の重心を指定の位置まで移動できません\n"
 msgid "Velocity Limiting Filter"
 msgstr "速度制限フィルタ"
 
-#: FilterDialogs.cpp:53 JointDisplacementView.cpp:433
+#: FilterDialogs.cpp:53 JointDisplacementView.cpp:480
 msgid "Selected joints only"
 msgstr "選択関節のみ"
 
@@ -1552,31 +1552,31 @@ msgstr "遠クリッピング距離"
 msgid "field Of View"
 msgstr "視野角"
 
-#: JointDisplacementView.cpp:338
+#: JointDisplacementView.cpp:385
 msgid "Joint Displacement"
 msgstr "関節変位"
 
-#: JointDisplacementView.cpp:437
+#: JointDisplacementView.cpp:484
 msgid "Joint ID"
 msgstr "関節ID"
 
-#: JointDisplacementView.cpp:441
+#: JointDisplacementView.cpp:488
 msgid "Joint name"
 msgstr "関節名"
 
-#: JointDisplacementView.cpp:446
+#: JointDisplacementView.cpp:493
 msgid "Overlap joint name"
 msgstr "関節名を上に表示"
 
-#: JointDisplacementView.cpp:450
+#: JointDisplacementView.cpp:497
 msgid "Slider"
 msgstr "スライダ"
 
-#: JointDisplacementView.cpp:455
+#: JointDisplacementView.cpp:502
 msgid "Dial"
 msgstr "ダイヤル"
 
-#: JointDisplacementView.cpp:459
+#: JointDisplacementView.cpp:506
 msgid "Phase"
 msgstr "位相"
 

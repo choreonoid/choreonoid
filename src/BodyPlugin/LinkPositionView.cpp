@@ -22,6 +22,7 @@
 #include <cnoid/ComboBox>
 #include <cnoid/Separator>
 #include <cnoid/ButtonGroup>
+#include <cnoid/Selection>
 #include <QLabel>
 #include <QGridLayout>
 #include <QGroupBox>
@@ -68,10 +69,11 @@ public:
     QLabel targetLabel;
     QLabel configurationLabel;
     QLabel resultLabel;
-    enum { BASE_COORD, PARENT_COORD, OBJECT_COORD };
+    enum { BASE_COORD, ROOT_COORD, OBJECT_COORD, NUM_COORD_MODES };
+    Selection coordinateMode;
     ButtonGroup coordinateModeGroup;
     RadioButton baseCoordRadio;
-    RadioButton parentCoordRadio;
+    RadioButton rootCoordRadio;
     RadioButton objectCoordRadio;
     DoubleSpinBox xyzSpin[3];
     Action* rpyCheck;
@@ -98,6 +100,7 @@ public:
     ScopedConnection bodyBarConnection;
     ScopedConnectionSet bodyItemConnections;
     ScopedConnectionSet userInputConnections;
+    ScopedConnectionSet settingConnections;
 
     LinkPositionViewImpl(LinkPositionView* self);
     ~LinkPositionViewImpl();
@@ -117,6 +120,8 @@ public:
     void onPositionInputQuaternion(InputElementSet inputElements);
     void onConfigurationInput(int index);
     void findSolution(const Position& T_input, InputElementSet inputElements);
+    bool storeState(Archive& archive);
+    bool restoreState(const Archive& archive);
 };
 
 }
@@ -136,7 +141,8 @@ LinkPositionView::LinkPositionView()
 
 
 LinkPositionViewImpl::LinkPositionViewImpl(LinkPositionView* self)
-    : self(self)
+    : self(self),
+      coordinateMode(NUM_COORD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     self->setDefaultLayoutArea(View::CENTER);
     createPanel();
@@ -209,12 +215,19 @@ void LinkPositionViewImpl::createPanel()
 
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Coordinate:")));
+    
+    coordinateMode.setSymbol(BASE_COORD, "base");
     baseCoordRadio.setText(_("Base"));
+    baseCoordRadio.setChecked(true);
     hbox->addWidget(&baseCoordRadio);
     coordinateModeGroup.addButton(&baseCoordRadio, BASE_COORD);
-    parentCoordRadio.setText(_("Parent"));
-    hbox->addWidget(&parentCoordRadio);
-    coordinateModeGroup.addButton(&parentCoordRadio, PARENT_COORD);
+
+    coordinateMode.setSymbol(ROOT_COORD, "root");
+    rootCoordRadio.setText(_("Root"));
+    hbox->addWidget(&rootCoordRadio);
+    coordinateModeGroup.addButton(&rootCoordRadio, ROOT_COORD);
+    
+    coordinateMode.setSymbol(OBJECT_COORD, "object");
     objectCoordRadio.setText(_("Object"));
     hbox->addWidget(&objectCoordRadio);
     coordinateModeGroup.addButton(&objectCoordRadio, OBJECT_COORD);
@@ -222,9 +235,8 @@ void LinkPositionViewImpl::createPanel()
     mainvbox->addLayout(hbox);
 
     auto grid = new QGridLayout;
-    static const char* xyzLabels[] = { "X", "Y", "Z" };
-    static const char* rpyLabelChar[] = {"RX", "RY", "RZ"};
 
+    static const char* xyzLabels[] = { "X", "Y", "Z" };
     for(int i=0; i < 3; ++i){
         // Translation spin boxes
         xyzSpin[i].setAlignment(Qt::AlignCenter);
@@ -240,13 +252,20 @@ void LinkPositionViewImpl::createPanel()
 
         grid->addWidget(new QLabel(xyzLabels[i]), 0, i * 2, Qt::AlignCenter);
         grid->addWidget(&xyzSpin[i], 0, i * 2 + 1);
-        
+
+        grid->setColumnStretch(i * 2, 1);
+        grid->setColumnStretch(i * 2 + 1, 10);
+    }
+
+    static const char* rpyLabelChar[] = {"RX", "RY", "RZ"};
+    for(int i=0; i < 3; ++i){
         // Roll-pitch-yaw spin boxes
         rpySpin[i].setAlignment(Qt::AlignCenter);
         rpySpin[i].setDecimals(1);
-        rpySpin[i].setRange(-360.0, 360.0);
+        rpySpin[i].setRange(-9999.0, 9999.0);
         rpySpin[i].setSingleStep(0.1);
 
+        InputElementSet s;
         s.set(RX + 1);
         userInputConnections.add(
             rpySpin[i].sigValueChanged().connect(
@@ -257,15 +276,11 @@ void LinkPositionViewImpl::createPanel()
         rpyWidgets.push_back(label);
         grid->addWidget(&rpySpin[i], 1, i * 2 + 1);
         rpyWidgets.push_back(&rpySpin[i]);
-
-        grid->setColumnStretch(i * 2, 1);
-        grid->setColumnStretch(i * 2 + 1, 10);
     }
     mainvbox->addLayout(grid);
 
     grid = new QGridLayout;
     static const char* quatLabelChar[] = {"QX", "QY", "QZ", "QW"};
-
     for(int i=0; i < 4; ++i){
         quatSpin[i].setAlignment(Qt::AlignCenter);
         quatSpin[i].setDecimals(4);
@@ -357,20 +372,25 @@ void LinkPositionViewImpl::createPanel()
     
     rpyCheck = menuManager.addCheckItem(_("Roll-pitch-yaw"));
     rpyCheck->setChecked(true);
-    rpyCheck->sigToggled().connect(
-        [&](bool on){ setRpySpinsVisible(on); });
+    settingConnections.add(
+        rpyCheck->sigToggled().connect(
+            [&](bool on){ setRpySpinsVisible(on); }));
     
     quaternionCheck = menuManager.addCheckItem(_("Quoternion"));
     quaternionCheck->setChecked(false);
     setQuaternionSpinsVisible(false);
-    quaternionCheck->sigToggled().connect(
-        [&](bool on){ setQuaternionSpinsVisible(on); });
+    settingConnections.add(
+        quaternionCheck->sigToggled().connect(
+            [&](bool on){ setQuaternionSpinsVisible(on); }));
 
     rotationMatrixCheck = menuManager.addCheckItem(_("Rotation matrix"));
     rotationMatrixCheck->setChecked(false);
     rotationMatrixPanel.setVisible(false);
-    rotationMatrixCheck->sigToggled().connect(
-        [&](bool on){ rotationMatrixPanel.setVisible(on); });
+    settingConnections.add(
+        rotationMatrixCheck->sigToggled().connect(
+            [&](bool on){
+                rotationMatrixPanel.setVisible(on);
+                updatePanel(); }));
 
     lastInputAttitudeType = ROLL_PITCH_YAW;
 }
@@ -556,12 +576,16 @@ void LinkPositionViewImpl::updatePanel()
         }
         Matrix3 R = endLink->attitude();
         if(rpyCheck->isChecked()){
-            Vector3 rpy = rpyFromRot(R);
+            Vector3 prevRPY;
+            for(int i=0; i < 3; ++i){
+                prevRPY[i] = radian(rpySpin[i].value());
+            }
+            Vector3 rpy = rpyFromRot(R, prevRPY);
             for(int i=0; i < 3; ++i){
                 auto& spin = rpySpin[i];
-                if(!spin.hasFocus()){
+                //if(!spin.hasFocus()){
                     spin.setValue(degree(rpy[i]));
-                }
+                    //}
             }
         }
         if(quaternionCheck->isChecked()){
@@ -725,11 +749,52 @@ void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet
 
 bool LinkPositionView::storeState(Archive& archive)
 {
+    return impl->storeState(archive);
+}
+
+
+bool LinkPositionViewImpl::storeState(Archive& archive)
+{
+    archive.write("coordinateMode", coordinateMode.selectedSymbol());
+    archive.write("showRPY", rpyCheck->isChecked());
+    archive.write("showQuoternion", quaternionCheck->isChecked());
+    archive.write("showRotationMatrix", rotationMatrixCheck->isChecked());
+    archive.write("configuration", configurationCombo.currentText().toStdString());
+    archive.write("isConfigurationRequired", requireConfigurationCheck.isChecked());
     return true;
 }
 
 
 bool LinkPositionView::restoreState(const Archive& archive)
 {
+    archive.addPostProcess([&](){ impl->restoreState(archive); });
+    return true;
+}
+
+
+bool LinkPositionViewImpl::restoreState(const Archive& archive)
+{
+    settingConnections.block();
+    userInputConnections.block();
+    
+    string symbol;
+    if(archive.read("coordinateMode", symbol)){
+        if(coordinateMode.select(symbol)){
+            coordinateModeGroup.button(coordinateMode.which())->setChecked(true);
+        }
+    }
+    rpyCheck->setChecked(archive.get("showRPY", rpyCheck->isChecked()));
+    quaternionCheck->setChecked(archive.get("showQuoternion", quaternionCheck->isChecked()));
+    rotationMatrixCheck->setChecked(archive.get("showRotationMatrix", rotationMatrixCheck->isChecked()));
+
+    if(archive.read("configuration", symbol)){
+        configurationCombo.setCurrentText(symbol.c_str());
+    }
+
+    userInputConnections.unblock();
+    settingConnections.unblock();
+
+    onConfigurationInput(configurationCombo.currentIndex());
+    
     return true;
 }
