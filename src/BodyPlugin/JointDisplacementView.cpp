@@ -180,6 +180,14 @@ public:
         return row + 1;
     }
 
+    void setNextTabOrderIndicator(JointIndicator* next)
+    {
+        QWidget::setTabOrder(&spin, &next->spin);
+        QWidget::setTabOrder(&slider, &next->slider);
+        QWidget::setTabOrder(&dial, &next->dial);
+        QWidget::setTabOrder(&phaseSpin, &next->phaseSpin);
+    }
+
     bool isDegreeMode() const { return true; }
 
     void setRangeLabelValues(double lower, double upper, int precision)
@@ -613,6 +621,9 @@ void JointDisplacementViewImpl::updateIndicatorGrid()
             auto indicator = jointIndicators[i];
             indicator->initialize(body->joint(activeJointIds[i]));
             row = indicator->attachTo(grid, row, 0, overlapJointNameCheck->isChecked());
+        }
+        for(int i=0; i < n - 1; ++i){
+            jointIndicators[i]->setNextTabOrderIndicator(jointIndicators[i+1]);
         }
     }
 }
