@@ -86,6 +86,7 @@ public:
     Action* rotationMatrixCheck;
     QWidget rotationMatrixPanel;
     QLabel rotationMatrixElementLabel[3][3];
+    Action* disableCustomIKCheck;
 
     vector<QWidget*> inputElementWidgets;
         
@@ -111,7 +112,7 @@ public:
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
     void setBodyItem(BodyItem* bodyItem);
-    void updateTarget();
+    void updateTargetLink(Link* link = nullptr);
     void updatePanel();
     Link* findUniqueEndLink(Body* body) const;
     void updateRotationMatrixPanel(const Matrix3& R);
@@ -190,7 +191,6 @@ void LinkPositionViewImpl::createPanel()
     hbox->addStretch(1);
     configurationLabel.setAlignment(Qt::AlignLeft);
     hbox->addWidget(&configurationLabel);
-    configurationWidgets.push_back(&configurationLabel);
     hbox->addStretch(10);
     
     menuButton.setText("*");
@@ -399,6 +399,15 @@ void LinkPositionViewImpl::createPanel()
                 rotationMatrixPanel.setVisible(on);
                 updatePanel(); }));
 
+    disableCustomIKCheck = menuManager.addCheckItem(_("Disable custom IK"));
+    disableCustomIKCheck->setChecked(false);
+    settingConnections.add(
+        disableCustomIKCheck->sigToggled().connect(
+            [&](bool){
+                updateTargetLink(targetLink);
+                updatePanel();
+            }));
+
     lastInputAttitudeType = ROLL_PITCH_YAW;
 }
 
@@ -465,11 +474,11 @@ void LinkPositionViewImpl::setBodyItem(BodyItem* bodyItem)
         if(bodyItem){
             bodyItemConnections.add(
                 bodyItem->sigNameChanged().connect(
-                    [&](const std::string&){ updateTarget(); }));
+                    [&](const std::string&){ updateTargetLink(targetLink); }));
 
             bodyItemConnections.add(
                 linkSelectionView->sigSelectionChanged(bodyItem).connect(
-                    [&](){ updateTarget(); updatePanel(); }));
+                    [&](){ updateTargetLink(); updatePanel(); }));
 
             bodyItemConnections.add(
                 bodyItem->sigKinematicStateChanged().connect(
@@ -477,31 +486,34 @@ void LinkPositionViewImpl::setBodyItem(BodyItem* bodyItem)
         }
         
         targetBodyItem = bodyItem;
-        updateTarget();
+        updateTargetLink();
         updatePanel();
     }
 }
 
 
-void LinkPositionViewImpl::updateTarget()
+void LinkPositionViewImpl::updateTargetLink(Link* link)
 {
-    targetLink = nullptr;
+    targetLink = link;
     jointPath = nullptr;
     jointPathConfigurationHandler = nullptr;
     
     if(!targetBodyItem){
         targetLabel.setText("------");
+        targetLink = nullptr;
 
     } else {
         auto body = targetBodyItem->body();
-        
-        auto selectedLinkIndex = linkSelectionView->selectedLinkIndex(targetBodyItem);
-        if(selectedLinkIndex >= 0){
-            targetLink = body->link(selectedLinkIndex);
-        } else {
-            targetLink = findUniqueEndLink(body);
-            if(!targetLink){
-                targetLink = body->rootLink();
+
+        if(!targetLink){
+            auto selectedLinkIndex = linkSelectionView->selectedLinkIndex(targetBodyItem);
+            if(selectedLinkIndex >= 0){
+                targetLink = body->link(selectedLinkIndex);
+            } else {
+                targetLink = findUniqueEndLink(body);
+                if(!targetLink){
+                    targetLink = body->rootLink();
+                }
             }
         }
         auto baseLink = targetBodyItem->currentBaseLink();
@@ -514,7 +526,11 @@ void LinkPositionViewImpl::updateTarget()
         jointPath = getCustomJointPath(body, baseLink, targetLink);
         if(jointPath){
             jointPathConfigurationHandler = dynamic_pointer_cast<JointPathConfigurationHandler>(jointPath);
-        } else {
+            if(disableCustomIKCheck->isChecked()){
+                jointPath = nullptr; // Use the usual joint path
+            }
+        }
+        if(!jointPath){
             jointPath = make_shared<JointPath>(baseLink, targetLink);
         }
     }
@@ -523,8 +539,9 @@ void LinkPositionViewImpl::updateTarget()
     resultLabel.setText("");
 
     configurationCombo.clear();
+    bool isConfigurationInputActive = (jointPathConfigurationHandler != nullptr) && !disableCustomIKCheck->isChecked();
     for(auto& widget : configurationWidgets){
-        widget->setEnabled(jointPathConfigurationHandler != nullptr);
+        widget->setEnabled(isConfigurationInputActive);
     }
     
     if(jointPathConfigurationHandler){
@@ -733,7 +750,8 @@ void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet
                 }
             }
         } else {
-            if(jointPathConfigurationHandler && requireConfigurationCheck.isChecked()){
+            if(jointPathConfigurationHandler && requireConfigurationCheck.isChecked() &&
+               !disableCustomIKCheck->isChecked()){
                 int preferred = configurationCombo.currentIndex();
                 if(!jointPathConfigurationHandler->checkConfiguration(preferred)){
                     configurationCombo.setStyleSheet(errorStyle);
@@ -769,6 +787,7 @@ bool LinkPositionViewImpl::storeState(Archive& archive)
     archive.write("uniqueRPY", uniqueRpyCheck->isChecked());
     archive.write("showQuoternion", quaternionCheck->isChecked());
     archive.write("showRotationMatrix", rotationMatrixCheck->isChecked());
+    archive.write("disableCustomIK", disableCustomIKCheck->isChecked());
     archive.write("configuration", configurationCombo.currentText().toStdString());
     archive.write("isConfigurationRequired", requireConfigurationCheck.isChecked());
     return true;
@@ -797,6 +816,7 @@ bool LinkPositionViewImpl::restoreState(const Archive& archive)
     uniqueRpyCheck->setChecked(archive.get("uniqueRPY", uniqueRpyCheck->isChecked()));
     quaternionCheck->setChecked(archive.get("showQuoternion", quaternionCheck->isChecked()));
     rotationMatrixCheck->setChecked(archive.get("showRotationMatrix", rotationMatrixCheck->isChecked()));
+    disableCustomIKCheck->setChecked(archive.get("disableCustomIK", disableCustomIKCheck->isChecked()));
 
     if(archive.read("configuration", symbol)){
         configurationCombo.setCurrentText(symbol.c_str());
@@ -805,6 +825,7 @@ bool LinkPositionViewImpl::restoreState(const Archive& archive)
     userInputConnections.unblock();
     settingConnections.unblock();
 
+    updateTargetLink();
     onConfigurationInput(configurationCombo.currentIndex());
     
     return true;
