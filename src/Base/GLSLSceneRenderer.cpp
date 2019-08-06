@@ -355,6 +355,7 @@ public:
     void updateDefaultFramebufferObject();
     bool initializeGL();
     void doRender();
+    void setupFullLightingRendering();
     bool doPick(int x, int y);
     void renderScene();
     bool renderShadowMap(int lightIndex);
@@ -831,57 +832,34 @@ void GLSLSceneRendererImpl::doRender()
     isLightweightRenderingBeingProcessed = false;
     isLowMemoryConsumptionRenderingBeingProcessed = isLowMemoryConsumptionMode;
     isTextureBeingRendered = false;
-    
-    if(lightingMode == GLSceneRenderer::NO_LIGHTING){
+
+    switch(lightingMode){
+
+    case GLSceneRenderer::NO_LIGHTING:
         pushProgram(nolightingProgram);
-        
-    } else if(lightingMode == GLSceneRenderer::SOLID_COLOR_LIGHTING){
+        break;
+
+    case GLSceneRenderer::SOLID_COLOR_LIGHTING:
         pushProgram(solidColorProgram);
-        
-    } else if(lightingMode == GLSceneRenderer::MINIMUM_LIGHTING){
+        break;
+
+    case GLSceneRenderer::MINIMUM_LIGHTING:
         pushProgram(minimumLightingProgram);
         isLightweightRenderingBeingProcessed = true;
         isLowMemoryConsumptionRenderingBeingProcessed = true;
+        break;
 
-    } else {
+    case GLSceneRenderer::FULL_LIGHTING:
+        setupFullLightingRendering();
+        break;
+
+    case GLSceneRenderer::NORMAL_LIGHTING:
+    default:
+        pushProgram(phongLightingProgram);
         isTextureBeingRendered = isTextureEnabled;
-
-        if(shadowLightIndices.empty() || !isShadowCastingEnabled){
-            // FULL_LIGHTING without shadows
-            pushProgram(phongLightingProgram);
-            
-        } else {
-            // FULL_LIGHTING with shadows
-            auto& program = phongShadowLightingProgram;
-            Array4i vp = self->viewport();
-            int w, h;
-            program.getShadowMapSize(w, h);
-            self->setViewport(0, 0, w, h);
-            pushProgram(program.shadowMapProgram());
-            isRenderingShadowMap = true;
-            isActuallyRendering = false;
-        
-            int shadowMapIndex = 0;
-            set<int>::iterator iter = shadowLightIndices.begin();
-            while(iter != shadowLightIndices.end() && shadowMapIndex < program.maxNumShadows()){
-                program.activateShadowMapGenerationPass(shadowMapIndex);
-                int shadowLightIndex = *iter;
-                if(renderShadowMap(shadowLightIndex)){
-                    ++shadowMapIndex;
-                }
-                ++iter;
-            }
-            program.setNumShadows(shadowMapIndex);
-        
-            popProgram();
-            isRenderingShadowMap = false;
-            self->setViewport(vp[0], vp[1], vp[2], vp[3]);
-    
-            program.activateMainRenderingPass();
-            pushProgram(program);
-        }
+        break;
     }
-    
+
     isActuallyRendering = true;
     const Vector3f& c = self->backgroundColor();
     glClearColor(c[0], c[1], c[2], 1.0f);
@@ -902,6 +880,46 @@ void GLSLSceneRendererImpl::doRender()
 
     popProgram();
     endRendering();
+}
+
+
+void GLSLSceneRendererImpl::setupFullLightingRendering()
+{
+    isTextureBeingRendered = isTextureEnabled;
+
+    if(shadowLightIndices.empty() || !isShadowCastingEnabled){
+        // Same as NORMAL_LIGHTING
+        pushProgram(phongLightingProgram);
+            
+    } else {
+        auto& program = phongShadowLightingProgram;
+        Array4i vp = self->viewport();
+        int w, h;
+        program.getShadowMapSize(w, h);
+        self->setViewport(0, 0, w, h);
+        pushProgram(program.shadowMapProgram());
+        isRenderingShadowMap = true;
+        isActuallyRendering = false;
+        
+        int shadowMapIndex = 0;
+        set<int>::iterator iter = shadowLightIndices.begin();
+        while(iter != shadowLightIndices.end() && shadowMapIndex < program.maxNumShadows()){
+            program.activateShadowMapGenerationPass(shadowMapIndex);
+            int shadowLightIndex = *iter;
+            if(renderShadowMap(shadowLightIndex)){
+                ++shadowMapIndex;
+            }
+            ++iter;
+        }
+        program.setNumShadows(shadowMapIndex);
+        
+        popProgram();
+        isRenderingShadowMap = false;
+        self->setViewport(vp[0], vp[1], vp[2], vp[3]);
+    
+        program.activateMainRenderingPass();
+        pushProgram(program);
+    }
 }
 
 

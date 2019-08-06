@@ -109,12 +109,13 @@ public:
     Selection lightingMode;
     ButtonGroup lightingModeGroup;
     RadioButton fullLightingRadio;
+    RadioButton normalLightingRadio;
     RadioButton minLightingRadio;
     RadioButton solidColorLightingRadio;
-    CheckBox smoothShadingCheck;
     Selection cullingMode;
     ButtonGroup cullingModeGroup;
     RadioButton cullingRadios[GLSceneRenderer::N_CULLING_MODES];
+    CheckBox smoothShadingCheck;
     CheckBox headLightCheck;
     DoubleSpinBox headLightIntensitySpin;
     CheckBox headLightFromBackCheck;
@@ -3067,6 +3068,12 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     lightingModeGroup.addButton(&fullLightingRadio, GLSceneRenderer::FULL_LIGHTING);
     lightingMode.setSymbol(GLSceneRenderer::FULL_LIGHTING, "full");
     hbox->addWidget(&fullLightingRadio);
+
+    normalLightingRadio.setText(_("Normal"));
+    normalLightingRadio.setChecked(false);
+    lightingModeGroup.addButton(&normalLightingRadio, GLSceneRenderer::NORMAL_LIGHTING);
+    lightingMode.setSymbol(GLSceneRenderer::NORMAL_LIGHTING, "normal");
+    hbox->addWidget(&normalLightingRadio);
     
     minLightingRadio.setText(_("Minimum"));
     lightingModeGroup.addButton(&minLightingRadio, GLSceneRenderer::MINIMUM_LIGHTING);
@@ -3087,15 +3094,16 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
             }
         });
 
-    hbox->addSpacing(10);
-    smoothShadingCheck.setText(_("Smooth shading"));
-    smoothShadingCheck.setChecked(true);
-    smoothShadingCheck.sigToggled().connect([=](bool on){ impl->onSmoothShadingToggled(on); });
-    hbox->addWidget(&smoothShadingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
+    smoothShadingCheck.setText(_("Smooth shading"));
+    smoothShadingCheck.setChecked(true);
+    smoothShadingCheck.sigToggled().connect([=](bool on){ impl->onSmoothShadingToggled(on); });
+    hbox->addWidget(&smoothShadingCheck);
+
+    hbox->addSpacing(10);
     hbox->addWidget(new QLabel(_("Back face culling: ")));
     cullingMode.setSymbol(GLSceneRenderer::ENABLE_BACK_FACE_CULLING, "enabled");
     cullingMode.setSymbol(GLSceneRenderer::DISABLE_BACK_FACE_CULLING, "disabled");
@@ -3117,6 +3125,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
                 sceneWidgetImpl->update();
             }
         });
+
     hbox->addStretch();
     vbox->addLayout(hbox);
 

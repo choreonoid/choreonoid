@@ -57,7 +57,12 @@ public:
     void setDefaultColor(const Vector3f& color);
 
     enum LightingMode {
-        FULL_LIGHTING, MINIMUM_LIGHTING, SOLID_COLOR_LIGHTING, NO_LIGHTING, N_LIGHTING_MODES
+        FULL_LIGHTING,
+        NORMAL_LIGHTING,
+        MINIMUM_LIGHTING,
+        SOLID_COLOR_LIGHTING,
+        NO_LIGHTING,
+        N_LIGHTING_MODES
     };
     virtual void setLightingMode(int mode) = 0;
     
