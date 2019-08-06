@@ -41,8 +41,8 @@ ValueNodePtr invalidNode;
 MappingPtr invalidMapping;
 ListingPtr invalidListing;
 
-const double PI = 3.14159265358979323846;
-const double TO_RADIAN = PI / 180.0;
+constexpr double PI = 3.141592653589793238462643383279502884;
+constexpr double TO_RADIAN = PI / 180.0;
 
 }
 

@@ -6,6 +6,7 @@
 #include "MeshGenerator.h"
 #include "MeshFilter.h"
 #include "MeshExtractor.h"
+#include "EigenUtil.h"
 #include "Triangulator.h"
 
 using namespace std;
@@ -13,7 +14,6 @@ using namespace cnoid;
 
 namespace {
 
-const double PI = 3.14159265358979323846;
 const int defaultDivisionNumber = 20;
 
 }

@@ -14,6 +14,7 @@
 #include "SceneLoader.h"
 #include "Exception.h"
 #include "NullOut.h"
+#include "EigenUtil.h"
 #include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
 #include <tuple>
@@ -21,11 +22,6 @@
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-
-namespace {
-
-const double PI = 3.14159265358979323846;
-}
 
 namespace cnoid {
 

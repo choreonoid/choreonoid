@@ -11,11 +11,10 @@
 
 namespace cnoid {
 
-const double PI = 3.14159265358979323846;
-const double PI_2 = 1.57079632679489661923;
-
-const double TO_DEGREE = 180.0 / PI;
-const double TO_RADIAN = PI / 180.0;
+constexpr double PI = 3.141592653589793238462643383279502884;
+constexpr double PI_2 = 1.570796326794896619231321691639751442;
+constexpr double TO_DEGREE = 180.0 / PI;
+constexpr double TO_RADIAN = PI / 180.0;
 
 inline double degree(double rad) { return TO_DEGREE * rad; }
 inline double radian(double deg) { return TO_RADIAN * deg; }

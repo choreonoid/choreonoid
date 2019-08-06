@@ -415,12 +415,6 @@ public:
 
 };
 
-/*
-  #ifdef _MSC_VER
-  const double CFSImpl::PI   = 3.14159265358979323846;
-  const double CFSImpl::PI_2 = 1.57079632679489661923;
-  #endif
-*/
 }
 
 

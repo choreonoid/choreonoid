@@ -7,6 +7,7 @@
 #include "MeshExtractor.h"
 #include "SceneDrawables.h"
 #include "IdPair.h"
+#include "EigenUtil.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <array>
@@ -15,8 +16,6 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
-
-const float PI = 3.14159265358979323846f;
 
 typedef array<int, 3> FaceId;
 
