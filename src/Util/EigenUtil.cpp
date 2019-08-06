@@ -127,10 +127,6 @@ static double calcPhasedAngleDistance(double x, double y)
 
 Vector3 rpyFromRot(const Matrix3& R, const Vector3& prev)
 {
-    cout << "rpyFromRot:\n";
-    cout << " R =\n" << R << "\n";
-    cout << " prev = " << prev << endl;
-    
     const double epsilon = 1.0e-6;
     double roll, pitch, yaw;
 
@@ -171,15 +167,11 @@ Vector3 rpyFromRot(const Matrix3& R, const Vector3& prev)
         }
     }
 
-    cout << "solution before adjust phase: " << roll << ", " << pitch << "," << yaw << endl;
-   
     // find the phases closest to the previous position
     roll = adjustPhase(roll, prev.x());
     pitch = adjustPhase(pitch, prev.y());
     yaw = adjustPhase(yaw, prev.z());
 
-    cout << "solution after adjust phase: " << roll << ", " << pitch << "," << yaw << endl;
-    
     return Vector3(roll, pitch, yaw);
 }
 
