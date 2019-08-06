@@ -676,7 +676,9 @@ bool GLSLSceneRendererImpl::initializeGL()
         solidColorProgram.initialize();
         minimumLightingProgram.initialize();
         phongLightingProgram.initialize();
-        phongShadowLightingProgram.initialize();
+        if(isShadowCastingEnabled){
+            phongShadowLightingProgram.initialize();
+        }
     }
     catch(std::runtime_error& error){
         os() << error.what() << endl;
