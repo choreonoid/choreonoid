@@ -16,7 +16,7 @@ namespace cnoid {
 */
 class CNOID_EXPORT CustomJointPathBase : public JointPath
 {
-    typedef std::function<bool(const Position& T)> InverseKinematicsFunc;
+    typedef std::function<bool(const Position& T_global, const Position& T_relative)> InverseKinematicsFunc;
     InverseKinematicsFunc calcCustomInverseKinematics;
     bool isReversed_;
     
