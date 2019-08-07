@@ -108,6 +108,7 @@ set(headers
   SceneCollision.h
   InverseKinematics.h
   CompositeIK.h
+  CompositeBodyIK.h
   PinDragIK.h
   LeggedBodyHelper.h
   PenetrationBlocker.h

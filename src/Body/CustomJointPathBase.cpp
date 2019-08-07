@@ -51,7 +51,7 @@ bool CustomJointPathBase::calcInverseKinematics(const Position& T)
 }
 
 
-bool CustomJointPathBase::hasAnalyticalIK() const
+bool CustomJointPathBase::hasCustomIK() const
 {
     return calcCustomInverseKinematics != nullptr;
 }

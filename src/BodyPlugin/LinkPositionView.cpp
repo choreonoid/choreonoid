@@ -10,6 +10,7 @@
 #include <cnoid/Link>
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
+#include <cnoid/CompositeBodyIK>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ViewManager>
@@ -59,7 +60,7 @@ public:
             
     BodyItemPtr targetBodyItem;
     Link* targetLink;
-    shared_ptr<JointPath> jointPath;
+    shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler;
 
     LinkSelectionView* linkSelectionView;
@@ -429,7 +430,7 @@ void LinkPositionView::onDeactivated()
     impl->bodyBarConnection.disconnect();
     impl->bodyItemConnections.disconnect();
     impl->targetBodyItem.reset();
-    impl->jointPath.reset();
+    impl->inverseKinematics.reset();
     impl->jointPathConfigurationHandler.reset();
 }
 
@@ -495,8 +496,8 @@ void LinkPositionViewImpl::setBodyItem(BodyItem* bodyItem)
 void LinkPositionViewImpl::updateTargetLink(Link* link)
 {
     targetLink = link;
-    jointPath = nullptr;
-    jointPathConfigurationHandler = nullptr;
+    inverseKinematics.reset();
+    jointPathConfigurationHandler.reset();
     
     if(!targetBodyItem){
         targetLabel.setText("------");
@@ -516,26 +517,29 @@ void LinkPositionViewImpl::updateTargetLink(Link* link)
                 }
             }
         }
-        auto baseLink = targetBodyItem->currentBaseLink();
-        if(!baseLink){
-            baseLink = body->rootLink();
-        }
         
         targetLabel.setText(format("{0} / {1}", body->name(), targetLink->name()).c_str());
 
-        jointPath = getCustomJointPath(body, baseLink, targetLink);
-        if(jointPath){
-            jointPathConfigurationHandler = dynamic_pointer_cast<JointPathConfigurationHandler>(jointPath);
-            if(disableCustomIKCheck->isChecked()){
-                jointPath = nullptr; // Use the usual joint path
+        inverseKinematics = targetBodyItem->getCurrentIK(targetLink);
+        if(inverseKinematics){
+            if(auto compositeBodyIK = dynamic_pointer_cast<CompositeBodyIK>(inverseKinematics)){
+                jointPathConfigurationHandler =
+                    dynamic_pointer_cast<JointPathConfigurationHandler>(
+                        compositeBodyIK->getParentBodyIK());
+            } else {
+                jointPathConfigurationHandler =
+                    dynamic_pointer_cast<JointPathConfigurationHandler>(inverseKinematics);
             }
-        }
-        if(!jointPath){
-            jointPath = make_shared<JointPath>(baseLink, targetLink);
+            if(disableCustomIKCheck->isChecked()){
+                if(auto jointPath = dynamic_pointer_cast<JointPath>(inverseKinematics)){
+                    // Use the non-customized, numerical IK
+                    jointPath->setNumericalIKenabled(true);
+                }
+            }
         }
     }
 
-    self->setEnabled(jointPath != nullptr);
+    self->setEnabled(inverseKinematics != nullptr);
     resultLabel.setText("");
 
     configurationCombo.clear();
@@ -580,7 +584,7 @@ Link* LinkPositionViewImpl::findUniqueEndLink(Body* body) const
 
 void LinkPositionViewImpl::updatePanel()
 {
-    if(!jointPath){
+    if(!inverseKinematics){
         self->setEnabled(false);
         resultLabel.setText("");
 
@@ -589,16 +593,14 @@ void LinkPositionViewImpl::updatePanel()
         
         userInputConnections.block();
 
-        auto endLink = jointPath->endLink();
-
-        Vector3 p = endLink->p();
+        Vector3 p = targetLink->p();
         for(int i=0; i < 3; ++i){
             auto& spin = xyzSpin[i];
             if(!spin.hasFocus()){
                 spin.setValue(p[i]);
             }
         }
-        Matrix3 R = endLink->attitude();
+        Matrix3 R = targetLink->attitude();
         if(rpyCheck->isChecked()){
             Vector3 prevRPY;
             for(int i=0; i < 3; ++i){
@@ -735,13 +737,13 @@ void LinkPositionViewImpl::onConfigurationInput(int index)
 
 void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet inputElements)
 {
-    if(jointPath){
+    if(inverseKinematics){
 
         Position T;
         T.translation() = T_input.translation();
-        T.linear() = jointPath->endLink()->calcRfromAttitude(T_input.linear());
+        T.linear() = targetLink->calcRfromAttitude(T_input.linear());
         targetBodyItem->beginKinematicStateEdit();
-        bool solved = jointPath->calcInverseKinematics(T);
+        bool solved = inverseKinematics->calcInverseKinematics(T);
 
         if(!solved){
             for(size_t i=0; i < inputElementWidgets.size(); ++i){

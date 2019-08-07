@@ -431,9 +431,28 @@ int JointPath::numIterations() const
 }
 
 
-bool JointPath::hasAnalyticalIK() const
+bool JointPath::hasCustomIK() const
 {
     return false;
+}
+
+
+bool JointPath::hasAnalyticalIK() const
+{
+    return hasCustomIK();
+}
+
+
+void JointPath::setNumericalIKenabled(bool on)
+{
+    if(on){
+        getOrCreateNumericalIK();
+    } else {
+        if(nuIK){
+            delete nuIK;
+            nuIK = nullptr;
+        }
+    }
 }
 
 
@@ -495,7 +514,7 @@ public:
         }
     }
         
-    virtual bool hasAnalyticalIK() const override
+    virtual bool hasCustomIK() const override
     {
         return (ikTypeId != 0);
     }

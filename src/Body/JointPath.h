@@ -60,6 +60,7 @@ public:
     int indexOf(const Link* link) const;
 
     bool isNumericalIkEnabled() const { return nuIK != 0; }
+    void setNumericalIKenabled(bool on);
 
     bool isBestEffortIKmode() const;
     void setBestEffortIKmode(bool on);
@@ -82,17 +83,15 @@ public:
     // For the path customized by the customizeTarget function
     bool calcInverseKinematics();
 
-    // InverseKinematics Interface
-    virtual bool hasAnalyticalIK() const;
-
     JointPath& storeCurrentPosition();
 
     JointPath& setBaseLinkGoal(const Position& T);
 
-
     virtual bool calcInverseKinematics(const Position& T) override;
 
     int numIterations() const;
+
+    virtual bool hasCustomIK() const;
 
     //! deprecated
     bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
@@ -107,6 +106,9 @@ public:
     void setNumericalIKtruncateRatio(double r);
     //! deprecated
     static double numericalIKdefaultTruncateRatio();
+
+    //! deprecated. Use hasCustomIK() insted of this.
+    bool hasAnalyticalIK() const;
 
 private:
 

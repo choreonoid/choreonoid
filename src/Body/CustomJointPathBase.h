@@ -30,7 +30,7 @@ public:
     bool isReversed() const { return isReversed_; }
 
     virtual bool calcInverseKinematics(const Position& T) override;
-    virtual bool hasAnalyticalIK() const override;
+    virtual bool hasCustomIK() const override;
 
     template<typename iterator> void copyJointDisplacements(iterator q_iter){
         if(!isReversed_){

@@ -27,9 +27,11 @@
 #include <cnoid/BodyState>
 #include <cnoid/InverseKinematics>
 #include <cnoid/CompositeIK>
+#include <cnoid/CompositeBodyIK>
 #include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/FileUtil>
+#include <cnoid/EigenArchive>
 #include <fmt/format.h>
 #include <bitset>
 #include <deque>
@@ -48,47 +50,35 @@ const bool TRACE_FUNCTIONS = false;
 BodyLoader bodyLoader;
 BodyState kinematicStateCopy;
 
-bool loadBodyItem(BodyItem* item, const std::string& filename)
-{
-    if(item->loadModelFile(filename)){
-        if(item->name().empty()){
-            item->setName(item->body()->modelName());
-        }
-        item->setEditable(!item->body()->isStaticModel());
-        return true;
-    }
-    return false;
-}
-    
-void onSigOptionsParsed(boost::program_options::variables_map& variables)
-{
-    if(variables.count("hrpmodel")){
-        vector<string> modelFileNames = variables["hrpmodel"].as< vector<string> >();
-        for(size_t i=0; i < modelFileNames.size(); ++i){
-            BodyItemPtr item(new BodyItem());
-            if(item->load(modelFileNames[i], "OpenHRP-VRML-MODEL")){
-                RootItem::mainInstance()->addChildItem(item);
-            }
-        }
-    }
-    else if(variables.count("body")){
-    	vector<string> bodyFileNames = variables["body"].as<vector<string>>();
-    	for(size_t i=0; i < bodyFileNames.size(); ++i){
-    		BodyItemPtr item(new BodyItem());
-    		if(item->load(bodyFileNames[i], "OpenHRP-VRML-MODEL")){
-    			RootItem::mainInstance()->addChildItem(item);
-    		}
-    	}
-    }
-}
+struct AttachmentInfo {
+    string category;
+    Link* link;
+    Position T;
+};
 
-double getCurrentTime()
+struct Attachment {
+    BodyItem* baseBodyItem;
+    Link* baseLink;
+    Position T_base_local;
+    Position T_local;
+    bool isBaseKinematicStateChangedNotificationReqruied;
+    string category;
+    ScopedConnection connection;
+};
+
+class MyCompositeBodyIK : public CompositeBodyIK
 {
-    return TimeBar::instance()->time();
-}
+public:
+    MyCompositeBodyIK(BodyItemImpl* bodyItemImpl);
+    virtual bool calcInverseKinematics(const Position& T) override;
+    virtual std::shared_ptr<InverseKinematics> getParentBodyIK() override;
+
+    BodyItemImpl* bodyItemImpl;
+    unique_ptr<Attachment>& attachment;
+    shared_ptr<InverseKinematics> baseIK;
+};
 
 }
-
 
 namespace cnoid {
 
@@ -97,8 +87,6 @@ class BodyItemImpl
 public:
     BodyItem* self;
     BodyPtr body;
-    LeggedBodyHelperPtr legged;
-    Vector3 zmp;
     
     enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_FLAGS };
     std::bitset<NUM_UPUDATE_FLAGS> updateFlags;
@@ -133,6 +121,11 @@ public:
 
     Signal<void()> sigModelUpdated;
 
+    unique_ptr<Attachment> attachment;
+
+    LeggedBodyHelperPtr legged;
+    Vector3 zmp;
+
     BodyItemImpl(BodyItem* self);
     BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
     BodyItemImpl(BodyItem* self, Body* body);
@@ -162,13 +155,53 @@ public:
     bool onStaticModelPropertyChanged(bool on);
     void createSceneBody();
     bool onEditableChanged(bool on);
+    void tryToAttachToBodyItem(BodyItem* bodyItem);
+    bool attachToBodyItem(BodyItem* bodyItem, const AttachmentInfo& baseInfo, const AttachmentInfo& info);
+    void clearAttachment();
+    void onBaseBodyKinematicStateChanged();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
 };
 
 }
+
+
+static bool loadBodyItem(BodyItem* item, const std::string& filename)
+{
+    if(item->loadModelFile(filename)){
+        if(item->name().empty()){
+            item->setName(item->body()->modelName());
+        }
+        item->setEditable(!item->body()->isStaticModel());
+        return true;
+    }
+    return false;
+}
     
+
+static void onSigOptionsParsed(boost::program_options::variables_map& variables)
+{
+    if(variables.count("hrpmodel")){
+        vector<string> modelFileNames = variables["hrpmodel"].as< vector<string> >();
+        for(size_t i=0; i < modelFileNames.size(); ++i){
+            BodyItemPtr item(new BodyItem());
+            if(item->load(modelFileNames[i], "OpenHRP-VRML-MODEL")){
+                RootItem::mainInstance()->addChildItem(item);
+            }
+        }
+    }
+    else if(variables.count("body")){
+    	vector<string> bodyFileNames = variables["body"].as<vector<string>>();
+    	for(size_t i=0; i < bodyFileNames.size(); ++i){
+    		BodyItemPtr item(new BodyItem());
+    		if(item->load(bodyFileNames[i], "OpenHRP-VRML-MODEL")){
+    			RootItem::mainInstance()->addChildItem(item);
+    		}
+    	}
+    }
+}
+
 
 void BodyItem::initializeClass(ExtensionManager* ext)
 {
@@ -340,7 +373,7 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
     if(loaded){
         body = newBody;
         body->initializePosition();
-        body->setCurrentTimeFunction(getCurrentTime);
+        body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
     }
 
     initBody(false);
@@ -629,13 +662,21 @@ std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 
 void BodyItemImpl::getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>& ik)
 {
-    if(KinematicsBar::instance()->mode() == KinematicsBar::AUTO_MODE){
-        getDefaultIK(targetLink, ik);
+    auto rootLink = body->rootLink();
+    
+    if(attachment && targetLink == rootLink){
+        ik = make_shared<MyCompositeBodyIK>(this);
+    }
+
+    if(!ik){
+        if(KinematicsBar::instance()->mode() == KinematicsBar::AUTO_MODE){
+            getDefaultIK(targetLink, ik);
+        }
     }
 
     if(!ik){
         self->pinDragIK(); // create if not created
-        if(pinDragIK->numPinnedLinks() > 0 || !currentBaseLink){
+        if(pinDragIK->numPinnedLinks() > 0){
             pinDragIK->setTargetLink(targetLink, true);
             if(pinDragIK->initialize()){
                 ik = pinDragIK;
@@ -643,9 +684,8 @@ void BodyItemImpl::getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>&
         }
     }
     if(!ik){
-        if(currentBaseLink){
-            ik = getCustomJointPath(body, currentBaseLink, targetLink);
-        }
+        auto baseLink = currentBaseLink ? currentBaseLink.get() : rootLink;
+        ik = getCustomJointPath(body, baseLink, targetLink);
     }
 }
 
@@ -904,17 +944,24 @@ void BodyItemImpl::notifyKinematicStateChange(bool requestFK, bool requestVelFK,
         isCurrentKinematicStateInHistory = false;
     }
 
-    if(requestFK){
-        isFkRequested |= requestFK;
-        isVelFkRequested |= requestVelFK;
-        isAccFkRequested |= requestAccFK;
-    }
     updateFlags.reset();
 
-    if(isDirect){
-        sigKinematicStateChanged.emit();
+    if(attachment && attachment->isBaseKinematicStateChangedNotificationReqruied){
+        attachment->isBaseKinematicStateChangedNotificationReqruied = false;
+        attachment->baseBodyItem->impl->notifyKinematicStateChange(
+            requestFK, requestVelFK, requestAccFK, isDirect);
+
     } else {
-        sigKinematicStateChanged.request();
+        if(requestFK){
+            isFkRequested |= requestFK;
+            isVelFkRequested |= requestVelFK;
+            isAccFkRequested |= requestAccFK;
+        }
+        if(isDirect){
+            sigKinematicStateChanged.emit();
+        } else {
+            sigKinematicStateChanged.request();
+        }
     }
 }
 
@@ -1066,7 +1113,7 @@ void BodyItemImpl::doAssign(Item* srcItem)
     BodyItem* srcBodyItem = dynamic_cast<BodyItem*>(srcItem);
     if(srcBodyItem){
         // copy the base link property
-        Link* baseLink = 0;
+        Link* baseLink = nullptr;
         Link* srcBaseLink = srcBodyItem->currentBaseLink();
         if(srcBaseLink){
             baseLink = body->link(srcBaseLink->name());
@@ -1102,9 +1149,17 @@ void BodyItemImpl::doAssign(Item* srcItem)
 
 void BodyItem::onPositionChanged()
 {
-    WorldItem* worldItem = findOwnerItem<WorldItem>();
+    auto worldItem = findOwnerItem<WorldItem>();
     if(!worldItem){
         clearCollisions();
+    }
+
+    auto ownerBodyItem = findOwnerItem<BodyItem>();
+    if(!impl->attachment || (impl->attachment->baseBodyItem != ownerBodyItem)){
+        impl->clearAttachment();
+        if(ownerBodyItem){
+            impl->tryToAttachToBodyItem(ownerBodyItem);
+        }
     }
 }
 
@@ -1158,6 +1213,165 @@ bool BodyItemImpl::onEditableChanged(bool on)
 {
     self->setEditable(on);
     return true;
+}
+
+
+static stdx::optional<AttachmentInfo> readAttachmentInfo(Mapping& node, const Body* body, bool isBase)
+{
+    AttachmentInfo info;
+    if(node.read("category", info.category)){
+        if(isBase){
+            string linkName;
+            if(node.read("link", linkName)){
+                info.link = body->link(linkName);
+                if(!info.link){
+                    return stdx::nullopt;
+                }
+            }
+        } else {
+            info.link = nullptr;
+        }
+        info.T.setIdentity();
+        Vector3 translation;
+        if(read(node, "translation", translation)){
+            info.T.translation() = translation;
+        }
+        AngleAxis rotation;
+        if(read(node, "rotation", rotation)){
+            info.T.linear() = rotation.toRotationMatrix();
+        }
+        return info;
+    }
+    return stdx::nullopt;
+}
+
+
+static vector<AttachmentInfo> readAttachmentBases(const Body* body)
+{
+    vector<AttachmentInfo> infos;
+    auto nodes = body->info()->findListing("attachmentBases");
+    if(nodes->isValid()){
+        infos.reserve(nodes->size());
+        for(auto& node : *nodes){
+            if(node->isMapping()){
+                auto info = readAttachmentInfo(*node->toMapping(), body, true);
+                if(info){
+                    infos.push_back(*info);
+                }
+            }
+        }
+    }
+    return infos;
+}
+
+
+void BodyItemImpl::tryToAttachToBodyItem(BodyItem* bodyItem)
+{
+    bool attached = false;
+    
+    auto node = body->info()->findMapping("attachment");
+    if(node->isValid()){
+        auto attachment = readAttachmentInfo(*node, body, false);
+        if(attachment){
+            auto attachmentBases = readAttachmentBases(bodyItem->body());
+            if(!attachmentBases.empty()){
+                for(auto& base : attachmentBases){
+                    if(base.category == (*attachment).category){
+                        if(attachToBodyItem(bodyItem, base, *attachment)){
+                            attached = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if(!attached){
+        mvout() << format(_("{0} cannot be attached to {1}."),
+                          self->name(), bodyItem->name()) << endl;
+    }
+}
+
+
+bool BodyItemImpl::attachToBodyItem
+(BodyItem* bodyItem, const AttachmentInfo& baseInfo, const AttachmentInfo& info)
+{
+    attachment.reset(new Attachment);
+    
+    attachment->baseBodyItem = bodyItem;
+    attachment->baseLink = baseInfo.link;
+    attachment->T_base_local = baseInfo.T;
+    attachment->T_local = info.T;
+    attachment->isBaseKinematicStateChangedNotificationReqruied = false;
+    attachment->category = info.category;
+
+    mvout() << format(_("{0} has been attached to {1} of {2}."),
+                      self->name(), baseInfo.link->name(), bodyItem->name()) << endl;
+
+    attachment->connection =
+        bodyItem->sigKinematicStateChanged().connect(
+            [&](){ onBaseBodyKinematicStateChanged(); });
+
+    onBaseBodyKinematicStateChanged();
+
+    return true;
+}
+
+
+void BodyItemImpl::clearAttachment()
+{
+    if(attachment){
+        auto baseLink = attachment->baseLink;
+        if(baseLink){
+            mvout() << format(_("{0} has been detached from {1} of {2}."),
+                              self->name(), baseLink->name(), baseLink->body()->name()) << endl;
+        }
+        attachment.reset();
+    }
+}
+
+
+void BodyItemImpl::onBaseBodyKinematicStateChanged()
+{
+    Position T_base = attachment->baseLink->T() * attachment->T_base_local;
+    body->rootLink()->T() = T_base * attachment->T_local.inverse(Eigen::Isometry);
+    attachment->isBaseKinematicStateChangedNotificationReqruied = false;
+
+    //! \todo requestVelFK and requestAccFK should be set appropriately
+    notifyKinematicStateChange(true, false, false, true);
+}
+
+
+MyCompositeBodyIK::MyCompositeBodyIK(BodyItemImpl* bodyItemImpl)
+    : bodyItemImpl(bodyItemImpl),
+      attachment(bodyItemImpl->attachment)
+{
+    baseIK = attachment->baseBodyItem->getCurrentIK(attachment->baseLink);
+}
+
+
+bool MyCompositeBodyIK::calcInverseKinematics(const Position& T)
+{
+    bool result = false;
+    if(baseIK){
+        if(!attachment){
+            baseIK.reset();
+        } else {
+            Position Ta = T * attachment->T_local * attachment->T_base_local.inverse(Eigen::Isometry);
+            result = baseIK->calcInverseKinematics(Ta);
+            if(result){
+                attachment->isBaseKinematicStateChangedNotificationReqruied = true;
+            }
+        }
+    }
+    return result;
+}
+
+
+std::shared_ptr<InverseKinematics> MyCompositeBodyIK::getParentBodyIK()
+{
+    return baseIK;
 }
 
 

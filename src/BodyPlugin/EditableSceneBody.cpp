@@ -172,7 +172,6 @@ public:
     Link* targetLink;
     double orgJointPosition;
         
-    shared_ptr<JointPath> ikPath;
     LinkTraverse fkTraverse;
     shared_ptr<PinDragIK> pinDragIK;
     shared_ptr<InverseKinematics> ik;
@@ -836,12 +835,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
                 ik.reset();
                 
                 switch(kinematicsBar->mode()){
-                case KinematicsBar::AUTO_MODE:
-                    ik = bodyItem->getDefaultIK(targetLink);
-                    if(ik){
-                        startIK(event);
-                        break;
-                    }
+
                 case KinematicsBar::FK_MODE:
                     if(targetLink == bodyItem->currentBaseLink()){
                         // Translation of the base link
@@ -850,6 +844,8 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
                         startFK(event);
                     }
                     break;
+
+                case KinematicsBar::AUTO_MODE:
                 case KinematicsBar::IK_MODE:
                     startIK(event);
                     break;
@@ -1213,25 +1209,20 @@ void EditableSceneBodyImpl::onDraggerDragFinished()
 
 bool EditableSceneBodyImpl::initializeIK()
 {
-    Link* baseLink = bodyItem->currentBaseLink();
-
-    if(!ik){
-        if(bodyItem->pinDragIK()->numPinnedLinks() == 0 && baseLink){
-            ikPath = getCustomJointPath(bodyItem->body(), baseLink, targetLink);
-            if(ikPath){
-                if(!ikPath->hasAnalyticalIK()){
-                    ikPath->setBestEffortIKmode(true);
-                }
-                ik = ikPath;
-            }
-        }
-    }
-    if(!ik){
+    if(!ik && bodyItem->pinDragIK()->numPinnedLinks() > 0){
         pinDragIK = bodyItem->pinDragIK();
-        pinDragIK->setBaseLink(baseLink);
+        pinDragIK->setBaseLink(bodyItem->currentBaseLink());
         pinDragIK->setTargetLink(targetLink, kinematicsBar->isPositionDraggerEnabled());
         if(pinDragIK->initialize()){
             ik = pinDragIK;
+        }
+    }
+    if(!ik){
+        ik = bodyItem->getCurrentIK(targetLink);
+        if(auto jointPath = dynamic_pointer_cast<JointPath>(ik)){
+            if(!jointPath->hasAnalyticalIK()){
+                jointPath->setBestEffortIKmode(true);
+            }
         }
     }
 
