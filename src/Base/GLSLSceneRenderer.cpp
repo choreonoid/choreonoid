@@ -646,11 +646,14 @@ bool GLSLSceneRendererImpl::initializeGL()
     if(regex_match((const char*)vendor, regex(".*nouveau.*"))){
         isShadowCastingEnabled = false;
     }
-        
-    // Check the version of Linux Intel GPU driver (Mesa version)
-    if(isShadowCastingEnabled){
-        std::cmatch match;
-        if(regex_match((const char*)version, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
+
+    std::cmatch match;
+
+    // Check the Intel GPU
+    if(regex_match((const char*)renderer, match, regex("Mesa DRI Intel\\(R\\) (\\S+).*$"))){
+        if(match.str(1) == "Sandybridge"){
+            isShadowCastingEnabled = false;
+        } else if(regex_match((const char*)version, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
             int mesaMajor = stoi(match.str(1));
             if(mesaMajor >= 19){
                 isShadowCastingEnabled = false;
