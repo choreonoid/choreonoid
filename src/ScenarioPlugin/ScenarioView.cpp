@@ -12,6 +12,7 @@
 #include <cnoid/TimeBar>
 #include <cnoid/Button>
 #include <cnoid/BodyItem>
+#include <cnoid/AudioItem>
 #include <cnoid/MediaItem>
 #include <vector>
 #include "gettext.h"
@@ -236,33 +237,6 @@ void ScenarioViewImpl::start()
 }
 
 
-namespace {
-
-template <class ItemType>
-void checkTargetItems(BodyMotionItemPtr motionItem) {
-
-    ItemTreeView* itv = ItemTreeView::mainInstance();
-
-    ItemList<ItemType> targetItems;
-    if(!targetItems.extractChildItems(motionItem)){
-        Item* parentMotionItem = motionItem->parentItem();
-        if(!dynamic_cast<ScenarioItem*>(parentMotionItem)){
-            targetItems.extractChildItems(parentMotionItem);
-        }
-    }
-        
-    ItemList<ItemType> allItems;
-    if(allItems.extractChildItems(motionItem->findRootItem())){
-        for(int i=0; i < allItems.size(); ++i){
-            ref_ptr<ItemType> item = allItems[i];
-            typename ItemList<ItemType>::iterator p = std::find(targetItems.begin(), targetItems.end(), item);
-            itv->checkItem(item, (p != targetItems.end()));
-        }
-    }
-}
-}
-
-
 void ScenarioViewImpl::startMotion(int index)
 {
     if(index < motions.size()){
@@ -283,8 +257,23 @@ void ScenarioViewImpl::startMotion(int index)
             }
             itv->selectItem(info->motionItem, true);
 
-            //checkTargetItems<AudioItem>(info->motionItem);
-            checkTargetItems<MediaItem>(info->motionItem);
+            Item* targetTopItem = info->motionItem;
+            while(true){
+                auto parentItem = targetTopItem->parentItem();
+                if(!parentItem || parentItem == currentScenarioItem){
+                    break;
+                }
+                targetTopItem = parentItem;
+            }
+
+            ItemList<> items;
+            items.extractSubTreeItems(currentScenarioItem);
+            for(auto& item : items){
+                if(dynamic_pointer_cast<AudioItem>(item) ||
+                   dynamic_pointer_cast<MediaItem>(item)){
+                    itv->checkItem(item, item->isOwnedBy(targetTopItem));
+                }
+            }
 
             if(sequentialCheck.isChecked()){
                 info->startButton.setEnabled(false);
