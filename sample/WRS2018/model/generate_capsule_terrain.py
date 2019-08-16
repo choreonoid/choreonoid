@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# To execute this script, the python module path must include the directory
+# containing the Choreonoid python modules.
+# Choreonoid python module directory usually exists at ${PREFIX}/lib/choreonoid-x.x/python.
+# The python module path can be added by setting the environmental variable PYTHONPATH.
+
 from math import *
 import random
 import cnoid.Util

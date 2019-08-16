@@ -26,6 +26,13 @@ void exportPyEigenTypes(py::module& m)
     m.attr("UnitY") = Vector3::UnitY();
     m.attr("UnitZ") = Vector3::UnitZ();
 
+    py::class_<AngleAxis>(m, "AngleAxis")
+        .def(py::init<>())
+        .def(py::init<const Matrix3&>())
+        .def("axis", [](AngleAxis& self){ return self.axis(); })
+        .def("angle", [](AngleAxis& self){ return self.angle(); })
+        ;
+
     // deprecated
     m.def("getUnitX", Vector3::UnitX);
     m.def("getUnitY", Vector3::UnitY);
