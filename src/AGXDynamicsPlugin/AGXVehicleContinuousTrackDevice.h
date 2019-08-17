@@ -2,6 +2,7 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_VEHICLE_TRACK_H
 
 #include <cnoid/Device>
+#include <cnoid/SceneDrawables>
 #include <string>
 #include <vector>
 
@@ -64,6 +65,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
     vector<string> rollerNames;
     vector<string> guideNames;
     string materialName;
+    SgShapePtr nodeShape;
 };
 
 struct TrackState{
@@ -98,6 +100,7 @@ public:
     void reserveTrackStateSize(const unsigned int& num );
     void addTrackState(const Vector3& boxSize, const Position& pos);
     TrackStates& getTrackStates();
+    SgShape* getNodeShape();
 
 private:
     TrackStates m_trackStates;
