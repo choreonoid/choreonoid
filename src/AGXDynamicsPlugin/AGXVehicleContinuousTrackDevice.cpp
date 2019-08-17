@@ -54,7 +54,6 @@ public:
 
     void createTrackShapes(){
         MeshGenerator meshGenerator;
-        SgCloneMap cloneMap;
         const TrackStates& states = m_trackDevice->getTrackStates();
         for(size_t i = 0; i < states.size(); ++i) {
             m_sgTracks[i]->clearChildren();
@@ -62,7 +61,7 @@ public:
             if(size != Vector3::Zero()){
                 auto shape = m_trackDevice->getNodeShape();
                 if(shape){
-                    shape = dynamic_cast<SgShape*>(shape->clone(cloneMap));
+                    shape = dynamic_cast<SgShape*>(shape->clone());
                 } else {
                     shape = new SgShape;
                 }
