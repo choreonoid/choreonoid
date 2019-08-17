@@ -15,7 +15,7 @@ class SceneFountain : public SceneParticles
 public:
     SceneFountain();
     SceneFountain(const SceneFountain& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     virtual ParticleSystem* getParticleSystem();
 

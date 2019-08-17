@@ -85,7 +85,7 @@ SceneRain::SceneRain(const SceneRain& org)
 }
 
 
-SgObject* SceneRain::clone(SgCloneMap& cloneMap) const
+SgObject* SceneRain::doClone(SgCloneMap*) const
 {
     return new SceneRain(*this);
 }
@@ -106,7 +106,7 @@ SceneSnow::SceneSnow(const SceneSnow& org)
 }
 
 
-SgObject* SceneSnow::clone(SgCloneMap& cloneMap) const
+SgObject* SceneSnow::doClone(SgCloneMap*) const
 {
     return new SceneSnow(*this);
 }

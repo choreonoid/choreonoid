@@ -64,7 +64,7 @@ SceneFountain::SceneFountain(const SceneFountain& org)
 }
 
 
-SgObject* SceneFountain::clone(SgCloneMap& cloneMap) const
+SgObject* SceneFountain::doClone(SgCloneMap*) const
 {
     return new SceneFountain(*this);
 }

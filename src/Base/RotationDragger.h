@@ -17,10 +17,9 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     RotationDragger();
-    RotationDragger(const RotationDragger& org);
-    RotationDragger(const RotationDragger& org, SgCloneMap& cloneMap);
+    RotationDragger(const RotationDragger& org, SgCloneMap* cloneMap = nullptr);
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     enum Axis { RX = 1, RY = 2, RZ = 4 };
 
@@ -46,10 +45,10 @@ public:
     const AngleAxis& draggedAngleAxis() const;
     Affine3 draggedPosition() const;
 
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
+    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event) override;
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
+    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
 
 private:
     int draggableAxes_;

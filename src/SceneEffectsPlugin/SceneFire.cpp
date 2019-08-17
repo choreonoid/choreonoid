@@ -63,7 +63,7 @@ SceneFire::SceneFire(const SceneFire& org)
 }
 
 
-SgObject* SceneFire::clone(SgCloneMap& cloneMap) const
+SgObject* SceneFire::doClone(SgCloneMap*) const
 {
     return new SceneFire(*this);
 }

@@ -60,7 +60,7 @@ SceneSmoke::SceneSmoke(const SceneSmoke& org)
 }
 
 
-SgObject* SceneSmoke::clone(SgCloneMap& cloneMap) const
+SgObject* SceneSmoke::doClone(SgCloneMap*) const
 {
     return new SceneSmoke(*this);
 }

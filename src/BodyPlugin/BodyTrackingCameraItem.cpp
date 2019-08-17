@@ -42,24 +42,16 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
         isConstantRelativeAttitudeMode_ = false;
     }
     
-    BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org) {
-        bodyItem = 0;
-        relativeTranslationFromBody.setZero();
-        relativePositionFromBody.setIdentity();
-        isSigUpdatedEmittedBySelf = false;
-        isConstantRelativeAttitudeMode_ = org.isConstantRelativeAttitudeMode_;
-    }
-    
-    BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org, SgCloneMap& cloneMap)
+    BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org, SgCloneMap* cloneMap)
         : InteractiveCameraTransform(org, cloneMap) {
-        bodyItem = 0;
+        bodyItem = nullptr;
         relativeTranslationFromBody.setZero();
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
         isConstantRelativeAttitudeMode_ = org.isConstantRelativeAttitudeMode_;
     }
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const {
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override {
         return new BodyTrackingCameraTransform(*this, cloneMap);
     }
 
@@ -101,7 +93,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
         }
     }
 
-    virtual void onUpdated(SgUpdate& update) {
+    virtual void onUpdated(SgUpdate& update) override {
         if(isSigUpdatedEmittedBySelf){
             isSigUpdatedEmittedBySelf = false;
         } else {
