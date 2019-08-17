@@ -392,13 +392,13 @@ bool YAMLSceneReader::extractTranslation(Mapping& info, Vector3& out_p) const
 
 SgNode* YAMLSceneReader::readNode(Mapping& info)
 {
-    return impl->readNode(info);
+    return info.isValid() ? impl->readNode(info) : nullptr;
 }
 
 
 SgNode* YAMLSceneReader::readNode(Mapping& info, const std::string& type)
 {
-    return impl->readNode(info, type);
+    return info.isValid() ? impl->readNode(info, type) : nullptr;
 }
 
 
@@ -584,29 +584,29 @@ SgNode* YAMLSceneReaderImpl::readTransformParameters(Mapping& info, SgNode* scen
 
 SgNode* YAMLSceneReaderImpl::readShape(Mapping& info)
 {
-    SgNode* scene = 0;
+    SgNode* scene = nullptr;
 
-    Mapping& geometry = *info.findMapping("geometry");
-    if(geometry.isValid()){
-        SgShapePtr shape = new SgShape;
-
-        Mapping& appearance = *info.findMapping("appearance");
-        if(appearance.isValid()){
-            readAppearance(shape, appearance);
-        }
-
+    SgShapePtr shape = new SgShape;
+    
+    Mapping& appearance = *info.findMapping("appearance");
+    if(appearance.isValid()){
+        readAppearance(shape, appearance);
         if(shape->texture()){
             generateTexCoord = true;
         }else{
             generateTexCoord = false;
         }
+    }
+
+    Mapping& geometry = *info.findMapping("geometry");
+    if(geometry.isValid()){
         shape->setMesh(readGeometry(geometry));
+    }
 
-        scene = readTransformParameters(info, shape);
+    scene = readTransformParameters(info, shape);
 
-        if(scene == shape){
-            return shape.retn();
-        }
+    if(scene == shape){
+        return shape.retn();
     }
 
     return scene;
@@ -743,7 +743,7 @@ SgMesh* YAMLSceneReaderImpl::readExtrusion(Mapping& info)
         for(int i=0; i < n; ++i){
             AngleAxis& aa = orientation[i];
             Vector3& axis = aa.axis();
-            for(int j=0; j < 4; ++j){
+            for(int j=0; j < 3; ++j){
                 axis[j] = orientationNode[i*4+j].toDouble();
             }
             aa.angle() = self->toRadian(orientationNode[i*4+3].toDouble());
