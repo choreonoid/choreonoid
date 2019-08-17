@@ -77,7 +77,6 @@ for i in range(num_capsules_y):
         axis = aa.axis()
             
         print(capsule_description.format(
-            #rot = 90 * random.randint(0,3),
             x = capsule_diameter * j,
             z = h * capsule_height_step / 2.0,
             rx = axis[0],
