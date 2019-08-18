@@ -6,6 +6,7 @@ Changes since 1.7.0:
 * Remove the python plugins and wrappers implemented with boost.python
 * Remove OpenHRPPlugin and OpenHRPModelLoader
 * Remove GrxUIPlugin
+* Remove ScenarioPlugin
 * Stop supporting Qt4
 * Replace QGLWidget with QOpenGLWidget in the implementation of SceneWidget
 * Improve the rendering engine (GLSLSceneRenderer)
@@ -23,6 +24,8 @@ Changes since 1.7.0:
 * Fix a bug in picking objects on SceneView when a high DPI display is used
 * Improve JointSliderView and rename it to JointDisplacementView
 * The GLSL scene renderer is used by default
+* The appearance of the AGX track shoes can be specified
+* Multiple body items can be integrated into a composite body
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
