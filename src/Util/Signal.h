@@ -180,7 +180,7 @@ public:
     typedef typename signal_private::function_traits<Signature>::result_type result_type;
     
     SlotHolder(const FuncType& func)
-        : func(func), prev(0), owner(0) {
+        : func(func), prev(nullptr), owner(nullptr) {
     }
 
     virtual void disconnect() {
@@ -188,7 +188,7 @@ public:
     }
 
     virtual bool connected() const {
-        return owner != 0;
+        return owner != nullptr;
     }
 
     virtual void changeOrder(int orderId) {
@@ -218,7 +218,7 @@ public:
     void disconnect() {
         if(slot) {
             slot->disconnect();
-            slot = 0;
+            slot = nullptr;
         }
     }
 
@@ -291,7 +291,7 @@ private:
     Signal& operator=(const Signal& rhs);
 
 public:
-    Signal() : lastSlot(0) { }
+    Signal() : lastSlot(nullptr) { }
 
     ~Signal() {
         disconnect_all_slots();
@@ -328,8 +328,8 @@ public:
             } else {
                 firstSlot = next;
             }
-            slot->prev = 0;
-            slot->owner = 0;
+            slot->prev = nullptr;
+            slot->owner = nullptr;
             slot->isBlocked = true;
 
             /**
@@ -375,7 +375,7 @@ public:
     }
 
     bool empty() const {
-        return (firstSlot == 0);
+        return (firstSlot == nullptr);
     }
     
     result_type operator()(Args... args){
@@ -427,7 +427,7 @@ class SignalProxy
 public:
     typedef Signal<Signature, Combiner> SignalType;
 
-    SignalProxy() : signal(0) { }
+    SignalProxy() : signal(nullptr) { }
     SignalProxy(SignalType& signal) : signal(&signal) { }
     SignalProxy(const SignalProxy& org) : signal(org.signal) { }
 

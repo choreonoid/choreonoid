@@ -55,7 +55,6 @@ public:
     bool addSubItem(Item* item);
     bool isSubItem() const;
     void detachFromParentItem();
-    void emitSigDetachedFromRootForSubTree();
     bool insertChildItem(Item* item, Item* nextItem, bool isManualOperation = false);
     bool insertSubItem(Item* item, Item* nextItem);
 
@@ -189,14 +188,14 @@ public:
        @note deprecated
     */
     SignalProxy<void()> sigDetachedFromRoot() {
-        return sigDetachedFromRoot_;
+        return sigDisconnectedFromRoot_;
     }
 
     /**
        @note Please use this instead of sigDetachedFromRoot()
     */
     SignalProxy<void()> sigDisconnectedFromRoot() {
-        return sigDetachedFromRoot_;
+        return sigDisconnectedFromRoot_;
     }
 
     SignalProxy<void()> sigSubTreeChanged() {
@@ -238,7 +237,7 @@ private:
     std::bitset<NUM_ATTRIBUTES> attributes;
 
     Signal<void(const std::string& oldName)> sigNameChanged_;
-    Signal<void()> sigDetachedFromRoot_;
+    Signal<void()> sigDisconnectedFromRoot_;
     Signal<void()> sigUpdated_;
     Signal<void()> sigPositionChanged_;
     Signal<void()> sigSubTreeChanged_;
@@ -257,6 +256,7 @@ private:
     void callSlotsOnPositionChanged();
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
+    void emitSigDisconnectedFromRootForSubTree();
     static void emitSigSubTreeChanged();
 
     void detachFromParentItemSub(bool isMoving);

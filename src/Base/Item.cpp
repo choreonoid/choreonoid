@@ -341,7 +341,7 @@ void Item::detachFromParentItemSub(bool isMoving)
             if(itemsBeingAddedOrRemoved.find(parent_) == itemsBeingAddedOrRemoved.end()){
                 callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
             }
-            emitSigDetachedFromRootForSubTree();
+            emitSigDisconnectedFromRootForSubTree();
         }
     }
 
@@ -356,12 +356,12 @@ void Item::detachFromParentItemSub(bool isMoving)
 }
 
 
-void Item::emitSigDetachedFromRootForSubTree()
+void Item::emitSigDisconnectedFromRootForSubTree()
 {
     for(Item* child = childItem(); child; child = child->nextItem()){
-        child->emitSigDetachedFromRootForSubTree();
+        child->emitSigDisconnectedFromRootForSubTree();
     }
-    sigDetachedFromRoot_();
+    sigDisconnectedFromRoot_();
 
     onDisconnectedFromRoot();
 }

@@ -45,7 +45,6 @@ void exportPyItems(py::module m)
         .def("addSubItem", &Item::addSubItem)
         .def("isSubItem", &Item::isSubItem)
         .def("detachFromParentItem", &Item::detachFromParentItem)
-        .def("emitSigDetachedFromRootForSubTree", &Item::emitSigDetachedFromRootForSubTree)
         .def("insertChildItem", [](Item& self, Item* item, Item* nextItem){ return self.insertChildItem(item, nextItem); })
         .def("insertChildItem", [](Item& self, Item* item, Item* nextItem, bool isManualOperation){
                 return self.insertChildItem(item, nextItem, isManualOperation); })
