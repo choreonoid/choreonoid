@@ -26,7 +26,7 @@ using namespace cnoid;
 
 namespace {
 
-ItemTreeView* itemTreeView = 0;
+ItemTreeView* itemTreeView = nullptr;
 
 typedef Signal<void(bool isChecked)> SigCheckToggled;
 typedef std::shared_ptr<SigCheckToggled> SigCheckToggledPtr;
@@ -43,8 +43,8 @@ public:
 
     ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl);
     virtual ~ItvItem();
-    virtual QVariant data(int column, int role) const;
-    virtual void setData(int column, int role, const QVariant& value);
+    virtual QVariant data(int column, int role) const override;
+    virtual void setData(int column, int role, const QVariant& value) override;
     SigCheckToggled* sigCheckToggled(int id);
     SigCheckToggled& getOrCreateSigCheckToggled(int id);
 };
@@ -106,8 +106,8 @@ public:
     void showCheckColumn(int id, bool on);
     void releaseCheckColumn(int id);
         
-    virtual void mousePressEvent(QMouseEvent* event);
-    virtual void keyPressEvent(QKeyEvent* event);
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void keyPressEvent(QKeyEvent* event) override;
         
     ItvItem* getItvItem(Item* item);
     ItvItem* getOrCreateItvItem(Item* item);
@@ -117,11 +117,11 @@ public:
     void onSubTreeRemoved(Item* item, bool isMoving);
     void onItemAssigned(Item* assigned, Item* srcItem);
 
-    virtual void dropEvent(QDropEvent* event);
+    virtual void dropEvent(QDropEvent* event) override;
         
     void onRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
     void onRowsInserted(const QModelIndex& parent, int start, int end);
-    virtual bool dropMimeData(QTreeWidgetItem* parent, int index, const QMimeData* data, Qt::DropAction action);
+    virtual bool dropMimeData(QTreeWidgetItem* parent, int index, const QMimeData* data, Qt::DropAction action) override;
     void onSelectionChanged();
     bool isItemSelected(Item* item);
     bool selectItem(Item* item, bool select);
@@ -568,7 +568,7 @@ void ItemTreeViewImpl::keyPressEvent(QKeyEvent* event)
 
 ItvItem* ItemTreeViewImpl::getItvItem(Item* item)
 {
-    ItvItem* itvItem = 0;
+    ItvItem* itvItem = nullptr;
     auto iter = itemToItvItemMap.find(item);
     if(iter != itemToItvItemMap.end()){
         itvItem = iter->second;
