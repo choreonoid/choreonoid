@@ -592,7 +592,7 @@ void EditableSceneBodyImpl::makeLinkFree(EditableSceneLink* sceneLink)
     if(bodyItem->currentBaseLink() == sceneLink->link()){
         bodyItem->setCurrentBaseLink(0);
     }
-    bodyItem->pinDragIK()->setPin(sceneLink->link(), InverseKinematics::NO_AXES);
+    bodyItem->pinDragIK()->setPin(sceneLink->link(), PinDragIK::NO_AXES);
     bodyItem->notifyUpdate();
 }
 
@@ -620,20 +620,20 @@ void EditableSceneBodyImpl::togglePin(EditableSceneLink* sceneLink, bool toggleT
 {
     auto pin = bodyItem->pinDragIK();
 
-    InverseKinematics::AxisSet axes = pin->pinAxes(sceneLink->link());
+    PinDragIK::AxisSet axes = pin->pinAxes(sceneLink->link());
 
     if(toggleTranslation && toggleRotation){
-        if(axes == InverseKinematics::NO_AXES){
-            axes = InverseKinematics::TRANSFORM_6D;
+        if(axes == PinDragIK::NO_AXES){
+            axes = PinDragIK::TRANSFORM_6D;
         } else {
-            axes = InverseKinematics::NO_AXES;
+            axes = PinDragIK::NO_AXES;
         }
     } else {
         if(toggleTranslation){
-            axes = (InverseKinematics::AxisSet)(axes ^ InverseKinematics::TRANSLATION_3D);
+            axes = (PinDragIK::AxisSet)(axes ^ PinDragIK::TRANSLATION_3D);
         }
         if(toggleRotation){
-            axes = (InverseKinematics::AxisSet)(axes ^ InverseKinematics::ROTATION_3D);
+            axes = (PinDragIK::AxisSet)(axes ^ PinDragIK::ROTATION_3D);
         }
     }
         
@@ -653,9 +653,12 @@ void EditableSceneBodyImpl::makeLinkAttitudeLevel()
             const Vector3 z(T(0,2), T(1, 2), T(2, 2));
             const Vector3 axis = z.cross(Vector3::UnitZ()).normalized();
             const Matrix3 R2 = AngleAxisd(theta, axis) * T.linear();
+            Position T2;
+            T2.linear() = R2;
+            T2.translation() = targetLink->p();
 
             bodyItem->beginKinematicStateEdit();
-            if(ik->calcInverseKinematics(targetLink->p(), R2)){
+            if(ik->calcInverseKinematics(T2)){
                 bodyItem->notifyKinematicStateChange(true);
                 bodyItem->acceptKinematicStateEdit();
             }
@@ -682,7 +685,7 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
                 sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
             } else {
                 int pinAxes = pin->pinAxes(link);
-                if(pinAxes & (InverseKinematics::TRANSFORM_6D)){
+                if(pinAxes & (PinDragIK::TRANSFORM_6D)){
                     sceneLink->showMarker(Vector3f(1.0f, 1.0f, 0.1f), 0.4);
                 }
             }
@@ -1272,7 +1275,7 @@ void EditableSceneBodyImpl::dragIK(const SceneWidgetEvent& event)
 void EditableSceneBodyImpl::doIK(const Position& position)
 {
     if(ik){
-        if(ik->calcInverseKinematics(position.translation(), position.linear()) || true /* Best effort */){
+        if(ik->calcInverseKinematics(position) || true /* Best effort */){
             fkTraverse.calcForwardKinematics();
             bodyItem->notifyKinematicStateChange(true);
         }

@@ -921,6 +921,10 @@ void BodyLinkViewImpl::setPosture(Matrix3 R)
 
 void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
 {
+    Position T;
+    T.translation() = p;
+    T.linear() = R;
+    
     auto ik = currentBodyItem->getCurrentIK(currentLink);
 
     if(ik){
@@ -931,19 +935,13 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
         if(KinematicsBar::instance()->isPenetrationBlockMode()){
             auto blocker = currentBodyItem->createPenetrationBlocker(currentLink, true);
             if(blocker){
-                Position T;
-                T.translation() = p;
-                T.linear() = R;
-                if(blocker->adjust(T, Vector3(p - currentLink->p()))){
-                    p = T.translation();
-                    R = T.linear();
-                }
+                blocker->adjust(T, Vector3(p - currentLink->p()));
             }
         }
 
         bool doNotifyKinematicStateChange = false;
         
-        if(ik->calcInverseKinematics(p, R)){
+        if(ik->calcInverseKinematics(T)){
             doNotifyKinematicStateChange = true;
 
             if(currentLink->isRoot()){

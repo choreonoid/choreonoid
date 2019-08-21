@@ -33,11 +33,6 @@ public:
 
     virtual bool calcInverseKinematics(const Position& T) override;
 
-    //! deprecated
-    bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
-        return InverseKinematics::calcInverseKinematics(p, R);
-    }
-        
 private:
     BodyPtr body_;
     Link* targetLink_;
