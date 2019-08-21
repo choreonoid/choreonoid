@@ -16,7 +16,8 @@
 
 namespace cnoid {
 
-class JointPathIkImpl;
+class NumericalIK;
+class LinkTraverse;
 
 class CNOID_EXPORT JointPath : public InverseKinematics
 {
@@ -24,7 +25,6 @@ public:
     JointPath();
     JointPath(Link* base, Link* end);
     JointPath(Link* end);
-    virtual ~JointPath();
 
     bool empty() const {
         return joints_.empty();
@@ -39,11 +39,11 @@ public:
     }
 
     Link* baseLink() const {
-        return linkPath.baseLink();
+        return linkPath_.baseLink();
     }
 
     Link* endLink() const {
-        return linkPath.endLink();
+        return linkPath_.endLink();
     }
 
     bool isJointDownward(int index) const {
@@ -53,13 +53,16 @@ public:
     LinkPath::accessor joints() { return LinkPath::accessor(joints_); }
     LinkPath::const_accessor joints() const { return LinkPath::const_accessor(joints_); }
 
+    LinkPath& linkPath() { return linkPath_; }
+    const LinkPath& linkPath() const { return linkPath_; }
+
     void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const {
-        linkPath.calcForwardKinematics(calcVelocity, calcAcceleration);
+        linkPath_.calcForwardKinematics(calcVelocity, calcAcceleration);
     }
 
     int indexOf(const Link* link) const;
 
-    bool isNumericalIkEnabled() const { return nuIK != 0; }
+    bool isNumericalIkEnabled() const { return numericalIK != nullptr; }
     void setNumericalIKenabled(bool on);
 
     bool isBestEffortIKmode() const;
@@ -88,6 +91,7 @@ public:
     JointPath& setBaseLinkGoal(const Position& T);
 
     virtual bool calcInverseKinematics(const Position& T) override;
+    virtual bool calcRemainingPartForwardKinematicsForInverseKinematics() override;
 
     int numIterations() const;
 
@@ -111,19 +115,18 @@ public:
     bool hasAnalyticalIK() const;
 
 private:
-
     JointPath(const JointPath& org);
-		
     void initialize();
     void extractJoints();
     void doResetWhenJointPathUpdated();
-    JointPathIkImpl* getOrCreateNumericalIK();
+    NumericalIK* getOrCreateNumericalIK();
 
-    LinkPath linkPath;
+    LinkPath linkPath_;
     std::vector<Link*> joints_;
     int numUpwardJointConnections;
     bool needForwardKinematicsBeforeIK;
-    JointPathIkImpl* nuIK; // numerical IK
+    NumericalIK* numericalIK;
+    std::shared_ptr<LinkTraverse> remainingLinkTraverse;
 };
 
 class Body;

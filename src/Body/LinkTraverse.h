@@ -32,6 +32,8 @@ public:
 
     void append(Link* link, bool isDownward = true);
 
+    bool remove(Link* link);
+
     int numLinks() const {
         return static_cast<int>(links_.size());
     }

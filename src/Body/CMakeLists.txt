@@ -39,6 +39,7 @@ set(sources
   MultiDeviceStateSeq.cpp
   ExtraBodyStateAccessor.cpp
   SceneCollision.cpp
+  InverseKinematics.cpp
   CompositeIK.cpp
   PinDragIK.cpp
   LinkGroup.cpp

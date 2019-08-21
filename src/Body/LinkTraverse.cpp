@@ -87,6 +87,27 @@ void LinkTraverse::append(Link* link, bool isDownward)
 }
 
 
+bool LinkTraverse::remove(Link* link)
+{
+    int index = -1;
+    for(size_t i=0; i < links_.size(); ++i){
+        if(links_[i] == link){
+            index = i;
+            break;
+        }
+    }
+    if(index >= 0){
+        if(index <= numUpwardConnections){
+            --numUpwardConnections;
+        }
+        links_.erase(links_.begin() + index);
+        return true;
+    }
+
+    return false;
+}
+
+
 void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleration) const
 {
     Vector3 arm;

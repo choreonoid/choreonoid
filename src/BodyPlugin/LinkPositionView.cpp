@@ -762,7 +762,8 @@ void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet
             }
         }
 
-        if(solved){       
+        if(solved){
+            inverseKinematics->calcRemainingPartForwardKinematicsForInverseKinematics();
             targetBodyItem->notifyKinematicStateChange();
             targetBodyItem->acceptKinematicStateEdit();
             resultLabel.setText(_("Solved"));
