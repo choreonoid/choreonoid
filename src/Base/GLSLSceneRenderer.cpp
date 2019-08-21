@@ -642,11 +642,6 @@ bool GLSLSceneRendererImpl::initializeGL()
     os() << fmt::format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view.\n"),
                         major, minor, vendor, renderer, glsl, self->name());
 
-    // Check if the GPU driver is Nouveau
-    if(regex_match((const char*)vendor, regex(".*nouveau.*"))){
-        isShadowCastingEnabled = false;
-    }
-
     std::cmatch match;
 
     // Check the Intel GPU
@@ -660,10 +655,20 @@ bool GLSLSceneRendererImpl::initializeGL()
             }
         }
     }
-
     // Check if the GPU is AMD's Radeon GPU
-    if(isShadowCastingEnabled && regex_match((const char*)renderer, regex("^AMD Radeon.*"))){
+    else if(regex_match((const char*)renderer, regex("AMD Radeon.*"))){
         isShadowCastingEnabled = false;
+    }
+    // CHeck if the VMWare's SVGA3D driver is used
+    else if(regex_match((const char*)vendor, regex("VMware, Inc\\..*")) &&
+            regex_match((const char*)renderer, regex("SVGA3D.*"))){
+        os() << "VMWare's SVGA3D is used." << endl;
+        isShadowCastingEnabled = false;
+    }
+    // Check if the GPU driver is Nouveau
+    else if(regex_match((const char*)vendor, regex(".*nouveau.*"))){
+        isShadowCastingEnabled = false;
+
     }
 
     if(!isShadowCastingEnabled){
