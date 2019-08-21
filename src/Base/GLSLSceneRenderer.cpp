@@ -659,10 +659,8 @@ bool GLSLSceneRendererImpl::initializeGL()
     else if(regex_match((const char*)renderer, regex("AMD Radeon.*"))){
         isShadowCastingEnabled = false;
     }
-    // CHeck if the VMWare's SVGA3D driver is used
-    else if(regex_match((const char*)vendor, regex("VMware, Inc\\..*")) &&
-            regex_match((const char*)renderer, regex("SVGA3D.*"))){
-        os() << "VMWare's SVGA3D is used." << endl;
+    // CHeck if the VMWare's virtual driver is used
+    else if(regex_match((const char*)vendor, regex("VMware, Inc\\..*"))){
         isShadowCastingEnabled = false;
     }
     // Check if the GPU driver is Nouveau
