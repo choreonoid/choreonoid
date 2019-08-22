@@ -173,8 +173,9 @@ public:
     double orgJointPosition;
         
     LinkTraverse fkTraverse;
+    shared_ptr<InverseKinematics> currentIK;
+    shared_ptr<InverseKinematics> defaultIK;
     shared_ptr<PinDragIK> pinDragIK;
-    shared_ptr<InverseKinematics> ik;
     shared_ptr<PenetrationBlocker> penetrationBlocker;
     PositionDraggerPtr positionDragger;
 
@@ -836,10 +837,18 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
             if(event.button() == Qt::LeftButton){
                 targetLink = pointedSceneLink->link();
                 updateMarkersAndManipulators();
-                ik.reset();
+                currentIK.reset();
+                defaultIK.reset();
                 
                 switch(kinematicsBar->mode()){
 
+                case KinematicsBar::AUTO_MODE:
+                    defaultIK = bodyItem->getDefaultIK(targetLink);
+                    if(defaultIK){
+                        startIK(event);
+                        break;
+                    }
+                    
                 case KinematicsBar::FK_MODE:
                     if(targetLink == bodyItem->currentBaseLink()){
                         // Translation of the base link
@@ -849,7 +858,6 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
                     }
                     break;
 
-                case KinematicsBar::AUTO_MODE:
                 case KinematicsBar::IK_MODE:
                     startIK(event);
                     break;
@@ -1213,24 +1221,28 @@ void EditableSceneBodyImpl::onDraggerDragFinished()
 
 bool EditableSceneBodyImpl::initializeIK()
 {
-    if(!ik && bodyItem->pinDragIK()->numPinnedLinks() > 0){
+    if(!currentIK && bodyItem->pinDragIK()->numPinnedLinks() > 0){
         pinDragIK = bodyItem->pinDragIK();
         pinDragIK->setBaseLink(bodyItem->currentBaseLink());
         pinDragIK->setTargetLink(targetLink, kinematicsBar->isPositionDraggerEnabled());
         if(pinDragIK->initialize()){
-            ik = pinDragIK;
+            currentIK = pinDragIK;
         }
     }
-    if(!ik){
-        ik = bodyItem->getCurrentIK(targetLink);
-        if(auto jointPath = dynamic_pointer_cast<JointPath>(ik)){
-            if(!jointPath->hasAnalyticalIK()){
-                jointPath->setBestEffortIKmode(true);
-            }
+    if(!currentIK){
+        if(defaultIK){
+            currentIK = defaultIK;
+        } else {
+            currentIK = bodyItem->getCurrentIK(targetLink);
+        }
+    }
+    if(auto jointPath = dynamic_pointer_cast<JointPath>(currentIK)){
+        if(!jointPath->hasAnalyticalIK()){
+            jointPath->setBestEffortIKmode(true);
         }
     }
 
-    return ik? true: false;
+    return currentIK? true: false;
 }
 
 
@@ -1275,9 +1287,9 @@ void EditableSceneBodyImpl::dragIK(const SceneWidgetEvent& event)
 
 void EditableSceneBodyImpl::doIK(const Position& position)
 {
-    if(ik){
-        if(ik->calcInverseKinematics(position) || true /* Best effort */){
-            bool fkDone = ik->calcRemainingPartForwardKinematicsForInverseKinematics();
+    if(currentIK){
+        if(currentIK->calcInverseKinematics(position) || true /* Best effort */){
+            bool fkDone = currentIK->calcRemainingPartForwardKinematicsForInverseKinematics();
             if(!fkDone){
                 fkTraverse.calcForwardKinematics();
             }

@@ -38,7 +38,7 @@ void CompositeIK::reset(Body* body, Link* targetLink)
 bool CompositeIK::addBaseLink(Link* baseLink)
 {
     if(baseLink && targetLink_){
-        auto path = getCustomJointPath(body_, targetLink_, baseLink);
+        auto path = getCustomJointPath(body_, baseLink, targetLink_);
         if(path){
             hasAnalyticalIK_ = paths.empty() ? path->hasAnalyticalIK() : (hasAnalyticalIK_ && path->hasAnalyticalIK());
             paths.push_back(path);
@@ -52,7 +52,7 @@ bool CompositeIK::addBaseLink(Link* baseLink)
 
 Link* CompositeIK::baseLink(int index) const
 {
-    return paths[index]->endLink();
+    return paths[index]->baseLink();
 }
 
 
@@ -74,27 +74,31 @@ bool CompositeIK::calcInverseKinematics(const Position& T)
         q0[i] = body_->joint(i)->q();
     }
 
-    targetLink_->setPosition(T);
-
     bool solved = true;
-    size_t pathIndex;
-    for(pathIndex=0; pathIndex < paths.size(); ++pathIndex){
+    size_t pathIndex = 0;
+    while(true){
         JointPath& path = *paths[pathIndex];
-        Link* link = path.endLink();
-        Position T_end = link->T();
-        solved = path.setBaseLinkGoal(T).calcInverseKinematics(T_end);
-        link->setPosition(T_end);
+        solved = path.calcInverseKinematics(T);
         if(!solved){
+            break;
+        }
+        ++pathIndex;
+        if(pathIndex < paths.size()){
+            targetLink_->setPosition(T0);
+        } else {
             break;
         }
     }
 
-    if(!solved){
+    if(solved){
+        targetLink_->setPosition(T);
+
+    } else {
         targetLink_->setPosition(T0);
         for(int i=0; i < n; ++i){
             body_->joint(i)->q() = q0[i];
         }
-        for(size_t i=0; i < pathIndex; ++i){
+        for(size_t i=0; i <= pathIndex; ++i){
             paths[i]->calcForwardKinematics();
         }
     }
