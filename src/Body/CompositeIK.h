@@ -8,6 +8,7 @@
 
 #include "InverseKinematics.h"
 #include <cnoid/Referenced>
+#include <vector>
 #include <memory>
 #include "exportdecl.h"
 
