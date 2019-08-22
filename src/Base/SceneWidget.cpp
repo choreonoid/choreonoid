@@ -2812,6 +2812,7 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
         renderer->setBackgroundColor(color);
         doUpdate = true;
     }
+
     if(readColor(archive, "gridColor", gridColor[FLOOR_GRID])){
         doUpdate = true;
     }
@@ -2822,6 +2823,7 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
     	doUpdate = true;
     }
     if(doUpdate){
+        updateGrids();
         update();
     }
 
