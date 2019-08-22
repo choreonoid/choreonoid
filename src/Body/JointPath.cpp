@@ -420,9 +420,10 @@ bool JointPath::calcRemainingPartForwardKinematicsForInverseKinematics()
 {
     if(!remainingLinkTraverse){
         remainingLinkTraverse = make_shared<LinkTraverse>(baseLink(), true, true);
-        for(int i=0; i < linkPath_.size() - 1; ++i){
-            remainingLinkTraverse->remove(linkPath_[i]);
+        for(auto& link : linkPath_){
+            remainingLinkTraverse->remove(link);
         }
+        remainingLinkTraverse->prependRootAdjacentLinkToward(baseLink());
     }
     remainingLinkTraverse->calcForwardKinematics();
     return true;

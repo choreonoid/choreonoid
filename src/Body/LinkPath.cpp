@@ -42,7 +42,7 @@ bool LinkPath::setPath(Link* base, Link* end)
 {
     links_.clear();
     numUpwardConnections = 0;
-    bool found = findPathSub(base, 0, end, false);
+    bool found = findPathSub(base, nullptr, end, false);
     if(!found){
         links_.clear();
     }

@@ -659,7 +659,8 @@ void EditableSceneBodyImpl::makeLinkAttitudeLevel()
 
             bodyItem->beginKinematicStateEdit();
             if(ik->calcInverseKinematics(T2)){
-                bodyItem->notifyKinematicStateChange(true);
+                bool fkDone = ik->calcRemainingPartForwardKinematicsForInverseKinematics();
+                bodyItem->notifyKinematicStateChange(!fkDone);
                 bodyItem->acceptKinematicStateEdit();
             }
         }
@@ -1276,8 +1277,11 @@ void EditableSceneBodyImpl::doIK(const Position& position)
 {
     if(ik){
         if(ik->calcInverseKinematics(position) || true /* Best effort */){
-            fkTraverse.calcForwardKinematics();
-            bodyItem->notifyKinematicStateChange(true);
+            bool fkDone = ik->calcRemainingPartForwardKinematicsForInverseKinematics();
+            if(!fkDone){
+                fkTraverse.calcForwardKinematics();
+            }
+            bodyItem->notifyKinematicStateChange();
         }
     }
 }

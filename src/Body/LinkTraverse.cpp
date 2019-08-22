@@ -108,6 +108,50 @@ bool LinkTraverse::remove(Link* link)
 }
 
 
+Link* LinkTraverse::prependRootAdjacentLinkToward(Link* link)
+{
+    if(!empty()){
+        bool isUpward = true;
+        auto linkToPrepend = findRootAdjacentLink(link, nullptr, links_.front(), isUpward);
+        if(linkToPrepend){
+            links_.insert(links_.begin(), linkToPrepend);
+            if(isUpward){
+                ++numUpwardConnections;
+            }
+            return linkToPrepend;
+        }
+    }
+    return nullptr;
+}
+
+
+Link* LinkTraverse::findRootAdjacentLink(Link* link, Link* prev, Link* root, bool& isUpward)
+{
+    if(link == root){
+        return prev;
+    }
+    if(isUpward){
+        auto parent = link->parent();
+        if(parent && parent != prev){
+            auto found = findRootAdjacentLink(parent, link, root, isUpward);
+            if(found){
+                return found;
+            }
+        }
+    }
+    isUpward = false;
+    for(auto child = link->child(); child; child = child->sibling()){
+        if(child != prev){
+            auto found = findRootAdjacentLink(child, link, root, isUpward);
+            if(found){
+                return found;
+            }
+        }
+    }
+    return nullptr;
+}
+
+    
 void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleration) const
 {
     Vector3 arm;

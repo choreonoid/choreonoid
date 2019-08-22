@@ -961,7 +961,8 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
             }
         }
         if(doNotifyKinematicStateChange){
-            currentBodyItem->notifyKinematicStateChange(true);
+            bool fkDone = ik->calcRemainingPartForwardKinematicsForInverseKinematics();
+            currentBodyItem->notifyKinematicStateChange(!fkDone);
             currentBodyItem->acceptKinematicStateEdit();
         }
     }

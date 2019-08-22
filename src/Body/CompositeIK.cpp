@@ -4,7 +4,9 @@
 */
 
 #include "CompositeIK.h"
+#include "Body.h"
 #include "Link.h"
+#include "JointPath.h"
 
 using namespace std;
 using namespace cnoid;
@@ -12,7 +14,7 @@ using namespace cnoid;
 
 CompositeIK::CompositeIK()
 {
-    targetLink_ = 0;
+    targetLink_ = nullptr;
     hasAnalyticalIK_ = false;
 }
 
@@ -23,18 +25,13 @@ CompositeIK::CompositeIK(Body* body, Link* targetLink)
 }
 
 
-CompositeIK::~CompositeIK()
-{
-
-}
-
-
 void CompositeIK::reset(Body* body, Link* targetLink)
 {
     body_ = body;
     targetLink_ = targetLink;
     hasAnalyticalIK_ = false;
     paths.clear();
+    remainingLinkTraverse.reset();
 }
    
 
@@ -45,10 +42,17 @@ bool CompositeIK::addBaseLink(Link* baseLink)
         if(path){
             hasAnalyticalIK_ = paths.empty() ? path->hasAnalyticalIK() : (hasAnalyticalIK_ && path->hasAnalyticalIK());
             paths.push_back(path);
+            remainingLinkTraverse.reset();
             return true;
         }
     }
     return false;
+}
+
+
+Link* CompositeIK::baseLink(int index) const
+{
+    return paths[index]->endLink();
 }
 
 
@@ -97,3 +101,22 @@ bool CompositeIK::calcInverseKinematics(const Position& T)
 
     return solved;
 }
+
+
+bool CompositeIK::calcRemainingPartForwardKinematicsForInverseKinematics()
+{
+    if(!remainingLinkTraverse){
+        remainingLinkTraverse = make_shared<LinkTraverse>(targetLink_, true, true);
+        for(auto& jointPath : paths){
+            for(auto& link : jointPath->linkPath()){
+                remainingLinkTraverse->remove(link);
+            }
+        }
+        remainingLinkTraverse->prependRootAdjacentLinkToward(targetLink_);
+    }
+    remainingLinkTraverse->calcForwardKinematics();
+    return true;
+}
+
+    
+
