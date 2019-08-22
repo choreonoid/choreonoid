@@ -24,7 +24,7 @@ public:
     AISTSimulatorItem(const AISTSimulatorItem& org);
     virtual ~AISTSimulatorItem();
 
-    virtual bool startSimulation(bool doReset = true);
+    virtual bool startSimulation(bool doReset = true) override;
 
     enum DynamicsMode { FORWARD_DYNAMICS = 0, KINEMATICS, N_DYNAMICS_MODES };
     enum IntegrationMode { EULER_INTEGRATION = 0, RUNGE_KUTTA_INTEGRATION, N_INTEGRATION_MODES };
@@ -51,9 +51,9 @@ public:
     void clearExtraJoint();
 
     virtual Vector3 getGravity() const override;
-    virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
-    virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
-    virtual void clearForcedPositions();
+    virtual void setForcedPosition(BodyItem* bodyItem, const Position& T) override;
+    virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const override;
+    virtual void clearForcedPositions() override;
 
     typedef std::function<bool(Link* link1, Link* link2,
                                const CollisionArray& collisions,
@@ -66,19 +66,19 @@ public:
     void setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction);
 
 protected:
-    virtual SimulationBody* createSimulationBody(Body* orgBody);
-    virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
-    virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
-    virtual void finalizeSimulation();
-    virtual std::shared_ptr<CollisionLinkPairList> getCollisions();
+    virtual SimulationBody* createSimulationBody(Body* orgBody) override;
+    virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
+    virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies) override;
+    virtual void finalizeSimulation() override;
+    virtual std::shared_ptr<CollisionLinkPairList> getCollisions() override;
         
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 #ifdef ENABLE_SIMULATION_PROFILING
-    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
-    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
+    virtual void getProfilingNames(std::vector<std::string>& profilingNames) override;
+    virtual void getProfilingTimes(std::vector<double>& profilingTimes) override;
 #endif
 
 private:
