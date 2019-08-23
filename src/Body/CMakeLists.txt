@@ -65,7 +65,9 @@ set(sources
   BodyMotionUtil.cpp
   ControllerIO.cpp
   SimpleController.cpp
+  ManipulatorFrame.cpp
   ManipulatorPosition.cpp
+  ManipulatorPositionManager.cpp
   CnoidBody.cpp # This file must be placed at the last position
   )
 
@@ -133,7 +135,9 @@ set(headers
   ExtraJoint.h
   ControllerIO.h
   SimpleController.h
+  ManipulatorFrame.h
   ManipulatorPosition.h
+  ManipulatorPositionManager.h
   exportdecl.h
   CnoidBody.h
   )
