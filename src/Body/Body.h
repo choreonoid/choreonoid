@@ -98,6 +98,8 @@ public:
         return rootLink_;
     }
 
+    Link* findUniqueEndLink() const;
+
     /**
        The number of the links that are actual joints.
        The joints given joint ids are recognized as such joints.

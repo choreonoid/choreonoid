@@ -115,7 +115,6 @@ public:
     void setBodyItem(BodyItem* bodyItem);
     void updateTargetLink(Link* link = nullptr);
     void updatePanel();
-    Link* findUniqueEndLink(Body* body) const;
     void updateRotationMatrixPanel(const Matrix3& R);
     void updateConfigurationPanel();
     void onPositionInput(InputElementSet inputElements);
@@ -511,7 +510,7 @@ void LinkPositionViewImpl::updateTargetLink(Link* link)
             if(selectedLinkIndex >= 0){
                 targetLink = body->link(selectedLinkIndex);
             } else {
-                targetLink = findUniqueEndLink(body);
+                targetLink = body->findUniqueEndLink();
                 if(!targetLink){
                     targetLink = body->rootLink();
                 }
@@ -561,24 +560,6 @@ void LinkPositionViewImpl::updateTargetLink(Link* link)
                 jointPathConfigurationHandler->getCurrentConfiguration());
         }
     }
-}
-
-
-Link* LinkPositionViewImpl::findUniqueEndLink(Body* body) const
-{
-    Link* endLink = nullptr;
-    Link* link = body->rootLink();
-    while(true){
-        if(!link->child()){
-            endLink = link;
-            break;
-        }
-        if(link->child()->sibling()){
-            break;
-        }
-        link = link->child();
-    }
-    return endLink;
 }
 
 

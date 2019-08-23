@@ -308,6 +308,24 @@ void Body::setModelName(const std::string& name)
 }
 
 
+Link* Body::findUniqueEndLink() const
+{
+    Link* endLink = nullptr;
+    Link* link = rootLink_;
+    while(true){
+        if(!link->child_){
+            endLink = link;
+            break;
+        }
+        if(link->child_->sibling_){
+            break;
+        }
+        link = link->child_;
+    }
+    return endLink;
+}
+
+
 const Mapping* Body::info() const
 {
     return impl->info;

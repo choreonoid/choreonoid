@@ -652,7 +652,7 @@ msgstr "リンク原点"
 
 #: LinkPositionView.cpp:353
 msgid "Config"
-msgstr "コンフィグ"
+msgstr "形態"
 
 #: LinkPositionView.cpp:362
 msgid "Require"
