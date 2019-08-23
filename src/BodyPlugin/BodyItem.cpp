@@ -685,7 +685,7 @@ void BodyItemImpl::getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>&
     }
     if(!ik){
         auto baseLink = currentBaseLink ? currentBaseLink.get() : rootLink;
-        ik = getCustomJointPath(body, baseLink, targetLink);
+        ik = JointPath::getCustomPath(body, baseLink, targetLink);
     }
 }
 
@@ -708,7 +708,7 @@ void BodyItemImpl::getDefaultIK(Link* targetLink, shared_ptr<InverseKinematics>&
             Link* baseLink = body->link(setup[0].toString());
             if(baseLink){
                 if(setup.size() == 1){
-                    ik = getCustomJointPath(body, baseLink, targetLink);
+                    ik = JointPath::getCustomPath(body, baseLink, targetLink);
                 } else {
                     auto compositeIK = make_shared<CompositeIK>(body, targetLink);
                     ik = compositeIK;

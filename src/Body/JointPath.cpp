@@ -556,7 +556,7 @@ public:
 }
 
 
-std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* endLink)
+std::shared_ptr<JointPath> JointPath::getCustomPath(Body* body, Link* baseLink, Link* endLink)
 {
     auto customJointPathHandler = body->findHandler<CustomJointPathHandler>();
     if(customJointPathHandler){
