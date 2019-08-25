@@ -24,6 +24,7 @@ class CNOID_EXPORT ManipulatorFrameSet : public Referenced
 {
 public:
     ManipulatorFrameSet();
+    ManipulatorFrameSet(const ManipulatorFrameSet& org);
     
     int numBaseFrames() const { return baseFrames_.size(); }
     int numToolFrames() const { return toolFrames_.size(); }

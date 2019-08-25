@@ -29,7 +29,7 @@ public:
     vector<ManipulatorPositionSetPtr> childSets;
 
     ManipulatorPositionSetImpl(ManipulatorPositionSet* self);
-    bool append(ManipulatorPosition* position);
+    bool append(ManipulatorPosition* position, bool doOverwrite);
     bool remove(ManipulatorPosition* position);
     pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> find(
         ManipulatorPosition* position, ManipulatorPositionSet* traversed);
@@ -39,6 +39,9 @@ public:
 };
 
 }
+
+
+constexpr int ManipulatorPosition::MAX_NUM_JOINTS;
 
 
 ManipulatorPosition::ManipulatorPosition(PositionType type)
@@ -263,17 +266,28 @@ ManipulatorPositionSetImpl::ManipulatorPositionSetImpl(ManipulatorPositionSet* s
 }
 
 
-bool ManipulatorPositionSet::append(ManipulatorPosition* position)
+bool ManipulatorPositionSet::append(ManipulatorPosition* position, bool doOverwrite)
 {
-    return impl->append(position);
+    return impl->append(position, doOverwrite);
 }
 
 
-bool ManipulatorPositionSetImpl::append(ManipulatorPosition* position)
+bool ManipulatorPositionSetImpl::append(ManipulatorPosition* position, bool doOverwrite)
 {
+    auto& positions = self->positions_;
+    
     auto iter = nameToIteratorMap.find(position->name());
     if(iter != nameToIteratorMap.end()){
-        return false;
+        if(!doOverwrite){
+            return false;
+        } else {
+            // remove existing position with the same name
+            auto listIter = iter->second;
+            auto pointer = *listIter;
+            pointerToIteratorMap.erase(pointer);
+            nameToIteratorMap.erase(iter);
+            positions.erase(listIter);
+        }
     }
 
     auto owner = position->ownerPositionSet();
@@ -281,7 +295,6 @@ bool ManipulatorPositionSetImpl::append(ManipulatorPosition* position)
         owner->remove(position);
     }
 
-    auto& positions = self->positions_;
     auto inserted = positions.insert(positions.end(), position);
     nameToIteratorMap[position->name()] = inserted;
     pointerToIteratorMap[position] = inserted;

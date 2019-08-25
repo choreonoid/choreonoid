@@ -119,7 +119,7 @@ public:
     container_type::const_iterator begin() const { return positions_.begin(); }
     container_type::const_iterator end() const { return positions_.end(); }
     
-    bool append(ManipulatorPosition* position);
+    bool append(ManipulatorPosition* position, bool doOverwrite = false);
     bool remove(ManipulatorPosition* position);
     
     ManipulatorPosition* find(const std::string& name);
