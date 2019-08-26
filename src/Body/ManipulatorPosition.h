@@ -15,7 +15,7 @@ class ManipulatorIkPosition;
 class ManipulatorFkPosition;
 class ManipulatorPositionSet;
 class ManipulatorPositionSetImpl;
-class ManipulatorPositionManager;
+class BodyManipulatorManager;
 class ManipulatorFrameSet;
 
 
@@ -37,8 +37,8 @@ public:
     ManipulatorIkPosition* ikPosition();
     ManipulatorFkPosition* fkPosition();
 
-    virtual bool setCurrentPosition(ManipulatorPositionManager* manager) = 0;
-    virtual bool apply(ManipulatorPositionManager* manager) const = 0;
+    virtual bool setCurrentPosition(BodyManipulatorManager* manager) = 0;
+    virtual bool apply(BodyManipulatorManager* manager) const = 0;
 
     ManipulatorPositionSet* ownerPositionSet(){ return weak_ownerPositionSet.lock(); }
 
@@ -77,8 +77,8 @@ public:
     int toolFrameIndex() const { return toolFrameIndex_; }
     int configuration() const { return configuration_; }
 
-    virtual bool setCurrentPosition(ManipulatorPositionManager* manager) override;
-    virtual bool apply(ManipulatorPositionManager* manager) const override;
+    virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
+    virtual bool apply(BodyManipulatorManager* manager) const override;
 
 private:
     Position T;
@@ -101,8 +101,8 @@ public:
 
     virtual ManipulatorPosition* clone() override;
 
-    virtual bool setCurrentPosition(ManipulatorPositionManager* manager) override;
-    virtual bool apply(ManipulatorPositionManager* manager) const override;
+    virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
+    virtual bool apply(BodyManipulatorManager* manager) const override;
 
 private:
     std::array<double, MAX_NUM_JOINTS> jointDisplacements;

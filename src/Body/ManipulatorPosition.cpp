@@ -1,5 +1,5 @@
 #include "ManipulatorPosition.h"
-#include "ManipulatorPositionManager.h"
+#include "BodyManipulatorManager.h"
 #include "ManipulatorFrame.h"
 #include <cnoid/Body>
 #include <cnoid/JointPath>
@@ -94,6 +94,7 @@ ManipulatorIkPosition::ManipulatorIkPosition()
     : ManipulatorPosition(IK)
 {
     T.setIdentity();
+    rpy_.setZero();
     baseFrameIndex_ = 0;
     toolFrameIndex_ = 0;
     configuration_ = 0;
@@ -105,6 +106,7 @@ ManipulatorIkPosition::ManipulatorIkPosition(const ManipulatorIkPosition& org)
     : ManipulatorPosition(org)
 {
     T = org.T;
+    rpy_ = org.rpy_;
     baseFrameIndex_ = org.baseFrameIndex_;
     toolFrameIndex_ = org.toolFrameIndex_;
     configuration_ = org.configuration_;
@@ -148,7 +150,7 @@ void ManipulatorIkPosition::setBaseFrame(ManipulatorFrameSet* frameSet, int fram
 {
     auto frame1 = frameSet->baseFrame(baseFrameIndex_);
     auto frame2 = frameSet->baseFrame(frameIndex);
-    T = frame2.T.inverse(Eigen::Isometry) * frame1.T * T;
+    T = frame2.T().inverse(Eigen::Isometry) * frame1.T() * T;
     baseFrameIndex_ = frameIndex;
 }
 
@@ -157,12 +159,12 @@ void ManipulatorIkPosition::setToolFrame(ManipulatorFrameSet* frameSet, int fram
 {
     auto frame1 = frameSet->toolFrame(toolFrameIndex_);
     auto frame2 = frameSet->toolFrame(frameIndex);
-    T =  T  * frame1.T.inverse(Eigen::Isometry) * frame2.T;
+    T =  T  * frame1.T().inverse(Eigen::Isometry) * frame2.T();
     toolFrameIndex_ = frameIndex;
 }    
 
 
-bool ManipulatorIkPosition::setCurrentPosition(ManipulatorPositionManager* manager)
+bool ManipulatorIkPosition::setCurrentPosition(BodyManipulatorManager* manager)
 {
     auto jointPath = manager->jointPath();
 
@@ -173,8 +175,8 @@ bool ManipulatorIkPosition::setCurrentPosition(ManipulatorPositionManager* manag
     auto frames = manager->frameSet();
         
     auto T_end = jointPath->endLink()->T();
-    auto T_base = jointPath->baseLink()->T() * frames->currentBaseFrame().T;
-    auto T_tool = frames->currentToolFrame().T;
+    auto T_base = jointPath->baseLink()->T() * frames->currentBaseFrame().T();
+    auto T_tool = frames->currentToolFrame().T();
 
     T = T_base.inverse(Eigen::Isometry) * T_end * T_tool;
 
@@ -189,7 +191,7 @@ bool ManipulatorIkPosition::setCurrentPosition(ManipulatorPositionManager* manag
 }
 
 
-bool ManipulatorIkPosition::apply(ManipulatorPositionManager* manager) const
+bool ManipulatorIkPosition::apply(BodyManipulatorManager* manager) const
 {
     auto jointPath = manager->jointPath();
 
@@ -202,8 +204,8 @@ bool ManipulatorIkPosition::apply(ManipulatorPositionManager* manager) const
     }
 
     auto frames = manager->frameSet();
-    auto T_base = jointPath->baseLink()->T() * frames->baseFrame(baseFrameIndex_).T;
-    auto T_tool = frames->toolFrame(toolFrameIndex_).T;
+    auto T_base = jointPath->baseLink()->T() * frames->baseFrame(baseFrameIndex_).T();
+    auto T_tool = frames->toolFrame(toolFrameIndex_).T();
     
     Position T_global = T_base * T * T_tool;
     return manager->jointPath()->calcInverseKinematics(T_global);
@@ -238,7 +240,7 @@ ManipulatorPosition* ManipulatorFkPosition::clone()
 }
 
 
-bool ManipulatorFkPosition::setCurrentPosition(ManipulatorPositionManager* manager)
+bool ManipulatorFkPosition::setCurrentPosition(BodyManipulatorManager* manager)
 {
     auto path = manager->jointPath();
     const int n = std::min(path->numJoints(), MAX_NUM_JOINTS);
@@ -254,7 +256,7 @@ bool ManipulatorFkPosition::setCurrentPosition(ManipulatorPositionManager* manag
 }
 
 
-bool ManipulatorFkPosition::apply(ManipulatorPositionManager* manager) const
+bool ManipulatorFkPosition::apply(BodyManipulatorManager* manager) const
 {
     auto path = manager->jointPath();
     const int n = std::min(path->numJoints(), MAX_NUM_JOINTS);

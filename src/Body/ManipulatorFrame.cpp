@@ -6,12 +6,23 @@ using namespace cnoid;
 
 ManipulatorFrame::ManipulatorFrame()
 {
-    T.setIdentity();
+    T_.setIdentity();
 }
 
 
+ManipulatorFrame::ManipulatorFrame(const std::string& name, const Position& T)
+    : T_(T),
+      name_(name)
+{
+
+}
+    
+
 ManipulatorFrameSet::ManipulatorFrameSet()
 {
+    baseFrames_.push_back(ManipulatorFrame("Base", Position::Identity()));
+    toolFrames_.push_back(ManipulatorFrame("Mechanical", Position::Identity()));
+                          
     currentBaseFrameIndex_ = 0;
     currentToolFrameIndex_ = 0;
 }

@@ -231,7 +231,7 @@ public:
 
     void cloneShapes(SgCloneMap& cloneMap);
         
-    template<class T> T* findCache(const std::string& name) {
+    template<class T> T* findCache(const std::string& name){
         return dynamic_cast<T*>(findCacheSub(name));
     }
 
@@ -239,13 +239,17 @@ public:
         return dynamic_cast<const T*>(findCacheSub(name));
     }
 
-    template<class T> T* getOrCreateCache(const std::string& name) {
+    template<class T> T* getOrCreateCache(const std::string& name){
         T* cache = findCache<T>(name);
         if(!cache){
             cache = new T();
             insertCache(name, cache);
         }
         return cache;
+    }
+
+    void setCache(const std::string& name, Referenced* cache){
+        insertCache(name, cache);
     }
 
     bool getCaches(PolymorphicReferencedArrayBase<>& out_caches, std::vector<std::string>& out_names) const;

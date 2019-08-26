@@ -14,9 +14,17 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     ManipulatorFrame();
-    
-    Position T;
-    std::string name;
+    ManipulatorFrame(const std::string& name, const Position& T);
+
+    void setName(const std::string& name){ name_ = name; }
+    const std::string& name() const { return name_; }
+
+    const Position& T() const { return T_; }
+    Position& T() { return T_; }
+
+private:
+    Position T_;
+    std::string name_;
 };
 
 
@@ -33,10 +41,10 @@ public:
     ManipulatorFrame& toolFrame(int index);
 
     int currentBaseFrameIndex() const { return currentBaseFrameIndex_; }
-    ManipulatorFrame& currentBaseFrame(){ return baseFrames_[currentBaseFrameIndex_]; }
+    ManipulatorFrame& currentBaseFrame(){ return baseFrame(currentBaseFrameIndex_); }
     
     int currentToolFrameIndex() const { return currentToolFrameIndex_; }
-    ManipulatorFrame& currentToolFrame(){ return toolFrames_[currentToolFrameIndex_]; }
+    ManipulatorFrame& currentToolFrame(){ return toolFrame(currentToolFrameIndex_); }
     
 private:
     std::vector<ManipulatorFrame> baseFrames_;
