@@ -66,6 +66,10 @@ public:
 
     virtual ManipulatorPosition* clone() override;
 
+    const Position& position() const { return T; }
+    Vector3 rpy() const;
+    void setRpy(const Vector3& rpy);
+
     void setBaseFrame(ManipulatorFrameSet* frameSet, int frameIndex);
     void setToolFrame(ManipulatorFrameSet* frameSet, int frameIndex);
 
@@ -78,6 +82,7 @@ public:
 
 private:
     Position T;
+    Vector3 rpy_;
     int baseFrameIndex_;
     int toolFrameIndex_;
     int configuration_;

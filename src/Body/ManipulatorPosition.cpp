@@ -4,6 +4,7 @@
 #include <cnoid/Body>
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
+#include <cnoid/EigenUtil>
 #include <unordered_map>
 
 using namespace std;
@@ -127,6 +128,19 @@ ManipulatorIkPosition& ManipulatorIkPosition::operator=(const ManipulatorIkPosit
 ManipulatorPosition* ManipulatorIkPosition::clone()
 {
     return new ManipulatorIkPosition(*this);
+}
+
+
+Vector3 ManipulatorIkPosition::rpy() const
+{
+    return rpyFromRot(T.linear(), rpy_);
+}
+
+
+void ManipulatorIkPosition::setRpy(const Vector3& rpy)
+{
+    T.linear() = rotFromRpy(rpy);
+    rpy_ = rpy;
 }
 
 
