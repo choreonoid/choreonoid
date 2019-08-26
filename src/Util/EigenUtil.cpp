@@ -105,14 +105,14 @@ static double adjustPhase(double x, double x_ref)
     double adjusted = x;
     double diff = x_ref - x;
     if(diff > 0.0){
-        while(diff > M_PI){
-            adjusted += 2.0 * M_PI;
-            diff = x_ref - adjusted;
+        if(diff > M_PI){
+            double n = ceil((diff - M_PI) / (2.0 * M_PI));
+            adjusted += n * 2.0 * M_PI;
         }
     } else {
-        while(diff < -M_PI){
-            adjusted -= 2.0 * M_PI;
-            diff = x_ref - adjusted;
+        if(diff < -M_PI){
+            double n = floor((diff + M_PI) / (2.0 * M_PI));
+            adjusted += n * 2.0 * M_PI;
         }
     }
     return adjusted;
