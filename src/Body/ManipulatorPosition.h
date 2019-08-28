@@ -11,19 +11,21 @@
 namespace cnoid {
 
 class Body;
+class ManipulatorPositionRef;
 class ManipulatorIkPosition;
 class ManipulatorFkPosition;
 class ManipulatorPositionSet;
 class ManipulatorPositionSetImpl;
 class BodyManipulatorManager;
 class ManipulatorFrameSet;
+class Mapping;
 
 
 class CNOID_EXPORT ManipulatorPosition : public Referenced
 {
 public:
     static constexpr int MAX_NUM_JOINTS = 8;
-    enum PositionType { IK, FK };
+    enum PositionType { REFERENCE, IK, FK };
 
     virtual ManipulatorPosition* clone() = 0;
 
@@ -31,9 +33,11 @@ public:
     bool setName(const std::string& name);
 
     int positionType() const { return positionType_; }
+    bool isReference() const { return (positionType_ == REFERENCE); };
     bool isIK() const { return (positionType_ == IK); };
     bool isFK() const { return (positionType_ == FK); };
 
+    ManipulatorPositionRef* reference();
     ManipulatorIkPosition* ikPosition();
     ManipulatorFkPosition* fkPosition();
 
@@ -42,10 +46,15 @@ public:
 
     ManipulatorPositionSet* ownerPositionSet(){ return weak_ownerPositionSet.lock(); }
 
+    virtual bool read(const Mapping& archive);
+    virtual bool write(Mapping& archive) const;
+
 protected:
     ManipulatorPosition(PositionType type);
+    ManipulatorPosition(PositionType type, const std::string& name);
     ManipulatorPosition(const ManipulatorPosition& org);
-
+    ManipulatorPosition& operator=(const ManipulatorPosition& rhs);
+    
 private:
     PositionType positionType_;
     std::string name_;
@@ -56,6 +65,21 @@ private:
 
 typedef ref_ptr<ManipulatorPosition> ManipulatorPositionPtr;
 
+
+class CNOID_EXPORT ManipulatorPositionRef : public ManipulatorPosition
+{
+public:
+    ManipulatorPositionRef(const std::string& name);
+    ManipulatorPositionRef(const ManipulatorPositionRef& org);
+    ManipulatorPositionRef& operator=(const ManipulatorPositionRef& rhs);
+
+    virtual ManipulatorPosition* clone() override;
+    
+    virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
+    virtual bool apply(BodyManipulatorManager* manager) const override;
+    virtual bool read(const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const override;
+};
 
 class CNOID_EXPORT ManipulatorIkPosition : public ManipulatorPosition
 {
@@ -79,6 +103,9 @@ public:
 
     virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
     virtual bool apply(BodyManipulatorManager* manager) const override;
+
+    virtual bool read(const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const override;
 
 private:
     Position T;
@@ -104,6 +131,9 @@ public:
     virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
     virtual bool apply(BodyManipulatorManager* manager) const override;
 
+    virtual bool read(const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const override;
+
 private:
     std::array<double, MAX_NUM_JOINTS> jointDisplacements;
 };
@@ -117,7 +147,7 @@ public:
     typedef std::list<ManipulatorPositionPtr> container_type;
 
     ManipulatorPositionSet();
-    ManipulatorPositionSet(const ManipulatorPositionSet& org) = delete;
+    ManipulatorPositionSet(const ManipulatorPositionSet& org);
 
     container_type::iterator begin() { return positions_.begin(); }
     container_type::iterator end() { return positions_.end(); }
@@ -132,6 +162,9 @@ public:
     ManipulatorPositionSet* parentSet();
     int numChildSets();
     ManipulatorPositionSet* childSet(int index);
+
+    bool read(const Mapping& archive);
+    bool write(Mapping& archive) const;
     
 private:
     container_type positions_;

@@ -5,6 +5,7 @@
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
 #include <cnoid/EigenUtil>
+#include <cnoid/EigenArchive>
 #include <unordered_map>
 
 using namespace std;
@@ -50,6 +51,14 @@ ManipulatorPosition::ManipulatorPosition(PositionType type)
 {
 
 }
+
+
+ManipulatorPosition::ManipulatorPosition(PositionType type, const std::string& name)
+    : positionType_(type),
+      name_(name)
+{
+
+}
     
 
 ManipulatorPosition::ManipulatorPosition(const ManipulatorPosition& org)
@@ -57,6 +66,14 @@ ManipulatorPosition::ManipulatorPosition(const ManipulatorPosition& org)
       name_(org.name_)
 {
 
+}
+
+
+ManipulatorPosition& ManipulatorPosition::operator=(const ManipulatorPosition& rhs)
+{
+    positionType_ = rhs.positionType_;
+    name_ = rhs.name_;
+    return *this;
 }
 
 
@@ -87,6 +104,70 @@ ManipulatorFkPosition* ManipulatorPosition::fkPosition()
         return static_cast<ManipulatorFkPosition*>(this);
     }
     return nullptr;
+}
+
+
+bool ManipulatorPosition::read(const Mapping& archive)
+{
+    return false;
+}
+
+
+bool ManipulatorPosition::write(Mapping& archive) const
+{
+    archive.write("name", name_);
+    return true;
+}
+
+
+ManipulatorPositionRef::ManipulatorPositionRef(const std::string& name)
+    : ManipulatorPosition(REFERENCE, name)
+{
+
+}
+
+
+ManipulatorPositionRef::ManipulatorPositionRef(const ManipulatorPositionRef& org)
+    : ManipulatorPosition(org)
+{
+
+}
+    
+
+ManipulatorPositionRef& ManipulatorPositionRef::operator=(const ManipulatorPositionRef& rhs)
+{
+    ManipulatorPosition::operator=(rhs);
+    return *this;
+}
+
+
+ManipulatorPosition* ManipulatorPositionRef::clone()
+{
+    return new ManipulatorPositionRef(*this);
+}
+
+
+bool ManipulatorPositionRef::setCurrentPosition(BodyManipulatorManager*)
+{
+    return false;
+}
+    
+    
+bool ManipulatorPositionRef::apply(BodyManipulatorManager* manager) const
+{
+    return false;
+}
+
+
+bool ManipulatorPositionRef::read(const Mapping& archive)
+{
+    return ManipulatorPosition::read(archive);
+}
+
+
+bool ManipulatorPositionRef::write(Mapping& archive) const
+{
+    return ManipulatorPosition::write(archive);
 }
 
 
@@ -212,6 +293,29 @@ bool ManipulatorIkPosition::apply(BodyManipulatorManager* manager) const
 }
 
 
+bool ManipulatorIkPosition::read(const Mapping& archive)
+{
+    return false;
+}
+
+
+bool ManipulatorIkPosition::write(Mapping& archive) const
+{
+    ManipulatorPosition::write(archive);
+    
+    cnoid::write(archive, "translation", Vector3(T.translation()));
+    cnoid::write(archive, "rotation", rpy_);
+    archive.write("baseFrameIndex", baseFrameIndex_);
+    archive.write("toolFrameIndex", toolFrameIndex_);
+    archive.write("configIndex", configuration_);
+    auto& phaseNodes = *archive.createFlowStyleListing("phases");
+    for(auto& phase : phase_){
+        phaseNodes.append(phase);
+    }
+    return true;
+}
+
+
 ManipulatorFkPosition::ManipulatorFkPosition()
     : ManipulatorPosition(FK)
 {
@@ -269,11 +373,48 @@ bool ManipulatorFkPosition::apply(BodyManipulatorManager* manager) const
 }
 
 
+bool ManipulatorFkPosition::read(const Mapping& archive)
+{
+    return false;
+}
+
+
+bool ManipulatorFkPosition::write(Mapping& archive) const
+{
+    ManipulatorPosition::write(archive);
+
+    auto& nodes = *archive.createFlowStyleListing("jointDisplacements");
+    for(auto& q : jointDisplacements){
+        nodes.append(degree(q));
+    }
+    
+    return true;
+}
+
+
 ManipulatorPositionSet::ManipulatorPositionSet()
 {
     impl = new ManipulatorPositionSetImpl(this);
 }
 
+
+ManipulatorPositionSet::ManipulatorPositionSet(const ManipulatorPositionSet& org)
+{
+    impl = new ManipulatorPositionSetImpl(this);
+
+    for(auto& position : org.positions_){
+        auto clone = position->clone();
+        append(clone);
+    }
+
+    impl->weak_parentSet = org.impl->weak_parentSet;
+
+    impl->childSets.reserve(org.impl->childSets.size());
+    for(auto& child : impl->childSets){
+        impl->childSets.push_back(child);
+    }
+}
+    
 
 ManipulatorPositionSetImpl::ManipulatorPositionSetImpl(ManipulatorPositionSet* self)
     : self(self)
@@ -290,6 +431,10 @@ bool ManipulatorPositionSet::append(ManipulatorPosition* position, bool doOverwr
 
 bool ManipulatorPositionSetImpl::append(ManipulatorPosition* position, bool doOverwrite)
 {
+    if(position->positionType_ == ManipulatorPosition::REFERENCE){
+        return false;
+    }
+    
     auto& positions = self->positions_;
     
     auto iter = nameToIteratorMap.find(position->name());
@@ -455,4 +600,30 @@ ManipulatorPositionSet* ManipulatorPositionSet::childSet(int index)
         return impl->childSets[index];
     }
     return nullptr;
+}
+
+
+bool ManipulatorPositionSet::read(const Mapping& archive)
+{
+    return false;
+}
+
+
+bool ManipulatorPositionSet::write(Mapping& archive) const
+{
+    archive.write("type", "ManipulatorPositionSet");
+    archive.write("formatVersion", 1.0);
+
+    Listing& positionNodes = *archive.createListing("positions");
+
+    if(!positions_.empty()){
+        for(auto& position : positions_){
+            MappingPtr node = new Mapping;
+            if(position->write(*node)){
+                positionNodes.append(node);
+            }
+        }
+    }
+
+    return true;
 }
