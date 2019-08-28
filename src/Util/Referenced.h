@@ -301,7 +301,7 @@ public:
     weak_ref_ptr(weak_ref_ptr const & rhs) : px(rhs.lock().get()){
         setCounter();
     }
-    
+
     template<class Y>
     weak_ref_ptr& operator=(weak_ref_ptr<Y> const & rhs){
         px = rhs.lock().get();
@@ -309,6 +309,12 @@ public:
         return *this;
     }
 
+    weak_ref_ptr& operator=(weak_ref_ptr const & rhs){
+        px = rhs.lock().get();
+        setCounter();
+        return *this;
+    }
+    
     weak_ref_ptr(weak_ref_ptr&& rhs) : px(rhs.px), counter(rhs.counter){
         rhs.px = nullptr;
         rhs.counter = 0;
