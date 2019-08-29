@@ -333,7 +333,7 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
         }
     }
 
-    return false;
+    return true;
 }
 
 
