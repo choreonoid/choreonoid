@@ -149,6 +149,8 @@ public:
     ManipulatorPositionSet();
     ManipulatorPositionSet(const ManipulatorPositionSet& org);
 
+    void clearInternalPositions();
+
     container_type::iterator begin() { return positions_.begin(); }
     container_type::iterator end() { return positions_.end(); }
     container_type::const_iterator begin() const { return positions_.begin(); }

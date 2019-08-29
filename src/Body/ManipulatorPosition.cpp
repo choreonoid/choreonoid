@@ -6,10 +6,13 @@
 #include <cnoid/JointPathConfigurationHandler>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
+#include <fmt/format.h>
 #include <unordered_map>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -109,7 +112,7 @@ ManipulatorFkPosition* ManipulatorPosition::fkPosition()
 
 bool ManipulatorPosition::read(const Mapping& archive)
 {
-    return false;
+    return setName(archive["name"].toString());
 }
 
 
@@ -161,13 +164,13 @@ bool ManipulatorPositionRef::apply(BodyManipulatorManager* manager) const
 
 bool ManipulatorPositionRef::read(const Mapping& archive)
 {
-    return ManipulatorPosition::read(archive);
+    return false;
 }
 
 
 bool ManipulatorPositionRef::write(Mapping& archive) const
 {
-    return ManipulatorPosition::write(archive);
+    return false;
 }
 
 
@@ -295,12 +298,49 @@ bool ManipulatorIkPosition::apply(BodyManipulatorManager* manager) const
 
 bool ManipulatorIkPosition::read(const Mapping& archive)
 {
+    if(!ManipulatorPosition::read(archive)){
+        return false;
+    }
+
+    Vector3 v;
+    if(cnoid::read(archive, "translation", v)){
+        T.translation() = v;
+    } else {
+        T.translation().setZero();
+    }
+    if(cnoid::read(archive, "rotation", v)){
+        T.linear() = rotFromRpy(v);
+        rpy_ = v;
+    } else {
+        T.linear().setIdentity();
+        rpy_.setZero();
+    }
+    
+    baseFrameIndex_ = archive.get("baseFrameIndex", 0);
+    toolFrameIndex_ = archive.get("toolFrameIndex", 0);
+    configuration_ = archive.get("configIndex", 0);
+
+    auto& phaseNodes = *archive.findListing("phases");
+    if(phaseNodes.isValid()){
+        int i = 0;
+        int n = std::min(phaseNodes.size(), MAX_NUM_JOINTS);
+        while(i < n){
+            phase_[i] = phaseNodes[i].toInt();
+            ++i;
+        }
+        while(i < MAX_NUM_JOINTS){
+            phase_[i] = 0;
+        }
+    }
+
     return false;
 }
 
 
 bool ManipulatorIkPosition::write(Mapping& archive) const
 {
+    archive.write("type", "IkPosition");
+    
     ManipulatorPosition::write(archive);
     
     cnoid::write(archive, "translation", Vector3(T.translation()));
@@ -375,7 +415,23 @@ bool ManipulatorFkPosition::apply(BodyManipulatorManager* manager) const
 
 bool ManipulatorFkPosition::read(const Mapping& archive)
 {
-    return false;
+    if(!ManipulatorPosition::read(archive)){
+        return false;
+    }
+
+    auto& nodes = *archive.findListing("jointDisplacements");
+    if(nodes.isValid()){
+        int i;
+        int n = std::min(nodes.size(), MAX_NUM_JOINTS);
+        for(i = 0; i < n; ++i){
+            jointDisplacements[i] = radian(nodes[i].toDouble());
+        }
+        for( ; i < MAX_NUM_JOINTS; ++i){
+            jointDisplacements[i] = 0.0;
+        }
+    }
+    
+    return true;
 }
 
 
@@ -420,6 +476,14 @@ ManipulatorPositionSetImpl::ManipulatorPositionSetImpl(ManipulatorPositionSet* s
     : self(self)
 {
 
+}
+
+
+void ManipulatorPositionSet::clearInternalPositions()
+{
+    impl->pointerToIteratorMap.clear();
+    impl->nameToIteratorMap.clear();
+    positions_.clear();
 }
 
 
@@ -605,7 +669,41 @@ ManipulatorPositionSet* ManipulatorPositionSet::childSet(int index)
 
 bool ManipulatorPositionSet::read(const Mapping& archive)
 {
-    return false;
+    auto& typeNode = archive.get("type");
+    if(typeNode.toString() != "ManipulatorPositionSet"){
+        typeNode.throwException(
+            format(_("{0} cannot be loaded as a manipulator position set"), typeNode.toString()));
+    }
+        
+    auto& versionNode = archive.get("formatVersion");
+    auto version = versionNode.toDouble();
+    if(version != 1.0){
+        versionNode.throwException(format(_("Format version {0} is not supported."), version));
+    }
+
+    auto& positionNodes = *archive.findListing("positions");
+    if(positionNodes.isValid()){
+        for(int i=0; i < positionNodes.size(); ++i){
+            auto& node = *positionNodes[i].toMapping();
+            auto& typeNode = node["type"];
+            auto type = typeNode.toString();
+            ManipulatorPositionPtr position;
+            if(type == "IkPosition"){
+                position = new ManipulatorIkPosition;
+            } else if(type == "FkPosition"){
+                position = new ManipulatorFkPosition;
+            } else {
+                typeNode.throwException(format(_("{0} is not supported"), type));
+            }
+            if(position){
+                if(position->read(node)){
+                    append(position, true);
+                }
+            }
+        }
+    }
+    
+    return true;
 }
 
 
