@@ -34,6 +34,7 @@ public:
     vector<ManipulatorPositionSetPtr> childSets;
 
     ManipulatorPositionSetImpl(ManipulatorPositionSet* self);
+    ManipulatorPositionSetImpl(ManipulatorPositionSet* self, const ManipulatorPositionSetImpl& org);
     bool append(ManipulatorPosition* position, bool doOverwrite);
     bool remove(ManipulatorPosition* position);
     pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> find(
@@ -179,6 +180,7 @@ ManipulatorIkPosition::ManipulatorIkPosition()
 {
     T.setIdentity();
     rpy_.setZero();
+    hasReferenceRpy_ = false;
     baseFrameIndex_ = 0;
     toolFrameIndex_ = 0;
     configuration_ = 0;
@@ -191,6 +193,7 @@ ManipulatorIkPosition::ManipulatorIkPosition(const ManipulatorIkPosition& org)
 {
     T = org.T;
     rpy_ = org.rpy_;
+    hasReferenceRpy_ = org.hasReferenceRpy_;
     baseFrameIndex_ = org.baseFrameIndex_;
     toolFrameIndex_ = org.toolFrameIndex_;
     configuration_ = org.configuration_;
@@ -202,6 +205,8 @@ ManipulatorIkPosition& ManipulatorIkPosition::operator=(const ManipulatorIkPosit
 {
     setName(rhs.name());
     T = rhs.T;
+    rpy_ = rhs.rpy_;
+    hasReferenceRpy_ = rhs.hasReferenceRpy_;
     baseFrameIndex_ = rhs.baseFrameIndex_;
     toolFrameIndex_ = rhs.toolFrameIndex_;
     configuration_ = rhs.configuration_;
@@ -219,7 +224,11 @@ ManipulatorPosition* ManipulatorIkPosition::clone()
 
 Vector3 ManipulatorIkPosition::rpy() const
 {
-    return rpyFromRot(T.linear(), rpy_);
+    if(hasReferenceRpy_){
+        return rpyFromRot(T.linear(), rpy_);
+    } else {
+        return rpyFromRot(T.linear());
+    }
 }
 
 
@@ -227,6 +236,20 @@ void ManipulatorIkPosition::setRpy(const Vector3& rpy)
 {
     T.linear() = rotFromRpy(rpy);
     rpy_ = rpy;
+    hasReferenceRpy_ = true;
+}
+
+
+void ManipulatorIkPosition::setReferenceRpy(const Vector3& rpy)
+{
+    rpy_ = rpy;
+    hasReferenceRpy_ = true;
+}
+
+
+void ManipulatorIkPosition::resetReferenceRpy()
+{
+    hasReferenceRpy_ = false;
 }
 
 
@@ -263,6 +286,8 @@ bool ManipulatorIkPosition::setCurrentPosition(BodyManipulatorManager* manager)
     auto T_tool = frames->currentToolFrame().T();
 
     T = T_base.inverse(Eigen::Isometry) * T_end * T_tool;
+
+    hasReferenceRpy_ = false;
 
     baseFrameIndex_ = frames->currentBaseFrameIndex();
     toolFrameIndex_ = frames->currentToolFrameIndex();
@@ -310,10 +335,10 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
     }
     if(cnoid::read(archive, "rotation", v)){
         T.linear() = rotFromRpy(v);
-        rpy_ = v;
+        setReferenceRpy(v);
     } else {
         T.linear().setIdentity();
-        rpy_.setZero();
+        resetReferenceRpy();
     }
     
     baseFrameIndex_ = archive.get("baseFrameIndex", 0);
@@ -344,7 +369,7 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
     ManipulatorPosition::write(archive);
     
     cnoid::write(archive, "translation", Vector3(T.translation()));
-    cnoid::write(archive, "rotation", rpy_);
+    cnoid::write(archive, "rotation", rpy());
     archive.write("baseFrameIndex", baseFrameIndex_);
     archive.write("toolFrameIndex", toolFrameIndex_);
     archive.write("configIndex", configuration_);
@@ -454,24 +479,6 @@ ManipulatorPositionSet::ManipulatorPositionSet()
 }
 
 
-ManipulatorPositionSet::ManipulatorPositionSet(const ManipulatorPositionSet& org)
-{
-    impl = new ManipulatorPositionSetImpl(this);
-
-    for(auto& position : org.positions_){
-        auto clone = position->clone();
-        append(clone);
-    }
-
-    impl->weak_parentSet = org.impl->weak_parentSet;
-
-    impl->childSets.reserve(org.impl->childSets.size());
-    for(auto& child : impl->childSets){
-        impl->childSets.push_back(child);
-    }
-}
-    
-
 ManipulatorPositionSetImpl::ManipulatorPositionSetImpl(ManipulatorPositionSet* self)
     : self(self)
 {
@@ -479,7 +486,31 @@ ManipulatorPositionSetImpl::ManipulatorPositionSetImpl(ManipulatorPositionSet* s
 }
 
 
-void ManipulatorPositionSet::clearInternalPositions()
+ManipulatorPositionSet::ManipulatorPositionSet(const ManipulatorPositionSet& org)
+{
+    impl = new ManipulatorPositionSetImpl(this, *org.impl);
+}
+
+
+ManipulatorPositionSetImpl::ManipulatorPositionSetImpl
+(ManipulatorPositionSet* self, const ManipulatorPositionSetImpl& org)
+    : self(self)
+{
+    for(auto& position : org.self->positions_){
+        auto clone = position->clone();
+        append(clone, false);
+    }
+
+    weak_parentSet = org.weak_parentSet;
+
+    childSets.reserve(org.childSets.size());
+    for(auto& child : childSets){
+        childSets.push_back(child);
+    }
+}
+    
+
+void ManipulatorPositionSet::clear()
 {
     impl->pointerToIteratorMap.clear();
     impl->nameToIteratorMap.clear();
@@ -550,6 +581,28 @@ bool ManipulatorPositionSetImpl::remove(ManipulatorPosition* position)
     }
     return owner != nullptr;
 }
+
+
+int ManipulatorPositionSet::removeUnreferencedPositions
+(std::function<bool(ManipulatorPosition* position)> isReferenced)
+{
+    int numRemoved = 0;
+    
+    auto iter = positions_.begin();
+    while(iter != positions_.end()){
+        auto& position = *iter;
+        if(isReferenced(position)){
+            ++iter;
+        } else {
+            impl->pointerToIteratorMap.erase(position);
+            impl->nameToIteratorMap.erase(position->name());
+            iter = positions_.erase(iter);
+            ++numRemoved;
+        }
+    }
+
+    return numRemoved;
+}            
 
 
 pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> ManipulatorPositionSetImpl::find

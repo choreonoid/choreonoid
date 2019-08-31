@@ -93,6 +93,8 @@ public:
     const Position& position() const { return T; }
     Vector3 rpy() const;
     void setRpy(const Vector3& rpy);
+    void setReferenceRpy(const Vector3& rpy);
+    void resetReferenceRpy();
 
     void setBaseFrame(ManipulatorFrameSet* frameSet, int frameIndex);
     void setToolFrame(ManipulatorFrameSet* frameSet, int frameIndex);
@@ -110,6 +112,7 @@ public:
 private:
     Position T;
     Vector3 rpy_;
+    bool hasReferenceRpy_;
     int baseFrameIndex_;
     int toolFrameIndex_;
     int configuration_;
@@ -149,7 +152,7 @@ public:
     ManipulatorPositionSet();
     ManipulatorPositionSet(const ManipulatorPositionSet& org);
 
-    void clearInternalPositions();
+    void clear();
 
     container_type::iterator begin() { return positions_.begin(); }
     container_type::iterator end() { return positions_.end(); }
@@ -158,6 +161,8 @@ public:
     
     bool append(ManipulatorPosition* position, bool doOverwrite = false);
     bool remove(ManipulatorPosition* position);
+
+    int removeUnreferencedPositions(std::function<bool(ManipulatorPosition* position)> isReferenced);
     
     ManipulatorPosition* find(const std::string& name);
 
