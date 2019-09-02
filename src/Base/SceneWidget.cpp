@@ -102,10 +102,16 @@ class ConfigDialog : public Dialog
 public:
     SceneWidgetImpl* sceneWidgetImpl;
     QVBoxLayout* vbox;
+
     ScopedConnectionSet builtinCameraConnections;
     SpinBox fieldOfViewSpin;
     DoubleSpinBox zNearSpin;
     DoubleSpinBox zFarSpin;
+    CheckBox restrictCameraRollCheck;
+    ButtonGroup verticalAxisGroup;
+    RadioButton verticalAxisZRadio;
+    RadioButton verticalAxisYRadio;
+
     Selection lightingMode;
     ButtonGroup lightingModeGroup;
     RadioButton fullLightingRadio;
@@ -188,34 +194,6 @@ public:
     }
 };
             
-
-/**
-   \note Z axis should always be the upper vertical direciton.
-*/
-Affine3 normalizedCameraTransform(const Affine3& T)
-{
-    Vector3 x, y;
-    Vector3 z = T.linear().col(2).normalized();
-        
-    if(fabs(z.dot(Vector3::UnitZ())) > 0.9){
-        x = T.linear().col(0).normalized();
-        y = z.cross(x);
-    } else {
-        y = T.linear().col(1);
-        if(y.dot(Vector3::UnitZ()) >= 0.0){
-            x = Vector3::UnitZ().cross(z).normalized();
-            y = z.cross(x);
-        } else {
-            x = z.cross(Vector3::UnitZ()).normalized();
-            y = z.cross(x);
-        }
-    }
-    Affine3 N;
-    N.linear() << x, y, z;
-    N.translation() = T.translation();
-    return N;
-}
-
 Signal<void(SceneWidget*)> sigSceneWidgetCreated;
 
 }
@@ -412,6 +390,7 @@ public:
     virtual void focusInEvent(QFocusEvent* event);
     virtual void focusOutEvent(QFocusEvent* event);
 
+    Affine3 getNormalizedCameraTransform(const Affine3& T);
     void startViewChange();
     void startViewRotation();
     void dragViewRotation();
@@ -1708,6 +1687,43 @@ SignalProxy<void()> SceneWidget::sigAboutToBeDestroyed()
 }
 
 
+/**
+   \note Z axis should always be the upper vertical direciton.
+*/
+Affine3 SceneWidgetImpl::getNormalizedCameraTransform(const Affine3& T)
+{
+    if(!config->restrictCameraRollCheck.isChecked()){
+        return T;
+    }
+    
+    Vector3 verticalAxis;
+    if(config->verticalAxisZRadio.isChecked()){
+        verticalAxis = Vector3::UnitZ();
+    } else {
+        verticalAxis = Vector3::UnitY();
+    }
+    
+    Vector3 x, y;
+    Vector3 z = T.linear().col(2).normalized();
+    if(fabs(z.dot(verticalAxis) > 0.9)){
+        x = T.linear().col(0).normalized();
+    } else {
+        y = T.linear().col(1);
+        if(y.dot(verticalAxis) >= 0.0){
+            x = verticalAxis.cross(z).normalized();
+        } else {
+            x = z.cross(verticalAxis).normalized();
+        }
+    }
+    y = z.cross(x);
+        
+    Affine3 N;
+    N.linear() << x, y, z;
+    N.translation() = T.translation();
+    return N;
+}
+
+
 void SceneWidgetImpl::startViewChange()
 {
     if(interactiveCameraTransform){
@@ -1773,13 +1789,30 @@ void SceneWidgetImpl::dragViewRotation()
     
     const double dx = latestEvent.x() - orgMouseX;
     const double dy = latestEvent.y() - orgMouseY;
-    const Vector3 right = SgCamera::right(orgCameraPosition);
 
+    Affine3 R;
+    if(config->restrictCameraRollCheck.isChecked()){
+        Vector3 up;
+        if(config->verticalAxisZRadio.isChecked()){
+            up = Vector3::UnitZ();
+        } else {
+            up = Vector3::UnitY();
+        }
+        R = AngleAxis(-dx * dragAngleRatio, up) *
+            AngleAxis(dy * dragAngleRatio, SgCamera::right(orgCameraPosition));
+    } else {
+        if(latestEvent.modifiers() & Qt::ControlModifier){
+            R = AngleAxis(-dx * dragAngleRatio, SgCamera::direction(orgCameraPosition));
+        } else {
+            R = AngleAxis(-dx * dragAngleRatio, SgCamera::up(orgCameraPosition)) *
+                AngleAxis(dy * dragAngleRatio, SgCamera::right(orgCameraPosition));
+        }
+    }
+        
     interactiveCameraTransform->setTransform(
-        normalizedCameraTransform(
+        getNormalizedCameraTransform(
             Translation3(orgPointedPos) *
-            AngleAxis(-dx * dragAngleRatio, Vector3::UnitZ()) *
-            AngleAxis(dy * dragAngleRatio, right) *
+            R *
             Translation3(-orgPointedPos) *
             orgCameraPosition));
 
@@ -1864,7 +1897,7 @@ void SceneWidgetImpl::dragViewTranslation()
     const double dy = viewTranslationRatioY * (latestEvent.y() - orgMouseY);
 
     interactiveCameraTransform->setTransform(
-        normalizedCameraTransform(
+        getNormalizedCameraTransform(
             Translation3(-dy * SgCamera::up(orgCameraPosition)) *
             Translation3(-dx * SgCamera::right(orgCameraPosition)) *
             orgCameraPosition));
@@ -1987,7 +2020,7 @@ void SceneWidgetImpl::rotateBuiltinCameraView(double dPitch, double dYaw)
 {
     const Affine3 T = builtinCameraTransform->T();
     builtinCameraTransform->setTransform(
-        normalizedCameraTransform(
+        getNormalizedCameraTransform(
             Translation3(cameraViewChangeCenter) *
             AngleAxis(dYaw, Vector3::UnitZ()) *
             AngleAxis(dPitch, SgCamera::right(T)) *
@@ -2008,7 +2041,7 @@ void SceneWidgetImpl::translateBuiltinCameraView(const Vector3& dp_local)
 {
     const Affine3 T = builtinCameraTransform->T();
     builtinCameraTransform->setTransform(
-        normalizedCameraTransform(
+        getNormalizedCameraTransform(
             Translation3(T.linear() * dp_local) * T));
     builtinCameraTransform->notifyUpdate(modified);
 }
@@ -3059,6 +3092,22 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    hbox = new QHBoxLayout;
+    restrictCameraRollCheck.setText(_("Restrict camera roll"));
+    restrictCameraRollCheck.setChecked(true);
+    hbox->addWidget(&restrictCameraRollCheck);
+    hbox->addSpacing(8);
+    hbox->addWidget(new QLabel(_("Vertical axis")));
+    verticalAxisYRadio.setText("Y");
+    hbox->addWidget(&verticalAxisYRadio);
+    verticalAxisZRadio.setText("Z");
+    hbox->addWidget(&verticalAxisZRadio);
+    verticalAxisGroup.addButton(&verticalAxisYRadio, 0);
+    verticalAxisGroup.addButton(&verticalAxisZRadio, 1);
+    verticalAxisZRadio.setChecked(true);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
     updateDefaultLightsLater.setFunction([=](){ impl->updateDefaultLights(); });
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Lighting"))));
@@ -3415,6 +3464,8 @@ void ConfigDialog::updateBuiltinCameraConfig()
 
 void ConfigDialog::storeState(Archive& archive)
 {
+    archive.write("restrictCameraRoll", restrictCameraRollCheck.isChecked());
+    archive.write("verticalAxis", verticalAxisZRadio.isChecked() ? "Z" : "Y");
     archive.write("lightingMode", lightingMode.selectedSymbol());
     archive.write("cullingMode", cullingMode.selectedSymbol());
     archive.write("defaultHeadLight", headLightCheck.isChecked());
@@ -3461,6 +3512,16 @@ void ConfigDialog::storeState(Archive& archive)
 void ConfigDialog::restoreState(const Archive& archive)
 {
     string symbol;
+    
+    restrictCameraRollCheck.setChecked(archive.get("restrictCameraRoll", restrictCameraRollCheck.isChecked()));
+    if(archive.read("verticalAxis", symbol)){
+        if(symbol == "Z"){
+            verticalAxisZRadio.setChecked(true);
+        } else if(symbol == "Y"){
+            verticalAxisYRadio.setChecked(true);
+        }
+    }
+    
     if(archive.read("lightingMode", symbol)){
         if(lightingMode.select(symbol)){
             lightingModeGroup.button(lightingMode.which())->setChecked(true);
