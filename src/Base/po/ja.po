@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-06 16:37+0900\n"
+"POT-Creation-Date: 2019-09-02 13:23+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -95,7 +95,7 @@ msgid "Save"
 msgstr "保存"
 
 #: CaptureBar.cpp:97 ItemManager.cpp:946 ItemManager.cpp:1157
-#: SceneWidget.cpp:950 TaskView.cpp:280 ItemPropertyView.cpp:291
+#: SceneWidget.cpp:929 TaskView.cpp:280 ItemPropertyView.cpp:291
 #: PluginManager.cpp:663 ProjectManager.cpp:578 ProjectManager.cpp:604
 msgid "Cancel"
 msgstr "キャンセル"
@@ -439,7 +439,7 @@ msgstr ""
 "外部のエディタによって内容が変更されました．\n"
 "ファイルを読み込み直しますか？"
 
-#: DescriptionDialog.cpp:28 SceneWidget.cpp:3369
+#: DescriptionDialog.cpp:28 SceneWidget.cpp:3420
 msgid "&Ok"
 msgstr "了解(&O)"
 
@@ -477,239 +477,247 @@ msgid ""
 "for more details.\n"
 msgstr ""
 
-#: SceneWidget.cpp:173
+#: SceneWidget.cpp:179
 msgid "OpengGL image buffer for picking"
 msgstr ""
 
-#: SceneWidget.cpp:455
+#: SceneWidget.cpp:434
 msgid "Vertical sync"
 msgstr "垂直同期"
 
-#: SceneWidget.cpp:461
+#: SceneWidget.cpp:440
 msgid "Low GPU memory consumption mode"
 msgstr "GPUメモリ消費低減モード"
 
-#: SceneWidget.cpp:996
+#: SceneWidget.cpp:975
 msgid "FPS Test Result"
 msgstr "フレームレートテスト結果"
 
-#: SceneWidget.cpp:997
+#: SceneWidget.cpp:976
 msgid "FPS: %1 frames / %2 [s] = %3"
 msgstr "フレームレート: %1 フレーム / %2 [秒] = %3 [fps]"
 
-#: SceneWidget.cpp:1604
+#: SceneWidget.cpp:1583
 msgid "Global Position: ({0:.3f} {1:.3f} {2:.3f})"
 msgstr "グローバル座標位置 = ({0:.3f} {1:.3f} {2:.3f})"
 
-#: SceneWidget.cpp:1605
+#: SceneWidget.cpp:1584
 msgid "Object: {0}, Global Position: ({1:.3f} {2:.3f} {3:.3f})"
 msgstr "オブジェクト: {0}, グローバル座標位置 = ({1:.3f} {2:.3f} {3:.3f})"
 
-#: SceneWidget.cpp:2024
+#: SceneWidget.cpp:2057
 msgid "Edit Mode"
 msgstr "編集モード"
 
-#: SceneWidget.cpp:2065
+#: SceneWidget.cpp:2098
 msgid "View Mode"
 msgstr "閲覧モード"
 
-#: SceneWidget.cpp:2124
+#: SceneWidget.cpp:2157
 msgid "Background Color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:2138
+#: SceneWidget.cpp:2171
 msgid "Floor Grid Color"
 msgstr "床グリッド色"
 
-#: SceneWidget.cpp:2152
+#: SceneWidget.cpp:2185
 msgid "Default Color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:3022
+#: SceneWidget.cpp:3057
 msgid "Scene Config"
 msgstr "シーン設定"
 
-#: SceneWidget.cpp:3034
+#: SceneWidget.cpp:3069
 msgid "Default Camera"
 msgstr "デフォルトカメラ"
 
-#: SceneWidget.cpp:3036
+#: SceneWidget.cpp:3071
 msgid "Field of view"
 msgstr "視野角"
 
-#: SceneWidget.cpp:3043
+#: SceneWidget.cpp:3078
 msgid "Clipping depth"
 msgstr "クリッピング深度"
 
-#: SceneWidget.cpp:3045
+#: SceneWidget.cpp:3080
 msgid "Near"
 msgstr "近隣"
 
-#: SceneWidget.cpp:3051
+#: SceneWidget.cpp:3086
 msgid "Far"
 msgstr "遠方"
 
-#: SceneWidget.cpp:3062
+#: SceneWidget.cpp:3096
+msgid "Restrict camera roll"
+msgstr "カメラロールを制限"
+
+#: SceneWidget.cpp:3100
+msgid "Vertical axis"
+msgstr "垂直軸"
+
+#: SceneWidget.cpp:3113
 msgid "Lighting"
 msgstr "ライティング"
 
-#: SceneWidget.cpp:3064
+#: SceneWidget.cpp:3115
 msgid "Lighting mode"
 msgstr "ライティングモード"
 
-#: SceneWidget.cpp:3066
+#: SceneWidget.cpp:3117
 msgid "Full"
 msgstr "完全"
 
-#: SceneWidget.cpp:3072
+#: SceneWidget.cpp:3123
 msgid "Normal"
 msgstr " 標準"
 
-#: SceneWidget.cpp:3078
+#: SceneWidget.cpp:3129
 msgid "Minimum"
 msgstr "最小限"
 
-#: SceneWidget.cpp:3083
+#: SceneWidget.cpp:3134
 msgid "Solid"
 msgstr "ソリッド"
 
-#: SceneWidget.cpp:3101
+#: SceneWidget.cpp:3152
 msgid "Smooth shading"
 msgstr "スムーズシェーディング"
 
-#: SceneWidget.cpp:3107
+#: SceneWidget.cpp:3158
 msgid "Back face culling: "
 msgstr "隠面消去"
 
-#: SceneWidget.cpp:3112
+#: SceneWidget.cpp:3163
 msgid "Enabled"
 msgstr "有効"
 
-#: SceneWidget.cpp:3113
+#: SceneWidget.cpp:3164
 msgid "Disabled"
 msgstr "無効"
 
-#: SceneWidget.cpp:3114
+#: SceneWidget.cpp:3165
 msgid "Forced"
 msgstr "強制"
 
-#: SceneWidget.cpp:3134
+#: SceneWidget.cpp:3185
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: SceneWidget.cpp:3139 SceneWidget.cpp:3156 LightingItem.cpp:497
+#: SceneWidget.cpp:3190 SceneWidget.cpp:3207 LightingItem.cpp:497
 msgid "Intensity"
 msgstr "照度"
 
-#: SceneWidget.cpp:3147
+#: SceneWidget.cpp:3198
 msgid "Back lighting"
 msgstr "裏面照射"
 
-#: SceneWidget.cpp:3151
+#: SceneWidget.cpp:3202
 msgid "World light"
 msgstr "ワールドライト"
 
-#: SceneWidget.cpp:3164
+#: SceneWidget.cpp:3215
 msgid "Ambient"
 msgstr "環境光"
 
-#: SceneWidget.cpp:3173
+#: SceneWidget.cpp:3224
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: SceneWidget.cpp:3182
+#: SceneWidget.cpp:3233
 msgid "Texture"
 msgstr "テクスチャ"
 
-#: SceneWidget.cpp:3187
+#: SceneWidget.cpp:3238
 msgid "Fog"
 msgstr "フォグ"
 
-#: SceneWidget.cpp:3197
+#: SceneWidget.cpp:3248
 msgid "Shadow %1"
 msgstr "影 %1"
 
-#: SceneWidget.cpp:3201
+#: SceneWidget.cpp:3252
 msgid "Light"
 msgstr "ライト"
 
-#: SceneWidget.cpp:3209
+#: SceneWidget.cpp:3260
 msgid "Anti-aliasing of shadows"
 msgstr "影のアンチエイリアシング"
 
-#: SceneWidget.cpp:3216
+#: SceneWidget.cpp:3267
 msgid "Background"
 msgstr "背景"
 
-#: SceneWidget.cpp:3219
+#: SceneWidget.cpp:3270
 msgid "Background color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:3223
+#: SceneWidget.cpp:3274
 msgid "Coordinate axes"
 msgstr "座標軸"
 
-#: SceneWidget.cpp:3233
+#: SceneWidget.cpp:3284
 msgid "XY Grid"
 msgstr "XYグリッド"
 
-#: SceneWidget.cpp:3235
+#: SceneWidget.cpp:3286
 msgid "XZ Grid"
 msgstr "XZグリッド"
 
-#: SceneWidget.cpp:3236
+#: SceneWidget.cpp:3287
 msgid "YZ Grid"
 msgstr "YZグリッド"
 
-#: SceneWidget.cpp:3243
+#: SceneWidget.cpp:3294
 msgid "Span"
 msgstr "長さ"
 
-#: SceneWidget.cpp:3253
+#: SceneWidget.cpp:3304
 msgid "Interval"
 msgstr "間隔"
 
-#: SceneWidget.cpp:3264 LightingItem.cpp:495
+#: SceneWidget.cpp:3315 LightingItem.cpp:495
 msgid "Color"
 msgstr "色"
 
-#: SceneWidget.cpp:3275
+#: SceneWidget.cpp:3326
 msgid "Default color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:3279
+#: SceneWidget.cpp:3330
 msgid "Default line width"
 msgstr "デフォルトの線幅"
 
-#: SceneWidget.cpp:3287
+#: SceneWidget.cpp:3338
 msgid "Default point size"
 msgstr "デフォルト点サイズ"
 
-#: SceneWidget.cpp:3298
+#: SceneWidget.cpp:3349
 msgid "Do point rendering in the wireframe mode"
 msgstr "ワイヤフレームモードでポイントレンダリングを行う"
 
-#: SceneWidget.cpp:3306
+#: SceneWidget.cpp:3357
 msgid "Normal Visualization"
 msgstr "法線の表示"
 
-#: SceneWidget.cpp:3316
+#: SceneWidget.cpp:3367
 msgid "Lightweight view change"
 msgstr "軽量視点変更"
 
-#: SceneWidget.cpp:3334
+#: SceneWidget.cpp:3385
 msgid "FPS Test"
 msgstr "FPSテスト"
 
-#: SceneWidget.cpp:3341
+#: SceneWidget.cpp:3392
 msgid "Show the picking buffer image (for debug)"
 msgstr "ピッキング用バッファの表示（デバッグ用）"
 
-#: SceneWidget.cpp:3349
+#: SceneWidget.cpp:3400
 msgid "Show collision visualization button set"
 msgstr "干渉可視化ボタン群の表示"
 
-#: SceneWidget.cpp:3359
+#: SceneWidget.cpp:3410
 msgid "Upside down"
 msgstr "上下反転"
 
@@ -978,7 +986,7 @@ msgstr "縦配置"
 msgid "OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view.\n"
 msgstr "OpenGL {0}.{1} ({2} {3}, GLSL {4}) が \"{5}\" ビューで利用可能です．\n"
 
-#: GLSLSceneRenderer.cpp:667
+#: GLSLSceneRenderer.cpp:673
 msgid " Shadow casting is disabled for this GPU due to some problems.\n"
 msgstr " 影の描画はこのGPUに対しては問題があるため無効化されます．\n"
 
