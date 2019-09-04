@@ -35,7 +35,7 @@ private:
     FCLCollisionDetectorImpl* impl;
 };
 
-typedef std::shared_ptr<FCLCollisionDetector> FCLCollisionDetectorPtr;
+typedef ref_ptr<FCLCollisionDetector> FCLCollisionDetectorPtr;
 }
 
 #endif

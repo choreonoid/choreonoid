@@ -48,7 +48,7 @@ CNOID_IMPLEMENT_PLUGIN_ENTRY(FCLPlugin);
 
 CollisionDetectorPtr factory()
 {
-    return std::make_shared<FCLCollisionDetector>();
+    return new FCLCollisionDetector;
 }
 
 struct FactoryRegistration
