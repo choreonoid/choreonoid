@@ -48,7 +48,7 @@ CNOID_IMPLEMENT_PLUGIN_ENTRY(FCLPlugin);
 
 CollisionDetectorPtr factory()
 {
-    return std::make_shared<FCLCollisionDetector>();
+    return new FCLCollisionDetector;
 }
 
 struct FactoryRegistration
@@ -172,9 +172,9 @@ int FCLCollisionDetector::numGeometries() const
 }
 
 
-int FCLCollisionDetector::addGeometry(SgNodePtr geometry)
+int FCLCollisionDetector::addGeometry(SgNode* geometry)
 {
-    return impl->addGeometry(geometry.get());
+    return impl->addGeometry(geometry);
 }
 
 
@@ -341,7 +341,7 @@ bool FCLCollisionDetector::enableGeometryCache(bool on)
 }
 
 
-void FCLCollisionDetector::clearGeometryCache(SgNodePtr geometry)
+void FCLCollisionDetector::clearGeometryCache(SgNode* geometry)
 {
     
 }
