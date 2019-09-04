@@ -248,7 +248,6 @@ set(qtheaders
   Timer.h
   SocketNotifier.h
   InfoBar.h
-  ItemTreeView.h
   SelectionListEditor.h
   TextEdit.h
   )
