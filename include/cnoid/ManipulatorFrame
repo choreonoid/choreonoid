@@ -1,1 +1,1 @@
-#include "src/Body/ManipulatorFrame.h"
+#include "src/ManipulatorPlugin/ManipulatorFrame.h"
