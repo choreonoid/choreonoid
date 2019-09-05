@@ -14,18 +14,17 @@ class Body;
 class ManipulatorPositionRef;
 class ManipulatorIkPosition;
 class ManipulatorFkPosition;
+class ManipulatorPositionCloneMap;
 class ManipulatorPositionSet;
-class ManipulatorPositionSetImpl;
 class BodyManipulatorManager;
 class ManipulatorFrameSet;
 class Mapping;
 
-
 class CNOID_EXPORT ManipulatorPosition : public Referenced
 {
 public:
-    static constexpr int MAX_NUM_JOINTS = 8;
-    enum PositionType { REFERENCE, IK, FK };
+    static constexpr int MaxNumJoints = 8;
+    enum PositionType { Reference, IK, FK };
 
     virtual ManipulatorPosition* clone() = 0;
 
@@ -33,7 +32,7 @@ public:
     bool setName(const std::string& name);
 
     int positionType() const { return positionType_; }
-    bool isReference() const { return (positionType_ == REFERENCE); };
+    bool isReference() const { return (positionType_ == Reference); };
     bool isIK() const { return (positionType_ == IK); };
     bool isFK() const { return (positionType_ == FK); };
 
@@ -60,7 +59,7 @@ private:
     std::string name_;
     weak_ref_ptr<ManipulatorPositionSet> weak_ownerPositionSet;
 
-    friend class ManipulatorPositionSetImpl;
+    friend class ManipulatorPositionSet;
 };
 
 typedef ref_ptr<ManipulatorPosition> ManipulatorPositionPtr;
@@ -116,7 +115,7 @@ private:
     int baseFrameIndex_;
     int toolFrameIndex_;
     int configuration_;
-    std::array<int, MAX_NUM_JOINTS> phase_;
+    std::array<int, MaxNumJoints> phase_;
 };
 
 typedef ref_ptr<ManipulatorIkPosition> ManipulatorIkPositionPtr;
@@ -138,7 +137,7 @@ public:
     virtual bool write(Mapping& archive) const override;
 
 private:
-    std::array<double, MAX_NUM_JOINTS> jointDisplacements;
+    std::array<double, MaxNumJoints> jointDisplacements;
 };
 
 typedef ref_ptr<ManipulatorFkPosition> ManipulatorFkPositionPtr;
@@ -150,7 +149,7 @@ public:
     typedef std::list<ManipulatorPositionPtr> container_type;
 
     ManipulatorPositionSet();
-    ManipulatorPositionSet(const ManipulatorPositionSet& org);
+    ManipulatorPositionSet(const ManipulatorPositionSet& org, ManipulatorPositionCloneMap& cloneMap);
 
     void clear();
 
@@ -173,15 +172,29 @@ public:
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
     
+    class Impl;
+
 private:
     container_type positions_;
-    ManipulatorPositionSetImpl* impl;
+    Impl* impl;
 
-    friend class ManipulatorPositionSetImpl;
     friend class ManipulatorPosition;
+    friend class ManipulatorPositionCloneMap;
 };
 
 typedef ref_ptr<ManipulatorPositionSet> ManipulatorPositionSetPtr;
+
+class ManipulatorPositionCloneMap
+{
+public:
+    ManipulatorPositionCloneMap();
+    ~ManipulatorPositionCloneMap();
+    ManipulatorPosition* getClone(ManipulatorPosition* org);
+private:
+    class Impl;
+    Impl* impl;
+    friend class ManipulatorPositionSet::Impl;
+};
 
 }
 

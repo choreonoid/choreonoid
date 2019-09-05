@@ -24,7 +24,18 @@ typedef unordered_map<string, container_type::iterator> NameToIteratorMap;
 
 namespace cnoid {
 
-class ManipulatorPositionSetImpl
+class ManipulatorPositionCloneMap::Impl
+{
+public:
+    ManipulatorPositionCloneMap* self;
+    unordered_map<ManipulatorPositionSet*, ManipulatorPositionSet*> positionSetMap;
+    unordered_map<ManipulatorPosition*, ManipulatorPosition*> positionMap;
+
+    Impl(ManipulatorPositionCloneMap* self);
+    ManipulatorPositionSet* getClone(ManipulatorPositionSet* org, bool createClone);
+};
+
+class ManipulatorPositionSet::Impl
 {
 public:
     ManipulatorPositionSet* self;
@@ -33,21 +44,21 @@ public:
     weak_ref_ptr<ManipulatorPositionSet> weak_parentSet;
     vector<ManipulatorPositionSetPtr> childSets;
 
-    ManipulatorPositionSetImpl(ManipulatorPositionSet* self);
-    ManipulatorPositionSetImpl(ManipulatorPositionSet* self, const ManipulatorPositionSetImpl& org);
+    Impl(ManipulatorPositionSet* self);
+    Impl(ManipulatorPositionSet* self, const Impl& org, ManipulatorPositionCloneMap& cloneMap);
     bool append(ManipulatorPosition* position, bool doOverwrite);
     bool remove(ManipulatorPosition* position);
     pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> find(
-        ManipulatorPosition* position, ManipulatorPositionSet* traversed);
-    pair<ManipulatorPositionSetImpl*, NameToIteratorMap::iterator> find(
-        const std::string& name, ManipulatorPositionSet* traversed);
+        ManipulatorPosition* position, bool traverseParent, bool traverseChildren);
+    pair<Impl*, NameToIteratorMap::iterator> find(
+        const std::string& name, bool traverseParent, bool traverseChildren);
     bool rewriteNameToIteratorMap(const string& oldName, const string& newName);
 };
 
 }
 
 
-constexpr int ManipulatorPosition::MAX_NUM_JOINTS;
+constexpr int ManipulatorPosition::MaxNumJoints;
 
 
 ManipulatorPosition::ManipulatorPosition(PositionType type)
@@ -125,7 +136,7 @@ bool ManipulatorPosition::write(Mapping& archive) const
 
 
 ManipulatorPositionRef::ManipulatorPositionRef(const std::string& name)
-    : ManipulatorPosition(REFERENCE, name)
+    : ManipulatorPosition(Reference, name)
 {
 
 }
@@ -348,12 +359,12 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
     auto& phaseNodes = *archive.findListing("phases");
     if(phaseNodes.isValid()){
         int i = 0;
-        int n = std::min(phaseNodes.size(), MAX_NUM_JOINTS);
+        int n = std::min(phaseNodes.size(), MaxNumJoints);
         while(i < n){
             phase_[i] = phaseNodes[i].toInt();
             ++i;
         }
-        while(i < MAX_NUM_JOINTS){
+        while(i < MaxNumJoints){
             phase_[i] = 0;
         }
     }
@@ -412,12 +423,12 @@ ManipulatorPosition* ManipulatorFkPosition::clone()
 bool ManipulatorFkPosition::setCurrentPosition(BodyManipulatorManager* manager)
 {
     auto path = manager->jointPath();
-    const int n = std::min(path->numJoints(), MAX_NUM_JOINTS);
+    const int n = std::min(path->numJoints(), MaxNumJoints);
     int i;
     for(i = 0; i < n; ++i){
         jointDisplacements[i] = path->joint(i)->q();
     }
-    for( ; i < MAX_NUM_JOINTS; ++i){
+    for( ; i < MaxNumJoints; ++i){
         jointDisplacements[i] = 0.0;
     }
 
@@ -428,7 +439,7 @@ bool ManipulatorFkPosition::setCurrentPosition(BodyManipulatorManager* manager)
 bool ManipulatorFkPosition::apply(BodyManipulatorManager* manager) const
 {
     auto path = manager->jointPath();
-    const int n = std::min(path->numJoints(), MAX_NUM_JOINTS);
+    const int n = std::min(path->numJoints(), MaxNumJoints);
     for(int i = 0; i < n; ++i){
         path->joint(i)->q() = jointDisplacements[i];
     }
@@ -447,11 +458,11 @@ bool ManipulatorFkPosition::read(const Mapping& archive)
     auto& nodes = *archive.findListing("jointDisplacements");
     if(nodes.isValid()){
         int i;
-        int n = std::min(nodes.size(), MAX_NUM_JOINTS);
+        int n = std::min(nodes.size(), MaxNumJoints);
         for(i = 0; i < n; ++i){
             jointDisplacements[i] = radian(nodes[i].toDouble());
         }
-        for( ; i < MAX_NUM_JOINTS; ++i){
+        for( ; i < MaxNumJoints; ++i){
             jointDisplacements[i] = 0.0;
         }
     }
@@ -473,39 +484,98 @@ bool ManipulatorFkPosition::write(Mapping& archive) const
 }
 
 
+ManipulatorPositionCloneMap::ManipulatorPositionCloneMap()
+{
+    impl = new Impl(this);
+}
+
+
+ManipulatorPositionCloneMap::Impl::Impl(ManipulatorPositionCloneMap* self)
+    : self(self)
+{
+
+}
+
+
+ManipulatorPositionCloneMap::~ManipulatorPositionCloneMap()
+{
+    delete impl;
+}
+
+
+ManipulatorPositionSet* ManipulatorPositionCloneMap::Impl::getClone(ManipulatorPositionSet* org, bool createClone)
+{
+    ManipulatorPositionSet* clone = org;
+    auto iter = positionSetMap.find(org);
+    if(iter != positionSetMap.end()){
+        clone = iter->second;
+    } else if(createClone){
+        clone = new ManipulatorPositionSet(*org, *self);
+        positionSetMap[org] = clone;
+    } else {
+        for(auto& position : org->positions_){
+            positionMap[position] = position;
+        }
+    }
+    return clone;
+}
+
+
+ManipulatorPosition* ManipulatorPositionCloneMap::getClone(ManipulatorPosition* org)
+{
+    ManipulatorPosition* clone;
+    auto iter = impl->positionMap.find(org);
+    if(iter != impl->positionMap.end()){
+        clone = iter->second;
+    } else {
+        clone = org->clone();
+        impl->positionMap[org] = clone;
+    }
+    return clone;
+}
+
+
 ManipulatorPositionSet::ManipulatorPositionSet()
 {
-    impl = new ManipulatorPositionSetImpl(this);
+    impl = new Impl(this);
 }
 
 
-ManipulatorPositionSetImpl::ManipulatorPositionSetImpl(ManipulatorPositionSet* self)
+ManipulatorPositionSet::Impl::Impl(ManipulatorPositionSet* self)
     : self(self)
 {
 
 }
 
 
-ManipulatorPositionSet::ManipulatorPositionSet(const ManipulatorPositionSet& org)
+ManipulatorPositionSet::ManipulatorPositionSet
+(const ManipulatorPositionSet& org, ManipulatorPositionCloneMap& cloneMap)
 {
-    impl = new ManipulatorPositionSetImpl(this, *org.impl);
+    impl = new ManipulatorPositionSet::Impl(this, *org.impl, cloneMap);
 }
 
 
-ManipulatorPositionSetImpl::ManipulatorPositionSetImpl
-(ManipulatorPositionSet* self, const ManipulatorPositionSetImpl& org)
+ManipulatorPositionSet::Impl::Impl
+(ManipulatorPositionSet* self, const Impl& org, ManipulatorPositionCloneMap& cloneMap)
     : self(self)
 {
-    for(auto& position : org.self->positions_){
+    for(auto& position : self->positions_){
         auto clone = position->clone();
         append(clone, false);
+        cloneMap.impl->positionMap[position] = clone;
     }
 
-    weak_parentSet = org.weak_parentSet;
+    // Do shallow copy for the parents
+    auto parent = org.weak_parentSet.lock();
+    while(parent){
+        weak_parentSet = cloneMap.impl->getClone(parent, false);
+        parent = parent->impl->weak_parentSet.lock();
+    }
 
+    // Do deep copy for the children
     childSets.reserve(org.childSets.size());
-    for(auto& child : childSets){
-        childSets.push_back(child);
+    for(auto& child : org.childSets){
+        childSets.push_back(cloneMap.impl->getClone(child, true));
     }
 }
     
@@ -524,9 +594,9 @@ bool ManipulatorPositionSet::append(ManipulatorPosition* position, bool doOverwr
 }
 
 
-bool ManipulatorPositionSetImpl::append(ManipulatorPosition* position, bool doOverwrite)
+bool ManipulatorPositionSet::Impl::append(ManipulatorPosition* position, bool doOverwrite)
 {
-    if(position->positionType_ == ManipulatorPosition::REFERENCE){
+    if(position->positionType() == ManipulatorPosition::Reference){
         return false;
     }
     
@@ -567,9 +637,9 @@ bool ManipulatorPositionSet::remove(ManipulatorPosition* position)
 }
 
 
-bool ManipulatorPositionSetImpl::remove(ManipulatorPosition* position)
+bool ManipulatorPositionSet::Impl::remove(ManipulatorPosition* position)
 {
-    auto found = find(position, nullptr);
+    auto found = find(position, true, true);
     auto owner = found.first;
     if(owner){
         position->weak_ownerPositionSet.reset();
@@ -605,8 +675,9 @@ int ManipulatorPositionSet::removeUnreferencedPositions
 }            
 
 
-pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> ManipulatorPositionSetImpl::find
-(ManipulatorPosition* position, ManipulatorPositionSet* traversed)
+pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator>
+ManipulatorPositionSet::Impl::find
+(ManipulatorPosition* position, bool traverseParent, bool traverseChildren)
 {
     pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> found;
     found.first = nullptr;
@@ -616,19 +687,17 @@ pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> ManipulatorPositio
         found.first = self;
         found.second = iter;
     } else {
-        for(auto& child : childSets){
-            if(child != traversed){
-                found = child->impl->find(position, self);
+        if(traverseChildren){
+            for(auto& child : childSets){
+                found = child->impl->find(position, false, true);
                 if(found.first){
                     break;
                 }
             }
         }
-        if(!found.first){
+        if(!found.first && traverseParent){
             auto parentSet = weak_parentSet.lock();
-            if(parentSet != traversed){
-                found = parentSet->impl->find(position, self);
-            }
+            found = parentSet->impl->find(position, true, false);
         }
     }
 
@@ -638,7 +707,7 @@ pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> ManipulatorPositio
 
 ManipulatorPosition* ManipulatorPositionSet::find(const std::string& name)
 {
-    auto found = impl->find(name, nullptr);
+    auto found = impl->find(name, true, true);
     if(found.first){
         return *found.second->second;
     }
@@ -646,10 +715,11 @@ ManipulatorPosition* ManipulatorPositionSet::find(const std::string& name)
 }
 
 
-pair<ManipulatorPositionSetImpl*, NameToIteratorMap::iterator> ManipulatorPositionSetImpl::find
-(const std::string& name, ManipulatorPositionSet* traversed)
+pair<ManipulatorPositionSet::Impl*, NameToIteratorMap::iterator>
+ManipulatorPositionSet::Impl::find
+(const std::string& name, bool traverseParent, bool traverseChildren)
 {
-    pair<ManipulatorPositionSetImpl*, NameToIteratorMap::iterator> found;
+    pair<ManipulatorPositionSet::Impl*, NameToIteratorMap::iterator> found;
     found.first = nullptr;
     
     auto iter = nameToIteratorMap.find(name);
@@ -657,19 +727,17 @@ pair<ManipulatorPositionSetImpl*, NameToIteratorMap::iterator> ManipulatorPositi
         found.first = this;
         found.second = iter;
     } else {
-        for(auto& child : childSets){
-            if(child != traversed){
-                found = child->impl->find(name, self);
+        if(traverseChildren){
+            for(auto& child : childSets){
+                found = child->impl->find(name, false, true);
                 if(found.first){
                     break;
                 }
             }
         }
-        if(!found.first){
+        if(!found.first && traverseParent){
             auto parentSet = weak_parentSet.lock();
-            if(parentSet != traversed){
-                found = parentSet->impl->find(name, self);
-            }
+            found = parentSet->impl->find(name, true, false);
         }
     }
 
@@ -677,11 +745,11 @@ pair<ManipulatorPositionSetImpl*, NameToIteratorMap::iterator> ManipulatorPositi
 }
 
 
-bool ManipulatorPositionSetImpl::rewriteNameToIteratorMap(const string& oldName, const string& newName)
+bool ManipulatorPositionSet::Impl::rewriteNameToIteratorMap(const string& oldName, const string& newName)
 {
     bool done = false;
     
-    auto found_old = find(oldName, nullptr);
+    auto found_old = find(oldName, true, true);
     auto owner = found_old.first;
     if(owner){
         auto& nameMap = owner->nameToIteratorMap;

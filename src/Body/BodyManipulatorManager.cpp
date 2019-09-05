@@ -90,7 +90,7 @@ bool BodyManipulatorManagerImpl::setManipulator(Body* body, Link* base, Link* en
         if(jointPath && jointPath->hasCustomIK()){
             jointPathConfigurationHandler =
                 dynamic_pointer_cast<JointPathConfigurationHandler>(jointPath);
-            if(jointPath->numJoints() <= ManipulatorPosition::MAX_NUM_JOINTS){
+            if(jointPath->numJoints() <= ManipulatorPosition::MaxNumJoints){
                 isValid = true;
             }
         }
