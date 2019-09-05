@@ -1,5 +1,5 @@
-#ifndef CNOID_BODY_MANIPULATOR_POSITION_H
-#define CNOID_BODY_MANIPULATOR_POSITION_H
+#ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
+#define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
@@ -194,6 +194,12 @@ private:
     class Impl;
     Impl* impl;
     friend class ManipulatorPositionSet::Impl;
+};
+
+class ManipulatorPositionOwner
+{
+public:
+    virtual ManipulatorPosition* getManipulatorPosition() = 0;
 };
 
 }

@@ -9,13 +9,19 @@ set(sources
   ManipulatorPlugin.cpp
   ManipulatorFrame.cpp
   ManipulatorPosition.cpp
+  ManipulatorProgram.cpp
+  ManipulatorStatements.cpp
   BodyManipulatorManager.cpp
+  ManipulatorProgramItemBase.cpp
   )
 
 set(headers
   ManipulatorFrame.h
   ManipulatorPosition.h
+  ManipulatorProgram.h
+  ManipulatorStatements.h
   BodyManipulatorManager.h
+  ManipulatorProgramItemBase.h
   exportdecl.h
   )
 
