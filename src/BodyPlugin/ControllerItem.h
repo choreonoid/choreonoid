@@ -32,6 +32,8 @@ public:
     
     const std::string& optionString() const;
 
+    virtual double timeStep() const = 0;
+
     /**
        This function is called before the simulation world is initialized.
 
@@ -46,8 +48,6 @@ public:
        This function is called after the simulation world is initialized.
     */
     virtual bool start();
-
-    virtual double timeStep() const = 0;
 
     /**
        \note This function is called from the simulation thread.

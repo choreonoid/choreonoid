@@ -37,11 +37,19 @@ public:
         return joints_.empty();
     }
 		
+    int size() const {
+        return static_cast<int>(joints_.size());
+    }
+
     int numJoints() const {
-        return joints_.size();
+        return size();
     }
 		
     Link* joint(int index) const {
+        return joints_[index];
+    }
+
+    Link* operator[] (int index) const {
         return joints_[index];
     }
 
@@ -59,6 +67,14 @@ public:
 
     LinkPath::accessor joints() { return LinkPath::accessor(joints_); }
     LinkPath::const_accessor joints() const { return LinkPath::const_accessor(joints_); }
+
+    typedef LinkPath::iterator iterator;
+    typedef LinkPath::const_iterator const_iterator;
+
+    iterator begin() { return joints().begin(); }
+    iterator end() { return joints().end(); }
+    const_iterator begin() const { return joints().begin(); }
+    const_iterator end() const { return joints().end(); }
 
     LinkPath& linkPath() { return linkPath_; }
     const LinkPath& linkPath() const { return linkPath_; }

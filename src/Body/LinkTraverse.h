@@ -83,13 +83,12 @@ public:
     accessor links(){ return accessor(links_); }
     const_accessor links() const { return const_accessor(links_); }
 
-    // Deprecated. Use links() instead of the following functions.
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
-    iterator begin() { return links_.begin(); }
-    iterator end() { return links_.end(); }
-    const_iterator begin() const { return links_.begin(); }
-    const_iterator end() const { return links_.end(); }
+    iterator begin() { return links().begin(); }
+    iterator end() { return links().end(); }
+    const_iterator begin() const { return links().begin(); }
+    const_iterator end() const { return links().end(); }
 	
     /**
        If the connection from the queried link to the next link is downward (forward) direction,
