@@ -12,7 +12,7 @@ using fmt::format;
 
 namespace cnoid {
 
-class BodyManipulatorManagerImpl
+class BodyManipulatorManager::Impl
 {
 public:
     BodyPtr body;
@@ -20,8 +20,9 @@ public:
     shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler;
     ManipulatorFrameSetPtr frameSet;
 
-    BodyManipulatorManagerImpl();
+    Impl();
     static bool complementManipulatorPath(Body* body, Link*& io_base, Link*& io_end);
+    BodyManipulatorManager* createClone();
     bool setManipulator(Body* body, Link* base, Link* end);
 };
 
@@ -31,7 +32,7 @@ public:
 BodyManipulatorManager* BodyManipulatorManager::getOrCreateManager
 (Body* body, Link* base, Link* end)
 {
-    if(!BodyManipulatorManagerImpl::complementManipulatorPath(body, base, end)){
+    if(!BodyManipulatorManager::Impl::complementManipulatorPath(body, base, end)){
         return nullptr;
     }
 
@@ -51,7 +52,7 @@ BodyManipulatorManager* BodyManipulatorManager::getOrCreateManager
 }
 
 
-bool BodyManipulatorManagerImpl::complementManipulatorPath(Body* body, Link*& io_base, Link*& io_end)
+bool BodyManipulatorManager::Impl::complementManipulatorPath(Body* body, Link*& io_base, Link*& io_end)
 {
     if(!io_base){
         io_base = body->rootLink();
@@ -65,11 +66,11 @@ bool BodyManipulatorManagerImpl::complementManipulatorPath(Body* body, Link*& io
 
 BodyManipulatorManager::BodyManipulatorManager()
 {
-    impl = new BodyManipulatorManagerImpl;
+    impl = new Impl;
 }
 
 
-BodyManipulatorManagerImpl::BodyManipulatorManagerImpl()
+BodyManipulatorManager::Impl::Impl()
 {
     frameSet = new ManipulatorFrameSet;
 }
@@ -81,7 +82,24 @@ BodyManipulatorManager::~BodyManipulatorManager()
 }
 
 
-bool BodyManipulatorManagerImpl::setManipulator(Body* body, Link* base, Link* end)
+BodyManipulatorManager* BodyManipulatorManager::clone()
+{
+    return impl->createClone();
+}
+
+
+BodyManipulatorManager* BodyManipulatorManager::Impl::createClone()
+{
+    Body* cloneBody = body->clone();
+    auto base = cloneBody->link(jointPath->baseLink()->name());
+    auto end = cloneBody->link(jointPath->endLink()->name());
+    auto clone = BodyManipulatorManager::getOrCreateManager(cloneBody, base, end);
+    clone->setFrameSet(new ManipulatorFrameSet(*frameSet));
+    return clone;
+}
+    
+
+bool BodyManipulatorManager::Impl::setManipulator(Body* body, Link* base, Link* end)
 {
     bool isValid = false;
 

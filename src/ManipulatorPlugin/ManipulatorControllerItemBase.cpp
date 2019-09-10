@@ -1,5 +1,6 @@
 #include "ManipulatorControllerItemBase.h"
 #include "ManipulatorProgramItemBase.h"
+#include "BodyManipulatorManager.h"
 #include <cnoid/ManipulatorProgram>
 #include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
@@ -21,9 +22,11 @@ public:
     ManipulatorProgramItemBasePtr programItem;
     ManipulatorProgramPtr program;
     ManipulatorProgramCloneMap manipulatorProgramCloneMap;
+    BodyManipulatorManagerPtr manipulatorManager;
 
     Impl(ManipulatorControllerItemBase* self);
     bool initializeManipulatorProgram(ControllerIO* io);
+    void clear();
 };
 
 }
@@ -89,6 +92,8 @@ bool ManipulatorControllerItemBase::Impl::initializeManipulatorProgram(Controlle
     manipulatorProgramCloneMap.clear();
     program = programItem->program()->clone(manipulatorProgramCloneMap);
 
+    manipulatorManager = programItem->manipulatorManager()->clone();
+
     return true;
 }
 
@@ -105,17 +110,30 @@ ManipulatorProgram* ManipulatorControllerItemBase::getManipulatorProgram()
 }
 
 
+BodyManipulatorManager* ManipulatorControllerItemBase::getBodyManipulatorManager()
+{
+    return impl->manipulatorManager;
+}
+
+
 void ManipulatorControllerItemBase::finalizeManipulatorProgram()
 {
-    impl->programItem = nullptr;
-    impl->program = nullptr;
-    impl->manipulatorProgramCloneMap.clear();
+    impl->clear();
 }
 
 
 void ManipulatorControllerItemBase::onDisconnectedFromRoot()
 {
-    finalizeManipulatorProgram();
+    impl->clear();
+}
+
+
+void ManipulatorControllerItemBase::Impl::clear()
+{
+    programItem.reset();
+    program.reset();
+    manipulatorProgramCloneMap.clear();
+    manipulatorManager.reset();
 }
     
 

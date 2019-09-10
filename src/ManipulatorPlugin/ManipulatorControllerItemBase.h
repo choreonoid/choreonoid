@@ -8,6 +8,7 @@ namespace cnoid {
 
 class ManipulatorProgramItemBase;
 class ManipulatorProgram;
+class BodyManipulatorManager;
 
 class CNOID_EXPORT ManipulatorControllerItemBase : public ControllerItem
 {
@@ -31,7 +32,9 @@ protected:
        for the purpose of control.
     */
     ManipulatorProgram* getManipulatorProgram();
-    
+
+    BodyManipulatorManager* getBodyManipulatorManager();
+
     void finalizeManipulatorProgram();
     
     virtual void onDisconnectedFromRoot() override;

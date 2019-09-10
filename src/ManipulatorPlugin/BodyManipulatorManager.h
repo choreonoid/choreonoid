@@ -13,7 +13,6 @@ class Link;
 class JointPath;
 class JointPathConfigurationHandler;
 class ManipulatorFrameSet;
-class BodyManipulatorManagerImpl;
 
 class CNOID_EXPORT BodyManipulatorManager : public Referenced
 {
@@ -21,6 +20,8 @@ public:
     static BodyManipulatorManager* getOrCreateManager(Body* body, Link* base = nullptr, Link* end = nullptr);
     
     ~BodyManipulatorManager();
+
+    BodyManipulatorManager* clone(); // Deep copy
 
     Body* body();
     std::shared_ptr<JointPath> jointPath();
@@ -37,7 +38,8 @@ protected:
     BodyManipulatorManager(const BodyManipulatorManager& org) = delete;
 
 private:
-    BodyManipulatorManagerImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<BodyManipulatorManager> BodyManipulatorManagerPtr;

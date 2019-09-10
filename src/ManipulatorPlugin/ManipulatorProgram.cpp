@@ -29,6 +29,8 @@ class ManipulatorProgram::Impl
 public:
     ManipulatorPositionSetPtr positions;
     std::string name;
+    Impl();
+    Impl(const Impl& org, ManipulatorProgramCloneMap& cloneMap);
 };
 
 }
@@ -99,20 +101,30 @@ void ManipulatorProgramCloneMap::setPositionSetIncluded(bool on)
 ManipulatorProgram::ManipulatorProgram()
 {
     impl = new Impl;
-    impl->positions = new ManipulatorPositionSet;
 }
 
 
+ManipulatorProgram::Impl::Impl()
+{
+    positions = new ManipulatorPositionSet;
+}
+    
+
 ManipulatorProgram::ManipulatorProgram(const ManipulatorProgram& org, ManipulatorProgramCloneMap& cloneMap)
 {
-    impl->name = org.impl->name;
-    
-    if(cloneMap.isPositionSetIncluded()){
-        impl->positions = new ManipulatorPositionSet(*org.positions(), cloneMap.manipulatorPositionCloneMap());
-    }
-    
-    for(auto& statement : org.statements_){
+    impl = new Impl(*org.impl, cloneMap);
+
+    for(auto& statement : org){
         append(statement->clone(cloneMap));
+    }
+}
+
+
+ManipulatorProgram::Impl::Impl(const Impl& org, ManipulatorProgramCloneMap& cloneMap)
+    : name(org.name)
+{
+    if(cloneMap.isPositionSetIncluded()){
+        positions = new ManipulatorPositionSet(*org.positions, cloneMap.manipulatorPositionCloneMap());
     }
 }
 
