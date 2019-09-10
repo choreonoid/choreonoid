@@ -21,16 +21,16 @@ class CNOID_EXPORT ManipulatorProgramCloneMap
 public:
     ManipulatorProgramCloneMap();
     ~ManipulatorProgramCloneMap();
+    void clear();
     ManipulatorProgram* getClone(ManipulatorProgram* org);
     ManipulatorPosition* getClone(ManipulatorPosition* org);
     ManipulatorPositionCloneMap& manipulatorPositionCloneMap();
-    bool isPositionSetIncluded() const { return isPositionSetIncluded_; }
-    void setPositionSetIncluded(bool on){ isPositionSetIncluded_ = on; }
+    bool isPositionSetIncluded() const;
+    void setPositionSetIncluded(bool on);
     
 private:
     class Impl;
     Impl* impl;
-    bool isPositionSetIncluded_;
 
     friend class ManipulatorProgram;
 };
@@ -40,6 +40,7 @@ class CNOID_EXPORT ManipulatorProgram : public Referenced
 public:
     typedef std::deque<ManipulatorStatementPtr> StatementContainer;
     typedef StatementContainer::iterator iterator;
+    typedef StatementContainer::const_iterator const_iterator;
 
     ManipulatorProgram();
     ~ManipulatorProgram();
@@ -54,7 +55,9 @@ public:
     bool remove(ManipulatorStatement* statement);
 
     iterator begin(){ return statements_.begin(); }
+    const_iterator begin() const { return statements_.begin(); }
     iterator end(){ return statements_.end(); }
+    const_iterator end() const { return statements_.end(); }
 
     ManipulatorPositionSet* positions();
     const ManipulatorPositionSet* positions() const;

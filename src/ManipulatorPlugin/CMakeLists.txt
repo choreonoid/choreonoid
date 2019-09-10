@@ -13,6 +13,7 @@ set(sources
   ManipulatorStatements.cpp
   BodyManipulatorManager.cpp
   ManipulatorProgramItemBase.cpp
+  ManipulatorControllerItemBase.cpp
   ManipulatorProgramViewBase.cpp
   ManipulatorStatementViewBase.cpp
   )
@@ -24,6 +25,7 @@ set(headers
   ManipulatorStatements.h
   BodyManipulatorManager.h
   ManipulatorProgramItemBase.h
+  ManipulatorControllerItemBase
   ManipulatorProgramViewBase.h
   ManipulatorStatementViewBase.h
   exportdecl.h

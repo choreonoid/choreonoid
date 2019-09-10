@@ -28,8 +28,8 @@ class ManipulatorPositionCloneMap::Impl
 {
 public:
     ManipulatorPositionCloneMap* self;
-    unordered_map<ManipulatorPositionSet*, ManipulatorPositionSet*> positionSetMap;
-    unordered_map<ManipulatorPosition*, ManipulatorPosition*> positionMap;
+    unordered_map<ManipulatorPositionSetPtr, ManipulatorPositionSetPtr> positionSetMap;
+    unordered_map<ManipulatorPositionPtr, ManipulatorPositionPtr> positionMap;
 
     Impl(ManipulatorPositionCloneMap* self);
     ManipulatorPositionSet* getClone(ManipulatorPositionSet* org, bool createClone);
@@ -500,6 +500,13 @@ ManipulatorPositionCloneMap::Impl::Impl(ManipulatorPositionCloneMap* self)
 ManipulatorPositionCloneMap::~ManipulatorPositionCloneMap()
 {
     delete impl;
+}
+
+
+void ManipulatorPositionCloneMap::clear()
+{
+    impl->positionSetMap.clear();
+    impl->positionMap.clear();
 }
 
 

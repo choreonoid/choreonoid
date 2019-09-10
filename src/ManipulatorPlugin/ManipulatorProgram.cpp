@@ -18,8 +18,10 @@ namespace cnoid {
 class ManipulatorProgramCloneMap::Impl
 {
 public:
-    unordered_map<ManipulatorProgram*, ManipulatorProgram*> programMap;
+    unordered_map<ManipulatorProgramPtr, ManipulatorProgramPtr> programMap;
     ManipulatorPositionCloneMap positionMap;
+    bool isPositionSetIncluded;
+    Impl();
 };
 
 class ManipulatorProgram::Impl
@@ -35,13 +37,25 @@ public:
 ManipulatorProgramCloneMap::ManipulatorProgramCloneMap()
 {
     impl = new ManipulatorProgramCloneMap::Impl;
-    isPositionSetIncluded_ = true;
+}
+
+
+ManipulatorProgramCloneMap::Impl::Impl()
+{
+    isPositionSetIncluded = true;
 }
 
 
 ManipulatorProgramCloneMap::~ManipulatorProgramCloneMap()
 {
     delete impl;
+}
+
+
+void ManipulatorProgramCloneMap::clear()
+{
+    impl->programMap.clear();
+    impl->positionMap.clear();
 }
 
 
@@ -67,6 +81,18 @@ ManipulatorPosition* ManipulatorProgramCloneMap::getClone(ManipulatorPosition* o
 ManipulatorPositionCloneMap& ManipulatorProgramCloneMap::manipulatorPositionCloneMap()
 {
     return impl->positionMap;
+}
+
+
+bool ManipulatorProgramCloneMap::isPositionSetIncluded() const
+{
+    return impl->isPositionSetIncluded;
+}
+
+
+void ManipulatorProgramCloneMap::setPositionSetIncluded(bool on)
+{
+    impl->isPositionSetIncluded = on;
 }
 
 

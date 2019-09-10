@@ -189,6 +189,7 @@ class ManipulatorPositionCloneMap
 public:
     ManipulatorPositionCloneMap();
     ~ManipulatorPositionCloneMap();
+    void clear();
     ManipulatorPosition* getClone(ManipulatorPosition* org);
 private:
     class Impl;
