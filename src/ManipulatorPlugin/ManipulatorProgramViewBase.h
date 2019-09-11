@@ -38,6 +38,11 @@ protected:
     virtual bool onCurrentProgramItemChanged(ManipulatorProgramItemBase* item) = 0;
     virtual void onCurrentStatementChanged(ManipulatorStatement* statement);
 
+    /**
+       This function is called when the current statemet is changed or clicked.
+    */
+    virtual void onCurrentStatementActivated(ManipulatorStatement* statement);
+
 private:
     Impl* impl;
 };

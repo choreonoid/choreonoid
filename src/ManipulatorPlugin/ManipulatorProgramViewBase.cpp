@@ -70,6 +70,7 @@ public:
     ScopedConnectionSet programItemConnections;
     ManipulatorStatementPtr currentStatement;
     Signal<void(ManipulatorStatement* statement)> sigCurrentStatementChanged;
+    ManipulatorStatementPtr prevCurrentStatement;
     QLabel programNameLabel;
     ToolButton optionMenuButton;
     MenuManager optionMenuManager;
@@ -86,6 +87,7 @@ public:
     void updateStatementTree();
     void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void setCurrentStatement(ManipulatorStatement* statement);
+    void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
     void onStatementAdded(ManipulatorProgram::iterator iter);
     void onStatementRemoved(ManipulatorStatement* statement);
     void forEachStatementInTreeEditEvent(
@@ -220,6 +222,10 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
         [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
             onCurrentTreeWidgetItemChanged(current, previous); });
 
+    sigItemClicked().connect(
+        [&](QTreeWidgetItem* item, int column){
+            onTreeWidgetItemClicked(item, column); });
+
     sigRowsAboutToBeRemoved().connect(
         [&](const QModelIndex& parent, int start, int end){
             onRowsAboutToBeRemoved(parent, start, end); });
@@ -259,6 +265,7 @@ void ManipulatorProgramViewBase::onDeactivated()
 {
     impl->itemTreeConnection.disconnect();
     impl->currentStatement = nullptr;
+    impl->prevCurrentStatement = nullptr;
 }
 
 
@@ -360,8 +367,12 @@ SignalProxy<void(ManipulatorStatement* statement)> ManipulatorProgramViewBase::s
 }
 
 
-void ManipulatorProgramViewBase::Impl::onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+void ManipulatorProgramViewBase::Impl::onCurrentTreeWidgetItemChanged
+(QTreeWidgetItem* current, QTreeWidgetItem* previous)
 {
+    if(auto statementItem = dynamic_cast<StatementItem*>(previous)){
+        prevCurrentStatement = statementItem->statement;
+    }
     if(auto statementItem = dynamic_cast<StatementItem*>(current)){
         setCurrentStatement(statementItem->statement);
     }
@@ -373,14 +384,33 @@ void ManipulatorProgramViewBase::Impl::setCurrentStatement(ManipulatorStatement*
     currentStatement = statement;
     self->onCurrentStatementChanged(statement);
     sigCurrentStatementChanged(statement);
+    self->onCurrentStatementActivated(statement);
 }
 
 
-void ManipulatorProgramViewBase::onCurrentStatementChanged(ManipulatorStatement* statement)
+void ManipulatorProgramViewBase::onCurrentStatementChanged(ManipulatorStatement*)
 {
 
 }
-    
+
+
+void ManipulatorProgramViewBase::Impl::onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */)
+{
+    if(auto statementItem = dynamic_cast<StatementItem*>(item)){
+        auto statement = statementItem->statement;
+        // If the clicked statement is different from the current one,
+        // onCurrentTreeWidgetItemChanged is processed
+        if(statement == prevCurrentStatement){
+            self->onCurrentStatementActivated(statement);
+        }
+    }
+}
+
+
+void ManipulatorProgramViewBase::onCurrentStatementActivated(ManipulatorStatement*)
+{
+
+}
 
 
 void ManipulatorProgramViewBase::Impl::onStatementAdded(ManipulatorProgram::iterator iter)
