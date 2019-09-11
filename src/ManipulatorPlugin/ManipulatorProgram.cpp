@@ -210,6 +210,18 @@ void ManipulatorProgram::removeUnreferencedPositions()
 }
 
 
+ManipulatorPositionSet* ManipulatorProgram::createPositionSet() const
+{
+    auto positions = new ManipulatorPositionSet;
+    for(auto& statement : statements_){
+        if(auto positionStatement = dynamic_cast<ManipulatorPositionOwner*>(statement.get())){
+            positions->append(positionStatement->getManipulatorPosition());
+        }
+    }
+    return positions;
+}
+
+
 bool ManipulatorProgram::load(const std::string& filename, std::ostream& os)
 {
     YAMLReader reader;
@@ -300,15 +312,19 @@ bool ManipulatorProgram::save(const std::string& filename)
         }
     }
     bool ready = true;
-    
+
+    ManipulatorPositionSetPtr positions;
     if(impl->positions){
+        positions = impl->positions;
         removeUnreferencedPositions();
-        MappingPtr node = new Mapping;
-        if(impl->positions->write(*node)){
-            archive->insert("positionSet", node);
-        } else {
-            ready = false;
-        }
+    } else {
+        positions = createPositionSet();
+    }
+    MappingPtr node = new Mapping;
+    if(positions->write(*node)){
+        archive->insert("positionSet", node);
+    } else {
+        ready = false;
     }
 
     if(ready){

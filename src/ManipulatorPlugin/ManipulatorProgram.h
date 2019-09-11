@@ -62,6 +62,7 @@ public:
     ManipulatorPositionSet* positions();
     const ManipulatorPositionSet* positions() const;
     void removeUnreferencedPositions();
+    ManipulatorPositionSet* createPositionSet() const;
 
     bool load(const std::string& filename, std::ostream& os);
     bool save(const std::string& filename);
