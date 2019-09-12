@@ -117,26 +117,32 @@ public:
 
     enum JointType {
         /// rotational joint (1 dof)
-        REVOLUTE_JOINT = 0,
-        ROTATIONAL_JOINT = REVOLUTE_JOINT,
+        RevoluteJoint = 0,
         /// translational joint (1 dof)
-        PRISMATIC_JOINT = 1,
-        /// deprecated
-        SLIDE_JOINT = PRISMATIC_JOINT,
+        PrismaticJoint = 1,
         /// 6-DOF root link
-        FREE_JOINT = 2,
+        FreeJoint = 2,
         /*
           Joint types below here are treated as a fixed joint
           when a code for processing a joint type is not given
         */
         /// fixed joint(0 dof)
-        FIXED_JOINT = 3,
+        FixedJoint = 3,
 
         /**
            special joint for simplified simulation of a continuous track
            \deprecated
         */
-        PSEUDO_CONTINUOUS_TRACK = 4,
+        PseudoContinousTrack = 4,
+
+        // Deprecated
+        REVOLUTE_JOINT = RevoluteJoint,
+        ROTATIONAL_JOINT = RevoluteJoint,
+        PRISMATIC_JOINT = PrismaticJoint,
+        SLIDE_JOINT = PrismaticJoint,
+        FREE_JOINT = FreeJoint,
+        FIXED_JOINT = FixedJoint,
+        PSEUDO_CONTINUOUS_TRACK = PseudoContinousTrack
     };
 
     int jointId() const { return jointId_; }
@@ -162,15 +168,26 @@ public:
     double Jm2() const { return Jm2_; }
 
     enum ActuationMode {
-        NO_ACTUATION = 0,
-        JOINT_TORQUE = 1,
-        JOINT_FORCE = 1,
-        JOINT_EFFORT = 1,
-        JOINT_ANGLE = 2,
-        JOINT_DISPLACEMENT = 2,
-        JOINT_VELOCITY = 3,
-        JOINT_SURFACE_VELOCITY = 4, // For pseudo continous tracks
-        LINK_POSITION = 5,
+        NoActuation = 0,
+        JointTorque = 1,
+        JointForce = 1,
+        JointEffort = 1,
+        JointAngle = 2,
+        JointDisplacement = 2,
+        JointVelocity = 3,
+        JointSurfaceVelocity = 4,
+        LinkPosition = 5,
+
+        // Deprecated
+        NO_ACTUATION = NoActuation,
+        JOINT_TORQUE = JointTorque,
+        JOINT_FORCE = JointForce,
+        JOINT_EFFORT = JointEffort,
+        JOINT_ANGLE = JointAngle,
+        JOINT_DISPLACEMENT = JointDisplacement,
+        JOINT_VELOCITY = JointVelocity,
+        JOINT_SURFACE_VELOCITY = JointSurfaceVelocity, // For pseudo continous tracks
+        LINK_POSITION = LinkPosition,
     };
 
     ActuationMode actuationMode() const { return actuationMode_; }
