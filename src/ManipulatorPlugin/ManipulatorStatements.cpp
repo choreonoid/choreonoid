@@ -64,12 +64,12 @@ ManipulatorStatement* IfStatement::clone(ManipulatorProgramCloneMap& cloneMap)
 }
 
 
-const char* IfStatement::label(int index) const
+std::string IfStatement::label(int index) const
 {
     if(index == 0){
         return "IF";
     }
-    return nullptr;
+    return string();
 }
 
 
@@ -104,12 +104,12 @@ ManipulatorStatement* CallStatement::clone(ManipulatorProgramCloneMap& cloneMap)
 }
 
 
-const char* CallStatement::label(int index) const
+std::string CallStatement::label(int index) const
 {
     if(index == 0){
         return "Call";
     }
-    return nullptr;
+    return string();
 }
 
 

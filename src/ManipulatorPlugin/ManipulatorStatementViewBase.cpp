@@ -221,9 +221,11 @@ void ManipulatorStatementViewBase::Impl::setStatement(ManipulatorProgramItemBase
     ManipulatorStatementPanel* panel = nullptr;
 
     if(statement){
-        statementLabel.setText(statement->label(0));
+        statementLabel.setText(statement->label(0).c_str());
         panel = getOrCreateStatementPanel(statement);
-        panel->impl->activate(programItem, statement);
+        if(panel){
+            panel->impl->activate(programItem, statement);
+        }
     } else {
         statementLabel.setText("---");
     }

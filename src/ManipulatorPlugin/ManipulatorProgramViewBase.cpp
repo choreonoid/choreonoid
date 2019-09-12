@@ -126,7 +126,7 @@ StatementItem::~StatementItem()
 QVariant StatementItem::data(int column, int role) const
 {
     if(role == Qt::DisplayRole){
-        return QString(statement->label(column));
+        return QString(statement->label(column).c_str());
     }
     return QTreeWidgetItem::data(column, role);
 }

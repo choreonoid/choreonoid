@@ -25,7 +25,7 @@ public:
 
     virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) = 0;
     
-    virtual const char* label(int index) const = 0;
+    virtual std::string label(int index) const = 0;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) = 0;
     virtual bool write(Mapping& archive) const = 0;
 
@@ -47,7 +47,7 @@ class CNOID_EXPORT IfStatement : public ManipulatorStatement
 public:
     IfStatement();
     virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
-    virtual const char* label(int index) const override;
+    virtual std::string label(int index) const override;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
 
@@ -61,7 +61,7 @@ class CNOID_EXPORT CallStatement : public ManipulatorStatement
 public:
     CallStatement();
     virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
-    virtual const char* label(int index) const override;
+    virtual std::string label(int index) const override;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
 
