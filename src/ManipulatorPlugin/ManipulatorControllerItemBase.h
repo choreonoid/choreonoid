@@ -16,6 +16,8 @@ public:
     ManipulatorControllerItemBase();
     ManipulatorControllerItemBase(const ManipulatorControllerItemBase& org);
     virtual ~ManipulatorControllerItemBase();
+
+    double speedRatio() const;
         
 protected:
     bool initializeManipulatorProgram(ControllerIO* io);

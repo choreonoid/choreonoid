@@ -6,6 +6,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/ControllerIO>
 #include <cnoid/MessageView>
+#include <cnoid/Archive>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -23,6 +24,7 @@ public:
     ManipulatorProgramPtr program;
     ManipulatorProgramCloneMap manipulatorProgramCloneMap;
     BodyManipulatorManagerPtr manipulatorManager;
+    double speedRatio;
 
     Impl(ManipulatorControllerItemBase* self);
     bool initializeManipulatorProgram(ControllerIO* io);
@@ -49,6 +51,7 @@ ManipulatorControllerItemBase::Impl::Impl(ManipulatorControllerItemBase* self)
     : self(self)
 {
     manipulatorProgramCloneMap.setPositionSetIncluded(false);
+    speedRatio = 1.0;
 }
 
 
@@ -135,21 +138,29 @@ void ManipulatorControllerItemBase::Impl::clear()
     manipulatorProgramCloneMap.clear();
     manipulatorManager.reset();
 }
+
+
+double ManipulatorControllerItemBase::speedRatio() const
+{
+    return impl->speedRatio;
+}
     
 
 void ManipulatorControllerItemBase::doPutProperties(PutPropertyFunction& putProperty)
 {
-
+    putProperty(_("Speed ratio"), impl->speedRatio, changeProperty(impl->speedRatio));
 }
 
 
 bool ManipulatorControllerItemBase::store(Archive& archive)
 {
+    archive.write("speedRatio", impl->speedRatio);
     return true;
 }
     
 
 bool ManipulatorControllerItemBase::restore(const Archive& archive)
 {
+    archive.read("speedRatio", impl->speedRatio);
     return true;
 }
