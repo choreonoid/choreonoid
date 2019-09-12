@@ -19,6 +19,7 @@ set(sources
   BodyMotionControllerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
+  KinematicSimulatorItem.cpp
   GLVisionSimulatorItem.cpp
   FisheyeLensConverter.cpp
   SensorVisualizerItem.cpp
@@ -61,6 +62,7 @@ set(headers
   SimpleControllerItem.h
   SimulationScriptItem.h
   AISTSimulatorItem.h
+  KinematicSimulatorItem.h
   GLVisionSimulatorItem.h
   SensorVisualizerItem.h
   BodyTrackingCameraItem.h

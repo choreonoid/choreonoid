@@ -9,6 +9,7 @@
 #include "ZMPSeqItem.h"
 #include "SimulatorItem.h"
 #include "AISTSimulatorItem.h"
+#include "KinematicSimulatorItem.h"
 #include "SimpleControllerItem.h"
 #include "BodyMotionControllerItem.h"
 #include "GLVisionSimulatorItem.h"
@@ -73,6 +74,7 @@ public:
         BodyMotionItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
+        KinematicSimulatorItem::initializeClass(this);
         SimpleControllerItem::initializeClass(this);
         BodyMotionControllerItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
