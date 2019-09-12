@@ -8,7 +8,6 @@ set(target CnoidBody)
 set(sources
   Body.cpp
   Link.cpp
-  Device.cpp
   LinkTraverse.cpp
   LinkPath.cpp
   JointPath.cpp
@@ -25,6 +24,8 @@ set(sources
   AbstractBodyLoader.cpp
   BodyLoader.cpp
   YAMLBodyLoader.cpp
+  Device.cpp
+  HolderDevice.cpp
   ForceSensor.cpp
   RateGyroSensor.cpp
   AccelerationSensor.cpp
@@ -93,6 +94,7 @@ set(headers
   MultiDeviceStateSeq.h
   Device.h
   DeviceList.h
+  HolderDevice.h
   ForceSensor.h
   RateGyroSensor.h
   AccelerationSensor.h

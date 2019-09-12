@@ -114,6 +114,13 @@ MarkerDevice::MarkerDevice()
 }
 
 
+MarkerDevice::MarkerDevice(const MarkerDevice& org, bool copyStateOnly)
+    : Device(org, copyStateOnly)
+{
+    copyMarkerDeviceStateFrom(org);
+}
+
+
 const char* MarkerDevice::typeName()
 {
     return "MarkerDevice";
@@ -137,14 +144,6 @@ void MarkerDevice::copyStateFrom(const DeviceState& other)
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
     copyMarkerDeviceStateFrom(static_cast<const MarkerDevice&>(other));
-}
-
-
-
-MarkerDevice::MarkerDevice(const MarkerDevice& org, bool copyStateOnly)
-    : Device(org, copyStateOnly)
-{
-    copyMarkerDeviceStateFrom(org);
 }
 
 

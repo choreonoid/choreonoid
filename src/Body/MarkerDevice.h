@@ -17,6 +17,8 @@ class Mapping;
 class CNOID_EXPORT MarkerDevice : public Device
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     MarkerDevice();
     MarkerDevice(const MarkerDevice& org, bool copyStateOnly = false);
     
@@ -62,9 +64,9 @@ public:
 private:
     bool on_;
     int markerType_;
-    float markerSize_;
     Position offsetPosition_;
     Vector3f color_;
+    float markerSize_;
     float emission_;
     float transparency_;
 };

@@ -40,7 +40,7 @@ public:
     void setLensType(LensType type) { lensType_ = type; }
 
     virtual bool on() const override;
-    void on(bool on) override;
+    virtual void on(bool on) override;
 
     double nearClipDistance() const { return nearClipDistance_; }
     void setNearClipDistance(double d) { nearClipDistance_ = d; }
