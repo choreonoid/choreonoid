@@ -1,4 +1,5 @@
 #include "HolderDevice.h"
+#include "AttachmentDevice.h"
 #include "Body.h"
 #include "YAMLBodyLoader.h"
 #include <cnoid/ValueTree>
@@ -21,9 +22,8 @@ registerHolderDevice(
 
 HolderDevice::HolderDevice()
 {
-    targetLocalPosition_.setIdentity();
     on_ = false;
-    attachment_ = nullptr;
+    category_ = nullptr;
 }
 
 
@@ -32,10 +32,10 @@ HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly)
 {
     copyHolderDeviceStateFrom(org);
 
-    attachment_ = nullptr;
+    category_ = nullptr;
     if(!copyStateOnly){
-        if(org.attachment_){
-            setAttachment(*org.attachment_);
+        if(org.category_){
+            setCategory(*org.category_);
         }
     }
 }
@@ -43,7 +43,7 @@ HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly)
 
 HolderDevice::~HolderDevice()
 {
-    clearAttachment();
+    clearCategory();
 }
 
 
@@ -55,7 +55,6 @@ const char* HolderDevice::typeName()
 
 void HolderDevice::copyHolderDeviceStateFrom(const HolderDevice& other)
 {
-    targetLocalPosition_ = other.targetLocalPosition_;
     on_ = other.on_;
 }
 
@@ -102,30 +101,29 @@ void HolderDevice::on(bool on)
 }
 
 
-std::string HolderDevice::attachment() const
+std::string HolderDevice::category() const
 {
-    if(attachment_){
-        return *attachment_;
+    if(category_){
+        return *category_;
     }
     return string();
 }
 
 
-void HolderDevice::setAttachment(const std::string& attachment)
+void HolderDevice::setCategory(const std::string& category)
 {
-    if(!attachment_){
-        attachment_ = new string;
-    }
-    *attachment_ = attachment;
+    clearCategory();
+    category_ = new string;
+    *category_ = category;
 }
 
 
-void HolderDevice::clearAttachment()
+void HolderDevice::clearCategory()
 {
-    if(attachment_){
-        delete attachment_;
+    if(category_){
+        delete category_;
     }
-    attachment_ = nullptr;
+    category_ = nullptr;
 }
         
 
@@ -154,10 +152,10 @@ double* HolderDevice::writeState(double* out_buf) const
 bool HolderDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
 {
     string symbol;
-    if(node.read("attachement", symbol)){
-        setAttachment(symbol);
+    if(node.read("cateogry", symbol)){
+        setCategory(symbol);
     } else {
-        clearAttachment();
+        clearCategory();
     }
     return loader.readDevice(this, node);
 }

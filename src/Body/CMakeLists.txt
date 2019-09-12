@@ -26,6 +26,7 @@ set(sources
   YAMLBodyLoader.cpp
   Device.cpp
   HolderDevice.cpp
+  AttachmentDevice.cpp
   ForceSensor.cpp
   RateGyroSensor.cpp
   AccelerationSensor.cpp
@@ -95,6 +96,7 @@ set(headers
   Device.h
   DeviceList.h
   HolderDevice.h
+  AttachmentDevice.h
   ForceSensor.h
   RateGyroSensor.h
   AccelerationSensor.h
