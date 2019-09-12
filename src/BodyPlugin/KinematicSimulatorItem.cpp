@@ -1,6 +1,6 @@
 #include "KinematicSimulatorItem.h"
 #include <cnoid/ItemManager>
-#include <cnoid/Body>
+#include <cnoid/BodyItem>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -13,7 +13,8 @@ namespace {
 class KinematicSimBody : public SimulationBody
 {
 public:
-    KinematicSimBody(Body* body) : SimulationBody(body) { }
+    KinematicSimBody(Body* body);
+    virtual bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem) override;
 };
 
 }
@@ -127,3 +128,21 @@ bool KinematicSimulatorItem::restore(const Archive& archive)
     return SimulatorItem::restore(archive);
 }
 
+
+KinematicSimBody::KinematicSimBody(Body* body)
+    : SimulationBody(body)
+{
+
+}
+
+
+bool KinematicSimBody::initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem)
+{
+    if(SimulationBody::initialize(simulatorItem, bodyItem)){
+        if(bodyItem->baseBodyItem()){
+            setActive(false);
+        }
+        return true;
+    }
+    return false;
+}
