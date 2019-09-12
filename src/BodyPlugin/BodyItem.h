@@ -41,6 +41,8 @@ public:
 
     Body* body() const;
 
+    BodyItem* baseBodyItem() const;
+
     bool isEditable() const;
     void setEditable(bool on);
         
