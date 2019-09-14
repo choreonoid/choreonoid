@@ -2,6 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 
 #include <cnoid/Referenced>
+#include <cnoid/CloneMap>
 #include <cnoid/EigenTypes>
 #include <string>
 #include <array>
@@ -26,7 +27,7 @@ public:
     static constexpr int MaxNumJoints = 8;
     enum PositionType { Reference, IK, FK };
 
-    virtual ManipulatorPosition* clone() = 0;
+    virtual ManipulatorPosition* clone() const = 0;
 
     const std::string& name() const { return name_; };
     bool setName(const std::string& name);
@@ -72,7 +73,7 @@ public:
     ManipulatorPositionRef(const ManipulatorPositionRef& org);
     ManipulatorPositionRef& operator=(const ManipulatorPositionRef& rhs);
 
-    virtual ManipulatorPosition* clone() override;
+    virtual ManipulatorPosition* clone() const override;
     
     virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
     virtual bool apply(BodyManipulatorManager* manager) const override;
@@ -87,7 +88,7 @@ public:
     ManipulatorIkPosition(const ManipulatorIkPosition& org);
     ManipulatorIkPosition& operator=(const ManipulatorIkPosition& rhs);
 
-    virtual ManipulatorPosition* clone() override;
+    virtual ManipulatorPosition* clone() const override;
 
     const Position& position() const { return T; }
     Vector3 rpy() const;
@@ -128,7 +129,7 @@ public:
     ManipulatorFkPosition(const ManipulatorFkPosition& org);
     ManipulatorFkPosition& operator=(const ManipulatorFkPosition& rhs);
 
-    virtual ManipulatorPosition* clone() override;
+    virtual ManipulatorPosition* clone() const override;
 
     virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
     virtual bool apply(BodyManipulatorManager* manager) const override;
@@ -184,17 +185,23 @@ private:
 
 typedef ref_ptr<ManipulatorPositionSet> ManipulatorPositionSetPtr;
 
-class ManipulatorPositionCloneMap
+class CNOID_EXPORT ManipulatorPositionCloneMap
 {
 public:
     ManipulatorPositionCloneMap();
-    ~ManipulatorPositionCloneMap();
+    ManipulatorPositionCloneMap(const ManipulatorPositionCloneMap& org) = delete;
+
     void clear();
-    ManipulatorPosition* getClone(ManipulatorPosition* org);
+
+    ManipulatorPosition* getClone(ManipulatorPosition* org){
+        return positionCloneMap.getClone<ManipulatorPosition>(org);
+    }
+
+    ManipulatorPositionSet* getClone(ManipulatorPositionSet* org, bool createClone);
+
 private:
-    class Impl;
-    Impl* impl;
-    friend class ManipulatorPositionSet::Impl;
+    CloneMap positionCloneMap;
+    CloneMap positionSetCloneMap;
 };
 
 class ManipulatorPositionOwner

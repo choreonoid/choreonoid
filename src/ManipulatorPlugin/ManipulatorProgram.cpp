@@ -1,11 +1,11 @@
 #include "ManipulatorProgram.h"
 #include "ManipulatorStatements.h"
 #include <cnoid/ManipulatorPosition>
+#include <cnoid/CloneMap>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <fmt/format.h>
 #include <algorithm>
-#include <unordered_map>
 #include <unordered_set>
 #include "gettext.h"
 
@@ -18,10 +18,10 @@ namespace cnoid {
 class ManipulatorProgramCloneMap::Impl
 {
 public:
-    unordered_map<ManipulatorProgramPtr, ManipulatorProgramPtr> programMap;
-    ManipulatorPositionCloneMap positionMap;
+    CloneMap programCloneMap;
+    ManipulatorPositionCloneMap positionCloneMap;
     bool isPositionSetIncluded;
-    Impl();
+    Impl(ManipulatorProgramCloneMap* self);
 };
 
 class ManipulatorProgram::Impl
@@ -38,11 +38,14 @@ public:
 
 ManipulatorProgramCloneMap::ManipulatorProgramCloneMap()
 {
-    impl = new ManipulatorProgramCloneMap::Impl;
+    impl = new ManipulatorProgramCloneMap::Impl(this);
 }
 
 
-ManipulatorProgramCloneMap::Impl::Impl()
+ManipulatorProgramCloneMap::Impl::Impl(ManipulatorProgramCloneMap* self)
+    : programCloneMap(
+        [self](const Referenced* org) -> Referenced* {
+            return static_cast<const ManipulatorProgram*>(org)->clone(*self); })
 {
     isPositionSetIncluded = true;
 }
@@ -56,33 +59,26 @@ ManipulatorProgramCloneMap::~ManipulatorProgramCloneMap()
 
 void ManipulatorProgramCloneMap::clear()
 {
-    impl->programMap.clear();
-    impl->positionMap.clear();
+    impl->programCloneMap.clear();
+    impl->positionCloneMap.clear();
 }
 
 
 ManipulatorProgram* ManipulatorProgramCloneMap::getClone(ManipulatorProgram* org)
 {
-    ManipulatorProgram* clone;
-    auto iter = impl->programMap.find(org);
-    if(iter != impl->programMap.end()){
-        clone = iter->second;
-    } else {
-        impl->programMap[org] = clone;
-    }
-    return clone;
+    return impl->programCloneMap.getClone(org);
 }
 
 
 ManipulatorPosition* ManipulatorProgramCloneMap::getClone(ManipulatorPosition* org)
 {
-    return impl->positionMap.getClone(org);
+    return impl->positionCloneMap.getClone(org);
 }
 
 
 ManipulatorPositionCloneMap& ManipulatorProgramCloneMap::manipulatorPositionCloneMap()
 {
-    return impl->positionMap;
+    return impl->positionCloneMap;
 }
 
 
@@ -135,7 +131,7 @@ ManipulatorProgram::~ManipulatorProgram()
 }
 
 
-ManipulatorProgram* ManipulatorProgram::clone(ManipulatorProgramCloneMap& cloneMap)
+ManipulatorProgram* ManipulatorProgram::clone(ManipulatorProgramCloneMap& cloneMap) const
 {
     return new ManipulatorProgram(*this, cloneMap);
 }

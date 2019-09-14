@@ -20,6 +20,7 @@ class CNOID_EXPORT ManipulatorProgramCloneMap
 {
 public:
     ManipulatorProgramCloneMap();
+    ManipulatorProgramCloneMap(const ManipulatorProgramCloneMap& org) = delete;
     ~ManipulatorProgramCloneMap();
     void clear();
     ManipulatorProgram* getClone(ManipulatorProgram* org);
@@ -45,7 +46,7 @@ public:
     ManipulatorProgram();
     ~ManipulatorProgram();
 
-    virtual ManipulatorProgram* clone(ManipulatorProgramCloneMap& cloneMap);
+    virtual ManipulatorProgram* clone(ManipulatorProgramCloneMap& cloneMap) const;
     
     const std::string& name() const;
     void setName(const std::string& name);

@@ -24,17 +24,6 @@ typedef unordered_map<string, container_type::iterator> NameToIteratorMap;
 
 namespace cnoid {
 
-class ManipulatorPositionCloneMap::Impl
-{
-public:
-    ManipulatorPositionCloneMap* self;
-    unordered_map<ManipulatorPositionSetPtr, ManipulatorPositionSetPtr> positionSetMap;
-    unordered_map<ManipulatorPositionPtr, ManipulatorPositionPtr> positionMap;
-
-    Impl(ManipulatorPositionCloneMap* self);
-    ManipulatorPositionSet* getClone(ManipulatorPositionSet* org, bool createClone);
-};
-
 class ManipulatorPositionSet::Impl
 {
 public:
@@ -156,7 +145,7 @@ ManipulatorPositionRef& ManipulatorPositionRef::operator=(const ManipulatorPosit
 }
 
 
-ManipulatorPosition* ManipulatorPositionRef::clone()
+ManipulatorPosition* ManipulatorPositionRef::clone() const
 {
     return new ManipulatorPositionRef(*this);
 }
@@ -227,7 +216,7 @@ ManipulatorIkPosition& ManipulatorIkPosition::operator=(const ManipulatorIkPosit
 }
     
 
-ManipulatorPosition* ManipulatorIkPosition::clone()
+ManipulatorPosition* ManipulatorIkPosition::clone() const
 {
     return new ManipulatorIkPosition(*this);
 }
@@ -414,7 +403,7 @@ ManipulatorFkPosition& ManipulatorFkPosition::operator=(const ManipulatorFkPosit
 }
 
 
-ManipulatorPosition* ManipulatorFkPosition::clone()
+ManipulatorPosition* ManipulatorFkPosition::clone() const
 {
     return new ManipulatorFkPosition(*this);
 }
@@ -485,58 +474,37 @@ bool ManipulatorFkPosition::write(Mapping& archive) const
 
 
 ManipulatorPositionCloneMap::ManipulatorPositionCloneMap()
+    : positionCloneMap(
+        [](const Referenced* org) -> Referenced* {
+            return static_cast<const ManipulatorPosition*>(org)->clone();
+        }),
+      positionSetCloneMap(
+        [this](const Referenced* org) -> Referenced* {
+            return new ManipulatorPositionSet(static_cast<const ManipulatorPositionSet&>(*org), *this);
+        })
 {
-    impl = new Impl(this);
-}
 
-
-ManipulatorPositionCloneMap::Impl::Impl(ManipulatorPositionCloneMap* self)
-    : self(self)
-{
-
-}
-
-
-ManipulatorPositionCloneMap::~ManipulatorPositionCloneMap()
-{
-    delete impl;
 }
 
 
 void ManipulatorPositionCloneMap::clear()
 {
-    impl->positionSetMap.clear();
-    impl->positionMap.clear();
+    positionCloneMap.clear();
+    positionSetCloneMap.clear();
 }
 
 
-ManipulatorPositionSet* ManipulatorPositionCloneMap::Impl::getClone(ManipulatorPositionSet* org, bool createClone)
+ManipulatorPositionSet* ManipulatorPositionCloneMap::getClone(ManipulatorPositionSet* org, bool createClone)
 {
-    ManipulatorPositionSet* clone = org;
-    auto iter = positionSetMap.find(org);
-    if(iter != positionSetMap.end()){
-        clone = iter->second;
-    } else if(createClone){
-        clone = new ManipulatorPositionSet(*org, *self);
-        positionSetMap[org] = clone;
+    ManipulatorPositionSet* clone;
+    if(createClone){
+        clone = positionSetCloneMap.getClone(org);
     } else {
+        clone = org;
+        positionSetCloneMap.setOriginalAsClone(org);
         for(auto& position : org->positions_){
-            positionMap[position] = position;
+            positionCloneMap.setOriginalAsClone(position);
         }
-    }
-    return clone;
-}
-
-
-ManipulatorPosition* ManipulatorPositionCloneMap::getClone(ManipulatorPosition* org)
-{
-    ManipulatorPosition* clone;
-    auto iter = impl->positionMap.find(org);
-    if(iter != impl->positionMap.end()){
-        clone = iter->second;
-    } else {
-        clone = org->clone();
-        impl->positionMap[org] = clone;
     }
     return clone;
 }
@@ -567,22 +535,21 @@ ManipulatorPositionSet::Impl::Impl
     : self(self)
 {
     for(auto& position : self->positions_){
-        auto clone = position->clone();
+        auto clone = cloneMap.getClone(position);
         append(clone, false);
-        cloneMap.impl->positionMap[position] = clone;
     }
 
     // Do shallow copy for the parents
     auto parent = org.weak_parentSet.lock();
     while(parent){
-        weak_parentSet = cloneMap.impl->getClone(parent, false);
+        weak_parentSet = cloneMap.getClone(parent, false);
         parent = parent->impl->weak_parentSet.lock();
     }
 
     // Do deep copy for the children
     childSets.reserve(org.childSets.size());
     for(auto& child : org.childSets){
-        childSets.push_back(cloneMap.impl->getClone(child, true));
+        childSets.push_back(cloneMap.getClone(child, true));
     }
 }
     
