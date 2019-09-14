@@ -10,6 +10,7 @@ endif()
 set(sources
   Config.cpp
   Referenced.cpp
+  CloneMap.cpp
   ConnectionSet.cpp
   Selection.cpp
   DataMap.cpp
@@ -83,6 +84,7 @@ endif()
 
 set(headers
   Referenced.h
+  CloneMap.h
   EasyScanner.h
   GaussianFilter.h
   UniformCubicBSpline.h
