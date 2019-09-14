@@ -1,6 +1,7 @@
 #include "CloneMap.h"
 #include "Referenced.h"
 #include <unordered_map>
+#include <vector>
 
 using namespace std;
 using namespace cnoid;
