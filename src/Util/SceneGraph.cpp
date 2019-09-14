@@ -18,51 +18,21 @@ SgUpdate::~SgUpdate()
 
 }
 
-namespace {
-typedef std::unordered_map<const SgObject*, SgObjectPtr> CloneMap;
-}
-
-namespace cnoid {
-class SgCloneMapImpl : public CloneMap { };
-}
-
 
 SgCloneMap::SgCloneMap()
+    : CloneMap(
+        [this](const Referenced* org) -> Referenced* {
+            return static_cast<const SgObject*>(org)->doClone(this);
+        })
 {
-    cloneMap = new SgCloneMapImpl;
     isNonNodeCloningEnabled_ = true;
 }
 
 
 SgCloneMap::SgCloneMap(const SgCloneMap& org)
+    : CloneMap(org)
 {
-    cloneMap = new SgCloneMapImpl(*org.cloneMap);
     isNonNodeCloningEnabled_ = org.isNonNodeCloningEnabled_;
-}
-
-
-void SgCloneMap::clear()
-{
-    cloneMap->clear();
-}
-
-
-SgObject* SgCloneMap::findOrCreateClone(const SgObject* org)
-{
-    CloneMap::iterator p = cloneMap->find(org);
-    if(p == cloneMap->end()){
-        SgObject* clone = org->clone(*this);
-        (*cloneMap)[org] = clone;
-        return clone;
-    } else {
-        return p->second.get();
-    }
-}
-
-
-SgCloneMap::~SgCloneMap()
-{
-    delete cloneMap;
 }
 
 

@@ -9,6 +9,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/BoundingBox>
 #include <cnoid/Signal>
+#include <cnoid/CloneMap>
 #include <string>
 #include <vector>
 #include <set>
@@ -50,27 +51,16 @@ private:
 };
 
 
-class SgCloneMapImpl;
-    
-class CNOID_EXPORT SgCloneMap
+class CNOID_EXPORT SgCloneMap : public CloneMap
 {
 public:
     SgCloneMap();
     SgCloneMap(const SgCloneMap& org);
-    ~SgCloneMap();
 
     void setNonNodeCloning(bool on) { isNonNodeCloningEnabled_ = on; }
     bool isNonNodeCloningEnabled() const { return isNonNodeCloningEnabled_; }
 
-    void clear();
-        
-    template<class ObjType> ObjType* getClone(const ObjType* org){
-        return static_cast<ObjType*>(findOrCreateClone(org));
-    }
-
 private:
-    SgObject* findOrCreateClone(const SgObject* org);
-    SgCloneMapImpl* cloneMap;
     bool isNonNodeCloningEnabled_;
 };
 
