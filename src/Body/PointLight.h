@@ -21,7 +21,6 @@ public:
     void copyStateFrom(const PointLight& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
-    virtual Device* clone() const;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
 
     static int pointLightStateSize();
@@ -37,6 +36,9 @@ public:
 
     float quadraticAttenuation() const { return quadraticAttenuation_; }
     void setQuadraticAttenuation(float a) { quadraticAttenuation_ = a; }
+
+protected:
+    virtual Device* doClone(BodyCloneMap* cloneMap) const;
         
 private:
     float constantAttenuation_;

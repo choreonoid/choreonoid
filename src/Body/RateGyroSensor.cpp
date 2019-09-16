@@ -59,7 +59,7 @@ DeviceState* RateGyroSensor::cloneState() const
 }
 
 
-Device* RateGyroSensor::clone() const
+Device* RateGyroSensor::doClone(BodyCloneMap*) const
 {
     return new RateGyroSensor(*this);
 }

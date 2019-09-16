@@ -13,6 +13,7 @@
 
 namespace cnoid {
 
+class BodyCloneMap;
 class Link;
 
 class CNOID_EXPORT DeviceState : public Referenced
@@ -69,16 +70,19 @@ class CNOID_EXPORT Device : public DeviceState
 protected:
     Device(); 
     Device(const Device& org, bool copyStateOnly = false);
+    virtual Device* doClone(BodyCloneMap* cloneMap) const = 0;
 
 public:
     virtual ~Device();
+
+    Device* clone() const { return doClone(nullptr); }
+    Device* clone(BodyCloneMap& cloneMap) const { return doClone(&cloneMap); }
 
     void setIndex(int index) { ns->index = index; }
     void setId(int id) { ns->id = id; }
     void setName(const std::string& name) { ns->name = name; }
     void setLink(Link* link) { ns->link = link; }
 
-    virtual Device* clone() const = 0;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
 
     bool hasStateOnly() const { return (ns != 0); }

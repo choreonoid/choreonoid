@@ -11,6 +11,7 @@
 #include "ExtraJoint.h"
 #include "DeviceList.h"
 #include "MassMatrix.h"
+#include <cnoid/CloneMap>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -26,15 +27,22 @@ struct BodyCustomizerInterface;
 typedef void* BodyCustomizerHandle;
 
 typedef ref_ptr<Body> BodyPtr;
-    
 
+class CNOID_EXPORT BodyCloneMap : public CloneMap
+{
+public:
+    BodyCloneMap();
+    BodyCloneMap(const BodyCloneMap& org) = delete;
+};
+    
 class CNOID_EXPORT Body : public Referenced
 {
 public:
     Body();
-    Body(const Body& org);
+    Body(const Body& org, BodyCloneMap* cloneMap = nullptr);
 
-    virtual Body* clone() const;
+    Body* clone() const { return doClone(nullptr); }
+    Body* clone(BodyCloneMap& cloneMap) const { return doClone(&cloneMap); }
 
     virtual Link* createLink(const Link* org = 0) const;
 
@@ -189,7 +197,8 @@ public:
         return findDeviceSub(name);
     }
     
-    void addDevice(Device* device);
+    void addDevice(Device* device, Link* link);
+    void addDevice(Device* device); //! \deprecated
     void initializeDeviceStates();
     void clearDevices();
 
@@ -277,7 +286,8 @@ public:
     static BodyInterface* bodyInterface();
 
 protected:
-    void copy(const Body& org);
+    void copy(const Body& org, BodyCloneMap* cloneMap);
+    virtual Body* doClone(BodyCloneMap* cloneMap) const;
 
 private:
     LinkTraverse linkTraverse_;
@@ -291,7 +301,7 @@ private:
     BodyImpl* impl;
 
     void initialize();
-    Link* cloneLinkTree(const Link* orgLink);
+    Link* cloneLinkTree(const Link* orgLink, BodyCloneMap* cloneMap);
     Link* createEmptyJoint(int jointId);
     Device* findDeviceSub(const std::string& name) const;
     Referenced* findCacheSub(const std::string& name);

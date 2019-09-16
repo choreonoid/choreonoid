@@ -59,7 +59,7 @@ DeviceState* PointLight::cloneState() const
 }
 
 
-Device* PointLight::clone() const
+Device* PointLight::doClone(BodyCloneMap*) const
 {
     return new PointLight(*this);
 }

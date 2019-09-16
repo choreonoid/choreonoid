@@ -68,6 +68,23 @@ public:
 }
 
 
+BodyCloneMap::BodyCloneMap()
+    : CloneMap(
+        [this](const Referenced* org) -> Referenced* {
+            if(auto link = dynamic_cast<const Link*>(org)){
+                return link->clone();
+            } else if(auto device = dynamic_cast<const Device*>(org)){
+                return device->clone(*this);
+            } else if(auto body = dynamic_cast<const Body*>(org)){
+                return body->clone(*this);
+            }
+            return nullptr;
+        })
+{
+
+}
+
+
 Body::Body()
 {
     initialize();
@@ -92,13 +109,13 @@ void Body::initialize()
 }
 
 
-Body::Body(const Body& org)
+Body::Body(const Body& org, BodyCloneMap* cloneMap)
 {
-    copy(org);
+    copy(org, cloneMap);
 }
 
 
-void Body::copy(const Body& org)
+void Body::copy(const Body& org, BodyCloneMap* cloneMap)
 {
     initialize();
 
@@ -110,20 +127,21 @@ void Body::copy(const Body& org)
     impl->modelName = org.impl->modelName;
     impl->info = org.impl->info;
 
-    setRootLink(cloneLinkTree(org.rootLink()));
+    setRootLink(cloneLinkTree(org.rootLink(), cloneMap));
 
     // deep copy of the devices
-    const DeviceList<>& orgDevices = org.devices();
-    for(size_t i=0; i < orgDevices.size(); ++i){
-        const Device& orgDevice = *orgDevices[i];
-        Device* device = orgDevice.clone();
-        device->setLink(link(orgDevice.link()->index()));
-        addDevice(device);
+    for(auto& device : org.devices()){
+        Device* clone;
+        if(cloneMap){
+            clone = cloneMap->getClone<Device>(device);
+        } else {
+            clone = device->clone();
+        }
+        addDevice(clone, link(device->link()->index()));
     }
 
     // deep copy of the extraJoints
-    for(size_t i=0; i < org.extraJoints_.size(); ++i){
-        const ExtraJoint& orgExtraJoint = org.extraJoints_[i];
+    for(auto& orgExtraJoint : org.extraJoints_){
         ExtraJoint extraJoint(orgExtraJoint);
         for(int j=0; j < 2; ++j){
             extraJoint.link[j] = link(orgExtraJoint.link[j]->index());
@@ -145,19 +163,24 @@ void Body::copy(const Body& org)
 }
 
 
-Link* Body::cloneLinkTree(const Link* orgLink)
+Link* Body::cloneLinkTree(const Link* orgLink, BodyCloneMap* cloneMap)
 {
-    Link* link = createLink(orgLink);
-    for(Link* orgChild = orgLink->child(); orgChild; orgChild = orgChild->sibling()){
-        link->appendChild(cloneLinkTree(orgChild));
+    Link* link;
+    if(cloneMap){
+        link = cloneMap->getClone(orgLink);
+    } else {
+        link = orgLink->clone();
+    }
+    for(Link* child = orgLink->child(); child; child = child->sibling()){
+        link->appendChild(cloneLinkTree(child, cloneMap));
     }
     return link;
 }
 
 
-Body* Body::clone() const
+Body* Body::doClone(BodyCloneMap* cloneMap) const
 {
-    return new Body(*this);
+    return new Body(*this, cloneMap);
 }
 
 
@@ -344,13 +367,20 @@ void Body::resetInfo(Mapping* info)
 }
 
 
-void Body::addDevice(Device* device)
+void Body::addDevice(Device* device, Link* link)
 {
+    device->setLink(link);
     device->setIndex(devices_.size());
     devices_.push_back(device);
     if(!device->name().empty()){
         impl->deviceNameMap[device->name()] = device;
     }
+}
+
+
+void Body::addDevice(Device* device)
+{
+    addDevice(device, device->link());
 }
 
 

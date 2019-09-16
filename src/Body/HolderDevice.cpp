@@ -27,10 +27,15 @@ HolderDevice::HolderDevice()
 }
 
 
-HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly)
+HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap)
     : Device(org, copyStateOnly)
 {
     copyHolderDeviceStateFrom(org);
+
+    if(org.attachment_ && cloneMap){
+        attachment_ = cloneMap->findCloneOrReplaceLater<AttachmentDevice>(
+            org.attachment_, [&](AttachmentDevice* clone){ attachment_ = clone; });
+    }
 
     category_ = nullptr;
     if(!copyStateOnly){
@@ -70,14 +75,14 @@ void HolderDevice::copyStateFrom(const DeviceState& other)
 
 DeviceState* HolderDevice::cloneState() const
 {
-    return new HolderDevice(*this, true);
+    return new HolderDevice(*this, true, nullptr);
 
 }
 
 
-Device* HolderDevice::clone() const
+Device* HolderDevice::doClone(BodyCloneMap* cloneMap) const
 {
-    return new HolderDevice(*this);
+    return new HolderDevice(*this, false, cloneMap);
 }
 
 
@@ -98,6 +103,18 @@ bool HolderDevice::on() const
 void HolderDevice::on(bool on)
 {
     on_ = on;
+}
+
+
+AttachmentDevice* HolderDevice::attachment()
+{
+    return attachment_;
+}
+
+
+void HolderDevice::setAttachment(AttachmentDevice* attachment)
+{
+    attachment_ = attachment;
 }
 
 

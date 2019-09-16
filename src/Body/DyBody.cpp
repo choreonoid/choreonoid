@@ -64,15 +64,15 @@ DyBody::DyBody()
 }
 
 
-DyBody::DyBody(const Body& org)
+DyBody::DyBody(const Body& org, BodyCloneMap* cloneMap)
 {
-    copy(org);
+    copy(org, cloneMap);
 }
 
     
-Body* DyBody::clone() const
+Body* DyBody::doClone(BodyCloneMap* cloneMap) const
 {
-    return new DyBody(*this);
+    return new DyBody(*this, cloneMap);
 }
 
 

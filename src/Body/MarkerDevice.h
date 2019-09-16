@@ -26,7 +26,6 @@ public:
     void copyMarkerDeviceStateFrom(const MarkerDevice& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
-    virtual Device* clone() const;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);
@@ -60,6 +59,9 @@ public:
     const Position& offsetPosition() const { return offsetPosition_; }
     void setOffsetPosition(const Position& T) { offsetPosition_ = T; }
     void setOffsetTranslation(const Vector3& p) { offsetPosition_.translation() = p; }
+
+protected:
+    virtual Device* doClone(BodyCloneMap* cloneMap) const;
 
 private:
     bool on_;
