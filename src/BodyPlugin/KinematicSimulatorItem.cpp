@@ -83,9 +83,9 @@ Item* KinematicSimulatorItem::doDuplicate() const
 
 SimulationBody* KinematicSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    auto body = new Body(*orgBody);
-    auto simBody = new KinematicSimBody(body);
-    return simBody;
+    auto body = new Body;
+    body->copyFrom(orgBody);
+    return new KinematicSimBody(body);
 }
 
 
