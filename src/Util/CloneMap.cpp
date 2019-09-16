@@ -73,6 +73,12 @@ void CloneMap::clear()
 }
 
 
+void CloneMap::setClone(const Referenced* org, Referenced* clone)
+{
+    impl->orgToCloneMap[const_cast<Referenced*>(org)] = clone;
+}
+
+
 Referenced* CloneMap::findClone_(const Referenced* org)
 {
     auto iter = impl->orgToCloneMap.find(const_cast<Referenced*>(org));

@@ -19,6 +19,8 @@ public:
 
     void clear();
 
+    void setClone(const Referenced* org, Referenced* clone);
+
     template<class ObjectType>
     ObjectType* findClone(const ObjectType* org){
         return static_cast<ObjectType*>(findClone_(org));
