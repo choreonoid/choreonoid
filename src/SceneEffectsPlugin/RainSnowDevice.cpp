@@ -143,7 +143,7 @@ DeviceState* RainDevice::cloneState() const
 }
 
 
-Device* RainDevice::clone() const
+Device* RainDevice::doClone(BodyCloneMap*) const
 {
     return new RainDevice(*this);
 }
@@ -191,7 +191,7 @@ DeviceState* SnowDevice::cloneState() const
 }
 
 
-Device* SnowDevice::clone() const
+Device* SnowDevice::doClone(BodyCloneMap*) const
 {
     return new SnowDevice(*this);
 }

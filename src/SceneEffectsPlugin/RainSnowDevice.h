@@ -44,8 +44,10 @@ public:
     virtual const char* typeName() override;
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+
+protected:
+    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<RainDevice> RainDevicePtr;
@@ -59,8 +61,10 @@ public:
     virtual const char* typeName() override;
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+
+protected:
+    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<SnowDevice> SnowDevicePtr;

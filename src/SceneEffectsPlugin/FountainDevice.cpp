@@ -94,7 +94,7 @@ DeviceState* FountainDevice::cloneState() const
 }
 
 
-Device* FountainDevice::clone() const
+Device* FountainDevice::doClone(BodyCloneMap*) const
 {
     return new FountainDevice(*this);
 }
