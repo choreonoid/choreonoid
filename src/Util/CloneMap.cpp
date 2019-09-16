@@ -73,7 +73,7 @@ void CloneMap::clear()
 }
 
 
-Referenced* CloneMap::findClone(const Referenced* org)
+Referenced* CloneMap::findClone_(const Referenced* org)
 {
     auto iter = impl->orgToCloneMap.find(const_cast<Referenced*>(org));
     if(iter != impl->orgToCloneMap.end()){
@@ -83,9 +83,9 @@ Referenced* CloneMap::findClone(const Referenced* org)
 }
 
 
-Referenced* CloneMap::findOrCreateClone(const Referenced* org)
+Referenced* CloneMap::findOrCreateClone_(const Referenced* org)
 {
-    auto clone = findClone(org);
+    auto clone = findClone_(org);
     if(!clone){
         clone = impl->cloneFunction(org);
         impl->orgToCloneMap[const_cast<Referenced*>(org)] = clone;
@@ -94,10 +94,10 @@ Referenced* CloneMap::findOrCreateClone(const Referenced* org)
 }
 
 
-Referenced* CloneMap::findCloneOrReplaceLater
+Referenced* CloneMap::findCloneOrReplaceLater_
 (const Referenced* org, std::function<void(Referenced* clone)> replaceFunction)
 {
-    auto clone = findClone(org);
+    auto clone = findClone_(org);
     if(!clone){
         impl->replaceFunctions.push_back(
             Impl::ReplaceFunctionInfo(const_cast<Referenced*>(org), replaceFunction));
@@ -109,7 +109,7 @@ Referenced* CloneMap::findCloneOrReplaceLater
 void CloneMap::replacePendingObjects()
 {
     for(auto& info : impl->replaceFunctions){
-        auto clone = findClone(info.object);
+        auto clone = findClone_(info.object);
         if(clone){
             info.replaceFunction(clone);
         }

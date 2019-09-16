@@ -21,34 +21,36 @@ public:
 
     template<class ObjectType>
     ObjectType* findClone(const ObjectType* org){
-        return static_cast<ObjectType*>(findClone(org));
+        return static_cast<ObjectType*>(findClone_(org));
     }
 
     template<class ObjectType>
     ObjectType* getClone(const ObjectType* org){
-        return static_cast<ObjectType*>(findOrCreateClone(org));
+        return static_cast<ObjectType*>(findOrCreateClone_(org));
     }
 
     template<class ObjectType>
     ObjectType* findCloneOrReplaceLater(
-        const ObjectType* org, std::function<void(Referenced* clone)> replaceFunction)
-    {
-        return static_cast<ObjectType*>(findCloneOrReplaceLater(org, replaceFunction));
+        const ObjectType* org, std::function<void(ObjectType* clone)> replaceFunction){
+        return static_cast<ObjectType*>(
+            findCloneOrReplaceLater_(
+                org,
+                [replaceFunction](Referenced* clone){
+                    replaceFunction(static_cast<ObjectType*>(clone)); }));
     }
 
     void replacePendingObjects();
 
     void setOriginalAsClone(const Referenced* org);
 
-protected:
-    Referenced* findClone(const Referenced* org);
-    Referenced* findOrCreateClone(const Referenced* org);
-    Referenced* findCloneOrReplaceLater(
-        const Referenced* org, std::function<void(Referenced* clone)> replaceFunction);
-
 private:
     class Impl;
     Impl* impl;
+
+    Referenced* findClone_(const Referenced* org);
+    Referenced* findOrCreateClone_(const Referenced* org);
+    Referenced* findCloneOrReplaceLater_(
+        const Referenced* org, std::function<void(Referenced* clone)> replaceFunction);
 };
 
 }
