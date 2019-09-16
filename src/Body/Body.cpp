@@ -86,9 +86,16 @@ BodyCloneMap::BodyCloneMap()
 
 
 Body::Body()
+    : Body(new Link)
+{
+
+}
+
+
+Body::Body(Link* rootLink)
 {
     initialize();
-    rootLink_ = createLink();
+    rootLink_ = rootLink;
     numActualJoints = 0;
     currentTimeFunction = getCurrentTime;
 
@@ -109,28 +116,22 @@ void Body::initialize()
 }
 
 
-Body::Body(const Body& org, BodyCloneMap* cloneMap)
-{
-    copy(org, cloneMap);
-}
-
-
-void Body::copy(const Body& org, BodyCloneMap* cloneMap)
+void Body::copyFrom(const Body* org, BodyCloneMap* cloneMap)
 {
     initialize();
 
-    currentTimeFunction = org.currentTimeFunction;
+    currentTimeFunction = org->currentTimeFunction;
 
-    impl->centerOfMass = org.impl->centerOfMass;
-    impl->mass = org.impl->mass;
-    impl->name = org.impl->name;
-    impl->modelName = org.impl->modelName;
-    impl->info = org.impl->info;
+    impl->centerOfMass = org->impl->centerOfMass;
+    impl->mass = org->impl->mass;
+    impl->name = org->impl->name;
+    impl->modelName = org->impl->modelName;
+    impl->info = org->impl->info;
 
-    setRootLink(cloneLinkTree(org.rootLink(), cloneMap));
+    setRootLink(cloneLinkTree(org->rootLink(), cloneMap));
 
     // deep copy of the devices
-    for(auto& device : org.devices()){
+    for(auto& device : org->devices()){
         Device* clone;
         if(cloneMap){
             clone = cloneMap->getClone<Device>(device);
@@ -141,7 +142,7 @@ void Body::copy(const Body& org, BodyCloneMap* cloneMap)
     }
 
     // deep copy of the extraJoints
-    for(auto& orgExtraJoint : org.extraJoints_){
+    for(auto& orgExtraJoint : org->extraJoints_){
         ExtraJoint extraJoint(orgExtraJoint);
         for(int j=0; j < 2; ++j){
             extraJoint.link[j] = link(orgExtraJoint.link[j]->index());
@@ -150,26 +151,24 @@ void Body::copy(const Body& org, BodyCloneMap* cloneMap)
         extraJoints_.push_back(extraJoint);
     }
 
-    if(!org.impl->handlers.empty()){
-        impl->handlers.reserve(org.impl->handlers.size());
-        for(auto& handler : org.impl->handlers){
+    if(!org->impl->handlers.empty()){
+        impl->handlers.reserve(org->impl->handlers.size());
+        for(auto& handler : org->impl->handlers){
             impl->handlers.push_back(handler->clone());
         }
     }
 
-    if(org.impl->customizerInterface){
-        installCustomizer(org.impl->customizerInterface);
+    if(org->impl->customizerInterface){
+        installCustomizer(org->impl->customizerInterface);
     }
 }
 
 
 Link* Body::cloneLinkTree(const Link* orgLink, BodyCloneMap* cloneMap)
 {
-    Link* link;
+    Link* link = createLink(orgLink);
     if(cloneMap){
-        link = cloneMap->getClone(orgLink);
-    } else {
-        link = orgLink->clone();
+        cloneMap->setClone(orgLink, link);
     }
     for(Link* child = orgLink->child(); child; child = child->sibling()){
         link->appendChild(cloneLinkTree(child, cloneMap));
@@ -180,7 +179,9 @@ Link* Body::cloneLinkTree(const Link* orgLink, BodyCloneMap* cloneMap)
 
 Body* Body::doClone(BodyCloneMap* cloneMap) const
 {
-    return new Body(*this, cloneMap);
+    auto body = new Body;
+    body->copyFrom(this, cloneMap);
+    return body;
 }
 
 

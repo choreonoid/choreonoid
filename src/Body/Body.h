@@ -39,14 +39,14 @@ class CNOID_EXPORT Body : public Referenced
 {
 public:
     Body();
-    Body(const Body& org, BodyCloneMap* cloneMap = nullptr);
+    Body(const Body& org) = delete;
+    virtual ~Body();
 
+    void copyFrom(const Body* org, BodyCloneMap* cloneMap = nullptr);
     Body* clone() const { return doClone(nullptr); }
     Body* clone(BodyCloneMap& cloneMap) const { return doClone(&cloneMap); }
 
     virtual Link* createLink(const Link* org = 0) const;
-
-    virtual ~Body();
 
     const std::string& name() const;
     void setName(const std::string& name);
@@ -286,7 +286,7 @@ public:
     static BodyInterface* bodyInterface();
 
 protected:
-    void copy(const Body& org, BodyCloneMap* cloneMap);
+    Body(Link* rootLink);
     virtual Body* doClone(BodyCloneMap* cloneMap) const;
 
 private:

@@ -346,7 +346,8 @@ bool AISTSimulatorItem::startSimulation(bool doReset)
 SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
 {
     SimulationBody* simBody = 0;
-    DyBody* body = new DyBody(*orgBody);
+    DyBody* body = new DyBody;
+    body->copyFrom(orgBody);
 
     const int n = orgBody->numLinks();
     for(int i=0; i < n; ++i){

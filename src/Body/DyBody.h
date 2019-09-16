@@ -119,7 +119,7 @@ class CNOID_EXPORT DyBody : public Body
 {
 public:
     DyBody();
-    DyBody(const Body& org, BodyCloneMap* cloneMap = nullptr);
+    DyBody(const Body& org) = delete;
 
     virtual Link* createLink(const Link* org = 0) const;
 
