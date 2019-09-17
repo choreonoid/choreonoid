@@ -169,7 +169,7 @@ double* AttachmentDevice::writeState(double* out_buf) const
 bool AttachmentDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
 {
     string symbol;
-    if(node.read("cateogry", symbol)){
+    if(node.read("category", symbol)){
         setCategory(symbol);
     } else {
         clearCategory();

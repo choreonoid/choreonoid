@@ -95,13 +95,12 @@ Body::Body()
 Body::Body(Link* rootLink)
 {
     initialize();
-    rootLink_ = rootLink;
-    numActualJoints = 0;
     currentTimeFunction = getCurrentTime;
-
     impl->centerOfMass.setZero();
-    impl->mass = 0.0;
     impl->info = new Mapping();
+
+    rootLink_ = nullptr;
+    setRootLink(rootLink);
 }
 
 
@@ -123,7 +122,6 @@ void Body::copyFrom(const Body* org, BodyCloneMap* cloneMap)
     currentTimeFunction = org->currentTimeFunction;
 
     impl->centerOfMass = org->impl->centerOfMass;
-    impl->mass = org->impl->mass;
     impl->name = org->impl->name;
     impl->modelName = org->impl->modelName;
     impl->info = org->impl->info;
