@@ -1461,6 +1461,14 @@ void SimulatorItemImpl::clearSimulation()
     postDynamicsFunctions.clear();
 
     subSimulatorItems.clear();
+
+    self->clearSimulation();
+}
+
+
+void SimulatorItem::clearSimulation()
+{
+
 }
 
 

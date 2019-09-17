@@ -200,6 +200,8 @@ protected:
     virtual void onPositionChanged() override;
     virtual void onDisconnectedFromRoot() override;
 
+    virtual void clearSimulation();
+
     /**
        @note orgBody should not owned by the SimulationBody instance.
        Instead of it, a clone instance which may be a sub Body class should be created and owned.

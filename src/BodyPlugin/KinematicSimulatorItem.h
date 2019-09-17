@@ -13,14 +13,14 @@ public:
     KinematicSimulatorItem();
     KinematicSimulatorItem(const KinematicSimulatorItem& org);
     virtual ~KinematicSimulatorItem();
-
     virtual Item* doDuplicate() const override;
 
 protected:
+    virtual void clearSimulation() override;
     virtual SimulationBody* createSimulationBody(Body* orgBody) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies) override;
-
+    virtual void finalizeSimulation() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

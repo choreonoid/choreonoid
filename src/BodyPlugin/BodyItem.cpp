@@ -53,13 +53,10 @@ BodyLoader bodyLoader;
 BodyState kinematicStateCopy;
 
 struct BodyAttachment {
-    BodyItem* baseBodyItem;
-    Link* baseLink;
-    Position T_base_local;
-    Position T_local;
-    bool isBaseKinematicStateChangedNotificationReqruied;
-    string category;
+    AttachmentDevicePtr attachment;
+    BodyItem* holderBodyItem;
     ScopedConnection connection;
+    bool isKinematicStateChangeNotificationToHolderBodyRequired;
 };
 
 class MyCompositeBodyIK : public CompositeBodyIK
@@ -71,7 +68,7 @@ public:
 
     BodyItemImpl* bodyItemImpl;
     unique_ptr<BodyAttachment>& bodyAttachment;
-    shared_ptr<InverseKinematics> baseIK;
+    shared_ptr<InverseKinematics> holderIK;
 };
 
 }
@@ -154,7 +151,7 @@ public:
     void tryToAttachToBodyItem(BodyItem* bodyItem);
     bool attachToBodyItem(AttachmentDevice* attachment, BodyItem* bodyItem, HolderDevice* holder);
     void clearBodyAttachment();
-    void onBaseBodyKinematicStateChanged();
+    void onHolderBodyKinematicStateChanged();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -319,18 +316,59 @@ void BodyItemImpl::initBody(bool calledFromCopyConstructor)
 }
 
 
+bool BodyItem::loadModelFile(const std::string& filename)
+{
+    return impl->loadModelFile(filename);
+}
+
+
+bool BodyItemImpl::loadModelFile(const std::string& filename)
+{
+    bodyLoader.setMessageSink(MessageView::instance()->cout());
+
+    BodyPtr newBody = new Body;
+    newBody->setName(self->name());
+
+    bool loaded = bodyLoader.load(newBody, filename);
+    if(loaded){
+        body = newBody;
+        body->initializePosition();
+        body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
+    }
+
+    initBody(false);
+
+    return loaded;
+}
+
+
 Body* BodyItem::body() const
 {
     return impl->body.get();
 }
 
 
-BodyItem* BodyItem::baseBodyItem() const
+void BodyItem::setBody(Body* body)
 {
-    if(impl->bodyAttachment){
-        return impl->bodyAttachment->baseBodyItem;
+    impl->setBody(body);
+}
+
+
+void BodyItemImpl::setBody(Body* body_)
+{
+    body = body_;
+    body->initializePosition();
+
+    initBody(false);
+}
+
+
+void BodyItem::setName(const std::string& name)
+{
+    if(impl->body){
+        impl->body->setName(name);
     }
-    return nullptr;
+    Item::setName(name);
 }
 
 
@@ -358,56 +396,6 @@ SignalProxy<void()> BodyItem::sigKinematicStateChanged()
 SignalProxy<void()> BodyItem::sigKinematicStateEdited()
 {
     return impl->sigKinematicStateEdited.signal();
-}
-
-
-bool BodyItem::loadModelFile(const std::string& filename)
-{
-    return impl->loadModelFile(filename);
-}
-
-
-bool BodyItemImpl::loadModelFile(const std::string& filename)
-{
-    bodyLoader.setMessageSink(MessageView::instance()->cout());
-
-    BodyPtr newBody = new Body;
-    newBody->setName(self->name());
-
-    bool loaded = bodyLoader.load(newBody, filename);
-    if(loaded){
-        body = newBody;
-        body->initializePosition();
-        body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
-    }
-
-    initBody(false);
-
-    return loaded;
-}
-
-
-void BodyItem::setBody(Body* body)
-{
-    impl->setBody(body);
-}
-
-
-void BodyItemImpl::setBody(Body* body_)
-{
-    body = body_;
-    body->initializePosition();
-
-    initBody(false);
-}
-
-
-void BodyItem::setName(const std::string& name)
-{
-    if(impl->body){
-        impl->body->setName(name);
-    }
-    Item::setName(name);
 }
 
 
@@ -951,9 +939,9 @@ void BodyItemImpl::notifyKinematicStateChange(bool requestFK, bool requestVelFK,
 
     updateFlags.reset();
 
-    if(bodyAttachment && bodyAttachment->isBaseKinematicStateChangedNotificationReqruied){
-        bodyAttachment->isBaseKinematicStateChangedNotificationReqruied = false;
-        bodyAttachment->baseBodyItem->impl->notifyKinematicStateChange(
+    if(bodyAttachment && bodyAttachment->isKinematicStateChangeNotificationToHolderBodyRequired){
+        bodyAttachment->isKinematicStateChangeNotificationToHolderBodyRequired = false;
+        bodyAttachment->holderBodyItem->impl->notifyKinematicStateChange(
             requestFK, requestVelFK, requestAccFK, isDirect);
 
     } else {
@@ -1160,7 +1148,7 @@ void BodyItem::onPositionChanged()
     }
 
     auto ownerBodyItem = findOwnerItem<BodyItem>();
-    if(!impl->bodyAttachment || (impl->bodyAttachment->baseBodyItem != ownerBodyItem)){
+    if(!impl->bodyAttachment || (impl->bodyAttachment->holderBodyItem != ownerBodyItem)){
         impl->clearBodyAttachment();
         if(ownerBodyItem){
             impl->tryToAttachToBodyItem(ownerBodyItem);
@@ -1246,23 +1234,28 @@ void BodyItemImpl::tryToAttachToBodyItem(BodyItem* bodyItem)
 bool BodyItemImpl::attachToBodyItem
 (AttachmentDevice* attachment, BodyItem* bodyItem, HolderDevice* holder)
 {
-    bodyAttachment.reset(new BodyAttachment);
-    
-    bodyAttachment->baseBodyItem = bodyItem;
-    bodyAttachment->baseLink = holder->link();
-    bodyAttachment->T_base_local = holder->T_local();
-    bodyAttachment->T_local = attachment->T_local();
-    bodyAttachment->isBaseKinematicStateChangedNotificationReqruied = false;
-    bodyAttachment->category = attachment->category();
+    if(holder->attachment()){
+        return false;
+    }
+    holder->setAttachment(attachment);
+    holder->on(true);
+    attachment->setHolder(holder);
+    attachment->on(true);
 
+    bodyAttachment.reset(new BodyAttachment);
+    bodyAttachment->attachment = attachment;
+    bodyAttachment->holderBodyItem = bodyItem;
+    
+    bodyAttachment->connection =
+        bodyItem->sigKinematicStateChanged().connect(
+            [&](){ onHolderBodyKinematicStateChanged(); });
+
+    bodyAttachment->isKinematicStateChangeNotificationToHolderBodyRequired = false;
+    
     mvout() << format(_("{0} has been attached to {1} of {2}."),
                       self->name(), holder->link()->name(), bodyItem->name()) << endl;
 
-    bodyAttachment->connection =
-        bodyItem->sigKinematicStateChanged().connect(
-            [&](){ onBaseBodyKinematicStateChanged(); });
-
-    onBaseBodyKinematicStateChanged();
+    onHolderBodyKinematicStateChanged();
 
     return true;
 }
@@ -1271,24 +1264,35 @@ bool BodyItemImpl::attachToBodyItem
 void BodyItemImpl::clearBodyAttachment()
 {
     if(bodyAttachment){
-        auto baseLink = bodyAttachment->baseLink;
-        if(baseLink){
+        auto attachment = bodyAttachment->attachment;
+        auto holder = attachment->holder();
+        if(holder){
+            holder->setAttachment(nullptr);
+            holder->on(false);
+            auto holderLink = holder->link();
             mvout() << format(_("{0} has been detached from {1} of {2}."),
-                              self->name(), baseLink->name(), baseLink->body()->name()) << endl;
+                              self->name(), holderLink->name(), holderLink->body()->name()) << endl;
         }
+        attachment->setHolder(nullptr);
+        attachment->on(false);
+
         bodyAttachment.reset();
     }
 }
 
 
-void BodyItemImpl::onBaseBodyKinematicStateChanged()
+void BodyItemImpl::onHolderBodyKinematicStateChanged()
 {
-    Position T_base = bodyAttachment->baseLink->T() * bodyAttachment->T_base_local;
-    body->rootLink()->T() = T_base * bodyAttachment->T_local.inverse(Eigen::Isometry);
-    bodyAttachment->isBaseKinematicStateChangedNotificationReqruied = false;
+    auto attachment = bodyAttachment->attachment;
+    auto holder = attachment->holder();
+    if(holder){
+        Position T_base = holder->link()->T() * holder->T_local();
+        body->rootLink()->T() = T_base * attachment->T_local().inverse(Eigen::Isometry);
+        bodyAttachment->isKinematicStateChangeNotificationToHolderBodyRequired = false;
 
-    //! \todo requestVelFK and requestAccFK should be set appropriately
-    notifyKinematicStateChange(true, false, false, true);
+        //! \todo requestVelFK and requestAccFK should be set appropriately
+        notifyKinematicStateChange(true, false, false, true);
+    }
 }
 
 
@@ -1296,21 +1300,26 @@ MyCompositeBodyIK::MyCompositeBodyIK(BodyItemImpl* bodyItemImpl)
     : bodyItemImpl(bodyItemImpl),
       bodyAttachment(bodyItemImpl->bodyAttachment)
 {
-    baseIK = bodyAttachment->baseBodyItem->getCurrentIK(bodyAttachment->baseLink);
+    auto holderLink = bodyAttachment->attachment->holder()->link();
+    holderIK = bodyAttachment->holderBodyItem->getCurrentIK(holderLink);
 }
 
 
 bool MyCompositeBodyIK::calcInverseKinematics(const Position& T)
 {
     bool result = false;
-    if(baseIK){
+    if(holderIK){
         if(!bodyAttachment){
-            baseIK.reset();
+            holderIK.reset();
         } else {
-            Position Ta = T * bodyAttachment->T_local * bodyAttachment->T_base_local.inverse(Eigen::Isometry);
-            result = baseIK->calcInverseKinematics(Ta);
-            if(result){
-                bodyAttachment->isBaseKinematicStateChangedNotificationReqruied = true;
+            auto attachment = bodyAttachment->attachment;
+            auto holder = attachment->holder();
+            if(holder){
+                Position Ta = T * attachment->T_local() * holder->T_local().inverse(Eigen::Isometry);
+                result = holderIK->calcInverseKinematics(Ta);
+                if(result){
+                    bodyAttachment->isKinematicStateChangeNotificationToHolderBodyRequired = true;
+                }
             }
         }
     }
@@ -1320,7 +1329,7 @@ bool MyCompositeBodyIK::calcInverseKinematics(const Position& T)
 
 std::shared_ptr<InverseKinematics> MyCompositeBodyIK::getParentBodyIK()
 {
-    return baseIK;
+    return holderIK;
 }
 
 

@@ -1,6 +1,8 @@
 #include "KinematicSimulatorItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
+#include <cnoid/HolderDevice>
+#include <cnoid/AttachmentDevice>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -25,6 +27,9 @@ class KinematicSimulatorItem::Impl
 {
 public:
     KinematicSimulatorItem* self;
+    vector<HolderDevicePtr> holders;
+    vector<HolderDevicePtr> activeHolders;
+    BodyCloneMap cloneMap;
 
     Impl(KinematicSimulatorItem* self);
     Impl(KinematicSimulatorItem* self, const Impl& org);
@@ -81,16 +86,33 @@ Item* KinematicSimulatorItem::doDuplicate() const
 }
 
 
+void KinematicSimulatorItem::clearSimulation()
+{
+    impl->cloneMap.clear();
+    impl->holders.clear();    
+    impl->activeHolders.clear();    
+}
+
+
 SimulationBody* KinematicSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    auto body = new Body;
-    body->copyFrom(orgBody);
+    auto body = impl->cloneMap.getClone(orgBody);
     return new KinematicSimBody(body);
 }
 
 
 bool KinematicSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
+    impl->cloneMap.replacePendingObjects();
+    
+    for(auto& simBody : simBodies){
+        for(auto& holder : simBody->body()->devices<HolderDevice>()){
+            impl->holders.push_back(holder);
+            if(holder->on() && holder->attachment()){
+                impl->activeHolders.push_back(holder);
+            }
+        }
+    }
     return true;
 }
 
@@ -107,7 +129,22 @@ bool KinematicSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& 
         }
         body->calcForwardKinematics();
     }
+
+    for(auto& holder : impl->activeHolders){
+        if(auto attachment = holder->attachment()){
+            Position T_base = holder->link()->T() * holder->T_local();
+            attachment->link()->T() = T_base * attachment->T_local().inverse(Eigen::Isometry);
+            attachment->link()->body()->calcForwardKinematics();
+        }
+    }
+    
     return true;
+}
+
+
+void KinematicSimulatorItem::finalizeSimulation()
+{
+
 }
     
 
@@ -138,11 +175,5 @@ KinematicSimBody::KinematicSimBody(Body* body)
 
 bool KinematicSimBody::initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem)
 {
-    if(SimulationBody::initialize(simulatorItem, bodyItem)){
-        if(bodyItem->baseBodyItem()){
-            setActive(false);
-        }
-        return true;
-    }
-    return false;
+    return SimulationBody::initialize(simulatorItem, bodyItem);
 }

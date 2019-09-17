@@ -34,22 +34,14 @@ public:
     virtual ~BodyItem();
 
     bool loadModelFile(const std::string& filename);
-
-    void setBody(Body* body);
-            
-    virtual void setName(const std::string& name) override;
-
     Body* body() const;
-
-    BodyItem* baseBodyItem() const;
-
+    void setBody(Body* body);
+    virtual void setName(const std::string& name) override;
     bool isEditable() const;
     void setEditable(bool on);
         
-    enum PresetPoseID { INITIAL_POSE, STANDARD_POSE };
-
     void moveToOrigin();
-
+    enum PresetPoseID { INITIAL_POSE, STANDARD_POSE };
     void setPresetPose(PresetPoseID id);
 
     Link* currentBaseLink() const;
