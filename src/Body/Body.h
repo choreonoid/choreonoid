@@ -193,6 +193,13 @@ public:
         return dynamic_cast<DeviceType*>(findDeviceSub(name));
     }
 
+    template<class DeviceType> DeviceType* findDevice() const {
+        for(auto& device : devices_)
+            if(auto found = dynamic_cast<DeviceType*>(device.get()))
+                return found;
+        return nullptr;
+    }
+
     Device* findDevice(const std::string& name) const {
         return findDeviceSub(name);
     }
