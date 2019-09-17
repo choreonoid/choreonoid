@@ -130,14 +130,14 @@ bool CallStatement::write(Mapping& archive) const
 
 SetSignalStatement::SetSignalStatement()
 {
-    number_ = 0;
+    signalIndex_ = 0;
     on_ = false;
 }
 
 
 SetSignalStatement::SetSignalStatement(const SetSignalStatement& org, ManipulatorProgramCloneMap& cloneMap)
 {
-    number_ = org.number_;
+    signalIndex_ = org.signalIndex_;
     on_ = org.on_;
 }
 
@@ -153,7 +153,7 @@ std::string SetSignalStatement::label(int index) const
     if(index == 0){
         return "Set";
     } else if(index == 1){
-        return format("Signal[{0}]", number_);
+        return format("Out[{0}]", signalIndex_);
     } else if(index == 2){
         return on_ ? "on" : "off";
     }
@@ -163,7 +163,7 @@ std::string SetSignalStatement::label(int index) const
 
 bool SetSignalStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
-    archive.read("number", number_);
+    archive.read("signalIndex", signalIndex_);
     archive.read("on", on_);
     return true;
 }
@@ -172,7 +172,7 @@ bool SetSignalStatement::read(ManipulatorProgram* program, const Mapping& archiv
 bool SetSignalStatement::write(Mapping& archive) const
 {
     archive.write("type", "SetSignal");
-    archive.write("number", number_);
+    archive.write("signalIndex", signalIndex_);
     archive.write("on", on_);
     return true;
 }

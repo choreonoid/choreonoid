@@ -27,6 +27,8 @@ public:
     std::shared_ptr<JointPath> jointPath();
     std::shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler();
 
+    Body* findAttachedEndEffector(Body* manipulatorBody);
+
     void setFrameSet(ManipulatorFrameSet* frameSet);
     ManipulatorFrameSet* frameSet();
 

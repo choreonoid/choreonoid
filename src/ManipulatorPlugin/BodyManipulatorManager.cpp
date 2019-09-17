@@ -4,6 +4,8 @@
 #include <cnoid/Body>
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
+#include <cnoid/HolderDevice>
+#include <cnoid/AttachmentDevice>
 #include "fmt/format.h"
 
 using namespace std;
@@ -141,6 +143,19 @@ std::shared_ptr<JointPath> BodyManipulatorManager::jointPath()
 std::shared_ptr<JointPathConfigurationHandler> BodyManipulatorManager::jointPathConfigurationHandler()
 {
     return impl->jointPathConfigurationHandler;
+}
+
+
+Body* BodyManipulatorManager::findAttachedEndEffector(Body* manipulatorBody)
+{
+    for(auto& holder : manipulatorBody->devices<HolderDevice>()){
+        if(holder->category() == "EndEffector"){
+            if(auto attachment = holder->attachment()){
+                return attachment->link()->body();
+            }
+        }
+    }
+    return nullptr;
 }
 
 

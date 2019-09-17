@@ -82,8 +82,8 @@ public:
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
 
-    int signalNumber() const { return number_; }
-    void setSignalNumber(int no){ number_ = no; }
+    int signalIndex() const { return signalIndex_; }
+    void setSignalIndex(int index){ signalIndex_ = index; }
 
     bool on() const { return on_; }
     void on(bool on){ on_ = on; }
@@ -92,7 +92,7 @@ protected:
     SetSignalStatement(const SetSignalStatement& org, ManipulatorProgramCloneMap& cloneMap);
 
 private:
-    int number_;
+    int signalIndex_;
     bool on_;
     
 };
