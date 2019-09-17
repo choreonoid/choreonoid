@@ -1,11 +1,13 @@
 #include "ManipulatorStatements.h"
 #include "ManipulatorProgram.h"
 #include <cnoid/ValueTree>
+#include <fmt/format.h>
 #include <unordered_map>
 #include <mutex>
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -125,12 +127,110 @@ bool CallStatement::write(Mapping& archive) const
     return true;
 }
 
+
+SetSignalStatement::SetSignalStatement()
+{
+    number_ = 0;
+    on_ = false;
+}
+
+
+SetSignalStatement::SetSignalStatement(const SetSignalStatement& org, ManipulatorProgramCloneMap& cloneMap)
+{
+    number_ = org.number_;
+    on_ = org.on_;
+}
+
+
+SetSignalStatement* SetSignalStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+{
+    return new SetSignalStatement(*this, cloneMap);
+}
+
+
+std::string SetSignalStatement::label(int index) const
+{
+    if(index == 0){
+        return "Set";
+    } else if(index == 1){
+        return format("Signal[{0}]", number_);
+    } else if(index == 2){
+        return on_ ? "on" : "off";
+    }
+    return string();
+}
+        
+
+bool SetSignalStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    archive.read("number", number_);
+    archive.read("on", on_);
+    return true;
+}
+
+
+bool SetSignalStatement::write(Mapping& archive) const
+{
+    archive.write("type", "SetSignal");
+    archive.write("number", number_);
+    archive.write("on", on_);
+    return true;
+}
+    
+
+DelayStatement::DelayStatement()
+{
+    time_ = 1.0;
+}
+
+
+DelayStatement::DelayStatement(const DelayStatement& org)
+    : ManipulatorStatement(org)
+{
+    time_ = org.time_;
+}
+
+
+ManipulatorStatement* DelayStatement::clone(ManipulatorProgramCloneMap&)
+{
+    return new DelayStatement(*this);
+}
+    
+
+std::string DelayStatement::label(int index) const
+{
+    if(index == 0){
+        return "Delay";
+    } else if(index == 1){
+        return std::to_string(time_);
+    }
+    return string();
+}
+
+
+bool DelayStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    archive.read("time", time_);
+    return true;
+}
+
+
+bool DelayStatement::write(Mapping& archive) const
+{
+    archive.write("type", "Delay");
+    archive.write("time", time_);
+    return true;
+}
+
+
 namespace {
 
 struct StatementTypeRegistration {
     StatementTypeRegistration(){
-        ManipulatorStatement::registerType<IfStatement>  ("If");
+        ManipulatorStatement::registerType<IfStatement>("If");
         ManipulatorStatement::registerType<CallStatement>("Call");
+        ManipulatorStatement::registerType<SetSignalStatement>("SetSignal");
+        ManipulatorStatement::registerType<DelayStatement>("Delay");
     }
 } registration;
 

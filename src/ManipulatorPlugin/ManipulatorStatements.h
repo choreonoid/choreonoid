@@ -73,6 +73,54 @@ private:
 };
 typedef ref_ptr<CallStatement> CallStatementPtr;
 
+class CNOID_EXPORT SetSignalStatement : public ManipulatorStatement
+{
+public:
+    SetSignalStatement();
+    virtual SetSignalStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
+    virtual std::string label(int index) const override;
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+
+    int signalNumber() const { return number_; }
+    void setSignalNumber(int no){ number_ = no; }
+
+    bool on() const { return on_; }
+    void on(bool on){ on_ = on; }
+    
+protected:
+    SetSignalStatement(const SetSignalStatement& org, ManipulatorProgramCloneMap& cloneMap);
+
+private:
+    int number_;
+    bool on_;
+    
+};
+typedef ref_ptr<SetSignalStatement> SetSignalStatementPtr;
+
+class CNOID_EXPORT DelayStatement : public ManipulatorStatement
+{
+public:
+    DelayStatement();
+    
+    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
+    virtual std::string label(int index) const override;
+
+    double time() const { return time_; }
+    void setTime(double t){ time_ = t; }
+
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+
+protected:
+    DelayStatement(const DelayStatement& org);
+
+private:
+    double time_;
+};
+
+typedef ref_ptr<DelayStatement> DelayStatementPtr;    
+
 }
 
 #endif

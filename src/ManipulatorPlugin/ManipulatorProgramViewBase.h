@@ -34,6 +34,8 @@ protected:
     void addStatementButton(QWidget* button, int row);
     void insertIfStatement();
     void insertCallStatement();
+    void insertSetSignalStatement();
+    void insertDelayStatement();
 
     virtual bool onCurrentProgramItemChanged(ManipulatorProgramItemBase* item) = 0;
     virtual void onCurrentStatementChanged(ManipulatorStatement* statement);

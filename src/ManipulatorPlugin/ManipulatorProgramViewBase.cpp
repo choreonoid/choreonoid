@@ -555,6 +555,28 @@ void ManipulatorProgramViewBase::insertCallStatement()
 }
 
 
+void ManipulatorProgramViewBase::insertSetSignalStatement()
+{
+    auto& programItem = impl->programItem;
+    if(programItem){
+        auto iter = programItem->program()->append(new SetSignalStatement);
+        programItem->sigStatementAdded()(iter);
+        programItem->suggestFileUpdate();
+    }
+}
+
+
+void ManipulatorProgramViewBase::insertDelayStatement()
+{
+    auto& programItem = impl->programItem;
+    if(programItem){
+        auto iter = programItem->program()->append(new DelayStatement);
+        programItem->sigStatementAdded()(iter);
+        programItem->suggestFileUpdate();
+    }
+}
+
+
 bool ManipulatorProgramViewBase::storeState(Archive& archive)
 {
     return impl->storeState(archive);
