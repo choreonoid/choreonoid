@@ -22,19 +22,19 @@ public:
     MarkerDevice();
     MarkerDevice(const MarkerDevice& org, bool copyStateOnly = false);
     
-    virtual const char* typeName();    
+    virtual const char* typeName() override;
     void copyMarkerDeviceStateFrom(const MarkerDevice& other);
-    virtual void copyStateFrom(const DeviceState& other);
-    virtual DeviceState* cloneState() const;
-    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
-    virtual int stateSize() const;
-    virtual const double* readState(const double* buf);
-    virtual double* writeState(double* out_buf) const;
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+    virtual int stateSize() const override;
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
 
     bool readDescription(YAMLBodyLoader& loader, Mapping& node);
 
-    virtual bool on() const;
-    virtual void on(bool on);
+    virtual bool on() const override;
+    virtual void on(bool on) override;
 
     enum MarkerType {
         CROSS_MARKER,
@@ -61,7 +61,7 @@ public:
     void setOffsetTranslation(const Vector3& p) { offsetPosition_.translation() = p; }
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const;
+    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
 
 private:
     bool on_;

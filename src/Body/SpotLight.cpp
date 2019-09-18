@@ -61,7 +61,7 @@ DeviceState* SpotLight::cloneState() const
 }
 
 
-Device* SpotLight::clone() const
+Device* SpotLight::doClone(BodyCloneMap*) const
 {
     return new SpotLight(*this);
 }

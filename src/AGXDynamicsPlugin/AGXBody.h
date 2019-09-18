@@ -82,7 +82,7 @@ typedef std::vector<AGXLinkPtr> AGXLinkPtrs;
 class CNOID_EXPORT AGXBody :  public SimulationBody
 {
 public:
-    AGXBody(Body& orgBody);
+    AGXBody(Body* body);
     void initialize();
     void createBody(AGXScene* agxScene);
     void setCollision();

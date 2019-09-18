@@ -83,7 +83,6 @@ public:
     void copyStateFrom(const AGXVehicleContinuousTrackDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf) override;
@@ -101,6 +100,9 @@ public:
     void addTrackState(const Vector3& boxSize, const Position& pos);
     TrackStates& getTrackStates();
     SgShape* getNodeShape();
+
+protected:
+    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
 
 private:
     TrackStates m_trackStates;

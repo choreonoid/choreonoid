@@ -286,7 +286,7 @@ DeviceState* RotorDevice::cloneState() const
     return new RotorDevice(*this, false);
 }
 
-Device* RotorDevice::clone() const
+Device* RotorDevice::doClone(BodyCloneMap*) const
 {
     return new RotorDevice(*this);
 }

@@ -773,7 +773,7 @@ void AGXLink::printDebugInfo()
 
 ////////////////////////////////////////////////////////////
 // AGXBody
-AGXBody::AGXBody(Body& orgBody) : SimulationBody(new Body(orgBody)) {}
+AGXBody::AGXBody(Body* body) : SimulationBody(body) {}
 
 void AGXBody::initialize()
 {
