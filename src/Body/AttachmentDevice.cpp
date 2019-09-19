@@ -1,6 +1,7 @@
 #include "AttachmentDevice.h"
 #include "HolderDevice.h"
 #include "Body.h"
+#include "BodyCloneMap.h"
 #include "YAMLBodyLoader.h"
 #include <cnoid/ValueTree>
 

@@ -7,6 +7,7 @@ set(target CnoidBody)
 
 set(sources
   Body.cpp
+  BodyCloneMap.cpp
   Link.cpp
   LinkTraverse.cpp
   LinkPath.cpp
@@ -27,7 +28,7 @@ set(sources
   Device.cpp
   HolderDevice.cpp
   AttachmentDevice.cpp
-  SignalIODevice.cpp
+  SignalIoDevice.cpp
   ForceSensor.cpp
   RateGyroSensor.cpp
   AccelerationSensor.cpp
@@ -73,6 +74,7 @@ set(sources
 
 set(headers
   Body.h
+  BodyCloneMap.h
   BodyHandler.h
   BodyHandlerManager.h
   CustomJointPathHandler.h
@@ -98,7 +100,7 @@ set(headers
   DeviceList.h
   HolderDevice.h
   AttachmentDevice.h
-  SignalIODevice.h
+  SignalIoDevice.h
   ForceSensor.h
   RateGyroSensor.h
   AccelerationSensor.h

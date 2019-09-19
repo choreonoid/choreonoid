@@ -4,6 +4,7 @@
 */
 
 #include "Body.h"
+#include "BodyCloneMap.h"
 #include "BodyHandler.h"
 #include "BodyCustomizerInterface.h"
 #include <cnoid/SceneGraph>
@@ -64,23 +65,6 @@ public:
     void setRsToShape(const Matrix3& Rs, SgNode* shape, std::function<void(SgNode* node)> setShape);
     void applyLinkOffsetRotationsToDevices(Body* body, vector<bool>& validRsFlags);    
 };
-
-}
-
-
-BodyCloneMap::BodyCloneMap()
-    : CloneMap(
-        [this](const Referenced* org) -> Referenced* {
-            if(auto link = dynamic_cast<const Link*>(org)){
-                return link->clone();
-            } else if(auto device = dynamic_cast<const Device*>(org)){
-                return device->clone(*this);
-            } else if(auto body = dynamic_cast<const Body*>(org)){
-                return body->clone(*this);
-            }
-            return nullptr;
-        })
-{
 
 }
 

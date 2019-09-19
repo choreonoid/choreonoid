@@ -10,14 +10,14 @@ namespace cnoid {
 class YAMLBodyLoader;
 class Mapping;
 
-class CNOID_EXPORT SignalIODevice : public Device
+class CNOID_EXPORT SignalIoDevice : public Device
 {
 public:
-    SignalIODevice();
-    virtual ~SignalIODevice();
+    SignalIoDevice();
+    virtual ~SignalIoDevice();
 
     virtual const char* typeName() override;
-    void copySignalIODeviceStateFrom(const SignalIODevice& other);
+    void copySignalIoDeviceStateFrom(const SignalIoDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
@@ -31,9 +31,14 @@ public:
     int numBinarySignals() const { return out_.size(); }
 
     bool out(int index) const { return out_[index]; }
-    bool in(int index) const { return in_[index]; }
     void setOut(int index, bool on, bool doNotify = true);
+    bool in(int index) const { return in_[index]; }
     void setIn(int index, bool on, bool doNotify = true);
+
+    const std::string& outLabel(int index) const;
+    void setOutLabel(int index, const std::string& label);
+    const std::string& inLabel(int index) const;
+    void setInLabel(int index, const std::string& label);
     
     SignalProxy<void(bool on)> sigSignalOutput(int index);
     SignalProxy<void(bool on)> sigSignalInput(int index);
@@ -41,7 +46,7 @@ public:
     bool readDescription(YAMLBodyLoader& loader, Mapping& node);
 
 protected:
-    SignalIODevice(const SignalIODevice& org, bool copyStateOnly, BodyCloneMap* cloneMap);
+    SignalIoDevice(const SignalIoDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap);
     virtual Device* doClone(BodyCloneMap* cloneMap) const override;
 
 private:
@@ -53,7 +58,7 @@ private:
     NonState* ns;
 };
 
-typedef ref_ptr<SignalIODevice> SignalIODevicePtr;
+typedef ref_ptr<SignalIoDevice> SignalIoDevicePtr;
 
 }
 

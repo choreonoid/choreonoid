@@ -14,6 +14,7 @@
 namespace cnoid {
 
 class BodyCloneMap;
+class Body;
 class Link;
 
 class CNOID_EXPORT DeviceState : public Referenced
@@ -87,13 +88,16 @@ public:
 
     bool hasStateOnly() const { return (ns != 0); }
 
-    const int index() const { return ns->index; }
-    const int id() const { return ns->id; }
+    int index() const { return ns->index; }
+    int id() const { return ns->id; }
     const std::string& name() const { return ns->name; }
 
     const Link* link() const { return ns->link; }
     Link* link() { return ns->link; }
 
+    const Body* body() const;
+    Body* body();
+    
     Isometry3& T_local() { return ns->T_local; }
     const Isometry3& T_local() const { return ns->T_local; }
         

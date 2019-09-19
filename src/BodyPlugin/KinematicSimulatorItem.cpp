@@ -1,8 +1,9 @@
 #include "KinematicSimulatorItem.h"
-#include <cnoid/ItemManager>
-#include <cnoid/BodyItem>
+#include "BodyItem.h"
+#include <cnoid/BodyCloneMap>
 #include <cnoid/HolderDevice>
 #include <cnoid/AttachmentDevice>
+#include <cnoid/ItemManager>
 #include <fmt/format.h>
 #include "gettext.h"
 

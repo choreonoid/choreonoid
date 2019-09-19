@@ -10,8 +10,6 @@
 #include "Link.h"
 #include "ExtraJoint.h"
 #include "DeviceList.h"
-#include "MassMatrix.h"
-#include <cnoid/CloneMap>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -20,6 +18,7 @@ class Body;
 class BodyImpl;
 class BodyHandler;
 class Mapping;
+class BodyCloneMap;
 class SgCloneMap;
 
 struct BodyInterface;
@@ -28,13 +27,6 @@ typedef void* BodyCustomizerHandle;
 
 typedef ref_ptr<Body> BodyPtr;
 
-class CNOID_EXPORT BodyCloneMap : public CloneMap
-{
-public:
-    BodyCloneMap();
-    BodyCloneMap(const BodyCloneMap& org) = delete;
-};
-    
 class CNOID_EXPORT Body : public Referenced
 {
 public:
