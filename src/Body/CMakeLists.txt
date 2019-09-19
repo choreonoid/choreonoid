@@ -29,6 +29,7 @@ set(sources
   HolderDevice.cpp
   AttachmentDevice.cpp
   SignalIoDevice.cpp
+  SignalIoConnectionMap.cpp
   ForceSensor.cpp
   RateGyroSensor.cpp
   AccelerationSensor.cpp
@@ -101,6 +102,7 @@ set(headers
   HolderDevice.h
   AttachmentDevice.h
   SignalIoDevice.h
+  SignalIoConnectionMap.h
   ForceSensor.h
   RateGyroSensor.h
   AccelerationSensor.h
