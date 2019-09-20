@@ -1,7 +1,7 @@
 #include "SignalIoConnectionView.h"
 #include "SignalIoConnectionMapItem.h"
 #include <cnoid/ViewManager>
-#include <cnoid/ItemTreeView>
+#include <cnoid/TargetItemPicker>
 #include <cnoid/Buttons>
 #include <QBoxLayout>
 #include <QLabel>
@@ -19,10 +19,8 @@ class SignalIoConnectionView::Impl : public QTableWidget
 {
 public:
     SignalIoConnectionView* self;
-    SignalIoConnectionMapItemPtr connectionMapItem;
+    TargetItemPicker<SignalIoConnectionMapItem> targetItemPicker;
     QLabel targetLabel;
-    ItemTreeView* itv;
-    ScopedConnection itemTreeConnection;
 
     Impl(SignalIoConnectionView* self);
     void setConnectionMapItem(SignalIoConnectionMapItem* item);
@@ -47,7 +45,8 @@ SignalIoConnectionView::SignalIoConnectionView()
 
 
 SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
-    : self(self)
+    : self(self),
+      targetItemPicker(self)
 {
     self->setDefaultLayoutArea(View::RIGHT);
 
@@ -59,7 +58,6 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     auto hbox = new QHBoxLayout;
     hbox->setSpacing(0);
     hbox->addSpacing(hs);
-    targetLabel.setText("---");
     targetLabel.setStyleSheet("font-weight: bold");
     hbox->addWidget(&targetLabel, 0, Qt::AlignVCenter);
     hbox->addSpacing(hs);
@@ -95,7 +93,9 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     vbox->addWidget(this);
     self->setLayout(vbox);
 
-    itv = ItemTreeView::instance();
+    targetItemPicker.sigTargetItemChanged().connect(
+        [&](SignalIoConnectionMapItem* item){
+            setConnectionMapItem(item); });
 }
 
 
@@ -105,29 +105,9 @@ SignalIoConnectionView::~SignalIoConnectionView()
 }
 
 
-void SignalIoConnectionView::onActivated()
-{
-    impl->itemTreeConnection.reset(
-        impl->itv->sigSelectionChanged().connect(
-            [&](const ItemList<>&){
-                impl->setConnectionMapItem(impl->itv->selectedItem<SignalIoConnectionMapItem>(true)); }));
-
-    impl->setConnectionMapItem(impl->itv->selectedItem<SignalIoConnectionMapItem>(true));
-}
-
-
-void SignalIoConnectionView::onDeactivated()
-{
-    impl->itemTreeConnection.disconnect();
-}
-
-
 void SignalIoConnectionView::Impl::setConnectionMapItem(SignalIoConnectionMapItem* item)
 {
-    connectionMapItem = item;
-    if(item){
-        targetLabel.setText(item->name().c_str());
-    }
+    targetLabel.setText(item ? item->name().c_str() : "---");
 }
 
 
@@ -145,12 +125,13 @@ void SignalIoConnectionView::Impl::onRemoveButtonClicked()
 
 bool SignalIoConnectionView::storeState(Archive& archive)
 {
+    impl->targetItemPicker.storeTargetItem(archive, "currentConnectionMapItem");
     return true;
 }
 
 
 bool SignalIoConnectionView::restoreState(const Archive& archive)
 {
+    impl->targetItemPicker.restoreTargetItemLater(archive, "currentConnectionMapItem");
     return true;
 }
-

@@ -11,13 +11,12 @@ class Archive;
 class ManipulatorProgramItemBase;
 class ManipulatorStatement;
     
-class CNOID_EXPORT ManipulatorProgramViewBase : public cnoid::View
+class CNOID_EXPORT ManipulatorProgramViewBase : public View
 {
 public:
     ManipulatorProgramViewBase();
     virtual ~ManipulatorProgramViewBase();
 
-    virtual void onActivated() override;
     virtual void onDeactivated() override;
 
     ManipulatorProgramItemBase* currentProgramItem();

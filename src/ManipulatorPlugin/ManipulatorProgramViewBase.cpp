@@ -4,7 +4,7 @@
 #include "ManipulatorStatements.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
-#include <cnoid/ItemTreeView>
+#include <cnoid/TargetItemPicker>
 #include <cnoid/TreeWidget>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
@@ -62,11 +62,10 @@ class ManipulatorProgramViewBase::Impl : public TreeWidget
 {
 public:
     ManipulatorProgramViewBase* self;
+    TargetItemPicker<ManipulatorProgramItemBase> targetItemPicker;
     ManipulatorProgramItemBasePtr programItem;
     unordered_map<ManipulatorStatementPtr, StatementItem*> statementItemMap;
     int statementItemOperationCallCounter;
-    ItemTreeView* itv;
-    ScopedConnection itemTreeConnection;
     ScopedConnectionSet programItemConnections;
     ManipulatorStatementPtr currentStatement;
     Signal<void(ManipulatorStatement* statement)> sigCurrentStatementChanged;
@@ -83,7 +82,7 @@ public:
     void onOptionMenuClicked();
     ScopedCounter scopedCounterOfStatementItemOperationCall();
     bool isDoingStatementItemOperation() const;
-    void setProgramItem(ManipulatorProgramItemBase* item, bool forceUpdate);
+    void setProgramItem(ManipulatorProgramItemBase* item);
     void updateStatementTree();
     void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void setCurrentStatement(ManipulatorStatement* statement);
@@ -100,8 +99,6 @@ public:
     void cutStatement(ManipulatorStatement* statementItem);
     void copyStatement(ManipulatorStatement* statementItem);
     void pasteStatement(ManipulatorStatement* statementItem);
-    bool storeState(Archive& archive);
-    bool restoreState(const Archive& archive);
 };
 
 }
@@ -155,12 +152,15 @@ ManipulatorProgramViewBase::ManipulatorProgramViewBase()
 
 
 ManipulatorProgramViewBase::Impl::Impl(ManipulatorProgramViewBase* self)
-    : self(self)
+    : self(self),
+      targetItemPicker(self)
 {
     setupWidgets();
 
     statementItemOperationCallCounter = 0;
-    itv = ItemTreeView::instance();
+
+    targetItemPicker.sigTargetItemChanged().connect(
+        [&](ManipulatorProgramItemBase* item){ setProgramItem(item); });
 }
 
 
@@ -250,20 +250,8 @@ void ManipulatorProgramViewBase::addStatementButton(QWidget* button, int row)
 }
 
 
-void ManipulatorProgramViewBase::onActivated()
-{
-    impl->itemTreeConnection.reset(
-        impl->itv->sigSelectionChanged().connect(
-            [&](const ItemList<>&){
-                impl->setProgramItem(impl->itv->selectedItem<ManipulatorProgramItemBase>(true), false); }));
-
-    impl->setProgramItem(impl->itv->selectedItem<ManipulatorProgramItemBase>(true), false);
-}
-
-
 void ManipulatorProgramViewBase::onDeactivated()
 {
-    impl->itemTreeConnection.disconnect();
     impl->currentStatement = nullptr;
     impl->prevCurrentStatement = nullptr;
 }
@@ -287,12 +275,8 @@ bool ManipulatorProgramViewBase::Impl::isDoingStatementItemOperation() const
 }
 
 
-void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase* item, bool forceUpdate)
+void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase* item)
 {
-    if(!forceUpdate && (!item || item == programItem)){
-        return;
-    }
-
     programItemConnections.disconnect();
     programItem = item;
     currentStatement = nullptr;
@@ -309,11 +293,7 @@ void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase
     } else {
         programItemConnections.add(
             programItem->sigNameChanged().connect(
-                [&](const std::string&){ setProgramItem(programItem, true); }));
-
-        programItemConnections.add(
-            programItem->sigDisconnectedFromRoot().connect(
-                [&](){ setProgramItem(itv->selectedItem<ManipulatorProgramItemBase>(true), true); }));
+                [&](const std::string&){ setProgramItem(programItem); }));
 
         programItemConnections.add(
             programItem->sigStatementAdded().connect(
@@ -579,33 +559,13 @@ void ManipulatorProgramViewBase::insertDelayStatement()
 
 bool ManipulatorProgramViewBase::storeState(Archive& archive)
 {
-    return impl->storeState(archive);
-}
-
-
-bool ManipulatorProgramViewBase::Impl::storeState(Archive& archive)
-{
-    if(programItem){
-        archive.writeItemId("currentProgram", programItem);
-    }
+    impl->targetItemPicker.storeTargetItem(archive, "currentProgram");
     return true;
 }
 
 
 bool ManipulatorProgramViewBase::restoreState(const Archive& archive)
 {
-    archive.addPostProcess([&](){ impl->restoreState(archive); });
-    return true;
-}
-
-
-bool ManipulatorProgramViewBase::Impl::restoreState(const Archive& archive)
-{
-    if(!programItem){
-        auto item = archive.findItem<ManipulatorProgramItemBase>("currentProgram");
-        if(item){
-            setProgramItem(item, true);
-        }
-    }
+    impl->targetItemPicker.restoreTargetItemLater(archive, "currentProgram");
     return true;
 }

@@ -9,12 +9,9 @@ class SignalIoConnectionView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
-            
+
     SignalIoConnectionView();
     virtual ~SignalIoConnectionView();
-
-    virtual void onActivated() override;
-    virtual void onDeactivated() override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 

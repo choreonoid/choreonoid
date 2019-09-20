@@ -12,7 +12,7 @@ class Archive;
 class BodyItem;
 class BodyManipulatorManager;
 
-class CNOID_EXPORT ManipulatorProgramItemBase : public cnoid::Item
+class CNOID_EXPORT ManipulatorProgramItemBase : public Item
 {
 public:
     virtual ~ManipulatorProgramItemBase();
