@@ -24,6 +24,7 @@ set(sources
   ItemPath.cpp
   ItemTreeView.cpp
   ItemPropertyView.cpp
+  TargetItemPicker.cpp
   SelectionListEditor.cpp
   MultiSeqItemCreationPanel.cpp
   ToolBar.cpp
@@ -165,6 +166,7 @@ set(headers
   ItemTreeView.h
   ItemList.h
   Item.h
+  TargetItemPicker.h
   PutPropertyFunction.h
   RootItem.h
   FolderItem.h
