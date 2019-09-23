@@ -11,9 +11,9 @@
 #include <cnoid/Buttons>
 #include <QBoxLayout>
 #include <QLabel>
-#include <QTableWidget>
+#include <QTableView>
+#include <QAbstractTableModel>
 #include <QHeaderView>
-#include <QDoubleSpinBox>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -21,27 +21,183 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace {
+
+constexpr int NumColumns = 6;
+
+class ConnectionMapModel : public QAbstractTableModel
+{
+public:
+    SignalIoConnectionMapPtr connectionMap;
+    
+    ConnectionMapModel(QObject* parent);
+    void setConnectionMap(SignalIoConnectionMap* connectionMap);
+    virtual int rowCount(const QModelIndex& parent) const override;
+    virtual int columnCount(const QModelIndex& parent) const override;
+    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+    virtual QVariant data(const QModelIndex& index, int role) const override;
+    QVariant getDeviceLabel(SignalIoConnection* ioConnection, int which) const;
+    void insertConnection(int row, SignalIoConnection* connection);
+};
+
+}
+
 namespace cnoid {
 
-class SignalIoConnectionView::Impl : public QTableWidget
+class SignalIoConnectionView::Impl : public QTableView
 {
 public:
     SignalIoConnectionView* self;
     TargetItemPicker<SignalIoConnectionMapItem> targetItemPicker;
     SignalIoConnectionMapItemPtr targetItem;
     QLabel targetLabel;
+    ConnectionMapModel* connectionMapModel;
 
     Impl(SignalIoConnectionView* self);
     void setConnectionMapItem(SignalIoConnectionMapItem* item);
-    void onAddButtonClicked();
+    void onInsertButtonClicked();
     void onRemoveButtonClicked();
-    void updateTables();
     void setConnectionInfoToTableRow(int row, SignalIoConnection* connection);
 };
 
 }
 
 
+ConnectionMapModel::ConnectionMapModel(QObject* parent)
+    : QAbstractTableModel(parent)
+{
+
+}
+
+
+void ConnectionMapModel::setConnectionMap(SignalIoConnectionMap* connectionMap)
+{
+    beginResetModel();
+    this->connectionMap = connectionMap;
+    endResetModel();
+}
+
+
+int ConnectionMapModel::rowCount(const QModelIndex& parent) const
+{
+    int n = 0;
+    if(!parent.isValid() && connectionMap){
+        n = connectionMap->numConnections();
+    }
+    return (n == 0) ? 1 : n;
+}
+
+
+int ConnectionMapModel::columnCount(const QModelIndex& parent) const
+{
+    return NumColumns;
+}
+        
+
+QVariant ConnectionMapModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if(role == Qt::DisplayRole){
+        if(orientation == Qt::Horizontal){
+            switch(section){
+            case 0:
+                return _("Output Device");
+            case 1:
+                return _("Signal No");
+            case 3:
+                return _("Input Device");
+            case 4:
+                return _("Signal No");
+            case 5:
+                return _("Note");
+            default:
+                return QVariant();
+            }
+        } else {
+            return QString::number(section);
+        }
+    } else if(role == Qt::TextAlignmentRole){
+        if(orientation == Qt::Horizontal){
+            if(section == 5){
+                return Qt::AlignLeft;
+            } else {
+                return Qt::AlignCenter;
+            }
+        }
+    }
+    return QVariant();
+}
+
+
+QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
+{
+    if(!index.isValid() || !connectionMap){
+        return QVariant();
+    }
+    if(index.row() >= connectionMap->numConnections()){
+        return QVariant();
+    }
+
+    auto ioConnection = connectionMap->connection(index.row());
+    
+    if(role == Qt::DisplayRole){
+        switch(index.column()){
+        case 0:
+            return getDeviceLabel(ioConnection, SignalIoConnection::Out);
+        case 1:
+            return ioConnection->outSignalIndex();
+        case 2:
+            return "-->";
+        case 3:
+            return getDeviceLabel(ioConnection, SignalIoConnection::In);
+        case 4:
+            return ioConnection->inSignalIndex();
+        default:
+            break;
+        }
+    } else if(role == Qt::TextAlignmentRole){
+        if(index.column() == 5){
+            return Qt::AlignLeft;
+        } else {
+            return Qt::AlignCenter;
+        }
+    }
+            
+    return QVariant();
+}
+
+
+QVariant ConnectionMapModel::getDeviceLabel(SignalIoConnection* ioConnection, int which) const
+{
+    auto device = ioConnection->device(which);
+    if(device){
+        auto body = device->body();
+        if(device->name().empty()){
+            return body->name().c_str();
+        } else {
+            return format("{0} - {1}", body->name(), device->name()).c_str();
+        }
+    } else {
+        auto& bodyName = ioConnection->bodyName(which);
+        auto& deviceName = ioConnection->deviceName(which);
+        if(deviceName.empty()){
+            return bodyName.c_str();
+        } else {
+            return format("{0} - {1}", bodyName, deviceName).c_str();
+        }
+    }
+}
+
+
+void ConnectionMapModel::insertConnection(int row, SignalIoConnection* connection)
+{
+    if(connectionMap){
+        beginInsertRows(QModelIndex(), row, 0);
+        connectionMap->insert(row, connection);
+        endInsertRows();
+    }
+}
+
+    
 void SignalIoConnectionView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<SignalIoConnectionView>(
@@ -72,9 +228,9 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     targetLabel.setStyleSheet("font-weight: bold");
     hbox->addWidget(&targetLabel, 0, Qt::AlignVCenter);
     hbox->addSpacing(hs);
-    auto addButton = new PushButton(_("Add"));
-    addButton->sigClicked().connect([&](){ onAddButtonClicked(); });
-    hbox->addWidget(addButton);
+    auto insertButton = new PushButton(_("Insert"));
+    insertButton->sigClicked().connect([&](){ onInsertButtonClicked(); });
+    hbox->addWidget(insertButton);
     auto removeButton = new PushButton(_("Remove"));
     removeButton->sigClicked().connect([&](){ onRemoveButtonClicked(); });
     hbox->addWidget(removeButton);
@@ -86,30 +242,20 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     hframe->setFrameStyle(QFrame::HLine | QFrame::Sunken);
     vbox->addWidget(hframe);
     setFrameShape(QFrame::NoFrame);
-    setColumnCount(6);
     setSelectionBehavior(QAbstractItemView::SelectRows);
     setSelectionMode(QAbstractItemView::SingleSelection);
     setTabKeyNavigation(true);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-
-    QTableWidgetItem* headerItem[6];
-    headerItem[0] = new QTableWidgetItem(_("Output Device"));
-    headerItem[1] = new QTableWidgetItem(_("Signal No."));
-    headerItem[2] = new QTableWidgetItem;
-    headerItem[3] = new QTableWidgetItem(_("Input Device"));
-    headerItem[4] = new QTableWidgetItem(_("Signal No."));
-    headerItem[5] = new QTableWidgetItem;
-    for(int i=0; i < 6; ++i){
-        setHorizontalHeaderItem(i, headerItem[i]);
-    }
 
     auto hheader = horizontalHeader();
     hheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     hheader->setStretchLastSection(true);
 
     auto vheader = verticalHeader();
-    vheader->hide();
     vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
+
+    connectionMapModel = new ConnectionMapModel(this);
+    setModel(connectionMapModel);
 
     vbox->addWidget(this);
     self->setLayout(vbox);
@@ -117,8 +263,6 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     targetItemPicker.sigTargetItemChanged().connect(
         [&](SignalIoConnectionMapItem* item){
             setConnectionMapItem(item); });
-
-    updateTables();
 }
 
 
@@ -131,11 +275,18 @@ SignalIoConnectionView::~SignalIoConnectionView()
 void SignalIoConnectionView::Impl::setConnectionMapItem(SignalIoConnectionMapItem* item)
 {
     targetItem = item;
-    targetLabel.setText(item ? item->name().c_str() : "---");
+
+    if(item){
+        targetLabel.setText(item->name().c_str());
+        connectionMapModel->setConnectionMap(item->connectionMap());
+    } else {
+        targetLabel.setText("---");
+        connectionMapModel->setConnectionMap(nullptr);
+    }
 }
 
 
-void SignalIoConnectionView::Impl::onAddButtonClicked()
+void SignalIoConnectionView::Impl::onInsertButtonClicked()
 {
     if(!targetItem){
         return;
@@ -163,19 +314,12 @@ void SignalIoConnectionView::Impl::onAddButtonClicked()
         }
     }
 
-    bool added = false;
-    auto connectionMap = targetItem->connectionMap();
     if(interConnection){
-        connectionMap->appendConnection(interConnection);
-        added = true;
+        connectionMapModel->insertConnection(0, interConnection);
     } else if(intraConnection){
-        connectionMap->appendConnection(intraConnection);
-        added = true;
+        connectionMapModel->insertConnection(0, intraConnection);
     } else {
         showWarningDialog(_("There are no I/O devices in the world"));
-    }
-    if(added){
-        updateTables();
     }
 }
 
@@ -185,75 +329,7 @@ void SignalIoConnectionView::Impl::onRemoveButtonClicked()
 
 }
 
-
-void SignalIoConnectionView::Impl::updateTables()
-{
-    clearContents();
-    clearSpans();
-
-    int n = 0;
-    if(!targetItem){
-        setRowCount(1);
-    } else{
-        auto connections = targetItem->connectionMap();
-        n = connections->numConnections();
-        setRowCount(n + 1);
-        for(int i=0; i < n; ++i){ 
-            setConnectionInfoToTableRow(i, connections->connection(i));
-        }
-    }
-
-    setSpan(n, 0, 1, 5);
-    auto endItem = new QTableWidgetItem(_("END"));
-    endItem->setFlags(Qt::ItemIsEnabled);
-    endItem->setTextAlignment(Qt::AlignCenter);
-    setItem(n, 0, endItem);
-
-    auto emptyItem = new QTableWidgetItem;
-    emptyItem->setFlags(Qt::NoItemFlags);
-    setItem(n, 5, emptyItem);
-
-    resizeColumnsToContents();
-}
-
-
-void SignalIoConnectionView::Impl::setConnectionInfoToTableRow(int row, SignalIoConnection* connection)
-{
-    constexpr Qt::ItemFlag SelectableFlag = Qt::NoItemFlags;
-    
-    for(int i=0; i < 2; ++i){
-        auto device = connection->device(i);
-        auto body = device->body();
-
-        string name;
-        if(device->name().empty()){
-            name = body->name();
-        } else {
-            name = format("{0} - {1}", body->name(), device->name());
-        }
-        auto nameItem = new QTableWidgetItem(name.c_str());
-        nameItem->setFlags(SelectableFlag | Qt::ItemIsEditable | Qt::ItemIsEnabled);
-        nameItem->setTextAlignment(Qt::AlignCenter);
-        setItem(row, i * 3, nameItem);
-
-        auto index = connection->signalIndex(i);
-        auto indexItem = new QTableWidgetItem(QString::number(index));
-        indexItem->setFlags(SelectableFlag | Qt::ItemIsEditable | Qt::ItemIsEnabled);
-        indexItem->setTextAlignment(Qt::AlignCenter);
-        setItem(row, i * 3 + 1, indexItem);
-    }
-
-    auto arrowItem = new QTableWidgetItem("-->");
-    arrowItem->setFlags(SelectableFlag);
-    arrowItem->setTextAlignment(Qt::AlignCenter);
-    setItem(row, 2, arrowItem);
-
-    auto emptyItem = new QTableWidgetItem;
-    emptyItem->setFlags(Qt::NoItemFlags);
-    setItem(row, 5, emptyItem);
-}
        
-
 bool SignalIoConnectionView::storeState(Archive& archive)
 {
     impl->targetItemPicker.storeTargetItem(archive, "currentConnectionMapItem");

@@ -22,25 +22,23 @@ public:
     SignalIoConnection(const SignalIoConnection& org);
     SignalIoConnection(const SignalIoConnection& org, BodyCloneMap& bodyCloneMap, bool doConnection = false);
 
-    SignalIoDevice* outDevice(){ return outDevice_; }
-    int outSignalIndex(){ return outIndex_; }
-    SignalIoDevice* inDevice(){ return inDevice_; }
-    int inSignalIndex(){ return inIndex_; }
+    enum { Out = 0, In = 1 };
 
-    enum { OUT = 0, IN = 1 };
-    SignalIoDevice* device(int which){ return (which == 0) ? outDevice_ : inDevice_; }
-    int signalIndex(int which){ return (which == 0) ? outIndex_ : inIndex_; }
+    SignalIoDevice* outDevice(){ return device_[Out]; }
+    int outSignalIndex(){ return signalIndex_[Out]; }
+    SignalIoDevice* inDevice(){ return device_[In]; }
+    int inSignalIndex(){ return signalIndex_[In]; }
+
+    SignalIoDevice* device(int which){ return device_[which]; }
+    int signalIndex(int which){ return signalIndex_[which]; }
+    const std::string& bodyName(int which) { return bodyName_[which]; }
+    const std::string& deviceName(int which) { return deviceName_[which]; }
 
 private:
-    SignalIoDevicePtr outDevice_;
-    int outIndex_;
-    std::string outBodyName_;
-    std::string outDeviceName_;
-
-    SignalIoDevicePtr inDevice_;
-    int inIndex_;
-    std::string inBodyName_;
-    std::string inDeviceName_;
+    SignalIoDevicePtr device_[2];
+    int signalIndex_[2];
+    std::string bodyName_[2];
+    std::string deviceName_[2];
 };
 typedef ref_ptr<SignalIoConnection> SignalIoConnectionPtr;
 
@@ -63,9 +61,7 @@ public:
     int numConnections() const { return connections_.size(); }
     SignalIoConnection* connection(int index){ return connections_[index]; }
     const SignalIoConnection* connection(int index) const { return connections_[index]; }
-
-    void appendConnection(SignalIoConnection* connection);
-    
+    void insert(int index, SignalIoConnection* connection);
     void removeConnectionsOfBody(Body* body);
 
 private:

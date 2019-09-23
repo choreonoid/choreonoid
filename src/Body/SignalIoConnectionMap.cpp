@@ -7,33 +7,40 @@ using namespace cnoid;
 
 SignalIoConnection::SignalIoConnection()
 {
-    outIndex_ = 0;
-    inIndex_ = 0;
+    for(int i=0; i < 2; ++i){
+        signalIndex_[i] = 0;
+    }
 }
 
 
 SignalIoConnection::SignalIoConnection(SignalIoDevice* outDevice, int outIndex, SignalIoDevice* inDevice, int inIndex)
-    : outDevice_(outDevice),
-      outIndex_(outIndex),
-      inDevice_(inDevice),
-      inIndex_(inIndex)
 {
-
+    device_[Out] = outDevice;
+    signalIndex_[Out] = outIndex;
+    device_[In] = inDevice;
+    signalIndex_[In] = inIndex;
 }
 
 
 SignalIoConnection::SignalIoConnection(const SignalIoConnection& org)
 {
-
+    for(int i=0; i < 2; ++i){
+        device_[i] = org.device_[i];
+        signalIndex_[i] = org.signalIndex_[i];
+        bodyName_[i] = org.bodyName_[i];
+        deviceName_[i] = org.deviceName_[i];
+    }
 }
 
 
 SignalIoConnection::SignalIoConnection(const SignalIoConnection& org, BodyCloneMap& bodyCloneMap, bool doConnection)
 {
-    outDevice_ = bodyCloneMap.getClone<SignalIoDevice>(org.outDevice_);
-    outIndex_ = org.outIndex_;
-    inDevice_ = bodyCloneMap.getClone<SignalIoDevice>(org.inDevice_);
-    inIndex_ = org.inIndex_;
+    for(int i=0; i < 2; ++i){
+        device_[i] = bodyCloneMap.getClone<SignalIoDevice>(org.device_[i]);
+        signalIndex_[i] = org.signalIndex_[i];
+        bodyName_[i] = org.bodyName_[i];
+        deviceName_[i] = org.deviceName_[i];
+    }
 }
 
 
@@ -55,9 +62,13 @@ SignalIoConnectionMap::SignalIoConnectionMap(const SignalIoConnectionMap& org, B
 }
 
 
-void SignalIoConnectionMap::appendConnection(SignalIoConnection* connection)
+void SignalIoConnectionMap::insert(int index, SignalIoConnection* connection)
 {
-    connections_.push_back(connection);
+    if(index >= connections_.size()){
+        connections_.push_back(connection);
+    } else {
+        connections_.insert(connections_.begin() + index, connection);
+    }
 }
 
 
@@ -65,5 +76,3 @@ void SignalIoConnectionMap::removeConnectionsOfBody(Body* body)
 {
 
 }
-
-
