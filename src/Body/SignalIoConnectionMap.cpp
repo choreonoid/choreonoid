@@ -55,6 +55,12 @@ SignalIoConnectionMap::SignalIoConnectionMap(const SignalIoConnectionMap& org, B
 }
 
 
+void SignalIoConnectionMap::appendConnection(SignalIoConnection* connection)
+{
+    connections_.push_back(connection);
+}
+
+
 void SignalIoConnectionMap::removeConnectionsOfBody(Body* body)
 {
 
