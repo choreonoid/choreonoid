@@ -1,5 +1,6 @@
 #include "SignalIoConnectionMap.h"
 #include "SignalIoDevice.h"
+#include "Body.h"
 #include "BodyCloneMap.h"
 
 using namespace std;
@@ -41,6 +42,45 @@ SignalIoConnection::SignalIoConnection(const SignalIoConnection& org, BodyCloneM
         bodyName_[i] = org.bodyName_[i];
         deviceName_[i] = org.deviceName_[i];
     }
+}
+
+
+const std::string& SignalIoConnection::bodyName(IoType which) const
+{
+    if(auto device = device_[which]){
+        if(auto body = device->body()){
+            return body->name();
+        }
+    }
+    return bodyName_[which];
+}
+
+
+const std::string& SignalIoConnection::deviceName(IoType which) const
+{
+    if(auto device = device_[which]){
+        return device->name();
+    } else {
+        return deviceName_[which];
+    }
+}
+
+
+void SignalIoConnection::setDevice(IoType which, SignalIoDevice* device)
+{
+    device_[which] = device;
+    deviceName_[which] = device->name();
+    if(auto body = device->body()){
+        bodyName_[which] = body->name();
+    }
+}
+
+
+void SignalIoConnection::setNames(IoType which, const std::string& bodyName, const std::string& deviceName)
+{
+    bodyName_[which] = bodyName;
+    deviceName_[which] = deviceName;
+    device_[which].reset();
 }
 
 

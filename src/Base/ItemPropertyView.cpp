@@ -234,6 +234,18 @@ public:
         return editor;
     }
 
+    virtual void updateEditorGeometry(
+        QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override
+    {
+        editor->setGeometry(option.rect);
+
+        /*
+        if(auto combo = dynamic_cast<QComboBox*>(editor)){
+            combo->showPopup();
+        }
+        */
+    }
+
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override
     {
         PropertyItem* item = tableWidget->itemFromIndex(index);
@@ -662,9 +674,12 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     tableWidget->setTabKeyNavigation(true);
+    tableWidget->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     tableWidget->setEditTriggers(
+        /* QAbstractItemView::CurrentChanged | */
         QAbstractItemView::DoubleClicked |
         QAbstractItemView::SelectedClicked | 
+        QAbstractItemView::EditKeyPressed |
         QAbstractItemView::AnyKeyPressed);
 
     QHeaderView* hh = tableWidget->horizontalHeader();

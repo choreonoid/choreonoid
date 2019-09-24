@@ -22,17 +22,25 @@ public:
     SignalIoConnection(const SignalIoConnection& org);
     SignalIoConnection(const SignalIoConnection& org, BodyCloneMap& bodyCloneMap, bool doConnection = false);
 
-    enum { Out = 0, In = 1 };
+    enum IoType { In = 0, Out = 1 };
 
-    SignalIoDevice* outDevice(){ return device_[Out]; }
-    int outSignalIndex(){ return signalIndex_[Out]; }
     SignalIoDevice* inDevice(){ return device_[In]; }
-    int inSignalIndex(){ return signalIndex_[In]; }
+    int inSignalIndex() const { return signalIndex_[In]; }
+    SignalIoDevice* outDevice(){ return device_[Out]; }
+    int outSignalIndex() const { return signalIndex_[Out]; }
 
-    SignalIoDevice* device(int which){ return device_[which]; }
-    int signalIndex(int which){ return signalIndex_[which]; }
-    const std::string& bodyName(int which) { return bodyName_[which]; }
-    const std::string& deviceName(int which) { return deviceName_[which]; }
+    void setInDevice(SignalIoDevice* device){ setDevice(In, device); }
+    void setInSignalIndex(int index){ signalIndex_[In] = index; }
+    void setOutDevice(SignalIoDevice* device){ setDevice(Out, device); }
+    void setOutSignalIndex(int index){ signalIndex_[Out] = index; }
+
+    SignalIoDevice* device(IoType which) const { return device_[which]; }
+    int signalIndex(IoType which) const { return signalIndex_[which]; }
+    const std::string& bodyName(IoType which) const;
+    const std::string& deviceName(IoType which) const;
+
+    void setDevice(IoType which, SignalIoDevice* device);
+    void setNames(IoType which, const std::string& bodyName, const std::string& deviceName);
 
 private:
     SignalIoDevicePtr device_[2];

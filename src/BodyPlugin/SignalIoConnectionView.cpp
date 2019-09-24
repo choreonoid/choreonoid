@@ -11,9 +11,12 @@
 #include <cnoid/Buttons>
 #include <QBoxLayout>
 #include <QLabel>
+#include <QComboBox>
+#include <QSpinBox>
 #include <QTableView>
-#include <QAbstractTableModel>
 #include <QHeaderView>
+#include <QAbstractTableModel>
+#include <QStyledItemDelegate>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -24,6 +27,32 @@ using fmt::format;
 namespace {
 
 constexpr int NumColumns = 6;
+constexpr int OutDeviceColumn = 0;
+constexpr int OutSignalIndexColumn = 1;
+constexpr int ConnectionArrowColumn = 2;
+constexpr int InDeviceColumn = 3;
+constexpr int InSignalIndexColumn = 4;
+constexpr int NoteColumn = 5;
+
+QString getDeviceLabel(const string& bodyName, const string& deviceName)
+{
+    QString label;
+    if(deviceName.empty()){
+        label = bodyName.c_str();
+    } else {
+        label = QString("%1 - %2").arg(bodyName.c_str()).arg(deviceName.c_str());
+    }
+    return label;
+}
+
+struct DeviceInfo
+{
+    SignalIoDevice* device;
+    string bodyName;
+    string deviceName;
+    DeviceInfo(SignalIoDevice* device, const string& bodyName, const string& deviceName)
+        : device(device), bodyName(bodyName), deviceName(deviceName) { }
+};
 
 class ConnectionMapModel : public QAbstractTableModel
 {
@@ -35,9 +64,40 @@ public:
     virtual int rowCount(const QModelIndex& parent) const override;
     virtual int columnCount(const QModelIndex& parent) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+    virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
+    virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
     virtual QVariant data(const QModelIndex& index, int role) const override;
-    QVariant getDeviceLabel(SignalIoConnection* ioConnection, int which) const;
+    QVariant getDeviceLabel(SignalIoConnection* connection, SignalIoConnection::IoType which) const;
+    virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void insertConnection(int row, SignalIoConnection* connection);
+};
+
+class CustomizedItemDelegate : public QStyledItemDelegate
+{
+public:
+    SignalIoConnectionView::Impl* view;
+    
+    CustomizedItemDelegate(SignalIoConnectionView::Impl* view);
+    virtual QWidget* createEditor(
+        QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+    QWidget* createSignalIndexSpingBox(
+        QWidget* parent, SignalIoConnection* connection, SignalIoConnection::IoType which) const;    
+    virtual void updateEditorGeometry(
+        QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
+    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+};
+
+class SignalDeviceComboBox : public QComboBox
+{
+public:
+    vector<DeviceInfo> deviceInfos;
+
+    SignalDeviceComboBox(
+        SignalIoConnectionView::Impl* view, SignalIoConnection* connection, SignalIoConnection::IoType which,
+        QWidget* parent);
+
+    DeviceInfo* getCurrentDeviceInfo(){ return &deviceInfos[currentIndex()]; }
 };
 
 }
@@ -128,34 +188,56 @@ QVariant ConnectionMapModel::headerData(int section, Qt::Orientation orientation
 }
 
 
+QModelIndex ConnectionMapModel::index(int row, int column, const QModelIndex& parent) const
+{
+    if(!connectionMap || parent.isValid()){
+        return QModelIndex();
+    }
+    if(row < connectionMap->numConnections()){
+        auto connection = connectionMap->connection(row);
+        return createIndex(row, column, connection);
+    }
+    return QModelIndex();
+}
+    
+
+Qt::ItemFlags ConnectionMapModel::flags(const QModelIndex& index) const
+{
+    if(!index.isValid()){
+        return QAbstractTableModel::flags(index);
+    }
+    if(index.column() != ConnectionArrowColumn){
+        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+    }
+    return QAbstractTableModel::flags(index);
+}
+
+
 QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
 {
-    if(!index.isValid() || !connectionMap){
-        return QVariant();
-    }
-    if(index.row() >= connectionMap->numConnections()){
+    auto connection = static_cast<SignalIoConnection*>(index.internalPointer());
+
+    if(!connection || !index.isValid()){
         return QVariant();
     }
 
-    auto ioConnection = connectionMap->connection(index.row());
-    
-    if(role == Qt::DisplayRole){
+    if(role == Qt::DisplayRole || role == Qt::EditRole){
         switch(index.column()){
-        case 0:
-            return getDeviceLabel(ioConnection, SignalIoConnection::Out);
-        case 1:
-            return ioConnection->outSignalIndex();
-        case 2:
+        case OutDeviceColumn:
+            return getDeviceLabel(connection, SignalIoConnection::Out);
+        case OutSignalIndexColumn:
+            return connection->outSignalIndex();
+        case ConnectionArrowColumn:
             return "-->";
-        case 3:
-            return getDeviceLabel(ioConnection, SignalIoConnection::In);
-        case 4:
-            return ioConnection->inSignalIndex();
+        case InDeviceColumn:
+            return getDeviceLabel(connection, SignalIoConnection::In);
+        case InSignalIndexColumn:
+            return connection->inSignalIndex();
         default:
             break;
         }
     } else if(role == Qt::TextAlignmentRole){
-        if(index.column() == 5){
+        if(index.column() == NoteColumn){
             return Qt::AlignLeft;
         } else {
             return Qt::AlignCenter;
@@ -166,9 +248,9 @@ QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
 }
 
 
-QVariant ConnectionMapModel::getDeviceLabel(SignalIoConnection* ioConnection, int which) const
+QVariant ConnectionMapModel::getDeviceLabel(SignalIoConnection* connection, SignalIoConnection::IoType which) const
 {
-    auto device = ioConnection->device(which);
+    auto device = connection->device(which);
     if(device){
         auto body = device->body();
         if(device->name().empty()){
@@ -177,14 +259,51 @@ QVariant ConnectionMapModel::getDeviceLabel(SignalIoConnection* ioConnection, in
             return format("{0} - {1}", body->name(), device->name()).c_str();
         }
     } else {
-        auto& bodyName = ioConnection->bodyName(which);
-        auto& deviceName = ioConnection->deviceName(which);
+        auto& bodyName = connection->bodyName(which);
+        auto& deviceName = connection->deviceName(which);
         if(deviceName.empty()){
             return bodyName.c_str();
         } else {
             return format("{0} - {1}", bodyName, deviceName).c_str();
         }
     }
+}
+
+
+bool ConnectionMapModel::setData(const QModelIndex& index, const QVariant& value, int role)
+{
+    if(index.isValid() && role == Qt::EditRole){
+        auto connection = static_cast<SignalIoConnection*>(index.internalPointer());
+        switch(index.column()){
+
+        case OutDeviceColumn:
+        case InDeviceColumn:
+            if(auto info = static_cast<DeviceInfo*>(value.value<void*>())){
+                auto which = (index.column() == OutDeviceColumn) ? SignalIoConnection::Out : SignalIoConnection::In;
+                if(info->device){
+                    connection->setDevice(which, info->device);
+                } else {
+                    connection->setNames(which, info->bodyName, info->deviceName);
+                }
+                Q_EMIT dataChanged(index, index, {role});
+            }
+            break;
+            
+        case OutSignalIndexColumn:
+            connection->setOutSignalIndex(value.toInt());
+            Q_EMIT dataChanged(index, index, {role});
+            return true;
+            break;
+            
+        case InSignalIndexColumn:
+            connection->setInSignalIndex(value.toInt());
+            Q_EMIT dataChanged(index, index, {role});
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
 }
 
 
@@ -197,7 +316,143 @@ void ConnectionMapModel::insertConnection(int row, SignalIoConnection* connectio
     }
 }
 
+
+CustomizedItemDelegate::CustomizedItemDelegate(SignalIoConnectionView::Impl* view)
+    : QStyledItemDelegate(view),
+      view(view)
+{
+
+}
+
+
+QWidget* CustomizedItemDelegate::createEditor
+(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    QWidget* editor = nullptr;
     
+    auto connection = static_cast<SignalIoConnection*>(index.internalPointer());
+    
+    switch(index.column()){
+    case OutDeviceColumn:
+        editor = new SignalDeviceComboBox(view, connection, SignalIoConnection::Out, parent);
+        break;
+    case OutSignalIndexColumn:
+        editor = createSignalIndexSpingBox(parent, connection, SignalIoConnection::Out);
+        break;
+    case InDeviceColumn:
+        editor = new SignalDeviceComboBox(view, connection, SignalIoConnection::In, parent);
+        break;
+    case InSignalIndexColumn:
+        editor = createSignalIndexSpingBox(parent, connection, SignalIoConnection::In);
+        break;
+    default:
+        editor = QStyledItemDelegate::createEditor(parent, option, index);
+        break;
+    }
+
+    return editor;
+}
+
+
+QWidget* CustomizedItemDelegate::createSignalIndexSpingBox
+(QWidget* parent, SignalIoConnection* connection, SignalIoConnection::IoType which) const
+{
+    auto spin = new QSpinBox(parent);
+    spin->setAlignment(Qt::AlignCenter);
+    spin->setFrame(false);
+    if(auto device = connection->device(which)){
+        spin->setRange(0, device->numBinarySignals() - 1);
+    } else {
+        spin->setRange(0, 999);
+    }
+    return spin;
+}
+
+
+void CustomizedItemDelegate::updateEditorGeometry
+(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    editor->setGeometry(option.rect);
+
+    if(auto combo = dynamic_cast<QComboBox*>(editor)){
+        combo->showPopup();
+    }
+}
+
+
+void CustomizedItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+{
+    QStyledItemDelegate::setEditorData(editor, index);
+}
+
+
+void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+{
+    switch(index.column()){
+    case OutDeviceColumn:
+    case InDeviceColumn:
+        if(auto combo = dynamic_cast<SignalDeviceComboBox*>(editor)){
+            auto value = QVariant::fromValue(static_cast<void*>(combo->getCurrentDeviceInfo()));
+            model->setData(index, value);
+        }
+        break;
+    default:
+        QStyledItemDelegate::setModelData(editor, model, index);
+    }
+}
+
+
+SignalDeviceComboBox::SignalDeviceComboBox
+(SignalIoConnectionView::Impl* view, SignalIoConnection* connection, SignalIoConnection::IoType which, QWidget* parent)
+    : QComboBox(parent)
+{
+    setFrame(false);
+
+    string currentBodyName;
+    string currentDeviceName;
+    auto currentDevice = connection->device(which);
+    if(currentDevice){
+        currentBodyName = currentDevice->body()->name();
+        currentDeviceName = currentDevice->name();
+    } else {
+        currentBodyName = connection->bodyName(which);
+        currentDeviceName = connection->deviceName(which);
+    }
+    bool isCurrentDeviceAvailable = false;
+    
+    if(view->targetItem){
+        Item* rootItem = view->targetItem->findOwnerItem<WorldItem>();
+        if(!rootItem){
+            rootItem = RootItem::instance();
+        }
+        ItemList<BodyItem> bodyItems;
+        bodyItems.extractSubTreeItems(rootItem);
+        for(auto& bodyItem : bodyItems){
+            for(auto& device : bodyItem->body()->devices<SignalIoDevice>()){
+                auto body = device->body();
+                int index = count();
+                addItem(getDeviceLabel(body->name(), device->name()));
+                deviceInfos.emplace_back(device, body->name(), device->name());
+                
+                if(!isCurrentDeviceAvailable){
+                    if((currentDevice && currentDevice == device) ||
+                       (body->name() == currentBodyName && device->name() == currentDeviceName)){
+                        isCurrentDeviceAvailable = true;
+                        setCurrentIndex(index);
+                    }
+                }
+            }
+        }
+    }
+    if(!isCurrentDeviceAvailable && !currentBodyName.empty()){
+        int index = count();
+        addItem(getDeviceLabel(currentBodyName, currentDeviceName));
+        setCurrentIndex(index);
+        deviceInfos.emplace_back(nullptr, currentBodyName, currentDeviceName);
+    }
+}
+
+
 void SignalIoConnectionView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<SignalIoConnectionView>(
@@ -246,11 +501,17 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     setSelectionMode(QAbstractItemView::SingleSelection);
     setTabKeyNavigation(true);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    setItemDelegate(new CustomizedItemDelegate(this));
+    setEditTriggers(
+        /* QAbstractItemView::CurrentChanged | */
+        QAbstractItemView::DoubleClicked |
+        QAbstractItemView::SelectedClicked |
+        QAbstractItemView::EditKeyPressed |
+        QAbstractItemView::AnyKeyPressed);
 
     auto hheader = horizontalHeader();
     hheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     hheader->setStretchLastSection(true);
-
     auto vheader = verticalHeader();
     vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
 

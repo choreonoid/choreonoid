@@ -15,8 +15,9 @@ public:
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
-private:
     class Impl;
+    
+private:
     Impl* impl;
 };
 
