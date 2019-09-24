@@ -53,9 +53,9 @@ Item::Item(const Item& org) :
 
 void Item::init()
 {
-    parent_ = 0;
-    lastChild_ = 0;
-    prevItem_ = 0;
+    parent_ = nullptr;
+    lastChild_ = nullptr;
+    prevItem_ = nullptr;
 
     numChildren_ = 0;
 
@@ -167,14 +167,14 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
             item->prevItem_ = prevItem;
         } else {
             firstChild_ = item;
-            item->prevItem_ = 0;
+            item->prevItem_ = nullptr;
         }
         newNextItem->prevItem_ = item;
 
     } else if(lastChild_){
         lastChild_->nextItem_ = item;
         item->prevItem_ = lastChild_;
-        item->nextItem_ = 0;
+        item->nextItem_ = nullptr;
         lastChild_ = item;
     } else {
         firstChild_ = item;
@@ -329,9 +329,9 @@ void Item::detachFromParentItemSub(bool isMoving)
     }
     
     --parent_->numChildren_;
-    parent_ = 0;
-    prevItem_ = 0;
-    nextItem_ = 0;
+    parent_ = nullptr;
+    prevItem_ = nullptr;
+    nextItem_ = nullptr;
 
     attributes.reset(SUB_ITEM);
 
@@ -392,7 +392,7 @@ static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterato
     if(it == end){
         return current;
     }
-    Item* item = 0;
+    Item* item = nullptr;
     for(Item* child = current->childItem(); child; child = child->nextItem()){
         if(child->name() == *it){
             item = findItemSub(child, ++it, end);
@@ -431,7 +431,7 @@ static Item* findChildItemSub(Item* current, ItemPath::iterator it, ItemPath::it
     if(it == end){
         return current;
     }
-    Item* item = 0;
+    Item* item = nullptr;
     for(Item* child = current->childItem(); child; child = child->nextItem()){
         if(child->name() == *it){
             item = findChildItemSub(child, ++it, end);
@@ -456,7 +456,7 @@ static Item* findSubItemSub(Item* current, ItemPath::iterator it, ItemPath::iter
     if(it == end){
         return current;
     }
-    Item* item = 0;
+    Item* item = nullptr;
     for(Item* child = current->childItem(); child; child = child->nextItem()){
         if(child->name() == *it && child->isSubItem()){
             item = findSubItemSub(child, ++it, end);
@@ -482,13 +482,19 @@ Item* Item::rootItem()
 }
 
 
-RootItem* Item::findRootItem() const
+Item* Item::getLocalRootItem() const
 {
     Item* current = const_cast<Item*>(this);
     while(current->parent_){
         current = current->parent_;
     }
-    return dynamic_cast<RootItem*>(current);
+    return current;
+}
+ 
+
+RootItem* Item::findRootItem() const
+{
+    return dynamic_cast<RootItem*>(getLocalRootItem());
 }
 
 
@@ -561,7 +567,7 @@ Item* Item::duplicate() const
     Item* duplicated = doDuplicate();
     if(duplicated && (typeid(*duplicated) != typeid(*this))){
         delete duplicated;
-        duplicated = 0;
+        duplicated = nullptr;
     }
     return duplicated;
 }
@@ -608,7 +614,7 @@ Item* Item::duplicateAllSub(Item* duplicated) const
 */
 Item* Item::doDuplicate() const
 {
-    return 0;
+    return nullptr;
 }
 
 
