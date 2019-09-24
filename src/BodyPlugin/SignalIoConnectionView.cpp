@@ -28,10 +28,10 @@ namespace {
 
 constexpr int NumColumns = 6;
 constexpr int OutDeviceColumn = 0;
-constexpr int OutSignalIndexColumn = 1;
+constexpr int OutSignalNumberColumn = 1;
 constexpr int ConnectionArrowColumn = 2;
 constexpr int InDeviceColumn = 3;
-constexpr int InSignalIndexColumn = 4;
+constexpr int InSignalNumberColumn = 4;
 constexpr int NoteColumn = 5;
 
 QString getDeviceLabel(const string& bodyName, const string& deviceName)
@@ -80,7 +80,7 @@ public:
     CustomizedItemDelegate(SignalIoConnectionView::Impl* view);
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    QWidget* createSignalIndexSpingBox(
+    QWidget* createSignalNumberSpingBox(
         QWidget* parent, SignalIoConnection* connection, SignalIoConnection::IoType which) const;    
     virtual void updateEditorGeometry(
         QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
@@ -225,14 +225,14 @@ QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
         switch(index.column()){
         case OutDeviceColumn:
             return getDeviceLabel(connection, SignalIoConnection::Out);
-        case OutSignalIndexColumn:
-            return connection->outSignalIndex();
+        case OutSignalNumberColumn:
+            return connection->outSignalNumber();
         case ConnectionArrowColumn:
             return "-->";
         case InDeviceColumn:
             return getDeviceLabel(connection, SignalIoConnection::In);
-        case InSignalIndexColumn:
-            return connection->inSignalIndex();
+        case InSignalNumberColumn:
+            return connection->inSignalNumber();
         default:
             break;
         }
@@ -289,14 +289,14 @@ bool ConnectionMapModel::setData(const QModelIndex& index, const QVariant& value
             }
             break;
             
-        case OutSignalIndexColumn:
-            connection->setOutSignalIndex(value.toInt());
+        case OutSignalNumberColumn:
+            connection->setOutSignalNumber(value.toInt());
             Q_EMIT dataChanged(index, index, {role});
             return true;
             break;
             
-        case InSignalIndexColumn:
-            connection->setInSignalIndex(value.toInt());
+        case InSignalNumberColumn:
+            connection->setInSignalNumber(value.toInt());
             Q_EMIT dataChanged(index, index, {role});
             return true;
         default:
@@ -336,14 +336,14 @@ QWidget* CustomizedItemDelegate::createEditor
     case OutDeviceColumn:
         editor = new SignalDeviceComboBox(view, connection, SignalIoConnection::Out, parent);
         break;
-    case OutSignalIndexColumn:
-        editor = createSignalIndexSpingBox(parent, connection, SignalIoConnection::Out);
+    case OutSignalNumberColumn:
+        editor = createSignalNumberSpingBox(parent, connection, SignalIoConnection::Out);
         break;
     case InDeviceColumn:
         editor = new SignalDeviceComboBox(view, connection, SignalIoConnection::In, parent);
         break;
-    case InSignalIndexColumn:
-        editor = createSignalIndexSpingBox(parent, connection, SignalIoConnection::In);
+    case InSignalNumberColumn:
+        editor = createSignalNumberSpingBox(parent, connection, SignalIoConnection::In);
         break;
     default:
         editor = QStyledItemDelegate::createEditor(parent, option, index);
@@ -354,7 +354,7 @@ QWidget* CustomizedItemDelegate::createEditor
 }
 
 
-QWidget* CustomizedItemDelegate::createSignalIndexSpingBox
+QWidget* CustomizedItemDelegate::createSignalNumberSpingBox
 (QWidget* parent, SignalIoConnection* connection, SignalIoConnection::IoType which) const
 {
     auto spin = new QSpinBox(parent);
@@ -421,6 +421,23 @@ SignalDeviceComboBox::SignalDeviceComboBox
     bool isCurrentDeviceAvailable = false;
     
     if(view->targetItem){
+        view->targetItem->forEachIoDevice(
+            [&](BodyItem* bodyItem, SignalIoDevice* device){
+                auto body = device->body();
+                int index = count();
+                addItem(getDeviceLabel(body->name(), device->name()));
+                deviceInfos.emplace_back(device, body->name(), device->name());
+                
+                if(!isCurrentDeviceAvailable){
+                    if((currentDevice && currentDevice == device) ||
+                       (body->name() == currentBodyName && device->name() == currentDeviceName)){
+                        isCurrentDeviceAvailable = true;
+                        setCurrentIndex(index);
+                    }
+                }
+            });
+
+/*        
         Item* rootItem = view->targetItem->findOwnerItem<WorldItem>();
         if(!rootItem){
             rootItem = RootItem::instance();
@@ -442,7 +459,8 @@ SignalDeviceComboBox::SignalDeviceComboBox
                     }
                 }
             }
-        }
+    }
+*/
     }
     if(!isCurrentDeviceAvailable && !currentBodyName.empty()){
         int index = count();

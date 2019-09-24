@@ -807,9 +807,8 @@ bool ManipulatorPositionSet::write(Mapping& archive) const
     archive.write("type", "ManipulatorPositionSet");
     archive.write("formatVersion", 1.0);
 
-    Listing& positionNodes = *archive.createListing("positions");
-
     if(!positions_.empty()){
+        Listing& positionNodes = *archive.createListing("positions");
         for(auto& position : positions_){
             MappingPtr node = new Mapping;
             if(position->write(*node)){

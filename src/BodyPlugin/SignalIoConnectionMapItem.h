@@ -7,6 +7,8 @@
 namespace cnoid {
 
 class SignalIoConnectionMap;
+class BodyItem;
+class SignalIoDevice;
 
 class CNOID_EXPORT SignalIoConnectionMapItem : public Item
 {
@@ -19,6 +21,10 @@ public:
 
     SignalIoConnectionMap* connectionMap();
     const SignalIoConnectionMap* connectionMap() const;
+
+    void forEachIoDevice(std::function<void(BodyItem* bodyItem, SignalIoDevice* device)> callback) const;
+    
+    void refreshIoDeviceInstances(bool enableWarningMessages = true);
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
