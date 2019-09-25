@@ -28,7 +28,7 @@ public:
     virtual bool on() const override;
     virtual void on(bool on) override;
 
-    int numBinarySignals() const { return out_.size(); }
+    int numSignalLines() const { return out_.size(); }
 
     bool out(int index) const { return out_[index]; }
     void setOut(int index, bool on, bool doNotify = true);
@@ -40,8 +40,8 @@ public:
     const std::string& inLabel(int index) const;
     void setInLabel(int index, const std::string& label);
     
-    SignalProxy<void(bool on)> sigSignalOutput(int index);
-    SignalProxy<void(bool on)> sigSignalInput(int index);
+    SignalProxy<void(bool on)> sigOutput(int index);
+    SignalProxy<void(bool on)> sigInput(int index);
 
     bool readDescription(YAMLBodyLoader& loader, Mapping& node);
 

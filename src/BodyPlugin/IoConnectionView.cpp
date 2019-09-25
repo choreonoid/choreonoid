@@ -31,10 +31,10 @@ namespace {
 
 constexpr int NumColumns = 6;
 constexpr int OutDeviceColumn = 0;
-constexpr int OutSignalNumberColumn = 1;
+constexpr int OutSignalIndexColumn = 1;
 constexpr int ConnectionArrowColumn = 2;
 constexpr int InDeviceColumn = 3;
-constexpr int InSignalNumberColumn = 4;
+constexpr int InSignalIndexColumn = 4;
 constexpr int NoteColumn = 5;
 
 QString getDeviceLabel(const string& bodyName, const string& deviceName)
@@ -86,7 +86,7 @@ public:
     CustomizedItemDelegate(IoConnectionView::Impl* view);
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    QWidget* createSignalNumberSpingBox(
+    QWidget* createSignalIndexSpingBox(
         QWidget* parent, DigitalIoConnection* connection, DigitalIoConnection::IoType which) const;    
     virtual void updateEditorGeometry(
         QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
@@ -240,14 +240,14 @@ QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
         switch(index.column()){
         case OutDeviceColumn:
             return getDeviceLabel(connection, DigitalIoConnection::Out);
-        case OutSignalNumberColumn:
-            return connection->outSignalNumber();
+        case OutSignalIndexColumn:
+            return connection->outSignalIndex();
         case ConnectionArrowColumn:
             return "-->";
         case InDeviceColumn:
             return getDeviceLabel(connection, DigitalIoConnection::In);
-        case InSignalNumberColumn:
-            return connection->inSignalNumber();
+        case InSignalIndexColumn:
+            return connection->inSignalIndex();
         default:
             break;
         }
@@ -304,14 +304,14 @@ bool ConnectionMapModel::setData(const QModelIndex& index, const QVariant& value
             }
             break;
             
-        case OutSignalNumberColumn:
-            connection->setOutSignalNumber(value.toInt());
+        case OutSignalIndexColumn:
+            connection->setOutSignalIndex(value.toInt());
             Q_EMIT dataChanged(index, index, {role});
             return true;
             break;
             
-        case InSignalNumberColumn:
-            connection->setInSignalNumber(value.toInt());
+        case InSignalIndexColumn:
+            connection->setInSignalIndex(value.toInt());
             Q_EMIT dataChanged(index, index, {role});
             return true;
         default:
@@ -379,14 +379,14 @@ QWidget* CustomizedItemDelegate::createEditor
     case OutDeviceColumn:
         editor = new SignalDeviceComboBox(view, connection, DigitalIoConnection::Out, parent);
         break;
-    case OutSignalNumberColumn:
-        editor = createSignalNumberSpingBox(parent, connection, DigitalIoConnection::Out);
+    case OutSignalIndexColumn:
+        editor = createSignalIndexSpingBox(parent, connection, DigitalIoConnection::Out);
         break;
     case InDeviceColumn:
         editor = new SignalDeviceComboBox(view, connection, DigitalIoConnection::In, parent);
         break;
-    case InSignalNumberColumn:
-        editor = createSignalNumberSpingBox(parent, connection, DigitalIoConnection::In);
+    case InSignalIndexColumn:
+        editor = createSignalIndexSpingBox(parent, connection, DigitalIoConnection::In);
         break;
     default:
         editor = QStyledItemDelegate::createEditor(parent, option, index);
@@ -397,14 +397,14 @@ QWidget* CustomizedItemDelegate::createEditor
 }
 
 
-QWidget* CustomizedItemDelegate::createSignalNumberSpingBox
+QWidget* CustomizedItemDelegate::createSignalIndexSpingBox
 (QWidget* parent, DigitalIoConnection* connection, DigitalIoConnection::IoType which) const
 {
     auto spin = new QSpinBox(parent);
     spin->setAlignment(Qt::AlignCenter);
     spin->setFrame(false);
     if(auto device = connection->device(which)){
-        spin->setRange(0, device->numBinarySignals() - 1);
+        spin->setRange(0, device->numSignalLines() - 1);
     } else {
         spin->setRange(0, 999);
     }

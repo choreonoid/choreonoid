@@ -14,17 +14,17 @@ using fmt::format;
 DigitalIoConnection::DigitalIoConnection()
 {
     for(int i=0; i < 2; ++i){
-        signalNumber_[i] = 0;
+        signalIndex_[i] = 0;
     }
 }
 
 
-DigitalIoConnection::DigitalIoConnection(DigitalIoDevice* outDevice, int outNumber, DigitalIoDevice* inDevice, int inNumber)
+DigitalIoConnection::DigitalIoConnection(DigitalIoDevice* outDevice, int outIndex, DigitalIoDevice* inDevice, int inIndex)
 {
     device_[Out] = outDevice;
-    signalNumber_[Out] = outNumber;
+    signalIndex_[Out] = outIndex;
     device_[In] = inDevice;
-    signalNumber_[In] = inNumber;
+    signalIndex_[In] = inIndex;
 }
 
 
@@ -32,7 +32,7 @@ DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org)
 {
     for(int i=0; i < 2; ++i){
         device_[i] = org.device_[i];
-        signalNumber_[i] = org.signalNumber_[i];
+        signalIndex_[i] = org.signalIndex_[i];
         bodyName_[i] = org.bodyName_[i];
         deviceName_[i] = org.deviceName_[i];
     }
@@ -43,7 +43,7 @@ DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org, BodyClo
 {
     for(int i=0; i < 2; ++i){
         device_[i] = bodyCloneMap.getClone<DigitalIoDevice>(org.device_[i]);
-        signalNumber_[i] = org.signalNumber_[i];
+        signalIndex_[i] = org.signalIndex_[i];
         bodyName_[i] = org.bodyName_[i];
         deviceName_[i] = org.deviceName_[i];
     }
@@ -99,11 +99,11 @@ bool DigitalIoConnection::establishConnection()
     }
 
     DigitalIoDevicePtr destDevice = inDevice();
-    auto destNumber = inSignalNumber();
+    auto destIndex = inSignalIndex();
     connection.reset(
-        outDevice()->sigSignalOutput(outSignalNumber()).connect(
-            [destDevice, destNumber](bool on){
-                destDevice->setIn(destNumber, on, true); }));
+        outDevice()->sigOutput(outSignalIndex()).connect(
+            [destDevice, destIndex](bool on){
+                destDevice->setIn(destIndex, on, true); }));
     return true;
 }
 
@@ -125,8 +125,8 @@ bool DigitalIoConnection::read(const Mapping& archive)
     deviceName_[Out] = archive.get("outDevice", "");
     deviceName_[In] = archive.get("inDevice", "");
 
-    signalNumber_[Out] = archive.get<int>("outSignalNumber");
-    signalNumber_[In] = archive.get<int>("inSignalNumber");
+    signalIndex_[Out] = archive.get<int>("outSignalIndex");
+    signalIndex_[In] = archive.get<int>("inSignalIndex");
 
     return true;
 }
@@ -139,14 +139,14 @@ bool DigitalIoConnection::write(Mapping& archive) const
     if(!outDeviceName.empty()){
         archive.write("outDevice", outDeviceName, DOUBLE_QUOTED);
     }
-    archive.write("outSignalNumber", signalNumber(Out));
+    archive.write("outSignalIndex", signalIndex(Out));
 
     archive.write("inBody", bodyName(In), DOUBLE_QUOTED);
     auto& inDeviceName = deviceName(In);
     if(!inDeviceName.empty()){
         archive.write("inDevice", inDeviceName, DOUBLE_QUOTED);
     }
-    archive.write("inSignalNumber", signalNumber(In));
+    archive.write("inSignalIndex", signalIndex(In));
 
     return true;
 }

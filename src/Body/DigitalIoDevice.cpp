@@ -23,8 +23,8 @@ namespace cnoid {
 class DigitalIoDevice::NonState
 {
 public:
-    unordered_map<int, Signal<void(bool on)>> sigSignalOutputMap;
-    unordered_map<int, Signal<void(bool on)>> sigSignalInputMap;
+    unordered_map<int, Signal<void(bool on)>> sigOutputMap;
+    unordered_map<int, Signal<void(bool on)>> sigInputMap;
     unordered_map<int, string> inputToDeviceOnActionMap;
     unordered_map<int, string> outLabelMap;
     unordered_map<int, string> inLabelMap;
@@ -142,7 +142,7 @@ void DigitalIoDevice::setOut(int index, bool on, bool doNotify)
     out_[index] = on;
 
     if(doNotify && ns){
-        ns->sigSignalOutputMap[index](on);
+        ns->sigOutputMap[index](on);
     }
 }
 
@@ -165,7 +165,7 @@ void DigitalIoDevice::setIn(int index, bool on, bool doNotify)
     }
     
     if(doNotify && ns){
-        ns->sigSignalInputMap[index](on);
+        ns->sigInputMap[index](on);
     }
 }
 
@@ -210,15 +210,15 @@ void DigitalIoDevice::setInLabel(int index, const std::string& label)
 }
 
 
-SignalProxy<void(bool on)> DigitalIoDevice::sigSignalOutput(int index)
+SignalProxy<void(bool on)> DigitalIoDevice::sigOutput(int index)
 {
-    return ns->sigSignalOutputMap[index];
+    return ns->sigOutputMap[index];
 }
 
 
-SignalProxy<void(bool on)> DigitalIoDevice::sigSignalInput(int index)
+SignalProxy<void(bool on)> DigitalIoDevice::sigInput(int index)
 {
-    return ns->sigSignalInputMap[index];
+    return ns->sigInputMap[index];
 }
 
 
@@ -247,7 +247,7 @@ double* DigitalIoDevice::writeState(double* out_buf) const
 bool DigitalIoDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
 {
     int n;
-    if(node.read("numBinarySignals", n)){
+    if(node.read("numSignalLines", n)){
         out_.resize(n, false);
         in_.resize(n, false);
     }
