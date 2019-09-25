@@ -1,9 +1,9 @@
-#include "SignalIoConnectionView.h"
-#include "SignalIoConnectionMapItem.h"
+#include "IoConnectionView.h"
+#include "IoConnectionMapItem.h"
 #include "WorldItem.h"
 #include "BodyItem.h"
-#include <cnoid/SignalIoDevice>
-#include <cnoid/SignalIoConnectionMap>
+#include <cnoid/DigitalIoDevice>
+#include <cnoid/IoConnectionMap>
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
@@ -50,20 +50,20 @@ QString getDeviceLabel(const string& bodyName, const string& deviceName)
 
 struct DeviceInfo
 {
-    SignalIoDevice* device;
+    DigitalIoDevice* device;
     string bodyName;
     string deviceName;
-    DeviceInfo(SignalIoDevice* device, const string& bodyName, const string& deviceName)
+    DeviceInfo(DigitalIoDevice* device, const string& bodyName, const string& deviceName)
         : device(device), bodyName(bodyName), deviceName(deviceName) { }
 };
 
 class ConnectionMapModel : public QAbstractTableModel
 {
 public:
-    SignalIoConnectionMapPtr connectionMap;
+    IoConnectionMapPtr connectionMap;
     
     ConnectionMapModel(QObject* parent);
-    void setConnectionMap(SignalIoConnectionMap* connectionMap);
+    void setConnectionMap(IoConnectionMap* connectionMap);
     bool isValid() const { return connectionMap != nullptr; }
     int numConnections() const { return connectionMap ? connectionMap->numConnections() : 0; }
     virtual int rowCount(const QModelIndex& parent) const override;
@@ -72,22 +72,22 @@ public:
     virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
     virtual QVariant data(const QModelIndex& index, int role) const override;
-    QVariant getDeviceLabel(SignalIoConnection* connection, SignalIoConnection::IoType which) const;
+    QVariant getDeviceLabel(DigitalIoConnection* connection, DigitalIoConnection::IoType which) const;
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
-    void addNewConnection(int row, SignalIoConnection* connection, bool doInsert);
+    void addNewConnection(int row, DigitalIoConnection* connection, bool doInsert);
     void removeConnections(QModelIndexList selected);
 };
 
 class CustomizedItemDelegate : public QStyledItemDelegate
 {
 public:
-    SignalIoConnectionView::Impl* view;
+    IoConnectionView::Impl* view;
     
-    CustomizedItemDelegate(SignalIoConnectionView::Impl* view);
+    CustomizedItemDelegate(IoConnectionView::Impl* view);
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     QWidget* createSignalNumberSpingBox(
-        QWidget* parent, SignalIoConnection* connection, SignalIoConnection::IoType which) const;    
+        QWidget* parent, DigitalIoConnection* connection, DigitalIoConnection::IoType which) const;    
     virtual void updateEditorGeometry(
         QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
@@ -100,7 +100,7 @@ public:
     vector<DeviceInfo> deviceInfos;
 
     SignalDeviceComboBox(
-        SignalIoConnectionView::Impl* view, SignalIoConnection* connection, SignalIoConnection::IoType which,
+        IoConnectionView::Impl* view, DigitalIoConnection* connection, DigitalIoConnection::IoType which,
         QWidget* parent);
 
     DeviceInfo* getCurrentDeviceInfo(){ return &deviceInfos[currentIndex()]; }
@@ -110,23 +110,23 @@ public:
 
 namespace cnoid {
 
-class SignalIoConnectionView::Impl : public QTableView
+class IoConnectionView::Impl : public QTableView
 {
 public:
-    SignalIoConnectionView* self;
-    TargetItemPicker<SignalIoConnectionMapItem> targetItemPicker;
-    SignalIoConnectionMapItemPtr targetItem;
+    IoConnectionView* self;
+    TargetItemPicker<IoConnectionMapItem> targetItemPicker;
+    IoConnectionMapItemPtr targetItem;
     QLabel targetLabel;
     ConnectionMapModel* connectionMapModel;
     PushButton addButton;
     MenuManager contextMenuManager;
 
-    Impl(SignalIoConnectionView* self);
-    void setConnectionMapItem(SignalIoConnectionMapItem* item);
+    Impl(IoConnectionView* self);
+    void setConnectionMapItem(IoConnectionMapItem* item);
     void addNewConnection(int index, bool doInsert);
     void addConnectionIntoCurrentIndex(bool doInsert);
     void removeSelectedConnections();
-    void setConnectionInfoToTableRow(int row, SignalIoConnection* connection);
+    void setConnectionInfoToTableRow(int row, DigitalIoConnection* connection);
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(int row, QPoint globalPos);
@@ -142,7 +142,7 @@ ConnectionMapModel::ConnectionMapModel(QObject* parent)
 }
 
 
-void ConnectionMapModel::setConnectionMap(SignalIoConnectionMap* connectionMap)
+void ConnectionMapModel::setConnectionMap(IoConnectionMap* connectionMap)
 {
     beginResetModel();
     this->connectionMap = connectionMap;
@@ -230,7 +230,7 @@ Qt::ItemFlags ConnectionMapModel::flags(const QModelIndex& index) const
 
 QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
 {
-    auto connection = static_cast<SignalIoConnection*>(index.internalPointer());
+    auto connection = static_cast<DigitalIoConnection*>(index.internalPointer());
 
     if(!connection || !index.isValid()){
         return QVariant();
@@ -239,13 +239,13 @@ QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
     if(role == Qt::DisplayRole || role == Qt::EditRole){
         switch(index.column()){
         case OutDeviceColumn:
-            return getDeviceLabel(connection, SignalIoConnection::Out);
+            return getDeviceLabel(connection, DigitalIoConnection::Out);
         case OutSignalNumberColumn:
             return connection->outSignalNumber();
         case ConnectionArrowColumn:
             return "-->";
         case InDeviceColumn:
-            return getDeviceLabel(connection, SignalIoConnection::In);
+            return getDeviceLabel(connection, DigitalIoConnection::In);
         case InSignalNumberColumn:
             return connection->inSignalNumber();
         default:
@@ -263,7 +263,7 @@ QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
 }
 
 
-QVariant ConnectionMapModel::getDeviceLabel(SignalIoConnection* connection, SignalIoConnection::IoType which) const
+QVariant ConnectionMapModel::getDeviceLabel(DigitalIoConnection* connection, DigitalIoConnection::IoType which) const
 {
     auto device = connection->device(which);
     if(device){
@@ -288,13 +288,13 @@ QVariant ConnectionMapModel::getDeviceLabel(SignalIoConnection* connection, Sign
 bool ConnectionMapModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if(index.isValid() && role == Qt::EditRole){
-        auto connection = static_cast<SignalIoConnection*>(index.internalPointer());
+        auto connection = static_cast<DigitalIoConnection*>(index.internalPointer());
         switch(index.column()){
 
         case OutDeviceColumn:
         case InDeviceColumn:
             if(auto info = static_cast<DeviceInfo*>(value.value<void*>())){
-                auto which = (index.column() == OutDeviceColumn) ? SignalIoConnection::Out : SignalIoConnection::In;
+                auto which = (index.column() == OutDeviceColumn) ? DigitalIoConnection::Out : DigitalIoConnection::In;
                 if(info->device){
                     connection->setDevice(which, info->device);
                 } else {
@@ -322,7 +322,7 @@ bool ConnectionMapModel::setData(const QModelIndex& index, const QVariant& value
 }
 
 
-void ConnectionMapModel::addNewConnection(int row, SignalIoConnection* connection, bool doInsert)
+void ConnectionMapModel::addNewConnection(int row, DigitalIoConnection* connection, bool doInsert)
 {
     if(connectionMap){
         if(connectionMap->numConnections() == 0){
@@ -346,7 +346,7 @@ void ConnectionMapModel::removeConnections(QModelIndexList selected)
         for(auto& index : selected){
             int row = index.row() - numRemoved;
             beginRemoveRows(QModelIndex(), row, row);
-            auto connection = static_cast<SignalIoConnection*>(index.internalPointer());
+            auto connection = static_cast<DigitalIoConnection*>(index.internalPointer());
             connectionMap->remove(connection);
             ++numRemoved;
             endRemoveRows();
@@ -360,7 +360,7 @@ void ConnectionMapModel::removeConnections(QModelIndexList selected)
 }
         
 
-CustomizedItemDelegate::CustomizedItemDelegate(SignalIoConnectionView::Impl* view)
+CustomizedItemDelegate::CustomizedItemDelegate(IoConnectionView::Impl* view)
     : QStyledItemDelegate(view),
       view(view)
 {
@@ -373,20 +373,20 @@ QWidget* CustomizedItemDelegate::createEditor
 {
     QWidget* editor = nullptr;
     
-    auto connection = static_cast<SignalIoConnection*>(index.internalPointer());
+    auto connection = static_cast<DigitalIoConnection*>(index.internalPointer());
     
     switch(index.column()){
     case OutDeviceColumn:
-        editor = new SignalDeviceComboBox(view, connection, SignalIoConnection::Out, parent);
+        editor = new SignalDeviceComboBox(view, connection, DigitalIoConnection::Out, parent);
         break;
     case OutSignalNumberColumn:
-        editor = createSignalNumberSpingBox(parent, connection, SignalIoConnection::Out);
+        editor = createSignalNumberSpingBox(parent, connection, DigitalIoConnection::Out);
         break;
     case InDeviceColumn:
-        editor = new SignalDeviceComboBox(view, connection, SignalIoConnection::In, parent);
+        editor = new SignalDeviceComboBox(view, connection, DigitalIoConnection::In, parent);
         break;
     case InSignalNumberColumn:
-        editor = createSignalNumberSpingBox(parent, connection, SignalIoConnection::In);
+        editor = createSignalNumberSpingBox(parent, connection, DigitalIoConnection::In);
         break;
     default:
         editor = QStyledItemDelegate::createEditor(parent, option, index);
@@ -398,7 +398,7 @@ QWidget* CustomizedItemDelegate::createEditor
 
 
 QWidget* CustomizedItemDelegate::createSignalNumberSpingBox
-(QWidget* parent, SignalIoConnection* connection, SignalIoConnection::IoType which) const
+(QWidget* parent, DigitalIoConnection* connection, DigitalIoConnection::IoType which) const
 {
     auto spin = new QSpinBox(parent);
     spin->setAlignment(Qt::AlignCenter);
@@ -446,7 +446,7 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
 
 
 SignalDeviceComboBox::SignalDeviceComboBox
-(SignalIoConnectionView::Impl* view, SignalIoConnection* connection, SignalIoConnection::IoType which, QWidget* parent)
+(IoConnectionView::Impl* view, DigitalIoConnection* connection, DigitalIoConnection::IoType which, QWidget* parent)
     : QComboBox(parent)
 {
     setFrame(false);
@@ -465,7 +465,7 @@ SignalDeviceComboBox::SignalDeviceComboBox
     
     if(view->targetItem){
         view->targetItem->forEachIoDevice(
-            [&](BodyItem* bodyItem, SignalIoDevice* device){
+            [&](BodyItem* bodyItem, DigitalIoDevice* device){
                 auto body = device->body();
                 int index = count();
                 addItem(getDeviceLabel(body->name(), device->name()));
@@ -490,20 +490,20 @@ SignalDeviceComboBox::SignalDeviceComboBox
 }
 
 
-void SignalIoConnectionView::initializeClass(ExtensionManager* ext)
+void IoConnectionView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<SignalIoConnectionView>(
-        "SignalIoConnectionView", N_("I/O Connection"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<IoConnectionView>(
+        "IoConnectionView", N_("I/O Connection"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
-SignalIoConnectionView::SignalIoConnectionView()
+IoConnectionView::IoConnectionView()
 {
     impl = new Impl(this);
 }
 
 
-SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
+IoConnectionView::Impl::Impl(IoConnectionView* self)
     : self(self),
       targetItemPicker(self)
 {
@@ -557,18 +557,18 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     self->setLayout(vbox);
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](SignalIoConnectionMapItem* item){
+        [&](IoConnectionMapItem* item){
             setConnectionMapItem(item); });
 }
 
 
-SignalIoConnectionView::~SignalIoConnectionView()
+IoConnectionView::~IoConnectionView()
 {
     delete impl;
 }
 
 
-void SignalIoConnectionView::Impl::setConnectionMapItem(SignalIoConnectionMapItem* item)
+void IoConnectionView::Impl::setConnectionMapItem(IoConnectionMapItem* item)
 {
     targetItem = item;
 
@@ -583,17 +583,17 @@ void SignalIoConnectionView::Impl::setConnectionMapItem(SignalIoConnectionMapIte
 }
 
 
-void SignalIoConnectionView::Impl::addNewConnection(int index, bool doInsert)
+void IoConnectionView::Impl::addNewConnection(int index, bool doInsert)
 {
     auto& connectionMap = connectionMapModel->connectionMap;
     if(!connectionMap){
         return;
     }
-    SignalIoConnectionPtr connection;
+    DigitalIoConnectionPtr connection;
     if(index < connectionMap->numConnections()){
         auto existing = connectionMap->connection(index);
         if(existing->hasDeviceInstances()){
-            connection = new SignalIoConnection(*existing);
+            connection = new DigitalIoConnection(*existing);
         }
     }
 
@@ -601,16 +601,16 @@ void SignalIoConnectionView::Impl::addNewConnection(int index, bool doInsert)
         Item* rootItem = targetItem->findOwnerItem<WorldItem>();
         ItemList<BodyItem> bodyItems;
         bodyItems.extractSubTreeItems(rootItem ? rootItem : RootItem::instance());
-        SignalIoConnectionPtr intraConnection;
-        SignalIoConnectionPtr interConnection;
+        DigitalIoConnectionPtr intraConnection;
+        DigitalIoConnectionPtr interConnection;
         for(auto& bodyItem1 : bodyItems){
-            if(auto ioDevice1 = bodyItem1->body()->findDevice<SignalIoDevice>()){
+            if(auto ioDevice1 = bodyItem1->body()->findDevice<DigitalIoDevice>()){
                 for(auto& bodyItem2 : bodyItems){
-                    if(auto ioDevice2 = bodyItem2->body()->findDevice<SignalIoDevice>()){
+                    if(auto ioDevice2 = bodyItem2->body()->findDevice<DigitalIoDevice>()){
                         if(!intraConnection && bodyItem1 == bodyItem2){
-                            intraConnection = new SignalIoConnection(ioDevice1, 0, ioDevice2, 0);
+                            intraConnection = new DigitalIoConnection(ioDevice1, 0, ioDevice2, 0);
                         } else if(!interConnection && bodyItem1 != bodyItem2){
-                            interConnection = new SignalIoConnection(ioDevice1, 0, ioDevice2, 0);
+                            interConnection = new DigitalIoConnection(ioDevice1, 0, ioDevice2, 0);
                         }
                         if(intraConnection && interConnection){
                             break;
@@ -630,7 +630,7 @@ void SignalIoConnectionView::Impl::addNewConnection(int index, bool doInsert)
 }
 
 
-void SignalIoConnectionView::Impl::addConnectionIntoCurrentIndex(bool doInsert)
+void IoConnectionView::Impl::addConnectionIntoCurrentIndex(bool doInsert)
 {
     auto current = selectionModel()->currentIndex();
     int index = current.isValid() ? current.row() : connectionMapModel->numConnections();
@@ -638,13 +638,13 @@ void SignalIoConnectionView::Impl::addConnectionIntoCurrentIndex(bool doInsert)
 }
 
 
-void SignalIoConnectionView::Impl::removeSelectedConnections()
+void IoConnectionView::Impl::removeSelectedConnections()
 {
     connectionMapModel->removeConnections(selectionModel()->selectedRows());
 }
 
 
-void SignalIoConnectionView::Impl::keyPressEvent(QKeyEvent* event)
+void IoConnectionView::Impl::keyPressEvent(QKeyEvent* event)
 {
     bool processed = true;
 
@@ -681,7 +681,7 @@ void SignalIoConnectionView::Impl::keyPressEvent(QKeyEvent* event)
 }
 
        
-void SignalIoConnectionView::Impl::mousePressEvent(QMouseEvent* event)
+void IoConnectionView::Impl::mousePressEvent(QMouseEvent* event)
 {
     QTableView::mousePressEvent(event);
 
@@ -694,7 +694,7 @@ void SignalIoConnectionView::Impl::mousePressEvent(QMouseEvent* event)
 }
 
 
-void SignalIoConnectionView::Impl::showContextMenu(int row, QPoint globalPos)
+void IoConnectionView::Impl::showContextMenu(int row, QPoint globalPos)
 {
     contextMenuManager.setNewPopupMenu(this);
 
@@ -708,14 +708,14 @@ void SignalIoConnectionView::Impl::showContextMenu(int row, QPoint globalPos)
 }
 
 
-bool SignalIoConnectionView::storeState(Archive& archive)
+bool IoConnectionView::storeState(Archive& archive)
 {
     impl->targetItemPicker.storeTargetItem(archive, "currentConnectionMapItem");
     return true;
 }
 
 
-bool SignalIoConnectionView::restoreState(const Archive& archive)
+bool IoConnectionView::restoreState(const Archive& archive)
 {
     impl->targetItemPicker.restoreTargetItemLater(archive, "currentConnectionMapItem");
     return true;

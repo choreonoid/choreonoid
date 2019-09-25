@@ -14,7 +14,7 @@
 #include "ZMPSeqItem.h"
 #include "MultiDeviceStateSeqItem.h"
 #include "WorldLogFileItem.h"
-#include "SignalIoConnectionMapItem.h"
+#include "IoConnectionMapItem.h"
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
 #include "BodyMarkerItem.h"
@@ -29,7 +29,7 @@
 #include "JointDisplacementView.h"
 #include "JointStateView.h"
 #include "BodyStateView.h"
-#include "SignalIoConnectionView.h"
+#include "IoConnectionView.h"
 #include "JointGraphView.h"
 #include "LinkGraphView.h"
 #include "KinematicsBar.h"
@@ -81,7 +81,7 @@ public:
         GLVisionSimulatorItem::initializeClass(this);
         BodyMotionItem::initializeClass(this);
         WorldLogFileItem::initializeClass(this);
-        SignalIoConnectionMapItem::initializeClass(this);
+        IoConnectionMapItem::initializeClass(this);
         SensorVisualizerItem::initializeClass(this);
         BodyTrackingCameraItem::initializeClass(this);
         BodyMarkerItem::initializeClass(this);
@@ -109,7 +109,7 @@ public:
         JointDisplacementView::initializeClass(this);
         JointStateView::initializeClass(this);
         BodyStateView::initializeClass(this);
-        SignalIoConnectionView::initializeClass(this);
+        IoConnectionView::initializeClass(this);
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
 

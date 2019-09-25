@@ -1,11 +1,11 @@
 #include "KinematicSimulatorItem.h"
 #include "BodyItem.h"
 #include "WorldItem.h"
-#include "SignalIoConnectionMapItem.h"
+#include "IoConnectionMapItem.h"
 #include <cnoid/BodyCloneMap>
 #include <cnoid/HolderDevice>
 #include <cnoid/AttachmentDevice>
-#include <cnoid/SignalIoConnectionMap>
+#include <cnoid/IoConnectionMap>
 #include <cnoid/ItemManager>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -46,7 +46,7 @@ public:
     vector<HolderInfoPtr> holders;
     vector<HolderInfoPtr> activeHolders;
     BodyCloneMap cloneMap;
-    vector<SignalIoConnectionMapPtr> ioConnectionMaps;
+    vector<IoConnectionMapPtr> ioConnectionMaps;
 
     Impl(KinematicSimulatorItem* self);
     Impl(KinematicSimulatorItem* self, const Impl& org);
@@ -134,11 +134,11 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
 
     /*
       This is a temporary implementation.
-      This should be implemented in SignalIoConnectionMapItem as functions of SubSimulatorItem.
+      This should be implemented in IoConnectionMapItem as functions of SubSimulatorItem.
       To achieve it, SubSimulatorItem must be an interface class that does not inherit the Item class,
       or define another interface class that provides the functions similar to SubSimulatorItem.
     */
-    ItemList<SignalIoConnectionMapItem> connectionMapItems;
+    ItemList<IoConnectionMapItem> connectionMapItems;
     if(connectionMapItems.extractSubTreeItems(self->worldItem())){
         for(auto& item : connectionMapItems){
             auto connectionMap = item->connectionMap()->clone(cloneMap);

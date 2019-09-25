@@ -1,5 +1,5 @@
-#ifndef CNOID_BODY_SIGNAL_IO_DEVICE_H
-#define CNOID_BODY_SIGNAL_IO_DEVICE_H
+#ifndef CNOID_BODY_DIGITAL_IO_DEVICE_H
+#define CNOID_BODY_DIGITAL_IO_DEVICE_H
 
 #include "Device.h"
 #include <vector>
@@ -10,14 +10,14 @@ namespace cnoid {
 class YAMLBodyLoader;
 class Mapping;
 
-class CNOID_EXPORT SignalIoDevice : public Device
+class CNOID_EXPORT DigitalIoDevice : public Device
 {
 public:
-    SignalIoDevice();
-    virtual ~SignalIoDevice();
+    DigitalIoDevice();
+    virtual ~DigitalIoDevice();
 
     virtual const char* typeName() override;
-    void copySignalIoDeviceStateFrom(const SignalIoDevice& other);
+    void copyDigitalIoDeviceStateFrom(const DigitalIoDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
@@ -46,7 +46,7 @@ public:
     bool readDescription(YAMLBodyLoader& loader, Mapping& node);
 
 protected:
-    SignalIoDevice(const SignalIoDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap);
+    DigitalIoDevice(const DigitalIoDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap);
     virtual Device* doClone(BodyCloneMap* cloneMap) const override;
 
 private:
@@ -58,7 +58,7 @@ private:
     NonState* ns;
 };
 
-typedef ref_ptr<SignalIoDevice> SignalIoDevicePtr;
+typedef ref_ptr<DigitalIoDevice> DigitalIoDevicePtr;
 
 }
 

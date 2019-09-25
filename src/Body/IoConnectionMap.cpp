@@ -1,5 +1,5 @@
-#include "SignalIoConnectionMap.h"
-#include "SignalIoDevice.h"
+#include "IoConnectionMap.h"
+#include "DigitalIoDevice.h"
 #include "Body.h"
 #include "BodyCloneMap.h"
 #include <cnoid/ValueTree>
@@ -11,7 +11,7 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-SignalIoConnection::SignalIoConnection()
+DigitalIoConnection::DigitalIoConnection()
 {
     for(int i=0; i < 2; ++i){
         signalNumber_[i] = 0;
@@ -19,7 +19,7 @@ SignalIoConnection::SignalIoConnection()
 }
 
 
-SignalIoConnection::SignalIoConnection(SignalIoDevice* outDevice, int outNumber, SignalIoDevice* inDevice, int inNumber)
+DigitalIoConnection::DigitalIoConnection(DigitalIoDevice* outDevice, int outNumber, DigitalIoDevice* inDevice, int inNumber)
 {
     device_[Out] = outDevice;
     signalNumber_[Out] = outNumber;
@@ -28,7 +28,7 @@ SignalIoConnection::SignalIoConnection(SignalIoDevice* outDevice, int outNumber,
 }
 
 
-SignalIoConnection::SignalIoConnection(const SignalIoConnection& org)
+DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org)
 {
     for(int i=0; i < 2; ++i){
         device_[i] = org.device_[i];
@@ -39,10 +39,10 @@ SignalIoConnection::SignalIoConnection(const SignalIoConnection& org)
 }
 
 
-SignalIoConnection::SignalIoConnection(const SignalIoConnection& org, BodyCloneMap& bodyCloneMap)
+DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org, BodyCloneMap& bodyCloneMap)
 {
     for(int i=0; i < 2; ++i){
-        device_[i] = bodyCloneMap.getClone<SignalIoDevice>(org.device_[i]);
+        device_[i] = bodyCloneMap.getClone<DigitalIoDevice>(org.device_[i]);
         signalNumber_[i] = org.signalNumber_[i];
         bodyName_[i] = org.bodyName_[i];
         deviceName_[i] = org.deviceName_[i];
@@ -50,7 +50,7 @@ SignalIoConnection::SignalIoConnection(const SignalIoConnection& org, BodyCloneM
 }
 
 
-const std::string& SignalIoConnection::bodyName(int which) const
+const std::string& DigitalIoConnection::bodyName(int which) const
 {
     if(auto device = device_[which]){
         if(auto body = device->body()){
@@ -61,7 +61,7 @@ const std::string& SignalIoConnection::bodyName(int which) const
 }
 
 
-const std::string& SignalIoConnection::deviceName(int which) const
+const std::string& DigitalIoConnection::deviceName(int which) const
 {
     if(auto device = device_[which]){
         return device->name();
@@ -71,7 +71,7 @@ const std::string& SignalIoConnection::deviceName(int which) const
 }
 
 
-void SignalIoConnection::setDevice(int which, SignalIoDevice* device)
+void DigitalIoConnection::setDevice(int which, DigitalIoDevice* device)
 {
     device_[which] = device;
     if(device){
@@ -83,7 +83,7 @@ void SignalIoConnection::setDevice(int which, SignalIoDevice* device)
 }
 
 
-void SignalIoConnection::setNames(int which, const std::string& bodyName, const std::string& deviceName)
+void DigitalIoConnection::setNames(int which, const std::string& bodyName, const std::string& deviceName)
 {
     bodyName_[which] = bodyName;
     deviceName_[which] = deviceName;
@@ -91,14 +91,14 @@ void SignalIoConnection::setNames(int which, const std::string& bodyName, const 
 }
 
 
-bool SignalIoConnection::establishConnection()
+bool DigitalIoConnection::establishConnection()
 {
     if(!hasDeviceInstances()){
         connection.disconnect();
         return false;
     }
 
-    SignalIoDevicePtr destDevice = inDevice();
+    DigitalIoDevicePtr destDevice = inDevice();
     auto destNumber = inSignalNumber();
     connection.reset(
         outDevice()->sigSignalOutput(outSignalNumber()).connect(
@@ -108,13 +108,13 @@ bool SignalIoConnection::establishConnection()
 }
 
 
-void SignalIoConnection::releaseConnection()
+void DigitalIoConnection::releaseConnection()
 {
     connection.disconnect();
 }
 
 
-bool SignalIoConnection::read(const Mapping& archive)
+bool DigitalIoConnection::read(const Mapping& archive)
 {
     device_[Out] = nullptr;
     device_[In] = nullptr;
@@ -132,7 +132,7 @@ bool SignalIoConnection::read(const Mapping& archive)
 }
 
 
-bool SignalIoConnection::write(Mapping& archive) const
+bool DigitalIoConnection::write(Mapping& archive) const
 {
     archive.write("outBody", bodyName(Out), DOUBLE_QUOTED);
     auto& outDeviceName = deviceName(Out);
@@ -152,35 +152,35 @@ bool SignalIoConnection::write(Mapping& archive) const
 }
 
 
-SignalIoConnectionMap::SignalIoConnectionMap()
+IoConnectionMap::IoConnectionMap()
 {
 
 }
 
 
-SignalIoConnectionMap::SignalIoConnectionMap(const SignalIoConnectionMap& org)
+IoConnectionMap::IoConnectionMap(const IoConnectionMap& org)
 {
     for(auto& connection : org.connections_){
-        append(new SignalIoConnection(*connection));
+        append(new DigitalIoConnection(*connection));
     }
 }
 
 
-SignalIoConnectionMap::SignalIoConnectionMap(const SignalIoConnectionMap& org, BodyCloneMap& bodyCloneMap)
+IoConnectionMap::IoConnectionMap(const IoConnectionMap& org, BodyCloneMap& bodyCloneMap)
 {
     for(auto& connection : org.connections_){
-        append(new SignalIoConnection(*connection, bodyCloneMap));
+        append(new DigitalIoConnection(*connection, bodyCloneMap));
     }
 }
 
 
-SignalIoConnectionMap* SignalIoConnectionMap::clone(BodyCloneMap& bodyCloneMap) const
+IoConnectionMap* IoConnectionMap::clone(BodyCloneMap& bodyCloneMap) const
 {
-    return new SignalIoConnectionMap(*this, bodyCloneMap);
+    return new IoConnectionMap(*this, bodyCloneMap);
 }
 
 
-void SignalIoConnectionMap::insert(int index, SignalIoConnection* connection)
+void IoConnectionMap::insert(int index, DigitalIoConnection* connection)
 {
     if(index >= connections_.size()){
         connections_.push_back(connection);
@@ -190,13 +190,13 @@ void SignalIoConnectionMap::insert(int index, SignalIoConnection* connection)
 }
 
 
-void SignalIoConnectionMap::append(SignalIoConnection* connection)
+void IoConnectionMap::append(DigitalIoConnection* connection)
 {
     connections_.push_back(connection);
 }
 
 
-void SignalIoConnectionMap::remove(SignalIoConnection* connection)
+void IoConnectionMap::remove(DigitalIoConnection* connection)
 {
     connections_.erase(
         std::remove(connections_.begin(), connections_.end(), connection),
@@ -204,7 +204,7 @@ void SignalIoConnectionMap::remove(SignalIoConnection* connection)
 }
 
 
-void SignalIoConnectionMap::establishConnections()
+void IoConnectionMap::establishConnections()
 {
     for(auto& connection : connections_){
         connection->establishConnection();
@@ -212,7 +212,7 @@ void SignalIoConnectionMap::establishConnections()
 }
 
 
-void SignalIoConnectionMap::releaseConnections()
+void IoConnectionMap::releaseConnections()
 {
     for(auto& connection : connections_){
         connection->releaseConnection();
@@ -220,10 +220,10 @@ void SignalIoConnectionMap::releaseConnections()
 }
 
 
-bool SignalIoConnectionMap::read(const Mapping& archive)
+bool IoConnectionMap::read(const Mapping& archive)
 {
     auto& typeNode = archive.get("type");
-    if(typeNode.toString() != "SignalIoConnectionMap"){
+    if(typeNode.toString() != "IoConnectionMap"){
         typeNode.throwException(
             format(_("{0} cannot be loaded as a signal I/O connection map"), typeNode.toString()));
     }
@@ -238,7 +238,7 @@ bool SignalIoConnectionMap::read(const Mapping& archive)
     if(connectionNodes.isValid()){
         for(int i=0; i < connectionNodes.size(); ++i){
             auto& node = *connectionNodes[i].toMapping();
-            SignalIoConnectionPtr connection = new SignalIoConnection;
+            DigitalIoConnectionPtr connection = new DigitalIoConnection;
             if(connection->read(node)){
                 append(connection);
             }
@@ -249,9 +249,9 @@ bool SignalIoConnectionMap::read(const Mapping& archive)
 }
 
 
-bool SignalIoConnectionMap::write(Mapping& archive) const
+bool IoConnectionMap::write(Mapping& archive) const
 {
-    archive.write("type", "SignalIoConnectionMap");
+    archive.write("type", "IoConnectionMap");
     archive.write("formatVersion", 1.0);
 
     if(!connections_.empty()){

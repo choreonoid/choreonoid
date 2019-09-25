@@ -1,4 +1,4 @@
-#include "SignalIoDevice.h"
+#include "DigitalIoDevice.h"
 #include "YAMLBodyLoader.h"
 #include <cnoid/Body>
 #include <cnoid/ValueTree>
@@ -11,16 +11,16 @@ namespace {
 
 YAMLBodyLoader::NodeTypeRegistration
 registerHolderDevice(
-    "SignalIO",
+    "DigitalIO",
     [](YAMLBodyLoader& loader, Mapping& node){
-        SignalIoDevicePtr device = new SignalIoDevice;
+        DigitalIoDevicePtr device = new DigitalIoDevice;
         return device->readDescription(loader, node);
     });
 }
 
 namespace cnoid {
 
-class SignalIoDevice::NonState
+class DigitalIoDevice::NonState
 {
 public:
     unordered_map<int, Signal<void(bool on)>> sigSignalOutputMap;
@@ -37,7 +37,7 @@ public:
 }
 
 
-SignalIoDevice::SignalIoDevice()
+DigitalIoDevice::DigitalIoDevice()
 {
     int n = 100;
     out_.resize(n, false);
@@ -47,16 +47,16 @@ SignalIoDevice::SignalIoDevice()
 }
 
 
-SignalIoDevice::NonState::NonState()
+DigitalIoDevice::NonState::NonState()
 {
 
 }
 
 
-SignalIoDevice::SignalIoDevice(const SignalIoDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap)
+DigitalIoDevice::DigitalIoDevice(const DigitalIoDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap)
     : Device(org, copyStateOnly)
 {
-    copySignalIoDeviceStateFrom(org);
+    copyDigitalIoDeviceStateFrom(org);
 
     if(copyStateOnly){
         ns = nullptr;
@@ -66,7 +66,7 @@ SignalIoDevice::SignalIoDevice(const SignalIoDevice& org, bool copyStateOnly, Bo
 }
 
 
-SignalIoDevice::NonState::NonState(const NonState& org)
+DigitalIoDevice::NonState::NonState(const NonState& org)
     : inputToDeviceOnActionMap(org.inputToDeviceOnActionMap),
       outLabelMap(org.outLabelMap),
       inLabelMap(org.inLabelMap)
@@ -74,7 +74,7 @@ SignalIoDevice::NonState::NonState(const NonState& org)
 
 }
 
-SignalIoDevice::~SignalIoDevice()
+DigitalIoDevice::~DigitalIoDevice()
 {
     if(ns){
         delete ns;
@@ -82,13 +82,13 @@ SignalIoDevice::~SignalIoDevice()
 }
 
 
-const char* SignalIoDevice::typeName()
+const char* DigitalIoDevice::typeName()
 {
-    return "SignalIoDevice";
+    return "DigitalIoDevice";
 }
 
 
-void SignalIoDevice::copySignalIoDeviceStateFrom(const SignalIoDevice& other)
+void DigitalIoDevice::copyDigitalIoDeviceStateFrom(const DigitalIoDevice& other)
 {
     out_ = other.out_;
     in_ = other.in_;
@@ -96,48 +96,48 @@ void SignalIoDevice::copySignalIoDeviceStateFrom(const SignalIoDevice& other)
 }
 
 
-void SignalIoDevice::copyStateFrom(const DeviceState& other)
+void DigitalIoDevice::copyStateFrom(const DeviceState& other)
 {
-    if(typeid(other) != typeid(SignalIoDevice)){
+    if(typeid(other) != typeid(DigitalIoDevice)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copySignalIoDeviceStateFrom(static_cast<const SignalIoDevice&>(other));
+    copyDigitalIoDeviceStateFrom(static_cast<const DigitalIoDevice&>(other));
 }
     
 
-DeviceState* SignalIoDevice::cloneState() const
+DeviceState* DigitalIoDevice::cloneState() const
 {
-    return new SignalIoDevice(*this, true, nullptr);
+    return new DigitalIoDevice(*this, true, nullptr);
 }
 
 
-Device* SignalIoDevice::doClone(BodyCloneMap* cloneMap) const
+Device* DigitalIoDevice::doClone(BodyCloneMap* cloneMap) const
 {
-    return new SignalIoDevice(*this, false, cloneMap);
+    return new DigitalIoDevice(*this, false, cloneMap);
 }
 
 
-void SignalIoDevice::forEachActualType(std::function<bool(const std::type_info& type)> func)
+void DigitalIoDevice::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
-    if(!func(typeid(SignalIoDevice))){
+    if(!func(typeid(DigitalIoDevice))){
         Device::forEachActualType(func);
     }
 }
 
 
-bool SignalIoDevice::on() const
+bool DigitalIoDevice::on() const
 {
     return on_;
 }
 
 
-void SignalIoDevice::on(bool on)
+void DigitalIoDevice::on(bool on)
 {
     on_ = on;
 }
 
 
-void SignalIoDevice::setOut(int index, bool on, bool doNotify)
+void DigitalIoDevice::setOut(int index, bool on, bool doNotify)
 {
     out_[index] = on;
 
@@ -147,7 +147,7 @@ void SignalIoDevice::setOut(int index, bool on, bool doNotify)
 }
 
 
-void SignalIoDevice::setIn(int index, bool on, bool doNotify)
+void DigitalIoDevice::setIn(int index, bool on, bool doNotify)
 {
     in_[index] = on;
 
@@ -170,7 +170,7 @@ void SignalIoDevice::setIn(int index, bool on, bool doNotify)
 }
 
 
-const std::string& SignalIoDevice::outLabel(int index) const
+const std::string& DigitalIoDevice::outLabel(int index) const
 {
     auto iter = ns->outLabelMap.find(index);
     if(iter != ns->outLabelMap.end()){
@@ -180,7 +180,7 @@ const std::string& SignalIoDevice::outLabel(int index) const
 }
 
 
-void SignalIoDevice::setOutLabel(int index, const std::string& label)
+void DigitalIoDevice::setOutLabel(int index, const std::string& label)
 {
     if(label.empty()){
         ns->outLabelMap.erase(index);
@@ -190,7 +190,7 @@ void SignalIoDevice::setOutLabel(int index, const std::string& label)
 }
 
 
-const std::string& SignalIoDevice::inLabel(int index) const
+const std::string& DigitalIoDevice::inLabel(int index) const
 {
     auto iter = ns->inLabelMap.find(index);
     if(iter != ns->inLabelMap.end()){
@@ -200,7 +200,7 @@ const std::string& SignalIoDevice::inLabel(int index) const
 }
 
 
-void SignalIoDevice::setInLabel(int index, const std::string& label)
+void DigitalIoDevice::setInLabel(int index, const std::string& label)
 {
     if(label.empty()){
         ns->inLabelMap.erase(index);
@@ -210,25 +210,25 @@ void SignalIoDevice::setInLabel(int index, const std::string& label)
 }
 
 
-SignalProxy<void(bool on)> SignalIoDevice::sigSignalOutput(int index)
+SignalProxy<void(bool on)> DigitalIoDevice::sigSignalOutput(int index)
 {
     return ns->sigSignalOutputMap[index];
 }
 
 
-SignalProxy<void(bool on)> SignalIoDevice::sigSignalInput(int index)
+SignalProxy<void(bool on)> DigitalIoDevice::sigSignalInput(int index)
 {
     return ns->sigSignalInputMap[index];
 }
 
 
-int SignalIoDevice::stateSize() const
+int DigitalIoDevice::stateSize() const
 {
     return 1;
 }
 
 
-const double* SignalIoDevice::readState(const double* buf)
+const double* DigitalIoDevice::readState(const double* buf)
 {
     int i = 0;
     on_ = buf[i++];
@@ -236,7 +236,7 @@ const double* SignalIoDevice::readState(const double* buf)
 }
 
 
-double* SignalIoDevice::writeState(double* out_buf) const
+double* DigitalIoDevice::writeState(double* out_buf) const
 {
     int i = 0;
     out_buf[i++] = on_ ? 1.0 : 0.0;
@@ -244,7 +244,7 @@ double* SignalIoDevice::writeState(double* out_buf) const
 }
 
 
-bool SignalIoDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
+bool DigitalIoDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
 {
     int n;
     if(node.read("numBinarySignals", n)){

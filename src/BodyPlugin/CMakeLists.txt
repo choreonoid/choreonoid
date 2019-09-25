@@ -22,7 +22,7 @@ set(sources
   ZMPSeqItem.cpp
   MultiDeviceStateSeqItem.cpp
   WorldLogFileItem.cpp
-  SignalIoConnectionMapItem.cpp
+  IoConnectionMapItem.cpp
   SensorVisualizerItem.cpp
   BodyTrackingCameraItem.cpp
   BodyMarkerItem.cpp
@@ -42,7 +42,7 @@ set(sources
   JointDisplacementView.cpp
   JointStateView.cpp
   BodyStateView.cpp
-  SignalIoConnectionView.cpp
+  IoConnectionView.cpp
   JointGraphView.cpp
   LinkGraphView.cpp
   HrpsysFileIO.cpp
@@ -66,7 +66,7 @@ set(headers
   ZMPSeqItem.h
   MultiDeviceStateSeqItem.h
   WorldLogFileItem.h
-  SignalIoConnectionMapItem.h
+  IoConnectionMapItem.h
   SensorVisualizerItem.h
   BodyTrackingCameraItem.h
   BodyMarkerItem.h

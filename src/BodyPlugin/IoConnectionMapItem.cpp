@@ -1,6 +1,6 @@
-#include "SignalIoConnectionMapItem.h"
-#include <cnoid/SignalIoConnectionMap>
-#include <cnoid/SignalIoDevice>
+#include "IoConnectionMapItem.h"
+#include <cnoid/IoConnectionMap>
+#include <cnoid/DigitalIoDevice>
 #include <cnoid/WorldItem>
 #include <cnoid/BodyItem>
 #include <cnoid/ItemManager>
@@ -14,81 +14,81 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class SignalIoConnectionMapItem::Impl
+class IoConnectionMapItem::Impl
 {
 public:
-    SignalIoConnectionMapItem* self;
-    SignalIoConnectionMapPtr connectionMap;
+    IoConnectionMapItem* self;
+    IoConnectionMapPtr connectionMap;
     weak_ref_ptr<Item> lastOwnerItem;
 
-    Impl(SignalIoConnectionMapItem* self);
-    Impl(SignalIoConnectionMapItem* self, const Impl& org);
+    Impl(IoConnectionMapItem* self);
+    Impl(IoConnectionMapItem* self, const Impl& org);
     Item* findOwnerItem();
 };
 
 }
 
 
-void SignalIoConnectionMapItem::initializeClass(ExtensionManager* ext)
+void IoConnectionMapItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
-    im.registerClass<SignalIoConnectionMapItem>(N_("SignalIoConnectionMapItem"));
-    im.addCreationPanel<SignalIoConnectionMapItem>();
+    im.registerClass<IoConnectionMapItem>(N_("IoConnectionMapItem"));
+    im.addCreationPanel<IoConnectionMapItem>();
 }
 
 
-SignalIoConnectionMapItem::SignalIoConnectionMapItem()
+IoConnectionMapItem::IoConnectionMapItem()
 {
     impl = new Impl(this);
 }
 
 
-SignalIoConnectionMapItem::Impl::Impl(SignalIoConnectionMapItem* self)
+IoConnectionMapItem::Impl::Impl(IoConnectionMapItem* self)
     : self(self)
 {
-    connectionMap = new SignalIoConnectionMap;
+    connectionMap = new IoConnectionMap;
 }
 
 
-SignalIoConnectionMapItem::SignalIoConnectionMapItem(const SignalIoConnectionMapItem& org)
+IoConnectionMapItem::IoConnectionMapItem(const IoConnectionMapItem& org)
     : Item(org)
 {
     impl = new Impl(this, *org.impl);
 }
 
 
-SignalIoConnectionMapItem::Impl::Impl(SignalIoConnectionMapItem* self, const Impl& org)
+IoConnectionMapItem::Impl::Impl(IoConnectionMapItem* self, const Impl& org)
     : self(self)
 {
-    connectionMap = new SignalIoConnectionMap(*org.connectionMap);
+    connectionMap = new IoConnectionMap(*org.connectionMap);
 }
 
 
-SignalIoConnectionMapItem::~SignalIoConnectionMapItem()
+IoConnectionMapItem::~IoConnectionMapItem()
 {
     delete impl;
 }
 
 
-Item* SignalIoConnectionMapItem::doDuplicate() const
+Item* IoConnectionMapItem::doDuplicate() const
 {
-    return new SignalIoConnectionMapItem(*this);
+    return new IoConnectionMapItem(*this);
 }
 
 
-SignalIoConnectionMap* SignalIoConnectionMapItem::connectionMap()
-{
-    return impl->connectionMap;
-}
-
-
-const SignalIoConnectionMap* SignalIoConnectionMapItem::connectionMap() const
+IoConnectionMap* IoConnectionMapItem::connectionMap()
 {
     return impl->connectionMap;
 }
 
 
-Item* SignalIoConnectionMapItem::Impl::findOwnerItem()
+const IoConnectionMap* IoConnectionMapItem::connectionMap() const
+{
+    return impl->connectionMap;
+}
+
+
+Item* IoConnectionMapItem::Impl::findOwnerItem()
 {
     Item* ownerItem = self->findOwnerItem<WorldItem>();
     if(!ownerItem){
@@ -98,7 +98,7 @@ Item* SignalIoConnectionMapItem::Impl::findOwnerItem()
 }
 
 
-void SignalIoConnectionMapItem::onPositionChanged()
+void IoConnectionMapItem::onPositionChanged()
 {
     auto item = impl->lastOwnerItem.lock();
     if(!item || item != impl->findOwnerItem()){
@@ -107,14 +107,14 @@ void SignalIoConnectionMapItem::onPositionChanged()
 }
 
 
-void SignalIoConnectionMapItem::forEachIoDevice
-(std::function<void(BodyItem* bodyItem, SignalIoDevice* device)> callback) const
+void IoConnectionMapItem::forEachIoDevice
+(std::function<void(BodyItem* bodyItem, DigitalIoDevice* device)> callback) const
 {
     auto ownerItem = impl->findOwnerItem();
     ItemList<BodyItem> bodyItems;
     bodyItems.extractSubTreeItems(ownerItem);
     for(auto& bodyItem : bodyItems){
-        for(auto& device : bodyItem->body()->devices<SignalIoDevice>()){
+        for(auto& device : bodyItem->body()->devices<DigitalIoDevice>()){
             callback(bodyItem, device);
         }
     }
@@ -123,15 +123,15 @@ void SignalIoConnectionMapItem::forEachIoDevice
 }
 
 
-void SignalIoConnectionMapItem::refreshIoDeviceInstances(bool enableWarningMessages)
+void IoConnectionMapItem::refreshIoDeviceInstances(bool enableWarningMessages)
 {
-    typedef unordered_map<string, SignalIoDevice*> IoDeviceMap;
+    typedef unordered_map<string, DigitalIoDevice*> IoDeviceMap;
     typedef unordered_map<string, IoDeviceMap> IoDeviceMapMap;
     IoDeviceMapMap allIoDeviceMap;
-    unordered_set<SignalIoDevice*> availableDevices;
+    unordered_set<DigitalIoDevice*> availableDevices;
 
     forEachIoDevice(
-        [&](BodyItem* bodyItem, SignalIoDevice* device){
+        [&](BodyItem* bodyItem, DigitalIoDevice* device){
             allIoDeviceMap[bodyItem->name()][device->name()] = device;
             availableDevices.insert(device);
         });
@@ -160,13 +160,13 @@ void SignalIoConnectionMapItem::refreshIoDeviceInstances(bool enableWarningMessa
 }
 
 
-bool SignalIoConnectionMapItem::store(Archive& archive)
+bool IoConnectionMapItem::store(Archive& archive)
 {
     return impl->connectionMap->write(archive);
 }
 
 
-bool SignalIoConnectionMapItem::restore(const Archive& archive)
+bool IoConnectionMapItem::restore(const Archive& archive)
 {
     if(impl->connectionMap->read(archive)){
         archive.addPostProcess([&](){ refreshIoDeviceInstances(true);});
