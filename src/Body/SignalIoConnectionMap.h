@@ -2,6 +2,7 @@
 #define CNOID_BODY_SIGNAL_IO_CONNECTION_MAP_H
 
 #include <cnoid/Referenced>
+#include <cnoid/Signal>
 #include <string>
 #include <vector>
 #include "exportdecl.h"
@@ -21,7 +22,7 @@ public:
     SignalIoConnection();
     SignalIoConnection(SignalIoDevice* outDevice, int outNumber, SignalIoDevice* inDevice, int inNumber);
     SignalIoConnection(const SignalIoConnection& org);
-    SignalIoConnection(const SignalIoConnection& org, BodyCloneMap& bodyCloneMap, bool doConnection = false);
+    SignalIoConnection(const SignalIoConnection& org, BodyCloneMap& bodyCloneMap);
 
     enum IoType { In = 0, Out = 1 };
 
@@ -53,6 +54,9 @@ public:
     void setOutDevice(SignalIoDevice* device){ setDevice(Out, device); }
     void setOutSignalNumber(int index){ setSignalNumber(Out, index); }
 
+    bool establishConnection();
+    void releaseConnection();
+
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
 
@@ -61,6 +65,7 @@ private:
     int signalNumber_[2];
     std::string bodyName_[2];
     std::string deviceName_[2];
+    ScopedConnection connection;
 };
 typedef ref_ptr<SignalIoConnection> SignalIoConnectionPtr;
 
@@ -69,7 +74,9 @@ class CNOID_EXPORT SignalIoConnectionMap : public Referenced
 public:
     SignalIoConnectionMap();
     SignalIoConnectionMap(const SignalIoConnectionMap& org);
-    SignalIoConnectionMap(const SignalIoConnectionMap& org, BodyCloneMap& bodyCloneMap, bool doConnection = false);
+    SignalIoConnectionMap(const SignalIoConnectionMap& org, BodyCloneMap& bodyCloneMap);
+
+    SignalIoConnectionMap* clone(BodyCloneMap& bodyCloneMap) const;
 
     typedef std::vector<SignalIoConnectionPtr> container;
     typedef container::iterator iterator;
@@ -86,7 +93,9 @@ public:
     void insert(int index, SignalIoConnection* connection);
     void append(SignalIoConnection* connection);
     void remove(SignalIoConnection* connection);
-    void removeConnectionsOfBody(Body* body);
+
+    void establishConnections();
+    void releaseConnections();
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;

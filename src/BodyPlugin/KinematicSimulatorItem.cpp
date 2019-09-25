@@ -1,8 +1,11 @@
 #include "KinematicSimulatorItem.h"
 #include "BodyItem.h"
+#include "WorldItem.h"
+#include "SignalIoConnectionMapItem.h"
 #include <cnoid/BodyCloneMap>
 #include <cnoid/HolderDevice>
 #include <cnoid/AttachmentDevice>
+#include <cnoid/SignalIoConnectionMap>
 #include <cnoid/ItemManager>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -43,9 +46,11 @@ public:
     vector<HolderInfoPtr> holders;
     vector<HolderInfoPtr> activeHolders;
     BodyCloneMap cloneMap;
+    vector<SignalIoConnectionMapPtr> ioConnectionMaps;
 
     Impl(KinematicSimulatorItem* self);
     Impl(KinematicSimulatorItem* self, const Impl& org);
+    bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void onHolderStateChanged(HolderInfo* info);
     Body* findAttachableBody(HolderDevice* holder, const Position& T_holder);
 };
@@ -106,6 +111,7 @@ void KinematicSimulatorItem::clearSimulation()
     impl->cloneMap.clear();
     impl->holders.clear();    
     impl->activeHolders.clear();    
+    impl->ioConnectionMaps.clear();
 }
 
 
@@ -118,17 +124,38 @@ SimulationBody* KinematicSimulatorItem::createSimulationBody(Body* orgBody)
 
 bool KinematicSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
-    impl->cloneMap.replacePendingObjects();
+    return impl->initializeSimulation(simBodies);
+}
+
+
+bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
+{
+    cloneMap.replacePendingObjects();
+
+    /*
+      This is a temporary implementation.
+      This should be implemented in SignalIoConnectionMapItem as functions of SubSimulatorItem.
+      To achieve it, SubSimulatorItem must be an interface class that does not inherit the Item class,
+      or define another interface class that provides the functions similar to SubSimulatorItem.
+    */
+    ItemList<SignalIoConnectionMapItem> connectionMapItems;
+    if(connectionMapItems.extractSubTreeItems(self->worldItem())){
+        for(auto& item : connectionMapItems){
+            auto connectionMap = item->connectionMap()->clone(cloneMap);
+            connectionMap->establishConnections();
+            ioConnectionMaps.push_back(connectionMap);
+        }
+    }
     
     for(auto& simBody : simBodies){
         for(auto& holder : simBody->body()->devices<HolderDevice>()){
             auto info = new HolderInfo(holder);
-            impl->holders.push_back(info);
+            holders.push_back(info);
             if(holder->on() && holder->attachment()){
-                impl->activeHolders.push_back(info);
+                activeHolders.push_back(info);
             }
             holder->sigStateChanged().connect(
-                [this, info](){ impl->onHolderStateChanged(info); });
+                [this, info](){ onHolderStateChanged(info); });
         }
     }
     return true;

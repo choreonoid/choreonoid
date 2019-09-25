@@ -39,7 +39,7 @@ SignalIoConnection::SignalIoConnection(const SignalIoConnection& org)
 }
 
 
-SignalIoConnection::SignalIoConnection(const SignalIoConnection& org, BodyCloneMap& bodyCloneMap, bool doConnection)
+SignalIoConnection::SignalIoConnection(const SignalIoConnection& org, BodyCloneMap& bodyCloneMap)
 {
     for(int i=0; i < 2; ++i){
         device_[i] = bodyCloneMap.getClone<SignalIoDevice>(org.device_[i]);
@@ -91,6 +91,29 @@ void SignalIoConnection::setNames(int which, const std::string& bodyName, const 
 }
 
 
+bool SignalIoConnection::establishConnection()
+{
+    if(!hasDeviceInstances()){
+        connection.disconnect();
+        return false;
+    }
+
+    SignalIoDevicePtr destDevice = inDevice();
+    auto destNumber = inSignalNumber();
+    connection.reset(
+        outDevice()->sigSignalOutput(outSignalNumber()).connect(
+            [destDevice, destNumber](bool on){
+                destDevice->setIn(destNumber, on, true); }));
+    return true;
+}
+
+
+void SignalIoConnection::releaseConnection()
+{
+    connection.disconnect();
+}
+
+
 bool SignalIoConnection::read(const Mapping& archive)
 {
     device_[Out] = nullptr;
@@ -137,13 +160,23 @@ SignalIoConnectionMap::SignalIoConnectionMap()
 
 SignalIoConnectionMap::SignalIoConnectionMap(const SignalIoConnectionMap& org)
 {
-
+    for(auto& connection : org.connections_){
+        append(new SignalIoConnection(*connection));
+    }
 }
 
 
-SignalIoConnectionMap::SignalIoConnectionMap(const SignalIoConnectionMap& org, BodyCloneMap& bodyCloneMap, bool doConnection)
+SignalIoConnectionMap::SignalIoConnectionMap(const SignalIoConnectionMap& org, BodyCloneMap& bodyCloneMap)
 {
+    for(auto& connection : org.connections_){
+        append(new SignalIoConnection(*connection, bodyCloneMap));
+    }
+}
 
+
+SignalIoConnectionMap* SignalIoConnectionMap::clone(BodyCloneMap& bodyCloneMap) const
+{
+    return new SignalIoConnectionMap(*this, bodyCloneMap);
 }
 
 
@@ -171,9 +204,19 @@ void SignalIoConnectionMap::remove(SignalIoConnection* connection)
 }
 
 
-void SignalIoConnectionMap::removeConnectionsOfBody(Body* body)
+void SignalIoConnectionMap::establishConnections()
 {
+    for(auto& connection : connections_){
+        connection->establishConnection();
+    }
+}
 
+
+void SignalIoConnectionMap::releaseConnections()
+{
+    for(auto& connection : connections_){
+        connection->releaseConnection();
+    }
 }
 
 
