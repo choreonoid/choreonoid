@@ -1,5 +1,6 @@
 #include "SignalIoDevice.h"
 #include "YAMLBodyLoader.h"
+#include <cnoid/Body>
 #include <cnoid/ValueTree>
 #include <unordered_map>
 
@@ -24,9 +25,13 @@ class SignalIoDevice::NonState
 public:
     unordered_map<int, Signal<void(bool on)>> sigSignalOutputMap;
     unordered_map<int, Signal<void(bool on)>> sigSignalInputMap;
+    unordered_map<int, string> inputToDeviceOnActionMap;
     unordered_map<int, string> outLabelMap;
     unordered_map<int, string> inLabelMap;
     string emptyLabel;
+
+    NonState();
+    NonState(const NonState& org);
 };
 
 }
@@ -42,6 +47,12 @@ SignalIoDevice::SignalIoDevice()
 }
 
 
+SignalIoDevice::NonState::NonState()
+{
+
+}
+
+
 SignalIoDevice::SignalIoDevice(const SignalIoDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap)
     : Device(org, copyStateOnly)
 {
@@ -50,10 +61,18 @@ SignalIoDevice::SignalIoDevice(const SignalIoDevice& org, bool copyStateOnly, Bo
     if(copyStateOnly){
         ns = nullptr;
     } else {
-        ns = new NonState;
+        ns = new NonState(*org.ns);
     }
 }
 
+
+SignalIoDevice::NonState::NonState(const NonState& org)
+    : inputToDeviceOnActionMap(org.inputToDeviceOnActionMap),
+      outLabelMap(org.outLabelMap),
+      inLabelMap(org.inLabelMap)
+{
+
+}
 
 SignalIoDevice::~SignalIoDevice()
 {
@@ -131,6 +150,19 @@ void SignalIoDevice::setOut(int index, bool on, bool doNotify)
 void SignalIoDevice::setIn(int index, bool on, bool doNotify)
 {
     in_[index] = on;
+
+    auto iter = ns->inputToDeviceOnActionMap.find(index);
+    if(iter != ns->inputToDeviceOnActionMap.end()){
+        auto& deviceName = iter->second;
+        if(auto body_ = body()){
+            if(auto device = body_->findDevice(deviceName)){
+                device->on(on);
+                if(doNotify){
+                    device->notifyStateChange();
+                }
+            }
+        }
+    }
     
     if(doNotify && ns){
         ns->sigSignalInputMap[index](on);
@@ -219,5 +251,24 @@ bool SignalIoDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
         out_.resize(n, false);
         in_.resize(n, false);
     }
+
+    ns->inputToDeviceOnActionMap.clear();
+    auto action = node.findMapping("action");
+    if(action->isValid()){
+        auto input = action->findMapping("input");
+        if(input->isValid()){
+            for(auto& kv : *input){
+                int signalIndex = stoi(kv.first);
+                Listing* target = kv.second->toListing();
+                if(target->size() == 3 &&
+                   target->at(0)->toString() == "device" &&
+                   target->at(2)->toString() == "on"){
+                    auto& deviceName = target->at(1)->toString();
+                    ns->inputToDeviceOnActionMap[signalIndex] = deviceName;
+                }
+            }
+        }
+    }
+
     return loader.readDevice(this, node);
 }
