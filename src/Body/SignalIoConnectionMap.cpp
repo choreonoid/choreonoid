@@ -4,6 +4,7 @@
 #include "BodyCloneMap.h"
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -159,6 +160,14 @@ void SignalIoConnectionMap::insert(int index, SignalIoConnection* connection)
 void SignalIoConnectionMap::append(SignalIoConnection* connection)
 {
     connections_.push_back(connection);
+}
+
+
+void SignalIoConnectionMap::remove(SignalIoConnection* connection)
+{
+    connections_.erase(
+        std::remove(connections_.begin(), connections_.end(), connection),
+        connections_.end());
 }
 
 

@@ -5,6 +5,7 @@
 #include <cnoid/SignalIoDevice>
 #include <cnoid/SignalIoConnectionMap>
 #include <cnoid/ViewManager>
+#include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
 #include <cnoid/RootItem>
 #include <cnoid/MessageView>
@@ -17,6 +18,8 @@
 #include <QHeaderView>
 #include <QAbstractTableModel>
 #include <QStyledItemDelegate>
+#include <QKeyEvent>
+#include <QMouseEvent>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -61,6 +64,8 @@ public:
     
     ConnectionMapModel(QObject* parent);
     void setConnectionMap(SignalIoConnectionMap* connectionMap);
+    bool isValid() const { return connectionMap != nullptr; }
+    int numConnections() const { return connectionMap ? connectionMap->numConnections() : 0; }
     virtual int rowCount(const QModelIndex& parent) const override;
     virtual int columnCount(const QModelIndex& parent) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
@@ -69,7 +74,8 @@ public:
     virtual QVariant data(const QModelIndex& index, int role) const override;
     QVariant getDeviceLabel(SignalIoConnection* connection, SignalIoConnection::IoType which) const;
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
-    void insertConnection(int row, SignalIoConnection* connection);
+    void addNewConnection(int row, SignalIoConnection* connection, bool doInsert);
+    void removeConnections(QModelIndexList selected);
 };
 
 class CustomizedItemDelegate : public QStyledItemDelegate
@@ -112,12 +118,18 @@ public:
     SignalIoConnectionMapItemPtr targetItem;
     QLabel targetLabel;
     ConnectionMapModel* connectionMapModel;
+    PushButton addButton;
+    MenuManager contextMenuManager;
 
     Impl(SignalIoConnectionView* self);
     void setConnectionMapItem(SignalIoConnectionMapItem* item);
-    void onInsertButtonClicked();
-    void onRemoveButtonClicked();
+    void addNewConnection(int index, bool doInsert);
+    void addConnectionIntoCurrentIndex(bool doInsert);
+    void removeSelectedConnections();
     void setConnectionInfoToTableRow(int row, SignalIoConnection* connection);
+    virtual void keyPressEvent(QKeyEvent* event) override;
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    void showContextMenu(int row, QPoint globalPos);
 };
 
 }
@@ -144,7 +156,10 @@ int ConnectionMapModel::rowCount(const QModelIndex& parent) const
     if(!parent.isValid() && connectionMap){
         n = connectionMap->numConnections();
     }
-    return (n == 0) ? 1 : n;
+    if(n == 0){ // to show an empty row
+        n = 1;
+    }
+    return n;
 }
 
 
@@ -307,15 +322,43 @@ bool ConnectionMapModel::setData(const QModelIndex& index, const QVariant& value
 }
 
 
-void ConnectionMapModel::insertConnection(int row, SignalIoConnection* connection)
+void ConnectionMapModel::addNewConnection(int row, SignalIoConnection* connection, bool doInsert)
 {
     if(connectionMap){
-        beginInsertRows(QModelIndex(), row, 0);
-        connectionMap->insert(row, connection);
+        if(connectionMap->numConnections() == 0){
+            // Remove the empty row first
+            beginRemoveRows(QModelIndex(), 0, 0);
+            endRemoveRows();
+        }
+        int newConnectionRow = doInsert ? row : row + 1;
+        beginInsertRows(QModelIndex(), newConnectionRow, newConnectionRow);
+        connectionMap->insert(newConnectionRow, connection);
         endInsertRows();
     }
 }
 
+
+void ConnectionMapModel::removeConnections(QModelIndexList selected)
+{
+    if(connectionMap){
+        std::sort(selected.begin(), selected.end());
+        int numRemoved = 0;
+        for(auto& index : selected){
+            int row = index.row() - numRemoved;
+            beginRemoveRows(QModelIndex(), row, row);
+            auto connection = static_cast<SignalIoConnection*>(index.internalPointer());
+            connectionMap->remove(connection);
+            ++numRemoved;
+            endRemoveRows();
+        }
+        if(connectionMap->numConnections() == 0){
+            // This is necessary to show the empty row
+            beginResetModel();
+            endResetModel();
+        }
+    }
+}
+        
 
 CustomizedItemDelegate::CustomizedItemDelegate(SignalIoConnectionView::Impl* view)
     : QStyledItemDelegate(view),
@@ -436,32 +479,8 @@ SignalDeviceComboBox::SignalDeviceComboBox
                     }
                 }
             });
+    }
 
-/*        
-        Item* rootItem = view->targetItem->findOwnerItem<WorldItem>();
-        if(!rootItem){
-            rootItem = RootItem::instance();
-        }
-        ItemList<BodyItem> bodyItems;
-        bodyItems.extractSubTreeItems(rootItem);
-        for(auto& bodyItem : bodyItems){
-            for(auto& device : bodyItem->body()->devices<SignalIoDevice>()){
-                auto body = device->body();
-                int index = count();
-                addItem(getDeviceLabel(body->name(), device->name()));
-                deviceInfos.emplace_back(device, body->name(), device->name());
-                
-                if(!isCurrentDeviceAvailable){
-                    if((currentDevice && currentDevice == device) ||
-                       (body->name() == currentBodyName && device->name() == currentDeviceName)){
-                        isCurrentDeviceAvailable = true;
-                        setCurrentIndex(index);
-                    }
-                }
-            }
-    }
-*/
-    }
     if(!isCurrentDeviceAvailable && !currentBodyName.empty()){
         int index = count();
         addItem(getDeviceLabel(currentBodyName, currentDeviceName));
@@ -501,12 +520,9 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     targetLabel.setStyleSheet("font-weight: bold");
     hbox->addWidget(&targetLabel, 0, Qt::AlignVCenter);
     hbox->addSpacing(hs);
-    auto insertButton = new PushButton(_("Insert"));
-    insertButton->sigClicked().connect([&](){ onInsertButtonClicked(); });
-    hbox->addWidget(insertButton);
-    auto removeButton = new PushButton(_("Remove"));
-    removeButton->sigClicked().connect([&](){ onRemoveButtonClicked(); });
-    hbox->addWidget(removeButton);
+    addButton.setText(_("Add"));
+    addButton.sigClicked().connect([&](){ addConnectionIntoCurrentIndex(false); });
+    hbox->addWidget(&addButton);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -516,8 +532,9 @@ SignalIoConnectionView::Impl::Impl(SignalIoConnectionView* self)
     vbox->addWidget(hframe);
     setFrameShape(QFrame::NoFrame);
     setSelectionBehavior(QAbstractItemView::SelectRows);
-    setSelectionMode(QAbstractItemView::SingleSelection);
+    setSelectionMode(QAbstractItemView::ExtendedSelection);
     setTabKeyNavigation(true);
+    setCornerButtonEnabled(true);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     setItemDelegate(new CustomizedItemDelegate(this));
     setEditTriggers(
@@ -562,53 +579,135 @@ void SignalIoConnectionView::Impl::setConnectionMapItem(SignalIoConnectionMapIte
         targetLabel.setText("---");
         connectionMapModel->setConnectionMap(nullptr);
     }
+    addButton.setEnabled(targetItem != nullptr);
 }
 
 
-void SignalIoConnectionView::Impl::onInsertButtonClicked()
+void SignalIoConnectionView::Impl::addNewConnection(int index, bool doInsert)
 {
-    if(!targetItem){
+    auto& connectionMap = connectionMapModel->connectionMap;
+    if(!connectionMap){
         return;
     }
+    SignalIoConnectionPtr connection;
+    if(index < connectionMap->numConnections()){
+        auto existing = connectionMap->connection(index);
+        if(existing->hasDeviceInstances()){
+            connection = new SignalIoConnection(*existing);
+        }
+    }
 
-    Item* rootItem = targetItem->findOwnerItem<WorldItem>();
-    ItemList<BodyItem> bodyItems;
-    bodyItems.extractSubTreeItems(rootItem ? rootItem : RootItem::instance());
-    SignalIoConnectionPtr intraConnection;
-    SignalIoConnectionPtr interConnection;
-    for(auto& bodyItem1 : bodyItems){
-        if(auto ioDevice1 = bodyItem1->body()->findDevice<SignalIoDevice>()){
-            for(auto& bodyItem2 : bodyItems){
-                if(auto ioDevice2 = bodyItem2->body()->findDevice<SignalIoDevice>()){
-                    if(!intraConnection && bodyItem1 == bodyItem2){
-                        intraConnection = new SignalIoConnection(ioDevice1, 0, ioDevice2, 0);
-                    } else if(!interConnection && bodyItem1 != bodyItem2){
-                        interConnection = new SignalIoConnection(ioDevice1, 0, ioDevice2, 0);
-                    }
-                    if(intraConnection && interConnection){
-                        break;
+    if(!connection){
+        Item* rootItem = targetItem->findOwnerItem<WorldItem>();
+        ItemList<BodyItem> bodyItems;
+        bodyItems.extractSubTreeItems(rootItem ? rootItem : RootItem::instance());
+        SignalIoConnectionPtr intraConnection;
+        SignalIoConnectionPtr interConnection;
+        for(auto& bodyItem1 : bodyItems){
+            if(auto ioDevice1 = bodyItem1->body()->findDevice<SignalIoDevice>()){
+                for(auto& bodyItem2 : bodyItems){
+                    if(auto ioDevice2 = bodyItem2->body()->findDevice<SignalIoDevice>()){
+                        if(!intraConnection && bodyItem1 == bodyItem2){
+                            intraConnection = new SignalIoConnection(ioDevice1, 0, ioDevice2, 0);
+                        } else if(!interConnection && bodyItem1 != bodyItem2){
+                            interConnection = new SignalIoConnection(ioDevice1, 0, ioDevice2, 0);
+                        }
+                        if(intraConnection && interConnection){
+                            break;
+                        }
                     }
                 }
             }
         }
+        connection = interConnection ? interConnection : intraConnection;
     }
 
-    if(interConnection){
-        connectionMapModel->insertConnection(0, interConnection);
-    } else if(intraConnection){
-        connectionMapModel->insertConnection(0, intraConnection);
-    } else {
+    if(!connection){
         showWarningDialog(_("There are no I/O devices in the world"));
+    } else {
+        connectionMapModel->addNewConnection(index, connection, doInsert);
     }
 }
 
 
-void SignalIoConnectionView::Impl::onRemoveButtonClicked()
+void SignalIoConnectionView::Impl::addConnectionIntoCurrentIndex(bool doInsert)
 {
+    auto current = selectionModel()->currentIndex();
+    int index = current.isValid() ? current.row() : connectionMapModel->numConnections();
+    addNewConnection(index, doInsert);
+}
 
+
+void SignalIoConnectionView::Impl::removeSelectedConnections()
+{
+    connectionMapModel->removeConnections(selectionModel()->selectedRows());
+}
+
+
+void SignalIoConnectionView::Impl::keyPressEvent(QKeyEvent* event)
+{
+    bool processed = true;
+
+    switch(event->key()){
+    case Qt::Key_Escape:
+        clearSelection();
+        break;
+    case Qt::Key_Insert:
+        addConnectionIntoCurrentIndex(true);
+        break;
+    case Qt::Key_Delete:
+        removeSelectedConnections();
+        break;
+    default:
+        processed = false;
+        break;
+    }
+        
+    if(!processed && (event->modifiers() & Qt::ControlModifier)){
+        processed = true;
+        switch(event->key()){
+        case Qt::Key_A:
+            selectAll();
+            break;
+        default:
+            processed = false;
+            break;
+        }
+    }
+
+    if(!processed){
+        QTableView::keyPressEvent(event);
+    }
 }
 
        
+void SignalIoConnectionView::Impl::mousePressEvent(QMouseEvent* event)
+{
+    QTableView::mousePressEvent(event);
+
+    if(event->button() == Qt::RightButton){
+        int row = rowAt(event->pos().y());
+        if(row >= 0){
+            showContextMenu(row, event->globalPos());
+        }
+    }
+}
+
+
+void SignalIoConnectionView::Impl::showContextMenu(int row, QPoint globalPos)
+{
+    contextMenuManager.setNewPopupMenu(this);
+
+    contextMenuManager.addItem(_("Add"))
+        ->sigTriggered().connect([=](){ addNewConnection(row, false); });
+
+    contextMenuManager.addItem(_("Remove"))
+        ->sigTriggered().connect([=](){ removeSelectedConnections(); });
+    
+    contextMenuManager.popupMenu()->popup(globalPos);
+}
+
+
 bool SignalIoConnectionView::storeState(Archive& archive)
 {
     impl->targetItemPicker.storeTargetItem(archive, "currentConnectionMapItem");

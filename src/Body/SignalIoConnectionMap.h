@@ -30,6 +30,10 @@ public:
     const std::string& bodyName(int which) const;
     const std::string& deviceName(int which) const;
 
+    bool hasDeviceInstances() const {
+        return (device_[In] != nullptr) && (device_[Out] != nullptr);
+    }
+
     void setDevice(int which, SignalIoDevice* device);
     void setNames(int which, const std::string& bodyName, const std::string& deviceName);
     void setSignalNumber(int which, int number){ signalNumber_[which] = number; }
@@ -81,6 +85,7 @@ public:
     const SignalIoConnection* connection(int index) const { return connections_[index]; }
     void insert(int index, SignalIoConnection* connection);
     void append(SignalIoConnection* connection);
+    void remove(SignalIoConnection* connection);
     void removeConnectionsOfBody(Body* body);
 
     bool read(const Mapping& archive);

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-23 18:40+0900\n"
+"POT-Creation-Date: 2019-09-25 14:31+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -224,37 +224,37 @@ msgstr "関節並進位置 [m]"
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
-#: SignalIoConnectionView.cpp:105
+#: SignalIoConnectionView.cpp:178
 msgid "Output Device"
 msgstr "出力デバイス"
 
-#: SignalIoConnectionView.cpp:107 SignalIoConnectionView.cpp:111
+#: SignalIoConnectionView.cpp:180 SignalIoConnectionView.cpp:184
 msgid "Signal No"
 msgstr "信号No"
 
-#: SignalIoConnectionView.cpp:109
+#: SignalIoConnectionView.cpp:182
 msgid "Input Device"
 msgstr "入力デバイス"
 
-#: SignalIoConnectionView.cpp:113
+#: SignalIoConnectionView.cpp:186
 msgid "Note"
 msgstr "注釈"
 
-#: SignalIoConnectionView.cpp:192
+#: SignalIoConnectionView.cpp:496
 msgid "I/O Connection"
 msgstr "I/O接続"
 
-#: SignalIoConnectionView.cpp:219
-msgid "Insert"
-msgstr "挿入"
+#: SignalIoConnectionView.cpp:523 SignalIoConnectionView.cpp:701
+msgid "Add"
+msgstr "追加"
 
-#: SignalIoConnectionView.cpp:222
-msgid "Remove"
-msgstr "削除"
-
-#: SignalIoConnectionView.cpp:310
+#: SignalIoConnectionView.cpp:626
 msgid "There are no I/O devices in the world"
 msgstr "ワールドにI/Oデバイスが存在しません。"
+
+#: SignalIoConnectionView.cpp:704
+msgid "Remove"
+msgstr "削除"
 
 #: KinematicFaultChecker.cpp:108 KinematicFaultChecker.cpp:141
 msgid "Kinematic Fault Checker"
@@ -550,7 +550,7 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
-#: SignalIoConnectionMapItem.cpp:27
+#: SignalIoConnectionMapItem.cpp:35
 msgid "SignalIoConnectionMapItem"
 msgstr "信号入出力接続マップアイテム"
 
@@ -1643,3 +1643,4 @@ msgstr "ダイヤル"
 #: JointDisplacementView.cpp:514
 msgid "Phase"
 msgstr "位相"
+
