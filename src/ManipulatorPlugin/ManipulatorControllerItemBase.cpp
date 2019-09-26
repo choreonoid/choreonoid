@@ -2,33 +2,92 @@
 #include "ManipulatorProgramItemBase.h"
 #include "BodyManipulatorManager.h"
 #include <cnoid/ManipulatorProgram>
+#include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <cnoid/ControllerIO>
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <fmt/format.h>
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace {
+
+class Processor : public Referenced
+{
+public:
+    virtual void input() { }
+    virtual bool control() = 0;
+    virtual void output() { }
+};
+
+class ControlFunctionSetProcessor : public Processor
+{
+public:
+    function<bool()> control_;
+    function<void()> input_;
+    function<void()> output_;
+
+    ControlFunctionSetProcessor(
+        function<bool()> control, function<void()> input, function<void()> output)
+        : control_(control), input_(input), output_(output)
+    { }
+
+    virtual void input() override { if(input_) input_(); }
+    virtual bool control() override { return control_(); }
+    virtual void output() override { if(output_) output_(); }
+};
+
+class OutputOnceFunctionProcessor : public Processor
+{
+public:
+    function<void()> output_;
+
+    OutputOnceFunctionProcessor(function<void()> output): output_(output) { }
+
+    virtual bool control() override {
+        return output_ != nullptr;
+    }
+    virtual void output() override {
+        if(output_){
+            output_();
+            output_ = nullptr;
+        }
+    }
+};
+
+}
+    
+    
 namespace cnoid {
 
 class ManipulatorControllerItemBase::Impl
 {
 public:
     ManipulatorControllerItemBase* self;
+    ControllerIO* io;
     ManipulatorProgramItemBasePtr programItem;
     ManipulatorProgramPtr program;
     ManipulatorProgramCloneMap manipulatorProgramCloneMap;
     BodyManipulatorManagerPtr manipulatorManager;
+    vector<function<void()>> residentInputFunctions;
+    unordered_map<type_index, function<void(ManipulatorStatement* statement)>> interpreterMap;
+    ManipulatorProgram::iterator iterator;
+    vector<ref_ptr<Processor>> processorStack;
+    DigitalIoDevicePtr ioDevice;
     double speedRatio;
 
     Impl(ManipulatorControllerItemBase* self);
-    bool initializeManipulatorProgram(ControllerIO* io);
+    bool initialize(ControllerIO* io);
+    bool control();
     void clear();
+    void interpretDelayStatement(DelayStatement* statement);
+    void interpretSetSignalStatement(SetSignalStatement* statement);
 };
 
 }
@@ -61,14 +120,50 @@ ManipulatorControllerItemBase::~ManipulatorControllerItemBase()
 }
 
 
-bool ManipulatorControllerItemBase::initializeManipulatorProgram(ControllerIO* io)
+void ManipulatorControllerItemBase::registerStatementInterpreter
+(std::type_index statementType, const std::function<void(ManipulatorStatement* statement)>& interpret)
 {
-    return impl->initializeManipulatorProgram(io);
+    impl->interpreterMap[statementType] = interpret;
 }
 
 
-bool ManipulatorControllerItemBase::Impl::initializeManipulatorProgram(ControllerIO* io)
+void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
 {
+    ManipulatorControllerItemBase::Impl* impl_ = impl;
+    
+    registerStatementInterpreter<DelayStatement>(
+        [impl_](DelayStatement* statement){ impl_->interpretDelayStatement(statement); });
+
+    registerStatementInterpreter<SetSignalStatement>(
+        [impl_](SetSignalStatement* statement){ impl_->interpretSetSignalStatement(statement); });
+}
+
+
+void ManipulatorControllerItemBase::setResidentInputFunction(std::function<void()> input)
+{
+    impl->residentInputFunctions.push_back(input);
+}
+
+
+double ManipulatorControllerItemBase::timeStep() const
+{
+    return impl->io ? impl->io->timeStep() : 0.0;
+}
+        
+
+bool ManipulatorControllerItemBase::initialize(ControllerIO* io)
+{
+    if(impl->initialize(io)){
+        return onInitialize(io);
+    }
+    return false;
+}    
+
+
+bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
+{
+    this->io = io;
+    
     auto mv = MessageView::instance();
 
     programItem = nullptr;
@@ -97,6 +192,18 @@ bool ManipulatorControllerItemBase::Impl::initializeManipulatorProgram(Controlle
 
     manipulatorManager = programItem->manipulatorManager()->clone();
 
+    processorStack.clear();
+    iterator = program->begin();
+
+    auto body = io->body();
+    ioDevice = body->findDevice<DigitalIoDevice>();
+    
+    return true;
+}
+
+
+bool ManipulatorControllerItemBase::onInitialize(ControllerIO* /* io */)
+{
     return true;
 }
 
@@ -119,9 +226,98 @@ BodyManipulatorManager* ManipulatorControllerItemBase::getBodyManipulatorManager
 }
 
 
-void ManipulatorControllerItemBase::finalizeManipulatorProgram()
+bool ManipulatorControllerItemBase::start()
+{
+    return onStart();
+}
+
+
+bool ManipulatorControllerItemBase::onStart()
+{
+    return true;
+}
+
+
+void ManipulatorControllerItemBase::input()
+{
+    for(auto& input : impl->residentInputFunctions){
+        input();
+    }
+    if(!impl->processorStack.empty()){
+        impl->processorStack.back()->input();
+    }
+}
+
+
+bool ManipulatorControllerItemBase::control()
+{
+    return impl->control();
+}
+
+
+bool ManipulatorControllerItemBase::Impl::control()
+{
+    bool isActive = false;
+
+    while(true){
+        while(!processorStack.empty()){
+            isActive = processorStack.back()->control();
+            if(isActive){
+                break;
+            }
+            processorStack.pop_back();
+        }
+        if(isActive || iterator == program->end()){
+            break;
+        }
+        auto statement = iterator->get();
+        ++iterator;
+
+        auto iter = interpreterMap.find(typeid(*statement));
+        if(iter == interpreterMap.end()){
+            io->os() << format(_("{0} cannot be executed because the interpreter for it is not found."),
+                               statement->label(0)) << endl;
+            continue;
+        }
+        auto& interpret = iter->second;
+        interpret(statement);
+    }        
+        
+    return isActive;
+}
+
+
+void ManipulatorControllerItemBase::pushControlFunctions
+(std::function<bool()> control, std::function<void()> input, std::function<void()> output)
+{
+    impl->processorStack.push_back(new ControlFunctionSetProcessor(control, input, output));
+}
+        
+
+void ManipulatorControllerItemBase::pushOutputOnceFunction(std::function<void()> outputOnce)
+{
+    impl->processorStack.push_back(new OutputOnceFunctionProcessor(outputOnce));
+}
+
+
+void ManipulatorControllerItemBase::output()
+{
+    if(!impl->processorStack.empty()){
+        impl->processorStack.back()->output();
+    }
+}
+
+
+void ManipulatorControllerItemBase::stop()
 {
     impl->clear();
+    onStop();
+}
+
+
+bool ManipulatorControllerItemBase::onStop()
+{
+    return true;
 }
 
 
@@ -144,8 +340,28 @@ double ManipulatorControllerItemBase::speedRatio() const
 {
     return impl->speedRatio;
 }
-    
 
+
+void ManipulatorControllerItemBase::Impl::interpretDelayStatement(DelayStatement* statement)
+{
+    int remainingFrames = statement->time() / io->timeStep();
+    self->pushControlFunctions([remainingFrames]() mutable { return (remainingFrames-- > 0); });
+}
+
+
+void ManipulatorControllerItemBase::Impl::interpretSetSignalStatement(SetSignalStatement* statement)
+{
+    if(!ioDevice){
+        io->os() << format(_("{0} cannot be executed because {1} does not have a signal I/O device"),
+                           statement->label(0), io->body()->name()) << endl;
+    } else {
+        self->pushOutputOnceFunction(
+            [this, statement](){
+                ioDevice->setOut(statement->signalIndex(), statement->on(), true); });
+    }
+}
+
+    
 void ManipulatorControllerItemBase::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Speed ratio"), impl->speedRatio, changeProperty(impl->speedRatio));
