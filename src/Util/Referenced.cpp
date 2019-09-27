@@ -9,6 +9,7 @@ using namespace cnoid;
 Referenced::~Referenced()
 {
     if(weakCounter_){
-        weakCounter_->setDestructed();
+        weakCounter_->isObjectAlive_ = false;
+        weakCounter_->release();
     }
 }
