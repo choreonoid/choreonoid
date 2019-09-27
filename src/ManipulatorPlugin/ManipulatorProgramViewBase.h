@@ -31,6 +31,7 @@ public:
 
 protected:
     void addStatementButton(QWidget* button, int row);
+    void insertCommentStatement();
     void insertIfStatement();
     void insertCallStatement();
     void insertSetSignalStatement();

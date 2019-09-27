@@ -14,6 +14,8 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <QProxyStyle>
+#include <QStyledItemDelegate>
+#include <QPainter>
 #include <unordered_map>
 #include "gettext.h"
 
@@ -31,6 +33,15 @@ public:
     StatementItem(ManipulatorStatement* statement, ManipulatorProgramViewBase::Impl* viewImpl);
     ~StatementItem();
     virtual QVariant data(int column, int role) const override;
+};
+
+
+class StatementItemDelegate : public QStyledItemDelegate
+{
+    ManipulatorProgramViewBase::Impl* view;
+public:
+    StatementItemDelegate(ManipulatorProgramViewBase::Impl* view);
+    virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 };
 
 
@@ -99,6 +110,13 @@ public:
     void cutStatement(ManipulatorStatement* statementItem);
     void copyStatement(ManipulatorStatement* statementItem);
     void pasteStatement(ManipulatorStatement* statementItem);
+
+    QModelIndex indexFromItem(const QTreeWidgetItem* item, int column = 0) const {
+        return TreeWidget::indexFromItem(item, column);
+    }
+    QTreeWidgetItem* itemFromIndex(const QModelIndex& index) const {
+        return TreeWidget::itemFromIndex(index);
+    }
 };
 
 }
@@ -123,9 +141,47 @@ StatementItem::~StatementItem()
 QVariant StatementItem::data(int column, int role) const
 {
     if(role == Qt::DisplayRole){
-        return QString(statement->label(column).c_str());
+        int span = statement->labelSpan(column);
+        if(span == 1){
+            return QString(statement->label(column).c_str());
+        } else {
+            return QVariant();
+        }
     }
     return QTreeWidgetItem::data(column, role);
+}
+
+
+StatementItemDelegate::StatementItemDelegate(ManipulatorProgramViewBase::Impl* view)
+    : view(view)
+{
+
+}
+
+
+void StatementItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    auto item = static_cast<StatementItem*>(view->itemFromIndex(index));
+    auto statement = item->statement;
+    
+    int column = index.column();
+    int span = statement->labelSpan(column);
+    if(span == 1){
+        QStyledItemDelegate::paint(painter, option, index);
+    } else if(span > 1){
+        auto rect = view->visualRect(index);
+        for(int i=1; i < span; ++i){
+            auto rect2 = view->visualRect(view->indexFromItem(item, column + i));
+            rect = rect.united(rect2);
+        }
+        painter->save();
+        if(option.state & QStyle::State_Selected){
+            painter->fillRect(rect, option.palette.highlight());
+            painter->setPen(option.palette.highlightedText().color());
+        }
+        painter->drawText(rect, 0, statement->label(column).c_str());
+        painter->restore();
+    }
 }
 
 
@@ -209,7 +265,10 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setDragDropMode(QAbstractItemView::InternalMove);
     setDropIndicatorShown(true);
+    setTabKeyNavigation(true);
     setStyle(new TreeWidgetStyle(style()));
+    setItemDelegate(new StatementItemDelegate(this));
+
     
     auto& rheader = *header();
     rheader.setMinimumSectionSize(0);
@@ -510,6 +569,17 @@ void ManipulatorProgramViewBase::Impl::copyStatement(ManipulatorStatement* state
 void ManipulatorProgramViewBase::Impl::pasteStatement(ManipulatorStatement* statementItem)
 {
 
+}
+
+
+void ManipulatorProgramViewBase::insertCommentStatement()
+{
+    auto& programItem = impl->programItem;
+    if(programItem){
+        auto iter = programItem->program()->append(new CommentStatement);
+        programItem->sigStatementAdded()(iter);
+        programItem->suggestFileUpdate();
+    }
 }
 
 

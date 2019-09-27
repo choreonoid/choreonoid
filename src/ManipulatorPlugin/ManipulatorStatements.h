@@ -24,8 +24,10 @@ public:
     static ManipulatorStatement* create(const std::string& type);
 
     virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) = 0;
-    
+
+    static constexpr int MaxNumLabels = 4;
     virtual std::string label(int index) const = 0;
+    virtual int labelSpan(int index) const;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) = 0;
     virtual bool write(Mapping& archive) const = 0;
 
@@ -34,25 +36,78 @@ protected:
     ManipulatorStatement(const ManipulatorStatement& org);
     
 private:
-    // Is this necessary?
-    //weak_ref_ptr<ManipulatorProgram> ownerProgram_;
-
     static void registerFactory(const char* type, FactoryFunction factory);
 };
 
 typedef ref_ptr<ManipulatorStatement> ManipulatorStatementPtr;
 
-class CNOID_EXPORT IfStatement : public ManipulatorStatement
+
+class CNOID_EXPORT EmptyStatement : public ManipulatorStatement
+{
+public:
+    EmptyStatement();
+    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
+    virtual std::string label(int index) const override;
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const override;
+
+protected:
+    EmptyStatement(const EmptyStatement& org);
+};
+
+typedef ref_ptr<EmptyStatement> EmptyStatementPtr;
+
+class CNOID_EXPORT CommentStatement : public ManipulatorStatement
+{
+public:
+    CommentStatement();
+    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
+    virtual std::string label(int index) const override;
+    virtual int labelSpan(int index) const override;
+
+    void setComment(const std::string& comment){ comment_ = comment; }
+    const std::string& comment() const { return comment_; }
+    
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const override;
+
+protected:
+    CommentStatement(const CommentStatement& org);
+
+private:
+    std::string comment_;
+};
+
+typedef ref_ptr<CommentStatement> CommentStatementPtr;
+
+class CNOID_EXPORT StructuredStatement : public ManipulatorStatement
+{
+public:
+    virtual ManipulatorProgram* lowerLevelProgram() const = 0;
+
+protected:
+    StructuredStatement();
+    StructuredStatement(const StructuredStatement& org);
+};
+typedef ref_ptr<StructuredStatement> StructuredStatementPtr;
+
+class CNOID_EXPORT IfStatement : public StructuredStatement
 {
 public:
     IfStatement();
     virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
+
+    virtual ManipulatorProgram* lowerLevelProgram() const override;
+    
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
 
 protected:
-    IfStatement(const IfStatement& org);
+    IfStatement(const IfStatement& org, ManipulatorProgramCloneMap& cloneMap);
+
+private:
+    ManipulatorProgramPtr program_;
 };
 typedef ref_ptr<IfStatement> IfStatementPtr;
 
@@ -69,7 +124,7 @@ protected:
     CallStatement(const CallStatement& org, ManipulatorProgramCloneMap& cloneMap);
 
 private:
-    ManipulatorProgramPtr subProgram;
+    ManipulatorProgramPtr program_;
 };
 typedef ref_ptr<CallStatement> CallStatementPtr;
 

@@ -48,21 +48,133 @@ ManipulatorStatement::ManipulatorStatement(const ManipulatorStatement& org)
 }
 
 
-IfStatement::IfStatement()
+int ManipulatorStatement::labelSpan(int /* index */) const
+{
+    return 1;
+}
+
+
+EmptyStatement::EmptyStatement()
 {
 
 }
 
 
-IfStatement::IfStatement(const IfStatement& org)
+EmptyStatement::EmptyStatement(const EmptyStatement& org)
+    : ManipulatorStatement(org)
 {
 
+}
+
+
+ManipulatorStatement* EmptyStatement::clone(ManipulatorProgramCloneMap&)
+{
+    return new EmptyStatement(*this);
+}
+
+
+std::string EmptyStatement::label(int index) const
+{
+    return string();
+}
+
+
+bool EmptyStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    return true;
+}
+
+
+bool EmptyStatement::write(Mapping& archive) const
+{
+    archive.write("type", "Empty");
+    return true;
+}
+
+
+CommentStatement::CommentStatement()
+{
+
+}
+
+
+CommentStatement::CommentStatement(const CommentStatement& org)
+    : ManipulatorStatement(org),
+      comment_(org.comment_)
+{
+
+}
+
+
+ManipulatorStatement* CommentStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+{
+    return new CommentStatement(*this);
+}
+
+
+std::string CommentStatement::label(int index) const
+{
+    if(index == 0){
+        return format("# {}", comment_);
+    }
+    return string();
+}
+
+
+int CommentStatement::labelSpan(int index) const
+{
+    if(index == 0){
+        return MaxNumLabels;
+    }
+    return 0;
+}
+
+
+bool CommentStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    archive.read("comment", comment_);
+    return true;
+}
+    
+
+bool CommentStatement::write(Mapping& archive) const
+{
+    archive.write("type", "Comment");
+    archive.write("comment", comment_);
+    return true;
+}
+
+
+StructuredStatement::StructuredStatement()
+{
+
+}
+
+
+StructuredStatement::StructuredStatement(const StructuredStatement& org)
+    : ManipulatorStatement(org)
+{
+
+}
+
+
+IfStatement::IfStatement()
+{
+    program_ = new ManipulatorProgram;
+    program_->append(new EmptyStatement);
+}
+
+
+IfStatement::IfStatement(const IfStatement& org, ManipulatorProgramCloneMap& cloneMap)
+    : StructuredStatement(org)
+{
+    program_ = cloneMap.getClone(org.program_);
 }
 
 
 ManipulatorStatement* IfStatement::clone(ManipulatorProgramCloneMap& cloneMap)
 {
-    return new IfStatement(*this);
+    return new IfStatement(*this, cloneMap);
 }
 
 
@@ -74,6 +186,12 @@ std::string IfStatement::label(int index) const
     return string();
 }
 
+
+ManipulatorProgram* IfStatement::lowerLevelProgram() const
+{
+    return program_;
+}
+    
 
 bool IfStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
@@ -96,7 +214,7 @@ CallStatement::CallStatement()
 
 CallStatement::CallStatement(const CallStatement& org, ManipulatorProgramCloneMap& cloneMap)
 {
-    subProgram = cloneMap.getClone(org.subProgram);
+    program_ = cloneMap.getClone(org.program_);
 }
 
 
@@ -227,6 +345,8 @@ namespace {
 
 struct StatementTypeRegistration {
     StatementTypeRegistration(){
+        ManipulatorStatement::registerType<EmptyStatement>("Empty");
+        ManipulatorStatement::registerType<CommentStatement>("Comment");
         ManipulatorStatement::registerType<IfStatement>("If");
         ManipulatorStatement::registerType<CallStatement>("Call");
         ManipulatorStatement::registerType<SetSignalStatement>("SetSignal");
