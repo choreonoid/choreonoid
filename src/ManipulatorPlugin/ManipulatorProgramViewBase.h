@@ -31,11 +31,10 @@ public:
 
 protected:
     void addStatementButton(QWidget* button, int row);
-    void insertCommentStatement();
-    void insertIfStatement();
-    void insertCallStatement();
-    void insertSetSignalStatement();
-    void insertDelayStatement();
+
+    enum InsertionType { BeforeTargetPosition, AfterTargetPosition };
+    bool insertStatement(
+        ManipulatorStatement* statement, int insertionType = AfterTargetPosition);
 
     virtual bool onCurrentProgramItemChanged(ManipulatorProgramItemBase* item) = 0;
     virtual void onCurrentStatementChanged(ManipulatorStatement* statement);

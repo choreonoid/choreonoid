@@ -83,7 +83,7 @@ typedef ref_ptr<CommentStatement> CommentStatementPtr;
 class CNOID_EXPORT StructuredStatement : public ManipulatorStatement
 {
 public:
-    virtual ManipulatorProgram* lowerLevelProgram() const = 0;
+    virtual ManipulatorProgram* getLowerLevelProgram() const = 0;
 
 protected:
     StructuredStatement();
@@ -98,7 +98,7 @@ public:
     virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
 
-    virtual ManipulatorProgram* lowerLevelProgram() const override;
+    virtual ManipulatorProgram* getLowerLevelProgram() const override;
     
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
@@ -110,6 +110,49 @@ private:
     ManipulatorProgramPtr program_;
 };
 typedef ref_ptr<IfStatement> IfStatementPtr;
+
+
+class CNOID_EXPORT ElseStatement : public StructuredStatement
+{
+public:
+    ElseStatement();
+    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
+    virtual std::string label(int index) const override;
+
+    virtual ManipulatorProgram* getLowerLevelProgram() const override;
+    
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+
+protected:
+    ElseStatement(const ElseStatement& org, ManipulatorProgramCloneMap& cloneMap);
+
+private:
+    ManipulatorProgramPtr program_;
+};
+typedef ref_ptr<IfStatement> IfStatementPtr;
+
+
+class CNOID_EXPORT WhileStatement : public StructuredStatement
+{
+public:
+    WhileStatement();
+    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
+    virtual std::string label(int index) const override;
+
+    virtual ManipulatorProgram* getLowerLevelProgram() const override;
+    
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+
+protected:
+    WhileStatement(const WhileStatement& org, ManipulatorProgramCloneMap& cloneMap);
+
+private:
+    ManipulatorProgramPtr program_;
+};
+typedef ref_ptr<IfStatement> IfStatementPtr;
+
 
 class CNOID_EXPORT CallStatement : public ManipulatorStatement
 {

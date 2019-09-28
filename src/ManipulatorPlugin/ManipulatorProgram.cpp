@@ -149,7 +149,7 @@ void ManipulatorProgram::setName(const std::string& name)
 }
 
 
-ManipulatorProgram::iterator ManipulatorProgram::insert(const iterator& pos, ManipulatorStatement* statement)
+ManipulatorProgram::iterator ManipulatorProgram::insert(iterator pos, ManipulatorStatement* statement)
 {
     return statements_.insert(pos, statement);
 }
@@ -159,6 +159,12 @@ ManipulatorProgram::iterator ManipulatorProgram::append(ManipulatorStatement* st
 {
     statements_.push_back(statement);
     return statements_.end() - 1;
+}
+
+
+ManipulatorProgram::iterator ManipulatorProgram::remove(iterator pos)
+{
+    return statements_.erase(pos);
 }
 
 

@@ -51,8 +51,9 @@ public:
     const std::string& name() const;
     void setName(const std::string& name);
 
-    iterator insert(const iterator& pos, ManipulatorStatement* statement);
+    iterator insert(iterator pos, ManipulatorStatement* statement);
     iterator append(ManipulatorStatement* statement);
+    iterator remove(iterator pos);
     bool remove(ManipulatorStatement* statement);
 
     iterator begin(){ return statements_.begin(); }

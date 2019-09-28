@@ -15,8 +15,8 @@ class ManipulatorProgramItemBase::Impl
 {
 public:
     ManipulatorProgramPtr program;
-    Signal<void(ManipulatorProgram::iterator iter)> sigStatementAdded;
-    Signal<void(ManipulatorStatement* statement)> sigStatementRemoved;
+    Signal<void(ManipulatorProgram::iterator iter, StructuredStatement* parentStatement)> sigStatementAdded;
+    Signal<void(ManipulatorStatement* statement, StructuredStatement* parentStatement)> sigStatementRemoved;
     BodyItem* targetBodyItem;
     BodyManipulatorManagerPtr manipulatorManager;
     Signal<void(BodyManipulatorManager* manager)> sigManipulatorChanged;
@@ -134,13 +134,15 @@ const ManipulatorProgram* ManipulatorProgramItemBase::program() const
 }
 
 
-Signal<void(ManipulatorProgram::iterator iter)>& ManipulatorProgramItemBase::sigStatementAdded()
+Signal<void(ManipulatorProgram::iterator iter, StructuredStatement* parentStatement)>&
+ManipulatorProgramItemBase::sigStatementAdded()
 {
     return impl->sigStatementAdded;
 }
 
 
-Signal<void(ManipulatorStatement* statement)>& ManipulatorProgramItemBase::sigStatementRemoved()
+Signal<void(ManipulatorStatement* statement, StructuredStatement* parentStatement)>&
+ManipulatorProgramItemBase::sigStatementRemoved()
 {
     return impl->sigStatementRemoved;
 }

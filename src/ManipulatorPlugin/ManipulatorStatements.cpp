@@ -187,7 +187,7 @@ std::string IfStatement::label(int index) const
 }
 
 
-ManipulatorProgram* IfStatement::lowerLevelProgram() const
+ManipulatorProgram* IfStatement::getLowerLevelProgram() const
 {
     return program_;
 }
@@ -202,6 +202,102 @@ bool IfStatement::read(ManipulatorProgram* program, const Mapping& archive)
 bool IfStatement::write(Mapping& archive) const
 {
     archive.write("type", "If");
+    return true;
+}
+
+
+ElseStatement::ElseStatement()
+{
+    program_ = new ManipulatorProgram;
+    program_->append(new EmptyStatement);
+}
+
+
+ElseStatement::ElseStatement(const ElseStatement& org, ManipulatorProgramCloneMap& cloneMap)
+    : StructuredStatement(org)
+{
+    program_ = cloneMap.getClone(org.program_);
+}
+
+
+ManipulatorStatement* ElseStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+{
+    return new ElseStatement(*this, cloneMap);
+}
+
+
+std::string ElseStatement::label(int index) const
+{
+    if(index == 0){
+        return "ELSE";
+    }
+    return string();
+}
+
+
+ManipulatorProgram* ElseStatement::getLowerLevelProgram() const
+{
+    return program_;
+}
+    
+
+bool ElseStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    return true;
+}
+
+
+bool ElseStatement::write(Mapping& archive) const
+{
+    archive.write("type", "Else");
+    return true;
+}
+
+
+WhileStatement::WhileStatement()
+{
+    program_ = new ManipulatorProgram;
+    program_->append(new EmptyStatement);
+}
+
+
+WhileStatement::WhileStatement(const WhileStatement& org, ManipulatorProgramCloneMap& cloneMap)
+    : StructuredStatement(org)
+{
+    program_ = cloneMap.getClone(org.program_);
+}
+
+
+ManipulatorStatement* WhileStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+{
+    return new WhileStatement(*this, cloneMap);
+}
+
+
+std::string WhileStatement::label(int index) const
+{
+    if(index == 0){
+        return "WHILE";
+    }
+    return string();
+}
+
+
+ManipulatorProgram* WhileStatement::getLowerLevelProgram() const
+{
+    return program_;
+}
+    
+
+bool WhileStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    return true;
+}
+
+
+bool WhileStatement::write(Mapping& archive) const
+{
+    archive.write("type", "While");
     return true;
 }
 
@@ -348,6 +444,8 @@ struct StatementTypeRegistration {
         ManipulatorStatement::registerType<EmptyStatement>("Empty");
         ManipulatorStatement::registerType<CommentStatement>("Comment");
         ManipulatorStatement::registerType<IfStatement>("If");
+        ManipulatorStatement::registerType<ElseStatement>("Else");
+        ManipulatorStatement::registerType<ElseStatement>("While");
         ManipulatorStatement::registerType<CallStatement>("Call");
         ManipulatorStatement::registerType<SetSignalStatement>("SetSignal");
         ManipulatorStatement::registerType<DelayStatement>("Delay");
