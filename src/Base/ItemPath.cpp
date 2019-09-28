@@ -3,46 +3,26 @@
 */
 
 #include "ItemPath.h"
-#include "Item.h"
-#include "RootItem.h"
+#include <cnoid/Tokenizer>
 
 using namespace std;
 using namespace cnoid;
 
-
-ItemPath::ItemPath(const std::string& path) :
-    path(path)
+ItemPath::ItemPath(const std::string& pathstr)
 {
-    Tokenizer pathElements(path, Separator("\\", "/", ""));
-
-    pathBegin = pathElements.begin();
-    pathEnd = pathElements.end();
-
-    if(pathBegin != pathEnd && (*pathBegin).empty()){
-        pathBegin++;
+    if(pathstr.empty()){
+        return;
+    }
+    Tokenizer<EscapedListSeparator<char>> tokens(pathstr, EscapedListSeparator<char>("\\", "/", ""));
+    auto iter = tokens.begin();
+    if(iter != tokens.end() && iter->empty()){
+        ++iter;
         isAbsolute_ = true;
     } else {
         isAbsolute_ = false;
     }
-  
-    pathLeaf = pathBegin;
-
-    for(iterator it = pathBegin; it != pathEnd; ++it){
-        pathLeaf = it;
+    while(iter != tokens.end()){
+        path.push_back(*iter);
+        ++iter;
     }
-}
-
-
-std::string ItemPath::folder()
-{
-    std::string path;
-    iterator it = pathBegin;
-    while(true){
-        path.append(*it++);
-        if(it == pathLeaf){
-            break;
-        }
-        path.append("/");
-    }
-    return path;
 }

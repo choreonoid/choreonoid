@@ -41,7 +41,7 @@ void exportLuaSignalTypes(sol::table& module)
 
     module.new_usertype<ScopedConnection>(
         "ScopedConnection",
-        "reset", &ScopedConnection::reset,
+        "reset", (void(ScopedConnection::*)()) &ScopedConnection::reset,
         "disconnect", &ScopedConnection::disconnect,
         "connected", &ScopedConnection::connected,
         "block", &ScopedConnection::block,

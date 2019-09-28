@@ -45,7 +45,6 @@ void exportPyItems(py::module m)
         .def("addSubItem", &Item::addSubItem)
         .def("isSubItem", &Item::isSubItem)
         .def("detachFromParentItem", &Item::detachFromParentItem)
-        .def("emitSigDetachedFromRootForSubTree", &Item::emitSigDetachedFromRootForSubTree)
         .def("insertChildItem", [](Item& self, Item* item, Item* nextItem){ return self.insertChildItem(item, nextItem); })
         .def("insertChildItem", [](Item& self, Item* item, Item* nextItem, bool isManualOperation){
                 return self.insertChildItem(item, nextItem, isManualOperation); })
@@ -240,6 +239,10 @@ void exportPyItems(py::module m)
     py::class_<SceneItem, SceneItemPtr, Item>(m, "SceneItem", py::multiple_inheritance())
         .def(py::init<>())
         .def_property_readonly("topNode", (SgPosTransform*(SceneItem::*)()) &SceneItem::topNode)
+        .def("setTranslation", &SceneItem::setTranslation)
+        .def("setRotation", &SceneItem::setRotation)
+        .def("setLightweightRenderingEnabled", &SceneItem::setLightweightRenderingEnabled)
+        .def("isLightweightRenderingEnabled", &SceneItem::isLightweightRenderingEnabled)
 
         // deprecated
         .def("getTopNode", (SgPosTransform*(SceneItem::*)()) &SceneItem::topNode)

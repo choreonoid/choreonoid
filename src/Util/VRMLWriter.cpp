@@ -4,12 +4,11 @@
 */
 
 #include "VRMLWriter.h"
-#include <boost/filesystem.hpp>
+#include <cnoid/stdx/filesystem>
 #include <iostream>
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -464,10 +463,10 @@ void VRMLWriterImpl::writeSwitchNode(VRMLNodePtr node)
  **/
 std::string VRMLWriterImpl::abstorel(std::string& fname)
 {
-    filesystem::path from(ofname);
-    filesystem::path to(fname);
-    filesystem::path::const_iterator fromIter = from.begin();
-    filesystem::path::const_iterator toIter = to.begin();
+    stdx::filesystem::path from(ofname);
+    stdx::filesystem::path to(fname);
+    stdx::filesystem::path::const_iterator fromIter = from.begin();
+    stdx::filesystem::path::const_iterator toIter = to.begin();
     
     while(fromIter != from.end() && toIter != to.end() && (*toIter) == (*fromIter)) {
         ++toIter;
@@ -476,7 +475,7 @@ std::string VRMLWriterImpl::abstorel(std::string& fname)
     
     if (fromIter != from.end()) ++fromIter;
     
-    filesystem::path finalPath;
+    stdx::filesystem::path finalPath;
     while(fromIter != from.end()) {
         finalPath /= "..";
         ++fromIter;

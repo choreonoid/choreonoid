@@ -167,13 +167,7 @@ RTSConfigurationViewImpl::RTSConfigurationViewImpl(RTSConfigurationView* self)
     lstConfigSet_->setColumnWidth(0, 50);
     lstConfigSet_->setRowCount(0);
     lstConfigSet_->setHorizontalHeaderLabels(QStringList() << "Active" << "Config");
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    lstConfigSet_->horizontalHeader()->setResizeMode(1, QHeaderView::Stretch);
-#else
     lstConfigSet_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-#endif
-
     lstConfigSet_->setItemDelegate(new ConfigSetDelegate(this));
 
     chkSetDetail_ = new CheckBox(_("Detail"));
@@ -221,14 +215,8 @@ RTSConfigurationViewImpl::RTSConfigurationViewImpl(RTSConfigurationView* self)
     lstDetail_->verticalHeader()->setVisible(false);
     lstDetail_->setRowCount(0);
     lstDetail_->setHorizontalHeaderLabels(QStringList() << "Name" << "Value");
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    lstDetail_->horizontalHeader()->setResizeMode(0, QHeaderView::Stretch);
-    lstDetail_->horizontalHeader()->setResizeMode(1, QHeaderView::Stretch);
-#else
     lstDetail_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     lstDetail_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-#endif
     lstDetail_->setItemDelegate(new DetailDelegate(this));
 
     chkDetail_ = new CheckBox(_("Detail"));

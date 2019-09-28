@@ -1,0 +1,61 @@
+#ifndef CNOID_STDX_FILESYSTEM_HEADER
+#define CNOID_STDX_FILESYSTEM_HEADER
+
+#if __cplusplus > 201402L
+
+#include <chrono>
+
+#if (defined(__GNUC__) && (__GNUC__ < 8)) || defined(_MSC_VER)
+#include <experimental/filesystem>
+namespace std::experimental::filesystem {
+inline path lexically_normal(const path& p){
+    // lexically_normal or any other normalization functions are not
+    // implemented in the experimental filesystem implementation
+    return p; 
+}
+
+#else
+#include <filesystem>
+namespace std::filesystem {
+inline path lexically_normal(const path& p){
+    return p.lexically_normal();
+}
+#endif
+
+inline std::time_t last_write_time_to_time_t(const path& p){
+    return std::chrono::duration_cast<std::chrono::system_clock::duration>(
+        last_write_time(p).time_since_epoch()).count();
+}
+
+} // namespace
+
+namespace cnoid::stdx {
+#if __GNUC__ < 8
+namespace filesystem = std::experimental::filesystem;
+#else
+namespace filesystem = std::filesystem;
+#endif
+}
+
+#else
+
+#include <boost/filesystem.hpp>
+namespace boost { namespace filesystem {
+inline std::time_t last_write_time_to_time_t(const path& p){
+    return last_write_time(p);
+}
+inline path lexically_normal(const path& p){
+#if BOOST_VERSION < 106000
+    path n(p);
+    return n.normalize();
+#else
+    return p.lexically_normal();
+#endif
+}
+} }
+namespace cnoid { namespace stdx {
+namespace filesystem = boost::filesystem;
+} }
+#endif
+
+#endif

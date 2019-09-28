@@ -2,23 +2,22 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PHENOMENON_PLUGIN_PARTICLES_PROGRAM_H
-#define CNOID_PHENOMENON_PLUGIN_PARTICLES_PROGRAM_H
+#ifndef CNOID_SCENE_EFFECTS_PLUGIN_PARTICLES_PROGRAM_H
+#define CNOID_SCENE_EFFECTS_PLUGIN_PARTICLES_PROGRAM_H
 
 #include "SceneParticles.h"
-#include <cnoid/GLSLSceneRenderer>
 #include <cnoid/ShaderPrograms>
-#include <memory>
-#include <cstdlib>
 
 namespace cnoid {
+
+class GLSLSceneRenderer;
 
 class ParticlesProgramBase
 {
 public:
     ParticlesProgramBase(GLSLSceneRenderer* renderer);
     
-    void requestRendering(SceneParticles* particles, std::function<void()> renderingFunction);
+    void requestRendering(SceneParticles* particles, const std::function<void()>& renderingFunction);
 
     void setTime(float time){
         glUniform1f(timeLocation, time);
@@ -45,14 +44,15 @@ private:
     GLuint textureId;
     Matrix3f globalAttitude_;
 
-    void render(SceneParticles* particles, const Matrix3f& R, const Matrix4f& MV, const std::function<void()>& renderingFunction);
+    void render(SceneParticles* particles, const Affine3& position, const std::function<void()>& renderingFunction);
 };
 
     
-class ParticlesProgram : public LightingProgram, public ParticlesProgramBase
+class ParticlesProgram : public BasicLightingProgram, public ParticlesProgramBase
 {
 public:
-    ParticlesProgram(GLSLSceneRenderer* renderer);
+    ParticlesProgram(
+        GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader);
 
 protected:
     virtual ShaderProgram* shaderProgram() { return this; }
@@ -62,7 +62,8 @@ protected:
 class LuminousParticlesProgram : public ShaderProgram, public ParticlesProgramBase
 {
 public:
-    LuminousParticlesProgram(GLSLSceneRenderer* renderer);
+    LuminousParticlesProgram(
+        GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader);
 
 protected:
     virtual ShaderProgram* shaderProgram() { return this; }

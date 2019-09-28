@@ -18,9 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
-using boost::get;
-using boost::dynamic_pointer_cast;
 
 namespace {
 
@@ -515,8 +512,7 @@ void VRMLParserImpl::load(const string& filename, bool doClearAncestorPathsList)
     protoMap.clear();
     defNodeMap.clear();
     
-    filesystem::path path(filename);
-    path.normalize();
+    stdx::filesystem::path path(stdx::filesystem::lexically_normal(filename));
     string pathString(path.string());
     if(doClearAncestorPathsList){
         ancestorPathsList.clear();
@@ -842,12 +838,10 @@ string VRMLParserImpl::getRealPath(string url)
     if(!isFileProtocol(url)){
         return url;
     } else {
-        filesystem::path path(removeURLScheme(url));
-        path.normalize();
+        stdx::filesystem::path path(stdx::filesystem::lexically_normal(removeURLScheme(url)));
         if(!checkAbsolute(path)){
-            filesystem::path parentPath(scanner->filename);
-            path = parentPath.parent_path() / path;
-            path.normalize();
+            stdx::filesystem::path parentPath(scanner->filename);
+            path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
         }
         return getAbsolutePathString(path);
     }
@@ -907,22 +901,22 @@ VRMLProtoPtr VRMLParserImpl::defineProto()
 
             switch(field_symbol){
 
-            case T_SFINT32:    field = SFInt32();    readSFInt32(get<SFInt32>(field));         break;
-            case T_SFFLOAT:    field = SFFloat();    readSFFloat(get<SFFloat>(field));         break;
-            case T_MFINT32:    field = MFInt32();    readMFInt32(get<MFInt32>(field));         break;
-            case T_MFFLOAT:    field = MFFloat();    readMFFloat(get<MFFloat>(field));         break;
-            case T_SFVEC3F:    field = SFVec3f();    readSFVec3f(get<SFVec3f>(field));         break;
-            case T_MFVEC3F:    field = MFVec3f();    readMFVec3f(get<MFVec3f>(field));         break;
-            case T_SFCOLOR:    field = SFColor();    readSFColor(get<SFColor>(field));         break;
-            case T_MFCOLOR:    field = MFColor();    readMFColor(get<MFColor>(field));         break;
-            case T_SFSTRING:   field = SFString();   readSFString(get<SFString>(field));       break;
-            case T_MFSTRING:   field = MFString();   readMFString(get<MFString>(field));       break;
-            case T_SFROTATION: field = SFRotation(); readSFRotation(get<SFRotation>(field));   break;
-            case T_MFROTATION: field = MFRotation(); readMFRotation(get<MFRotation>(field));   break;
-            case T_SFBOOL:     field = SFBool();     readSFBool(get<SFBool>(field));           break;
-            case T_SFNODE:     field = SFNode();     readSFNode(get<SFNode>(field), ANY_NODE); break;
-            case T_MFNODE:     field = MFNode();     readMFNode(get<MFNode>(field), ANY_NODE); break;
-            case T_SFIMAGE:    field = SFImage();    readSFImage(get<SFImage>(field));         break;
+            case T_SFINT32:    field = SFInt32();    readSFInt32(stdx::get<SFInt32>(field));         break;
+            case T_SFFLOAT:    field = SFFloat();    readSFFloat(stdx::get<SFFloat>(field));         break;
+            case T_MFINT32:    field = MFInt32();    readMFInt32(stdx::get<MFInt32>(field));         break;
+            case T_MFFLOAT:    field = MFFloat();    readMFFloat(stdx::get<MFFloat>(field));         break;
+            case T_SFVEC3F:    field = SFVec3f();    readSFVec3f(stdx::get<SFVec3f>(field));         break;
+            case T_MFVEC3F:    field = MFVec3f();    readMFVec3f(stdx::get<MFVec3f>(field));         break;
+            case T_SFCOLOR:    field = SFColor();    readSFColor(stdx::get<SFColor>(field));         break;
+            case T_MFCOLOR:    field = MFColor();    readMFColor(stdx::get<MFColor>(field));         break;
+            case T_SFSTRING:   field = SFString();   readSFString(stdx::get<SFString>(field));       break;
+            case T_MFSTRING:   field = MFString();   readMFString(stdx::get<MFString>(field));       break;
+            case T_SFROTATION: field = SFRotation(); readSFRotation(stdx::get<SFRotation>(field));   break;
+            case T_MFROTATION: field = MFRotation(); readMFRotation(stdx::get<MFRotation>(field));   break;
+            case T_SFBOOL:     field = SFBool();     readSFBool(stdx::get<SFBool>(field));           break;
+            case T_SFNODE:     field = SFNode();     readSFNode(stdx::get<SFNode>(field), ANY_NODE); break;
+            case T_MFNODE:     field = MFNode();     readMFNode(stdx::get<MFNode>(field), ANY_NODE); break;
+            case T_SFIMAGE:    field = SFImage();    readSFImage(stdx::get<SFImage>(field));         break;
 
             default: scanner->throwException("illegal field type");
             }
@@ -1004,26 +998,26 @@ VRMLProtoInstancePtr VRMLParserImpl::readProtoInstanceNode(const string& proto_n
 
         VRMLVariantField& field = p->second;
 
-        switch(field.which()){
+        switch(stdx::get_variant_index(field)){
 
-        case SFINT32:    readSFInt32(get<SFInt32>(field));         break;
-        case MFINT32:    readMFInt32(get<MFInt32>(field));         break;
-        case SFFLOAT:    readSFFloat(get<SFFloat>(field));         break;
-        case MFFLOAT:    readMFFloat(get<MFFloat>(field));         break;
-        case SFVEC2F:    readSFVec2f(get<SFVec2f>(field));         break;
-        case MFVEC2F:    readMFVec2f(get<MFVec2f>(field));         break;
-        case SFVEC3F:    readSFVec3f(get<SFVec3f>(field));         break;
-        case MFVEC3F:    readMFVec3f(get<MFVec3f>(field));         break;
-        case SFCOLOR:    readSFColor(get<SFColor>(field));         break;
-        case MFCOLOR:    readMFColor(get<MFColor>(field));         break;
-        case SFSTRING:   readSFString(get<SFString>(field));       break;
-        case MFSTRING:   readMFString(get<MFString>(field));       break;
-        case SFROTATION: readSFRotation(get<SFRotation>(field));   break;
-        case MFROTATION: readMFRotation(get<MFRotation>(field));   break;
-        case SFBOOL:     readSFBool(get<SFBool>(field));           break;
-        case SFNODE:     readSFNode(get<SFNode>(field), ANY_NODE); break;
-        case MFNODE:     readMFNode(get<MFNode>(field), ANY_NODE); break;
-        case SFIMAGE:    readSFImage(get<SFImage>(field));         break;
+        case SFINT32:    readSFInt32(stdx::get<SFInt32>(field));         break;
+        case MFINT32:    readMFInt32(stdx::get<MFInt32>(field));         break;
+        case SFFLOAT:    readSFFloat(stdx::get<SFFloat>(field));         break;
+        case MFFLOAT:    readMFFloat(stdx::get<MFFloat>(field));         break;
+        case SFVEC2F:    readSFVec2f(stdx::get<SFVec2f>(field));         break;
+        case MFVEC2F:    readMFVec2f(stdx::get<MFVec2f>(field));         break;
+        case SFVEC3F:    readSFVec3f(stdx::get<SFVec3f>(field));         break;
+        case MFVEC3F:    readMFVec3f(stdx::get<MFVec3f>(field));         break;
+        case SFCOLOR:    readSFColor(stdx::get<SFColor>(field));         break;
+        case MFCOLOR:    readMFColor(stdx::get<MFColor>(field));         break;
+        case SFSTRING:   readSFString(stdx::get<SFString>(field));       break;
+        case MFSTRING:   readMFString(stdx::get<MFString>(field));       break;
+        case SFROTATION: readSFRotation(stdx::get<SFRotation>(field));   break;
+        case MFROTATION: readMFRotation(stdx::get<MFRotation>(field));   break;
+        case SFBOOL:     readSFBool(stdx::get<SFBool>(field));           break;
+        case SFNODE:     readSFNode(stdx::get<SFNode>(field), ANY_NODE); break;
+        case MFNODE:     readMFNode(stdx::get<MFNode>(field), ANY_NODE); break;
+        case SFIMAGE:    readSFImage(stdx::get<SFImage>(field));         break;
         default:
             break;
         }
@@ -1998,7 +1992,7 @@ VRMLVariantField& VRMLParserImpl::readProtoField(VRMLFieldTypeId fieldTypeId)
         msg += scanner->stringValue +") does not exist in proto node";
         scanner->throwException(msg);
     }
-    if(p->second.which() != fieldTypeId){
+    if(stdx::get_variant_index(p->second) != fieldTypeId){
         scanner->throwException("Unmatched field type");
     }
 
@@ -2009,7 +2003,7 @@ VRMLVariantField& VRMLParserImpl::readProtoField(VRMLFieldTypeId fieldTypeId)
 void VRMLParserImpl::readSFInt32(SFInt32& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFInt32>(readProtoField(SFINT32));
+        out_value = stdx::get<SFInt32>(readProtoField(SFINT32));
     } else {
         out_value = scanner->readIntEx("illegal int value");
     }
@@ -2019,7 +2013,7 @@ void VRMLParserImpl::readSFInt32(SFInt32& out_value)
 void VRMLParserImpl::readMFInt32(MFInt32& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<MFInt32>(readProtoField(MFINT32));
+        out_value = stdx::get<MFInt32>(readProtoField(MFINT32));
     } else {
         out_value.clear();
         if(!scanner->readChar('[')){
@@ -2036,7 +2030,7 @@ void VRMLParserImpl::readMFInt32(MFInt32& out_value)
 void VRMLParserImpl::readSFFloat(SFFloat& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFFloat>(readProtoField(SFFLOAT));
+        out_value = stdx::get<SFFloat>(readProtoField(SFFLOAT));
     } else {
         out_value = scanner->readDoubleEx("illegal float value");
     }
@@ -2046,7 +2040,7 @@ void VRMLParserImpl::readSFFloat(SFFloat& out_value)
 void VRMLParserImpl::readMFFloat(MFFloat& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<MFFloat>(readProtoField(MFFLOAT));
+        out_value = stdx::get<MFFloat>(readProtoField(MFFLOAT));
     } else {
         out_value.clear();
         if(!scanner->readChar('[')){
@@ -2073,7 +2067,7 @@ static inline SFColor readSFColor(EasyScanner* scanner)
 void VRMLParserImpl::readSFColor(SFColor& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFColor>(readProtoField(SFCOLOR));
+        out_value = stdx::get<SFColor>(readProtoField(SFCOLOR));
     } else {
         out_value = ::readSFColor(scanner);
     }
@@ -2083,7 +2077,7 @@ void VRMLParserImpl::readSFColor(SFColor& out_value)
 void VRMLParserImpl::readMFColor(MFColor& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<MFColor>(readProtoField(MFCOLOR));
+        out_value = stdx::get<MFColor>(readProtoField(MFCOLOR));
     } else {
         out_value.clear();
         if(!scanner->readChar('[')){
@@ -2100,7 +2094,7 @@ void VRMLParserImpl::readMFColor(MFColor& out_value)
 void VRMLParserImpl::readSFString(SFString& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFString>(readProtoField(SFSTRING));
+        out_value = stdx::get<SFString>(readProtoField(SFSTRING));
     } else {
         out_value = scanner->readQuotedStringEx("illegal string");
     }
@@ -2110,7 +2104,7 @@ void VRMLParserImpl::readSFString(SFString& out_value)
 void VRMLParserImpl::readMFString(MFString& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<MFString>(readProtoField(MFSTRING));
+        out_value = stdx::get<MFString>(readProtoField(MFSTRING));
     } else {
         out_value.clear();
         if(!scanner->readChar('[')){
@@ -2137,7 +2131,7 @@ static inline SFVec2f readSFVec2f(EasyScanner* scanner)
 inline void VRMLParserImpl::readSFVec2f(SFVec2f& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFVec2f>(readProtoField(SFVEC2F));
+        out_value = stdx::get<SFVec2f>(readProtoField(SFVEC2F));
     } else {
         out_value = ::readSFVec2f(scanner);
     }
@@ -2147,7 +2141,7 @@ inline void VRMLParserImpl::readSFVec2f(SFVec2f& out_value)
 void VRMLParserImpl::readMFVec2f(MFVec2f& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<MFVec2f>(readProtoField(MFVEC2F));
+        out_value = stdx::get<MFVec2f>(readProtoField(MFVEC2F));
     } else {
         out_value.clear();
         if(!scanner->readChar('[')){
@@ -2174,7 +2168,7 @@ static inline SFVec2s readSFVec2s(EasyScanner* scanner)
 inline void VRMLParserImpl::readSFVec2s(SFVec2s& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFVec2f>(readProtoField(SFVEC2F)).cast<SFVec2s::Scalar>();
+        out_value = stdx::get<SFVec2f>(readProtoField(SFVEC2F)).cast<SFVec2s::Scalar>();
     } else {
         out_value = ::readSFVec2s(scanner);
     }
@@ -2184,7 +2178,7 @@ inline void VRMLParserImpl::readSFVec2s(SFVec2s& out_value)
 void VRMLParserImpl::readMFVec2s(MFVec2s& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        const MFVec2f& value = get<MFVec2f>(readProtoField(MFVEC2F));
+        const MFVec2f& value = stdx::get<MFVec2f>(readProtoField(MFVEC2F));
         const size_t n = value.size();
         out_value.resize(n);
         for(size_t i=0; i < n; ++i){
@@ -2216,7 +2210,7 @@ static inline SFVec3f readSFVec3f(EasyScanner* scanner)
 inline void VRMLParserImpl::readSFVec3f(SFVec3f& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFVec3f>(readProtoField(SFVEC3F));
+        out_value = stdx::get<SFVec3f>(readProtoField(SFVEC3F));
     } else {
         out_value = ::readSFVec3f(scanner);
     }
@@ -2226,7 +2220,7 @@ inline void VRMLParserImpl::readSFVec3f(SFVec3f& out_value)
 void VRMLParserImpl::readMFVec3f(MFVec3f& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<MFVec3f>(readProtoField(MFVEC3F));
+        out_value = stdx::get<MFVec3f>(readProtoField(MFVEC3F));
     } else {
         out_value.clear();
         if(!scanner->readChar('[')){
@@ -2253,7 +2247,7 @@ static inline SFVec3s readSFVec3s(EasyScanner* scanner)
 inline void VRMLParserImpl::readSFVec3s(SFVec3s& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFVec3f>(readProtoField(SFVEC3F)).cast<SFVec3s::Scalar>();
+        out_value = stdx::get<SFVec3f>(readProtoField(SFVEC3F)).cast<SFVec3s::Scalar>();
     } else {
         out_value = ::readSFVec3s(scanner);
     }
@@ -2263,7 +2257,7 @@ inline void VRMLParserImpl::readSFVec3s(SFVec3s& out_value)
 void VRMLParserImpl::readMFVec3s(MFVec3s& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        const MFVec3f& value = get<MFVec3f>(readProtoField(MFVEC3F));
+        const MFVec3f& value = stdx::get<MFVec3f>(readProtoField(MFVEC3F));
         const size_t n = value.size();
         out_value.resize(n);
         for(size_t i=0; i < n; ++i){
@@ -2304,7 +2298,7 @@ static inline SFRotation readSFRotation(EasyScanner* scanner)
 void VRMLParserImpl::readSFRotation(SFRotation& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFRotation>(readProtoField(SFROTATION));
+        out_value = stdx::get<SFRotation>(readProtoField(SFROTATION));
     } else {
         out_value = ::readSFRotation(scanner);
     }
@@ -2314,7 +2308,7 @@ void VRMLParserImpl::readSFRotation(SFRotation& out_value)
 void VRMLParserImpl::readMFRotation(MFRotation& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<MFRotation>(readProtoField(MFROTATION));
+        out_value = stdx::get<MFRotation>(readProtoField(MFROTATION));
     } else {
         out_value.clear();
         if(!scanner->readChar('[')){
@@ -2331,7 +2325,7 @@ void VRMLParserImpl::readMFRotation(MFRotation& out_value)
 void VRMLParserImpl::readSFBool(SFBool& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<SFBool>(readProtoField(SFBOOL));
+        out_value = stdx::get<SFBool>(readProtoField(SFBOOL));
     } else {
         switch(scanner->readSymbolEx("no bool value")){
         case V_TRUE:  out_value = true;  break;
@@ -2345,7 +2339,7 @@ void VRMLParserImpl::readSFBool(SFBool& out_value)
 void VRMLParserImpl::readSFImage(SFImage& out_image)
 {
     if(scanner->readSymbol(F_IS)){
-        out_image = get<SFImage>(readProtoField(SFIMAGE));
+        out_image = stdx::get<SFImage>(readProtoField(SFIMAGE));
     } else {
         readSFInt32(out_image.width);
         readSFInt32(out_image.height);
@@ -2376,7 +2370,7 @@ void VRMLParserImpl::readSFImage(SFImage& out_image)
 void VRMLParserImpl::readSFTime(SFTime& out_value)
 {
     if(scanner->readSymbol( F_IS )){
-        out_value = get<SFTime>(readProtoField(SFTIME));
+        out_value = stdx::get<SFTime>(readProtoField(SFTIME));
     } else {
         out_value = scanner->readDoubleEx("illegal time value");
     }
@@ -2386,7 +2380,7 @@ void VRMLParserImpl::readSFTime(SFTime& out_value)
 void VRMLParserImpl::readMFTime(MFTime& out_value)
 {
     if(scanner->readSymbol(F_IS)){
-        out_value = get<MFTime>(readProtoField(MFTIME));
+        out_value = stdx::get<MFTime>(readProtoField(MFTIME));
     } else {
         out_value.clear();
         if(!scanner->readChar('[' )){
@@ -2404,7 +2398,7 @@ void VRMLParserImpl::readMFTime(MFTime& out_value)
 void VRMLParserImpl::readSFNode(SFNode& out_node, VRMLNodeCategory nodeCategory)
 {
     if(scanner->readSymbol(F_IS)){
-        out_node = get<SFNode>(readProtoField(SFNODE));
+        out_node = stdx::get<SFNode>(readProtoField(SFNODE));
     } else if(scanner->readSymbol(V_NULL)){
         out_node = 0;
     } else {
@@ -2416,7 +2410,7 @@ void VRMLParserImpl::readSFNode(SFNode& out_node, VRMLNodeCategory nodeCategory)
 SFNode VRMLParserImpl::readSFNode(VRMLNodeCategory nodeCategory)
 {
     if(scanner->readSymbol(F_IS)){
-        return get<SFNode>(readProtoField(SFNODE));
+        return stdx::get<SFNode>(readProtoField(SFNODE));
     } else if(scanner->readSymbol(V_NULL)){
         return 0;
     } else {
@@ -2428,7 +2422,7 @@ SFNode VRMLParserImpl::readSFNode(VRMLNodeCategory nodeCategory)
 void VRMLParserImpl::readMFNode(MFNode& out_nodes, VRMLNodeCategory nodeCategory)
 {
     if(scanner->readSymbol(F_IS)){
-        out_nodes = get<MFNode>(readProtoField(MFNODE));
+        out_nodes = stdx::get<MFNode>(readProtoField(MFNODE));
     } else {
         SFNode sfnode;
         out_nodes.clear();
@@ -2722,17 +2716,15 @@ void VRMLParserImpl::setSymbols()
 void VRMLParserImpl::convertUrl(MFString& urls)
 {
     for(MFString::iterator it=urls.begin(); it!=urls.end(); it++){
-        filesystem::path path;
+        stdx::filesystem::path path;
         string chkFile("");
         if(isFileProtocol(*it)){
-            path = filesystem::path(removeURLScheme(*it));
-            path.normalize();
+            path = stdx::filesystem::lexically_normal(removeURLScheme(*it));
 
             // Relative path check & translate to absolute path 
             if(!exists(path)){
-                filesystem::path parentPath(scanner->filename);
-                path = parentPath.parent_path() / path;
-                path.normalize();
+                stdx::filesystem::path parentPath(scanner->filename);
+                path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
             }
             chkFile = getAbsolutePathString(path);
         } else {

@@ -29,6 +29,8 @@ public:
     virtual void setDefaultCreaseAngle(double theta) override;
     virtual SgNode* load(const std::string& filename) override;
 
+    SgNode* load(const std::string& filename, bool& out_isSupportedFormat);
+
 private:
     SceneLoaderImpl* impl;
 };

@@ -41,17 +41,17 @@ bool CustomJointPathBase::calcInverseKinematics(const Position& T)
     bool solved = false;
     if(!isReversed_){
         Position T_relative = baseLink()->T().inverse(Eigen::Isometry) * T;
-        solved = calcCustomInverseKinematics(T_relative);
+        solved = calcCustomInverseKinematics(T, T_relative);
     } else {
         Position T_relative = T.inverse(Eigen::Isometry) * baseLink()->T();
-        solved = calcCustomInverseKinematics(T_relative);
+        solved = calcCustomInverseKinematics(T, T_relative);
     }
 
     return solved;
 }
 
 
-bool CustomJointPathBase::hasAnalyticalIK() const
+bool CustomJointPathBase::hasCustomIK() const
 {
     return calcCustomInverseKinematics != nullptr;
 }

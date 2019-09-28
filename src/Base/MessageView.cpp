@@ -319,12 +319,6 @@ void MessageView::put(const std::string& message, int type)
 }
 
 
-void MessageView::put(const boost::format& message, int type)
-{
-    impl->put(type, message.str().c_str(), false, false, false);
-}
-
-
 void MessageView::put(const QString& message, int type)
 {
     impl->put(type, message, false, false, false);
@@ -343,12 +337,6 @@ void MessageView::putln(const std::string& message, int type)
 }
 
 
-void MessageView::putln(const boost::format& message, int type)
-{
-    impl->put(type, message.str().c_str(), true, false, false);
-}
-
-
 void MessageView::putln(const char* message, int type)
 {
     impl->put(type, message, true, false, false);
@@ -364,12 +352,6 @@ void MessageView::putln(const QString& message, int type)
 void MessageView::notify(const std::string& message, int type)
 {
     impl->put(type, message.c_str(), true, true, false);
-}
-
-
-void MessageView::notify(const boost::format& message, int type)
-{
-    impl->put(type, message.str().c_str(), true, true, false);
 }
 
 
@@ -400,13 +382,6 @@ void MessageView::put(int type, const std::string& message)
 
 
 //! \deprecated
-void MessageView::put(int type, const boost::format& message)
-{
-    impl->put(type, message.str().c_str(), false, false, false);
-}
-
-
-//! \deprecated
 void MessageView::put(int type, const QString& message)
 {
     impl->put(type, message, false, false, false);
@@ -424,13 +399,6 @@ void MessageView::putln(int type, const char* message)
 void MessageView::putln(int type, const std::string& message)
 {
     impl->put(type, message.c_str(), true, false, false);
-}
-
-
-//! \deprecated
-void MessageView::putln(int type, const boost::format& message)
-{
-    impl->put(type, message.str().c_str(), true, false, false);
 }
 
 
@@ -568,20 +536,8 @@ void MessageView::flush()
 void MessageViewImpl::flush()
 {
     if(QThread::currentThreadId() == mainThreadId){
-
         ++flushingRef;
-
-        const int maxTime = 10;
-        
-#if defined(Q_OS_WIN32) || defined(Q_OS_MAC)
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, maxTime);
-        //QCoreApplication::processEvents();
-#else
-        //QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-        //while(QCoreApplication::hasPendingEvents()){
-        QCoreApplication::processEvents(QEventLoop::AllEvents, maxTime);
-        //}
-#endif
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers, 1.0);
         --flushingRef;
         if(flushingRef == 0){
             sigFlushFinished_();
@@ -1070,12 +1026,6 @@ void cnoid::showMessageBox(const std::string& message)
 }
 
 
-void cnoid::showMessageBox(const boost::format& message)
-{
-    showMessageBox(QString(message.str().c_str()));
-}
-
-
 void cnoid::showWarningDialog(const QString& message)
 {
     QMessageBox::warning(MainWindow::instance(), _("Warning"), message);
@@ -1089,12 +1039,6 @@ void cnoid::showWarningDialog(const char* message)
 void cnoid::showWarningDialog(const std::string& message)
 {
     showWarningDialog(QString(message.c_str()));
-}
-
-
-void cnoid::showWarningDialog(const boost::format& message)
-{
-    showWarningDialog(QString(message.str().c_str()));
 }
 
 

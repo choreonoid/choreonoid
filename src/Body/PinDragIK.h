@@ -28,14 +28,15 @@ public:
     void setTargetLink(Link* targetLink, bool isAttitudeEnabled = false);
     void setJointWeight(int jointId, double weight);
 
-    void setPin(Link* link, InverseKinematics::AxisSet axes = InverseKinematics::TRANSLATION_3D, double weight = 1.0);
-    InverseKinematics::AxisSet pinAxes(Link* link);
+    enum AxisSet { NO_AXES = 0, TRANSLATION_3D = 0x1, ROTATION_3D = 0x2, TRANSFORM_6D = 0x3 };
+    void setPin(Link* link, AxisSet axes = TRANSLATION_3D, double weight = 1.0);
+    AxisSet pinAxes(Link* link);
     void clearPins();
     int numPinnedLinks();
             
-    virtual void setIKErrorThresh(double e);
-    virtual bool hasAnalyticalIK();
-    virtual InverseKinematics::AxisSet targetAxes() const;
+    void setIKErrorThresh(double e);
+    bool hasAnalyticalIK();
+    AxisSet targetAxes() const;
     void setSRInverseParameters(double k0, double w0);
     void enableJointRangeConstraints(bool on);
 

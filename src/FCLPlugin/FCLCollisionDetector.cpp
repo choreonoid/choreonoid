@@ -8,9 +8,9 @@
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
+#include <cnoid/stdx/optional>
 #include <fcl/narrowphase/collision.h>
 #include <fcl/geometry/bvh/BVH_model.h>
-#include <boost/optional.hpp>
 #include <memory>
 
 using namespace std;
@@ -48,7 +48,7 @@ CNOID_IMPLEMENT_PLUGIN_ENTRY(FCLPlugin);
 
 CollisionDetectorPtr factory()
 {
-    return std::make_shared<FCLCollisionDetector>();
+    return new FCLCollisionDetector;
 }
 
 struct FactoryRegistration
@@ -172,9 +172,9 @@ int FCLCollisionDetector::numGeometries() const
 }
 
 
-int FCLCollisionDetector::addGeometry(SgNodePtr geometry)
+int FCLCollisionDetector::addGeometry(SgNode* geometry)
 {
-    return impl->addGeometry(geometry.get());
+    return impl->addGeometry(geometry);
 }
 
 
@@ -221,7 +221,7 @@ void FCLCollisionDetectorImpl::addMesh(CollisionObjectEx* model)
         if(mesh->primitiveType() != SgMesh::MESH){
             bool doAddPrimitive = false;
             Vector3 scale;
-            boost::optional<Vector3> translation;
+            stdx::optional<Vector3> translation;
             if(!meshExtractor->isCurrentScaled()){
                 scale.setOnes();
                 doAddPrimitive = true;
@@ -341,7 +341,7 @@ bool FCLCollisionDetector::enableGeometryCache(bool on)
 }
 
 
-void FCLCollisionDetector::clearGeometryCache(SgNodePtr geometry)
+void FCLCollisionDetector::clearGeometryCache(SgNode* geometry)
 {
     
 }

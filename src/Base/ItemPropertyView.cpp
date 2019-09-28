@@ -15,6 +15,8 @@
 #include "Buttons.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExecutablePath>
+#include <cnoid/stdx/variant>
+#include <cnoid/stdx/filesystem>
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QBoxLayout>
@@ -26,15 +28,13 @@
 #include <QKeyEvent>
 #include <QApplication>
 #include <QFileDialog>
-#include <boost/variant.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/filesystem.hpp>
+#include <cmath>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -69,13 +69,14 @@ struct Double {
     };
 };
 
-typedef boost::variant<bool, Int, Double, string, Selection, FilePathProperty> ValueVariant;
+typedef stdx::variant<bool, Int, Double, string, Selection, FilePathProperty> ValueVariant;
 
-typedef boost::variant<std::function<bool(bool)>,
-                       std::function<bool(int)>,
-                       std::function<bool(double)>,
-                       std::function<bool(const string&)>
-                       > FunctionVariant;
+typedef stdx::variant<
+    std::function<bool(bool)>,
+    std::function<bool(int)>,
+    std::function<bool(double)>,
+    std::function<bool(const string&)>
+    > FunctionVariant;
 
 template<class ValueType> class ReturnTrue {
 public:
@@ -199,12 +200,12 @@ public:
         PropertyItem* item = tableWidget->itemFromIndex(index);
         if(item){
             ValueVariant& value = item->value;
-            switch(value.which()){
+            switch(stdx::get_variant_index(value)){
 
             case TYPE_INT:
                 editor = QStyledItemDelegate::createEditor(parent, option, index);
                 if(QSpinBox* spinBox = dynamic_cast<QSpinBox*>(editor)){
-                    Int& v = boost::get<Int>(value);
+                    Int& v = stdx::get<Int>(value);
                     spinBox->setRange(v.min, v.max);
                 }
                 break;
@@ -212,7 +213,7 @@ public:
             case TYPE_DOUBLE:
                 editor = QStyledItemDelegate::createEditor(parent, option, index);
                 if(QDoubleSpinBox* doubleSpinBox = dynamic_cast<QDoubleSpinBox*>(editor)){
-                    Double& v = boost::get<Double>(value);
+                    Double& v = stdx::get<Double>(value);
                     if(v.decimals >= 0){
                         doubleSpinBox->setDecimals(v.decimals);
                         doubleSpinBox->setSingleStep(pow(10.0, -v.decimals));
@@ -236,9 +237,9 @@ public:
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override
     {
         PropertyItem* item = tableWidget->itemFromIndex(index);
-        if(item && item->value.which() == TYPE_FILEPATH){
+        if(item && (stdx::get_variant_index(item->value) == TYPE_FILEPATH)){
             if(FilePathEditor* fpEditor = dynamic_cast<FilePathEditor*>(editor)){
-                fpEditor->setValue(boost::get<FilePathProperty>(item->value));
+                fpEditor->setValue(stdx::get<FilePathProperty>(item->value));
                 return;
             }
         }
@@ -248,7 +249,7 @@ public:
     virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override
     {
         PropertyItem* item = tableWidget->itemFromIndex(index);
-        if(item && item->value.which() == TYPE_FILEPATH){
+        if(item && (stdx::get_variant_index(item->value) == TYPE_FILEPATH)){
             if(FilePathEditor* fpEditor = dynamic_cast<FilePathEditor*>(editor)){
                 item->setData(Qt::EditRole, fpEditor->value());
                 return;
@@ -268,9 +269,9 @@ public:
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override
     {
         PropertyItem* item = tableWidget->itemFromIndex(index);
-        if(item && item->value.which() == TYPE_DOUBLE){
+        if(item && (stdx::get_variant_index(item->value) == TYPE_DOUBLE)){
             int& d = const_cast<int&>(decimals);
-            d = boost::get<Double>(item->value).decimals;
+            d = stdx::get<Double>(item->value).decimals;
         }
         QStyledItemDelegate::paint(painter, option, index);
     }
@@ -531,15 +532,15 @@ PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value, F
 QVariant PropertyItem::data(int role) const
 {
     if(role == Qt::DisplayRole || role == Qt::EditRole){
-        switch(value.which()){
-        case TYPE_BOOL:      return boost::get<bool>(value);
-        case TYPE_INT:       return boost::get<Int>(value).value;
-        case TYPE_DOUBLE:    return boost::get<Double>(value).value;
-        case TYPE_STRING:    return boost::get<string>(value).c_str();
+        switch(stdx::get_variant_index(value)){
+        case TYPE_BOOL:      return stdx::get<bool>(value);
+        case TYPE_INT:       return stdx::get<Int>(value).value;
+        case TYPE_DOUBLE:    return stdx::get<Double>(value).value;
+        case TYPE_STRING:    return stdx::get<string>(value).c_str();
 
         case TYPE_SELECTION:
             {
-                const Selection& s = boost::get<Selection>(value);
+                const Selection& s = stdx::get<Selection>(value);
                 if(role == Qt::DisplayRole){
                     return s.selectedLabel();
                 } else if(role == Qt::EditRole){
@@ -554,7 +555,7 @@ QVariant PropertyItem::data(int role) const
 
         case TYPE_FILEPATH:
             {
-                const FilePathProperty& f = boost::get<FilePathProperty>(value);
+                const FilePathProperty& f = stdx::get<FilePathProperty>(value);
                 string filename = f.filename();
                 if(!f.isFullpathDisplayMode()){
                     filename = filesystem::path(filename).filename().string();
@@ -563,8 +564,8 @@ QVariant PropertyItem::data(int role) const
             }
         }
     } else if(role == Qt::ToolTipRole){
-        if(value.which() == TYPE_FILEPATH){
-            const FilePathProperty& f = boost::get<FilePathProperty>(value);
+        if(stdx::get_variant_index(value) == TYPE_FILEPATH){
+            const FilePathProperty& f = stdx::get<FilePathProperty>(value);
             if(!f.isFullpathDisplayMode()){
                 string fullpath = f.filename();
                 string filename = filesystem::path(fullpath).filename().string();
@@ -588,42 +589,37 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 
     if(role == Qt::EditRole){
 
-        try {
-            switch(qvalue.type()){
+        switch(qvalue.type()){
                 
-            case QVariant::Bool:
-                accepted = boost::get<std::function<bool(bool)>>(func)(qvalue.toBool());
-                break;
-                
-            case QVariant::String:
-                accepted = boost::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
-                break;
-                
-            case QVariant::Int:
-                accepted = boost::get<std::function<bool(int)>>(func)(qvalue.toInt());
-                break;
-                
-            case QVariant::Double:
-                accepted = boost::get<std::function<bool(double)>>(func)(qvalue.toDouble());
-                break;
-                
-            case QVariant::StringList:
-            {
-                const QStringList& slist = qvalue.toStringList();
-                if(!slist.empty()){
-                    accepted = boost::get<std::function<bool(int)>>(func)(slist[0].toInt());
-                }
-            }
+        case QVariant::Bool:
+            accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
             break;
-            
-            default:
-                break;
+                
+        case QVariant::String:
+            accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
+            break;
+                
+        case QVariant::Int:
+            accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
+            break;
+                
+        case QVariant::Double:
+            accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
+            break;
+                
+        case QVariant::StringList:
+        {
+            const QStringList& slist = qvalue.toStringList();
+            if(!slist.empty()){
+                accepted = stdx::get<std::function<bool(int)>>(func)(slist[0].toInt());
             }
-            
-        } catch(const boost::bad_lexical_cast& ex) {
-            
         }
-        
+        break;
+            
+        default:
+            break;
+        }
+            
         if(accepted){
             if(!itemPropertyViewImpl->updateRequestedDuringPropertyEditing){
                 itemPropertyViewImpl->currentItem->notifyUpdate();
@@ -675,13 +671,8 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     QHeaderView* vh = tableWidget->verticalHeader();
     hh->hide();
     vh->hide();
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    hh->setResizeMode(QHeaderView::Interactive);
-    vh->setResizeMode(QHeaderView::ResizeToContents);    
-#else
     hh->setSectionResizeMode(QHeaderView::Interactive);
     vh->setSectionResizeMode(QHeaderView::ResizeToContents);
-#endif
     hh->setStretchLastSection(true);
 
     QStyledItemDelegate* delegate = new CustomizedItemDelegate(tableWidget);

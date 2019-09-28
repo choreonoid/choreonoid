@@ -10,8 +10,8 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
-#include <Eigen/StdVector>
-#include <boost/dynamic_bitset.hpp>
+#include <fmt/format.h>
+#include <bitset>
 #include <unordered_map>
 #include <iostream>
 
@@ -23,18 +23,19 @@
 
 #include <GL/glu.h>
 
+#include "gettext.h"
+
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-const bool USE_DISPLAY_LISTS = true;
-const bool USE_VBO = false;
+const bool USE_RIGHT_BOTTOM_PIXEL_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
-typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Array;
+typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
 struct SgObjectPtrHash {
     std::hash<SgObject*> hash;
@@ -56,48 +57,24 @@ struct TransparentShapeInfo
 typedef std::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
 
 
-class DisplayListResource : public Referenced
-{
-public:
-    GLuint listID;
-    GLuint listIDforPicking;
-    bool useIDforPicking;
-    vector<TransparentShapeInfoPtr> transparentShapes;
-    ResourceMap resourceMap;
-    ScopedConnection updateConnection;
-
-    DisplayListResource(){
-        listID = 0;
-        useIDforPicking = false;
-        listIDforPicking = 0;
-    }
-    ~DisplayListResource() {
-        if(listID){
-            glDeleteLists(listID, 1);
-        }
-        if(listIDforPicking){
-            glDeleteLists(listIDforPicking, 1);
-        }
-    }
-};
-    
-    
 /*
   A set of variables associated with a scene node
 */
-class ShapeResource : public Referenced
+class VertexResource : public Referenced
 {
 public:
-    GLuint bufferNames[4];
-    GLuint size;
+    GLuint bufferNames[5];
+    GLuint numVertices;
+    GLuint normalVisualizationSize;
+    ScopedConnection updateConnection;
 
-    ShapeResource() {
-        for(int i=0; i < 4; ++i){
+    VertexResource() {
+        for(int i=0; i < 5; ++i){
             bufferNames[i] = GL_INVALID_VALUE;
         }
     }
-    ~ShapeResource() {
-        for(int i=0; i < 4; ++i){
+    ~VertexResource() {
+        for(int i=0; i < 5; ++i){
             if(bufferNames[i] != GL_INVALID_VALUE){
                 glDeleteBuffers(1, &bufferNames[i]);
             }
@@ -105,10 +82,11 @@ public:
     }
     GLuint& vertexBufferName() { return bufferNames[0]; }
     GLuint& normalBufferName() { return bufferNames[1]; }
-    GLuint& indexBufferName() { return bufferNames[2]; }
+    GLuint& colorBufferName() { return bufferNames[2]; }
     GLuint& texCoordBufferName() { return bufferNames[3]; }
+    GLuint& normalVisualizationVertexBufferName(){ return bufferNames[4]; }
 };
-typedef ref_ptr<ShapeResource> ShapeResourcePtr;
+typedef ref_ptr<VertexResource> VertexResourcePtr;
 
 
 class TextureResource : public Referenced
@@ -120,6 +98,7 @@ public:
     int width;
     int height;
     int numComponents;
+    ScopedConnection updateConnection;
         
     TextureResource(){
         isBound = false;
@@ -155,9 +134,9 @@ public:
 
     Affine3Array Vstack; // stack of the model/view matrices
 
-    typedef vector<Vector4f, Eigen::aligned_allocator<Vector4f> > ColorArray;
+    typedef vector<Vector4f, Eigen::aligned_allocator<Vector4f>> ColorArray;
         
-    struct Buf {
+    struct TemporaryBuf {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         SgVertexArray vertices;
         SgIndexArray triangles;
@@ -165,10 +144,10 @@ public:
         ColorArray colors;
         SgTexCoordArray texCoords;
         vector<char> scaledImageBuf;
+        bool used;
+        TemporaryBuf() : used(false) { }
     };
-    std::unique_ptr<Buf> buf;
-
-    int currentDisplayListResourceTopViewMatrixIndex;
+    std::unique_ptr<TemporaryBuf> tmpbuf;
 
     Affine3 lastViewMatrix;
     Matrix4 lastProjectionMatrix;
@@ -181,12 +160,13 @@ public:
     ResourceMap resourceMaps[2];
     ResourceMap* currentResourceMap;
     ResourceMap* nextResourceMap;
-    vector<SgInvariantGroup*> invariantGroupsToUpdate;
+    vector<SgObject*> updatedSceneObjects;
+
     int currentResourceMapIndex;
-    DisplayListResource* currentDisplayListResource;
 
     int numSystemLights;
     int prevNumLights;
+    int lightingMode;
     bool defaultLighting;
     bool isHeadLightLightingFromBackEnabled;
 
@@ -224,7 +204,7 @@ public:
         NUM_STATE_FLAGS
     };
 
-    boost::dynamic_bitset<> stateFlag;
+    bitset<NUM_STATE_FLAGS> stateFlag;
         
     Vector3f currentColor;
     Vector4f diffuseColor;
@@ -249,9 +229,8 @@ public:
     double normalLength;
 
     bool isCompiling;
-    bool isNewDisplayListDoubleRenderingEnabled;
-    bool isNewDisplayListCreated;
     bool isPicking;
+    bool isRenderingOutline;
 
     GLdouble pickX;
     GLdouble pickY;
@@ -281,7 +260,7 @@ public:
     ~GL1SceneRendererImpl();
     void initialize();
     bool initializeGL();
-    void beginRendering(bool doRenderingCommands);
+    void beginRendering();
     void beginActualRendering(SgCamera* camera);
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(const Affine3& cameraPosition);
@@ -297,8 +276,6 @@ public:
 
     void renderGroup(SgGroup* group);
     void renderSwitch(SgSwitch* node);
-    void renderInvariantGroup(SgInvariantGroup* group);
-    void renderDisplayListSubTree(SgInvariantGroup* group, DisplayListResource* resource, GLuint& listID);
     void renderTransform(SgTransform* transform);
     void renderShape(SgShape* shape);
     void renderUnpickableGroup(SgUnpickableGroup* group);
@@ -306,11 +283,16 @@ public:
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void renderTransparentShapes();
     void putMeshData(SgMesh* mesh);
+    VertexResource* findOrCreateVertexResource(SgObject* object, bool& out_found);
     void renderMesh(SgMesh* mesh, bool hasTexture);
-    void writeVertexBuffers(SgMesh* mesh, ShapeResource* resource, bool hasTexture);
+    void setupMeshResource(SgMesh* mesh, VertexResource* resource, bool hasTexture);
+    void renderNormalVisualizationLines(SgMesh* mesh, VertexResource* resource);
     void renderPointSet(SgPointSet* pointSet);
-    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
-    void renderLineSet(SgLineSet* lineSet);        
+    void setupPointSetResource(SgPointSet* lineSet, VertexResource* resource);
+    void renderLineSet(SgLineSet* lineSet);
+    void setupLineSetResource(SgLineSet* lineSet, VertexResource* resource);
+    void renderPlot(
+        SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource);
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
@@ -335,13 +317,6 @@ public:
 }
 
 
-GL1SceneRenderer::GL1SceneRenderer()
-{
-    impl = new GL1SceneRendererImpl(this);
-    impl->initialize();
-}
-
-
 GL1SceneRenderer::GL1SceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
@@ -361,7 +336,7 @@ void GL1SceneRendererImpl::initialize()
 {
     Vstack.reserve(16);
     
-    buf.reset(new Buf);
+    tmpbuf.reset(new TemporaryBuf);
 
     doUnusedResourceCheck = true;
     currentResourceMapIndex = 0;
@@ -378,8 +353,9 @@ void GL1SceneRendererImpl::initialize()
     prevNumLights = 0;
     isHeadLightLightingFromBackEnabled = false;
 
-    prevFog = 0;
+    prevFog = nullptr;
 
+    lightingMode = GLSceneRenderer::FULL_LIGHTING;
     defaultLighting = true;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
@@ -393,20 +369,16 @@ void GL1SceneRendererImpl::initialize()
     normalLength = 0.0;
 
     isCompiling = false;
-    isNewDisplayListDoubleRenderingEnabled = false;
-    isNewDisplayListCreated = false;
     isPicking = false;
+    isRenderingOutline = false;
     pickedPoint.setZero();
 
-    stateFlag.resize(NUM_STATE_FLAGS, false);
     clearGLState();
 
     os_ = &nullout();
 
     renderingFunctions.setFunction<SgGroup>(
         [&](SgGroup* node){ renderGroup(node); });
-    renderingFunctions.setFunction<SgInvariantGroup>(
-        [&](SgInvariantGroup* node){ renderInvariantGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
     renderingFunctions.setFunction<SgSwitch>(
@@ -449,13 +421,13 @@ SceneRenderer::NodeFunctionSet* GL1SceneRenderer::renderingFunctions()
 
 void GL1SceneRenderer::setOutputStream(std::ostream& os)
 {
+    GLSceneRenderer::setOutputStream(os);
     impl->os_ = &os;
 }
 
 
 bool GL1SceneRenderer::initializeGL()
 {
-    GLSceneRenderer::initializeGL();
     return impl->initializeGL();
 }
 
@@ -466,11 +438,20 @@ bool GL1SceneRendererImpl::initializeGL()
         return false;
     }
 
+    const GLubyte* version = glGetString(GL_VERSION);
+    const GLubyte* vendor = glGetString(GL_VENDOR);
+    const GLubyte* renderer = glGetString(GL_RENDERER);
+    os() << fmt::format(_("OpenGL {0} ({1} {2}) is available for the \"{3}\" view."),
+                        version, vendor, renderer, self->name()) << endl;
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
     setFrontCCW(true);
 
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
+
+    GLfloat defaultAmbient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, defaultAmbient);
     
     glDisable(GL_FOG);
     isCurrentFogUpdated = false;
@@ -487,20 +468,27 @@ void GL1SceneRenderer::flush()
 }
 
 
+void GL1SceneRenderer::setViewport(int x, int y, int width, int height)
+{
+    glViewport(x, y, width, height);
+    updateViewportInformation(x, y, width, height);
+}
+
+
 void GL1SceneRenderer::requestToClearResources()
 {
     impl->isResourceClearRequested = true;
 }
 
 
-void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
+void GL1SceneRendererImpl::beginRendering()
 {
     isCheckingUnusedResources = isPicking ? false : doUnusedResourceCheck;
 
     if(isResourceClearRequested){
         resourceMaps[0].clear();
         resourceMaps[1].clear();
-        invariantGroupsToUpdate.clear();
+        updatedSceneObjects.clear();
         hasValidNextResourceMap = false;
         isCheckingUnusedResources = false;
         isResourceClearRequested = false;
@@ -508,34 +496,31 @@ void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
     if(hasValidNextResourceMap){
         currentResourceMapIndex = 1 - currentResourceMapIndex;
         currentResourceMap = &resourceMaps[currentResourceMapIndex];
-        for(auto& group : invariantGroupsToUpdate){
-            currentResourceMap->erase(group);
+
+        for(auto& object : updatedSceneObjects){
+            currentResourceMap->erase(object);
         }
-        invariantGroupsToUpdate.clear();
+        updatedSceneObjects.clear();
+
         nextResourceMap = &resourceMaps[1 - currentResourceMapIndex];
         hasValidNextResourceMap = false;
     }
-    currentDisplayListResource = 0;
 
-    if(doRenderingCommands){
-        if(isPicking){
-            currentNodePath.clear();
-            pickingNodePathList.clear();
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        } else {
-            const Vector3f& c = self->backgroundColor();
-            glClearColor(c[0], c[1], c[2], 1.0f);
-        }
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if(isPicking){
+        currentNodePath.clear();
+        pickingNodePathList.clear();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    } else {
+        const Vector3f& c = self->backgroundColor();
+        glClearColor(c[0], c[1], c[2], 1.0f);
     }
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     self->extractPreprocessedNodes();
 
-    if(doRenderingCommands){
-        SgCamera* camera = self->currentCamera();
-        if(camera){
-            beginActualRendering(camera);
-        }
+    SgCamera* camera = self->currentCamera();
+    if(camera){
+        beginActualRendering(camera);
     }
 }
 
@@ -574,8 +559,6 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
         }
     }
 
-    isNewDisplayListCreated = false;
-            
     clearGLState();
     
     setColor(self->defaultColor());
@@ -635,12 +618,17 @@ void GL1SceneRendererImpl::renderLights(const Affine3& cameraPosition)
         glDisable(GL_LIGHT1);
     } else {
         renderLight(headLight, GL_LIGHT0, cameraPosition);
+        bool isBackLightActive = false;
         if(isHeadLightLightingFromBackEnabled){
             if(SgDirectionalLight* directionalHeadLight = dynamic_cast<SgDirectionalLight*>(headLight)){
                 SgDirectionalLight lightFromBack(*directionalHeadLight);
                 lightFromBack.setDirection(-directionalHeadLight->direction());
                 renderLight(&lightFromBack, GL_LIGHT1, cameraPosition);
+                isBackLightActive = true;
             }
+        }
+        if(!isBackLightActive){
+            glDisable(GL_LIGHT1);
         }
     }
     
@@ -730,7 +718,7 @@ void GL1SceneRendererImpl::renderLight(const SgLight* light, GLint id, const Aff
 
 void GL1SceneRendererImpl::renderFog()
 {
-    SgFog* fog = 0;
+    SgFog* fog = nullptr;
     if(self->isFogEnabled()){
         int n = self->numFogs();
         if(n > 0){
@@ -784,8 +772,8 @@ void GL1SceneRendererImpl::endRendering()
         hasValidNextResourceMap = true;
     }
 
-    if(isNewDisplayListDoubleRenderingEnabled && isNewDisplayListCreated){
-        self->scene()->notifyUpdate();
+    if(tmpbuf->used){
+        tmpbuf.reset(new TemporaryBuf);
     }
 }
 
@@ -802,7 +790,7 @@ void GL1SceneRendererImpl::doRender()
         renderingFunctions.updateDispatchTable();
     }
     
-    beginRendering(true);
+    beginRendering();
 
     renderingFunctions.dispatch(self->sceneRoot());
 
@@ -837,8 +825,21 @@ bool GL1SceneRendererImpl::doPick(int x, int y)
     glDisable(GL_DITHER);
     glDisable(GL_FOG);
 
+    int vx, vy, vw, vh;
+    int px, py;
+
+    if(USE_RIGHT_BOTTOM_PIXEL_FOR_PICKING){
+        self->getViewport(vx, vy, vw, vh);
+        glViewport(vw - x - 1, -y, vw, vh);
+        px = vw - 1;
+        py = 0;
+    } else {
+        px = x;
+        py = y;
+    }
+        
     if(!SHOW_IMAGE_FOR_PICKING){
-        glScissor(x, y, 1, 1);
+        glScissor(px, py, 1, 1);
         glEnable(GL_SCISSOR_TEST);
     }
     
@@ -849,7 +850,7 @@ bool GL1SceneRendererImpl::doPick(int x, int y)
     glPopAttrib();
 
     GLfloat color[4];
-    glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
+    glReadPixels(px, py, 1, 1, GL_RGBA, GL_FLOAT, color);
     if(SHOW_IMAGE_FOR_PICKING){
         color[2] = 0.0f;
     }
@@ -859,11 +860,15 @@ bool GL1SceneRendererImpl::doPick(int x, int y)
 
     if(0 < id && id < pickingNodePathList.size()){
         GLfloat depth;
-        glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        glReadPixels(px, py, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
         Vector3 projected;
         if(self->unproject(x, y, depth, pickedPoint)){
             pickedNodePath = *pickingNodePathList[id];
         }
+    }
+
+    if(USE_RIGHT_BOTTOM_PIXEL_FOR_PICKING){
+        glViewport(vx, vy, vw, vh);
     }
 
     return !pickedNodePath.empty();
@@ -953,101 +958,6 @@ void GL1SceneRendererImpl::renderSwitch(SgSwitch* node)
     }
 }
 
-void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
-{
-    if(!USE_DISPLAY_LISTS || isCompiling){
-        renderGroup(group);
-
-    } else {
-        DisplayListResource* resource;
-        auto p = currentResourceMap->find(group);
-        if(p == currentResourceMap->end()){
-            resource = new DisplayListResource();
-            currentResourceMap->insert(ResourceMap::value_type(group, resource));
-            resource->updateConnection.reset(
-                group->sigUpdated().connect(
-                    [&, group](const SgUpdate& update){
-                        invariantGroupsToUpdate.push_back(group);
-                    }));
-        } else {
-            resource = static_cast<DisplayListResource*>(p->second.get());
-        }
-
-        if(!resource->listID && !isPicking){
-            currentDisplayListResource = resource;
-            currentDisplayListResourceTopViewMatrixIndex = Vstack.size() - 1;
-
-            resource->listID = glGenLists(1);
-            if(resource->listID){
-                renderDisplayListSubTree(group, resource, resource->listID);
-
-                if(stateFlag[LIGHTING] || stateFlag[CURRENT_COLOR]){
-                    resource->useIDforPicking = true;
-                }
-                isNewDisplayListCreated = true;
-            }
-        }
-
-        GLuint listID = resource->listID;
-
-        if(listID){
-            if(isPicking && resource->useIDforPicking){
-                if(!resource->listIDforPicking){
-                    currentDisplayListResource = resource;
-                    currentDisplayListResourceTopViewMatrixIndex = Vstack.size() - 1;
-                    resource->listIDforPicking = glGenLists(1);
-                    if(resource->listIDforPicking){
-                        renderDisplayListSubTree(group, resource, resource->listIDforPicking);
-                    }
-                }
-                listID = resource->listIDforPicking;
-            }
-            if(listID){
-                const unsigned int pickId = pushPickName(group);
-                glPushAttrib(GL_ENABLE_BIT);
-                glCallList(listID);
-                glPopAttrib();
-                clearGLState();
-                popPickName();
-
-                const vector<TransparentShapeInfoPtr>& transparentShapes = resource->transparentShapes;
-                if(!transparentShapes.empty()){
-                    const Affine3& V = Vstack.back();
-                    for(size_t i=0; i < transparentShapes.size(); ++i){
-                        const TransparentShapeInfo& src = *transparentShapes[i];
-                        TransparentShapeInfoPtr info = make_shared_aligned<TransparentShapeInfo>();
-                        info->shape = src.shape;
-                        info->pickId = pickId;
-                        info->V = V * src.V;
-                        transparentShapeInfos.push_back(info);
-                    }
-                }
-            }
-
-            if(isCheckingUnusedResources){
-                nextResourceMap->insert(ResourceMap::value_type(group, resource));
-                nextResourceMap->insert(resource->resourceMap.begin(), resource->resourceMap.end());
-            }
-        }
-    }
-    currentDisplayListResource = 0;
-}
-
-
-void GL1SceneRendererImpl::renderDisplayListSubTree(SgInvariantGroup* group, DisplayListResource* resource, GLuint& listID)
-{
-    glNewList(listID, GL_COMPILE);
-
-    isCompiling = true;
-    auto orgNextResourceMap = nextResourceMap;
-    nextResourceMap = &resource->resourceMap;
-    clearGLState();
-    renderGroup(group);
-    nextResourceMap = orgNextResourceMap;
-    isCompiling = false;
-    glEndList();
-}    
-
 
 void GL1SceneRendererImpl::renderTransform(SgTransform* transform)
 {
@@ -1110,22 +1020,17 @@ void GL1SceneRendererImpl::renderShape(SgShape* shape)
                 popPickName();
             } else {
                 SgMaterial* material = shape->material();
-                SgTexture* texture = isTextureEnabled ? shape->texture() : 0;
+                SgTexture* texture = isTextureEnabled ? shape->texture() : nullptr;
                 
                 if((material && material->transparency() > 0.0)
                    /* || (texture && texture->constImage().hasAlphaComponent()) */){
                     // A transparent shape is rendered later
                     TransparentShapeInfoPtr info = make_shared_aligned<TransparentShapeInfo>();
                     info->shape = shape;
-                    if(isCompiling){
-                        info->V = Vstack[currentDisplayListResourceTopViewMatrixIndex].inverse() * Vstack.back();
-                        currentDisplayListResource->transparentShapes.push_back(info);
-                    } else {
-                        info->V = Vstack.back();
-                        info->pickId = pushPickName(shape, false);
-                        popPickName();
-                        transparentShapeInfos.push_back(info);
-                    }
+                    info->V = Vstack.back();
+                    info->pickId = pushPickName(shape, false);
+                    popPickName();
+                    transparentShapeInfos.push_back(info);
                 } else {
                     pushPickName(shape);
                     bool hasTexture = false;
@@ -1200,13 +1105,18 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     bool doLoadTexImage = false;
     bool doReloadTexImage = false;
 
-    auto p = currentResourceMap->find(sgImage);
     TextureResource* resource;
-    if(p != currentResourceMap->end()){
-        resource = static_cast<TextureResource*>(p->second.get());
+    auto it = currentResourceMap->find(sgImage);
+    if(it != currentResourceMap->end()){
+        resource = static_cast<TextureResource*>(it->second.get());
     } else {
         resource = new TextureResource;
-        currentResourceMap->insert(ResourceMap::value_type(sgImage, resource));
+        it = currentResourceMap->insert(ResourceMap::value_type(sgImage, resource)).first;
+        resource->updateConnection =
+            sgImage->sigUpdated().connect(
+                [resource](const SgUpdate& update){
+                    resource->isImageUpdateNeeded = true;
+                });
     }
     if(resource->isBound){
         glBindTexture(GL_TEXTURE_2D, resource->textureName);
@@ -1221,7 +1131,7 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
         doLoadTexImage = true;
     }
     if(isCheckingUnusedResources){
-        nextResourceMap->insert(ResourceMap::value_type(sgImage, resource));
+        nextResourceMap->insert(*it);
     }
     resource->width = width;
     resource->height = height;
@@ -1230,7 +1140,13 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, withMaterial ? GL_MODULATE : GL_REPLACE);
+
+    // Set the base color white to output the texture color with the GL_MODULE mode
+    setDiffuseColor(Vector4f(1.0f, 1.0f, 1.0f, 1.0f)); 
+    //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); // default
+    
+    //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, withMaterial ? GL_MODULATE : GL_REPLACE);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     if(isCompiling){
@@ -1257,7 +1173,8 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
         }
 
         if(!isCompiling && doReloadTexImage){
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
+                            format, GL_UNSIGNED_BYTE, image.pixels());
 
         } else {
             double w2 = log2(width);
@@ -1265,14 +1182,17 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
             double pw = ceil(w2);
             double ph = ceil(h2);
             if((pw - w2 == 0.0) && (ph - h2 == 0.0)){
-                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
+                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+                             format, GL_UNSIGNED_BYTE, image.pixels());
             } else{
                 GLsizei potWidth = pow(2.0, pw);
                 GLsizei potHeight = pow(2.0, ph);
-                buf->scaledImageBuf.resize(potWidth * potHeight * image.numComponents());
+                tmpbuf->scaledImageBuf.resize(potWidth * potHeight * image.numComponents());
                 gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image.pixels(),
-                              potWidth, potHeight, GL_UNSIGNED_BYTE, &buf->scaledImageBuf.front());
-                glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0, format, GL_UNSIGNED_BYTE, &buf->scaledImageBuf.front());
+                              potWidth, potHeight, GL_UNSIGNED_BYTE, &tmpbuf->scaledImageBuf.front());
+                glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0,
+                             format, GL_UNSIGNED_BYTE, &tmpbuf->scaledImageBuf.front());
+                tmpbuf->used = true;
             }
         } 
     }
@@ -1293,17 +1213,6 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     }
 
     return true;
-}
-
-
-void GL1SceneRenderer::onImageUpdated(SgImage* image)
-{
-    ResourceMap* resourceMap = impl->hasValidNextResourceMap ? impl->nextResourceMap : impl->currentResourceMap;
-    auto p = resourceMap->find(image);
-    if(p != resourceMap->end()){
-        TextureResource* resource = static_cast<TextureResource*>(p->second.get());
-        resource->isImageUpdateNeeded = true;
-    }
 }
 
 
@@ -1330,7 +1239,7 @@ void GL1SceneRendererImpl::renderTransparentShapes()
             setPickColor(info.pickId);
         } else {
             renderMaterial(shape->material());
-            SgTexture* texture = isTextureEnabled ? shape->texture() : 0;
+            SgTexture* texture = isTextureEnabled ? shape->texture() : nullptr;
             if(texture && shape->mesh()->hasTexCoords()){
                 hasTexture = renderTexture(texture, shape->material());
             }
@@ -1410,6 +1319,30 @@ void GL1SceneRendererImpl::putMeshData(SgMesh* mesh)
 }
 
 
+VertexResource* GL1SceneRendererImpl::findOrCreateVertexResource(SgObject* object, bool& out_found)
+{
+    VertexResource* resource;
+    auto it = currentResourceMap->find(object);
+    if(it != currentResourceMap->end()){
+        resource = static_cast<VertexResource*>(it->second.get());
+        out_found = true;
+    } else {
+        resource = new VertexResource;
+        it = currentResourceMap->insert(ResourceMap::value_type(object, resource)).first;
+        resource->updateConnection =
+            object->sigUpdated().connect(
+                [this, object](const SgUpdate& update){
+                    updatedSceneObjects.push_back(object);
+                });
+        out_found = false;
+    }
+    if(isCheckingUnusedResources){
+        nextResourceMap->insert(*it);
+    }
+    return resource;
+}
+    
+
 void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
 {
     if(false){
@@ -1429,206 +1362,200 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         doCullFace = true;
         break;
     }
-        
-    enableCullFace(doCullFace);
-    setLightModelTwoSide(!doCullFace);
+
+    bool found;
+    auto resource = findOrCreateVertexResource(mesh, found);
+    if(!found){
+        setupMeshResource(mesh, resource, hasTexture);
+    }
+
+    const GLvoid* offset = 0;
 
     glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 
-    if(!USE_VBO){
-        writeVertexBuffers(mesh, 0, hasTexture);
+    enableCullFace(doCullFace);
+    setLightModelTwoSide(!doCullFace);
 
-    } else {
-        ShapeResource* resource;
-        auto it = currentResourceMap->find(mesh);
-        if(it != currentResourceMap->end()){
-            resource = static_cast<ShapeResource*>(it->second.get());
-        } else {
-            it = currentResourceMap->insert(ResourceMap::value_type(mesh, new ShapeResource)).first;
-            resource = static_cast<ShapeResource*>(it->second.get());
-            writeVertexBuffers(mesh, resource, hasTexture);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
+    glVertexPointer(3, GL_FLOAT, 0, offset);
+
+    bool isNormalArrayActive = false;
+    bool isColorArrayActive = false;
+    bool isTextureActive = false;
+        
+    if(isLightingEnabled){
+        if(resource->normalBufferName() != GL_INVALID_VALUE){
+            glEnableClientState(GL_NORMAL_ARRAY);
+            glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
+            glNormalPointer(GL_FLOAT, 0, offset);
+            isNormalArrayActive = true;
         }
-        if(isCheckingUnusedResources){
-            nextResourceMap->insert(*it);
+        if(resource->colorBufferName() != GL_INVALID_VALUE){
+            glEnableClientState(GL_COLOR_ARRAY);
+            glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
+            glColorPointer(4, GL_FLOAT, 0, offset);
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+            glEnable(GL_COLOR_MATERIAL);
+            isColorArrayActive = true;
         }
-        if(resource->vertexBufferName() != GL_INVALID_VALUE){
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
-            glVertexPointer(3, GL_FLOAT, 0, 0);
-                        
-            if(resource->normalBufferName() != GL_INVALID_VALUE){
-                glEnableClientState(GL_NORMAL_ARRAY);
-                glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
-                glNormalPointer(GL_FLOAT, 0, 0);
-            }
-            if(resource->texCoordBufferName() != GL_INVALID_VALUE){
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glBindBuffer(GL_ARRAY_BUFFER, resource->texCoordBufferName());
-                glTexCoordPointer(2, GL_FLOAT, 0, 0);
-                glEnable(GL_TEXTURE_2D);
-            }
-            glDrawArrays(GL_TRIANGLES, 0, resource->size);
-            if(resource->texCoordBufferName() != GL_INVALID_VALUE){
-                glDisable(GL_TEXTURE_2D);
-            }
+        if(resource->texCoordBufferName() != GL_INVALID_VALUE){
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glBindBuffer(GL_ARRAY_BUFFER, resource->texCoordBufferName());
+            glTexCoordPointer(2, GL_FLOAT, 0, offset);
+            glEnable(GL_TEXTURE_2D);
+            isTextureActive = true;
         }
+    }
+    
+    glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
+
+    if(isColorArrayActive){
+        glDisable(GL_COLOR_MATERIAL);
+        stateFlag.reset(DIFFUSE_COLOR);
+        stateFlag.reset(AMBIENT_COLOR);
+    }
+    if(isTextureActive){
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    if(doNormalVisualization && isNormalArrayActive && !isPicking){
+        glDisableClientState(GL_NORMAL_ARRAY);
+        if(isColorArrayActive){
+            glDisableClientState(GL_COLOR_ARRAY);
+        }
+        if(isTextureActive){
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+        renderNormalVisualizationLines(mesh, resource);
     }
 
     glPopClientAttrib();
 }
 
 
-void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeResource* resource, bool hasTexture)
+void GL1SceneRendererImpl::setupMeshResource(SgMesh* mesh, VertexResource* resource, bool hasTexture)
 {
-    SgVertexArray& orgVertices = *mesh->vertices();
     SgIndexArray& orgTriangleVertices = mesh->triangleVertices();
-    const size_t numTriangles = mesh->numTriangles();
     const size_t totalNumVertices = orgTriangleVertices.size();
-    const bool doLighting = !isPicking && defaultLighting;
-    const bool hasNormals = mesh->hasNormals() && doLighting;
-    const bool hasColors = mesh->hasColors() && doLighting;
-    SgVertexArray* vertices = 0;
-    SgNormalArray* normals = 0;
-    SgIndexArray* triangleVertices = 0;
-    ColorArray* colors = 0;
-    SgTexCoordArray* texCoords = 0;
 
-    vertices = &buf->vertices;
-    vertices->clear();
-    vertices->reserve(totalNumVertices);
-    if(hasNormals){
-        normals = &buf->normals;
-        normals->clear();
-        normals->reserve(totalNumVertices);
-    }
-    if(hasColors){
-        colors = &buf->colors;
-        colors->clear();
-        colors->reserve(totalNumVertices);
-    }
-    if(hasTexture){
-        texCoords = &buf->texCoords;
-        texCoords->clear();
-        texCoords->reserve(totalNumVertices);
-    }
+    SgVertexArray& orgVertices = *mesh->vertices();
+    auto vertices = tmpbuf->vertices;
+    vertices.clear();
+    vertices.reserve(totalNumVertices);
     
-    int faceVertexIndex = 0;
-    
-    for(size_t i=0; i < numTriangles; ++i){
-        for(size_t j=0; j < 3; ++j){
-            const int orgVertexIndex = orgTriangleVertices[faceVertexIndex];
-            vertices->push_back(orgVertices[orgVertexIndex]);
-            if(hasNormals){
-                if(mesh->normalIndices().empty()){
-                    normals->push_back(mesh->normals()->at(orgVertexIndex));
-                } else {
-                    const int normalIndex = mesh->normalIndices()[faceVertexIndex];
-                    normals->push_back(mesh->normals()->at(normalIndex));
-                }
-            }
-            if(hasColors){
-                if(mesh->colorIndices().empty()){
-                    colors->push_back(createColorWithAlpha(mesh->colors()->at(faceVertexIndex)));
-                } else {
-                    const int colorIndex = mesh->colorIndices()[faceVertexIndex];
-                    colors->push_back(createColorWithAlpha(mesh->colors()->at(colorIndex)));
-                }
-            }
-            if(hasTexture){
-                if(mesh->texCoordIndices().empty()){
-                    texCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
-                }else{
-                    const int texCoordIndex = mesh->texCoordIndices()[faceVertexIndex];
-                    texCoords->push_back(mesh->texCoords()->at(texCoordIndex));
-                }
-            }
-            ++faceVertexIndex;
-        }
+    SgNormalArray* pNormals = nullptr;
+    if(mesh->hasNormals()){
+        pNormals = &tmpbuf->normals;
+        pNormals->clear();
+        pNormals->reserve(totalNumVertices);
     }
-
-    if(USE_VBO){
-        if(resource->vertexBufferName() == GL_INVALID_VALUE){
-            glGenBuffers(1, &resource->vertexBufferName());
-            glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
-            glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
-        }
-    } else {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, vertices->data());
+    ColorArray* pColors = nullptr;
+    if(mesh->hasColors()){
+        pColors = &tmpbuf->colors;
+        pColors->clear();
+        pColors->reserve(totalNumVertices);
     }
-    if(normals){
-        if(USE_VBO){
-            if(resource->normalBufferName() == GL_INVALID_VALUE){
-                glGenBuffers(1, &resource->normalBufferName());
-                glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
-                glBufferData(GL_ARRAY_BUFFER, normals->size() * sizeof(Vector3f), normals->data(), GL_STATIC_DRAW);
-            }
-        } else {
-            glEnableClientState(GL_NORMAL_ARRAY);
-            glNormalPointer(GL_FLOAT, 0, normals->data());
-        }
-    }
-    bool useColorArray = false;
-    if(colors){
-        if(!USE_VBO){
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-            glEnable(GL_COLOR_MATERIAL);
-            glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(4, GL_FLOAT, 0, &colors[0][0]);
-            useColorArray = true;
-        }
-    }
+    SgTexCoordArray* pTexCoords = nullptr;
     if(hasTexture){
-        if(USE_VBO){
-            if(resource->texCoordBufferName() == GL_INVALID_VALUE){
-                glGenBuffers(1, &resource->texCoordBufferName());
-                glBindBuffer(GL_ARRAY_BUFFER, resource->texCoordBufferName());
-                glBufferData(GL_ARRAY_BUFFER, texCoords->size() * sizeof(Vector2f), texCoords->data(), GL_STATIC_DRAW);
+        pTexCoords = &tmpbuf->texCoords;
+        pTexCoords->clear();
+        pTexCoords->reserve(totalNumVertices);
+    }
+    tmpbuf->used = true;
+
+    for(size_t i=0; i < totalNumVertices; ++i){
+        const int orgVertexIndex = orgTriangleVertices[i];
+        vertices.push_back(orgVertices[orgVertexIndex]);
+        if(pNormals){
+            if(mesh->normalIndices().empty()){
+                pNormals->push_back(mesh->normals()->at(orgVertexIndex));
+            } else {
+                const int normalIndex = mesh->normalIndices()[i];
+                pNormals->push_back(mesh->normals()->at(normalIndex));
             }
-        } else {
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_FLOAT, 0, texCoords->data());
         }
-        glEnable(GL_TEXTURE_2D);
+        if(pColors){
+            if(mesh->colorIndices().empty()){
+                pColors->push_back(createColorWithAlpha(mesh->colors()->at(i)));
+            } else {
+                const int colorIndex = mesh->colorIndices()[i];
+                pColors->push_back(createColorWithAlpha(mesh->colors()->at(colorIndex)));
+            }
+        }
+        if(pTexCoords){
+            if(mesh->texCoordIndices().empty()){
+                pTexCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
+            } else {
+                const int texCoordIndex = mesh->texCoordIndices()[i];
+                pTexCoords->push_back(mesh->texCoords()->at(texCoordIndex));
+            }
+        }
     }
 
-    if(USE_VBO){
-        if(!triangleVertices){
-            resource->size = vertices->size();
+    glGenBuffers(1, &resource->vertexBufferName());
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    resource->numVertices = vertices.size();
 
-        } else if(resource->indexBufferName() == GL_INVALID_VALUE){
-            glGenBuffers(1, &resource->indexBufferName());
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, resource->indexBufferName());
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleVertices->size(), &triangleVertices->front(), GL_STATIC_DRAW);
-            resource->size = triangleVertices->size();
-        }
-            
+    if(pNormals){
+        glGenBuffers(1, &resource->normalBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pNormals->size() * sizeof(Vector3f), pNormals->data(), GL_STATIC_DRAW);
+    }
+    if(pColors){
+        glGenBuffers(1, &resource->colorBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pColors->size() * sizeof(ColorArray::value_type), pColors->data(), GL_STATIC_DRAW);
+    }
+    if(pTexCoords){
+        glGenBuffers(1, &resource->texCoordBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->texCoordBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pTexCoords->size() * sizeof(Vector2f), pTexCoords->data(), GL_STATIC_DRAW);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the buffer
+}
+
+
+void GL1SceneRendererImpl::renderNormalVisualizationLines(SgMesh* mesh, VertexResource* resource)
+{
+    auto& bufferName = resource->normalVisualizationVertexBufferName();
+
+    if(bufferName != GL_INVALID_VALUE){
+        glBindBuffer(GL_ARRAY_BUFFER, bufferName);
+        
     } else {
-        glDrawArrays(GL_TRIANGLES, 0, vertices->size());
-    }
+        glGenBuffers(1, &bufferName);
+        glBindBuffer(GL_ARRAY_BUFFER, bufferName);
 
-    if(useColorArray){
-        glDisable(GL_COLOR_MATERIAL);
-        stateFlag.set(CURRENT_COLOR);
-    }
-    if(hasTexture){
-        glDisable(GL_TEXTURE_2D);
-    }
-
-    if(doNormalVisualization && !isPicking){
-        enableLighting(false);
-        vector<Vector3f> lines;
-        for(size_t i=0; i < vertices->size(); ++i){
-            const Vector3f& v = (*vertices)[i];
+        const auto& indices = mesh->triangleVertices();
+        const int numVertices = indices.size();
+        auto& lines = tmpbuf->vertices;
+        tmpbuf->used = true;
+        lines.clear();
+        lines.reserve(numVertices * 2);
+        for(size_t i=0; i < numVertices; ++i){
+            const int orgVertexIndex = indices[i];
+            const auto& v = mesh->vertices()->at(orgVertexIndex);
+            Vector3f* pNormal;
+            if(mesh->normalIndices().empty()){
+                pNormal = &mesh->normals()->at(orgVertexIndex);
+            } else {
+                pNormal = &mesh->normals()->at(mesh->normalIndices()[i]);
+            }
             lines.push_back(v);
-            lines.push_back(v + (*normals)[i] * normalLength);
+            lines.push_back(v + (*pNormal) * normalLength);
         }
-        glDisableClientState(GL_NORMAL_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, lines.front().data());
-        setColor(Vector3f(0.0f, 1.0f, 0.0f));
-        glDrawArrays(GL_LINES, 0, lines.size());
-        enableLighting(true);
+        resource->normalVisualizationSize = lines.size();
+        glBufferData(GL_ARRAY_BUFFER, lines.size() * sizeof(Vector3f), lines.data(), GL_STATIC_DRAW);
     }
+        
+    enableLighting(false);
+    glVertexPointer(3, GL_FLOAT, 0, 0);
+    setColor(Vector3f(0.0f, 1.0f, 0.0f));
+    glDrawArrays(GL_LINES, 0, resource->normalVisualizationSize);
+    enableLighting(true);
 }
 
 
@@ -1641,58 +1568,54 @@ void GL1SceneRendererImpl::renderPointSet(SgPointSet* pointSet)
     if(s > 0.0){
         setPointSize(s);
     }
-    renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
+
+    renderPlot(
+        pointSet, (GLenum)GL_POINTS,
+        [this, pointSet](VertexResource* resource){
+            setupPointSetResource(pointSet, resource);
+        });
+    
     if(s > 0.0){
-        setPointSize(s);
+        setPointSize(defaultPointSize);
     }
 }
 
 
-void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode)
+void GL1SceneRendererImpl::setupPointSetResource(SgPointSet* pointSet, VertexResource* resource)
 {
-    glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
-        
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, expandedVertices.data());
+    const SgVertexArray& vertices = *pointSet->vertices();
+    glGenBuffers(1, &resource->vertexBufferName());
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    resource->numVertices = vertices.size();
     
-    SgMaterial* material = plot->material() ? plot->material() : defaultMaterial.get();
-    
-    if(!plot->hasNormals()){
-        enableLighting(false);
-        //glDisableClientState(GL_NORMAL_ARRAY);
-        lastAlpha = 1.0;
-        if(!plot->hasColors()){
-            setColor(material->diffuseColor() + material->emissiveColor());
-        }
-    } else if(!isPicking){
-        enableCullFace(false);
-        setLightModelTwoSide(true);
-        renderMaterial(material);
-        
-        const SgNormalArray& orgNormals = *plot->normals();
-        SgNormalArray& normals = buf->normals;
-        const SgIndexArray& normalIndices = plot->normalIndices();
+    if(pointSet->hasNormals()){
+        SgNormalArray* pNormals;
+        const auto& normalIndices = pointSet->normalIndices();
         if(normalIndices.empty()){
-            normals = orgNormals;
+            pNormals = pointSet->normals();
         } else {
-            normals.clear();
-            normals.reserve(normalIndices.size());
+            pNormals = &tmpbuf->normals;
+            pNormals->clear();
+            pNormals->reserve(normalIndices.size());
+            tmpbuf->used = true;
+            const auto& orgNormals = *pointSet->normals();
             for(size_t i=0; i < normalIndices.size(); ++i){
-                normals.push_back(orgNormals[normalIndices[i]]);
+                pNormals->push_back(orgNormals[normalIndices[i]]);
             }
         }
-        glEnableClientState(GL_NORMAL_ARRAY);
-        glNormalPointer(GL_FLOAT, 0, normals.data());
+        glGenBuffers(1, &resource->normalBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pNormals->size() * sizeof(Vector3f), pNormals->data(), GL_STATIC_DRAW);
     }
 
-    bool isColorMaterialEnabled = false;
-
-    if(plot->hasColors() && !isPicking){
-        const SgColorArray& orgColors = *plot->colors();
-        ColorArray& colors = buf->colors;
+    if(pointSet->hasColors()){
+        const auto& colorIndices = pointSet->colorIndices();
+        const SgColorArray& orgColors = *pointSet->colors();
+        ColorArray& colors = tmpbuf->colors;
+        tmpbuf->used = true;
         colors.clear();
-        colors.reserve(expandedVertices.size());
-        const SgIndexArray& colorIndices = plot->colorIndices();
+        colors.reserve(vertices.size());
         if(colorIndices.empty()){
             for(size_t i=0; i < orgColors.size(); ++i){
                 colors.push_back(createColorWithAlpha(orgColors[i]));
@@ -1702,58 +1625,163 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
                 colors.push_back(createColorWithAlpha(orgColors[colorIndices[i]]));
             }
         }
-        if(plot->hasNormals()){
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-            glEnable(GL_COLOR_MATERIAL);
-            isColorMaterialEnabled = true;
-        }
-        glEnableClientState(GL_COLOR_ARRAY);
-        glColorPointer(4, GL_FLOAT, 0, &colors[0][0]);
-        stateFlag.set(CURRENT_COLOR);
-        //setColor(colors.back()); // set the last color
+        glGenBuffers(1, &resource->colorBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
+        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(ColorArray::value_type), colors.data(), GL_STATIC_DRAW);
     }
     
-    pushPickName(plot);
-    glDrawArrays(primitiveMode, 0, expandedVertices.size());
-    popPickName();
-    
-    if(plot->hasNormals()){
-        if(isColorMaterialEnabled){
-            glDisable(GL_COLOR_MATERIAL);
-        }
-    } else {
-        enableLighting(true);
-    }
-    
-    glPopClientAttrib();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the buffer
 }
 
 
 void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 {
-    const int n = lineSet->numLines();
-    if(!lineSet->hasVertices() || (n <= 0)){
+    if(!lineSet->hasVertices() || (lineSet->numLines() <= 0)){
         return;
-    }
-
-    const SgVertexArray& orgVertices = *lineSet->vertices();
-    SgVertexArray& vertices = buf->vertices;
-    vertices.clear();
-    vertices.reserve(n * 2);
-    for(int i=0; i < n; ++i){
-        SgLineSet::LineRef line = lineSet->line(i);
-        vertices.push_back(orgVertices[line[0]]);
-        vertices.push_back(orgVertices[line[1]]);
     }
 
     const double w = lineSet->lineWidth();
     if(w > 0.0){
         setLineWidth(w);
     }
-    renderPlot(lineSet, vertices, GL_LINES);
+    
+    renderPlot(
+        lineSet, (GLenum)GL_LINES,
+        [this, lineSet](VertexResource* resource){
+            setupLineSetResource(lineSet, resource);
+        });
+
     if(w > 0.0){
         setLineWidth(defaultLineWidth);
     }
+}
+
+
+void GL1SceneRendererImpl::setupLineSetResource(SgLineSet* lineSet, VertexResource* resource)
+{
+    const auto& lineVertices = lineSet->lineVertices();
+    const int totalNumVertices = lineVertices.size();
+
+    const SgVertexArray& orgVertices = *lineSet->vertices();
+    SgVertexArray& vertices = tmpbuf->vertices;
+    vertices.clear();
+    vertices.reserve(totalNumVertices);
+    tmpbuf->used = true;
+
+    SgNormalArray* pNormals = nullptr;
+    if(lineSet->hasNormals()){
+        pNormals = &tmpbuf->normals;
+        pNormals->clear();
+        pNormals->reserve(totalNumVertices);
+    }
+    ColorArray* pColors = nullptr;
+    if(lineSet->hasColors()){
+        pColors = &tmpbuf->colors;
+        pColors->clear();
+        pColors->reserve(totalNumVertices);
+    }
+
+    for(size_t i=0; i < totalNumVertices; ++i){
+        const int orgVertexIndex = lineVertices[i];
+        vertices.push_back(orgVertices[orgVertexIndex]);
+        if(pNormals){
+            if(lineSet->normalIndices().empty()){
+                pNormals->push_back(lineSet->normals()->at(orgVertexIndex));
+            } else {
+                const int normalIndex = lineSet->normalIndices()[i];
+                pNormals->push_back(lineSet->normals()->at(normalIndex));
+            }
+        }
+        if(pColors){
+            if(lineSet->colorIndices().empty()){
+                pColors->push_back(createColorWithAlpha(lineSet->colors()->at(i)));
+            } else {
+                const int colorIndex = lineSet->colorIndices()[i];
+                pColors->push_back(createColorWithAlpha(lineSet->colors()->at(colorIndex)));
+            }
+        }
+    }
+
+    glGenBuffers(1, &resource->vertexBufferName());
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    resource->numVertices = vertices.size();
+
+    if(pNormals){
+        glGenBuffers(1, &resource->normalBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pNormals->size() * sizeof(Vector3f), pNormals->data(), GL_STATIC_DRAW);
+    }
+    if(pColors){
+        glGenBuffers(1, &resource->colorBufferName());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
+        glBufferData(GL_ARRAY_BUFFER, pColors->size() * sizeof(ColorArray::value_type), pColors->data(), GL_STATIC_DRAW);
+    }
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the buffer
+}
+
+
+void GL1SceneRendererImpl::renderPlot
+(SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource)
+{
+    bool found;
+    auto resource = findOrCreateVertexResource(plot, found);
+
+    if(!found){
+        setupVertexResource(resource);
+    }
+
+    glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+
+    const GLvoid* offset = 0;
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
+    glVertexPointer(3, GL_FLOAT, 0, offset);
+
+    bool hasNormalArray = (resource->normalBufferName() != GL_INVALID_VALUE);
+    bool doLighting = hasNormalArray && isLightingEnabled;
+    SgMaterial* material = plot->material() ? plot->material() : defaultMaterial.get();
+
+    if(!doLighting){
+        enableLighting(false);
+        lastAlpha = 1.0;
+        if(!plot->hasColors()){
+            setColor(material->diffuseColor() + material->emissiveColor());
+        }
+    } else {
+        enableCullFace(false);
+        setLightModelTwoSide(true);
+        renderMaterial(material);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
+        glNormalPointer(GL_FLOAT, 0, offset);
+    }
+
+    bool isColorMaterialEnabled = false;
+    if(resource->colorBufferName() != GL_INVALID_VALUE && !isPicking){
+        glEnableClientState(GL_COLOR_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
+        glColorPointer(4, GL_FLOAT, 0, offset);
+        if(doLighting){
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+            glEnable(GL_COLOR_MATERIAL);
+            isColorMaterialEnabled = true;
+        }
+    }
+
+    pushPickName(plot);
+    glDrawArrays(primitiveMode, 0, resource->numVertices);
+    popPickName();
+
+    if(!doLighting){
+        enableLighting(true);
+    } else if(isColorMaterialEnabled){
+        glDisable(GL_COLOR_MATERIAL);
+        stateFlag.reset(CURRENT_COLOR);
+    }
+
+    glPopClientAttrib();
 }
 
 
@@ -1808,19 +1836,24 @@ void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     glPushAttrib(GL_POLYGON_BIT);
-    glLineWidth(outline->lineWidth()*2+1);
     glPolygonMode(GL_FRONT, GL_LINE);
     setColor(outline->color());
     enableColorMaterial(true);
 
+    int orgLineWidth = lineWidth;
+    setLineWidth(outline->lineWidth() * 2 + 2);
+
+    bool wasRenderingOutlineGroup = isRenderingOutline;
+    isRenderingOutline = true;
+    
     renderChildNodes(outline);
 
+    isRenderingOutline = wasRenderingOutlineGroup;
+
+    setLineWidth(orgLineWidth);
     enableColorMaterial(false);
-    setLineWidth(lineWidth);
     glPopAttrib();
-
     glDisable(GL_STENCIL_TEST);
-
     clearGLState();
 }
 
@@ -1890,12 +1923,6 @@ void GL1SceneRendererImpl::enableColorMaterial(bool on)
 }
 
 
-void GL1SceneRenderer::enableColorMaterial(bool on)
-{
-    impl->enableColorMaterial(on);
-}
-
-
 void GL1SceneRendererImpl::setDiffuseColor(const Vector4f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
@@ -1903,12 +1930,6 @@ void GL1SceneRendererImpl::setDiffuseColor(const Vector4f& color)
         diffuseColor = color;
         stateFlag.set(DIFFUSE_COLOR);
     }
-}
-
-
-void GL1SceneRenderer::setDiffuseColor(const Vector4f& color)
-{
-    impl->setDiffuseColor(color);
 }
 
 
@@ -1922,12 +1943,6 @@ void GL1SceneRendererImpl::setAmbientColor(const Vector4f& color)
 }
 
 
-void GL1SceneRenderer::setAmbientColor(const Vector4f& color)
-{
-    impl->setAmbientColor(color);
-}
-
-
 void GL1SceneRendererImpl::setEmissionColor(const Vector4f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
@@ -1935,12 +1950,6 @@ void GL1SceneRendererImpl::setEmissionColor(const Vector4f& color)
         emissionColor = color;
         stateFlag.set(EMISSION_COLOR);
     }
-}
-
-
-void GL1SceneRenderer::setEmissionColor(const Vector4f& color)
-{
-    impl->setEmissionColor(color);
 }
 
 
@@ -1954,12 +1963,6 @@ void GL1SceneRendererImpl::setSpecularColor(const Vector4f& color)
 }
 
 
-void GL1SceneRenderer::setSpecularColor(const Vector4f& color)
-{
-    impl->setSpecularColor(color);
-}
-
-
 void GL1SceneRendererImpl::setShininess(float s)
 {
     if(!stateFlag[SHININESS] || shininess != s){
@@ -1967,12 +1970,6 @@ void GL1SceneRendererImpl::setShininess(float s)
         shininess = s;
         stateFlag.set(SHININESS);
     }
-}
-
-
-void GL1SceneRenderer::setShininess(float s)
-{
-    impl->setShininess(s);
 }
 
 
@@ -2005,16 +2002,6 @@ void GL1SceneRendererImpl::setFrontCCW(bool on)
 }
 
 
-void GL1SceneRenderer::setFrontCCW(bool on)
-{
-    impl->setFrontCCW(on);
-}
-
-
-/**
-   Lighting should not be enabled in rendering code
-   which may be rendered with displaylists.
-*/
 void GL1SceneRendererImpl::enableLighting(bool on)
 {
     if(isPicking || !defaultLighting){
@@ -2032,12 +2019,6 @@ void GL1SceneRendererImpl::enableLighting(bool on)
 }
 
 
-void GL1SceneRenderer::enableLighting(bool on)
-{
-    impl->enableLighting(on);
-}
-
-
 void GL1SceneRendererImpl::setLightModelTwoSide(bool on)
 {
     if(!stateFlag[LIGHT_MODEL_TWO_SIDE] || isLightModelTwoSide != on){
@@ -2045,12 +2026,6 @@ void GL1SceneRendererImpl::setLightModelTwoSide(bool on)
         isLightModelTwoSide = on;
         stateFlag.set(LIGHT_MODEL_TWO_SIDE);
     }
-}
-
-
-void GL1SceneRenderer::setLightModelTwoSide(bool on)
-{
-    impl->setLightModelTwoSide(on);
 }
 
 
@@ -2080,12 +2055,6 @@ void GL1SceneRendererImpl::enableBlend(bool on)
 }
 
 
-void GL1SceneRenderer::enableBlend(bool on)
-{
-    impl->enableBlend(on);
-}
-
-
 void GL1SceneRendererImpl::enableDepthMask(bool on)
 {
     if(!stateFlag[DEPTH_MASK] || isDepthMaskEnabled != on){
@@ -2093,12 +2062,6 @@ void GL1SceneRendererImpl::enableDepthMask(bool on)
         isDepthMaskEnabled = on;
         stateFlag.set(DEPTH_MASK);
     }
-}
-
-
-void GL1SceneRenderer::enableDepthMask(bool on)
-{
-    impl->enableDepthMask(on);
 }
 
 
@@ -2116,12 +2079,6 @@ void GL1SceneRendererImpl::setPointSize(float size)
 }
 
 
-void GL1SceneRenderer::setPointSize(float size)
-{
-    impl->setPointSize(size);
-}
-
-
 void GL1SceneRendererImpl::setLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
@@ -2136,16 +2093,15 @@ void GL1SceneRendererImpl::setLineWidth(float width)
 }
 
 
-void GL1SceneRenderer::setLineWidth(float width)
+void GL1SceneRenderer::setLightingMode(int mode)
 {
-    impl->setLineWidth(width);
-}
-
-
-void GL1SceneRenderer::setDefaultLighting(bool on)
-{
-    if(on != impl->defaultLighting){
-        impl->defaultLighting = on;
+    if(mode != impl->lightingMode){
+        impl->lightingMode = mode;
+        if(mode == FULL_LIGHTING || mode == MINIMUM_LIGHTING){
+            impl->defaultLighting = true;
+        } else {
+            impl->defaultLighting = false;
+        }
         requestToClearResources();
     }
 }
@@ -2198,12 +2154,6 @@ void GL1SceneRenderer::showNormalVectors(double length)
         impl->normalLength = length;
         requestToClearResources();
     }
-}
-
-
-void GL1SceneRenderer::setNewDisplayListDoubleRenderingEnabled(bool on)
-{
-    impl->isNewDisplayListDoubleRenderingEnabled = on;
 }
 
 

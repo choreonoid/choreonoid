@@ -13,6 +13,7 @@
 #include <cnoid/SceneLights>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneEffects>
+#include <cnoid/stdx/variant>
 #include <QBoxLayout>
 #include <QTableWidget>
 #include <QHeaderView>
@@ -21,8 +22,6 @@
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
 #include <QKeyEvent>
-#include <boost/lexical_cast.hpp>
-#include <boost/variant.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -52,10 +51,10 @@ struct Double {
     };
 };
 
-typedef boost::variant<bool, Int, Double, string> ValueVariant;
+typedef stdx::variant<bool, Int, Double, string> ValueVariant;
 
-typedef boost::variant<std::function<bool(bool)>, std::function<bool(int)>, std::function<bool(double)>,
-                std::function<bool(const string&)> > FunctionVariant;
+typedef stdx::variant<std::function<bool(bool)>, std::function<bool(int)>, std::function<bool(double)>,
+                      std::function<bool(const string&)> > FunctionVariant;
 
 enum TypeId { TYPE_BOOL, TYPE_INT, TYPE_DOUBLE, TYPE_STRING };
 
@@ -99,14 +98,14 @@ public:
         if(item){
             if(QSpinBox* spinBox = dynamic_cast<QSpinBox*>(editor)){
                 ValueVariant& value = item->value;
-                if(value.which() == TYPE_INT){
-                    Int& v = get<Int>(value);
+                if(stdx::get_variant_index(value) == TYPE_INT){
+                    Int& v = stdx::get<Int>(value);
                     spinBox->setRange(v.min, v.max);
                 }
             } else if(QDoubleSpinBox* doubleSpinBox = dynamic_cast<QDoubleSpinBox*>(editor)){
                 ValueVariant& value = item->value;
-                if(value.which() == TYPE_DOUBLE){
-                    Double& v = get<Double>(value);
+                if(stdx::get_variant_index(value) == TYPE_DOUBLE){
+                    Double& v = stdx::get<Double>(value);
                     if(v.decimals >= 0){
                         doubleSpinBox->setDecimals(v.decimals);
                         doubleSpinBox->setSingleStep(pow(10.0, -v.decimals));
@@ -128,9 +127,9 @@ public:
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
             
         PropertyItem* item = tableWidget->itemFromIndex(index);
-        if(item && item->value.which() == TYPE_DOUBLE){
+        if(item && (stdx::get_variant_index(item->value) == TYPE_DOUBLE)){
             int& d = const_cast<int&>(decimals);
-            d = get<Double>(item->value).decimals;
+            d = stdx::get<Double>(item->value).decimals;
         }
         QStyledItemDelegate::paint(painter, option, index);
     }
@@ -213,11 +212,11 @@ PropertyItem::PropertyItem(SceneGraphPropertyViewImpl* viewImpl, ValueVariant va
 QVariant PropertyItem::data(int role) const
 {
     if(role == Qt::DisplayRole || role == Qt::EditRole){
-        switch(value.which()){
-        case TYPE_BOOL:      return get<bool>(value);
-        case TYPE_INT:       return get<Int>(value).value;
-        case TYPE_DOUBLE:    return get<Double>(value).value;
-        case TYPE_STRING:    return get<string>(value).c_str();
+        switch(stdx::get_variant_index(value)){
+        case TYPE_BOOL:      return stdx::get<bool>(value);
+        case TYPE_INT:       return stdx::get<Int>(value).value;
+        case TYPE_DOUBLE:    return stdx::get<Double>(value).value;
+        case TYPE_STRING:    return stdx::get<string>(value).c_str();
         }
     }
     return QTableWidgetItem::data(role);
@@ -228,30 +227,25 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 {
     bool accepted = false;
     if(role == Qt::EditRole){
-        try {
-            switch(qvalue.type()){
+        switch(qvalue.type()){
                 
-            case QVariant::Bool:
-                accepted = get< std::function<bool(bool)> >(func)(qvalue.toBool());
-                break;
+        case QVariant::Bool:
+            accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
+            break;
                 
-            case QVariant::String:
-                accepted = get< std::function<bool(const string&)> >(func)(qvalue.toString().toStdString());
-                break;
+        case QVariant::String:
+            accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
+            break;
                 
-            case QVariant::Int:
-                accepted = get< std::function<bool(int)> >(func)(qvalue.toInt());
-                break;
+        case QVariant::Int:
+            accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
+            break;
                 
-            case QVariant::Double:
-                accepted = get< std::function<bool(double)> >(func)(qvalue.toDouble());
-                break;
-            default:
-                break;
-            }
-            
-        } catch(const boost::bad_lexical_cast& ex) {
-            
+        case QVariant::Double:
+            accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
+            break;
+        default:
+            break;
         }
     }
 }
@@ -291,11 +285,7 @@ SceneGraphPropertyViewImpl::SceneGraphPropertyViewImpl(SceneGraphPropertyView* s
     tableWidget->horizontalHeader()->setStretchLastSection(true);
 
     tableWidget->verticalHeader()->hide();
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    tableWidget->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-#else
     tableWidget->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-#endif
 
     QStyledItemDelegate* delegate = new CustomizedItemDelegate(tableWidget);
     QItemEditorFactory* factory = new QItemEditorFactory;

@@ -204,7 +204,17 @@ void BoundingBoxf::clear()
 
 Vector3f BoundingBoxf::center() const
 {
-    return (min_ + max_) / 2.0;
+    return (min_ + max_) / 2.0f;
+}
+
+
+Vector3f BoundingBoxf::size() const
+{
+    if(empty_){
+        return Vector3f::Zero();
+    } else {
+        return (max_ - min_);
+    }
 }
 
 

@@ -431,7 +431,7 @@ SimulationManager::calculateSurfaceCuttoffCoefficient(map<Link*, tuple<Body*, Li
 
             const FFCalc::GaussTriangle3d& curTri = curTriAry[j];
 
-#ifdef WIN32
+#ifdef _WIN32
             vector<double> minCoefs(numIP);
 #else
             double minCoefs[numIP];
@@ -449,7 +449,7 @@ SimulationManager::calculateSurfaceCuttoffCoefficient(map<Link*, tuple<Body*, Li
                 if( trgTriAry.empty() == true )
                     continue;
 
-#ifdef WIN32
+#ifdef _WIN32
                 double* coefs = new double[numIP];
 #else
                 double coefs[numIP];
@@ -460,7 +460,7 @@ SimulationManager::calculateSurfaceCuttoffCoefficient(map<Link*, tuple<Body*, Li
                         minCoefs[iIP] = coefs[iIP];
                     }
                 }
-#ifdef WIN32
+#ifdef _WIN32
                 delete[] coefs;
 #endif
             }

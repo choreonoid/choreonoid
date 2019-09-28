@@ -16,12 +16,12 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     InteractiveCameraTransform();
-    InteractiveCameraTransform(const InteractiveCameraTransform& org);
-    InteractiveCameraTransform(const InteractiveCameraTransform& org, SgCloneMap& cloneMap);
+    InteractiveCameraTransform(const InteractiveCameraTransform& org, SgCloneMap* cloneMap = nullptr);
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
-    virtual void onPositionUpdatedInteractively();
+protected:
+    InteractiveCameraTransform(int polymorhicId);
 };
 
 typedef ref_ptr<InteractiveCameraTransform> InteractiveCameraTransformPtr;

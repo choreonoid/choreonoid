@@ -18,7 +18,6 @@
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
 #include <cnoid/PolyhedralRegion>
-#include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -371,12 +370,12 @@ SignalProxy<void()> PointSetItem::sigAttentionPointsChanged()
 }
 
 
-boost::optional<Vector3> PointSetItem::attentionPoint() const
+stdx::optional<Vector3> PointSetItem::attentionPoint() const
 {
     if(numAttentionPoints() == 1){
         return attentionPoint(0);
     }
-    return boost::none;
+    return stdx::nullopt;
 }
 
 
@@ -481,7 +480,7 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
         const SgIndexArray orgIndices(indices);
         const int numOrgIndices = orgIndices.size();
         indices.clear();
-        boost::dynamic_bitset<> elementValidness(numOrgElements);
+        vector<bool> elementValidness(numOrgElements, false);
         int j = 0;
         int nextIndexToRemove = indicesToRemove[j++];
         for(int i=0; i < numOrgIndices; ++i){
@@ -491,14 +490,14 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
                 }
             } else {
                 int index = orgIndices[i];
-                elementValidness.set(index);
+                elementValidness[index] = true;
                 indices.push_back(index);
             }
         }
         vector<int> indexMap(numOrgElements);
         int newIndex = 0;
         for(int i=0; i < numOrgElements; ++i){
-            if(elementValidness.test(i)){
+            if(elementValidness[i]){
                 elements.push_back(orgElements[i]);
                 ++newIndex;
             }

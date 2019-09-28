@@ -7,31 +7,25 @@
 using namespace cnoid;
 
 
-LazySignalBase::LazySignalBase()
-    : LazyCaller(std::bind(&LazySignalBase::doEmit, this))
+LazySignalBase::LazySignalBase(int priority)
+    : LazyCaller([&](){ doEmit(); }, priority)
 {
 
 }
 
 
 LazySignalBase::LazySignalBase(std::function<void()> emitFunction, int priority)
-    : LazyCaller(std::bind(&LazySignalBase::doEmit, this), priority),
+    : LazyCaller([&](){ doEmit(); }, priority),
       emitFunction(emitFunction)
 {
 
 }
 
 
-void LazySignalBase::request()
+void LazySignalBase::doEmit()
 {
-    (*this)();
-}
-
-
-bool LazySignalBase::doEmit()
-{
-    for(size_t i=0; i < connectionsToBlock.size(); ++i){
-        connectionsToBlock[i].block();
+    for(auto& connection : connectionsToBlock){
+        connection.block();
     }
 
     if(emitFunction){
@@ -40,10 +34,8 @@ bool LazySignalBase::doEmit()
         defaultEmitFunction();
     }
     
-    for(size_t i=0; i < connectionsToBlock.size(); ++i){
-        connectionsToBlock[i].unblock();
+    for(auto& connection : connectionsToBlock){
+        connection.unblock();
     }
     connectionsToBlock.clear();
-    
-    return false;
 }

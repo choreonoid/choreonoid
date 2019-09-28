@@ -7,6 +7,7 @@
 #include "SceneSmoke.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/GLSLProgram>
 
 using namespace std;
 using namespace cnoid;
@@ -59,7 +60,7 @@ SceneSmoke::SceneSmoke(const SceneSmoke& org)
 }
 
 
-SgObject* SceneSmoke::clone(SgCloneMap& cloneMap) const
+SgObject* SceneSmoke::doClone(SgCloneMap*) const
 {
     return new SceneSmoke(*this);
 }
@@ -72,7 +73,10 @@ ParticleSystem* SceneSmoke::getParticleSystem()
 
 
 SmokeProgram::SmokeProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer)
+    : ParticlesProgram(
+        renderer,
+        ":/SceneEffectsPlugin/shader/Smoke.vert",
+        ":/SceneEffectsPlugin/shader/Particles.frag")
 {
 
 }
@@ -80,16 +84,13 @@ SmokeProgram::SmokeProgram(GLSLSceneRenderer* renderer)
 
 bool SmokeProgram::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(":/SceneEffectsPlugin/shader/Smoke.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    link();
-    
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
-    lifeTimeLocation = getUniformLocation("lifeTime");
-    accelLocation = getUniformLocation("accel");
+    auto& glsl = glslProgram();
+    lifeTimeLocation = glsl.getUniformLocation("lifeTime");
+    accelLocation = glsl.getUniformLocation("accel");
 
     glGenBuffers(1, &initVelBuffer);
     glGenBuffers(1, &offsetTimeBuffer);

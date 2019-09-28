@@ -39,6 +39,7 @@ set(sources
   MultiDeviceStateSeq.cpp
   ExtraBodyStateAccessor.cpp
   SceneCollision.cpp
+  InverseKinematics.cpp
   CompositeIK.cpp
   PinDragIK.cpp
   LinkGroup.cpp
@@ -108,6 +109,7 @@ set(headers
   SceneCollision.h
   InverseKinematics.h
   CompositeIK.h
+  CompositeBodyIK.h
   PinDragIK.h
   LeggedBodyHelper.h
   PenetrationBlocker.h

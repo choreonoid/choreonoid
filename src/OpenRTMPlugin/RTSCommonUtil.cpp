@@ -6,10 +6,10 @@
 #include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
 #include "gettext.h"
-#include <boost/assert.hpp>
-#include <string>
-#include <QString>
 #include <rtm/Manager.h>
+#include <QString>
+#include <string>
+#include <cassert>
 
 using namespace std;
 
@@ -70,7 +70,7 @@ void RTCCommonUtil::splitPortName(string& value)
         return;
     }
     vector<string> results = split(value, '.');
-    BOOST_ASSERT(0 < results.size());
+    assert(0 < results.size());
     value = results[results.size() - 1];
 }
 
@@ -193,4 +193,3 @@ void NameServerManager::clearNameServer() {
 }
 
 }
-

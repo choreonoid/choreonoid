@@ -11,20 +11,18 @@
 #include "gettext.h"
 
 using namespace std;
-namespace filesystem = boost::filesystem;
-using fmt::format;
 using namespace cnoid;
-
-using boost::filesystem::path;
+namespace filesystem = cnoid::stdx::filesystem;
+using fmt::format;
 
 namespace {
 
 string application;
 string organization;
 
-path configDirPath;
-path filePath;
-path fullPath;
+filesystem::path configDirPath;
+filesystem::path filePath;
+filesystem::path fullPath;
 
 std::shared_ptr<YAMLReader> pYAMLReader;
 
@@ -35,7 +33,7 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
     application = application_;
     organization = organization_;
 
-#ifdef WIN32
+#ifdef _WIN32
     const char* appdata = getenv("APPDATA");
     if(appdata){
         configDirPath = filesystem::path(appdata) / organization_;

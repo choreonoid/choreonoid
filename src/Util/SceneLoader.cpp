@@ -39,7 +39,7 @@ public:
 
     SceneLoaderImpl();
     AbstractSceneLoaderPtr findLoader(string ext);
-    SgNode* load(const std::string& filename);
+    SgNode* load(const std::string& filename, bool* out_isSupportedFormat);
 };
 
 }
@@ -144,27 +144,39 @@ AbstractSceneLoaderPtr SceneLoaderImpl::findLoader(string ext)
 
 SgNode* SceneLoader::load(const std::string& filename)
 {
-    return impl->load(filename);
+    return impl->load(filename, nullptr);
 }
 
 
-SgNode* SceneLoaderImpl::load(const std::string& filename)
+SgNode* SceneLoader::load(const std::string& filename, bool& out_isSupportedFormat)
 {
-    boost::filesystem::path filepath(filename);
+    out_isSupportedFormat = false;
+    return impl->load(filename, &out_isSupportedFormat);
+}
+
+
+SgNode* SceneLoaderImpl::load(const std::string& filename, bool* out_isSupportedFormat)
+{
+    stdx::filesystem::path filepath(filename);
 
     string ext = getExtension(filepath);
     if(ext.empty()){
         os() << fmt::format(_("The file format of \"{}\" is unknown because it lacks a file name extension."),
                 getFilename(filepath)) << endl;
-        return 0;
+        return nullptr;
     }
 
-    SgNode* node = 0;
+    SgNode* node = nullptr;
     auto loader = findLoader(ext);
     if(!loader){
-        os() << fmt::format(_("The file format of \"{}\" is not supported by the scene loader."),
-                getFilename(filepath)) << endl;
+        if(!out_isSupportedFormat){
+            os() << fmt::format(_("The file format of \"{}\" is not supported by the scene loader."),
+                                getFilename(filepath)) << endl;
+        }
     } else {
+        if(out_isSupportedFormat){
+            *out_isSupportedFormat = true;
+        }
         loader->setMessageSink(os());
         if(defaultDivisionNumber > 0){
             loader->setDefaultDivisionNumber(defaultDivisionNumber);
@@ -173,6 +185,7 @@ SgNode* SceneLoaderImpl::load(const std::string& filename)
             loader->setDefaultCreaseAngle(defaultCreaseAngle);
         }
         node = loader->load(filename);
+        os().flush();
     }
 
     return node;

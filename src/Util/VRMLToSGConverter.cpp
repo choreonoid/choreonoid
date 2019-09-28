@@ -14,6 +14,7 @@
 #include "SceneLoader.h"
 #include "Exception.h"
 #include "NullOut.h"
+#include "EigenUtil.h"
 #include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
 #include <tuple>
@@ -21,11 +22,6 @@
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-
-namespace {
-
-const double PI = 3.14159265358979323846;
-}
 
 namespace cnoid {
 
@@ -395,18 +391,15 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
             converted = shape;
             shape->setMesh(mesh);
 
-            VRMLMaterial* vm;
             if(vshape->appearance && vshape->appearance->material){
-                vm = vshape->appearance->material.get();
-            } else {
-                vm = defaultMaterial.get();
-            }
-            VRMLMaterialToSgMaterialMap::iterator p = vrmlMaterialToSgMaterialMap.find(vm);
-            if(p != vrmlMaterialToSgMaterialMap.end()){
-                shape->setMaterial(p->second);
-            } else {
-                shape->setMaterial(createMaterial(vm));
-                vrmlMaterialToSgMaterialMap[vm] = shape->material();
+                auto vm = vshape->appearance->material;
+                VRMLMaterialToSgMaterialMap::iterator p = vrmlMaterialToSgMaterialMap.find(vm);
+                if(p != vrmlMaterialToSgMaterialMap.end()){
+                    shape->setMaterial(p->second);
+                } else {
+                    shape->setMaterial(createMaterial(vm));
+                    vrmlMaterialToSgMaterialMap[vm] = shape->material();
+                }
             }
 
             if(vshape->appearance && vshape->appearance->texture){

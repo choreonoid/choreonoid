@@ -53,6 +53,8 @@ public:
         return static_cast<ViewType*>(
             registerClassSub(typeid(ViewType), className, defaultInstanceName, itype, new Factory<ViewType>()));
     }
+
+    void registerClassAlias(const std::string& alias, const std::string& orgClassName);
     
     static ViewClass* viewClass(const std::type_info& view_type_info);
 

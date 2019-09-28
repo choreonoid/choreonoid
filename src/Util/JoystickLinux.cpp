@@ -5,8 +5,8 @@
 #include "Joystick.h"
 #include "ExtJoystick.h"
 #include <cnoid/Config>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
-#include <boost/filesystem.hpp>
 #include <linux/joystick.h>
 #include <sys/ioctl.h>
 #include <string>
@@ -18,20 +18,12 @@
 #include <cmath>
 #include <fcntl.h>
 #include <unistd.h>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::smatch;
-using boost::regex_match;
-#else
 #include <regex>
-#endif
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-namespace filesystem = boost::filesystem;
+namespace filesystem = stdx::filesystem;
 
 namespace {
 

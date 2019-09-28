@@ -177,8 +177,7 @@ FluidEnvironment::~FluidEnvironment()
 void
 FluidEnvironment::string2Vector3i(const std::string& line, Eigen::Vector3i& ret)
 {    
-    boost::char_separator<char> sep(",", "");
-    boost::tokenizer<boost::char_separator<char>> tokens(line, sep);
+    Tokenizer<CharSeparator<char>> tokens(line, CharSeparator<char>(","));
     
     vector<int> intAry;
     intAry.reserve(3);

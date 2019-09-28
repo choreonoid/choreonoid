@@ -15,25 +15,27 @@ namespace cnoid {
 class CNOID_EXPORT LazySignalBase : public LazyCaller
 {
 public:
-    void request();
+    void request(){ (*this)(); }
     void requestBlocking(Connection connection){
         connectionsToBlock.push_back(connection);
     }
+    void emit(){ flush(); }
+    
 protected:
-    LazySignalBase();
+    LazySignalBase(int priority);
     LazySignalBase(std::function<void()> emitFunction, int priority);
     std::function<void()> emitFunction;
     std::vector<Connection> connectionsToBlock;
     virtual void defaultEmitFunction() = 0;
 
 private:
-    bool doEmit();
+    void doEmit();
 };
 
 template <class SignalType> class LazySignal : public LazySignalBase
 {
 public:
-    LazySignal() { }
+    LazySignal(int priority = LazyCaller::PRIORITY_HIGH) : LazySignalBase(priority) { }
 
     LazySignal(std::function<void()> emitFunction, int priority = LazyCaller::PRIORITY_HIGH)
         : LazySignalBase(emitFunction, priority) {
@@ -42,7 +44,7 @@ public:
     SignalType& signal() { return signal_; }
 
 protected:
-    virtual void defaultEmitFunction() {
+    virtual void defaultEmitFunction() override {
         signal_();
     }
 

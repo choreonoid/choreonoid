@@ -1,6 +1,6 @@
 #version 330
 
-#define MAX_NUM_SHADOWS 3
+#define MAX_NUM_SHADOWS 2
 
 in vec3 position;
 in vec3 normal; // interpolated normal
@@ -149,7 +149,14 @@ void main()
             color += lights[i].ambientIntensity * ambientColor;
         }
     }
-        
+
+    /**
+       \note In a particular environment, using 'textureProj' or 'textureProjOffset"
+       makes lighting abnormal even though the function is not actually called.
+       This happens with Ubuntu Linux 19.04 with Intel UHD Graphics 630, which are
+       installed on Thinkpad P52. The shader programs phong.vert and phong.frag are
+       provided as implementations without shadow processing to avoid the defect.
+    */
     for(int i=0; i < numShadows; ++i){
         float shadow;
         if(isShadowAntiAliasingEnabled){

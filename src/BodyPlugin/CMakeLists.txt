@@ -35,8 +35,9 @@ set(sources
   LinkTreeWidget.cpp
   LinkSelectionView.cpp
   LinkPropertyView.cpp
+  LinkPositionView.cpp
   BodyLinkView.cpp
-  JointSliderView.cpp
+  JointDisplacementView.cpp
   JointStateView.cpp
   BodyStateView.cpp
   JointGraphView.cpp
@@ -82,8 +83,8 @@ set(target CnoidBodyPlugin)
 
 make_gettext_mofiles(${target} mofiles)
 
-QTX_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
-QTX_WRAP_CPP(qtsources LinkTreeWidget.h)
+QT5_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
+QT5_WRAP_CPP(qtsources LinkTreeWidget.h)
 set(sources ${sources} ${qtsources})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

@@ -4,29 +4,26 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifdef _WIN64
-#define NOT_USE_BOOST_ATOMIC
-#endif
-
 #include "BodyCustomizerInterface.h"
 #include "Body.h"
 #include <cnoid/FileUtil>
+#include <cnoid/Tokenizer>
 #include <map>
 #include <set>
 #include <cstdlib>
 #include <iostream>
-#include <boost/tokenizer.hpp>
 #include <fmt/format.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
-
-#ifdef _WIN32
-# include <windows.h>
-#endif
 
 namespace {
 
@@ -163,15 +160,12 @@ static int loadBodyCustomizers(BodyInterface* bodyInterface, std::ostream& os)
     if(!pluginLoadingFunctionsCalled){
 
         pluginLoadingFunctionsCalled = true;
-
+        
         char* pathListEnv = getenv("CNOID_CUSTOMIZER_PATH");
-
         if(pathListEnv){
-            boost::char_separator<char> sep(PATH_DELIMITER);
-            string pathList(pathListEnv);
-            boost::tokenizer<boost::char_separator<char>> paths(pathList, sep);
-            for(auto p = paths.begin(); p != paths.end(); ++p){
-                numLoaded = ::loadBodyCustomizers(bodyInterface, *p, os);
+            string pathList = pathListEnv;
+            for(auto& path : Tokenizer<CharSeparator<char>>(pathList, CharSeparator<char>(PATH_DELIMITER))){
+                numLoaded = ::loadBodyCustomizers(bodyInterface, path, os);
             }
         }
 

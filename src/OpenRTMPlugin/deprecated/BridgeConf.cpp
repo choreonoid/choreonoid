@@ -7,24 +7,15 @@
 #include "../OpenRTMUtil.h"
 #include "../LoggerUtil.h"
 #include <cnoid/Config>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
-#include <boost/filesystem.hpp>
-#include <iostream>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::match_results;
-using boost::regex_search;
-namespace regex_constants = boost::regex_constants;
-#else
 #include <regex>
-#endif
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
 namespace program_options = boost::program_options;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 
@@ -168,10 +159,9 @@ void BridgeConf::parseOptions()
         vector<string> values = vmap["module"].as<vector<string> >();
         for(size_t i=0; i < values.size(); ++i){
             string modulePath( values[i] );
-            if( filesystem::extension(filesystem::path( modulePath )).empty() )
-                {
-                    modulePath += string( SUFFIX_SHARED_EXT );
-                }
+            if(filesystem::path(modulePath).extension().empty()){
+                modulePath += string( SUFFIX_SHARED_EXT );
+            }
             addModuleInfo( modulePath );
         }
     }
@@ -329,7 +319,7 @@ void BridgeConf::addModuleInfo(const std::string& value)
     } else {
         ModuleInfo info;
         info.fileName = parameters[0];
-        info.componentName = filesystem::basename(filesystem::path(info.fileName));
+        info.componentName = filesystem::path(info.fileName).stem().string();
         if(parameters.size() == 1){
             info.initFuncName = info.componentName + "Init";
         } else {

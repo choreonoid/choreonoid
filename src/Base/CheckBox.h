@@ -19,12 +19,8 @@ public:
     CheckBox(QWidget* parent = 0);
     CheckBox(const QString& text, QWidget* parent = 0);
                                
-    SignalProxy<void(int)> sigStateChanged() {
-        return sigStateChanged_;
-    }
-    SignalProxy<void(bool)> sigToggled() {
-        return sigToggled_;
-    }
+    SignalProxy<void(int)> sigStateChanged();
+    SignalProxy<void(bool)> sigToggled();
 
 private Q_SLOTS:
     void onStateChanged(int state);
@@ -33,8 +29,8 @@ private Q_SLOTS:
 private:
     Signal<void(int)> sigStateChanged_;
     Signal<void(bool)> sigToggled_;
-
-    void initialize();
+    bool sigStateChangedConnected;
+    bool sigButtonToggledConnected;
 };
 
 }

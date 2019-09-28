@@ -8,8 +8,8 @@
 #include <cnoid/Archive>
 #include "gettext.h"
 
+using namespace std;
 using namespace cnoid;
-using namespace std::placeholders;
 
 namespace cnoid {
 
@@ -59,34 +59,34 @@ BodyBarImpl::BodyBarImpl(BodyBar* self)
     self->setVisibleByDefault(true);
 
     self->addButton(QIcon(":/Body/icons/storepose.png"), _("Memory the current pose"))
-        ->sigClicked().connect(std::bind(&BodyBarImpl::onCopyButtonClicked, this));
+        ->sigClicked().connect([&](){ onCopyButtonClicked(); });
 
     self->addButton(QIcon(":/Body/icons/restorepose.png"), _("Recall the memorized pose"))
-        ->sigClicked().connect(std::bind(&BodyBarImpl::onPasteButtonClicked, this));
+        ->sigClicked().connect([&](){ onPasteButtonClicked(); });
     
     self->addButton(QIcon(":/Body/icons/origin.png"), _("Move the selected bodies to the origin"))
-        ->sigClicked().connect(std::bind(&BodyBarImpl::onOriginButtonClicked, this));
+        ->sigClicked().connect([&](){ onOriginButtonClicked(); });
 
     self->addButton(QIcon(":/Body/icons/initialpose.png"), _("Set the preset initial pose to the selected bodies"))
-        ->sigClicked().connect(std::bind(&BodyBarImpl::onPoseButtonClicked, this, BodyItem::INITIAL_POSE));
+        ->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::INITIAL_POSE); });
 
     self->addButton(QIcon(":/Body/icons/stdpose.png"), _("Set the preset standard pose to the selected bodies"))
-        ->sigClicked().connect(std::bind(&BodyBarImpl::onPoseButtonClicked, this, BodyItem::STANDARD_POSE));
+        ->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::STANDARD_POSE); });
 
     self->addSeparator();
 
     self->addButton(QIcon(":/Body/icons/right-to-left.png"), _("Copy the right side pose to the left side"))
-        ->sigClicked().connect(std::bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 1, false));
+        ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(1, false); });
 
     self->addButton(QIcon(":/Body/icons/flip.png"), _("Mirror copy"))
-        ->sigClicked().connect(std::bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 0, true));
+        ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, true); });
 
     self->addButton(QIcon(":/Body/icons/left-to-right.png"), _("Copy the left side pose to the right side"))
-        ->sigClicked().connect(std::bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 0, false));
+        ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, false); });
 
     connectionOfItemSelectionChanged = 
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            std::bind(&BodyBarImpl::onItemSelectionChanged, this, _1));
+        ItemTreeView::instance()->sigSelectionChanged().connect(
+            [&](const ItemList<>& items){ onItemSelectionChanged(items); });
 }
 
 
@@ -145,20 +145,20 @@ bool BodyBar::makeSingleSelection(BodyItem* bodyItem)
 
 bool BodyBarImpl::makeSingleSelection(BodyItem* bodyItem)
 {
-    ItemTreeView* tree = ItemTreeView::mainInstance()->mainInstance();
+    auto itv = ItemTreeView::instance();
 
     ItemList<BodyItem> prevSelected = selectedBodyItems;
 
     for(size_t i=0; i < prevSelected.size(); ++i){
         BodyItem* item = prevSelected[i];
-        if(item != bodyItem && tree->isItemSelected(item)){
-            tree->selectItem(item, false);
+        if(item != bodyItem && itv->isItemSelected(item)){
+            itv->selectItem(item, false);
         }
     }
 
-    bool selected = tree->isItemSelected(bodyItem);
+    bool selected = itv->isItemSelected(bodyItem);
     if(!selected){
-        selected = tree->selectItem(bodyItem, true);
+        selected = itv->selectItem(bodyItem, true);
     }
     return selected;
 }
@@ -178,9 +178,10 @@ void BodyBarImpl::onItemSelectionChanged(const ItemList<BodyItem>& bodyItems)
     if(firstItem && firstItem != currentBodyItem){
         currentBodyItem = firstItem;
         connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
-        connectionOfCurrentBodyItemDetachedFromRoot = currentBodyItem->sigDetachedFromRoot().connect(
-            std::bind(&BodyBarImpl::onBodyItemDetachedFromRoot, this));
-        sigCurrentBodyItemChanged(currentBodyItem.get());
+        connectionOfCurrentBodyItemDetachedFromRoot =
+            currentBodyItem->sigDetachedFromRoot().connect(
+                [&](){ onBodyItemDetachedFromRoot(); });
+        sigCurrentBodyItemChanged(currentBodyItem);
     }
 
     if(selectedBodyItemsChanged){
@@ -291,7 +292,7 @@ bool BodyBar::storeState(Archive& archive)
 
 bool BodyBar::restoreState(const Archive& archive)
 {
-    archive.addPostProcess(std::bind(&BodyBarImpl::restoreState, impl, std::ref(archive)));
+    archive.addPostProcess([&](){ impl->restoreState(archive); });
     return true;
 }
 
@@ -304,7 +305,7 @@ bool BodyBarImpl::restoreState(const Archive& archive)
             if(targetBodyItems.empty()){
                 targetBodyItems.push_back(currentBodyItem);
             }
-            sigCurrentBodyItemChanged(currentBodyItem.get());
+            sigCurrentBodyItemChanged(currentBodyItem);
         }
     }
     return true;

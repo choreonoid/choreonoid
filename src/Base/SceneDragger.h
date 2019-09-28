@@ -14,8 +14,7 @@ class CNOID_EXPORT SceneDragger : public SgPosTransform, public SceneWidgetEdita
 {
   public:
     SceneDragger();
-    SceneDragger(const SceneDragger& org);
-    SceneDragger(const SceneDragger& org, SgCloneMap& cloneMap);
+    SceneDragger(const SceneDragger& org, SgCloneMap* cloneMap = nullptr);
 
     bool isContainerMode() const { return isContainerMode_; }
     void setContainerMode(bool on);

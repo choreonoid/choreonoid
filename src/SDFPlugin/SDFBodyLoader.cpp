@@ -19,21 +19,20 @@
 #include <cnoid/RootItem>
 #include <cnoid/EigenUtil>
 #include <cnoid/PolymorphicFunctionSet>
+#include <cnoid/std/filesystem>
 #include <sdf/sdf.hh>
 #include <sdf/parser_urdf.hh>
 #include <ignition/math.hh>
 #include <OGRE/OgreRoot.h>
 #include <OGRE/OgreMaterialManager.h>
-#include <boost/function.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 #include <fmt/format.h>
 #include <map>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 
 using ignition::math::Pose3d;
 

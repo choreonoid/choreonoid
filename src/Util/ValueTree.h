@@ -8,6 +8,7 @@
 #include "Referenced.h"
 #include <map>
 #include <vector>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {

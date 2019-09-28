@@ -8,7 +8,7 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
-#ifdef WIN32
+#ifdef _WIN32
 #include "Link.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>

@@ -11,6 +11,7 @@
 #include "Buttons.h"
 #include "Timer.h"
 #include <cnoid/ConnectionSet>
+#include <cnoid/stdx/filesystem>
 #include <QAction>
 #include <QHBoxLayout>
 #include <QFile>
@@ -18,13 +19,12 @@
 #include <QMessageBox>
 #include <QTextCodec>
 #include <QTextDocumentWriter>
-#include <boost/filesystem.hpp>
 #include <sstream>
 #include "gettext.h"
 
 using namespace cnoid;
 using namespace std::placeholders;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 #define FILE_CHECK_TIME 1000   //msec
 
@@ -243,7 +243,7 @@ void TextEditViewImpl::setCurrentFileName()
         textEdit.setReadOnly(false);
         textEdit.document()->setModified(false);
         filesystem::path fpath(currentTextItem_->textFilename());
-        fileTimeStamp = filesystem::last_write_time(fpath);
+        fileTimeStamp = filesystem::last_write_time_to_time_t(fpath);
         fileSize = filesystem::file_size(fpath);
         if(viewActive)
             timer.start(FILE_CHECK_TIME);
@@ -258,7 +258,7 @@ void TextEditViewImpl::timeOut()
         if(!filename.empty()){
             filesystem::path fpath(filename);
             if(filesystem::exists(fpath)){
-                if( filesystem::last_write_time(fpath) != fileTimeStamp ||
+                if( filesystem::last_write_time_to_time_t(fpath) != fileTimeStamp ||
                     filesystem::file_size(fpath) != fileSize ){
                     QMessageBox::StandardButton ret;
                     ret = QMessageBox::warning(MainWindow::instance(), _("Warning"),
@@ -268,7 +268,7 @@ void TextEditViewImpl::timeOut()
                         textEdit.clear();
                         open();
                     }else if (ret == QMessageBox::No){
-                        fileTimeStamp = filesystem::last_write_time(fpath);
+                        fileTimeStamp = filesystem::last_write_time_to_time_t(fpath);
                         fileSize = filesystem::file_size(fpath);
                         textEdit.document()->setModified(true);
                     }

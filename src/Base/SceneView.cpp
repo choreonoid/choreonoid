@@ -79,6 +79,8 @@ SceneView* SceneView::instance()
 void SceneView::initializeClass(ExtensionManager* ext)
 {
     if(instances.empty()){
+        SceneWidget::initializeClass(ext);
+        
         ext->viewManager().registerClass<SceneView>(
             "SceneView", N_("Scene"), ViewManager::MULTI_DEFAULT);
 
@@ -94,6 +96,7 @@ void finalizeClass()
 {
     sigItemAddedConnection.disconnect();
 }
+
 }
 
 
@@ -110,6 +113,9 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
     
     sceneWidget = new SceneWidget;
     scene = sceneWidget->scene();
+    sceneWidget->setObjectName(self->windowTitle());
+    self->sigWindowTitleChanged().connect(
+        [this](string title){ sceneWidget->setObjectName(title.c_str()); });
 
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->addWidget(sceneWidget);
@@ -160,7 +166,7 @@ SceneViewImpl::~SceneViewImpl()
         finalizeClass();
     }
 }
-    
+
 
 void SceneView::onActivated()
 {

@@ -1,0 +1,482 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: 2F-85
+
+links:
+  -
+    name: Coupler
+    jointType: fixed
+    mass: 0.1
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000001, 0.000000, 0.000000,
+      0.000000, 0.000001, 0.000000,
+      0.000000, 0.000000, 0.000001 ]
+    elements:
+      -
+        type: Visual
+        elements: 
+          Transform:
+            rotation: [ 0, 0, 1, -90 ]
+            elements: { Resource: { uri: "parts/kinova_robotiq_coupler.dae" } }
+      - 
+        type: Collision
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, -0.01 ]
+            geometry: { type: Cylinder, radius: 0.0318, height: 0.02 }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, -0.02 ]
+            geometry: { type: Cylinder, radius: 0.0335, height: 0.01 }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, -0.03 ]
+            geometry: { type: Cylinder, radius: 0.036, height: 0.01 }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, -0.0435 ]
+            geometry: { type: Cylinder, radius: 0.0376, height: 0.021 }
+  -
+    name: Gripper_Base
+    parent: Coupler
+    jointType: fixed
+    translation: [ 0.0, 0.0, -0.05105 ]
+    rotation: [ 0, 1, 0, 90 ]
+    mass: 0.636951
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000380, 0.000000, 0.000000,
+      0.000000, 0.001110, 0.000000,
+      0.000000, 0.000000, 0.001171 ]
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_base_link.dae" } }
+      - 
+        type: Collision
+        elements:
+          -
+            type: Shape
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ 0.0195, 0, 0 ]
+            geometry: { type: Cylinder, radius: 0.0377, height: 0.033 }
+          -
+            type: Shape
+            translation: [ 0.061, 0, 0 ]
+            geometry: { type: Box, size: [ 0.058, 0.031, 0.022 ] }
+          -
+            type: Shape
+            translation: [ 0.04, 0, 0 ]
+            geometry: { type: Box, size: [ 0.01, 0.072, 0.022 ] } 
+          - &BASE_SHAPE1
+            type: Transform
+            translation: [ 0.037, 0.036, 0.0 ]
+            rotation: [ 0, 0, 1, 21]
+            elements:
+              -
+                type: Shape
+                translation: [ 0.011, -0.015, 0 ]
+                geometry: { type: Box, size: [ 0.022, 0.03, 0.022 ] }
+              -
+                type: Transform
+                translation: [ 0.022, 0.0, 0.0 ]
+                rotation: [ 0, 0, 1, -57.5]
+                elements:
+                  -
+                    type: Shape
+                    translation: [ 0.019, -0.015, 0.0 ]
+                    geometry: { type: Box, size: [ 0.038, 0.03, 0.022] }
+                  -
+                    type: Transform
+                    translation: [ 0.038, 0.0, 0.0 ]
+                    rotation: [ 0, 0, 1, -38 ]
+                    elements:
+                      Shape:
+                        translation: [ 0.0035, -0.005, 0.0 ]
+                        geometry: { type: Box, size: [ 0.007, 0.01, 0.022] }
+          -
+            type: Transform
+            rotation: [ 1, 0, 0, 180 ]
+            elements: *BASE_SHAPE1
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0.0614, 0.0127, 0 ]
+            geometry: { type: Cylinder, radius: 0.0076, height: 0.024 }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0.0614, -0.0127, 0 ]
+            geometry: { type: Cylinder, radius: 0.0076, height: 0.024 }
+  -
+    name: Finger1_knuckle
+    parent: Gripper_Base
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointId: 0
+    translation: [ 0.05490451627, 0.03060114443, 0.0 ]
+    rotation: [ 1, 0, 0, 180 ]
+    jointRange: [ 0, 46 ]
+    jointVelocityRange: [ -114.6, 114.6 ]
+    mass: 0.018491
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000009, -0.000001, 0.000000,
+     -0.000001,  0.000001, 0.000000,
+      0.000000,  0.000000, 0.000010 ]
+    rotorInertia: 0.005
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_knuckle_link.dae" } }
+      - 
+        type: Collision
+        elements: &KNUCKLE_SHAPE
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0 ]
+            geometry: { type: Cylinder, radius: 0.0075, height: 0.011 }
+          -
+            type: Transform
+            rotation: [ 0, 0, 1, -7 ]
+            elements:
+              -
+                type: Shape
+                translation: [ 0.0, -0.013, 0.0 ]
+                geometry: { type: Box, size: [ 0.0095, 0.026, 0.009 ] }
+              -
+                type: Shape
+                translation: [ 0.00575, -0.028, 0 ]
+                geometry: { type: Box, size: [ 0.021, 0.014, 0.009 ] }
+              -
+                type: Transform
+                translation: [ 0.0045, -0.013, 0.0 ]
+                rotation: [ 0, 0, 1, -35 ]
+                elements:
+                  Shape:
+                    translation: [ 0.007, -0.006, 0.0 ]
+                    geometry: { type: Box, size: [ 0.014, 0.012, 0.009 ] }
+              -
+                type: Shape
+                translation: [ 0.00985, -0.0238, 0.0 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0025, height: 0.024 }
+  -
+    name: Finger1_finger
+    parent: Finger1_knuckle
+    jointType: fixed
+    translation: [ -0.00408552455, -0.03148604435, 0.0 ]
+    rotation: [ 1, 0, 0, 0 ]
+    mass: 0.027309
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000003, -0.000002, 0.000000,
+     -0.000002,  0.000021, 0.000000,
+      0.000000,  0.000000, 0.000020 ]
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_finger_link.dae" } }
+      - 
+        type: Collision
+        elements: &FINGER_SHAPE
+          - &FINGER1_SHAPE1
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.0025, height: 0.027 }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.006, height: 0.024 }
+          -
+            type: Transform
+            rotation: [ 0, 0, 1, -7.393 ]
+            elements:
+              -
+                type: Shape
+                translation: [ 0.0145, 0.0, 0.0 ]
+                geometry: { type: Box, size: [ 0.029, 0.012, 0.024 ] }
+              -
+                type: Transform
+                translation: [ 0.0475, 0.0, 0.0 ]
+                elements:
+                  -  <<: *FINGER1_SHAPE1
+                  -
+                    type: Transform
+                    translation: [ 0, 0, 0.00975 ]
+                    elements: &FINGER1_SHAPE2
+                      -
+                        type: Shape
+                        rotation: [ 1, 0, 0, 90 ]
+                        geometry: { type: Cylinder, radius: 0.006, height: 0.0045 }
+                      - 
+                        type: Shape
+                        translation: [ -0.01, 0.0, 0.0 ]
+                        geometry: { type: Box, size: [ 0.02, 0.012, 0.0045 ] }
+                  -
+                    type: Transform
+                    translation: [ 0, 0, -0.00975 ]
+                    elements: *FINGER1_SHAPE2
+  -
+    name: Finger1_inner_knuckle
+    parent: Gripper_Base
+    jointType: revolute
+    jointId: 1
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.06142, 0.0127, 0 ]
+    rotation: [ 1, 0, 0, 180 ]
+    jointRange: [ 0, 46 ]
+    jointVelocityRange: [ -5730, 5730 ]
+    mass: 0.029951
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000039, 0.000000, 0.000000,
+      0.000000, 0.000005, 0.000000,
+      0.000000, 0.000000, 0.000035 ]
+    rotorInertia: 0.005
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_inner_knuckle_link.dae" } }
+      - 
+        type: Collision
+        elements: &INNER_KUNCKLE_SHAPE
+          - type: Transform
+            rotation: [ 0, 0, 1, -41.1405 ]
+            elements:
+              - 
+                type: Transform
+                translation: [ 0.0, 0.0, 0.012 ]
+                elements: &INNER_KUNCKLE_SHAPE1
+                  -   
+                    type: Shape
+                    translation: [ 0.0, 0.0, 0.00375 ]
+                    rotation: [ 1, 0, 0, 90 ]
+                    geometry: { type: Cylinder, radius: 0.006, height: 0.0075 }
+                  -
+                    type: Shape
+                    translation: [ 0.005, 0.0, 0.00375 ]
+                    geometry: { type: Box, size: [ 0.01, 0.012, 0.0075 ] } 
+                  -
+                    type: Shape
+                    translation: [ 0.025, 0.0, 0.0025 ]
+                    geometry: { type: Box, size: [ 0.03, 0.012, 0.005 ] }
+                  -
+                    type: Shape
+                    translation: [ 0.0485, 0.0, -0.00225 ]
+                    geometry: { type: Box, size: [ 0.0174, 0.012, 0.0045 ] }
+                  -
+                    type: Shape
+                    translation: [ 0.0572, 0.0, -0.00225 ]
+                    rotation: [ 1, 0, 0, 90 ]
+                    geometry: { type: Cylinder, radius: 0.006, height: 0.0045 }
+              - 
+                type: Transform
+                translation: [ 0.0, 0.0, -0.012 ]
+                rotation: [ 1, 0, 0, 180 ]
+                elements: *INNER_KUNCKLE_SHAPE1
+              -
+                type: Shape
+                translation: [ 0.05715, 0.0, 0.0 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0025, height: 0.027 }
+              -
+                type: Shape
+                translation: [ 0.035, 0.0, 0.0 ]
+                geometry: { type: Box, size: [ 0.0096, 0.012, 0.025 ] }
+  -
+    name: Finger1_finger_tip
+    parent: Finger1_inner_knuckle
+    jointType: revolute
+    jointId: 2
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.04303959807, -0.03759940821, 0.0 ]
+    rotation: [ 1, 0, 0, 0 ]
+    jointRange: [ 0, -46 ]
+    jointVelocityRange: [ -5730, 5730 ]
+    mass: 0.019555
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000002, 0.000000, 0.000000,
+      0.000000, 0.000005, 0.000000,
+      0.000000, 0.000000, 0.000006 ]
+    rotorInertia: 0.005
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_finger_tip_link.dae" } }
+      - 
+        type: Collision
+        elements: &FINGER_TIP_SHAPE
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: &FINGER_TIP_CYLINDER1 { type: Cylinder, radius: 0.005, height: 0.015 }
+          -
+            type: Transform
+            rotation: [ 0, 0, 1, -20 ]
+            elements:
+              -
+                type: Transform
+                rotation: [ 1, 0, 0, 90 ]
+                translation: [ 0.0, -0.01905, 0.0 ]
+                elements:
+                  -
+                    type: Shape
+                    geometry: *FINGER_TIP_CYLINDER1 
+                  -
+                    type: Shape
+                    geometry: { type: Cylinder, radius: 0.006, height: 0.014 }
+                
+              -
+                type: Shape
+                translation: [ 0.0, -0.00745, 0.0 ]
+                geometry: { type: Box, size: [ 0.012, 0.0233, 0.014 ] }
+          -
+            type: Shape
+            translation: [ 0.0144, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.0372, 0.012, 0.014 ] }
+          -
+            type: Shape
+            translation: [ 0.0355, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.005, 0.008, 0.014 ] }
+          -
+            type: Transform
+            translation: [ 0.033, -0.006, 0.0 ]
+            rotation: [ 0, 0, 1, 21.804 ]
+            elements:
+              Shape:
+                translation: [ 0.0027, 0.0015, 0.0 ]
+                geometry: { type: Box, size: [ 0.0054, 0.003, 0.014 ] }
+          -
+            type: Shape
+            translation: [ 0.02325, 0.0044, 0.0 ]
+            geometry: { type: Box, size: [ 0.0325, 0.0068, 0.022 ] }
+          -
+            type: Shape
+            translation: [ 0.0395, 0.0044, -0.006 ]
+            geometry: &FINGER_TIP_CYLINDER2 { type: Cylinder, radius: 0.005, height: 0.0068 }
+          -
+            type: Shape
+            translation: [ 0.0395, 0.0044, 0.006 ]
+            geometry: *FINGER_TIP_CYLINDER2 
+          -
+            type: Shape
+            translation: [ 0.042, 0.0044, 0.0 ]
+            geometry: { type: Box, size: [ 0.005, 0.0068, 0.012 ] }
+  -
+    name: Finger2_knuckle
+    parent: Gripper_Base
+    jointType: revolute
+    jointId: 3
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.05490451627, -0.03060114443, 0.0 ]
+    rotation: [ 1, 0, 0, 0 ]
+    jointRange: [ 0, 46 ]
+    jointVelocityRange: [ -5730, 5730 ]
+    mass: 0.018491
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000009, -0.000001, 0.000000,
+     -0.000001,  0.000001, 0.000000,
+      0.000000,  0.000000, 0.000010 ]
+    rotorInertia: 0.005
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_knuckle_link.dae" } }
+      - 
+        type: Collision
+        elements: *KNUCKLE_SHAPE
+  -
+    name: Finger2_finger
+    parent: Finger2_knuckle
+    jointType: fixed
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ -0.00408552455, -0.03148604435, 0.0 ]
+    rotation: [ 1, 0, 0, 0 ]
+    mass: 0.027309
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000003, -0.000002, 0.000000,
+     -0.000002,  0.000021, 0.000000,
+      0.000000,  0.000000, 0.000020 ]
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_finger_link.dae" } }
+      - 
+        type: Collision
+        elements: *FINGER_SHAPE
+  -
+    name: Finger2_inner_knuckle
+    parent: Gripper_Base
+    jointType: revolute
+    jointId: 4
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.06142, -0.0127, 0 ]
+    rotation: [ 1, 0, 0, 0 ]
+    jointRange: [ 0, 46 ]
+    jointVelocityRange: [ -5730, 5730 ]
+    mass: 0.029951
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000039, 0.000000, 0.000000,
+      0.000000, 0.000005, 0.000000,
+      0.000000, 0.000000, 0.000035 ]
+    rotorInertia: 0.005
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_inner_knuckle_link.dae" } }
+      - 
+        type: Collision
+        elements: *INNER_KUNCKLE_SHAPE    
+  -
+    name: Finger2_finger_tip
+    parent: Finger2_inner_knuckle
+    jointType: revolute
+    jointId: 5
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.04303959807, -0.03759940821, 0.0 ]
+    rotation: [ 1, 0, 0, 0 ]
+    jointRange: [ 0, -46 ]
+    jointVelocityRange: [ -5730, 5730 ]
+    mass: 0.019555
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.000002, 0.000000, 0.000000,
+      0.000000, 0.000005, 0.000000,
+      0.000000, 0.000000, 0.000006 ]
+    rotorInertia: 0.005
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "parts/robotiq_85_finger_tip_link.dae" } }
+      - 
+        type: Collision
+        elements: *FINGER_TIP_SHAPE
+extraJoints:    
+  -
+    link1Name: Finger1_finger
+    link2Name: Finger1_finger_tip
+    jointType: piston
+    jointAxis: [ 0, 0, 1 ]
+    link1LocalPos: [ 0.047181008, -0.005912811, 0 ]
+    link2LocalPos: [ -0.00645959, -0.017700592, 0 ]
+  -
+    link1Name: Finger2_finger
+    link2Name: Finger2_finger_tip
+    jointType: piston
+    jointAxis: [ 0, 0, 1 ]
+    link1LocalPos: [ 0.047181008, -0.005912811, 0 ]
+    link2LocalPos: [ -0.00645959, -0.017700592, 0 ]
+    

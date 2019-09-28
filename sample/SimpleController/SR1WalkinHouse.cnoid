@@ -213,7 +213,7 @@ views:
       headLightLightingFromBack: false
       worldLight: true
       worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
+      worldLightAmbient: 0.25
       additionalLights: false
       fog: true
       floorGrid: false

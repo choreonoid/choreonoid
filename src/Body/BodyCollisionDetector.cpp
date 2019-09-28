@@ -280,13 +280,13 @@ bool BodyCollisionDetector::makeReady()
 }
 
 
-boost::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::findGeometryHandle(Link* link)
+stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::findGeometryHandle(Link* link)
 {
     auto iter = impl->linkToGeometryHandleMap.find(link);
     if(iter != impl->linkToGeometryHandleMap.end()){
         return iter->second;
     }
-    return boost::none;
+    return stdx::nullopt;
 }
 
 

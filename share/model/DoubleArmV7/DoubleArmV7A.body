@@ -36,6 +36,12 @@ links:
         lockToReachMergeConditionCompliance: 0.1
         lockToReachMergeConditionSpookDamping: 0.01
         material: DoubleArmV7ATracks
+        nodeShape: &NODE_SHAPE
+          appearance:
+            material:
+              diffuseColor: [ 0.15, 0.15, 0.15 ]
+              specularColor: [ 0.8, 0.8, 0.8 ]
+              shininess: 0.02
       -
         type: AGXVehicleContinuousTrackDevice
         name: TRACK_R
@@ -62,6 +68,7 @@ links:
         lockToReachMergeConditionCompliance: 0.1
         lockToReachMergeConditionSpookDamping: 0.01
         material: DoubleArmV7ATracks
+        nodeShape: *NODE_SHAPE
   -
     name: WHEEL_L0
     parent: TFRAME
@@ -82,8 +89,8 @@ links:
           material:
             diffuseColor: [ 0.3, 0.3, 0.3 ]
             ambientIntensity: 0.2
-            specularColor: [ 0.2, 0.2, 0.2 ]
-            shininess: 0.1
+            specularColor: [ 0.5, 0.5, 0.5 ]
+            shininess: 0.02
         geometry: { type: Cylinder, radius: 0.2, height: 0.25 }
   -
     name: WHEEL_L1

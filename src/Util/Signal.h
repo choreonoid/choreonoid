@@ -180,7 +180,7 @@ public:
     typedef typename signal_private::function_traits<Signature>::result_type result_type;
     
     SlotHolder(const FuncType& func)
-        : func(func), prev(0), owner(0) {
+        : func(func), prev(nullptr), owner(nullptr) {
     }
 
     virtual void disconnect() {
@@ -188,7 +188,7 @@ public:
     }
 
     virtual bool connected() const {
-        return owner != 0;
+        return owner != nullptr;
     }
 
     virtual void changeOrder(int orderId) {
@@ -218,11 +218,11 @@ public:
     void disconnect() {
         if(slot) {
             slot->disconnect();
-            slot = 0;
+            slot = nullptr;
         }
     }
 
-    bool connected() {
+    bool connected() const {
         return slot && slot->connected();
     }
 
@@ -249,22 +249,26 @@ public:
 };
 
 
-class ScopedConnection : private Connection
+class ScopedConnection
 {
+    Connection connection_;
+    
 public:
     ScopedConnection() { }
-    ScopedConnection(const Connection& org) : Connection(org) { }
-    ~ScopedConnection() { Connection::disconnect(); }
-    void reset(const Connection& c) { Connection::disconnect(); Connection::operator=(c); }
-    void disconnect() { Connection::disconnect(); }
-    bool connected() { return Connection::connected(); }
-    void block() { Connection::block(); }
-    void unblock() { Connection::unblock(); }
-    ScopedConnection& changeOrder(Order order) { Connection::changeOrder(order); return *this; }
-
-private:
-    ScopedConnection(const ScopedConnection& org);
-    ScopedConnection& operator=(const ScopedConnection& rhs);
+    ScopedConnection(const ScopedConnection& org) = delete;
+    ScopedConnection(const Connection& org) { connection_ = org; }
+    ~ScopedConnection() { connection_.disconnect(); }
+    void reset() { connection_.disconnect(); }
+    void reset(const Connection& c) { connection_.disconnect(); connection_ = c; }
+    ScopedConnection& operator=(const ScopedConnection& rhs) = delete;
+    ScopedConnection& operator=(const Connection& rhs) { reset(rhs); return *this; }
+    void disconnect() { connection_.disconnect(); }
+    bool connected() const { return connection_.connected(); }
+    void block() { connection_.block(); }
+    void unblock() { connection_.unblock(); }
+    ScopedConnection& changeOrder(Connection::Order order) { connection_.changeOrder(order); return *this; }
+    Connection& connection(){ return connection_; }
+    const Connection& connection() const { return connection_; }
 };
 
 
@@ -287,7 +291,7 @@ private:
     Signal& operator=(const Signal& rhs);
 
 public:
-    Signal() : lastSlot(0) { }
+    Signal() : lastSlot(nullptr) { }
 
     ~Signal() {
         disconnect_all_slots();
@@ -324,8 +328,8 @@ public:
             } else {
                 firstSlot = next;
             }
-            slot->prev = 0;
-            slot->owner = 0;
+            slot->prev = nullptr;
+            slot->owner = nullptr;
             slot->isBlocked = true;
 
             /**
@@ -371,7 +375,7 @@ public:
     }
 
     bool empty() const {
-        return (firstSlot == 0);
+        return (firstSlot == nullptr);
     }
     
     result_type operator()(Args... args){
@@ -423,7 +427,7 @@ class SignalProxy
 public:
     typedef Signal<Signature, Combiner> SignalType;
 
-    SignalProxy() : signal(0) { }
+    SignalProxy() : signal(nullptr) { }
     SignalProxy(SignalType& signal) : signal(&signal) { }
     SignalProxy(const SignalProxy& org) : signal(org.signal) { }
 

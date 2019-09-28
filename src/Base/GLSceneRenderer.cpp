@@ -4,18 +4,21 @@
 */
 
 #include "GLSceneRenderer.h"
+#include "GL1SceneRenderer.h"
+#include "GLSLSceneRenderer.h"
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
-#include <fmt/format.h>
-#ifdef _WIN32
-#include <windows.h>
-#endif
-#include <GL/gl.h>
+#include <cnoid/NullOut>
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
+
+namespace {
+
+int rendererType_ = GLSceneRenderer::GLSL_RENDERER;
+
+}
 
 namespace cnoid {
 
@@ -28,10 +31,12 @@ public:
     SgGroupPtr sceneRoot;
     SgGroupPtr scene;
     Array4i viewport;
-    GLfloat aspectRatio; // width / height;
+    float aspectRatio; // width / height;
     Vector3f backgroundColor;
     Vector3f defaultColor;
     GLSceneRenderer::PolygonMode polygonMode;
+    ostream* os_;
+    ostream& os(){ return *os_; };
 
     GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
     ~GLSceneRendererImpl();
@@ -41,16 +46,37 @@ public:
 }
 
 
-GLSceneRenderer::GLSceneRenderer()
+void GLSceneRenderer::initializeClass()
 {
-    SgGroup* sceneRoot = new SgGroup;
-    sceneRoot->setName("Root");
-    impl = new GLSceneRendererImpl(this, sceneRoot);
+    char* CNOID_USE_GLSL = getenv("CNOID_USE_GLSL");
+    if(CNOID_USE_GLSL && (strcmp(CNOID_USE_GLSL, "0") == 0)){
+        rendererType_ = GL1_RENDERER;
+    }
+}
+
+
+int GLSceneRenderer::rendererType()
+{
+    return rendererType_;
+}
+
+
+GLSceneRenderer* GLSceneRenderer::create(SgGroup* root)
+{
+    if(rendererType_ == GL1_RENDERER){
+        return new GL1SceneRenderer(root);
+    } else {
+        return new GLSLSceneRenderer(root);
+    }
 }
 
 
 GLSceneRenderer::GLSceneRenderer(SgGroup* sceneRoot)
 {
+    if(!sceneRoot){
+        sceneRoot = new SgGroup;
+        sceneRoot->setName("Root");
+    }
     impl = new GLSceneRendererImpl(this, sceneRoot);
 }
 
@@ -68,6 +94,8 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     backgroundColor << 0.1f, 0.1f, 0.3f; // dark blue
     defaultColor << 1.0f, 1.0f, 1.0f;
     polygonMode = GLSceneRenderer::FILL_MODE;
+
+    os_ = &nullout();
 }
 
 
@@ -80,6 +108,12 @@ GLSceneRenderer::~GLSceneRenderer()
 GLSceneRendererImpl::~GLSceneRendererImpl()
 {
 
+}
+
+
+void GLSceneRenderer::setOutputStream(std::ostream& os)
+{
+    impl->os_ = &os;
 }
 
 
@@ -101,6 +135,12 @@ void GLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
         onImageUpdated(image);
     }
     SceneRenderer::onSceneGraphUpdated(update);
+}
+
+
+void GLSceneRenderer::onImageUpdated(SgImage*)
+{
+
 }
 
 
@@ -140,14 +180,12 @@ GLSceneRenderer::PolygonMode GLSceneRenderer::polygonMode() const
 }
 
 
-void GLSceneRenderer::setViewport(int x, int y, int width, int height)
+void GLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
     if(height > 0){
         impl->aspectRatio = (double)width / height;
     }
     impl->viewport << x, y, width, height;
-    //glViewport(x, y, width, height);
-    glViewport(x, y, width, height);
 }
 
 
@@ -172,57 +210,6 @@ double GLSceneRenderer::aspectRatio() const
 }
 
 
-bool GLSceneRenderer::initializeGL()
-{
-#ifndef _WIN32
-    ostream& os = mvout();
-    GLint major, minor;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
-    os << format("OpenGL version is {0}.{1}.", major, minor) << endl;
-    if(major >= 2){
-        os << format("GLSL version is {0}.", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
-    }
-#endif
-    return true;
-}
-
-
-bool GLSceneRenderer::setSwapInterval(int interval)
-{
-#if 0
-#ifdef _WIN32
-    DISPLAY_DEVICE device;
-    device.cb = sizeof(DISPLAY_DEVICE);
-    for (unsigned int i = 0; EnumDisplayDevices(NULL, i, &device, NULL); i++) {
-        if (strstr(device.DeviceString, "VirtualBox") != NULL){
-            return false;
-        }
-    }
-
-    if(!wglGetProcAddress("wglGetExtensionsStringEXT"))
-        return false;
-    if( strstr(wglGetExtensionsStringEXT(), "WGL_EXT_swap_control" ) == 0 )
-        return false;
-
-    return wglSwapIntervalEXT(interval);
-#endif
-#endif
-    return false;
-}
-
-
-int GLSceneRenderer::getSwapInterval() const
-{
-#if 0
-#ifdef _WIN32
-    return wglGetSwapIntervalEXT();
-#endif
-#endif
-    return -1;
-}
-
-
 void GLSceneRenderer::clearShadows()
 {
 
@@ -242,6 +229,12 @@ void GLSceneRenderer::enableShadowAntiAliasing(bool /* on */)
 
 
 void GLSceneRenderer::setUpsideDown(bool /* on */)
+{
+
+}
+
+
+void GLSceneRenderer::setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool /* on */)
 {
 
 }
@@ -318,3 +311,22 @@ bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_proje
 
     return true;
 }
+
+
+void GLSceneRenderer::setPickingBufferImageOutputEnabled(bool)
+{
+
+}
+    
+
+bool GLSceneRenderer::getPickingBufferImage(Image&)
+{
+    return false;
+}
+
+
+bool GLSceneRenderer::isShadowCastingAvailable() const
+{
+    return false;
+}
+

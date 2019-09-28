@@ -1,6 +1,1 @@
-#include <cnoid/Config>
-#ifdef CNOID_USE_PYBIND11
 #include "src/Util/pybind11/PySignal.h"
-#else
-#include "src/Util/boostpython/PySignal.h"
-#endif

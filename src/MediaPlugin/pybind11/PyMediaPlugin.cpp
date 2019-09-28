@@ -15,7 +15,7 @@ namespace {
 bool pyPlayAudioFile(const string& filename, double volumeRatio)
 {
     bool result = false;
-#ifndef WIN32
+#ifndef _WIN32
     callSynchronously([&](){ result = cnoid::playAudioFile(filename, volumeRatio); });
 #endif
     return result;

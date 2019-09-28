@@ -8,22 +8,12 @@
 #include "FileUtil.h"
 #include "UTF8.h"
 #include <fmt/format.h>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::smatch;
-using boost::regex_match;
-#else
 #include <regex>
-#endif
-
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-namespace filesystem = boost::filesystem;
 
 namespace cnoid {
 
@@ -34,22 +24,22 @@ public:
     regex variableRegex;
     bool isVariableRegexAssinged;
     string baseDirString;
-    filesystem::path baseDirPath;
+    stdx::filesystem::path baseDirPath;
     bool isBaseDirInHome;
     string topDirString;
-    filesystem::path topDirPath;
+    stdx::filesystem::path topDirPath;
     string shareDirString;
-    filesystem::path shareDirPath;
+    stdx::filesystem::path shareDirPath;
     string homeDirString;
-    filesystem::path homeDirPath;
+    stdx::filesystem::path homeDirPath;
     string projectDirString;
     string errorMessage;
 
     ParametricPathProcessorImpl();
     bool findSubDirectoryOfDirectoryVariable(
-        const filesystem::path& path, std::string& out_varName, filesystem::path& out_relativePath);
+        const stdx::filesystem::path& path, std::string& out_varName, stdx::filesystem::path& out_relativePath);
     bool replaceDirectoryVariable(string& io_pathString, const string& varname, int pos, int len);
-    boost::optional<std::string> expand(const std::string& pathString);
+    stdx::optional<std::string> expand(const std::string& pathString);
 };
 
 }
@@ -83,7 +73,7 @@ ParametricPathProcessorImpl::ParametricPathProcessorImpl()
 
     char* home = getenv("HOME");
     if(home){
-        homeDirPath = filesystem::path(home);
+        homeDirPath = stdx::filesystem::path(home);
         homeDirString = home;
     }
 }
@@ -105,7 +95,7 @@ void ParametricPathProcessor::setBaseDirectory(const std::string& directory)
 {
     impl->baseDirString = directory;
     impl->baseDirPath = directory;
-    filesystem::path relativePath;
+    stdx::filesystem::path relativePath;
     impl->isBaseDirInHome = findSubDirectory(impl->homeDirPath, impl->baseDirPath, relativePath);
 }
 
@@ -121,14 +111,14 @@ void ParametricPathProcessor::setProjectDirectory(const std::string& directory)
 */
 std::string ParametricPathProcessor::parameterize(const std::string& orgPathString)
 {
-    filesystem::path orgPath(orgPathString);
+    stdx::filesystem::path orgPath(orgPathString);
 
     // In the case where the path is originally relative one
-    if(!orgPath.is_complete()){
+    if(!orgPath.is_absolute()){
         return getGenericPathString(orgPath);
 
     } else {
-        filesystem::path relativePath;
+        stdx::filesystem::path relativePath;
 
         if(!impl->baseDirPath.empty() && findSubDirectory(impl->baseDirPath, orgPath, relativePath)){
             return getGenericPathString(relativePath);
@@ -160,17 +150,17 @@ std::string ParametricPathProcessor::parameterize(const std::string& orgPathStri
    \todo Introduce a tree structure to improve the efficiency of searching matched directories
 */
 bool ParametricPathProcessorImpl::findSubDirectoryOfDirectoryVariable
-(const filesystem::path& path, std::string& out_varName, filesystem::path& out_relativePath)
+(const stdx::filesystem::path& path, std::string& out_varName, stdx::filesystem::path& out_relativePath)
 {
     out_relativePath.clear();
     int maxMatchSize = 0;
-    filesystem::path relativePath;
+    stdx::filesystem::path relativePath;
     Mapping::const_iterator p;
     for(p = variables->begin(); p != variables->end(); ++p){
         Listing* paths = p->second->toListing();
         if(paths){
             for(int i=0; i < paths->size(); ++i){
-                filesystem::path dirPath(paths->at(i)->toString());
+                stdx::filesystem::path dirPath(paths->at(i)->toString());
                 int n = findSubDirectory(dirPath, path, relativePath);
                 if(n > maxMatchSize){
                     maxMatchSize = n;
@@ -184,20 +174,20 @@ bool ParametricPathProcessorImpl::findSubDirectoryOfDirectoryVariable
 }
 
 
-boost::optional<std::string> ParametricPathProcessor::expand(const std::string& pathString)
+stdx::optional<std::string> ParametricPathProcessor::expand(const std::string& pathString)
 {
     return impl->expand(pathString);
 }
 
 
-boost::optional<std::string> ParametricPathProcessorImpl::expand(const std::string& pathString)
+stdx::optional<std::string> ParametricPathProcessorImpl::expand(const std::string& pathString)
 {
     if(!isVariableRegexAssinged){
         variableRegex = "^\\$\\{(\\w+)\\}";
         isVariableRegexAssinged = true;
     }
 
-    filesystem::path path;
+    stdx::filesystem::path path;
     smatch match;
     if(!regex_search(pathString, match, variableRegex)){
         path = pathString;
@@ -216,12 +206,12 @@ boost::optional<std::string> ParametricPathProcessorImpl::expand(const std::stri
             if(projectDirString.empty()){
                 errorMessage =
                     format(_("PROJECT_DIR of \"{}\" cannot be expanded."), pathString);
-                return boost::none;
+                return stdx::nullopt;
             }
             expanded.replace(pos, len, projectDirString);
         } else {
             if(!replaceDirectoryVariable(expanded, varname, pos, len)){
-                return boost::none;
+                return stdx::nullopt;
             }
         }
         path = expanded;
@@ -230,9 +220,9 @@ boost::optional<std::string> ParametricPathProcessorImpl::expand(const std::stri
     if(checkAbsolute(path) || baseDirPath.empty()){
         return getNativePathString(path);
     } else {
-        filesystem::path fullPath = baseDirPath / path;
+        stdx::filesystem::path fullPath = baseDirPath / path;
         if(!path.empty() && (*path.begin() == "..")){
-            filesystem::path compact(getCompactPath(fullPath));
+            stdx::filesystem::path compact(getCompactPath(fullPath));
             return getNativePathString(compact);
         } else {
             return getNativePathString(fullPath);
@@ -250,8 +240,8 @@ bool ParametricPathProcessorImpl::replaceDirectoryVariable
             string vpath;
             string replaced(io_pathString);
             replaced.replace(pos, len, paths->at(i)->toString());
-            filesystem::file_status fstatus = filesystem::status(filesystem::path(replaced));
-            if(filesystem::is_directory(fstatus) || filesystem::exists(fstatus)) {
+            stdx::filesystem::file_status fstatus = stdx::filesystem::status(stdx::filesystem::path(replaced));
+            if(stdx::filesystem::is_directory(fstatus) || stdx::filesystem::exists(fstatus)) {
                 io_pathString = replaced;
                 return true;
             }

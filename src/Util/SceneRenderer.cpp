@@ -9,8 +9,7 @@
 #include "SceneLights.h"
 #include "SceneEffects.h"
 #include "PolymorphicFunctionSet.h"
-#include <Eigen/StdVector>
-#include <boost/variant.hpp>
+#include <cnoid/stdx/variant>
 #include <set>
 #include <unordered_map>
 #include <mutex>
@@ -31,7 +30,7 @@ std::unordered_map<string, int> propertyKeyMap;
 struct PreproNode
 {
     enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA };
-    boost::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgFog*, SgCamera*> node;
+    stdx::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgFog*, SgCamera*> node;
     SgNode* base;
     PreproNode* parent;
     PreproNode* child;
@@ -88,6 +87,7 @@ class SceneRendererImpl
 {
 public:
     SceneRenderer* self;
+    string name;
     bool isRendering;
     bool doPreprocessedNodeTreeExtraction;
     Signal<void()> sigRenderingRequest;
@@ -111,7 +111,7 @@ public:
         PreproNode* node;
     };
 
-    typedef vector<CameraInfo, Eigen::aligned_allocator<CameraInfo> > CameraInfoArray;
+    typedef vector<CameraInfo, Eigen::aligned_allocator<CameraInfo>> CameraInfoArray;
     CameraInfoArray cameras1;
     CameraInfoArray cameras2;
     CameraInfoArray* cameras;
@@ -134,7 +134,7 @@ public:
         SgLight* light;
         Affine3 M;
     };
-    vector<LightInfo, Eigen::aligned_allocator<LightInfo> > lights;
+    vector<LightInfo, Eigen::aligned_allocator<LightInfo>> lights;
 
     SgLightPtr headLight;
     std::set<SgLightPtr> defaultLights;
@@ -146,7 +146,7 @@ public:
     std::mutex newExtensionMutex;
     vector<std::function<void(SceneRenderer* renderer)>> newExtendFunctions;
 
-    typedef boost::variant<bool, int, double> PropertyValue;
+    typedef stdx::variant<bool, int, double> PropertyValue;
     vector<PropertyValue> properties;
     
     SceneRendererImpl(SceneRenderer* self);
@@ -173,8 +173,8 @@ public:
             return defaultValue;
         }
         const PropertyValue& value = properties[id];
-        if(value.which() == which){
-            return get<ValueType>(value);
+        if(stdx::get_variant_index(value) == which){
+            return stdx::get<ValueType>(value);
         }
         return defaultValue;
     }    
@@ -215,6 +215,18 @@ SceneRenderer::~SceneRenderer()
     std::lock_guard<std::mutex> guard(extensionMutex);
     renderers.erase(this);
     delete impl;
+}
+
+
+void SceneRenderer::setName(const std::string& name)
+{
+    impl->name = name;
+}
+
+
+const std::string& SceneRenderer::name() const
+{
+    return impl->name;
 }
 
 
@@ -345,7 +357,7 @@ void SceneRendererImpl::extractPreproNodes()
 
 void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T)
 {
-    switch(node->node.which()){
+    switch(stdx::get_variant_index(node->node)){
 
     case PreproNode::GROUP:
         for(PreproNode* childNode = node->child; childNode; childNode = childNode->next){
@@ -355,7 +367,7 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
         
     case PreproNode::TRANSFORM:
     {
-        SgTransform* transform = boost::get<SgTransform*>(node->node);
+        SgTransform* transform = stdx::get<SgTransform*>(node->node);
         Affine3 T1;
         transform->getTransform(T1);
         const Affine3 T2 = T * T1;
@@ -371,7 +383,7 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
 
     case PreproNode::LIGHT:
     {
-        SgLight* light = boost::get<SgLight*>(node->node);
+        SgLight* light = stdx::get<SgLight*>(node->node);
         if(additionalLightsEnabled || defaultLights.find(light) != defaultLights.end()){
             lights.push_back(LightInfo(light, T));
         }
@@ -380,14 +392,14 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
 
     case PreproNode::FOG:
     {
-        SgFog* fog = boost::get<SgFog*>(node->node);
+        SgFog* fog = stdx::get<SgFog*>(node->node);
         fogs.push_back(fog);
         break;
     }
 
     case PreproNode::CAMERA:
     {
-        SgCamera* camera = boost::get<SgCamera*>(node->node);
+        SgCamera* camera = stdx::get<SgCamera*>(node->node);
         size_t index = cameras->size();
         if(!camerasChanged){
             if(index >= prevCameras->size() || camera != (*prevCameras)[index].camera){

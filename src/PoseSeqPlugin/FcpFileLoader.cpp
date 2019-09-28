@@ -12,18 +12,17 @@
 #include <cnoid/MessageView>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MenuManager>
+#include <cnoid/Tokenizer>
+#include <cnoid/stdx/filesystem>
 #include <QFileDialog>
-#include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/filesystem.hpp>
 #include <map>
 #include <vector>
+#include <stdexcept>
 #include <fstream>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -41,7 +40,7 @@ struct Part
     vector<int> jointIds;
     map<string, FcPose> poses;
 };
-typedef boost::shared_ptr<Part> PartPtr;
+typedef shared_ptr<Part> PartPtr;
     
 vector<PartPtr> parts;
 
@@ -62,8 +61,8 @@ bool loadFaceControllerPoseSet(const string& filename)
 
     int nLines = 0;
     try {
-        typedef tokenizer< char_separator<char> > tokenizer;
-        char_separator<char> sep(" \t\r\n");
+        CharSeparator<char> sep(" \t\r\n", 0, DROP_EMPTY_TOKENS);
+        
         string line;
         while(getline(ifs, line)){
             ++nLines;
@@ -73,14 +72,14 @@ bool loadFaceControllerPoseSet(const string& filename)
                 line = line.substr(0, line.length()-1);
             }
             
-            tokenizer tokens(line, sep);
-            tokenizer::iterator it = tokens.begin();
+            Tokenizer<CharSeparator<char>> tokens(line, sep);
+            auto it = tokens.begin();
             if(it != tokens.end()){
                 if(*it == "*"){
                     ++it;
                     PartPtr part(new Part());
                     while(it != tokens.end()){
-                        part->jointIds.push_back(lexical_cast<int>(*it++));
+                        part->jointIds.push_back(std::stoi(*it++));
                     }
                     if(!part->jointIds.empty()){
                         os << "pose registration of the joint set ";
@@ -105,7 +104,7 @@ bool loadFaceControllerPoseSet(const string& filename)
                     FcPose pose;
                     if(it != tokens.end()){
                         while(true){
-                            double value = lexical_cast<double>(*it++);
+                            double value = std::stod(*it++);
                             if(it == tokens.end()){
                                 pose.transitionTime = value;
                                 break;
@@ -132,7 +131,7 @@ bool loadFaceControllerPoseSet(const string& filename)
             cout << endl;
         }
     }
-    catch(const bad_lexical_cast& ex){
+    catch(const std::invalid_argument& ex){
         os << ex.what() << " at line " << nLines << endl;
         parts.clear();
     }
@@ -154,16 +153,14 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
     os << "Loading " << filename << "..." << endl;
 
     PoseSeqItemPtr item = new PoseSeqItem();
-    filesystem::path fpath(filename);
-    item->setName(basename(fpath));
+    stdx::filesystem::path fpath(filename);
+    item->setName(fpath.stem().string());
     PoseSeqPtr seq = item->poseSeq();
 
     int nLines = 0;
         
     try {
-            
-        typedef tokenizer< char_separator<char> > tokenizer;
-        char_separator<char> sep(" ,\t\r\n", "", boost::keep_empty_tokens);
+        CharSeparator<char> sep(" ,\t\r\n", 0, KEEP_EMPTY_TOKENS);
             
         int nPoses = 0;
         string line;
@@ -173,13 +170,13 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
             if(!line.empty() && line[line.length()-1] == '\r'){
                 line = line.substr(0, line.length()-1);
             }
-            tokenizer tokens(line, sep);
+            Tokenizer<CharSeparator<char>> tokens(line, sep);
                 
-            tokenizer::iterator it = tokens.begin();
+            auto it = tokens.begin();
             if(it != tokens.end()){
                 if(*it != "#"){
                     PoseSeq::iterator poseIter = seq->begin();
-                    double time = lexical_cast<double>(*it++);
+                    double time = std::stod(*it++);
                     int numParts = parts.size();
                     bool poseAdded = false;
                     for(int i=0; it != tokens.end(); ++i, ++it){
@@ -215,7 +212,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
         }
         os << "A pose sequence with " << nPoses << " poses has been loaded." << endl;
     }
-    catch(const bad_lexical_cast& ex){
+    catch(const std::invalid_argument& ex){
         os << "FaceController : " << ex.what() << endl;
         os << " at line " << nLines << "." << endl;
         item = 0;

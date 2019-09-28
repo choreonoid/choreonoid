@@ -7,6 +7,7 @@
 #include "SceneFountain.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/GLSLProgram>
 
 using namespace std;
 using namespace cnoid;
@@ -63,7 +64,7 @@ SceneFountain::SceneFountain(const SceneFountain& org)
 }
 
 
-SgObject* SceneFountain::clone(SgCloneMap& cloneMap) const
+SgObject* SceneFountain::doClone(SgCloneMap*) const
 {
     return new SceneFountain(*this);
 }
@@ -76,7 +77,10 @@ ParticleSystem* SceneFountain::getParticleSystem()
 
 
 FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer),
+    : ParticlesProgram(
+        renderer,
+        ":/SceneEffectsPlugin/shader/Fountain.vert",
+        ":/SceneEffectsPlugin/shader/Particles.frag"),
       initVelBuffer(buffers[0]),
       offsetTimeBuffer(buffers[1])
 {
@@ -86,16 +90,13 @@ FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
 
 bool FountainProgram::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(":/SceneEffectsPlugin/shader/Fountain.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    link();
-    
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
-    lifeTimeLocation = getUniformLocation("lifeTime");
-    accelLocation = getUniformLocation("accel");
+    auto& glsl = glslProgram();
+    lifeTimeLocation = glsl.getUniformLocation("lifeTime");
+    accelLocation = glsl.getUniformLocation("accel");
 
     glGenBuffers(2, buffers);
     glGenVertexArrays(1, &vertexArray);

@@ -6,7 +6,7 @@
 #define CNOID_BASE_VIEW_H
 
 #include <cnoid/Signal>
-#include <QWidget>
+#include <cnoid/Widget>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -25,7 +25,7 @@ public:
     virtual const std::string& className() const = 0;
 };
 
-class CNOID_EXPORT View : public QWidget
+class CNOID_EXPORT View : public Widget
 {
 public:
     View();
@@ -36,11 +36,7 @@ public:
     virtual void setName(const std::string& name);
     
     std::string name() const {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-        return objectName().toUtf8().data();
-#else
         return objectName().toStdString();
-#endif
      }
 
     ViewArea* viewArea() const;

@@ -19,21 +19,6 @@ int clamp(int i, int min, int max)
     return i < min ? min : i < max ? i : max - 1;
 }
 
-double myNearByInt(double x)
-{
-#ifdef Q_OS_WIN32
-    double u = ceil(x);
-    double l = floor(x);
-    if(fabs(u - x) < fabs(x - l)){
-        return u;
-    } else {
-        return l;
-    }
-#else
-    return nearbyint(x);
-#endif
-}
-
 }
 
 
@@ -258,16 +243,16 @@ void FisheyeLensConverter::convertImageWithoutAntiAliasing(Image* image)
                         }
                         double xx = x*tanTheta;
                         double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2-0.5);
-                        jj = myNearByInt(yy + screenWidth2-0.5);
+                        ii = nearbyint(xx + screenWidth2-0.5);
+                        jj = nearbyint(yy + screenWidth2-0.5);
                         if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){
                             screenId = FRONT_SCREEN;
                             picked = true;
                         }else if(ii >= screenWidth){  //right
                             double xx_ = sw22 / xx;
                             double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iir = nearbyint(-xx_ + screenWidth2-0.5);
+                            int jjr = nearbyint(yy_ + screenWidth2-0.5);
                             if( 0 <= jjr && jjr < screenWidth){
                                 screenId = RIGHT_SCREEN;
                                 ii = clamp(iir, 0, screenWidth);
@@ -277,8 +262,8 @@ void FisheyeLensConverter::convertImageWithoutAntiAliasing(Image* image)
                         }else if(ii < 0){    //left
                             double xx_ = sw22 / -xx;
                             double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
-                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iil = nearbyint(xx_ +screenWidth2-0.5);
+                            int jjl = nearbyint(yy_ + screenWidth2-0.5);
                             if( 0 <= jjl && jjl < screenWidth){
                                 screenId = LEFT_SCREEN;
                                 ii = clamp(iil, 0, screenWidth);
@@ -289,8 +274,8 @@ void FisheyeLensConverter::convertImageWithoutAntiAliasing(Image* image)
                         if(!picked && jj >= screenWidth){    //bottom
                             double xx_ = screenWidth2 * xx / yy;
                             double yy_ = sw22 / yy;
-                            int iib = myNearByInt(xx_ + screenWidth2-0.5);
-                            int jjb = myNearByInt(-yy_ + screenWidth2-0.5);
+                            int iib = nearbyint(xx_ + screenWidth2-0.5);
+                            int jjb = nearbyint(-yy_ + screenWidth2-0.5);
                             screenId = BOTTOM_SCREEN;
                             ii = clamp(iib, 0, screenWidth);
                             jj = clamp(jjb, 0, screenWidth);
@@ -298,8 +283,8 @@ void FisheyeLensConverter::convertImageWithoutAntiAliasing(Image* image)
                         }else if(!picked && jj < 0){    //top
                             double xx_ = screenWidth2 * xx / -yy;
                             double yy_ = sw22 / -yy;
-                            int iit = myNearByInt(xx_ + screenWidth2-0.5);
-                            int jjt = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iit = nearbyint(xx_ + screenWidth2-0.5);
+                            int jjt = nearbyint(yy_ + screenWidth2-0.5);
                             screenId = TOP_SCREEN;
                             ii = clamp(iit, 0, screenWidth);
                             jj = clamp(jjt, 0, screenWidth);
@@ -321,16 +306,16 @@ void FisheyeLensConverter::convertImageWithoutAntiAliasing(Image* image)
                         }
                         double xx = x*tanTheta;
                         double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2-0.5);
-                        jj = myNearByInt(yy + screenWidth2-0.5);
+                        ii = nearbyint(xx + screenWidth2-0.5);
+                        jj = nearbyint(yy + screenWidth2-0.5);
                         if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){
                             screenId = BACK_SCREEN;
                             picked = true;
                         }else if(ii >= screenWidth){
                             double xx_ = sw22 / xx;
                             double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iir = nearbyint(-xx_ + screenWidth2-0.5);
+                            int jjr = nearbyint(yy_ + screenWidth2-0.5);
                             if( 0 <= jjr && jjr < screenWidth){
                                 screenId = LEFT_SCREEN;
                                 ii = clamp(iir, 0, screenWidth);
@@ -340,8 +325,8 @@ void FisheyeLensConverter::convertImageWithoutAntiAliasing(Image* image)
                         }else if(ii < 0){
                             double xx_ = sw22 / -xx;
                             double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
-                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iil = nearbyint(xx_ +screenWidth2-0.5);
+                            int jjl = nearbyint(yy_ + screenWidth2-0.5);
                             if( 0 <= jjl && jjl < screenWidth){
                                 screenId = RIGHT_SCREEN;
                                 ii = clamp(iil, 0, screenWidth);
@@ -352,8 +337,8 @@ void FisheyeLensConverter::convertImageWithoutAntiAliasing(Image* image)
                         if(!picked && jj >= screenWidth){
                             double xx_ = screenWidth2 * xx / yy;
                             double yy_ = sw22 / yy;
-                            int iib = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjb = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iib = nearbyint(-xx_ + screenWidth2-0.5);
+                            int jjb = nearbyint(yy_ + screenWidth2-0.5);
                             screenId = BOTTOM_SCREEN;
                             ii = clamp(iib, 0, screenWidth);
                             jj = clamp(jjb, 0, screenWidth);
@@ -361,8 +346,8 @@ void FisheyeLensConverter::convertImageWithoutAntiAliasing(Image* image)
                         }else if(!picked && jj < 0){
                             double xx_ = screenWidth2 * xx / -yy;
                             double yy_ = sw22 / -yy;
-                            int iit = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjt = myNearByInt(-yy_ + screenWidth2-0.5);
+                            int iit = nearbyint(-xx_ + screenWidth2-0.5);
+                            int jjt = nearbyint(-yy_ + screenWidth2-0.5);
                             screenId = TOP_SCREEN;
                             ii = clamp(iit, 0, screenWidth);
                             jj = clamp(jjt, 0, screenWidth);
@@ -458,8 +443,8 @@ void  FisheyeLensConverter::convertImageWithAntiAliasing(Image* image)
                         }
                         double xx = x*tanTheta;
                         double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2-0.5);
-                        jj = myNearByInt(yy + screenWidth2-0.5);
+                        ii = nearbyint(xx + screenWidth2-0.5);
+                        jj = nearbyint(yy + screenWidth2-0.5);
                         if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){  //center
                             sx = xx + screenWidth2-0.5;
                             sy = yy + screenWidth2-0.5;
@@ -492,8 +477,8 @@ void  FisheyeLensConverter::convertImageWithAntiAliasing(Image* image)
                         }else if(ii >= screenWidth){  //right
                             double xx_ = sw22 / xx;
                             double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iir = nearbyint(-xx_ + screenWidth2-0.5);
+                            int jjr = nearbyint(yy_ + screenWidth2-0.5);
                             if( 0 <= jjr && jjr < screenWidth){
                                 sx = -xx_ + screenWidth2-0.5;
                                 sy = yy_ + screenWidth2-0.5;
@@ -529,8 +514,8 @@ void  FisheyeLensConverter::convertImageWithAntiAliasing(Image* image)
                         }else if(ii < 0){    //left
                             double xx_ = sw22 / -xx;
                             double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
-                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iil = nearbyint(xx_ +screenWidth2-0.5);
+                            int jjl = nearbyint(yy_ + screenWidth2-0.5);
                             if( 0 <= jjl && jjl < screenWidth){
                                 sx = xx_ + screenWidth2-0.5;
                                 sy = yy_ + screenWidth2-0.5;
@@ -648,8 +633,8 @@ void  FisheyeLensConverter::convertImageWithAntiAliasing(Image* image)
                         }
                         double xx = x*tanTheta;
                         double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2-0.5);
-                        jj = myNearByInt(yy + screenWidth2-0.5);
+                        ii = nearbyint(xx + screenWidth2-0.5);
+                        jj = nearbyint(yy + screenWidth2-0.5);
                         if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){  // center
                             sx = xx + screenWidth2-0.5;
                             sy = yy + screenWidth2-0.5;
@@ -692,8 +677,8 @@ void  FisheyeLensConverter::convertImageWithAntiAliasing(Image* image)
                         }else if(ii >= screenWidth){  //right
                             double xx_ = sw22 / xx;
                             double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iir = nearbyint(-xx_ + screenWidth2-0.5);
+                            int jjr = nearbyint(yy_ + screenWidth2-0.5);
                             if( 0 <= jjr && jjr < screenWidth){
                                 sx = -xx_ + screenWidth2-0.5;
                                 sy = yy_ + screenWidth2-0.5;
@@ -729,8 +714,8 @@ void  FisheyeLensConverter::convertImageWithAntiAliasing(Image* image)
                         }else if(ii < 0){   //left
                             double xx_ = sw22 / -xx;
                             double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ + screenWidth2-0.5);
-                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
+                            int iil = nearbyint(xx_ + screenWidth2-0.5);
+                            int jjl = nearbyint(yy_ + screenWidth2-0.5);
                             if( 0 <= jjl && jjl < screenWidth){
                                 sx = xx_ + screenWidth2-0.5;
                                 sy = yy_ + screenWidth2-0.5;
@@ -892,7 +877,7 @@ void  FisheyeLensConverter::convertImageWithAntiAliasing(Image* image)
                         map.bias[k] = bias[k];
                     }
                     for(int kk=0; kk<3; kk++){
-                        pix[kk] = myNearByInt(pixd[kk]);
+                        pix[kk] = nearbyint(pixd[kk]);
                     }
                 }else{
                     pix[0] = pix[1] = pix[2] = 0;
@@ -915,7 +900,7 @@ void  FisheyeLensConverter::convertImageWithAntiAliasing(Image* image)
                         }
                     }
                     for(int kk=0; kk<3; kk++){
-                        pix[kk] = myNearByInt(pixd[kk]);
+                        pix[kk] = nearbyint(pixd[kk]);
                     }
                 }else{
                     pix[0] = pix[1] = pix[2] = 0;

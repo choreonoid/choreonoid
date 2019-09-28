@@ -152,7 +152,7 @@ public:
 
     ConnectionSet connections;
     Connection connectionToSigCollisionsUpdated;
-    boost::dynamic_bitset<> collisionLinkBitSet;
+    vector<bool> collisionLinkBitSet;
     ScopedConnection connectionToSigLinkSelectionChanged;
 
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };
@@ -172,10 +172,10 @@ public:
     Link* targetLink;
     double orgJointPosition;
         
-    shared_ptr<JointPath> ikPath;
     LinkTraverse fkTraverse;
+    shared_ptr<InverseKinematics> currentIK;
+    shared_ptr<InverseKinematics> defaultIK;
     shared_ptr<PinDragIK> pinDragIK;
-    shared_ptr<InverseKinematics> ik;
     shared_ptr<PenetrationBlocker> penetrationBlocker;
     PositionDraggerPtr positionDragger;
 
@@ -344,11 +344,11 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     if(legged->isValid() && legged->numFeet() > 0){
         Link* footLink = legged->footLink(0);
         const double r = calcLinkMarkerRadius(self->sceneLink(footLink->index()));
-        zmpMarker = new SphereMarker(r, Vector3f(0.0f, 1.0f, 0.0f), 0.3f);
+        zmpMarker = new SphereMarker(r, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
         zmpMarker->setName("ZMP");
         zmpMarker->addChild(new CrossMarker(r * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
     } else {
-        zmpMarker = new SphereMarker(0.1, Vector3f(0.0f, 1.0f, 0.0f), 0.3f);
+        zmpMarker = new SphereMarker(0.1, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
     }
     isZmpVisible = false;
 
@@ -509,7 +509,7 @@ EditableSceneBodyImpl::~EditableSceneBodyImpl()
 }
 
 
-void EditableSceneBody::setLinkVisibilities(const boost::dynamic_bitset<>& visibilities)
+void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilities)
 {
     int i;
     const int m = numSceneLinks();
@@ -536,8 +536,7 @@ void EditableSceneBodyImpl::onLinkVisibilityCheckToggled()
         onLinkSelectionChanged();
     } else {
         connectionToSigLinkSelectionChanged.disconnect();
-        boost::dynamic_bitset<> visibilities;
-        visibilities.resize(self->numSceneLinks(), true);
+        vector<bool> visibilities(self->numSceneLinks(), true);
         self->setLinkVisibilities(visibilities);
     }
 }
@@ -594,7 +593,7 @@ void EditableSceneBodyImpl::makeLinkFree(EditableSceneLink* sceneLink)
     if(bodyItem->currentBaseLink() == sceneLink->link()){
         bodyItem->setCurrentBaseLink(0);
     }
-    bodyItem->pinDragIK()->setPin(sceneLink->link(), InverseKinematics::NO_AXES);
+    bodyItem->pinDragIK()->setPin(sceneLink->link(), PinDragIK::NO_AXES);
     bodyItem->notifyUpdate();
 }
 
@@ -622,20 +621,20 @@ void EditableSceneBodyImpl::togglePin(EditableSceneLink* sceneLink, bool toggleT
 {
     auto pin = bodyItem->pinDragIK();
 
-    InverseKinematics::AxisSet axes = pin->pinAxes(sceneLink->link());
+    PinDragIK::AxisSet axes = pin->pinAxes(sceneLink->link());
 
     if(toggleTranslation && toggleRotation){
-        if(axes == InverseKinematics::NO_AXES){
-            axes = InverseKinematics::TRANSFORM_6D;
+        if(axes == PinDragIK::NO_AXES){
+            axes = PinDragIK::TRANSFORM_6D;
         } else {
-            axes = InverseKinematics::NO_AXES;
+            axes = PinDragIK::NO_AXES;
         }
     } else {
         if(toggleTranslation){
-            axes = (InverseKinematics::AxisSet)(axes ^ InverseKinematics::TRANSLATION_3D);
+            axes = (PinDragIK::AxisSet)(axes ^ PinDragIK::TRANSLATION_3D);
         }
         if(toggleRotation){
-            axes = (InverseKinematics::AxisSet)(axes ^ InverseKinematics::ROTATION_3D);
+            axes = (PinDragIK::AxisSet)(axes ^ PinDragIK::ROTATION_3D);
         }
     }
         
@@ -655,10 +654,14 @@ void EditableSceneBodyImpl::makeLinkAttitudeLevel()
             const Vector3 z(T(0,2), T(1, 2), T(2, 2));
             const Vector3 axis = z.cross(Vector3::UnitZ()).normalized();
             const Matrix3 R2 = AngleAxisd(theta, axis) * T.linear();
+            Position T2;
+            T2.linear() = R2;
+            T2.translation() = targetLink->p();
 
             bodyItem->beginKinematicStateEdit();
-            if(ik->calcInverseKinematics(targetLink->p(), R2)){
-                bodyItem->notifyKinematicStateChange(true);
+            if(ik->calcInverseKinematics(T2)){
+                bool fkDone = ik->calcRemainingPartForwardKinematicsForInverseKinematics();
+                bodyItem->notifyKinematicStateChange(!fkDone);
                 bodyItem->acceptKinematicStateEdit();
             }
         }
@@ -681,11 +684,11 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         if(isEditMode && !activeSimulatorItem){
             Link* link = sceneLink->link();
             if(link == baseLink){
-                sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4f);
+                sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
             } else {
                 int pinAxes = pin->pinAxes(link);
-                if(pinAxes & (InverseKinematics::TRANSFORM_6D)){
-                    sceneLink->showMarker(Vector3f(1.0f, 1.0f, 0.1f), 0.4f);
+                if(pinAxes & (PinDragIK::TRANSFORM_6D)){
+                    sceneLink->showMarker(Vector3f(1.0f, 1.0f, 0.1f), 0.4);
                 }
             }
         }
@@ -834,15 +837,18 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
             if(event.button() == Qt::LeftButton){
                 targetLink = pointedSceneLink->link();
                 updateMarkersAndManipulators();
-                ik.reset();
+                currentIK.reset();
+                defaultIK.reset();
                 
                 switch(kinematicsBar->mode()){
+
                 case KinematicsBar::AUTO_MODE:
-                    ik = bodyItem->getDefaultIK(targetLink);
-                    if(ik){
+                    defaultIK = bodyItem->getDefaultIK(targetLink);
+                    if(defaultIK){
                         startIK(event);
                         break;
                     }
+                    
                 case KinematicsBar::FK_MODE:
                     if(targetLink == bodyItem->currentBaseLink()){
                         // Translation of the base link
@@ -851,6 +857,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
                         startFK(event);
                     }
                     break;
+
                 case KinematicsBar::IK_MODE:
                     startIK(event);
                     break;
@@ -1214,29 +1221,28 @@ void EditableSceneBodyImpl::onDraggerDragFinished()
 
 bool EditableSceneBodyImpl::initializeIK()
 {
-    Link* baseLink = bodyItem->currentBaseLink();
-
-    if(!ik){
-        if(bodyItem->pinDragIK()->numPinnedLinks() == 0 && baseLink){
-            ikPath = getCustomJointPath(bodyItem->body(), baseLink, targetLink);
-            if(ikPath){
-                if(!ikPath->hasAnalyticalIK()){
-                    ikPath->setBestEffortIKmode(true);
-                }
-                ik = ikPath;
-            }
-        }
-    }
-    if(!ik){
+    if(!currentIK && bodyItem->pinDragIK()->numPinnedLinks() > 0){
         pinDragIK = bodyItem->pinDragIK();
-        pinDragIK->setBaseLink(baseLink);
+        pinDragIK->setBaseLink(bodyItem->currentBaseLink());
         pinDragIK->setTargetLink(targetLink, kinematicsBar->isPositionDraggerEnabled());
         if(pinDragIK->initialize()){
-            ik = pinDragIK;
+            currentIK = pinDragIK;
+        }
+    }
+    if(!currentIK){
+        if(defaultIK){
+            currentIK = defaultIK;
+        } else {
+            currentIK = bodyItem->getCurrentIK(targetLink);
+        }
+    }
+    if(auto jointPath = dynamic_pointer_cast<JointPath>(currentIK)){
+        if(!jointPath->hasAnalyticalIK()){
+            jointPath->setBestEffortIKmode(true);
         }
     }
 
-    return ik? true: false;
+    return currentIK? true: false;
 }
 
 
@@ -1281,10 +1287,13 @@ void EditableSceneBodyImpl::dragIK(const SceneWidgetEvent& event)
 
 void EditableSceneBodyImpl::doIK(const Position& position)
 {
-    if(ik){
-        if(ik->calcInverseKinematics(position.translation(), position.linear()) || true /* Best effort */){
-            fkTraverse.calcForwardKinematics();
-            bodyItem->notifyKinematicStateChange(true);
+    if(currentIK){
+        if(currentIK->calcInverseKinematics(position) || true /* Best effort */){
+            bool fkDone = currentIK->calcRemainingPartForwardKinematicsForInverseKinematics();
+            if(!fkDone){
+                fkTraverse.calcForwardKinematics();
+            }
+            bodyItem->notifyKinematicStateChange();
         }
     }
 }

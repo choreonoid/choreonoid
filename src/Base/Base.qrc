@@ -29,11 +29,15 @@
   <file>icons/eraser-cursor.png</file>
   <file>icons/adjustSize.png</file>
   
+  <file>shader/nolighting.vert</file>
+  <file>shader/nolighting.frag</file>
+  <file>shader/solidcolor.frag</file>
+  <file>shader/minlighting.vert</file>
+  <file>shader/minlighting.frag</file>
+  <file>shader/phong.vert</file>
+  <file>shader/phong.frag</file>
   <file>shader/phongshadow.vert</file>
   <file>shader/phongshadow.frag</file>
-  <file>shader/shadowmap.frag</file>
-  <file>shader/nolighting.vert</file>
-  <file>shader/solidcolor.frag</file>
 
   <file alias="LICENSE">../../LICENSE</file>
 

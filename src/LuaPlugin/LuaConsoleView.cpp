@@ -10,18 +10,10 @@
 #include <QPlainTextEdit>
 #include <QBoxLayout>
 #include <QTextBlock>
+#include <lua.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
-#include <lua.hpp>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::regex_match;
-#else
 #include <regex>
-#endif
-
 #include "gettext.h"
 
 using namespace std;

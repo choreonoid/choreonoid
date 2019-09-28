@@ -22,7 +22,7 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -883,7 +883,7 @@ bool MultiPointSetItemImpl::startAutomaticSave(const std::string& filename)
                     }
                 }
             }
-            catch(const boost::filesystem::filesystem_error& ex){
+            catch(const filesystem::filesystem_error& ex){
                 mvout() << ex.what() << endl;
             }
         }
@@ -901,7 +901,7 @@ void MultiPointSetItemImpl::saveAdditionalPointSet(int index)
                 save(getPathString(autoSaveFilePath));
             }
         }
-        catch(const boost::filesystem::filesystem_error& ex){
+        catch(const filesystem::filesystem_error& ex){
             mvout() << ex.what() << endl;
         }
     } else {

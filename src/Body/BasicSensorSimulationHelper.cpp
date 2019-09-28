@@ -5,7 +5,6 @@
 
 #include "BasicSensorSimulationHelper.h"
 #include "Body.h"
-#include <Eigen/StdVector>
 
 using namespace std;
 using namespace cnoid;
@@ -34,7 +33,7 @@ public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Vector2 x[3];
     };
-    typedef vector<KFState, Eigen::aligned_allocator<KFState> > KFStateArray;
+    typedef vector<KFState, Eigen::aligned_allocator<KFState>> KFStateArray;
 
     KFStateArray kfStates;
 

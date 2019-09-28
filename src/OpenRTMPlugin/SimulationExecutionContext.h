@@ -15,7 +15,7 @@
 #include <rtm/OpenHRPExecutionContext.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma warning( disable : 4290 )
 #endif
 

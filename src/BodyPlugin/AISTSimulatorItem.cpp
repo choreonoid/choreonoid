@@ -2,13 +2,6 @@
   @file
   @author Shin'ichiro Nakaoka
 */
-#ifdef WIN32
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 105900) 
-#define BOOST_NO_CXX11_ALLOCATOR
-#endif
-#endif
-
 #include "AISTSimulatorItem.h"
 #include "WorldItem.h"
 #include "BodyItem.h"
@@ -26,7 +19,6 @@
 #include <cnoid/MessageView>
 #include <cnoid/IdPair>
 #include <fmt/format.h>
-#include <boost/lexical_cast.hpp>
 #include <mutex>
 #include <iomanip>
 #include <fstream>
@@ -110,7 +102,7 @@ public:
     typedef std::map<Link*, Link*> LinkMap;
     LinkMap orgLinkToInternalLinkMap;
 
-    boost::optional<int> forcedBodyPositionFunctionId;
+    stdx::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
     Position forcedBodyPosition;
@@ -397,7 +389,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 {
     if(ENABLE_DEBUG_OUTPUT){
         static int ntest = 0;
-        os.open((string("test-log-") + boost::lexical_cast<string>(ntest++) + ".log").c_str());
+        os.open((string("test-log-") + std::to_string(ntest++) + ".log").c_str());
         os << setprecision(30);
     }
 
@@ -610,7 +602,7 @@ void AISTSimulatorItem::clearForcedPositions()
 {
     if(impl->forcedBodyPositionFunctionId){
         removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
-        impl->forcedBodyPositionFunctionId = boost::none;
+        impl->forcedBodyPositionFunctionId = stdx::nullopt;
     }
 }
     

@@ -213,27 +213,6 @@ views:
     checked: [ 1, 2, 4 ]
     expanded: [ 1, 2, 3, 6 ]
   "Scene": 
-    viewpointControlMode: thirdPerson
-    collisionLines: false
-    polygonMode: fill
-    defaultHeadLight: true
-    defaultHeadLightIntensity: 0.75
-    headLightLightingFromBack: false
-    worldLight: true
-    worldLightIntensity: 0.5
-    worldLightAmbient: 0.3
-    additionalLights: true
-    floorGrid: true
-    floorGridSpan: 10
-    floorGridInterval: 0.5
-    texture: true
-    lineWidth: 1
-    pointSize: 1
-    normalVisualization: false
-    normalLength: 0.01
-    coordinateAxes: true
-    showFPS: false
-    useBufferForPicking: true
     camera: 
       current: Perspective
       eye: [ 2.38053012, 1.54674006, 1.10801005 ]
@@ -243,9 +222,6 @@ views:
       near: 0.01
       far: 10000
       orthoHeight: 20
-    backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-    gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-    gridInterval: 1
 toolbars: 
   "TimeBar": 
     minTime: 0

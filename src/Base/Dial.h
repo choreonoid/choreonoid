@@ -20,20 +20,16 @@ public:
     void setValue(double value);
     double value();
 
-    SignalProxy<void(double)> sigValueChanged() {
-        return sigValueChanged_;
-    }
+    SignalProxy<void(double)> sigValueChanged();
 
 private Q_SLOTS:
     void onValueChanged(int value);
 
 private:
     Signal<void(double)> sigValueChanged_;
-    int pre_Value;
-    double increasing_Value;
-
-    void initialize();
-
+    double increasingValue;
+    int preValue;
+    bool isSigValueChangedConnected;
 };
 
 }

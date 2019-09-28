@@ -9,7 +9,7 @@ endif()
 
 set(project_files "")
 
-# SR1 samples
+# SR1
 add_cnoid_simple_controller(SR1MinimumController SR1MinimumController.cpp)
 add_cnoid_simple_controller(SR1WalkPatternController SR1WalkPatternController.cpp)
 add_cnoid_simple_controller(SR1LiftupController SR1LiftupController.cpp)
@@ -20,33 +20,37 @@ install(FILES ${sr1-pattern-files} DESTINATION ${CNOID_SHARE_SUBDIR}/motion/SR1)
 list(APPEND project_files
   SR1Minimum.cnoid SR1Walk.cnoid SR1Walk2D.cnoid SR1Liftup.cnoid SR1WalkinHouse.cnoid)
 
-# PA10 sample
+# PA10
 add_cnoid_simple_controller(PA10PickupController PA10PickupController.cpp)
 list(APPEND project_files PA10Pickup.cnoid)
 
-# Crawler samples
+# Universal Robots
+add_cnoid_simple_controller(UniversalRobotPickupController UniversalRobotPickupController.cpp)
+list(APPEND project_files UR3Pickup.cnoid UR5Pickup.cnoid UR10Pickup.cnoid)
+
+# Crawler
 add_cnoid_simple_controller(SampleCrawlerController SampleCrawlerController.cpp)
 add_cnoid_simple_controller(SampleCrawlerJoystickController SampleCrawlerJoystickController.cpp)
 list(APPEND project_files SampleCrawler.cnoid SampleCrawlerJoystick.cnoid SampleCrawlerSlope.cnoid)
 
-# Tank samples
+# Tank
 add_cnoid_simple_controller(TankJoystickController TankJoystickController.cpp)
 list(APPEND project_files Tank.cnoid TankVisionSensors.cnoid AgxTank.cnoid)
 
-# DoubleArmV7 sample
+# DoubleArmV7
 add_cnoid_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
 list(APPEND project_files DoubleArmV7S.cnoid DoubleArmV7A.cnoid)
 
-# Jaco2 sample
+# JACO2
 add_cnoid_simple_controller(Jaco2Controller Jaco2Controller.cpp)
 
-# AizuSpider sample
+# AizuSpider
 add_cnoid_simple_controller(AizuSpiderController AizuSpiderController.cpp)
 list(APPEND project_files
   AizuSpiderNS.cnoid AizuSpiderNA.cnoid AizuSpiderSS.cnoid
   AizuSpiderSA.cnoid AizuSpiderDS.cnoid AizuSpiderDA.cnoid)
 
-# AizuWheel sample
+# AizuWheel
 add_cnoid_simple_controller(AizuWheelController AizuWheelController.cpp)
 list(APPEND project_files AizuWheel.cnoid)
 

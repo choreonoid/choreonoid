@@ -24,7 +24,7 @@ except:
     pass
 
 def loadProject(
-    view, task, simulatorProjects, robotProject,
+    view, task, simulatorProjects, robotProjects,
     enableMulticopterSimulation = False, enableVisionSimulation = False, targetVisionSensors = "", remoteType = ""):
 
     projectdir = os.path.join(shareDirectory, "WRS2018", "project")
@@ -59,39 +59,54 @@ def loadProject(
     for i in range(1, len(selectedSimulatorItems)):
         itv.selectItem(selectedSimulatorItems[i], False)
 
-    robot = pm.loadProject(os.path.join(projectdir, robotProject + ".cnoid"), world)[0]
+    if not isinstance(robotProjects, list):
+        robotProjects = [ robotProjects ]
 
-    if remoteType:
-        joystickInput = SimpleControllerItem()
-        joystickInput.name = robot.name + "-JoystickInput"
-        mainController = robot.getDescendantItems(SimpleControllerItem)[0]
-        mainController.addChildItem(joystickInput)
+    robotOffset = 0.0
 
-        if remoteType == "RTM":
-            joystickInput.setController("RemoteJoystickInputController")
-            visionSensorOutput = BodyIoRTCItem()
-            visionSensorOutput.name = "VisionSensorOutput"
-            visionSensorOutput.rtcModuleName = "VisionSensorIoRTC"
-            robot.addChildItem(visionSensorOutput)
+    for robotProject in robotProjects:
+
+        robot = pm.loadProject(os.path.join(projectdir, robotProject + ".cnoid"), world)[0]
+
+        rootLink = robot.body.rootLink;
+        p = rootLink.translation
+        p[1] -= robotOffset
+        rootLink.setTranslation(p)
+        robot.notifyKinematicStateChange(True)
+        robot.storeInitialState()
+        robotOffset += 1.5
+
+        if remoteType:
+            joystickInput = SimpleControllerItem()
+            joystickInput.name = robot.name + "-JoystickInput"
+            mainController = robot.getDescendantItems(SimpleControllerItem)[0]
+            mainController.addChildItem(joystickInput)
+
+            if remoteType == "RTM":
+                joystickInput.setController("RemoteJoystickInputController")
+                visionSensorOutput = BodyIoRTCItem()
+                visionSensorOutput.name = "VisionSensorOutput"
+                visionSensorOutput.rtcModuleName = "VisionSensorIoRTC"
+                robot.addChildItem(visionSensorOutput)
         
-        elif remoteType == "ROS":
-            joystickInput.setController("JoyTopicSubscriberController")
-            bodyPublisher = BodyPublisherItem()
-            bodyPublisher.name = "BodyPublisher"
-            robot.addChildItem(bodyPublisher)
+            elif remoteType == "ROS":
+                joystickInput.setController("JoyTopicSubscriberController")
+                bodyPublisher = BodyPublisherItem()
+                bodyPublisher.name = "BodyPublisher"
+                robot.addChildItem(bodyPublisher)
 
-    if enableMulticopterSimulation:
-        multicopterSimulator = MulticopterSimulatorItem()
-        simulators = world.getDescendantItems(SimulatorItem)
-        for simulator in simulators:
-            simulator.addChildItem(multicopterSimulator.duplicate())
+        if enableMulticopterSimulation:
+            multicopterSimulator = MulticopterSimulatorItem()
+            simulators = world.getDescendantItems(SimulatorItem)
+            for simulator in simulators:
+                simulator.addChildItem(multicopterSimulator.duplicate())
 
-    if enableVisionSimulation:
-        visionSimulator = GLVisionSimulatorItem()
-        visionSimulator.setTargetSensors(targetVisionSensors)
-        visionSimulator.setBestEffortMode(True)
-        simulators = world.getDescendantItems(SimulatorItem)
-        for simulator in simulators:
-            simulator.addChildItem(visionSimulator.duplicate())
+        if enableVisionSimulation:
+            visionSimulator = GLVisionSimulatorItem()
+            visionSimulator.setTargetSensors(targetVisionSensors)
+            visionSimulator.setBestEffortMode(True)
+            simulators = world.getDescendantItems(SimulatorItem)
+            for simulator in simulators:
+                simulator.addChildItem(visionSimulator.duplicate())
             
-    pm.setCurrentProjectName(task + "-" + robotProject)
+    pm.setCurrentProjectName(task + "-" + robotProjects[0])

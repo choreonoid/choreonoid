@@ -1,0 +1,27 @@
+#ifndef CNOID_STDX_OPTIONAL_HEADER
+#define CNOID_STDX_OPTIONAL_HEADER
+
+#if __cplusplus > 201402L
+#include <optional>
+namespace cnoid::stdx {
+using std::optional;
+using std::nullopt;
+}
+
+#else
+#include <boost/version.hpp>
+#include <boost/optional.hpp>
+namespace cnoid { namespace stdx {
+using boost::optional;
+namespace {
+#if BOOST_VERSION >= 106000
+const boost::none_t nullopt ((boost::none_t::init_tag()));
+#else
+const boost::none_t& nullopt = boost::detail::optional_detail::none_instance<boost::none_t>::instance;
+#endif
+}
+} }
+
+#endif
+
+#endif

@@ -53,14 +53,14 @@ links:
         geometry: { type: Box, size: [ 0.74, 0.16, 0.09 ] }
         appearance:
           <<: *ASPHALT
-          textureTransform: { scale: [ 2, 1 ] }
+          textureTransform: { scale: [ 3, 0.5 ] }
       -
         type: Shape
         translation: [ -0.45, 0, 0 ]
         geometry: { type: Box, size: [ 3.3, 0.16, 0.09 ] }
         appearance:
           <<: *ASPHALT
-          textureTransform: { scale: [ 2, 1 ] }
+          textureTransform: { scale: [ 7, 0.5 ] }
       -
         type: Resource
         translation: [ 1.28, 0, 0 ]
@@ -108,6 +108,7 @@ links:
             geometry: { type: Cylinder, height: 0.09, radius: 0.081 }
             appearance:
               <<: *ASPHALT
+              textureTransform: { scale: [ 0.6, 0.6 ] }
       -
         type: AGXBreakableJointDevice
         name: BOARING_CONSTRAINT

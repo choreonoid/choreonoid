@@ -68,7 +68,7 @@ public:
         }
 
         string filename = getNativePathString(
-            boost::filesystem::path(shareDirectory()) / "motion" / "SR1" / patternFile);
+            cnoid::stdx::filesystem::path(shareDirectory()) / "motion" / "SR1" / patternFile);
         
         BodyMotion motion;
         if(!motion.loadStandardYAMLformat(filename)){

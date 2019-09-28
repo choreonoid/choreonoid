@@ -7,7 +7,6 @@
 #define CNOID_UTIL_MESH_GENERATOR_H
 
 #include "EigenTypes.h"
-#include <Eigen/StdVector>
 #include "SceneDrawables.h"
 #include "exportdecl.h"
 
@@ -26,8 +25,13 @@ public:
     int divisionNumber() const;
     static int defaultDivisionNumber();
 
+    void setNormalGenerationEnabled(bool on);
+    // \deprecated
     void enableNormalGeneration(bool on);
     bool isNormalGenerationEnabled() const;
+
+    void setBoundingBoxUpdateEnabled(bool on);
+    bool isBoundingBoxUpdateEnabled() const;
 
     SgMesh* generateBox(Vector3 size, bool enableTextureCoordinate=false);
     SgMesh* generateSphere(double radius, bool enableTextureCoordinate=false);
@@ -40,9 +44,9 @@ public:
     SgMesh* generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight);
     SgMesh* generateTorus(double radius, double crossSectionRadius);
 
-    typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Array;
-    typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3> > Vector3Array;
-    typedef std::vector<AngleAxis, Eigen::aligned_allocator<AngleAxis> > AngleAxisArray;
+    typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2>> Vector2Array;
+    typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3>> Vector3Array;
+    typedef std::vector<AngleAxis, Eigen::aligned_allocator<AngleAxis>> AngleAxisArray;
         
     struct Extrusion
     {
@@ -89,6 +93,7 @@ public:
 private:
     int divisionNumber_;
     bool isNormalGenerationEnabled_;
+    bool isBoundingBoxUpdateEnabled_;
     MeshFilter* meshFilter;
 
     void generateNormals(SgMesh* mesh, double creaseAngle);

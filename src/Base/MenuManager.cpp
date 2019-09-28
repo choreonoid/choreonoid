@@ -130,11 +130,7 @@ std::pair<QAction*, QWidget*> MenuManager::findPath(const QString& path, bool cr
                 if(textDomain.empty()){
                     item = new QAction(name, menu);
                 } else {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-                    item = new QAction(dgettext(textDomain.c_str(), name.toAscii()), menu);
-#else
                     item = new QAction(dgettext(textDomain.c_str(), name.toUtf8()), menu);
-#endif
                 }
                 item->setObjectName(name);
                 addItem(menu, item);

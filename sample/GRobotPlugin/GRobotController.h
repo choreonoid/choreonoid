@@ -15,7 +15,7 @@ typedef io_service io_context;
 } }
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <signal.h>
 #include <semaphore.h>
 #endif
@@ -83,7 +83,7 @@ private:
 
     bool isTimerAvailable;
     bool isTimerActive;
-#ifdef WIN32
+#ifdef _WIN32
     HANDLE timerHandle;
     HANDLE timerQueue; 
     LARGE_INTEGER pc0, pc1, pcfreq;
@@ -109,7 +109,7 @@ private:
     void stopTimer();
     void finalizeTimer();
     
-#if WIN32
+#if _WIN32
     static VOID CALLBACK timerCallback(PVOID lpParameter, BOOL TimerOrWaitFired);
 #else
     static void timerHandler(int sig, siginfo_t* si, void* uc);

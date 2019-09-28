@@ -22,14 +22,7 @@ SceneDragger::SceneDragger()
 }
 
 
-SceneDragger::SceneDragger(const SceneDragger& org)
-    : SgPosTransform(org)
-{
-    isContainerMode_ = org.isContainerMode_;
-}
-
-
-SceneDragger::SceneDragger(const SceneDragger& org, SgCloneMap& cloneMap)
+SceneDragger::SceneDragger(const SceneDragger& org, SgCloneMap* cloneMap)
     : SgPosTransform(org, cloneMap)
 {
     isContainerMode_ = org.isContainerMode_;

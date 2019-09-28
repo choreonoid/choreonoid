@@ -10,7 +10,7 @@
 #include <cnoid/Link>
 #include <cnoid/LinkTraverse>
 #include <cnoid/CompositeIK>
-#include <boost/optional.hpp>
+#include <cnoid/stdx/optional>
 #include <vector>
 
 namespace cnoid {
@@ -90,7 +90,7 @@ namespace cnoid {
         PoseProvider* provider;
         bool isCalculatingInitialWaistTrajectory;
 
-        std::vector< boost::optional<double> > jointPositions;
+        std::vector<stdx::optional<double>> jointPositions;
             
         int numIterations_;
         int beginningFrame;

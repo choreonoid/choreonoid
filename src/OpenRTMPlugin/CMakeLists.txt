@@ -67,9 +67,9 @@ else()
   set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramView.h)
 endif()  
 
-QTX_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+QT5_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
 
-QTX_WRAP_CPP(qtsources ${qt_wrap_cpp_files})
+QT5_WRAP_CPP(qtsources ${qt_wrap_cpp_files})
 
 set(plugin_sources ${plugin_sources} ${qtsources})
 

@@ -1,6 +1,7 @@
 #include "AGXVehicleContinuousTrackDevice.h"
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/YAMLReader>
+#include <cnoid/YAMLSceneReader>
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
@@ -58,7 +59,12 @@ public:
             m_sgTracks[i]->clearChildren();
             const auto& size = states[i].boxSize;
             if(size != Vector3::Zero()){
-                auto shape = new SgShape;
+                auto shape = m_trackDevice->getNodeShape();
+                if(shape){
+                    shape = dynamic_cast<SgShape*>(shape->clone());
+                } else {
+                    shape = new SgShape;
+                }
                 shape->setMesh(meshGenerator.generateBox(size));
                 m_sgTracks[i]->addChild(shape, true);
             }
@@ -104,6 +110,9 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     node.read("lockToReachMergeConditionSpookDamping", desc.lockToReachMergeConditionSpookDamping);
     NODE_READ(maxAngleMergeCondition);
     node.read("material", desc.materialName);
+
+    desc.nodeShape = dynamic_cast<SgShape*>(       
+        loader.sceneReader().readNode(*node.findMapping("nodeShape"), "Shape"));
 
     // Get name of wheels from yaml
     const auto toVectorString = [](ValueNodePtr const vnptr, vector<string>& vs) ->bool
@@ -322,5 +331,8 @@ TrackStates& AGXVehicleContinuousTrackDevice::getTrackStates() {
     return m_trackStates;
 }
 
+SgShape* AGXVehicleContinuousTrackDevice::getNodeShape(){
+    return nodeShape;
+}
 
 }

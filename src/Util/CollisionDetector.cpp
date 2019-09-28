@@ -59,7 +59,7 @@ public:
         return numGeometries_;
     }
 
-    virtual boost::optional<GeometryHandle> addGeometry(SgNode*) override
+    virtual stdx::optional<GeometryHandle> addGeometry(SgNode*) override
     {
         GeometryHandle handle;
         handle = numGeometries_++;

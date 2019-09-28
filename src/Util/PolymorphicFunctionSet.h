@@ -101,7 +101,7 @@ public:
         if(id >= static_cast<int>(dispatchTable.size())){
             updateDispatchTable();
         }
-        const Function& func = dispatchTable[id];
+        const auto& func = dispatchTable[id];
         if(func){
             func(obj);
         } 
@@ -109,7 +109,7 @@ public:
 
     template <class Object>
     inline void dispatchAs(Object* obj){
-        const Function& func = dispatchTable[ObjectBase::template findPolymorphicId<Object>()];
+        const auto& func = dispatchTable[ObjectBase::template findPolymorphicId<Object>()];
         if(func){
             func(obj);
         }

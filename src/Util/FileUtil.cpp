@@ -6,9 +6,10 @@
 #include "FileUtil.h"
 
 using namespace std;
-using namespace boost;
 
 namespace cnoid {
+
+namespace filesystem = stdx::filesystem;
 
 #ifdef _WIN32
 const char* DLL_PREFIX = "";
@@ -90,7 +91,7 @@ int findSubDirectory(const filesystem::path& directory, const filesystem::path& 
 
 bool findRelativePath(const filesystem::path& from_, const filesystem::path& to, filesystem::path& out_relativePath)
 {
-    if(from_.is_complete() && to.is_complete()){
+    if(from_.is_absolute() && to.is_absolute()){
 
         filesystem::path from(getCompactPath(from_));
         filesystem::path::const_iterator p = from.begin();
@@ -225,9 +226,9 @@ std::string toActualPathName(const std::string& path)
 #endif
 
 
-std::string getExtension(const boost::filesystem::path& path)
+std::string getExtension(const stdx::filesystem::path& path)
 {
-    string ext = filesystem::extension(path);
+    string ext = path.extension().string();
     if(!ext.empty()){
         if(ext[0] == '.'){
             ext = ext.substr(1);
@@ -239,31 +240,31 @@ std::string getExtension(const boost::filesystem::path& path)
 }
 
 
-std::string getGenericPathString(const boost::filesystem::path& path)
+std::string getGenericPathString(const stdx::filesystem::path& path)
 {
     return path.generic_string();
 }
 
 
-bool checkAbsolute(const boost::filesystem::path& path)
+bool checkAbsolute(const stdx::filesystem::path& path)
 {
     return path.is_absolute();
 }
 
 
-boost::filesystem::path getAbsolutePath(const boost::filesystem::path& path)
+stdx::filesystem::path getAbsolutePath(const stdx::filesystem::path& path)
 {
-    return boost::filesystem::absolute(path);
+    return stdx::filesystem::absolute(path);
 }
 
 
-std::string getAbsolutePathString(const boost::filesystem::path& path)
+std::string getAbsolutePathString(const stdx::filesystem::path& path)
 {
-    return boost::filesystem::absolute(path).string();
+    return stdx::filesystem::absolute(path).string();
 }
 
 
-std::string getFilename(const boost::filesystem::path& path)
+std::string getFilename(const stdx::filesystem::path& path)
 {
     return path.filename().string();
 }
@@ -271,26 +272,26 @@ std::string getFilename(const boost::filesystem::path& path)
 
 std::string getFilename(const std::string& pathString)
 {
-    boost::filesystem::path path(pathString);
+    stdx::filesystem::path path(pathString);
     return path.filename().string();
 }
 
 
-std::string getBasename(const boost::filesystem::path& path)
+std::string getBasename(const stdx::filesystem::path& path)
 {
     return path.stem().string();
 }
 
 
-std::string getPathString(const boost::filesystem::path& path)
+std::string getPathString(const stdx::filesystem::path& path)
 {
     return path.string();
 }
 
 
-std::string getNativePathString(const boost::filesystem::path& path)
+std::string getNativePathString(const stdx::filesystem::path& path)
 {
-    boost::filesystem::path p(path);
+    stdx::filesystem::path p(path);
     return p.make_preferred().string();
 }
 

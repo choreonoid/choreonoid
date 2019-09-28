@@ -1,6 +1,6 @@
 #version 330
 
-#define MAX_NUM_SHADOWS 3
+#define MAX_NUM_SHADOWS 2
 
 layout (location = 0) in vec4 vertexPosition;
 layout (location = 1) in vec3 vertexNormal;

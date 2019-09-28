@@ -9,21 +9,36 @@ using namespace cnoid;
 CheckBox::CheckBox(QWidget* parent)
     : QCheckBox(parent)
 {
-    initialize();
+    sigStateChangedConnected = false;
+    sigButtonToggledConnected = false;
 }
 
 
 CheckBox::CheckBox(const QString& text, QWidget* parent)
     : QCheckBox(text, parent)
 {
-    initialize();
+    sigStateChangedConnected = false;
+    sigButtonToggledConnected = false;
 }
 
 
-void CheckBox::initialize()
+SignalProxy<void(int)> CheckBox::sigStateChanged()
 {
-    connect(this, SIGNAL(stateChanged(int)), this, SLOT(onStateChanged(int)));
-    connect(this, SIGNAL(toggled(bool)), this, SLOT(onToggled(bool)));
+    if(!sigStateChangedConnected){
+        connect(this, SIGNAL(stateChanged(int)), this, SLOT(onStateChanged(int)));
+        sigStateChangedConnected = true;
+    }
+    return sigStateChanged_;
+}
+
+
+SignalProxy<void(bool)> CheckBox::sigToggled()
+{
+    if(!sigButtonToggledConnected){
+        connect(this, SIGNAL(toggled(bool)), this, SLOT(onToggled(bool)));
+        sigButtonToggledConnected = true;
+    }
+    return sigToggled_;
 }
 
 
@@ -31,6 +46,7 @@ void CheckBox::onStateChanged(int state)
 {
     sigStateChanged_(state);
 }
+
 
 void CheckBox::onToggled(bool checked)
 {

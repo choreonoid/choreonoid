@@ -7,6 +7,7 @@
 #include "SceneRainSnow.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/GLSLProgram>
 
 using namespace std;
 using namespace cnoid;
@@ -84,7 +85,7 @@ SceneRain::SceneRain(const SceneRain& org)
 }
 
 
-SgObject* SceneRain::clone(SgCloneMap& cloneMap) const
+SgObject* SceneRain::doClone(SgCloneMap*) const
 {
     return new SceneRain(*this);
 }
@@ -105,7 +106,7 @@ SceneSnow::SceneSnow(const SceneSnow& org)
 }
 
 
-SgObject* SceneSnow::clone(SgCloneMap& cloneMap) const
+SgObject* SceneSnow::doClone(SgCloneMap*) const
 {
     return new SceneSnow(*this);
 }
@@ -113,7 +114,10 @@ SgObject* SceneSnow::clone(SgCloneMap& cloneMap) const
 
 
 RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer)
+    : ParticlesProgram(
+        renderer,
+        ":/SceneEffectsPlugin/shader/RainSnow.vert",
+        ":/SceneEffectsPlugin/shader/Particles.frag")
 {
 
 }
@@ -121,10 +125,6 @@ RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
 
 bool RainSnowProgram::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(":/SceneEffectsPlugin/shader/RainSnow.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    link();
-    
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
@@ -178,8 +178,9 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    velocityLocation = getUniformLocation("velocity");
-    lifeTimeLocation = getUniformLocation("lifeTime");
+    auto& glsl = glslProgram();
+    velocityLocation = glsl.getUniformLocation("velocity");
+    lifeTimeLocation = glsl.getUniformLocation("lifeTime");
 
     return true;
 }

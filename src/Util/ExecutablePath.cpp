@@ -12,6 +12,7 @@
 
 #ifdef __linux__
 #include <sys/utsname.h>
+#include <unistd.h>
 #include <cstring>
 #endif
 
@@ -26,7 +27,6 @@
 #endif
 
 using namespace std;
-using namespace boost;
 
 namespace {
 string executablePath_;
@@ -39,6 +39,8 @@ string executableBasename_;
 
 
 namespace cnoid {
+
+namespace filesystem = stdx::filesystem;
 
 void findExecutablePath()
 {

@@ -22,33 +22,21 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/EigenUtil>
+#include <cnoid/StringUtil>
+#include <cnoid/Tokenizer>
 #include <QThread>
 #include <QApplication>
+#include <QOpenGLContext>
+#include <QOffscreenSurface>
+#include <QOpenGLFramebufferObject>
 #include <fmt/format.h>
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string.hpp>
 #include <mutex>
 #include <condition_variable>
 #include <queue>
 #include <iostream>
+#include "gettext.h"
 
 static const bool DEBUG_MESSAGE = false;
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#define USE_QT5_OPENGL 1
-#else
-#define USE_QT5_OPENGL 0
-#endif
-
-#if USE_QT5_OPENGL
-#include <QOpenGLContext>
-#include <QOffscreenSurface>
-#include <QOpenGLFramebufferObject>
-#else
-#include <QGLPixelBuffer>
-#endif
-
-#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -66,21 +54,6 @@ enum ScreenId {
     BACK_SCREEN = FisheyeLensConverter::BACK_SCREEN
 };
 
-double myNearByInt(double x)
-{
-#ifdef Q_OS_WIN32
-    double u = ceil(x);
-    double l = floor(x);
-    if(fabs(u - x) < fabs(x - l)){
-        return u;
-    } else {
-        return l;
-    }
-#else
-    return nearbyint(x);
-#endif
-}
-
 string getNameListString(const vector<string>& names)
 {
     string nameList;
@@ -95,21 +68,16 @@ string getNameListString(const vector<string>& names)
     return nameList;
 }
 
-bool updateNames(const string& nameListString, string& newNameListString, vector<string>& names)
+bool updateNames(const string& nameListString, string& out_newNameListString, vector<string>& out_names)
 {
-    using boost::tokenizer;
-    using boost::char_separator;
-    
-    names.clear();
-    char_separator<char> sep(",");
-    tokenizer<char_separator<char>> tok(nameListString, sep);
-    for(tokenizer<char_separator<char>>::iterator p = tok.begin(); p != tok.end(); ++p){
-        string name = boost::trim_copy(*p);
+    out_names.clear();
+    for(auto& token : Tokenizer<CharSeparator<char>>(nameListString, CharSeparator<char>(","))){
+        auto name = trimmed(token);
         if(!name.empty()){
-            names.push_back(name);
+            out_names.push_back(name);
         }
     }
-    newNameListString = nameListString;
+    out_newNameListString = nameListString;
     return true;
 }
 
@@ -172,13 +140,9 @@ public:
     bool hasUpdatedData;
     double depthError;
     
-#if USE_QT5_OPENGL
     QOpenGLContext* glContext;
     QOffscreenSurface* offscreenSurface;
     QOpenGLFramebufferObject* frameBuffer;
-#else
-    QGLPixelBuffer* renderingBuffer;
-#endif
 
     GLSceneRenderer* renderer;
     int numYawSamples;
@@ -268,7 +232,6 @@ public:
     vector<SensorRenderer*> renderersInRendering;
     vector<SensorRenderer*> renderersToTurnOff;
 
-    bool useGLSL;
     bool useQueueThreadForAllSensors;
     bool useThreadsForSensors;
     bool useThreadsForScreens;
@@ -343,13 +306,12 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
       os(MessageView::instance()->cout()),
       threadMode(GLVisionSimulatorItem::N_THREAD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    simulatorItem = 0;
+    simulatorItem = nullptr;
     maxFrameRate = 1000.0;
     maxLatency = 1.0;
     rangeSensorPrecisionRatio = 2.0;
     depthError = 0.0;
 
-    useGLSL = (getenv("CNOID_USE_GLSL") != 0);
     isVisionDataRecordingEnabled = false;
     isBestEffortModeProperty = false;
     isHeadLightEnabled = true;
@@ -378,9 +340,8 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
       bodyNames(org.bodyNames),
       sensorNames(org.sensorNames)
 {
-    simulatorItem = 0;
+    simulatorItem = nullptr;
 
-    useGLSL = org.useGLSL;
     isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
     rangeSensorPrecisionRatio = org.rangeSensorPrecisionRatio;
     depthError = org.depthError;
@@ -500,14 +461,6 @@ bool GLVisionSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 
 bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorItem)
 {
-#if !USE_QT5_OPENGL
-    if(!QGLPixelBuffer::hasOpenGLPbuffers()){
-        os << format(_("The vision sensor simulation by {} cannot be performed because the OpenGL pbuffer is not available."),
-                     self->name()) << endl;
-        return false;
-    }
-#endif
-
     this->simulatorItem = simulatorItem;
     worldTimeStep = simulatorItem->worldTimeStep();
     currentTime = 0;
@@ -844,15 +797,10 @@ SensorScreenRenderer::SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, D
     rangeCameraForRendering = dynamic_cast<RangeCamera*>(screenDevice);
     rangeSensorForRendering = dynamic_cast<RangeSensor*>(screenDevice);
 
-#if USE_QT5_OPENGL
-    glContext = 0;
-    offscreenSurface = 0;
-    frameBuffer = 0;
-#else
-    renderingBuffer = 0;
-#endif
-
-    renderer = 0;
+    glContext = nullptr;
+    offscreenSurface = nullptr;
+    frameBuffer = nullptr;
+    renderer = nullptr;
     screenId = FRONT_SCREEN;
 }
 
@@ -968,13 +916,15 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
 
 void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
 {
-#if USE_QT5_OPENGL
     glContext = new QOpenGLContext;
+
     QSurfaceFormat format;
     format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    if(simImpl->useGLSL){
+    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GLSL_RENDERER){
         format.setProfile(QSurfaceFormat::CoreProfile);
         format.setVersion(3, 3);
+    } else {
+        format.setVersion(1, 5);
     }
     glContext->setFormat(format);
     glContext->create();
@@ -984,23 +934,9 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     glContext->makeCurrent(offscreenSurface);
     frameBuffer = new QOpenGLFramebufferObject(pixelWidth, pixelHeight, QOpenGLFramebufferObject::CombinedDepthStencil);
     frameBuffer->bind();
-#else
-    QGLFormat format;
-    format.setDoubleBuffer(false);
-    if(simImpl->useGLSL){
-        format.setProfile(QGLFormat::CoreProfile);
-        format.setVersion(3, 3);
-    }
-    renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, format);
-    renderingBuffer->makeCurrent();
-#endif
 
     if(!renderer){
-        if(simImpl->useGLSL){
-            renderer = new GLSLSceneRenderer;
-        } else {
-            renderer = new GL1SceneRenderer;
-        }
+        renderer = GLSceneRenderer::create();
     }
 
     renderer->initializeGL();
@@ -1010,7 +946,7 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     renderer->setCurrentCamera(sceneCamera);
 
     if(rangeSensorForRendering){
-        renderer->setDefaultLighting(false);
+        renderer->setLightingMode(GLSceneRenderer::NO_LIGHTING);
     } else {
         if(screenId != FRONT_SCREEN){
             SgDirectionalLight* headLight = dynamic_cast<SgDirectionalLight*>(renderer->headLight());
@@ -1082,9 +1018,7 @@ void SensorScreenRenderer::startRenderingThread()
 
 void SensorScreenRenderer::moveRenderingBufferToThread(QThread& thread)
 {
-#if USE_QT5_OPENGL
     glContext->moveToThread(&thread);
-#endif
 }
 
 
@@ -1098,30 +1032,20 @@ void SensorRenderer::moveRenderingBufferToMainThread()
 
 void SensorScreenRenderer::moveRenderingBufferToMainThread()
 {
-#if USE_QT5_OPENGL
     QThread* mainThread = QApplication::instance()->thread();
     glContext->moveToThread(mainThread);
-#endif
 }
 
 
 void SensorScreenRenderer::makeGLContextCurrent()
 {
-#if USE_QT5_OPENGL
     glContext->makeCurrent(offscreenSurface);
-#else
-    renderingBuffer->makeCurrent();
-#endif
 }
 
 
 void SensorScreenRenderer::doneGLContextCurrent()
 {
-#if USE_QT5_OPENGL
     glContext->doneCurrent();
-#else
-    renderingBuffer->doneCurrent();
-#endif
 }
 
 
@@ -1571,12 +1495,12 @@ bool SensorScreenRenderer::getCameraImage(Image& image)
 bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
 {
 #ifndef _WIN32
-    unsigned char* colorBuf = 0;
+    unsigned char* colorBuf = nullptr;
 #else
     vector<unsigned char> colorBuf;
 #endif
 
-    unsigned char* pixels = 0;
+    unsigned char* pixels = nullptr;
 
     const bool extractColors = (cameraForRendering->imageType() == Camera::COLOR_IMAGE);
     if(extractColors){
@@ -1613,7 +1537,7 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
     n[3] = 1.0f;
     points.clear();
     points.reserve(pixelWidth * pixelHeight);
-    unsigned char* colorSrc = 0;
+    unsigned char* colorSrc = nullptr;
 
     isDense = true;
     
@@ -1724,7 +1648,7 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
                 py = 0;
             } else {
                 const double r = (tan(pitchAngle)/cos(yawAngle) + maxTanPitchAngle) / (maxTanPitchAngle * 2.0);
-                py = myNearByInt(r * (fh - 1.0));
+                py = nearbyint(r * (fh - 1.0));
             }
             const int srcpos = py * pixelWidth;
 
@@ -1733,7 +1657,7 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
                 px = 0;
             } else {
                 const double r = (maxTanYawAngle - tan(yawAngle)) / (maxTanYawAngle * 2.0);
-                px = myNearByInt(r * (fw - 1.0));
+                px = nearbyint(r * (fw - 1.0));
             }
             //! \todo add the option to do the interpolation between the adjacent two pixel depths
             const float depth = depthBuf[srcpos + px];
@@ -1841,7 +1765,6 @@ void SensorScene::terminate()
 
 SensorScreenRenderer::~SensorScreenRenderer()
 {
-#if USE_QT5_OPENGL
     if(glContext){
         makeGLContextCurrent();
         frameBuffer->release();
@@ -1849,12 +1772,6 @@ SensorScreenRenderer::~SensorScreenRenderer()
         delete glContext;
         delete offscreenSurface;
     }
-#else
-    if(renderingBuffer){
-        makeGLContextCurrent();
-        delete renderingBuffer;
-    }
-#endif
     if(renderer){
         delete renderer;
     }

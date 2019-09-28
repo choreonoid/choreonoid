@@ -10,10 +10,10 @@
 #include <cnoid/SceneLoader>
 #include <cnoid/FileUtil>
 #include <cnoid/EigenArchive>
+#include <cnoid/SceneEffects>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -27,11 +27,12 @@ bool loadScene(SceneItem* item, const std::string& filename, std::ostream& os)
     }
     auto scene = loader->load(filename);
     if(scene){
-        auto invariant = new SgInvariantGroup;
-        invariant->addChild(scene);
-        auto node = item->topNode();
-        node->clearChildren();
-        node->addChild(invariant);
+        auto group = new SgInvariantGroup;
+        group->addChild(scene);
+        auto topNode = item->topNode();
+        topNode->clearChildren();
+        topNode->addChild(group);
+        item->setLightweightRenderingEnabled(item->isLightweightRenderingEnabled());
         return true;
     }
     return false;
@@ -47,16 +48,25 @@ void SceneItem::initializeClass(ExtensionManager* ext)
         ext->itemManager().registerClass<SceneItem>(N_("SceneItem"));
 
         ext->itemManager().addLoader<SceneItem>(
-            "Scene", "AVAILABLE-SCENE-FILE", SceneLoader::availableFileExtensions,
-            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
+            _("Scene"), "AVAILABLE-SCENE-FILE", SceneLoader::availableFileExtensions,
+            [&](SceneItem* item, const std::string& filename, std::ostream& os, Item* parentItem){
+                return ::loadScene(item, filename, os);
+            },
+            ItemManager::PRIORITY_CONVERSION);
 
         ext->itemManager().addLoader<SceneItem>(
             "VRML", "VRML-FILE", "wrl",
-            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_COMPATIBILITY);
+            [&](SceneItem* item, const std::string& filename, std::ostream& os, Item* parentItem){
+                return ::loadScene(item, filename, os);
+            },
+            ItemManager::PRIORITY_COMPATIBILITY);
 
         ext->itemManager().addLoader<SceneItem>(
             "Stereolithography (STL)", "STL-FILE", "stl",
-            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_COMPATIBILITY);
+            [&](SceneItem* item, const std::string& filename, std::ostream& os, Item* parentItem){
+                return ::loadScene(item, filename, os);
+            },
+            ItemManager::PRIORITY_COMPATIBILITY);
 
         initialized = true;
     }
@@ -64,9 +74,9 @@ void SceneItem::initializeClass(ExtensionManager* ext)
 
 
 SceneItem::SceneItem()
-    : topNode_(new SgPosTransform())
 {
-
+    topNode_ = new SgPosTransform;
+    isLightweightRenderingEnabled_ = false;
 }
 
 
@@ -75,12 +85,19 @@ SceneItem::SceneItem(const SceneItem& org)
 {
     // shallow copy
     topNode_ = new SgPosTransform(*org.topNode());
+    isLightweightRenderingEnabled_ = org.isLightweightRenderingEnabled_;
 }
 
 
 SceneItem::~SceneItem()
 {
     
+}
+
+
+Item* SceneItem::doDuplicate() const
+{
+    return new SceneItem(*this);
 }
 
 
@@ -97,43 +114,69 @@ SgNode* SceneItem::getScene()
 }
 
 
-Item* SceneItem::doDuplicate() const
+void SceneItem::setTranslation(const Vector3f& translation)
 {
-    return new SceneItem(*this);
+    topNode_->setTranslation(translation);
+    topNode_->notifyUpdate();
 }
+
+
+void SceneItem::setRotation(const AngleAxisf& rotation)
+{
+    topNode_->setRotation(rotation);
+    topNode_->notifyUpdate();
+}
+
+
+void SceneItem::setLightweightRenderingEnabled(bool on)
+{
+    if(on){
+        if(!topNode_->findNodeOfType<SgLightweightRenderingGroup>(1)){
+            auto lightweight = new SgLightweightRenderingGroup;
+            topNode_->moveChildrenTo(lightweight);
+            topNode_->addChild(lightweight, true);
+        }
+    } else {
+        auto lightweight = topNode_->findNodeOfType<SgLightweightRenderingGroup>(1);
+        if(lightweight){
+            lightweight->moveChildrenTo(topNode_);
+            topNode_->removeChild(lightweight, true);
+        }
+    }
+    isLightweightRenderingEnabled_ = on;
+}       
 
 
 void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("File"), getFilename(filePath()));
+
     putProperty(_("Translation"), str(Vector3(topNode_->translation())),
-                std::bind(&SceneItem::onTranslationChanged, this, _1));
+                [&](const std::string& value){
+                    Vector3 p;
+                    if(toVector3(value, p)){
+                        topNode_->setTranslation(p);
+                        topNode_->notifyUpdate();
+                        return true;
+                    }
+                    return false;
+                });
+
     Vector3 rpy(TO_DEGREE * rpyFromRot(topNode_->rotation()));
-    putProperty("RPY", str(rpy), std::bind(&SceneItem::onRotationChanged, this, _1));
-}
-
-
-bool SceneItem::onTranslationChanged(const std::string& value)
-{
-    Vector3 p;
-    if(toVector3(value, p)){
-        topNode_->setTranslation(p);
-        topNode_->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool SceneItem::onRotationChanged(const std::string& value)
-{
-    Vector3 rpy;
-    if(toVector3(value, rpy)){
-        topNode_->setRotation(rotFromRpy(TO_RADIAN * rpy));
-        topNode_->notifyUpdate();
-        return true;
-    }
-    return false;
+    
+    putProperty("RPY", str(rpy),
+                [&](const std::string& value){
+                    Vector3 rpy;
+                    if(toVector3(value, rpy)){
+                        topNode_->setRotation(rotFromRpy(TO_RADIAN * rpy));
+                        topNode_->notifyUpdate();
+                        return true;
+                    }
+                    return false;
+                });
+    
+    putProperty(_("Lightweight rendering"), isLightweightRenderingEnabled_,
+                [&](bool on){ setLightweightRenderingEnabled(on); return true; });
 }
 
 
@@ -144,6 +187,7 @@ bool SceneItem::store(Archive& archive)
         archive.write("format", fileFormat());
         write(archive, "translation", topNode_->translation());
         write(archive, "rotation", AngleAxis(topNode_->rotation()));
+        archive.write("lightweightRendering", isLightweightRenderingEnabled_);
     }
     return true;
 }
@@ -161,6 +205,9 @@ bool SceneItem::restore(const Archive& archive)
         if(read(archive, "rotation", rot)){
             topNode_->setRotation(rot);
         }
+
+        archive.read("lightweightRendering", isLightweightRenderingEnabled_);
+        
         if(load(filename, archive.currentParentItem(), formatId)){
             return true;
         }

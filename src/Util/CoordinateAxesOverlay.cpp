@@ -38,8 +38,10 @@ CoordinateAxesOverlay::CoordinateAxesOverlay()
         { 0.4f, 0.6f, 1.0f }};
         
     MeshGenerator meshGenerator;
+    meshGenerator.setBoundingBoxUpdateEnabled(false);
     SgMeshPtr mesh = meshGenerator.generateArrow(width / 2.0, length, width, width * 2.0);
     mesh->translate(Vector3f(0.0f, length / 2.0, 0.0f));
+    mesh->updateBoundingBox();
     
     //auto invariant = new SgInvariantGroup;
     

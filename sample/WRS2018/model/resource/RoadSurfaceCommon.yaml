@@ -2,17 +2,6 @@ ROAD_TEXTURE_FILE: &ROAD_TEXTURE_FILE "Blacktop_New_fixed.jpg"
 ROADCURB_TEXTURE_FILE: &ROADCURB_TEXTURE_FILE "Blacktop_Old_01.jpg"
 
 ROAD_SURFACE_ELEMENTS: &ROAD_SURFACE_ELEMENTS
-  - #dummy
-    type: Shape
-    translation: [ 0, 0, -0.2 ]
-    geometry: { type: Box, size: [ 0.01, 0.01, 0.01 ] }
-    appearance:
-      texture:
-        url: *ROAD_TEXTURE_FILE
-        repeatS: true
-        repeatT: true
-      textureTransform:
-        scale: [ 7, 1 ]
   -
     type: Shape
     name: Surface
@@ -24,7 +13,7 @@ ROAD_SURFACE_ELEMENTS: &ROAD_SURFACE_ELEMENTS
         repeatS: true
         repeatT: true
       textureTransform:
-        scale: [ 3, 3 ]
+        scale: [ 7, 1 ]
   -
     type: Transform
     translation: [ *HALF_ROAD_LENGTH, 4.1, -0.1 ]
@@ -39,7 +28,7 @@ ROAD_SURFACE_ELEMENTS: &ROAD_SURFACE_ELEMENTS
             repeatS: true
             repeatT: true
           textureTransform:
-            scale: [ 1, 1 ]
+            scale: [ *ROAD_LENGTH, 1 ]
   -
     type: Transform
     translation: [ *HALF_ROAD_LENGTH, -4.1, -0.1 ]

@@ -45,6 +45,12 @@ COMMON_BELT_SPEC: &COMMON_BELT_SPEC
   enableLockToReachMergeCondition: true
   lockToReachMergeConditionCompliance: 1.0E-11
   lockToReachMergeConditionSpookDamping: 0.05
+  nodeShape:
+    appearance:
+      material:
+        diffuseColor: [ 0.15, 0.15, 0.15 ]
+        specularColor: [ 0.8, 0.8, 0.8 ]
+        shininess: 0.04
 
 WHEEL_MATERIAL: &WHEEL_MATERIAL SpiderWheel
 

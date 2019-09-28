@@ -31,10 +31,12 @@
 #include <cnoid/SceneGraph>
 #include <QThread>
 #include <QMutex>
+#include <QElapsedTimer>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <set>
+#include <deque>
 #include <fmt/format.h>
 
 #ifdef ENABLE_SIMULATION_PROFILING
@@ -43,12 +45,6 @@
 #include <cnoid/SceneWidget>
 #endif
 
-#if QT_VERSION >= 0x040700
-#include <QElapsedTimer>
-#else
-#include <QTime>
-typedef QTime QElapsedTimer;
-#endif
 #include "gettext.h"
 
 using namespace std;
@@ -256,7 +252,7 @@ public:
     double nextLogTime;
     double logTimeStep;
     
-    boost::optional<int> extForceFunctionId;
+    stdx::optional<int> extForceFunctionId;
     std::mutex extForceMutex;
     struct ExtForceInfo {
         Link* link;
@@ -266,7 +262,7 @@ public:
     };
     ExtForceInfo extForceInfo;
 
-    boost::optional<int> virtualElasticStringFunctionId;
+    stdx::optional<int> virtualElasticStringFunctionId;
     std::mutex virtualElasticStringMutex;
     struct VirtualElasticString {
         Link* link;
@@ -1561,8 +1557,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         frame0[0]  = std::make_shared<CollisionLinkPairList>();
     }
 
-    extForceFunctionId = boost::none;
-    virtualElasticStringFunctionId = boost::none;
+    extForceFunctionId = stdx::nullopt;
+    virtualElasticStringFunctionId = stdx::nullopt;
 
     bool result = self->initializeSimulation(simBodiesWithBody);
 
@@ -2428,7 +2424,7 @@ void SimulatorItem::clearExternalForces()
 {
     if(impl->extForceFunctionId){
         removePreDynamicsFunction(*impl->extForceFunctionId);
-        impl->extForceFunctionId = boost::none;
+        impl->extForceFunctionId = stdx::nullopt;
     }
 }    
 
@@ -2485,7 +2481,7 @@ void SimulatorItem::clearVirtualElasticStrings()
 {
     if(impl->virtualElasticStringFunctionId){
         removePreDynamicsFunction(*impl->virtualElasticStringFunctionId);
-        impl->virtualElasticStringFunctionId = boost::none;
+        impl->virtualElasticStringFunctionId = stdx::nullopt;
     }
 }
 

@@ -6,7 +6,6 @@
 #ifndef CNOID_UTIL_DEQUE_2D_H
 #define CNOID_UTIL_DEQUE_2D_H
 
-#include <Eigen/StdVector>
 #include <memory>
 #include <iterator>
 

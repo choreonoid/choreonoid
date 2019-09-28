@@ -8,7 +8,7 @@
 
 #include "SceneGraph.h"
 #include "Image.h"
-#include <boost/variant.hpp>
+#include <cnoid/stdx/variant>
 #include <memory>
 #include <initializer_list>
 #include "exportdecl.h"
@@ -20,7 +20,7 @@ class CNOID_EXPORT SgMaterial : public SgObject
 public:
     SgMaterial();
     SgMaterial(const SgMaterial& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     float ambientIntensity() const { return ambientIntensity_; }
     void setAmbientIntensity(float intensity) { ambientIntensity_ = intensity; }
@@ -56,7 +56,7 @@ public:
     SgImage(const Image& image);
     SgImage(std::shared_ptr<Image> sharedImage);
     SgImage(const SgImage& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     Image& image();
     const Image& image() const { return *image_; }
@@ -88,7 +88,7 @@ public:
 
     SgTextureTransform();
     SgTextureTransform(const SgTextureTransform& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     const Vector2& center() const { return center_; }
     template<typename Derived> void setCenter(const Eigen::MatrixBase<Derived>& c) {
@@ -115,12 +115,12 @@ class CNOID_EXPORT SgTexture : public SgObject
 {
 public:
     SgTexture();
-    SgTexture(const SgTexture& org, SgCloneMap& cloneMap);
+    SgTexture(const SgTexture& org, SgCloneMap* cloneMap = nullptr);
     ~SgTexture();
     
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual int numChildObjects() const;
-    virtual SgObject* childObject(int index);
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
+    virtual int numChildObjects() const override;
+    virtual SgObject* childObject(int index) override;
 
     SgImage* image() { return image_; }
     const SgImage* image() const { return image_; }
@@ -144,7 +144,7 @@ private:
 typedef ref_ptr<SgTexture> SgTexturePtr;
 
 
-template<class T, class Alloc = std::allocator<T> > class SgVectorArray : public SgObject
+template<class T, class Alloc = std::allocator<T>> class SgVectorArray : public SgObject
 {
     typedef std::vector<T> Container;
         
@@ -174,7 +174,7 @@ public:
         
     SgVectorArray(const SgVectorArray& org) : SgObject(org), values(org.values) { }
 
-    virtual SgObject* clone(SgCloneMap&) const { return new SgVectorArray(*this); }
+    virtual SgObject* doClone(SgCloneMap*) const override { return new SgVectorArray(*this); }
         
     SgVectorArray<T>& operator=(const SgVectorArray<T>& rhs) {
         values = rhs.values;
@@ -189,6 +189,7 @@ public:
     void resize(size_type s, const T& v) { values.resize(s, v); }
     bool empty() const { return values.empty(); }
     void reserve(size_type s) { values.reserve(s); }
+    size_type capacity() const { return values.capacity(); }
     T& operator[](size_type i) { return values[i]; }
     const T& operator[](size_type i) const { return values[i]; }
     T& at(size_type i) { return values[i]; }
@@ -219,7 +220,7 @@ typedef ref_ptr<SgNormalArray> SgNormalArrayPtr;
 typedef SgVectorArray<Vector3f> SgColorArray;
 typedef ref_ptr<SgColorArray> SgColorArrayPtr;
 
-typedef SgVectorArray<Vector2f, Eigen::aligned_allocator<Vector2f> > SgTexCoordArray;
+typedef SgVectorArray<Vector2f, Eigen::aligned_allocator<Vector2f>> SgTexCoordArray;
 typedef ref_ptr<SgTexCoordArray> SgTexCoordArrayPtr;
 
 typedef std::vector<int> SgIndexArray;
@@ -229,20 +230,23 @@ class CNOID_EXPORT SgMeshBase : public SgObject
 {
 protected:
     SgMeshBase();
-    SgMeshBase(const SgMeshBase& org, SgCloneMap& cloneMap);
+    SgMeshBase(const SgMeshBase& org, SgCloneMap* cloneMap = nullptr);
     ~SgMeshBase();
     
 public:
-    virtual int numChildObjects() const;
-    virtual SgObject* childObject(int index);
-    virtual const BoundingBox& boundingBox() const;
+    virtual int numChildObjects() const override;
+    virtual SgObject* childObject(int index) override;
+
+    const BoundingBox& boundingBox() const { return bbox; }
     virtual void updateBoundingBox();
+    void setBoundingBox(const BoundingBox& bb){ bbox = bb; };
+    void setBoundingBox(const BoundingBoxf& bb){ bbox = bb; };
 
     bool hasVertices() const { return (vertices_ && !vertices_->empty()); }
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }
     SgVertexArray* setVertices(SgVertexArray* vertices);
-    SgVertexArray* getOrCreateVertices();
+    SgVertexArray* getOrCreateVertices(size_t size = 0);
         
     bool hasNormals() const { return (normals_ && !normals_->empty()); }
     SgNormalArray* normals() { return normals_; }
@@ -280,7 +284,7 @@ public:
     bool isSolid() const { return isSolid_; }
     void setSolid(bool on) { isSolid_ = on; }
 
-  protected:
+protected:
     BoundingBox bbox;
     
 private:
@@ -300,9 +304,11 @@ class CNOID_EXPORT SgMesh : public SgMeshBase
 {
 public:
     SgMesh();
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    SgMesh(const SgMesh& org, SgCloneMap* cloneMap = nullptr);
 
-    virtual void updateBoundingBox();
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
+
+    virtual void updateBoundingBox() override;
 
     /**
        Triangle indices (triangles variable) should be CCW.
@@ -392,18 +398,15 @@ public:
             double height;
         };
 
-    typedef boost::variant<Mesh, Box, Sphere, Cylinder, Cone, Capsule> Primitive;
+    typedef stdx::variant<Mesh, Box, Sphere, Cylinder, Cone, Capsule> Primitive;
 
-    const int primitiveType() const { return primitive_.which(); }
-    template<class TPrimitive> const TPrimitive& primitive() const { return boost::get<TPrimitive>(primitive_); }
+    const int primitiveType() const { return stdx::get_variant_index(primitive_); }
+    template<class TPrimitive> const TPrimitive& primitive() const { return stdx::get<TPrimitive>(primitive_); }
     template<class TPrimitive> void setPrimitive(const TPrimitive& prim) { primitive_ = prim; }
 
     void transform(const Affine3f& T);
     void translate(const Vector3f& translation);
     void rotate(const Matrix3f& R);
-
-protected:
-    SgMesh(const SgMesh& org, SgCloneMap& cloneMap);
 
 private:
     SgIndexArray triangleVertices_;
@@ -416,9 +419,11 @@ class CNOID_EXPORT SgPolygonMesh : public SgMeshBase
 {
 public:
     SgPolygonMesh();
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    SgPolygonMesh(const SgPolygonMesh& org, SgCloneMap* cloneMap = nullptr);
 
-    virtual void updateBoundingBox();
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
+
+    virtual void updateBoundingBox() override;
     
     /**
        The array of vertex indices corresponding to polygons.
@@ -429,9 +434,6 @@ public:
     */
     SgIndexArray& polygonVertices() { return polygonVertices_; }
     const SgIndexArray& polygonVertices() const { return polygonVertices_; }
-
-protected:
-    SgPolygonMesh(const SgPolygonMesh& org, SgCloneMap& cloneMap);
 
 private:
     SgIndexArray polygonVertices_;
@@ -444,12 +446,13 @@ class CNOID_EXPORT SgShape : public SgNode
 {
 public:
     SgShape();
+    SgShape(const SgShape& org, SgCloneMap* cloneMap = nullptr);
     ~SgShape();
     
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual int numChildObjects() const;
-    virtual SgObject* childObject(int index);
-    virtual const BoundingBox& boundingBox() const;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
+    virtual int numChildObjects() const override;
+    virtual SgObject* childObject(int index) override;
+    virtual const BoundingBox& boundingBox() const override;
         
     SgMesh* mesh() { return mesh_; }
     const SgMesh* mesh() const { return mesh_; }
@@ -468,7 +471,6 @@ public:
 
 protected:
     SgShape(int polymorhicId);
-    SgShape(const SgShape& org, SgCloneMap& cloneMap);
 
 private:
     SgMeshPtr mesh_;
@@ -482,14 +484,15 @@ class CNOID_EXPORT SgPlot : public SgNode
 {
 protected:
     SgPlot(int polymorhicId);
-    SgPlot(const SgPlot& org, SgCloneMap& cloneMap);
+    SgPlot(const SgPlot& org, SgCloneMap* cloneMap = nullptr);
     ~SgPlot();
     
 public:
 
-    virtual int numChildObjects() const;
-    virtual SgObject* childObject(int index);
-    virtual const BoundingBox& boundingBox() const;
+    virtual int numChildObjects() const override;
+    virtual SgObject* childObject(int index) override;
+
+    virtual const BoundingBox& boundingBox() const override;
     void updateBoundingBox();
 
     void clear();
@@ -498,7 +501,7 @@ public:
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }
     SgVertexArray* setVertices(SgVertexArray* vertices);
-    SgVertexArray* getOrCreateVertices();
+    SgVertexArray* getOrCreateVertices(size_t size = 0);
         
     SgMaterial* material() { return material_; }
     const SgMaterial* material() const { return material_; }
@@ -539,7 +542,8 @@ class CNOID_EXPORT SgPointSet : public SgPlot
 {
 public:
     SgPointSet();
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    SgPointSet(const SgPointSet& org, SgCloneMap* cloneMap = nullptr);
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     void setPointSize(double size) { pointSize_ = size; }
 
@@ -550,7 +554,6 @@ public:
 
 protected:
     SgPointSet(int polymorhicId);
-    SgPointSet(const SgPointSet& org, SgCloneMap& cloneMap);
 
 private:
     double pointSize_;
@@ -562,7 +565,8 @@ class CNOID_EXPORT SgLineSet : public SgPlot
 {
 public:
     SgLineSet();
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    SgLineSet(const SgLineSet& org, SgCloneMap* cloneMap = nullptr);
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     const SgIndexArray& lineVertices() const { return lineVertices_; }
     SgIndexArray& lineVertices() { return lineVertices_; }
@@ -608,7 +612,6 @@ public:
 
 protected:
     SgLineSet(int polymorhicId);
-    SgLineSet(const SgLineSet& org, SgCloneMap& cloneMap);
 
 private:
     SgIndexArray lineVertices_;
@@ -621,9 +624,10 @@ class CNOID_EXPORT SgOverlay : public SgGroup
 {
 public:
     SgOverlay();
+    SgOverlay(const SgOverlay& org, SgCloneMap* cloneMap = nullptr);
     ~SgOverlay();
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     struct ViewVolume {
         double left;
@@ -638,7 +642,6 @@ public:
 
 protected:
     SgOverlay(int polymorhicId);
-    SgOverlay(const SgOverlay& org, SgCloneMap& cloneMap);
 };
 
 }

@@ -5,7 +5,7 @@
 #ifndef CNOID_BODY_LINK_GROUP_H
 #define CNOID_BODY_LINK_GROUP_H
 
-#include <boost/variant.hpp>
+#include <cnoid/stdx/variant>
 #include <vector>
 #include <string>
 #include <memory>
@@ -20,7 +20,7 @@ typedef std::shared_ptr<LinkGroup> LinkGroupPtr;
 
 class CNOID_EXPORT LinkGroup
 {
-    typedef boost::variant<LinkGroupPtr, int> Element;
+    typedef stdx::variant<LinkGroupPtr, int> Element;
 
     LinkGroup(const LinkGroup& org);
 
@@ -36,10 +36,10 @@ public:
     const std::string& name() { return name_; }
 
     int numElements() const { return elements.size(); }
-    bool isSubGroup(int index) const { return elements[index].which() == 0; }
-    bool isLinkIndex(int index) const { return elements[index].which() == 1; }
-    const LinkGroupPtr& subGroup(int index) const { return boost::get<LinkGroupPtr>(elements[index]); }
-    int linkIndex(int index) const { return boost::get<int>(elements[index]); }
+    bool isSubGroup(int index) const { return stdx::get_variant_index(elements[index]) == 0; }
+    bool isLinkIndex(int index) const { return stdx::get_variant_index(elements[index]) == 1; }
+    const LinkGroupPtr& subGroup(int index) const { return stdx::get<LinkGroupPtr>(elements[index]); }
+    int linkIndex(int index) const { return stdx::get<int>(elements[index]); }
 
     std::vector<int> collectLinkIndices() const;
     std::vector<LinkGroupPtr> collectGroups() const;

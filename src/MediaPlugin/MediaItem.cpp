@@ -10,7 +10,7 @@
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/FileUtil>
-#include <boost/filesystem.hpp>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -18,7 +18,7 @@ using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -125,7 +125,7 @@ Item* MediaItem::doDuplicate() const
 void MediaItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty("uri", mediaURI_);
-    putProperty(_("offset"), offsetTime_, std::bind(&MediaItem::setOffsetTime, this, _1), true);
+    putProperty(_("offset"), offsetTime_, [&](double value){ setOffsetTime(value); return true; });
 }
 
 

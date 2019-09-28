@@ -6,9 +6,8 @@
 #include <stack>
 #include <iostream>
 #include <yaml.h>
-#include <boost/lexical_cast.hpp>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
-#include <boost/filesystem.hpp>
 #include "gettext.h"
 
 #ifdef _WIN32
@@ -16,7 +15,6 @@
 #endif
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -43,8 +41,8 @@ ValueNodePtr invalidNode;
 MappingPtr invalidMapping;
 ListingPtr invalidListing;
 
-const double PI = 3.14159265358979323846;
-const double TO_RADIAN = PI / 180.0;
+constexpr double PI = 3.141592653589793238462643383279502884;
+constexpr double TO_RADIAN = PI / 180.0;
 
 }
 
@@ -352,7 +350,7 @@ ScalarNode::ScalarNode(const char* text, size_t length, StringStyle stringStyle)
 
 
 ScalarNode::ScalarNode(int value)
-    : stringValue_(lexical_cast<string>(value))
+    : stringValue_(std::to_string(value))
 {
     typeBits = SCALAR;
     line_ = -1;
@@ -864,7 +862,7 @@ void Mapping::write(const std::string &key, double value)
 
 void Mapping::writePath(const std::string &key, const std::string& value)
 {
-    write(key, filesystem::path(value).string(), DOUBLE_QUOTED);
+    write(key, stdx::filesystem::path(value).string(), DOUBLE_QUOTED);
 }
 
 

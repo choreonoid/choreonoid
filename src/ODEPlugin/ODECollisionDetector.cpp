@@ -101,7 +101,7 @@ public:
 
     ODECollisionDetectorImpl();
     ~ODECollisionDetectorImpl();
-    boost::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(GeometryInfo* model);
     void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2);
     bool makeReady();
@@ -164,13 +164,13 @@ int ODECollisionDetector::numGeometries() const
 }
 
 
-boost::optional<GeometryHandle> ODECollisionDetector::addGeometry(SgNode* geometry)
+stdx::optional<GeometryHandle> ODECollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-boost::optional<GeometryHandle> ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
+stdx::optional<GeometryHandle> ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
     if(geometry){
         GeometryHandle handle = geometryInfos.size();
@@ -196,7 +196,7 @@ boost::optional<GeometryHandle> ODECollisionDetectorImpl::addGeometry(SgNode* ge
         }
     }
 
-    return boost::none;
+    return stdx::nullopt;
 }
 
 

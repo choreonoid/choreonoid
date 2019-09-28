@@ -9,6 +9,12 @@
 #include <QIcon>
 #include <cstdlib>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <vector>
+#include <boost/program_options.hpp>
+#endif
+
 using namespace std;
 using namespace cnoid;
 
@@ -27,13 +33,7 @@ int main(int argc, char *argv[])
 }
 
 
-#ifdef WIN32
-
-#include <windows.h>
-#include <vector>
-#include <boost/program_options.hpp>
-
-using namespace boost;
+#ifdef _WIN32
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -42,7 +42,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     argv.push_back(appname);
     
 #ifndef UNICODE
-    vector<string> args = program_options::split_winmain(lpCmdLine);
+    vector<string> args = boost::program_options::split_winmain(lpCmdLine);
     for(size_t i=0; i < args.size(); ++i){
         char* arg = new char[args[i].size() + 1];
         strcpy(arg, args[i].c_str());
@@ -50,7 +50,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
 #else
-    vector<wstring> wargs = program_options::split_winmain(lpCmdLine);
+    vector<wstring> wargs = boost::program_options::split_winmain(lpCmdLine);
     vector<char> buf;
     vector<string> args(wargs.size());
     int codepage = _getmbcp();

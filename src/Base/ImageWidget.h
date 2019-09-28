@@ -20,7 +20,7 @@ class CNOID_EXPORT ImageWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ImageWidget(QWidget* parent = 0);
+    explicit ImageWidget(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
 
 //public Q_SLOTS:
     void setPixmap(const QPixmap& pixmap);

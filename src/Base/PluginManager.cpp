@@ -13,11 +13,11 @@
 #include "MainWindow.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/Tokenizer>
 #include <cnoid/Config>
 #include <QLibrary>
 #include <QRegExp>
 #include <QFileDialog>
-#include <boost/tokenizer.hpp>
 #include <vector>
 #include <map>
 #include <set>
@@ -33,7 +33,7 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 
 #ifdef Q_OS_WIN32
@@ -49,11 +49,6 @@ static const char* DEBUG_SUFFIX = "";
 static const char* DEBUG_SUFFIX = "";
 # endif
 #endif
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-typedef void* QFunctionPointer;
-#endif
-
 
 namespace {
 PluginManager* instance_ = 0;
@@ -301,11 +296,7 @@ void PluginManager::scanPluginFilesInPathList(const std::string& pathList)
 
 void PluginManagerImpl::scanPluginFilesInDefaultPath(const std::string& pathList)
 {
-    boost::char_separator<char> sep(PATH_DELIMITER);
-    boost::tokenizer< boost::char_separator<char> > paths(pathList, sep);
-    boost::tokenizer< boost::char_separator<char> >::iterator p;
-    for(p = paths.begin(); p != paths.end(); ++p){
-        const string& path = *p;
+    for(auto& path : Tokenizer<CharSeparator<char>>(pathList, CharSeparator<char>(PATH_DELIMITER))){
         scanPluginFiles(path, false);
     }
 }

@@ -47,9 +47,6 @@ SPACER: &SPACER
         geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
         appearance:
           texture: *APP_SPACER_TEXTURE
-#            url: *ROAD_TEXTURE_FILE
-#            repeatS: true
-#            repeatT: true
           textureTransform:
             scale: [ 0.25, 0.75 ]
       -
@@ -68,9 +65,6 @@ SPACER: &SPACER
         geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
         appearance:
           texture:  *APP_SPACER_TEXTURE
-          textureTransform:
-            scale: [ 0.25, 0.75 ]
-#            rotation: [ 0, 0, 1, 90 ]
       -
         type: Shape
         translation: [ 0.125, -0.375, 0 ]
@@ -79,8 +73,6 @@ SPACER: &SPACER
         appearance:
           texture:  *APP_SPACER_TEXTURE
           textureTransform:
-            scale: [ 0.25, 0.75 ]
-#            rotation: [ 0, 0, 1, 90 ]
 
 A-05-10: &A-05-10
   -
@@ -232,8 +224,8 @@ links:
                     url: *ROAD_TEXTURE_FILE
                     repeatS: true
                     repeatT: true
-#                  textureTransform:
-#                    scale: [ 0.25, 0.75 ]
+                  textureTransform:
+                    scale: [ 0.25, 0.75 ]
           -
             type: Transform
             translation: [ 20, -3.55, -0.225 ]
@@ -386,138 +378,3 @@ links:
           -
             <<: *A-05-10-FILLED
             translation: [ 10.5, -3, 0 ]
-#LINE12-19
-#          -
-#            type: Transform
-#            translation: [ 0, 0, -0.45 ]
-#            rotation: [[ 1, 0, 0, 90],[ 0, 1, 0, 90 ]]
-#            elements:
-#              -
-#                type: Shape
-#                translation: [ 0, 0, -0.2]
-#                geometry:
-#                  type: Box
-#                  size: [ 0.01, 0.01, 0.01]
-#                appearance:
-#                  texture:
-#                    url: *ROAD_TEXTURE_FILE
-#                    repeatS: true
-#                    repeatT: true
-#                  textureTransform:
-#                    scale: [ 10, 15 ]
-#              
-#              -
-#                type: Shape
-#                geometry:
-#                  type: Extrusion
-#                  crossSection: [ 3.5,   11,
-#                                  3.5,   18.039,
-#                                  3.5,   19,
-#                                 -3.5,   19,
-#                                 -2.254, 18.412,
-#                                 -1.288, 18.154,
-#                                 -1.547, 17.188,
-#                                  1.547, 14.612,
-#                                  2.513, 14.354,
-#                                  2.254, 13.387,
-#                                  1.288, 13.646,
-#                                  1.547, 14.612,
-#                                 -1.547, 17.188,
-#                                 -2.513, 17.446,
-#                                 -2.254, 18.412,
-#                                 -3.5,   19,
-#                                 -3.5,   14.94,
-#                                 -3.5,   11,
-#                                  3.5,   11    ]
-#                  spine: [ 0, 0, 0,
-#                           0, 0.45, 0 ]
-#                appearance:
-#                  texture:
-#                    url: *ROAD_TEXTURE_FILE
-#                    repeatS: true
-#                    repeatT: true
-#                  textureTransform:
-#                    scale: [ 20, 20 ]
-#                    rotation: [ 0, 0, -1, 90 ]
-#          -
-#            <<: *V-1-10
-#            translation: [ 14, 1.9, -0.2 ]
-#            rotation: [ 0, 0, -1, -15 ]
-#
-#          -
-#            <<: *V-1-10
-#            translation: [ 17.8, -1.9, -0.2 ]
-#            rotation: [ 0, 0, -1, -15 ]
-#
-##LINE20
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 19.5, 0, 0]
-##LINE21
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 20.5, 0, 0]
-##LINE22
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 21.5, 0, 0]
-##LINE23
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 22.5, 0, 0]
-##LINE24-
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 23.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 24.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 25.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 26.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 27.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 28.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 29.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 30.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 31.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 32.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 33.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 34.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 35.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 36.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 37.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 38.5, 0, 0]
-#          -
-#            <<: *BLOCKLINE
-#            translation: [ 39.5, 0, 0]
-#
-#
-#
-#

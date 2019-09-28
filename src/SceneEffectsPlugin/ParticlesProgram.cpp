@@ -5,8 +5,10 @@
 
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/SceneCameras>
+#include <cnoid/GLSLProgram>
+#include <cnoid/GLSLSceneRenderer>
 #include <QImage>
-#include <memory>
 #include <mutex>
 
 using namespace std;
@@ -27,13 +29,14 @@ bool ParticlesProgramBase::initializeRendering(SceneParticles* particles)
 
     program->initialize();
 
-    modelViewMatrixLocation = program->getUniformLocation("modelViewMatrix");
-    projectionMatrixLocation = program->getUniformLocation("projectionMatrix");
-    pointSizeLocation = program->getUniformLocation("pointSize");
-    angle2pixelsLocation = program->getUniformLocation("angle2pixels");
+    auto& glsl = program->glslProgram();
+    modelViewMatrixLocation = glsl.getUniformLocation("modelViewMatrix");
+    projectionMatrixLocation = glsl.getUniformLocation("projectionMatrix");
+    pointSizeLocation = glsl.getUniformLocation("pointSize");
+    angle2pixelsLocation = glsl.getUniformLocation("angle2pixels");
     
-    timeLocation = program->getUniformLocation("time");
-    particleTexLocation = program->getUniformLocation("particleTex");
+    timeLocation = glsl.getUniformLocation("time");
+    particleTexLocation = glsl.getUniformLocation("particleTex");
 
     if(!particles->texture().empty()){
         QImage image(particles->texture().c_str());
@@ -51,7 +54,8 @@ bool ParticlesProgramBase::initializeRendering(SceneParticles* particles)
 }
 
 
-void ParticlesProgramBase::requestRendering(SceneParticles* particles, std::function<void()> renderingFunction)
+void ParticlesProgramBase::requestRendering
+(SceneParticles* particles, const std::function<void()>& renderingFunction)
 {
     if(renderer_->isPicking()){
         return;
@@ -82,25 +86,27 @@ void ParticlesProgramBase::requestRendering(SceneParticles* particles, std::func
         }
     }
 
-    Matrix3f R = renderer_->currentModelTransform().linear().cast<float>();
-    const Matrix4f MV = renderer_->modelViewMatrix().cast<float>();
-    renderer_->dispatchToTransparentPhase([=](){ render(particles, R, MV, renderingFunction); });
+    renderer_->dispatchToTransparentPhase(
+        particles, 0,
+        [this, renderingFunction](Referenced* object, const Affine3& position, int /* id */){
+            render(static_cast<SceneParticles*>(object), position, renderingFunction); });
 }
 
 
 void ParticlesProgramBase::render
-(SceneParticles* particles, const Matrix3f& R, const Matrix4f& MV, const std::function<void()>& renderingFunction)
+(SceneParticles* particles, const Affine3& position, const std::function<void()>& renderingFunction)
 {
     ShaderProgram* program = shaderProgram();
     
-    renderer_->pushShaderProgram(*program, false);
+    renderer_->pushShaderProgram(*program);
 
-    auto lightingProgram = dynamic_cast<LightingProgram*>(program);
+    auto lightingProgram = dynamic_cast<BasicLightingProgram*>(program);
     if(lightingProgram){
         renderer_->renderLights(lightingProgram);
         renderer_->renderFog(lightingProgram);
     }
 
+    const Matrix4f MV = (renderer_->viewTransform() * position).cast<float>().matrix();
     glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
     const Matrix4f P = renderer_->projectionMatrix().cast<float>();
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, P.data());
@@ -124,22 +130,26 @@ void ParticlesProgramBase::render
     
     glUniform1i(particleTexLocation, 0);
 
-    globalAttitude_ = R;
+    globalAttitude_ = position.linear().cast<float>();
     renderingFunction();
 
     renderer_->popShaderProgram();
 }
 
 
-ParticlesProgram::ParticlesProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgramBase(renderer)
+ParticlesProgram::ParticlesProgram
+(GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader)
+    : BasicLightingProgram(vertexShader, fragmentShader),
+      ParticlesProgramBase(renderer)
 {
 
 }
 
 
-LuminousParticlesProgram::LuminousParticlesProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgramBase(renderer)
+LuminousParticlesProgram::LuminousParticlesProgram
+(GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader)
+    : ShaderProgram(vertexShader, fragmentShader),
+      ParticlesProgramBase(renderer)
 {
 
 }

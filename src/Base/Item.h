@@ -26,21 +26,6 @@ class ExtensionManager;
 
 class CNOID_EXPORT Item : public Referenced
 {
-    template<class ItemType>
-    class ItemCallback
-    {
-        std::function<bool(ItemType* item)> function;
-        
-    public:
-        ItemCallback(std::function<bool(ItemType* item)> f) : function(f) { }
-        bool operator()(Item* item) {
-            if(ItemType* casted = dynamic_cast<ItemType*>(item)){
-                return function(casted);
-            }
-            return false;
-        }
-    };
-
 protected:
     Item();
     Item(const Item& item);
@@ -70,13 +55,13 @@ public:
     bool addSubItem(Item* item);
     bool isSubItem() const;
     void detachFromParentItem();
-    void emitSigDetachedFromRootForSubTree();
     bool insertChildItem(Item* item, Item* nextItem, bool isManualOperation = false);
     bool insertSubItem(Item* item, Item* nextItem);
 
     bool isTemporal() const;
     void setTemporal(bool on = true);
 
+    static Item* rootItem();
     RootItem* findRootItem() const;
     bool isConnectedToRoot() const;
 
@@ -85,7 +70,7 @@ public:
     */
     Item* findItem(const std::string& path) const;
     template<class ItemType>
-        ItemType* findItem(const std::string& path) const {
+    ItemType* findItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findItem(path));
     }
 
@@ -138,7 +123,13 @@ public:
 
     template<class ItemType>
     bool traverse(std::function<bool(ItemType* item)> function){
-        return Item::traverse(ItemCallback<ItemType>(function));
+        return Item::traverse(
+            [&function](Item* item){
+                if(auto* casted = dynamic_cast<ItemType*>(item)){
+                    return function(casted);
+                }
+                return false;
+            });
     }
 
     Item* duplicate() const;
@@ -197,14 +188,14 @@ public:
        @note deprecated
     */
     SignalProxy<void()> sigDetachedFromRoot() {
-        return sigDetachedFromRoot_;
+        return sigDisconnectedFromRoot_;
     }
 
     /**
        @note Please use this instead of sigDetachedFromRoot()
     */
     SignalProxy<void()> sigDisconnectedFromRoot() {
-        return sigDetachedFromRoot_;
+        return sigDisconnectedFromRoot_;
     }
 
     SignalProxy<void()> sigSubTreeChanged() {
@@ -246,7 +237,7 @@ private:
     std::bitset<NUM_ATTRIBUTES> attributes;
 
     Signal<void(const std::string& oldName)> sigNameChanged_;
-    Signal<void()> sigDetachedFromRoot_;
+    Signal<void()> sigDisconnectedFromRoot_;
     Signal<void()> sigUpdated_;
     Signal<void()> sigPositionChanged_;
     Signal<void()> sigSubTreeChanged_;
@@ -265,6 +256,7 @@ private:
     void callSlotsOnPositionChanged();
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
+    void emitSigDisconnectedFromRootForSubTree();
     static void emitSigSubTreeChanged();
 
     void detachFromParentItemSub(bool isMoving);

@@ -14,7 +14,7 @@
 #ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
 # include "deprecated/corba/CameraImage.hh"
 #else
-# ifdef WIN32
+# ifdef _WIN32
 #  include <rtm/idl/CameraCommonInterface.hh>
 # else
 #  include <rtm/ext/CameraCommonInterface.hh>

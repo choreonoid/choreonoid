@@ -18,10 +18,9 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     TranslationDragger(bool setDefaultAxes = true);
-    TranslationDragger(const TranslationDragger& org);
-    TranslationDragger(const TranslationDragger& org, SgCloneMap& cloneMap);
+    TranslationDragger(const TranslationDragger& org, SgCloneMap* cloneMap = nullptr);
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     enum Axis { TX = 1, TY = 2, TZ = 4 };
 
@@ -44,15 +43,15 @@ public:
         return sigTranslationFinished_;
     }
 
-    virtual bool isDragging() const;
-    virtual Affine3 draggedPosition() const;
+    virtual bool isDragging() const override;
+    virtual Affine3 draggedPosition() const override;
 
     const Vector3& draggedTranslation() const;
 
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
+    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event) override;
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
+    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
         
 private:
     int draggableAxes_;

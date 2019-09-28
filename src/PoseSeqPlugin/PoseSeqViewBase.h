@@ -21,7 +21,6 @@
 #include <cnoid/LinkTreeWidget>
 #include <QBoxLayout>
 #include <QLabel>
-#include <boost/dynamic_bitset.hpp>
 #include <ostream>
 #include <set>
 
@@ -78,7 +77,7 @@ public:
     int validPartColumn;
     int stationaryPointColumn;
     int ikPartColumn;
-    boost::dynamic_bitset<> possibleIkLinkFlag;
+    std::vector<bool> possibleIkLinkFlag;
     LinkTreeItem* zmpRow;
         
     PosePtr poseForDefaultStateSetting;

@@ -1,0 +1,21 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: UR3-2F85
+rootLink: Base
+
+links:
+  - # Main body
+    type: SubBody
+    uri: "UR3.body"
+    translation: [ 0, 0, 0.0 ]
+    jointType: fixed
+
+  - # Gripper
+    type: SubBody
+    uri: "../Robotiq/2F-85.body"
+    parent: Wrist_3
+    translation: [ 0.0, 0.08, 0.0 ]
+    rotation: [ 1, 0, 0, 90 ]
+    jointType: fixed
+    jointIdOffset: 6

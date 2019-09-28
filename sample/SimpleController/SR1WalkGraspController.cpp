@@ -56,7 +56,7 @@ public:
 
         if(!qseq){
             string filename = getNativePathString(
-                boost::filesystem::path(shareDirectory())
+                cnoid::stdx::filesystem::path(shareDirectory())
                 / "motion" / "SR1" / "SR1WalkPattern3.seq");
 
             BodyMotion motion;

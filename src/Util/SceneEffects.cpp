@@ -53,12 +53,20 @@ SgOutlineGroup::SgOutlineGroup()
 }
 
 
+SgLightweightRenderingGroup::SgLightweightRenderingGroup()
+    : SgGroup(findPolymorphicId<SgLightweightRenderingGroup>())
+{
+
+}
+
+
 namespace {
 
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SgNode::registerType<SgFog, SgPreprocessed>();
         SgNode::registerType<SgOutlineGroup, SgGroup>();
+        SgNode::registerType<SgLightweightRenderingGroup, SgGroup>();
     }
 } registration;
 

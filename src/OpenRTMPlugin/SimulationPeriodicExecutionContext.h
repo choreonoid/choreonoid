@@ -8,7 +8,7 @@
 
 #include <rtm/PeriodicExecutionContext.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma warning( disable : 4290 )
 #endif
 

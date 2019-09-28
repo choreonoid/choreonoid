@@ -82,13 +82,8 @@ LinkPropertyViewImpl::LinkPropertyViewImpl(LinkPropertyView* self)
     QHeaderView* vh = verticalHeader();
     hh->hide();
     vh->hide();
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    hh->setResizeMode(QHeaderView::Fixed);
-    vh->setResizeMode(QHeaderView::ResizeToContents);    
-#else
     hh->setSectionResizeMode(QHeaderView::Stretch);
     vh->setSectionResizeMode(QHeaderView::ResizeToContents);
-#endif
     hh->setStretchLastSection(true);
 
     fontPointSizeDiff = 0;

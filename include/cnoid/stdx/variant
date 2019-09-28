@@ -1,0 +1,29 @@
+#ifndef CNOID_STDX_VARIANT_HEADER
+#define CNOID_STDX_VARIANT_HEADER
+
+#if __cplusplus > 201402L
+#include <variant>
+namespace cnoid::stdx {
+using std::variant;
+template<class... Types>
+inline std::size_t get_variant_index(const variant<Types...>& v){ return v.index(); };
+using std::get;
+using std::holds_alternative;
+}
+#else
+#include <boost/variant.hpp>
+namespace cnoid { namespace stdx {
+using boost::variant;
+template<class... Types>
+inline std::size_t get_variant_index(const variant<Types...>& v){ return v.which(); };
+using boost::get;
+
+template <typename T, typename... Ts>
+bool holds_alternative(const variant<Ts...>& v) noexcept {
+    return boost::get<T>(&v) != nullptr;
+}
+
+} }
+#endif
+
+#endif

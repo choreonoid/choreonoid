@@ -17,7 +17,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -545,14 +544,14 @@ bool WorldLogFileItemImpl::setLogFile(const std::string& filename, bool isLoadin
 string WorldLogFileItemImpl::getActualFilename()
 {
     if(isTimeStampSuffixEnabled && recordingStartTime.isValid()){
-        filesystem::path filepath(self->filePath());
+        stdx::filesystem::path filepath(self->filePath());
         string suffix = recordingStartTime.toString("-yyyy-MM-dd-hh-mm-ss").toStdString();
         string fname = getBasename(filepath) + suffix;
         string ext = getExtension(filepath);
         if(!ext.empty()){
             fname = fname + "." + ext;
         }
-        return getPathString(filepath.parent_path() / filesystem::path(fname));
+        return getPathString(filepath.parent_path() / stdx::filesystem::path(fname));
     } else {
         return self->filePath();
     }
@@ -627,7 +626,7 @@ bool WorldLogFileItemImpl::readTopHeader()
         ifs.close();
     }
     string fname = getActualFilename();
-    if(filesystem::exists(fname)){
+    if(stdx::filesystem::exists(fname)){
         ifs.open(fname.c_str(), ios::in | ios::binary);
         if(ifs.is_open()){
             readBuf.clear();

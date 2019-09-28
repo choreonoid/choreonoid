@@ -26,6 +26,7 @@ public:
     void clear();
 
     bool empty() const { return empty_; }
+    explicit operator bool() const { return !empty_; }
     const Vector3& min() const { return min_; }
     const Vector3& max() const { return max_; }
     Vector3 center() const;
@@ -61,9 +62,11 @@ public:
     void clear();
 
     bool empty() const { return empty_; }
+    explicit operator bool() const { return !empty_; }
     const Vector3f& min() const { return min_; }
     const Vector3f& max() const { return max_; }
     Vector3f center() const;
+    Vector3f size() const;
     float boundingSphereRadius() const;
         
     void expandBy(const BoundingBoxf& bbox);

@@ -47,9 +47,6 @@ SPACER: &SPACER
         geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
         appearance:
           texture: *APP_SPACER_TEXTURE
-#            url: *ROAD_TEXTURE_FILE
-#            repeatS: true
-#            repeatT: true
           textureTransform:
             scale: [ 0.25, 0.75 ]
       -
@@ -68,9 +65,6 @@ SPACER: &SPACER
         geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
         appearance:
           texture:  *APP_SPACER_TEXTURE
-          textureTransform:
-            scale: [ 0.25, 0.75 ]
-#            rotation: [ 0, 0, 1, 90 ]
       -
         type: Shape
         translation: [ 0.125, -0.375, 0 ]
@@ -78,9 +72,6 @@ SPACER: &SPACER
         geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
         appearance:
           texture:  *APP_SPACER_TEXTURE
-          textureTransform:
-            scale: [ 0.25, 0.75 ]
-#            rotation: [ 0, 0, 1, 90 ]
 
 A-05-10: &A-05-10
   -
@@ -194,18 +185,6 @@ links:
         type: Transform
         elements:
           -
-            type: Shape
-            name: Surface
-            translation: [ 20.0, 0.0, -0.425 ]
-            geometry: { type: Box, size: [ 40.0, 7.2, 0.05 ] }
-            appearance:
-              texture:
-                url: *ROAD_TEXTURE_FILE
-                repeatS: true
-                repeatT: true
-              textureTransform:
-                scale: [ 1, 1 ]
-          -
             type: Transform
             translation: [ 20.0, 4.1, -0.1 ]
             elements:
@@ -232,8 +211,8 @@ links:
                     url: *ROAD_TEXTURE_FILE
                     repeatS: true
                     repeatT: true
-#                  textureTransform:
-#                    scale: [ 0.25, 0.75 ]
+                  textureTransform:
+                    scale: [ 0.25, 0.75 ]
           -
             type: Transform
             translation: [ 20, -3.55, -0.225 ]
@@ -394,20 +373,6 @@ links:
             elements:
               -
                 type: Shape
-                translation: [ 0, 0, -0.2]
-                geometry:
-                  type: Box
-                  size: [ 0.01, 0.01, 0.01]
-                appearance:
-                  texture:
-                    url: *ROAD_TEXTURE_FILE
-                    repeatS: true
-                    repeatT: true
-                  textureTransform:
-                    scale: [ 10, 15 ]
-              
-              -
-                type: Shape
                 geometry:
                   type: Extrusion
                   crossSection: [ 3.5,   11,
@@ -437,8 +402,7 @@ links:
                     repeatS: true
                     repeatT: true
                   textureTransform:
-                    scale: [ 20, 20 ]
-                    rotation: [ 0, 0, -1, 90 ]
+                    scale: [ 10, 15 ]
           -
             <<: *V-1-10
             translation: [ 14, 1.9, -0.2 ]

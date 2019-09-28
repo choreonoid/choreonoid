@@ -11,17 +11,13 @@
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
 #include <QRegExp>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/tokenizer.hpp>
 #include <map>
 #include <cstdlib>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using namespace std::placeholders;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -203,7 +199,7 @@ void Archive::addPostProcess(const std::function<void()>& func, int priority) co
             shared->postProcesses.push_back(func);
         } else {
             shared->postProcesses.push_back(
-                std::bind(&Archive::addPostProcess, this, func, priority - 1));
+                [this, func, priority](){ addPostProcess(func, priority - 1); });
         }
     }
 }
@@ -362,7 +358,7 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
     string varName;
 
     // In the case where the path is originally relative one
-    if(!orgPath.is_complete()){
+    if(!orgPath.is_absolute()){
         return getGenericPathString(orgPath);
 
     } else if(findSubDirectory(shared->projectDirPath, orgPath, relativePath)){

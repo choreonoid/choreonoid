@@ -7,7 +7,6 @@
 #include "ToolBar.h"
 #include "View.h"
 #include "Licenses.h"
-#include <boost/variant.hpp>
 
 using namespace std;
 using namespace cnoid;

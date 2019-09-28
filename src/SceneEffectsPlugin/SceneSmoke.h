@@ -15,7 +15,7 @@ class SceneSmoke : public SceneParticles
 public:
     SceneSmoke();
     SceneSmoke(const SceneSmoke& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
+    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     virtual ParticleSystem* getParticleSystem();
 

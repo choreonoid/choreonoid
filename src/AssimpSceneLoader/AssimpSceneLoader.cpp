@@ -10,14 +10,35 @@
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/NullOut>
+#include <cnoid/stdx/optional>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <boost/optional.hpp>
+#include <fmt/format.h>
 #include <map>
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
+namespace filesystem = cnoid::stdx::filesystem;
+
+namespace {
+
+const bool USE_AFFINE_TRANSFORM = false;
+
+/*
+  If the following option is true, transforms with coordinate flip
+  are applied to the original mesh vertices so that flipped transforms
+  can be excluded from the scene graph.
+  However, this conversion may cause some troubles in operating the scene graph,
+  so the conversion should be disabled unless there is a special reason.
+  Anyway, transformations with flipping should not be included in the scene graph.
+  Such transformations can be warned by setting true to the next option.
+ */
+const bool ENABLE_FLIPPED_COORDINATE_EXPANSION = false;
+const bool ENABLE_WARNING_FOR_FLIPPED_COORDINATE = false;
+
+}
 
 namespace cnoid {
 
@@ -28,10 +49,10 @@ public:
     ostream& os() { return *os_; }
     Assimp::Importer importer;
     const aiScene* scene;
-    boost::filesystem::path directoryPath;
+    filesystem::path directoryPath;
     ImageIO imageIO;
 
-    boost::optional<Affine3f> T_local;
+    stdx::optional<Affine3f> T_local;
     
     typedef map<unsigned int, SgNodePtr> AiIndexToSgShapeMap;
     AiIndexToSgShapeMap aiIndexToSgShapeMap;
@@ -78,7 +99,6 @@ AssimpSceneLoaderImpl* AssimpSceneLoader::getOrCreateImpl()
     }
     return impl;
 }
-
 
 
 AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
@@ -131,13 +151,13 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 
     if(!scene){
         os() << importer.GetErrorString() << endl;
-        return 0;
+        return nullptr;
     }
 
-    boost::filesystem::path path(filename);
+    filesystem::path path(filename);
     directoryPath = path.remove_filename();
 
-    T_local = boost::none;
+    T_local = stdx::nullopt;
 
     SgNode* node = convertAiNode(scene->mRootNode);
 
@@ -159,16 +179,25 @@ SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
         S[1][0], S[1][1], S[1][2],
         S[2][0], S[2][1], S[2][2];
 
-    boost::optional<Affine3f> prev_T_local = T_local;
-    
-    double d = T.linear().determinant();
-    if(T_local || d < 0){ // include coordinate reflection
-        if(T_local){
-            T_local = (*T_local) * T.cast<Matrix3f::Scalar>();
-        } else {
-            T_local = T.cast<Matrix3f::Scalar>();
+    stdx::optional<Affine3f> prev_T_local = T_local;
+
+    if(ENABLE_FLIPPED_COORDINATE_EXPANSION || ENABLE_WARNING_FOR_FLIPPED_COORDINATE){
+        double d = T.linear().determinant();
+        if(ENABLE_WARNING_FOR_FLIPPED_COORDINATE){
+            if(d < 0){
+                os() << format("Warning: Flip transform is included in node \"{0}\".\n", node->mName.C_Str());
+            }
         }
-        T.setIdentity();
+        if(ENABLE_FLIPPED_COORDINATE_EXPANSION){
+            if(T_local || d < 0){ // include coordinate reflection
+                if(T_local){
+                    T_local = (*T_local) * T.cast<Matrix3f::Scalar>();
+                } else {
+                    T_local = T.cast<Matrix3f::Scalar>();
+                }
+                T.setIdentity();
+            }
+        }
     }
 
     SgGroupPtr group;
@@ -221,7 +250,9 @@ SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
         }
     }
 
-    T_local = prev_T_local;
+    if(ENABLE_FLIPPED_COORDINATE_EXPANSION){
+        T_local = prev_T_local;
+    }
     
     if(group->empty()){
         group = nullptr;
@@ -233,17 +264,21 @@ SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 
 SgNode* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
 {
-    AiIndexToSgShapeMap::iterator p = aiIndexToSgShapeMap.find(index);
-    if(p != aiIndexToSgShapeMap.end()){
-        return p->second;
+    if(!ENABLE_FLIPPED_COORDINATE_EXPANSION || !T_local){
+        AiIndexToSgShapeMap::iterator p = aiIndexToSgShapeMap.find(index);
+        if(p != aiIndexToSgShapeMap.end()){
+            return p->second;
+        }
     }
 
-    SgNode* node = 0;
+    SgNode* node = nullptr;
     aiMesh* srcMesh = scene->mMeshes[index];
     if(srcMesh->HasFaces()){
         node = convertAiMeshFaces(srcMesh);
     }
-    aiIndexToSgShapeMap[index] = node;
+    if(!ENABLE_FLIPPED_COORDINATE_EXPANSION || !T_local){
+        aiIndexToSgShapeMap[index] = node;
+    }
 
     return node;;
 }
@@ -263,7 +298,7 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
         const auto& v = srcVertices[i];
         vertices->at(i) << v.x, v.y, v.z;
     }
-    if(T_local){
+    if(ENABLE_FLIPPED_COORDINATE_EXPANSION && T_local){
         for(auto& v : *vertices){
             v = (*T_local) * v;
         }
@@ -278,7 +313,7 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
             const auto& n = srcNormals[i];
             normals->at(i) << n.x, n.y, n.z;
         }
-        if(T_local){
+        if(ENABLE_FLIPPED_COORDINATE_EXPANSION && T_local){
             const Matrix3f R = (*T_local).linear();
             for(auto& n : *normals){
                 n = R * n;
@@ -398,7 +433,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
         return p->second;
     }
 
-    SgMaterial* material = new SgMaterial();
+    SgMaterial* material = new SgMaterial;
     aiMaterial* srcMaterial = scene->mMaterials[index];
 
     aiString name;
@@ -424,9 +459,10 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
         material->setShininess(s / 128.0f);
     }
     if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
-        float c = diffuse ==0 ? 0 : (color.r + color.g + color.b) / diffuse;
-        if(c>1)
-            c=1;
+        float c = (diffuse == 0.0f ? 0.0f : (color.r + color.g + color.b) / diffuse);
+        if(c > 1.0f){
+            c = 1.0f;
+        }
         material->setAmbientIntensity(c);
     }
 
@@ -453,16 +489,15 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
         return p->second;
     }
 
-    SgTexture* texture = 0;
+    SgTexture* texture = nullptr;
     aiMaterial* srcMaterial = scene->mMaterials[index];
 
     if(srcMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0){
         aiString path;
         if(srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS){
-            boost::filesystem::path filepath(path.data);
+            filesystem::path filepath(path.data);
             if(!checkAbsolute(filepath)){
-                filepath = directoryPath / filepath;
-                filepath.normalize();
+                filepath = filesystem::lexically_normal(directoryPath / filepath);
             }
             string textureFile = getAbsolutePathString(filepath);
 
@@ -477,7 +512,7 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
                     imagePathToSgImageMap[textureFile] = image;
                 } catch(const exception_base& ex){
                     os() << *boost::get_error_info<error_info_message>(ex) << endl;
-                    image = 0;
+                    image = nullptr;
                 }
             }
             if(image){

@@ -32,6 +32,11 @@ public:
 
     void append(Link* link, bool isDownward = true);
 
+    bool remove(Link* link);
+
+    //! @return prepended link
+    Link* prependRootAdjacentLinkToward(Link* link);
+
     int numLinks() const {
         return static_cast<int>(links_.size());
     }
@@ -45,7 +50,7 @@ public:
     }
 
     Link* rootLink() const {
-        return (links_.empty() ? 0 : links_.front());
+        return (links_.empty() ? nullptr : links_.front());
     }
 
     Link* link(int index) const {
@@ -103,6 +108,7 @@ protected:
 
 private:
     void traverse(Link* link, bool doUpward, bool doDownward, bool isUpward, Link* prev);
+    Link* findRootAdjacentLink(Link* link, Link* prev, Link* root, bool& isUpward);
 };
 
 }

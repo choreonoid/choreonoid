@@ -27,6 +27,12 @@ public:
     SgPosTransform* topNode() { return topNode_; }
     const SgPosTransform* topNode() const { return topNode_; }
 
+    void setTranslation(const Vector3f& translation);
+    void setRotation(const AngleAxisf& rotation);
+
+    void setLightweightRenderingEnabled(bool on);
+    bool isLightweightRenderingEnabled() const { return isLightweightRenderingEnabled_; }
+
 protected:
     virtual Item* doDuplicate() const;
     virtual bool store(Archive& archive);
@@ -35,6 +41,7 @@ protected:
 
 private:
     SgPosTransformPtr topNode_;
+    bool isLightweightRenderingEnabled_;
 
     bool onTranslationChanged(const std::string& value);
     bool onRotationChanged(const std::string& value);

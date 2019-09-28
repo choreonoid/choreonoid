@@ -21,7 +21,7 @@
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -34,13 +34,13 @@ class RTComponentImpl
 public:
     RTC::RTObject_var rtcRef;
     RTC::RtcBase* rtc_;
-    boost::filesystem::path modulePath;
+    filesystem::path modulePath;
     Process rtcProcess;
     std::string componentName;
     MessageView* mv;
 
     RTComponentImpl(const filesystem::path& modulePath, PropertyMap& prop);
-    void init(const boost::filesystem::path& modulePath, PropertyMap& properties);
+    void init(const filesystem::path& modulePath, PropertyMap& properties);
     bool createRTC(PropertyMap& properties);
     bool isValid() const;
     void setupModules(string& fileName, string& initFuncName, string& componentName, PropertyMap& properties);

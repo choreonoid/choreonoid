@@ -7,8 +7,6 @@
 #define CNOID_BODY_FORWARD_DYNAMICS_CBM_H
 
 #include "ForwardDynamics.h"
-#include <Eigen/StdVector>
-#include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 
 namespace cnoid
@@ -108,7 +106,8 @@ private:
     Vector3 dvoorg;
     Vector3 dworg;
 		
-    struct ForceSensorInfo {
+    struct ForceSensorInfo
+    {
         bool hasSensor;
         bool hasSensorsAbove;
         Vector3 f;
@@ -121,7 +120,7 @@ private:
             { }
     };
 
-    std::vector<ForceSensorInfo, Eigen::aligned_allocator<ForceSensorInfo> > forceSensorInfo;
+    std::vector<ForceSensorInfo> forceSensorInfo;
 
     // Buffers for the Runge Kutta Method
     Position T0;

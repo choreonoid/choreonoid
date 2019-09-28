@@ -20,21 +20,11 @@
 #include <unordered_map>
 #include <fmt/format.h>
 #include <mutex>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::smatch;
-using boost::regex_match;
-#else
 #include <regex>
-#endif
-
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
 using fmt::format;
 
 namespace {
@@ -89,6 +79,7 @@ public:
     bool on;
     
     MeshGenerator meshGenerator;
+    int defaultDivisionNumber;
     PolygonMeshTriangulator polygonMeshTriangulator;
     MeshFilter meshFilter;
     SgMaterialPtr defaultMaterial;
@@ -96,7 +87,7 @@ public:
 
     map<string, ResourceInfoPtr> resourceInfoMap;
     SceneLoader sceneLoader;
-    filesystem::path baseDirectory;
+    stdx::filesystem::path baseDirectory;
     regex uriSchemeRegex;
     bool isUriSchemeRegexReady;
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
@@ -120,6 +111,7 @@ public:
     SgNode* readTransformParameters(Mapping& info, SgNode* scene);
     SgNode* readShape(Mapping& info);
     SgMesh* readGeometry(Mapping& info);
+    void readDivisionNumber(Mapping& info);
     SgMesh* readBox(Mapping& info);
     SgMesh* readSphere(Mapping& info);
     SgMesh* readCylinder(Mapping& info);
@@ -131,7 +123,6 @@ public:
     SgMesh* readResourceAsGeometry(Mapping& info);
     void readAppearance(SgShape* shape, Mapping& info);
     void readMaterial(SgShape* shape, Mapping& info);
-    void setDefaultMaterial(SgShape* shape);
     void readTexture(SgShape* shape, Mapping& info);
     void readTextureTransform(SgTexture* texture, Mapping& info);
     void readLightCommon(Mapping& info, SgLight* light);
@@ -146,7 +137,7 @@ public:
         Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, YAMLSceneReader::Resource& resource);
     void decoupleResourceNode(Mapping& resourceNode, const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(Mapping& resourceNode, const string& uri);
-    filesystem::path findFileInPackage(const string& file);
+    stdx::filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(SceneNodeInfo& info);
     void makeSceneNodeMap(ResourceInfo* info);
     void makeSceneNodeMapSub(const SceneNodeInfo& nodeInfo, SceneNodeMap& nodeMap);
@@ -197,6 +188,7 @@ YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
         nodeFunctionMap["Resource"] = &YAMLSceneReaderImpl::readResource;
     }
     os_ = &nullout();
+    defaultDivisionNumber = meshGenerator.defaultDivisionNumber();
     isUriSchemeRegexReady = false;
     imageIO.setUpsideDown(true);
 }
@@ -223,14 +215,14 @@ void YAMLSceneReader::setMessageSink(std::ostream& os)
 
 void YAMLSceneReader::setDefaultDivisionNumber(int n)
 {
-    impl->meshGenerator.setDivisionNumber(n);
+    impl->defaultDivisionNumber = n;
     impl->sceneLoader.setDefaultDivisionNumber(n);
 }
 
 
 int YAMLSceneReader::defaultDivisionNumber() const
 {
-    return impl->meshGenerator.divisionNumber();
+    return impl->defaultDivisionNumber;
 }
 
 
@@ -400,13 +392,13 @@ bool YAMLSceneReader::extractTranslation(Mapping& info, Vector3& out_p) const
 
 SgNode* YAMLSceneReader::readNode(Mapping& info)
 {
-    return impl->readNode(info);
+    return info.isValid() ? impl->readNode(info) : nullptr;
 }
 
 
 SgNode* YAMLSceneReader::readNode(Mapping& info, const std::string& type)
 {
-    return impl->readNode(info, type);
+    return info.isValid() ? impl->readNode(info, type) : nullptr;
 }
 
 
@@ -592,31 +584,29 @@ SgNode* YAMLSceneReaderImpl::readTransformParameters(Mapping& info, SgNode* scen
 
 SgNode* YAMLSceneReaderImpl::readShape(Mapping& info)
 {
-    SgNode* scene = 0;
+    SgNode* scene = nullptr;
 
-    Mapping& geometry = *info.findMapping("geometry");
-    if(geometry.isValid()){
-        SgShapePtr shape = new SgShape;
-
-        Mapping& appearance = *info.findMapping("appearance");
-        if(appearance.isValid()){
-            readAppearance(shape, appearance);
-        } else {
-            setDefaultMaterial(shape);
-        }
-
+    SgShapePtr shape = new SgShape;
+    
+    Mapping& appearance = *info.findMapping("appearance");
+    if(appearance.isValid()){
+        readAppearance(shape, appearance);
         if(shape->texture()){
             generateTexCoord = true;
         }else{
             generateTexCoord = false;
         }
+    }
+
+    Mapping& geometry = *info.findMapping("geometry");
+    if(geometry.isValid()){
         shape->setMesh(readGeometry(geometry));
+    }
 
-        scene = readTransformParameters(info, shape);
+    scene = readTransformParameters(info, shape);
 
-        if(scene == shape){
-            return shape.retn();
-        }
+    if(scene == shape){
+        return shape.retn();
     }
 
     return scene;
@@ -654,6 +644,12 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& info)
 }
 
 
+void YAMLSceneReaderImpl::readDivisionNumber(Mapping& info)
+{
+    meshGenerator.setDivisionNumber(info.get("divisionNumber", defaultDivisionNumber));
+}
+    
+
 SgMesh* YAMLSceneReaderImpl::readBox(Mapping& info)
 {
     Vector3 size;
@@ -666,16 +662,20 @@ SgMesh* YAMLSceneReaderImpl::readBox(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readSphere(Mapping& info)
 {
+    readDivisionNumber(info);
     return meshGenerator.generateSphere(info.get("radius", 1.0), generateTexCoord);
 }
 
 
 SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& info)
 {
+    readDivisionNumber(info);
+    
     double radius = info.get("radius", 1.0);
     double height = info.get("height", 1.0);
     bool bottom = info.get("bottom", true);
     bool top = info.get("top", true);
+    
     return meshGenerator.generateCylinder(radius, height, bottom, top, true, generateTexCoord);
 
 }
@@ -683,7 +683,12 @@ SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readCone(Mapping& info)
 {
-    double radius = info.get("radius", 1.0);
+    readDivisionNumber(info);
+
+    double radius = 1.0;
+    if(!info.read("radius", radius)){
+        info.read("bottomRadius", radius); // for the compatibility with VRML97
+    }
     double height = info.get("height", 1.0);
     bool bottom = info.get("bottom", true);
     return meshGenerator.generateCone(radius, height, bottom, true, generateTexCoord);
@@ -692,6 +697,8 @@ SgMesh* YAMLSceneReaderImpl::readCone(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readCapsule(Mapping& info)
 {
+    readDivisionNumber(info);
+    
     double radius = info.get("radius", 1.0);
     double height = info.get("height", 1.0);
     return meshGenerator.generateCapsule(radius, height);
@@ -736,7 +743,7 @@ SgMesh* YAMLSceneReaderImpl::readExtrusion(Mapping& info)
         for(int i=0; i < n; ++i){
             AngleAxis& aa = orientation[i];
             Vector3& axis = aa.axis();
-            for(int j=0; j < 4; ++j){
+            for(int j=0; j < 3; ++j){
                 axis[j] = orientationNode[i*4+j].toDouble();
             }
             aa.angle() = self->toRadian(orientationNode[i*4+3].toDouble());
@@ -920,8 +927,6 @@ void YAMLSceneReaderImpl::readAppearance(SgShape* shape, Mapping& info)
     Mapping& material = *info.findMapping("material");
     if(material.isValid()){
         readMaterial(shape, material);
-    } else {
-        setDefaultMaterial(shape);
     }
 
     Mapping& texture = *info.findMapping("texture");
@@ -940,30 +945,27 @@ void YAMLSceneReaderImpl::readMaterial(SgShape* shape, Mapping& info)
 {
     SgMaterialPtr material = new SgMaterial;
 
-    material->setAmbientIntensity(info.get("ambientIntensity", 0.2));
+    double value;
+    if(info.read("ambientIntensity", value)){
+        material->setAmbientIntensity(value);
+    }
     if(read(info, "diffuseColor", color)){
         material->setDiffuseColor(color);
-    } else {
-        material->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
     }
-    if(read(info, "emissiveColor", color)) material->setEmissiveColor(color);
-    material->setShininess(info.get("shininess", 0.2));
-    if(read(info, "specularColor", color)) material->setSpecularColor(color);
-    if(info.read("transparency", value)) material->setTransparency(value);
+    if(read(info, "emissiveColor", color)){
+        material->setEmissiveColor(color);
+    }
+    if(info.read("shininess", value)){
+        material->setShininess(value);
+    }
+    if(read(info, "specularColor", color)){
+        material->setSpecularColor(color);
+    }
+    if(info.read("transparency", value)){
+        material->setTransparency(value);
+    }
 
     shape->setMaterial(material);
-}
-
-
-void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
-{
-    if(!defaultMaterial){
-        defaultMaterial = new SgMaterial;
-        defaultMaterial->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
-        defaultMaterial->setAmbientIntensity(0.2f);
-        defaultMaterial->setShininess(0.2f);
-    }
-    shape->setMaterial(defaultMaterial);
 }
 
 
@@ -979,10 +981,9 @@ void YAMLSceneReaderImpl::readTexture(SgShape* shape, Mapping& info)
             }else{
                 try{
                     image = new SgImage;
-                    filesystem::path filepath(url);
+                    stdx::filesystem::path filepath(url);
                     if(!checkAbsolute(filepath)){
-                        filepath = baseDirectory / filepath;
-                        filepath.normalize();
+                        filepath = stdx::filesystem::lexically_normal(baseDirectory / filepath);
                     }
                     imageIO.load(image->image(), getAbsolutePathString(filepath));
                     imagePathToSgImageMap[url] = image;
@@ -1227,7 +1228,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
         return iter->second;
     }
 
-    filesystem::path filepath;
+    stdx::filesystem::path filepath;
         
     if(!isUriSchemeRegexReady){
         uriSchemeRegex.assign("^(.+)://(.+)$");
@@ -1259,8 +1260,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
     if(!hasScheme){
         filepath = uri;
         if(!checkAbsolute(filepath)){
-            filepath = baseDirectory / filepath;
-            filepath.normalize();
+            filepath = stdx::filesystem::lexically_normal(baseDirectory / filepath);
         }
     }
     
@@ -1271,8 +1271,8 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
 
     ResourceInfoPtr info = new ResourceInfo;
 
-    string filename = filesystem::absolute(filepath).string();
-    string ext = filesystem::extension(filepath);
+    string filename = stdx::filesystem::absolute(filepath).string();
+    string ext = filepath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if(ext == ".yaml" || ext == ".yml"){

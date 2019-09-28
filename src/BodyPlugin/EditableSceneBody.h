@@ -7,7 +7,7 @@
 
 #include <cnoid/SceneWidgetEditable>
 #include <cnoid/SceneBody>
-#include <boost/dynamic_bitset.hpp>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -51,8 +51,7 @@ public:
     EditableSceneBody(BodyItemPtr bodyItem);
 
     EditableSceneLink* editableSceneLink(int index);
-    const boost::dynamic_bitset<>& linkVisibilities() const;
-    void setLinkVisibilities(const boost::dynamic_bitset<>& visibilities);
+    void setLinkVisibilities(const std::vector<bool>& visibilities);
 
     virtual void updateModel();
 

@@ -7,14 +7,15 @@
 #include "RootItem.h"
 #include "ItemPath.h"
 #include "ItemManager.h"
-#include <boost/filesystem.hpp>
+#include <cnoid/stdx/filesystem>
+#include <chrono>
 #include <typeinfo>
 #include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
-namespace filesystem = boost::filesystem;
 using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 
 //tmp
 #include <iostream>
@@ -340,7 +341,7 @@ void Item::detachFromParentItemSub(bool isMoving)
             if(itemsBeingAddedOrRemoved.find(parent_) == itemsBeingAddedOrRemoved.end()){
                 callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
             }
-            emitSigDetachedFromRootForSubTree();
+            emitSigDisconnectedFromRootForSubTree();
         }
     }
 
@@ -355,12 +356,12 @@ void Item::detachFromParentItemSub(bool isMoving)
 }
 
 
-void Item::emitSigDetachedFromRootForSubTree()
+void Item::emitSigDisconnectedFromRootForSubTree()
 {
     for(Item* child = childItem(); child; child = child->nextItem()){
-        child->emitSigDetachedFromRootForSubTree();
+        child->emitSigDisconnectedFromRootForSubTree();
     }
-    sigDetachedFromRoot_();
+    sigDisconnectedFromRoot_();
 
     onDisconnectedFromRoot();
 }
@@ -472,6 +473,12 @@ Item* Item::findSubItem(const std::string& path) const
 {
     ItemPath ipath(path);
     return findSubItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
+}
+
+
+Item* Item::rootItem()
+{
+    return RootItem::instance();
 }
 
 
@@ -729,7 +736,7 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
 {
     filesystem::path fpath(filename);
     if(filesystem::exists(fpath)){
-        fileModificationTime_ = filesystem::last_write_time(fpath);
+        fileModificationTime_ = filesystem::last_write_time_to_time_t(fpath);
         isConsistentWithFile_ = true;
     } else {
         fileModificationTime_ = 0;

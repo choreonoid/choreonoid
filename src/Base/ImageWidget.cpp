@@ -14,8 +14,8 @@ using namespace std;
 using namespace cnoid;
 
 
-ImageWidget::ImageWidget(QWidget* parent) :
-    QWidget(parent)
+ImageWidget::ImageWidget(QWidget* parent, Qt::WindowFlags f)
+    : QWidget(parent, f)
 {
     QPalette p(palette());
     p.setColor(QPalette::Background, Qt::black);
@@ -76,7 +76,8 @@ void ImageWidget::setImage(const Image& image)
         QImage::Format_Invalid,
         QImage::Format_Invalid, //! \todo convert a gray scale image to RGB888
         QImage::Format_Invalid,
-        QImage::Format_RGB888
+        QImage::Format_RGB888,
+        QImage::Format_RGBA8888
     };
 
     QImage::Format f = componentSizeToFormat[image.numComponents()];
@@ -159,7 +160,7 @@ void ImageWidget::paintEvent(QPaintEvent* event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
     painter.setWorldTransform(transform_);
-
+    pixmap_.setDevicePixelRatio(devicePixelRatio());
     painter.drawPixmap(0, 0, pixmap_);
 }
 

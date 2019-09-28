@@ -64,29 +64,25 @@ TranslationDragger::TranslationDragger(bool setDefaultAxes)
 }
 
 
-TranslationDragger::TranslationDragger(const TranslationDragger& org)
-    : SceneDragger(org)
-{
-    draggableAxes_ = org.draggableAxes_;
-    defaultAxesScale = new SgScaleTransform;
-    defaultAxesScale->setScale(org.defaultAxesScale->scale());
-    org.defaultAxesScale->copyChildrenTo(defaultAxesScale);
-    addChild(defaultAxesScale);
-
-    axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
-}
-
-
-TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap& cloneMap)
+TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap* cloneMap)
     : SceneDragger(org, cloneMap)
 {
     draggableAxes_ = org.draggableAxes_;
-    defaultAxesScale = getChild<SgScaleTransform>(0);
+
+    if(cloneMap){
+        defaultAxesScale = getChild<SgScaleTransform>(0);
+    } else {
+        defaultAxesScale = new SgScaleTransform;
+        defaultAxesScale->setScale(org.defaultAxesScale->scale());
+        org.defaultAxesScale->copyChildrenTo(defaultAxesScale);
+        addChild(defaultAxesScale);
+    }
+        
     axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
 }
 
 
-SgObject* TranslationDragger::clone(SgCloneMap& cloneMap) const
+SgObject* TranslationDragger::doClone(SgCloneMap* cloneMap) const
 {
     return new TranslationDragger(*this, cloneMap);
 }

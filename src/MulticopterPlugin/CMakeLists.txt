@@ -31,7 +31,7 @@ set(sources
   MulticopterPlugin.cpp
   )
 
-QTX_WRAP_CPP(qtsources MonitorForm.h)
+QT5_WRAP_CPP(qtsources MonitorForm.h)
 qt5_wrap_ui(qtforms MonitorForm.ui)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

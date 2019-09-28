@@ -14,7 +14,7 @@
 #include <rtm/idl/InterfaceDataTypes.hh>
 #include <cnoid/corba/PointCloud.hh>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <rtm/idl/CameraCommonInterface.hh>
 extern "C" {
 #define XMD_H

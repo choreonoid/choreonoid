@@ -16,7 +16,6 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <QTcpSocket>
-#include <boost/filesystem.hpp>
 #include <fmt/format.h>
 #include <thread>
 #include <iostream>
@@ -25,7 +24,7 @@
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 bool commonInitializationDone;

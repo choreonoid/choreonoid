@@ -183,57 +183,33 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 #endif
 
     
-#ifdef CNOID_USE_PYBIND11
     pybind11::object consoleOutClass =
         pybind11::class_<PythonConsoleOut>(mainModule, "PythonConsoleOut")
         .def(pybind11::init<>())
-#else
-    python::object consoleOutClass =
-        boost::python::class_<PythonConsoleOut>("PythonConsoleOut", python::init<>())
-#endif
         .def("write", &PythonConsoleOut::write);
     
     consoleOut = consoleOutClass();
 
-#ifdef CNOID_USE_PYBIND11
     PythonConsoleOut& consoleOut_ = consoleOut.cast<PythonConsoleOut&>();
-#else
-    PythonConsoleOut& consoleOut_ = boost::python::extract<PythonConsoleOut&>(consoleOut);
-#endif
     consoleOut_.setConsole(this);
 
     python::object consoleInClass =
-#ifdef CNOID_USE_PYBIND11
         pybind11::class_<PythonConsoleIn>(mainModule, "PythonConsoleIn")
         .def(pybind11::init<>())
-#else
-        python::class_<PythonConsoleIn>("PythonConsoleIn", python::init<>())
-#endif
         .def("readline", &PythonConsoleIn::readline);
     
     consoleIn = consoleInClass();
     
-#ifdef CNOID_USE_PYBIND11
     PythonConsoleIn& consoleIn_ = consoleIn.cast<PythonConsoleIn&>();
-#else
-    PythonConsoleIn& consoleIn_ = python::extract<PythonConsoleIn&>(consoleIn);
-#endif
     consoleIn_.setConsole(this);
     
     sys = getSysModule();
 
     python::object keyword = python::module::import("keyword");
-#ifdef CNOID_USE_PYBIND11
     pybind11::list kwlist = pybind11::cast<pybind11::list>(keyword.attr("kwlist"));
     for(size_t i = 0; i < pybind11::len(kwlist); ++i){
         keywords.push_back(pybind11::cast<string>(kwlist[i]));
     }
-#else
-    python::list kwlist = python::extract<python::list>(keyword.attr("kwlist"));
-    for(int i = 0; i < python::len(kwlist); ++i){
-        keywords.push_back(python::extract<string>(kwlist[i]));
-    }
-#endif
 
     histIter = history.end();
     
@@ -315,11 +291,7 @@ void PythonConsoleViewImpl::execCommand()
     
     put("\n"); // This must be done after getInputString().
 
-#ifdef CNOID_USE_PYBIND11
     if(interpreter.attr("push")(command.toStdString()).cast<bool>()){
-#else
-    if(python::extract<bool>(interpreter.attr("push")(command.toStdString()))){
-#endif
         setPrompt("... ");
     } else {
         setPrompt(">>> ");
@@ -363,24 +335,13 @@ std::vector<string> PythonConsoleViewImpl::getMemberNames(python::object& module
     if(pPyObject == NULL){
         return std::vector<string>();
     }
-#ifdef CNOID_USE_PYBIND11
     pybind11::handle h( PyObject_Dir(pPyObject) );
     pybind11::list memberNames = h.cast<pybind11::list>();
-#else
-    python::handle<> h(PyObject_Dir(pPyObject));
-    python::list memberNames = python::extract<python::list>(python::object(h));
-#endif
     std::vector<string> retNames;
     for(size_t i=0; i < python::len(memberNames); ++i){
-#ifdef CNOID_USE_PYBIND11
         if(!strstr(string(memberNames[i].cast<string>()).c_str(), "__" )){
             retNames.push_back(string(memberNames[i].cast<string>()));
         }
-#else
-        if(!strstr(string(python::extract<string>(memberNames[i])).c_str(), "__" )){
-            retNames.push_back(string(python::extract<string>(memberNames[i])));
-        }
-#endif
     }
     return retNames;
 }

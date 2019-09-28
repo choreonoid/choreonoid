@@ -18,7 +18,7 @@ template<> void MultiSeqItem<MultiSE3Seq>::initializeClass(ExtensionManager* ext
         new MultiSeqItemCreationPanel(_("Number of SE3 values in a frame")));
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 template class MultiSeqItem<MultiSE3Seq>;
 #endif
 

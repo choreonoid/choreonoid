@@ -36,7 +36,7 @@ set(headers
   exportdecl.h
   )
 
-QTX_ADD_RESOURCES(RC_SRCS PoseSeqPlugin.qrc)
+QT5_ADD_RESOURCES(RC_SRCS PoseSeqPlugin.qrc)
 
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})

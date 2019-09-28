@@ -4,7 +4,9 @@
 */
 
 #include "CompositeIK.h"
+#include "Body.h"
 #include "Link.h"
+#include "JointPath.h"
 
 using namespace std;
 using namespace cnoid;
@@ -12,7 +14,7 @@ using namespace cnoid;
 
 CompositeIK::CompositeIK()
 {
-    targetLink_ = 0;
+    targetLink_ = nullptr;
     hasAnalyticalIK_ = false;
 }
 
@@ -23,32 +25,34 @@ CompositeIK::CompositeIK(Body* body, Link* targetLink)
 }
 
 
-CompositeIK::~CompositeIK()
-{
-
-}
-
-
 void CompositeIK::reset(Body* body, Link* targetLink)
 {
     body_ = body;
     targetLink_ = targetLink;
     hasAnalyticalIK_ = false;
     paths.clear();
+    remainingLinkTraverse.reset();
 }
    
 
 bool CompositeIK::addBaseLink(Link* baseLink)
 {
     if(baseLink && targetLink_){
-        auto path = getCustomJointPath(body_, targetLink_, baseLink);
+        auto path = getCustomJointPath(body_, baseLink, targetLink_);
         if(path){
             hasAnalyticalIK_ = paths.empty() ? path->hasAnalyticalIK() : (hasAnalyticalIK_ && path->hasAnalyticalIK());
             paths.push_back(path);
+            remainingLinkTraverse.reset();
             return true;
         }
     }
     return false;
+}
+
+
+Link* CompositeIK::baseLink(int index) const
+{
+    return paths[index]->baseLink();
 }
 
 
@@ -70,30 +74,53 @@ bool CompositeIK::calcInverseKinematics(const Position& T)
         q0[i] = body_->joint(i)->q();
     }
 
-    targetLink_->setPosition(T);
-
     bool solved = true;
-    size_t pathIndex;
-    for(pathIndex=0; pathIndex < paths.size(); ++pathIndex){
+    size_t pathIndex = 0;
+    while(true){
         JointPath& path = *paths[pathIndex];
-        Link* link = path.endLink();
-        Position T_end = link->T();
-        solved = path.setBaseLinkGoal(T).calcInverseKinematics(T_end);
-        link->setPosition(T_end);
+        solved = path.calcInverseKinematics(T);
         if(!solved){
+            break;
+        }
+        ++pathIndex;
+        if(pathIndex < paths.size()){
+            targetLink_->setPosition(T0);
+        } else {
             break;
         }
     }
 
-    if(!solved){
+    if(solved){
+        targetLink_->setPosition(T);
+
+    } else {
         targetLink_->setPosition(T0);
         for(int i=0; i < n; ++i){
             body_->joint(i)->q() = q0[i];
         }
-        for(size_t i=0; i < pathIndex; ++i){
+        for(size_t i=0; i <= pathIndex; ++i){
             paths[i]->calcForwardKinematics();
         }
     }
 
     return solved;
 }
+
+
+bool CompositeIK::calcRemainingPartForwardKinematicsForInverseKinematics()
+{
+    if(!remainingLinkTraverse){
+        remainingLinkTraverse = make_shared<LinkTraverse>(targetLink_, true, true);
+        for(auto& jointPath : paths){
+            for(auto& link : jointPath->linkPath()){
+                remainingLinkTraverse->remove(link);
+            }
+        }
+        remainingLinkTraverse->prependRootAdjacentLinkToward(targetLink_);
+    }
+    remainingLinkTraverse->calcForwardKinematics();
+    return true;
+}
+
+    
+

@@ -8,7 +8,6 @@
 
 #include "AbstractSeq.h"
 #include "Deque2D.h"
-#include <Eigen/StdVector>
 #include <algorithm>
 #include <memory>
 

@@ -870,30 +870,22 @@ RTSDiagramViewImpl::~RTSDiagramViewImpl()
 
 void RTSDiagramViewImpl::dragEnterEvent(QDragEnterEvent *event)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     const RTSNameTreeWidget* nameServerItem =
         qobject_cast<const RTSNameTreeWidget*>(event->source()); //event->mimeData());
     if (nameServerItem) {
-#else
-    if (event->mimeData()->hasFormat("application/RTSNameServerItem")) {
-#endif
         event->acceptProposedAction();
     }
-    }
+}
 
 
 void RTSDiagramViewImpl::dragMoveEvent(QDragMoveEvent *event)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     const RTSNameTreeWidget* nameServerItem =
         qobject_cast<const RTSNameTreeWidget*>(event->source());//event->mimeData());
     if (nameServerItem) {
-#else
-    if (event->mimeData()->hasFormat("application/RTSNameServerItem")) {
-#endif
         event->acceptProposedAction();
     }
-    }
+}
 
 
 void RTSDiagramViewImpl::dragLeaveEvent(QDragLeaveEvent *event)

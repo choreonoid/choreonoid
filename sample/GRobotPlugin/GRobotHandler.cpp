@@ -133,10 +133,12 @@ GRobotJointPath::GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* e
     if(numJoints() == 6){
         if(checkLinkPath("WAIST", "L_ANKLE_R", isReversed)){
             setCustomInverseKinematics(
-                [&](const Position& T){ return calcLegInverseKinematics(T,  1.0); }, isReversed);
+                [&](const Position& T_global, const Position& T_relative){
+                    return calcLegInverseKinematics(T_relative,  1.0); }, isReversed);
         } else if(checkLinkPath("WAIST", "R_ANKLE_R", isReversed)){
             setCustomInverseKinematics(
-                [&](const Position& T){ return calcLegInverseKinematics(T, -1.0); }, isReversed);
+                [&](const Position& T_global, const Position& T_relative){
+                    return calcLegInverseKinematics(T_relative, -1.0); }, isReversed);
         }
     }
 }

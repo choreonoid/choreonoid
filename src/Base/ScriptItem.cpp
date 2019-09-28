@@ -37,7 +37,7 @@ const std::string& ScriptItem::textFilename() const
 std::string ScriptItem::identityName() const
 {
     const string& name_ = name();
-    const string fname = getFilename(boost::filesystem::path(scriptFilename()));
+    const string fname = getFilename(stdx::filesystem::path(scriptFilename()));
     if(name_.empty()){
         return fname;
     }

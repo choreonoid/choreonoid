@@ -8,7 +8,7 @@
 
 #include "Collision.h"
 #include "Referenced.h"
-#include <boost/optional.hpp>
+#include <cnoid/stdx/optional>
 #include <cstdint>
 #include "exportdecl.h"
 
@@ -44,7 +44,7 @@ public:
     /**
        \return A handle of the geometry in the collision detector
     */
-    virtual boost::optional<GeometryHandle> addGeometry(SgNode* geometry) = 0;
+    virtual stdx::optional<GeometryHandle> addGeometry(SgNode* geometry) = 0;
     virtual void setCustomObject(GeometryHandle geometry, Referenced* object) = 0;
     virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) = 0;
     virtual void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2) = 0;

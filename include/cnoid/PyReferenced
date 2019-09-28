@@ -1,4 +1,1 @@
-#include <cnoid/Config>
-#ifdef CNOID_USE_PYBIND11
 #include "src/Util/pybind11/PyReferenced.h"
-#endif

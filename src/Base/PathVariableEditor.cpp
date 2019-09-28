@@ -79,11 +79,7 @@ PathVariableEditor::PathVariableEditor()
     tableWidget->horizontalHeader()->setStretchLastSection(true);
 
     tableWidget->verticalHeader()->hide();
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    tableWidget->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-#else
     tableWidget->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-#endif
     
     vbox->addWidget(tableWidget, 1);
 
@@ -167,7 +163,7 @@ void PathVariableEditor::writePathVariablesToArchive()
             string name = tableWidget->item(i, 0)->text().toStdString();
             if(!name.empty() && !item->path.isEmpty()){
                 Listing* listing = pathVars->openListing(name);
-                boost::filesystem::path path(item->path.toStdString());
+                stdx::filesystem::path path(item->path.toStdString());
                 listing->append(getGenericPathString(path), DOUBLE_QUOTED);
             }
         }

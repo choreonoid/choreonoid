@@ -9,7 +9,6 @@
 #include <fstream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 

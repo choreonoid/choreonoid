@@ -22,7 +22,7 @@ set(headers
 
 make_gettext_mofiles(${target} mofiles)
 
-QTX_ADD_RESOURCES(RC_SRCS RobotAccessPlugin.qrc)
+QT5_ADD_RESOURCES(RC_SRCS RobotAccessPlugin.qrc)
 
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
 target_link_libraries(${target} CnoidBodyPlugin)

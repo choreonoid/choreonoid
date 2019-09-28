@@ -94,7 +94,7 @@ void LeggedBodyBarImpl::moveCM(BodyItem::PositionType position)
     for(size_t i=0; i < targetBodyItems.size(); ++i){
         BodyItem* bodyItem = targetBodyItems[i];
         Vector3 c = bodyItem->centerOfMass();
-        boost::optional<Vector3> p = bodyItem->getParticularPosition(position);
+        auto p = bodyItem->getParticularPosition(position);
         if(p){
             c[0] = (*p)[0];
             c[1] = (*p)[1];
@@ -112,7 +112,7 @@ void LeggedBodyBarImpl::setZmp(BodyItem::PositionType position)
 {
     const ItemList<BodyItem>& targetBodyItems = bodyBar->targetBodyItems();
     for(size_t i=0; i < targetBodyItems.size(); ++i){
-        boost::optional<Vector3> p = targetBodyItems[i]->getParticularPosition(position);
+        auto p = targetBodyItems[i]->getParticularPosition(position);
         if(p){
             targetBodyItems[i]->editZmp(*p);
         }

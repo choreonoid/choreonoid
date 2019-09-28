@@ -13,7 +13,7 @@ void exportLuaQtCoreTypes(sol::table& module)
     module.new_usertype<QObject>(
         "QObject",
         "new", sol::factories([]() { return new QObject; }),
-        "blockSignals", &QObject::blockSignals,
+        "blockSignals", [](QObject& self, bool b){ return self.blockSignals(b); },
         "inherits", &QObject::inherits,
         "isWidgetType", &QObject::isWidgetType,
         "killTimer", &QObject::killTimer,
@@ -21,8 +21,9 @@ void exportLuaQtCoreTypes(sol::table& module)
         "parent", &QObject::parent,
         "setObjectName", [](QObject* self, const char* name) { return self->setObjectName(name); },
         "setParent", &QObject::setParent,
-        "startTimer", [](QObject* self, std::chrono::milliseconds time){ return self->startTimer(time); },
-        "deleteLater", &QObject::deleteLater);
+        "startTimer", [](QObject* self, int interval){ return self->startTimer(interval); },
+        "deleteLater", &QObject::deleteLater
+        );
 
     module.new_usertype<QTimer>(
         "QTimer",

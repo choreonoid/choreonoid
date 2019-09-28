@@ -7,6 +7,7 @@
 #include "SceneFire.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/GLSLProgram>
 
 using namespace std;
 using namespace cnoid;
@@ -62,7 +63,7 @@ SceneFire::SceneFire(const SceneFire& org)
 }
 
 
-SgObject* SceneFire::clone(SgCloneMap& cloneMap) const
+SgObject* SceneFire::doClone(SgCloneMap*) const
 {
     return new SceneFire(*this);
 }
@@ -75,7 +76,10 @@ ParticleSystem* SceneFire::getParticleSystem()
 
 
 FireProgram::FireProgram(GLSLSceneRenderer* renderer)
-    : LuminousParticlesProgram(renderer),
+    : LuminousParticlesProgram(
+        renderer,
+        ":/SceneEffectsPlugin/shader/Fire.vert",
+        ":/SceneEffectsPlugin/shader/LuminousParticles.frag"),
       initVelBuffer(buffers[0]),
       offsetTimeBuffer(buffers[1])
 {
@@ -85,16 +89,13 @@ FireProgram::FireProgram(GLSLSceneRenderer* renderer)
 
 bool FireProgram::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(":/SceneEffectsPlugin/shader/Fire.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/LuminousParticles.frag");
-    link();
-    
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
-    lifeTimeLocation = getUniformLocation("lifeTime");
-    accelLocation = getUniformLocation("accel");
+    auto& glsl = glslProgram();
+    lifeTimeLocation = glsl.getUniformLocation("lifeTime");
+    accelLocation = glsl.getUniformLocation("accel");
 
     glGenBuffers(2, buffers);
     glGenVertexArrays(1, &vertexArray);

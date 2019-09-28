@@ -5,6 +5,7 @@
 # CHOREONOID_VERSION_MINOR    - The minor version of Choreonoid
 # CHOREONOID_VERSION_PATCH    - The patch version of Choreonoid
 # CHOREONOID_ROOT_DIR         - The base directory of Choreonoid
+# CHOREONOID_CXX_STANDARD     - The c++ standard version used to build Choreonoid (11, 14, or 17)
 # CHOREONOID_DEFINITIONS      - Definitions needed to build with Choreonoid
 # CHOREONOID_INCLUDE_DIRS     - List of directories of Choreonoid and it's dependencies
 # CHOREONOID_LIBRARY_DIRS     - List of directories of Choreonoid and it's dependencies
@@ -17,8 +18,9 @@ set(CHOREONOID_VERSION_MAJOR "@CNOID_MAJOR_VERSION@")
 set(CHOREONOID_VERSION_MINOR "@CNOID_MINOR_VERSION@")
 set(CHOREONOID_VERSION_PATCH "@CNOID_PATCH_VERSION@")
 
+set(CHOREONOID_CXX_STANDARD @CMAKE_CXX_STANDARD@)
 set(CHOREONOID_DEFINITIONS @definitions@)
-set(CHOREONOID_INCLUDE_DIRS @include_dirs@)
+set(CHOREONOID_INCLUDE_DIRS @CNOID_SDK_INCLUDE_DIRS@)
 set(CHOREONOID_LIBRARY_DIRS @library_dirs@)
 set(CHOREONOID_UTIL_LIBRARIES CnoidUtil)
 set(CHOREONOID_BASE_LIBRARIES ${CHOREONOID_UTIL_LIBRARIES} CnoidBase)
@@ -27,11 +29,13 @@ set(CHOREONOID_BODY_PLUGIN_LIBRARIES ${CHOREONOID_BASE_LIBRARIES} CnoidBody Cnoi
 set(CHOREONOID_LIBRARIES ${CNOD_BODY_LIBRARIES} ${CHOREONOID_BODY_PLUGIN_LIBRARIES})
 set(CHOREONOID_PLUGIN_SUBDIR @CNOID_PLUGIN_SUBDIR@)
 set(CHOREONOID_PLUGIN_DIR @CNOID_DIR@/@CNOID_PLUGIN_SUBDIR@)
+set(CHOREONOID_SHARE_SUBDIR @CNOID_SHARE_SUBDIR@)
+set(CHOREONOID_SHARE_DIR @CNOID_DIR@/@CNOID_SHARE_DIR@)
 
 set(CHOREONOID_ENABLE_PYTHON @ENABLE_PYTHON@)
-set(CHOREONOID_USE_PYBIND11 @USE_PYBIND11@)
 set(CHOREONOID_PYTHON_LIBRARIES CnoidPyUtil CnoidPyBase)
 set(CHOREONOID_PYTHON_SUBDIR @CNOID_PYTHON_SUBDIR@)
+set(CHOREONOID_USE_PYBIND11 @USE_PYBIND11@) # This variable is kept for backward compatibility
 
 MARK_AS_ADVANCED(
   CHOREONOID_ROOT_DIR
@@ -78,7 +82,7 @@ function(cnoid_make_gettext_mofiles target out_mofiles)
   set(${out_mofiles} ${mofiles} PARENT_SCOPE)
 endfunction()
 
-if(CHOREONOID_ENABLE_PYTHON AND CHOREONOID_USE_PYBIND11)
+if(CHOREONOID_ENABLE_PYTHON)
   function(add_cnoid_python_module)
     set(target ${ARGV0})
     string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
@@ -88,13 +92,11 @@ if(CHOREONOID_ENABLE_PYTHON AND CHOREONOID_USE_PYBIND11)
     if(MSVC)
       set_target_properties(${target} PROPERTIES SUFFIX .pyd)
     else()
-      if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-	get_target_property(compile_flags ${target} COMPILE_FLAGS)
-	if(compile_flags)
-	  set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
-	else()
-	  set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
-	endif()
+      get_target_property(compile_flags ${target} COMPILE_FLAGS)
+      if(compile_flags)
+	set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
+      else()
+	set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
       endif()
       if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
 	if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")

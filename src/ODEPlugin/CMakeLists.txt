@@ -58,10 +58,10 @@ if(BUILD_ODE_PLUGIN)
         install(PROGRAMS ${ODE_DIR}/lib/DebugDoubleDLL/ode_doubled.dll DESTINATION bin CONFIGURATIONS Debug)
       
         if(INSTALL_SDK_WITH_EXTLIBS)
-	      install(FILES ${ODE_DIR}/lib/ReleaseDoubleDLL/ode_double.lib DESTINATION lib
-	        CONFIGURATIONS Release RelWithDebInfo MinSizeRel)
-	      install(FILES ${ODE_DIR}/lib/DebugDoubleDLL/ode_doubled.lib DESTINATION lib CONFIGURATIONS Debug)
-	      install(DIRECTORY ${ODE_DIR}/include/ode DESTINATION ${CNOID_HEADER_SUBDIR})
+	  install(FILES ${ODE_DIR}/lib/ReleaseDoubleDLL/ode_double.lib DESTINATION lib
+	    CONFIGURATIONS Release RelWithDebInfo MinSizeRel)
+	  install(FILES ${ODE_DIR}/lib/DebugDoubleDLL/ode_doubled.lib DESTINATION lib CONFIGURATIONS Debug)
+	  install(DIRECTORY ${ODE_DIR}/include/ode DESTINATION ${CNOID_HEADER_SUBDIR})
         endif()
       endif()
     endif()
