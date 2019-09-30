@@ -48,12 +48,6 @@ ManipulatorStatement::ManipulatorStatement(const ManipulatorStatement& org)
 }
 
 
-int ManipulatorStatement::labelSpan(int /* index */) const
-{
-    return 1;
-}
-
-
 EmptyStatement::EmptyStatement()
 {
 
@@ -159,15 +153,6 @@ std::string CommentStatement::label(int index) const
         return format("# {}", comment_);
     }
     return string();
-}
-
-
-int CommentStatement::labelSpan(int index) const
-{
-    if(index == 0){
-        return MaxNumLabels;
-    }
-    return 0;
 }
 
 
@@ -473,7 +458,7 @@ std::string DelayStatement::label(int index) const
     if(index == 0){
         return "Delay";
     } else if(index == 1){
-        return std::to_string(time_);
+        return format("{0:.3}", time_);
     }
     return string();
 }

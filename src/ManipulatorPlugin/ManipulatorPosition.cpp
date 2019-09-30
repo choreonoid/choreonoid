@@ -710,8 +710,9 @@ ManipulatorPositionSet::Impl::find
             }
         }
         if(!found.first && traverseParent){
-            auto parentSet = weak_parentSet.lock();
-            found = parentSet->impl->find(name, true, false);
+            if(auto parentSet = weak_parentSet.lock()){
+                found = parentSet->impl->find(name, true, false);
+            }
         }
     }
 

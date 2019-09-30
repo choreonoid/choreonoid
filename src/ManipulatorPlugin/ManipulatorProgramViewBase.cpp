@@ -25,28 +25,32 @@ using namespace cnoid;
 
 namespace {
 
+static constexpr int NumColumns = 4;
+
 class StatementItem : public QTreeWidgetItem
 {
     ManipulatorStatementPtr statement_;
 public:
     ManipulatorProgramViewBase::Impl* viewImpl;
+    ManipulatorProgramViewBase::StatementDelegate* delegate;
 
     StatementItem(ManipulatorStatement* statement, ManipulatorProgramViewBase::Impl* viewImpl);
     ~StatementItem();
     virtual QVariant data(int column, int role) const override;
     StatementItem* getParentStatementItem() const { return static_cast<StatementItem*>(parent()); }
-    StructuredStatement* getParentStatement();
+    StructuredStatement* getParentStatement() const;
+    ManipulatorProgram* getProgram() const;
     template<class StatementType>
     ref_ptr<StatementType> statement() const { return dynamic_pointer_cast<StatementType>(statement_); }
     ManipulatorStatementPtr statement() const { return statement_; }
 };
 
 
-class StatementItemDelegate : public QStyledItemDelegate
+class ProgramViewDelegate : public QStyledItemDelegate
 {
-    ManipulatorProgramViewBase::Impl* view;
+    ManipulatorProgramViewBase::Impl* viewImpl;
 public:
-    StatementItemDelegate(ManipulatorProgramViewBase::Impl* view);
+    ProgramViewDelegate(ManipulatorProgramViewBase::Impl* viewImpl);
     virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
@@ -64,9 +68,9 @@ public:
 */
 class TreeWidgetStyle : public QProxyStyle
 {
-    ManipulatorProgramViewBase::Impl* view;
+    ManipulatorProgramViewBase::Impl* viewImpl;
 public:
-    TreeWidgetStyle(ManipulatorProgramViewBase::Impl* view);
+    TreeWidgetStyle(ManipulatorProgramViewBase::Impl* viewImpl);
     void drawPrimitive(
         PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget = 0) const;
 };
@@ -88,6 +92,20 @@ public:
 
 namespace cnoid {
 
+class ManipulatorProgramViewBase::StatementDelegate::Impl
+{
+public:
+    ManipulatorProgramViewBase::Impl* viewImpl;
+    ProgramViewDelegate* mainDelegate;
+    const StatementItem* currentItem;
+    QWidget* currentParentWidget;
+    const QStyleOptionViewItem* pCurrentOption;
+    const QModelIndex* pCurrentModelIndex;
+
+    Impl();
+    void setView(ManipulatorProgramViewBase::Impl* viewImpl);
+};
+
 class ManipulatorProgramViewBase::Impl : public TreeWidget
 {
 public:
@@ -101,6 +119,9 @@ public:
     Signal<void(ManipulatorStatement* statement)> sigCurrentStatementChanged;
     ManipulatorStatementPtr prevCurrentStatement;
     vector<ManipulatorStatementPtr> statementsToPaste;
+    ProgramViewDelegate* mainDelegate;
+    ref_ptr<StatementDelegate> defaultStatementDelegate;
+    unordered_map<type_index, ref_ptr<StatementDelegate>> statementDelegateMap;
     QLabel programNameLabel;
     ToolButton optionMenuButton;
     MenuManager optionMenuManager;
@@ -110,6 +131,7 @@ public:
     Impl(ManipulatorProgramViewBase* self);
     ~Impl();
     void setupWidgets();
+    StatementDelegate* findStatementDelegate(ManipulatorStatement* statement);
     void onOptionMenuClicked();
     ScopedCounter scopedCounterOfStatementItemOperationCall();
     bool isDoingStatementItemOperation() const;
@@ -154,6 +176,8 @@ StatementItem::StatementItem(ManipulatorStatement* statement_, ManipulatorProgra
       viewImpl(viewImpl)
 {
     viewImpl->statementItemMap[statement_] = this;
+    delegate = viewImpl->findStatementDelegate(statement_);
+    
     Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsEditable;
     if(statement<StructuredStatement>()){
         flags |= Qt::ItemIsDropEnabled;
@@ -171,20 +195,21 @@ StatementItem::~StatementItem()
 QVariant StatementItem::data(int column, int role) const
 {
     if(role == Qt::DisplayRole){
-        int span = statement()->labelSpan(column);
+        int span = delegate->labelSpan(statement(), column, NumColumns);
         if(span == 1){
             return QString(statement()->label(column).c_str());
         } else {
             return QVariant();
         }
     } else if(role == Qt::EditRole){
-        return QString(statement()->label(column).c_str());
+        delegate->impl->currentItem = this;
+        return delegate->dataOfEditRole(statement(), column);
     }
     return QTreeWidgetItem::data(column, role);
 }
 
 
-StructuredStatement* StatementItem::getParentStatement()
+StructuredStatement* StatementItem::getParentStatement() const
 {
     if(auto parentStatementItem = getParentStatementItem()){
         return parentStatementItem->statement<StructuredStatement>();
@@ -193,35 +218,39 @@ StructuredStatement* StatementItem::getParentStatement()
 }
 
 
-StatementItemDelegate::StatementItemDelegate(ManipulatorProgramViewBase::Impl* view)
-    : view(view)
+ManipulatorProgram* StatementItem::getProgram() const
+{
+    if(auto parentStatement = getParentStatement()){
+        return parentStatement->getLowerLevelProgram();
+    }
+    if(viewImpl->programItem){
+        return viewImpl->programItem->program();
+    }
+    return nullptr;
+}
+
+
+ProgramViewDelegate::ProgramViewDelegate(ManipulatorProgramViewBase::Impl* viewImpl)
+    : viewImpl(viewImpl)
 {
 
 }
 
 
-void StatementItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+void ProgramViewDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    auto item = view->itemFromIndex(index);
+    auto item = viewImpl->itemFromIndex(index);
     auto statement = item->statement();
     
     int column = index.column();
-    int span = statement->labelSpan(column);
+    int span = item->delegate->labelSpan(statement, column, NumColumns);
     if(span == 1){
         QStyledItemDelegate::paint(painter, option, index);
     } else if(span > 1){
-        auto rect = view->visualRect(index);
+        auto rect = viewImpl->visualRect(index);
         for(int i=1; i < span; ++i){
-            auto rect2 = view->visualRect(view->indexFromItem(item, column + i));
+            auto rect2 = viewImpl->visualRect(viewImpl->indexFromItem(item, column + i));
             rect = rect.united(rect2);
-        }
-        // This doesn't work because the HasDecoration bit is always zero
-        bool hasDecoration = option.features & QStyleOptionViewItem::HasDecoration;
-        if(true /* hasDecoration */){
-            int decorationWidth = option.decorationSize.width();
-            if(decorationWidth > 0){
-                rect.setLeft(rect.left() + decorationWidth);
-            }
         }
         painter->save();
         if(option.state & QStyle::State_Selected){
@@ -234,78 +263,85 @@ void StatementItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
 }
 
 
-QWidget* StatementItemDelegate::createEditor
+QWidget* ProgramViewDelegate::createEditor
 (QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    auto item = view->itemFromIndex(index);
+    auto item = viewImpl->itemFromIndex(index);
     auto statement = item->statement();
     int column = index.column();
-    int span = statement->labelSpan(column);
+    int span = item->delegate->labelSpan(statement, column, NumColumns);
     if(span == 0){
         return nullptr;
     } else if(column == 0 && span == 1){
         return nullptr;
     }
 
-   /*
-   if(auto comment = dynamic_cast<CommentStatement*>(statement)){
-       if(index.column() == 0){
-       }
-   }
-   */
-
-   return QStyledItemDelegate::createEditor(parent, option, index);
+    auto delegate = item->delegate;
+    delegate->impl->currentParentWidget = parent;
+    delegate->impl->pCurrentOption = &option;
+    delegate->impl->pCurrentModelIndex = &index;
+    return delegate->createEditor(statement, column);
 }
 
 
-void StatementItemDelegate::updateEditorGeometry
+void ProgramViewDelegate::updateEditorGeometry
 (QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    auto item = view->itemFromIndex(index);
+    auto item = viewImpl->itemFromIndex(index);
     auto statement = item->statement();
     int column = index.column();
-    int span = statement->labelSpan(column);
+    int span = item->delegate->labelSpan(statement, column, NumColumns);
     QRect rect;
     if(span == 0){
-        
-    } else if(span == 1){
-        rect = option.rect;
-        editor->setGeometry(rect);
-    } else {
-        rect = view->visualRect(index);
-        for(int i=1; i < span; ++i){
-            auto rect2 = view->visualRect(view->indexFromItem(item, column + i));
+        int topColumn = column - 1;
+        while(topColumn >= 0){
+            if(item->delegate->labelSpan(statement, topColumn, NumColumns) > 0){
+                break;
+            }
+            if(topColumn > 0){
+                --topColumn;
+            } else {
+                break;
+            }
+        }
+        for(int i=topColumn; i < NumColumns; ++i){
+            auto rect2 = viewImpl->visualRect(viewImpl->indexFromItem(item, i));
             rect = rect.united(rect2);
         }
-        editor->setGeometry(rect);
+    } else if(span == 1){
+        rect = option.rect;
+    } else {
+        rect = viewImpl->visualRect(index);
+        for(int i=1; i < span; ++i){
+            auto rect2 = viewImpl->visualRect(viewImpl->indexFromItem(item, column + i));
+            rect = rect.united(rect2);
+        }
     }
+    editor->setGeometry(rect);
 }
 
 
-void StatementItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+void ProgramViewDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-    QStyledItemDelegate::setEditorData(editor, index);
+    auto item = viewImpl->itemFromIndex(index);
+    auto statement = item->statement();
+    item->delegate->impl->pCurrentModelIndex = &index;
+    item->delegate->setEditorData(statement, index.column(), editor);
 }
 
 
-void StatementItemDelegate::setModelData
+void ProgramViewDelegate::setModelData
 (QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
-    auto item = view->itemFromIndex(index);
-    int column = index.column();
-    if(auto comment = item->statement<CommentStatement>()){
-       if(index.column() == 0){
-           if(auto lineEdit = dynamic_cast<QLineEdit*>(editor)){
-               comment->setComment(lineEdit->text().toStdString());
-           }
-       }
-   }
+    auto item = viewImpl->itemFromIndex(index);
+    auto statement = item->statement();
+    item->delegate->setStatementData(statement, index.column(), editor);
 }
 
 
-TreeWidgetStyle::TreeWidgetStyle(ManipulatorProgramViewBase::Impl* view)
-    : QProxyStyle(view->style()),
-      view(view)
+TreeWidgetStyle::TreeWidgetStyle(ManipulatorProgramViewBase::Impl* viewImpl)
+    : QProxyStyle(viewImpl->style()),
+      viewImpl(viewImpl)
 {
 
 }
@@ -316,7 +352,7 @@ void TreeWidgetStyle::drawPrimitive
 {
     if(element == QStyle::PE_IndicatorItemViewItemDrop && !option->rect.isNull()){
         QStyleOption opt(*option);
-        auto item = dynamic_cast<StatementItem*>(view->itemAt(opt.rect.center()));
+        auto item = dynamic_cast<StatementItem*>(viewImpl->itemAt(opt.rect.center()));
         opt.rect.setLeft(0);
         if(widget){
             opt.rect.setRight(widget->width());
@@ -328,9 +364,102 @@ void TreeWidgetStyle::drawPrimitive
 }
 
 
+ManipulatorProgramViewBase::StatementDelegate::StatementDelegate()
+{
+    impl = new Impl;
+}
+
+
+ManipulatorProgramViewBase::StatementDelegate::Impl::Impl()
+{
+    viewImpl = nullptr;
+    mainDelegate = nullptr;
+    currentItem = nullptr;
+    currentParentWidget = nullptr;
+    pCurrentOption = nullptr;
+    pCurrentModelIndex = nullptr;
+}
+
+
+ManipulatorProgramViewBase::StatementDelegate::~StatementDelegate()
+{
+    delete impl;
+}
+
+
+void ManipulatorProgramViewBase::StatementDelegate::Impl::setView
+(ManipulatorProgramViewBase::Impl* viewImpl)
+{
+    this->viewImpl = viewImpl;
+    mainDelegate = viewImpl->mainDelegate;
+}
+
+
+ManipulatorProgram* ManipulatorProgramViewBase::StatementDelegate::getProgram
+(ManipulatorStatement* statement) const
+{
+    if(auto item = impl->viewImpl->statementItemFromStatement(statement)){
+        return item->getProgram();
+    }
+    return nullptr;
+}
+    
+
+int ManipulatorProgramViewBase::StatementDelegate::labelSpan
+(ManipulatorStatement* /* statement */, int /* column */, int /* numColumns */) const
+{
+    return 1;
+}
+
+
+QVariant ManipulatorProgramViewBase::StatementDelegate::dataOfEditRole
+(ManipulatorStatement* /* statement */, int /* column */) const
+{
+    return QVariant();
+}
+
+
+QVariant ManipulatorProgramViewBase::StatementDelegate::defaultDataOfEditRole
+(ManipulatorStatement* /* statement */, int column) const
+{
+    return impl->currentItem->QTreeWidgetItem::data(column, Qt::EditRole);
+}
+
+
+QWidget* ManipulatorProgramViewBase::StatementDelegate::createEditor
+(ManipulatorStatement* /* statement */, int /* column */) const
+{
+    return nullptr;
+}
+
+
+QWidget* ManipulatorProgramViewBase::StatementDelegate::createDefaultEditor
+(ManipulatorStatement* /* statement */, int /* column */) const
+{
+    return impl->mainDelegate->QStyledItemDelegate::createEditor(
+        impl->currentParentWidget, *impl->pCurrentOption, *impl->pCurrentModelIndex);
+}
+
+
+void ManipulatorProgramViewBase::StatementDelegate::setEditorData
+(ManipulatorStatement* /* statement */, int /* column */, QWidget* editor) const
+{
+    impl->mainDelegate->QStyledItemDelegate::setEditorData(editor, *impl->pCurrentModelIndex);
+}
+
+
+void ManipulatorProgramViewBase::StatementDelegate::setStatementData
+(ManipulatorStatement* /* statement */, int /* column */, QWidget* /* editor */) const
+{
+
+}
+
+
 ManipulatorProgramViewBase::ManipulatorProgramViewBase()
 {
     impl = new Impl(this);
+
+    registerBaseStatementDelegates();
 }
 
 
@@ -344,6 +473,8 @@ ManipulatorProgramViewBase::Impl::Impl(ManipulatorProgramViewBase* self)
 
     targetItemPicker.sigTargetItemChanged().connect(
         [&](ManipulatorProgramItemBase* item){ setProgramItem(item); });
+
+    defaultStatementDelegate = new StatementDelegate;
 }
 
 
@@ -384,7 +515,7 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     vbox->addWidget(&programNameLabel);
 
     // TreeWidget setup
-    setColumnCount(3);
+    setColumnCount(NumColumns);
     setFrameShape(QFrame::NoFrame);
     setHeaderHidden(true);
     setRootIsDecorated(true);
@@ -393,8 +524,16 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     setDragDropMode(QAbstractItemView::InternalMove);
     setDropIndicatorShown(true);
     setTabKeyNavigation(true);
+    setAllColumnsShowFocus(true);
+    mainDelegate = new ProgramViewDelegate(this);
+    setItemDelegate(mainDelegate);
+    //setAlternatingRowColors(true);
+    setEditTriggers(
+        QAbstractItemView::DoubleClicked |
+        QAbstractItemView::SelectedClicked |
+        QAbstractItemView::EditKeyPressed |
+        QAbstractItemView::AnyKeyPressed);
     //setStyle(new TreeWidgetStyle(this));
-    setItemDelegate(new StatementItemDelegate(this));
 
     auto& rheader = *header();
     rheader.setMinimumSectionSize(0);
@@ -430,6 +569,25 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     optionMenuManager.setNewPopupMenu(this);
     optionMenuManager.addItem(_("Refresh"))->sigTriggered().connect(
         [&](){ updateStatementTree(); });
+}
+
+
+void ManipulatorProgramViewBase::registerStatementDelegate
+(type_index statementType, StatementDelegate* delegate)
+{
+    delegate->impl->setView(impl);
+    impl->statementDelegateMap[statementType] = delegate;
+}
+
+
+ManipulatorProgramViewBase::StatementDelegate*
+ManipulatorProgramViewBase::Impl::findStatementDelegate(ManipulatorStatement* statement)
+{
+    auto iter = statementDelegateMap.find(typeid(*statement));
+    if(iter != statementDelegateMap.end()){
+        return iter->second;
+    }
+    return defaultStatementDelegate;
 }
 
 
@@ -782,7 +940,7 @@ void ManipulatorProgramViewBase::Impl::onRowsInserted(const QModelIndex& parent,
             // The dummy statement at the insertion position is overwritten
             if(index == end && parentStatement){
                 if(!removeDummyStatementAroundInsertionPosition(parentStatement, program, start, -1)){
-                    if(removeDummyStatementAroundInsertionPosition(parentStatement, program, end, +1));
+                    removeDummyStatementAroundInsertionPosition(parentStatement, program, end, +1);
                 }
             }
         });

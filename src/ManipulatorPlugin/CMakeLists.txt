@@ -15,6 +15,7 @@ set(sources
   ManipulatorProgramItemBase.cpp
   ManipulatorControllerItemBase.cpp
   ManipulatorProgramViewBase.cpp
+  ManipulatorProgramViewDelegates.cpp
   ManipulatorStatementViewBase.cpp
   )
 

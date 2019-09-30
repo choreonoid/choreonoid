@@ -26,9 +26,7 @@ public:
     ManipulatorStatement* clone() const { return doClone(nullptr); }
     ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) const { return doClone(&cloneMap); }
 
-    static constexpr int MaxNumLabels = 4;
     virtual std::string label(int index) const = 0;
-    virtual int labelSpan(int index) const;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) = 0;
     virtual bool write(Mapping& archive) const = 0;
 
@@ -81,7 +79,6 @@ class CNOID_EXPORT CommentStatement : public ManipulatorStatement
 public:
     CommentStatement();
     virtual std::string label(int index) const override;
-    virtual int labelSpan(int index) const override;
 
     void setComment(const std::string& comment){ comment_ = comment; }
     const std::string& comment() const { return comment_; }

@@ -3,14 +3,17 @@
 
 #include <cnoid/View>
 #include <cnoid/Signal>
+#include <cnoid/Referenced>
+#include <typeindex>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class Archive;
 class ManipulatorProgramItemBase;
+class ManipulatorProgram;
 class ManipulatorStatement;
-    
+
 class CNOID_EXPORT ManipulatorProgramViewBase : public View
 {
 public:
@@ -26,7 +29,32 @@ public:
 
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
-            
+
+    class CNOID_EXPORT StatementDelegate : public Referenced
+    {
+    public:
+        StatementDelegate();
+        ~StatementDelegate();
+        virtual int labelSpan(ManipulatorStatement* statement, int column, int numColumns) const;
+        virtual QVariant dataOfEditRole(ManipulatorStatement* statement, int column) const;
+        virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const;
+        virtual void setEditorData(ManipulatorStatement* statement, int column, QWidget* editor) const;
+        virtual void setStatementData(ManipulatorStatement* statement, int column, QWidget* editor) const;
+
+        class Impl;
+        Impl* impl;
+
+    protected:
+        QVariant defaultDataOfEditRole(ManipulatorStatement* statement, int column) const;
+        QWidget* createDefaultEditor(ManipulatorStatement* statement, int column) const;
+        ManipulatorProgram* getProgram(ManipulatorStatement* statement) const;
+    };
+
+    template<class StatementType>
+    void registerStatementDelegate(StatementDelegate* delegate){
+        registerStatementDelegate(typeid(StatementType), delegate);
+    }
+
     class Impl;
 
 protected:
@@ -45,6 +73,9 @@ protected:
     virtual void onCurrentStatementActivated(ManipulatorStatement* statement);
 
 private:
+    void registerStatementDelegate(std::type_index statementType, StatementDelegate* delegate);
+    void registerBaseStatementDelegates();
+    
     Impl* impl;
 };
 
