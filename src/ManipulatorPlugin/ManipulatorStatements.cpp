@@ -67,7 +67,7 @@ EmptyStatement::EmptyStatement(const EmptyStatement& org)
 }
 
 
-ManipulatorStatement* EmptyStatement::clone(ManipulatorProgramCloneMap&)
+ManipulatorStatement* EmptyStatement::doClone(ManipulatorProgramCloneMap*) const
 {
     return new EmptyStatement(*this);
 }
@@ -92,6 +92,47 @@ bool EmptyStatement::write(Mapping& archive) const
 }
 
 
+DummyStatement::DummyStatement()
+{
+
+}
+
+
+DummyStatement::DummyStatement(const DummyStatement& org)
+    : EmptyStatement(org)
+{
+
+}
+
+
+ManipulatorStatement* DummyStatement::doClone(ManipulatorProgramCloneMap*) const
+{
+    return new DummyStatement(*this);
+}
+
+
+std::string DummyStatement::label(int index) const
+{
+    if(index == 0){
+        return "---";
+    }
+    return string();
+}
+
+
+bool DummyStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    return true;
+}
+
+
+bool DummyStatement::write(Mapping& archive) const
+{
+    archive.write("type", "Dummy");
+    return true;
+}
+
+
 CommentStatement::CommentStatement()
 {
 
@@ -106,7 +147,7 @@ CommentStatement::CommentStatement(const CommentStatement& org)
 }
 
 
-ManipulatorStatement* CommentStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+ManipulatorStatement* CommentStatement::doClone(ManipulatorProgramCloneMap*) const
 {
     return new CommentStatement(*this);
 }
@@ -161,18 +202,22 @@ StructuredStatement::StructuredStatement(const StructuredStatement& org)
 IfStatement::IfStatement()
 {
     program_ = new ManipulatorProgram;
-    program_->append(new EmptyStatement);
+    program_->append(new DummyStatement);
 }
 
 
-IfStatement::IfStatement(const IfStatement& org, ManipulatorProgramCloneMap& cloneMap)
+IfStatement::IfStatement(const IfStatement& org, ManipulatorProgramCloneMap* cloneMap)
     : StructuredStatement(org)
 {
-    program_ = cloneMap.getClone(org.program_);
+    if(cloneMap){
+        program_ = cloneMap->getClone(org.program_);
+    } else {
+        program_ = org.program_->clone();
+    }
 }
 
 
-ManipulatorStatement* IfStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+ManipulatorStatement* IfStatement::doClone(ManipulatorProgramCloneMap* cloneMap) const
 {
     return new IfStatement(*this, cloneMap);
 }
@@ -209,18 +254,22 @@ bool IfStatement::write(Mapping& archive) const
 ElseStatement::ElseStatement()
 {
     program_ = new ManipulatorProgram;
-    program_->append(new EmptyStatement);
+    program_->append(new DummyStatement);
 }
 
 
-ElseStatement::ElseStatement(const ElseStatement& org, ManipulatorProgramCloneMap& cloneMap)
+ElseStatement::ElseStatement(const ElseStatement& org, ManipulatorProgramCloneMap* cloneMap)
     : StructuredStatement(org)
 {
-    program_ = cloneMap.getClone(org.program_);
+    if(cloneMap){
+        program_ = cloneMap->getClone(org.program_);
+    } else {
+        program_ = org.program_->clone();
+    }
 }
 
 
-ManipulatorStatement* ElseStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+ManipulatorStatement* ElseStatement::doClone(ManipulatorProgramCloneMap* cloneMap) const
 {
     return new ElseStatement(*this, cloneMap);
 }
@@ -257,18 +306,22 @@ bool ElseStatement::write(Mapping& archive) const
 WhileStatement::WhileStatement()
 {
     program_ = new ManipulatorProgram;
-    program_->append(new EmptyStatement);
+    program_->append(new DummyStatement);
 }
 
 
-WhileStatement::WhileStatement(const WhileStatement& org, ManipulatorProgramCloneMap& cloneMap)
+WhileStatement::WhileStatement(const WhileStatement& org, ManipulatorProgramCloneMap* cloneMap)
     : StructuredStatement(org)
 {
-    program_ = cloneMap.getClone(org.program_);
+    if(cloneMap){
+        program_ = cloneMap->getClone(org.program_);
+    } else {
+        program_ = org.program_->clone();
+    }
 }
 
 
-ManipulatorStatement* WhileStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+ManipulatorStatement* WhileStatement::doClone(ManipulatorProgramCloneMap* cloneMap) const
 {
     return new WhileStatement(*this, cloneMap);
 }
@@ -308,13 +361,17 @@ CallStatement::CallStatement()
 }
 
 
-CallStatement::CallStatement(const CallStatement& org, ManipulatorProgramCloneMap& cloneMap)
+CallStatement::CallStatement(const CallStatement& org, ManipulatorProgramCloneMap* cloneMap)
 {
-    program_ = cloneMap.getClone(org.program_);
+    if(cloneMap){
+        program_ = cloneMap->getClone(org.program_);
+    } else {
+        program_ = org.program_;
+    }
 }
 
 
-ManipulatorStatement* CallStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+ManipulatorStatement* CallStatement::doClone(ManipulatorProgramCloneMap* cloneMap) const
 {
     return new CallStatement(*this, cloneMap);
 }
@@ -349,16 +406,16 @@ SetSignalStatement::SetSignalStatement()
 }
 
 
-SetSignalStatement::SetSignalStatement(const SetSignalStatement& org, ManipulatorProgramCloneMap& cloneMap)
+SetSignalStatement::SetSignalStatement(const SetSignalStatement& org)
 {
     signalIndex_ = org.signalIndex_;
     on_ = org.on_;
 }
 
 
-SetSignalStatement* SetSignalStatement::clone(ManipulatorProgramCloneMap& cloneMap)
+SetSignalStatement* SetSignalStatement::doClone(ManipulatorProgramCloneMap*) const
 {
-    return new SetSignalStatement(*this, cloneMap);
+    return new SetSignalStatement(*this);
 }
 
 
@@ -405,7 +462,7 @@ DelayStatement::DelayStatement(const DelayStatement& org)
 }
 
 
-ManipulatorStatement* DelayStatement::clone(ManipulatorProgramCloneMap&)
+ManipulatorStatement* DelayStatement::doClone(ManipulatorProgramCloneMap*) const
 {
     return new DelayStatement(*this);
 }
@@ -442,6 +499,7 @@ namespace {
 struct StatementTypeRegistration {
     StatementTypeRegistration(){
         ManipulatorStatement::registerType<EmptyStatement>("Empty");
+        ManipulatorStatement::registerType<DummyStatement>("Dummy");
         ManipulatorStatement::registerType<CommentStatement>("Comment");
         ManipulatorStatement::registerType<IfStatement>("If");
         ManipulatorStatement::registerType<ElseStatement>("Else");

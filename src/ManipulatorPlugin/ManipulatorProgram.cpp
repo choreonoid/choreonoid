@@ -30,7 +30,7 @@ public:
     ManipulatorPositionSetPtr positions;
     std::string name;
     Impl();
-    Impl(const Impl& org, ManipulatorProgramCloneMap& cloneMap);
+    Impl(const Impl& org, ManipulatorProgramCloneMap* cloneMap);
 };
 
 }
@@ -106,21 +106,27 @@ ManipulatorProgram::Impl::Impl()
 }
     
 
-ManipulatorProgram::ManipulatorProgram(const ManipulatorProgram& org, ManipulatorProgramCloneMap& cloneMap)
+ManipulatorProgram::ManipulatorProgram(const ManipulatorProgram& org, ManipulatorProgramCloneMap* cloneMap)
 {
     impl = new Impl(*org.impl, cloneMap);
 
-    for(auto& statement : org){
-        append(statement->clone(cloneMap));
+    if(cloneMap){
+        for(auto& statement : org){
+            append(statement->clone(*cloneMap));
+        }
+    } else {
+        for(auto& statement : org){
+            append(statement->clone());
+        }
     }
 }
 
 
-ManipulatorProgram::Impl::Impl(const Impl& org, ManipulatorProgramCloneMap& cloneMap)
+ManipulatorProgram::Impl::Impl(const Impl& org, ManipulatorProgramCloneMap* cloneMap)
     : name(org.name)
 {
-    if(cloneMap.isPositionSetIncluded()){
-        positions = new ManipulatorPositionSet(*org.positions, cloneMap.manipulatorPositionCloneMap());
+    if(cloneMap && cloneMap->isPositionSetIncluded()){
+        positions = new ManipulatorPositionSet(*org.positions, cloneMap->manipulatorPositionCloneMap());
     }
 }
 
@@ -131,7 +137,7 @@ ManipulatorProgram::~ManipulatorProgram()
 }
 
 
-ManipulatorProgram* ManipulatorProgram::clone(ManipulatorProgramCloneMap& cloneMap) const
+ManipulatorProgram* ManipulatorProgram::doClone(ManipulatorProgramCloneMap* cloneMap) const
 {
     return new ManipulatorProgram(*this, cloneMap);
 }

@@ -23,7 +23,8 @@ public:
 
     static ManipulatorStatement* create(const std::string& type);
 
-    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) = 0;
+    ManipulatorStatement* clone() const { return doClone(nullptr); }
+    ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) const { return doClone(&cloneMap); }
 
     static constexpr int MaxNumLabels = 4;
     virtual std::string label(int index) const = 0;
@@ -34,6 +35,7 @@ public:
 protected:
     ManipulatorStatement();
     ManipulatorStatement(const ManipulatorStatement& org);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const = 0;
     
 private:
     static void registerFactory(const char* type, FactoryFunction factory);
@@ -46,22 +48,38 @@ class CNOID_EXPORT EmptyStatement : public ManipulatorStatement
 {
 public:
     EmptyStatement();
-    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 
 protected:
     EmptyStatement(const EmptyStatement& org);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<EmptyStatement> EmptyStatementPtr;
+
+
+class CNOID_EXPORT DummyStatement : public EmptyStatement
+{
+public:
+    DummyStatement();
+    virtual std::string label(int index) const override;
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const override;
+
+protected:
+    DummyStatement(const DummyStatement& org);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
+};
+
+typedef ref_ptr<DummyStatement> DummyStatementPtr;
+
 
 class CNOID_EXPORT CommentStatement : public ManipulatorStatement
 {
 public:
     CommentStatement();
-    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
     virtual int labelSpan(int index) const override;
 
@@ -73,12 +91,14 @@ public:
 
 protected:
     CommentStatement(const CommentStatement& org);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
 
 private:
     std::string comment_;
 };
 
 typedef ref_ptr<CommentStatement> CommentStatementPtr;
+
 
 class CNOID_EXPORT StructuredStatement : public ManipulatorStatement
 {
@@ -91,11 +111,11 @@ protected:
 };
 typedef ref_ptr<StructuredStatement> StructuredStatementPtr;
 
+
 class CNOID_EXPORT IfStatement : public StructuredStatement
 {
 public:
     IfStatement();
-    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
 
     virtual ManipulatorProgram* getLowerLevelProgram() const override;
@@ -104,7 +124,8 @@ public:
     virtual bool write(Mapping& archive) const;
 
 protected:
-    IfStatement(const IfStatement& org, ManipulatorProgramCloneMap& cloneMap);
+    IfStatement(const IfStatement& org, ManipulatorProgramCloneMap* cloneMap);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
 
 private:
     ManipulatorProgramPtr program_;
@@ -116,7 +137,6 @@ class CNOID_EXPORT ElseStatement : public StructuredStatement
 {
 public:
     ElseStatement();
-    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
 
     virtual ManipulatorProgram* getLowerLevelProgram() const override;
@@ -125,7 +145,8 @@ public:
     virtual bool write(Mapping& archive) const;
 
 protected:
-    ElseStatement(const ElseStatement& org, ManipulatorProgramCloneMap& cloneMap);
+    ElseStatement(const ElseStatement& org, ManipulatorProgramCloneMap* cloneMap);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
 
 private:
     ManipulatorProgramPtr program_;
@@ -137,7 +158,6 @@ class CNOID_EXPORT WhileStatement : public StructuredStatement
 {
 public:
     WhileStatement();
-    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
 
     virtual ManipulatorProgram* getLowerLevelProgram() const override;
@@ -146,7 +166,8 @@ public:
     virtual bool write(Mapping& archive) const;
 
 protected:
-    WhileStatement(const WhileStatement& org, ManipulatorProgramCloneMap& cloneMap);
+    WhileStatement(const WhileStatement& org, ManipulatorProgramCloneMap* cloneMap);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
 
 private:
     ManipulatorProgramPtr program_;
@@ -158,13 +179,13 @@ class CNOID_EXPORT CallStatement : public ManipulatorStatement
 {
 public:
     CallStatement();
-    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
 
 protected:
-    CallStatement(const CallStatement& org, ManipulatorProgramCloneMap& cloneMap);
+    CallStatement(const CallStatement& org, ManipulatorProgramCloneMap* cloneMap);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
 
 private:
     ManipulatorProgramPtr program_;
@@ -175,7 +196,6 @@ class CNOID_EXPORT SetSignalStatement : public ManipulatorStatement
 {
 public:
     SetSignalStatement();
-    virtual SetSignalStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
@@ -187,7 +207,8 @@ public:
     void on(bool on){ on_ = on; }
     
 protected:
-    SetSignalStatement(const SetSignalStatement& org, ManipulatorProgramCloneMap& cloneMap);
+    SetSignalStatement(const SetSignalStatement& org);
+    virtual SetSignalStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
 
 private:
     int signalIndex_;
@@ -196,12 +217,12 @@ private:
 };
 typedef ref_ptr<SetSignalStatement> SetSignalStatementPtr;
 
+
 class CNOID_EXPORT DelayStatement : public ManipulatorStatement
 {
 public:
     DelayStatement();
     
-    virtual ManipulatorStatement* clone(ManipulatorProgramCloneMap& cloneMap) override;
     virtual std::string label(int index) const override;
 
     double time() const { return time_; }
@@ -212,6 +233,7 @@ public:
 
 protected:
     DelayStatement(const DelayStatement& org);
+    virtual ManipulatorStatement* doClone(ManipulatorProgramCloneMap* cloneMap) const override;
 
 private:
     double time_;

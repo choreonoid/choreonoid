@@ -46,10 +46,14 @@ public:
     ManipulatorProgram();
     ~ManipulatorProgram();
 
-    virtual ManipulatorProgram* clone(ManipulatorProgramCloneMap& cloneMap) const;
+    ManipulatorProgram* clone() const { return doClone(nullptr); }
+    ManipulatorProgram* clone(ManipulatorProgramCloneMap& cloneMap) const { return doClone(&cloneMap); }
     
     const std::string& name() const;
     void setName(const std::string& name);
+
+    bool empty() const { return statements_.empty(); }
+    int numStatements() const { return statements_.size(); }
 
     iterator insert(iterator pos, ManipulatorStatement* statement);
     iterator append(ManipulatorStatement* statement);
@@ -70,7 +74,8 @@ public:
     bool save(const std::string& filename);
 
 protected:
-    ManipulatorProgram(const ManipulatorProgram& org, ManipulatorProgramCloneMap& cloneMap);
+    ManipulatorProgram(const ManipulatorProgram& org, ManipulatorProgramCloneMap* cloneMap);
+    virtual ManipulatorProgram* doClone(ManipulatorProgramCloneMap* cloneMap) const;
 
 private:
     bool read(Mapping& archive);

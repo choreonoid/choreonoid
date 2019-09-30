@@ -27,14 +27,18 @@ namespace {
 
 class StatementItem : public QTreeWidgetItem
 {
+    ManipulatorStatementPtr statement_;
 public:
-    ManipulatorStatementPtr statement;
     ManipulatorProgramViewBase::Impl* viewImpl;
 
     StatementItem(ManipulatorStatement* statement, ManipulatorProgramViewBase::Impl* viewImpl);
     ~StatementItem();
     virtual QVariant data(int column, int role) const override;
-    StructuredStatement* parentStatement();
+    StatementItem* getParentStatementItem() const { return static_cast<StatementItem*>(parent()); }
+    StructuredStatement* getParentStatement();
+    template<class StatementType>
+    ref_ptr<StatementType> statement() const { return dynamic_pointer_cast<StatementType>(statement_); }
+    ManipulatorStatementPtr statement() const { return statement_; }
 };
 
 
@@ -53,11 +57,18 @@ public:
 };
 
 
+/**
+   The style to draw the drop line over all the columns.
+   This style is currently not used because it is difficult to make the indent
+   correspoinding to the drop position.
+*/
 class TreeWidgetStyle : public QProxyStyle
 {
+    ManipulatorProgramViewBase::Impl* view;
 public:
-    TreeWidgetStyle(QStyle* style) : QProxyStyle(style) { }
-    void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget = 0) const;
+    TreeWidgetStyle(ManipulatorProgramViewBase::Impl* view);
+    void drawPrimitive(
+        PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget = 0) const;
 };
 
 
@@ -89,6 +100,7 @@ public:
     ManipulatorStatementPtr currentStatement;
     Signal<void(ManipulatorStatement* statement)> sigCurrentStatementChanged;
     ManipulatorStatementPtr prevCurrentStatement;
+    vector<ManipulatorStatementPtr> statementsToPaste;
     QLabel programNameLabel;
     ToolButton optionMenuButton;
     MenuManager optionMenuManager;
@@ -113,61 +125,69 @@ public:
     void onStatementRemoved(ManipulatorStatement* statement, StructuredStatement* parentStatement);
     void forEachStatementInTreeEditEvent(
         const QModelIndex& parent, int start, int end,
-        function<bool(ManipulatorProgram* program, int index, ManipulatorStatement* statement)> func);
+        function<void(StructuredStatement* parentStatement, ManipulatorProgram* program,
+                      int index, ManipulatorStatement* statement)> func);
     void onRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
+    void onRowsRemoved(const QModelIndex& parent, int start, int end);
     void onRowsInserted(const QModelIndex& parent, int start, int end);
+    bool removeDummyStatementAroundInsertionPosition(
+        StructuredStatement* parentStatement, ManipulatorProgram* program, int index, int direction);
+    virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
-    void showContextMenu(StatementItem* statementItem, QPoint globalPos);
-    void cutStatement(ManipulatorStatement* statementItem);
-    void copyStatement(ManipulatorStatement* statementItem);
-    void pasteStatement(ManipulatorStatement* statementItem);
+    void showContextMenu(QPoint globalPos);
+    void copySelectedStatements(bool doCut);
+    void pasteStatements();
 
     QModelIndex indexFromItem(const QTreeWidgetItem* item, int column = 0) const {
         return TreeWidget::indexFromItem(item, column);
     }
-    QTreeWidgetItem* itemFromIndex(const QModelIndex& index) const {
-        return TreeWidget::itemFromIndex(index);
+    StatementItem* itemFromIndex(const QModelIndex& index) const {
+        return static_cast<StatementItem*>(TreeWidget::itemFromIndex(index));
     }
 };
 
 }
 
 
-StatementItem::StatementItem(ManipulatorStatement* statement, ManipulatorProgramViewBase::Impl* viewImpl)
-    : statement(statement),
+StatementItem::StatementItem(ManipulatorStatement* statement_, ManipulatorProgramViewBase::Impl* viewImpl)
+    : statement_(statement_),
       viewImpl(viewImpl)
 {
-    viewImpl->statementItemMap[statement] = this;
-    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsEditable);
+    viewImpl->statementItemMap[statement_] = this;
+    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsEditable;
+    if(statement<StructuredStatement>()){
+        flags |= Qt::ItemIsDropEnabled;
+    }
+    setFlags(flags);
 }
 
 
 StatementItem::~StatementItem()
 {
-    viewImpl->statementItemMap.erase(statement);
+    viewImpl->statementItemMap.erase(statement());
 }
 
 
 QVariant StatementItem::data(int column, int role) const
 {
     if(role == Qt::DisplayRole){
-        int span = statement->labelSpan(column);
+        int span = statement()->labelSpan(column);
         if(span == 1){
-            return QString(statement->label(column).c_str());
+            return QString(statement()->label(column).c_str());
         } else {
             return QVariant();
         }
     } else if(role == Qt::EditRole){
-        return QString(statement->label(column).c_str());
+        return QString(statement()->label(column).c_str());
     }
     return QTreeWidgetItem::data(column, role);
 }
 
 
-StructuredStatement* StatementItem::parentStatement()
+StructuredStatement* StatementItem::getParentStatement()
 {
-    if(auto parentStatementItem = dynamic_cast<StatementItem*>(parent())){
-        return dynamic_cast<StructuredStatement*>(parentStatementItem->statement.get());
+    if(auto parentStatementItem = getParentStatementItem()){
+        return parentStatementItem->statement<StructuredStatement>();
     }
     return nullptr;
 }
@@ -182,8 +202,8 @@ StatementItemDelegate::StatementItemDelegate(ManipulatorProgramViewBase::Impl* v
 
 void StatementItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    auto item = static_cast<StatementItem*>(view->itemFromIndex(index));
-    auto statement = item->statement;
+    auto item = view->itemFromIndex(index);
+    auto statement = item->statement();
     
     int column = index.column();
     int span = statement->labelSpan(column);
@@ -217,8 +237,8 @@ void StatementItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
 QWidget* StatementItemDelegate::createEditor
 (QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    auto item = static_cast<StatementItem*>(view->itemFromIndex(index));
-    auto statement = item->statement;
+    auto item = view->itemFromIndex(index);
+    auto statement = item->statement();
     int column = index.column();
     int span = statement->labelSpan(column);
     if(span == 0){
@@ -241,8 +261,8 @@ QWidget* StatementItemDelegate::createEditor
 void StatementItemDelegate::updateEditorGeometry
 (QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    auto item = static_cast<StatementItem*>(view->itemFromIndex(index));
-    auto statement = item->statement;
+    auto item = view->itemFromIndex(index);
+    auto statement = item->statement();
     int column = index.column();
     int span = statement->labelSpan(column);
     QRect rect;
@@ -271,11 +291,9 @@ void StatementItemDelegate::setEditorData(QWidget* editor, const QModelIndex& in
 void StatementItemDelegate::setModelData
 (QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
-    auto item = static_cast<StatementItem*>(view->itemFromIndex(index));
-    auto statement = item->statement;
+    auto item = view->itemFromIndex(index);
     int column = index.column();
-
-    if(auto comment = dynamic_cast<CommentStatement*>(statement.get())){
+    if(auto comment = item->statement<CommentStatement>()){
        if(index.column() == 0){
            if(auto lineEdit = dynamic_cast<QLineEdit*>(editor)){
                comment->setComment(lineEdit->text().toStdString());
@@ -285,12 +303,20 @@ void StatementItemDelegate::setModelData
 }
 
 
+TreeWidgetStyle::TreeWidgetStyle(ManipulatorProgramViewBase::Impl* view)
+    : QProxyStyle(view->style()),
+      view(view)
+{
+
+}
+
 
 void TreeWidgetStyle::drawPrimitive
 (PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const
 {
     if(element == QStyle::PE_IndicatorItemViewItemDrop && !option->rect.isNull()){
         QStyleOption opt(*option);
+        auto item = dynamic_cast<StatementItem*>(view->itemAt(opt.rect.center()));
         opt.rect.setLeft(0);
         if(widget){
             opt.rect.setRight(widget->width());
@@ -367,10 +393,9 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     setDragDropMode(QAbstractItemView::InternalMove);
     setDropIndicatorShown(true);
     setTabKeyNavigation(true);
-    setStyle(new TreeWidgetStyle(style()));
+    //setStyle(new TreeWidgetStyle(this));
     setItemDelegate(new StatementItemDelegate(this));
 
-    
     auto& rheader = *header();
     rheader.setMinimumSectionSize(0);
     rheader.setStretchLastSection(false);
@@ -389,6 +414,10 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     sigRowsAboutToBeRemoved().connect(
         [&](const QModelIndex& parent, int start, int end){
             onRowsAboutToBeRemoved(parent, start, end); });
+
+    sigRowsRemoved().connect(
+        [&](const QModelIndex& parent, int start, int end){
+            onRowsRemoved(parent, start, end); });
     
     sigRowsInserted().connect(
         [&](const QModelIndex& parent, int start, int end){
@@ -490,6 +519,7 @@ void ManipulatorProgramViewBase::Impl::updateStatementTree()
 void ManipulatorProgramViewBase::Impl::addProgramStatementsToTree
 (ManipulatorProgram* program, QTreeWidgetItem* parentItem)
 {
+    auto counter = scopedCounterOfStatementItemOperationCall();
     parentItem->setExpanded(true);
     for(auto& statement : *program){
         auto statementItem = new StatementItem(statement, this);
@@ -525,10 +555,10 @@ void ManipulatorProgramViewBase::Impl::onCurrentTreeWidgetItemChanged
 (QTreeWidgetItem* current, QTreeWidgetItem* previous)
 {
     if(auto statementItem = dynamic_cast<StatementItem*>(previous)){
-        prevCurrentStatement = statementItem->statement;
+        prevCurrentStatement = statementItem->statement();
     }
     if(auto statementItem = dynamic_cast<StatementItem*>(current)){
-        setCurrentStatement(statementItem->statement);
+        setCurrentStatement(statementItem->statement());
     }
 }
 
@@ -551,7 +581,7 @@ void ManipulatorProgramViewBase::onCurrentStatementChanged(ManipulatorStatement*
 void ManipulatorProgramViewBase::Impl::onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */)
 {
     if(auto statementItem = dynamic_cast<StatementItem*>(item)){
-        auto statement = statementItem->statement;
+        auto statement = statementItem->statement();
         // If the clicked statement is different from the current one,
         // onCurrentTreeWidgetItemChanged is processed
         if(statement == prevCurrentStatement){
@@ -589,7 +619,6 @@ bool ManipulatorProgramViewBase::Impl::insertStatement(ManipulatorStatement* sta
         auto program = programItem->program();
         ManipulatorProgram::iterator pos;
         StructuredStatement* parentStatement = nullptr;
-        EmptyStatementPtr emptyStatementAtInsertionPosition;
         auto selected = selectedItems();
         if(selected.empty()){
             if(insertionType == BeforeTargetPosition){
@@ -599,20 +628,19 @@ bool ManipulatorProgramViewBase::Impl::insertStatement(ManipulatorStatement* sta
             }
         } else {
             auto lastSelectedItem = static_cast<StatementItem*>(selected.back());
-            parentStatement = lastSelectedItem->parentStatement();
+            parentStatement = lastSelectedItem->getParentStatement();
             if(parentStatement){
                 program = parentStatement->getLowerLevelProgram();
             }
             auto index = indexFromItem(lastSelectedItem);
             pos = program->begin() + index.row();
 
-            emptyStatementAtInsertionPosition =
-                dynamic_cast<EmptyStatement*>(lastSelectedItem->statement.get());
-            if(emptyStatementAtInsertionPosition){
+            auto dummyStatementAtInsertionPosition = lastSelectedItem->statement<DummyStatement>();
+            if(dummyStatementAtInsertionPosition){
                 pos = program->remove(pos);
-                programItem->sigStatementRemoved()(emptyStatementAtInsertionPosition, parentStatement);
+                programItem->sigStatementRemoved()(dummyStatementAtInsertionPosition, parentStatement);
             }
-            if(insertionType == AfterTargetPosition && !emptyStatementAtInsertionPosition){
+            if(insertionType == AfterTargetPosition && !dummyStatementAtInsertionPosition){
                 ++pos;
             }
         }
@@ -668,33 +696,47 @@ void ManipulatorProgramViewBase::Impl::onStatementRemoved
     auto counter = scopedCounterOfStatementItemOperationCall();
     auto iter = statementItemMap.find(statement);
     if(iter != statementItemMap.end()){
-        auto& item = iter->second;
-        takeTopLevelItem(indexOfTopLevelItem(item));
-        delete item;
+        auto statementItem = iter->second;
+        QTreeWidgetItem* parentItem;
+        if(!parentStatement){
+            parentItem = invisibleRootItem();
+        } else {
+            parentItem = statementItemMap[parentStatement];
+        }
+        parentItem->takeChild(parentItem->indexOfChild(statementItem));
+        delete statementItem;
     }
 }
 
 
 void ManipulatorProgramViewBase::Impl::forEachStatementInTreeEditEvent
 (const QModelIndex& parent, int start, int end,
- function<bool(ManipulatorProgram* program, int index, ManipulatorStatement* statement)> func)
+ function<void(StructuredStatement* parentStatement, ManipulatorProgram* program,
+               int index, ManipulatorStatement* statement)> func)
 {
     if(!programItem || isDoingStatementItemOperation()){
         return;
     }
-    if(auto parentItem = itemFromIndex(parent)){
-        return;
-    }
-    auto root = invisibleRootItem();
-    auto program = programItem->program();
-    bool updated = false;
-    for(int i = start; i <= end; ++i){
-        auto item = static_cast<StatementItem*>(root->child(i));
-        if(func(program, i, item->statement)){
-            updated = true;
+    QTreeWidgetItem* parentItem = nullptr;
+    StructuredStatement* parentStatement = nullptr;
+    ManipulatorProgram* program = nullptr;
+    
+    if(!parent.isValid()){
+        parentItem = invisibleRootItem();
+        program = programItem->program();
+    } else {
+        parentItem = itemFromIndex(parent);
+        auto parentStatementItem = static_cast<StatementItem*>(parentItem);
+        parentStatement = parentStatementItem->statement<StructuredStatement>();
+        if(parentStatement){
+            program = parentStatement->getLowerLevelProgram();
         }
     }
-    if(updated){
+    if(program){
+        for(int i = start; i <= end; ++i){
+            auto item = static_cast<StatementItem*>(parentItem->child(i));
+            func(parentStatement, program, i, item->statement());
+        }
         programItem->suggestFileUpdate();
     }
 }
@@ -704,9 +746,27 @@ void ManipulatorProgramViewBase::Impl::onRowsAboutToBeRemoved(const QModelIndex&
 {
     forEachStatementInTreeEditEvent(
         parent, start, end,
-        [&](ManipulatorProgram* program, int, ManipulatorStatement* statement){
-            return program->remove(statement);
+        [&](StructuredStatement*, ManipulatorProgram* program, int, ManipulatorStatement* statement){
+            program->remove(statement);
         });
+}
+
+
+void ManipulatorProgramViewBase::Impl::onRowsRemoved(const QModelIndex& parent, int start, int end)
+{
+    if(isDoingStatementItemOperation()){
+        return;
+    }
+    // Keep at least one dummy statement in a control structure statement
+    if(parent.isValid()){
+        if(auto structured = itemFromIndex(parent)->statement<StructuredStatement>()){
+            auto program = structured->getLowerLevelProgram();
+            if(program->empty()){
+                auto inserted = program->append(new DummyStatement);
+                programItem->sigStatementAdded()(inserted, structured);
+            }
+        }
+    }
 }
 
 
@@ -714,11 +774,77 @@ void ManipulatorProgramViewBase::Impl::onRowsInserted(const QModelIndex& parent,
 {
     forEachStatementInTreeEditEvent(
         parent, start, end,
-        [&](ManipulatorProgram* program, int index, ManipulatorStatement* statement){
+        [&](StructuredStatement* parentStatement, ManipulatorProgram* program, int index,
+            ManipulatorStatement* statement){
+
             program->insert(program->begin() + index, statement);
-            return true;
+
+            // The dummy statement at the insertion position is overwritten
+            if(index == end && parentStatement){
+                if(!removeDummyStatementAroundInsertionPosition(parentStatement, program, start, -1)){
+                    if(removeDummyStatementAroundInsertionPosition(parentStatement, program, end, +1));
+                }
+            }
         });
 }
+
+
+bool ManipulatorProgramViewBase::Impl::removeDummyStatementAroundInsertionPosition
+(StructuredStatement* parentStatement, ManipulatorProgram* program, int index, int direction)
+{
+    auto pos = program->begin() + index;
+    if(direction < 0 && pos == program->begin() || direction > 0 && pos == program->end()){
+        return false;
+    }
+    pos += direction;
+    auto statement = *pos;
+    if(auto dummy = dynamic_cast<DummyStatement*>(statement.get())){
+        program->remove(pos);
+        programItem->sigStatementRemoved()(dummy, parentStatement);
+        return true;
+    }
+    return false;
+}
+
+
+void ManipulatorProgramViewBase::Impl::keyPressEvent(QKeyEvent* event)
+{
+    bool processed = true;
+
+    switch(event->key()){
+    case Qt::Key_Escape:
+        clearSelection();
+        break;
+    case Qt::Key_Delete:
+        copySelectedStatements(true);
+        break;
+    default:
+        processed = false;
+        break;
+    }
+        
+    if(!processed && (event->modifiers() & Qt::ControlModifier)){
+        processed = true;
+        switch(event->key()){
+        case Qt::Key_A:
+            selectAll();
+            break;
+        case Qt::Key_X:
+            copySelectedStatements(true);
+            break;
+        case Qt::Key_C:
+            copySelectedStatements(false);
+            break;
+        case Qt::Key_V:
+            pasteStatements();
+            break;
+        }
+    }
+
+    if(!processed){
+        TreeWidget::keyPressEvent(event);
+    }
+}            
 
 
 void ManipulatorProgramViewBase::Impl::mousePressEvent(QMouseEvent* event)
@@ -726,62 +852,121 @@ void ManipulatorProgramViewBase::Impl::mousePressEvent(QMouseEvent* event)
     TreeWidget::mousePressEvent(event);
 
     if(event->button() == Qt::RightButton){
-        auto item = dynamic_cast<StatementItem*>(itemAt(event->pos()));
-        if(item){
-            showContextMenu(item, event->globalPos());
-        }
+        showContextMenu(event->globalPos());
     }
 }
 
 
-void ManipulatorProgramViewBase::Impl::showContextMenu(StatementItem* statementItem, QPoint globalPos)
+void ManipulatorProgramViewBase::Impl::showContextMenu(QPoint globalPos)
 {
     contextMenuManager.setNewPopupMenu(this);
 
-    auto statement = statementItem->statement;
+    contextMenuManager.addItem(_("Insert statement line"))
+        ->sigTriggered().connect([=](){ insertStatement(new DummyStatement, BeforeTargetPosition); });
+
+    contextMenuManager.addSeparator();
 
     contextMenuManager.addItem(_("Cut"))
-        ->sigTriggered().connect([=](){ cutStatement(statement); });
+        ->sigTriggered().connect([=](){ copySelectedStatements(true); });
 
     contextMenuManager.addItem(_("Copy"))
-        ->sigTriggered().connect([=](){ copyStatement(statement); });
+        ->sigTriggered().connect([=](){ copySelectedStatements(false); });
 
-    contextMenuManager.addItem(_("Paste"))
-        ->sigTriggered().connect([=](){ pasteStatement(statement); });
+    auto pasteAction = contextMenuManager.addItem(_("Paste"));
+    if(statementsToPaste.empty()){
+        pasteAction->setEnabled(false);
+    } else {
+        pasteAction->sigTriggered().connect([=](){ pasteStatements(); });
+    }
     
     contextMenuManager.popupMenu()->popup(globalPos);
 }
 
 
-void ManipulatorProgramViewBase::Impl::cutStatement(ManipulatorStatement* statement)
+void ManipulatorProgramViewBase::Impl::copySelectedStatements(bool doCut)
 {
-    if(programItem){
-        auto program = programItem->program();
-        StructuredStatement* parentStatement = nullptr;
-        if(auto item = statementItemFromStatement(statement)){
-            parentStatement = item->parentStatement();
-            if(parentStatement){
-                program = parentStatement->getLowerLevelProgram();
+    vector<StatementItem*> selectedStatementTops;
+    auto selectedItems_ = selectedItems();
+    for(auto& item : selectedItems_){
+        auto statementItem = static_cast<StatementItem*>(item);
+        if(statementItem->statement<DummyStatement>()){
+            continue;
+        }
+        bool isTop = true;
+        auto parent = item->parent();
+        while(parent){
+            if(selectedItems_.contains(parent)){
+                isTop = false;
+                break;
+            }
+            parent = parent->parent();
+        }
+        if(isTop){
+            selectedStatementTops.push_back(statementItem);
+        }
+    }
+
+    if(!selectedStatementTops.empty()){
+        auto counter = scopedCounterOfStatementItemOperationCall();
+        statementsToPaste.clear();
+        for(auto& statementItem : selectedStatementTops){
+            auto statement = statementItem->statement();
+            statementsToPaste.push_back(statement->clone());
+
+            if(doCut){
+                ManipulatorProgram* program;
+                auto parentStatement = statementItem->getParentStatement();
+                if(parentStatement){
+                    program = parentStatement->getLowerLevelProgram();
+                } else {
+                    program = programItem->program();
+                }
+                program->remove(statement);
+                programItem->sigStatementRemoved()(statement, parentStatement);
             }
         }
-        if(program){
-            program->remove(statement);
-            programItem->sigStatementRemoved()(statement, parentStatement);
-            programItem->suggestFileUpdate();
-        }
+        programItem->suggestFileUpdate();
     }
 }
 
 
-void ManipulatorProgramViewBase::Impl::copyStatement(ManipulatorStatement* statementItem)
+void ManipulatorProgramViewBase::Impl::pasteStatements()
 {
+    auto counter = scopedCounterOfStatementItemOperationCall();
 
-}
-
-
-void ManipulatorProgramViewBase::Impl::pasteStatement(ManipulatorStatement* statementItem)
-{
-
+    ManipulatorProgram* program = programItem->program();
+    StatementItem* pastePositionItem = nullptr;
+    StructuredStatement* parentStatement = nullptr;
+    ManipulatorProgram::iterator pos;
+    
+    auto selected = selectedItems();
+    if(!selected.empty()){
+        pastePositionItem = static_cast<StatementItem*>(selected.back());
+    }
+    if(!pastePositionItem){
+        pos = program->end();
+    } else {
+        parentStatement = pastePositionItem->getParentStatement();
+        if(parentStatement){
+            program = parentStatement->getLowerLevelProgram();
+        }
+        auto index = indexFromItem(pastePositionItem);
+        int row = index.row();
+        if(auto dummyStatement = pastePositionItem->statement<DummyStatement>()){
+            pos = program->remove(program->begin() + row);
+            programItem->sigStatementRemoved()(dummyStatement, parentStatement);
+        } else {
+            pos = program->begin() + row + 1;
+        }
+    }
+    
+    for(auto& statement : statementsToPaste){
+        pos = program->insert(pos, statement->clone());
+        programItem->sigStatementAdded()(pos, parentStatement);
+        ++pos;
+    }
+    
+    programItem->suggestFileUpdate();
 }
 
 

@@ -36,6 +36,7 @@ public:
 
     // Signals of QAbstractItemModel owned by TreeWidget
     SignalProxy<void(const QModelIndex &parent, int first, int last)> sigRowsAboutToBeRemoved();
+    SignalProxy<void(const QModelIndex &parent, int first, int last)> sigRowsRemoved();
     SignalProxy<void(const QModelIndex &parent, int first, int last)> sigRowsInserted();
 
 protected:
@@ -54,6 +55,7 @@ private Q_SLOTS:
     void onItemPressed(QTreeWidgetItem* item, int column);
     void onItemSelectionChanged(void);
     void onRowsAboutToBeRemoved(const QModelIndex &parent, int first, int last);
+    void onRowsRemoved(const QModelIndex &parent, int first, int last);
     void onRowsInserted(const QModelIndex &parent, int first, int last);
 
 private:

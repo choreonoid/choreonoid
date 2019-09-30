@@ -30,6 +30,7 @@ public:
     stdx::optional<Signal<void()>> sigItemSelectionChanged;
 
     stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsAboutToBeRemoved;
+    stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsRemoved;
     stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsInserted;
 
     Impl();
@@ -228,6 +229,17 @@ SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::si
 }
 
 
+SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::sigRowsRemoved()
+{
+    if(!impl->sigRowsRemoved){
+        stdx::emplace(impl->sigRowsRemoved);
+        QObject::connect(model(), SIGNAL(rowsRemoved(const QModelIndex&, int, int)),
+                         this, SLOT(onRowsRemoved(const QModelIndex&, int, int)));
+    }
+    return *impl->sigRowsRemoved;
+}
+
+
 SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::sigRowsInserted()
 {
     if(!impl->sigRowsInserted){
@@ -300,6 +312,12 @@ void TreeWidget::onItemSelectionChanged(void)
 void TreeWidget::onRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
     (*impl->sigRowsAboutToBeRemoved)(parent, first, last);
+}
+
+
+void TreeWidget::onRowsRemoved(const QModelIndex& parent, int first, int last)
+{
+    (*impl->sigRowsRemoved)(parent, first, last);
 }
 
 
