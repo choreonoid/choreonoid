@@ -1019,7 +1019,7 @@ void ManipulatorProgramViewBase::Impl::showContextMenu(QPoint globalPos)
 {
     contextMenuManager.setNewPopupMenu(this);
 
-    contextMenuManager.addItem(_("Insert statement line"))
+    contextMenuManager.addItem(_("Insert empty line"))
         ->sigTriggered().connect([=](){ insertStatement(new DummyStatement, BeforeTargetPosition); });
 
     contextMenuManager.addSeparator();

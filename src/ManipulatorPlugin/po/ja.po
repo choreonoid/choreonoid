@@ -1,0 +1,79 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2019 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# nakaoka <nakaoka@choreonoid.co.jp>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-10-01 23:57+0900\n"
+"PO-Revision-Date: 2019-10-01 23:57+0900\n"
+"Last-Translator: nakaoka <nakaoka@choreonoid.co.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ManipulatorControllerItemBase.cpp:176
+msgid "Any program item for {} is not found."
+msgstr "{}用のプログラムアイテムがみつかりません．"
+
+#: ManipulatorControllerItemBase.cpp:278
+msgid "{0} cannot be executed because the interpreter for it is not found."
+msgstr "{0}はこれに対応したインタプリタがみつからないため実行できません．"
+
+#: ManipulatorControllerItemBase.cpp:355
+msgid "{0} cannot be executed because {1} does not have a signal I/O device"
+msgstr "{0}は{1}がシグナルI/Oデバイスを有していないため実行できません．"
+
+#: ManipulatorControllerItemBase.cpp:367
+msgid "Speed ratio"
+msgstr "速度比率"
+
+#: ManipulatorPosition.cpp:771
+msgid "{0} cannot be loaded as a manipulator position set"
+msgstr "{0}はマニピュレータ位置集合として読み込むことができません．"
+
+#: ManipulatorPosition.cpp:777 ManipulatorProgram.cpp:260
+msgid "Format version {0} is not supported."
+msgstr "フォーマットバージョン{0}はサポートされていません．"
+
+#: ManipulatorPosition.cpp:792
+msgid "{0} is not supported"
+msgstr "{0}はサポートされていません"
+
+#: ManipulatorProgram.cpp:254
+msgid "{0} cannot be loaded as a Manipulator program file"
+msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"
+
+#: ManipulatorProgram.cpp:285
+msgid "Statement type \"{0}\" is not supported"
+msgstr "ステートメント型\"{0}\"はサポートされていません"
+
+#: ManipulatorProgramViewBase.cpp:504
+msgid "*"
+msgstr ""
+
+#: ManipulatorProgramViewBase.cpp:570
+msgid "Refresh"
+msgstr "リフレッシュ"
+
+#: ManipulatorProgramViewBase.cpp:1022
+msgid "Insert empty line"
+msgstr "空行の挿入"
+
+#: ManipulatorProgramViewBase.cpp:1027
+msgid "Cut"
+msgstr "カット"
+
+#: ManipulatorProgramViewBase.cpp:1030
+msgid "Copy"
+msgstr "コピー"
+
+#: ManipulatorProgramViewBase.cpp:1033
+msgid "Paste"
+msgstr "ペースト"
+
