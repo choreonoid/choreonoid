@@ -8,11 +8,11 @@
 #include "ViewManager.h"
 #include "MenuManager.h"
 #include "PutPropertyFunction.h"
-#include "SelectionListEditor.h"
 #include "LazyCaller.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "Buttons.h"
+#include "StringListComboBox.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExecutablePath>
 #include <cnoid/stdx/variant>
@@ -693,9 +693,9 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     QStyledItemDelegate* delegate = new CustomizedItemDelegate(tableWidget);
     QItemEditorFactory* factory = new QItemEditorFactory;
     
-    QItemEditorCreatorBase* selectionListCreator =
-        new QStandardItemEditorCreator<SelectionListEditor>();
-    factory->registerEditor(QVariant::StringList, selectionListCreator);
+    QItemEditorCreatorBase* selectionEditorCreator =
+        new QStandardItemEditorCreator<StringListComboBox>();
+    factory->registerEditor(QVariant::StringList, selectionEditorCreator);
     
     delegate->setItemEditorFactory(factory);
 

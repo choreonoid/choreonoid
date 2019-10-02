@@ -1,20 +1,16 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
-#include "SelectionListEditor.h"
+#include "StringListComboBox.h"
 
 using namespace cnoid;
 
 
-SelectionListEditor::SelectionListEditor(QWidget* widget)
+StringListComboBox::StringListComboBox(QWidget* widget)
     : QComboBox(widget)
 {
 
 }
 
 
-QStringList SelectionListEditor::labels() const
+QStringList StringListComboBox::labels() const
 {
     QStringList labelList;
     labelList << QString::number(currentIndex());
@@ -25,7 +21,7 @@ QStringList SelectionListEditor::labels() const
 }
 
 
-void SelectionListEditor::setLabels(QStringList labels)
+void StringListComboBox::setLabels(QStringList labels)
 {
     if(labels.count() >= 2){
         for(int i=1; i < labels.count(); ++i){

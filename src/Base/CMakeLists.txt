@@ -25,7 +25,7 @@ set(sources
   ItemTreeView.cpp
   ItemPropertyView.cpp
   TargetItemPicker.cpp
-  SelectionListEditor.cpp
+  StringListComboBox.cpp
   MultiSeqItemCreationPanel.cpp
   ToolBar.cpp
   TimeBar.cpp
@@ -250,7 +250,7 @@ set(qtheaders
   Timer.h
   SocketNotifier.h
   InfoBar.h
-  SelectionListEditor.h
+  StringListComboBox.h
   TextEdit.h
   )
 
