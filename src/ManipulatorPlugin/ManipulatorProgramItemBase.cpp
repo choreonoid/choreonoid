@@ -14,15 +14,15 @@ namespace cnoid {
 class ManipulatorProgramItemBase::Impl
 {
 public:
+    ManipulatorProgramItemBase* self;
     ManipulatorProgramPtr program;
-    Signal<void(ManipulatorProgram::iterator iter, StructuredStatement* parentStatement)> sigStatementAdded;
-    Signal<void(ManipulatorStatement* statement, StructuredStatement* parentStatement)> sigStatementRemoved;
     BodyItem* targetBodyItem;
     BodyManipulatorManagerPtr manipulatorManager;
     Signal<void(BodyManipulatorManager* manager)> sigManipulatorChanged;
 
-    Impl();
-    Impl(const Impl& org);
+    Impl(ManipulatorProgramItemBase* self);
+    Impl(ManipulatorProgramItemBase* self, const Impl& org);
+    void setupSignalConnections();
     void setTargetBodyItem(BodyItem* bodyItem);    
 };
 
@@ -31,13 +31,15 @@ public:
 
 ManipulatorProgramItemBase::ManipulatorProgramItemBase()
 {
-    impl = new ManipulatorProgramItemBase::Impl;
+    impl = new ManipulatorProgramItemBase::Impl(this);
 }
 
 
-ManipulatorProgramItemBase::Impl::Impl()
+ManipulatorProgramItemBase::Impl::Impl(ManipulatorProgramItemBase* self)
+    : self(self)
 {
     program = new ManipulatorProgram;
+    setupSignalConnections();
     targetBodyItem = nullptr;
 }
 
@@ -45,16 +47,34 @@ ManipulatorProgramItemBase::Impl::Impl()
 ManipulatorProgramItemBase::ManipulatorProgramItemBase(const ManipulatorProgramItemBase& org)
     : Item(org)
 {
-    impl = new ManipulatorProgramItemBase::Impl(*org.impl);
+    impl = new ManipulatorProgramItemBase::Impl(this, *org.impl);
 }
 
 
-ManipulatorProgramItemBase::Impl::Impl(const Impl& org)
+ManipulatorProgramItemBase::Impl::Impl(ManipulatorProgramItemBase* self, const Impl& org)
+    : self(self)
 {
     program = new ManipulatorProgram(*org.program);
+    setupSignalConnections();
     targetBodyItem = nullptr;
 }
 
+
+void ManipulatorProgramItemBase::Impl::setupSignalConnections()
+{
+    program->sigStatementInserted().connect(
+        [&](ManipulatorProgram*, ManipulatorProgram::iterator){
+            self->suggestFileUpdate(); });
+
+    program->sigStatementRemoved().connect(
+        [&](ManipulatorProgram*, ManipulatorStatement*){
+            self->suggestFileUpdate(); });
+
+    program->sigStatementUpdated().connect(
+        [&](ManipulatorStatement*){
+            self->suggestFileUpdate(); });
+}
+    
 
 ManipulatorProgramItemBase::~ManipulatorProgramItemBase()
 {
@@ -131,20 +151,6 @@ ManipulatorProgram* ManipulatorProgramItemBase::program()
 const ManipulatorProgram* ManipulatorProgramItemBase::program() const
 {
     return impl->program;
-}
-
-
-Signal<void(ManipulatorProgram::iterator iter, StructuredStatement* parentStatement)>&
-ManipulatorProgramItemBase::sigStatementAdded()
-{
-    return impl->sigStatementAdded;
-}
-
-
-Signal<void(ManipulatorStatement* statement, StructuredStatement* parentStatement)>&
-ManipulatorProgramItemBase::sigStatementRemoved()
-{
-    return impl->sigStatementRemoved;
 }
 
 

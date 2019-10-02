@@ -76,7 +76,7 @@ public:
     ManipulatorProgramCloneMap manipulatorProgramCloneMap;
     BodyManipulatorManagerPtr manipulatorManager;
     vector<function<void()>> residentInputFunctions;
-    unordered_map<type_index, function<void(ManipulatorStatement* statement)>> interpreterMap;
+    unordered_map<type_index, function<bool(ManipulatorStatement* statement)>> interpreterMap;
     ManipulatorProgram::iterator iterator;
     vector<ref_ptr<Processor>> processorStack;
     DigitalIoDevicePtr ioDevice;
@@ -86,8 +86,8 @@ public:
     bool initialize(ControllerIO* io);
     bool control();
     void clear();
-    void interpretDelayStatement(DelayStatement* statement);
-    void interpretSetSignalStatement(SetSignalStatement* statement);
+    bool interpretDelayStatement(DelayStatement* statement);
+    bool interpretSetSignalStatement(SetSignalStatement* statement);
 };
 
 }
@@ -121,7 +121,7 @@ ManipulatorControllerItemBase::~ManipulatorControllerItemBase()
 
 
 void ManipulatorControllerItemBase::registerStatementInterpreter
-(std::type_index statementType, const std::function<void(ManipulatorStatement* statement)>& interpret)
+(std::type_index statementType, const std::function<bool(ManipulatorStatement* statement)>& interpret)
 {
     impl->interpreterMap[statementType] = interpret;
 }
@@ -132,10 +132,12 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
     ManipulatorControllerItemBase::Impl* impl_ = impl;
     
     registerStatementInterpreter<DelayStatement>(
-        [impl_](DelayStatement* statement){ impl_->interpretDelayStatement(statement); });
+        [impl_](DelayStatement* statement){
+            return impl_->interpretDelayStatement(statement); });
 
     registerStatementInterpreter<SetSignalStatement>(
-        [impl_](SetSignalStatement* statement){ impl_->interpretSetSignalStatement(statement); });
+        [impl_](SetSignalStatement* statement){
+            return impl_->interpretSetSignalStatement(statement); });
 }
 
 
@@ -280,7 +282,12 @@ bool ManipulatorControllerItemBase::Impl::control()
             continue;
         }
         auto& interpret = iter->second;
-        interpret(statement);
+        bool result = interpret(statement);
+
+        if(!result){
+            isActive = false;
+            break;
+        }
     }        
         
     return isActive;
@@ -342,14 +349,15 @@ double ManipulatorControllerItemBase::speedRatio() const
 }
 
 
-void ManipulatorControllerItemBase::Impl::interpretDelayStatement(DelayStatement* statement)
+bool ManipulatorControllerItemBase::Impl::interpretDelayStatement(DelayStatement* statement)
 {
     int remainingFrames = statement->time() / io->timeStep();
     self->pushControlFunctions([remainingFrames]() mutable { return (remainingFrames-- > 0); });
+    return true;
 }
 
 
-void ManipulatorControllerItemBase::Impl::interpretSetSignalStatement(SetSignalStatement* statement)
+bool ManipulatorControllerItemBase::Impl::interpretSetSignalStatement(SetSignalStatement* statement)
 {
     if(!ioDevice){
         io->os() << format(_("{0} cannot be executed because {1} does not have a signal I/O device"),
@@ -359,6 +367,7 @@ void ManipulatorControllerItemBase::Impl::interpretSetSignalStatement(SetSignalS
             [this, statement](){
                 ioDevice->setOut(statement->signalIndex(), statement->on(), true); });
     }
+    return true;
 }
 
     

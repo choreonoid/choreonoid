@@ -35,8 +35,10 @@ public:
     public:
         StatementDelegate();
         ~StatementDelegate();
-        virtual int labelSpan(ManipulatorStatement* statement, int column, int numColumns) const;
+        static constexpr int SpanToLast = -1;
+        virtual int labelSpan(ManipulatorStatement* statement, int column) const;
         virtual QVariant dataOfEditRole(ManipulatorStatement* statement, int column) const;
+        virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const;
         virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const;
         virtual void setEditorData(ManipulatorStatement* statement, int column, QWidget* editor) const;
         virtual void setStatementData(ManipulatorStatement* statement, int column, QWidget* editor) const;
@@ -45,9 +47,8 @@ public:
         Impl* impl;
 
     protected:
-        QVariant defaultDataOfEditRole(ManipulatorStatement* statement, int column) const;
-        QWidget* createDefaultEditor(ManipulatorStatement* statement, int column) const;
-        ManipulatorProgram* getProgram(ManipulatorStatement* statement) const;
+        // Only calleded from the createEditor function
+        QWidget* createDefaultEditor() const;
     };
 
     template<class StatementType>

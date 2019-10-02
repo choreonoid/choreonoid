@@ -3,6 +3,7 @@
 
 #include "ManipulatorStatements.h"
 #include <cnoid/Referenced>
+#include <cnoid/Signal>
 #include <string>
 #include <deque>
 #include <iosfwd>
@@ -15,6 +16,7 @@ class ManipulatorPosition;
 class ManipulatorPositionCloneMap;
 class ManipulatorPositionSet;
 class ManipulatorProgram;
+class StructuredStatement;
 
 class CNOID_EXPORT ManipulatorProgramCloneMap
 {
@@ -36,6 +38,7 @@ private:
     friend class ManipulatorProgram;
 };
 
+
 class CNOID_EXPORT ManipulatorProgram : public Referenced
 {
 public:
@@ -55,10 +58,10 @@ public:
     bool empty() const { return statements_.empty(); }
     int numStatements() const { return statements_.size(); }
 
-    iterator insert(iterator pos, ManipulatorStatement* statement);
-    iterator append(ManipulatorStatement* statement);
-    iterator remove(iterator pos);
-    bool remove(ManipulatorStatement* statement);
+    iterator insert(iterator pos, ManipulatorStatement* statement, bool doNotify = true);
+    iterator append(ManipulatorStatement* statement, bool doNotify = true);
+    iterator remove(iterator pos, bool doNotify = true);
+    bool remove(ManipulatorStatement* statement, bool doNotify = true);
 
     iterator begin(){ return statements_.begin(); }
     const_iterator begin() const { return statements_.begin(); }
@@ -70,6 +73,14 @@ public:
     void removeUnreferencedPositions();
     ManipulatorPositionSet* createPositionSet() const;
 
+    SignalProxy<void(ManipulatorProgram* program, ManipulatorProgram::iterator iter)> sigStatementInserted();
+    SignalProxy<void(ManipulatorProgram* program, ManipulatorStatement* statement)> sigStatementRemoved();
+    SignalProxy<void(ManipulatorStatement* statement)> sigStatementUpdated();
+    
+    void notifyStatementUpdate(ManipulatorStatement* statement) const;
+
+    StructuredStatement* holderStatement() const;
+
     bool load(const std::string& filename, std::ostream& os);
     bool save(const std::string& filename);
 
@@ -78,12 +89,14 @@ protected:
     virtual ManipulatorProgram* doClone(ManipulatorProgramCloneMap* cloneMap) const;
 
 private:
-    bool read(Mapping& archive);
-
     StatementContainer statements_;
 
     class Impl;
     Impl* impl;
+
+    friend class StructuredStatement;
+
+    void setHolderStatement(StructuredStatement* holder);
 };
 
 typedef ref_ptr<ManipulatorProgram> ManipulatorProgramPtr;

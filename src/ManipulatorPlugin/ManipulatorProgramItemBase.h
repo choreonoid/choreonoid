@@ -27,9 +27,6 @@ public:
     ManipulatorProgram* program();
     const ManipulatorProgram* program() const;
 
-    Signal<void(ManipulatorProgram::iterator iter, StructuredStatement* parentStatement)>& sigStatementAdded();
-    Signal<void(ManipulatorStatement* statement, StructuredStatement* parentStatement)>& sigStatementRemoved();
-    
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

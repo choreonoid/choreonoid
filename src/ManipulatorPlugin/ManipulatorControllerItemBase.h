@@ -24,11 +24,11 @@ public:
         
 protected:
     template<class StatementType>
-    void registerStatementInterpreter(std::function<void(StatementType* statement)> interpret){
+    void registerStatementInterpreter(std::function<bool(StatementType* statement)> interpret){
         registerStatementInterpreter(
             typeid(StatementType),
             [interpret](ManipulatorStatement* statement){
-                interpret(static_cast<StatementType*>(statement)); });
+                return interpret(static_cast<StatementType*>(statement)); });
     }
     void registerBaseStatementInterpreters();
 
@@ -66,7 +66,7 @@ protected:
         
 private:
     void registerStatementInterpreter(
-        std::type_index statementType, const std::function<void(ManipulatorStatement* statement)>& interpret);
+        std::type_index statementType, const std::function<bool(ManipulatorStatement* statement)>& interpret);
     
     virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;

@@ -15,10 +15,10 @@ typedef ManipulatorProgramViewBase::StatementDelegate Delegate;
 class CommentStatementDelegate : public Delegate
 {
 public:
-    virtual int labelSpan(ManipulatorStatement* statement, int column, int numColumns) const override
+    virtual int labelSpan(ManipulatorStatement* statement, int column) const override
     {
         if(column == 0){
-            return numColumns;
+            return SpanToLast;
         }
         return 0;
     }
@@ -34,7 +34,7 @@ public:
     virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const override
     {
         if(column == 0){
-            return createDefaultEditor(statement, column);
+            return createDefaultEditor();
         }
         return nullptr;
     }
@@ -70,7 +70,7 @@ public:
     virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const override
     {
         if(column == 1 || column == 2){
-            return createDefaultEditor(statement, column);
+            return createDefaultEditor();
         }
         return nullptr;
     }
@@ -104,7 +104,7 @@ public:
     virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const override
     {
         if(column == 1){
-            return createDefaultEditor(statement, column);
+            return createDefaultEditor();
         }
         return nullptr;
     }

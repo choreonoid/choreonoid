@@ -173,32 +173,33 @@ bool CommentStatement::write(Mapping& archive) const
 
 StructuredStatement::StructuredStatement()
 {
-
-}
-
-
-StructuredStatement::StructuredStatement(const StructuredStatement& org)
-    : ManipulatorStatement(org)
-{
-
-}
-
-
-IfStatement::IfStatement()
-{
     program_ = new ManipulatorProgram;
-    program_->append(new DummyStatement);
+    program_->setHolderStatement(this);
+    program_->append(new DummyStatement, false);
 }
 
 
-IfStatement::IfStatement(const IfStatement& org, ManipulatorProgramCloneMap* cloneMap)
-    : StructuredStatement(org)
+StructuredStatement::StructuredStatement(const StructuredStatement& org, ManipulatorProgramCloneMap* cloneMap)
+    : ManipulatorStatement(org)
 {
     if(cloneMap){
         program_ = cloneMap->getClone(org.program_);
     } else {
         program_ = org.program_->clone();
     }
+}
+
+
+IfStatement::IfStatement()
+{
+
+}
+
+
+IfStatement::IfStatement(const IfStatement& org, ManipulatorProgramCloneMap* cloneMap)
+    : StructuredStatement(org, cloneMap)
+{
+    
 }
 
 
@@ -217,12 +218,6 @@ std::string IfStatement::label(int index) const
 }
 
 
-ManipulatorProgram* IfStatement::getLowerLevelProgram() const
-{
-    return program_;
-}
-    
-
 bool IfStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
     return true;
@@ -238,19 +233,14 @@ bool IfStatement::write(Mapping& archive) const
 
 ElseStatement::ElseStatement()
 {
-    program_ = new ManipulatorProgram;
-    program_->append(new DummyStatement);
+
 }
 
 
 ElseStatement::ElseStatement(const ElseStatement& org, ManipulatorProgramCloneMap* cloneMap)
-    : StructuredStatement(org)
+    : StructuredStatement(org, cloneMap)
 {
-    if(cloneMap){
-        program_ = cloneMap->getClone(org.program_);
-    } else {
-        program_ = org.program_->clone();
-    }
+
 }
 
 
@@ -269,12 +259,6 @@ std::string ElseStatement::label(int index) const
 }
 
 
-ManipulatorProgram* ElseStatement::getLowerLevelProgram() const
-{
-    return program_;
-}
-    
-
 bool ElseStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
     return true;
@@ -290,19 +274,14 @@ bool ElseStatement::write(Mapping& archive) const
 
 WhileStatement::WhileStatement()
 {
-    program_ = new ManipulatorProgram;
-    program_->append(new DummyStatement);
+
 }
 
 
 WhileStatement::WhileStatement(const WhileStatement& org, ManipulatorProgramCloneMap* cloneMap)
-    : StructuredStatement(org)
+    : StructuredStatement(org, cloneMap)
 {
-    if(cloneMap){
-        program_ = cloneMap->getClone(org.program_);
-    } else {
-        program_ = org.program_->clone();
-    }
+
 }
 
 
@@ -320,12 +299,6 @@ std::string WhileStatement::label(int index) const
     return string();
 }
 
-
-ManipulatorProgram* WhileStatement::getLowerLevelProgram() const
-{
-    return program_;
-}
-    
 
 bool WhileStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
