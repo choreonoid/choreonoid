@@ -166,6 +166,9 @@ public:
     
     ManipulatorPosition* find(const std::string& name);
 
+    void resetNumbering(const std::string& format, int initial = 0, const std::string& pattern = std::string());
+    std::string getNextNumberedName() const;
+
     ManipulatorPositionSet* parentSet();
     int numChildSets();
     ManipulatorPositionSet* childSet(int index);

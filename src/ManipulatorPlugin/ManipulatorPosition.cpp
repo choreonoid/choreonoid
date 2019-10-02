@@ -8,6 +8,7 @@
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>
 #include <unordered_map>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -32,6 +33,9 @@ public:
     NameToIteratorMap nameToIteratorMap;
     weak_ref_ptr<ManipulatorPositionSet> weak_parentSet;
     vector<ManipulatorPositionSetPtr> childSets;
+    int numberingCounter;
+    string numberingFormat;
+    regex numberingPattern;
 
     Impl(ManipulatorPositionSet* self);
     Impl(ManipulatorPositionSet* self, const Impl& org, ManipulatorPositionCloneMap& cloneMap);
@@ -519,7 +523,7 @@ ManipulatorPositionSet::ManipulatorPositionSet()
 ManipulatorPositionSet::Impl::Impl(ManipulatorPositionSet* self)
     : self(self)
 {
-
+    
 }
 
 
@@ -739,6 +743,48 @@ bool ManipulatorPositionSet::Impl::rewriteNameToIteratorMap(const string& oldNam
     }
         
     return done;
+}
+
+
+void ManipulatorPositionSet::resetNumbering(const std::string& format, int initial, const std::string& pattern)
+{
+    impl->numberingFormat = format;
+    impl->numberingCounter = initial;
+
+    if(!pattern.empty()){
+        impl->numberingPattern.assign(pattern);
+    } else {
+        impl->numberingPattern.assign("(\\d+)");
+    }
+    smatch match;
+    for(auto& position : positions_){
+        if(regex_search(position->name(), match, impl->numberingPattern)){
+            int number = std::stoi(match.str(1));
+            if(number > impl->numberingCounter){
+                impl->numberingCounter = number;
+            }
+        }
+    }
+}
+
+
+std::string ManipulatorPositionSet::getNextNumberedName() const
+{
+    if(impl->numberingFormat.empty()){
+        const_cast<ManipulatorPositionSet*>(this)->resetNumbering("{}", 0);
+    }
+
+    string name;
+    for(int i=0; i < 100; ++i){
+        name = fmt::format(impl->numberingFormat, impl->numberingCounter);
+        auto found = impl->find(name, false, false);
+        if(!found.first){
+            break;
+        }
+        ++impl->numberingCounter;
+    }
+
+    return name;
 }
 
 
