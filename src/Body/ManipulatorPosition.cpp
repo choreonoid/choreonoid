@@ -1,9 +1,9 @@
 #include "ManipulatorPosition.h"
 #include "BodyManipulatorManager.h"
-#include "ManipulatorFrame.h"
-#include <cnoid/Body>
-#include <cnoid/JointPath>
-#include <cnoid/JointPathConfigurationHandler>
+#include "Body.h"
+#include "JointPath.h"
+#include "JointPathConfigurationHandler.h"
+#include "CoordinateFrameSet.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>
@@ -186,7 +186,7 @@ ManipulatorIkPosition::ManipulatorIkPosition()
     rpy_.setZero();
     hasReferenceRpy_ = false;
     baseFrameIndex_ = 0;
-    toolFrameIndex_ = 0;
+    toolFrameOffsetIndex_ = 0;
     configuration_ = 0;
     phase_.fill(0);
 }
@@ -199,7 +199,7 @@ ManipulatorIkPosition::ManipulatorIkPosition(const ManipulatorIkPosition& org)
     rpy_ = org.rpy_;
     hasReferenceRpy_ = org.hasReferenceRpy_;
     baseFrameIndex_ = org.baseFrameIndex_;
-    toolFrameIndex_ = org.toolFrameIndex_;
+    toolFrameOffsetIndex_ = org.toolFrameOffsetIndex_;
     configuration_ = org.configuration_;
     phase_ = org.phase_;
 }
@@ -212,7 +212,7 @@ ManipulatorIkPosition& ManipulatorIkPosition::operator=(const ManipulatorIkPosit
     rpy_ = rhs.rpy_;
     hasReferenceRpy_ = rhs.hasReferenceRpy_;
     baseFrameIndex_ = rhs.baseFrameIndex_;
-    toolFrameIndex_ = rhs.toolFrameIndex_;
+    toolFrameOffsetIndex_ = rhs.toolFrameOffsetIndex_;
     configuration_ = rhs.configuration_;
     phase_ = rhs.phase_;
 
@@ -257,21 +257,21 @@ void ManipulatorIkPosition::resetReferenceRpy()
 }
 
 
-void ManipulatorIkPosition::setBaseFrame(ManipulatorFrameSet* frameSet, int frameIndex)
+void ManipulatorIkPosition::setBaseFrame(CoordinateFrameSet* frameSet, int frameIndex)
 {
     auto frame1 = frameSet->baseFrame(baseFrameIndex_);
     auto frame2 = frameSet->baseFrame(frameIndex);
-    T = frame2.T().inverse(Eigen::Isometry) * frame1.T() * T;
+    T = frame2->T().inverse(Eigen::Isometry) * frame1->T() * T;
     baseFrameIndex_ = frameIndex;
 }
 
 
-void ManipulatorIkPosition::setToolFrame(ManipulatorFrameSet* frameSet, int frameIndex)
+void ManipulatorIkPosition::setToolFrame(CoordinateFrameSet* frameSet, int frameIndex)
 {
-    auto frame1 = frameSet->toolFrame(toolFrameIndex_);
-    auto frame2 = frameSet->toolFrame(frameIndex);
-    T =  T  * frame1.T().inverse(Eigen::Isometry) * frame2.T();
-    toolFrameIndex_ = frameIndex;
+    auto frame1 = frameSet->objectFrameOffset(toolFrameOffsetIndex_);
+    auto frame2 = frameSet->objectFrameOffset(frameIndex);
+    T =  T  * frame1->T().inverse(Eigen::Isometry) * frame2->T();
+    toolFrameOffsetIndex_ = frameIndex;
 }    
 
 
@@ -286,15 +286,15 @@ bool ManipulatorIkPosition::setCurrentPosition(BodyManipulatorManager* manager)
     auto frames = manager->frameSet();
         
     auto T_end = jointPath->endLink()->T();
-    auto T_base = jointPath->baseLink()->T() * frames->currentBaseFrame().T();
-    auto T_tool = frames->currentToolFrame().T();
+    auto T_base = jointPath->baseLink()->T() * frames->currentBaseFrame()->T();
+    auto T_tool = frames->currentObjectFrameOffset()->T();
 
     T = T_base.inverse(Eigen::Isometry) * T_end * T_tool;
 
     hasReferenceRpy_ = false;
 
     baseFrameIndex_ = frames->currentBaseFrameIndex();
-    toolFrameIndex_ = frames->currentToolFrameIndex();
+    toolFrameOffsetIndex_ = frames->currentObjectFrameOffsetIndex();
 
     configuration_ = manager->currentConfiguration();
 
@@ -317,8 +317,8 @@ bool ManipulatorIkPosition::apply(BodyManipulatorManager* manager) const
     }
 
     auto frames = manager->frameSet();
-    auto T_base = jointPath->baseLink()->T() * frames->baseFrame(baseFrameIndex_).T();
-    auto T_tool = frames->toolFrame(toolFrameIndex_).T();
+    auto T_base = jointPath->baseLink()->T() * frames->baseFrame(baseFrameIndex_)->T();
+    auto T_tool = frames->objectFrameOffset(toolFrameOffsetIndex_)->T();
     
     Position T_global = T_base * T * T_tool;
     return manager->jointPath()->calcInverseKinematics(T_global);
@@ -346,7 +346,7 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
     }
     
     baseFrameIndex_ = archive.get("baseFrameIndex", 0);
-    toolFrameIndex_ = archive.get("toolFrameIndex", 0);
+    toolFrameOffsetIndex_ = archive.get("toolFrameIndex", 0);
     configuration_ = archive.get("configIndex", 0);
 
     auto& phaseNodes = *archive.findListing("phases");
@@ -375,7 +375,7 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", rpy());
     archive.write("baseFrameIndex", baseFrameIndex_);
-    archive.write("toolFrameIndex", toolFrameIndex_);
+    archive.write("toolFrameOffsetIndex", toolFrameOffsetIndex_);
     archive.write("configIndex", configuration_);
     auto& phaseNodes = *archive.createFlowStyleListing("phases");
     for(auto& phase : phase_){

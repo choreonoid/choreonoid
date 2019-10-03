@@ -1,5 +1,5 @@
-#ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
-#define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
+#ifndef CNOID_BODY_MANIPULATOR_POSITION_H
+#define CNOID_BODY_MANIPULATOR_POSITION_H
 
 #include <cnoid/Referenced>
 #include <cnoid/CloneMap>
@@ -18,7 +18,7 @@ class ManipulatorFkPosition;
 class ManipulatorPositionCloneMap;
 class ManipulatorPositionSet;
 class BodyManipulatorManager;
-class ManipulatorFrameSet;
+class CoordinateFrameSet;
 class Mapping;
 
 class CNOID_EXPORT ManipulatorPosition : public Referenced
@@ -96,11 +96,11 @@ public:
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();
 
-    void setBaseFrame(ManipulatorFrameSet* frameSet, int frameIndex);
-    void setToolFrame(ManipulatorFrameSet* frameSet, int frameIndex);
+    void setBaseFrame(CoordinateFrameSet* frameSet, int frameIndex);
+    void setToolFrame(CoordinateFrameSet* frameSet, int frameIndex);
 
     int baseFrameIndex() const { return baseFrameIndex_; }
-    int toolFrameIndex() const { return toolFrameIndex_; }
+    int toolFrameIndex() const { return toolFrameOffsetIndex_; }
     int configuration() const { return configuration_; }
 
     virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
@@ -114,7 +114,7 @@ private:
     Vector3 rpy_;
     bool hasReferenceRpy_;
     int baseFrameIndex_;
-    int toolFrameIndex_;
+    int toolFrameOffsetIndex_;
     int configuration_;
     std::array<int, MaxNumJoints> phase_;
 };

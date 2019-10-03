@@ -1,11 +1,11 @@
 #include "BodyManipulatorManager.h"
-#include "ManipulatorFrame.h"
 #include "ManipulatorPosition.h"
-#include <cnoid/Body>
-#include <cnoid/JointPath>
-#include <cnoid/JointPathConfigurationHandler>
-#include <cnoid/HolderDevice>
-#include <cnoid/AttachmentDevice>
+#include "Body.h"
+#include "JointPath.h"
+#include "JointPathConfigurationHandler.h"
+#include "HolderDevice.h"
+#include "AttachmentDevice.h"
+#include "CoordinateFrameSet.h"
 #include "fmt/format.h"
 
 using namespace std;
@@ -20,7 +20,7 @@ public:
     BodyPtr body;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler;
-    ManipulatorFrameSetPtr frameSet;
+    CoordinateFrameSetPtr frameSet;
 
     Impl();
     static bool complementManipulatorPath(Body* body, Link*& io_base, Link*& io_end);
@@ -74,7 +74,7 @@ BodyManipulatorManager::BodyManipulatorManager()
 
 BodyManipulatorManager::Impl::Impl()
 {
-    frameSet = new ManipulatorFrameSet;
+    frameSet = new CoordinateFrameSet;
 }
 
 
@@ -96,7 +96,7 @@ BodyManipulatorManager* BodyManipulatorManager::Impl::createClone()
     auto base = cloneBody->link(jointPath->baseLink()->name());
     auto end = cloneBody->link(jointPath->endLink()->name());
     auto clone = BodyManipulatorManager::getOrCreateManager(cloneBody, base, end);
-    clone->setFrameSet(new ManipulatorFrameSet(*frameSet));
+    clone->setFrameSet(new CoordinateFrameSet(*frameSet));
     return clone;
 }
     
@@ -159,13 +159,13 @@ Body* BodyManipulatorManager::findAttachedEndEffector(Body* manipulatorBody)
 }
 
 
-void BodyManipulatorManager::setFrameSet(ManipulatorFrameSet* frameSet)
+void BodyManipulatorManager::setFrameSet(CoordinateFrameSet* frameSet)
 {
     impl->frameSet = frameSet;
 }
 
 
-ManipulatorFrameSet* BodyManipulatorManager::frameSet()
+CoordinateFrameSet* BodyManipulatorManager::frameSet()
 {
     return impl->frameSet;
 }

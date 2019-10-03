@@ -7,11 +7,8 @@ set(target CnoidManipulatorPlugin)
 
 set(sources
   ManipulatorPlugin.cpp
-  ManipulatorFrame.cpp
-  ManipulatorPosition.cpp
   ManipulatorProgram.cpp
   ManipulatorStatements.cpp
-  BodyManipulatorManager.cpp
   ManipulatorProgramItemBase.cpp
   ManipulatorControllerItemBase.cpp
   ManipulatorProgramViewBase.cpp
@@ -20,11 +17,8 @@ set(sources
   )
 
 set(headers
-  ManipulatorFrame.h
-  ManipulatorPosition.h
   ManipulatorProgram.h
   ManipulatorStatements.h
-  BodyManipulatorManager.h
   ManipulatorProgramItemBase.h
   ManipulatorControllerItemBase
   ManipulatorProgramViewBase.h

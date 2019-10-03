@@ -47,6 +47,9 @@ set(sources
   InverseKinematics.cpp
   CompositeIK.cpp
   PinDragIK.cpp
+  BodyManipulatorManager.cpp
+  ManipulatorPosition.cpp
+  CoordinateFrameSet.cpp
   LinkGroup.cpp
   LeggedBodyHelper.cpp
   BodyCollisionDetector.cpp
@@ -121,6 +124,9 @@ set(headers
   CompositeIK.h
   CompositeBodyIK.h
   PinDragIK.h
+  BodyManipulatorManager.h
+  ManipulatorPosition.h
+  CoordinateFrameSet.h
   LeggedBodyHelper.h
   PenetrationBlocker.h
   ForwardDynamics.h

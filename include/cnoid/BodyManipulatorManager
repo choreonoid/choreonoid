@@ -1,1 +1,1 @@
-#include "src/ManipulatorPlugin/BodyManipulatorManager.h"
+#include "src/Body/BodyManipulatorManager.h"

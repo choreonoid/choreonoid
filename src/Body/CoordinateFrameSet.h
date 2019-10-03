@@ -15,8 +15,7 @@ public:
 
     CoordinateFrame();
     CoordinateFrame(const std::string& name, const Position& T);
-
-    CoordinateFrame* clone() const { return static_cast<CoordinateFrame*>(doClone(nullptr)); }
+    CoordinateFrame(const CoordinateFrame& org);
 
     void setName(const std::string& name){ name_ = name; }
     const std::string& name() const { return name_; }
@@ -25,12 +24,12 @@ public:
     Position& T() { return T_; }
 
 protected:
-    CoordinateFrame(const CoordinateFrame& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Position T_;
     std::string name_;
+    bool isAbsolute_;
 };
 
 typedef ref_ptr<CoordinateFrame> CoordinateFramePtr;
@@ -40,21 +39,23 @@ class CNOID_EXPORT CoordinateFrameSet : public CloneMappableReferenced
 {
 public:
     CoordinateFrameSet();
+    CoordinateFrameSet(const CoordinateFrameSet& org);
 
-    CoordinateFrameSet* clone() const { return static_cast<CoordinateFrameSet*>(doClone(nullptr)); }
-    CoordinateFrameSet* clone(CloneMap* cloneMap) const { return static_cast<CoordinateFrameSet*>(doClone(cloneMap)); }
-    
-    int numBaseFrames() const { return baseFrames_.size(); }
-    int numToolFrames() const { return toolFrames_.size(); }
+    int numWorldFrames() const { return worldFrames_.size();  }
+    int numObjectFrameOffsets() const { return objectFrameOffsets_.size(); }
 
     CoordinateFrame* worldFrame(int index);
-    CoordinateFrame* localFrameOffset(int index);
-
     int currentWorldFrameIndex() const { return currentWorldFrameIndex_; }
-    CoordinateFrame& currentWorldFrame(){ return worldFrame(currentWorldFrameIndex_); }
-    
-    int currentLocalFrameOffsetIndex() const { return currentLocalFrameOffsetIndex_; }
-    CoordinateFrame& currentLocalFrameOffset(){ return toolFrame(currentToolFrameIndex_); }
+    CoordinateFrame* currentWorldFrame(){ return worldFrame(currentWorldFrameIndex_); }
+
+    // The following functions are the same as the worldFrame functions
+    CoordinateFrame* baseFrame(int index){ return worldFrame(index); }
+    int currentBaseFrameIndex() const { return currentWorldFrameIndex_; }
+    CoordinateFrame* currentBaseFrame(){ return worldFrame(currentWorldFrameIndex_); }
+
+    CoordinateFrame* objectFrameOffset(int index);
+    int currentObjectFrameOffsetIndex() const { return currentObjectFrameOffsetIndex_; }
+    CoordinateFrame* currentObjectFrameOffset(){ return objectFrameOffset(currentObjectFrameOffsetIndex_); } 
 
 protected:
     CoordinateFrameSet(const CoordinateFrameSet& org, CloneMap* cloneMap);
@@ -62,9 +63,9 @@ protected:
     
 private:
     std::vector<CoordinateFramePtr> worldFrames_;
-    std::vector<CoordinateFramePtr> localFrameOffsets_;
+    std::vector<CoordinateFramePtr> objectFrameOffsets_;
     int currentWorldFrameIndex_;
-    int currentLocalFrameOffsetIndex_;
+    int currentObjectFrameOffsetIndex_;
 };
 
 typedef ref_ptr<CoordinateFrameSet> CoordinateFrameSetPtr;

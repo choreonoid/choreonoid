@@ -1,5 +1,5 @@
-#ifndef CNOID_MANIPULATOR_PLUGIN_BODY_MANIPULATOR_MANAGER_H
-#define CNOID_MANIPULATOR_PLUGIN_BODY_MANIPULATOR_MANAGER_H
+#ifndef CNOID_BODY_BODY_MANIPULATOR_MANAGER_H
+#define CNOID_BODY_BODY_MANIPULATOR_MANAGER_H
 
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
@@ -12,7 +12,7 @@ class Body;
 class Link;
 class JointPath;
 class JointPathConfigurationHandler;
-class ManipulatorFrameSet;
+class CoordinateFrameSet;
 
 class CNOID_EXPORT BodyManipulatorManager : public Referenced
 {
@@ -29,8 +29,8 @@ public:
 
     Body* findAttachedEndEffector(Body* manipulatorBody);
 
-    void setFrameSet(ManipulatorFrameSet* frameSet);
-    ManipulatorFrameSet* frameSet();
+    void setFrameSet(CoordinateFrameSet* frameSet);
+    CoordinateFrameSet* frameSet();
 
     int currentConfiguration() const;
     std::string configurationName(int index) const;

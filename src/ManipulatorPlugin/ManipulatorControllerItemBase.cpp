@@ -1,6 +1,6 @@
 #include "ManipulatorControllerItemBase.h"
 #include "ManipulatorProgramItemBase.h"
-#include "BodyManipulatorManager.h"
+#include <cnoid/BodyManipulatorManager>
 #include <cnoid/ManipulatorProgram>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
