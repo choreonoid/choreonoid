@@ -85,6 +85,7 @@ endif()
 set(headers
   Referenced.h
   CloneMap.h
+  CloneMappableReferenced.h
   EasyScanner.h
   GaussianFilter.h
   UniformCubicBSpline.h

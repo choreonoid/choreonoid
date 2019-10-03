@@ -1,5 +1,5 @@
 #include "CloneMap.h"
-#include "Referenced.h"
+#include "CloneMappableReferenced.h"
 #include <unordered_map>
 #include <vector>
 
@@ -26,20 +26,33 @@ public:
 
     vector<ReplaceFunctionInfo> replaceFunctions;
     
-    Impl(CloneFunction& cloneFunction);
+    Impl();
+    Impl(const CloneFunction& cloneFunction);
     Impl(const Impl& org);
 };
 
 }
 
 
-CloneMap::CloneMap(CloneFunction cloneFunction)
+CloneMap::CloneMap()
+{
+    impl = new Impl;
+}
+
+
+CloneMap::Impl::Impl()
+{
+
+}
+
+
+CloneMap::CloneMap(const CloneFunction& cloneFunction)
 {
     impl = new Impl(cloneFunction);
 }
 
 
-CloneMap::Impl::Impl(CloneFunction& cloneFunction)
+CloneMap::Impl::Impl(const CloneFunction& cloneFunction)
     : cloneFunction(cloneFunction)
 {
 
@@ -53,8 +66,8 @@ CloneMap::CloneMap(const CloneMap& org)
 
 
 CloneMap::Impl::Impl(const Impl& org)
-    : orgToCloneMap(org.orgToCloneMap),
-      cloneFunction(org.cloneFunction)
+    : orgToCloneMap(org.orgToCloneMap)
+      //cloneFunction(org.cloneFunction)
 {
 
 }
@@ -94,6 +107,29 @@ Referenced* CloneMap::findOrCreateClone_(const Referenced* org)
     auto clone = findClone_(org);
     if(!clone){
         clone = impl->cloneFunction(org);
+        impl->orgToCloneMap[const_cast<Referenced*>(org)] = clone;
+    }
+    return clone;
+}
+
+
+Referenced* CloneMap::findOrCreateClone_(const CloneMappableReferenced* org)
+{
+    auto clone = findClone_(org);
+    if(!clone){
+        clone = org->doClone(this);
+        impl->orgToCloneMap[const_cast<CloneMappableReferenced*>(org)] = clone;
+    }
+    return clone;
+}
+
+
+Referenced* CloneMap::findOrCreateClone_
+(const Referenced* org, const CloneFunction& cloneFunction)
+{
+    auto clone = findClone_(org);
+    if(!clone){
+        clone = cloneFunction(org);
         impl->orgToCloneMap[const_cast<Referenced*>(org)] = clone;
     }
     return clone;
