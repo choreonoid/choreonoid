@@ -1,6 +1,7 @@
 #ifndef CNOID_BODY_MANIPULATOR_POSITION_H
 #define CNOID_BODY_MANIPULATOR_POSITION_H
 
+#include "CoordinateFrameSet.h"
 #include <cnoid/Referenced>
 #include <cnoid/CloneMap>
 #include <cnoid/EigenTypes>
@@ -18,7 +19,6 @@ class ManipulatorFkPosition;
 class ManipulatorPositionCloneMap;
 class ManipulatorPositionSet;
 class BodyManipulatorManager;
-class CoordinateFrameSet;
 class Mapping;
 
 class CNOID_EXPORT ManipulatorPosition : public Referenced
@@ -96,16 +96,25 @@ public:
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();
 
-    void setBaseFrame(CoordinateFrameSet* frameSet, int frameIndex);
-    void setToolFrame(CoordinateFrameSet* frameSet, int frameIndex);
+    void updatePositionWithNewFrames(
+        CoordinateFrameSetPair* frameSetPair,
+        const CoordinateFrame::Id& baseFrameId,
+        const CoordinateFrame::Id& toolFrameId);
 
-    int baseFrameIndex() const { return baseFrameIndex_; }
-    int toolFrameIndex() const { return toolFrameOffsetIndex_; }
+    void setBaseFrameId(const CoordinateFrame::Id& id){ baseFrameId_ = id; }
+    void setToolFrameId(const CoordinateFrame::Id& id){ toolFrameId_ = id; }
+    
+    const CoordinateFrame::Id& baseFrameId() const { return baseFrameId_; }
+    const CoordinateFrame::Id& toolFrameId() const { return toolFrameId_; }
+
+    const CoordinateFrame::Id& frameId(int which) const {
+        return (which == 0) ? baseFrameId_ : toolFrameId_;
+    }
+    
     int configuration() const { return configuration_; }
 
-    virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
+    virtual bool setCurrentPosition(BodyManipulatorManager* manager);
     virtual bool apply(BodyManipulatorManager* manager) const override;
-
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 
@@ -113,8 +122,8 @@ private:
     Position T;
     Vector3 rpy_;
     bool hasReferenceRpy_;
-    int baseFrameIndex_;
-    int toolFrameOffsetIndex_;
+    CoordinateFrame::Id baseFrameId_;
+    CoordinateFrame::Id toolFrameId_;
     int configuration_;
     std::array<int, MaxNumJoints> phase_;
 };

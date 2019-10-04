@@ -20,7 +20,7 @@ public:
     BodyPtr body;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler;
-    CoordinateFrameSetPtr frameSet;
+    CoordinateFrameSetPairPtr frameSetPair;
 
     Impl();
     static bool complementManipulatorPath(Body* body, Link*& io_base, Link*& io_end);
@@ -74,7 +74,7 @@ BodyManipulatorManager::BodyManipulatorManager()
 
 BodyManipulatorManager::Impl::Impl()
 {
-    frameSet = new CoordinateFrameSet;
+    frameSetPair = new CoordinateFrameSetPair;
 }
 
 
@@ -96,7 +96,7 @@ BodyManipulatorManager* BodyManipulatorManager::Impl::createClone()
     auto base = cloneBody->link(jointPath->baseLink()->name());
     auto end = cloneBody->link(jointPath->endLink()->name());
     auto clone = BodyManipulatorManager::getOrCreateManager(cloneBody, base, end);
-    clone->setFrameSet(new CoordinateFrameSet(*frameSet));
+    clone->setFrameSetPair(new CoordinateFrameSetPair(*frameSetPair));
     return clone;
 }
     
@@ -159,15 +159,27 @@ Body* BodyManipulatorManager::findAttachedEndEffector(Body* manipulatorBody)
 }
 
 
-void BodyManipulatorManager::setFrameSet(CoordinateFrameSet* frameSet)
+void BodyManipulatorManager::setFrameSetPair(CoordinateFrameSetPair* frameSetPair)
 {
-    impl->frameSet = frameSet;
+    impl->frameSetPair = frameSetPair;
 }
 
 
-CoordinateFrameSet* BodyManipulatorManager::frameSet()
+CoordinateFrameSetPair* BodyManipulatorManager::frameSetPair()
 {
-    return impl->frameSet;
+    return impl->frameSetPair;
+}
+
+
+CoordinateFrameSet* BodyManipulatorManager::baseFrames()
+{
+    return impl->frameSetPair->baseFrames();
+}
+
+
+CoordinateFrameSet* BodyManipulatorManager::toolFrames()
+{
+    return impl->frameSetPair->localFrames();
 }
 
 

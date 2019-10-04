@@ -13,6 +13,7 @@ class Link;
 class JointPath;
 class JointPathConfigurationHandler;
 class CoordinateFrameSet;
+class CoordinateFrameSetPair;
 
 class CNOID_EXPORT BodyManipulatorManager : public Referenced
 {
@@ -29,8 +30,10 @@ public:
 
     Body* findAttachedEndEffector(Body* manipulatorBody);
 
-    void setFrameSet(CoordinateFrameSet* frameSet);
-    CoordinateFrameSet* frameSet();
+    void setFrameSetPair(CoordinateFrameSetPair* frameSetPair);
+    CoordinateFrameSetPair* frameSetPair();
+    CoordinateFrameSet* baseFrames();
+    CoordinateFrameSet* toolFrames();
 
     int currentConfiguration() const;
     std::string configurationName(int index) const;

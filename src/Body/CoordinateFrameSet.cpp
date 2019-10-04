@@ -1,4 +1,5 @@
 #include "CoordinateFrameSet.h"
+#include "CoordinateFrameContainer.h"
 #include <cnoid/CloneMap>
 
 using namespace std;
@@ -8,12 +9,13 @@ using namespace cnoid;
 CoordinateFrame::CoordinateFrame()
 {
     T_.setIdentity();
+    id_ = -1; // make invalid
 }
 
 
-CoordinateFrame::CoordinateFrame(const std::string& name, const Position& T)
+CoordinateFrame::CoordinateFrame(const Id& id, const Position& T)
     : T_(T),
-      name_(name)
+      id_(id)
 {
 
 }
@@ -21,7 +23,7 @@ CoordinateFrame::CoordinateFrame(const std::string& name, const Position& T)
 
 CoordinateFrame::CoordinateFrame(const CoordinateFrame& org)
     : T_(org.T_),
-      name_(org.name_)
+      id_(org.id_)
 {
 
 }
@@ -33,63 +35,66 @@ Referenced* CoordinateFrame::doClone(CloneMap*) const
 }
 
 
-CoordinateFrameSet::CoordinateFrameSet()
+std::string CoordinateFrame::idLabel() const
 {
-    worldFrames_.push_back(new CoordinateFrame("World", Position::Identity()));
-    objectFrameOffsets_.push_back(new CoordinateFrame("Mechanical", Position::Identity()));
-                          
-    currentWorldFrameIndex_ = 0;
-    currentObjectFrameOffsetIndex_ = 0;
+    int type = stdx::get_variant_index(id_);
+    if(type == IntId){
+        return std::to_string(stdx::get<int>(id_));
+    } else {
+        return stdx::get<string>(id_);
+    }
 }
 
 
-CoordinateFrameSet::CoordinateFrameSet(const CoordinateFrameSet& org)
+void CoordinateFrameSet::setCoordinateFrameId(CoordinateFrame* frame, const CoordinateFrame::Id& id)
 {
-    for(auto& frame : org.worldFrames_){
-        worldFrames_.push_back(new CoordinateFrame(*frame));
-    }
-    for(auto& frame : org.objectFrameOffsets_){
-        objectFrameOffsets_.push_back(new CoordinateFrame(*frame));
-    }
+    frame->id_ = id;
+}
 
-    currentWorldFrameIndex_ = org.currentWorldFrameIndex_;
-    currentObjectFrameOffsetIndex_ = org.currentObjectFrameOffsetIndex_;
+
+void CoordinateFrameSet::setCoordinateFrameOwner(CoordinateFrame* frame, CoordinateFrameSet* owner)
+{
+    frame->ownerFrameSet_ = owner;
+}
+
+
+CoordinateFrameSetPair::CoordinateFrameSetPair()
+{
+    for(int i=0; i < 2; ++i){
+        frameSets[i] = new CoordinateFrameContainer;
+    }
+}
+
+
+CoordinateFrameSetPair::CoordinateFrameSetPair
+(CoordinateFrameSet* baseFrames, CoordinateFrameSet* offsetFrames)
+{
+    frameSets[0] = baseFrames;
+    frameSets[1] = offsetFrames;
+}
+
+
+CoordinateFrameSetPair::CoordinateFrameSetPair(const CoordinateFrameSetPair& org)
+{
+    for(int i=0; i < 2; ++i){
+        frameSets[i] = org.frameSets[i]->clone();
+    }
+}
+
+
+CoordinateFrameSetPair::CoordinateFrameSetPair(const CoordinateFrameSetPair& org, CloneMap* cloneMap)
+{
+    for(int i=0; i < 2; ++i){
+        frameSets[i] = cloneMap->getClone(org.frameSets[i].get());
+    }
 }
     
-
-CoordinateFrameSet::CoordinateFrameSet(const CoordinateFrameSet& org, CloneMap* cloneMap)
+    
+Referenced* CoordinateFrameSetPair::doClone(CloneMap* cloneMap) const
 {
-    for(auto& frame : org.worldFrames_){
-        worldFrames_.push_back(cloneMap->getClone(frame.get()));
+    if(cloneMap){
+        return new CoordinateFrameSetPair(*this, cloneMap);
+    } else {
+        return new CoordinateFrameSetPair(*this);
     }
-    for(auto& frame : org.objectFrameOffsets_){
-        objectFrameOffsets_.push_back(cloneMap->getClone(frame.get()));
-    }
-        
-    currentWorldFrameIndex_ = org.currentWorldFrameIndex_;
-    currentObjectFrameOffsetIndex_ = org.currentObjectFrameOffsetIndex_;
-}
-
-
-Referenced* CoordinateFrameSet::doClone(CloneMap* cloneMap) const
-{
-    return new CoordinateFrameSet(*this, cloneMap);
-}
-
-
-CoordinateFrame* CoordinateFrameSet::worldFrame(int index)
-{
-    if(index >= worldFrames_.size()){
-        worldFrames_.resize(index + 1);
-    }
-    return worldFrames_[index];
-}
-
-
-CoordinateFrame* CoordinateFrameSet::objectFrameOffset(int index)
-{
-    if(index >= objectFrameOffsets_.size()){
-        objectFrameOffsets_.resize(index + 1);
-    }
-    return objectFrameOffsets_[index];
 }

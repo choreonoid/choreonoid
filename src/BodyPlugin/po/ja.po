@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-25 22:51+0900\n"
+"POT-Creation-Date: 2019-10-07 00:30+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -226,6 +226,10 @@ msgstr "タイムスタンプ接尾辞"
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
 
+#: CoordinateFrameSetItem.cpp:29
+msgid "CoordinateFrameSetItem"
+msgstr "座標フレーム集合アイテム"
+
 #: SimpleControllerItem.cpp:153
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
@@ -427,7 +431,7 @@ msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:501 BodyItem.cpp:1353
+#: WorldItem.cpp:501 BodyItem.cpp:1376
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -731,6 +735,7 @@ msgid "I/O Connection"
 msgstr "I/O接続"
 
 #: IoConnectionView.cpp:523 IoConnectionView.cpp:701
+#: CoordinateFrameSetView.cpp:358 CoordinateFrameSetView.cpp:496
 msgid "Add"
 msgstr "追加"
 
@@ -738,7 +743,7 @@ msgstr "追加"
 msgid "There are no I/O devices in the world"
 msgstr "ワールドにI/Oデバイスが存在しません。"
 
-#: IoConnectionView.cpp:704
+#: IoConnectionView.cpp:704 CoordinateFrameSetView.cpp:499
 msgid "Remove"
 msgstr "削除"
 
@@ -806,7 +811,7 @@ msgstr ""
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:158 BodyItem.cpp:1350
+#: LinkPropertyView.cpp:158 BodyItem.cpp:1373
 msgid "Mass"
 msgstr "質量"
 
@@ -842,67 +847,67 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
-#: BodyItem.cpp:205
+#: BodyItem.cpp:206
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:207
+#: BodyItem.cpp:208
 msgid "Body"
 msgstr "ボディ"
 
-#: BodyItem.cpp:1228
+#: BodyItem.cpp:1251
 msgid "{0} cannot be attached to {1}."
 msgstr "{0}は{1}にアタッチできません．"
 
-#: BodyItem.cpp:1255
+#: BodyItem.cpp:1278
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1273
+#: BodyItem.cpp:1296
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1344
+#: BodyItem.cpp:1367
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1345
+#: BodyItem.cpp:1368
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1346
+#: BodyItem.cpp:1369
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1347
+#: BodyItem.cpp:1370
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1348
+#: BodyItem.cpp:1371
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1349
+#: BodyItem.cpp:1372
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1351
+#: BodyItem.cpp:1374
 msgid "Static model"
 msgstr "静的モデル"
 
-#: BodyItem.cpp:1355
+#: BodyItem.cpp:1378
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1357
+#: BodyItem.cpp:1380
 msgid "Editable"
 msgstr "編集可能"
 
-#: BodyItem.cpp:1439
+#: BodyItem.cpp:1462
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1464
+#: BodyItem.cpp:1487
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1013,9 +1018,41 @@ msgstr "2Dモード"
 msgid "Old accel sensor mode"
 msgstr "旧加速センサモード"
 
+#: CoordinateFrameSetView.cpp:138 LinkTreeWidget.cpp:279
+msgid "ID"
+msgstr ""
+
+#: CoordinateFrameSetView.cpp:140
+msgid "X"
+msgstr ""
+
+#: CoordinateFrameSetView.cpp:142 CoordinateFrameSetView.cpp:150
+msgid "Y"
+msgstr ""
+
+#: CoordinateFrameSetView.cpp:144
+msgid "Z"
+msgstr ""
+
+#: CoordinateFrameSetView.cpp:146
+msgid "R"
+msgstr ""
+
+#: CoordinateFrameSetView.cpp:148
+msgid "P"
+msgstr ""
+
+#: CoordinateFrameSetView.cpp:331
+msgid "Coordinate Frames"
+msgstr "座標フレーム"
+
 #: CollisionSeq.cpp:79
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
+
+#: CoordinateFrameSetPairItem.cpp:32
+msgid "CoordinateFrameSetPairItem"
+msgstr "座標フレーム集合対アイテム"
 
 #: CollisionSeqItem.cpp:66
 msgid "CollisionSeqItem"
@@ -1158,7 +1195,7 @@ msgstr ""
 msgid "{0:7.3f} [s]: Collision between {1} and {2}"
 msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
 
-#: BodyPlugin.cpp:134
+#: BodyPlugin.cpp:140
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -1595,10 +1632,6 @@ msgstr "干渉データの記録"
 #: SimulatorItem.cpp:2587
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
-
-#: LinkTreeWidget.cpp:279
-msgid "ID"
-msgstr ""
 
 #: LinkTreeWidget.cpp:300
 msgid "Link List"

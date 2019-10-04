@@ -14,6 +14,7 @@ set(sources
   ManipulatorProgramViewBase.cpp
   ManipulatorProgramViewDelegates.cpp
   ManipulatorStatementViewBase.cpp
+  ManipulatorCoordinateFrameItem.cpp
   )
 
 set(headers
@@ -23,6 +24,7 @@ set(headers
   ManipulatorControllerItemBase
   ManipulatorProgramViewBase.h
   ManipulatorStatementViewBase.h
+  ManipulatorCoordinateFrameItem.h
   exportdecl.h
   )
 

@@ -185,8 +185,8 @@ ManipulatorIkPosition::ManipulatorIkPosition()
     T.setIdentity();
     rpy_.setZero();
     hasReferenceRpy_ = false;
-    baseFrameIndex_ = 0;
-    toolFrameOffsetIndex_ = 0;
+    baseFrameId_ = -1; // invalid value
+    toolFrameId_ = -1; // invalid value
     configuration_ = 0;
     phase_.fill(0);
 }
@@ -198,8 +198,8 @@ ManipulatorIkPosition::ManipulatorIkPosition(const ManipulatorIkPosition& org)
     T = org.T;
     rpy_ = org.rpy_;
     hasReferenceRpy_ = org.hasReferenceRpy_;
-    baseFrameIndex_ = org.baseFrameIndex_;
-    toolFrameOffsetIndex_ = org.toolFrameOffsetIndex_;
+    baseFrameId_ = org.baseFrameId_;
+    toolFrameId_ = org.toolFrameId_;
     configuration_ = org.configuration_;
     phase_ = org.phase_;
 }
@@ -211,8 +211,8 @@ ManipulatorIkPosition& ManipulatorIkPosition::operator=(const ManipulatorIkPosit
     T = rhs.T;
     rpy_ = rhs.rpy_;
     hasReferenceRpy_ = rhs.hasReferenceRpy_;
-    baseFrameIndex_ = rhs.baseFrameIndex_;
-    toolFrameOffsetIndex_ = rhs.toolFrameOffsetIndex_;
+    baseFrameId_ = rhs.baseFrameId_;
+    toolFrameId_ = rhs.toolFrameId_;
     configuration_ = rhs.configuration_;
     phase_ = rhs.phase_;
 
@@ -257,22 +257,22 @@ void ManipulatorIkPosition::resetReferenceRpy()
 }
 
 
-void ManipulatorIkPosition::setBaseFrame(CoordinateFrameSet* frameSet, int frameIndex)
+void ManipulatorIkPosition::updatePositionWithNewFrames
+(CoordinateFrameSetPair* frameSetPair,
+ const CoordinateFrame::Id& baseFrameId, const CoordinateFrame::Id& toolFrameId)
 {
-    auto frame1 = frameSet->baseFrame(baseFrameIndex_);
-    auto frame2 = frameSet->baseFrame(frameIndex);
-    T = frame2->T().inverse(Eigen::Isometry) * frame1->T() * T;
-    baseFrameIndex_ = frameIndex;
+    auto baseFrames = frameSetPair->baseFrames();
+    auto Tb1 = baseFrames->findFrame(this->baseFrameId_);
+    auto Tb2 = baseFrames->findFrame(baseFrameId);
+    T = Tb2->T().inverse(Eigen::Isometry) * Tb1->T() * T;
+    this->baseFrameId_ = baseFrameId;
+
+    auto toolFrames = frameSetPair->localFrames();
+    auto Tt1 = toolFrames->findFrame(this->toolFrameId_);
+    auto Tt2 = toolFrames->findFrame(toolFrameId);
+    T =  T  * Tt1->T().inverse(Eigen::Isometry) * Tt2->T();
+    this->toolFrameId_ = toolFrameId;
 }
-
-
-void ManipulatorIkPosition::setToolFrame(CoordinateFrameSet* frameSet, int frameIndex)
-{
-    auto frame1 = frameSet->objectFrameOffset(toolFrameOffsetIndex_);
-    auto frame2 = frameSet->objectFrameOffset(frameIndex);
-    T =  T  * frame1->T().inverse(Eigen::Isometry) * frame2->T();
-    toolFrameOffsetIndex_ = frameIndex;
-}    
 
 
 bool ManipulatorIkPosition::setCurrentPosition(BodyManipulatorManager* manager)
@@ -283,18 +283,14 @@ bool ManipulatorIkPosition::setCurrentPosition(BodyManipulatorManager* manager)
         return false;
     }
 
-    auto frames = manager->frameSet();
-        
     auto T_end = jointPath->endLink()->T();
-    auto T_base = jointPath->baseLink()->T() * frames->currentBaseFrame()->T();
-    auto T_tool = frames->currentObjectFrameOffset()->T();
+    auto F_base = manager->baseFrames()->findFrame(baseFrameId_)->T();
+    auto T_base = jointPath->baseLink()->T() * F_base;
+    auto F_tool = manager->toolFrames()->findFrame(toolFrameId_)->T();
 
-    T = T_base.inverse(Eigen::Isometry) * T_end * T_tool;
+    T = T_base.inverse(Eigen::Isometry) * T_end * F_tool;
 
     hasReferenceRpy_ = false;
-
-    baseFrameIndex_ = frames->currentBaseFrameIndex();
-    toolFrameOffsetIndex_ = frames->currentObjectFrameOffsetIndex();
 
     configuration_ = manager->currentConfiguration();
 
@@ -316,12 +312,28 @@ bool ManipulatorIkPosition::apply(BodyManipulatorManager* manager) const
         handler->setPreferredConfiguration(configuration_);
     }
 
-    auto frames = manager->frameSet();
-    auto T_base = jointPath->baseLink()->T() * frames->baseFrame(baseFrameIndex_)->T();
-    auto T_tool = frames->objectFrameOffset(toolFrameOffsetIndex_)->T();
+    auto F_base = manager->baseFrames()->findFrame(baseFrameId_)->T();
+    auto T_base = jointPath->baseLink()->T() * F_base;
+    auto F_tool = manager->toolFrames()->findFrame(toolFrameId_)->T();
     
-    Position T_global = T_base * T * T_tool;
+    Position T_global = T_base * T * F_tool;
     return manager->jointPath()->calcInverseKinematics(T_global);
+}
+
+
+static void readFrameId(const Mapping& archive, const char* key, CoordinateFrame::Id& id)
+{
+    auto idNode = archive.find(key);
+    if(idNode->isValid() && idNode->isScalar()){
+        auto scalar = static_cast<ScalarNode*>(idNode);
+        if(scalar->stringStyle()!= PLAIN_STRING){
+            id = idNode->toString();
+        } else {
+            id = idNode->toInt();
+        }
+    } else {
+        id = -1;
+    }
 }
 
 
@@ -344,9 +356,10 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
         T.linear().setIdentity();
         resetReferenceRpy();
     }
-    
-    baseFrameIndex_ = archive.get("baseFrameIndex", 0);
-    toolFrameOffsetIndex_ = archive.get("toolFrameIndex", 0);
+
+    readFrameId(archive, "baseFrame", baseFrameId_);
+    readFrameId(archive, "toolFrame", toolFrameId_);
+
     configuration_ = archive.get("configIndex", 0);
 
     auto& phaseNodes = *archive.findListing("phases");
@@ -366,6 +379,17 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
 }
 
 
+static void writeFrameId(Mapping& archive, const char* key, const CoordinateFrame::Id& id)
+{
+    if(stdx::get_variant_index(id) == CoordinateFrame::IntId){
+        int idValue = stdx::get<int>(id);
+        if(idValue >= 0){
+            archive.write(key, idValue);
+        }
+    }
+}
+
+
 bool ManipulatorIkPosition::write(Mapping& archive) const
 {
     archive.write("type", "IkPosition");
@@ -374,8 +398,10 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
     
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", rpy());
-    archive.write("baseFrameIndex", baseFrameIndex_);
-    archive.write("toolFrameOffsetIndex", toolFrameOffsetIndex_);
+
+    writeFrameId(archive, "baseFrame", baseFrameId_);
+    writeFrameId(archive, "toolFrame", toolFrameId_);
+
     archive.write("configIndex", configuration_);
     auto& phaseNodes = *archive.createFlowStyleListing("phases");
     for(auto& phase : phase_){

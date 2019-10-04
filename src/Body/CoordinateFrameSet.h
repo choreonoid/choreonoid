@@ -3,33 +3,57 @@
 
 #include <cnoid/CloneMappableReferenced>
 #include <cnoid/EigenTypes>
-#include <vector>
+#include <cnoid/stdx/variant>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
+
+class CoordinateFrameSet;
 
 class CNOID_EXPORT CoordinateFrame : public CloneMappableReferenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    enum IdType { IntId, StringId };
+    typedef stdx::variant<int, std::string> Id;
+    
     CoordinateFrame();
-    CoordinateFrame(const std::string& name, const Position& T);
+    CoordinateFrame(const Id& id, const Position& T);
     CoordinateFrame(const CoordinateFrame& org);
 
-    void setName(const std::string& name){ name_ = name; }
-    const std::string& name() const { return name_; }
+    const Id& id() const { return id_; }
+
+    template <class ValueType>
+    ValueType id() const {
+        if(stdx::holds_alternative<ValueType>(id_)){
+            return stdx::get<ValueType>(id_);
+        }
+        return ValueType();
+    }
+
+    std::string idLabel() const;
 
     const Position& T() const { return T_; }
     Position& T() { return T_; }
+
+    const Position& position() const { return T_; }
+    void setPosition(const Position& T) { T_ = T; }
+    
+    CoordinateFrameSet* ownerFrameSet() const {
+        return ownerFrameSet_.lock();
+    }
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Position T_;
-    std::string name_;
-    bool isAbsolute_;
+    Id id_;
+    weak_ref_ptr<CoordinateFrameSet> ownerFrameSet_;
+
+    friend class CoordinateFrameSet;
 };
 
 typedef ref_ptr<CoordinateFrame> CoordinateFramePtr;
@@ -38,37 +62,61 @@ typedef ref_ptr<CoordinateFrame> CoordinateFramePtr;
 class CNOID_EXPORT CoordinateFrameSet : public CloneMappableReferenced
 {
 public:
-    CoordinateFrameSet();
-    CoordinateFrameSet(const CoordinateFrameSet& org);
+    CoordinateFrameSet* clone(){
+        return static_cast<CoordinateFrameSet*>(doClone(nullptr));
+    }
+    CoordinateFrameSet* clone(CloneMap& cloneMap){
+        return static_cast<CoordinateFrameSet*>(doClone(&cloneMap));
+    }
 
-    int numWorldFrames() const { return worldFrames_.size();  }
-    int numObjectFrameOffsets() const { return objectFrameOffsets_.size(); }
-
-    CoordinateFrame* worldFrame(int index);
-    int currentWorldFrameIndex() const { return currentWorldFrameIndex_; }
-    CoordinateFrame* currentWorldFrame(){ return worldFrame(currentWorldFrameIndex_); }
-
-    // The following functions are the same as the worldFrame functions
-    CoordinateFrame* baseFrame(int index){ return worldFrame(index); }
-    int currentBaseFrameIndex() const { return currentWorldFrameIndex_; }
-    CoordinateFrame* currentBaseFrame(){ return worldFrame(currentWorldFrameIndex_); }
-
-    CoordinateFrame* objectFrameOffset(int index);
-    int currentObjectFrameOffsetIndex() const { return currentObjectFrameOffsetIndex_; }
-    CoordinateFrame* currentObjectFrameOffset(){ return objectFrameOffset(currentObjectFrameOffsetIndex_); } 
+    /*
+    virtual int getNumCoordinateFrames() const = 0;
+    virtual CoordinateFrame* getCoordinateFrame(int index) const = 0;
+    virtual CoordinateFrame* findCoordinateFrame(
+        const CoordinateFrame::Id& id, bool returnIdentityFrameIfNotFound = true) const = 0;
+    */
+    virtual int getNumFrames() const = 0;
+    virtual CoordinateFrame* getFrame(int index) const = 0;
+    virtual CoordinateFrame* findFrame(
+        const CoordinateFrame::Id& id, bool returnIdentityFrameIfNotFound = true) const = 0;
 
 protected:
-    CoordinateFrameSet(const CoordinateFrameSet& org, CloneMap* cloneMap);
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
-    
-private:
-    std::vector<CoordinateFramePtr> worldFrames_;
-    std::vector<CoordinateFramePtr> objectFrameOffsets_;
-    int currentWorldFrameIndex_;
-    int currentObjectFrameOffsetIndex_;
+    void setCoordinateFrameId(CoordinateFrame* frame, const CoordinateFrame::Id& id);
+    void setCoordinateFrameOwner(CoordinateFrame* frame, CoordinateFrameSet* owner);
 };
 
 typedef ref_ptr<CoordinateFrameSet> CoordinateFrameSetPtr;
+
+
+class CNOID_EXPORT CoordinateFrameSetPair : public CloneMappableReferenced
+{
+public:
+    CoordinateFrameSetPair();
+    CoordinateFrameSetPair(CoordinateFrameSet* baseFrames, CoordinateFrameSet* offsetFrame);
+    CoordinateFrameSetPair(const CoordinateFrameSetPair& org);
+
+    CoordinateFrameSet* frameSet(int which){ return frameSets[which]; }
+
+    CoordinateFrameSet* baseFrames(){ return frameSets[0]; }
+    CoordinateFrameSet* localFrames(){ return frameSets[1]; }
+
+    CoordinateFrame* findBaseFrame(const std::string& name){
+        return baseFrames()->findFrame(name);
+    }
+
+    CoordinateFrame* findLocalFrame(const std::string& name){
+        return localFrames()->findFrame(name);
+    }
+    
+protected:
+    CoordinateFrameSetPair(const CoordinateFrameSetPair& org, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    CoordinateFrameSetPtr frameSets[2];
+};
+
+typedef ref_ptr<CoordinateFrameSetPair> CoordinateFrameSetPairPtr;
 
 }
 

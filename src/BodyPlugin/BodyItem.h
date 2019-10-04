@@ -19,6 +19,8 @@ class BodyState;
 class BodyItem;
 typedef ref_ptr<BodyItem> BodyItemPtr;
 class BodyItemImpl;
+class CoordinateFrameSetPair;
+typedef ref_ptr<CoordinateFrameSetPair> CoordinateFrameSetPairPtr;
 class InverseKinematics;
 class PinDragIK;
 class PenetrationBlocker;
@@ -67,6 +69,8 @@ public:
     void acceptKinematicStateEdit();
     bool undoKinematicState();
     bool redoKinematicState();
+
+    CoordinateFrameSetPair* getCoordinateFrameSetPair() const;
 
     std::shared_ptr<PinDragIK> pinDragIK();
     std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);

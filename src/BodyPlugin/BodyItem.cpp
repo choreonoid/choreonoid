@@ -8,6 +8,7 @@
 #include "KinematicsBar.h"
 #include "EditableSceneBody.h"
 #include "LinkSelectionView.h"
+#include "CoordinateFrameSetPairItem.h"
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/YAMLReader>
 #include <cnoid/EigenArchive>
@@ -633,6 +634,28 @@ bool BodyItemImpl::redoKinematicState()
         return true;
     }
     return false;
+}
+
+
+CoordinateFrameSetPair* BodyItem::getCoordinateFrameSetPair() const
+{
+    ItemList<CoordinateFrameSetPairItem> lowerItems;
+    if(lowerItems.extractSubTreeItems(this)){
+        return lowerItems.toSingle()->frameSetPair();
+    }
+    auto upperItem = parentItem();
+    while(upperItem){
+        if(auto frameSetPairItem = dynamic_cast<CoordinateFrameSetPairItem*>(upperItem)){
+            return frameSetPairItem->frameSetPair();
+        }
+        if(auto worldItem = dynamic_cast<WorldItem*>(upperItem)){
+            ItemList<CoordinateFrameSetPairItem> lowerItems;
+            if(lowerItems.extractSubTreeItems(worldItem)){
+                return lowerItems.toSingle()->frameSetPair();
+            }
+        }
+    }
+    return nullptr;
 }
         
 

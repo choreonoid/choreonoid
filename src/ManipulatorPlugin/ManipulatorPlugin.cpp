@@ -1,3 +1,4 @@
+#include "ManipulatorCoordinateFrameItem.h"
 #include <cnoid/Plugin>
 
 using namespace cnoid;
@@ -14,6 +15,7 @@ public:
 
     virtual bool initialize()
     {
+        ManipulatorCoordinateFrameItem::initializeClass(this);
         return true;
     }
 };

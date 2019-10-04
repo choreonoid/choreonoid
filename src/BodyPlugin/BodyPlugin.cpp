@@ -4,6 +4,8 @@
 
 #include "WorldItem.h"
 #include "BodyItem.h"
+#include "CoordinateFrameSetPairItem.h"
+#include "CoordinateFrameSetItem.h"
 #include "SimulatorItem.h"
 #include "AISTSimulatorItem.h"
 #include "KinematicSimulatorItem.h"
@@ -27,6 +29,7 @@
 #include "LinkPositionView.h"
 #include "BodyLinkView.h"
 #include "JointDisplacementView.h"
+#include "CoordinateFrameSetView.h"
 #include "JointStateView.h"
 #include "BodyStateView.h"
 #include "IoConnectionView.h"
@@ -73,6 +76,8 @@ public:
 
         WorldItem::initializeClass(this);
         BodyItem::initializeClass(this);
+        CoordinateFrameSetPairItem::initializeClass(this);
+        CoordinateFrameSetItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
         KinematicSimulatorItem::initializeClass(this);
@@ -107,6 +112,7 @@ public:
         LinkPositionView::initializeClass(this);
         BodyLinkView::initializeClass(this);
         JointDisplacementView::initializeClass(this);
+        CoordinateFrameSetView::initializeClass(this);
         JointStateView::initializeClass(this);
         BodyStateView::initializeClass(this);
         IoConnectionView::initializeClass(this);
