@@ -41,25 +41,27 @@ public:
 
     ItemType* toSingle(bool allowFromMultiElements = false) const {
         return (ArrayBase::size() == 1 || (allowFromMultiElements && !ArrayBase::empty())) ?
-            ArrayBase::front().get() : 0;
+            ArrayBase::front().get() : nullptr;
     }
 
-    bool extractSubTreeItems(Item* root){
+    bool extractSubTreeItems(const Item* root){
         ArrayBase::clear();
-        return ItemListBase::extractSubTreeItemsSub(root);
+        return ItemListBase::extractSubTreeItemsSub(const_cast<Item*>(root));
     }
 
     //! \deprecated Use extractSubTreeItems.
-    bool extractChildItems(Item* item){ return extractSubTreeItems(item); }
+    bool extractChildItems(const Item* item){
+        return extractSubTreeItems(item);
+    }
 
-    bool extractAssociatedItems(Item* item){
+    bool extractAssociatedItems(const Item* item){
         ArrayBase::clear();
-        return ItemListBase::extractAssociatedItemsSub(item);
+        return ItemListBase::extractAssociatedItemsSub(const_cast<Item*>(item));
     }
         
-    bool extractSubItems(Item* item){
+    bool extractSubItems(const Item* item){
         ArrayBase::clear();
-        return ItemListBase::extractSubItemsSub(item);
+        return ItemListBase::extractSubItemsSub(const_cast<Item*>(item));
     }
 
     ItemType* find(const std::string& name){
@@ -68,7 +70,7 @@ public:
                 return (*this)[i];
             }
         }
-        return 0;
+        return nullptr;
     }
 
 private:
