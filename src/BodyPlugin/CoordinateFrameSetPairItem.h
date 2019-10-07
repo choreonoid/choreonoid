@@ -14,6 +14,7 @@ class CNOID_EXPORT CoordinateFrameSetPairItem : public Item
 {
 public:
     static void initializeClass(ExtensionManager* ext);
+    static void setFrameSetLabels(const char* baseFrameLabel, const char* localFrameLabeld);
 
     CoordinateFrameSetPairItem();
     CoordinateFrameSetPairItem(const CoordinateFrameSetPairItem& org);

@@ -9,6 +9,13 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+string baseFrameSetLabel;
+string localFrameSetLabel;
+
+}
+
 namespace cnoid {
 
 class CoordinateFrameSetPairItem::Impl
@@ -30,7 +37,16 @@ void CoordinateFrameSetPairItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
     im.registerClass<CoordinateFrameSetPairItem>(N_("CoordinateFrameSetPairItem"));
-    //im.addCreationPanel<CoordinateFrameSetPairItem>();
+    im.addCreationPanel<CoordinateFrameSetPairItem>();
+    baseFrameSetLabel = "Base";
+    localFrameSetLabel = "Local";
+}
+
+
+void CoordinateFrameSetPairItem::setFrameSetLabels(const char* baseFrameLabel, const char* localFrameLabel)
+{
+    ::baseFrameSetLabel = baseFrameLabel;
+    ::localFrameSetLabel = localFrameLabel;
 }
 
 
@@ -44,11 +60,11 @@ CoordinateFrameSetPairItem::Impl::Impl(CoordinateFrameSetPairItem* self)
     : self(self)
 {
     baseFrameSetItem = new CoordinateFrameSetItem;
-    baseFrameSetItem->setName("Base");
+    baseFrameSetItem->setName(baseFrameSetLabel);
     self->addSubItem(baseFrameSetItem);
 
     localFrameSetItem = new CoordinateFrameSetItem;
-    localFrameSetItem->setName("Local");
+    localFrameSetItem->setName(localFrameSetLabel);
     self->addSubItem(localFrameSetItem);
 
     frameSetPair = new CoordinateFrameSetPair(

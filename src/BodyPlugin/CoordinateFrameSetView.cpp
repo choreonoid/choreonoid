@@ -24,7 +24,7 @@ using fmt::format;
 
 namespace {
 
-constexpr int NumColumns = 7;
+constexpr int NumColumns = 8;
 constexpr int IdColumn = 0;
 constexpr int XColumn = 1;
 constexpr int YColumn = 2;
@@ -32,6 +32,7 @@ constexpr int ZColumn = 3;
 constexpr int RXColumn = 4;
 constexpr int RYColumn = 5;
 constexpr int RZColumn = 6;
+constexpr int NoteColumn = 7;
 
 class FrameContainerModel : public QAbstractTableModel
 {
@@ -135,19 +136,21 @@ QVariant FrameContainerModel::headerData(int section, Qt::Orientation orientatio
         if(orientation == Qt::Horizontal){
             switch(section){
             case 0:
-                return _("ID");
+                return "ID";
             case 1:
-                return _("X");
+                return "X";
             case 2:
-                return _("Y");
+                return "Y";
             case 3:
-                return _("Z");
+                return "Z";
             case 4:
-                return _("R");
+                return "R";
             case 5:
-                return _("P");
+                return "P";
             case 6:
-                return _("Y");
+                return "Y";
+            case 7:
+                return _("Note");
             default:
                 return QVariant();
             }
