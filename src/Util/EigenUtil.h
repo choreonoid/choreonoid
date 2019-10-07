@@ -21,6 +21,8 @@ inline double radian(double deg) { return TO_RADIAN * deg; }
 inline float degree(float rad) { return (float)TO_DEGREE * rad; }
 inline float radian(float deg) { return (float)TO_RADIAN * deg; }
 inline double radian(int deg) { return TO_RADIAN * deg; }
+inline Vector3 degree(const Vector3& v){ return Vector3(degree(v.x()), degree(v.y()), degree(v.z())); }
+inline Vector3 radian(const Vector3& v){ return Vector3(radian(v.x()), radian(v.y()), radian(v.z())); }
 
 CNOID_EXPORT Vector3 rpyFromRot(const Matrix3& R);
 CNOID_EXPORT Vector3 rpyFromRot(const Matrix3& R, const Vector3& prevRPY);
