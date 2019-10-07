@@ -166,7 +166,7 @@ public:
     void copySelectedStatements(bool doCut);
     void pasteStatements();
 
-    QModelIndex indexFromItem(const QTreeWidgetItem* item, int column = 0) const {
+    QModelIndex indexFromItem(QTreeWidgetItem* item, int column = 0) const {
         return TreeWidget::indexFromItem(item, column);
     }
     StatementItem* itemFromIndex(const QModelIndex& index) const {

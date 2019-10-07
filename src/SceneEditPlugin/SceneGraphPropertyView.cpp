@@ -5,7 +5,7 @@
 
 #include "SceneGraphPropertyView.h"
 #include "SceneGraphView.h"
-#include <cnoid/SelectionListEditor>
+#include <cnoid/StringListComboBox>
 #include <cnoid/EigenUtil>
 #include <cnoid/AppConfig>
 #include <cnoid/ViewManager>
@@ -290,9 +290,9 @@ SceneGraphPropertyViewImpl::SceneGraphPropertyViewImpl(SceneGraphPropertyView* s
     QStyledItemDelegate* delegate = new CustomizedItemDelegate(tableWidget);
     QItemEditorFactory* factory = new QItemEditorFactory;
     
-    QItemEditorCreatorBase* selectionListCreator =
-        new QStandardItemEditorCreator<SelectionListEditor>();
-    factory->registerEditor(QVariant::StringList, selectionListCreator);
+    QItemEditorCreatorBase* stringListEditorCreator =
+        new QStandardItemEditorCreator<StringListComboBox>();
+    factory->registerEditor(QVariant::StringList, stringListEditorCreator);
     
     delegate->setItemEditorFactory(factory);
 
