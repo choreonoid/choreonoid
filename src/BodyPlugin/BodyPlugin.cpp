@@ -22,12 +22,9 @@
 #include "BodyMarkerItem.h"
 #include "KinematicFaultChecker.h"
 #include "SplineFilterDialog.h"
-#include "BodyBar.h"
-#include "LeggedBodyBar.h"
+#include "PositionView.h"
 #include "LinkSelectionView.h"
 #include "LinkPropertyView.h"
-#include "LinkPositionView.h"
-#include "BodyLinkView.h"
 #include "JointDisplacementView.h"
 #include "CoordinateFrameSetView.h"
 #include "JointStateView.h"
@@ -35,6 +32,9 @@
 #include "IoConnectionView.h"
 #include "JointGraphView.h"
 #include "LinkGraphView.h"
+#include "BodyLinkView.h"
+#include "BodyBar.h"
+#include "LeggedBodyBar.h"
 #include "KinematicsBar.h"
 #include "SimulationBar.h"
 #include "BodyMotionEngine.h"
@@ -107,10 +107,9 @@ public:
         addToolBar(LeggedBodyBar::instance());
         addToolBar(KinematicsBar::instance());
 
+        PositionView::initializeClass(this);
         LinkSelectionView::initializeClass(this);
         LinkPropertyView::initializeClass(this);
-        LinkPositionView::initializeClass(this);
-        BodyLinkView::initializeClass(this);
         JointDisplacementView::initializeClass(this);
         CoordinateFrameSetView::initializeClass(this);
         JointStateView::initializeClass(this);
@@ -118,6 +117,7 @@ public:
         IoConnectionView::initializeClass(this);
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
+        BodyLinkView::initializeClass(this);
 
         CollisionSeqItem::initislizeClass(this);
 

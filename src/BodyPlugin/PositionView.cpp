@@ -2,11 +2,11 @@
     \author Shin'ichiro Nakaoka
 */
 
-#include "LinkPositionView.h"
-#include "BodyBar.h"
+#include "PositionView.h"
 #include "LinkSelectionView.h"
 #include <cnoid/Body>
 #include <cnoid/BodyItem>
+#include <cnoid/TargetItemPicker>
 #include <cnoid/Link>
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
@@ -15,7 +15,6 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
-#include <cnoid/RootItem>
 #include <cnoid/Archive>
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
@@ -53,11 +52,12 @@ const char* errorStyle = "font-weight: bold; color: red";
 
 namespace cnoid {
 
-class LinkPositionViewImpl
+class PositionView::Impl
 {
 public:
-    LinkPositionView* self;
-            
+    PositionView* self;
+
+    TargetItemPicker<BodyItem> targetBodyItemPicker;
     BodyItemPtr targetBodyItem;
     Link* targetLink;
     shared_ptr<InverseKinematics> inverseKinematics;
@@ -100,13 +100,12 @@ public:
     CheckBox requireConfigurationCheck;
     vector<QWidget*> configurationWidgets;
 
-    ScopedConnection bodyBarConnection;
     ScopedConnectionSet bodyItemConnections;
     ScopedConnectionSet userInputConnections;
     ScopedConnectionSet settingConnections;
 
-    LinkPositionViewImpl(LinkPositionView* self);
-    ~LinkPositionViewImpl();
+    Impl(PositionView* self);
+    ~Impl();
     void createPanel();
     void resetInputWidgetStyles();
     void onMenuButtonClicked();
@@ -130,21 +129,22 @@ public:
 }
 
 
-void LinkPositionView::initializeClass(ExtensionManager* ext)
+void PositionView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<LinkPositionView>(
-        "LinkPositionView", N_("Link Position"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<PositionView>(
+        "PositionView", N_("Position"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
-LinkPositionView::LinkPositionView()
+PositionView::PositionView()
 {
-    impl = new LinkPositionViewImpl(this);
+    impl = new Impl(this);
 }
 
 
-LinkPositionViewImpl::LinkPositionViewImpl(LinkPositionView* self)
+PositionView::Impl::Impl(PositionView* self)
     : self(self),
+      targetBodyItemPicker(self),
       coordinateMode(NUM_COORD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     self->setDefaultLayoutArea(View::CENTER);
@@ -153,22 +153,25 @@ LinkPositionViewImpl::LinkPositionViewImpl(LinkPositionView* self)
     self->setEnabled(false);
 
     linkSelectionView = LinkSelectionView::instance();
+
+    targetBodyItemPicker.sigTargetItemChanged().connect(
+        [&](BodyItem* item){ setBodyItem(item); });
 }
 
 
-LinkPositionView::~LinkPositionView()
+PositionView::~PositionView()
 {
     delete impl;
 }
 
 
-LinkPositionViewImpl::~LinkPositionViewImpl()
+PositionView::Impl::~Impl()
 {
 
 }
 
 
-void LinkPositionViewImpl::createPanel()
+void PositionView::Impl::createPanel()
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
@@ -414,29 +417,7 @@ void LinkPositionViewImpl::createPanel()
 }
 
 
-void LinkPositionView::onActivated()
-{
-    auto bb = BodyBar::instance();
-
-    impl->bodyBarConnection = 
-        bb->sigCurrentBodyItemChanged().connect(
-            [&](BodyItem* bodyItem){ impl->setBodyItem(bodyItem); });
-
-    impl->setBodyItem(bb->currentBodyItem());
-}
-
-
-void LinkPositionView::onDeactivated()
-{
-    impl->bodyBarConnection.disconnect();
-    impl->bodyItemConnections.disconnect();
-    impl->targetBodyItem.reset();
-    impl->inverseKinematics.reset();
-    impl->jointPathConfigurationHandler.reset();
-}
-
-
-void LinkPositionViewImpl::resetInputWidgetStyles()
+void PositionView::Impl::resetInputWidgetStyles()
 {
     for(auto& widget : inputElementWidgets){
         widget->setStyleSheet(normalStyle);
@@ -444,13 +425,13 @@ void LinkPositionViewImpl::resetInputWidgetStyles()
 }
     
 
-void LinkPositionViewImpl::onMenuButtonClicked()
+void PositionView::Impl::onMenuButtonClicked()
 {
     menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
 }
 
 
-void LinkPositionViewImpl::setRpySpinsVisible(bool on)
+void PositionView::Impl::setRpySpinsVisible(bool on)
 {
     for(auto& widget : rpyWidgets){
         widget->setVisible(on);
@@ -458,7 +439,7 @@ void LinkPositionViewImpl::setRpySpinsVisible(bool on)
 }
 
 
-void LinkPositionViewImpl::setQuaternionSpinsVisible(bool on)
+void PositionView::Impl::setQuaternionSpinsVisible(bool on)
 {
     for(auto& widget : quatWidgets){
         widget->setVisible(on);
@@ -466,7 +447,7 @@ void LinkPositionViewImpl::setQuaternionSpinsVisible(bool on)
 }
 
 
-void LinkPositionViewImpl::setBodyItem(BodyItem* bodyItem)
+void PositionView::Impl::setBodyItem(BodyItem* bodyItem)
 {
     if(bodyItem != targetBodyItem){
 
@@ -496,7 +477,7 @@ void LinkPositionViewImpl::setBodyItem(BodyItem* bodyItem)
 }
 
 
-void LinkPositionViewImpl::updateTargetLink(Link* link)
+void PositionView::Impl::updateTargetLink(Link* link)
 {
     targetLink = link;
     inverseKinematics.reset();
@@ -567,7 +548,7 @@ void LinkPositionViewImpl::updateTargetLink(Link* link)
 }
 
 
-void LinkPositionViewImpl::clearPanelValues()
+void PositionView::Impl::clearPanelValues()
 {
     userInputConnections.block();
     
@@ -583,7 +564,7 @@ void LinkPositionViewImpl::clearPanelValues()
 }
 
 
-void LinkPositionViewImpl::updatePanel()
+void PositionView::Impl::updatePanel()
 {
     if(!inverseKinematics){
         self->setEnabled(false);
@@ -645,7 +626,7 @@ void LinkPositionViewImpl::updatePanel()
 }
 
 
-void LinkPositionViewImpl::updateRotationMatrixPanel(const Matrix3& R)
+void PositionView::Impl::updateRotationMatrixPanel(const Matrix3& R)
 {
     for(int i=0; i < 3; ++i){
         for(int j=0; j < 3; ++j){
@@ -656,7 +637,7 @@ void LinkPositionViewImpl::updateRotationMatrixPanel(const Matrix3& R)
 }
 
 
-void LinkPositionViewImpl::updateConfigurationPanel()
+void PositionView::Impl::updateConfigurationPanel()
 {
     if(!jointPathConfigurationHandler){
         configurationLabel.setText("");
@@ -674,7 +655,7 @@ void LinkPositionViewImpl::updateConfigurationPanel()
 }
 
 
-void LinkPositionViewImpl::onPositionInput(InputElementSet inputElements)
+void PositionView::Impl::onPositionInput(InputElementSet inputElements)
 {
     if(lastInputAttitudeType == ROLL_PITCH_YAW && rpyCheck->isChecked()){
         onPositionInputRpy(inputElements);
@@ -688,7 +669,7 @@ void LinkPositionViewImpl::onPositionInput(InputElementSet inputElements)
 }
 
 
-void LinkPositionViewImpl::onPositionInputRpy(InputElementSet inputElements)
+void PositionView::Impl::onPositionInputRpy(InputElementSet inputElements)
 {
     Position T;
     Vector3 rpy;
@@ -705,7 +686,7 @@ void LinkPositionViewImpl::onPositionInputRpy(InputElementSet inputElements)
 }
 
 
-void LinkPositionViewImpl::onPositionInputQuaternion(InputElementSet inputElements)
+void PositionView::Impl::onPositionInputQuaternion(InputElementSet inputElements)
 {
     Position T;
 
@@ -727,7 +708,7 @@ void LinkPositionViewImpl::onPositionInputQuaternion(InputElementSet inputElemen
 }
 
 
-void LinkPositionViewImpl::onConfigurationInput(int index)
+void PositionView::Impl::onConfigurationInput(int index)
 {
     if(jointPathConfigurationHandler){
         jointPathConfigurationHandler->setPreferredConfiguration(index);
@@ -736,7 +717,7 @@ void LinkPositionViewImpl::onConfigurationInput(int index)
 }
 
 
-void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet inputElements)
+void PositionView::Impl::findSolution(const Position& T_input, InputElementSet inputElements)
 {
     if(inverseKinematics){
 
@@ -778,13 +759,13 @@ void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet
 }
 
 
-bool LinkPositionView::storeState(Archive& archive)
+bool PositionView::storeState(Archive& archive)
 {
     return impl->storeState(archive);
 }
 
 
-bool LinkPositionViewImpl::storeState(Archive& archive)
+bool PositionView::Impl::storeState(Archive& archive)
 {
     archive.write("coordinateMode", coordinateMode.selectedSymbol());
     archive.write("showRPY", rpyCheck->isChecked());
@@ -794,18 +775,19 @@ bool LinkPositionViewImpl::storeState(Archive& archive)
     archive.write("disableCustomIK", disableCustomIKCheck->isChecked());
     archive.write("configuration", configurationCombo.currentText().toStdString());
     archive.write("isConfigurationRequired", requireConfigurationCheck.isChecked());
+    targetBodyItemPicker.storeTargetItem(archive, "currentBodyItem");    
     return true;
 }
 
 
-bool LinkPositionView::restoreState(const Archive& archive)
+bool PositionView::restoreState(const Archive& archive)
 {
     archive.addPostProcess([&](){ impl->restoreState(archive); });
     return true;
 }
 
 
-bool LinkPositionViewImpl::restoreState(const Archive& archive)
+bool PositionView::Impl::restoreState(const Archive& archive)
 {
     settingConnections.block();
     userInputConnections.block();
@@ -831,6 +813,8 @@ bool LinkPositionViewImpl::restoreState(const Archive& archive)
 
     updateTargetLink();
     onConfigurationInput(configurationCombo.currentIndex());
-    
+
+    targetBodyItemPicker.restoreTargetItem(archive, "currentBodyItem");
+
     return true;
 }

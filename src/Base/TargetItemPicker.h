@@ -16,6 +16,7 @@ public:
     ~TargetItemPickerBase();
 
     void storeTargetItem(Archive& archive, const std::string& key);
+    void restoreTargetItem(const Archive& archive, const std::string& key);
     void restoreTargetItemLater(const Archive& archive, const std::string& key);
 
 protected:

@@ -161,14 +161,14 @@ void TargetItemPickerBase::storeTargetItem(Archive& archive, const std::string& 
 }
 
 
-void TargetItemPickerBase::restoreTargetItemLater(const Archive& archive, const std::string& key)
+void TargetItemPickerBase::restoreTargetItem(const Archive& archive, const std::string& key)
 {
-    archive.addPostProcess([&, key](){ impl->restoreTargetItem(archive, key); });
+    auto item = archive.findItem<Item>(key);
+    impl->setTargetItem(item, true, false);
 }
 
 
-void TargetItemPickerBase::Impl::restoreTargetItem(const Archive& archive, const std::string& key)
+void TargetItemPickerBase::restoreTargetItemLater(const Archive& archive, const std::string& key)
 {
-    auto item = archive.findItem<Item>(key);
-    setTargetItem(item, true, false);
+    archive.addPostProcess([&, key](){ restoreTargetItem(archive, key); });
 }
