@@ -69,15 +69,6 @@ void TargetItemPickerBase::Impl::onViewActivated()
             [&](const ItemList<>&){ onItemSelectionChanged(); }));
                 
     onItemSelectionChanged();
-
-    if(!targetItem){
-        ItemList<> items;
-        items.extractChildItems(RootItem::instance());
-        self->extractTargetItemCandidates(items);
-        if(auto candidate = items.toSingle()){
-            setTargetItem(candidate, true, false);
-        }
-    }
 }
 
 
@@ -92,7 +83,7 @@ void TargetItemPickerBase::Impl::onItemSelectionChanged()
 {
     auto selectedItems = itemTreeView->selectedItems();
     self->extractTargetItemCandidates(selectedItems);
-    setTargetItem(selectedItems.toSingle(), true, false);
+    setTargetItem(selectedItems.toSingle(true), true, false);
 }
 
 
@@ -120,21 +111,36 @@ void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool u
         }
     }
 
-    if(!targetItem && !itemAddedConnection.connected()){
+    if(!targetItem){
+        ItemList<> items;
+        items.extractChildItems(RootItem::instance());
+        self->extractTargetItemCandidates(items);
+        if(auto candidate = items.toSingle(true)){
+            setTargetItem(candidate, true, false);
+            return;
+        }
+
+        if(!targetItem && !itemAddedConnection.connected()){
         itemAddedConnection.reset(
             RootItem::instance()->sigItemAdded().connect(
                 [&](Item* item){ onItemAddedWhenNoTargetItemSpecified(item); }));
+        }
     }
 }
 
 
 void TargetItemPickerBase::Impl::onItemAddedWhenNoTargetItemSpecified(Item* item)
 {
-    ItemList<> items;
-    items.push_back(item);
-    self->extractTargetItemCandidates(items);
-    if(auto candidate = items.toSingle()){
-        setTargetItem(candidate, true, false);
+    if(!targetItem){
+        ItemList<> items;
+        items.push_back(item);
+        self->extractTargetItemCandidates(items);
+        if(auto candidate = items.toSingle(true)){
+            setTargetItem(candidate, true, false);
+        }
+    }
+    if(targetItem){
+        itemAddedConnection.disconnect();
     }
 }
 
