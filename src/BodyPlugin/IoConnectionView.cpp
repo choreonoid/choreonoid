@@ -192,11 +192,7 @@ QVariant ConnectionMapModel::headerData(int section, Qt::Orientation orientation
         }
     } else if(role == Qt::TextAlignmentRole){
         if(orientation == Qt::Horizontal){
-            if(section == 5){
-                return Qt::AlignLeft;
-            } else {
-                return Qt::AlignCenter;
-            }
+            return Qt::AlignCenter;
         }
     }
     return QVariant();

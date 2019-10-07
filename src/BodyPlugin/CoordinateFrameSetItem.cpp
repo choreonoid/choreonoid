@@ -87,15 +87,21 @@ SgNode* CoordinateFrameSetItem::getScene()
 }
 
 
+void CoordinateFrameSetItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Num frames"), impl->frames->numFrames());
+}
+
+
 bool CoordinateFrameSetItem::store(Archive& archive)
 {
-    //return impl->frames->write(archive);
-    return true;
+    return impl->frames->write(archive);
 }
 
 
 bool CoordinateFrameSetItem::restore(const Archive& archive)
 {
-    //return impl->frames->read(archive);
+    impl->frames->resetIdCounter();
+    impl->frames->read(archive);
     return true;
 }

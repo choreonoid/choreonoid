@@ -167,11 +167,23 @@ const CoordinateFrameContainer* CoordinateFrameSetPairItem::localFrames() const
 
 bool CoordinateFrameSetPairItem::store(Archive& archive)
 {
+    if(!impl->baseFrameSetItem->store(*archive.openSubArchive("baseFrames"))){
+        return false;
+    }
+    if(!impl->localFrameSetItem->store(*archive.openSubArchive("localFrames"))){
+        return false;
+    }
     return true;
 }
 
 
 bool CoordinateFrameSetPairItem::restore(const Archive& archive)
 {
+    if(!impl->baseFrameSetItem->restore(*archive.findSubArchive("baseFrames"))){
+        return false;
+    }
+    if(!impl->localFrameSetItem->restore(*archive.findSubArchive("localFrames"))){
+        return false;
+    }
     return true;
 }

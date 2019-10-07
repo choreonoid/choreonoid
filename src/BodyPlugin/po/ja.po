@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-07 11:46+0900\n"
+"POT-Creation-Date: 2019-10-07 16:36+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -236,16 +236,16 @@ msgstr "信号No"
 msgid "Input Device"
 msgstr "入力デバイス"
 
-#: IoConnectionView.cpp:186 CoordinateFrameSetView.cpp:153
+#: IoConnectionView.cpp:186 CoordinateFrameSetView.cpp:138
 msgid "Note"
-msgstr "注釈"
+msgstr "覚書"
 
 #: IoConnectionView.cpp:496
 msgid "I/O Connection"
 msgstr "I/O接続"
 
 #: IoConnectionView.cpp:523 IoConnectionView.cpp:701
-#: CoordinateFrameSetView.cpp:361 CoordinateFrameSetView.cpp:499
+#: CoordinateFrameSetView.cpp:337 CoordinateFrameSetView.cpp:476
 msgid "Add"
 msgstr "追加"
 
@@ -253,7 +253,7 @@ msgstr "追加"
 msgid "There are no I/O devices in the world"
 msgstr "ワールドにI/Oデバイスが存在しません。"
 
-#: IoConnectionView.cpp:704 CoordinateFrameSetView.cpp:502
+#: IoConnectionView.cpp:704 CoordinateFrameSetView.cpp:479
 msgid "Remove"
 msgstr "削除"
 
@@ -963,7 +963,15 @@ msgstr "マージン"
 msgid "Merge selected MultiValueSeqItems (Temporary version)"
 msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
 
-#: CoordinateFrameSetView.cpp:334
+#: CoordinateFrameSetView.cpp:136
+msgid "Position"
+msgstr "ポジション"
+
+#: CoordinateFrameSetView.cpp:192
+msgid "X = {0:.3}, Y = {1:.3}, Z = {2:.3}, R = {3:.1}, P = {4:.1}, Y = {5:.1}"
+msgstr ""
+
+#: CoordinateFrameSetView.cpp:310
 msgid "Coordinate Frames"
 msgstr "座標フレーム"
 

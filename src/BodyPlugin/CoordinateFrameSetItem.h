@@ -29,6 +29,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
     class Impl;

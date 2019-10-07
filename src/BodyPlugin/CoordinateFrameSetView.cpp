@@ -24,15 +24,10 @@ using fmt::format;
 
 namespace {
 
-constexpr int NumColumns = 8;
+constexpr int NumColumns = 3;
 constexpr int IdColumn = 0;
-constexpr int XColumn = 1;
-constexpr int YColumn = 2;
-constexpr int ZColumn = 3;
-constexpr int RXColumn = 4;
-constexpr int RYColumn = 5;
-constexpr int RZColumn = 6;
-constexpr int NoteColumn = 7;
+constexpr int NoteColumn = 1;
+constexpr int PositionColumn = 2;
 
 class FrameContainerModel : public QAbstractTableModel
 {
@@ -78,8 +73,9 @@ public:
     CoordinateFrameSetView* self;
     TargetItemPicker<CoordinateFrameSetItem> targetItemPicker;
     CoordinateFrameSetItemPtr targetItem;
-    QLabel targetLabel;
+    CoordinateFrameContainerPtr frameContainer;
     FrameContainerModel* frameContainerModel;
+    QLabel targetLabel;
     PushButton addButton;
     MenuManager contextMenuManager;
 
@@ -135,22 +131,12 @@ QVariant FrameContainerModel::headerData(int section, Qt::Orientation orientatio
     if(role == Qt::DisplayRole){
         if(orientation == Qt::Horizontal){
             switch(section){
-            case 0:
+            case IdColumn:
                 return "ID";
-            case 1:
-                return "X";
-            case 2:
-                return "Y";
-            case 3:
-                return "Z";
-            case 4:
-                return "R";
-            case 5:
-                return "P";
-            case 6:
-                return "Y";
-            case 7:
+            case NoteColumn:
                 return _("Note");
+            case PositionColumn:
+                return _("Position");
             default:
                 return QVariant();
             }
@@ -181,13 +167,11 @@ QModelIndex FrameContainerModel::index(int row, int column, const QModelIndex& p
 
 Qt::ItemFlags FrameContainerModel::flags(const QModelIndex& index) const
 {
-    if(!index.isValid()){
-        return QAbstractTableModel::flags(index);
+    auto flags = QAbstractTableModel::flags(index);
+    if(index.isValid() && index.column() != PositionColumn){
+        flags = flags | Qt::ItemIsEditable;
     }
-    if(index.column() == IdColumn){
-        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
-    }
-    return QAbstractTableModel::flags(index);
+    return flags;
 }
 
 
@@ -199,18 +183,26 @@ QVariant FrameContainerModel::data(const QModelIndex& index, int role) const
         return QVariant();
     }
 
+    int column = index.column();
     if(role == Qt::DisplayRole || role == Qt::EditRole){
-        int column = index.column();
         if(column == IdColumn){
             return frame->idLabel().c_str();
-        } else if(column >= XColumn && column <= ZColumn){
-            return frame->T().translation()(column - XColumn);
-        } else if(column >= RXColumn && column <= RZColumn){
-            auto rpy = rpyFromRot(frame->T().linear());
-            return rpy(column - RXColumn);
+
+        } else if(column == NoteColumn){
+            return frame->note().c_str();
+
+        } else if(column == PositionColumn){
+            auto p = frame->T().translation();
+            auto rpy = degree(rpyFromRot(frame->T().linear()));
+            return format("( {0:.3}, {1:.3}, {2:.3}, {3:.1}, {4:.1}, {5:.1} )",
+                          p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
         }
     } else if(role == Qt::TextAlignmentRole){
-        return Qt::AlignCenter;
+        if(column == NoteColumn){
+            return (Qt::AlignLeft + Qt::AlignVCenter);
+        } else {
+            return Qt::AlignCenter;
+        }
     }
             
     return QVariant();
@@ -223,21 +215,19 @@ bool FrameContainerModel::setData(const QModelIndex& index, const QVariant& valu
         auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
         int column = index.column();
         if(column == IdColumn){
-            frames->resetId(frame, value.toString().toStdString());
+            bool isInt;
+            auto stringId = value.toString();
+            int intId = stringId.toInt(&isInt);
+            if(isInt){
+                frames->resetId(frame, intId);
+            } else {
+                frames->resetId(frame, stringId.toStdString());
+            }
+            Q_EMIT dataChanged(index, index, {role});
+        } else if(column == NoteColumn){
+            frame->setNote(value.toString().toStdString());
             Q_EMIT dataChanged(index, index, {role});
         }
-        /*
-        else if(column >= XColumn && column <= ZColumn){
-            frame->T().translation()(column - XColumn) = value.toDouble();
-            Q_EMIT dataChanged(index, index, {role});
-        } else if(column >= RXColumn && column <= RZColumn){
-            auto rpy = rpyFromRot(frame->T());
-            rpy[column - RXColumn] = value.toDouble();
-            auto R = rotFromRpy(rpy);
-            frames->T().linear() = R;
-            Q_EMIT dataChanged(index, index, {role});
-        }
-        */
     }
     return false;
 }
@@ -382,14 +372,16 @@ CoordinateFrameSetView::Impl::Impl(CoordinateFrameSetView* self)
         QAbstractItemView::EditKeyPressed |
         QAbstractItemView::AnyKeyPressed);
 
-    auto hheader = horizontalHeader();
-    hheader->setSectionResizeMode(QHeaderView::ResizeToContents);
-    hheader->setStretchLastSection(true);
-    auto vheader = verticalHeader();
-    vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
-
     frameContainerModel = new FrameContainerModel(this);
     setModel(frameContainerModel);
+
+    auto hheader = horizontalHeader();
+    hheader->setSectionResizeMode(IdColumn, QHeaderView::ResizeToContents);
+    hheader->setSectionResizeMode(NoteColumn, QHeaderView::Stretch);
+    hheader->setSectionResizeMode(PositionColumn, QHeaderView::ResizeToContents);
+    auto vheader = verticalHeader();
+    vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
+    vheader->hide();
 
     vbox->addWidget(this);
     self->setLayout(vbox);
@@ -412,9 +404,11 @@ void CoordinateFrameSetView::Impl::setCoordinateFrameSetItem(CoordinateFrameSetI
 
     if(item){
         targetLabel.setText(item->name().c_str());
-        frameContainerModel->setFrameContainer(item->frames());
+        frameContainer = item->frames();
+        frameContainerModel->setFrameContainer(frameContainer);
     } else {
         targetLabel.setText("---");
+        frameContainer = nullptr;
         frameContainerModel->setFrameContainer(nullptr);
     }
     addButton.setEnabled(targetItem != nullptr);
@@ -431,8 +425,13 @@ void CoordinateFrameSetView::Impl::addFrameIntoCurrentIndex(bool doInsert)
 
 void CoordinateFrameSetView::Impl::addFrame(int index, bool doInsert)
 {
-    CoordinateFramePtr frame = new CoordinateFrame;
-    frameContainerModel->addFrame(index, frame, doInsert);
+    if(frameContainer){
+        auto id = frameContainer->createNextId();
+        CoordinateFramePtr frame = new CoordinateFrame(id);
+        frameContainerModel->addFrame(index, frame, doInsert);
+        resizeColumnToContents(IdColumn);
+        resizeColumnToContents(PositionColumn);
+    }
 }
 
 

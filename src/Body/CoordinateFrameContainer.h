@@ -31,6 +31,12 @@ public:
     */
     bool resetId(CoordinateFrame* frame, const CoordinateFrame::Id& newId);
 
+    void resetIdCounter();
+    CoordinateFrame::Id createNextId(int prevId = -1);
+
+    bool read(const Mapping& archive);
+    bool write(Mapping& archive) const;    
+
 protected:
     CoordinateFrameContainer(const CoordinateFrameContainer& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

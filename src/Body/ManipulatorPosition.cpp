@@ -381,11 +381,14 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
 
 static void writeFrameId(Mapping& archive, const char* key, const CoordinateFrame::Id& id)
 {
-    if(stdx::get_variant_index(id) == CoordinateFrame::IntId){
+    int type = stdx::get_variant_index(id);
+    if(type == CoordinateFrame::IntId){
         int idValue = stdx::get<int>(id);
         if(idValue >= 0){
             archive.write(key, idValue);
         }
+    } else {
+        archive.write(key, stdx::get<string>(id), DOUBLE_QUOTED);
     }
 }
 

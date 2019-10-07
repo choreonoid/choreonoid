@@ -10,6 +10,7 @@
 namespace cnoid {
 
 class CoordinateFrameSet;
+class Mapping;
 
 class CNOID_EXPORT CoordinateFrame : public CloneMappableReferenced
 {
@@ -20,7 +21,7 @@ public:
     typedef stdx::variant<int, std::string> Id;
     
     CoordinateFrame();
-    CoordinateFrame(const Id& id, const Position& T);
+    CoordinateFrame(const Id& id);
     CoordinateFrame(const CoordinateFrame& org);
 
     const Id& id() const { return id_; }
@@ -33,6 +34,8 @@ public:
         return ValueType();
     }
 
+    bool hasValidId() const;
+
     std::string idLabel() const;
 
     const Position& T() const { return T_; }
@@ -40,10 +43,16 @@ public:
 
     const Position& position() const { return T_; }
     void setPosition(const Position& T) { T_ = T; }
-    
+
+    const std::string& note() const { return note_; }
+    void setNote(const std::string& note) { note_ = note; }
+
     CoordinateFrameSet* ownerFrameSet() const {
         return ownerFrameSet_.lock();
     }
+
+    bool read(const Mapping& archive);
+    bool write(Mapping& archive) const;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -51,6 +60,7 @@ protected:
 private:
     Position T_;
     Id id_;
+    std::string note_;
     weak_ref_ptr<CoordinateFrameSet> ownerFrameSet_;
 
     friend class CoordinateFrameSet;
