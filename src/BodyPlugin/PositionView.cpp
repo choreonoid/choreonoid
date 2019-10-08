@@ -3,10 +3,9 @@
 */
 
 #include "PositionView.h"
-#include "LinkSelectionView.h"
-#include <cnoid/Body>
+#include "BodySelectionManager.h"
 #include <cnoid/BodyItem>
-#include <cnoid/TargetItemPicker>
+#include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
@@ -57,13 +56,11 @@ class PositionView::Impl
 public:
     PositionView* self;
 
-    TargetItemPicker<BodyItem> targetBodyItemPicker;
+    ScopedConnection bodySelectionManagerConnection;
     BodyItemPtr targetBodyItem;
     Link* targetLink;
     shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler;
-
-    LinkSelectionView* linkSelectionView;
 
     ToolButton menuButton;
     MenuManager menuManager;
@@ -111,8 +108,8 @@ public:
     void onMenuButtonClicked();
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
-    void setBodyItem(BodyItem* bodyItem);
-    void updateTargetLink(Link* link = nullptr);
+    void setTargetLink(BodyItem* bodyItem, Link* link);
+    void updateTargetLink(Link* link);
     void clearPanelValues();
     void updatePanel();
     void updateRotationMatrixPanel(const Matrix3& R);
@@ -144,18 +141,12 @@ PositionView::PositionView()
 
 PositionView::Impl::Impl(PositionView* self)
     : self(self),
-      targetBodyItemPicker(self),
       coordinateMode(NUM_COORD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     self->setDefaultLayoutArea(View::CENTER);
     createPanel();
     clearPanelValues();
     self->setEnabled(false);
-
-    linkSelectionView = LinkSelectionView::instance();
-
-    targetBodyItemPicker.sigTargetItemChanged().connect(
-        [&](BodyItem* item){ setBodyItem(item); });
 }
 
 
@@ -417,6 +408,25 @@ void PositionView::Impl::createPanel()
 }
 
 
+void PositionView::onActivated()
+{
+    auto bsm = BodySelectionManager::instance();
+    
+    impl->bodySelectionManagerConnection.reset(
+        bsm->sigCurrentChanged().connect(
+            [&](BodyItem* bodyItem, Link* link){
+                impl->setTargetLink(bodyItem, link); }));
+
+    impl->setTargetLink(bsm->currentBodyItem(), bsm->currentLink());
+}
+
+
+void PositionView::onDeactivated()
+{
+    impl->bodySelectionManagerConnection.disconnect();
+}
+
+
 void PositionView::Impl::resetInputWidgetStyles()
 {
     for(auto& widget : inputElementWidgets){
@@ -447,31 +457,31 @@ void PositionView::Impl::setQuaternionSpinsVisible(bool on)
 }
 
 
-void PositionView::Impl::setBodyItem(BodyItem* bodyItem)
+void PositionView::Impl::setTargetLink(BodyItem* bodyItem, Link* link)
 {
-    if(bodyItem != targetBodyItem){
-
-        resetInputWidgetStyles();
-        bodyItemConnections.disconnect();
-
-        clearPanelValues();
+    bool isBodyItemChanged = bodyItem != targetBodyItem;
+    bool isLinkChanged = link != targetLink;
     
-        if(bodyItem){
-            bodyItemConnections.add(
-                bodyItem->sigNameChanged().connect(
-                    [&](const std::string&){ updateTargetLink(targetLink); }));
+    if(isBodyItemChanged || isLinkChanged){
 
-            bodyItemConnections.add(
-                linkSelectionView->sigSelectionChanged(bodyItem).connect(
-                    [&](){ updateTargetLink(); updatePanel(); }));
+        if(isBodyItemChanged){
+            resetInputWidgetStyles();
+            bodyItemConnections.disconnect();
+            clearPanelValues();
+            targetBodyItem = bodyItem;
+    
+            if(bodyItem){
+                bodyItemConnections.add(
+                    bodyItem->sigNameChanged().connect(
+                        [&](const std::string&){ updateTargetLink(targetLink); }));
 
-            bodyItemConnections.add(
-                bodyItem->sigKinematicStateChanged().connect(
-                    [&](){ updatePanel(); }));
+                bodyItemConnections.add(
+                    bodyItem->sigKinematicStateChanged().connect(
+                        [&](){ updatePanel(); }));
+            }
         }
-        
-        targetBodyItem = bodyItem;
-        updateTargetLink();
+
+        updateTargetLink(link);
         updatePanel();
     }
 }
@@ -483,25 +493,12 @@ void PositionView::Impl::updateTargetLink(Link* link)
     inverseKinematics.reset();
     jointPathConfigurationHandler.reset();
     
-    if(!targetBodyItem){
+    if(!targetLink){
         targetLabel.setText("------");
-        targetLink = nullptr;
 
     } else {
         auto body = targetBodyItem->body();
 
-        if(!targetLink){
-            auto selectedLinkIndex = linkSelectionView->selectedLinkIndex(targetBodyItem);
-            if(selectedLinkIndex >= 0){
-                targetLink = body->link(selectedLinkIndex);
-            } else {
-                targetLink = body->findUniqueEndLink();
-                if(!targetLink){
-                    targetLink = body->rootLink();
-                }
-            }
-        }
-        
         targetLabel.setText(format("{0} / {1}", body->name(), targetLink->name()).c_str());
 
         inverseKinematics = targetBodyItem->getCurrentIK(targetLink);
@@ -775,7 +772,6 @@ bool PositionView::Impl::storeState(Archive& archive)
     archive.write("disableCustomIK", disableCustomIKCheck->isChecked());
     archive.write("configuration", configurationCombo.currentText().toStdString());
     archive.write("isConfigurationRequired", requireConfigurationCheck.isChecked());
-    targetBodyItemPicker.storeTargetItem(archive, "currentBodyItem");    
     return true;
 }
 
@@ -811,10 +807,8 @@ bool PositionView::Impl::restoreState(const Archive& archive)
     userInputConnections.unblock();
     settingConnections.unblock();
 
-    updateTargetLink();
+    updateTargetLink(targetLink);
     onConfigurationInput(configurationCombo.currentIndex());
-
-    targetBodyItemPicker.restoreTargetItem(archive, "currentBodyItem");
 
     return true;
 }

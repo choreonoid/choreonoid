@@ -14,6 +14,7 @@ class TargetItemPickerBase::Impl
 public:
     TargetItemPickerBase* self;
     ItemPtr targetItem;
+    ItemList<> tmpSelectedItems;
     ScopedConnection targetItemConnection;
     bool isBeforeAnyItemChangeNotification;
     View* view;
@@ -23,8 +24,8 @@ public:
     ScopedConnection itemAddedConnection;
 
     Impl(TargetItemPickerBase* self, View* view);
-    void onViewActivated();
-    void onViewDeactivate();
+    void activate(bool doUpdate);
+    void deactivate();
     void onItemSelectionChanged();
     void setTargetItem(Item* item, bool doNotify, bool updateEvenIfEmpty);
     void onItemAddedWhenNoTargetItemSpecified(Item* item);
@@ -49,10 +50,14 @@ TargetItemPickerBase::Impl::Impl(TargetItemPickerBase* self, View* view)
     
     itemTreeView = ItemTreeView::instance();
 
-    viewConnections.add(
-        view->sigActivated().connect([&](){ onViewActivated(); }));
-    viewConnections.add(
-        view->sigDeactivated().connect([&](){ onViewDeactivate(); }));
+    if(view){
+        viewConnections.add(
+            view->sigActivated().connect([&](){ activate(true); }));
+        viewConnections.add(
+            view->sigDeactivated().connect([&](){ deactivate(); }));
+    } else {
+        activate(false);
+    }
 }
 
 
@@ -62,28 +67,33 @@ TargetItemPickerBase::~TargetItemPickerBase()
 }
 
 
-void TargetItemPickerBase::Impl::onViewActivated()
+void TargetItemPickerBase::Impl::activate(bool doUpdate)
 {
     itemSelectionChangeConnection.reset(
         itemTreeView->sigSelectionChanged().connect(
             [&](const ItemList<>&){ onItemSelectionChanged(); }));
-                
-    onItemSelectionChanged();
+
+    if(doUpdate){
+        onItemSelectionChanged();
+    }
 }
 
 
-void TargetItemPickerBase::Impl::onViewDeactivate()
+void TargetItemPickerBase::Impl::deactivate()
 {
     itemSelectionChangeConnection.disconnect();
     itemAddedConnection.disconnect();
+
+    self->onDeactivated();
 }
         
 
 void TargetItemPickerBase::Impl::onItemSelectionChanged()
 {
-    auto selectedItems = itemTreeView->selectedItems();
-    self->extractTargetItemCandidates(selectedItems);
-    setTargetItem(selectedItems.toSingle(true), true, false);
+    tmpSelectedItems = itemTreeView->selectedItems();
+    self->extractTargetItemCandidates(tmpSelectedItems, true);
+    setTargetItem(tmpSelectedItems.toSingle(true), true, false);
+    tmpSelectedItems.clear();
 }
 
 
@@ -114,7 +124,7 @@ void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool u
     if(!targetItem){
         ItemList<> items;
         items.extractChildItems(RootItem::instance());
-        self->extractTargetItemCandidates(items);
+        self->extractTargetItemCandidates(items, false);
         if(auto candidate = items.toSingle(true)){
             setTargetItem(candidate, true, false);
             return;
@@ -134,7 +144,7 @@ void TargetItemPickerBase::Impl::onItemAddedWhenNoTargetItemSpecified(Item* item
     if(!targetItem){
         ItemList<> items;
         items.push_back(item);
-        self->extractTargetItemCandidates(items);
+        self->extractTargetItemCandidates(items, false);
         if(auto candidate = items.toSingle(true)){
             setTargetItem(candidate, true, false);
         }

@@ -1,7 +1,7 @@
 #include "CoordinateFrameSetGroup.h"
 #include <cnoid/CloneMap>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
 
 using namespace std;
@@ -131,8 +131,10 @@ void CoordinateFrameSetGroup::getArrangedFrameLists
     out_numberedFrameList.clear();
     out_namedFrameList.clear();
 
-    typedef unordered_map<int, CoordinateFrame*> NumberedFrameMap;
+    // Use the normal map to keep the key order
+    typedef map<int, CoordinateFrame*> NumberedFrameMap;
     NumberedFrameMap numberedFrameMap;
+    
     unordered_set<string> namedFrameSet;
 
     for(auto& frameSet : impl->frameSets){

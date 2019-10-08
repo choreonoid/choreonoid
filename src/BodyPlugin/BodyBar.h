@@ -22,6 +22,10 @@ public:
 
     virtual ~BodyBar();
 
+    /**
+       Following functions are deprecated.
+       Use BodySelectionManager instead of them.
+    */
     SignalProxy<void(const ItemList<BodyItem>& selectedBodyItems)> sigBodyItemSelectionChanged();
     SignalProxy<void(BodyItem* currentBodyItem)> sigCurrentBodyItemChanged();
     const ItemList<BodyItem>& selectedBodyItems();

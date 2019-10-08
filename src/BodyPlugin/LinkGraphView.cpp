@@ -50,7 +50,7 @@ LinkGraphView::LinkGraphView()
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
             std::bind(&LinkGraphView::onItemSelectionChanged, this, _1));
 
-    linkSelection = LinkSelectionView::mainInstance();
+    linkSelection = LinkSelectionView::instance();
 }
 
 

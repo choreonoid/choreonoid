@@ -9,6 +9,7 @@ set(sources
   WorldItem.cpp
   CoordinateFrameSetPairItem.cpp
   CoordinateFrameSetItem.cpp
+  BodySelectionManager.cpp
   BodyItem.cpp
   SimulatorItem.cpp
   SubSimulatorItem.cpp
@@ -56,6 +57,7 @@ set(sources
 
 set(headers
   WorldItem.h
+  BodySelectionManager.h
   BodyItem.h
   CoordinateFrameSetPairItem.h
   CoordinateFrameSetItem.h

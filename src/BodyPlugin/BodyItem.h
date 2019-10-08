@@ -16,8 +16,6 @@
 namespace cnoid {
 
 class BodyState;
-class BodyItem;
-typedef ref_ptr<BodyItem> BodyItemPtr;
 class BodyItemImpl;
 class CoordinateFrameSetPair;
 typedef ref_ptr<CoordinateFrameSetPair> CoordinateFrameSetPairPtr;
@@ -153,6 +151,8 @@ private:
     std::vector<std::vector<CollisionLinkPairPtr>> collisionsOfLink_;
     Signal<void()> sigCollisionsUpdated_;
 };
+
+typedef ref_ptr<BodyItem> BodyItemPtr;
 
 }
 

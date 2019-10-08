@@ -67,7 +67,7 @@ TimeSyncItemEngine* createCollisionSeqEngine(Item* sourceItem)
 }
 
 
-void CollisionSeqEngine::initialize(ExtensionManager* ext)
+void CollisionSeqEngine::initializeClass(ExtensionManager* ext)
 {
     ext->timeSyncItemEngineManger().addEngineFactory(createCollisionSeqEngine);
 }

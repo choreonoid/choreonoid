@@ -98,7 +98,7 @@ public:
 }
 
 
-void KinematicFaultChecker::initialize(ExtensionManager* ext)
+void KinematicFaultChecker::initializeClass(ExtensionManager* ext)
 {
     if(!checkerInstance){
         checkerInstance = ext->manage(new KinematicFaultChecker());
@@ -288,9 +288,9 @@ void KinematicFaultCheckerImpl::apply()
                 
                 vector<bool> linkSelection;
                 if(selectedJointsRadio.isChecked()){
-                    linkSelection = LinkSelectionView::mainInstance()->linkSelection(bodyItem);
+                    linkSelection = LinkSelectionView::instance()->linkSelection(bodyItem);
                 } else if(nonSelectedJointsRadio.isChecked()){
-                    linkSelection = LinkSelectionView::mainInstance()->linkSelection(bodyItem);
+                    linkSelection = LinkSelectionView::instance()->linkSelection(bodyItem);
                     linkSelection.flip();
                 } else {
                     linkSelection.resize(bodyItem->body()->numLinks(), true);

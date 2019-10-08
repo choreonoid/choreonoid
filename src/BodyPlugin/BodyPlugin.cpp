@@ -20,6 +20,7 @@
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
 #include "BodyMarkerItem.h"
+#include "BodySelectionManager.h"
 #include "KinematicFaultChecker.h"
 #include "SplineFilterDialog.h"
 #include "PositionView.h"
@@ -74,6 +75,8 @@ public:
         Body::addCustomizerDirectory(
             executableTopDirectory() + "/" + CNOID_PLUGIN_SUBDIR + "/customizer");
 
+        BodySelectionManager::initializeClass(this);
+
         WorldItem::initializeClass(this);
         BodyItem::initializeClass(this);
         CoordinateFrameSetPairItem::initializeClass(this);
@@ -91,9 +94,9 @@ public:
         BodyTrackingCameraItem::initializeClass(this);
         BodyMarkerItem::initializeClass(this);
 
-        BodyMotionEngine::initialize(this);
-        CollisionSeqEngine::initialize(this);
-        KinematicFaultChecker::initialize(this);
+        BodyMotionEngine::initializeClass(this);
+        CollisionSeqEngine::initializeClass(this);
+        KinematicFaultChecker::initializeClass(this);
         initializeSplineFilterDialog(this);
 
         // This should be after the initialization of BodyMotionEngine

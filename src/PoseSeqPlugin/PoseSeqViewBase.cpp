@@ -1590,7 +1590,7 @@ void PoseSeqViewBase::setCurrentBodyStateToSelectedPoses(bool onlySelected)
 bool PoseSeqViewBase::setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected)
 {
     const auto& linkSelection =
-        LinkSelectionView::mainInstance()->linkSelection(currentBodyItem);
+        LinkSelectionView::instance()->linkSelection(currentBodyItem);
             
     bool updated = false;
             

@@ -3,9 +3,8 @@
 */
 
 #include "JointDisplacementView.h"
+#include "BodySelectionManager.h"
 #include "BodyItem.h"
-#include "BodyBar.h"
-#include "LinkSelectionView.h"
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Archive>
@@ -19,6 +18,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/RootItem>
 #include <cnoid/MathUtil>
+#include <QLabel>
 #include <QGridLayout>
 #include <QScrollArea>
 #include <QKeyEvent>
@@ -44,19 +44,20 @@ const double resolution = 100000.0;
 
 namespace cnoid {
 
-class JointDisplacementViewImpl : public QObject
+class JointDisplacementView::Impl : public QObject
 {
 public:
     JointDisplacementView* self;
-            
+
+    BodySelectionManager* bodySelectionManager;
+    BodyItemPtr currentBodyItem;
     vector<int> activeJointIds;
     vector<JointIndicator*> jointIndicators;
-    BodyItemPtr currentBodyItem;
-            
-    ScopedConnection kinematicStateChangeConnection;
-    ScopedConnection bodyBarConnection;
-    ScopedConnection linkSelectionChangeConnection;
     LazyCaller updateJointDisplacementsLater;
+            
+    ScopedConnection bodySelectionManagerConnection;
+    ScopedConnection linkSelectionChangeConnection;
+    ScopedConnection kinematicStateChangeConnection;
 
     QLabel targetLabel;
     Action* selectedJointsOnlyCheck;
@@ -74,10 +75,11 @@ public:
     ToolButton menuButton;
     MenuManager menuManager;
 
-    JointDisplacementViewImpl(JointDisplacementView* self);
-    ~JointDisplacementViewImpl();
+    Impl(JointDisplacementView* self);
+    ~Impl();
     void createPanel();
     void createOptionMenu();
+    void onActivated();
     void onMenuButtonClicked();
     void onSelectedBodyItemsChanged(const ItemList<BodyItem>& selected);
     void setBodyItem(BodyItem* bodyItem);
@@ -104,7 +106,7 @@ namespace {
 class JointIndicator
 {
 public:
-    JointDisplacementViewImpl* viewImpl;
+    JointDisplacementView::Impl* viewImpl;
     int index;
     Link* joint;
     double unitConversionRatio;
@@ -119,7 +121,7 @@ public:
     QLabel lowerLimitLabel;
     QLabel upperLimitLabel;
 
-    JointIndicator(JointDisplacementViewImpl* viewImpl, int index)
+    JointIndicator(JointDisplacementView::Impl* viewImpl, int index)
         : viewImpl(viewImpl),
           index(index),
           joint(nullptr),
@@ -397,15 +399,16 @@ void JointDisplacementView::initializeClass(ExtensionManager* ext)
 
 JointDisplacementView::JointDisplacementView()
 {
-    impl = new JointDisplacementViewImpl(this);
+    impl = new Impl(this);
 }
 
 
-JointDisplacementViewImpl::JointDisplacementViewImpl(JointDisplacementView* self) :
+JointDisplacementView::Impl::Impl(JointDisplacementView* self) :
     self(self)
 {
     self->setDefaultLayoutArea(View::CENTER);
     createPanel();
+    bodySelectionManager = BodySelectionManager::instance();
 }
 
 
@@ -415,7 +418,7 @@ JointDisplacementView::~JointDisplacementView()
 }
 
 
-JointDisplacementViewImpl::~JointDisplacementViewImpl()
+JointDisplacementView::Impl::~Impl()
 {
     for(size_t i=0; i < jointIndicators.size(); ++i){
         delete jointIndicators[i];
@@ -423,7 +426,7 @@ JointDisplacementViewImpl::~JointDisplacementViewImpl()
 }
 
 
-void JointDisplacementViewImpl::createPanel()
+void JointDisplacementView::Impl::createPanel()
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
@@ -481,7 +484,7 @@ void JointDisplacementViewImpl::createPanel()
 }
 
 
-void JointDisplacementViewImpl::createOptionMenu()
+void JointDisplacementView::Impl::createOptionMenu()
 {
     menuManager.setNewPopupMenu(self);
 
@@ -519,36 +522,41 @@ void JointDisplacementViewImpl::createOptionMenu()
 
 void JointDisplacementView::onActivated()
 {
-    auto bb = BodyBar::instance();
-    impl->bodyBarConnection =
-        bb->sigBodyItemSelectionChanged().connect(
-            [&](const ItemList<BodyItem>& selected){
-                impl->onSelectedBodyItemsChanged(selected);
-            });
+    impl->onActivated();
+}
 
-    impl->onSelectedBodyItemsChanged(bb->selectedBodyItems());
-    if(!impl->currentBodyItem){
-        ItemList<BodyItem> items;
-        items.extractSubTreeItems(RootItem::instance());
-        impl->onSelectedBodyItemsChanged(items);
+
+void JointDisplacementView::Impl::onActivated()
+{
+    bodySelectionManagerConnection =
+        bodySelectionManager->sigSelectedBodyItemsChanged().connect(
+            [&](const ItemList<BodyItem>& bodyItems){
+                onSelectedBodyItemsChanged(bodyItems); });
+
+    onSelectedBodyItemsChanged(bodySelectionManager->selectedBodyItems());
+    
+    if(!currentBodyItem){
+        ItemList<BodyItem> allBodyItems;
+        allBodyItems.extractChildItems(RootItem::instance());
+        onSelectedBodyItemsChanged(allBodyItems);
     }
 }
 
 
 void JointDisplacementView::onDeactivated()
 {
-    impl->bodyBarConnection.disconnect();
+    impl->bodySelectionManagerConnection.disconnect();
     impl->setBodyItem(nullptr);
 }
 
 
-void JointDisplacementViewImpl::onMenuButtonClicked()
+void JointDisplacementView::Impl::onMenuButtonClicked()
 {
     menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
 }
 
 
-void JointDisplacementViewImpl::onSelectedBodyItemsChanged(const ItemList<BodyItem>& selected)
+void JointDisplacementView::Impl::onSelectedBodyItemsChanged(const ItemList<BodyItem>& selected)
 {
     for(auto& item : selected){
         if(item->body()->numJoints() > 0){
@@ -559,7 +567,7 @@ void JointDisplacementViewImpl::onSelectedBodyItemsChanged(const ItemList<BodyIt
 }
 
 
-void JointDisplacementViewImpl::setBodyItem(BodyItem* bodyItem)
+void JointDisplacementView::Impl::setBodyItem(BodyItem* bodyItem)
 {
     if(bodyItem != currentBodyItem){
 
@@ -571,8 +579,8 @@ void JointDisplacementViewImpl::setBodyItem(BodyItem* bodyItem)
 
         if(bodyItem){
             linkSelectionChangeConnection =
-                LinkSelectionView::mainInstance()->sigSelectionChanged(bodyItem).connect(
-                    [&](){ updateIndicatorGrid(); });
+                bodySelectionManager->sigLinkSelectionChanged(bodyItem).connect(
+                    [&](const std::vector<bool>&){ updateIndicatorGrid(); });
             
             kinematicStateChangeConnection =
                 bodyItem->sigKinematicStateChanged().connect(updateJointDisplacementsLater);
@@ -582,7 +590,7 @@ void JointDisplacementViewImpl::setBodyItem(BodyItem* bodyItem)
 }
 
 
-void JointDisplacementViewImpl::updateIndicatorGrid()
+void JointDisplacementView::Impl::updateIndicatorGrid()
 {
     if(!currentBodyItem){
         self->setEnabled(false);
@@ -597,8 +605,7 @@ void JointDisplacementViewImpl::updateIndicatorGrid()
         int numJoints = body->numJoints();
         
         if(selectedJointsOnlyCheck->isChecked()){
-            const auto& linkSelection =
-                LinkSelectionView::instance()->linkSelection(currentBodyItem);
+            auto& linkSelection = bodySelectionManager->linkSelection(currentBodyItem);
             activeJointIds.clear();
             for(int i=0; i < numJoints; ++i){
                 Link* joint = body->joint(i);
@@ -629,7 +636,7 @@ void JointDisplacementViewImpl::updateIndicatorGrid()
 }
 
 
-void JointDisplacementViewImpl::initializeIndicators(int num)
+void JointDisplacementView::Impl::initializeIndicators(int num)
 {
     int prevNum = jointIndicators.size();
 
@@ -651,13 +658,13 @@ void JointDisplacementViewImpl::initializeIndicators(int num)
 }
 
 
-void JointDisplacementViewImpl::onNumColumnsChanged(int n)
+void JointDisplacementView::Impl::onNumColumnsChanged(int n)
 {
     callLater([&](){ updateIndicatorGrid(); });
 }
 
 
-void JointDisplacementViewImpl::onUnitChanged()
+void JointDisplacementView::Impl::onUnitChanged()
 {
     BodyPtr body = currentBodyItem->body();
     for(size_t i=0; i < activeJointIds.size(); ++i){
@@ -667,7 +674,7 @@ void JointDisplacementViewImpl::onUnitChanged()
 }
 
 
-bool JointDisplacementViewImpl::eventFilter(QObject* object, QEvent* event)
+bool JointDisplacementView::Impl::eventFilter(QObject* object, QEvent* event)
 {
     Slider* slider = dynamic_cast<Slider*>(object);
     if(slider && (event->type() == QEvent::KeyPress)){
@@ -682,7 +689,7 @@ bool JointDisplacementViewImpl::eventFilter(QObject* object, QEvent* event)
     return QObject::eventFilter(object, event);
 }
 
-bool JointDisplacementViewImpl::onSliderKeyPressEvent(Slider* slider, QKeyEvent* event)
+bool JointDisplacementView::Impl::onSliderKeyPressEvent(Slider* slider, QKeyEvent* event)
 {
     int index = slider->property("JointSliderIndex").toInt();
     
@@ -707,7 +714,7 @@ bool JointDisplacementViewImpl::onSliderKeyPressEvent(Slider* slider, QKeyEvent*
 }
 
 
-bool JointDisplacementViewImpl::onDialKeyPressEvent(Dial* dial, QKeyEvent* event)
+bool JointDisplacementView::Impl::onDialKeyPressEvent(Dial* dial, QKeyEvent* event)
 {
     int index = dial->property("JointDialIndex").toInt();
 
@@ -732,7 +739,7 @@ bool JointDisplacementViewImpl::onDialKeyPressEvent(Dial* dial, QKeyEvent* event
 }
 
 
-void JointDisplacementViewImpl::focusSlider(int index)
+void JointDisplacementView::Impl::focusSlider(int index)
 {
     if(index >= 0 && index < static_cast<int>(jointIndicators.size())){
         Slider& slider = jointIndicators[index]->slider;
@@ -742,7 +749,7 @@ void JointDisplacementViewImpl::focusSlider(int index)
 }
 
 
-void JointDisplacementViewImpl::focusDial(int index)
+void JointDisplacementView::Impl::focusDial(int index)
 {
     if(index >= 0 && index < static_cast<int>(jointIndicators.size())){
         Dial& dial = jointIndicators[index]->dial;
@@ -752,7 +759,7 @@ void JointDisplacementViewImpl::focusDial(int index)
 }
 
         
-void JointDisplacementViewImpl::notifyJointDisplacementInput()
+void JointDisplacementView::Impl::notifyJointDisplacementInput()
 {
     kinematicStateChangeConnection.block();
     currentBodyItem->notifyKinematicStateChange(true);
@@ -760,7 +767,7 @@ void JointDisplacementViewImpl::notifyJointDisplacementInput()
 }
 
 
-void JointDisplacementViewImpl::updateJointDisplacements()
+void JointDisplacementView::Impl::updateJointDisplacements()
 {
     for(size_t i=0; i < activeJointIds.size(); ++i){
         jointIndicators[i]->updateDisplacement(false);
@@ -774,7 +781,7 @@ bool JointDisplacementView::storeState(Archive& archive)
 }
 
 
-bool JointDisplacementViewImpl::storeState(Archive& archive)
+bool JointDisplacementView::Impl::storeState(Archive& archive)
 {
     archive.write("showSelectedJoints", selectedJointsOnlyCheck->isChecked());
     archive.write("showJointIDs", jointIdCheck->isChecked());
@@ -795,7 +802,7 @@ bool JointDisplacementView::restoreState(const Archive& archive)
 }
 
 
-bool JointDisplacementViewImpl::restoreState(const Archive& archive)
+bool JointDisplacementView::Impl::restoreState(const Archive& archive)
 {
     bool on;
     if(archive.read("showSelectedJoints", on)){
@@ -834,7 +841,7 @@ bool JointDisplacementViewImpl::restoreState(const Archive& archive)
 }
 
 
-void JointDisplacementViewImpl::restoreCurrentBodyItem(const Archive& archive)
+void JointDisplacementView::Impl::restoreCurrentBodyItem(const Archive& archive)
 {
     setBodyItem(archive.findItem<BodyItem>("currentBodyItem"));
 }

@@ -4,7 +4,7 @@
 
 #include "LinkSelectionView.h"
 #include "LinkTreeWidget.h"
-#include "BodyBar.h"
+#include "BodySelectionManager.h"
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #include <QHeaderView>
@@ -14,18 +14,22 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
-LinkSelectionView* mainLinkSelectionView = 0;
+LinkSelectionView* instance = nullptr;
 }
 
 namespace cnoid {
 
-class LinkSelectionViewImpl
+class LinkSelectionView::Impl
 {
 public:
-    LinkSelectionViewImpl(LinkSelectionView* self);
-    ~LinkSelectionViewImpl();
     LinkTreeWidget linkTreeWidget;
-    Connection currentBodyItemChangeConnection;
+    BodySelectionManager* bodySelectionManager;
+    ScopedConnection bodySelectionManagerConnection;
+    ScopedConnection linkTreeWidgetConnection;
+
+    Impl(LinkSelectionView* self);
+    void onBodySelectionManagerCurrentChanged(BodyItem* bodyItem, Link* link);
+    void onLinkTreeWidgetSelectionChanged();
 };
 
 }
@@ -33,7 +37,7 @@ public:
 
 void LinkSelectionView::initializeClass(ExtensionManager* ext)
 {
-    mainLinkSelectionView =
+    ::instance =
         ext->viewManager().registerClass<LinkSelectionView>(
             "LinkSelectionView", N_("Links"), ViewManager::SINGLE_DEFAULT);
 }
@@ -41,23 +45,17 @@ void LinkSelectionView::initializeClass(ExtensionManager* ext)
 
 LinkSelectionView* LinkSelectionView::instance()
 {
-    return mainLinkSelectionView;
-}
-
-
-LinkSelectionView* LinkSelectionView::mainInstance()
-{
-    return instance();
+    return ::instance;
 }
 
 
 LinkSelectionView::LinkSelectionView()
 {
-    impl = new LinkSelectionViewImpl(this);
+    impl = new Impl(this);
 }
 
 
-LinkSelectionViewImpl::LinkSelectionViewImpl(LinkSelectionView* self)
+LinkSelectionView::Impl::Impl(LinkSelectionView* self)
 {
     self->setDefaultLayoutArea(View::LEFT_BOTTOM);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
@@ -73,9 +71,16 @@ LinkSelectionViewImpl::LinkSelectionViewImpl(LinkSelectionView* self)
     vbox->addWidget(&linkTreeWidget);
     self->setLayout(vbox);
 
-    currentBodyItemChangeConnection =
-        BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            [&](BodyItem* bodyItem){ linkTreeWidget.setBodyItem(bodyItem); });
+    bodySelectionManager = BodySelectionManager::instance();
+
+    bodySelectionManagerConnection.reset(
+        bodySelectionManager->sigCurrentChanged().connect(
+            [&](BodyItem* bodyItem, Link* link){
+                onBodySelectionManagerCurrentChanged(bodyItem, link); }));
+
+    linkTreeWidgetConnection.reset(
+        linkTreeWidget.sigSelectionChanged().connect(
+            [&](){ onLinkTreeWidgetSelectionChanged(); }));
 }
 
 
@@ -85,9 +90,16 @@ LinkSelectionView::~LinkSelectionView()
 }
 
 
-LinkSelectionViewImpl::~LinkSelectionViewImpl()
+void LinkSelectionView::Impl::onBodySelectionManagerCurrentChanged(BodyItem* bodyItem, Link* link)
 {
-    currentBodyItemChangeConnection.disconnect();
+    linkTreeWidget.setBodyItem(bodyItem);
+    if(bodyItem){
+        if(link){
+            linkTreeWidget.makeSingleSelection(bodyItem, link->index());
+        } else {
+            //linkTreeWidget.setSelection(bodySelectionManager->linkSelection(bodyItem));
+        }
+    }
 }
 
 
@@ -100,6 +112,17 @@ BodyItem* LinkSelectionView::currentBodyItem()
 SignalProxy<void()> LinkSelectionView::sigSelectionChanged()
 {
     return impl->linkTreeWidget.sigSelectionChanged();
+}
+
+
+void LinkSelectionView::Impl::onLinkTreeWidgetSelectionChanged()
+{
+    bodySelectionManagerConnection.block();
+
+    bodySelectionManager->setLinkSelection(
+        linkTreeWidget.bodyItem(), linkTreeWidget.linkSelection());
+    
+    bodySelectionManagerConnection.unblock();
 }
 
 

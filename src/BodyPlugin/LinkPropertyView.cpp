@@ -3,8 +3,8 @@
 */
 
 #include "LinkPropertyView.h"
-#include "LinkSelectionView.h"
-#include "BodyBar.h"
+#include "BodyItem.h"
+#include "BodySelectionManager.h"
 #include <cnoid/Link>
 #include <cnoid/ViewManager>
 #include <cnoid/AppConfig>
@@ -16,25 +16,19 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
-
 
 namespace cnoid {
 
-class LinkPropertyViewImpl : public QTableWidget
+class LinkPropertyView::Impl : public QTableWidget
 {
 public:
     LinkPropertyView* self;
-    LinkSelectionView* linkSelectionView;
-    ConnectionSet connections;
+    ScopedConnection connection;
     int fontPointSizeDiff;
 
-    LinkPropertyViewImpl(LinkPropertyView* self);
-    ~LinkPropertyViewImpl();
-    void onCurrentBodyItemChanged(BodyItem* bodyItem);
-    void clear();
-    void updateProperties();
+    Impl(LinkPropertyView* self);
+    void onCurrentLinkChanged(BodyItem* bodyItem, Link* link);
     void updateLinkProperties(Link* link);
     void addProperty(const string& name, const QString& value);
     void addProperty(const string& name, const string& value);
@@ -48,7 +42,6 @@ public:
 
 }
 
-
 void LinkPropertyView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LinkPropertyView>(
@@ -58,7 +51,7 @@ void LinkPropertyView::initializeClass(ExtensionManager* ext)
 
 LinkPropertyView::LinkPropertyView()
 {
-    impl = new LinkPropertyViewImpl(this);
+    impl = new Impl(this);
 
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->addWidget(impl);
@@ -68,11 +61,9 @@ LinkPropertyView::LinkPropertyView()
 }
 
 
-LinkPropertyViewImpl::LinkPropertyViewImpl(LinkPropertyView* self)
+LinkPropertyView::Impl::Impl(LinkPropertyView* self)
     : self(self)
 {
-    linkSelectionView = LinkSelectionView::mainInstance();
-    
     setFrameShape(QFrame::NoFrame);
     setColumnCount(2);
     setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -93,13 +84,10 @@ LinkPropertyViewImpl::LinkPropertyViewImpl(LinkPropertyView* self)
         zoomFontSize(storedFontPointSizeDiff);
     }
 
-    connections.add(
-        BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            std::bind(&LinkPropertyViewImpl::onCurrentBodyItemChanged, this, _1)));
-
-    connections.add(
-        linkSelectionView->sigSelectionChanged().connect(
-            std::bind(&LinkPropertyViewImpl::updateProperties, this)));
+    connection.reset(
+        BodySelectionManager::instance()->sigCurrentChanged().connect(
+            [&](BodyItem* bodyItem, Link* link){
+                onCurrentLinkChanged(bodyItem, link); }));
 }
 
 
@@ -109,45 +97,17 @@ LinkPropertyView::~LinkPropertyView()
 }
 
 
-LinkPropertyViewImpl::~LinkPropertyViewImpl()
+void LinkPropertyView::Impl::onCurrentLinkChanged(BodyItem* bodyItem, Link* link)
 {
-    connections.disconnect();
-}
+    setRowCount(0); // clear
 
-
-void LinkPropertyViewImpl::onCurrentBodyItemChanged(BodyItem* bodyItem)
-{
-    if(!bodyItem){
-        clear();
+    if(bodyItem && link){
+        updateLinkProperties(link);
     }
 }
 
 
-void LinkPropertyViewImpl::clear()
-{
-    setRowCount(0);
-}
-
-
-void LinkPropertyViewImpl::updateProperties()
-{
-    clear();
-        
-    BodyItem* bodyItem = linkSelectionView->currentBodyItem();
-    if(bodyItem){
-        Body* body = bodyItem->body();
-        int linkIndex = linkSelectionView->selectedLinkIndex();
-        if(linkIndex >= 0){
-            Link* link = body->link(linkIndex);
-            if(link){
-                updateLinkProperties(link);
-            }
-        }
-    }
-}
-
-
-void LinkPropertyViewImpl::updateLinkProperties(Link* link)
+void LinkPropertyView::Impl::updateLinkProperties(Link* link)
 {
     addProperty(_("Name"), link->name());
     addProperty(_("Index"), link->index());
@@ -182,7 +142,7 @@ void LinkPropertyViewImpl::updateLinkProperties(Link* link)
 }
 
 
-void LinkPropertyViewImpl::addProperty(const string& name, const QString& value)
+void LinkPropertyView::Impl::addProperty(const string& name, const QString& value)
 {
     int row = rowCount();
     setRowCount(row + 1);
@@ -194,32 +154,32 @@ void LinkPropertyViewImpl::addProperty(const string& name, const QString& value)
 }
 
 
-void LinkPropertyViewImpl::addProperty(const string& name, const string& value)
+void LinkPropertyView::Impl::addProperty(const string& name, const string& value)
 {
     addProperty(name, QString(value.c_str()));
 }
 
 
-void LinkPropertyViewImpl::addProperty(const string& name, int value)
+void LinkPropertyView::Impl::addProperty(const string& name, int value)
 {
     addProperty(name, QString::number(value));
 }
 
 
-void LinkPropertyViewImpl::addProperty(const string& name, double value)
+void LinkPropertyView::Impl::addProperty(const string& name, double value)
 {
     addProperty(name, QString::number(value));
 }
 
 
-void LinkPropertyViewImpl::addProperty(const string& name, const Vector3& value)
+void LinkPropertyView::Impl::addProperty(const string& name, const Vector3& value)
 {
     static const QString format("%1 %2 %3");
     addProperty(name, format.arg(value[0]).arg(value[1]).arg(value[2]));
 }
 
 
-void LinkPropertyViewImpl::addProperty(const string& name, const AngleAxis& rotation)
+void LinkPropertyView::Impl::addProperty(const string& name, const AngleAxis& rotation)
 {
     static const QString format("%1 %2 %3 %4");
     const Vector3 a = rotation.axis();
@@ -227,7 +187,7 @@ void LinkPropertyViewImpl::addProperty(const string& name, const AngleAxis& rota
 }
 
 
-void LinkPropertyViewImpl::addProperty(const string& name, const Matrix3& M)
+void LinkPropertyView::Impl::addProperty(const string& name, const Matrix3& M)
 {
     static const QString format("%1 %2 %3 %4 %5 %6 %7 %8 %9");
     addProperty(
@@ -256,7 +216,7 @@ void LinkPropertyView::keyPressEvent(QKeyEvent* event)
 }
 
 
-void LinkPropertyViewImpl::zoomFontSize(int pointSizeDiff)
+void LinkPropertyView::Impl::zoomFontSize(int pointSizeDiff)
 {
     QFont f = font();
     f.setPointSize(f.pointSize() + pointSizeDiff);

@@ -12,7 +12,7 @@ class View;
 class CNOID_EXPORT TargetItemPickerBase
 {
 public:
-    TargetItemPickerBase(View* view);
+    TargetItemPickerBase(View* view = nullptr);
     ~TargetItemPickerBase();
 
     void storeTargetItem(Archive& archive, const std::string& key);
@@ -21,8 +21,9 @@ public:
 
 protected:
     Item* getTargetItem();
-    virtual void extractTargetItemCandidates(ItemList<>& io_items) = 0;
+    virtual void extractTargetItemCandidates(ItemList<>& io_items, bool selectionChanged) = 0;
     virtual void onTargetItemChanged(Item* item) = 0;
+    virtual void onDeactivated() = 0;
 
 private:
 class Impl;
@@ -36,18 +37,21 @@ class TargetItemPicker : public TargetItemPickerBase
 public:
     typedef ref_ptr<ItemType> ItemTypePtr;
     
-    TargetItemPicker(View* view)
-        : TargetItemPickerBase(view)
-    { }
+    TargetItemPicker() : TargetItemPickerBase() { }
+    TargetItemPicker(View* view) : TargetItemPickerBase(view) { }
 
     ItemType* currentItem(){ return static_cast<ItemType*>(getTargetItem()); }
+    const ItemList<ItemType>& selectedItems(){ return selectedItems_; }
 
     SignalProxy<void(ItemType* targetItem)> sigTargetItemChanged(){
         return sigTargetItemChanged_;
     }
+    SignalProxy<void(const ItemList<ItemType>& selected)> sigSelectedItemsChanged(){
+        return sigSelectedItemsChanged_;
+    }
 
 protected:
-    virtual void extractTargetItemCandidates(ItemList<>& io_items) override
+    virtual void extractTargetItemCandidates(ItemList<>& io_items, bool selectionChanged) override
     {
         auto iter = io_items.begin();
         while(iter != io_items.end()){
@@ -57,6 +61,10 @@ protected:
                 ++iter;
             }
         }
+        if(selectionChanged){
+            selectedItems_ = io_items;
+            sigSelectedItemsChanged_(selectedItems_);
+        }
     }
 
     virtual void onTargetItemChanged(Item* item) override
@@ -64,8 +72,15 @@ protected:
         sigTargetItemChanged_(static_cast<ItemType*>(item));
     }
 
+    virtual void onDeactivated() override
+    {
+        selectedItems_.clear();
+    }
+
 private:
     Signal<void(ItemType* targetItem)> sigTargetItemChanged_;
+    Signal<void(const ItemList<ItemType>& selected)> sigSelectedItemsChanged_;
+    ItemList<ItemType> selectedItems_;
 };
 
 }

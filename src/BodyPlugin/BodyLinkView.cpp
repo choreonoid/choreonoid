@@ -3,9 +3,8 @@
 */
 
 #include "BodyLinkView.h"
-#include "BodyBar.h"
+#include "BodySelectionManager.h"
 #include "BodyItem.h"
-#include "LinkSelectionView.h"
 #include "WorldItem.h"
 #include "KinematicsBar.h"
 #include "SimulatorItem.h"
@@ -46,17 +45,16 @@ void onUseQuaternionToggled(bool on)
     BodyLinkView::instance()->switchRpyQuat(on);
 }
 
-BodyLinkView* bodyLinkView = 0;
+BodyLinkView* bodyLinkView = nullptr;
 
 }
 
 namespace cnoid {
 
-class BodyLinkViewImpl
+class BodyLinkView::Impl
 {
 public:
-    BodyLinkViewImpl(BodyLinkView* self);
-    ~BodyLinkViewImpl();
+    Impl(BodyLinkView* self);
             
     BodyLinkView* self;
             
@@ -103,15 +101,15 @@ public:
     BodyItemPtr currentBodyItem;
     Link* currentLink;
 
-    Connection currentBodyItemChangeConnection;
-    ConnectionSet bodyItemConnections;
+    ScopedConnection bodySelectionManagerConnection;
+    ScopedConnectionSet bodyItemConnections;
     LazyCaller updateKinematicStateLater;
-    ConnectionSet propertyWidgetConnections;
-    ConnectionSet stateWidgetConnections;
+    ScopedConnectionSet propertyWidgetConnections;
+    ScopedConnectionSet stateWidgetConnections;
 
     void setupWidgets();
     void onAttMatrixCheckToggled(bool on);
-    void onCurrentBodyItemChanged(BodyItem* bodyItem);
+    void onCurrentLinkChanged(BodyItem* bodyItem, Link* link);
     void activateCurrentBodyItem(bool on);
     void update();
     void updateLink();
@@ -170,11 +168,11 @@ BodyLinkView* BodyLinkView::instance()
 
 BodyLinkView::BodyLinkView()
 {
-    impl = new BodyLinkViewImpl(this);
+    impl = new Impl(this);
 }
 
 
-BodyLinkViewImpl::BodyLinkViewImpl(BodyLinkView* self)
+BodyLinkView::Impl::Impl(BodyLinkView* self)
     : self(self)
 {
     self->setDefaultLayoutArea(View::CENTER);
@@ -188,9 +186,9 @@ BodyLinkViewImpl::BodyLinkViewImpl(BodyLinkView* self)
     updateKinematicStateLater.setFunction([&](){ updateKinematicState(true); });
     updateKinematicStateLater.setPriority(LazyCaller::PRIORITY_LOW);
 
-    currentBodyItemChangeConnection = 
-        BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            [&](BodyItem* bodyItem){ onCurrentBodyItemChanged(bodyItem); });
+    bodySelectionManagerConnection = 
+        BodySelectionManager::instance()->sigCurrentChanged().connect(
+            [&](BodyItem* bodyItem, Link* link){ onCurrentLinkChanged(bodyItem, link); });
     
     self->sigActivated().connect([&](){ activateCurrentBodyItem(true); });
     self->sigDeactivated().connect([&](){ activateCurrentBodyItem(false); });
@@ -203,14 +201,7 @@ BodyLinkView::~BodyLinkView()
 }
 
 
-BodyLinkViewImpl::~BodyLinkViewImpl()
-{
-    currentBodyItemChangeConnection.disconnect();
-    bodyItemConnections.disconnect();
-}
-
-
-void BodyLinkViewImpl::setupWidgets()
+void BodyLinkView::Impl::setupWidgets()
 {
     QHBoxLayout* hbox;
     QVBoxLayout* vbox;
@@ -477,7 +468,7 @@ void BodyLinkViewImpl::setupWidgets()
 }
 
 
-void BodyLinkViewImpl::onAttMatrixCheckToggled(bool on)
+void BodyLinkView::Impl::onAttMatrixCheckToggled(bool on)
 {
     if(on){
         attMatrixBox.show();
@@ -488,30 +479,29 @@ void BodyLinkViewImpl::onAttMatrixCheckToggled(bool on)
 }
 
 
-void BodyLinkViewImpl::onCurrentBodyItemChanged(BodyItem* bodyItem)
+void BodyLinkView::Impl::onCurrentLinkChanged(BodyItem* bodyItem, Link* link)
 {
     if(bodyItem != currentBodyItem){
-
         activateCurrentBodyItem(false);
-        
         currentBodyItem = bodyItem;
-        currentLink = 0;
-    
+        if(link){
+            currentLink = link;
+        }
         activateCurrentBodyItem(true);
+
+    } else if(link != currentLink){
+        currentLink = link;
+        update();
     }
 }
 
 
-void BodyLinkViewImpl::activateCurrentBodyItem(bool on)
+void BodyLinkView::Impl::activateCurrentBodyItem(bool on)
 {
     bodyItemConnections.disconnect();
 
     if(on){
         if(self->isActive() && currentBodyItem){
-
-            bodyItemConnections.add(
-                LinkSelectionView::mainInstance()->sigSelectionChanged(currentBodyItem).connect(
-                    [&](){ update(); }));
 
             bodyItemConnections.add(
                 currentBodyItem->sigKinematicStateChanged().connect(updateKinematicStateLater));
@@ -529,10 +519,8 @@ void BodyLinkViewImpl::activateCurrentBodyItem(bool on)
 }
 
 
-void BodyLinkViewImpl::update()
+void BodyLinkView::Impl::update()
 {
-    currentLink = 0;
-    
     if(!currentBodyItem){
         nameLabel.setText("");
         return;
@@ -542,13 +530,9 @@ void BodyLinkViewImpl::update()
     stateWidgetConnections.block();
     
     BodyPtr body = currentBodyItem->body();
-    const vector<int>& selectedLinkIndices =
-        LinkSelectionView::mainInstance()->selectedLinkIndices(currentBodyItem);
 
-    if(selectedLinkIndices.empty()){
-        currentLink = body->rootLink();
-    } else {
-        currentLink = body->link(selectedLinkIndices.front());
+    if(!currentLink){
+        currentLink = BodySelectionManager::instance()->currentLink();
     }
 
     if(currentLink){
@@ -575,7 +559,7 @@ void BodyLinkViewImpl::update()
 }
 
 
-void BodyLinkViewImpl::updateLink()
+void BodyLinkView::Impl::updateLink()
 {
     BodyPtr body = currentBodyItem->body();
     
@@ -599,7 +583,7 @@ void BodyLinkViewImpl::updateLink()
 }
 
 
-void BodyLinkViewImpl::updateRotationalJointState()
+void BodyLinkView::Impl::updateRotationalJointState()
 {
     jointTypeLabel.setText(_("Rotation"));
 
@@ -641,7 +625,7 @@ void BodyLinkViewImpl::updateRotationalJointState()
 }        
 
 
-void BodyLinkViewImpl::updateSlideJointState()
+void BodyLinkView::Impl::updateSlideJointState()
 {
     jointTypeLabel.setText(_("Slide"));
     
@@ -683,7 +667,7 @@ void BodyLinkViewImpl::updateSlideJointState()
 }
 
     
-void BodyLinkViewImpl::updateKinematicState(bool blockSignals)
+void BodyLinkView::Impl::updateKinematicState(bool blockSignals)
 {
     if(currentBodyItem){
 
@@ -756,7 +740,7 @@ void BodyLinkViewImpl::updateKinematicState(bool blockSignals)
 }
 
 
-void BodyLinkViewImpl::updateCollisions()
+void BodyLinkView::Impl::updateCollisions()
 {
     selfCollisionString.clear();
     worldCollisionString.clear();
@@ -779,7 +763,7 @@ void BodyLinkViewImpl::updateCollisions()
 }
 
 
-void BodyLinkViewImpl::addSelfCollision(const CollisionLinkPair& collisionPair, QString& collisionString)
+void BodyLinkView::Impl::addSelfCollision(const CollisionLinkPair& collisionPair, QString& collisionString)
 {
     Link* oppositeLink;
     if(collisionPair.link[0] == currentLink){
@@ -794,7 +778,7 @@ void BodyLinkViewImpl::addSelfCollision(const CollisionLinkPair& collisionPair, 
 }
 
 
-void BodyLinkViewImpl::addWorldCollision(const CollisionLinkPair& collisionPair, QString& collisionString)
+void BodyLinkView::Impl::addWorldCollision(const CollisionLinkPair& collisionPair, QString& collisionString)
 {
     int opposite = (collisionPair.link[0] == currentLink) ? 1 : 0;
 
@@ -807,19 +791,19 @@ void BodyLinkViewImpl::addWorldCollision(const CollisionLinkPair& collisionPair,
 }
 
 
-void BodyLinkViewImpl::on_qSpinChanged(double value)
+void BodyLinkView::Impl::on_qSpinChanged(double value)
 {
     on_qChanged(value);
 }
 
 
-void BodyLinkViewImpl::on_qSliderChanged(int value)
+void BodyLinkView::Impl::on_qSliderChanged(int value)
 {
     on_qChanged(value / sliderResolution);
 }
 
 
-void BodyLinkViewImpl::on_qChanged(double q)
+void BodyLinkView::Impl::on_qChanged(double q)
 {
     if(currentLink){
         if(currentLink->isRotationalJoint()){
@@ -831,7 +815,7 @@ void BodyLinkViewImpl::on_qChanged(double q)
 }
 
 
-void BodyLinkViewImpl::on_dqLimitChanged(bool isMin)
+void BodyLinkView::Impl::on_dqLimitChanged(bool isMin)
 {
     if(currentLink){
         
@@ -854,7 +838,7 @@ void BodyLinkViewImpl::on_dqLimitChanged(bool isMin)
 }
     
 
-void BodyLinkViewImpl::onXyzChanged()
+void BodyLinkView::Impl::onXyzChanged()
 {
     if(currentBodyItem && currentLink){
         Vector3 translation;
@@ -876,7 +860,7 @@ void BodyLinkViewImpl::onXyzChanged()
 }
 
 
-void BodyLinkViewImpl::onRpyChanged()
+void BodyLinkView::Impl::onRpyChanged()
 {
     if(currentBodyItem && currentLink){
         Vector3 rpy;
@@ -891,7 +875,7 @@ void BodyLinkViewImpl::onRpyChanged()
 }
 
 
-void BodyLinkViewImpl::onQuatChanged()
+void BodyLinkView::Impl::onQuatChanged()
 {
     if(currentBodyItem && currentLink){
         Eigen::Quaterniond quat = Eigen::Quaterniond(quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
@@ -904,7 +888,7 @@ void BodyLinkViewImpl::onQuatChanged()
 }
 
 
-void BodyLinkViewImpl::setPosture(Matrix3 R)
+void BodyLinkView::Impl::setPosture(Matrix3 R)
 {
     SimulatorItem* activeSimulator = SimulatorItem::findActiveSimulatorItemFor(currentBodyItem);
     if(!activeSimulator){
@@ -919,7 +903,7 @@ void BodyLinkViewImpl::setPosture(Matrix3 R)
 }
 
 
-void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
+void BodyLinkView::Impl::doInverseKinematics(Vector3 p, Matrix3 R)
 {
     Position T;
     T.translation() = p;
@@ -947,7 +931,7 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
             if(currentLink->isRoot()){
                 Position Tinv = currentLink->T().inverse();
                 Position Trel = T0.inverse() * currentLink->T();
-                const ItemList<BodyItem>& bodyItems = BodyBar::instance()->selectedBodyItems();
+                auto& bodyItems = BodySelectionManager::instance()->selectedBodyItems();
                 for(size_t i=0; i < bodyItems.size(); ++i){
                     BodyItem* bodyItem = bodyItems[i];
                     if(bodyItem != currentBodyItem){
@@ -969,7 +953,7 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
 }
 
 
-void BodyLinkViewImpl::onZmpXyzChanged()
+void BodyLinkView::Impl::onZmpXyzChanged()
 {
     if(currentBodyItem){
         Vector3 zmp;
@@ -988,7 +972,7 @@ void BodyLinkView::switchRpyQuat(bool on)
 }
 
 
-void BodyLinkViewImpl::switchRpyQuat(bool on)
+void BodyLinkView::Impl::switchRpyQuat(bool on)
 {
     if(on){
         Vector3 rpy;
@@ -1035,7 +1019,7 @@ bool BodyLinkView::storeState(Archive& archive)
 }
 
 
-bool BodyLinkViewImpl::storeState(Archive& archive)
+bool BodyLinkView::Impl::storeState(Archive& archive)
 {
     archive.write("showRotationMatrix", attMatrixCheck.isChecked());
     return true;
@@ -1048,7 +1032,7 @@ bool BodyLinkView::restoreState(const Archive& archive)
 }
 
 
-bool BodyLinkViewImpl::restoreState(const Archive& archive)
+bool BodyLinkView::Impl::restoreState(const Archive& archive)
 {
     attMatrixCheck.setChecked(archive.get("showRotationMatrix", attMatrixCheck.isChecked()));
     return true;
