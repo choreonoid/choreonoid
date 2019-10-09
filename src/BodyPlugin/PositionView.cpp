@@ -14,6 +14,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
+#include <cnoid/PositionEditManager>
 #include <cnoid/Archive>
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
@@ -39,10 +40,10 @@ enum InputElement {
     TX, TY, TZ,
     RX, RY, RZ,
     QX, QY, QZ, QW,
-    NUM_INPUT_ELEMENTS
+    NumInputElements
 };
 
-typedef std::bitset<NUM_INPUT_ELEMENTS> InputElementSet;
+typedef std::bitset<NumInputElements> InputElementSet;
 
 const char* normalStyle = "font-weight: normal";
 const char* errorStyle = "font-weight: bold; color: red";
@@ -56,18 +57,25 @@ class PositionView::Impl
 public:
     PositionView* self;
 
-    ScopedConnection bodySelectionManagerConnection;
+    ScopedConnectionSet managerConnections;
+    ScopedConnectionSet targetConnections;
+    
+    enum TargetType { LinkTarget, PositionEditTarget } targetType;
+
     BodyItemPtr targetBodyItem;
-    Link* targetLink;
+    LinkPtr targetLink;
     shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler;
+
+    AbstractPositionEditTarget* positionEditTarget;
 
     ToolButton menuButton;
     MenuManager menuManager;
     QLabel targetLabel;
     QLabel configurationLabel;
     QLabel resultLabel;
-    enum { BASE_COORD, ROOT_COORD, OBJECT_COORD, NUM_COORD_MODES };
+    enum CoordinateMode {
+        BaseCoordinateMode, RootCoordinateMode, ObjectCoordinateMode, NumCoordinateModes };
     Selection coordinateMode;
     ButtonGroup coordinateModeGroup;
     RadioButton baseCoordRadio;
@@ -88,8 +96,8 @@ public:
 
     vector<QWidget*> inputElementWidgets;
         
-    enum AttitudeType { ROLL_PITCH_YAW, QUATERNION };
-    AttitudeType lastInputAttitudeType;
+    enum AttitudeMode { RollPitchYawMode, QuaternionMode };
+    AttitudeMode lastInputAttitudeMode;
 
     ComboBox userCoordCombo;
     ComboBox toolCoordCombo;
@@ -97,19 +105,23 @@ public:
     CheckBox requireConfigurationCheck;
     vector<QWidget*> configurationWidgets;
 
-    ScopedConnectionSet bodyItemConnections;
     ScopedConnectionSet userInputConnections;
     ScopedConnectionSet settingConnections;
 
     Impl(PositionView* self);
     ~Impl();
     void createPanel();
+    void onActivated();
     void resetInputWidgetStyles();
+    void setConfigurationWidgetsEnabled(bool on);
     void onMenuButtonClicked();
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
-    void setTargetLink(BodyItem* bodyItem, Link* link);
+    void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
+    bool setPositionEditTarget(AbstractPositionEditTarget* target);
+    void updatePositionEditTargetPosition(const Position& T);
+    void onPositionEditTargetExpired();
     void clearPanelValues();
     void updatePanel();
     void updateRotationMatrixPanel(const Matrix3& R);
@@ -141,12 +153,15 @@ PositionView::PositionView()
 
 PositionView::Impl::Impl(PositionView* self)
     : self(self),
-      coordinateMode(NUM_COORD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
+      coordinateMode(NumCoordinateModes, CNOID_GETTEXT_DOMAIN_NAME)
 {
     self->setDefaultLayoutArea(View::CENTER);
     createPanel();
     clearPanelValues();
     self->setEnabled(false);
+    
+    targetType = LinkTarget;
+    positionEditTarget = nullptr;
 }
 
 
@@ -213,21 +228,21 @@ void PositionView::Impl::createPanel()
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Coordinate:")));
     
-    coordinateMode.setSymbol(BASE_COORD, "base");
+    coordinateMode.setSymbol(BaseCoordinateMode, "base");
     baseCoordRadio.setText(_("Base"));
     baseCoordRadio.setChecked(true);
     hbox->addWidget(&baseCoordRadio);
-    coordinateModeGroup.addButton(&baseCoordRadio, BASE_COORD);
+    coordinateModeGroup.addButton(&baseCoordRadio, BaseCoordinateMode);
 
-    coordinateMode.setSymbol(ROOT_COORD, "root");
+    coordinateMode.setSymbol(RootCoordinateMode, "root");
     rootCoordRadio.setText(_("Root"));
     hbox->addWidget(&rootCoordRadio);
-    coordinateModeGroup.addButton(&rootCoordRadio, ROOT_COORD);
+    coordinateModeGroup.addButton(&rootCoordRadio, RootCoordinateMode);
     
-    coordinateMode.setSymbol(OBJECT_COORD, "object");
+    coordinateMode.setSymbol(ObjectCoordinateMode, "object");
     objectCoordRadio.setText(_("Object"));
     hbox->addWidget(&objectCoordRadio);
-    coordinateModeGroup.addButton(&objectCoordRadio, OBJECT_COORD);
+    coordinateModeGroup.addButton(&objectCoordRadio, ObjectCoordinateMode);
     hbox->addStretch();
     mainvbox->addLayout(hbox);
 
@@ -404,26 +419,44 @@ void PositionView::Impl::createPanel()
                 updatePanel();
             }));
 
-    lastInputAttitudeType = ROLL_PITCH_YAW;
+    lastInputAttitudeMode = RollPitchYawMode;
 }
 
 
 void PositionView::onActivated()
 {
+    impl->onActivated();
+}
+
+
+void PositionView::Impl::onActivated()
+{
     auto bsm = BodySelectionManager::instance();
+    auto pem = PositionEditManager::instance();
     
-    impl->bodySelectionManagerConnection.reset(
+    managerConnections.add(
         bsm->sigCurrentChanged().connect(
             [&](BodyItem* bodyItem, Link* link){
-                impl->setTargetLink(bodyItem, link); }));
+                setTargetBodyAndLink(bodyItem, link); }));
 
-    impl->setTargetLink(bsm->currentBodyItem(), bsm->currentLink());
+    managerConnections.add(
+        pem->sigPositionEditRequest().connect(
+            [&](AbstractPositionEditTarget* target){
+                return setPositionEditTarget(target); }));
+                
+    setTargetBodyAndLink(bsm->currentBodyItem(), bsm->currentLink());
+
+    if(!targetBodyItem){
+        if(auto positionEditTarget = pem->lastPositionEditTarget()){
+            setPositionEditTarget(positionEditTarget);
+        }
+    }
 }
 
 
 void PositionView::onDeactivated()
 {
-    impl->bodySelectionManagerConnection.disconnect();
+    impl->managerConnections.disconnect();
 }
 
 
@@ -431,6 +464,14 @@ void PositionView::Impl::resetInputWidgetStyles()
 {
     for(auto& widget : inputElementWidgets){
         widget->setStyleSheet(normalStyle);
+    }
+}
+
+
+void PositionView::Impl::setConfigurationWidgetsEnabled(bool on)
+{
+    for(auto& widget : configurationWidgets){
+        widget->setEnabled(on);
     }
 }
     
@@ -457,30 +498,33 @@ void PositionView::Impl::setQuaternionSpinsVisible(bool on)
 }
 
 
-void PositionView::Impl::setTargetLink(BodyItem* bodyItem, Link* link)
+void PositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
-    bool isBodyItemChanged = bodyItem != targetBodyItem;
-    bool isLinkChanged = link != targetLink;
+    bool isTargetTypeChanged = (targetType != LinkTarget);
+    bool isBodyItemChanged = isTargetTypeChanged || (bodyItem != targetBodyItem);
+    bool isLinkChanged = isTargetTypeChanged || (link != targetLink);
     
     if(isBodyItemChanged || isLinkChanged){
 
         if(isBodyItemChanged){
             resetInputWidgetStyles();
-            bodyItemConnections.disconnect();
             clearPanelValues();
+            targetConnections.disconnect();
+            
             targetBodyItem = bodyItem;
     
             if(bodyItem){
-                bodyItemConnections.add(
+                targetConnections.add(
                     bodyItem->sigNameChanged().connect(
                         [&](const std::string&){ updateTargetLink(targetLink); }));
 
-                bodyItemConnections.add(
+                targetConnections.add(
                     bodyItem->sigKinematicStateChanged().connect(
                         [&](){ updatePanel(); }));
             }
         }
 
+        targetType = LinkTarget;
         updateTargetLink(link);
         updatePanel();
     }
@@ -489,6 +533,10 @@ void PositionView::Impl::setTargetLink(BodyItem* bodyItem, Link* link)
 
 void PositionView::Impl::updateTargetLink(Link* link)
 {
+    if(targetType != LinkTarget){
+        return;
+    }
+    
     targetLink = link;
     inverseKinematics.reset();
     jointPathConfigurationHandler.reset();
@@ -525,9 +573,7 @@ void PositionView::Impl::updateTargetLink(Link* link)
 
     configurationCombo.clear();
     bool isConfigurationInputActive = (jointPathConfigurationHandler != nullptr) && !disableCustomIKCheck->isChecked();
-    for(auto& widget : configurationWidgets){
-        widget->setEnabled(isConfigurationInputActive);
-    }
+    setConfigurationWidgetsEnabled(isConfigurationInputActive);
     
     if(jointPathConfigurationHandler){
         int n = jointPathConfigurationHandler->getNumConfigurations();
@@ -542,6 +588,45 @@ void PositionView::Impl::updateTargetLink(Link* link)
                 jointPathConfigurationHandler->getCurrentConfiguration());
         }
     }
+}
+
+
+bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
+{
+    resetInputWidgetStyles();
+    clearPanelValues();
+    targetConnections.disconnect();
+
+    targetType = PositionEditTarget;
+    positionEditTarget = target;
+
+    targetConnections.add(
+        target->sigPositionChanged().connect(
+            [&](const Position& T){ updatePositionEditTargetPosition(T); }));
+
+    targetConnections.add(
+        target->sigPositionEditTargetExpired().connect(
+            [&](){ onPositionEditTargetExpired(); }));
+
+    targetLabel.setText(target->getPositionName().c_str());
+
+    self->setEnabled(true);
+
+    setConfigurationWidgetsEnabled(false);
+
+    return true;
+}
+
+
+void PositionView::Impl::updatePositionEditTargetPosition(const Position& T)
+{
+
+}
+
+
+void PositionView::Impl::onPositionEditTargetExpired()
+{
+
 }
 
 
@@ -654,9 +739,9 @@ void PositionView::Impl::updateConfigurationPanel()
 
 void PositionView::Impl::onPositionInput(InputElementSet inputElements)
 {
-    if(lastInputAttitudeType == ROLL_PITCH_YAW && rpyCheck->isChecked()){
+    if(lastInputAttitudeMode == RollPitchYawMode && rpyCheck->isChecked()){
         onPositionInputRpy(inputElements);
-    } else if(lastInputAttitudeType == QUATERNION && quaternionCheck->isChecked()){
+    } else if(lastInputAttitudeMode == QuaternionMode && quaternionCheck->isChecked()){
         onPositionInputQuaternion(inputElements);
     } else if(quaternionCheck->isChecked()){
         onPositionInputQuaternion(inputElements);
@@ -679,7 +764,7 @@ void PositionView::Impl::onPositionInputRpy(InputElementSet inputElements)
     
     findSolution(T, inputElements);
 
-    lastInputAttitudeType = ROLL_PITCH_YAW;
+    lastInputAttitudeMode = RollPitchYawMode;
 }
 
 
@@ -701,7 +786,7 @@ void PositionView::Impl::onPositionInputQuaternion(InputElementSet inputElements
         findSolution(T, inputElements);
     }
 
-    lastInputAttitudeType = QUATERNION;
+    lastInputAttitudeMode = QuaternionMode;
 }
 
 
@@ -770,16 +855,13 @@ bool PositionView::Impl::storeState(Archive& archive)
     archive.write("showQuoternion", quaternionCheck->isChecked());
     archive.write("showRotationMatrix", rotationMatrixCheck->isChecked());
     archive.write("disableCustomIK", disableCustomIKCheck->isChecked());
-    archive.write("configuration", configurationCombo.currentText().toStdString());
-    archive.write("isConfigurationRequired", requireConfigurationCheck.isChecked());
     return true;
 }
 
 
 bool PositionView::restoreState(const Archive& archive)
 {
-    archive.addPostProcess([&](){ impl->restoreState(archive); });
-    return true;
+    return impl->restoreState(archive);
 }
 
 
@@ -800,15 +882,8 @@ bool PositionView::Impl::restoreState(const Archive& archive)
     rotationMatrixCheck->setChecked(archive.get("showRotationMatrix", rotationMatrixCheck->isChecked()));
     disableCustomIKCheck->setChecked(archive.get("disableCustomIK", disableCustomIKCheck->isChecked()));
 
-    if(archive.read("configuration", symbol)){
-        configurationCombo.setCurrentText(symbol.c_str());
-    }
-
     userInputConnections.unblock();
     settingConnections.unblock();
-
-    updateTargetLink(targetLink);
-    onConfigurationInput(configurationCombo.currentIndex());
 
     return true;
 }

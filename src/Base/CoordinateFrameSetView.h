@@ -3,10 +3,14 @@
 
 #include <cnoid/View>
 
+class QModelIndex;
+
 namespace cnoid {
 
 class CoordinateFrameSetView : public View
 {
+    Q_OBJECT
+    
 public:
     static void initializeClass(ExtensionManager* ext);
 
@@ -17,6 +21,9 @@ public:
 
     class Impl;
     
+private Q_SLOTS:
+    void onTableItemClicked(const QModelIndex& index);
+
 private:
     Impl* impl;
 };

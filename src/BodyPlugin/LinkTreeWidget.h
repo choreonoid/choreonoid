@@ -54,7 +54,7 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
 {
     Q_OBJECT
 
-        public:
+public:
             
     LinkTreeWidget(QWidget* parent = 0);
     virtual ~LinkTreeWidget();

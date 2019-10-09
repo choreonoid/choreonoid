@@ -1,7 +1,6 @@
 #ifndef CNOID_BASE_POSITION_EDIT_MANAGER_H
 #define CNOID_BASE_POSITION_EDIT_MANAGER_H
 
-#include <cnoid/Referenced>
 #include <cnoid/Signal>
 #include <cnoid/EigenTypes>
 #include <string>
@@ -9,29 +8,24 @@
 
 namespace cnoid {
 
-class AbstractPositionEditTarget : public Referenced
+class AbstractPositionEditTarget
 {
 public:
-    virtual std::string name() = 0;
+    virtual std::string getPositionName() = 0;
     virtual Position getPosition() = 0;
     virtual bool setPosition(const Position& T) = 0;
     virtual SignalProxy<void(const Position& T)> sigPositionChanged() = 0;
-    virtual SignalProxy<void()> sigFinishRequest() = 0;
+    virtual SignalProxy<void()> sigPositionEditTargetExpired() = 0;
 };
 
-typedef ref_ptr<AbstractPositionEditTarget> AbstractPositionEditTargetPtr;
-    
 class CNOID_EXPORT PositionEditManager
 {
 public:
     static PositionEditManager* instance();
 
     SignalProxy<bool(AbstractPositionEditTarget* target), LogicalSum> sigPositionEditRequest();
-    SignalProxy<void(AbstractPositionEditTarget* target)> sigFinishRequest();
-
-    AbstractPositionEditTarget* lastPositionEditTarget();
-
     bool requestPositionEdit(AbstractPositionEditTarget* target);
+    AbstractPositionEditTarget* lastPositionEditTarget();
 
 private:
     PositionEditManager();

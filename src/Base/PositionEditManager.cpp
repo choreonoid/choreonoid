@@ -9,11 +9,10 @@ class PositionEditManager::Impl
 {
 public:
     Signal<bool(AbstractPositionEditTarget* target), LogicalSum> sigPositionEditRequest;
-    Signal<void(AbstractPositionEditTarget* target)> sigFinishRequest;
-    AbstractPositionEditTargetPtr lastTarget;
-    ScopedConnection finishRequestConnection;
+    AbstractPositionEditTarget* lastTarget;
+    ScopedConnection expireConnection;
 
-    void onFinishRequest(AbstractPositionEditTarget* target);
+    void onPositionEditExpired(AbstractPositionEditTarget* target);
     bool requestPositionEdit(AbstractPositionEditTarget* target);
 };
 
@@ -30,6 +29,7 @@ PositionEditManager* PositionEditManager::instance()
 PositionEditManager::PositionEditManager()
 {
     impl = new Impl;
+    impl->lastTarget = nullptr;
 }
 
 
@@ -45,12 +45,6 @@ SignalProxy<bool(AbstractPositionEditTarget* target), LogicalSum> PositionEditMa
 }
 
 
-AbstractPositionEditTarget* PositionEditManager::lastPositionEditTarget()
-{
-    return impl->lastTarget;
-}
-
-
 bool PositionEditManager::requestPositionEdit(AbstractPositionEditTarget* target)
 {
     return impl->requestPositionEdit(target);
@@ -59,28 +53,29 @@ bool PositionEditManager::requestPositionEdit(AbstractPositionEditTarget* target
 
 bool PositionEditManager::Impl::requestPositionEdit(AbstractPositionEditTarget* target)
 {
-    if(lastTarget && target != lastTarget){
-        sigFinishRequest(lastTarget);
-    }
-        
     bool accepted = sigPositionEditRequest(target);
     
     lastTarget = target;
 
-    finishRequestConnection =
-        target->sigFinishRequest().connect([this, target](){ onFinishRequest(target); });
+    expireConnection =
+        target->sigPositionEditTargetExpired().connect(
+            [this, target](){ onPositionEditExpired(target); });
     
     return accepted;
 }
 
 
-void PositionEditManager::Impl::onFinishRequest(AbstractPositionEditTarget* target)
+void PositionEditManager::Impl::onPositionEditExpired(AbstractPositionEditTarget* target)
 {
-    finishRequestConnection.disconnect();
+    expireConnection.disconnect();
 
-    sigFinishRequest(target);
-    
     if(target == lastTarget){
         lastTarget = nullptr;
     }
+}
+
+
+AbstractPositionEditTarget* PositionEditManager::lastPositionEditTarget()
+{
+    return impl->lastTarget;
 }

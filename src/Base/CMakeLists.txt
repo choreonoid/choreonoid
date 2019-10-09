@@ -259,6 +259,7 @@ set(qtheaders
   InfoBar.h
   StringListComboBox.h
   TextEdit.h
+  CoordinateFrameSetView.h
   )
 
 QT5_ADD_RESOURCES(RC_SRCS Base.qrc)

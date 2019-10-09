@@ -1,5 +1,6 @@
 #include "CoordinateFrameSetView.h"
 #include "CoordinateFrameSetItem.h"
+#include "PositionEditManager.h"
 #include <cnoid/CoordinateFrameSet>
 #include <cnoid/CoordinateFrameContainer>
 #include <cnoid/ViewManager>
@@ -67,7 +68,7 @@ public:
 
 namespace cnoid {
 
-class CoordinateFrameSetView::Impl : public QTableView
+class CoordinateFrameSetView::Impl : public QTableView, public AbstractPositionEditTarget
 {
 public:
     CoordinateFrameSetView* self;
@@ -79,6 +80,12 @@ public:
     PushButton addButton;
     MenuManager contextMenuManager;
 
+    // For the position editing by external editors
+    PositionEditManager* positionEditManager;
+    CoordinateFramePtr frameBeingEditedOutside;
+    Signal<void(const Position& T)> sigPositionChanged_;
+    Signal<void()> sigPositionEditTargetExpired_;
+
     Impl(CoordinateFrameSetView* self);
     void setCoordinateFrameSetItem(CoordinateFrameSetItem* item);
     void addFrameIntoCurrentIndex(bool doInsert);
@@ -87,6 +94,13 @@ public:
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(int row, QPoint globalPos);
+    virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous) override;
+    void startExternalPositionEditing(CoordinateFrame* frame);
+    virtual std::string getPositionName() override;
+    virtual Position getPosition() override;
+    virtual bool setPosition(const Position& T) override;
+    virtual SignalProxy<void(const Position& T)> sigPositionChanged() override;
+    virtual SignalProxy<void()> sigPositionEditTargetExpired() override;
 };
 
 }
@@ -368,7 +382,7 @@ CoordinateFrameSetView::Impl::Impl(CoordinateFrameSetView* self)
     setEditTriggers(
         /* QAbstractItemView::CurrentChanged | */
         QAbstractItemView::DoubleClicked |
-        QAbstractItemView::SelectedClicked |
+        /* QAbstractItemView::SelectedClicked | */
         QAbstractItemView::EditKeyPressed |
         QAbstractItemView::AnyKeyPressed);
 
@@ -383,12 +397,17 @@ CoordinateFrameSetView::Impl::Impl(CoordinateFrameSetView* self)
     vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     vheader->hide();
 
+    connect(this, SIGNAL(clicked(const QModelIndex&)),
+            self, SLOT(onTableItemClicked(const QModelIndex&)));
+    
     vbox->addWidget(this);
     self->setLayout(vbox);
 
     targetItemPicker.sigTargetItemChanged().connect(
         [&](CoordinateFrameSetItem* item){
             setCoordinateFrameSetItem(item); });
+
+    positionEditManager = PositionEditManager::instance();
 }
 
 
@@ -502,6 +521,76 @@ void CoordinateFrameSetView::Impl::showContextMenu(int row, QPoint globalPos)
         ->sigTriggered().connect([=](){ removeSelectedFrames(); });
     
     contextMenuManager.popupMenu()->popup(globalPos);
+}
+
+
+void CoordinateFrameSetView::Impl::currentChanged(const QModelIndex& current, const QModelIndex& previous)
+{
+    QTableView::currentChanged(current, previous);
+    
+    auto frame = static_cast<CoordinateFrame*>(current.internalPointer());
+    startExternalPositionEditing(frame);
+}
+
+
+void CoordinateFrameSetView::onTableItemClicked(const QModelIndex& index)
+{
+    auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
+    impl->startExternalPositionEditing(frame);
+}
+
+
+void CoordinateFrameSetView::Impl::startExternalPositionEditing(CoordinateFrame* frame)
+{
+    if(frame != frameBeingEditedOutside && frameBeingEditedOutside){
+        sigPositionEditTargetExpired_();
+    }
+
+    frameBeingEditedOutside = frame;
+
+    if(frame){
+        positionEditManager->requestPositionEdit(this);
+    }
+}
+
+
+std::string CoordinateFrameSetView::Impl::getPositionName()
+{
+    if(frameBeingEditedOutside){
+        return format("{0}: {1}", targetItem->name(), frameBeingEditedOutside->idLabel());
+    }
+    return string();
+}
+
+
+Position CoordinateFrameSetView::Impl::getPosition()
+{
+    if(frameBeingEditedOutside){
+        return frameBeingEditedOutside->T();
+    }
+    return Position::Identity();
+}
+
+
+bool CoordinateFrameSetView::Impl::setPosition(const Position& T)
+{
+    if(frameBeingEditedOutside){
+        frameBeingEditedOutside->T() = T;
+        return true;
+    }
+    return false;
+}
+
+
+SignalProxy<void(const Position& T)> CoordinateFrameSetView::Impl::sigPositionChanged()
+{
+    return sigPositionChanged_;
+}
+
+
+SignalProxy<void()> CoordinateFrameSetView::Impl::sigPositionEditTargetExpired()
+{
+    return sigPositionEditTargetExpired_;
 }
 
 
