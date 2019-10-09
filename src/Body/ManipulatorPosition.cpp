@@ -3,7 +3,7 @@
 #include "Body.h"
 #include "JointPath.h"
 #include "JointPathConfigurationHandler.h"
-#include "CoordinateFrameSet.h"
+#include <cnoid/CoordinateFrameSet>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>

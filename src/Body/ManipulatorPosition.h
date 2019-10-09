@@ -1,9 +1,9 @@
 #ifndef CNOID_BODY_MANIPULATOR_POSITION_H
 #define CNOID_BODY_MANIPULATOR_POSITION_H
 
-#include "CoordinateFrameSet.h"
 #include <cnoid/Referenced>
 #include <cnoid/CloneMap>
+#include <cnoid/CoordinateFrameSet>
 #include <cnoid/EigenTypes>
 #include <string>
 #include <array>

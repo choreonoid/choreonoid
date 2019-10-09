@@ -70,6 +70,8 @@ set(sources
   MultiSE3SeqItem.cpp
   MultiSE3MatrixSeqItem.cpp
   Vector3SeqItem.cpp
+  CoordinateFrameSetItem.cpp
+  CoordinateFrameSetPairItem.cpp
   ExtCommandItem.cpp
   AbstractTextItem.cpp
   ScriptItem.cpp
@@ -106,6 +108,7 @@ set(sources
   GeneralSliderView.cpp
   ImageView.cpp
   TextEdit.cpp
+  CoordinateFrameSetView.cpp
   TaskView.cpp
   VirtualJoystickView.cpp
   MessageLogItem.cpp
@@ -177,6 +180,8 @@ set(headers
   MultiSE3SeqItem.h
   MultiSE3MatrixSeqItem.h
   Vector3SeqItem.h
+  CoordinateFrameSetItem.h
+  CoordinateFrameSetPairItem.h
   ExtCommandItem.h
   AbstractTextItem.h
   ScriptItem.h

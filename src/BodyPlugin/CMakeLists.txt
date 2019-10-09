@@ -7,8 +7,6 @@
 set(sources
   BodyPlugin.cpp
   WorldItem.cpp
-  CoordinateFrameSetPairItem.cpp
-  CoordinateFrameSetItem.cpp
   BodySelectionManager.cpp
   BodyItem.cpp
   SimulatorItem.cpp
@@ -42,7 +40,6 @@ set(sources
   LinkSelectionView.cpp
   LinkPropertyView.cpp
   JointDisplacementView.cpp
-  CoordinateFrameSetView.cpp
   JointStateView.cpp
   BodyStateView.cpp
   IoConnectionView.cpp
@@ -59,8 +56,6 @@ set(headers
   WorldItem.h
   BodySelectionManager.h
   BodyItem.h
-  CoordinateFrameSetPairItem.h
-  CoordinateFrameSetItem.h
   SimulatorItem.h
   SubSimulatorItem.h
   ControllerItem.h

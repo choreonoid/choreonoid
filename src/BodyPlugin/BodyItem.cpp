@@ -8,12 +8,12 @@
 #include "KinematicsBar.h"
 #include "EditableSceneBody.h"
 #include "LinkSelectionView.h"
-#include "CoordinateFrameSetPairItem.h"
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/YAMLReader>
 #include <cnoid/EigenArchive>
 #include <cnoid/Archive>
 #include <cnoid/RootItem>
+#include <cnoid/CoordinateFrameSetPairItem>
 #include <cnoid/ConnectionSet>
 #include <cnoid/LazySignal>
 #include <cnoid/LazyCaller>

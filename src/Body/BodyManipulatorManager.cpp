@@ -5,7 +5,7 @@
 #include "JointPathConfigurationHandler.h"
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
-#include "CoordinateFrameSet.h"
+#include <cnoid/CoordinateFrameSet>
 #include "fmt/format.h"
 
 using namespace std;

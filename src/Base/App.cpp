@@ -26,6 +26,8 @@
 #include "MultiSE3SeqItem.h"
 #include "MultiSE3MatrixSeqItem.h"
 #include "Vector3SeqItem.h"
+#include "CoordinateFrameSetItem.h"
+#include "CoordinateFrameSetPairItem.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -41,6 +43,7 @@
 #include "GraphBar.h"
 #include "MultiValueSeqGraphView.h"
 #include "MultiSE3SeqGraphView.h"
+#include "CoordinateFrameSetView.h"
 #include "TextEditView.h"
 #include "GeneralSliderView.h"
 #include "VirtualJoystickView.h"
@@ -220,6 +223,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     GraphBar::initialize(ext);
     MultiValueSeqGraphView::initializeClass(ext);
     MultiSE3SeqGraphView::initializeClass(ext);
+    CoordinateFrameSetView::initializeClass(ext);
     TaskView::initializeClass(ext);
     VirtualJoystickView::initializeClass(ext);
 
@@ -237,6 +241,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     MultiPointSetItem::initializeClass(ext);
     MessageLogItem::initializeClass(ext);
     LightingItem::initializeClass(ext);
+    CoordinateFrameSetItem::initializeClass(ext);
+    CoordinateFrameSetPairItem::initializeClass(ext);
 
     MovieRecorder::initialize(ext);
 

@@ -49,9 +49,6 @@ set(sources
   PinDragIK.cpp
   BodyManipulatorManager.cpp
   ManipulatorPosition.cpp
-  CoordinateFrameSet.cpp
-  CoordinateFrameContainer.cpp
-  CoordinateFrameSetGroup.cpp
   LinkGroup.cpp
   LeggedBodyHelper.cpp
   BodyCollisionDetector.cpp
@@ -128,9 +125,6 @@ set(headers
   PinDragIK.h
   BodyManipulatorManager.h
   ManipulatorPosition.h
-  CoordinateFrameSet.h
-  CoordinateFrameContainer.h
-  CoordinateFrameSetGroup.h
   LeggedBodyHelper.h
   PenetrationBlocker.h
   ForwardDynamics.h
