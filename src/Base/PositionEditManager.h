@@ -12,6 +12,7 @@ namespace cnoid {
 class AbstractPositionEditTarget
 {
 public:
+    virtual Referenced* getPositionObject() = 0;
     virtual std::string getPositionName() const = 0;
     virtual CoordinateFrameId getPreferredBaseFrameId() const = 0;
     virtual CoordinateFrameId getPreferredLocalFrameId() const = 0;

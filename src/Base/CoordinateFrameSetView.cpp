@@ -34,6 +34,7 @@ class FrameContainerModel : public QAbstractTableModel
 {
 public:
     CoordinateFrameContainerPtr frames;
+    QFont monoFont;
     
     FrameContainerModel(QObject* parent);
     void setFrameContainer(CoordinateFrameContainer* frames);
@@ -98,6 +99,7 @@ public:
     virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous) override;
 
     void startExternalPositionEditing(CoordinateFrame* frame);
+    virtual Referenced* getPositionObject() override;
     virtual std::string getPositionName() const override;
     virtual CoordinateFrameId getPreferredBaseFrameId() const override;
     virtual CoordinateFrameId getPreferredLocalFrameId() const override;
@@ -113,9 +115,10 @@ public:
 
 
 FrameContainerModel::FrameContainerModel(QObject* parent)
-    : QAbstractTableModel(parent)
+    : QAbstractTableModel(parent),
+      monoFont("Monospace")
 {
-
+    monoFont.setStyleHint(QFont::TypeWriter);
 }
 
 
@@ -214,7 +217,7 @@ QVariant FrameContainerModel::data(const QModelIndex& index, int role) const
         } else if(column == PositionColumn){
             auto p = frame->T().translation();
             auto rpy = degree(rpyFromRot(frame->T().linear()));
-            return format("( {0:.3}, {1:.3}, {2:.3}, {3:.1}, {4:.1}, {5:.1} )",
+            return format("( {0: 1.3f}, {1: 1.3f}, {2: 1.3f}, {3: 6.1f}, {4: 6.1f}, {5: 6.1f} )",
                           p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
         }
     } else if(role == Qt::TextAlignmentRole){
@@ -222,6 +225,10 @@ QVariant FrameContainerModel::data(const QModelIndex& index, int role) const
             return (Qt::AlignLeft + Qt::AlignVCenter);
         } else {
             return Qt::AlignCenter;
+        }
+    } else if(role == Qt::FontRole){
+        if(column == PositionColumn){
+            return monoFont;
         }
     }
             
@@ -572,6 +579,12 @@ void CoordinateFrameSetView::Impl::startExternalPositionEditing(CoordinateFrame*
 }
 
 
+Referenced* CoordinateFrameSetView::Impl::getPositionObject()
+{
+    return frameBeingEditedOutside;
+}
+
+
 std::string CoordinateFrameSetView::Impl::getPositionName() const
 {
     if(frameBeingEditedOutside){
@@ -600,8 +613,6 @@ Position CoordinateFrameSetView::Impl::getGlobalPosition() const
     }
     return Position::Identity();
 }
-
-
 
 
 bool CoordinateFrameSetView::Impl::setPosition
