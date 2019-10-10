@@ -53,7 +53,7 @@ CoordinateFrameContainer::CoordinateFrameContainer()
 
 CoordinateFrameContainer::Impl::Impl()
 {
-    identityFrame = new CoordinateFrame;
+    identityFrame = new CoordinateFrame(0);
     idCounter = 0;
 }
 
@@ -144,6 +144,10 @@ int CoordinateFrameContainer::indexOf(CoordinateFrame* frame) const
 CoordinateFrame* CoordinateFrameContainer::findFrame
 (const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound) const
 {
+    if(id == 0){
+        return impl->identityFrame;
+    }
+        
     auto iter = impl->idToFrameMap.find(id);
     if(iter != impl->idToFrameMap.end()){
         return iter->second;
@@ -154,7 +158,7 @@ CoordinateFrame* CoordinateFrameContainer::findFrame
 
 bool CoordinateFrameContainer::insert(int index, CoordinateFrame* frame)
 {
-    if(frame->ownerFrameSet() || !frame->id().isValid() ||
+    if(frame->ownerFrameSet() || !frame->id().isValid() || frame->id() == 0 ||
        CoordinateFrameContainer::findFrame(frame->id(), false)){
         return false;
     }
@@ -192,7 +196,7 @@ bool CoordinateFrameContainer::resetId(CoordinateFrame* frame, const CoordinateF
 {
     bool changed = false;
 
-    if(frame->ownerFrameSet() == this){
+    if(frame->ownerFrameSet() == this && newId.isValid() && newId != 0){
         auto& frameMap = impl->idToFrameMap;
         auto iter = frameMap.find(newId);
         if(iter == frameMap.end()){
@@ -209,7 +213,7 @@ bool CoordinateFrameContainer::resetId(CoordinateFrame* frame, const CoordinateF
 
 void CoordinateFrameContainer::resetIdCounter()
 {
-    impl->idCounter = 0;
+    impl->idCounter = 1;
 }
 
 

@@ -11,6 +11,10 @@ namespace cnoid {
 class CoordinateFrameSet;
 class Mapping;
 
+/**
+   \note Id 0 is reserved for the default frame, which corresponds to the identity frame.
+   The frame with Id 0 cannot be inserted in any frame set.
+*/
 class CNOID_EXPORT CoordinateFrameId
 {
 public:
@@ -54,6 +58,18 @@ public:
         return false;
     }
     bool operator!=(const CoordinateFrameId& rhs) const {
+        return !(this->operator==(rhs));
+    }
+    bool operator==(int rhs) const {
+        return (valueType == Int && intId == rhs);
+    }
+    bool operator!=(int rhs) const {
+        return !(this->operator==(rhs));
+    }
+    bool operator==(const std::string& rhs) const {
+        return (valueType == String && stringId == rhs);
+    }
+    bool operator!=(const std::string& rhs) const {
         return !(this->operator==(rhs));
     }
 
