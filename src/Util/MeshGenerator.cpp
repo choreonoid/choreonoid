@@ -110,31 +110,27 @@ SgMesh* MeshGenerator::generateBox(Vector3 size, bool enableTextureCoordinate)
 
     SgMesh* mesh = new SgMesh;
     
-    SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
-    vertices.reserve(8);
-
-    vertices.push_back(Vector3f( x, y, z));
-    vertices.push_back(Vector3f(-x, y, z));
-    vertices.push_back(Vector3f(-x,-y, z));
-    vertices.push_back(Vector3f( x,-y, z));
-    vertices.push_back(Vector3f( x, y,-z));
-    vertices.push_back(Vector3f(-x, y,-z));
-    vertices.push_back(Vector3f(-x,-y,-z));
-    vertices.push_back(Vector3f( x,-y,-z));
-
-    mesh->reserveNumTriangles(12);
-    mesh->addTriangle(0,1,2);
-    mesh->addTriangle(2,3,0);
-    mesh->addTriangle(0,5,1);
-    mesh->addTriangle(0,4,5);
-    mesh->addTriangle(1,5,6);
-    mesh->addTriangle(1,6,2);
-    mesh->addTriangle(2,6,7);
-    mesh->addTriangle(2,7,3);
-    mesh->addTriangle(3,7,4);
-    mesh->addTriangle(3,4,0);
-    mesh->addTriangle(4,6,5);
-    mesh->addTriangle(4,7,6);
+    mesh->setVertices(
+        new SgVertexArray{
+            {  x, y, z },
+            { -x, y, z },
+            { -x,-y, z },
+            {  x,-y, z },
+            {  x, y,-z },
+            { -x, y,-z },
+            { -x,-y,-z },
+            {  x,-y,-z }
+        });
+        
+    mesh->addTriangles({
+            {0,1,2},{2,3,0},
+            {0,5,1},{0,4,5},
+            {1,5,6},{1,6,2},
+            {2,6,7},{2,7,3},
+            {3,7,4},{3,4,0},
+            {4,6,5},{4,7,6}
+        });
+    
 
     mesh->setPrimitive(SgMesh::Box(size));
 
@@ -805,31 +801,28 @@ SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid, bool ena
 
 void MeshGenerator::generateTextureCoordinateForBox(SgMesh* mesh)
 {
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    texCoords.resize(4);
-    texCoords[0] << 0.0, 0.0;
-    texCoords[1] << 1.0, 0.0;
-    texCoords[2] << 0.0, 1.0;
-    texCoords[3] << 1.0, 1.0;
+    mesh->setTexCoords(
+        new SgTexCoordArray({
+                { 0.0, 0.0 },
+                { 1.0, 0.0 },
+                { 0.0, 1.0 },
+                { 1.0, 1.0 }
+            }));
 
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-    texCoordIndices.reserve(36);
-
-    texCoordIndices.push_back(3); texCoordIndices.push_back(2); texCoordIndices.push_back(0);
-    texCoordIndices.push_back(0); texCoordIndices.push_back(1); texCoordIndices.push_back(3);
-    texCoordIndices.push_back(1); texCoordIndices.push_back(2); texCoordIndices.push_back(0);
-    texCoordIndices.push_back(1); texCoordIndices.push_back(3); texCoordIndices.push_back(2);
-    texCoordIndices.push_back(3); texCoordIndices.push_back(2); texCoordIndices.push_back(0);
-    texCoordIndices.push_back(3); texCoordIndices.push_back(0); texCoordIndices.push_back(1);
-    texCoordIndices.push_back(2); texCoordIndices.push_back(0); texCoordIndices.push_back(1);
-    texCoordIndices.push_back(2); texCoordIndices.push_back(1); texCoordIndices.push_back(3);
-    texCoordIndices.push_back(0); texCoordIndices.push_back(1); texCoordIndices.push_back(3);
-    texCoordIndices.push_back(0); texCoordIndices.push_back(3); texCoordIndices.push_back(2);
-    texCoordIndices.push_back(2); texCoordIndices.push_back(1); texCoordIndices.push_back(3);
-    texCoordIndices.push_back(2); texCoordIndices.push_back(0); texCoordIndices.push_back(1);
-
+    mesh->texCoordIndices() = {
+        3, 2, 0,
+        0, 1, 3,
+        1, 2, 0,
+        1, 3, 2,
+        3, 2, 0,
+        3, 0, 1,
+        2, 0, 1,
+        2, 1, 3,
+        0, 1, 3,
+        0, 3, 2,
+        2, 1, 3,
+        2, 0, 1
+    };
 }
 
 

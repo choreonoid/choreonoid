@@ -162,7 +162,7 @@ public:
     SgVectorArray() { }
     SgVectorArray(size_t size) : values(size) { }
     SgVectorArray(const std::vector<T>& org) : values(org) { }
-    SgVectorArray(std::initializer_list<T> init) : values(init.begin(), init.end()) { }
+    SgVectorArray(std::initializer_list<T> init) : values(init) { }
 
     template<class Element>
     SgVectorArray(const std::vector<Element>& org) {
@@ -200,6 +200,7 @@ public:
     const T& back() const { return values.back(); }
     Scalar* data() { return values.front().data(); }
     const Scalar* data() const { return values.front().data(); }
+    iterator insert(const_iterator pos, std::initializer_list<T> il){ return values.insert(pos, il); }
     void push_back(const T& v) { values.push_back(v); }
     void pop_back() { values.pop_back(); }
     iterator erase(iterator p) { return values.erase(p); }
@@ -345,6 +346,15 @@ public:
 
     // deprecated
     TriangleRef addTriangle(){ return newTriangle(); }
+
+    void addTriangles(std::initializer_list<Array3i> il){
+        triangleVertices_.reserve(triangleVertices_.size() + il.size() * 3);
+        for(auto& v : il){
+            for(int i=0; i < 3; ++i){
+                triangleVertices_.push_back(v[i]);
+            }
+        }
+    }
 
     void addTriangle(int v0, int v1, int v2){
         triangleVertices_.push_back(v0);

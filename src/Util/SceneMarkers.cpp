@@ -189,13 +189,16 @@ void CrossMarker::setSize(double size)
 {
     if(size != size_){
         const float s = size;
-        vertices->resize(6);
-        vertices->at(0) << - s, 0.0f, 0.0f;
-        vertices->at(1) <<   s, 0.0f, 0.0f;
-        vertices->at(2) << 0.0f,  -s, 0.0f;
-        vertices->at(3) << 0.0f,   s, 0.0f;
-        vertices->at(4) << 0.0f,0.0f,   -s;
-        vertices->at(5) << 0.0f,0.0f,    s;
+
+        *vertices = {
+            { -s,     0.0f,  0.0f },
+            {  s,     0.0f,  0.0f },
+            {  0.0f, -s,     0.0f },
+            {  0.0f,  s,     0.0f },
+            {  0.0f,  0.0f, -s    },
+            {  0.0f,  0.0f,  s    }
+        };
+            
         size_ = size;
         vertices->notifyUpdate();
     }
