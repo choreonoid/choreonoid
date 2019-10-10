@@ -32,6 +32,8 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+TaskView* instance_ = nullptr;
+
 typedef PushButton CommandButton;
 //typedef ToolButton CommandButton;
 
@@ -197,7 +199,9 @@ public:
 
 static void onAboutToQuit()
 {
-    TaskView::instance()->clearTasks();
+    if(instance_){
+        instance_->clearTasks();
+    }
 }
 
 
@@ -212,7 +216,9 @@ void TaskView::initializeClass(ExtensionManager* ext)
 
 TaskView* TaskView::instance()
 {
-    static TaskView* instance_ = ViewManager::getOrCreateView<TaskView>();
+    if(!instance_){
+        instance_ = ViewManager::getOrCreateView<TaskView>();
+    }
     return instance_;
 }
 
