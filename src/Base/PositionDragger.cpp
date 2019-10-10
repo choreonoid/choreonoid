@@ -14,7 +14,7 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class PositionDraggerImpl
+class PositionDragger::Impl
 {
 public:
     PositionDragger* self;
@@ -23,9 +23,7 @@ public:
     SceneDragProjector dragProjector;
     int draggableAxes;
     bool isContentsDragEnabled;
-    bool isDraggerAlwaysShown;
-    bool isDraggerAlwaysHidden;
-    bool isDraggerShown;
+    DisplayMode displayMode;
     bool isUndoEnabled;
     std::deque<Affine3> history;
     Signal<void(int axisSet)> sigDraggableAxesChanged;
@@ -33,9 +31,9 @@ public:
     Signal<void()> sigPositionDragged;
     Signal<void()> sigDragFinished;
 
-    PositionDraggerImpl(PositionDragger* self);
-    PositionDraggerImpl(PositionDragger* self, const PositionDraggerImpl& org);
-    PositionDraggerImpl(PositionDragger* self, const PositionDraggerImpl& org, SgCloneMap* cloneMap);
+    Impl(PositionDragger* self);
+    Impl(PositionDragger* self, const Impl& org);
+    Impl(PositionDragger* self, const Impl& org, SgCloneMap* cloneMap);
     void initializeDraggers();
     void onSubDraggerDragStarted();
     void onSubDraggerDragged();
@@ -48,11 +46,11 @@ public:
 
 PositionDragger::PositionDragger()
 {
-    impl = new PositionDraggerImpl(this);
+    impl = new Impl(this);
 }
 
 
-PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self)
+PositionDragger::Impl::Impl(PositionDragger* self)
     : self(self)
 {
     translationDragger = new TranslationDragger;
@@ -62,9 +60,8 @@ PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self)
         PositionDragger::RX | PositionDragger::RY | PositionDragger::RZ;
 
     initializeDraggers();
-    
-    isDraggerAlwaysShown = false;
-    isDraggerAlwaysHidden = false;
+
+    displayMode = DisplayInFocus;
     isContentsDragEnabled = true;
     isUndoEnabled = false;    
 }
@@ -73,11 +70,11 @@ PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self)
 PositionDragger::PositionDragger(const PositionDragger& org)
     : SceneDragger(org)
 {
-    impl = new PositionDraggerImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
-PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self, const PositionDraggerImpl& org)
+PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org)
     : self(self)
 {
     translationDragger = new TranslationDragger(*org.translationDragger);
@@ -86,8 +83,7 @@ PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self, const PositionDr
 
     initializeDraggers();
 
-    isDraggerAlwaysShown = org.isDraggerAlwaysShown;
-    isDraggerAlwaysHidden = org.isDraggerAlwaysHidden;
+    displayMode = org.displayMode;
     isContentsDragEnabled = org.isContentsDragEnabled;
     isUndoEnabled = org.isUndoEnabled;
 }
@@ -96,11 +92,11 @@ PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self, const PositionDr
 PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap* cloneMap)
     : SceneDragger(org, cloneMap)
 {
-    impl = new PositionDraggerImpl(this, *org.impl, cloneMap);
+    impl = new Impl(this, *org.impl, cloneMap);
 }
 
 
-PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self, const PositionDraggerImpl& org, SgCloneMap* cloneMap)
+PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, SgCloneMap* cloneMap)
     : self(self)
 {
     translationDragger = new TranslationDragger(*org.translationDragger, cloneMap);
@@ -109,26 +105,27 @@ PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self, const PositionDr
 
     initializeDraggers();
 
-    isDraggerAlwaysShown = org.isDraggerAlwaysShown;
-    isDraggerAlwaysHidden = org.isDraggerAlwaysHidden;
+    displayMode = org.displayMode;
     isContentsDragEnabled = org.isContentsDragEnabled;
     isUndoEnabled = org.isUndoEnabled;
 }
 
 
-void PositionDraggerImpl::initializeDraggers()
+void PositionDragger::Impl::initializeDraggers()
 {
     translationDragger->sigTranslationStarted().connect(
-        std::bind(&PositionDraggerImpl::onSubDraggerDragStarted, this));
+        [&](){ onSubDraggerDragStarted(); });
     translationDragger->sigTranslationDragged().connect(
-        std::bind(&PositionDraggerImpl::onSubDraggerDragged, this));
-    translationDragger->sigTranslationFinished().connect(std::ref(sigDragFinished));
+        [&](){ onSubDraggerDragged(); });
+    translationDragger->sigTranslationFinished().connect(
+        [&](){ sigDragFinished(); });
     
     rotationDragger->sigRotationStarted().connect(
-        std::bind(&PositionDraggerImpl::onSubDraggerDragStarted, this));
+        [&](){ onSubDraggerDragStarted(); });
     rotationDragger->sigRotationDragged().connect(
-        std::bind(&PositionDraggerImpl::onSubDraggerDragged, this));
-    rotationDragger->sigRotationFinished().connect(std::ref(sigDragFinished));
+        [&](const AngleAxis&){ onSubDraggerDragged(); });
+    rotationDragger->sigRotationFinished().connect(
+        [&](){ sigDragFinished(); });
 }
 
 
@@ -237,49 +234,58 @@ bool PositionDragger::isContentsDragEnabled() const
 }
 
 
+PositionDragger::DisplayMode PositionDragger::displayMode() const
+{
+    return impl->displayMode;
+}
+
+
+void PositionDragger::setDisplayMode(DisplayMode mode)
+{
+    if(mode != impl->displayMode){
+        impl->displayMode = mode;
+        if(mode == DisplayAlways){
+            impl->showDragMarkers(true);
+        } else if(mode == DisplayNever){
+            impl->showDragMarkers(false);
+        }
+    }
+}
+
+
 void PositionDragger::setDraggerAlwaysShown(bool on)
 {
     if(on){
-        impl->isDraggerAlwaysHidden = false;
-    }
-    bool changed = (on != impl->isDraggerAlwaysShown);
-    impl->isDraggerAlwaysShown = on;
-    if(on && changed){
-        impl->showDragMarkers(true);
+        setDisplayMode(DisplayAlways);
     }
 }
 
 
 bool PositionDragger::isDraggerAlwaysShown() const
 {
-    return impl->isDraggerAlwaysShown;
+    return (impl->displayMode == DisplayAlways);
 }
 
 
 void PositionDragger::setDraggerAlwaysHidden(bool on)
 {
     if(on){
-        impl->isDraggerAlwaysShown = false;
-    }
-    bool changed = (on != impl->isDraggerAlwaysHidden);
-    impl->isDraggerAlwaysHidden = on;
-    if(on && changed){
-        impl->showDragMarkers(false);
+        setDisplayMode(DisplayNever);
     }
 }
 
 
 bool PositionDragger::isDraggerAlwaysHidden() const
 {
-    return impl->isDraggerAlwaysHidden;
+    return (impl->displayMode == DisplayNever);
 }
 
 
-void PositionDraggerImpl::showDragMarkers(bool on)
+void PositionDragger::Impl::showDragMarkers(bool on)
 {
-    if(isDraggerAlwaysHidden){
+    if(displayMode == DisplayNever){
         on = false;
-    } else if(isDraggerAlwaysShown){
+    } else if(displayMode == DisplayAlways){
         on = true;
     }
     
@@ -315,14 +321,14 @@ Affine3 PositionDragger::draggedPosition() const
 }
 
 
-void PositionDraggerImpl::onSubDraggerDragStarted()
+void PositionDragger::Impl::onSubDraggerDragStarted()
 {
     storeCurrentPositionToHistory();
     sigDragStarted();
 }
 
 
-void PositionDraggerImpl::onSubDraggerDragged()
+void PositionDragger::Impl::onSubDraggerDragged()
 {
     if(self->isContainerMode()){
         if(isContentsDragEnabled){
@@ -339,7 +345,7 @@ void PositionDraggerImpl::onSubDraggerDragged()
 bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     if(isContainerMode() && impl->isContentsDragEnabled){
-        if(!impl->isDraggerAlwaysShown){
+        if(impl->displayMode == DisplayInFocus){
             impl->showDragMarkers(true);
         }
         impl->dragProjector.setInitialPosition(T());
@@ -392,15 +398,21 @@ void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
 void PositionDragger::onFocusChanged(const SceneWidgetEvent&, bool on)
 {
     if(isContainerMode()){
-        impl->showDragMarkers(on || impl->isDraggerAlwaysShown);
+        impl->showDragMarkers(on);
     }
 }
 
 
 void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    if(!event.sceneWidget()->isEditMode()){
-        impl->showDragMarkers(false);
+    if(event.sceneWidget()->isEditMode()){
+        if(impl->displayMode == DisplayInEditMode){
+            impl->showDragMarkers(true);
+        }
+    } else {
+        if(impl->displayMode == DisplayInEditMode || impl->displayMode == DisplayInFocus){
+            impl->showDragMarkers(false);
+        }
     }
 }
 
@@ -411,7 +423,7 @@ void PositionDragger::storeCurrentPositionToHistory()
 }
 
 
-void PositionDraggerImpl::storeCurrentPositionToHistory()
+void PositionDragger::Impl::storeCurrentPositionToHistory()
 {
     if(isUndoEnabled){
         history.push_back(self->position());
