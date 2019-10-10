@@ -33,6 +33,8 @@ public:
     BodyItemInfoPtr currentInfo;
     unordered_map<BodyItemPtr, BodyItemInfoPtr> bodyItemInfoMap;
 
+    Signal<void(BodyItem* bodyItem, Link* link)> sigCurrentSpecified;
+    Signal<void(BodyItem* bodyItem)> sigCurrentBodySpecified;
     Signal<void(BodyItem* bodyItem, Link* link)> sigCurrentChanged;
     Signal<void(BodyItem* bodyItem)> sigCurrentBodyChanged;
     Signal<void(const ItemList<BodyItem>& bodyItems)> sigSelectedBodyItemsChanged;
@@ -74,7 +76,7 @@ BodySelectionManager::BodySelectionManager()
 
 BodySelectionManager::Impl::Impl()
 {
-    targetBodyItemPicker.sigTargetItemChanged().connect(
+    targetBodyItemPicker.sigTargetItemSpecified().connect(
         [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem, nullptr); });
 }
 
@@ -82,6 +84,18 @@ BodySelectionManager::Impl::Impl()
 BodySelectionManager::~BodySelectionManager()
 {
     delete impl;
+}
+
+
+SignalProxy<void(BodyItem* bodyItem, Link* link)> BodySelectionManager::sigCurrentSpecified()
+{
+    return impl->sigCurrentSpecified;
+}
+
+
+SignalProxy<void(BodyItem* bodyItem)> BodySelectionManager::sigCurrentBodySpecified()
+{
+    return impl->sigCurrentBodySpecified;
 }
 
 
@@ -155,12 +169,19 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
         if(bodyChanged){
             sigCurrentBodyChanged(bodyItem);
         }
+        sigCurrentBodySpecified(bodyItem);
+
         if(linkChanged){
             if(currentInfo){
                 currentInfo->sigLinkSelectionChanged(currentInfo->linkSelection);
             }
         }
         sigCurrentChanged(bodyItem, currentLink);
+        sigCurrentSpecified(bodyItem, currentLink);
+
+    } else {
+        sigCurrentBodySpecified(bodyItem);
+        sigCurrentSpecified(bodyItem, getCurrentLink());
     }
 }
 

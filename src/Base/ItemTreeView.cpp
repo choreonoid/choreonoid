@@ -517,6 +517,17 @@ RootItem* ItemTreeView::rootItem()
 
 void ItemTreeViewImpl::mousePressEvent(QMouseEvent* event)
 {
+    // Emit sigSelectionChanged when clicking on an already selected item
+    if(event->button() == Qt::LeftButton){
+        if(selectedItemList.size() == 1){
+            if(auto itvItem = dynamic_cast<ItvItem*>(itemAt(event->pos()))){
+                if(itvItem->item == selectedItemList.front()){
+                    sigSelectionChanged(selectedItemList);
+                }
+            }
+        }
+    }
+    
     TreeWidget::mousePressEvent(event);
 
     if(event->button() == Qt::RightButton){

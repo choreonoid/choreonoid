@@ -105,6 +105,8 @@ Item* TargetItemPickerBase::getTargetItem()
 
 void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool updateEvenIfEmpty)
 {
+    bool isChanged;
+    
     if((item != targetItem && (item || updateEvenIfEmpty)) || isBeforeAnyItemChangeNotification){
         targetItemConnection.disconnect();
         targetItem = item;
@@ -117,8 +119,10 @@ void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool u
         }
         if(doNotify){
             isBeforeAnyItemChangeNotification = false;
-            self->onTargetItemChanged(targetItem);
+            self->onTargetItemSpecified(targetItem, true);
         }
+    } else if(item || updateEvenIfEmpty){
+        self->onTargetItemSpecified(targetItem, false);
     }
 
     if(!targetItem){
@@ -161,7 +165,15 @@ void TargetItemPickerBase::Impl::onTargetItemDisconnectedFromRoot(Item* item)
         setTargetItem(nullptr, true, true);
     }
 }
-    
+
+
+void TargetItemPickerBase::clearTargetItem()
+{
+    if(impl->targetItem){
+        impl->setTargetItem(nullptr, false, true);
+    }
+}
+
 
 void TargetItemPickerBase::storeTargetItem(Archive& archive, const std::string& key)
 {

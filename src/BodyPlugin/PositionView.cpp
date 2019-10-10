@@ -435,7 +435,7 @@ void PositionView::Impl::onActivated()
     auto pem = PositionEditManager::instance();
     
     managerConnections.add(
-        bsm->sigCurrentChanged().connect(
+        bsm->sigCurrentSpecified().connect(
             [&](BodyItem* bodyItem, Link* link){
                 setTargetBodyAndLink(bodyItem, link); }));
 

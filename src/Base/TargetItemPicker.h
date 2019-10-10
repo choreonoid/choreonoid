@@ -15,6 +15,7 @@ public:
     TargetItemPickerBase(View* view = nullptr);
     ~TargetItemPickerBase();
 
+    void clearTargetItem();
     void storeTargetItem(Archive& archive, const std::string& key);
     void restoreTargetItem(const Archive& archive, const std::string& key);
     void restoreTargetItemLater(const Archive& archive, const std::string& key);
@@ -22,7 +23,7 @@ public:
 protected:
     Item* getTargetItem();
     virtual void extractTargetItemCandidates(ItemList<>& io_items, bool selectionChanged) = 0;
-    virtual void onTargetItemChanged(Item* item) = 0;
+    virtual void onTargetItemSpecified(Item* item, bool isChanged) = 0;
     virtual void onDeactivated() = 0;
 
 private:
@@ -43,6 +44,9 @@ public:
     ItemType* currentItem(){ return static_cast<ItemType*>(getTargetItem()); }
     const ItemList<ItemType>& selectedItems(){ return selectedItems_; }
 
+    SignalProxy<void(ItemType* targetItem)> sigTargetItemSpecified(){
+        return sigTargetItemSpecified_;
+    }
     SignalProxy<void(ItemType* targetItem)> sigTargetItemChanged(){
         return sigTargetItemChanged_;
     }
@@ -67,9 +71,13 @@ protected:
         }
     }
 
-    virtual void onTargetItemChanged(Item* item) override
+    virtual void onTargetItemSpecified(Item* item, bool isChanged) override
     {
-        sigTargetItemChanged_(static_cast<ItemType*>(item));
+        auto targetItem = static_cast<ItemType*>(item);
+        sigTargetItemSpecified_(targetItem);
+        if(isChanged){
+           sigTargetItemChanged_(targetItem);
+        }
     }
 
     virtual void onDeactivated() override
@@ -78,6 +86,7 @@ protected:
     }
 
 private:
+    Signal<void(ItemType* targetItem)> sigTargetItemSpecified_;
     Signal<void(ItemType* targetItem)> sigTargetItemChanged_;
     Signal<void(const ItemList<ItemType>& selected)> sigSelectedItemsChanged_;
     ItemList<ItemType> selectedItems_;

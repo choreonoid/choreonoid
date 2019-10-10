@@ -18,8 +18,12 @@ public:
 
     ~BodySelectionManager();
 
+    SignalProxy<void(BodyItem* bodyItem, Link* link)> sigCurrentSpecified();
+    SignalProxy<void(BodyItem* bodyItem)> sigCurrentBodySpecified();
+
     SignalProxy<void(BodyItem* bodyItem, Link* link)> sigCurrentChanged();
     SignalProxy<void(BodyItem* bodyItem)> sigCurrentBodyChanged();
+
     BodyItem* currentBodyItem();
     Link* currentLink();
     void setCurrent(BodyItem* bodyItem, Link* link = nullptr);
