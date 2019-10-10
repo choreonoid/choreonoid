@@ -6,10 +6,11 @@
 #define CNOID_BODYPLUGIN_POSITION_VIEW_H
 
 #include <cnoid/View>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class PositionView : public View
+class CNOID_EXPORT PositionView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -17,6 +18,8 @@ public:
 
     PositionView();
     virtual ~PositionView();
+
+    void setCoordinateFrameLabels(const char* baseFrameLabel, const char* localFrameLabel);
 
 protected:
     virtual void onActivated() override;

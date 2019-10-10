@@ -398,7 +398,9 @@ void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
 void PositionDragger::onFocusChanged(const SceneWidgetEvent&, bool on)
 {
     if(isContainerMode()){
-        impl->showDragMarkers(on);
+        if(impl->displayMode == DisplayInFocus){
+            impl->showDragMarkers(on);
+        }
     }
 }
 

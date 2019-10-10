@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-07 22:41+0900\n"
+"POT-Creation-Date: 2019-10-11 03:02+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -94,7 +94,7 @@ msgstr "{}の重心を指定の位置まで移動できません\n"
 msgid "Velocity Limiting Filter"
 msgstr "速度制限フィルタ"
 
-#: FilterDialogs.cpp:53 JointDisplacementView.cpp:488
+#: FilterDialogs.cpp:53 JointDisplacementView.cpp:491
 msgid "Selected joints only"
 msgstr "選択関節のみ"
 
@@ -106,7 +106,7 @@ msgstr "Pollard手法"
 msgid "Gaussian Filter"
 msgstr "ガウシアンフィルタ"
 
-#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 PositionView.cpp:216
+#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 PositionView.cpp:237
 msgid "Apply"
 msgstr "適用"
 
@@ -226,14 +226,6 @@ msgstr "タイムスタンプ接尾辞"
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
 
-#: CoordinateFrameSetItem.cpp:29
-msgid "CoordinateFrameSetItem"
-msgstr "座標フレーム集合アイテム"
-
-#: CoordinateFrameSetItem.cpp:92
-msgid "Num frames"
-msgstr ""
-
 #: SimpleControllerItem.cpp:153
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
@@ -331,87 +323,87 @@ msgstr "シンボルのエクスポート"
 msgid "Old target value variable mode"
 msgstr "旧指令値変数モード"
 
-#: BodyLinkView.cpp:153
+#: BodyLinkView.cpp:151
 msgid "Body / Link"
 msgstr "ボディ／リンク"
 
-#: BodyLinkView.cpp:154
+#: BodyLinkView.cpp:152
 msgid "BodyLink View"
 msgstr "ボディ／リンクビュー"
 
-#: BodyLinkView.cpp:156
+#: BodyLinkView.cpp:154
 msgid "Use Quaternion"
 msgstr "クオタニオンを使用"
 
-#: BodyLinkView.cpp:247
+#: BodyLinkView.cpp:238
 msgid "Index:"
 msgstr "インデックス"
 
-#: BodyLinkView.cpp:249
+#: BodyLinkView.cpp:240
 msgid "Joint ID:"
 msgstr "関節ID"
 
-#: BodyLinkView.cpp:251
+#: BodyLinkView.cpp:242
 msgid "Joint Type:"
 msgstr "関節タイプ"
 
-#: BodyLinkView.cpp:254
+#: BodyLinkView.cpp:245
 msgid "Joint Axis:"
 msgstr "関節軸"
 
-#: BodyLinkView.cpp:257
+#: BodyLinkView.cpp:248
 msgid "Material:"
 msgstr "マテリアル"
 
-#: BodyLinkView.cpp:265
+#: BodyLinkView.cpp:256
 msgid "Link Position [m],[deg]"
 msgstr "リンク位置 [m],[deg]"
 
-#: BodyLinkView.cpp:332
+#: BodyLinkView.cpp:323
 msgid "Matrix"
 msgstr "行列"
 
-#: BodyLinkView.cpp:399
+#: BodyLinkView.cpp:390
 msgid "min"
 msgstr "最小"
 
-#: BodyLinkView.cpp:409
+#: BodyLinkView.cpp:400
 msgid "max"
 msgstr "最大"
 
-#: BodyLinkView.cpp:423
+#: BodyLinkView.cpp:414
 msgid "Collisions"
 msgstr "干渉"
 
-#: BodyLinkView.cpp:440
+#: BodyLinkView.cpp:431
 msgid "Self-Collisions"
 msgstr "自己干渉"
 
-#: BodyLinkView.cpp:452
+#: BodyLinkView.cpp:443
 msgid "ZMP [m]"
 msgstr "ZMP [m]"
 
-#: BodyLinkView.cpp:604
+#: BodyLinkView.cpp:588
 msgid "Rotation"
 msgstr "回転"
 
-#: BodyLinkView.cpp:607
+#: BodyLinkView.cpp:591
 msgid "Joint Angle [deg]"
 msgstr "関節角 [deg]"
 
-#: BodyLinkView.cpp:630
+#: BodyLinkView.cpp:614
 msgid "Joint Velocity [deg/s]"
 msgstr "関節角速度 [deg/s]"
 
-#: BodyLinkView.cpp:646
+#: BodyLinkView.cpp:630
 msgid "Slide"
 msgstr "直動"
 
-#: BodyLinkView.cpp:649
+#: BodyLinkView.cpp:633
 msgid "Joint Translation [m]:"
 msgstr "関節並進位置 [m]"
 
-#: BodyLinkView.cpp:672
+#: BodyLinkView.cpp:656
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
@@ -419,89 +411,101 @@ msgstr "関節速度 [m/s]"
 msgid "Link Trajectories"
 msgstr "リンク軌道"
 
-#: PositionView.cpp:136 CoordinateFrameSetView.cpp:139
+#: PositionView.cpp:153
 msgid "Position"
 msgstr "ポジション"
 
-#: PositionView.cpp:203 JointDisplacementView.cpp:453
+#: PositionView.cpp:224 JointDisplacementView.cpp:456
 msgid "Option"
 msgstr "オプション"
 
-#: PositionView.cpp:213
+#: PositionView.cpp:234
 msgid "Fetch"
 msgstr "取込"
 
-#: PositionView.cpp:224
+#: PositionView.cpp:245
 msgid "Coordinate:"
 msgstr "座標:"
 
-#: PositionView.cpp:227 PositionView.cpp:349
+#: PositionView.cpp:248
 msgid "Base"
 msgstr "ベース"
 
-#: PositionView.cpp:233
+#: PositionView.cpp:254
 msgid "Root"
 msgstr "ルート"
 
-#: PositionView.cpp:238
+#: PositionView.cpp:259
 msgid "Object"
 msgstr "オブジェクト"
 
-#: PositionView.cpp:350
+#: PositionView.cpp:370
+msgid "Base Coord"
+msgstr "ベース座標"
+
+#: PositionView.cpp:372 PositionView.cpp:788
 msgid "World"
 msgstr "ワールド"
 
-#: PositionView.cpp:352 PositionView.cpp:357
-msgid "Edit"
-msgstr "編集"
+#: PositionView.cpp:375
+msgid "Local Coord"
+msgstr "ローカル座標"
 
-#: PositionView.cpp:354
-msgid "Target"
-msgstr "対象"
-
-#: PositionView.cpp:355
+#: PositionView.cpp:377
 msgid "Link Origin"
 msgstr "リンク原点"
 
-#: PositionView.cpp:359
+#: PositionView.cpp:380
 msgid "Config"
 msgstr "形態"
 
-#: PositionView.cpp:368
+#: PositionView.cpp:389
 msgid "Require"
 msgstr "必須"
 
-#: PositionView.cpp:380
+#: PositionView.cpp:401
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: PositionView.cpp:386
+#: PositionView.cpp:407
 msgid "Fetch as a unique RPY value"
 msgstr "一意なRPY値として取り込み"
 
-#: PositionView.cpp:392
+#: PositionView.cpp:413
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: PositionView.cpp:399
+#: PositionView.cpp:420
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-#: PositionView.cpp:408
+#: PositionView.cpp:429
 msgid "Disable custom IK"
 msgstr "カスタムIKを使用しない"
 
-#: PositionView.cpp:635
+#: PositionView.cpp:750
 msgid "Actual State"
 msgstr "実状態"
 
-#: PositionView.cpp:763
+#: PositionView.cpp:792
+msgid "Mechanical"
+msgstr "メカニカル"
+
+#: PositionView.cpp:923
 msgid "Solved"
 msgstr "解有り"
 
-#: PositionView.cpp:767
+#: PositionView.cpp:927
 msgid "Not Solved"
 msgstr "解無し"
+
+#: PositionView.cpp:943
+msgid "Accepted"
+msgstr ""
+
+#: PositionView.cpp:946
+msgid "Not Accepted"
+msgstr ""
 
 #: MultiDeviceStateSeqItem.cpp:85
 msgid "MultiDeviceStateSeqItem"
@@ -571,31 +575,31 @@ msgstr "遠クリッピング距離"
 msgid "field Of View"
 msgstr "視野角"
 
-#: JointDisplacementView.cpp:393
+#: JointDisplacementView.cpp:395
 msgid "Joint Displacement"
 msgstr "関節変位"
 
-#: JointDisplacementView.cpp:492
+#: JointDisplacementView.cpp:495
 msgid "Joint ID"
 msgstr "関節ID"
 
-#: JointDisplacementView.cpp:496
+#: JointDisplacementView.cpp:499
 msgid "Joint name"
 msgstr "関節名"
 
-#: JointDisplacementView.cpp:501
+#: JointDisplacementView.cpp:504
 msgid "Overlap joint name"
 msgstr "関節名を上に表示"
 
-#: JointDisplacementView.cpp:505
+#: JointDisplacementView.cpp:508
 msgid "Slider"
 msgstr "スライダ"
 
-#: JointDisplacementView.cpp:510
+#: JointDisplacementView.cpp:513
 msgid "Dial"
 msgstr "ダイヤル"
 
-#: JointDisplacementView.cpp:514
+#: JointDisplacementView.cpp:517
 msgid "Phase"
 msgstr "位相"
 
@@ -603,7 +607,7 @@ msgstr "位相"
 msgid "Joint Trajectories"
 msgstr "関節軌道"
 
-#: LinkSelectionView.cpp:38
+#: LinkSelectionView.cpp:42
 msgid "Links"
 msgstr "リンク"
 
@@ -730,7 +734,7 @@ msgstr "信号No"
 msgid "Input Device"
 msgstr "入力デバイス"
 
-#: IoConnectionView.cpp:186 CoordinateFrameSetView.cpp:137
+#: IoConnectionView.cpp:186
 msgid "Note"
 msgstr "覚書"
 
@@ -739,7 +743,6 @@ msgid "I/O Connection"
 msgstr "I/O接続"
 
 #: IoConnectionView.cpp:519 IoConnectionView.cpp:697
-#: CoordinateFrameSetView.cpp:351 CoordinateFrameSetView.cpp:498
 msgid "Add"
 msgstr "追加"
 
@@ -747,7 +750,7 @@ msgstr "追加"
 msgid "There are no I/O devices in the world"
 msgstr "ワールドにI/Oデバイスが存在しません。"
 
-#: IoConnectionView.cpp:700 CoordinateFrameSetView.cpp:501
+#: IoConnectionView.cpp:700
 msgid "Remove"
 msgstr "削除"
 
@@ -787,67 +790,67 @@ msgstr "ルート相対"
 msgid "KinematicSimulatorItem"
 msgstr "運動学シミュレータアイテム"
 
-#: LinkPropertyView.cpp:55
+#: LinkPropertyView.cpp:48
 msgid "Link Properties"
 msgstr "リンクプロパティ"
 
-#: LinkPropertyView.cpp:152
+#: LinkPropertyView.cpp:112
 msgid "Name"
 msgstr "名前"
 
-#: LinkPropertyView.cpp:153
+#: LinkPropertyView.cpp:113
 msgid "Index"
 msgstr "インデックス"
 
-#: LinkPropertyView.cpp:154
+#: LinkPropertyView.cpp:114
 msgid "Offset translation"
 msgstr "並進オフセット"
 
-#: LinkPropertyView.cpp:155
+#: LinkPropertyView.cpp:115
 msgid "Offset rotation"
 msgstr "回転オフセット"
 
-#: LinkPropertyView.cpp:156
+#: LinkPropertyView.cpp:116
 msgid "Rs"
 msgstr ""
 
-#: LinkPropertyView.cpp:157
+#: LinkPropertyView.cpp:117
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:158 BodyItem.cpp:1373
+#: LinkPropertyView.cpp:118 BodyItem.cpp:1373
 msgid "Mass"
 msgstr "質量"
 
-#: LinkPropertyView.cpp:159
+#: LinkPropertyView.cpp:119
 msgid "Inertia tensor"
 msgstr "慣性テンソル"
 
-#: LinkPropertyView.cpp:160
+#: LinkPropertyView.cpp:120
 msgid "Joint type"
 msgstr "関節タイプ"
 
-#: LinkPropertyView.cpp:162
+#: LinkPropertyView.cpp:122
 msgid "Joint axis"
 msgstr "関節軸"
 
-#: LinkPropertyView.cpp:163
+#: LinkPropertyView.cpp:123
 msgid "Upper joint limit"
 msgstr "関節変位上限"
 
-#: LinkPropertyView.cpp:164
+#: LinkPropertyView.cpp:124
 msgid "Lower joint limit"
 msgstr "関節変位下限"
 
-#: LinkPropertyView.cpp:165
+#: LinkPropertyView.cpp:125
 msgid "Upper joint velocity"
 msgstr "関節速度上限"
 
-#: LinkPropertyView.cpp:166
+#: LinkPropertyView.cpp:126
 msgid "Lower joint velocity"
 msgstr "関節速度下限"
 
-#: LinkPropertyView.cpp:167
+#: LinkPropertyView.cpp:127
 msgid "Joint inertia"
 msgstr "関節慣性"
 
@@ -1022,17 +1025,9 @@ msgstr "2Dモード"
 msgid "Old accel sensor mode"
 msgstr "旧加速センサモード"
 
-#: CoordinateFrameSetView.cpp:324
-msgid "Coordinate Frames"
-msgstr "座標フレーム"
-
 #: CollisionSeq.cpp:79
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
-
-#: CoordinateFrameSetPairItem.cpp:39
-msgid "CoordinateFrameSetPairItem"
-msgstr "座標フレーム集合ペアアイテム"
 
 #: CollisionSeqItem.cpp:66
 msgid "CollisionSeqItem"
@@ -1175,7 +1170,7 @@ msgstr ""
 msgid "{0:7.3f} [s]: Collision between {1} and {2}"
 msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
 
-#: BodyPlugin.cpp:140
+#: BodyPlugin.cpp:137
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -1660,6 +1655,21 @@ msgstr "{}のフレームレートはワールドのフレームレートと異�
 #: BodyMotionControllerItem.cpp:200
 msgid "Control mode"
 msgstr "制御モード"
+
+#~ msgid "CoordinateFrameSetItem"
+#~ msgstr "座標フレーム集合アイテム"
+
+#~ msgid "Edit"
+#~ msgstr "編集"
+
+#~ msgid "Target"
+#~ msgstr "対象"
+
+#~ msgid "Coordinate Frames"
+#~ msgstr "座標フレーム"
+
+#~ msgid "CoordinateFrameSetPairItem"
+#~ msgstr "座標フレーム集合ペアアイテム"
 
 #~ msgid "Link Position"
 #~ msgstr "リンク位置"

@@ -17,12 +17,6 @@ public:
         return static_cast<CoordinateFrameSet*>(doClone(&cloneMap));
     }
 
-    /*
-    virtual int getNumCoordinateFrames() const = 0;
-    virtual CoordinateFrame* getCoordinateFrame(int index) const = 0;
-    virtual CoordinateFrame* findCoordinateFrame(
-        const CoordinateFrame::Id& id, bool returnIdentityFrameIfNotFound = true) const = 0;
-    */
     virtual int getNumFrames() const = 0;
     virtual CoordinateFrame* getFrame(int index) const = 0;
     virtual CoordinateFrame* findFrame(

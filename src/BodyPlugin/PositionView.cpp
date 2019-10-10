@@ -10,6 +10,7 @@
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
 #include <cnoid/CompositeBodyIK>
+#include <cnoid/CoordinateFrameSet>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ViewManager>
@@ -99,8 +100,10 @@ public:
     enum AttitudeMode { RollPitchYawMode, QuaternionMode };
     AttitudeMode lastInputAttitudeMode;
 
-    ComboBox userCoordCombo;
-    ComboBox toolCoordCombo;
+    QLabel baseCoordLabel;
+    ComboBox baseCoordCombo;
+    QLabel localCoordLabel;
+    ComboBox localCoordCombo;
     ComboBox configurationCombo;
     CheckBox requireConfigurationCheck;
     vector<QWidget*> configurationWidgets;
@@ -128,6 +131,8 @@ public:
     void updatePanelWithPosition(const Position& T);
     void updateRotationMatrixPanel(const Matrix3& R);
     void updateConfigurationPanel();
+    void updateCoordinateFrames(CoordinateFrameSetPair* frameSetPair);
+    void setFramesToCombo(CoordinateFrameSet* frames, QComboBox& combo);
     void onPositionInput(InputElementSet inputElements);
     void onPositionInputRpy(InputElementSet inputElements);
     void onPositionInputQuaternion(InputElementSet inputElements);
@@ -146,6 +151,13 @@ void PositionView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<PositionView>(
         "PositionView", N_("Position"), ViewManager::SINGLE_OPTIONAL);
+}
+
+
+PositionView* PositionView::instance()
+{
+    static PositionView* instance_ = ViewManager::getOrCreateView<PositionView>();
+    return instance_;
 }
 
 
@@ -355,15 +367,15 @@ void PositionView::Impl::createPanel()
     grid = new QGridLayout;
     grid->setColumnStretch(1, 1);
 
-    grid->addWidget(new QLabel(_("Base")), 0, 0, Qt::AlignLeft);
-    userCoordCombo.addItem(_("World"));
-    grid->addWidget(&userCoordCombo, 0, 1);
-    grid->addWidget(new QPushButton(_("Edit")), 0, 2);
+    baseCoordLabel.setText(_("Base Coord"));
+    grid->addWidget(&baseCoordLabel, 0, 0, Qt::AlignLeft);
+    baseCoordCombo.addItem(_("World"));
+    grid->addWidget(&baseCoordCombo, 0, 1, 1, 2);
 
-    grid->addWidget(new QLabel(_("Target")), 1, 0, Qt::AlignLeft);
-    toolCoordCombo.addItem(_("Link Origin"));
-    grid->addWidget(&toolCoordCombo, 1, 1);
-    grid->addWidget(new QPushButton(_("Edit")), 1, 2);
+    localCoordLabel.setText(_("Local Coord"));
+    grid->addWidget(&localCoordLabel, 1, 0, Qt::AlignLeft);
+    localCoordCombo.addItem(_("Link Origin"));
+    grid->addWidget(&localCoordCombo, 1, 1, 1, 2);
 
     auto label = new QLabel(_("Config"));
     grid->addWidget(label, 2, 0, Qt::AlignLeft);
@@ -424,6 +436,13 @@ void PositionView::Impl::createPanel()
             }));
 
     lastInputAttitudeMode = RollPitchYawMode;
+}
+
+
+void PositionView::setCoordinateFrameLabels(const char* baseFrameLabel, const char* localFrameLabel)
+{
+    impl->baseCoordLabel.setText(baseFrameLabel);
+    impl->localCoordLabel.setText(localFrameLabel);
 }
 
 
@@ -525,6 +544,8 @@ void PositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
                 targetConnections.add(
                     bodyItem->sigKinematicStateChanged().connect(
                         [&](){ updatePanelWithCurrentLinkPosition(); }));
+
+                updateCoordinateFrames(bodyItem->getCoordinateFrameSetPair());
             }
         }
 
@@ -756,6 +777,41 @@ void PositionView::Impl::updateConfigurationPanel()
         }
         int actual = jointPathConfigurationHandler->getCurrentConfiguration();
         configurationLabel.setText(QString("( %1 )").arg(configurationCombo.itemText(actual)));
+    }
+}
+
+
+void PositionView::Impl::updateCoordinateFrames(CoordinateFrameSetPair* frameSetPair)
+{
+    int prevBaseIndex = baseCoordCombo.currentIndex();
+    baseCoordCombo.clear();
+    baseCoordCombo.addItem(_("World"), 0);
+
+    int prevLocalIndex = localCoordCombo.currentIndex();
+    localCoordCombo.clear();
+    localCoordCombo.addItem(_("Mechanical"), 0);
+
+    if(frameSetPair){
+        setFramesToCombo(frameSetPair->baseFrames(), baseCoordCombo);
+        baseCoordCombo.setCurrentIndex(prevBaseIndex);
+
+        setFramesToCombo(frameSetPair->localFrames(), localCoordCombo);
+        localCoordCombo.setCurrentIndex(prevLocalIndex);
+    }
+}
+
+
+void PositionView::Impl::setFramesToCombo(CoordinateFrameSet* frames, QComboBox& combo)
+{
+    const int n = frames->getNumFrames();
+    for(int i=0; i < n; ++i){
+        auto frame = frames->getFrame(i);
+        auto& id = frame->id();
+        if(id.isInt()){
+            combo.addItem(id.label().c_str(), id.toInt());
+        } else {
+            combo.addItem(id.label().c_str(), id.toString().c_str());
+        }
     }
 }
 

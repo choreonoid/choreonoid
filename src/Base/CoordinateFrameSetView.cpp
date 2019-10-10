@@ -217,7 +217,7 @@ QVariant FrameContainerModel::data(const QModelIndex& index, int role) const
         } else if(column == PositionColumn){
             auto p = frame->T().translation();
             auto rpy = degree(rpyFromRot(frame->T().linear()));
-            return format("( {0: 1.3f}, {1: 1.3f}, {2: 1.3f}, {3: 6.1f}, {4: 6.1f}, {5: 6.1f} )",
+            return format("{0: 1.3f},{1: 1.3f},{2: 1.3f},{3: 6.1f},{4: 6.1f},{5: 6.1f}",
                           p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
         }
     } else if(role == Qt::TextAlignmentRole){
