@@ -113,24 +113,28 @@ public:
     void createPanel();
     void onActivated();
     void resetInputWidgetStyles();
-    void setConfigurationWidgetsEnabled(bool on);
+    void setConfigurationInterfaceEnabled(bool on);
     void onMenuButtonClicked();
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
-    void updatePositionEditTargetPosition(const Position& T);
     void onPositionEditTargetExpired();
     void clearPanelValues();
     void updatePanel();
+    void updatePanelWithCurrentLinkPosition();
+    void updatePanelWithPositionEditTarget();
+    void updatePanelWithPosition(const Position& T);
     void updateRotationMatrixPanel(const Matrix3& R);
     void updateConfigurationPanel();
     void onPositionInput(InputElementSet inputElements);
     void onPositionInputRpy(InputElementSet inputElements);
     void onPositionInputQuaternion(InputElementSet inputElements);
     void onConfigurationInput(int index);
-    void findSolution(const Position& T_input, InputElementSet inputElements);
+    void applyInput(const Position& T_input, InputElementSet inputElements);
+    void findBodyIkSolution(const Position& T_input, InputElementSet inputElements);
+    void applyInputToPositionEditTarget(const Position& T_input, InputElementSet inputElements);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -468,7 +472,7 @@ void PositionView::Impl::resetInputWidgetStyles()
 }
 
 
-void PositionView::Impl::setConfigurationWidgetsEnabled(bool on)
+void PositionView::Impl::setConfigurationInterfaceEnabled(bool on)
 {
     for(auto& widget : configurationWidgets){
         widget->setEnabled(on);
@@ -520,13 +524,13 @@ void PositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 
                 targetConnections.add(
                     bodyItem->sigKinematicStateChanged().connect(
-                        [&](){ updatePanel(); }));
+                        [&](){ updatePanelWithCurrentLinkPosition(); }));
             }
         }
 
         targetType = LinkTarget;
         updateTargetLink(link);
-        updatePanel();
+        updatePanelWithCurrentLinkPosition();
     }
 }
 
@@ -573,7 +577,7 @@ void PositionView::Impl::updateTargetLink(Link* link)
 
     configurationCombo.clear();
     bool isConfigurationInputActive = (jointPathConfigurationHandler != nullptr) && !disableCustomIKCheck->isChecked();
-    setConfigurationWidgetsEnabled(isConfigurationInputActive);
+    setConfigurationInterfaceEnabled(isConfigurationInputActive);
     
     if(jointPathConfigurationHandler){
         int n = jointPathConfigurationHandler->getNumConfigurations();
@@ -601,26 +605,21 @@ bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* targe
     positionEditTarget = target;
 
     targetConnections.add(
-        target->sigPositionChanged().connect(
-            [&](const Position& T){ updatePositionEditTargetPosition(T); }));
+        target->sigGlobalPositionChanged().connect(
+            [&](const Position&){ updatePanelWithPositionEditTarget(); }));
 
     targetConnections.add(
         target->sigPositionEditTargetExpired().connect(
             [&](){ onPositionEditTargetExpired(); }));
 
     targetLabel.setText(target->getPositionName().c_str());
-
+    configurationLabel.clear();
     self->setEnabled(true);
+    setConfigurationInterfaceEnabled(false);
 
-    setConfigurationWidgetsEnabled(false);
+    updatePanelWithPositionEditTarget();
 
     return true;
-}
-
-
-void PositionView::Impl::updatePositionEditTargetPosition(const Position& T)
-{
-
 }
 
 
@@ -648,63 +647,87 @@ void PositionView::Impl::clearPanelValues()
 
 void PositionView::Impl::updatePanel()
 {
-    if(!inverseKinematics){
-        self->setEnabled(false);
-        resultLabel.setText("");
+    if(targetType == LinkTarget){
+        updatePanelWithCurrentLinkPosition();
 
-    } else {
-        self->setEnabled(true);
-        
-        userInputConnections.block();
-
-        Vector3 p = targetLink->p();
-        for(int i=0; i < 3; ++i){
-            auto& spin = xyzSpin[i];
-            if(!spin.hasFocus()){
-                spin.setValue(p[i]);
-            }
-        }
-        Matrix3 R = targetLink->attitude();
-        if(rpyCheck->isChecked()){
-            Vector3 prevRPY;
-            for(int i=0; i < 3; ++i){
-                prevRPY[i] = radian(rpySpin[i].value());
-            }
-            Vector3 rpy;
-            if(uniqueRpyCheck->isChecked()){
-                rpy = rpyFromRot(R);
-            } else {
-                rpy = rpyFromRot(R, prevRPY);
-            }
-            for(int i=0; i < 3; ++i){
-                rpySpin[i].setValue(degree(rpy[i]));
-            }
-        }
-        if(quaternionCheck->isChecked()){
-            if(!quatSpin[0].hasFocus() &&
-               !quatSpin[1].hasFocus() &&
-               !quatSpin[2].hasFocus() &&
-               !quatSpin[3].hasFocus()){
-                Eigen::Quaterniond quat(R);
-                quatSpin[0].setValue(quat.x());
-                quatSpin[1].setValue(quat.y());
-                quatSpin[2].setValue(quat.z());
-                quatSpin[3].setValue(quat.w());
-            }
-        }
-        if(rotationMatrixCheck->isChecked()){
-            updateRotationMatrixPanel(R);
-        }
-
-        resetInputWidgetStyles();
-
-        updateConfigurationPanel();
-
-        userInputConnections.unblock();
-
-        resultLabel.setText(_("Actual State"));
-        resultLabel.setStyleSheet(normalStyle);
+    } else if(targetType == PositionEditTarget){
+        updatePanelWithPositionEditTarget();
     }
+}
+
+
+void PositionView::Impl::updatePanelWithCurrentLinkPosition()
+{
+    if(targetLink){
+        Position T;
+        T.linear() = targetLink->attitude();
+        T.translation() = targetLink->translation();
+        updatePanelWithPosition(T);
+    }
+}
+
+
+void PositionView::Impl::updatePanelWithPositionEditTarget()
+{
+    if(positionEditTarget){
+        updatePanelWithPosition(positionEditTarget->getGlobalPosition());
+    }
+}
+
+
+void PositionView::Impl::updatePanelWithPosition(const Position& T)
+{
+    userInputConnections.block();
+
+    Vector3 p = T.translation();
+    for(int i=0; i < 3; ++i){
+        auto& spin = xyzSpin[i];
+        if(!spin.hasFocus()){
+            spin.setValue(p[i]);
+        }
+    }
+    Matrix3 R = T.linear();
+    if(rpyCheck->isChecked()){
+        Vector3 prevRPY;
+        for(int i=0; i < 3; ++i){
+            prevRPY[i] = radian(rpySpin[i].value());
+        }
+        Vector3 rpy;
+        if(uniqueRpyCheck->isChecked()){
+            rpy = rpyFromRot(R);
+        } else {
+            rpy = rpyFromRot(R, prevRPY);
+        }
+        for(int i=0; i < 3; ++i){
+            rpySpin[i].setValue(degree(rpy[i]));
+        }
+    }
+    if(quaternionCheck->isChecked()){
+        if(!quatSpin[0].hasFocus() &&
+           !quatSpin[1].hasFocus() &&
+           !quatSpin[2].hasFocus() &&
+           !quatSpin[3].hasFocus()){
+            Eigen::Quaterniond quat(R);
+            quatSpin[0].setValue(quat.x());
+            quatSpin[1].setValue(quat.y());
+            quatSpin[2].setValue(quat.z());
+            quatSpin[3].setValue(quat.w());
+        }
+    }
+    if(rotationMatrixCheck->isChecked()){
+        updateRotationMatrixPanel(R);
+    }
+
+    resetInputWidgetStyles();
+
+    if(targetType == LinkTarget){
+        updateConfigurationPanel();
+    }
+
+    userInputConnections.unblock();
+
+    resultLabel.setText(_("Actual State"));
+    resultLabel.setStyleSheet(normalStyle);
 }
 
 
@@ -762,7 +785,7 @@ void PositionView::Impl::onPositionInputRpy(InputElementSet inputElements)
     }
     T.linear() = rotFromRpy(rpy);
     
-    findSolution(T, inputElements);
+    applyInput(T, inputElements);
 
     lastInputAttitudeMode = RollPitchYawMode;
 }
@@ -783,7 +806,7 @@ void PositionView::Impl::onPositionInputQuaternion(InputElementSet inputElements
     if(quat.norm() > 1.0e-6){
         quat.normalize();
         T.linear() = quat.toRotationMatrix();
-        findSolution(T, inputElements);
+        applyInput(T, inputElements);
     }
 
     lastInputAttitudeMode = QuaternionMode;
@@ -799,7 +822,18 @@ void PositionView::Impl::onConfigurationInput(int index)
 }
 
 
-void PositionView::Impl::findSolution(const Position& T_input, InputElementSet inputElements)
+void PositionView::Impl::applyInput(const Position& T_input, InputElementSet inputElements)
+{
+    if(targetType == LinkTarget){
+        findBodyIkSolution(T_input, inputElements);
+
+    } else if(targetType == PositionEditTarget){
+        applyInputToPositionEditTarget(T_input, inputElements);
+    }
+}
+
+
+void PositionView::Impl::findBodyIkSolution(const Position& T_input, InputElementSet inputElements)
 {
     if(inverseKinematics){
 
@@ -836,6 +870,31 @@ void PositionView::Impl::findSolution(const Position& T_input, InputElementSet i
             targetBodyItem->cancelKinematicStateEdit();
             resultLabel.setText(_("Not Solved"));
             resultLabel.setStyleSheet("font-weight: bold; color: red");
+        }
+    }
+}
+
+
+void PositionView::Impl::applyInputToPositionEditTarget(const Position& T_input, InputElementSet inputElements)
+{
+    if(positionEditTarget){
+
+        targetConnections.block();
+        bool accepted = positionEditTarget->setPosition(T_input, T_input, nullptr, nullptr);
+        targetConnections.unblock();
+
+        if(accepted){
+            resultLabel.setText(_("Accepted"));
+            resultLabel.setStyleSheet(normalStyle);
+        } else {
+            resultLabel.setText(_("Not Accepted"));
+            resultLabel.setStyleSheet("font-weight: bold; color: red");
+            
+            for(size_t i=0; i < inputElementWidgets.size(); ++i){
+                if(inputElements[i]){
+                    inputElementWidgets[i]->setStyleSheet(errorStyle);
+                }
+            }
         }
     }
 }

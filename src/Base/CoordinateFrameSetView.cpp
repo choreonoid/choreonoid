@@ -48,6 +48,7 @@ public:
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void addFrame(int row, CoordinateFrame* frame, bool doInsert);
     void removeFrames(QModelIndexList selected);
+    void notifyFramePositionUpdate(CoordinateFrame* frame);
 };
 
 class CustomizedItemDelegate : public QStyledItemDelegate
@@ -95,11 +96,16 @@ public:
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(int row, QPoint globalPos);
     virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous) override;
+
     void startExternalPositionEditing(CoordinateFrame* frame);
-    virtual std::string getPositionName() override;
-    virtual Position getPosition() override;
-    virtual bool setPosition(const Position& T) override;
-    virtual SignalProxy<void(const Position& T)> sigPositionChanged() override;
+    virtual std::string getPositionName() const override;
+    virtual CoordinateFrameId getPreferredBaseFrameId() const override;
+    virtual CoordinateFrameId getPreferredLocalFrameId() const override;
+    virtual Position getGlobalPosition() const override;
+    virtual bool setPosition(
+        const Position& T_global,
+        const Position& T_frame, CoordinateFrame* baseFrame, CoordinateFrame* localFrame) override;
+    virtual SignalProxy<void(const Position& T)> sigGlobalPositionChanged() override;
     virtual SignalProxy<void()> sigPositionEditTargetExpired() override;
 };
 
@@ -200,7 +206,7 @@ QVariant FrameContainerModel::data(const QModelIndex& index, int role) const
     int column = index.column();
     if(role == Qt::DisplayRole || role == Qt::EditRole){
         if(column == IdColumn){
-            return frame->idLabel().c_str();
+            return frame->id().label().c_str();
 
         } else if(column == NoteColumn){
             return frame->note().c_str();
@@ -282,6 +288,18 @@ void FrameContainerModel::removeFrames(QModelIndexList selected)
         }
     }
 }
+
+
+void FrameContainerModel::notifyFramePositionUpdate(CoordinateFrame* frame)
+{
+    if(frames){
+        int row = frames->indexOf(frame);
+        if(row >= 0){
+            auto modelIndex = index(row, PositionColumn, QModelIndex());
+            Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+        }
+    }
+}
         
 
 CustomizedItemDelegate::CustomizedItemDelegate(CoordinateFrameSetView::Impl* view)
@@ -335,7 +353,7 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
 void CoordinateFrameSetView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<CoordinateFrameSetView>(
-        "CoordinateFrameSetView", N_("Coordinate Frames"), ViewManager::SINGLE_OPTIONAL);
+        "CoordinateFrameSetView", N_("Coordinate Systems"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
@@ -554,16 +572,28 @@ void CoordinateFrameSetView::Impl::startExternalPositionEditing(CoordinateFrame*
 }
 
 
-std::string CoordinateFrameSetView::Impl::getPositionName()
+std::string CoordinateFrameSetView::Impl::getPositionName() const
 {
     if(frameBeingEditedOutside){
-        return format("{0}: {1}", targetItem->name(), frameBeingEditedOutside->idLabel());
+        return format("{0}: {1}", targetItem->name(), frameBeingEditedOutside->id().label());
     }
     return string();
 }
 
 
-Position CoordinateFrameSetView::Impl::getPosition()
+CoordinateFrameId CoordinateFrameSetView::Impl::getPreferredBaseFrameId() const
+{
+    return CoordinateFrameId::defaultId();
+}
+
+
+CoordinateFrameId CoordinateFrameSetView::Impl::getPreferredLocalFrameId() const
+{
+    return CoordinateFrameId::defaultId();
+}
+
+
+Position CoordinateFrameSetView::Impl::getGlobalPosition() const
 {
     if(frameBeingEditedOutside){
         return frameBeingEditedOutside->T();
@@ -572,17 +602,23 @@ Position CoordinateFrameSetView::Impl::getPosition()
 }
 
 
-bool CoordinateFrameSetView::Impl::setPosition(const Position& T)
+
+
+bool CoordinateFrameSetView::Impl::setPosition
+(const Position& T_global,
+ const Position& /* T_frame */, CoordinateFrame* /* baseFrame */, CoordinateFrame* /* localFrame */)
 {
     if(frameBeingEditedOutside){
-        frameBeingEditedOutside->T() = T;
+        frameBeingEditedOutside->T() = T_global;
+        frameContainerModel->notifyFramePositionUpdate(frameBeingEditedOutside);
+        sigPositionChanged_(T_global);
         return true;
     }
     return false;
 }
 
 
-SignalProxy<void(const Position& T)> CoordinateFrameSetView::Impl::sigPositionChanged()
+SignalProxy<void(const Position& T)> CoordinateFrameSetView::Impl::sigGlobalPositionChanged()
 {
     return sigPositionChanged_;
 }

@@ -7,15 +7,23 @@
 using namespace std;
 using namespace cnoid;
 
+std::string CoordinateFrameId::label() const
+{
+    if(valueType == Int){
+        return std::to_string(intId);
+    } else {
+        return stringId;
+    }
+}
+    
 
 CoordinateFrame::CoordinateFrame()
 {
     T_.setIdentity();
-    id_ = -1; // make invalid
 }
 
 
-CoordinateFrame::CoordinateFrame(const Id& id)
+CoordinateFrame::CoordinateFrame(const CoordinateFrameId& id)
     : id_(id)
 {
     T_.setIdentity();
@@ -37,25 +45,9 @@ Referenced* CoordinateFrame::doClone(CloneMap*) const
 }
 
 
-bool CoordinateFrame::hasValidId() const
+CoordinateFrameSet* CoordinateFrame::ownerFrameSet() const
 {
-    int type = stdx::get_variant_index(id_);
-    if(type == IntId){
-        return stdx::get<int>(id_) >= 0;
-    } else {
-        return !stdx::get<string>(id_).empty();
-    }
-}
-
-
-std::string CoordinateFrame::idLabel() const
-{
-    int type = stdx::get_variant_index(id_);
-    if(type == IntId){
-        return std::to_string(stdx::get<int>(id_));
-    } else {
-        return stdx::get<string>(id_);
-    }
+    return ownerFrameSet_.lock();
 }
 
 
@@ -89,11 +81,10 @@ bool CoordinateFrame::read(const Mapping& archive)
 
 bool CoordinateFrame::write(Mapping& archive) const
 {
-    int type = stdx::get_variant_index(id_);
-    if(type == IntId){
-        archive.write("id", stdx::get<int>(id_));
+    if(id_.isInt()){
+        archive.write("id", id_.toInt());
     } else {
-        archive.write("id", stdx::get<string>(id_), DOUBLE_QUOTED);
+        archive.write("id", id_.toString(), DOUBLE_QUOTED);
     }
 
     cnoid::write(archive, "translation", Vector3(T_.translation()));

@@ -89,7 +89,7 @@ SgNode* CoordinateFrameSetItem::getScene()
 
 void CoordinateFrameSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Num frames"), impl->frames->numFrames());
+    putProperty(_("Num coordinate frames"), impl->frames->numFrames());
 }
 
 

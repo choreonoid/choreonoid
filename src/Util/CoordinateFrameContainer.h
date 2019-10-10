@@ -15,11 +15,13 @@ public:
     
     void clear();
     int numFrames() const;
-    virtual int getNumFrames() const override;
     CoordinateFrame* frame(int index) const;
+    int indexOf(CoordinateFrame* frame) const;
+
+    virtual int getNumFrames() const override;
     virtual CoordinateFrame* getFrame(int index) const override;
     virtual CoordinateFrame* findFrame(
-        const CoordinateFrame::Id& id, bool returnIdentityFrameIfNotFound = true) const override;
+        const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound = true) const override;
 
     bool insert(int index, CoordinateFrame* frame);
     bool append(CoordinateFrame* frame);
@@ -29,10 +31,10 @@ public:
        @return true if the id is successfully changed. false if the id is not
        changed because anther coordinate frame with the same is exists.
     */
-    bool resetId(CoordinateFrame* frame, const CoordinateFrame::Id& newId);
+    bool resetId(CoordinateFrame* frame, const CoordinateFrameId& newId);
 
     void resetIdCounter();
-    CoordinateFrame::Id createNextId(int prevId = -1);
+    CoordinateFrameId createNextId(int prevId = -1);
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;    

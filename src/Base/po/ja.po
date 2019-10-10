@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-02 13:23+0900\n"
+"POT-Creation-Date: 2019-10-10 10:49+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -37,7 +37,7 @@ msgstr "ポイントセットアイテム"
 msgid "Point Cloud (PCD)"
 msgstr "ポイントクラウド(PCD)"
 
-#: PointSetItem.cpp:516 MainWindow.cpp:228 Item.cpp:779 SceneItem.cpp:152
+#: PointSetItem.cpp:516 MainWindow.cpp:228 Item.cpp:785 SceneItem.cpp:152
 msgid "File"
 msgstr "ファイル"
 
@@ -89,18 +89,18 @@ msgstr "PointSet: 消去モード終了"
 msgid "Save the image of %1"
 msgstr "%1の画像を保存"
 
-#: CaptureBar.cpp:96 ItemManager.cpp:1156 TextEditView.cpp:119
+#: CaptureBar.cpp:96 ItemManager.cpp:1170 TextEditView.cpp:119
 #: ProjectManager.cpp:603
 msgid "Save"
 msgstr "保存"
 
-#: CaptureBar.cpp:97 ItemManager.cpp:946 ItemManager.cpp:1157
-#: SceneWidget.cpp:929 TaskView.cpp:280 ItemPropertyView.cpp:291
+#: CaptureBar.cpp:97 ItemManager.cpp:960 ItemManager.cpp:1171
+#: SceneWidget.cpp:929 TaskView.cpp:286 ItemPropertyView.cpp:303
 #: PluginManager.cpp:663 ProjectManager.cpp:578 ProjectManager.cpp:604
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: CaptureBar.cpp:100 ItemManager.cpp:247 ItemPropertyView.cpp:310
+#: CaptureBar.cpp:100 ItemManager.cpp:250 ItemPropertyView.cpp:322
 #: PluginManager.cpp:667 ProjectManager.cpp:582 ProjectManager.cpp:608
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
@@ -283,131 +283,131 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-#: ItemManager.cpp:172 ViewManager.cpp:270
+#: ItemManager.cpp:175 ViewManager.cpp:270
 msgid "Name:"
 msgstr "名前"
 
-#: ItemManager.cpp:255
+#: ItemManager.cpp:258
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
-#: ItemManager.cpp:274
+#: ItemManager.cpp:277
 msgid "New ..."
 msgstr "新規"
 
-#: ItemManager.cpp:281
+#: ItemManager.cpp:284
 msgid "Open ..."
 msgstr "読み込み"
 
-#: ItemManager.cpp:283
+#: ItemManager.cpp:286
 msgid "Reload Selected Items"
 msgstr "選択アイテムの再読み込み"
 
-#: ItemManager.cpp:288
+#: ItemManager.cpp:291
 msgid "Save Selected Items"
 msgstr "選択アイテムの保存"
 
-#: ItemManager.cpp:290
+#: ItemManager.cpp:293
 msgid "Save Selected Items As"
 msgstr "名前を付けて選択アイテムを保存"
 
-#: ItemManager.cpp:292
+#: ItemManager.cpp:295
 msgid "Save All Items"
 msgstr "全てのアイテムを保存"
 
-#: ItemManager.cpp:297
+#: ItemManager.cpp:300
 msgid "Import ..."
 msgstr "インポート"
 
-#: ItemManager.cpp:301
+#: ItemManager.cpp:304
 msgid "Export Selected Items"
 msgstr "選択アイテムのエクスポート"
 
-#: ItemManager.cpp:578
+#: ItemManager.cpp:581
 msgid "Item$"
 msgstr "アイテム$"
 
-#: ItemManager.cpp:580
+#: ItemManager.cpp:583
 msgid "Create New %1"
 msgstr "新しい%1の生成"
 
-#: ItemManager.cpp:625 ViewManager.cpp:276
+#: ItemManager.cpp:627 ViewManager.cpp:276
 msgid "&Create"
 msgstr "生成(&C)"
 
-#: ItemManager.cpp:628 ViewManager.cpp:281 PathVariableEditor.cpp:98
+#: ItemManager.cpp:630 ViewManager.cpp:281 PathVariableEditor.cpp:98
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
-#: ItemManager.cpp:812
+#: ItemManager.cpp:826
 msgid "Item with empty filename cannot be loaded."
 msgstr ""
 
-#: ItemManager.cpp:831
+#: ItemManager.cpp:845
 msgid "\"{0}\" cannot be loaded because item type \"{1}\" is not registered."
 msgstr "\"{0}\" は\"{1}\"タイプが未登録のため読み込めません．"
 
-#: ItemManager.cpp:870
+#: ItemManager.cpp:884
 msgid "\"{}\" cannot be loaded because the file format is unknown."
 msgstr "\"{}\" はフォーマットが不明なため読み込めません．"
 
-#: ItemManager.cpp:874
+#: ItemManager.cpp:888
 msgid "\"{0}\" cannot be loaded because file format \"{1}\" is unknown."
 msgstr "\"{0}\" はフォーマット\"{1}\"が不明なため読み込めません。"
 
-#: ItemManager.cpp:896
+#: ItemManager.cpp:910
 msgid "Loading {0} \"{1}\""
 msgstr "{0} \"{1}\" を読み込み中"
 
-#: ItemManager.cpp:908 ItemManager.cpp:1115
+#: ItemManager.cpp:922 ItemManager.cpp:1129
 msgid " -> failed.\n"
 msgstr " -> 失敗.\n"
 
-#: ItemManager.cpp:914 ItemManager.cpp:1121
+#: ItemManager.cpp:928 ItemManager.cpp:1135
 msgid " -> ok!\n"
 msgstr " -> 完了!\n"
 
-#: ItemManager.cpp:935
+#: ItemManager.cpp:949
 msgid "The singleton instance of {} is already loaded."
 msgstr "{}のシングルトンインスタンスは既に読み込まれています．"
 
-#: ItemManager.cpp:943
+#: ItemManager.cpp:957
 msgid "Load %1"
 msgstr "%1の読み込み"
 
-#: ItemManager.cpp:945 PluginManager.cpp:662 ProjectManager.cpp:577
+#: ItemManager.cpp:959 PluginManager.cpp:662 ProjectManager.cpp:577
 msgid "Open"
 msgstr "読み込み"
 
-#: ItemManager.cpp:953
+#: ItemManager.cpp:967
 msgid "Check the item(s) in ItemTreeView"
 msgstr "アイテムツリービューのチェックを入れる"
 
-#: ItemManager.cpp:1100
+#: ItemManager.cpp:1114
 msgid "Saving {0} to \"{1}\""
 msgstr "{0} を \"{1}\" に保存中"
 
-#: ItemManager.cpp:1102
+#: ItemManager.cpp:1116
 msgid "Exporting {0} into \"{1}\""
 msgstr "{0} を \"{1}\" にエクスポート中"
 
-#: ItemManager.cpp:1129
+#: ItemManager.cpp:1143
 msgid "{} cannot be saved.\n"
 msgstr "{} は保存できません．\n"
 
-#: ItemManager.cpp:1131
+#: ItemManager.cpp:1145
 msgid "{} cannot be exported.\n"
 msgstr "{} はエクスポートできません．\n"
 
-#: ItemManager.cpp:1135
+#: ItemManager.cpp:1149
 msgid "{0} cannot be saved as the {1} format.\n"
 msgstr "{0} はフォーマット{1}として保存できません．\n"
 
-#: ItemManager.cpp:1137
+#: ItemManager.cpp:1151
 msgid "{0} cannot be exported into the {1} format.\n"
 msgstr "{0} はフォーマット{1}としてエクスポートできません．\n"
 
-#: ItemManager.cpp:1152
+#: ItemManager.cpp:1166
 msgid "Save %1 as"
 msgstr "%1の保存"
 
@@ -896,89 +896,89 @@ msgstr "シーン"
 msgid "Use dedicated item tree view checks to select the target items"
 msgstr "対象アイテム選択用の専用のチェックをアイテムツリービューに追加"
 
-#: TaskView.cpp:207
+#: TaskView.cpp:211
 msgid "Task"
 msgstr "タスク"
 
-#: TaskView.cpp:254
+#: TaskView.cpp:260
 msgid "Select a task type"
 msgstr "タスクの選択"
 
-#: TaskView.cpp:263
+#: TaskView.cpp:269
 msgid "Option Menu"
 msgstr "オプションメニュー"
 
-#: TaskView.cpp:268
+#: TaskView.cpp:274
 msgid "Return to the current phase"
 msgstr "元のフェーズに復帰"
 
-#: TaskView.cpp:273
+#: TaskView.cpp:279
 msgid "Go to the config phase"
 msgstr "設定フェーズに移動"
 
-#: TaskView.cpp:277
+#: TaskView.cpp:283
 msgid "Go back to the previous phase"
 msgstr "前のフェーズに戻る"
 
-#: TaskView.cpp:281
+#: TaskView.cpp:287
 msgid "Cancel waiting for the command to finish"
 msgstr "コマンド完了待ちのキャンセル"
 
-#: TaskView.cpp:285
+#: TaskView.cpp:291
 msgid "Phase index"
 msgstr "フェーズインデックス"
 
-#: TaskView.cpp:293
+#: TaskView.cpp:299
 msgid "V"
 msgstr "↓"
 
-#: TaskView.cpp:295
+#: TaskView.cpp:301
 msgid "Execute the default command of the current phase"
 msgstr "本フェーズのデフォルトコマンドを実行"
 
-#: TaskView.cpp:298
+#: TaskView.cpp:304
 msgid "Auto"
 msgstr "自動"
 
-#: TaskView.cpp:299
+#: TaskView.cpp:305
 msgid "Automatic mode"
 msgstr "自動モード"
 
-#: TaskView.cpp:302
+#: TaskView.cpp:308
 msgid "Skip to the next phase"
 msgstr "次のフェーズに移動"
 
-#: TaskView.cpp:442
+#: TaskView.cpp:448
 msgid "Task sequencer '%1' has been activated."
 msgstr "タスクシーケンサ '%1' が活性化されました．"
 
-#: TaskView.cpp:444
+#: TaskView.cpp:450
 msgid "Task sequencer '%1' has been deactivated."
 msgstr "タスクシーケンサ '%1' が非活性化されました．"
 
-#: TaskView.cpp:489
+#: TaskView.cpp:495
 msgid "Task \"{}\" has been added."
 msgstr "タスク \"{}\" が追加されました．"
 
-#: TaskView.cpp:510
+#: TaskView.cpp:516
 msgid ""
 "Task \"{}\" cannot be updated now because it is wating for a command to "
 "finish."
 msgstr "タスク \"{}\" は現在コマンドの終了待ちを行っているため更新できません．"
 
-#: TaskView.cpp:544
+#: TaskView.cpp:550
 msgid "Task \"{}\" has been updated with the new one."
 msgstr "タスク \"{}\" が更新されました。"
 
-#: TaskView.cpp:1255
+#: TaskView.cpp:1261
 msgid "Next task \"{}\" is not found."
 msgstr "次のタスク \"{}\" がみつかりません．"
 
-#: TaskView.cpp:1496
+#: TaskView.cpp:1502
 msgid "Retry"
 msgstr "リトライ"
 
-#: TaskView.cpp:1498
+#: TaskView.cpp:1504
 msgid "Vertical Layout"
 msgstr "縦配置"
 
@@ -1178,31 +1178,63 @@ msgstr "プログラムの有効化に失敗しました"
 msgid "Shader has not been linked."
 msgstr "シェーダがリンクされていません．"
 
+#: CoordinateFrameSetItem.cpp:29
+msgid "CoordinateFrameSetItem"
+msgstr "座標フレーム集合アイテム"
+
+#: CoordinateFrameSetItem.cpp:92
+msgid "Num coordinate frames"
+msgstr "座標フレーム数"
+
 #: GL1SceneRenderer.cpp:444
 msgid "OpenGL {0} ({1} {2}) is available for the \"{3}\" view."
 msgstr "OpenGL {0} ({1} {2}) が \"{3}\" ビューで利用可能です．"
 
-#: ItemPropertyView.cpp:282
+#: CoordinateFrameSetPairItem.cpp:39
+msgid "CoordinateFrameSetPairItem"
+msgstr "座標フレーム集合ペアアイテム"
+
+#: CoordinateFrameSetView.cpp:151
+msgid "Note"
+msgstr "注釈"
+
+#: CoordinateFrameSetView.cpp:153
+msgid "Position"
+msgstr "ポジション"
+
+#: CoordinateFrameSetView.cpp:338
+msgid "Coordinate Systems"
+msgstr "座標系"
+
+#: CoordinateFrameSetView.cpp:365 CoordinateFrameSetView.cpp:517
+msgid "Add"
+msgstr "追加"
+
+#: CoordinateFrameSetView.cpp:520
+msgid "Remove"
+msgstr "削除"
+
+#: ItemPropertyView.cpp:294
 msgid "Select File"
 msgstr "ファイルを選択"
 
-#: ItemPropertyView.cpp:286 MovieRecorder.cpp:367
+#: ItemPropertyView.cpp:298 MovieRecorder.cpp:367
 msgid "Select"
 msgstr "選択"
 
-#: ItemPropertyView.cpp:289
+#: ItemPropertyView.cpp:301
 msgid "OK"
 msgstr "OK"
 
-#: ItemPropertyView.cpp:641
+#: ItemPropertyView.cpp:653
 msgid "Property"
 msgstr "プロパティ"
 
-#: ItemPropertyView.cpp:843
+#: ItemPropertyView.cpp:858
 msgid "Update"
 msgstr "更新"
 
-#: ItemPropertyView.cpp:846
+#: ItemPropertyView.cpp:861
 msgid "Reset Column Sizes"
 msgstr "コラムサイズのリセット"
 
@@ -1322,71 +1354,71 @@ msgstr "画像アイテムの選択"
 msgid "Adjust image size according to view"
 msgstr "画像サイスをビューに合わせる"
 
-#: Item.cpp:763 MultiSeqItemCreationPanel.cpp:27
+#: Item.cpp:769 MultiSeqItemCreationPanel.cpp:27
 msgid "Name"
 msgstr "名前"
 
-#: Item.cpp:774
+#: Item.cpp:780
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:782
+#: Item.cpp:788
 msgid "Num children"
 msgstr "小アイテムの数"
 
-#: Item.cpp:783
+#: Item.cpp:789
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:784
+#: Item.cpp:790
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:785
+#: Item.cpp:791
 msgid "Refs"
 msgstr "参照数"
 
-#: ItemTreeView.cpp:267
+#: ItemTreeView.cpp:268
 msgid "Items"
 msgstr "アイテム"
 
-#: ItemTreeView.cpp:352
+#: ItemTreeView.cpp:355
 msgid "Cut"
 msgstr "カット"
 
-#: ItemTreeView.cpp:354
+#: ItemTreeView.cpp:357
 msgid "Copy (single)"
 msgstr "コピー（単独）"
 
-#: ItemTreeView.cpp:356
+#: ItemTreeView.cpp:359
 msgid "Copy (sub tree)"
 msgstr "コピー（サブツリー）"
 
-#: ItemTreeView.cpp:358
+#: ItemTreeView.cpp:361
 msgid "Paste"
 msgstr "ペースト"
 
-#: ItemTreeView.cpp:362
+#: ItemTreeView.cpp:365
 msgid "Check"
 msgstr "チェック"
 
-#: ItemTreeView.cpp:364
+#: ItemTreeView.cpp:367
 msgid "Uncheck"
 msgstr "アンチェック"
 
-#: ItemTreeView.cpp:366
+#: ItemTreeView.cpp:369
 msgid "Toggle checks"
 msgstr "チェックの反転"
 
-#: ItemTreeView.cpp:370
+#: ItemTreeView.cpp:373
 msgid "Reload"
 msgstr "再読み込み"
 
-#: ItemTreeView.cpp:374
+#: ItemTreeView.cpp:377
 msgid "Select all"
 msgstr "全て選択"
 
-#: ItemTreeView.cpp:376
+#: ItemTreeView.cpp:379
 msgid "Clear selection"
 msgstr "選択解除"
 
@@ -1634,11 +1666,11 @@ msgstr ""
 msgid "Vector3SeqItem"
 msgstr "３次元ベクタ列アイテム"
 
-#: App.cpp:247 App.cpp:406
+#: App.cpp:253 App.cpp:412
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:251
+#: App.cpp:257
 msgid ""
 "The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: "
 "{3})."
@@ -1825,3 +1857,6 @@ msgstr "軽量レンダリング"
 #: MultiSE3MatrixSeqItem.cpp:15
 msgid "MultiSE3MatrixSeqItem"
 msgstr ""
+
+#~ msgid "Num frames"
+#~ msgstr "フレーム数"

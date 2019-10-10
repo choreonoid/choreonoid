@@ -98,16 +98,16 @@ public:
 
     void updatePositionWithNewFrames(
         CoordinateFrameSetPair* frameSetPair,
-        const CoordinateFrame::Id& baseFrameId,
-        const CoordinateFrame::Id& toolFrameId);
+        const CoordinateFrameId& baseFrameId,
+        const CoordinateFrameId& toolFrameId);
 
-    void setBaseFrameId(const CoordinateFrame::Id& id){ baseFrameId_ = id; }
-    void setToolFrameId(const CoordinateFrame::Id& id){ toolFrameId_ = id; }
+    void setBaseFrameId(const CoordinateFrameId& id){ baseFrameId_ = id; }
+    void setToolFrameId(const CoordinateFrameId& id){ toolFrameId_ = id; }
     
-    const CoordinateFrame::Id& baseFrameId() const { return baseFrameId_; }
-    const CoordinateFrame::Id& toolFrameId() const { return toolFrameId_; }
+    const CoordinateFrameId& baseFrameId() const { return baseFrameId_; }
+    const CoordinateFrameId& toolFrameId() const { return toolFrameId_; }
 
-    const CoordinateFrame::Id& frameId(int which) const {
+    const CoordinateFrameId& frameId(int which) const {
         return (which == 0) ? baseFrameId_ : toolFrameId_;
     }
     
@@ -122,8 +122,8 @@ private:
     Position T;
     Vector3 rpy_;
     bool hasReferenceRpy_;
-    CoordinateFrame::Id baseFrameId_;
-    CoordinateFrame::Id toolFrameId_;
+    CoordinateFrameId baseFrameId_;
+    CoordinateFrameId toolFrameId_;
     int configuration_;
     std::array<int, MaxNumJoints> phase_;
 };

@@ -26,10 +26,10 @@ public:
     virtual int getNumFrames() const = 0;
     virtual CoordinateFrame* getFrame(int index) const = 0;
     virtual CoordinateFrame* findFrame(
-        const CoordinateFrame::Id& id, bool returnIdentityFrameIfNotFound = true) const = 0;
+        const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound = true) const = 0;
 
 protected:
-    void setCoordinateFrameId(CoordinateFrame* frame, const CoordinateFrame::Id& id);
+    void setCoordinateFrameId(CoordinateFrame* frame, const CoordinateFrameId& id);
     void setCoordinateFrameOwner(CoordinateFrame* frame, CoordinateFrameSet* owner);
 };
 

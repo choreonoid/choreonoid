@@ -21,7 +21,7 @@ public:
     virtual int getNumFrames() const override;
     virtual CoordinateFrame* getFrame(int index) const override;
     virtual CoordinateFrame* findFrame(
-        const CoordinateFrame::Id& id, bool returnIdentityFrameIfNotFound = true) const override;
+        const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound = true) const override;
 
     void getArrangedFrameLists(
         std::vector<CoordinateFramePtr>& out_numberedFrameList,

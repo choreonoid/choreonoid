@@ -112,7 +112,7 @@ CoordinateFrame* CoordinateFrameSetGroup::getFrame(int index) const
 
 
 CoordinateFrame* CoordinateFrameSetGroup::findFrame
-(const CoordinateFrame::Id& id, bool returnIdentityFrameIfNotFound) const
+(const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound) const
 {
     for(auto& frameSet : impl->frameSets){
         auto frame = frameSet->findFrame(id, false);
@@ -142,13 +142,10 @@ void CoordinateFrameSetGroup::getArrangedFrameLists
         for(int i=0; i < n; ++i){
             auto frame = frameSet->getFrame(i);
             auto& id = frame->id();
-            int type = stdx::get_variant_index(id);
-            if(type == CoordinateFrame::IntId){
-                int intId = get<int>(id);
-                numberedFrameMap.insert(NumberedFrameMap::value_type(intId, frame));
-            } else if(type == CoordinateFrame::StringId){
-                auto& stringId = get<string>(id);
-                auto inserted = namedFrameSet.insert(stringId);
+            if(id.isInt()){
+                numberedFrameMap.insert(NumberedFrameMap::value_type(id.toInt(), frame));
+            } else if(id.isString()){
+                auto inserted = namedFrameSet.insert(id.toString());
                 if(inserted.second){
                     out_namedFrameList.push_back(frame);
                 }

@@ -259,7 +259,7 @@ void ManipulatorIkPosition::resetReferenceRpy()
 
 void ManipulatorIkPosition::updatePositionWithNewFrames
 (CoordinateFrameSetPair* frameSetPair,
- const CoordinateFrame::Id& baseFrameId, const CoordinateFrame::Id& toolFrameId)
+ const CoordinateFrameId& baseFrameId, const CoordinateFrameId& toolFrameId)
 {
     auto baseFrames = frameSetPair->baseFrames();
     auto Tb1 = baseFrames->findFrame(this->baseFrameId_);
@@ -321,7 +321,7 @@ bool ManipulatorIkPosition::apply(BodyManipulatorManager* manager) const
 }
 
 
-static void readFrameId(const Mapping& archive, const char* key, CoordinateFrame::Id& id)
+static void readFrameId(const Mapping& archive, const char* key, CoordinateFrameId& id)
 {
     auto idNode = archive.find(key);
     if(idNode->isValid() && idNode->isScalar()){
@@ -379,16 +379,14 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
 }
 
 
-static void writeFrameId(Mapping& archive, const char* key, const CoordinateFrame::Id& id)
+static void writeFrameId(Mapping& archive, const char* key, const CoordinateFrameId& id)
 {
-    int type = stdx::get_variant_index(id);
-    if(type == CoordinateFrame::IntId){
-        int idValue = stdx::get<int>(id);
-        if(idValue >= 0){
-            archive.write(key, idValue);
+    if(id.isValid()){
+        if(id.isInt()){
+            archive.write(key, id.toInt());
+        } else {
+            archive.write(key, id.toString(), DOUBLE_QUOTED);
         }
-    } else {
-        archive.write(key, stdx::get<string>(id), DOUBLE_QUOTED);
     }
 }
 

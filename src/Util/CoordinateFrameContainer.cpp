@@ -4,17 +4,28 @@
 #include <fmt/format.h>
 #include <vector>
 #include <unordered_map>
-
-#if __cplusplus <= 201402L
-#include <boost/functional/hash.hpp>
-#endif
-
+#include <functional>
 #include "gettext.h"
-
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
+
+namespace {
+
+struct IdHash {
+    typedef std::hash<string>::result_type result_type;
+    result_type operator()(const CoordinateFrameId& key) const{
+        if(key.isInt()){
+            return std::hash<int>()(key.toInt());
+        } else {
+            return std::hash<string>()(key.toString());
+        }
+    }
+};
+
+}
+
 
 namespace cnoid {
 
@@ -22,11 +33,8 @@ class CoordinateFrameContainer::Impl
 {
 public:
     std::vector<CoordinateFramePtr> frames;
-#if __cplusplus > 201402L
-    unordered_map<CoordinateFrame::Id, CoordinateFramePtr> idToFrameMap;
-#else
-    unordered_map<CoordinateFrame::Id, CoordinateFramePtr, boost::hash<CoordinateFrame::Id>> idToFrameMap;
-#endif
+
+    unordered_map<CoordinateFrameId, CoordinateFramePtr, IdHash> idToFrameMap;
     CoordinateFramePtr identityFrame;
 
     int idCounter;
@@ -123,8 +131,18 @@ CoordinateFrame* CoordinateFrameContainer::getFrame(int index) const
 }
 
 
+int CoordinateFrameContainer::indexOf(CoordinateFrame* frame) const
+{
+    auto pos = std::find(impl->frames.begin(), impl->frames.end(), frame);
+    if(pos == impl->frames.end()){
+        return -1;
+    }
+    return pos - impl->frames.begin();
+}
+
+
 CoordinateFrame* CoordinateFrameContainer::findFrame
-(const CoordinateFrame::Id& id, bool returnIdentityFrameIfNotFound) const
+(const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound) const
 {
     auto iter = impl->idToFrameMap.find(id);
     if(iter != impl->idToFrameMap.end()){
@@ -136,7 +154,7 @@ CoordinateFrame* CoordinateFrameContainer::findFrame
 
 bool CoordinateFrameContainer::insert(int index, CoordinateFrame* frame)
 {
-    if(frame->ownerFrameSet() || !frame->hasValidId() ||
+    if(frame->ownerFrameSet() || !frame->id().isValid() ||
        CoordinateFrameContainer::findFrame(frame->id(), false)){
         return false;
     }
@@ -170,7 +188,7 @@ void CoordinateFrameContainer::removeAt(int index)
 }
 
 
-bool CoordinateFrameContainer::resetId(CoordinateFrame* frame, const CoordinateFrame::Id& newId)
+bool CoordinateFrameContainer::resetId(CoordinateFrame* frame, const CoordinateFrameId& newId)
 {
     bool changed = false;
 
@@ -195,7 +213,7 @@ void CoordinateFrameContainer::resetIdCounter()
 }
 
 
-CoordinateFrame::Id CoordinateFrameContainer::createNextId(int prevId)
+CoordinateFrameId CoordinateFrameContainer::createNextId(int prevId)
 {
     if(prevId >= 0){
         impl->idCounter = prevId + 1;

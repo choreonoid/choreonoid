@@ -3,7 +3,6 @@
 
 #include <cnoid/CloneMappableReferenced>
 #include <cnoid/EigenTypes>
-#include <cnoid/stdx/variant>
 #include <string>
 #include "exportdecl.h"
 
@@ -12,31 +11,76 @@ namespace cnoid {
 class CoordinateFrameSet;
 class Mapping;
 
+class CNOID_EXPORT CoordinateFrameId
+{
+public:
+    static CoordinateFrameId defaultId() { return CoordinateFrameId(0); }
+    
+    CoordinateFrameId()
+        : valueType(Int), intId(-1) { }
+    CoordinateFrameId(int id)
+        : valueType(Int), intId(id) { }
+    CoordinateFrameId(const std::string& id)
+        : valueType(String), intId(0), stringId(id) { }
+    CoordinateFrameId(const CoordinateFrameId& org)
+        : valueType(org.valueType), intId(org.intId), stringId(org.stringId) { }
+
+    CoordinateFrameId& operator=(const CoordinateFrameId& rhs){
+        valueType = rhs.valueType;
+        intId = rhs.intId;
+        stringId = rhs.stringId;
+        return *this;
+    }
+    CoordinateFrameId& operator=(int rhs){
+        valueType = Int;
+        intId = rhs;
+        stringId.clear();
+        return *this;
+    }
+    CoordinateFrameId& operator=(const std::string& rhs){
+        valueType = String;
+        intId = 0;
+        stringId = rhs;
+        return *this;
+    }
+    bool operator==(const CoordinateFrameId& rhs) const {
+        if(isValid_ == rhs.isValid_){
+            if(valueType == Int){
+                return rhs.valueType == Int && intId == rhs.intId;
+            } else {
+                return rhs.valueType == String && stringId == rhs.stringId;
+            }
+        }
+        return false;
+    }
+    bool operator!=(const CoordinateFrameId& rhs) const {
+        return !(this->operator==(rhs));
+    }
+
+    bool isValid() const { return intId >= 0; }
+    bool isInt() const { return valueType == Int; }
+    bool isString() const { return valueType == String; }
+    int toInt() const { return intId; }
+    const std::string& toString() const { return stringId; }
+    std::string label() const;
+        
+private:
+    enum IdValueType { Int, String } valueType;
+    int intId;
+    std::string stringId;
+    bool isValid_;
+};
+
 class CNOID_EXPORT CoordinateFrame : public CloneMappableReferenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    enum IdType { IntId, StringId };
-    typedef stdx::variant<int, std::string> Id;
-    
     CoordinateFrame();
-    CoordinateFrame(const Id& id);
+    CoordinateFrame(const CoordinateFrameId& id);
     CoordinateFrame(const CoordinateFrame& org);
 
-    const Id& id() const { return id_; }
-
-    template <class ValueType>
-    ValueType id() const {
-        if(stdx::holds_alternative<ValueType>(id_)){
-            return stdx::get<ValueType>(id_);
-        }
-        return ValueType();
-    }
-
-    bool hasValidId() const;
-
-    std::string idLabel() const;
+    const CoordinateFrameId& id() const { return id_; }
 
     const Position& T() const { return T_; }
     Position& T() { return T_; }
@@ -47,9 +91,7 @@ public:
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
 
-    CoordinateFrameSet* ownerFrameSet() const {
-        return ownerFrameSet_.lock();
-    }
+    CoordinateFrameSet* ownerFrameSet() const;
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
@@ -59,7 +101,7 @@ protected:
 
 private:
     Position T_;
-    Id id_;
+    CoordinateFrameId id_;
     std::string note_;
     weak_ref_ptr<CoordinateFrameSet> ownerFrameSet_;
 
