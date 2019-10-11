@@ -25,6 +25,7 @@ set(sources
   YAMLWriter.cpp
   EigenUtil.cpp
   EigenArchive.cpp
+  GeneralId.cpp
   Selection.cpp
   DataMap.cpp
   AbstractSeq.cpp
@@ -117,6 +118,7 @@ set(headers
   EigenUtil.h
   EigenArchive.h
   MathUtil.h
+  GeneralId.h
   Selection.h
   DataMap.h
   IdPair.h

@@ -5,7 +5,7 @@
 using namespace std;
 using namespace cnoid;
 
-void CoordinateFrameSet::setCoordinateFrameId(CoordinateFrame* frame, const CoordinateFrameId& id)
+void CoordinateFrameSet::setCoordinateFrameId(CoordinateFrame* frame, const GeneralId& id)
 {
     frame->id_ = id;
 }

@@ -7,15 +7,6 @@
 using namespace std;
 using namespace cnoid;
 
-std::string CoordinateFrameId::label() const
-{
-    if(valueType == Int){
-        return std::to_string(intId);
-    } else {
-        return stringId;
-    }
-}
-    
 
 CoordinateFrame::CoordinateFrame()
 {
@@ -23,7 +14,7 @@ CoordinateFrame::CoordinateFrame()
 }
 
 
-CoordinateFrame::CoordinateFrame(const CoordinateFrameId& id)
+CoordinateFrame::CoordinateFrame(const GeneralId& id)
     : id_(id)
 {
     T_.setIdentity();
@@ -53,45 +44,30 @@ CoordinateFrameSet* CoordinateFrame::ownerFrameSet() const
 
 bool CoordinateFrame::read(const Mapping& archive)
 {
-    auto idNode = archive.find("id");
-    if(idNode->isValid() && idNode->isScalar()){
-        auto scalar = static_cast<ScalarNode*>(idNode);
-        if(scalar->stringStyle()!= PLAIN_STRING){
-            id_ = idNode->toString();
-        } else {
-            id_ = idNode->toInt();
+    if(id_.read(archive, "id")){
+        Vector3 v;
+        if(cnoid::read(archive, "translation", v)){
+            T_.translation() = v;
         }
-    } else {
-        return false;
+        if(cnoid::read(archive, "rotation", v)){
+            T_.linear() = rotFromRpy(v);
+        }
+        archive.read("note", note_);
+        return true;
     }
-    
-    Vector3 v;
-    if(cnoid::read(archive, "translation", v)){
-        T_.translation() = v;
-    }
-    if(cnoid::read(archive, "rotation", v)){
-        T_.linear() = rotFromRpy(v);
-    }
-
-    archive.read("note", note_);
-
-    return true;
+    return false;
 }
 
 
 bool CoordinateFrame::write(Mapping& archive) const
 {
-    if(id_.isInt()){
-        archive.write("id", id_.toInt());
-    } else {
-        archive.write("id", id_.toString(), DOUBLE_QUOTED);
+    if(id_.write(archive, "key")){
+        cnoid::write(archive, "translation", Vector3(T_.translation()));
+        cnoid::write(archive, "rotation", rpyFromRot(T_.linear()));
+        if(!note_.empty()){
+            archive.write("note", note_, DOUBLE_QUOTED);
+        }
+        return true;
     }
-
-    cnoid::write(archive, "translation", Vector3(T_.translation()));
-    cnoid::write(archive, "rotation", rpyFromRot(T_.linear()));
-
-    if(!note_.empty()){
-        archive.write("note", note_, DOUBLE_QUOTED);
-    }
-    return true;
+    return false;
 }

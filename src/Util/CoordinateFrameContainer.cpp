@@ -11,22 +11,6 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-namespace {
-
-struct IdHash {
-    typedef std::hash<string>::result_type result_type;
-    result_type operator()(const CoordinateFrameId& key) const{
-        if(key.isInt()){
-            return std::hash<int>()(key.toInt());
-        } else {
-            return std::hash<string>()(key.toString());
-        }
-    }
-};
-
-}
-
-
 namespace cnoid {
 
 class CoordinateFrameContainer::Impl
@@ -34,7 +18,7 @@ class CoordinateFrameContainer::Impl
 public:
     std::vector<CoordinateFramePtr> frames;
 
-    unordered_map<CoordinateFrameId, CoordinateFramePtr, IdHash> idToFrameMap;
+    unordered_map<GeneralId, CoordinateFramePtr, GeneralId::Hash> idToFrameMap;
     CoordinateFramePtr identityFrame;
 
     int idCounter;
@@ -142,7 +126,7 @@ int CoordinateFrameContainer::indexOf(CoordinateFrame* frame) const
 
 
 CoordinateFrame* CoordinateFrameContainer::findFrame
-(const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound) const
+(const GeneralId& id, bool returnIdentityFrameIfNotFound) const
 {
     if(id == 0){
         return impl->identityFrame;
@@ -192,7 +176,7 @@ void CoordinateFrameContainer::removeAt(int index)
 }
 
 
-bool CoordinateFrameContainer::resetId(CoordinateFrame* frame, const CoordinateFrameId& newId)
+bool CoordinateFrameContainer::resetId(CoordinateFrame* frame, const GeneralId& newId)
 {
     bool changed = false;
 
@@ -217,7 +201,7 @@ void CoordinateFrameContainer::resetIdCounter()
 }
 
 
-CoordinateFrameId CoordinateFrameContainer::createNextId(int prevId)
+GeneralId CoordinateFrameContainer::createNextId(int prevId)
 {
     if(prevId >= 0){
         impl->idCounter = prevId + 1;

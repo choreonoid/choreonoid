@@ -112,7 +112,7 @@ CoordinateFrame* CoordinateFrameSetGroup::getFrame(int index) const
 
 
 CoordinateFrame* CoordinateFrameSetGroup::findFrame
-(const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound) const
+(const GeneralId& id, bool returnIdentityFrameIfNotFound) const
 {
     for(auto& frameSet : impl->frameSets){
         auto frame = frameSet->findFrame(id, false);

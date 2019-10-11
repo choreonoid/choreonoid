@@ -101,8 +101,8 @@ public:
     void startExternalPositionEditing(CoordinateFrame* frame);
     virtual Referenced* getPositionObject() override;
     virtual std::string getPositionName() const override;
-    virtual CoordinateFrameId getPreferredBaseFrameId() const override;
-    virtual CoordinateFrameId getPreferredLocalFrameId() const override;
+    virtual GeneralId getPreferredBaseFrameId() const override;
+    virtual GeneralId getPreferredLocalFrameId() const override;
     virtual Position getGlobalPosition() const override;
     virtual bool setPosition(
         const Position& T_global,
@@ -594,15 +594,15 @@ std::string CoordinateFrameSetView::Impl::getPositionName() const
 }
 
 
-CoordinateFrameId CoordinateFrameSetView::Impl::getPreferredBaseFrameId() const
+GeneralId CoordinateFrameSetView::Impl::getPreferredBaseFrameId() const
 {
-    return CoordinateFrameId::defaultId();
+    return GeneralId::defaultId();
 }
 
 
-CoordinateFrameId CoordinateFrameSetView::Impl::getPreferredLocalFrameId() const
+GeneralId CoordinateFrameSetView::Impl::getPreferredLocalFrameId() const
 {
-    return CoordinateFrameId::defaultId();
+    return GeneralId::defaultId();
 }
 
 

@@ -1,5 +1,5 @@
-#ifndef CNOID_BODY_COORDINATE_FRAME_SET_H
-#define CNOID_BODY_COORDINATE_FRAME_SET_H
+#ifndef CNOID_UTIL_COORDINATE_FRAME_SET_H
+#define CNOID_UTIL_COORDINATE_FRAME_SET_H
 
 #include "CoordinateFrame.h"
 #include <cnoid/CloneMappableReferenced>
@@ -20,10 +20,10 @@ public:
     virtual int getNumFrames() const = 0;
     virtual CoordinateFrame* getFrame(int index) const = 0;
     virtual CoordinateFrame* findFrame(
-        const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound = true) const = 0;
+        const GeneralId& id, bool returnIdentityFrameIfNotFound = true) const = 0;
 
 protected:
-    void setCoordinateFrameId(CoordinateFrame* frame, const CoordinateFrameId& id);
+    void setCoordinateFrameId(CoordinateFrame* frame, const GeneralId& id);
     void setCoordinateFrameOwner(CoordinateFrame* frame, CoordinateFrameSet* owner);
 };
 

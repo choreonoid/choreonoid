@@ -14,8 +14,8 @@ class AbstractPositionEditTarget
 public:
     virtual Referenced* getPositionObject() = 0;
     virtual std::string getPositionName() const = 0;
-    virtual CoordinateFrameId getPreferredBaseFrameId() const = 0;
-    virtual CoordinateFrameId getPreferredLocalFrameId() const = 0;
+    virtual GeneralId getPreferredBaseFrameId() const = 0;
+    virtual GeneralId getPreferredLocalFrameId() const = 0;
     virtual Position getGlobalPosition() const = 0;
     virtual bool setPosition(
         const Position& T_global,

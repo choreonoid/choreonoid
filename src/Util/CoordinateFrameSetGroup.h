@@ -1,5 +1,5 @@
-#ifndef CNOID_BODY_COORDINATE_FRAME_GROUP_H
-#define CNOID_BODY_COORDINATE_FRAME_GROUP_H
+#ifndef CNOID_UTIL_COORDINATE_FRAME_GROUP_H
+#define CNOID_UTIL_COORDINATE_FRAME_GROUP_H
 
 #include "CoordinateFrameSet.h"
 #include <vector>
@@ -21,7 +21,7 @@ public:
     virtual int getNumFrames() const override;
     virtual CoordinateFrame* getFrame(int index) const override;
     virtual CoordinateFrame* findFrame(
-        const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound = true) const override;
+        const GeneralId& id, bool returnIdentityFrameIfNotFound = true) const override;
 
     void getArrangedFrameLists(
         std::vector<CoordinateFramePtr>& out_numberedFrameList,

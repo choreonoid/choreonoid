@@ -1,5 +1,5 @@
-#ifndef CNOID_BODY_COORDINATE_FRAME_CONTAINER_H
-#define CNOID_BODY_COORDINATE_FRAME_CONTAINER_H
+#ifndef CNOID_UTIL_COORDINATE_FRAME_CONTAINER_H
+#define CNOID_UTIL_COORDINATE_FRAME_CONTAINER_H
 
 #include "CoordinateFrameSet.h"
 #include "exportdecl.h"
@@ -21,7 +21,7 @@ public:
     virtual int getNumFrames() const override;
     virtual CoordinateFrame* getFrame(int index) const override;
     virtual CoordinateFrame* findFrame(
-        const CoordinateFrameId& id, bool returnIdentityFrameIfNotFound = true) const override;
+        const GeneralId& id, bool returnIdentityFrameIfNotFound = true) const override;
 
     bool insert(int index, CoordinateFrame* frame);
     bool append(CoordinateFrame* frame);
@@ -31,10 +31,10 @@ public:
        @return true if the id is successfully changed. false if the id is not
        changed because anther coordinate frame with the same is exists.
     */
-    bool resetId(CoordinateFrame* frame, const CoordinateFrameId& newId);
+    bool resetId(CoordinateFrame* frame, const GeneralId& newId);
 
     void resetIdCounter();
-    CoordinateFrameId createNextId(int prevId = -1);
+    GeneralId createNextId(int prevId = -1);
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;    

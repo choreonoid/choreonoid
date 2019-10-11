@@ -259,7 +259,7 @@ void ManipulatorIkPosition::resetReferenceRpy()
 
 void ManipulatorIkPosition::updatePositionWithNewFrames
 (CoordinateFrameSetPair* frameSetPair,
- const CoordinateFrameId& baseFrameId, const CoordinateFrameId& toolFrameId)
+ const GeneralId& baseFrameId, const GeneralId& toolFrameId)
 {
     auto baseFrames = frameSetPair->baseFrames();
     auto Tb1 = baseFrames->findFrame(this->baseFrameId_);
@@ -321,7 +321,7 @@ bool ManipulatorIkPosition::apply(BodyManipulatorManager* manager) const
 }
 
 
-static void readFrameId(const Mapping& archive, const char* key, CoordinateFrameId& id)
+static void readFrameId(const Mapping& archive, const char* key, GeneralId& id)
 {
     auto idNode = archive.find(key);
     if(idNode->isValid() && idNode->isScalar()){
@@ -379,7 +379,7 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
 }
 
 
-static void writeFrameId(Mapping& archive, const char* key, const CoordinateFrameId& id)
+static void writeFrameId(Mapping& archive, const char* key, const GeneralId& id)
 {
     if(id.isValid()){
         if(id.isInt()){
