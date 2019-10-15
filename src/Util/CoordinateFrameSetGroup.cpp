@@ -28,7 +28,7 @@ CoordinateFrameSetGroup::CoordinateFrameSetGroup()
 
 CoordinateFrameSetGroup::Impl::Impl()
 {
-    identityFrame = new CoordinateFrame;
+    identityFrame = new CoordinateFrame(0);
 }
 
 
@@ -98,12 +98,12 @@ int CoordinateFrameSetGroup::getNumFrames() const
 }
     
 
-CoordinateFrame* CoordinateFrameSetGroup::getFrame(int index) const
+CoordinateFrame* CoordinateFrameSetGroup::getFrameAt(int index) const
 {
     for(auto& frameSet : impl->frameSets){
         const int n = frameSet->getNumFrames();
         if(index < n){
-            return frameSet->getFrame(index);
+            return frameSet->getFrameAt(index);
         }
         index -= n;
     }
@@ -111,50 +111,55 @@ CoordinateFrame* CoordinateFrameSetGroup::getFrame(int index) const
 }
 
 
-CoordinateFrame* CoordinateFrameSetGroup::findFrame
-(const GeneralId& id, bool returnIdentityFrameIfNotFound) const
+CoordinateFrame* CoordinateFrameSetGroup::findFrame(const GeneralId& id) const
 {
+    if(id == 0){
+        return impl->identityFrame;
+    }
+    
     for(auto& frameSet : impl->frameSets){
-        auto frame = frameSet->findFrame(id, false);
-        if(frame){
+        if(auto frame = frameSet->findFrame(id)){
             return frame;
         }
     }
-    return returnIdentityFrameIfNotFound ? impl->identityFrame.get() : nullptr;
+    
+    return nullptr;
 }
 
 
-void CoordinateFrameSetGroup::getArrangedFrameLists
-(std::vector<CoordinateFramePtr>& out_numberedFrameList,
- std::vector<CoordinateFramePtr>& out_namedFrameList) const
+std::vector<CoordinateFramePtr> CoordinateFrameSetGroup::getFindableFrameLists() const
 {
-    out_numberedFrameList.clear();
-    out_namedFrameList.clear();
-
     // Use the normal map to keep the key order
     typedef map<int, CoordinateFrame*> NumberedFrameMap;
     NumberedFrameMap numberedFrameMap;
     
     unordered_set<string> namedFrameSet;
+    vector<CoordinateFrame*> namedFrames;
 
     for(auto& frameSet : impl->frameSets){
         const int n = frameSet->getNumFrames();
         for(int i=0; i < n; ++i){
-            auto frame = frameSet->getFrame(i);
+            auto frame = frameSet->getFrameAt(i);
             auto& id = frame->id();
             if(id.isInt()){
                 numberedFrameMap.insert(NumberedFrameMap::value_type(id.toInt(), frame));
             } else if(id.isString()){
                 auto inserted = namedFrameSet.insert(id.toString());
                 if(inserted.second){
-                    out_namedFrameList.push_back(frame);
+                    namedFrames.push_back(frame);
                 }
             }
         }
     }
 
-    out_numberedFrameList.reserve(numberedFrameMap.size());
+    vector<CoordinateFramePtr> frames;
+    frames.reserve(numberedFrameMap.size() + namedFrames.size());
     for(auto& kv : numberedFrameMap){
-        out_numberedFrameList.push_back(kv.second);
+        frames.push_back(kv.second);
     }
+    for(auto& frame : namedFrames){
+        frames.push_back(frame);
+    }
+
+    return frames;
 }

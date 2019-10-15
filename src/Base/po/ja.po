@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-11 03:02+0900\n"
+"POT-Creation-Date: 2019-10-16 00:14+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -37,7 +37,7 @@ msgstr ""
 msgid "CoordinateFrameSetItem"
 msgstr "座標フレーム集合アイテム"
 
-#: CoordinateFrameSetItem.cpp:127
+#: CoordinateFrameSetItem.cpp:177
 msgid "Num coordinate frames"
 msgstr "座標フレーム数"
 
@@ -488,7 +488,7 @@ msgstr "PointSet: 消去モード終了"
 
 #: SceneWidget.cpp:179
 msgid "OpengGL image buffer for picking"
-msgstr ""
+msgstr "ピッキング用OpenGL画像バッファ"
 
 #: SceneWidget.cpp:434
 msgid "Vertical sync"
@@ -1012,7 +1012,7 @@ msgstr "生成(&C)"
 
 #: ItemManager.cpp:826
 msgid "Item with empty filename cannot be loaded."
-msgstr ""
+msgstr "空のファイル名のアイテムを読み込むことはできません．"
 
 #: ItemManager.cpp:845
 msgid "\"{0}\" cannot be loaded because item type \"{1}\" is not registered."
@@ -1858,5 +1858,3 @@ msgstr "スクリプトバー"
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
-#~ msgid "Num frames"
-#~ msgstr "フレーム数"

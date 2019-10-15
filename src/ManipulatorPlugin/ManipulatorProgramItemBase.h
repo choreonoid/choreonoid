@@ -3,14 +3,13 @@
 
 #include "ManipulatorProgram.h"
 #include <cnoid/Item>
-#include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class Archive;
 class BodyItem;
-class BodyManipulatorManager;
+class LinkKinematicsKit;
 
 class CNOID_EXPORT ManipulatorProgramItemBase : public Item
 {
@@ -21,8 +20,7 @@ public:
 
     BodyItem* targetBodyItem();
 
-    BodyManipulatorManager* manipulatorManager();
-    SignalProxy<void(BodyManipulatorManager* manager)> sigManipulatorChanged();
+    LinkKinematicsKit* kinematicsKit();
 
     ManipulatorProgram* program();
     const ManipulatorProgram* program() const;

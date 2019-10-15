@@ -17,10 +17,8 @@ class CoordinateFrameContainer::Impl
 {
 public:
     std::vector<CoordinateFramePtr> frames;
-
     unordered_map<GeneralId, CoordinateFramePtr, GeneralId::Hash> idToFrameMap;
     CoordinateFramePtr identityFrame;
-
     int idCounter;
     
     Impl();
@@ -103,15 +101,15 @@ int CoordinateFrameContainer::getNumFrames() const
 }
 
 
-CoordinateFrame* CoordinateFrameContainer::frame(int index) const
+CoordinateFrame* CoordinateFrameContainer::frameAt(int index) const
 {
     return impl->frames[index];
 }
 
 
-CoordinateFrame* CoordinateFrameContainer::getFrame(int index) const
+CoordinateFrame* CoordinateFrameContainer::getFrameAt(int index) const
 {
-    return frame(index);
+    return frameAt(index);
 }
 
 
@@ -125,8 +123,7 @@ int CoordinateFrameContainer::indexOf(CoordinateFrame* frame) const
 }
 
 
-CoordinateFrame* CoordinateFrameContainer::findFrame
-(const GeneralId& id, bool returnIdentityFrameIfNotFound) const
+CoordinateFrame* CoordinateFrameContainer::findFrame(const GeneralId& id) const
 {
     if(id == 0){
         return impl->identityFrame;
@@ -136,14 +133,37 @@ CoordinateFrame* CoordinateFrameContainer::findFrame
     if(iter != impl->idToFrameMap.end()){
         return iter->second;
     }
-    return returnIdentityFrameIfNotFound ? impl->identityFrame.get() : nullptr;
+    
+    return nullptr;
+}
+
+
+std::vector<CoordinateFramePtr> CoordinateFrameContainer::getFindableFrameLists() const
+{
+    vector<CoordinateFramePtr> frames;
+    vector<CoordinateFramePtr> namedFrames;
+
+    for(auto& frame : impl->frames){
+        auto& id = frame->id();
+        if(id.isInt()){
+            frames.push_back(frame);
+        } else if(id.isString()){
+            namedFrames.push_back(frame);
+        }
+    }
+
+    const int numNumberedFrames = frames.size();
+    frames.resize(numNumberedFrames + namedFrames.size());
+    std::copy(namedFrames.begin(), namedFrames.end(), frames.begin() + numNumberedFrames);
+
+    return frames;
 }
 
 
 bool CoordinateFrameContainer::insert(int index, CoordinateFrame* frame)
 {
     if(frame->ownerFrameSet() || !frame->id().isValid() || frame->id() == 0 ||
-       CoordinateFrameContainer::findFrame(frame->id(), false)){
+       CoordinateFrameContainer::findFrame(frame->id())){
         return false;
     }
 

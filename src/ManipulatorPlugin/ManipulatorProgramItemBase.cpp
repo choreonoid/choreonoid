@@ -2,7 +2,7 @@
 #include "ManipulatorProgram.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
-#include <cnoid/BodyManipulatorManager>
+#include <cnoid/LinkKinematicsKit>
 #include <cnoid/Archive>
 #include "gettext.h"
 
@@ -17,8 +17,7 @@ public:
     ManipulatorProgramItemBase* self;
     ManipulatorProgramPtr program;
     BodyItem* targetBodyItem;
-    BodyManipulatorManagerPtr manipulatorManager;
-    Signal<void(BodyManipulatorManager* manager)> sigManipulatorChanged;
+    LinkKinematicsKitPtr kinematicsKit;
 
     Impl(ManipulatorProgramItemBase* self);
     Impl(ManipulatorProgramItemBase* self, const Impl& org);
@@ -107,20 +106,18 @@ void ManipulatorProgramItemBase::onPositionChanged()
 void ManipulatorProgramItemBase::Impl::setTargetBodyItem(BodyItem* bodyItem)
 {
     if(!bodyItem){
-        manipulatorManager.reset();
+        kinematicsKit.reset();
 
     } else {
         auto body = bodyItem->body();
-        manipulatorManager = BodyManipulatorManager::getOrCreateManager(body);
+        kinematicsKit = bodyItem->getLinkKinematicsKit();
     }
 
-    if(manipulatorManager){
+    if(kinematicsKit){
         targetBodyItem = bodyItem;
     } else {
         targetBodyItem = nullptr;
     }
-
-    sigManipulatorChanged(manipulatorManager.get());
 }
 
 
@@ -130,15 +127,9 @@ BodyItem* ManipulatorProgramItemBase::targetBodyItem()
 }
 
 
-BodyManipulatorManager* ManipulatorProgramItemBase::manipulatorManager()
+LinkKinematicsKit* ManipulatorProgramItemBase::kinematicsKit()
 {
-    return impl->manipulatorManager;
-}
-
-
-SignalProxy<void(BodyManipulatorManager* manager)> ManipulatorProgramItemBase::sigManipulatorChanged()
-{
-    return impl->sigManipulatorChanged;
+    return impl->kinematicsKit;
 }
 
 

@@ -8,12 +8,12 @@
 #include "KinematicsBar.h"
 #include "EditableSceneBody.h"
 #include "LinkSelectionView.h"
+#include "LinkKinematicsKitManager.h"
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/YAMLReader>
 #include <cnoid/EigenArchive>
 #include <cnoid/Archive>
 #include <cnoid/RootItem>
-#include <cnoid/CoordinateFrameSetPairItem>
 #include <cnoid/ConnectionSet>
 #include <cnoid/LazySignal>
 #include <cnoid/LazyCaller>
@@ -91,6 +91,7 @@ public:
     LinkPtr currentBaseLink;
     LinkTraverse fkTraverse;
     shared_ptr<PinDragIK> pinDragIK;
+    unique_ptr<LinkKinematicsKitManager> linkKinematicsKitManager;
 
     bool isEditable;
     bool isCallingSlotsOnKinematicStateEdited;
@@ -132,8 +133,9 @@ public:
     void appendKinematicStateToHistory();
     bool undoKinematicState();
     bool redoKinematicState();
-    void getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>& ik);
-    void getDefaultIK(Link* targetLink, shared_ptr<InverseKinematics>& ik);
+    LinkKinematicsKit* getLinkKinematicsKit(Link* baseLink, Link* endLink);
+    std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);
+    std::shared_ptr<InverseKinematics> getDefaultIK(Link* targetLink);
     void createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker);
     void setPresetPose(BodyItem::PresetPoseID id);
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor);
@@ -637,28 +639,36 @@ bool BodyItemImpl::redoKinematicState()
 }
 
 
-CoordinateFrameSetPair* BodyItem::getCoordinateFrameSetPair() const
+LinkKinematicsKit* BodyItem::getLinkKinematicsKit(Link* targetLink, Link* baseLink)
 {
-    ItemList<CoordinateFrameSetPairItem> lowerItems;
-    if(lowerItems.extractSubTreeItems(this)){
-        return lowerItems.toSingle()->frameSetPair();
+    return impl->getLinkKinematicsKit(targetLink, baseLink);
+}
+
+
+LinkKinematicsKit* BodyItemImpl::getLinkKinematicsKit(Link* targetLink, Link* baseLink)
+{
+    LinkKinematicsKit* kit = nullptr;
+    
+    if(!linkKinematicsKitManager){
+        linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
     }
-    auto upperItem = parentItem();
-    while(upperItem){
-        if(auto frameSetPairItem = dynamic_cast<CoordinateFrameSetPairItem*>(upperItem)){
-            return frameSetPairItem->frameSetPair();
-        }
-        if(auto worldItem = dynamic_cast<WorldItem*>(upperItem)){
-            ItemList<CoordinateFrameSetPairItem> lowerItems;
-            if(lowerItems.extractSubTreeItems(worldItem)){
-                return lowerItems.toSingle()->frameSetPair();
+    if(!targetLink){
+        targetLink = body->findUniqueEndLink();
+    }
+    if(targetLink){
+        if(baseLink){
+            kit = linkKinematicsKitManager->getOrCreateKinematicsKit(targetLink, baseLink);
+        } else {
+            if(auto ik = getCurrentIK(targetLink)){
+                kit = linkKinematicsKitManager->getOrCreateKinematicsKit(targetLink, ik);
             }
         }
     }
-    return nullptr;
+
+    return kit;
 }
         
-
+        
 std::shared_ptr<PinDragIK> BodyItem::pinDragIK()
 {
     if(!impl->pinDragIK){
@@ -670,14 +680,14 @@ std::shared_ptr<PinDragIK> BodyItem::pinDragIK()
 
 std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 {
-    shared_ptr<InverseKinematics> ik;
-    impl->getCurrentIK(targetLink, ik);
-    return ik;
+    return impl->getCurrentIK(targetLink);
 }
 
 
-void BodyItemImpl::getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>& ik)
+std::shared_ptr<InverseKinematics> BodyItemImpl::getCurrentIK(Link* targetLink)
 {
+    std::shared_ptr<InverseKinematics> ik;
+    
     auto rootLink = body->rootLink();
     
     if(bodyAttachment && targetLink == rootLink){
@@ -686,7 +696,7 @@ void BodyItemImpl::getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>&
 
     if(!ik){
         if(KinematicsBar::instance()->mode() == KinematicsBar::AUTO_MODE){
-            getDefaultIK(targetLink, ik);
+            ik = getDefaultIK(targetLink);
         }
     }
 
@@ -703,19 +713,21 @@ void BodyItemImpl::getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>&
         auto baseLink = currentBaseLink ? currentBaseLink.get() : rootLink;
         ik = JointPath::getCustomPath(body, baseLink, targetLink);
     }
+
+    return ik;
 }
 
 
 std::shared_ptr<InverseKinematics> BodyItem::getDefaultIK(Link* targetLink)
 {
-    shared_ptr<InverseKinematics> ik;
-    impl->getDefaultIK(targetLink, ik);
-    return ik;
+    return impl->getDefaultIK(targetLink);
 }
 
 
-void BodyItemImpl::getDefaultIK(Link* targetLink, shared_ptr<InverseKinematics>& ik)
+std::shared_ptr<InverseKinematics> BodyItemImpl::getDefaultIK(Link* targetLink)
 {
+    std::shared_ptr<InverseKinematics> ik;
+
     const Mapping& setupMap = *body->info()->findMapping("defaultIKsetup");
 
     if(targetLink && setupMap.isValid()){
@@ -741,6 +753,8 @@ void BodyItemImpl::getDefaultIK(Link* targetLink, shared_ptr<InverseKinematics>&
             }
         }
     }
+
+    return ik;
 }
 
 

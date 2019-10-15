@@ -1,9 +1,9 @@
 #include "ManipulatorPosition.h"
-#include "BodyManipulatorManager.h"
-#include "Body.h"
-#include "JointPath.h"
-#include "JointPathConfigurationHandler.h"
-#include <cnoid/CoordinateFrameSet>
+#include <cnoid/Body>
+#include <cnoid/JointPath>
+#include <cnoid/JointPathConfigurationHandler>
+#include <cnoid/CoordinateFrame>
+#include <cnoid/LinkKinematicsKit>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>
@@ -155,13 +155,13 @@ ManipulatorPosition* ManipulatorPositionRef::clone() const
 }
 
 
-bool ManipulatorPositionRef::setCurrentPosition(BodyManipulatorManager*)
+bool ManipulatorPositionRef::setCurrentPosition(LinkKinematicsKit*)
 {
     return false;
 }
     
     
-bool ManipulatorPositionRef::apply(BodyManipulatorManager* manager) const
+bool ManipulatorPositionRef::apply(LinkKinematicsKit*) const
 {
     return false;
 }
@@ -258,41 +258,39 @@ void ManipulatorIkPosition::resetReferenceRpy()
 
 
 void ManipulatorIkPosition::updatePositionWithNewFrames
-(CoordinateFrameSetPair* frameSetPair,
+(LinkKinematicsKit* kinematicsKit,
  const GeneralId& baseFrameId, const GeneralId& toolFrameId)
 {
-    auto baseFrames = frameSetPair->baseFrames();
-    auto Tb1 = baseFrames->findFrame(this->baseFrameId_);
-    auto Tb2 = baseFrames->findFrame(baseFrameId);
+    auto Tb1 = kinematicsKit->baseFrame(this->baseFrameId_);
+    auto Tb2 = kinematicsKit->baseFrame(baseFrameId);
     T = Tb2->T().inverse(Eigen::Isometry) * Tb1->T() * T;
     this->baseFrameId_ = baseFrameId;
 
-    auto toolFrames = frameSetPair->localFrames();
-    auto Tt1 = toolFrames->findFrame(this->toolFrameId_);
-    auto Tt2 = toolFrames->findFrame(toolFrameId);
+    auto Tt1 = kinematicsKit->localFrame(this->toolFrameId_);
+    auto Tt2 = kinematicsKit->localFrame(toolFrameId);
     T =  T  * Tt1->T().inverse(Eigen::Isometry) * Tt2->T();
     this->toolFrameId_ = toolFrameId;
 }
 
 
-bool ManipulatorIkPosition::setCurrentPosition(BodyManipulatorManager* manager)
+bool ManipulatorIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
-    auto jointPath = manager->jointPath();
+    auto jointPath = kinematicsKit->jointPath();
 
     if(!jointPath){
         return false;
     }
 
     auto T_end = jointPath->endLink()->T();
-    auto F_base = manager->baseFrames()->findFrame(baseFrameId_)->T();
+    auto F_base = kinematicsKit->baseFrame(baseFrameId_)->T();
     auto T_base = jointPath->baseLink()->T() * F_base;
-    auto F_tool = manager->toolFrames()->findFrame(toolFrameId_)->T();
+    auto F_tool = kinematicsKit->localFrame(toolFrameId_)->T();
 
     T = T_base.inverse(Eigen::Isometry) * T_end * F_tool;
 
     hasReferenceRpy_ = false;
 
-    configuration_ = manager->currentConfiguration();
+    configuration_ = kinematicsKit->currentConfiguration();
 
     //! \todo set phase here
 
@@ -300,24 +298,24 @@ bool ManipulatorIkPosition::setCurrentPosition(BodyManipulatorManager* manager)
 }
 
 
-bool ManipulatorIkPosition::apply(BodyManipulatorManager* manager) const
+bool ManipulatorIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 {
-    auto jointPath = manager->jointPath();
+    auto jointPath = kinematicsKit->jointPath();
 
     if(!jointPath){
         return false;
     }
 
-    if(auto handler = manager->jointPathConfigurationHandler()){
+    if(auto handler = kinematicsKit->configurationHandler()){
         handler->setPreferredConfiguration(configuration_);
     }
 
-    auto F_base = manager->baseFrames()->findFrame(baseFrameId_)->T();
+    auto F_base = kinematicsKit->baseFrame(baseFrameId_)->T();
     auto T_base = jointPath->baseLink()->T() * F_base;
-    auto F_tool = manager->toolFrames()->findFrame(toolFrameId_)->T();
+    auto F_tool = kinematicsKit->localFrame(toolFrameId_)->T();
     
     Position T_global = T_base * T * F_tool;
-    return manager->jointPath()->calcInverseKinematics(T_global);
+    return jointPath->calcInverseKinematics(T_global);
 }
 
 
@@ -440,9 +438,9 @@ ManipulatorPosition* ManipulatorFkPosition::clone() const
 }
 
 
-bool ManipulatorFkPosition::setCurrentPosition(BodyManipulatorManager* manager)
+bool ManipulatorFkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
-    auto path = manager->jointPath();
+    auto path = kinematicsKit->jointPath();
     const int n = std::min(path->numJoints(), MaxNumJoints);
     int i;
     for(i = 0; i < n; ++i){
@@ -456,9 +454,9 @@ bool ManipulatorFkPosition::setCurrentPosition(BodyManipulatorManager* manager)
 }
 
 
-bool ManipulatorFkPosition::apply(BodyManipulatorManager* manager) const
+bool ManipulatorFkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 {
-    auto path = manager->jointPath();
+    auto path = kinematicsKit->jointPath();
     const int n = std::min(path->numJoints(), MaxNumJoints);
     for(int i = 0; i < n; ++i){
         path->joint(i)->q() = jointDisplacements[i];

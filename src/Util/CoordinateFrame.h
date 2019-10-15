@@ -21,10 +21,6 @@ public:
     CoordinateFrame(const GeneralId& id);
     CoordinateFrame(const CoordinateFrame& org);
 
-    /**
-       \note Id 0 is reserved for the default frame, which corresponds to the identity frame.
-       The frame with Id 0 cannot be inserted in any frame set.
-    */
     const GeneralId& id() const { return id_; }
 
     const Position& T() const { return T_; }
@@ -32,6 +28,12 @@ public:
 
     const Position& position() const { return T_; }
     void setPosition(const Position& T) { T_ = T; }
+
+    enum Mode { Relative, Global };
+
+    bool isRelative() const { return (mode_ == Relative); }
+    bool isGlobal() const { return (mode_ == Global); }
+    void setMode(Mode mode){ mode_ = mode; }
 
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
@@ -47,6 +49,7 @@ protected:
 private:
     Position T_;
     GeneralId id_;
+    Mode mode_;
     std::string note_;
     weak_ref_ptr<CoordinateFrameSet> ownerFrameSet_;
 

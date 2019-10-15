@@ -15,13 +15,14 @@ public:
     
     void clear();
     int numFrames() const;
-    CoordinateFrame* frame(int index) const;
+    CoordinateFrame* frameAt(int index) const;
     int indexOf(CoordinateFrame* frame) const;
 
     virtual int getNumFrames() const override;
-    virtual CoordinateFrame* getFrame(int index) const override;
-    virtual CoordinateFrame* findFrame(
-        const GeneralId& id, bool returnIdentityFrameIfNotFound = true) const override;
+    virtual CoordinateFrame* getFrameAt(int index) const override;
+    virtual CoordinateFrame* findFrame(const GeneralId& id) const override;
+
+    virtual std::vector<CoordinateFramePtr> getFindableFrameLists() const override;
 
     bool insert(int index, CoordinateFrame* frame);
     bool append(CoordinateFrame* frame);

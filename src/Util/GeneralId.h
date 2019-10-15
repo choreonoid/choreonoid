@@ -77,14 +77,13 @@ public:
     struct Hash {
         typedef size_t result_type;
         result_type operator()(const GeneralId& key) const{
-        if(key.isInt()){
-            return std::hash<int>()(key.toInt());
-        } else {
-            return std::hash<std::string>()(key.toString());
+            if(key.isInt()){
+                return std::hash<int>()(key.toInt());
+            } else {
+                return std::hash<std::string>()(key.toString());
+            }
         }
-    }
-};
-
+    };
         
 private:
     enum IdValueType { Int, String } valueType;

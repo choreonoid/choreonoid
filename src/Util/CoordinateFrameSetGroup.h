@@ -19,13 +19,9 @@ public:
     void addFrameSet(CoordinateFrameSet* frameSet);
 
     virtual int getNumFrames() const override;
-    virtual CoordinateFrame* getFrame(int index) const override;
-    virtual CoordinateFrame* findFrame(
-        const GeneralId& id, bool returnIdentityFrameIfNotFound = true) const override;
-
-    void getArrangedFrameLists(
-        std::vector<CoordinateFramePtr>& out_numberedFrameList,
-        std::vector<CoordinateFramePtr>& out_namedFrameList) const;
+    virtual CoordinateFrame* getFrameAt(int index) const override;
+    virtual CoordinateFrame* findFrame(const GeneralId& id) const override;
+    virtual std::vector<CoordinateFramePtr> getFindableFrameLists() const override;
 
 protected:
     CoordinateFrameSetGroup(const CoordinateFrameSetGroup& org, CloneMap* cloneMap);

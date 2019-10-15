@@ -17,8 +17,7 @@ namespace cnoid {
 
 class BodyState;
 class BodyItemImpl;
-class CoordinateFrameSetPair;
-typedef ref_ptr<CoordinateFrameSetPair> CoordinateFrameSetPairPtr;
+class LinkKinematicsKit;
 class InverseKinematics;
 class PinDragIK;
 class PenetrationBlocker;
@@ -68,7 +67,7 @@ public:
     bool undoKinematicState();
     bool redoKinematicState();
 
-    CoordinateFrameSetPair* getCoordinateFrameSetPair() const;
+    LinkKinematicsKit* getLinkKinematicsKit(Link* targetLink = nullptr, Link* baseLink = nullptr);
 
     std::shared_ptr<PinDragIK> pinDragIK();
     std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);

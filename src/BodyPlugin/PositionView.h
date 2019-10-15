@@ -6,9 +6,13 @@
 #define CNOID_BODYPLUGIN_POSITION_VIEW_H
 
 #include <cnoid/View>
+#include <functional>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
+
+class LinkKinematicsKit;
 
 class CNOID_EXPORT PositionView : public View
 {
@@ -20,6 +24,9 @@ public:
     virtual ~PositionView();
 
     void setCoordinateFrameLabels(const char* baseFrameLabel, const char* localFrameLabel);
+
+    void customizeDefaultCoordinateFrameNames(
+        std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> getNames);
 
 protected:
     virtual void onActivated() override;

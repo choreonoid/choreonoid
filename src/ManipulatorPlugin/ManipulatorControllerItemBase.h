@@ -10,7 +10,7 @@ namespace cnoid {
 class ManipulatorProgramItemBase;
 class ManipulatorProgram;
 class ManipulatorStatement;
-class BodyManipulatorManager;
+class LinkKinematicsKit;
 
 class CNOID_EXPORT ManipulatorControllerItemBase : public ControllerItem
 {
@@ -48,7 +48,7 @@ protected:
     */
     ManipulatorProgram* getManipulatorProgram();
 
-    BodyManipulatorManager* getBodyManipulatorManager();
+    LinkKinematicsKit* getLinkKinematicsKit();
 
     void pushControlFunctions(
         std::function<bool()> control, std::function<void()> input = nullptr, std::function<void()> output = nullptr);

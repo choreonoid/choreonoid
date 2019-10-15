@@ -11,6 +11,7 @@
 #include <cnoid/JointPathConfigurationHandler>
 #include <cnoid/CompositeBodyIK>
 #include <cnoid/CoordinateFrameSet>
+#include <cnoid/LinkKinematicsKit>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ViewManager>
@@ -58,18 +59,18 @@ class PositionView::Impl
 public:
     PositionView* self;
 
+    enum TargetType { LinkTarget, PositionEditTarget } targetType;
+    BodyItemPtr targetBodyItem;
+    LinkPtr targetLink;
+    LinkKinematicsKitPtr kinematicsKit;
+    LinkKinematicsKitPtr dummyKinematicsKit;
+    string defaultBaseCoordName;
+    string defaultLocalCoordName;
+    std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
+    AbstractPositionEditTarget* positionEditTarget;
     ScopedConnectionSet managerConnections;
     ScopedConnectionSet targetConnections;
     
-    enum TargetType { LinkTarget, PositionEditTarget } targetType;
-
-    BodyItemPtr targetBodyItem;
-    LinkPtr targetLink;
-    shared_ptr<InverseKinematics> inverseKinematics;
-    shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler;
-
-    AbstractPositionEditTarget* positionEditTarget;
-
     ToolButton menuButton;
     MenuManager menuManager;
     QLabel targetLabel;
@@ -122,6 +123,13 @@ public:
     void setQuaternionSpinsVisible(bool on);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
+    void updateIkMode();
+    void updateCoordinateFrameCandidates();
+    void updateBaseCoordinateFrameCandidates();
+    void updateLocalCoordinateFrameCandidates();
+    void updateCoordinateFrameComboItems(
+        QComboBox& combo, CoordinateFrameSet* frames, const GeneralId& currentId, const std::string& originLabel);
+    void updateConfigurationCandidates();
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onPositionEditTargetExpired();
     void clearPanelValues();
@@ -131,7 +139,6 @@ public:
     void updatePanelWithPosition(const Position& T);
     void updateRotationMatrixPanel(const Matrix3& R);
     void updateConfigurationPanel();
-    void updateCoordinateFrames(CoordinateFrameSetPair* frameSetPair);
     void setFramesToCombo(CoordinateFrameSet* frames, QComboBox& combo);
     void onPositionInput(InputElementSet inputElements);
     void onPositionInputRpy(InputElementSet inputElements);
@@ -178,6 +185,8 @@ PositionView::Impl::Impl(PositionView* self)
     
     targetType = LinkTarget;
     positionEditTarget = nullptr;
+    dummyKinematicsKit = new LinkKinematicsKit(nullptr);
+    kinematicsKit = dummyKinematicsKit;
 }
 
 
@@ -242,16 +251,16 @@ void PositionView::Impl::createPanel()
     mainvbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(_("Coordinate:")));
+    //hbox->addWidget(new QLabel(_("Coordinate:")));
     
-    coordinateMode.setSymbol(BaseCoordinateMode, "base");
-    baseCoordRadio.setText(_("Base"));
+    coordinateMode.setSymbol(BaseCoordinateMode, "global");
+    baseCoordRadio.setText(_("Global"));
     baseCoordRadio.setChecked(true);
     hbox->addWidget(&baseCoordRadio);
     coordinateModeGroup.addButton(&baseCoordRadio, BaseCoordinateMode);
 
-    coordinateMode.setSymbol(RootCoordinateMode, "root");
-    rootCoordRadio.setText(_("Root"));
+    coordinateMode.setSymbol(RootCoordinateMode, "base");
+    rootCoordRadio.setText(_("Base"));
     hbox->addWidget(&rootCoordRadio);
     coordinateModeGroup.addButton(&rootCoordRadio, RootCoordinateMode);
     
@@ -369,12 +378,14 @@ void PositionView::Impl::createPanel()
 
     baseCoordLabel.setText(_("Base Coord"));
     grid->addWidget(&baseCoordLabel, 0, 0, Qt::AlignLeft);
-    baseCoordCombo.addItem(_("World"));
+    baseCoordCombo.sigAboutToShowPopup().connect(
+        [&](){ updateBaseCoordinateFrameCandidates(); });
     grid->addWidget(&baseCoordCombo, 0, 1, 1, 2);
 
     localCoordLabel.setText(_("Local Coord"));
     grid->addWidget(&localCoordLabel, 1, 0, Qt::AlignLeft);
-    localCoordCombo.addItem(_("Link Origin"));
+    localCoordCombo.sigAboutToShowPopup().connect(
+        [&](){ updateLocalCoordinateFrameCandidates(); });
     grid->addWidget(&localCoordCombo, 1, 1, 1, 2);
 
     auto label = new QLabel(_("Config"));
@@ -431,7 +442,7 @@ void PositionView::Impl::createPanel()
     settingConnections.add(
         disableCustomIKCheck->sigToggled().connect(
             [&](bool){
-                updateTargetLink(targetLink);
+                updateIkMode();
                 updatePanel();
             }));
 
@@ -443,6 +454,13 @@ void PositionView::setCoordinateFrameLabels(const char* baseFrameLabel, const ch
 {
     impl->baseCoordLabel.setText(baseFrameLabel);
     impl->localCoordLabel.setText(localFrameLabel);
+}
+
+
+void PositionView::customizeDefaultCoordinateFrameNames
+(std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> getNames)
+{
+    impl->functionToGetDefaultFrameNames = getNames;
 }
 
 
@@ -544,8 +562,6 @@ void PositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
                 targetConnections.add(
                     bodyItem->sigKinematicStateChanged().connect(
                         [&](){ updatePanelWithCurrentLinkPosition(); }));
-
-                updateCoordinateFrames(bodyItem->getCoordinateFrameSetPair());
             }
         }
 
@@ -563,57 +579,125 @@ void PositionView::Impl::updateTargetLink(Link* link)
     }
     
     targetLink = link;
-    inverseKinematics.reset();
-    jointPathConfigurationHandler.reset();
     
     if(!targetLink){
+        kinematicsKit = dummyKinematicsKit;
         targetLabel.setText("------");
+        self->setEnabled(false);
 
     } else {
         auto body = targetBodyItem->body();
 
         targetLabel.setText(format("{0} / {1}", body->name(), targetLink->name()).c_str());
 
-        inverseKinematics = targetBodyItem->getCurrentIK(targetLink);
-        if(inverseKinematics){
-            if(auto compositeBodyIK = dynamic_pointer_cast<CompositeBodyIK>(inverseKinematics)){
-                jointPathConfigurationHandler =
-                    dynamic_pointer_cast<JointPathConfigurationHandler>(
-                        compositeBodyIK->getParentBodyIK());
-            } else {
-                jointPathConfigurationHandler =
-                    dynamic_pointer_cast<JointPathConfigurationHandler>(inverseKinematics);
+        kinematicsKit = targetBodyItem->getLinkKinematicsKit(targetLink);
+        if(kinematicsKit){
+            if(functionToGetDefaultFrameNames){
+                tie(defaultBaseCoordName, defaultLocalCoordName) =
+                    functionToGetDefaultFrameNames(kinematicsKit);
             }
-            if(disableCustomIKCheck->isChecked()){
-                if(auto jointPath = dynamic_pointer_cast<JointPath>(inverseKinematics)){
-                    // Use the non-customized, numerical IK
-                    jointPath->setNumericalIKenabled(true);
-                }
+            if(defaultBaseCoordName.empty()){
+                defaultBaseCoordName = _("Origin");
             }
+            if(defaultLocalCoordName.empty()){
+                defaultLocalCoordName = _("Origin");
+            }
+            
+            updateIkMode();
         }
     }
 
-    self->setEnabled(inverseKinematics != nullptr);
+    self->setEnabled(kinematicsKit->inverseKinematics() != nullptr);
     resultLabel.setText("");
 
-    configurationCombo.clear();
-    bool isConfigurationInputActive = (jointPathConfigurationHandler != nullptr) && !disableCustomIKCheck->isChecked();
-    setConfigurationInterfaceEnabled(isConfigurationInputActive);
-    
-    if(jointPathConfigurationHandler){
-        int n = jointPathConfigurationHandler->getNumConfigurations();
-        for(int i=0; i < n; ++i){
-            configurationCombo.addItem(
-                jointPathConfigurationHandler->getConfigurationName(i).c_str());
-        }
-        if(jointPathConfigurationHandler->checkConfiguration(0)){
-            configurationCombo.setCurrentIndex(0);
-        } else {
-            configurationCombo.setCurrentIndex(
-                jointPathConfigurationHandler->getCurrentConfiguration());
-        }
+    updateCoordinateFrameCandidates();
+    updateConfigurationCandidates();
+}
+
+
+void PositionView::Impl::updateIkMode()
+{
+    if(auto jointPath = kinematicsKit->jointPath()){
+        jointPath->setNumericalIKenabled(!disableCustomIKCheck->isChecked());
     }
 }
+            
+
+void PositionView::Impl::updateCoordinateFrameCandidates()
+{
+    updateBaseCoordinateFrameCandidates();
+    updateLocalCoordinateFrameCandidates();
+}
+
+
+void PositionView::Impl::updateBaseCoordinateFrameCandidates()
+{
+    updateCoordinateFrameComboItems(
+        baseCoordCombo,
+        kinematicsKit->baseFrames(), kinematicsKit->currentBaseFrameId(), defaultBaseCoordName);
+}
+
+
+void PositionView::Impl::updateLocalCoordinateFrameCandidates()
+{
+    updateCoordinateFrameComboItems(
+        localCoordCombo,
+        kinematicsKit->localFrames(), kinematicsKit->currentLocalFrameId(), defaultLocalCoordName);
+}
+
+
+void PositionView::Impl::updateCoordinateFrameComboItems
+(QComboBox& combo, CoordinateFrameSet* frames, const GeneralId& currentId, const std::string& originLabel)
+{
+    combo.clear();
+    combo.addItem(QString("0: %1").arg(originLabel.c_str()), 0);
+    int currentIndex = 0;
+
+    if(frames){
+        auto candidates = frames->getFindableFrameLists();
+        const int n = candidates.size();
+        for(int i=0; i < n; ++i){
+            auto frame = candidates[i];
+            auto& id = frame->id();
+            if(id.isInt()){
+                combo.addItem(id.label().c_str(), id.toInt());
+            } else {
+                combo.addItem(id.label().c_str(), id.toString().c_str());
+            }
+            if(id == currentId){
+                currentIndex = i;
+            }
+        }
+    }
+
+    combo.setCurrentIndex(currentIndex);
+}
+
+
+void PositionView::Impl::updateConfigurationCandidates()
+{
+    bool isConfigurationComboActive = false;
+    configurationCombo.clear();
+
+    if(kinematicsKit){
+        if(auto configurationHandler = kinematicsKit->configurationHandler()){
+            int n = configurationHandler->getNumConfigurations();
+            for(int i=0; i < n; ++i){
+                configurationCombo.addItem(
+                    configurationHandler->getConfigurationName(i).c_str());
+            }
+            if(configurationHandler->checkConfiguration(0)){
+                configurationCombo.setCurrentIndex(0);
+            } else {
+                configurationCombo.setCurrentIndex(
+                    configurationHandler->getCurrentConfiguration());
+            }
+            isConfigurationComboActive = !disableCustomIKCheck->isChecked();
+        }
+    }
+
+    setConfigurationInterfaceEnabled(isConfigurationComboActive);
+}    
 
 
 bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
@@ -765,53 +849,21 @@ void PositionView::Impl::updateRotationMatrixPanel(const Matrix3& R)
 
 void PositionView::Impl::updateConfigurationPanel()
 {
-    if(!jointPathConfigurationHandler){
+    auto configurationHandler = kinematicsKit->configurationHandler();
+    
+    if(!configurationHandler){
         configurationLabel.setText("");
+        
     } else {
         int preferred = configurationCombo.currentIndex();
         if(requireConfigurationCheck.isChecked() &&
-           !jointPathConfigurationHandler->checkConfiguration(preferred)){
+           !configurationHandler->checkConfiguration(preferred)){
             configurationCombo.setStyleSheet(errorStyle);
         } else {
             configurationCombo.setStyleSheet("font-weight: normal");
         }
-        int actual = jointPathConfigurationHandler->getCurrentConfiguration();
+        int actual = configurationHandler->getCurrentConfiguration();
         configurationLabel.setText(QString("( %1 )").arg(configurationCombo.itemText(actual)));
-    }
-}
-
-
-void PositionView::Impl::updateCoordinateFrames(CoordinateFrameSetPair* frameSetPair)
-{
-    int prevBaseIndex = baseCoordCombo.currentIndex();
-    baseCoordCombo.clear();
-    baseCoordCombo.addItem(_("World"), 0);
-
-    int prevLocalIndex = localCoordCombo.currentIndex();
-    localCoordCombo.clear();
-    localCoordCombo.addItem(_("Mechanical"), 0);
-
-    if(frameSetPair){
-        setFramesToCombo(frameSetPair->baseFrames(), baseCoordCombo);
-        baseCoordCombo.setCurrentIndex(prevBaseIndex);
-
-        setFramesToCombo(frameSetPair->localFrames(), localCoordCombo);
-        localCoordCombo.setCurrentIndex(prevLocalIndex);
-    }
-}
-
-
-void PositionView::Impl::setFramesToCombo(CoordinateFrameSet* frames, QComboBox& combo)
-{
-    const int n = frames->getNumFrames();
-    for(int i=0; i < n; ++i){
-        auto frame = frames->getFrame(i);
-        auto& id = frame->id();
-        if(id.isInt()){
-            combo.addItem(id.label().c_str(), id.toInt());
-        } else {
-            combo.addItem(id.label().c_str(), id.toString().c_str());
-        }
     }
 }
 
@@ -871,8 +923,8 @@ void PositionView::Impl::onPositionInputQuaternion(InputElementSet inputElements
 
 void PositionView::Impl::onConfigurationInput(int index)
 {
-    if(jointPathConfigurationHandler){
-        jointPathConfigurationHandler->setPreferredConfiguration(index);
+    if(auto configurationHandler = kinematicsKit->configurationHandler()){
+        configurationHandler->setPreferredConfiguration(index);
     }
     onPositionInput(InputElementSet(0));
 }
@@ -891,13 +943,13 @@ void PositionView::Impl::applyInput(const Position& T_input, InputElementSet inp
 
 void PositionView::Impl::findBodyIkSolution(const Position& T_input, InputElementSet inputElements)
 {
-    if(inverseKinematics){
+    if(auto ik = kinematicsKit->inverseKinematics()){
 
         Position T;
         T.translation() = T_input.translation();
         T.linear() = targetLink->calcRfromAttitude(T_input.linear());
         targetBodyItem->beginKinematicStateEdit();
-        bool solved = inverseKinematics->calcInverseKinematics(T);
+        bool solved = ik->calcInverseKinematics(T);
 
         if(!solved){
             for(size_t i=0; i < inputElementWidgets.size(); ++i){
@@ -906,18 +958,19 @@ void PositionView::Impl::findBodyIkSolution(const Position& T_input, InputElemen
                 }
             }
         } else {
-            if(jointPathConfigurationHandler && requireConfigurationCheck.isChecked() &&
-               !disableCustomIKCheck->isChecked()){
-                int preferred = configurationCombo.currentIndex();
-                if(!jointPathConfigurationHandler->checkConfiguration(preferred)){
-                    configurationCombo.setStyleSheet(errorStyle);
-                    solved = false;
+            if(requireConfigurationCheck.isChecked() && !disableCustomIKCheck->isChecked()){
+                if(auto configurationHandler = kinematicsKit->configurationHandler()){
+                    int preferred = configurationCombo.currentIndex();
+                    if(!configurationHandler->checkConfiguration(preferred)){
+                        configurationCombo.setStyleSheet(errorStyle);
+                        solved = false;
+                    }
                 }
             }
         }
 
         if(solved){
-            inverseKinematics->calcRemainingPartForwardKinematicsForInverseKinematics();
+            ik->calcRemainingPartForwardKinematicsForInverseKinematics();
             targetBodyItem->notifyKinematicStateChange();
             targetBodyItem->acceptKinematicStateEdit();
             resultLabel.setText(_("Solved"));

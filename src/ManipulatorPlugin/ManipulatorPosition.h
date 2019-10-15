@@ -1,10 +1,10 @@
-#ifndef CNOID_BODY_MANIPULATOR_POSITION_H
-#define CNOID_BODY_MANIPULATOR_POSITION_H
+#ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
+#define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 
 #include <cnoid/Referenced>
 #include <cnoid/CloneMap>
-#include <cnoid/CoordinateFrameSet>
 #include <cnoid/EigenTypes>
+#include <cnoid/GeneralId>
 #include <string>
 #include <array>
 #include <list>
@@ -18,7 +18,7 @@ class ManipulatorIkPosition;
 class ManipulatorFkPosition;
 class ManipulatorPositionCloneMap;
 class ManipulatorPositionSet;
-class BodyManipulatorManager;
+class LinkKinematicsKit;
 class Mapping;
 
 class CNOID_EXPORT ManipulatorPosition : public Referenced
@@ -41,8 +41,8 @@ public:
     ManipulatorIkPosition* ikPosition();
     ManipulatorFkPosition* fkPosition();
 
-    virtual bool setCurrentPosition(BodyManipulatorManager* manager) = 0;
-    virtual bool apply(BodyManipulatorManager* manager) const = 0;
+    virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) = 0;
+    virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
 
     ManipulatorPositionSet* ownerPositionSet(){ return weak_ownerPositionSet.lock(); }
 
@@ -75,8 +75,8 @@ public:
 
     virtual ManipulatorPosition* clone() const override;
     
-    virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
-    virtual bool apply(BodyManipulatorManager* manager) const override;
+    virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) override;
+    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 };
@@ -97,9 +97,7 @@ public:
     void resetReferenceRpy();
 
     void updatePositionWithNewFrames(
-        CoordinateFrameSetPair* frameSetPair,
-        const GeneralId& baseFrameId,
-        const GeneralId& toolFrameId);
+        LinkKinematicsKit* kinematicsKit, const GeneralId& baseFrameId, const GeneralId& toolFrameId);
 
     void setBaseFrameId(const GeneralId& id){ baseFrameId_ = id; }
     void setToolFrameId(const GeneralId& id){ toolFrameId_ = id; }
@@ -113,8 +111,8 @@ public:
     
     int configuration() const { return configuration_; }
 
-    virtual bool setCurrentPosition(BodyManipulatorManager* manager);
-    virtual bool apply(BodyManipulatorManager* manager) const override;
+    virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit);
+    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 
@@ -140,8 +138,8 @@ public:
 
     virtual ManipulatorPosition* clone() const override;
 
-    virtual bool setCurrentPosition(BodyManipulatorManager* manager) override;
-    virtual bool apply(BodyManipulatorManager* manager) const override;
+    virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) override;
+    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
 
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;

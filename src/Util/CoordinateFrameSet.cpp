@@ -5,6 +5,13 @@
 using namespace std;
 using namespace cnoid;
 
+
+CoordinateFrameSet::CoordinateFrameSet()
+{
+    identityFrame = new CoordinateFrame;
+}
+
+
 void CoordinateFrameSet::setCoordinateFrameId(CoordinateFrame* frame, const GeneralId& id)
 {
     frame->id_ = id;

@@ -11,6 +11,7 @@ using namespace cnoid;
 CoordinateFrame::CoordinateFrame()
 {
     T_.setIdentity();
+    mode_ = Relative;
 }
 
 
@@ -18,12 +19,14 @@ CoordinateFrame::CoordinateFrame(const GeneralId& id)
     : id_(id)
 {
     T_.setIdentity();
+    mode_ = Relative;
 }
 
 
 CoordinateFrame::CoordinateFrame(const CoordinateFrame& org)
     : T_(org.T_),
       id_(org.id_),
+      mode_(org.mode_),
       note_(org.note_)
 {
 
@@ -52,6 +55,14 @@ bool CoordinateFrame::read(const Mapping& archive)
         if(cnoid::read(archive, "rotation", v)){
             T_.linear() = rotFromRpy(v);
         }
+        string mode;
+        if(archive.read("mode", mode)){
+            if(mode == "relative"){
+                mode = Relative;
+            } else if(mode == "global"){
+                mode = Global;
+            }
+        }
         archive.read("note", note_);
         return true;
     }
@@ -61,9 +72,14 @@ bool CoordinateFrame::read(const Mapping& archive)
 
 bool CoordinateFrame::write(Mapping& archive) const
 {
-    if(id_.write(archive, "key")){
+    if(id_.write(archive, "id")){
         cnoid::write(archive, "translation", Vector3(T_.translation()));
         cnoid::write(archive, "rotation", rpyFromRot(T_.linear()));
+        if(mode_ == Relative){
+            archive.write("mode", "relative");
+        } else if(mode_ == Global){
+            archive.write("mode", "global");
+        }
         if(!note_.empty()){
             archive.write("note", note_, DOUBLE_QUOTED);
         }

@@ -1,6 +1,7 @@
 #include "ManipulatorControllerItemBase.h"
 #include "ManipulatorProgramItemBase.h"
-#include <cnoid/BodyManipulatorManager>
+#include <cnoid/LinkKinematicsKit>
+#include <cnoid/CoordinateFrameSet>
 #include <cnoid/ManipulatorProgram>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
@@ -74,7 +75,7 @@ public:
     ManipulatorProgramItemBasePtr programItem;
     ManipulatorProgramPtr program;
     ManipulatorProgramCloneMap manipulatorProgramCloneMap;
-    BodyManipulatorManagerPtr manipulatorManager;
+    LinkKinematicsKitPtr kinematicsKit;
     vector<function<void()>> residentInputFunctions;
     unordered_map<type_index, function<bool(ManipulatorStatement* statement)>> interpreterMap;
     ManipulatorProgram::iterator iterator;
@@ -84,6 +85,7 @@ public:
 
     Impl(ManipulatorControllerItemBase* self);
     bool initialize(ControllerIO* io);
+    bool createKinematicsKitForControl();
     bool control();
     void clear();
     bool interpretDelayStatement(DelayStatement* statement);
@@ -189,10 +191,12 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
         }
     }
 
+    if(!createKinematicsKitForControl()){
+        return false;
+    }
+    
     manipulatorProgramCloneMap.clear();
     program = programItem->program()->clone(manipulatorProgramCloneMap);
-
-    manipulatorManager = programItem->manipulatorManager()->clone();
 
     processorStack.clear();
     iterator = program->begin();
@@ -200,6 +204,26 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
     auto body = io->body();
     ioDevice = body->findDevice<DigitalIoDevice>();
     
+    return true;
+}
+
+
+bool ManipulatorControllerItemBase::Impl::createKinematicsKitForControl()
+{
+    auto orgKit = programItem->kinematicsKit();
+
+    if(!orgKit->baseLink()){
+        return false;
+    }
+
+    auto body = orgKit->body()->clone();
+    auto targetLink = body->link(orgKit->link()->index());
+    auto baseLink = body->link(orgKit->baseLink()->index());
+
+    kinematicsKit = new LinkKinematicsKit(targetLink);
+    kinematicsKit->setBaseLink(baseLink);
+    kinematicsKit->setFrameSetPair(new CoordinateFrameSetPair(*orgKit->frameSetPair()));
+
     return true;
 }
 
@@ -222,9 +246,9 @@ ManipulatorProgram* ManipulatorControllerItemBase::getManipulatorProgram()
 }
 
 
-BodyManipulatorManager* ManipulatorControllerItemBase::getBodyManipulatorManager()
+LinkKinematicsKit* ManipulatorControllerItemBase::getLinkKinematicsKit()
 {
-    return impl->manipulatorManager;
+    return impl->kinematicsKit;
 }
 
 
@@ -339,7 +363,7 @@ void ManipulatorControllerItemBase::Impl::clear()
     programItem.reset();
     program.reset();
     manipulatorProgramCloneMap.clear();
-    manipulatorManager.reset();
+    kinematicsKit.reset();
 }
 
 

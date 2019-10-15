@@ -122,12 +122,6 @@ SgNode* CoordinateFrameSetItem::getScene()
 }
 
 
-void CoordinateFrameSetItem::doPutProperties(PutPropertyFunction& putProperty)
-{
-    putProperty(_("Num coordinate frames"), impl->frames->numFrames());
-}
-
-
 bool CoordinateFrameSetItem::Impl::onPositionEditRequest(AbstractPositionEditTarget* target)
 {
     if(auto frame = dynamic_cast<CoordinateFrame*>(target->getPositionObject())){
@@ -175,6 +169,12 @@ void CoordinateFrameSetItem::Impl::onDraggerPositionChanged()
         positionEditTarget->setPosition(T, T, nullptr, nullptr);
         targetConnections.unblock();
     }
+}
+
+
+void CoordinateFrameSetItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Num coordinate frames"), impl->frames->numFrames());
 }
 
 

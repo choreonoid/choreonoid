@@ -275,6 +275,7 @@ void BodySelectionManager::setLinkSelection(BodyItem* bodyItem, const std::vecto
         auto currentLink = impl->getCurrentLink();
         if(currentLink != oldCurrentLink){
             impl->sigCurrentChanged(bodyItem, currentLink);
+            impl->sigCurrentSpecified(bodyItem, currentLink);
         }
     }
 }

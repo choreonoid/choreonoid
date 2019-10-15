@@ -7,6 +7,7 @@ set(target CnoidManipulatorPlugin)
 
 set(sources
   ManipulatorPlugin.cpp
+  ManipulatorPosition.cpp
   ManipulatorProgram.cpp
   ManipulatorStatements.cpp
   ManipulatorProgramItemBase.cpp
@@ -18,6 +19,7 @@ set(sources
 
 set(headers
   ManipulatorProgram.h
+  ManipulatorPosition.h
   ManipulatorStatements.h
   ManipulatorProgramItemBase.h
   ManipulatorControllerItemBase

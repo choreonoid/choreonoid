@@ -181,7 +181,7 @@ QModelIndex FrameContainerModel::index(int row, int column, const QModelIndex& p
         return QModelIndex();
     }
     if(row < frames->numFrames()){
-        auto frame = frames->frame(row);
+        auto frame = frames->frameAt(row);
         return createIndex(row, column, frame);
     }
     return QModelIndex();
