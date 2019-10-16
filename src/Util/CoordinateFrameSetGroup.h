@@ -22,6 +22,7 @@ public:
     virtual CoordinateFrame* getFrameAt(int index) const override;
     virtual CoordinateFrame* findFrame(const GeneralId& id) const override;
     virtual std::vector<CoordinateFramePtr> getFindableFrameLists() const override;
+    virtual bool contains(const CoordinateFrameSet* frameSet) const override;
 
 protected:
     CoordinateFrameSetGroup(const CoordinateFrameSetGroup& org, CloneMap* cloneMap);

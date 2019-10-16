@@ -38,15 +38,22 @@ public:
     bool isManipulator() const;
 
     CoordinateFrameSetPair* frameSetPair();
-    CoordinateFrameSet* baseFrames();
+    CoordinateFrameSet* frameSet(int which);
+    CoordinateFrameSet* baseFrameSet();
+    CoordinateFrameSet* localFrameSet();
+    
     CoordinateFrame* baseFrame(const GeneralId& id);
-    CoordinateFrameSet* localFrames();
     CoordinateFrame* localFrame(const GeneralId& id);
+
+    const GeneralId& currentFrameId(int which);
     const GeneralId& currentBaseFrameId();
-    CoordinateFrame* currentBaseFrame();
-    void setCurrentBaseFrame(const GeneralId& id);
     const GeneralId& currentLocalFrameId();
+    
+    CoordinateFrame* currentBaseFrame();
     CoordinateFrame* currentLocalFrame();
+
+    void setCurrentFrame(int which, const GeneralId& id);
+    void setCurrentBaseFrame(const GeneralId& id);
     void setCurrentLocalFrame(const GeneralId& id);
 
     Body* findAttachedEndEffector() const;

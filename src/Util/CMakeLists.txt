@@ -39,7 +39,7 @@ set(sources
   RangeLimiter.cpp
   CoordinateFrame.cpp
   CoordinateFrameSet.cpp
-  CoordinateFrameContainer.cpp
+  CoordinateFrameList.cpp
   CoordinateFrameSetGroup.cpp
   BoundingBox.cpp
   SceneGraph.cpp
@@ -138,7 +138,7 @@ set(headers
   UniformCubicBSpline.h
   CoordinateFrame.h
   CoordinateFrameSet.h
-  CoordinateFrameContainer.h
+  CoordinateFrameList.h
   CoordinateFrameSetGroup.h
   BoundingBox.h
   SceneGraph.h

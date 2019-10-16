@@ -50,6 +50,8 @@ typedef std::bitset<NumInputElements> InputElementSet;
 const char* normalStyle = "font-weight: normal";
 const char* errorStyle = "font-weight: bold; color: red";
 
+enum FrameType { Base, Local };
+
 }
 
 namespace cnoid {
@@ -64,8 +66,6 @@ public:
     LinkPtr targetLink;
     LinkKinematicsKitPtr kinematicsKit;
     LinkKinematicsKitPtr dummyKinematicsKit;
-    string defaultBaseCoordName;
-    string defaultLocalCoordName;
     std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
     AbstractPositionEditTarget* positionEditTarget;
     ScopedConnectionSet managerConnections;
@@ -101,10 +101,10 @@ public:
     enum AttitudeMode { RollPitchYawMode, QuaternionMode };
     AttitudeMode lastInputAttitudeMode;
 
-    QLabel baseCoordLabel;
-    ComboBox baseCoordCombo;
-    QLabel localCoordLabel;
-    ComboBox localCoordCombo;
+    string defaultCoordName[2];
+    QLabel frameLabel[2];
+    ComboBox frameCombo[2];
+    
     ComboBox configurationCombo;
     CheckBox requireConfigurationCheck;
     vector<QWidget*> configurationWidgets;
@@ -117,18 +117,19 @@ public:
     void createPanel();
     void onActivated();
     void resetInputWidgetStyles();
-    void setConfigurationInterfaceEnabled(bool on);
     void onMenuButtonClicked();
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
     void updateIkMode();
+    void setCoordinateFrameInterfaceEnabled(bool on);
     void updateCoordinateFrameCandidates();
-    void updateBaseCoordinateFrameCandidates();
-    void updateLocalCoordinateFrameCandidates();
+    void updateCoordinateFrameCandidates(int which);
     void updateCoordinateFrameComboItems(
         QComboBox& combo, CoordinateFrameSet* frames, const GeneralId& currentId, const std::string& originLabel);
+    void onFrameComboActivated(int which, int index);
+    void setConfigurationInterfaceEnabled(bool on);
     void updateConfigurationCandidates();
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onPositionEditTargetExpired();
@@ -376,17 +377,20 @@ void PositionView::Impl::createPanel()
     grid = new QGridLayout;
     grid->setColumnStretch(1, 1);
 
-    baseCoordLabel.setText(_("Base Coord"));
-    grid->addWidget(&baseCoordLabel, 0, 0, Qt::AlignLeft);
-    baseCoordCombo.sigAboutToShowPopup().connect(
-        [&](){ updateBaseCoordinateFrameCandidates(); });
-    grid->addWidget(&baseCoordCombo, 0, 1, 1, 2);
+    frameLabel[Base].setText(_("Base Coord"));
+    frameLabel[Local].setText(_("Local Coord"));
 
-    localCoordLabel.setText(_("Local Coord"));
-    grid->addWidget(&localCoordLabel, 1, 0, Qt::AlignLeft);
-    localCoordCombo.sigAboutToShowPopup().connect(
-        [&](){ updateLocalCoordinateFrameCandidates(); });
-    grid->addWidget(&localCoordCombo, 1, 1, 1, 2);
+    for(int i=0; i < 2; ++i){
+        grid->addWidget(&frameLabel[i], i, 0, Qt::AlignLeft);
+        
+        frameCombo[i].sigAboutToShowPopup().connect(
+            [=](){ updateCoordinateFrameCandidates(i); });
+        
+        frameCombo[i].sigActivated().connect(
+            [=](int index){ onFrameComboActivated(i, index); });
+        
+        grid->addWidget(&frameCombo[i], i, 1, 1, 2);
+    }
 
     auto label = new QLabel(_("Config"));
     grid->addWidget(label, 2, 0, Qt::AlignLeft);
@@ -452,8 +456,8 @@ void PositionView::Impl::createPanel()
 
 void PositionView::setCoordinateFrameLabels(const char* baseFrameLabel, const char* localFrameLabel)
 {
-    impl->baseCoordLabel.setText(baseFrameLabel);
-    impl->localCoordLabel.setText(localFrameLabel);
+    impl->frameLabel[Base].setText(baseFrameLabel);
+    impl->frameLabel[Local].setText(localFrameLabel);
 }
 
 
@@ -508,14 +512,6 @@ void PositionView::Impl::resetInputWidgetStyles()
     }
 }
 
-
-void PositionView::Impl::setConfigurationInterfaceEnabled(bool on)
-{
-    for(auto& widget : configurationWidgets){
-        widget->setEnabled(on);
-    }
-}
-    
 
 void PositionView::Impl::onMenuButtonClicked()
 {
@@ -591,23 +587,25 @@ void PositionView::Impl::updateTargetLink(Link* link)
         targetLabel.setText(format("{0} / {1}", body->name(), targetLink->name()).c_str());
 
         kinematicsKit = targetBodyItem->getLinkKinematicsKit(targetLink);
+
         if(kinematicsKit){
             if(functionToGetDefaultFrameNames){
-                tie(defaultBaseCoordName, defaultLocalCoordName) =
+                tie(defaultCoordName[Base], defaultCoordName[Local]) =
                     functionToGetDefaultFrameNames(kinematicsKit);
             }
-            if(defaultBaseCoordName.empty()){
-                defaultBaseCoordName = _("Origin");
-            }
-            if(defaultLocalCoordName.empty()){
-                defaultLocalCoordName = _("Origin");
+            for(int i=0; i < 2; ++i){
+                if(defaultCoordName[i].empty()){
+                    defaultCoordName[i] = _("Origin");
+                }
             }
             
             updateIkMode();
         }
     }
 
-    self->setEnabled(kinematicsKit->inverseKinematics() != nullptr);
+    bool isValid = kinematicsKit->inverseKinematics() != nullptr;
+    self->setEnabled(isValid);
+    setCoordinateFrameInterfaceEnabled(isValid);
     resultLabel.setText("");
 
     updateCoordinateFrameCandidates();
@@ -623,26 +621,33 @@ void PositionView::Impl::updateIkMode()
 }
             
 
+void PositionView::Impl::setCoordinateFrameInterfaceEnabled(bool on)
+{
+    for(int i=0; i < 2; ++i){
+        frameLabel[i].setEnabled(on);
+        frameCombo[i].setEnabled(on);
+        if(!on){
+            frameCombo[i].clear();
+        }
+    }
+}
+    
+
 void PositionView::Impl::updateCoordinateFrameCandidates()
 {
-    updateBaseCoordinateFrameCandidates();
-    updateLocalCoordinateFrameCandidates();
+    for(int i=0; i < 2; ++i){
+        updateCoordinateFrameCandidates(i);
+    }
 }
 
 
-void PositionView::Impl::updateBaseCoordinateFrameCandidates()
+void PositionView::Impl::updateCoordinateFrameCandidates(int which)
 {
     updateCoordinateFrameComboItems(
-        baseCoordCombo,
-        kinematicsKit->baseFrames(), kinematicsKit->currentBaseFrameId(), defaultBaseCoordName);
-}
-
-
-void PositionView::Impl::updateLocalCoordinateFrameCandidates()
-{
-    updateCoordinateFrameComboItems(
-        localCoordCombo,
-        kinematicsKit->localFrames(), kinematicsKit->currentLocalFrameId(), defaultLocalCoordName);
+        frameCombo[which],
+        kinematicsKit->frameSet(which),
+        kinematicsKit->currentFrameId(which),
+        defaultCoordName[which]);
 }
 
 
@@ -657,6 +662,7 @@ void PositionView::Impl::updateCoordinateFrameComboItems
         auto candidates = frames->getFindableFrameLists();
         const int n = candidates.size();
         for(int i=0; i < n; ++i){
+            int index = combo.count();
             auto frame = candidates[i];
             auto& id = frame->id();
             if(id.isInt()){
@@ -665,7 +671,7 @@ void PositionView::Impl::updateCoordinateFrameComboItems
                 combo.addItem(id.label().c_str(), id.toString().c_str());
             }
             if(id == currentId){
-                currentIndex = i;
+                currentIndex = index;
             }
         }
     }
@@ -673,6 +679,34 @@ void PositionView::Impl::updateCoordinateFrameComboItems
     combo.setCurrentIndex(currentIndex);
 }
 
+
+void PositionView::Impl::onFrameComboActivated(int which, int index)
+{
+    if(kinematicsKit){
+        GeneralId id;
+        auto idValue = frameCombo[which].itemData(index);
+        if(idValue.userType() == QMetaType::Int){
+            id = idValue.toInt();
+        } else if(idValue.userType() == QMetaType::QString){
+            id = idValue.toString().toStdString();
+        }
+        if(id.isValid()){
+            kinematicsKit->setCurrentFrame(which, id);
+        }
+    }
+}
+
+
+void PositionView::Impl::setConfigurationInterfaceEnabled(bool on)
+{
+    for(auto& widget : configurationWidgets){
+        widget->setEnabled(on);
+    }
+    if(!on){
+        configurationCombo.clear();
+    }
+}
+    
 
 void PositionView::Impl::updateConfigurationCandidates()
 {
@@ -710,7 +744,7 @@ bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* targe
     positionEditTarget = target;
 
     targetConnections.add(
-        target->sigGlobalPositionChanged().connect(
+        target->sigPositionChanged().connect(
             [&](const Position&){ updatePanelWithPositionEditTarget(); }));
 
     targetConnections.add(
@@ -720,6 +754,7 @@ bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* targe
     targetLabel.setText(target->getPositionName().c_str());
     configurationLabel.clear();
     self->setEnabled(true);
+    setCoordinateFrameInterfaceEnabled(false);
     setConfigurationInterfaceEnabled(false);
 
     updatePanelWithPositionEditTarget();
@@ -775,7 +810,7 @@ void PositionView::Impl::updatePanelWithCurrentLinkPosition()
 void PositionView::Impl::updatePanelWithPositionEditTarget()
 {
     if(positionEditTarget){
-        updatePanelWithPosition(positionEditTarget->getGlobalPosition());
+        updatePanelWithPosition(positionEditTarget->getPosition());
     }
 }
 
@@ -989,7 +1024,7 @@ void PositionView::Impl::applyInputToPositionEditTarget(const Position& T_input,
     if(positionEditTarget){
 
         targetConnections.block();
-        bool accepted = positionEditTarget->setPosition(T_input, T_input, nullptr, nullptr);
+        bool accepted = positionEditTarget->setPosition(T_input);
         targetConnections.unblock();
 
         if(accepted){

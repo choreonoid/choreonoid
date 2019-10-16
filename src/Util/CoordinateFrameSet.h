@@ -45,6 +45,8 @@ public:
 
     virtual std::vector<CoordinateFramePtr> getFindableFrameLists() const = 0;
 
+    virtual bool contains(const CoordinateFrameSet* frameSet) const = 0;
+
 protected:
     CoordinateFrameSet();
     void setCoordinateFrameId(CoordinateFrame* frame, const GeneralId& id);
@@ -61,13 +63,15 @@ class CNOID_EXPORT CoordinateFrameSetPair : public CloneMappableReferenced
 {
 public:
     CoordinateFrameSetPair();
-    CoordinateFrameSetPair(CoordinateFrameSet* baseFrames, CoordinateFrameSet* offsetFrame);
+    CoordinateFrameSetPair(CoordinateFrameSet* baseFrameSet, CoordinateFrameSet* localFrameSet);
     CoordinateFrameSetPair(const CoordinateFrameSetPair& org); // Do deep copy
+
+    CoordinateFrameSetPair& operator=(const CoordinateFrameSetPair& rhs);
     
     CoordinateFrameSet* frameSet(int which){ return frameSets[which]; }
-    CoordinateFrameSet* baseFrames(){ return frameSets[0]; }
-    CoordinateFrameSet* localFrames(){ return frameSets[1]; }
-    
+    CoordinateFrameSet* baseFrameSet(){ return frameSets[0]; }
+    CoordinateFrameSet* localFrameSet(){ return frameSets[1]; }
+
 protected:
     CoordinateFrameSetPair(const CoordinateFrameSetPair& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

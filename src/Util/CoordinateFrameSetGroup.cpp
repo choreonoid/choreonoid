@@ -163,3 +163,19 @@ std::vector<CoordinateFramePtr> CoordinateFrameSetGroup::getFindableFrameLists()
 
     return frames;
 }
+
+
+bool CoordinateFrameSetGroup::contains(const CoordinateFrameSet* frameSet) const
+{
+    if(frameSet == this){
+        return true;
+    }
+    for(auto& subFrameSet : impl->frameSets){
+        if(frameSet == subFrameSet){
+            return true;
+        }
+    }
+    return false;
+}
+
+    

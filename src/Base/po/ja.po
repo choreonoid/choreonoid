@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-16 00:14+0900\n"
+"POT-Creation-Date: 2019-10-17 13:55+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -32,14 +32,6 @@ msgstr " 影の描画はこのGPUに対しては問題があるため無効化�
 #: ShaderPrograms.cpp:965
 msgid "Framebuffer is not complete.\n"
 msgstr ""
-
-#: CoordinateFrameSetItem.cpp:43
-msgid "CoordinateFrameSetItem"
-msgstr "座標フレーム集合アイテム"
-
-#: CoordinateFrameSetItem.cpp:177
-msgid "Num coordinate frames"
-msgstr "座標フレーム数"
 
 #: FolderItem.cpp:53
 msgid "FolderItem"
@@ -343,6 +335,10 @@ msgstr "設定ダイアログの表示"
 #: TimeBar.cpp:642
 msgid "Stop animation"
 msgstr "アニメーションの停止"
+
+#: CoordinateFrameListPairItem.cpp:39
+msgid "CoordinateFrameListPairItem"
+msgstr "座標フレームリストペアアイテム"
 
 #: TaskView.cpp:211
 msgid "Task"
@@ -737,6 +733,14 @@ msgstr "了解(&O)"
 #: OptionManager.cpp:90
 msgid "Input file \"{}\" was not processed."
 msgstr "入力ファイル \"{}\" は処理されませんでした．"
+
+#: CoordinateFrameListItem.cpp:29
+msgid "CoordinateFrameListItem"
+msgstr "座標フレームリストアイテム"
+
+#: CoordinateFrameListItem.cpp:84
+msgid "Num coordinate frames"
+msgstr "座標フレーム数"
 
 #: MainWindow.cpp:228
 msgid "Exit"
@@ -1634,30 +1638,6 @@ msgstr "ファイルモード"
 msgid "skip escapeSequence"
 msgstr "エスケープシーケンスをスキップ"
 
-#: CoordinateFrameSetView.cpp:160
-msgid "Note"
-msgstr "注釈"
-
-#: CoordinateFrameSetView.cpp:162
-msgid "Position"
-msgstr "ポジション"
-
-#: CoordinateFrameSetView.cpp:363
-msgid "Coordinate Systems"
-msgstr "座標系"
-
-#: CoordinateFrameSetView.cpp:390 CoordinateFrameSetView.cpp:542
-msgid "Add"
-msgstr "追加"
-
-#: CoordinateFrameSetView.cpp:545
-msgid "Remove"
-msgstr "削除"
-
-#: CoordinateFrameSetPairItem.cpp:39
-msgid "CoordinateFrameSetPairItem"
-msgstr "座標フレーム集合ペアアイテム"
-
 #: VirtualJoystickView.cpp:107
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
@@ -1745,6 +1725,26 @@ msgstr "タイムステップ"
 #: AbstractSeqItem.cpp:125
 msgid "Num parts"
 msgstr "パート数"
+
+#: CoordinateFrameListView.cpp:159
+msgid "Note"
+msgstr "注釈"
+
+#: CoordinateFrameListView.cpp:161
+msgid "Position"
+msgstr "ポジション"
+
+#: CoordinateFrameListView.cpp:362
+msgid "Coordinate Frames"
+msgstr "座標フレーム"
+
+#: CoordinateFrameListView.cpp:389 CoordinateFrameListView.cpp:541
+msgid "Add"
+msgstr "追加"
+
+#: CoordinateFrameListView.cpp:544
+msgid "Remove"
+msgstr "削除"
 
 #: Vector3SeqItem.cpp:14
 msgid "Vector3SeqItem"
@@ -1858,3 +1858,8 @@ msgstr "スクリプトバー"
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
+#~ msgid "Coord Frame List"
+#~ msgstr "座標フレーム一覧"
+
+#~ msgid "Coordinate Systems"
+#~ msgstr "座標系"

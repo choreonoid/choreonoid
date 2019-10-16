@@ -22,7 +22,7 @@ public:
     LinkKinematicsKit* getOrCreateKinematicsKit(Link* targetLink, Link* baseLink);
     LinkKinematicsKit* getOrCreateKinematicsKit(Link* targetLink, std::shared_ptr<InverseKinematics> ik);
 
-    SgNode* sceneFrameMarkers();
+    SgNode* scene();
 
 private:
     class Impl;

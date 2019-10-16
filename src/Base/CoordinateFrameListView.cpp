@@ -1,8 +1,7 @@
-#include "CoordinateFrameSetView.h"
-#include "CoordinateFrameSetItem.h"
+#include "CoordinateFrameListView.h"
+#include "CoordinateFrameListItem.h"
 #include "PositionEditManager.h"
-#include <cnoid/CoordinateFrameSet>
-#include <cnoid/CoordinateFrameContainer>
+#include <cnoid/CoordinateFrameList>
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
@@ -30,14 +29,14 @@ constexpr int IdColumn = 0;
 constexpr int NoteColumn = 1;
 constexpr int PositionColumn = 2;
 
-class FrameContainerModel : public QAbstractTableModel
+class FrameListModel : public QAbstractTableModel
 {
 public:
-    CoordinateFrameContainerPtr frames;
+    CoordinateFrameListPtr frames;
     QFont monoFont;
     
-    FrameContainerModel(QObject* parent);
-    void setFrameContainer(CoordinateFrameContainer* frames);
+    FrameListModel(QObject* parent);
+    void setFrameList(CoordinateFrameList* frames);
     bool isValid() const { return frames != nullptr; }
     int numFrames() const { return frames ? frames->numFrames() : 0; }
     virtual int rowCount(const QModelIndex& parent) const override;
@@ -55,9 +54,9 @@ public:
 class CustomizedItemDelegate : public QStyledItemDelegate
 {
 public:
-    CoordinateFrameSetView::Impl* view;
+    CoordinateFrameListView::Impl* view;
     
-    CustomizedItemDelegate(CoordinateFrameSetView::Impl* view);
+    CustomizedItemDelegate(CoordinateFrameListView::Impl* view);
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual void updateEditorGeometry(
@@ -70,14 +69,14 @@ public:
 
 namespace cnoid {
 
-class CoordinateFrameSetView::Impl : public QTableView, public AbstractPositionEditTarget
+class CoordinateFrameListView::Impl : public QTableView, public AbstractPositionEditTarget
 {
 public:
-    CoordinateFrameSetView* self;
-    TargetItemPicker<CoordinateFrameSetItem> targetItemPicker;
-    CoordinateFrameSetItemPtr targetItem;
-    CoordinateFrameContainerPtr frameContainer;
-    FrameContainerModel* frameContainerModel;
+    CoordinateFrameListView* self;
+    TargetItemPicker<CoordinateFrameListItem> targetItemPicker;
+    CoordinateFrameListItemPtr targetItem;
+    CoordinateFrameListPtr frames;
+    FrameListModel* frameListModel;
     QLabel targetLabel;
     PushButton addButton;
     MenuManager contextMenuManager;
@@ -88,8 +87,8 @@ public:
     Signal<void(const Position& T)> sigPositionChanged_;
     Signal<void()> sigPositionEditTargetExpired_;
 
-    Impl(CoordinateFrameSetView* self);
-    void setCoordinateFrameSetItem(CoordinateFrameSetItem* item);
+    Impl(CoordinateFrameListView* self);
+    void setCoordinateFrameListItem(CoordinateFrameListItem* item);
     void addFrameIntoCurrentIndex(bool doInsert);
     void addFrame(int index, bool doInsert);
     void removeSelectedFrames();
@@ -101,20 +100,16 @@ public:
     void startExternalPositionEditing(CoordinateFrame* frame);
     virtual Referenced* getPositionObject() override;
     virtual std::string getPositionName() const override;
-    virtual GeneralId getPreferredBaseFrameId() const override;
-    virtual GeneralId getPreferredLocalFrameId() const override;
-    virtual Position getGlobalPosition() const override;
-    virtual bool setPosition(
-        const Position& T_global,
-        const Position& T_frame, CoordinateFrame* baseFrame, CoordinateFrame* localFrame) override;
-    virtual SignalProxy<void(const Position& T)> sigGlobalPositionChanged() override;
+    virtual Position getPosition() const override;
+    virtual bool setPosition(const Position& T) override;
+    virtual SignalProxy<void(const Position& T)> sigPositionChanged() override;
     virtual SignalProxy<void()> sigPositionEditTargetExpired() override;
 };
 
 }
 
 
-FrameContainerModel::FrameContainerModel(QObject* parent)
+FrameListModel::FrameListModel(QObject* parent)
     : QAbstractTableModel(parent),
       monoFont("Monospace")
 {
@@ -122,7 +117,7 @@ FrameContainerModel::FrameContainerModel(QObject* parent)
 }
 
 
-void FrameContainerModel::setFrameContainer(CoordinateFrameContainer* frames)
+void FrameListModel::setFrameList(CoordinateFrameList* frames)
 {
     beginResetModel();
     this->frames = frames;
@@ -130,7 +125,7 @@ void FrameContainerModel::setFrameContainer(CoordinateFrameContainer* frames)
 }
 
 
-int FrameContainerModel::rowCount(const QModelIndex& parent) const
+int FrameListModel::rowCount(const QModelIndex& parent) const
 {
     int n = 0;
     if(!parent.isValid() && frames){
@@ -143,13 +138,13 @@ int FrameContainerModel::rowCount(const QModelIndex& parent) const
 }
 
 
-int FrameContainerModel::columnCount(const QModelIndex& parent) const
+int FrameListModel::columnCount(const QModelIndex& parent) const
 {
     return NumColumns;
 }
         
 
-QVariant FrameContainerModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant FrameListModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if(role == Qt::DisplayRole){
         if(orientation == Qt::Horizontal){
@@ -175,7 +170,7 @@ QVariant FrameContainerModel::headerData(int section, Qt::Orientation orientatio
 }
 
 
-QModelIndex FrameContainerModel::index(int row, int column, const QModelIndex& parent) const
+QModelIndex FrameListModel::index(int row, int column, const QModelIndex& parent) const
 {
     if(!frames || parent.isValid()){
         return QModelIndex();
@@ -188,7 +183,7 @@ QModelIndex FrameContainerModel::index(int row, int column, const QModelIndex& p
 }
     
 
-Qt::ItemFlags FrameContainerModel::flags(const QModelIndex& index) const
+Qt::ItemFlags FrameListModel::flags(const QModelIndex& index) const
 {
     auto flags = QAbstractTableModel::flags(index);
     if(index.isValid() && index.column() != PositionColumn){
@@ -198,7 +193,7 @@ Qt::ItemFlags FrameContainerModel::flags(const QModelIndex& index) const
 }
 
 
-QVariant FrameContainerModel::data(const QModelIndex& index, int role) const
+QVariant FrameListModel::data(const QModelIndex& index, int role) const
 {
     auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
 
@@ -236,7 +231,7 @@ QVariant FrameContainerModel::data(const QModelIndex& index, int role) const
 }
 
 
-bool FrameContainerModel::setData(const QModelIndex& index, const QVariant& value, int role)
+bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if(index.isValid() && role == Qt::EditRole){
         auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
@@ -260,7 +255,7 @@ bool FrameContainerModel::setData(const QModelIndex& index, const QVariant& valu
 }
 
 
-void FrameContainerModel::addFrame(int row, CoordinateFrame* frame, bool doInsert)
+void FrameListModel::addFrame(int row, CoordinateFrame* frame, bool doInsert)
 {
     if(frames){
         if(frames->numFrames() == 0){
@@ -276,7 +271,7 @@ void FrameContainerModel::addFrame(int row, CoordinateFrame* frame, bool doInser
 }
 
 
-void FrameContainerModel::removeFrames(QModelIndexList selected)
+void FrameListModel::removeFrames(QModelIndexList selected)
 {
     if(frames){
         std::sort(selected.begin(), selected.end());
@@ -297,7 +292,7 @@ void FrameContainerModel::removeFrames(QModelIndexList selected)
 }
 
 
-void FrameContainerModel::notifyFramePositionUpdate(CoordinateFrame* frame)
+void FrameListModel::notifyFramePositionUpdate(CoordinateFrame* frame)
 {
     if(frames){
         int row = frames->indexOf(frame);
@@ -309,7 +304,7 @@ void FrameContainerModel::notifyFramePositionUpdate(CoordinateFrame* frame)
 }
         
 
-CustomizedItemDelegate::CustomizedItemDelegate(CoordinateFrameSetView::Impl* view)
+CustomizedItemDelegate::CustomizedItemDelegate(CoordinateFrameListView::Impl* view)
     : QStyledItemDelegate(view),
       view(view)
 {
@@ -357,20 +352,20 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
 }
 
 
-void CoordinateFrameSetView::initializeClass(ExtensionManager* ext)
+void CoordinateFrameListView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<CoordinateFrameSetView>(
-        "CoordinateFrameSetView", N_("Coordinate Systems"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<CoordinateFrameListView>(
+        "CoordinateFrameListView", N_("Coordinate Frames"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
-CoordinateFrameSetView::CoordinateFrameSetView()
+CoordinateFrameListView::CoordinateFrameListView()
 {
     impl = new Impl(this);
 }
 
 
-CoordinateFrameSetView::Impl::Impl(CoordinateFrameSetView* self)
+CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     : self(self),
       targetItemPicker(self)
 {
@@ -411,8 +406,8 @@ CoordinateFrameSetView::Impl::Impl(CoordinateFrameSetView* self)
         QAbstractItemView::EditKeyPressed |
         QAbstractItemView::AnyKeyPressed);
 
-    frameContainerModel = new FrameContainerModel(this);
-    setModel(frameContainerModel);
+    frameListModel = new FrameListModel(this);
+    setModel(frameListModel);
 
     auto hheader = horizontalHeader();
     hheader->setSectionResizeMode(IdColumn, QHeaderView::ResizeToContents);
@@ -429,63 +424,63 @@ CoordinateFrameSetView::Impl::Impl(CoordinateFrameSetView* self)
     self->setLayout(vbox);
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](CoordinateFrameSetItem* item){
-            setCoordinateFrameSetItem(item); });
+        [&](CoordinateFrameListItem* item){
+            setCoordinateFrameListItem(item); });
 
     positionEditManager = PositionEditManager::instance();
 }
 
 
-CoordinateFrameSetView::~CoordinateFrameSetView()
+CoordinateFrameListView::~CoordinateFrameListView()
 {
     delete impl;
 }
 
 
-void CoordinateFrameSetView::Impl::setCoordinateFrameSetItem(CoordinateFrameSetItem* item)
+void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameListItem* item)
 {
     targetItem = item;
 
     if(item){
         targetLabel.setText(item->name().c_str());
-        frameContainer = item->frames();
-        frameContainerModel->setFrameContainer(frameContainer);
+        frames = item->frames();
+        frameListModel->setFrameList(frames);
     } else {
         targetLabel.setText("---");
-        frameContainer = nullptr;
-        frameContainerModel->setFrameContainer(nullptr);
+        frames = nullptr;
+        frameListModel->setFrameList(nullptr);
     }
     addButton.setEnabled(targetItem != nullptr);
 }
 
 
-void CoordinateFrameSetView::Impl::addFrameIntoCurrentIndex(bool doInsert)
+void CoordinateFrameListView::Impl::addFrameIntoCurrentIndex(bool doInsert)
 {
     auto current = selectionModel()->currentIndex();
-    int index = current.isValid() ? current.row() : frameContainerModel->numFrames();
+    int index = current.isValid() ? current.row() : frameListModel->numFrames();
     addFrame(index, doInsert);
 }
 
 
-void CoordinateFrameSetView::Impl::addFrame(int index, bool doInsert)
+void CoordinateFrameListView::Impl::addFrame(int index, bool doInsert)
 {
-    if(frameContainer){
-        auto id = frameContainer->createNextId();
+    if(frames){
+        auto id = frames->createNextId();
         CoordinateFramePtr frame = new CoordinateFrame(id);
-        frameContainerModel->addFrame(index, frame, doInsert);
+        frameListModel->addFrame(index, frame, doInsert);
         resizeColumnToContents(IdColumn);
         resizeColumnToContents(PositionColumn);
     }
 }
 
 
-void CoordinateFrameSetView::Impl::removeSelectedFrames()
+void CoordinateFrameListView::Impl::removeSelectedFrames()
 {
-    frameContainerModel->removeFrames(selectionModel()->selectedRows());
+    frameListModel->removeFrames(selectionModel()->selectedRows());
 }
 
 
-void CoordinateFrameSetView::Impl::keyPressEvent(QKeyEvent* event)
+void CoordinateFrameListView::Impl::keyPressEvent(QKeyEvent* event)
 {
     bool processed = true;
 
@@ -522,7 +517,7 @@ void CoordinateFrameSetView::Impl::keyPressEvent(QKeyEvent* event)
 }
 
        
-void CoordinateFrameSetView::Impl::mousePressEvent(QMouseEvent* event)
+void CoordinateFrameListView::Impl::mousePressEvent(QMouseEvent* event)
 {
     QTableView::mousePressEvent(event);
 
@@ -535,7 +530,7 @@ void CoordinateFrameSetView::Impl::mousePressEvent(QMouseEvent* event)
 }
 
 
-void CoordinateFrameSetView::Impl::showContextMenu(int row, QPoint globalPos)
+void CoordinateFrameListView::Impl::showContextMenu(int row, QPoint globalPos)
 {
     contextMenuManager.setNewPopupMenu(this);
 
@@ -549,7 +544,7 @@ void CoordinateFrameSetView::Impl::showContextMenu(int row, QPoint globalPos)
 }
 
 
-void CoordinateFrameSetView::Impl::currentChanged(const QModelIndex& current, const QModelIndex& previous)
+void CoordinateFrameListView::Impl::currentChanged(const QModelIndex& current, const QModelIndex& previous)
 {
     QTableView::currentChanged(current, previous);
     
@@ -558,14 +553,14 @@ void CoordinateFrameSetView::Impl::currentChanged(const QModelIndex& current, co
 }
 
 
-void CoordinateFrameSetView::onTableItemClicked(const QModelIndex& index)
+void CoordinateFrameListView::onTableItemClicked(const QModelIndex& index)
 {
     auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
     impl->startExternalPositionEditing(frame);
 }
 
 
-void CoordinateFrameSetView::Impl::startExternalPositionEditing(CoordinateFrame* frame)
+void CoordinateFrameListView::Impl::startExternalPositionEditing(CoordinateFrame* frame)
 {
     if(frame != frameBeingEditedOutside && frameBeingEditedOutside){
         sigPositionEditTargetExpired_();
@@ -579,13 +574,13 @@ void CoordinateFrameSetView::Impl::startExternalPositionEditing(CoordinateFrame*
 }
 
 
-Referenced* CoordinateFrameSetView::Impl::getPositionObject()
+Referenced* CoordinateFrameListView::Impl::getPositionObject()
 {
     return frameBeingEditedOutside;
 }
 
 
-std::string CoordinateFrameSetView::Impl::getPositionName() const
+std::string CoordinateFrameListView::Impl::getPositionName() const
 {
     if(frameBeingEditedOutside){
         return format("{0}: {1}", targetItem->name(), frameBeingEditedOutside->id().label());
@@ -594,19 +589,7 @@ std::string CoordinateFrameSetView::Impl::getPositionName() const
 }
 
 
-GeneralId CoordinateFrameSetView::Impl::getPreferredBaseFrameId() const
-{
-    return GeneralId::defaultId();
-}
-
-
-GeneralId CoordinateFrameSetView::Impl::getPreferredLocalFrameId() const
-{
-    return GeneralId::defaultId();
-}
-
-
-Position CoordinateFrameSetView::Impl::getGlobalPosition() const
+Position CoordinateFrameListView::Impl::getPosition() const
 {
     if(frameBeingEditedOutside){
         return frameBeingEditedOutside->T();
@@ -614,41 +597,38 @@ Position CoordinateFrameSetView::Impl::getGlobalPosition() const
     return Position::Identity();
 }
 
-
-bool CoordinateFrameSetView::Impl::setPosition
-(const Position& T_global,
- const Position& /* T_frame */, CoordinateFrame* /* baseFrame */, CoordinateFrame* /* localFrame */)
+bool CoordinateFrameListView::Impl::setPosition(const Position& T)
 {
     if(frameBeingEditedOutside){
-        frameBeingEditedOutside->T() = T_global;
-        frameContainerModel->notifyFramePositionUpdate(frameBeingEditedOutside);
-        sigPositionChanged_(T_global);
+        frameBeingEditedOutside->T() = T;
+        frameListModel->notifyFramePositionUpdate(frameBeingEditedOutside);
+        sigPositionChanged_(T);
         return true;
     }
     return false;
 }
 
 
-SignalProxy<void(const Position& T)> CoordinateFrameSetView::Impl::sigGlobalPositionChanged()
+SignalProxy<void(const Position& T)> CoordinateFrameListView::Impl::sigPositionChanged()
 {
     return sigPositionChanged_;
 }
 
 
-SignalProxy<void()> CoordinateFrameSetView::Impl::sigPositionEditTargetExpired()
+SignalProxy<void()> CoordinateFrameListView::Impl::sigPositionEditTargetExpired()
 {
     return sigPositionEditTargetExpired_;
 }
 
 
-bool CoordinateFrameSetView::storeState(Archive& archive)
+bool CoordinateFrameListView::storeState(Archive& archive)
 {
     impl->targetItemPicker.storeTargetItem(archive, "currentItem");
     return true;
 }
 
 
-bool CoordinateFrameSetView::restoreState(const Archive& archive)
+bool CoordinateFrameListView::restoreState(const Archive& archive)
 {
     impl->targetItemPicker.restoreTargetItemLater(archive, "currentItem");
     return true;

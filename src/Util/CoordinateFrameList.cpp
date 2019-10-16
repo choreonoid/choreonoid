@@ -1,4 +1,4 @@
-#include "CoordinateFrameContainer.h"
+#include "CoordinateFrameList.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
@@ -13,7 +13,7 @@ using fmt::format;
 
 namespace cnoid {
 
-class CoordinateFrameContainer::Impl
+class CoordinateFrameList::Impl
 {
 public:
     std::vector<CoordinateFramePtr> frames;
@@ -27,20 +27,20 @@ public:
 }
 
 
-CoordinateFrameContainer::CoordinateFrameContainer()
+CoordinateFrameList::CoordinateFrameList()
 {
     impl = new Impl;
 }
 
 
-CoordinateFrameContainer::Impl::Impl()
+CoordinateFrameList::Impl::Impl()
 {
     identityFrame = new CoordinateFrame(0);
     idCounter = 0;
 }
 
 
-CoordinateFrameContainer::CoordinateFrameContainer(const CoordinateFrameContainer& org)
+CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org)
 {
     impl = new Impl;
 
@@ -51,7 +51,7 @@ CoordinateFrameContainer::CoordinateFrameContainer(const CoordinateFrameContaine
 }
 
 
-CoordinateFrameContainer::CoordinateFrameContainer(const CoordinateFrameContainer& org, CloneMap* cloneMap)
+CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org, CloneMap* cloneMap)
 {
     impl = new Impl;
 
@@ -62,24 +62,24 @@ CoordinateFrameContainer::CoordinateFrameContainer(const CoordinateFrameContaine
 }
 
 
-Referenced* CoordinateFrameContainer::doClone(CloneMap* cloneMap) const
+Referenced* CoordinateFrameList::doClone(CloneMap* cloneMap) const
 {
     if(cloneMap){
-        return new CoordinateFrameContainer(*this, cloneMap);
+        return new CoordinateFrameList(*this, cloneMap);
     } else {
-        return new CoordinateFrameContainer(*this);
+        return new CoordinateFrameList(*this);
     }
 }
 
 
-CoordinateFrameContainer::~CoordinateFrameContainer()
+CoordinateFrameList::~CoordinateFrameList()
 {
     clear();
     delete impl;
 }
 
 
-void CoordinateFrameContainer::clear()
+void CoordinateFrameList::clear()
 {
     for(auto& frame : impl->frames){
         setCoordinateFrameOwner(frame, nullptr);
@@ -89,31 +89,31 @@ void CoordinateFrameContainer::clear()
 }
 
 
-int CoordinateFrameContainer::numFrames() const
+int CoordinateFrameList::numFrames() const
 {
     return impl->frames.size();
 }
 
 
-int CoordinateFrameContainer::getNumFrames() const
+int CoordinateFrameList::getNumFrames() const
 {
     return numFrames();
 }
 
 
-CoordinateFrame* CoordinateFrameContainer::frameAt(int index) const
+CoordinateFrame* CoordinateFrameList::frameAt(int index) const
 {
     return impl->frames[index];
 }
 
 
-CoordinateFrame* CoordinateFrameContainer::getFrameAt(int index) const
+CoordinateFrame* CoordinateFrameList::getFrameAt(int index) const
 {
     return frameAt(index);
 }
 
 
-int CoordinateFrameContainer::indexOf(CoordinateFrame* frame) const
+int CoordinateFrameList::indexOf(CoordinateFrame* frame) const
 {
     auto pos = std::find(impl->frames.begin(), impl->frames.end(), frame);
     if(pos == impl->frames.end()){
@@ -123,7 +123,7 @@ int CoordinateFrameContainer::indexOf(CoordinateFrame* frame) const
 }
 
 
-CoordinateFrame* CoordinateFrameContainer::findFrame(const GeneralId& id) const
+CoordinateFrame* CoordinateFrameList::findFrame(const GeneralId& id) const
 {
     if(id == 0){
         return impl->identityFrame;
@@ -138,7 +138,7 @@ CoordinateFrame* CoordinateFrameContainer::findFrame(const GeneralId& id) const
 }
 
 
-std::vector<CoordinateFramePtr> CoordinateFrameContainer::getFindableFrameLists() const
+std::vector<CoordinateFramePtr> CoordinateFrameList::getFindableFrameLists() const
 {
     vector<CoordinateFramePtr> frames;
     vector<CoordinateFramePtr> namedFrames;
@@ -160,10 +160,16 @@ std::vector<CoordinateFramePtr> CoordinateFrameContainer::getFindableFrameLists(
 }
 
 
-bool CoordinateFrameContainer::insert(int index, CoordinateFrame* frame)
+bool CoordinateFrameList::contains(const CoordinateFrameSet* frameSet) const
+{
+    return (frameSet == this);
+}
+
+
+bool CoordinateFrameList::insert(int index, CoordinateFrame* frame)
 {
     if(frame->ownerFrameSet() || !frame->id().isValid() || frame->id() == 0 ||
-       CoordinateFrameContainer::findFrame(frame->id())){
+       CoordinateFrameList::findFrame(frame->id())){
         return false;
     }
 
@@ -178,13 +184,13 @@ bool CoordinateFrameContainer::insert(int index, CoordinateFrame* frame)
 }
 
 
-bool CoordinateFrameContainer::append(CoordinateFrame* frame)
+bool CoordinateFrameList::append(CoordinateFrame* frame)
 {
     return insert(numFrames(), frame);
 }
 
 
-void CoordinateFrameContainer::removeAt(int index)
+void CoordinateFrameList::removeAt(int index)
 {
     if(index >= numFrames()){
         return;
@@ -196,7 +202,7 @@ void CoordinateFrameContainer::removeAt(int index)
 }
 
 
-bool CoordinateFrameContainer::resetId(CoordinateFrame* frame, const GeneralId& newId)
+bool CoordinateFrameList::resetId(CoordinateFrame* frame, const GeneralId& newId)
 {
     bool changed = false;
 
@@ -215,13 +221,13 @@ bool CoordinateFrameContainer::resetId(CoordinateFrame* frame, const GeneralId& 
 }
 
 
-void CoordinateFrameContainer::resetIdCounter()
+void CoordinateFrameList::resetIdCounter()
 {
     impl->idCounter = 1;
 }
 
 
-GeneralId CoordinateFrameContainer::createNextId(int prevId)
+GeneralId CoordinateFrameList::createNextId(int prevId)
 {
     if(prevId >= 0){
         impl->idCounter = prevId + 1;
@@ -239,12 +245,12 @@ GeneralId CoordinateFrameContainer::createNextId(int prevId)
 }
 
 
-bool CoordinateFrameContainer::read(const Mapping& archive)
+bool CoordinateFrameList::read(const Mapping& archive)
 {
     auto& typeNode = archive.get("type");
-    if(typeNode.toString() != "CoordinateFrameSet"){
+    if(typeNode.toString() != "CoordinateFrameList"){
         typeNode.throwException(
-            format(_("{0} cannot be loaded as a coordinate frame set"), typeNode.toString()));
+            format(_("{0} cannot be loaded as a coordinate frame list"), typeNode.toString()));
     }
         
     auto& versionNode = archive.get("formatVersion");
@@ -270,9 +276,9 @@ bool CoordinateFrameContainer::read(const Mapping& archive)
 }
 
 
-bool CoordinateFrameContainer::write(Mapping& archive) const
+bool CoordinateFrameList::write(Mapping& archive) const
 {
-    archive.write("type", "CoordinateFrameSet");
+    archive.write("type", "CoordinateFrameList");
     archive.write("formatVersion", 1.0);
 
     if(!impl->frames.empty()){

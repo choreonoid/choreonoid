@@ -1,17 +1,17 @@
-#ifndef CNOID_UTIL_COORDINATE_FRAME_CONTAINER_H
-#define CNOID_UTIL_COORDINATE_FRAME_CONTAINER_H
+#ifndef CNOID_UTIL_COORDINATE_FRAME_LIST_H
+#define CNOID_UTIL_COORDINATE_FRAME_LIST_H
 
 #include "CoordinateFrameSet.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT CoordinateFrameContainer : public CoordinateFrameSet
+class CNOID_EXPORT CoordinateFrameList : public CoordinateFrameSet
 {
 public:
-    CoordinateFrameContainer();
-    CoordinateFrameContainer(const CoordinateFrameContainer& org);
-    ~CoordinateFrameContainer();
+    CoordinateFrameList();
+    CoordinateFrameList(const CoordinateFrameList& org);
+    ~CoordinateFrameList();
     
     void clear();
     int numFrames() const;
@@ -21,8 +21,8 @@ public:
     virtual int getNumFrames() const override;
     virtual CoordinateFrame* getFrameAt(int index) const override;
     virtual CoordinateFrame* findFrame(const GeneralId& id) const override;
-
     virtual std::vector<CoordinateFramePtr> getFindableFrameLists() const override;
+    virtual bool contains(const CoordinateFrameSet* frameSet) const override;
 
     bool insert(int index, CoordinateFrame* frame);
     bool append(CoordinateFrame* frame);
@@ -41,7 +41,7 @@ public:
     bool write(Mapping& archive) const;    
 
 protected:
-    CoordinateFrameContainer(const CoordinateFrameContainer& org, CloneMap* cloneMap);
+    CoordinateFrameList(const CoordinateFrameList& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
@@ -49,7 +49,7 @@ private:
     Impl* impl;
 };
 
-typedef ref_ptr<CoordinateFrameContainer> CoordinateFrameContainerPtr;
+typedef ref_ptr<CoordinateFrameList> CoordinateFrameListPtr;
 
 }
 

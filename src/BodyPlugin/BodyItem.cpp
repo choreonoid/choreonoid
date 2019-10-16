@@ -651,6 +651,7 @@ LinkKinematicsKit* BodyItemImpl::getLinkKinematicsKit(Link* targetLink, Link* ba
     
     if(!linkKinematicsKitManager){
         linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
+        self->sceneBody()->addChild(linkKinematicsKitManager->scene(), true);
     }
     if(!targetLink){
         targetLink = body->findUniqueEndLink();

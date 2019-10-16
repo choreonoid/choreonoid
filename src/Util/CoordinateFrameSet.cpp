@@ -1,5 +1,5 @@
 #include "CoordinateFrameSet.h"
-#include "CoordinateFrameContainer.h"
+#include "CoordinateFrameList.h"
 #include <cnoid/CloneMap>
 
 using namespace std;
@@ -27,16 +27,16 @@ void CoordinateFrameSet::setCoordinateFrameOwner(CoordinateFrame* frame, Coordin
 CoordinateFrameSetPair::CoordinateFrameSetPair()
 {
     for(int i=0; i < 2; ++i){
-        frameSets[i] = new CoordinateFrameContainer;
+        frameSets[i] = new CoordinateFrameList;
     }
 }
 
 
 CoordinateFrameSetPair::CoordinateFrameSetPair
-(CoordinateFrameSet* baseFrames, CoordinateFrameSet* offsetFrames)
+(CoordinateFrameSet* baseFrameSet, CoordinateFrameSet* localFrameSet)
 {
-    frameSets[0] = baseFrames;
-    frameSets[1] = offsetFrames;
+    frameSets[0] = baseFrameSet;
+    frameSets[1] = localFrameSet;
 }
 
 
@@ -64,3 +64,13 @@ Referenced* CoordinateFrameSetPair::doClone(CloneMap* cloneMap) const
         return new CoordinateFrameSetPair(*this);
     }
 }
+
+
+CoordinateFrameSetPair& CoordinateFrameSetPair::operator=(const CoordinateFrameSetPair& rhs)
+{
+    for(int i=0; i < 2; ++i){
+        frameSets[i] = rhs.frameSets[i];
+    }
+    return *this;
+}
+

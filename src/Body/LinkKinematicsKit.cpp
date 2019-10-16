@@ -10,6 +10,12 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+enum FrameType { Base, Local };
+
+}
+
 namespace cnoid {
 
 class LinkKinematicsKit::Impl
@@ -21,10 +27,7 @@ public:
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointPathConfigurationHandler> configurationHandler;
     CoordinateFrameSetPairPtr frameSetPair;
-    CoordinateFrameSetPtr baseFrames;
-    CoordinateFrameSetPtr localFrames;
-    GeneralId currentBaseFrameId;
-    GeneralId currentLocalFrameId;
+    GeneralId currentFrameId[2];
     
     Impl(Link* link);
     void setBaseLink(Link* link);
@@ -108,6 +111,18 @@ void LinkKinematicsKit::Impl::setInversetKinematics(std::shared_ptr<InverseKinem
 }
 
 
+void LinkKinematicsKit::setFrameSetPair(CoordinateFrameSetPair* frameSets)
+{
+    impl->setFrameSetPair(frameSets);
+}
+
+
+void LinkKinematicsKit::Impl::setFrameSetPair(CoordinateFrameSetPair* frameSets)
+{
+    this->frameSetPair = frameSets;
+}
+
+
 Body* LinkKinematicsKit::body()
 {
     return impl->body;
@@ -182,77 +197,81 @@ CoordinateFrameSetPair* LinkKinematicsKit::frameSetPair()
 }
 
 
-void LinkKinematicsKit::setFrameSetPair(CoordinateFrameSetPair* frameSets)
+CoordinateFrameSet* LinkKinematicsKit::frameSet(int which)
 {
-    impl->setFrameSetPair(frameSets);
+    return impl->frameSetPair->frameSet(which);
 }
 
 
-void LinkKinematicsKit::Impl::setFrameSetPair(CoordinateFrameSetPair* frameSets)
+CoordinateFrameSet* LinkKinematicsKit::baseFrameSet()
 {
-    this->frameSetPair = frameSets;
-    baseFrames = frameSets->baseFrames();
-    localFrames = frameSets->localFrames();
+    return impl->frameSetPair->baseFrameSet();
 }
 
 
-CoordinateFrameSet* LinkKinematicsKit::baseFrames()
+CoordinateFrameSet* LinkKinematicsKit::localFrameSet()
 {
-    return impl->baseFrames;    
+    return impl->frameSetPair->localFrameSet();
 }
 
 
 CoordinateFrame* LinkKinematicsKit::baseFrame(const GeneralId& id)
 {
-    return impl->baseFrames->getFrame(id);
-}
-
-
-const GeneralId& LinkKinematicsKit::currentBaseFrameId()
-{
-    return impl->currentBaseFrameId;
-}
-
-
-CoordinateFrame* LinkKinematicsKit::currentBaseFrame()
-{
-    return impl->baseFrames->getFrame(impl->currentBaseFrameId);
-}
-
-
-void LinkKinematicsKit::setCurrentBaseFrame(const GeneralId& id)
-{
-    impl->currentBaseFrameId = id;
-}
-
-
-CoordinateFrameSet* LinkKinematicsKit::localFrames()
-{
-    return impl->localFrames;
+    return impl->frameSetPair->baseFrameSet()->getFrame(id);
 }
 
 
 CoordinateFrame* LinkKinematicsKit::localFrame(const GeneralId& id)
 {
-    return impl->localFrames->getFrame(id);
+    return impl->frameSetPair->localFrameSet()->getFrame(id);
+}
+
+
+const GeneralId& LinkKinematicsKit::currentFrameId(int which)
+{
+    return impl->currentFrameId[which];
+}
+
+
+const GeneralId& LinkKinematicsKit::currentBaseFrameId()
+{
+    return impl->currentFrameId[Base];
 }
 
 
 const GeneralId& LinkKinematicsKit::currentLocalFrameId()
 {
-    return impl->currentLocalFrameId;
+    return impl->currentFrameId[Local];
+}
+
+
+CoordinateFrame* LinkKinematicsKit::currentBaseFrame()
+{
+    return impl->frameSetPair->baseFrameSet()->getFrame(impl->currentFrameId[Base]);
 }
 
 
 CoordinateFrame* LinkKinematicsKit::currentLocalFrame()
 {
-    return impl->localFrames->getFrame(impl->currentLocalFrameId);
+    return impl->frameSetPair->localFrameSet()->getFrame(impl->currentFrameId[Local]);
+}
+
+
+void LinkKinematicsKit::setCurrentFrame(int which, const GeneralId& id)
+{
+    impl->currentFrameId[which] = id;
+}
+
+
+void LinkKinematicsKit::setCurrentBaseFrame(const GeneralId& id)
+{
+    impl->currentFrameId[Base] = id;
 }
 
 
 void LinkKinematicsKit::setCurrentLocalFrame(const GeneralId& id)
 {
-    impl->currentLocalFrameId = id;
+    impl->currentFrameId[Local] = id;
 }
 
 

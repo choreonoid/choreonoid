@@ -1,6 +1,5 @@
 #include "CoordinateFrame.h"
 #include "CoordinateFrameSet.h"
-#include "CoordinateFrameContainer.h"
 #include <cnoid/CloneMap>
 #include <cnoid/EigenArchive>
 
