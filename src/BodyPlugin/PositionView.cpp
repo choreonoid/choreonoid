@@ -662,8 +662,13 @@ void PositionView::Impl::updateCoordinateFrameCandidates(int which)
 void PositionView::Impl::updateCoordinateFrameComboItems
 (QComboBox& combo, CoordinateFrameSet* frames, const GeneralId& currentId, const std::string& originLabel)
 {
+    constexpr bool EnableToolTip = false;
+    
     combo.clear();
     combo.addItem(QString("0: %1").arg(originLabel.c_str()), 0);
+    if(EnableToolTip){
+        combo.setItemData(0, QString(), Qt::ToolTipRole);
+    }
     int currentIndex = 0;
 
     if(frames){
@@ -674,9 +679,15 @@ void PositionView::Impl::updateCoordinateFrameComboItems
             auto frame = candidates[i];
             auto& id = frame->id();
             if(id.isInt()){
-                combo.addItem(id.label().c_str(), id.toInt());
+                combo.addItem(QString("%1: %2").arg(id.toInt()).arg(frame->note().c_str()), id.toInt());
+                if(EnableToolTip){
+                    combo.setItemData(index, QString(), Qt::ToolTipRole);
+                }
             } else {
                 combo.addItem(id.label().c_str(), id.toString().c_str());
+                if(EnableToolTip){
+                    combo.setItemData(index, frame->note().c_str(), Qt::ToolTipRole);
+                }
             }
             if(id == currentId){
                 currentIndex = index;

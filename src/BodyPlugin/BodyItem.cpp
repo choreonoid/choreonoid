@@ -133,6 +133,7 @@ public:
     void appendKinematicStateToHistory();
     bool undoKinematicState();
     bool redoKinematicState();
+    LinkKinematicsKitManager* getOrCreateLinkKinematicsKitManager();
     LinkKinematicsKit* getLinkKinematicsKit(Link* baseLink, Link* endLink);
     std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);
     std::shared_ptr<InverseKinematics> getDefaultIK(Link* targetLink);
@@ -639,6 +640,16 @@ bool BodyItemImpl::redoKinematicState()
 }
 
 
+LinkKinematicsKitManager* BodyItemImpl::getOrCreateLinkKinematicsKitManager()
+{
+    if(!linkKinematicsKitManager){
+        linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
+        self->sceneBody()->addChild(linkKinematicsKitManager->scene(), true);
+    }
+    return linkKinematicsKitManager.get();
+}
+
+
 LinkKinematicsKit* BodyItem::getLinkKinematicsKit(Link* targetLink, Link* baseLink)
 {
     return impl->getLinkKinematicsKit(targetLink, baseLink);
@@ -648,15 +659,12 @@ LinkKinematicsKit* BodyItem::getLinkKinematicsKit(Link* targetLink, Link* baseLi
 LinkKinematicsKit* BodyItemImpl::getLinkKinematicsKit(Link* targetLink, Link* baseLink)
 {
     LinkKinematicsKit* kit = nullptr;
-    
-    if(!linkKinematicsKitManager){
-        linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
-        self->sceneBody()->addChild(linkKinematicsKitManager->scene(), true);
-    }
+
     if(!targetLink){
         targetLink = body->findUniqueEndLink();
     }
     if(targetLink){
+        getOrCreateLinkKinematicsKitManager();
         if(baseLink){
             kit = linkKinematicsKitManager->getOrCreateKinematicsKit(targetLink, baseLink);
         } else {
@@ -1560,10 +1568,7 @@ bool BodyItemImpl::restore(const Archive& archive)
 
     auto kinematicsNode = archive.findMapping("linkKinematics");
     if(kinematicsNode->isValid()){
-        if(!linkKinematicsKitManager){
-            linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
-        }
-        linkKinematicsKitManager->restoreState(*kinematicsNode);
+        getOrCreateLinkKinematicsKitManager()->restoreState(*kinematicsNode);
     }
 
     self->notifyKinematicStateChange();
