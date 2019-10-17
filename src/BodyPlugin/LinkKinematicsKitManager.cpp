@@ -188,7 +188,7 @@ void LinkKinematicsKitManager::Impl::setupPositionDragger()
 {
     positionDragger = new PositionDragger;
     positionDragger->setRadius(0.05);
-    positionDragger->setDisplayMode(PositionDragger::DisplayInEditMode);
+    positionDragger->setDisplayMode(PositionDragger::DisplayNever);
     positionDragger->setContainerMode(true);
 
     positionDragger->sigPositionDragged().connect(
@@ -253,14 +253,19 @@ void LinkKinematicsKitManager::Impl::setFrameEditTarget(AbstractPositionEditTarg
     frameEditTarget = target;
     frameEditLink = link;
 
-    if(target){
+    if(!target){
+        positionDragger->setDisplayMode(PositionDragger::DisplayNever);
+
+    } else {
+        positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
+
         frameEditConnections.add(
             target->sigPositionChanged().connect(
                 [&](const Position& T){ onFrameEditPositionChanged(T); }));
 
         frameEditConnections.add(
             target->sigPositionEditTargetExpired().connect(
-                [=](){ setFrameEditTarget(nullptr, link); }));
+                [=](){ setFrameEditTarget(nullptr, nullptr); }));
 
         frameEditConnections.add(
             bodyItem->sigKinematicStateChanged().connect(

@@ -95,9 +95,10 @@ public:
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(int row, QPoint globalPos);
-    virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous) override;
+    virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
 
     void startExternalPositionEditing(CoordinateFrame* frame);
+    void stopExternalPositionEditing();
     virtual Referenced* getPositionObject() override;
     virtual std::string getPositionName() const override;
     virtual Position getPosition() const override;
@@ -437,8 +438,22 @@ CoordinateFrameListView::~CoordinateFrameListView()
 }
 
 
+void CoordinateFrameListView::onActivated()
+{
+
+}
+
+
+void CoordinateFrameListView::onDeactivated()
+{
+    impl->stopExternalPositionEditing();
+}
+
+
 void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameListItem* item)
 {
+    stopExternalPositionEditing();
+
     targetItem = item;
 
     if(item){
@@ -544,12 +559,18 @@ void CoordinateFrameListView::Impl::showContextMenu(int row, QPoint globalPos)
 }
 
 
-void CoordinateFrameListView::Impl::currentChanged(const QModelIndex& current, const QModelIndex& previous)
+void CoordinateFrameListView::Impl::selectionChanged
+(const QItemSelection& selected, const QItemSelection& deselected)
 {
-    QTableView::currentChanged(current, previous);
-    
-    auto frame = static_cast<CoordinateFrame*>(current.internalPointer());
-    startExternalPositionEditing(frame);
+    QTableView::selectionChanged(selected, deselected);
+
+    auto indexes = selected.indexes();
+    if(indexes.empty()){
+        startExternalPositionEditing(nullptr);
+    } else {
+        auto frame = static_cast<CoordinateFrame*>(indexes.front().internalPointer());
+        startExternalPositionEditing(frame);
+    }
 }
 
 
@@ -562,15 +583,24 @@ void CoordinateFrameListView::onTableItemClicked(const QModelIndex& index)
 
 void CoordinateFrameListView::Impl::startExternalPositionEditing(CoordinateFrame* frame)
 {
-    if(frame != frameBeingEditedOutside && frameBeingEditedOutside){
+    if(frame != frameBeingEditedOutside){
+        stopExternalPositionEditing();
+
+        frameBeingEditedOutside = frame;
+
+        if(frame){
+            positionEditManager->requestPositionEdit(this);
+        }
+    }
+}
+
+
+void CoordinateFrameListView::Impl::stopExternalPositionEditing()
+{
+    if(frameBeingEditedOutside){
         sigPositionEditTargetExpired_();
     }
-
-    frameBeingEditedOutside = frame;
-
-    if(frame){
-        positionEditManager->requestPositionEdit(this);
-    }
+    frameBeingEditedOutside = nullptr;
 }
 
 

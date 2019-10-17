@@ -16,11 +16,15 @@ public:
 
     CoordinateFrameListView();
     virtual ~CoordinateFrameListView();
-    virtual bool storeState(Archive& archive) override;
-    virtual bool restoreState(const Archive& archive) override;
 
     class Impl;
     
+protected:
+    virtual void onActivated() override;
+    virtual void onDeactivated() override;
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
+
 private Q_SLOTS:
     void onTableItemClicked(const QModelIndex& index);
 
