@@ -3,6 +3,7 @@
 
 #include <cnoid/Referenced>
 #include <memory>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
