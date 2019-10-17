@@ -537,6 +537,14 @@ void PositionView::Impl::setQuaternionSpinsVisible(bool on)
 
 void PositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
+    // Sub body's root link is recognized as the parent body's end link
+    if(link && link->isRoot()){
+        if(auto parentBodyItem = bodyItem->parentBodyItem()){
+            link = bodyItem->parentLink();
+            bodyItem = parentBodyItem;
+        }
+    }
+    
     bool isTargetTypeChanged = (targetType != LinkTarget);
     bool isBodyItemChanged = isTargetTypeChanged || (bodyItem != targetBodyItem);
     bool isLinkChanged = isTargetTypeChanged || (link != targetLink);

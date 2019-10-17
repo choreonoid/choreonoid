@@ -1247,6 +1247,24 @@ bool BodyItemImpl::onEditableChanged(bool on)
 }
 
 
+BodyItem* BodyItem::parentBodyItem()
+{
+    if(impl->bodyAttachment){
+        return impl->bodyAttachment->holderBodyItem;
+    }
+    return nullptr;
+}
+
+
+Link* BodyItem::parentLink()
+{
+    if(impl->bodyAttachment){
+        return impl->bodyAttachment->attachment->holder()->link();
+    }
+    return nullptr;
+}
+
+
 void BodyItemImpl::tryToAttachToBodyItem(BodyItem* bodyItem)
 {
     bool attached = false;

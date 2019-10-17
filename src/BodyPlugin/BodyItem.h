@@ -38,6 +38,10 @@ public:
     virtual void setName(const std::string& name) override;
     bool isEditable() const;
     void setEditable(bool on);
+
+    // API for a composite body
+    BodyItem* parentBodyItem();
+    Link* parentLink();
         
     void moveToOrigin();
     enum PresetPoseID { INITIAL_POSE, STANDARD_POSE };
