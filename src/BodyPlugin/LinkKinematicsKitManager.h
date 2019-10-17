@@ -11,6 +11,7 @@ class LinkKinematicsKit;
 class Link;
 class InverseKinematics;
 class SgNode;
+class Mapping;
 
 class CNOID_EXPORT LinkKinematicsKitManager
 {
@@ -23,6 +24,9 @@ public:
     LinkKinematicsKit* getOrCreateKinematicsKit(Link* targetLink, std::shared_ptr<InverseKinematics> ik);
 
     SgNode* scene();
+
+    bool storeState(Mapping& archive) const;
+    bool restoreState(const Mapping& archive);
 
 private:
     class Impl;

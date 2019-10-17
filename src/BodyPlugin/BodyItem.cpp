@@ -1461,6 +1461,13 @@ bool BodyItemImpl::store(Archive& archive)
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
     archive.write("isEditable", isEditable);
 
+    if(linkKinematicsKitManager){
+        MappingPtr kinematicsNode = new Mapping;
+        if(linkKinematicsKitManager->storeState(*kinematicsNode) && !kinematicsNode->empty()){
+            archive.insert("linkKinematics", kinematicsNode);
+        }
+    }
+
     return true;
 }
 
@@ -1550,6 +1557,14 @@ bool BodyItemImpl::restore(const Archive& archive)
     }
 
     archive.read("isEditable", isEditable);
+
+    auto kinematicsNode = archive.findMapping("linkKinematics");
+    if(kinematicsNode->isValid()){
+        if(!linkKinematicsKitManager){
+            linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
+        }
+        linkKinematicsKitManager->restoreState(*kinematicsNode);
+    }
 
     self->notifyKinematicStateChange();
 

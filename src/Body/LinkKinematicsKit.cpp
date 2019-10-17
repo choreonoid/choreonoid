@@ -45,7 +45,8 @@ LinkKinematicsKit::LinkKinematicsKit(Link* link)
 
 
 LinkKinematicsKit::Impl::Impl(Link* link)
-    : link(link)
+    : link(link),
+      currentFrameId{ 0, 0 }
 {
     if(link){
         body = link->body();

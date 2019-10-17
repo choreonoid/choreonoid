@@ -11,6 +11,7 @@
 #include <cnoid/PositionEditManager>
 #include <cnoid/PositionDragger>
 #include <cnoid/ConnectionSet>
+#include <cnoid/ValueTree>
 #include <map>
 
 using namespace std;
@@ -298,3 +299,57 @@ void LinkKinematicsKitManager::Impl::onDraggerPositionChanged()
         frameEditConnections.unblock();
     }
 }
+
+
+bool LinkKinematicsKitManager::storeState(Mapping& archive) const
+{
+    const auto defaultId = CoordinateFrame::defaultFrameId();
+    archive.setKeyQuoteStyle(DOUBLE_QUOTED);
+    auto body = impl->bodyItem->body();
+    
+    for(auto& kv : impl->linkIndexToKinematicsKitMap){
+        auto& kit = kv.second;
+        auto baseId = kit->currentBaseFrameId();
+        auto localId = kit->currentLocalFrameId();
+        if(baseId != defaultId || localId != defaultId){
+            int linkIndex = kv.first;
+            auto& linkName = body->link(linkIndex)->name();
+            if(!linkName.empty()){
+                auto& node = *archive.openMapping(linkName);
+                if(baseId != defaultId){
+                    node.write("currentBaseFrame", baseId.label(), DOUBLE_QUOTED);
+                }
+                if(localId != defaultId){
+                    node.write("currentLocalFrame", localId.label(), DOUBLE_QUOTED);
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+
+bool LinkKinematicsKitManager::restoreState(const Mapping& archive)
+{
+    auto body = impl->bodyItem->body();
+    GeneralId id;
+
+    for(auto& kv : archive){
+        auto& linkName = kv.first;
+        auto link = body->link(linkName);
+        if(link){
+            auto kit = getOrCreateKinematicsKit(link);
+            auto& node = *kv.second->toMapping();
+            if(id.read(node, "currentBaseFrame")){
+                kit->setCurrentBaseFrame(id);
+            }
+            if(id.read(node, "currentLocalFrame")){
+                kit->setCurrentLocalFrame(id);
+            }
+        }
+    }
+
+    return true;
+}
+

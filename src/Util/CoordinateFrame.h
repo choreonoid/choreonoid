@@ -23,6 +23,8 @@ public:
 
     const GeneralId& id() const { return id_; }
 
+    static GeneralId defaultFrameId() { return GeneralId(0); }
+
     const Position& T() const { return T_; }
     Position& T() { return T_; }
 
