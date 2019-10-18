@@ -19,6 +19,9 @@ class CNOID_EXPORT SceneDragger : public SgPosTransform, public SceneWidgetEdita
     bool isContainerMode() const { return isContainerMode_; }
     void setContainerMode(bool on);
 
+    virtual bool isDragEnabled() const = 0;
+    virtual void setDragEnabled(bool on) = 0;
+
     virtual bool isDragging() const = 0;
     virtual Affine3 draggedPosition() const = 0;
 

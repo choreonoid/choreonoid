@@ -67,6 +67,9 @@ public:
     SignalProxy<void()> sigPositionDragged();
     SignalProxy<void()> sigDragFinished();
 
+    virtual bool isDragEnabled() const override;
+    virtual void setDragEnabled(bool on) override;
+
     virtual bool isDragging() const override;
     virtual Affine3 draggedPosition() const override;
 

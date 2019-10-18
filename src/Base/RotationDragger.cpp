@@ -153,6 +153,8 @@ RotationDragger::RotationDragger()
     }
 
     addChild(scale);
+
+    isDragEnabled_ = true;
 }
 
 
@@ -169,6 +171,8 @@ RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap* cloneMa
         org.scale->copyChildrenTo(scale);
         addChild(scale);
     }
+
+    isDragEnabled_ = org.isDragEnabled_;
 }
 
 
@@ -199,6 +203,18 @@ void RotationDragger::setRadius(double r)
 }
 
 
+bool RotationDragger::isDragEnabled() const
+{
+    return isDragEnabled_;
+}
+
+
+void RotationDragger::setDragEnabled(bool on)
+{
+    isDragEnabled_ = on;
+}
+
+
 bool RotationDragger::isDragging() const
 {
     return dragProjector.isDragging();
@@ -219,6 +235,10 @@ Affine3 RotationDragger::draggedPosition() const
 
 bool RotationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
+    if(!isDragEnabled_){
+        return false;
+    }
+
     int axis;
     int indexOfTopNode;
     if(detectAxisFromNodePath(event.nodePath(), this, axis, indexOfTopNode)){

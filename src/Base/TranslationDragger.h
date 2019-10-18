@@ -43,6 +43,9 @@ public:
         return sigTranslationFinished_;
     }
 
+    virtual bool isDragEnabled() const override;
+    virtual void setDragEnabled(bool on) override;
+
     virtual bool isDragging() const override;
     virtual Affine3 draggedPosition() const override;
 
@@ -59,6 +62,7 @@ private:
     SgGroupPtr customAxes;
     SgMaterialPtr axisMaterials[3];
     SceneDragProjector dragProjector;
+    bool isDragEnabled_;
     double axisCylinderNormalizedRadius;
     Signal<void()> sigTranslationStarted_;
     Signal<void()> sigTranslationDragged_;

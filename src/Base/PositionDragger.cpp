@@ -22,6 +22,7 @@ public:
     RotationDraggerPtr rotationDragger;
     SceneDragProjector dragProjector;
     int draggableAxes;
+    bool isDragEnabled;
     bool isContentsDragEnabled;
     DisplayMode displayMode;
     bool isUndoEnabled;
@@ -62,6 +63,7 @@ PositionDragger::Impl::Impl(PositionDragger* self)
     initializeDraggers();
 
     displayMode = DisplayInFocus;
+    isDragEnabled = true;
     isContentsDragEnabled = true;
     isUndoEnabled = false;    
 }
@@ -84,6 +86,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org)
     initializeDraggers();
 
     displayMode = org.displayMode;
+    isDragEnabled = org.isDragEnabled;
     isContentsDragEnabled = org.isContentsDragEnabled;
     isUndoEnabled = org.isUndoEnabled;
 }
@@ -106,6 +109,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, SgCloneMap* 
     initializeDraggers();
 
     displayMode = org.displayMode;
+    isDragEnabled = org.isDragEnabled;
     isContentsDragEnabled = org.isContentsDragEnabled;
     isUndoEnabled = org.isUndoEnabled;
 }
@@ -261,6 +265,20 @@ void PositionDragger::setDraggerAlwaysShown(bool on)
 }
 
 
+bool PositionDragger::isDragEnabled() const
+{
+    return impl->isDragEnabled;
+}
+
+
+void PositionDragger::setDragEnabled(bool on)
+{
+    impl->translationDragger->setDragEnabled(on);
+    impl->rotationDragger->setDragEnabled(on);
+    impl->isDragEnabled = on;
+}
+
+
 bool PositionDragger::isDraggerAlwaysShown() const
 {
     return (impl->displayMode == DisplayAlways);
@@ -344,7 +362,7 @@ void PositionDragger::Impl::onSubDraggerDragged()
 
 bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(isContainerMode() && impl->isContentsDragEnabled){
+    if(isContainerMode() && impl->isDragEnabled && impl->isContentsDragEnabled){
         if(impl->displayMode == DisplayInFocus){
             impl->showDragMarkers(true);
         }

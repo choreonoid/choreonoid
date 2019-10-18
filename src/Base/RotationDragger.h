@@ -41,6 +41,9 @@ public:
         return sigRotationFinished_;
     }
 
+    virtual bool isDragEnabled() const override;
+    virtual void setDragEnabled(bool on) override;
+
     bool isDragging() const;
     const AngleAxis& draggedAngleAxis() const;
     Affine3 draggedPosition() const;
@@ -54,6 +57,7 @@ private:
     int draggableAxes_;
     SgScaleTransformPtr scale;
     SceneDragProjector dragProjector;
+    bool isDragEnabled_;
     Signal<void()> sigRotationStarted_;
     Signal<void(const AngleAxis& rotation)> sigRotationDragged_;
     Signal<void()> sigRotationFinished_;
