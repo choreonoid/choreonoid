@@ -32,6 +32,13 @@ CoordinateFrame::CoordinateFrame(const CoordinateFrame& org)
 }
 
 
+CoordinateFrame::CoordinateFrame(const GeneralId& id, CoordinateFrameSet* owner)
+    : CoordinateFrame(id)
+{
+    ownerFrameSet_ = owner;
+}
+
+
 Referenced* CoordinateFrame::doClone(CloneMap*) const
 {
     return new CoordinateFrame(*this);

@@ -15,6 +15,7 @@ public:
     virtual Referenced* getPositionObject() = 0;
     virtual std::string getPositionName() const = 0;
     virtual Position getPosition() const = 0;
+    virtual bool isEditable() const { return true; }
     virtual bool setPosition(const Position& T) = 0;
     virtual SignalProxy<void(const Position& T)> sigPositionChanged() = 0;
     virtual SignalProxy<void()> sigPositionEditTargetExpired() = 0;

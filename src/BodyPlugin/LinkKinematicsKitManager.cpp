@@ -259,6 +259,7 @@ void LinkKinematicsKitManager::Impl::setFrameEditTarget(AbstractPositionEditTarg
 
     } else {
         positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
+        positionDragger->setDragEnabled(target->isEditable());
 
         frameEditConnections.add(
             target->sigPositionChanged().connect(

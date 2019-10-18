@@ -772,7 +772,7 @@ bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* targe
 
     targetLabel.setText(target->getPositionName().c_str());
     configurationLabel.clear();
-    self->setEnabled(true);
+    self->setEnabled(target->isEditable());
     setCoordinateFrameInterfaceEnabled(false);
     setConfigurationInterfaceEnabled(false);
 

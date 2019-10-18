@@ -21,6 +21,12 @@ public:
     CoordinateFrame(const GeneralId& id);
     CoordinateFrame(const CoordinateFrame& org);
 
+    /**
+       This constructor is used in a special case where the frame is not actually
+       contained in the owner, but the frame needs to set the owner formally.
+    */
+    CoordinateFrame(const GeneralId& id, CoordinateFrameSet* owner);
+
     const GeneralId& id() const { return id_; }
 
     static GeneralId defaultFrameId() { return GeneralId(0); }
