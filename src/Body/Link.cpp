@@ -320,6 +320,15 @@ void Link::setCollisionShape(SgNode* shape)
 }
 
 
+Position Link::Ta() const
+{
+    Position Ta;
+    Ta.linear() = R() * Rs();
+    Ta.translation() = translation();
+    return Ta;
+}
+
+
 void Link::resetInfo(Mapping* info)
 {
     info_ = info;

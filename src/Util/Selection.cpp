@@ -24,6 +24,15 @@ Selection::Selection(size_t size, const char* domainname)
 }
 
 
+Selection::Selection(const Selection& org)
+    : symbols_(org.symbols_),
+      selectedIndex_(org.selectedIndex_),
+      domainname_(org.domainname_)
+{
+
+}
+
+
 void Selection::resize(int s)
 {
     symbols_.resize(s);

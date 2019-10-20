@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-16 00:12+0900\n"
+"POT-Creation-Date: 2019-10-19 00:38+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -106,7 +106,7 @@ msgstr "Pollard手法"
 msgid "Gaussian Filter"
 msgstr "ガウシアンフィルタ"
 
-#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 PositionView.cpp:243
+#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 PositionView.cpp:251
 msgid "Apply"
 msgstr "適用"
 
@@ -411,91 +411,87 @@ msgstr "関節速度 [m/s]"
 msgid "Link Trajectories"
 msgstr "リンク軌道"
 
-#: PositionView.cpp:157
+#: PositionView.cpp:165
 msgid "Position"
 msgstr "ポジション"
 
-#: PositionView.cpp:230 JointDisplacementView.cpp:456
+#: PositionView.cpp:238 JointDisplacementView.cpp:456
 msgid "Option"
 msgstr "オプション"
 
-#: PositionView.cpp:240
+#: PositionView.cpp:248
 msgid "Fetch"
 msgstr "取込"
 
-#: PositionView.cpp:251
-msgid "Coordinate:"
-msgstr "座標:"
+#: PositionView.cpp:262
+msgid "World"
+msgstr "ワールド"
 
-#: PositionView.cpp:254
-msgid "Global"
-msgstr "グローバル"
-
-#: PositionView.cpp:260
+#: PositionView.cpp:268
 msgid "Base"
 msgstr "ベース"
 
-#: PositionView.cpp:265
-msgid "Object"
-msgstr "オブジェクト"
+#: PositionView.cpp:273
+msgid "Local"
+msgstr "ローカル"
 
-#: PositionView.cpp:376
+#: PositionView.cpp:384
 msgid "Base Coord"
 msgstr "ベース座標"
 
-#: PositionView.cpp:382
+#: PositionView.cpp:385
 msgid "Local Coord"
 msgstr "ローカル座標"
 
-#: PositionView.cpp:388
+#: PositionView.cpp:399
 msgid "Config"
 msgstr "形態"
 
-#: PositionView.cpp:397
+#: PositionView.cpp:408
 msgid "Require"
 msgstr "必須"
 
-#: PositionView.cpp:409
+#: PositionView.cpp:420
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: PositionView.cpp:415
+#: PositionView.cpp:426
 msgid "Fetch as a unique RPY value"
 msgstr "一意なRPY値として取り込み"
 
-#: PositionView.cpp:421
+#: PositionView.cpp:432
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: PositionView.cpp:428
+#: PositionView.cpp:439
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-#: PositionView.cpp:437
+#: PositionView.cpp:448
 msgid "Disable custom IK"
 msgstr "カスタムIKを使用しない"
 
-#: PositionView.cpp:615 PositionView.cpp:622
+#: PositionView.cpp:619
 msgid "Origin"
 msgstr "原点"
 
-#: PositionView.cpp:811
+#: PositionView.cpp:913
 msgid "Actual State"
 msgstr "実状態"
 
-#: PositionView.cpp:953
+#: PositionView.cpp:1058
 msgid "Solved"
 msgstr "解有り"
 
-#: PositionView.cpp:957
+#: PositionView.cpp:1062
 msgid "Not Solved"
 msgstr "解無し"
 
-#: PositionView.cpp:973
+#: PositionView.cpp:1078
 msgid "Accepted"
 msgstr ""
 
-#: PositionView.cpp:976
+#: PositionView.cpp:1081
 msgid "Not Accepted"
 msgstr ""
 
@@ -515,7 +511,7 @@ msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:501 BodyItem.cpp:1465
+#: WorldItem.cpp:501 BodyItem.cpp:1417
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -810,7 +806,7 @@ msgstr ""
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:118 BodyItem.cpp:1462
+#: LinkPropertyView.cpp:118 BodyItem.cpp:1414
 msgid "Mass"
 msgstr "質量"
 
@@ -846,67 +842,67 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
-#: BodyItem.cpp:212
+#: BodyItem.cpp:209
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:214
+#: BodyItem.cpp:211
 msgid "Body"
 msgstr "ボディ"
 
-#: BodyItem.cpp:1340
+#: BodyItem.cpp:1292
 msgid "{0} cannot be attached to {1}."
 msgstr "{0}は{1}にアタッチできません．"
 
-#: BodyItem.cpp:1367
+#: BodyItem.cpp:1319
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1385
+#: BodyItem.cpp:1337
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1456
+#: BodyItem.cpp:1408
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1457
+#: BodyItem.cpp:1409
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1458
+#: BodyItem.cpp:1410
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1459
+#: BodyItem.cpp:1411
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1460
+#: BodyItem.cpp:1412
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1461
+#: BodyItem.cpp:1413
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1463
+#: BodyItem.cpp:1415
 msgid "Static model"
 msgstr "静的モデル"
 
-#: BodyItem.cpp:1467
+#: BodyItem.cpp:1419
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1469
+#: BodyItem.cpp:1421
 msgid "Editable"
 msgstr "編集可能"
 
-#: BodyItem.cpp:1551
+#: BodyItem.cpp:1510
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1576
+#: BodyItem.cpp:1535
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 

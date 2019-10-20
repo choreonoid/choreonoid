@@ -97,8 +97,6 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::getOrCreateKinematicsKit(Link
     
     auto kit = new LinkKinematicsKit(targetLink);
 
-    
-
     kit->setFrameSetPair(commonFrameSetPair);
     
     linkIndexToKinematicsKitMap[targetLink->index()] = kit;

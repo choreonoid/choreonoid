@@ -38,6 +38,8 @@ public:
     std::shared_ptr<InverseKinematics> inverseKinematics();
     bool isManipulator() const;
 
+    enum FrameType { BaseFrame = 0, LocalFrame = 1 };
+
     CoordinateFrameSetPair* frameSetPair();
     CoordinateFrameSet* frameSet(int which);
     CoordinateFrameSet* baseFrameSet();

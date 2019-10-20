@@ -65,8 +65,8 @@ bool CoordinateFrame::read(const Mapping& archive)
         if(archive.read("mode", mode)){
             if(mode == "relative"){
                 mode = Relative;
-            } else if(mode == "global"){
-                mode = Global;
+            } else if(mode == "absolute"){
+                mode = Absolute;
             }
         }
         archive.read("note", note_);
@@ -83,8 +83,8 @@ bool CoordinateFrame::write(Mapping& archive) const
         cnoid::write(archive, "rotation", rpyFromRot(T_.linear()));
         if(mode_ == Relative){
             archive.write("mode", "relative");
-        } else if(mode_ == Global){
-            archive.write("mode", "global");
+        } else if(mode_ == Absolute){
+            archive.write("mode", "absolute");
         }
         if(!note_.empty()){
             archive.write("note", note_, DOUBLE_QUOTED);

@@ -23,7 +23,11 @@ public:
     PositionView();
     virtual ~PositionView();
 
-    void setCoordinateFrameLabels(const char* baseFrameLabel, const char* localFrameLabel);
+    void setCoordinateModeLabels(
+        const char* worldModeLabel, const char* baseModeLabel, const char* localModeLabel);
+
+    void setCoordinateFrameLabels(
+        const char* baseFrameLabel, const char* localFrameLabel);
 
     void customizeDefaultCoordinateFrameNames(
         std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> getNames);

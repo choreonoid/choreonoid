@@ -312,6 +312,7 @@ public:
     void setCollisionShape(SgNode* shape);
 
     // The following two methods should be deprecated after introducing Tb
+    Position Ta() const;
     Matrix3 attitude() const { return R() * Rs_; }
     void setAttitude(const Matrix3& Ra) { R() = Ra * Rs_.transpose(); }
     Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra * Rs_.transpose(); }

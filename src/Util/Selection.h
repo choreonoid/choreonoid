@@ -15,15 +15,19 @@ class CNOID_EXPORT Selection
 {
 public:
     explicit Selection(const char* domainname = 0);
-
     explicit Selection(size_t size, const char* domainname = 0);
+    Selection(const Selection& org);
         
     int size() const {
         return  static_cast<int>(symbols_.size());
     }
 
-    operator bool() const {
+    explicit operator bool() const {
         return selectedIndex_ >= 0;
+    }
+
+    operator int() const {
+        return selectedIndex_;
     }
         
     void resize(int s);
