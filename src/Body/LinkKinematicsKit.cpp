@@ -28,6 +28,7 @@ public:
     shared_ptr<JointPathConfigurationHandler> configurationHandler;
     CoordinateFrameSetPairPtr frameSetPair;
     GeneralId currentFrameId[2];
+    Signal<void()> sigCurrentFrameChanged;
     
     Impl(Link* link);
     void setBaseLink(Link* link);
@@ -273,6 +274,18 @@ void LinkKinematicsKit::setCurrentBaseFrame(const GeneralId& id)
 void LinkKinematicsKit::setCurrentLocalFrame(const GeneralId& id)
 {
     impl->currentFrameId[Local] = id;
+}
+
+
+SignalProxy<void()> LinkKinematicsKit::sigCurrentFrameChanged()
+{
+    return impl->sigCurrentFrameChanged;
+}
+
+
+void LinkKinematicsKit::notifyCurrentFrameChange()
+{
+    impl->sigCurrentFrameChanged();
 }
 
 

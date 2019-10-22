@@ -2,6 +2,7 @@
 #define CNOID_BODY_LINK_KINEMATICS_KIT_H
 
 #include <cnoid/Referenced>
+#include <cnoid/Signal>
 #include <memory>
 #include <string>
 #include "exportdecl.h"
@@ -58,6 +59,9 @@ public:
     void setCurrentFrame(int which, const GeneralId& id);
     void setCurrentBaseFrame(const GeneralId& id);
     void setCurrentLocalFrame(const GeneralId& id);
+
+    SignalProxy<void()> sigCurrentFrameChanged();
+    void notifyCurrentFrameChange();
 
     Body* findAttachedEndEffector() const;
 

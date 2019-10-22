@@ -63,18 +63,19 @@ public:
 
     PositionView* self;
 
+    ScopedConnectionSet managerConnections;
+    ScopedConnectionSet targetConnections;
     enum TargetType { LinkTarget, PositionEditTarget } targetType;
     BodyItemPtr targetBodyItem;
     LinkPtr targetLink;
     LinkKinematicsKitPtr kinematicsKit;
     LinkKinematicsKitPtr dummyKinematicsKit;
+    ScopedConnection kinematicsKitConnection;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
     CoordinateFramePtr localFrame;
     std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
     AbstractPositionEditTarget* positionEditTarget;
-    ScopedConnectionSet managerConnections;
-    ScopedConnectionSet targetConnections;
     
     ToolButton menuButton;
     MenuManager menuManager;
@@ -141,6 +142,7 @@ public:
     void onFrameComboActivated(int which, int index);
     void setConfigurationInterfaceEnabled(bool on);
     void updateConfigurationCandidates();
+    void onCurrentFrameChanged();
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onPositionEditTargetExpired();
     void clearPanelValues();
@@ -653,6 +655,7 @@ void PositionView::Impl::updateTargetLink(Link* link)
     
     if(!targetLink){
         kinematicsKit = dummyKinematicsKit;
+        kinematicsKitConnection.reset();
         targetLabel.setText("------");
         self->setEnabled(false);
 
@@ -662,6 +665,9 @@ void PositionView::Impl::updateTargetLink(Link* link)
         targetLabel.setText(format("{0} / {1}", body->name(), targetLink->name()).c_str());
 
         kinematicsKit = targetBodyItem->getLinkKinematicsKit(targetLink);
+        kinematicsKitConnection =
+            kinematicsKit->sigCurrentFrameChanged().connect(
+                [&](){ onCurrentFrameChanged(); });
 
         if(functionToGetDefaultFrameNames){
             tie(defaultCoordName[Base], defaultCoordName[Local]) =
@@ -839,7 +845,38 @@ void PositionView::Impl::updateConfigurationCandidates()
     }
 
     setConfigurationInterfaceEnabled(isConfigurationComboActive);
-}    
+}
+
+
+void PositionView::Impl::onCurrentFrameChanged()
+{
+    if(kinematicsKit){
+        for(int i=0; i < 2; ++i){
+            auto& newId = kinematicsKit->currentFrameId(i);
+            auto& combo = frameCombo[i];
+            int currentIndex = combo.currentIndex();
+            for(int j=0; j < combo.count(); ++j){
+                GeneralId id;
+                auto idValue = combo.itemData(j);
+                if(idValue.userType() == QMetaType::Int){
+                    id = idValue.toInt();
+                } else if(idValue.userType() == QMetaType::QString){
+                    id = idValue.toString().toStdString();
+                }
+                if(id == newId){
+                    currentIndex = j;
+                    break;
+                }
+            }
+            if(currentIndex != combo.currentIndex()){
+                combo.setCurrentIndex(currentIndex);
+            }
+        }
+        baseFrame = kinematicsKit->currentBaseFrame();
+        localFrame = kinematicsKit->currentLocalFrame();
+        updatePanel();
+    }
+}
 
 
 bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
