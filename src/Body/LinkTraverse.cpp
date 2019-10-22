@@ -64,9 +64,10 @@ void LinkTraverse::traverse(Link* link, bool doUpward, bool doDownward, bool isU
     if(isUpward){
         ++numUpwardConnections;
     }
-    
-    if(doUpward && link->parent()){
-        traverse(link->parent(), doUpward, true, true, link);
+
+    auto parent = link->parent();
+    if(doUpward && parent && (parent->body() == link->body())){
+        traverse(parent, doUpward, true, true, link);
     }
     if(doDownward){
         for(Link* child = link->child(); child; child = child->sibling()){

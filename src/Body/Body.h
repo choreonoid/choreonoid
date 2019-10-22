@@ -57,6 +57,13 @@ public:
     void initializePosition();
     virtual void initializeState();
 
+    Body* parentBody() const {
+        return rootLink_->parent() ? rootLink_->parent()->body() : nullptr;
+    }
+
+    void setParent(Link* parentBodyLink);
+    void resetParent();
+
     /**
        The number of all the links the body has.
        The value corresponds to the size of the sequence obtained by link() function.

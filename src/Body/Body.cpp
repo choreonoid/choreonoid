@@ -314,6 +314,18 @@ void Body::setModelName(const std::string& name)
 }
 
 
+void Body::setParent(Link* parentBodyLink)
+{
+    rootLink_->parent_ = parentBodyLink;
+}
+
+
+void Body::resetParent()
+{
+    rootLink_->parent_ = nullptr;
+}
+
+
 Link* Body::findUniqueEndLink() const
 {
     Link* endLink = nullptr;

@@ -1301,6 +1301,9 @@ bool BodyItemImpl::attachToBodyItem
     if(holder->attachment()){
         return false;
     }
+
+    body->setParent(holder->link());
+    
     holder->setAttachment(attachment);
     holder->on(true);
     attachment->setHolder(holder);
@@ -1339,6 +1342,7 @@ void BodyItemImpl::clearBodyAttachment()
         }
         attachment->setHolder(nullptr);
         attachment->on(false);
+        body->resetParent();
 
         bodyAttachment.reset();
     }
