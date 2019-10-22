@@ -697,7 +697,7 @@ void PositionView::Impl::updateTargetLink(Link* link)
 void PositionView::Impl::updateIkMode()
 {
     if(auto jointPath = kinematicsKit->jointPath()){
-        jointPath->setNumericalIKenabled(!disableCustomIKCheck->isChecked());
+        jointPath->setNumericalIKenabled(disableCustomIKCheck->isChecked());
     }
 }
 
