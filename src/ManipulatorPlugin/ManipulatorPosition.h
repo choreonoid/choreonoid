@@ -96,9 +96,6 @@ public:
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();
 
-    void updatePositionWithNewFrames(
-        LinkKinematicsKit* kinematicsKit, const GeneralId& baseFrameId, const GeneralId& toolFrameId);
-
     void setBaseFrameId(const GeneralId& id){ baseFrameId_ = id; }
     void setToolFrameId(const GeneralId& id){ toolFrameId_ = id; }
     

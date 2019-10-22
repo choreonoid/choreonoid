@@ -180,26 +180,26 @@ bool ManipulatorPositionRef::write(Mapping& archive) const
 
 
 ManipulatorIkPosition::ManipulatorIkPosition()
-    : ManipulatorPosition(IK)
+    : ManipulatorPosition(IK),
+      baseFrameId_(0),
+      toolFrameId_(0)
 {
     T.setIdentity();
     rpy_.setZero();
     hasReferenceRpy_ = false;
-    baseFrameId_ = -1; // invalid value
-    toolFrameId_ = -1; // invalid value
     configuration_ = 0;
     phase_.fill(0);
 }
 
 
 ManipulatorIkPosition::ManipulatorIkPosition(const ManipulatorIkPosition& org)
-    : ManipulatorPosition(org)
+    : ManipulatorPosition(org),
+      baseFrameId_(org.baseFrameId_),
+      toolFrameId_(org.toolFrameId_)
 {
     T = org.T;
     rpy_ = org.rpy_;
     hasReferenceRpy_ = org.hasReferenceRpy_;
-    baseFrameId_ = org.baseFrameId_;
-    toolFrameId_ = org.toolFrameId_;
     configuration_ = org.configuration_;
     phase_ = org.phase_;
 }
@@ -257,38 +257,30 @@ void ManipulatorIkPosition::resetReferenceRpy()
 }
 
 
-void ManipulatorIkPosition::updatePositionWithNewFrames
-(LinkKinematicsKit* kinematicsKit,
- const GeneralId& baseFrameId, const GeneralId& toolFrameId)
-{
-    auto Tb1 = kinematicsKit->baseFrame(this->baseFrameId_);
-    auto Tb2 = kinematicsKit->baseFrame(baseFrameId);
-    T = Tb2->T().inverse(Eigen::Isometry) * Tb1->T() * T;
-    this->baseFrameId_ = baseFrameId;
-
-    auto Tt1 = kinematicsKit->localFrame(this->toolFrameId_);
-    auto Tt2 = kinematicsKit->localFrame(toolFrameId);
-    T =  T  * Tt1->T().inverse(Eigen::Isometry) * Tt2->T();
-    this->toolFrameId_ = toolFrameId;
-}
-
-
 bool ManipulatorIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
-    auto jointPath = kinematicsKit->jointPath();
-
-    if(!jointPath){
+    auto baseLink = kinematicsKit->baseLink();
+    if(!baseLink){
         return false;
     }
 
-    auto T_end = jointPath->endLink()->T();
-    auto F_base = kinematicsKit->baseFrame(baseFrameId_)->T();
-    auto T_base = jointPath->baseLink()->T() * F_base;
-    auto F_tool = kinematicsKit->localFrame(toolFrameId_)->T();
+    Position T_base;
+    auto baseFrame = kinematicsKit->currentBaseFrame();
+    if(baseFrame->isRelative()){
+        T_base = baseLink->Ta() * baseFrame->T();
+    } else {
+        T_base = baseFrame->T();
+    }
 
-    T = T_base.inverse(Eigen::Isometry) * T_end * F_tool;
+    auto localFrame = kinematicsKit->currentLocalFrame();
+    Position T_end = kinematicsKit->link()->Ta() * localFrame->T();
+
+    T = T_base.inverse(Eigen::Isometry) * T_end;
 
     hasReferenceRpy_ = false;
+
+    baseFrameId_ = kinematicsKit->currentBaseFrameId();
+    toolFrameId_ = kinematicsKit->currentLocalFrameId();
 
     configuration_ = kinematicsKit->currentConfiguration();
 
@@ -301,7 +293,6 @@ bool ManipulatorIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 bool ManipulatorIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 {
     auto jointPath = kinematicsKit->jointPath();
-
     if(!jointPath){
         return false;
     }
@@ -310,28 +301,21 @@ bool ManipulatorIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
         handler->setPreferredConfiguration(configuration_);
     }
 
-    auto F_base = kinematicsKit->baseFrame(baseFrameId_)->T();
-    auto T_base = jointPath->baseLink()->T() * F_base;
-    auto F_tool = kinematicsKit->localFrame(toolFrameId_)->T();
-    
-    Position T_global = T_base * T * F_tool;
-    return jointPath->calcInverseKinematics(T_global);
-}
-
-
-static void readFrameId(const Mapping& archive, const char* key, GeneralId& id)
-{
-    auto idNode = archive.find(key);
-    if(idNode->isValid() && idNode->isScalar()){
-        auto scalar = static_cast<ScalarNode*>(idNode);
-        if(scalar->stringStyle()!= PLAIN_STRING){
-            id = idNode->toString();
-        } else {
-            id = idNode->toInt();
-        }
+    Position T_base;
+    auto baseFrame = kinematicsKit->baseFrame(baseFrameId_);
+    if(baseFrame->isRelative()){
+        T_base = kinematicsKit->baseLink()->Ta() * baseFrame->T();
     } else {
-        id = -1;
+        T_base = baseFrame->T();
     }
+
+    Position T_tool = kinematicsKit->localFrame(toolFrameId_)->T();
+    Position Ta_end = T_base * T * T_tool.inverse(Eigen::Isometry);
+    Position T_end;
+    T_end.translation() = Ta_end.translation();
+    T_end.linear() = kinematicsKit->link()->calcRfromAttitude(Ta_end.linear());
+    
+    return jointPath->calcInverseKinematics(T_end);
 }
 
 
@@ -355,8 +339,8 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
         resetReferenceRpy();
     }
 
-    readFrameId(archive, "baseFrame", baseFrameId_);
-    readFrameId(archive, "toolFrame", toolFrameId_);
+    baseFrameId_.read(archive, "baseFrame");
+    toolFrameId_.read(archive, "toolFrame");
 
     configuration_ = archive.get("configIndex", 0);
 
@@ -377,18 +361,6 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
 }
 
 
-static void writeFrameId(Mapping& archive, const char* key, const GeneralId& id)
-{
-    if(id.isValid()){
-        if(id.isInt()){
-            archive.write(key, id.toInt());
-        } else {
-            archive.write(key, id.toString(), DOUBLE_QUOTED);
-        }
-    }
-}
-
-
 bool ManipulatorIkPosition::write(Mapping& archive) const
 {
     archive.write("type", "IkPosition");
@@ -398,8 +370,8 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", rpy());
 
-    writeFrameId(archive, "baseFrame", baseFrameId_);
-    writeFrameId(archive, "toolFrame", toolFrameId_);
+    baseFrameId_.write(archive, "baseFrame");
+    toolFrameId_.write(archive, "toolFrame");
 
     archive.write("configIndex", configuration_);
     auto& phaseNodes = *archive.createFlowStyleListing("phases");
