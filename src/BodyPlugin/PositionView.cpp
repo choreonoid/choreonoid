@@ -50,7 +50,7 @@ typedef std::bitset<NumInputElements> InputElementSet;
 const char* normalStyle = "font-weight: normal";
 const char* errorStyle = "font-weight: bold; color: red";
 
-enum FrameType { Base, Local };
+enum OffsetTarget { Base, End };
 
 }
 
@@ -82,13 +82,13 @@ public:
     QLabel targetLabel;
     QLabel configurationLabel;
     QLabel resultLabel;
-    enum CoordinateMode { WorldCoordinateMode, BaseCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
+    enum CoordinateMode { WorldCoordinateMode, ModelCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
     Selection coordinateModeSelection;
     int coordinateMode;
     int preferredCoordinateMode;
     ButtonGroup coordinateModeGroup;
     RadioButton worldCoordRadio;
-    RadioButton baseCoordRadio;
+    RadioButton modelCoordRadio;
     RadioButton localCoordRadio;
     DoubleSpinBox xyzSpin[3];
     Action* rpyCheck;
@@ -128,7 +128,7 @@ public:
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
     void setCoordinateMode(int mode);
-    void setBaseCoordinateModeEnabled(bool on);
+    void setModelCoordinateModeEnabled(bool on);
     void onCoordinateModeRadioToggled(int mode);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
@@ -264,7 +264,7 @@ void PositionView::Impl::createPanel()
     mainvbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
-    //hbox->addWidget(new QLabel(_("Coordinate:")));
+    hbox->addWidget(new QLabel(_("Coord:")));
     
     coordinateModeSelection.setSymbol(WorldCoordinateMode, "world");
     worldCoordRadio.setText(_("World"));
@@ -272,10 +272,10 @@ void PositionView::Impl::createPanel()
     hbox->addWidget(&worldCoordRadio);
     coordinateModeGroup.addButton(&worldCoordRadio, WorldCoordinateMode);
 
-    coordinateModeSelection.setSymbol(BaseCoordinateMode, "base");
-    baseCoordRadio.setText(_("Base"));
-    hbox->addWidget(&baseCoordRadio);
-    coordinateModeGroup.addButton(&baseCoordRadio, BaseCoordinateMode);
+    coordinateModeSelection.setSymbol(ModelCoordinateMode, "Model");
+    modelCoordRadio.setText(_("Model"));
+    hbox->addWidget(&modelCoordRadio);
+    coordinateModeGroup.addButton(&modelCoordRadio, ModelCoordinateMode);
 
     coordinateModeSelection.setSymbol(LocalCoordinateMode, "local");
     localCoordRadio.setText(_("Local"));
@@ -399,8 +399,8 @@ void PositionView::Impl::createPanel()
     grid = new QGridLayout;
     grid->setColumnStretch(1, 1);
 
-    frameLabel[Base].setText(_("Base Coord"));
-    frameLabel[Local].setText(_("Local Coord"));
+    frameLabel[Base].setText(_("Base offset"));
+    frameLabel[End].setText(_("End offset"));
 
     for(int i=0; i < 2; ++i){
         grid->addWidget(&frameLabel[i], i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
@@ -477,18 +477,18 @@ void PositionView::Impl::createPanel()
 
 
 void PositionView::setCoordinateModeLabels
-(const char* worldModeLabel, const char* baseModeLabel, const char* localModeLabel)
+(const char* worldModeLabel, const char* modelModeLabel, const char* localModeLabel)
 {
     impl->worldCoordRadio.setText(worldModeLabel);
-    impl->baseCoordRadio.setText(baseModeLabel);
+    impl->modelCoordRadio.setText(modelModeLabel);
     impl->localCoordRadio.setText(localModeLabel);
 }
 
 
-void PositionView::setCoordinateFrameLabels(const char* baseFrameLabel, const char* localFrameLabel)
+void PositionView::setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* endOffsetLabel)
 {
-    impl->frameLabel[Base].setText(baseFrameLabel);
-    impl->frameLabel[Local].setText(localFrameLabel);
+    impl->frameLabel[Base].setText(baseOffsetLabel);
+    impl->frameLabel[End].setText(endOffsetLabel);
 }
 
 
@@ -573,9 +573,9 @@ void PositionView::Impl::setCoordinateMode(int mode)
     if(mode == WorldCoordinateMode){
         worldCoordRadio.setEnabled(true);
         worldCoordRadio.setChecked(true);
-    } else if(mode == BaseCoordinateMode){
-        baseCoordRadio.setEnabled(true);
-        baseCoordRadio.setChecked(true);
+    } else if(mode == ModelCoordinateMode){
+        modelCoordRadio.setEnabled(true);
+        modelCoordRadio.setChecked(true);
     } else if(mode == LocalCoordinateMode){
         localCoordRadio.setEnabled(true);
         localCoordRadio.setChecked(true);
@@ -588,10 +588,10 @@ void PositionView::Impl::setCoordinateMode(int mode)
 }
 
 
-void PositionView::Impl::setBaseCoordinateModeEnabled(bool on)
+void PositionView::Impl::setModelCoordinateModeEnabled(bool on)
 {
-    baseCoordRadio.setEnabled(on);
-    if(!on && coordinateMode  == BaseCoordinateMode){
+    modelCoordRadio.setEnabled(on);
+    if(!on && coordinateMode  == ModelCoordinateMode){
         setCoordinateMode(WorldCoordinateMode);
     }
 }
@@ -670,7 +670,7 @@ void PositionView::Impl::updateTargetLink(Link* link)
                 [&](){ onCurrentFrameChanged(); });
 
         if(functionToGetDefaultFrameNames){
-            tie(defaultCoordName[Base], defaultCoordName[Local]) =
+            tie(defaultCoordName[Base], defaultCoordName[End]) =
                 functionToGetDefaultFrameNames(kinematicsKit);
         }
         for(int i=0; i < 2; ++i){
@@ -695,7 +695,7 @@ void PositionView::Impl::updateTargetLink(Link* link)
 
     setCoordinateMode(preferredCoordinateMode);
 
-    setBaseCoordinateModeEnabled(
+    setModelCoordinateModeEnabled(
         !(!kinematicsKit->baseLink() || link == kinematicsKit->baseLink()));
 }
 
@@ -904,7 +904,7 @@ bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* targe
     self->setEnabled(target->isEditable());
     setCoordinateFrameInterfaceEnabled(false);
     setConfigurationInterfaceEnabled(false);
-    setBaseCoordinateModeEnabled(false);
+    setModelCoordinateModeEnabled(false);
 
     updatePanelWithPositionEditTarget();
 
@@ -948,12 +948,9 @@ void PositionView::Impl::updatePanel()
 void PositionView::Impl::updatePanelWithCurrentLinkPosition()
 {
     if(targetLink){
-        Position T = targetLink->Ta() * localFrame->T();
-        if(coordinateMode == BaseCoordinateMode){
-            T = baseFrame->T().inverse(Eigen::Isometry) * T;
-            if(baseFrame->isRelative()){
-                T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
-            }
+        Position T = baseFrame->T().inverse(Eigen::Isometry) * targetLink->Ta() * localFrame->T();
+        if(coordinateMode == ModelCoordinateMode && kinematicsKit->baseLink()){
+            T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
         }
         updatePanelWithPosition(T);
     }
@@ -1135,12 +1132,9 @@ void PositionView::Impl::findBodyIkSolution(const Position& T_input, InputElemen
 
         targetBodyItem->beginKinematicStateEdit();
         
-        Position T = T_input * localFrame->T().inverse(Eigen::Isometry);
-        if(coordinateMode == BaseCoordinateMode){
-            T = baseFrame->T() * T;
-            if(baseFrame->isRelative()){
-                T = kinematicsKit->baseLink()->Ta() * T;
-            }
+        Position T = baseFrame->T() * T_input * localFrame->T().inverse(Eigen::Isometry);
+        if(coordinateMode == ModelCoordinateMode && kinematicsKit->baseLink()){
+            T = kinematicsKit->baseLink()->Ta() * T;
         }
         T.linear() = targetLink->calcRfromAttitude(T.linear());
         
