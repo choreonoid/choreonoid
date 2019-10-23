@@ -11,6 +11,8 @@ string worldFrameListLabel;
 string bodyFrameListLabel;
 string endFrameListLabel;
 
+bool enabledFlags[] = { 1, 1, 1 };
+
 Signal<void(int index, bool on)> sigEnabledFrameListsChanged;
 
 }
@@ -38,6 +40,7 @@ void LinkCoordinateFrameListSetItem::setFrameListLabels
 
 void LinkCoordinateFrameListSetItem::setFrameListEnabledForAllItems(int index, bool on)
 {
+    enabledFlags[index] = on;
     sigEnabledFrameListsChanged(index, on);
 }
 
@@ -46,7 +49,7 @@ LinkCoordinateFrameListSetItem::LinkCoordinateFrameListSetItem()
     : MultiCoordinateFrameListItem{ worldFrameListLabel, bodyFrameListLabel, endFrameListLabel }
 {
     replaceFrameListContainer(new LinkCoordinateFrameSet);
-    setEnabledFrameListChangeConnection();
+    initializeFrameListEnabling();
 }
 
 
@@ -54,12 +57,18 @@ LinkCoordinateFrameListSetItem::LinkCoordinateFrameListSetItem(const LinkCoordin
     : MultiCoordinateFrameListItem(org)
 {
     replaceFrameListContainer(new LinkCoordinateFrameSet);
-    setEnabledFrameListChangeConnection();
+    initializeFrameListEnabling();
 }
 
 
-void LinkCoordinateFrameListSetItem::setEnabledFrameListChangeConnection()
+void LinkCoordinateFrameListSetItem::initializeFrameListEnabling()
 {
+    for(size_t i=0; i < 3; ++i){
+        if(!enabledFlags[i]){
+            setFrameListEnabled(i, false);
+        }
+    }
+    
     connection = sigEnabledFrameListsChanged.connect(
         [&](int index, bool on){
             setFrameListEnabled(index, on); });

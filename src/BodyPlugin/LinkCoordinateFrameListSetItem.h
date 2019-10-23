@@ -43,7 +43,7 @@ protected:
     virtual Item* doDuplicate() const override;
 
 private:
-    void setEnabledFrameListChangeConnection();
+    void initializeFrameListEnabling();
     
     ScopedConnection connection;
 };
