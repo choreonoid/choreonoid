@@ -3,7 +3,6 @@
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
 #include <cnoid/CoordinateFrame>
-#include <cnoid/LinkKinematicsKit>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>
@@ -187,6 +186,7 @@ ManipulatorIkPosition::ManipulatorIkPosition()
     T.setIdentity();
     rpy_.setZero();
     hasReferenceRpy_ = false;
+    baseFrameType_ = BodyFrame;
     configuration_ = 0;
     phase_.fill(0);
 }
@@ -194,14 +194,16 @@ ManipulatorIkPosition::ManipulatorIkPosition()
 
 ManipulatorIkPosition::ManipulatorIkPosition(const ManipulatorIkPosition& org)
     : ManipulatorPosition(org),
+      T(org.T),
+      rpy_(org.rpy_),
+      hasReferenceRpy_(org.hasReferenceRpy_),
       baseFrameId_(org.baseFrameId_),
-      toolFrameId_(org.toolFrameId_)
+      toolFrameId_(org.toolFrameId_),
+      baseFrameType_(org.baseFrameType_),
+      configuration_(org.configuration_),
+      phase_(org.phase_)
 {
-    T = org.T;
-    rpy_ = org.rpy_;
-    hasReferenceRpy_ = org.hasReferenceRpy_;
-    configuration_ = org.configuration_;
-    phase_ = org.phase_;
+
 }
     
     
@@ -213,6 +215,7 @@ ManipulatorIkPosition& ManipulatorIkPosition::operator=(const ManipulatorIkPosit
     hasReferenceRpy_ = rhs.hasReferenceRpy_;
     baseFrameId_ = rhs.baseFrameId_;
     toolFrameId_ = rhs.toolFrameId_;
+    baseFrameType_ = rhs.baseFrameType_;
     configuration_ = rhs.configuration_;
     phase_ = rhs.phase_;
 
@@ -266,21 +269,19 @@ bool ManipulatorIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 
     Position T_base;
     auto baseFrame = kinematicsKit->currentBaseFrame();
-    if(baseFrame->isRelative()){
-        T_base = baseLink->Ta() * baseFrame->T();
-    } else {
+    if(baseFrameType_ == WorldFrame){
         T_base = baseFrame->T();
+    } else {
+        T_base = baseLink->Ta() * baseFrame->T();
     }
+    baseFrameId_ = kinematicsKit->currentBaseFrameId();
 
-    auto localFrame = kinematicsKit->currentLocalFrame();
-    Position T_end = kinematicsKit->link()->Ta() * localFrame->T();
+    auto endFrame = kinematicsKit->currentEndFrame();
+    Position T_end = kinematicsKit->link()->Ta() * endFrame->T();
 
     T = T_base.inverse(Eigen::Isometry) * T_end;
 
     hasReferenceRpy_ = false;
-
-    baseFrameId_ = kinematicsKit->currentBaseFrameId();
-    toolFrameId_ = kinematicsKit->currentLocalFrameId();
 
     configuration_ = kinematicsKit->currentConfiguration();
 
@@ -302,14 +303,15 @@ bool ManipulatorIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
     }
 
     Position T_base;
-    auto baseFrame = kinematicsKit->baseFrame(baseFrameId_);
-    if(baseFrame->isRelative()){
-        T_base = kinematicsKit->baseLink()->Ta() * baseFrame->T();
+    if(baseFrameType_ == WorldFrame){
+        auto worldFrame = kinematicsKit->worldFrame(baseFrameId_);
+        T_base = worldFrame->T();
     } else {
-        T_base = baseFrame->T();
+        auto bodyFrame = kinematicsKit->bodyFrame(baseFrameId_);
+        T_base = kinematicsKit->baseLink()->Ta() * bodyFrame->T();
     }
-
-    Position T_tool = kinematicsKit->localFrame(toolFrameId_)->T();
+    
+    Position T_tool = kinematicsKit->endFrame(toolFrameId_)->T();
     Position Ta_end = T_base * T * T_tool.inverse(Eigen::Isometry);
     Position T_end;
     T_end.translation() = Ta_end.translation();
@@ -342,6 +344,15 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
     baseFrameId_.read(archive, "baseFrame");
     toolFrameId_.read(archive, "toolFrame");
 
+    string type;
+    if(archive.read("baseFrameType", type)){
+        if(type == "world"){
+            baseFrameType_ = WorldFrame;
+        } else if(type == "body"){
+            baseFrameType_ = BodyFrame;
+        }
+    }
+
     configuration_ = archive.get("configIndex", 0);
 
     auto& phaseNodes = *archive.findListing("phases");
@@ -372,6 +383,12 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
 
     baseFrameId_.write(archive, "baseFrame");
     toolFrameId_.write(archive, "toolFrame");
+
+    if(baseFrameType_ == WorldFrame){
+        archive.write("baseFrameType", "world");
+    } else if(baseFrameType_ == BodyFrame){
+        archive.write("baseFrameType", "body");
+    }
 
     archive.write("configIndex", configuration_);
     auto& phaseNodes = *archive.createFlowStyleListing("phases");

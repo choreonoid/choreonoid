@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-23 02:58+0900\n"
+"POT-Creation-Date: 2019-10-24 00:43+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -106,7 +106,7 @@ msgstr "Pollard手法"
 msgid "Gaussian Filter"
 msgstr "ガウシアンフィルタ"
 
-#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 PositionView.cpp:259
+#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 PositionView.cpp:271
 msgid "Apply"
 msgstr "適用"
 
@@ -411,91 +411,91 @@ msgstr "関節速度 [m/s]"
 msgid "Link Trajectories"
 msgstr "リンク軌道"
 
-#: PositionView.cpp:173
+#: PositionView.cpp:179
 msgid "Position"
 msgstr "ポジション"
 
-#: PositionView.cpp:246 JointDisplacementView.cpp:456
+#: PositionView.cpp:258 JointDisplacementView.cpp:456
 msgid "Option"
 msgstr "オプション"
 
-#: PositionView.cpp:256
+#: PositionView.cpp:268
 msgid "Fetch"
 msgstr "取込"
 
-#: PositionView.cpp:267
+#: PositionView.cpp:279
 msgid "Coord:"
 msgstr "座標系"
 
-#: PositionView.cpp:270
+#: PositionView.cpp:282
 msgid "World"
 msgstr "ワールド"
 
-#: PositionView.cpp:276
-msgid "Model"
-msgstr "モデル"
+#: PositionView.cpp:288 BodyItem.cpp:211
+msgid "Body"
+msgstr "ボディ"
 
-#: PositionView.cpp:281
+#: PositionView.cpp:293
 msgid "Local"
 msgstr "ローカル"
 
-#: PositionView.cpp:402
+#: PositionView.cpp:414
 msgid "Base offset"
 msgstr "ベースオフセット"
 
-#: PositionView.cpp:403
+#: PositionView.cpp:415
 msgid "End offset"
 msgstr "エンドオフセット"
 
-#: PositionView.cpp:417
+#: PositionView.cpp:429
 msgid "Config"
 msgstr "形態"
 
-#: PositionView.cpp:426
+#: PositionView.cpp:438
 msgid "Require"
 msgstr "必須"
 
-#: PositionView.cpp:438
+#: PositionView.cpp:450
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: PositionView.cpp:444
+#: PositionView.cpp:456
 msgid "Fetch as a unique RPY value"
 msgstr "一意なRPY値として取り込み"
 
-#: PositionView.cpp:450
+#: PositionView.cpp:462
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: PositionView.cpp:457
+#: PositionView.cpp:469
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-#: PositionView.cpp:466
+#: PositionView.cpp:478
 msgid "Disable custom IK"
 msgstr "カスタムIKを使用しない"
 
-#: PositionView.cpp:678
+#: PositionView.cpp:696
 msgid "Origin"
 msgstr "原点"
 
-#: PositionView.cpp:1019
+#: PositionView.cpp:1055
 msgid "Actual State"
 msgstr "実状態"
 
-#: PositionView.cpp:1165
+#: PositionView.cpp:1201
 msgid "Solved"
 msgstr "解有り"
 
-#: PositionView.cpp:1169
+#: PositionView.cpp:1205
 msgid "Not Solved"
 msgstr "解無し"
 
-#: PositionView.cpp:1185
+#: PositionView.cpp:1221
 msgid "Accepted"
 msgstr ""
 
-#: PositionView.cpp:1188
+#: PositionView.cpp:1224
 msgid "Not Accepted"
 msgstr ""
 
@@ -530,6 +530,10 @@ msgstr "接触マテリアル定義ファイル (*.yaml)"
 #: WorldItem.cpp:507
 msgid "Material table"
 msgstr "マテリアルテーブル"
+
+#: LinkCoordinateFrameListSetItem.cpp:21
+msgid "LinkCoordinateFrameListSetItem"
+msgstr "リンク座標フレームリスト一式アイテム"
 
 #: BodyTrackingCameraItem.cpp:156
 msgid "BodyTrackingCameraItem"
@@ -850,10 +854,6 @@ msgstr "関節慣性"
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:211
-msgid "Body"
-msgstr "ボディ"
-
 #: BodyItem.cpp:1292
 msgid "{0} cannot be attached to {1}."
 msgstr "{0}は{1}にアタッチできません．"
@@ -1162,7 +1162,7 @@ msgstr ""
 msgid "{0:7.3f} [s]: Collision between {1} and {2}"
 msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
 
-#: BodyPlugin.cpp:137
+#: BodyPlugin.cpp:139
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -1648,8 +1648,3 @@ msgstr "{}のフレームレートはワールドのフレームレートと異�
 msgid "Control mode"
 msgstr "制御モード"
 
-#~ msgid "Base"
-#~ msgstr "ベース"
-
-#~ msgid "End"
-#~ msgstr "エンド"

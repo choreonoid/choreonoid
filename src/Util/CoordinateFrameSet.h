@@ -4,6 +4,7 @@
 #include "CoordinateFrame.h"
 #include <cnoid/CloneMappableReferenced>
 #include <vector>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -21,6 +22,10 @@ public:
     CoordinateFrameSet* clone(CloneMap& cloneMap){
         return static_cast<CoordinateFrameSet*>(doClone(&cloneMap));
     }
+
+    const std::string& name() const { return name_; }
+
+    virtual void setName(const std::string& name);
 
     /**
        \note The default frame with Id 0 is not counted.
@@ -54,33 +59,10 @@ protected:
 
 private:
     CoordinateFramePtr identityFrame;
+    std::string name_;
 };
 
 typedef ref_ptr<CoordinateFrameSet> CoordinateFrameSetPtr;
-
-
-class CNOID_EXPORT CoordinateFrameSetPair : public CloneMappableReferenced
-{
-public:
-    CoordinateFrameSetPair();
-    CoordinateFrameSetPair(CoordinateFrameSet* baseFrameSet, CoordinateFrameSet* localFrameSet);
-    CoordinateFrameSetPair(const CoordinateFrameSetPair& org); // Do deep copy
-
-    CoordinateFrameSetPair& operator=(const CoordinateFrameSetPair& rhs);
-    
-    CoordinateFrameSet* frameSet(int which){ return frameSets[which]; }
-    CoordinateFrameSet* baseFrameSet(){ return frameSets[0]; }
-    CoordinateFrameSet* localFrameSet(){ return frameSets[1]; }
-
-protected:
-    CoordinateFrameSetPair(const CoordinateFrameSetPair& org, CloneMap* cloneMap);
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
-
-private:
-    CoordinateFrameSetPtr frameSets[2];
-};
-
-typedef ref_ptr<CoordinateFrameSetPair> CoordinateFrameSetPairPtr;
 
 }
 

@@ -41,6 +41,7 @@ set(sources
   CoordinateFrameSet.cpp
   CoordinateFrameList.cpp
   CoordinateFrameSetGroup.cpp
+  MultiCoordinateFrameSet.cpp
   BoundingBox.cpp
   SceneGraph.cpp
   SceneDrawables.cpp
@@ -140,6 +141,7 @@ set(headers
   CoordinateFrameSet.h
   CoordinateFrameList.h
   CoordinateFrameSetGroup.h
+  MultiCoordinateFrameSet.h
   BoundingBox.h
   SceneGraph.h
   SceneDrawables.h

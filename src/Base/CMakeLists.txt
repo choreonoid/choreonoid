@@ -72,7 +72,7 @@ set(sources
   MultiSE3MatrixSeqItem.cpp
   Vector3SeqItem.cpp
   CoordinateFrameListItem.cpp
-  CoordinateFrameListPairItem.cpp
+  MultiCoordinateFrameListItem.cpp
   ExtCommandItem.cpp
   AbstractTextItem.cpp
   ScriptItem.cpp
@@ -183,7 +183,7 @@ set(headers
   MultiSE3MatrixSeqItem.h
   Vector3SeqItem.h
   CoordinateFrameListItem.h
-  CoordinateFrameListPairItem.h
+  MultiCoordinateFrameListItem.h
   ExtCommandItem.h
   AbstractTextItem.h
   ScriptItem.h

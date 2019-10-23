@@ -1,7 +1,7 @@
 #include "ManipulatorControllerItemBase.h"
 #include "ManipulatorProgramItemBase.h"
 #include <cnoid/LinkKinematicsKit>
-#include <cnoid/CoordinateFrameSet>
+#include <cnoid/LinkCoordinateFrameSet>
 #include <cnoid/ManipulatorProgram>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
@@ -222,7 +222,7 @@ bool ManipulatorControllerItemBase::Impl::createKinematicsKitForControl()
 
     kinematicsKit = new LinkKinematicsKit(targetLink);
     kinematicsKit->setBaseLink(baseLink);
-    kinematicsKit->setFrameSetPair(new CoordinateFrameSetPair(*orgKit->frameSetPair()));
+    kinematicsKit->setFrameSets(new LinkCoordinateFrameSet(*orgKit->frameSets()));
 
     return true;
 }

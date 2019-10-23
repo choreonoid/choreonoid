@@ -10,7 +10,7 @@
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
 #include <cnoid/CompositeBodyIK>
-#include <cnoid/CoordinateFrameSet>
+#include <cnoid/LinkCoordinateFrameSet>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
@@ -50,7 +50,13 @@ typedef std::bitset<NumInputElements> InputElementSet;
 const char* normalStyle = "font-weight: normal";
 const char* errorStyle = "font-weight: bold; color: red";
 
-enum OffsetTarget { Base, End };
+enum FrameType {
+    WorldFrame = LinkKinematicsKit::WorldFrame,
+    BodyFrame = LinkKinematicsKit::BodyFrame,
+    EndFrame = LinkKinematicsKit::EndFrame
+};
+
+enum FrameComboType { BaseFrameCombo, EndFrameCombo };
 
 }
 
@@ -73,8 +79,8 @@ public:
     ScopedConnection kinematicsKitConnection;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
-    CoordinateFramePtr localFrame;
-    std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
+    CoordinateFramePtr endFrame;
+    std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
     AbstractPositionEditTarget* positionEditTarget;
     
     ToolButton menuButton;
@@ -82,13 +88,13 @@ public:
     QLabel targetLabel;
     QLabel configurationLabel;
     QLabel resultLabel;
-    enum CoordinateMode { WorldCoordinateMode, ModelCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
+    enum CoordinateMode { WorldCoordinateMode, BodyCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
     Selection coordinateModeSelection;
     int coordinateMode;
     int preferredCoordinateMode;
     ButtonGroup coordinateModeGroup;
     RadioButton worldCoordRadio;
-    RadioButton modelCoordRadio;
+    RadioButton bodyCoordRadio;
     RadioButton localCoordRadio;
     DoubleSpinBox xyzSpin[3];
     Action* rpyCheck;
@@ -108,8 +114,8 @@ public:
     enum AttitudeMode { RollPitchYawMode, QuaternionMode };
     AttitudeMode lastInputAttitudeMode;
 
-    string defaultCoordName[2];
-    QLabel frameLabel[2];
+    string defaultCoordName[3];
+    QLabel frameComboLabel[2];
     ComboBox frameCombo[2];
     
     ComboBox configurationCombo;
@@ -128,21 +134,21 @@ public:
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
     void setCoordinateMode(int mode);
-    void setModelCoordinateModeEnabled(bool on);
+    void setBodyCoordinateModeEnabled(bool on);
     void onCoordinateModeRadioToggled(int mode);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
     void updateIkMode();
     void setCoordinateFrameInterfaceEnabled(bool on);
     void updateCoordinateFrameCandidates();
-    void updateCoordinateFrameCandidates(int which);
+    void updateCoordinateFrameCandidates(int frameComboIndex);
     void updateCoordinateFrameComboItems(
         QComboBox& combo, CoordinateFrameSet* frames, const GeneralId& currentId, const std::string& originLabel,
-         bool isBaseLinkBaseFrame);
-    void onFrameComboActivated(int which, int index);
+         bool isBaseLinkBodyFrame);
+    void onFrameComboActivated(int frameComboIndex, int index);
+    void onCurrentFrameChanged();
     void setConfigurationInterfaceEnabled(bool on);
     void updateConfigurationCandidates();
-    void onCurrentFrameChanged();
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onPositionEditTargetExpired();
     void clearPanelValues();
@@ -197,9 +203,15 @@ PositionView::Impl::Impl(PositionView* self)
     self->setEnabled(false);
     
     targetType = LinkTarget;
-    positionEditTarget = nullptr;
     dummyKinematicsKit = new LinkKinematicsKit(nullptr);
+    dummyKinematicsKit->setFrameSets(new LinkCoordinateFrameSet);
     kinematicsKit = dummyKinematicsKit;
+
+    identityFrame = new CoordinateFrame;
+    baseFrame = identityFrame;
+    endFrame = identityFrame;
+
+    positionEditTarget = nullptr;
 }
 
 
@@ -272,10 +284,10 @@ void PositionView::Impl::createPanel()
     hbox->addWidget(&worldCoordRadio);
     coordinateModeGroup.addButton(&worldCoordRadio, WorldCoordinateMode);
 
-    coordinateModeSelection.setSymbol(ModelCoordinateMode, "Model");
-    modelCoordRadio.setText(_("Model"));
-    hbox->addWidget(&modelCoordRadio);
-    coordinateModeGroup.addButton(&modelCoordRadio, ModelCoordinateMode);
+    coordinateModeSelection.setSymbol(BodyCoordinateMode, "body");
+    bodyCoordRadio.setText(_("Body"));
+    hbox->addWidget(&bodyCoordRadio);
+    coordinateModeGroup.addButton(&bodyCoordRadio, BodyCoordinateMode);
 
     coordinateModeSelection.setSymbol(LocalCoordinateMode, "local");
     localCoordRadio.setText(_("Local"));
@@ -399,11 +411,11 @@ void PositionView::Impl::createPanel()
     grid = new QGridLayout;
     grid->setColumnStretch(1, 1);
 
-    frameLabel[Base].setText(_("Base offset"));
-    frameLabel[End].setText(_("End offset"));
+    frameComboLabel[BaseFrameCombo].setText(_("Base offset"));
+    frameComboLabel[EndFrameCombo].setText(_("End offset"));
 
     for(int i=0; i < 2; ++i){
-        grid->addWidget(&frameLabel[i], i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
+        grid->addWidget(&frameComboLabel[i], i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
         
         frameCombo[i].sigAboutToShowPopup().connect(
             [=](){ updateCoordinateFrameCandidates(i); });
@@ -477,23 +489,23 @@ void PositionView::Impl::createPanel()
 
 
 void PositionView::setCoordinateModeLabels
-(const char* worldModeLabel, const char* modelModeLabel, const char* localModeLabel)
+(const char* worldModeLabel, const char* baseModeLabel, const char* localModeLabel)
 {
     impl->worldCoordRadio.setText(worldModeLabel);
-    impl->modelCoordRadio.setText(modelModeLabel);
+    impl->bodyCoordRadio.setText(baseModeLabel);
     impl->localCoordRadio.setText(localModeLabel);
 }
 
 
 void PositionView::setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* endOffsetLabel)
 {
-    impl->frameLabel[Base].setText(baseOffsetLabel);
-    impl->frameLabel[End].setText(endOffsetLabel);
+    impl->frameComboLabel[BaseFrameCombo].setText(baseOffsetLabel);
+    impl->frameComboLabel[EndFrameCombo].setText(endOffsetLabel);
 }
 
 
 void PositionView::customizeDefaultCoordinateFrameNames
-(std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> getNames)
+(std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> getNames)
 {
     impl->functionToGetDefaultFrameNames = getNames;
 }
@@ -573,25 +585,31 @@ void PositionView::Impl::setCoordinateMode(int mode)
     if(mode == WorldCoordinateMode){
         worldCoordRadio.setEnabled(true);
         worldCoordRadio.setChecked(true);
-    } else if(mode == ModelCoordinateMode){
-        modelCoordRadio.setEnabled(true);
-        modelCoordRadio.setChecked(true);
+        kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::WorldFrame);
+    } else if(mode == BodyCoordinateMode){
+        bodyCoordRadio.setEnabled(true);
+        bodyCoordRadio.setChecked(true);
+        kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::BodyFrame);
     } else if(mode == LocalCoordinateMode){
         localCoordRadio.setEnabled(true);
         localCoordRadio.setChecked(true);
     }
-    coordinateMode = mode;
 
     coordinateModeGroup.blockSignals(false);
+
+    if(mode != coordinateMode){
+        coordinateMode = mode;
+        updateCoordinateFrameCandidates();
+    }
 
     updatePanel();
 }
 
 
-void PositionView::Impl::setModelCoordinateModeEnabled(bool on)
+void PositionView::Impl::setBodyCoordinateModeEnabled(bool on)
 {
-    modelCoordRadio.setEnabled(on);
-    if(!on && coordinateMode  == ModelCoordinateMode){
+    bodyCoordRadio.setEnabled(on);
+    if(!on && coordinateMode == BodyCoordinateMode){
         setCoordinateMode(WorldCoordinateMode);
     }
 }
@@ -670,19 +688,24 @@ void PositionView::Impl::updateTargetLink(Link* link)
                 [&](){ onCurrentFrameChanged(); });
 
         if(functionToGetDefaultFrameNames){
-            tie(defaultCoordName[Base], defaultCoordName[End]) =
+            tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[EndFrame]) =
                 functionToGetDefaultFrameNames(kinematicsKit);
         }
-        for(int i=0; i < 2; ++i){
+        for(int i=0; i < 3; ++i){
             if(defaultCoordName[i].empty()){
                 defaultCoordName[i] = _("Origin");
             }
         }
         
         updateIkMode();
-        
+
+        if(coordinateMode == WorldCoordinateMode){
+            kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::WorldFrame);
+        } else {
+            kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::BodyFrame);
+        }
         baseFrame = kinematicsKit->currentBaseFrame();
-        localFrame = kinematicsKit->currentLocalFrame();
+        endFrame = kinematicsKit->currentEndFrame();
     }
 
     bool isValid = kinematicsKit->inverseKinematics() != nullptr;
@@ -695,7 +718,7 @@ void PositionView::Impl::updateTargetLink(Link* link)
 
     setCoordinateMode(preferredCoordinateMode);
 
-    setModelCoordinateModeEnabled(
+    setBodyCoordinateModeEnabled(
         !(!kinematicsKit->baseLink() || link == kinematicsKit->baseLink()));
 }
 
@@ -711,7 +734,7 @@ void PositionView::Impl::updateIkMode()
 void PositionView::Impl::setCoordinateFrameInterfaceEnabled(bool on)
 {
     for(int i=0; i < 2; ++i){
-        frameLabel[i].setEnabled(on);
+        frameComboLabel[i].setEnabled(on);
         frameCombo[i].setEnabled(on);
         if(!on){
             frameCombo[i].clear();
@@ -728,25 +751,36 @@ void PositionView::Impl::updateCoordinateFrameCandidates()
 }
 
 
-void PositionView::Impl::updateCoordinateFrameCandidates(int which)
+void PositionView::Impl::updateCoordinateFrameCandidates(int frameComboIndex)
 {
-    bool isBaseLinkBaseFrame = false;
-    if(which == Base && kinematicsKit->baseLink() == targetLink){
-        isBaseLinkBaseFrame = true;
+    int frameType;
+    bool isBaseLinkBodyFrame = false;
+
+    if(frameComboIndex == EndFrameCombo){
+        frameType = EndFrame;
+    } else {
+        if(kinematicsKit->baseLink() == targetLink){
+            isBaseLinkBodyFrame = true;
+        }
+        if(coordinateMode == WorldCoordinateMode){
+            frameType = WorldFrame;
+        } else {
+            frameType = BodyFrame;
+        }
     }
     
     updateCoordinateFrameComboItems(
-        frameCombo[which],
-        kinematicsKit->frameSet(which),
-        kinematicsKit->currentFrameId(which),
-        defaultCoordName[which],
-        isBaseLinkBaseFrame);
+        frameCombo[frameComboIndex],
+        kinematicsKit->frameSet(frameType),
+        kinematicsKit->currentFrameId(frameType),
+        defaultCoordName[frameType],
+        isBaseLinkBodyFrame);
 }
 
 
 void PositionView::Impl::updateCoordinateFrameComboItems
 (QComboBox& combo, CoordinateFrameSet* frames, const GeneralId& currentId, const std::string& originLabel,
- bool isBaseLinkBaseFrame)
+ bool isBaseLinkBodyFrame)
 {
     constexpr bool EnableToolTip = false;
     
@@ -763,9 +797,6 @@ void PositionView::Impl::updateCoordinateFrameComboItems
         for(int i=0; i < n; ++i){
             int index = combo.count();
             auto frame = candidates[i];
-            if(isBaseLinkBaseFrame && frame->isRelative()){
-                continue;
-            }
             auto& id = frame->id();
             if(id.isInt()){
                 combo.addItem(QString("%1: %2").arg(id.toInt()).arg(frame->note().c_str()), id.toInt());
@@ -788,26 +819,69 @@ void PositionView::Impl::updateCoordinateFrameComboItems
 }
 
 
-void PositionView::Impl::onFrameComboActivated(int which, int index)
+void PositionView::Impl::onFrameComboActivated(int frameComboIndex, int index)
 {
-    if(kinematicsKit){
-        GeneralId id;
-        auto idValue = frameCombo[which].itemData(index);
-        if(idValue.userType() == QMetaType::Int){
-            id = idValue.toInt();
-        } else if(idValue.userType() == QMetaType::QString){
-            id = idValue.toString().toStdString();
-        }
-        if(id.isValid()){
-            kinematicsKit->setCurrentFrame(which, id);
-            if(which == LinkKinematicsKit::BaseFrame){
-                baseFrame = kinematicsKit->currentBaseFrame();
-            } else if(which == LinkKinematicsKit::LocalFrame){
-                localFrame = kinematicsKit->currentLocalFrame();
+    GeneralId id;
+    auto idValue = frameCombo[frameComboIndex].itemData(index);
+    if(idValue.userType() == QMetaType::Int){
+        id = idValue.toInt();
+    } else if(idValue.userType() == QMetaType::QString){
+        id = idValue.toString().toStdString();
+    }
+    if(id.isValid()){
+        int frameType;
+        if(frameComboIndex == BaseFrameCombo){
+            if(coordinateMode == WorldCoordinateMode){
+                frameType = WorldFrame;
+            } else {
+                frameType = BodyFrame;
             }
-            updatePanel();
+        } else {
+            frameType = EndFrame;
+        }
+        kinematicsKit->setCurrentFrame(frameType, id);
+        if(frameComboIndex == BaseFrameCombo){
+            baseFrame = kinematicsKit->currentFrame(frameType);
+        } else {
+            endFrame = kinematicsKit->currentEndFrame();
+        }
+        updatePanel();
+    }
+}
+
+
+void PositionView::Impl::onCurrentFrameChanged()
+{
+    for(int i=0; i < 2; ++i){
+        GeneralId newId;
+        if(i == BaseFrameCombo){
+            newId = kinematicsKit->currentBaseFrameId();
+        } else {
+            newId = kinematicsKit->currentEndFrameId();
+        }
+        auto& combo = frameCombo[i];
+        int currentIndex = combo.currentIndex();
+        for(int j=0; j < combo.count(); ++j){
+            GeneralId id;
+            auto idValue = combo.itemData(j);
+            if(idValue.userType() == QMetaType::Int){
+                id = idValue.toInt();
+            } else if(idValue.userType() == QMetaType::QString){
+                id = idValue.toString().toStdString();
+            }
+            if(id == newId){
+                currentIndex = j;
+                break;
+            }
+        }
+        if(currentIndex != combo.currentIndex()){
+            combo.setCurrentIndex(currentIndex);
         }
     }
+    baseFrame = kinematicsKit->currentBaseFrame();
+    endFrame = kinematicsKit->currentEndFrame();
+    
+    updatePanel();
 }
 
 
@@ -827,55 +901,22 @@ void PositionView::Impl::updateConfigurationCandidates()
     bool isConfigurationComboActive = false;
     configurationCombo.clear();
 
-    if(kinematicsKit){
-        if(auto configurationHandler = kinematicsKit->configurationHandler()){
-            int n = configurationHandler->getNumConfigurations();
-            for(int i=0; i < n; ++i){
-                configurationCombo.addItem(
-                    configurationHandler->getConfigurationName(i).c_str());
-            }
-            if(configurationHandler->checkConfiguration(0)){
-                configurationCombo.setCurrentIndex(0);
-            } else {
-                configurationCombo.setCurrentIndex(
-                    configurationHandler->getCurrentConfiguration());
-            }
-            isConfigurationComboActive = !disableCustomIKCheck->isChecked();
+    if(auto configurationHandler = kinematicsKit->configurationHandler()){
+        int n = configurationHandler->getNumConfigurations();
+        for(int i=0; i < n; ++i){
+            configurationCombo.addItem(
+                configurationHandler->getConfigurationName(i).c_str());
         }
+        if(configurationHandler->checkConfiguration(0)){
+            configurationCombo.setCurrentIndex(0);
+        } else {
+            configurationCombo.setCurrentIndex(
+                configurationHandler->getCurrentConfiguration());
+        }
+        isConfigurationComboActive = !disableCustomIKCheck->isChecked();
     }
 
     setConfigurationInterfaceEnabled(isConfigurationComboActive);
-}
-
-
-void PositionView::Impl::onCurrentFrameChanged()
-{
-    if(kinematicsKit){
-        for(int i=0; i < 2; ++i){
-            auto& newId = kinematicsKit->currentFrameId(i);
-            auto& combo = frameCombo[i];
-            int currentIndex = combo.currentIndex();
-            for(int j=0; j < combo.count(); ++j){
-                GeneralId id;
-                auto idValue = combo.itemData(j);
-                if(idValue.userType() == QMetaType::Int){
-                    id = idValue.toInt();
-                } else if(idValue.userType() == QMetaType::QString){
-                    id = idValue.toString().toStdString();
-                }
-                if(id == newId){
-                    currentIndex = j;
-                    break;
-                }
-            }
-            if(currentIndex != combo.currentIndex()){
-                combo.setCurrentIndex(currentIndex);
-            }
-        }
-        baseFrame = kinematicsKit->currentBaseFrame();
-        localFrame = kinematicsKit->currentLocalFrame();
-        updatePanel();
-    }
 }
 
 
@@ -887,9 +928,8 @@ bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* targe
 
     targetType = PositionEditTarget;
     positionEditTarget = target;
-    identityFrame = new CoordinateFrame;
     baseFrame = identityFrame;
-    localFrame = identityFrame;
+    endFrame = identityFrame;
 
     targetConnections.add(
         target->sigPositionChanged().connect(
@@ -904,7 +944,7 @@ bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* targe
     self->setEnabled(target->isEditable());
     setCoordinateFrameInterfaceEnabled(false);
     setConfigurationInterfaceEnabled(false);
-    setModelCoordinateModeEnabled(false);
+    setBodyCoordinateModeEnabled(false);
 
     updatePanelWithPositionEditTarget();
 
@@ -948,8 +988,8 @@ void PositionView::Impl::updatePanel()
 void PositionView::Impl::updatePanelWithCurrentLinkPosition()
 {
     if(targetLink){
-        Position T = baseFrame->T().inverse(Eigen::Isometry) * targetLink->Ta() * localFrame->T();
-        if(coordinateMode == ModelCoordinateMode && kinematicsKit->baseLink()){
+        Position T = baseFrame->T().inverse(Eigen::Isometry) * targetLink->Ta() * endFrame->T();
+        if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
             T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
         }
         updatePanelWithPosition(T);
@@ -1132,8 +1172,8 @@ void PositionView::Impl::findBodyIkSolution(const Position& T_input, InputElemen
 
         targetBodyItem->beginKinematicStateEdit();
         
-        Position T = baseFrame->T() * T_input * localFrame->T().inverse(Eigen::Isometry);
-        if(coordinateMode == ModelCoordinateMode && kinematicsKit->baseLink()){
+        Position T = baseFrame->T() * T_input * endFrame->T().inverse(Eigen::Isometry);
+        if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
             T = kinematicsKit->baseLink()->Ta() * T;
         }
         T.linear() = targetLink->calcRfromAttitude(T.linear());

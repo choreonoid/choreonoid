@@ -5,16 +5,10 @@
 #include "CompositeBodyIK.h"
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
-#include <cnoid/CoordinateFrameSet>
+#include <cnoid/LinkCoordinateFrameSet>
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-enum FrameType { Base, Local };
-
-}
 
 namespace cnoid {
 
@@ -26,14 +20,15 @@ public:
     shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointPathConfigurationHandler> configurationHandler;
-    CoordinateFrameSetPairPtr frameSetPair;
-    GeneralId currentFrameId[2];
+    LinkCoordinateFrameSetPtr frameSets;
+    GeneralId currentFrameId[3];
+    int currentBaseFrameType;
     Signal<void()> sigCurrentFrameChanged;
     
     Impl(Link* link);
     void setBaseLink(Link* link);
     void setInversetKinematics(std::shared_ptr<InverseKinematics> ik);
-    void setFrameSetPair(CoordinateFrameSetPair* frameSets);
+    void setFrameSets(LinkCoordinateFrameSet* frameSets);
 };
 
 }
@@ -47,12 +42,12 @@ LinkKinematicsKit::LinkKinematicsKit(Link* link)
 
 LinkKinematicsKit::Impl::Impl(Link* link)
     : link(link),
-      currentFrameId{ 0, 0 }
+      currentFrameId{ 0, 0, 0 },
+      currentBaseFrameType(WorldFrame)
 {
     if(link){
         body = link->body();
     }
-    setFrameSetPair(new CoordinateFrameSetPair);
 }
     
 
@@ -113,15 +108,15 @@ void LinkKinematicsKit::Impl::setInversetKinematics(std::shared_ptr<InverseKinem
 }
 
 
-void LinkKinematicsKit::setFrameSetPair(CoordinateFrameSetPair* frameSets)
+void LinkKinematicsKit::setFrameSets(LinkCoordinateFrameSet* frameSets)
 {
-    impl->setFrameSetPair(frameSets);
+    impl->setFrameSets(frameSets);
 }
 
 
-void LinkKinematicsKit::Impl::setFrameSetPair(CoordinateFrameSetPair* frameSets)
+void LinkKinematicsKit::Impl::setFrameSets(LinkCoordinateFrameSet* frameSets)
 {
-    this->frameSetPair = frameSets;
+    this->frameSets = frameSets;
 }
 
 
@@ -193,87 +188,155 @@ bool LinkKinematicsKit::isManipulator() const
 }
 
 
-CoordinateFrameSetPair* LinkKinematicsKit::frameSetPair()
+LinkCoordinateFrameSet* LinkKinematicsKit::frameSets()
 {
-    return impl->frameSetPair;
+    return impl->frameSets;
 }
 
 
-CoordinateFrameSet* LinkKinematicsKit::frameSet(int which)
+CoordinateFrameSet* LinkKinematicsKit::frameSet(int frameType)
 {
-    return impl->frameSetPair->frameSet(which);
+    return impl->frameSets->frameSet(frameType);
 }
 
 
-CoordinateFrameSet* LinkKinematicsKit::baseFrameSet()
+CoordinateFrameSet* LinkKinematicsKit::worldFrameSet()
 {
-    return impl->frameSetPair->baseFrameSet();
+    return impl->frameSets->worldFrameSet();
 }
 
 
-CoordinateFrameSet* LinkKinematicsKit::localFrameSet()
+CoordinateFrameSet* LinkKinematicsKit::bodyFrameSet()
 {
-    return impl->frameSetPair->localFrameSet();
+    return impl->frameSets->bodyFrameSet();
 }
 
 
-CoordinateFrame* LinkKinematicsKit::baseFrame(const GeneralId& id)
+CoordinateFrameSet* LinkKinematicsKit::endFrameSet()
 {
-    return impl->frameSetPair->baseFrameSet()->getFrame(id);
+    return impl->frameSets->endFrameSet();
 }
 
 
-CoordinateFrame* LinkKinematicsKit::localFrame(const GeneralId& id)
+CoordinateFrame* LinkKinematicsKit::worldFrame(const GeneralId& id)
 {
-    return impl->frameSetPair->localFrameSet()->getFrame(id);
+    return impl->frameSets->worldFrame(id);
 }
 
 
-const GeneralId& LinkKinematicsKit::currentFrameId(int which)
+CoordinateFrame* LinkKinematicsKit::bodyFrame(const GeneralId& id)
 {
-    return impl->currentFrameId[which];
+    return impl->frameSets->bodyFrame(id);
+}
+
+
+CoordinateFrame* LinkKinematicsKit::endFrame(const GeneralId& id)
+{
+    return impl->frameSets->endFrame(id);
+}
+
+
+const GeneralId& LinkKinematicsKit::currentFrameId(int frameType)
+{
+    return impl->currentFrameId[frameType];
+}
+
+
+const GeneralId& LinkKinematicsKit::currentWorldFrameId()
+{
+    return impl->currentFrameId[WorldFrame];
+}
+
+
+const GeneralId& LinkKinematicsKit::currentBodyFrameId()
+{
+    return impl->currentFrameId[BodyFrame];
+}
+
+
+const GeneralId& LinkKinematicsKit::currentEndFrameId()
+{
+    return impl->currentFrameId[EndFrame];
+}
+
+
+CoordinateFrame* LinkKinematicsKit::currentFrame(int frameType)
+{
+    return impl->frameSets->frameSet(frameType)->getFrame(currentFrameId(frameType));
+}
+
+
+CoordinateFrame* LinkKinematicsKit::currentWorldFrame()
+{
+    return impl->frameSets->worldFrameSet()->getFrame(currentWorldFrameId());
+}
+
+
+CoordinateFrame* LinkKinematicsKit::currentBodyFrame()
+{
+    return impl->frameSets->bodyFrameSet()->getFrame(currentBodyFrameId());
+}
+
+
+CoordinateFrame* LinkKinematicsKit::currentEndFrame()
+{
+    return impl->frameSets->endFrameSet()->getFrame(currentEndFrameId());
+}
+
+
+void LinkKinematicsKit::setCurrentFrame(int frameType, const GeneralId& id)
+{
+    impl->currentFrameId[frameType] = id;
+}
+
+
+void LinkKinematicsKit::setCurrentWorldFrame(const GeneralId& id)
+{
+    impl->currentFrameId[WorldFrame] = id;
+}
+
+
+void LinkKinematicsKit::setCurrentBodyFrame(const GeneralId& id)
+{
+    impl->currentFrameId[BodyFrame] = id;
+}
+
+
+void LinkKinematicsKit::setCurrentEndFrame(const GeneralId& id)
+{
+    impl->currentFrameId[EndFrame] = id;
+}
+
+
+int LinkKinematicsKit::currentBaseFrameType()
+{
+    return impl->currentBaseFrameType;
+}
+
+
+void LinkKinematicsKit::setCurrentBaseFrameType(int frameType)
+{
+    impl->currentBaseFrameType = frameType;
 }
 
 
 const GeneralId& LinkKinematicsKit::currentBaseFrameId()
 {
-    return impl->currentFrameId[Base];
-}
-
-
-const GeneralId& LinkKinematicsKit::currentLocalFrameId()
-{
-    return impl->currentFrameId[Local];
+    if(impl->currentBaseFrameType == WorldFrame){
+        return currentWorldFrameId();
+    } else {
+        return currentBodyFrameId();
+    }
 }
 
 
 CoordinateFrame* LinkKinematicsKit::currentBaseFrame()
 {
-    return impl->frameSetPair->baseFrameSet()->getFrame(impl->currentFrameId[Base]);
-}
-
-
-CoordinateFrame* LinkKinematicsKit::currentLocalFrame()
-{
-    return impl->frameSetPair->localFrameSet()->getFrame(impl->currentFrameId[Local]);
-}
-
-
-void LinkKinematicsKit::setCurrentFrame(int which, const GeneralId& id)
-{
-    impl->currentFrameId[which] = id;
-}
-
-
-void LinkKinematicsKit::setCurrentBaseFrame(const GeneralId& id)
-{
-    impl->currentFrameId[Base] = id;
-}
-
-
-void LinkKinematicsKit::setCurrentLocalFrame(const GeneralId& id)
-{
-    impl->currentFrameId[Local] = id;
+    if(impl->currentBaseFrameType == WorldFrame){
+        return currentWorldFrame();
+    } else {
+        return currentBodyFrame();
+    }
 }
 
 

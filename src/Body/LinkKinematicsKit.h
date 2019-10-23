@@ -1,6 +1,7 @@
 #ifndef CNOID_BODY_LINK_KINEMATICS_KIT_H
 #define CNOID_BODY_LINK_KINEMATICS_KIT_H
 
+#include <cnoid/LinkCoordinateFrameSet>
 #include <cnoid/Referenced>
 #include <cnoid/Signal>
 #include <memory>
@@ -16,7 +17,7 @@ class JointPathConfigurationHandler;
 class GeneralId;
 class CoordinateFrame;
 class CoordinateFrameSet;
-class CoordinateFrameSetPair;
+class LinkCoordinateFrameSet;
 class InverseKinematics;
 
 class CNOID_EXPORT LinkKinematicsKit : public Referenced
@@ -27,7 +28,7 @@ public:
 
     void setBaseLink(Link* baseLink);
     void setInversetKinematics(std::shared_ptr<InverseKinematics> ik);
-    void setFrameSetPair(CoordinateFrameSetPair* frameSets);
+    void setFrameSets(LinkCoordinateFrameSet* frameSets);
 
     Body* body();
     Link* link();
@@ -39,26 +40,42 @@ public:
     std::shared_ptr<InverseKinematics> inverseKinematics();
     bool isManipulator() const;
 
-    enum FrameType { BaseFrame = 0, LocalFrame = 1 };
+    enum FrameType {
+        WorldFrame = LinkCoordinateFrameSet::WorldFrame,
+        BodyFrame = LinkCoordinateFrameSet::BodyFrame,
+        EndFrame = LinkCoordinateFrameSet::EndFrame
+    };
 
-    CoordinateFrameSetPair* frameSetPair();
-    CoordinateFrameSet* frameSet(int which);
-    CoordinateFrameSet* baseFrameSet();
-    CoordinateFrameSet* localFrameSet();
+    LinkCoordinateFrameSet* frameSets();
+
+    CoordinateFrameSet* frameSet(int frameType);
+    CoordinateFrameSet* worldFrameSet();
+    CoordinateFrameSet* bodyFrameSet();
+    CoordinateFrameSet* endFrameSet();
     
-    CoordinateFrame* baseFrame(const GeneralId& id);
-    CoordinateFrame* localFrame(const GeneralId& id);
+    CoordinateFrame* worldFrame(const GeneralId& id);
+    CoordinateFrame* bodyFrame(const GeneralId& id);
+    CoordinateFrame* endFrame(const GeneralId& id);
 
-    const GeneralId& currentFrameId(int which);
+    const GeneralId& currentFrameId(int frameType);
+    const GeneralId& currentWorldFrameId();
+    const GeneralId& currentBodyFrameId();
+    const GeneralId& currentEndFrameId();
+    
+    CoordinateFrame* currentFrame(int frameType);
+    CoordinateFrame* currentWorldFrame();
+    CoordinateFrame* currentBodyFrame();
+    CoordinateFrame* currentEndFrame();
+
+    void setCurrentFrame(int frameType, const GeneralId& id);
+    void setCurrentWorldFrame(const GeneralId& id);
+    void setCurrentBodyFrame(const GeneralId& id);
+    void setCurrentEndFrame(const GeneralId& id);
+
+    int currentBaseFrameType(); // WorldFrame or BodyFrame
+    void setCurrentBaseFrameType(int frameType);
     const GeneralId& currentBaseFrameId();
-    const GeneralId& currentLocalFrameId();
-    
     CoordinateFrame* currentBaseFrame();
-    CoordinateFrame* currentLocalFrame();
-
-    void setCurrentFrame(int which, const GeneralId& id);
-    void setCurrentBaseFrame(const GeneralId& id);
-    void setCurrentLocalFrame(const GeneralId& id);
 
     SignalProxy<void()> sigCurrentFrameChanged();
     void notifyCurrentFrameChange();

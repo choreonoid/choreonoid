@@ -270,6 +270,17 @@ Archive* Archive::openSubArchive(const std::string& name)
 }
 
 
+Archive* Archive::subArchive(Mapping* node)
+{
+    Archive* archive = dynamic_cast<Archive*>(node);
+    if(archive){
+        archive->inheritSharedInfoFrom(*this);
+        return archive;
+    }
+    return invalidArchive();
+}
+
+
 std::string Archive::expandPathVariables(const std::string& path) const
 {
     QString qpath(path.c_str());

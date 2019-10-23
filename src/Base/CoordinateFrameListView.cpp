@@ -532,7 +532,7 @@ void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameLi
 
     if(item){
         targetLabel.setText(item->name().c_str());
-        frames = item->frames();
+        frames = item->frameList();
         frameListModel->setFrameList(frames);
     } else {
         targetLabel.setText("---");

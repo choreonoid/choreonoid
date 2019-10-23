@@ -27,7 +27,7 @@
 #include "MultiSE3MatrixSeqItem.h"
 #include "Vector3SeqItem.h"
 #include "CoordinateFrameListItem.h"
-#include "CoordinateFrameListPairItem.h"
+#include "MultiCoordinateFrameListItem.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -242,7 +242,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     MessageLogItem::initializeClass(ext);
     LightingItem::initializeClass(ext);
     CoordinateFrameListItem::initializeClass(ext);
-    CoordinateFrameListPairItem::initializeClass(ext);
+    MultiCoordinateFrameListItem::initializeClass(ext);
 
     MovieRecorder::initialize(ext);
 

@@ -17,8 +17,8 @@ public:
     CoordinateFrameListItem(const CoordinateFrameListItem& org);
     virtual ~CoordinateFrameListItem();
 
-    CoordinateFrameList* frames();
-    const CoordinateFrameList* frames() const;
+    CoordinateFrameList* frameList();
+    const CoordinateFrameList* frameList() const;
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

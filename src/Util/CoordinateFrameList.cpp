@@ -259,6 +259,11 @@ bool CoordinateFrameList::read(const Mapping& archive)
         versionNode.throwException(format(_("Format version {0} is not supported."), version));
     }
 
+    string name;
+    if(archive.read("name", name)){
+        setName(name);
+    }
+
     clear();
 
     auto& frameNodes = *archive.findListing("frames");
@@ -280,6 +285,9 @@ bool CoordinateFrameList::write(Mapping& archive) const
 {
     archive.write("type", "CoordinateFrameList");
     archive.write("formatVersion", 1.0);
+    if(!name().empty()){
+        archive.write("name", name());
+    }
 
     if(!impl->frames.empty()){
         Listing& frameNodes = *archive.createListing("frames");

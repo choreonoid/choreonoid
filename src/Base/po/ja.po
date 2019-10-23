@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-17 13:55+0900\n"
+"POT-Creation-Date: 2019-10-24 00:41+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -31,7 +31,7 @@ msgstr " 影の描画はこのGPUに対しては問題があるため無効化�
 
 #: ShaderPrograms.cpp:965
 msgid "Framebuffer is not complete.\n"
-msgstr ""
+msgstr "フレームバッファが不完全です．\n"
 
 #: FolderItem.cpp:53
 msgid "FolderItem"
@@ -276,6 +276,10 @@ msgstr "一時的"
 msgid "Refs"
 msgstr "参照数"
 
+#: MultiCoordinateFrameListItem.cpp:33
+msgid "MultiCoordinateFrameListItem"
+msgstr "マルチ座標フレームリストアイテム"
+
 #: GraphWidget.cpp:1151
 msgid "Graph: Position = ({0:.5f}, {1:.5f})"
 msgstr "グラフ位置 = ({0:.5f}, {1:.5f})"
@@ -335,10 +339,6 @@ msgstr "設定ダイアログの表示"
 #: TimeBar.cpp:642
 msgid "Stop animation"
 msgstr "アニメーションの停止"
-
-#: CoordinateFrameListPairItem.cpp:39
-msgid "CoordinateFrameListPairItem"
-msgstr "座標フレームリストペアアイテム"
 
 #: TaskView.cpp:211
 msgid "Task"
@@ -1726,23 +1726,23 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-#: CoordinateFrameListView.cpp:159
+#: CoordinateFrameListView.cpp:220
 msgid "Note"
 msgstr "注釈"
 
-#: CoordinateFrameListView.cpp:161
+#: CoordinateFrameListView.cpp:222
 msgid "Position"
 msgstr "ポジション"
 
-#: CoordinateFrameListView.cpp:362
+#: CoordinateFrameListView.cpp:432
 msgid "Coordinate Frames"
 msgstr "座標フレーム"
 
-#: CoordinateFrameListView.cpp:389 CoordinateFrameListView.cpp:541
+#: CoordinateFrameListView.cpp:459 CoordinateFrameListView.cpp:626
 msgid "Add"
 msgstr "追加"
 
-#: CoordinateFrameListView.cpp:544
+#: CoordinateFrameListView.cpp:630
 msgid "Remove"
 msgstr "削除"
 
@@ -1858,8 +1858,3 @@ msgstr "スクリプトバー"
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
-#~ msgid "Coord Frame List"
-#~ msgstr "座標フレーム一覧"
-
-#~ msgid "Coordinate Systems"
-#~ msgstr "座標系"

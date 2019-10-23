@@ -2,8 +2,9 @@
 #include "BodySelectionManager.h"
 #include <cnoid/Link>
 #include <cnoid/LinkKinematicsKit>
-#include <cnoid/CoordinateFrameSet>
-#include <cnoid/CoordinateFrameListPairItem>
+#include <cnoid/CoordinateFrameList>
+#include <cnoid/LinkCoordinateFrameSet>
+#include <cnoid/LinkCoordinateFrameListSetItem>
 #include <cnoid/RootItem>
 #include <cnoid/BodyItem>
 #include <cnoid/WorldItem>
@@ -17,6 +18,16 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+enum FrameType {
+    WorldFrame = LinkKinematicsKit::WorldFrame,
+    BodyFrame = LinkKinematicsKit::BodyFrame,
+    EndFrame = LinkKinematicsKit::EndFrame
+};
+
+}
+    
 namespace cnoid {
 
 class LinkKinematicsKitManager::Impl
@@ -26,7 +37,7 @@ public:
     map<int, LinkKinematicsKitPtr> linkIndexToKinematicsKitMap;
 
     ScopedConnection treeChangeConnection;
-    CoordinateFrameSetPairPtr commonFrameSetPair;
+    LinkCoordinateFrameSetPtr commonFrameSets;
 
     BodySelectionManager* bodySelectionManager;
     AbstractPositionEditTarget* frameEditTarget;
@@ -38,13 +49,13 @@ public:
 
     Impl(BodyItem* bodyItem);
     LinkKinematicsKit* getOrCreateKinematicsKit(Link* targetLink);
-    CoordinateFrameSetPairPtr extractCoordinateFrameSets();
-    CoordinateFrameSetPairPtr extractWorldCoordinateFrameSets(Item* item);
+    LinkCoordinateFrameSetPtr extractCoordinateFrameSets();
+    LinkCoordinateFrameSetPtr extractWorldCoordinateFrameSets(Item* item);
     void onTreeChanged();
     void setupPositionDragger();
     bool onPositionEditRequest(AbstractPositionEditTarget* target);
-    bool startBaseFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
-    bool startLocalFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
+    bool startBodyFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
+    bool startEndFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
     void setFrameEditTarget(AbstractPositionEditTarget* target, Link* link);
     void onFrameEditPositionChanged(const Position& T);
     void onDraggerPositionChanged();
@@ -62,7 +73,7 @@ LinkKinematicsKitManager::LinkKinematicsKitManager(BodyItem* bodyItem)
 LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
     : bodyItem(bodyItem)
 {
-    commonFrameSetPair = new CoordinateFrameSetPair;
+    commonFrameSets = new LinkCoordinateFrameSet;
     
     treeChangeConnection =
         RootItem::instance()->sigTreeChanged().connect([&](){ onTreeChanged(); });
@@ -97,7 +108,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::getOrCreateKinematicsKit(Link
     
     auto kit = new LinkKinematicsKit(targetLink);
 
-    kit->setFrameSetPair(commonFrameSetPair);
+    kit->setFrameSets(commonFrameSets);
     
     linkIndexToKinematicsKitMap[targetLink->index()] = kit;
 
@@ -127,18 +138,18 @@ LinkKinematicsKit* LinkKinematicsKitManager::getOrCreateKinematicsKit
 
 
 
-CoordinateFrameSetPairPtr LinkKinematicsKitManager::Impl::extractCoordinateFrameSets()
+LinkCoordinateFrameSetPtr LinkKinematicsKitManager::Impl::extractCoordinateFrameSets()
 {
-    CoordinateFrameSetPairPtr extracted;
+    LinkCoordinateFrameSetPtr extracted;
     
-    ItemList<CoordinateFrameListPairItem> lowerItems;
+    ItemList<LinkCoordinateFrameListSetItem> lowerItems;
     if(lowerItems.extractSubTreeItems(bodyItem)){
-        extracted = lowerItems.toSingle()->frameSetPair();
+        extracted = lowerItems.toSingle()->frameSets();
     } else {
         auto upperItem = bodyItem->parentItem();
         while(upperItem){
-            if(auto listPairItem = dynamic_cast<CoordinateFrameListPairItem*>(upperItem)){
-                extracted = listPairItem->frameSetPair();
+            if(auto listSetItem = dynamic_cast<LinkCoordinateFrameListSetItem*>(upperItem)){
+                extracted = listSetItem->frameSets();
                 break;
             }
             if(auto worldItem = dynamic_cast<WorldItem*>(upperItem)){
@@ -153,16 +164,16 @@ CoordinateFrameSetPairPtr LinkKinematicsKitManager::Impl::extractCoordinateFrame
 }
 
 
-CoordinateFrameSetPairPtr LinkKinematicsKitManager::Impl::extractWorldCoordinateFrameSets(Item* item)
+LinkCoordinateFrameSetPtr LinkKinematicsKitManager::Impl::extractWorldCoordinateFrameSets(Item* item)
 {
-    if(auto listPairItem = dynamic_cast<CoordinateFrameListPairItem*>(item)){
-        return listPairItem->frameSetPair();
+    if(auto listSetItem = dynamic_cast<LinkCoordinateFrameListSetItem*>(item)){
+        return listSetItem->frameSets();
     } else if(auto bodyItem = dynamic_cast<BodyItem*>(item)){
         return nullptr;
     }
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        if(auto frameSetPair = extractWorldCoordinateFrameSets(child)){
-            return frameSetPair;
+        if(auto frameSets = extractWorldCoordinateFrameSets(child)){
+            return frameSets;
         }
     }
     return nullptr;
@@ -172,7 +183,7 @@ CoordinateFrameSetPairPtr LinkKinematicsKitManager::Impl::extractWorldCoordinate
 void LinkKinematicsKitManager::Impl::onTreeChanged()
 {
     if(auto fsets = extractCoordinateFrameSets()){
-        *commonFrameSetPair = *fsets;
+        *commonFrameSets = *fsets;
     }
 }
 
@@ -208,10 +219,10 @@ bool LinkKinematicsKitManager::Impl::onPositionEditRequest(AbstractPositionEditT
     if(auto frame = dynamic_cast<CoordinateFrame*>(target->getPositionObject())){
         if(bodyItem == bodySelectionManager->currentBodyItem()){
             if(auto frameSet = frame->ownerFrameSet()){
-                if(commonFrameSetPair->baseFrameSet()->contains(frameSet)){
-                    accepted = startBaseFrameEditing(target, frame);
-                } else if(commonFrameSetPair->localFrameSet()->contains(frameSet)){
-                    accepted = startLocalFrameEditing(target, frame);
+                if(commonFrameSets->frameSet(BodyFrame)->contains(frameSet)){
+                    accepted = startBodyFrameEditing(target, frame);
+                } else if(commonFrameSets->frameSet(EndFrame)->contains(frameSet)){
+                    accepted = startEndFrameEditing(target, frame);
                 }
             }
         }
@@ -220,7 +231,7 @@ bool LinkKinematicsKitManager::Impl::onPositionEditRequest(AbstractPositionEditT
 }
 
 
-bool LinkKinematicsKitManager::Impl::startBaseFrameEditing
+bool LinkKinematicsKitManager::Impl::startBodyFrameEditing
 (AbstractPositionEditTarget* target, CoordinateFrame* frame)
 {
     if(auto link = bodySelectionManager->currentLink()){
@@ -234,7 +245,7 @@ bool LinkKinematicsKitManager::Impl::startBaseFrameEditing
 }
 
 
-bool LinkKinematicsKitManager::Impl::startLocalFrameEditing
+bool LinkKinematicsKitManager::Impl::startEndFrameEditing
 (AbstractPositionEditTarget* target, CoordinateFrame* frame)
 {
     if(auto link = bodySelectionManager->currentLink()){
@@ -308,18 +319,22 @@ bool LinkKinematicsKitManager::storeState(Mapping& archive) const
     
     for(auto& kv : impl->linkIndexToKinematicsKitMap){
         auto& kit = kv.second;
-        auto baseId = kit->currentBaseFrameId();
-        auto localId = kit->currentLocalFrameId();
-        if(baseId != defaultId || localId != defaultId){
+        auto worldId = kit->currentWorldFrameId();
+        auto bodyId = kit->currentBodyFrameId();
+        auto endId = kit->currentEndFrameId();
+        if(worldId != defaultId || bodyId != defaultId || endId != defaultId){
             int linkIndex = kv.first;
             auto& linkName = body->link(linkIndex)->name();
             if(!linkName.empty()){
                 auto& node = *archive.openMapping(linkName);
-                if(baseId != defaultId){
-                    node.write("currentBaseFrame", baseId.label(), DOUBLE_QUOTED);
+                if(worldId != defaultId){
+                    node.write("currentWorldFrame", worldId.label(), DOUBLE_QUOTED);
                 }
-                if(localId != defaultId){
-                    node.write("currentLocalFrame", localId.label(), DOUBLE_QUOTED);
+                if(bodyId != defaultId){
+                    node.write("currentBodyFrame", bodyId.label(), DOUBLE_QUOTED);
+                }
+                if(endId != defaultId){
+                    node.write("currentEndFrame", endId.label(), DOUBLE_QUOTED);
                 }
             }
         }
@@ -340,15 +355,17 @@ bool LinkKinematicsKitManager::restoreState(const Mapping& archive)
         if(link){
             auto kit = getOrCreateKinematicsKit(link);
             auto& node = *kv.second->toMapping();
-            if(id.read(node, "currentBaseFrame")){
-                kit->setCurrentBaseFrame(id);
+            if(id.read(node, "currentWorldFrame")){
+                kit->setCurrentWorldFrame(id);
             }
-            if(id.read(node, "currentLocalFrame")){
-                kit->setCurrentLocalFrame(id);
+            if(id.read(node, "currentBodyFrame")){
+                kit->setCurrentBodyFrame(id);
+            }
+            if(id.read(node, "currentEndFrame")){
+                kit->setCurrentEndFrame(id);
             }
         }
     }
 
     return true;
 }
-

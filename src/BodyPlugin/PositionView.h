@@ -8,6 +8,7 @@
 #include <cnoid/View>
 #include <functional>
 #include <string>
+#include <tuple>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -29,7 +30,7 @@ public:
     void setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* endOffsetLabel);
 
     void customizeDefaultCoordinateFrameNames(
-        std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> getNames);
+        std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> getNames);
 
 protected:
     virtual void onActivated() override;

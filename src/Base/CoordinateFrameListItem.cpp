@@ -14,7 +14,7 @@ namespace cnoid {
 class CoordinateFrameListItem::Impl
 {
 public:
-    CoordinateFrameListPtr frames;
+    CoordinateFrameListPtr frameList;
 
     Impl();
     Impl(const Impl& org);
@@ -38,7 +38,7 @@ CoordinateFrameListItem::CoordinateFrameListItem()
 
 CoordinateFrameListItem::Impl::Impl()
 {
-    frames = new CoordinateFrameList;
+    frameList = new CoordinateFrameList;
 }
 
 
@@ -51,7 +51,7 @@ CoordinateFrameListItem::CoordinateFrameListItem(const CoordinateFrameListItem& 
 
 CoordinateFrameListItem::Impl::Impl(const Impl& org)
 {
-    frames = new CoordinateFrameList(*org.frames);
+    frameList = new CoordinateFrameList(*org.frameList);
 }
 
 
@@ -67,33 +67,33 @@ Item* CoordinateFrameListItem::doDuplicate() const
 }
 
 
-CoordinateFrameList* CoordinateFrameListItem::frames()
+CoordinateFrameList* CoordinateFrameListItem::frameList()
 {
-    return impl->frames;
+    return impl->frameList;
 }
 
 
-const CoordinateFrameList* CoordinateFrameListItem::frames() const
+const CoordinateFrameList* CoordinateFrameListItem::frameList() const
 {
-    return impl->frames;
+    return impl->frameList;
 }
 
 
 void CoordinateFrameListItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Num coordinate frames"), impl->frames->numFrames());
+    putProperty(_("Num coordinate frames"), impl->frameList->numFrames());
 }
 
 
 bool CoordinateFrameListItem::store(Archive& archive)
 {
-    return impl->frames->write(archive);
+    return impl->frameList->write(archive);
 }
 
 
 bool CoordinateFrameListItem::restore(const Archive& archive)
 {
-    impl->frames->resetIdCounter();
-    impl->frames->read(archive);
+    impl->frameList->resetIdCounter();
+    impl->frameList->read(archive);
     return true;
 }

@@ -1,6 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 
+#include <cnoid/LinkKinematicsKit>
 #include <cnoid/Referenced>
 #include <cnoid/CloneMap>
 #include <cnoid/EigenTypes>
@@ -18,7 +19,6 @@ class ManipulatorIkPosition;
 class ManipulatorFkPosition;
 class ManipulatorPositionCloneMap;
 class ManipulatorPositionSet;
-class LinkKinematicsKit;
 class Mapping;
 
 class CNOID_EXPORT ManipulatorPosition : public Referenced
@@ -96,11 +96,23 @@ public:
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();
 
+    enum BaseFrameType {
+        WorldFrame = LinkKinematicsKit::WorldFrame,
+        BodyFrame = LinkKinematicsKit::BodyFrame
+    };
+
+    void setBaseFrameType(int type) { baseFrameType_ = type; }
+    int baseFrameType() const { return baseFrameType_; }
+    bool isBasedOnWorldFrame() const { return (baseFrameType_ == WorldFrame); }
+    bool isBasedOnBodyFrame() const { return (baseFrameType_ == BodyFrame); }
+
     void setBaseFrameId(const GeneralId& id){ baseFrameId_ = id; }
     void setToolFrameId(const GeneralId& id){ toolFrameId_ = id; }
     
     const GeneralId& baseFrameId() const { return baseFrameId_; }
     const GeneralId& toolFrameId() const { return toolFrameId_; }
+
+    enum FrameType { BaseFrame = 0, ToolFrame = 1 };
 
     const GeneralId& frameId(int which) const {
         return (which == 0) ? baseFrameId_ : toolFrameId_;
@@ -119,6 +131,7 @@ private:
     bool hasReferenceRpy_;
     GeneralId baseFrameId_;
     GeneralId toolFrameId_;
+    int baseFrameType_;
     int configuration_;
     std::array<int, MaxNumJoints> phase_;
 };

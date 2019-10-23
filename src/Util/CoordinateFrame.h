@@ -37,12 +37,6 @@ public:
     const Position& position() const { return T_; }
     void setPosition(const Position& T) { T_ = T; }
 
-    enum Mode { Relative, Absolute };
-
-    bool isRelative() const { return (mode_ == Relative); }
-    bool isAbsolute() const { return (mode_ == Absolute); }
-    void setMode(Mode mode){ mode_ = mode; }
-
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
 
@@ -57,7 +51,6 @@ protected:
 private:
     Position T_;
     GeneralId id_;
-    Mode mode_;
     std::string note_;
     weak_ref_ptr<CoordinateFrameSet> ownerFrameSet_;
 
