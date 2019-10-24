@@ -1443,8 +1443,35 @@ bool BodyItemImpl::store(Archive& archive)
     /// \todo Improve the following for current / initial position representations
     write(archive, "rootPosition", body->rootLink()->p());
     write(archive, "rootAttitude", Matrix3(body->rootLink()->R()));
-    Listing* qs = archive.createFlowStyleListing("jointPositions");
+
+    Listing* qs;
+    
+    // New format uses degree
     int n = body->numAllJoints();
+    if(n > 0){
+        bool doWriteInitialJointDisplacements = false;
+        BodyState::Data& initialJointDisplacements = initialState.data(BodyState::JOINT_POSITIONS);
+        qs = archive.createFlowStyleListing("jointDisplacements");
+        for(int i=0; i < n; ++i){
+            double q = body->joint(i)->q();
+            qs->append(degree(q), 10, n);
+            if(!doWriteInitialJointDisplacements){
+                if(i < initialJointDisplacements.size() && q != initialJointDisplacements[i]){
+                    doWriteInitialJointDisplacements = true;
+                }
+            }
+        }
+        if(doWriteInitialJointDisplacements){
+            qs = archive.createFlowStyleListing("initialJointDisplacements");
+            for(size_t i=0; i < initialJointDisplacements.size(); ++i){
+                qs->append(degree(initialJointDisplacements[i]), 10, n);
+            }
+        }
+    }
+
+    // Old format. Remove this after version 1.8 is released.
+    qs = archive.createFlowStyleListing("jointPositions");
+    n = body->numAllJoints();
     for(int i=0; i < n; ++i){
         qs->append(body->joint(i)->q(), 10, n);
     }
@@ -1455,6 +1482,8 @@ bool BodyItemImpl::store(Archive& archive)
         write(archive, "initialRootPosition", initialRootPosition.translation());
         write(archive, "initialRootAttitude", Matrix3(initialRootPosition.rotation()));
     }
+
+    // Old format. Remove this after version 1.8 is released.
     BodyState::Data& initialJointPositions = initialState.data(BodyState::JOINT_POSITIONS);
     if(!initialJointPositions.empty()){
         qs = archive.createFlowStyleListing("initialJointPositions");
@@ -1505,21 +1534,6 @@ bool BodyItemImpl::restore(const Archive& archive)
     if(read(archive, "rootAttitude", R)){
         body->rootLink()->R() = R;
     }
-    Listing* qs = archive.findListing("jointPositions");
-    if(qs->isValid()){
-        int nj = body->numAllJoints();
-        if(qs->size() != nj){
-            if(qs->size() != body->numJoints()){
-                MessageView::instance()->putln(
-                    format(_("Mismatched size of the stored joint positions for {}"), self->name()),
-                    MessageView::WARNING);
-            }
-            nj = std::min(qs->size(), nj);
-        }
-        for(int i=0; i < nj; ++i){
-            body->joint(i)->q() = (*qs)[i].toDouble();
-        }
-    }
 
     //! \todo replace the following code with the ValueTree serialization function of BodyState
     initialState.clear();
@@ -1527,26 +1541,64 @@ bool BodyItemImpl::restore(const Archive& archive)
     read(archive, "initialRootPosition", p);
     read(archive, "initialRootAttitude", R);
     initialState.setRootLinkPosition(SE3(p, R));
-    
-    qs = archive.findListing("initialJointPositions");
+
+    Listing* qs;
+    bool useNewJointDisplacementFormat = false;
+
+    qs = archive.findListing("jointDisplacements");
+    Listing* qs_initial = archive.findListing("initialJointDisplacements");
     if(qs->isValid()){
-        BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
-        int n = body->numAllJoints();
-        int m = qs->size();
-        if(m != n){
-            if(m != body->numJoints()){
-                MessageView::instance()->putln(
-                    format(_("Mismatched size of the stored initial joint positions for {}"), self->name()),
-                    MessageView::WARNING);
+        useNewJointDisplacementFormat = true;
+        int nj = std::min(qs->size(), body->numAllJoints());
+        BodyState::Data& q_initial = initialState.data(BodyState::JOINT_POSITIONS);
+        q_initial.resize(nj);
+        for(int i=0; i < nj; ++i){
+            double q = radian((*qs)[i].toDouble());
+            body->joint(i)->q() = q;
+            if(qs_initial->isValid() && i < qs_initial->size()){
+                q_initial[i] = radian((*qs_initial)[i].toDouble());
+            } else {
+                q_initial[i] = q;
             }
-            m = std::min(m, n);
         }
-        q.resize(n);
-        for(int i=0; i < m; ++i){
-            q[i] = (*qs)[i].toDouble();
+    }
+
+    if(!useNewJointDisplacementFormat){
+        qs = archive.findListing("jointPositions");
+        if(qs->isValid()){
+            int nj = body->numAllJoints();
+            if(qs->size() != nj){
+                if(qs->size() != body->numJoints()){
+                    MessageView::instance()->putln(
+                        format(_("Mismatched size of the stored joint positions for {}"), self->name()),
+                        MessageView::WARNING);
+                }
+                nj = std::min(qs->size(), nj);
+            }
+            for(int i=0; i < nj; ++i){
+                body->joint(i)->q() = (*qs)[i].toDouble();
+            }
         }
-        for(int i=m; i < n; ++i){
-            q[i] = body->joint(i)->q();
+        qs = archive.findListing("initialJointPositions");
+        if(qs->isValid()){
+            BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
+            int n = body->numAllJoints();
+            int m = qs->size();
+            if(m != n){
+                if(m != body->numJoints()){
+                    MessageView::instance()->putln(
+                        format(_("Mismatched size of the stored initial joint positions for {}"), self->name()),
+                        MessageView::WARNING);
+                }
+                m = std::min(m, n);
+            }
+            q.resize(n);
+            for(int i=0; i < m; ++i){
+                q[i] = (*qs)[i].toDouble();
+            }
+            for(int i=m; i < n; ++i){
+                q[i] = body->joint(i)->q();
+            }
         }
     }
 
