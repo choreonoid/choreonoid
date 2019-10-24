@@ -303,7 +303,7 @@ void PositionView::Impl::createPanel()
     localCoordRadio.setEnabled(false);
 
     coordinateMode = WorldCoordinateMode;
-    preferredCoordinateMode = WorldCoordinateMode;
+    preferredCoordinateMode = BodyCoordinateMode;
 
     coordinateModeGroup.sigButtonToggled().connect(
         [&](int id, bool checked){
@@ -882,32 +882,50 @@ void PositionView::Impl::onFrameComboActivated(int frameComboIndex, int index)
 
 void PositionView::Impl::onCurrentFrameChanged()
 {
-    for(int i=0; i < 2; ++i){
-        GeneralId newId;
-        if(i == BaseFrameCombo){
-            newId = kinematicsKit->currentBaseFrameId();
-        } else {
-            newId = kinematicsKit->currentEndFrameId();
-        }
-        auto& combo = frameCombo[i];
-        int currentIndex = combo.currentIndex();
-        for(int j=0; j < combo.count(); ++j){
-            GeneralId id;
-            auto idValue = combo.itemData(j);
-            if(idValue.userType() == QMetaType::Int){
-                id = idValue.toInt();
-            } else if(idValue.userType() == QMetaType::QString){
-                id = idValue.toString().toStdString();
+    bool coordinateModeUpdated = false;
+    auto baseFrameType = kinematicsKit->currentBaseFrameType();
+    
+    if(baseFrameType == LinkCoordinateFrameSet::WorldFrame && coordinateMode != WorldCoordinateMode){
+        setCoordinateMode(WorldCoordinateMode);
+        coordinateModeUpdated = true;
+
+    } else if(baseFrameType == LinkCoordinateFrameSet::BodyFrame && coordinateMode != BodyCoordinateMode){
+        setCoordinateMode(BodyCoordinateMode);
+        coordinateModeUpdated = true;
+    }
+
+    if(coordinateModeUpdated){
+        preferredCoordinateMode = coordinateMode;
+
+    } else {
+        for(int i=0; i < 2; ++i){
+            GeneralId newId;
+            if(i == BaseFrameCombo){
+                newId = kinematicsKit->currentBaseFrameId();
+            } else {
+                newId = kinematicsKit->currentEndFrameId();
             }
-            if(id == newId){
-                currentIndex = j;
-                break;
+            auto& combo = frameCombo[i];
+            int currentIndex = combo.currentIndex();
+            for(int j=0; j < combo.count(); ++j){
+                GeneralId id;
+                auto idValue = combo.itemData(j);
+                if(idValue.userType() == QMetaType::Int){
+                    id = idValue.toInt();
+                } else if(idValue.userType() == QMetaType::QString){
+                    id = idValue.toString().toStdString();
+                }
+                if(id == newId){
+                    currentIndex = j;
+                    break;
+                }
             }
-        }
-        if(currentIndex != combo.currentIndex()){
-            combo.setCurrentIndex(currentIndex);
+            if(currentIndex != combo.currentIndex()){
+                combo.setCurrentIndex(currentIndex);
+            }
         }
     }
+    
     baseFrame = kinematicsKit->currentBaseFrame();
     endFrame = kinematicsKit->currentEndFrame();
     
