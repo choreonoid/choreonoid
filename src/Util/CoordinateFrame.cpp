@@ -56,7 +56,7 @@ bool CoordinateFrame::read(const Mapping& archive)
             T_.translation() = v;
         }
         if(cnoid::read(archive, "rotation", v)){
-            T_.linear() = rotFromRpy(v);
+            T_.linear() = rotFromRpy(radian(v));
         }
         archive.read("note", note_);
         return true;
@@ -69,7 +69,7 @@ bool CoordinateFrame::write(Mapping& archive) const
 {
     if(id_.write(archive, "id")){
         cnoid::write(archive, "translation", Vector3(T_.translation()));
-        cnoid::write(archive, "rotation", rpyFromRot(T_.linear()));
+        cnoid::write(archive, "rotation", degree(rpyFromRot(T_.linear())));
         if(!note_.empty()){
             archive.write("note", note_, DOUBLE_QUOTED);
         }

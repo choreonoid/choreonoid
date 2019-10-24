@@ -350,8 +350,7 @@ bool ManipulatorIkPosition::read(const Mapping& archive)
         T.translation().setZero();
     }
     if(cnoid::read(archive, "rotation", v)){
-        T.linear() = rotFromRpy(v);
-        setReferenceRpy(v);
+        setRpy(radian(v));
     } else {
         T.linear().setIdentity();
         resetReferenceRpy();
@@ -395,7 +394,7 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
     ManipulatorPosition::write(archive);
     
     cnoid::write(archive, "translation", Vector3(T.translation()));
-    cnoid::write(archive, "rotation", rpy());
+    cnoid::write(archive, "rotation", degree(rpy()));
 
     if(baseFrameType_ == WorldFrame){
         archive.write("baseFrameType", "world");
