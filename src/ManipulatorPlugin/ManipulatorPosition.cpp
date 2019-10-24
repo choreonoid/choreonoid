@@ -1,5 +1,6 @@
 #include "ManipulatorPosition.h"
 #include <cnoid/Body>
+#include <cnoid/LinkKinematicsKit>
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
 #include <cnoid/CoordinateFrame>

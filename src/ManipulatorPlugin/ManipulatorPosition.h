@@ -1,7 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 
-#include <cnoid/LinkKinematicsKit>
+#include <cnoid/LinkCoordinateFrameSet>
 #include <cnoid/Referenced>
 #include <cnoid/CloneMap>
 #include <cnoid/EigenTypes>
@@ -14,6 +14,7 @@
 namespace cnoid {
 
 class Body;
+class LinkKinematicsKit;
 class ManipulatorPositionRef;
 class ManipulatorIkPosition;
 class ManipulatorFkPosition;
@@ -97,8 +98,8 @@ public:
     void resetReferenceRpy();
 
     enum BaseFrameType {
-        WorldFrame = LinkKinematicsKit::WorldFrame,
-        BodyFrame = LinkKinematicsKit::BodyFrame
+        WorldFrame = LinkCoordinateFrameSet::WorldFrame,
+        BodyFrame = LinkCoordinateFrameSet::BodyFrame
     };
 
     void setBaseFrameType(int type) { baseFrameType_ = type; }
@@ -114,8 +115,18 @@ public:
 
     enum FrameType { BaseFrame = 0, ToolFrame = 1 };
 
-    const GeneralId& frameId(int which) const {
-        return (which == 0) ? baseFrameId_ : toolFrameId_;
+    const GeneralId& frameId(int frameType) const {
+        return (frameType == BaseFrame) ? baseFrameId_ : toolFrameId_;
+    }
+
+    CoordinateFrame* baseFrame(LinkCoordinateFrameSet* frames){
+        return frames->frameSet(baseFrameType_)->getFrame(baseFrameId_);
+    }
+    CoordinateFrame* toolFrame(LinkCoordinateFrameSet* frames){
+        return frames->endFrameSet()->getFrame(toolFrameId_);
+    }
+    CoordinateFrame* frame(LinkCoordinateFrameSet* frames, int frameType){
+        return (frameType == BaseFrame) ? baseFrame(frames) : toolFrame(frames);
     }
     
     int configuration() const { return configuration_; }
