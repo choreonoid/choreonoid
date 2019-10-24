@@ -77,6 +77,7 @@ public:
     LinkKinematicsKitPtr kinematicsKit;
     LinkKinematicsKitPtr dummyKinematicsKit;
     ScopedConnection kinematicsKitConnection;
+    Vector3 referenceRpy;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
     CoordinateFramePtr endFrame;
@@ -136,6 +137,7 @@ public:
     void resetInputWidgetStyles();
     void onMenuButtonClicked();
     void setRpySpinsVisible(bool on);
+    Vector3 getRpySpinValue();
     void setQuaternionSpinsVisible(bool on);
     void setCoordinateModeInterfaceEnabled(bool on);
     void setCoordinateMode(int mode);
@@ -212,6 +214,7 @@ PositionView::Impl::Impl(PositionView* self)
     dummyKinematicsKit->setFrameSets(new LinkCoordinateFrameSet);
     kinematicsKit = dummyKinematicsKit;
 
+    referenceRpy.setZero();
     identityFrame = new CoordinateFrame;
     baseFrame = identityFrame;
     endFrame = identityFrame;
@@ -585,6 +588,16 @@ void PositionView::Impl::setRpySpinsVisible(bool on)
     }
 }
 
+
+Vector3 PositionView::Impl::getRpySpinValue()
+{
+    Vector3 rpy;
+    for(int i=0; i < 3; ++i){
+        rpy[i] = radian(rpySpin[i].value());
+    }
+    return rpy;
+}
+    
 
 void PositionView::Impl::setQuaternionSpinsVisible(bool on)
 {
@@ -1041,6 +1054,7 @@ void PositionView::Impl::updatePanelWithCurrentLinkPosition()
         if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
             T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
         }
+        referenceRpy = kinematicsKit->referenceRpy();
         updatePanelWithPosition(T);
     }
 }
@@ -1049,6 +1063,7 @@ void PositionView::Impl::updatePanelWithCurrentLinkPosition()
 void PositionView::Impl::updatePanelWithPositionEditTarget()
 {
     if(positionEditTarget){
+        referenceRpy.setZero();
         updatePanelWithPosition(positionEditTarget->getPosition());
     }
 }
@@ -1065,22 +1080,25 @@ void PositionView::Impl::updatePanelWithPosition(const Position& T)
             spin.setValue(p[i]);
         }
     }
+
     Matrix3 R = T.linear();
     if(rpyCheck->isChecked()){
-        Vector3 prevRPY;
-        for(int i=0; i < 3; ++i){
-            prevRPY[i] = radian(rpySpin[i].value());
-        }
         Vector3 rpy;
         if(uniqueRpyCheck->isChecked()){
             rpy = rpyFromRot(R);
         } else {
-            rpy = rpyFromRot(R, prevRPY);
+            if(T.linear().isApprox(rotFromRpy(referenceRpy))){
+                rpy = rpyFromRot(R, referenceRpy);
+            } else {
+                rpy = rpyFromRot(R, getRpySpinValue());
+            }
+            referenceRpy = rpy;
         }
         for(int i=0; i < 3; ++i){
             rpySpin[i].setValue(degree(rpy[i]));
         }
     }
+    
     if(quaternionCheck->isChecked()){
         if(!quatSpin[0].hasFocus() &&
            !quatSpin[1].hasFocus() &&
@@ -1093,6 +1111,7 @@ void PositionView::Impl::updatePanelWithPosition(const Position& T)
             quatSpin[3].setValue(quat.w());
         }
     }
+    
     if(rotationMatrixCheck->isChecked()){
         updateRotationMatrixPanel(R);
     }
@@ -1218,6 +1237,8 @@ void PositionView::Impl::applyInput(const Position& T_input, InputElementSet inp
 void PositionView::Impl::findBodyIkSolution(const Position& T_input, InputElementSet inputElements)
 {
     if(auto ik = kinematicsKit->inverseKinematics()){
+
+        kinematicsKit->setReferenceRpy(getRpySpinValue());
 
         targetBodyItem->beginKinematicStateEdit();
         

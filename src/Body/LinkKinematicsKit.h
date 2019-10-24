@@ -33,12 +33,16 @@ public:
     Body* body();
     Link* link();
     Link* baseLink();
+    std::shared_ptr<InverseKinematics> inverseKinematics();
     std::shared_ptr<JointPath> jointPath();
     std::shared_ptr<JointPathConfigurationHandler> configurationHandler();
     int currentConfiguration() const;
     std::string configurationName(int index) const;
-    std::shared_ptr<InverseKinematics> inverseKinematics();
     bool isManipulator() const;
+
+    Vector3 referenceRpy() const;
+    void setReferenceRpy(const Vector3& rpy);
+    void resetReferenceRpy();
 
     enum FrameType {
         WorldFrame = LinkCoordinateFrameSet::WorldFrame,

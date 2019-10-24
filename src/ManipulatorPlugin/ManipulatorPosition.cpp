@@ -185,8 +185,7 @@ ManipulatorIkPosition::ManipulatorIkPosition()
       toolFrameId_(0)
 {
     T.setIdentity();
-    rpy_.setZero();
-    hasReferenceRpy_ = false;
+    referenceRpy_.setZero();
     baseFrameType_ = BodyFrame;
     configuration_ = 0;
     phase_.fill(0);
@@ -196,8 +195,7 @@ ManipulatorIkPosition::ManipulatorIkPosition()
 ManipulatorIkPosition::ManipulatorIkPosition(const ManipulatorIkPosition& org)
     : ManipulatorPosition(org),
       T(org.T),
-      rpy_(org.rpy_),
-      hasReferenceRpy_(org.hasReferenceRpy_),
+      referenceRpy_(org.referenceRpy_),
       baseFrameId_(org.baseFrameId_),
       toolFrameId_(org.toolFrameId_),
       baseFrameType_(org.baseFrameType_),
@@ -212,8 +210,7 @@ ManipulatorIkPosition& ManipulatorIkPosition::operator=(const ManipulatorIkPosit
 {
     setName(rhs.name());
     T = rhs.T;
-    rpy_ = rhs.rpy_;
-    hasReferenceRpy_ = rhs.hasReferenceRpy_;
+    referenceRpy_ = rhs.referenceRpy_;
     baseFrameId_ = rhs.baseFrameId_;
     toolFrameId_ = rhs.toolFrameId_;
     baseFrameType_ = rhs.baseFrameType_;
@@ -232,32 +229,26 @@ ManipulatorPosition* ManipulatorIkPosition::clone() const
 
 Vector3 ManipulatorIkPosition::rpy() const
 {
-    if(hasReferenceRpy_){
-        return rpyFromRot(T.linear(), rpy_);
-    } else {
-        return rpyFromRot(T.linear());
-    }
+    return rpyFromRot(T.linear(), referenceRpy_);
 }
 
 
 void ManipulatorIkPosition::setRpy(const Vector3& rpy)
 {
     T.linear() = rotFromRpy(rpy);
-    rpy_ = rpy;
-    hasReferenceRpy_ = true;
+    referenceRpy_ = rpy;
 }
 
 
 void ManipulatorIkPosition::setReferenceRpy(const Vector3& rpy)
 {
-    rpy_ = rpy;
-    hasReferenceRpy_ = true;
+    referenceRpy_ = rpy;
 }
 
 
 void ManipulatorIkPosition::resetReferenceRpy()
 {
-    hasReferenceRpy_ = false;
+    referenceRpy_.setZero();
 }
 
 
@@ -304,7 +295,7 @@ bool ManipulatorIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit
 
     T = T_base.inverse(Eigen::Isometry) * T_end;
 
-    hasReferenceRpy_ = false;
+    referenceRpy_ = rpyFromRot(T.linear(), kinematicsKit->referenceRpy());
 
     configuration_ = kinematicsKit->currentConfiguration();
 
@@ -339,6 +330,8 @@ bool ManipulatorIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
     Position T_end;
     T_end.translation() = Ta_end.translation();
     T_end.linear() = kinematicsKit->link()->calcRfromAttitude(Ta_end.linear());
+
+    kinematicsKit->setReferenceRpy(rpyFromRot(T.linear(), referenceRpy_));
     
     return jointPath->calcInverseKinematics(T_end);
 }

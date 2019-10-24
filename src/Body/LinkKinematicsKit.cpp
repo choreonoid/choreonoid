@@ -17,6 +17,8 @@ class LinkKinematicsKit::Impl
 public:
     BodyPtr body;
     LinkPtr link;
+    Vector3 referenceRpy;
+    bool isRpySpecified;
     shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointPathConfigurationHandler> configurationHandler;
@@ -42,6 +44,7 @@ LinkKinematicsKit::LinkKinematicsKit(Link* link)
 
 LinkKinematicsKit::Impl::Impl(Link* link)
     : link(link),
+      referenceRpy(Vector3::Zero()),
       currentFrameId{ 0, 0, 0 },
       currentBaseFrameType(WorldFrame)
 {
@@ -174,6 +177,24 @@ std::string LinkKinematicsKit::configurationName(int index) const
         return impl->configurationHandler->getConfigurationName(index);
     }
     return std::string();
+}
+
+
+Vector3 LinkKinematicsKit::referenceRpy() const
+{
+    return impl->referenceRpy;
+}
+
+
+void LinkKinematicsKit::setReferenceRpy(const Vector3& rpy)
+{
+    impl->referenceRpy = rpy;
+}
+
+
+void LinkKinematicsKit::resetReferenceRpy()
+{
+    impl->referenceRpy.setZero();
 }
 
 

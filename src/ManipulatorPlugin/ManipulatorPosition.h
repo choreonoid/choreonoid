@@ -147,8 +147,7 @@ public:
 
 private:
     Position T;
-    Vector3 rpy_;
-    bool hasReferenceRpy_;
+    Vector3 referenceRpy_;
     GeneralId baseFrameId_;
     GeneralId toolFrameId_;
     int baseFrameType_;
