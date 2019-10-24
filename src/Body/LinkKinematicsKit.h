@@ -76,6 +76,7 @@ public:
     void setCurrentBaseFrameType(int frameType);
     const GeneralId& currentBaseFrameId();
     CoordinateFrame* currentBaseFrame();
+    void setCurrentBaseFrame(const GeneralId& id);
 
     SignalProxy<void()> sigCurrentFrameChanged();
     void notifyCurrentFrameChange();

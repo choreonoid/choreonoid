@@ -263,19 +263,41 @@ void ManipulatorIkPosition::resetReferenceRpy()
 
 bool ManipulatorIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
+    return setCurrentPosition_(kinematicsKit, false);
+}
+
+
+bool ManipulatorIkPosition::setCurrentPositionWithCurrentBaseFrameType(LinkKinematicsKit* kinematicsKit)
+{
+    return setCurrentPosition_(kinematicsKit, true);
+}
+
+
+bool ManipulatorIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool useCurrentBaseFrameType)
+{
     auto baseLink = kinematicsKit->baseLink();
     if(!baseLink){
         return false;
     }
 
     Position T_base;
-    auto baseFrame = kinematicsKit->currentBaseFrame();
-    if(baseFrameType_ == WorldFrame){
-        T_base = baseFrame->T();
+
+    if(useCurrentBaseFrameType){
+        baseFrameType_ = kinematicsKit->currentBaseFrameType();
     } else {
+        baseFrameType_ = BodyFrame;
+    }
+
+    if(baseFrameType_ == WorldFrame){
+        baseFrameId_ = kinematicsKit->currentWorldFrameId();
+        auto baseFrame = kinematicsKit->currentWorldFrame();
+        T_base = baseFrame->T();
+
+    } else {
+        baseFrameId_ = kinematicsKit->currentBodyFrameId();
+        auto baseFrame = kinematicsKit->currentBodyFrame();
         T_base = baseLink->Ta() * baseFrame->T();
     }
-    baseFrameId_ = kinematicsKit->currentBaseFrameId();
 
     auto endFrame = kinematicsKit->currentEndFrame();
     Position T_end = kinematicsKit->link()->Ta() * endFrame->T();
@@ -382,14 +404,14 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", rpy());
 
-    baseFrameId_.write(archive, "baseFrame");
-    toolFrameId_.write(archive, "toolFrame");
-
     if(baseFrameType_ == WorldFrame){
         archive.write("baseFrameType", "world");
     } else if(baseFrameType_ == BodyFrame){
         archive.write("baseFrameType", "body");
     }
+
+    baseFrameId_.write(archive, "baseFrame");
+    toolFrameId_.write(archive, "toolFrame");
 
     archive.write("configIndex", configuration_);
     auto& phaseNodes = *archive.createFlowStyleListing("phases");

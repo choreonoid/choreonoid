@@ -340,6 +340,16 @@ CoordinateFrame* LinkKinematicsKit::currentBaseFrame()
 }
 
 
+void LinkKinematicsKit::setCurrentBaseFrame(const GeneralId& id)
+{
+    if(impl->currentBaseFrameType == WorldFrame){
+        setCurrentWorldFrame(id);
+    } else {
+        setCurrentBodyFrame(id);
+    }
+}
+    
+
 SignalProxy<void()> LinkKinematicsKit::sigCurrentFrameChanged()
 {
     return impl->sigCurrentFrameChanged;

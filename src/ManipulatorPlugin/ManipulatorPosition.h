@@ -131,7 +131,16 @@ public:
     
     int configuration() const { return configuration_; }
 
+    /**
+       \note This function always specifies BodyFrame as the base frame type.
+    */
     virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit);
+
+    /**
+       \note This function specifies the current base frame type specified in the kinematics kit.
+    */
+    bool setCurrentPositionWithCurrentBaseFrameType(LinkKinematicsKit* kinematicsKit);
+    
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
@@ -145,6 +154,8 @@ private:
     int baseFrameType_;
     int configuration_;
     std::array<int, MaxNumJoints> phase_;
+
+    bool setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool useCurrentBaseFrameType);    
 };
 
 typedef ref_ptr<ManipulatorIkPosition> ManipulatorIkPositionPtr;
