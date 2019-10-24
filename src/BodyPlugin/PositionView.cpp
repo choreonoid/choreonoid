@@ -85,9 +85,10 @@ public:
     
     ToolButton menuButton;
     MenuManager menuManager;
+    
     QLabel targetLabel;
-    QLabel configurationLabel;
     QLabel resultLabel;
+    
     enum CoordinateMode { WorldCoordinateMode, BodyCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
     Selection coordinateModeSelection;
     int coordinateMode;
@@ -96,6 +97,8 @@ public:
     RadioButton worldCoordRadio;
     RadioButton bodyCoordRadio;
     RadioButton localCoordRadio;
+    vector<QWidget*> coordinateModeWidgets;
+
     DoubleSpinBox xyzSpin[3];
     Action* rpyCheck;
     Action* uniqueRpyCheck;
@@ -118,6 +121,7 @@ public:
     QLabel frameComboLabel[2];
     ComboBox frameCombo[2];
     
+    QLabel configurationLabel;
     ComboBox configurationCombo;
     CheckBox requireConfigurationCheck;
     vector<QWidget*> configurationWidgets;
@@ -133,6 +137,7 @@ public:
     void onMenuButtonClicked();
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
+    void setCoordinateModeInterfaceEnabled(bool on);
     void setCoordinateMode(int mode);
     void setBodyCoordinateModeEnabled(bool on);
     void onCoordinateModeRadioToggled(int mode);
@@ -249,9 +254,6 @@ void PositionView::Impl::createPanel()
     targetLabel.setStyleSheet("font-weight: bold");
     targetLabel.setAlignment(Qt::AlignLeft);
     hbox->addWidget(&targetLabel);
-    hbox->addStretch(1);
-    configurationLabel.setAlignment(Qt::AlignLeft);
-    hbox->addWidget(&configurationLabel);
     hbox->addStretch(10);
     
     menuButton.setText("*");
@@ -276,23 +278,28 @@ void PositionView::Impl::createPanel()
     mainvbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(_("Coord:")));
+    auto coordLabel = new QLabel(_("Coord:"));
+    hbox->addWidget(coordLabel);
+    coordinateModeWidgets.push_back(coordLabel);
     
     coordinateModeSelection.setSymbol(WorldCoordinateMode, "world");
     worldCoordRadio.setText(_("World"));
     worldCoordRadio.setChecked(true);
     hbox->addWidget(&worldCoordRadio);
     coordinateModeGroup.addButton(&worldCoordRadio, WorldCoordinateMode);
+    coordinateModeWidgets.push_back(&worldCoordRadio);
 
     coordinateModeSelection.setSymbol(BodyCoordinateMode, "body");
     bodyCoordRadio.setText(_("Body"));
     hbox->addWidget(&bodyCoordRadio);
     coordinateModeGroup.addButton(&bodyCoordRadio, BodyCoordinateMode);
+    coordinateModeWidgets.push_back(&bodyCoordRadio);
 
     coordinateModeSelection.setSymbol(LocalCoordinateMode, "local");
     localCoordRadio.setText(_("Local"));
     hbox->addWidget(&localCoordRadio);
     coordinateModeGroup.addButton(&localCoordRadio, LocalCoordinateMode);
+    coordinateModeWidgets.push_back(&localCoordRadio);
     localCoordRadio.setEnabled(false);
 
     coordinateMode = WorldCoordinateMode;
@@ -409,13 +416,14 @@ void PositionView::Impl::createPanel()
     mainvbox->addWidget(&rotationMatrixPanel);
 
     grid = new QGridLayout;
+    int row = 0;
     grid->setColumnStretch(1, 1);
 
-    frameComboLabel[BaseFrameCombo].setText(_("Base offset"));
-    frameComboLabel[EndFrameCombo].setText(_("End offset"));
+    frameComboLabel[BaseFrameCombo].setText(_("Base"));
+    frameComboLabel[EndFrameCombo].setText(_("End"));
 
     for(int i=0; i < 2; ++i){
-        grid->addWidget(&frameComboLabel[i], i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
+        grid->addWidget(&frameComboLabel[i], row + i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
         
         frameCombo[i].sigAboutToShowPopup().connect(
             [=](){ updateCoordinateFrameCandidates(i); });
@@ -423,20 +431,28 @@ void PositionView::Impl::createPanel()
         frameCombo[i].sigActivated().connect(
             [=](int index){ onFrameComboActivated(i, index); });
         
-        grid->addWidget(&frameCombo[i], i, 1, 1, 2);
+        grid->addWidget(&frameCombo[i], row + i, 1, 1, 2);
     }
+    row += 2;
 
-    auto label = new QLabel(_("Config"));
-    grid->addWidget(label, 2, 0, Qt::AlignLeft);
-    configurationWidgets.push_back(label);
-    grid->addWidget(&configurationCombo, 2, 1);
+    auto configTitle = new QLabel(_("Config"));
+    grid->addWidget(configTitle, row, 0, Qt::AlignLeft);
+    configurationWidgets.push_back(configTitle);
+    grid->addWidget(&configurationLabel, row, 1, 1, 2, Qt::AlignLeft);
+    configurationWidgets.push_back(&configurationLabel);
+    row += 1;
+
+    auto configComboTitle = new QLabel(_("Pref."));
+    grid->addWidget(configComboTitle, row, 0, Qt::AlignLeft);
+    configurationWidgets.push_back(configComboTitle);
+    grid->addWidget(&configurationCombo, row, 1);
     configurationWidgets.push_back(&configurationCombo);
     userInputConnections.add(
         configurationCombo.sigActivated().connect(
             [this](int index){ onConfigurationInput(index); }));
 
-    requireConfigurationCheck.setText(_("Require"));
-    grid->addWidget(&requireConfigurationCheck, 2, 2);
+    requireConfigurationCheck.setText(_("Req."));
+    grid->addWidget(&requireConfigurationCheck, row, 2);
     configurationWidgets.push_back(&requireConfigurationCheck);
     userInputConnections.add(
         requireConfigurationCheck.sigToggled().connect(
@@ -578,6 +594,15 @@ void PositionView::Impl::setQuaternionSpinsVisible(bool on)
 }
 
 
+void PositionView::Impl::setCoordinateModeInterfaceEnabled(bool on)
+{
+    for(auto& widget : coordinateModeWidgets){
+        widget->setEnabled(on);
+    }
+    localCoordRadio.setEnabled(false);
+}
+
+
 void PositionView::Impl::setCoordinateMode(int mode)
 {
     coordinateModeGroup.blockSignals(true);
@@ -665,6 +690,8 @@ void PositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 
 void PositionView::Impl::updateTargetLink(Link* link)
 {
+    setCoordinateModeInterfaceEnabled(true);
+    
     if(targetType != LinkTarget){
         return;
     }
@@ -691,7 +718,10 @@ void PositionView::Impl::updateTargetLink(Link* link)
             tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[EndFrame]) =
                 functionToGetDefaultFrameNames(kinematicsKit);
         }
-        for(int i=0; i < 3; ++i){
+        if(defaultCoordName[WorldFrame].empty()){
+            defaultCoordName[WorldFrame] = _("World Origin");
+        }
+        for(int i=0; i < 2; ++i){
             if(defaultCoordName[i].empty()){
                 defaultCoordName[i] = _("Origin");
             }
@@ -891,6 +921,7 @@ void PositionView::Impl::setConfigurationInterfaceEnabled(bool on)
         widget->setEnabled(on);
     }
     if(!on){
+        configurationLabel.setText("-----");
         configurationCombo.clear();
     }
 }
@@ -940,11 +971,11 @@ bool PositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* targe
             [&](){ onPositionEditTargetExpired(); }));
 
     targetLabel.setText(target->getPositionName().c_str());
-    configurationLabel.clear();
     self->setEnabled(target->isEditable());
     setCoordinateFrameInterfaceEnabled(false);
     setConfigurationInterfaceEnabled(false);
     setBodyCoordinateModeEnabled(false);
+    setCoordinateModeInterfaceEnabled(false);
 
     updatePanelWithPositionEditTarget();
 
@@ -1077,7 +1108,7 @@ void PositionView::Impl::updateConfigurationPanel()
     auto configurationHandler = kinematicsKit->configurationHandler();
     
     if(!configurationHandler){
-        configurationLabel.setText("");
+        configurationLabel.setText("-----");
         
     } else {
         int preferred = configurationCombo.currentIndex();
@@ -1088,7 +1119,7 @@ void PositionView::Impl::updateConfigurationPanel()
             configurationCombo.setStyleSheet("font-weight: normal");
         }
         int actual = configurationHandler->getCurrentConfiguration();
-        configurationLabel.setText(QString("( %1 )").arg(configurationCombo.itemText(actual)));
+        configurationLabel.setText(configurationCombo.itemText(actual));
     }
 }
 
