@@ -688,8 +688,14 @@ Referenced* CoordinateFrameListView::Impl::getPositionObject()
 
 std::string CoordinateFrameListView::Impl::getPositionName() const
 {
-    if(frameBeingEditedOutside){
-        return format("{0}: {1}", targetItem->name(), frameBeingEditedOutside->id().label());
+    if (frameBeingEditedOutside) {
+        auto& id = frameBeingEditedOutside->id();
+        auto& note = frameBeingEditedOutside->note();
+        if (id.isString() || note.empty()) {
+            return format("{0}: {1}", targetItem->name(), id.label());
+        } else {
+            return format("{0}: {1} ( {2} )", targetItem->name(), id.label(), note);
+        }
     }
     return string();
 }
