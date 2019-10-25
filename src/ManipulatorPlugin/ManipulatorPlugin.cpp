@@ -1,3 +1,4 @@
+#include "ManipulatorVariableListItem.h"
 #include <cnoid/Plugin>
 
 using namespace cnoid;
@@ -14,6 +15,7 @@ public:
 
     virtual bool initialize()
     {
+        ManipulatorVariableListItem::initializeClass(this);
         return true;
     }
 };

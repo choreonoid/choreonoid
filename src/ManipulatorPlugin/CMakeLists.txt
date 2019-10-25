@@ -16,6 +16,7 @@ set(sources
   ManipulatorVariableSetGroup.cpp
   ManipulatorProgramItemBase.cpp
   ManipulatorControllerItemBase.cpp
+  ManipulatorVariableListItem.cpp
   ManipulatorProgramViewBase.cpp
   ManipulatorProgramViewDelegates.cpp
   ManipulatorStatementViewBase.cpp
@@ -31,6 +32,7 @@ set(headers
   ManipulatorVariableSetGroup.h
   ManipulatorProgramItemBase.h
   ManipulatorControllerItemBase
+  ManipulatorVariableListItem.cpp
   ManipulatorProgramViewBase.h
   ManipulatorStatementViewBase.h
   exportdecl.h

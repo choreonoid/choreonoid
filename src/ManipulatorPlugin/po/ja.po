@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-24 00:46+0900\n"
+"POT-Creation-Date: 2019-10-25 17:53+0900\n"
 "PO-Revision-Date: 2019-10-01 23:57+0900\n"
 "Last-Translator: nakaoka <nakaoka@choreonoid.co.jp>\n"
 "Language-Team: Japanese\n"
@@ -16,6 +16,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ManipulatorVariable.cpp:72
+msgid "Invalid value type"
+msgstr ""
 
 #: ManipulatorControllerItemBase.cpp:180
 msgid "Any program item for {} is not found."
@@ -37,7 +41,8 @@ msgstr "速度比率"
 msgid "{0} cannot be loaded as a Manipulator program file"
 msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"
 
-#: ManipulatorProgram.cpp:366 ManipulatorPosition.cpp:837
+#: ManipulatorProgram.cpp:366 ManipulatorVariableList.cpp:270
+#: ManipulatorPosition.cpp:852
 msgid "Format version {0} is not supported."
 msgstr "フォーマットバージョン{0}はサポートされていません．"
 
@@ -69,11 +74,22 @@ msgstr "コピー"
 msgid "Paste"
 msgstr "ペースト"
 
-#: ManipulatorPosition.cpp:831
-msgid "{0} cannot be loaded as a manipulator position set"
-msgstr "{0}はマニピュレータ位置集合ファイルとして読み込むことができません"
+#: ManipulatorVariableList.cpp:264
+msgid "{0} cannot be loaded as a manipulator variable list"
+msgstr "{0}はマニピュレータ変数リストとして読み込むことができません"
 
-#: ManipulatorPosition.cpp:852
+#: ManipulatorVariableListItem.cpp:29
+msgid "ManipulatorVariableListItem"
+msgstr "マニピュレータ変数リストアイテム"
+
+#: ManipulatorVariableListItem.cpp:85
+msgid "Num variables"
+msgstr "変数個数"
+
+#: ManipulatorPosition.cpp:846
+msgid "{0} cannot be loaded as a manipulator position set"
+msgstr "{0}はマニピュレータ位置集として読み込むことができません"
+
+#: ManipulatorPosition.cpp:867
 msgid "{0} is not supported"
 msgstr "{0}はサポートされていません"
-
