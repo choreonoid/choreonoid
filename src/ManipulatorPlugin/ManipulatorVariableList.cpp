@@ -1,0 +1,314 @@
+#include "ManipulatorVariableList.h"
+#include <cnoid/CloneMap>
+#include <cnoid/ValueTree>
+#include <fmt/format.h>
+#include <vector>
+#include <unordered_map>
+#include <functional>
+#include "gettext.h"
+
+using namespace std;
+using namespace cnoid;
+using fmt::format;
+
+namespace cnoid {
+
+class ManipulatorVariableList::Impl
+{
+public:
+    std::vector<ManipulatorVariablePtr> variables;
+    unordered_map<GeneralId, ManipulatorVariablePtr, GeneralId::Hash> idToVariableMap;
+    int idCounter;
+    
+    Impl();
+};
+
+}
+
+
+ManipulatorVariableList::ManipulatorVariableList()
+{
+    impl = new Impl;
+}
+
+
+ManipulatorVariableList::Impl::Impl()
+{
+    idCounter = 0;
+}
+
+
+ManipulatorVariableList::ManipulatorVariableList(const ManipulatorVariableList& org)
+    : ManipulatorVariableSet(org)
+{
+    impl = new Impl;
+
+    impl->variables.reserve(org.impl->variables.size());
+    for(auto& variable : org.impl->variables){
+        append(new ManipulatorVariable(*variable));
+    }
+}
+
+
+ManipulatorVariableList::ManipulatorVariableList(const ManipulatorVariableList& org, CloneMap* cloneMap)
+    : ManipulatorVariableSet(org)
+{
+    impl = new Impl;
+
+    impl->variables.reserve(org.impl->variables.size());
+    for(auto& variable : org.impl->variables){
+        append(cloneMap->getClone<ManipulatorVariable>(variable));
+    }
+}
+
+
+Referenced* ManipulatorVariableList::doClone(CloneMap* cloneMap) const
+{
+    if(cloneMap){
+        return new ManipulatorVariableList(*this, cloneMap);
+    } else {
+        return new ManipulatorVariableList(*this);
+    }
+}
+
+
+ManipulatorVariableList::~ManipulatorVariableList()
+{
+    clear();
+    delete impl;
+}
+
+
+void ManipulatorVariableList::clear()
+{
+    for(auto& variable : impl->variables){
+        setManipulatorVariableOwner(variable, nullptr);
+    }
+    impl->variables.clear();
+    impl->idToVariableMap.clear();
+}
+
+
+int ManipulatorVariableList::numVariables() const
+{
+    return impl->variables.size();
+}
+
+
+int ManipulatorVariableList::getNumVariables() const
+{
+    return numVariables();
+}
+
+
+ManipulatorVariable* ManipulatorVariableList::variableAt(int index) const
+{
+    return impl->variables[index];
+}
+
+
+ManipulatorVariable* ManipulatorVariableList::getVariableAt(int index) const
+{
+    return variableAt(index);
+}
+
+
+int ManipulatorVariableList::indexOf(ManipulatorVariable* variable) const
+{
+    auto pos = std::find(impl->variables.begin(), impl->variables.end(), variable);
+    if(pos == impl->variables.end()){
+        return -1;
+    }
+    return pos - impl->variables.begin();
+}
+
+
+ManipulatorVariable* ManipulatorVariableList::findVariable(const GeneralId& id) const
+{
+    auto iter = impl->idToVariableMap.find(id);
+    if(iter != impl->idToVariableMap.end()){
+        return iter->second;
+    }
+    
+    return nullptr;
+}
+
+
+ManipulatorVariable* ManipulatorVariableList::findOrCreateVariable
+(const GeneralId& id, const ManipulatorVariable::Value& defaultValue)
+{
+    auto variable = findVariable(id);
+
+    if(!variable){
+        variable = new ManipulatorVariable(id);
+        append(variable);
+    }
+    
+    return variable;
+}
+
+
+
+std::vector<ManipulatorVariablePtr> ManipulatorVariableList::getFindableVariableLists() const
+{
+    vector<ManipulatorVariablePtr> variables;
+    vector<ManipulatorVariablePtr> namedVariables;
+
+    for(auto& variable : impl->variables){
+        auto& id = variable->id();
+        if(id.isInt()){
+            variables.push_back(variable);
+        } else if(id.isString()){
+            namedVariables.push_back(variable);
+        }
+    }
+
+    const int numNumberedVariables = variables.size();
+    variables.resize(numNumberedVariables + namedVariables.size());
+    std::copy(namedVariables.begin(), namedVariables.end(), variables.begin() + numNumberedVariables);
+
+    return variables;
+}
+
+
+bool ManipulatorVariableList::contains(const ManipulatorVariableSet* variableSet) const
+{
+    return (variableSet == this);
+}
+
+
+bool ManipulatorVariableList::insert(int index, ManipulatorVariable* variable)
+{
+    if(variable->ownerVariableSet() || !variable->id().isValid() ||
+       ManipulatorVariableList::findVariable(variable->id())){
+        return false;
+    }
+
+    setManipulatorVariableOwner(variable, this);
+    impl->idToVariableMap[variable->id()] = variable;
+    if(index > numVariables()){
+        index = numVariables();
+    }
+    impl->variables.insert(impl->variables.begin() + index, variable);
+    
+    return true;
+}
+
+
+bool ManipulatorVariableList::append(ManipulatorVariable* variable)
+{
+    return insert(numVariables(), variable);
+}
+
+
+void ManipulatorVariableList::removeAt(int index)
+{
+    if(index >= numVariables()){
+        return;
+    }
+    auto variable_ = impl->variables[index];
+    setManipulatorVariableOwner(variable_, nullptr);
+    impl->idToVariableMap.erase(variable_->id());
+    impl->variables.erase(impl->variables.begin() + index);
+}
+
+
+bool ManipulatorVariableList::resetId(ManipulatorVariable* variable, const GeneralId& newId)
+{
+    bool changed = false;
+
+    if(variable->ownerVariableSet() == this && newId.isValid()){
+        auto& variableMap = impl->idToVariableMap;
+        auto iter = variableMap.find(newId);
+        if(iter == variableMap.end()){
+            variableMap.erase(variable->id());
+            setManipulatorVariableId(variable, newId);
+            variableMap[newId] = variable;
+            changed = true;
+        }
+    }
+
+    return changed;
+}
+
+
+void ManipulatorVariableList::resetIdCounter()
+{
+    impl->idCounter = 1;
+}
+
+
+GeneralId ManipulatorVariableList::createNextId(int prevId)
+{
+    if(prevId >= 0){
+        impl->idCounter = prevId + 1;
+    }
+    string name;
+    int id;
+    while(true){
+        id = impl->idCounter++;
+        auto iter = impl->idToVariableMap.find(id);
+        if(iter == impl->idToVariableMap.end()){
+            break;
+        }
+    }
+    return id;
+}
+
+
+bool ManipulatorVariableList::read(const Mapping& archive)
+{
+    auto& typeNode = archive.get("type");
+    if(typeNode.toString() != "ManipulatorVariableList"){
+        typeNode.throwException(
+            format(_("{0} cannot be loaded as a manipulator variable list"), typeNode.toString()));
+    }
+        
+    auto& versionNode = archive.get("formatVersion");
+    auto version = versionNode.toDouble();
+    if(version != 1.0){
+        versionNode.throwException(format(_("Format version {0} is not supported."), version));
+    }
+
+    string name;
+    if(archive.read("name", name)){
+        setName(name);
+    }
+
+    clear();
+
+    auto& variableNodes = *archive.findListing("variables");
+    if(variableNodes.isValid()){
+        for(int i=0; i < variableNodes.size(); ++i){
+            auto& node = *variableNodes[i].toMapping();
+            ManipulatorVariablePtr variable = new ManipulatorVariable;
+            if(variable->read(node)){
+                append(variable);
+            }
+        }
+    }
+    
+    return true;
+}
+
+
+bool ManipulatorVariableList::write(Mapping& archive) const
+{
+    archive.write("type", "ManipulatorVariableList");
+    archive.write("formatVersion", 1.0);
+    if(!name().empty()){
+        archive.write("name", name());
+    }
+
+    if(!impl->variables.empty()){
+        Listing& variableNodes = *archive.createListing("variables");
+        for(auto& variable : impl->variables){
+            MappingPtr node = new Mapping;
+            if(variable->write(*node)){
+                variableNodes.append(node);
+            }
+        }
+    }
+
+    return true;
+}

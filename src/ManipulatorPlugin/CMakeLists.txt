@@ -10,6 +10,10 @@ set(sources
   ManipulatorPosition.cpp
   ManipulatorProgram.cpp
   ManipulatorStatements.cpp
+  ManipulatorVariable.cpp
+  ManipulatorVariableSet.cpp
+  ManipulatorVariableList.cpp
+  ManipulatorVariableSetGroup.cpp
   ManipulatorProgramItemBase.cpp
   ManipulatorControllerItemBase.cpp
   ManipulatorProgramViewBase.cpp
@@ -21,6 +25,10 @@ set(headers
   ManipulatorProgram.h
   ManipulatorPosition.h
   ManipulatorStatements.h
+  ManipulatorVariable.h
+  ManipulatorVariableSet.h
+  ManipulatorVariableList.h
+  ManipulatorVariableSetGroup.h
   ManipulatorProgramItemBase.h
   ManipulatorControllerItemBase
   ManipulatorProgramViewBase.h
