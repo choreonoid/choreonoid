@@ -54,6 +54,7 @@ public:
 
 protected:
     CoordinateFrameSet();
+    CoordinateFrameSet(const CoordinateFrameSet& org);    
     void setCoordinateFrameId(CoordinateFrame* frame, const GeneralId& id);
     void setCoordinateFrameOwner(CoordinateFrame* frame, CoordinateFrameSet* owner);
 

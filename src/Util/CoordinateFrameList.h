@@ -30,7 +30,7 @@ public:
 
     /**
        @return true if the id is successfully changed. false if the id is not
-       changed because anther coordinate frame with the same is exists.
+       changed because anther coordinate frame with the same id is exists.
     */
     bool resetId(CoordinateFrame* frame, const GeneralId& newId);
 

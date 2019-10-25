@@ -2,7 +2,6 @@
 #define CNOID_UTIL_COORDINATE_FRAME_GROUP_H
 
 #include "CoordinateFrameSet.h"
-#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {

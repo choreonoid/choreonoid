@@ -1,12 +1,17 @@
 #include "CoordinateFrameSet.h"
-#include "CoordinateFrameList.h"
-#include <cnoid/CloneMap>
 
 using namespace std;
 using namespace cnoid;
 
 
 CoordinateFrameSet::CoordinateFrameSet()
+{
+    identityFrame = new CoordinateFrame;
+}
+
+
+CoordinateFrameSet::CoordinateFrameSet(const CoordinateFrameSet& org)
+    : name_(org.name_)
 {
     identityFrame = new CoordinateFrame;
 }

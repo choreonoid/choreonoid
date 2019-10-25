@@ -41,6 +41,7 @@ CoordinateFrameList::Impl::Impl()
 
 
 CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org)
+    : CoordinateFrameSet(org)
 {
     impl = new Impl;
 
@@ -52,6 +53,7 @@ CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org)
 
 
 CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org, CloneMap* cloneMap)
+    : CoordinateFrameSet(org)
 {
     impl = new Impl;
 

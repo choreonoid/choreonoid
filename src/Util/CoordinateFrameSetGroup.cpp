@@ -33,6 +33,7 @@ CoordinateFrameSetGroup::Impl::Impl()
 
 
 CoordinateFrameSetGroup::CoordinateFrameSetGroup(const CoordinateFrameSetGroup& org)
+    : CoordinateFrameSet(org)
 {
     impl = new Impl;
 
@@ -44,6 +45,7 @@ CoordinateFrameSetGroup::CoordinateFrameSetGroup(const CoordinateFrameSetGroup& 
 
 
 CoordinateFrameSetGroup::CoordinateFrameSetGroup(const CoordinateFrameSetGroup& org, CloneMap* cloneMap)
+    : CoordinateFrameSet(org)
 {
     impl = new Impl;
 
