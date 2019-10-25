@@ -19,7 +19,7 @@ public:
     ManipulatorVariable(const ManipulatorVariable& org);
 
     typedef stdx::variant<bool, int, double, std::string> Value;
-    enum ValueType { Bool, Int, Double, String };
+    enum ValueTypeId { Bool, Int, Double, String };
 
     ManipulatorVariable& operator=(const ManipulatorVariable& rhs);
 
@@ -42,12 +42,19 @@ public:
     }
     */
 
-    template<class T> T get() const { return stdx::get<T>(value_); }
+    template<class T> T value() const { return stdx::get<T>(value_); }
+    template<class T> void setValue(const T& value){ value_ = value; }
 
     bool toBool() const { return stdx::get<bool>(value_); }
     int toInt() const { return stdx::get<int>(value_); }
     double toDouble() const { return stdx::get<double>(value_); }
     const std::string& toString() const { return stdx::get<std::string>(value_); }
+
+    int valueTypeId() const { return stdx::get_variant_index(value_); }
+
+    void changeValueType(int typeId);
+
+    std::string valueString() const;
 
     const GeneralId& id() const { return id_; }
 

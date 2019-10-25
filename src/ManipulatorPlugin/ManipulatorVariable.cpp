@@ -43,6 +43,96 @@ ManipulatorVariable& ManipulatorVariable::operator=(const ManipulatorVariable& r
 }
 
 
+static void changeValueToBool(ManipulatorVariable::Value& value)
+{
+    switch(stdx::get_variant_index(value)){
+    case ManipulatorVariable::Int:
+        value = static_cast<bool>(stdx::get<int>(value));
+        break;
+    case ManipulatorVariable::Double:
+        value = static_cast<bool>(stdx::get<double>(value));
+        break;
+    default:
+        value = false;
+        break;
+    }
+}
+
+
+static void changeValueToInt(ManipulatorVariable::Value& value)
+{
+    switch(stdx::get_variant_index(value)){
+    case ManipulatorVariable::Bool:
+        value = stdx::get<bool>(value) ? 1 : 0;
+        break;
+    case ManipulatorVariable::Double:
+        value = static_cast<int>(stdx::get<double>(value));
+        break;
+    default:
+        value = 0;
+        break;
+    }
+}
+
+
+static void changeValueToDouble(ManipulatorVariable::Value& value)
+{
+    switch(stdx::get_variant_index(value)){
+    case ManipulatorVariable::Bool:
+        value = stdx::get<bool>(value) ? 1.0 : 0.0;
+        break;
+    case ManipulatorVariable::Int:
+        value = static_cast<double>(stdx::get<int>(value));
+        break;
+    default:
+        value = 0.0;
+        break;
+    }
+}
+
+
+void ManipulatorVariable::changeValueType(int typeId)
+{
+    int prevTypeId = valueTypeId();
+    if(typeId == prevTypeId){
+        return;
+    }
+    switch(typeId){
+    case Bool:
+        changeValueToBool(value_);
+        break;
+    case Int:
+        changeValueToInt(value_);
+        break;
+    case Double:
+        changeValueToDouble(value_);
+        break;
+    case String:
+        value_ = string();
+        break;
+    default:
+        break;
+    }
+}
+        
+
+std::string ManipulatorVariable::valueString() const
+{
+    switch(valueTypeId()){
+    case Bool:
+        return toBool() ? "true" : "false";
+    case Int:
+        return std::to_string(toInt());
+    case Double:
+        return std::to_string(toDouble());
+    case String:
+        return toString();
+    default:
+        return string();
+    }
+}
+
+
 ManipulatorVariableSet* ManipulatorVariable::ownerVariableSet() const
 {
     return ownerVariableSet_.lock();
@@ -52,25 +142,20 @@ ManipulatorVariableSet* ManipulatorVariable::ownerVariableSet() const
 bool ManipulatorVariable::read(const Mapping& archive)
 {
     if(id_.read(archive, "id")){
-        int type;
+
+        string type;
         if(archive.read("valueType", type)){
             auto& node = archive["value"];
-            switch(type){
-            case Bool:
+            if(type == "bool"){
                 value_ = node.toBool();
-                break;
-            case Int:
+            } else if(type == "int"){
                 value_ = node.toInt();
-                break;
-            case Double:
+            } else if(type == "double"){
                 value_ = node.toDouble();
-                break;
-            case String:
+            } else if(type == "string"){
                 value_ = node.toString();
-                break;
-            default:
+            } else {
                 archive.throwException(_("Invalid value type"));
-                break;
             }
 
             archive.read("note", note_);
@@ -86,18 +171,21 @@ bool ManipulatorVariable::write(Mapping& archive) const
 {
     if(id_.write(archive, "id")){
         int valueType = stdx::get_variant_index(value_);
-        archive.write("valueType", valueType);
         switch(valueType){
         case Bool:
+            archive.write("valueType", "bool");
             archive.write("value", stdx::get<bool>(value_));
             break;
         case Int:
+            archive.write("valueType", "int");
             archive.write("value", stdx::get<int>(value_));
             break;
         case Double:
+            archive.write("valueType", "double");
             archive.write("value", stdx::get<double>(value_));
             break;
         case String:
+            archive.write("valueType", "string");
             archive.write("value", stdx::get<string>(value_));
             break;
         default:

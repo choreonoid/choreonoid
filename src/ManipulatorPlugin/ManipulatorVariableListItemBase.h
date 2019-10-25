@@ -1,5 +1,5 @@
-#ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_VARIABLE_LIST_ITEM_H
-#define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_VARIABLE_LIST_ITEM_H
+#ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_VARIABLE_LIST_ITEM_BASE_H
+#define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_VARIABLE_LIST_ITEM_BASE_H
 
 #include <cnoid/Item>
 #include "exportdecl.h"
@@ -8,14 +8,12 @@ namespace cnoid {
 
 class ManipulatorVariableList;
 
-class CNOID_EXPORT ManipulatorVariableListItem : public Item
+class CNOID_EXPORT ManipulatorVariableListItemBase : public Item
 {
 public:
-    static void initializeClass(ExtensionManager* ext);
-
-    ManipulatorVariableListItem();
-    ManipulatorVariableListItem(const ManipulatorVariableListItem& org);
-    virtual ~ManipulatorVariableListItem();
+    ManipulatorVariableListItemBase();
+    ManipulatorVariableListItemBase(const ManipulatorVariableListItemBase& org);
+    virtual ~ManipulatorVariableListItemBase();
 
     ManipulatorVariableList* variableList();
     const ManipulatorVariableList* variableList() const;
@@ -32,7 +30,7 @@ private:
     Impl* impl;
 };
 
-typedef ref_ptr<ManipulatorVariableListItem> ManipulatorVariableListItemPtr;
+typedef ref_ptr<ManipulatorVariableListItemBase> ManipulatorVariableListItemBasePtr;
 
 }
 

@@ -234,7 +234,7 @@ bool ManipulatorVariableList::resetId(ManipulatorVariable* variable, const Gener
 
 void ManipulatorVariableList::resetIdCounter()
 {
-    impl->idCounter = 1;
+    impl->idCounter = 0;
 }
 
 

@@ -16,10 +16,11 @@ set(sources
   ManipulatorVariableSetGroup.cpp
   ManipulatorProgramItemBase.cpp
   ManipulatorControllerItemBase.cpp
-  ManipulatorVariableListItem.cpp
+  ManipulatorVariableListItemBase.cpp
   ManipulatorProgramViewBase.cpp
   ManipulatorProgramViewDelegates.cpp
   ManipulatorStatementViewBase.cpp
+  ManipulatorVariableListViewBase.cpp
   )
 
 set(headers
@@ -32,9 +33,10 @@ set(headers
   ManipulatorVariableSetGroup.h
   ManipulatorProgramItemBase.h
   ManipulatorControllerItemBase
-  ManipulatorVariableListItem.cpp
+  ManipulatorVariableListItemBase.cpp
   ManipulatorProgramViewBase.h
   ManipulatorStatementViewBase.h
+  ManipulatorVariableListViewBase.h
   exportdecl.h
   )
 
