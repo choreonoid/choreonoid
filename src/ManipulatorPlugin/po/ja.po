@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-25 19:12+0900\n"
+"POT-Creation-Date: 2019-10-27 15:49+0900\n"
 "PO-Revision-Date: 2019-10-01 23:57+0900\n"
 "Last-Translator: nakaoka <nakaoka@choreonoid.co.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,9 +17,86 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ManipulatorVariable.cpp:89
-msgid "Invalid value type"
+#: ManipulatorVariableListViewBase.cpp:210
+msgid "ID"
 msgstr ""
+
+#: ManipulatorVariableListViewBase.cpp:212
+msgid "Type"
+msgstr "型"
+
+#: ManipulatorVariableListViewBase.cpp:214
+msgid "Value"
+msgstr "値"
+
+#: ManipulatorVariableListViewBase.cpp:216
+msgid "Note"
+msgstr "注釈"
+
+#: ManipulatorVariableListViewBase.cpp:266
+#: ManipulatorVariableListViewBase.cpp:435
+msgid "Integer"
+msgstr "整数"
+
+#: ManipulatorVariableListViewBase.cpp:268
+#: ManipulatorVariableListViewBase.cpp:436
+msgid "Real"
+msgstr "実数"
+
+#: ManipulatorVariableListViewBase.cpp:270
+#: ManipulatorVariableListViewBase.cpp:437
+msgid "Logical"
+msgstr "論理"
+
+#: ManipulatorVariableListViewBase.cpp:272
+#: ManipulatorVariableListViewBase.cpp:438
+msgid "String"
+msgstr "文字列"
+
+#: ManipulatorVariableListViewBase.cpp:274
+msgid "Unknown"
+msgstr "不明"
+
+#: ManipulatorVariableListViewBase.cpp:279
+msgid "True"
+msgstr "真"
+
+#: ManipulatorVariableListViewBase.cpp:279
+msgid "False"
+msgstr "偽"
+
+#: ManipulatorVariableListViewBase.cpp:310
+msgid "Negative number cannot be used as ID."
+msgstr ""
+
+#: ManipulatorVariableListViewBase.cpp:316
+msgid "ID {0} is already in use."
+msgstr ""
+
+#: ManipulatorVariableListViewBase.cpp:509
+#: ManipulatorVariableListViewBase.cpp:694
+msgid "Add"
+msgstr "追加"
+
+#: ManipulatorVariableListViewBase.cpp:515
+msgid "Put all variables (for debug)"
+msgstr ""
+
+#: ManipulatorVariableListViewBase.cpp:518 ManipulatorProgramViewBase.cpp:526
+msgid "*"
+msgstr ""
+
+#: ManipulatorVariableListViewBase.cpp:698
+msgid "Remove"
+msgstr "削除"
+
+#: ManipulatorVariableListItemBase.cpp:76
+msgid "Num variables"
+msgstr "変数個数"
+
+#: ManipulatorVariable.cpp:158
+msgid "Invalid value type"
+msgstr "無効な値型"
 
 #: ManipulatorControllerItemBase.cpp:180
 msgid "Any program item for {} is not found."
@@ -50,10 +127,6 @@ msgstr "フォーマットバージョン{0}はサポートされていません
 msgid "Statement type \"{0}\" is not supported"
 msgstr "ステートメント型\"{0}\"はサポートされていません"
 
-#: ManipulatorProgramViewBase.cpp:526
-msgid "*"
-msgstr ""
-
 #: ManipulatorProgramViewBase.cpp:600
 msgid "Refresh"
 msgstr "リフレッシュ"
@@ -74,45 +147,9 @@ msgstr "コピー"
 msgid "Paste"
 msgstr "ペースト"
 
-#: ManipulatorVariableListView.cpp:164
-msgid "ID"
-msgstr ""
-
-#: ManipulatorVariableListView.cpp:166
-msgid "Type"
-msgstr "型"
-
-#: ManipulatorVariableListView.cpp:168
-msgid "Value"
-msgstr "値"
-
-#: ManipulatorVariableListView.cpp:170
-msgid "Note"
-msgstr "注釈"
-
-#: ManipulatorVariableListView.cpp:390
-msgid "Manipulator Variables"
-msgstr "マニピュレータ変数"
-
-#: ManipulatorVariableListView.cpp:417 ManipulatorVariableListView.cpp:568
-msgid "Add"
-msgstr "追加"
-
-#: ManipulatorVariableListView.cpp:572
-msgid "Remove"
-msgstr "削除"
-
 #: ManipulatorVariableList.cpp:264
 msgid "{0} cannot be loaded as a manipulator variable list"
 msgstr "{0}はマニピュレータ変数リストとして読み込むことができません"
-
-#: ManipulatorVariableListItem.cpp:28
-msgid "ManipulatorVariableListItem"
-msgstr "マニピュレータ変数リストアイテム"
-
-#: ManipulatorVariableListItem.cpp:84
-msgid "Num variables"
-msgstr "変数個数"
 
 #: ManipulatorPosition.cpp:846
 msgid "{0} cannot be loaded as a manipulator position set"

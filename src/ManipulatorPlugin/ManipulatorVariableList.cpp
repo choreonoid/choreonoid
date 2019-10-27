@@ -19,8 +19,10 @@ public:
     std::vector<ManipulatorVariablePtr> variables;
     unordered_map<GeneralId, ManipulatorVariablePtr, GeneralId::Hash> idToVariableMap;
     int idCounter;
+    bool isStringIdEnabled;
     
     Impl();
+    Impl(const Impl& org);
 };
 
 }
@@ -35,13 +37,14 @@ ManipulatorVariableList::ManipulatorVariableList()
 ManipulatorVariableList::Impl::Impl()
 {
     idCounter = 0;
+    isStringIdEnabled = true;
 }
 
 
 ManipulatorVariableList::ManipulatorVariableList(const ManipulatorVariableList& org)
     : ManipulatorVariableSet(org)
 {
-    impl = new Impl;
+    impl = new Impl(*org.impl);
 
     impl->variables.reserve(org.impl->variables.size());
     for(auto& variable : org.impl->variables){
@@ -53,12 +56,19 @@ ManipulatorVariableList::ManipulatorVariableList(const ManipulatorVariableList& 
 ManipulatorVariableList::ManipulatorVariableList(const ManipulatorVariableList& org, CloneMap* cloneMap)
     : ManipulatorVariableSet(org)
 {
-    impl = new Impl;
+    impl = new Impl(*org.impl);
 
     impl->variables.reserve(org.impl->variables.size());
     for(auto& variable : org.impl->variables){
         append(cloneMap->getClone<ManipulatorVariable>(variable));
     }
+}
+
+
+ManipulatorVariableList::Impl::Impl(const Impl& org)
+{
+    idCounter = 0;
+    isStringIdEnabled = org.isStringIdEnabled;
 }
 
 
@@ -76,6 +86,18 @@ ManipulatorVariableList::~ManipulatorVariableList()
 {
     clear();
     delete impl;
+}
+
+
+void ManipulatorVariableList::setStringIdEnabled(bool on)
+{
+    impl->isStringIdEnabled = on;
+}
+
+
+bool ManipulatorVariableList::isStringIdEnabled() const
+{
+    return impl->isStringIdEnabled;
 }
 
 
@@ -180,6 +202,7 @@ bool ManipulatorVariableList::contains(const ManipulatorVariableSet* variableSet
 bool ManipulatorVariableList::insert(int index, ManipulatorVariable* variable)
 {
     if(variable->ownerVariableSet() || !variable->id().isValid() ||
+       (!impl->isStringIdEnabled && variable->id().isString()) ||
        ManipulatorVariableList::findVariable(variable->id())){
         return false;
     }
@@ -217,7 +240,9 @@ bool ManipulatorVariableList::resetId(ManipulatorVariable* variable, const Gener
 {
     bool changed = false;
 
-    if(variable->ownerVariableSet() == this && newId.isValid()){
+    if(variable->ownerVariableSet() == this && newId.isValid() &&
+       (impl->isStringIdEnabled || newId.isInt())){
+
         auto& variableMap = impl->idToVariableMap;
         auto iter = variableMap.find(newId);
         if(iter == variableMap.end()){
@@ -283,6 +308,12 @@ bool ManipulatorVariableList::read(const Mapping& archive)
             auto& node = *variableNodes[i].toMapping();
             ManipulatorVariablePtr variable = new ManipulatorVariable;
             if(variable->read(node)){
+                if(!impl->isStringIdEnabled && variable->id().isString()){
+                    node.throwException(
+                        format(_("String \"{0}\" is specified as ID, but "
+                                 "the string id type is not supported in this system"),
+                               variable->id().toString()));
+                }
                 append(variable);
             }
         }

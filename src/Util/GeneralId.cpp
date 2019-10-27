@@ -19,7 +19,7 @@ bool GeneralId::read(const Mapping& archive, const char* key)
     auto idNode = archive.find(key);
     if(idNode->isValid() && idNode->isScalar()){
         auto scalar = static_cast<ScalarNode*>(idNode);
-        if(scalar->stringStyle()!= PLAIN_STRING){
+        if(scalar->stringStyle() != PLAIN_STRING){
             (*this) = idNode->toString();
         } else {
             (*this) = idNode->toInt();

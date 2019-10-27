@@ -3,6 +3,7 @@
 #include <cnoid/ManipulatorVariableList>
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
+#include <cnoid/MessageView>
 #include <cnoid/TargetItemPicker>
 #include <cnoid/Buttons>
 #include <QBoxLayout>
@@ -12,6 +13,7 @@
 #include <QAbstractTableModel>
 #include <QStyledItemDelegate>
 #include <QComboBox>
+#include <QSpinBox>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <fmt/format.h>
@@ -60,10 +62,55 @@ public:
     CustomizedItemDelegate(ManipulatorVariableListViewBase::Impl* view);
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+    QWidget* createVariableValueEditor(ManipulatorVariable* variable, QWidget* parent) const;
     virtual void updateEditorGeometry(
         QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
     virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+};
+
+/**
+   Spin box that can input both the integer number and string
+*/
+class IdSpinBox : public QSpinBox
+{
+    mutable QString inputText;
+    mutable QString finalText;
+    bool isStringIdEnabled;
+public:
+    IdSpinBox(bool isStringIdEnabled, QWidget* parent)
+        : QSpinBox(parent), isStringIdEnabled(isStringIdEnabled) { }
+
+    virtual QValidator::State validate(QString& input, int& pos) const override {
+        auto state = QSpinBox::validate(input, pos);
+        if(isStringIdEnabled){
+            if(state == QValidator::Invalid){
+                inputText = input;
+                state = QValidator::Intermediate;
+            } else {
+                inputText.clear();
+            }
+        }
+        return state;
+    }
+    virtual void fixup(QString &input) const override {
+        if(isStringIdEnabled){
+            finalText = inputText;
+        }
+        QSpinBox::fixup(input);
+    }
+      
+    QVariant getId(){
+        if(finalText.isEmpty()){
+            return value();
+        }
+        bool ok;
+        int id = finalText.toInt(&ok);
+        if(ok){
+            return id;
+        }
+        return finalText;
+    }
 };
 
 }
@@ -80,6 +127,8 @@ public:
     VariableListModel* variableListModel;
     QLabel targetLabel;
     PushButton addButton;
+    ToolButton optionMenuButton;
+    MenuManager optionMenuManager;
     MenuManager contextMenuManager;
 
     Impl(ManipulatorVariableListViewBase* self);
@@ -87,6 +136,7 @@ public:
     void addVariableIntoCurrentIndex(bool doInsert);
     void addVariable(int row, bool doInsert);
     void removeSelectedVariables();
+    void onOptionMenuClicked();
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(int row, QPoint globalPos);
@@ -217,20 +267,27 @@ QVariant VariableListModel::data(const QModelIndex& index, int role) const
 
         } else if(column == ValueTypeColumn){
             switch(variable->valueTypeId()){
-            case ManipulatorVariable::Bool:
-                return "Bool";
             case ManipulatorVariable::Int:
-                return "Integer";
+                return _("Integer");
             case ManipulatorVariable::Double:
-                return "Real";
+                return _("Real");
+            case ManipulatorVariable::Bool:
+                return _("Logical");
             case ManipulatorVariable::String:
-                return "String";
+                return _("String");
             default:
-                return "Unknown";
+                return _("Unknown");
             }
 
         } else if(column == ValueColumn){
-            return variable->valueString().c_str();
+            switch(variable->valueTypeId()){
+            case ManipulatorVariable::Double:
+                return QString("%1").arg(variable->toDouble(), 0, 'g');
+            case ManipulatorVariable::Bool:
+                return variable->toBool() ? _("True") : _("False");
+            default:
+                return variable->valueString().c_str();
+            }
 
         } else if(column == NoteColumn){
             return variable->note().c_str();
@@ -248,16 +305,26 @@ bool VariableListModel::setData(const QModelIndex& index, const QVariant& value,
     if(index.isValid() && role == Qt::EditRole){
         auto variable = static_cast<ManipulatorVariable*>(index.internalPointer());
         int column = index.column();
+
         if(column == IdColumn){
-            bool isInt;
-            auto stringId = value.toString();
-            int intId = stringId.toInt(&isInt);
-            if(isInt){
-                variables->resetId(variable, intId);
-            } else {
-                variables->resetId(variable, stringId.toStdString());
+            bool changed = false;
+            bool ok;
+            GeneralId newId = value.toInt(&ok);
+            if(!ok){
+                newId = value.toString().toStdString();
             }
-            Q_EMIT dataChanged(index, index, {role});
+            if(newId != variable->id()){
+                if(newId.isInt() && newId.toInt() < 0){
+                    showWarningDialog(_("Negative number cannot be used as ID."));
+                } else {
+                    if(variables->resetId(variable, newId)){
+                        Q_EMIT dataChanged(index, index, {role});
+                    } else {
+                        showWarningDialog(
+                            format(_("ID {0} is already in use."), newId.label()));
+                    }
+                }
+            }
 
         } else if(column == ValueTypeColumn){
             variable->changeValueType(value.toInt());
@@ -355,25 +422,83 @@ QWidget* CustomizedItemDelegate::createEditor
     auto variable = static_cast<ManipulatorVariable*>(index.internalPointer());
     
     switch(index.column()){
+
+    case IdColumn:
+    {
+        auto& id = variable->id();
+        if(id.isInt()){
+            auto spin = new IdSpinBox(view->variables->isStringIdEnabled(), parent);
+            spin->setFrame(false);
+            spin->setRange(0, 9999);
+            spin->setValue(id.toInt());
+            editor = spin;
+        } else {
+            editor = QStyledItemDelegate::createEditor(parent, option, index);
+        }
+        break;
+    }
     case ValueTypeColumn:
     {
         auto combo = new QComboBox(parent);
-        combo->addItem("Bool");
-        combo->addItem("Integer");
-        combo->addItem("Real");
-        combo->addItem("String");
+        combo->addItem(_("Integer"));
+        combo->addItem(_("Real"));
+        combo->addItem(_("Logical"));
+        combo->addItem(_("String"));
         combo->setCurrentIndex(variable->valueTypeId());
         editor = combo;
         break;
     }
-    default:
-        editor = QStyledItemDelegate::createEditor(parent, option, index);
+    case ValueColumn:
+        editor = createVariableValueEditor(variable, parent);
         break;
+        
+    default:
+        break;
+    }
+
+    if(!editor){
+        editor = QStyledItemDelegate::createEditor(parent, option, index);
     }
 
     return editor;
 }
 
+
+QWidget* CustomizedItemDelegate::createVariableValueEditor(ManipulatorVariable* variable, QWidget* parent) const
+{
+    switch(variable->valueTypeId()){
+    case ManipulatorVariable::Int:
+    {
+        auto spin = new QSpinBox(parent);
+        spin->setRange(-999999, 999999);
+        spin->setValue(variable->toInt());
+        return spin;
+        break;
+    }
+    case ManipulatorVariable::Double:
+    {
+        auto spin = new QDoubleSpinBox(parent);
+        spin->setDecimals(3);
+        spin->setRange(-999999.0, 999999.0);
+        spin->setValue(variable->toDouble());
+        return spin;
+        break;
+    }
+    case ManipulatorVariable::Bool:
+    {
+        auto combo = new QComboBox(parent);
+        combo->addItem(_("True"));
+        combo->addItem(_("False"));
+        combo->setCurrentIndex(variable->toBool() ? 0 : 1);
+        return combo;
+    }
+    default:
+        break;
+    }
+
+    return nullptr;
+}
+            
 
 void CustomizedItemDelegate::updateEditorGeometry
 (QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -391,9 +516,23 @@ void CustomizedItemDelegate::setEditorData(QWidget* editor, const QModelIndex& i
 void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
     switch(index.column()){
+    case IdColumn:
+        if(auto spin = dynamic_cast<IdSpinBox*>(editor)){
+            model->setData(index, spin->getId());
+        } else {
+            QStyledItemDelegate::setModelData(editor, model, index);
+        }
+        break;
     case ValueTypeColumn:
         if(auto combo = dynamic_cast<QComboBox*>(editor)){
             model->setData(index, combo->currentIndex());
+        }
+        break;
+    case ValueColumn:
+        if(auto combo = dynamic_cast<QComboBox*>(editor)){
+            model->setData(index, (combo->currentIndex() == 0) ? true : false);
+        } else {
+            QStyledItemDelegate::setModelData(editor, model, index);
         }
         break;
     default:
@@ -429,8 +568,17 @@ ManipulatorVariableListViewBase::Impl::Impl(ManipulatorVariableListViewBase* sel
     addButton.sigClicked().connect([&](){ addVariableIntoCurrentIndex(false); });
     hbox->addWidget(&addButton);
     hbox->addStretch();
-    vbox->addLayout(hbox);
 
+    /*
+    optionMenuManager.setNewPopupMenu(this);
+    optionMenuManager.addItem(_("option 1"))
+    
+    optionMenuButton.setText(_("*"));
+    optionMenuButton.sigClicked().connect([&](){ onOptionMenuClicked(); });
+    hbox->addWidget(&optionMenuButton);
+    vbox->addLayout(hbox);
+    */
+    
     // Setup the table
     auto hframe = new QFrame;
     hframe->setFrameStyle(QFrame::HLine | QFrame::Sunken);
@@ -517,6 +665,12 @@ void ManipulatorVariableListViewBase::Impl::addVariable(int row, bool doInsert)
 void ManipulatorVariableListViewBase::Impl::removeSelectedVariables()
 {
     variableListModel->removeVariables(selectionModel()->selectedRows());
+}
+
+
+void ManipulatorVariableListViewBase::Impl::onOptionMenuClicked()
+{
+    optionMenuManager.popupMenu()->popup(optionMenuButton.mapToGlobal(QPoint(0,0)));
 }
 
 

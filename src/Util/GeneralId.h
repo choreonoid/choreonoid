@@ -46,7 +46,6 @@ public:
         } else {
             return rhs.valueType == String && stringId == rhs.stringId;
         }
-        return false;
     }
     bool operator!=(const GeneralId& rhs) const {
         return !(this->operator==(rhs));

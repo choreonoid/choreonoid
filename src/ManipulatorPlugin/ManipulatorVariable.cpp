@@ -43,6 +43,38 @@ ManipulatorVariable& ManipulatorVariable::operator=(const ManipulatorVariable& r
 }
 
 
+static void changeValueToInt(ManipulatorVariable::Value& value)
+{
+    switch(stdx::get_variant_index(value)){
+    case ManipulatorVariable::Double:
+        value = static_cast<int>(stdx::get<double>(value));
+        break;
+    case ManipulatorVariable::Bool:
+        value = stdx::get<bool>(value) ? 1 : 0;
+        break;
+    default:
+        value = 0;
+        break;
+    }
+}
+
+
+static void changeValueToDouble(ManipulatorVariable::Value& value)
+{
+    switch(stdx::get_variant_index(value)){
+    case ManipulatorVariable::Int:
+        value = static_cast<double>(stdx::get<int>(value));
+        break;
+    case ManipulatorVariable::Bool:
+        value = stdx::get<bool>(value) ? 1.0 : 0.0;
+        break;
+    default:
+        value = 0.0;
+        break;
+    }
+}
+
+
 static void changeValueToBool(ManipulatorVariable::Value& value)
 {
     switch(stdx::get_variant_index(value)){
@@ -59,38 +91,6 @@ static void changeValueToBool(ManipulatorVariable::Value& value)
 }
 
 
-static void changeValueToInt(ManipulatorVariable::Value& value)
-{
-    switch(stdx::get_variant_index(value)){
-    case ManipulatorVariable::Bool:
-        value = stdx::get<bool>(value) ? 1 : 0;
-        break;
-    case ManipulatorVariable::Double:
-        value = static_cast<int>(stdx::get<double>(value));
-        break;
-    default:
-        value = 0;
-        break;
-    }
-}
-
-
-static void changeValueToDouble(ManipulatorVariable::Value& value)
-{
-    switch(stdx::get_variant_index(value)){
-    case ManipulatorVariable::Bool:
-        value = stdx::get<bool>(value) ? 1.0 : 0.0;
-        break;
-    case ManipulatorVariable::Int:
-        value = static_cast<double>(stdx::get<int>(value));
-        break;
-    default:
-        value = 0.0;
-        break;
-    }
-}
-
-
 void ManipulatorVariable::changeValueType(int typeId)
 {
     int prevTypeId = valueTypeId();
@@ -98,14 +98,14 @@ void ManipulatorVariable::changeValueType(int typeId)
         return;
     }
     switch(typeId){
-    case Bool:
-        changeValueToBool(value_);
-        break;
     case Int:
         changeValueToInt(value_);
         break;
     case Double:
         changeValueToDouble(value_);
+        break;
+    case Bool:
+        changeValueToBool(value_);
         break;
     case String:
         value_ = string();
@@ -119,12 +119,12 @@ void ManipulatorVariable::changeValueType(int typeId)
 std::string ManipulatorVariable::valueString() const
 {
     switch(valueTypeId()){
-    case Bool:
-        return toBool() ? "true" : "false";
     case Int:
         return std::to_string(toInt());
     case Double:
         return std::to_string(toDouble());
+    case Bool:
+        return toBool() ? "true" : "false";
     case String:
         return toString();
     default:
@@ -146,12 +146,12 @@ bool ManipulatorVariable::read(const Mapping& archive)
         string type;
         if(archive.read("valueType", type)){
             auto& node = archive["value"];
-            if(type == "bool"){
-                value_ = node.toBool();
-            } else if(type == "int"){
+            if(type == "int"){
                 value_ = node.toInt();
             } else if(type == "double"){
                 value_ = node.toDouble();
+            } else if(type == "bool"){
+                value_ = node.toBool();
             } else if(type == "string"){
                 value_ = node.toString();
             } else {
@@ -172,10 +172,6 @@ bool ManipulatorVariable::write(Mapping& archive) const
     if(id_.write(archive, "id")){
         int valueType = stdx::get_variant_index(value_);
         switch(valueType){
-        case Bool:
-            archive.write("valueType", "bool");
-            archive.write("value", stdx::get<bool>(value_));
-            break;
         case Int:
             archive.write("valueType", "int");
             archive.write("value", stdx::get<int>(value_));
@@ -184,9 +180,13 @@ bool ManipulatorVariable::write(Mapping& archive) const
             archive.write("valueType", "double");
             archive.write("value", stdx::get<double>(value_));
             break;
+        case Bool:
+            archive.write("valueType", "bool");
+            archive.write("value", stdx::get<bool>(value_));
+            break;
         case String:
             archive.write("valueType", "string");
-            archive.write("value", stdx::get<string>(value_));
+            archive.write("value", stdx::get<string>(value_), DOUBLE_QUOTED);
             break;
         default:
             break;

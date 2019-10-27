@@ -12,6 +12,9 @@ public:
     ManipulatorVariableList();
     ManipulatorVariableList(const ManipulatorVariableList& org);
     ~ManipulatorVariableList();
+
+    void setStringIdEnabled(bool on);
+    bool isStringIdEnabled() const;
     
     void clear();
     int numVariables() const;
