@@ -63,8 +63,6 @@ public:
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     QWidget* createVariableValueEditor(ManipulatorVariable* variable, QWidget* parent) const;
-    virtual void updateEditorGeometry(
-        QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
     virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
 };
@@ -499,13 +497,6 @@ QWidget* CustomizedItemDelegate::createVariableValueEditor(ManipulatorVariable* 
     return nullptr;
 }
             
-
-void CustomizedItemDelegate::updateEditorGeometry
-(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
-{
-    editor->setGeometry(option.rect);
-}
-
 
 void CustomizedItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
