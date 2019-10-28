@@ -2,9 +2,18 @@
 #include "CloneMappableReferenced.h"
 #include <unordered_map>
 #include <vector>
+#include <mutex>
 
 using namespace std;
 using namespace cnoid;
+
+namespace {
+
+unordered_map<string, int> flagNameToIdMap;
+int idCounter = 0;
+mutex flagMapMutex;
+
+}
 
 namespace cnoid {
 
@@ -37,6 +46,7 @@ public:
 CloneMap::CloneMap()
 {
     impl = new Impl;
+    flags.resize(idCounter, false);
 }
 
 
@@ -49,6 +59,7 @@ CloneMap::Impl::Impl()
 CloneMap::CloneMap(const CloneFunction& cloneFunction)
 {
     impl = new Impl(cloneFunction);
+    flags.resize(idCounter, false);
 }
 
 
@@ -60,8 +71,10 @@ CloneMap::Impl::Impl(const CloneFunction& cloneFunction)
 
 
 CloneMap::CloneMap(const CloneMap& org)
+    : flags(org.flags)
 {
     impl = new Impl(*org.impl);
+    flags.resize(idCounter, false);
 }
 
 
@@ -163,4 +176,18 @@ void CloneMap::replacePendingObjects()
 void CloneMap::setOriginalAsClone(const Referenced* org)
 {
     impl->orgToCloneMap[const_cast<Referenced*>(org)] = const_cast<Referenced*>(org);
+}
+
+
+int CloneMap::getFlagId(const char* name)
+{
+    lock_guard<mutex> guard(flagMapMutex);
+
+    auto iter = flagNameToIdMap.find(name);
+    if(iter != flagNameToIdMap.end()){
+        return iter->second;
+    }
+    int id = idCounter;
+    flagNameToIdMap[name] = idCounter++;
+    return id;
 }

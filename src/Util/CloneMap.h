@@ -2,6 +2,7 @@
 #define CNOID_UTIL_CLONE_MAP_H
 
 #include <functional>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -52,9 +53,20 @@ public:
 
     void setOriginalAsClone(const Referenced* org);
 
+    class FlagId {
+        int id_;
+    public:
+        FlagId(const char* name) : id_(getFlagId(name)) { }
+        operator int() const { return id_; }
+    };
+
+    bool flag(int id) const { return flags[id]; }
+    void setFlag(int id, bool on) { flags[id] = on; }
+
 private:
     class Impl;
     Impl* impl;
+    std::vector<bool> flags;
 
     Referenced* findClone_(const Referenced* org);
     Referenced* findOrCreateClone_(const Referenced* org);
@@ -62,6 +74,8 @@ private:
     Referenced* findOrCreateClone_(const Referenced* org, const CloneFunction& cloneFunction);
     Referenced* findCloneOrReplaceLater_(
         const Referenced* org, std::function<void(Referenced* clone)> replaceFunction);
+
+    static int getFlagId(const char* name);
 };
 
 }

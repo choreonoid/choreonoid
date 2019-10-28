@@ -10,7 +10,7 @@ endif()
 set(sources
   Config.cpp
   Referenced.cpp
-  CloneMap.cpp
+  CloneMap.cpp # This must be before any class using CloneMap::getFlagId.
   ConnectionSet.cpp
   FileUtil.cpp
   ExecutablePath.cpp
