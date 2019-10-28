@@ -44,4 +44,4 @@ make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin)
 
-apply_common_setting_for_library(${target} "${headers}")
+apply_common_setting_for_plugin(${target} "${headers}")

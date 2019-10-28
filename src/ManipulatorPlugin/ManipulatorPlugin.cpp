@@ -9,7 +9,7 @@ class ManipulatorPlugin : public Plugin
 public:
     ManipulatorPlugin() : Plugin("Manipulator")
     {
-
+        require("Body");
     }
 
     virtual bool initialize()
