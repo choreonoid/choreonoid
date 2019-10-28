@@ -66,7 +66,7 @@ TranslationDragger::TranslationDragger(bool setDefaultAxes)
 }
 
 
-TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap* cloneMap)
+TranslationDragger::TranslationDragger(const TranslationDragger& org, CloneMap* cloneMap)
     : SceneDragger(org, cloneMap)
 {
     draggableAxes_ = org.draggableAxes_;
@@ -85,7 +85,7 @@ TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap
 }
 
 
-SgObject* TranslationDragger::doClone(SgCloneMap* cloneMap) const
+Referenced* TranslationDragger::doClone(CloneMap* cloneMap) const
 {
     return new TranslationDragger(*this, cloneMap);
 }

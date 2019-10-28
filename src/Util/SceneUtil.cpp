@@ -5,6 +5,7 @@
 #include "SceneUtil.h"
 #include "SceneDrawables.h"
 #include "PolymorphicFunctionSet.h"
+#include "CloneMap.h"
 
 using namespace std;
 using namespace cnoid;
@@ -60,12 +61,12 @@ namespace {
 class Transparenter : PolymorphicFunctionSet<SgNode>
 {
 public:
-    SgCloneMap& cloneMap;
+    CloneMap& cloneMap;
     bool doKeepOrgTransparency;
     float transparency;
     int numModified;
 
-    Transparenter(SgCloneMap& cloneMap, bool doKeepOrgTransparency)
+    Transparenter(CloneMap& cloneMap, bool doKeepOrgTransparency)
         : cloneMap(cloneMap),
           doKeepOrgTransparency(doKeepOrgTransparency)
     {
@@ -124,7 +125,7 @@ public:
 }
 
 
-int cnoid::makeTransparent(SgNode* topNode, float transparency, SgCloneMap& cloneMap, bool doKeepOrgTransparency)
+int cnoid::makeTransparent(SgNode* topNode, float transparency, CloneMap& cloneMap, bool doKeepOrgTransparency)
 {
     if(topNode){
         Transparenter transparenter(cloneMap, doKeepOrgTransparency);

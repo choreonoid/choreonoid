@@ -34,7 +34,7 @@ public:
 
     Impl(PositionDragger* self);
     Impl(PositionDragger* self, const Impl& org);
-    Impl(PositionDragger* self, const Impl& org, SgCloneMap* cloneMap);
+    Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap);
     void initializeDraggers();
     void onSubDraggerDragStarted();
     void onSubDraggerDragged();
@@ -92,14 +92,14 @@ PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org)
 }
 
 
-PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap* cloneMap)
+PositionDragger::PositionDragger(const PositionDragger& org, CloneMap* cloneMap)
     : SceneDragger(org, cloneMap)
 {
     impl = new Impl(this, *org.impl, cloneMap);
 }
 
 
-PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, SgCloneMap* cloneMap)
+PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap)
     : self(self)
 {
     translationDragger = new TranslationDragger(*org.translationDragger, cloneMap);
@@ -158,7 +158,7 @@ SignalProxy<void(int axisSet)> PositionDragger::sigDraggableAxesChanged()
 }
 
 
-SgObject* PositionDragger::doClone(SgCloneMap* cloneMap) const
+Referenced* PositionDragger::doClone(CloneMap* cloneMap) const
 {
     return new PositionDragger(*this, cloneMap);
 }

@@ -21,14 +21,14 @@ InteractiveCameraTransform::InteractiveCameraTransform()
 }
 
 
-InteractiveCameraTransform::InteractiveCameraTransform(const InteractiveCameraTransform& org, SgCloneMap* cloneMap)
+InteractiveCameraTransform::InteractiveCameraTransform(const InteractiveCameraTransform& org, CloneMap* cloneMap)
     : SgPosTransform(org, cloneMap)
 {
 
 }
 
 
-SgObject* InteractiveCameraTransform::doClone(SgCloneMap* cloneMap) const
+Referenced* InteractiveCameraTransform::doClone(CloneMap* cloneMap) const
 {
     return new InteractiveCameraTransform(*this, cloneMap);
 }

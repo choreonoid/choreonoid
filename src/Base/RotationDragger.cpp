@@ -32,13 +32,13 @@ public:
         thresh = cos(radian(45.0));
     }
 
-    SgViewpointDependentSelector(const SgViewpointDependentSelector& org, SgCloneMap* cloneMap)
+    SgViewpointDependentSelector(const SgViewpointDependentSelector& org, CloneMap* cloneMap)
         : SgGroup(org, cloneMap) {
         axis = org.axis;
         thresh = org.thresh;
     }
 
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override {
+    virtual Referenced* doClone(CloneMap* cloneMap) const override {
         return new SgViewpointDependentSelector(*this, cloneMap);
     }
 
@@ -158,7 +158,7 @@ RotationDragger::RotationDragger()
 }
 
 
-RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap* cloneMap)
+RotationDragger::RotationDragger(const RotationDragger& org, CloneMap* cloneMap)
     : SceneDragger(org, cloneMap)
 {
     draggableAxes_ = org.draggableAxes_;
@@ -176,7 +176,7 @@ RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap* cloneMa
 }
 
 
-SgObject* RotationDragger::doClone(SgCloneMap* cloneMap) const
+Referenced* RotationDragger::doClone(CloneMap* cloneMap) const
 {
     return new RotationDragger(*this, cloneMap);
 }

@@ -15,11 +15,13 @@ class SceneFountain : public SceneParticles
 public:
     SceneFountain();
     SceneFountain(const SceneFountain& org);
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
 
     virtual ParticleSystem* getParticleSystem();
 
     ParticleSystem& particleSystem() { return particleSystem_; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
     ParticleSystem particleSystem_;

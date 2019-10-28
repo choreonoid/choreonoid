@@ -28,7 +28,7 @@ class SimulationBodyImpl;
 class SimulatorItem;
 class SimulatorItemImpl;
 class SimulatedMotionEngineManager;
-class SgCloneMap;
+class CloneMap;
 
 class CNOID_EXPORT SimulationBody : public Referenced
 {
@@ -162,7 +162,7 @@ public:
         
     //void addRecordFunction(std::function<void()> func);
 
-    SgCloneMap& sgCloneMap();
+    CloneMap& cloneMap();
 
     /**
        \note This signal is emitted in the simulation thread

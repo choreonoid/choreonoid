@@ -173,7 +173,7 @@ Link* Body::createLink(const Link* org) const
 }
 
 
-void Body::cloneShapes(SgCloneMap& cloneMap)
+void Body::cloneShapes(CloneMap& cloneMap)
 {
     const int n = linkTraverse_.numLinks();
     for(int i=0; i < n; ++i){

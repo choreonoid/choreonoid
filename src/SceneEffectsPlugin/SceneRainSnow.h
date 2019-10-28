@@ -46,7 +46,9 @@ class SceneRain : public SceneRainSnowBase
 public:
     SceneRain();
     SceneRain(const SceneRain& org);
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 
@@ -55,7 +57,9 @@ class SceneSnow : public SceneRainSnowBase
 public:
     SceneSnow();
     SceneSnow(const SceneSnow& org);
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 }

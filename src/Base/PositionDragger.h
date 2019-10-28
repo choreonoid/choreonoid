@@ -25,9 +25,7 @@ public:
 
     PositionDragger();
     PositionDragger(const PositionDragger& org);
-    PositionDragger(const PositionDragger& org, SgCloneMap* cloneMap);
-
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
+    PositionDragger(const PositionDragger& org, CloneMap* cloneMap);
 
     enum Axis { TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
                 TRANSLATION_AXES = (TX | TY | TZ),
@@ -81,7 +79,10 @@ public:
     virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;
     virtual bool onUndoRequest() override;
     virtual bool onRedoRequest() override;
-        
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
 private:
     class Impl;
     Impl* impl;

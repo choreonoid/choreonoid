@@ -19,13 +19,15 @@ protected:
 public:
     SgFog();
     SgFog(const SgFog& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
     const Vector3f& color() const { return color_; }
     template<typename Derived> void setColor(const Eigen::MatrixBase<Derived>& c) {
         color_ = c.template cast<Vector3f::Scalar>(); }
     void setVisibilityRange(float r) { visibilityRange_ = r; }
     float visibilityRange() const { return visibilityRange_; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
     Vector3f color_;
@@ -50,6 +52,9 @@ public:
     void setLineWidth(float width) { lineWidth_ = width; }
     float lineWidth() const { return lineWidth_; }
 
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
 private:
     Vector3f color_;
     float lineWidth_;
@@ -61,6 +66,9 @@ class CNOID_EXPORT SgLightweightRenderingGroup : public SgGroup
 {
 public:
     SgLightweightRenderingGroup();
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 typedef ref_ptr<SgLightweightRenderingGroup> SgLightweightRenderingGroupPtr;
 

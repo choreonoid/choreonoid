@@ -6,6 +6,7 @@
 #include "PyEigenTypes.h"
 #include "../SceneGraph.h"
 #include "../SceneProvider.h"
+#include "../CloneMap.h"
 
 using namespace cnoid;
 namespace py = pybind11;
@@ -33,14 +34,6 @@ void exportPySceneGraph(py::module& m)
         .value("BBOX_UPDATED", SgUpdate::Action::BBOX_UPDATED)
         .value("MODIFIED", SgUpdate::Action::MODIFIED)
         .export_values();
-
-    py::class_<SgCloneMap>(m, "SgCloneMap")
-        .def(py::init<>())
-        .def(py::init<const SgCloneMap&>())
-        .def("setNonNodeCloning", &SgCloneMap::setNonNodeCloning)
-        .def("isNonNodeCloningEnabled", &SgCloneMap::isNonNodeCloningEnabled)
-        .def("clear", &SgCloneMap::clear)
-        ;
 
     py::class_<SgObject, SgObjectPtr, Referenced>(m, "SgObject")
         .def_property("name", &SgObject::name, &SgObject::setName)
@@ -104,7 +97,7 @@ void exportPySceneGraph(py::module& m)
 
     py::class_<SceneProvider>(m, "SceneProvider")
         .def("getScene", (SgNode*(SceneProvider::*)()) &SceneProvider::getScene)
-        .def("getScene", (SgNode*(SceneProvider::*)(SgCloneMap&)) &SceneProvider::getScene)
+        .def("getScene", (SgNode*(SceneProvider::*)(CloneMap&)) &SceneProvider::getScene)
         ;
 }
 

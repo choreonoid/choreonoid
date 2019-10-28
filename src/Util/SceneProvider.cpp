@@ -15,7 +15,7 @@ SceneProvider::~SceneProvider()
 }
 
 
-SgNode* SceneProvider::cloneScene(SgCloneMap& cloneMap)
+SgNode* SceneProvider::cloneScene(CloneMap& cloneMap)
 {
     return getScene()->cloneNode(cloneMap);
 }

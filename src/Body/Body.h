@@ -19,7 +19,7 @@ class BodyImpl;
 class BodyHandler;
 class Mapping;
 class BodyCloneMap;
-class SgCloneMap;
+class CloneMap;
 
 struct BodyInterface;
 struct BodyCustomizerInterface;
@@ -244,7 +244,7 @@ public:
     Mapping* info();
     void resetInfo(Mapping* info);
 
-    void cloneShapes(SgCloneMap& cloneMap);
+    void cloneShapes(CloneMap& cloneMap);
         
     template<class T> T* findCache(const std::string& name){
         return dynamic_cast<T*>(findCacheSub(name));

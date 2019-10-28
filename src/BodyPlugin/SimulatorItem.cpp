@@ -29,6 +29,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/SceneGraph>
+#include <cnoid/CloneMap>
 #include <QThread>
 #include <QMutex>
 #include <QElapsedTimer>
@@ -279,7 +280,7 @@ public:
 
     Connection aboutToQuitConnection;
 
-    SgCloneMap sgCloneMap;
+    CloneMap cloneMap;
         
     ItemTreeView* itemTreeView;
 
@@ -672,7 +673,7 @@ void SimulationBody::cloneShapesOnce()
         if(!impl->simImpl){
             // throw exception
         }
-        impl->body_->cloneShapes(impl->simImpl->sgCloneMap);
+        impl->body_->cloneShapes(impl->simImpl->cloneMap);
         impl->areShapesCloned = true;
     }
 }
@@ -1497,7 +1498,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         return false;
     }
 
-    sgCloneMap.clear();
+    cloneMap.clear();
 
     currentFrame = 0;
     worldTimeStep_ = self->worldTimeStep();
@@ -1748,9 +1749,9 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 }
 
 
-SgCloneMap& SimulatorItem::sgCloneMap()
+CloneMap& SimulatorItem::cloneMap()
 {
-    return impl->sgCloneMap;
+    return impl->cloneMap;
 }
 
 
