@@ -151,15 +151,9 @@ bool PythonScriptItemImpl::waitToFinish(double timeout)
 }
 
 
-python::object PythonScriptItemImpl::resultObject()
+const std::string PythonScriptItemImpl::exceptionText() const
 {
-    return executor.resultObject();
-}
-
-
-const std::string PythonScriptItemImpl::resultString() const
-{
-    return executor.resultString();
+    return executor.exceptionText();
 }
 
 
@@ -175,9 +169,6 @@ void PythonScriptItemImpl::onScriptFinished()
         mv->putln(format(_("The execution of Python script \"{0}\" failed.\n{1}"),
                 iname, executor.exceptionText()));
     } else {
-        if(!executor.resultObject().is_none()){
-            mv->putln(executor.resultString());
-        }
         mv->putln(format(_("The execution of Python script \"{}\" has been finished."), iname));
     }
     

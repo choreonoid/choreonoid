@@ -214,6 +214,7 @@ bool PythonPlugin::initializeInterpreter()
     char dummy_str[] = "choreonoid"; // avoid deprecated conversion from string constant
     char* dummy_argv[] = {dummy_str};
 #else
+
     wchar_t dummy_str[] = L"choreonoid"; // avoid deprecated conversion from string constant
     wchar_t* dummy_argv[] = {dummy_str};
 #endif

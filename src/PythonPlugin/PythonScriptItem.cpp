@@ -106,7 +106,7 @@ bool PythonScriptItem::waitToFinish(double timeout)
 
 std::string PythonScriptItem::resultString() const
 {
-    return impl->resultString();
+    return impl->exceptionText();
 }
 
 
