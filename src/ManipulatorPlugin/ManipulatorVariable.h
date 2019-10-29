@@ -2,7 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_VARIBLE_H
 
 #include <cnoid/GeneralId>
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/stdx/variant>
 #include <string>
 #include "exportdecl.h"
@@ -11,7 +11,7 @@ namespace cnoid {
 
 class ManipulatorVariableSet;
 
-class CNOID_EXPORT ManipulatorVariable : public CloneMappableReferenced
+class CNOID_EXPORT ManipulatorVariable : public CloneableReferenced
 {
 public:
     ManipulatorVariable();

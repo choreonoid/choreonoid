@@ -2,7 +2,7 @@
 #define CNOID_UTIL_COORDINATE_FRAME_SET_H
 
 #include "CoordinateFrame.h"
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <vector>
 #include <string>
 #include "exportdecl.h"
@@ -13,7 +13,7 @@ namespace cnoid {
    \note CoordinateFrame Id 0 is reserved for the default frame, which corresponds to the identity frame.
    The frame with Id 0 cannot be inserted in any frame set.
 */
-class CNOID_EXPORT CoordinateFrameSet : public CloneMappableReferenced
+class CNOID_EXPORT CoordinateFrameSet : public CloneableReferenced
 {
 public:
     CoordinateFrameSet* clone(){

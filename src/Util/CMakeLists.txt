@@ -91,7 +91,7 @@ endif()
 set(headers
   Referenced.h
   CloneMap.h
-  CloneMappableReferenced.h
+  CloneableReferenced.h
   PolymorphicReferencedArray.h
   PolymorphicPointerArray.h
   PolymorphicFunctionSet.h

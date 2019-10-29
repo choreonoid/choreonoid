@@ -6,7 +6,7 @@
 #ifndef CNOID_BODY_LINK_H
 #define CNOID_BODY_LINK_H
 
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/EigenTypes>
 #ifdef _WIN32
 #include "Link.h"
@@ -28,7 +28,7 @@ typedef ref_ptr<SgNode> SgNodePtr;
 class Mapping;
 typedef ref_ptr<Mapping> MappingPtr;
 
-class CNOID_EXPORT Link : public CloneMappableReferenced
+class CNOID_EXPORT Link : public CloneableReferenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

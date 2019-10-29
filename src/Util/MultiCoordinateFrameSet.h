@@ -2,14 +2,14 @@
 #define CNOID_UTIL_MULTI_COORDINATE_FRAME_SET_H
 
 #include "CoordinateFrameSet.h"
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <vector>
 #include <initializer_list>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT MultiCoordinateFrameSet : public CloneMappableReferenced
+class CNOID_EXPORT MultiCoordinateFrameSet : public CloneableReferenced
 {
 public:
     MultiCoordinateFrameSet();

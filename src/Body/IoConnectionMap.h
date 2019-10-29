@@ -1,7 +1,7 @@
 #ifndef CNOID_BODY_IO_CONNECTION_MAP_H
 #define CNOID_BODY_IO_CONNECTION_MAP_H
 
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/Signal>
 #include <string>
 #include <vector>
@@ -15,7 +15,7 @@ typedef ref_ptr<DigitalIoDevice> DigitalIoDevicePtr;
 class Body;
 class Mapping;
 
-class CNOID_EXPORT DigitalIoConnection : public CloneMappableReferenced
+class CNOID_EXPORT DigitalIoConnection : public CloneableReferenced
 {
 public:
     DigitalIoConnection();
@@ -78,7 +78,7 @@ private:
 typedef ref_ptr<DigitalIoConnection> DigitalIoConnectionPtr;
 
 
-class CNOID_EXPORT IoConnectionMap : public CloneMappableReferenced
+class CNOID_EXPORT IoConnectionMap : public CloneableReferenced
 {
 public:
     IoConnectionMap();

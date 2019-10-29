@@ -6,7 +6,7 @@
 #ifndef CNOID_BODY_DEVICE_H
 #define CNOID_BODY_DEVICE_H
 
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
 #include <string>
@@ -17,7 +17,7 @@ namespace cnoid {
 class Body;
 class Link;
 
-class CNOID_EXPORT DeviceState : public CloneMappableReferenced
+class CNOID_EXPORT DeviceState : public CloneableReferenced
 {
 protected:
     DeviceState() { }

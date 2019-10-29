@@ -2,7 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_PROGRAM_H
 
 #include "ManipulatorStatements.h"
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/Signal>
 #include <string>
 #include <deque>
@@ -18,7 +18,7 @@ class ManipulatorProgram;
 class StructuredStatement;
 
 
-class CNOID_EXPORT ManipulatorProgram : public CloneMappableReferenced
+class CNOID_EXPORT ManipulatorProgram : public CloneableReferenced
 {
 public:
     typedef std::deque<ManipulatorStatementPtr> StatementContainer;

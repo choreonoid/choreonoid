@@ -1,5 +1,5 @@
 #include "CloneMap.h"
-#include "CloneMappableReferenced.h"
+#include "CloneableReferenced.h"
 #include <unordered_map>
 #include <vector>
 #include <mutex>
@@ -126,12 +126,12 @@ Referenced* CloneMap::findOrCreateClone_(const Referenced* org)
 }
 
 
-Referenced* CloneMap::findOrCreateClone_(const CloneMappableReferenced* org)
+Referenced* CloneMap::findOrCreateClone_(const CloneableReferenced* org)
 {
     auto clone = findClone_(org);
     if(!clone){
         clone = org->doClone(this);
-        impl->orgToCloneMap[const_cast<CloneMappableReferenced*>(org)] = clone;
+        impl->orgToCloneMap[const_cast<CloneableReferenced*>(org)] = clone;
     }
     return clone;
 }

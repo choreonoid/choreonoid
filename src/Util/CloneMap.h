@@ -8,7 +8,7 @@
 
 namespace cnoid {
 
-class CloneMappableReferenced;
+class CloneableReferenced;
 
 class CNOID_EXPORT CloneMap
 {
@@ -75,7 +75,7 @@ private:
 
     Referenced* findClone_(const Referenced* org);
     Referenced* findOrCreateClone_(const Referenced* org);
-    Referenced* findOrCreateClone_(const CloneMappableReferenced* org);
+    Referenced* findOrCreateClone_(const CloneableReferenced* org);
     Referenced* findOrCreateClone_(const Referenced* org, const CloneFunction& cloneFunction);
     Referenced* findCloneOrReplaceLater_(
         const Referenced* org, std::function<void(Referenced* clone)> replaceFunction);

@@ -1,5 +1,5 @@
-#ifndef CNOID_UTIL_CLONE_MAPPABLE_REFERENCED_H
-#define CNOID_UTIL_CLONE_MAPPABLE_REFERENCED_H
+#ifndef CNOID_UTIL_CLONEABLE_REFERENCED_H
+#define CNOID_UTIL_CLONEABLE_REFERENCED_H
 
 #include "Referenced.h"
 
@@ -7,7 +7,7 @@ namespace cnoid {
 
 class CloneMap;
 
-class CloneMappableReferenced : public Referenced
+class CloneableReferenced : public Referenced
 {
 public:
     virtual Referenced* doClone(CloneMap* cloneMap) const = 0;

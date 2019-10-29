@@ -2,7 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 
 #include <cnoid/LinkCoordinateFrameSet>
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/EigenTypes>
 #include <cnoid/GeneralId>
 #include <string>
@@ -20,7 +20,7 @@ class ManipulatorFkPosition;
 class ManipulatorPositionSet;
 class Mapping;
 
-class CNOID_EXPORT ManipulatorPosition : public CloneMappableReferenced
+class CNOID_EXPORT ManipulatorPosition : public CloneableReferenced
 {
 public:
     static constexpr int MaxNumJoints = 8;
@@ -185,7 +185,7 @@ private:
 typedef ref_ptr<ManipulatorFkPosition> ManipulatorFkPositionPtr;
 
 
-class CNOID_EXPORT ManipulatorPositionSet : public CloneMappableReferenced
+class CNOID_EXPORT ManipulatorPositionSet : public CloneableReferenced
 {
 public:
     typedef std::list<ManipulatorPositionPtr> container_type;

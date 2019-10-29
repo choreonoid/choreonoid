@@ -1,7 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_STATEMENTS_H
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_STATEMENTS_H
 
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/ManipulatorPosition>
 #include "exportdecl.h"
 
@@ -10,7 +10,7 @@ namespace cnoid {
 class ManipulatorProgram;
 typedef ref_ptr<ManipulatorProgram> ManipulatorProgramPtr;
 
-class CNOID_EXPORT ManipulatorStatement : public CloneMappableReferenced
+class CNOID_EXPORT ManipulatorStatement : public CloneableReferenced
 {
 public:
     typedef ManipulatorStatement* (*FactoryFunction)();

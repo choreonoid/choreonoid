@@ -2,7 +2,7 @@
 #define CNOID_UTIL_COORDINATE_FRAME_H
 
 #include "GeneralId.h"
-#include <cnoid/CloneMappableReferenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/EigenTypes>
 #include <string>
 #include "exportdecl.h"
@@ -12,7 +12,7 @@ namespace cnoid {
 class CoordinateFrameSet;
 class Mapping;
 
-class CNOID_EXPORT CoordinateFrame : public CloneMappableReferenced
+class CNOID_EXPORT CoordinateFrame : public CloneableReferenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

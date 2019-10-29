@@ -26,7 +26,7 @@ typedef void* BodyCustomizerHandle;
 
 typedef ref_ptr<Body> BodyPtr;
 
-class CNOID_EXPORT Body : public CloneMappableReferenced
+class CNOID_EXPORT Body : public CloneableReferenced
 {
 public:
     Body();
