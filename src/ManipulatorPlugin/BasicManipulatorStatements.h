@@ -1,54 +1,10 @@
-#ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_STATEMENTS_H
-#define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_STATEMENTS_H
+#ifndef CNOID_MANIPULATOR_PLUGIN_BASIC_MANIPULATOR_STATEMENTS_H
+#define CNOID_MANIPULATOR_PLUGIN_BASIC_MANIPULATOR_STATEMENTS_H
 
-#include <cnoid/CloneableReferenced>
-#include <cnoid/ManipulatorPosition>
+#include "ManipulatorStatement.h"
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class ManipulatorProgram;
-typedef ref_ptr<ManipulatorProgram> ManipulatorProgramPtr;
-
-class CNOID_EXPORT ManipulatorStatement : public CloneableReferenced
-{
-public:
-    typedef ManipulatorStatement* (*FactoryFunction)();
-
-    template<class StatementType>
-    static void registerType(const char* type){
-        registerFactory(type, []() -> ManipulatorStatement* { return new StatementType; });
-    }
-
-    static ManipulatorStatement* create(const std::string& type);
-
-    ManipulatorStatement* clone() const {
-        return static_cast<ManipulatorStatement*>(doClone(nullptr));
-    }
-    ManipulatorStatement* clone(CloneMap& cloneMap) const {
-        return static_cast<ManipulatorStatement*>(doClone(&cloneMap));
-    }
-
-    virtual std::string label(int index) const = 0;
-    virtual bool read(ManipulatorProgram* program, const Mapping& archive) = 0;
-    virtual bool write(Mapping& archive) const = 0;
-
-    ManipulatorProgram* holderProgram() const { return holderProgram_.lock(); }
-
-protected:
-    ManipulatorStatement();
-    ManipulatorStatement(const ManipulatorStatement& org);
-    
-private:
-    static void registerFactory(const char* type, FactoryFunction factory);
-
-    weak_ref_ptr<ManipulatorProgram> holderProgram_;
-
-    friend class ManipulatorProgram;
-};
-
-typedef ref_ptr<ManipulatorStatement> ManipulatorStatementPtr;
-
 
 class CNOID_EXPORT EmptyStatement : public ManipulatorStatement
 {
@@ -82,6 +38,22 @@ protected:
 typedef ref_ptr<DummyStatement> DummyStatementPtr;
 
 
+class CNOID_EXPORT StructuredStatement : public ManipulatorStatement
+{
+public:
+    ManipulatorProgram* lowerLevelProgram() { return program_; }
+    const ManipulatorProgram* lowerLevelProgram() const { return program_; }
+
+protected:
+    StructuredStatement();
+    StructuredStatement(const StructuredStatement& org, CloneMap* cloneMap);
+
+private:
+    ManipulatorProgramPtr program_;
+};
+typedef ref_ptr<StructuredStatement> StructuredStatementPtr;
+
+
 class CNOID_EXPORT CommentStatement : public ManipulatorStatement
 {
 public:
@@ -103,22 +75,6 @@ private:
 };
 
 typedef ref_ptr<CommentStatement> CommentStatementPtr;
-
-
-class CNOID_EXPORT StructuredStatement : public ManipulatorStatement
-{
-public:
-    ManipulatorProgram* lowerLevelProgram() { return program_; }
-    const ManipulatorProgram* lowerLevelProgram() const { return program_; }
-
-protected:
-    StructuredStatement();
-    StructuredStatement(const StructuredStatement& org, CloneMap* cloneMap);
-
-private:
-    ManipulatorProgramPtr program_;
-};
-typedef ref_ptr<StructuredStatement> StructuredStatementPtr;
 
 
 class CNOID_EXPORT IfStatement : public StructuredStatement

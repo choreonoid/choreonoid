@@ -8,8 +8,10 @@ set(target CnoidManipulatorPlugin)
 set(sources
   ManipulatorPlugin.cpp
   ManipulatorPosition.cpp
+  ManipulatorPositionList.cpp
   ManipulatorProgram.cpp
-  ManipulatorStatements.cpp
+  ManipulatorStatement.cpp
+  BasicManipulatorStatements.cpp
   ManipulatorVariable.cpp
   ManipulatorVariableSet.cpp
   ManipulatorVariableList.cpp
@@ -25,8 +27,9 @@ set(sources
 
 set(headers
   ManipulatorProgram.h
-  ManipulatorPosition.h
-  ManipulatorStatements.h
+  ManipulatorPositionList.h
+  ManipulatorStatement.h
+  BasicManipulatorStatements.h
   ManipulatorVariable.h
   ManipulatorVariableSet.h
   ManipulatorVariableList.h

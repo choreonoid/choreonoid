@@ -1,6 +1,7 @@
 #include "ManipulatorProgram.h"
-#include "ManipulatorStatements.h"
+#include "BasicManipulatorStatements.h"
 #include <cnoid/ManipulatorPosition>
+#include <cnoid/ManipulatorPositionList>
 #include <cnoid/CloneMap>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
@@ -13,21 +14,14 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-namespace {
-
-// Id to access the correspondingCloneMap flag
-CloneMap::FlagId PositionSetExclusion("ManipulatorProgramPositionSetExclusion");
-
-}
-
 namespace cnoid {
 
 class ManipulatorProgram::Impl
 {
 public:
     ManipulatorProgram* self;
-    weak_ref_ptr<StructuredStatement> holderStatement;
-    ManipulatorPositionSetPtr positions;
+    weak_ref_ptr<StructuredStatement> ownerStatement;
+    ManipulatorPositionListPtr positions;
     Signal<void(ManipulatorStatement* statement)> sigStatementUpdated;
     Signal<void(ManipulatorProgram* program, iterator iter)> sigStatementInserted;
     Signal<void(ManipulatorProgram* program, ManipulatorStatement* statement)> sigStatementRemoved;
@@ -53,7 +47,7 @@ ManipulatorProgram::ManipulatorProgram()
 ManipulatorProgram::Impl::Impl(ManipulatorProgram* self)
     : self(self)
 {
-    positions = new ManipulatorPositionSet;
+    positions = new ManipulatorPositionList;
 }
     
 
@@ -77,8 +71,10 @@ ManipulatorProgram::Impl::Impl(ManipulatorProgram* self, const Impl& org, CloneM
     : self(self),
       name(org.name)
 {
-    if(cloneMap && ManipulatorProgram::checkPositionSetInclusion(*cloneMap)){
+    if(cloneMap){
         positions = cloneMap->getClone(org.positions);
+    } else {
+        positions = org.positions->clone();
     }
 }
 
@@ -92,18 +88,6 @@ ManipulatorProgram::~ManipulatorProgram()
 Referenced* ManipulatorProgram::doClone(CloneMap* cloneMap) const
 {
     return new ManipulatorProgram(*this, cloneMap);
-}
-
-
-bool ManipulatorProgram::checkPositionSetInclusion(const CloneMap& cloneMap)
-{
-    return !cloneMap.flag(PositionSetExclusion);
-}
-
-
-void ManipulatorProgram::setPositionSetInclusion(CloneMap& cloneMap, bool on)
-{
-    cloneMap.setFlag(PositionSetExclusion, !on);
 }
 
 
@@ -121,11 +105,11 @@ void ManipulatorProgram::setName(const std::string& name)
 
 ManipulatorProgram::iterator ManipulatorProgram::insert(iterator pos, ManipulatorStatement* statement, bool doNotify)
 {
-    if(statement->holderProgram_){
+    if(statement->ownerProgram_){
         throw std::runtime_error(
             "A statement contained in a manipulator program was tried to be inserted into another program");
     }
-    statement->holderProgram_ = this;
+    statement->ownerProgram_ = this;
     auto iter = statements_.insert(pos, statement);
 
     if(doNotify){
@@ -146,8 +130,8 @@ void ManipulatorProgram::Impl::notifyStatementInsertion(ManipulatorProgram* prog
 {
     sigStatementInserted(program, iter);
 
-    if(auto hs = holderStatement.lock()){
-        if(auto hp = hs->holderProgram()){
+    if(auto hs = ownerStatement.lock()){
+        if(auto hp = hs->ownerProgram()){
             hp->impl->notifyStatementInsertion(program, iter);
         }
     }
@@ -157,9 +141,9 @@ void ManipulatorProgram::Impl::notifyStatementInsertion(ManipulatorProgram* prog
 ManipulatorProgram::iterator ManipulatorProgram::remove(iterator pos, bool doNotify)
 {
     auto statement = *pos;
-    auto program = statement->holderProgram_.lock();
+    auto program = statement->ownerProgram_.lock();
     if(program == this){
-        statement->holderProgram_.reset();
+        statement->ownerProgram_.reset();
         auto iter = statements_.erase(pos);
         if(doNotify){
             impl->notifyStatementRemoval(this, statement);
@@ -189,8 +173,8 @@ void ManipulatorProgram::Impl::notifyStatementRemoval(ManipulatorProgram* progra
 {
     sigStatementRemoved(program, statement);
 
-    if(auto hs = holderStatement.lock()){
-        if(auto hp = hs->holderProgram()){
+    if(auto hs = ownerStatement.lock()){
+        if(auto hp = hs->ownerProgram()){
             hp->impl->notifyStatementRemoval(program, statement);
         }
     }
@@ -201,21 +185,21 @@ void ManipulatorProgram::notifyStatementUpdate(ManipulatorStatement* statement) 
 {
     impl->sigStatementUpdated(statement);
 
-    if(auto hs = holderStatement()){
-        if(auto hp = hs->holderProgram()){
+    if(auto hs = ownerStatement()){
+        if(auto hp = hs->ownerProgram()){
             hp->notifyStatementUpdate(statement);
         }
     }
 }
 
 
-ManipulatorPositionSet* ManipulatorProgram::positions()
+ManipulatorPositionList* ManipulatorProgram::positions()
 {
     return impl->positions;
 }
 
 
-const ManipulatorPositionSet* ManipulatorProgram::positions() const
+const ManipulatorPositionList* ManipulatorProgram::positions() const
 {
     return impl->positions;
 }
@@ -227,40 +211,30 @@ void ManipulatorProgram::removeUnreferencedPositions()
         return;
     }
     
-    std::unordered_set<ManipulatorPosition*> referenced;
+    std::unordered_set<GeneralId, GeneralId::Hash> referencedIds;
 
     for(auto& statement : statements_){
-        if(auto positionStatement = dynamic_cast<ManipulatorPositionOwner*>(statement.get())){
-            referenced.insert(positionStatement->getManipulatorPosition());
+        if(auto referencer = dynamic_cast<ManipulatorPositionReferencer*>(statement.get())){
+            referencedIds.insert(referencer->getManipulatorPositionId());
         }
     }
 
     impl->positions->removeUnreferencedPositions(
         [&](ManipulatorPosition* position){
-            return (referenced.find(position) != referenced.end());
+            return (referencedIds.find(position->id()) != referencedIds.end());
         });
 }
 
 
-ManipulatorPositionSet* ManipulatorProgram::createPositionSet() const
-{
-    auto positions = new ManipulatorPositionSet;
-    for(auto& statement : statements_){
-        if(auto positionStatement = dynamic_cast<ManipulatorPositionOwner*>(statement.get())){
-            positions->append(positionStatement->getManipulatorPosition());
-        }
-    }
-    return positions;
-}
-
-
-SignalProxy<void(ManipulatorProgram* program, ManipulatorProgram::iterator iter)> ManipulatorProgram::sigStatementInserted()
+SignalProxy<void(ManipulatorProgram* program, ManipulatorProgram::iterator iter)>
+ManipulatorProgram::sigStatementInserted()
 {
     return impl->sigStatementInserted;
 }
 
 
-SignalProxy<void(ManipulatorProgram* program, ManipulatorStatement* statement)> ManipulatorProgram::sigStatementRemoved()
+SignalProxy<void(ManipulatorProgram* program, ManipulatorStatement* statement)>
+ManipulatorProgram::sigStatementRemoved()
 {
     return impl->sigStatementRemoved;
 }
@@ -272,19 +246,19 @@ SignalProxy<void(ManipulatorStatement* statement)> ManipulatorProgram::sigStatem
 }
 
 
-StructuredStatement* ManipulatorProgram::holderStatement() const
+StructuredStatement* ManipulatorProgram::ownerStatement() const
 {
-    return impl->holderStatement.lock();
+    return impl->ownerStatement.lock();
 }
 
 
-void ManipulatorProgram::setHolderStatement(StructuredStatement* holder)
+void ManipulatorProgram::setOwnerStatement(StructuredStatement* owner)
 {
-    if(auto holder = impl->holderStatement){
+    if(auto owner = impl->ownerStatement){
         throw std::runtime_error(
             "A manipulator program contaied in a structured statement was tried to be holded by another statement");
     }
-    impl->holderStatement = holder;
+    impl->ownerStatement = owner;
 }
 
 
@@ -320,12 +294,12 @@ bool ManipulatorProgram::Impl::read(Mapping& archive)
 
     archive.read("name", name);
 
-    auto& positionSetNode = *archive.findMapping("positionSet");
+    auto& positionSetNode = *archive.findMapping("positions");
     if(positionSetNode.isValid()){
         if(positions){
             positions->clear();
         } else {
-            positions = new ManipulatorPositionSet;
+            positions = new ManipulatorPositionList;
         }
         if(!positions->read(positionSetNode)){
             return false;
@@ -379,16 +353,11 @@ bool ManipulatorProgram::save(const std::string& filename)
     }
     bool ready = true;
 
-    ManipulatorPositionSetPtr positions;
-    if(impl->positions){
-        positions = impl->positions;
-        removeUnreferencedPositions();
-    } else {
-        positions = createPositionSet();
-    }
+    removeUnreferencedPositions();
+    
     MappingPtr node = new Mapping;
-    if(positions->write(*node)){
-        archive->insert("positionSet", node);
+    if(impl->positions->write(*node)){
+        archive->insert("positions", node);
     } else {
         ready = false;
     }

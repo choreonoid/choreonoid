@@ -1,7 +1,7 @@
 #include "ManipulatorStatementViewBase.h"
 #include "ManipulatorProgramViewBase.h"
 #include "ManipulatorProgramItemBase.h"
-#include "ManipulatorStatements.h"
+#include "ManipulatorStatement.h"
 #include <cnoid/Archive>
 #include <QBoxLayout>
 #include <QLabel>

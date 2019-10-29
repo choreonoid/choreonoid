@@ -2318,8 +2318,11 @@ void SimulatorItemImpl::onSimulationLoopStopped()
     }
 
     mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->name(), finishTime));
-    mv->putln(format(_("Computation time is {0} [s], computation time / simulation time = {1}."),
-                     actualSimulationTime, (actualSimulationTime / finishTime)));
+
+    if(finishTime > 0.0){
+        mv->putln(format(_("Computation time is {0} [s], computation time / simulation time = {1}."),
+                         actualSimulationTime, (actualSimulationTime / finishTime)));
+    }
 
     clearSimulation();
 

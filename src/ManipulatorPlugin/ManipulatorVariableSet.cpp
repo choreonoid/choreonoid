@@ -21,15 +21,3 @@ void ManipulatorVariableSet::setName(const std::string& name)
 {
     name_ = name;
 }
-
-
-void ManipulatorVariableSet::setManipulatorVariableId(ManipulatorVariable* varianble, const GeneralId& id)
-{
-    varianble->id_ = id;
-}
-
-
-void ManipulatorVariableSet::setManipulatorVariableOwner(ManipulatorVariable* variable, ManipulatorVariableSet* owner)
-{
-    variable->ownerVariableSet_ = owner;
-}

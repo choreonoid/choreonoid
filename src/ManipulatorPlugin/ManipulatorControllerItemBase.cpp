@@ -1,5 +1,6 @@
 #include "ManipulatorControllerItemBase.h"
 #include "ManipulatorProgramItemBase.h"
+#include "BasicManipulatorStatements.h"
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/LinkCoordinateFrameSet>
 #include <cnoid/ManipulatorProgram>
@@ -112,7 +113,6 @@ ManipulatorControllerItemBase::ManipulatorControllerItemBase(const ManipulatorCo
 ManipulatorControllerItemBase::Impl::Impl(ManipulatorControllerItemBase* self)
     : self(self)
 {
-    ManipulatorProgram::setPositionSetInclusion(cloneMap, false);
     speedRatio = 1.0;
 }
 
@@ -197,7 +197,8 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
     }
     
     cloneMap.clear();
-    program = programItem->program()->clone(cloneMap);
+
+    program = cloneMap.getClone(programItem->program());
 
     processorStack.clear();
     iterator = program->begin();

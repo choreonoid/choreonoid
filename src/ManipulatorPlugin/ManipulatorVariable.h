@@ -9,7 +9,7 @@
 
 namespace cnoid {
 
-class ManipulatorVariableSet;
+class ManipulatorVariableList;
 
 class CNOID_EXPORT ManipulatorVariable : public CloneableReferenced
 {
@@ -51,7 +51,7 @@ public:
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
 
-    ManipulatorVariableSet* ownerVariableSet() const;
+    ManipulatorVariableList* owner() const;
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
@@ -63,9 +63,9 @@ private:
     Value value_;
     GeneralId id_;
     std::string note_;
-    weak_ref_ptr<ManipulatorVariableSet> ownerVariableSet_;
+    weak_ref_ptr<ManipulatorVariableList> owner_;
 
-    friend class ManipulatorVariableSet;
+    friend class ManipulatorVariableList;
 };
 
 typedef ref_ptr<ManipulatorVariable> ManipulatorVariablePtr;

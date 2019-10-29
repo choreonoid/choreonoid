@@ -7,88 +7,73 @@
 #include <cnoid/GeneralId>
 #include <string>
 #include <array>
-#include <list>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class Body;
 class LinkKinematicsKit;
-class ManipulatorPositionRef;
 class ManipulatorIkPosition;
 class ManipulatorFkPosition;
-class ManipulatorPositionSet;
+class ManipulatorPositionList;
 class Mapping;
 
 class CNOID_EXPORT ManipulatorPosition : public CloneableReferenced
 {
 public:
     static constexpr int MaxNumJoints = 8;
-    enum PositionType { Reference, IK, FK };
+    enum PositionType { IK, FK };
+
+    ManipulatorPosition& operator=(const ManipulatorPosition& rhs) = delete;
 
     ManipulatorPosition* clone() const {
         return static_cast<ManipulatorPosition*>(doClone(nullptr));
     }
     
-    const std::string& name() const { return name_; };
-    bool setName(const std::string& name);
+    const GeneralId& id() const { return id_; }
 
     int positionType() const { return positionType_; }
-    bool isReference() const { return (positionType_ == Reference); };
     bool isIK() const { return (positionType_ == IK); };
     bool isFK() const { return (positionType_ == FK); };
 
-    ManipulatorPositionRef* reference();
     ManipulatorIkPosition* ikPosition();
     ManipulatorFkPosition* fkPosition();
+
+    ManipulatorPositionList* owner();
 
     virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) = 0;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
 
-    ManipulatorPositionSet* ownerPositionSet(){ return weak_ownerPositionSet.lock(); }
+    const std::string& note() const { return note_; }
+    void setNote(const std::string& note) { note_ = note; }
 
     virtual bool read(const Mapping& archive);
     virtual bool write(Mapping& archive) const;
 
 protected:
     ManipulatorPosition(PositionType type);
-    ManipulatorPosition(PositionType type, const std::string& name);
+    ManipulatorPosition(PositionType type, const GeneralId& id);
     ManipulatorPosition(const ManipulatorPosition& org);
-    ManipulatorPosition& operator=(const ManipulatorPosition& rhs);
     
 private:
     PositionType positionType_;
-    std::string name_;
-    weak_ref_ptr<ManipulatorPositionSet> weak_ownerPositionSet;
+    GeneralId id_;
+    std::string note_;
+    weak_ref_ptr<ManipulatorPositionList> owner_;
 
-    friend class ManipulatorPositionSet;
+    friend class ManipulatorPositionList;
 };
 
 typedef ref_ptr<ManipulatorPosition> ManipulatorPositionPtr;
 
 
-class CNOID_EXPORT ManipulatorPositionRef : public ManipulatorPosition
-{
-public:
-    ManipulatorPositionRef(const std::string& name);
-    ManipulatorPositionRef(const ManipulatorPositionRef& org);
-    ManipulatorPositionRef& operator=(const ManipulatorPositionRef& rhs);
-
-    virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) override;
-    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-    virtual bool read(const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
-
-protected:
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
-};
-
 class CNOID_EXPORT ManipulatorIkPosition : public ManipulatorPosition
 {
 public:
     ManipulatorIkPosition();
+    ManipulatorIkPosition(const GeneralId& id);
     ManipulatorIkPosition(const ManipulatorIkPosition& org);
-    ManipulatorIkPosition& operator=(const ManipulatorIkPosition& rhs);
+    ManipulatorIkPosition& operator=(const ManipulatorIkPosition& rhs) = delete;
 
     const Position& position() const { return T; }
     Vector3 rpy() const;
@@ -166,8 +151,9 @@ class CNOID_EXPORT ManipulatorFkPosition : public ManipulatorPosition
 {
 public:
     ManipulatorFkPosition();
+    ManipulatorFkPosition(const GeneralId& id);
     ManipulatorFkPosition(const ManipulatorFkPosition& org);
-    ManipulatorFkPosition& operator=(const ManipulatorFkPosition& rhs);
+    ManipulatorFkPosition& operator=(const ManipulatorFkPosition& rhs) = delete;
 
     virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
@@ -185,64 +171,10 @@ private:
 typedef ref_ptr<ManipulatorFkPosition> ManipulatorFkPositionPtr;
 
 
-class CNOID_EXPORT ManipulatorPositionSet : public CloneableReferenced
+class ManipulatorPositionReferencer
 {
 public:
-    typedef std::list<ManipulatorPositionPtr> container_type;
-
-    ManipulatorPositionSet();
-
-    ManipulatorPositionSet* clone() const {
-        return static_cast<ManipulatorPositionSet*>(doClone(nullptr));
-    }
-    ManipulatorPositionSet* clone(CloneMap& cloneMap) const {
-        return static_cast<ManipulatorPositionSet*>(doClone(&cloneMap));
-    }
-
-    void clear();
-
-    container_type::iterator begin() { return positions_.begin(); }
-    container_type::iterator end() { return positions_.end(); }
-    container_type::const_iterator begin() const { return positions_.begin(); }
-    container_type::const_iterator end() const { return positions_.end(); }
-    
-    bool append(ManipulatorPosition* position, bool doOverwrite = false);
-    bool remove(ManipulatorPosition* position);
-
-    int removeUnreferencedPositions(std::function<bool(ManipulatorPosition* position)> isReferenced);
-    
-    ManipulatorPosition* find(const std::string& name);
-
-    void resetNumbering(const std::string& format, int initial = 0, const std::string& pattern = std::string());
-    std::string getNextNumberedName() const;
-
-    ManipulatorPositionSet* parentSet();
-    int numChildSets();
-    ManipulatorPositionSet* childSet(int index);
-
-    bool read(const Mapping& archive);
-    bool write(Mapping& archive) const;
-    
-    class Impl;
-
-protected:
-    ManipulatorPositionSet(const ManipulatorPositionSet& org, CloneMap* cloneMap);
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
-
-private:
-    container_type positions_;
-    Impl* impl;
-
-    friend class ManipulatorPosition;
-};
-
-typedef ref_ptr<ManipulatorPositionSet> ManipulatorPositionSetPtr;
-
-
-class ManipulatorPositionOwner
-{
-public:
-    virtual ManipulatorPosition* getManipulatorPosition() = 0;
+    virtual GeneralId getManipulatorPositionId() const = 0;
 };
 
 }

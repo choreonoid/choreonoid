@@ -1,5 +1,5 @@
 #include "ManipulatorVariable.h"
-#include "ManipulatorVariableSet.h"
+#include "ManipulatorVariableList.h"
 #include <cnoid/ValueTree>
 #include "gettext.h"
 
@@ -133,9 +133,9 @@ std::string ManipulatorVariable::valueString() const
 }
 
 
-ManipulatorVariableSet* ManipulatorVariable::ownerVariableSet() const
+ManipulatorVariableList* ManipulatorVariable::owner() const
 {
-    return ownerVariableSet_.lock();
+    return owner_.lock();
 }
 
 

@@ -1,7 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_PROGRAM_H
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_PROGRAM_H
 
-#include "ManipulatorStatements.h"
+#include "ManipulatorStatement.h"
 #include <cnoid/CloneableReferenced>
 #include <cnoid/Signal>
 #include <string>
@@ -13,7 +13,7 @@ namespace cnoid {
 
 class Mapping;
 class ManipulatorPosition;
-class ManipulatorPositionSet;
+class ManipulatorPositionList;
 class ManipulatorProgram;
 class StructuredStatement;
 
@@ -35,9 +35,6 @@ public:
         return static_cast<ManipulatorProgram*>(doClone(&cloneMap));
     }
 
-    static bool checkPositionSetInclusion(const CloneMap& cloneMap);
-    static void setPositionSetInclusion(CloneMap& cloneMap, bool on);
-    
     const std::string& name() const;
     void setName(const std::string& name);
 
@@ -54,10 +51,9 @@ public:
     iterator end(){ return statements_.end(); }
     const_iterator end() const { return statements_.end(); }
 
-    ManipulatorPositionSet* positions();
-    const ManipulatorPositionSet* positions() const;
+    ManipulatorPositionList* positions();
+    const ManipulatorPositionList* positions() const;
     void removeUnreferencedPositions();
-    ManipulatorPositionSet* createPositionSet() const;
 
     SignalProxy<void(ManipulatorProgram* program, ManipulatorProgram::iterator iter)> sigStatementInserted();
     SignalProxy<void(ManipulatorProgram* program, ManipulatorStatement* statement)> sigStatementRemoved();
@@ -65,7 +61,7 @@ public:
     
     void notifyStatementUpdate(ManipulatorStatement* statement) const;
 
-    StructuredStatement* holderStatement() const;
+    StructuredStatement* ownerStatement() const;
 
     bool load(const std::string& filename, std::ostream& os);
     bool save(const std::string& filename);
@@ -82,7 +78,7 @@ private:
 
     friend class StructuredStatement;
 
-    void setHolderStatement(StructuredStatement* holder);
+    void setOwnerStatement(StructuredStatement* owner);
 };
 
 typedef ref_ptr<ManipulatorProgram> ManipulatorProgramPtr;

@@ -1,5 +1,6 @@
 #include "GeneralId.h"
 #include "ValueTree.h"
+#include <cstdlib>
 
 using namespace std;
 using namespace cnoid;
@@ -22,7 +23,14 @@ bool GeneralId::read(const Mapping& archive, const char* key)
         if(scalar->stringStyle() != PLAIN_STRING){
             (*this) = idNode->toString();
         } else {
-            (*this) = idNode->toInt();
+            auto s = idNode->toString();
+            char* endptr;
+            int id = strtol(s.c_str(), &endptr, 10);
+            if(endptr == s.c_str()){
+                (*this) = s;
+            } else {
+                (*this) = id;
+            }
         }
         return true;
     }

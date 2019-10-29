@@ -1,7 +1,7 @@
 #include "ManipulatorProgramViewBase.h"
 #include "ManipulatorProgramItemBase.h"
 #include "ManipulatorProgram.h"
-#include "ManipulatorStatements.h"
+#include "BasicManipulatorStatements.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
@@ -323,8 +323,11 @@ void ProgramViewDelegate::updateEditorGeometry
             auto rect2 = viewImpl->visualRect(viewImpl->indexFromItem(item, i));
             rect = rect.united(rect2);
         }
+
     } else if(span == 1){
         rect = option.rect;
+        //rect.setWidth(rect.width() * 1.25);
+
     } else {
         rect = viewImpl->visualRect(index);
         for(int i=1; i < span; ++i){
@@ -849,8 +852,8 @@ void ManipulatorProgramViewBase::Impl::onStatementInserted
     auto counter = scopedCounterOfStatementItemOperationCall();
 
     QTreeWidgetItem* parentItem;
-    if(auto holderStatement = program->holderStatement()){
-        parentItem = statementItemFromStatement(holderStatement);
+    if(auto ownerStatement = program->ownerStatement()){
+        parentItem = statementItemFromStatement(ownerStatement);
     } else {
         parentItem = invisibleRootItem();
     }
@@ -888,8 +891,8 @@ void ManipulatorProgramViewBase::Impl::onStatementRemoved
     if(iter != statementItemMap.end()){
         auto statementItem = iter->second;
         QTreeWidgetItem* parentItem;
-        if(auto holderStatement = program->holderStatement()){
-            parentItem = statementItemFromStatement(holderStatement);
+        if(auto ownerStatement = program->ownerStatement()){
+            parentItem = statementItemFromStatement(ownerStatement);
         } else {
             parentItem = invisibleRootItem();
         }

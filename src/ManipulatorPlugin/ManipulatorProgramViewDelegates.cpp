@@ -1,5 +1,5 @@
 #include "ManipulatorProgramViewBase.h"
-#include "ManipulatorStatements.h"
+#include "BasicManipulatorStatements.h"
 #include "ManipulatorProgram.h"
 #include <QLineEdit>
 #include <QSpinBox>

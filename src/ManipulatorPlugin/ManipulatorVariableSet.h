@@ -39,8 +39,6 @@ public:
 protected:
     ManipulatorVariableSet();
     ManipulatorVariableSet(const ManipulatorVariableSet& org);
-    void setManipulatorVariableId(ManipulatorVariable* variable, const GeneralId& id);
-    void setManipulatorVariableOwner(ManipulatorVariable* variable, ManipulatorVariableSet* owner);
 
 private:
     std::string name_;

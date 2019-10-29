@@ -1,52 +1,12 @@
-#include "ManipulatorStatements.h"
+#include "BasicManipulatorStatements.h"
 #include "ManipulatorProgram.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
-#include <unordered_map>
-#include <mutex>
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-
-namespace {
-
-unordered_map<string, ManipulatorStatement::FactoryFunction> factoryMap;
-mutex factoryMutex;
-
-}
-
-
-void ManipulatorStatement::registerFactory(const char* type, FactoryFunction factory)
-{
-    lock_guard<mutex> lock(factoryMutex);
-    factoryMap[type] = factory;
-}
-
-
-ManipulatorStatement* ManipulatorStatement::create(const std::string& type)
-{
-    lock_guard<mutex> lock(factoryMutex);
-    auto iter = factoryMap.find(type);
-    if(iter != factoryMap.end()){
-        auto& factory = iter->second;
-        return factory();
-    }
-    return nullptr;
-}
-
-
-ManipulatorStatement::ManipulatorStatement()
-{
-
-}
-
-
-ManipulatorStatement::ManipulatorStatement(const ManipulatorStatement& org)
-{
-
-}
 
 
 EmptyStatement::EmptyStatement()
@@ -175,7 +135,7 @@ bool CommentStatement::write(Mapping& archive) const
 StructuredStatement::StructuredStatement()
 {
     program_ = new ManipulatorProgram;
-    program_->setHolderStatement(this);
+    program_->setOwnerStatement(this);
     program_->append(new DummyStatement, false);
 }
 
