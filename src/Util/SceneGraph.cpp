@@ -16,7 +16,7 @@ using namespace cnoid;
 namespace {
 
 // Id to access the correspondingCloneMap flag
-CloneMap::FlagId isNonNodeCloningDisabled("isNonNodeCloningDisabled");
+CloneMap::FlagId DisableNonNodeCloning("SgObjectDisableNonNodeCloning");
 
 }
 
@@ -45,15 +45,16 @@ Referenced* SgObject::doClone(CloneMap*) const
     return new SgObject(*this);
 }
 
-bool SgObject::isNonNodeCloningEnabled(const CloneMap& cloneMap)
+
+bool SgObject::checkNonNodeCloning(const CloneMap& cloneMap)
 {
-    return !cloneMap.flag(isNonNodeCloningDisabled);
+    return !cloneMap.flag(DisableNonNodeCloning);
 }
 
 
-void SgObject::setNonNodeCloningEnabled(CloneMap& cloneMap, bool on)
+void SgObject::setNonNodeCloning(CloneMap& cloneMap, bool on)
 {
-    cloneMap.setFlag(isNonNodeCloningDisabled, !on);
+    cloneMap.setFlag(DisableNonNodeCloning, !on);
 }
 
 

@@ -285,7 +285,7 @@ void SceneLink::setVisible(bool on)
 void SceneLink::makeTransparent(float transparency)
 {
     CloneMap cloneMap;
-    SgObject::setNonNodeCloningEnabled(cloneMap, false);
+    SgObject::setNonNodeCloning(cloneMap, false);
     impl->makeTransparent(transparency, cloneMap);
 }
 
@@ -467,6 +467,6 @@ void SceneBody::makeTransparent(float transparency, CloneMap& cloneMap)
 void SceneBody::makeTransparent(float transparency)
 {
     CloneMap cloneMap;
-    SgNode::setNonNodeCloningEnabled(cloneMap, false);
+    SgObject::setNonNodeCloning(cloneMap, false);
     makeTransparent(transparency, cloneMap);
 }

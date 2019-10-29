@@ -496,7 +496,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
       even if the non node objects in the scene are not modified because
       the signal connection / disconnection operations may collide.
     */
-    SgObject::setNonNodeCloningEnabled(cloneMap, true);
+    SgObject::setNonNodeCloning(cloneMap, true);
 
     std::set<string> bodyNameSet;
     for(size_t i=0; i < bodyNames.size(); ++i){

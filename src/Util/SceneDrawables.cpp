@@ -154,7 +154,7 @@ SgTexture::SgTexture()
 SgTexture::SgTexture(const SgTexture& org, CloneMap* cloneMap)
     : SgObject(org)
 {
-    if(cloneMap && isNonNodeCloningEnabled(*cloneMap)){
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.image()){
             setImage(cloneMap->getClone<SgImage>(org.image()));
         }
@@ -254,7 +254,7 @@ SgMeshBase::SgMeshBase(const SgMeshBase& org, CloneMap* cloneMap)
       colorIndices_(org.colorIndices_),
       texCoordIndices_(org.texCoordIndices_)
 {
-    if(cloneMap && isNonNodeCloningEnabled(*cloneMap)){
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.vertices_){
             setVertices(cloneMap->getClone<SgVertexArray>(org.vertices()));
         }
@@ -571,7 +571,7 @@ SgShape::SgShape()
 SgShape::SgShape(const SgShape& org, CloneMap* cloneMap)
     : SgNode(org)
 {
-    if(cloneMap && isNonNodeCloningEnabled(*cloneMap)){
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.mesh()){
             setMesh(cloneMap->getClone<SgMesh>(org.mesh()));
         }
@@ -715,7 +715,7 @@ SgPlot::SgPlot(int polymorhicId)
 SgPlot::SgPlot(const SgPlot& org, CloneMap* cloneMap)
     : SgNode(org)
 {
-    if(cloneMap && isNonNodeCloningEnabled(*cloneMap)){
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.vertices()){
             setVertices(cloneMap->getClone<SgVertexArray>(org.vertices()));
         }

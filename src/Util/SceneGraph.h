@@ -67,9 +67,9 @@ public:
         return static_cast<SgObject*>(doClone(&cloneMap));
     }
 
-    static bool isNonNodeCloningEnabled(const CloneMap& cloneMap);
-    static void setNonNodeCloningEnabled(CloneMap& cloneMap, bool on);
-        
+    static bool checkNonNodeCloning(const CloneMap& cloneMap);
+    static void setNonNodeCloning(CloneMap& cloneMap, bool on);
+    
     const std::string& name() const { return name_; }
     void setName(const std::string& name) { name_ = name; }
 
