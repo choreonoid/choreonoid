@@ -35,15 +35,34 @@ public:
     }
 
     template<class ObjectType>
-    ObjectType* getClone(const ref_ptr<ObjectType> org){
+    ObjectType* getClone(ref_ptr<ObjectType> org){
         return getClone<ObjectType>(org.get());
     }
+
+    /*
+    template<class ObjectType>
+    ObjectType* getClone(ref_ptr<const ObjectType> org){
+        return getClone<ObjectType>(org.get());
+    }
+    */
 
     template<class ObjectType>
     ObjectType* getClone(const ObjectType* org, const CloneFunction& cloneFunction){
         return static_cast<ObjectType*>(findOrCreateClone_(org, cloneFunction));
     }
-    
+
+    template<class ObjectType>
+    ObjectType* getClone(ref_ptr<ObjectType> org, const CloneFunction& cloneFunction){
+        return getClone(org.get(), cloneFunction);
+    }
+
+    /*
+    template<class ObjectType>
+    ObjectType* getClone(ref_ptr<const ObjectType> org, const CloneFunction& cloneFunction){
+        return getClone(org.get(), cloneFunction);
+    }
+    */
+
     template<class ObjectType>
     ObjectType* findCloneOrReplaceLater(
         const ObjectType* org, std::function<void(ObjectType* clone)> replaceFunction){

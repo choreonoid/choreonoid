@@ -45,7 +45,6 @@ public:
     KinematicSimulatorItem* self;
     vector<HolderInfoPtr> holders;
     vector<HolderInfoPtr> activeHolders;
-    CloneMap cloneMap;
     vector<IoConnectionMapPtr> ioConnectionMaps;
 
     Impl(KinematicSimulatorItem* self);
@@ -108,17 +107,15 @@ Item* KinematicSimulatorItem::doDuplicate() const
 
 void KinematicSimulatorItem::clearSimulation()
 {
-    impl->cloneMap.clear();
     impl->holders.clear();    
     impl->activeHolders.clear();    
     impl->ioConnectionMaps.clear();
 }
 
 
-SimulationBody* KinematicSimulatorItem::createSimulationBody(Body* orgBody)
+SimulationBody* KinematicSimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
 {
-    auto body = impl->cloneMap.getClone(orgBody);
-    return new KinematicSimBody(body);
+    return new KinematicSimBody(cloneMap.getClone(orgBody));
 }
 
 
@@ -130,8 +127,6 @@ bool KinematicSimulatorItem::initializeSimulation(const std::vector<SimulationBo
 
 bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
-    cloneMap.replacePendingObjects();
-
     /*
       This is a temporary implementation.
       This should be implemented in IoConnectionMapItem as functions of SubSimulatorItem.
@@ -141,7 +136,7 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
     ItemList<IoConnectionMapItem> connectionMapItems;
     if(connectionMapItems.extractSubTreeItems(self->worldItem())){
         for(auto& item : connectionMapItems){
-            auto connectionMap = item->connectionMap()->clone(cloneMap);
+            auto connectionMap = self->cloneMap().getClone(item->connectionMap());
             connectionMap->establishConnections();
             ioConnectionMaps.push_back(connectionMap);
         }

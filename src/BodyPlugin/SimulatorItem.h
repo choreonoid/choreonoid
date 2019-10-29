@@ -204,9 +204,13 @@ protected:
 
     /**
        @note orgBody should not owned by the SimulationBody instance.
-       Instead of it, a clone instance which may be a sub Body class should be created and owned.
+       Instead it must clone a body instance using cloneMap and use it for the simulation.
+       @note This function should be a pure virtual function when the old function is removed.
     */
-    virtual SimulationBody* createSimulationBody(Body* orgBody) = 0;
+    virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap);
+
+    //! \deprecated. This is an old interface. Use createSimulationBody(Body* orgBody, CloneMap& cloneMap).
+    virtual SimulationBody* createSimulationBody(Body* orgBody);
 
     CollisionDetector* getOrCreateCollisionDetector();
 

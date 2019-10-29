@@ -7,16 +7,17 @@
 #include "BodyItem.h"
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/MessageView>
 #include <cnoid/Archive>
-#include <cnoid/EigenArchive>
 #include <cnoid/DyWorld>
 #include <cnoid/DyBody>
 #include <cnoid/ForwardDynamicsCBM>
 #include <cnoid/ConstraintForceSolver>
 #include <cnoid/LeggedBodyHelper>
+#include <cnoid/CloneMap>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
-#include <cnoid/MessageView>
+#include <cnoid/EigenArchive>
 #include <cnoid/IdPair>
 #include <fmt/format.h>
 #include <mutex>
@@ -343,11 +344,13 @@ bool AISTSimulatorItem::startSimulation(bool doReset)
 }
 
 
-SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
+SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
 {
-    SimulationBody* simBody = 0;
+    SimulationBody* simBody = nullptr;
+
     DyBody* body = new DyBody;
-    body->copyFrom(orgBody);
+    cloneMap.setClone(orgBody, body);
+    body->copyFrom(orgBody, &cloneMap);
 
     const int n = orgBody->numLinks();
     for(int i=0; i < n; ++i){

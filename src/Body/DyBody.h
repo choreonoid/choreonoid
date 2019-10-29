@@ -121,6 +121,13 @@ class CNOID_EXPORT DyBody : public Body
 {
 public:
     DyBody();
+
+    /**
+       The copy constructor is disabled becasue a virtual function is neccessary
+       to create the instance but it cannot be called from the contructor.
+       Use the copyFrom function after the empty instance is created to create
+       the copied instance.
+    */
     DyBody(const Body& org) = delete;
 
     virtual Link* createLink(const Link* org = 0) const;

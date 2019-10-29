@@ -1473,6 +1473,18 @@ void SimulatorItem::clearSimulation()
 }
 
 
+SimulationBody* SimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
+{
+    return nullptr;
+}
+
+
+SimulationBody* SimulatorItem::createSimulationBody(Body* orgBody)
+{
+    return nullptr;
+}
+
+
 bool SimulatorItem::startSimulation(bool doReset)
 {
     return impl->startSimulation(doReset);
@@ -1521,16 +1533,26 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             if(doReset){
                 bodyItem->restoreInitialState(false);
             }
-            SimulationBodyPtr simBody = self->createSimulationBody(bodyItem->body());
-            if(simBody->body()){
-                if(simBody->initialize(self, bodyItem)){
+            auto orgBody = bodyItem->body();
+            SimulationBodyPtr simBody = self->createSimulationBody(orgBody, cloneMap);
+            if(!simBody){
+                // Old API
+                simBody = self->createSimulationBody(orgBody);
+            }
 
-                    // copy the body state overwritten by the controller
-                    simBody->impl->copyStateToBodyItem();
+            if(!simBody){
+                mv->putln(format(_("The clone of {0} for the simulation cannot be created."), orgBody->name()),
+                          MessageView::WARNING);
+            } else {
+                if(simBody->body()){
+                    if(simBody->initialize(self, bodyItem)){
+                        // copy the body state overwritten by the controller
+                        simBody->impl->copyStateToBodyItem();
                         
-                    allSimBodies.push_back(simBody);
-                    simBodiesWithBody.push_back(simBody);
-                    simBodyMap[bodyItem] = simBody;
+                        allSimBodies.push_back(simBody);
+                        simBodiesWithBody.push_back(simBody);
+                        simBodyMap[bodyItem] = simBody;
+                    }
                 }
             }
             bodyItem->notifyKinematicStateChange();
@@ -1575,6 +1597,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     extForceFunctionId = stdx::nullopt;
     virtualElasticStringFunctionId = stdx::nullopt;
 
+    cloneMap.replacePendingObjects();
+    
     bool result = self->initializeSimulation(simBodiesWithBody);
 
     if(result){
