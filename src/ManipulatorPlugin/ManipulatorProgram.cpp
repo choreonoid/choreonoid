@@ -13,16 +13,14 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-namespace cnoid {
+namespace {
 
-class ManipulatorProgramCloneMap::Impl
-{
-public:
-    CloneMap programCloneMap;
-    ManipulatorPositionCloneMap positionCloneMap;
-    bool isPositionSetIncluded;
-    Impl(ManipulatorProgramCloneMap* self);
-};
+// Id to access the correspondingCloneMap flag
+CloneMap::FlagId PositionSetExclusion("ManipulatorProgramPositionSetExclusion");
+
+}
+
+namespace cnoid {
 
 class ManipulatorProgram::Impl
 {
@@ -36,71 +34,13 @@ public:
     std::string name;
 
     Impl(ManipulatorProgram* self);
-    Impl(ManipulatorProgram* self, const Impl& org, ManipulatorProgramCloneMap* cloneMap);
+    Impl(ManipulatorProgram* self, const Impl& org, CloneMap* cloneMap);
     void notifyStatementInsertion(ManipulatorProgram* program, iterator iter);
     void notifyStatementRemoval(ManipulatorProgram* program, ManipulatorStatement* statement);
     void notifyStatementUpdate(ManipulatorStatement* statement) const;
     bool read(Mapping& archive);    
 };
 
-}
-
-
-ManipulatorProgramCloneMap::ManipulatorProgramCloneMap()
-{
-    impl = new ManipulatorProgramCloneMap::Impl(this);
-}
-
-
-ManipulatorProgramCloneMap::Impl::Impl(ManipulatorProgramCloneMap* self)
-    : programCloneMap(
-        [self](const Referenced* org) -> Referenced* {
-            return static_cast<const ManipulatorProgram*>(org)->clone(*self); })
-{
-    isPositionSetIncluded = true;
-}
-
-
-ManipulatorProgramCloneMap::~ManipulatorProgramCloneMap()
-{
-    delete impl;
-}
-
-
-void ManipulatorProgramCloneMap::clear()
-{
-    impl->programCloneMap.clear();
-    impl->positionCloneMap.clear();
-}
-
-
-ManipulatorProgram* ManipulatorProgramCloneMap::getClone(ManipulatorProgram* org)
-{
-    return impl->programCloneMap.getClone(org);
-}
-
-
-ManipulatorPosition* ManipulatorProgramCloneMap::getClone(ManipulatorPosition* org)
-{
-    return impl->positionCloneMap.getClone(org);
-}
-
-
-ManipulatorPositionCloneMap& ManipulatorProgramCloneMap::manipulatorPositionCloneMap()
-{
-    return impl->positionCloneMap;
-}
-
-
-bool ManipulatorProgramCloneMap::isPositionSetIncluded() const
-{
-    return impl->isPositionSetIncluded;
-}
-
-
-void ManipulatorProgramCloneMap::setPositionSetIncluded(bool on)
-{
-    impl->isPositionSetIncluded = on;
 }
 
 
@@ -117,7 +57,7 @@ ManipulatorProgram::Impl::Impl(ManipulatorProgram* self)
 }
     
 
-ManipulatorProgram::ManipulatorProgram(const ManipulatorProgram& org, ManipulatorProgramCloneMap* cloneMap)
+ManipulatorProgram::ManipulatorProgram(const ManipulatorProgram& org, CloneMap* cloneMap)
 {
     impl = new Impl(this, *org.impl, cloneMap);
 
@@ -133,12 +73,12 @@ ManipulatorProgram::ManipulatorProgram(const ManipulatorProgram& org, Manipulato
 }
 
 
-ManipulatorProgram::Impl::Impl(ManipulatorProgram* self, const Impl& org, ManipulatorProgramCloneMap* cloneMap)
+ManipulatorProgram::Impl::Impl(ManipulatorProgram* self, const Impl& org, CloneMap* cloneMap)
     : self(self),
       name(org.name)
 {
-    if(cloneMap && cloneMap->isPositionSetIncluded()){
-        positions = new ManipulatorPositionSet(*org.positions, cloneMap->manipulatorPositionCloneMap());
+    if(cloneMap && ManipulatorProgram::checkPositionSetInclusion(*cloneMap)){
+        positions = cloneMap->getClone(org.positions);
     }
 }
 
@@ -149,9 +89,21 @@ ManipulatorProgram::~ManipulatorProgram()
 }
 
 
-ManipulatorProgram* ManipulatorProgram::doClone(ManipulatorProgramCloneMap* cloneMap) const
+Referenced* ManipulatorProgram::doClone(CloneMap* cloneMap) const
 {
     return new ManipulatorProgram(*this, cloneMap);
+}
+
+
+bool ManipulatorProgram::checkPositionSetInclusion(const CloneMap& cloneMap)
+{
+    return !cloneMap.flag(PositionSetExclusion);
+}
+
+
+void ManipulatorProgram::setPositionSetInclusion(CloneMap& cloneMap, bool on)
+{
+    cloneMap.setFlag(PositionSetExclusion, !on);
 }
 
 

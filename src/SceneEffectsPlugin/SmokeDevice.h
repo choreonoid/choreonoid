@@ -32,7 +32,7 @@ public:
     const ParticleSystem& particleSystem() const { return particleSystem_; }
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
         
 private:
     ParticleSystem particleSystem_;

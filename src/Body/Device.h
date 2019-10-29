@@ -6,6 +6,7 @@
 #ifndef CNOID_BODY_DEVICE_H
 #define CNOID_BODY_DEVICE_H
 
+#include <cnoid/CloneMappableReferenced>
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
 #include <string>
@@ -13,11 +14,10 @@
 
 namespace cnoid {
 
-class BodyCloneMap;
 class Body;
 class Link;
 
-class CNOID_EXPORT DeviceState : public Referenced
+class CNOID_EXPORT DeviceState : public CloneMappableReferenced
 {
 protected:
     DeviceState() { }
@@ -71,13 +71,16 @@ class CNOID_EXPORT Device : public DeviceState
 protected:
     Device(); 
     Device(const Device& org, bool copyStateOnly = false);
-    virtual Device* doClone(BodyCloneMap* cloneMap) const = 0;
 
 public:
     virtual ~Device();
 
-    Device* clone() const { return doClone(nullptr); }
-    Device* clone(BodyCloneMap& cloneMap) const { return doClone(&cloneMap); }
+    Device* clone() const {
+        return static_cast<Device*>(doClone(nullptr));
+    }
+    Device* clone(CloneMap& cloneMap) const {
+        return static_cast<Device*>(doClone(&cloneMap));
+    }
 
     void setIndex(int index) { ns->index = index; }
     void setId(int id) { ns->id = id; }

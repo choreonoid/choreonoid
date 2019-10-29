@@ -83,7 +83,7 @@ void Camera::copyCameraStateFrom(const Camera& other)
 }
 
 
-Device* Camera::doClone(BodyCloneMap*) const
+Referenced* Camera::doClone(CloneMap*) const
 {
     return new Camera(*this, false);
 }

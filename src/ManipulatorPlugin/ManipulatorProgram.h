@@ -2,7 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_PROGRAM_H
 
 #include "ManipulatorStatements.h"
-#include <cnoid/Referenced>
+#include <cnoid/CloneMappableReferenced>
 #include <cnoid/Signal>
 #include <string>
 #include <deque>
@@ -13,33 +13,12 @@ namespace cnoid {
 
 class Mapping;
 class ManipulatorPosition;
-class ManipulatorPositionCloneMap;
 class ManipulatorPositionSet;
 class ManipulatorProgram;
 class StructuredStatement;
 
-class CNOID_EXPORT ManipulatorProgramCloneMap
-{
-public:
-    ManipulatorProgramCloneMap();
-    ManipulatorProgramCloneMap(const ManipulatorProgramCloneMap& org) = delete;
-    ~ManipulatorProgramCloneMap();
-    void clear();
-    ManipulatorProgram* getClone(ManipulatorProgram* org);
-    ManipulatorPosition* getClone(ManipulatorPosition* org);
-    ManipulatorPositionCloneMap& manipulatorPositionCloneMap();
-    bool isPositionSetIncluded() const;
-    void setPositionSetIncluded(bool on);
-    
-private:
-    class Impl;
-    Impl* impl;
 
-    friend class ManipulatorProgram;
-};
-
-
-class CNOID_EXPORT ManipulatorProgram : public Referenced
+class CNOID_EXPORT ManipulatorProgram : public CloneMappableReferenced
 {
 public:
     typedef std::deque<ManipulatorStatementPtr> StatementContainer;
@@ -49,8 +28,15 @@ public:
     ManipulatorProgram();
     ~ManipulatorProgram();
 
-    ManipulatorProgram* clone() const { return doClone(nullptr); }
-    ManipulatorProgram* clone(ManipulatorProgramCloneMap& cloneMap) const { return doClone(&cloneMap); }
+    ManipulatorProgram* clone() const {
+        return static_cast<ManipulatorProgram*>(doClone(nullptr));
+    }
+    ManipulatorProgram* clone(CloneMap& cloneMap) const {
+        return static_cast<ManipulatorProgram*>(doClone(&cloneMap));
+    }
+
+    static bool checkPositionSetInclusion(const CloneMap& cloneMap);
+    static void setPositionSetInclusion(CloneMap& cloneMap, bool on);
     
     const std::string& name() const;
     void setName(const std::string& name);
@@ -85,8 +71,8 @@ public:
     bool save(const std::string& filename);
 
 protected:
-    ManipulatorProgram(const ManipulatorProgram& org, ManipulatorProgramCloneMap* cloneMap);
-    virtual ManipulatorProgram* doClone(ManipulatorProgramCloneMap* cloneMap) const;
+    ManipulatorProgram(const ManipulatorProgram& org, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     StatementContainer statements_;

@@ -1,7 +1,7 @@
 #include "IoConnectionMap.h"
 #include "DigitalIoDevice.h"
 #include "Body.h"
-#include "BodyCloneMap.h"
+#include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
 #include <algorithm>
@@ -19,7 +19,8 @@ DigitalIoConnection::DigitalIoConnection()
 }
 
 
-DigitalIoConnection::DigitalIoConnection(DigitalIoDevice* outDevice, int outIndex, DigitalIoDevice* inDevice, int inIndex)
+DigitalIoConnection::DigitalIoConnection
+(DigitalIoDevice* outDevice, int outIndex, DigitalIoDevice* inDevice, int inIndex)
 {
     device_[Out] = outDevice;
     signalIndex_[Out] = outIndex;
@@ -28,10 +29,14 @@ DigitalIoConnection::DigitalIoConnection(DigitalIoDevice* outDevice, int outInde
 }
 
 
-DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org)
+DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org, CloneMap* cloneMap)
 {
     for(int i=0; i < 2; ++i){
-        device_[i] = org.device_[i];
+        if(cloneMap){
+            device_[i] = cloneMap->getClone<DigitalIoDevice>(org.device_[i]);
+        } else {
+            device_[i] = org.device_[i];
+        }
         signalIndex_[i] = org.signalIndex_[i];
         bodyName_[i] = org.bodyName_[i];
         deviceName_[i] = org.deviceName_[i];
@@ -39,14 +44,9 @@ DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org)
 }
 
 
-DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org, BodyCloneMap& bodyCloneMap)
+Referenced* DigitalIoConnection::doClone(CloneMap* cloneMap) const
 {
-    for(int i=0; i < 2; ++i){
-        device_[i] = bodyCloneMap.getClone<DigitalIoDevice>(org.device_[i]);
-        signalIndex_[i] = org.signalIndex_[i];
-        bodyName_[i] = org.bodyName_[i];
-        deviceName_[i] = org.deviceName_[i];
-    }
+    return new DigitalIoConnection(*this, cloneMap);
 }
 
 
@@ -158,25 +158,23 @@ IoConnectionMap::IoConnectionMap()
 }
 
 
-IoConnectionMap::IoConnectionMap(const IoConnectionMap& org)
+IoConnectionMap::IoConnectionMap(const IoConnectionMap& org, CloneMap* cloneMap)
 {
-    for(auto& connection : org.connections_){
-        append(new DigitalIoConnection(*connection));
+    if(cloneMap){
+        for(auto& connection : org.connections_){
+            append(connection->clone(*cloneMap));
+        }
+    } else {
+        for(auto& connection : org.connections_){
+            append(connection->clone());
+        }
     }
 }
 
 
-IoConnectionMap::IoConnectionMap(const IoConnectionMap& org, BodyCloneMap& bodyCloneMap)
+Referenced* IoConnectionMap::doClone(CloneMap* cloneMap) const
 {
-    for(auto& connection : org.connections_){
-        append(new DigitalIoConnection(*connection, bodyCloneMap));
-    }
-}
-
-
-IoConnectionMap* IoConnectionMap::clone(BodyCloneMap& bodyCloneMap) const
-{
-    return new IoConnectionMap(*this, bodyCloneMap);
+    return new IoConnectionMap(*this, cloneMap);
 }
 
 

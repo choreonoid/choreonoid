@@ -589,7 +589,7 @@ void IoConnectionView::Impl::addNewConnection(int index, bool doInsert)
     if(index < connectionMap->numConnections()){
         auto existing = connectionMap->connection(index);
         if(existing->hasDeviceInstances()){
-            connection = new DigitalIoConnection(*existing);
+            connection = existing->clone();
         }
     }
 

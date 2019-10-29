@@ -46,8 +46,8 @@ public:
     bool readDescription(YAMLBodyLoader& loader, Mapping& node);
 
 protected:
-    DigitalIoDevice(const DigitalIoDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap);
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    DigitalIoDevice(const DigitalIoDevice& org, bool copyStateOnly, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     std::vector<bool> out_;

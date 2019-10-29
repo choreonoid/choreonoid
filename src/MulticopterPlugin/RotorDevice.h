@@ -65,7 +65,7 @@ public:
     virtual double* writeState(double* out_buf) const override;
 
 protected:
-    virtual Device* doClone(cnoid::BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(cnoid::CloneMap* cloneMap) const override;
 
 private:
     bool _on;

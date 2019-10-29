@@ -61,7 +61,7 @@ public:
     void setOffsetTranslation(const Vector3& p) { offsetPosition_.translation() = p; }
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     bool on_;

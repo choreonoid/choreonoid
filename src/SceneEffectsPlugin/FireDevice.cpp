@@ -96,7 +96,7 @@ DeviceState* FireDevice::cloneState() const
 }
 
 
-Device* FireDevice::doClone(BodyCloneMap*) const
+Referenced* FireDevice::doClone(CloneMap*) const
 {
     return new FireDevice(*this);
 }

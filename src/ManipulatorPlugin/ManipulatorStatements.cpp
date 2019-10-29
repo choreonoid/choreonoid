@@ -1,5 +1,6 @@
 #include "ManipulatorStatements.h"
 #include "ManipulatorProgram.h"
+#include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
 #include <unordered_map>
@@ -61,7 +62,7 @@ EmptyStatement::EmptyStatement(const EmptyStatement& org)
 }
 
 
-ManipulatorStatement* EmptyStatement::doClone(ManipulatorProgramCloneMap*) const
+Referenced* EmptyStatement::doClone(CloneMap*) const
 {
     return new EmptyStatement(*this);
 }
@@ -99,7 +100,7 @@ DummyStatement::DummyStatement(const DummyStatement& org)
 }
 
 
-ManipulatorStatement* DummyStatement::doClone(ManipulatorProgramCloneMap*) const
+Referenced* DummyStatement::doClone(CloneMap*) const
 {
     return new DummyStatement(*this);
 }
@@ -141,7 +142,7 @@ CommentStatement::CommentStatement(const CommentStatement& org)
 }
 
 
-ManipulatorStatement* CommentStatement::doClone(ManipulatorProgramCloneMap*) const
+Referenced* CommentStatement::doClone(CloneMap*) const
 {
     return new CommentStatement(*this);
 }
@@ -179,7 +180,7 @@ StructuredStatement::StructuredStatement()
 }
 
 
-StructuredStatement::StructuredStatement(const StructuredStatement& org, ManipulatorProgramCloneMap* cloneMap)
+StructuredStatement::StructuredStatement(const StructuredStatement& org, CloneMap* cloneMap)
     : ManipulatorStatement(org)
 {
     if(cloneMap){
@@ -196,14 +197,14 @@ IfStatement::IfStatement()
 }
 
 
-IfStatement::IfStatement(const IfStatement& org, ManipulatorProgramCloneMap* cloneMap)
+IfStatement::IfStatement(const IfStatement& org, CloneMap* cloneMap)
     : StructuredStatement(org, cloneMap)
 {
     
 }
 
 
-ManipulatorStatement* IfStatement::doClone(ManipulatorProgramCloneMap* cloneMap) const
+Referenced* IfStatement::doClone(CloneMap* cloneMap) const
 {
     return new IfStatement(*this, cloneMap);
 }
@@ -237,14 +238,14 @@ ElseStatement::ElseStatement()
 }
 
 
-ElseStatement::ElseStatement(const ElseStatement& org, ManipulatorProgramCloneMap* cloneMap)
+ElseStatement::ElseStatement(const ElseStatement& org, CloneMap* cloneMap)
     : StructuredStatement(org, cloneMap)
 {
 
 }
 
 
-ManipulatorStatement* ElseStatement::doClone(ManipulatorProgramCloneMap* cloneMap) const
+Referenced* ElseStatement::doClone(CloneMap* cloneMap) const
 {
     return new ElseStatement(*this, cloneMap);
 }
@@ -278,14 +279,14 @@ WhileStatement::WhileStatement()
 }
 
 
-WhileStatement::WhileStatement(const WhileStatement& org, ManipulatorProgramCloneMap* cloneMap)
+WhileStatement::WhileStatement(const WhileStatement& org, CloneMap* cloneMap)
     : StructuredStatement(org, cloneMap)
 {
 
 }
 
 
-ManipulatorStatement* WhileStatement::doClone(ManipulatorProgramCloneMap* cloneMap) const
+Referenced* WhileStatement::doClone(CloneMap* cloneMap) const
 {
     return new WhileStatement(*this, cloneMap);
 }
@@ -319,7 +320,7 @@ CallStatement::CallStatement()
 }
 
 
-CallStatement::CallStatement(const CallStatement& org, ManipulatorProgramCloneMap* cloneMap)
+CallStatement::CallStatement(const CallStatement& org, CloneMap* cloneMap)
 {
     if(cloneMap){
         program_ = cloneMap->getClone(org.program_);
@@ -329,7 +330,7 @@ CallStatement::CallStatement(const CallStatement& org, ManipulatorProgramCloneMa
 }
 
 
-ManipulatorStatement* CallStatement::doClone(ManipulatorProgramCloneMap* cloneMap) const
+Referenced* CallStatement::doClone(CloneMap* cloneMap) const
 {
     return new CallStatement(*this, cloneMap);
 }
@@ -371,7 +372,7 @@ SetSignalStatement::SetSignalStatement(const SetSignalStatement& org)
 }
 
 
-SetSignalStatement* SetSignalStatement::doClone(ManipulatorProgramCloneMap*) const
+Referenced* SetSignalStatement::doClone(CloneMap*) const
 {
     return new SetSignalStatement(*this);
 }
@@ -420,7 +421,7 @@ DelayStatement::DelayStatement(const DelayStatement& org)
 }
 
 
-ManipulatorStatement* DelayStatement::doClone(ManipulatorProgramCloneMap*) const
+Referenced* DelayStatement::doClone(CloneMap*) const
 {
     return new DelayStatement(*this);
 }

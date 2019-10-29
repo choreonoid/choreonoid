@@ -63,7 +63,7 @@ void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other)
 }
 
 
-Device* RangeCamera::doClone(BodyCloneMap*) const
+Referenced* RangeCamera::doClone(CloneMap*) const
 {
     return new RangeCamera(*this, false);
 }

@@ -43,7 +43,7 @@ public:
     Vector6& F_max() { return spec->F_max; }
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Vector6 F_; // f (linear force) + tau (torque)

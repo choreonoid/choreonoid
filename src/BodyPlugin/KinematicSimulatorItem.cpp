@@ -2,7 +2,7 @@
 #include "BodyItem.h"
 #include "WorldItem.h"
 #include "IoConnectionMapItem.h"
-#include <cnoid/BodyCloneMap>
+#include <cnoid/CloneMap>
 #include <cnoid/HolderDevice>
 #include <cnoid/AttachmentDevice>
 #include <cnoid/IoConnectionMap>
@@ -45,7 +45,7 @@ public:
     KinematicSimulatorItem* self;
     vector<HolderInfoPtr> holders;
     vector<HolderInfoPtr> activeHolders;
-    BodyCloneMap cloneMap;
+    CloneMap cloneMap;
     vector<IoConnectionMapPtr> ioConnectionMaps;
 
     Impl(KinematicSimulatorItem* self);

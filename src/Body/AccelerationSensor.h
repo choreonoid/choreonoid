@@ -35,7 +35,7 @@ public:
     Vector3& dv_max() { return spec->dv_max; }
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Vector3 dv_;

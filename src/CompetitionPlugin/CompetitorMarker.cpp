@@ -59,7 +59,7 @@ DeviceState* CompetitorMarker::cloneState() const
 }
 
 
-Device* CompetitorMarker::doClone(BodyCloneMap*) const
+Referenced* CompetitorMarker::doClone(CloneMap*) const
 {
     return new CompetitorMarker(*this);
 }

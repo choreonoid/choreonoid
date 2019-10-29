@@ -53,7 +53,7 @@ DigitalIoDevice::NonState::NonState()
 }
 
 
-DigitalIoDevice::DigitalIoDevice(const DigitalIoDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap)
+DigitalIoDevice::DigitalIoDevice(const DigitalIoDevice& org, bool copyStateOnly, CloneMap* cloneMap)
     : Device(org, copyStateOnly)
 {
     copyDigitalIoDeviceStateFrom(org);
@@ -111,7 +111,7 @@ DeviceState* DigitalIoDevice::cloneState() const
 }
 
 
-Device* DigitalIoDevice::doClone(BodyCloneMap* cloneMap) const
+Referenced* DigitalIoDevice::doClone(CloneMap* cloneMap) const
 {
     return new DigitalIoDevice(*this, false, cloneMap);
 }

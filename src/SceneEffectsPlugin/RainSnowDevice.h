@@ -13,10 +13,6 @@ namespace cnoid {
 
 class RainSnowDevice : public Device
 {
-protected:
-    RainSnowDevice();
-    RainSnowDevice(const RainSnowDevice& org, bool copyStateOnly = false);
-    
 public:
     void copyStateFrom(const RainSnowDevice& other);
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
@@ -30,6 +26,10 @@ public:
     ParticleSystem& particleSystem() { return particleSystem_; }
     const ParticleSystem& particleSystem() const { return particleSystem_; }
 
+protected:
+    RainSnowDevice();
+    RainSnowDevice(const RainSnowDevice& org, bool copyStateOnly = false);
+    
 private:
     bool on_;
     ParticleSystem particleSystem_;
@@ -47,7 +47,7 @@ public:
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<RainDevice> RainDevicePtr;
@@ -64,7 +64,7 @@ public:
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<SnowDevice> SnowDevicePtr;

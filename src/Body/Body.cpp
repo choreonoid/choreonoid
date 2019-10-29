@@ -4,9 +4,9 @@
 */
 
 #include "Body.h"
-#include "BodyCloneMap.h"
 #include "BodyHandler.h"
 #include "BodyCustomizerInterface.h"
+#include <cnoid/CloneMap>
 #include <cnoid/SceneGraph>
 #include <cnoid/EigenUtil>
 #include <cnoid/ValueTree>
@@ -99,7 +99,7 @@ void Body::initialize()
 }
 
 
-void Body::copyFrom(const Body* org, BodyCloneMap* cloneMap)
+void Body::copyFrom(const Body* org, CloneMap* cloneMap)
 {
     initialize();
 
@@ -146,7 +146,7 @@ void Body::copyFrom(const Body* org, BodyCloneMap* cloneMap)
 }
 
 
-Link* Body::cloneLinkTree(const Link* orgLink, BodyCloneMap* cloneMap)
+Link* Body::cloneLinkTree(const Link* orgLink, CloneMap* cloneMap)
 {
     Link* link = createLink(orgLink);
     if(cloneMap){
@@ -159,7 +159,7 @@ Link* Body::cloneLinkTree(const Link* orgLink, BodyCloneMap* cloneMap)
 }
 
 
-Body* Body::doClone(BodyCloneMap* cloneMap) const
+Referenced* Body::doClone(CloneMap* cloneMap) const
 {
     auto body = new Body;
     body->copyFrom(this, cloneMap);

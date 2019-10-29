@@ -39,8 +39,8 @@ public:
     bool readDescription(YAMLBodyLoader& loader, Mapping& node);
 
 protected:
-    HolderDevice(const HolderDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap);
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    HolderDevice(const HolderDevice& org, bool copyStateOnly, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     AttachmentDevicePtr attachment_;

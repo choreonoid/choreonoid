@@ -6,6 +6,7 @@
 #include <cnoid/CoordinateFrame>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
+#include <cnoid/CloneMap>
 #include <fmt/format.h>
 #include <unordered_map>
 #include <regex>
@@ -38,7 +39,7 @@ public:
     regex numberingPattern;
 
     Impl(ManipulatorPositionSet* self);
-    Impl(ManipulatorPositionSet* self, const Impl& org, ManipulatorPositionCloneMap& cloneMap);
+    Impl(ManipulatorPositionSet* self, const Impl& org, CloneMap* cloneMap);
     bool append(ManipulatorPosition* position, bool doOverwrite);
     bool remove(ManipulatorPosition* position);
     pair<ManipulatorPositionSet*, PointerToIteratorMap::iterator> find(
@@ -149,7 +150,7 @@ ManipulatorPositionRef& ManipulatorPositionRef::operator=(const ManipulatorPosit
 }
 
 
-ManipulatorPosition* ManipulatorPositionRef::clone() const
+Referenced* ManipulatorPositionRef::doClone(CloneMap*) const
 {
     return new ManipulatorPositionRef(*this);
 }
@@ -221,7 +222,7 @@ ManipulatorIkPosition& ManipulatorIkPosition::operator=(const ManipulatorIkPosit
 }
     
 
-ManipulatorPosition* ManipulatorIkPosition::clone() const
+Referenced* ManipulatorIkPosition::doClone(CloneMap*) const
 {
     return new ManipulatorIkPosition(*this);
 }
@@ -436,7 +437,7 @@ ManipulatorFkPosition& ManipulatorFkPosition::operator=(const ManipulatorFkPosit
 }
 
 
-ManipulatorPosition* ManipulatorFkPosition::clone() const
+Referenced* ManipulatorFkPosition::doClone(CloneMap*) const
 {
     return new ManipulatorFkPosition(*this);
 }
@@ -506,43 +507,6 @@ bool ManipulatorFkPosition::write(Mapping& archive) const
 }
 
 
-ManipulatorPositionCloneMap::ManipulatorPositionCloneMap()
-    : positionCloneMap(
-        [](const Referenced* org) -> Referenced* {
-            return static_cast<const ManipulatorPosition*>(org)->clone();
-        }),
-      positionSetCloneMap(
-        [this](const Referenced* org) -> Referenced* {
-            return new ManipulatorPositionSet(static_cast<const ManipulatorPositionSet&>(*org), *this);
-        })
-{
-
-}
-
-
-void ManipulatorPositionCloneMap::clear()
-{
-    positionCloneMap.clear();
-    positionSetCloneMap.clear();
-}
-
-
-ManipulatorPositionSet* ManipulatorPositionCloneMap::getClone(ManipulatorPositionSet* org, bool createClone)
-{
-    ManipulatorPositionSet* clone;
-    if(createClone){
-        clone = positionSetCloneMap.getClone(org);
-    } else {
-        clone = org;
-        positionSetCloneMap.setOriginalAsClone(org);
-        for(auto& position : org->positions_){
-            positionCloneMap.setOriginalAsClone(position);
-        }
-    }
-    return clone;
-}
-
-
 ManipulatorPositionSet::ManipulatorPositionSet()
 {
     impl = new Impl(this);
@@ -556,34 +520,39 @@ ManipulatorPositionSet::Impl::Impl(ManipulatorPositionSet* self)
 }
 
 
-ManipulatorPositionSet::ManipulatorPositionSet
-(const ManipulatorPositionSet& org, ManipulatorPositionCloneMap& cloneMap)
+ManipulatorPositionSet::ManipulatorPositionSet(const ManipulatorPositionSet& org, CloneMap* cloneMap)
 {
     impl = new ManipulatorPositionSet::Impl(this, *org.impl, cloneMap);
 }
 
 
 ManipulatorPositionSet::Impl::Impl
-(ManipulatorPositionSet* self, const Impl& org, ManipulatorPositionCloneMap& cloneMap)
+(ManipulatorPositionSet* self, const Impl& org, CloneMap* cloneMap)
     : self(self)
 {
-    for(auto& position : self->positions_){
-        auto clone = cloneMap.getClone(position);
-        append(clone, false);
+    if(cloneMap){
+        for(auto& position : self->positions_){
+            append(cloneMap->getClone(position), false);
+        }
+        childSets.reserve(org.childSets.size());
+        for(auto& child : org.childSets){
+            childSets.push_back(cloneMap->getClone(child));
+        }
+    } else {
+        for(auto& position : self->positions_){
+            append(position->clone(), false);
+        }
+        childSets.reserve(org.childSets.size());
+        for(auto& child : org.childSets){
+            childSets.push_back(child->clone());
+        }
     }
+}
 
-    // Do shallow copy for the parents
-    auto parent = org.weak_parentSet.lock();
-    while(parent){
-        weak_parentSet = cloneMap.getClone(parent, false);
-        parent = parent->impl->weak_parentSet.lock();
-    }
 
-    // Do deep copy for the children
-    childSets.reserve(org.childSets.size());
-    for(auto& child : org.childSets){
-        childSets.push_back(cloneMap.getClone(child, true));
-    }
+Referenced* ManipulatorPositionSet::doClone(CloneMap* cloneMap) const
+{
+    return new ManipulatorPositionSet(*this, cloneMap);
 }
     
 

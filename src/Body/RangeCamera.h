@@ -51,7 +51,7 @@ public:
     void clearPoints();
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     std::shared_ptr< std::vector<Vector3f> > points_;

@@ -38,7 +38,7 @@ public:
     void setQuadraticAttenuation(float a) { quadraticAttenuation_ = a; }
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
         
 private:
     float constantAttenuation_;

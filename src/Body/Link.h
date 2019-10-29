@@ -6,7 +6,7 @@
 #ifndef CNOID_BODY_LINK_H
 #define CNOID_BODY_LINK_H
 
-#include <cnoid/Referenced>
+#include <cnoid/CloneMappableReferenced>
 #include <cnoid/EigenTypes>
 #ifdef _WIN32
 #include "Link.h"
@@ -28,7 +28,7 @@ typedef ref_ptr<SgNode> SgNodePtr;
 class Mapping;
 typedef ref_ptr<Mapping> MappingPtr;
 
-class CNOID_EXPORT Link : public Referenced
+class CNOID_EXPORT Link : public CloneMappableReferenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -41,7 +41,9 @@ public:
     */
     Link(const Link& link);
 
-    virtual Link* clone() const;
+    Link* clone() const {
+        return static_cast<Link*>(doClone(nullptr));
+    }
         
     virtual ~Link();
 
@@ -336,6 +338,9 @@ public:
     Matrix3 segmentAttitude() const { return R() * Rs_; }
     void setSegmentAttitude(const Matrix3& Ra) { R() = Ra * Rs_.transpose(); }
 #endif
+
+protected:
+    Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     int index_; 

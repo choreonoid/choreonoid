@@ -153,7 +153,7 @@ DeviceState* MarkerDevice::cloneState() const
 }
 
 
-Device* MarkerDevice::doClone(BodyCloneMap*) const
+Referenced* MarkerDevice::doClone(CloneMap*) const
 {
     return new MarkerDevice(*this);
 }

@@ -2,8 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_H
 
 #include <cnoid/LinkCoordinateFrameSet>
-#include <cnoid/Referenced>
-#include <cnoid/CloneMap>
+#include <cnoid/CloneMappableReferenced>
 #include <cnoid/EigenTypes>
 #include <cnoid/GeneralId>
 #include <string>
@@ -18,18 +17,19 @@ class LinkKinematicsKit;
 class ManipulatorPositionRef;
 class ManipulatorIkPosition;
 class ManipulatorFkPosition;
-class ManipulatorPositionCloneMap;
 class ManipulatorPositionSet;
 class Mapping;
 
-class CNOID_EXPORT ManipulatorPosition : public Referenced
+class CNOID_EXPORT ManipulatorPosition : public CloneMappableReferenced
 {
 public:
     static constexpr int MaxNumJoints = 8;
     enum PositionType { Reference, IK, FK };
 
-    virtual ManipulatorPosition* clone() const = 0;
-
+    ManipulatorPosition* clone() const {
+        return static_cast<ManipulatorPosition*>(doClone(nullptr));
+    }
+    
     const std::string& name() const { return name_; };
     bool setName(const std::string& name);
 
@@ -74,12 +74,13 @@ public:
     ManipulatorPositionRef(const ManipulatorPositionRef& org);
     ManipulatorPositionRef& operator=(const ManipulatorPositionRef& rhs);
 
-    virtual ManipulatorPosition* clone() const override;
-    
     virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 class CNOID_EXPORT ManipulatorIkPosition : public ManipulatorPosition
@@ -88,8 +89,6 @@ public:
     ManipulatorIkPosition();
     ManipulatorIkPosition(const ManipulatorIkPosition& org);
     ManipulatorIkPosition& operator=(const ManipulatorIkPosition& rhs);
-
-    virtual ManipulatorPosition* clone() const override;
 
     const Position& position() const { return T; }
     Vector3 rpy() const;
@@ -145,6 +144,9 @@ public:
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    
 private:
     Position T;
     Vector3 referenceRpy_;
@@ -167,14 +169,15 @@ public:
     ManipulatorFkPosition(const ManipulatorFkPosition& org);
     ManipulatorFkPosition& operator=(const ManipulatorFkPosition& rhs);
 
-    virtual ManipulatorPosition* clone() const override;
-
     virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
 
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    
 private:
     std::array<double, MaxNumJoints> jointDisplacements;
 };
@@ -182,13 +185,19 @@ private:
 typedef ref_ptr<ManipulatorFkPosition> ManipulatorFkPositionPtr;
 
 
-class CNOID_EXPORT ManipulatorPositionSet : public Referenced
+class CNOID_EXPORT ManipulatorPositionSet : public CloneMappableReferenced
 {
 public:
     typedef std::list<ManipulatorPositionPtr> container_type;
 
     ManipulatorPositionSet();
-    ManipulatorPositionSet(const ManipulatorPositionSet& org, ManipulatorPositionCloneMap& cloneMap);
+
+    ManipulatorPositionSet* clone() const {
+        return static_cast<ManipulatorPositionSet*>(doClone(nullptr));
+    }
+    ManipulatorPositionSet* clone(CloneMap& cloneMap) const {
+        return static_cast<ManipulatorPositionSet*>(doClone(&cloneMap));
+    }
 
     void clear();
 
@@ -216,34 +225,19 @@ public:
     
     class Impl;
 
+protected:
+    ManipulatorPositionSet(const ManipulatorPositionSet& org, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
 private:
     container_type positions_;
     Impl* impl;
 
     friend class ManipulatorPosition;
-    friend class ManipulatorPositionCloneMap;
 };
 
 typedef ref_ptr<ManipulatorPositionSet> ManipulatorPositionSetPtr;
 
-class CNOID_EXPORT ManipulatorPositionCloneMap
-{
-public:
-    ManipulatorPositionCloneMap();
-    ManipulatorPositionCloneMap(const ManipulatorPositionCloneMap& org) = delete;
-
-    void clear();
-
-    ManipulatorPosition* getClone(ManipulatorPosition* org){
-        return positionCloneMap.getClone<ManipulatorPosition>(org);
-    }
-
-    ManipulatorPositionSet* getClone(ManipulatorPositionSet* org, bool createClone);
-
-private:
-    CloneMap positionCloneMap;
-    CloneMap positionSetCloneMap;
-};
 
 class ManipulatorPositionOwner
 {

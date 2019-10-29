@@ -103,7 +103,7 @@ Link::Link(const Link& org)
 }
 
 
-Link* Link::clone() const
+Referenced* Link::doClone(CloneMap*) const
 {
     return new Link(*this);
 }

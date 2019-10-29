@@ -22,7 +22,6 @@ public:
 
     DyLink();
     DyLink(const Link& link);
-    virtual Link* clone() const override;
 
     virtual void initializeState() override;
 
@@ -78,6 +77,9 @@ public:
 
     virtual void prependChild(Link* link);
     virtual void appendChild(Link* link);
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
         
 private:
     Vector3 vo_;  ///< translation elements of spacial velocity
@@ -142,7 +144,7 @@ public:
     void calcSpatialForwardKinematics();
 
 protected:
-    virtual Body* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<DyBody> DyBodyPtr;

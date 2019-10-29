@@ -8,6 +8,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/ControllerIO>
 #include <cnoid/MessageView>
+#include <cnoid/CloneMap>
 #include <cnoid/Archive>
 #include <fmt/format.h>
 #include <unordered_map>
@@ -74,7 +75,7 @@ public:
     ControllerIO* io;
     ManipulatorProgramItemBasePtr programItem;
     ManipulatorProgramPtr program;
-    ManipulatorProgramCloneMap manipulatorProgramCloneMap;
+    CloneMap cloneMap;
     LinkKinematicsKitPtr kinematicsKit;
     vector<function<void()>> residentInputFunctions;
     unordered_map<type_index, function<bool(ManipulatorStatement* statement)>> interpreterMap;
@@ -111,7 +112,7 @@ ManipulatorControllerItemBase::ManipulatorControllerItemBase(const ManipulatorCo
 ManipulatorControllerItemBase::Impl::Impl(ManipulatorControllerItemBase* self)
     : self(self)
 {
-    manipulatorProgramCloneMap.setPositionSetIncluded(false);
+    ManipulatorProgram::setPositionSetInclusion(cloneMap, false);
     speedRatio = 1.0;
 }
 
@@ -195,8 +196,8 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
         return false;
     }
     
-    manipulatorProgramCloneMap.clear();
-    program = programItem->program()->clone(manipulatorProgramCloneMap);
+    cloneMap.clear();
+    program = programItem->program()->clone(cloneMap);
 
     processorStack.clear();
     iterator = program->begin();
@@ -362,7 +363,7 @@ void ManipulatorControllerItemBase::Impl::clear()
 {
     programItem.reset();
     program.reset();
-    manipulatorProgramCloneMap.clear();
+    cloneMap.clear();
     kinematicsKit.reset();
 }
 

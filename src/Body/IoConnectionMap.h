@@ -1,7 +1,7 @@
 #ifndef CNOID_BODY_IO_CONNECTION_MAP_H
 #define CNOID_BODY_IO_CONNECTION_MAP_H
 
-#include <cnoid/Referenced>
+#include <cnoid/CloneMappableReferenced>
 #include <cnoid/Signal>
 #include <string>
 #include <vector>
@@ -13,16 +13,20 @@ class DigitalIoDevice;
 typedef ref_ptr<DigitalIoDevice> DigitalIoDevicePtr;
 
 class Body;
-class BodyCloneMap;
 class Mapping;
 
-class CNOID_EXPORT DigitalIoConnection : public Referenced
+class CNOID_EXPORT DigitalIoConnection : public CloneMappableReferenced
 {
 public:
     DigitalIoConnection();
     DigitalIoConnection(DigitalIoDevice* outDevice, int outIndex, DigitalIoDevice* inDevice, int inIndex);
-    DigitalIoConnection(const DigitalIoConnection& org);
-    DigitalIoConnection(const DigitalIoConnection& org, BodyCloneMap& bodyCloneMap);
+
+    DigitalIoConnection* clone() const {
+        return static_cast<DigitalIoConnection*>(doClone(nullptr));
+    }
+    DigitalIoConnection* clone(CloneMap& cloneMap) const {
+        return static_cast<DigitalIoConnection*>(doClone(&cloneMap));
+    }
 
     enum IoType { In = 0, Out = 1 };
 
@@ -60,6 +64,10 @@ public:
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
 
+protected:
+    DigitalIoConnection(const DigitalIoConnection& org, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
 private:
     DigitalIoDevicePtr device_[2];
     int signalIndex_[2];
@@ -69,14 +77,18 @@ private:
 };
 typedef ref_ptr<DigitalIoConnection> DigitalIoConnectionPtr;
 
-class CNOID_EXPORT IoConnectionMap : public Referenced
+
+class CNOID_EXPORT IoConnectionMap : public CloneMappableReferenced
 {
 public:
     IoConnectionMap();
-    IoConnectionMap(const IoConnectionMap& org);
-    IoConnectionMap(const IoConnectionMap& org, BodyCloneMap& bodyCloneMap);
 
-    IoConnectionMap* clone(BodyCloneMap& bodyCloneMap) const;
+    IoConnectionMap* clone() const {
+        return static_cast<IoConnectionMap*>(doClone(nullptr));
+    }
+    IoConnectionMap* clone(CloneMap& cloneMap) const {
+        return static_cast<IoConnectionMap*>(doClone(&cloneMap));
+    }
 
     typedef std::vector<DigitalIoConnectionPtr> container;
     typedef container::iterator iterator;
@@ -99,6 +111,10 @@ public:
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
+
+protected:
+    IoConnectionMap(const IoConnectionMap& org, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     std::vector<DigitalIoConnectionPtr> connections_;

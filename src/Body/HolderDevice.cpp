@@ -1,8 +1,8 @@
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
 #include "Body.h"
-#include "BodyCloneMap.h"
 #include "YAMLBodyLoader.h"
+#include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 
 using namespace std;
@@ -28,7 +28,7 @@ HolderDevice::HolderDevice()
 }
 
 
-HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly, BodyCloneMap* cloneMap)
+HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly, CloneMap* cloneMap)
     : Device(org, copyStateOnly)
 {
     copyHolderDeviceStateFrom(org);
@@ -81,7 +81,7 @@ DeviceState* HolderDevice::cloneState() const
 }
 
 
-Device* HolderDevice::doClone(BodyCloneMap* cloneMap) const
+Referenced* HolderDevice::doClone(CloneMap* cloneMap) const
 {
     return new HolderDevice(*this, false, cloneMap);
 }

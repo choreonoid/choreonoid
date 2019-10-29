@@ -1,13 +1,13 @@
 #ifndef CNOID_UTIL_CLONE_MAP_H
 #define CNOID_UTIL_CLONE_MAP_H
 
+#include "Referenced.h"
 #include <functional>
 #include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class Referenced;
 class CloneMappableReferenced;
 
 class CNOID_EXPORT CloneMap
@@ -32,6 +32,11 @@ public:
     template<class ObjectType>
     ObjectType* getClone(const ObjectType* org){
         return static_cast<ObjectType*>(findOrCreateClone_(org));
+    }
+
+    template<class ObjectType>
+    ObjectType* getClone(const ref_ptr<ObjectType> org){
+        return getClone<ObjectType>(org.get());
     }
 
     template<class ObjectType>

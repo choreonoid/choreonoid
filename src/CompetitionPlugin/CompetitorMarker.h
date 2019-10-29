@@ -22,7 +22,7 @@ public:
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<CompetitorMarker> CompetitorMarkerPtr;
