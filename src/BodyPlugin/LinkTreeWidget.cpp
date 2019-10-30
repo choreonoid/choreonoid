@@ -263,8 +263,10 @@ void LinkTreeWidgetImpl::initialize()
     QHeaderView* header = self->header();
     header->setMinimumSectionSize(0);
     header->setStretchLastSection(false);
-    QObject::connect(header, SIGNAL(sectionResized(int, int, int)),
-                     self, SLOT(onHeaderSectionResized()));
+
+    self->sigSectionResized().connect(
+        [&](int, int, int){ self->updateGeometry(); });
+
     self->setHeaderItem(headerItem);
     self->setSelectionMode(QAbstractItemView::ExtendedSelection);
     self->setIndentation(12);
@@ -1081,12 +1083,6 @@ void LinkTreeWidgetImpl::onItemCollapsed(QTreeWidgetItem* treeWidgetItem)
     if(item){
         setExpansionState(item, false);
     }
-}
-
-
-void LinkTreeWidget::onHeaderSectionResized()
-{
-    updateGeometry();
 }
 
 

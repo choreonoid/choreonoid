@@ -39,6 +39,9 @@ public:
     SignalProxy<void(const QModelIndex &parent, int first, int last)> sigRowsRemoved();
     SignalProxy<void(const QModelIndex &parent, int first, int last)> sigRowsInserted();
 
+    // Signal of QHeaderView owned by TreeWidget
+    SignalProxy<void(int logicalIndex, int oldSize, int newSize)> sigSectionResized();
+
 protected:
     virtual void paintEvent(QPaintEvent* event);
     virtual void scrollContentsBy(int dx, int dy);     
@@ -57,6 +60,7 @@ private Q_SLOTS:
     void onRowsAboutToBeRemoved(const QModelIndex &parent, int first, int last);
     void onRowsRemoved(const QModelIndex &parent, int first, int last);
     void onRowsInserted(const QModelIndex &parent, int first, int last);
+    void onSectionResized(int logicalIndex, int oldSize, int newSize);
 
 private:
     class Impl;

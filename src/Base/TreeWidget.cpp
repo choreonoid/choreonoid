@@ -33,6 +33,8 @@ public:
     stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsRemoved;
     stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsInserted;
 
+    stdx::optional<Signal<void(int logicalIndex, int oldSize, int newSize)>> sigSectionResized;
+
     Impl();
 };
 
@@ -251,6 +253,17 @@ SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::si
 }
 
 
+SignalProxy<void(int logicalIndex, int oldSize, int newSize)> TreeWidget::sigSectionResized()
+{
+    if(!impl->sigSectionResized){
+        stdx::emplace(impl->sigSectionResized);
+        QObject::connect(header(), SIGNAL(sectionResized(int, int, int)),
+                         this, SLOT(onSectionResized(int, int, int)));
+    }
+    return *impl->sigSectionResized;
+}
+
+
 void TreeWidget::onCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
 {
     (*impl->sigCurrentItemChanged)(current, previous);
@@ -324,4 +337,10 @@ void TreeWidget::onRowsRemoved(const QModelIndex& parent, int first, int last)
 void TreeWidget::onRowsInserted(const QModelIndex& parent, int first, int last)
 {
     (*impl->sigRowsInserted)(parent, first, last);
+}
+
+
+void TreeWidget::onSectionResized(int logicalIndex, int oldSize, int newSize)
+{
+    (*impl->sigSectionResized)(logicalIndex, oldSize, newSize);
 }

@@ -136,7 +136,6 @@ private Q_SLOTS:
     void onCustomContextMenuRequested(const QPoint& pos);
     void onItemExpanded(QTreeWidgetItem* treeWidgetItem);
     void onItemCollapsed(QTreeWidgetItem* treeWidgetItem);
-    void onHeaderSectionResized();
         
 private:
             
