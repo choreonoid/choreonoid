@@ -203,7 +203,16 @@ QVariant StatementItem::data(int column, int role) const
     if(role == Qt::DisplayRole){
         int span = delegate->labelSpan(statement(), column);
         if(span == 1){
-            return QString(statement()->label(column).c_str());
+            QString label(statement()->label(column).c_str());
+            if(!label.isEmpty()){
+                // Add the margin
+                if(column == 0){
+                    label.append("     ");
+                } else {
+                    label.append("     ");
+                }
+            }
+            return label;
         } else {
             return QVariant();
         }
@@ -295,7 +304,7 @@ QWidget* ProgramViewDelegate::createEditor
     delegate->impl->currentParentWidget = parent;
     delegate->impl->pCurrentOption = &option;
     delegate->impl->pCurrentModelIndex = &index;
-    return delegate->createEditor(statement, column);
+    return delegate->createEditor(statement, column, parent);
 }
 
 
@@ -453,7 +462,7 @@ void ManipulatorProgramViewBase::StatementDelegate::setDataOfEditRole
 
 
 QWidget* ManipulatorProgramViewBase::StatementDelegate::createEditor
-(ManipulatorStatement* /* statement */, int /* column */) const
+(ManipulatorStatement* /* statement */, int /* column */, QWidget* /* parent */) const
 {
     return nullptr;
 }
@@ -544,7 +553,7 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     setFrameShape(QFrame::NoFrame);
     setHeaderHidden(true);
     setRootIsDecorated(true);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setDragDropMode(QAbstractItemView::InternalMove);
     setDropIndicatorShown(true);
@@ -573,8 +582,10 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     rheader.setStretchLastSection(false);
     rheader.setSectionResizeMode(0, QHeaderView::ResizeToContents);
     rheader.setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    rheader.setSectionResizeMode(2, QHeaderView::Stretch);
-    
+    rheader.setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    rheader.setSectionResizeMode(3, QHeaderView::Stretch);
+    sigSectionResized().connect([&](int, int, int){ updateGeometry(); });
+
     sigCurrentItemChanged().connect(
         [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
             onCurrentTreeWidgetItemChanged(current, previous); });

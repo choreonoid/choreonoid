@@ -159,6 +159,7 @@ bool ManipulatorProgram::remove(ManipulatorStatement* statement, bool doNotify)
     auto iter = std::find(begin(), end(), statement);
     if(iter != statements_.end()){
         auto statement = *iter;
+        statement->ownerProgram_.reset();
         statements_.erase(iter);
         if(doNotify){
             impl->notifyStatementRemoval(this, statement);

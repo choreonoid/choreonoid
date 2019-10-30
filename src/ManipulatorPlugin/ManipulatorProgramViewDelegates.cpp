@@ -4,6 +4,7 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QComboBox>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -31,7 +32,7 @@ public:
         return QVariant();
     }
     
-    virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const override
+    virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
     {
         if(column == 0){
             return createDefaultEditor();
@@ -67,11 +68,20 @@ public:
         return QVariant();
     }
 
-    virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const override
+    virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
     {
-        if(column == 1 || column == 2){
+        if(column == 1){
             return createDefaultEditor();
+
+        } else if(column == 2){
+            auto setSignal = static_cast<SetSignalStatement*>(statement);
+            auto combo = new QComboBox(parent);
+            combo->addItem(_("on"));
+            combo->addItem(_("off"));
+            combo->setCurrentIndex(setSignal->on() ? 0 : 1);
+            return combo;
         }
+        
         return nullptr;
     }
 
@@ -84,7 +94,7 @@ public:
         }
         if(column == 2){
             if(auto combo = dynamic_cast<QComboBox*>(editor)){
-                static_cast<SetSignalStatement*>(statement)->on(combo->currentIndex() == 1);
+                static_cast<SetSignalStatement*>(statement)->on(combo->currentIndex() == 0);
             }
         }
     }
@@ -101,7 +111,7 @@ public:
         return QVariant();
     }
 
-    virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const override
+    virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
     {
         if(column == 1){
             return createDefaultEditor();

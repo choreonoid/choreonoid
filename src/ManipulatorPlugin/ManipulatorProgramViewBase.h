@@ -39,7 +39,7 @@ public:
         virtual int labelSpan(ManipulatorStatement* statement, int column) const;
         virtual QVariant dataOfEditRole(ManipulatorStatement* statement, int column) const;
         virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const;
-        virtual QWidget* createEditor(ManipulatorStatement* statement, int column) const;
+        virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const;
         virtual void setEditorData(ManipulatorStatement* statement, int column, QWidget* editor) const;
         virtual void setStatementData(ManipulatorStatement* statement, int column, QWidget* editor) const;
 
