@@ -2,6 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_STATEMENT_H
 
 #include <cnoid/CloneableReferenced>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
