@@ -1,9 +1,7 @@
 #include "ManipulatorProgramViewBase.h"
 #include "BasicManipulatorStatements.h"
 #include "ManipulatorProgram.h"
-#include <QLineEdit>
 #include <QSpinBox>
-#include <QComboBox>
 #include "gettext.h"
 
 using namespace std;
@@ -12,6 +10,7 @@ using namespace cnoid;
 namespace {
 
 typedef ManipulatorProgramViewBase::StatementDelegate Delegate;
+
 
 class CommentStatementDelegate : public Delegate
 {
@@ -31,6 +30,15 @@ public:
         }
         return QVariant();
     }
+
+    virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const override
+    {
+        if(column == 0){
+            auto comment = static_cast<CommentStatement*>(statement);
+            comment->setComment(value.toString().toStdString());
+            comment->notifyUpdate();
+        }
+    }
     
     virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
     {
@@ -39,66 +47,108 @@ public:
         }
         return nullptr;
     }
+};
 
-    virtual void setEditorData(ManipulatorStatement* statement, int column, QWidget* editor) const override
+
+class AssignStatementDelegate : public Delegate
+{
+public:
+    virtual QVariant dataOfEditRole(ManipulatorStatement* statement, int column) const override
     {
-        if(auto lineEdit = dynamic_cast<QLineEdit*>(editor)){
-            lineEdit->setText(static_cast<CommentStatement*>(statement)->comment().c_str());
+        auto assign = static_cast<AssignStatement*>(statement);
+
+        if(column == 1){
+            auto& id = assign->variableId();
+            if(!id.isValid()){
+                return 0;
+            } else if(id.isInt()){
+                return id.toInt();
+            } else {
+                return id.toString().c_str();
+            }
+        } else if(column == 2){
+            return assign->expression().c_str();
         }
+        
+        return QVariant();
     }
 
-    virtual void setStatementData(ManipulatorStatement* statement, int column, QWidget* editor) const override
+    virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const override
     {
-        if(auto lineEdit = dynamic_cast<QLineEdit*>(editor)){
-            static_cast<CommentStatement*>(statement)->setComment(lineEdit->text().toStdString());
+        auto assign = static_cast<AssignStatement*>(statement);
+
+        if(column == 1){
+            bool ok;
+            GeneralId newId = value.toInt(&ok);
+            if(!ok){
+                newId = value.toString().toStdString();
+            }
+            assign->setVariableId(newId);
+
+        } else if(column == 2){
+            assign->setExpression(value.toString().toStdString());
         }
+        assign->notifyUpdate();
+    }
+    
+    virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
+    {
+        auto assign = static_cast<AssignStatement*>(statement);
+
+        if(column == 1){
+            auto editor = createDefaultEditor();
+            if(auto spin = dynamic_cast<QSpinBox*>(editor)){
+                //spin->setPrefix("Var[ ");
+                //spin->setSuffix(" ]");
+                spin->setRange(0, 999);
+            }
+            return editor;
+
+        } else if(column == 2){
+            return createDefaultEditor();
+        }
+        
+        return nullptr;
     }
 };
+
 
 class SetSignalStatementDelegate : public Delegate
 {
 public:
     virtual QVariant dataOfEditRole(ManipulatorStatement* statement, int column) const override
     {
+        auto setSignal = static_cast<SetSignalStatement*>(statement);
         if(column == 1){
             return static_cast<SetSignalStatement*>(statement)->signalIndex();
         } else if(column == 2){
+            return QStringList{ (setSignal->on() ? "0" : "1"), "on", "off" };
             return static_cast<SetSignalStatement*>(statement)->on();
         }
         return QVariant();
     }
 
+    virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const override
+    {
+        auto setSignal = static_cast<SetSignalStatement*>(statement);
+        if(column == 1){
+            setSignal->setSignalIndex(value.toInt());
+        } else if(column == 2){
+            int selected = value.toStringList().first().toInt();
+            setSignal->on(selected == 0);
+        }
+        setSignal->notifyUpdate();
+    }
+
     virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
     {
-        if(column == 1){
+        if(column == 1 || column == 2){
             return createDefaultEditor();
-
-        } else if(column == 2){
-            auto setSignal = static_cast<SetSignalStatement*>(statement);
-            auto combo = new QComboBox(parent);
-            combo->addItem(_("on"));
-            combo->addItem(_("off"));
-            combo->setCurrentIndex(setSignal->on() ? 0 : 1);
-            return combo;
         }
-        
         return nullptr;
     }
-
-    virtual void setStatementData(ManipulatorStatement* statement, int column, QWidget* editor) const override
-    {
-        if(column == 1){
-            if(auto spin = dynamic_cast<QSpinBox*>(editor)){
-                static_cast<SetSignalStatement*>(statement)->setSignalIndex(spin->value());
-            }
-        }
-        if(column == 2){
-            if(auto combo = dynamic_cast<QComboBox*>(editor)){
-                static_cast<SetSignalStatement*>(statement)->on(combo->currentIndex() == 0);
-            }
-        }
-    }
 };
+
 
 class DelayStatementDelegate : public Delegate
 {
@@ -111,21 +161,20 @@ public:
         return QVariant();
     }
 
+    virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const override
+    {
+        if(column == 1){
+            static_cast<DelayStatement*>(statement)->setTime(value.toDouble());
+            statement->notifyUpdate();
+        }
+    }
+
     virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
     {
         if(column == 1){
             return createDefaultEditor();
         }
         return nullptr;
-    }
-
-    virtual void setStatementData(ManipulatorStatement* statement, int column, QWidget* editor) const override
-    {
-        if(column == 1){
-            if(auto spin = dynamic_cast<QDoubleSpinBox*>(editor)){
-                static_cast<DelayStatement*>(statement)->setTime(spin->value());
-            }
-        }
     }
 };
 
@@ -136,6 +185,7 @@ namespace cnoid {
 void ManipulatorProgramViewBase::registerBaseStatementDelegates()
 {
     registerStatementDelegate<CommentStatement>(new CommentStatementDelegate);
+    registerStatementDelegate<AssignStatement>(new AssignStatementDelegate);
     registerStatementDelegate<SetSignalStatement>(new SetSignalStatementDelegate);
     registerStatementDelegate<DelayStatement>(new DelayStatementDelegate);
 }

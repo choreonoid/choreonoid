@@ -20,6 +20,7 @@ public:
     unordered_map<GeneralId, ManipulatorVariablePtr, GeneralId::Hash> idToVariableMap;
     int idCounter;
     bool isStringIdEnabled;
+    Signal<void(ManipulatorVariableSet* variableSet, ManipulatorVariable* variable)> sigVariableUpdated;
     
     Impl();
     Impl(const Impl& org);
@@ -193,7 +194,7 @@ std::vector<ManipulatorVariablePtr> ManipulatorVariableList::getFindableVariable
 }
 
 
-bool ManipulatorVariableList::contains(const ManipulatorVariableSet* variableSet) const
+bool ManipulatorVariableList::containsVariableSet(const ManipulatorVariableSet* variableSet) const
 {
     return (variableSet == this);
 }
@@ -280,6 +281,19 @@ GeneralId ManipulatorVariableList::createNextId(int prevId)
         }
     }
     return id;
+}
+
+
+SignalProxy<void(ManipulatorVariableSet* variableSet, ManipulatorVariable* variable)>
+ManipulatorVariableList::sigVariableUpdated()
+{
+    return impl->sigVariableUpdated;
+}
+    
+
+void ManipulatorVariableList::notifyVariableUpdate(ManipulatorVariable* variable)
+{
+    impl->sigVariableUpdated(this, variable);
 }
 
 

@@ -1,5 +1,6 @@
 #include "BasicManipulatorStatements.h"
 #include "ManipulatorProgram.h"
+#include "ManipulatorVariableSet.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
@@ -318,6 +319,73 @@ bool CallStatement::write(Mapping& archive) const
 }
 
 
+AssignStatement::AssignStatement()
+{
+
+}
+
+
+AssignStatement::AssignStatement(const AssignStatement& org)
+    : variableId_(org.variableId_),
+      expression_(org.expression_)
+{
+
+}
+      
+
+Referenced* AssignStatement::doClone(CloneMap*) const
+{
+    return new AssignStatement(*this);
+}
+
+
+std::string AssignStatement::label(int index) const
+{
+    if(index == 0){
+        return "Assign";
+
+    } else if(index == 1){
+        if(!variableId_.isValid()){
+            return "..... = ";
+        } else if(variableId_.isInt()){
+            return format("var[{0}] =", variableId_.toInt());
+        } else {
+            return format("{0} = ", variableId_.label());
+        }
+    } else if(index == 2){
+        if(expression_.empty()){
+            return ".....";
+        } else {
+            return expression_;
+        }
+    }
+    return string();
+}
+
+
+ManipulatorVariable* AssignStatement::variable(ManipulatorVariableSet* variables) const
+{
+    return variables->findOrCreateVariable(variableId_, 0);
+}
+
+
+bool AssignStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    variableId_.read(archive, "variable");
+    archive.read("expression", expression_);
+    return true;
+}
+
+
+bool AssignStatement::write(Mapping& archive) const
+{
+    archive.write("type", "Assign");
+    variableId_.write(archive, "variable");
+    archive.write("expression", expression_, SINGLE_QUOTED);
+    return true;
+}
+
+
 SetSignalStatement::SetSignalStatement()
 {
     signalIndex_ = 0;
@@ -424,6 +492,7 @@ struct StatementTypeRegistration {
         ManipulatorStatement::registerType<ElseStatement>("Else");
         ManipulatorStatement::registerType<ElseStatement>("While");
         ManipulatorStatement::registerType<CallStatement>("Call");
+        ManipulatorStatement::registerType<AssignStatement>("Assign");
         ManipulatorStatement::registerType<SetSignalStatement>("SetSignal");
         ManipulatorStatement::registerType<DelayStatement>("Delay");
     }

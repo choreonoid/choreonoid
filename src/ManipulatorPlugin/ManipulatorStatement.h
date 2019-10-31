@@ -31,11 +31,13 @@ public:
         return static_cast<ManipulatorStatement*>(doClone(&cloneMap));
     }
 
+    ManipulatorProgram* ownerProgram() const;
+
+    void notifyUpdate();
+
     virtual std::string label(int index) const = 0;
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) = 0;
     virtual bool write(Mapping& archive) const = 0;
-
-    ManipulatorProgram* ownerProgram() const;
 
 protected:
     ManipulatorStatement();

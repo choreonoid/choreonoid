@@ -139,6 +139,14 @@ ManipulatorVariableList* ManipulatorVariable::owner() const
 }
 
 
+void ManipulatorVariable::notifyUpdate()
+{
+    if(auto owner__ = owner()){
+        owner__->notifyVariableUpdate(this);
+    }
+}
+
+
 bool ManipulatorVariable::read(const Mapping& archive)
 {
     if(id_.read(archive, "id")){

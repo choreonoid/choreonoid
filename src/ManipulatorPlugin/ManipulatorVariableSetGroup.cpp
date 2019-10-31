@@ -1,5 +1,7 @@
 #include "ManipulatorVariableSetGroup.h"
+#include "ManipulatorVariableList.h"
 #include <cnoid/CloneMap>
+#include <cnoid/ConnectionSet>
 #include <vector>
 #include <map>
 #include <unordered_set>
@@ -13,6 +15,8 @@ class ManipulatorVariableSetGroup::Impl
 {
 public:
     vector<ManipulatorVariableSetPtr> variableSets;
+    Signal<void(ManipulatorVariableSet* variableSet, ManipulatorVariable* variable)> sigVariableUpdated;
+    ScopedConnectionSet connections;
     Impl();
 };
 
@@ -67,6 +71,7 @@ Referenced* ManipulatorVariableSetGroup::doClone(CloneMap* cloneMap) const
 
 void ManipulatorVariableSetGroup::clear()
 {
+    impl->connections.disconnect();
     impl->variableSets.clear();
 }
 
@@ -86,6 +91,12 @@ ManipulatorVariableSet* ManipulatorVariableSetGroup::variableSet(int index) cons
 void ManipulatorVariableSetGroup::addVariableSet(ManipulatorVariableSet* variableSet)
 {
     impl->variableSets.push_back(variableSet);
+
+    auto impl_ = impl;
+    impl->connections.add(
+        variableSet->sigVariableUpdated().connect(
+            [impl_](ManipulatorVariableSet* variableSet, ManipulatorVariable* variable){
+                impl_->sigVariableUpdated(variableSet, variable); }));
 }
 
 
@@ -179,7 +190,7 @@ std::vector<ManipulatorVariablePtr> ManipulatorVariableSetGroup::getFindableVari
 }
 
 
-bool ManipulatorVariableSetGroup::contains(const ManipulatorVariableSet* variableSet) const
+bool ManipulatorVariableSetGroup::containsVariableSet(const ManipulatorVariableSet* variableSet) const
 {
     if(variableSet == this){
         return true;
@@ -191,3 +202,11 @@ bool ManipulatorVariableSetGroup::contains(const ManipulatorVariableSet* variabl
     }
     return false;
 }
+
+
+SignalProxy<void(ManipulatorVariableSet* variableSet, ManipulatorVariable* variable)>
+ManipulatorVariableSetGroup::sigVariableUpdated()
+{
+    return impl->sigVariableUpdated;
+}
+

@@ -2,6 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_BASIC_MANIPULATOR_STATEMENTS_H
 
 #include "ManipulatorStatement.h"
+#include <cnoid/GeneralId>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -51,6 +52,7 @@ protected:
 private:
     ManipulatorProgramPtr program_;
 };
+
 typedef ref_ptr<StructuredStatement> StructuredStatementPtr;
 
 
@@ -90,6 +92,7 @@ protected:
     IfStatement(const IfStatement& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
+
 typedef ref_ptr<IfStatement> IfStatementPtr;
 
 
@@ -106,6 +109,7 @@ protected:
     ElseStatement(const ElseStatement& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
+
 typedef ref_ptr<IfStatement> IfStatementPtr;
 
 
@@ -122,6 +126,7 @@ protected:
     WhileStatement(const WhileStatement& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
+
 typedef ref_ptr<IfStatement> IfStatementPtr;
 
 
@@ -140,15 +145,48 @@ protected:
 private:
     ManipulatorProgramPtr program_;
 };
+
 typedef ref_ptr<CallStatement> CallStatementPtr;
+
+
+class ManipulatorVariable;
+class ManipulatorVariableSet;
+
+class CNOID_EXPORT AssignStatement : public ManipulatorStatement
+{
+public:
+    AssignStatement();
+
+    virtual std::string label(int index) const override;
+
+    const GeneralId& variableId() const { return variableId_; }
+    void setVariableId(const GeneralId& id) { variableId_ = id; }
+    
+    ManipulatorVariable* variable(ManipulatorVariableSet* variables) const;
+    
+    const std::string expression() const { return expression_; }
+    void setExpression(const std::string& expression) { expression_ = expression; }
+
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+    
+protected:
+    AssignStatement(const AssignStatement& org);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    GeneralId variableId_;
+    std::string expression_;
+};
+
+typedef ref_ptr<AssignStatement> AssignStatementPtr;
+
 
 class CNOID_EXPORT SetSignalStatement : public ManipulatorStatement
 {
 public:
     SetSignalStatement();
     virtual std::string label(int index) const override;
-    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const;
 
     int signalIndex() const { return signalIndex_; }
     void setSignalIndex(int index){ signalIndex_ = index; }
@@ -156,6 +194,9 @@ public:
     bool on() const { return on_; }
     void on(bool on){ on_ = on; }
     
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+
 protected:
     SetSignalStatement(const SetSignalStatement& org);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -165,6 +206,7 @@ private:
     bool on_;
     
 };
+
 typedef ref_ptr<SetSignalStatement> SetSignalStatementPtr;
 
 

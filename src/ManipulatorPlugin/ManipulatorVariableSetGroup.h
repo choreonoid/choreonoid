@@ -23,7 +23,9 @@ public:
     virtual ManipulatorVariable* findOrCreateVariable(
         const GeneralId& id, const ManipulatorVariable::Value& defaultValue) override;
     virtual std::vector<ManipulatorVariablePtr> getFindableVariableLists() const override;
-    virtual bool contains(const ManipulatorVariableSet* variableSet) const override;
+    virtual bool containsVariableSet(const ManipulatorVariableSet* variableSet) const override;
+    virtual SignalProxy<void(ManipulatorVariableSet* variableSet, ManipulatorVariable* variable)>
+        sigVariableUpdated() override;
 
 protected:
     ManipulatorVariableSetGroup(const ManipulatorVariableSetGroup& org, CloneMap* cloneMap);

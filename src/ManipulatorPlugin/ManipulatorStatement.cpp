@@ -49,3 +49,13 @@ ManipulatorProgram* ManipulatorStatement::ownerProgram() const
 {
     return ownerProgram_.lock();
 }
+
+
+void ManipulatorStatement::notifyUpdate()
+{
+    if(auto owner = ownerProgram()){
+        owner->notifyStatementUpdate(this);
+    }
+}
+
+

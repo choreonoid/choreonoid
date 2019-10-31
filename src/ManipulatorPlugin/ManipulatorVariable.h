@@ -18,6 +18,13 @@ public:
     ManipulatorVariable(const GeneralId& id);
     ManipulatorVariable(const ManipulatorVariable& org);
 
+    ManipulatorVariable* clone(){
+        return static_cast<ManipulatorVariable*>(doClone(nullptr));
+    }
+    ManipulatorVariable* clone(CloneMap& cloneMap){
+        return static_cast<ManipulatorVariable*>(doClone(&cloneMap));
+    }
+
     typedef stdx::variant<int, double, bool, std::string> Value;
     enum ValueTypeId { Int, Double, Bool, String };
 
@@ -27,10 +34,10 @@ public:
         value_ = rhs; return *this;
     }
 
+    int valueTypeId() const { return stdx::get_variant_index(value_); }
+    Value variantValue() const { return value_; }
     template<class T> T value() const { return stdx::get<T>(value_); }
     template<class T> void setValue(const T& value){ value_ = value; }
-
-    int valueTypeId() const { return stdx::get_variant_index(value_); }
 
     bool isInt() const { return valueTypeId() == Int; }
     bool isDouble() const { return valueTypeId() == Double; }
@@ -52,6 +59,8 @@ public:
     void setNote(const std::string& note) { note_ = note; }
 
     ManipulatorVariableList* owner() const;
+
+    void notifyUpdate();
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;

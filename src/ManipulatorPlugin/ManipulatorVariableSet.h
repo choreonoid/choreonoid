@@ -3,6 +3,7 @@
 
 #include "ManipulatorVariable.h"
 #include <cnoid/CloneableReferenced>
+#include <cnoid/Signal>
 #include <vector>
 #include <string>
 #include "exportdecl.h"
@@ -34,7 +35,10 @@ public:
 
     virtual std::vector<ManipulatorVariablePtr> getFindableVariableLists() const = 0;
 
-    virtual bool contains(const ManipulatorVariableSet* variableSet) const = 0;
+    virtual bool containsVariableSet(const ManipulatorVariableSet* variableSet) const = 0;
+
+    virtual SignalProxy<void(ManipulatorVariableSet* variableSet, ManipulatorVariable* variable)>
+        sigVariableUpdated() = 0;
 
 protected:
     ManipulatorVariableSet();
