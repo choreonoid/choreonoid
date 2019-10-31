@@ -14,8 +14,10 @@ class TargetItemPickerBase::Impl
 public:
     TargetItemPickerBase* self;
     ItemPtr targetItem;
+    ItemPtr preferredTargetItem; // Use this as the target when no candidate item is selected
     ItemList<> tmpSelectedItems;
     ScopedConnection targetItemConnection;
+    bool isActive;
     bool isBeforeAnyItemChangeNotification;
     View* view;
     ScopedConnectionSet viewConnections;
@@ -46,6 +48,7 @@ TargetItemPickerBase::Impl::Impl(TargetItemPickerBase* self, View* view)
     : self(self),
       view(view)
 {
+    isActive = false;
     isBeforeAnyItemChangeNotification = true;
     
     itemTreeView = ItemTreeView::instance();
@@ -55,6 +58,7 @@ TargetItemPickerBase::Impl::Impl(TargetItemPickerBase* self, View* view)
             view->sigActivated().connect([&](){ activate(true); }));
         viewConnections.add(
             view->sigDeactivated().connect([&](){ deactivate(); }));
+
     } else {
         activate(false);
     }
@@ -73,6 +77,8 @@ void TargetItemPickerBase::Impl::activate(bool doUpdate)
         itemTreeView->sigSelectionChanged().connect(
             [&](const ItemList<>&){ onItemSelectionChanged(); }));
 
+    isActive = true;
+
     if(doUpdate){
         onItemSelectionChanged();
     }
@@ -84,7 +90,13 @@ void TargetItemPickerBase::Impl::deactivate()
     itemSelectionChangeConnection.disconnect();
     itemAddedConnection.disconnect();
 
+    isActive = false;
+
     self->onDeactivated();
+
+    if(targetItem){
+        setTargetItem(nullptr, true, true);
+    }
 }
         
 
@@ -125,19 +137,31 @@ void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool u
         self->onTargetItemSpecified(targetItem, false);
     }
 
-    if(!targetItem){
+    if(!targetItem && !updateEvenIfEmpty){
         ItemList<> items;
         items.extractChildItems(RootItem::instance());
         self->extractTargetItemCandidates(items, false);
-        if(auto candidate = items.toSingle(true)){
+
+        ItemPtr candidate;
+        if(preferredTargetItem){
+            auto iter = std::find(items.begin(), items.end(), preferredTargetItem);
+            if(iter != items.end()){
+                candidate = preferredTargetItem;
+            }
+            preferredTargetItem.reset();
+        }
+        if(!candidate){
+            candidate = items.toSingle(true);
+        }
+        if(candidate){
             setTargetItem(candidate, true, false);
             return;
         }
 
         if(!targetItem && !itemAddedConnection.connected()){
-        itemAddedConnection.reset(
-            RootItem::instance()->sigItemAdded().connect(
-                [&](Item* item){ onItemAddedWhenNoTargetItemSpecified(item); }));
+            itemAddedConnection.reset(
+                RootItem::instance()->sigItemAdded().connect(
+                    [&](Item* item){ onItemAddedWhenNoTargetItemSpecified(item); }));
         }
     }
 }
@@ -186,7 +210,11 @@ void TargetItemPickerBase::storeTargetItem(Archive& archive, const std::string& 
 void TargetItemPickerBase::restoreTargetItem(const Archive& archive, const std::string& key)
 {
     auto item = archive.findItem<Item>(key);
-    impl->setTargetItem(item, true, false);
+    if(impl->isActive){
+        impl->setTargetItem(item, true, false);
+    } else {
+        impl->preferredTargetItem = item;
+    }
 }
 
 
