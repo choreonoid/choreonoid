@@ -133,7 +133,6 @@ public:
 
     Impl(ManipulatorVariableListViewBase* self);
     void setManipulatorVariableListItem(ManipulatorVariableListItemBase* item);
-    void onVariableUpdated(ManipulatorVariable* variable);
     void addVariableIntoCurrentIndex(bool doInsert);
     void addVariable(int row, bool doInsert);
     void removeSelectedVariables();
@@ -637,21 +636,13 @@ void ManipulatorVariableListViewBase::Impl::setManipulatorVariableListItem(Manip
         variableUpdateConnection =
             variables->sigVariableUpdated().connect(
                 [&](ManipulatorVariableSet*, ManipulatorVariable* variable){
-                    onVariableUpdated(variable); });
-        
+                    variableListModel->notifyVariableUpdate(variable); });
     } else {
         targetLabel.setText("---");
         variables = nullptr;
         variableListModel->setVariableList(nullptr);
     }
     addButton.setEnabled(targetItem != nullptr);
-}
-
-
-void ManipulatorVariableListViewBase::Impl::onVariableUpdated(ManipulatorVariable* variable)
-{
-    // temporary code
-    variableListModel->refresh();
 }
 
 

@@ -19,7 +19,7 @@ public:
     void clear();
     int numVariables() const;
     ManipulatorVariable* variableAt(int index) const;
-    int indexOf(ManipulatorVariable* frame) const;
+    int indexOf(ManipulatorVariable* variable) const;
 
     bool insert(int index, ManipulatorVariable* variable);
     bool append(ManipulatorVariable* variable);
