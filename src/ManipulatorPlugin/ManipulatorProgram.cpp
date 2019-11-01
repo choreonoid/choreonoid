@@ -32,7 +32,7 @@ public:
     void notifyStatementInsertion(ManipulatorProgram* program, iterator iter);
     void notifyStatementRemoval(ManipulatorProgram* program, ManipulatorStatement* statement);
     void notifyStatementUpdate(ManipulatorStatement* statement) const;
-    bool read(Mapping& archive);    
+    bool read(const Mapping& archive);    
 };
 
 }
@@ -247,6 +247,12 @@ SignalProxy<void(ManipulatorStatement* statement)> ManipulatorProgram::sigStatem
 }
 
 
+bool ManipulatorProgram::isSubProgram() const
+{
+    return impl->ownerStatement ? true : false;
+}
+
+
 StructuredStatement* ManipulatorProgram::ownerStatement() const
 {
     return impl->ownerStatement.lock();
@@ -271,6 +277,7 @@ bool ManipulatorProgram::load(const std::string& filename, std::ostream& os)
     try {
         auto& archive = *reader.loadDocument(filename)->toMapping();
         result = impl->read(archive);
+
     } catch(const ValueNode::Exception& ex){
         os << ex.message();
     }
@@ -279,34 +286,43 @@ bool ManipulatorProgram::load(const std::string& filename, std::ostream& os)
 }
 
 
-bool ManipulatorProgram::Impl::read(Mapping& archive)
+bool ManipulatorProgram::read(const Mapping& archive)
 {
-    auto& typeNode = archive.get("type");
-    if(typeNode.toString() != "ManipulatorProgram"){
-        typeNode.throwException(
-            format(_("{0} cannot be loaded as a Manipulator program file"), typeNode.toString()));
-    }
+    return impl->read(archive);
+}
+
+
+bool ManipulatorProgram::Impl::read(const Mapping& archive)
+{
+    if(!self->isSubProgram()){
         
-    auto& versionNode = archive.get("formatVersion");
-    auto version = versionNode.toDouble();
-    if(version != 1.0){
-        versionNode.throwException(format(_("Format version {0} is not supported."), version));
-    }
-
-    archive.read("name", name);
-
-    auto& positionSetNode = *archive.findMapping("positions");
-    if(positionSetNode.isValid()){
-        if(positions){
-            positions->clear();
-        } else {
-            positions = new ManipulatorPositionList;
+        auto& typeNode = archive.get("type");
+        if(typeNode.toString() != "ManipulatorProgram"){
+            typeNode.throwException(
+                format(_("{0} cannot be loaded as a Manipulator program file"), typeNode.toString()));
         }
-        if(!positions->read(positionSetNode)){
-            return false;
+        
+        auto& versionNode = archive.get("formatVersion");
+        auto version = versionNode.toDouble();
+        if(version != 1.0){
+            versionNode.throwException(format(_("Format version {0} is not supported."), version));
+        }
+
+        archive.read("name", name);
+
+        auto& positionSetNode = *archive.findMapping("positions");
+        if(positionSetNode.isValid()){
+            if(positions){
+                positions->clear();
+            } else {
+                positions = new ManipulatorPositionList;
+            }
+            if(!positions->read(positionSetNode)){
+                return false;
+            }
         }
     }
-
+    
     auto& statementNodes = *archive.findListing("statements");
     if(statementNodes.isValid()){
         for(int i=0; i < statementNodes.size(); ++i){
@@ -329,43 +345,60 @@ bool ManipulatorProgram::Impl::read(Mapping& archive)
 
 bool ManipulatorProgram::save(const std::string& filename)
 {
-    YAMLWriter writer(filename);
-    if(!writer.isOpen()){
-        return false;
-    }
+    bool result = false;
     
-    writer.setKeyOrderPreservationMode(true);
+    YAMLWriter writer(filename);
 
-    MappingPtr archive = new Mapping();
-    archive->setDoubleFormat("%.9g");
+    if(writer.isOpen()){
+        removeUnreferencedPositions();
+        
+        writer.setKeyOrderPreservationMode(true);
+        MappingPtr archive = new Mapping();
+        if(write(*archive)){
+            writer.putNode(archive);
+            result = true;
+        }
+    }
 
-    archive->write("type", "ManipulatorProgram");
-    archive->write("formatVersion", 1.0);
-    archive->write("name", name(), DOUBLE_QUOTED);
+    return result;
+}
+
+
+bool ManipulatorProgram::write(Mapping& archive) const
+{
+    if(!isSubProgram()){
+        archive.write("type", "ManipulatorProgram");
+        archive.write("formatVersion", 1.0);
+        archive.write("name", name(), DOUBLE_QUOTED);
+    }
 
     if(!statements_.empty()){
-        Listing& statementNodes = *archive->createListing("statements");
+        bool appended = false;
+        ListingPtr statementNodes = new Listing;
         for(auto& statement : statements_){
             MappingPtr node = new Mapping;
             if(statement->write(*node)){
-                statementNodes.append(node);
+                statementNodes->append(node);
+                appended = true;
             }
         }
-    }
-    bool ready = true;
-
-    removeUnreferencedPositions();
-    
-    MappingPtr node = new Mapping;
-    if(impl->positions->write(*node)){
-        archive->insert("positions", node);
-    } else {
-        ready = false;
+        if(appended){
+            archive.insert("statements", statementNodes);
+        }
     }
 
-    if(ready){
-        writer.putNode(archive);
+    if(!isSubProgram()){
+        MappingPtr node = new Mapping;
+        if(impl->positions->write(*node)){
+            archive.insert("positions", node);
+        }
     }
 
-    return ready;
+    return true;
 }
+
+        
+    
+        
+        
+    

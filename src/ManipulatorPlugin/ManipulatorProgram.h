@@ -61,10 +61,15 @@ public:
     
     void notifyStatementUpdate(ManipulatorStatement* statement) const;
 
+    bool isSubProgram() const;
+
     StructuredStatement* ownerStatement() const;
 
     bool load(const std::string& filename, std::ostream& os);
     bool save(const std::string& filename);
+
+    bool read(const Mapping& archive);
+    bool write(Mapping& archive) const;
 
 protected:
     ManipulatorProgram(const ManipulatorProgram& org, CloneMap* cloneMap);

@@ -76,12 +76,6 @@ std::string DummyStatement::label(int index) const
 }
 
 
-bool DummyStatement::read(ManipulatorProgram* program, const Mapping& archive)
-{
-    return true;
-}
-
-
 bool DummyStatement::write(Mapping& archive) const
 {
     archive.write("type", "Dummy");
@@ -137,7 +131,6 @@ StructuredStatement::StructuredStatement()
 {
     program_ = new ManipulatorProgram;
     program_->setOwnerStatement(this);
-    program_->append(new DummyStatement, false);
 }
 
 
@@ -149,6 +142,51 @@ StructuredStatement::StructuredStatement(const StructuredStatement& org, CloneMa
     } else {
         program_ = org.program_->clone();
     }
+
+    program_->setOwnerStatement(this);
+}
+
+
+bool StructuredStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    return program_->read(archive);
+}
+
+
+bool StructuredStatement::write(Mapping& archive) const
+{
+    return program_->write(archive);
+}
+
+
+ConditionalStatement::ConditionalStatement()
+{
+
+}
+
+
+ConditionalStatement::ConditionalStatement(const ConditionalStatement& org, CloneMap* cloneMap)
+    : StructuredStatement(org, cloneMap),
+      condition_(org.condition_)
+{
+
+}
+
+
+bool ConditionalStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    if(StructuredStatement::read(program, archive)){
+        archive.read("condition", condition_);
+        return true;
+    }
+    return false;
+}
+
+
+bool ConditionalStatement::write(Mapping& archive) const
+{
+    archive.write("condition", condition_, DOUBLE_QUOTED);
+    return StructuredStatement::write(archive);
 }
 
 
@@ -159,7 +197,7 @@ IfStatement::IfStatement()
 
 
 IfStatement::IfStatement(const IfStatement& org, CloneMap* cloneMap)
-    : StructuredStatement(org, cloneMap)
+    : ConditionalStatement(org, cloneMap)
 {
     
 }
@@ -175,6 +213,8 @@ std::string IfStatement::label(int index) const
 {
     if(index == 0){
         return "IF";
+    } else if(index == 1){
+        return condition();
     }
     return string();
 }
@@ -182,14 +222,14 @@ std::string IfStatement::label(int index) const
 
 bool IfStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
-    return true;
+    return ConditionalStatement::read(program, archive);
 }
 
 
 bool IfStatement::write(Mapping& archive) const
 {
     archive.write("type", "If");
-    return true;
+    return ConditionalStatement::write(archive);
 }
 
 
@@ -223,14 +263,14 @@ std::string ElseStatement::label(int index) const
 
 bool ElseStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
-    return true;
+    return StructuredStatement::read(program, archive);
 }
 
 
 bool ElseStatement::write(Mapping& archive) const
 {
     archive.write("type", "Else");
-    return true;
+    return StructuredStatement::write(archive);
 }
 
 
@@ -241,7 +281,7 @@ WhileStatement::WhileStatement()
 
 
 WhileStatement::WhileStatement(const WhileStatement& org, CloneMap* cloneMap)
-    : StructuredStatement(org, cloneMap)
+    : ConditionalStatement(org, cloneMap)
 {
 
 }
@@ -257,6 +297,8 @@ std::string WhileStatement::label(int index) const
 {
     if(index == 0){
         return "WHILE";
+    } else if(index == 1){
+        return condition();
     }
     return string();
 }
@@ -264,14 +306,14 @@ std::string WhileStatement::label(int index) const
 
 bool WhileStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
-    return true;
+    return ConditionalStatement::read(program, archive);
 }
 
 
 bool WhileStatement::write(Mapping& archive) const
 {
     archive.write("type", "While");
-    return true;
+    return ConditionalStatement::write(archive);
 }
 
 

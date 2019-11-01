@@ -292,6 +292,8 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
     
     ManipulatorPosition::write(archive);
     
+    archive.setDoubleFormat("%.9g");
+
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", degree(rpy()));
 
@@ -395,6 +397,8 @@ bool ManipulatorFkPosition::read(const Mapping& archive)
 bool ManipulatorFkPosition::write(Mapping& archive) const
 {
     ManipulatorPosition::write(archive);
+
+    archive.setDoubleFormat("%.9g");
 
     auto& nodes = *archive.createFlowStyleListing("jointDisplacements");
     for(auto& q : jointDisplacements){

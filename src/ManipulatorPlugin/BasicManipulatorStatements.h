@@ -28,7 +28,6 @@ class CNOID_EXPORT DummyStatement : public EmptyStatement
 public:
     DummyStatement();
     virtual std::string label(int index) const override;
-    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 
 protected:
@@ -37,23 +36,6 @@ protected:
 };
 
 typedef ref_ptr<DummyStatement> DummyStatementPtr;
-
-
-class CNOID_EXPORT StructuredStatement : public ManipulatorStatement
-{
-public:
-    ManipulatorProgram* lowerLevelProgram() { return program_; }
-    const ManipulatorProgram* lowerLevelProgram() const { return program_; }
-
-protected:
-    StructuredStatement();
-    StructuredStatement(const StructuredStatement& org, CloneMap* cloneMap);
-
-private:
-    ManipulatorProgramPtr program_;
-};
-
-typedef ref_ptr<StructuredStatement> StructuredStatementPtr;
 
 
 class CNOID_EXPORT CommentStatement : public ManipulatorStatement
@@ -79,7 +61,47 @@ private:
 typedef ref_ptr<CommentStatement> CommentStatementPtr;
 
 
-class CNOID_EXPORT IfStatement : public StructuredStatement
+class CNOID_EXPORT StructuredStatement : public ManipulatorStatement
+{
+public:
+    ManipulatorProgram* lowerLevelProgram() { return program_; }
+    const ManipulatorProgram* lowerLevelProgram() const { return program_; }
+
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+
+protected:
+    StructuredStatement();
+    StructuredStatement(const StructuredStatement& org, CloneMap* cloneMap);
+
+private:
+    ManipulatorProgramPtr program_;
+};
+
+typedef ref_ptr<StructuredStatement> StructuredStatementPtr;
+
+
+class CNOID_EXPORT ConditionalStatement : public StructuredStatement
+{
+public:
+    const std::string condition() const { return condition_; }
+    void setCondition(const std::string& condition) { condition_ = condition; }
+
+    virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+
+protected:
+    ConditionalStatement();
+    ConditionalStatement(const ConditionalStatement& org, CloneMap* cloneMap);
+
+private:
+    std::string condition_;
+};
+
+typedef ref_ptr<ConditionalStatement> ConditionalStatementPtr;
+
+
+class CNOID_EXPORT IfStatement : public ConditionalStatement
 {
 public:
     IfStatement();
@@ -113,7 +135,7 @@ protected:
 typedef ref_ptr<IfStatement> IfStatementPtr;
 
 
-class CNOID_EXPORT WhileStatement : public StructuredStatement
+class CNOID_EXPORT WhileStatement : public ConditionalStatement
 {
 public:
     WhileStatement();
