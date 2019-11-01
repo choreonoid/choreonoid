@@ -1,5 +1,6 @@
 #include "ManipulatorStatement.h"
 #include "ManipulatorProgram.h"
+#include "BasicManipulatorStatements.h"
 #include <unordered_map>
 #include <mutex>
 
@@ -45,16 +46,26 @@ ManipulatorStatement::ManipulatorStatement(const ManipulatorStatement& org)
 }
 
 
-ManipulatorProgram* ManipulatorStatement::ownerProgram() const
+ManipulatorProgram* ManipulatorStatement::holderProgram() const
 {
-    return ownerProgram_.lock();
+    return holderProgram_.lock();
+}
+
+
+ManipulatorProgram* ManipulatorStatement::topLevelProgram() const
+{
+    auto program = holderProgram();
+    if(!program){
+        return nullptr;
+    }
+    return program->topLevelProgram();
 }
 
 
 void ManipulatorStatement::notifyUpdate()
 {
-    if(auto owner = ownerProgram()){
-        owner->notifyStatementUpdate(this);
+    if(auto holder = holderProgram()){
+        holder->notifyStatementUpdate(this);
     }
 }
 

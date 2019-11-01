@@ -50,6 +50,35 @@ public:
 };
 
 
+class ConditionalStatementDelegate : public Delegate
+{
+public:
+    virtual QVariant dataOfEditRole(ManipulatorStatement* statement, int column) const override
+    {
+        if(column = 1){
+            return static_cast<ConditionalStatement*>(statement)->condition().c_str();
+        }
+        return QVariant();
+    }
+
+    virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const override
+    {
+        if(column == 1){
+            return static_cast<ConditionalStatement*>(statement)->setCondition(value.toString().toStdString());
+            statement->notifyUpdate();
+        }
+    }
+
+    virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
+    {
+        if(column == 1){
+            return createDefaultEditor();
+        }
+        return nullptr;
+    }
+};
+
+
 class AssignStatementDelegate : public Delegate
 {
 public:
@@ -185,6 +214,8 @@ namespace cnoid {
 void ManipulatorProgramViewBase::registerBaseStatementDelegates()
 {
     registerStatementDelegate<CommentStatement>(new CommentStatementDelegate);
+    registerStatementDelegate<IfStatement>(new ConditionalStatementDelegate);
+    registerStatementDelegate<WhileStatement>(new ConditionalStatementDelegate);
     registerStatementDelegate<AssignStatement>(new AssignStatementDelegate);
     registerStatementDelegate<SetSignalStatement>(new SetSignalStatementDelegate);
     registerStatementDelegate<DelayStatement>(new DelayStatementDelegate);

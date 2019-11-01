@@ -31,7 +31,8 @@ public:
         return static_cast<ManipulatorStatement*>(doClone(&cloneMap));
     }
 
-    ManipulatorProgram* ownerProgram() const;
+    ManipulatorProgram* holderProgram() const;
+    ManipulatorProgram* topLevelProgram() const;
 
     void notifyUpdate();
 
@@ -46,7 +47,7 @@ protected:
 private:
     static void registerFactory(const char* type, FactoryFunction factory);
 
-    weak_ref_ptr<ManipulatorProgram> ownerProgram_;
+    weak_ref_ptr<ManipulatorProgram> holderProgram_;
 
     friend class ManipulatorProgram;
 };

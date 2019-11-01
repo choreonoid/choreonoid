@@ -874,12 +874,12 @@ void ManipulatorProgramViewBase::Impl::onStatementInserted
     auto counter = scopedCounterOfStatementItemOperationCall();
 
     QTreeWidgetItem* parentItem;
-    auto ownerStatement = program->ownerStatement();
-    if(!ownerStatement){
+    auto holderStatement = program->holderStatement();
+    if(!holderStatement){
         parentItem = invisibleRootItem();
     } else {
         // Check the dummy statement and remove it
-        parentItem = statementItemFromStatement(ownerStatement);
+        parentItem = statementItemFromStatement(holderStatement);
         if(parentItem->childCount() == 1){
             auto statementItem = static_cast<StatementItem*>(parentItem->child(0));
             if(statementItem->statement() == dummyStatement){
@@ -923,16 +923,16 @@ void ManipulatorProgramViewBase::Impl::onStatementRemoved
     if(iter != statementItemMap.end()){
         auto statementItem = iter->second;
         QTreeWidgetItem* parentItem;
-        auto ownerStatement = program->ownerStatement();
-        if(ownerStatement){
-            parentItem = statementItemFromStatement(ownerStatement);
+        auto holderStatement = program->holderStatement();
+        if(holderStatement){
+            parentItem = statementItemFromStatement(holderStatement);
         } else {
             parentItem = invisibleRootItem();
         }
         parentItem->removeChild(statementItem);
         delete statementItem;
 
-        if(ownerStatement && ownerStatement->lowerLevelProgram()->empty()){
+        if(holderStatement && holderStatement->lowerLevelProgram()->empty()){
             // Keep at least one dummy statement item in a sub program
             parentItem->addChild(new StatementItem(dummyStatement, this));
         }
@@ -1099,11 +1099,6 @@ void ManipulatorProgramViewBase::Impl::showContextMenu(QPoint globalPos)
 {
     contextMenuManager.setNewPopupMenu(this);
 
-    contextMenuManager.addItem(_("Insert empty line"))
-        ->sigTriggered().connect([=](){ insertStatement(new EmptyStatement, BeforeTargetPosition); });
-
-    contextMenuManager.addSeparator();
-
     contextMenuManager.addItem(_("Cut"))
         ->sigTriggered().connect([=](){ copySelectedStatements(true); });
 
@@ -1116,7 +1111,12 @@ void ManipulatorProgramViewBase::Impl::showContextMenu(QPoint globalPos)
     } else {
         pasteAction->sigTriggered().connect([=](){ pasteStatements(); });
     }
-    
+
+    contextMenuManager.addSeparator();
+
+    contextMenuManager.addItem(_("Insert empty line"))
+        ->sigTriggered().connect([=](){ insertStatement(new EmptyStatement, BeforeTargetPosition); });
+
     contextMenuManager.popupMenu()->popup(globalPos);
 }
 

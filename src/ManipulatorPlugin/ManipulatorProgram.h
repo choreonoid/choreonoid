@@ -61,9 +61,11 @@ public:
     
     void notifyStatementUpdate(ManipulatorStatement* statement) const;
 
+    StructuredStatement* holderStatement() const;
     bool isSubProgram() const;
+    ManipulatorProgram* topLevelProgram() const;
 
-    StructuredStatement* ownerStatement() const;
+    void traverseAllStatements(std::function<bool(ManipulatorStatement* statement)> callback);
 
     bool load(const std::string& filename, std::ostream& os);
     bool save(const std::string& filename);
@@ -83,7 +85,7 @@ private:
 
     friend class StructuredStatement;
 
-    void setOwnerStatement(StructuredStatement* owner);
+    void setHolderStatement(StructuredStatement* holder);
 };
 
 typedef ref_ptr<ManipulatorProgram> ManipulatorProgramPtr;

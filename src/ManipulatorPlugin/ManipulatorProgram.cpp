@@ -20,7 +20,7 @@ class ManipulatorProgram::Impl
 {
 public:
     ManipulatorProgram* self;
-    weak_ref_ptr<StructuredStatement> ownerStatement;
+    weak_ref_ptr<StructuredStatement> holderStatement;
     ManipulatorPositionListPtr positions;
     Signal<void(ManipulatorStatement* statement)> sigStatementUpdated;
     Signal<void(ManipulatorProgram* program, iterator iter)> sigStatementInserted;
@@ -32,6 +32,7 @@ public:
     void notifyStatementInsertion(ManipulatorProgram* program, iterator iter);
     void notifyStatementRemoval(ManipulatorProgram* program, ManipulatorStatement* statement);
     void notifyStatementUpdate(ManipulatorStatement* statement) const;
+    ManipulatorPositionList* getOrCreatePositions();
     bool read(const Mapping& archive);    
 };
 
@@ -47,7 +48,7 @@ ManipulatorProgram::ManipulatorProgram()
 ManipulatorProgram::Impl::Impl(ManipulatorProgram* self)
     : self(self)
 {
-    positions = new ManipulatorPositionList;
+
 }
     
 
@@ -71,10 +72,12 @@ ManipulatorProgram::Impl::Impl(ManipulatorProgram* self, const Impl& org, CloneM
     : self(self),
       name(org.name)
 {
-    if(cloneMap){
-        positions = cloneMap->getClone(org.positions);
-    } else {
-        positions = org.positions->clone();
+    if(org.positions){
+        if(cloneMap){
+            positions = cloneMap->getClone(org.positions);
+        } else {
+            positions = org.positions->clone();
+        }
     }
 }
 
@@ -105,11 +108,11 @@ void ManipulatorProgram::setName(const std::string& name)
 
 ManipulatorProgram::iterator ManipulatorProgram::insert(iterator pos, ManipulatorStatement* statement, bool doNotify)
 {
-    if(statement->ownerProgram_){
+    if(statement->holderProgram_){
         throw std::runtime_error(
             "A statement contained in a manipulator program was tried to be inserted into another program");
     }
-    statement->ownerProgram_ = this;
+    statement->holderProgram_ = this;
     auto iter = statements_.insert(pos, statement);
 
     if(doNotify){
@@ -130,8 +133,8 @@ void ManipulatorProgram::Impl::notifyStatementInsertion(ManipulatorProgram* prog
 {
     sigStatementInserted(program, iter);
 
-    if(auto hs = ownerStatement.lock()){
-        if(auto hp = hs->ownerProgram()){
+    if(auto hs = holderStatement.lock()){
+        if(auto hp = hs->holderProgram()){
             hp->impl->notifyStatementInsertion(program, iter);
         }
     }
@@ -141,9 +144,9 @@ void ManipulatorProgram::Impl::notifyStatementInsertion(ManipulatorProgram* prog
 ManipulatorProgram::iterator ManipulatorProgram::remove(iterator pos, bool doNotify)
 {
     auto statement = *pos;
-    auto program = statement->ownerProgram_.lock();
+    auto program = statement->holderProgram_.lock();
     if(program == this){
-        statement->ownerProgram_.reset();
+        statement->holderProgram_.reset();
         auto iter = statements_.erase(pos);
         if(doNotify){
             impl->notifyStatementRemoval(this, statement);
@@ -156,14 +159,9 @@ ManipulatorProgram::iterator ManipulatorProgram::remove(iterator pos, bool doNot
 
 bool ManipulatorProgram::remove(ManipulatorStatement* statement, bool doNotify)
 {
-    auto iter = std::find(begin(), end(), statement);
-    if(iter != statements_.end()){
-        auto statement = *iter;
-        statement->ownerProgram_.reset();
-        statements_.erase(iter);
-        if(doNotify){
-            impl->notifyStatementRemoval(this, statement);
-        }
+    auto pos = std::find(begin(), end(), statement);
+    if(pos != statements_.end()){
+        remove(pos, doNotify);
         return true;
     }
     return false;
@@ -174,8 +172,8 @@ void ManipulatorProgram::Impl::notifyStatementRemoval(ManipulatorProgram* progra
 {
     sigStatementRemoved(program, statement);
 
-    if(auto hs = ownerStatement.lock()){
-        if(auto hp = hs->ownerProgram()){
+    if(auto hs = holderStatement.lock()){
+        if(auto hp = hs->holderProgram()){
             hp->impl->notifyStatementRemoval(program, statement);
         }
     }
@@ -186,44 +184,11 @@ void ManipulatorProgram::notifyStatementUpdate(ManipulatorStatement* statement) 
 {
     impl->sigStatementUpdated(statement);
 
-    if(auto hs = ownerStatement()){
-        if(auto hp = hs->ownerProgram()){
+    if(auto hs = holderStatement()){
+        if(auto hp = hs->holderProgram()){
             hp->notifyStatementUpdate(statement);
         }
     }
-}
-
-
-ManipulatorPositionList* ManipulatorProgram::positions()
-{
-    return impl->positions;
-}
-
-
-const ManipulatorPositionList* ManipulatorProgram::positions() const
-{
-    return impl->positions;
-}
-
-
-void ManipulatorProgram::removeUnreferencedPositions()
-{
-    if(!impl->positions){
-        return;
-    }
-    
-    std::unordered_set<GeneralId, GeneralId::Hash> referencedIds;
-
-    for(auto& statement : statements_){
-        if(auto referencer = dynamic_cast<ManipulatorPositionReferencer*>(statement.get())){
-            referencedIds.insert(referencer->getManipulatorPositionId());
-        }
-    }
-
-    impl->positions->removeUnreferencedPositions(
-        [&](ManipulatorPosition* position){
-            return (referencedIds.find(position->id()) != referencedIds.end());
-        });
 }
 
 
@@ -247,25 +212,111 @@ SignalProxy<void(ManipulatorStatement* statement)> ManipulatorProgram::sigStatem
 }
 
 
+StructuredStatement* ManipulatorProgram::holderStatement() const
+{
+    return impl->holderStatement.lock();
+}
+
+
 bool ManipulatorProgram::isSubProgram() const
 {
-    return impl->ownerStatement ? true : false;
+    return impl->holderStatement ? true : false;
 }
 
 
-StructuredStatement* ManipulatorProgram::ownerStatement() const
+ManipulatorProgram* ManipulatorProgram::topLevelProgram() const
 {
-    return impl->ownerStatement.lock();
+    auto holder = holderStatement();
+    if(!holder){
+        return const_cast<ManipulatorProgram*>(this);
+    }
+    return holder->topLevelProgram();
 }
 
 
-void ManipulatorProgram::setOwnerStatement(StructuredStatement* owner)
+void ManipulatorProgram::setHolderStatement(StructuredStatement* holder)
 {
-    if(auto owner = impl->ownerStatement){
+    if(impl->holderStatement){
         throw std::runtime_error(
             "A manipulator program contaied in a structured statement was tried to be holded by another statement");
     }
-    impl->ownerStatement = owner;
+    impl->holderStatement = holder;
+}
+
+
+static bool traverseAllStatements
+(ManipulatorProgram* program, const std::function<bool(ManipulatorStatement* statement)>& callback)
+{
+    for(auto& statement : *program){
+        if(!callback(statement)){
+            return false;
+        }
+        if(auto structured = dynamic_cast<StructuredStatement*>(statement.get())){
+            auto program = structured->lowerLevelProgram();
+            if(!traverseAllStatements(program, callback)){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+void ManipulatorProgram::traverseAllStatements(std::function<bool(ManipulatorStatement* statement)> callback)
+{
+    ::traverseAllStatements(this, callback);
+}
+
+
+ManipulatorPositionList* ManipulatorProgram::Impl::getOrCreatePositions()
+{
+    if(!positions){
+        positions = new ManipulatorPositionList;
+    }
+    return positions;
+}
+
+
+ManipulatorPositionList* ManipulatorProgram::positions()
+{
+    if(!impl->holderStatement){
+        return impl->getOrCreatePositions();
+    }
+    if(auto topLevel = topLevelProgram()){
+        return topLevel->impl->getOrCreatePositions();
+    }
+    return impl->getOrCreatePositions();
+}
+
+
+const ManipulatorPositionList* ManipulatorProgram::positions() const
+{
+    return const_cast<ManipulatorProgram*>(this)->positions();
+}
+
+
+void ManipulatorProgram::removeUnreferencedPositions()
+{
+    auto positions_ = positions();
+
+    if(!positions_){
+        return;
+    }
+    
+    std::unordered_set<GeneralId, GeneralId::Hash> referencedIds;
+
+    traverseAllStatements(
+        [&](ManipulatorStatement* statement){
+            if(auto referencer = dynamic_cast<ManipulatorPositionReferencer*>(statement)){
+                referencedIds.insert(referencer->getManipulatorPositionId());
+            }
+            return true;
+        });
+
+    positions_->removeUnreferencedPositions(
+        [&](ManipulatorPosition* position){
+            return (referencedIds.find(position->id()) != referencedIds.end());
+        });
 }
 
 
@@ -312,11 +363,8 @@ bool ManipulatorProgram::Impl::read(const Mapping& archive)
 
         auto& positionSetNode = *archive.findMapping("positions");
         if(positionSetNode.isValid()){
-            if(positions){
-                positions->clear();
-            } else {
-                positions = new ManipulatorPositionList;
-            }
+            getOrCreatePositions();
+            positions->clear();
             if(!positions->read(positionSetNode)){
                 return false;
             }
@@ -387,7 +435,7 @@ bool ManipulatorProgram::write(Mapping& archive) const
         }
     }
 
-    if(!isSubProgram()){
+    if(!isSubProgram() && impl->positions){
         MappingPtr node = new Mapping;
         if(impl->positions->write(*node)){
             archive.insert("positions", node);

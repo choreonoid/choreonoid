@@ -130,7 +130,7 @@ bool CommentStatement::write(Mapping& archive) const
 StructuredStatement::StructuredStatement()
 {
     program_ = new ManipulatorProgram;
-    program_->setOwnerStatement(this);
+    program_->setHolderStatement(this);
 }
 
 
@@ -143,7 +143,7 @@ StructuredStatement::StructuredStatement(const StructuredStatement& org, CloneMa
         program_ = org.program_->clone();
     }
 
-    program_->setOwnerStatement(this);
+    program_->setHolderStatement(this);
 }
 
 
@@ -212,7 +212,7 @@ Referenced* IfStatement::doClone(CloneMap* cloneMap) const
 std::string IfStatement::label(int index) const
 {
     if(index == 0){
-        return "IF";
+        return "If";
     } else if(index == 1){
         return condition();
     }
@@ -255,7 +255,7 @@ Referenced* ElseStatement::doClone(CloneMap* cloneMap) const
 std::string ElseStatement::label(int index) const
 {
     if(index == 0){
-        return "ELSE";
+        return "Else";
     }
     return string();
 }
@@ -296,7 +296,7 @@ Referenced* WhileStatement::doClone(CloneMap* cloneMap) const
 std::string WhileStatement::label(int index) const
 {
     if(index == 0){
-        return "WHILE";
+        return "While";
     } else if(index == 1){
         return condition();
     }
@@ -532,7 +532,7 @@ struct StatementTypeRegistration {
         ManipulatorStatement::registerType<CommentStatement>("Comment");
         ManipulatorStatement::registerType<IfStatement>("If");
         ManipulatorStatement::registerType<ElseStatement>("Else");
-        ManipulatorStatement::registerType<ElseStatement>("While");
+        ManipulatorStatement::registerType<WhileStatement>("While");
         ManipulatorStatement::registerType<CallStatement>("Call");
         ManipulatorStatement::registerType<AssignStatement>("Assign");
         ManipulatorStatement::registerType<SetSignalStatement>("SetSignal");
