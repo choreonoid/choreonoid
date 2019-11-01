@@ -63,7 +63,7 @@ ManipulatorProgramItemBase::Impl::Impl(ManipulatorProgramItemBase* self, const I
 void ManipulatorProgramItemBase::Impl::setupSignalConnections()
 {
     program->sigStatementInserted().connect(
-        [&](ManipulatorProgram*, ManipulatorProgram::iterator){
+        [&](ManipulatorProgram::iterator){
             self->suggestFileUpdate(); });
 
     program->sigStatementRemoved().connect(

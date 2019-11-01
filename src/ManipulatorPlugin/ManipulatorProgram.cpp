@@ -23,13 +23,13 @@ public:
     weak_ref_ptr<StructuredStatement> holderStatement;
     ManipulatorPositionListPtr positions;
     Signal<void(ManipulatorStatement* statement)> sigStatementUpdated;
-    Signal<void(ManipulatorProgram* program, iterator iter)> sigStatementInserted;
+    Signal<void(iterator iter)> sigStatementInserted;
     Signal<void(ManipulatorProgram* program, ManipulatorStatement* statement)> sigStatementRemoved;
     std::string name;
 
     Impl(ManipulatorProgram* self);
     Impl(ManipulatorProgram* self, const Impl& org, CloneMap* cloneMap);
-    void notifyStatementInsertion(ManipulatorProgram* program, iterator iter);
+    void notifyStatementInsertion(iterator iter);
     void notifyStatementRemoval(ManipulatorProgram* program, ManipulatorStatement* statement);
     void notifyStatementUpdate(ManipulatorStatement* statement) const;
     ManipulatorPositionList* getOrCreatePositions();
@@ -116,7 +116,7 @@ ManipulatorProgram::iterator ManipulatorProgram::insert(iterator pos, Manipulato
     auto iter = statements_.insert(pos, statement);
 
     if(doNotify){
-        impl->notifyStatementInsertion(this, iter);
+        impl->notifyStatementInsertion(iter);
     }
 
     return iter;
@@ -129,13 +129,13 @@ ManipulatorProgram::iterator ManipulatorProgram::append(ManipulatorStatement* st
 }
 
 
-void ManipulatorProgram::Impl::notifyStatementInsertion(ManipulatorProgram* program, iterator iter)
+void ManipulatorProgram::Impl::notifyStatementInsertion(iterator iter)
 {
-    sigStatementInserted(program, iter);
+    sigStatementInserted(iter);
 
     if(auto hs = holderStatement.lock()){
         if(auto hp = hs->holderProgram()){
-            hp->impl->notifyStatementInsertion(program, iter);
+            hp->impl->notifyStatementInsertion(iter);
         }
     }
 }
@@ -192,8 +192,7 @@ void ManipulatorProgram::notifyStatementUpdate(ManipulatorStatement* statement) 
 }
 
 
-SignalProxy<void(ManipulatorProgram* program, ManipulatorProgram::iterator iter)>
-ManipulatorProgram::sigStatementInserted()
+SignalProxy<void(ManipulatorProgram::iterator iter)> ManipulatorProgram::sigStatementInserted()
 {
     return impl->sigStatementInserted;
 }

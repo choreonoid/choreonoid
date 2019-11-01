@@ -55,7 +55,7 @@ public:
     const ManipulatorPositionList* positions() const;
     void removeUnreferencedPositions();
 
-    SignalProxy<void(ManipulatorProgram* program, ManipulatorProgram::iterator iter)> sigStatementInserted();
+    SignalProxy<void(ManipulatorProgram::iterator iter)> sigStatementInserted();
     SignalProxy<void(ManipulatorProgram* program, ManipulatorStatement* statement)> sigStatementRemoved();
     SignalProxy<void(ManipulatorStatement* statement)> sigStatementUpdated();
     

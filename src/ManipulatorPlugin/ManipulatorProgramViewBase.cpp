@@ -150,7 +150,7 @@ public:
     void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
     StatementItem* statementItemFromStatement(ManipulatorStatement* statement);
     bool insertStatement(ManipulatorStatement* statement, int insertionType);
-    void onStatementInserted(ManipulatorProgram* program, ManipulatorProgram::iterator iter);
+    void onStatementInserted(ManipulatorProgram::iterator iter);
     void onStatementRemoved(ManipulatorProgram* program, ManipulatorStatement* statement);
     void forEachStatementInTreeEditEvent(
         const QModelIndex& parent, int start, int end,
@@ -696,8 +696,8 @@ void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase
 
         programConnections.add(
             program->sigStatementInserted().connect(
-                [&](ManipulatorProgram* program, ManipulatorProgram::iterator iter){
-                    onStatementInserted(program, iter); }));
+                [&](ManipulatorProgram::iterator iter){
+                    onStatementInserted(iter); }));
 
         programConnections.add(
             program->sigStatementRemoved().connect(
@@ -868,13 +868,15 @@ bool ManipulatorProgramViewBase::Impl::insertStatement(ManipulatorStatement* sta
 }
 
 
-void ManipulatorProgramViewBase::Impl::onStatementInserted
-(ManipulatorProgram* program, ManipulatorProgram::iterator iter)
+void ManipulatorProgramViewBase::Impl::onStatementInserted(ManipulatorProgram::iterator iter)
 {
     auto counter = scopedCounterOfStatementItemOperationCall();
 
-    QTreeWidgetItem* parentItem;
+    auto statement = *iter;
+    auto program = statement->holderProgram();
     auto holderStatement = program->holderStatement();
+
+    QTreeWidgetItem* parentItem;
     if(!holderStatement){
         parentItem = invisibleRootItem();
     } else {
@@ -889,7 +891,6 @@ void ManipulatorProgramViewBase::Impl::onStatementInserted
         }
     }
 
-    auto statement = *iter;
     auto statementItem = new StatementItem(statement, this);
     bool added = false;
     auto nextIter = ++iter;
