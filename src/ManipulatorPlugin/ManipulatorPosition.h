@@ -32,6 +32,9 @@ public:
     
     const GeneralId& id() const { return id_; }
 
+    //! \note This function only works when the position is not belonging to any position set.
+    void setId(const GeneralId& id);
+
     int positionType() const { return positionType_; }
     bool isIK() const { return (positionType_ == IK); };
     bool isFK() const { return (positionType_ == FK); };

@@ -40,6 +40,14 @@ ManipulatorPosition::ManipulatorPosition(const ManipulatorPosition& org)
 }
 
 
+void ManipulatorPosition::setId(const GeneralId& id)
+{
+    if(!owner_){
+        id_ = id;
+    }
+}
+
+
 ManipulatorIkPosition* ManipulatorPosition::ikPosition()
 {
     if(positionType_ == IK){

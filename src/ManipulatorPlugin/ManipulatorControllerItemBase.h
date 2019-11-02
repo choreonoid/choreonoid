@@ -2,6 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_CONTROLLR_ITEM_BASE_H
 
 #include <cnoid/ControllerItem>
+#include "ManipulatorProgram.h"
 #include <typeindex>
 #include "exportdecl.h"
 
@@ -46,11 +47,15 @@ protected:
        This function returns the program instance cloned by the controller
        for the purpose of control.
     */
-    ManipulatorProgram* getProgram();
+    ManipulatorProgram* getMainProgram();
 
     LinkKinematicsKit* getLinkKinematicsKit();
-
     ManipulatorVariableSet* getVariableSet();
+
+    ManipulatorProgram* getCurrentProgram();
+    ManipulatorProgram::iterator getCurrentIterator();
+    void setCurrent(ManipulatorProgram::iterator iter);
+    void setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter);
 
     void pushControlFunctions(
         std::function<bool()> control, std::function<void()> input = nullptr, std::function<void()> output = nullptr);

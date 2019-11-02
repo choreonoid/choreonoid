@@ -6,7 +6,6 @@
 #include "ManipulatorVariableSetGroup.h"
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/LinkCoordinateFrameSet>
-#include <cnoid/ManipulatorProgram>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
@@ -89,19 +88,27 @@ public:
     ManipulatorControllerItemBase* self;
     ControllerIO* io;
     ManipulatorProgramItemBasePtr programItem;
-    ManipulatorProgramPtr program;
+    ManipulatorProgramPtr mainProgram;
+    ManipulatorProgramPtr currentProgram;
     CloneMap cloneMap;
     LinkKinematicsKitPtr kinematicsKit;
     ManipulatorVariableSetPtr variables;
-    vector<function<void()>> residentInputFunctions;
-    unordered_map<type_index, function<bool(ManipulatorStatement* statement)>> interpreterMap;
-    ManipulatorProgram::iterator iterator;
+
+    typedef ManipulatorProgram::iterator Iterator;
+    Iterator iterator;
+    vector<Iterator> iteratorStack;
     vector<ref_ptr<Processor>> processorStack;
+    
+    vector<function<void()>> residentInputFunctions;
+
+    typedef function<bool(ManipulatorStatement* statement)> InterpretFunction;
+    unordered_map<type_index, InterpretFunction> interpreterMap;
     DigitalIoDevicePtr ioDevice;
     double speedRatio;
 
     regex termPattern;
     regex operatorPattern;
+    regex cmpOperatorPattern;
     regex intPattern;
     regex floatPattern;
     regex boolPattern;
@@ -120,10 +127,13 @@ public:
     bool control();
     void clear();
     bool interpretCommentStatement(CommentStatement* statement);
-    bool applyExpressionTerm(ManipulatorVariable::Value& value, ExpressionTerm term, char op);
-    bool interpretDelayStatement(DelayStatement* statement);
+    bool interpretWhileStatement(WhileStatement* statement);
+    stdx::optional<ExpressionTerm> getTermValue(string::const_iterator& iter, string::const_iterator& end);
+    stdx::optional<string> getComparisonOperator(string::const_iterator& iter, string::const_iterator& end);
     bool interpretAssignStatement(AssignStatement* statement);
+    bool applyExpressionTerm(ManipulatorVariable::Value& value, ExpressionTerm term, char op);
     bool interpretSetSignalStatement(SetSignalStatement* statement);
+    bool interpretDelayStatement(DelayStatement* statement);
 };
 
 }
@@ -170,9 +180,9 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
         [impl_](CommentStatement* statement){
             return impl_->interpretCommentStatement(statement); });
 
-    registerStatementInterpreter<DelayStatement>(
-        [impl_](DelayStatement* statement){
-            return impl_->interpretDelayStatement(statement); });
+    registerStatementInterpreter<WhileStatement>(
+        [impl_](WhileStatement* statement){
+            return impl_->interpretWhileStatement(statement); });
 
     registerStatementInterpreter<AssignStatement>(
         [impl_](AssignStatement* statement){
@@ -180,6 +190,7 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
 
     impl->termPattern.assign("^\\s*(.+)\\s*");
     impl->operatorPattern.assign("^\\s*([+-])\\s*");
+    impl->cmpOperatorPattern.assign("^\\s*(=|==|!=|<|>|<=|>=)\\s*");
     impl->intPattern.assign("^[+-]?\\d+");
     impl->floatPattern.assign("^[+-]?(\\d+\\.\\d*|\\.\\d+)");
     impl->boolPattern.assign("^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])");
@@ -189,6 +200,10 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
     registerStatementInterpreter<SetSignalStatement>(
         [impl_](SetSignalStatement* statement){
             return impl_->interpretSetSignalStatement(statement); });
+
+    registerStatementInterpreter<DelayStatement>(
+        [impl_](DelayStatement* statement){
+            return impl_->interpretDelayStatement(statement); });
 }
 
 
@@ -219,8 +234,7 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
     
     auto mv = MessageView::instance();
 
-    programItem = nullptr;
-    program = nullptr;
+    clear();
     
     ItemList<ManipulatorProgramItemBase> programItems;
     if(!programItems.extractChildItems(self)){
@@ -244,14 +258,12 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
         return false;
     }
     
-    cloneMap.clear();
-
-    program = cloneMap.getClone(programItem->program());
-
+    mainProgram = cloneMap.getClone(programItem->program());
+    currentProgram = mainProgram;
+    
     variables = createVariableSet(programItem);
 
-    processorStack.clear();
-    iterator = program->begin();
+    iterator = currentProgram->begin();
 
     auto body = io->body();
     ioDevice = body->findDevice<DigitalIoDevice>();
@@ -395,9 +407,35 @@ ManipulatorProgramItemBase* ManipulatorControllerItemBase::getProgramItem()
 }
 
 
-ManipulatorProgram* ManipulatorControllerItemBase::getProgram()
+ManipulatorProgram* ManipulatorControllerItemBase::getMainProgram()
 {
-    return impl->program;
+    return impl->mainProgram;
+}
+
+
+ManipulatorProgram* ManipulatorControllerItemBase::getCurrentProgram()
+{
+    return impl->currentProgram;
+}
+
+
+ManipulatorProgram::iterator ManipulatorControllerItemBase::getCurrentIterator()
+{
+    return impl->iterator;
+}
+
+
+void ManipulatorControllerItemBase::setCurrent(ManipulatorProgram::iterator iter)
+{
+    impl->iterator = iter;
+}
+
+
+void ManipulatorControllerItemBase::setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter)
+{
+    impl->iteratorStack.push_back(impl->iterator);
+    impl->currentProgram = program;
+    impl->iterator = iter;
 }
 
 
@@ -454,21 +492,32 @@ bool ManipulatorControllerItemBase::Impl::control()
             }
             processorStack.pop_back();
         }
-        if(isActive || iterator == program->end()){
+        if(isActive){
             break;
         }
+        if(iterator == currentProgram->end()){
+            if(iteratorStack.empty()){
+                break;
+            }
+            iterator = iteratorStack.back();
+            currentProgram = (*iterator)->holderProgram();
+            iteratorStack.pop_back();
+        }
+        
         auto statement = iterator->get();
-        ++iterator;
 
-        auto iter = interpreterMap.find(typeid(*statement));
-        if(iter == interpreterMap.end()){
+        auto p = interpreterMap.find(typeid(*statement));
+        if(p == interpreterMap.end()){
             io->os() << format(_("{0} cannot be executed because the interpreter for it is not found."),
                                statement->label(0)) << endl;
+            ++iterator;
             continue;
         }
-        auto& interpret = iter->second;
+        auto& interpret = p->second;
         bool result = interpret(statement);
 
+        //++iterator;
+        
         if(!result){
             isActive = false;
             break;
@@ -522,9 +571,13 @@ void ManipulatorControllerItemBase::onDisconnectedFromRoot()
 void ManipulatorControllerItemBase::Impl::clear()
 {
     programItem.reset();
-    program.reset();
+    mainProgram.reset();
+    currentProgram.reset();
+    iteratorStack.clear();
+    processorStack.clear();
     cloneMap.clear();
     kinematicsKit.reset();
+    variables.reset();
 }
 
 
@@ -536,15 +589,172 @@ double ManipulatorControllerItemBase::speedRatio() const
 
 bool ManipulatorControllerItemBase::Impl::interpretCommentStatement(CommentStatement*)
 {
+    ++iterator;
     return true;
 }
 
 
-bool ManipulatorControllerItemBase::Impl::interpretDelayStatement(DelayStatement* statement)
+template<class LhsType, class RhsType>
+static stdx::optional<bool> checkNumericalComparison(const string& op, LhsType lhs, RhsType rhs)
 {
-    int remainingFrames = statement->time() / io->timeStep();
-    self->pushControlFunctions([remainingFrames]() mutable { return (remainingFrames-- > 0); });
+    if(op == "="){
+        return lhs == rhs;
+    } else if(op == "=="){
+        return lhs == rhs;
+    } else if(op == "!="){
+        return lhs != rhs;
+    } else if(op == "<"){
+        return lhs < rhs;
+    } else if(op == ">"){
+        return lhs > rhs;
+    } else if(op == "<="){
+        return lhs <= rhs;
+    } else if(op == ">="){
+        return lhs >= rhs;
+    }
+    return stdx::nullopt;
+}
+
+
+bool ManipulatorControllerItemBase::Impl::interpretWhileStatement(WhileStatement* statement)
+{
+    auto& condition = statement->condition();
+    if(condition.empty()){
+        io->os() << _("The condition of a While statement is empty.") << endl;
+        return false;
+    }
+    auto iter = condition.cbegin();
+    auto end = condition.cend();
+
+    stdx::optional<ExpressionTerm> pLhs = getTermValue(iter, end);
+    stdx::optional<string> pCmpOp = getComparisonOperator(iter, end);
+    stdx::optional<ExpressionTerm> pRhs = getTermValue(iter, end);
+
+    if(!pLhs || !pCmpOp || !pRhs){
+        io->os() << _("The condition of a While statement is invalid.") << endl;
+        return false;
+    }
+
+    ExpressionTerm& lhs = *pLhs;
+    ExpressionTerm& rhs = *pRhs;
+    string& cmpOp = *pCmpOp;
+
+    stdx::optional<bool> pResult;
+    int rhsValueType = stdx::get_variant_index(rhs);
+    switch(stdx::get_variant_index(lhs)){
+    case Int:
+    {
+        int lhsValue = stdx::get<int>(lhs);
+        if(rhsValueType == Int){
+            pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<int>(rhs));
+        } else if(rhsValueType == Double){
+            pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<double>(rhs));
+        }
+        break;
+    }
+    case Double:
+    {
+        int lhsValue = stdx::get<double>(lhs);
+        if(rhsValueType == Int){
+            pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<int>(rhs));
+        } else if(rhsValueType == Double){
+            pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<double>(rhs));
+        }
+        break;
+    }
+    case Bool:
+        if(rhsValueType == Bool && cmpOp == "="){
+            pResult = checkNumericalComparison(cmpOp, stdx::get<bool>(lhs), stdx::get<bool>(rhs));
+        }
+        break;
+
+    case String:
+        if(rhsValueType == String && cmpOp == "="){
+            pResult = checkNumericalComparison(cmpOp, stdx::get<string>(lhs), stdx::get<string>(rhs));
+        }
+        break;
+    }
+
+    if(!pResult){
+        io->os() << _("Type / operator mismatch in the condition of a While statement.") << endl;
+        return false;
+
+    } else {
+        if(*pResult){
+            iteratorStack.push_back(iterator);
+            currentProgram = statement->lowerLevelProgram();
+            iterator = currentProgram->begin();
+        } else {
+            ++iterator;
+        }
+    }
+    
     return true;
+}
+
+
+stdx::optional<ExpressionTerm> ManipulatorControllerItemBase::Impl::getTermValue
+(string::const_iterator& iter, string::const_iterator& end)
+{
+    stdx::optional<ExpressionTerm> value;
+    std::smatch match;
+
+    if(regex_search(iter, end,  match, stringPattern)){
+        value = ExpressionTerm(match.str(1));
+                
+    } else if(regex_search(iter, end, match, floatPattern)){
+        value = ExpressionTerm(std::stod(match.str(0)));
+            
+    } else if(regex_search(iter, end, match, intPattern)){
+        value = ExpressionTerm(std::stoi(match.str(0)));
+
+    } else if(regex_search(iter, end, match, boolPattern)){
+        auto label = match.str(1);
+        std::transform(label.begin(), label.end(), label.begin(), ::tolower);
+        value = ExpressionTerm(label == "true" ? true : false);
+                
+    } else if(regex_search(iter, end, match, variablePattern)){
+        GeneralId id(std::stoi(match.str(1)));
+        auto variable = variables->findVariable(id);
+        if(!variable){
+            io->os() << format(_("Variable {0} is not defined."), id.label()) << endl;
+        } else {
+            switch(variable->valueTypeId()){
+            case ManipulatorVariable::Int:
+                value = ExpressionTerm(variable->toInt());
+                break;
+            case ManipulatorVariable::Double:
+                value = ExpressionTerm(variable->toDouble());
+                break;
+            case ManipulatorVariable::Bool:
+                value = ExpressionTerm(variable->toBool());
+                break;
+            case ManipulatorVariable::String:
+                value = ExpressionTerm(variable->toString());
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    if(value){
+        iter = match[0].second;
+    }
+    
+    return value;
+}
+
+
+stdx::optional<string> ManipulatorControllerItemBase::Impl::getComparisonOperator
+(string::const_iterator& iter, string::const_iterator& end)
+{
+    std::smatch match;
+    if(regex_search(iter, end,  match, cmpOperatorPattern)){
+        iter = match[0].second;
+        return match.str(1);
+    }
+    return stdx::nullopt;
 }
 
 
@@ -646,6 +856,8 @@ bool ManipulatorControllerItemBase::Impl::interpretAssignStatement(AssignStateme
 
     variable->setValue(value);
     self->pushOutputOnceFunction([variable](){ variable->notifyUpdate(); });
+
+    ++iterator;
 
     return true;
 }
@@ -760,10 +972,22 @@ bool ManipulatorControllerItemBase::Impl::interpretSetSignalStatement(SetSignalS
             [this, statement](){
                 ioDevice->setOut(statement->signalIndex(), statement->on(), true); });
     }
+
+    ++iterator;
+    
     return true;
 }
 
     
+bool ManipulatorControllerItemBase::Impl::interpretDelayStatement(DelayStatement* statement)
+{
+    int remainingFrames = statement->time() / io->timeStep();
+    self->pushControlFunctions([remainingFrames]() mutable { return (remainingFrames-- > 0); });
+    ++iterator;
+    return true;
+}
+
+
 void ManipulatorControllerItemBase::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Speed ratio"), impl->speedRatio, changeProperty(impl->speedRatio));
