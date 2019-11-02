@@ -212,7 +212,7 @@ Referenced* IfStatement::doClone(CloneMap* cloneMap) const
 std::string IfStatement::label(int index) const
 {
     if(index == 0){
-        return "If";
+        return "IF";
     } else if(index == 1){
         return condition();
     }
@@ -255,7 +255,7 @@ Referenced* ElseStatement::doClone(CloneMap* cloneMap) const
 std::string ElseStatement::label(int index) const
 {
     if(index == 0){
-        return "Else";
+        return "ELSE";
     }
     return string();
 }
@@ -296,7 +296,7 @@ Referenced* WhileStatement::doClone(CloneMap* cloneMap) const
 std::string WhileStatement::label(int index) const
 {
     if(index == 0){
-        return "While";
+        return "WHILE";
     } else if(index == 1){
         return condition();
     }

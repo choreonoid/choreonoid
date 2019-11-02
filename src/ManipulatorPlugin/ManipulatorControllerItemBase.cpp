@@ -127,7 +127,10 @@ public:
     bool control();
     void clear();
     bool interpretCommentStatement(CommentStatement* statement);
+    bool interpretIfStatement(IfStatement* statement);
+    bool interpretElseStatement(ElseStatement* statement);
     bool interpretWhileStatement(WhileStatement* statement);
+    stdx::optional<bool> evalConditionalExpression(const string& expression);
     stdx::optional<ExpressionTerm> getTermValue(string::const_iterator& iter, string::const_iterator& end);
     stdx::optional<string> getComparisonOperator(string::const_iterator& iter, string::const_iterator& end);
     bool interpretAssignStatement(AssignStatement* statement);
@@ -180,6 +183,14 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
         [impl_](CommentStatement* statement){
             return impl_->interpretCommentStatement(statement); });
 
+    registerStatementInterpreter<IfStatement>(
+        [impl_](IfStatement* statement){
+            return impl_->interpretIfStatement(statement); });
+
+    registerStatementInterpreter<ElseStatement>(
+        [impl_](ElseStatement* statement){
+            return impl_->interpretElseStatement(statement); });
+
     registerStatementInterpreter<WhileStatement>(
         [impl_](WhileStatement* statement){
             return impl_->interpretWhileStatement(statement); });
@@ -187,6 +198,14 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
     registerStatementInterpreter<AssignStatement>(
         [impl_](AssignStatement* statement){
             return impl_->interpretAssignStatement(statement); });
+
+    registerStatementInterpreter<SetSignalStatement>(
+        [impl_](SetSignalStatement* statement){
+            return impl_->interpretSetSignalStatement(statement); });
+
+    registerStatementInterpreter<DelayStatement>(
+        [impl_](DelayStatement* statement){
+            return impl_->interpretDelayStatement(statement); });
 
     impl->termPattern.assign("^\\s*(.+)\\s*");
     impl->operatorPattern.assign("^\\s*([+-])\\s*");
@@ -196,14 +215,6 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
     impl->boolPattern.assign("^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])");
     impl->stringPattern.assign("^\"(.*)\"");
     impl->variablePattern.assign("^var\\[(\\d+)\\]");
-
-    registerStatementInterpreter<SetSignalStatement>(
-        [impl_](SetSignalStatement* statement){
-            return impl_->interpretSetSignalStatement(statement); });
-
-    registerStatementInterpreter<DelayStatement>(
-        [impl_](DelayStatement* statement){
-            return impl_->interpretDelayStatement(statement); });
 }
 
 
@@ -594,6 +605,64 @@ bool ManipulatorControllerItemBase::Impl::interpretCommentStatement(CommentState
 }
 
 
+bool ManipulatorControllerItemBase::Impl::interpretIfStatement(IfStatement* statement)
+{
+    auto condition = evalConditionalExpression(statement->condition());
+
+    if(!condition){
+        return false;
+    }
+
+    ++iterator;
+
+    ElseStatement* nextElseStatement = nullptr;
+    if(iterator != currentProgram->end()){
+        nextElseStatement = dynamic_cast<ElseStatement*>(iterator->get());
+    }
+
+    bool processed = true;
+
+    if(*condition){
+        if(nextElseStatement){
+            ++iterator;
+        }
+        iteratorStack.push_back(iterator);
+        currentProgram = statement->lowerLevelProgram();
+        iterator = currentProgram->begin();
+
+    } else if(nextElseStatement){
+        processed = interpretElseStatement(nextElseStatement);
+    }
+
+    return processed;
+}
+
+
+bool ManipulatorControllerItemBase::Impl::interpretElseStatement(ElseStatement* statement)
+{
+    iteratorStack.push_back(++iterator);
+    currentProgram = statement->lowerLevelProgram();
+    iterator = currentProgram->begin();
+    return true;
+}
+    
+
+bool ManipulatorControllerItemBase::Impl::interpretWhileStatement(WhileStatement* statement)
+{
+    auto condition = evalConditionalExpression(statement->condition());
+
+    if(*condition){
+        iteratorStack.push_back(iterator);
+        currentProgram = statement->lowerLevelProgram();
+        iterator = currentProgram->begin();
+    } else {
+        ++iterator;
+    }
+    
+    return true;
+}
+
+
 template<class LhsType, class RhsType>
 static stdx::optional<bool> checkNumericalComparison(const string& op, LhsType lhs, RhsType rhs)
 {
@@ -616,30 +685,30 @@ static stdx::optional<bool> checkNumericalComparison(const string& op, LhsType l
 }
 
 
-bool ManipulatorControllerItemBase::Impl::interpretWhileStatement(WhileStatement* statement)
+stdx::optional<bool> ManipulatorControllerItemBase::Impl::evalConditionalExpression(const string& expression)
 {
-    auto& condition = statement->condition();
-    if(condition.empty()){
-        io->os() << _("The condition of a While statement is empty.") << endl;
-        return false;
+    stdx::optional<bool> pResult;
+
+    if(expression.empty()){
+        io->os() << _("The conditional expression of a While statement is empty.") << endl;
+        return pResult;
     }
-    auto iter = condition.cbegin();
-    auto end = condition.cend();
+    auto iter = expression.cbegin();
+    auto end = expression.cend();
 
     stdx::optional<ExpressionTerm> pLhs = getTermValue(iter, end);
     stdx::optional<string> pCmpOp = getComparisonOperator(iter, end);
     stdx::optional<ExpressionTerm> pRhs = getTermValue(iter, end);
 
     if(!pLhs || !pCmpOp || !pRhs){
-        io->os() << _("The condition of a While statement is invalid.") << endl;
-        return false;
+        io->os() << _("The conditional expression of a While statement is invalid.") << endl;
+        return pResult;
     }
 
     ExpressionTerm& lhs = *pLhs;
     ExpressionTerm& rhs = *pRhs;
     string& cmpOp = *pCmpOp;
 
-    stdx::optional<bool> pResult;
     int rhsValueType = stdx::get_variant_index(rhs);
     switch(stdx::get_variant_index(lhs)){
     case Int:
@@ -676,23 +745,13 @@ bool ManipulatorControllerItemBase::Impl::interpretWhileStatement(WhileStatement
     }
 
     if(!pResult){
-        io->os() << _("Type / operator mismatch in the condition of a While statement.") << endl;
-        return false;
-
-    } else {
-        if(*pResult){
-            iteratorStack.push_back(iterator);
-            currentProgram = statement->lowerLevelProgram();
-            iterator = currentProgram->begin();
-        } else {
-            ++iterator;
-        }
+        io->os() << _("Type / operator mismatch in the conditional expression of a While statement.") << endl;
     }
-    
-    return true;
+
+    return pResult;
 }
-
-
+    
+    
 stdx::optional<ExpressionTerm> ManipulatorControllerItemBase::Impl::getTermValue
 (string::const_iterator& iter, string::const_iterator& end)
 {
