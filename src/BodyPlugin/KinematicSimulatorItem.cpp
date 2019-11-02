@@ -192,7 +192,7 @@ void KinematicSimulatorItem::Impl::onHolderStateChanged(HolderInfo* info)
 {
     auto holder = info->holder;
 
-    if(!info->on_prev && holder->on()){
+    if(holder->on()){
         Position T_holder = holder->link()->T() * holder->T_local();
         info->attachedBody = findAttachableBody(holder, T_holder);
         if(info->attachedBody){
@@ -200,7 +200,7 @@ void KinematicSimulatorItem::Impl::onHolderStateChanged(HolderInfo* info)
             info->T_offset = T_holder.inverse(Eigen::Isometry) * T_attached;
             activeHolders.push_back(info);
         }
-    } else if(info->on_prev && !holder->on()){
+    } else {
         activeHolders.erase(
             std::find(activeHolders.begin(), activeHolders.end(), info));
     }
