@@ -202,6 +202,7 @@ class ManipulatorPositionReferencer
 {
 public:
     virtual GeneralId getManipulatorPositionId() const = 0;
+    virtual void setManipulatorPositionId(const GeneralId& id) = 0;
 };
 
 }

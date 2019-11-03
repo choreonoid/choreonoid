@@ -615,10 +615,6 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     vbox->addWidget(this);
     
     self->setLayout(vbox);
-
-    optionMenuManager.setNewPopupMenu(this);
-    optionMenuManager.addItem(_("Refresh"))->sigTriggered().connect(
-        [&](){ updateStatementTree(); });
 }
 
 
@@ -656,9 +652,27 @@ void ManipulatorProgramViewBase::onDeactivated()
 
 void ManipulatorProgramViewBase::Impl::onOptionMenuClicked()
 {
+    optionMenuManager.setNewPopupMenu();
+    self->onOptionMenuRequest(optionMenuManager);
     optionMenuManager.popupMenu()->popup(optionMenuButton.mapToGlobal(QPoint(0,0)));
 }
 
+
+void ManipulatorProgramViewBase::onOptionMenuRequest(MenuManager& menuManager)
+{
+    menuManager.addItem(_("Refresh"))->sigTriggered().connect(
+        [&](){ updateStatementTree(); });
+
+    menuManager.addItem(_("Renumbering"))->sigTriggered().connect(
+        [&](){
+            if(impl->programItem){
+                impl->programItem->program()->renumberPositionIds();
+                impl->programItem->notifyUpdate();
+                updateStatementTree();
+            }
+        });
+}
+    
 
 ScopedCounter ManipulatorProgramViewBase::Impl::scopedCounterOfStatementItemOperationCall()
 {
@@ -710,6 +724,12 @@ void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase
     }
 
     updateStatementTree();
+}
+
+
+void ManipulatorProgramViewBase::updateStatementTree()
+{
+    impl->updateStatementTree();
 }
 
 
@@ -863,6 +883,11 @@ bool ManipulatorProgramViewBase::Impl::insertStatement(ManipulatorStatement* sta
         }
     }
     auto inserted = program->insert(pos, statement);
+
+    if(insertionType == AfterTargetPosition){
+        clearSelection();
+        statementItemFromStatement(statement)->setSelected(true);
+    }
 
     return true;
 }

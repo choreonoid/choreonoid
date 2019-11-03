@@ -67,6 +67,8 @@ public:
 
     void traverseAllStatements(std::function<bool(ManipulatorStatement* statement)> callback);
 
+    void renumberPositionIds();
+
     bool load(const std::string& filename, std::ostream& os);
     bool save(const std::string& filename);
 

@@ -8,6 +8,8 @@
 #include <fmt/format.h>
 #include <algorithm>
 #include <unordered_set>
+#include <vector>
+#include <map>
 #include "gettext.h"
 
 using namespace std;
@@ -319,6 +321,74 @@ void ManipulatorProgram::removeUnreferencedPositions()
 }
 
 
+void ManipulatorProgram::renumberPositionIds()
+{
+    struct ConversionInfo {
+        int newId;
+        ManipulatorPositionPtr position;
+        ConversionInfo(int newId, ManipulatorPositionPtr position)
+            : newId(newId), position(position) { }
+    };
+    
+    map<int, ConversionInfo> idConversionMap;
+
+    int idCounter = 0;
+
+    traverseAllStatements(
+        [&](ManipulatorStatement* statement){
+            if(auto referencer = dynamic_cast<ManipulatorPositionReferencer*>(statement)){
+                auto id = referencer->getManipulatorPositionId();
+                if(id.isInt()){
+                    auto it = idConversionMap.find(id.toInt());
+                    if(it != idConversionMap.end()){
+                        auto& info = it->second;
+                        referencer->setManipulatorPositionId(info.newId);
+                    } else {
+                        int newId = idCounter++;
+                        auto position = impl->positions->findPosition(id);
+                        idConversionMap.insert(make_pair(id.toInt(), ConversionInfo(newId, position)));
+                        referencer->setManipulatorPositionId(newId);
+                    }
+                }
+            }
+            return true;
+        });
+
+    vector<ManipulatorPositionPtr> unreferencedIntIdPositions;
+    vector<ManipulatorPositionPtr> stringIdPositions;
+
+    const int n = impl->positions->numPositions();
+    for(int i=0; i < n; ++i){
+        auto position = impl->positions->positionAt(i);
+        if(position->id().isString()){
+            stringIdPositions.push_back(position);
+        } else {
+            if(idConversionMap.find(position->id().toInt()) == idConversionMap.end()){
+                unreferencedIntIdPositions.push_back(position);
+            }
+        }
+    }
+
+    impl->positions->clear();
+
+    for(auto& kv : idConversionMap){
+        auto& info = kv.second;
+        auto& position = info.position;
+        if(position){
+            position->setId(info.newId);
+            impl->positions->append(position);
+        }
+    }
+    for(auto& position : unreferencedIntIdPositions){
+        position->setId(idCounter++);
+        impl->positions->append(position);
+    }
+    for(auto& position : stringIdPositions){
+        impl->positions->append(position);
+    }
+}
+
+
 bool ManipulatorProgram::load(const std::string& filename, std::ostream& os)
 {
     YAMLReader reader;
@@ -443,9 +513,3 @@ bool ManipulatorProgram::write(Mapping& archive) const
 
     return true;
 }
-
-        
-    
-        
-        
-    

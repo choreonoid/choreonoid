@@ -27,6 +27,8 @@ public:
     ManipulatorStatement* currentStatement();
     SignalProxy<void(ManipulatorStatement* statement)> sigCurrentStatementChanged();
 
+    void updateStatementTree();
+
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
@@ -72,6 +74,8 @@ protected:
        This function is called when the current statemet is changed or clicked.
     */
     virtual void onCurrentStatementActivated(ManipulatorStatement* statement);
+
+    virtual void onOptionMenuRequest(MenuManager& menuManager);
 
 private:
     void registerStatementDelegate(std::type_index statementType, StatementDelegate* delegate);
