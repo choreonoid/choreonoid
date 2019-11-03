@@ -325,23 +325,27 @@ bool ManipulatorIkPosition::write(Mapping& archive) const
 
 
 ManipulatorFkPosition::ManipulatorFkPosition()
-    : ManipulatorPosition(FK, GeneralId())
+    : ManipulatorFkPosition(GeneralId())
 {
 
 }
 
 
 ManipulatorFkPosition::ManipulatorFkPosition(const GeneralId& id)
-    : ManipulatorPosition(FK, id)
+    : ManipulatorPosition(FK, id),
+      prismaticJointFlags_(0)
 {
-    jointDisplacements.fill(0.0);
+    jointDisplacements_.fill(0.0);
+    numJoints_ = 0;
 }
 
 
 ManipulatorFkPosition::ManipulatorFkPosition(const ManipulatorFkPosition& org)
-    : ManipulatorPosition(org)
+    : ManipulatorPosition(org),
+      jointDisplacements_(org.jointDisplacements_),
+      prismaticJointFlags_(org.prismaticJointFlags_)
 {
-    jointDisplacements = org.jointDisplacements;
+    numJoints_ = org.numJoints_;
 }
 
 
@@ -354,15 +358,17 @@ Referenced* ManipulatorFkPosition::doClone(CloneMap*) const
 bool ManipulatorFkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
     auto path = kinematicsKit->jointPath();
-    const int n = std::min(path->numJoints(), MaxNumJoints);
+    numJoints_ = std::min(path->numJoints(), MaxNumJoints);
     int i;
-    for(i = 0; i < n; ++i){
-        jointDisplacements[i] = path->joint(i)->q();
+    for(i = 0; i < numJoints_; ++i){
+        auto joint = path->joint(i);
+        jointDisplacements_[i] = joint->q();
+        prismaticJointFlags_[i] = joint->isPrismaticJoint();
     }
     for( ; i < MaxNumJoints; ++i){
-        jointDisplacements[i] = 0.0;
+        jointDisplacements_[i] = 0.0;
+        prismaticJointFlags_[i] = false;
     }
-
     return true;
 }
 
@@ -370,9 +376,8 @@ bool ManipulatorFkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 bool ManipulatorFkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 {
     auto path = kinematicsKit->jointPath();
-    const int n = std::min(path->numJoints(), MaxNumJoints);
-    for(int i = 0; i < n; ++i){
-        path->joint(i)->q() = jointDisplacements[i];
+    for(int i = 0; i < numJoints_; ++i){
+        path->joint(i)->q() = jointDisplacements_[i];
     }
     path->calcForwardKinematics();
 
@@ -386,15 +391,33 @@ bool ManipulatorFkPosition::read(const Mapping& archive)
         return false;
     }
 
-    auto& nodes = *archive.findListing("jointDisplacements");
-    if(nodes.isValid()){
-        int i;
-        int n = std::min(nodes.size(), MaxNumJoints);
-        for(i = 0; i < n; ++i){
-            jointDisplacements[i] = radian(nodes[i].toDouble());
+    prismaticJointFlags_.reset();
+    auto& plist = *archive.findListing("prismaticJoints");
+    if(!plist.isValid()){
+        for(int i=0; i < plist.size(); ++i){
+            int index = plist[i].toInt();
+            if(index < MaxNumJoints){
+                prismaticJointFlags_[index] = true;
+            }
         }
-        for( ; i < MaxNumJoints; ++i){
-            jointDisplacements[i] = 0.0;
+    }
+
+    auto& nodes = *archive.findListing("jointDisplacements");
+    if(!nodes.isValid()){
+        numJoints_ = 0;
+    } else {
+        numJoints_ = std::min(nodes.size(), MaxNumJoints);
+        int i = 0;
+        while(i < numJoints_){
+            double q = nodes[i].toDouble();
+            if(!prismaticJointFlags_[i]){
+                q = radian(q);
+            }
+            jointDisplacements_[i] = q;
+            ++i;
+        }
+        while(i < MaxNumJoints){
+            jointDisplacements_[i++] = 0.0;
         }
     }
     
@@ -404,13 +427,28 @@ bool ManipulatorFkPosition::read(const Mapping& archive)
 
 bool ManipulatorFkPosition::write(Mapping& archive) const
 {
+    archive.write("type", "FkPosition");
+    
     ManipulatorPosition::write(archive);
 
     archive.setDoubleFormat("%.9g");
 
-    auto& nodes = *archive.createFlowStyleListing("jointDisplacements");
-    for(auto& q : jointDisplacements){
-        nodes.append(degree(q));
+    auto& qlist = *archive.createFlowStyleListing("jointDisplacements");
+    ListingPtr plist = new Listing;
+
+    for(int i=0; i < numJoints_; ++i){
+        double q = jointDisplacements_[i];
+        if(prismaticJointFlags_[i]){
+            plist->append(i);
+        } else {
+            q = degree(q);
+        }
+        qlist.append(q);
+    }
+
+    if(!plist->empty()){
+        plist->setFlowStyle(true);
+        archive.insert("prismaticJoints", plist);
     }
     
     return true;

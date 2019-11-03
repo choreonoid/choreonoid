@@ -7,6 +7,7 @@
 #include <cnoid/GeneralId>
 #include <string>
 #include <array>
+#include <bitset>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -22,6 +23,7 @@ class CNOID_EXPORT ManipulatorPosition : public CloneableReferenced
 {
 public:
     static constexpr int MaxNumJoints = 8;
+    
     enum PositionType { IK, FK };
 
     ManipulatorPosition& operator=(const ManipulatorPosition& rhs) = delete;
@@ -152,6 +154,8 @@ typedef ref_ptr<ManipulatorIkPosition> ManipulatorIkPositionPtr;
 
 class CNOID_EXPORT ManipulatorFkPosition : public ManipulatorPosition
 {
+    typedef std::array<double, MaxNumJoints> JointDisplacementArray;
+    
 public:
     ManipulatorFkPosition();
     ManipulatorFkPosition(const GeneralId& id);
@@ -164,11 +168,31 @@ public:
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 
+    int numJoints() const { return numJoints_; }
+
+    typedef JointDisplacementArray::iterator iterator;
+    typedef JointDisplacementArray::const_iterator const_iterator;
+
+    iterator begin() { return jointDisplacements_.begin(); }
+    const_iterator begin() const { return jointDisplacements_.cbegin(); }
+    iterator end() { return jointDisplacements_.begin() + numJoints_; }
+    const_iterator end() const { return jointDisplacements_.cbegin() + numJoints_; }
+
+    double& jointDisplacement(int index) { return jointDisplacements_[index]; }
+    double jointDisplacement(int index) const { return jointDisplacements_[index]; }
+    double& q(int index) { return jointDisplacements_[index]; }
+    double q(int index) const { return jointDisplacements_[index]; }
+
+    bool checkIfPrismaticJoint(int index) const { return prismaticJointFlags_[index]; }
+    bool checkIfRevoluteJoint(int index) const { return !prismaticJointFlags_[index]; }
+        
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
-    std::array<double, MaxNumJoints> jointDisplacements;
+    JointDisplacementArray jointDisplacements_;
+    std::bitset<MaxNumJoints> prismaticJointFlags_;
+    int numJoints_;
 };
 
 typedef ref_ptr<ManipulatorFkPosition> ManipulatorFkPositionPtr;
