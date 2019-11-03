@@ -197,6 +197,7 @@ bool ManipulatorIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit
         T_base = baseLink->Ta() * baseFrame->T();
     }
 
+    toolFrameId_ = kinematicsKit->currentEndFrameId();
     auto endFrame = kinematicsKit->currentEndFrame();
     Position T_end = kinematicsKit->link()->Ta() * endFrame->T();
 
