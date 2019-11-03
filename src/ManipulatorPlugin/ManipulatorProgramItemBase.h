@@ -25,6 +25,7 @@ public:
     ManipulatorProgram* program();
     const ManipulatorProgram* program() const;
 
+    virtual void notifyUpdate() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

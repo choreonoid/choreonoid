@@ -146,6 +146,13 @@ const ManipulatorProgram* ManipulatorProgramItemBase::program() const
 }
 
 
+void ManipulatorProgramItemBase::notifyUpdate()
+{
+    Item::notifyUpdate();
+    suggestFileUpdate();
+}
+    
+
 void ManipulatorProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Num statements"), impl->program->numStatements());
