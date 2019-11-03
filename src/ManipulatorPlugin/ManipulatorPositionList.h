@@ -14,6 +14,7 @@ class CNOID_EXPORT ManipulatorPositionList : public CloneableReferenced
 {
 public:
     ManipulatorPositionList();
+    ~ManipulatorPositionList();
 
     ManipulatorPositionList* clone() const {
         return static_cast<ManipulatorPositionList*>(doClone(nullptr));
@@ -46,7 +47,7 @@ public:
     
     void resetIdCounter();
     GeneralId createNextId(int prevId = -1);
-    
+
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
     

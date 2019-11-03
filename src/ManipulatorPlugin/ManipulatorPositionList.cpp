@@ -69,6 +69,13 @@ Referenced* ManipulatorPositionList::doClone(CloneMap* cloneMap) const
 {
     return new ManipulatorPositionList(*this, cloneMap);
 }
+
+
+ManipulatorPositionList::~ManipulatorPositionList()
+{
+    clear();
+    delete impl;
+}
     
 
 void ManipulatorPositionList::setStringIdEnabled(bool on)
@@ -85,6 +92,9 @@ bool ManipulatorPositionList::isStringIdEnabled() const
 
 void ManipulatorPositionList::clear()
 {
+    for(auto& position : impl->positions){
+        position->owner_.reset();
+    }
     impl->positions.clear();
     impl->idToPositionMap.clear();
 }
