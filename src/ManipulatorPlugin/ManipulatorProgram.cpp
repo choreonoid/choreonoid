@@ -8,8 +8,8 @@
 #include <fmt/format.h>
 #include <algorithm>
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
-#include <map>
 #include "gettext.h"
 
 using namespace std;
@@ -323,14 +323,8 @@ void ManipulatorProgram::removeUnreferencedPositions()
 
 void ManipulatorProgram::renumberPositionIds()
 {
-    struct ConversionInfo {
-        int newId;
-        ManipulatorPositionPtr position;
-        ConversionInfo(int newId, ManipulatorPositionPtr position)
-            : newId(newId), position(position) { }
-    };
-    
-    map<int, ConversionInfo> idConversionMap;
+    unordered_map<int, int> idMap;
+    vector<ManipulatorPositionPtr> referencedIntIdPositions;
 
     int idCounter = 0;
 
@@ -339,14 +333,15 @@ void ManipulatorProgram::renumberPositionIds()
             if(auto referencer = dynamic_cast<ManipulatorPositionReferencer*>(statement)){
                 auto id = referencer->getManipulatorPositionId();
                 if(id.isInt()){
-                    auto it = idConversionMap.find(id.toInt());
-                    if(it != idConversionMap.end()){
-                        auto& info = it->second;
-                        referencer->setManipulatorPositionId(info.newId);
+                    auto it = idMap.find(id.toInt());
+                    if(it != idMap.end()){
+                        int newId = it->second;
+                        referencer->setManipulatorPositionId(newId);
                     } else {
                         int newId = idCounter++;
                         auto position = impl->positions->findPosition(id);
-                        idConversionMap.insert(make_pair(id.toInt(), ConversionInfo(newId, position)));
+                        idMap[id.toInt()] = newId;
+                        referencedIntIdPositions.push_back(position);
                         referencer->setManipulatorPositionId(newId);
                     }
                 }
@@ -363,7 +358,7 @@ void ManipulatorProgram::renumberPositionIds()
         if(position->id().isString()){
             stringIdPositions.push_back(position);
         } else {
-            if(idConversionMap.find(position->id().toInt()) == idConversionMap.end()){
+            if(idMap.find(position->id().toInt()) == idMap.end()){
                 unreferencedIntIdPositions.push_back(position);
             }
         }
@@ -371,11 +366,10 @@ void ManipulatorProgram::renumberPositionIds()
 
     impl->positions->clear();
 
-    for(auto& kv : idConversionMap){
-        auto& info = kv.second;
-        auto& position = info.position;
+    for(size_t i=0; i < referencedIntIdPositions.size(); ++i){
+        auto& position = referencedIntIdPositions[i];
         if(position){
-            position->setId(info.newId);
+            position->setId(i);
             impl->positions->append(position);
         }
     }
