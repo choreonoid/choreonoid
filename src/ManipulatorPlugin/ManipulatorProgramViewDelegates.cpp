@@ -64,7 +64,46 @@ public:
     virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const override
     {
         if(column == 1){
-            return static_cast<ConditionalStatement*>(statement)->setCondition(value.toString().toStdString());
+            static_cast<ConditionalStatement*>(statement)->setCondition(value.toString().toStdString());
+            statement->notifyUpdate();
+        }
+    }
+
+    virtual QWidget* createEditor(ManipulatorStatement* statement, int column, QWidget* parent) const override
+    {
+        if(column == 1){
+            return createDefaultEditor();
+        }
+        return nullptr;
+    }
+};
+
+
+class CallStatementDelegate : public Delegate
+{
+public:
+    virtual int labelSpan(ManipulatorStatement* statement, int column) const override
+    {
+        if(column == 0){
+            return 1;
+        } else if(column == 1){
+            return SpanToLast;
+        }
+        return 0;
+    }
+    
+    virtual QVariant dataOfEditRole(ManipulatorStatement* statement, int column) const override
+    {
+        if(column = 1){
+            return static_cast<CallStatement*>(statement)->programName().c_str();
+        }
+        return QVariant();
+    }
+
+    virtual void setDataOfEditRole(ManipulatorStatement* statement, int column, const QVariant& value) const override
+    {
+        if(column == 1){
+            static_cast<CallStatement*>(statement)->setProgramName(value.toString().toStdString());
             statement->notifyUpdate();
         }
     }
@@ -152,7 +191,6 @@ public:
             return static_cast<SetSignalStatement*>(statement)->signalIndex();
         } else if(column == 2){
             return QStringList{ (setSignal->on() ? "0" : "1"), "on", "off" };
-            return static_cast<SetSignalStatement*>(statement)->on();
         }
         return QVariant();
     }
@@ -216,6 +254,7 @@ void ManipulatorProgramViewBase::registerBaseStatementDelegates()
     registerStatementDelegate<CommentStatement>(new CommentStatementDelegate);
     registerStatementDelegate<IfStatement>(new ConditionalStatementDelegate);
     registerStatementDelegate<WhileStatement>(new ConditionalStatementDelegate);
+    registerStatementDelegate<CallStatement>(new CallStatementDelegate);
     registerStatementDelegate<AssignStatement>(new AssignStatementDelegate);
     registerStatementDelegate<SetSignalStatement>(new SetSignalStatementDelegate);
     registerStatementDelegate<DelayStatement>(new DelayStatementDelegate);

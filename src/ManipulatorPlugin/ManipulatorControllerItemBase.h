@@ -49,13 +49,15 @@ protected:
     */
     ManipulatorProgram* getMainProgram();
 
-    LinkKinematicsKit* getLinkKinematicsKit();
-    ManipulatorVariableSet* getVariableSet();
-
     ManipulatorProgram* getCurrentProgram();
     ManipulatorProgram::iterator getCurrentIterator();
     void setCurrent(ManipulatorProgram::iterator iter);
     void setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter);
+
+    ManipulatorProgram* findProgram(const std::string& name);
+
+    LinkKinematicsKit* getLinkKinematicsKit();
+    ManipulatorVariableSet* getVariableSet();
 
     void pushControlFunctions(
         std::function<bool()> control, std::function<void()> input = nullptr, std::function<void()> output = nullptr);

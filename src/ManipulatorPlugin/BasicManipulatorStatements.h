@@ -157,15 +157,19 @@ class CNOID_EXPORT CallStatement : public ManipulatorStatement
 public:
     CallStatement();
     virtual std::string label(int index) const override;
+
+    const std::string& programName() const { return programName_; }
+    void setProgramName(const std::string& name) { programName_ = name; }
+    
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
 
 protected:
-    CallStatement(const CallStatement& org, CloneMap* cloneMap);
+    CallStatement(const CallStatement& org);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    ManipulatorProgramPtr program_;
+    std::string programName_;
 };
 
 typedef ref_ptr<CallStatement> CallStatementPtr;

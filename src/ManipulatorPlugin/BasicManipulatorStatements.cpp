@@ -323,19 +323,17 @@ CallStatement::CallStatement()
 }
 
 
-CallStatement::CallStatement(const CallStatement& org, CloneMap* cloneMap)
+CallStatement::CallStatement(const CallStatement& org)
+    : ManipulatorStatement(org),
+      programName_(org.programName_)
 {
-    if(cloneMap){
-        program_ = cloneMap->getClone(org.program_);
-    } else {
-        program_ = org.program_;
-    }
+
 }
 
 
-Referenced* CallStatement::doClone(CloneMap* cloneMap) const
+Referenced* CallStatement::doClone(CloneMap*) const
 {
-    return new CallStatement(*this, cloneMap);
+    return new CallStatement(*this);
 }
 
 
@@ -343,6 +341,8 @@ std::string CallStatement::label(int index) const
 {
     if(index == 0){
         return "Call";
+    } else if(index == 1){
+        return programName_;
     }
     return string();
 }
@@ -350,6 +350,7 @@ std::string CallStatement::label(int index) const
 
 bool CallStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
+    archive.read("program", programName_);
     return true;
 }
 
@@ -357,6 +358,7 @@ bool CallStatement::read(ManipulatorProgram* program, const Mapping& archive)
 bool CallStatement::write(Mapping& archive) const
 {
     archive.write("type", "Call");
+    archive.write("program", programName_, DOUBLE_QUOTED);
     return true;
 }
 

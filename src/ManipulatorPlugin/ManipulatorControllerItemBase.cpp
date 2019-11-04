@@ -90,13 +90,22 @@ public:
     ManipulatorProgramItemBasePtr programItem;
     ManipulatorProgramPtr mainProgram;
     ManipulatorProgramPtr currentProgram;
+    unordered_map<string, ManipulatorProgramPtr> otherProgramMap;
     CloneMap cloneMap;
     LinkKinematicsKitPtr kinematicsKit;
     ManipulatorVariableSetPtr variables;
 
     typedef ManipulatorProgram::iterator Iterator;
     Iterator iterator;
-    vector<Iterator> iteratorStack;
+
+    struct ProgramPosition {
+        ManipulatorProgramPtr program;
+        Iterator iterator;
+        ProgramPosition(ManipulatorProgram* program, Iterator iterator)
+            : program(program), iterator(iterator) { }
+    };
+    vector<ProgramPosition> programStack;
+    
     vector<ref_ptr<Processor>> processorStack;
     
     vector<function<void()>> residentInputFunctions;
@@ -124,12 +133,14 @@ public:
     void extractBodyLocalVariables(ManipulatorVariableSetGroup* variables, Item* item);
     void addVariableList(ManipulatorVariableSetGroup* group, ManipulatorVariableListItemBase* listItem);
     void updateOrgVariableList(ManipulatorVariableList* orgList, ManipulatorVariable* variable);
+    void setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter);
     bool control();
     void clear();
     bool interpretCommentStatement(CommentStatement* statement);
     bool interpretIfStatement(IfStatement* statement);
     bool interpretElseStatement(ElseStatement* statement);
     bool interpretWhileStatement(WhileStatement* statement);
+    bool interpretCallStatement(CallStatement* statement);
     stdx::optional<bool> evalConditionalExpression(const string& expression);
     stdx::optional<ExpressionTerm> getTermValue(string::const_iterator& iter, string::const_iterator& end);
     stdx::optional<string> getComparisonOperator(string::const_iterator& iter, string::const_iterator& end);
@@ -194,6 +205,10 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
     registerStatementInterpreter<WhileStatement>(
         [impl_](WhileStatement* statement){
             return impl_->interpretWhileStatement(statement); });
+ 
+    registerStatementInterpreter<CallStatement>(
+        [impl_](CallStatement* statement){
+            return impl_->interpretCallStatement(statement); });
 
     registerStatementInterpreter<AssignStatement>(
         [impl_](AssignStatement* statement){
@@ -265,12 +280,19 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
         }
     }
 
+    mainProgram = cloneMap.getClone(programItem->program());
+    currentProgram = mainProgram;
+
     if(!createKinematicsKitForControl()){
         return false;
     }
-    
-    mainProgram = cloneMap.getClone(programItem->program());
-    currentProgram = mainProgram;
+
+    for(auto& item : programItems){
+        if(item != programItem){
+            auto program = cloneMap.getClone(item->program());
+            otherProgramMap.insert(make_pair(item->name(), program));
+        }
+    }
     
     variables = createVariableSet(programItem);
 
@@ -444,9 +466,25 @@ void ManipulatorControllerItemBase::setCurrent(ManipulatorProgram::iterator iter
 
 void ManipulatorControllerItemBase::setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter)
 {
-    impl->iteratorStack.push_back(impl->iterator);
-    impl->currentProgram = program;
-    impl->iterator = iter;
+    impl->setCurrent(program, iter);
+}
+
+
+void ManipulatorControllerItemBase::Impl::setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter)    
+{
+    programStack.push_back(ProgramPosition(currentProgram, iterator));
+    currentProgram = program;
+    iterator = iter;
+}
+
+
+ManipulatorProgram* ManipulatorControllerItemBase::findProgram(const std::string& name)
+{
+    auto iter = impl->otherProgramMap.find(name);
+    if(iter != impl->otherProgramMap.end()){
+        return iter->second;
+    }
+    return nullptr;
 }
 
 
@@ -506,13 +544,21 @@ bool ManipulatorControllerItemBase::Impl::control()
         if(isActive){
             break;
         }
-        if(iterator == currentProgram->end()){
-            if(iteratorStack.empty()){
+
+        bool hasNextStatement = (iterator != currentProgram->end());
+        
+        while(!hasNextStatement){
+            if(programStack.empty()){
                 break;
             }
-            iterator = iteratorStack.back();
-            currentProgram = (*iterator)->holderProgram();
-            iteratorStack.pop_back();
+            auto& pos = programStack.back();
+            iterator = pos.iterator;
+            currentProgram = pos.program;
+            programStack.pop_back();
+            hasNextStatement = (iterator != currentProgram->end());
+        }
+        if(!hasNextStatement){
+            break;
         }
         
         auto statement = iterator->get();
@@ -527,8 +573,6 @@ bool ManipulatorControllerItemBase::Impl::control()
         auto& interpret = p->second;
         bool result = interpret(statement);
 
-        //++iterator;
-        
         if(!result){
             isActive = false;
             break;
@@ -584,7 +628,7 @@ void ManipulatorControllerItemBase::Impl::clear()
     programItem.reset();
     mainProgram.reset();
     currentProgram.reset();
-    iteratorStack.clear();
+    programStack.clear();
     processorStack.clear();
     cloneMap.clear();
     kinematicsKit.reset();
@@ -626,9 +670,8 @@ bool ManipulatorControllerItemBase::Impl::interpretIfStatement(IfStatement* stat
         if(nextElseStatement){
             ++iterator;
         }
-        iteratorStack.push_back(iterator);
-        currentProgram = statement->lowerLevelProgram();
-        iterator = currentProgram->begin();
+        auto program = statement->lowerLevelProgram();
+        setCurrent(program, program->begin());
 
     } else if(nextElseStatement){
         processed = interpretElseStatement(nextElseStatement);
@@ -640,9 +683,9 @@ bool ManipulatorControllerItemBase::Impl::interpretIfStatement(IfStatement* stat
 
 bool ManipulatorControllerItemBase::Impl::interpretElseStatement(ElseStatement* statement)
 {
-    iteratorStack.push_back(++iterator);
-    currentProgram = statement->lowerLevelProgram();
-    iterator = currentProgram->begin();
+    ++iterator;
+    auto program = statement->lowerLevelProgram();
+    setCurrent(program, program->begin());
     return true;
 }
     
@@ -652,13 +695,36 @@ bool ManipulatorControllerItemBase::Impl::interpretWhileStatement(WhileStatement
     auto condition = evalConditionalExpression(statement->condition());
 
     if(*condition){
-        iteratorStack.push_back(iterator);
-        currentProgram = statement->lowerLevelProgram();
-        iterator = currentProgram->begin();
+        auto program = statement->lowerLevelProgram();
+        setCurrent(program, program->begin());
     } else {
         ++iterator;
     }
     
+    return true;
+}
+
+
+bool ManipulatorControllerItemBase::Impl::interpretCallStatement(CallStatement* statement)
+{
+    auto& programName = statement->programName();
+
+    if(programName.empty()){
+        io->os() << _("A program specified in a call statement is empty.") << endl;
+        return false;
+    }
+        
+    auto program = self->findProgram(programName);
+
+    if(!program){
+        io->os() << format(_("Program \"{0}\" specified in a call statement does not exist."),
+                           programName) << endl;
+        return false;
+    }
+
+    ++iterator;
+    setCurrent(program, program->begin());
+
     return true;
 }
 
