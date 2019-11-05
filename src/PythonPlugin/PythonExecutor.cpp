@@ -184,6 +184,12 @@ PythonExecutor::State PythonExecutor::state() const
 }
 
 
+python::object PythonExecutor::globalNamespace()
+{
+    return getGlobalNamespace();
+}
+
+
 bool PythonExecutor::eval(const std::string& code)
 {
     return impl->exec(

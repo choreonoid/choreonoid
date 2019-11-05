@@ -28,6 +28,8 @@ public:
     enum State { NOT_RUNNING, RUNNING_FOREGROUND, RUNNING_BACKGROUND };
 
     State state() const;
+
+    python::object globalNamespace();
         
     bool eval(const std::string& code);
 
