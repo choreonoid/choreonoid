@@ -34,6 +34,7 @@ public:
     bool loadPlainMatrixFormat(const std::string& filename, std::ostream& os = nullout());
     bool loadPlainRpyFormat(const std::string& filename, std::ostream& os = nullout());
     bool saveTopPartAsPlainMatrixFormat(const std::string& filename, std::ostream& os = nullout());
+    bool saveTopPartAsPosAndRPYFormat(const std::string& filename, std::ostream& os = nullout());
 
 protected:
     virtual SE3 defaultValue() const override;

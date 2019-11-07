@@ -301,3 +301,41 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename, st
 
     return false;
 }
+
+
+bool MultiSE3Seq::saveTopPartAsPosAndRPYFormat(const std::string& filename, std::ostream& os)
+{
+    const int nFrames = numFrames();
+
+    if(nFrames > 0 && numParts() > 0){
+
+        ofstream file(filename.c_str());
+        if(!file){
+            os << format(_("{0} cannot be opened."), filename) << endl;
+            return false;
+        }
+
+        const double r = frameRate();
+
+        Part base = part(0);
+        for(int i=0; i < nFrames; ++i){
+            file << format("{0:.4f}", (i / r));
+            const SE3& x = base[i];
+            for(int j=0; j < 3; ++j){
+                file << " " << x.translation()[j];
+            }
+            Vector3 rpy(rpyFromRot(Matrix3(x.rotation())));
+            for(int j=0; j < 3; ++j){
+                if(fabs(rpy[j]) < 1.0e-14){
+                    rpy[j] = 0.0;
+                }
+                file << " " << rpy[j];
+            }
+            file << "\n";
+        }
+
+        return true;
+    }
+
+    return false;
+}
