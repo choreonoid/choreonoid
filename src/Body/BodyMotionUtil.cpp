@@ -262,11 +262,11 @@ bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, Body* body, const std::stri
 
     if(motion.jointPosSeq()->saveAsPlainFormat(
            getNativePathString(
-               stdx::filesystem::path(orgpath).replace_extension(".pos"))) &&
+               stdx::filesystem::path(orgpath).replace_extension(".pos")), os) &&
            
-       motion.linkPosSeq()->saveTopPartAsPlainMatrixFormat(
+       motion.linkPosSeq()->saveTopPartAsPosAndRPYFormat(
            getNativePathString(
-               stdx::filesystem::path(orgpath).replace_extension(".waist"))) &&
+               stdx::filesystem::path(orgpath).replace_extension(".waist")), os) &&
            
        saveRootLinkAttAsRpyFormat(
            motion, getNativePathString(
