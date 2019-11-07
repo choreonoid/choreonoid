@@ -25,11 +25,11 @@ void setColumnOfMassMatrix(Body* body, MatrixXd& out_M, int column)
         out_M(i + 6, column) = joint->u();
     }
 }
+
 }
 
 
 namespace cnoid {
-
 
 /**
    calculate the mass matrix using the unit vector method
@@ -40,7 +40,7 @@ namespace cnoid {
    | out_M | * | dw   | + | b1 | = | tauext    |
    |       |   |ddq   |   |    |   | u         |
 */
-void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M)
+void calcMassMatrix(Body* body, Eigen::MatrixXd& out_M)
 {
     const int nj = body->numJoints();
     Link* rootLink = body->rootLink();
@@ -62,20 +62,21 @@ void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M)
     const Vector3 dvorg = rootLink->dv();
     const Vector3 dworg  = rootLink->dw();
 
-    //const Vector3 root_w_x_v = rootLink->w().cross(rootLink->vo() + rootLink->w().cross(rootLink->p()));
-
-    rootLink->dv() = g;
     rootLink->dw().setZero();
-	
+
+    /** 
+    rootLink->dv() = g; // gravity
     MatrixXd b1(totaldof, 1);
-        
     setColumnOfMassMatrix(body, b1, 0);
+    */
+
+    rootLink->dv().setZero();
 
     if(!rootLink->isFixedJoint()){
         for(int i=0; i < 3; ++i){
             rootLink->dv()[i] += 1.0;
             setColumnOfMassMatrix(body, out_M, i);
-            rootLink->dv()[i] -= 0.0;
+            rootLink->dv()[i] -= 1.0;
         }
         for(int i=0; i < 3; ++i){
             rootLink->dw()[i] = 1.0;
@@ -93,11 +94,6 @@ void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M)
         joint->ddq() = 0.0;
     }
 
-    // subtract the constant term
-    for(int i = 0; i < out_M.cols(); ++i){
-        out_M.col(i) -= b1;
-    }
-
     // recover state
     for(int i = 0; i < nj; ++i){
         Link* joint = body->joint(i);
@@ -106,20 +102,6 @@ void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M)
     }
     rootLink->dv() = dvorg;
     rootLink->dw() = dworg;
-}
-
-
-void calcMassMatrix(const BodyPtr& body, MatrixXd& out_M)
-{
-    const Vector3 g(0, 0, 9.8);
-    calcMassMatrix(body, g, out_M);
-}
-
-
-void calcMassMatrix(Body* body, MatrixXd& out_M)
-{
-    const Vector3 g(0, 0, 9.8);
-    calcMassMatrix(body, g, out_M);
 }
 
 }
