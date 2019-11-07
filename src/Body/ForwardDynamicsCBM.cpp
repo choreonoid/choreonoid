@@ -671,7 +671,7 @@ void ForwardDynamicsCBM::initializeAccelSolver()
         }
         for(int i=1; i < body->numLinks(); ++i){
             DyLink* link = body->link(i);
-            link->u() = uorg  [i];
+            link->u() = uorg[i];
         }
 
         accelSolverInitialized = true;
