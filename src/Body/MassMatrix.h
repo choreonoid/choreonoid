@@ -11,6 +11,7 @@
 namespace cnoid {
 
 CNOID_EXPORT void calcMassMatrix(Body* body, MatrixXd& out_M);
+CNOID_EXPORT void calcMassMatrix(Body* body, const Vector3& g, MatrixXd& out_M, VectorXd& out_b);
 
 }
 

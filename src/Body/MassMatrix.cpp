@@ -10,14 +10,15 @@ using namespace cnoid;
 
 namespace {
 
-void setColumnOfMassMatrix(Body* body, MatrixXd& out_M, int column)
+template<typename Derived>
+void setColumnOfMassMatrix(Body* body, Eigen::MatrixBase<Derived>& out_M, int column)
 {
     Link* rootLink = body->rootLink();
     Vector6 f = calcInverseDynamics(rootLink);
         
     if(!rootLink->isFixedJoint()){
         f.tail<3>() -= rootLink->p().cross(f.head<3>());
-        out_M.block<6, 1>(0, column) = f;
+        out_M. Eigen::MatrixBase<Derived>::template block<6, 1>(0, column) = f;
     }
     const int n = body->numJoints();
     for(int i = 0; i < n; ++i){
@@ -28,7 +29,6 @@ void setColumnOfMassMatrix(Body* body, MatrixXd& out_M, int column)
 
 }
 
-
 namespace cnoid {
 
 /**
@@ -36,11 +36,11 @@ namespace cnoid {
    \todo replace the unit vector method here with a more efficient method
        
    The motion equation (dv != dvo)
-   |       |   | dv   |   |    |   | fext      |
-   | out_M | * | dw   | + | b1 | = | tauext    |
-   |       |   |ddq   |   |    |   | u         |
+   |       |   | dv  |   |   |   | fext      |
+   | out_M | * | dw  | + | b | = | tauext    |
+   |       |   | ddq |   |   |   | u         |
 */
-void calcMassMatrix(Body* body, Eigen::MatrixXd& out_M)
+void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M, VectorXd& out_b)
 {
     const int nj = body->numJoints();
     Link* rootLink = body->rootLink();
@@ -62,21 +62,17 @@ void calcMassMatrix(Body* body, Eigen::MatrixXd& out_M)
     const Vector3 dvorg = rootLink->dv();
     const Vector3 dworg  = rootLink->dw();
 
+    rootLink->dv() = g;
     rootLink->dw().setZero();
 
-    /** 
-    rootLink->dv() = g; // gravity
-    MatrixXd b1(totaldof, 1);
-    setColumnOfMassMatrix(body, b1, 0);
-    */
-
-    rootLink->dv().setZero();
+    out_b.resize(totaldof);
+    setColumnOfMassMatrix(body, out_b, 0);
 
     if(!rootLink->isFixedJoint()){
         for(int i=0; i < 3; ++i){
-            rootLink->dv()[i] = 1.0;
+            rootLink->dv()[i] += 1.0;
             setColumnOfMassMatrix(body, out_M, i);
-            rootLink->dv()[i] = 0.0;
+            rootLink->dv()[i] -= 1.0;
         }
         for(int i=0; i < 3; ++i){
             rootLink->dw()[i] = 1.0;
@@ -94,6 +90,11 @@ void calcMassMatrix(Body* body, Eigen::MatrixXd& out_M)
         joint->ddq() = 0.0;
     }
 
+    // subtract the constant term
+    for(int i = 0; i < out_M.cols(); ++i){
+        out_M.col(i) -= out_b;
+    }
+    
     // recover state
     for(int i = 0; i < nj; ++i){
         Link* joint = body->joint(i);
@@ -102,6 +103,12 @@ void calcMassMatrix(Body* body, Eigen::MatrixXd& out_M)
     }
     rootLink->dv() = dvorg;
     rootLink->dw() = dworg;
+}
+
+void calcMassMatrix(const BodyPtr& body, MatrixXd& out_M)
+{
+    VectorXd b;
+    calcMassMatrix(body, Vector3::Zero(), out_M, b);
 }
 
 }
