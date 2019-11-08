@@ -105,7 +105,7 @@ void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M, Vector
     rootLink->dw() = dworg;
 }
 
-void calcMassMatrix(const BodyPtr& body, MatrixXd& out_M)
+void calcMassMatrix(Body* body, MatrixXd& out_M)
 {
     VectorXd b;
     calcMassMatrix(body, Vector3::Zero(), out_M, b);
