@@ -5,13 +5,9 @@
 #ifndef CNOID_BASE_APP_H
 #define CNOID_BASE_APP_H
 
-#include <QWidget>
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class ExtensionManager;
-class AppImpl;
 
 class CNOID_EXPORT App
 {
@@ -27,15 +23,8 @@ public:
     static void clearFocusView();
 
 private:
-    AppImpl* impl;
-};
-
-class AppImplBase : public QObject
-{
-    Q_OBJECT
-    
-protected Q_SLOTS:
-    void onFocusChanged(QWidget* old, QWidget* now);
+    class Impl;
+    Impl* impl;
 };
 
 }
