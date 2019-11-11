@@ -231,7 +231,6 @@ set(headers
 set(target CnoidBase)
 
 set(qtheaders
-  App.h
   Menu.h
   ToolBar.h
   Process.h
