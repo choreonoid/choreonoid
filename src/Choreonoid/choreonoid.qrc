@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/Icons" >
-        <file>icon/choreonoid48.png</file>
-        <file>icon/choreonoid32.png</file>
-        <file>icon/choreonoid24.png</file>
-        <file>icon/choreonoid16.png</file>
-    </qresource>
-</RCC>

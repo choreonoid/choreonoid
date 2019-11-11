@@ -1,45 +1,48 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-<qresource prefix="/Base" >
+  <qresource prefix="/Base" >
 
-  <file>icons/setup.png</file>
+    <file>icons/choreonoid48.png</file>
+    <file>icons/choreonoid32.png</file>
 
-  <file>icons/projectsave.png</file>
+    <file>icons/setup.png</file>
 
-  <file>icons/play.png</file>
-  <file>icons/resume.png</file>
-  <file>icons/stop.png</file>
-  <file>icons/refresh.png</file>
+    <file>icons/projectsave.png</file>
 
-  <file>icons/script.png</file>
+    <file>icons/play.png</file>
+    <file>icons/resume.png</file>
+    <file>icons/stop.png</file>
+    <file>icons/refresh.png</file>
 
-  <file>icons/sceneedit.png</file>
-  <file>icons/walkthrough.png</file>
-  <file>icons/viewfitting.png</file>
-  <file>icons/perspective.png</file>
-  <file>icons/floorgrid.png</file>
-  <file>icons/collisionlines.png</file>
-  <file>icons/wireframe.png</file>
-  <file>icons/scenecapture.png</file>
+    <file>icons/script.png</file>
 
-  <file>icons/graph.png</file>
-  <file>icons/velocitygraph.png</file>
-  <file>icons/accgraph.png</file>
+    <file>icons/sceneedit.png</file>
+    <file>icons/walkthrough.png</file>
+    <file>icons/viewfitting.png</file>
+    <file>icons/perspective.png</file>
+    <file>icons/floorgrid.png</file>
+    <file>icons/collisionlines.png</file>
+    <file>icons/wireframe.png</file>
+    <file>icons/scenecapture.png</file>
 
-  <file>icons/eraser-cursor.png</file>
-  <file>icons/adjustSize.png</file>
+    <file>icons/graph.png</file>
+    <file>icons/velocitygraph.png</file>
+    <file>icons/accgraph.png</file>
+
+    <file>icons/eraser-cursor.png</file>
+    <file>icons/adjustSize.png</file>
   
-  <file>shader/nolighting.vert</file>
-  <file>shader/nolighting.frag</file>
-  <file>shader/solidcolor.frag</file>
-  <file>shader/minlighting.vert</file>
-  <file>shader/minlighting.frag</file>
-  <file>shader/phong.vert</file>
-  <file>shader/phong.frag</file>
-  <file>shader/phongshadow.vert</file>
-  <file>shader/phongshadow.frag</file>
+    <file>shader/nolighting.vert</file>
+    <file>shader/nolighting.frag</file>
+    <file>shader/solidcolor.frag</file>
+    <file>shader/minlighting.vert</file>
+    <file>shader/minlighting.frag</file>
+    <file>shader/phong.vert</file>
+    <file>shader/phong.frag</file>
+    <file>shader/phongshadow.vert</file>
+    <file>shader/phongshadow.frag</file>
 
-  <file alias="LICENSE">../../LICENSE</file>
+    <file alias="LICENSE">../../LICENSE</file>
 
-</qresource>
+  </qresource>
 </RCC>

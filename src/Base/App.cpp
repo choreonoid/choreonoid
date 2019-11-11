@@ -117,7 +117,7 @@ class AppImpl : public AppImplBase
     
     AppImpl(App* self, int& argc, char**& argv);
     ~AppImpl();
-    void initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList);
+    void initialize(const char* appName, const char* vendorName, const char* pluginPathList);
     int exec();
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
@@ -171,13 +171,13 @@ AppImpl::AppImpl(App* self, int& argc, char**& argv)
 }
 
 
-void App::initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList)
+void App::initialize(const char* appName, const char* vendorName, const char* pluginPathList)
 {
-    impl->initialize(appName, vendorName, icon, pluginPathList);
+    impl->initialize(appName, vendorName, pluginPathList);
 }
 
 
-void AppImpl::initialize( const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList)
+void AppImpl::initialize( const char* appName, const char* vendorName, const char* pluginPathList)
 {
     this->appName = appName;
     this->vendorName = vendorName;
@@ -187,6 +187,10 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
+
+    QIcon icon;
+    icon.addFile(":/Base/icons/choreonoid32.png");
+    icon.addFile(":/Base/icons/choreonoid48.png");
     qapplication->setWindowIcon(icon);
 
     AppConfig::initialize(appName, vendorName);
