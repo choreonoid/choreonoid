@@ -34,6 +34,7 @@ enum ModelID {
     PS3v2,   // new hid-sony driver (kernel version 4.10 or later)
     XBOX,
     F310,
+    LDA,     // Logicool Dual Action
     UNSUPPORTED,
     NUM_MODELS
 };
@@ -70,7 +71,9 @@ enum ButtonID {
     DIRECTIONAL_PAD_RIGHT_BUTTON = 201,
     DIRECTIONAL_PAD_UP_BUTTON = 202,
     DIRECTIONAL_PAD_DOWN_BUTTON = 203,
-    
+
+    L_TRIGGER_BUTTON = 204,
+    R_TRIGGER_BUTTON = 205,
 };
 
 const int INVALID_BUTTON = -1;
@@ -127,10 +130,17 @@ const int XBOX_Buttons[] = {
 const int F310_Axes[] = {
     L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
     DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
-    
+
 const int F310_Buttons[] = {
     A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON, LOGO_BUTTON,
     L_STICK_BUTTON, R_STICK_BUTTON };
+    
+const int LDA_Axes[] = {
+    L_STICK_H_AXIS, L_STICK_V_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+    
+const int LDA_Buttons[] = {
+    X_BUTTON, A_BUTTON, B_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, L_TRIGGER_BUTTON, R_TRIGGER_BUTTON,
+    SELECT_BUTTON, START_BUTTON, L_STICK_BUTTON, R_STICK_BUTTON };
     
 struct ModelInfo {
     ModelID id;
@@ -151,7 +161,8 @@ const map<string, ModelID> modelIdMap = {
     { "Sony PLAYSTATION(R)3 Controller", PS3 },
     { "Microsoft X-Box 360 pad", XBOX },
     { "Microsoft X-Box One pad", XBOX },
-    { "Logitech Gamepad F310", F310 }
+    { "Logitech Gamepad F310", F310 },
+    { "Logicool Logicool Dual Action", LDA }
 };
 
 const vector<ModelInfo> modelInfos = {
@@ -161,6 +172,7 @@ const vector<ModelInfo> modelInfos = {
     { PS3v2,       PS3v2_Axes, PS3v2_Buttons, true  },
     { XBOX,        XBOX_Axes,  XBOX_Buttons,  false },
     { F310,        F310_Axes,  F310_Buttons,  false },
+    { LDA,         LDA_Axes,   LDA_Buttons,  false },
     { UNSUPPORTED, nullptr,    nullptr,       false }
 };
 
@@ -293,6 +305,7 @@ bool JoystickImpl::openDevice(const string& device)
 
     return setupDevice();
 }
+
 
 bool JoystickImpl::setupDevice()
 {
@@ -477,6 +490,12 @@ bool JoystickImpl::readEvent()
                     break;
                 case DIRECTIONAL_PAD_DOWN_BUTTON:
                     setAxisState(DIRECTIONAL_PAD_V_AXIS, p);
+                    break;
+                case L_TRIGGER_BUTTON:
+                    setAxisState(L_TRIGGER_AXIS, p);
+                    break;
+                case R_TRIGGER_BUTTON:
+                    setAxisState(R_TRIGGER_AXIS, p);
                     break;
                 default:
                     break;
