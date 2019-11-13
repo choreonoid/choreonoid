@@ -8,6 +8,7 @@
 
 #include <cnoid/EigenTypes>
 #include <cnoid/DataMap>
+#include <bitset>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -35,6 +36,7 @@ public:
         DataMap<double>::operator=(rhs);
         return *this;
     }
+    
     void storePositions(const Body& body);
     bool restorePositions(Body& io_body) const;
 
@@ -52,7 +54,6 @@ public:
 #endif
 
 protected:
-
     virtual std::map<std::string, int>& nameToIdMap();
     virtual std::map<int, std::string>& idToNameMap();
     virtual int nextDynamicId();

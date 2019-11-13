@@ -42,7 +42,7 @@ Vector6 calcInverseDynamicsSub(Link* link, const Vector3& vo_parent, const Vecto
         const Vector3 dsv = parent->w().cross(sv) + vo_parent.cross(sw);
         const Vector3 dsw = parent->w().cross(sw);
 
-        link->dw()  = parent->dw()  + dsw * link->dq() + sw * link->ddq();
+        link->dw() = parent->dw() + dsw * link->dq() + sw * link->ddq();
         dvo = dvo_parent + dsv * link->dq() + sv * link->ddq();
     }
 

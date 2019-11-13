@@ -61,10 +61,12 @@ TranslationDragger::TranslationDragger(bool setDefaultAxes)
         }
         addChild(defaultAxesScale);
     }
+
+    isDragEnabled_ = true;
 }
 
 
-TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap* cloneMap)
+TranslationDragger::TranslationDragger(const TranslationDragger& org, CloneMap* cloneMap)
     : SceneDragger(org, cloneMap)
 {
     draggableAxes_ = org.draggableAxes_;
@@ -78,11 +80,12 @@ TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap
         addChild(defaultAxesScale);
     }
         
+    isDragEnabled_ = org.isDragEnabled_;
     axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
 }
 
 
-SgObject* TranslationDragger::doClone(SgCloneMap* cloneMap) const
+Referenced* TranslationDragger::doClone(CloneMap* cloneMap) const
 {
     return new TranslationDragger(*this, cloneMap);
 }
@@ -131,6 +134,18 @@ void TranslationDragger::setRadius(double r)
 }
 
 
+bool TranslationDragger::isDragEnabled() const
+{
+    return isDragEnabled_;
+}
+
+
+void TranslationDragger::setDragEnabled(bool on)
+{
+    isDragEnabled_ = on;
+}
+
+
 bool TranslationDragger::isDragging() const
 {
     return dragProjector.isDragging();
@@ -151,6 +166,10 @@ Affine3 TranslationDragger::draggedPosition() const
 
 bool TranslationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
+    if(!isDragEnabled_){
+        return false;
+    }
+    
     int axis;
     int indexOfTopNode;
     const SgNodePath& path = event.nodePath();

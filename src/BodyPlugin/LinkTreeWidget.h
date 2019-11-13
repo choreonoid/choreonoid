@@ -54,7 +54,7 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
 {
     Q_OBJECT
 
-        public:
+public:
             
     LinkTreeWidget(QWidget* parent = 0);
     virtual ~LinkTreeWidget();
@@ -136,7 +136,6 @@ private Q_SLOTS:
     void onCustomContextMenuRequested(const QPoint& pos);
     void onItemExpanded(QTreeWidgetItem* treeWidgetItem);
     void onItemCollapsed(QTreeWidgetItem* treeWidgetItem);
-    void onHeaderSectionResized();
         
 private:
             

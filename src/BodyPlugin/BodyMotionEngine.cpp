@@ -201,7 +201,7 @@ bool BodyMotionEngine::onTimeChanged(double time)
 }
 
 
-void BodyMotionEngine::initialize(ExtensionManager* ext)
+void BodyMotionEngine::initializeClass(ExtensionManager* ext)
 {
     ext->timeSyncItemEngineManger().addEngineFactory(createBodyMotionEngine);
 

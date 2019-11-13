@@ -11,7 +11,7 @@
 namespace cnoid {
 
 class SgNode;
-class SgCloneMap;
+class CloneMap;
 
 class CNOID_EXPORT SceneProvider
 {
@@ -33,7 +33,7 @@ public:
        scene, it is necessary to override the clonseScene function so that it does not
        return any further clone of the cloned scene.
     */
-    virtual SgNode* cloneScene(SgCloneMap& cloneMap);
+    virtual SgNode* cloneScene(CloneMap& cloneMap);
 };
     
 }

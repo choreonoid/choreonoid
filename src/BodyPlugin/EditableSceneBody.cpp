@@ -527,7 +527,7 @@ void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilitie
 
 void EditableSceneBodyImpl::onLinkVisibilityCheckToggled()
 {
-    LinkSelectionView* selectionView = LinkSelectionView::mainInstance();
+    LinkSelectionView* selectionView = LinkSelectionView::instance();
 
     if(linkVisibilityCheck->isChecked()){
         connectionToSigLinkSelectionChanged.reset(
@@ -545,7 +545,7 @@ void EditableSceneBodyImpl::onLinkVisibilityCheckToggled()
 void EditableSceneBodyImpl::onLinkSelectionChanged()
 {
     if(linkVisibilityCheck->isChecked()){
-        self->setLinkVisibilities(LinkSelectionView::mainInstance()->linkSelection(bodyItem));
+        self->setLinkVisibilities(LinkSelectionView::instance()->linkSelection(bodyItem));
     }
 }
 
@@ -916,7 +916,7 @@ bool EditableSceneBodyImpl::onDoubleClickEvent(const SceneWidgetEvent& event)
     if(findPointedObject(event.nodePath()) == PT_SCENE_LINK){
         if(event.button() == Qt::LeftButton){
             if(BodyBar::instance()->makeSingleSelection(bodyItem)){
-                LinkSelectionView::mainInstance()->makeSingleSelection(
+                LinkSelectionView::instance()->makeSingleSelection(
                     bodyItem, pointedSceneLink->link()->index());
             }
             return true;

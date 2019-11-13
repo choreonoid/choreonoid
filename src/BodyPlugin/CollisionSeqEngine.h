@@ -19,7 +19,7 @@ class CollisionSeqItem;
 class CNOID_EXPORT CollisionSeqEngine : public TimeSyncItemEngine
 {
 public:
-    static void initialize(ExtensionManager* ext);
+    static void initializeClass(ExtensionManager* ext);
 
     CollisionSeqEngine(WorldItem* worldItem, CollisionSeqItem* collisionSeqItem);
     ~CollisionSeqEngine();

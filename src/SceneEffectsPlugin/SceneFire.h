@@ -15,9 +15,11 @@ class SceneFire : public SceneParticles
 public:
     SceneFire();
     SceneFire(const SceneFire& org);
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
     virtual ParticleSystem* getParticleSystem() override;
     ParticleSystem& particleSystem() { return particleSystem_; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     ParticleSystem particleSystem_;

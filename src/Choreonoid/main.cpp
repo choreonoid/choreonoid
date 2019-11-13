@@ -6,7 +6,6 @@
 
 #include <cnoid/Config>
 #include <cnoid/App>
-#include <QIcon>
 #include <cstdlib>
 
 #ifdef _WIN32
@@ -22,11 +21,7 @@ int main(int argc, char *argv[])
 {
     cnoid::App app(argc, argv);
 
-    QIcon icon;
-    icon.addFile(":/Icons/icon/choreonoid32.png");
-    icon.addFile(":/Icons/icon/choreonoid48.png");
-
-    app.initialize("Choreonoid", "Choreonoid", icon, getenv("CNOID_PLUGIN_PATH"));
+    app.initialize("Choreonoid", "Choreonoid", getenv("CNOID_PLUGIN_PATH"));
     app.exec();
     
     return 0;

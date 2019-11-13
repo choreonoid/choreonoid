@@ -13,6 +13,7 @@
 #ifdef __linux__
 #include <sys/utsname.h>
 #include <unistd.h>
+#include <dlfcn.h>
 #include <cstring>
 #endif
 
@@ -44,10 +45,31 @@ namespace filesystem = stdx::filesystem;
 
 void findExecutablePath()
 {
-#ifdef _WIN32
+#ifdef __linux__
+
+    Dl_info dlInfo;
+    if(dladdr((void*)(&findExecutablePath), &dlInfo) == 0){
+        throw std::runtime_error("The execution of the dladdr function to get the executable path failed.");
+    }
+    filesystem::path path(dlInfo.dli_fname);
+    
+    utsname info;
+    if(uname(&info) == 0){
+        if(strncmp(info.sysname, "Linux", 6) == 0){
+            static const int BUFSIZE = 1024;
+            char buf[BUFSIZE];
+            int n = readlink("/proc/self/exe", buf, BUFSIZE - 1);
+            buf[n] = 0;
+            executablePath_ = buf;
+        }
+    }
+
+#elif defined(_WIN32)
+
     static const int BUFSIZE = 1024;
     TCHAR execFilePath[BUFSIZE];
     if(GetModuleFileName(NULL, execFilePath, BUFSIZE)){
+
 #ifndef UNICODE
         executablePath_ = execFilePath;
 #else
@@ -60,23 +82,12 @@ void findExecutablePath()
             ;
         }
 #endif // UNICODE
+        
     }
-#endif
-
-#ifdef __linux__
-    utsname info;
-    if(uname(&info) == 0){
-        if(strncmp(info.sysname, "Linux", 6) == 0){
-            static const int BUFSIZE = 1024;
-            char buf[BUFSIZE];
-            int n = readlink("/proc/self/exe", buf, BUFSIZE - 1);
-            buf[n] = 0;
-            executablePath_ = buf;
-        }
-    }
-#endif
-
-#ifdef MACOSX
+    filesystem::path path(executablePath_);
+    
+#elif defined(MACOSX)
+    
     char buf[1024];
     uint32_t n = sizeof(buf);
     if(_NSGetExecutablePath(buf, &n) == 0){
@@ -87,9 +98,11 @@ void findExecutablePath()
     // remove dot from a path like bin/./choreonoid
     makePathCompact(filesystem::path(executablePath_), path);
     //filesystem::path path = filesystem::canonical(filesystem::path(executablePath_));
-#else
-    filesystem::path path(executablePath_);
 #endif
+
+    if(path.empty()){
+        throw std::runtime_error("The executable path cannot be detected.");
+    }
 
     executableDirectory_ = path.parent_path().string();
     

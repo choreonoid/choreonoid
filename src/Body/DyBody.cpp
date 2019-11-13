@@ -23,7 +23,7 @@ DyLink::DyLink(const Link& link)
 }
 
 
-Link* DyLink::clone() const
+Referenced* DyLink::doClone(CloneMap*) const
 {
     return new DyLink(*this);
 }
@@ -59,20 +59,17 @@ void DyLink::appendChild(Link* link)
 
 
 DyBody::DyBody()
+    : Body(new DyLink)
 {
 
 }
 
 
-DyBody::DyBody(const Body& org)
+Referenced* DyBody::doClone(CloneMap* cloneMap) const
 {
-    copy(org);
-}
-
-    
-Body* DyBody::clone() const
-{
-    return new DyBody(*this);
+    auto body = new DyBody;
+    body->copyFrom(this, cloneMap);
+    return body;
 }
 
 

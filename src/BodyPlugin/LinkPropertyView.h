@@ -9,8 +9,6 @@
 
 namespace cnoid {
 
-class LinkPropertyViewImpl;
-
 class LinkPropertyView : public View
 {
 public:
@@ -23,7 +21,8 @@ protected:
     void keyPressEvent(QKeyEvent* event);
 
 private:
-    LinkPropertyViewImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

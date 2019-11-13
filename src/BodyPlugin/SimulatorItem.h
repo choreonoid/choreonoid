@@ -25,9 +25,10 @@ class WorldItem;
 class BodyItem;
 class ControllerItem;
 class SimulationBodyImpl;
+class SimulatorItem;
 class SimulatorItemImpl;
 class SimulatedMotionEngineManager;
-class SgCloneMap;
+class CloneMap;
 
 class CNOID_EXPORT SimulationBody : public Referenced
 {
@@ -45,6 +46,8 @@ public:
        Call this in the initilization when the shapes are accessed after the initialization
     */
     void cloneShapesOnce();
+
+    virtual bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem);
 
     /**
        Called from the simulation loop thread
@@ -159,7 +162,7 @@ public:
         
     //void addRecordFunction(std::function<void()> func);
 
-    SgCloneMap& sgCloneMap();
+    CloneMap& cloneMap();
 
     /**
        \note This signal is emitted in the simulation thread
@@ -197,11 +200,17 @@ protected:
     virtual void onPositionChanged() override;
     virtual void onDisconnectedFromRoot() override;
 
+    virtual void clearSimulation();
+
     /**
        @note orgBody should not owned by the SimulationBody instance.
-       Instead of it, a clone instance which may be a sub Body class should be created and owned.
+       Instead it must clone a body instance using cloneMap and use it for the simulation.
+       @note This function should be a pure virtual function when the old function is removed.
     */
-    virtual SimulationBody* createSimulationBody(Body* orgBody) = 0;
+    virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap);
+
+    //! \deprecated. This is an old interface. Use createSimulationBody(Body* orgBody, CloneMap& cloneMap).
+    virtual SimulationBody* createSimulationBody(Body* orgBody);
 
     CollisionDetector* getOrCreateCollisionDetector();
 
@@ -244,9 +253,10 @@ protected:
 #endif
             
 private:
-            
     SimulatorItemImpl* impl;
+
     friend class SimulatorItemImpl;
+    friend class SimulationBodyImpl;
     friend class SimulatedMotionEngineManager;
 };
         

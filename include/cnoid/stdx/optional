@@ -6,11 +6,18 @@
 namespace cnoid::stdx {
 using std::optional;
 using std::nullopt;
+
+template<class T, class... Args>
+T& emplace(optional<T>& opt, Args&&... args){
+    return opt.emplace(args...);
+}
+
 }
 
 #else
 #include <boost/version.hpp>
 #include <boost/optional.hpp>
+#include <boost/utility/in_place_factory.hpp>
 namespace cnoid { namespace stdx {
 using boost::optional;
 namespace {
@@ -19,7 +26,15 @@ const boost::none_t nullopt ((boost::none_t::init_tag()));
 #else
 const boost::none_t& nullopt = boost::detail::optional_detail::none_instance<boost::none_t>::instance;
 #endif
+
+template<class T, class... Args>
+T& emplace(optional<T>& opt, Args&&... args){
+    opt = boost::in_place(args...);
+    return *opt;
 }
+
+}
+
 } }
 
 #endif

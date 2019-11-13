@@ -19,6 +19,7 @@
 #include <cnoid/BodyBar>
 #include <cnoid/LinkSelectionView>
 #include <cnoid/RootItem>
+#include <cnoid/BodyItem>
 #include <cnoid/SimulatorItem>
 #include <cnoid/SubSimulatorItem>
 #include <cnoid/MeshGenerator>

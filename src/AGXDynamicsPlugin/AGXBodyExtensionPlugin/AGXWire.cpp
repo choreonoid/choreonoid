@@ -48,7 +48,6 @@ public:
     void copyStateFrom(const AGXWireDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf) override;
@@ -63,6 +62,10 @@ public:
     double getWireRadius();
     void addWireNodeState(const Vector3& pos);
     WireNodeStates& getWireNodeStates();
+
+protected:
+    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    
 private:
     MappingPtr m_info;
     WireNodeStates m_wireNodeStates;
@@ -135,7 +138,7 @@ DeviceState* AGXWireDevice::cloneState() const
     return new AGXWireDevice(*this, true);
 }
 
-Device*AGXWireDevice::clone() const
+Device*AGXWireDevice::doClone(BodyCloneMap*) const
 {
     return new AGXWireDevice(*this);
 }

@@ -64,6 +64,7 @@ public:
     static Item* rootItem();
     RootItem* findRootItem() const;
     bool isConnectedToRoot() const;
+    Item* getLocalRootItem() const;
 
     /**
        Find an item that has the corresponding path to it in the sub tree
@@ -105,8 +106,8 @@ public:
 
     Item* headItem() const;
 
-    template <class ItemType> ItemType* findOwnerItem(bool includeSelf = false) {
-        Item* parentItem__ = includeSelf ? this : parentItem();
+    template <class ItemType> ItemType* findOwnerItem(bool includeSelf = false) const {
+        Item* parentItem__ = includeSelf ? const_cast<Item*>(this) : parentItem();
         while(parentItem__){
             ItemType* ownerItem = dynamic_cast<ItemType*>(parentItem__);
             if(ownerItem){
@@ -114,7 +115,7 @@ public:
             }
             parentItem__ = parentItem__->parentItem();
         }
-        return 0;
+        return nullptr;
     }
 
     bool isOwnedBy(Item* item) const;

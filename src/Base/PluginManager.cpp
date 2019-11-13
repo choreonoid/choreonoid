@@ -119,7 +119,7 @@ public:
     LazyCaller reloadPluginsLater;
     
     void clearUnusedPlugins();
-    void scanPluginFilesInDefaultPath(const std::string& pathList);
+    void scanPluginFilesInPathList(const std::string& pathList);
     void scanPluginFilesInDirectoyOfExecFile();
     void scanPluginFiles(const std::string& pathString, bool isRecursive);
     void loadPlugins();
@@ -290,11 +290,11 @@ void PluginManager::doStartupLoading(const char* pluginPathList)
 */
 void PluginManager::scanPluginFilesInPathList(const std::string& pathList)
 {
-    impl->scanPluginFilesInDefaultPath(pathList);
+    impl->scanPluginFilesInPathList(pathList);
 }
 
 
-void PluginManagerImpl::scanPluginFilesInDefaultPath(const std::string& pathList)
+void PluginManagerImpl::scanPluginFilesInPathList(const std::string& pathList)
 {
     for(auto& path : Tokenizer<CharSeparator<char>>(pathList, CharSeparator<char>(PATH_DELIMITER))){
         scanPluginFiles(path, false);

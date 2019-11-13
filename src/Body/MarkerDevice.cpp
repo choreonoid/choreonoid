@@ -114,6 +114,13 @@ MarkerDevice::MarkerDevice()
 }
 
 
+MarkerDevice::MarkerDevice(const MarkerDevice& org, bool copyStateOnly)
+    : Device(org, copyStateOnly)
+{
+    copyMarkerDeviceStateFrom(org);
+}
+
+
 const char* MarkerDevice::typeName()
 {
     return "MarkerDevice";
@@ -140,21 +147,13 @@ void MarkerDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-
-MarkerDevice::MarkerDevice(const MarkerDevice& org, bool copyStateOnly)
-    : Device(org, copyStateOnly)
-{
-    copyMarkerDeviceStateFrom(org);
-}
-
-
 DeviceState* MarkerDevice::cloneState() const
 {
     return new MarkerDevice(*this, true);
 }
 
 
-Device* MarkerDevice::clone() const
+Referenced* MarkerDevice::doClone(CloneMap*) const
 {
     return new MarkerDevice(*this);
 }

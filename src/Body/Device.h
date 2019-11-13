@@ -6,6 +6,7 @@
 #ifndef CNOID_BODY_DEVICE_H
 #define CNOID_BODY_DEVICE_H
 
+#include <cnoid/CloneableReferenced>
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
 #include <string>
@@ -13,9 +14,10 @@
 
 namespace cnoid {
 
+class Body;
 class Link;
 
-class CNOID_EXPORT DeviceState : public Referenced
+class CNOID_EXPORT DeviceState : public CloneableReferenced
 {
 protected:
     DeviceState() { }
@@ -73,23 +75,32 @@ protected:
 public:
     virtual ~Device();
 
+    Device* clone() const {
+        return static_cast<Device*>(doClone(nullptr));
+    }
+    Device* clone(CloneMap& cloneMap) const {
+        return static_cast<Device*>(doClone(&cloneMap));
+    }
+
     void setIndex(int index) { ns->index = index; }
     void setId(int id) { ns->id = id; }
     void setName(const std::string& name) { ns->name = name; }
     void setLink(Link* link) { ns->link = link; }
 
-    virtual Device* clone() const = 0;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
 
     bool hasStateOnly() const { return (ns != 0); }
 
-    const int index() const { return ns->index; }
-    const int id() const { return ns->id; }
+    int index() const { return ns->index; }
+    int id() const { return ns->id; }
     const std::string& name() const { return ns->name; }
 
     const Link* link() const { return ns->link; }
     Link* link() { return ns->link; }
 
+    const Body* body() const;
+    Body* body();
+    
     Isometry3& T_local() { return ns->T_local; }
     const Isometry3& T_local() const { return ns->T_local; }
         

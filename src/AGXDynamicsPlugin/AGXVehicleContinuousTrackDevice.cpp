@@ -203,7 +203,7 @@ DeviceState* AGXVehicleContinuousTrackDevice::cloneState() const
 }
 
 
-Device* AGXVehicleContinuousTrackDevice::clone() const
+Device* AGXVehicleContinuousTrackDevice::doClone(BodyCloneMap*) const
 {
     return new AGXVehicleContinuousTrackDevice(*this);
 }

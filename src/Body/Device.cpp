@@ -50,6 +50,18 @@ void Device::forEachActualType(std::function<bool(const std::type_info& type)> f
 }
 
 
+const Body* Device::body() const
+{
+    return ns->link ? ns->link->body() : nullptr;
+}
+
+
+Body* Device::body()
+{
+    return ns->link ? ns->link->body() : nullptr;    
+}
+
+
 void Device::clearState()
 {
 

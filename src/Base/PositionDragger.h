@@ -12,7 +12,6 @@ namespace cnoid {
 
 class TranslationDragger;
 class RotationDragger;
-class PositionDraggerImpl;
 
 /**
    \todo Since the draggable axis set can be specified for PositoinDragger now,
@@ -26,9 +25,7 @@ public:
 
     PositionDragger();
     PositionDragger(const PositionDragger& org);
-    PositionDragger(const PositionDragger& org, SgCloneMap* cloneMap);
-
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override;
+    PositionDragger(const PositionDragger& org, CloneMap* cloneMap);
 
     enum Axis { TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
                 TRANSLATION_AXES = (TX | TY | TZ),
@@ -46,6 +43,12 @@ public:
     void adjustSize(const BoundingBox& bb);
     void setContentsDragEnabled(bool on);
     bool isContentsDragEnabled() const;
+
+    enum DisplayMode { DisplayAlways, DisplayInEditMode, DisplayInFocus, DisplayNever };
+    DisplayMode displayMode() const;
+    void setDisplayMode(DisplayMode mode);
+
+    // Thw following functions are deprecated. Use displayMode and setDisplayMode instead.
     void setDraggerAlwaysShown(bool on);
     bool isDraggerAlwaysShown() const;
     void setDraggerAlwaysHidden(bool on);
@@ -62,6 +65,9 @@ public:
     SignalProxy<void()> sigPositionDragged();
     SignalProxy<void()> sigDragFinished();
 
+    virtual bool isDragEnabled() const override;
+    virtual void setDragEnabled(bool on) override;
+
     virtual bool isDragging() const override;
     virtual Affine3 draggedPosition() const override;
 
@@ -73,10 +79,13 @@ public:
     virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;
     virtual bool onUndoRequest() override;
     virtual bool onRedoRequest() override;
-        
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
 private:
-    PositionDraggerImpl* impl;
-    
+    class Impl;
+    Impl* impl;
 };
     
 typedef ref_ptr<PositionDragger> PositionDraggerPtr;

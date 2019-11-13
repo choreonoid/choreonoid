@@ -95,7 +95,7 @@ DeviceState* SmokeDevice::cloneState() const
 }
 
 
-Device* SmokeDevice::clone() const
+Referenced* SmokeDevice::doClone(CloneMap*) const
 {
     return new SmokeDevice(*this);
 }

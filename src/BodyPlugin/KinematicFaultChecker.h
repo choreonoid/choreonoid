@@ -1,9 +1,9 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_KINEMATIC_FAULT_CHECKER_H_INCLUDED
-#define CNOID_BODYPLUGIN_KINEMATIC_FAULT_CHECKER_H_INCLUDED
+#ifndef CNOID_BODYPLUGIN_KINEMATIC_FAULT_CHECKER_H
+#define CNOID_BODYPLUGIN_KINEMATIC_FAULT_CHECKER_H
 
 #include <ostream>
 #include <limits>
@@ -19,7 +19,7 @@ class KinematicFaultCheckerImpl;
 class CNOID_EXPORT KinematicFaultChecker
 {
 public:
-    static void initialize(ExtensionManager* ext);
+    static void initializeClass(ExtensionManager* ext);
     static KinematicFaultChecker* instance();
             
     KinematicFaultChecker();

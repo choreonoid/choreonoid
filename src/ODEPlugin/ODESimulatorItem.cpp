@@ -109,7 +109,7 @@ public:
     vector<dJointFeedback> forceSensorFeedbacks;
     BasicSensorSimulationHelper sensorHelper;
         
-    ODEBody(const Body& orgBody);
+    ODEBody(Body* body);
     ~ODEBody();
     void createBody(ODESimulatorItemImpl* simImpl);
     void setExtraJoints(bool flipYZ);
@@ -639,8 +639,8 @@ void ODELink::setVelocityToODE()
 }
 
 
-ODEBody::ODEBody(const Body& orgBody)
-    : SimulationBody(new Body(orgBody))
+ODEBody::ODEBody(Body* body)
+    : SimulationBody(body)
 {
     worldID = 0;
     spaceID = 0;
@@ -1058,7 +1058,7 @@ Item* ODESimulatorItem::doDuplicate() const
 
 SimulationBody* ODESimulatorItem::createSimulationBody(Body* orgBody)
 {
-    return new ODEBody(*orgBody);
+    return new ODEBody(orgBody->clone());
 }
 
 

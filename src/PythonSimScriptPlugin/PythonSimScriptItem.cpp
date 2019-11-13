@@ -98,7 +98,7 @@ bool PythonSimScriptItem::waitToFinish(double timeout)
 
 std::string PythonSimScriptItem::resultString() const
 {
-    return impl->resultString();
+    return impl->exceptionText();
 }
 
 

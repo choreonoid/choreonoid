@@ -9,8 +9,6 @@
 
 namespace cnoid {
 
-class BodyLinkViewImpl;
-
 class BodyLinkView : public cnoid::View
 {
 public:
@@ -22,11 +20,13 @@ public:
 
     void switchRpyQuat(bool on);
 
-private:
-    BodyLinkViewImpl* impl;
-
+protected:
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
+
+private:
+    class Impl;
+    Impl* impl;
 };
 
 }

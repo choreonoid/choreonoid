@@ -42,23 +42,8 @@ public:
     ItemManagerImpl(const string& moduleName, MenuManager& menuManager);
     ~ItemManagerImpl();
 
-    typedef list<shared_ptr<ItemManager::CreationPanelFilterBase>> CreationPanelFilterList;
-    typedef set<pair<string, shared_ptr<ItemManager::CreationPanelFilterBase>>> CreationPanelFilterSet;
-    
-    class CreationPanelBase : public QDialog
-    {
-    public:
-        CreationPanelBase(const QString& title, ItemPtr protoItem, bool isSingleton);
-        void addPanel(ItemCreationPanel* panel);
-        ItemPtr createItem(ItemPtr parentItem);
-        CreationPanelFilterList preFilters;
-        CreationPanelFilterList postFilters;
-    private:
-        QVBoxLayout* panelLayout;
-        ItemPtr protoItem;
-        bool isSingleton;
-    };
-    
+    class CreationPanelBase;
+
     struct Saver;
     typedef shared_ptr<Saver> SaverPtr;
     
@@ -67,7 +52,7 @@ public:
 
     struct ClassInfo
     {
-        ClassInfo() { creationPanelBase = 0; }
+        ClassInfo() { creationPanelBase = nullptr; }
         ~ClassInfo() { delete creationPanelBase; }
         string moduleName;
         string className;
@@ -82,6 +67,24 @@ public:
     typedef shared_ptr<ClassInfo> ClassInfoPtr;
     
     typedef map<string, ClassInfoPtr> ClassInfoMap;
+
+    typedef list<shared_ptr<ItemManager::CreationPanelFilterBase>> CreationPanelFilterList;
+    typedef set<pair<string, shared_ptr<ItemManager::CreationPanelFilterBase>>> CreationPanelFilterSet;
+    
+    class CreationPanelBase : public QDialog
+    {
+    public:
+        CreationPanelBase(const QString& title, ClassInfo& classInfo, ItemPtr protoItem, bool isSingleton);
+        void addPanel(ItemCreationPanel* panel);
+        ItemPtr createItem(ItemPtr parentItem);
+        CreationPanelFilterList preFilters;
+        CreationPanelFilterList postFilters;
+    private:
+        ClassInfo& classInfo;
+        QVBoxLayout* panelLayout;
+        ItemPtr protoItem;
+        bool isSingleton;
+    };
     
     struct Loader : public QObject
     {
@@ -581,11 +584,8 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
             ItemPtr protoItem;
             if(info->isSingleton){
                 protoItem = info->singletonInstance;
-            } else {
-                protoItem = info->factory();
-                protoItem->setName(info->name);
             }
-            base = new CreationPanelBase(title, protoItem, info->isSingleton);
+            base = new CreationPanelBase(title, *info, protoItem, info->isSingleton);
             base->hide();
             menuManager.setPath("/File/New ...").addItem(translatedName)
                 ->sigTriggered().connect(std::bind(ItemManagerImpl::onNewItemActivated, base));
@@ -615,8 +615,10 @@ void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
 }
 
 
-ItemManagerImpl::CreationPanelBase::CreationPanelBase(const QString& title, ItemPtr protoItem, bool isSingleton)
+ItemManagerImpl::CreationPanelBase::CreationPanelBase
+(const QString& title, ClassInfo& classInfo, ItemPtr protoItem, bool isSingleton)
     : QDialog(MainWindow::instance()),
+      classInfo(classInfo),
       protoItem(protoItem),
       isSingleton(isSingleton)
 {
@@ -651,7 +653,7 @@ ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
 {
     if(isSingleton){
         if(protoItem->parentItem()){
-            return 0;
+            return nullptr;
         }
     }
             
@@ -668,9 +670,19 @@ ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
 
     bool result = true;
 
+    if(!protoItem && (!preFilters.empty() || !postFilters.empty())){
+        protoItem = classInfo.factory();
+        protoItem->setName(classInfo.name);
+    }
+    ItemPtr item = protoItem;
+    if(!item){
+        item = classInfo.factory();
+        item->setName(classInfo.name);
+    }
+
     for(CreationPanelFilterList::iterator p = preFilters.begin(); p != preFilters.end(); ++p){
         auto filter = *p;
-        if(!(*filter)(protoItem.get(), parentItem.get())){
+        if(!(*filter)(item, parentItem)){
             result = false;
             break;
         }
@@ -678,7 +690,7 @@ ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
 
     if(result){
         for(size_t i=0; i < panels.size(); ++i){
-            if(!panels[i]->initializePanel(protoItem.get())){
+            if(!panels[i]->initializePanel(item)){
                 result = false;
                 break;
             }
@@ -688,7 +700,7 @@ ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
     if(result){
         if(exec() == QDialog::Accepted){
             for(size_t i=0; i < panels.size(); ++i){
-                if(!panels[i]->initializeItem(protoItem.get())){
+                if(!panels[i]->initializeItem(item)){
                     result = false;
                     break;
                 }
@@ -696,7 +708,7 @@ ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
             if(result){
                 for(CreationPanelFilterList::iterator p = postFilters.begin(); p != postFilters.end(); ++p){
                     auto filter = *p;
-                    if(!(*filter)(protoItem.get(), parentItem.get())){
+                    if(!(*filter)(item, parentItem)){
                         result = false;
                         break;
                     }
@@ -710,9 +722,11 @@ ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
     ItemPtr newItem;
     if(result){
         if(isSingleton){
-            newItem = protoItem;
-        } else {
+            newItem = item;
+        } else if(protoItem){
             newItem = protoItem->duplicate();
+        } else {
+            newItem = item;
         }
     }
     

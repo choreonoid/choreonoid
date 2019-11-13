@@ -16,37 +16,23 @@ class CNOID_EXPORT TreeView : public QTreeView
 {
     Q_OBJECT
 
-        public:
+public:
     TreeView(QWidget* parent = 0);
+    ~TreeView();
 
     virtual void setModel(QAbstractItemModel* model);
 
-    ItemSelectionModel* itemSelectionModel() const;
+    ItemSelectionModel* selectionModel() const;
         
-    SignalProxy<void(const QModelIndex& index)> sigCollapsed() {
-        return sigCollapsed_;
-    }
-    SignalProxy<void(const QModelIndex& index)> sigExpanded() {
-        return sigExpanded_;
-    }
-    SignalProxy<void(const QModelIndex& index)> sigActivated() {
-        return sigActivated_;
-    }
-    SignalProxy<void(const QModelIndex& index)> sigClicked() {
-        return sigClicked_;
-    }
-    SignalProxy<void(const QModelIndex& index)> sigDoubleClicked() {
-        return sigDoubleClicked_;
-    }
-    SignalProxy<void(const QModelIndex& index)> sigEntered() {
-        return sigEntered_;
-    }
-    SignalProxy<void(const QModelIndex& index)> sigPressed() {
-        return sigPressed_;
-    }
-    SignalProxy<void()> sigViewportEntered() {
-        return sigViewportEntered_;
-    }
+    SignalProxy<void(const QModelIndex& index)> sigCollapsed();
+    SignalProxy<void(const QModelIndex& index)> sigExpanded();
+    SignalProxy<void(const QModelIndex& index)> sigActivated();
+    SignalProxy<void(const QModelIndex& index)> sigClicked();
+    SignalProxy<void(const QModelIndex& index)>	sigDoubleClicked();
+    SignalProxy<void(const QModelIndex& index)>	sigEntered();
+    SignalProxy<void(const QModelIndex& index)>	sigPressed();
+    SignalProxy<void()> sigViewportEntered();
+
 
 private Q_SLOTS:
     void onCollapsed(const QModelIndex& index);
@@ -61,12 +47,10 @@ private Q_SLOTS:
 private:
     Signal<void(const QModelIndex& index)> sigCollapsed_;
     Signal<void(const QModelIndex& index)> sigExpanded_;
-    Signal<void(const QModelIndex& index)> sigActivated_;
-    Signal<void(const QModelIndex& index)> sigClicked_;
-    Signal<void(const QModelIndex& index)> sigDoubleClicked_;
-    Signal<void(const QModelIndex& index)> sigEntered_;
-    Signal<void(const QModelIndex& index)> sigPressed_;
-    Signal<void()> sigViewportEntered_;
+
+private:
+    class Impl;
+    Impl* impl;
 };
 
 }

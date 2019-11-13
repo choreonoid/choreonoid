@@ -19,7 +19,7 @@ void exportPyBody(py::module& m)
 {
     py::class_<Body, BodyPtr, Referenced> body(m, "Body");
     body
-        .def("clone", &Body::clone)
+        .def("clone", (Body*(Body::*)()const) &Body::clone)
         .def("createLink", &Body::createLink)
         .def("createLink", [](Body& self){ return self.createLink(); })
         .def_property("name", &Body::name, &Body::setName)
@@ -39,7 +39,7 @@ void exportPyBody(py::module& m)
         .def_property_readonly("rootLink", &Body::rootLink)
         .def_property_readonly("numDevices", &Body::numDevices)
         .def("device", &Body::device)
-        .def("addDevice", &Body::addDevice)
+        .def("addDevice", (void(Body::*)(Device*, Link*)) &Body::addDevice)
         .def("initializeDeviceStates", &Body::initializeDeviceStates)
         .def("clearDevices", &Body::clearDevices)
         .def("isStaticModel", &Body::isStaticModel)

@@ -141,23 +141,31 @@ bool BodyState::restorePositions(Body& io_body) const
     for(size_t i=0; i < n; ++i){
         io_body.joint(i)->q() = q[i];
     }
-    const Data& p = data(LINK_POSITIONS);
-    if(p.size() < 7){
-        isComplete = false;
+
+    if(io_body.parentBody()){
+        io_body.calcForwardKinematics();
+        isComplete = true;
+
     } else {
-        Link* rootLink = io_body.rootLink();
-        rootLink->p() = Eigen::Map<const Vector3>(&p[0]);
-        rootLink->R() = Eigen::Map<const Quat>(&p[3]).toRotationMatrix();
-    }
+        //! \todo Use relative coordinates for a child body
+        const Data& p = data(LINK_POSITIONS);
+        if(p.size() < 7){
+            isComplete = false;
+        } else {
+            Link* rootLink = io_body.rootLink();
+            rootLink->p() = Eigen::Map<const Vector3>(&p[0]);
+            rootLink->R() = Eigen::Map<const Quat>(&p[3]).toRotationMatrix();
+        }
 
-    io_body.calcForwardKinematics();
+        io_body.calcForwardKinematics();
 
-    if(p.size() > 7){
-        const int numNonRootLinks = (p.size() - 7) / 7;
-        for(int i=1; i < numNonRootLinks + 1; ++i){
-            Link* link = io_body.link(i);
-            link->p() = Eigen::Map<const Vector3>(&p[i*7]);
-            link->R() = Eigen::Map<const Quat>(&p[i*7 + 3]).toRotationMatrix();
+        if(p.size() > 7){
+            const int numNonRootLinks = (p.size() - 7) / 7;
+            for(int i=1; i < numNonRootLinks + 1; ++i){
+                Link* link = io_body.link(i);
+                link->p() = Eigen::Map<const Vector3>(&p[i*7]);
+                link->R() = Eigen::Map<const Quat>(&p[i*7 + 3]).toRotationMatrix();
+            }
         }
     }
 

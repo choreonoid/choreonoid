@@ -21,6 +21,7 @@
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
+#include <cnoid/CloneMap>
 #include <cnoid/EigenUtil>
 #include <cnoid/StringUtil>
 #include <cnoid/Tokenizer>
@@ -259,7 +260,7 @@ public:
     bool areAdditionalLightsEnabled;
     double maxFrameRate;
     double maxLatency;
-    SgCloneMap cloneMap;
+    CloneMap cloneMap;
     bool isAntiAliasingEnabled;
         
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self);
@@ -495,7 +496,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
       even if the non node objects in the scene are not modified because
       the signal connection / disconnection operations may collide.
     */
-    cloneMap.setNonNodeCloning(true);
+    SgObject::setNonNodeCloning(cloneMap, true);
 
     std::set<string> bodyNameSet;
     for(size_t i=0; i < bodyNames.size(); ++i){

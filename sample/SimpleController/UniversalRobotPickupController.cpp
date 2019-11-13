@@ -183,7 +183,7 @@ public:
         ikBody = ioBody->clone();
         ikWrist = ikBody->link("Wrist_3");
         Link* base = ikBody->rootLink();
-        baseToWrist = getCustomJointPath(ikBody, base, ikWrist);
+        baseToWrist = JointPath::getCustomPath(ikBody, base, ikWrist);
         base->p().setZero();
         base->R().setIdentity();
         baseToWrist->calcForwardKinematics();

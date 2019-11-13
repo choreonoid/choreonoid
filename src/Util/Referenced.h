@@ -21,29 +21,20 @@ namespace cnoid {
 class Referenced;
 
 /**
-   \todo Make this thread safe
+   \todo Make this thread safe. (Is it necessary to use mutex?)
 */
 class WeakCounter
 {
 public:
     WeakCounter(){
         isObjectAlive_ = true;
-        weakCount = 0;
+        weakCount = 1; // count for the Referenced object
     }
 
     void add() { ++weakCount; }
 
     void release() {
-        if(--weakCount == 0){
-            if(!isObjectAlive_){
-                delete this;
-            }
-        }
-    }
-
-    void setDestructed() {
-        isObjectAlive_ = false;
-        if(weakCount == 0){
+        if(weakCount.fetch_sub(1) == 1){
             delete this;
         }
     }
@@ -53,8 +44,10 @@ public:
     }
 
 private:
-    bool isObjectAlive_;
-    int weakCount;
+    std::atomic<int> weakCount;
+    std::atomic<bool> isObjectAlive_;
+
+    friend class Referenced;
 };
 
     
@@ -68,20 +61,26 @@ class CNOID_EXPORT Referenced
     WeakCounter* weakCounter_;
             
     void addRef() const {
-        refCount_.fetch_add(1, std::memory_order_relaxed);
+        ++refCount_;
+        //refCount_.fetch_add(1, std::memory_order_relaxed);
     }
 
     void releaseRef() const {
-        if(refCount_.fetch_sub(1, std::memory_order_release) == 1) {
-            std::atomic_thread_fence(std::memory_order_acquire);
+        //if(refCount_.fetch_sub(1, std::memory_order_release) == 1) {
+        if(refCount_.fetch_sub(1) == 1) {
+            //std::atomic_thread_fence(std::memory_order_acquire);
             delete this;
         }
     }
 
     void decrementRef() const {
-        refCount_.fetch_sub(1, std::memory_order_release);
+        //refCount_.fetch_sub(1, std::memory_order_release);
+        --refCount_;
     }
-    
+
+    /**
+       \note This function is not thread safe
+    */
     WeakCounter* weakCounter(){
         if(!weakCounter_){
             weakCounter_ = new WeakCounter();
@@ -90,10 +89,11 @@ class CNOID_EXPORT Referenced
     }
 
 protected:
-    Referenced() : refCount_(0), weakCounter_(0) { }
-    Referenced(const Referenced&) : refCount_(0), weakCounter_(0) { }
+    Referenced() : refCount_(0), weakCounter_(nullptr) { }
+    Referenced(const Referenced&) : refCount_(0), weakCounter_(nullptr) { }
 
-    int refCount() const { return refCount_.load(std::memory_order_relaxed); }
+    //int refCount() const { return refCount_.load(std::memory_order_relaxed); }
+    int refCount() const { return refCount_.load(); }
     
 public:
     virtual ~Referenced();
@@ -105,7 +105,7 @@ template<class T> class ref_ptr
 public:
     typedef T element_type;
     
-    ref_ptr() : px(0) { }
+    ref_ptr() : px(nullptr) { }
 
     ref_ptr(T* p) : px(p){
         if(px != nullptr){
@@ -275,23 +275,19 @@ typedef ref_ptr<Referenced> ReferencedPtr;
 
 template<class T> class weak_ref_ptr
 {
-    typedef void (weak_ref_ptr<T>::*bool_type)() const;
-
-    void bool_type_func() const { }
-    
     void setCounter(){
         if(px){
             counter = px->weakCounter();
             counter->add();
         } else {
-            counter = 0;
+            counter = nullptr;
         }
     }
             
 public:
     typedef T element_type;
     
-    weak_ref_ptr() : px(0), counter(0) { }
+    weak_ref_ptr() : px(nullptr), counter(nullptr) { }
 
     template<class Y>
     weak_ref_ptr(weak_ref_ptr<Y> const & rhs) : px(rhs.lock().get()){
@@ -301,7 +297,7 @@ public:
     weak_ref_ptr(weak_ref_ptr const & rhs) : px(rhs.lock().get()){
         setCounter();
     }
-    
+
     template<class Y>
     weak_ref_ptr& operator=(weak_ref_ptr<Y> const & rhs){
         px = rhs.lock().get();
@@ -309,6 +305,12 @@ public:
         return *this;
     }
 
+    weak_ref_ptr& operator=(weak_ref_ptr const & rhs){
+        px = rhs.lock().get();
+        setCounter();
+        return *this;
+    }
+    
     weak_ref_ptr(weak_ref_ptr&& rhs) : px(rhs.px), counter(rhs.counter){
         rhs.px = nullptr;
         rhs.counter = 0;
@@ -338,7 +340,7 @@ public:
         return *this;
     }
 
-    operator bool_type() const { return px ? &weak_ref_ptr<T>::bool_type_func : 0; }
+    explicit operator bool() const { return px != nullptr; }
 
     ref_ptr<T> lock() const {
         if(counter && counter->isObjectAlive()){

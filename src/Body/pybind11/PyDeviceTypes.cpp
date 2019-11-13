@@ -24,7 +24,7 @@ void exportPyDeviceTypes(py::module& m)
         .def("setName", &Device::setName)
         .def("link", (Link*(Device::*)())&Device::link)
         .def("setLink", &Device::setLink)
-        .def("clone", &Device::clone)
+        .def("clone", (Device*(Device::*)()const) &Device::clone)
         .def("clearState", &Device::clearState)
         .def("hasStateOnly", &Device::hasStateOnly)
         .def_property("T_local", [](Device& self) ->Position { return self.T_local(); },

@@ -17,13 +17,12 @@ public:
     RangeCamera();
     RangeCamera(const RangeCamera& org, bool copyStateOnly = false);
 
-    virtual const char* typeName();
+    virtual const char* typeName() override;
     void copyStateFrom(const RangeCamera& other); 
-    virtual void copyStateFrom(const DeviceState& other);
-    virtual DeviceState* cloneState() const;
-    virtual Device* clone() const;
-    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
-    virtual void clearState();
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+    virtual void clearState() override;
 
     int numPoints() const { return points_->size(); }
 
@@ -50,6 +49,9 @@ public:
     void setPoints(std::shared_ptr<PointData>& points);
 
     void clearPoints();
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     std::shared_ptr< std::vector<Vector3f> > points_;

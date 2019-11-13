@@ -136,7 +136,8 @@ bool AGXSimulatorItemImpl::restore(const Archive & archive)
 SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody)
 {
     // When user click start bottom, this function will be called first.
-    return new AGXBody(*orgBody);
+    
+    return new AGXBody(orgBody->clone());
 }
 
 bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)

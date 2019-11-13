@@ -14,13 +14,6 @@ namespace cnoid {
 
 class CNOID_EXPORT AccelerationSensor : public Device
 {
-    Vector3 dv_;
-
-    struct Spec {
-        Vector3 dv_max;
-    };
-    std::unique_ptr<Spec> spec;
-
 public:
     AccelerationSensor();
     AccelerationSensor(const AccelerationSensor& org, bool copyStateOnly = false);
@@ -29,7 +22,6 @@ public:
     void copyStateFrom(const AccelerationSensor& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual void clearState() override;
     virtual int stateSize() const override;
@@ -41,6 +33,17 @@ public:
 
     const Vector3& dv_max() const { return spec->dv_max; }
     Vector3& dv_max() { return spec->dv_max; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    Vector3 dv_;
+
+    struct Spec {
+        Vector3 dv_max;
+    };
+    std::unique_ptr<Spec> spec;
 };
 
 typedef ref_ptr<AccelerationSensor> AccelerationSensorPtr;

@@ -63,7 +63,7 @@ public:
     Body* body() { return body_; }
     const Body* body() const { return body_; }
 
-    void cloneShapes(SgCloneMap& cloneMap);
+    void cloneShapes(CloneMap& cloneMap);
 
     int numSceneLinks() const { return sceneLinks_.size(); }
     SceneLink* sceneLink(int index) { return sceneLinks_[index]; }
@@ -77,7 +77,7 @@ public:
     void updateSceneDevices(double time);
 
     void makeTransparent(float transparency);
-    void makeTransparent(float transparency, SgCloneMap& cloneMap);
+    void makeTransparent(float transparency, CloneMap& cloneMap);
 
     virtual void updateModel();
 

@@ -14,13 +14,6 @@ namespace cnoid {
 
 class CNOID_EXPORT RateGyroSensor : public Device
 {
-    Vector3 w_; // w = omega = angular velocity
-        
-    struct Spec {
-        Vector3 w_max;
-    };
-    std::unique_ptr<Spec> spec;
-        
 public:
     RateGyroSensor();
     RateGyroSensor(const RateGyroSensor& org, bool copyStateOnly = false);
@@ -29,7 +22,6 @@ public:
     void copyStateFrom(const RateGyroSensor& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual void clearState() override;
     virtual int stateSize() const override;
@@ -41,6 +33,17 @@ public:
 
     const Vector3& w_max() const { return spec->w_max; }
     Vector3& w_max() { return spec->w_max; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    Vector3 w_; // w = omega = angular velocity
+        
+    struct Spec {
+        Vector3 w_max;
+    };
+    std::unique_ptr<Spec> spec;
 };
 
 typedef ref_ptr<RateGyroSensor> RateGyroSensorPtr;

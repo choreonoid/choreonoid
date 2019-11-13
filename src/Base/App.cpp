@@ -26,6 +26,8 @@
 #include "MultiSE3SeqItem.h"
 #include "MultiSE3MatrixSeqItem.h"
 #include "Vector3SeqItem.h"
+#include "CoordinateFrameListItem.h"
+#include "MultiCoordinateFrameListItem.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -41,6 +43,7 @@
 #include "GraphBar.h"
 #include "MultiValueSeqGraphView.h"
 #include "MultiSE3SeqGraphView.h"
+#include "CoordinateFrameListView.h"
 #include "TextEditView.h"
 #include "GeneralSliderView.h"
 #include "VirtualJoystickView.h"
@@ -98,7 +101,7 @@ BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 
 namespace cnoid {
 
-class AppImpl : public AppImplBase
+class App::Impl : public QObject
 {
     App* self;
     QApplication* qapplication;
@@ -112,13 +115,14 @@ class AppImpl : public AppImplBase
     DescriptionDialog* descriptionDialog;
     bool doQuit;
     
-    AppImpl(App* self, int& argc, char**& argv);
-    ~AppImpl();
-    void initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList);
+    Impl(App* self, int& argc, char**& argv);
+    ~Impl();
+    void initialize(const char* appName, const char* vendorName, const char* pluginPathList);
     int exec();
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
     void showInformationDialog();
+    void onFocusChanged(QWidget* /* old */, QWidget* now);
     virtual bool eventFilter(QObject* watched, QEvent* event);
 
     friend class App;
@@ -130,11 +134,11 @@ class AppImpl : public AppImplBase
 
 App::App(int& argc, char**& argv)
 {
-    impl = new AppImpl(this, argc, argv);
+    impl = new Impl(this, argc, argv);
 }
 
 
-AppImpl::AppImpl(App* self, int& argc, char**& argv)
+App::Impl::Impl(App* self, int& argc, char**& argv)
     : self(self),
       argc(argc),
       argv(argv)
@@ -163,18 +167,18 @@ AppImpl::AppImpl(App* self, int& argc, char**& argv)
 
     qapplication = new QApplication(argc, argv);
 
-    connect(qapplication, SIGNAL(focusChanged(QWidget*, QWidget*)),
-            this, SLOT(onFocusChanged(QWidget*, QWidget*)));
+    connect(qapplication, &QApplication::focusChanged,
+            [&](QWidget* old, QWidget* now){ onFocusChanged(old, now); });
 }
 
 
-void App::initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList)
+void App::initialize(const char* appName, const char* vendorName, const char* pluginPathList)
 {
-    impl->initialize(appName, vendorName, icon, pluginPathList);
+    impl->initialize(appName, vendorName, pluginPathList);
 }
 
 
-void AppImpl::initialize( const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList)
+void App::Impl::initialize( const char* appName, const char* vendorName, const char* pluginPathList)
 {
     this->appName = appName;
     this->vendorName = vendorName;
@@ -184,6 +188,10 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
+
+    QIcon icon;
+    icon.addFile(":/Base/icons/choreonoid32.png");
+    icon.addFile(":/Base/icons/choreonoid48.png");
     qapplication->setWindowIcon(icon);
 
     AppConfig::initialize(appName, vendorName);
@@ -220,6 +228,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     GraphBar::initialize(ext);
     MultiValueSeqGraphView::initializeClass(ext);
     MultiSE3SeqGraphView::initializeClass(ext);
+    CoordinateFrameListView::initializeClass(ext);
     TaskView::initializeClass(ext);
     VirtualJoystickView::initializeClass(ext);
 
@@ -237,6 +246,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     MultiPointSetItem::initializeClass(ext);
     MessageLogItem::initializeClass(ext);
     LightingItem::initializeClass(ext);
+    CoordinateFrameListItem::initializeClass(ext);
+    MultiCoordinateFrameListItem::initializeClass(ext);
 
     MovieRecorder::initialize(ext);
 
@@ -306,7 +317,7 @@ App::~App()
 }
 
 
-AppImpl::~AppImpl()
+App::Impl::~Impl()
 {
     AppConfig::flush();
     delete qapplication;
@@ -319,7 +330,7 @@ int App::exec()
 }
 
 
-int AppImpl::exec()
+int App::Impl::exec()
 {
     if(!ext->optionManager().parseCommandLine1(argc, argv)){
         //exit
@@ -354,7 +365,7 @@ int AppImpl::exec()
 }
 
 
-bool AppImpl::eventFilter(QObject* watched, QEvent* event)
+bool App::Impl::eventFilter(QObject* watched, QEvent* event)
 {
     if(watched == mainWindow && event->type() == QEvent::Close){
         onMainWindowCloseEvent();
@@ -365,7 +376,7 @@ bool AppImpl::eventFilter(QObject* watched, QEvent* event)
 }
 
 
-void AppImpl::onMainWindowCloseEvent()
+void App::Impl::onMainWindowCloseEvent()
 {
     sigAboutToQuit_();
     mainWindow->storeWindowStateConfig();
@@ -386,7 +397,7 @@ SignalProxy<void()> cnoid::sigAboutToQuit()
 }
 
 
-void AppImpl::onSigOptionsParsed(boost::program_options::variables_map& v)
+void App::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("quit")){
         doQuit = true;
@@ -397,7 +408,7 @@ void AppImpl::onSigOptionsParsed(boost::program_options::variables_map& v)
 }
     
 
-void AppImpl::showInformationDialog()
+void App::Impl::showInformationDialog()
 {
     if(!descriptionDialog){
 
@@ -418,7 +429,7 @@ void AppImpl::showInformationDialog()
 }
 
 
-void AppImplBase::onFocusChanged(QWidget* /* old */, QWidget* now)
+void App::Impl::onFocusChanged(QWidget* /* old */, QWidget* now)
 {
     while(now){
         View* view = dynamic_cast<View*>(now);

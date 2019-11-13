@@ -29,7 +29,7 @@ EventManager::initialize()
     }
 
     if( _lnkSelChangedCon.connected() == false ){
-        LinkSelectionView* lnkSelView = LinkSelectionView::mainInstance();
+        LinkSelectionView* lnkSelView = LinkSelectionView::instance();
         if( lnkSelView ){            
             _lnkSelChangedCon =
                 lnkSelView->sigSelectionChanged(_curBodyItem).connect(
@@ -174,7 +174,7 @@ EventManager::onCurrentBodyItemChanged(BodyItem* bodyItem)
       _lnkSelChangedCon.disconnect();
     }
     if( _lnkSelChangedCon.connected() == false ){
-        LinkSelectionView* lnkSelView = LinkSelectionView::mainInstance();
+        LinkSelectionView* lnkSelView = LinkSelectionView::instance();
         if( lnkSelView ){
             _lnkSelChangedCon = lnkSelView->sigSelectionChanged(_curBodyItem).connect(std::bind(&EventManager::onLinkItemSelected, this));
         }
@@ -189,7 +189,7 @@ EventManager::onCurrentBodyItemChanged(BodyItem* bodyItem)
 void
 EventManager::onLinkItemSelected()
 {
-    const vector<int>& selectedLinkIndices = LinkSelectionView::mainInstance()->selectedLinkIndices(_curBodyItem);
+    const vector<int>& selectedLinkIndices = LinkSelectionView::instance()->selectedLinkIndices(_curBodyItem);
     if(selectedLinkIndices.empty()){
         _curLink = _curBodyItem->body()->rootLink();
     } else {

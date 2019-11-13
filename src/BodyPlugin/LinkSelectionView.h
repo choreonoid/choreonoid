@@ -5,20 +5,18 @@
 #ifndef CNOID_BODY_PLUGIN_LINK_SELECTION_VIEW_H
 #define CNOID_BODY_PLUGIN_LINK_SELECTION_VIEW_H
 
-#include "BodyItem.h"
 #include <cnoid/View>
 #include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class LinkSelectionViewImpl;
-    
+class BodyItem;
+
 class CNOID_EXPORT LinkSelectionView : public cnoid::View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
-    static LinkSelectionView* mainInstance(); // deprecated
     static LinkSelectionView* instance();
             
     LinkSelectionView();
@@ -47,8 +45,8 @@ public:
     virtual bool restoreState(const Archive& archive);
             
 private:
-            
-    LinkSelectionViewImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

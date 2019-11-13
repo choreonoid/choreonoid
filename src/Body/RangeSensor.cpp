@@ -82,7 +82,7 @@ void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
 }
 
 
-Device* RangeSensor::clone() const
+Referenced* RangeSensor::doClone(CloneMap*) const
 {
     return new RangeSensor(*this, false);
 }

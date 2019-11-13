@@ -32,7 +32,7 @@ SgFog::SgFog(const SgFog& org)
 }
 
 
-SgObject* SgFog::clone(SgCloneMap&) const
+Referenced* SgFog::doClone(CloneMap*) const
 {
     return new SgFog(*this);
 }
@@ -53,10 +53,22 @@ SgOutlineGroup::SgOutlineGroup()
 }
 
 
+Referenced* SgOutlineGroup::doClone(CloneMap*) const
+{
+    return new SgOutlineGroup(*this);
+}
+
+
 SgLightweightRenderingGroup::SgLightweightRenderingGroup()
     : SgGroup(findPolymorphicId<SgLightweightRenderingGroup>())
 {
 
+}
+
+
+Referenced* SgLightweightRenderingGroup::doClone(CloneMap*) const
+{
+    return new SgLightweightRenderingGroup(*this);
 }
 
 

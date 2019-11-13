@@ -129,7 +129,7 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
             break;
         }
         size_t numDone = 0;
-        auto baseToWaist = getCustomJointPath(body_, baseFoot, waist);
+        auto baseToWaist = JointPath::getCustomPath(body_, baseFoot, waist);
         if(baseToWaist){
             Position T = waist->T();
             T.translation() += e;
@@ -137,7 +137,7 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
                 numDone++;
                 for(size_t j=1; j < footInfos.size(); ++j){
                     Link* foot = footInfos[j].link;
-                    auto waistToFoot = getCustomJointPath(body_, waist, foot);
+                    auto waistToFoot = JointPath::getCustomPath(body_, waist, foot);
                     if(waistToFoot){
                         bool ikDone;
                         if(waistToFoot->hasAnalyticalIK()){
@@ -193,7 +193,7 @@ bool LeggedBodyHelper::setStance(double width, Link* baseLink)
 
     Link* waist = body_->rootLink();
         
-    auto ikPath = getCustomJointPath(body_, foot[0], waist);
+    auto ikPath = JointPath::getCustomPath(body_, foot[0], waist);
 
     if(ikPath){
         Position T = waist->T();
@@ -204,7 +204,7 @@ bool LeggedBodyHelper::setStance(double width, Link* baseLink)
         T.translation() << wp.x(), wp.y();
         
         if(ikPath->calcInverseKinematics(T)){
-            ikPath = getCustomJointPath(body_, waist, foot[1]);
+            ikPath = JointPath::getCustomPath(body_, waist, foot[1]);
             if(ikPath && ikPath->calcInverseKinematics(foot[1]->T())){
                 LinkTraverse fkTraverse(baseLink);
                 fkTraverse.calcForwardKinematics();

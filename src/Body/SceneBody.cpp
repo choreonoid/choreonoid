@@ -6,6 +6,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneUtil>
 #include <cnoid/SceneRenderer>
+#include <cnoid/CloneMap>
 #include "gettext.h"
 
 using namespace std;
@@ -41,7 +42,7 @@ public:
         isVisible = on;
     }
 
-    void cloneShapes(SgCloneMap& cloneMap)
+    void cloneShapes(CloneMap& cloneMap)
     {
         if(!hasClone){
             bool sameness = (visualShape == collisionShape);
@@ -136,8 +137,8 @@ public:
 
     SceneLinkImpl(SceneLink* self, Link* link);
     bool removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup);
-    void cloneShape(SgCloneMap& cloneMap);
-    void makeTransparent(float transparency, SgCloneMap& cloneMap);
+    void cloneShape(CloneMap& cloneMap);
+    void makeTransparent(float transparency, CloneMap& cloneMap);
 };
 
 class SceneBodyImpl
@@ -149,7 +150,7 @@ public:
     std::function<SceneLink*(Link*)> sceneLinkFactory;
 
     SceneBodyImpl(SceneBody* self, std::function<SceneLink*(Link*)> sceneLinkFactory);
-    void cloneShape(SgCloneMap& cloneMap);
+    void cloneShape(CloneMap& cloneMap);
 };
 
 }
@@ -269,7 +270,7 @@ bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup)
 }
 
 
-void SceneLinkImpl::cloneShape(SgCloneMap& cloneMap)
+void SceneLinkImpl::cloneShape(CloneMap& cloneMap)
 {
     mainShapeGroup->cloneShapes(cloneMap);
 }
@@ -283,13 +284,13 @@ void SceneLink::setVisible(bool on)
 
 void SceneLink::makeTransparent(float transparency)
 {
-    SgCloneMap cloneMap;
-    cloneMap.setNonNodeCloning(false);
+    CloneMap cloneMap;
+    SgObject::setNonNodeCloning(cloneMap, false);
     impl->makeTransparent(transparency, cloneMap);
 }
 
 
-void SceneLinkImpl::makeTransparent(float transparency, SgCloneMap& cloneMap)
+void SceneLinkImpl::makeTransparent(float transparency, CloneMap& cloneMap)
 {
     if(transparency == this->transparency){
         return;
@@ -396,7 +397,7 @@ void SceneBody::updateModel()
 }
 
 
-void SceneBody::cloneShapes(SgCloneMap& cloneMap)
+void SceneBody::cloneShapes(CloneMap& cloneMap)
 {
     for(size_t i=0; i < sceneLinks_.size(); ++i){
         sceneLinks_[i]->impl->cloneShape(cloneMap);
@@ -455,7 +456,7 @@ void SceneBody::updateSceneDevices(double time)
 }
 
 
-void SceneBody::makeTransparent(float transparency, SgCloneMap& cloneMap)
+void SceneBody::makeTransparent(float transparency, CloneMap& cloneMap)
 {
     for(size_t i=0; i < sceneLinks_.size(); ++i){
         sceneLinks_[i]->impl->makeTransparent(transparency, cloneMap);
@@ -465,7 +466,7 @@ void SceneBody::makeTransparent(float transparency, SgCloneMap& cloneMap)
 
 void SceneBody::makeTransparent(float transparency)
 {
-    SgCloneMap cloneMap;
-    cloneMap.setNonNodeCloning(false);
+    CloneMap cloneMap;
+    SgObject::setNonNodeCloning(cloneMap, false);
     makeTransparent(transparency, cloneMap);
 }

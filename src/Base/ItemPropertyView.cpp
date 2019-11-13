@@ -8,11 +8,11 @@
 #include "ViewManager.h"
 #include "MenuManager.h"
 #include "PutPropertyFunction.h"
-#include "SelectionListEditor.h"
 #include "LazyCaller.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "Buttons.h"
+#include "StringListComboBox.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExecutablePath>
 #include <cnoid/stdx/variant>
@@ -232,6 +232,18 @@ public:
             }
         }
         return editor;
+    }
+
+    virtual void updateEditorGeometry(
+        QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override
+    {
+        editor->setGeometry(option.rect);
+
+        /*
+        if(auto combo = dynamic_cast<QComboBox*>(editor)){
+            combo->showPopup();
+        }
+        */
     }
 
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override
@@ -662,9 +674,12 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     tableWidget->setTabKeyNavigation(true);
+    tableWidget->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     tableWidget->setEditTriggers(
+        /* QAbstractItemView::CurrentChanged | */
         QAbstractItemView::DoubleClicked |
         QAbstractItemView::SelectedClicked | 
+        QAbstractItemView::EditKeyPressed |
         QAbstractItemView::AnyKeyPressed);
 
     QHeaderView* hh = tableWidget->horizontalHeader();
@@ -678,9 +693,9 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     QStyledItemDelegate* delegate = new CustomizedItemDelegate(tableWidget);
     QItemEditorFactory* factory = new QItemEditorFactory;
     
-    QItemEditorCreatorBase* selectionListCreator =
-        new QStandardItemEditorCreator<SelectionListEditor>();
-    factory->registerEditor(QVariant::StringList, selectionListCreator);
+    QItemEditorCreatorBase* selectionEditorCreator =
+        new QStandardItemEditorCreator<StringListComboBox>();
+    factory->registerEditor(QVariant::StringList, selectionEditorCreator);
     
     delegate->setItemEditorFactory(factory);
 

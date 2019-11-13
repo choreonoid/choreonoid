@@ -59,7 +59,7 @@ DeviceState* AccelerationSensor::cloneState() const
 }
 
 
-Device* AccelerationSensor::clone() const
+Referenced* AccelerationSensor::doClone(CloneMap*) const
 {
     return new AccelerationSensor(*this);
 }

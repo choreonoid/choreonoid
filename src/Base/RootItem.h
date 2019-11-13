@@ -6,7 +6,6 @@
 #define CNOID_BASE_ROOT_ITEM_H
 
 #include "Item.h"
-#include "ItemList.h"
 #include "exportdecl.h"
 
 namespace cnoid {

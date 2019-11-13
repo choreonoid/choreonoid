@@ -61,7 +61,7 @@ DeviceState* SpotLight::cloneState() const
 }
 
 
-Device* SpotLight::clone() const
+Referenced* SpotLight::doClone(CloneMap*) const
 {
     return new SpotLight(*this);
 }

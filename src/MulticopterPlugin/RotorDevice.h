@@ -55,16 +55,17 @@ public:
     RotorDevice();
     RotorDevice(const RotorDevice& org,  bool copyStateOnly = false);
 
-    virtual const char* typeName();
+    virtual const char* typeName() override;
     void copyStateFrom(const RotorDevice& other);
-    virtual void copyStateFrom(const DeviceState& other);
-    virtual DeviceState* cloneState() const;
-    virtual Device* clone() const;
-    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
-    virtual int stateSize() const;
-    virtual const double* readState(const double* buf);
-    virtual double* writeState(double* out_buf) const;
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+    virtual int stateSize() const override;
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
 
+protected:
+    virtual Referenced* doClone(cnoid::CloneMap* cloneMap) const override;
 
 private:
     bool _on;

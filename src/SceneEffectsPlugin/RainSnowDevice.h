@@ -13,10 +13,6 @@ namespace cnoid {
 
 class RainSnowDevice : public Device
 {
-protected:
-    RainSnowDevice();
-    RainSnowDevice(const RainSnowDevice& org, bool copyStateOnly = false);
-    
 public:
     void copyStateFrom(const RainSnowDevice& other);
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
@@ -30,6 +26,10 @@ public:
     ParticleSystem& particleSystem() { return particleSystem_; }
     const ParticleSystem& particleSystem() const { return particleSystem_; }
 
+protected:
+    RainSnowDevice();
+    RainSnowDevice(const RainSnowDevice& org, bool copyStateOnly = false);
+    
 private:
     bool on_;
     ParticleSystem particleSystem_;
@@ -44,8 +44,10 @@ public:
     virtual const char* typeName() override;
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<RainDevice> RainDevicePtr;
@@ -59,8 +61,10 @@ public:
     virtual const char* typeName() override;
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<SnowDevice> SnowDevicePtr;

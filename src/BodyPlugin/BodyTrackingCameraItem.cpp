@@ -42,7 +42,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
         isConstantRelativeAttitudeMode_ = false;
     }
     
-    BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org, SgCloneMap* cloneMap)
+    BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org, CloneMap* cloneMap)
         : InteractiveCameraTransform(org, cloneMap) {
         bodyItem = nullptr;
         relativeTranslationFromBody.setZero();
@@ -51,7 +51,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
         isConstantRelativeAttitudeMode_ = org.isConstantRelativeAttitudeMode_;
     }
 
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override {
+    virtual Referenced* doClone(CloneMap* cloneMap) const override {
         return new BodyTrackingCameraTransform(*this, cloneMap);
     }
 

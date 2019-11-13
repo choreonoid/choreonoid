@@ -9,8 +9,6 @@
 
 namespace cnoid {
 
-class JointDisplacementViewImpl;
-        
 class JointDisplacementView : public cnoid::View
 {
 public:
@@ -19,6 +17,8 @@ public:
     JointDisplacementView();
     virtual ~JointDisplacementView();
 
+    class Impl;
+    
 protected:
     virtual void onActivated() override;
     virtual void onDeactivated() override;
@@ -27,7 +27,7 @@ private:
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
-    JointDisplacementViewImpl* impl;
+    Impl* impl;
 };
 
 }

@@ -21,7 +21,7 @@ class BodyMotionEngineImpl;
 class CNOID_EXPORT BodyMotionEngine : public TimeSyncItemEngine
 {
 public:
-    static void initialize(ExtensionManager* ext);
+    static void initializeClass(ExtensionManager* ext);
 
     static void addExtraSeqEngineFactory(
         const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory);

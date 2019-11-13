@@ -19,6 +19,11 @@ file(COPY ${models} DESTINATION ${CNOID_BINARY_SHARE_DIR}/model/misc)
 install(FILES ${models} DESTINATION ${CNOID_SHARE_SUBDIR}/model/misc)
 
 install(FILES
+  AizuSpiderNA.cnoid
+  AizuSpiderSA.cnoid
+  AizuSpiderDA.cnoid
+  DoubleArmV7A.cnoid
+  AgxTank.cnoid
   ConvexDecomposition.cnoid
   LockedDoor.cnoid
   agxMagneticJoint.cnoid

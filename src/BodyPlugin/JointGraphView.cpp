@@ -35,7 +35,7 @@ JointGraphView::JointGraphView()
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
             std::bind(&JointGraphView::onItemSelectionChanged, this, _1));
 
-    linkSelection = LinkSelectionView::mainInstance();
+    linkSelection = LinkSelectionView::instance();
 }
 
 

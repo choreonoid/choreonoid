@@ -17,48 +17,30 @@ class CNOID_EXPORT TreeWidget : public QTreeWidget
     Q_OBJECT
 
 public:
-    TreeWidget(QWidget* parent = 0);
-    virtual ~TreeWidget();
+    TreeWidget(QWidget* parent = nullptr);
+    ~TreeWidget();
 
     void setHeaderSectionResizeMode(int column, QHeaderView::ResizeMode mode);
     void setVerticalGridLineShown(bool on);
 
-    SignalProxy<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> sigCurrentItemChanged() {
-        return sigCurrentItemChanged_;
-    }
-    /*
-    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemActivated() {
-        return sigItemActivated_;
-    }
-    */
-    
-    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemActivated() {
-        return sigItemActivated_;
-    }
-    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemChanged() {
-        return sigItemChanged_;
-    }
-    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemClicked() {
-        return sigItemClicked_;
-    }
-    SignalProxy<void(QTreeWidgetItem* item)> sigItemCollapsed() {
-        return sigItemCollapsed_;
-    }
-    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemDoubleClicked() {
-        return sigItemDoubleClicked_;
-    }
-    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemEntered() {
-        return sigItemEntered_;
-    }
-    SignalProxy<void(QTreeWidgetItem* item)> sigItemExpanded() {
-        return sigItemExpanded_;
-    }
-    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemPressed() {
-        return sigItemPressed_;
-    }
-    SignalProxy<void()> sigItemSelectionChanged() {
-        return sigItemSelectionChanged_;
-    }
+    SignalProxy<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> sigCurrentItemChanged();
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemActivated();
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemChanged();
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemClicked();
+    SignalProxy<void(QTreeWidgetItem* item)> sigItemCollapsed();
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemDoubleClicked();
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemEntered();
+    SignalProxy<void(QTreeWidgetItem* item)> sigItemExpanded();
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemPressed();
+    SignalProxy<void()> sigItemSelectionChanged();
+
+    // Signals of QAbstractItemModel owned by TreeWidget
+    SignalProxy<void(const QModelIndex &parent, int first, int last)> sigRowsAboutToBeRemoved();
+    SignalProxy<void(const QModelIndex &parent, int first, int last)> sigRowsRemoved();
+    SignalProxy<void(const QModelIndex &parent, int first, int last)> sigRowsInserted();
+
+    // Signal of QHeaderView owned by TreeWidget
+    SignalProxy<void(int logicalIndex, int oldSize, int newSize)> sigSectionResized();
 
 protected:
     virtual void paintEvent(QPaintEvent* event);
@@ -75,21 +57,14 @@ private Q_SLOTS:
     void onItemExpanded(QTreeWidgetItem* item);
     void onItemPressed(QTreeWidgetItem* item, int column);
     void onItemSelectionChanged(void);
+    void onRowsAboutToBeRemoved(const QModelIndex &parent, int first, int last);
+    void onRowsRemoved(const QModelIndex &parent, int first, int last);
+    void onRowsInserted(const QModelIndex &parent, int first, int last);
+    void onSectionResized(int logicalIndex, int oldSize, int newSize);
 
 private:
-    Signal<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> sigCurrentItemChanged_;
-    Signal<void(QTreeWidgetItem* item, int column)> sigItemActivated_;
-    Signal<void(QTreeWidgetItem* item, int column)> sigItemChanged_;
-    Signal<void(QTreeWidgetItem* item, int column)> sigItemClicked_;
-    Signal<void(QTreeWidgetItem* item)> sigItemCollapsed_;
-    Signal<void(QTreeWidgetItem* item, int column)> sigItemDoubleClicked_;
-    Signal<void(QTreeWidgetItem* item, int column)> sigItemEntered_;
-    Signal<void(QTreeWidgetItem* item)> sigItemExpanded_;
-    Signal<void(QTreeWidgetItem* item, int column)> sigItemPressed_;
-    Signal<void()> sigItemSelectionChanged_;
-
-    int gridColorRGB;
-    bool isVerticalGridLineShown;
+    class Impl;
+    Impl* impl;
 };
 
 }

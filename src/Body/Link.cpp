@@ -16,8 +16,8 @@ Link::Link()
 {
     index_ = -1;
     jointId_ = -1;
-    parent_ = 0;
-    body_ = 0;
+    parent_ = nullptr;
+    body_ = nullptr;
     T_.setIdentity();
     Tb_.setIdentity();
     Rs_.setIdentity();
@@ -56,8 +56,8 @@ Link::Link(const Link& org)
     index_ = -1; // should be set by a Body object
     jointId_ = org.jointId_;
 
-    parent_ = 0;
-    body_ = 0;
+    parent_ = nullptr;
+    body_ = nullptr;
 
     T_ = org.T_;
     Tb_ = org.Tb_;
@@ -103,7 +103,7 @@ Link::Link(const Link& org)
 }
 
 
-Link* Link::clone() const
+Referenced* Link::doClone(CloneMap*) const
 {
     return new Link(*this);
 }
@@ -113,9 +113,9 @@ Link::~Link()
 {
     LinkPtr link = child_;
     while(link){
-        link->parent_ = 0;
+        link->parent_ = nullptr;
         LinkPtr next = link->sibling_;
-        link->sibling_ = 0;
+        link->sibling_ = nullptr;
         link = next;
     }
 }
@@ -177,14 +177,14 @@ void Link::appendChild(Link* link)
     }
     if(!child_){
         child_ = link;
-        link->sibling_ = 0;
+        link->sibling_ = nullptr;
     } else {
         Link* lastChild = child_;
         while(lastChild->sibling_){
             lastChild = lastChild->sibling_;
         }
         lastChild->sibling_ = link;
-        link->sibling_ = 0;
+        link->sibling_ = nullptr;
     }
     link->parent_ = this;
 
@@ -213,11 +213,11 @@ bool Link::isOwnerOf(const Link* link) const
 bool Link::removeChild(Link* childToRemove)
 {
     Link* link = child_;
-    Link* prevSibling = 0;
+    Link* prevSibling = nullptr;
     while(link){
         if(link == childToRemove){
-            childToRemove->parent_ = 0;
-            childToRemove->sibling_ = 0;
+            childToRemove->parent_ = nullptr;
+            childToRemove->sibling_ = nullptr;
             if(prevSibling){
                 prevSibling->sibling_ = link->sibling_;
             } else {
@@ -317,6 +317,15 @@ void Link::setVisualShape(SgNode* shape)
 void Link::setCollisionShape(SgNode* shape)
 {
     collisionShape_ = shape;
+}
+
+
+Position Link::Ta() const
+{
+    Position Ta;
+    Ta.linear() = R() * Rs();
+    Ta.translation() = translation();
+    return Ta;
 }
 
 

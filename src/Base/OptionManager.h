@@ -27,15 +27,14 @@ public:
     SignalProxy<void(std::vector<std::string>& inputFiles)> sigInputFileOptionsParsed(int phase = 0);
     SignalProxy<void(boost::program_options::variables_map& variables)> sigOptionsParsed(int phase = 0);
 
+    bool parseCommandLine1(int argc, char *argv[]);
+    void parseCommandLine2();
+
 private:
     OptionManager();
     ~OptionManager();
 
-    bool parseCommandLine1(int argc, char *argv[]);
-    void parseCommandLine2();
-
     friend class ExtensionManager;
-    friend class AppImpl;
 };
 
 }

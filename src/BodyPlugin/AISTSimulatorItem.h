@@ -66,7 +66,7 @@ public:
     void setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction);
 
 protected:
-    virtual SimulationBody* createSimulationBody(Body* orgBody) override;
+    virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies) override;
     virtual void finalizeSimulation() override;

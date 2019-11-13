@@ -18,8 +18,6 @@ protected:
     SgLight(const SgLight& org);
         
 public:
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
     const Vector3f& color() const { return color_; }
@@ -29,7 +27,10 @@ public:
     void setIntensity(float intensity) { intensity_ = intensity; }
     float ambientIntensity() const { return ambientIntensity_; }
     void setAmbientIntensity(float intensity) { ambientIntensity_ = intensity; }
-        
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
 private:
     Vector3f color_;
     float intensity_;
@@ -41,18 +42,18 @@ typedef ref_ptr<SgLight> SgLightPtr;
 
 class CNOID_EXPORT SgDirectionalLight : public SgLight
 {
-protected:
-    SgDirectionalLight(int polymorhicId);
-    
 public:
     SgDirectionalLight();
     SgDirectionalLight(const SgDirectionalLight& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
     const Vector3& direction() const { return direction_; }
     template<typename Derived> void setDirection(const Eigen::MatrixBase<Derived>& d) {
         direction_ = d.template cast<Vector3::Scalar>(); }
 
+protected:
+    SgDirectionalLight(int polymorhicId);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    
 private:
     Vector3 direction_;
 };
@@ -61,13 +62,9 @@ typedef ref_ptr<SgDirectionalLight> SgDirectionalLightPtr;
 
 class CNOID_EXPORT SgPointLight : public SgLight
 {
-protected:
-    SgPointLight(int polymorhicId);
-    
 public:
     SgPointLight();
     SgPointLight(const SgPointLight& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
     float constantAttenuation() const { return constantAttenuation_; }
     void setConstantAttenuation(float a) { constantAttenuation_ = a; }
@@ -78,6 +75,10 @@ public:
     float quadraticAttenuation() const { return quadraticAttenuation_; }
     void setQuadraticAttenuation(float a) { quadraticAttenuation_ = a; }
 
+protected:
+    SgPointLight(int polymorhicId);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    
 private:
     float constantAttenuation_;
     float linearAttenuation_;
@@ -88,13 +89,9 @@ typedef ref_ptr<SgPointLight> SgPointLightPtr;
 
 class CNOID_EXPORT SgSpotLight : public SgPointLight
 {
-protected:
-    SgSpotLight(int polymorhicId);
-    
 public:
     SgSpotLight();
     SgSpotLight(const SgSpotLight& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
     const Vector3& direction() const { return direction_; }
     template<typename Derived> void setDirection(const Eigen::MatrixBase<Derived>& d) {
@@ -107,6 +104,10 @@ public:
     float cutOffExponent() const { return cutOffExponent_; }
     void setCutOffExponent(float e) { cutOffExponent_ = e; }
 
+protected:
+    SgSpotLight(int polymorhicId);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    
 private:
     Vector3 direction_;
     float beamWidth_;

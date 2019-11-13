@@ -212,6 +212,20 @@ void LinkDataOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
         }
     }
     break;
+    case ABS_ACCELERATION:
+    {
+        value.data.length(6*n);
+        for(size_t i=0, j=0; i<n; i++){
+            Link* link = body->link(linkNames[i]);
+            value.data[j++] = link->dv()(0);
+            value.data[j++] = link->dv()(1);
+            value.data[j++] = link->dv()(2);
+            value.data[j++] = link->dw()(0);
+            value.data[j++] = link->dw()(1);
+            value.data[j++] = link->dw()(2);
+        }
+    }
+    break;
     case EXTERNAL_FORCE:
     {
         value.data.length(6*n);

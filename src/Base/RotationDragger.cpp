@@ -32,13 +32,13 @@ public:
         thresh = cos(radian(45.0));
     }
 
-    SgViewpointDependentSelector(const SgViewpointDependentSelector& org, SgCloneMap* cloneMap)
+    SgViewpointDependentSelector(const SgViewpointDependentSelector& org, CloneMap* cloneMap)
         : SgGroup(org, cloneMap) {
         axis = org.axis;
         thresh = org.thresh;
     }
 
-    virtual SgObject* doClone(SgCloneMap* cloneMap) const override {
+    virtual Referenced* doClone(CloneMap* cloneMap) const override {
         return new SgViewpointDependentSelector(*this, cloneMap);
     }
 
@@ -153,10 +153,12 @@ RotationDragger::RotationDragger()
     }
 
     addChild(scale);
+
+    isDragEnabled_ = true;
 }
 
 
-RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap* cloneMap)
+RotationDragger::RotationDragger(const RotationDragger& org, CloneMap* cloneMap)
     : SceneDragger(org, cloneMap)
 {
     draggableAxes_ = org.draggableAxes_;
@@ -169,10 +171,12 @@ RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap* cloneMa
         org.scale->copyChildrenTo(scale);
         addChild(scale);
     }
+
+    isDragEnabled_ = org.isDragEnabled_;
 }
 
 
-SgObject* RotationDragger::doClone(SgCloneMap* cloneMap) const
+Referenced* RotationDragger::doClone(CloneMap* cloneMap) const
 {
     return new RotationDragger(*this, cloneMap);
 }
@@ -199,6 +203,18 @@ void RotationDragger::setRadius(double r)
 }
 
 
+bool RotationDragger::isDragEnabled() const
+{
+    return isDragEnabled_;
+}
+
+
+void RotationDragger::setDragEnabled(bool on)
+{
+    isDragEnabled_ = on;
+}
+
+
 bool RotationDragger::isDragging() const
 {
     return dragProjector.isDragging();
@@ -219,6 +235,10 @@ Affine3 RotationDragger::draggedPosition() const
 
 bool RotationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
+    if(!isDragEnabled_){
+        return false;
+    }
+
     int axis;
     int indexOfTopNode;
     if(detectAxisFromNodePath(event.nodePath(), this, axis, indexOfTopNode)){

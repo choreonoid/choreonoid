@@ -21,7 +21,6 @@ public:
     void copyStateFrom(const FountainDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf) override;
@@ -32,6 +31,9 @@ public:
         
     ParticleSystem& particleSystem() { return particleSystem_; }
     const ParticleSystem& particleSystem() const { return particleSystem_; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     ParticleSystem particleSystem_;

@@ -45,8 +45,7 @@ public:
     Qt::HANDLE threadId;
     mutable QMutex stateMutex;
     QWaitCondition stateCondition;
-    python::object resultObject;
-    string resultString;
+    python::object returnValue;
     Signal<void()> sigFinished;
 
     string scriptDirectory;
@@ -58,8 +57,7 @@ public:
     python::object exceptionType;
     python::object exceptionValue;
 
-    python::object lastResultObject;
-    string lastResultString;
+    python::object lastReturnValue;
     python::object lastExceptionType;
     python::object lastExceptionValue;
     string lastExceptionTypeName;
@@ -127,7 +125,7 @@ PythonExecutorImpl::PythonExecutorImpl(const PythonExecutorImpl& org)
 
 void PythonExecutorImpl::resetLastResultObjects()
 {
-    lastResultObject = python::object(); // null
+    lastReturnValue = python::object(); // null
     lastExceptionType = python::object(); // null
     lastExceptionValue = python::object(); // null
 }
@@ -186,9 +184,17 @@ PythonExecutor::State PythonExecutor::state() const
 }
 
 
-static python::object execPythonFileSub(const std::string& filename)
+python::object PythonExecutor::globalNamespace()
 {
-    return pybind11::eval_file(filename.c_str(), getGlobalNamespace());
+    return getGlobalNamespace();
+}
+
+
+bool PythonExecutor::eval(const std::string& code)
+{
+    return impl->exec(
+        [=](){ return pybind11::eval(code.c_str(), getGlobalNamespace()); },
+        "");
 }
 
 
@@ -202,7 +208,9 @@ bool PythonExecutor::execCode(const std::string& code)
 
 bool PythonExecutor::execFile(const std::string& filename)
 {
-    return impl->exec([=](){ return execPythonFileSub(filename); }, filename);
+    return impl->exec(
+        [=](){ return pybind11::eval_file(filename.c_str(), getGlobalNamespace()); },
+        filename);
 }
 
 
@@ -288,17 +296,14 @@ bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const 
 bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
 {
     bool completed = false;
-    resultObject = python::object();
-    resultString.clear();
+    returnValue = python::object();
     
     try {
-        resultObject = execScript();
-        resultString.clear();
+        returnValue = execScript();
         completed = true;
     }
     catch(const python::error_already_set& ex) {
         exceptionText = ex.what();
-        resultString = exceptionText;
         hasException = true;
         if(ex.matches(getExitException())){
             isTerminated = true;
@@ -309,8 +314,7 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
 
     stateMutex.lock();
     isRunningForeground = false;
-    lastResultObject = resultObject;
-    lastResultString = resultString;
+    lastReturnValue = returnValue;
     lastExceptionType = exceptionType;
     lastExceptionValue = exceptionValue;
     lastExceptionTypeName = exceptionTypeName;
@@ -383,21 +387,12 @@ bool PythonExecutorImpl::waitToFinish(double timeout)
 /**
    \note GIL must be obtained when accessing this object.
 */
-python::object PythonExecutor::resultObject()
+python::object PythonExecutor::returnValue()
 {
     impl->stateMutex.lock();
-    python::object object = impl->lastResultObject;
+    python::object object = impl->lastReturnValue;
     impl->stateMutex.unlock();
     return object;
-}
-
-
-const std::string PythonExecutor::resultString() const
-{
-    impl->stateMutex.lock();
-    string result = impl->lastResultString;
-    impl->stateMutex.unlock();
-    return result;
 }
 
 

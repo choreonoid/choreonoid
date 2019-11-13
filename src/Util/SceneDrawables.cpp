@@ -4,6 +4,7 @@
 */
 
 #include "SceneDrawables.h"
+#include "CloneMap.h"
 
 using namespace std;
 using namespace cnoid;
@@ -47,7 +48,7 @@ SgMaterial::SgMaterial(const SgMaterial& org)
 }
 
 
-SgObject* SgMaterial::doClone(SgCloneMap*) const
+Referenced* SgMaterial::doClone(CloneMap*) const
 {
     return new SgMaterial(*this);
 }
@@ -82,7 +83,7 @@ SgImage::SgImage(const SgImage& org)
 }
 
 
-SgObject* SgImage::doClone(SgCloneMap*) const
+Referenced* SgImage::doClone(CloneMap*) const
 {
     return new SgImage(*this);
 }
@@ -137,7 +138,7 @@ SgTextureTransform::SgTextureTransform(const SgTextureTransform& org)
 }
 
 
-SgObject* SgTextureTransform::doClone(SgCloneMap*) const
+Referenced* SgTextureTransform::doClone(CloneMap*) const
 {
     return new SgTextureTransform(*this);
 }
@@ -150,10 +151,10 @@ SgTexture::SgTexture()
 }
 
 
-SgTexture::SgTexture(const SgTexture& org, SgCloneMap* cloneMap)
+SgTexture::SgTexture(const SgTexture& org, CloneMap* cloneMap)
     : SgObject(org)
 {
-    if(cloneMap && cloneMap->isNonNodeCloningEnabled()){
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.image()){
             setImage(cloneMap->getClone<SgImage>(org.image()));
         }
@@ -181,7 +182,7 @@ SgTexture::~SgTexture()
 }    
 
 
-SgObject* SgTexture::doClone(SgCloneMap* cloneMap) const
+Referenced* SgTexture::doClone(CloneMap* cloneMap) const
 {
     return new SgTexture(*this, cloneMap);
 }
@@ -247,13 +248,13 @@ SgMeshBase::SgMeshBase()
 }
 
 
-SgMeshBase::SgMeshBase(const SgMeshBase& org, SgCloneMap* cloneMap)
+SgMeshBase::SgMeshBase(const SgMeshBase& org, CloneMap* cloneMap)
     : SgObject(org),
       normalIndices_(org.normalIndices_),
       colorIndices_(org.colorIndices_),
       texCoordIndices_(org.texCoordIndices_)
 {
-    if(cloneMap && cloneMap->isNonNodeCloningEnabled()){
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.vertices_){
             setVertices(cloneMap->getClone<SgVertexArray>(org.vertices()));
         }
@@ -425,7 +426,7 @@ SgMesh::SgMesh()
 }
 
 
-SgMesh::SgMesh(const SgMesh& org, SgCloneMap* cloneMap)
+SgMesh::SgMesh(const SgMesh& org, CloneMap* cloneMap)
     : SgMeshBase(org, cloneMap),
       triangleVertices_(org.triangleVertices_),
       primitive_(org.primitive_)
@@ -434,7 +435,7 @@ SgMesh::SgMesh(const SgMesh& org, SgCloneMap* cloneMap)
 }
 
 
-SgObject* SgMesh::doClone(SgCloneMap* cloneMap) const
+Referenced* SgMesh::doClone(CloneMap* cloneMap) const
 {
     return new SgMesh(*this, cloneMap);
 }
@@ -515,7 +516,7 @@ SgPolygonMesh::SgPolygonMesh()
 }
 
 
-SgPolygonMesh::SgPolygonMesh(const SgPolygonMesh& org, SgCloneMap* cloneMap)
+SgPolygonMesh::SgPolygonMesh(const SgPolygonMesh& org, CloneMap* cloneMap)
     : SgMeshBase(org, cloneMap),
       polygonVertices_(org.polygonVertices_)
 {
@@ -523,7 +524,7 @@ SgPolygonMesh::SgPolygonMesh(const SgPolygonMesh& org, SgCloneMap* cloneMap)
 }
     
 
-SgObject* SgPolygonMesh::doClone(SgCloneMap* cloneMap) const
+Referenced* SgPolygonMesh::doClone(CloneMap* cloneMap) const
 {
     return new SgPolygonMesh(*this, cloneMap);
 }
@@ -567,10 +568,10 @@ SgShape::SgShape()
 }
 
 
-SgShape::SgShape(const SgShape& org, SgCloneMap* cloneMap)
+SgShape::SgShape(const SgShape& org, CloneMap* cloneMap)
     : SgNode(org)
 {
-    if(cloneMap && cloneMap->isNonNodeCloningEnabled()){
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.mesh()){
             setMesh(cloneMap->getClone<SgMesh>(org.mesh()));
         }
@@ -602,7 +603,7 @@ SgShape::~SgShape()
 }    
 
 
-SgObject* SgShape::doClone(SgCloneMap* cloneMap) const
+Referenced* SgShape::doClone(CloneMap* cloneMap) const
 {
     return new SgShape(*this, cloneMap);
 }
@@ -711,10 +712,10 @@ SgPlot::SgPlot(int polymorhicId)
 }
         
 
-SgPlot::SgPlot(const SgPlot& org, SgCloneMap* cloneMap)
+SgPlot::SgPlot(const SgPlot& org, CloneMap* cloneMap)
     : SgNode(org)
 {
-    if(cloneMap && cloneMap->isNonNodeCloningEnabled()){
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.vertices()){
             setVertices(cloneMap->getClone<SgVertexArray>(org.vertices()));
         }
@@ -911,14 +912,14 @@ SgPointSet::SgPointSet()
 }
 
 
-SgPointSet::SgPointSet(const SgPointSet& org, SgCloneMap* cloneMap)
+SgPointSet::SgPointSet(const SgPointSet& org, CloneMap* cloneMap)
     : SgPlot(org, cloneMap)
 {
     pointSize_ = org.pointSize_;
 }
 
 
-SgObject* SgPointSet::doClone(SgCloneMap* cloneMap) const
+Referenced* SgPointSet::doClone(CloneMap* cloneMap) const
 {
     return new SgPointSet(*this, cloneMap);
 }
@@ -938,14 +939,14 @@ SgLineSet::SgLineSet()
 }
 
 
-SgLineSet::SgLineSet(const SgLineSet& org, SgCloneMap* cloneMap)
+SgLineSet::SgLineSet(const SgLineSet& org, CloneMap* cloneMap)
     : SgPlot(org, cloneMap)
 {
     lineWidth_ = org.lineWidth_;
 }
 
     
-SgObject* SgLineSet::doClone(SgCloneMap* cloneMap) const
+Referenced* SgLineSet::doClone(CloneMap* cloneMap) const
 {
     return new SgLineSet(*this, cloneMap);
 }
@@ -965,7 +966,7 @@ SgOverlay::SgOverlay()
 }
 
 
-SgOverlay::SgOverlay(const SgOverlay& org, SgCloneMap* cloneMap)
+SgOverlay::SgOverlay(const SgOverlay& org, CloneMap* cloneMap)
     : SgGroup(org, cloneMap)
 {
 
@@ -978,7 +979,7 @@ SgOverlay::~SgOverlay()
 }
 
 
-SgObject* SgOverlay::doClone(SgCloneMap* cloneMap) const
+Referenced* SgOverlay::doClone(CloneMap* cloneMap) const
 {
     return new SgOverlay(*this, cloneMap);
 }

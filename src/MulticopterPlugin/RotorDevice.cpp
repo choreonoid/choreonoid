@@ -286,7 +286,7 @@ DeviceState* RotorDevice::cloneState() const
     return new RotorDevice(*this, false);
 }
 
-Device* RotorDevice::clone() const
+Referenced* RotorDevice::doClone(CloneMap*) const
 {
     return new RotorDevice(*this);
 }

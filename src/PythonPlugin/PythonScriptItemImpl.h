@@ -29,8 +29,7 @@ public:
     bool execute();
     bool executeCode(const char* code);
     bool waitToFinish(double timeout);
-    python::object resultObject();
-    const std::string resultString() const;
+    const std::string exceptionText() const;
     Signal<void()>& sigScriptFinished() { return sigScriptFinished_; }
     bool terminate();
     void doPutProperties(PutPropertyFunction& putProperty);

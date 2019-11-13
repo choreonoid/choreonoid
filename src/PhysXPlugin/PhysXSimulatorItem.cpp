@@ -336,7 +336,7 @@ void PhysXLink::createGeometry(PhysXBody* physXBody)
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->collisionShape(), std::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
+        if(extractor->extract(link->collisionShape(), [&](){this->addMesh(extractor, physXBody);})) {
             if(!vertices.empty()){
 #ifdef VERSION_3_3_LATER
                 if(pxRigidActor->getType() == PxActorType::eRIGID_STATIC){

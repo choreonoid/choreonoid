@@ -17,17 +17,16 @@ public:
     PointLight();
     PointLight(const PointLight& org, bool copyStateOnly = false);
 
-    virtual const char* typeName();
+    virtual const char* typeName() override;
     void copyStateFrom(const PointLight& other);
-    virtual void copyStateFrom(const DeviceState& other);
-    virtual DeviceState* cloneState() const;
-    virtual Device* clone() const;
-    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
     static int pointLightStateSize();
-    virtual int stateSize() const;
-    virtual const double* readState(const double* buf);
-    virtual double* writeState(double* out_buf) const;
+    virtual int stateSize() const override;
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
 
     float constantAttenuation() const { return constantAttenuation_; }
     void setConstantAttenuation(float a) { constantAttenuation_ = a; }
@@ -37,6 +36,9 @@ public:
 
     float quadraticAttenuation() const { return quadraticAttenuation_; }
     void setQuadraticAttenuation(float a) { quadraticAttenuation_ = a; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
         
 private:
     float constantAttenuation_;

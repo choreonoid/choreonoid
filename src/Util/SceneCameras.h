@@ -61,7 +61,6 @@ protected:
 public:
     SgPerspectiveCamera();
     SgPerspectiveCamera(const SgPerspectiveCamera& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
     double fieldOfView() const { return fieldOfView_; }
     void setFieldOfView(double fov) { fieldOfView_ = fov; }
@@ -71,6 +70,9 @@ public:
     double fovy(double aspectRatio) const {
         return SgPerspectiveCamera::fovy(aspectRatio, fieldOfView_);
     }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     double fieldOfView_;
@@ -86,10 +88,12 @@ protected:
 public:
     SgOrthographicCamera();
     SgOrthographicCamera(const SgOrthographicCamera& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
     double height() const { return height_; }
     void setHeight(double h) { height_ = h; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     double height_;

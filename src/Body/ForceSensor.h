@@ -14,14 +14,6 @@ namespace cnoid {
 
 class CNOID_EXPORT ForceSensor : public Device
 {
-    Vector6 F_; // f (linear force) + tau (torque)
-        
-    struct Spec {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Vector6 F_max;
-    };
-    std::unique_ptr<Spec> spec;
-        
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -32,7 +24,6 @@ public:
     void copyStateFrom(const ForceSensor& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual void clearState() override;
     virtual int stateSize() const override;
@@ -50,6 +41,18 @@ public:
 
     const Vector6& F_max() const { return spec->F_max; }
     Vector6& F_max() { return spec->F_max; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    Vector6 F_; // f (linear force) + tau (torque)
+        
+    struct Spec {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Vector6 F_max;
+    };
+    std::unique_ptr<Spec> spec;
 };
 
 typedef ref_ptr<ForceSensor> ForceSensorPtr;

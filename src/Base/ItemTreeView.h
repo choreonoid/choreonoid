@@ -5,9 +5,8 @@
 #ifndef CNOID_BASE_ITEM_TREE_VIEW_H
 #define CNOID_BASE_ITEM_TREE_VIEW_H
 
-#include "ItemList.h"
 #include "View.h"
-#include <QModelIndex>
+#include "ItemList.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -18,8 +17,6 @@ class ItemTreeViewImpl;
 
 class CNOID_EXPORT ItemTreeView : public View
 {
-    Q_OBJECT
-
 public:
     static void initializeClass(ExtensionManager* ext);
     static ItemTreeView* instance();
@@ -34,7 +31,7 @@ public:
     /**
        This function returns the specific type items that are selected in the ItemTreeView
     */
-    template <class ItemType> inline ItemList<ItemType> selectedItems() {
+    template <class ItemType> ItemList<ItemType> selectedItems() {
         return allSelectedItems();
     }
 
@@ -43,7 +40,7 @@ public:
     }
 
         
-    template <class ItemType> inline ItemType* selectedItem(bool fromMultiItems = false) {
+    template <class ItemType> ItemType* selectedItem(bool fromMultiItems = false) {
         return selectedItems<ItemType>().toSingle(fromMultiItems);
     }
 
@@ -51,13 +48,13 @@ public:
        This functions returns the specific type items that are selected in the sub tree of the topItem.
        The topItem itself is not included in the return value list.
     */
-    template <class ItemType> inline ItemList<ItemType> selectedSubItems(Item* topItem) {
+    template <class ItemType> ItemList<ItemType> selectedSubItems(Item* topItem) {
         ItemList<> items;
         extractSelectedItemsOfSubTree(topItem, items);
         return items;
     }
 
-    template <class ItemType> inline ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) {
+    template <class ItemType> ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) {
         return selectedSubItems<ItemType>(topItem).toSingle(fromMultiItems);
     }
         
@@ -120,10 +117,6 @@ private:
     ItemList<>& allSelectedItems();
     ItemList<>& allCheckedItems(int id);
     void extractSelectedItemsOfSubTree(Item* topItem, ItemList<>& items);
-
-private Q_SLOTS:
-    void onRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
-    void onRowsInserted(const QModelIndex& parent, int start, int end);
 };
 
 }

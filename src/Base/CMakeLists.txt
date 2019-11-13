@@ -24,7 +24,9 @@ set(sources
   ItemPath.cpp
   ItemTreeView.cpp
   ItemPropertyView.cpp
-  SelectionListEditor.cpp
+  TargetItemPicker.cpp
+  StringListComboBox.cpp
+  PositionEditManager.cpp
   MultiSeqItemCreationPanel.cpp
   ToolBar.cpp
   TimeBar.cpp
@@ -69,6 +71,8 @@ set(sources
   MultiSE3SeqItem.cpp
   MultiSE3MatrixSeqItem.cpp
   Vector3SeqItem.cpp
+  CoordinateFrameListItem.cpp
+  MultiCoordinateFrameListItem.cpp
   ExtCommandItem.cpp
   AbstractTextItem.cpp
   ScriptItem.cpp
@@ -105,6 +109,7 @@ set(sources
   GeneralSliderView.cpp
   ImageView.cpp
   TextEdit.cpp
+  CoordinateFrameListView.cpp
   TaskView.cpp
   VirtualJoystickView.cpp
   MessageLogItem.cpp
@@ -165,6 +170,8 @@ set(headers
   ItemTreeView.h
   ItemList.h
   Item.h
+  TargetItemPicker.h
+  PositionEditManager.h
   PutPropertyFunction.h
   RootItem.h
   FolderItem.h
@@ -175,6 +182,8 @@ set(headers
   MultiSE3SeqItem.h
   MultiSE3MatrixSeqItem.h
   Vector3SeqItem.h
+  CoordinateFrameListItem.h
+  MultiCoordinateFrameListItem.h
   ExtCommandItem.h
   AbstractTextItem.h
   ScriptItem.h
@@ -222,7 +231,6 @@ set(headers
 set(target CnoidBase)
 
 set(qtheaders
-  App.h
   Menu.h
   ToolBar.h
   Process.h
@@ -248,9 +256,9 @@ set(qtheaders
   Timer.h
   SocketNotifier.h
   InfoBar.h
-  ItemTreeView.h
-  SelectionListEditor.h
+  StringListComboBox.h
   TextEdit.h
+  CoordinateFrameListView.h
   )
 
 QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
@@ -283,6 +291,10 @@ else()
 endif()
 
 apply_common_setting_for_library(${target} "${headers}")
+
+file(MAKE_DIRECTORY ${CNOID_BINARY_SHARE_DIR}/icon)
+file(COPY icons/choreonoid.svg DESTINATION ${CNOID_BINARY_SHARE_DIR}/icon)
+install(FILES icons/choreonoid.svg DESTINATION ${CNOID_SHARE_SUBDIR}/icon)
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

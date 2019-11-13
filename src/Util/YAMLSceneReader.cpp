@@ -32,6 +32,7 @@ namespace {
 typedef SgNode* (YAMLSceneReaderImpl::*NodeFunction)(Mapping& info);
 typedef unordered_map<string, NodeFunction> NodeFunctionMap;
 NodeFunctionMap nodeFunctionMap;
+mutex nodeFunctionMapMutex;
 
 struct SceneNodeInfo
 {
@@ -178,15 +179,22 @@ YAMLSceneReader::YAMLSceneReader()
 YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
     : self(self)
 {
-    if(nodeFunctionMap.empty()){
-        nodeFunctionMap["Node"] = &YAMLSceneReaderImpl::readNodeNode;
-        nodeFunctionMap["Group"] = &YAMLSceneReaderImpl::readGroup;
-        nodeFunctionMap["Transform"] = &YAMLSceneReaderImpl::readTransform;
-        nodeFunctionMap["Shape"] = &YAMLSceneReaderImpl::readShape;
-        nodeFunctionMap["DirectionalLight"] = &YAMLSceneReaderImpl::readDirectionalLight;
-        nodeFunctionMap["SpotLight"] = &YAMLSceneReaderImpl::readSpotLight;
-        nodeFunctionMap["Resource"] = &YAMLSceneReaderImpl::readResource;
+    {
+        lock_guard<mutex> lock(nodeFunctionMapMutex);
+        
+        if(nodeFunctionMap.empty()){
+            nodeFunctionMap = {
+                { "Node",             &YAMLSceneReaderImpl::readNodeNode },
+                { "Group",            &YAMLSceneReaderImpl::readGroup },
+                { "Transform",        &YAMLSceneReaderImpl::readTransform },
+                { "Shape",            &YAMLSceneReaderImpl::readShape },
+                { "DirectionalLight", &YAMLSceneReaderImpl::readDirectionalLight },
+                { "SpotLight",        &YAMLSceneReaderImpl::readSpotLight },
+                { "Resource",         &YAMLSceneReaderImpl::readResource }
+            };
+        }
     }
+    
     os_ = &nullout();
     defaultDivisionNumber = meshGenerator.defaultDivisionNumber();
     isUriSchemeRegexReady = false;

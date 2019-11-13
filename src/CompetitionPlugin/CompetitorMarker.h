@@ -16,11 +16,13 @@ public:
     CompetitorMarker();
     CompetitorMarker(const CompetitorMarker& org, bool copyStateOnly = false);
     
-    virtual const char* typeName();    
-    virtual void copyStateFrom(const DeviceState& other);
-    virtual DeviceState* cloneState() const;
-    virtual Device* clone() const;
-    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
+    virtual const char* typeName() override;
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<CompetitorMarker> CompetitorMarkerPtr;

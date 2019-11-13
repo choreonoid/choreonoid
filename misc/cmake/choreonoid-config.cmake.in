@@ -22,11 +22,12 @@ set(CHOREONOID_CXX_STANDARD @CMAKE_CXX_STANDARD@)
 set(CHOREONOID_DEFINITIONS @definitions@)
 set(CHOREONOID_INCLUDE_DIRS @CNOID_SDK_INCLUDE_DIRS@)
 set(CHOREONOID_LIBRARY_DIRS @library_dirs@)
-set(CHOREONOID_UTIL_LIBRARIES CnoidUtil)
+set(CHOREONOID_UTIL_LIBRARIES CnoidUtil @Boost_SYSTEM_LIBRARY@ @Boost_FILESYSTEM_LIBRARY@)
 set(CHOREONOID_BASE_LIBRARIES ${CHOREONOID_UTIL_LIBRARIES} CnoidBase)
 set(CHOREONOID_BODY_LIBRARIES ${CHOREONOID_UTIL_LIBRARIES} CnoidBody)
 set(CHOREONOID_BODY_PLUGIN_LIBRARIES ${CHOREONOID_BASE_LIBRARIES} CnoidBody CnoidBodyPlugin)
 set(CHOREONOID_LIBRARIES ${CNOD_BODY_LIBRARIES} ${CHOREONOID_BODY_PLUGIN_LIBRARIES})
+set(CHOREONOID_VERSION_SUBDIR @CNOID_VERSION_SUBDIR@)
 set(CHOREONOID_PLUGIN_SUBDIR @CNOID_PLUGIN_SUBDIR@)
 set(CHOREONOID_PLUGIN_DIR @CNOID_DIR@/@CNOID_PLUGIN_SUBDIR@)
 set(CHOREONOID_SHARE_SUBDIR @CNOID_SHARE_SUBDIR@)
@@ -47,6 +48,7 @@ MARK_AS_ADVANCED(
   CHOREONOID_LIBRARY_SUFFIX
   )
 
+
 function(add_cnoid_plugin)
   set(target ${ARGV0})
   add_library(${ARGV})
@@ -61,6 +63,7 @@ function(add_cnoid_plugin)
     ARCHIVE_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR}
     RUNTIME_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR})
 endfunction()
+
 
 function(cnoid_make_gettext_mofiles target out_mofiles)
   set(${out_mofiles} "" PARENT_SCOPE)
@@ -81,6 +84,18 @@ function(cnoid_make_gettext_mofiles target out_mofiles)
   endforeach()
   set(${out_mofiles} ${mofiles} PARENT_SCOPE)
 endfunction()
+
+
+function(add_cnoid_simple_controller)
+  set(target ${ARGV0})
+  list(REMOVE_AT ARGV 0)
+  add_library(${target} SHARED ${ARGV})
+  target_link_libraries(${target} ${CHOREONOID_BODY_LIBRARIES})
+  set_target_properties(${target} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR}/simplecontroller PREFIX "")
+  install(TARGETS ${target} LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/simplecontroller)
+endfunction()
+
 
 if(CHOREONOID_ENABLE_PYTHON)
   function(add_cnoid_python_module)

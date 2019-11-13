@@ -1,0 +1,56 @@
+#ifndef CNOID_BODY_ATTACHMENT_DEVICE_H
+#define CNOID_BODY_ATTACHMENT_DEVICE_H
+
+#include "Device.h"
+#include "exportdecl.h"
+
+namespace cnoid {
+
+class HolderDevice;
+typedef ref_ptr<HolderDevice> HolderDevicePtr;
+class YAMLBodyLoader;
+class Mapping;
+
+class CNOID_EXPORT AttachmentDevice : public Device
+{
+public:
+    AttachmentDevice();
+    virtual ~AttachmentDevice();
+
+    virtual const char* typeName() override;
+    void copyAttachmentDeviceStateFrom(const AttachmentDevice& other);
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+    virtual int stateSize() const override;
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
+
+    virtual bool on() const override;
+    virtual void on(bool on) override;
+
+    HolderDevice* holder();
+    void setHolder(HolderDevice* holder);
+
+    std::string category() const;
+    void setCategory(const std::string& category);
+    void clearCategory();
+
+    bool readDescription(YAMLBodyLoader& loader, Mapping& node);
+
+protected:
+    AttachmentDevice(const AttachmentDevice& org, bool copyStateOnly, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    HolderDevicePtr holder_;
+    bool on_;
+
+    std::string* category_; // Not a state
+};
+
+typedef ref_ptr<AttachmentDevice> AttachmentDevicePtr;
+
+}
+
+#endif

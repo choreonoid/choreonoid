@@ -7,16 +7,17 @@
 #include "BodyItem.h"
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/MessageView>
 #include <cnoid/Archive>
-#include <cnoid/EigenArchive>
 #include <cnoid/DyWorld>
 #include <cnoid/DyBody>
 #include <cnoid/ForwardDynamicsCBM>
 #include <cnoid/ConstraintForceSolver>
 #include <cnoid/LeggedBodyHelper>
+#include <cnoid/CloneMap>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
-#include <cnoid/MessageView>
+#include <cnoid/EigenArchive>
 #include <cnoid/IdPair>
 #include <fmt/format.h>
 #include <mutex>
@@ -98,9 +99,6 @@ public:
 
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
-
-    typedef std::map<Link*, Link*> LinkMap;
-    LinkMap orgLinkToInternalLinkMap;
 
     stdx::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
@@ -342,20 +340,20 @@ Item* AISTSimulatorItem::doDuplicate() const
 
 bool AISTSimulatorItem::startSimulation(bool doReset)
 {
-    impl->orgLinkToInternalLinkMap.clear();
     return SimulatorItem::startSimulation(doReset);
 }
 
 
-SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
+SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
 {
-    SimulationBody* simBody = 0;
-    DyBody* body = new DyBody(*orgBody);
+    SimulationBody* simBody = nullptr;
+
+    DyBody* body = new DyBody;
+    cloneMap.setClone(orgBody, body);
+    body->copyFrom(orgBody, &cloneMap);
 
     const int n = orgBody->numLinks();
     for(int i=0; i < n; ++i){
-        impl->orgLinkToInternalLinkMap[orgBody->link(i)] = body->link(i);
-
         auto link = body->link(i);
         if(link->isFreeJoint() && !link->isRoot()){
             MessageView::instance()->putln(

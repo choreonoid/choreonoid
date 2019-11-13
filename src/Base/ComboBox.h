@@ -16,31 +16,21 @@ class CNOID_EXPORT ComboBox : public QComboBox
     Q_OBJECT
 
 public:
-    ComboBox(QWidget* parent = 0);
+    ComboBox(QWidget* parent = nullptr);
+    ~ComboBox();
 
     void enableI18n(const char* domainname);
-
     void addI18nItem(const char* text);
     void addI18nItem(const QIcon & icon, const char* text);
-
     QString currentOrgText() const;
     int findOrgText(const std::string& text, bool setFoundItemCurrent = false);
+    virtual void showPopup() override;
 
-    SignalProxy<void(int)> sigActivated() {
-        return sigActivated_;
-    }
-            
-    SignalProxy<void(int)> sigCurrentIndexChanged() {
-        return sigCurrentIndexChanged_;
-    }
-
-    SignalProxy<void(const QString&)> sigEditTextChanged() {
-        return sigEditTextChanged_;
-    }
-        
-    SignalProxy<void(int)> sigHighlighted() {
-        return sigHighlighted_;
-    }
+    SignalProxy<void(int)> sigActivated();
+    SignalProxy<void(int)> sigCurrentIndexChanged();
+    SignalProxy<void(const QString&)> sigEditTextChanged();
+    SignalProxy<void(int)> sigHighlighted();
+    SignalProxy<void()> sigAboutToShowPopup();
 
 private Q_SLOTS:
     void onActivated(int index);
@@ -49,13 +39,8 @@ private Q_SLOTS:
     void onHighlighted(int index);
 
 private:
-    bool isI18nEnabled;
-    std::string domainName;
-        
-    Signal<void(int)> sigActivated_;
-    Signal<void(int)> sigCurrentIndexChanged_;
-    Signal<void(const QString&)> sigEditTextChanged_;
-    Signal<void(int)> sigHighlighted_;
+    class Impl;
+    Impl* impl;
 };
 
 }

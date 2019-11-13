@@ -18,10 +18,17 @@ namespace cnoid {
 
 class NumericalIK;
 class LinkTraverse;
+class Body;
 
 class CNOID_EXPORT JointPath : public InverseKinematics
 {
 public:
+    /**
+       This function returns a joint path which may do analytical inverse kinematics
+       when the body has the analytical one for a given path.
+    */
+    static std::shared_ptr<JointPath> getCustomPath(Body* body, Link* baseLink, Link* endLink);
+    
     JointPath();
     JointPath(Link* base, Link* end);
     JointPath(Link* end);
@@ -30,11 +37,19 @@ public:
         return joints_.empty();
     }
 		
+    int size() const {
+        return static_cast<int>(joints_.size());
+    }
+
     int numJoints() const {
-        return joints_.size();
+        return size();
     }
 		
     Link* joint(int index) const {
+        return joints_[index];
+    }
+
+    Link* operator[] (int index) const {
         return joints_[index];
     }
 
@@ -52,6 +67,14 @@ public:
 
     LinkPath::accessor joints() { return LinkPath::accessor(joints_); }
     LinkPath::const_accessor joints() const { return LinkPath::const_accessor(joints_); }
+
+    typedef LinkPath::iterator iterator;
+    typedef LinkPath::const_iterator const_iterator;
+
+    iterator begin() { return joints().begin(); }
+    iterator end() { return joints().end(); }
+    const_iterator begin() const { return joints().begin(); }
+    const_iterator end() const { return joints().end(); }
 
     LinkPath& linkPath() { return linkPath_; }
     const LinkPath& linkPath() const { return linkPath_; }
@@ -129,14 +152,10 @@ private:
     std::shared_ptr<LinkTraverse> remainingLinkTraverse;
 };
 
-class Body;
-
-/**
-   This function returns a joint path which may do analytical inverse kinematics
-   when the body has the analytical one for a given path.
-   \todo move back this function to the Body class
-*/
-CNOID_EXPORT std::shared_ptr<JointPath> getCustomJointPath(Body* body, Link* baseLink, Link* endLink);
+//! \deprecated Use JointPath::getCustomPath instead of this.
+inline std::shared_ptr<JointPath> getCustomJointPath(Body* body, Link* baseLink, Link* endLink){
+    return JointPath::getCustomPath(body, baseLink, endLink);
+}
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
 typedef std::shared_ptr<JointPath> JointPathPtr;

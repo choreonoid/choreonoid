@@ -10,65 +10,72 @@ endif()
 set(sources
   Config.cpp
   Referenced.cpp
+  CloneMap.cpp # This must be before any class using CloneMap::getFlagId.
   ConnectionSet.cpp
-  Selection.cpp
-  DataMap.cpp
-  EigenUtil.cpp
-  EigenArchive.cpp
-  ValueTree.cpp
-  YAMLReader.cpp
-  YAMLWriter.cpp
-  UTF8.cpp
-  EasyScanner.cpp
-  NullOut.cpp
-  StringUtil.cpp
   FileUtil.cpp
   ExecutablePath.cpp
   ParametricPathProcessor.cpp
+  GettextUtil.cpp
+  UTF8.cpp
+  NullOut.cpp
+  StringUtil.cpp
+  EasyScanner.cpp
+  ValueTree.cpp
+  YAMLReader.cpp
+  YAMLWriter.cpp
+  EigenUtil.cpp
+  EigenArchive.cpp
+  GeneralId.cpp
+  Selection.cpp
+  DataMap.cpp
   AbstractSeq.cpp
   Vector3Seq.cpp
-  MultiSE3Seq.cpp
-  MultiSE3MatrixSeq.cpp
   MultiValueSeq.cpp
   MultiVector3Seq.cpp
+  MultiSE3Seq.cpp
+  MultiSE3MatrixSeq.cpp
   GeneralSeqReader.cpp
   PlainSeqFileLoader.cpp
-  Task.cpp
-  AbstractTaskSequencer.cpp
-  CollisionDetector.cpp
   RangeLimiter.cpp
+  CoordinateFrame.cpp
+  CoordinateFrameSet.cpp
+  CoordinateFrameList.cpp
+  CoordinateFrameSetGroup.cpp
+  MultiCoordinateFrameSet.cpp
   BoundingBox.cpp
   SceneGraph.cpp
   SceneDrawables.cpp
   SceneCameras.cpp
   SceneLights.cpp
   SceneEffects.cpp
+  SceneMarkers.cpp
   SceneRenderer.cpp
+  CoordinateAxesOverlay.cpp # This must be after SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
+  AbstractSceneLoader.cpp
+  SceneLoader.cpp
   MeshGenerator.cpp
   MeshFilter.cpp
   MeshExtractor.cpp
-  SceneMarkers.cpp
-  CoordinateAxesOverlay.cpp
   PolygonMeshTriangulator.cpp
   Image.cpp
   ImageIO.cpp
   ImageConverter.cpp
   ImageProvider.cpp
   PointSetUtil.cpp
-  AbstractSceneLoader.cpp
-  SceneLoader.cpp
-  YAMLSceneLoader.cpp
+  CollisionDetector.cpp
   YAMLSceneReader.cpp
+  YAMLSceneLoader.cpp
   STLSceneLoader.cpp
   VRML.cpp
   VRMLParser.cpp
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
   VRMLSceneLoader.cpp
-  GettextUtil.cpp
   ExtJoystick.cpp
+  Task.cpp
+  AbstractTaskSequencer.cpp
   CnoidUtil.cpp # This file must be placed at the last position
   )
 
@@ -83,54 +90,74 @@ endif()
 
 set(headers
   Referenced.h
-  EasyScanner.h
-  GaussianFilter.h
-  UniformCubicBSpline.h
-  IdPair.h
-  Array2D.h
-  Deque2D.h
+  CloneMap.h
+  CloneableReferenced.h
   PolymorphicReferencedArray.h
   PolymorphicPointerArray.h
   PolymorphicFunctionSet.h
-  MultiSE3Seq.h
-  MultiSE3MatrixSeq.h
-  MultiSeq.h
-  MultiValueSeq.h
-  MultiVector3Seq.h
-  NullOut.h
-  PlainSeqFileLoader.h
-  RangeLimiter.h
-  Seq.h
-  AbstractSeq.h
+  Signal.h
+  ConnectionSet.h
+  Exception.h
+  Sleep.h
+  ThreadPool.h
   Timeval.h
   TimeMeasure.h
-  Sleep.h
-  Vector3Seq.h
-  StringUtil.h
-  Tokenizer.h
   FileUtil.h
-  MathUtil.h
   ExecutablePath.h
   ParametricPathProcessor.h
+  GettextUtil.h
   UTF8.h
+  NullOut.h
+  StringUtil.h
+  Tokenizer.h
+  EasyScanner.h
+  ValueTree.h
+  ValueTreeUtil.h
+  YAMLReader.h
+  YAMLWriter.h
+  EigenTypes.h
+  EigenUtil.h
+  EigenArchive.h
+  MathUtil.h
+  GeneralId.h
+  Selection.h
+  DataMap.h
+  IdPair.h
+  Array2D.h
+  Deque2D.h
+  AbstractSeq.h
+  Seq.h
+  MultiSeq.h
+  Vector3Seq.h
+  MultiValueSeq.h
+  MultiVector3Seq.h
+  MultiSE3Seq.h
+  MultiSE3MatrixSeq.h
+  PlainSeqFileLoader.h
+  RangeLimiter.h
+  GaussianFilter.h
+  UniformCubicBSpline.h
+  CoordinateFrame.h
+  CoordinateFrameSet.h
+  CoordinateFrameList.h
+  CoordinateFrameSetGroup.h
+  MultiCoordinateFrameSet.h
   BoundingBox.h
   SceneGraph.h
   SceneDrawables.h
   SceneCameras.h
   SceneLights.h
   SceneEffects.h
+  SceneMarkers.h
   SceneRenderer.h
+  CoordinateAxesOverlay.h
+  SceneProvider.h
   SceneUtil.h
   AbstractSceneLoader.h
   SceneLoader.h
   MeshGenerator.h
   MeshFilter.h
   MeshExtractor.h
-  SceneMarkers.h
-  CoordinateAxesOverlay.h
-  SceneProvider.h
-  Collision.h
-  CollisionDetector.h
   Triangulator.h
   PolygonMeshTriangulator.h
   PolyhedralRegion.h
@@ -139,36 +166,24 @@ set(headers
   ImageConverter.h
   ImageProvider.h
   PointSetUtil.h
-  YAMLSceneLoader.h
+  Collision.h
+  CollisionDetector.h
   YAMLSceneReader.h
+  YAMLSceneLoader.h
+  STLSceneLoader.h
   VRML.h
   VRMLParser.h
   VRMLWriter.h
   VRMLToSGConverter.h
-  Parser.h
-  STLSceneLoader.h
-  ValueTree.h
-  ValueTreeUtil.h
-  YAMLReader.h
-  YAMLWriter.h
-  EigenTypes.h
-  EigenUtil.h
-  EigenArchive.h
-  Signal.h
-  ConnectionSet.h
-  GettextUtil.h
-  Selection.h
-  DataMap.h
   JoystickInterface.h
   Joystick.h
   ExtJoystick.h
   SharedJoystick.h
   Task.h
   AbstractTaskSequencer.h
-  Exception.h
   exportdecl.h
   CnoidUtil.h
-  ThreadPool.h
+  
   )
 
 include_directories(${LIBYAML_INCLUDE_DIRS})
