@@ -100,14 +100,15 @@ class CNOID_EXPORT SimpleController
     virtual void stop();
 
     enum StateType {
-        JOINT_ANGLE = SimpleControllerIO::JOINT_ANGLE,
+        JOINT_ANGLE        = SimpleControllerIO::JOINT_ANGLE,
         JOINT_DISPLACEMENT = SimpleControllerIO::JOINT_DISPLACEMENT,
-        JOINT_VELOCITY = SimpleControllerIO::JOINT_VELOCITY,
+        JOINT_VELOCITY     = SimpleControllerIO::JOINT_VELOCITY,
         JOINT_ACCELERATION = SimpleControllerIO::JOINT_ACCELERATION,
-        JOINT_TORQUE = SimpleControllerIO::JOINT_TORQUE,
-        JOINT_FORCE = SimpleControllerIO::JOINT_FORCE,
-        LINK_POSITION = SimpleControllerIO::LINK_POSITION,
-        LINK_FORCE = SimpleControllerIO::LINK_FORCE
+        JOINT_TORQUE       = SimpleControllerIO::JOINT_TORQUE,
+        JOINT_FORCE        = SimpleControllerIO::JOINT_FORCE,
+        JOINT_EFFORT       = SimpleControllerIO::JOINT_EFFORT,
+        LINK_POSITION      = SimpleControllerIO::LINK_POSITION,
+        LINK_FORCE         = SimpleControllerIO::LINK_FORCE
     };
 
   protected:
