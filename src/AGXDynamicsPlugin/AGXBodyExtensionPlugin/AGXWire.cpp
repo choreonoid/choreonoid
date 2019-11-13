@@ -64,7 +64,7 @@ public:
     WireNodeStates& getWireNodeStates();
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
     MappingPtr m_info;
@@ -138,7 +138,7 @@ DeviceState* AGXWireDevice::cloneState() const
     return new AGXWireDevice(*this, true);
 }
 
-Device*AGXWireDevice::doClone(BodyCloneMap*) const
+Referenced* AGXWireDevice::doClone(CloneMap*) const
 {
     return new AGXWireDevice(*this);
 }
