@@ -243,7 +243,6 @@ function(install_external_libraries dll_dir lib_dir)
 endfunction()
 
 option(ENABLE_INSTALL_RPATH "Enable RPATH setting for installed binary files" ON)
-
 if(ENABLE_INSTALL_RPATH)
   set(CMAKE_SKIP_BUILD_RPATH FALSE)
   if(APPLE)
@@ -259,6 +258,14 @@ else()
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 endif()
 
+if(UNIX AND NOT APPLE)
+  option(ENABLE_NEW_DTAGS "Make LD_LIBRARY_PATH take precedence over RPATH with --enable-new-dtags" OFF)
+  if(ENABLE_NEW_DTAGS)
+    set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--enable-new-dtags")
+  else()
+    set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--disable-new-dtags")
+  endif()
+endif()
 
 option(CNOID_ENABLE_BACKWARD_COMPATIBILITY "Enable some backward compatibility" OFF)
 if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
