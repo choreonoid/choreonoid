@@ -43,7 +43,7 @@ public:
     void resetInfo(Mapping* info);
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     MappingPtr m_info;
@@ -98,7 +98,7 @@ DeviceState* AGXMagneticJointDevice::cloneState() const
     return new AGXMagneticJointDevice(*this, false);
 }
 
-Device*AGXMagneticJointDevice::doClone(BodyCloneMap*) const
+Referenced* AGXMagneticJointDevice::doClone(CloneMap*) const
 {
     return new AGXMagneticJointDevice(*this);
 }

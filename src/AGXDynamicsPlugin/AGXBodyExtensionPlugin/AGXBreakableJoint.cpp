@@ -45,7 +45,7 @@ public:
     void resetInfo(Mapping* info);
 
 protected:
-    virtual Device* doClone(BodyCloneMap* cloneMap) const override;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     MappingPtr m_info;
@@ -104,7 +104,7 @@ DeviceState* AGXBreakableJointDevice::cloneState() const
     return new AGXBreakableJointDevice(*this, false);
 }
 
-Device*AGXBreakableJointDevice::doClone(BodyCloneMap*) const
+Referenced* AGXBreakableJointDevice::doClone(CloneMap*) const
 {
     return new AGXBreakableJointDevice(*this);
 }
