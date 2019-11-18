@@ -50,6 +50,7 @@ public:
     void setPointSize(double size);
     double pointSize() const;
 
+    static double defaultVoxelSize();
     double voxelSize() const;
     void setVoxelSize(double size);
     

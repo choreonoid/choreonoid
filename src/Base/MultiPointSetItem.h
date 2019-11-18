@@ -2,15 +2,13 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PCL_PLUGIN_MULTI_POINT_SET_ITEM_H
-#define CNOID_PCL_PLUGIN_MULTI_POINT_SET_ITEM_H
+#ifndef CNOID_BASE_MULTI_POINT_SET_ITEM_H
+#define CNOID_BASE_MULTI_POINT_SET_ITEM_H
 
 #include <cnoid/PointSetItem>
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class MultiPointSetItemImpl;
 
 class CNOID_EXPORT MultiPointSetItem : public Item, public SceneProvider
 {
@@ -20,6 +18,17 @@ public:
     MultiPointSetItem();
     MultiPointSetItem(const MultiPointSetItem& org);
     virtual ~MultiPointSetItem();
+
+    enum VisibilityMode {
+        ShowAll, ShowSelected, NumVisibilityModes
+    };
+    void setVisibilityMode(int mode);
+    
+    enum RenderingMode {
+        Point = PointSetItem::POINT,
+        Voxel = PointSetItem::VOXEL,
+        NumRenderingModes
+    };
 
     void setRenderingMode(int mode);
     int renderingMode() const;
@@ -34,10 +43,10 @@ public:
     PointSetItem* pointSetItem(int index);
     const PointSetItem* pointSetItem(int index) const;
 
-    int numActivePointSetItems() const;
-    PointSetItem* activePointSetItem(int index);
-    const PointSetItem* activePointSetItem(int index) const;
-
+    int numVisiblePointSetItems() const;
+    PointSetItem* visiblePointSetItem(int index);
+    const PointSetItem* visiblePointSetItem(int index) const;
+    
     void selectSinglePointSetItem(int index);
 
     SignalProxy<void(int index)> sigPointSetItemAdded();
@@ -66,13 +75,20 @@ public:
     bool startAutomaticSave(const std::string& filename);
     void stopAutomaticSave();
 
+    // deprecated. Use numVisiblePointSetItems();
+    int numActivePointSetItems() const;
+    // deprecated. Use visiblePointSetItem(int index);
+    PointSetItem* activePointSetItem(int index);
+    const PointSetItem* activePointSetItem(int index) const;
+
+    class Impl;
+
 protected:
     virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
 private:
-    friend class MultiPointSetItemImpl;
-    MultiPointSetItemImpl* impl;
+    Impl* impl;
     void initialize();
 };
 

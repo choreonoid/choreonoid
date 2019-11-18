@@ -17,7 +17,6 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
-#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -41,7 +40,7 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     RectRegionMarkerPtr regionMarker;
     ScopedConnection eraserModeMenuItemConnection;
 
-    SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem);
+    SceneMultiPointSet(MultiPointSetItem::Impl* multiPointSetItem);
 
     int numAttentionPoints() const;
     Vector3 attentionPoint(int index) const;
@@ -65,7 +64,7 @@ typedef ref_ptr<SceneMultiPointSet> SceneMultiPointSetPtr;
 
 namespace cnoid {
         
-class MultiPointSetItemImpl
+class MultiPointSetItem::Impl
 {
 public:
     MultiPointSetItem* self;
@@ -81,8 +80,9 @@ public:
     ItemInfoMap itemInfoMap;
 
     ItemList<PointSetItem> pointSetItems;
-    ItemList<PointSetItem> selectedPointSetItems;
-    ItemList<PointSetItem> activePointSetItems;
+    Selection visibilityMode;
+    ItemList<PointSetItem> lastSelectedPointSetItems;
+    
     SceneMultiPointSetPtr scene;
     Selection renderingMode;
     double pointSize;
@@ -98,9 +98,9 @@ public:
     bool isAutoSaveMode;
     filesystem::path autoSaveFilePath;
 
-    MultiPointSetItemImpl(MultiPointSetItem* self);
-    MultiPointSetItemImpl(MultiPointSetItem* self, const MultiPointSetItemImpl& org);
-    void initialize();
+    Impl(MultiPointSetItem* self);
+    Impl(MultiPointSetItem* self, const Impl& org);
+    void updateVisibilities();
     void onItemSelectionChanged(ItemList<PointSetItem> items);
     void onSubTreeChanged();
     void onPointSetUpdated(PointSetItem* item);
@@ -134,9 +134,9 @@ void MultiPointSetItem::initializeClass(ExtensionManager* ext)
         im.addLoaderAndSaver<MultiPointSetItem>(
             _("Multi Point Sets"), "MULTI-PCD-SET", "yaml",
             [](MultiPointSetItem* item, const std::string& filename, std::ostream& os, Item*){
-                return MultiPointSetItemImpl::loadItem(item, filename); },
+                return MultiPointSetItem::Impl::loadItem(item, filename); },
             [](MultiPointSetItem* item, const std::string& filename, std::ostream& os, Item*){
-                return MultiPointSetItemImpl::saveItem(item, filename); },
+                return MultiPointSetItem::Impl::saveItem(item, filename); },
             ItemManager::PRIORITY_DEFAULT);
         initialized = true;
     }
@@ -145,41 +145,27 @@ void MultiPointSetItem::initializeClass(ExtensionManager* ext)
 
 MultiPointSetItem::MultiPointSetItem()
 {
-    impl = new MultiPointSetItemImpl(this);
+    impl = new Impl(this);
 }
 
 
-MultiPointSetItemImpl::MultiPointSetItemImpl(MultiPointSetItem* self)
-    : self(self)
+MultiPointSetItem::Impl::Impl(MultiPointSetItem* self)
+    : self(self),
+      visibilityMode(NumVisibilityModes, CNOID_GETTEXT_DOMAIN_NAME),
+      renderingMode(NumRenderingModes, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    initialize();
-    renderingMode.select(PointSetItem::POINT);
-
-}
-
-
-MultiPointSetItem::MultiPointSetItem(const MultiPointSetItem& org)
-    : Item(org)
-{
-    impl = new MultiPointSetItemImpl(this, *org.impl);
-}
-
-
-MultiPointSetItemImpl::MultiPointSetItemImpl(MultiPointSetItem* self, const MultiPointSetItemImpl& org)
-    : self(self)
-{
-    initialize();
-    renderingMode.select(org.renderingMode.which());
-}
-
-
-void MultiPointSetItemImpl::initialize()
-{
+    visibilityMode.setSymbol(ShowAll, N_("All"));
+    visibilityMode.setSymbol(ShowSelected, N_("Selected"));
+    visibilityMode.select(ShowAll);
+    
+    renderingMode.setSymbol(Point, N_("Point"));
+    renderingMode.setSymbol(Voxel, N_("Voxel"));
+    renderingMode.select(Point);
+    pointSize = 0.0;
+    voxelSize = PointSetItem::defaultVoxelSize();
+    
     scene = new SceneMultiPointSet(this);
     
-    renderingMode.setSymbol(PointSetItem::POINT, N_("Point"));
-    renderingMode.setSymbol(PointSetItem::VOXEL, N_("Voxel"));
-
     itemSelectionChangedConnection.reset(
         ItemTreeView::instance()->sigSelectionChanged().connect(
             [&](const ItemList<PointSetItem>& items){ onItemSelectionChanged(items); }));
@@ -189,7 +175,22 @@ void MultiPointSetItemImpl::initialize()
             [&](){ onSubTreeChanged(); }));
 
     isAutoSaveMode = false;
-}    
+}
+
+
+MultiPointSetItem::MultiPointSetItem(const MultiPointSetItem& org)
+    : Item(org)
+{
+    impl = new Impl(this, *org.impl);
+}
+
+
+MultiPointSetItem::Impl::Impl(MultiPointSetItem* self, const Impl& org)
+    : Impl(self)
+{
+    visibilityMode.select(org.visibilityMode.which());
+    renderingMode.select(org.renderingMode.which());
+}
 
 
 MultiPointSetItem::~MultiPointSetItem()
@@ -204,48 +205,57 @@ SgNode* MultiPointSetItem::getScene()
 }
 
 
-void MultiPointSetItemImpl::onItemSelectionChanged(ItemList<PointSetItem> items)
+void MultiPointSetItem::setVisibilityMode(int mode)
+{
+    impl->visibilityMode.select(mode);
+    impl->updateVisibilities();
+}
+
+
+void MultiPointSetItem::Impl::updateVisibilities()
+{
+    ItemList<PointSetItem>* pItemList;
+    if(visibilityMode.is(MultiPointSetItem::ShowAll)){
+        pItemList = &pointSetItems;
+    } else if(visibilityMode.is(MultiPointSetItem::ShowSelected)){
+        pItemList = &lastSelectedPointSetItems;
+    }
+
+    scene->pointSetGroup->clearChildren();
+    for(auto& item : *pItemList){
+        scene->pointSetGroup->addChild(item->getScene());
+    }
+    scene->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+}
+
+
+void MultiPointSetItem::Impl::onItemSelectionChanged(ItemList<PointSetItem> items)
 {
     bool changed = false;
 
-    selectedPointSetItems.clear();
-    for(size_t i=0; i < items.size(); ++i){
-        PointSetItem* item = items[i];
+    ItemList<PointSetItem> selected;
+    for(auto& item : items){
         if(item->isOwnedBy(self)){
-            selectedPointSetItems.push_back(item);
+            selected.push_back(item);
         }
     }
-    
-    if(!selectedPointSetItems.empty()){
-        if(selectedPointSetItems != activePointSetItems){
-            activePointSetItems = selectedPointSetItems;
-            changed = true;
-        }
-    } else {
-        ItemList<PointSetItem>::iterator p = activePointSetItems.begin();
-        while(p != activePointSetItems.end()){
-            if((*p)->isOwnedBy(self)){
-                ++p;
-            } else {
-                p = activePointSetItems.erase(p);
-                changed = true;
-            }
-        }
-    }
-
-    if(changed){
-        scene->pointSetGroup->clearChildren();
-        for(size_t i=0; i < activePointSetItems.size(); ++i){
-            scene->pointSetGroup->addChild(activePointSetItems[i]->getScene());
-        }
-        scene->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+    if(!selected.empty() && selected != lastSelectedPointSetItems){
+        lastSelectedPointSetItems = selected;
+        updateVisibilities();
     }
 }
 
 
-void MultiPointSetItemImpl::onSubTreeChanged()
+void MultiPointSetItem::Impl::onSubTreeChanged()
 {
-    pointSetItems.extractChildItems(self);
+    ItemList<PointSetItem> childItems;
+    childItems.extractChildItems(self);
+
+    if(childItems == pointSetItems){
+        return;
+    }
+
+    pointSetItems = childItems;
 
     ItemInfoMap prevMap(itemInfoMap);
     itemInfoMap.clear();
@@ -267,18 +277,24 @@ void MultiPointSetItemImpl::onSubTreeChanged()
                 item->pointSet()->sigUpdated().connect(
                     [&, item](const SgUpdate&){ onPointSetUpdated(item); }));
             itemInfoMap.insert(ItemInfoMap::value_type(item, info));
-
+            
             sigPointSetItemAdded(i);
-
+            
             if(isAutoSaveMode){
                 saveAdditionalPointSet(i);
             }
         }
     }
+
+    if(visibilityMode.is(MultiPointSetItem::ShowSelected)){
+        onItemSelectionChanged(ItemTreeView::instance()->selectedItems<PointSetItem>());
+    } else {
+        updateVisibilities();
+    }
 }
 
 
-void MultiPointSetItemImpl::onPointSetUpdated(PointSetItem* item)
+void MultiPointSetItem::Impl::onPointSetUpdated(PointSetItem* item)
 {
     ItemInfoMap::iterator p = itemInfoMap.find(item);
     if(p != itemInfoMap.end()){
@@ -294,7 +310,7 @@ void MultiPointSetItem::setRenderingMode(int mode)
 }
 
 
-void MultiPointSetItemImpl::setRenderingMode(int mode)
+void MultiPointSetItem::Impl::setRenderingMode(int mode)
 {
     renderingMode.select(mode);
     for(size_t i=0; i < pointSetItems.size(); ++i){
@@ -321,7 +337,7 @@ void MultiPointSetItem::setPointSize(double size)
 }
 
 
-void MultiPointSetItemImpl::setPointSize(double size)
+void MultiPointSetItem::Impl::setPointSize(double size)
 {
     pointSize = size;
     for(size_t i=0; i < pointSetItems.size(); ++i){
@@ -342,7 +358,7 @@ void MultiPointSetItem::setVoxelSize(double size)
 }
 
 
-void MultiPointSetItemImpl::setVoxelSize(double size)
+void MultiPointSetItem::Impl::setVoxelSize(double size)
 {
     voxelSize = size;
     for(size_t i=0; i < pointSetItems.size(); ++i){
@@ -369,15 +385,35 @@ const PointSetItem* MultiPointSetItem::pointSetItem(int index) const
 }
 
 
+int MultiPointSetItem::numVisiblePointSetItems() const
+{
+    if(impl->visibilityMode.is(ShowAll)){
+        return impl->pointSetItems.size();
+    } else {
+        return impl->lastSelectedPointSetItems.size();
+    }
+}
+
+
 int MultiPointSetItem::numActivePointSetItems() const
 {
-    return impl->activePointSetItems.size();
+    return numVisiblePointSetItems();
+}
+
+
+PointSetItem* MultiPointSetItem::visiblePointSetItem(int index)
+{
+    if(impl->visibilityMode.is(ShowAll)){
+        return impl->pointSetItems[index];
+    } else {
+        return impl->lastSelectedPointSetItems[index];
+    }
 }
 
 
 PointSetItem* MultiPointSetItem::activePointSetItem(int index)
 {
-    return impl->activePointSetItems[index];
+    return visiblePointSetItem(index);
 }
 
 
@@ -387,7 +423,7 @@ void MultiPointSetItem::selectSinglePointSetItem(int index)
 }
 
 
-void MultiPointSetItemImpl::selectSinglePointSetItem(int index)
+void MultiPointSetItem::Impl::selectSinglePointSetItem(int index)
 {
     if(index < 0 || index >= static_cast<int>(pointSetItems.size())){
         return;
@@ -395,8 +431,8 @@ void MultiPointSetItemImpl::selectSinglePointSetItem(int index)
     
     itemSelectionChangedConnection.block();
     ItemTreeView* view = ItemTreeView::instance();
-    for(size_t i=0; i < selectedPointSetItems.size(); ++i){
-        view->unselectItem(selectedPointSetItems[i]);
+    for(size_t i=0; i < lastSelectedPointSetItems.size(); ++i){
+        view->unselectItem(lastSelectedPointSetItems[i]);
     }
     PointSetItem* item = pointSetItems[index];
     view->selectItem(item);
@@ -513,8 +549,11 @@ Item* MultiPointSetItem::doDuplicate() const
 
 void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
+    putProperty(_("Visibility"), impl->visibilityMode,
+                [&](int mode){
+                    setVisibilityMode(mode); impl->updateVisibilities(); return true; });
     putProperty(_("Auto save"), false);
-    putProperty(_("Directory"), "");
+    putProperty(_("Directory"), string(""));
     putProperty(_("Num point sets"), numPointSetItems());
     putProperty(_("Rendering mode"), impl->renderingMode,
                 [&](int mode){ return impl->onRenderingModePropertyChanged(mode); });
@@ -522,14 +561,14 @@ void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
                                      [&](double size){ setPointSize(size); return true; });
     putProperty.decimals(4)(_("Voxel size"), voxelSize(),
                             [&](double size){ setVoxelSize(size); return true; });
-    putProperty(_("Top translation"), str(Vector3(topOffsetTransform().translation())),
+    putProperty(_("Translation"), str(Vector3(topOffsetTransform().translation())),
                 [&](const string& value){ return impl->onTopTranslationPropertyChanged(value); });
     Vector3 rpy(TO_DEGREE * rpyFromRot(topOffsetTransform().linear()));
-    putProperty("Top RPY", str(rpy), [&](const string& value){ return impl->onTopRotationPropertyChanged(value); });
+    putProperty(_("Rotation"), str(rpy), [&](const string& value){ return impl->onTopRotationPropertyChanged(value); });
 }
 
 
-bool MultiPointSetItemImpl::onRenderingModePropertyChanged(int mode)
+bool MultiPointSetItem::Impl::onRenderingModePropertyChanged(int mode)
 {
     if(mode != renderingMode.which()){
         if(renderingMode.select(mode)){
@@ -541,7 +580,7 @@ bool MultiPointSetItemImpl::onRenderingModePropertyChanged(int mode)
 }
 
 
-bool MultiPointSetItemImpl::onTopTranslationPropertyChanged(const std::string& value)
+bool MultiPointSetItem::Impl::onTopTranslationPropertyChanged(const std::string& value)
 {
     Vector3 p;
     if(toVector3(value, p)){
@@ -553,7 +592,7 @@ bool MultiPointSetItemImpl::onTopTranslationPropertyChanged(const std::string& v
 }
 
 
-bool MultiPointSetItemImpl::onTopRotationPropertyChanged(const std::string& value)
+bool MultiPointSetItem::Impl::onTopRotationPropertyChanged(const std::string& value)
 {
     Vector3 rpy;
     if(toVector3(value, rpy)){
@@ -567,10 +606,16 @@ bool MultiPointSetItemImpl::onTopRotationPropertyChanged(const std::string& valu
 
 bool MultiPointSetItem::store(Archive& archive)
 {
+    archive.write("visibilityMode", impl->visibilityMode.selectedSymbol());
     archive.write("autoSave", false);
     if(!impl->directory.empty()){
         archive.writeRelocatablePath("directory", impl->directory);
     }
+
+    auto& scene = impl->scene;
+    write(archive, "translation", Vector3(scene->translation()));
+    write(archive, "rotation", AngleAxis(scene->rotation()));
+    
     archive.write("renderingMode", impl->renderingMode.selectedSymbol());
     archive.write("pointSize", pointSize());
     archive.write("voxelSize", voxelSize());
@@ -580,12 +625,27 @@ bool MultiPointSetItem::store(Archive& archive)
 
 bool MultiPointSetItem::restore(const Archive& archive)
 {
+    string symbol;
+    if(archive.read("visibilityMode", symbol)){
+        setVisibilityMode(impl->visibilityMode.index(symbol));
+    }
+    
     archive.get("autoSave", false);
     string directory;
     if(archive.readRelocatablePath("directory", directory)){
 
     }
-    string symbol;
+
+    auto& scene = impl->scene;
+    Vector3 translation;
+    if(read(archive, "translation", translation)){
+        scene->setTranslation(translation);
+    }
+    AngleAxis rot;
+    if(read(archive, "rotation", rot)){
+        scene->setRotation(rot);
+    }
+    
     if(archive.read("renderingMode", symbol)){
         impl->onRenderingModePropertyChanged(impl->renderingMode.index(symbol));
     }
@@ -596,7 +656,7 @@ bool MultiPointSetItem::restore(const Archive& archive)
 }
 
 
-SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem)
+SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItem::Impl* multiPointSetItem)
     : weakMultiPointSetItem(multiPointSetItem->self)
 {
     pointSetGroup = new SgGroup;
@@ -747,7 +807,7 @@ void SceneMultiPointSet::onRegionFixed(const PolyhedralRegion& region)
 {
     MultiPointSetItem* item = weakMultiPointSetItem.lock();
     if(item){
-        int n = item->numActivePointSetItems();
+        int n = item->numVisiblePointSetItems();
         for(int i=0; i < n; ++i){
             item->activePointSetItem(i)->removePoints(region);
         }
@@ -755,13 +815,13 @@ void SceneMultiPointSet::onRegionFixed(const PolyhedralRegion& region)
 }
 
 
-bool MultiPointSetItemImpl::loadItem(MultiPointSetItem* item, const std::string& filename)
+bool MultiPointSetItem::Impl::loadItem(MultiPointSetItem* item, const std::string& filename)
 {
     return item->impl->load(filename);
 }
 
 
-bool MultiPointSetItemImpl::load(const std::string& filename)
+bool MultiPointSetItem::Impl::load(const std::string& filename)
 {
     YAMLReader reader;
     if(reader.load(filename)){
@@ -792,13 +852,13 @@ bool MultiPointSetItemImpl::load(const std::string& filename)
 }
 
 
-bool MultiPointSetItemImpl::saveItem(MultiPointSetItem* item, const std::string& filename)
+bool MultiPointSetItem::Impl::saveItem(MultiPointSetItem* item, const std::string& filename)
 {
     return item->impl->save(filename);
 }
 
 
-bool MultiPointSetItemImpl::save(const std::string& filename)
+bool MultiPointSetItem::Impl::save(const std::string& filename)
 {
     outputArchive = new Mapping();
     outputArchive->setDoubleFormat("%.9g");
@@ -816,7 +876,7 @@ bool MultiPointSetItemImpl::save(const std::string& filename)
 }
 
 
-bool MultiPointSetItemImpl::outputPointSetItem(int index)
+bool MultiPointSetItem::Impl::outputPointSetItem(int index)
 {
     bool result = false;
     
@@ -847,7 +907,7 @@ bool MultiPointSetItemImpl::outputPointSetItem(int index)
 }
 
 
-bool MultiPointSetItemImpl::writeOutputArchive(const std::string& filename)
+bool MultiPointSetItem::Impl::writeOutputArchive(const std::string& filename)
 {
     if(outputArchive && !outputFileListing->empty()){
         YAMLWriter writer(filename);
@@ -866,7 +926,7 @@ bool MultiPointSetItem::startAutomaticSave(const std::string& filename)
 }
 
 
-bool MultiPointSetItemImpl::startAutomaticSave(const std::string& filename)
+bool MultiPointSetItem::Impl::startAutomaticSave(const std::string& filename)
 {
     isAutoSaveMode = false;
 
@@ -893,7 +953,7 @@ bool MultiPointSetItemImpl::startAutomaticSave(const std::string& filename)
 }
 
 
-void MultiPointSetItemImpl::saveAdditionalPointSet(int index)
+void MultiPointSetItem::Impl::saveAdditionalPointSet(int index)
 {
     if(!outputArchive){
         try {

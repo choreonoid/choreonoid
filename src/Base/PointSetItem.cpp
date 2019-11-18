@@ -309,6 +309,12 @@ void PointSetItem::setPointSize(double size)
 }
 
 
+double PointSetItem::defaultVoxelSize()
+{
+    return 0.01f;
+}
+
+
 double PointSetItem::voxelSize() const
 {
     return impl->scene->voxelSize;
@@ -526,7 +532,7 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Translation"), str(Vector3(offsetTransform().translation())),
                 [&](const string& value){ return impl->onTranslationPropertyChanged(value); });
     Vector3 rpy(TO_DEGREE * rpyFromRot(offsetTransform().linear()));
-    putProperty("RPY", str(rpy), [&](const string& value){ return impl->onRotationPropertyChanged(value);});
+    putProperty(_("Rotation"), str(rpy), [&](const string& value){ return impl->onRotationPropertyChanged(value);});
 }
 
 
@@ -573,6 +579,8 @@ bool PointSetItem::store(Archive& archive)
         archive.writeRelocatablePath("file", filePath());
         archive.write("format", fileFormat());
     }
+    write(archive, "translation", Vector3(scene->translation()));
+    write(archive, "rotation", AngleAxis(scene->rotation()));
     archive.write("renderingMode", scene->renderingMode.selectedSymbol());
     archive.write("pointSize", pointSize());
     archive.write("voxelSize", scene->voxelSize);
@@ -584,6 +592,16 @@ bool PointSetItem::store(Archive& archive)
 bool PointSetItem::restore(const Archive& archive)
 {
     ScenePointSet* scene = impl->scene;
+
+    Vector3 translation;
+    if(read(archive, "translation", translation)){
+        scene->setTranslation(translation);
+    }
+    AngleAxis rot;
+    if(read(archive, "rotation", rot)){
+        scene->setRotation(rot);
+    }
+    
     string symbol;
     if(archive.read("renderingMode", symbol)){
         impl->setRenderingMode(scene->renderingMode.index(symbol));
@@ -609,7 +627,7 @@ ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
 
     voxels = new SgShape;
     voxels->getOrCreateMaterial();
-    voxelSize = 0.01f;
+    voxelSize = PointSetItem::defaultVoxelSize();
 
     renderingMode.setSymbol(PointSetItem::POINT, N_("Point"));
     renderingMode.setSymbol(PointSetItem::VOXEL, N_("Voxel"));

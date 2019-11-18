@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-24 00:41+0900\n"
+"POT-Creation-Date: 2019-11-18 17:26+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -81,9 +81,14 @@ msgstr "シーン"
 msgid "File"
 msgstr "ファイル"
 
-#: SceneItem.cpp:154 LightingItem.cpp:484 PointSetItem.cpp:526
+#: SceneItem.cpp:154 MultiPointSetItem.cpp:562 LightingItem.cpp:484
+#: PointSetItem.cpp:526
 msgid "Translation"
-msgstr "位置"
+msgstr "並進"
+
+#: SceneItem.cpp:167 MultiPointSetItem.cpp:565 PointSetItem.cpp:529
+msgid "Rotation"
+msgstr "回転"
 
 #: SceneItem.cpp:178
 msgid "Lightweight rendering"
@@ -434,51 +439,59 @@ msgstr "マルチポイントセットアイテム"
 msgid "Multi Point Sets"
 msgstr "マルチポイントセット"
 
-#: MultiPointSetItem.cpp:180 PointSetItem.cpp:614
+#: MultiPointSetItem.cpp:157
+msgid "All"
+msgstr "全て"
+
+#: MultiPointSetItem.cpp:158
+msgid "Selected"
+msgstr "選択"
+
+#: MultiPointSetItem.cpp:161 PointSetItem.cpp:626
 msgid "Point"
 msgstr "点"
 
-#: MultiPointSetItem.cpp:181 PointSetItem.cpp:615
+#: MultiPointSetItem.cpp:162 PointSetItem.cpp:627
 msgid "Voxel"
 msgstr "ボクセル"
 
-#: MultiPointSetItem.cpp:516
+#: MultiPointSetItem.cpp:550
+msgid "Visibility"
+msgstr "表示"
+
+#: MultiPointSetItem.cpp:553
 msgid "Auto save"
 msgstr "自動保存"
 
-#: MultiPointSetItem.cpp:517 MovieRecorder.cpp:362
+#: MultiPointSetItem.cpp:554 MovieRecorder.cpp:362
 msgid "Directory"
 msgstr "ディレクトリ"
 
-#: MultiPointSetItem.cpp:518
+#: MultiPointSetItem.cpp:555
 msgid "Num point sets"
 msgstr "点群数"
 
-#: MultiPointSetItem.cpp:519 PointSetItem.cpp:517
+#: MultiPointSetItem.cpp:556 PointSetItem.cpp:517
 msgid "Rendering mode"
 msgstr "描画モード"
 
-#: MultiPointSetItem.cpp:521 PointSetItem.cpp:519
+#: MultiPointSetItem.cpp:558 PointSetItem.cpp:519
 msgid "Point size"
 msgstr "デフォルト点サイズ"
 
-#: MultiPointSetItem.cpp:523 PointSetItem.cpp:521
+#: MultiPointSetItem.cpp:560 PointSetItem.cpp:521
 msgid "Voxel size"
 msgstr "ボクセルサイズ"
 
-#: MultiPointSetItem.cpp:525
-msgid "Top translation"
-msgstr "最上位並進"
-
-#: MultiPointSetItem.cpp:726 PointSetItem.cpp:895
+#: MultiPointSetItem.cpp:784 PointSetItem.cpp:907
 msgid "PointSet: Clear Attention Points"
 msgstr "PointSet: 注視点のクリア"
 
-#: MultiPointSetItem.cpp:732 PointSetItem.cpp:901
+#: MultiPointSetItem.cpp:790 PointSetItem.cpp:913
 msgid "PointSet: Start Eraser Mode"
 msgstr "PointSet: 消去モード開始"
 
-#: MultiPointSetItem.cpp:741 PointSetItem.cpp:911
+#: MultiPointSetItem.cpp:799 PointSetItem.cpp:923
 msgid "PointSet: Exit Eraser Mode"
 msgstr "PointSet: 消去モード終了"
 
@@ -1674,11 +1687,11 @@ msgstr "対象アイテム選択用の専用のチェックをアイテムツリ
 msgid "Multi SE3 Seq"
 msgstr "SE3軌道"
 
-#: App.cpp:253 App.cpp:412
+#: App.cpp:258 App.cpp:417
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:257
+#: App.cpp:262
 msgid ""
 "The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: "
 "{3})."
@@ -1857,4 +1870,3 @@ msgstr "スクリプトバー"
 #: ScriptBar.cpp:29
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
-

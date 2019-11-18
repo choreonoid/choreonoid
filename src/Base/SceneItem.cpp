@@ -164,7 +164,7 @@ void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
 
     Vector3 rpy(TO_DEGREE * rpyFromRot(topNode_->rotation()));
     
-    putProperty("RPY", str(rpy),
+    putProperty(_("Rotation"), str(rpy),
                 [&](const std::string& value){
                     Vector3 rpy;
                     if(toVector3(value, rpy)){
