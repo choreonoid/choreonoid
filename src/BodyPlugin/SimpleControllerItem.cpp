@@ -17,6 +17,7 @@
 #include <QLibrary>
 #include <fmt/format.h>
 #include <set>
+#include <bitset>
 #include "gettext.h"
 
 using namespace std;

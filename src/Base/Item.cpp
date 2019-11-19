@@ -8,19 +8,19 @@
 #include "ItemPath.h"
 #include "ItemManager.h"
 #include <cnoid/stdx/filesystem>
-#include <chrono>
 #include <typeinfo>
+#include <bitset>
 #include <unordered_set>
+#include <iostream> // for debug
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
 
-//tmp
-#include <iostream>
 
 namespace {
+
 const bool TRACE_FUNCTIONS = false;
 
 unordered_set<Item*> itemsToEmitSigSubTreeChanged;
@@ -30,47 +30,89 @@ unordered_set<Item*> itemsBeingAddedOrRemoved;
 
 }
 
+namespace cnoid {
 
-Item::Item()
+class Item::Impl
 {
-    attributes = 0;
-    init();
+public:
+    Item* self;
+    Item* lastChild;
+    std::bitset<NUM_ATTRIBUTES> attributes;
+
+    Signal<void(const std::string& oldName)> sigNameChanged;
+    Signal<void()> sigDisconnectedFromRoot;
+    Signal<void()> sigUpdated;
+    Signal<void()> sigPositionChanged;
+    Signal<void()> sigSubTreeChanged;
+
+    // for file overwriting management, mainly accessed by ItemManagerImpl
+    bool isConsistentWithFile;
+    std::string filePath;
+    std::string fileFormat;
+    std::time_t fileModificationTime;
+
+    Impl(Item* self);
+    Impl(Item* self, const Impl& org);
+    void initialize();
+    ~Impl();
+    Item* duplicateAllSub(Item* duplicated) const;
+    bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
+    void detachFromParentItemSub(bool isMoving);
+    void callSlotsOnPositionChanged();
+    void callFuncOnConnectedToRoot();
+    void addToItemsToEmitSigSubTreeChanged();
+    static void emitSigSubTreeChanged();
+    void emitSigDisconnectedFromRootForSubTree();
+    bool traverse(Item* item, const std::function<bool(Item*)>& function);
+};
+
 }
 
 
-Item::Item(const Item& org) :
-    name_(org.name_),
-    attributes(org.attributes)
+Item::Item()
 {
-    init();
+    impl = new Impl(this);
+}
+
+
+Item::Impl::Impl(Item* self)
+    : self(self)
+{
+    initialize();
+}
+
+
+Item::Item(const Item& org)
+    : name_(org.name_)
+{
+    impl = new Impl(this, *org.impl);
+}
+
+
+Item::Impl::Impl(Item* self, const Impl& org)
+    : attributes(org.attributes)
+{
+    initialize();
 
     if(attributes[LOAD_ONLY]){
-        filePath_ = org.filePath_;
-        fileFormat_ = org.fileFormat_;
+        filePath = org.filePath;
+        fileFormat = org.fileFormat;
     }
 }
 
 
-void Item::init()
+void Item::Impl::initialize()
 {
-    parent_ = nullptr;
-    lastChild_ = nullptr;
-    prevItem_ = nullptr;
-
-    numChildren_ = 0;
+    self->parent_ = nullptr;
+    lastChild = nullptr;
+    self->prevItem_ = nullptr;
+    self->numChildren_ = 0;
 
     attributes.reset(SUB_ITEM);
     attributes.reset(TEMPORAL);
 
-    isConsistentWithFile_ = false;
-    fileModificationTime_ = 0;
-}
-
-
-// The assignment operator is disabled
-Item& Item::operator=(const Item& rhs)
-{
-    return *this;
+    isConsistentWithFile = false;
+    fileModificationTime = 0;
 }
 
 
@@ -80,14 +122,36 @@ Item::~Item()
         cout << "Item::~Item() of " << name_ << endl;
     }
     
-    sigSubTreeChanged_.disconnect_all_slots();
-
     Item* child = childItem();
     while(child){
         Item* next = child->nextItem();
         child->detachFromParentItem();
         child = next;
     }
+
+    delete impl;
+}
+
+
+Item::Impl::~Impl()
+{
+    
+}
+
+
+void Item::assign(Item* srcItem)
+{
+    doAssign(srcItem);
+    RootItem* rootItem = findRootItem();
+    if(rootItem){
+        rootItem->emitSigItemAssinged(this, srcItem);
+    }
+}
+
+
+void Item::doAssign(Item* srcItem)
+{
+    
 }
 
 
@@ -96,56 +160,135 @@ void Item::setName(const std::string& name)
     if(name != name_){
         string oldName(name_);
         name_ = name;
-        sigNameChanged_(oldName);
+        impl->sigNameChanged(oldName);
     }
+}
+
+
+SignalProxy<void(const std::string& oldName)> Item::sigNameChanged()
+{
+    return impl->sigNameChanged;
+}
+
+
+bool Item::hasAttribute(Attribute attribute) const
+{
+    return impl->attributes[attribute];
+}
+
+
+void Item::setAttribute(Attribute attribute)
+{
+    impl->attributes.set(attribute);
+}
+
+
+void Item::unsetAttribute(Attribute attribute)
+{
+    impl->attributes.reset(attribute);
+}
+
+
+bool Item::isSubItem() const
+{
+    return impl->attributes[SUB_ITEM];
+}
+
+
+bool Item::isTemporal() const
+{
+    return impl->attributes[TEMPORAL];
+}
+
+
+void Item::setTemporal(bool on)
+{
+    impl->attributes.set(TEMPORAL, on);
+}
+
+
+Item* Item::headItem() const
+{
+    Item* head = const_cast<Item*>(this);
+    while(head->isSubItem()){
+        if(head->parent_){
+            head = head->parent_;
+        } else {
+            break;
+        }
+    }
+    return head;
+}
+
+
+Item* Item::rootItem()
+{
+    return RootItem::instance();
+}
+
+
+RootItem* Item::findRootItem() const
+{
+    return dynamic_cast<RootItem*>(getLocalRootItem());
+}
+
+
+bool Item::isConnectedToRoot() const
+{
+    return findRootItem() != nullptr;
+}
+
+
+Item* Item::getLocalRootItem() const
+{
+    Item* current = const_cast<Item*>(this);
+    while(current->parent_){
+        current = current->parent_;
+    }
+    return current;
 }
 
 
 bool Item::addChildItem(Item* item, bool isManualOperation)
 {
-    return doInsertChildItem(item, 0, isManualOperation);
-}
-
-
-/**
-   This function adds a sub item to the item.
-   The sub item is an item that is a required element of the main item,
-   and the sub item cannot be removed from the main item.
-*/
-bool Item::addSubItem(Item* item)
-{
-    item->attributes.set(SUB_ITEM);
-    return addChildItem(item, false);
+    return impl->doInsertChildItem(item, nullptr, isManualOperation);
 }
 
 
 bool Item::insertChildItem(Item* item, Item* nextItem, bool isManualOperation)
 {
-    return doInsertChildItem(item, nextItem, isManualOperation);
+    return impl->doInsertChildItem(item, nextItem, isManualOperation);
+}
+
+
+bool Item::addSubItem(Item* item)
+{
+    item->impl->attributes.set(SUB_ITEM);
+    return addChildItem(item, false);
 }
 
 
 bool Item::insertSubItem(Item* item, Item* nextItem)
 {
-    item->attributes.set(SUB_ITEM);
-    return doInsertChildItem(item, nextItem, false);
+    item->impl->attributes.set(SUB_ITEM);
+    return impl->doInsertChildItem(item, nextItem, false);
 }
 
 
-bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation)
+bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation)
 {
-    if(!this->onChildItemAboutToBeAdded(item, isManualOperation)){
+    if(!self->onChildItemAboutToBeAdded(item, isManualOperation)){
         return false; // rejected
     }
 
     ++recursiveTreeChangeCounter;
     itemsBeingAddedOrRemoved.insert(item);
     
-    if(!item->attributes[SUB_ITEM]){
+    if(!item->impl->attributes[SUB_ITEM]){
         attributes.reset(TEMPORAL);
     }
     bool isMoving = false;
-    RootItem* rootItem = findRootItem();
+    RootItem* rootItem = self->findRootItem();
     
     if(item->parent_){
         RootItem* srcRootItem = item->parent_->findRootItem();
@@ -154,34 +297,34 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
                 isMoving = true;
             }
         }
-        item->detachFromParentItemSub(isMoving);
+        item->impl->detachFromParentItemSub(isMoving);
     }
         
-    item->parent_ = this;
+    item->parent_ = self;
 
-    if(newNextItem && (newNextItem->parent_ == this)){
+    if(newNextItem && (newNextItem->parent_ == self)){
         item->nextItem_ = newNextItem;
         Item* prevItem = newNextItem->prevItem_;
         if(prevItem){
             prevItem->nextItem_ = item;
             item->prevItem_ = prevItem;
         } else {
-            firstChild_ = item;
+            self->firstChild_ = item;
             item->prevItem_ = nullptr;
         }
         newNextItem->prevItem_ = item;
 
-    } else if(lastChild_){
-        lastChild_->nextItem_ = item;
-        item->prevItem_ = lastChild_;
+    } else if(lastChild){
+        lastChild->nextItem_ = item;
+        item->prevItem_ = lastChild;
         item->nextItem_ = nullptr;
-        lastChild_ = item;
+        lastChild = item;
     } else {
-        firstChild_ = item;
-        lastChild_ = item;
+        self->firstChild_ = item;
+        lastChild = item;
     }
 
-    ++numChildren_;
+    ++self->numChildren_;
 
     if(rootItem){
         if(isMoving){
@@ -193,10 +336,10 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
 
     if(rootItem){
         if(!isMoving){
-            item->callFuncOnConnectedToRoot();
+            item->impl->callFuncOnConnectedToRoot();
         }
-        if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
-            item->callSlotsOnPositionChanged();
+        if(itemsBeingAddedOrRemoved.find(self) == itemsBeingAddedOrRemoved.end()){
+            item->impl->callSlotsOnPositionChanged();
         }
     }
 
@@ -212,133 +355,73 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
     return true;
 }
 
-/**
-   This function is called when a child item is about to added to this item.
-   
-   \return false if the item cannot be accepted as a child item
-   \note The childItem is not actually connected to the item when this function is called.
-*/
+
 bool Item::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
 {
     return true;
 }
 
 
-void Item::callSlotsOnPositionChanged()
+void Item::Impl::callFuncOnConnectedToRoot()
 {
-    onPositionChanged();
-    sigPositionChanged_();
-
-    for(Item* child = childItem(); child; child = child->nextItem()){
-        child->callSlotsOnPositionChanged();
+    self->onConnectedToRoot();
+    for(Item* child = self->childItem(); child; child = child->nextItem()){
+        child->impl->callFuncOnConnectedToRoot();
     }
 }
 
 
-void Item::callFuncOnConnectedToRoot()
+void Item::onConnectedToRoot()
 {
-    onConnectedToRoot();
-    for(Item* child = childItem(); child; child = child->nextItem()){
-        child->callFuncOnConnectedToRoot();
-    }
-}
 
-
-void Item::addToItemsToEmitSigSubTreeChanged()
-{
-    Item* item = this;
-    do {
-        itemsToEmitSigSubTreeChanged.insert(item);
-        item = item->parentItem();
-    } while(item);
-}
-
-
-void Item::emitSigSubTreeChanged()
-{
-    vector<Item*> items(itemsToEmitSigSubTreeChanged.size());
-    std::copy(itemsToEmitSigSubTreeChanged.begin(), itemsToEmitSigSubTreeChanged.end(), items.begin());
-    std::sort(items.begin(), items.end(), [](Item* lhs, Item* rhs){ return !rhs->isOwnedBy(lhs); });
-    
-    for(auto item : items){
-        item->sigSubTreeChanged_();
-    }
-    
-    itemsToEmitSigSubTreeChanged.clear();
-}
-
-
-bool Item::isSubItem() const
-{
-    return attributes[SUB_ITEM];
-}
-
-
-/**
-   If this is true, the item is not automatically saved or overwritten
-   when a project is saved. For example, a motion item which is produced as a
-   simulation result may be an temporal item because a user may not want to
-   save the result. If a user manually save the item, the item becomes a
-   non-temporal item. Or if a child item is manually attached to a temporal
-   item, the item becomes non-temporal one, too.
-*/
-bool Item::isTemporal() const
-{
-    return attributes[TEMPORAL];
-}
-
-
-void Item::setTemporal(bool on)
-{
-    attributes.set(TEMPORAL, on);
 }
 
 
 void Item::detachFromParentItem()
 {
     ItemPtr self = this;
-    detachFromParentItemSub(false);
+    impl->detachFromParentItemSub(false);
 }
 
 
-void Item::detachFromParentItemSub(bool isMoving)
+void Item::Impl::detachFromParentItemSub(bool isMoving)
 {
-    if(!parent_){
+    if(!self->parent_){
         return;
     }
 
     ++recursiveTreeChangeCounter;
-    itemsBeingAddedOrRemoved.insert(this);
+    itemsBeingAddedOrRemoved.insert(self);
     
-    RootItem* rootItem = findRootItem();
+    RootItem* rootItem = self->findRootItem();
   
     if(rootItem){
-        rootItem->notifyEventOnSubTreeRemoving(this, isMoving);
+        rootItem->notifyEventOnSubTreeRemoving(self, isMoving);
     }
 
-    parent_->addToItemsToEmitSigSubTreeChanged();
-    if(prevItem_){
-        prevItem_->nextItem_ = nextItem_;
+    self->parent_->impl->addToItemsToEmitSigSubTreeChanged();
+    if(self->prevItem_){
+        self->prevItem_->nextItem_ = self->nextItem_;
     } else {
-        parent_->firstChild_ = nextItem_;
+        self->parent_->firstChild_ = self->nextItem_;
     }
-    if(nextItem_){
-        nextItem_->prevItem_ = prevItem_;
+    if(self->nextItem_){
+        self->nextItem_->prevItem_ = self->prevItem_;
     } else {
-        parent_->lastChild_ = prevItem_;
+        self->parent_->impl->lastChild = self->prevItem_;
     }
     
-    --parent_->numChildren_;
-    parent_ = nullptr;
-    prevItem_ = nullptr;
-    nextItem_ = nullptr;
+    --self->parent_->numChildren_;
+    self->parent_ = nullptr;
+    self->prevItem_ = nullptr;
+    self->nextItem_ = nullptr;
 
     attributes.reset(SUB_ITEM);
 
     if(rootItem){
-        rootItem->notifyEventOnSubTreeRemoved(this, isMoving);
+        rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
-            if(itemsBeingAddedOrRemoved.find(parent_) == itemsBeingAddedOrRemoved.end()){
+            if(itemsBeingAddedOrRemoved.find(self->parent_) == itemsBeingAddedOrRemoved.end()){
                 callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
             }
             emitSigDisconnectedFromRootForSubTree();
@@ -356,20 +439,55 @@ void Item::detachFromParentItemSub(bool isMoving)
 }
 
 
-void Item::emitSigDisconnectedFromRootForSubTree()
+void Item::Impl::callSlotsOnPositionChanged()
 {
-    for(Item* child = childItem(); child; child = child->nextItem()){
-        child->emitSigDisconnectedFromRootForSubTree();
-    }
-    sigDisconnectedFromRoot_();
+    self->onPositionChanged();
+    sigPositionChanged();
 
-    onDisconnectedFromRoot();
+    for(Item* child = self->childItem(); child; child = child->nextItem()){
+        child->impl->callSlotsOnPositionChanged();
+    }
 }
 
 
-void Item::onConnectedToRoot()
+void Item::onPositionChanged()
 {
 
+}
+
+
+void Item::Impl::addToItemsToEmitSigSubTreeChanged()
+{
+    Item* item = self;
+    do {
+        itemsToEmitSigSubTreeChanged.insert(item);
+        item = item->parentItem();
+    } while(item);
+}
+
+
+void Item::Impl::emitSigSubTreeChanged()
+{
+    vector<Item*> items(itemsToEmitSigSubTreeChanged.size());
+    std::copy(itemsToEmitSigSubTreeChanged.begin(), itemsToEmitSigSubTreeChanged.end(), items.begin());
+    std::sort(items.begin(), items.end(), [](Item* lhs, Item* rhs){ return !rhs->isOwnedBy(lhs); });
+    
+    for(auto item : items){
+        item->impl->sigSubTreeChanged();
+    }
+    
+    itemsToEmitSigSubTreeChanged.clear();
+}
+
+
+void Item::Impl::emitSigDisconnectedFromRootForSubTree()
+{
+    for(Item* child = self->childItem(); child; child = child->nextItem()){
+        child->impl->emitSigDisconnectedFromRootForSubTree();
+    }
+    sigDisconnectedFromRoot();
+
+    self->onDisconnectedFromRoot();
 }
 
 
@@ -381,9 +499,21 @@ void Item::onDisconnectedFromRoot()
 }
 
 
-void Item::onPositionChanged()
+SignalProxy<void()> Item::sigPositionChanged()
 {
+    return impl->sigPositionChanged;
+}
 
+
+SignalProxy<void()> Item::sigSubTreeChanged()
+{
+    return impl->sigSubTreeChanged;
+}
+
+
+SignalProxy<void()> Item::sigDisconnectedFromRoot()
+{
+    return impl->sigDisconnectedFromRoot;
 }
 
 
@@ -476,53 +606,6 @@ Item* Item::findSubItem(const std::string& path) const
 }
 
 
-Item* Item::rootItem()
-{
-    return RootItem::instance();
-}
-
-
-Item* Item::getLocalRootItem() const
-{
-    Item* current = const_cast<Item*>(this);
-    while(current->parent_){
-        current = current->parent_;
-    }
-    return current;
-}
- 
-
-RootItem* Item::findRootItem() const
-{
-    return dynamic_cast<RootItem*>(getLocalRootItem());
-}
-
-
-bool Item::isConnectedToRoot() const
-{
-    return findRootItem() != nullptr;
-}
-
-
-/**
-   @return When the item is embeded one,
-   this function returs the first parent item which is not an embeded one.
-   Otherwise the item itself is returned.
-*/
-Item* Item::headItem() const
-{
-    Item* head = const_cast<Item*>(this);
-    while(head->isSubItem()){
-        if(head->parent_){
-            head = head->parent_;
-        } else {
-            break;
-        }
-    }
-    return head;
-}
-
-
 bool Item::isOwnedBy(Item* item) const
 {
     Item* current = const_cast<Item*>(this);
@@ -538,11 +621,11 @@ bool Item::isOwnedBy(Item* item) const
 
 bool Item::traverse(std::function<bool(Item*)> function)
 {
-    return traverse(this, function);
+    return impl->traverse(this, function);
 }
 
 
-bool Item::traverse(Item* item, const std::function<bool(Item*)>& function)
+bool Item::Impl::traverse(Item* item, const std::function<bool(Item*)>& function)
 {
     if(function(item)){
         return true;
@@ -553,12 +636,6 @@ bool Item::traverse(Item* item, const std::function<bool(Item*)>& function)
         }
     }
     return false;
-}
-
-
-void Item::notifyUpdate()
-{
-    sigUpdated_();
 }
 
 
@@ -573,31 +650,28 @@ Item* Item::duplicate() const
 }
 
 
-/**
-   This function creates a copy of the item including its sub tree items.
-*/
 Item* Item::duplicateAll() const
 {
-    return duplicateAllSub(0);
+    return impl->duplicateAllSub(nullptr);
 }
 
 
-Item* Item::duplicateAllSub(Item* duplicated) const
+Item* Item::Impl::duplicateAllSub(Item* duplicated) const
 {
     if(!duplicated){
-        duplicated = this->duplicate();
+        duplicated = self->duplicate();
     }
     
     if(duplicated){
-        for(Item* child = childItem(); child; child = child->nextItem()){
+        for(Item* child = self->childItem(); child; child = child->nextItem()){
             Item* duplicatedChildItem;
             if(child->isSubItem()){
                 duplicatedChildItem = duplicated->findChildItem(child->name());
                 if(duplicatedChildItem){
-                    child->duplicateAllSub(duplicatedChildItem);
+                    child->impl->duplicateAllSub(duplicatedChildItem);
                 }
             } else {
-                duplicatedChildItem = child->duplicateAllSub(0);
+                duplicatedChildItem = child->impl->duplicateAllSub(nullptr);
                 if(duplicatedChildItem){
                     duplicated->addChildItem(duplicatedChildItem);
                 }
@@ -609,79 +683,42 @@ Item* Item::duplicateAllSub(Item* duplicated) const
 }
 
 
-/**
-   Override this function to allow duplication of an instance.
-*/
 Item* Item::doDuplicate() const
 {
     return nullptr;
 }
 
 
-/**
-   Copy item properties as much as possible like the assignment operator
-*/
-void Item::assign(Item* srcItem)
+void Item::notifyUpdate()
 {
-    doAssign(srcItem);
-    RootItem* rootItem = findRootItem();
-    if(rootItem){
-        rootItem->emitSigItemAssinged(this, srcItem);
-    }
-}
-
-/**
-   Implement the code to copy properties like the assingment operator
-*/
-void Item::doAssign(Item* srcItem)
-{
-    
+    impl->sigUpdated();
 }
 
 
-/**
-   This function loads the data of the item from a file by using a pre-registered loading function.
-   
-   To make this function available, a loading function has to be registered to an ItemManager
-   in advance by calling the addLoader() or addLoaderAndSaver() function.  Otherwise,
-   this function cannot be used.
-   Note that this function should not be overloaded or overridden in the derived classes.
-*/
+SignalProxy<void()> Item::sigUpdated()
+{
+    return impl->sigUpdated;
+}
+
+
 bool Item::load(const std::string& filename, const std::string& format)
 {
     return ItemManager::load(this, filename, parentItem(), format);
 }
 
 
-/**
-   @param parentItem specify this when the item is newly created one and will be attached to a parent item
-   if loading succeeds.
-*/
 bool Item::load(const std::string& filename, Item* parent, const std::string& format)
 {
     return ItemManager::load(this, filename, parent, format);
 }
 
 
-/**
-   This function saves the data of the item to a file by using a pre-registered saving function.
-   
-   To make this function available, a saving function has to be registered to an ItemManager
-   in advance by calling the addSaver() or addLoaderAndSaver() function.  Otherwise,
-   this function cannot be used.
-   Note that this function should not be overloaded or overridden in the derived classes.
-*/
 bool Item::save(const std::string& filename, const std::string& format)
 {
     return ItemManager::save(this, filename, format);
 }
 
 
-/**
-   This function save the data of the item to the file from which the data of the item has been loaded.
-   
-   If the data has not been loaded from a file, a file save dialog opens and user specifies a file.
-*/
 bool Item::overwrite(bool forceOverwrite, const std::string& format)
 {
     return ItemManager::overwrite(this, forceOverwrite, format);
@@ -690,51 +727,51 @@ bool Item::overwrite(bool forceOverwrite, const std::string& format)
 
 const std::string& Item::filePath() const
 {
-    return filePath_;
+    return impl->filePath;
 }
 
 
 const std::string& Item::fileFormat() const
 {
-    return fileFormat_;
+    return impl->fileFormat;
 }
 
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
 const std::string& Item::lastAccessedFilePath() const
 {
-    return filePath_;
+    return impl->filePath;
 }
 
 
 const std::string& Item::lastAccessedFileFormatId() const
 {
-    return fileFormat_;
+    return impl->fileFormat;
 }
 #endif
 
 
 std::time_t Item::fileModificationTime() const
 {
-    return fileModificationTime_;
+    return impl->fileModificationTime;
 }
 
 
 bool Item::isConsistentWithFile() const
 {
-    return isConsistentWithFile_;
+    return impl->isConsistentWithFile;
 }
 
 
 void Item::setConsistentWithFile(bool isConsistent)
 {
-    isConsistentWithFile_ = isConsistent;
+    impl->isConsistentWithFile = isConsistent;
 }
 
 
 void Item::suggestFileUpdate()
 {
-    isConsistentWithFile_ = false;
+    impl->isConsistentWithFile = false;
 }
 
 
@@ -742,25 +779,22 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
 {
     filesystem::path fpath(filename);
     if(filesystem::exists(fpath)){
-        fileModificationTime_ = filesystem::last_write_time_to_time_t(fpath);
-        isConsistentWithFile_ = true;
+        impl->fileModificationTime = filesystem::last_write_time_to_time_t(fpath);
+        impl->isConsistentWithFile = true;
     } else {
-        fileModificationTime_ = 0;
-        isConsistentWithFile_ = false;
+        impl->fileModificationTime = 0;
+        impl->isConsistentWithFile = false;
     }        
-    filePath_ = filename;
-    fileFormat_ = format;
+    impl->filePath = filename;
+    impl->fileFormat = format;
 }
 
 
-/**
-   Use this function to disable the implicit overwrite next time
-*/
 void Item::clearFileInformation()
 {
-    filePath_.clear();
-    fileFormat_.clear();
-    isConsistentWithFile_ = true;
+    impl->filePath.clear();
+    impl->fileFormat.clear();
+    impl->isConsistentWithFile = true;
 }
 
 
@@ -781,8 +815,8 @@ void Item::putProperties(PutPropertyFunction& putProperty)
     
     doPutProperties(putProperty);
 
-    if(!filePath_.empty()){
-        putProperty(_("File"), FilePathProperty(filePath_));
+    if(!impl->filePath.empty()){
+        putProperty(_("File"), FilePathProperty(impl->filePath));
     }
 
     putProperty(_("Num children"), numChildren_);
@@ -792,12 +826,6 @@ void Item::putProperties(PutPropertyFunction& putProperty)
 }
 
 
-/**
-   Override this function to put properties of the item.
-   @note Please call doPutProperties() of the parent class in this function.
-   For example, when your class directly inherits the Item class,
-   call Item::doPutProperties(putProperty).
-*/
 void Item::doPutProperties(PutPropertyFunction& putProperty)
 {
 

@@ -8,10 +8,8 @@
 #include "PutPropertyFunction.h"
 #include <cnoid/Referenced>
 #include <cnoid/Signal>
-#include <cnoid/NullOut>
-#include <ctime>
-#include <bitset>
 #include <string>
+#include <ctime>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -23,7 +21,6 @@ class RootItem;
 class Archive;
 class ExtensionManager;
 
-
 class CNOID_EXPORT Item : public Referenced
 {
 protected:
@@ -31,7 +28,6 @@ protected:
     Item(const Item& item);
     
 public:
-
     enum Attribute {
         SUB_ITEM,
         TEMPORAL,
@@ -39,32 +35,79 @@ public:
         NUM_ATTRIBUTES
     };
 
-    virtual ~Item(); // The destructor should not be called in usual ways
+    virtual ~Item();
+
+    Item& operator=(const Item& rhs) = delete;
+
+    //! Copy item properties as much as possible like the assignment operator
+    void assign(Item* srcItem);
 
     const std::string& name() const { return name_; }
     virtual void setName(const std::string& name);
+    SignalProxy<void(const std::string& oldName)> sigNameChanged();
 
-    bool hasAttribute(Attribute attribute) const { return attributes[attribute]; }
+    bool hasAttribute(Attribute attribute) const;
+    bool isSubItem() const;
+
+    /**
+       If this is true, the item is not automatically saved or overwritten
+       when a project is saved. For example, a motion item which is produced as a
+       simulation result may be an temporal item because a user may not want to
+       save the result. If a user manually save the item, the item becomes a
+       non-temporal item. Or if a child item is manually attached to a temporal
+       item, the item becomes non-temporal one, too.
+    */
+    bool isTemporal() const;
+    
+    void setTemporal(bool on = true);
 
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }
     Item* nextItem() const { return nextItem_; }
     Item* parentItem() const { return parent_; }
 
-    bool addChildItem(Item* item, bool isManualOperation = false);
-    bool addSubItem(Item* item);
-    bool isSubItem() const;
-    void detachFromParentItem();
-    bool insertChildItem(Item* item, Item* nextItem, bool isManualOperation = false);
-    bool insertSubItem(Item* item, Item* nextItem);
-
-    bool isTemporal() const;
-    void setTemporal(bool on = true);
+    /**
+       @return When the item is embeded one,
+       this function returs the first parent item which is not an embeded one.
+       Otherwise the item itself is returned.
+    */
+    Item* headItem() const;
 
     static Item* rootItem();
     RootItem* findRootItem() const;
     bool isConnectedToRoot() const;
     Item* getLocalRootItem() const;
+
+    bool addChildItem(Item* item, bool isManualOperation = false);
+    bool insertChildItem(Item* item, Item* nextItem, bool isManualOperation = false);
+
+    /**
+       This function adds a sub item to the item.
+       The sub item is an item that is a required element of the main item,
+       and the sub item cannot be removed from the main item.
+    */
+    bool addSubItem(Item* item);
+
+    bool insertSubItem(Item* item, Item* nextItem);
+
+    void detachFromParentItem();
+
+    /**
+       This signal is emitted when the position of this item in the item tree is changed.
+       Being added to the tree and being removed from the tree are also the events
+       to emit this signal.
+       This signal is also emitted for descendent items when the position of an ancestor
+       item is changed.
+       This signal is emitted before RootItem::sigTreeChanged();
+    */
+    SignalProxy<void()> sigPositionChanged();
+
+    SignalProxy<void()> sigSubTreeChanged();
+
+    SignalProxy<void()> sigDisconnectedFromRoot();
+
+    //! \deprecated
+    SignalProxy<void()> sigDetachedFromRoot() { return sigDisconnectedFromRoot(); }
 
     /**
        Find an item that has the corresponding path to it in the sub tree
@@ -99,13 +142,6 @@ public:
         return dynamic_cast<ItemType*>(findSubItem(path));
     }
     
-    /*
-      The function 'template <class ItemType> ItemList<ItemType> getSubItems() const'
-      has been removed. Please use ItemList::extractChildItems(Item* item) instead of it.
-    */
-
-    Item* headItem() const;
-
     template <class ItemType> ItemType* findOwnerItem(bool includeSelf = false) const {
         Item* parentItem__ = includeSelf ? const_cast<Item*>(this) : parentItem();
         while(parentItem__){
@@ -134,13 +170,43 @@ public:
     }
 
     Item* duplicate() const;
+
+    //! This function creates a copy of the item including its sub tree items.
     Item* duplicateAll() const;
 
-    void assign(Item* srcItem);
+    virtual void notifyUpdate();
+    SignalProxy<void()> sigUpdated();
 
+    /**
+       This function loads the data of the item from a file by using a pre-registered loading function.
+   
+       To make this function available, a loading function has to be registered to an ItemManager
+       in advance by calling the addLoader() or addLoaderAndSaver() function.  Otherwise,
+       this function cannot be used.
+       Note that this function should not be overloaded or overridden in the derived classes.
+    */
     bool load(const std::string& filename, const std::string& format = std::string());
+
+    /**
+       @param parentItem specify this when the item is newly created one and will be attached to a parent item
+       if loading succeeds.
+    */
     bool load(const std::string& filename, Item* parent, const std::string& format = std::string());
+
+    /**
+       This function saves the data of the item to a file by using a pre-registered saving function.
+   
+       To make this function available, a saving function has to be registered to an ItemManager
+       in advance by calling the addSaver() or addLoaderAndSaver() function.  Otherwise,
+       this function cannot be used.
+       Note that this function should not be overloaded or overridden in the derived classes.
+    */
     bool save(const std::string& filename, const std::string& format = std::string());
+
+    /**
+       This function save the data of the item to the file from which the data of the item has been loaded.
+       If the data has not been loaded from a file, a file save dialog opens and user specifies a file.
+    */
     bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
 
     const std::string& filePath() const;
@@ -151,6 +217,8 @@ public:
     void updateFileInformation(const std::string& filename, const std::string& format);
     void setConsistentWithFile(bool isConsistent);
     void suggestFileUpdate();
+
+    //! Use this function to disable the implicit overwrite next time
     void clearFileInformation();
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
@@ -160,111 +228,54 @@ public:
 
     void putProperties(PutPropertyFunction& putProperty);
 
-    virtual void notifyUpdate();
-
-    SignalProxy<void(const std::string& oldName)> sigNameChanged() {
-        return sigNameChanged_;
-    }
-
-    /**
-       \todo Remove this signal and define 'sigPropertyChanged' instead of it
-    */
-    SignalProxy<void()> sigUpdated() {
-        return sigUpdated_;
-    }
-
-    /**
-       This signal is emitted when the position of this item in the item tree is changed.
-       Being added to the tree and being removed from the tree are also the events
-       to emit this signal.
-       This signal is also emitted for descendent items when the position of an ancestor
-       item is changed.
-       This signal is emitted before RootItem::sigTreeChanged();
-    */
-    SignalProxy<void()> sigPositionChanged() {
-        return sigPositionChanged_;
-    }
-
-    /**
-       @note deprecated
-    */
-    SignalProxy<void()> sigDetachedFromRoot() {
-        return sigDisconnectedFromRoot_;
-    }
-
-    /**
-       @note Please use this instead of sigDetachedFromRoot()
-    */
-    SignalProxy<void()> sigDisconnectedFromRoot() {
-        return sigDisconnectedFromRoot_;
-    }
-
-    SignalProxy<void()> sigSubTreeChanged() {
-        return sigSubTreeChanged_;
-    }
-
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
 protected:
+
+    //! Implement the code to copy properties like the assingment operator
+    virtual void doAssign(Item* srcItem);
+
+    //! Override this function to allow duplication of an instance.
+    virtual Item* doDuplicate() const;
+
+    void setAttribute(Attribute attribute);
+    void unsetAttribute(Attribute attribute);
+
     /**
        This function is called when the item has been connected to the tree including the root item.
        The onPositionChanged function and sigSubTreeChanged are processed before calling this function.
     */
     virtual void onConnectedToRoot();
-    virtual void onDisconnectedFromRoot();
+
     virtual void onPositionChanged();
+    virtual void onDisconnectedFromRoot();
+
+    /**
+       This function is called when a child item is about to added to this item.
+       \return false if the item cannot be accepted as a child item
+       \note The childItem is not actually connected to the item when this function is called.
+    */
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
-        
-    virtual Item* doDuplicate() const;
-    virtual void doAssign(Item* srcItem);
+
+    /**
+       Override this function to put properties of the item.
+       @note Please call doPutProperties() of the parent class in this function.
+       For example, when your class directly inherits the Item class,
+       call Item::doPutProperties(putProperty).
+    */
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
-    void setAttribute(Attribute attribute) { attributes.set(attribute); }
-    void unsetAttribute(Attribute attribute) { attributes.reset(attribute); }
-
 private:
+    class Impl;
+    Impl* impl;
 
     Item* parent_;
     ItemPtr firstChild_;
     ItemPtr nextItem_;
     Item* prevItem_;
-    Item* lastChild_;
-
     int numChildren_;
-
     std::string name_;
-
-    std::bitset<NUM_ATTRIBUTES> attributes;
-
-    Signal<void(const std::string& oldName)> sigNameChanged_;
-    Signal<void()> sigDisconnectedFromRoot_;
-    Signal<void()> sigUpdated_;
-    Signal<void()> sigPositionChanged_;
-    Signal<void()> sigSubTreeChanged_;
-
-    // for file overwriting management, mainly accessed by ItemManagerImpl
-    bool isConsistentWithFile_;
-    std::string filePath_;
-    std::string fileFormat_;
-    std::time_t fileModificationTime_;
-
-    // disable the assignment operator
-    Item& operator=(const Item& rhs);
-
-    void init();
-    bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
-    void callSlotsOnPositionChanged();
-    void callFuncOnConnectedToRoot();
-    void addToItemsToEmitSigSubTreeChanged();
-    void emitSigDisconnectedFromRootForSubTree();
-    static void emitSigSubTreeChanged();
-
-    void detachFromParentItemSub(bool isMoving);
-    bool traverse(Item* item, const std::function<bool(Item*)>& function);
-    Item* duplicateAllSub(Item* duplicated) const;
-        
-    //friend class ItemManagerImpl;
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED
