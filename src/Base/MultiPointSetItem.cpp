@@ -165,10 +165,12 @@ MultiPointSetItem::Impl::Impl(MultiPointSetItem* self)
     voxelSize = PointSetItem::defaultVoxelSize();
     
     scene = new SceneMultiPointSet(this);
-    
+
+    auto itv = ItemTreeView::instance();
     itemSelectionChangedConnection.reset(
-        ItemTreeView::instance()->sigSelectionChanged().connect(
-            [&](const ItemList<PointSetItem>& items){ onItemSelectionChanged(items); }));
+        itv->sigSelectionChanged().connect(
+            [=](const ItemList<PointSetItem>&){
+                onItemSelectionChanged(itv->selectedSubItems<PointSetItem>(self)); }));
 
     subTreeChangedConnection.reset(
         self->sigSubTreeChanged().connect(
@@ -287,7 +289,7 @@ void MultiPointSetItem::Impl::onSubTreeChanged()
     }
 
     if(visibilityMode.is(MultiPointSetItem::ShowSelected)){
-        onItemSelectionChanged(ItemTreeView::instance()->selectedItems<PointSetItem>());
+        onItemSelectionChanged(ItemTreeView::instance()->selectedSubItems<PointSetItem>(self));
     } else {
         updateVisibilities();
     }
