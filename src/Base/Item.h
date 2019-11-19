@@ -61,6 +61,16 @@ public:
     
     void setTemporal(bool on = true);
 
+    bool isSelected() const { return isSelected_; }
+    void setSelected(bool on);
+    SignalProxy<void(bool isSelected)> sigSelectionChanged();
+
+    enum StateId { AnyState = -1, EnabledState = 0 };
+    bool isChecked(int stateId = EnabledState) const;
+    void setChecked(bool on); // for EnabledState
+    void setChecked(int stateId, bool on);
+    SignalProxy<void(bool on)> sigCheckToggled(int stateId);
+
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }
     Item* nextItem() const { return nextItem_; }
@@ -275,6 +285,7 @@ private:
     ItemPtr nextItem_;
     Item* prevItem_;
     int numChildren_;
+    bool isSelected_;
     std::string name_;
 };
 

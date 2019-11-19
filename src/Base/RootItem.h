@@ -36,9 +36,37 @@ public:
     SignalProxy<void(Item* item, bool isMoving)> sigSubTreeRemoving();
     SignalProxy<void(Item* item, bool isMoving)> sigSubTreeRemoved();
     SignalProxy<void()> sigTreeChanged();
-
     SignalProxy<void(Item* assigned, Item* srcItem)> sigItemAssigned();
 
+    void setAllItemSelected(bool on);
+
+    template <class ItemType> ItemList<ItemType> selectedItems() {
+        return getSelectedItems();
+    }
+
+    const ItemList<>& selectedItems() {
+        return getSelectedItems();
+    }
+    
+    template <class ItemType> ItemList<ItemType> selectedSubTreeItems(Item* subTreeRoot) {
+        return getSelectedSubTreeItems(subTreeRoot);
+    }
+
+    SignalProxy<void(const ItemList<>& selectedItems)> sigSelectionChanged();
+
+    //! \return The state id of the new check state.
+    int addCheckState();
+    void setCheckStateDescription(int stateId, const std::string& description);
+    void releaseCheckState(int stateId);
+    void storeCheckStates(int stateId, Archive& archive){
+    bool restoreCheckStates(int stateId, const Archive& archive);
+
+    template <class ItemType> ItemList<ItemType> checkedItems(int stateId = EnabledState) {
+        return getCheckedItems(stateId);
+    }
+
+    SignalProxy<void(Item* item, bool on)> sigCheckToggled(int stateId = EnabledState);
+    
 protected:
 
     virtual Item* doDuplicate() const;

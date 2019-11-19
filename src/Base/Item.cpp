@@ -10,6 +10,7 @@
 #include <cnoid/stdx/filesystem>
 #include <typeinfo>
 #include <bitset>
+#include <vector>
 #include <unordered_set>
 #include <iostream> // for debug
 #include "gettext.h"
@@ -17,7 +18,6 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-
 
 namespace {
 
@@ -37,7 +37,8 @@ class Item::Impl
 public:
     Item* self;
     Item* lastChild;
-    std::bitset<NUM_ATTRIBUTES> attributes;
+    bitset<NUM_ATTRIBUTES> attributes;
+    vector<bool> checkStates;
 
     Signal<void(const std::string& oldName)> sigNameChanged;
     Signal<void()> sigDisconnectedFromRoot;

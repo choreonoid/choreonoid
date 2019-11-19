@@ -11,6 +11,8 @@
 
 namespace cnoid {
 
+class Item;
+
 class CNOID_EXPORT ItemListBase
 {
 public:
