@@ -283,22 +283,10 @@ ItemTreeView* ItemTreeView::mainInstance()
 
 ItemTreeView::ItemTreeView()
 {
-    construct(RootItem::instance());
-}
-
-
-ItemTreeView::ItemTreeView(RootItem* rootItem)
-{
-    construct(rootItem);
-}
-
-
-void ItemTreeView::construct(RootItem* rootItem)
-{
     setDefaultLayoutArea(View::LEFT);
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     
-    impl = new ItemTreeViewImpl(this, rootItem);
+    impl = new ItemTreeViewImpl(this, RootItem::instance());
 
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(impl);
@@ -399,6 +387,12 @@ ItemTreeView::~ItemTreeView()
 ItemTreeViewImpl::~ItemTreeViewImpl()
 {
 
+}
+
+
+Item* ItemTreeView::rootItem()
+{
+    return impl->rootItem;
 }
 
 
@@ -506,12 +500,6 @@ void ItemTreeViewImpl::releaseCheckColumn(int id)
 
     // just hide the column currently
     showCheckColumn(id, false);
-}
-
-
-RootItem* ItemTreeView::rootItem()
-{
-    return impl->rootItem;
 }
 
 

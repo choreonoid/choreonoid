@@ -261,7 +261,7 @@ void invokeFaceControllerPatternFileImportDialog()
             ItemTreeView* itv = ItemTreeView::mainInstance(); 
             Item* parentItem = itv->selectedItem<Item>();
             if(!parentItem){
-                parentItem = itv->rootItem();
+                parentItem = RootItem::instance();
             }
             QStringList poseseqFiles = dialog.selectedFiles();
             AppConfig::archive()->write(

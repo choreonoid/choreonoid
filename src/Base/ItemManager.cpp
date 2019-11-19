@@ -149,9 +149,9 @@ public:
     static SaverPtr determineSaver(list<SaverPtr>& savers, const string& filename, const string& formatId);
     static bool overwrite(Item* item, bool forceOverwrite, const string& formatId);
 
-    static void onNewItemActivated(CreationPanelBase* base);
+    void onNewItemActivated(CreationPanelBase* base);
     void onLoadItemActivated();
-    static void onLoadSpecificTypeItemActivated(LoaderPtr loader);
+    void onLoadSpecificTypeItemActivated(LoaderPtr loader);
     void onReloadSelectedItemsActivated();
     void onSaveSelectedItemsActivated();
     void onSaveSelectedItemsAsActivated();
@@ -279,21 +279,21 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
         menuManager.setPath("/File");
         /*
         menuManager.addItem(_("Open Item"))
-            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onLoadItemActivated, this));
+            ->sigTriggered().connect([&](){ onLoadItemActivated(); });
         */
         menuManager.setPath(N_("Open ..."));
         menuManager.setPath("/File");
         menuManager.addItem(_("Reload Selected Items"))
-            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onReloadSelectedItemsActivated, this));
+            ->sigTriggered().connect([&](){ onReloadSelectedItemsActivated(); });
         
         menuManager.addSeparator();
 
         menuManager.addItem(_("Save Selected Items"))
-            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onSaveSelectedItemsActivated, this));
+            ->sigTriggered().connect([&](){ onSaveSelectedItemsActivated(); });
         menuManager.addItem(_("Save Selected Items As"))
-            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onSaveSelectedItemsAsActivated, this));
+            ->sigTriggered().connect([&](){ onSaveSelectedItemsAsActivated(); });
         menuManager.addItem(_("Save All Items"))
-            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onSaveAllItemsActivated, this));
+            ->sigTriggered().connect([&](){ onSaveAllItemsActivated(); });
 
         menuManager.addSeparator();
         
@@ -302,7 +302,7 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
         
         menuManager.setPath("/File");
         menuManager.addItem(_("Export Selected Items"))
-            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onExportSelectedItemsActivated, this));
+            ->sigTriggered().connect([&](){ onExportSelectedItemsActivated(); });
         
         menuManager.addSeparator();
 
@@ -563,7 +563,7 @@ void ItemManagerImpl::addCreationPanelFilter
 
 ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBase(const string& typeId)
 {
-    CreationPanelBase* base = 0;
+    CreationPanelBase* base = nullptr;
     
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p != typeIdToClassInfoMap.end()){
@@ -588,7 +588,7 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
             base = new CreationPanelBase(title, *info, protoItem, info->isSingleton);
             base->hide();
             menuManager.setPath("/File/New ...").addItem(translatedName)
-                ->sigTriggered().connect(std::bind(ItemManagerImpl::onNewItemActivated, base));
+                ->sigTriggered().connect([=](){ onNewItemActivated(base); });
             info->creationPanelBase = base;
         }
     }
@@ -599,11 +599,10 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
 
 void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
 {
-    ItemTreeView* itemTreeView = ItemTreeView::mainInstance();
-    ItemList<Item> parentItems = itemTreeView->selectedItems();
+    ItemList<Item> parentItems = ItemTreeView::instance()->selectedItems();
 
     if(parentItems.empty()){
-        parentItems.push_back(itemTreeView->rootItem());
+        parentItems.push_back(RootItem::instance());
     }
     for(size_t i=0; i < parentItems.size(); ++i){
         ItemPtr parentItem = parentItems[i];
@@ -789,7 +788,7 @@ void ItemManagerImpl::addLoader
             }
             menuManager.addItem(caption.c_str())
                 ->sigTriggered().connect(
-                    std::bind(&ItemManagerImpl::onLoadSpecificTypeItemActivated, loader));
+                    [=](){ onLoadSpecificTypeItemActivated(loader); });
         }
         
         registeredLoaders.insert(loader);
@@ -1007,8 +1006,8 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
                   
         QStringList filenames = dialog.selectedFiles();
 
-        ItemTreeView* itemTreeView = ItemTreeView::instance();
-        Item* parentItem = itemTreeView->selectedItem<Item>();
+        auto itv = ItemTreeView::instance();
+        Item* parentItem = itv->selectedItem<Item>();
         if(!parentItem){
             parentItem = RootItem::instance();
         }
@@ -1022,7 +1021,7 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
                 parentItem->addChildItem(item, true);
 
                 if(checkCheckBox.isChecked()){
-                    itemTreeView->checkItem(item);
+                    itv->checkItem(item);
                 }
             }
         }
@@ -1343,7 +1342,7 @@ bool ItemManagerImpl::overwrite(Item* item, bool forceOverwrite, const string& f
 
 void ItemManagerImpl::onReloadSelectedItemsActivated()
 {
-    ItemManager::reloadItems(ItemTreeView::mainInstance()->selectedItems());
+    ItemManager::reloadItems(ItemTreeView::instance()->selectedItems());
 }
 
 
@@ -1400,7 +1399,7 @@ Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
 
 void ItemManagerImpl::onSaveSelectedItemsActivated()
 {
-    const ItemList<>& selectedItems = ItemTreeView::mainInstance()->selectedItems();
+    const ItemList<>& selectedItems = ItemTreeView::instance()->selectedItems();
     for(size_t i=0; i < selectedItems.size(); ++i){
         overwrite(selectedItems.get(i), true, "");
     }
@@ -1409,7 +1408,7 @@ void ItemManagerImpl::onSaveSelectedItemsActivated()
 
 void ItemManagerImpl::onSaveSelectedItemsAsActivated()
 {
-    const ItemList<>& selectedItems = ItemTreeView::mainInstance()->selectedItems();
+    const ItemList<>& selectedItems = ItemTreeView::instance()->selectedItems();
     for(size_t i=0; i < selectedItems.size(); ++i){
         string formatId;
         save(selectedItems.get(i), true, false, selectedItems[i]->headItem()->name(), formatId);
@@ -1425,7 +1424,7 @@ void ItemManagerImpl::onSaveAllItemsActivated()
 
 void ItemManagerImpl::onExportSelectedItemsActivated()
 {
-    const ItemList<>& selectedItems = ItemTreeView::mainInstance()->selectedItems();
+    const ItemList<>& selectedItems = ItemTreeView::instance()->selectedItems();
     for(size_t i=0; i < selectedItems.size(); ++i){
         string formatId;
         save(selectedItems.get(i), true, true, selectedItems[i]->headItem()->name(), formatId);

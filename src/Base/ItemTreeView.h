@@ -11,9 +11,7 @@
 
 namespace cnoid {
 
-class RootItem;
 class ItemTreeViewImpl;
-
 
 class CNOID_EXPORT ItemTreeView : public View
 {
@@ -23,11 +21,10 @@ public:
     static ItemTreeView* mainInstance(); // deprecated
 
     ItemTreeView();
-    ItemTreeView(RootItem* rootItem);
     ~ItemTreeView();
 
-    RootItem* rootItem();
-
+    Item* rootItem();
+    
     /**
        This function returns the specific type items that are selected in the ItemTreeView
     */
@@ -113,7 +110,6 @@ protected:
 private:
     ItemTreeViewImpl* impl;
 
-    void construct(RootItem* rootItem);
     ItemList<>& allSelectedItems();
     ItemList<>& allCheckedItems(int id);
     void extractSelectedItemsOfSubTree(Item* topItem, ItemList<>& items);
