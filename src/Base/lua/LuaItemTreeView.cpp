@@ -3,7 +3,6 @@
 */
 
 #include "../ItemTreeView.h"
-#include "../RootItem.h"
 #include <cnoid/LuaUtil>
 #include <cnoid/LuaSignal>
 #include "LuaItemList.h"
@@ -17,7 +16,7 @@ void exportLuaItemTreeView(sol::table& module)
         sol::base_classes, sol::bases<View, QWidget, QObject>(),
         "new", sol::no_constructor,
         "instance", &ItemTreeView::instance,
-        "rootItem", [](ItemTreeView* self) -> RootItemPtr { return self->rootItem(); },
+        "rootItem", [](ItemTreeView* self) -> ItemPtr { return self->rootItem(); },
         "selectedItems", &ItemTreeView::selectedItems<Item>,
         "isItemSelected", &ItemTreeView::isItemSelected,
         "selectItem", sol::overload(
