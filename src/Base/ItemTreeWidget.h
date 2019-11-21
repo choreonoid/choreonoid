@@ -1,25 +1,31 @@
 #ifndef CNOID_BASE_ITEM_TREE_WIDGET_H
 #define CNOID_BASE_ITEM_TREE_WIDGET_H
 
-#include "TreeWidget.h"
-#include "ItemList.h"
+#include <QWidget>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT ItemTreeWidget : public TreeWidget
+class Item;
+class RootItem;
+class Archive;
+
+class CNOID_EXPORT ItemTreeWidget : public QWidget
 {
 public:
-    ItemTreeWidget();
+    ItemTreeWidget(RootItem* rootItem);
     ~ItemTreeWidget();
 
     void addTopLevelItem(Item* item);
+    void setFontSizeZoom(int zoom);
 
-    bool storeState(Archive& archive) override;
-    bool restoreState(const Archive& archive) override;
+    bool storeState(Archive& archive);
+    bool restoreState(const Archive& archive);
+
+    class Impl;
 
 private:
-    
+    Impl* impl;
 };
 
 }

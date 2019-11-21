@@ -18,16 +18,17 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
-class CheckState
+class CheckEntry
 {
 public:
+    //bool isEnabled;
+    Signal<void(Item* item, bool on)> sigCheckToggled;
     ItemList<> checkedItems;
     bool needToUpdateCheckedItemList;
-    Signal<void(Item* item, bool on)> sigCheckToggled;
     string description;
 
-    CheckState(const string& description);
-    CheckState(const CheckState& org);
+    CheckEntry(const string& description);
+    CheckEntry(const CheckEntry& org);
     void emitSigCheckToggled();
 };
 
@@ -42,14 +43,17 @@ public:
 	
     ItemList<> selectedItems;
     bool needToUpdateSelectedItems;
-    LazyCaller emitSigSelectionChangedLater;
-    Signal<void(const ItemList<>& selectedItems)> sigSelectionChanged;
+    LazyCaller emitSigSelectedItemsChangedLater;
+    Signal<void(Item* item, bool on)> sigSelectionChanged;
+    Signal<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged;
 
-    vector<shared_ptr<CheckState>> checkStates;
-    Signal<void(int checkId)> sigCheckStateAdded;
-    Signal<void(int checkId)> sigCheckStateReleased;
+    vector<shared_ptr<CheckEntry>> checkEntries;
+    //Signal<void(int checkId)> sigCheckEntryEnabled;
+    Signal<void(int checkId)> sigCheckEntryAdded;
+    Signal<void(int checkId)> sigCheckEntryReleased;
     Signal<void(Item* item, bool on)> sigCheckToggledDummy;
 
+    string emptyString;
     ItemList<> dummyItemList;
 
     Signal<void(RootItem* rootItem)> sigDestroyed;
@@ -74,16 +78,18 @@ public:
 }
 
 
-CheckState::CheckState(const string& description)
-    : needToUpdateCheckedItemList(false),
+CheckEntry::CheckEntry(const string& description)
+    : //isEnabled(true),
+      needToUpdateCheckedItemList(false),
       description(description)
 {
 
 }
 
 
-CheckState::CheckState(const CheckState& org)
-    : needToUpdateCheckedItemList(false),
+CheckEntry::CheckEntry(const CheckEntry& org)
+    : //isEnabled(org.isEnabled),
+      needToUpdateCheckedItemList(false),
       description(org.description)
 {
 
@@ -112,7 +118,7 @@ RootItem* RootItem::instance()
 RootItem::RootItem()
 {
     impl = new Impl(this);
-    addCheckState(_("Primary check state"));
+    addCheckEntry(_("Primary check"));
 }
 
 
@@ -132,9 +138,9 @@ RootItem::RootItem(const RootItem& org)
 
 RootItem::Impl::Impl(RootItem* self, const Impl& org)
 {
-    checkStates.reserve(org.checkStates.size());
-    for(auto& state : org.checkStates){
-        checkStates.push_back(make_shared<CheckState>(*state));
+    checkEntries.reserve(org.checkEntries.size());
+    for(auto& entry : org.checkEntries){
+        checkEntries.push_back(make_shared<CheckEntry>(*entry));
     }
 
     doCommonInitialization();
@@ -145,8 +151,8 @@ void RootItem::Impl::doCommonInitialization()
 {
     needToUpdateSelectedItems = false;
     
-    emitSigSelectionChangedLater.setFunction(
-        [&](){ sigSelectionChanged(self->getSelectedItems()); });
+    emitSigSelectedItemsChangedLater.setFunction(
+        [&](){ sigSelectedItemsChanged(self->getSelectedItems()); });
 }
 
 
@@ -347,74 +353,113 @@ void RootItem::Impl::updateSelectedItemsIter(Item* item)
 void RootItem::notifyEventOnItemSelectionChanged(Item* item, bool on)
 {
     impl->needToUpdateSelectedItems = true;
-    impl->emitSigSelectionChangedLater();
+    impl->sigSelectionChanged(item, on);
+    impl->emitSigSelectedItemsChangedLater();
 }
 
 
-SignalProxy<void(const ItemList<>& selectedItems)> RootItem::sigSelectionChanged()
+SignalProxy<void(Item* item, bool on)> RootItem::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
 }
 
 
-int RootItem::addCheckState(const std::string& description)
+SignalProxy<void(const ItemList<>& selectedItems)> RootItem::sigSelectedItemsChanged()
 {
-    const int n = impl->checkStates.size();
+    return impl->sigSelectedItemsChanged;
+}
+
+
+int RootItem::addCheckEntry(const std::string& description)
+{
+    const int n = impl->checkEntries.size();
     int checkId;
     for(checkId = 0; checkId < n; ++checkId){
-        if(!impl->checkStates[checkId]){
+        if(!impl->checkEntries[checkId]){
             break;
         }
     }
     if(checkId >= n){
-        impl->checkStates.resize(checkId + 1);
+        impl->checkEntries.resize(checkId + 1);
     }
-    impl->checkStates[checkId] = make_shared<CheckState>(description);
+    impl->checkEntries[checkId] = make_shared<CheckEntry>(description);
 
-    impl->sigCheckStateAdded(checkId);
+    //impl->sigCheckEntryEnabled(checkId, true);
+    impl->sigCheckEntryAdded(checkId);
     
     return checkId;
 }
 
 
-int RootItem::numCheckStates() const
+int RootItem::numCheckEntries() const
 {
-    return impl->checkStates.size();
+    return impl->checkEntries.size();
 }
 
 
-std::string RootItem::checkStateDescription(int checkId) const
+const std::string& RootItem::checkEntryDescription(int checkId) const
 {
-    if(checkId < impl->checkStates.size()){
-        if(auto checkState = impl->checkStates[checkId]){
-            return checkState->description;
+    if(checkId < impl->checkEntries.size()){
+        if(auto checkEntry = impl->checkEntries[checkId]){
+            return checkEntry->description;
         }
     }
-    return string();
+    return impl->emptyString;
 }
 
 
-void RootItem::releaseCheckState(int checkId)
+/*
+void RootItem::setCheckEntryEnabled(int checkId, bool on)
 {
-    int n = impl->checkStates.size();
+    int n = impl->checkEntries.size();
+    if(checkId < n){
+        auto& entry = impl->checkEntries[checkId];
+        if(on != entry->isEnabled){
+            entry->isEnabled = on;
+            if(!on){
+                entry->checkedItems.clear();
+                entry->needToUpdateSelectedItems = false;
+            }
+            impl->sigCheckEntryEnabled(on);
+        }
+    }
+}
+*/
+
+
+void RootItem::releaseCheckEntry(int checkId)
+{
+    int n = impl->checkEntries.size();
     if(checkId < n){
         if(checkId == n - 1){
-            impl->checkStates.resize(n - 1);
+            impl->checkEntries.resize(n - 1);
         } else {
-            impl->checkStates[checkId] = nullptr;
+            impl->checkEntries[checkId] = nullptr;
         }
-        impl->sigCheckStateReleased(checkId);
+        impl->sigCheckEntryReleased(checkId);
     }
 }
 
 
-bool RootItem::storeCheckStates(int checkId, Archive& archive, const std::string& key)
+SignalProxy<void(int checkId)> RootItem::sigCheckEntryAdded()
+{
+    return impl->sigCheckEntryAdded;
+}
+
+
+SignalProxy<void(int checkId)> RootItem::sigCheckEntryReleased()
+{
+    return impl->sigCheckEntryReleased;
+}
+
+
+bool RootItem::storeCheckEntries(int checkId, Archive& archive, const std::string& key)
 {
     ItemList<>* pCheckedItems;
-    if(checkId >= impl->checkStates.size()){
+    if(checkId >= impl->checkEntries.size()){
         return false;
     }
-    auto& items = impl->checkStates[checkId]->checkedItems;
+    auto& items = impl->checkEntries[checkId]->checkedItems;
     Listing& idseq = *archive.createFlowStyleListing(key);
     for(auto& item : items){
         if(auto itemId = archive.getItemId(item)){
@@ -425,7 +470,7 @@ bool RootItem::storeCheckStates(int checkId, Archive& archive, const std::string
 }
 
 
-bool RootItem::restoreCheckStates(int checkId, const Archive& archive, const std::string& key)
+bool RootItem::restoreCheckEntries(int checkId, const Archive& archive, const std::string& key)
 {
     bool completed = false;
     const Listing& idseq = *archive.findListing(key);
@@ -450,13 +495,13 @@ bool RootItem::restoreCheckStates(int checkId, const Archive& archive, const std
 
 const ItemList<>& RootItem::getCheckedItems(int checkId)
 {
-    if(checkId < impl->checkStates.size()){
-        if(auto checkState = impl->checkStates[checkId]){
-            auto& checkedItems = checkState->checkedItems;
-            if(checkState->needToUpdateCheckedItemList){
+    if(checkId < impl->checkEntries.size()){
+        if(auto checkEntry = impl->checkEntries[checkId]){
+            auto& checkedItems = checkEntry->checkedItems;
+            if(checkEntry->needToUpdateCheckedItemList){
                 checkedItems.clear();
                 impl->updateCheckedItemsIter(this, checkId, checkedItems);
-                checkState->needToUpdateCheckedItemList = false;
+                checkEntry->needToUpdateCheckedItemList = false;
             }
             return checkedItems;
         }
@@ -478,10 +523,10 @@ void RootItem::Impl::updateCheckedItemsIter(Item* item, int checkId, ItemList<>&
 
 void RootItem::notifyEventOnItemCheckToggled(Item* item, int checkId, bool on)
 {
-    if(checkId < impl->checkStates.size()){
-        if(auto checkState = impl->checkStates[checkId]){
-            checkState->needToUpdateCheckedItemList = true;
-            checkState->sigCheckToggled(item, on);
+    if(checkId < impl->checkEntries.size()){
+        if(auto checkEntry = impl->checkEntries[checkId]){
+            checkEntry->needToUpdateCheckedItemList = true;
+            checkEntry->sigCheckToggled(item, on);
         }
     }
 }
@@ -489,9 +534,9 @@ void RootItem::notifyEventOnItemCheckToggled(Item* item, int checkId, bool on)
 
 SignalProxy<void(Item* item, bool on)> RootItem::sigCheckToggled(int checkId)
 {
-    if(checkId < impl->checkStates.size()){
-        if(auto checkState = impl->checkStates[checkId]){
-            return checkState->sigCheckToggled;
+    if(checkId < impl->checkEntries.size()){
+        if(auto checkEntry = impl->checkEntries[checkId]){
+            return checkEntry->sigCheckToggled;
         }
     }
     return impl->sigCheckToggledDummy;

@@ -67,14 +67,15 @@ public:
     void setTemporal(bool on = true);
 
     bool isSelected() const { return isSelected_; }
-    void setSelected(bool on);
+    void setSelected(bool on, bool forceToNotify = false);
     void setSubTreeSelected(bool on);
-    SignalProxy<void(bool isSelected)> sigSelectionChanged();
+    SignalProxy<void(bool on)> sigSelectionChanged();
 
     enum CheckId { AnyCheck = -1, PrimaryCheck = 0 };
     bool isChecked(int checkId = PrimaryCheck) const;
     void setChecked(bool on); // for PrimaryCheck
     void setChecked(int checkId, bool on);
+    SignalProxy<void(int checkId, bool on)> sigCheckToggled();
     SignalProxy<void(bool on)> sigCheckToggled(int checkId);
 
     Item* childItem() const { return firstChild_; }

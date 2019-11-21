@@ -55,19 +55,23 @@ public:
     }
     */
 
-    SignalProxy<void(const ItemList<>& selectedItems)> sigSelectionChanged();
+    SignalProxy<void(Item* item, bool on)> sigSelectionChanged();
+    SignalProxy<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged();
 
     //! \return The state id of the new check state.
-    int addCheckState(const std::string& description);
-    int numCheckStates() const;
-    std::string checkStateDescription(int checkId) const;
-    void releaseCheckState(int checkId);
-    bool storeCheckStates(int checkId, Archive& archive, const std::string& key);
-    bool restoreCheckStates(int checkId, const Archive& archive, const std::string& key);
+    int addCheckEntry(const std::string& description);
+    int numCheckEntries() const;
+    const std::string& checkEntryDescription(int checkId) const;
+    //void setCheckEntryEnabled(int checkId, bool on);
+    void releaseCheckEntry(int checkId);
 
-    SignalProxy<void(int checkId)> sigCheckStateAdded();
-    SignalProxy<void(int checkId)> sigCheckStateReleased();
+    //SignalProxy<void(int checkId, bool on)> sigCheckEntryEnabled();
+    SignalProxy<void(int checkId)> sigCheckEntryAdded();
+    SignalProxy<void(int checkId)> sigCheckEntryReleased();
     
+    bool storeCheckEntries(int checkId, Archive& archive, const std::string& key);
+    bool restoreCheckEntries(int checkId, const Archive& archive, const std::string& key);
+
     template <class ItemType> ItemList<ItemType> checkedItems(int checkId = PrimaryCheck) {
         return getCheckedItems(checkId);
     }

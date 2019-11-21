@@ -47,7 +47,8 @@ public:
     Signal<void()> sigPositionChanged;
     Signal<void()> sigSubTreeChanged;
     Signal<void(bool on)> sigSelectionChanged;
-
+    Signal<void(int checkId, bool on)> sigCheckToggled;
+    
     map<int, Signal<void(bool on)>> checkIdToSignalMap;
 
     // for file overwriting management, mainly accessed by ItemManagerImpl
@@ -266,9 +267,9 @@ void Item::setTemporal(bool on)
 }
 
 
-void Item::setSelected(bool on)
+void Item::setSelected(bool on, bool forceToNotify)
 {
-    if(on != isSelected_){
+    if(on != isSelected_ || forceToNotify){
         isSelected_ = on;
         impl->sigSelectionChanged(on);
         if(auto root = findRootItem()){
@@ -321,7 +322,7 @@ void Item::setChecked(int checkId, bool on)
     if(checkId >= impl->checkStates.size()){
         root = findRootItem();
         auto tmpRoot = root ? root : RootItem::instance();
-        if(checkId >= tmpRoot->numCheckStates()){
+        if(checkId >= tmpRoot->numCheckEntries()){
             return;
         }
         impl->checkStates.resize(checkId + 1, false);
@@ -330,6 +331,7 @@ void Item::setChecked(int checkId, bool on)
     if(on != current){
         impl->checkStates[checkId] = on;
         impl->checkIdToSignalMap[checkId](on);
+        impl->sigCheckToggled(checkId, on);
         if(!root){
             root = findRootItem();
         }
@@ -337,6 +339,12 @@ void Item::setChecked(int checkId, bool on)
             root->notifyEventOnItemCheckToggled(this, checkId, on);
         }
     }
+}
+
+
+SignalProxy<void(int checkId, bool on)> Item::sigCheckToggled()
+{
+    return impl->sigCheckToggled;
 }
 
 
