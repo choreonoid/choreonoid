@@ -151,6 +151,11 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
     } else {
         archive->write("plugin", pluginName);
         archive->write("class", className);
+    }
+    if(item->isSelected()){
+        archive->write("isSelected", true);
+    }
+    if(!item->isSubItem()){
         if(!dataArchive->empty()){
             archive->insert("data", dataArchive);
         }
@@ -263,6 +268,7 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
                 format(_("Sub item \"{}\" is not found. Its children cannot be restored."), name),
                 MessageView::ERROR);
         }
+        item->setSelected(archive.get("isSelected", false));
         return item;
     }
     
@@ -303,7 +309,7 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
     } else {
         mv->putln(format(_("Restoring {0} \"{1}\""), className, name));
         mv->flush();
-        
+
         ValueNodePtr dataNode = archive.find("data");
         if(dataNode->isValid()){
             if(!dataNode->isMapping()){
@@ -320,6 +326,11 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
         }
         if(item){
             parentItem->addChildItem(item);
+
+            if(archive.get("isSelected", false)){
+                item->setSelected(true);
+            }
+            
             restoredItems.push_back(item);
         }
     }

@@ -42,6 +42,11 @@ public:
     //! Copy item properties as much as possible like the assignment operator
     void assign(Item* srcItem);
 
+    Item* duplicate() const;
+
+    //! This function creates a copy of the item including its sub tree items.
+    Item* duplicateAll() const;
+
     const std::string& name() const { return name_; }
     virtual void setName(const std::string& name);
     SignalProxy<void(const std::string& oldName)> sigNameChanged();
@@ -63,13 +68,14 @@ public:
 
     bool isSelected() const { return isSelected_; }
     void setSelected(bool on);
+    void setSubTreeSelected(bool on);
     SignalProxy<void(bool isSelected)> sigSelectionChanged();
 
-    enum StateId { AnyState = -1, EnabledState = 0 };
-    bool isChecked(int stateId = EnabledState) const;
-    void setChecked(bool on); // for EnabledState
-    void setChecked(int stateId, bool on);
-    SignalProxy<void(bool on)> sigCheckToggled(int stateId);
+    enum CheckId { AnyCheck = -1, PrimaryCheck = 0 };
+    bool isChecked(int checkId = PrimaryCheck) const;
+    void setChecked(bool on); // for PrimaryCheck
+    void setChecked(int checkId, bool on);
+    SignalProxy<void(bool on)> sigCheckToggled(int checkId);
 
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }
@@ -179,11 +185,6 @@ public:
             });
     }
 
-    Item* duplicate() const;
-
-    //! This function creates a copy of the item including its sub tree items.
-    Item* duplicateAll() const;
-
     virtual void notifyUpdate();
     SignalProxy<void()> sigUpdated();
 
@@ -285,8 +286,8 @@ private:
     ItemPtr nextItem_;
     Item* prevItem_;
     int numChildren_;
-    bool isSelected_;
     std::string name_;
+    bool isSelected_;
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED

@@ -6,13 +6,10 @@
 #define CNOID_BASE_ROOT_ITEM_H
 
 #include "Item.h"
+#include "ItemList.h"
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class Project;
-class Item;
-class RootItemImpl;
 
 /**
    The class of the item that is the root of the item tree structure
@@ -22,7 +19,9 @@ class CNOID_EXPORT RootItem : public Item
 public:
     static void initializeClass(ExtensionManager* ext);
     static RootItem* instance();
-    static RootItem* mainInstance(); // deprecated
+
+    //! \deprecated
+    static RootItem* mainInstance() { return instance(); }
 
     RootItem();
     RootItem(const RootItem& org);
@@ -38,7 +37,9 @@ public:
     SignalProxy<void()> sigTreeChanged();
     SignalProxy<void(Item* assigned, Item* srcItem)> sigItemAssigned();
 
-    void setAllItemSelected(bool on);
+    void setAllItemsSelected(bool on){
+        setSubTreeSelected(on);
+    }
 
     template <class ItemType> ItemList<ItemType> selectedItems() {
         return getSelectedItems();
@@ -47,47 +48,53 @@ public:
     const ItemList<>& selectedItems() {
         return getSelectedItems();
     }
-    
+
+    /*
     template <class ItemType> ItemList<ItemType> selectedSubTreeItems(Item* subTreeRoot) {
         return getSelectedSubTreeItems(subTreeRoot);
     }
+    */
 
     SignalProxy<void(const ItemList<>& selectedItems)> sigSelectionChanged();
 
     //! \return The state id of the new check state.
-    int addCheckState();
-    void setCheckStateDescription(int stateId, const std::string& description);
-    void releaseCheckState(int stateId);
-    void storeCheckStates(int stateId, Archive& archive){
-    bool restoreCheckStates(int stateId, const Archive& archive);
+    int addCheckState(const std::string& description);
+    int numCheckStates() const;
+    std::string checkStateDescription(int checkId) const;
+    void releaseCheckState(int checkId);
+    bool storeCheckStates(int checkId, Archive& archive, const std::string& key);
+    bool restoreCheckStates(int checkId, const Archive& archive, const std::string& key);
 
-    template <class ItemType> ItemList<ItemType> checkedItems(int stateId = EnabledState) {
-        return getCheckedItems(stateId);
+    SignalProxy<void(int checkId)> sigCheckStateAdded();
+    SignalProxy<void(int checkId)> sigCheckStateReleased();
+    
+    template <class ItemType> ItemList<ItemType> checkedItems(int checkId = PrimaryCheck) {
+        return getCheckedItems(checkId);
     }
 
-    SignalProxy<void(Item* item, bool on)> sigCheckToggled(int stateId = EnabledState);
+    SignalProxy<void(Item* item, bool on)> sigCheckToggled(int checkId = PrimaryCheck);
     
 protected:
-
-    virtual Item* doDuplicate() const;
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
-
-    void initializeInstance();
-
     friend class Item;
+    class Impl;
+    Impl* impl;
 
+    // The following functions are called from the implementation of the Item class
     void notifyEventOnSubTreeAdded(Item* item);
     void notifyEventOnSubTreeMoved(Item* item);
     void notifyEventOnSubTreeRemoving(Item* item, bool isMoving);
     void notifyEventOnSubTreeRemoved(Item* item, bool isMoving);
-
     void emitSigItemAssinged(Item* assigned, Item* srcItem);
+    void notifyEventOnItemSelectionChanged(Item* item, bool on);
+    void notifyEventOnItemCheckToggled(Item* item, int checkId, bool on);
 
-    friend class RootItemImpl;
-    RootItemImpl* impl;
+    const ItemList<>& getSelectedItems();
+    const ItemList<>& getCheckedItems(int checkId);
 };
 
 typedef ref_ptr<RootItem> RootItemPtr;

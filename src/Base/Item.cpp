@@ -11,6 +11,7 @@
 #include <typeinfo>
 #include <bitset>
 #include <vector>
+#include <map>
 #include <unordered_set>
 #include <iostream> // for debug
 #include "gettext.h"
@@ -45,6 +46,9 @@ public:
     Signal<void()> sigUpdated;
     Signal<void()> sigPositionChanged;
     Signal<void()> sigSubTreeChanged;
+    Signal<void(bool on)> sigSelectionChanged;
+
+    map<int, Signal<void(bool on)>> checkIdToSignalMap;
 
     // for file overwriting management, mainly accessed by ItemManagerImpl
     bool isConsistentWithFile;
@@ -56,6 +60,7 @@ public:
     Impl(Item* self, const Impl& org);
     void initialize();
     ~Impl();
+    void setSubTreeSelectedIter(Item* item, bool on);
     Item* duplicateAllSub(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void detachFromParentItemSub(bool isMoving);
@@ -64,6 +69,8 @@ public:
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
     void emitSigDisconnectedFromRootForSubTree();
+    void notifySubTreeSelectedItemsToRootItem(Item* item, RootItem* root);
+    void notifySubTreeActiveChecksToRootItem(Item* item, RootItem* root);
     bool traverse(Item* item, const std::function<bool(Item*)>& function);
 };
 
@@ -108,6 +115,7 @@ void Item::Impl::initialize()
     lastChild = nullptr;
     self->prevItem_ = nullptr;
     self->numChildren_ = 0;
+    self->isSelected_ = false;
 
     attributes.reset(SUB_ITEM);
     attributes.reset(TEMPORAL);
@@ -153,6 +161,56 @@ void Item::assign(Item* srcItem)
 void Item::doAssign(Item* srcItem)
 {
     
+}
+
+
+Item* Item::duplicate() const
+{
+    Item* duplicated = doDuplicate();
+    if(duplicated && (typeid(*duplicated) != typeid(*this))){
+        delete duplicated;
+        duplicated = nullptr;
+    }
+    return duplicated;
+}
+
+
+Item* Item::duplicateAll() const
+{
+    return impl->duplicateAllSub(nullptr);
+}
+
+
+Item* Item::Impl::duplicateAllSub(Item* duplicated) const
+{
+    if(!duplicated){
+        duplicated = self->duplicate();
+    }
+    
+    if(duplicated){
+        for(Item* child = self->childItem(); child; child = child->nextItem()){
+            Item* duplicatedChildItem;
+            if(child->isSubItem()){
+                duplicatedChildItem = duplicated->findChildItem(child->name());
+                if(duplicatedChildItem){
+                    child->impl->duplicateAllSub(duplicatedChildItem);
+                }
+            } else {
+                duplicatedChildItem = child->impl->duplicateAllSub(nullptr);
+                if(duplicatedChildItem){
+                    duplicated->addChildItem(duplicatedChildItem);
+                }
+            }
+        }
+    }
+
+    return duplicated;
+}
+
+
+Item* Item::doDuplicate() const
+{
+    return nullptr;
 }
 
 
@@ -207,6 +265,86 @@ void Item::setTemporal(bool on)
     impl->attributes.set(TEMPORAL, on);
 }
 
+
+void Item::setSelected(bool on)
+{
+    if(on != isSelected_){
+        isSelected_ = on;
+        impl->sigSelectionChanged(on);
+        if(auto root = findRootItem()){
+            root->notifyEventOnItemSelectionChanged(this, on);
+        }
+    }
+}
+
+
+void Item::setSubTreeSelected(bool on)
+{
+    impl->setSubTreeSelectedIter(this, on);
+}
+
+
+void Item::Impl::setSubTreeSelectedIter(Item* item, bool on)
+{
+    item->setSelected(on);
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        setSubTreeSelectedIter(child, on);
+    }
+}
+
+
+SignalProxy<void(bool isSelected)> Item::sigSelectionChanged()
+{
+    return impl->sigSelectionChanged;
+}
+
+
+bool Item::isChecked(int checkId) const
+{
+    if(checkId < impl->checkStates.size()){
+        return impl->checkStates[checkId];
+    }
+    return false;
+}
+
+
+void Item::setChecked(bool on)
+{
+    setChecked(PrimaryCheck, on);
+}
+
+
+void Item::setChecked(int checkId, bool on)
+{
+    RootItem* root = nullptr;
+    
+    if(checkId >= impl->checkStates.size()){
+        root = findRootItem();
+        auto tmpRoot = root ? root : RootItem::instance();
+        if(checkId >= tmpRoot->numCheckStates()){
+            return;
+        }
+        impl->checkStates.resize(checkId + 1, false);
+    }
+    bool current = impl->checkStates[checkId];
+    if(on != current){
+        impl->checkStates[checkId] = on;
+        impl->checkIdToSignalMap[checkId](on);
+        if(!root){
+            root = findRootItem();
+        }
+        if(root){
+            root->notifyEventOnItemCheckToggled(this, checkId, on);
+        }
+    }
+}
+
+
+SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
+{
+    return impl->checkIdToSignalMap[checkId];
+}
+    
 
 Item* Item::headItem() const
 {
@@ -290,8 +428,12 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     }
     bool isMoving = false;
     RootItem* rootItem = self->findRootItem();
+
+    bool doNotifySubTreeSelectedItemsToRootItem = false;
     
-    if(item->parent_){
+    if(!item->parent_){
+        doNotifySubTreeSelectedItemsToRootItem = true;
+    } else {
         RootItem* srcRootItem = item->parent_->findRootItem();
         if(srcRootItem){
             if(srcRootItem == rootItem){
@@ -299,8 +441,9 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
             }
         }
         item->impl->detachFromParentItemSub(isMoving);
+        doNotifySubTreeSelectedItemsToRootItem = false;
     }
-        
+
     item->parent_ = self;
 
     if(newNextItem && (newNextItem->parent_ == self)){
@@ -332,11 +475,6 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
             rootItem->notifyEventOnSubTreeMoved(item);
         } else {
             rootItem->notifyEventOnSubTreeAdded(item);
-        }
-    }
-
-    if(rootItem){
-        if(!isMoving){
             item->impl->callFuncOnConnectedToRoot();
         }
         if(itemsBeingAddedOrRemoved.find(self) == itemsBeingAddedOrRemoved.end()){
@@ -351,6 +489,13 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     if(recursiveTreeChangeCounter == 0){
         emitSigSubTreeChanged();
         itemsBeingAddedOrRemoved.clear();
+    }
+
+    if(rootItem){
+        if(doNotifySubTreeSelectedItemsToRootItem){
+            item->impl->notifySubTreeSelectedItemsToRootItem(item, rootItem);
+        }
+        notifySubTreeActiveChecksToRootItem(item, rootItem);
     }
 
     return true;
@@ -390,6 +535,9 @@ void Item::Impl::detachFromParentItemSub(bool isMoving)
     if(!self->parent_){
         return;
     }
+
+    // Clear all the selection of the sub tree to remove
+    self->setSubTreeSelected(false);
 
     ++recursiveTreeChangeCounter;
     itemsBeingAddedOrRemoved.insert(self);
@@ -496,6 +644,32 @@ void Item::onDisconnectedFromRoot()
 {
     if(TRACE_FUNCTIONS){
         cout << "Item::onDisconnectedFromRoot() of " << name_ << endl;
+    }
+}
+
+
+void Item::Impl::notifySubTreeSelectedItemsToRootItem(Item* item, RootItem* root)
+{
+    if(item->isSelected()){
+        root->notifyEventOnItemSelectionChanged(item, true);
+    }
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        notifySubTreeSelectedItemsToRootItem(child, root);
+    }
+}
+
+
+void Item::Impl::notifySubTreeActiveChecksToRootItem(Item* item, RootItem* root)
+{
+    auto& checks = item->impl->checkStates;
+    int n = checks.size();
+    for(int checkId=0; checkId < n; ++checkId){
+        if(checks[checkId]){
+            root->notifyEventOnItemCheckToggled(item, checkId, true);
+        }
+    }
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        notifySubTreeActiveChecksToRootItem(child, root);
     }
 }
 
@@ -637,56 +811,6 @@ bool Item::Impl::traverse(Item* item, const std::function<bool(Item*)>& function
         }
     }
     return false;
-}
-
-
-Item* Item::duplicate() const
-{
-    Item* duplicated = doDuplicate();
-    if(duplicated && (typeid(*duplicated) != typeid(*this))){
-        delete duplicated;
-        duplicated = nullptr;
-    }
-    return duplicated;
-}
-
-
-Item* Item::duplicateAll() const
-{
-    return impl->duplicateAllSub(nullptr);
-}
-
-
-Item* Item::Impl::duplicateAllSub(Item* duplicated) const
-{
-    if(!duplicated){
-        duplicated = self->duplicate();
-    }
-    
-    if(duplicated){
-        for(Item* child = self->childItem(); child; child = child->nextItem()){
-            Item* duplicatedChildItem;
-            if(child->isSubItem()){
-                duplicatedChildItem = duplicated->findChildItem(child->name());
-                if(duplicatedChildItem){
-                    child->impl->duplicateAllSub(duplicatedChildItem);
-                }
-            } else {
-                duplicatedChildItem = child->impl->duplicateAllSub(nullptr);
-                if(duplicatedChildItem){
-                    duplicated->addChildItem(duplicatedChildItem);
-                }
-            }
-        }
-    }
-
-    return duplicated;
-}
-
-
-Item* Item::doDuplicate() const
-{
-    return nullptr;
 }
 
 
