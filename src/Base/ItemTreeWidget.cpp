@@ -94,6 +94,10 @@ public:
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void dropEvent(QDropEvent* event) override;
+
+    void storeExpandedItems(Archive& archive);
+    void storeExpandedItemsIter(QTreeWidgetItem* parentTwItem, Archive& archive, Listing& expanded);
+    void restoreExpandedItems(const Archive& archive);
 };
 
 }
@@ -182,7 +186,8 @@ void ItwItem::unblockConnections()
 }
 
 
-ItemTreeWidget::ItemTreeWidget(RootItem* rootItem)
+ItemTreeWidget::ItemTreeWidget(RootItem* rootItem, QWidget* parent)
+    : QWidget(parent)
 {
     impl = new Impl(this, rootItem);
     auto box = new QVBoxLayout;
@@ -842,4 +847,62 @@ void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
     isDropping = true;
     TreeWidget::dropEvent(event);
     isDropping = false;
+}
+
+
+bool ItemTreeWidget::storeState(Archive& archive)
+{
+    impl->storeExpandedItems(archive);
+    return true;
+}
+
+
+bool ItemTreeWidget::restoreState(const Archive& archive)
+{
+    impl->restoreExpandedItems(archive);
+    return true;
+}
+
+
+void ItemTreeWidget::Impl::storeExpandedItems(Archive& archive)
+{
+    ListingPtr expanded = new Listing;
+    expanded->setFlowStyle(true);
+    storeExpandedItemsIter(invisibleRootItem(), archive, *expanded);
+    if(!expanded->empty()){
+        archive.insert("expanded", expanded);
+    }
+}
+
+
+void ItemTreeWidget::Impl::storeExpandedItemsIter(QTreeWidgetItem* parentTwItem, Archive& archive, Listing& expanded)
+{
+    int n = parentTwItem->childCount();
+    for(int i=0; i < n; ++i){
+        if(auto itwItem = dynamic_cast<ItwItem*>(parentTwItem->child(i))){
+            if(itwItem->isExpanded()){
+                if(auto id = archive.getItemId(itwItem->item)){
+                    expanded.append(id);
+                }
+            }
+            if(itwItem->childCount() > 0){
+                storeExpandedItemsIter(itwItem, archive, expanded);
+            }
+        }
+    }
+}
+
+
+void ItemTreeWidget::Impl::restoreExpandedItems(const Archive& archive)
+{
+    const Listing& expanded = *archive.findListing("expanded");
+    if(expanded.isValid()){
+        for(int i=0; i < expanded.size(); ++i){
+            if(auto item = archive.findItem(expanded.at(i))){
+                if(auto itwItem = getItwItem(item)){
+                    itwItem->setExpanded(true);
+                }
+            }
+        }
+    }
 }

@@ -13,7 +13,7 @@ class Archive;
 class CNOID_EXPORT ItemTreeWidget : public QWidget
 {
 public:
-    ItemTreeWidget(RootItem* rootItem);
+    ItemTreeWidget(RootItem* rootItem, QWidget* parent = nullptr);
     ~ItemTreeWidget();
 
     void addTopLevelItem(Item* item);
