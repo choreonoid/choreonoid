@@ -635,7 +635,7 @@ void ItemTreeViewImpl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, Ite
         parentTwItem->addChild(itvItem);
     }
 
-    if(!ProjectManager::isProjectBeingLoaded()){
+    if(!projectManager->isLoadingProject()){
         if(!parentTwItem->isExpanded() && !item->isSubItem()){
             parentTwItem->setExpanded(true);
         }

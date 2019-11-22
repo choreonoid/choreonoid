@@ -16,6 +16,7 @@ namespace cnoid {
 class Item;
 class View;
 class ViewManager;
+class ProjectManager;
 class ArchiveSharedData;
 
 class CNOID_EXPORT Archive : public Mapping
@@ -90,7 +91,7 @@ private:
 
     friend class ItemTreeArchiverImpl;
     friend class ViewManager;
-    friend class ProjectManagerImpl;
+    friend class ProjectManager;
 
     stdx::filesystem::path projectDirPath;
 };

@@ -8,6 +8,7 @@
 #include "MessageView.h"
 #include "ItemTreeView.h"
 #include <cnoid/ConnectionSet>
+#include <cnoid/Archive>
 #include <fmt/format.h>
 #include <set>
 #include "gettext.h"
@@ -151,11 +152,12 @@ void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
 {
     projectFilesBeingLoaded.insert(filename);
 
-    auto items = projectManager()->loadProject(filename, self);
+    auto pm = projectManager();
+    auto items = pm->loadProject(filename, self);
 
     projectFilesBeingLoaded.erase(filename);
 
-    if(!ProjectManager::isProjectBeingLoaded()){
+    if(!pm->isLoadingProject()){
         ItemTreeView::instance()->expandItem(self);
     }
 

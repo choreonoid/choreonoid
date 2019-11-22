@@ -13,6 +13,7 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <stack>
 #include "gettext.h"
 
 using namespace std;
@@ -52,8 +53,12 @@ public:
     unordered_set<Item*> itemsBeingOperated;
     int isProcessingSlotForRootItemSignals;
     bool isDropping;
-    ItemList<Item> copiedItems;
+
     ProjectManager* projectManager;
+    ScopedConnectionSet projectManagerConnections;
+    stack<bool> projectLoadingWithItemExpansionInfoStack;
+    
+    ItemList<Item> copiedItems;
     Menu* popupMenu;
     MenuManager menuManager;
 
@@ -97,7 +102,10 @@ public:
 
     void storeExpandedItems(Archive& archive);
     void storeExpandedItemsIter(QTreeWidgetItem* parentTwItem, Archive& archive, Listing& expanded);
-    void restoreExpandedItems(const Archive& archive);
+    void onProjectAboutToBeLoaded(int recursiveLevel);
+    void onProjectLoaded(int recursiveLevel);
+    void restoreState(const Archive& archive, const ListingPtr expanded);
+    void restoreExpandedItems(const Archive& archive, const ListingPtr expanded);
 };
 
 }
@@ -191,6 +199,7 @@ ItemTreeWidget::ItemTreeWidget(RootItem* rootItem, QWidget* parent)
 {
     impl = new Impl(this, rootItem);
     auto box = new QVBoxLayout;
+    box->setContentsMargins(0, 0, 0, 0);
     box->addWidget(impl);
     setLayout(box);
 }
@@ -269,6 +278,14 @@ void ItemTreeWidget::Impl::initialize()
         [&](const QModelIndex& parent, int start, int end){
             onTreeWidgetRowsInserted(parent, start, end);  });
 
+    projectManagerConnections.add(
+        projectManager->sigProjectAboutToBeLoaded().connect(
+            [&](int recursiveLevel){ onProjectAboutToBeLoaded(recursiveLevel); }));
+
+    projectManagerConnections.add(
+        projectManager->sigProjectLoaded().connect(
+            [&](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
+    
     popupMenu = new Menu(this);
     menuManager.setTopMenu(popupMenu);
 
@@ -298,6 +315,14 @@ void ItemTreeWidget::Impl::initialize()
         ->sigTriggered().connect([=](){ selectAllItems(); });
     menuManager.addItem(_("Clear selection"))
         ->sigTriggered().connect([=](){ clearSelection(); });
+}
+
+
+void ItemTreeWidget::addTopLevelItem(Item* item)
+{
+    if(!impl->checkIfTopLevelItem(item)){
+        impl->topLevelItems.push_back(item);
+    }
 }
 
 
@@ -452,7 +477,8 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         parentTwItem->addChild(itwItem);
     }
 
-    if(!ProjectManager::instance()->isProjectBeingLoaded()){
+    if(projectLoadingWithItemExpansionInfoStack.empty() ||
+       !projectLoadingWithItemExpansionInfoStack.top()){
         if(!parentTwItem->isExpanded() && !item->isSubItem()){
             parentTwItem->setExpanded(true);
         }
@@ -857,21 +883,10 @@ bool ItemTreeWidget::storeState(Archive& archive)
 }
 
 
-bool ItemTreeWidget::restoreState(const Archive& archive)
-{
-    impl->restoreExpandedItems(archive);
-    return true;
-}
-
-
 void ItemTreeWidget::Impl::storeExpandedItems(Archive& archive)
 {
-    ListingPtr expanded = new Listing;
-    expanded->setFlowStyle(true);
-    storeExpandedItemsIter(invisibleRootItem(), archive, *expanded);
-    if(!expanded->empty()){
-        archive.insert("expanded", expanded);
-    }
+    Listing& expanded = *archive.createFlowStyleListing("expanded");
+    storeExpandedItemsIter(invisibleRootItem(), archive, expanded);
 }
 
 
@@ -893,15 +908,46 @@ void ItemTreeWidget::Impl::storeExpandedItemsIter(QTreeWidgetItem* parentTwItem,
 }
 
 
-void ItemTreeWidget::Impl::restoreExpandedItems(const Archive& archive)
+void ItemTreeWidget::Impl::onProjectAboutToBeLoaded(int recursiveLevel)
 {
-    const Listing& expanded = *archive.findListing("expanded");
-    if(expanded.isValid()){
-        for(int i=0; i < expanded.size(); ++i){
-            if(auto item = archive.findItem(expanded.at(i))){
-                if(auto itwItem = getItwItem(item)){
-                    itwItem->setExpanded(true);
-                }
+    projectLoadingWithItemExpansionInfoStack.push(false);
+}
+
+
+void ItemTreeWidget::Impl::onProjectLoaded(int recursiveLevel)
+{
+    if(!projectLoadingWithItemExpansionInfoStack.empty()){
+        projectLoadingWithItemExpansionInfoStack.pop();
+    }
+}
+
+bool ItemTreeWidget::restoreState(const Archive& archive)
+{
+    const ListingPtr expanded = archive.findListing("expanded");
+    if(expanded->isValid()){
+        if(!impl->projectLoadingWithItemExpansionInfoStack.empty()){
+            impl->projectLoadingWithItemExpansionInfoStack.top()  = true;
+        }
+    }
+    archive.addPostProcess([&, expanded](){ impl->restoreState(archive, expanded); });
+    return true;
+}
+
+
+void ItemTreeWidget::Impl::restoreState(const Archive& archive, const ListingPtr expanded)
+{
+    if(expanded->isValid()){
+        restoreExpandedItems(archive, expanded);
+    }
+}
+
+
+void ItemTreeWidget::Impl::restoreExpandedItems(const Archive& archive, const ListingPtr expanded)
+{
+    for(int i=0; i < expanded->size(); ++i){
+        if(auto item = archive.findItem(expanded->at(i))){
+            if(auto itwItem = getItwItem(item)){
+                itwItem->setExpanded(true);
             }
         }
     }

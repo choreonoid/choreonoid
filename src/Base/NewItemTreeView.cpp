@@ -42,6 +42,7 @@ NewItemTreeView::Impl::Impl(NewItemTreeView* self)
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     itemTreeWidget = new ItemTreeWidget(RootItem::instance(), self);
+    itemTreeWidget->addTopLevelItem(RootItem::instance());
 
     auto vbox = new QVBoxLayout;
     vbox->addWidget(itemTreeWidget);
