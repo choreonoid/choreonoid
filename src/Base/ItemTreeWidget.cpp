@@ -54,6 +54,8 @@ public:
     int isProcessingSlotForRootItemSignals;
     bool isDropping;
 
+    function<bool(Item* item)> isVisibleItem;
+
     ProjectManager* projectManager;
     ScopedConnectionSet projectManagerConnections;
     stack<bool> projectLoadingWithItemExpansionInfoStack;
@@ -63,18 +65,22 @@ public:
     MenuManager menuManager;
 
     Impl(ItemTreeWidget* self, RootItem* rootItem);
+    ~Impl();
     void initialize();
-    bool checkIfTopLevelItem(Item* item);
+    void addTopLevelItem(Item* item);
+    bool addTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
     Item* findTopLevelItemOf(Item* item);
-    ItwItem* getItwItem(Item* item);
-    ItwItem* getOrCreateItwItem(Item* item);
+    ItwItem* findItwItem(Item* item);
+    ItwItem* findOrCreateItwItem(Item* item);
     void addCheckColumn(int checkId);
     void updateCheckColumn(int checkId, int column);
     void updateCheckColumnIter(QTreeWidgetItem* twItem, int checkId, int column);
     void releaseCheckColumn(int checkId);
     bool isItemBeingOperated(Item* item);
     void onSubTreeAddedOrMoved(Item* item);
-    void insertItem(QTreeWidgetItem* parentTwItem, Item* item, Item* nextItem);
+    void insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItem);
+    ItwItem* findNextItwItem(Item* item, bool isTopLevelItem);
+    ItwItem* findNextItwItemInSubTree(Item* item, bool doTraverse);
     void onSubTreeRemoved(Item* item, bool isMoving);
     //void onItemAssigned(Item* assigned, Item* srcItem);
 
@@ -214,12 +220,6 @@ ItemTreeWidget::Impl::Impl(ItemTreeWidget* self, RootItem* rootItem)
 }
 
 
-ItemTreeWidget::~ItemTreeWidget()
-{
-    delete impl;
-}
-
-
 void ItemTreeWidget::Impl::initialize()
 {
     isProcessingSlotForRootItemSignals = 0;
@@ -285,6 +285,8 @@ void ItemTreeWidget::Impl::initialize()
     projectManagerConnections.add(
         projectManager->sigProjectLoaded().connect(
             [&](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
+
+    isVisibleItem = [&](Item* item){ return true; };
     
     popupMenu = new Menu(this);
     menuManager.setTopMenu(popupMenu);
@@ -318,25 +320,53 @@ void ItemTreeWidget::Impl::initialize()
 }
 
 
-void ItemTreeWidget::addTopLevelItem(Item* item)
+ItemTreeWidget::~ItemTreeWidget()
 {
-    if(!impl->checkIfTopLevelItem(item)){
-        impl->topLevelItems.push_back(item);
-    }
+    delete impl;
 }
 
 
-bool ItemTreeWidget::Impl::checkIfTopLevelItem(Item* item)
+ItemTreeWidget::Impl::~Impl()
 {
-    auto it = std::find(topLevelItems.begin(), topLevelItems.end(), item);
-    return it != topLevelItems.end();
+    clear();
+}
+
+
+void ItemTreeWidget::addTopLevelItem(Item* item)
+{
+    impl->addTopLevelItem(item);
+}
+
+
+void ItemTreeWidget::Impl::addTopLevelItem(Item* item)
+{
+    auto pos = topLevelItems.begin();
+    addTopLevelItemIter(rootItem, item, pos);
+}
+
+
+bool ItemTreeWidget::Impl::addTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos)
+{
+    if(item == newTopLevelItem){
+        topLevelItems.insert(pos, newTopLevelItem);
+        return true;
+    }
+    if(pos != topLevelItems.end() && item == *pos){
+        ++pos;
+    }
+    for(auto child = item->childItem(); child; child = child->nextItem()){
+        if(addTopLevelItemIter(child, newTopLevelItem, pos)){
+            return true;
+        }
+    }
+    return false;
 }
 
 
 Item* ItemTreeWidget::Impl::findTopLevelItemOf(Item* item)
 {
     while(item){
-        if(checkIfTopLevelItem(item)){
+        if(findItwItem(item)){
             return item;
         }
         item = item->parentItem();
@@ -345,7 +375,13 @@ Item* ItemTreeWidget::Impl::findTopLevelItemOf(Item* item)
 }
 
 
-ItwItem* ItemTreeWidget::Impl::getItwItem(Item* item)
+void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item)> pred)
+{
+    impl->isVisibleItem = pred;
+}
+
+
+ItwItem* ItemTreeWidget::Impl::findItwItem(Item* item)
 {
     auto iter = itemToItwItemMap.find(item);
     if(iter != itemToItwItemMap.end()){
@@ -355,9 +391,9 @@ ItwItem* ItemTreeWidget::Impl::getItwItem(Item* item)
 }
 
 
-ItwItem* ItemTreeWidget::Impl::getOrCreateItwItem(Item* item)
+ItwItem* ItemTreeWidget::Impl::findOrCreateItwItem(Item* item)
 {
-    auto itwItem = getItwItem(item);
+    auto itwItem = findItwItem(item);
     if(!itwItem){
         itwItem = new ItwItem(item, this);
     }
@@ -426,7 +462,7 @@ void ItemTreeWidget::Impl::releaseCheckColumn(int checkId)
             kv.second = reassignedColumn;
         }
     }
-}    
+}
 
 
 bool ItemTreeWidget::Impl::isItemBeingOperated(Item* item)
@@ -443,37 +479,32 @@ void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
     
     isProcessingSlotForRootItemSignals++;
 
-    if(auto topLevelItem = findTopLevelItemOf(item)){
-        if(auto parentItem = item->parentItem()){
-            if(parentItem == rootItem){
-                insertItem(invisibleRootItem(), item, item->nextItem());
-            } else {
-                if(auto parentItwItem = getItwItem(parentItem)){
-                    insertItem(parentItwItem, item, item->nextItem());
-                }
-            }
-        }
-        if(findTopLevelItemOf(topLevelItem)){
-            std::remove(topLevelItems.begin(), topLevelItems.end(), topLevelItem);
-        }
+    auto parentItem = item->parentItem();
+    if(auto parentItwItem = findItwItem(parentItem)){
+        insertItem(parentItwItem, item, false);
+    } else {
+        insertItem(invisibleRootItem(), item, true);
     }
 
     isProcessingSlotForRootItemSignals--;
 }
 
 
-void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, Item* nextItem)
+void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItem)
 {
-    auto itwItem = getOrCreateItwItem(item);
-    bool inserted = false;
-    if(nextItem){
-        if(auto nextItwItem = getItwItem(nextItem)){
-            int index = parentTwItem->indexOfChild(nextItwItem);
-            parentTwItem->insertChild(index, itwItem);
-            inserted = true;
-        }
+    if(!isVisibleItem(item)){
+        return;
     }
-    if(!inserted){
+
+    auto itwItem = findOrCreateItwItem(item);
+    if(isTopLevelItem){
+        addTopLevelItem(item);
+    }
+    auto nextItwItem = findNextItwItem(item, isTopLevelItem);
+    if(nextItwItem){
+        int index = parentTwItem->indexOfChild(nextItwItem);
+        parentTwItem->insertChild(index, itwItem);
+    } else {
         parentTwItem->addChild(itwItem);
     }
 
@@ -485,8 +516,47 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
     }
 
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        insertItem(itwItem, child, nullptr);
+        insertItem(itwItem, child, false);
     }
+}
+
+
+ItwItem* ItemTreeWidget::Impl::findNextItwItem(Item* item, bool isTopLevelItem)
+{
+    auto nextItwItem = findNextItwItemInSubTree(item, isTopLevelItem);
+
+    if(!nextItwItem){
+        if(isTopLevelItem){
+            auto it = ++std::find(topLevelItems.begin(), topLevelItems.end(), item);
+            if(it != topLevelItems.end()){
+                auto nextTopLevelItem = *it;
+                nextItwItem = findItwItem(nextTopLevelItem);
+            }
+        }
+    }
+    
+    return nextItwItem;
+}
+
+
+ItwItem* ItemTreeWidget::Impl::findNextItwItemInSubTree(Item* item, bool doTraverse)
+{
+    ItwItem* found = nullptr;
+
+    for(auto nextItem = item->nextItem(); nextItem; nextItem = nextItem->nextItem()){
+        if(found = findItwItem(nextItem)){
+            break;
+        }
+        if(doTraverse){
+            if(auto childItem = nextItem->childItem()){
+                if(found = findNextItwItemInSubTree(childItem, true)){
+                    break;
+                }
+            }
+        }
+    }
+    
+    return found;
 }
 
 
@@ -498,7 +568,7 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item, bool isMoving)
     
     isProcessingSlotForRootItemSignals++;
     
-    if(auto itwItem = getItwItem(item)){
+    if(auto itwItem = findItwItem(item)){
         if(auto parentTwItem = itwItem->parent()){
             parentTwItem->removeChild(itwItem);
         } else {
@@ -946,7 +1016,7 @@ void ItemTreeWidget::Impl::restoreExpandedItems(const Archive& archive, const Li
 {
     for(int i=0; i < expanded->size(); ++i){
         if(auto item = archive.findItem(expanded->at(i))){
-            if(auto itwItem = getItwItem(item)){
+            if(auto itwItem = findItwItem(item)){
                 itwItem->setExpanded(true);
             }
         }

@@ -2,6 +2,7 @@
 #define CNOID_BASE_ITEM_TREE_WIDGET_H
 
 #include <QWidget>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -17,6 +18,9 @@ public:
     ~ItemTreeWidget();
 
     void addTopLevelItem(Item* item);
+
+    void setVisibleItemPredicate(std::function<bool(Item* item)> pred);
+    
     void setFontSizeZoom(int zoom);
 
     bool storeState(Archive& archive);
