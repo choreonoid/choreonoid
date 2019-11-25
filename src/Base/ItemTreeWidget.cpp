@@ -54,7 +54,7 @@ public:
     int isProcessingSlotForRootItemSignals;
     bool isDropping;
 
-    function<bool(Item* item)> isVisibleItem;
+    function<bool(Item* item, bool isTopLevelItem)> isVisibleItem;
 
     ProjectManager* projectManager;
     ScopedConnectionSet projectManagerConnections;
@@ -67,8 +67,9 @@ public:
     Impl(ItemTreeWidget* self, RootItem* rootItem);
     ~Impl();
     void initialize();
-    void addTopLevelItem(Item* item);
-    bool addTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
+    void updateTreeWidgetItems();
+    void registerTopLevelItem(Item* item);
+    bool registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
     Item* findTopLevelItemOf(Item* item);
     ItwItem* findItwItem(Item* item);
     ItwItem* findOrCreateItwItem(Item* item);
@@ -286,7 +287,7 @@ void ItemTreeWidget::Impl::initialize()
         projectManager->sigProjectLoaded().connect(
             [&](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
 
-    isVisibleItem = [&](Item* item){ return true; };
+    isVisibleItem = [&](Item*, bool){ return true; };
     
     popupMenu = new Menu(this);
     menuManager.setTopMenu(popupMenu);
@@ -332,20 +333,29 @@ ItemTreeWidget::Impl::~Impl()
 }
 
 
-void ItemTreeWidget::addTopLevelItem(Item* item)
+void ItemTreeWidget::updateTreeWidgetItems()
 {
-    impl->addTopLevelItem(item);
+    impl->updateTreeWidgetItems();
 }
 
 
-void ItemTreeWidget::Impl::addTopLevelItem(Item* item)
+void ItemTreeWidget::Impl::updateTreeWidgetItems()
+{
+    clear();
+    for(auto item = rootItem->childItem(); item; item = item->nextItem()){
+        insertItem(invisibleRootItem(), item, true);
+    }
+}
+
+
+void ItemTreeWidget::Impl::registerTopLevelItem(Item* item)
 {
     auto pos = topLevelItems.begin();
-    addTopLevelItemIter(rootItem, item, pos);
+    registerTopLevelItemIter(rootItem, item, pos);
 }
 
 
-bool ItemTreeWidget::Impl::addTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos)
+bool ItemTreeWidget::Impl::registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos)
 {
     if(item == newTopLevelItem){
         topLevelItems.insert(pos, newTopLevelItem);
@@ -355,7 +365,7 @@ bool ItemTreeWidget::Impl::addTopLevelItemIter(Item* item, Item* newTopLevelItem
         ++pos;
     }
     for(auto child = item->childItem(); child; child = child->nextItem()){
-        if(addTopLevelItemIter(child, newTopLevelItem, pos)){
+        if(registerTopLevelItemIter(child, newTopLevelItem, pos)){
             return true;
         }
     }
@@ -375,7 +385,7 @@ Item* ItemTreeWidget::Impl::findTopLevelItemOf(Item* item)
 }
 
 
-void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item)> pred)
+void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred)
 {
     impl->isVisibleItem = pred;
 }
@@ -477,47 +487,54 @@ void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
         return;
     }
     
-    isProcessingSlotForRootItemSignals++;
-
     auto parentItem = item->parentItem();
     if(auto parentItwItem = findItwItem(parentItem)){
         insertItem(parentItwItem, item, false);
     } else {
         insertItem(invisibleRootItem(), item, true);
     }
-
-    isProcessingSlotForRootItemSignals--;
 }
 
 
 void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItem)
 {
-    if(!isVisibleItem(item)){
-        return;
-    }
+    isProcessingSlotForRootItemSignals++;
 
-    auto itwItem = findOrCreateItwItem(item);
-    if(isTopLevelItem){
-        addTopLevelItem(item);
-    }
-    auto nextItwItem = findNextItwItem(item, isTopLevelItem);
-    if(nextItwItem){
-        int index = parentTwItem->indexOfChild(nextItwItem);
-        parentTwItem->insertChild(index, itwItem);
+    if(!isVisibleItem(item, isTopLevelItem)){
+        if(!isTopLevelItem){
+            parentTwItem = nullptr;
+        }
     } else {
-        parentTwItem->addChild(itwItem);
+        auto itwItem = findOrCreateItwItem(item);
+        if(isTopLevelItem){
+            registerTopLevelItem(item);
+        }
+        auto nextItwItem = findNextItwItem(item, isTopLevelItem);
+        if(nextItwItem){
+            int index = parentTwItem->indexOfChild(nextItwItem);
+            parentTwItem->insertChild(index, itwItem);
+        } else {
+            parentTwItem->addChild(itwItem);
+        }
+
+        if(projectLoadingWithItemExpansionInfoStack.empty() ||
+           !projectLoadingWithItemExpansionInfoStack.top()){
+            if(!parentTwItem->isExpanded() && !item->isSubItem()){
+                parentTwItem->setExpanded(true);
+            }
+        }
+
+        isTopLevelItem = false;
+        parentTwItem = itwItem;
     }
 
-    if(projectLoadingWithItemExpansionInfoStack.empty() ||
-       !projectLoadingWithItemExpansionInfoStack.top()){
-        if(!parentTwItem->isExpanded() && !item->isSubItem()){
-            parentTwItem->setExpanded(true);
+    if(parentTwItem){
+        for(Item* child = item->childItem(); child; child = child->nextItem()){
+            insertItem(parentTwItem, child, isTopLevelItem);
         }
     }
 
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        insertItem(itwItem, child, false);
-    }
+    isProcessingSlotForRootItemSignals--;
 }
 
 

@@ -17,9 +17,8 @@ public:
     ItemTreeWidget(RootItem* rootItem, QWidget* parent = nullptr);
     ~ItemTreeWidget();
 
-    void addTopLevelItem(Item* item);
-
-    void setVisibleItemPredicate(std::function<bool(Item* item)> pred);
+    void updateTreeWidgetItems();
+    void setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred);
     
     void setFontSizeZoom(int zoom);
 
