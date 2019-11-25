@@ -99,7 +99,8 @@ Item::Item(const Item& org)
 
 
 Item::Impl::Impl(Item* self, const Impl& org)
-    : attributes(org.attributes)
+    : self(self),
+      attributes(org.attributes)
 {
     initialize();
 
