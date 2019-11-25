@@ -62,10 +62,8 @@ public:
     int addCheckEntry(const std::string& description);
     int numCheckEntries() const;
     const std::string& checkEntryDescription(int checkId) const;
-    //void setCheckEntryEnabled(int checkId, bool on);
     void releaseCheckEntry(int checkId);
 
-    //SignalProxy<void(int checkId, bool on)> sigCheckEntryEnabled();
     SignalProxy<void(int checkId)> sigCheckEntryAdded();
     SignalProxy<void(int checkId)> sigCheckEntryReleased();
     

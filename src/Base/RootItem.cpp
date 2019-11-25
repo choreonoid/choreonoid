@@ -21,7 +21,6 @@ const bool TRACE_FUNCTIONS = false;
 class CheckEntry
 {
 public:
-    //bool isEnabled;
     Signal<void(Item* item, bool on)> sigCheckToggled;
     ItemList<> checkedItems;
     bool needToUpdateCheckedItemList;
@@ -48,7 +47,6 @@ public:
     Signal<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged;
 
     vector<shared_ptr<CheckEntry>> checkEntries;
-    //Signal<void(int checkId)> sigCheckEntryEnabled;
     Signal<void(int checkId)> sigCheckEntryAdded;
     Signal<void(int checkId)> sigCheckEntryReleased;
     Signal<void(Item* item, bool on)> sigCheckToggledDummy;
@@ -79,8 +77,7 @@ public:
 
 
 CheckEntry::CheckEntry(const string& description)
-    : //isEnabled(true),
-      needToUpdateCheckedItemList(false),
+    : needToUpdateCheckedItemList(false),
       description(description)
 {
 
@@ -88,8 +85,7 @@ CheckEntry::CheckEntry(const string& description)
 
 
 CheckEntry::CheckEntry(const CheckEntry& org)
-    : //isEnabled(org.isEnabled),
-      needToUpdateCheckedItemList(false),
+    : needToUpdateCheckedItemList(false),
       description(org.description)
 {
 
@@ -384,7 +380,6 @@ int RootItem::addCheckEntry(const std::string& description)
     }
     impl->checkEntries[checkId] = make_shared<CheckEntry>(description);
 
-    //impl->sigCheckEntryEnabled(checkId, true);
     impl->sigCheckEntryAdded(checkId);
     
     return checkId;
@@ -406,25 +401,6 @@ const std::string& RootItem::checkEntryDescription(int checkId) const
     }
     return impl->emptyString;
 }
-
-
-/*
-void RootItem::setCheckEntryEnabled(int checkId, bool on)
-{
-    int n = impl->checkEntries.size();
-    if(checkId < n){
-        auto& entry = impl->checkEntries[checkId];
-        if(on != entry->isEnabled){
-            entry->isEnabled = on;
-            if(!on){
-                entry->checkedItems.clear();
-                entry->needToUpdateSelectedItems = false;
-            }
-            impl->sigCheckEntryEnabled(on);
-        }
-    }
-}
-*/
 
 
 void RootItem::releaseCheckEntry(int checkId)

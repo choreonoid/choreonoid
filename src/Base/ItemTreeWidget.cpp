@@ -26,15 +26,14 @@ class ItwItem : public QTreeWidgetItem
 public:
     Item* item;
     ItemTreeWidget::Impl* widgetImpl;
-    ScopedConnectionSet itemConnections;
+    ScopedConnection itemSelectionConnection;
+    ScopedConnection itemCheckConnection;
     bool isExpandedBeforeRemoving;
 
     ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl);
     virtual ~ItwItem();
     virtual QVariant data(int column, int role) const override;
     virtual void setData(int column, int role, const QVariant& value) override;
-    void blockConnections();
-    void unblockConnections();
 };
 
 }
@@ -46,6 +45,7 @@ class ItemTreeWidget::Impl : public TreeWidget
 public:
     ItemTreeWidget* self;
     RootItemPtr rootItem;
+    ScopedConnection treeWidgetSelectionChangeConnection;
     ScopedConnectionSet rootItemConnections;
     vector<ItemPtr> topLevelItems;
     unordered_map<Item*, ItwItem*> itemToItwItemMap;
@@ -74,7 +74,6 @@ public:
     ItwItem* findItwItem(Item* item);
     ItwItem* findOrCreateItwItem(Item* item);
     void addCheckColumn(int checkId);
-    void updateCheckColumn(int checkId, int column);
     void updateCheckColumnIter(QTreeWidgetItem* twItem, int checkId, int column);
     void releaseCheckColumn(int checkId);
     bool isItemBeingOperated(Item* item);
@@ -100,8 +99,9 @@ public:
     void onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
     void onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end);
     void onTreeWidgetSelectionChanged();
-    void setItwItemSelected(ItwItem* item, bool on);
-    void toggleItwItemCheck(ItwItem* item, int checkId, bool on);
+    void updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet);
+    void setItwItemSelected(ItwItem* itwItem, bool on);
+    void toggleItwItemCheck(ItwItem* itwItem, int checkId, bool on);
     
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;
@@ -122,6 +122,8 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     : item(item),
       widgetImpl(widgetImpl)
 {
+    widgetImpl->itemToItwItemMap[item] = this;
+
     setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsDropEnabled);
 
     if(!item->isSubItem()){
@@ -130,25 +132,25 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
 
     setToolTip(0, QString());
 
-    itemConnections.add(
+    widgetImpl->setItwItemSelected(this, item->isSelected());
+
+    itemSelectionConnection =
         item->sigSelectionChanged().connect(
-            [&](bool on){
-                widgetImpl->setItwItemSelected(this, on); }));
-    
-    itemConnections.add(
-        item->sigCheckToggled().connect(
-            [&](int checkId, bool on){
-                widgetImpl->toggleItwItemCheck(this, checkId, on); }));
-                
+            [this](bool on){
+                this->widgetImpl->setItwItemSelected(this, on); });
+
     auto rootItem = widgetImpl->rootItem;
     int numCheckColumns = rootItem->numCheckEntries();
     for(int i=0; i < numCheckColumns; ++i){
-        setCheckState(i + 1, Qt::Unchecked);
+        setCheckState(i + 1, item->isChecked(i) ? Qt::Checked : Qt::Unchecked);
         setToolTip(i + 1, rootItem->checkEntryDescription(i).c_str());
     }
 
-    widgetImpl->itemToItwItemMap[item] = this;
-
+    itemCheckConnection = 
+        item->sigCheckToggled().connect(
+            [this](int checkId, bool on){
+                this->widgetImpl->toggleItwItemCheck(this, checkId, on); });
+                
     isExpandedBeforeRemoving = false;
 }
 
@@ -184,20 +186,13 @@ void ItwItem::setData(int column, int role, const QVariant& value)
         bool checked = ((Qt::CheckState)value.toInt() == Qt::Checked);
         QTreeWidgetItem::setData(column, role, value);
         int checkId = column - 1;
-        item->setChecked(checkId, checked);
+
+        if(checked != item->isChecked(checkId)){
+            itemCheckConnection.block();
+            item->setChecked(checkId, checked);
+            itemCheckConnection.unblock();
+        }
     }
-}
-
-
-void ItwItem::blockConnections()
-{
-    itemConnections.block();
-}
-
-
-void ItwItem::unblockConnections()
-{
-    itemConnections.unblock();
 }
 
 
@@ -243,8 +238,9 @@ void ItemTreeWidget::Impl::initialize()
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setDragDropMode(QAbstractItemView::InternalMove);
 
-    sigItemSelectionChanged().connect(
-        [&](){ onTreeWidgetSelectionChanged(); });
+    treeWidgetSelectionChangeConnection =
+        sigItemSelectionChanged().connect(
+            [&](){ onTreeWidgetSelectionChanged(); });
 
     rootItemConnections.add(
         rootItem->sigCheckEntryAdded().connect(
@@ -422,15 +418,7 @@ void ItemTreeWidget::Impl::addCheckColumn(int checkId)
     checkIdToColumnMap[checkId] = column;
     header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
 
-    updateCheckColumn(checkId, column);
-}
-
-
-void ItemTreeWidget::Impl::updateCheckColumn(int checkId, int column)
-{
-    // block signals
     updateCheckColumnIter(invisibleRootItem(), checkId, column);
-    // unblock signals
 }
 
 
@@ -450,7 +438,7 @@ void ItemTreeWidget::Impl::updateCheckColumnIter(QTreeWidgetItem* twItem, int ch
 void ItemTreeWidget::Impl::releaseCheckColumn(int checkId)
 {
     auto it = checkIdToColumnMap.find(checkId);
-    if(it != checkIdToColumnMap.end()){
+    if(it == checkIdToColumnMap.end()){
         return;
     }
 
@@ -468,7 +456,7 @@ void ItemTreeWidget::Impl::releaseCheckColumn(int checkId)
         int column = kv.second;
         if(column > releasedColumn){
             int reassignedColumn = column - 1;
-            updateCheckColumn(checkId, reassignedColumn);
+            updateCheckColumnIter(invisibleRootItem(), checkId, reassignedColumn);
             kv.second = reassignedColumn;
         }
     }
@@ -854,26 +842,49 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, i
 
 void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
 {
-    //! \todo unselect the items that is not selected in the tree widget
-    for(auto& selected : selectedItems()){
-        if(auto itwItem = dynamic_cast<ItwItem*>(selected)){
-            itwItem->blockConnections();
-            itwItem->item->setSelected(true);
-            itwItem->unblockConnections();
+    unordered_set<Item*> selectedItemSet;
+    for(auto& twItem : selectedItems()){
+        if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
+            selectedItemSet.insert(itwItem->item);
         }
+    }
+    updateItemSelectionIter(invisibleRootItem(), selectedItemSet);
+}
+
+
+void ItemTreeWidget::Impl::updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet)
+{
+    if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
+        auto item = itwItem->item;
+        bool on = selectedItemSet.find(item) != selectedItemSet.end();
+        if(on != item->isSelected()){
+            itwItem->itemSelectionConnection.block();
+            item->setSelected(on);
+            itwItem->itemSelectionConnection.unblock();
+        }
+    }
+    int n = twItem->childCount();
+    for(int i=0; i < n; ++i){
+        updateItemSelectionIter(twItem->child(i), selectedItemSet);
     }
 }
 
 
-void ItemTreeWidget::Impl::setItwItemSelected(ItwItem* item, bool on)
+void ItemTreeWidget::Impl::setItwItemSelected(ItwItem* itwItem, bool on)
 {
-
+    if(on != itwItem->isSelected()){
+        treeWidgetSelectionChangeConnection.block();
+        itwItem->setSelected(on);
+        treeWidgetSelectionChangeConnection.unblock();
+    }
 }
 
 
-void ItemTreeWidget::Impl::toggleItwItemCheck(ItwItem* item, int checkId, bool on)
+void ItemTreeWidget::Impl::toggleItwItemCheck(ItwItem* itwItem, int checkId, bool on)
 {
-
+    if(on != itwItem->checkState(checkId + 1)){
+        itwItem->setCheckState(checkId + 1, on ? Qt::Checked : Qt::Unchecked);
+    }
 }
 
 
@@ -885,9 +896,9 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
         if(selected.size() == 1){
             if(auto itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()))){
                 if(itwItem == selected.front()){
-                    itwItem->blockConnections();
+                    itwItem->itemSelectionConnection.block();
                     itwItem->item->setSelected(true, true);
-                    itwItem->unblockConnections();
+                    itwItem->itemSelectionConnection.unblock();
                 }
             }
         }
