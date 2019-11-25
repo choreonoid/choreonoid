@@ -82,7 +82,7 @@ public:
     ItwItem* findNextItwItem(Item* item, bool isTopLevelItem);
     ItwItem* findNextItwItemInSubTree(Item* item, bool doTraverse);
     void onSubTreeRemoved(Item* item, bool isMoving);
-    //void onItemAssigned(Item* assigned, Item* srcItem);
+    void onItemAssigned(Item* assigned, Item* srcItem);
 
     ItemList<> getSelectedItems();
     void selectAllItems();
@@ -262,10 +262,9 @@ void ItemTreeWidget::Impl::initialize()
         rootItem->sigSubTreeRemoved().connect(
             [&](Item* item, bool isMoving){ onSubTreeRemoved(item, isMoving); }));
 
-    /*
     rootItemConnections.add(
-        rootItem->sigItemAssigned().connect([&](Item* assigned, Item* srcItem){ onItemAssigned(assigned, srcItem); }));
-    */
+        rootItem->sigItemAssigned().connect(
+            [&](Item* assigned, Item* srcItem){ onItemAssigned(assigned, srcItem); }));
 
     sigRowsAboutToBeRemoved().connect(
         [&](const QModelIndex& parent, int start, int end){
@@ -587,13 +586,16 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item, bool isMoving)
 }
 
 
-// What is this?
-/*
 void ItemTreeWidget::Impl::onItemAssigned(Item* assigned, Item* srcItem)
 {
-
+    if(findItwItem(assigned)){
+        assigned->setSelected(srcItem->isSelected());
+        int numCheckColumns = rootItem->numCheckEntries();
+        for(int i=0; i < numCheckColumns; ++i){
+            assigned->setChecked(i, srcItem->isChecked(i));
+        }
+    }
 }
-*/
 
 
 ItemList<> ItemTreeWidget::Impl::getSelectedItems()
