@@ -2,6 +2,7 @@
 #include <cnoid/Plugin>
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
+#include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <agxSDK/Simulation.h>
 #include <iostream>
