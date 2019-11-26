@@ -8,6 +8,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
 #include <cnoid/ComboBox>
+#include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <cnoid/ConnectionSet>
 #include <cnoid/SceneDrawables>

@@ -75,14 +75,19 @@ public:
 
     bool isSelected() const { return isSelected_; }
     void setSelected(bool on, bool forceToNotify = false);
-    void setSubTreeSelected(bool on);
+    void setSubTreeItemsSelected(bool on);
     SignalProxy<void(bool on)> sigSelectionChanged();
 
     template <class ItemType> ItemList<ItemType> selectedDescendants() const {
         return getSelectedDescendantas();
     }
 
+    /**
+       \note AnyCheck is only valid for "isChecked(AnyCheck)" and
+       the signal returned by "sigCheckToggled(AnyCheck)".
+    */
     enum CheckId { AnyCheck = -1, PrimaryCheck = 0 };
+    
     bool isChecked(int checkId = PrimaryCheck) const;
     void setChecked(bool on); // for PrimaryCheck
     void setChecked(int checkId, bool on);

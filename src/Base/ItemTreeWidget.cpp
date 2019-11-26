@@ -63,6 +63,7 @@ public:
     ItemList<Item> copiedItems;
     Menu* popupMenu;
     MenuManager menuManager;
+    int fontPointSizeDiff;
 
     Impl(ItemTreeWidget* self, RootItem* rootItem);
     ~Impl();
@@ -102,6 +103,7 @@ public:
     void updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet);
     void setItwItemSelected(ItwItem* itwItem, bool on);
     void toggleItwItemCheck(ItwItem* itwItem, int checkId, bool on);
+    void zoomFontSize(int pointSizeDiff);
     
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;
@@ -313,6 +315,8 @@ void ItemTreeWidget::Impl::initialize()
         ->sigTriggered().connect([=](){ selectAllItems(); });
     menuManager.addItem(_("Clear selection"))
         ->sigTriggered().connect([=](){ clearSelection(); });
+
+    fontPointSizeDiff = 0;
 }
 
 
@@ -898,6 +902,15 @@ void ItemTreeWidget::Impl::toggleItwItemCheck(ItwItem* itwItem, int checkId, boo
 }
 
 
+void ItemTreeWidget::Impl::zoomFontSize(int pointSizeDiff)
+{
+    QFont font = TreeWidget::font();
+    font.setPointSize(font.pointSize() + pointSizeDiff);
+    setFont(font);
+    fontPointSizeDiff += pointSizeDiff;
+}
+
+
 void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
 {
     // Emit sigSelectionChanged when clicking on an already selected item
@@ -957,11 +970,11 @@ void ItemTreeWidget::Impl::keyPressEvent(QKeyEvent* event)
             
         case Qt::Key_Plus:
         case Qt::Key_Semicolon:
-            //zoomFontSize(1);
+            zoomFontSize(1);
             break;
             
         case Qt::Key_Minus:
-            //zoomFontSize(-1);
+            zoomFontSize(-1);
             break;
             
         default:

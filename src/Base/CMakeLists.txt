@@ -24,7 +24,6 @@ set(sources
   ItemPath.cpp
   ItemTreeWidget.cpp
   ItemTreeView.cpp
-  NewItemTreeView.cpp
   ItemPropertyView.cpp
   TargetItemPicker.cpp
   StringListComboBox.cpp

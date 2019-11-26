@@ -36,10 +36,6 @@ public:
     SignalProxy<void()> sigTreeChanged();
     SignalProxy<void(Item* assigned, Item* srcItem)> sigItemAssigned();
 
-    void setAllItemsSelected(bool on){
-        setSubTreeSelected(on);
-    }
-
     template <class ItemType> ItemList<ItemType> selectedItems() {
         return getSelectedItems();
     }
@@ -60,9 +56,10 @@ public:
     SignalProxy<void(int checkId)> sigCheckEntryAdded();
     SignalProxy<void(int checkId)> sigCheckEntryReleased();
     
-    bool storeCheckEntries(int checkId, Archive& archive, const std::string& key);
-    bool restoreCheckEntries(int checkId, const Archive& archive, const std::string& key);
+    bool storeCheckStates(int checkId, Archive& archive, const std::string& key);
+    bool restoreCheckStates(int checkId, const Archive& archive, const std::string& key);
 
+    //! \note Item::AnyCheck is not supported
     template <class ItemType> ItemList<ItemType> checkedItems(int checkId = PrimaryCheck) {
         return getCheckedItems(checkId);
     }
@@ -85,8 +82,9 @@ private:
     void notifyEventOnSubTreeRemoving(Item* item, bool isMoving);
     void notifyEventOnSubTreeRemoved(Item* item, bool isMoving);
     void emitSigItemAssinged(Item* assigned, Item* srcItem);
-    void notifyEventOnItemSelectionChanged(Item* item, bool on);
-    void notifyEventOnItemCheckToggled(Item* item, int checkId, bool on);
+    void emitSigSelectionChanged(Item* item, bool on);
+    void emitSigSelectedItemsChangedLater();
+    void emitSigCheckToggled(Item* item, int checkId, bool on);
 
     const ItemList<>& getSelectedItems();
     const ItemList<>& getCheckedItems(int checkId);

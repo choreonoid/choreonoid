@@ -6,6 +6,7 @@
 #include "GRobotControllerItem.h"
 #include "GRobotBar.h"
 #include "GRobotController.h"
+#include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>

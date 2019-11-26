@@ -334,18 +334,18 @@ class SimulatedMotionEngineManager
 {
 public:
     ItemList<SimulatorItem> simulatorItems;
-    ScopedConnection selectionOrTreeChangedConnection;
+    ScopedConnection selectionConnection;
     ScopedConnection timeChangeConnection;
 
     SimulatedMotionEngineManager(){
-        selectionOrTreeChangedConnection.reset(
-            ItemTreeView::instance()->sigSelectionOrTreeChanged().connect(
+        selectionConnection.reset(
+            ItemTreeView::instance()->sigSelectionChanged().connect(
                 [&](const ItemList<SimulatorItem>& selected){
-                    onItemSelectionOrTreeChanged(selected);
+                    onSelectedItemsChanged(selected);
                 }));
     }
 
-    void onItemSelectionOrTreeChanged(const ItemList<SimulatorItem>& selected){
+    void onSelectedItemsChanged(const ItemList<SimulatorItem>& selected){
 
         bool changed = false;
         

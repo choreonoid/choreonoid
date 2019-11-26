@@ -6,6 +6,7 @@
 #include "ScriptItem.h"
 #include <cnoid/ExtensionManager>
 #include <cnoid/ItemTreeView>
+#include <cnoid/ItemList>
 #include "gettext.h"
 
 using namespace cnoid;

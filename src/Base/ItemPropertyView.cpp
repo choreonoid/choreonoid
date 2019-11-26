@@ -3,8 +3,9 @@
 */
 
 #include "ItemPropertyView.h"
-#include "ItemTreeView.h"
 #include "Item.h"
+#include "ItemList.h"
+#include "ItemTreeView.h"
 #include "ViewManager.h"
 #include "MenuManager.h"
 #include "PutPropertyFunction.h"

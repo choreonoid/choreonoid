@@ -7,10 +7,11 @@
 #include "FcpFileLoader.h"
 #include "PoseSeqItem.h"
 #include <cnoid/RootItem>
+#include <cnoid/ItemList>
+#include <cnoid/ItemTreeView>
 #include <cnoid/AppConfig>
 #include <cnoid/MainWindow>
 #include <cnoid/MessageView>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MenuManager>
 #include <cnoid/Tokenizer>
 #include <cnoid/stdx/filesystem>

@@ -28,6 +28,38 @@ unordered_set<Item*> itemsToEmitSigSubTreeChanged;
 
 int recursiveTreeChangeCounter = 0;
 unordered_set<Item*> itemsBeingAddedOrRemoved;
+bool isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
+
+void clearItemsBeingAddedOrRemoved()
+{
+    itemsBeingAddedOrRemoved.clear();
+    isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
+}
+
+bool checkIfAnyItemInSubTreeSelected(Item* item)
+{
+    if(item->isSelected()){
+        return true;
+    }
+    for(auto child = item->childItem(); child; child = child->nextItem()){
+        return checkIfAnyItemInSubTreeSelected(child);
+    }
+    return false;
+}
+
+void memorizeItemBeingAddedOrRemoved(Item* item)
+{
+    itemsBeingAddedOrRemoved.insert(item);
+
+    if(checkIfAnyItemInSubTreeSelected(item)){
+        isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
+    }
+}
+
+bool isItemBeingAddedOrRemoved(Item* item)
+{
+    return itemsBeingAddedOrRemoved.find(item) != itemsBeingAddedOrRemoved.end();
+}
 
 }
 
@@ -46,9 +78,11 @@ public:
     Signal<void()> sigUpdated;
     Signal<void()> sigPositionChanged;
     Signal<void()> sigSubTreeChanged;
+
     Signal<void(bool on)> sigSelectionChanged;
+
     Signal<void(int checkId, bool on)> sigCheckToggled;
-    
+    Signal<void(bool on)> sigAnyCheckToggled;
     map<int, Signal<void(bool on)>> checkIdToSignalMap;
 
     // for file overwriting management, mainly accessed by ItemManagerImpl
@@ -61,18 +95,19 @@ public:
     Impl(Item* self, const Impl& org);
     void initialize();
     ~Impl();
-    void setSubTreeSelectedIter(Item* item, bool on);
+    void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
+    bool setSubTreeItemsSelectedIter(Item* item, bool on);
     void getSelectedDescendantsIter(const Item* parentItem, ItemList<>& selected) const;
     Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
-    void detachFromParentItemSub(bool isMoving);
+    void doDetachFromParentItem(bool isMoving);
     void callSlotsOnPositionChanged();
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
     void emitSigDisconnectedFromRootForSubTree();
-    void notifySubTreeSelectedItemsToRootItem(Item* item, RootItem* root);
-    void notifySubTreeActiveChecksToRootItem(Item* item, RootItem* root);
+    void requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(Item* item, RootItem* root);
+    void requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(Item* item, RootItem* root);
     bool traverse(Item* item, const std::function<bool(Item*)>& function);
 };
 
@@ -271,28 +306,49 @@ void Item::setTemporal(bool on)
 
 void Item::setSelected(bool on, bool forceToNotify)
 {
-    if(on != isSelected_ || forceToNotify){
-        isSelected_ = on;
-        impl->sigSelectionChanged(on);
-        if(auto root = findRootItem()){
-            root->notifyEventOnItemSelectionChanged(this, on);
+    impl->setSelected(on, forceToNotify, true);
+}
+
+
+void Item::Impl::setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater)
+{
+    if(on != self->isSelected_ || forceToNotify){
+        self->isSelected_ = on;
+        sigSelectionChanged(on);
+        if(auto rootItem = self->findRootItem()){
+            rootItem->emitSigSelectionChanged(self, on);
+            if(doEmitSigSelectedItemsChangedLater){
+                rootItem->emitSigSelectedItemsChangedLater();
+            }
+        }
+    }
+}    
+
+
+void Item::setSubTreeItemsSelected(bool on)
+{
+    bool changed = impl->setSubTreeItemsSelectedIter(this, on);
+    if(changed){
+        if(auto rootItem = findRootItem()){
+            rootItem->emitSigSelectedItemsChangedLater();
         }
     }
 }
 
 
-void Item::setSubTreeSelected(bool on)
+bool Item::Impl::setSubTreeItemsSelectedIter(Item* item, bool on)
 {
-    impl->setSubTreeSelectedIter(this, on);
-}
-
-
-void Item::Impl::setSubTreeSelectedIter(Item* item, bool on)
-{
-    item->setSelected(on);
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        setSubTreeSelectedIter(child, on);
+    bool changed = false;
+    if(on != item->isSelected()){
+        item->impl->setSelected(on, false, false);
+        changed = true;
     }
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        if(setSubTreeItemsSelectedIter(child, on)){
+            changed = true;
+        }
+    }
+    return changed;
 }
 
 
@@ -325,9 +381,18 @@ void Item::Impl::getSelectedDescendantsIter(const Item* parentItem, ItemList<>& 
 
 bool Item::isChecked(int checkId) const
 {
-    if(checkId < impl->checkStates.size()){
+    if(checkId == AnyCheck){
+        for(const auto& checked : impl->checkStates){
+            if(checked){
+                return true;
+            }
+        }
+        return false;
+
+    } else if(checkId < impl->checkStates.size()){
         return impl->checkStates[checkId];
     }
+    
     return false;
 }
 
@@ -340,8 +405,12 @@ void Item::setChecked(bool on)
 
 void Item::setChecked(int checkId, bool on)
 {
-    RootItem* root = nullptr;
+    if(checkId < 0){
+        return;
+    }
     
+    RootItem* root = nullptr;
+
     if(checkId >= impl->checkStates.size()){
         root = findRootItem();
         auto tmpRoot = root ? root : RootItem::instance();
@@ -359,7 +428,22 @@ void Item::setChecked(int checkId, bool on)
             root = findRootItem();
         }
         if(root){
-            root->notifyEventOnItemCheckToggled(this, checkId, on);
+            root->emitSigCheckToggled(this, checkId, on);
+            
+            if(!impl->sigAnyCheckToggled.empty()){
+                int n = std::min(root->numCheckEntries(), (int)impl->checkStates.size());
+                bool wasAnyChecked = false;
+                for(int i=0; i < n; ++i){
+                    if(impl->checkStates[i]){
+                        wasAnyChecked = true;
+                        break;
+                    }
+                }
+                if(on != wasAnyChecked){
+                    impl->sigAnyCheckToggled(on);
+                    root->emitSigCheckToggled(this, AnyCheck, on);
+                }
+            }
         }
     }
 }
@@ -373,7 +457,11 @@ SignalProxy<void(int checkId, bool on)> Item::sigCheckToggled()
 
 SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
 {
-    return impl->checkIdToSignalMap[checkId];
+    if(checkId == AnyCheck){
+        return impl->sigAnyCheckToggled;
+    } else {
+        return impl->checkIdToSignalMap[checkId];
+    }
 }
     
 
@@ -452,27 +540,23 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     }
 
     ++recursiveTreeChangeCounter;
-    itemsBeingAddedOrRemoved.insert(item);
+    memorizeItemBeingAddedOrRemoved(item);
     
     if(!item->impl->attributes[SUB_ITEM]){
         attributes.reset(TEMPORAL);
     }
+
     bool isMoving = false;
     RootItem* rootItem = self->findRootItem();
 
-    bool doNotifySubTreeSelectedItemsToRootItem = false;
-    
-    if(!item->parent_){
-        doNotifySubTreeSelectedItemsToRootItem = true;
-    } else {
+    if(item->parent_){
         RootItem* srcRootItem = item->parent_->findRootItem();
         if(srcRootItem){
             if(srcRootItem == rootItem){
                 isMoving = true;
             }
         }
-        item->impl->detachFromParentItemSub(isMoving);
-        doNotifySubTreeSelectedItemsToRootItem = false;
+        item->impl->doDetachFromParentItem(isMoving);
     }
 
     item->parent_ = self;
@@ -507,8 +591,10 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         } else {
             rootItem->notifyEventOnSubTreeAdded(item);
             item->impl->callFuncOnConnectedToRoot();
+            item->impl->requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(item, rootItem);
+            item->impl->requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(item, rootItem);
         }
-        if(itemsBeingAddedOrRemoved.find(self) == itemsBeingAddedOrRemoved.end()){
+        if(!isItemBeingAddedOrRemoved(self)){
             item->impl->callSlotsOnPositionChanged();
         }
     }
@@ -519,14 +605,10 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
 
     if(recursiveTreeChangeCounter == 0){
         emitSigSubTreeChanged();
-        itemsBeingAddedOrRemoved.clear();
-    }
-
-    if(rootItem){
-        if(doNotifySubTreeSelectedItemsToRootItem){
-            item->impl->notifySubTreeSelectedItemsToRootItem(item, rootItem);
+        if(rootItem && isAnyItemInSubTreesBeingAddedOrRemovedSelected){
+            rootItem->emitSigSelectedItemsChangedLater();
         }
-        notifySubTreeActiveChecksToRootItem(item, rootItem);
+        clearItemsBeingAddedOrRemoved();
     }
 
     return true;
@@ -557,22 +639,22 @@ void Item::onConnectedToRoot()
 void Item::detachFromParentItem()
 {
     ItemPtr self = this;
-    impl->detachFromParentItemSub(false);
+    impl->doDetachFromParentItem(false);
 }
 
 
-void Item::Impl::detachFromParentItemSub(bool isMoving)
+void Item::Impl::doDetachFromParentItem(bool isMoving)
 {
     if(!self->parent_){
         return;
     }
 
-    // Clear all the selection of the sub tree to remove
-    self->setSubTreeSelected(false);
-
     ++recursiveTreeChangeCounter;
-    itemsBeingAddedOrRemoved.insert(self);
-    
+    memorizeItemBeingAddedOrRemoved(self);
+
+    // Clear all the selection of the sub tree to remove
+    setSubTreeItemsSelectedIter(self, false);
+
     RootItem* rootItem = self->findRootItem();
   
     if(rootItem){
@@ -601,7 +683,7 @@ void Item::Impl::detachFromParentItemSub(bool isMoving)
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
-            if(itemsBeingAddedOrRemoved.find(self->parent_) == itemsBeingAddedOrRemoved.end()){
+            if(!isItemBeingAddedOrRemoved(self->parent_)){
                 callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
             }
             emitSigDisconnectedFromRootForSubTree();
@@ -614,7 +696,10 @@ void Item::Impl::detachFromParentItemSub(bool isMoving)
         if(!isMoving){
             emitSigSubTreeChanged();
         }
-        itemsBeingAddedOrRemoved.clear();
+        if(rootItem && isAnyItemInSubTreesBeingAddedOrRemovedSelected){
+            rootItem->emitSigSelectedItemsChangedLater();
+        }
+        clearItemsBeingAddedOrRemoved();
     }
 }
 
@@ -679,28 +764,30 @@ void Item::onDisconnectedFromRoot()
 }
 
 
-void Item::Impl::notifySubTreeSelectedItemsToRootItem(Item* item, RootItem* root)
+void Item::Impl::requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems
+(Item* item, RootItem* rootItem)
 {
     if(item->isSelected()){
-        root->notifyEventOnItemSelectionChanged(item, true);
+        rootItem->emitSigSelectionChanged(item, true);
     }
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        notifySubTreeSelectedItemsToRootItem(child, root);
+        requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(child, rootItem);
     }
 }
 
 
-void Item::Impl::notifySubTreeActiveChecksToRootItem(Item* item, RootItem* root)
+void Item::Impl::requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems
+(Item* item, RootItem* root)
 {
     auto& checks = item->impl->checkStates;
     int n = checks.size();
     for(int checkId=0; checkId < n; ++checkId){
         if(checks[checkId]){
-            root->notifyEventOnItemCheckToggled(item, checkId, true);
+            root->emitSigCheckToggled(item, checkId, true);
         }
     }
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        notifySubTreeActiveChecksToRootItem(child, root);
+        requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(child, root);
     }
 }
 

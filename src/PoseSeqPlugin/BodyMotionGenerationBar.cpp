@@ -9,6 +9,7 @@
 #include <cnoid/BodyMotionPoseProvider>
 #include <cnoid/PoseProviderToBodyMotionConverter>
 #include <cnoid/BodyMotionUtil>
+#include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>

@@ -4,6 +4,7 @@
 
 #include "TimeSyncItemEngine.h"
 #include "ItemTreeView.h"
+#include "ItemList.h"
 #include "TimeBar.h"
 #include "LazyCaller.h"
 #include <vector>
@@ -23,7 +24,7 @@ typedef map<string, FactoryArray> FactoryArrayMap;
 FactoryArrayMap allFactories;
 
 vector<TimeSyncItemEnginePtr> engines;
-Connection connectionOfSelectionOrTreeChanged;
+Connection selectionConnection;
 Connection connectionOfTimeChanged;
 
 LazyCaller updateLater;
@@ -45,7 +46,7 @@ void update() {
     setTime(currentTime);
 }
 
-void onItemSelectionOrTreeChanged(const ItemList<>& selectedItems)
+void onSelectedItemsChanged(const ItemList<>& selectedItems)
 {
     engines.clear();
 
@@ -95,8 +96,8 @@ void TimeSyncItemEngineManager::initialize()
         
         currentTime = 0.0;
         
-        connectionOfSelectionOrTreeChanged =
-            ItemTreeView::instance()->sigSelectionOrTreeChanged().connect(onItemSelectionOrTreeChanged);
+        selectionConnection =
+            ItemTreeView::instance()->sigSelectionChanged().connect(onSelectedItemsChanged);
         
         connectionOfTimeChanged = TimeBar::instance()->sigTimeChanged().connect(setTime);
         

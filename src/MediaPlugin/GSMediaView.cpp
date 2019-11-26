@@ -9,6 +9,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/ViewManager>
 #include <cnoid/Archive>
+#include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/Timer>

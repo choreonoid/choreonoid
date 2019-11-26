@@ -14,7 +14,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -85,13 +84,14 @@ void SceneView::initializeClass(ExtensionManager* ext)
             "SceneView", N_("Scene"), ViewManager::MULTI_DEFAULT);
 
         sigItemAddedConnection =
-            RootItem::mainInstance()->sigItemAdded().connect(
-                std::bind(&SceneView::onItemAdded, _1));
+            RootItem::instance()->sigItemAdded().connect(
+                [](Item* item){ SceneView::onItemAdded(item); });
     }
 }
 
 
 namespace {
+
 void finalizeClass()
 {
     sigItemAddedConnection.disconnect();
@@ -126,7 +126,7 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
     QHBoxLayout* hbox = new QHBoxLayout;
     dedicatedCheckCheck.setText(_("Use dedicated item tree view checks to select the target items"));
     dedicatedCheckCheck.sigToggled().connect(
-        std::bind(&SceneViewImpl::onDedicatedCheckToggled, this, _1));
+        [&](bool on){ onDedicatedCheckToggled(on); });
     hbox->addWidget(&dedicatedCheckCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -157,7 +157,7 @@ SceneView::~SceneView()
 SceneViewImpl::~SceneViewImpl()
 {
     if(dedicatedCheckId >= 0){
-        itemTreeView->releaseCheckColumn(dedicatedCheckId);
+        RootItem::instance()->releaseCheckEntry(dedicatedCheckId);
     }
 
     instances.erase(std::find(instances.begin(), instances.end(), self));
@@ -211,13 +211,13 @@ void SceneViewImpl::onSceneProviderItemAdded(Item* item, SceneProvider* provider
         
     info.sigDetachedFromRootConnection =
         item->sigDetachedFromRoot().connect(
-            std::bind(&SceneViewImpl::onSceneProviderItemDetachedFromRoot, this, infoIter));
+            [this, infoIter](){ onSceneProviderItemDetachedFromRoot(infoIter); });
 
-    int checkId = dedicatedCheckCheck.isChecked() ? dedicatedCheckId : 0;
+    int checkId = dedicatedCheckCheck.isChecked() ? dedicatedCheckId : Item::PrimaryCheck;
         
     info.sigCheckToggledConnection =
         itemTreeView->sigCheckToggled(item, checkId).connect(
-            std::bind(&SceneViewImpl::showScene, this, infoIter, _1));
+            [this, infoIter](bool on){ showScene(infoIter, on); });
         
     if(itemTreeView->isItemChecked(item, checkId)){
         showScene(infoIter, true);
@@ -254,19 +254,18 @@ void SceneViewImpl::showScene(list<SceneInfo>::iterator infoIter, bool show)
 
 void SceneViewImpl::onDedicatedCheckToggled(bool on)
 {
-    int checkId = 0;
+    int checkId = Item::PrimaryCheck;
     
     if(on){
         if(dedicatedCheckId < 0){
-            dedicatedCheckId = itemTreeView->addCheckColumn();
-            itemTreeView->setCheckColumnToolTip(dedicatedCheckId, self->windowTitle());
+            dedicatedCheckId = RootItem::instance()->addCheckEntry(self->windowTitle().toStdString());
         }
-        itemTreeView->showCheckColumn(dedicatedCheckId, true);
         checkId = dedicatedCheckId;
 
     } else {
         if(dedicatedCheckId >= 0){
-            itemTreeView->showCheckColumn(dedicatedCheckId, false);
+            RootItem::instance()->releaseCheckEntry(dedicatedCheckId);
+            dedicatedCheckId = -1;
         }
     }
 
@@ -274,7 +273,7 @@ void SceneViewImpl::onDedicatedCheckToggled(bool on)
         p->sigCheckToggledConnection.disconnect();
         p->sigCheckToggledConnection =
             itemTreeView->sigCheckToggled(p->item, checkId).connect(
-                std::bind(&SceneViewImpl::showScene, this, p, _1));
+                [this, p](bool on) { showScene(p, on); });
         
         showScene(p, itemTreeView->isItemChecked(p->item, checkId));
     }
@@ -299,7 +298,7 @@ bool SceneViewImpl::storeState(Archive& archive)
     result &= sceneWidget->storeState(archive);
     archive.write("dedicatedItemTreeViewChecks", dedicatedCheckCheck.isChecked());
     if(dedicatedCheckCheck.isChecked()){
-        itemTreeView->storeCheckColumnState(dedicatedCheckId, archive);
+        RootItem::instance()->storeCheckStates(dedicatedCheckId, archive, "checked");
     }
     return result;
 }
@@ -316,7 +315,7 @@ bool SceneViewImpl::restoreState(const Archive& archive)
     bool result = sceneWidget->restoreState(archive);
 
     dedicatedCheckCheck.setChecked(archive.get("dedicatedItemTreeViewChecks", dedicatedCheckCheck.isChecked()));
-    archive.addPostProcess(std::bind(&SceneViewImpl::restoreDedicatedItemChecks, this, std::ref(archive)));
+    archive.addPostProcess([&](){ restoreDedicatedItemChecks(archive); });
     
     return result;
 }
@@ -324,5 +323,5 @@ bool SceneViewImpl::restoreState(const Archive& archive)
 
 void SceneViewImpl::restoreDedicatedItemChecks(const Archive& archive)
 {
-    itemTreeView->restoreCheckColumnState(dedicatedCheckId, archive);
+    RootItem::instance()->restoreCheckStates(dedicatedCheckId, archive, "checked");
 }

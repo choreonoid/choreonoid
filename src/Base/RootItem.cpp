@@ -47,9 +47,10 @@ public:
     Signal<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged;
 
     vector<shared_ptr<CheckEntry>> checkEntries;
+    Signal<void(Item* item, bool on)> sigAnyCheckToggled;
+    Signal<void(Item* item, bool on)> sigCheckToggledDummy;
     Signal<void(int checkId)> sigCheckEntryAdded;
     Signal<void(int checkId)> sigCheckEntryReleased;
-    Signal<void(Item* item, bool on)> sigCheckToggledDummy;
 
     string emptyString;
     ItemList<> dummyItemList;
@@ -346,10 +347,16 @@ void RootItem::Impl::updateSelectedItemsIter(Item* item)
 }
     
 
-void RootItem::notifyEventOnItemSelectionChanged(Item* item, bool on)
+void RootItem::emitSigSelectionChanged(Item* item, bool on)
 {
     impl->needToUpdateSelectedItems = true;
     impl->sigSelectionChanged(item, on);
+}
+
+
+void RootItem::emitSigSelectedItemsChangedLater()
+{
+    impl->needToUpdateSelectedItems = true;
     impl->emitSigSelectedItemsChangedLater();
 }
 
@@ -429,7 +436,7 @@ SignalProxy<void(int checkId)> RootItem::sigCheckEntryReleased()
 }
 
 
-bool RootItem::storeCheckEntries(int checkId, Archive& archive, const std::string& key)
+bool RootItem::storeCheckStates(int checkId, Archive& archive, const std::string& key)
 {
     ItemList<>* pCheckedItems;
     if(checkId >= impl->checkEntries.size()){
@@ -446,7 +453,7 @@ bool RootItem::storeCheckEntries(int checkId, Archive& archive, const std::strin
 }
 
 
-bool RootItem::restoreCheckEntries(int checkId, const Archive& archive, const std::string& key)
+bool RootItem::restoreCheckStates(int checkId, const Archive& archive, const std::string& key)
 {
     bool completed = false;
     const Listing& idseq = *archive.findListing(key);
@@ -497,9 +504,12 @@ void RootItem::Impl::updateCheckedItemsIter(Item* item, int checkId, ItemList<>&
 }
 
 
-void RootItem::notifyEventOnItemCheckToggled(Item* item, int checkId, bool on)
+void RootItem::emitSigCheckToggled(Item* item, int checkId, bool on)
 {
-    if(checkId < impl->checkEntries.size()){
+    if(checkId == Item::AnyCheck){
+        impl->sigAnyCheckToggled(item, on);
+
+    } else if(checkId >= 0 && checkId < impl->checkEntries.size()){
         if(auto checkEntry = impl->checkEntries[checkId]){
             checkEntry->needToUpdateCheckedItemList = true;
             checkEntry->sigCheckToggled(item, on);
@@ -510,7 +520,10 @@ void RootItem::notifyEventOnItemCheckToggled(Item* item, int checkId, bool on)
 
 SignalProxy<void(Item* item, bool on)> RootItem::sigCheckToggled(int checkId)
 {
-    if(checkId < impl->checkEntries.size()){
+    if(checkId == Item::AnyCheck){
+        return impl->sigAnyCheckToggled;
+
+    } else if(checkId >= 0 && checkId < impl->checkEntries.size()){
         if(auto checkEntry = impl->checkEntries[checkId]){
             return checkEntry->sigCheckToggled;
         }

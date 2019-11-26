@@ -7,6 +7,7 @@
 #include "MainWindow.h"
 #include "ViewManager.h"
 #include "ItemTreeView.h"
+#include "ItemList.h"
 #include "AbstractTextItem.h"
 #include "Buttons.h"
 #include "Timer.h"

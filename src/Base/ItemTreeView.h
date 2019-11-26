@@ -1,118 +1,91 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_ITEM_TREE_VIEW_H
 #define CNOID_BASE_ITEM_TREE_VIEW_H
 
 #include "View.h"
-#include "ItemList.h"
+#include "RootItem.h"
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class ItemTreeViewImpl;
 
 class CNOID_EXPORT ItemTreeView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
+
     static ItemTreeView* instance();
-    static ItemTreeView* mainInstance(); // deprecated
+
+     // deprecated
+    static ItemTreeView* mainInstance() {
+        return instance();
+    }
 
     ItemTreeView();
     ~ItemTreeView();
 
-    Item* rootItem();
-    
-    /**
-       This function returns the specific type items that are selected in the ItemTreeView
+    void setExpanded(Item* item, bool on = true);
+
+    /*
+       All the following functions are deprecated.
+       Use the corresponding functions defined in the RootItem class.
     */
-    template <class ItemType> ItemList<ItemType> selectedItems() {
-        return allSelectedItems();
+    template <class ItemType> ItemList<ItemType> selectedItems() const {
+        return RootItem::instance()->selectedItems<ItemType>();
     }
-
-    const ItemList<>& selectedItems() {
-        return allSelectedItems();
+    const ItemList<>& selectedItems() const {
+        return RootItem::instance()->selectedItems();
     }
-
-        
-    template <class ItemType> ItemType* selectedItem(bool fromMultiItems = false) {
+    template <class ItemType> ItemType* selectedItem(bool fromMultiItems = false) const {
         return selectedItems<ItemType>().toSingle(fromMultiItems);
     }
-
-    /**
-       This functions returns the specific type items that are selected in the sub tree of the topItem.
-       The topItem itself is not included in the return value list.
-    */
-    template <class ItemType> ItemList<ItemType> selectedSubItems(Item* topItem) {
-        ItemList<> items;
-        extractSelectedItemsOfSubTree(topItem, items);
-        return items;
+    template <class ItemType> ItemList<ItemType> selectedSubItems(const Item* topItem) const {
+        return topItem->selectedDescendants<ItemType>();
     }
-
-    template <class ItemType> ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) {
+    template <class ItemType> ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) const {
         return selectedSubItems<ItemType>(topItem).toSingle(fromMultiItems);
     }
-        
-    bool isItemSelected(Item* item);
-    bool selectItem(Item* item, bool select = true);
-    void unselectItem(Item* item);
-    
-    void selectAllItems();
-    void clearSelection();
-
-    /**
-       @return The ID of the check column.
-    */
-    int addCheckColumn();
-    void setCheckColumnToolTip(int id, const QString& whatsThis);
-    void updateCheckColumnToolTip(int id);
-    void showCheckColumn(int id, bool on = true);
-    void storeCheckColumnState(int id, Archive& archive);
-    bool restoreCheckColumnState(int id, const Archive& archive);
-    void releaseCheckColumn(int id);
-
-    enum { ID_ANY = -1 };
-
-    /**
-       This functions returns the specific type items that are checked in the ItemTreeView
-    */
-    template <class ItemType> inline ItemList<ItemType> checkedItems(int id = 0) {
-        return allCheckedItems(id);
+    bool isItemSelected(const Item* item) const {
+        return item->isSelected();
+    }
+    bool selectItem(Item* item, bool select = true) {
+        item->setSelected(select);
+        return true;
+    }
+    void selectAllItems() {
+        RootItem::instance()->setSubTreeItemsSelected(true);
+    }
+    void clearSelection() {
+        RootItem::instance()->setSubTreeItemsSelected(false);
     }
 
-    bool isItemChecked(Item* item, int id = 0);
-    bool checkItem(Item* item, bool check = true, int id = 0);
-
-    void expandItem(Item* item, bool expanded = true);
-
-    /**
-       The signal that is emitted when the item selection state is changed.
-    */
-    SignalProxy<void(const ItemList<>&)> sigSelectionChanged();
-
-    /**
-       The signal that is emitted when the item selection state or the tree structure is changed.
-    */
-    SignalProxy<void(const ItemList<>&)> sigSelectionOrTreeChanged();
-    
-    SignalProxy<void(Item* item, bool isChecked)> sigCheckToggled(int id = 0);
-
-    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* item, int id = 0);
-
-    void cutSelectedItems();
+    enum CheckId { ID_ANY = Item::AnyCheck };
+        
+    template <class ItemType> inline ItemList<ItemType> checkedItems(int checkId = Item::PrimaryCheck) const {
+        return RootItem::instance()->checkedItems<ItemType>();
+    }
+    bool isItemChecked(const Item* item, int checkId = Item::PrimaryCheck) const {
+        return item->isChecked(checkId);
+    }
+    bool checkItem(Item* item, bool on = true, int checkId = Item::PrimaryCheck) {
+        item->setChecked(checkId, on);
+        return true;
+    }
+    SignalProxy<void(const ItemList<>&)> sigSelectionChanged() const {
+        return RootItem::instance()->sigSelectedItemsChanged();
+    }
+    SignalProxy<void(Item* item, bool isChecked)> sigCheckToggled(int checkId = Item::PrimaryCheck) const {
+        return RootItem::instance()->sigCheckToggled(checkId);
+    }
+    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* item, int checkId = Item::PrimaryCheck) const {
+        return item->sigCheckToggled(checkId);
+    }
 
 protected:
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
 private:
-    ItemTreeViewImpl* impl;
-
-    ItemList<>& allSelectedItems();
-    ItemList<>& allCheckedItems(int id);
-    void extractSelectedItemsOfSubTree(Item* topItem, ItemList<>& items);
+    class Impl;
+    Impl* impl;
 };
 
 }

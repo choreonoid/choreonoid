@@ -22,8 +22,6 @@ public:
 
     void setExpanded(Item* item, bool on = true);
     
-    void setFontSizeZoom(int zoom);
-
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 

@@ -6,6 +6,7 @@
 #include "RobotAccessBar.h"
 #include "RobotAccessItem.h"
 #include <cnoid/RootItem>
+#include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include "gettext.h"
