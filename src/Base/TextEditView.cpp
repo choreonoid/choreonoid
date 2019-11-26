@@ -129,7 +129,7 @@ TextEditViewImpl::TextEditViewImpl(TextEditView* self)
         std::bind(&TextEditViewImpl::cursorPositionChanged, this));
 
     connections.add(
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+        ItemTreeView::instance()->sigSelectionChanged().connect(
             std::bind(&TextEditViewImpl::onItemSelectionChanged, this, _1)));
     timer.setSingleShot(true);
     connections.add(

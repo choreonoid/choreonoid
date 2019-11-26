@@ -29,6 +29,13 @@ void NewItemTreeView::initializeClass(ExtensionManager* ext)
 }
 
 
+NewItemTreeView* NewItemTreeView::instance()
+{
+    static NewItemTreeView* instance_ = ViewManager::getOrCreateView<NewItemTreeView>();
+    return instance_;
+}
+
+
 NewItemTreeView::NewItemTreeView()
 {
     impl = new Impl(this);
@@ -52,6 +59,12 @@ NewItemTreeView::Impl::Impl(NewItemTreeView* self)
 NewItemTreeView::~NewItemTreeView()
 {
     delete impl;
+}
+
+
+void NewItemTreeView::setExpanded(Item* item, bool on)
+{
+    impl->itemTreeWidget->setExpanded(item, on);
 }
 
 

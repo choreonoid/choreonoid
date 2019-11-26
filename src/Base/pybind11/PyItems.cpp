@@ -61,7 +61,7 @@ void exportPyItems(py::module m)
         .def("getDescendantItems", [](Item& self, py::object itemClass) {
             ItemList<Item> items; items.extractChildItems(&self); return getPyNarrowedItemList(items, itemClass); })
         .def("duplicate", &Item::duplicate)
-        .def("duplicateAll", &Item::duplicateAll)
+        .def("duplicateSubTree", &Item::duplicateSubTree)
         .def("assign", &Item::assign)
         .def("load", [](Item& self, const string& filename){ return self.load(filename); })
         .def("load", [](Item& self, const string& filename, const string& format){ return self.load(filename, format); })

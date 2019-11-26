@@ -272,7 +272,7 @@ void KinematicFaultCheckerImpl::restore(const Archive& archive)
 
 void KinematicFaultCheckerImpl::apply()
 {
-    ItemList<BodyMotionItem> items = ItemTreeView::mainInstance()->selectedItems<BodyMotionItem>();
+    ItemList<BodyMotionItem> items = ItemTreeView::instance()->selectedItems<BodyMotionItem>();
     if(items.empty()){
         mes.notify(_("No BodyMotionItems are selected."));
     } else {

@@ -6,7 +6,6 @@
 #define CNOID_BASE_ROOT_ITEM_H
 
 #include "Item.h"
-#include "ItemList.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -48,12 +47,6 @@ public:
     const ItemList<>& selectedItems() {
         return getSelectedItems();
     }
-
-    /*
-    template <class ItemType> ItemList<ItemType> selectedSubTreeItems(Item* subTreeRoot) {
-        return getSelectedSubTreeItems(subTreeRoot);
-    }
-    */
 
     SignalProxy<void(Item* item, bool on)> sigSelectionChanged();
     SignalProxy<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged();

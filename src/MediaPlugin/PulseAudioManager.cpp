@@ -218,7 +218,7 @@ PulseAudioManagerImpl::PulseAudioManagerImpl(ExtensionManager* ext)
         std::bind(&PulseAudioManagerImpl::store, this, _1),
         std::bind(&PulseAudioManagerImpl::restore, this, _1));
     
-    ItemTreeView::mainInstance()->sigCheckToggled().connect(
+    ItemTreeView::instance()->sigCheckToggled().connect(
         std::bind(&PulseAudioManagerImpl::onItemCheckToggled, this, _1, _2));
 
     timeBar = TimeBar::instance();

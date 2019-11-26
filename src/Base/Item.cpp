@@ -62,7 +62,8 @@ public:
     void initialize();
     ~Impl();
     void setSubTreeSelectedIter(Item* item, bool on);
-    Item* duplicateAllSub(Item* duplicated) const;
+    void getSelectedDescendantsIter(const Item* parentItem, ItemList<>& selected) const;
+    Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void detachFromParentItemSub(bool isMoving);
     void callSlotsOnPositionChanged();
@@ -177,13 +178,13 @@ Item* Item::duplicate() const
 }
 
 
-Item* Item::duplicateAll() const
+Item* Item::duplicateSubTree() const
 {
-    return impl->duplicateAllSub(nullptr);
+    return impl->duplicateSubTreeIter(nullptr);
 }
 
 
-Item* Item::Impl::duplicateAllSub(Item* duplicated) const
+Item* Item::Impl::duplicateSubTreeIter(Item* duplicated) const
 {
     if(!duplicated){
         duplicated = self->duplicate();
@@ -195,10 +196,10 @@ Item* Item::Impl::duplicateAllSub(Item* duplicated) const
             if(child->isSubItem()){
                 duplicatedChildItem = duplicated->findChildItem(child->name());
                 if(duplicatedChildItem){
-                    child->impl->duplicateAllSub(duplicatedChildItem);
+                    child->impl->duplicateSubTreeIter(duplicatedChildItem);
                 }
             } else {
-                duplicatedChildItem = child->impl->duplicateAllSub(nullptr);
+                duplicatedChildItem = child->impl->duplicateSubTreeIter(nullptr);
                 if(duplicatedChildItem){
                     duplicated->addChildItem(duplicatedChildItem);
                 }
@@ -298,6 +299,27 @@ void Item::Impl::setSubTreeSelectedIter(Item* item, bool on)
 SignalProxy<void(bool isSelected)> Item::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
+}
+
+
+ItemList<> Item::getSelectedDescendantas() const
+{
+    ItemList<> selected;
+    impl->getSelectedDescendantsIter(this, selected);
+    return selected;
+}
+
+
+void Item::Impl::getSelectedDescendantsIter(const Item* parentItem, ItemList<>& selected) const
+{
+    for(auto child = parentItem->childItem(); child; child = child->nextItem()){
+        if(child->isSelected()){
+            selected.push_back(child);
+        }
+        if(child->childItem()){
+            getSelectedDescendantsIter(child, selected);
+        }
+    }
 }
 
 

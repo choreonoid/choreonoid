@@ -258,7 +258,7 @@ PoseSeqViewBase::PoseSeqViewBase(View* view)
     setupLinkTreeWidget();
 
     staticConnections.add(
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+        ItemTreeView::instance()->sigSelectionChanged().connect(
             std::bind(&PoseSeqViewBase::onItemSelectionChanged, this, _1)));
 
     isSelectedPoseMoving = false;

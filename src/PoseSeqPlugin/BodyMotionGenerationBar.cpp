@@ -438,7 +438,7 @@ void BodyMotionGenerationBar::notifyInterpolationParametersChanged()
 void BodyMotionGenerationBar::onGenerationButtonClicked()
 {
     set<BodyMotionItem*> motionItems; // for avoiding overlap
-    ItemList<Item> selectedItems = ItemTreeView::mainInstance()->selectedItems<Item>();
+    ItemList<Item> selectedItems = ItemTreeView::instance()->selectedItems<Item>();
 
     for(size_t i=0; i < selectedItems.size(); ++i){
         PoseSeqItem* poseSeqItem = selectedItems.get<PoseSeqItem>(i);

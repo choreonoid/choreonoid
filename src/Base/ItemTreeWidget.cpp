@@ -386,6 +386,14 @@ void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item, bool
 }
 
 
+void ItemTreeWidget::setExpanded(Item* item, bool on)
+{
+    if(auto itwItem = impl->findItwItem(item)){
+        itwItem->setExpanded(on);
+    }
+}
+
+
 ItwItem* ItemTreeWidget::Impl::findItwItem(Item* item)
 {
     auto iter = itemToItwItemMap.find(item);
@@ -715,7 +723,7 @@ void ItemTreeWidget::Impl::copySelectedItemsWithSubTrees()
     forEachTopItems(
         getSelectedItems(),
         [&](Item* item, unordered_set<Item*>&){
-            if(auto duplicated = item->duplicateAll()){
+            if(auto duplicated = item->duplicateSubTree()){
                 copiedItems.push_back(duplicated);
             }
         });
@@ -752,7 +760,7 @@ void ItemTreeWidget::Impl::pasteItems()
         auto it = copiedItems.begin();
         while(it != copiedItems.end()){
             auto& item = *it;
-            if(auto duplicated = item->duplicateAll()){
+            if(auto duplicated = item->duplicateSubTree()){
                 parentItem->addChildItem(duplicated, true);
                 ++it;
             } else {

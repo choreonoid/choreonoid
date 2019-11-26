@@ -29,7 +29,7 @@ public:
     }
 private:
     void onSaveSimulationToAGXFileTriggered(){
-        ItemList<SimulatorItem> simItems = ItemTreeView::mainInstance()->selectedItems<SimulatorItem>();
+        ItemList<SimulatorItem> simItems = ItemTreeView::instance()->selectedItems<SimulatorItem>();
         for(size_t i=0; i < simItems.size(); ++i){
             SimulatorItem* simItem = simItems[i];
             AGXSimulatorItem* agxSimItem = dynamic_cast<AGXSimulatorItem*>(simItem);
@@ -42,7 +42,7 @@ private:
         }
     }
     void onInitializeAGXSimulationTriggered(){
-        ItemList<SimulatorItem> simItems = ItemTreeView::mainInstance()->selectedItems<SimulatorItem>();
+        ItemList<SimulatorItem> simItems = ItemTreeView::instance()->selectedItems<SimulatorItem>();
         for(size_t i=0; i < simItems.size(); ++i){
             SimulatorItem* simItem = simItems[i];
             AGXSimulatorItem* agxSimItem = dynamic_cast<AGXSimulatorItem*>(simItem);

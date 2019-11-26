@@ -363,7 +363,7 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem)
 
     menuManager.addSeparator();
     menuManager.addItem(_("Select all"))
-        ->sigTriggered().connect([=](){ self->selectAllItems(); });
+        ->sigTriggered().connect([=](){ selectAll(); });
     menuManager.addItem(_("Clear selection"))
         ->sigTriggered().connect([=](){ self->clearSelection(); });
     
@@ -544,7 +544,7 @@ void ItemTreeViewImpl::keyPressEvent(QKeyEvent* event)
         processed = true;
         switch(event->key()){
         case Qt::Key_A:
-            self->selectAllItems();
+            selectAll();
             break;
         case Qt::Key_R:
             ItemManager::reloadItems(selectedItemList);
@@ -1099,7 +1099,7 @@ void ItemTreeViewImpl::copySelectedItemsWithChildren()
 
 void ItemTreeViewImpl::addCopiedItemToCopiedItemList(Item* item)
 {
-    ItemPtr duplicated = item->duplicateAll();
+    ItemPtr duplicated = item->duplicateSubTree();
     if(duplicated){
         copiedItemList.push_back(duplicated);
     }
@@ -1118,7 +1118,7 @@ void ItemTreeViewImpl::pasteItems()
         if(parentItem){
             for(size_t i=0; i < copiedItemList.size(); ++i){
                 ItemPtr org = copiedItemList[i];
-                ItemPtr duplicated = org->duplicateAll();
+                ItemPtr duplicated = org->duplicateSubTree();
                 if(duplicated){
                     copiedItemList[i] = duplicated;
                 }
@@ -1210,7 +1210,7 @@ bool ItemTreeViewImpl::restoreState(const Archive& archive)
 
 bool ItemTreeView::restoreCheckColumnState(int id, const Archive& archive)
 {
-    return impl->restoreItemStates(archive, "checked", [&](Item* item){ checkItem(item, true, id); });
+    return impl->restoreItemStates(archive, "checked", [&](Item* item){ impl->checkItem(item, true, id); });
 }
 
 

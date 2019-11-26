@@ -32,7 +32,7 @@ JointGraphView::JointGraphView()
     setLayout(vbox);
 
     itemTreeViewConnection = 
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+        ItemTreeView::instance()->sigSelectionChanged().connect(
             std::bind(&JointGraphView::onItemSelectionChanged, this, _1));
 
     linkSelection = LinkSelectionView::instance();

@@ -706,7 +706,7 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     self->setLayout(vbox);
 
     selectionChangedConnection =
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+        ItemTreeView::instance()->sigSelectionChanged().connect(
             [&](const ItemList<>& items){ onItemSelectionChanged(items); });
 
     fontPointSizeDiff = 0;

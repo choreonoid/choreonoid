@@ -258,7 +258,7 @@ void invokeFaceControllerPatternFileImportDialog()
             dialog.hide();
             MessageView::mainInstance()->flush();
 
-            ItemTreeView* itv = ItemTreeView::mainInstance(); 
+            ItemTreeView* itv = ItemTreeView::instance(); 
             Item* parentItem = itv->selectedItem<Item>();
             if(!parentItem){
                 parentItem = RootItem::instance();

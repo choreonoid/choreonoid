@@ -50,7 +50,7 @@ Item* GRobotControllerItem::doDuplicate() const
 void GRobotControllerItem::onConnectedToRoot()
 {
     checkToggledConnection =
-        ItemTreeView::mainInstance()->sigCheckToggled(this).connect(
+        ItemTreeView::instance()->sigCheckToggled(this).connect(
             std::bind(&GRobotControllerItem::onCheckToggled, this, _1));
 }
 
@@ -137,7 +137,7 @@ bool GRobotControllerItem::onPlaybackInitialized(double time)
 
     if(bodyItem){
         BodyMotionItemPtr motionItem =
-            ItemTreeView::mainInstance()->selectedSubItem<BodyMotionItem>(bodyItem);
+            ItemTreeView::instance()->selectedSubItem<BodyMotionItem>(bodyItem);
         if(motionItem){
             auto qseq = motionItem->jointPosSeq();
             if(qseq->numFrames() > 0 && qseq->numParts() == controller->numJoints()){

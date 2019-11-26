@@ -96,7 +96,7 @@ void TimeSyncItemEngineManager::initialize()
         currentTime = 0.0;
         
         connectionOfSelectionOrTreeChanged =
-            ItemTreeView::mainInstance()->sigSelectionOrTreeChanged().connect(onItemSelectionOrTreeChanged);
+            ItemTreeView::instance()->sigSelectionOrTreeChanged().connect(onItemSelectionOrTreeChanged);
         
         connectionOfTimeChanged = TimeBar::instance()->sigTimeChanged().connect(setTime);
         

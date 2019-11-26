@@ -16,13 +16,11 @@ void exportLuaItemTreeView(sol::table& module)
         sol::base_classes, sol::bases<View, QWidget, QObject>(),
         "new", sol::no_constructor,
         "instance", &ItemTreeView::instance,
-        "rootItem", [](ItemTreeView* self) -> ItemPtr { return self->rootItem(); },
         "selectedItems", &ItemTreeView::selectedItems<Item>,
         "isItemSelected", &ItemTreeView::isItemSelected,
         "selectItem", sol::overload(
             [](ItemTreeView* self, Item* item) { self->selectItem(item); },
             [](ItemTreeView* self, Item* item, bool on) { self->selectItem(item, on); }),
-        "selectAllItems", &ItemTreeView::selectAllItems,
         "clearSelection", &ItemTreeView::clearSelection,
         //"checkedItems", ItemTreeView_checkedItems1,
         "isItemChecked", sol::overload(
@@ -38,8 +36,8 @@ void exportLuaItemTreeView(sol::table& module)
             [](ItemTreeView* self) { return self->sigCheckToggled(); },
             [](ItemTreeView* self, int id) { return self->sigCheckToggled(id); },
             [](ItemTreeView* self, Item* item) { return self->sigCheckToggled(item); },
-            [](ItemTreeView* self, Item* item, int id) { return self->sigCheckToggled(item, id); }),
-        "cutSelectedItems", &ItemTreeView::cutSelectedItems);
+            [](ItemTreeView* self, Item* item, int id) { return self->sigCheckToggled(item, id); })
+        );
 
     LuaSignal<void(const ItemList<>&)>("ItemListSignal", module);
     LuaSignal<void(Item* item, bool isChecked)>("ItemBoolSignal", module);

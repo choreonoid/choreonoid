@@ -139,7 +139,7 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
       ItemTreeView::mainInstance()->selectedItems<SimulatorItem>();
     */
     ItemList<SimulatorItem> simulators =
-        ItemTreeView::mainInstance()->selectedItems<SimulatorItem>();
+        ItemTreeView::instance()->selectedItems<SimulatorItem>();
 
     if(simulators.empty()){
         simulators.extractChildItems(RootItem::instance());

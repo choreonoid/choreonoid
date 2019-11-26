@@ -139,7 +139,7 @@ GraphViewBaseImpl::GraphViewBaseImpl(GraphViewBase* self)
     self->setLayout(hbox);
     
     itemSelectionChangedConnection =
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+        ItemTreeView::instance()->sigSelectionChanged().connect(
             std::bind(&GraphViewBaseImpl::onItemSelectionChanged, this, _1));
 
     partSelectionChangedConnection =

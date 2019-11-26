@@ -24,7 +24,7 @@ public:
 };
     
 
-template<class ItemType = Item>
+template<class ItemType>
 class ItemList : public PolymorphicPointerArray<ItemType, ref_ptr<ItemType>>, public ItemListBase
 {
     typedef PolymorphicPointerArray<ItemType, ref_ptr<ItemType> > ArrayBase;

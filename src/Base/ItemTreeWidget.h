@@ -19,6 +19,8 @@ public:
 
     void updateTreeWidgetItems();
     void setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred);
+
+    void setExpanded(Item* item, bool on = true);
     
     void setFontSizeZoom(int zoom);
 

@@ -47,7 +47,7 @@ LinkGraphView::LinkGraphView()
     setLayout(hbox);
 
     itemTreeViewConnection = 
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+        ItemTreeView::instance()->sigSelectionChanged().connect(
             std::bind(&LinkGraphView::onItemSelectionChanged, this, _1));
 
     linkSelection = LinkSelectionView::instance();

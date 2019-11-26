@@ -231,7 +231,7 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
             std::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
 
     connections.add(
-        ItemTreeView::mainInstance()->sigCheckToggled().connect(
+        ItemTreeView::instance()->sigCheckToggled().connect(
             std::bind(&GSMediaViewImpl::onItemCheckToggled, this, _1, _2)));
 }
 
@@ -510,7 +510,7 @@ void GSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
     
     MediaItem* mediaItem = dynamic_cast<MediaItem*>(item);
     if(mediaItem){
-        ItemList<MediaItem> checkedItems = ItemTreeView::mainInstance()->checkedItems<MediaItem>();
+        ItemList<MediaItem> checkedItems = ItemTreeView::instance()->checkedItems<MediaItem>();
         MediaItemPtr targetItem;
         if(!checkedItems.empty()){
             targetItem = checkedItems.front();

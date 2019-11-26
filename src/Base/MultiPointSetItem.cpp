@@ -434,7 +434,7 @@ void MultiPointSetItem::Impl::selectSinglePointSetItem(int index)
     itemSelectionChangedConnection.block();
     ItemTreeView* view = ItemTreeView::instance();
     for(size_t i=0; i < lastSelectedPointSetItems.size(); ++i){
-        view->unselectItem(lastSelectedPointSetItems[i]);
+        view->selectItem(lastSelectedPointSetItems[i], false);
     }
     PointSetItem* item = pointSetItems[index];
     view->selectItem(item);

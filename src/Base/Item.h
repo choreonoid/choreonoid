@@ -16,6 +16,8 @@ namespace cnoid {
 
 class Item;
 typedef ref_ptr<Item> ItemPtr;
+
+template<class ItemType = Item> class ItemList;
     
 class RootItem;
 class Archive;
@@ -44,8 +46,13 @@ public:
 
     Item* duplicate() const;
 
-    //! This function creates a copy of the item including its sub tree items.
-    Item* duplicateAll() const;
+    //! This function creates a copy of the item including its descendant items
+    Item* duplicateSubTree() const;
+
+    //! \deprecated. Use duplicateSubTree
+    Item* duplicateAll() const {
+        return duplicateSubTree();
+    }
 
     const std::string& name() const { return name_; }
     virtual void setName(const std::string& name);
@@ -70,6 +77,10 @@ public:
     void setSelected(bool on, bool forceToNotify = false);
     void setSubTreeSelected(bool on);
     SignalProxy<void(bool on)> sigSelectionChanged();
+
+    template <class ItemType> ItemList<ItemType> selectedDescendants() const {
+        return getSelectedDescendantas();
+    }
 
     enum CheckId { AnyCheck = -1, PrimaryCheck = 0 };
     bool isChecked(int checkId = PrimaryCheck) const;
@@ -289,6 +300,8 @@ private:
     int numChildren_;
     std::string name_;
     bool isSelected_;
+
+    ItemList<> getSelectedDescendantas() const;
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED
