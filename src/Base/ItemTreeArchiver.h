@@ -13,7 +13,6 @@
 namespace cnoid {
 
 class Item;
-class ItemTreeArchiverImpl;
 
 class CNOID_EXPORT ItemTreeArchiver
 {
@@ -27,7 +26,8 @@ public:
     int numRestoredItems() const;
 
 private:
-    ItemTreeArchiverImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

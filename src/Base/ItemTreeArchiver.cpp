@@ -21,7 +21,7 @@ using fmt::format;
 
 namespace cnoid {
 
-class ItemTreeArchiverImpl
+class ItemTreeArchiver::Impl
 {
 public:
     MessageView* mv;
@@ -31,13 +31,14 @@ public:
     int numRestoredItems;
     const std::set<std::string>* pOptionalPlugins;
 
-    ItemTreeArchiverImpl();
+    Impl();
     ArchivePtr store(Archive& parentArchive, Item* item);
     ArchivePtr storeIter(Archive& parentArchive, Item* item, bool& isComplete);
     ItemList<> restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
     void restoreItemIter(Archive& archive, Item* parentItem, ItemList<>& restoredItems);
     ItemPtr restoreItem(
         Archive& archive, Item* parentItem, ItemList<>& restoredItems, string& out_itemName, bool& io_isOptional);
+    void restoreItemStates(Archive& archive, Item* item);
 };
 
 }
@@ -45,13 +46,13 @@ public:
 
 ItemTreeArchiver::ItemTreeArchiver()
 {
-    impl = new ItemTreeArchiverImpl;
+    impl = new Impl;
     reset();
 }
 
 
-ItemTreeArchiverImpl::ItemTreeArchiverImpl()
-    : mv(MessageView::mainInstance()),
+ItemTreeArchiver::Impl::Impl()
+    : mv(MessageView::instance()),
       os(mv->cout())
 {
     
@@ -91,7 +92,7 @@ ArchivePtr ItemTreeArchiver::store(Archive* parentArchive, Item* item)
 }
 
 
-ArchivePtr ItemTreeArchiverImpl::store(Archive& parentArchive, Item* item)
+ArchivePtr ItemTreeArchiver::Impl::store(Archive& parentArchive, Item* item)
 {
     bool isComplete = true;
     ArchivePtr archive = storeIter(parentArchive, item, isComplete);
@@ -102,7 +103,7 @@ ArchivePtr ItemTreeArchiverImpl::store(Archive& parentArchive, Item* item)
 }
 
 
-ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, bool& isComplete)
+ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item, bool& isComplete)
 {
     string pluginName;
     string className;
@@ -155,6 +156,9 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
     if(item->isSelected()){
         archive->write("isSelected", true);
     }
+    if(item->isChecked()){
+        archive->write("isChecked", true);
+    }
     if(!item->isSubItem()){
         if(!dataArchive->empty()){
             archive->insert("data", dataArchive);
@@ -192,7 +196,7 @@ ItemList<> ItemTreeArchiver::restore(Archive* archive, Item* parentItem, const s
 }
 
 
-ItemList<> ItemTreeArchiverImpl::restore
+ItemList<> ItemTreeArchiver::Impl::restore
 (Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
 {
     numArchivedItems = 0;
@@ -213,7 +217,7 @@ ItemList<> ItemTreeArchiverImpl::restore
 }
 
 
-void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem, ItemList<>& restoredItems)
+void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem, ItemList<>& restoredItems)
 {
     ItemPtr item;
     string itemName;
@@ -250,7 +254,7 @@ void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem, I
 }
 
 
-ItemPtr ItemTreeArchiverImpl::restoreItem
+ItemPtr ItemTreeArchiver::Impl::restoreItem
 (Archive& archive, Item* parentItem, ItemList<>& restoredItems, string& out_itemName, bool& io_isOptional)
 {
     ItemPtr item;
@@ -268,7 +272,7 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
                 format(_("Sub item \"{}\" is not found. Its children cannot be restored."), name),
                 MessageView::ERROR);
         }
-        item->setSelected(archive.get("isSelected", false));
+        restoreItemStates(archive, item);
         return item;
     }
     
@@ -326,14 +330,21 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
         }
         if(item){
             parentItem->addChildItem(item);
-
-            if(archive.get("isSelected", false)){
-                item->setSelected(true);
-            }
-            
+            restoreItemStates(archive, item);
             restoredItems.push_back(item);
         }
     }
 
     return item;
+}
+
+
+void ItemTreeArchiver::Impl::restoreItemStates(Archive& archive, Item* item)
+{
+    if(archive.get("isSelected", false)){
+        item->setSelected(true);
+    }
+    if(archive.get("isChecked", false)){
+        item->setChecked(true);
+    }
 }

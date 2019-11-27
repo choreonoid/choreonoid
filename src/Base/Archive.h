@@ -89,7 +89,7 @@ private:
     // called from ItemTreeArchiver
     void callPostProcesses();
 
-    friend class ItemTreeArchiverImpl;
+    friend class ItemTreeArchiver;
     friend class ViewManager;
     friend class ProjectManager;
 
