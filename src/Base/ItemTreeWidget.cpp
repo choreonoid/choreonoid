@@ -423,13 +423,14 @@ void ItemTreeWidget::Impl::addCheckColumn(int checkId)
     if(checkIdToColumnMap.find(checkId) != checkIdToColumnMap.end()){
         return;
     }
-    
     int column = columnCount();
     setColumnCount(column + 1);
     checkIdToColumnMap[checkId] = column;
     header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
 
     updateCheckColumnIter(invisibleRootItem(), checkId, column);
+
+    header()->showSection(column);
 }
 
 
@@ -438,10 +439,10 @@ void ItemTreeWidget::Impl::updateCheckColumnIter(QTreeWidgetItem* twItem, int ch
     if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
         bool checked = itwItem->item->isChecked(checkId);
         itwItem->setCheckState(column, checked ? Qt::Checked : Qt::Unchecked);
-        const int n = itwItem->childCount();
-        for(int i=0; i < n; ++i){
-            updateCheckColumnIter(itwItem->child(i), checkId, column);
-        }
+    }
+    const int n = twItem->childCount();
+    for(int i=0; i < n; ++i){
+        updateCheckColumnIter(twItem->child(i), checkId, column);
     }
 }
 
@@ -457,20 +458,20 @@ void ItemTreeWidget::Impl::releaseCheckColumn(int checkId)
     int numColumns = columnCount();
     checkIdToColumnMap.erase(it);
     
-    if(releasedColumn == numColumns - 1){
-        setColumnCount(numColumns - 1);
-        return;
-    }
-
-    for(auto& kv : checkIdToColumnMap){
-        int id = kv.first;
-        int column = kv.second;
-        if(column > releasedColumn){
-            int reassignedColumn = column - 1;
-            updateCheckColumnIter(invisibleRootItem(), checkId, reassignedColumn);
-            kv.second = reassignedColumn;
+    if(releasedColumn < numColumns - 1){
+        for(auto& kv : checkIdToColumnMap){
+            int id = kv.first;
+            int column = kv.second;
+            if(column > releasedColumn){
+                int reassignedColumn = column - 1;
+                updateCheckColumnIter(invisibleRootItem(), checkId, reassignedColumn);
+                kv.second = reassignedColumn;
+            }
         }
     }
+
+    header()->hideSection(releasedColumn);
+    setColumnCount(numColumns - 1);
 }
 
 

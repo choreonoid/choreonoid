@@ -438,11 +438,7 @@ SignalProxy<void(int checkId)> RootItem::sigCheckEntryReleased()
 
 bool RootItem::storeCheckStates(int checkId, Archive& archive, const std::string& key)
 {
-    ItemList<>* pCheckedItems;
-    if(checkId >= impl->checkEntries.size()){
-        return false;
-    }
-    auto& items = impl->checkEntries[checkId]->checkedItems;
+    auto& items = getCheckedItems(checkId);
     Listing& idseq = *archive.createFlowStyleListing(key);
     for(auto& item : items){
         if(auto itemId = archive.getItemId(item)){

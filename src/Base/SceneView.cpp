@@ -296,7 +296,7 @@ bool SceneViewImpl::storeState(Archive& archive)
 {
     bool result = true;
     result &= sceneWidget->storeState(archive);
-    archive.write("dedicatedItemTreeViewChecks", dedicatedCheckCheck.isChecked());
+    archive.write("isDedicatedItemCheckEnabled", dedicatedCheckCheck.isChecked());
     if(dedicatedCheckCheck.isChecked()){
         RootItem::instance()->storeCheckStates(dedicatedCheckId, archive, "checked");
     }
@@ -314,8 +314,12 @@ bool SceneViewImpl::restoreState(const Archive& archive)
 {
     bool result = sceneWidget->restoreState(archive);
 
-    dedicatedCheckCheck.setChecked(archive.get("dedicatedItemTreeViewChecks", dedicatedCheckCheck.isChecked()));
-    archive.addPostProcess([&](){ restoreDedicatedItemChecks(archive); });
+    bool isDedicatedItemCheckEnabled = false;
+    if(archive.read("isDedicatedItemCheckEnabled", isDedicatedItemCheckEnabled) ||
+       archive.read("dedicatedItemTreeViewChecks", isDedicatedItemCheckEnabled) /* old format */){
+        dedicatedCheckCheck.setChecked(isDedicatedItemCheckEnabled);
+        archive.addPostProcess([&](){ restoreDedicatedItemChecks(archive); });
+    }
     
     return result;
 }
