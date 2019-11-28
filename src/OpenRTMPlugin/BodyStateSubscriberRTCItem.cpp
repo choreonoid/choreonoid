@@ -8,6 +8,7 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/Config>
 #include <cnoid/MessageView>
