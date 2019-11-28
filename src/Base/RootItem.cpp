@@ -47,7 +47,7 @@ public:
     Signal<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged;
 
     vector<shared_ptr<CheckEntry>> checkEntries;
-    Signal<void(Item* item, bool on)> sigAnyCheckToggled;
+    Signal<void(Item* item, bool on)> sigLogicalSumOfAllChecksToggled;
     Signal<void(Item* item, bool on)> sigCheckToggledDummy;
     Signal<void(int checkId)> sigCheckEntryAdded;
     Signal<void(int checkId)> sigCheckEntryReleased;
@@ -502,8 +502,8 @@ void RootItem::Impl::updateCheckedItemsIter(Item* item, int checkId, ItemList<>&
 
 void RootItem::emitSigCheckToggled(Item* item, int checkId, bool on)
 {
-    if(checkId == Item::AnyCheck){
-        impl->sigAnyCheckToggled(item, on);
+    if(checkId == Item::LogicalSumOfAllChecks){
+        impl->sigLogicalSumOfAllChecksToggled(item, on);
 
     } else if(checkId >= 0 && checkId < impl->checkEntries.size()){
         if(auto checkEntry = impl->checkEntries[checkId]){
@@ -516,8 +516,8 @@ void RootItem::emitSigCheckToggled(Item* item, int checkId, bool on)
 
 SignalProxy<void(Item* item, bool on)> RootItem::sigCheckToggled(int checkId)
 {
-    if(checkId == Item::AnyCheck){
-        return impl->sigAnyCheckToggled;
+    if(checkId == Item::LogicalSumOfAllChecks){
+        return impl->sigLogicalSumOfAllChecksToggled;
 
     } else if(checkId >= 0 && checkId < impl->checkEntries.size()){
         if(auto checkEntry = impl->checkEntries[checkId]){

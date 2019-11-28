@@ -57,10 +57,10 @@ public:
         RootItem::instance()->setSubTreeItemsSelected(false);
     }
 
-    enum CheckId { ID_ANY = Item::AnyCheck };
+    enum CheckId { ID_ANY = Item::LogicalSumOfAllChecks };
         
-    template <class ItemType> inline ItemList<ItemType> checkedItems(int checkId = Item::PrimaryCheck) const {
-        return RootItem::instance()->checkedItems<ItemType>();
+    template <class ItemType> ItemList<ItemType> checkedItems(int checkId = Item::PrimaryCheck) const {
+        return RootItem::instance()->checkedItems<ItemType>(checkId);
     }
     bool isItemChecked(const Item* item, int checkId = Item::PrimaryCheck) const {
         return item->isChecked(checkId);

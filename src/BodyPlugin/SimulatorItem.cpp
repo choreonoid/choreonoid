@@ -14,12 +14,12 @@
 #include "CollisionSeq.h"
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
+#include <cnoid/RootItem>
 #include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
 #include <cnoid/AppUtil>
 #include <cnoid/ExtensionManager>
 #include <cnoid/TimeBar>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/LazyCaller>
 #include <cnoid/PutPropertyFunction>
@@ -283,8 +283,6 @@ public:
 
     CloneMap cloneMap;
         
-    ItemTreeView* itemTreeView;
-
 #ifdef ENABLE_SIMULATION_PROFILING
     double controllerTime;
     QElapsedTimer timer;
@@ -340,13 +338,11 @@ public:
 
     SimulatedMotionEngineManager(){
         selectionConnection.reset(
-            ItemTreeView::instance()->sigSelectionChanged().connect(
-                [&](const ItemList<SimulatorItem>& selected){
-                    onSelectedItemsChanged(selected);
-                }));
+            RootItem::instance()->sigSelectedItemsChanged().connect(
+                [&](const ItemList<>& selected){ onSelectedItemsChanged(selected); }));
     }
 
-    void onSelectedItemsChanged(const ItemList<SimulatorItem>& selected){
+    void onSelectedItemsChanged(ItemList<SimulatorItem> selected){
 
         bool changed = false;
         
@@ -544,7 +540,7 @@ void SimulationBodyImpl::findControlSrcItems(Item* item, vector<Item*>& io_items
             srcItem = item;
         }
         if(srcItem){
-            bool isChecked = ItemTreeView::instance()->isItemChecked(srcItem);
+            bool isChecked = srcItem->isChecked();
             if(!doPickCheckedItems || isChecked){
                 if(!doPickCheckedItems && isChecked){
                     io_items.clear();
@@ -1139,7 +1135,6 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     recordCollisionData = false;
 
     timeBar = TimeBar::instance();
-    itemTreeView = ItemTreeView::instance();
 }
 
 
@@ -1339,7 +1334,7 @@ void SimulatorItemImpl::findTargetItems
         out_targetItems.push_back(item);
 
     } else if(SimulationScriptItem* scriptItem = dynamic_cast<SimulationScriptItem*>(item)){
-        if(itemTreeView->isItemChecked(scriptItem)){
+        if(scriptItem->isChecked()){
             if(scriptItem->executionTiming() == SimulationScriptItem::BEFORE_INITIALIZATION){
                 scriptItem->executeAsSimulationScript();
             } else {

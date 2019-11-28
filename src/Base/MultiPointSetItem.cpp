@@ -4,12 +4,12 @@
 */
 
 #include "MultiPointSetItem.h"
-#include "SceneWidgetEditable.h"
-#include "SceneWidget.h"
-#include "MenuManager.h"
-#include "PutPropertyFunction.h"
-#include "ItemTreeView.h"
 #include "ItemManager.h"
+#include "MenuManager.h"
+#include "RootItem.h"
+#include "SceneWidget.h"
+#include "SceneWidgetEditable.h"
+#include "PutPropertyFunction.h"
 #include "Archive.h"
 #include <cnoid/PointSetUtil>
 #include <cnoid/EigenArchive>
@@ -102,7 +102,7 @@ public:
     Impl(MultiPointSetItem* self);
     Impl(MultiPointSetItem* self, const Impl& org);
     void updateVisibilities();
-    void onItemSelectionChanged(ItemList<PointSetItem> items);
+    void onSelectedItemsChanged();
     void onSubTreeChanged();
     void onPointSetUpdated(PointSetItem* item);
     void setRenderingMode(int mode);
@@ -167,11 +167,9 @@ MultiPointSetItem::Impl::Impl(MultiPointSetItem* self)
     
     scene = new SceneMultiPointSet(this);
 
-    auto itv = ItemTreeView::instance();
     itemSelectionChangedConnection.reset(
-        itv->sigSelectionChanged().connect(
-            [=](const ItemList<PointSetItem>&){
-                onItemSelectionChanged(itv->selectedSubItems<PointSetItem>(self)); }));
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [=](const ItemList<>&){ onSelectedItemsChanged(); }));
 
     subTreeChangedConnection.reset(
         self->sigSubTreeChanged().connect(
@@ -232,16 +230,9 @@ void MultiPointSetItem::Impl::updateVisibilities()
 }
 
 
-void MultiPointSetItem::Impl::onItemSelectionChanged(ItemList<PointSetItem> items)
+void MultiPointSetItem::Impl::onSelectedItemsChanged()
 {
-    bool changed = false;
-
-    ItemList<PointSetItem> selected;
-    for(auto& item : items){
-        if(item->isOwnedBy(self)){
-            selected.push_back(item);
-        }
-    }
+    auto selected = self->selectedDescendants<PointSetItem>();
     if(!selected.empty() && selected != lastSelectedPointSetItems){
         lastSelectedPointSetItems = selected;
         updateVisibilities();
@@ -290,7 +281,7 @@ void MultiPointSetItem::Impl::onSubTreeChanged()
     }
 
     if(visibilityMode.is(MultiPointSetItem::ShowSelected)){
-        onItemSelectionChanged(ItemTreeView::instance()->selectedSubItems<PointSetItem>(self));
+        onSelectedItemsChanged();
     } else {
         updateVisibilities();
     }
@@ -433,17 +424,12 @@ void MultiPointSetItem::Impl::selectSinglePointSetItem(int index)
     }
     
     itemSelectionChangedConnection.block();
-    ItemTreeView* view = ItemTreeView::instance();
-    for(size_t i=0; i < lastSelectedPointSetItems.size(); ++i){
-        view->selectItem(lastSelectedPointSetItems[i], false);
+    for(int i=0; i < pointSetItems.size(); ++i){
+        pointSetItems[i]->setSelected(i == index);
     }
-    PointSetItem* item = pointSetItems[index];
-    view->selectItem(item);
     itemSelectionChangedConnection.unblock();
 
-    ItemList<PointSetItem> items;
-    items.push_back(item);
-    onItemSelectionChanged(items);
+    onSelectedItemsChanged();
 }
 
 

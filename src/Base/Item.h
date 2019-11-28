@@ -83,16 +83,16 @@ public:
     }
 
     /**
-       \note AnyCheck is only valid for "isChecked(AnyCheck)" and
-       the signal returned by "sigCheckToggled(AnyCheck)".
+       \note LogicalSumOfAllChecks is only valid for "isChecked(LogicalSumOfAllChecks)" and
+       the signal returned by "sigCheckToggled(LogicalSumOfAllChecks)".
     */
-    enum CheckId { AnyCheck = -1, PrimaryCheck = 0 };
+    enum CheckId { LogicalSumOfAllChecks = -1, PrimaryCheck = 0 };
     
     bool isChecked(int checkId = PrimaryCheck) const;
     void setChecked(bool on); // for PrimaryCheck
     void setChecked(int checkId, bool on);
-    SignalProxy<void(int checkId, bool on)> sigCheckToggled();
-    SignalProxy<void(bool on)> sigCheckToggled(int checkId);
+    SignalProxy<void(int checkId, bool on)> sigAnyCheckToggled();
+    SignalProxy<void(bool on)> sigCheckToggled(int checkId = PrimaryCheck);
 
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }

@@ -8,8 +8,8 @@
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
 #include <cnoid/ComboBox>
+#include <cnoid/RootItem>
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/ConnectionSet>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneProvider>
@@ -483,7 +483,7 @@ void putSceneStatistics()
     int totalNumTriangles = 0;
     SceneCounter counter;
 
-    ItemList<> selected = ItemTreeView::instance()->selectedItems();
+    ItemList<> selected = RootItem::instance()->selectedItems();
     for(size_t i=0; i < selected.size(); ++i){
         Item* item = selected[i];
         SceneProvider* provider = dynamic_cast<SceneProvider*>(item);

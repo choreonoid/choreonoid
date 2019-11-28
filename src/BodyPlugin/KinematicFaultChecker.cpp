@@ -7,12 +7,12 @@
 #include "BodyMotionItem.h"
 #include "WorldItem.h"
 #include "LinkSelectionView.h"
+#include <cnoid/RootItem>
 #include <cnoid/BodyState>
 #include <cnoid/Archive>
 #include <cnoid/MainWindow>
 #include <cnoid/MenuManager>
 #include <cnoid/TimeBar>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/SpinBox>
 #include <cnoid/Buttons>
@@ -272,7 +272,7 @@ void KinematicFaultCheckerImpl::restore(const Archive& archive)
 
 void KinematicFaultCheckerImpl::apply()
 {
-    ItemList<BodyMotionItem> items = ItemTreeView::instance()->selectedItems<BodyMotionItem>();
+    auto items = RootItem::instance()->selectedItems<BodyMotionItem>();
     if(items.empty()){
         mes.notify(_("No BodyMotionItems are selected."));
     } else {

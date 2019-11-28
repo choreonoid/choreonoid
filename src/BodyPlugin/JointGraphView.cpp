@@ -3,7 +3,7 @@
 */
 
 #include "JointGraphView.h"
-#include <cnoid/ItemTreeView>
+#include <cnoid/RootItem>
 #include <cnoid/Archive>
 #include <cnoid/Link>
 #include <cnoid/ViewManager>
@@ -11,7 +11,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -31,9 +30,10 @@ JointGraphView::JointGraphView()
     vbox->addWidget(&graph);
     setLayout(vbox);
 
-    itemTreeViewConnection = 
-        ItemTreeView::instance()->sigSelectionChanged().connect(
-            std::bind(&JointGraphView::onItemSelectionChanged, this, _1));
+    rootItemConnection = 
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& selectedItems){
+                onSelectedItemsChanged(selectedItems); });
 
     linkSelection = LinkSelectionView::instance();
 }
@@ -41,7 +41,7 @@ JointGraphView::JointGraphView()
 
 JointGraphView::~JointGraphView()
 {
-    itemTreeViewConnection.disconnect();
+    rootItemConnection.disconnect();
     bodyItemConnections.disconnect();
 }
 
@@ -52,7 +52,7 @@ QWidget* JointGraphView::indicatorOnInfoBar()
 }
 
 
-void JointGraphView::onItemSelectionChanged(const ItemList<MultiValueSeqItem>& items)
+void JointGraphView::onSelectedItemsChanged(ItemList<MultiValueSeqItem> items)
 {
     if(items.empty()){
         return;
@@ -83,11 +83,13 @@ void JointGraphView::onItemSelectionChanged(const ItemList<MultiValueSeqItem>& i
             it->seq = it->item->seq();
             it->bodyItem = bodyItem;
 
-            it->connections.add(it->item->sigUpdated().connect(
-                                    std::bind(&JointGraphView::onDataItemUpdated, this, it)));
+            it->connections.add(
+                it->item->sigUpdated().connect(
+                    [=]{ onDataItemUpdated(it); }));
 
-            it->connections.add(it->item->sigDetachedFromRoot().connect(
-                                    std::bind(&JointGraphView::onDataItemDetachedFromRoot, this, it)));
+            it->connections.add(
+                it->item->sigDetachedFromRoot().connect(
+                    [=](){ onDataItemDetachedFromRoot(it); }));
         }
     }
 
@@ -119,11 +121,11 @@ void JointGraphView::updateBodyItems()
 
             bodyItemConnections.add(
                 linkSelection->sigSelectionChanged(it->bodyItem).connect(
-                    std::bind(&JointGraphView::setupGraphWidget, this)));
+                    [=](){ setupGraphWidget(); }));
             
             bodyItemConnections.add(
                 it->bodyItem->sigDetachedFromRoot().connect(
-                    std::bind(&JointGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
+                    [=](){ onBodyItemDetachedFromRoot(it->bodyItem); }));
         }
     }
 }
@@ -182,10 +184,14 @@ void JointGraphView::addJointTrajectory
     handler->setVelocityLimits(joint->dq_lower(), joint->dq_upper());
                 
     handler->setFrameProperties(seq->numFrames(), seq->frameRate());
+
     handler->setDataRequestCallback(
-        std::bind(&JointGraphView::onDataRequest, this, itemInfoIter, joint->jointId(), _1, _2, _3));
+        [=](int frame, int size, double* out_values){
+            onDataRequest(itemInfoIter, joint->jointId(), frame, size, out_values); });
+    
     handler->setDataModifiedCallback(
-        std::bind(&JointGraphView::onDataModified, this, itemInfoIter, joint->jointId(), _1, _2, _3));
+        [=](int frame, int size, double* values){
+            onDataModified(itemInfoIter, joint->jointId(), frame, size, values); });
                 
     graph.addDataHandler(handler);
     itemInfoIter->handlers.push_back(handler);

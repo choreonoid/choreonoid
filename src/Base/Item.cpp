@@ -82,8 +82,8 @@ public:
 
     Signal<void(bool on)> sigSelectionChanged;
 
-    Signal<void(int checkId, bool on)> sigCheckToggled;
-    Signal<void(bool on)> sigAnyCheckToggled;
+    Signal<void(int checkId, bool on)> sigAnyCheckToggled;
+    Signal<void(bool on)> sigLogicalSumOfAllChecksToggled;
     map<int, Signal<void(bool on)>> checkIdToSignalMap;
 
     // for file overwriting management, mainly accessed by ItemManagerImpl
@@ -382,7 +382,7 @@ void Item::Impl::getSelectedDescendantsIter(const Item* parentItem, ItemList<>& 
 
 bool Item::isChecked(int checkId) const
 {
-    if(checkId == AnyCheck){
+    if(checkId == LogicalSumOfAllChecks){
         for(const auto& checked : impl->checkStates){
             if(checked){
                 return true;
@@ -424,14 +424,14 @@ void Item::setChecked(int checkId, bool on)
     if(on != current){
         impl->checkStates[checkId] = on;
         impl->checkIdToSignalMap[checkId](on);
-        impl->sigCheckToggled(checkId, on);
+        impl->sigAnyCheckToggled(checkId, on);
         if(!root){
             root = findRootItem();
         }
         if(root){
             root->emitSigCheckToggled(this, checkId, on);
             
-            if(!impl->sigAnyCheckToggled.empty()){
+            if(!impl->sigLogicalSumOfAllChecksToggled.empty()){
                 int n = std::min(root->numCheckEntries(), (int)impl->checkStates.size());
                 bool wasAnyChecked = false;
                 for(int i=0; i < n; ++i){
@@ -441,8 +441,8 @@ void Item::setChecked(int checkId, bool on)
                     }
                 }
                 if(on != wasAnyChecked){
-                    impl->sigAnyCheckToggled(on);
-                    root->emitSigCheckToggled(this, AnyCheck, on);
+                    impl->sigLogicalSumOfAllChecksToggled(on);
+                    root->emitSigCheckToggled(this, LogicalSumOfAllChecks, on);
                 }
             }
         }
@@ -450,16 +450,16 @@ void Item::setChecked(int checkId, bool on)
 }
 
 
-SignalProxy<void(int checkId, bool on)> Item::sigCheckToggled()
+SignalProxy<void(int checkId, bool on)> Item::sigAnyCheckToggled()
 {
-    return impl->sigCheckToggled;
+    return impl->sigAnyCheckToggled;
 }
 
 
 SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
 {
-    if(checkId == AnyCheck){
-        return impl->sigAnyCheckToggled;
+    if(checkId == LogicalSumOfAllChecks){
+        return impl->sigLogicalSumOfAllChecksToggled;
     } else {
         return impl->checkIdToSignalMap[checkId];
     }

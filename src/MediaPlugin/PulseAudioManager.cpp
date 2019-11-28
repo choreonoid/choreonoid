@@ -7,7 +7,7 @@
 #include "AudioItem.h"
 #include "MediaUtil.h"
 #include <cnoid/MenuManager>
-#include <cnoid/ItemTreeView>
+#include <cnoid/RootItem>
 #include <cnoid/TimeBar>
 #include <cnoid/LazyCaller>
 #include <cnoid/Archive>
@@ -19,7 +19,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
 
@@ -211,26 +210,26 @@ PulseAudioManagerImpl::PulseAudioManagerImpl(ExtensionManager* ext)
 
     fullSyncPlaybackMenuItem = mm.addCheckItem(_("Fully-Synchronized Audio Playback"));
     fullSyncPlaybackMenuItem->sigToggled().connect(
-        std::bind(&PulseAudioManagerImpl::onFullSyncPlaybackToggled, this));
+        [&](bool){ onFullSyncPlaybackToggled(); });
 
     ext->setProjectArchiver(
         "PulseAudioManager",
-        std::bind(&PulseAudioManagerImpl::store, this, _1),
-        std::bind(&PulseAudioManagerImpl::restore, this, _1));
+        [&](Archive& archive){ return store(archive); },
+        [&](const Archive& archive){ restore(archive); });
     
-    ItemTreeView::instance()->sigCheckToggled().connect(
-        std::bind(&PulseAudioManagerImpl::onItemCheckToggled, this, _1, _2));
+    RootItem::instance()->sigCheckToggled().connect(
+        [&](Item* item, bool on){ onItemCheckToggled(item, on); });
 
     timeBar = TimeBar::instance();
 
     timeBar->sigPlaybackInitialized().connect(
-        std::bind(&PulseAudioManagerImpl::onPlaybackInitialized, this, _1));
+        [&](double time){ return onPlaybackInitialized(time); });
 
     timeBar->sigPlaybackStarted().connect(
-        std::bind(&PulseAudioManagerImpl::onPlaybackStarted, this, _1));
+        [&](double time){ onPlaybackStarted(time); });
 
     timeBar->sigPlaybackStopped().connect(
-        std::bind(&PulseAudioManagerImpl::onPlaybackStopped, this, _1));
+        [&](double time, bool){ onPlaybackStopped(time); });
 
     // In some environments, the initial stream connection after starting up an
     // operating system produces an undesired playback timing offset.
@@ -296,7 +295,7 @@ bool PulseAudioManagerImpl::playAudioFile(const std::string& filename, double vo
             activeSources[audioItem] = source;
 
             timeBar->sigPlaybackStopped().connect(
-                std::bind(&PulseAudioManagerImpl::onAudioFilePlaybackStopped, this, audioItem));
+                [this, audioItem](double, bool){ onAudioFilePlaybackStopped(audioItem); });
 
             timeBar->setTime(0.0);
             timeBar->startPlayback();
@@ -348,7 +347,7 @@ bool PulseAudioManagerImpl::onPlaybackInitialized(double time)
             source->initializePlayback(time);
         }
         sigTimeChangedConnection = timeBar->sigTimeChanged().connect(
-            std::bind(&PulseAudioManagerImpl::onTimeChanged, this, _1));
+            [&](double time){ return onTimeChanged(time); });
     }
     return true;
 }
@@ -405,7 +404,7 @@ void PulseAudioManagerImpl::restore(const Archive& archive)
 Source::Source(PulseAudioManagerImpl* manager, AudioItemPtr audioItem)
     : manager(manager),
       audioItem(audioItem),
-      stopLater(std::bind(&Source::stop, this))
+      stopLater([&](){ stop(); })
 {
     stream = 0;
     currentFrame = 0;
@@ -448,14 +447,14 @@ void pa_stream_success_callback(pa_stream* stream, int success, void* userdata)
 void pa_stream_overflow_notify_callback(pa_stream* stream, void* userdata)
 {
     Source* source = (Source*)userdata;
-    callLater(std::bind(&Source::onBufferOverflow, source));
+    callLater([source](){ source->onBufferOverflow(); });
 }
 
 void pa_stream_underflow_notify_callback(pa_stream* stream, void* userdata)
 {
     Source* source = (Source*)userdata;
     if(!source->hasAllFramesWritten){
-        callLater(std::bind(&Source::onBufferUnderflow, source));
+        callLater([source](){ source->onBufferUnderflow(); });
     }
 }
 }
@@ -697,7 +696,7 @@ void Source::write(size_t nbytes, bool isDoingInitialization)
             if(negative){
                 latency = 0;
             }
-            callLater(std::bind(&Source::onAllFramesWritten, this, latency));
+            callLater([this, latency](){ onAllFramesWritten(latency); });
         }
     }
 }

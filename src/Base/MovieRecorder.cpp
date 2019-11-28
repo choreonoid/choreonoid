@@ -11,6 +11,7 @@
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "SceneView.h"
+#include "SceneWidget.h"
 #include "ToolBar.h"
 #include "TimeBar.h"
 #include "Archive.h"

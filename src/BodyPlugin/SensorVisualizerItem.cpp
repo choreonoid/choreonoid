@@ -9,7 +9,6 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/PointSetItem>
-#include <cnoid/ItemTreeView>
 #include <cnoid/ItemManager>
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneDrawables>
@@ -354,7 +353,7 @@ SensorVisualizerItemBase::SensorVisualizerItemBase(Item* visualizerItem)
       bodyItem(nullptr)
 {
     sigCheckToggledConnection.reset(
-        ItemTreeView::instance()->sigCheckToggled(visualizerItem, ItemTreeView::ID_ANY).connect(
+        visualizerItem->sigCheckToggled(Item::LogicalSumOfAllChecks).connect(
             [&](bool on){ enableVisualization(on); }));
 }
 
@@ -362,13 +361,13 @@ SensorVisualizerItemBase::SensorVisualizerItemBase(Item* visualizerItem)
 void SensorVisualizerItemBase::setBodyItem(BodyItem* bodyItem)
 {
     this->bodyItem = bodyItem;
-    enableVisualization(ItemTreeView::instance()->isItemChecked(visualizerItem, ItemTreeView::ID_ANY));
+    enableVisualization(visualizerItem->isChecked(Item::LogicalSumOfAllChecks));
 }
 
 
 void SensorVisualizerItemBase::updateVisualization()
 {
-    if(ItemTreeView::instance()->isItemChecked(visualizerItem, ItemTreeView::ID_ANY)){
+    if(visualizerItem->isChecked(Item::LogicalSumOfAllChecks)){
         doUpdateVisualization();
     }
 }

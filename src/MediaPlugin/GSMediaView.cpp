@@ -9,8 +9,8 @@
 #include <cnoid/MenuManager>
 #include <cnoid/ViewManager>
 #include <cnoid/Archive>
+#include <cnoid/RootItem>
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
@@ -26,7 +26,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -222,18 +221,20 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
     pendingSeekTimer.setSingleShot(true);
     pendingSeekTimer.setInterval(200);
     pendingSeekTimer.sigTimeout().connect(
-        std::bind(&GSMediaViewImpl::checkPendingSeek, this));
+        [&](){ checkPendingSeek(); });
 
     connections.add(
         aspectRatioCheck->sigToggled().connect(
-            std::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
-    connections.add(
-        orgSizeCheck->sigToggled().connect(
-            std::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
+            [&](bool){ onZoomPropertyChanged(); }));
 
     connections.add(
-        ItemTreeView::instance()->sigCheckToggled().connect(
-            std::bind(&GSMediaViewImpl::onItemCheckToggled, this, _1, _2)));
+        orgSizeCheck->sigToggled().connect(
+            [&](bool){ onZoomPropertyChanged(); }));
+
+    connections.add(
+        RootItem::instance()->sigCheckToggled().connect(
+            [&](Item* item, bool isChecked){
+                onItemCheckToggled(item, isChecked); }));
 }
 
 
@@ -376,7 +377,7 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
         cout << "GSMediaViewImpl::onBusMessageSync(" << GST_MESSAGE_TYPE_NAME(message) << ")" << endl;
     }
 
-    callLater(std::bind(&GSMediaViewImpl::onBusMessageAsync, this, gst_message_copy(message)));
+    callLater([this, message](){ onBusMessageAsync(gst_message_copy(message)); });
 
     return GST_BUS_DROP;
 }
@@ -444,7 +445,7 @@ GstPadProbeReturn GSMediaViewImpl::onVideoPadGotBuffer(GstPad* pad, GstPadProbeI
         const GstStructure* structure = gst_caps_get_structure(caps, 0);
         if(gst_structure_get_int(structure, "width", &videoWidth) &&
            gst_structure_get_int(structure, "height", &videoHeight)){
-            callLater(std::bind(&GSMediaViewImpl::updateRenderRectangle, this));
+            callLater([&](){ updateRenderRectangle(); });
         }
     }
 
@@ -511,7 +512,7 @@ void GSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
     
     MediaItem* mediaItem = dynamic_cast<MediaItem*>(item);
     if(mediaItem){
-        ItemList<MediaItem> checkedItems = ItemTreeView::instance()->checkedItems<MediaItem>();
+        auto checkedItems = RootItem::instance()->checkedItems<MediaItem>();
         MediaItemPtr targetItem;
         if(!checkedItems.empty()){
             targetItem = checkedItems.front();
@@ -563,16 +564,16 @@ void GSMediaViewImpl::activateCurrentMediaItem()
         if(timeBarConnections.empty()){
             timeBarConnections.add(
                 timeBar->sigPlaybackInitialized().connect(
-                    std::bind(&GSMediaViewImpl::onPlaybackInitialized, this, _1)));
+                    [&](double time){ return onPlaybackInitialized(time); }));
             timeBarConnections.add(
                 timeBar->sigPlaybackStarted().connect(
-                    std::bind(&GSMediaViewImpl::onPlaybackStarted, this, _1)));
+                    [&](double time){ onPlaybackStarted(time); }));
             timeBarConnections.add(
                 timeBar->sigPlaybackStopped().connect(
-                    std::bind(&GSMediaViewImpl::onPlaybackStopped, this, _1)));
+                    [&](double time, bool){ onPlaybackStopped(time);}));
             timeBarConnections.add(
                 timeBar->sigTimeChanged().connect(
-                    std::bind(&GSMediaViewImpl::onTimeChanged, this, _1)));
+                    [&](double time){ return onTimeChanged(time); }));
         }
 
         self->update();

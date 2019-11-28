@@ -8,7 +8,6 @@
 #include "PoseSeqItem.h"
 #include <cnoid/RootItem>
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/AppConfig>
 #include <cnoid/MainWindow>
 #include <cnoid/MessageView>
@@ -259,10 +258,10 @@ void invokeFaceControllerPatternFileImportDialog()
             dialog.hide();
             MessageView::mainInstance()->flush();
 
-            ItemTreeView* itv = ItemTreeView::instance(); 
-            Item* parentItem = itv->selectedItem<Item>();
+            auto rootItem = RootItem::instance();
+            Item* parentItem = rootItem->selectedItems().toSingle();;
             if(!parentItem){
-                parentItem = RootItem::instance();
+                parentItem = rootItem;
             }
             QStringList poseseqFiles = dialog.selectedFiles();
             AppConfig::archive()->write(

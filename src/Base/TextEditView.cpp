@@ -6,7 +6,7 @@
 #include "TextEdit.h"
 #include "MainWindow.h"
 #include "ViewManager.h"
-#include "ItemTreeView.h"
+#include "RootItem.h"
 #include "ItemList.h"
 #include "AbstractTextItem.h"
 #include "Buttons.h"
@@ -24,7 +24,6 @@
 #include "gettext.h"
 
 using namespace cnoid;
-using namespace std::placeholders;
 namespace filesystem = cnoid::stdx::filesystem;
 
 #define FILE_CHECK_TIME 1000   //msec
@@ -53,11 +52,11 @@ private:
     std::time_t fileTimeStamp;
     uintmax_t fileSize;
 
-    QAction *actionUndo,
-        *actionRedo,
-        *actionCut,
-        *actionCopy,
-        *actionPaste;
+    QAction* actionUndo;
+    QAction* actionRedo;
+    QAction* actionCut;
+    QAction* actionCopy;
+    QAction* actionPaste;
 
     void onItemSelectionChanged(const ItemList<AbstractTextItem>& textItems);
     void onTextItemDetachedFromRoot();
@@ -69,6 +68,7 @@ private:
     void cursorPositionChanged();
     void onActivated(bool on);
 };
+
 }
 
 
@@ -118,7 +118,7 @@ TextEditViewImpl::TextEditViewImpl(TextEditView* self)
     fileNameLabel.setSizePolicy(QSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred));
     hbox->addWidget(&fileNameLabel, 10);
     PushButton* saveButton = new PushButton(_("Save"));
-    saveButton->sigClicked().connect(std::bind(&TextEditViewImpl::save, this));
+    saveButton->sigClicked().connect([&](){ save();});
     hbox->addWidget(saveButton);
     vbox->addLayout(hbox);
     vbox->addWidget(&textEdit);
@@ -127,18 +127,18 @@ TextEditViewImpl::TextEditViewImpl(TextEditView* self)
     self->setLayout(vbox);
 
     textEdit.sigCursorPositionChanged().connect(
-        std::bind(&TextEditViewImpl::cursorPositionChanged, this));
+        [&](){ cursorPositionChanged(); });
 
     connections.add(
-        ItemTreeView::instance()->sigSelectionChanged().connect(
-            std::bind(&TextEditViewImpl::onItemSelectionChanged, this, _1)));
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& items){ onItemSelectionChanged(items); }));
+    
     timer.setSingleShot(true);
-    connections.add(
-        timer.sigTimeout().connect(
-            std::bind(&TextEditViewImpl::timeOut, this)));
+    
+    connections.add(timer.sigTimeout().connect([&](){ timeOut(); }));
 
-    self->sigActivated().connect(std::bind(&TextEditViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(std::bind(&TextEditViewImpl::onActivated, this ,false));
+    self->sigActivated().connect([&](){ onActivated(true); });
+    self->sigDeactivated().connect([&](){ onActivated(false); });
 
     viewActive = false;
 }
@@ -153,20 +153,23 @@ TextEditViewImpl::~TextEditViewImpl()
 
 void TextEditViewImpl::onItemSelectionChanged(const ItemList<AbstractTextItem>& textItems)
 {
-    if(selectedTextItems_ != textItems)
+    if(selectedTextItems_ != textItems){
         selectedTextItems_ = textItems;
-    else
+    } else {
         return;
+    }
 
     AbstractTextItemPtr firstItem = textItems.toSingle();
 
     if(firstItem && firstItem != currentTextItem_){
-        if(currentTextItem_)
+        if(currentTextItem_){
             maybeSave();
+        }
         currentTextItem_ = firstItem;
         connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
-        connectionOfCurrentBodyItemDetachedFromRoot = currentTextItem_->sigDetachedFromRoot().connect(
-            std::bind(&TextEditViewImpl::onTextItemDetachedFromRoot, this));
+        connectionOfCurrentBodyItemDetachedFromRoot =
+            currentTextItem_->sigDetachedFromRoot().connect(
+                [&](){ onTextItemDetachedFromRoot(); });
         open();
     }
 }
@@ -186,11 +189,13 @@ void TextEditViewImpl::open()
 {
     timer.stop();
     QString fileName(currentTextItem_->textFilename().c_str());
-    if (!QFile::exists(fileName))
+    if(!QFile::exists(fileName)){
         return;
+    }
     QFile file(fileName);
-    if (!file.open(QFile::ReadWrite))
+    if(!file.open(QFile::ReadWrite)){
         return;
+    }
     
     QByteArray data = file.readAll();
     QString str = QString::fromLocal8Bit(data);
@@ -202,33 +207,39 @@ void TextEditViewImpl::open()
 
 void TextEditViewImpl::maybeSave()
 {
-    if (!textEdit.document()->isModified())
+    if(!textEdit.document()->isModified()){
         return;
+    }
     timer.stop();
     QMessageBox::StandardButton ret;
-    ret = QMessageBox::warning(MainWindow::instance(), _("Warning"),
-                               _("The document has been modified.\n Do you want to save your changes?"),
-                               QMessageBox::Yes | QMessageBox::No );
-    if (ret == QMessageBox::Yes)
+    ret = QMessageBox::warning(
+        MainWindow::instance(), _("Warning"),
+        _("The document has been modified.\n Do you want to save your changes?"),
+        QMessageBox::Yes | QMessageBox::No );
+    if(ret == QMessageBox::Yes){
         return save();
-    else if (ret == QMessageBox::No)
+    } else if(ret == QMessageBox::No){
         return;
+    }
 }
 
 
 void TextEditViewImpl::save()
 {
     timer.stop();
-    if(!currentTextItem_)
+    if(!currentTextItem_){
         return;
+    }
     QString fileName(currentTextItem_->textFilename().c_str());
-    if(fileName.isEmpty())
+    if(fileName.isEmpty()){
         return;
+    }
     QTextDocumentWriter writer(fileName);
     writer.setFormat("plaintext");
     bool success = writer.write(textEdit.document());
-    if (success)
+    if(success){
         setCurrentFileName();
+    }
 }
 
 
@@ -246,8 +257,9 @@ void TextEditViewImpl::setCurrentFileName()
         filesystem::path fpath(currentTextItem_->textFilename());
         fileTimeStamp = filesystem::last_write_time_to_time_t(fpath);
         fileSize = filesystem::file_size(fpath);
-        if(viewActive)
+        if(viewActive){
             timer.start(FILE_CHECK_TIME);
+        }
     }
 }
 
@@ -277,8 +289,9 @@ void TextEditViewImpl::timeOut()
             }
         }
     }
-    if(viewActive)
+    if(viewActive){
         timer.start(FILE_CHECK_TIME);
+    }
 }
 
 
@@ -295,8 +308,9 @@ void TextEditViewImpl::onActivated(bool on)
 {
     viewActive = on;
 
-    if(currentTextItem_ && on)
+    if(currentTextItem_ && on){
         timer.start(FILE_CHECK_TIME);
-    else
+    } else {
         timer.stop();
+    }
 }

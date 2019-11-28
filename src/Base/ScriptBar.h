@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCRIPT_BAR_H_INCLUDED
-#define CNOID_BASE_SCRIPT_BAR_H_INCLUDED
+#ifndef CNOID_BASE_SCRIPT_BAR_H
+#define CNOID_BASE_SCRIPT_BAR_H
 
 #include <cnoid/ToolBar>
 
@@ -19,6 +19,7 @@ private:
     virtual ~ScriptBar();
     void executeCheckedScriptItems();
 };
+
 }
 
 #endif

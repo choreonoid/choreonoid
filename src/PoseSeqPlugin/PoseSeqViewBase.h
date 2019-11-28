@@ -182,7 +182,7 @@ public:
     void onIkPartCheckClicked(LinkTreeItem* item, Qt::CheckState checkState);
 
     void onInterpolationParametersChanged();
-    void onItemSelectionChanged(const ItemList<PoseSeqItem>& selectedItems);
+    void onSelectedItemsChanged(ItemList<PoseSeqItem> selectedItems);
 
     void setCurrentItemName(ItemPtr item);
     void onBodyKinematicStateEdited();

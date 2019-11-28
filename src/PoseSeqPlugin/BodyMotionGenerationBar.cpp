@@ -9,8 +9,8 @@
 #include <cnoid/BodyMotionPoseProvider>
 #include <cnoid/PoseProviderToBodyMotionConverter>
 #include <cnoid/BodyMotionUtil>
+#include <cnoid/RootItem>
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>
 #include <cnoid/Archive>
@@ -439,8 +439,8 @@ void BodyMotionGenerationBar::notifyInterpolationParametersChanged()
 void BodyMotionGenerationBar::onGenerationButtonClicked()
 {
     set<BodyMotionItem*> motionItems; // for avoiding overlap
-    ItemList<Item> selectedItems = ItemTreeView::instance()->selectedItems<Item>();
 
+    auto selectedItems = RootItem::instance()->selectedItems();
     for(size_t i=0; i < selectedItems.size(); ++i){
         PoseSeqItem* poseSeqItem = selectedItems.get<PoseSeqItem>(i);
         if(poseSeqItem){

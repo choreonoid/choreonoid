@@ -41,6 +41,7 @@ private:
     GraphViewBaseImpl* impl;
     friend class GraphViewBaseImpl;
 };
+
 }
 
 #endif

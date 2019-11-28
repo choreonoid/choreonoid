@@ -149,7 +149,7 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     }
 
     itemCheckConnection = 
-        item->sigCheckToggled().connect(
+        item->sigAnyCheckToggled().connect(
             [this](int checkId, bool on){
                 this->widgetImpl->toggleItwItemCheck(this, checkId, on); });
                 

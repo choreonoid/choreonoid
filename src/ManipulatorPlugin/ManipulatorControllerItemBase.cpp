@@ -8,7 +8,6 @@
 #include <cnoid/LinkCoordinateFrameSet>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/BodyItem>
 #include <cnoid/ControllerIO>
 #include <cnoid/MessageView>
@@ -273,9 +272,8 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
 
     programItem = programItems.front();
     // find the first checked item
-    ItemTreeView* itv = ItemTreeView::instance();
     for(size_t i=0; i < programItems.size(); ++i){
-        if(itv->isItemChecked(programItems[i])){
+        if(programItems[i]->isChecked()){
             programItem = programItems[i];
             break;
         }

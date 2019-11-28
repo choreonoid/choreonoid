@@ -59,7 +59,7 @@ public:
     bool storeCheckStates(int checkId, Archive& archive, const std::string& key);
     bool restoreCheckStates(int checkId, const Archive& archive, const std::string& key);
 
-    //! \note Item::AnyCheck is not supported
+    //! \note Item::LogicalSumOfAllChecks is not supported
     template <class ItemType> ItemList<ItemType> checkedItems(int checkId = PrimaryCheck) {
         return getCheckedItems(checkId);
     }

@@ -3,9 +3,8 @@
 */
 
 #include "ItemPropertyView.h"
-#include "Item.h"
+#include "RootItem.h"
 #include "ItemList.h"
-#include "ItemTreeView.h"
 #include "ViewManager.h"
 #include "MenuManager.h"
 #include "PutPropertyFunction.h"
@@ -516,7 +515,7 @@ public:
     void clear();
     void updateProperties(bool isItemChanged = false);
     void addProperty(const std::string& name, PropertyItem* propertyItem);
-    void onItemSelectionChanged(const ItemList<>& items);
+    void onSelectedItemsChanged(const ItemList<>& items);
     void zoomFontSize(int pointSizeDiff);
 };
 
@@ -707,8 +706,8 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     self->setLayout(vbox);
 
     selectionChangedConnection =
-        ItemTreeView::instance()->sigSelectionChanged().connect(
-            [&](const ItemList<>& items){ onItemSelectionChanged(items); });
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& items){ onSelectedItemsChanged(items); });
 
     fontPointSizeDiff = 0;
     MappingPtr config = AppConfig::archive()->openMapping("ItemPropertyView");
@@ -798,10 +797,10 @@ void ItemPropertyViewImpl::addProperty(const std::string& name, PropertyItem* pr
 }
 
 
-void ItemPropertyViewImpl::onItemSelectionChanged(const ItemList<>& items)
+void ItemPropertyViewImpl::onSelectedItemsChanged(const ItemList<>& items)
 {
     if(TRACE_FUNCTIONS){
-        cout << "ItemPropertyView::onItemSelectionChanged()" << endl;
+        cout << "ItemPropertyView::onSelectedItemsChanged()" << endl;
     }
 
     Item* item = items.toSingle();

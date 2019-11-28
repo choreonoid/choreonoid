@@ -7,9 +7,9 @@
 #include "PronunSymbol.h"
 #include "PoseFilters.h"
 #include "BodyMotionGenerationBar.h"
+#include <cnoid/RootItem>
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/LinkSelectionView>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/InfoBar>
 #include <cnoid/Dialog>
@@ -258,8 +258,8 @@ PoseSeqViewBase::PoseSeqViewBase(View* view)
     setupLinkTreeWidget();
 
     staticConnections.add(
-        ItemTreeView::instance()->sigSelectionChanged().connect(
-            std::bind(&PoseSeqViewBase::onItemSelectionChanged, this, _1)));
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            std::bind(&PoseSeqViewBase::onSelectedItemsChanged, this, _1)));
 
     isSelectedPoseMoving = false;
 
@@ -831,10 +831,9 @@ void PoseSeqViewBase::onTimeScaleChanged()
 }
 
 
-void PoseSeqViewBase::onItemSelectionChanged(const ItemList<PoseSeqItem>& selectedItems)
+void PoseSeqViewBase::onSelectedItemsChanged(ItemList<PoseSeqItem> selectedItems)
 {
-    PoseSeqItemPtr item = selectedItems.toSingle();
-    if(item){
+    if(auto item = selectedItems.toSingle()){
         setCurrentPoseSeqItem(item);
     }
 }

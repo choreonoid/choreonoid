@@ -3,11 +3,10 @@
 */
 
 #include "GraphViewBase.h"
-#include <cnoid/Item>
+#include "RootItem.h"
+#include "Archive.h"
+#include "TreeWidget.h"
 #include <cnoid/ConnectionSet>
-#include <cnoid/ItemTreeView>
-#include <cnoid/Archive>
-#include <cnoid/TreeWidget>
 #include <QBoxLayout>
 #include <QHeaderView>
 #include <QScrollBar>
@@ -18,7 +17,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -28,7 +26,6 @@ struct ItemInfo
 {
     GraphViewBaseImpl* base;
     ItemPtr item;
-    //ConnectionSet connections;
     std::vector<GraphDataHandlerPtr> handlers;
 
     ItemInfo(GraphViewBaseImpl* base) : base(base) { }
@@ -82,7 +79,7 @@ public:
 
     map<Item*, ConnectionSet> itemToConnectionSetMap;
 
-    void onItemSelectionChanged(const ItemList<>& items);
+    void onSelectedItemsChanged(const ItemList<>& items);
     void onItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
     void updatePartList();
     void updateSelections();
@@ -139,12 +136,12 @@ GraphViewBaseImpl::GraphViewBaseImpl(GraphViewBase* self)
     self->setLayout(hbox);
     
     itemSelectionChangedConnection =
-        ItemTreeView::instance()->sigSelectionChanged().connect(
-            std::bind(&GraphViewBaseImpl::onItemSelectionChanged, this, _1));
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& items){ onSelectedItemsChanged(items); });
 
     partSelectionChangedConnection =
         treeWidget.sigItemSelectionChanged().connect(
-            std::bind(&GraphViewBaseImpl::updateSelections, this));
+            [&](){ updateSelections(); });
 }
 
 
@@ -173,7 +170,7 @@ QWidget* GraphViewBase::indicatorOnInfoBar()
 }
 
 
-void GraphViewBaseImpl::onItemSelectionChanged(const ItemList<>& allItems)
+void GraphViewBaseImpl::onSelectedItemsChanged(const ItemList<>& allItems)
 {
     ItemList<> items = self->extractTargetItems(allItems);
 
@@ -204,11 +201,13 @@ void GraphViewBaseImpl::onItemSelectionChanged(const ItemList<>& allItems)
         it->item = items[i];
 
         ConnectionSet& connections = itemToConnectionSetMap[it->item.get()];
-        connections.add(it->item->sigUpdated().connect(
-                            std::bind(&GraphViewBaseImpl::onItemUpdated, this, it)));
+        connections.add(
+            it->item->sigUpdated().connect(
+                [this, it](){ onItemUpdated(it); }));
 
-        connections.add(it->item->sigDetachedFromRoot().connect(
-                            std::bind(&GraphViewBaseImpl::onItemDetachedFromRoot, this, it)));
+        connections.add(
+            it->item->sigDetachedFromRoot().connect(
+                [this, it](){ onItemDetachedFromRoot(it); }));
     }
 
     updatePartList();

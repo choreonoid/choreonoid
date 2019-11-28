@@ -4,7 +4,7 @@
 
 #include "BodyBar.h"
 #include "BodyItem.h"
-#include <cnoid/ItemTreeView>
+#include <cnoid/RootItem>
 #include <cnoid/Archive>
 #include "gettext.h"
 
@@ -27,7 +27,7 @@ public:
     BodyBarImpl(BodyBar* self);
     ~BodyBarImpl();
     bool makeSingleSelection(BodyItem* bodyItem);
-    void onItemSelectionChanged(const ItemList<BodyItem>& bodyItems);
+    void onSelectedItemsChanged(ItemList<BodyItem> bodyItems);
     void onBodyItemDetachedFromRoot();
     void onCopyButtonClicked();
     void onPasteButtonClicked();
@@ -85,8 +85,8 @@ BodyBarImpl::BodyBarImpl(BodyBar* self)
         ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, false); });
 
     connectionOfItemSelectionChanged = 
-        ItemTreeView::instance()->sigSelectionChanged().connect(
-            [&](const ItemList<>& items){ onItemSelectionChanged(items); });
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& items){ onSelectedItemsChanged(items); });
 }
 
 
@@ -133,10 +133,6 @@ BodyItem* BodyBar::currentBodyItem()
 }
 
 
-/**
-   \todo ItemTreeView::sigSelectionChanged() should be emitted
-   after the final selection state has been determined.
-*/
 bool BodyBar::makeSingleSelection(BodyItem* bodyItem)
 {
     return impl->makeSingleSelection(bodyItem);
@@ -145,26 +141,19 @@ bool BodyBar::makeSingleSelection(BodyItem* bodyItem)
 
 bool BodyBarImpl::makeSingleSelection(BodyItem* bodyItem)
 {
-    auto itv = ItemTreeView::instance();
-
     ItemList<BodyItem> prevSelected = selectedBodyItems;
-
     for(size_t i=0; i < prevSelected.size(); ++i){
         BodyItem* item = prevSelected[i];
-        if(item != bodyItem && itv->isItemSelected(item)){
-            itv->selectItem(item, false);
+        if(item != bodyItem){
+            item->setSelected(false);
         }
     }
-
-    bool selected = itv->isItemSelected(bodyItem);
-    if(!selected){
-        selected = itv->selectItem(bodyItem, true);
-    }
-    return selected;
+    bodyItem->setSelected(true);
+    return true;
 }
 
 
-void BodyBarImpl::onItemSelectionChanged(const ItemList<BodyItem>& bodyItems)
+void BodyBarImpl::onSelectedItemsChanged(ItemList<BodyItem> bodyItems)
 {
     bool selectedBodyItemsChanged = false;
     

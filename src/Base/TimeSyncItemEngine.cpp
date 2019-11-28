@@ -3,7 +3,7 @@
 */
 
 #include "TimeSyncItemEngine.h"
-#include "ItemTreeView.h"
+#include "RootItem.h"
 #include "ItemList.h"
 #include "TimeBar.h"
 #include "LazyCaller.h"
@@ -97,7 +97,7 @@ void TimeSyncItemEngineManager::initialize()
         currentTime = 0.0;
         
         selectionConnection =
-            ItemTreeView::instance()->sigSelectionChanged().connect(onSelectedItemsChanged);
+            RootItem::instance()->sigSelectedItemsChanged().connect(onSelectedItemsChanged);
         
         connectionOfTimeChanged = TimeBar::instance()->sigTimeChanged().connect(setTime);
         

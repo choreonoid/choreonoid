@@ -10,10 +10,10 @@
 #include <cnoid/BodyMotionItem>
 #include <cnoid/MultiVector3Seq>
 #include <cnoid/ZMPSeq>
+#include <cnoid/RootItem>
 #include <cnoid/ItemList>
 #include <cnoid/Archive>
 #include <cnoid/MenuManager>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/Dialog>
 #include <cnoid/Button>
@@ -307,7 +307,7 @@ void SplineFilterDialog::onAccepted()
 {
     double ratio = timeLengthRatioSpin.value();
         
-    ItemList<AbstractMultiSeqItem> items = ItemTreeView::instance()->selectedItems<AbstractMultiSeqItem>();
+    auto items = RootItem::instance()->selectedItems<AbstractMultiSeqItem>();
 
     ItemList<MultiValueSeqItem> vItems = items;
     for(int i=0; i < vItems.size(); ++i){

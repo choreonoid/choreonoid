@@ -6,12 +6,12 @@
 #include "PoseRollView.h"
 #include "PoseSeqViewBase.h"
 #include "PronunSymbol.h"
+#include <cnoid/RootItem>
 #include <cnoid/ScrollBar>
 #include <cnoid/CheckBox>
 #include <cnoid/Separator>
 #include <cnoid/EigenUtil>
 #include <cnoid/ViewManager>
-#include <cnoid/ItemTreeView>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QPaintEvent>
@@ -314,7 +314,7 @@ void PoseRollViewImpl::initialize()
     commandMenuButton.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     commandMenuButton.sigClicked().connect(std::bind(&PoseRollViewImpl::onMenuButtonClicked, this));
 
-    onItemSelectionChanged(ItemTreeView::instance()->selectedItems());
+    onSelectedItemsChanged(RootItem::instance()->selectedItems());
 }
 
 

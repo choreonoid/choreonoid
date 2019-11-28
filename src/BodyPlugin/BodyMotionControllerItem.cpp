@@ -7,7 +7,6 @@
 #include "BodyMotionItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/ControllerIO>
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
@@ -90,9 +89,8 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
     }
     motionItem = motionItems.front();
     // find the first checked item
-    ItemTreeView* itv = ItemTreeView::instance();
     for(size_t i=0; i < motionItems.size(); ++i){
-        if(itv->isItemChecked(motionItems[i])){
+        if(motionItems[i]->isChecked()){
             motionItem = motionItems[i];
             break;
         }

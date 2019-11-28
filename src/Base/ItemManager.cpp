@@ -5,7 +5,6 @@
 #include "ItemManager.h"
 #include "Item.h"
 #include "RootItem.h"
-#include "ItemTreeView.h"
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
@@ -599,7 +598,7 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
 
 void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
 {
-    ItemList<Item> parentItems = ItemTreeView::instance()->selectedItems();
+    ItemList<Item> parentItems = RootItem::instance()->selectedItems();
 
     if(parentItems.empty()){
         parentItems.push_back(RootItem::instance());
@@ -963,11 +962,15 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
     static const char* checkConfigKey = "defaultChecked";
 
     bool isCheckedByDefault = false;
-    CheckBox checkCheckBox(_("Check the item(s) in ItemTreeView"));
+    CheckBox checkCheckBox(_("Check the item(s)"));
     QGridLayout* layout = dynamic_cast<QGridLayout*>(dialog.layout());
 
     if(layout){
-        Mapping* conf = AppConfig::archive()->findMapping("ItemTreeView");
+        Mapping* conf = AppConfig::archive()->findMapping("ItemManager");
+        if(!conf->isValid()){
+            // for backward compatibility
+            conf = AppConfig::archive()->findMapping("ItemTreeView");
+        }
         if(conf->isValid()){
             conf = conf->findMapping(checkConfigKey);
             if(conf->isValid()){
@@ -997,7 +1000,7 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
 
         if(checkCheckBox.isChecked() != isCheckedByDefault){
             Mapping* checkConfig = config
-                ->openMapping("ItemTreeView")
+                ->openMapping("ItemManager")
                 ->openMapping(checkConfigKey)
                 ->openMapping(classInfo->moduleName);
             checkConfig->write(classInfo->className, checkCheckBox.isChecked());
@@ -1006,8 +1009,7 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
                   
         QStringList filenames = dialog.selectedFiles();
 
-        auto itv = ItemTreeView::instance();
-        Item* parentItem = itv->selectedItem<Item>();
+        Item* parentItem = RootItem::instance()->selectedItems().toSingle();
         if(!parentItem){
             parentItem = RootItem::instance();
         }
@@ -1021,7 +1023,7 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
                 parentItem->addChildItem(item, true);
 
                 if(checkCheckBox.isChecked()){
-                    itv->checkItem(item);
+                    item->setChecked(true);
                 }
             }
         }
@@ -1342,7 +1344,7 @@ bool ItemManagerImpl::overwrite(Item* item, bool forceOverwrite, const string& f
 
 void ItemManagerImpl::onReloadSelectedItemsActivated()
 {
-    ItemManager::reloadItems(ItemTreeView::instance()->selectedItems());
+    ItemManager::reloadItems(RootItem::instance()->selectedItems());
 }
 
 
@@ -1399,7 +1401,7 @@ Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
 
 void ItemManagerImpl::onSaveSelectedItemsActivated()
 {
-    const ItemList<>& selectedItems = ItemTreeView::instance()->selectedItems();
+    const ItemList<>& selectedItems = RootItem::instance()->selectedItems();
     for(size_t i=0; i < selectedItems.size(); ++i){
         overwrite(selectedItems.get(i), true, "");
     }
@@ -1408,7 +1410,7 @@ void ItemManagerImpl::onSaveSelectedItemsActivated()
 
 void ItemManagerImpl::onSaveSelectedItemsAsActivated()
 {
-    const ItemList<>& selectedItems = ItemTreeView::instance()->selectedItems();
+    const ItemList<>& selectedItems = RootItem::instance()->selectedItems();
     for(size_t i=0; i < selectedItems.size(); ++i){
         string formatId;
         save(selectedItems.get(i), true, false, selectedItems[i]->headItem()->name(), formatId);
@@ -1424,7 +1426,7 @@ void ItemManagerImpl::onSaveAllItemsActivated()
 
 void ItemManagerImpl::onExportSelectedItemsActivated()
 {
-    const ItemList<>& selectedItems = ItemTreeView::instance()->selectedItems();
+    const ItemList<>& selectedItems = RootItem::instance()->selectedItems();
     for(size_t i=0; i < selectedItems.size(); ++i){
         string formatId;
         save(selectedItems.get(i), true, true, selectedItems[i]->headItem()->name(), formatId);

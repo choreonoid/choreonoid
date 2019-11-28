@@ -52,9 +52,9 @@ private:
 
     std::set<BodyItemPtr> bodyItems;
     ConnectionSet bodyItemConnections;
-    Connection itemTreeViewConnection;
+    Connection rootItemConnection;
 
-    void onItemSelectionChanged(const ItemList<MultiValueSeqItem>& items);
+    void onSelectedItemsChanged(ItemList<MultiValueSeqItem> items);
     void onDataItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
     void updateBodyItems();
     void onBodyItemDetachedFromRoot(BodyItemPtr bodyItem);

@@ -48,7 +48,7 @@ private:
     ToggleToolButton rpyToggles[3];
 
     ConnectionSet toggleConnections;
-    Connection itemTreeViewConnection;
+    Connection rootItemConnection;
 
     struct ItemInfo
     {
@@ -68,7 +68,7 @@ private:
     ConnectionSet bodyItemConnections;
 
     void setupElementToggleSet(QBoxLayout* box, ToggleToolButton toggles[], const char* labels[], bool isActive);
-    void onItemSelectionChanged(const ItemList<MultiSE3SeqItem>& dataItems);
+    void onSelectedItemsChanged(ItemList<MultiSE3SeqItem> items);
     void onDataItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
     void updateBodyItems();
     void onBodyItemDetachedFromRoot(BodyItemPtr bodyItem);

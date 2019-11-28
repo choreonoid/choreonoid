@@ -7,7 +7,6 @@
 #include "WorldItem.h"
 #include <cnoid/TimeBar>
 #include <cnoid/RootItem>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/LazyCaller>
@@ -16,7 +15,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
 
@@ -26,7 +24,7 @@ static SimulationBar* instance_ = 0;
 static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("start-simulation")){
-        callLater(std::bind(static_cast<void(SimulationBar::*)(bool)>(&SimulationBar::startSimulation), instance_, true));
+        callLater([](){ instance_->startSimulation(true); });
     }
 }
 
@@ -57,27 +55,25 @@ SimulationBar::SimulationBar()
     
     addButton(QIcon(":/Body/icons/store-world-initial.png"),
               _("Store body positions to the initial world state"))->
-        sigClicked().connect(std::bind(&SimulationBar::onStoreInitialClicked, this));
+        sigClicked().connect([&](){ onStoreInitialClicked(); });
     
     addButton(QIcon(":/Body/icons/restore-world-initial.png"),
               _("Restore body positions from the initial world state"))->
-        sigClicked().connect(std::bind(&SimulationBar::onRestoreInitialClicked, this));
+        sigClicked().connect([&](){ onRestoreInitialClicked(); });
 
     addButton(QIcon(":/Body/icons/start-simulation.png"), _("Start simulation from the beginning"))->
-        sigClicked().connect(
-            std::bind(static_cast<void(SimulationBar::*)(bool)>(&SimulationBar::startSimulation), this, true));
+        sigClicked().connect([&](){ startSimulation(true); });
 
     addButton(QIcon(":/Body/icons/restart-simulation.png"),
               _("Start simulation from the current state"))->
-        sigClicked().connect(
-            std::bind(static_cast<void(SimulationBar::*)(bool)>(&SimulationBar::startSimulation), this, false));
+        sigClicked().connect([&](){ startSimulation(false); });
     
     pauseToggle = addToggleButton(QIcon(":/Body/icons/pause-simulation.png"), _("Pause simulation"));
-    pauseToggle->sigClicked().connect(std::bind(&SimulationBar::onPauseSimulationClicked, this));
+    pauseToggle->sigClicked().connect([&](){ onPauseSimulationClicked(); });
     pauseToggle->setChecked(false);
 
     addButton(QIcon(":/Body/icons/stop-simulation.png"), _("Stop simulation"))->
-        sigClicked().connect(std::bind(&SimulationBar::onStopSimulationClicked, this));
+        sigClicked().connect([&](){ onStopSimulationClicked(); });
 
 }
 
@@ -90,17 +86,15 @@ SimulationBar::~SimulationBar()
 
 static void forEachTargetBodyItem(std::function<void(BodyItem*)> callback)
 {
-    ItemTreeView* itemTreeView = ItemTreeView::instance();
-
     ItemList<BodyItem> bodyItems;
     bodyItems.extractChildItems(RootItem::instance());
     
     for(size_t i=0; i < bodyItems.size(); ++i){
         BodyItem* bodyItem = bodyItems.get(i);
-        bool isTarget = itemTreeView->isItemSelected(bodyItem);
+        bool isTarget = bodyItem->isSelected();
         if(!isTarget){
             WorldItem* worldItem = bodyItem->findOwnerItem<WorldItem>();
-            if(worldItem && itemTreeView->isItemSelected(worldItem)){
+            if(worldItem && worldItem->isSelected()){
                 isTarget = true;
             }
         }
@@ -127,19 +121,16 @@ void SimulationBar::onStoreInitialClicked()
 
 void SimulationBar::onRestoreInitialClicked()
 {
-    forEachTargetBodyItem(std::function<void(BodyItem*)>(std::bind(&BodyItem::restoreInitialState, _1, true)));
+    forEachTargetBodyItem(
+        [](BodyItem* bodyItem){ bodyItem->restoreInitialState(true); });
 }
 
 
 void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator)> callback, bool doSelect)
 {
-    MessageView* mv = MessageView::instance();
-    /*
-      ItemList<SimulatorItem> simulators =
-      ItemTreeView::mainInstance()->selectedItems<SimulatorItem>();
-    */
-    ItemList<SimulatorItem> simulators =
-        ItemTreeView::instance()->selectedItems<SimulatorItem>();
+    auto mv = MessageView::instance();
+
+    auto simulators =  RootItem::instance()->selectedItems<SimulatorItem>();
 
     if(simulators.empty()){
         simulators.extractChildItems(RootItem::instance());
@@ -150,7 +141,7 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
             mv->notify(_("Please select a simulator item to simulate."));
         } else {
             if(doSelect){
-                ItemTreeView::instance()->selectItem(simulators.front());
+                simulators.front()->setSelected(true);
             }
         }
     }
@@ -193,12 +184,11 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
 }
 
 
-void SimulationBar::startSimulation(bool doRest)
+void SimulationBar::startSimulation(bool doReset)
 {
     forEachSimulator(
-        std::bind(
-            static_cast<void(SimulationBar::*)(SimulatorItem*,bool)>(&SimulationBar::startSimulation),
-            this, _1, doRest), true);
+        [=](SimulatorItem* simulator){ startSimulation(simulator, doReset); },
+        true);
 }
 
 
@@ -222,7 +212,8 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
 
 void SimulationBar::onStopSimulationClicked()
 {
-    forEachSimulator(std::bind(&SimulationBar::stopSimulation, this, _1));
+    forEachSimulator(
+        [&](SimulatorItem* simulator){ stopSimulation(simulator); });
 
     TimeBar* timeBar = TimeBar::instance();
     if(timeBar->isDoingPlayback()){
@@ -240,7 +231,8 @@ void SimulationBar::stopSimulation(SimulatorItem* simulator)
 
 void SimulationBar::onPauseSimulationClicked()
 {
-    forEachSimulator(std::bind(&SimulationBar::pauseSimulation, this, _1));
+    forEachSimulator(
+        [&](SimulatorItem* simulator){ pauseSimulation(simulator); });
 }
 
 

@@ -4,7 +4,7 @@
 
 #include "LinkGraphView.h"
 #include "LinkSelectionView.h"
-#include <cnoid/ItemTreeView>
+#include <cnoid/RootItem>
 #include <cnoid/Archive>
 #include <cnoid/Link>
 #include <cnoid/EigenUtil>
@@ -12,7 +12,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -46,9 +45,9 @@ LinkGraphView::LinkGraphView()
     
     setLayout(hbox);
 
-    itemTreeViewConnection = 
-        ItemTreeView::instance()->sigSelectionChanged().connect(
-            std::bind(&LinkGraphView::onItemSelectionChanged, this, _1));
+    rootItemConnection = 
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& items){ onSelectedItemsChanged(items); });
 
     linkSelection = LinkSelectionView::instance();
 }
@@ -65,14 +64,14 @@ void LinkGraphView::setupElementToggleSet
 
         toggleConnections.add(
             toggles[i].sigToggled().connect(
-                std::bind(&LinkGraphView::setupGraphWidget, this)));
+                [&](bool){ setupGraphWidget(); }));
     }
 }
 
 
 LinkGraphView::~LinkGraphView()
 {
-    itemTreeViewConnection.disconnect();
+    rootItemConnection.disconnect();
     bodyItemConnections.disconnect();
 }
 
@@ -83,7 +82,7 @@ QWidget* LinkGraphView::indicatorOnInfoBar()
 }
 
 
-void LinkGraphView::onItemSelectionChanged(const ItemList<MultiSE3SeqItem>& items)
+void LinkGraphView::onSelectedItemsChanged(ItemList<MultiSE3SeqItem> items)
 {
     if(items.empty()){
         return;
@@ -114,11 +113,13 @@ void LinkGraphView::onItemSelectionChanged(const ItemList<MultiSE3SeqItem>& item
             it->seq = it->item->seq();
             it->bodyItem = bodyItem;
 
-            it->connections.add(it->item->sigUpdated().connect(
-                                    std::bind(&LinkGraphView::onDataItemUpdated, this, it)));
+            it->connections.add(
+                it->item->sigUpdated().connect(
+                    [=](){ onDataItemUpdated(it); }));
 
-            it->connections.add(it->item->sigDetachedFromRoot().connect(
-                                    std::bind(&LinkGraphView::onDataItemDetachedFromRoot, this, it)));
+            it->connections.add(
+                it->item->sigDetachedFromRoot().connect(
+                    [=](){ onDataItemDetachedFromRoot(it); }));
         }
     }
 
@@ -150,11 +151,11 @@ void LinkGraphView::updateBodyItems()
 
             bodyItemConnections.add(
                 linkSelection->sigSelectionChanged(it->bodyItem).connect(
-                    std::bind(&LinkGraphView::setupGraphWidget, this)));
+                    [=](){ setupGraphWidget(); }));
             
             bodyItemConnections.add(
                 it->bodyItem->sigDetachedFromRoot().connect(
-                    std::bind(&LinkGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
+                    [=](){ onBodyItemDetachedFromRoot(it->bodyItem); }));
         }
     }
 }
@@ -219,9 +220,11 @@ void LinkGraphView::addPositionTrajectory
             
                 handler->setFrameProperties(seq->numFrames(), seq->frameRate());
                 handler->setDataRequestCallback(
-                    std::bind(&LinkGraphView::onDataRequest, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
+                    [=](int frame, int size, double* out_values){
+                        onDataRequest(itemInfoIter, link->index(), i, j, frame, size, out_values); });
                 handler->setDataModifiedCallback(
-                    std::bind(&LinkGraphView::onDataModified, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
+                    [=](int frame, int size, double* values){
+                        onDataModified(itemInfoIter, link->index(), i, j, frame, size, values); });
             
                 graph.addDataHandler(handler);
                 itemInfoIter->handlers.push_back(handler);

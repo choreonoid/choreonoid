@@ -7,7 +7,6 @@
 #include "GRobotBar.h"
 #include "GRobotController.h"
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>
 #include <cnoid/PutPropertyFunction>
@@ -17,7 +16,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -52,8 +50,8 @@ Item* GRobotControllerItem::doDuplicate() const
 void GRobotControllerItem::onConnectedToRoot()
 {
     checkToggledConnection =
-        ItemTreeView::instance()->sigCheckToggled(this).connect(
-            std::bind(&GRobotControllerItem::onCheckToggled, this, _1));
+        sigCheckToggled(PrimaryCheck).connect(
+            [&](bool on){ onCheckToggled(on); });
 }
 
 
@@ -72,15 +70,15 @@ void GRobotControllerItem::onCheckToggled(bool on)
 
         connections.add(
             bar->sigServoSwitchRequest().connect(
-                std::bind(&GRobotController::switchServos, controller, _1)));
+                [&](bool on){ controller->switchServos(on); }));
 
         connections.add(
             bar->sigPoseSendRequest().connect(
-                std::bind(&GRobotControllerItem::requestToSendPose, this, 1.0)));
+                [&](){ requestToSendPose(1.0); }));
         
         connections.add(
             bar->sigSyncModeToggled().connect(
-                std::bind(&GRobotControllerItem::setSyncMode, this, _1)));
+                [&](bool on){ setSyncMode(on); }));
 
         if(bar->isSyncMode()){
             setSyncMode(true);
@@ -107,12 +105,12 @@ void GRobotControllerItem::setSyncMode(bool on)
 
         kinematicStateChangeConnection =
             bodyItem->sigKinematicStateChanged().connect(
-                std::bind(&GRobotControllerItem::requestToSendPose, this, 0.1));
+                [&](){ requestToSendPose(0.1); });
         requestToSendPose(1.0);
 
         playbackInitilizeConnection =
             TimeBar::instance()->sigPlaybackInitialized().connect(
-                std::bind(&GRobotControllerItem::onPlaybackInitialized, this, _1));
+                [&](double time){ return onPlaybackInitialized(time); });
     }
 }
 
@@ -138,8 +136,7 @@ bool GRobotControllerItem::onPlaybackInitialized(double time)
     playbackConnections.disconnect();
 
     if(bodyItem){
-        BodyMotionItemPtr motionItem =
-            ItemTreeView::instance()->selectedSubItem<BodyMotionItem>(bodyItem);
+        auto motionItem = bodyItem->selectedDescendants<BodyMotionItem>().toSingle();
         if(motionItem){
             auto qseq = motionItem->jointPosSeq();
             if(qseq->numFrames() > 0 && qseq->numParts() == controller->numJoints()){
@@ -147,10 +144,10 @@ bool GRobotControllerItem::onPlaybackInitialized(double time)
                     TimeBar* timeBar = TimeBar::instance();
                     playbackConnections.add(
                         timeBar->sigPlaybackStarted().connect(
-                            std::bind(&GRobotControllerItem::onPlaybackStarted, this, _1)));
+                            [&](double time){ onPlaybackStarted(time);}));
                     playbackConnections.add(
                         timeBar->sigPlaybackStopped().connect(
-                            std::bind(&GRobotControllerItem::onPlaybackStopped, this)));
+                            [&](double, bool){ onPlaybackStopped(); }));
                 }
             }
         }
@@ -175,7 +172,7 @@ void GRobotControllerItem::onPlaybackStopped()
 void GRobotControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Port"), controller->portDevice(),
-                std::bind(&GRobotControllerItem::onPortPropertyChanged, this, _1));
+                [&](const std::string& port){ return onPortPropertyChanged(port); });
 }
 
 

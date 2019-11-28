@@ -6,15 +6,13 @@
 #define CNOID_BASE_SCENE_VIEW_H
 
 #include "View.h"
-#include "SceneWidget.h"
-#include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class Item;
 class SceneWidget;
-class SceneWidgetRoot;
+class SgGroup;
+class Item;
 class SceneViewImpl;
 
 class CNOID_EXPORT SceneView : public View
