@@ -23,9 +23,19 @@ Changes since 1.7.0:
 * Modify the default material colors
 * Fix a bug in picking objects on SceneView when a high DPI display is used
 * Improve JointSliderView and rename it to JointDisplacementView
+* Add PositionView, which replaces BodyLinkView
 * The GLSL scene renderer is used by default
 * The appearance of the AGX track shoes can be specified
 * Multiple body items can be integrated into a composite body
+* Add ManipulatorPlugin
+* Introduce the environmental variable CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS
+* Improve the CMake configuration files for developing plugins and controllers externally
+* Fix a bug in the calcMassMatrix function
+* Add KinematicsSimulatorItem, which replaces the kinematics mode of AISTSimulatorItem
+* Add HolderDevice, AttachmentDevice
+* Add DigitalIODevice, SignalIOConnectionItem, SignalIOConnectionView
+* Make the vertical axis of SceneWidget modifiable
+* Add the "export symbols" property to SimpleControllerItem
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
