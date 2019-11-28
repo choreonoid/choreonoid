@@ -1,8 +1,9 @@
 #include "CoordinateFrameListItem.h"
+#include "ItemManager.h"
+#include "PutPropertyFunction.h"
+#include "Archive.h"
 #include <cnoid/CoordinateFrameSet>
 #include <cnoid/CoordinateFrameList>
-#include <cnoid/ItemManager>
-#include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include "gettext.h"
 

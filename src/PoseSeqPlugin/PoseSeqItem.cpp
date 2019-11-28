@@ -6,6 +6,7 @@
 #include "PoseSeqItem.h"
 #include "BodyMotionGenerationBar.h"
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
 #include <cnoid/LinkPath>

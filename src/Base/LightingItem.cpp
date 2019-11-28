@@ -4,12 +4,13 @@
 */
 
 #include "LightingItem.h"
-#include <cnoid/ItemManager>
+#include "ItemManager.h"
+#include "PutPropertyFunction.h"
+#include "Archive.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
 #include <cnoid/EigenUtil>
-#include <cnoid/Archive>
 #include <cnoid/EigenArchive>
 #include "gettext.h"
 

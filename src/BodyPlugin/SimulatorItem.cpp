@@ -22,6 +22,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/LazyCaller>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MultiDeviceStateSeq>
 #include <cnoid/Timer>
@@ -1230,9 +1231,9 @@ void SimulatorItem::setRecordingMode(int selection)
 }
 
 
-Selection SimulatorItem::recordingMode() const
+int SimulatorItem::recordingMode() const
 {
-    return impl->recordingMode;
+    return impl->recordingMode.which();
 }
 
 

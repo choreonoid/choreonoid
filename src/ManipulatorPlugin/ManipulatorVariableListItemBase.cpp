@@ -1,6 +1,7 @@
 #include "ManipulatorVariableListItemBase.h"
 #include <cnoid/ManipulatorVariableList>
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include "gettext.h"

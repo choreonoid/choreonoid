@@ -8,12 +8,11 @@
 
 #include <cnoid/Item>
 #include <memory>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class ExtensionManager;
-    
 class CNOID_EXPORT AudioItem : public Item
 {
 public:

@@ -6,6 +6,7 @@
 #include "PhysXSimulatorItem.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
 #include <cnoid/MeshExtractor>
@@ -82,7 +83,7 @@ public:
     BasicSensorSimulationHelper sensorHelper;
     vector<PxJoint*> extraJoints;
 
-    PhysXBody(const Body& orgBody);
+    PhysXBody(Body* body);
     ~PhysXBody();
     void createBody(PhysXSimulatorItemImpl* simImpl);
     void setKinematicStateToPhysX();
@@ -708,8 +709,8 @@ void PhysXLink::setVelocityToPhysX()
 }
 
 
-PhysXBody::PhysXBody(const Body& orgBody)
-    : SimulationBody(new Body(orgBody))
+PhysXBody::PhysXBody(Body* body)
+    : SimulationBody(body)
 {
     pxAggregate = 0;
     extraJoints.clear();
@@ -1038,7 +1039,7 @@ Item* PhysXSimulatorItem::doDuplicate() const
 
 SimulationBody* PhysXSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    return new PhysXBody(*orgBody);
+    return new PhysXBody(orgBody->clone());
 }
 
 

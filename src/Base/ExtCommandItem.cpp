@@ -5,8 +5,9 @@
 
 #include "ExtCommandItem.h"
 #include "ItemManager.h"
-#include <cnoid/MessageView>
-#include <cnoid/Archive>
+#include "MessageView.h"
+#include "PutPropertyFunction.h"
+#include "Archive.h"
 #include <cnoid/Sleep>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>

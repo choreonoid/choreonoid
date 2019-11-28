@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_GL_VISION_SIMULATOREX_ITEM_H
-#define CNOID_BODYPLUGIN_GL_VISION_SIMULATOREX_ITEM_H
+#ifndef CNOID_BODY_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
+#define CNOID_BODY_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
 
 #include "SubSimulatorItem.h"
 #include "exportdecl.h"

@@ -8,6 +8,7 @@
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/DyWorld>
 #include <cnoid/DyBody>

@@ -4,13 +4,13 @@
 */
 
 #include "PythonScriptItemImpl.h"
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
 #include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
-namespace stdph = std::placeholders;
 using namespace cnoid;
 using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
@@ -123,7 +123,7 @@ bool PythonScriptItemImpl::execute()
             sigFinishedConnection.disconnect();
             sigFinishedConnection =
                 executor.sigFinished().connect(
-                    std::bind(&PythonScriptItemImpl::onScriptFinished, this));
+                    [&](){ onScriptFinished(); });
             
             result = executor.execFile(scriptFilename_);
         }
@@ -197,7 +197,7 @@ bool PythonScriptItemImpl::terminate()
 void PythonScriptItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Background execution"), executor.isBackgroundMode(),
-                std::bind(&PythonScriptItemImpl::onBackgroundModeChanged, this, stdph::_1));
+                [&](bool on){ return onBackgroundModeChanged(on); });
 }
 
 

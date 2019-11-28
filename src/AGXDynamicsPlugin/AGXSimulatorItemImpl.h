@@ -2,6 +2,7 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SIMULATOR_ITEM_IMPL_H
 
 #include <cnoid/SimulatorItem>
+#include <cnoid/Selection>
 #include "AGXScene.h"
 #include "AGXBody.h"
 #include <iostream>
@@ -10,6 +11,7 @@ namespace cnoid {
 
 class ContactMaterial;
 class AGXSimulatorItem;
+
 class AGXSimulatorItemImpl : public Referenced
 {
 public:
@@ -58,5 +60,6 @@ private:
     Selection m_p_debugMessageOnConsoleType;
     AGXScene* getAGXScene();
 };
+
 }
 #endif

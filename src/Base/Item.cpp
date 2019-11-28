@@ -7,6 +7,7 @@
 #include "RootItem.h"
 #include "ItemPath.h"
 #include "ItemManager.h"
+#include "PutPropertyFunction.h"
 #include <cnoid/stdx/filesystem>
 #include <typeinfo>
 #include <bitset>

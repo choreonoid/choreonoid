@@ -12,7 +12,6 @@ namespace cnoid {
 
 class SimpleControllerItemImpl;
 class SimpleController;
-class MessageView;
 
 class CNOID_EXPORT SimpleControllerItem : public ControllerItem
 {

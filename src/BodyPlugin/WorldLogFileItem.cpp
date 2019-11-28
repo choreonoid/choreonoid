@@ -9,6 +9,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/TimeSyncItemEngine>
 #include <cnoid/FileUtil>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <QDateTime>
 #include <fstream>

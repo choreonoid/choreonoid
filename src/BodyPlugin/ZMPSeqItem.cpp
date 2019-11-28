@@ -8,6 +8,7 @@
 #include "BodyMotionItem.h"
 #include "BodyMotionEngine.h"
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <fmt/format.h>
 #include "gettext.h"
 

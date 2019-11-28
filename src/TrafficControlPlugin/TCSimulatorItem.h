@@ -5,7 +5,9 @@
 #pragma once
 
 #include <cnoid/SubSimulatorItem>
+#include <cnoid/Selection>
 #include <map>
+#include <vector>
 #include "exportdecl.h"
 
 #ifndef NIC_MAX

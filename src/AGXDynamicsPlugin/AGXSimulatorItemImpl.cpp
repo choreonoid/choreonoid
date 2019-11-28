@@ -5,6 +5,7 @@
 #include <cnoid/MaterialTable>
 #include "AGXConvert.h"
 #include <unordered_map>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
 #include "gettext.h"

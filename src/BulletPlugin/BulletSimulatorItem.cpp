@@ -5,6 +5,7 @@
 
 #include "BulletSimulatorItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
@@ -120,7 +121,7 @@ public:
 
     btMultiBody* multiBody;
 
-    BulletBody(const Body& orgBody);
+    BulletBody(Body* body);
     ~BulletBody();
     void createBody(BulletSimulatorItemImpl* simImpl, short group);
     void getKinematicStateFromBullet();
@@ -1003,8 +1004,8 @@ void BulletLink::setVelocityToBullet()
 
 
 ////////////////////////////////Body////////////////////////////////////////
-BulletBody::BulletBody(const Body& orgBody)
-    : SimulationBody(new Body(orgBody))
+BulletBody::BulletBody(Body* body)
+    : SimulationBody(body)
 {
     body = SimulationBody::body();
     multiBody = 0;
@@ -1373,7 +1374,7 @@ Item* BulletSimulatorItem::doDuplicate() const
 
 SimulationBody* BulletSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    BulletBody* bulletBody = new BulletBody(*orgBody);
+    BulletBody* bulletBody = new BulletBody(orgBody->clone());
 //    if(bulletBody->haveCrawlerJoint())
 //        usefeatherstoneAlgorithm = false;
 

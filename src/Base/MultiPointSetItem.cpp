@@ -7,9 +7,10 @@
 #include "SceneWidgetEditable.h"
 #include "SceneWidget.h"
 #include "MenuManager.h"
-#include <cnoid/ItemTreeView>
-#include <cnoid/ItemManager>
-#include <cnoid/Archive>
+#include "PutPropertyFunction.h"
+#include "ItemTreeView.h"
+#include "ItemManager.h"
+#include "Archive.h"
 #include <cnoid/PointSetUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/YAMLReader>

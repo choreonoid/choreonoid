@@ -123,7 +123,7 @@ public:
     enum TimeRangeMode { TR_UNLIMITED, TR_ACTIVE_CONTROL, TR_SPECIFIED, TR_TIMEBAR, N_TIME_RANGE_MODES };
     
     void setRecordingMode(int selection);
-    Selection recordingMode() const;
+    int recordingMode() const;
     void setTimeRangeMode(int selection);
     void setRealtimeSyncMode(bool on);
     void setDeviceStateOutputEnabled(bool on);

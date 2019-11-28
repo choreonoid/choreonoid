@@ -9,6 +9,7 @@
 #include "FisheyeLensConverter.h"
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/ValueTreeUtil>
 #include <cnoid/GL1SceneRenderer>

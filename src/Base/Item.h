@@ -5,7 +5,6 @@
 #ifndef CNOID_BASE_ITEM_H
 #define CNOID_BASE_ITEM_H
 
-#include "PutPropertyFunction.h"
 #include <cnoid/Referenced>
 #include <cnoid/Signal>
 #include <string>
@@ -22,6 +21,7 @@ template<class ItemType = Item> class ItemList;
 class RootItem;
 class Archive;
 class ExtensionManager;
+class PutPropertyFunction;
 
 class CNOID_EXPORT Item : public Referenced
 {

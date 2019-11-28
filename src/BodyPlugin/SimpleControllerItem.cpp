@@ -7,6 +7,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/Body>
 #include <cnoid/Link>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
 #include <cnoid/ExecutablePath>

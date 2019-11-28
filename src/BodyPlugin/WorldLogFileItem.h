@@ -15,7 +15,6 @@ class SE3;
 class DeviceState;
 class WorldLogFileItemImpl;
 
-
 class CNOID_EXPORT WorldLogFileItem : public Item
 {
 public:

@@ -17,6 +17,7 @@
 #include <cnoid/SceneProvider>
 #include <cnoid/ImageProvider>
 #include <cnoid/ConnectionSet>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include "gettext.h"
 

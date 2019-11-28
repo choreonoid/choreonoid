@@ -4,13 +4,14 @@
 */
 
 #include "PointSetItem.h"
-#include <cnoid/ItemManager>
-#include <cnoid/MenuManager>
-#include <cnoid/Archive>
+#include "ItemManager.h"
+#include "MenuManager.h"
+#include "PutPropertyFunction.h"
+#include "Archive.h"
+#include "GLSceneRenderer.h"
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneWidgetEditable>
-#include <cnoid/GLSceneRenderer>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneMarkers>

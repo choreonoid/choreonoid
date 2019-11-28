@@ -5,6 +5,7 @@
 
 #include "AudioItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <fmt/format.h>
 
@@ -15,7 +16,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
 
@@ -32,8 +32,10 @@ void AudioItem::initialize(ExtensionManager* ext)
         ext->itemManager().registerClass<AudioItem>(N_("AudioItem"));
 
 #ifdef CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE
-        ext->itemManager().addLoader<AudioItem>(_("Audio File"), "AUDIO-GENERIC", "wav;ogg",
-                                                std::bind(&AudioItem::loadAudioFile, _1, _2, _3, _4));
+        ext->itemManager().addLoader<AudioItem>(
+            _("Audio File"), "AUDIO-GENERIC", "wav;ogg",
+            [](AudioItem* item, const std::string& filename, std::ostream& os, Item* parentItem){
+                return item->loadAudioFile(filename, os, parentItem); });
 #endif
         initialized = true;
     }
@@ -180,7 +182,8 @@ void AudioItem::doPutProperties(PutPropertyFunction& putProperty)
     if(!samplingData_->empty()){
         putProperty("title", title);
         putProperty("length", timeLength());
-        putProperty("offset", offsetTime(), std::bind(&AudioItem::setOffsetTime, this, _1), true);
+        putProperty("offset", offsetTime(),
+                    [&](double offset){ setOffsetTime(offset); return true; });
         putProperty("channels", numChannels());
         putProperty("sampling rate", samplingRate());
         if(!copyright.empty()) putProperty("copyright", copyright);

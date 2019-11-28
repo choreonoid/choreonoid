@@ -3,6 +3,7 @@
 */
 
 #include "MulticopterPluginHeader.h"
+#include <cnoid/PutPropertyFunction>
 #include <fmt/format.h>
 
 using namespace std;

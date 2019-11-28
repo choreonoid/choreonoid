@@ -10,6 +10,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyMotionItem>

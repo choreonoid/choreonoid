@@ -10,6 +10,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/ControllerIO>
 #include <cnoid/MessageView>
+#include <cnoid/PutPropertyFunction>
 #include <fmt/format.h>
 #include "gettext.h"
 

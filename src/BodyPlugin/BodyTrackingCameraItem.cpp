@@ -5,6 +5,7 @@
 
 #include "BodyTrackingCameraItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/InteractiveCameraTransform>
 #include <cnoid/SceneCameras>

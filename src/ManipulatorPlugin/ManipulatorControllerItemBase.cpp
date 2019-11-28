@@ -14,6 +14,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/CloneMap>
 #include <cnoid/LazyCaller>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <fmt/format.h>
 #include <unordered_map>

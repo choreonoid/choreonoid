@@ -5,6 +5,7 @@
 
 #include "ODESimulatorItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>

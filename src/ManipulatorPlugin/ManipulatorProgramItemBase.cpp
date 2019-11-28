@@ -4,6 +4,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/LinkKinematicsKit>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include "gettext.h"
 

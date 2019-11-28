@@ -4,6 +4,7 @@
 */
 
 #include "ControllerItem.h"
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include "gettext.h"
 

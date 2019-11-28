@@ -7,6 +7,7 @@
 #include <cnoid/SimulatorItem>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>

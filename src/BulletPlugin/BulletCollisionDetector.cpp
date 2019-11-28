@@ -175,7 +175,7 @@ int BulletCollisionDetector::numGeometries() const
 }
 
 
-stx::optional<GeometryHandle> BulletCollisionDetector::addGeometry(SgNode* geometry)
+stdx::optional<GeometryHandle> BulletCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }

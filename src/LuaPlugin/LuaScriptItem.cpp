@@ -6,6 +6,7 @@
 #include "LuaScriptItem.h"
 #include "LuaInterpreter.h"
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>

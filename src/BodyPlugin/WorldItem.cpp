@@ -7,6 +7,7 @@
 #include "KinematicsBar.h"
 #include <cnoid/ItemManager>
 #include <cnoid/RootItem>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
 #include <cnoid/ConnectionSet>

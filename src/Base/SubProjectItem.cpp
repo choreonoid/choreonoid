@@ -7,8 +7,9 @@
 #include "ProjectManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
+#include "PutPropertyFunction.h"
+#include "Archive.h"
 #include <cnoid/ConnectionSet>
-#include <cnoid/Archive>
 #include <fmt/format.h>
 #include <set>
 #include "gettext.h"

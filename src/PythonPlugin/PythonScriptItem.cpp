@@ -6,6 +6,7 @@
 #include "PythonScriptItem.h"
 #include "PythonScriptItemImpl.h"
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>

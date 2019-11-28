@@ -7,6 +7,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
 #include <cnoid/SimulatorItem>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <dirent.h>
 #include "gettext.h"
