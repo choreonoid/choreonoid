@@ -471,13 +471,13 @@ bool PluginManagerImpl::loadPlugin(int index)
 
         info->dll.setFileName(info->pathString.c_str());
 
-        // Some Python modules written in C/C++ requires the following options
-        // to link with the python runtime library, but this might cause the symbol conflicts
-        // amaong internal use libraries such as OPCODE used in both the Body module and ODE.
-        info->dll.setLoadHints(QLibrary::ExportExternalSymbolsHint);
-        
-        //info->dll.setLoadHints(QLibrary::ResolveAllSymbolsHint);
-        //info->dll.setLoadHints(0);
+        char* CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS = getenv("CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS");
+        if(!CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS || (strcmp(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS, "1") == 0)){
+            // Some Python modules written in C/C++ requires the following options
+            // to link with the python runtime library, but this might cause the symbol conflicts
+            // amaong internal use libraries such as OPCODE used in both the Body module and ODE.
+            info->dll.setLoadHints(QLibrary::ExportExternalSymbolsHint);
+        }
         
         if(!(info->dll.load())){
             mv->putln(MessageView::ERROR, info->dll.errorString());
