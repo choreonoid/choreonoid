@@ -12,6 +12,8 @@
 #include <cnoid/ProjectManager>
 #include <cnoid/CorbaUtil>
 #include <cnoid/Process>
+#include <cnoid/PutPropertyFunction>
+#include <cnoid/Archive>
 #include <rtm/RTObject.h>
 #include <fmt/format.h>
 #include "gettext.h"

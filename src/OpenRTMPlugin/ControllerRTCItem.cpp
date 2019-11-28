@@ -8,6 +8,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
 #include <cnoid/ProjectManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/Sleep>
 #include <cnoid/ExecutablePath>

@@ -13,6 +13,7 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/ControllerIO>
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>

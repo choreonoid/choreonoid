@@ -5,6 +5,7 @@
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
 #include <cnoid/AppConfig>
+#include <cnoid/PutPropertyFunction>
 #include <rtm/CORBA_SeqUtil.h>
 #include <fmt/format.h>
 #include "LoggerUtil.h"

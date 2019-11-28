@@ -2,6 +2,7 @@
 #define CNOID_OPENRTM_PLUGIN_RTC_ITEM_H
 
 #include <cnoid/Item>
+#include <cnoid/Selection>
 #include <cnoid/stdx/filesystem>
 #include <map>
 #include "exportdecl.h"

@@ -6,6 +6,7 @@
 #include "PointCloudSubscriberRTCItem.h"
 #include <cnoid/corba/PointCloud.hh>
 #include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/Config>
 #include <cnoid/RangeCamera>
