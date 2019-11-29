@@ -1311,8 +1311,8 @@ void RTSDiagramViewImpl::setNewRTSItemDetector()
     itemAddedConnection.disconnect();
 
     if (!currentRTSItem) {
-        ItemList<RTSystemItem> rtsItems;
-        if (rtsItems.extractChildItems(RootItem::instance())) {
+        auto rtsItems = RootItem::instance()->descendantItems<RTSystemItem>();
+        if (!rtsItems.empty()){
             setCurrentRTSItem(rtsItems[0]);
         } else {
             itemAddedConnection.reset(
