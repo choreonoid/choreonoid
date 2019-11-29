@@ -98,7 +98,8 @@ public:
     ~Impl();
     void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
     bool setSubTreeItemsSelectedIter(Item* item, bool on);
-    void getSelectedDescendantsIter(const Item* parentItem, ItemList<>& selected) const;
+    void getDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
+    void getSelectedDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
     Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void doDetachFromParentItem(bool isMoving);
@@ -214,6 +215,12 @@ Item* Item::duplicate() const
 }
 
 
+Item* Item::doDuplicate() const
+{
+    return nullptr;
+}
+
+
 Item* Item::duplicateSubTree() const
 {
     return impl->duplicateSubTreeIter(nullptr);
@@ -244,12 +251,6 @@ Item* Item::Impl::duplicateSubTreeIter(Item* duplicated) const
     }
 
     return duplicated;
-}
-
-
-Item* Item::doDuplicate() const
-{
-    return nullptr;
 }
 
 
@@ -353,33 +354,6 @@ bool Item::Impl::setSubTreeItemsSelectedIter(Item* item, bool on)
 }
 
 
-SignalProxy<void(bool isSelected)> Item::sigSelectionChanged()
-{
-    return impl->sigSelectionChanged;
-}
-
-
-ItemList<> Item::getSelectedDescendantas() const
-{
-    ItemList<> selected;
-    impl->getSelectedDescendantsIter(this, selected);
-    return selected;
-}
-
-
-void Item::Impl::getSelectedDescendantsIter(const Item* parentItem, ItemList<>& selected) const
-{
-    for(auto child = parentItem->childItem(); child; child = child->nextItem()){
-        if(child->isSelected()){
-            selected.push_back(child);
-        }
-        if(child->childItem()){
-            getSelectedDescendantsIter(child, selected);
-        }
-    }
-}
-
-
 bool Item::isChecked(int checkId) const
 {
     if(checkId == LogicalSumOfAllChecks){
@@ -450,22 +424,6 @@ void Item::setChecked(int checkId, bool on)
 }
 
 
-SignalProxy<void(int checkId, bool on)> Item::sigAnyCheckToggled()
-{
-    return impl->sigAnyCheckToggled;
-}
-
-
-SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
-{
-    if(checkId == LogicalSumOfAllChecks){
-        return impl->sigLogicalSumOfAllChecksToggled;
-    } else {
-        return impl->checkIdToSignalMap[checkId];
-    }
-}
-    
-
 Item* Item::headItem() const
 {
     Item* head = const_cast<Item*>(this);
@@ -480,15 +438,17 @@ Item* Item::headItem() const
 }
 
 
+/*
 Item* Item::rootItem()
 {
     return RootItem::instance();
 }
+*/
 
 
 RootItem* Item::findRootItem() const
 {
-    return dynamic_cast<RootItem*>(getLocalRootItem());
+    return dynamic_cast<RootItem*>(localRootItem());
 }
 
 
@@ -498,7 +458,7 @@ bool Item::isConnectedToRoot() const
 }
 
 
-Item* Item::getLocalRootItem() const
+Item* Item::localRootItem() const
 {
     Item* current = const_cast<Item*>(this);
     while(current->parent_){
@@ -811,6 +771,28 @@ SignalProxy<void()> Item::sigDisconnectedFromRoot()
 }
 
 
+SignalProxy<void(bool isSelected)> Item::sigSelectionChanged()
+{
+    return impl->sigSelectionChanged;
+}
+
+
+SignalProxy<void(int checkId, bool on)> Item::sigAnyCheckToggled()
+{
+    return impl->sigAnyCheckToggled;
+}
+
+
+SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
+{
+    if(checkId == LogicalSumOfAllChecks){
+        return impl->sigLogicalSumOfAllChecksToggled;
+    } else {
+        return impl->checkIdToSignalMap[checkId];
+    }
+}
+    
+
 static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
 {
     if(it == end){
@@ -910,6 +892,46 @@ bool Item::isOwnedBy(Item* item) const
         }
     }
     return false;
+}
+
+
+ItemList<> Item::descendantItems() const
+{
+    ItemList<> items;
+    impl->getDescendantItemsIter(this, items);
+    return items;
+}
+
+
+void Item::Impl::getDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const
+{
+    for(auto child = parentItem->childItem(); child; child = child->nextItem()){
+        io_items.push_back(child);
+        if(child->childItem()){
+            getDescendantItemsIter(child, io_items);
+        }
+    }
+}
+
+
+ItemList<> Item::selectedDescendantItems() const
+{
+    ItemList<> items;
+    impl->getSelectedDescendantItemsIter(this, items);
+    return items;
+}
+
+
+void Item::Impl::getSelectedDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const
+{
+    for(auto child = parentItem->childItem(); child; child = child->nextItem()){
+        if(child->isSelected()){
+            io_items.push_back(child);
+        }
+        if(child->childItem()){
+            getSelectedDescendantItemsIter(child, io_items);
+        }
+    }
 }
 
 

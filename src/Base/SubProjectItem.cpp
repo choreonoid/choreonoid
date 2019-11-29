@@ -172,10 +172,7 @@ void SubProjectItemImpl::enableSubProjectUpdateDetection()
 {
     updateConnections.disconnect();
 
-    ItemList<> subTreeItems;
-    subTreeItems.extractSubTreeItems(self);
-
-    for(auto& item : subTreeItems){
+    for(auto& item : self->descendantItems()){
         updateConnections.add(
             item->sigNameChanged().connect(
                 [&](const std::string&){ onSubProjectUpdated(); }));

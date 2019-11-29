@@ -92,7 +92,7 @@ Item* IoConnectionMapItem::Impl::findOwnerItem()
 {
     Item* ownerItem = self->findOwnerItem<WorldItem>();
     if(!ownerItem){
-        ownerItem = self->getLocalRootItem();
+        ownerItem = self->localRootItem();
     }
     return ownerItem;
 }
@@ -111,14 +111,11 @@ void IoConnectionMapItem::forEachIoDevice
 (std::function<void(BodyItem* bodyItem, DigitalIoDevice* device)> callback) const
 {
     auto ownerItem = impl->findOwnerItem();
-    ItemList<BodyItem> bodyItems;
-    bodyItems.extractSubTreeItems(ownerItem);
-    for(auto& bodyItem : bodyItems){
+    for(auto& bodyItem : ownerItem->descendantItems<BodyItem>()){
         for(auto& device : bodyItem->body()->devices<DigitalIoDevice>()){
             callback(bodyItem, device);
         }
     }
-
     impl->lastOwnerItem = ownerItem;
 }
 

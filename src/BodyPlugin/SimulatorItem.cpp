@@ -1692,10 +1692,11 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             [&](){ stopSimulation(true); });
 
         worldLogFileItem = nullptr;
-        ItemList<WorldLogFileItem> worldLogFileItems;
-        worldLogFileItems.extractChildItems(self); // Check child items first
+         // Check child items first
+        auto worldLogFileItems = self->descendantItems<WorldLogFileItem>();
         if(worldLogFileItems.empty()){
-            worldLogFileItems.extractChildItems(worldItem); // Check items in the world secondly
+            // Check items in the world secondly
+            worldLogFileItems = worldItem->descendantItems<WorldLogFileItem>();
         }
         worldLogFileItem = worldLogFileItems.toSingle(true);
         if(worldLogFileItem){

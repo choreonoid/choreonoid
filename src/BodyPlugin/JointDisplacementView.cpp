@@ -536,9 +536,7 @@ void JointDisplacementView::Impl::onActivated()
     onSelectedBodyItemsChanged(bodySelectionManager->selectedBodyItems());
     
     if(!currentBodyItem){
-        ItemList<BodyItem> allBodyItems;
-        allBodyItems.extractChildItems(RootItem::instance());
-        onSelectedBodyItemsChanged(allBodyItems);
+        onSelectedBodyItemsChanged(RootItem::instance()->descendantItems<BodyItem>());
     }
 }
 

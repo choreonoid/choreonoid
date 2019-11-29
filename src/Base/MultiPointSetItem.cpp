@@ -232,7 +232,7 @@ void MultiPointSetItem::Impl::updateVisibilities()
 
 void MultiPointSetItem::Impl::onSelectedItemsChanged()
 {
-    auto selected = self->selectedDescendants<PointSetItem>();
+    auto selected = self->selectedDescendantItems<PointSetItem>();
     if(!selected.empty() && selected != lastSelectedPointSetItems){
         lastSelectedPointSetItems = selected;
         updateVisibilities();
@@ -242,14 +242,11 @@ void MultiPointSetItem::Impl::onSelectedItemsChanged()
 
 void MultiPointSetItem::Impl::onSubTreeChanged()
 {
-    ItemList<PointSetItem> childItems;
-    childItems.extractChildItems(self);
-
-    if(childItems == pointSetItems){
+    auto newPointSetItems = self->descendantItems<PointSetItem>();
+    if(newPointSetItems == pointSetItems){
         return;
     }
-
-    pointSetItems = childItems;
+    pointSetItems = newPointSetItems;
 
     ItemInfoMap prevMap(itemInfoMap);
     itemInfoMap.clear();

@@ -138,8 +138,7 @@ void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool u
     }
 
     if(!targetItem && !updateEvenIfEmpty){
-        ItemList<> items;
-        items.extractChildItems(rootItem);
+        auto items = rootItem->descendantItems();
         self->extractTargetItemCandidates(items, false);
 
         ItemPtr candidate;

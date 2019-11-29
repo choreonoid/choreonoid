@@ -86,11 +86,7 @@ SimulationBar::~SimulationBar()
 
 static void forEachTargetBodyItem(std::function<void(BodyItem*)> callback)
 {
-    ItemList<BodyItem> bodyItems;
-    bodyItems.extractChildItems(RootItem::instance());
-    
-    for(size_t i=0; i < bodyItems.size(); ++i){
-        BodyItem* bodyItem = bodyItems.get(i);
+    for(auto& bodyItem : RootItem::instance()->descendantItems<BodyItem>()){
         bool isTarget = bodyItem->isSelected();
         if(!isTarget){
             WorldItem* worldItem = bodyItem->findOwnerItem<WorldItem>();
@@ -131,9 +127,8 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
     auto mv = MessageView::instance();
 
     auto simulators =  RootItem::instance()->selectedItems<SimulatorItem>();
-
     if(simulators.empty()){
-        simulators.extractChildItems(RootItem::instance());
+        simulators = RootItem::instance()->descendantItems<SimulatorItem>();
         if(simulators.empty()){
             mv->notify(_("There is no simulator item."));
         } else  if(simulators.size() > 1){

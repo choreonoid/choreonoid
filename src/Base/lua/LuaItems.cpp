@@ -25,9 +25,8 @@ void exportLuaItems(sol::table& module)
         "setTemporal", &Item::setTemporal,
         "notifyUpdate", &Item::notifyUpdate,
 
-        "getDescendantItems", [](Item* self, sol::table itemClass, sol::this_state s){
-            ItemList<Item> items;
-            items.extractChildItems(self);
+        "descendantItems", [](Item* self, sol::table itemClass, sol::this_state s){
+            auto items = self->descendantItems();
             sol::state_view lua(s);
             sol::table matched = lua.create_table();
             int index = 1;

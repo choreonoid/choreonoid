@@ -91,19 +91,10 @@ bool CollisionSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 
 void CollisionSeq::readCollisionData(int nFrames, const Listing& values)
 {
-    /*
-    WorldItem* worldItem = collisionSeqItem_->findOwnerItem<WorldItem>();
-    if(!worldItem)
+    auto worldItem = collisionSeqItem_->findOwnerItem<WorldItem>();
+    if(!worldItem){
         return;
-    */
-    WorldItem* worldItem = 0;
-    RootItem* rootItem = RootItem::instance();
-    ItemList<WorldItem> worldItems;
-    if(worldItems.extractChildItems(rootItem)){
-        worldItem = worldItems.front();
     }
-    if(!worldItem)
-        return;
 
     for(int i=0; i < nFrames; ++i){
         const Mapping& frameNode = *values[i].toMapping();

@@ -767,16 +767,11 @@ SensorScenePtr SensorRenderer::createSensorScene(const vector<SimulationBody*>& 
     }
 
     if(simImpl->shootAllSceneObjects){
-        WorldItem* worldItem = simImpl->self->findOwnerItem<WorldItem>();
-        if(worldItem){
-            ItemList<> items;
-            items.extractChildItems(worldItem);
-            for(size_t i=0; i < items.size(); ++i){
-                Item* item = items.get(i);
-                SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item);
-                if(sceneProvider && !dynamic_cast<BodyItem*>(item)){
-                    auto node = sceneProvider->cloneScene(simImpl->cloneMap);
-                    if(node){
+        if(auto worldItem = simImpl->self->findOwnerItem<WorldItem>()){
+            for(auto& item : worldItem->descendantItems()){
+                SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item.get());
+                if(sceneProvider && !dynamic_cast<BodyItem*>(item.get())){
+                    if(auto node = sceneProvider->cloneScene(simImpl->cloneMap)){
                         scene->root->addChild(node);
                     }
                 }

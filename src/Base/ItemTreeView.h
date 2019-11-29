@@ -38,7 +38,7 @@ public:
         return selectedItems<ItemType>().toSingle(fromMultiItems);
     }
     template <class ItemType> ItemList<ItemType> selectedSubItems(const Item* topItem) const {
-        return topItem->selectedDescendants<ItemType>();
+        return topItem->selectedDescendantItems<ItemType>();
     }
     template <class ItemType> ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) const {
         return selectedSubItems<ItemType>(topItem).toSingle(fromMultiItems);

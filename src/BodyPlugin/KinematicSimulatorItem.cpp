@@ -133,13 +133,10 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
       To achieve it, SubSimulatorItem must be an interface class that does not inherit the Item class,
       or define another interface class that provides the functions similar to SubSimulatorItem.
     */
-    ItemList<IoConnectionMapItem> connectionMapItems;
-    if(connectionMapItems.extractSubTreeItems(self->worldItem())){
-        for(auto& item : connectionMapItems){
-            auto connectionMap = self->cloneMap().getClone(item->connectionMap());
-            connectionMap->establishConnections();
-            ioConnectionMaps.push_back(connectionMap);
-        }
+    for(auto& item : self->worldItem()->descendantItems<IoConnectionMapItem>()){
+        auto connectionMap = self->cloneMap().getClone(item->connectionMap());
+        connectionMap->establishConnections();
+        ioConnectionMaps.push_back(connectionMap);
     }
     
     for(auto& simBody : simBodies){

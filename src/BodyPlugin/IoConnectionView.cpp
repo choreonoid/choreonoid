@@ -595,8 +595,10 @@ void IoConnectionView::Impl::addNewConnection(int index, bool doInsert)
 
     if(!connection){
         Item* rootItem = targetItem->findOwnerItem<WorldItem>();
-        ItemList<BodyItem> bodyItems;
-        bodyItems.extractSubTreeItems(rootItem ? rootItem : RootItem::instance());
+        if(!rootItem){
+            rootItem = RootItem::instance();
+        }
+        auto bodyItems = rootItem->descendantItems<BodyItem>();
         DigitalIoConnectionPtr intraConnection;
         DigitalIoConnectionPtr interConnection;
         for(auto& bodyItem1 : bodyItems){

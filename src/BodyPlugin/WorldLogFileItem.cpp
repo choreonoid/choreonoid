@@ -570,10 +570,9 @@ void WorldLogFileItemImpl::updateBodyInfos()
     bodyInfos.clear();
     
     if(!bodyNames.empty()){
-        WorldItem* worldItem = self->findOwnerItem<WorldItem>();
-        if(worldItem){
-            ItemList<BodyItem> items;
-            if(items.extractChildItems(worldItem)){
+        if(auto worldItem = self->findOwnerItem<WorldItem>()){
+            auto items = worldItem->descendantItems<BodyItem>();
+            if(!items.empty()){
                 for(size_t i=0; i < bodyNames.size(); ++i){
                     ItemList<BodyItem>::iterator p = findItemOfName(items, bodyNames[i]);
                     if(p != items.end()){

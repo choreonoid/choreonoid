@@ -49,7 +49,7 @@ public:
     //! This function creates a copy of the item including its descendant items
     Item* duplicateSubTree() const;
 
-    //! \deprecated. Use duplicateSubTree
+    //! \deprecated. Use duplicateSubTree.
     Item* duplicateAll() const {
         return duplicateSubTree();
     }
@@ -76,11 +76,6 @@ public:
     bool isSelected() const { return isSelected_; }
     void setSelected(bool on, bool forceToNotify = false);
     void setSubTreeItemsSelected(bool on);
-    SignalProxy<void(bool on)> sigSelectionChanged();
-
-    template <class ItemType> ItemList<ItemType> selectedDescendants() const {
-        return getSelectedDescendantas();
-    }
 
     /**
        \note LogicalSumOfAllChecks is only valid for "isChecked(LogicalSumOfAllChecks)" and
@@ -91,8 +86,6 @@ public:
     bool isChecked(int checkId = PrimaryCheck) const;
     void setChecked(bool on); // for PrimaryCheck
     void setChecked(int checkId, bool on);
-    SignalProxy<void(int checkId, bool on)> sigAnyCheckToggled();
-    SignalProxy<void(bool on)> sigCheckToggled(int checkId = PrimaryCheck);
 
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }
@@ -106,10 +99,9 @@ public:
     */
     Item* headItem() const;
 
-    static Item* rootItem();
     RootItem* findRootItem() const;
     bool isConnectedToRoot() const;
-    Item* getLocalRootItem() const;
+    Item* localRootItem() const;
 
     bool addChildItem(Item* item, bool isManualOperation = false);
     bool insertChildItem(Item* item, Item* nextItem, bool isManualOperation = false);
@@ -124,23 +116,6 @@ public:
     bool insertSubItem(Item* item, Item* nextItem);
 
     void detachFromParentItem();
-
-    /**
-       This signal is emitted when the position of this item in the item tree is changed.
-       Being added to the tree and being removed from the tree are also the events
-       to emit this signal.
-       This signal is also emitted for descendent items when the position of an ancestor
-       item is changed.
-       This signal is emitted before RootItem::sigTreeChanged();
-    */
-    SignalProxy<void()> sigPositionChanged();
-
-    SignalProxy<void()> sigSubTreeChanged();
-
-    SignalProxy<void()> sigDisconnectedFromRoot();
-
-    //! \deprecated
-    SignalProxy<void()> sigDetachedFromRoot() { return sigDisconnectedFromRoot(); }
 
     /**
        Find an item that has the corresponding path to it in the sub tree
@@ -189,6 +164,18 @@ public:
 
     bool isOwnedBy(Item* item) const;
 
+    ItemList<> descendantItems() const;
+
+    template <class ItemType> ItemList<ItemType> descendantItems() const {
+        return descendantItems();
+    }
+
+    ItemList<> selectedDescendantItems() const;
+
+    template <class ItemType> ItemList<ItemType> selectedDescendantItems() const {
+        return selectedDescendantItems();
+    }
+
     bool traverse(std::function<bool(Item*)> function);
 
     template<class ItemType>
@@ -201,6 +188,27 @@ public:
                 return false;
             });
     }
+
+    /**
+       This signal is emitted when the position of this item in the item tree is changed.
+       Being added to the tree and being removed from the tree are also the events
+       to emit this signal.
+       This signal is also emitted for descendent items when the position of an ancestor
+       item is changed.
+       This signal is emitted before RootItem::sigTreeChanged();
+    */
+    SignalProxy<void()> sigPositionChanged();
+
+    SignalProxy<void()> sigSubTreeChanged();
+
+    SignalProxy<void()> sigDisconnectedFromRoot();
+
+    //! \deprecated
+    SignalProxy<void()> sigDetachedFromRoot() { return sigDisconnectedFromRoot(); }
+
+    SignalProxy<void(bool on)> sigSelectionChanged();
+    SignalProxy<void(int checkId, bool on)> sigAnyCheckToggled();
+    SignalProxy<void(bool on)> sigCheckToggled(int checkId = PrimaryCheck);
 
     virtual void notifyUpdate();
     SignalProxy<void()> sigUpdated();
@@ -305,8 +313,6 @@ private:
     int numChildren_;
     std::string name_;
     bool isSelected_;
-
-    ItemList<> getSelectedDescendantas() const;
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED

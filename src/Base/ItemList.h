@@ -46,12 +46,13 @@ public:
             ArrayBase::front().get() : nullptr;
     }
 
+    //! \deprecated Use Item::descendantItems
     bool extractSubTreeItems(const Item* root){
         ArrayBase::clear();
         return ItemListBase::extractSubTreeItemsSub(const_cast<Item*>(root));
     }
 
-    //! \deprecated Use extractSubTreeItems.
+    //! \deprecated Use Item::descendantItems.
     bool extractChildItems(const Item* item){
         return extractSubTreeItems(item);
     }

@@ -1465,11 +1465,7 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
 {
     ListingPtr states = new Listing();
 
-    ItemList<BodyItem> bodyItems;
-    bodyItems.extractChildItems(RootItem::instance());
-    
-    for(size_t i=0; i < bodyItems.size(); ++i){
-        BodyItem* bodyItem = bodyItems[i];
+    for(auto& bodyItem : RootItem::instance()->descendantItems<BodyItem>()){
         EditableSceneBody* sceneBody = bodyItem->existingSceneBody();
         if(sceneBody){
             ValueNodePtr id = archive.getItemId(bodyItem);

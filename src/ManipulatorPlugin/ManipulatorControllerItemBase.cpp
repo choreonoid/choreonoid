@@ -262,8 +262,9 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
 
     clear();
     
-    ItemList<ManipulatorProgramItemBase> programItems;
-    if(!programItems.extractChildItems(self)){
+    auto programItems = self->descendantItems<ManipulatorProgramItemBase>();
+    
+    if(programItems.empty()){
         mv->putln(
             MessageView::ERROR,
             format(_("Any program item for {} is not found."), self->name()));
@@ -271,6 +272,7 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
     }
 
     programItem = programItems.front();
+    
     // find the first checked item
     for(size_t i=0; i < programItems.size(); ++i){
         if(programItems[i]->isChecked()){

@@ -136,7 +136,7 @@ bool GRobotControllerItem::onPlaybackInitialized(double time)
     playbackConnections.disconnect();
 
     if(bodyItem){
-        auto motionItem = bodyItem->selectedDescendants<BodyMotionItem>().toSingle();
+        auto motionItem = bodyItem->selectedDescendantItems<BodyMotionItem>().toSingle();
         if(motionItem){
             auto qseq = motionItem->jointPosSeq();
             if(qseq->numFrames() > 0 && qseq->numParts() == controller->numJoints()){

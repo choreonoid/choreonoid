@@ -142,9 +142,11 @@ LinkCoordinateFrameSetPtr LinkKinematicsKitManager::Impl::extractCoordinateFrame
 {
     LinkCoordinateFrameSetPtr extracted;
     
-    ItemList<LinkCoordinateFrameListSetItem> lowerItems;
-    if(lowerItems.extractSubTreeItems(bodyItem)){
-        extracted = lowerItems.toSingle()->frameSets();
+    auto lowerItems = bodyItem->descendantItems<LinkCoordinateFrameListSetItem>();
+    
+    if(!lowerItems.empty()){
+        extracted = lowerItems.front()->frameSets();
+        
     } else {
         auto upperItem = bodyItem->parentItem();
         while(upperItem){

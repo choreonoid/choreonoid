@@ -79,9 +79,9 @@ bool BodyMotionControllerItem::initialize(ControllerIO* io)
 bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
 {
     auto mv = MessageView::instance();
-    
-    ItemList<BodyMotionItem> motionItems;
-    if(!motionItems.extractChildItems(self)){
+
+    auto motionItems = self->descendantItems<BodyMotionItem>();
+    if(motionItems.empty()){
         mv->putln(
             format(_("Any body motion item for {} is not found."), self->name()),
             MessageView::ERROR);
