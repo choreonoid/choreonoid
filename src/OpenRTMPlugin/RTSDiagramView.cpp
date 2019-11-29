@@ -15,7 +15,6 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/Timer>
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/RootItem>
 #include <cnoid/SimulatorItem>
 #include <cnoid/AppConfig>
@@ -264,7 +263,7 @@ public:
     QGraphicsScene  scene;
     ScopedConnection nsViewSelectionChangedConnection;
     ScopedConnection itemAddedConnection;
-    ScopedConnection itemTreeViewSelectionChangedConnection;
+    ScopedConnection rootItemConnection;
     ScopedConnection connectionOfRTSystemItemDetachedFromRoot;
     ScopedConnection timeOutConnection;
 
@@ -312,7 +311,7 @@ public:
     void onTime();
     void onActivated(bool on);
     void timerPeriodUpdate(int value);
-    void onItemTreeViewSelectionChanged(const ItemList<RTSystemItem>& items);
+    void onSelectedItemsChanged(ItemList<RTSystemItem> items);
     void onRTSystemItemDetachedFromRoot();
     void setCurrentRTSItem(RTSystemItem* item);
     void updateView();
@@ -838,9 +837,9 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
     self->sigActivated().connect([&](){ onActivated(true); });
     self->sigDeactivated().connect([&](){ onActivated(false); });
 
-    itemTreeViewSelectionChangedConnection.reset(
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            [&](const ItemList<>& items){ onItemTreeViewSelectionChanged(items); }));
+    rootItemConnection.reset(
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& items){ onSelectedItemsChanged(items); }));
 
     QPen pen(Qt::DashDotLine);
     pen.setWidth(2);
@@ -1238,7 +1237,7 @@ void RTSDiagramViewImpl::timerPeriodUpdate(int value)
     }
 }
 
-void RTSDiagramViewImpl::onItemTreeViewSelectionChanged(const ItemList<RTSystemItem>& items)
+void RTSDiagramViewImpl::onSelectedItemsChanged(ItemList<RTSystemItem> items)
 {
     RTSystemItem* firstItem = items.toSingle();
 

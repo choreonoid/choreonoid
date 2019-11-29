@@ -10,7 +10,6 @@
 #include <cnoid/MenuManager>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ItemList>
-#include <cnoid/ItemTreeView>
 #include <cnoid/RootItem>
 #include <cnoid/SimulatorItem>
 #include <cnoid/AppConfig>
@@ -716,7 +715,7 @@ class RTSDiagramViewExImpl : public QGraphicsView
 public:
     RTSystemItemExPtr currentRTSItem;
     ScopedConnection itemAddedConnection;
-    ScopedConnection itemTreeViewSelectionChangedConnection;
+    ScopedConnection rootItemConnection;
     ScopedConnection connectionOfRTSystemItemDetachedFromRoot;
 
     ScopedConnection rtsLoadedConnection;
@@ -759,7 +758,7 @@ public:
     void onRTSCompSelectionChange();
     void onRTSCompPositionChanged(const RTSCompGItem*);
     void onActivated(bool on);
-    void onItemTreeViewSelectionChanged(const ItemList<RTSystemItemEx>& items);
+    void onSelectedItemsChanged(ItemList<RTSystemItemEx> items);
     void onRTSystemItemDetachedFromRoot();
     void setCurrentRTSItem(RTSystemItemEx* item);
     void updateView();
@@ -908,9 +907,9 @@ RTSDiagramViewExImpl::RTSDiagramViewExImpl(RTSDiagramViewEx* self)
     self->sigActivated().connect([&](){ onActivated(true); });
     self->sigDeactivated().connect([&](){ onActivated(false); });
 
-    itemTreeViewSelectionChangedConnection.reset(
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            [&](const ItemList<>& items){ onItemTreeViewSelectionChanged(items); }));
+    rootItemConnection.reset(
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& items){ onSelectedItemsChanged(items); }));
 
     QPen pen(Qt::DashDotLine);
     pen.setWidth(2);
@@ -1291,7 +1290,7 @@ void RTSDiagramViewExImpl::onActivated(bool on)
     }
 }
 
-void RTSDiagramViewExImpl::onItemTreeViewSelectionChanged(const ItemList<RTSystemItemEx>& items)
+void RTSDiagramViewExImpl::onSelectedItemsChanged(ItemList<RTSystemItemEx> items)
 {
     RTSystemItemEx* firstItem = items.toSingle();
 
