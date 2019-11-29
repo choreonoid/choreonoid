@@ -10,7 +10,8 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/MessageView>
 #include <cnoid/ViewManager>
-#include <cnoid/ItemTreeView>
+#include <cnoid/RootItem>
+#include <cnoid/ItemList>
 #include <cnoid/MenuManager>
 #include <cnoid/Sleep>
 #include <QPainter>
@@ -23,7 +24,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
 
@@ -49,7 +49,8 @@ public:
 
     DSMediaView* self;
     MessageView* mv;
-    ConnectionSet timeBarConnections;
+    ScopedConnection rootItemConnection;
+    ScopedConnectionSet timeBarConnections;
     MediaItemPtr currentMediaItem;
 
     enum PLAYSTATE { Empty, Stopped, Paused, Running } currentState;
@@ -95,6 +96,7 @@ public:
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
+
 }
 
 
@@ -186,13 +188,14 @@ DSMediaViewImpl::DSMediaViewImpl(DSMediaView* self)
     orgWinProc = NULL;
 
     aspectRatioCheck->sigToggled().connect(
-        std::bind(&DSMediaViewImpl::onAspectRatioCheckToggled, this));
+        [&](bool){ onAspectRatioCheckToggled(); });
 
     orgSizeCheck->sigToggled().connect(
-        std::bind(&DSMediaViewImpl::onOrgSizeCheckToggled, this));
-    
-    ItemTreeView::mainInstance()->sigCheckToggled().connect(
-        std::bind(&DSMediaViewImpl::onItemCheckToggled, this, _1, _2));
+        [&](bool){ onOrgSizeCheckToggled(); });
+
+    rootItemConnection = 
+        RootItem::instance()->sigCheckToggled().connect(
+            [&](Item* item, bool on){ onItemCheckToggled(item, on); });
 }
 
 
@@ -208,7 +211,7 @@ DSMediaView::~DSMediaView()
 
 DSMediaViewImpl::~DSMediaViewImpl()
 {
-    timeBarConnections.disconnect();
+
 }
 
 
@@ -337,20 +340,14 @@ void DSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
 
     MediaItem* mediaItem = dynamic_cast<MediaItem*>(item);
     if(mediaItem){
-        ItemList<MediaItem> checkedItems = ItemTreeView::mainInstance()->checkedItems<MediaItem>();
-        MediaItemPtr targetItem;
-        if(!checkedItems.empty()){
-            targetItem = checkedItems.front();
-        }
-        if(targetItem != currentMediaItem){
-
+        MediaItemPtr targetItem = RootItem::instance()->checkedItems<MediaItem>().toSingle(true);
+         if(targetItem != currentMediaItem){
             if(currentMediaItem){
                 if(bLoaded){
                     unload();
                 }
             }
             currentMediaItem = targetItem;
-
             if(bMapped && currentMediaItem){
                 load();
             }
@@ -550,16 +547,16 @@ void DSMediaViewImpl::connectTimeBarSignals()
         TimeBar* timeBar = TimeBar::instance();
         timeBarConnections.add(
             timeBar->sigPlaybackInitialized().connect(
-                std::bind(&DSMediaViewImpl::onPlaybackInitialized, this, _1)));
+                [&](double time){ return onPlaybackInitialized(time); }));
         timeBarConnections.add(
             timeBar->sigPlaybackStarted().connect(
-                std::bind(&DSMediaViewImpl::onPlaybackStarted, this, _1)));
+                [&](double time){ onPlaybackStarted(time); }));
         timeBarConnections.add(
             timeBar->sigPlaybackStopped().connect(
-                std::bind(&DSMediaViewImpl::onPlaybackStopped, this, _1)));
+                [&](double time, bool){ onPlaybackStopped(time); }));
         timeBarConnections.add(
             timeBar->sigTimeChanged().connect(
-                std::bind(&DSMediaViewImpl::onTimeChanged, this, _1)));
+                [&](double time){ return onTimeChanged(time); }));
     }
 }
 
