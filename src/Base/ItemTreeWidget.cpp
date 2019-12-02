@@ -1048,7 +1048,7 @@ bool ItemTreeWidget::restoreState(const Archive& archive)
     const ListingPtr expanded = archive.findListing("expanded");
     if(expanded->isValid()){
         if(!impl->projectLoadingWithItemExpansionInfoStack.empty()){
-            impl->projectLoadingWithItemExpansionInfoStack.top()  = true;
+            impl->projectLoadingWithItemExpansionInfoStack.top() = true;
         }
     }
     archive.addPostProcess([&, expanded](){ impl->restoreState(archive, expanded); });

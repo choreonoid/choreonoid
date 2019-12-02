@@ -79,8 +79,11 @@ bool ItemTreeView::storeState(Archive& archive)
 
 bool ItemTreeView::restoreState(const Archive& archive)
 {
-    archive.addPostProcess([&](){ impl->restoreState(archive); });
-    return true;
+    if(impl->itemTreeWidget->restoreState(archive)){
+        archive.addPostProcess([&](){ impl->restoreState(archive); });
+        return true;
+    }
+    return false;
 }
 
 
@@ -97,8 +100,6 @@ void ItemTreeView::Impl::restoreState(const Archive& archive)
         archive, "selected", [&](Item* item){ item->setSelected(true); });
     restoreItemStates(
         archive, "checked", [&](Item* item){ item->setChecked(true); });
-    
-    itemTreeWidget->restoreState(archive);
 }
 
 
