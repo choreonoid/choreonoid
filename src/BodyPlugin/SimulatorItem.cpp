@@ -24,6 +24,7 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MultiDeviceStateSeq>
+#include <cnoid/ReferencedObjectSeqItem>
 #include <cnoid/Timer>
 #include <cnoid/Deque2D>
 #include <cnoid/ConnectionSet>
@@ -106,8 +107,12 @@ class ControllerInfo : public Referenced, public ControllerIO
 {
 public:
     ControllerItemPtr controller;
-    Body* body_;
     SimulatorItem::Impl* simImpl;
+    Body* body_;
+    unique_ptr<ReferencedObjectSeq> logBuf;
+    int logBufFrameOffset;
+    ReferencedObjectSeqItemPtr logItem;
+    shared_ptr<ReferencedObjectSeq> log;
 
     ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl);
     virtual Body* body() override;
@@ -115,6 +120,9 @@ public:
     virtual double timeStep() const override;
     virtual double currentTime() const override;
     virtual std::string optionString() const override;
+    virtual bool enableLog() override;
+    virtual void outputLog(Referenced* frameLog) override;
+    void flushLog();
 };
 
 typedef ref_ptr<ControllerInfo> ControllerInfoPtr;
@@ -131,7 +139,6 @@ public:
     BodyItemPtr bodyItem;
 
     vector<ControllerInfoPtr> controllerInfos;
-    double frameRate;
     SimulatorItem::Impl* simImpl;
 
     bool isActive;
@@ -188,6 +195,7 @@ public:
     vector<SimulationBodyPtr> allSimBodies;
     vector<SimulationBody*> simBodiesWithBody;
     vector<SimulationBody*> activeSimBodies;
+    vector<ControllerInfoPtr> loggedControllerInfos;
 
     BodyItemToSimBodyMap simBodyMap;
 
@@ -530,6 +538,65 @@ std::string ControllerInfo::optionString() const
 }
 
 
+bool ControllerInfo::enableLog()
+{
+    logBuf.reset(new ReferencedObjectSeq);
+    logBuf->setFrameRate(simImpl->worldFrameRate);
+    logBufFrameOffset = 0;
+
+    string logName = simImpl->self->name() + "-" + controller->name();
+    logItem = controller->findChildItem<ReferencedObjectSeqItem>(logName);
+    if(!logItem){
+        logItem = new ReferencedObjectSeqItem;
+        logItem->setTemporal();
+        logItem->setName(logName);
+        controller->addChildItem(logItem);
+    }
+    log = logItem->seq();
+    log->setNumFrames(0);
+    log->setFrameRate(simImpl->worldFrameRate);
+    log->setOffsetTime(0.0);
+    
+    simImpl->loggedControllerInfos.push_back(this);
+
+    return true;
+}
+
+
+void ControllerInfo::outputLog(Referenced* frameLog)
+{
+    int bufFrame = simImpl->currentFrame - logBufFrameOffset;
+    int numFrames = bufFrame + 1;
+    int lastNumFrames = logBuf->numFrames();
+    Referenced* lastLog;
+    if(lastNumFrames > 0){
+        lastLog = logBuf->back();
+    } else {
+        lastLog = frameLog;
+    }
+    if(numFrames > lastNumFrames){
+        logBuf->setNumFrames(numFrames);
+        for(int i=lastNumFrames; i < numFrames - 1; ++i){
+            logBuf->at(i) = lastLog;
+        }
+        logBuf->back() = frameLog;
+    }
+}
+
+
+void ControllerInfo::flushLog()
+{
+    int numBufFrames = logBuf->numFrames();
+    int offsetFrame = log->numFrames();
+    log->setNumFrames(offsetFrame + numBufFrames);
+    for(int i=0; i < numBufFrames; ++i){
+        log->at(i + offsetFrame) = logBuf->at(i);
+    }
+    logBuf->clear();
+    logBufFrameOffset += numBufFrames;
+}
+
+
 SimulationBody::SimulationBody(Body* body)
 {
     impl = new Impl(this, body);
@@ -614,7 +681,6 @@ bool SimulationBody::Impl::initialize(SimulatorItem* simulatorItem, BodyItem* bo
 {
     simImpl = simulatorItem->impl;
     this->bodyItem = bodyItem;
-    frameRate = simImpl->worldFrameRate;
     deviceStateConnections.disconnect();
     controllerInfos.clear();
     resultItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
@@ -644,7 +710,6 @@ bool SimulationBody::Impl::initialize(SimulatorItem* simulatorItem, BodyItem* bo
 bool SimulationBody::Impl::initialize(SimulatorItem::Impl* simImpl, ControllerItem* controllerItem)
 {
     this->simImpl = simImpl;
-    frameRate = simImpl->worldFrameRate;
 
     ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
 
@@ -815,7 +880,7 @@ void SimulationBody::Impl::initializeResultItems()
     }
 
     motion = motionItem->motion();
-    motion->setFrameRate(frameRate);
+    motion->setFrameRate(simImpl->worldFrameRate);
     motion->setDimension(0, jointPosBuf.colSize(), linkPosBuf.colSize());
     motion->setOffsetTime(0.0);
     simImpl->addBodyMotionEngine(motionItem);
@@ -2201,8 +2266,12 @@ void SimulatorItem::Impl::flushResults()
         }
     }
     
-    for(size_t i=0; i < activeSimBodies.size(); ++i){
-        activeSimBodies[i]->flushResults();
+    for(auto& simBody : activeSimBodies){
+        simBody->flushResults();
+    }
+
+    for(auto& info : loggedControllerInfos){
+        info->flushLog();
     }
 
     bool offsetChanged;

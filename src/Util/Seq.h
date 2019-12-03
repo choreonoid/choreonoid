@@ -95,6 +95,10 @@ public:
         }
     }
 
+    void clear() {
+        container.clear();
+    }
+
     bool empty() const {
         return container.empty();
     }
@@ -141,6 +145,14 @@ public:
 
     const ElementType& at(int frameIndex) const {
         return container[frameIndex];
+    }
+
+    ElementType& back() {
+        return container.back();
+    }
+
+    const ElementType& back() const {
+        return container.back();
     }
 
     int clampFrameIndex(int frameIndex, bool& out_isValidRange){

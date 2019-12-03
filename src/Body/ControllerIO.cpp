@@ -66,6 +66,18 @@ double ControllerIO::currentTime() const
 }
 
 
+bool ControllerIO::enableLog()
+{
+    return false;
+}
+
+
+void ControllerIO::outputLog(Referenced* frameLog)
+{
+
+}
+
+
 bool ControllerIO::isNoDelayMode() const
 {
     return false;
