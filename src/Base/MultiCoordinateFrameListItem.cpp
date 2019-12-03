@@ -181,7 +181,7 @@ bool MultiCoordinateFrameListItem::isFrameListEnabled(int index) const
 
 bool MultiCoordinateFrameListItem::store(Archive& archive)
 {
-    auto& nodes = *archive.createListing("frameLists");
+    ListingPtr nodes = new Listing;
     const int n = impl->frameListItems.size();
     for(int i=0; i < n; ++i){
         auto item = impl->frameListItems[i];
@@ -192,8 +192,11 @@ bool MultiCoordinateFrameListItem::store(Archive& archive)
             if(!item->store(*subArchive)){
                 return false;
             }
-            nodes.append(subArchive);
+            nodes->append(subArchive);
         }
+    }
+    if(!nodes->empty()){
+        archive.insert("frameLists", nodes);
     }
     return true;
 }
@@ -201,8 +204,6 @@ bool MultiCoordinateFrameListItem::store(Archive& archive)
 
 bool MultiCoordinateFrameListItem::restore(const Archive& archive)
 {
-    bool loaded = false;
-    
     auto& nodes = *archive.findListing("frameLists");
     if(nodes.isValid()){
         for(auto& node : nodes){
@@ -210,11 +211,11 @@ bool MultiCoordinateFrameListItem::restore(const Archive& archive)
             int id = listNode->find("id")->toInt();
             if(id >= 0 && id < impl->frameListItems.size()){
                 auto& subArchive = *const_cast<Archive&>(archive).subArchive(listNode);
-                if(impl->frameListItems[id]->restore(subArchive)){
-                    loaded = true;
+                if(!impl->frameListItems[id]->restore(subArchive)){
+                    // Put error messages
                 }
             }
         }
     }
-    return loaded;
+    return true;
 }

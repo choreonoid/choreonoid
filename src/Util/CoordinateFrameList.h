@@ -6,6 +6,10 @@
 
 namespace cnoid {
 
+/**
+   \note Frame id 0 is reserved for the default identity frame, and any frame with id 0
+   cannot be inserted into the list. The createNextId function returns 1 as the first id.
+*/
 class CNOID_EXPORT CoordinateFrameList : public CoordinateFrameSet
 {
 public:
@@ -34,6 +38,10 @@ public:
     */
     bool resetId(CoordinateFrame* frame, const GeneralId& newId);
 
+    /**
+       Reset the internal id counter so that the createNextId function returns 1
+       if there is no existing frame with id 1.
+    */
     void resetIdCounter();
     GeneralId createNextId(int prevId = -1);
 

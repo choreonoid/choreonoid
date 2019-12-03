@@ -13,7 +13,7 @@ string endFrameListLabel;
 
 bool enabledFlags[] = { 1, 1, 1 };
 
-Signal<void(int index, bool on)> sigEnabledFrameListsChanged;
+Signal<void(LinkCoordinateFrameListSetItem::FrameType type, bool on)> sigEnabledFrameListsChanged;
 
 }
 
@@ -38,10 +38,10 @@ void LinkCoordinateFrameListSetItem::setFrameListLabels
 }
 
 
-void LinkCoordinateFrameListSetItem::setFrameListEnabledForAllItems(int index, bool on)
+void LinkCoordinateFrameListSetItem::setFrameListEnabledForAllItems(FrameType type, bool on)
 {
-    enabledFlags[index] = on;
-    sigEnabledFrameListsChanged(index, on);
+    enabledFlags[type] = on;
+    sigEnabledFrameListsChanged(type, on);
 }
 
 
@@ -70,8 +70,8 @@ void LinkCoordinateFrameListSetItem::initializeFrameListEnabling()
     }
     
     connection = sigEnabledFrameListsChanged.connect(
-        [&](int index, bool on){
-            setFrameListEnabled(index, on); });
+        [&](int type, bool on){
+            setFrameListEnabled(type, on); });
 }
 
 

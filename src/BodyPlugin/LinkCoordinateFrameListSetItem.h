@@ -13,22 +13,22 @@ class CNOID_EXPORT LinkCoordinateFrameListSetItem : public MultiCoordinateFrameL
 public:
     static void initializeClass(ExtensionManager* ext);
 
+    enum FrameType {
+        WorldFrame = LinkCoordinateFrameSet::WorldFrame,
+        BodyFrame  = LinkCoordinateFrameSet::BodyFrame,
+        EndFrame   = LinkCoordinateFrameSet::EndFrame
+    };
+
     static void setFrameListLabels(
         const char* worldFrameLabel, const char* bodyFrameLabel, const char* endFrameLabel);
 
-    static void setFrameListEnabledForAllItems(int index, bool on);
+    static void setFrameListEnabledForAllItems(FrameType type, bool on);
 
     LinkCoordinateFrameListSetItem();
     LinkCoordinateFrameListSetItem(const LinkCoordinateFrameListSetItem& org);
 
     LinkCoordinateFrameSet* frameSets();
     const LinkCoordinateFrameSet* frameSets() const;
-
-    enum FrameType {
-        WorldFrame = LinkCoordinateFrameSet::WorldFrame,
-        BodyFrame  = LinkCoordinateFrameSet::BodyFrame,
-        EndFrame   = LinkCoordinateFrameSet::EndFrame
-    };
 
     CoordinateFrameListItem* worldFrameListItem(int index);
     const CoordinateFrameListItem* worldFrameListItem(int index) const;

@@ -36,7 +36,7 @@ CoordinateFrameList::CoordinateFrameList()
 CoordinateFrameList::Impl::Impl()
 {
     identityFrame = new CoordinateFrame(0);
-    idCounter = 0;
+    idCounter = 1;
 }
 
 
