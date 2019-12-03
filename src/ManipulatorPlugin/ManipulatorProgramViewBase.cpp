@@ -851,10 +851,12 @@ bool ManipulatorProgramViewBase::Impl::onTimeChanged(bool time)
                 auto seq = logItem->seq();
                 if(!seq->empty()){
                     auto data = seq->at(seq->frameOfTime(time)).get();
+                    /*
                     if(auto log = dynamic_cast<ManipulatorControllerLog*>(data)){
                         //cout << "Current statement index: " << log->position[0] << endl;
                         hit = true;
                     }
+                    */
                 }
             }
         }
