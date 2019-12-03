@@ -117,6 +117,9 @@ Referenced* CloneMap::findClone_(const Referenced* org)
 
 Referenced* CloneMap::findOrCreateClone_(const Referenced* org)
 {
+    if(!org){
+        return nullptr;
+    }
     auto clone = findClone_(org);
     if(!clone){
         clone = impl->cloneFunction(org);
@@ -128,6 +131,9 @@ Referenced* CloneMap::findOrCreateClone_(const Referenced* org)
 
 Referenced* CloneMap::findOrCreateClone_(const CloneableReferenced* org)
 {
+    if(!org){
+        return nullptr;
+    }
     auto clone = findClone_(org);
     if(!clone){
         clone = org->doClone(this);
@@ -140,6 +146,9 @@ Referenced* CloneMap::findOrCreateClone_(const CloneableReferenced* org)
 Referenced* CloneMap::findOrCreateClone_
 (const Referenced* org, const CloneFunction& cloneFunction)
 {
+    if(!org){
+        return nullptr;
+    }
     auto clone = findClone_(org);
     if(!clone){
         clone = cloneFunction(org);
@@ -152,6 +161,9 @@ Referenced* CloneMap::findOrCreateClone_
 Referenced* CloneMap::findCloneOrReplaceLater_
 (const Referenced* org, std::function<void(Referenced* clone)> replaceFunction)
 {
+    if(!org){
+        return nullptr;
+    }
     auto clone = findClone_(org);
     if(!clone){
         impl->replaceFunctions.push_back(
