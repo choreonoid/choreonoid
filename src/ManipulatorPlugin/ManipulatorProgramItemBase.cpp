@@ -93,6 +93,7 @@ void ManipulatorProgramItemBase::setName(const std::string& name)
 {
     Item::setName(name);
     impl->program->setName(name);
+    suggestFileUpdate();
 }
 
 
