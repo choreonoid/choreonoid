@@ -8,6 +8,9 @@
 
 #include "CollisionSeq.h"
 #include <cnoid/Item>
+#include <cnoid/EigenTypes>
+#include <vector>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -19,14 +22,13 @@ const bool SIMULATION_PROFILING = false;
 #endif
 
 class Body;
+class Link;
 class Device;
 class CollisionDetector;
 class WorldItem;
 class BodyItem;
 class ControllerItem;
-class SimulationBodyImpl;
 class SimulatorItem;
-class SimulatorItemImpl;
 class SimulatedMotionEngineManager;
 class CloneMap;
 
@@ -72,9 +74,12 @@ public:
     virtual void bufferResults();
     virtual void flushResults();
 
+    class Impl;
+
 private:
-    SimulationBodyImpl* impl;
-    friend class SimulatorItemImpl;
+    Impl* impl;
+
+    friend class SimulatorItem;
 };
     
 typedef ref_ptr<SimulationBody> SimulationBodyPtr;
@@ -194,6 +199,8 @@ public:
     virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
     virtual void clearForcedPositions();
 
+    class Impl;
+
 protected:
     SimulatorItem(const SimulatorItem& org);
 
@@ -238,10 +245,7 @@ protected:
     */
     virtual void finalizeSimulation();
 
-    virtual std::shared_ptr<CollisionLinkPairList> getCollisions()
-    {
-        return std::make_shared<CollisionLinkPairList>();
-    }
+    virtual std::shared_ptr<CollisionLinkPairList> getCollisions();
 
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
@@ -253,10 +257,9 @@ protected:
 #endif
             
 private:
-    SimulatorItemImpl* impl;
+    Impl* impl;
 
-    friend class SimulatorItemImpl;
-    friend class SimulationBodyImpl;
+    friend class SimulationBody;
     friend class SimulatedMotionEngineManager;
 };
         

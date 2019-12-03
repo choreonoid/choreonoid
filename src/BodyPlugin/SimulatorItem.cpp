@@ -11,14 +11,13 @@
 #include "BodyMotionItem.h"
 #include "BodyMotionEngine.h"
 #include "WorldLogFileItem.h"
-#include "CollisionSeq.h"
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
+#include <cnoid/ExtensionManager>
 #include <cnoid/RootItem>
 #include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
 #include <cnoid/AppUtil>
-#include <cnoid/ExtensionManager>
 #include <cnoid/TimeBar>
 #include <cnoid/MessageView>
 #include <cnoid/LazyCaller>
@@ -69,14 +68,14 @@ struct FunctionSet
     };
     vector<FunctionInfo> functions;
     std::mutex mutex;
-    SimulatorItemImpl* simImpl;
+    SimulatorItem::Impl* simImpl;
     int idCounter;
     bool needToUpdate;
     vector<FunctionInfo> functionsToAdd;
     set<int> registerdIds;
     vector<int> idsToRemove;
         
-    FunctionSet(SimulatorItemImpl* simImpl) : simImpl(simImpl) {
+    FunctionSet(SimulatorItem::Impl* simImpl) : simImpl(simImpl) {
         clear();
     }
     void clear() {
@@ -103,19 +102,37 @@ struct FunctionSet
     void updateFunctions();
 };
 
+class ControllerInfo : public Referenced, public ControllerIO
+{
+public:
+    ControllerItemPtr controller;
+    Body* body_;
+    SimulatorItem::Impl* simImpl;
+
+    ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl);
+    virtual Body* body() override;
+    std::ostream& os() const override;
+    virtual double timeStep() const override;
+    virtual double currentTime() const override;
+    virtual std::string optionString() const override;
+};
+
+typedef ref_ptr<ControllerInfo> ControllerInfoPtr;
+
 }
 
 namespace cnoid {
 
-class SimulationBodyImpl : public ControllerIO
+class SimulationBody::Impl
 {
 public:
     SimulationBody* self;
     BodyPtr body_;
     BodyItemPtr bodyItem;
-    vector<ControllerItemPtr> controllers;
+
+    vector<ControllerInfoPtr> controllerInfos;
     double frameRate;
-    SimulatorItemImpl* simImpl;
+    SimulatorItem::Impl* simImpl;
 
     bool isActive;
     bool isDynamic;
@@ -137,10 +154,10 @@ public:
     vector<DeviceStatePtr> prevFlushedDeviceStateInDirectMode;
     shared_ptr<MultiDeviceStateSeq> deviceStateResults;
 
-    SimulationBodyImpl(SimulationBody* self, Body* body);
+    Impl(SimulationBody* self, Body* body);
     void findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems = false);
     bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem);
-    bool initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem);
+    bool initialize(SimulatorItem::Impl* simImpl, ControllerItem* controllerItem);
     void extractAssociatedItems(bool doReset);
     void copyStateToBodyItem();
     void cloneShapesOnce();
@@ -155,22 +172,15 @@ public:
     void flushResultsToBody();
     void flushResultsToWorldLogFile(int bufferFrame);
     void notifyResults(double time);
-
-    // Following functions are defined in the ControllerIO class
-    virtual Body* body() override;
-    std::ostream& os() const;
-    virtual double timeStep() const override;
-    virtual double currentTime() const override;
-    virtual std::string optionString() const override;
 };
 
 
-class SimulatorItemImpl : public QThread, public ControllerIO
+class SimulatorItem::Impl : public QThread, public ControllerIO
 {
 public:
-    SimulatorItemImpl(SimulatorItem* self);
-    SimulatorItemImpl(SimulatorItem* self, const SimulatorItemImpl& org);
-    ~SimulatorItemImpl();
+    Impl(SimulatorItem* self);
+    Impl(SimulatorItem* self, const Impl& org);
+    ~Impl();
             
     SimulatorItem* self;
     WorldItem* worldItem;
@@ -196,7 +206,7 @@ public:
     FunctionSet midDynamicsFunctions;
     FunctionSet postDynamicsFunctions;
     
-    vector<SimulationBodyImpl*> simBodyImplsToNotifyResults;
+    vector<SimulationBody::Impl*> simBodyImplsToNotifyResults;
     ItemList<SubSimulatorItem> subSimulatorItems;
 
     vector<ControllerItem*> activeControllers;
@@ -347,7 +357,7 @@ public:
         bool changed = false;
         
         if(selected.empty()){
-            vector<SimulatorItemPtr>::iterator p = simulatorItems.begin();
+            auto p = simulatorItems.begin();
             while(p != simulatorItems.end()){
                 if((*p)->isRunning() && (*p)->findRootItem()){
                     ++p;
@@ -366,7 +376,7 @@ public:
             if(simulatorItems.empty()){
                 timeChangeConnection.disconnect();
             } else {
-                TimeBar* timeBar = TimeBar::instance();
+                auto timeBar = TimeBar::instance();
                 timeChangeConnection.reset(
                     timeBar->sigTimeChanged().connect(
                         [&](double time){ return setTime(time); }));
@@ -466,8 +476,7 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 {
     SimulatorItem* activeSimulatorItem = nullptr;
     if(item){
-        WorldItem* worldItem = item->findOwnerItem<WorldItem>();
-        if(worldItem){
+        if(auto worldItem = item->findOwnerItem<WorldItem>()){
             worldItem->traverse<SimulatorItem>(
                 [&](SimulatorItem* item){
                     if(item->isActive()){
@@ -482,13 +491,52 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 }
 
 
-SimulationBody::SimulationBody(Body* body)
+ControllerInfo::ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl)
+    : controller(controller),
+      body_(simBodyImpl->body_),
+      simImpl(simBodyImpl->simImpl)
 {
-    impl = new SimulationBodyImpl(this, body);
+
 }
 
 
-SimulationBodyImpl::SimulationBodyImpl(SimulationBody* self, Body* body)
+Body* ControllerInfo::body()
+{
+    return body_;
+}
+
+
+std::ostream& ControllerInfo::os() const
+{
+    return simImpl->mv->cout();
+}
+    
+
+double ControllerInfo::timeStep() const
+{
+    return simImpl->worldTimeStep_;
+}
+    
+
+double ControllerInfo::currentTime() const
+{
+    return simImpl->currentTime();
+}
+
+
+std::string ControllerInfo::optionString() const
+{
+    return simImpl->controllerOptionString_;
+}
+
+
+SimulationBody::SimulationBody(Body* body)
+{
+    impl = new Impl(this, body);
+}
+
+
+SimulationBody::Impl::Impl(SimulationBody* self, Body* body)
     : self(self),
       body_(body)
 {
@@ -519,20 +567,20 @@ Body* SimulationBody::body() const
 
 int SimulationBody::numControllers() const
 {
-    return impl->controllers.size();
+    return impl->controllerInfos.size();
 }
 
 
 ControllerItem* SimulationBody::controller(int index) const
 {
-    if(index < static_cast<int>(impl->controllers.size())){
-        return impl->controllers[index];
+    if(index < static_cast<int>(impl->controllerInfos.size())){
+        return impl->controllerInfos[index]->controller;
     }
-    return 0;
+    return nullptr;
 }
 
 
-void SimulationBodyImpl::findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems)
+void SimulationBody::Impl::findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems)
 {
     while(item){
         Item* srcItem = nullptr;
@@ -562,13 +610,13 @@ bool SimulationBody::initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem
 }
 
 
-bool SimulationBodyImpl::initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem)
+bool SimulationBody::Impl::initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem)
 {
     simImpl = simulatorItem->impl;
     this->bodyItem = bodyItem;
     frameRate = simImpl->worldFrameRate;
     deviceStateConnections.disconnect();
-    controllers.clear();
+    controllerInfos.clear();
     resultItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
 
     body_->setCurrentTimeFunction([this](){ return this->simImpl->currentTime(); });
@@ -593,15 +641,17 @@ bool SimulationBodyImpl::initialize(SimulatorItem* simulatorItem, BodyItem* body
 
 
 // For a controller which is not associated with a body
-bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem)
+bool SimulationBody::Impl::initialize(SimulatorItem::Impl* simImpl, ControllerItem* controllerItem)
 {
     this->simImpl = simImpl;
     frameRate = simImpl->worldFrameRate;
 
-    if(!controllerItem->initialize(this)){
+    ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
+
+    if(!controllerItem->initialize(info)){
         return false;
     }
-    controllers.push_back(controllerItem);
+    controllerInfos.push_back(info);
 
     linkPosBuf.resizeColumn(0);
 
@@ -609,17 +659,18 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, ControllerItem* 
 }
 
 
-void SimulationBodyImpl::extractAssociatedItems(bool doReset)
+void SimulationBody::Impl::extractAssociatedItems(bool doReset)
 {
     vector<Item*> controlSrcItems;
     findControlSrcItems(bodyItem->childItem(), controlSrcItems);
-    vector<Item*>::iterator iter = controlSrcItems.begin();
+    auto iter = controlSrcItems.begin();
     while(iter != controlSrcItems.end()){
         Item* srcItem = *iter;
-        ControllerItem* controllerItem = dynamic_cast<ControllerItem*>(srcItem);
+        auto controllerItem = dynamic_cast<ControllerItem*>(srcItem);
         if(controllerItem){
-            if(controllerItem->initialize(this)){
-                controllers.push_back(controllerItem);
+            ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
+            if(controllerItem->initialize(info)){
+                controllerInfos.push_back(info);
             } else {
                 controllerItem = nullptr;
             }
@@ -657,7 +708,7 @@ void SimulationBodyImpl::extractAssociatedItems(bool doReset)
 }
 
 
-void SimulationBodyImpl::copyStateToBodyItem()
+void SimulationBody::Impl::copyStateToBodyItem()
 {
     BodyState state(*body_);
     state.restorePositions(*bodyItem->body());
@@ -682,7 +733,7 @@ const std::string& SimulationBody::resultItemPrefix() const
 }
 
 
-void SimulationBodyImpl::initializeResultData()
+void SimulationBody::Impl::initializeResultData()
 {
     self->initializeResultBuffers();
     
@@ -700,7 +751,7 @@ void SimulationBody::initializeResultBuffers()
 }
 
 
-void SimulationBodyImpl::initializeResultBuffers()
+void SimulationBody::Impl::initializeResultBuffers()
 {
     jointPosBuf.resizeColumn(body_->numAllJoints());
     int numLinksToRecord = 0;
@@ -749,13 +800,13 @@ void SimulationBody::initializeResultItems()
 }
 
 
-void SimulationBodyImpl::initializeResultItems()
+void SimulationBody::Impl::initializeResultItems()
 {
     if(!parentOfResultItems){
         return;
     }
     
-    BodyMotionItem* motionItem = parentOfResultItems->findChildItem<BodyMotionItem>(resultItemPrefix);
+    auto motionItem = parentOfResultItems->findChildItem<BodyMotionItem>(resultItemPrefix);
     if(!motionItem){
         motionItem = new BodyMotionItem();
         motionItem->setTemporal();
@@ -782,7 +833,7 @@ void SimulationBodyImpl::initializeResultItems()
 }
 
 
-void SimulationBodyImpl::setInitialStateOfBodyMotion(shared_ptr<BodyMotion> bodyMotion)
+void SimulationBody::Impl::setInitialStateOfBodyMotion(shared_ptr<BodyMotion> bodyMotion)
 {
     bool updated = false;
     
@@ -796,7 +847,7 @@ void SimulationBodyImpl::setInitialStateOfBodyMotion(shared_ptr<BodyMotion> body
     }
     auto jseq = bodyMotion->jointPosSeq();
     if(jseq->numFrames() > 0){
-        MultiValueSeq::Frame jframe0 = jseq->frame(0);
+        auto jframe0 = jseq->frame(0);
         int n = std::min(jframe0.size(), body_->numJoints());
         for(int i=0; i < n; ++i){
             body_->joint(i)->q() = jframe0[i];
@@ -821,7 +872,7 @@ void SimulationBody::setActive(bool on)
 }
 
 
-void SimulationBodyImpl::setActive(bool on)
+void SimulationBody::Impl::setActive(bool on)
 {
     if(body_){
         if(on){
@@ -857,7 +908,7 @@ void SimulationBody::bufferResults()
 }
 
 
-void SimulationBodyImpl::bufferResults()
+void SimulationBody::Impl::bufferResults()
 {
     if(jointPosBuf.colSize() > 0){
         Deque2D<double>::Row q = jointPosBuf.append();
@@ -895,7 +946,7 @@ void SimulationBody::flushResults()
 }
 
 
-void SimulationBodyImpl::flushResults()
+void SimulationBody::Impl::flushResults()
 {
     if(simImpl->isRecordingEnabled){
         flushResultsToBodyMotionItems();
@@ -913,7 +964,7 @@ void SimulationBodyImpl::flushResults()
 }
 
 
-void SimulationBodyImpl::flushResultsToBodyMotionItems()
+void SimulationBody::Impl::flushResultsToBodyMotionItems()
 {
     if(!linkPosResults){
         initializeResultItems();
@@ -926,7 +977,7 @@ void SimulationBodyImpl::flushResultsToBodyMotionItems()
     if(linkPosBuf.colSize() > 0){
         bool offsetChanged = false;
         for(int i=0; i < numBufFrames; ++i){
-            MultiSE3Deque::Row buf = linkPosBuf.row(i);
+            auto buf = linkPosBuf.row(i);
             if(linkPosResults->numFrames() >= ringBufferSize){
                 linkPosResults->popFrontFrame();
                 offsetChanged = true;
@@ -940,7 +991,7 @@ void SimulationBodyImpl::flushResultsToBodyMotionItems()
     if(jointPosBuf.colSize() > 0){
         bool offsetChanged = false;
         for(int i=0; i < numBufFrames; ++i){
-            Deque2D<double>::Row buf = jointPosBuf.row(i);
+            auto buf = jointPosBuf.row(i);
             if(jointPosResults->numFrames() >= ringBufferSize){
                 jointPosResults->popFrontFrame();
                 offsetChanged = true;
@@ -955,7 +1006,7 @@ void SimulationBodyImpl::flushResultsToBodyMotionItems()
         bool offsetChanged = false;
         // This loop begins with the second element to skip the first element to keep the unchanged states
         for(int i=1; i < deviceStateBuf.rowSize(); ++i){ 
-            Deque2D<DeviceStatePtr>::Row buf = deviceStateBuf.row(i);
+            auto buf = deviceStateBuf.row(i);
             if(deviceStateResults->numFrames() >= ringBufferSize){
                 deviceStateResults->popFrontFrame();
                 offsetChanged = true;
@@ -969,11 +1020,11 @@ void SimulationBodyImpl::flushResultsToBodyMotionItems()
 }
 
 
-void SimulationBodyImpl::flushResultsToBody()
+void SimulationBody::Impl::flushResultsToBody()
 {
     Body* orgBody = bodyItem->body();
     if(!linkPosBuf.empty()){
-        MultiSE3Deque::Row last = linkPosBuf.last();
+        auto last = linkPosBuf.last();
         const int n = last.size();
         for(int i=0; i < n; ++i){
             SE3& pos = last[i];
@@ -983,7 +1034,7 @@ void SimulationBodyImpl::flushResultsToBody()
         }
     }
     if(!jointPosBuf.empty()){
-        Deque2D<double>::Row last = jointPosBuf.last();
+        auto last = jointPosBuf.last();
         const int n = body_->numJoints();
         for(int i=0; i < n; ++i){
             orgBody->joint(i)->q() = last[i];
@@ -992,7 +1043,7 @@ void SimulationBodyImpl::flushResultsToBody()
     if(!deviceStateBuf.empty()){
         devicesToNotifyResults.clear();
         const DeviceList<>& devices = orgBody->devices();
-        Deque2D<DeviceStatePtr>::Row ds = deviceStateBuf.last();
+        auto ds = deviceStateBuf.last();
         const int ndevices = devices.size();
         for(int i=0; i < ndevices; ++i){
             const DeviceStatePtr& s = ds[i];
@@ -1007,7 +1058,7 @@ void SimulationBodyImpl::flushResultsToBody()
 }
 
 
-void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
+void SimulationBody::Impl::flushResultsToWorldLogFile(int bufferFrame)
 {
     //if(bufferFrame < linkPosBuf.rowSize()){
     
@@ -1015,16 +1066,16 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
     log->beginBodyStateOutput();
 
     if(linkPosBuf.colSize() > 0){
-        MultiSE3Deque::Row posbuf = linkPosBuf.row(bufferFrame);
+        auto posbuf = linkPosBuf.row(bufferFrame);
         log->outputLinkPositions(posbuf.begin(), posbuf.size());
     }
     if(jointPosBuf.colSize() > 0){
-        Deque2D<double>::Row jointbuf = jointPosBuf.row(bufferFrame);
+        auto jointbuf = jointPosBuf.row(bufferFrame);
         log->outputJointPositions(jointbuf.begin(), jointbuf.size());
     }
     if(deviceStateBuf.colSize() > 0){
         // Skip the first element because it is used for sharing an unchanged state
-        Deque2D<DeviceStatePtr>::Row states = deviceStateBuf.row(bufferFrame + 1);
+        auto states = deviceStateBuf.row(bufferFrame + 1);
         log->beginDeviceStateOutput();
         for(int i=0; i < states.size(); ++i){
             log->outputDeviceState(states[i]);
@@ -1041,7 +1092,7 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
 /**
    This function is called when the no recording mode
 */
-void SimulationBodyImpl::notifyResults(double time)
+void SimulationBody::Impl::notifyResults(double time)
 {
     if(isDynamic){
         bodyItem->notifyKinematicStateChange(!simImpl->isAllLinkPositionOutputMode);
@@ -1055,43 +1106,13 @@ void SimulationBodyImpl::notifyResults(double time)
 }
 
 
-Body* SimulationBodyImpl::body()
-{
-    return body_;
-}
-
-
-std::string SimulationBodyImpl::optionString() const
-{
-    return simImpl->controllerOptionString_;
-}
-
-
-std::ostream& SimulationBodyImpl::os() const
-{
-    return simImpl->mv->cout();
-}
-
-
-double SimulationBodyImpl::timeStep() const
-{
-    return simImpl->worldTimeStep_;
-}
-
-
-double SimulationBodyImpl::currentTime() const
-{
-    return simImpl->currentTime();
-}
-
-
 SimulatorItem::SimulatorItem()
 {
-    impl = new SimulatorItemImpl(this);
+    impl = new Impl(this);
 }
 
 
-SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
+SimulatorItem::Impl::Impl(SimulatorItem* self)
     : self(self),
       temporalResolutionType(N_TEMPORARL_RESOLUTION_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
       preDynamicsFunctions(this),
@@ -1141,12 +1162,12 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
 SimulatorItem::SimulatorItem(const SimulatorItem& org)
     : Item(org)
 {
-    impl = new SimulatorItemImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
-SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self, const SimulatorItemImpl& org)
-    : SimulatorItemImpl(self)
+SimulatorItem::Impl::Impl(SimulatorItem* self, const Impl& org)
+    : Impl(self)
 {
     temporalResolutionType = org.temporalResolutionType;
     timeStepProperty = org.timeStepProperty;
@@ -1172,7 +1193,7 @@ SimulatorItem::~SimulatorItem()
 }
 
 
-SimulatorItemImpl::~SimulatorItemImpl()
+SimulatorItem::Impl::~Impl()
 {
     aboutToQuitConnection.disconnect();
 }
@@ -1278,7 +1299,7 @@ void SimulatorItem::setSpecifiedRecordingTimeLength(double length)
     impl->setSpecifiedRecordingTimeLength(length);
 }
 
-void SimulatorItemImpl::setSpecifiedRecordingTimeLength(double length)
+void SimulatorItem::Impl::setSpecifiedRecordingTimeLength(double length)
 {
     specifiedTimeLength = length;
 }
@@ -1323,7 +1344,7 @@ const std::string& SimulatorItem::controllerOptionString() const
   Extract body items, controller items which are not associated with (not under) a body item,
   and simulation script items which are not under another simulator item
 */
-void SimulatorItemImpl::findTargetItems
+void SimulatorItem::Impl::findTargetItems
 (Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems)
 {
     if(dynamic_cast<BodyItem*>(item)){
@@ -1333,7 +1354,7 @@ void SimulatorItemImpl::findTargetItems
     } else if(!isUnderBodyItem && dynamic_cast<ControllerItem*>(item)){
         out_targetItems.push_back(item);
 
-    } else if(SimulationScriptItem* scriptItem = dynamic_cast<SimulationScriptItem*>(item)){
+    } else if(auto scriptItem = dynamic_cast<SimulationScriptItem*>(item)){
         if(scriptItem->isChecked()){
             if(scriptItem->executionTiming() == SimulationScriptItem::BEFORE_INITIALIZATION){
                 scriptItem->executeAsSimulationScript();
@@ -1342,9 +1363,9 @@ void SimulatorItemImpl::findTargetItems
             }
         }
     }
-    SimulatorItem* simulatorItem = dynamic_cast<SimulatorItem*>(item);
+    auto simulatorItem = dynamic_cast<SimulatorItem*>(item);
     if(!simulatorItem || (simulatorItem == self)){
-        for(Item* childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
+        for(auto childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
             findTargetItems(childItem, isUnderBodyItem, out_targetItems);
         }
     }
@@ -1432,7 +1453,7 @@ void FunctionSet::updateFunctions()
     for(size_t i=0; i < idsToRemove.size(); ++i){
 
         const int idToRemove = idsToRemove[i];
-        vector<FunctionInfo>::iterator p = functions.end();
+        auto p = functions.end();
         while(p != functions.begin()){
             --p;
             FunctionInfo& info = *p;
@@ -1446,7 +1467,7 @@ void FunctionSet::updateFunctions()
 }        
     
     
-void SimulatorItemImpl::clearSimulation()
+void SimulatorItem::Impl::clearSimulation()
 {
     allSimBodies.clear();
     simBodiesWithBody.clear();;
@@ -1487,15 +1508,14 @@ bool SimulatorItem::startSimulation(bool doReset)
 }
 
 
-bool SimulatorItemImpl::startSimulation(bool doReset)
+bool SimulatorItem::Impl::startSimulation(bool doReset)
 {
     this->doReset = doReset;
     
     stopSimulation(true);
 
     if(!worldItem){
-        mv->putln(format(_("{} must be in a WorldItem to do simulation."),
-                         self->name()),
+        mv->putln(format(_("{} must be in a WorldItem to do simulation."), self->name()),
                   MessageView::ERROR);
         return false;
     }
@@ -1525,7 +1545,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
     for(size_t i=0; i < targetItems.size(); ++i){
 
-        if(BodyItem* bodyItem = dynamic_cast<BodyItem*>(targetItems.get(i))){
+        if(auto bodyItem = dynamic_cast<BodyItem*>(targetItems.get(i))){
             if(doReset){
                 bodyItem->restoreInitialState(false);
             }
@@ -1553,13 +1573,13 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             }
             bodyItem->notifyKinematicStateChange();
             
-        } else if(ControllerItem* controller = dynamic_cast<ControllerItem*>(targetItems.get(i))){
+        } else if(auto controller = dynamic_cast<ControllerItem*>(targetItems.get(i))){
             // ControllerItem which is not associated with a body
             SimulationBodyPtr simBody = new SimulationBody(nullptr);
             if(simBody->impl->initialize(this, controller)){
                 allSimBodies.push_back(simBody);
             }
-        } else if(SimulationScriptItem* script = dynamic_cast<SimulationScriptItem*>(targetItems.get(i))){
+        } else if(auto script = dynamic_cast<SimulationScriptItem*>(targetItems.get(i))){
             SimulationBodyPtr simBody = new SimulationBody(nullptr);
             ControllerItemPtr scriptControllerItem = new ScriptControllerItem(script);
             if(simBody->impl->initialize(this, scriptControllerItem)){
@@ -1573,7 +1593,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     if(isRecordingEnabled && recordCollisionData){
         collisionPairsBuf.clear();
         string collisionSeqName = self->name() + "-collisions";
-        CollisionSeqItem* collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
+        auto collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
         if(!collisionSeqItem){
             collisionSeqItem = new CollisionSeqItem();
             collisionSeqItem->setTemporal();
@@ -1619,7 +1639,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         }
 
         subSimulatorItems.extractAssociatedItems(self);
-        ItemList<SubSimulatorItem>::iterator p = subSimulatorItems.begin();
+        auto p = subSimulatorItems.begin();
         while(p != subSimulatorItems.end()){
             SubSimulatorItem* item = *p;
             bool initialized = false;
@@ -1642,13 +1662,14 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             }
         }
 
-        for(size_t i=0; i < allSimBodies.size(); ++i){
-            SimulationBodyImpl* simBodyImpl = allSimBodies[i]->impl;
+        for(auto& simBody : allSimBodies){
+            auto simBodyImpl = simBody->impl;
             Body* body = simBodyImpl->body_;
-            vector<ControllerItemPtr>& controllers = simBodyImpl->controllers;
-            vector<ControllerItemPtr>::iterator iter = controllers.begin();
-            while(iter != controllers.end()){
-                ControllerItem* controller = *iter;
+            auto& controllerInfos = simBodyImpl->controllerInfos;
+            auto iter = controllerInfos.begin();
+            while(iter != controllerInfos.end()){
+                auto& info = *iter;
+                ControllerItem* controller = info->controller;
                 bool ready = false;
                 controller->setSimulatorItem(self);
                 if(body){
@@ -1661,8 +1682,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 } else {
                     ready = controller->start();
                     if(!ready){
-                        mv->putln(format(_("{} failed to start."),
-                                         controller->name()),
+                        mv->putln(format(_("{} failed to start."), controller->name()),
                                   MessageView::WARNING);
                     }
                 }
@@ -1670,7 +1690,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                     ++iter;
                 } else {
                     controller->setSimulatorItem(nullptr);
-                    iter = controllers.erase(iter);
+                    iter = controllerInfos.erase(iter);
                 }
             }
         }
@@ -1744,8 +1764,9 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         profilingNames.push_back("Total computation time");
         int n = profilingNames.size();
         SceneView* view = ViewManager::findView<SceneView>("Simulation Scene");
-        if(!view)
+        if(!view){
             view = SceneView::instance();
+        }
         sw = view->sceneWidget();
         sw->profilingNames.resize(n);
         copy(profilingNames.begin(), profilingNames.end(), sw->profilingNames.begin());
@@ -1800,7 +1821,7 @@ const std::vector<SimulationBody*>& SimulatorItem::simulationBodies()
 SimulationBody* SimulatorItem::findSimulationBody(BodyItem* bodyItem)
 {
     SimulationBody* simBody = nullptr;
-    BodyItemToSimBodyMap::iterator p = impl->simBodyMap.find(bodyItem);
+    auto p = impl->simBodyMap.find(bodyItem);
     if(p != impl->simBodyMap.end()){
         simBody = p->second;
     }
@@ -1821,12 +1842,12 @@ SimulationBody* SimulatorItem::findSimulationBody(const std::string& name)
             return simBody;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
 // Simulation loop
-void SimulatorItemImpl::run()
+void SimulatorItem::Impl::run()
 {
     self->initializeSimulationThread();
 
@@ -1976,7 +1997,7 @@ void SimulatorItemImpl::run()
 }
 
 
-void SimulatorItemImpl::updateSimBodyLists()
+void SimulatorItem::Impl::updateSimBodyLists()
 {
     activeSimBodies.clear();
     activeControllers.clear();
@@ -1984,16 +2005,16 @@ void SimulatorItemImpl::updateSimBodyLists()
     
     for(size_t i=0; i < allSimBodies.size(); ++i){
         SimulationBody* simBody = allSimBodies[i];
-        SimulationBodyImpl* simBodyImpl = simBody->impl;
-        vector<ControllerItemPtr>& controllers = simBodyImpl->controllers;
+        auto simBodyImpl = simBody->impl;
+        auto& controllerInfos = simBodyImpl->controllerInfos;
         if(simBodyImpl->isActive){
             activeSimBodies.push_back(simBody);
-            if(controllers.empty()){
+            if(controllerInfos.empty()){
                 hasActiveFreeBodies = true;
             }
         }
-        for(size_t j=0; j < controllers.size(); ++j){
-            activeControllers.push_back(controllers[j]);
+        for(auto& info : controllerInfos){
+            activeControllers.push_back(info->controller);
        }
     }
 
@@ -2001,7 +2022,7 @@ void SimulatorItemImpl::updateSimBodyLists()
 }
 
 
-bool SimulatorItemImpl::stepSimulationMain()
+bool SimulatorItem::Impl::stepSimulationMain()
 {
     currentFrame++;
 
@@ -2117,7 +2138,7 @@ bool SimulatorItemImpl::stepSimulationMain()
 }
 
 
-void SimulatorItemImpl::concurrentControlLoop()
+void SimulatorItem::Impl::concurrentControlLoop()
 {
     while(true){
         {
@@ -2159,7 +2180,7 @@ exitConcurrentControlLoop:
 }
 
 
-void SimulatorItemImpl::flushResults()
+void SimulatorItem::Impl::flushResults()
 {
     resultBufMutex.lock();
 
@@ -2204,7 +2225,7 @@ void SimulatorItemImpl::flushResults()
 #ifdef ENABLE_SIMULATION_PROFILING
     offsetChanged = false;
     for(int i=0 ; i < simProfilingBuf.rowSize(); i++){
-        Deque2D<double>::Row buf = simProfilingBuf.row(i);
+        auto buf = simProfilingBuf.row(i);
         if(simProfilingSeq.numFrames() >= ringBufferSize){
             simProfilingSeq.popFrontFrame();
             offsetChanged = true;
@@ -2242,7 +2263,7 @@ void SimulatorItem::pauseSimulation()
 }
 
 
-void SimulatorItemImpl::pauseSimulation()
+void SimulatorItem::Impl::pauseSimulation()
 {
     pauseRequested = true;
 }
@@ -2254,7 +2275,7 @@ void SimulatorItem::restartSimulation()
 }
 
 
-void SimulatorItemImpl::restartSimulation()
+void SimulatorItem::Impl::restartSimulation()
 {
     pauseRequested = false;
 }
@@ -2266,7 +2287,7 @@ void SimulatorItem::stopSimulation()
 }
 
 
-void SimulatorItemImpl::stopSimulation(bool doSync)
+void SimulatorItem::Impl::stopSimulation(bool doSync)
 {
     if(isDoingSimulationLoop){
         if(doSync){
@@ -2290,22 +2311,21 @@ void SimulatorItem::finalizeSimulation()
 }
 
 
-void SimulatorItemImpl::onSimulationLoopStopped()
+void SimulatorItem::Impl::onSimulationLoopStopped()
 {
     flushTimer.stop();
     
-    for(size_t i=0; i < allSimBodies.size(); ++i){
-        vector<ControllerItemPtr>& controllers = allSimBodies[i]->impl->controllers;
-        for(size_t j=0; j < controllers.size(); ++j){
-            ControllerItem* controller = controllers[j];
+    for(auto& simBody : allSimBodies){
+        for(auto& info : simBody->impl->controllerInfos){
+            auto& controller = info->controller;
             controller->stop();
             controller->setSimulatorItem(nullptr);
         }
     }
     self->finalizeSimulation();
 
-    for(size_t i=0; i < subSimulatorItems.size(); ++i){
-        subSimulatorItems[i]->finalizeSimulation();
+    for(auto& subSimulator : subSimulatorItems){
+        subSimulator->finalizeSimulation();
     }
 
     flushResults();
@@ -2357,7 +2377,7 @@ double SimulatorItem::currentTime() const
 }
 
 
-double SimulatorItemImpl::currentTime() const
+double SimulatorItem::Impl::currentTime() const
 {
     return currentFrame / worldFrameRate;
 }
@@ -2377,25 +2397,25 @@ double SimulatorItem::simulationTime() const
 }
 
 
-double SimulatorItemImpl::timeStep() const
+double SimulatorItem::Impl::timeStep() const
 {
     return worldTimeStep_;
 }
 
 
-Body* SimulatorItemImpl::body()
+Body* SimulatorItem::Impl::body()
 {
-    return 0;
+    return nullptr;
 }
 
 
-std::string SimulatorItemImpl::optionString() const
+std::string SimulatorItem::Impl::optionString() const
 {
     return controllerOptionString_;
 }
 
 
-std::ostream& SimulatorItemImpl::os() const
+std::ostream& SimulatorItem::Impl::os() const
 {
     return mv->cout();
 }
@@ -2437,7 +2457,7 @@ void SimulatorItem::setExternalForce(BodyItem* bodyItem, Link* link, const Vecto
 }
 
 
-void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time)
+void SimulatorItem::Impl::setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time)
 {
     if(bodyItem && link){
         SimulationBody* simBody = self->findSimulationBody(bodyItem);
@@ -2468,7 +2488,7 @@ void SimulatorItem::clearExternalForces()
 }    
 
 
-void SimulatorItemImpl::doSetExternalForce()
+void SimulatorItem::Impl::doSetExternalForce()
 {
     std::lock_guard<std::mutex> lock(extForceMutex);
     extForceInfo.link->addExternalForce(extForceInfo.f, extForceInfo.point);
@@ -2488,7 +2508,7 @@ void SimulatorItem::setVirtualElasticString
 }
 
 
-void SimulatorItemImpl::setVirtualElasticString
+void SimulatorItem::Impl::setVirtualElasticString
 (BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint)
 {
     if(bodyItem && link){
@@ -2525,7 +2545,7 @@ void SimulatorItem::clearVirtualElasticStrings()
 }
 
 
-void SimulatorItemImpl::setVirtualElasticStringForce()
+void SimulatorItem::Impl::setVirtualElasticStringForce()
 {
     std::lock_guard<std::mutex> lock(virtualElasticStringMutex);
     const VirtualElasticString& s = virtualElasticString;
@@ -2560,7 +2580,7 @@ void SimulatorItem::clearForcedPositions()
 }
 
 
-void SimulatorItemImpl::onRealtimeSyncChanged(bool on)
+void SimulatorItem::Impl::onRealtimeSyncChanged(bool on)
 {
     isRealtimeSyncMode = on;
 }
@@ -2569,10 +2589,16 @@ void SimulatorItemImpl::onRealtimeSyncChanged(bool on)
 /**
    This function may be overridden.
 */
-bool SimulatorItemImpl::onAllLinkPositionOutputModeChanged(bool on)
+bool SimulatorItem::Impl::onAllLinkPositionOutputModeChanged(bool on)
 {
     self->setAllLinkPositionOutputMode(on);
     return (isAllLinkPositionOutputMode == on);
+}
+
+
+std::shared_ptr<CollisionLinkPairList> SimulatorItem::getCollisions()
+{
+    return std::make_shared<CollisionLinkPairList>();
 }
 
 
@@ -2582,7 +2608,7 @@ void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-void SimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+void SimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Temporal resolution type"), temporalResolutionType,
                 [&](int index){ return temporalResolutionType.select(index); });
@@ -2622,7 +2648,7 @@ bool SimulatorItem::store(Archive& archive)
 }
 
 
-bool SimulatorItemImpl::store(Archive& archive)
+bool SimulatorItem::Impl::store(Archive& archive)
 {
     if(temporalResolutionType.is(RESOLUTION_TIMESTEP)){
         archive.write("timeStep", timeStepProperty.string());
@@ -2669,7 +2695,7 @@ bool SimulatorItem::restore(const Archive& archive)
 }
 
 
-bool SimulatorItemImpl::restore(const Archive& archive)
+bool SimulatorItem::Impl::restore(const Archive& archive)
 {
     bool boolValue;
     string symbol;
@@ -2721,7 +2747,7 @@ bool SimulatorItemImpl::restore(const Archive& archive)
 }
 
 
-void SimulatorItemImpl::restoreBodyMotionEngines(const Archive& archive)
+void SimulatorItem::Impl::restoreBodyMotionEngines(const Archive& archive)
 {
     bodyMotionEngines.clear();
 
@@ -2730,7 +2756,7 @@ void SimulatorItemImpl::restoreBodyMotionEngines(const Archive& archive)
         for(int i=0; i < idseq.size(); ++i){
             ValueNode* id = idseq.at(i);
             if(id){
-                BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(archive.findItem(id));
+                auto motionItem = dynamic_cast<BodyMotionItem*>(archive.findItem(id));
                 if(motionItem){
                     addBodyMotionEngine(motionItem);
                 }
@@ -2742,7 +2768,7 @@ void SimulatorItemImpl::restoreBodyMotionEngines(const Archive& archive)
     ValueNode* id;
     id = archive.find("collisionSeqItem");
     if(id->isValid()){
-        CollisionSeqItem* collisionSeqItem = dynamic_cast<CollisionSeqItem*>(archive.findItem(id));
+        auto collisionSeqItem = dynamic_cast<CollisionSeqItem*>(archive.findItem(id));
         if(collisionSeqItem){
             addCollisionSeqEngine(collisionSeqItem);
         }
@@ -2750,16 +2776,15 @@ void SimulatorItemImpl::restoreBodyMotionEngines(const Archive& archive)
 }
 
 
-void SimulatorItemImpl::addBodyMotionEngine(BodyMotionItem* motionItem)
+void SimulatorItem::Impl::addBodyMotionEngine(BodyMotionItem* motionItem)
 {
-    BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
-    if(bodyItem){
+    if(auto bodyItem = motionItem->findOwnerItem<BodyItem>()){
         bodyMotionEngines.push_back(new BodyMotionEngine(bodyItem, motionItem));
     }
 }
 
 
-void SimulatorItemImpl::addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem)
+void SimulatorItem::Impl::addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem)
 {
     if(worldItem){
         collisionSeqEngine = new CollisionSeqEngine(worldItem, collisionSeqItem);
@@ -2767,12 +2792,12 @@ void SimulatorItemImpl::addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem
 }
 
 
-bool SimulatorItemImpl::setPlaybackTime(double time)
+bool SimulatorItem::Impl::setPlaybackTime(double time)
 {
     bool processed = false;
     if(!bodyMotionEngines.empty()){
-        for(size_t i=0; i < bodyMotionEngines.size(); ++i){
-            processed |= bodyMotionEngines[i]->onTimeChanged(time);
+        for(auto& engine : bodyMotionEngines){
+            processed |= engine->onTimeChanged(time);
         }
     } else if(worldLogFileItem){
         processed |= worldLogFileItem->recallStateAtTime(time);
@@ -2786,10 +2811,11 @@ bool SimulatorItemImpl::setPlaybackTime(double time)
     if(numFrames > 0){
         const int frame = simProfilingSeq.frameOfTime(time);
         const int clampedFrame = simProfilingSeq.clampFrameIndex(frame);
-        const MultiValueSeq::Frame profilingTimes = simProfilingSeq.frame(clampedFrame);
+        auto profilingTimes = simProfilingSeq.frame(clampedFrame);
         sw->profilingTimes.clear();
-        for(int i=0; i<profilingTimes.size(); i++)
+        for(int i=0; i<profilingTimes.size(); i++){
             sw->profilingTimes.push_back(profilingTimes[i]);
+        }
         sw->worldTimeStep = worldTimeStep_ * 1.0e9;
     }
 #endif

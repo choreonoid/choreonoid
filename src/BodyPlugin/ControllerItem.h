@@ -94,8 +94,7 @@ private:
     bool isNoDelayMode_;
     std::string optionString_;
 
-    friend class SimulatorItemImpl;
-
+    friend class SimulatorItem;
     void setSimulatorItem(SimulatorItem* item);
 };
         

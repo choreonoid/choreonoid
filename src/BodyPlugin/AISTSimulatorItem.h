@@ -14,6 +14,7 @@ namespace cnoid {
 
 class AISTSimulatorItemImpl;
 class ContactMaterial;
+class ExtraJoint;
         
 class CNOID_EXPORT AISTSimulatorItem : public SimulatorItem
 {
