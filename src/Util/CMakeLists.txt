@@ -29,11 +29,12 @@ set(sources
   Selection.cpp
   DataMap.cpp
   AbstractSeq.cpp
-  Vector3Seq.cpp
   MultiValueSeq.cpp
-  MultiVector3Seq.cpp
   MultiSE3Seq.cpp
   MultiSE3MatrixSeq.cpp
+  MultiVector3Seq.cpp
+  Vector3Seq.cpp
+  ReferencedObjectSeq.cpp
   GeneralSeqReader.cpp
   PlainSeqFileLoader.cpp
   RangeLimiter.cpp
@@ -128,11 +129,12 @@ set(headers
   AbstractSeq.h
   Seq.h
   MultiSeq.h
-  Vector3Seq.h
   MultiValueSeq.h
-  MultiVector3Seq.h
   MultiSE3Seq.h
   MultiSE3MatrixSeq.h
+  MultiVector3Seq.h
+  Vector3Seq.h
+  ReferencedObjectSeq.h
   PlainSeqFileLoader.h
   RangeLimiter.h
   GaussianFilter.h

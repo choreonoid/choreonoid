@@ -24,7 +24,7 @@ public:
     virtual ~Vector3Seq();
 
     using BaseSeqType::operator=;
-    virtual std::shared_ptr<AbstractSeq> cloneSeq() const;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
         
     bool loadPlainFormat(const std::string& filename, std::ostream& os = nullout());
     bool saveAsPlainFormat(const std::string& filename, std::ostream& os = nullout());
