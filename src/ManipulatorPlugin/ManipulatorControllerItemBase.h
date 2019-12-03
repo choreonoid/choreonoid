@@ -87,9 +87,18 @@ private:
     class Impl;
     Impl* impl;
 };
-        
+
 typedef ref_ptr<ManipulatorControllerItemBase> ManipulatorControllerItemBasePtr;
 
+
+class CNOID_EXPORT ManipulatorControllerLog : public Referenced
+{
+public:
+    std::vector<int> position;
+};
+
+typedef ref_ptr<ManipulatorControllerLog> ManipulatorControllerLogPtr;
+        
 }
 
 #endif

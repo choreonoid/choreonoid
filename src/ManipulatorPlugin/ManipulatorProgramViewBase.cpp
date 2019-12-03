@@ -2,6 +2,7 @@
 #include "ManipulatorProgramItemBase.h"
 #include "ManipulatorProgram.h"
 #include "BasicManipulatorStatements.h"
+#include "ManipulatorControllerItemBase.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
@@ -11,6 +12,8 @@
 #include <cnoid/BodyItem>
 #include <cnoid/Buttons>
 #include <cnoid/StringListComboBox>
+#include <cnoid/TimeBar>
+#include <cnoid/ReferencedObjectSeqItem>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
@@ -148,6 +151,7 @@ public:
     void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void setCurrentStatement(ManipulatorStatement* statement);
     void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
+    bool onTimeChanged(bool time);
     StatementItem* statementItemFromStatement(ManipulatorStatement* statement);
     bool insertStatement(ManipulatorStatement* statement, int insertionType);
     void onStatementInserted(ManipulatorProgram::iterator iter);
@@ -515,6 +519,9 @@ ManipulatorProgramViewBase::Impl::Impl(ManipulatorProgramViewBase* self)
         [&](ManipulatorProgramItemBase* item){ setProgramItem(item); });
 
     defaultStatementDelegate = new StatementDelegate;
+
+    TimeBar::instance()->sigTimeChanged().connect(
+        [&](double time){ return onTimeChanged(time); });
 }
 
 
@@ -831,6 +838,28 @@ void ManipulatorProgramViewBase::Impl::onTreeWidgetItemClicked(QTreeWidgetItem* 
 void ManipulatorProgramViewBase::onCurrentStatementActivated(ManipulatorStatement*)
 {
 
+}
+
+
+bool ManipulatorProgramViewBase::Impl::onTimeChanged(bool time)
+{
+    //! \todo Make the following code more efficient
+    bool hit = false;
+    if(programItem){
+        if(auto controllerItem = programItem->findOwnerItem<ManipulatorControllerItemBase>()){
+            if(auto logItem = controllerItem->descendantItems<ReferencedObjectSeqItem>().toSingle()){
+                auto seq = logItem->seq();
+                if(!seq->empty()){
+                    auto data = seq->at(seq->frameOfTime(time)).get();
+                    if(auto log = dynamic_cast<ManipulatorControllerLog*>(data)){
+                        //cout << "Current statement index: " << log->position[0] << endl;
+                        hit = true;
+                    }
+                }
+            }
+        }
+    }
+    return hit;
 }
 
 

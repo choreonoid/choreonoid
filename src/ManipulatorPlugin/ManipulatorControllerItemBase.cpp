@@ -71,7 +71,6 @@ public:
     }
 };
 
-
 enum ExpressionTermId {
     Int, Double, Bool, String, Variable, Char };
 
@@ -114,6 +113,9 @@ public:
     unordered_map<type_index, InterpretFunction> interpreterMap;
     DigitalIoDevicePtr ioDevice;
     double speedRatio;
+
+    ManipulatorControllerLogPtr currentLog;
+    bool isLogEnabled;
 
     regex termPattern;
     regex operatorPattern;
@@ -170,6 +172,7 @@ ManipulatorControllerItemBase::Impl::Impl(ManipulatorControllerItemBase* self)
     : self(self)
 {
     speedRatio = 1.0;
+    currentLog = new ManipulatorControllerLog;
 }
 
 
@@ -301,6 +304,8 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
 
     auto body = io->body();
     ioDevice = body->findDevice<DigitalIoDevice>();
+
+    isLogEnabled = io->enableLog();
     
     return true;
 }
@@ -533,6 +538,7 @@ bool ManipulatorControllerItemBase::control()
 bool ManipulatorControllerItemBase::Impl::control()
 {
     bool isActive = false;
+    bool stateChanged = false;
 
     while(true){
         while(!processorStack.empty()){
@@ -561,6 +567,12 @@ bool ManipulatorControllerItemBase::Impl::control()
         if(!hasNextStatement){
             break;
         }
+
+        if(isLogEnabled){
+            currentLog->position.resize(1);
+            currentLog->position[0] = iterator - currentProgram->begin();
+            stateChanged = true;
+        }
         
         auto statement = iterator->get();
 
@@ -578,7 +590,11 @@ bool ManipulatorControllerItemBase::Impl::control()
             isActive = false;
             break;
         }
-    }        
+    }
+
+    if(isLogEnabled && stateChanged){
+        io->outputLog(new ManipulatorControllerLog(*currentLog));
+    }
         
     return isActive;
 }

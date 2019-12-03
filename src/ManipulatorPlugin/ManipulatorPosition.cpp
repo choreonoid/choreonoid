@@ -240,7 +240,7 @@ bool ManipulatorIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
     T_end.linear() = kinematicsKit->link()->calcRfromAttitude(Ta_end.linear());
 
     kinematicsKit->setReferenceRpy(rpyFromRot(T.linear(), referenceRpy_));
-    
+
     return jointPath->calcInverseKinematics(T_end);
 }
 
@@ -377,7 +377,8 @@ bool ManipulatorFkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 bool ManipulatorFkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 {
     auto path = kinematicsKit->jointPath();
-    for(int i = 0; i < numJoints_; ++i){
+    int nj = std::min(path->numJoints(), numJoints_);
+    for(int i = 0; i < nj; ++i){
         path->joint(i)->q() = jointDisplacements_[i];
     }
     path->calcForwardKinematics();
