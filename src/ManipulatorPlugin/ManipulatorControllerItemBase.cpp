@@ -115,6 +115,7 @@ public:
     double speedRatio;
 
     ManipulatorControllerLogPtr currentLog;
+    unordered_map<ManipulatorProgramPtr, shared_ptr<string>> topLevelProgramToSharedNameMap;
     bool isLogEnabled;
 
     regex termPattern;
@@ -482,10 +483,10 @@ void ManipulatorControllerItemBase::Impl::setCurrent
     upper.current = iterator;
     upper.next = upperNext;
 
-    int statementIndex = upper.current - currentProgram->begin();
     if(!programStack.empty()){
         upper.hierachicalPosition = programStack.back().hierachicalPosition;
     }
+    int statementIndex = upper.current - currentProgram->begin();
     upper.hierachicalPosition.push_back(statementIndex);
 
     programStack.push_back(upper);
@@ -612,13 +613,22 @@ bool ManipulatorControllerItemBase::Impl::control()
 
 void ManipulatorControllerItemBase::Impl::setCurrentProgramPositionToLog(ManipulatorControllerLog* log)
 {
-    if(programStack.empty()){
-        log->position.clear();
+    auto topLevelProgram = currentProgram->topLevelProgram();
+    auto it = topLevelProgramToSharedNameMap.find(topLevelProgram);
+    if(it != topLevelProgramToSharedNameMap.end()){
+        log->topLevelProgramName = it->second;
     } else {
-        log->position = programStack.back().hierachicalPosition;
+        log->topLevelProgramName = make_shared<string>(topLevelProgram->name());
+        topLevelProgramToSharedNameMap[topLevelProgram] = log->topLevelProgramName;
+    }
+        
+    if(currentProgram->isTopLevelProgram()){
+        log->hierachicalPosition.clear();
+    } else if(!programStack.empty()){
+        log->hierachicalPosition = programStack.back().hierachicalPosition;
     }
     int statementIndex = iterator - currentProgram->begin();
-    log->position.push_back(statementIndex);
+    log->hierachicalPosition.push_back(statementIndex);
 }
 
 
@@ -667,11 +677,12 @@ void ManipulatorControllerItemBase::Impl::clear()
     programItem.reset();
     mainProgram.reset();
     currentProgram.reset();
-    programStack.clear();
-    processorStack.clear();
     cloneMap.clear();
     kinematicsKit.reset();
     variables.reset();
+    programStack.clear();
+    processorStack.clear();
+    topLevelProgramToSharedNameMap.clear();
 }
 
 

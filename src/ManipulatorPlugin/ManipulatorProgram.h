@@ -62,6 +62,7 @@ public:
     void notifyStatementUpdate(ManipulatorStatement* statement) const;
 
     StructuredStatement* holderStatement() const;
+    bool isTopLevelProgram() const;
     bool isSubProgram() const;
     ManipulatorProgram* topLevelProgram() const;
 

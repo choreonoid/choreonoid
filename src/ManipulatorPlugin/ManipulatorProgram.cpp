@@ -219,9 +219,15 @@ StructuredStatement* ManipulatorProgram::holderStatement() const
 }
 
 
+bool ManipulatorProgram::isTopLevelProgram() const
+{
+    return impl->holderStatement ? false : true;
+}
+
+
 bool ManipulatorProgram::isSubProgram() const
 {
-    return impl->holderStatement ? true : false;
+    return !isTopLevelProgram();
 }
 
 

@@ -121,6 +121,7 @@ public:
     ManipulatorProgramViewBase* self;
     TargetItemPicker<ManipulatorProgramItemBase> targetItemPicker;
     ManipulatorProgramItemBasePtr programItem;
+    shared_ptr<string> logTopLevelProgramName;
     unordered_map<ManipulatorStatementPtr, StatementItem*> statementItemMap;
     DummyStatementPtr dummyStatement;
     int statementItemOperationCallCounter;
@@ -702,6 +703,7 @@ void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase
 {
     programConnections.disconnect();
     programItem = item;
+    logTopLevelProgramName.reset();
     currentStatement = nullptr;
 
     bool accepted = self->onCurrentProgramItemChanged(item);
@@ -890,7 +892,7 @@ ManipulatorStatement* ManipulatorProgramViewBase::Impl::findStatementAtHierachic
 
 bool ManipulatorProgramViewBase::Impl::onTimeChanged(double time)
 {
-    //! \todo Make the following code more efficient
+    //! \todo Store the controllerItem and logItem in advance to avoid searching them every time
     bool hit = false;
     if(programItem){
         if(auto controllerItem = programItem->findOwnerItem<ManipulatorControllerItemBase>()){
@@ -899,7 +901,14 @@ bool ManipulatorProgramViewBase::Impl::onTimeChanged(double time)
                 if(!seq->empty()){
                     auto data = seq->at(seq->lastFrameOfTime(time)).get();
                     if(auto logData = dynamic_cast<ManipulatorControllerLog*>(data)){
-                        if(auto statement = findStatementAtHierachicalPosition(logData->position)){
+                        auto& programName = logData->topLevelProgramName;
+                        if(programName != logTopLevelProgramName){
+                            if(auto logProgramItem = controllerItem->findItem<ManipulatorProgramItemBase>(*programName)){
+                                setProgramItem(logProgramItem);
+                                logTopLevelProgramName = programName;
+                            }
+                        }
+                        if(auto statement = findStatementAtHierachicalPosition(logData->hierachicalPosition)){
                             setCurrentStatement(statement, true, false);
                             if(time < seq->timeLength()){
                                 hit = true;

@@ -4,6 +4,7 @@
 #include <cnoid/ControllerItem>
 #include "ManipulatorProgram.h"
 #include <typeindex>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -95,8 +96,8 @@ typedef ref_ptr<ManipulatorControllerItemBase> ManipulatorControllerItemBasePtr;
 class CNOID_EXPORT ManipulatorControllerLog : public Referenced
 {
 public:
-    std::shared_ptr<std::string> programName;
-    std::vector<int> position;
+    std::shared_ptr<std::string> topLevelProgramName;
+    std::vector<int> hierachicalPosition;
 };
 
 typedef ref_ptr<ManipulatorControllerLog> ManipulatorControllerLogPtr;
