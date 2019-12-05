@@ -27,9 +27,9 @@ class CNOID_EXPORT ControllerIO
 
     /**
        Call this function in the controller's control function to put the log data of each frame.
-       The frameLog object must not be accessed from the controller after it passed to this function.
+       The log data object must not be accessed from the controller after it passed to this function.
     */
-    virtual void outputLog(Referenced* frameLog);
+    virtual void outputLog(Referenced* logData);
     
     // The following functions are only available in simulation
     virtual bool isNoDelayMode() const;

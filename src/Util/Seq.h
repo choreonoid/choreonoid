@@ -110,7 +110,16 @@ public:
     int frameOfTime(double time) const {
         return static_cast<int>((time - offsetTime_) * frameRate_);
     }
-            
+
+    int lastFrameOfTime(double time) const {
+        int frame = frameOfTime(time);
+        const int n = numFrames();
+        if(frame >= n){
+            frame = (n > 0) ? (n - 1) : 0;
+        }
+        return frame;
+    }
+    
     double timeOfFrame(int frame) const {
         return (frameRate_ > 0.0) ? ((frame / frameRate_) + offsetTime_) : offsetTime_;
     }

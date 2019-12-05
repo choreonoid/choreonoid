@@ -124,6 +124,7 @@ public:
     unordered_map<ManipulatorStatementPtr, StatementItem*> statementItemMap;
     DummyStatementPtr dummyStatement;
     int statementItemOperationCallCounter;
+    Connection currentItemChangeConnection;
     ScopedConnectionSet programConnections;
     ManipulatorStatementPtr currentStatement;
     Signal<void(ManipulatorStatement* statement)> sigCurrentStatementChanged;
@@ -149,10 +150,10 @@ public:
     void updateStatementTree();
     void addProgramStatementsToTree(ManipulatorProgram* program, QTreeWidgetItem* parentItem);
     void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
-    void setCurrentStatement(ManipulatorStatement* statement);
+    void setCurrentStatement(ManipulatorStatement* statement, bool doSetCurrentItem, bool doActivate);
     void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
-    bool onTimeChanged(bool time);
-    StatementItem* statementItemFromStatement(ManipulatorStatement* statement);
+    bool onTimeChanged(double time);
+    StatementItem* findStatementItem(ManipulatorStatement* statement);
     bool insertStatement(ManipulatorStatement* statement, int insertionType);
     void onStatementInserted(ManipulatorProgram::iterator iter);
     void onStatementRemoved(ManipulatorProgram* program, ManipulatorStatement* statement);
@@ -599,9 +600,10 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
     rheader.setSectionResizeMode(3, QHeaderView::Stretch);
     sigSectionResized().connect([&](int, int, int){ updateGeometry(); });
 
-    sigCurrentItemChanged().connect(
-        [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
-            onCurrentTreeWidgetItemChanged(current, previous); });
+    currentItemChangeConnection =
+        sigCurrentItemChanged().connect(
+            [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
+                onCurrentTreeWidgetItemChanged(current, previous); });
 
     sigItemClicked().connect(
         [&](QTreeWidgetItem* item, int column){
@@ -802,17 +804,30 @@ void ManipulatorProgramViewBase::Impl::onCurrentTreeWidgetItemChanged
         prevCurrentStatement = statementItem->statement();
     }
     if(auto statementItem = dynamic_cast<StatementItem*>(current)){
-        setCurrentStatement(statementItem->statement());
+        setCurrentStatement(statementItem->statement(), false, true);
     }
 }
 
 
-void ManipulatorProgramViewBase::Impl::setCurrentStatement(ManipulatorStatement* statement)
+void ManipulatorProgramViewBase::Impl::setCurrentStatement
+(ManipulatorStatement* statement, bool doSetCurrentItem, bool doActivate)
 {
+    if(doSetCurrentItem){
+        if(auto item = findStatementItem(statement)){
+            currentItemChangeConnection.block();
+            setCurrentItem(item);
+            currentItemChangeConnection.unblock();
+        }
+        prevCurrentStatement = statement;
+    }
+    
     currentStatement = statement;
     self->onCurrentStatementChanged(statement);
     sigCurrentStatementChanged(statement);
-    self->onCurrentStatementActivated(statement);
+
+    if(doActivate){
+        self->onCurrentStatementActivated(statement);
+    }
 }
 
 
@@ -831,6 +846,7 @@ void ManipulatorProgramViewBase::Impl::onTreeWidgetItemClicked(QTreeWidgetItem* 
         if(statement == prevCurrentStatement){
             self->onCurrentStatementActivated(statement);
         }
+        prevCurrentStatement = statement;
     }
 }
 
@@ -841,7 +857,7 @@ void ManipulatorProgramViewBase::onCurrentStatementActivated(ManipulatorStatemen
 }
 
 
-bool ManipulatorProgramViewBase::Impl::onTimeChanged(bool time)
+bool ManipulatorProgramViewBase::Impl::onTimeChanged(double time)
 {
     //! \todo Make the following code more efficient
     bool hit = false;
@@ -850,13 +866,18 @@ bool ManipulatorProgramViewBase::Impl::onTimeChanged(bool time)
             if(auto logItem = controllerItem->descendantItems<ReferencedObjectSeqItem>().toSingle()){
                 auto seq = logItem->seq();
                 if(!seq->empty()){
-                    auto data = seq->at(seq->frameOfTime(time)).get();
-                    /*
-                    if(auto log = dynamic_cast<ManipulatorControllerLog*>(data)){
-                        //cout << "Current statement index: " << log->position[0] << endl;
-                        hit = true;
+                    auto data = seq->at(seq->lastFrameOfTime(time)).get();
+                    if(auto logData = dynamic_cast<ManipulatorControllerLog*>(data)){
+                        int index = logData->position[0];
+                        auto program = programItem->program();
+                        if(index < program->numStatements()){
+                            auto iter = program->begin() + index;
+                            setCurrentStatement(*iter, true, false);
+                            if(time < seq->timeLength()){
+                                hit = true;
+                            }
+                        }
                     }
-                    */
                 }
             }
         }
@@ -865,7 +886,7 @@ bool ManipulatorProgramViewBase::Impl::onTimeChanged(bool time)
 }
 
 
-StatementItem* ManipulatorProgramViewBase::Impl::statementItemFromStatement(ManipulatorStatement* statement)
+StatementItem* ManipulatorProgramViewBase::Impl::findStatementItem(ManipulatorStatement* statement)
 {
     auto iter = statementItemMap.find(statement);
     if(iter != statementItemMap.end()){
@@ -917,7 +938,7 @@ bool ManipulatorProgramViewBase::Impl::insertStatement(ManipulatorStatement* sta
 
     if(insertionType == AfterTargetPosition){
         clearSelection();
-        statementItemFromStatement(statement)->setSelected(true);
+        findStatementItem(statement)->setSelected(true);
     }
 
     return true;
@@ -937,7 +958,7 @@ void ManipulatorProgramViewBase::Impl::onStatementInserted(ManipulatorProgram::i
         parentItem = invisibleRootItem();
     } else {
         // Check the dummy statement and remove it
-        parentItem = statementItemFromStatement(holderStatement);
+        parentItem = findStatementItem(holderStatement);
         if(parentItem->childCount() == 1){
             auto statementItem = static_cast<StatementItem*>(parentItem->child(0));
             if(statementItem->statement() == dummyStatement){
@@ -955,7 +976,7 @@ void ManipulatorProgramViewBase::Impl::onStatementInserted(ManipulatorProgram::i
         parentItem->addChild(statementItem);
         added = true;
     } else {
-        if(auto nextItem = statementItemFromStatement(*nextIter)){
+        if(auto nextItem = findStatementItem(*nextIter)){
             parentItem->insertChild(parentItem->indexOfChild(nextItem), statementItem);
             added = true;
         }
@@ -982,7 +1003,7 @@ void ManipulatorProgramViewBase::Impl::onStatementRemoved
         QTreeWidgetItem* parentItem;
         auto holderStatement = program->holderStatement();
         if(holderStatement){
-            parentItem = statementItemFromStatement(holderStatement);
+            parentItem = findStatementItem(holderStatement);
         } else {
             parentItem = invisibleRootItem();
         }

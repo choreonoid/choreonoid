@@ -109,6 +109,9 @@ public:
     ControllerItemPtr controller;
     SimulatorItem::Impl* simImpl;
     Body* body_;
+
+    std::mutex logMutex;
+    ReferencedPtr lastLogData;
     unique_ptr<ReferencedObjectSeq> logBuf;
     int logBufFrameOffset;
     ReferencedObjectSeqItemPtr logItem;
@@ -318,6 +321,7 @@ public:
     bool stepSimulationMain();
     void concurrentControlLoop();
     void flushResults();
+    int flushMainResults();
     void stopSimulation(bool doSync);
     void pauseSimulation();
     void restartSimulation();
@@ -563,37 +567,43 @@ bool ControllerInfo::enableLog()
 }
 
 
-void ControllerInfo::outputLog(Referenced* frameLog)
+void ControllerInfo::outputLog(Referenced* logData)
 {
-    int bufFrame = simImpl->currentFrame - logBufFrameOffset;
-    int numFrames = bufFrame + 1;
-    int lastNumFrames = logBuf->numFrames();
-    Referenced* lastLog;
-    if(lastNumFrames > 0){
-        lastLog = logBuf->back();
-    } else {
-        lastLog = frameLog;
+    std::lock_guard<std::mutex> lock(logMutex);
+
+    if(!lastLogData){
+        lastLogData = logData;
     }
-    if(numFrames > lastNumFrames){
-        logBuf->setNumFrames(numFrames);
-        for(int i=lastNumFrames; i < numFrames - 1; ++i){
-            logBuf->at(i) = lastLog;
-        }
-        logBuf->back() = frameLog;
+
+    const int bufFrame = simImpl->currentFrame - logBufFrameOffset;
+    const int numFrames = bufFrame + 1;
+    const int lastNumFrames = logBuf->numFrames();
+
+    logBuf->setNumFrames(numFrames);
+
+    for(int i = lastNumFrames; i < numFrames - 1; ++i){
+        logBuf->at(i) = lastLogData;
     }
+    logBuf->back() = logData;
+
+    lastLogData = logData;
 }
 
 
 void ControllerInfo::flushLog()
 {
-    int numBufFrames = logBuf->numFrames();
-    int offsetFrame = log->numFrames();
-    log->setNumFrames(offsetFrame + numBufFrames);
-    for(int i=0; i < numBufFrames; ++i){
-        log->at(i + offsetFrame) = logBuf->at(i);
+    std::lock_guard<std::mutex> lock(logMutex);
+
+    if(!logBuf->empty()){
+        const int numBufFrames = logBuf->numFrames();
+        const int offsetFrame = log->numFrames();
+        log->setNumFrames(offsetFrame + numBufFrames);
+        for(int i=0; i < numBufFrames; ++i){
+            log->at(i + offsetFrame) = logBuf->at(i);
+        }
+        logBuf->clear();
+        logBufFrameOffset += numBufFrames;
     }
-    logBuf->clear();
-    logBufFrameOffset += numBufFrames;
 }
 
 
@@ -2247,6 +2257,27 @@ exitConcurrentControlLoop:
 
 void SimulatorItem::Impl::flushResults()
 {
+    int frame = flushMainResults();
+
+    for(auto& info : loggedControllerInfos){
+        info->flushLog();
+    }
+
+    if(isRecordingEnabled){
+        double fillLevel = frame / worldFrameRate;
+        timeBar->updateFillLevel(fillLevelId, fillLevel);
+    } else {
+        const double time = frame / worldFrameRate;
+        for(size_t i=0; i < activeSimBodies.size(); ++i){
+            activeSimBodies[i]->impl->notifyResults(time);
+        }
+        timeBar->setTime(time);
+    }
+}
+
+
+int SimulatorItem::Impl::flushMainResults()
+{
     resultBufMutex.lock();
 
     if(worldLogFileItem){
@@ -2268,10 +2299,6 @@ void SimulatorItem::Impl::flushResults()
     
     for(auto& simBody : activeSimBodies){
         simBody->flushResults();
-    }
-
-    for(auto& info : loggedControllerInfos){
-        info->flushLog();
     }
 
     bool offsetChanged;
@@ -2313,16 +2340,7 @@ void SimulatorItem::Impl::flushResults()
     
     resultBufMutex.unlock();
 
-    if(isRecordingEnabled){
-        double fillLevel = frame / worldFrameRate;
-        timeBar->updateFillLevel(fillLevelId, fillLevel);
-    } else {
-        const double time = frame / worldFrameRate;
-        for(size_t i=0; i < activeSimBodies.size(); ++i){
-            activeSimBodies[i]->impl->notifyResults(time);
-        }
-        timeBar->setTime(time);
-    }
+    return frame;
 }
 
 

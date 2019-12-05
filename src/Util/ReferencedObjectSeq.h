@@ -12,10 +12,10 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT ReferencedObjectSeq : public Seq<ref_ptr<Referenced>>
+class CNOID_EXPORT ReferencedObjectSeq : public Seq<ReferencedPtr>
 {
 public:
-    typedef Seq<ref_ptr<Referenced>> BaseSeqType;
+    typedef Seq<ReferencedPtr> BaseSeqType;
     typedef typename BaseSeqType::value_type value_type;
             
     ReferencedObjectSeq(int nFrames = 0);
