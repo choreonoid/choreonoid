@@ -34,6 +34,8 @@ public:
     ManipulatorProgram* holderProgram() const;
     ManipulatorProgram* topLevelProgram() const;
 
+    virtual ManipulatorProgram* getLowerLevelProgram();
+
     void notifyUpdate();
 
     virtual std::string label(int index) const = 0;

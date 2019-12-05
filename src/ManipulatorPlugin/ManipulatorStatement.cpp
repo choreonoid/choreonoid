@@ -62,6 +62,12 @@ ManipulatorProgram* ManipulatorStatement::topLevelProgram() const
 }
 
 
+ManipulatorProgram* ManipulatorStatement::getLowerLevelProgram()
+{
+    return nullptr;
+}
+
+
 void ManipulatorStatement::notifyUpdate()
 {
     if(auto holder = holderProgram()){

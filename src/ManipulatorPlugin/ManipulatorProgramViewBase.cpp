@@ -152,6 +152,9 @@ public:
     void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void setCurrentStatement(ManipulatorStatement* statement, bool doSetCurrentItem, bool doActivate);
     void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
+    ManipulatorStatement* findStatementAtHierachicalPosition(const vector<int>& position);
+    ManipulatorStatement* findStatementAtHierachicalPositionIter(
+        const vector<int>& position, ManipulatorProgram* program, int level);
     bool onTimeChanged(double time);
     StatementItem* findStatementItem(ManipulatorStatement* statement);
     bool insertStatement(ManipulatorStatement* statement, int insertionType);
@@ -857,6 +860,34 @@ void ManipulatorProgramViewBase::onCurrentStatementActivated(ManipulatorStatemen
 }
 
 
+ManipulatorStatement* ManipulatorProgramViewBase::Impl::findStatementAtHierachicalPosition(const vector<int>& position)
+{
+    if(!position.empty()){
+        return findStatementAtHierachicalPositionIter(position, programItem->program(), 0);
+    }
+    return nullptr;
+}
+
+
+ManipulatorStatement* ManipulatorProgramViewBase::Impl::findStatementAtHierachicalPositionIter
+(const vector<int>& position, ManipulatorProgram* program, int level)
+{
+    int statementIndex = position[level];
+    if(statementIndex < program->numStatements()){
+        auto iter = program->begin() + statementIndex;
+        auto statement = *iter;
+        if(++level == position.size()){
+            return statement;
+        } else {
+            if(auto lower = statement->getLowerLevelProgram()){
+                return findStatementAtHierachicalPositionIter(position, lower, level);
+            }
+        }
+    }
+    return nullptr;
+}
+
+
 bool ManipulatorProgramViewBase::Impl::onTimeChanged(double time)
 {
     //! \todo Make the following code more efficient
@@ -868,11 +899,8 @@ bool ManipulatorProgramViewBase::Impl::onTimeChanged(double time)
                 if(!seq->empty()){
                     auto data = seq->at(seq->lastFrameOfTime(time)).get();
                     if(auto logData = dynamic_cast<ManipulatorControllerLog*>(data)){
-                        int index = logData->position[0];
-                        auto program = programItem->program();
-                        if(index < program->numStatements()){
-                            auto iter = program->begin() + index;
-                            setCurrentStatement(*iter, true, false);
+                        if(auto statement = findStatementAtHierachicalPosition(logData->position)){
+                            setCurrentStatement(statement, true, false);
                             if(time < seq->timeLength()){
                                 hit = true;
                             }

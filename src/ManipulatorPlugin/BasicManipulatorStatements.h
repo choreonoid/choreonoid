@@ -66,6 +66,7 @@ class CNOID_EXPORT StructuredStatement : public ManipulatorStatement
 public:
     ManipulatorProgram* lowerLevelProgram() { return program_; }
     const ManipulatorProgram* lowerLevelProgram() const { return program_; }
+    virtual ManipulatorProgram* getLowerLevelProgram() override;
 
     virtual bool read(ManipulatorProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;

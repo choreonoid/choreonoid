@@ -147,6 +147,12 @@ StructuredStatement::StructuredStatement(const StructuredStatement& org, CloneMa
 }
 
 
+ManipulatorProgram* StructuredStatement::getLowerLevelProgram()
+{
+    return lowerLevelProgram();
+}
+
+
 bool StructuredStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
     return program_->read(archive);

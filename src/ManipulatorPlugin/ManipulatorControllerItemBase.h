@@ -52,7 +52,8 @@ protected:
     ManipulatorProgram* getCurrentProgram();
     ManipulatorProgram::iterator getCurrentIterator();
     void setCurrent(ManipulatorProgram::iterator iter);
-    void setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter);
+    void setCurrent(
+        ManipulatorProgram* program, ManipulatorProgram::iterator iter, ManipulatorProgram::iterator upperNext);
 
     ManipulatorProgram* findProgram(const std::string& name);
 
@@ -94,6 +95,7 @@ typedef ref_ptr<ManipulatorControllerItemBase> ManipulatorControllerItemBasePtr;
 class CNOID_EXPORT ManipulatorControllerLog : public Referenced
 {
 public:
+    std::shared_ptr<std::string> programName;
     std::vector<int> position;
 };
 

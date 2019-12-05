@@ -99,9 +99,9 @@ public:
 
     struct ProgramPosition {
         ManipulatorProgramPtr program;
-        Iterator iterator;
-        ProgramPosition(ManipulatorProgram* program, Iterator iterator)
-            : program(program), iterator(iterator) { }
+        Iterator current;
+        Iterator next;
+        vector<int> hierachicalPosition;
     };
     vector<ProgramPosition> programStack;
     
@@ -135,12 +135,13 @@ public:
     void extractBodyLocalVariables(ManipulatorVariableSetGroup* variables, Item* item);
     void addVariableList(ManipulatorVariableSetGroup* group, ManipulatorVariableListItemBase* listItem);
     void updateOrgVariableList(ManipulatorVariableList* orgList, ManipulatorVariable* variable);
-    void setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter);
+    void setCurrent(
+        ManipulatorProgram* program, ManipulatorProgram::iterator iter, ManipulatorProgram::iterator upperNext);
     bool control();
+    void setCurrentProgramPositionToLog(ManipulatorControllerLog* log);
     void clear();
     bool interpretCommentStatement(CommentStatement* statement);
     bool interpretIfStatement(IfStatement* statement);
-    bool interpretElseStatement(ElseStatement* statement);
     bool interpretWhileStatement(WhileStatement* statement);
     bool interpretCallStatement(CallStatement* statement);
     stdx::optional<bool> evalConditionalExpression(const string& expression);
@@ -200,10 +201,6 @@ void ManipulatorControllerItemBase::registerBaseStatementInterpreters()
     registerStatementInterpreter<IfStatement>(
         [impl_](IfStatement* statement){
             return impl_->interpretIfStatement(statement); });
-
-    registerStatementInterpreter<ElseStatement>(
-        [impl_](ElseStatement* statement){
-            return impl_->interpretElseStatement(statement); });
 
     registerStatementInterpreter<WhileStatement>(
         [impl_](WhileStatement* statement){
@@ -470,15 +467,29 @@ void ManipulatorControllerItemBase::setCurrent(ManipulatorProgram::iterator iter
 }
 
 
-void ManipulatorControllerItemBase::setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter)
+void ManipulatorControllerItemBase::setCurrent
+(ManipulatorProgram* program, ManipulatorProgram::iterator iter, ManipulatorProgram::iterator upperNext)
 {
-    impl->setCurrent(program, iter);
+    impl->setCurrent(program, iter, upperNext);
 }
 
 
-void ManipulatorControllerItemBase::Impl::setCurrent(ManipulatorProgram* program, ManipulatorProgram::iterator iter)    
+void ManipulatorControllerItemBase::Impl::setCurrent
+(ManipulatorProgram* program, ManipulatorProgram::iterator iter, ManipulatorProgram::iterator upperNext)
 {
-    programStack.push_back(ProgramPosition(currentProgram, iterator));
+    ProgramPosition upper;
+    upper.program = currentProgram;
+    upper.current = iterator;
+    upper.next = upperNext;
+
+    int statementIndex = upper.current - currentProgram->begin();
+    if(!programStack.empty()){
+        upper.hierachicalPosition = programStack.back().hierachicalPosition;
+    }
+    upper.hierachicalPosition.push_back(statementIndex);
+
+    programStack.push_back(upper);
+    
     currentProgram = program;
     iterator = iter;
 }
@@ -558,9 +569,9 @@ bool ManipulatorControllerItemBase::Impl::control()
             if(programStack.empty()){
                 break;
             }
-            auto& pos = programStack.back();
-            iterator = pos.iterator;
-            currentProgram = pos.program;
+            auto& upper = programStack.back();
+            iterator = upper.next;
+            currentProgram = upper.program;
             programStack.pop_back();
             hasNextStatement = (iterator != currentProgram->end());
         }
@@ -569,8 +580,7 @@ bool ManipulatorControllerItemBase::Impl::control()
         }
 
         if(isLogEnabled){
-            currentLog->position.resize(1);
-            currentLog->position[0] = iterator - currentProgram->begin();
+            setCurrentProgramPositionToLog(currentLog);
             stateChanged = true;
         }
         
@@ -597,6 +607,18 @@ bool ManipulatorControllerItemBase::Impl::control()
     }
         
     return isActive;
+}
+
+
+void ManipulatorControllerItemBase::Impl::setCurrentProgramPositionToLog(ManipulatorControllerLog* log)
+{
+    if(programStack.empty()){
+        log->position.clear();
+    } else {
+        log->position = programStack.back().hierachicalPosition;
+    }
+    int statementIndex = iterator - currentProgram->begin();
+    log->position.push_back(statementIndex);
 }
 
 
@@ -674,38 +696,29 @@ bool ManipulatorControllerItemBase::Impl::interpretIfStatement(IfStatement* stat
         return false;
     }
 
-    ++iterator;
-
+    auto next = iterator;
+    ++next;
+                           
     ElseStatement* nextElseStatement = nullptr;
-    if(iterator != currentProgram->end()){
-        nextElseStatement = dynamic_cast<ElseStatement*>(iterator->get());
+    if(next != currentProgram->end()){
+        if(nextElseStatement = dynamic_cast<ElseStatement*>(next->get())){
+            ++next;
+        }
     }
-
-    bool processed = true;
 
     if(*condition){
-        if(nextElseStatement){
-            ++iterator;
-        }
         auto program = statement->lowerLevelProgram();
-        setCurrent(program, program->begin());
+        setCurrent(program, program->begin(), next);
 
     } else if(nextElseStatement){
-        processed = interpretElseStatement(nextElseStatement);
+        ++iterator;
+        auto program = statement->lowerLevelProgram();
+        setCurrent(program, program->begin(), next);
     }
 
-    return processed;
-}
-
-
-bool ManipulatorControllerItemBase::Impl::interpretElseStatement(ElseStatement* statement)
-{
-    ++iterator;
-    auto program = statement->lowerLevelProgram();
-    setCurrent(program, program->begin());
     return true;
 }
-    
+
 
 bool ManipulatorControllerItemBase::Impl::interpretWhileStatement(WhileStatement* statement)
 {
@@ -713,7 +726,7 @@ bool ManipulatorControllerItemBase::Impl::interpretWhileStatement(WhileStatement
 
     if(*condition){
         auto program = statement->lowerLevelProgram();
-        setCurrent(program, program->begin());
+        setCurrent(program, program->begin(), iterator);
     } else {
         ++iterator;
     }
@@ -739,8 +752,7 @@ bool ManipulatorControllerItemBase::Impl::interpretCallStatement(CallStatement* 
         return false;
     }
 
-    ++iterator;
-    setCurrent(program, program->begin());
+    setCurrent(program, program->begin(), iterator + 1);
 
     return true;
 }
