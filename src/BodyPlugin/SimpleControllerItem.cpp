@@ -152,7 +152,7 @@ public:
 void SimpleControllerItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& itemManager = ext->itemManager();
-    itemManager.registerClass<SimpleControllerItem>(N_("SimpleControllerItem"));
+    itemManager.registerClass<SimpleControllerItem, ControllerItem>(N_("SimpleControllerItem"));
     itemManager.addCreationPanel<SimpleControllerItem>();
 }
 

@@ -36,7 +36,7 @@ static bool saveAsPlainSeqFormat(MultiValueSeqItem* item, const std::string& fil
 
 template<> void MultiSeqItem<MultiValueSeq>::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<MultiValueSeqItem>(N_("MultiValueSeqItem"));
+    ext->itemManager().registerClass<MultiValueSeqItem, AbstractMultiSeqItem>(N_("MultiValueSeqItem"));
 
     ext->itemManager().addCreationPanel<MultiValueSeqItem>(
         new MultiSeqItemCreationPanel(_("Number of values in a frame")));

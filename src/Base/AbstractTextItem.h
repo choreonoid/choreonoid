@@ -14,6 +14,8 @@ namespace cnoid {
 class CNOID_EXPORT AbstractTextItem : public Item
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+    
     AbstractTextItem();
     AbstractTextItem(const AbstractTextItem& org);
 

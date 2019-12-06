@@ -73,7 +73,7 @@ TimeSyncItemEngine* createZMPSeqEngine(BodyItem* bodyItem, AbstractSeqItem* seqI
 
 void ZMPSeqItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<ZMPSeqItem>(N_("ZMPSeqItem"));
+    ext->itemManager().registerClass<ZMPSeqItem, Vector3SeqItem>(N_("ZMPSeqItem"));
     
     BodyMotionItem::addExtraSeqItemFactory(ZMPSeq::key(), createZMPSeqItem);
     BodyMotionEngine::addExtraSeqEngineFactory(ZMPSeq::key(), createZMPSeqEngine);

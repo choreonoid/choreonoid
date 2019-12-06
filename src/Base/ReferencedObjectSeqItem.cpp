@@ -12,7 +12,7 @@ using namespace cnoid;
 
 void ReferencedObjectSeqItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<ReferencedObjectSeqItem>(N_("ReferencedObjectSeqItem"));
+    ext->itemManager().registerClass<ReferencedObjectSeqItem, AbstractSeqItem>(N_("ReferencedObjectSeqItem"));
 }
 
 

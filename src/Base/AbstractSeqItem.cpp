@@ -4,11 +4,18 @@
 */
 
 #include "AbstractSeqItem.h"
+#include "ItemManager.h"
 #include "Archive.h"
 #include "PutPropertyFunction.h"
 #include "gettext.h"
 
 using namespace cnoid;
+
+
+void AbstractSeqItem::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<AbstractSeqItem>();
+}
 
 
 AbstractSeqItem::AbstractSeqItem()
@@ -90,6 +97,12 @@ bool AbstractSeqItem::restore(const Archive& archive)
         }
     }
     return false;
+}
+
+
+void AbstractMultiSeqItem::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<AbstractMultiSeqItem, AbstractSeqItem>();
 }
 
 

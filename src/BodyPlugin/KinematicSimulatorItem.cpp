@@ -59,7 +59,7 @@ public:
 
 void KinematicSimulatorItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<KinematicSimulatorItem>(N_("KinematicSimulatorItem"));
+    ext->itemManager().registerClass<KinematicSimulatorItem, SimulatorItem>(N_("KinematicSimulatorItem"));
     ext->itemManager().addCreationPanel<KinematicSimulatorItem>();
 }
 

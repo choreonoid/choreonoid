@@ -4,8 +4,16 @@
 */
 
 #include "AbstractTextItem.h"
+#include "ItemManager.h"
 
 using namespace cnoid;
+
+
+void AbstractTextItem::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<AbstractTextItem>();
+}
+    
 
 AbstractTextItem::AbstractTextItem()
 {

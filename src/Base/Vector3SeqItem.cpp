@@ -11,7 +11,7 @@ using namespace cnoid;
 
 void Vector3SeqItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<Vector3SeqItem>(N_("Vector3SeqItem"));
+    ext->itemManager().registerClass<Vector3SeqItem, AbstractSeqItem>(N_("Vector3SeqItem"));
 }
 
 

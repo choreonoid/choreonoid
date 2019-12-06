@@ -16,6 +16,8 @@ class SimulatorItem;
 class CNOID_EXPORT SubSimulatorItem : public Item
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+    
     SubSimulatorItem();
     SubSimulatorItem(const SubSimulatorItem& org);
     

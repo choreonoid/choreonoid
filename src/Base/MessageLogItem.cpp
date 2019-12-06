@@ -48,7 +48,7 @@ public:
 
 void MessageLogItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<MessageLogItem>(N_("MessageLogItem"));
+    ext->itemManager().registerClass<MessageLogItem, AbstractTextItem>(N_("MessageLogItem"));
     ext->itemManager().addCreationPanel<MessageLogItem>();
 }
 

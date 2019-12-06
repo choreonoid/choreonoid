@@ -14,6 +14,7 @@
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
 #include <cnoid/ExtensionManager>
+#include <cnoid/ItemManager>
 #include <cnoid/RootItem>
 #include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
@@ -480,7 +481,9 @@ public:
 
 void SimulatorItem::initializeClass(ExtensionManager* ext)
 {
+    ext->itemManager().registerAbstractClass<SimulatorItem>();
     ext->manage(new SimulatedMotionEngineManager());
+    
 }
 
 

@@ -4,12 +4,19 @@
 */
 
 #include "ControllerItem.h"
+#include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+
+
+void ControllerItem::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<ControllerItem>();
+}
 
 
 ControllerItem::ControllerItem()

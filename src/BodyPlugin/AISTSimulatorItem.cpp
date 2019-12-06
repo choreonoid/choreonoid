@@ -129,7 +129,7 @@ public:
 
 void AISTSimulatorItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<AISTSimulatorItem>(N_("AISTSimulatorItem"));
+    ext->itemManager().registerClass<AISTSimulatorItem, SimulatorItem>(N_("AISTSimulatorItem"));
     ext->itemManager().addCreationPanel<AISTSimulatorItem>();
 }
 

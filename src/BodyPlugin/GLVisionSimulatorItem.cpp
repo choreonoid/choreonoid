@@ -291,7 +291,7 @@ public:
 
 void GLVisionSimulatorItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<GLVisionSimulatorItem>(N_("GLVisionSimulatorItem"));
+    ext->itemManager().registerClass<GLVisionSimulatorItem, SubSimulatorItem>(N_("GLVisionSimulatorItem"));
     ext->itemManager().addCreationPanel<GLVisionSimulatorItem>();
 }
 

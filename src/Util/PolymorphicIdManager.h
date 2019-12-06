@@ -26,6 +26,10 @@ template<class BaseType>
 class PolymorphicIdManager : public PolymorphicIdManagerBase
 {
 public:
+    PolymorphicIdManager() {
+        registerTypeAsTypeInfo(typeid(BaseType), typeid(BaseType));
+    }
+    
     template<class TargetType, class SuperType = BaseType>
     int registerType() {
         return registerTypeAsTypeInfo(typeid(TargetType), typeid(SuperType));

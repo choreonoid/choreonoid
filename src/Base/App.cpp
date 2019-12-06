@@ -21,7 +21,10 @@
 #include "PointSetItem.h"
 #include "MultiPointSetItem.h"
 #include "LightingItem.h"
+#include "AbstractTextItem.h"
+#include "ScriptItem.h"
 #include "MessageLogItem.h"
+#include "AbstractSeqItem.h"
 #include "MultiValueSeqItem.h"
 #include "MultiSE3SeqItem.h"
 #include "MultiSE3MatrixSeqItem.h"
@@ -237,6 +240,8 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     FolderItem::initializeClass(ext);
     SubProjectItem::initializeClass(ext);
     ExtCommandItem::initializeClass(ext);
+    AbstractSeqItem::initializeClass(ext);
+    AbstractMultiSeqItem::initializeClass(ext);
     MultiValueSeqItem::initializeClass(ext);
     MultiSE3SeqItem::initializeClass(ext);
     MultiSE3MatrixSeqItem::initializeClass(ext);
@@ -244,7 +249,10 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     SceneItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);
     MultiPointSetItem::initializeClass(ext);
+    AbstractTextItem::initializeClass(ext);
+    ScriptItem::initializeClass(ext);
     MessageLogItem::initializeClass(ext);
+    
     LightingItem::initializeClass(ext);
     CoordinateFrameListItem::initializeClass(ext);
     MultiCoordinateFrameListItem::initializeClass(ext);

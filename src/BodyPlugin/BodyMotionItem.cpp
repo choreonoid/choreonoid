@@ -118,7 +118,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
     
     ItemManager& im = ext->itemManager();
     
-    im.registerClass<BodyMotionItem>(N_("BodyMotionItem"));
+    im.registerClass<BodyMotionItem, AbstractSeqItem>(N_("BodyMotionItem"));
 
     im.addCreationPanel<BodyMotionItem>(new MultiSeqItemCreationPanel(_("Number of joints")));
     im.addCreationPanelPreFilter<BodyMotionItem>(bodyMotionItemPreFilter);

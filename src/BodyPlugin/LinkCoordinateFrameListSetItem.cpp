@@ -20,7 +20,8 @@ Signal<void(LinkCoordinateFrameListSetItem::FrameType type, bool on)> sigEnabled
 void LinkCoordinateFrameListSetItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
-    im.registerClass<LinkCoordinateFrameListSetItem>(N_("LinkCoordinateFrameListSetItem"));
+    im.registerClass<LinkCoordinateFrameListSetItem, MultiCoordinateFrameListItem>(
+        N_("LinkCoordinateFrameListSetItem"));
     im.addCreationPanel<LinkCoordinateFrameListSetItem>();
 
     worldFrameListLabel = "World";

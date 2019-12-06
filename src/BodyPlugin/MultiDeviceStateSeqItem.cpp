@@ -82,7 +82,8 @@ void MultiDeviceStateSeqItem::initializeClass(ExtensionManager* ext)
 
     if(!initialized){
         
-        ext->itemManager().registerClass<MultiDeviceStateSeqItem>(N_("MultiDeviceStateSeqItem"));
+        ext->itemManager().registerClass<MultiDeviceStateSeqItem, AbstractMultiSeqItem>(
+            N_("MultiDeviceStateSeqItem"));
         
         BodyMotionItem::addExtraSeqItemFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqItem);
         BodyMotionEngine::addExtraSeqEngineFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqEngine);

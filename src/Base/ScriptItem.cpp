@@ -4,10 +4,18 @@
 */
 
 #include "ScriptItem.h"
+#include "ItemManager.h"
 #include <cnoid/FileUtil>
 
 using namespace std;
 using namespace cnoid;
+
+
+void ScriptItem::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<ScriptItem, AbstractTextItem>();
+}
+
 
 ScriptItem::ScriptItem()
 {

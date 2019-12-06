@@ -4,6 +4,7 @@
 */
 
 #include "SimulationScriptItem.h"
+#include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include "gettext.h"
@@ -25,6 +26,13 @@ public:
     SimulationScriptItemImpl(SimulationScriptItem* self);
     SimulationScriptItemImpl(SimulationScriptItem* self, const SimulationScriptItemImpl& org);
 };
+
+}
+
+
+void SimulationScriptItem::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<SimulationScriptItem, ScriptItem>();
 }
 
 

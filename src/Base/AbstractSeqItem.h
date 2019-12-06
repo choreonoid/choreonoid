@@ -15,6 +15,8 @@ namespace cnoid {
 class CNOID_EXPORT AbstractSeqItem : public Item
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+    
     AbstractSeqItem();
     AbstractSeqItem(const AbstractSeqItem& org);
     virtual ~AbstractSeqItem();
@@ -33,6 +35,8 @@ typedef ref_ptr<AbstractSeqItem> AbstractSeqItemPtr;
 class CNOID_EXPORT AbstractMultiSeqItem : public AbstractSeqItem
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+    
     AbstractMultiSeqItem();
     AbstractMultiSeqItem(const AbstractMultiSeqItem& org);
     virtual ~AbstractMultiSeqItem();

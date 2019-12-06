@@ -16,6 +16,8 @@ class SimulationScriptItemImpl;
 class CNOID_EXPORT SimulationScriptItem : public ScriptItem
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+        
     SimulationScriptItem();
     SimulationScriptItem(const SimulationScriptItem& org);
 

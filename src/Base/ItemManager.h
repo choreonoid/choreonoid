@@ -113,6 +113,13 @@ public:
         registerClassSub(className, typeid(ItemType), typeid(SuperItemType), nullptr, singletonInstance);
         return *this;
     }
+
+    template <class ItemType, class SuperItemType = Item>
+    ItemManager& registerAbstractClass() {
+        registerClassSub("", typeid(ItemType), typeid(SuperItemType), nullptr, nullptr);
+        return *this;
+    }
+
     
     static bool getClassIdentifier(ItemPtr item, std::string& out_moduleName, std::string& out_className);
 

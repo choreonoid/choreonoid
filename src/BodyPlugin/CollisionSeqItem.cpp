@@ -63,7 +63,7 @@ void CollisionSeqItem::initislizeClass(ExtensionManager* ext)
 
     ItemManager& im = ext->itemManager();
 
-    im.registerClass<CollisionSeqItem>(N_("CollisionSeqItem"));
+    im.registerClass<CollisionSeqItem, AbstractMultiSeqItem>(N_("CollisionSeqItem"));
     im.addLoaderAndSaver<CollisionSeqItem>(
         _("Collision Data"), "COLLISION-DATA-YAML", "yaml",
         std::bind(loadStandardYamlFormat, _1, _2, _3),  std::bind(saveAsStandardYamlFormat, _1, _2, _3));

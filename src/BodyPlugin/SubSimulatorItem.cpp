@@ -4,11 +4,19 @@
 */
 
 #include "SubSimulatorItem.h"
+#include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include "gettext.h"
 
 using namespace cnoid;
+
+
+void SubSimulatorItem::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<SubSimulatorItem>();
+}
+
 
 SubSimulatorItem::SubSimulatorItem()
 {

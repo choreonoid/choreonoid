@@ -429,7 +429,9 @@ void ItemManager::registerClassSub
 (const std::string& className, const std::type_info& type, const std::type_info& superType,
  std::function<Item*()> factory, Item* singletonInstance)
 {
-    impl->registerClass(factory, singletonInstance, type.name(), className);
+    if(factory || singletonInstance){
+        impl->registerClass(factory, singletonInstance, type.name(), className);
+    }
     polymorphicIdManager.registerTypeAsTypeInfo(type, superType);
 }
 
