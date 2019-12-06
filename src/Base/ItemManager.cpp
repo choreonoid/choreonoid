@@ -10,6 +10,7 @@
 #include "MainWindow.h"
 #include "MessageView.h"
 #include "CheckBox.h"
+#include <cnoid/PolymorphicIdManager>
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
 #include <cnoid/ParametricPathProcessor>
@@ -161,6 +162,8 @@ public:
 }
 
 namespace {
+
+PolymorphicIdManager<Item> polymorphicIdManager;
 
 class DefaultCreationPanel : public ItemCreationPanel
 {
@@ -423,9 +426,11 @@ void ItemManager::bindTextDomain(const std::string& domain)
 
 
 void ItemManager::registerClassSub
-(std::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className)
+(const std::string& className, const std::type_info& type, const std::type_info& superType,
+ std::function<Item*()> factory, Item* singletonInstance)
 {
-    impl->registerClass(factory, singletonInstance, typeId, className);
+    impl->registerClass(factory, singletonInstance, type.name(), className);
+    polymorphicIdManager.registerTypeAsTypeInfo(type, superType);
 }
 
 

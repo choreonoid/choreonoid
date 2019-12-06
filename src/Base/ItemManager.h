@@ -100,14 +100,17 @@ public:
         Function function;
     };
 
-    template <class ItemType> ItemManager& registerClass(const std::string& className) {
-        registerClassSub(Factory<ItemType>(), 0, typeid(ItemType).name(), className);
+    template <class ItemType, class SuperItemType = Item>
+    ItemManager& registerClass(const std::string& className) {
+        registerClassSub(className, typeid(ItemType), typeid(SuperItemType), Factory<ItemType>(), nullptr);
         return *this;
     }
 
     //! This function registers a singleton item class
-    template <class ItemType> ItemManager& registerClass(const std::string& className, ItemType* singletonInstance){
-        registerClassSub(0, singletonInstance, typeid(ItemType).name(), className);
+    template <class ItemType, class SuperItemType = Item>
+    ItemManager& registerClass(const std::string& className, ItemType* singletonInstance){
+        registerClassSub(className, typeid(ItemType), typeid(SuperItemType), Factory<ItemType>(), nullptr);
+        registerClassSub(className, typeid(ItemType), typeid(SuperItemType), nullptr, singletonInstance);
         return *this;
     }
     
@@ -205,7 +208,8 @@ public:
 
 private:
     void registerClassSub(
-        std::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className);
+        const std::string& className, const std::type_info& type, const std::type_info& superType,
+        std::function<Item*()> factory, Item* singletonInstance);
     void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilterSub(
         const std::string& typeId, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
