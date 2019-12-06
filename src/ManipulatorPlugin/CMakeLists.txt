@@ -10,6 +10,7 @@ set(sources
   ManipulatorPosition.cpp
   ManipulatorPositionList.cpp
   ManipulatorProgram.cpp
+  ManipulatorStatementRegistration.cpp
   ManipulatorStatement.cpp
   BasicManipulatorStatements.cpp
   ManipulatorVariable.cpp
@@ -28,6 +29,7 @@ set(sources
 set(headers
   ManipulatorProgram.h
   ManipulatorPositionList.h
+  ManipulatorStatementRegistration.h
   ManipulatorStatement.h
   BasicManipulatorStatements.h
   ManipulatorVariable.h

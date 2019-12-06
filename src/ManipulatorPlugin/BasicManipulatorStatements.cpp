@@ -1,4 +1,5 @@
 #include "BasicManipulatorStatements.h"
+#include "ManipulatorStatementRegistration.h"
 #include "ManipulatorProgram.h"
 #include "ManipulatorVariableSet.h"
 #include <cnoid/CloneMap>
@@ -43,7 +44,6 @@ bool EmptyStatement::read(ManipulatorProgram* program, const Mapping& archive)
 
 bool EmptyStatement::write(Mapping& archive) const
 {
-    archive.write("type", "Empty");
     return true;
 }
 
@@ -78,7 +78,6 @@ std::string DummyStatement::label(int index) const
 
 bool DummyStatement::write(Mapping& archive) const
 {
-    archive.write("type", "Dummy");
     return true;
 }
 
@@ -121,7 +120,6 @@ bool CommentStatement::read(ManipulatorProgram* program, const Mapping& archive)
 
 bool CommentStatement::write(Mapping& archive) const
 {
-    archive.write("type", "Comment");
     archive.write("comment", comment_);
     return true;
 }
@@ -234,7 +232,6 @@ bool IfStatement::read(ManipulatorProgram* program, const Mapping& archive)
 
 bool IfStatement::write(Mapping& archive) const
 {
-    archive.write("type", "If");
     return ConditionalStatement::write(archive);
 }
 
@@ -275,7 +272,6 @@ bool ElseStatement::read(ManipulatorProgram* program, const Mapping& archive)
 
 bool ElseStatement::write(Mapping& archive) const
 {
-    archive.write("type", "Else");
     return StructuredStatement::write(archive);
 }
 
@@ -318,7 +314,6 @@ bool WhileStatement::read(ManipulatorProgram* program, const Mapping& archive)
 
 bool WhileStatement::write(Mapping& archive) const
 {
-    archive.write("type", "While");
     return ConditionalStatement::write(archive);
 }
 
@@ -363,7 +358,6 @@ bool CallStatement::read(ManipulatorProgram* program, const Mapping& archive)
 
 bool CallStatement::write(Mapping& archive) const
 {
-    archive.write("type", "Call");
     archive.write("program", programName_, DOUBLE_QUOTED);
     return true;
 }
@@ -429,7 +423,6 @@ bool AssignStatement::read(ManipulatorProgram* program, const Mapping& archive)
 
 bool AssignStatement::write(Mapping& archive) const
 {
-    archive.write("type", "Assign");
     variableId_.write(archive, "variable");
     archive.write("expression", expression_, SINGLE_QUOTED);
     return true;
@@ -479,7 +472,6 @@ bool SetSignalStatement::read(ManipulatorProgram* program, const Mapping& archiv
 
 bool SetSignalStatement::write(Mapping& archive) const
 {
-    archive.write("type", "SetSignal");
     archive.write("signalIndex", signalIndex_);
     archive.write("on", on_);
     return true;
@@ -525,7 +517,6 @@ bool DelayStatement::read(ManipulatorProgram* program, const Mapping& archive)
 
 bool DelayStatement::write(Mapping& archive) const
 {
-    archive.write("type", "Delay");
     archive.write("time", time_);
     return true;
 }
@@ -535,16 +526,17 @@ namespace {
 
 struct StatementTypeRegistration {
     StatementTypeRegistration(){
-        ManipulatorStatement::registerType<EmptyStatement>("Empty");
-        ManipulatorStatement::registerType<DummyStatement>("Dummy");
-        ManipulatorStatement::registerType<CommentStatement>("Comment");
-        ManipulatorStatement::registerType<IfStatement>("If");
-        ManipulatorStatement::registerType<ElseStatement>("Else");
-        ManipulatorStatement::registerType<WhileStatement>("While");
-        ManipulatorStatement::registerType<CallStatement>("Call");
-        ManipulatorStatement::registerType<AssignStatement>("Assign");
-        ManipulatorStatement::registerType<SetSignalStatement>("SetSignal");
-        ManipulatorStatement::registerType<DelayStatement>("Delay");
+        ManipulatorStatementRegistration()
+            .registerType<EmptyStatement>("Empty")
+            .registerType<DummyStatement>("Dummy")
+            .registerType<CommentStatement>("Comment")
+            .registerType<IfStatement>("If")
+            .registerType<ElseStatement>("Else")
+            .registerType<WhileStatement>("While")
+            .registerType<CallStatement>("Call")
+            .registerType<AssignStatement>("Assign")
+            .registerType<SetSignalStatement>("SetSignal")
+            .registerType<DelayStatement>("Delay");
     }
 } registration;
 

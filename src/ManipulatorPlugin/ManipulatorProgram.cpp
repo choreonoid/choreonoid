@@ -1,5 +1,6 @@
 #include "ManipulatorProgram.h"
 #include "BasicManipulatorStatements.h"
+#include "ManipulatorStatementRegistration.h"
 #include <cnoid/ManipulatorPosition>
 #include <cnoid/ManipulatorPositionList>
 #include <cnoid/CloneMap>
@@ -9,6 +10,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
+#include <regex>
 #include <vector>
 #include "gettext.h"
 
@@ -442,11 +444,20 @@ bool ManipulatorProgram::Impl::read(const Mapping& archive)
     
     auto& statementNodes = *archive.findListing("statements");
     if(statementNodes.isValid()){
+
+        regex pattern("(.*):(.+)");
+        std::smatch match;
+        
         for(int i=0; i < statementNodes.size(); ++i){
+            ManipulatorStatementPtr statement;
             auto& node = *statementNodes[i].toMapping();
             auto& typeNode = node["type"];
             auto type = typeNode.toString();
-            ManipulatorStatementPtr statement = ManipulatorStatement::create(type);
+            if(regex_match(type, match, pattern)){
+                statement = ManipulatorStatementRegistration::create(match.str(2), match.str(1));
+            } else {
+                statement = ManipulatorStatementRegistration::create(type);
+            }
             if(!statement){
                 typeNode.throwException(format(_("Statement type \"{0}\" is not supported"), type));
             }
@@ -494,6 +505,7 @@ bool ManipulatorProgram::write(Mapping& archive) const
         ListingPtr statementNodes = new Listing;
         for(auto& statement : statements_){
             MappingPtr node = new Mapping;
+            node->write("type", ManipulatorStatementRegistration::fullTypeName(statement));
             if(statement->write(*node)){
                 statementNodes->append(node);
                 appended = true;

@@ -4,7 +4,6 @@
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
 #include <unordered_map>
-#include <regex>
 #include "gettext.h"
 
 using namespace std;
