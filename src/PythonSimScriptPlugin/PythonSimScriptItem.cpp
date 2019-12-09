@@ -16,7 +16,7 @@ using namespace cnoid;
 
 void PythonSimScriptItem::initialize(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<PythonSimScriptItem>(N_("PythonSimScriptItem"));
+    ext->itemManager().registerClass<PythonSimScriptItem, SimulationScriptItem>(N_("PythonSimScriptItem"));
     ext->itemManager().addLoader<PythonSimScriptItem>(
         _("Python Script for Simulation"), "PYTHON-SCRIPT-FILE", "py",
         std::bind(&PythonSimScriptItem::setScriptFilename, stdph::_1, stdph::_2));

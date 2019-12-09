@@ -22,7 +22,7 @@ void
 DynamicTCSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
-    im.registerClass<DynamicTCSimulatorItem>("DynamicTCSimulatorItem");
+    im.registerClass<DynamicTCSimulatorItem, SubSimulatorItem>("DynamicTCSimulatorItem");
     im.addCreationPanel<DynamicTCSimulatorItem>();
 }
 

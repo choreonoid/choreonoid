@@ -29,7 +29,7 @@ std::shared_ptr<Joystick> joystick;
 void SubmersibleSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
-    im.registerClass<SubmersibleSimulatorItem>("SubmersibleSimulatorItem");
+    im.registerClass<SubmersibleSimulatorItem, SubSimulatorItem>("SubmersibleSimulatorItem");
     im.addCreationPanel<SubmersibleSimulatorItem>();
 
     resistancePoints.push_back(Vector3( 0.3,  0.2,  0.15));

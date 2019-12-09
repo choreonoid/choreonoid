@@ -23,6 +23,12 @@ public:
 }
 
 
+void ManipulatorVariableListItemBase::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<ManipulatorVariableListItemBase>();
+}
+
+
 ManipulatorVariableListItemBase::ManipulatorVariableListItemBase()
 {
     impl = new Impl;

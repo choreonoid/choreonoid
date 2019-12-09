@@ -20,7 +20,7 @@ void
 TCSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
-    im.registerClass<TCSimulatorItem>("TCSimulatorItem");
+    im.registerClass<TCSimulatorItem, SimulatorItem>("TCSimulatorItem");
     im.addCreationPanel<TCSimulatorItem>();
 }
 

@@ -14,6 +14,8 @@ class LinkKinematicsKit;
 class CNOID_EXPORT ManipulatorProgramItemBase : public Item
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+
     virtual ~ManipulatorProgramItemBase();
 
     virtual void setName(const std::string& name) override;

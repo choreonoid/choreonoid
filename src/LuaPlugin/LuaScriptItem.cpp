@@ -45,7 +45,7 @@ public:
 
 void LuaScriptItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<LuaScriptItem>(N_("LuaScriptItem"));
+    ext->itemManager().registerClass<LuaScriptItem, ScriptItem>(N_("LuaScriptItem"));
     ext->itemManager().addLoader<LuaScriptItem>(
         _("Lua Script"), "LUA-SCRIPT-FILE", "lua",
         [](LuaScriptItem* item, const std::string& filename, std::ostream& /* os */, Item* /* parentItem */){

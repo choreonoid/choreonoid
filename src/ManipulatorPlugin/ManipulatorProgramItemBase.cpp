@@ -30,6 +30,12 @@ public:
 }
 
 
+void ManipulatorProgramItemBase::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<ManipulatorProgramItemBase>();
+}
+
+
 ManipulatorProgramItemBase::ManipulatorProgramItemBase()
 {
     impl = new ManipulatorProgramItemBase::Impl(this);

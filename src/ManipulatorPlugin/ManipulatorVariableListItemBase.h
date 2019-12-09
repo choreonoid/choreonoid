@@ -11,6 +11,8 @@ class ManipulatorVariableList;
 class CNOID_EXPORT ManipulatorVariableListItemBase : public Item
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+    
     ManipulatorVariableListItemBase();
     ManipulatorVariableListItemBase(const ManipulatorVariableListItemBase& org);
     virtual ~ManipulatorVariableListItemBase();

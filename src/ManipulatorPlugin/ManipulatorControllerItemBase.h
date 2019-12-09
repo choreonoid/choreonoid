@@ -18,6 +18,8 @@ class ManipulatorVariableSet;
 class CNOID_EXPORT ManipulatorControllerItemBase : public ControllerItem
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+    
     ManipulatorControllerItemBase();
     ManipulatorControllerItemBase(const ManipulatorControllerItemBase& org);
     virtual ~ManipulatorControllerItemBase();

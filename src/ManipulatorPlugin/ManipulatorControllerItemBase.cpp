@@ -4,6 +4,7 @@
 #include "ManipulatorVariableList.h"
 #include "ManipulatorVariableListItemBase.h"
 #include "ManipulatorVariableSetGroup.h"
+#include <cnoid/ItemManager>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/LinkCoordinateFrameSet>
 #include <cnoid/DigitalIoDevice>
@@ -154,6 +155,12 @@ public:
     bool interpretDelayStatement(DelayStatement* statement);
 };
 
+}
+
+
+void ManipulatorControllerItemBase::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerAbstractClass<ManipulatorControllerItemBase, ControllerItem>();
 }
 
 
