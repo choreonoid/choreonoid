@@ -18,6 +18,7 @@ set(sources
   View.cpp
   MessageView.cpp
   ItemManager.cpp
+  ItemClassIdRegistry.cpp
   Item.cpp
   RootItem.cpp
   ItemList.cpp
@@ -196,6 +197,7 @@ set(headers
   TimeSyncItemEngine.h
   GraphBar.h
   ItemManager.h
+  ItemClassIdRegistry.h
   AppConfig.h
   AppUtil.h
   Archive.h

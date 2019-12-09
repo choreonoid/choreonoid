@@ -91,6 +91,20 @@ CheckEntry::CheckEntry(const CheckEntry& org)
 {
 
 }
+
+#include "MenuManager.h"
+#include "ItemClassIdRegistry.h"
+#include <fmt/format.h>
+static void putItemTreeWithPolymorphicIds()
+{
+    auto registry = ItemClassIdRegistry::instance();
+    cout << "Number of item classes: " << registry->numRegisteredClasses() << endl;
+    for(auto& item : RootItem::instance()->descendantItems()){
+        int id = item->polymorphicId();
+        cout << fmt::format("{}: id {} : {}",
+                            item->name(), id, registry->superClassId(id)) << endl;
+    }
+}
     
 
 void RootItem::initializeClass(ExtensionManager* ext)
@@ -100,6 +114,10 @@ void RootItem::initializeClass(ExtensionManager* ext)
         ext->itemManager().registerClass<RootItem>(N_("RootItem"));
         ext->manage(RootItemPtr(mainInstance()));
         initialized = true;
+
+        // debug
+        ext->menuManager().setPath("/Options").addItem("Polymorphic id test")->sigTriggered().connect(
+            [](){ putItemTreeWithPolymorphicIds(); });
     }
 }
 

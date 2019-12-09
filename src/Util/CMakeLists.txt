@@ -11,7 +11,7 @@ set(sources
   Config.cpp
   Referenced.cpp
   CloneMap.cpp # This must be before any class using CloneMap::getFlagId.
-  PolymorphicIdManager.cpp
+  HierarchicalClassIdRegistry.cpp
   ConnectionSet.cpp
   FileUtil.cpp
   ExecutablePath.cpp
@@ -94,10 +94,10 @@ set(headers
   Referenced.h
   CloneMap.h
   CloneableReferenced.h
+  HierarchicalClassIdRegistry.h
+  PolymorphicFunctionSet.h
   PolymorphicReferencedArray.h
   PolymorphicPointerArray.h
-  PolymorphicIdManager.h
-  PolymorphicFunctionSet.h
   Signal.h
   ConnectionSet.h
   Exception.h
