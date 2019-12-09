@@ -488,6 +488,17 @@ bool ItemManager::getClassIdentifier(ItemPtr item, std::string& out_moduleName, 
 }
 
 
+int ItemManager::getPolymorphicId(const Item* item)
+{
+    int id = polymorphicIdManager.findPolymorphicId(item);
+    if(id < 0){
+        // Returns the id of the base type if the target type is not registered
+        id = 0;
+    }
+    return id;
+}
+
+
 Item* ItemManager::getSingletonInstance(const std::string& typeId)
 {
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);

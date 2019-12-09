@@ -151,6 +151,8 @@ Item::Impl::Impl(Item* self, const Impl& org)
 
 void Item::Impl::initialize()
 {
+    self->polymorphicId_ = -1;
+    
     self->parent_ = nullptr;
     lastChild = nullptr;
     self->prevItem_ = nullptr;
@@ -185,6 +187,12 @@ Item::~Item()
 Item::Impl::~Impl()
 {
     
+}
+
+
+void Item::validatePolymorphicId() const
+{
+    polymorphicId_ = ItemManager::getPolymorphicId(this);
 }
 
 

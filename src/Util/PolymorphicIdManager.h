@@ -35,7 +35,9 @@ public:
         return registerTypeAsTypeInfo(typeid(TargetType), typeid(SuperType));
     }
 
-    int findPolymorphicId(BaseType* object) const;
+    int findPolymorphicId(const BaseType* object) const {
+        return PolymorphicIdManagerBase::findPolymorphicId(typeid(*object));
+    }
 };
 
 }

@@ -120,8 +120,9 @@ public:
         return *this;
     }
 
-    
     static bool getClassIdentifier(ItemPtr item, std::string& out_moduleName, std::string& out_className);
+
+    static int getPolymorphicId(const Item* item);
 
     template <class ItemType> static ItemType* singletonInstance() {
         return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType).name()));
