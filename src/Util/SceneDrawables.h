@@ -490,7 +490,7 @@ public:
     SgTexture* getOrCreateTexture();
 
 protected:
-    SgShape(int polymorhicId);
+    SgShape(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
@@ -504,7 +504,7 @@ typedef ref_ptr<SgShape> SgShapePtr;
 class CNOID_EXPORT SgPlot : public SgNode
 {
 protected:
-    SgPlot(int polymorhicId);
+    SgPlot(int classId);
     SgPlot(const SgPlot& org, CloneMap* cloneMap = nullptr);
     ~SgPlot();
     
@@ -573,7 +573,7 @@ public:
     double pointSize() const { return pointSize_; }
 
 protected:
-    SgPointSet(int polymorhicId);
+    SgPointSet(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
@@ -631,7 +631,7 @@ public:
     float lineWidth() const { return lineWidth_; }
 
 protected:
-    SgLineSet(int polymorhicId);
+    SgLineSet(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
@@ -660,7 +660,7 @@ public:
     virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
 
 protected:
-    SgOverlay(int polymorhicId);
+    SgOverlay(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 

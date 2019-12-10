@@ -7,7 +7,7 @@
 #define CNOID_UTIL_SCENE_RENDERER_H
 
 #include "SceneGraph.h"
-#include "PolymorphicFunctionSet.h"
+#include "PolymorphicSceneNodeFunctionSet.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -31,9 +31,10 @@ public:
     virtual SgGroup* scene() = 0;
     virtual void clearScene();
 
-    typedef PolymorphicFunctionSet<SgNode> NodeFunctionSet;
+    //! \deprecated. USe PolymorphicSceneNodeFunctionSet
+    typedef PolymorphicSceneNodeFunctionSet NodeFunctionSet;
 
-    virtual NodeFunctionSet* renderingFunctions() = 0;
+    virtual PolymorphicSceneNodeFunctionSet* renderingFunctions() = 0;
     virtual void renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction) = 0;
     virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) = 0;
 

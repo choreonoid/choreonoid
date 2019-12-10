@@ -4,6 +4,7 @@
 */
 
 #include "SceneGraph.h"
+#include "SceneNodeClassRegistry.h"
 #include "CloneMap.h"
 #include "Exception.h"
 #include <unordered_map>
@@ -104,74 +105,34 @@ void SgObject::removeParent(SgObject* parent)
 }
 
 
-namespace {
-std::mutex polymorphicIdMutex;
-typedef std::unordered_map<std::type_index, int> PolymorphicIdMap;
-PolymorphicIdMap polymorphicIdMap;
-std::vector<int> superTypePolymorphicIdMap;
-}
-
 int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_info& superType)
 {
-    std::lock_guard<std::mutex> guard(polymorphicIdMutex);
-
-    int superTypeId;
-    PolymorphicIdMap::iterator iter = polymorphicIdMap.find(superType);
-    if(iter == polymorphicIdMap.end()){
-        superTypeId = polymorphicIdMap.size();
-        polymorphicIdMap[superType] = superTypeId;
-    } else {
-        superTypeId = iter->second;
-    }
-    int id;
-    if(nodeType == superType){
-        id = superTypeId;
-    } else {
-        id = polymorphicIdMap.size();
-        polymorphicIdMap[nodeType] = id;
-        if(id >= static_cast<int>(superTypePolymorphicIdMap.size())){
-            superTypePolymorphicIdMap.resize(id + 1, -1);
-        }
-        superTypePolymorphicIdMap[id] = superTypeId;
-    }
-
-    return id;
+    return SceneNodeClassRegistry::instance()->registerClassAsTypeInfo(nodeType, superType);
 }
+
 
 int SgNode::findPolymorphicId(const std::type_info& nodeType)
 {
-    std::lock_guard<std::mutex> guard(polymorphicIdMutex);
-
-    auto iter = polymorphicIdMap.find(nodeType);
-    if(iter != polymorphicIdMap.end()){
-        return iter->second;
-    }
-    return -1;
+    return SceneNodeClassRegistry::instance()->classId(nodeType);
 }
 
 
-int SgNode::findSuperTypePolymorphicId(int polymorhicId)
+/*
+int SgNode::findSuperTypePolymorphicId(int classId)
 {
-    std::lock_guard<std::mutex> guard(polymorphicIdMutex);
-    return superTypePolymorphicIdMap[polymorhicId];
+    return SceneNodeClassRegistry::instance()->superClassId(classId);
 }
-
-
-int SgNode::numPolymorphicTypes()
-{
-    std::lock_guard<std::mutex> guard(polymorphicIdMutex);
-    return polymorphicIdMap.size();
-}
+*/
 
 
 SgNode::SgNode()
 {
-    polymorhicId_ = findPolymorphicId<SgNode>();
+    classId_ = findPolymorphicId<SgNode>();
 }
 
 
-SgNode::SgNode(int polymorhicId)
-    : polymorhicId_(polymorhicId)
+SgNode::SgNode(int classId)
+    : classId_(classId)
 {
 
 }
@@ -179,7 +140,7 @@ SgNode::SgNode(int polymorhicId)
 
 SgNode::SgNode(const SgNode& org)
     : SgObject(org),
-      polymorhicId_(org.polymorhicId_)
+      classId_(org.classId_)
 {
 
 }
@@ -261,8 +222,8 @@ SgGroup::SgGroup()
 }
 
 
-SgGroup::SgGroup(int polymorhicId)
-    : SgNode(polymorhicId)
+SgGroup::SgGroup(int classId)
+    : SgNode(classId)
 {
     isBboxCacheValid = false;
 }
@@ -491,8 +452,8 @@ Referenced* SgInvariantGroup::doClone(CloneMap* cloneMap) const
 }
 
 
-SgTransform::SgTransform(int polymorhicId)
-    : SgGroup(polymorhicId)
+SgTransform::SgTransform(int classId)
+    : SgGroup(classId)
 {
 
 }
@@ -514,8 +475,8 @@ const BoundingBox& SgTransform::untransformedBoundingBox() const
 }
 
 
-SgPosTransform::SgPosTransform(int polymorhicId)
-    : SgTransform(polymorhicId),
+SgPosTransform::SgPosTransform(int classId)
+    : SgTransform(classId),
       T_(Affine3::Identity())
 {
 
@@ -573,8 +534,8 @@ void SgPosTransform::getTransform(Affine3& out_T) const
 }
 
 
-SgScaleTransform::SgScaleTransform(int polymorhicId)
-    : SgTransform(polymorhicId)
+SgScaleTransform::SgScaleTransform(int classId)
+    : SgTransform(classId)
 {
     scale_.setOnes();
 }
@@ -609,8 +570,8 @@ Referenced* SgScaleTransform::doClone(CloneMap* cloneMap) const
 }
         
 
-SgAffineTransform::SgAffineTransform(int polymorhicId)
-    : SgTransform(polymorhicId),
+SgAffineTransform::SgAffineTransform(int classId)
+    : SgTransform(classId),
       T_(Affine3::Identity())
 {
 
@@ -739,8 +700,8 @@ Referenced* SgUnpickableGroup::doClone(CloneMap* cloneMap) const
 }
 
 
-SgPreprocessed::SgPreprocessed(int polymorhicId)
-    : SgNode(polymorhicId)
+SgPreprocessed::SgPreprocessed(int classId)
+    : SgNode(classId)
 {
 
 }

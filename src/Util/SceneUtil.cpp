@@ -4,7 +4,7 @@
 
 #include "SceneUtil.h"
 #include "SceneDrawables.h"
-#include "PolymorphicFunctionSet.h"
+#include "PolymorphicSceneNodeFunctionSet.h"
 #include "CloneMap.h"
 
 using namespace std;
@@ -58,7 +58,7 @@ Affine3 cnoid::calcTotalTransform(SgNodePath::const_iterator begin, SgNodePath::
 
 namespace {
 
-class Transparenter : PolymorphicFunctionSet<SgNode>
+class Transparenter : PolymorphicSceneNodeFunctionSet
 {
 public:
     CloneMap& cloneMap;

@@ -425,7 +425,7 @@ void SceneBar::sceneWidget(vector<SceneWidget*>& widget)
 
 namespace {
 
-class SceneCounter : public PolymorphicFunctionSet<SgNode>
+class SceneCounter : public PolymorphicSceneNodeFunctionSet
 {
 public:
     int numVertices;

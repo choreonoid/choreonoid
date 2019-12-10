@@ -8,7 +8,6 @@
 #include "SceneCameras.h"
 #include "SceneLights.h"
 #include "SceneEffects.h"
-#include "PolymorphicFunctionSet.h"
 #include <cnoid/stdx/variant>
 #include <set>
 #include <unordered_map>
@@ -55,7 +54,7 @@ struct PreproNode
 
 class PreproTreeExtractor
 {
-    PolymorphicFunctionSet<SgNode> functions;
+    PolymorphicSceneNodeFunctionSet functions;
     PreproNode* node;
     bool found;
 

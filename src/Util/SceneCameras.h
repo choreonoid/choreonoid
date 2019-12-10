@@ -14,7 +14,7 @@ namespace cnoid {
 class CNOID_EXPORT SgCamera : public SgPreprocessed
 {
 protected:
-    SgCamera(int polymorhicId);
+    SgCamera(int classId);
     SgCamera(const SgCamera& org);
         
 public:
@@ -56,7 +56,7 @@ typedef ref_ptr<SgCamera> SgCameraPtr;
 class CNOID_EXPORT SgPerspectiveCamera : public SgCamera
 {
 protected:
-    SgPerspectiveCamera(int polymorhicId);
+    SgPerspectiveCamera(int classId);
     
 public:
     SgPerspectiveCamera();
@@ -83,7 +83,7 @@ typedef ref_ptr<SgPerspectiveCamera> SgPerspectiveCameraPtr;
 class CNOID_EXPORT SgOrthographicCamera : public SgCamera
 {
 protected:
-    SgOrthographicCamera(int polymorhicId);
+    SgOrthographicCamera(int classId);
     
 public:
     SgOrthographicCamera();

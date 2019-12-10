@@ -68,7 +68,7 @@ Signal<void()> sigVSyncModeChanged;
 bool isLowMemoryConsumptionMode;
 Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
-class EditableExtractor : public PolymorphicFunctionSet<SgNode>
+class EditableExtractor : public PolymorphicSceneNodeFunctionSet
 {
 public:
     vector<SgNode*> editables;

@@ -5,7 +5,7 @@
 
 #include "MeshExtractor.h"
 #include "SceneDrawables.h"
-#include "PolymorphicFunctionSet.h"
+#include "PolymorphicSceneNodeFunctionSet.h"
 
 using namespace cnoid;
 
@@ -16,7 +16,7 @@ class MeshExtractorImpl
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    PolymorphicFunctionSet<SgNode> functions;
+    PolymorphicSceneNodeFunctionSet functions;
     std::function<void()> callback1;
     std::function<void(SgMesh* mesh)> callback2;
     SgMesh* currentMesh;

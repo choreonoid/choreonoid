@@ -554,8 +554,8 @@ void SgPolygonMesh::updateBoundingBox()
 }
 
 
-SgShape::SgShape(int polymorhicId)
-    : SgNode(polymorhicId)
+SgShape::SgShape(int classId)
+    : SgNode(classId)
 {
 
 }
@@ -705,8 +705,8 @@ SgTexture* SgShape::getOrCreateTexture()
 }
 
 
-SgPlot::SgPlot(int polymorhicId)
-    : SgNode(polymorhicId)
+SgPlot::SgPlot(int classId)
+    : SgNode(classId)
 {
 
 }
@@ -898,8 +898,8 @@ SgColorArray* SgPlot::getOrCreateColors()
 }
 
 
-SgPointSet::SgPointSet(int polymorhicId)
-    : SgPlot(polymorhicId)
+SgPointSet::SgPointSet(int classId)
+    : SgPlot(classId)
 {
     pointSize_ = 0.0;
 }
@@ -925,8 +925,8 @@ Referenced* SgPointSet::doClone(CloneMap* cloneMap) const
 }
 
 
-SgLineSet::SgLineSet(int polymorhicId)
-    : SgPlot(polymorhicId)
+SgLineSet::SgLineSet(int classId)
+    : SgPlot(classId)
 {
     lineWidth_ = 0.0;
 }
@@ -952,8 +952,8 @@ Referenced* SgLineSet::doClone(CloneMap* cloneMap) const
 }
     
 
-SgOverlay::SgOverlay(int polymorhicId)
-    : SgGroup(polymorhicId)
+SgOverlay::SgOverlay(int classId)
+    : SgGroup(classId)
 {
 
 }

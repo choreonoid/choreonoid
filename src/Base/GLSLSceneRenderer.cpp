@@ -228,7 +228,7 @@ public:
         
     GLSLSceneRenderer* self;
 
-    PolymorphicFunctionSet<SgNode> renderingFunctions;
+    PolymorphicSceneNodeFunctionSet renderingFunctions;
 
     GLuint defaultFBO;
     GLuint fboForPicking;

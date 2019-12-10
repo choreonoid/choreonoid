@@ -7,6 +7,7 @@
 #include "RootItem.h"
 #include "ItemPath.h"
 #include "ItemManager.h"
+#include "ItemClassRegistry.h"
 #include "PutPropertyFunction.h"
 #include <cnoid/stdx/filesystem>
 #include <typeinfo>
@@ -192,7 +193,7 @@ Item::Impl::~Impl()
 
 void Item::validatePolymorphicId() const
 {
-    polymorphicId_ = ItemManager::getPolymorphicId(this);
+    polymorphicId_ = ItemClassRegistry::instance()->classId(this);
 }
 
 

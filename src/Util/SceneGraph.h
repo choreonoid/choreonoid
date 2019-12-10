@@ -127,37 +127,13 @@ typedef std::vector<SgNode*> SgNodePath;
 
 class CNOID_EXPORT SgNode : public SgObject
 {
-    static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);
-
-    int polymorhicId_;
-
 public:
     SgNode();
     SgNode(const SgNode& org);
-
-    template <class NodeType, class SuperType> struct registerType {
-        registerType() {
-            SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
-        }
-    };
-
-    template <class NodeType, class SuperType> int registerType_() {
-        return SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
-    }
-    
-    static int findPolymorphicId(const std::type_info& nodeType);
-    
-    template <class NodeType> static int findPolymorphicId() {
-        return findPolymorphicId(typeid(NodeType));
-    }
-
-    static int findSuperTypePolymorphicId(int polymorhicId);
-    static int numPolymorphicTypes();
-        
     ~SgNode();
-    int polymorhicId() const { return polymorhicId_; }
-    virtual const BoundingBox& boundingBox() const;
 
+    int classId() const { return classId_; }
+    
     SgNode* cloneNode() const {
         return static_cast<SgNode*>(this->clone());
     }
@@ -165,13 +141,51 @@ public:
         return static_cast<SgNode*>(this->clone(cloneMap));
     }
 
+    virtual const BoundingBox& boundingBox() const;
     virtual bool isGroup() const;
 
     SgNodePath findNode(const std::string& name, Affine3& out_T);
 
+    //! \deprecated Use SgNode::classId
+    int polymorhicId() const { return classId_; }
+        
+    //! \deprecated Use SceneNodeClassRegistry::registerClass
+    template <class NodeType, class SuperType>
+    struct registerType {
+        registerType() {
+            SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
+        }
+    };
+
+    //! \deprecated Use SceneNodeClassRegistry::registerClass
+    /*
+    template <class NodeType, class SuperType> int registerType_() {
+        return SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
+    }
+    */
+    
+    //! \deprecated Use SceneNodeClassRegistry::classId
+    static int findPolymorphicId(const std::type_info& nodeType);
+    
+    //! \deprecated Use SceneNodeClassRegistry::classId
+    template <class NodeType> static int findPolymorphicId() {
+        return findPolymorphicId(typeid(NodeType));
+    }
+
+    // Use SceneNodeClassRegistry::superClassId
+    //static int findSuperTypePolymorphicId(int polymorhicId);
+
+    // Use SceneNodeClassRegistry::numRegisteredClasses
+    //static int numPolymorphicTypes();
+
 protected:
     SgNode(int polymorhicId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    int classId_;
+
+    static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);
 };
 
 

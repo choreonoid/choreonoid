@@ -5,7 +5,7 @@
 #include "ItemManager.h"
 #include "Item.h"
 #include "RootItem.h"
-#include "ItemClassIdRegistry.h"
+#include "ItemClassRegistry.h"
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
@@ -163,7 +163,7 @@ public:
 
 namespace {
 
-ItemClassIdRegistry* itemClassIdRegistry = nullptr;
+ItemClassRegistry* itemClassRegistry = nullptr;
 
 class DefaultCreationPanel : public ItemCreationPanel
 {
@@ -276,7 +276,7 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
 {
     if(!isStaticMembersInitialized){
 
-        itemClassIdRegistry = ItemClassIdRegistry::instance();
+        itemClassRegistry = ItemClassRegistry::instance();
 
         menuManager.setPath("/File").setPath(N_("New ..."));
         
@@ -434,7 +434,7 @@ void ItemManager::registerClassSub
     if(factory || singletonInstance){
         impl->registerClass(factory, singletonInstance, type.name(), className);
     }
-    itemClassIdRegistry->registerClassAsTypeInfo(type, superType);
+    itemClassRegistry->registerClassAsTypeInfo(type, superType);
 }
 
 
@@ -487,17 +487,6 @@ bool ItemManager::getClassIdentifier(ItemPtr item, std::string& out_moduleName, 
     }
 
     return result;
-}
-
-
-int ItemManager::getPolymorphicId(const Item* item)
-{
-    int id = itemClassIdRegistry->classId(item);
-    if(id < 0){
-        // Returns the id of the base type if the target type is not registered
-        id = 0;
-    }
-    return id;
 }
 
 

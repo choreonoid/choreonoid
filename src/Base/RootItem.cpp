@@ -93,11 +93,11 @@ CheckEntry::CheckEntry(const CheckEntry& org)
 }
 
 #include "MenuManager.h"
-#include "ItemClassIdRegistry.h"
+#include "ItemClassRegistry.h"
 #include <fmt/format.h>
 static void putItemTreeWithPolymorphicIds()
 {
-    auto registry = ItemClassIdRegistry::instance();
+    auto registry = ItemClassRegistry::instance();
     cout << "Number of item classes: " << registry->numRegisteredClasses() << endl;
     for(auto& item : RootItem::instance()->descendantItems()){
         int id = item->polymorphicId();

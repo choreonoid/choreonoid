@@ -27,7 +27,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual void setOutputStream(std::ostream& os) override;
 
-    virtual NodeFunctionSet* renderingFunctions() override;
+    virtual PolymorphicSceneNodeFunctionSet* renderingFunctions() override;
     virtual void renderCustomGroup(SgGroup* transform, std::function<void()> traverseFunction) override;
     virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) override;
 

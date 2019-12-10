@@ -11,7 +11,7 @@ set(sources
   Config.cpp
   Referenced.cpp
   CloneMap.cpp # This must be before any class using CloneMap::getFlagId.
-  HierarchicalClassIdRegistry.cpp
+  HierarchicalClassRegistry.cpp
   ConnectionSet.cpp
   FileUtil.cpp
   ExecutablePath.cpp
@@ -45,6 +45,8 @@ set(sources
   CoordinateFrameSetGroup.cpp
   MultiCoordinateFrameSet.cpp
   BoundingBox.cpp
+  SceneNodeClassRegistry.cpp # This must be before any scene graph classes
+  PolymorphicSceneNodeFunctionSet.cpp
   SceneGraph.cpp
   SceneDrawables.cpp
   SceneCameras.cpp
@@ -94,7 +96,7 @@ set(headers
   Referenced.h
   CloneMap.h
   CloneableReferenced.h
-  HierarchicalClassIdRegistry.h
+  HierarchicalClassRegistry.h
   PolymorphicFunctionSet.h
   PolymorphicReferencedArray.h
   PolymorphicPointerArray.h
@@ -147,6 +149,8 @@ set(headers
   CoordinateFrameSetGroup.h
   MultiCoordinateFrameSet.h
   BoundingBox.h
+  SceneNodeClassRegistry.h
+  PolymorphicSceneNodeFunctionSet.h
   SceneGraph.h
   SceneDrawables.h
   SceneCameras.h

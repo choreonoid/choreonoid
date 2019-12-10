@@ -9,8 +9,8 @@ using namespace std;
 using namespace cnoid;
 
 
-SgCamera::SgCamera(int polymorhicId)
-    : SgPreprocessed(polymorhicId)
+SgCamera::SgCamera(int classId)
+    : SgPreprocessed(classId)
 {
     nearClipDistance_ = 0.04;
     farClipDistance_ = 200.0;
@@ -43,8 +43,8 @@ Affine3 SgCamera::positionLookingAt(const Vector3& eye, const Vector3& center, c
 }
 
 
-SgPerspectiveCamera::SgPerspectiveCamera(int polymorhicId)
-    : SgCamera(polymorhicId)
+SgPerspectiveCamera::SgPerspectiveCamera(int classId)
+    : SgCamera(classId)
 {
     fieldOfView_ = 0.785398;
 }
@@ -83,8 +83,8 @@ double SgPerspectiveCamera::fovy(double aspectRatio, double fieldOfView)
 }
 
 
-SgOrthographicCamera::SgOrthographicCamera(int polymorhicId)
-    : SgCamera(polymorhicId)
+SgOrthographicCamera::SgOrthographicCamera(int classId)
+    : SgCamera(classId)
 {
     height_ = 2.0;
 }

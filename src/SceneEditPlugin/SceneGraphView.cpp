@@ -8,7 +8,7 @@
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
 #include <cnoid/SceneMarkers>
-#include <cnoid/PolymorphicFunctionSet>
+#include <cnoid/PolymorphicSceneNodeFunctionSet>
 #include <cnoid/TreeWidget>
 #include <cnoid/SceneView>
 #include <cnoid/ViewManager>
@@ -64,7 +64,7 @@ public:
 
     SceneGraphView* self;
 
-    PolymorphicFunctionSet<SgNode> visitor;
+    PolymorphicSceneNodeFunctionSet visitor;
     
     SgNode* sceneRoot;
     SgvItem* rootItem;
