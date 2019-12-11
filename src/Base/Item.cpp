@@ -403,30 +403,40 @@ void Item::setChecked(int checkId, bool on)
         }
         impl->checkStates.resize(checkId + 1, false);
     }
+
     bool current = impl->checkStates[checkId];
+    
     if(on != current){
-        impl->checkStates[checkId] = on;
-        impl->checkIdToSignalMap[checkId](on);
-        impl->sigAnyCheckToggled(checkId, on);
+
         if(!root){
             root = findRootItem();
         }
+
+        bool doEmitSigLogicalSumOfAllChecksToggled = false;
+        int n = std::min(root->numCheckEntries(), (int)impl->checkStates.size());
+        bool wasAnyChecked = false;
+        for(int i=0; i < n; ++i){
+            if(impl->checkStates[i]){
+                wasAnyChecked = true;
+                break;
+            }
+        }
+        if(on != wasAnyChecked){
+            doEmitSigLogicalSumOfAllChecksToggled = true;
+        }
+        
+        impl->checkStates[checkId] = on;
+        impl->checkIdToSignalMap[checkId](on);
+        impl->sigAnyCheckToggled(checkId, on);
+
+        if(doEmitSigLogicalSumOfAllChecksToggled){
+            impl->sigLogicalSumOfAllChecksToggled(on);
+        }
+            
         if(root){
             root->emitSigCheckToggled(this, checkId, on);
-            
-            if(!impl->sigLogicalSumOfAllChecksToggled.empty()){
-                int n = std::min(root->numCheckEntries(), (int)impl->checkStates.size());
-                bool wasAnyChecked = false;
-                for(int i=0; i < n; ++i){
-                    if(impl->checkStates[i]){
-                        wasAnyChecked = true;
-                        break;
-                    }
-                }
-                if(on != wasAnyChecked){
-                    impl->sigLogicalSumOfAllChecksToggled(on);
-                    root->emitSigCheckToggled(this, LogicalSumOfAllChecks, on);
-                }
+            if(doEmitSigLogicalSumOfAllChecksToggled){
+                root->emitSigCheckToggled(this, LogicalSumOfAllChecks, on);
             }
         }
     }
