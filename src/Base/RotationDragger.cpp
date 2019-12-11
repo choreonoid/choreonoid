@@ -3,6 +3,7 @@
 */
 
 #include "RotationDragger.h"
+#include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneRenderer>
@@ -27,7 +28,7 @@ class SgViewpointDependentSelector : public SgGroup
     
 public:
     SgViewpointDependentSelector()
-        : SgGroup(findPolymorphicId<SgViewpointDependentSelector>()) {
+        : SgGroup(findClassId<SgViewpointDependentSelector>()) {
         axis = Vector3::UnitX();
         thresh = cos(radian(45.0));
     }
@@ -67,9 +68,9 @@ public:
 };
 
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<SgViewpointDependentSelector, SgGroup>();
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        SceneNodeClassRegistry::instance().registerClass<SgViewpointDependentSelector, SgGroup>();
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){

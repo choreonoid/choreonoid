@@ -4,6 +4,7 @@
 */
 
 #include "SceneCameras.h"
+#include "SceneNodeClassRegistry.h"
 
 using namespace std;
 using namespace cnoid;
@@ -51,7 +52,7 @@ SgPerspectiveCamera::SgPerspectiveCamera(int classId)
 
 
 SgPerspectiveCamera::SgPerspectiveCamera()
-    : SgPerspectiveCamera(findPolymorphicId<SgPerspectiveCamera>())
+    : SgPerspectiveCamera(findClassId<SgPerspectiveCamera>())
 {
 
 }
@@ -91,7 +92,7 @@ SgOrthographicCamera::SgOrthographicCamera(int classId)
 
 
 SgOrthographicCamera::SgOrthographicCamera()
-    : SgOrthographicCamera(findPolymorphicId<SgOrthographicCamera>())
+    : SgOrthographicCamera(findClassId<SgOrthographicCamera>())
 {
 
 }
@@ -112,11 +113,12 @@ Referenced* SgOrthographicCamera::doClone(CloneMap*) const
 
 namespace {
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<SgCamera, SgPreprocessed>();
-        SgNode::registerType<SgPerspectiveCamera, SgCamera>();
-        SgNode::registerType<SgOrthographicCamera, SgCamera>();
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        SceneNodeClassRegistry::instance()
+            .registerClass<SgCamera, SgPreprocessed>()
+            .registerClass<SgPerspectiveCamera, SgCamera>()
+            .registerClass<SgOrthographicCamera, SgCamera>();
     }
 } registration;
 

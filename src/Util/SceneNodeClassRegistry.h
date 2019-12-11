@@ -10,7 +10,7 @@ namespace cnoid {
 class CNOID_EXPORT SceneNodeClassRegistry : public HierarchicalClassRegistry<SgNode>
 {
 public:
-    static SceneNodeClassRegistry* instance();
+    static SceneNodeClassRegistry& instance();
 
 private:
     SceneNodeClassRegistry();

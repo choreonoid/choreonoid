@@ -13,7 +13,7 @@ namespace cnoid {
 class SceneParticles : public SgNode
 {
 protected:
-    SceneParticles(int polymorphicId);
+    SceneParticles(int classId);
     SceneParticles(const SceneParticles& org);
 
 public:

@@ -3,19 +3,20 @@
 */
 
 #include "InteractiveCameraTransform.h"
+#include <cnoid/SceneNodeClassRegistry>
 
 using namespace cnoid;
 
 
-InteractiveCameraTransform::InteractiveCameraTransform(int polymorhicId)
-    : SgPosTransform(polymorhicId)
+InteractiveCameraTransform::InteractiveCameraTransform(int classId)
+    : SgPosTransform(classId)
 {
     
 }
 
 
 InteractiveCameraTransform::InteractiveCameraTransform()
-    : InteractiveCameraTransform(findPolymorphicId<InteractiveCameraTransform>())
+    : InteractiveCameraTransform(findClassId<InteractiveCameraTransform>())
 {
     
 }
@@ -36,9 +37,9 @@ Referenced* InteractiveCameraTransform::doClone(CloneMap* cloneMap) const
 
 namespace {
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<InteractiveCameraTransform, SgPosTransform>();
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        SceneNodeClassRegistry::instance().registerClass<InteractiveCameraTransform, SgPosTransform>();
     }
 } registration;
 

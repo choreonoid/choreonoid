@@ -5,7 +5,7 @@ using namespace cnoid;
 
 
 PolymorphicSceneNodeFunctionSet::PolymorphicSceneNodeFunctionSet()
-    : PolymorphicFunctionSet<SgNode>(*SceneNodeClassRegistry::instance())
+    : PolymorphicFunctionSet<SgNode>(SceneNodeClassRegistry::instance())
 {
 
 }

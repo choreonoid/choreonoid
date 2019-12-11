@@ -5,6 +5,7 @@
 
 #include "SceneParticles.h"
 #include "ParticlesProgram.h"
+#include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/EigenUtil>
 
 using namespace std;
@@ -12,17 +13,17 @@ using namespace cnoid;
 
 namespace {
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<SceneParticles, SgNode>();
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        SceneNodeClassRegistry::instance().registerClass<SceneParticles, SgNode>();
     }
 } registration;
 
 }
 
 
-SceneParticles::SceneParticles(int polymorhicId)
-    : SgNode(polymorhicId)
+SceneParticles::SceneParticles(int classId)
+    : SgNode(classId)
 {
     time_ = 0.0f;
 }

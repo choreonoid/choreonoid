@@ -4,6 +4,7 @@
 */
 
 #include "SceneCollision.h"
+#include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneRenderer>
 
 using namespace std;
@@ -11,9 +12,9 @@ using namespace cnoid;
 
 namespace {
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<SceneCollision, SgLineSet>();
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        SceneNodeClassRegistry::instance().registerClass<SceneCollision, SgLineSet>();
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
@@ -30,7 +31,7 @@ struct NodeTypeRegistration {
 
 
 SceneCollision::SceneCollision(std::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs)
-    : SgLineSet(findPolymorphicId<SceneCollision>()),
+    : SgLineSet(findClassId<SceneCollision>()),
       collisionPairs(collisionPairs)
 {
     vertices_ = setVertices(new SgVertexArray);

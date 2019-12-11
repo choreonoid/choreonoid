@@ -3,6 +3,7 @@
 */
 
 #include "SceneBody.h"
+#include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneUtil>
 #include <cnoid/SceneRenderer>
@@ -24,7 +25,7 @@ public:
     bool hasClone;
     
     LinkShapeGroup(Link* link)
-        : SgGroup(findPolymorphicId<LinkShapeGroup>())
+        : SgGroup(findClassId<LinkShapeGroup>())
     {
         visualShape = link->visualShape();
         if(visualShape){
@@ -108,9 +109,9 @@ public:
 
 typedef ref_ptr<LinkShapeGroup> LinkShapeGroupPtr;
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration(){
-        SgNode::registerType<LinkShapeGroup, SgGroup>();
+struct NodeClassRegistration {
+    NodeClassRegistration(){
+        SceneNodeClassRegistry::instance().registerClass<LinkShapeGroup, SgGroup>();
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
                 renderer->renderingFunctions()->setFunction<LinkShapeGroup>(

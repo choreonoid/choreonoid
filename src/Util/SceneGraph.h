@@ -133,6 +133,10 @@ public:
     ~SgNode();
 
     int classId() const { return classId_; }
+    static int findClassId(const std::type_info& nodeType);
+    template <class NodeType> static int findClassId() {
+        return findClassId(typeid(NodeType));
+    }
     
     SgNode* cloneNode() const {
         return static_cast<SgNode*>(this->clone());
@@ -146,9 +150,6 @@ public:
 
     SgNodePath findNode(const std::string& name, Affine3& out_T);
 
-    //! \deprecated Use SgNode::classId
-    int polymorhicId() const { return classId_; }
-        
     //! \deprecated Use SceneNodeClassRegistry::registerClass
     template <class NodeType, class SuperType>
     struct registerType {
@@ -157,26 +158,10 @@ public:
         }
     };
 
-    //! \deprecated Use SceneNodeClassRegistry::registerClass
-    /*
-    template <class NodeType, class SuperType> int registerType_() {
-        return SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
-    }
-    */
-    
-    //! \deprecated Use SceneNodeClassRegistry::classId
-    static int findPolymorphicId(const std::type_info& nodeType);
-    
     //! \deprecated Use SceneNodeClassRegistry::classId
     template <class NodeType> static int findPolymorphicId() {
-        return findPolymorphicId(typeid(NodeType));
+        return findClassId(typeid(NodeType));
     }
-
-    // Use SceneNodeClassRegistry::superClassId
-    //static int findSuperTypePolymorphicId(int polymorhicId);
-
-    // Use SceneNodeClassRegistry::numRegisteredClasses
-    //static int numPolymorphicTypes();
 
 protected:
     SgNode(int polymorhicId);
@@ -185,7 +170,8 @@ protected:
 private:
     int classId_;
 
-    static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);
+    //! \deprecated
+    static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);    
 };
 
 

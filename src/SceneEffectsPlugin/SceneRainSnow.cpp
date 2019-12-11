@@ -6,6 +6,7 @@
 #include "SceneEffectsPlugin.h"
 #include "SceneRainSnow.h"
 #include "ParticlesProgram.h"
+#include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/EigenUtil>
 #include <cnoid/GLSLProgram>
 
@@ -33,9 +34,10 @@ public:
 
 struct Registration {
     Registration(){
-        SgNode::registerType<SceneRainSnowBase, SceneParticles>();
-        SgNode::registerType<SceneRain, SceneRainSnowBase>();
-        SgNode::registerType<SceneSnow, SceneRainSnowBase>();
+        SceneNodeClassRegistry::instance()
+            .registerClass<SceneRainSnowBase, SceneParticles>()
+            .registerClass<SceneRain, SceneRainSnowBase>()
+            .registerClass<SceneSnow, SceneRainSnowBase>();
 
         registerSceneEffectType<SceneRain, RainSnowProgram>();
         registerSceneEffectType<SceneSnow, RainSnowProgram>();
@@ -45,8 +47,8 @@ struct Registration {
 }
 
 
-SceneRainSnowBase::SceneRainSnowBase(int polymorphicId)
-    : SceneParticles(polymorphicId)
+SceneRainSnowBase::SceneRainSnowBase(int classId)
+    : SceneParticles(classId)
 {
     radius_ = 10.0f;
     top_ = 10.0f;
@@ -71,7 +73,7 @@ ParticleSystem* SceneRainSnowBase::getParticleSystem()
 
 
 SceneRain::SceneRain()
-    : SceneRainSnowBase(findPolymorphicId<SceneRain>())
+    : SceneRainSnowBase(findClassId<SceneRain>())
 {
     setVelocity(Vector3f(0.0f, 0.0f, -5.0f));
     setTexture(":/SceneEffectsPlugin/texture/rain.png");
@@ -92,7 +94,7 @@ Referenced* SceneRain::doClone(CloneMap*) const
 
 
 SceneSnow::SceneSnow()
-    : SceneRainSnowBase(findPolymorphicId<SceneSnow>())
+    : SceneRainSnowBase(findClassId<SceneSnow>())
 {
     setVelocity(Vector3f(0.0f, 0.0f, -0.3f));
     setTexture(":/SceneEffectsPlugin/texture/snow.png");

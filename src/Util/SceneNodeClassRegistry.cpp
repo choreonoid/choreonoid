@@ -3,10 +3,10 @@
 using namespace cnoid;
 
 
-SceneNodeClassRegistry* SceneNodeClassRegistry::instance()
+SceneNodeClassRegistry& SceneNodeClassRegistry::instance()
 {
     static SceneNodeClassRegistry registry;
-    return &registry;
+    return registry;
 }
 
 

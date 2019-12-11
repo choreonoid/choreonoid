@@ -5,6 +5,7 @@
 
 #include "SceneDrawables.h"
 #include "CloneMap.h"
+#include "SceneNodeClassRegistry.h"
 
 using namespace std;
 using namespace cnoid;
@@ -13,13 +14,14 @@ namespace {
 
 const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<SgShape, SgNode>();
-        SgNode::registerType<SgPlot, SgNode>();
-        SgNode::registerType<SgPointSet, SgPlot>();
-        SgNode::registerType<SgLineSet, SgPlot>();
-        SgNode::registerType<SgOverlay, SgGroup>();
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        SceneNodeClassRegistry::instance()
+            .registerClass<SgShape, SgNode>()
+            .registerClass<SgPlot, SgNode>()
+            .registerClass<SgPointSet, SgPlot>()
+            .registerClass<SgLineSet, SgPlot>()
+            .registerClass<SgOverlay, SgGroup>();
     }
 } registration;
 
@@ -562,7 +564,7 @@ SgShape::SgShape(int classId)
 
 
 SgShape::SgShape()
-    : SgShape(findPolymorphicId<SgShape>())
+    : SgShape(findClassId<SgShape>())
 {
 
 }
@@ -906,7 +908,7 @@ SgPointSet::SgPointSet(int classId)
 
 
 SgPointSet::SgPointSet()
-    : SgPointSet(findPolymorphicId<SgPointSet>())
+    : SgPointSet(findClassId<SgPointSet>())
 {
 
 }
@@ -933,7 +935,7 @@ SgLineSet::SgLineSet(int classId)
 
 
 SgLineSet::SgLineSet()
-    : SgLineSet(findPolymorphicId<SgLineSet>())
+    : SgLineSet(findClassId<SgLineSet>())
 {
     lineWidth_ = 0.0;
 }
@@ -960,7 +962,7 @@ SgOverlay::SgOverlay(int classId)
 
 
 SgOverlay::SgOverlay()
-    : SgOverlay(findPolymorphicId<SgOverlay>())
+    : SgOverlay(findClassId<SgOverlay>())
 {
 
 }

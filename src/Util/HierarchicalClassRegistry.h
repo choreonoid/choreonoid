@@ -33,8 +33,9 @@ public:
     }
     
     template<class TargetClass, class SuperClass = BaseClass>
-    int registerClass() {
-        return registerClassAsTypeInfo(typeid(TargetClass), typeid(SuperClass));
+    HierarchicalClassRegistry<BaseClass>& registerClass() {
+        registerClassAsTypeInfo(typeid(TargetClass), typeid(SuperClass));
+        return *this;
     }
 
     template<class Object>

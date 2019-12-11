@@ -3,6 +3,7 @@
 */
 
 #include "CoordinateAxesOverlay.h"
+#include "SceneNodeClassRegistry.h"
 #include "SceneRenderer.h"
 #include "MeshGenerator.h"
 #include "EigenUtil.h"
@@ -11,9 +12,9 @@ using namespace cnoid;
 
 namespace {
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<CoordinateAxesOverlay, SgOverlay>();
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        SceneNodeClassRegistry::instance().registerClass<CoordinateAxesOverlay, SgOverlay>();
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
@@ -30,7 +31,7 @@ struct NodeTypeRegistration {
 
 
 CoordinateAxesOverlay::CoordinateAxesOverlay()
-    : SgOverlay(findPolymorphicId<CoordinateAxesOverlay>())
+    : SgOverlay(findClassId<CoordinateAxesOverlay>())
 {
     static const Vector3f colors[] = {
         { 1.0f, 0.0f, 0.0f },

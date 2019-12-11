@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PHENOMENON_PLUGIN_SCENE_RAIN_SNOW_H
-#define CNOID_PHENOMENON_PLUGIN_SCENE_RAIN_SNOW_H
+#ifndef CNOID_SCENE_EFFECTS_PLUGIN_SCENE_RAIN_SNOW_H
+#define CNOID_SCENE_EFFECTS_PLUGIN_SCENE_RAIN_SNOW_H
 
 #include "SceneParticles.h"
 #include "ParticleSystem.h"
@@ -13,7 +13,7 @@ namespace cnoid {
 class SceneRainSnowBase : public SceneParticles
 {
 protected:
-    SceneRainSnowBase(int polymorphicId);
+    SceneRainSnowBase(int classId);
     SceneRainSnowBase(const SceneRainSnowBase& org);
 
 public:

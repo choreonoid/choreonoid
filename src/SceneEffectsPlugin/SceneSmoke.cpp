@@ -6,6 +6,7 @@
 #include "SceneEffectsPlugin.h"
 #include "SceneSmoke.h"
 #include "ParticlesProgram.h"
+#include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/EigenUtil>
 #include <cnoid/GLSLProgram>
 
@@ -37,7 +38,7 @@ public:
 
 struct Registration {
     Registration(){
-        SgNode::registerType<SceneSmoke, SceneParticles>();
+        SceneNodeClassRegistry::instance().registerClass<SceneSmoke, SceneParticles>();
         registerSceneEffectType<SceneSmoke, SmokeProgram>();
     }
 } registration;
@@ -46,7 +47,7 @@ struct Registration {
 
 
 SceneSmoke::SceneSmoke()
-    : SceneParticles(findPolymorphicId<SceneSmoke>())
+    : SceneParticles(findClassId<SceneSmoke>())
 {
     setTexture(":/SceneEffectsPlugin/texture/smoke.png");
 }

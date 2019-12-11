@@ -6,6 +6,7 @@
 #include "SceneEffectsPlugin.h"
 #include "SceneFountain.h"
 #include "ParticlesProgram.h"
+#include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/EigenUtil>
 #include <cnoid/GLSLProgram>
 
@@ -40,7 +41,7 @@ public:
 
 struct Registration {
     Registration(){
-        SgNode::registerType<SceneFountain, SceneParticles>();
+        SceneNodeClassRegistry::instance().registerClass<SceneFountain, SceneParticles>();
         registerSceneEffectType<SceneFountain, FountainProgram>();
     }
 } registration;
@@ -50,7 +51,7 @@ struct Registration {
 
 
 SceneFountain::SceneFountain()
-    : SceneParticles(findPolymorphicId<SceneFountain>())
+    : SceneParticles(findClassId<SceneFountain>())
 {
     setTexture(":/SceneEffectsPlugin/texture/bluewater.png");
 }

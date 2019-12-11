@@ -105,29 +105,21 @@ void SgObject::removeParent(SgObject* parent)
 }
 
 
+int SgNode::findClassId(const std::type_info& nodeType)
+{
+    return SceneNodeClassRegistry::instance().classId(nodeType);
+}
+
+
 int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_info& superType)
 {
-    return SceneNodeClassRegistry::instance()->registerClassAsTypeInfo(nodeType, superType);
+    return SceneNodeClassRegistry::instance().registerClassAsTypeInfo(nodeType, superType);
 }
-
-
-int SgNode::findPolymorphicId(const std::type_info& nodeType)
-{
-    return SceneNodeClassRegistry::instance()->classId(nodeType);
-}
-
-
-/*
-int SgNode::findSuperTypePolymorphicId(int classId)
-{
-    return SceneNodeClassRegistry::instance()->superClassId(classId);
-}
-*/
 
 
 SgNode::SgNode()
 {
-    classId_ = findPolymorphicId<SgNode>();
+    classId_ = findClassId<SgNode>();
 }
 
 
@@ -216,7 +208,7 @@ SgNodePath SgNode::findNode(const std::string& name, Affine3& out_T)
 
 
 SgGroup::SgGroup()
-    : SgNode(findPolymorphicId<SgGroup>())
+    : SgNode(findClassId<SgGroup>())
 {
     isBboxCacheValid = false;
 }
@@ -433,7 +425,7 @@ void SgGroup::throwTypeMismatchError()
 
 
 SgInvariantGroup::SgInvariantGroup()
-    : SgGroup(findPolymorphicId<SgInvariantGroup>())
+    : SgGroup(findClassId<SgInvariantGroup>())
 {
 
 }
@@ -484,14 +476,14 @@ SgPosTransform::SgPosTransform(int classId)
 
 
 SgPosTransform::SgPosTransform()
-    : SgPosTransform(findPolymorphicId<SgPosTransform>())
+    : SgPosTransform(findClassId<SgPosTransform>())
 {
 
 }
 
 
 SgPosTransform::SgPosTransform(const Affine3& T)
-    : SgTransform(findPolymorphicId<SgPosTransform>()),
+    : SgTransform(findClassId<SgPosTransform>()),
       T_(T)
 {
 
@@ -542,14 +534,14 @@ SgScaleTransform::SgScaleTransform(int classId)
 
 
 SgScaleTransform::SgScaleTransform()
-    : SgScaleTransform(findPolymorphicId<SgScaleTransform>())
+    : SgScaleTransform(findClassId<SgScaleTransform>())
 {
 
 }
 
 
 SgScaleTransform::SgScaleTransform(const Vector3& scale)
-    : SgTransform(findPolymorphicId<SgScaleTransform>()),
+    : SgTransform(findClassId<SgScaleTransform>()),
       scale_(scale)
 {
 
@@ -579,14 +571,14 @@ SgAffineTransform::SgAffineTransform(int classId)
 
 
 SgAffineTransform::SgAffineTransform()
-    : SgAffineTransform(findPolymorphicId<SgAffineTransform>())
+    : SgAffineTransform(findClassId<SgAffineTransform>())
 {
 
 }
 
 
 SgAffineTransform::SgAffineTransform(const Affine3& T)
-    : SgTransform(findPolymorphicId<SgAffineTransform>()),
+    : SgTransform(findClassId<SgAffineTransform>()),
       T_(T)
 {
 
@@ -652,7 +644,7 @@ void SgScaleTransform::getTransform(Affine3& out_T) const
 
 
 SgSwitch::SgSwitch()
-    : SgGroup(findPolymorphicId<SgSwitch>())
+    : SgGroup(findClassId<SgSwitch>())
 {
     isTurnedOn_ = true;
 }
@@ -681,7 +673,7 @@ void SgSwitch::setTurnedOn(bool on, bool doNotify)
 
 
 SgUnpickableGroup::SgUnpickableGroup()
-    : SgGroup(findPolymorphicId<SgUnpickableGroup>())
+    : SgGroup(findClassId<SgUnpickableGroup>())
 {
 
 }
@@ -716,18 +708,18 @@ SgPreprocessed::SgPreprocessed(const SgPreprocessed& org)
 
 namespace {
 
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<SgNode, SgNode>();
-        SgNode::registerType<SgGroup, SgNode>();
-        SgNode::registerType<SgInvariantGroup, SgGroup>();
-        SgNode::registerType<SgTransform, SgGroup>();
-        SgNode::registerType<SgAffineTransform, SgTransform>();
-        SgNode::registerType<SgPosTransform, SgTransform>();
-        SgNode::registerType<SgScaleTransform, SgTransform>();
-        SgNode::registerType<SgSwitch, SgGroup>();
-        SgNode::registerType<SgUnpickableGroup, SgGroup>();
-        SgNode::registerType<SgPreprocessed, SgNode>();
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        SceneNodeClassRegistry::instance()
+            .registerClass<SgGroup, SgNode>()
+            .registerClass<SgInvariantGroup, SgGroup>()
+            .registerClass<SgTransform, SgGroup>()
+            .registerClass<SgAffineTransform, SgTransform>()
+            .registerClass<SgPosTransform, SgTransform>()
+            .registerClass<SgScaleTransform, SgTransform>()
+            .registerClass<SgSwitch, SgGroup>()
+            .registerClass<SgUnpickableGroup, SgGroup>()
+            .registerClass<SgPreprocessed, SgNode>();
     }
 } registration;
 

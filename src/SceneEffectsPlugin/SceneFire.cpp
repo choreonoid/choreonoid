@@ -6,6 +6,7 @@
 #include "SceneEffectsPlugin.h"
 #include "SceneFire.h"
 #include "ParticlesProgram.h"
+#include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/EigenUtil>
 #include <cnoid/GLSLProgram>
 
@@ -40,7 +41,7 @@ public:
 
 struct Registration {
     Registration(){
-        SgNode::registerType<SceneFire, SceneParticles>();
+        SceneNodeClassRegistry::instance().registerClass<SceneFire, SceneParticles>();
         registerSceneEffectType<SceneFire, FireProgram>();
     }
 } registration;
@@ -49,7 +50,7 @@ struct Registration {
 
 
 SceneFire::SceneFire()
-    : SceneParticles(findPolymorphicId<SceneFire>())
+    : SceneParticles(findClassId<SceneFire>())
 {
     setTexture(":/SceneEffectsPlugin/texture/fire.png");
 }
