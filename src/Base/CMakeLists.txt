@@ -20,6 +20,7 @@ set(sources
   ItemManager.cpp
   ItemClassRegistry.cpp
   Item.cpp
+  PolymorphicItemFunctionSet.cpp
   RootItem.cpp
   ItemList.cpp
   ItemPath.cpp
@@ -198,6 +199,7 @@ set(headers
   GraphBar.h
   ItemManager.h
   ItemClassRegistry.h
+  PolymorphicItemFunctionSet.h
   AppConfig.h
   AppUtil.h
   Archive.h

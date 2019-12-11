@@ -276,7 +276,7 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
 {
     if(!isStaticMembersInitialized){
 
-        itemClassRegistry = ItemClassRegistry::instance();
+        itemClassRegistry = &ItemClassRegistry::instance();
 
         menuManager.setPath("/File").setPath(N_("New ..."));
         

@@ -3,10 +3,10 @@
 using namespace cnoid;
 
 
-ItemClassRegistry* ItemClassRegistry::instance()
+ItemClassRegistry& ItemClassRegistry::instance()
 {
     static ItemClassRegistry registry;
-    return &registry;
+    return registry;
 }
 
 

@@ -41,9 +41,9 @@ public:
 
     Item& operator=(const Item& rhs) = delete;
 
-    int polymorphicId() const {
-        if(polymorphicId_ < 0) validatePolymorphicId();
-        return polymorphicId_;
+    int classId() const {
+        if(classId_ < 0) validateClassId();
+        return classId_;
     }
 
     //! Copy item properties as much as possible like the assignment operator
@@ -311,7 +311,7 @@ private:
     class Impl;
     Impl* impl;
 
-    mutable int polymorphicId_;
+    mutable int classId_;
     Item* parent_;
     ItemPtr firstChild_;
     ItemPtr nextItem_;
@@ -320,7 +320,7 @@ private:
     std::string name_;
     bool isSelected_;
 
-    void validatePolymorphicId() const;
+    void validateClassId() const;
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED

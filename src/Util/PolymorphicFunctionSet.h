@@ -26,17 +26,17 @@ private:
 public:
     PolymorphicFunctionSet(HierarchicalClassRegistry<ObjectBase>& registry)
         : registry(registry)
-   {
-        const int n = registry.numRegisteredClasses();
-        dispatchTable.resize(n);
-        isFixed.resize(n, false);
-        isDirty = true;
+    {
+        isDirty = false;
     }
 
-    template <class Object>
-    void setFunction(Function func)
+    bool empty() const {
+        return dispatchTable.empty();
+    }
+
+    void setFunction(const std::type_info& type, Function func)
     {
-        int id = registry.template classId<Object>();
+        int id = registry.template classId(type);
         if(id >= 0){
             if(id >= static_cast<int>(dispatchTable.size())){
                 dispatchTable.resize(id + 1);
@@ -46,6 +46,12 @@ public:
             isFixed[id] = true;
             isDirty = true;
         }
+    }
+
+    template <class Object>
+    void setFunction(Function func)
+    {
+        setFunction(typeid(Object), func);
     }
 
     template <class Object>

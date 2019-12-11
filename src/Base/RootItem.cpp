@@ -97,12 +97,12 @@ CheckEntry::CheckEntry(const CheckEntry& org)
 #include <fmt/format.h>
 static void putItemTreeWithPolymorphicIds()
 {
-    auto registry = ItemClassRegistry::instance();
-    cout << "Number of item classes: " << registry->numRegisteredClasses() << endl;
+    auto& registry = ItemClassRegistry::instance();
+    cout << "Number of item classes: " << registry.numRegisteredClasses() << endl;
     for(auto& item : RootItem::instance()->descendantItems()){
-        int id = item->polymorphicId();
+        int id = item->classId();
         cout << fmt::format("{}: id {} : {}",
-                            item->name(), id, registry->superClassId(id)) << endl;
+                            item->name(), id, registry.superClassId(id)) << endl;
     }
 }
     

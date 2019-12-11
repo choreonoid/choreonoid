@@ -1,5 +1,7 @@
 #include "ItemTreeView.h"
+#include "ItemManager.h"
 #include "ViewManager.h"
+#include "MenuManager.h"
 #include "ItemTreeWidget.h"
 #include "RootItem.h"
 #include <QBoxLayout>
@@ -17,6 +19,7 @@ public:
     ItemTreeWidget* itemTreeWidget;
 
     Impl(ItemTreeView* self);
+    void onContextMenuRequested(MenuManager& menuManager);
     void restoreState(const Archive& archive);
     void restoreItemStates(
         const Archive& archive, const char* key, std::function<void(Item*)> stateChangeFunc);
@@ -56,6 +59,9 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     auto vbox = new QVBoxLayout;
     vbox->addWidget(itemTreeWidget);
     self->setLayout(vbox);
+
+    itemTreeWidget->setContextMenuFunction(
+        [&](MenuManager& menuManager){ onContextMenuRequested(menuManager); });
 }
 
 
@@ -68,6 +74,66 @@ ItemTreeView::~ItemTreeView()
 void ItemTreeView::setExpanded(Item* item, bool on)
 {
     impl->itemTreeWidget->setExpanded(item, on);
+}
+
+
+void ItemTreeView::Impl::onContextMenuRequested(MenuManager& menuManager)
+{
+    menuManager.addItem(_("Cut"))
+        ->sigTriggered().connect([&](){
+                itemTreeWidget->cutSelectedItems();
+            });
+    
+    menuManager.addItem(_("Copy (single)"))
+        ->sigTriggered().connect([&](){
+                itemTreeWidget->copySelectedItems();
+            });
+    
+    menuManager.addItem(_("Copy (sub tree)"))
+        ->sigTriggered().connect([&](){
+                itemTreeWidget->copySelectedItemsWithSubTrees();
+            });
+    
+    menuManager.addItem(_("Paste"))
+        ->sigTriggered().connect([&](){
+                itemTreeWidget->pasteItems();
+            });
+
+    menuManager.addSeparator();
+    
+    menuManager.addItem(_("Check"))
+        ->sigTriggered().connect([&](){
+                itemTreeWidget->setSelectedItemsChecked(true);
+            });
+    
+    menuManager.addItem(_("Uncheck"))
+        ->sigTriggered().connect([&](){
+                itemTreeWidget->setSelectedItemsChecked(false);
+            });
+    
+    menuManager.addItem(_("Toggle checks"))
+        ->sigTriggered().connect([&](){
+                itemTreeWidget->toggleSelectedItemChecks();
+            });
+
+    menuManager.addSeparator();
+    
+    menuManager.addItem(_("Reload"))
+        ->sigTriggered().connect([&](){
+                ItemManager::reloadItems(itemTreeWidget->selectedItems());
+            });
+
+    menuManager.addSeparator();
+    
+    menuManager.addItem(_("Select all"))
+        ->sigTriggered().connect([=](){
+                itemTreeWidget->selectAllItems();
+            });
+    
+    menuManager.addItem(_("Clear selection"))
+        ->sigTriggered().connect([=](){
+                itemTreeWidget->clearSelection();
+            });
 }
 
 

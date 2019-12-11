@@ -1,5 +1,6 @@
 #include "ItemTreeWidget.h"
 #include "TreeWidget.h"
+#include "PolymorphicItemFunctionSet.h"
 #include "RootItem.h"
 #include "ProjectManager.h"
 #include "ItemManager.h"
@@ -61,9 +62,11 @@ public:
     stack<bool> projectLoadingWithItemExpansionInfoStack;
     
     ItemList<Item> copiedItems;
-    Menu* popupMenu;
     MenuManager menuManager;
     int fontPointSizeDiff;
+
+    function<void(MenuManager& menuManager)> contextMenuFunction;
+    PolymorphicItemFunctionSet polymorphicContextMenuFunctions;
 
     Impl(ItemTreeWidget* self, RootItem* rootItem);
     ~Impl();
@@ -85,7 +88,7 @@ public:
     void onSubTreeRemoved(Item* item, bool isMoving);
     void onItemAssigned(Item* assigned, Item* srcItem);
 
-    ItemList<> getSelectedItems();
+    ItemList<> getSelectedItems() const;
     void selectAllItems();
     void clearSelection();
     void setSelectedItemsChecked(bool on);
@@ -286,36 +289,6 @@ void ItemTreeWidget::Impl::initialize()
 
     isVisibleItem = [&](Item*, bool){ return true; };
     
-    popupMenu = new Menu(this);
-    menuManager.setTopMenu(popupMenu);
-
-    menuManager.addItem(_("Cut"))
-        ->sigTriggered().connect([&](){ cutSelectedItems(); });
-    menuManager.addItem(_("Copy (single)"))
-        ->sigTriggered().connect([&](){ copySelectedItems(); });
-    menuManager.addItem(_("Copy (sub tree)"))
-        ->sigTriggered().connect([&](){ copySelectedItemsWithSubTrees(); });
-    menuManager.addItem(_("Paste"))
-        ->sigTriggered().connect([&](){ pasteItems(); });
-
-    menuManager.addSeparator();
-    menuManager.addItem(_("Check"))
-        ->sigTriggered().connect([&](){ setSelectedItemsChecked(true); });
-    menuManager.addItem(_("Uncheck"))
-        ->sigTriggered().connect([&](){ setSelectedItemsChecked(false); });
-    menuManager.addItem(_("Toggle checks"))
-        ->sigTriggered().connect([&](){ toggleSelectedItemChecks(); });
-
-    menuManager.addSeparator();
-    menuManager.addItem(_("Reload"))
-        ->sigTriggered().connect([&](){ ItemManager::reloadItems(getSelectedItems()); });
-
-    menuManager.addSeparator();
-    menuManager.addItem(_("Select all"))
-        ->sigTriggered().connect([=](){ selectAllItems(); });
-    menuManager.addItem(_("Clear selection"))
-        ->sigTriggered().connect([=](){ clearSelection(); });
-
     fontPointSizeDiff = 0;
 }
 
@@ -611,7 +584,13 @@ void ItemTreeWidget::Impl::onItemAssigned(Item* assigned, Item* srcItem)
 }
 
 
-ItemList<> ItemTreeWidget::Impl::getSelectedItems()
+ItemList<> ItemTreeWidget::selectedItems() const
+{
+    return impl->getSelectedItems();
+}
+
+
+ItemList<> ItemTreeWidget::Impl::getSelectedItems() const
 {
     auto selectedTwItems = selectedItems();
     ItemList<> items;
@@ -625,12 +604,24 @@ ItemList<> ItemTreeWidget::Impl::getSelectedItems()
 }
 
 
+void ItemTreeWidget::selectAllItems()
+{
+    impl->selectAllItems();
+}
+
+
 void ItemTreeWidget::Impl::selectAllItems()
 {
     for(auto& kv : itemToItwItemMap){
         auto& item = kv.first;
         item->setSelected(true);
     }
+}
+
+
+void ItemTreeWidget::clearSelection()
+{
+    impl->clearSelection();
 }
 
 
@@ -642,11 +633,23 @@ void ItemTreeWidget::Impl::clearSelection()
 }
 
 
+void ItemTreeWidget::setSelectedItemsChecked(bool on)
+{
+    impl->setSelectedItemsChecked(on);
+}
+
+
 void ItemTreeWidget::Impl::setSelectedItemsChecked(bool on)
 {
     for(auto& item : getSelectedItems()){
         item->setChecked(on);
     }
+}
+
+
+void ItemTreeWidget::toggleSelectedItemChecks()
+{
+    impl->toggleSelectedItemChecks();
 }
 
 
@@ -680,6 +683,13 @@ void ItemTreeWidget::Impl::forEachTopItems
         }
     }
 }
+
+
+void ItemTreeWidget::copySelectedItems()
+{
+    impl->copySelectedItems();
+}
+
 
 
 void ItemTreeWidget::Impl::copySelectedItems()
@@ -721,6 +731,12 @@ void ItemTreeWidget::Impl::copySelectedItemsInSubTree
 }
 
 
+void ItemTreeWidget::copySelectedItemsWithSubTrees()
+{
+    impl->copySelectedItemsWithSubTrees();
+}
+
+
 void ItemTreeWidget::Impl::copySelectedItemsWithSubTrees()
 {
     copiedItems.clear();
@@ -735,6 +751,12 @@ void ItemTreeWidget::Impl::copySelectedItemsWithSubTrees()
 }
 
 
+void ItemTreeWidget::cutSelectedItems()
+{
+    impl->cutSelectedItems();
+}
+
+
 void ItemTreeWidget::Impl::cutSelectedItems()
 {
     copiedItems.clear();
@@ -745,6 +767,12 @@ void ItemTreeWidget::Impl::cutSelectedItems()
             copiedItems.push_back(item);
             item->detachFromParentItem();
         });
+}
+
+
+void ItemTreeWidget::pasteItems()
+{
+    impl->pasteItems();
 }
 
 
@@ -914,16 +942,17 @@ void ItemTreeWidget::Impl::zoomFontSize(int pointSizeDiff)
 
 void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
 {
+    ItwItem* itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()));
+    Item* item = itwItem ? itwItem->item : nullptr;
+
     // Emit sigSelectionChanged when clicking on an already selected item
     if(event->button() == Qt::LeftButton){
         auto selected = selectedItems();
         if(selected.size() == 1){
-            if(auto itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()))){
-                if(itwItem == selected.front()){
-                    itwItem->itemSelectionConnection.block();
-                    itwItem->item->setSelected(true, true);
-                    itwItem->itemSelectionConnection.unblock();
-                }
+            if(itwItem && itwItem == selected.front()){
+                itwItem->itemSelectionConnection.block();
+                itwItem->item->setSelected(true, true);
+                itwItem->itemSelectionConnection.unblock();
             }
         }
     }
@@ -931,7 +960,15 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
     TreeWidget::mousePressEvent(event);
 
     if(event->button() == Qt::RightButton){
-        popupMenu->popup(event->globalPos());
+        menuManager.setNewPopupMenu(this);
+        if(!item || polymorphicContextMenuFunctions.empty()){
+            if(contextMenuFunction){
+                contextMenuFunction(menuManager);
+            }
+        } else {
+            polymorphicContextMenuFunctions.dispatch(item);
+        }
+        menuManager.popupMenu()->popup(event->globalPos());
     }
 }
 
@@ -995,6 +1032,21 @@ void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
     isDropping = true;
     TreeWidget::dropEvent(event);
     isDropping = false;
+}
+
+
+void ItemTreeWidget::setContextMenuFunction(std::function<void(MenuManager& menuManager)> func)
+{
+    impl->contextMenuFunction = func;
+}
+
+
+void ItemTreeWidget::setContextMenuFunctionFor
+(const std::type_info& type, std::function<void(Item* item, MenuManager& menuManager)> func)
+{
+    impl->polymorphicContextMenuFunctions.setFunction(
+        type,
+        [this, func](Item* item){ func(item, impl->menuManager); });
 }
 
 

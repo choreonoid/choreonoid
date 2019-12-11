@@ -10,7 +10,7 @@ namespace cnoid {
 class CNOID_EXPORT ItemClassRegistry : public HierarchicalClassRegistry<Item>
 {
 public:
-    static ItemClassRegistry* instance();
+    static ItemClassRegistry& instance();
 
 private:
     ItemClassRegistry();

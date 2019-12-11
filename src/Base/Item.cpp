@@ -152,7 +152,7 @@ Item::Impl::Impl(Item* self, const Impl& org)
 
 void Item::Impl::initialize()
 {
-    self->polymorphicId_ = -1;
+    self->classId_ = -1;
     
     self->parent_ = nullptr;
     lastChild = nullptr;
@@ -191,9 +191,9 @@ Item::Impl::~Impl()
 }
 
 
-void Item::validatePolymorphicId() const
+void Item::validateClassId() const
 {
-    polymorphicId_ = ItemClassRegistry::instance()->classId(this);
+    classId_ = ItemClassRegistry::instance().classId(this);
 }
 
 
