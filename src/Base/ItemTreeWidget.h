@@ -21,8 +21,8 @@ public:
     ~ItemTreeWidget();
 
     void updateTreeWidgetItems();
+    void setCheckColumnShown(bool on);
     void setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred);
-
     void setExpanded(Item* item, bool on = true);
 
     template<class ItemType>
@@ -36,6 +36,9 @@ public:
     }
 
     ItemList<> selectedItems() const;
+    template <class ItemType> ItemList<ItemType> selectedItems() {
+        return selectedItems();
+    }
     void selectAllItems();
     void clearSelection();
     void setSelectedItemsChecked(bool on);

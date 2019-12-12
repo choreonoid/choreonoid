@@ -53,6 +53,7 @@ public:
     map<int, int> checkIdToColumnMap;
     unordered_set<Item*> itemsBeingOperated;
     int isProcessingSlotForRootItemSignals;
+    bool isCheckColumnShown;
     bool isDropping;
 
     function<bool(Item* item, bool isTopLevelItem)> isVisibleItem;
@@ -74,6 +75,7 @@ public:
     void registerTopLevelItem(Item* item);
     bool registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
     Item* findTopLevelItemOf(Item* item);
+    void setCheckColumnShown(int column, bool on);
     ItwItem* findItwItem(Item* item);
     ItwItem* findOrCreateItwItem(Item* item);
     void addCheckColumn(int checkId);
@@ -128,11 +130,14 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
 {
     widgetImpl->itemToItwItemMap[item] = this;
 
-    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsDropEnabled);
-
-    if(!item->isSubItem()){
-        setFlags(flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled);
+    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDropEnabled;
+    if(widgetImpl->isCheckColumnShown){
+        flags |= Qt::ItemIsUserCheckable;
     }
+    if(!item->isSubItem()){
+        flags |= Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
+    }
+    setFlags(flags);
 
     setToolTip(0, QString());
 
@@ -143,18 +148,19 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
             [this](bool on){
                 this->widgetImpl->setItwItemSelected(this, on); });
 
-    auto rootItem = widgetImpl->rootItem;
-    int numCheckColumns = rootItem->numCheckEntries();
-    for(int i=0; i < numCheckColumns; ++i){
-        setCheckState(i + 1, item->isChecked(i) ? Qt::Checked : Qt::Unchecked);
-        setToolTip(i + 1, rootItem->checkEntryDescription(i).c_str());
+    if(widgetImpl->isCheckColumnShown){
+        auto rootItem = widgetImpl->rootItem;
+        int numCheckColumns = rootItem->numCheckEntries();
+        for(int i=0; i < numCheckColumns; ++i){
+            setCheckState(i + 1, item->isChecked(i) ? Qt::Checked : Qt::Unchecked);
+            setToolTip(i + 1, rootItem->checkEntryDescription(i).c_str());
+        }
+        itemCheckConnection = 
+            item->sigAnyCheckToggled().connect(
+                [this](int checkId, bool on){
+                    this->widgetImpl->toggleItwItemCheck(this, checkId, on); });
     }
 
-    itemCheckConnection = 
-        item->sigAnyCheckToggled().connect(
-            [this](int checkId, bool on){
-                this->widgetImpl->toggleItwItemCheck(this, checkId, on); });
-                
     isExpandedBeforeRemoving = false;
 }
 
@@ -186,7 +192,7 @@ void ItwItem::setData(int column, int role, const QVariant& value)
                 }
             }
         }
-    } else if(column >= 1 && role == Qt::CheckStateRole){
+    } else if(column >= 1 && role == Qt::CheckStateRole && widgetImpl->isCheckColumnShown){
         bool checked = ((Qt::CheckState)value.toInt() == Qt::Checked);
         QTreeWidgetItem::setData(column, role, value);
         int checkId = column - 1;
@@ -223,6 +229,7 @@ ItemTreeWidget::Impl::Impl(ItemTreeWidget* self, RootItem* rootItem)
 void ItemTreeWidget::Impl::initialize()
 {
     isProcessingSlotForRootItemSignals = 0;
+    isCheckColumnShown = true;
     isDropping = false;
     
     setColumnCount(1);
@@ -356,6 +363,28 @@ Item* ItemTreeWidget::Impl::findTopLevelItemOf(Item* item)
 }
 
 
+void ItemTreeWidget::setCheckColumnShown(bool on)
+{
+    impl->isCheckColumnShown = on;
+    for(auto& kv : impl->checkIdToColumnMap){
+        int column = kv.second;
+        impl->setCheckColumnShown(column, on);
+    }
+    impl->updateTreeWidgetItems();
+}
+
+
+void ItemTreeWidget::Impl::setCheckColumnShown(int column, bool on)
+{
+    if(on){
+        header()->showSection(column);
+        header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
+    } else {
+        header()->hideSection(column);
+    }
+}
+            
+        
 void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred)
 {
     impl->isVisibleItem = pred;
@@ -398,11 +427,11 @@ void ItemTreeWidget::Impl::addCheckColumn(int checkId)
     int column = columnCount();
     setColumnCount(column + 1);
     checkIdToColumnMap[checkId] = column;
-    header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
 
-    updateCheckColumnIter(invisibleRootItem(), checkId, column);
-
-    header()->showSection(column);
+    if(isCheckColumnShown){
+        setCheckColumnShown(column, true);
+        updateCheckColumnIter(invisibleRootItem(), checkId, column);
+    }
 }
 
 
