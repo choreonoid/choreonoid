@@ -13,6 +13,8 @@ public:
     PolymorphicItemFunctionSet();
 };
 
+typedef PolymorphicItemFunctionSet::Dispatcher ItemFunctionDispatcher;
+
 }
 
 #endif

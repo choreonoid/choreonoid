@@ -3,6 +3,7 @@
 
 #include "View.h"
 #include "RootItem.h"
+#include "ItemTreeWidget.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -22,7 +23,13 @@ public:
     ItemTreeView();
     ~ItemTreeView();
 
-    void setExpanded(Item* item, bool on = true);
+    ItemTreeWidget* itemTreeWidget();
+
+    template<class ItemType>
+    void setContextMenuFunctionFor(
+        std::function<void(ItemType* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func){
+        itemTreeWidget()->setContextMenuFunctionFor(func);
+    }
 
     /*
        All the following functions are deprecated.

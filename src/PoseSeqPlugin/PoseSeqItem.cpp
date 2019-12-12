@@ -6,18 +6,19 @@
 #include "PoseSeqItem.h"
 #include "BodyMotionGenerationBar.h"
 #include <cnoid/ItemManager>
-#include <cnoid/PutPropertyFunction>
-#include <cnoid/Archive>
+#include <cnoid/ItemTreeView>
+#include <cnoid/MenuManager>
 #include <cnoid/MessageView>
 #include <cnoid/LinkPath>
 #include <cnoid/BodyItem>
 #include <cnoid/LeggedBodyHelper>
+#include <cnoid/Archive>
+#include <cnoid/PutPropertyFunction>
 #include <fmt/format.h>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
 
@@ -63,38 +64,38 @@ bool savePoseSeqItem(PoseSeqItem* item, const std::string& filename, std::ostrea
     return false;
 }
 
-bool exportTalkPluginFormat(PoseSeqItem* item, const std::string& filename)
-{
-    return item->poseSeq()->exportTalkPluginFile(filename);
-}
-
-bool exportFaceControllerFormat(PoseSeqItem* item, const std::string& filename)
-{
-    return item->poseSeq()->exportSeqFileForFaceController(filename);
-}    
 }
 
 
 void PoseSeqItem::initializeClass(ExtensionManager* ext)
 {
-    static bool initialized = false;
-    if(!initialized){
+    ItemManager& im = ext->itemManager();
     
-        ItemManager& im = ext->itemManager();
-    
-        im.registerClass<PoseSeqItem>(N_("PoseSeqItem"));
-        im.addCreationPanel<PoseSeqItem>();
-        im.addLoaderAndSaver<PoseSeqItem>(
-            _("Pose Sequence"), "POSE-SEQ-YAML", "pseq", loadPoseSeqItem, savePoseSeqItem);
-        im.addSaver<PoseSeqItem>(
-            _("Talk Plugin File"), "TALK-PLUGIN-FORMAT", "talk",
-            std::bind(exportTalkPluginFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
-        im.addSaver<PoseSeqItem>(
-            _("Seq File for the Face Controller"), "FACE-CONTROLLER-SEQ-FORMAT", "poseseq",
-            std::bind(exportFaceControllerFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
+    im.registerClass<PoseSeqItem>(N_("PoseSeqItem"));
 
-        initialized = true;
-    }
+    im.addCreationPanel<PoseSeqItem>();
+
+    im.addLoaderAndSaver<PoseSeqItem>(
+        _("Pose Sequence"), "POSE-SEQ-YAML", "pseq", loadPoseSeqItem, savePoseSeqItem);
+
+    im.addSaver<PoseSeqItem>(
+        _("Talk Plugin File"), "TALK-PLUGIN-FORMAT", "talk",
+        [](PoseSeqItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->poseSeq()->exportTalkPluginFile(filename); },
+        ItemManager::PRIORITY_CONVERSION);
+        
+    im.addSaver<PoseSeqItem>(
+        _("Seq File for the Face Controller"), "FACE-CONTROLLER-SEQ-FORMAT", "poseseq",
+        [](PoseSeqItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->poseSeq()->exportSeqFileForFaceController(filename); },
+        ItemManager::PRIORITY_CONVERSION);
+
+    ItemTreeView::instance()->setContextMenuFunctionFor<PoseSeqItem>(
+        [](PoseSeqItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+            menuManager.addItem(_("Generate"))->sigTriggered().connect([item](){ item->updateTrajectory(true); });
+            menuManager.addSeparator();
+            menuFunction.dispatchAs<Item>(item);
+        });
 }
 
 
@@ -156,7 +157,7 @@ void PoseSeqItem::onPositionChanged()
     if(!sigInterpolationParametersChangedConnection.connected()){
         sigInterpolationParametersChangedConnection =
             generationBar->sigInterpolationParametersChanged().connect(
-                std::bind(&PoseSeqItem::updateInterpolationParameters, this));
+                [&](){ updateInterpolationParameters(); });
         updateInterpolationParameters();
     }
 
@@ -381,10 +382,10 @@ void PoseSeqItem::beginEditing()
 
     if(editConnections.empty()){
         editConnections = seq->connectSignalSet(
-            std::bind(&PoseSeqItem::onInserted, this, _1, _2),
-            std::bind(&PoseSeqItem::onRemoving, this, _1, _2),
-            std::bind(&PoseSeqItem::onModifying, this, _1),
-            std::bind(&PoseSeqItem::onModified, this, _1));
+            [&](PoseSeq::iterator p, bool isMoving){ onInserted(p, isMoving); },
+            [&](PoseSeq::iterator p, bool isMoving){ onRemoving(p, isMoving); },
+            [&](PoseSeq::iterator p){ onModifying(p); },
+            [&](PoseSeq::iterator p){ onModified(p); });
     }
 }
 

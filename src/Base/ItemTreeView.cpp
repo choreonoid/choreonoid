@@ -19,7 +19,7 @@ public:
     ItemTreeWidget* itemTreeWidget;
 
     Impl(ItemTreeView* self);
-    void onContextMenuRequested(MenuManager& menuManager);
+    void onContextMenuRequested(Item* item, MenuManager& menuManager);
     void restoreState(const Archive& archive);
     void restoreItemStates(
         const Archive& archive, const char* key, std::function<void(Item*)> stateChangeFunc);
@@ -60,8 +60,9 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     vbox->addWidget(itemTreeWidget);
     self->setLayout(vbox);
 
-    itemTreeWidget->setContextMenuFunction(
-        [&](MenuManager& menuManager){ onContextMenuRequested(menuManager); });
+    itemTreeWidget->setContextMenuFunctionFor<Item>(
+        [&](Item* item, MenuManager& menuManager, ItemFunctionDispatcher){
+            onContextMenuRequested(item, menuManager); });
 }
 
 
@@ -71,13 +72,13 @@ ItemTreeView::~ItemTreeView()
 }
 
 
-void ItemTreeView::setExpanded(Item* item, bool on)
+ItemTreeWidget* ItemTreeView::itemTreeWidget()
 {
-    impl->itemTreeWidget->setExpanded(item, on);
+    return impl->itemTreeWidget;
 }
 
 
-void ItemTreeView::Impl::onContextMenuRequested(MenuManager& menuManager)
+void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menuManager)
 {
     menuManager.addItem(_("Cut"))
         ->sigTriggered().connect([&](){

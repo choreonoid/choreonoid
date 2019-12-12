@@ -5,7 +5,10 @@
 
 #include "ScriptItem.h"
 #include "ItemManager.h"
+#include "ItemTreeView.h"
+#include "MenuManager.h"
 #include <cnoid/FileUtil>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -14,6 +17,14 @@ using namespace cnoid;
 void ScriptItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerAbstractClass<ScriptItem, AbstractTextItem>();
+
+    ItemTreeView::instance()->setContextMenuFunctionFor<ScriptItem>(
+        [](ScriptItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+            menuManager.addItem(_("Execute"))->sigTriggered().connect([item](){ item->execute(); });
+            menuManager.addItem(_("Terminate"))->sigTriggered().connect([item](){ item->terminate(); });
+            menuManager.addSeparator();
+            menuFunction.dispatchAs<Item>(item);
+        });
 }
 
 

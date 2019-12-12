@@ -16,6 +16,8 @@
 #include <cnoid/ExtensionManager>
 #include <cnoid/ItemManager>
 #include <cnoid/RootItem>
+#include <cnoid/ItemTreeView>
+#include <cnoid/MenuManager>
 #include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
 #include <cnoid/AppUtil>
@@ -483,7 +485,22 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerAbstractClass<SimulatorItem>();
     ext->manage(new SimulatedMotionEngineManager());
-    
+
+    ItemTreeView::instance()->setContextMenuFunctionFor<SimulatorItem>(
+        [](SimulatorItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+            menuManager.setPath("/").setPath(_("Simulation"));
+            menuManager.addItem(_("Start"))->sigTriggered().connect(
+                [item](){ item->startSimulation(); });
+            menuManager.addItem(_("Pause"))->sigTriggered().connect(
+                [item](){ item->pauseSimulation(); });
+            menuManager.addItem(_("Resume"))->sigTriggered().connect(
+                [item](){ item->restartSimulation(); });
+            menuManager.addItem(_("Finish"))->sigTriggered().connect(
+                [item](){ item->stopSimulation(); });
+            menuManager.setPath("/");
+            menuManager.addSeparator();
+            menuFunction.dispatchAs<Item>(item);
+        });
 }
 
 

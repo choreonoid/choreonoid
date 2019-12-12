@@ -36,6 +36,7 @@ Changes since 1.7.0:
 * Add DigitalIODevice, SignalIOConnectionItem, SignalIOConnectionView
 * Make the vertical axis of SceneWidget modifiable
 * Add the "export symbols" property to SimpleControllerItem
+* Improove the context menu in ItemTreeView
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

@@ -2,6 +2,7 @@
 #define CNOID_BASE_ITEM_TREE_WIDGET_H
 
 #include "ItemList.h"
+#include "PolymorphicItemFunctionSet.h"
 #include <QWidget>
 #include <functional>
 #include "exportdecl.h"
@@ -24,14 +25,13 @@ public:
 
     void setExpanded(Item* item, bool on = true);
 
-    void setContextMenuFunction(std::function<void(MenuManager& menuManager)> func);
-
     template<class ItemType>
-    void setContextMenuFunctionFor(std::function<void(ItemType* item, MenuManager& menuManager)> func){
-        setContextMenuFunction(
+    void setContextMenuFunctionFor(
+        std::function<void(ItemType* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func){
+        setContextMenuFunctionFor(
             typeid(ItemType),
-            [func](Item* item, MenuManager& menuManager){
-                func(static_cast<ItemType*>(item), menuManager);
+            [func](Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+                func(static_cast<ItemType*>(item), menuManager, menuFunction);
             });
     }
 
@@ -51,7 +51,9 @@ public:
     class Impl;
 
 private:
-    void setContextMenuFunctionFor(const std::type_info& type, std::function<void(Item* item, MenuManager& menuManager)> func);
+    void setContextMenuFunctionFor(
+        const std::type_info& type,
+        std::function<void(Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func);
     
     Impl* impl;
 };

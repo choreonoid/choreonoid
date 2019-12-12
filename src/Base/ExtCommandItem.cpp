@@ -5,6 +5,8 @@
 
 #include "ExtCommandItem.h"
 #include "ItemManager.h"
+#include "ItemTreeView.h"
+#include "MenuManager.h"
 #include "MessageView.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
@@ -20,13 +22,18 @@ namespace filesystem = cnoid::stdx::filesystem;
 
 void ExtCommandItem::initializeClass(ExtensionManager* ext)
 {
-    static bool initialized = false;
-    if(!initialized){
-        ItemManager& im = ext->itemManager();
-        im.registerClass<ExtCommandItem>(N_("ExtCommandItem"));
-        im.addCreationPanel<ExtCommandItem>();
-        initialized = true;
-    }
+    ItemManager& im = ext->itemManager();
+    im.registerClass<ExtCommandItem>(N_("ExtCommandItem"));
+    im.addCreationPanel<ExtCommandItem>();
+
+    ItemTreeView::instance()->setContextMenuFunctionFor<ExtCommandItem>(
+        [](ExtCommandItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+            menuManager.addItem(_("Execute"))->sigTriggered().connect([item](){ item->execute(); });
+            menuManager.addItem(_("Terminate"))->sigTriggered().connect([item](){ item->terminate(); });
+            menuManager.addSeparator();
+            menuFunction.dispatchAs<Item>(item);
+        });
+    
 }
 
 

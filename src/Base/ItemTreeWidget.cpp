@@ -65,8 +65,7 @@ public:
     MenuManager menuManager;
     int fontPointSizeDiff;
 
-    function<void(MenuManager& menuManager)> contextMenuFunction;
-    PolymorphicItemFunctionSet polymorphicContextMenuFunctions;
+    PolymorphicItemFunctionSet contextMenuFunctions;
 
     Impl(ItemTreeWidget* self, RootItem* rootItem);
     ~Impl();
@@ -943,7 +942,7 @@ void ItemTreeWidget::Impl::zoomFontSize(int pointSizeDiff)
 void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
 {
     ItwItem* itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()));
-    Item* item = itwItem ? itwItem->item : nullptr;
+    Item* item = itwItem ? itwItem->item : rootItem.get();
 
     // Emit sigSelectionChanged when clicking on an already selected item
     if(event->button() == Qt::LeftButton){
@@ -961,13 +960,7 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
 
     if(event->button() == Qt::RightButton){
         menuManager.setNewPopupMenu(this);
-        if(!item || polymorphicContextMenuFunctions.empty()){
-            if(contextMenuFunction){
-                contextMenuFunction(menuManager);
-            }
-        } else {
-            polymorphicContextMenuFunctions.dispatch(item);
-        }
+        contextMenuFunctions.dispatch(item);
         menuManager.popupMenu()->popup(event->globalPos());
     }
 }
@@ -1035,18 +1028,15 @@ void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
 }
 
 
-void ItemTreeWidget::setContextMenuFunction(std::function<void(MenuManager& menuManager)> func)
-{
-    impl->contextMenuFunction = func;
-}
-
-
 void ItemTreeWidget::setContextMenuFunctionFor
-(const std::type_info& type, std::function<void(Item* item, MenuManager& menuManager)> func)
+(const std::type_info& type,
+ std::function<void(Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func)
 {
-    impl->polymorphicContextMenuFunctions.setFunction(
+    impl->contextMenuFunctions.setFunction(
         type,
-        [this, func](Item* item){ func(item, impl->menuManager); });
+        [this, func](Item* item){
+            func(item, impl->menuManager, impl->contextMenuFunctions.dispatcher()); }
+        );
 }
 
 

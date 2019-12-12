@@ -128,6 +128,20 @@ public:
             func(obj);
         }
     }
+
+    class Dispatcher {
+    public:
+        Dispatcher(PolymorphicFunctionSet<ObjectBase>& pfs) : pfs(pfs) { }
+        template<class Object> void dispatchAs(Object* obj){
+            pfs.dispatchAs<Object>(obj);
+        }
+    private:
+        PolymorphicFunctionSet<ObjectBase>& pfs;
+    };
+
+    Dispatcher dispatcher(){
+        return Dispatcher(*this);
+    }
 };
 
 }
