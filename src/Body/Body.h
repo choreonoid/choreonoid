@@ -241,6 +241,11 @@ public:
 
     const Mapping* info() const;
     Mapping* info();
+
+    template<typename T> T info(const std::string& key) const;
+    template<typename T> T info(const std::string& key, const T& defaultValue) const;
+    template<typename T> void setInfo(const std::string& key, const T& value);
+
     void resetInfo(Mapping* info);
 
     void cloneShapes(CloneMap& cloneMap);
@@ -315,6 +320,12 @@ private:
     BodyHandler* findHandler(std::function<bool(BodyHandler*)> isTargetHandlerType);
     void setVirtualJointForcesSub(); // deprecated
 };
+
+template<> CNOID_EXPORT double Body::info(const std::string& key) const;
+template<> CNOID_EXPORT double Body::info(const std::string& key, const double& defaultValue) const;
+template<> CNOID_EXPORT bool Body::info(const std::string& key, const bool& defaultValue) const;
+template<> CNOID_EXPORT void Body::setInfo(const std::string& key, const double& value);
+template<> CNOID_EXPORT void Body::setInfo(const std::string& key, const bool& value);
 
 }
 
