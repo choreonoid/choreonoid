@@ -19,15 +19,15 @@ public:
     
 private:
     HierarchicalClassRegistry<ObjectBase>& registry;
+    int validDispatchTableSize;
     std::vector<Function> dispatchTable;
     std::vector<bool> isFixed;
-    bool isDirty;
 
 public:
     PolymorphicFunctionSet(HierarchicalClassRegistry<ObjectBase>& registry)
         : registry(registry)
     {
-        isDirty = false;
+        validDispatchTableSize = 0;
     }
 
     bool empty() const {
@@ -38,13 +38,15 @@ public:
     {
         int id = registry.template classId(type);
         if(id >= 0){
+            if(validDispatchTableSize > id + 1){
+                validDispatchTableSize = id + 1;
+            }
             if(id >= static_cast<int>(dispatchTable.size())){
                 dispatchTable.resize(id + 1);
                 isFixed.resize(id + 1, false);
             }
             dispatchTable[id] = func;
             isFixed[id] = true;
-            isDirty = true;
         }
     }
 
@@ -65,6 +67,9 @@ public:
     {
         int id = registry.template classId<Object>();
         if(id >= 0 && id < dispatchTable.size()){
+            if(validDispatchTableSize > id){
+                validDispatchTableSize = id;
+            }
             dispatchTable[id] = nullptr;
             isFixed[id] = false;
             if(doUpdate){
@@ -73,60 +78,70 @@ public:
         }
     }
 
-    void updateDispatchTable()
+    bool updateDispatchTable(int idToCheck = 0)
     {
-        const size_t numTypes = registry.numRegisteredClasses();
-        if(dispatchTable.size() == numTypes && !isDirty){
-            return;
+        const size_t numClasses = registry.numRegisteredClasses();
+        if(numClasses == validDispatchTableSize){
+            return idToCheck < numClasses;
         }
         
-        if(dispatchTable.size() < numTypes){
-            dispatchTable.resize(numTypes);
-            isFixed.resize(numTypes, false);
+        if(dispatchTable.size() != numClasses){
+            dispatchTable.resize(numClasses);
+            isFixed.resize(numClasses, false);
         }
-    
+
         const int n = dispatchTable.size();
-        for(int i=0; i < n; ++i){
+        for(int i = validDispatchTableSize; i < n; ++i){
             if(!isFixed[i]){
                 dispatchTable[i] = nullptr;
             }
         }
-        for(int i=0; i < n; ++i){
-            if(!dispatchTable[i]){
-                int id = i;
-                while(true){
-                    int superTypeId = registry.superClassId(id);
-                    if(superTypeId < 0){
-                        break;
-                    }
-                    if(dispatchTable[superTypeId]){
-                        dispatchTable[i] = dispatchTable[superTypeId];
-                        break;
-                    }
-                    id = superTypeId;
-                }
+
+        for(int i = validDispatchTableSize; i < n; ++i){
+            setSuperClassFunction(i);
+        }
+        validDispatchTableSize = n;
+        
+        return idToCheck < validDispatchTableSize;
+    }
+
+    int setSuperClassFunction(int id)
+    {
+        if(dispatchTable[id]){
+            return id;
+        }
+        int superClassId = registry.superClassId(id);
+        if(superClassId < 0){
+            return -1;
+        }
+        int functionId = setSuperClassFunction(superClassId);
+        if(functionId >= 0){
+            dispatchTable[id] = dispatchTable[functionId];
+        }
+        return functionId;
+    }
+
+    inline void dispatch(ObjectBase* obj, const int id)
+    {
+        if(id >= validDispatchTableSize){
+            if(!updateDispatchTable(id)){
+                return;
             }
+        }
+        auto& function = dispatchTable[id];
+        if(function){
+            function(obj);
         }
     }
 
     inline void dispatch(ObjectBase* obj)
     {
-        const int id = obj->classId();
-        if(id >= static_cast<int>(dispatchTable.size())){
-            updateDispatchTable();
-        }
-        const auto& func = dispatchTable[id];
-        if(func){
-            func(obj);
-        } 
+        dispatch(obj, obj->classId());
     }
 
     template <class Object>
     inline void dispatchAs(Object* obj){
-        const auto& func = dispatchTable[registry.template classId<Object>(0)];
-        if(func){
-            func(obj);
-        }
+        dispatch(obj, registry.template classId<Object>(0));
     }
 
     class Dispatcher {
