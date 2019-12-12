@@ -36,7 +36,7 @@ public:
 
     void setFunction(const std::type_info& type, Function func)
     {
-        int id = registry.template classId(type);
+        int id = registry.classId(type);
         if(id >= 0){
             if(validDispatchTableSize > id + 1){
                 validDispatchTableSize = id + 1;
