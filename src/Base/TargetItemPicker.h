@@ -22,7 +22,7 @@ public:
 
 protected:
     Item* getTargetItem();
-    virtual void extractTargetItemCandidates(ItemList<>& io_items, bool selectionChanged) = 0;
+    virtual Item* extractTargetItemCandidates(ItemList<>& io_items, Item* preferred, bool selectionChanged) = 0;
     virtual void onTargetItemSpecified(Item* item, bool isChanged) = 0;
     virtual void onDeactivated() = 0;
 
@@ -55,20 +55,34 @@ public:
     }
 
 protected:
-    virtual void extractTargetItemCandidates(ItemList<>& io_items, bool selectionChanged) override
+    virtual Item* extractTargetItemCandidates
+    (ItemList<>& io_items, Item* preferred, bool selectionChanged) override
     {
+        Item* candidate = nullptr;
+        
         auto iter = io_items.begin();
         while(iter != io_items.end()){
-            if(!dynamic_cast<ItemType*>(iter->get())){
+            auto item = dynamic_cast<ItemType*>(iter->get());
+            if(!item){
                 iter = io_items.erase(iter);
             } else {
+                if(!candidate){
+                    candidate = item;
+                } else if(item == preferred){
+                    candidate = preferred;
+                }
                 ++iter;
             }
         }
+
         if(selectionChanged){
-            selectedItems_ = io_items;
-            sigSelectedItemsChanged_(selectedItems_);
+            if(io_items != selectedItems_){
+                selectedItems_ = io_items;
+                sigSelectedItemsChanged_(selectedItems_);
+            }
         }
+
+        return candidate;
     }
 
     virtual void onTargetItemSpecified(Item* item, bool isChanged) override

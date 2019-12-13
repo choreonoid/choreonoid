@@ -36,6 +36,8 @@ public:
     SignalProxy<void()> sigTreeChanged();
     SignalProxy<void(Item* assigned, Item* srcItem)> sigItemAssigned();
 
+    Item* focusedItem();
+    
     template <class ItemType> ItemList<ItemType> selectedItems() {
         return getSelectedItems();
     }
@@ -82,7 +84,7 @@ private:
     void notifyEventOnSubTreeRemoving(Item* item, bool isMoving);
     void notifyEventOnSubTreeRemoved(Item* item, bool isMoving);
     void emitSigItemAssinged(Item* assigned, Item* srcItem);
-    void emitSigSelectionChanged(Item* item, bool on);
+    void emitSigSelectionChanged(Item* item, bool on, bool isFocused);
     void emitSigSelectedItemsChangedLater();
     void emitSigCheckToggled(Item* item, int checkId, bool on);
 

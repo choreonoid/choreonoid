@@ -41,6 +41,7 @@ public:
     RootItem* self;
 	
     ItemList<> selectedItems;
+    ItemPtr focusedItem;
     bool needToUpdateSelectedItems;
     LazyCaller emitSigSelectedItemsChangedLater;
     Signal<void(Item* item, bool on)> sigSelectionChanged;
@@ -70,7 +71,7 @@ public:
     void doCommonInitialization();
     void emitSigItemAddedForItemTree(Item* item);
     void emitSigItemMovedForItemTree(Item* item);
-    void updateSelectedItemsIter(Item* item);
+    bool updateSelectedItemsIter(Item* item);
     void updateCheckedItemsIter(Item* item, int checkId, ItemList<>& checkedItems);
 };
 
@@ -343,30 +344,60 @@ void RootItem::emitSigItemAssinged(Item* assigned, Item* srcItem)
 }
 
 
+Item* RootItem::focusedItem()
+{
+    auto& selected = getSelectedItems();
+    if(impl->focusedItem){
+        return impl->focusedItem;
+    }
+    return selected.toSingle(true);
+}
+
+
 const ItemList<>& RootItem::getSelectedItems()
 {
     if(impl->needToUpdateSelectedItems){
         impl->selectedItems.clear();
-        impl->updateSelectedItemsIter(this);
+        bool isFocusedItemIncluded = impl->updateSelectedItemsIter(this);
+        if(!isFocusedItemIncluded){
+            impl->focusedItem = nullptr;
+        }
         impl->needToUpdateSelectedItems = false;
     }
     return impl->selectedItems;
 }
 
 
-void RootItem::Impl::updateSelectedItemsIter(Item* item)
+//! \return true if the selected items include the focused item
+bool RootItem::Impl::updateSelectedItemsIter(Item* item)
 {
+    bool isFocusedItemIncluded = false;
+    
     if(item->isSelected()){
         selectedItems.push_back(item);
+        if(item == focusedItem){
+            isFocusedItemIncluded = true;
+        }
     }
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        updateSelectedItemsIter(child);
+        if(updateSelectedItemsIter(child)){
+            isFocusedItemIncluded = true;
+        }
     }
+
+    return isFocusedItemIncluded;
 }
     
 
-void RootItem::emitSigSelectionChanged(Item* item, bool on)
+void RootItem::emitSigSelectionChanged(Item* item, bool on, bool isFocused)
 {
+    if(isFocused){
+        if(on){
+            impl->focusedItem = item;
+        } else {
+            impl->focusedItem = nullptr;
+        }
+    }
     impl->needToUpdateSelectedItems = true;
     impl->sigSelectionChanged(item, on);
 }

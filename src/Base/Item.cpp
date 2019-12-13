@@ -315,19 +315,19 @@ void Item::setTemporal(bool on)
 }
 
 
-void Item::setSelected(bool on, bool forceToNotify)
+void Item::setSelected(bool on, bool isFocused)
 {
-    impl->setSelected(on, forceToNotify, true);
+    impl->setSelected(on, isFocused, true);
 }
 
 
-void Item::Impl::setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater)
+void Item::Impl::setSelected(bool on, bool isFocused, bool doEmitSigSelectedItemsChangedLater)
 {
-    if(on != self->isSelected_ || forceToNotify){
+    if(on != self->isSelected_ || isFocused){
         self->isSelected_ = on;
         sigSelectionChanged(on);
         if(auto rootItem = self->findRootItem()){
-            rootItem->emitSigSelectionChanged(self, on);
+            rootItem->emitSigSelectionChanged(self, on, isFocused);
             if(doEmitSigSelectedItemsChangedLater){
                 rootItem->emitSigSelectedItemsChangedLater();
             }
@@ -748,7 +748,7 @@ void Item::Impl::requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedIt
 (Item* item, RootItem* rootItem)
 {
     if(item->isSelected()){
-        rootItem->emitSigSelectionChanged(item, true);
+        rootItem->emitSigSelectionChanged(item, true, false);
     }
     for(Item* child = item->childItem(); child; child = child->nextItem()){
         requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(child, rootItem);

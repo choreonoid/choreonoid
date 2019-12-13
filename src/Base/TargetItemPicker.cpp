@@ -103,8 +103,9 @@ void TargetItemPickerBase::Impl::deactivate()
 void TargetItemPickerBase::Impl::onSelectedItemsChanged(const ItemList<>& items)
 {
     tmpSelectedItems = items;
-    self->extractTargetItemCandidates(tmpSelectedItems, true);
-    setTargetItem(tmpSelectedItems.toSingle(true), true, false);
+    auto candidate = self->extractTargetItemCandidates(
+        tmpSelectedItems, rootItem->focusedItem(), true);
+    setTargetItem(candidate, true, false);
     tmpSelectedItems.clear();
 }
 
@@ -139,18 +140,9 @@ void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool u
 
     if(!targetItem && !updateEvenIfEmpty){
         auto items = rootItem->descendantItems();
-        self->extractTargetItemCandidates(items, false);
-
-        ItemPtr candidate;
-        if(preferredTargetItem){
-            auto iter = std::find(items.begin(), items.end(), preferredTargetItem);
-            if(iter != items.end()){
-                candidate = preferredTargetItem;
-            }
+        auto candidate = self->extractTargetItemCandidates(items, preferredTargetItem, false);
+        if(candidate == preferredTargetItem){
             preferredTargetItem.reset();
-        }
-        if(!candidate){
-            candidate = items.toSingle(true);
         }
         if(candidate){
             setTargetItem(candidate, true, false);
@@ -171,8 +163,7 @@ void TargetItemPickerBase::Impl::onItemAddedWhenNoTargetItemSpecified(Item* item
     if(!targetItem){
         ItemList<> items;
         items.push_back(item);
-        self->extractTargetItemCandidates(items, false);
-        if(auto candidate = items.toSingle(true)){
+        if(auto candidate = self->extractTargetItemCandidates(items, nullptr, false)){
             setTargetItem(candidate, true, false);
         }
     }

@@ -50,6 +50,7 @@ public:
     ScopedConnectionSet rootItemConnections;
     vector<ItemPtr> topLevelItems;
     unordered_map<Item*, ItwItem*> itemToItwItemMap;
+    ItemPtr lastClickedItem;
     map<int, int> checkIdToColumnMap;
     unordered_set<Item*> itemsBeingOperated;
     int isProcessingSlotForRootItemSignals;
@@ -168,6 +169,10 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
 ItwItem::~ItwItem()
 {
     widgetImpl->itemToItwItemMap.erase(item);
+
+    if(widgetImpl->lastClickedItem == item){
+        widgetImpl->lastClickedItem = nullptr;
+    }
 }
 
 
@@ -928,9 +933,10 @@ void ItemTreeWidget::Impl::updateItemSelectionIter(QTreeWidgetItem* twItem, unor
     if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
         auto item = itwItem->item;
         bool on = selectedItemSet.find(item) != selectedItemSet.end();
-        if(on != item->isSelected()){
+        bool isFocused = (item == lastClickedItem);
+        if(on != item->isSelected() || isFocused){
             itwItem->itemSelectionConnection.block();
-            item->setSelected(on);
+            item->setSelected(on, isFocused);
             itwItem->itemSelectionConnection.unblock();
         }
     }
@@ -972,16 +978,17 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
 {
     ItwItem* itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()));
     Item* item = itwItem ? itwItem->item : rootItem.get();
+    lastClickedItem = nullptr;
 
     // Emit sigSelectionChanged when clicking on an already selected item
     if(event->button() == Qt::LeftButton){
         auto selected = selectedItems();
-        if(selected.size() == 1){
-            if(itwItem && itwItem == selected.front()){
-                itwItem->itemSelectionConnection.block();
-                itwItem->item->setSelected(true, true);
-                itwItem->itemSelectionConnection.unblock();
-            }
+        if(selected.size() == 1 && itwItem && itwItem == selected.front()){
+            itwItem->itemSelectionConnection.block();
+            itwItem->item->setSelected(true, true);
+            itwItem->itemSelectionConnection.unblock();
+        } else {
+            lastClickedItem = itwItem->item;
         }
     }
     
