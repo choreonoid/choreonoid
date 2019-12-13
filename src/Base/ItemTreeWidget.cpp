@@ -497,7 +497,18 @@ void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
     if(auto parentItwItem = findItwItem(parentItem)){
         insertItem(parentItwItem, item, false);
     } else {
-        insertItem(invisibleRootItem(), item, true);
+        bool isUpperLevelItemInserted = false;
+        parentItem = parentItem->parentItem();
+        while(parentItem){
+            if(findItwItem(parentItem)){
+                isUpperLevelItemInserted = true;
+                break;
+            }
+            parentItem = parentItem->parentItem();
+        }
+        if(!isUpperLevelItemInserted){
+            insertItem(invisibleRootItem(), item, true);
+        }
     }
 }
 
