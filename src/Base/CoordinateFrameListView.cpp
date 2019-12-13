@@ -1,11 +1,11 @@
 #include "CoordinateFrameListView.h"
 #include "CoordinateFrameListItem.h"
+#include "ViewManager.h"
+#include "MenuManager.h"
+#include "TargetItemPicker.h"
 #include "PositionEditManager.h"
+#include "Buttons.h"
 #include <cnoid/CoordinateFrameList>
-#include <cnoid/ViewManager>
-#include <cnoid/MenuManager>
-#include <cnoid/TargetItemPicker>
-#include <cnoid/Buttons>
 #include <cnoid/EigenUtil>
 #include <QBoxLayout>
 #include <QLabel>
