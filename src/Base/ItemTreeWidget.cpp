@@ -983,12 +983,14 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
     // Emit sigSelectionChanged when clicking on an already selected item
     if(event->button() == Qt::LeftButton){
         auto selected = selectedItems();
-        if(selected.size() == 1 && itwItem && itwItem == selected.front()){
-            itwItem->itemSelectionConnection.block();
-            itwItem->item->setSelected(true, true);
-            itwItem->itemSelectionConnection.unblock();
-        } else {
-            lastClickedItem = itwItem->item;
+        if(itwItem){
+            if(selected.size() == 1 && itwItem == selected.front()){
+                itwItem->itemSelectionConnection.block();
+                itwItem->item->setSelected(true, true);
+                itwItem->itemSelectionConnection.unblock();
+            } else {
+                lastClickedItem = itwItem->item;
+            }
         }
     }
     
