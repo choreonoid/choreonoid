@@ -1,11 +1,12 @@
-#ifndef CNOID_BODYPLUGIN_KINEMATIC_SIMULATOR_ITEM_H
-#define CNOID_BODYPLUGIN_KINEMATIC_SIMULATOR_ITEM_H
+#ifndef CNOID_BODY_PLUGIN_KINEMATIC_SIMULATOR_ITEM_H
+#define CNOID_BODY_PLUGIN_KINEMATIC_SIMULATOR_ITEM_H
 
 #include "SimulatorItem.h"
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class KinematicSimulatorItem : public SimulatorItem
+class CNOID_EXPORT KinematicSimulatorItem : public SimulatorItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
