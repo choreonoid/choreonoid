@@ -61,10 +61,14 @@ struct last_value
     typedef T result_type;
     
     template<typename InputIterator>
-    T operator()(InputIterator first, InputIterator last) const {
+    T operator()(InputIterator iter, InputIterator last) const {
         T value;
-        while (first != last)
-            value = *first++;
+        while (iter != last){
+            if(iter.isReady()){
+                value = *iter;
+            }
+            ++iter;
+        }
         return value;
     }
 };
@@ -74,9 +78,11 @@ template<>
 struct last_value<void> {
   public:
     template<typename InputIterator>
-    void operator()(InputIterator first, InputIterator last) const{
-        while (first != last)
-            *first++;
+    void operator()(InputIterator iter, InputIterator last) const{
+        while (iter != last){
+            if(iter.isReady()) *iter;
+            ++iter;
+        }
     }
 };
 
@@ -110,14 +116,10 @@ public:
     }
     
     SlotCallIterator(SlotHolderType* firstSlot, std::tuple<Args...>& args)
-        : currentSlotHolder(firstSlot), args(args) {
-        seekActiveSlot();
-    }
+        : currentSlotHolder(firstSlot), args(args) { }
 
     SlotCallIterator(const SlotCallIterator& org)
-        : currentSlotHolder(org.currentSlotHolder), args(org.args) {
-        seekActiveSlot();
-    }
+        : currentSlotHolder(org.currentSlotHolder), args(org.args) { }
 
     bool operator==(const SlotCallIterator& rhs) const {
         return (currentSlotHolder == rhs.currentSlotHolder);
@@ -127,11 +129,13 @@ public:
         return (currentSlotHolder != rhs.currentSlotHolder);
     }
 
-    SlotCallIterator operator++(int) {
-        SlotCallIterator iter(*this);
+    SlotCallIterator& operator++() {
         currentSlotHolder = currentSlotHolder->next;
-        seekActiveSlot();
-        return iter;
+        return *this;
+    }
+
+    bool isReady() const {
+        return !currentSlotHolder->isBlocked;
     }
     
     result_type operator*() const {
@@ -145,7 +149,7 @@ public:
            called unless the reference to currentSlotHolder is kept here.
         */
         ref_ptr<SlotHolderBase> holder = currentSlotHolder;
-        
+
         return apply(currentSlotHolder->func, args);
     }
 };
@@ -392,10 +396,13 @@ class LogicalProduct
 public:
     typedef bool result_type;
     template<typename InputIterator>
-    bool operator()(InputIterator first, InputIterator last) const {
+    bool operator()(InputIterator iter, InputIterator last) const {
         bool result = true;
-        while(first != last){
-            result &= *first++;
+        while(iter != last){
+            if(iter.isReady()){
+                result &= *iter;
+            }
+            ++iter;
         }
         return result;
     }
@@ -407,10 +414,13 @@ class LogicalSum
 public:
     typedef bool result_type;
     template<typename InputIterator>
-    bool operator()(InputIterator first, InputIterator last) const {
+    bool operator()(InputIterator iter, InputIterator last) const {
         bool result = false;
-        while(first != last){
-            result |= *first++;
+        while(iter != last){
+            if(iter.isReady()){
+                result |= *iter;
+            }
+            ++iter;
         }
         return result;
     }
