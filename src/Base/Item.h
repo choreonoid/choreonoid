@@ -146,6 +146,13 @@ public:
         return dynamic_cast<ItemType*>(findChildItem(path));
     }
 
+    template<class ItemType>
+    ItemType* findChildItem() const {
+        return static_cast<ItemType*>(
+            findChildItem(
+                [](Item* item)->bool { return dynamic_cast<ItemType*>(item); }));
+    }
+
     /**
        Find a sub item that has the corresponding path from a direct sub item to it
     */
@@ -168,6 +175,12 @@ public:
     }
 
     bool isOwnedBy(Item* item) const;
+
+    ItemList<> childItems() const;
+
+    template <class ItemType> ItemList<ItemType> childItems() const {
+        return childItems();
+    }
 
     ItemList<> descendantItems() const;
 
@@ -320,7 +333,9 @@ private:
     std::string name_;
     bool isSelected_;
 
+    Item* findChildItem(const std::function<bool(Item* item)>& checkType) const;
     void validateClassId() const;
+    
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED

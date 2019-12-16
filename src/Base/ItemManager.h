@@ -148,7 +148,12 @@ public:
             std::make_shared<CreationPanelFilter<ItemType>>(filter),
             true);
     }
-    
+
+    template <class ItemType>
+    static ItemType* createNewItem(Item* parentItem){
+        return static_cast<ItemType*>(createNewItem_(typeid(ItemType), parentItem));
+    }
+
     template <class ItemType>
     ItemManager& addLoader(
         const std::string& caption, const std::string& formatId, const std::string& extensions, 
@@ -227,6 +232,8 @@ private:
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
 
     static Item* getSingletonInstance(const std::string& typeId);
+
+    static Item* createNewItem_(const std::type_info& type, Item* parentItem);
 
     // The following static functions are called from functions in the Item class
     static bool load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId);

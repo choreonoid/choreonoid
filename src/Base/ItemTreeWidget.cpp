@@ -72,11 +72,11 @@ public:
     Impl(ItemTreeWidget* self, RootItem* rootItem);
     ~Impl();
     void initialize();
-    void updateTreeWidgetItems();
     void registerTopLevelItem(Item* item);
     bool registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
     Item* findTopLevelItemOf(Item* item);
     void setCheckColumnShown(int column, bool on);
+    void updateTreeWidgetItems();
     ItwItem* findItwItem(Item* item);
     ItwItem* findOrCreateItwItem(Item* item);
     void addCheckColumn(int checkId);
@@ -87,7 +87,7 @@ public:
     void insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItem);
     ItwItem* findNextItwItem(Item* item, bool isTopLevelItem);
     ItwItem* findNextItwItemInSubTree(Item* item, bool doTraverse);
-    void onSubTreeRemoved(Item* item, bool isMoving);
+    void onSubTreeRemoved(Item* item);
     void onItemAssigned(Item* assigned, Item* srcItem);
 
     ItemList<> getSelectedItems() const;
@@ -276,7 +276,7 @@ void ItemTreeWidget::Impl::initialize()
 
     rootItemConnections.add(
         rootItem->sigSubTreeRemoved().connect(
-            [&](Item* item, bool isMoving){ onSubTreeRemoved(item, isMoving); }));
+            [&](Item* item, bool){ onSubTreeRemoved(item); }));
 
     rootItemConnections.add(
         rootItem->sigItemAssigned().connect(
@@ -316,18 +316,9 @@ ItemTreeWidget::Impl::~Impl()
 }
 
 
-void ItemTreeWidget::updateTreeWidgetItems()
+RootItem* ItemTreeWidget::rootItem()
 {
-    impl->updateTreeWidgetItems();
-}
-
-
-void ItemTreeWidget::Impl::updateTreeWidgetItems()
-{
-    clear();
-    for(auto item = rootItem->childItem(); item; item = item->nextItem()){
-        insertItem(invisibleRootItem(), item, true);
-    }
+    return impl->rootItem;
 }
 
 
@@ -368,6 +359,16 @@ Item* ItemTreeWidget::Impl::findTopLevelItemOf(Item* item)
 }
 
 
+void ItemTreeWidget::setDragDropEnabled(bool on)
+{
+    if(on){
+        impl->setDragDropMode(QAbstractItemView::InternalMove);
+    } else {
+        impl->setDragDropMode(QAbstractItemView::NoDragDrop);
+    }        
+}
+
+
 void ItemTreeWidget::setCheckColumnShown(bool on)
 {
     impl->isCheckColumnShown = on;
@@ -393,6 +394,21 @@ void ItemTreeWidget::Impl::setCheckColumnShown(int column, bool on)
 void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred)
 {
     impl->isVisibleItem = pred;
+}
+
+
+void ItemTreeWidget::updateTreeWidgetItems()
+{
+    impl->updateTreeWidgetItems();
+}
+
+
+void ItemTreeWidget::Impl::updateTreeWidgetItems()
+{
+    clear();
+    for(auto item = rootItem->childItem(); item; item = item->nextItem()){
+        insertItem(invisibleRootItem(), item, true);
+    }
 }
 
 
@@ -594,14 +610,14 @@ ItwItem* ItemTreeWidget::Impl::findNextItwItemInSubTree(Item* item, bool doTrave
 }
 
 
-void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item, bool isMoving)
+void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
 {
     if(isItemBeingOperated(item)){
         return;
     }
     
     isProcessingSlotForRootItemSignals++;
-    
+
     if(auto itwItem = findItwItem(item)){
         if(auto parentTwItem = itwItem->parent()){
             parentTwItem->removeChild(itwItem);
@@ -610,6 +626,10 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item, bool isMoving)
             std::remove(topLevelItems.begin(), topLevelItems.end(), item);
         }
         delete itwItem;
+    } else {
+        for(auto child = item->childItem(); child; child = child->nextItem()){
+            onSubTreeRemoved(child);
+        }
     }
 
     isProcessingSlotForRootItemSignals--;
@@ -1010,7 +1030,9 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
     if(event->button() == Qt::RightButton){
         menuManager.setNewPopupMenu(this);
         contextMenuFunctions.dispatch(item);
-        menuManager.popupMenu()->popup(event->globalPos());
+        if(menuManager.numItems() > 0){
+            menuManager.popupMenu()->popup(event->globalPos());
+        }
     }
 }
 

@@ -413,9 +413,8 @@ void Item::setChecked(int checkId, bool on)
         }
 
         bool doEmitSigLogicalSumOfAllChecksToggled = false;
-        int n = std::min(root->numCheckEntries(), (int)impl->checkStates.size());
         bool wasAnyChecked = false;
-        for(int i=0; i < n; ++i){
+        for(size_t i=0; i < impl->checkStates.size(); ++i){
             if(impl->checkStates[i]){
                 wasAnyChecked = true;
                 break;
@@ -876,6 +875,17 @@ Item* Item::findChildItem(const std::string& path) const
 }
 
 
+Item* Item::findChildItem(const std::function<bool(Item* item)>& checkType) const
+{
+    for(auto child = childItem(); child; child = child->nextItem()){
+        if(checkType(child)){
+            return child;
+        }
+    }
+    return nullptr;
+}
+
+
 static Item* findSubItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
 {
     if(it == end){
@@ -911,6 +921,16 @@ bool Item::isOwnedBy(Item* item) const
         }
     }
     return false;
+}
+
+
+ItemList<> Item::childItems() const
+{
+    ItemList<> items;
+    for(auto child = childItem(); child; child = child->nextItem()){
+        items.push_back(child);
+    }
+    return items;
 }
 
 

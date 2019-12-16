@@ -361,7 +361,11 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
             if(loaded){
                 if(!isSubProject){
                     self->setCurrentProjectName(getBasename(filename));
-                    lastAccessedProjectFile = filename;
+                    if(archive->get("isNewProjectTemplate", false)){
+                        lastAccessedProjectFile.clear();
+                    } else {
+                        lastAccessedProjectFile = filename;
+                    }
                 }
 
                 mv->flush();
@@ -621,7 +625,7 @@ void ProjectManager::Impl::openDialogToSaveProject()
     dialog.setNameFilters(filters);
 
     dialog.setDirectory(AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory()).c_str());
-    if(!currentProjectName.empty()){
+    if(!currentProjectName.empty() && !lastAccessedProjectFile.empty()){
         dialog.selectFile(currentProjectName.c_str());
     }
 

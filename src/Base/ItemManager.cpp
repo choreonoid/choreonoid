@@ -76,7 +76,7 @@ public:
     public:
         CreationPanelBase(const QString& title, ClassInfo& classInfo, ItemPtr protoItem, bool isSingleton);
         void addPanel(ItemCreationPanel* panel);
-        ItemPtr createItem(ItemPtr parentItem);
+        Item* createItem(Item* parentItem);
         CreationPanelFilterList preFilters;
         CreationPanelFilterList postFilters;
     private:
@@ -200,9 +200,6 @@ ClassInfoMap typeIdToClassInfoMap;
 typedef map<string, ItemManagerImpl*> ModuleNameToItemManagerImplMap;
 ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
     
-typedef map<string, ItemManagerImpl::CreationPanelBase*> CreationPanelBaseMap;
-CreationPanelBaseMap creationPanelBaseMap;
-
 QWidget* importMenu;
 
 std::map<ItemPtr, ItemPtr> reloadedItemToOriginalItemMap;
@@ -373,15 +370,8 @@ ItemManagerImpl::~ItemManagerImpl()
         }
     }
 
-    // unregister item class identifiers, CreationPanelBases and savers
     for(auto q = registeredTypeIds.begin(); q != registeredTypeIds.end(); ++q){
         const string& id = *q;
-        CreationPanelBaseMap::iterator s = creationPanelBaseMap.find(id);
-        if(s != creationPanelBaseMap.end()){
-            CreationPanelBase* base = s->second;
-            delete base;
-            creationPanelBaseMap.erase(s);
-        }
         typeIdToClassInfoMap.erase(id);
     }
 
@@ -613,12 +603,36 @@ void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
         parentItems.push_back(RootItem::instance());
     }
     for(size_t i=0; i < parentItems.size(); ++i){
-        ItemPtr parentItem = parentItems[i];
-        ItemPtr newItem = base->createItem(parentItem);
+        auto parentItem = parentItems[i];
+        auto newItem = base->createItem(parentItem);
         if(newItem){
             parentItem->addChildItem(newItem, true);
         }
     }
+}
+
+
+Item* ItemManager::createNewItem_(const std::type_info& type, Item* parentItem)
+{
+    Item* newItem = nullptr;
+    
+    auto iter = typeIdToClassInfoMap.find(type.name());
+    if(iter == typeIdToClassInfoMap.end()){
+        showWarningDialog(format(_("Class {} is not registered as an item class."), type.name()));
+
+    } else {
+        auto& info = iter->second;
+        auto panel = info->creationPanelBase;
+        if(!panel){
+            showWarningDialog(format(_("The panel to create {} is not registered."), info->className));
+        } else {
+            if(!parentItem){
+                parentItem = RootItem::instance();
+            }
+            newItem = panel->createItem(parentItem);
+        }
+    }
+    return newItem;
 }
 
 
@@ -656,7 +670,7 @@ void ItemManagerImpl::CreationPanelBase::addPanel(ItemCreationPanel* panel)
 }
 
 
-ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
+Item* ItemManagerImpl::CreationPanelBase::createItem(Item* parentItem)
 {
     if(isSingleton){
         if(protoItem->parentItem()){
@@ -726,18 +740,13 @@ ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
         }
     }
     
-    ItemPtr newItem;
-    if(result){
-        if(isSingleton){
-            newItem = item;
-        } else if(protoItem){
-            newItem = protoItem->duplicate();
-        } else {
-            newItem = item;
-        }
+    if(!result){
+        item = nullptr;
+    } else if(item == protoItem && !isSingleton){
+        item = item->duplicate();
     }
-    
-    return newItem;
+
+    return item.retn();
 }
 
 

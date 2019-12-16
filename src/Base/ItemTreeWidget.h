@@ -20,10 +20,11 @@ public:
     ItemTreeWidget(RootItem* rootItem, QWidget* parent = nullptr);
     ~ItemTreeWidget();
 
-    void updateTreeWidgetItems();
+    RootItem* rootItem();
+
+    void setDragDropEnabled(bool on);
     void setCheckColumnShown(bool on);
     void setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred);
-    void setExpanded(Item* item, bool on = true);
 
     template<class ItemType>
     void setContextMenuFunctionFor(
@@ -34,6 +35,9 @@ public:
                 func(static_cast<ItemType*>(item), menuManager, menuFunction);
             });
     }
+
+    void updateTreeWidgetItems();
+    void setExpanded(Item* item, bool on = true);
 
     ItemList<> selectedItems() const;
     template <class ItemType> ItemList<ItemType> selectedItems() {

@@ -1,5 +1,5 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #include "MenuManager.h"
@@ -13,10 +13,10 @@ using namespace cnoid;
 
 
 MenuManager::MenuManager()
-    : topMenu_(0)
+    : topMenu_(nullptr)
 {
     currentMenu_ = topMenu_;
-    popupMenu_ = 0;
+    popupMenu_ = nullptr;
     isBackwardMode = false;
 }
 
@@ -25,7 +25,7 @@ MenuManager::MenuManager(QWidget* topMenu)
     : topMenu_(topMenu)
 {
     currentMenu_ = topMenu;
-    popupMenu_ = 0;
+    popupMenu_ = nullptr;
     isBackwardMode = false;
 }
 
@@ -40,7 +40,7 @@ void MenuManager::setTopMenu(QWidget* topMenu)
 {
     if(popupMenu_){
         delete popupMenu_;
-        popupMenu_ = 0;
+        popupMenu_ = nullptr;
     }
     topMenu_ = topMenu;
     currentMenu_ = topMenu;
@@ -103,7 +103,7 @@ std::pair<QAction*, QWidget*> MenuManager::findPath(const QString& path, bool cr
 {
     int pos = 0;
     int size = path.size();
-    QAction* item = 0;
+    QAction* item = nullptr;
     QWidget* menu = currentMenu_;
     
     if(path[pos] == QChar('/')){
@@ -118,7 +118,7 @@ std::pair<QAction*, QWidget*> MenuManager::findPath(const QString& path, bool cr
         QString name = path.mid(pos, length);
 
         QList<QAction*> items = menu->actions();
-        item = 0;
+        item = nullptr;
         for(int i=0; i < items.size(); ++i){
             if(name == items[i]->objectName()){
                 item = items[i];
