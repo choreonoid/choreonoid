@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-16 16:46+0900\n"
+"POT-Creation-Date: 2019-12-16 21:12+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -445,7 +445,7 @@ msgid ""
 "The document has been modified.\n"
 " Do you want to save your changes?"
 msgstr ""
-"ドキュメントは変更されています。\n"
+"ドキュメントは変更されています．\n"
 "変更内容を保存しますか？"
 
 #: TextEditView.cpp:249
@@ -1215,6 +1215,10 @@ msgstr "プログラムの有効化に失敗しました"
 msgid "Shader has not been linked."
 msgstr "シェーダがリンクされていません．"
 
+#: LocationView.cpp:24
+msgid "Location"
+msgstr "配置"
+
 #: ReferencedObjectSeqItem.cpp:15
 msgid "ReferencedObjectSeqItem"
 msgstr ""
@@ -1683,15 +1687,35 @@ msgstr ""
 msgid "Vector3SeqItem"
 msgstr "３次元ベクタ列アイテム"
 
-#: App.cpp:266 App.cpp:425
+#: App.cpp:268 App.cpp:427
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:270
+#: App.cpp:272
 msgid ""
 "The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: "
 "{3})."
 msgstr ""
+
+#: PositionWidget.cpp:134
+msgid "Option"
+msgstr "オプション"
+
+#: PositionWidget.cpp:245
+msgid "Roll-pitch-yaw"
+msgstr "ロールピッチヨー"
+
+#: PositionWidget.cpp:251
+msgid "Fetch as a unique RPY value"
+msgstr "一意なRPY値として取り込み"
+
+#: PositionWidget.cpp:257
+msgid "Quoternion"
+msgstr "クオタニオン"
+
+#: PositionWidget.cpp:264
+msgid "Rotation matrix"
+msgstr "回転行列"
 
 #: CoordinateFrameListView.cpp:220
 msgid "Note"

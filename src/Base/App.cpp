@@ -36,6 +36,7 @@
 #include "ItemTreeView.h"
 #include "ItemPropertyView.h"
 #include "SceneView.h"
+#include "LocationView.h"
 #include "FileBar.h"
 #include "ScriptBar.h"
 #include "TimeBar.h"
@@ -224,6 +225,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     ItemPropertyView::initializeClass(ext);
     SceneBar::initialize(ext);
     SceneView::initializeClass(ext);
+    LocationView::initializeClass(ext);
     ImageViewBar::initialize(ext);
     ImageView::initializeClass(ext);
     TextEditView::initializeClass(ext);

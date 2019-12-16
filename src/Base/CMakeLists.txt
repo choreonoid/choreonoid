@@ -29,6 +29,8 @@ set(sources
   ItemPropertyView.cpp
   TargetItemPicker.cpp
   StringListComboBox.cpp
+  PositionWidget.cpp
+  LocationView.cpp
   PositionEditManager.cpp
   MultiSeqItemCreationPanel.cpp
   ToolBar.cpp
@@ -176,6 +178,7 @@ set(headers
   ItemList.h
   Item.h
   TargetItemPicker.h
+  PositionWidget.h
   PositionEditManager.h
   PutPropertyFunction.h
   RootItem.h
