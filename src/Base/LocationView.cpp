@@ -1,6 +1,8 @@
 #include "LocationView.h"
 #include "PositionWidget.h"
 #include "ViewManager.h"
+#include "TargetItemPicker.h"
+#include "PlaceableItem.h"
 #include <QBoxLayout>
 #include "gettext.h"
 
@@ -12,7 +14,13 @@ namespace cnoid {
 class LocationView::Impl : public PositionWidget
 {
 public:
+    PlaceableItem* targetItem;
+    TargetItemPicker<Item> targetItemPicker;
+    ScopedConnection connection;
+    
     Impl(QWidget* parent);
+    void setTargetItem(Item* item);
+    bool setInputPositionToTargetItem(const Position& T);
 };
 
 }
@@ -38,7 +46,14 @@ LocationView::LocationView()
 LocationView::Impl::Impl(QWidget* parent)
     : PositionWidget(parent)
 {
+    targetItem = nullptr;
+    
+    targetItemPicker.setTargetInterface<PlaceableItem>();
+    targetItemPicker.sigTargetItemChanged().connect(
+        [&](Item* item){ setTargetItem(item); });
 
+    setPositionCallback(
+        [&](const Position& T){ return setInputPositionToTargetItem(T); });
 }
 
 
@@ -51,6 +66,32 @@ LocationView::~LocationView()
 void LocationView::onAttachedMenuRequest(MenuManager& menuManager)
 {
     impl->setOptionMenu(menuManager);
+}
+
+
+void LocationView::Impl::setTargetItem(Item* item)
+{
+    targetItem = dynamic_cast<PlaceableItem*>(item);
+    
+    if(!targetItem){
+        connection.disconnect();
+    } else {
+        updatePosition(targetItem->getLocation());
+        connection =
+            targetItem->sigLocationChanged().connect(
+                [this](){
+                    updatePosition(targetItem->getLocation()); });
+    }
+}
+
+
+bool LocationView::Impl::setInputPositionToTargetItem(const Position& T)
+{
+    if(targetItem){
+        targetItem->setLocation(T);
+        return true;
+    }
+    return false;
 }
 
 

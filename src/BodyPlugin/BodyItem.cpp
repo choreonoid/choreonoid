@@ -1218,6 +1218,25 @@ bool BodyItemImpl::onStaticModelPropertyChanged(bool on)
     }
     return false;
 }
+
+
+SignalProxy<void()> BodyItem::sigLocationChanged()
+{
+    return impl->sigKinematicStateChanged.signal();
+}
+
+
+Position BodyItem::getLocation() const
+{
+    return impl->body->rootLink()->position();
+}
+
+
+void BodyItem::setLocation(const Position& T)
+{
+    impl->body->rootLink()->setPosition(T);
+    notifyKinematicStateChange(true);
+}
         
 
 EditableSceneBody* BodyItem::sceneBody()

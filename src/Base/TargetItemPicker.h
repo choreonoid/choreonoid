@@ -41,6 +41,11 @@ public:
     TargetItemPicker() : TargetItemPickerBase() { }
     TargetItemPicker(View* view) : TargetItemPickerBase(view) { }
 
+    template<class Interface>
+    void setTargetInterface(){
+        hasTargetInterface = [](Item* item)->bool { return dynamic_cast<Interface*>(item) != nullptr; };
+    }
+
     ItemType* currentItem(){ return static_cast<ItemType*>(getTargetItem()); }
     const ItemList<ItemType>& selectedItems(){ return selectedItems_; }
 
@@ -62,7 +67,14 @@ protected:
         
         auto iter = io_items.begin();
         while(iter != io_items.end()){
-            auto item = dynamic_cast<ItemType*>(iter->get());
+            auto item = iter->get();
+            if(hasTargetInterface){
+                if(!hasTargetInterface(item)){
+                    item = nullptr;
+                }
+            } else {
+                item = dynamic_cast<ItemType*>(item);
+            }
             if(!item){
                 iter = io_items.erase(iter);
             } else {
@@ -100,6 +112,7 @@ protected:
     }
 
 private:
+    std::function<bool(Item* item)> hasTargetInterface;
     Signal<void(ItemType* targetItem)> sigTargetItemSpecified_;
     Signal<void(ItemType* targetItem)> sigTargetItemChanged_;
     Signal<void(const ItemList<ItemType>& selected)> sigSelectedItemsChanged_;
