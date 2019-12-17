@@ -47,23 +47,21 @@ LocationView::Impl::Impl(LocationView* self)
     : self(self)
 {
     self->setDefaultLayoutArea(View::CENTER);
-    
+    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+
+    auto vbox = new QVBoxLayout;
+    self->setLayout(vbox, 0.5);
+
+    positionWidget = new PositionWidget(self);
+    positionWidget->setCaptionVisible(true);
+    positionWidget->setPositionCallback(
+        [&](const Position& T){ return setInputPositionToTargetItem(T); });
+    vbox->addWidget(positionWidget);
+
     targetItem = nullptr;
-    
     targetItemPicker.setTargetInterface<PlaceableItem>();
     targetItemPicker.sigTargetItemChanged().connect(
         [&](Item* item){ setTargetItem(item); });
-
-    auto vbox = new QVBoxLayout;
-
-    positionWidget = new PositionWidget(self);
-
-    positionWidget->setPositionCallback(
-        [&](const Position& T){ return setInputPositionToTargetItem(T); });
-
-    vbox->addWidget(positionWidget);
-    self->setLayout(vbox);
-
     setTargetItem(nullptr);
 }
 

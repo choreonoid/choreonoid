@@ -8,7 +8,6 @@
 #include <cnoid/Separator>
 #include <QLabel>
 #include <QGridLayout>
-#include <QStyle>
 #include <QMouseEvent>
 #include <fmt/format.h>
 #include <bitset>
@@ -79,7 +78,7 @@ public:
     void refreshPosition();
     void updatePosition(const Position& T);
     void updateRotationMatrix(const Matrix3& R);
-    Vector3 getRpySpinValue();
+    Vector3 getRpyInput();
     void onPositionInput(InputElementSet inputElements);
     void onPositionInputRpy(InputElementSet inputElements);
     void onPositionInputQuaternion(InputElementSet inputElements);
@@ -107,16 +106,10 @@ PositionWidget::~PositionWidget()
 PositionWidget::Impl::Impl(PositionWidget* self)
     : self(self)
 {
-    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-
-    auto style = self->style();
-    int lmargin = style->pixelMetric(QStyle::PM_LayoutLeftMargin);
-    int tmargin = style->pixelMetric(QStyle::PM_LayoutTopMargin);
-    int rmargin = style->pixelMetric(QStyle::PM_LayoutRightMargin);
-    int bmargin = style->pixelMetric(QStyle::PM_LayoutBottomMargin);
+    //self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
     auto mainvbox = new QVBoxLayout;
-    mainvbox->setContentsMargins(lmargin / 2, tmargin / 2, rmargin / 2, bmargin / 2);
+    mainvbox->setContentsMargins(0, 0, 0, 0);
     self->setLayout(mainvbox);
 
     auto grid = new QGridLayout;
@@ -124,6 +117,7 @@ PositionWidget::Impl::Impl(PositionWidget* self)
 
     caption.setStyleSheet("font-weight: bold");
     grid->addWidget(&caption, row++, 1, 1, 5);
+    caption.setVisible(false);
 
     static const char* xyzLabels[] = { "X", "Y", "Z" };
     for(int i=0; i < 3; ++i){
@@ -227,6 +221,7 @@ PositionWidget::Impl::Impl(PositionWidget* self)
 
     isRpyEnabled = true;
     isUniqueRpyMode = false;
+    referenceRpy.setZero();
     isQuaternionEnabled = true;
     setQuaternionEnabled(false);
     isRotationMatrixEnabled = true;
@@ -240,6 +235,12 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     lastInputAttitudeMode = RollPitchYawMode;
 
     clearPosition();
+}
+
+
+void PositionWidget::setCaptionVisible(bool on)
+{
+    impl->caption.setVisible(on);
 }
 
 
@@ -324,6 +325,7 @@ void PositionWidget::Impl::resetInputWidgetStyles()
 
 void PositionWidget::clearPosition()
 {
+    impl->resetInputWidgetStyles();
     impl->clearPosition();
 }
 
@@ -356,6 +358,12 @@ void PositionWidget::Impl::refreshPosition()
 }
 
 
+void PositionWidget::setReferenceRpy(const Vector3& rpy)
+{
+    impl->referenceRpy = rpy;
+}
+
+
 void PositionWidget::updatePosition(const Position& T)
 {
     impl->updatePosition(T);
@@ -383,7 +391,7 @@ void PositionWidget::Impl::updatePosition(const Position& T)
             if(T.linear().isApprox(rotFromRpy(referenceRpy))){
                 rpy = rpyFromRot(R, referenceRpy);
             } else {
-                rpy = rpyFromRot(R, getRpySpinValue());
+                rpy = rpyFromRot(R, getRpyInput());
             }
             referenceRpy = rpy;
         }
@@ -428,13 +436,25 @@ void PositionWidget::Impl::updateRotationMatrix(const Matrix3& R)
 }
 
 
-Vector3 PositionWidget::Impl::getRpySpinValue()
+Vector3 PositionWidget::getRpyInput() const
+{
+    return impl->getRpyInput();
+}
+
+
+Vector3 PositionWidget::Impl::getRpyInput()
 {
     Vector3 rpy;
     for(int i=0; i < 3; ++i){
         rpy[i] = radian(rpySpin[i].value());
     }
     return rpy;
+}
+
+
+void PositionWidget::applyPositionInput()
+{
+    impl->onPositionInput(InputElementSet(0));
 }
 
 
@@ -493,7 +513,9 @@ void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElemen
 
 void PositionWidget::Impl::notifyPositionInput(const Position& T, InputElementSet inputElements)
 {
-    if(!positionCallback(T)){
+    bool accepted = positionCallback(T);
+
+    if(!accepted){
         for(size_t i=0; i < inputElementWidgets.size(); ++i){
             if(inputElements[i]){
                 inputElementWidgets[i]->setStyleSheet(errorStyle);

@@ -61,7 +61,7 @@ public:
     void setDefaultLayoutArea(LayoutArea area);
     LayoutArea defaultLayoutArea() const;
 
-    void setLayout(QLayout* layout);
+    void setLayout(QLayout* layout, double marginRatio = 0.0);
 
     QPoint viewAreaPos() const;
 

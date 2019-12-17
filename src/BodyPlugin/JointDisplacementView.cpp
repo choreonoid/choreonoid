@@ -439,12 +439,11 @@ void JointDisplacementView::Impl::createPanel()
     int bmargin = style->pixelMetric(QStyle::PM_LayoutBottomMargin);
 
     auto vbox = new QVBoxLayout;
-    vbox->setContentsMargins(0, 0, 0, 0);
     vbox->setSpacing(0);
     self->setLayout(vbox);
 
     auto hbox = new QHBoxLayout;
-    hbox->setContentsMargins(lmargin / 2, rmargin / 2, tmargin / 2, bmargin / 2);
+    hbox->setContentsMargins(lmargin / 2, tmargin / 2, rmargin / 2, bmargin / 2);
     hbox->addStretch(1);
     targetLabel.setStyleSheet("font-weight: bold");
     targetLabel.setAlignment(Qt::AlignLeft);

@@ -361,6 +361,9 @@ int ViewPane::addView(View* view)
 }
 
 
+/**
+   \todo Implement this in View.cpp. See the View::bringToFront function.
+*/
 void ViewPane::onViewTitleChanged(const QString &title)
 {
     if(auto view = dynamic_cast<View*>(sender())){

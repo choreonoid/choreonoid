@@ -17,11 +17,15 @@ public:
     PositionWidget(QWidget* parent);
     ~PositionWidget();
 
+    void setCaptionVisible(bool on);
     void setCaption(const std::string& caption);
     void setOptionMenu(MenuManager& menuManager);
     void setPositionCallback(std::function<bool(const Position& T)> callback);
     void clearPosition();
     void refreshPosition();
+    void applyPositionInput();
+    Vector3 getRpyInput() const;
+    void setReferenceRpy(const Vector3& rpy);
     void updatePosition(const Position& T);
     void storeState(Archive& archive);
     void restoreState(const Archive& archive);

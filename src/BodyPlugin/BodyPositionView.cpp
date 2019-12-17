@@ -4,6 +4,7 @@
 
 #include "BodyPositionView.h"
 #include "BodySelectionManager.h"
+#include <cnoid/PositionWidget>
 #include <cnoid/BodyItem>
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -19,17 +20,14 @@
 #include <cnoid/PositionEditManager>
 #include <cnoid/Archive>
 #include <cnoid/Buttons>
-#include <cnoid/SpinBox>
 #include <cnoid/CheckBox>
 #include <cnoid/ComboBox>
-#include <cnoid/Separator>
 #include <cnoid/ButtonGroup>
 #include <cnoid/Selection>
 #include <QLabel>
 #include <QGridLayout>
-#include <QGroupBox>
+#include <QStyle>
 #include <fmt/format.h>
-#include <bitset>
 #include "gettext.h"
 
 using namespace std;
@@ -37,15 +35,6 @@ using namespace cnoid;
 using fmt::format;
 
 namespace {
-
-enum InputElement {
-    TX, TY, TZ,
-    RX, RY, RZ,
-    QX, QY, QZ, QW,
-    NumInputElements
-};
-
-typedef std::bitset<NumInputElements> InputElementSet;
 
 const char* normalStyle = "font-weight: normal";
 const char* errorStyle = "font-weight: bold; color: red";
@@ -77,19 +66,16 @@ public:
     LinkKinematicsKitPtr kinematicsKit;
     LinkKinematicsKitPtr dummyKinematicsKit;
     ScopedConnection kinematicsKitConnection;
-    Vector3 referenceRpy;
+    bool isCustomIkDisabled;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
     CoordinateFramePtr endFrame;
     std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
     AbstractPositionEditTarget* positionEditTarget;
     
-    ToolButton menuButton;
-    MenuManager menuManager;
-    
     QLabel targetLabel;
     QLabel resultLabel;
-    
+
     enum CoordinateMode { WorldCoordinateMode, BodyCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
     Selection coordinateModeSelection;
     int coordinateMode;
@@ -100,23 +86,7 @@ public:
     RadioButton localCoordRadio;
     vector<QWidget*> coordinateModeWidgets;
 
-    DoubleSpinBox xyzSpin[3];
-    Action* rpyCheck;
-    Action* uniqueRpyCheck;
-    DoubleSpinBox rpySpin[3];
-    vector<QWidget*> rpyWidgets;
-    Action* quaternionCheck;
-    DoubleSpinBox quatSpin[4];
-    vector<QWidget*> quatWidgets;
-    Action* rotationMatrixCheck;
-    QWidget rotationMatrixPanel;
-    QLabel rotationMatrixElementLabel[3][3];
-    Action* disableCustomIKCheck;
-
-    vector<QWidget*> inputElementWidgets;
-        
-    enum AttitudeMode { RollPitchYawMode, QuaternionMode };
-    AttitudeMode lastInputAttitudeMode;
+    PositionWidget* positionWidget;
 
     string defaultCoordName[3];
     QLabel frameComboLabel[2];
@@ -128,17 +98,11 @@ public:
     vector<QWidget*> configurationWidgets;
 
     ScopedConnectionSet userInputConnections;
-    ScopedConnectionSet settingConnections;
 
     Impl(BodyPositionView* self);
-    ~Impl();
     void createPanel();
     void onActivated();
-    void resetInputWidgetStyles();
-    void onMenuButtonClicked();
-    void setRpySpinsVisible(bool on);
-    Vector3 getRpySpinValue();
-    void setQuaternionSpinsVisible(bool on);
+    void onAttachedMenuRequest(MenuManager& menuManager);
     void setCoordinateModeInterfaceEnabled(bool on);
     void setCoordinateMode(int mode);
     void setBodyCoordinateModeEnabled(bool on);
@@ -158,21 +122,15 @@ public:
     void updateConfigurationCandidates();
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onPositionEditTargetExpired();
-    void clearPanelValues();
     void updatePanel();
     void updatePanelWithCurrentLinkPosition();
     void updatePanelWithPositionEditTarget();
-    void updatePanelWithPosition(const Position& T);
-    void updateRotationMatrixPanel(const Matrix3& R);
     void updateConfigurationPanel();
     void setFramesToCombo(CoordinateFrameSet* frames, QComboBox& combo);
-    void onPositionInput(InputElementSet inputElements);
-    void onPositionInputRpy(InputElementSet inputElements);
-    void onPositionInputQuaternion(InputElementSet inputElements);
     void onConfigurationInput(int index);
-    void applyInput(const Position& T_input, InputElementSet inputElements);
-    void findBodyIkSolution(const Position& T_input, InputElementSet inputElements);
-    void applyInputToPositionEditTarget(const Position& T_input, InputElementSet inputElements);
+    bool applyPositionInput(const Position& T);
+    bool findBodyIkSolution(const Position& T_input);
+    bool applyInputToPositionEditTarget(const Position& T_input);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -206,7 +164,6 @@ BodyPositionView::Impl::Impl(BodyPositionView* self)
 {
     self->setDefaultLayoutArea(View::CENTER);
     createPanel();
-    clearPanelValues();
     self->setEnabled(false);
     
     targetType = LinkTarget;
@@ -214,7 +171,6 @@ BodyPositionView::Impl::Impl(BodyPositionView* self)
     dummyKinematicsKit->setFrameSets(new LinkCoordinateFrameSet);
     kinematicsKit = dummyKinematicsKit;
 
-    referenceRpy.setZero();
     identityFrame = new CoordinateFrame;
     baseFrame = identityFrame;
     endFrame = identityFrame;
@@ -229,28 +185,11 @@ BodyPositionView::~BodyPositionView()
 }
 
 
-BodyPositionView::Impl::~Impl()
-{
-
-}
-
-
 void BodyPositionView::Impl::createPanel()
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
-    auto style = self->style();
-    int lmargin = style->pixelMetric(QStyle::PM_LayoutLeftMargin);
-    int rmargin = style->pixelMetric(QStyle::PM_LayoutRightMargin);
-    int tmargin = style->pixelMetric(QStyle::PM_LayoutTopMargin);
-    int bmargin = style->pixelMetric(QStyle::PM_LayoutBottomMargin);
-    
-    auto topvbox = new QVBoxLayout;
-    self->setLayout(topvbox);
-    
-    auto mainvbox = new QVBoxLayout;
-    mainvbox->setContentsMargins(lmargin / 2, tmargin / 2, rmargin / 2, bmargin / 2);
-    topvbox->addLayout(mainvbox);
+    auto vbox = new QVBoxLayout;
 
     auto hbox = new QHBoxLayout;
     hbox->addStretch(2);
@@ -258,13 +197,7 @@ void BodyPositionView::Impl::createPanel()
     targetLabel.setAlignment(Qt::AlignLeft);
     hbox->addWidget(&targetLabel);
     hbox->addStretch(10);
-    
-    menuButton.setText("*");
-    menuButton.setToolTip(_("Option"));
-    menuButton.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    menuButton.sigClicked().connect([&](){ onMenuButtonClicked(); });
-    hbox->addWidget(&menuButton);
-    mainvbox->addLayout(hbox);
+    vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
     resultLabel.setFrameStyle(QFrame::Box | QFrame::Sunken);
@@ -274,11 +207,9 @@ void BodyPositionView::Impl::createPanel()
     actualButton->sigClicked().connect([&](){ updatePanel(); });
     hbox->addWidget(actualButton);
     auto applyButton = new PushButton(_("Apply"));
-    InputElementSet s;
-    s.set();
-    applyButton->sigClicked().connect([this, s](){ onPositionInput(s); });
+    applyButton->sigClicked().connect([&](){ positionWidget->applyPositionInput(); });
     hbox->addWidget(applyButton);
-    mainvbox->addLayout(hbox);
+    vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
     auto coordLabel = new QLabel(_("Coord:"));
@@ -314,111 +245,16 @@ void BodyPositionView::Impl::createPanel()
         });
     
     hbox->addStretch();
-    mainvbox->addLayout(hbox);
+    vbox->addLayout(hbox);
+
+    positionWidget = new PositionWidget(self);
+    positionWidget->setPositionCallback(
+        [&](const Position& T){ return applyPositionInput(T); });
+    vbox->addWidget(positionWidget);
+
+    isCustomIkDisabled = false;
 
     auto grid = new QGridLayout;
-
-    static const char* xyzLabels[] = { "X", "Y", "Z" };
-    for(int i=0; i < 3; ++i){
-        // Translation spin boxes
-        xyzSpin[i].setAlignment(Qt::AlignCenter);
-        xyzSpin[i].setDecimals(4);
-        xyzSpin[i].setRange(-99.9999, 99.9999);
-        xyzSpin[i].setSingleStep(0.0001);
-
-        InputElementSet s;
-        s.set(TX + i);
-        userInputConnections.add(
-            xyzSpin[i].sigValueChanged().connect(
-                [this, s](double){ onPositionInput(s); }));
-
-        grid->addWidget(new QLabel(xyzLabels[i]), 0, i * 2, Qt::AlignCenter);
-        grid->addWidget(&xyzSpin[i], 0, i * 2 + 1);
-
-        grid->setColumnStretch(i * 2, 1);
-        grid->setColumnStretch(i * 2 + 1, 10);
-    }
-
-    static const char* rpyLabelChar[] = { "R", "P", "Y" };
-    for(int i=0; i < 3; ++i){
-        // Roll-pitch-yaw spin boxes
-        rpySpin[i].setAlignment(Qt::AlignCenter);
-        rpySpin[i].setDecimals(1);
-        rpySpin[i].setRange(-9999.0, 9999.0);
-        rpySpin[i].setSingleStep(0.1);
-
-        InputElementSet s;
-        s.set(RX + 1);
-        userInputConnections.add(
-            rpySpin[i].sigValueChanged().connect(
-                [this, s](double){ onPositionInputRpy(s); }));
-
-        auto label = new QLabel(rpyLabelChar[i]);
-        grid->addWidget(label, 1, i * 2, Qt::AlignCenter);
-        rpyWidgets.push_back(label);
-        grid->addWidget(&rpySpin[i], 1, i * 2 + 1);
-        rpyWidgets.push_back(&rpySpin[i]);
-    }
-    mainvbox->addLayout(grid);
-
-    grid = new QGridLayout;
-    static const char* quatLabelChar[] = {"QX", "QY", "QZ", "QW"};
-    for(int i=0; i < 4; ++i){
-        quatSpin[i].setAlignment(Qt::AlignCenter);
-        quatSpin[i].setDecimals(4);
-        quatSpin[i].setRange(-1.0000, 1.0000);
-        quatSpin[i].setSingleStep(0.0001);
-
-        InputElementSet s;
-        s.set(QX + i);
-        userInputConnections.add(
-            quatSpin[i].sigValueChanged().connect(
-                [this, s](double){ onPositionInputQuaternion(s); }));
-        
-        auto label = new QLabel(quatLabelChar[i]);
-        grid->addWidget(label, 0, i * 2, Qt::AlignRight);
-        quatWidgets.push_back(label);
-        grid->addWidget(&quatSpin[i], 0, i * 2 + 1);
-        quatWidgets.push_back(&quatSpin[i]);
-
-        grid->setColumnStretch(i * 2, 1);
-        grid->setColumnStretch(i * 2 + 1, 10);
-    }
-    mainvbox->addLayout(grid);
-
-    inputElementWidgets = {
-        &xyzSpin[0], &xyzSpin[1], &xyzSpin[2],
-        &rpySpin[0], &rpySpin[1], &rpySpin[2],
-        &quatSpin[0], &quatSpin[1], &quatSpin[2], &quatSpin[3]
-    };
-
-    hbox = new QHBoxLayout;
-    rotationMatrixPanel.setLayout(hbox);
-    hbox->addStretch();
-    hbox->addWidget(new QLabel("R = "));
-    hbox->addWidget(new VSeparator);
-
-    grid = new QGridLayout();
-    grid->setHorizontalSpacing(10);
-    grid->setVerticalSpacing(4);
-    for(int i=0; i < 3; ++i){
-        for(int j=0; j < 3; ++j){
-            auto& label = rotationMatrixElementLabel[i][j];
-            QFont font("Monospace");
-            font.setStyleHint(QFont::TypeWriter);
-            label.setFont(font);
-            label.setTextInteractionFlags(Qt::TextSelectableByMouse);
-            grid->addWidget(&label, i, j);
-        }
-    }
-    updateRotationMatrixPanel(Matrix3::Identity());
-    hbox->addLayout(grid);
-    hbox->addWidget(new VSeparator);
-    hbox->addStretch();
-    
-    mainvbox->addWidget(&rotationMatrixPanel);
-
-    grid = new QGridLayout;
     int row = 0;
     grid->setColumnStretch(1, 1);
 
@@ -461,49 +297,9 @@ void BodyPositionView::Impl::createPanel()
         requireConfigurationCheck.sigToggled().connect(
             [this](bool){ onConfigurationInput(configurationCombo.currentIndex()); }));
 
-    mainvbox->addLayout(grid);
-    mainvbox->addStretch();
-
-    menuManager.setNewPopupMenu(self);
-    
-    rpyCheck = menuManager.addCheckItem(_("Roll-pitch-yaw"));
-    rpyCheck->setChecked(true);
-    settingConnections.add(
-        rpyCheck->sigToggled().connect(
-            [&](bool on){ setRpySpinsVisible(on); }));
-
-    uniqueRpyCheck = menuManager.addCheckItem(_("Fetch as a unique RPY value"));
-    uniqueRpyCheck->setChecked(false);
-    settingConnections.add(
-        uniqueRpyCheck->sigToggled().connect(
-            [&](bool on){ updatePanel(); }));
-    
-    quaternionCheck = menuManager.addCheckItem(_("Quoternion"));
-    quaternionCheck->setChecked(false);
-    setQuaternionSpinsVisible(false);
-    settingConnections.add(
-        quaternionCheck->sigToggled().connect(
-            [&](bool on){ setQuaternionSpinsVisible(on); }));
-
-    rotationMatrixCheck = menuManager.addCheckItem(_("Rotation matrix"));
-    rotationMatrixCheck->setChecked(false);
-    rotationMatrixPanel.setVisible(false);
-    settingConnections.add(
-        rotationMatrixCheck->sigToggled().connect(
-            [&](bool on){
-                rotationMatrixPanel.setVisible(on);
-                updatePanel(); }));
-
-    disableCustomIKCheck = menuManager.addCheckItem(_("Disable custom IK"));
-    disableCustomIKCheck->setChecked(false);
-    settingConnections.add(
-        disableCustomIKCheck->sigToggled().connect(
-            [&](bool){
-                updateIkMode();
-                updatePanel();
-            }));
-
-    lastInputAttitudeMode = RollPitchYawMode;
+    vbox->addLayout(grid);
+    vbox->addStretch();
+    self->setLayout(vbox, 0.5);
 }
 
 
@@ -567,43 +363,24 @@ void BodyPositionView::onDeactivated()
 }
 
 
-void BodyPositionView::Impl::resetInputWidgetStyles()
+void BodyPositionView::onAttachedMenuRequest(MenuManager& menuManager)
 {
-    for(auto& widget : inputElementWidgets){
-        widget->setStyleSheet(normalStyle);
-    }
+    impl->onAttachedMenuRequest(menuManager);
 }
 
 
-void BodyPositionView::Impl::onMenuButtonClicked()
+void BodyPositionView::Impl::onAttachedMenuRequest(MenuManager& menuManager)
 {
-    menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
-}
+    positionWidget->setOptionMenu(menuManager);
 
-
-void BodyPositionView::Impl::setRpySpinsVisible(bool on)
-{
-    for(auto& widget : rpyWidgets){
-        widget->setVisible(on);
-    }
-}
-
-
-Vector3 BodyPositionView::Impl::getRpySpinValue()
-{
-    Vector3 rpy;
-    for(int i=0; i < 3; ++i){
-        rpy[i] = radian(rpySpin[i].value());
-    }
-    return rpy;
-}
-    
-
-void BodyPositionView::Impl::setQuaternionSpinsVisible(bool on)
-{
-    for(auto& widget : quatWidgets){
-        widget->setVisible(on);
-    }
+    auto disableCustomIkCheck = menuManager.addCheckItem(_("Disable custom IK"));
+    disableCustomIkCheck->setChecked(isCustomIkDisabled);
+    disableCustomIkCheck->sigToggled().connect(
+        [&](bool on){
+            isCustomIkDisabled = on;
+            updateIkMode();
+            updatePanel();
+        });
 }
 
 
@@ -677,8 +454,7 @@ void BodyPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
     if(isBodyItemChanged || isLinkChanged){
 
         if(isBodyItemChanged){
-            resetInputWidgetStyles();
-            clearPanelValues();
+            positionWidget->clearPosition();
             targetConnections.disconnect();
             
             targetBodyItem = bodyItem;
@@ -769,7 +545,7 @@ void BodyPositionView::Impl::updateTargetLink(Link* link)
 void BodyPositionView::Impl::updateIkMode()
 {
     if(auto jointPath = kinematicsKit->jointPath()){
-        jointPath->setNumericalIKenabled(disableCustomIKCheck->isChecked());
+        jointPath->setNumericalIKenabled(isCustomIkDisabled);
     }
 }
 
@@ -975,7 +751,7 @@ void BodyPositionView::Impl::updateConfigurationCandidates()
             configurationCombo.setCurrentIndex(
                 configurationHandler->getCurrentConfiguration());
         }
-        isConfigurationComboActive = !disableCustomIKCheck->isChecked();
+        isConfigurationComboActive = !isCustomIkDisabled;
     }
 
     setConfigurationInterfaceEnabled(isConfigurationComboActive);
@@ -984,8 +760,7 @@ void BodyPositionView::Impl::updateConfigurationCandidates()
 
 bool BodyPositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
 {
-    resetInputWidgetStyles();
-    clearPanelValues();
+    positionWidget->clearPosition();
     targetConnections.disconnect();
 
     targetType = PositionEditTarget;
@@ -1020,30 +795,21 @@ void BodyPositionView::Impl::onPositionEditTargetExpired()
 }
 
 
-void BodyPositionView::Impl::clearPanelValues()
+void BodyPositionView::Impl::updatePanel()
 {
     userInputConnections.block();
     
-    for(int i=0; i < 3; ++i){
-        xyzSpin[i].setValue(0.0);
-        rpySpin[i].setValue(0.0);
-        quatSpin[i].setValue(0.0);
-    }
-    quatSpin[3].setValue(1.0);
-    updateRotationMatrixPanel(Matrix3::Identity());
-
-    userInputConnections.unblock();
-}
-
-
-void BodyPositionView::Impl::updatePanel()
-{
     if(targetType == LinkTarget){
         updatePanelWithCurrentLinkPosition();
 
     } else if(targetType == PositionEditTarget){
         updatePanelWithPositionEditTarget();
     }
+
+    userInputConnections.unblock();
+
+    resultLabel.setText(_("Actual State"));
+    resultLabel.setStyleSheet(normalStyle);
 }
 
 
@@ -1054,8 +820,10 @@ void BodyPositionView::Impl::updatePanelWithCurrentLinkPosition()
         if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
             T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
         }
-        referenceRpy = kinematicsKit->referenceRpy();
-        updatePanelWithPosition(T);
+        positionWidget->setReferenceRpy(kinematicsKit->referenceRpy());
+        positionWidget->updatePosition(T);
+
+        updateConfigurationPanel();
     }
 }
 
@@ -1063,79 +831,8 @@ void BodyPositionView::Impl::updatePanelWithCurrentLinkPosition()
 void BodyPositionView::Impl::updatePanelWithPositionEditTarget()
 {
     if(positionEditTarget){
-        referenceRpy.setZero();
-        updatePanelWithPosition(positionEditTarget->getPosition());
-    }
-}
-
-
-void BodyPositionView::Impl::updatePanelWithPosition(const Position& T)
-{
-    userInputConnections.block();
-
-    Vector3 p = T.translation();
-    for(int i=0; i < 3; ++i){
-        auto& spin = xyzSpin[i];
-        if(!spin.hasFocus()){
-            spin.setValue(p[i]);
-        }
-    }
-
-    Matrix3 R = T.linear();
-    if(rpyCheck->isChecked()){
-        Vector3 rpy;
-        if(uniqueRpyCheck->isChecked()){
-            rpy = rpyFromRot(R);
-        } else {
-            if(T.linear().isApprox(rotFromRpy(referenceRpy))){
-                rpy = rpyFromRot(R, referenceRpy);
-            } else {
-                rpy = rpyFromRot(R, getRpySpinValue());
-            }
-            referenceRpy = rpy;
-        }
-        for(int i=0; i < 3; ++i){
-            rpySpin[i].setValue(degree(rpy[i]));
-        }
-    }
-    
-    if(quaternionCheck->isChecked()){
-        if(!quatSpin[0].hasFocus() &&
-           !quatSpin[1].hasFocus() &&
-           !quatSpin[2].hasFocus() &&
-           !quatSpin[3].hasFocus()){
-            Eigen::Quaterniond quat(R);
-            quatSpin[0].setValue(quat.x());
-            quatSpin[1].setValue(quat.y());
-            quatSpin[2].setValue(quat.z());
-            quatSpin[3].setValue(quat.w());
-        }
-    }
-    
-    if(rotationMatrixCheck->isChecked()){
-        updateRotationMatrixPanel(R);
-    }
-
-    resetInputWidgetStyles();
-
-    if(targetType == LinkTarget){
-        updateConfigurationPanel();
-    }
-
-    userInputConnections.unblock();
-
-    resultLabel.setText(_("Actual State"));
-    resultLabel.setStyleSheet(normalStyle);
-}
-
-
-void BodyPositionView::Impl::updateRotationMatrixPanel(const Matrix3& R)
-{
-    for(int i=0; i < 3; ++i){
-        for(int j=0; j < 3; ++j){
-            rotationMatrixElementLabel[i][j].setText(
-                format("{: .6f}", R(i, j)).c_str());
-        }
+        positionWidget->setReferenceRpy(Vector3::Zero());
+        positionWidget->updatePosition(positionEditTarget->getPosition());
     }
 }
 
@@ -1161,84 +858,37 @@ void BodyPositionView::Impl::updateConfigurationPanel()
 }
 
 
-void BodyPositionView::Impl::onPositionInput(InputElementSet inputElements)
-{
-    if(lastInputAttitudeMode == RollPitchYawMode && rpyCheck->isChecked()){
-        onPositionInputRpy(inputElements);
-    } else if(lastInputAttitudeMode == QuaternionMode && quaternionCheck->isChecked()){
-        onPositionInputQuaternion(inputElements);
-    } else if(quaternionCheck->isChecked()){
-        onPositionInputQuaternion(inputElements);
-    } else {
-        onPositionInputRpy(inputElements);
-    }
-}
-
-
-void BodyPositionView::Impl::onPositionInputRpy(InputElementSet inputElements)
-{
-    Position T;
-    Vector3 rpy;
-
-    for(int i=0; i < 3; ++i){
-        T.translation()[i] = xyzSpin[i].value();
-        rpy[i] = radian(rpySpin[i].value());
-    }
-    T.linear() = rotFromRpy(rpy);
-    
-    applyInput(T, inputElements);
-
-    lastInputAttitudeMode = RollPitchYawMode;
-}
-
-
-void BodyPositionView::Impl::onPositionInputQuaternion(InputElementSet inputElements)
-{
-    Position T;
-
-    for(int i=0; i < 3; ++i){
-        T.translation()[i] = xyzSpin[i].value();
-    }
-    
-    Eigen::Quaterniond quat =
-        Eigen::Quaterniond(
-            quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
-
-    if(quat.norm() > 1.0e-6){
-        quat.normalize();
-        T.linear() = quat.toRotationMatrix();
-        applyInput(T, inputElements);
-    }
-
-    lastInputAttitudeMode = QuaternionMode;
-}
-
-
 void BodyPositionView::Impl::onConfigurationInput(int index)
 {
     if(auto configurationHandler = kinematicsKit->configurationHandler()){
         configurationHandler->setPreferredConfiguration(index);
     }
-    onPositionInput(InputElementSet(0));
+    positionWidget->applyPositionInput();
 }
 
 
-void BodyPositionView::Impl::applyInput(const Position& T_input, InputElementSet inputElements)
+bool BodyPositionView::Impl::applyPositionInput(const Position& T)
 {
+    bool accepted = false;
+    
     if(targetType == LinkTarget){
-        findBodyIkSolution(T_input, inputElements);
+        accepted = findBodyIkSolution(T);
 
     } else if(targetType == PositionEditTarget){
-        applyInputToPositionEditTarget(T_input, inputElements);
+        accepted = applyInputToPositionEditTarget(T);
     }
+
+    return accepted;
 }
 
 
-void BodyPositionView::Impl::findBodyIkSolution(const Position& T_input, InputElementSet inputElements)
+bool BodyPositionView::Impl::findBodyIkSolution(const Position& T_input)
 {
+    bool solved = false;
+    
     if(auto ik = kinematicsKit->inverseKinematics()){
 
-        kinematicsKit->setReferenceRpy(getRpySpinValue());
+        kinematicsKit->setReferenceRpy(positionWidget->getRpyInput());
 
         targetBodyItem->beginKinematicStateEdit();
         
@@ -1248,16 +898,10 @@ void BodyPositionView::Impl::findBodyIkSolution(const Position& T_input, InputEl
         }
         T.linear() = targetLink->calcRfromAttitude(T.linear());
         
-        bool solved = ik->calcInverseKinematics(T);
+        solved = ik->calcInverseKinematics(T);
 
-        if(!solved){
-            for(size_t i=0; i < inputElementWidgets.size(); ++i){
-                if(inputElements[i]){
-                    inputElementWidgets[i]->setStyleSheet(errorStyle);
-                }
-            }
-        } else {
-            if(requireConfigurationCheck.isChecked() && !disableCustomIKCheck->isChecked()){
+        if(solved){
+            if(requireConfigurationCheck.isChecked() && !isCustomIkDisabled){
                 if(auto configurationHandler = kinematicsKit->configurationHandler()){
                     int preferred = configurationCombo.currentIndex();
                     if(!configurationHandler->checkConfiguration(preferred)){
@@ -1280,15 +924,19 @@ void BodyPositionView::Impl::findBodyIkSolution(const Position& T_input, InputEl
             resultLabel.setStyleSheet("font-weight: bold; color: red");
         }
     }
+
+    return solved;
 }
 
 
-void BodyPositionView::Impl::applyInputToPositionEditTarget(const Position& T_input, InputElementSet inputElements)
+bool BodyPositionView::Impl::applyInputToPositionEditTarget(const Position& T_input)
 {
+    bool accepted = false;
+    
     if(positionEditTarget){
 
         targetConnections.block();
-        bool accepted = positionEditTarget->setPosition(T_input);
+        accepted = positionEditTarget->setPosition(T_input);
         targetConnections.unblock();
 
         if(accepted){
@@ -1297,14 +945,10 @@ void BodyPositionView::Impl::applyInputToPositionEditTarget(const Position& T_in
         } else {
             resultLabel.setText(_("Not Accepted"));
             resultLabel.setStyleSheet("font-weight: bold; color: red");
-            
-            for(size_t i=0; i < inputElementWidgets.size(); ++i){
-                if(inputElements[i]){
-                    inputElementWidgets[i]->setStyleSheet(errorStyle);
-                }
-            }
         }
     }
+
+    return accepted;
 }
 
 
@@ -1320,12 +964,10 @@ bool BodyPositionView::Impl::storeState(Archive& archive)
     archive.write("coordinateMode", coordinateModeSelection.selectedSymbol());
     coordinateModeSelection.select(preferredCoordinateMode);
     archive.write("preferredCoordinateMode", coordinateModeSelection.selectedSymbol());
+    archive.write("disableCustomIK", isCustomIkDisabled);
 
-    archive.write("showRPY", rpyCheck->isChecked());
-    archive.write("uniqueRPY", uniqueRpyCheck->isChecked());
-    archive.write("showQuoternion", quaternionCheck->isChecked());
-    archive.write("showRotationMatrix", rotationMatrixCheck->isChecked());
-    archive.write("disableCustomIK", disableCustomIKCheck->isChecked());
+    positionWidget->storeState(archive);
+
     return true;
 }
 
@@ -1338,7 +980,6 @@ bool BodyPositionView::restoreState(const Archive& archive)
 
 bool BodyPositionView::Impl::restoreState(const Archive& archive)
 {
-    settingConnections.block();
     userInputConnections.block();
     
     string symbol;
@@ -1352,14 +993,12 @@ bool BodyPositionView::Impl::restoreState(const Archive& archive)
             setCoordinateMode(coordinateModeSelection.which());
         }
     }
-    rpyCheck->setChecked(archive.get("showRPY", rpyCheck->isChecked()));
-    uniqueRpyCheck->setChecked(archive.get("uniqueRPY", uniqueRpyCheck->isChecked()));
-    quaternionCheck->setChecked(archive.get("showQuoternion", quaternionCheck->isChecked()));
-    rotationMatrixCheck->setChecked(archive.get("showRotationMatrix", rotationMatrixCheck->isChecked()));
-    disableCustomIKCheck->setChecked(archive.get("disableCustomIK", disableCustomIKCheck->isChecked()));
+
+    positionWidget->restoreState(archive);
+    
+    archive.read("disableCustomIK", isCustomIkDisabled);
 
     userInputConnections.unblock();
-    settingConnections.unblock();
 
     return true;
 }

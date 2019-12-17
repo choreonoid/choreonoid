@@ -10,6 +10,7 @@
 #include <QLayout>
 #include <QKeyEvent>
 #include <QTabWidget>
+#include <QStyle>
 #include <fmt/format.h>
 
 using namespace std;
@@ -250,10 +251,19 @@ View::LayoutArea View::defaultLayoutArea() const
 }
 
 
-void View::setLayout(QLayout* layout)
+void View::setLayout(QLayout* layout, double marginRatio)
 {
-    const int margin = 0;
-    layout->setContentsMargins(margin, margin, margin, margin);
+    if(marginRatio == 0.0){
+        layout->setContentsMargins(0, 0, 0, 0);
+    } else {
+        auto s = style();
+        int left = s->pixelMetric(QStyle::PM_LayoutLeftMargin);
+        int top = s->pixelMetric(QStyle::PM_LayoutTopMargin);
+        int right = s->pixelMetric(QStyle::PM_LayoutRightMargin);
+        int bottom = s->pixelMetric(QStyle::PM_LayoutBottomMargin);
+        double r = marginRatio;
+        layout->setContentsMargins(left * r, top * r, right * r, bottom * r);
+    }
     QWidget::setLayout(layout);
 }
 
