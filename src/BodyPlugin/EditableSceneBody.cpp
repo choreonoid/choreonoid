@@ -178,6 +178,7 @@ public:
     PositionDraggerPtr positionDragger;
 
     bool isEditMode;
+    bool isFocused;
 
     KinematicsBar* kinematicsBar;
 
@@ -230,7 +231,7 @@ public:
     void makeLinkAttitudeLevel();
         
     PointedType findPointedObject(const vector<SgNode*>& path);
-    void updateMarkersAndManipulators();
+    void updateMarkersAndManipulators(bool on);
     void attachPositionDragger(Link* link);
 
     bool onKeyPressEvent(const SceneWidgetEvent& event);
@@ -309,6 +310,7 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     dragMode = DRAG_NONE;
     isDragging = false;
     isEditMode = false;
+    isFocused = false;
 
     markerGroup = new SgGroup;
     markerGroup->setName("Marker");
@@ -425,7 +427,7 @@ void EditableSceneBody::Impl::updateModel()
 
 void EditableSceneBody::Impl::onBodyItemUpdated()
 {
-    updateMarkersAndManipulators();
+    updateMarkersAndManipulators(isFocused);
 }
 
 
@@ -666,7 +668,7 @@ void EditableSceneBody::Impl::makeLinkAttitudeLevel()
 }
 
 
-void EditableSceneBody::Impl::updateMarkersAndManipulators()
+void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 {
     Link* baseLink = bodyItem->currentBaseLink();
     auto pin = bodyItem->pinDragIK();
@@ -676,9 +678,8 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators()
         EditableSceneLink* sceneLink = editableSceneLink(i);
         sceneLink->hideMarker();
         sceneLink->removeChild(positionDragger);
-        markerGroup->removeChild(positionDragger);
 
-        if(isEditMode && !activeSimulatorItem){
+        if(on && isEditMode && !activeSimulatorItem){
             Link* link = sceneLink->link();
             if(link == baseLink){
                 sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
@@ -691,7 +692,7 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators()
         }
     }
 
-    bool showDragger = isEditMode && targetLink && kinematicsBar->isPositionDraggerEnabled();
+    bool showDragger = on && isEditMode && targetLink && kinematicsBar->isPositionDraggerEnabled();
     if(showDragger){
         if(activeSimulatorItem){
             showDragger = forcedPositionMode != NO_FORCED_POSITION;
@@ -833,7 +834,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         if(pointedType == PT_SCENE_LINK){
             if(event.button() == Qt::LeftButton){
                 targetLink = pointedSceneLink->link();
-                updateMarkersAndManipulators();
+                updateMarkersAndManipulators(true);
                 currentIK.reset();
                 defaultIK.reset();
                 
@@ -1025,6 +1026,15 @@ bool EditableSceneBody::Impl::onScrollEvent(const SceneWidgetEvent& event)
 }
 
 
+void EditableSceneBody::onFocusChanged(const SceneWidgetEvent& event, bool on)
+{
+    impl->isFocused = on;
+    if(!on){
+        impl->updateMarkersAndManipulators(false);
+    }
+}
+
+
 void EditableSceneBody::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
     impl->onContextMenuRequest(event, menuManager);
@@ -1120,7 +1130,7 @@ void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
             outlinedLink->showOutline(false);
             outlinedLink = nullptr;
         }
-        updateMarkersAndManipulators();
+        updateMarkersAndManipulators(false);
     }
 }
 
@@ -1341,7 +1351,7 @@ void EditableSceneBody::Impl::setForcedPositionMode(int mode, bool on)
         forcedPositionMode = mode;
     } else {
         forcedPositionMode = NO_FORCED_POSITION;
-        updateMarkersAndManipulators();
+        updateMarkersAndManipulators(isFocused);
     }
     finishForcedPosition();
 }
@@ -1398,7 +1408,7 @@ void EditableSceneBody::Impl::finishVirtualElasticString()
 void EditableSceneBody::Impl::startForcedPosition(const SceneWidgetEvent& event)
 {
     finishForcedPosition();
-    updateMarkersAndManipulators();
+    updateMarkersAndManipulators(true);
 
     dragProjector.setInitialPosition(targetLink->position());
     dragProjector.setTranslationAlongViewPlane();

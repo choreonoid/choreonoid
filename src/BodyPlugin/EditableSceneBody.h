@@ -60,6 +60,7 @@ public:
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
     virtual bool onScrollEvent(const SceneWidgetEvent& event) override;
+    virtual void onFocusChanged(const SceneWidgetEvent& event, bool on) override;
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
     virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;
     virtual bool onUndoRequest() override;
