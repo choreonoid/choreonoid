@@ -48,6 +48,8 @@ public:
     vector<QWidget*> inputElementWidgets;
     ScopedConnectionSet userInputConnections;
 
+    QLabel caption;
+
     DoubleSpinBox xyzSpin[3];
 
     enum AttitudeMode { RollPitchYawMode, QuaternionMode };
@@ -109,15 +111,19 @@ PositionWidget::Impl::Impl(PositionWidget* self)
 
     auto style = self->style();
     int lmargin = style->pixelMetric(QStyle::PM_LayoutLeftMargin);
-    int rmargin = style->pixelMetric(QStyle::PM_LayoutRightMargin);
     int tmargin = style->pixelMetric(QStyle::PM_LayoutTopMargin);
+    int rmargin = style->pixelMetric(QStyle::PM_LayoutRightMargin);
     int bmargin = style->pixelMetric(QStyle::PM_LayoutBottomMargin);
 
     auto mainvbox = new QVBoxLayout;
-    mainvbox->setContentsMargins(lmargin / 2, rmargin / 2, tmargin / 2, bmargin / 2);
+    mainvbox->setContentsMargins(lmargin / 2, tmargin / 2, rmargin / 2, bmargin / 2);
     self->setLayout(mainvbox);
 
     auto grid = new QGridLayout;
+    int row = 0;
+
+    caption.setStyleSheet("font-weight: bold");
+    grid->addWidget(&caption, row++, 1, 1, 5);
 
     static const char* xyzLabels[] = { "X", "Y", "Z" };
     for(int i=0; i < 3; ++i){
@@ -133,12 +139,13 @@ PositionWidget::Impl::Impl(PositionWidget* self)
             xyzSpin[i].sigValueChanged().connect(
                 [this, s](double){ onPositionInput(s); }));
 
-        grid->addWidget(new QLabel(xyzLabels[i]), 0, i * 2, Qt::AlignCenter);
-        grid->addWidget(&xyzSpin[i], 0, i * 2 + 1);
+        grid->addWidget(new QLabel(xyzLabels[i]), row, i * 2, Qt::AlignCenter);
+        grid->addWidget(&xyzSpin[i], row, i * 2 + 1);
 
         grid->setColumnStretch(i * 2, 1);
         grid->setColumnStretch(i * 2 + 1, 10);
     }
+    ++row;
 
     static const char* rpyLabelChar[] = { "R", "P", "Y" };
     for(int i=0; i < 3; ++i){
@@ -155,11 +162,13 @@ PositionWidget::Impl::Impl(PositionWidget* self)
                 [this, s](double){ onPositionInputRpy(s); }));
 
         auto label = new QLabel(rpyLabelChar[i]);
-        grid->addWidget(label, 1, i * 2, Qt::AlignCenter);
+        grid->addWidget(label, row, i * 2, Qt::AlignCenter);
         rpyWidgets.push_back(label);
-        grid->addWidget(&rpySpin[i], 1, i * 2 + 1);
+        grid->addWidget(&rpySpin[i], row, i * 2 + 1);
         rpyWidgets.push_back(&rpySpin[i]);
     }
+    ++row;
+    
     mainvbox->addLayout(grid);
 
     grid = new QGridLayout;
@@ -231,6 +240,12 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     lastInputAttitudeMode = RollPitchYawMode;
 
     clearPosition();
+}
+
+
+void PositionWidget::setCaption(const std::string& caption)
+{
+    impl->caption.setText(caption.c_str());
 }
 
 

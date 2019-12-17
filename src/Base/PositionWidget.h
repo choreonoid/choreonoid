@@ -17,6 +17,7 @@ public:
     PositionWidget(QWidget* parent);
     ~PositionWidget();
 
+    void setCaption(const std::string& caption);
     void setOptionMenu(MenuManager& menuManager);
     void setPositionCallback(std::function<bool(const Position& T)> callback);
     void clearPosition();

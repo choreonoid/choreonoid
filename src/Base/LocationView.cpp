@@ -4,21 +4,25 @@
 #include "TargetItemPicker.h"
 #include "PlaceableItem.h"
 #include <QBoxLayout>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace cnoid {
 
-class LocationView::Impl : public PositionWidget
+class LocationView::Impl
 {
 public:
+    LocationView* self;
     PlaceableItem* targetItem;
     TargetItemPicker<Item> targetItemPicker;
     ScopedConnection connection;
+    PositionWidget* positionWidget;
     
-    Impl(QWidget* parent);
+    Impl(LocationView* self);
     void setTargetItem(Item* item);
     bool setInputPositionToTargetItem(const Position& T);
 };
@@ -35,25 +39,32 @@ void LocationView::initializeClass(ExtensionManager* ext)
 
 LocationView::LocationView()
 {
-    setDefaultLayoutArea(View::CENTER);
     impl = new Impl(this);
-    auto vbox = new QVBoxLayout;
-    vbox->addWidget(impl);
-    setLayout(vbox);
 }
 
 
-LocationView::Impl::Impl(QWidget* parent)
-    : PositionWidget(parent)
+LocationView::Impl::Impl(LocationView* self)
+    : self(self)
 {
+    self->setDefaultLayoutArea(View::CENTER);
+    
     targetItem = nullptr;
     
     targetItemPicker.setTargetInterface<PlaceableItem>();
     targetItemPicker.sigTargetItemChanged().connect(
         [&](Item* item){ setTargetItem(item); });
 
-    setPositionCallback(
+    auto vbox = new QVBoxLayout;
+
+    positionWidget = new PositionWidget(self);
+
+    positionWidget->setPositionCallback(
         [&](const Position& T){ return setInputPositionToTargetItem(T); });
+
+    vbox->addWidget(positionWidget);
+    self->setLayout(vbox);
+
+    setTargetItem(nullptr);
 }
 
 
@@ -65,7 +76,7 @@ LocationView::~LocationView()
 
 void LocationView::onAttachedMenuRequest(MenuManager& menuManager)
 {
-    impl->setOptionMenu(menuManager);
+    impl->positionWidget->setOptionMenu(menuManager);
 }
 
 
@@ -75,12 +86,16 @@ void LocationView::Impl::setTargetItem(Item* item)
     
     if(!targetItem){
         connection.disconnect();
+        positionWidget->setCaption("-----");
+        positionWidget->setEnabled(false);
     } else {
-        updatePosition(targetItem->getLocation());
+        positionWidget->setCaption(item->name());
+        positionWidget->setEnabled(true);
+        positionWidget->updatePosition(targetItem->getLocation());
         connection =
             targetItem->sigLocationChanged().connect(
                 [this](){
-                    updatePosition(targetItem->getLocation()); });
+                    positionWidget->updatePosition(targetItem->getLocation()); });
     }
 }
 
@@ -97,13 +112,13 @@ bool LocationView::Impl::setInputPositionToTargetItem(const Position& T)
 
 bool LocationView::storeState(Archive& archive)
 {
-    impl->storeState(archive);
+    impl->positionWidget->storeState(archive);
     return true;
 }
 
 
 bool LocationView::restoreState(const Archive& archive)
 {
-    impl->restoreState(archive);
+    impl->positionWidget->restoreState(archive);
     return true;
 }

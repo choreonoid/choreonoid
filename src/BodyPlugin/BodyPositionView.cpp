@@ -249,7 +249,7 @@ void BodyPositionView::Impl::createPanel()
     self->setLayout(topvbox);
     
     auto mainvbox = new QVBoxLayout;
-    mainvbox->setContentsMargins(lmargin / 2, rmargin / 2, tmargin / 2, bmargin / 2);
+    mainvbox->setContentsMargins(lmargin / 2, tmargin / 2, rmargin / 2, bmargin / 2);
     topvbox->addLayout(mainvbox);
 
     auto hbox = new QHBoxLayout;
