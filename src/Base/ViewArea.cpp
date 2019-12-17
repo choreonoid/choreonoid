@@ -19,7 +19,6 @@
 #include <QDesktopWidget>
 #include <QLabel>
 #include <bitset>
-#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -46,6 +45,7 @@ class ViewPane : public QWidget
 public:
     ViewPane(ViewAreaImpl* viewAreaImpl, QWidget* parent = 0);
     int addView(View* view);
+    void onViewTitleChanged(const QString &title);
     void removeView(View* view);
     void setTabVisible(bool on);
     void makeDirect();
@@ -331,14 +331,15 @@ ViewPane::ViewPane(ViewAreaImpl* viewAreaImpl, QWidget* parent)
     
     vbox->addWidget(tabWidget);
 
-    directView = 0;
+    directView = nullptr;
 }
 
 
 int ViewPane::addView(View* view)
 {
+    int index = 0;
     if(viewAreaImpl->viewTabsVisible){
-        return tabWidget->addTab(view, view->windowTitle());
+        index = tabWidget->addTab(view, view->windowTitle());
     } else {
         if(viewAreaImpl->self->isWindow() && tabWidget->count() == 0 && !directView){
             tabWidget->hide();
@@ -346,15 +347,25 @@ int ViewPane::addView(View* view)
             directView->setParent(this);
             vbox->addWidget(directView);
             directView->show();
-            return 0;
         } else {
             tabWidget->show();
             if(directView){
                 tabWidget->addTab(directView, directView->windowTitle());
-                directView = 0;
+                directView = nullptr;
             }
-            return tabWidget->addTab(view, view->windowTitle());
+            index = tabWidget->addTab(view, view->windowTitle());
         }
+    }
+    connect(view, &QWidget::windowTitleChanged, this, &ViewPane::onViewTitleChanged);
+    return index;
+}
+
+
+void ViewPane::onViewTitleChanged(const QString &title)
+{
+    if(auto view = dynamic_cast<View*>(sender())){
+        int index = tabWidget->indexOf(view);
+        tabWidget->setTabText(index, view->windowTitle());
     }
 }
 
@@ -363,13 +374,14 @@ void ViewPane::removeView(View* view)
 {
     if(view == directView){
         vbox->removeWidget(directView);
-        directView = 0;
+        directView = nullptr;
     } else {
         tabWidget->removeTab(tabWidget->indexOf(view));
         if(viewAreaImpl->self->isWindow() && tabWidget->count() == 1 && !viewAreaImpl->viewTabsVisible){
             makeDirect();
         }
     }
+    disconnect(view, &QWidget::windowTitleChanged, this, &ViewPane::onViewTitleChanged);
 }
 
 
@@ -378,7 +390,7 @@ void ViewPane::setTabVisible(bool on)
     if(on){
         if(directView){
             tabWidget->addTab(directView, directView->windowTitle());
-            directView = 0;
+            directView = nullptr;
             tabWidget->show();
         }
         tabBar()->show();
@@ -458,8 +470,7 @@ ViewAreaImpl::ViewAreaImpl(ViewArea* self)
 
     viewSizeLabelTimer.setSingleShot(true);
     viewSizeLabelTimer.setInterval(1000);
-    viewSizeLabelTimer.sigTimeout().connect(
-        std::bind(&ViewAreaImpl::hideViewSizeLabels, this));
+    viewSizeLabelTimer.sigTimeout().connect([&](){ hideViewSizeLabels(); });
 
     topSplitter = 0;
     needToUpdateDefaultPaneAreas = true;
@@ -1417,7 +1428,7 @@ bool ViewAreaImpl::viewTabMousePressEvent(ViewPane* pane, QMouseEvent* event)
                 viewMenuManager.addSeparator();
             }
             viewMenuManager.addItem(_("Separate the view"))
-                ->sigTriggered().connect(std::bind(&ViewAreaImpl::separateView, this, view));
+                ->sigTriggered().connect([this, view](){ separateView(view); });
                 
             viewMenuManager.popupMenu()->popup(event->globalPos());
         }

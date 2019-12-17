@@ -10,16 +10,21 @@
 #include <QLayout>
 #include <QKeyEvent>
 #include <QTabWidget>
+#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace cnoid {
 
-class ViewImpl
+class View::Impl
 {
 public:
+    View* self;
     bool isActive;
+    string name;
+    string titleFormat;
     mutable ViewArea* viewArea;
 
     Signal<void()> sigActivated;
@@ -31,7 +36,8 @@ public:
     bool isFontSizeZoomKeysEnabled;
     int fontZoom;
 
-    ViewImpl();
+    Impl(View* self);
+    void updateTitle();
     void zoomFontSize(int zoom, const QList<QWidget*>& widgets);
 };
 
@@ -40,13 +46,15 @@ public:
 
 View::View()
 {
-    impl = new ViewImpl();
+    impl = new Impl(this);
 }
 
 
-ViewImpl::ViewImpl()
+View::Impl::Impl(View* self)
+    : self(self)
 {
     isActive = false;
+    titleFormat = "{}";
     viewArea = 0;
     defaultLayoutArea = View::CENTER;
     isFontSizeZoomKeysEnabled = false;
@@ -76,6 +84,45 @@ View::~View()
 ViewClass* View::viewClass() const
 {
     return ViewManager::viewClass(typeid(*this));
+}
+
+
+const std::string& View::name() const
+{
+    return impl->name;
+}
+
+
+void View::setName(const std::string& name)
+{
+    impl->name = name;
+    setObjectName(name.c_str());
+}
+
+
+void View::Impl::updateTitle()
+{
+    self->setWindowTitle(format(titleFormat, name).c_str());
+}
+
+
+void View::setTitleFormat(const std::string& title)
+{
+    impl->titleFormat = title;
+    impl->updateTitle();
+}
+
+
+void View::resetTitleFormat()
+{
+    impl->titleFormat = "{}";
+    impl->updateTitle();
+}
+
+
+const std::string& View::titleFormat() const
+{
+    return impl->titleFormat;
 }
 
 
@@ -137,13 +184,6 @@ void View::onDeactivated()
     if(impl->isFontSizeZoomKeysEnabled){
         AppConfig::archive()->openMapping(viewClass()->className())->write("fontZoom", impl->fontZoom);
     }
-}
-
-
-void View::setName(const std::string& name)
-{
-    setObjectName(name.c_str());
-    setWindowTitle(name.c_str());
 }
 
 
@@ -287,7 +327,7 @@ void View::zoomFontSize(int zoom)
 }
 
 
-void ViewImpl::zoomFontSize(int zoom, const QList<QWidget*>& widgets)
+void View::Impl::zoomFontSize(int zoom, const QList<QWidget*>& widgets)
 {
     int n = widgets.size();
     for(int i=0; i < n; ++i){

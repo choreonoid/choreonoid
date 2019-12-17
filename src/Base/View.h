@@ -17,7 +17,6 @@ class MenuManager;
 class ViewArea;
 class ViewAreaImpl;
 class ViewManagerImpl;
-class ViewImpl;
 
 class CNOID_EXPORT ViewClass
 {
@@ -33,11 +32,11 @@ public:
 
     ViewClass* viewClass() const;
 
+    const std::string& name() const;
     virtual void setName(const std::string& name);
-    
-    std::string name() const {
-        return objectName().toStdString();
-     }
+    void setTitleFormat(const std::string& title);
+    void resetTitleFormat();
+    const std::string& titleFormat() const;
 
     ViewArea* viewArea() const;
         
@@ -50,13 +49,14 @@ public:
     SignalProxy<void()> sigResized();
     SignalProxy<void()> sigRemoved();
     
-    enum LayoutArea { LEFT = 0,
-                      LEFT_TOP = 0,
-                      LEFT_BOTTOM = 1,
-                      CENTER = 2,
-                      RIGHT = 3,
-                      BOTTOM = 4,
-                      NUM_AREAS };
+    enum LayoutArea {
+        LEFT = 0,
+        LEFT_TOP = 0,
+        LEFT_BOTTOM = 1,
+        CENTER = 2,
+        RIGHT = 3,
+        BOTTOM = 4,
+        NUM_AREAS };
 
     void setDefaultLayoutArea(LayoutArea area);
     LayoutArea defaultLayoutArea() const;
@@ -90,10 +90,11 @@ private:
     virtual void showEvent(QShowEvent* event);
     virtual void hideEvent(QHideEvent* event);
 
-    ViewImpl* impl;
-
     void setViewArea(ViewArea* area);
     void notifySigRemoved();
+
+    class Impl;
+    Impl* impl;
 
     friend class ViewAreaImpl;
     friend class ViewManagerImpl;
