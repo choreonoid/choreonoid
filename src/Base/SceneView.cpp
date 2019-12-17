@@ -7,10 +7,10 @@
 #include "ViewManager.h"
 #include "Separator.h"
 #include "RootItem.h"
+#include "RenderableItem.h"
 #include "Buttons.h"
 #include "CheckBox.h"
 #include <cnoid/SceneGraph>
-#include <cnoid/SceneProvider>
 #include <list>
 #include "gettext.h"
 
@@ -33,17 +33,17 @@ public:
 
     struct SceneInfo {
         Item* item;
-        SceneProvider* provider;
+        RenderableItem* renderable;
         SgNodePtr scene;
         bool isShown;
-        Connection sigDetachedFromRootConnection;
+        Connection sigDisconnectedFromRootConnection;
         Connection sigCheckToggledConnection;
-        SceneInfo(Item* item, SceneProvider* provider)
-            : item(item), provider(provider) {
+        SceneInfo(Item* item, RenderableItem* renderable)
+            : item(item), renderable(renderable) {
             isShown = false;
         }
         ~SceneInfo(){
-            sigDetachedFromRootConnection.disconnect();
+            sigDisconnectedFromRootConnection.disconnect();
             sigCheckToggledConnection.disconnect();
         }
     };
@@ -56,8 +56,8 @@ public:
         
     SceneViewImpl(SceneView* self);
     ~SceneViewImpl();
-    void onSceneProviderItemAdded(Item* item, SceneProvider* provider);
-    void onSceneProviderItemDetachedFromRoot(list<SceneInfo>::iterator infoIter);
+    void onRenderableItemAdded(Item* item, RenderableItem* renderable);
+    void onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iterator infoIter);
     void showScene(list<SceneInfo>::iterator infoIter, bool show);
     void onDedicatedCheckToggled(bool on);
     bool storeState(Archive& archive);
@@ -142,7 +142,7 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
         list<SceneInfo>::iterator p;
         for(p = mainImpl->sceneInfos.begin(); p != mainImpl->sceneInfos.end(); ++p){
             SceneInfo& info = *p;
-            onSceneProviderItemAdded(info.item, info.provider);
+            onRenderableItemAdded(info.item, info.renderable);
         }
     }
     
@@ -196,24 +196,24 @@ SgGroup* SceneView::scene()
 
 void SceneView::onItemAdded(Item* item)
 {
-    if(SceneProvider* provider = dynamic_cast<SceneProvider*>(item)){
+    if(RenderableItem* renderable = dynamic_cast<RenderableItem*>(item)){
         for(size_t i=0; i < instances.size(); ++i){
-            instances[i]->impl->onSceneProviderItemAdded(item, provider);
+            instances[i]->impl->onRenderableItemAdded(item, renderable);
         }
     }
 }
 
 
-void SceneViewImpl::onSceneProviderItemAdded(Item* item, SceneProvider* provider)
+void SceneViewImpl::onRenderableItemAdded(Item* item, RenderableItem* renderable)
 {
-    sceneInfos.push_back(SceneInfo(item, provider));
+    sceneInfos.push_back(SceneInfo(item, renderable));
     list<SceneInfo>::iterator infoIter = sceneInfos.end();
     --infoIter;
     SceneInfo& info = *infoIter;
         
-    info.sigDetachedFromRootConnection =
-        item->sigDetachedFromRoot().connect(
-            [this, infoIter](){ onSceneProviderItemDetachedFromRoot(infoIter); });
+    info.sigDisconnectedFromRootConnection =
+        item->sigDisconnectedFromRoot().connect(
+            [this, infoIter](){ onRenderableItemDisconnectedFromRoot(infoIter); });
 
     int checkId = dedicatedCheckCheck.isChecked() ? dedicatedCheckId : Item::PrimaryCheck;
         
@@ -227,7 +227,7 @@ void SceneViewImpl::onSceneProviderItemAdded(Item* item, SceneProvider* provider
 }
 
 
-void SceneViewImpl::onSceneProviderItemDetachedFromRoot(list<SceneInfo>::iterator infoIter)
+void SceneViewImpl::onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iterator infoIter)
 {
     showScene(infoIter, false);
     sceneInfos.erase(infoIter);
@@ -244,7 +244,7 @@ void SceneViewImpl::showScene(list<SceneInfo>::iterator infoIter, bool show)
         
     } else if(!infoIter->isShown && show){
         if(!infoIter->scene){
-            infoIter->scene = infoIter->provider->getScene();
+            infoIter->scene = infoIter->renderable->getScene();
         }
         if(infoIter->scene){
             scene->addChild(infoIter->scene, true);

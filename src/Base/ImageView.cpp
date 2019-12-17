@@ -1,15 +1,11 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ImageView.h"
 #include "ImageWidget.h"
 #include "ViewManager.h"
 #include "RootItem.h"
+#include "ImageableItem.h"
 #include "ComboBox.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/Image>
-#include <cnoid/ImageProvider>
 #include <QImage>
 #include <QBoxLayout>
 #include "gettext.h"
@@ -17,7 +13,7 @@
 using namespace std;
 using namespace cnoid;
 
-Q_DECLARE_METATYPE(ImageProvider *)
+Q_DECLARE_METATYPE(ImageableItem *)
 
 namespace {
 vector<ImageView*> instances;
@@ -30,21 +26,17 @@ class ImageViewImpl
 public:
     ImageView* self;
     ImageWidget* imageWidget;
-
     Connection sigUpdatedConnection;
-    ImageProvider* imageProvider;
-    Item* imageProviderItem;
+    ImageableItem* imageable;
 
     ImageViewImpl(ImageView* self);
     ~ImageViewImpl();
 
     void updateImage();
-    void setImageProvider(ImageProvider* imageProvider_, Item* item);
-    void clear();
+    void setImageableItem(ImageableItem* imageable);
 
     bool storeState(Archive& archive);
-    bool restoreState(const Archive& archive);
-
+    void restoreState(const Archive& archive);
 };
 
 class ImageViewBarImpl
@@ -54,27 +46,25 @@ public:
     ComboBox* imageCombo;
     Connection sigItemAddedConnection;
     Connection sigViewActivatedConnection;
-    typedef map<ImageProvider*, ConnectionSet> ImageProviderConnectionsMap;
-    ImageProviderConnectionsMap imageProviderConnections;
+    typedef map<ImageableItem*, ConnectionSet> ImageableItemConnectionsMap;
+    ImageableItemConnectionsMap imageableItemConnections;
     typedef map<ImageView*, ConnectionSet> ViewConnectionsMap;
     ViewConnectionsMap viewConnections;
     ImageView* targetView;
-    typedef map<ImageProvider*, Item*> ImageProviderItemMap;
-    ImageProviderItemMap imageProviderItems;
 
     ImageViewBarImpl(ImageViewBar* self);
     ~ImageViewBarImpl();
     ToolButton* adjustSizeToggle;
     void onItemAdded(Item* item);
     void onImageComboCurrentIndexChanged(int index);
-    void onItemDetachedFromRoot(Item* item);
+    void onItemDisconnectedFromRoot(Item* item);
     void onItemNameChange(Item* item);
     void onViewActivated(View* view);
     void onForcusViewChanged(View* view);
     void onViewDeactivated(ImageView* imageView);
     void onAdjustSizeClicked(bool on);
-    ImageProvider* getSelectedImageProvider();
-    ImageProvider* getImageProvider(int index);
+    ImageableItem* getSelectedImageableItem();
+    ImageableItem* getImageableItem(int index);
 };
 
 }
@@ -95,12 +85,10 @@ ImageViewImpl::ImageViewImpl(ImageView* self)
     self->setFocusPolicy( Qt::StrongFocus );
 
     ImageViewBar* imageViewBar = ImageViewBar::instance();
-    imageProvider = 0;
-    imageProviderItem = 0;
-    ImageProvider* imageProvider_ = imageViewBar->getSelectedImageProvider();
-    Item* item = imageViewBar->getImageProviderItem(imageProvider_);
-    setImageProvider(imageProvider_, item);
 
+    imageable = nullptr;
+
+    setImageableItem(imageViewBar->getSelectedImageableItem());
 }
 
 
@@ -114,36 +102,30 @@ ImageViewImpl::~ImageViewImpl()
 
 void ImageViewImpl::updateImage()
 {
-    if(imageProvider){
-        auto image = imageProvider->getImage();
-        if(image){
-            imageWidget->setImage(*imageProvider->getImage());
-            return;
+    bool updated = false;
+    if(imageable){
+        if(auto image = imageable->getImage()){
+            imageWidget->setImage(*image);
+            updated = true;
         }
     }
-    imageWidget->clear();
-}
-
-
-void ImageViewImpl::clear()
-{
-    imageWidget->clear();
+    if(!updated){
+        imageWidget->clear();
+    }
 }
 
 
 void ImageView::initializeClass(ExtensionManager* ext)
 {
-    if(instances.empty()){
-        ext->viewManager().registerClass<ImageView>(
-                "ImageView", N_("Image"), ViewManager::MULTI_OPTIONAL);
-    }
+    ext->viewManager().registerClass<ImageView>(
+        "ImageView", N_("Image"), ViewManager::MULTI_OPTIONAL);
 }
 
 
 ImageView* ImageView::instance()
 {
     if(instances.empty()){
-        return 0;
+        return nullptr;
     }
     return instances.front();
 }
@@ -153,7 +135,6 @@ ImageView::ImageView()
 {
     impl = new ImageViewImpl(this);
     instances.push_back(this);
-
     impl->updateImage();
 }
 
@@ -194,38 +175,27 @@ bool ImageView::isScalingEnabled() const
 }
 
 
-ImageProvider* ImageView::getImageProvider()
+ImageableItem* ImageView::getImageableItem()
 {
-    return impl->imageProvider;
+    return impl->imageable;
 }
 
 
-void ImageView::setImageProvider(ImageProvider* imageProvider, Item* item)
+void ImageView::setImageableItem(ImageableItem* imageable)
 {
-    impl->setImageProvider(imageProvider, item);
-
+    impl->setImageableItem(imageable);
 }
 
 
-void ImageViewImpl::setImageProvider(ImageProvider* imageProvider_, Item* item)
+void ImageViewImpl::setImageableItem(ImageableItem* imageable)
 {
-    if(imageProvider == imageProvider_)
-        return;
-
-    if(imageProvider){
-        clear();
+    if(imageable != this->imageable){
+        this->imageable = imageable;
+        imageWidget->clear();
         sigUpdatedConnection.disconnect();
-    }
-
-    imageProvider = imageProvider_;
-
-    if(imageProvider){
-        sigUpdatedConnection =
-            imageProvider->sigImageUpdated().connect( [&](){ updateImage(); } );
+        sigUpdatedConnection = imageable->sigImageUpdated().connect([&](){ updateImage(); });
         updateImage();
     }
-
-    imageProviderItem = item;
 }
 
 
@@ -237,7 +207,9 @@ bool ImageView::storeState(Archive& archive)
 
 bool ImageViewImpl::storeState(Archive& archive)
 {
-    archive.writeItemId("ImageProviderItem", imageProviderItem);
+    if(auto item = dynamic_cast<Item*>(imageable)){
+        archive.writeItemId("ImageableItem", item);
+    }
     return true;
 }
 
@@ -249,31 +221,22 @@ bool ImageView::restoreState(const Archive& archive)
 }
 
 
-bool ImageViewImpl::restoreState(const Archive& archive)
+void ImageViewImpl::restoreState(const Archive& archive)
 {
-    Item* item = archive.findItem<Item>("ImageProviderItem");
-    ImageProvider* imageProvider = dynamic_cast<ImageProvider*>(item);
-    if(item && imageProvider){
-        setImageProvider(imageProvider, item);
-    }
-
-    return true;
+    setImageableItem(
+        dynamic_cast<ImageableItem*>(archive.findItem<Item>("ImageableItem")));
 }
 
 
 void ImageViewBar::initialize(ExtensionManager* ext)
 {
-    static bool initialized = false;
-    if(!initialized){
-        ext->addToolBar(instance());
-
-    }
+    ext->addToolBar(instance());
 }
 
 
 ImageViewBar* ImageViewBar::instance()
 {
-    static ImageViewBar* imageViewBar = new ImageViewBar();
+    static ImageViewBar* imageViewBar = new ImageViewBar;
     return imageViewBar;
 }
 
@@ -294,11 +257,10 @@ ImageViewBar::~ImageViewBar()
 ImageViewBarImpl::ImageViewBarImpl(ImageViewBar* self)
     : self(self)
 {
-    targetView = 0;
-    imageProviderItems[0] = 0;
+    targetView = nullptr;
 
     imageCombo = new ComboBox();
-    imageCombo->setToolTip(_("Select a ImageProvider Item"));
+    imageCombo->setToolTip(_("Select an imageable item"));
     imageCombo->setMinimumContentsLength(6);
     imageCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     imageCombo->sigCurrentIndexChanged().connect(
@@ -328,90 +290,75 @@ ImageViewBarImpl::~ImageViewBarImpl()
 
 void ImageViewBarImpl::onItemAdded(Item* item)
 {
-    ImageProvider* imageProvider = dynamic_cast<ImageProvider*>(item);
+    auto imageable = dynamic_cast<ImageableItem*>(item);
 
-    if(imageProvider && imageCombo->findData(QVariant::fromValue(imageProvider))==-1){
+    if(imageable && imageCombo->findData(QVariant::fromValue(imageable))==-1){
 
-        ConnectionSet& connections = imageProviderConnections[imageProvider];
+        ConnectionSet& connections = imageableItemConnections[imageable];
         connections.add(
             item->sigDisconnectedFromRoot().connect(
-                [&, item](){ onItemDetachedFromRoot(item); }) );
+                [&, item](){ onItemDisconnectedFromRoot(item); }));
         connections.add(
             item->sigNameChanged().connect(
-                [&, item](const string& /* oldName */) { onItemNameChange(item); }) );
+                [&, item](const string& /* oldName */) { onItemNameChange(item); }));
 
-        imageCombo->addItem(item->name().c_str(), QVariant::fromValue(imageProvider));
-
-        imageProviderItems[imageProvider] = item;
+        imageCombo->addItem(item->name().c_str(), QVariant::fromValue(imageable));
     }
 }
 
 
-void ImageViewBarImpl::onItemDetachedFromRoot(Item* item)
+void ImageViewBarImpl::onItemDisconnectedFromRoot(Item* item)
 {
-    ImageProvider* imageProvider = dynamic_cast<ImageProvider*>(item);
-    if(!imageProvider)
-        return;
-
-    int removeIndex = imageCombo->findData(QVariant::fromValue(imageProvider));
-    imageCombo->removeItem(removeIndex);
-
-    ConnectionSet& connections = imageProviderConnections[imageProvider];
-    connections.disconnect();
-
-    imageProviderConnections.erase(imageProvider);
-
-    imageProviderItems.erase(imageProvider);
+    if(auto imageable = dynamic_cast<ImageableItem*>(item)){
+        int removeIndex = imageCombo->findData(QVariant::fromValue(imageable));
+        imageCombo->removeItem(removeIndex);
+        ConnectionSet& connections = imageableItemConnections[imageable];
+        connections.disconnect();
+        imageableItemConnections.erase(imageable);
+    }
 }
 
 
 void ImageViewBarImpl::onItemNameChange(Item* item)
 {
-    int index = imageCombo->findData(QVariant::fromValue(dynamic_cast<ImageProvider*>(item)));
+    int index = imageCombo->findData(QVariant::fromValue(dynamic_cast<ImageableItem*>(item)));
     imageCombo->setItemText(index, QString(item->name().c_str()));
 }
 
 
 void ImageViewBarImpl::onImageComboCurrentIndexChanged(int index)
 {
-    if(index == -1)
+    if(index == -1){
         return;
-
-    if(targetView){
-        ImageProvider* imageProvider = getImageProvider(index);
-        targetView->setImageProvider(imageProvider, imageProviderItems[imageProvider]);
     }
-
+    if(targetView){
+        auto item = getImageableItem(index);
+        targetView->setImageableItem(item);
+    }
 }
 
 
-ImageProvider* ImageViewBar::getSelectedImageProvider()
+ImageableItem* ImageViewBar::getSelectedImageableItem()
 {
-    return impl->getSelectedImageProvider();
+    return impl->getSelectedImageableItem();
 }
 
 
-ImageProvider* ImageViewBarImpl::getSelectedImageProvider()
+ImageableItem* ImageViewBarImpl::getSelectedImageableItem()
 {
     int index = imageCombo->currentIndex();
-    return getImageProvider(index);
+    return getImageableItem(index);
 }
 
 
-ImageProvider* ImageViewBarImpl::getImageProvider(int index)
+ImageableItem* ImageViewBarImpl::getImageableItem(int index)
 {
     const QVariant qv = imageCombo->itemData(index);
     if(qv.isValid()){
-        return qv.value<ImageProvider*>();
+        return qv.value<ImageableItem*>();
     }else{
-        return 0;
+        return nullptr;
     }
-}
-
-
-Item* ImageViewBar::getImageProviderItem(ImageProvider* imageProvider)
-{
-    return impl->imageProviderItems[imageProvider];
 }
 
 
@@ -430,31 +377,29 @@ void ImageViewBarImpl::onViewActivated(View* view)
 
 void ImageViewBarImpl::onForcusViewChanged(View* view)
 {
-    ImageView* imageView = dynamic_cast<ImageView*>(view);
+    auto imageView = dynamic_cast<ImageView*>(view);
     if(imageView){
         targetView = imageView;
-        ImageProvider* imageProvider = targetView->getImageProvider();
-        if(imageProvider){
-            int index = imageCombo->findData(QVariant::fromValue(imageProvider));
+        if(auto imageable = targetView->getImageableItem()){
+            int index = imageCombo->findData(QVariant::fromValue(imageable));
             imageCombo->setCurrentIndex(index);
         }else{
             imageCombo->setCurrentIndex(0);
         }
 
-        if( targetView->isScalingEnabled() ){
+        if(targetView->isScalingEnabled()){
             adjustSizeToggle->setChecked(true);
         }else{
             adjustSizeToggle->setChecked(false);
         }
     }
-
 }
 
 
 void ImageViewBarImpl::onViewDeactivated(ImageView* imageView)
 {
     if(targetView == imageView){
-        targetView = 0;
+        targetView = nullptr;
     }
 
     ConnectionSet& connections = viewConnections[imageView];
@@ -470,4 +415,3 @@ void ImageViewBarImpl::onAdjustSizeClicked(bool on)
         targetView->setScalingEnabled(on);
     }
 }
-

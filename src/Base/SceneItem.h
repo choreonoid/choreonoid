@@ -6,13 +6,13 @@
 #define CNOID_BASE_SCENE_ITEM_H
 
 #include "Item.h"
+#include "RenderableItem.h"
 #include <cnoid/SceneGraph>
-#include <cnoid/SceneProvider>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT SceneItem : public Item, public SceneProvider
+class CNOID_EXPORT SceneItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -21,8 +21,10 @@ public:
     SceneItem(const SceneItem& org);
     virtual ~SceneItem();
 
-    virtual void setName(const std::string& name);
-    virtual SgNode* getScene();
+    virtual void setName(const std::string& name) override;
+
+    // RenderableItem
+    virtual SgNode* getScene() override;
 
     SgPosTransform* topNode() { return topNode_; }
     const SgPosTransform* topNode() const { return topNode_; }
@@ -34,10 +36,10 @@ public:
     bool isLightweightRenderingEnabled() const { return isLightweightRenderingEnabled_; }
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
+    virtual Item* doDuplicate() const override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
     SgPosTransformPtr topNode_;

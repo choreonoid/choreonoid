@@ -9,7 +9,7 @@
 #include "BodyItem.h"
 #include <cnoid/Item>
 #include <cnoid/ItemList>
-#include <cnoid/SceneProvider>
+#include <cnoid/RenderableItem>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -18,7 +18,7 @@ class WorldItemImpl;
 class CollisionDetector;
 class MaterialTable;
 
-class CNOID_EXPORT WorldItem : public Item, public SceneProvider
+class CNOID_EXPORT WorldItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -39,6 +39,7 @@ public:
     std::vector<CollisionLinkPairPtr>& collisions() const;
     SignalProxy<void()> sigCollisionsUpdated();
 
+    // RenderableItem
     virtual SgNode* getScene() override;
 
     void setMaterialTableFile(const std::string& filename);

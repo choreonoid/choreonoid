@@ -55,7 +55,6 @@ set(sources
   SceneMarkers.cpp
   SceneRenderer.cpp
   CoordinateAxesOverlay.cpp # This must be after SceneRenderer.cpp
-  SceneProvider.cpp
   SceneUtil.cpp
   AbstractSceneLoader.cpp
   SceneLoader.cpp
@@ -66,7 +65,6 @@ set(sources
   Image.cpp
   ImageIO.cpp
   ImageConverter.cpp
-  ImageProvider.cpp
   PointSetUtil.cpp
   CollisionDetector.cpp
   YAMLSceneReader.cpp
@@ -159,7 +157,6 @@ set(headers
   SceneMarkers.h
   SceneRenderer.h
   CoordinateAxesOverlay.h
-  SceneProvider.h
   SceneUtil.h
   AbstractSceneLoader.h
   SceneLoader.h
@@ -172,7 +169,6 @@ set(headers
   Image.h
   ImageIO.h
   ImageConverter.h
-  ImageProvider.h
   PointSetUtil.h
   Collision.h
   CollisionDetector.h

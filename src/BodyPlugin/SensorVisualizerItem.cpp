@@ -5,16 +5,16 @@
 
 #include "SensorVisualizerItem.h"
 #include "BodyItem.h"
+#include <cnoid/ItemManager>
+#include <cnoid/ImageableItem>
+#include <cnoid/PointSetItem>
+#include <cnoid/RenderableItem>
 #include <cnoid/BasicSensors>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
-#include <cnoid/PointSetItem>
-#include <cnoid/ItemManager>
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
-#include <cnoid/SceneProvider>
-#include <cnoid/ImageProvider>
 #include <cnoid/ConnectionSet>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
@@ -85,18 +85,18 @@ public:
 };
     
 
-class ForceSensorVisualizerItem : public Item, public SensorVisualizerItemBase, public SceneProvider
+class ForceSensorVisualizerItem : public Item, public SensorVisualizerItemBase, public RenderableItem
 {
 public:
     ForceSensorVisualizerItem();
-    virtual SgNode* getScene();
+    virtual SgNode* getScene() override;
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
     void updateSensorPositions();
     void updateForceSensorState(int index);
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
     SgGroupPtr scene;
     SgShapePtr cylinder;
@@ -107,11 +107,12 @@ public:
     ScopedConnectionSet connections;
 };
 
-class CameraImageVisualizerItem : public Item, public ImageProvider, public SensorVisualizerItemBase
+class CameraImageVisualizerItem : public Item, public ImageableItem, public SensorVisualizerItemBase
 {
 public:
     CameraImageVisualizerItem();
-    virtual const Image* getImage();
+    virtual const Image* getImage() override;
+    virtual SignalProxy<void()> sigImageUpdated() override;
     void setBodyItem(BodyItem* bodyItem, Camera* camera);
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
@@ -119,6 +120,7 @@ public:
     CameraPtr camera;
     ScopedConnectionSet connections;
     std::shared_ptr<const Image> image;
+    Signal<void()> sigImageUpdated_;
 };
 
 class PointCloudVisualizerItem : public PointSetItem, public SensorVisualizerItemBase
@@ -505,6 +507,12 @@ const Image* CameraImageVisualizerItem::getImage()
 }
 
 
+SignalProxy<void()> CameraImageVisualizerItem::sigImageUpdated()
+{
+    return sigImageUpdated_;
+}
+
+
 void CameraImageVisualizerItem::setBodyItem(BodyItem* bodyItem, Camera* camera)
 {
     if(name().empty()){
@@ -541,7 +549,7 @@ void CameraImageVisualizerItem::doUpdateVisualization()
     } else {
         image.reset();
     }
-    notifyImageUpdate();
+    sigImageUpdated_();
 }
 
 

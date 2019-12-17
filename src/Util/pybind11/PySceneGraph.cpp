@@ -5,7 +5,6 @@
 #include "PyReferenced.h"
 #include "PyEigenTypes.h"
 #include "../SceneGraph.h"
-#include "../SceneProvider.h"
 #include "../CloneMap.h"
 
 using namespace cnoid;
@@ -93,11 +92,6 @@ void exportPySceneGraph(py::module& m)
         .def("getPosition", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position)
         .def("getTranslation", (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
         .def("getRotation", (Affine3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
-        ;
-
-    py::class_<SceneProvider>(m, "SceneProvider")
-        .def("getScene", (SgNode*(SceneProvider::*)()) &SceneProvider::getScene)
-        .def("getScene", (SgNode*(SceneProvider::*)(CloneMap&)) &SceneProvider::getScene)
         ;
 }
 

@@ -7,7 +7,7 @@
 #define CNOID_BODY_PLUGIN_BODY_MARKER_ITEM_H
 
 #include <cnoid/Item>
-#include <cnoid/SceneProvider>
+#include <cnoid/RenderableItem>
 #include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
@@ -15,7 +15,7 @@ namespace cnoid {
 
 class BodyMarkerItemImpl;
 
-class CNOID_EXPORT BodyMarkerItem : public Item, public SceneProvider
+class CNOID_EXPORT BodyMarkerItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -24,8 +24,10 @@ public:
     BodyMarkerItem(const BodyMarkerItem& org);
     virtual ~BodyMarkerItem();
 
-    virtual void setName(const std::string& name);
-    virtual SgNode* getScene();
+    virtual void setName(const std::string& name) override;
+
+    // RenderableItem
+    virtual SgNode* getScene() override;
 
     bool setTargetLink(const std::string& name);
     bool setTargetNode(const std::string& name);
@@ -46,11 +48,11 @@ public:
     void setMarkerColor(const Vector3f& color);
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void onPositionChanged();
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
             
 private:
     BodyMarkerItemImpl* impl;

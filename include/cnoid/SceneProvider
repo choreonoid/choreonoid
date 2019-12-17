@@ -1,1 +1,2 @@
-#include "src/Util/SceneProvider.h"
+// Deprecated. Use the RenderableItem header
+#include "src/Base/RenderableItem.h"

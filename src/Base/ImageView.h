@@ -1,14 +1,8 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_IMAGE_VIEW_H
 #define CNOID_BASE_IMAGE_VIEW_H
 
 #include "View.h"
-#include "Item.h"
 #include "ToolBar.h"
-#include <cnoid/ImageProvider>
 #include "exportdecl.h"
 
 class QImage;
@@ -16,7 +10,9 @@ class QImage;
 namespace cnoid {
 
 class Image;
+class ImageableItem;
 class ImageViewImpl;
+class ImageViewBarImpl;
     
 class CNOID_EXPORT ImageView : public View
 {
@@ -34,8 +30,8 @@ public:
     void setScalingEnabled(bool on);
     bool isScalingEnabled() const;
 
-    ImageProvider* getImageProvider();
-    void setImageProvider(ImageProvider* imageProvider, Item* item);
+    ImageableItem* getImageableItem();
+    void setImageableItem(ImageableItem* imageable);
 
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);
@@ -45,15 +41,13 @@ private:
 
 };
 
-class ImageViewBarImpl;
 class CNOID_EXPORT ImageViewBar : public ToolBar
 {
 public:
     static void initialize(ExtensionManager* ext);
     static ImageViewBar* instance();
 
-    ImageProvider* getSelectedImageProvider();
-    Item* getImageProviderItem(ImageProvider* imageProvider);
+    ImageableItem* getSelectedImageableItem();
 
 private:
     ImageViewBarImpl* impl;

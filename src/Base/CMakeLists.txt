@@ -177,6 +177,9 @@ set(headers
   ItemTreeView.h
   ItemList.h
   Item.h
+  PlaceableItem.h
+  RenderableItem.h
+  ImageableItem.h
   TargetItemPicker.h
   PositionWidget.h
   PositionEditManager.h

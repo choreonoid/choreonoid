@@ -155,7 +155,7 @@ views:
     class: ImageView
     mounted: true
     state: 
-      ImageProviderItem: [ 4, "Kinect Camera" ]
+      ImageableItem: [ 4, "Kinect Camera" ]
   - 
     id: 1
     name: "Theta Image"
@@ -163,7 +163,7 @@ views:
     class: ImageView
     mounted: true
     state: 
-      ImageProviderItem: [ 4, "Theta" ]
+      ImageableItem: [ 4, "Theta" ]
   - 
     id: 2
     plugin: Base

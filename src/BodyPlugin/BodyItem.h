@@ -10,7 +10,7 @@
 #include <cnoid/Body>
 #include <cnoid/CollisionLinkPair>
 #include <cnoid/PlaceableItem>
-#include <cnoid/SceneProvider>
+#include <cnoid/RenderableItem>
 #include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
@@ -24,7 +24,7 @@ class PinDragIK;
 class PenetrationBlocker;
 class EditableSceneBody;
 
-class CNOID_EXPORT BodyItem : public Item, public PlaceableItem, public SceneProvider
+class CNOID_EXPORT BodyItem : public Item, public PlaceableItem, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -139,7 +139,7 @@ public:
     virtual Position getLocation() const override;
     virtual void setLocation(const Position& T) override;
 
-    // SceneProvider function
+    // RenderableItem function
     virtual SgNode* getScene() override;
 
     EditableSceneBody* sceneBody();

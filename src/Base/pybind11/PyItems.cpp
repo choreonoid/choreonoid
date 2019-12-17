@@ -5,6 +5,7 @@
 #include "PyItemList.h"
 #include "PyQString.h"
 #include "../Item.h"
+#include "../RenderableItem.h"
 #include "../RootItem.h"
 #include "../FolderItem.h"
 #include "../SubProjectItem.h"
@@ -118,6 +119,10 @@ void exportPyItems(py::module m)
         .def_static("getInstance", &RootItem::instance)
         ;
 
+    py::class_<RenderableItem>(m, "RenderableItem")
+        .def("getScene", (SgNode*(RenderableItem::*)()) &RenderableItem::getScene)
+        ;
+    
     PyItemList<RootItem>(m, "RootItemList");
 
     py::class_<FolderItem, FolderItemPtr, Item>(m, "FolderItem")

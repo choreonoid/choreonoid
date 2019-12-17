@@ -5,9 +5,9 @@
 #ifndef CNOID_BASE_POINT_SET_ITEM_H
 #define CNOID_BASE_POINT_SET_ITEM_H
 
-#include <cnoid/Item>
+#include "Item.h"
+#include "RenderableItem.h"
 #include <cnoid/RectRegionMarker>
-#include <cnoid/SceneProvider>
 #include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
@@ -16,7 +16,7 @@ namespace cnoid {
 class SgPointSet;
 class PointSetItemImpl;
 
-class CNOID_EXPORT PointSetItem : public Item, public SceneProvider
+class CNOID_EXPORT PointSetItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -25,13 +25,14 @@ public:
     PointSetItem(const PointSetItem& org);
     virtual ~PointSetItem();
 
-    virtual void setName(const std::string& name);
-    virtual SgNode* getScene();
+    virtual void setName(const std::string& name) override;
 
     const SgPointSet* pointSet() const;
     SgPointSet* pointSet();
 
-    virtual void notifyUpdate();
+    virtual void notifyUpdate() override;
+
+    virtual SgNode* getScene() override;
         
     const Affine3& offsetTransform() const;
     void setOffsetTransform(const Affine3& T);
@@ -73,12 +74,12 @@ public:
 
     SignalProxy<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved();
 
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
     PointSetItemImpl* impl;

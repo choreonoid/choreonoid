@@ -4,17 +4,17 @@
 
 #include "SceneBar.h"
 #include "SceneWidget.h"
-#include <cnoid/ExtensionManager>
-#include <cnoid/MenuManager>
-#include <cnoid/MessageView>
-#include <cnoid/ComboBox>
-#include <cnoid/RootItem>
-#include <cnoid/ItemList>
+#include "ExtensionManager.h"
+#include "MenuManager.h"
+#include "RootItem.h"
+#include "RenderableItem.h"
+#include "ItemList.h"
+#include "MessageView.h"
+#include "AppConfig.h"
+#include "ComboBox.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/SceneDrawables>
-#include <cnoid/SceneProvider>
 #include <cnoid/SceneRenderer>
-#include <cnoid/AppConfig>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -483,13 +483,9 @@ void putSceneStatistics()
     int totalNumTriangles = 0;
     SceneCounter counter;
 
-    ItemList<> selected = RootItem::instance()->selectedItems();
-    for(size_t i=0; i < selected.size(); ++i){
-        Item* item = selected[i];
-        SceneProvider* provider = dynamic_cast<SceneProvider*>(item);
-        if(provider){
-            SgNodePtr scene = provider->getScene();
-            if(scene){
+    for(auto& item : RootItem::instance()->selectedItems()){
+        if(auto renderable = dynamic_cast<RenderableItem*>(item.get())){
+            if(auto scene = renderable->getScene()){
                 os << format(_(" Scene \"{}\":"), item->name()) << endl;
                 counter.count(scene);
                 os << format(_("  Vertices: {}\n"), counter.numVertices);

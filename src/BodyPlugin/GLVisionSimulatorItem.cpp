@@ -14,6 +14,7 @@
 #include <cnoid/ValueTreeUtil>
 #include <cnoid/GL1SceneRenderer>
 #include <cnoid/GLSLSceneRenderer>
+#include <cnoid/RenderableItem>
 #include <cnoid/Body>
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
@@ -769,9 +770,9 @@ SensorScenePtr SensorRenderer::createSensorScene(const vector<SimulationBody*>& 
     if(simImpl->shootAllSceneObjects){
         if(auto worldItem = simImpl->self->findOwnerItem<WorldItem>()){
             for(auto& item : worldItem->descendantItems()){
-                SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item.get());
-                if(sceneProvider && !dynamic_cast<BodyItem*>(item.get())){
-                    if(auto node = sceneProvider->cloneScene(simImpl->cloneMap)){
+                auto renderable = dynamic_cast<RenderableItem*>(item.get());
+                if(renderable && !dynamic_cast<BodyItem*>(item.get())){
+                    if(auto node = renderable->getScene()->cloneNode(simImpl->cloneMap)){
                         scene->root->addChild(node);
                     }
                 }

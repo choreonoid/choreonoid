@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-16 21:12+0900\n"
+"POT-Creation-Date: 2019-12-17 14:42+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -235,39 +235,39 @@ msgstr "設定ダイアログの表示"
 msgid "Scene statistics:"
 msgstr "シーン統計情報:"
 
-#: SceneBar.cpp:493
+#: SceneBar.cpp:489
 msgid " Scene \"{}\":"
 msgstr " シーン \"{}\":"
 
-#: SceneBar.cpp:495
+#: SceneBar.cpp:491
 msgid "  Vertices: {}\n"
 msgstr "  頂点: {}\n"
 
-#: SceneBar.cpp:496
+#: SceneBar.cpp:492
 msgid "  Normals: {}\n"
 msgstr "  法線: {}\n"
 
-#: SceneBar.cpp:497
+#: SceneBar.cpp:493
 msgid "  Triangles: {}"
 msgstr "  トライアングル: {}"
 
-#: SceneBar.cpp:507
+#: SceneBar.cpp:503
 msgid "No valid scene item is selected."
 msgstr "有効なシーンアイテムが選択されていません．"
 
-#: SceneBar.cpp:509
+#: SceneBar.cpp:505
 msgid "The total number of {} scene items:\n"
 msgstr "{}シーンアイテムの総数: \n"
 
-#: SceneBar.cpp:510
+#: SceneBar.cpp:506
 msgid " Vertices: {}\n"
 msgstr " 頂点: {}\n"
 
-#: SceneBar.cpp:511
+#: SceneBar.cpp:507
 msgid " Normals: {}\n"
 msgstr " 法線: {}\n"
 
-#: SceneBar.cpp:512
+#: SceneBar.cpp:508
 msgid " Triangles: {}"
 msgstr " トライアングル: {}"
 
@@ -1215,7 +1215,7 @@ msgstr "プログラムの有効化に失敗しました"
 msgid "Shader has not been linked."
 msgstr "シェーダがリンクされていません．"
 
-#: LocationView.cpp:24
+#: LocationView.cpp:32
 msgid "Location"
 msgstr "配置"
 
@@ -1359,19 +1359,19 @@ msgstr "プラグイン{}のDLLが解放されました．"
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
 
-#: ImageView.cpp:138
+#: ImageView.cpp:121
 msgid "Image"
 msgstr "画像"
 
-#: ImageView.cpp:282
+#: ImageView.cpp:245
 msgid "ImageViewBar"
 msgstr "画像ビューバー"
 
-#: ImageView.cpp:301
-msgid "Select a ImageProvider Item"
+#: ImageView.cpp:263
+msgid "Select an imageable item"
 msgstr "画像アイテムの選択"
 
-#: ImageView.cpp:310
+#: ImageView.cpp:272
 msgid "Adjust image size according to view"
 msgstr "画像サイスをビューに合わせる"
 
@@ -1697,23 +1697,19 @@ msgid ""
 "{3})."
 msgstr ""
 
-#: PositionWidget.cpp:134
-msgid "Option"
-msgstr "オプション"
-
 #: PositionWidget.cpp:245
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: PositionWidget.cpp:251
+#: PositionWidget.cpp:250
 msgid "Fetch as a unique RPY value"
 msgstr "一意なRPY値として取り込み"
 
-#: PositionWidget.cpp:257
+#: PositionWidget.cpp:255
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: PositionWidget.cpp:264
+#: PositionWidget.cpp:260
 msgid "Rotation matrix"
 msgstr "回転行列"
 
@@ -1918,3 +1914,4 @@ msgstr "軽量レンダリング"
 #: MultiSE3MatrixSeqItem.cpp:15
 msgid "MultiSE3MatrixSeqItem"
 msgstr ""
+

@@ -7,14 +7,14 @@
 #define CNOID_BODY_PLUGIN_BODY_TRACKING_CAMERA_ITEM_H
 
 #include <cnoid/Item>
-#include <cnoid/SceneProvider>
+#include <cnoid/RenderableItem>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class BodyTrackingCameraItemImpl;
   
-class CNOID_EXPORT BodyTrackingCameraItem : public Item, public SceneProvider
+class CNOID_EXPORT BodyTrackingCameraItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -25,8 +25,10 @@ public:
     BodyTrackingCameraItem(const BodyTrackingCameraItem& org);
     ~BodyTrackingCameraItem();
 
-    virtual void setName(const std::string& name);
-    virtual SgNode* getScene();
+    virtual void setName(const std::string& name) override;
+
+    // RenderableItem
+    virtual SgNode* getScene() override;
 
 protected:
     virtual Item* doDuplicate() const override;

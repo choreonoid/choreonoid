@@ -10,7 +10,7 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT MultiPointSetItem : public Item, public SceneProvider
+class CNOID_EXPORT MultiPointSetItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -66,11 +66,12 @@ public:
     void addAttentionPoint(const Vector3& p);
     SignalProxy<void()> sigAttentionPointsChanged();
     void notifyAttentionPointChange();
+
+    // RenderableItem
+    virtual SgNode* getScene() override;
     
-    virtual SgNode* getScene();
-    
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
     bool startAutomaticSave(const std::string& filename);
     void stopAutomaticSave();
@@ -84,8 +85,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
     Impl* impl;

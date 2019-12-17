@@ -7,14 +7,14 @@
 #define CNOID_BASE_LIGHTING_ITEM_H
 
 #include "Item.h"
-#include <cnoid/SceneProvider>
+#include "RenderableItem.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class LightingItemImpl;
 
-class CNOID_EXPORT LightingItem : public Item, public SceneProvider
+class CNOID_EXPORT LightingItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -25,10 +25,12 @@ public:
 
 protected:
     virtual Item* doDuplicate() const;
-    virtual SgNode* getScene() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
+
+    // RenderableItem
+    virtual SgNode* getScene() override;
 
 private:
     LightingItemImpl* impl;
