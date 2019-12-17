@@ -695,7 +695,7 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators()
     if(showDragger){
         if(activeSimulatorItem){
             showDragger = forcedPositionMode != NO_FORCED_POSITION;
-                } else {
+        } else {
             showDragger = (kinematicsBar->mode() == KinematicsBar::IK_MODE);
         }
     }

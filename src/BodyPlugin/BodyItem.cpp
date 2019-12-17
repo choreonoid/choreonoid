@@ -735,11 +735,17 @@ std::shared_ptr<InverseKinematics> BodyItem::getDefaultIK(Link* targetLink)
 
 std::shared_ptr<InverseKinematics> BodyItemImpl::getDefaultIK(Link* targetLink)
 {
+    if(!targetLink){
+        return nullptr;
+    }
+
+    if(bodyAttachment && targetLink == body->rootLink()){
+        return make_shared<MyCompositeBodyIK>(this);
+    }
+    
     std::shared_ptr<InverseKinematics> ik;
-
     const Mapping& setupMap = *body->info()->findMapping("defaultIKsetup");
-
-    if(targetLink && setupMap.isValid()){
+    if(setupMap.isValid()){
         const Listing& setup = *setupMap.findListing(targetLink->name());
         if(setup.isValid() && !setup.empty()){
             Link* baseLink = body->link(setup[0].toString());
@@ -762,7 +768,6 @@ std::shared_ptr<InverseKinematics> BodyItemImpl::getDefaultIK(Link* targetLink)
             }
         }
     }
-
     return ik;
 }
 
