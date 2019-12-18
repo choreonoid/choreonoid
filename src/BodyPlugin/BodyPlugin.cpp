@@ -25,7 +25,7 @@
 #include "BodySelectionManager.h"
 #include "KinematicFaultChecker.h"
 #include "SplineFilterDialog.h"
-#include "BodyPositionView.h"
+#include "LinkPositionView.h"
 #include "LinkSelectionView.h"
 #include "LinkPropertyView.h"
 #include "JointDisplacementView.h"
@@ -113,7 +113,7 @@ public:
         addToolBar(LeggedBodyBar::instance());
         addToolBar(KinematicsBar::instance());
 
-        BodyPositionView::initializeClass(this);
+        LinkPositionView::initializeClass(this);
         LinkSelectionView::initializeClass(this);
         LinkPropertyView::initializeClass(this);
         JointDisplacementView::initializeClass(this);

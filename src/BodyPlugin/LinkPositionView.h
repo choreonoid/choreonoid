@@ -2,8 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_PLUGIN_BODY_POSITION_VIEW_H
-#define CNOID_BODY_PLUGIN_BODY_POSITION_VIEW_H
+#ifndef CNOID_BODY_PLUGIN_LINK_POSITION_VIEW_H
+#define CNOID_BODY_PLUGIN_LINK_POSITION_VIEW_H
 
 #include <cnoid/View>
 #include <functional>
@@ -15,14 +15,14 @@ namespace cnoid {
 
 class LinkKinematicsKit;
 
-class CNOID_EXPORT BodyPositionView : public View
+class CNOID_EXPORT LinkPositionView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
-    static BodyPositionView* instance();
+    static LinkPositionView* instance();
 
-    BodyPositionView();
-    virtual ~BodyPositionView();
+    LinkPositionView();
+    virtual ~LinkPositionView();
 
     void setCoordinateModeLabels(
         const char* worldModeLabel, const char* modelModeLabel, const char* localModeLabel);

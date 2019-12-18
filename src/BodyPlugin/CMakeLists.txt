@@ -37,9 +37,9 @@ set(sources
   LeggedBodyBar.cpp
   KinematicsBar.cpp
   SimulationBar.cpp
-  BodyPositionView.cpp
   LinkTreeWidget.cpp
   LinkSelectionView.cpp
+  LinkPositionView.cpp
   LinkPropertyView.cpp
   JointDisplacementView.cpp
   JointStateView.cpp
@@ -80,9 +80,9 @@ set(headers
   BodyBar.h
   KinematicsBar.h
   SimulationBar.h
-  BodyPositionView.h
   LinkTreeWidget.h
   LinkSelectionView.h
+  LinkPositionView.h
   EditableSceneBody.h
   CollisionSeq.h
   CollisionSeqItem.h

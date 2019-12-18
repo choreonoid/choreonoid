@@ -2,7 +2,7 @@
     \author Shin'ichiro Nakaoka
 */
 
-#include "BodyPositionView.h"
+#include "LinkPositionView.h"
 #include "BodySelectionManager.h"
 #include <cnoid/PositionWidget>
 #include <cnoid/BodyItem>
@@ -51,12 +51,12 @@ enum FrameComboType { BaseFrameCombo, EndFrameCombo };
 
 namespace cnoid {
 
-class BodyPositionView::Impl
+class LinkPositionView::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    BodyPositionView* self;
+    LinkPositionView* self;
 
     ScopedConnectionSet managerConnections;
     ScopedConnectionSet targetConnections;
@@ -99,7 +99,7 @@ public:
 
     ScopedConnectionSet userInputConnections;
 
-    Impl(BodyPositionView* self);
+    Impl(LinkPositionView* self);
     void createPanel();
     void onActivated();
     void onAttachedMenuRequest(MenuManager& menuManager);
@@ -138,27 +138,27 @@ public:
 }
 
 
-void BodyPositionView::initializeClass(ExtensionManager* ext)
+void LinkPositionView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<BodyPositionView>(
-        "BodyPositionView", N_("Position"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<LinkPositionView>(
+        "LinkPositionView", N_("Link Position"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
-BodyPositionView* BodyPositionView::instance()
+LinkPositionView* LinkPositionView::instance()
 {
-    static BodyPositionView* instance_ = ViewManager::getOrCreateView<BodyPositionView>();
+    static LinkPositionView* instance_ = ViewManager::getOrCreateView<LinkPositionView>();
     return instance_;
 }
 
 
-BodyPositionView::BodyPositionView()
+LinkPositionView::LinkPositionView()
 {
     impl = new Impl(this);
 }
 
 
-BodyPositionView::Impl::Impl(BodyPositionView* self)
+LinkPositionView::Impl::Impl(LinkPositionView* self)
     : self(self),
       coordinateModeSelection(NumCoordinateModes, CNOID_GETTEXT_DOMAIN_NAME)
 {
@@ -179,13 +179,13 @@ BodyPositionView::Impl::Impl(BodyPositionView* self)
 }
 
 
-BodyPositionView::~BodyPositionView()
+LinkPositionView::~LinkPositionView()
 {
     delete impl;
 }
 
 
-void BodyPositionView::Impl::createPanel()
+void LinkPositionView::Impl::createPanel()
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
@@ -303,7 +303,7 @@ void BodyPositionView::Impl::createPanel()
 }
 
 
-void BodyPositionView::setCoordinateModeLabels
+void LinkPositionView::setCoordinateModeLabels
 (const char* worldModeLabel, const char* baseModeLabel, const char* localModeLabel)
 {
     impl->worldCoordRadio.setText(worldModeLabel);
@@ -312,27 +312,27 @@ void BodyPositionView::setCoordinateModeLabels
 }
 
 
-void BodyPositionView::setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* endOffsetLabel)
+void LinkPositionView::setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* endOffsetLabel)
 {
     impl->frameComboLabel[BaseFrameCombo].setText(baseOffsetLabel);
     impl->frameComboLabel[EndFrameCombo].setText(endOffsetLabel);
 }
 
 
-void BodyPositionView::customizeDefaultCoordinateFrameNames
+void LinkPositionView::customizeDefaultCoordinateFrameNames
 (std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> getNames)
 {
     impl->functionToGetDefaultFrameNames = getNames;
 }
 
 
-void BodyPositionView::onActivated()
+void LinkPositionView::onActivated()
 {
     impl->onActivated();
 }
 
 
-void BodyPositionView::Impl::onActivated()
+void LinkPositionView::Impl::onActivated()
 {
     auto bsm = BodySelectionManager::instance();
     auto pem = PositionEditManager::instance();
@@ -357,19 +357,19 @@ void BodyPositionView::Impl::onActivated()
 }
 
 
-void BodyPositionView::onDeactivated()
+void LinkPositionView::onDeactivated()
 {
     impl->managerConnections.disconnect();
 }
 
 
-void BodyPositionView::onAttachedMenuRequest(MenuManager& menuManager)
+void LinkPositionView::onAttachedMenuRequest(MenuManager& menuManager)
 {
     impl->onAttachedMenuRequest(menuManager);
 }
 
 
-void BodyPositionView::Impl::onAttachedMenuRequest(MenuManager& menuManager)
+void LinkPositionView::Impl::onAttachedMenuRequest(MenuManager& menuManager)
 {
     positionWidget->setOptionMenu(menuManager);
 
@@ -384,7 +384,7 @@ void BodyPositionView::Impl::onAttachedMenuRequest(MenuManager& menuManager)
 }
 
 
-void BodyPositionView::Impl::setCoordinateModeInterfaceEnabled(bool on)
+void LinkPositionView::Impl::setCoordinateModeInterfaceEnabled(bool on)
 {
     for(auto& widget : coordinateModeWidgets){
         widget->setEnabled(on);
@@ -393,7 +393,7 @@ void BodyPositionView::Impl::setCoordinateModeInterfaceEnabled(bool on)
 }
 
 
-void BodyPositionView::Impl::setCoordinateMode(int mode)
+void LinkPositionView::Impl::setCoordinateMode(int mode)
 {
     coordinateModeGroup.blockSignals(true);
     
@@ -421,7 +421,7 @@ void BodyPositionView::Impl::setCoordinateMode(int mode)
 }
 
 
-void BodyPositionView::Impl::setBodyCoordinateModeEnabled(bool on)
+void LinkPositionView::Impl::setBodyCoordinateModeEnabled(bool on)
 {
     bodyCoordRadio.setEnabled(on);
     if(!on && coordinateMode == BodyCoordinateMode){
@@ -430,14 +430,14 @@ void BodyPositionView::Impl::setBodyCoordinateModeEnabled(bool on)
 }
 
 
-void BodyPositionView::Impl::onCoordinateModeRadioToggled(int mode)
+void LinkPositionView::Impl::onCoordinateModeRadioToggled(int mode)
 {
     setCoordinateMode(mode);
     preferredCoordinateMode = mode;
 }
 
 
-void BodyPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
+void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
     // Sub body's root link is recognized as the parent body's end link
     if(link && link->isRoot()){
@@ -477,7 +477,7 @@ void BodyPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
 }
 
 
-void BodyPositionView::Impl::updateTargetLink(Link* link)
+void LinkPositionView::Impl::updateTargetLink(Link* link)
 {
     setCoordinateModeInterfaceEnabled(true);
     
@@ -542,7 +542,7 @@ void BodyPositionView::Impl::updateTargetLink(Link* link)
 }
 
 
-void BodyPositionView::Impl::updateIkMode()
+void LinkPositionView::Impl::updateIkMode()
 {
     if(auto jointPath = kinematicsKit->jointPath()){
         jointPath->setNumericalIKenabled(isCustomIkDisabled);
@@ -550,7 +550,7 @@ void BodyPositionView::Impl::updateIkMode()
 }
 
 
-void BodyPositionView::Impl::setCoordinateFrameInterfaceEnabled(bool on)
+void LinkPositionView::Impl::setCoordinateFrameInterfaceEnabled(bool on)
 {
     for(int i=0; i < 2; ++i){
         frameComboLabel[i].setEnabled(on);
@@ -562,7 +562,7 @@ void BodyPositionView::Impl::setCoordinateFrameInterfaceEnabled(bool on)
 }
     
 
-void BodyPositionView::Impl::updateCoordinateFrameCandidates()
+void LinkPositionView::Impl::updateCoordinateFrameCandidates()
 {
     for(int i=0; i < 2; ++i){
         updateCoordinateFrameCandidates(i);
@@ -570,7 +570,7 @@ void BodyPositionView::Impl::updateCoordinateFrameCandidates()
 }
 
 
-void BodyPositionView::Impl::updateCoordinateFrameCandidates(int frameComboIndex)
+void LinkPositionView::Impl::updateCoordinateFrameCandidates(int frameComboIndex)
 {
     int frameType;
     bool isBaseLinkBodyFrame = false;
@@ -597,7 +597,7 @@ void BodyPositionView::Impl::updateCoordinateFrameCandidates(int frameComboIndex
 }
 
 
-void BodyPositionView::Impl::updateCoordinateFrameComboItems
+void LinkPositionView::Impl::updateCoordinateFrameComboItems
 (QComboBox& combo, CoordinateFrameSet* frames, const GeneralId& currentId, const std::string& originLabel,
  bool isBaseLinkBodyFrame)
 {
@@ -638,7 +638,7 @@ void BodyPositionView::Impl::updateCoordinateFrameComboItems
 }
 
 
-void BodyPositionView::Impl::onFrameComboActivated(int frameComboIndex, int index)
+void LinkPositionView::Impl::onFrameComboActivated(int frameComboIndex, int index)
 {
     GeneralId id;
     auto idValue = frameCombo[frameComboIndex].itemData(index);
@@ -669,7 +669,7 @@ void BodyPositionView::Impl::onFrameComboActivated(int frameComboIndex, int inde
 }
 
 
-void BodyPositionView::Impl::onCurrentFrameChanged()
+void LinkPositionView::Impl::onCurrentFrameChanged()
 {
     bool coordinateModeUpdated = false;
     auto baseFrameType = kinematicsKit->currentBaseFrameType();
@@ -722,7 +722,7 @@ void BodyPositionView::Impl::onCurrentFrameChanged()
 }
 
 
-void BodyPositionView::Impl::setConfigurationInterfaceEnabled(bool on)
+void LinkPositionView::Impl::setConfigurationInterfaceEnabled(bool on)
 {
     for(auto& widget : configurationWidgets){
         widget->setEnabled(on);
@@ -734,7 +734,7 @@ void BodyPositionView::Impl::setConfigurationInterfaceEnabled(bool on)
 }
     
 
-void BodyPositionView::Impl::updateConfigurationCandidates()
+void LinkPositionView::Impl::updateConfigurationCandidates()
 {
     bool isConfigurationComboActive = false;
     configurationCombo.clear();
@@ -758,7 +758,7 @@ void BodyPositionView::Impl::updateConfigurationCandidates()
 }
 
 
-bool BodyPositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
+bool LinkPositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
 {
     positionWidget->clearPosition();
     targetConnections.disconnect();
@@ -789,13 +789,13 @@ bool BodyPositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* t
 }
 
 
-void BodyPositionView::Impl::onPositionEditTargetExpired()
+void LinkPositionView::Impl::onPositionEditTargetExpired()
 {
 
 }
 
 
-void BodyPositionView::Impl::updatePanel()
+void LinkPositionView::Impl::updatePanel()
 {
     userInputConnections.block();
     
@@ -813,7 +813,7 @@ void BodyPositionView::Impl::updatePanel()
 }
 
 
-void BodyPositionView::Impl::updatePanelWithCurrentLinkPosition()
+void LinkPositionView::Impl::updatePanelWithCurrentLinkPosition()
 {
     if(targetLink){
         Position T = baseFrame->T().inverse(Eigen::Isometry) * targetLink->Ta() * endFrame->T();
@@ -828,7 +828,7 @@ void BodyPositionView::Impl::updatePanelWithCurrentLinkPosition()
 }
 
 
-void BodyPositionView::Impl::updatePanelWithPositionEditTarget()
+void LinkPositionView::Impl::updatePanelWithPositionEditTarget()
 {
     if(positionEditTarget){
         positionWidget->setReferenceRpy(Vector3::Zero());
@@ -837,7 +837,7 @@ void BodyPositionView::Impl::updatePanelWithPositionEditTarget()
 }
 
 
-void BodyPositionView::Impl::updateConfigurationPanel()
+void LinkPositionView::Impl::updateConfigurationPanel()
 {
     auto configurationHandler = kinematicsKit->configurationHandler();
     
@@ -858,7 +858,7 @@ void BodyPositionView::Impl::updateConfigurationPanel()
 }
 
 
-void BodyPositionView::Impl::onConfigurationInput(int index)
+void LinkPositionView::Impl::onConfigurationInput(int index)
 {
     if(auto configurationHandler = kinematicsKit->configurationHandler()){
         configurationHandler->setPreferredConfiguration(index);
@@ -867,7 +867,7 @@ void BodyPositionView::Impl::onConfigurationInput(int index)
 }
 
 
-bool BodyPositionView::Impl::applyPositionInput(const Position& T)
+bool LinkPositionView::Impl::applyPositionInput(const Position& T)
 {
     bool accepted = false;
     
@@ -882,7 +882,7 @@ bool BodyPositionView::Impl::applyPositionInput(const Position& T)
 }
 
 
-bool BodyPositionView::Impl::findBodyIkSolution(const Position& T_input)
+bool LinkPositionView::Impl::findBodyIkSolution(const Position& T_input)
 {
     bool solved = false;
     
@@ -929,7 +929,7 @@ bool BodyPositionView::Impl::findBodyIkSolution(const Position& T_input)
 }
 
 
-bool BodyPositionView::Impl::applyInputToPositionEditTarget(const Position& T_input)
+bool LinkPositionView::Impl::applyInputToPositionEditTarget(const Position& T_input)
 {
     bool accepted = false;
     
@@ -952,13 +952,13 @@ bool BodyPositionView::Impl::applyInputToPositionEditTarget(const Position& T_in
 }
 
 
-bool BodyPositionView::storeState(Archive& archive)
+bool LinkPositionView::storeState(Archive& archive)
 {
     return impl->storeState(archive);
 }
 
 
-bool BodyPositionView::Impl::storeState(Archive& archive)
+bool LinkPositionView::Impl::storeState(Archive& archive)
 {
     coordinateModeSelection.select(coordinateMode);
     archive.write("coordinateMode", coordinateModeSelection.selectedSymbol());
@@ -972,13 +972,13 @@ bool BodyPositionView::Impl::storeState(Archive& archive)
 }
 
 
-bool BodyPositionView::restoreState(const Archive& archive)
+bool LinkPositionView::restoreState(const Archive& archive)
 {
     return impl->restoreState(archive);
 }
 
 
-bool BodyPositionView::Impl::restoreState(const Archive& archive)
+bool LinkPositionView::Impl::restoreState(const Archive& archive)
 {
     userInputConnections.block();
     
