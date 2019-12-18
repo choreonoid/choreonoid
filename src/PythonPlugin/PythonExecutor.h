@@ -13,6 +13,10 @@ namespace cnoid {
 
 class PythonExecutorImpl;
 
+/**
+   \note GIL must be locked to access to the objects of this class.
+   Even the destructor requires GIL to be locked when it is executed.
+*/
 class CNOID_EXPORT PythonExecutor
 {
 public:
