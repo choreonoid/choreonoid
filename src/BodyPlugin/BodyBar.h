@@ -13,7 +13,6 @@
 namespace cnoid {
 
 class BodyItem;
-class BodyBarImpl;
     
 class CNOID_EXPORT BodyBar : public ToolBar
 {
@@ -39,7 +38,9 @@ protected:
 
 private:
     BodyBar();
-    BodyBarImpl* impl;
+
+    class Impl;
+    Impl* impl;
 };
 
 }

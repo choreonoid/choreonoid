@@ -4,7 +4,7 @@
 
 #include "JointStateView.h"
 #include "LinkTreeWidget.h"
-#include "BodyBar.h"
+#include "BodySelectionManager.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/EigenUtil>
 #include <cnoid/ExtraBodyStateAccessor>
@@ -12,21 +12,21 @@
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #include <QHeaderView>
-#include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
+
 const bool TRACE_FUNCTIONS = false;
 const bool doColumnStretch = true;
+
 }
 
 namespace cnoid {
 
-class JointStateViewImpl
+class JointStateView::Impl
 {
 public:
     JointStateView* self;
@@ -46,8 +46,8 @@ public:
     ConnectionSet connections;
     ConnectionSet connectionsToBody;
 
-    JointStateViewImpl(JointStateView* self);
-    ~JointStateViewImpl();
+    Impl(JointStateView* self);
+    ~Impl();
     void clearSignalConnections();
     void onActivated(bool on);
     void setCurrentBodyItem(BodyItem* bodyItem);
@@ -69,11 +69,11 @@ void JointStateView::initializeClass(ExtensionManager* ext)
 
 JointStateView::JointStateView()
 {
-    impl = new JointStateViewImpl(this);
+    impl = new Impl(this);
 }
 
 
-JointStateViewImpl::JointStateViewImpl(JointStateView* self)
+JointStateView::Impl::Impl(JointStateView* self)
     : self(self)
 {
     self->setDefaultLayoutArea(View::CENTER);
@@ -122,16 +122,16 @@ JointStateViewImpl::JointStateViewImpl(JointStateView* self)
         jointStateWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Stretch);
     }
     
-    jointStateWidget.sigUpdateRequest().connect(std::bind(&JointStateViewImpl::updateJointList, this));
+    jointStateWidget.sigUpdateRequest().connect([&](bool){ updateJointList(); });
     
     vbox->addWidget(&jointStateWidget);
 
     self->setLayout(vbox);
 
-    self->sigActivated().connect(std::bind(&JointStateViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(std::bind(&JointStateViewImpl::onActivated, this ,false));
+    self->sigActivated().connect([&](){ onActivated(true); });
+    self->sigDeactivated().connect([&](){ onActivated(false); });
 
-    updateViewLater.setFunction(std::bind(&JointStateViewImpl::updateView, this));
+    updateViewLater.setFunction([&](){ updateView(); });
 
     //self->enableFontSizeZoomKeys(true);
 }
@@ -143,20 +143,20 @@ JointStateView::~JointStateView()
 }
 
 
-JointStateViewImpl::~JointStateViewImpl()
+JointStateView::Impl::~Impl()
 {
     clearSignalConnections();
 }
 
 
-void JointStateViewImpl::clearSignalConnections()
+void JointStateView::Impl::clearSignalConnections()
 {
     connections.disconnect();
     connectionsToBody.disconnect();
 }    
 
 
-void JointStateViewImpl::onActivated(bool on)
+void JointStateView::Impl::onActivated(bool on)
 {
     clearSignalConnections();
 
@@ -164,17 +164,16 @@ void JointStateViewImpl::onActivated(bool on)
         setCurrentBodyItem(0);
 
     } else {
-        BodyBar* bodyBar = BodyBar::instance();
+        auto bsm = BodySelectionManager::instance();
         connections.add(
-            bodyBar->sigCurrentBodyItemChanged().connect(
-                std::bind(&JointStateViewImpl::setCurrentBodyItem, this, _1)));
-        
-        setCurrentBodyItem(bodyBar->currentBodyItem());
+            bsm->sigCurrentBodyChanged().connect(
+                [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem); }));
+        setCurrentBodyItem(bsm->currentBodyItem());
     }
 }
 
 
-void JointStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
+void JointStateView::Impl::setCurrentBodyItem(BodyItem* bodyItem)
 {
     connectionsToBody.disconnect();
     jointStateWidget.setNumColumns(uColumn + 1);
@@ -229,18 +228,18 @@ void JointStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
     if(bodyItem){
         connectionsToBody.add(
             bodyItem->sigKinematicStateChanged().connect(
-                std::bind(&JointStateViewImpl::onKinematicStateChanged, this)));
+                [&](){ onKinematicStateChanged(); }));
     }
 
     for(size_t i=0; i < accessors.size(); ++i){
         connectionsToBody.add(
             accessors[i]->sigStateChanged().connect(
-                std::bind(&JointStateViewImpl::onExtraJointStateChanged, this)));
+                [&](){ onExtraJointStateChanged(); }));
     }
 }
 
 
-void JointStateViewImpl::updateJointList()
+void JointStateView::Impl::updateJointList()
 {
     // The current body item should be gotten from the jointStateWidget because
     // this function is first called from it when the body item is detached.
@@ -304,21 +303,21 @@ void JointStateViewImpl::updateJointList()
 }
 
 
-void JointStateViewImpl::onKinematicStateChanged()
+void JointStateView::Impl::onKinematicStateChanged()
 {
     isKinematicStateChanged = true;
     updateViewLater();
 }
 
 
-void JointStateViewImpl::onExtraJointStateChanged()
+void JointStateView::Impl::onExtraJointStateChanged()
 {
     isExtraJointStateChanged = true;
     updateViewLater();
 }
 
 
-void JointStateViewImpl::updateView()
+void JointStateView::Impl::updateView()
 {
     if(!currentBody){
         return;

@@ -3,7 +3,8 @@
 */
 
 #include "BodyStateView.h"
-#include "BodyBar.h"
+#include "BodyItem.h"
+#include "BodySelectionManager.h"
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExtraBodyStateAccessor>
@@ -12,13 +13,9 @@
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #include <QHeaderView>
-
-#include <iostream>
-
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -44,7 +41,7 @@ public:
     int lastNumValidColumns;
 };
 
-class BodyStateViewImpl
+class BodyStateView::Impl
 {
 public:
     BodyStateView* self;
@@ -63,8 +60,8 @@ public:
     Connection bodyItemChangeConnection;
     ConnectionSet stateConnections;
 
-    BodyStateViewImpl(BodyStateView* self);
-    ~BodyStateViewImpl();
+    Impl(BodyStateView* self);
+    ~Impl();
     void clearSignalConnections();
     void onActivated(bool on);
     void setCurrentBodyItem(BodyItem* bodyItem);
@@ -84,11 +81,11 @@ void BodyStateView::initializeClass(ExtensionManager* ext)
 
 BodyStateView::BodyStateView()
 {
-    impl = new BodyStateViewImpl(this);
+    impl = new Impl(this);
 }
 
 
-BodyStateViewImpl::BodyStateViewImpl(BodyStateView* self)
+BodyStateView::Impl::Impl(BodyStateView* self)
     : self(self)
 {
     self->setDefaultLayoutArea(View::BOTTOM);
@@ -111,8 +108,8 @@ BodyStateViewImpl::BodyStateViewImpl(BodyStateView* self)
     vbox->addWidget(&stateTreeWidget);
     self->setLayout(vbox);
 
-    self->sigActivated().connect(std::bind(&BodyStateViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(std::bind(&BodyStateViewImpl::onActivated, this ,false));
+    self->sigActivated().connect([&](){ onActivated(true); });
+    self->sigDeactivated().connect([&](){ onActivated(false); });
 
     //self->enableFontSizeZoomKeys(true);
 }
@@ -124,20 +121,20 @@ BodyStateView::~BodyStateView()
 }
 
 
-BodyStateViewImpl::~BodyStateViewImpl()
+BodyStateView::Impl::~Impl()
 {
     clearSignalConnections();
 }
 
 
-void BodyStateViewImpl::clearSignalConnections()
+void BodyStateView::Impl::clearSignalConnections()
 {
     bodyItemChangeConnection.disconnect();
     stateConnections.disconnect();
 }    
 
 
-void BodyStateViewImpl::onActivated(bool on)
+void BodyStateView::Impl::onActivated(bool on)
 {
     clearSignalConnections();
 
@@ -145,18 +142,16 @@ void BodyStateViewImpl::onActivated(bool on)
         setCurrentBodyItem(0);
 
     } else {
-        BodyBar* bodyBar = BodyBar::instance();
-        
-        setCurrentBodyItem(bodyBar->currentBodyItem());
-
+        auto bsm = BodySelectionManager::instance();
+        setCurrentBodyItem(bsm->currentBodyItem());
         bodyItemChangeConnection =
-            bodyBar->sigCurrentBodyItemChanged().connect(
-                std::bind(&BodyStateViewImpl::setCurrentBodyItem, this, _1));
+            bsm->sigCurrentBodyChanged().connect(
+                [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem); });
     }
 }
 
 
-void BodyStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
+void BodyStateView::Impl::setCurrentBodyItem(BodyItem* bodyItem)
 {
     currentBodyItem = bodyItem;
     if(bodyItem){
@@ -169,7 +164,7 @@ void BodyStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
 }
 
 
-void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
+void BodyStateView::Impl::updateStateList(BodyItem* bodyItem)
 {
     stateConnections.disconnect();
     stateTreeWidget.clear();
@@ -196,7 +191,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
             }
             stateConnections.add(
                 device->sigStateChanged().connect(
-                    std::bind(&BodyStateViewImpl::updateDeviceStates, this, device, i)));
+                    [=](){ updateDeviceStates(device, i); }));
             updateDeviceStates(device, i);
         }
 
@@ -220,7 +215,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
                 }
                 stateConnections.add(
                     accessor.sigStateChanged().connect(
-                        std::bind(&BodyStateViewImpl::updateExtraStates, this)));
+                        [&](){ updateExtraStates(); }));
             }
             extraStateItemMap.push_back(itemMap);
         }
@@ -250,7 +245,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
 }
 
 
-void BodyStateViewImpl::updateDeviceStates(DevicePtr device, int rowIndex)
+void BodyStateView::Impl::updateDeviceStates(DevicePtr device, int rowIndex)
 {
     if(currentBody){
         StateItem* item = static_cast<StateItem*>(stateTreeWidget.topLevelItem(rowIndex));
@@ -269,7 +264,7 @@ void BodyStateViewImpl::updateDeviceStates(DevicePtr device, int rowIndex)
 }
 
 
-void BodyStateViewImpl::updateExtraStates()
+void BodyStateView::Impl::updateExtraStates()
 {
     if(!currentBody){
         return;

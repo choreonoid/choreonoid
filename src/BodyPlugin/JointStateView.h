@@ -2,17 +2,14 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_JOINT_STATE_VIEW_H_INCLUDED
-#define CNOID_BODYPLUGIN_JOINT_STATE_VIEW_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_JOINT_STATE_VIEW_H
+#define CNOID_BODY_PLUGIN_JOINT_STATE_VIEW_H
 
-#include "BodyItem.h"
 #include <cnoid/View>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class JointStateViewImpl;
-    
 class CNOID_EXPORT JointStateView : public cnoid::View
 {
 public:
@@ -25,8 +22,10 @@ public:
     virtual bool restoreState(const Archive& archive);
 
 private:
-    JointStateViewImpl* impl;
+    class Impl;
+    Impl* impl;
 };
+
 }
 
 #endif

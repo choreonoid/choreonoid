@@ -4,10 +4,9 @@
 
 #include "EditableSceneBody.h"
 #include "BodyItem.h"
-#include "SimulatorItem.h"
+#include "BodySelectionManager.h"
 #include "KinematicsBar.h"
-#include "BodyBar.h"
-#include "LinkSelectionView.h"
+#include "SimulatorItem.h"
 #include <cnoid/JointPath>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/MenuManager>
@@ -219,7 +218,7 @@ public:
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
     void onLinkVisibilityCheckToggled();
-    void onLinkSelectionChanged();
+    void onLinkSelectionChanged(const std::vector<bool>& selection);
 
     void showCenterOfMass(bool on);
     void showPpcom(bool on);
@@ -526,25 +525,26 @@ void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilitie
 
 void EditableSceneBody::Impl::onLinkVisibilityCheckToggled()
 {
-    LinkSelectionView* selectionView = LinkSelectionView::instance();
+    auto bsm = BodySelectionManager::instance();
 
     if(linkVisibilityCheck->isChecked()){
         connectionToSigLinkSelectionChanged.reset(
-            selectionView->sigSelectionChanged(bodyItem).connect(
-                [&](){ onLinkSelectionChanged(); }));
-        onLinkSelectionChanged();
+            bsm->sigLinkSelectionChanged(bodyItem).connect(
+                [&](const std::vector<bool>& selection){
+                    onLinkSelectionChanged(selection);
+                }));
+        onLinkSelectionChanged(bsm->linkSelection(bodyItem));
     } else {
         connectionToSigLinkSelectionChanged.disconnect();
-        vector<bool> visibilities(self->numSceneLinks(), true);
-        self->setLinkVisibilities(visibilities);
+        self->setLinkVisibilities(vector<bool>(self->numSceneLinks(), true));
     }
 }
 
 
-void EditableSceneBody::Impl::onLinkSelectionChanged()
+void EditableSceneBody::Impl::onLinkSelectionChanged(const std::vector<bool>& selection)
 {
     if(linkVisibilityCheck->isChecked()){
-        self->setLinkVisibilities(LinkSelectionView::instance()->linkSelection(bodyItem));
+        self->setLinkVisibilities(selection);
     }
 }
 
@@ -913,10 +913,7 @@ bool EditableSceneBody::Impl::onDoubleClickEvent(const SceneWidgetEvent& event)
 {
     if(findPointedObject(event.nodePath()) == PT_SCENE_LINK){
         if(event.button() == Qt::LeftButton){
-            if(BodyBar::instance()->makeSingleSelection(bodyItem)){
-                LinkSelectionView::instance()->makeSingleSelection(
-                    bodyItem, pointedSceneLink->link()->index());
-            }
+            BodySelectionManager::instance()->setCurrent(bodyItem, pointedSceneLink->link());
             return true;
         }
     }

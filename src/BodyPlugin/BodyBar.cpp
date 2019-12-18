@@ -13,7 +13,7 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class BodyBarImpl
+class BodyBar::Impl
 {
 public:
     BodyItemPtr currentBodyItem;
@@ -24,8 +24,8 @@ public:
     Signal<void(const ItemList<BodyItem>& selectedBodyItems)> sigBodyItemSelectionChanged;
     Signal<void(BodyItem* currentBodyItem)> sigCurrentBodyItemChanged;
 
-    BodyBarImpl(BodyBar* self);
-    ~BodyBarImpl();
+    Impl(BodyBar* self);
+    ~Impl();
     bool makeSingleSelection(BodyItem* bodyItem);
     void onSelectedItemsChanged(ItemList<BodyItem> bodyItems);
     void onBodyItemDetachedFromRoot();
@@ -50,11 +50,11 @@ BodyBar* BodyBar::instance()
 BodyBar::BodyBar()
     : ToolBar(N_("BodyBar"))
 {
-    impl = new BodyBarImpl(this);
+    impl = new Impl(this);
 }
 
 
-BodyBarImpl::BodyBarImpl(BodyBar* self)
+BodyBar::Impl::Impl(BodyBar* self)
 {
     self->setVisibleByDefault(true);
 
@@ -96,7 +96,7 @@ BodyBar::~BodyBar()
 }
 
 
-BodyBarImpl::~BodyBarImpl()
+BodyBar::Impl::~Impl()
 {
     connectionOfItemSelectionChanged.disconnect();
     connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
@@ -139,7 +139,7 @@ bool BodyBar::makeSingleSelection(BodyItem* bodyItem)
 }
 
 
-bool BodyBarImpl::makeSingleSelection(BodyItem* bodyItem)
+bool BodyBar::Impl::makeSingleSelection(BodyItem* bodyItem)
 {
     ItemList<BodyItem> prevSelected = selectedBodyItems;
     for(size_t i=0; i < prevSelected.size(); ++i){
@@ -153,7 +153,7 @@ bool BodyBarImpl::makeSingleSelection(BodyItem* bodyItem)
 }
 
 
-void BodyBarImpl::onSelectedItemsChanged(ItemList<BodyItem> bodyItems)
+void BodyBar::Impl::onSelectedItemsChanged(ItemList<BodyItem> bodyItems)
 {
     bool selectedBodyItemsChanged = false;
     
@@ -188,7 +188,7 @@ void BodyBarImpl::onSelectedItemsChanged(ItemList<BodyItem> bodyItems)
 }
 
 
-void BodyBarImpl::onCopyButtonClicked()
+void BodyBar::Impl::onCopyButtonClicked()
 {
     if(currentBodyItem){
         currentBodyItem->copyKinematicState();
@@ -196,7 +196,7 @@ void BodyBarImpl::onCopyButtonClicked()
 }
 
 
-void BodyBarImpl::onPasteButtonClicked()
+void BodyBar::Impl::onPasteButtonClicked()
 {
     for(size_t i=0; i < targetBodyItems.size(); ++i){
         targetBodyItems[i]->pasteKinematicState();
@@ -204,7 +204,7 @@ void BodyBarImpl::onPasteButtonClicked()
 }
 
 
-void BodyBarImpl::onBodyItemDetachedFromRoot()
+void BodyBar::Impl::onBodyItemDetachedFromRoot()
 {
     currentBodyItem = 0;
     connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
@@ -212,7 +212,7 @@ void BodyBarImpl::onBodyItemDetachedFromRoot()
 }
 
 
-void BodyBarImpl::onOriginButtonClicked()
+void BodyBar::Impl::onOriginButtonClicked()
 {
     for(size_t i=0; i < targetBodyItems.size(); ++i){
         targetBodyItems[i]->moveToOrigin();
@@ -220,7 +220,7 @@ void BodyBarImpl::onOriginButtonClicked()
 }
 
 
-void BodyBarImpl::onPoseButtonClicked(BodyItem::PresetPoseID id)
+void BodyBar::Impl::onPoseButtonClicked(BodyItem::PresetPoseID id)
 {
     for(size_t i=0; i < targetBodyItems.size(); ++i){
         targetBodyItems[i]->setPresetPose(id);
@@ -228,7 +228,7 @@ void BodyBarImpl::onPoseButtonClicked(BodyItem::PresetPoseID id)
 }
 
 
-void BodyBarImpl::onSymmetricCopyButtonClicked(int direction, bool doMirrorCopy)
+void BodyBar::Impl::onSymmetricCopyButtonClicked(int direction, bool doMirrorCopy)
 {
     for(size_t i=0; i < targetBodyItems.size(); ++i){
         const Listing& slinks = *targetBodyItems[i]->body()->info()->findListing("symmetricJoints");
@@ -286,7 +286,7 @@ bool BodyBar::restoreState(const Archive& archive)
 }
 
 
-bool BodyBarImpl::restoreState(const Archive& archive)
+bool BodyBar::Impl::restoreState(const Archive& archive)
 {
     if(!currentBodyItem){
         currentBodyItem = archive.findItem<BodyItem>("current");
