@@ -48,6 +48,7 @@ public:
 
     SignalProxy<void(Item* item, bool on)> sigSelectionChanged();
     SignalProxy<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged();
+    void flushSigSelectedItemsChanged();
 
     //! \return The state id of the new check state.
     int addCheckEntry(const std::string& description);

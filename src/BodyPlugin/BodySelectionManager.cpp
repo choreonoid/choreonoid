@@ -1,9 +1,10 @@
 #include "BodySelectionManager.h"
 #include "BodyItem.h"
-#include <cnoid/Link>
 #include <cnoid/ExtensionManager>
 #include <cnoid/TargetItemPicker>
+#include <cnoid/RootItem>
 #include <cnoid/ConnectionSet>
+#include <cnoid/Link>
 #include <cnoid/Archive>
 #include <unordered_map>
 
@@ -41,7 +42,7 @@ public:
 
     Impl();
     Link* getCurrentLink();
-    void setCurrentBodyItem(BodyItem* bodyItem, Link* link);
+    void setCurrentBodyItem(BodyItem* bodyItem, Link* link, bool doSelectBodyItem);
     BodyItemInfo* getOrCreateBodyItemInfo(BodyItem* bodyItem, Link* link);
     void onBodyItemDisconnectedFromRoot(BodyItem* bodyItem);
     bool storeState(Archive& archive);
@@ -77,7 +78,7 @@ BodySelectionManager::BodySelectionManager()
 BodySelectionManager::Impl::Impl()
 {
     targetBodyItemPicker.sigTargetItemSpecified().connect(
-        [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem, nullptr); });
+        [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem, nullptr, false); });
 }
 
 
@@ -145,13 +146,13 @@ Link* BodySelectionManager::Impl::getCurrentLink()
 }
 
 
-void BodySelectionManager::setCurrent(BodyItem* bodyItem, Link* link)
+void BodySelectionManager::setCurrent(BodyItem* bodyItem, Link* link, bool doSelectBodyItem)
 {
-    impl->setCurrentBodyItem(bodyItem, link);
+    impl->setCurrentBodyItem(bodyItem, link, doSelectBodyItem);
 }
 
 
-void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* link)
+void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* link, bool doSelectBodyItem)
 {
     bool bodyChanged = bodyItem != currentBodyItem;
     bool linkChanged = link && (link != getCurrentLink());
@@ -182,6 +183,14 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
     } else {
         sigCurrentBodySpecified(bodyItem);
         sigCurrentSpecified(bodyItem, getCurrentLink());
+    }
+
+    if(doSelectBodyItem && bodyItem){
+        targetBodyItemPicker.setItemSelectionDetectionEnabled(false);
+        for(auto& item : RootItem::instance()->descendantItems<BodyItem>()){
+            item->setSelected(item == bodyItem);
+        }
+        targetBodyItemPicker.setItemSelectionDetectionEnabled(true);
     }
 }
 
@@ -233,7 +242,7 @@ void BodySelectionManager::Impl::onBodyItemDisconnectedFromRoot(BodyItem* bodyIt
     auto iter = bodyItemInfoMap.find(bodyItem);
     if(iter != bodyItemInfoMap.end()){
         if(bodyItem == currentBodyItem){
-            setCurrentBodyItem(nullptr, nullptr);
+            setCurrentBodyItem(nullptr, nullptr, false);
         }
         bodyItemInfoMap.erase(iter);
     }
@@ -303,7 +312,7 @@ void BodySelectionManager::Impl::restoreState(const Archive& archive)
                 if(archive.read("currentLink", linkName)){
                     link = bodyItem->body()->link(linkName);
                 }
-                setCurrentBodyItem(bodyItem, link);
+                setCurrentBodyItem(bodyItem, link, false);
             }
         });
 }

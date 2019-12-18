@@ -242,6 +242,10 @@ public:
         }
     }
 
+    bool isBlocked() const {
+        return slot ? slot->isBlocked : false;
+    }
+
     enum Order { FIRST = 0, LAST };
     
     Connection& changeOrder(Order order) {
@@ -270,6 +274,7 @@ public:
     bool connected() const { return connection_.connected(); }
     void block() { connection_.block(); }
     void unblock() { connection_.unblock(); }
+    bool isBlocked() const { return connection_.isBlocked(); }
     ScopedConnection& changeOrder(Connection::Order order) { connection_.changeOrder(order); return *this; }
     Connection& connection(){ return connection_; }
     const Connection& connection() const { return connection_; }

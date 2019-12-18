@@ -1,5 +1,5 @@
-#ifndef CNOID_BODYPLUGIN_BODY_SELECTION_MANAGER_H
-#define CNOID_BODYPLUGIN_BODY_SELECTION_MANAGER_H
+#ifndef CNOID_BODY_PLUGIN_BODY_SELECTION_MANAGER_H
+#define CNOID_BODY_PLUGIN_BODY_SELECTION_MANAGER_H
 
 #include <cnoid/Signal>
 #include <cnoid/ItemList>
@@ -26,7 +26,7 @@ public:
 
     BodyItem* currentBodyItem();
     Link* currentLink();
-    void setCurrent(BodyItem* bodyItem, Link* link = nullptr);
+    void setCurrent(BodyItem* bodyItem, Link* link = nullptr, bool doSelectBodyItem = false);
 
     SignalProxy<void(const ItemList<BodyItem>& selected)> sigSelectedBodyItemsChanged();
     const ItemList<BodyItem>& selectedBodyItems() const;

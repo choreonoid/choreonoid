@@ -410,6 +410,14 @@ void RootItem::emitSigSelectedItemsChangedLater()
 }
 
 
+void RootItem::flushSigSelectedItemsChanged()
+{
+    if(impl->emitSigSelectedItemsChangedLater.isPending()){
+        impl->emitSigSelectedItemsChangedLater.flush();
+    }
+}
+
+
 SignalProxy<void(Item* item, bool on)> RootItem::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
