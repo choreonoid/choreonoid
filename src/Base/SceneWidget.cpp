@@ -59,6 +59,8 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+const int ThreashToStartPointerMoveEventForEditableNode = 0;
+
 const int NUM_SHADOWS = 2;
 
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
@@ -240,7 +242,7 @@ public:
     Selection viewpointControlMode;
     bool isFirstPersonMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
         
-    enum DragMode { NO_DRAGGING, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
+    enum DragMode { NO_DRAGGING, ABOUT_TO_EDIT, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
 
     bool isDraggingView() const {
         return (dragMode == VIEW_ROTATION ||
@@ -272,6 +274,8 @@ public:
 
     SceneWidgetEvent latestEvent;
     Vector3 lastClickedPoint;
+    int mousePressX;
+    int mousePressY;
 
     SceneWidgetEditable* eventFilter;
     ReferencedPtr eventFilterRef;
@@ -1411,6 +1415,8 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
     updateLatestEvent(event);
     updateLatestEventPath();
     updateLastClickedPoint();
+    mousePressX = event->x();
+    mousePressY = event->y();
 
     bool handled = false;
     bool forceViewMode = (event->modifiers() & Qt::AltModifier);
@@ -1422,15 +1428,18 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
         } else {
             if(eventFilter){
                 handled = eventFilter->onButtonPressEvent(latestEvent);
+                if(handled){
+                    dragMode = EDITING;
+                }
             }
             if(!handled){
                 handled = setFocusToPointedEditablePath(
                     applyFunction(
                         pointedEditablePath,
                         [&](SceneWidgetEditable* editable){ return editable->onButtonPressEvent(latestEvent); }));
-            }
-            if(handled){
-                dragMode = EDITING;
+                if(handled){
+                    dragMode = ABOUT_TO_EDIT;
+                }
             }
         }
     }
@@ -1476,7 +1485,7 @@ void SceneWidgetImpl::mouseReleaseEvent(QMouseEvent* event)
     updateLatestEvent(event);
 
     bool handled = false;
-    if(isEditMode && dragMode == EDITING){
+    if(isEditMode && (dragMode == ABOUT_TO_EDIT || dragMode == EDITING)){
         if(eventFilter){
             handled = eventFilter->onButtonReleaseEvent(latestEvent);
         }
@@ -1496,20 +1505,31 @@ void SceneWidgetImpl::mouseMoveEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
 
-    bool handled = false;
 
     switch(dragMode){
 
+    case ABOUT_TO_EDIT:
     case EDITING:
+    {
+        bool handled = false;
         if(eventFilter){
             handled = eventFilter->onPointerMoveEvent(latestEvent);
         }
         if(!handled){
             if(focusedEditable){
-                handled = focusedEditable->onPointerMoveEvent(latestEvent);
+                if(dragMode == ABOUT_TO_EDIT){
+                    const int thresh = ThreashToStartPointerMoveEventForEditableNode;
+                    if(abs(event->x() - mousePressX) > thresh || abs(event->y() - mousePressY) > thresh){
+                        dragMode = EDITING;
+                    }
+                }
+                if(dragMode == EDITING){
+                    focusedEditable->onPointerMoveEvent(latestEvent);
+                }
             }
         }
         break;
+    }
 
     case VIEW_ROTATION:
         dragViewRotation();
