@@ -232,7 +232,6 @@ public:
     PointedType findPointedObject(const vector<SgNode*>& path);
     void updateMarkersAndManipulators(bool on);
     void attachPositionDragger(Link* link);
-    void specifyTargetLink(Link* link, bool doSelectBodyItem);
 
     bool onKeyPressEvent(const SceneWidgetEvent& event);
     bool onKeyReleaseEvent(const SceneWidgetEvent& event);
@@ -740,14 +739,6 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 }
 
 
-void EditableSceneBody::Impl::specifyTargetLink(Link* link, bool doSelectBodyItem)
-{
-    targetLink = link;
-    updateMarkersAndManipulators(true);
-    BodySelectionManager::instance()->setCurrent(bodyItem, link, doSelectBodyItem);
-}
-
-
 bool EditableSceneBody::onKeyPressEvent(const SceneWidgetEvent& event)
 {
     return impl->onKeyPressEvent(event);
@@ -837,17 +828,20 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         }
     } else {
         if(pointedType == PT_SCENE_LINK){
+            targetLink = pointedSceneLink->link();
             if(event.button() == Qt::LeftButton){
-                specifyTargetLink(pointedSceneLink->link(), true);
+                updateMarkersAndManipulators(true);
+                BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
                 startKinematicsDragOperation(event);
+                handled = true;
 
             } else if(event.button() == Qt::MiddleButton){
                 togglePin(pointedSceneLink, true, true);
+                handled = true;
 
             } else if(event.button() == Qt::RightButton){
-                
+                BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
             }
-            handled = true;
 
         } else if(pointedType == PT_ZMP){
             startZmpTranslation(event);

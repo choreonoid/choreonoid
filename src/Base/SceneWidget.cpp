@@ -1422,31 +1422,30 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
     bool forceViewMode = (event->modifiers() & Qt::AltModifier);
 
     if(isEditMode && !forceViewMode){
-        if(event->button() == Qt::RightButton){
-            showEditModePopupMenu(event->globalPos());
-            handled = true;
-        } else {
-            if(eventFilter){
-                handled = eventFilter->onButtonPressEvent(latestEvent);
-                if(handled){
-                    dragMode = EDITING;
-                }
+        if(eventFilter){
+            handled = eventFilter->onButtonPressEvent(latestEvent);
+            if(handled){
+                dragMode = EDITING;
             }
-            if(!handled){
-                handled = setFocusToPointedEditablePath(
-                    applyFunction(
-                        pointedEditablePath,
-                        [&](SceneWidgetEditable* editable){ return editable->onButtonPressEvent(latestEvent); }));
-                if(handled){
-                    dragMode = ABOUT_TO_EDIT;
-                }
+        }
+        if(!handled){
+            handled = setFocusToPointedEditablePath(
+                applyFunction(
+                    pointedEditablePath,
+                    [&](SceneWidgetEditable* editable){ return editable->onButtonPressEvent(latestEvent); }));
+            if(handled){
+                dragMode = ABOUT_TO_EDIT;
             }
         }
     }
 
     if(!handled){
-        if(!isEditMode && event->button() == Qt::RightButton){
-            showViewModePopupMenu(event->globalPos());
+        if(event->button() == Qt::RightButton){
+            if(isEditMode){
+                showEditModePopupMenu(event->globalPos());
+            } else {
+                showViewModePopupMenu(event->globalPos());
+            }
             handled = true;
         }
     }
