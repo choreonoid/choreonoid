@@ -243,6 +243,7 @@ Action* MenuManager::addRadioItem(QActionGroup* group, const QString& text)
 {
     Action* item = addItem(text);
     if(item){
+        item->setCheckable(true);
         item->setActionGroup(group);
     }
     return item;
