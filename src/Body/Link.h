@@ -63,6 +63,8 @@ public:
     Body* body() { return body_; }
     const Body* body() const { return body_; }
 
+    bool hasParentBody() const { return parent_ && (body_ != parent_->body_); }
+
     Position& T() { return T_; }
     const Position& T() const { return T_; }
 

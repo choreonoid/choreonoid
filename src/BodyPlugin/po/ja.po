@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-18 14:09+0900\n"
+"POT-Creation-Date: 2019-12-19 00:38+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -106,7 +106,7 @@ msgstr "Pollard手法"
 msgid "Gaussian Filter"
 msgstr "ガウシアンフィルタ"
 
-#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 LinkPositionView.cpp:209
+#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 LinkPositionView.cpp:214
 msgid "Apply"
 msgstr "適用"
 
@@ -447,79 +447,95 @@ msgstr "マテリアルテーブル"
 msgid "LinkCoordinateFrameListSetItem"
 msgstr "リンク座標フレームリスト一式アイテム"
 
-#: LinkPositionView.cpp:144
+#: LinkPositionView.cpp:148
 msgid "Link Position"
 msgstr "リンクポジション"
 
-#: LinkPositionView.cpp:206
+#: LinkPositionView.cpp:211
 msgid "Fetch"
 msgstr "取込"
 
-#: LinkPositionView.cpp:215
+#: LinkPositionView.cpp:220
 msgid "Coord:"
 msgstr "座標系"
 
-#: LinkPositionView.cpp:220
+#: LinkPositionView.cpp:225
 msgid "World"
 msgstr "ワールド"
 
-#: LinkPositionView.cpp:227 BodyItem.cpp:211
+#: LinkPositionView.cpp:232 BodyItem.cpp:211
 msgid "Body"
 msgstr "ボディ"
 
-#: LinkPositionView.cpp:233
+#: LinkPositionView.cpp:238
 msgid "Local"
 msgstr "ローカル"
 
-#: LinkPositionView.cpp:261
+#: LinkPositionView.cpp:266
 msgid "Base"
 msgstr "ベース"
 
-#: LinkPositionView.cpp:262
+#: LinkPositionView.cpp:267
 msgid "End"
 msgstr "エンド"
 
-#: LinkPositionView.cpp:277
+#: LinkPositionView.cpp:282
 msgid "Config"
 msgstr "形態"
 
-#: LinkPositionView.cpp:284
+#: LinkPositionView.cpp:289
 msgid "Pref."
 msgstr "希望形態"
 
-#: LinkPositionView.cpp:293
+#: LinkPositionView.cpp:298
 msgid "Req."
 msgstr "必須"
 
-#: LinkPositionView.cpp:376
+#: LinkPositionView.cpp:379
+msgid "Target link type"
+msgstr "対象リンクタイプ"
+
+#: LinkPositionView.cpp:381
+msgid "IK priority link"
+msgstr "逆運動学優先リンク"
+
+#: LinkPositionView.cpp:382
+msgid "IK priority link and root link"
+msgstr "逆運動学優先／ルートリンク"
+
+#: LinkPositionView.cpp:383
+msgid "Any links"
+msgstr "全リンク"
+
+#: LinkPositionView.cpp:395
 msgid "Disable custom IK"
 msgstr "カスタムIKを使用しない"
 
-#: LinkPositionView.cpp:511
+#: LinkPositionView.cpp:537
 msgid "World Origin"
 msgstr "ワールド原点"
 
-#: LinkPositionView.cpp:515
+#: LinkPositionView.cpp:541
 msgid "Origin"
 msgstr "原点"
 
-#: LinkPositionView.cpp:811
+#: LinkPositionView.cpp:837
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionView.cpp:919
+#: LinkPositionView.cpp:945
 msgid "Solved"
 msgstr "解有り"
 
-#: LinkPositionView.cpp:923
+#: LinkPositionView.cpp:949
 msgid "Not Solved"
 msgstr "解無し"
 
-#: LinkPositionView.cpp:943
+#: LinkPositionView.cpp:969
 msgid "Accepted"
 msgstr ""
 
-#: LinkPositionView.cpp:946
+#: LinkPositionView.cpp:972
 msgid "Not Accepted"
 msgstr ""
 
@@ -1301,71 +1317,71 @@ msgstr "角度"
 msgid "Torque"
 msgstr "トルク"
 
-#: JointStateView.cpp:362 BodyStateView.cpp:289
+#: JointStateView.cpp:361 BodyStateView.cpp:284
 msgid "ON"
 msgstr ""
 
-#: JointStateView.cpp:362 BodyStateView.cpp:289
+#: JointStateView.cpp:361 BodyStateView.cpp:284
 msgid "OFF"
 msgstr ""
 
-#: EditableSceneBody.cpp:1057
+#: EditableSceneBody.cpp:1034
 msgid "Move Forcibly"
 msgstr "強制移動"
 
-#: EditableSceneBody.cpp:1062
+#: EditableSceneBody.cpp:1039
 msgid "Hold Forcibly"
 msgstr "強制保持"
 
-#: EditableSceneBody.cpp:1070
+#: EditableSceneBody.cpp:1047
 msgid "Set Free"
 msgstr "フリーに"
 
-#: EditableSceneBody.cpp:1072
+#: EditableSceneBody.cpp:1049
 msgid "Set Base"
 msgstr "ベースに"
 
-#: EditableSceneBody.cpp:1074
+#: EditableSceneBody.cpp:1051
 msgid "Set Translation Pin"
 msgstr "並進ピンをセット"
 
-#: EditableSceneBody.cpp:1076
+#: EditableSceneBody.cpp:1053
 msgid "Set Rotation Pin"
 msgstr "回転ピンをセット"
 
-#: EditableSceneBody.cpp:1078
+#: EditableSceneBody.cpp:1055
 msgid "Set Both Pins"
 msgstr "両方のピンをセット"
 
-#: EditableSceneBody.cpp:1083
+#: EditableSceneBody.cpp:1060
 msgid "Level Attitude"
 msgstr "水平姿勢に"
 
-#: EditableSceneBody.cpp:1089
+#: EditableSceneBody.cpp:1066
 msgid "Markers"
 msgstr "マーカー"
 
-#: EditableSceneBody.cpp:1091
+#: EditableSceneBody.cpp:1068
 msgid "Center of Mass"
 msgstr "重心"
 
-#: EditableSceneBody.cpp:1095
+#: EditableSceneBody.cpp:1072
 msgid "Projection Point of CoM"
 msgstr "重心投影点"
 
-#: EditableSceneBody.cpp:1099
+#: EditableSceneBody.cpp:1076
 msgid "ZMP"
 msgstr "ZMP"
 
-#: EditableSceneBody.cpp:1531
+#: EditableSceneBody.cpp:1550
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
-#: EditableSceneBody.cpp:1532
+#: EditableSceneBody.cpp:1551
 msgid "Enable editing static models"
 msgstr "静的モデルの編集を許可"
 
-#: BodyStateView.cpp:81
+#: BodyStateView.cpp:78
 msgid "Body State"
 msgstr "ボディ状態"
 
@@ -1663,4 +1679,3 @@ msgstr "{}のフレームレートはワールドのフレームレートと異�
 #: BodyMotionControllerItem.cpp:199
 msgid "Control mode"
 msgstr "制御モード"
-

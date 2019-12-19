@@ -23,6 +23,7 @@
 #include <cnoid/CheckBox>
 #include <cnoid/ComboBox>
 #include <cnoid/ButtonGroup>
+#include <cnoid/ActionGroup>
 #include <cnoid/Selection>
 #include <QLabel>
 #include <QGridLayout>
@@ -63,6 +64,8 @@ public:
     enum TargetType { LinkTarget, PositionEditTarget } targetType;
     BodyItemPtr targetBodyItem;
     LinkPtr targetLink;
+    enum TargetLinkType { IK_LINK, IK_ROOT_LINK, ANY_LINK };
+    int targetLinkType;
     LinkKinematicsKitPtr kinematicsKit;
     LinkKinematicsKitPtr dummyKinematicsKit;
     ScopedConnection kinematicsKitConnection;
@@ -107,6 +110,7 @@ public:
     void setCoordinateMode(int mode);
     void setBodyCoordinateModeEnabled(bool on);
     void onCoordinateModeRadioToggled(int mode);
+    void setTargetLinkType(int type);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
     void updateIkMode();
@@ -167,6 +171,7 @@ LinkPositionView::Impl::Impl(LinkPositionView* self)
     self->setEnabled(false);
     
     targetType = LinkTarget;
+    targetLinkType = IK_ROOT_LINK;
     dummyKinematicsKit = new LinkKinematicsKit(nullptr);
     dummyKinematicsKit->setFrameSets(new LinkCoordinateFrameSet);
     kinematicsKit = dummyKinematicsKit;
@@ -369,11 +374,25 @@ void LinkPositionView::onAttachedMenuRequest(MenuManager& menuManager)
 }
 
 
-void LinkPositionView::Impl::onAttachedMenuRequest(MenuManager& menuManager)
+void LinkPositionView::Impl::onAttachedMenuRequest(MenuManager& menu)
 {
-    positionWidget->setOptionMenu(menuManager);
+    menu.setPath("/").setPath(_("Target link type"));
+    auto checkGroup = new ActionGroup(menu.topMenu());
+    menu.addRadioItem(checkGroup, _("IK priority link"));
+    menu.addRadioItem(checkGroup, _("IK priority link and root link"));
+    menu.addRadioItem(checkGroup, _("Any links"));
+    checkGroup->actions()[targetLinkType]->setChecked(true);
+    checkGroup->sigTriggered().connect(
+        [=](QAction* check){ setTargetLinkType(checkGroup->actions().indexOf(check)); });
+                                           
+    menu.setPath("/");
+    menu.addSeparator();
+    
+    positionWidget->setOptionMenu(menu);
 
-    auto disableCustomIkCheck = menuManager.addCheckItem(_("Disable custom IK"));
+    menu.addSeparator();
+
+    auto disableCustomIkCheck = menu.addCheckItem(_("Disable custom IK"));
     disableCustomIkCheck->setChecked(isCustomIkDisabled);
     disableCustomIkCheck->sigToggled().connect(
         [&](bool on){
@@ -437,16 +456,31 @@ void LinkPositionView::Impl::onCoordinateModeRadioToggled(int mode)
 }
 
 
+void LinkPositionView::Impl::setTargetLinkType(int type)
+{
+    targetLinkType = type;
+    setTargetBodyAndLink(targetBodyItem, targetLink);
+}
+
+
 void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
     // Sub body's root link is recognized as the parent body's end link
-    if(link && link->isRoot()){
+    if(link && link->hasParentBody()){
         if(auto parentBodyItem = bodyItem->parentBodyItem()){
             link = bodyItem->parentLink();
             bodyItem = parentBodyItem;
         }
     }
-    
+
+    if(bodyItem){
+        if(targetLinkType == IK_LINK || targetLinkType == IK_ROOT_LINK){
+            if(!bodyItem->getDefaultIK(link)){
+                link = bodyItem->body()->findUniqueEndLink(); // Fix later
+            }
+        }
+    }
+                
     bool isTargetTypeChanged = (targetType != LinkTarget);
     bool isBodyItemChanged = isTargetTypeChanged || (bodyItem != targetBodyItem);
     bool isLinkChanged = isTargetTypeChanged || (link != targetLink);
