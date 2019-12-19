@@ -228,7 +228,6 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     setRotationMatrixEnabled(false);
     
     mainvbox->addWidget(&rotationMatrixPanel);
-    mainvbox->addStretch();
 
     T_last.setIdentity();
     

@@ -57,6 +57,7 @@ LocationView::Impl::Impl(LocationView* self)
     positionWidget->setPositionCallback(
         [&](const Position& T){ return setInputPositionToTargetItem(T); });
     vbox->addWidget(positionWidget);
+    vbox->addStretch();
 
     targetItem = nullptr;
     targetItemPicker.setTargetInterface<PlaceableItem>();
