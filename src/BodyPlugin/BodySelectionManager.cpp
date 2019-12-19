@@ -29,6 +29,7 @@ class BodySelectionManager::Impl
 {
 public:
     TargetItemPicker<BodyItem> targetBodyItemPicker;
+    ConnectionSet pickerConnections;
     ItemList<BodyItem> selectedBodyItems;
     BodyItemPtr currentBodyItem;
     BodyItemInfoPtr currentInfo;
@@ -77,8 +78,14 @@ BodySelectionManager::BodySelectionManager()
 
 BodySelectionManager::Impl::Impl()
 {
-    targetBodyItemPicker.sigTargetItemSpecified().connect(
-        [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem, nullptr, false); });
+    pickerConnections.add(
+        targetBodyItemPicker.sigTargetItemSpecified().connect(
+            [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem, nullptr, false); }));
+
+    pickerConnections.add(
+        targetBodyItemPicker.sigSelectedItemsChanged().connect(
+            [&](const ItemList<BodyItem>& bodyItems){
+                sigSelectedBodyItemsChanged(bodyItems); }));
 }
 
 
@@ -186,11 +193,19 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
     }
 
     if(doSelectBodyItem && bodyItem){
-        targetBodyItemPicker.setItemSelectionDetectionEnabled(false);
+        bool selectionChanged = false;
+        pickerConnections.block();
         for(auto& item : RootItem::instance()->descendantItems<BodyItem>()){
-            item->setSelected(item == bodyItem);
+            bool on = item == bodyItem;
+            if(on != item->isSelected()){
+                item->setSelected(on);
+                selectionChanged = true;
+            }
         }
-        targetBodyItemPicker.setItemSelectionDetectionEnabled(true);
+        pickerConnections.unblock();
+        if(selectionChanged){
+            sigSelectedBodyItemsChanged(targetBodyItemPicker.selectedItems());
+        }
     }
 }
 
@@ -251,7 +266,7 @@ void BodySelectionManager::Impl::onBodyItemDisconnectedFromRoot(BodyItem* bodyIt
 
 SignalProxy<void(const ItemList<BodyItem>& selected)> BodySelectionManager::sigSelectedBodyItemsChanged()
 {
-    return impl->targetBodyItemPicker.sigSelectedItemsChanged();
+    return impl->sigSelectedBodyItemsChanged;
 }
 
 

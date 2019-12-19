@@ -100,19 +100,6 @@ void TargetItemPickerBase::Impl::deactivate()
 }
 
 
-void TargetItemPickerBase::setItemSelectionDetectionEnabled(bool on)
-{
-    if(on){
-        if(impl->itemSelectionChangeConnection.isBlocked()){
-            impl->rootItem->flushSigSelectedItemsChanged();
-            impl->itemSelectionChangeConnection.unblock();
-        }
-    } else {
-        impl->itemSelectionChangeConnection.block();
-    }
-}
-
-        
 void TargetItemPickerBase::Impl::onSelectedItemsChanged(const ItemList<>& items)
 {
     tmpSelectedItems = items;
