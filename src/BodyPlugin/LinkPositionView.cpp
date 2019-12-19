@@ -64,8 +64,8 @@ public:
     enum TargetType { LinkTarget, PositionEditTarget } targetType;
     BodyItemPtr targetBodyItem;
     LinkPtr targetLink;
-    enum TargetLinkType { IK_LINK, IK_ROOT_LINK, ANY_LINK };
-    int targetLinkType;
+    enum TargetLinkType { AnyLink, RootOrIkLink, IkLink, NumTargetLinkTypes };
+    Selection targetLinkTypeSelection;
     LinkKinematicsKitPtr kinematicsKit;
     LinkKinematicsKitPtr dummyKinematicsKit;
     ScopedConnection kinematicsKitConnection;
@@ -164,6 +164,7 @@ LinkPositionView::LinkPositionView()
 
 LinkPositionView::Impl::Impl(LinkPositionView* self)
     : self(self),
+      targetLinkTypeSelection(NumTargetLinkTypes, CNOID_GETTEXT_DOMAIN_NAME),
       coordinateModeSelection(NumCoordinateModes, CNOID_GETTEXT_DOMAIN_NAME)
 {
     self->setDefaultLayoutArea(View::CENTER);
@@ -171,7 +172,12 @@ LinkPositionView::Impl::Impl(LinkPositionView* self)
     self->setEnabled(false);
     
     targetType = LinkTarget;
-    targetLinkType = IK_ROOT_LINK;
+
+    targetLinkTypeSelection.setSymbol(AnyLink, "anyLink");    
+    targetLinkTypeSelection.setSymbol(RootOrIkLink, "rootOrIkLink");    
+    targetLinkTypeSelection.setSymbol(IkLink, "ikLink");    
+    targetLinkTypeSelection.select(RootOrIkLink);
+    
     dummyKinematicsKit = new LinkKinematicsKit(nullptr);
     dummyKinematicsKit->setFrameSets(new LinkCoordinateFrameSet);
     kinematicsKit = dummyKinematicsKit;
@@ -378,10 +384,10 @@ void LinkPositionView::Impl::onAttachedMenuRequest(MenuManager& menu)
 {
     menu.setPath("/").setPath(_("Target link type"));
     auto checkGroup = new ActionGroup(menu.topMenu());
-    menu.addRadioItem(checkGroup, _("IK priority link"));
-    menu.addRadioItem(checkGroup, _("IK priority link and root link"));
     menu.addRadioItem(checkGroup, _("Any links"));
-    checkGroup->actions()[targetLinkType]->setChecked(true);
+    menu.addRadioItem(checkGroup, _("IK priority link and root link"));
+    menu.addRadioItem(checkGroup, _("IK priority link"));
+    checkGroup->actions()[targetLinkTypeSelection.which()]->setChecked(true);
     checkGroup->sigTriggered().connect(
         [=](QAction* check){ setTargetLinkType(checkGroup->actions().indexOf(check)); });
                                            
@@ -458,7 +464,7 @@ void LinkPositionView::Impl::onCoordinateModeRadioToggled(int mode)
 
 void LinkPositionView::Impl::setTargetLinkType(int type)
 {
-    targetLinkType = type;
+    targetLinkTypeSelection.select(type);
     setTargetBodyAndLink(targetBodyItem, targetLink);
 }
 
@@ -466,17 +472,27 @@ void LinkPositionView::Impl::setTargetLinkType(int type)
 void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
     // Sub body's root link is recognized as the parent body's end link
-    if(link && link->hasParentBody()){
-        if(auto parentBodyItem = bodyItem->parentBodyItem()){
-            link = bodyItem->parentLink();
-            bodyItem = parentBodyItem;
+    if(bodyItem && link){
+        if(link->hasParentBody()){
+            if(auto parentBodyItem = bodyItem->parentBodyItem()){
+                link = bodyItem->parentLink();
+                bodyItem = parentBodyItem;
+            }
         }
-    }
-
-    if(bodyItem){
-        if(targetLinkType == IK_LINK || targetLinkType == IK_ROOT_LINK){
+        bool isIkLinkRequired = !targetLinkTypeSelection.is(AnyLink);
+        if(targetLinkTypeSelection.is(RootOrIkLink)){
+            isIkLinkRequired = !link->isRoot();
+        }
+        if(isIkLinkRequired){
             if(!bodyItem->getDefaultIK(link)){
-                link = bodyItem->body()->findUniqueEndLink(); // Fix later
+                LinkTraverse traverse(link);
+                link = nullptr;
+                for(int i=1; i < traverse.numLinks(); ++i){
+                    if(bodyItem->getDefaultIK(traverse[i])){
+                        link = traverse[i];
+                        break;
+                    }
+                }
             }
         }
     }
@@ -994,6 +1010,7 @@ bool LinkPositionView::storeState(Archive& archive)
 
 bool LinkPositionView::Impl::storeState(Archive& archive)
 {
+    archive.write("targetLinkType", targetLinkTypeSelection.selectedSymbol());
     coordinateModeSelection.select(coordinateMode);
     archive.write("coordinateMode", coordinateModeSelection.selectedSymbol());
     coordinateModeSelection.select(preferredCoordinateMode);
@@ -1017,6 +1034,10 @@ bool LinkPositionView::Impl::restoreState(const Archive& archive)
     userInputConnections.block();
     
     string symbol;
+
+    if(archive.read("targetLinkType", symbol)){
+        targetLinkTypeSelection.select(symbol);
+    }
     if(archive.read("preferredCoordinateMode", symbol)){
         if(coordinateModeSelection.select(symbol)){
             preferredCoordinateMode = coordinateModeSelection.which();

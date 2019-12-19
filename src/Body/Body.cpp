@@ -332,7 +332,9 @@ Link* Body::findUniqueEndLink() const
     Link* link = rootLink_;
     while(true){
         if(!link->child_){
-            endLink = link;
+            if(link != rootLink_){
+                endLink = link;
+            }
             break;
         }
         if(link->child_->sibling_){
