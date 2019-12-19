@@ -50,6 +50,9 @@ public:
     EditableSceneLink* editableSceneLink(int index);
     void setLinkVisibilities(const std::vector<bool>& visibilities);
 
+    bool isDraggable() const;
+    void setDraggable(bool on);
+
     virtual void updateModel() override;
 
     virtual bool onKeyPressEvent(const SceneWidgetEvent& event) override;

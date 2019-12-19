@@ -37,7 +37,10 @@ public:
     Body* body() const;
     void setBody(Body* body);
     virtual void setName(const std::string& name) override;
+
+    //! \deprecated. Use EditableSceneBody::isDraggable().
     bool isEditable() const;
+    //! \deprecated. Use EditableSceneBody::setDraggable().
     void setEditable(bool on);
 
     // API for a composite body

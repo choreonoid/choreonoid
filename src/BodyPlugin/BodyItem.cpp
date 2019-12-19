@@ -93,7 +93,6 @@ public:
     shared_ptr<PinDragIK> pinDragIK;
     unique_ptr<LinkKinematicsKitManager> linkKinematicsKitManager;
 
-    bool isEditable;
     bool isCallingSlotsOnKinematicStateEdited;
     bool isFkRequested;
     bool isVelFkRequested;
@@ -113,6 +112,7 @@ public:
 
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
+    bool isSceneBodyDraggableByDefault;
 
     Signal<void()> sigModelUpdated;
 
@@ -151,7 +151,8 @@ public:
     void doAssign(Item* srcItem);
     bool onStaticModelPropertyChanged(bool on);
     void createSceneBody();
-    bool onEditableChanged(bool on);
+    bool isSceneBodyDraggable() const;
+    void setSceneBodyDraggable(bool on, bool doNotify);
     void tryToAttachToBodyItem(BodyItem* bodyItem);
     bool attachToBodyItem(AttachmentDevice* attachment, BodyItem* bodyItem, HolderDevice* holder);
     void clearBodyAttachment();
@@ -232,9 +233,9 @@ BodyItem::BodyItem()
 BodyItemImpl::BodyItemImpl(BodyItem* self)
     : BodyItemImpl(self, new Body)
 {
-    isEditable = true;
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
+    isSceneBodyDraggableByDefault = true;
 }
 
 
@@ -253,10 +254,10 @@ BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
         setCurrentBaseLink(body->link(org.currentBaseLink->index()));
     }
     zmp = org.zmp;
-    isEditable = org.isEditable;
     isOriginalModelStatic = org.isOriginalModelStatic;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
+    isSceneBodyDraggableByDefault = org.isSceneBodyDraggableByDefault;
 
     initialState = org.initialState;
 }
@@ -338,6 +339,10 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
         body = newBody;
         body->initializePosition();
         body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
+
+        if(!sceneBody){
+            isSceneBodyDraggableByDefault = !body->isStaticModel();
+        }
     }
 
     initBody(false);
@@ -378,16 +383,13 @@ void BodyItem::setName(const std::string& name)
 
 bool BodyItem::isEditable() const
 {
-    return impl->isEditable;
+    return impl->isSceneBodyDraggable();
 }
 
-    
+
 void BodyItem::setEditable(bool on)
 {
-    if(on != impl->isEditable){
-        impl->isEditable = on;
-        notifyUpdate();
-    }
+    impl->setSceneBodyDraggable(on, true);
 }
 
 
@@ -1257,6 +1259,7 @@ void BodyItemImpl::createSceneBody()
 {
     sceneBody = new EditableSceneBody(self);
     sceneBody->setSceneDeviceUpdateConnection(true);
+    sceneBody->setDraggable(isSceneBodyDraggableByDefault);
 }
 
 
@@ -1272,10 +1275,24 @@ EditableSceneBody* BodyItem::existingSceneBody()
 }
 
 
-bool BodyItemImpl::onEditableChanged(bool on)
+bool BodyItemImpl::isSceneBodyDraggable() const
 {
-    self->setEditable(on);
-    return true;
+    return sceneBody ? sceneBody->isDraggable() : isSceneBodyDraggableByDefault;
+}
+
+    
+void BodyItemImpl::setSceneBodyDraggable(bool on, bool doNotify)
+{
+    if(on != isSceneBodyDraggable()){
+        if(sceneBody){
+            sceneBody->setDraggable(on);
+        } else {
+            isSceneBodyDraggableByDefault = on;
+        }
+        if(doNotify){
+            self->notifyUpdate();
+        }
+    }
 }
 
 
@@ -1446,8 +1463,8 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ return enableCollisionDetection(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
                 [&](bool on){ return enableSelfCollisionDetection(on); });
-    putProperty(_("Editable"), isEditable,
-                [&](bool on){ return onEditableChanged(on); });
+    putProperty(_("Draggable"), isSceneBodyDraggable(),
+                [&](bool on){ setSceneBodyDraggable(on, false); return true; });
 }
 
 
@@ -1524,7 +1541,7 @@ bool BodyItemImpl::store(Archive& archive)
 
     archive.write("collisionDetection", isCollisionDetectionEnabled);
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
-    archive.write("isEditable", isEditable);
+    archive.write("isSceneBodyDraggable", isSceneBodyDraggable());
 
     if(linkKinematicsKitManager){
         MappingPtr kinematicsNode = new Mapping;
@@ -1644,8 +1661,11 @@ bool BodyItemImpl::restore(const Archive& archive)
         enableSelfCollisionDetection(on);
     }
 
-    archive.read("isEditable", isEditable);
-
+    if(archive.read("isSceneBodyDraggable", isSceneBodyDraggableByDefault) ||
+       archive.read("isEditable", isSceneBodyDraggableByDefault)){
+        setSceneBodyDraggable(isSceneBodyDraggableByDefault, false);
+    }
+       
     auto kinematicsNode = archive.findMapping("linkKinematics");
     if(kinematicsNode->isValid()){
         getOrCreateLinkKinematicsKitManager()->restoreState(*kinematicsNode);

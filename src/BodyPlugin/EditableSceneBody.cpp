@@ -32,7 +32,6 @@ using namespace cnoid;
 namespace {
 
 Action* linkVisibilityCheck;
-Action* enableStaticModelEditCheck;
 
 }
 
@@ -178,6 +177,7 @@ public:
 
     bool isEditMode;
     bool isFocused;
+    bool isDraggable;
 
     KinematicsBar* kinematicsBar;
 
@@ -198,11 +198,6 @@ public:
     Vector3 pointedLinkLocalPoint;
     enum { NO_FORCED_POSITION, MOVE_FORCED_POSITION, KEEP_FORCED_POSITION };
     int forcedPositionMode;
-
-    bool isEditable() {
-        return bodyItem->isEditable() &&
-            (!bodyItem->body()->isStaticModel() || enableStaticModelEditCheck->isChecked());
-    }
 
     EditableSceneLink* editableSceneLink(int index){
         return static_cast<EditableSceneLink*>(self->sceneLink(index));
@@ -312,6 +307,7 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     isDragging = false;
     isEditMode = false;
     isFocused = false;
+    isDraggable = true;
 
     markerGroup = new SgGroup;
     markerGroup->setName("Marker");
@@ -551,6 +547,18 @@ void EditableSceneBody::Impl::onLinkSelectionChanged(const std::vector<bool>& se
 }
 
 
+bool EditableSceneBody::isDraggable() const
+{
+    return impl->isDraggable;
+}
+
+
+void EditableSceneBody::setDraggable(bool on)
+{
+    impl->isDraggable = on;
+}
+
+
 void EditableSceneBody::Impl::showCenterOfMass(bool on)
 {
     isCmVisible = on;
@@ -747,7 +755,7 @@ bool EditableSceneBody::onKeyPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBody::Impl::onKeyPressEvent(const SceneWidgetEvent& event)
 {
-    if(!isEditable()){
+    if(!isDraggable){
         return false;
     }
         
@@ -800,16 +808,22 @@ bool EditableSceneBody::onButtonPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(!isEditable()){
+    PointedType pointedType = findPointedObject(event.nodePath());
+
+    if(pointedType == PT_SCENE_LINK && event.button() == Qt::RightButton){
+        // The context menu is about to be shown
+        BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
         return false;
     }
-    
+
     if(outlinedLink){
         outlinedLink->showOutline(false);
         outlinedLink = nullptr;
     }
-
-    PointedType pointedType = findPointedObject(event.nodePath());
+    
+    if(!isDraggable){
+        return false;
+    }
     
     if(pointedSceneLink){
         pointedSceneLink->showOutline(true);
@@ -829,6 +843,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     } else {
         if(pointedType == PT_SCENE_LINK){
             targetLink = pointedSceneLink->link();
+
             if(event.button() == Qt::LeftButton){
                 updateMarkersAndManipulators(true);
                 BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
@@ -838,11 +853,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
             } else if(event.button() == Qt::MiddleButton){
                 togglePin(pointedSceneLink, true, true);
                 handled = true;
-
-            } else if(event.button() == Qt::RightButton){
-                BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
             }
-
         } else if(pointedType == PT_ZMP){
             startZmpTranslation(event);
             handled = true;
@@ -906,30 +917,27 @@ bool EditableSceneBody::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    if(!isEditable()){
-        return false;
-    }
     if(dragMode == DRAG_NONE){
         findPointedObject(event.nodePath());
-        if(pointedSceneLink){
-            if(pointedSceneLink != outlinedLink){
-                if(outlinedLink){
-                    outlinedLink->showOutline(false);
+        if(!pointedSceneLink){
+            event.updateIndicator("");
+        } else {
+            if(isDraggable){
+                if(pointedSceneLink != outlinedLink){
+                    if(outlinedLink){
+                        outlinedLink->showOutline(false);
+                    }
+                    pointedSceneLink->showOutline(true);
+                    outlinedLink = pointedSceneLink;
                 }
-                pointedSceneLink->showOutline(true);
-                outlinedLink = pointedSceneLink;
             }
-        }
-        if(pointedSceneLink){
             const Vector3 p = pointedSceneLink->T().inverse() * event.point();
             event.updateIndicator(
                 fmt::format("{0} / {1} : ({2:.3f}, {3:.3f}, {4:.3f})",
                             bodyItem->name(), pointedSceneLink->link()->name(),
                             p.x(), p.y(), p.z()));
-        } else {
-            event.updateIndicator("");
         }
-    } else {
+    } else if(isDraggable) {
         if(!isDragging){
             bodyItem->beginKinematicStateEdit();
             isDragging = true;
@@ -978,7 +986,7 @@ void EditableSceneBody::onPointerLeaveEvent(const SceneWidgetEvent& event)
 
 void EditableSceneBody::Impl::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    if(!isEditable()){
+    if(!isDraggable){
         return;
     }
     if(outlinedLink){
@@ -1015,67 +1023,79 @@ void EditableSceneBody::onContextMenuRequest(const SceneWidgetEvent& event, Menu
 }
 
 
-void EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+void EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& mm)
 {
-    if(!isEditable()){
-        return;
-    }
-    
     PointedType pointedType = findPointedObject(event.nodePath());
 
     if(bodyItem && pointedType == PT_SCENE_LINK){
 
-        activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
-        if(activeSimulatorItem){
-            if(pointedSceneLink->link()->isRoot()){
-                Action* item1 = menuManager.addCheckItem(_("Move Forcibly"));
-                item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
-                item1->sigToggled().connect(
-                    [&](bool on){ setForcedPositionMode(MOVE_FORCED_POSITION, on); });
-
-                Action* item2 = menuManager.addCheckItem(_("Hold Forcibly"));
-                item2->setChecked(forcedPositionMode == KEEP_FORCED_POSITION);
-                item2->sigToggled().connect(
-                    [&](bool on){ setForcedPositionMode(KEEP_FORCED_POSITION, on); });
+        auto draggableCheck = mm.addCheckItem(_("Draggable"));
+        draggableCheck->setChecked(isDraggable);
+        draggableCheck->sigToggled().connect(
+            [&](bool on){
+                isDraggable = on;
+                if(!on){
+                    if(outlinedLink){
+                        outlinedLink->showOutline(false);
+                        outlinedLink = nullptr;
+                    }
+                    updateMarkersAndManipulators(false);
+                }
+            });
+                    
+        if(isDraggable){
+            activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+            if(activeSimulatorItem){
+                if(pointedSceneLink->link()->isRoot()){
+                    Action* item1 = mm.addCheckItem(_("Move Forcibly"));
+                    item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
+                    item1->sigToggled().connect(
+                        [&](bool on){ setForcedPositionMode(MOVE_FORCED_POSITION, on); });
+                    
+                    Action* item2 = mm.addCheckItem(_("Hold Forcibly"));
+                    item2->setChecked(forcedPositionMode == KEEP_FORCED_POSITION);
+                    item2->sigToggled().connect(
+                        [&](bool on){ setForcedPositionMode(KEEP_FORCED_POSITION, on); });
+                    
+                    mm.addSeparator();
+                }
+            } else {
+                mm.addItem(_("Set Free"))->sigTriggered().connect(
+                    [&](){ makeLinkFree(pointedSceneLink); });
+                mm.addItem(_("Set Base"))->sigTriggered().connect(
+                    [&](){ setBaseLink(pointedSceneLink); });
+                mm.addItem(_("Set Translation Pin"))->sigTriggered().connect(
+                    [&](){ togglePin(pointedSceneLink, true, false); });
+                mm.addItem(_("Set Rotation Pin"))->sigTriggered().connect(
+                    [&](){ togglePin(pointedSceneLink, false, true); });
+                mm.addItem(_("Set Both Pins"))->sigTriggered().connect(
+                    [&](){ togglePin(pointedSceneLink, true, true); });
                 
-                menuManager.addSeparator();
+                mm.addSeparator();
+                
+                mm.addItem(_("Level Attitude"))->sigTriggered().connect(
+                    [&](){ makeLinkAttitudeLevel(); });
+                
+                mm.addSeparator();
             }
-        } else {
-            menuManager.addItem(_("Set Free"))->sigTriggered().connect(
-                [&](){ makeLinkFree(pointedSceneLink); });
-            menuManager.addItem(_("Set Base"))->sigTriggered().connect(
-                [&](){ setBaseLink(pointedSceneLink); });
-            menuManager.addItem(_("Set Translation Pin"))->sigTriggered().connect(
-                [&](){ togglePin(pointedSceneLink, true, false); });
-            menuManager.addItem(_("Set Rotation Pin"))->sigTriggered().connect(
-                [&](){ togglePin(pointedSceneLink, false, true); });
-            menuManager.addItem(_("Set Both Pins"))->sigTriggered().connect(
-                [&](){ togglePin(pointedSceneLink, true, true); });
 
-            menuManager.addSeparator();
+            mm.setPath(_("Markers"));
+        
+            Action* item = mm.addCheckItem(_("Center of Mass"));
+            item->setChecked(isCmVisible);
+            item->sigToggled().connect([&](bool on){ showCenterOfMass(on); });
+            
+            item = mm.addCheckItem(_("Projection Point of CoM"));
+            item->setChecked(isPpcomVisible);
+            item->sigToggled().connect([&](bool on){ showPpcom(on); });
+            
+            item = mm.addCheckItem(_("ZMP"));
+            item->setChecked(isZmpVisible);
+            item->sigToggled().connect([&](bool on){ showZmp(on); });
 
-            menuManager.addItem(_("Level Attitude"))->sigTriggered().connect(
-                [&](){ makeLinkAttitudeLevel(); });
-
-            menuManager.addSeparator();
+            mm.setPath("/");
+            mm.addSeparator();
         }
-        
-        menuManager.setPath(_("Markers"));
-        
-        Action* item = menuManager.addCheckItem(_("Center of Mass"));
-        item->setChecked(isCmVisible);
-        item->sigToggled().connect([&](bool on){ showCenterOfMass(on); });
-
-        item = menuManager.addCheckItem(_("Projection Point of CoM"));
-        item->setChecked(isPpcomVisible);
-        item->sigToggled().connect([&](bool on){ showPpcom(on); });
-
-        item = menuManager.addCheckItem(_("ZMP"));
-        item->setChecked(isZmpVisible);
-        item->sigToggled().connect([&](bool on){ showZmp(on); });
-
-        menuManager.setPath("/");
-        menuManager.addSeparator();
     }
 }
 
@@ -1088,7 +1108,7 @@ void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
 
 void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    if(!isEditable()){
+    if(!isDraggable){
         isEditMode = false;
         return;
     }
@@ -1113,7 +1133,7 @@ bool EditableSceneBody::Impl::finishEditing()
 {
     bool finished = false;
     
-    if(isEditable()){
+    if(isDraggable){
 
         isDragging = false;
         finished = true;
@@ -1143,7 +1163,7 @@ bool EditableSceneBody::onUndoRequest()
 
 bool EditableSceneBody::Impl::onUndoRequest()
 {
-    if(!isEditable()){
+    if(!isDraggable){
         return false;
     }
     return bodyItem->undoKinematicState();
@@ -1158,7 +1178,7 @@ bool EditableSceneBody::onRedoRequest()
 
 bool EditableSceneBody::Impl::onRedoRequest()
 {
-    if(!isEditable()){
+    if(!isDraggable){
         return false;
     }
     return bodyItem->redoKinematicState();
@@ -1507,16 +1527,12 @@ bool EditableSceneBody::Impl::storeProperties(Archive& archive)
         archive.insert("editableSceneBodies", states);
     }
 
-    archive.write("staticModelEditing", enableStaticModelEditCheck->isChecked());
-    
     return true;
 }
     
     
 void EditableSceneBody::Impl::restoreProperties(const Archive& archive)
 {
-    enableStaticModelEditCheck->setChecked(archive.get("staticModelEditing", false));
-
     archive.addPostProcess(
         [&archive](){ restoreSceneBodyProperties(archive); },
         1);
@@ -1545,8 +1561,6 @@ void EditableSceneBody::initializeClass(ExtensionManager* ext)
 {
     MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
     linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
-    enableStaticModelEditCheck = mm.addCheckItem(_("Enable editing static models"));
-    enableStaticModelEditCheck->setChecked(true);
 
     ext->setProjectArchiver(
         "EditableSceneBody",
