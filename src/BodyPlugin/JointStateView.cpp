@@ -166,7 +166,7 @@ void JointStateView::Impl::onActivated(bool on)
     } else {
         auto bsm = BodySelectionManager::instance();
         connections.add(
-            bsm->sigCurrentBodyChanged().connect(
+            bsm->sigCurrentBodyItemChanged().connect(
                 [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem); }));
         setCurrentBodyItem(bsm->currentBodyItem());
     }

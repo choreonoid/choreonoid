@@ -145,7 +145,7 @@ void BodyStateView::Impl::onActivated(bool on)
         auto bsm = BodySelectionManager::instance();
         setCurrentBodyItem(bsm->currentBodyItem());
         bodyItemChangeConnection =
-            bsm->sigCurrentBodyChanged().connect(
+            bsm->sigCurrentBodyItemChanged().connect(
                 [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem); });
     }
 }

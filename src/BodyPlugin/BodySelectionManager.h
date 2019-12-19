@@ -19,10 +19,10 @@ public:
     ~BodySelectionManager();
 
     SignalProxy<void(BodyItem* bodyItem, Link* link)> sigCurrentSpecified();
-    SignalProxy<void(BodyItem* bodyItem)> sigCurrentBodySpecified();
+    SignalProxy<void(BodyItem* bodyItem)> sigCurrentBodyItemSpecified();
 
     SignalProxy<void(BodyItem* bodyItem, Link* link)> sigCurrentChanged();
-    SignalProxy<void(BodyItem* bodyItem)> sigCurrentBodyChanged();
+    SignalProxy<void(BodyItem* bodyItem)> sigCurrentBodyItemChanged();
 
     BodyItem* currentBodyItem();
     Link* currentLink();

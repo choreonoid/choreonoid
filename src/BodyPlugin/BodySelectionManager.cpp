@@ -36,9 +36,9 @@ public:
     unordered_map<BodyItemPtr, BodyItemInfoPtr> bodyItemInfoMap;
 
     Signal<void(BodyItem* bodyItem, Link* link)> sigCurrentSpecified;
-    Signal<void(BodyItem* bodyItem)> sigCurrentBodySpecified;
+    Signal<void(BodyItem* bodyItem)> sigCurrentBodyItemSpecified;
     Signal<void(BodyItem* bodyItem, Link* link)> sigCurrentChanged;
-    Signal<void(BodyItem* bodyItem)> sigCurrentBodyChanged;
+    Signal<void(BodyItem* bodyItem)> sigCurrentBodyItemChanged;
     Signal<void(const ItemList<BodyItem>& bodyItems)> sigSelectedBodyItemsChanged;
 
     Impl();
@@ -101,9 +101,9 @@ SignalProxy<void(BodyItem* bodyItem, Link* link)> BodySelectionManager::sigCurre
 }
 
 
-SignalProxy<void(BodyItem* bodyItem)> BodySelectionManager::sigCurrentBodySpecified()
+SignalProxy<void(BodyItem* bodyItem)> BodySelectionManager::sigCurrentBodyItemSpecified()
 {
-    return impl->sigCurrentBodySpecified;
+    return impl->sigCurrentBodyItemSpecified;
 }
 
 
@@ -113,9 +113,9 @@ SignalProxy<void(BodyItem* bodyItem, Link* link)> BodySelectionManager::sigCurre
 }
 
 
-SignalProxy<void(BodyItem* bodyItem)> BodySelectionManager::sigCurrentBodyChanged()
+SignalProxy<void(BodyItem* bodyItem)> BodySelectionManager::sigCurrentBodyItemChanged()
 {
-    return impl->sigCurrentBodyChanged;
+    return impl->sigCurrentBodyItemChanged;
 }
 
 
@@ -175,9 +175,9 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
             currentLink = getCurrentLink();
         }
         if(bodyChanged){
-            sigCurrentBodyChanged(bodyItem);
+            sigCurrentBodyItemChanged(bodyItem);
         }
-        sigCurrentBodySpecified(bodyItem);
+        sigCurrentBodyItemSpecified(bodyItem);
 
         if(linkChanged){
             if(currentInfo){
@@ -188,7 +188,7 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
         sigCurrentSpecified(bodyItem, currentLink);
 
     } else {
-        sigCurrentBodySpecified(bodyItem);
+        sigCurrentBodyItemSpecified(bodyItem);
         sigCurrentSpecified(bodyItem, getCurrentLink());
     }
 
