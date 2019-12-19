@@ -838,7 +838,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     } else {
         if(pointedType == PT_SCENE_LINK){
             if(event.button() == Qt::LeftButton){
-                specifyTargetLink(pointedSceneLink->link(), false);
+                specifyTargetLink(pointedSceneLink->link(), true);
                 startKinematicsDragOperation(event);
 
             } else if(event.button() == Qt::MiddleButton){
@@ -891,12 +891,15 @@ bool EditableSceneBody::onDoubleClickEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBody::Impl::onDoubleClickEvent(const SceneWidgetEvent& event)
 {
+    /*
     if(event.button() == Qt::LeftButton){
         if(findPointedObject(event.nodePath()) == PT_SCENE_LINK){
             BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
-            return true;
+            return true
         }
     }
+    */
+    
     return false;
 }
 
