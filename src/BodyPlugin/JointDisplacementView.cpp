@@ -25,8 +25,6 @@
 #include <QStyle>
 #include "gettext.h"
 
-#include <iostream>
-
 using namespace std;
 using namespace cnoid;
 
@@ -81,7 +79,7 @@ public:
     void createOptionMenu();
     void onActivated();
     void onMenuButtonClicked();
-    void onSelectedBodyItemsChanged(const ItemList<BodyItem>& selected);
+    void onCurrentBodyItemChanged(BodyItem* bodyItem);
     void setBodyItem(BodyItem* bodyItem);
     void updateIndicatorGrid();
     void initializeIndicators(int num);
@@ -528,15 +526,10 @@ void JointDisplacementView::onActivated()
 void JointDisplacementView::Impl::onActivated()
 {
     bodySelectionManagerConnection =
-        bodySelectionManager->sigSelectedBodyItemsChanged().connect(
-            [&](const ItemList<BodyItem>& bodyItems){
-                onSelectedBodyItemsChanged(bodyItems); });
+        bodySelectionManager->sigCurrentBodyItemChanged().connect(
+            [&](BodyItem* bodyItem){ onCurrentBodyItemChanged(bodyItem); });
 
-    onSelectedBodyItemsChanged(bodySelectionManager->selectedBodyItems());
-    
-    if(!currentBodyItem){
-        onSelectedBodyItemsChanged(RootItem::instance()->descendantItems<BodyItem>());
-    }
+    onCurrentBodyItemChanged(bodySelectionManager->currentBodyItem());
 }
 
 
@@ -553,12 +546,20 @@ void JointDisplacementView::Impl::onMenuButtonClicked()
 }
 
 
-void JointDisplacementView::Impl::onSelectedBodyItemsChanged(const ItemList<BodyItem>& selected)
+void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
 {
-    for(auto& item : selected){
-        if(item->body()->numJoints() > 0){
-            setBodyItem(item);
-            return;
+    if(!bodyItem){
+        setBodyItem(nullptr);
+    } else {
+        if(bodyItem->body()->numJoints() > 0){
+            setBodyItem(bodyItem);
+        } else {
+            while(bodyItem = bodyItem->parentBodyItem()){
+                if(bodyItem->body()->numJoints() > 0){
+                    setBodyItem(bodyItem);
+                    break;
+                }
+            }
         }
     }
 }

@@ -118,8 +118,6 @@ Item* TargetItemPickerBase::getTargetItem()
 
 void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool updateEvenIfEmpty)
 {
-    bool isChanged;
-    
     if((item != targetItem && (item || updateEvenIfEmpty)) || isBeforeAnyItemChangeNotification){
         targetItemConnection.disconnect();
         targetItem = item;
