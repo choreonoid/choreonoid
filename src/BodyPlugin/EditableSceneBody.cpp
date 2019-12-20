@@ -600,7 +600,7 @@ void EditableSceneBody::Impl::showZmp(bool on)
 void EditableSceneBody::Impl::makeLinkFree(EditableSceneLink* sceneLink)
 {
     if(bodyItem->currentBaseLink() == sceneLink->link()){
-        bodyItem->setCurrentBaseLink(0);
+        bodyItem->setCurrentBaseLink(nullptr);
     }
     bodyItem->pinDragIK()->setPin(sceneLink->link(), PinDragIK::NO_AXES);
     bodyItem->notifyUpdate();
@@ -620,7 +620,7 @@ void EditableSceneBody::Impl::toggleBaseLink(EditableSceneLink* sceneLink)
     if(sceneLink->link() != baseLink){
         bodyItem->setCurrentBaseLink(sceneLink->link());
     } else {
-        bodyItem->setCurrentBaseLink(0);
+        bodyItem->setCurrentBaseLink(nullptr);
     }
     bodyItem->notifyUpdate();
 }
@@ -722,19 +722,6 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
         }
     }
 
-    bool showDragger = on && isEditMode && targetLink && kinematicsBar->isPositionDraggerEnabled();
-    if(showDragger){
-        if(activeSimulatorItem){
-            showDragger = forcedPositionMode != NO_FORCED_POSITION;
-        } else {
-            showDragger = (kinematicsBar->mode() == KinematicsBar::IK_MODE);
-        }
-    }
-        
-    if(showDragger){
-        attachPositionDragger(targetLink);
-    }
-
     self->notifyUpdate(modified);
 }
 
@@ -743,7 +730,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 {
     SceneLink* sceneLink = self->sceneLink(link->index());
     positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
-    sceneLink->addChild(positionDragger);
+    sceneLink->addChildOnce(positionDragger);
 }
 
 
@@ -1225,6 +1212,8 @@ void EditableSceneBody::Impl::startKinematicsDragOperation(const SceneWidgetEven
     currentIK.reset();
     defaultIK.reset();
                 
+    auto rootLink = bodyItem->body()->rootLink();
+    
     switch(kinematicsBar->mode()){
 
     case KinematicsBar::AUTO_MODE:
@@ -1235,16 +1224,28 @@ void EditableSceneBody::Impl::startKinematicsDragOperation(const SceneWidgetEven
         }
         
     case KinematicsBar::FK_MODE:
-        if(targetLink == bodyItem->currentBaseLink()){
-            // Translation of the base link
-            startIK(event);
-        } else {
+    {
+        bool doFK = true;
+        auto body = bodyItem->body();
+        if(rootLink->isFreeJoint()){
+            auto baseLink = bodyItem->currentBaseLink();
+            if((baseLink && targetLink == baseLink) ||
+               (!baseLink && targetLink == rootLink)){
+                // Translation of the base link
+                startIK(event);
+                doFK = false;
+            }
+        }
+        if(doFK){
             startFK(event);
         }
         break;
+    }
         
     case KinematicsBar::IK_MODE:
-        startIK(event);
+        if(targetLink != rootLink || !rootLink->isFixedJoint() || bodyItem->currentBaseLink()){
+            startIK(event);
+        }
         break;
     }
 }
@@ -1445,7 +1446,9 @@ void EditableSceneBody::Impl::startForcedPosition(const SceneWidgetEvent& event)
 {
     finishForcedPosition();
     updateMarkersAndManipulators(true);
-
+    if(kinematicsBar->isPositionDraggerEnabled() && forcedPositionMode != NO_FORCED_POSITION){
+        attachPositionDragger(targetLink);
+    }
     dragProjector.setInitialPosition(targetLink->position());
     dragProjector.setTranslationAlongViewPlane();
     if(dragProjector.startTranslation(event)){

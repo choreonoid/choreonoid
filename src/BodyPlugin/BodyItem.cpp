@@ -129,7 +129,7 @@ public:
     void initBody(bool calledFromCopyConstructor);
     bool loadModelFile(const std::string& filename);
     void setBody(Body* body);
-    void setCurrentBaseLink(Link* link);
+    void setCurrentBaseLink(Link* link, bool forceUpdate = false);
     void appendKinematicStateToHistory();
     bool undoKinematicState();
     bool redoKinematicState();
@@ -251,7 +251,7 @@ BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
     : BodyItemImpl(self, org.body->clone())
 {
     if(org.currentBaseLink){
-        setCurrentBaseLink(body->link(org.currentBaseLink->index()));
+        setCurrentBaseLink(body->link(org.currentBaseLink->index()), true);
     }
     zmp = org.zmp;
     isOriginalModelStatic = org.isOriginalModelStatic;
@@ -314,7 +314,7 @@ void BodyItemImpl::initBody(bool calledFromCopyConstructor)
     isOriginalModelStatic = body->isStaticModel();
 
     if(!calledFromCopyConstructor){
-        setCurrentBaseLink(body->rootLink());
+        setCurrentBaseLink(nullptr, true);
         zmp.setZero();
         self->storeInitialState();
     }
@@ -425,13 +425,13 @@ Link* BodyItem::currentBaseLink() const
 
 void BodyItem::setCurrentBaseLink(Link* link)
 {
-    impl->setCurrentBaseLink(link);
+    impl->setCurrentBaseLink(link, false);
 }
 
 
-void BodyItemImpl::setCurrentBaseLink(Link* link)
+void BodyItemImpl::setCurrentBaseLink(Link* link, bool forceUpdate)
 {
-    if(link != currentBaseLink){
+    if(link != currentBaseLink || forceUpdate){
         if(link){
             fkTraverse.find(link, true, true);
         } else {
