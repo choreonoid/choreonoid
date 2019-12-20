@@ -20,6 +20,7 @@ public:
     void setCaptionVisible(bool on);
     void setCaption(const std::string& caption);
     void setOptionMenu(MenuManager& menuManager);
+    void setEditable(bool on);
     void setPositionCallback(std::function<bool(const Position& T)> callback);
     void clearPosition();
     void refreshPosition();

@@ -141,6 +141,7 @@ public:
     virtual SignalProxy<void()> sigLocationChanged() override;
     virtual Position getLocation() const override;
     virtual void setLocation(const Position& T) override;
+    virtual bool isLocationEditable() const override;
 
     // RenderableItem function
     virtual SgNode* getScene() override;

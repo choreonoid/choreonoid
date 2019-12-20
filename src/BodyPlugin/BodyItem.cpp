@@ -1244,6 +1244,12 @@ void BodyItem::setLocation(const Position& T)
     impl->body->rootLink()->setPosition(T);
     notifyKinematicStateChange(true);
 }
+
+
+bool BodyItem::isLocationEditable() const
+{
+    return const_cast<BodyItem*>(this)->parentBodyItem() == nullptr;
+}
         
 
 EditableSceneBody* BodyItem::sceneBody()

@@ -44,7 +44,8 @@ public:
 
     Position T_last;
     std::function<bool(const Position& T)> positionCallback;
-    vector<QWidget*> inputElementWidgets;
+    vector<QWidget*> inputPanelWidgets;
+    vector<QWidget*> inputSpins;
     ScopedConnectionSet userInputConnections;
 
     QLabel caption;
@@ -122,44 +123,56 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     static const char* xyzLabels[] = { "X", "Y", "Z" };
     for(int i=0; i < 3; ++i){
         // Translation spin boxes
-        xyzSpin[i].setAlignment(Qt::AlignCenter);
-        xyzSpin[i].setDecimals(3);
-        xyzSpin[i].setRange(-99.999, 99.999);
-        xyzSpin[i].setSingleStep(0.001);
+        auto spin = &xyzSpin[i];
+        spin->setAlignment(Qt::AlignCenter);
+        spin->setDecimals(3);
+        spin->setRange(-99.999, 99.999);
+        spin->setSingleStep(0.001);
 
         InputElementSet s;
         s.set(TX + i);
         userInputConnections.add(
-            xyzSpin[i].sigValueChanged().connect(
+            spin->sigValueChanged().connect(
                 [this, s](double){ onPositionInput(s); }));
 
-        grid->addWidget(new QLabel(xyzLabels[i]), row, i * 2, Qt::AlignCenter);
-        grid->addWidget(&xyzSpin[i], row, i * 2 + 1);
+        auto label = new QLabel(xyzLabels[i]);
+        grid->addWidget(label, row, i * 2, Qt::AlignCenter);
+        grid->addWidget(spin, row, i * 2 + 1);
 
         grid->setColumnStretch(i * 2, 1);
         grid->setColumnStretch(i * 2 + 1, 10);
+
+        inputSpins.push_back(spin);
+        inputPanelWidgets.push_back(label);
+        inputPanelWidgets.push_back(spin);
     }
     ++row;
 
     static const char* rpyLabelChar[] = { "R", "P", "Y" };
+    
     for(int i=0; i < 3; ++i){
         // Roll-pitch-yaw spin boxes
-        rpySpin[i].setAlignment(Qt::AlignCenter);
-        rpySpin[i].setDecimals(1);
-        rpySpin[i].setRange(-9999.0, 9999.0);
-        rpySpin[i].setSingleStep(0.1);
+        auto spin = &rpySpin[i];
+        spin->setAlignment(Qt::AlignCenter);
+        spin->setDecimals(1);
+        spin->setRange(-9999.0, 9999.0);
+        spin->setSingleStep(0.1);
 
         InputElementSet s;
         s.set(RX + 1);
         userInputConnections.add(
-            rpySpin[i].sigValueChanged().connect(
+            spin->sigValueChanged().connect(
                 [this, s](double){ onPositionInputRpy(s); }));
 
         auto label = new QLabel(rpyLabelChar[i]);
         grid->addWidget(label, row, i * 2, Qt::AlignCenter);
+        grid->addWidget(spin, row, i * 2 + 1);
+
+        inputSpins.push_back(spin);
         rpyWidgets.push_back(label);
-        grid->addWidget(&rpySpin[i], row, i * 2 + 1);
-        rpyWidgets.push_back(&rpySpin[i]);
+        rpyWidgets.push_back(spin);
+        inputPanelWidgets.push_back(label);
+        inputPanelWidgets.push_back(spin);
     }
     ++row;
     
@@ -168,55 +181,55 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     grid = new QGridLayout;
     static const char* quatLabelChar[] = {"QX", "QY", "QZ", "QW"};
     for(int i=0; i < 4; ++i){
-        quatSpin[i].setAlignment(Qt::AlignCenter);
-        quatSpin[i].setDecimals(4);
-        quatSpin[i].setRange(-1.0000, 1.0000);
-        quatSpin[i].setSingleStep(0.0001);
+        auto spin = &quatSpin[i];
+        spin->setAlignment(Qt::AlignCenter);
+        spin->setDecimals(4);
+        spin->setRange(-1.0000, 1.0000);
+        spin->setSingleStep(0.0001);
 
         InputElementSet s;
         s.set(QX + i);
         userInputConnections.add(
-            quatSpin[i].sigValueChanged().connect(
+            spin->sigValueChanged().connect(
                 [this, s](double){ onPositionInputQuaternion(s); }));
         
         auto label = new QLabel(quatLabelChar[i]);
         grid->addWidget(label, 0, i * 2, Qt::AlignRight);
-        quatWidgets.push_back(label);
         grid->addWidget(&quatSpin[i], 0, i * 2 + 1);
-        quatWidgets.push_back(&quatSpin[i]);
-
         grid->setColumnStretch(i * 2, 1);
         grid->setColumnStretch(i * 2 + 1, 10);
+
+        inputSpins.push_back(spin);
+        quatWidgets.push_back(label);
+        quatWidgets.push_back(spin);
+        inputPanelWidgets.push_back(label);
+        inputPanelWidgets.push_back(spin);
     }
     mainvbox->addLayout(grid);
-
-    inputElementWidgets = {
-        &xyzSpin[0], &xyzSpin[1], &xyzSpin[2],
-        &rpySpin[0], &rpySpin[1], &rpySpin[2],
-        &quatSpin[0], &quatSpin[1], &quatSpin[2], &quatSpin[3]
-    };
 
     auto hbox = new QHBoxLayout;
     rotationMatrixPanel.setLayout(hbox);
     hbox->addStretch();
     //hbox->addWidget(new QLabel("R = "));
-    hbox->addWidget(new VSeparator);
+    auto separator = new VSeparator;
+    hbox->addWidget(separator);
 
     grid = new QGridLayout();
     grid->setHorizontalSpacing(10);
     grid->setVerticalSpacing(4);
     for(int i=0; i < 3; ++i){
         for(int j=0; j < 3; ++j){
-            auto& label = rotationMatrixElementLabel[i][j];
+            auto label = &rotationMatrixElementLabel[i][j];
             QFont font("Monospace");
             font.setStyleHint(QFont::TypeWriter);
-            label.setFont(font);
-            label.setTextInteractionFlags(Qt::TextSelectableByMouse);
-            grid->addWidget(&label, i, j);
+            label->setFont(font);
+            label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+            grid->addWidget(label, i, j);
         }
     }
     hbox->addLayout(grid);
-    hbox->addWidget(new VSeparator);
+    separator = new VSeparator;
+    hbox->addWidget(separator);
     hbox->addStretch();
 
     isRpyEnabled = true;
@@ -228,6 +241,7 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     setRotationMatrixEnabled(false);
     
     mainvbox->addWidget(&rotationMatrixPanel);
+    inputPanelWidgets.push_back(&rotationMatrixPanel);
 
     T_last.setIdentity();
     
@@ -279,6 +293,14 @@ void PositionWidget::Impl::setOptionMenu(MenuManager& menu)
 }
 
 
+void PositionWidget::setEditable(bool on)
+{
+    for(auto& widget : impl->inputPanelWidgets){
+        widget->setEnabled(on);
+    }
+}
+    
+
 void PositionWidget::setPositionCallback(std::function<bool(const Position& T)> callback)
 {
     impl->positionCallback = callback;
@@ -316,7 +338,7 @@ void PositionWidget::Impl::setRotationMatrixEnabled(bool on)
 
 void PositionWidget::Impl::resetInputWidgetStyles()
 {
-    for(auto& widget : inputElementWidgets){
+    for(auto& widget : inputSpins){
         widget->setStyleSheet(normalStyle);
     }
 }
@@ -515,9 +537,9 @@ void PositionWidget::Impl::notifyPositionInput(const Position& T, InputElementSe
     bool accepted = positionCallback(T);
 
     if(!accepted){
-        for(size_t i=0; i < inputElementWidgets.size(); ++i){
+        for(size_t i=0; i < inputSpins.size(); ++i){
             if(inputElements[i]){
-                inputElementWidgets[i]->setStyleSheet(errorStyle);
+                inputSpins[i]->setStyleSheet(errorStyle);
             }
         }
     }

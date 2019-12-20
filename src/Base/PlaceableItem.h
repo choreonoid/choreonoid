@@ -11,6 +11,7 @@ public:
     virtual SignalProxy<void()> sigLocationChanged() = 0;
     virtual Position getLocation() const = 0;
     virtual void setLocation(const Position& T) = 0;
+    virtual bool isLocationEditable() const = 0;
 };
 
 }

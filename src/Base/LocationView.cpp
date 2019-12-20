@@ -86,11 +86,11 @@ void LocationView::Impl::setTargetItem(Item* item)
     if(!targetItem){
         connection.disconnect();
         positionWidget->setCaption("-----");
-        positionWidget->setEnabled(false);
+        positionWidget->setEditable(false);
     } else {
         positionWidget->setCaption(item->name());
-        positionWidget->setEnabled(true);
         positionWidget->updatePosition(targetItem->getLocation());
+        positionWidget->setEditable(targetItem->isLocationEditable());
         connection =
             targetItem->sigLocationChanged().connect(
                 [this](){
