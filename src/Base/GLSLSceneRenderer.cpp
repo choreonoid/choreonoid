@@ -382,7 +382,10 @@ public:
     void applyCullingMode(SgMesh* mesh);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);        
+    void renderOverlay(SgOverlay* overlay);
+    void renderOverlayMain(SgOverlay* overlay, const Affine3& T, bool doDepthTest);
     void renderViewportOverlay(SgViewportOverlay* overlay);
+    void renderViewportOverlayMain(SgViewportOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T);
     void renderLightweightRenderingGroup(SgLightweightRenderingGroup* group);
@@ -512,6 +515,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgPointSet* node){ renderPointSet(node); });
     renderingFunctions.setFunction<SgLineSet>(
         [&](SgLineSet* node){ renderLineSet(node); });
+    renderingFunctions.setFunction<SgOverlay>(
+        [&](SgOverlay* node){ renderOverlay(node); });
     renderingFunctions.setFunction<SgViewportOverlay>(
         [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
     renderingFunctions.setFunction<SgOutlineGroup>(
@@ -2332,24 +2337,55 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 }
 
 
+void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
+{
+    if(isActuallyRendering){
+        const Affine3& T = modelMatrixStack.back();
+        postRenderingFunctions.emplace_back(
+            [this, overlay, T](){ renderOverlayMain(overlay, T, false); });
+    }
+}
+
+
+void GLSLSceneRendererImpl::renderOverlayMain(SgOverlay* overlay, const Affine3& T, bool doDepthTest)
+{
+    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
+
+    modelMatrixStack.push_back(T);
+
+    if(!doDepthTest){
+        glDisable(GL_DEPTH_TEST);
+    }
+    
+    renderChildNodes(overlay);
+
+    if(!doDepthTest){
+        glEnable(GL_DEPTH_TEST);
+    }
+    
+    modelMatrixStack.pop_back();
+}
+
+
 void GLSLSceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
-    if(!isActuallyRendering){
-        return;
+    if(isActuallyRendering){
+        postRenderingFunctions.emplace_back(
+            [this, overlay](){ renderViewportOverlayMain(overlay); });
     }
+}
 
-    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
-    
-    modelMatrixStack.push_back(Affine3::Identity());
 
+void GLSLSceneRendererImpl::renderViewportOverlayMain(SgViewportOverlay* overlay)
+{
     const Matrix4 PV0 = PV;
     SgViewportOverlay::ViewVolume v;
     int x, y, width, height;
     self->getViewport(x, y, width, height);
     overlay->calcViewVolume(width, height, v);
     self->getOrthographicProjectionMatrix(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar, PV);
-            
-    renderGroup(overlay);
+
+    renderOverlayMain(overlay, Affine3::Identity(), true);
 
     PV = PV0;
     modelMatrixStack.pop_back();
