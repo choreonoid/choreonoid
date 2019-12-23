@@ -382,7 +382,7 @@ public:
     void applyCullingMode(SgMesh* mesh);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);        
-    void renderOverlay(SgOverlay* overlay);
+    void renderViewportOverlay(SgViewportOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T);
     void renderLightweightRenderingGroup(SgLightweightRenderingGroup* group);
@@ -512,8 +512,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgPointSet* node){ renderPointSet(node); });
     renderingFunctions.setFunction<SgLineSet>(
         [&](SgLineSet* node){ renderLineSet(node); });
-    renderingFunctions.setFunction<SgOverlay>(
-        [&](SgOverlay* node){ renderOverlay(node); });
+    renderingFunctions.setFunction<SgViewportOverlay>(
+        [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
     renderingFunctions.setFunction<SgOutlineGroup>(
         [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
     renderingFunctions.setFunction<SgLightweightRenderingGroup>(
@@ -2332,7 +2332,7 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 }
 
 
-void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
+void GLSLSceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
     if(!isActuallyRendering){
         return;
@@ -2343,7 +2343,7 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
     modelMatrixStack.push_back(Affine3::Identity());
 
     const Matrix4 PV0 = PV;
-    SgOverlay::ViewVolume v;
+    SgViewportOverlay::ViewVolume v;
     int x, y, width, height;
     self->getViewport(x, y, width, height);
     overlay->calcViewVolume(width, height, v);

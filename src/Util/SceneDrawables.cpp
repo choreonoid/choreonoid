@@ -21,7 +21,8 @@ struct NodeClassRegistration {
             .registerClass<SgPlot, SgNode>()
             .registerClass<SgPointSet, SgPlot>()
             .registerClass<SgLineSet, SgPlot>()
-            .registerClass<SgOverlay, SgGroup>();
+            .registerClass<SgOverlay, SgGroup>()
+            .registerClass<SgViewportOverlay, SgOverlay>();
     }
 } registration;
 
@@ -962,7 +963,7 @@ SgOverlay::SgOverlay(int classId)
 
 
 SgOverlay::SgOverlay()
-    : SgOverlay(findClassId<SgOverlay>())
+    : SgGroup(findClassId<SgOverlay>())
 {
 
 }
@@ -987,7 +988,40 @@ Referenced* SgOverlay::doClone(CloneMap* cloneMap) const
 }
 
 
-void SgOverlay::calcViewVolume(double /* viewportWidth */, double /* viewportHeight */, ViewVolume& io_volume)
+SgViewportOverlay::SgViewportOverlay(int classId)
+    : SgOverlay(classId)
+{
+
+}
+
+
+SgViewportOverlay::SgViewportOverlay()
+    : SgOverlay(findClassId<SgViewportOverlay>())
+{
+
+}
+
+
+SgViewportOverlay::SgViewportOverlay(const SgViewportOverlay& org, CloneMap* cloneMap)
+    : SgOverlay(org, cloneMap)
+{
+
+}
+
+
+SgViewportOverlay::~SgViewportOverlay()
+{
+
+}
+
+
+Referenced* SgViewportOverlay::doClone(CloneMap* cloneMap) const
+{
+    return new SgViewportOverlay(*this, cloneMap);
+}
+
+
+void SgViewportOverlay::calcViewVolume(double /* viewportWidth */, double /* viewportHeight */, ViewVolume& io_volume)
 {
     io_volume.left = -1.0;
     io_volume.right = 1.0;

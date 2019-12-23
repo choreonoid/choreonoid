@@ -489,6 +489,7 @@ class SgPlot;
 class SgPointSet;
 class SgLineSet;
 class SgOverlay;
+class SgViewportOverlay;
 class SgLight;
 class SgDirectionalLight;
 class SgPointLight;

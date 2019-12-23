@@ -648,6 +648,19 @@ public:
     SgOverlay(const SgOverlay& org, CloneMap* cloneMap = nullptr);
     ~SgOverlay();
 
+protected:
+    SgOverlay(int classId);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+};
+
+
+class CNOID_EXPORT SgViewportOverlay : public SgOverlay
+{
+public:
+    SgViewportOverlay();
+    SgViewportOverlay(const SgViewportOverlay& org, CloneMap* cloneMap = nullptr);
+    ~SgViewportOverlay();
+
     struct ViewVolume {
         double left;
         double right;
@@ -660,7 +673,7 @@ public:
     virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
 
 protected:
-    SgOverlay(int classId);
+    SgViewportOverlay(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 

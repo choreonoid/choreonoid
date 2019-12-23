@@ -293,7 +293,7 @@ public:
     void setupLineSetResource(SgLineSet* lineSet, VertexResource* resource);
     void renderPlot(
         SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource);
-    void renderOverlay(SgOverlay* overlay);
+    void renderViewportOverlay(SgViewportOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
     void setColor(const Vector3f& color);
@@ -391,8 +391,8 @@ void GL1SceneRendererImpl::initialize()
         [&](SgPointSet* node){ renderPointSet(node); });
     renderingFunctions.setFunction<SgLineSet>(
         [&](SgLineSet* node){ renderLineSet(node); });
-    renderingFunctions.setFunction<SgOverlay>(
-        [&](SgOverlay* node){ renderOverlay(node); });
+    renderingFunctions.setFunction<SgViewportOverlay>(
+        [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
     renderingFunctions.setFunction<SgOutlineGroup>(
         [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
 
@@ -1785,7 +1785,7 @@ void GL1SceneRendererImpl::renderPlot
 }
 
 
-void GL1SceneRendererImpl::renderOverlay(SgOverlay* overlay)
+void GL1SceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
     if(isPicking){
         return;
@@ -1798,7 +1798,7 @@ void GL1SceneRendererImpl::renderOverlay(SgOverlay* overlay)
     glPushMatrix();
     glLoadIdentity();
 
-    SgOverlay::ViewVolume v;
+    SgViewportOverlay::ViewVolume v;
     const Array4i vp = self->viewport();
     overlay->calcViewVolume(vp[2], vp[3], v);
 

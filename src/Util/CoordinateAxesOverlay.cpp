@@ -14,7 +14,8 @@ namespace {
 
 struct NodeClassRegistration {
     NodeClassRegistration() {
-        SceneNodeClassRegistry::instance().registerClass<CoordinateAxesOverlay, SgOverlay>();
+        SceneNodeClassRegistry::instance().
+            registerClass<CoordinateAxesOverlay, SgViewportOverlay>();
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
@@ -31,7 +32,8 @@ struct NodeClassRegistration {
 
 
 CoordinateAxesOverlay::CoordinateAxesOverlay()
-    : SgOverlay(findClassId<CoordinateAxesOverlay>())
+    : SgViewportOverlay(findClassId<CoordinateAxesOverlay>()),
+      superClassId(findClassId<SgViewportOverlay>())
 {
     static const Vector3f colors[] = {
         { 1.0f, 0.0f, 0.0f },
@@ -83,5 +85,5 @@ void CoordinateAxesOverlay::render(SceneRenderer* renderer)
 {
     const Affine3& T = renderer->currentCameraPosition();
     axesTransform->setRotation(T.linear().transpose());
-    renderer->renderingFunctions()->dispatchAs<SgOverlay>(this);
+    renderer->renderingFunctions()->dispatch(this, superClassId);
 }

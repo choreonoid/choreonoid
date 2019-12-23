@@ -14,7 +14,7 @@ using namespace cnoid;
 
 namespace {
 
-class TextureOverlay : public SgOverlay
+class TextureOverlay : public SgViewportOverlay
 {
 public:
     SgTexturePtr texture;
@@ -49,7 +49,7 @@ public:
         addChild(shape);
     }
 
-    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume) {
+    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume) override {
 
         SgImage* image = texture->getOrCreateImage();
         double tw = image->width();

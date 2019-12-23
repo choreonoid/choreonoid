@@ -12,11 +12,12 @@ namespace cnoid {
 
 class SceneRenderer;
 
-class CNOID_EXPORT CoordinateAxesOverlay : public SgOverlay
+class CNOID_EXPORT CoordinateAxesOverlay : public SgViewportOverlay
 {
     const double length = 15;
     const double width = 4;
     SgPosTransformPtr axesTransform;
+    int superClassId;
     
 public:
     CoordinateAxesOverlay();

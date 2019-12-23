@@ -15,7 +15,7 @@ namespace cnoid {
 class PolyhedralRegion;
 class RectRegionMarkerImpl;
 
-class CNOID_EXPORT RectRegionMarker : public SgOverlay, public SceneWidgetEditable
+class CNOID_EXPORT RectRegionMarker : public SgViewportOverlay, public SceneWidgetEditable
 {
 public:
     RectRegionMarker();
@@ -32,12 +32,12 @@ public:
     const PolyhedralRegion& region() const;
     SignalProxy<void(const PolyhedralRegion& region)> sigRegionFixed();
 
-    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume) override;
+    virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
+    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event) override;
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
+    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
 
     SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest();
 
