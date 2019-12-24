@@ -35,7 +35,7 @@ void calcTotalTransform
 Affine3 cnoid::calcTotalTransform(const SgNodePath& path)
 {
     Affine3 T;
-    ::calcTotalTransform(path.begin(), path.end(), 0, T);
+    ::calcTotalTransform(path.begin(), path.end(), nullptr, T);
     return T;
 }
 
@@ -51,7 +51,7 @@ Affine3 cnoid::calcTotalTransform(const SgNodePath& path, const SgNode* targetNo
 Affine3 cnoid::calcTotalTransform(SgNodePath::const_iterator begin, SgNodePath::const_iterator end)
 {
     Affine3 T;
-    ::calcTotalTransform(begin, end, 0, T);
+    ::calcTotalTransform(begin, end, nullptr, T);
     return T;
 }
 

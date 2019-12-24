@@ -233,6 +233,10 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
         }
     } else {
         // shallow copy
+        /**
+           \todo Stop the shallow copy of the child nodes.
+           Only the attributes of this node should be copied when the clone map is not used.
+        */
         for(auto& child : org){
             addChild(child, false);
         }
