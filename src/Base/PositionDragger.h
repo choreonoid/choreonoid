@@ -22,7 +22,7 @@ public:
 
     PositionDragger();
     PositionDragger(int axisSet);
-    PositionDragger(const PositionDragger& org, CloneMap* cloneMap = nullptr);
+    PositionDragger(const PositionDragger& org);
 
     void setDraggableAxes(int axisSet);
     int draggableAxes() const;
@@ -40,6 +40,9 @@ public:
     
     void adjustSize();
     void adjustSize(const BoundingBox& bb);
+
+    void setOverlayMode(bool on);
+    bool isOverlayMode() const;
 
     bool isContainerMode() const;
     void setContainerMode(bool on);
@@ -82,6 +85,7 @@ public:
     bool isDraggerAlwaysHidden() const;
 
 protected:
+    PositionDragger(const PositionDragger& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:

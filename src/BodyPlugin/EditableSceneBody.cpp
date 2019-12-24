@@ -298,7 +298,7 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     targetLink = nullptr;
 
     positionDragger = new PositionDragger;
-    positionDragger->setDraggerAlwaysShown(true);
+    positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
     positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
     positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
     positionDragger->sigDragFinished().connect([&](){ onDraggerDragFinished(); });

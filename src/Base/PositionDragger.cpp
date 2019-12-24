@@ -98,14 +98,18 @@ public:
     int draggableAxes;
     Signal<void(int axisSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
+    bool isOverlayMode;
     bool isContainerMode;
     bool isDragEnabled;
     bool isContentsDragEnabled;
     bool isUndoEnabled;
-    SceneDragProjector dragProjector;
+    SgGroupPtr axisGroup;
+    SgOverlayPtr overlay;
     SgScaleTransformPtr translationAxisScale;
     SgScaleTransformPtr rotationAxisScale;
     double rotationHandleSizeRatio;
+    array<SgMaterialPtr, 3> axisMaterials;
+    SceneDragProjector dragProjector;
     Signal<void()> sigDragStarted;
     Signal<void()> sigPositionDragged;
     Signal<void()> sigDragFinished;
@@ -115,9 +119,10 @@ public:
     Impl(PositionDragger* self, const Impl& org);
     Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap);
     void createDraggers();
-    void createTranslationDragger(MeshGenerator& meshGenerator, array<SgMaterialPtr, 3>& axisMaterials);
-    void createRotationDragger(MeshGenerator& meshGenerator, array<SgMaterialPtr, 3>& axisMaterials);
+    void createTranslationDragger(MeshGenerator& meshGenerator);
+    void createRotationDragger(MeshGenerator& meshGenerator);
     void setDraggableAxes(int axisSet);
+    void setOverlayMode(bool on);
     void showDragMarkers(bool on);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
     bool onTranslationDraggerPressed(const SceneWidgetEvent& event, int axis, int topNodeIndex);
@@ -146,19 +151,22 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
 {
     draggableAxes = axisSet;
     rotationHandleSizeRatio = 0.5;
-
-    translationAxisScale = new SgScaleTransform;
-    self->addChild(translationAxisScale);
-    rotationAxisScale = new SgScaleTransform;
-    self->addChild(rotationAxisScale);
+    axisGroup = self;
 
     createDraggers();
 
     displayMode = DisplayInFocus;
+    isOverlayMode = false;
     isContainerMode = false;
     isDragEnabled = true;
     isContentsDragEnabled = true;
     isUndoEnabled = false;    
+}
+
+
+PositionDragger::PositionDragger(const PositionDragger& org)
+{
+    impl = new Impl(this, *org.impl, nullptr);
 }
 
 
@@ -169,46 +177,46 @@ PositionDragger::PositionDragger(const PositionDragger& org, CloneMap* cloneMap)
 }
 
 
+Referenced* PositionDragger::doClone(CloneMap* cloneMap) const
+{
+    if(cloneMap){
+        return new PositionDragger(*this, cloneMap);
+    } else {
+        return new PositionDragger(*this);
+    }
+}
+
+
 PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap)
     : self(self)
 {
     draggableAxes = org.draggableAxes;
-
     rotationHandleSizeRatio = org.rotationHandleSizeRatio;
-
-    if(cloneMap){
-        translationAxisScale = cloneMap->getClone(org.translationAxisScale);
-        rotationAxisScale = cloneMap->getClone(org.rotationAxisScale);
-    } else {
-        translationAxisScale = new SgScaleTransform;
-        translationAxisScale->setScale(org.translationAxisScale->scale());
-        org.translationAxisScale->copyChildrenTo(translationAxisScale);
-        self->addChild(translationAxisScale);
-
-        rotationAxisScale = new SgScaleTransform;
-        rotationAxisScale->setScale(org.rotationAxisScale->scale());
-        org.rotationAxisScale->copyChildrenTo(rotationAxisScale);
-        self->addChild(rotationAxisScale);
-    }
-    
-    displayMode = org.displayMode;
+    isOverlayMode = org.isOverlayMode;
     isContainerMode = org.isContainerMode;
     isDragEnabled = org.isDragEnabled;
     isContentsDragEnabled = org.isContentsDragEnabled;
     isUndoEnabled = org.isUndoEnabled;
-}
 
-
-Referenced* PositionDragger::doClone(CloneMap* cloneMap) const
-{
-    return new PositionDragger(*this, cloneMap);
+    axisGroup = self;
+    if(cloneMap){
+        axisGroup = cloneMap->findClone(org.axisGroup);
+        translationAxisScale = cloneMap->getClone(org.translationAxisScale);
+        rotationAxisScale = cloneMap->getClone(org.rotationAxisScale);
+        for(int i=0; i < 3; ++i){
+            axisMaterials[i] = cloneMap->getClone(org.axisMaterials[i]);
+        }
+        displayMode = org.displayMode;
+    } else {
+        createDraggers();
+        displayMode = DisplayInFocus;
+        self->setDisplayMode(org.displayMode);
+    }
 }
 
 
 void PositionDragger::Impl::createDraggers()
 {
-    array<SgMaterialPtr, 3> axisMaterials;
-    
     for(int i=0; i < 3; ++i){
         auto material = new SgMaterial;
         Vector3f color(0.2f, 0.2f, 0.2f);
@@ -221,14 +229,15 @@ void PositionDragger::Impl::createDraggers()
     }
 
     MeshGenerator meshGenerator;
-    createTranslationDragger(meshGenerator, axisMaterials);
-    createRotationDragger(meshGenerator, axisMaterials);
+    createTranslationDragger(meshGenerator);
+    createRotationDragger(meshGenerator);
 }
 
     
-void PositionDragger::Impl::createTranslationDragger
-(MeshGenerator& meshGenerator, array<SgMaterialPtr, 3>& axisMaterials)
+void PositionDragger::Impl::createTranslationDragger(MeshGenerator& meshGenerator)
 {
+    translationAxisScale = new SgScaleTransform;
+    
     SgMeshPtr mesh = meshGenerator.generateArrow(0.04, 1.8, 0.1, 0.18);
     for(int i=0; i < 3; ++i){
         auto shape = new SgShape;
@@ -249,12 +258,15 @@ void PositionDragger::Impl::createTranslationDragger
         axis->setTurnedOn(draggableAxes & (1 << i));
         translationAxisScale->addChild(axis);
     }
+
+    axisGroup->addChild(translationAxisScale);
 }
 
 
-void PositionDragger::Impl::createRotationDragger
-(MeshGenerator& meshGenerator, array<SgMaterialPtr, 3>& axisMaterials)
+void PositionDragger::Impl::createRotationDragger(MeshGenerator& meshGenerator)
 {
+    rotationAxisScale = new SgScaleTransform;
+
     meshGenerator.setDivisionNumber(36);
     auto beltMesh1 = meshGenerator.generateDisc(1.0, 1.0 - 0.2);
     meshGenerator.setDivisionNumber(24);
@@ -303,6 +315,8 @@ void PositionDragger::Impl::createRotationDragger
 
         rotationAxisScale->addChild(axis);
     }
+
+    axisGroup->addChild(rotationAxisScale);
 }
 
 
@@ -405,6 +419,44 @@ void PositionDragger::adjustSize()
 }
 
 
+void PositionDragger::setOverlayMode(bool on)
+{
+    impl->setOverlayMode(on);
+}
+
+
+void PositionDragger::Impl::setOverlayMode(bool on)
+{
+    if(on != isOverlayMode){
+        double transparency;
+        if(on){
+            if(!overlay){
+                overlay = new SgOverlay;
+            }
+            self->moveChildrenTo(overlay);
+            self->addChild(overlay);
+            axisGroup = overlay;
+            transparency = 0.0f;
+        } else {
+            self->removeChild(overlay);
+            overlay->moveChildrenTo(self);
+            axisGroup = self;
+            transparency = 1.0f;
+        }
+        for(int i=0; i < 3; ++i){
+            axisMaterials[i]->setTransparency(transparency);
+        }
+        isOverlayMode = on;
+    }
+}
+
+
+bool PositionDragger::isOverlayMode() const
+{
+    return impl->isOverlayMode;
+}
+
+
 bool PositionDragger::isContainerMode() const
 {
     return impl->isContainerMode;
@@ -457,11 +509,11 @@ void PositionDragger::Impl::showDragMarkers(bool on)
     }
     
     if(on){
-        self->addChildOnce(translationAxisScale, true);
-        self->addChildOnce(rotationAxisScale, true);
+        axisGroup->addChildOnce(translationAxisScale, true);
+        axisGroup->addChildOnce(rotationAxisScale, true);
     } else {
-        self->removeChild(translationAxisScale, true);
-        self->removeChild(rotationAxisScale, true);
+        axisGroup->removeChild(translationAxisScale, true);
+        axisGroup->removeChild(rotationAxisScale, true);
     }
 }    
 

@@ -48,6 +48,7 @@ private:
     float transparency_;
     float shininess_;
 };
+
 typedef ref_ptr<SgMaterial> SgMaterialPtr;
 
 
@@ -82,6 +83,7 @@ protected:
 private:
     std::shared_ptr<Image> image_;
 };
+
 typedef ref_ptr<SgImage> SgImagePtr;
 
 
@@ -114,6 +116,7 @@ private:
     Vector2 translation_;
     double rotation_;
 };
+
 typedef ref_ptr<SgTextureTransform> SgTextureTransformPtr;
 
 
@@ -149,6 +152,7 @@ private:
     bool repeatS_;
     bool repeatT_;
 };
+
 typedef ref_ptr<SgTexture> SgTexturePtr;
 
 
@@ -307,6 +311,7 @@ private:
     SgIndexArray texCoordIndices_;
     bool isSolid_;
 };
+
 typedef ref_ptr<SgMeshBase> SgMeshBasePtr;
 
 
@@ -432,6 +437,7 @@ private:
     SgIndexArray triangleVertices_;
     Primitive primitive_;
 };
+
 typedef ref_ptr<SgMesh> SgMeshPtr;
 
 
@@ -498,6 +504,7 @@ private:
     SgMaterialPtr material_;
     SgTexturePtr texture_;
 };
+
 typedef ref_ptr<SgShape> SgShapePtr;
 
 
@@ -556,6 +563,7 @@ private:
     SgIndexArray colorIndices_;
     SgMaterialPtr material_;
 };
+
 typedef ref_ptr<SgPlot> SgPlotPtr;
 
 
@@ -579,6 +587,7 @@ protected:
 private:
     double pointSize_;
 };
+
 typedef ref_ptr<SgPointSet> SgPointSetPtr;
 
 
@@ -638,6 +647,7 @@ private:
     SgIndexArray lineVertices_;
     float lineWidth_;
 };
+
 typedef ref_ptr<SgLineSet> SgLineSetPtr;
 
 
@@ -652,6 +662,8 @@ protected:
     SgOverlay(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
+
+typedef ref_ptr<SgOverlay> SgOverlayPtr;
 
 
 class CNOID_EXPORT SgViewportOverlay : public SgOverlay
@@ -676,6 +688,8 @@ protected:
     SgViewportOverlay(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
+
+typedef ref_ptr<SgViewportOverlay> SgViewportOverlayPtr;
 
 }
 

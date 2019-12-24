@@ -30,6 +30,11 @@ public:
     }
 
     template<class ObjectType>
+    ObjectType* findClone(ref_ptr<ObjectType> org){
+        return findClone<ObjectType>(org.get());
+    }
+
+template<class ObjectType>
     ObjectType* getClone(const ObjectType* org){
         return static_cast<ObjectType*>(findOrCreateClone_(org));
     }
