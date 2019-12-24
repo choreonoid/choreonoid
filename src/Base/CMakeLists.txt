@@ -100,9 +100,6 @@ set(sources
   InteractiveCameraTransform.cpp
   SceneProjector.cpp
   SceneDragProjector.cpp
-  SceneDragger.cpp
-  TranslationDragger.cpp
-  RotationDragger.cpp
   PositionDragger.cpp
   RectRegionMarker.cpp
   SceneView.cpp
@@ -216,9 +213,6 @@ set(headers
   SceneWidgetEvent.h
   SceneProjector.h
   SceneDragProjector.h
-  SceneDragger.h
-  TranslationDragger.h
-  RotationDragger.h
   PositionDragger.h
   SceneBar.h
   SceneWidgetEditable.h

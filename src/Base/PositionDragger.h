@@ -5,12 +5,12 @@
 #ifndef CNOID_BASE_POSITION_DRAGGER_H
 #define CNOID_BASE_POSITION_DRAGGER_H
 
-#include "SceneDragger.h"
+#include "SceneWidgetEditable.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT PositionDragger : public SceneDragger
+class CNOID_EXPORT PositionDragger : public SgPosTransform, public SceneWidgetEditable
 {
 public:
     enum Axis { TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
@@ -40,6 +40,10 @@ public:
     
     void adjustSize();
     void adjustSize(const BoundingBox& bb);
+
+    bool isContainerMode() const;
+    void setContainerMode(bool on);
+
     void setContentsDragEnabled(bool on);
     bool isContentsDragEnabled() const;
 
@@ -51,11 +55,10 @@ public:
     bool isUndoEnabled() const;
     void storeCurrentPositionToHistory();
 
-    virtual bool isDragEnabled() const override;
-    virtual void setDragEnabled(bool on) override;
-    virtual bool isDragging() const override;
-
-    virtual Affine3 draggedPosition() const override;
+    bool isDragEnabled() const;
+    void setDragEnabled(bool on);
+    bool isDragging() const;
+    Affine3 draggedPosition() const;
     const Vector3& draggedTranslation() const;
     const AngleAxis& draggedAngleAxis() const;
 

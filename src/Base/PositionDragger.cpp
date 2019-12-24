@@ -98,6 +98,7 @@ public:
     int draggableAxes;
     Signal<void(int axisSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
+    bool isContainerMode;
     bool isDragEnabled;
     bool isContentsDragEnabled;
     bool isUndoEnabled;
@@ -144,7 +145,6 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
     : self(self)
 {
     draggableAxes = axisSet;
-
     rotationHandleSizeRatio = 0.5;
 
     translationAxisScale = new SgScaleTransform;
@@ -155,6 +155,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
     createDraggers();
 
     displayMode = DisplayInFocus;
+    isContainerMode = false;
     isDragEnabled = true;
     isContentsDragEnabled = true;
     isUndoEnabled = false;    
@@ -162,7 +163,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
 
 
 PositionDragger::PositionDragger(const PositionDragger& org, CloneMap* cloneMap)
-    : SceneDragger(org, cloneMap)
+    : SgPosTransform(org, cloneMap)
 {
     impl = new Impl(this, *org.impl, cloneMap);
 }
@@ -191,6 +192,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, CloneMap* cl
     }
     
     displayMode = org.displayMode;
+    isContainerMode = org.isContainerMode;
     isDragEnabled = org.isDragEnabled;
     isContentsDragEnabled = org.isContentsDragEnabled;
     isUndoEnabled = org.isUndoEnabled;
@@ -400,6 +402,18 @@ void PositionDragger::adjustSize()
         }
     }
     adjustSize(bb);
+}
+
+
+bool PositionDragger::isContainerMode() const
+{
+    return impl->isContainerMode;
+}
+
+
+void PositionDragger::setContainerMode(bool on)
+{
+    impl->isContainerMode = on;
 }
 
 
