@@ -13,9 +13,6 @@ namespace cnoid {
 class CNOID_EXPORT PositionDragger : public SceneDragger
 {
 public:
-    PositionDragger();
-    PositionDragger(const PositionDragger& org, CloneMap* cloneMap = nullptr);
-
     enum Axis { TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
                 TRANSLATION_AXES = (TX | TY | TZ),
                 RX = 1 << 3, RY = 1 << 4, RZ = 1 << 5,
@@ -23,12 +20,24 @@ public:
                 ALL_AXES = (TX | TY | TZ | RX | RY | RZ)
     };
 
+    PositionDragger();
+    PositionDragger(int axisSet);
+    PositionDragger(const PositionDragger& org, CloneMap* cloneMap = nullptr);
+
     void setDraggableAxes(int axisSet);
     int draggableAxes() const;
     SignalProxy<void(int axisSet)> sigDraggableAxesChanged();
 
+    double handleSize() const;
+    void setHandleSize(double s);
+    double rotationHandleSizeRatio() const;
+    void setRotationHandlerSizeRatio(double r);
+
+    //! \deprecated. Use the setHandleSize and setRotationHandlerSizeRatio functions.
     void setRadius(double r, double translationAxisRatio = 2.0f);
+    //! \deprecated. Use the handleSize and rotationHandleSizeRatio function.
     double radius() const;
+    
     void adjustSize();
     void adjustSize(const BoundingBox& bb);
     void setContentsDragEnabled(bool on);

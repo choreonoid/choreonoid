@@ -20,6 +20,8 @@ namespace {
 
 const char* axisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
 
+constexpr double axisCylinderRadius = 0.04;
+
 /**
    \note This node is not inserted the node path obtained by SceneWidgetEvent::nodePath()
 */
@@ -93,7 +95,6 @@ class PositionDragger::Impl
 {
 public:
     PositionDragger* self;
-
     int draggableAxes;
     Signal<void(int axisSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
@@ -103,14 +104,13 @@ public:
     SceneDragProjector dragProjector;
     SgScaleTransformPtr translationAxisScale;
     SgScaleTransformPtr rotationAxisScale;
-    double axisCylinderNormalizedRadius;
-    //SgGroupPtr customTranslationAxes;
+    double rotationHandleSizeRatio;
     Signal<void()> sigDragStarted;
     Signal<void()> sigPositionDragged;
     Signal<void()> sigDragFinished;
     std::deque<Affine3> history;
 
-    Impl(PositionDragger* self);
+    Impl(PositionDragger* self, int axisSet);
     Impl(PositionDragger* self, const Impl& org);
     Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap);
     void createDraggers();
@@ -128,15 +128,24 @@ public:
 
 
 PositionDragger::PositionDragger()
+    : PositionDragger(ALL_AXES)
 {
-    impl = new Impl(this);
+
 }
 
 
-PositionDragger::Impl::Impl(PositionDragger* self)
+PositionDragger::PositionDragger(int axisSet)
+{
+    impl = new Impl(this, axisSet);
+}
+
+
+PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
     : self(self)
 {
-    draggableAxes = TX | TY | TZ | RX | RY | RZ;
+    draggableAxes = axisSet;
+
+    rotationHandleSizeRatio = 0.5;
 
     translationAxisScale = new SgScaleTransform;
     self->addChild(translationAxisScale);
@@ -164,6 +173,8 @@ PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, CloneMap* cl
 {
     draggableAxes = org.draggableAxes;
 
+    rotationHandleSizeRatio = org.rotationHandleSizeRatio;
+
     if(cloneMap){
         translationAxisScale = cloneMap->getClone(org.translationAxisScale);
         rotationAxisScale = cloneMap->getClone(org.rotationAxisScale);
@@ -183,7 +194,6 @@ PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, CloneMap* cl
     isDragEnabled = org.isDragEnabled;
     isContentsDragEnabled = org.isContentsDragEnabled;
     isUndoEnabled = org.isUndoEnabled;
-    axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
 }
 
 
@@ -217,9 +227,6 @@ void PositionDragger::Impl::createDraggers()
 void PositionDragger::Impl::createTranslationDragger
 (MeshGenerator& meshGenerator, array<SgMaterialPtr, 3>& axisMaterials)
 {
-    axisCylinderNormalizedRadius = 0.04;
-    //customTranslationAxes = new SgGroup;
-
     SgMeshPtr mesh = meshGenerator.generateArrow(0.04, 1.8, 0.1, 0.18);
     for(int i=0; i < 3; ++i){
         auto shape = new SgShape;
@@ -237,6 +244,7 @@ void PositionDragger::Impl::createTranslationDragger
 
         auto axis = new SgSwitch;
         axis->addChild(arrow);
+        axis->setTurnedOn(draggableAxes & (1 << i));
         translationAxisScale->addChild(axis);
     }
 }
@@ -289,6 +297,7 @@ void PositionDragger::Impl::createRotationDragger
 
         auto axis = new SgSwitch;
         axis->addChild(selector);
+        axis->setTurnedOn(draggableAxes & (1 << (i + 3)));
 
         rotationAxisScale->addChild(axis);
     }
@@ -330,16 +339,42 @@ SignalProxy<void(int axisSet)> PositionDragger::sigDraggableAxesChanged()
 }
 
 
+double PositionDragger::handleSize() const
+{
+    return impl->translationAxisScale->scale().x();
+}
+
+
+void PositionDragger::setHandleSize(double s)
+{
+    impl->translationAxisScale->setScale(s);
+    impl->rotationAxisScale->setScale(s * impl->rotationHandleSizeRatio);
+}
+    
+
+double PositionDragger::rotationHandleSizeRatio() const
+{
+    return impl->rotationHandleSizeRatio;
+}
+
+
+void PositionDragger::setRotationHandlerSizeRatio(double r)
+{
+    impl->rotationHandleSizeRatio = r;
+    impl->rotationAxisScale->setScale(handleSize() * r);
+}
+
+
 void PositionDragger::setRadius(double r, double translationAxisRatio)
 {
-    impl->translationAxisScale->setScale(r * translationAxisRatio);
-    impl->rotationAxisScale->setScale(r);
+    impl->rotationHandleSizeRatio = 1.0 / translationAxisRatio;
+    setHandleSize(2.0 * r);
 }
 
 
 double PositionDragger::radius() const
 {
-    return impl->rotationAxisScale->scale().x();
+    return handleSize() * impl->rotationHandleSizeRatio;
 }
 
 
@@ -350,7 +385,7 @@ void PositionDragger::adjustSize(const BoundingBox& bb)
         std::sort(s.data(), s.data() + 3);
         double a = Vector2(s[0], s[1]).norm() * 1.1;
         double r = std::max(a, s[2] * 1.2);
-        setRadius(r);
+        setHandleSize(2.0 * r);
     }
 }
 
@@ -591,7 +626,7 @@ bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& 
     
     dragProjector.setInitialPosition(T_global);
     
-    if(p_local.norm() < 2.0 * axisCylinderNormalizedRadius){
+    if(p_local.norm() < 2.0 * axisCylinderRadius){
         dragProjector.setTranslationAlongViewPlane();
     } else {
         dragProjector.setTranslationAxis(T_global.linear().col(axis));
