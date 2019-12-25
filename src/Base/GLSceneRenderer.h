@@ -39,6 +39,7 @@ public:
     Array4i viewport() const;
     void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
     double aspectRatio() const; // width / height;
+    SignalProxy<void(const Array4i& viewport)> sigViewportChanged();
 
     void getPerspectiveProjectionMatrix(
         double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);

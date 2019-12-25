@@ -294,7 +294,7 @@ public:
     void renderPlot(
         SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource);
     void renderViewportOverlay(SgViewportOverlay* overlay);
-    void renderOutlineGroup(SgOutlineGroup* outline);
+    void renderOutlineGroup(SgOutline* outline);
     void clearGLState();
     void setColor(const Vector3f& color);
     void enableColorMaterial(bool on);
@@ -393,8 +393,8 @@ void GL1SceneRendererImpl::initialize()
         [&](SgLineSet* node){ renderLineSet(node); });
     renderingFunctions.setFunction<SgViewportOverlay>(
         [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
-    renderingFunctions.setFunction<SgOutlineGroup>(
-        [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
+    renderingFunctions.setFunction<SgOutline>(
+        [&](SgOutline* node){ renderOutlineGroup(node); });
 
     self->applyExtensions();
     renderingFunctions.updateDispatchTable();
@@ -1820,7 +1820,7 @@ void GL1SceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 }
 
 
-void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
+void GL1SceneRendererImpl::renderOutlineGroup(SgOutline* outline)
 {
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);

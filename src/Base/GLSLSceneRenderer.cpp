@@ -191,6 +191,25 @@ public:
 
 typedef ref_ptr<TextureResource> TextureResourcePtr;
 
+class OutlineResource : public GLResource
+{
+public:
+    GLSLSceneRendererImpl* renderer;
+    GLuint stencilBuffer;
+    int lastRenderingFrameId;
+    int width;
+    int height;
+    bool needToUpdateStencilBufferSize;
+    ScopedConnection viewportConnection;
+
+    OutlineResource(GLSLSceneRendererImpl* renderer);
+    ~OutlineResource();
+    void activateStencilBuffer();
+    virtual void discard() override;
+};
+
+typedef ref_ptr<OutlineResource> OutlineResourcePtr;
+
 struct SgObjectPtrHash {
     std::hash<SgObject*> hash;
     std::size_t operator()(const SgObjectPtr& p) const {
@@ -250,6 +269,7 @@ public:
 
     vector<ScopedShaderProgramActivator> programStack;
 
+    unsigned int renderingFrameId;
     bool isActuallyRendering;
     bool isPicking;
     bool isPickingBufferImageOutputEnabled;
@@ -262,25 +282,13 @@ public:
     bool isBoundingBoxRenderingForLightweightRenderingGroupEnabled;
     
     Affine3Array modelMatrixStack; // stack of the model matrices
+    Affine3Array modelMatrixBuffer; // Model matriices used later are stored in this buffer
     Affine3 viewTransform;
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
-    vector<function<void()>> postRenderingFunctions;
-
-    struct RenderingFunction {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Affine3 position; // corresponds to the model matrix
-        ReferencedPtr object; // object to render
-        int id; // some id related with the object
-        typedef function<void(Referenced* object, Affine3& position, int id)> Func;
-        Func func;
-
-        RenderingFunction(Referenced* object, const Affine3& position, int id, const Func& func)
-            : position(position), object(object), id(id), func(func) { }
-        void operator()(){ func(object, position, id); }
-    };
-    vector<RenderingFunction, Eigen::aligned_allocator<RenderingFunction>> transparentRenderingFunctions;
+    deque<function<void()>> transparentRenderingQueue;
+    deque<function<void()>> overlayRenderingQueue;
     
     std::set<int> shadowLightIndices;
 
@@ -363,6 +371,8 @@ public:
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(LightingProgram* program);
     void renderFog(LightingProgram* program);
+    void renderTransparentObjects();
+    void renderOverlayObjects();    
     void endRendering();
     void renderSceneGraphNodes();
     void pushProgram(ShaderProgram& program);
@@ -386,11 +396,11 @@ public:
     void renderOverlayMain(SgOverlay* overlay, const Affine3& T, bool doDepthTest);
     void renderViewportOverlay(SgViewportOverlay* overlay);
     void renderViewportOverlayMain(SgViewportOverlay* overlay);
-    void renderOutlineGroup(SgOutlineGroup* outline);
-    void renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T);
+    OutlineResource* getOrCreateOutlineResource(SgOutline* outline);
+    void renderOutline(SgOutline* outline);
+    void renderOutlineMain(SgOutline* outline, const Affine3& T);
     void renderLightweightRenderingGroup(SgLightweightRenderingGroup* group);
     void flushNolightingTransformMatrices();
-    void renderTransparentObjects();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture);
     bool loadTextureImage(TextureResource* resource, const Image& image);
@@ -457,6 +467,7 @@ void GLSLSceneRendererImpl::initialize()
     currentLightingProgram = nullptr;
     currentMaterialLightingProgram = nullptr;
 
+    renderingFrameId = 1;
     isActuallyRendering = false;
     isPicking = false;
     isPickingBufferImageOutputEnabled = false;
@@ -519,8 +530,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgOverlay* node){ renderOverlay(node); });
     renderingFunctions.setFunction<SgViewportOverlay>(
         [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
-    renderingFunctions.setFunction<SgOutlineGroup>(
-        [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
+    renderingFunctions.setFunction<SgOutline>(
+        [&](SgOutline* node){ renderOutline(node); });
     renderingFunctions.setFunction<SgLightweightRenderingGroup>(
         [&](SgLightweightRenderingGroup* node){ renderLightweightRenderingGroup(node); });
 
@@ -1059,22 +1070,20 @@ bool GLSLSceneRenderer::getPickingBufferImage(Image& out_image)
 
 void GLSLSceneRendererImpl::renderScene()
 {
-    SgCamera* camera = self->currentCamera();
-    if(camera){
+    if(auto camera = self->currentCamera()){
+
         renderCamera(camera, self->currentCameraPosition());
 
-        postRenderingFunctions.clear();
-        transparentRenderingFunctions.clear();
+        transparentRenderingQueue.clear();
+        overlayRenderingQueue.clear();
 
         renderSceneGraphNodes();
 
-        for(auto&& func : postRenderingFunctions){
-            func();
-        }
-        postRenderingFunctions.clear();
-        
-        if(!transparentRenderingFunctions.empty()){
+        if(!transparentRenderingQueue.empty()){
             renderTransparentObjects();
+        }
+        if(!overlayRenderingQueue.empty()){
+            renderOverlayObjects();
         }
     }
 }
@@ -1131,11 +1140,17 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
 
     modelMatrixStack.clear();
     modelMatrixStack.push_back(Affine3::Identity());
+    modelMatrixBuffer.clear();
 }
 
 
 void GLSLSceneRendererImpl::beginRendering()
 {
+    ++renderingFrameId;
+    if(renderingFrameId == 0){
+        renderingFrameId = 1;
+    }
+    
     isCheckingUnusedResources = isPicking ? false : doUnusedResourceCheck;
 
     if(isResourceClearRequested){
@@ -1253,6 +1268,49 @@ void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
     }
     isCurrentFogUpdated = false;
     prevFog = fog;
+}
+
+
+void GLSLSceneRenderer::dispatchToTransparentPhase
+(ReferencedPtr object, int id,
+ const std::function<void(Referenced* object, const Affine3& position, int id)>& renderingFunction)
+{
+    int matrixIndex = impl->modelMatrixBuffer.size();
+    impl->modelMatrixBuffer.push_back(impl->modelMatrixStack.back());
+
+    impl->transparentRenderingQueue.emplace_back(
+        [this, renderingFunction, object, matrixIndex, id](){
+            renderingFunction(object, impl->modelMatrixBuffer[matrixIndex], id); });
+}
+
+
+void GLSLSceneRendererImpl::renderTransparentObjects()
+{
+    if(!isPicking){
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+    }
+
+    for(auto& func : transparentRenderingQueue){
+        func();
+    }
+
+    if(!isPicking){
+        glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
+    }
+
+    transparentRenderingQueue.clear();
+}
+
+
+void GLSLSceneRendererImpl::renderOverlayObjects()
+{
+    for(auto& func : overlayRenderingQueue){
+        func();
+    }
+    overlayRenderingQueue.clear();
 }
 
 
@@ -1427,11 +1485,9 @@ VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj)
     } else {
         resource = static_cast<VertexResource*>(p->second.get());
     }
-
     if(isCheckingUnusedResources){
         nextResourceMap->insert(*p);
     }
-
     return resource;
 }
 
@@ -1486,12 +1542,13 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
         SgMaterial* material = shape->material();
         if(material && material->transparency() > 0.0){
             if(!isRenderingShadowMap){
-                const Affine3& position = modelMatrixStack.back();
+                SgShapePtr shapePtr = shape;
+                int matrixIndex = modelMatrixBuffer.size();
+                modelMatrixBuffer.push_back(modelMatrixStack.back());
                 auto pickId = pushPickId(shape, false);
-                transparentRenderingFunctions.emplace_back(
-                    shape, position, pickId,
-                    [this](Referenced* object, Affine3& position, int id){
-                        renderShapeMain(static_cast<SgShape*>(object), position, id); });
+                transparentRenderingQueue.emplace_back(
+                    [this, shapePtr, matrixIndex, pickId](){
+                        renderShapeMain(shapePtr, modelMatrixBuffer[matrixIndex], pickId); });
                 popPickId();
             }
         } else {
@@ -1582,36 +1639,6 @@ void GLSLSceneRendererImpl::applyCullingMode(SgMesh* mesh)
             }
         }
     }
-}
-
-
-void GLSLSceneRenderer::dispatchToTransparentPhase
-(Referenced* object, int id,
- std::function<void(Referenced* object, const Affine3& position, int id)> renderingFunction)
-{
-    impl->transparentRenderingFunctions.emplace_back(
-        object, impl->modelMatrixStack.back(), id, renderingFunction);
-}
-
-
-void GLSLSceneRendererImpl::renderTransparentObjects()
-{
-    if(!isPicking){
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDepthMask(GL_FALSE);
-    }
-
-    for(auto& func : transparentRenderingFunctions){
-        func();
-    }
-
-    if(!isPicking){
-        glDisable(GL_BLEND);
-        glDepthMask(GL_TRUE);
-    }
-
-    transparentRenderingFunctions.clear();
 }
 
 
@@ -2340,9 +2367,11 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
     if(isActuallyRendering){
-        const Affine3& T = modelMatrixStack.back();
-        postRenderingFunctions.emplace_back(
-            [this, overlay, T](){ renderOverlayMain(overlay, T, false); });
+        int matrixIndex = modelMatrixBuffer.size();
+        modelMatrixBuffer.push_back(modelMatrixStack.back());
+        overlayRenderingQueue.emplace_back(
+            [this, overlay, matrixIndex](){
+                renderOverlayMain(overlay, modelMatrixBuffer[matrixIndex], false); });
     }
 }
 
@@ -2370,7 +2399,7 @@ void GLSLSceneRendererImpl::renderOverlayMain(SgOverlay* overlay, const Affine3&
 void GLSLSceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
     if(isActuallyRendering){
-        postRenderingFunctions.emplace_back(
+        overlayRenderingQueue.emplace_back(
             [this, overlay](){ renderViewportOverlayMain(overlay); });
     }
 }
@@ -2392,30 +2421,57 @@ void GLSLSceneRendererImpl::renderViewportOverlayMain(SgViewportOverlay* overlay
 }
 
 
-void GLSLSceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
+OutlineResource* GLSLSceneRendererImpl::getOrCreateOutlineResource(SgOutline* outline)
+{
+    OutlineResource* resource;
+    auto p = currentResourceMap->find(outline);
+    if(p == currentResourceMap->end()){
+        resource = new OutlineResource(this);
+        p = currentResourceMap->insert(GLResourceMap::value_type(outline, resource)).first;
+    } else {
+        resource = static_cast<OutlineResource*>(p->second.get());
+    }
+    if(isCheckingUnusedResources){
+        nextResourceMap->insert(*p);
+    }
+    return resource;
+}
+
+
+void GLSLSceneRendererImpl::renderOutline(SgOutline* outline)
 {
     if(isPicking){
         renderGroup(outline);
+
     } else {
-        const Affine3& T = modelMatrixStack.back();
-        postRenderingFunctions.emplace_back(
-            [this, outline, T](){ renderOutlineGroupMain(outline, T); });
+        auto resource = getOrCreateOutlineResource(outline);
+        resource->activateStencilBuffer();
+
+        glEnable(GL_STENCIL_TEST);
+        glStencilFunc(GL_ALWAYS, 1, -1);
+        glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+
+        renderGroup(outline);
+
+        glDisable(GL_STENCIL_TEST);
+        
+        int matrixIndex = modelMatrixBuffer.size();
+        modelMatrixBuffer.push_back(modelMatrixStack.back());
+        overlayRenderingQueue.emplace_back(
+            [this, outline, matrixIndex](){
+                renderOutlineMain(outline, modelMatrixBuffer[matrixIndex]); });
     }
 }
 
 
-void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T)
+void GLSLSceneRendererImpl::renderOutlineMain(SgOutline* outline, const Affine3& T)
 {
     modelMatrixStack.push_back(T);
 
-    glClearStencil(0);
-    glClear(GL_STENCIL_BUFFER_BIT);
+    auto resource = getOrCreateOutlineResource(outline);
+    resource->activateStencilBuffer();
+
     glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, 1, -1);
-    glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
-
-    renderChildNodes(outline);
-
     glStencilFunc(GL_NOTEQUAL, 1, -1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
@@ -2440,6 +2496,60 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
     solidColorProgram.setColorChangable(true);
 
     modelMatrixStack.pop_back();
+}
+
+
+OutlineResource::OutlineResource(GLSLSceneRendererImpl* renderer)
+    : renderer(renderer)
+{
+    glGenRenderbuffers(1, &stencilBuffer);
+    
+    lastRenderingFrameId = 0;
+    
+    viewportConnection =
+        renderer->self->sigViewportChanged().connect(
+            [&](const Array4i& viewport){
+                width = viewport[2];
+                height = viewport[3];
+                needToUpdateStencilBufferSize = true;
+            });
+    
+    int vx, vy;
+    renderer->self->getViewport(vx, vy, width, height);
+    needToUpdateStencilBufferSize = true;
+}
+                
+
+OutlineResource::~OutlineResource()
+{
+    if(stencilBuffer){
+        glDeleteRenderbuffers(1, &stencilBuffer);
+    }
+}
+
+
+void OutlineResource::activateStencilBuffer()
+{
+    if(needToUpdateStencilBufferSize){
+        glBindRenderbuffer(GL_RENDERBUFFER, stencilBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height);
+        needToUpdateStencilBufferSize = false;
+    }
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilBuffer);
+    
+    if(lastRenderingFrameId != renderer->renderingFrameId){
+        // Clear the stencil buffer when the corresponding outline node is
+        // processed for the first time in a rendering frame
+        glClearStencil(0);
+        glClear(GL_STENCIL_BUFFER_BIT);
+        lastRenderingFrameId = renderer->renderingFrameId;
+    }
+}
+
+
+void OutlineResource::discard()
+{
+    stencilBuffer = 0;
 }
 
 

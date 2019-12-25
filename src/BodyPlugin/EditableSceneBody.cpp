@@ -41,7 +41,7 @@ class EditableSceneLink::Impl
 {
 public:
     EditableSceneLink* self;
-    SgOutlineGroupPtr outlineGroup;
+    SgOutlinePtr outline;
     BoundingBoxMarkerPtr bbMarker;
     bool isPointed;
     bool isColliding;
@@ -78,10 +78,10 @@ void EditableSceneLink::showOutline(bool on)
     if(!visualShape()){
         return;
     }
-    SgOutlineGroupPtr& outline = impl->outlineGroup;
+    SgOutlinePtr& outline = impl->outline;
     if(on){
         if(!outline){
-            outline = new SgOutlineGroup;
+            outline = new SgOutline;
             outline->setColor(Vector3f(1.0f, 1.0f, 0.0f));
         }
         if(!outline->hasParents()){

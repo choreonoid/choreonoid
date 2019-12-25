@@ -34,18 +34,19 @@ private:
     float  visibilityRange_;
     //int fogType;
 };
+
 typedef ref_ptr<SgFog> SgFogPtr;
 
 
-class CNOID_EXPORT SgOutlineGroup : public SgGroup
+class CNOID_EXPORT SgOutline : public SgGroup
 {
 protected:
-    SgOutlineGroup(int polymorhicId);
+    SgOutline(int polymorhicId);
     
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    SgOutlineGroup();
+    SgOutline();
 
     const Vector3f& color() const { return color_; }
     void setColor(const Vector3f& color) { color_ = color; }
@@ -59,7 +60,8 @@ private:
     Vector3f color_;
     float lineWidth_;
 };
-typedef ref_ptr<SgOutlineGroup> SgOutlineGroupPtr;
+
+typedef ref_ptr<SgOutline> SgOutlinePtr;
 
 
 class CNOID_EXPORT SgLightweightRenderingGroup : public SgGroup
@@ -70,6 +72,7 @@ public:
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
+
 typedef ref_ptr<SgLightweightRenderingGroup> SgLightweightRenderingGroupPtr;
 
 }

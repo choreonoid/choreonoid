@@ -498,7 +498,7 @@ class SgCamera;
 class SgPerspectiveCamera;
 class SgOrthographicCamera;
 class SgFog;
-class SgOutlineGroup;
+class SgOutline;
 class SgLightweightRenderingGroup;
 
 }

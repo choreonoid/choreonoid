@@ -32,6 +32,7 @@ public:
     SgGroupPtr scene;
     Array4i viewport;
     float aspectRatio; // width / height;
+    Signal<void(const Array4i& viewport)> sigViewportChanged;
     Vector3f backgroundColor;
     Vector3f defaultColor;
     GLSceneRenderer::PolygonMode polygonMode;
@@ -90,6 +91,8 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     scene = new SgGroup();
     sceneRoot->addChild(scene);
 
+    int invaid = std::numeric_limits<int>::min();
+    viewport << invaid, invaid, invaid, invaid;
     aspectRatio = 1.0f;
     backgroundColor << 0.1f, 0.1f, 0.3f; // dark blue
     defaultColor << 1.0f, 1.0f, 1.0f;
@@ -182,10 +185,14 @@ GLSceneRenderer::PolygonMode GLSceneRenderer::polygonMode() const
 
 void GLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
-    if(height > 0){
-        impl->aspectRatio = (double)width / height;
+    auto& vp = impl->viewport;
+    if(x != vp[0] || y != vp[1] || width != vp[2] || height != vp[3]){
+        if(height > 0){
+            impl->aspectRatio = (double)width / height;
+        }
+        vp << x, y, width, height;
+        impl->sigViewportChanged(vp);
     }
-    impl->viewport << x, y, width, height;
 }
 
 
@@ -207,6 +214,12 @@ void GLSceneRenderer::getViewport(int& out_x, int& out_y, int& out_width, int& o
 double GLSceneRenderer::aspectRatio() const
 {
     return impl->aspectRatio;
+}
+
+
+SignalProxy<void(const Array4i& viewport)> GLSceneRenderer::sigViewportChanged()
+{
+    return impl->sigViewportChanged;
 }
 
 

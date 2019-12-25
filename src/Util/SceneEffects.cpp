@@ -39,7 +39,7 @@ Referenced* SgFog::doClone(CloneMap*) const
 }
 
 
-SgOutlineGroup::SgOutlineGroup(int classId)
+SgOutline::SgOutline(int classId)
     : SgGroup(classId)
 {
     lineWidth_ = 1.0;
@@ -47,16 +47,16 @@ SgOutlineGroup::SgOutlineGroup(int classId)
 }
 
 
-SgOutlineGroup::SgOutlineGroup()
-    : SgOutlineGroup(findClassId<SgOutlineGroup>())
+SgOutline::SgOutline()
+    : SgOutline(findClassId<SgOutline>())
 {
 
 }
 
 
-Referenced* SgOutlineGroup::doClone(CloneMap*) const
+Referenced* SgOutline::doClone(CloneMap*) const
 {
-    return new SgOutlineGroup(*this);
+    return new SgOutline(*this);
 }
 
 
@@ -79,7 +79,7 @@ struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SceneNodeClassRegistry::instance()
             .registerClass<SgFog, SgPreprocessed>()
-            .registerClass<SgOutlineGroup, SgGroup>()
+            .registerClass<SgOutline, SgGroup>()
             .registerClass<SgLightweightRenderingGroup, SgGroup>();
     }
 } registration;

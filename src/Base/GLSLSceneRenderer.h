@@ -47,8 +47,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     void renderFog(LightingProgram* program);
 
     void dispatchToTransparentPhase(
-        Referenced* object, int id,
-        std::function<void(Referenced* object, const Affine3& position, int id)> renderingFunction);
+        ReferencedPtr object, int id,
+        const std::function<void(Referenced* object, const Affine3& position, int id)>& renderingFunction);
 
     virtual bool initializeGL() override;
     virtual void flush() override;

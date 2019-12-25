@@ -1504,7 +1504,6 @@ void SceneWidgetImpl::mouseMoveEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
 
-
     switch(dragMode){
 
     case ABOUT_TO_EDIT:
