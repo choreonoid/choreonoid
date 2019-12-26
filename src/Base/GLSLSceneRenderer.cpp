@@ -249,6 +249,9 @@ public:
 
     PolymorphicSceneNodeFunctionSet renderingFunctions;
 
+    int viewportWidth;
+    int viewportHeight;
+
     GLuint defaultFBO;
     GLuint fboForPicking;
     GLuint colorBufferForPicking;
@@ -289,6 +292,8 @@ public:
 
     deque<function<void()>> transparentRenderingQueue;
     deque<function<void()>> overlayRenderingQueue;
+    //GLuint overlayDepthBuffer;
+    //bool needToUpdateOverlayDepthBufferSize;
     
     std::set<int> shadowLightIndices;
 
@@ -738,6 +743,9 @@ void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
     updateViewportInformation(x, y, width, height);
+    impl->viewportWidth = width;
+    impl->viewportHeight = height;
+    //impl->needToUpdateOverlayDepthBufferSize = true;
 }
 
 
@@ -955,6 +963,14 @@ bool GLSLSceneRenderer::doPick(int x, int y)
 
 bool GLSLSceneRendererImpl::doPick(int x, int y)
 {
+    static constexpr bool ShareSameDepthBufferAsRendering = true;
+
+    if(ShareSameDepthBufferAsRendering){
+        glGetFramebufferAttachmentParameteriv(
+            GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+            (GLint*)&depthBufferForPicking);
+    }
+
     int vx, vy, width, height;
     self->getViewport(vx, vy, width, height);
 
@@ -963,7 +979,7 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
     }
     glBindFramebuffer(GL_FRAMEBUFFER, fboForPicking);
 
-    if(width != pickingBufferWidth || height != pickingBufferHeight){
+    if(width != pickingBufferWidth != viewportWidth || height != pickingBufferHeight){
         // color buffer
         if(colorBufferForPicking){
             glDeleteRenderbuffers(1, &colorBufferForPicking);
@@ -974,18 +990,20 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBufferForPicking);
             
         // depth buffer
-        if(depthBufferForPicking){
-            glDeleteRenderbuffers(1, &depthBufferForPicking);
+        if(!ShareSameDepthBufferAsRendering){
+            if(depthBufferForPicking){
+                glDeleteRenderbuffers(1, &depthBufferForPicking);
+            }
+            glGenRenderbuffers(1, &depthBufferForPicking);
+            glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
         }
-        glGenRenderbuffers(1, &depthBufferForPicking);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
 
         pickingBufferWidth = width;
         pickingBufferHeight = height;
     }
-    
+
     self->extractPreprocessedNodes();
 
     if(!isPickingBufferImageOutputEnabled){
@@ -1307,6 +1325,18 @@ void GLSLSceneRendererImpl::renderTransparentObjects()
 
 void GLSLSceneRendererImpl::renderOverlayObjects()
 {
+    /*
+    if(!overlayDepthBuffer){
+        glGenRenderbuffers(1, &overlayDepthBuffer);
+    }
+    if(needToUpdateOverlayDepthBufferSize){
+        glBindRenderbuffer(GL_RENDERBUFFER, overlayDepthBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, viewportWidth, viewportHeight);
+        needToUpdateOverlayDepthBufferSize = false;
+    }
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, overlayDepthBuffer);
+    */
+
     for(auto& func : overlayRenderingQueue){
         func();
     }
@@ -2366,7 +2396,7 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 
 void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-    if(isActuallyRendering){
+    if(isActuallyRendering || isPicking){
         int matrixIndex = modelMatrixBuffer.size();
         modelMatrixBuffer.push_back(modelMatrixStack.back());
         overlayRenderingQueue.emplace_back(
@@ -2440,7 +2470,7 @@ OutlineResource* GLSLSceneRendererImpl::getOrCreateOutlineResource(SgOutline* ou
 
 void GLSLSceneRendererImpl::renderOutline(SgOutline* outline)
 {
-    if(isPicking){
+    if(isPicking || !isActuallyRendering){
         renderGroup(outline);
 
     } else {
