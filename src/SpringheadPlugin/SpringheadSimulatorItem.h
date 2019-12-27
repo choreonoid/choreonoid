@@ -33,17 +33,14 @@ public:
     void useWorldCollisionDetector(bool on);
 
 protected:
-        
-	virtual SimulationBody* createSimulationBody      (Body* orgBody)                                       override;
-    virtual bool            initializeSimulation      (const std::vector<SimulationBody*>& simBodies)       override;
-    virtual void            initializeSimulationThread()                                                    override;
-    virtual bool            stepSimulation            (const std::vector<SimulationBody*>& activeSimBodies) override;
-    virtual void            finalizeSimulation        ()                                                    override;
-    virtual Item*           doDuplicate               ()                                              const override;
-    virtual void            doPutProperties           (PutPropertyFunction& putProperty)                    override;
-    virtual bool            store                     (Archive& archive)                                    override;
-    virtual bool            restore                   (const Archive& archive)                              override;
-
+    virtual Item*           doDuplicate         ()                                              const override;
+    virtual void            doPutProperties     (PutPropertyFunction& putProperty)                    override;
+    virtual bool            store               (Archive& archive)                                    override;
+    virtual bool            restore             (const Archive& archive)                              override;
+	virtual SimulationBody* createSimulationBody(Body* orgBody)                                       override;
+    virtual bool            initializeSimulation(const std::vector<SimulationBody*>& simBodies)       override;
+    virtual bool            stepSimulation      (const std::vector<SimulationBody*>& activeSimBodies) override;
+	
 private:
     SpringheadSimulatorItemImpl* impl;
     friend class SpringheadSimulatorItemImpl;

@@ -65,7 +65,11 @@ public:
     Link*                        link;
     SpringheadBody*              body;
     SpringheadSimulatorItemImpl* impl;
-	
+
+	vector< pair<string, string> >  options;
+	bool        extrude;
+	Spr::Vec3f  extrudeDir;
+
     Spr::PHSolidIf*         phSolid;
     Spr::PHJointIf*         phJoint;
     Spr::PH1DJointIf*       phJoint1D;
@@ -76,6 +80,7 @@ public:
 
      SpringheadLink(SpringheadSimulatorItemImpl* simImpl, SpringheadBody* sprBody, SpringheadLink* parent, const Vector3& parentOrigin, Link* link);
     ~SpringheadLink();
+	void extractOptions();
     void createLinkBody(SpringheadSimulatorItemImpl* simImpl, SpringheadLink* parent, const Vector3& origin);
     void createGeometry(SpringheadBody* sprBody);
     void setKinematicStateToSpringhead  ();
@@ -99,7 +104,7 @@ public:
 
     Spr::PHRootNodeIf*          rootNode;
 
-     SpringheadBody(const Body& orgBody);
+     SpringheadBody(Body* body);
     ~SpringheadBody();
     void createBody(SpringheadSimulatorItemImpl* simImpl);
     void setExtraJoints();
@@ -114,7 +119,7 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-class SpringheadSimulatorItemImpl
+class SpringheadSimulatorItemImpl : public Referenced
 {
 public:
     SpringheadSimulatorItem* self;
@@ -150,15 +155,17 @@ public:
      SpringheadSimulatorItemImpl(SpringheadSimulatorItem* self, const SpringheadSimulatorItemImpl& org);
     ~SpringheadSimulatorItemImpl();
 
-    void clear               ();
-	void clearExternalForces ();
-    bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
-    void addBody             (SpringheadBody* sprBody);
-    bool stepSimulation      (const std::vector<SimulationBody*>& activeSimBodies);
     void doPutProperties     (PutPropertyFunction& putProperty);
     void store               (Archive& archive);
     void restore             (const Archive& archive);
-    void collisionCallback   (const CollisionPair& collisionPair);
+    
+	SimulationBody* createSimulationBody(Body* orgBody);
+    bool            initializeSimulation(const std::vector<SimulationBody*>& simBodies);
+    bool            stepSimulation      (const std::vector<SimulationBody*>& activeSimBodies);
+    void            clear               ();
+	//void            clearExternalForces ();
+    void            addBody             (SpringheadBody* sprBody);
+    //void            collisionCallback   (const CollisionPair& collisionPair);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,6 +182,11 @@ SpringheadLink::SpringheadLink(SpringheadSimulatorItemImpl* simImpl, SpringheadB
 	this->impl = simImpl;
     this->link = link;
 	this->body = sprBody;
+
+	// extract options from link name
+	extrude    = false;
+	extrudeDir = Spr::Vec3f(0.0f, 0.0f, 1.0f);
+	extractOptions();
     
     Vector3 o = parentOrigin + link->b();
     
@@ -187,6 +199,47 @@ SpringheadLink::SpringheadLink(SpringheadSimulatorItemImpl* simImpl, SpringheadB
     for(Link* child = link->child(); child; child = child->sibling()){
         new SpringheadLink(simImpl, sprBody, this, o, child);
     }
+}
+
+void SpringheadLink::extractOptions()
+{
+	string n = link->name();
+
+	const char nameDelimiter   = '?';
+	const char optionDelimiter = '&';
+	const char valueDelimiter  = '=';
+
+	string::iterator it = find(n.begin(), n.end(), nameDelimiter);
+	if(it == n.end())
+		return;
+
+	// substring after name delimiter is options part
+	string optPart(it+1, n.end());
+
+	while( !optPart.empty() ){
+		string::iterator it0 = find(optPart.begin(), optPart.end(), optionDelimiter);
+		string opt(optPart.begin(), it0);
+
+		string::iterator it1 = find(opt.begin(), opt.end(), valueDelimiter);
+		if(it1 != opt.end()){
+			string optName (opt.begin(), it1);
+			string optValue(it1+1, opt.end());
+
+			options.push_back( make_pair(optName, optValue) );
+		}
+
+		if(it0 == optPart.end())
+			break;
+
+		optPart = string(it0+1, optPart.end());
+	}
+
+	for(pair<string,string>& opt : options){
+		if(opt.first == "extrude"){
+			extrude = (opt.second == "true");
+		}
+	}
+
 }
 
 void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, SpringheadLink* parent, const Vector3& origin)
@@ -307,7 +360,9 @@ void SpringheadLink::createGeometry(SpringheadBody* sprBody)
 void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
 {
     SgMesh* mesh = extractor->currentMesh();
-    const Affine3& T = extractor->currentTransform();
+	SgShape* shape = extractor->currentShape();
+    const Affine3& Ts = extractor->currentTransform();
+    const Affine3& T  = extractor->currentTransformWithoutScaling();
     
     bool meshAdded = false;
 
@@ -408,19 +463,77 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
     }
 
     if(!meshAdded){
-        const SgVertexArray& vertices_ = *mesh->vertices();
-        const int numVertices = vertices_.size();
-		Spr::CDConvexMeshDesc meshDesc;
+        const SgVertexArray& vertices_      = *mesh->vertices        ();
+		const SgNormalArray& normals_       = *mesh->normals         ();
+		const SgIndexArray & normalIndices_ =  mesh->normalIndices   ();
+		const SgIndexArray & vertexIndices_ =  mesh->triangleVertices();
 
-        for(int i=0; i < numVertices; ++i){
-            Spr::Vec3f v = ToSpr((Vector3)(T * vertices_[i].cast<Position::Scalar>() - link->c()));
-			meshDesc.vertices.push_back(v);
-        }
+		vector<Spr::CDConvexMeshDesc> meshDescs;
 
-		cdShape = phSdk->CreateShape(meshDesc);
-		cdShapes.push_back(cdShape);
-		phSolid->AddShape(cdShape);
+		if(extrude){
+			const int numIndices = vertexIndices_.size();
+			int i = 0;
+			for(int j = 0; j < numIndices; j += 3){
+				Spr::Vec3f v0 = ToSpr((Vector3)(T * vertices_[vertexIndices_[j+0]].cast<Position::Scalar>() - link->c()));
+				Spr::Vec3f v1 = ToSpr((Vector3)(T * vertices_[vertexIndices_[j+1]].cast<Position::Scalar>() - link->c()));
+				Spr::Vec3f v2 = ToSpr((Vector3)(T * vertices_[vertexIndices_[j+2]].cast<Position::Scalar>() - link->c()));
+				Spr::Vec3f n  = ToSpr((Vector3)(T.rotation() * normals_[normalIndices_[j]].cast<Position::Scalar>()));
+
+				// face that is facing opposite of extrude direction is ignored
+				if( n * extrudeDir <= 0.0 )
+					continue;
+
+
+				
+				i++;
+			}
+		}
+		else{
+			const int numVertices = vertices_.size();
+			meshDescs.push_back(Spr::CDConvexMeshDesc());
+			Spr::CDConvexMeshDesc& md = meshDescs.back();
+
+			for(int i=0; i < numVertices; ++i){
+				Spr::Vec3f v = ToSpr((Vector3)(T * vertices_[i].cast<Position::Scalar>()));
+				md.vertices.push_back(v);
+			}
+
+		}
+        
+		for(Spr::CDConvexMeshDesc& md : meshDescs){
+			cdShape = phSdk->CreateShape(md);
+			cdShapes.push_back(cdShape);
+			phSolid->AddShape(cdShape);
+		}
     }
+	/*
+	if(meshProp->prism){
+			Message::Out("converting to prism: %d vertices", mesh.positions.size());
+			// 角柱化する場合，各面から三角柱をつくる
+			Vec3f dir = meshProp->prismdir;
+
+			uint n = (uint)mesh.positions.size();
+			for(uint j = 0; j < n; j += 3){
+				// プリズム化の向きに対して反対向きの面はスキップ
+				if(mesh.normals[j+0] * dir <= 0.0) continue;
+				if(mesh.normals[j+1] * dir <= 0.0) continue;
+				if(mesh.normals[j+2] * dir <= 0.0) continue;
+				
+				CDConvexMeshDesc cd;
+				Vec3f v, vp;
+				for(int k = 0; k < 3; k++){
+					v = mesh.positions[j+k];
+					// 角柱の底面に射影した点
+					float s = - (v * dir) / (dir * dir);
+					vp = v + s * dir;
+					cd.vertices.push_back(v);
+					cd.vertices.push_back(vp);
+				}
+				sh.push_back(phSdk->CreateShape(cd));
+			}
+			Message::Out("converting to prism finished");
+		}
+	*/
 }
 
 SpringheadLink::~SpringheadLink()
@@ -516,8 +629,8 @@ void SpringheadLink::setExternalForceToSpringhead(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-SpringheadBody::SpringheadBody(const Body& orgBody)
-    : SimulationBody(new Body(orgBody))
+SpringheadBody::SpringheadBody(Body* body)
+    : SimulationBody(body)
 {
     geometryId = 0;
 }
@@ -737,7 +850,8 @@ SpringheadSimulatorItemImpl::SpringheadSimulatorItemImpl(SpringheadSimulatorItem
 SpringheadSimulatorItemImpl::SpringheadSimulatorItemImpl(SpringheadSimulatorItem* self, const SpringheadSimulatorItemImpl& org)
     : self(self)
 {
-    phSdk = 0;
+    phSdk   = 0;
+	phScene = 0;
 
     param = org.param;
 }
@@ -751,7 +865,12 @@ void SpringheadSimulatorItemImpl::clear()
 {
 	if(phSdk)
 		phSdk->Clear();
-}    
+}
+
+SimulationBody* SpringheadSimulatorItemImpl::createSimulationBody(Body* orgBody)
+{
+	return new SpringheadBody(orgBody->clone());
+}
 
 bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
@@ -930,6 +1049,7 @@ void SpringheadSimulatorItem::initializeClass(ExtensionManager* ext)
 SpringheadSimulatorItem::SpringheadSimulatorItem()
 {
     impl = new SpringheadSimulatorItemImpl(this);
+	setName("SpringheadSimulator");
 }
 
 SpringheadSimulatorItem::SpringheadSimulatorItem(const SpringheadSimulatorItem& org)
@@ -990,31 +1110,17 @@ Item* SpringheadSimulatorItem::doDuplicate() const
 
 SimulationBody* SpringheadSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    return new SpringheadBody(*orgBody);
+    return impl->createSimulationBody(orgBody);
 }
-
 
 bool SpringheadSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     return impl->initializeSimulation(simBodies);
 }
 
-void SpringheadSimulatorItem::initializeSimulationThread()
-{
-
-}
-
 bool SpringheadSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     return impl->stepSimulation(activeSimBodies);
-}
-
-void SpringheadSimulatorItem::finalizeSimulation()
-{
-    if(MEASURE_PHYSICS_CALCULATION_TIME){
-        cout << "Springhead physicsTime= "   << impl->physicsTime *1.0e-9   << "[s]"<< endl;
-        cout << "Springhead collisionTime= " << impl->collisionTime *1.0e-9 << "[s]"<< endl;
-    }
 }
 
 void SpringheadSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
