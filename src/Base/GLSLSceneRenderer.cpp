@@ -14,6 +14,7 @@
 #include <fmt/format.h>
 #include <GL/glu.h>
 #include <unordered_map>
+#include <deque>
 #include <mutex>
 #include <regex>
 #include <iostream>

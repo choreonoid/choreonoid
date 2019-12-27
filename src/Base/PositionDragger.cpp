@@ -12,6 +12,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
 #include <deque>
+#include <array>
 
 using namespace std;
 using namespace cnoid;
