@@ -275,8 +275,8 @@ public:
 
     deque<function<void()>> transparentRenderingQueue;
     deque<function<void()>> overlayRenderingQueue;
-    //GLuint overlayDepthBuffer;
-    //bool needToUpdateOverlayDepthBufferSize;
+    GLuint depthBufferForOverlay;
+    bool needToUpdateOverlayDepthBufferSize;
     
     std::set<int> shadowLightIndices;
 
@@ -471,11 +471,12 @@ void GLSLSceneRendererImpl::initialize()
     currentResourceMap = &resourceMaps[0];
     nextResourceMap = &resourceMaps[1];
 
-    backFaceCullingMode = GLSceneRenderer::ENABLE_BACK_FACE_CULLING;
-
     modelMatrixStack.reserve(16);
     viewTransform.setIdentity();
     projectionMatrix.setIdentity();
+
+    depthBufferForOverlay = 0;
+    needToUpdateOverlayDepthBufferSize = true;
 
     lightingMode = GLSceneRenderer::FULL_LIGHTING;
     defaultSmoothShading = true;
@@ -492,6 +493,8 @@ void GLSLSceneRendererImpl::initialize()
     isUpsideDownEnabled = false;
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
+
+    backFaceCullingMode = GLSceneRenderer::ENABLE_BACK_FACE_CULLING;
 
     pickedPoint.setZero();
 
@@ -697,11 +700,9 @@ bool GLSLSceneRendererImpl::initializeGL()
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
-
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
     isResourceClearRequested = true;
-
     isCurrentFogUpdated = false;
 
     return true;
@@ -725,6 +726,7 @@ void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
     updateViewportInformation(x, y, width, height);
+    impl->needToUpdateOverlayDepthBufferSize = true;
 }
 
 
@@ -1304,22 +1306,30 @@ void GLSLSceneRendererImpl::renderTransparentObjects()
 
 void GLSLSceneRendererImpl::renderOverlayObjects()
 {
-    /*
-    if(!overlayDepthBuffer){
-        glGenRenderbuffers(1, &overlayDepthBuffer);
+    if(!depthBufferForOverlay){
+        glGenRenderbuffers(1, &depthBufferForOverlay);
     }
     if(needToUpdateOverlayDepthBufferSize){
-        glBindRenderbuffer(GL_RENDERBUFFER, overlayDepthBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, viewportWidth, viewportHeight);
+        Array4i vp = self->viewport();
+        glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlay);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp[2], vp[3]);
         needToUpdateOverlayDepthBufferSize = false;
     }
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, overlayDepthBuffer);
-    */
+ 
+    GLuint defaultDepthBuffer;
+    glGetFramebufferAttachmentParameteriv(
+        GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+        (GLint*)&defaultDepthBuffer);
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForOverlay);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     for(auto& func : overlayRenderingQueue){
         func();
     }
     overlayRenderingQueue.clear();
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, defaultDepthBuffer);
 }
 
 
@@ -2380,7 +2390,7 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
         modelMatrixBuffer.push_back(modelMatrixStack.back());
         overlayRenderingQueue.emplace_back(
             [this, overlay, matrixIndex](){
-                renderOverlayMain(overlay, modelMatrixBuffer[matrixIndex], false); });
+                renderOverlayMain(overlay, modelMatrixBuffer[matrixIndex], true); });
     }
 }
 
@@ -2451,6 +2461,7 @@ void GLSLSceneRendererImpl::renderOutlineEdge(SgOutline* outline, const Affine3&
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
     glEnable(GL_STENCIL_TEST);
+    glDisable(GL_DEPTH_TEST);
     
     {
         ScopedShaderProgramActivator programActivator(nolightingProgram, this);
@@ -2472,16 +2483,15 @@ void GLSLSceneRendererImpl::renderOutlineEdge(SgOutline* outline, const Affine3&
 
         float orgLineWidth = lineWidth;
         setLineWidth(outline->lineWidth()*2+1);
+
         GLint polygonMode;
         glGetIntegerv(GL_POLYGON_MODE, &polygonMode);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        glDisable(GL_DEPTH_TEST);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
         renderChildNodes(outline);
 
-        glEnable(GL_DEPTH_TEST);
         setLineWidth(orgLineWidth);
         glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -2490,6 +2500,7 @@ void GLSLSceneRendererImpl::renderOutlineEdge(SgOutline* outline, const Affine3&
     }
 
     glDisable(GL_STENCIL_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     modelMatrixStack.pop_back();
 }
