@@ -191,25 +191,6 @@ public:
 
 typedef ref_ptr<TextureResource> TextureResourcePtr;
 
-class OutlineResource : public GLResource
-{
-public:
-    GLSLSceneRendererImpl* renderer;
-    GLuint stencilBuffer;
-    int lastRenderingFrameId;
-    int width;
-    int height;
-    bool needToUpdateStencilBufferSize;
-    ScopedConnection viewportConnection;
-
-    OutlineResource(GLSLSceneRendererImpl* renderer);
-    ~OutlineResource();
-    void activateStencilBuffer();
-    virtual void discard() override;
-};
-
-typedef ref_ptr<OutlineResource> OutlineResourcePtr;
-
 struct SgObjectPtrHash {
     std::hash<SgObject*> hash;
     std::size_t operator()(const SgObjectPtr& p) const {
@@ -249,9 +230,6 @@ public:
 
     PolymorphicSceneNodeFunctionSet renderingFunctions;
 
-    int viewportWidth;
-    int viewportHeight;
-
     GLuint defaultFBO;
     GLuint fboForPicking;
     GLuint colorBufferForPicking;
@@ -272,7 +250,12 @@ public:
 
     vector<ScopedShaderProgramActivator> programStack;
 
+    /**
+       This variable is incremented at every frame of rendering.
+       The number is used to execute some operation onece at each rendering frame.
+    */
     unsigned int renderingFrameId;
+    
     bool isActuallyRendering;
     bool isPicking;
     bool isPickingBufferImageOutputEnabled;
@@ -401,9 +384,8 @@ public:
     void renderOverlayMain(SgOverlay* overlay, const Affine3& T, bool doDepthTest);
     void renderViewportOverlay(SgViewportOverlay* overlay);
     void renderViewportOverlayMain(SgViewportOverlay* overlay);
-    OutlineResource* getOrCreateOutlineResource(SgOutline* outline);
     void renderOutline(SgOutline* outline);
-    void renderOutlineMain(SgOutline* outline, const Affine3& T);
+    void renderOutlineEdge(SgOutline* outline, const Affine3& T);
     void renderLightweightRenderingGroup(SgLightweightRenderingGroup* group);
     void flushNolightingTransformMatrices();
     void renderMaterial(const SgMaterial* material);
@@ -743,9 +725,6 @@ void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
     updateViewportInformation(x, y, width, height);
-    impl->viewportWidth = width;
-    impl->viewportHeight = height;
-    //impl->needToUpdateOverlayDepthBufferSize = true;
 }
 
 
@@ -979,7 +958,7 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
     }
     glBindFramebuffer(GL_FRAMEBUFFER, fboForPicking);
 
-    if(width != pickingBufferWidth != viewportWidth || height != pickingBufferHeight){
+    if(width != pickingBufferWidth || height != pickingBufferHeight){
         // color buffer
         if(colorBufferForPicking){
             glDeleteRenderbuffers(1, &colorBufferForPicking);
@@ -2451,135 +2430,68 @@ void GLSLSceneRendererImpl::renderViewportOverlayMain(SgViewportOverlay* overlay
 }
 
 
-OutlineResource* GLSLSceneRendererImpl::getOrCreateOutlineResource(SgOutline* outline)
-{
-    OutlineResource* resource;
-    auto p = currentResourceMap->find(outline);
-    if(p == currentResourceMap->end()){
-        resource = new OutlineResource(this);
-        p = currentResourceMap->insert(GLResourceMap::value_type(outline, resource)).first;
-    } else {
-        resource = static_cast<OutlineResource*>(p->second.get());
-    }
-    if(isCheckingUnusedResources){
-        nextResourceMap->insert(*p);
-    }
-    return resource;
-}
-
-
 void GLSLSceneRendererImpl::renderOutline(SgOutline* outline)
 {
-    if(isPicking || !isActuallyRendering){
-        renderGroup(outline);
+    renderGroup(outline);
 
-    } else {
-        auto resource = getOrCreateOutlineResource(outline);
-        resource->activateStencilBuffer();
-
-        glEnable(GL_STENCIL_TEST);
-        glStencilFunc(GL_ALWAYS, 1, -1);
-        glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
-
-        renderGroup(outline);
-
-        glDisable(GL_STENCIL_TEST);
-        
+    if(!isPicking && isActuallyRendering){
         int matrixIndex = modelMatrixBuffer.size();
         modelMatrixBuffer.push_back(modelMatrixStack.back());
         overlayRenderingQueue.emplace_back(
             [this, outline, matrixIndex](){
-                renderOutlineMain(outline, modelMatrixBuffer[matrixIndex]); });
+                renderOutlineEdge(outline, modelMatrixBuffer[matrixIndex]); });
     }
 }
 
 
-void GLSLSceneRendererImpl::renderOutlineMain(SgOutline* outline, const Affine3& T)
+void GLSLSceneRendererImpl::renderOutlineEdge(SgOutline* outline, const Affine3& T)
 {
     modelMatrixStack.push_back(T);
 
-    auto resource = getOrCreateOutlineResource(outline);
-    resource->activateStencilBuffer();
-
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
     glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_NOTEQUAL, 1, -1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    float orgLineWidth = lineWidth;
-    setLineWidth(outline->lineWidth()*2+1);
-    GLint polygonMode;
-    glGetIntegerv(GL_POLYGON_MODE, &polygonMode);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
     
-    solidColorProgram.setColor(outline->color());
-    solidColorProgram.setColorChangable(false);
-    glDisable(GL_DEPTH_TEST);
+    {
+        ScopedShaderProgramActivator programActivator(nolightingProgram, this);
 
-    renderChildNodes(outline);
+        glStencilFunc(GL_ALWAYS, 1, -1);
+        glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        
+        renderChildNodes(outline);
+    }
 
-    glEnable(GL_DEPTH_TEST);
-    setLineWidth(orgLineWidth);
-    glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
+    {
+        ScopedShaderProgramActivator programActivator(solidColorProgram, this);
+        solidColorProgram.setColor(outline->color());
+        solidColorProgram.setColorChangable(false);
+
+        glStencilFunc(GL_NOTEQUAL, 1, -1);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+        float orgLineWidth = lineWidth;
+        setLineWidth(outline->lineWidth()*2+1);
+        GLint polygonMode;
+        glGetIntegerv(GL_POLYGON_MODE, &polygonMode);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        glDisable(GL_DEPTH_TEST);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+
+        renderChildNodes(outline);
+
+        glEnable(GL_DEPTH_TEST);
+        setLineWidth(orgLineWidth);
+        glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+        solidColorProgram.setColorChangable(true);
+    }
+
     glDisable(GL_STENCIL_TEST);
-    solidColorProgram.setColorChangable(true);
 
     modelMatrixStack.pop_back();
-}
-
-
-OutlineResource::OutlineResource(GLSLSceneRendererImpl* renderer)
-    : renderer(renderer)
-{
-    glGenRenderbuffers(1, &stencilBuffer);
-    
-    lastRenderingFrameId = 0;
-    
-    viewportConnection =
-        renderer->self->sigViewportChanged().connect(
-            [&](const Array4i& viewport){
-                width = viewport[2];
-                height = viewport[3];
-                needToUpdateStencilBufferSize = true;
-            });
-    
-    int vx, vy;
-    renderer->self->getViewport(vx, vy, width, height);
-    needToUpdateStencilBufferSize = true;
-}
-                
-
-OutlineResource::~OutlineResource()
-{
-    if(stencilBuffer){
-        glDeleteRenderbuffers(1, &stencilBuffer);
-    }
-}
-
-
-void OutlineResource::activateStencilBuffer()
-{
-    if(needToUpdateStencilBufferSize){
-        glBindRenderbuffer(GL_RENDERBUFFER, stencilBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height);
-        needToUpdateStencilBufferSize = false;
-    }
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilBuffer);
-    
-    if(lastRenderingFrameId != renderer->renderingFrameId){
-        // Clear the stencil buffer when the corresponding outline node is
-        // processed for the first time in a rendering frame
-        glClearStencil(0);
-        glClear(GL_STENCIL_BUFFER_BIT);
-        lastRenderingFrameId = renderer->renderingFrameId;
-    }
-}
-
-
-void OutlineResource::discard()
-{
-    stencilBuffer = 0;
 }
 
 
