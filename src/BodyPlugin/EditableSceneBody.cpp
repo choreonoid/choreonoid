@@ -298,6 +298,9 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     targetLink = nullptr;
 
     positionDragger = new PositionDragger;
+    positionDragger->setRotationHandlerSizeRatio(0.5);
+    positionDragger->setAutoScaleMode(true, 64.0);
+    positionDragger->setOverlayMode(true);
     positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
     positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
     positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
@@ -729,7 +732,9 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 {
     SceneLink* sceneLink = self->sceneLink(link->index());
-    positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
+    if(!positionDragger->isAutoScaleMode()){
+        positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
+    }
     sceneLink->addChildOnce(positionDragger);
 }
 

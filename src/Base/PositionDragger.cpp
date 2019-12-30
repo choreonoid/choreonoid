@@ -100,12 +100,14 @@ public:
     Signal<void(int axisSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
     bool isOverlayMode;
+    bool isAutoScaleMode;
     bool isContainerMode;
     bool isDragEnabled;
     bool isContentsDragEnabled;
     bool isUndoEnabled;
     SgGroupPtr axisGroup;
     SgOverlayPtr overlay;
+    SgAutoScalePtr autoScale;
     SgScaleTransformPtr translationAxisScale;
     SgScaleTransformPtr rotationAxisScale;
     double rotationHandleSizeRatio;
@@ -117,13 +119,12 @@ public:
     std::deque<Affine3> history;
 
     Impl(PositionDragger* self, int axisSet);
-    Impl(PositionDragger* self, const Impl& org);
-    Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap);
     void createDraggers();
     void createTranslationDragger(MeshGenerator& meshGenerator);
     void createRotationDragger(MeshGenerator& meshGenerator);
     void setDraggableAxes(int axisSet);
     void setOverlayMode(bool on);
+    void setAutoScaleMode(bool on, double pixelSizeRatio);
     void showDragMarkers(bool on);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
     bool onTranslationDraggerPressed(const SceneWidgetEvent& event, int axis, int topNodeIndex);
@@ -158,61 +159,11 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
 
     displayMode = DisplayInFocus;
     isOverlayMode = false;
+    isAutoScaleMode = false;
     isContainerMode = false;
     isDragEnabled = true;
     isContentsDragEnabled = true;
     isUndoEnabled = false;    
-}
-
-
-PositionDragger::PositionDragger(const PositionDragger& org)
-{
-    impl = new Impl(this, *org.impl, nullptr);
-}
-
-
-PositionDragger::PositionDragger(const PositionDragger& org, CloneMap* cloneMap)
-    : SgPosTransform(org, cloneMap)
-{
-    impl = new Impl(this, *org.impl, cloneMap);
-}
-
-
-Referenced* PositionDragger::doClone(CloneMap* cloneMap) const
-{
-    if(cloneMap){
-        return new PositionDragger(*this, cloneMap);
-    } else {
-        return new PositionDragger(*this);
-    }
-}
-
-
-PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap)
-    : self(self)
-{
-    draggableAxes = org.draggableAxes;
-    rotationHandleSizeRatio = org.rotationHandleSizeRatio;
-    isOverlayMode = org.isOverlayMode;
-    isContainerMode = org.isContainerMode;
-    isDragEnabled = org.isDragEnabled;
-    isContentsDragEnabled = org.isContentsDragEnabled;
-    isUndoEnabled = org.isUndoEnabled;
-
-    axisGroup = self;
-    if(cloneMap){
-        axisGroup = cloneMap->findClone(org.axisGroup);
-        translationAxisScale = cloneMap->getClone(org.translationAxisScale);
-        rotationAxisScale = cloneMap->getClone(org.rotationAxisScale);
-        for(int i=0; i < 3; ++i){
-            axisMaterials[i] = cloneMap->getClone(org.axisMaterials[i]);
-        }
-        displayMode = org.displayMode;
-    } else {
-        createDraggers();
-        displayMode = DisplayInFocus;
-        self->setDisplayMode(org.displayMode);
-    }
 }
 
 
@@ -436,12 +387,26 @@ void PositionDragger::Impl::setOverlayMode(bool on)
             }
             self->moveChildrenTo(overlay);
             self->addChild(overlay);
-            axisGroup = overlay;
+            if(axisGroup == self){
+                axisGroup = overlay;
+            }
             transparency = 0.0f;
         } else {
-            self->removeChild(overlay);
-            overlay->moveChildrenTo(self);
-            axisGroup = self;
+            SgGroup* parent;
+            if(self->contains(overlay)){
+                parent = self;
+            } else {
+                parent = autoScale;
+            }
+            parent->removeChild(overlay);
+            overlay->moveChildrenTo(parent);
+            if(axisGroup == overlay){
+                if(isAutoScaleMode){
+                    axisGroup = autoScale;
+                } else {
+                    axisGroup = self;
+                }
+            }
             transparency = 1.0f;
         }
         for(int i=0; i < 3; ++i){
@@ -457,6 +422,55 @@ bool PositionDragger::isOverlayMode() const
     return impl->isOverlayMode;
 }
 
+
+void PositionDragger::setAutoScaleMode(bool on, double pixelSizeRatio)
+{
+    impl->setAutoScaleMode(on, pixelSizeRatio);
+}
+
+
+void PositionDragger::Impl::setAutoScaleMode(bool on, double pixelSizeRatio)
+{
+    if(autoScale){
+        autoScale->setPixelSizeRatio(pixelSizeRatio);
+    }
+    if(on != isAutoScaleMode){
+        if(on){
+            if(!autoScale){
+                autoScale = new SgAutoScale(pixelSizeRatio);
+            }
+            self->moveChildrenTo(autoScale);
+            self->addChild(autoScale);
+            if(axisGroup == self){
+                axisGroup = autoScale;
+            }
+        } else {
+            SgGroup* parent;
+            if(self->contains(autoScale)){
+                parent = self;
+            } else {
+                parent = overlay;
+            }
+            parent->removeChild(autoScale);
+            autoScale->moveChildrenTo(parent);
+            if(axisGroup == autoScale){
+                if(isOverlayMode){
+                    axisGroup = overlay;
+                } else {
+                    axisGroup = self;
+                }
+            }
+        }
+        isAutoScaleMode = on;
+    }
+}
+
+
+bool PositionDragger::isAutoScaleMode() const
+{
+    return impl->isAutoScaleMode;
+}
+    
 
 bool PositionDragger::isContainerMode() const
 {

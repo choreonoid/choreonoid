@@ -566,6 +566,28 @@ Referenced* SgScaleTransform::doClone(CloneMap* cloneMap) const
 }
         
 
+const BoundingBox& SgScaleTransform::boundingBox() const
+{
+    if(isBboxCacheValid){
+        return bboxCache;
+    }
+    bboxCache.clear();
+    for(const_iterator p = begin(); p != end(); ++p){
+        bboxCache.expandBy((*p)->boundingBox());
+    }
+    untransformedBboxCache = bboxCache;
+    bboxCache.transform(Affine3(scale_.asDiagonal()));
+    isBboxCacheValid = true;
+    return bboxCache;
+}
+
+
+void SgScaleTransform::getTransform(Affine3& out_T) const
+{
+    out_T = scale_.asDiagonal();
+}
+
+
 SgAffineTransform::SgAffineTransform(int classId)
     : SgTransform(classId),
       T_(Affine3::Identity())
@@ -625,25 +647,37 @@ void SgAffineTransform::getTransform(Affine3& out_T) const
 }
 
 
-const BoundingBox& SgScaleTransform::boundingBox() const
+SgAutoScale::SgAutoScale()
+    : SgAutoScale(1.0)
 {
-    if(isBboxCacheValid){
-        return bboxCache;
-    }
-    bboxCache.clear();
-    for(const_iterator p = begin(); p != end(); ++p){
-        bboxCache.expandBy((*p)->boundingBox());
-    }
-    untransformedBboxCache = bboxCache;
-    bboxCache.transform(Affine3(scale_.asDiagonal()));
-    isBboxCacheValid = true;
-    return bboxCache;
+
 }
 
 
-void SgScaleTransform::getTransform(Affine3& out_T) const
+SgAutoScale::SgAutoScale(double pixelSizeRatio)
+    : SgGroup(findClassId<SgAutoScale>())
 {
-    out_T = scale_.asDiagonal();
+    pixelSizeRatio_ = pixelSizeRatio;
+}
+      
+
+SgAutoScale::SgAutoScale(int classId)
+    : SgGroup(classId)
+{
+    pixelSizeRatio_ = 1.0;
+}
+
+
+SgAutoScale::SgAutoScale(const SgAutoScale& org, CloneMap* cloneMap)
+    : SgGroup(org, cloneMap)
+{
+    pixelSizeRatio_ = org.pixelSizeRatio_;
+}
+
+
+Referenced* SgAutoScale::doClone(CloneMap* cloneMap) const
+{
+    return new SgAutoScale(*this, cloneMap);
 }
 
 
@@ -721,6 +755,7 @@ struct NodeClassRegistration {
             .registerClass<SgAffineTransform, SgTransform>()
             .registerClass<SgPosTransform, SgTransform>()
             .registerClass<SgScaleTransform, SgTransform>()
+            .registerClass<SgAutoScale, SgGroup>()
             .registerClass<SgSwitch, SgGroup>()
             .registerClass<SgUnpickableGroup, SgGroup>()
             .registerClass<SgPreprocessed, SgNode>();

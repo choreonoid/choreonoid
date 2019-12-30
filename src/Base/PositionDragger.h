@@ -22,7 +22,7 @@ public:
 
     PositionDragger();
     PositionDragger(int axisSet);
-    PositionDragger(const PositionDragger& org);
+    PositionDragger(const PositionDragger& org) = delete;
 
     void setDraggableAxes(int axisSet);
     int draggableAxes() const;
@@ -44,6 +44,9 @@ public:
     void setOverlayMode(bool on);
     bool isOverlayMode() const;
 
+    void setAutoScaleMode(bool on, double pixelSizeRatio = 1.0);
+    bool isAutoScaleMode() const;
+    
     bool isContainerMode() const;
     void setContainerMode(bool on);
 
@@ -83,10 +86,6 @@ public:
     bool isDraggerAlwaysShown() const;
     void setDraggerAlwaysHidden(bool on);
     bool isDraggerAlwaysHidden() const;
-
-protected:
-    PositionDragger(const PositionDragger& org, CloneMap* cloneMap);
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     class Impl;

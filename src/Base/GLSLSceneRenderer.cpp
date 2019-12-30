@@ -374,6 +374,7 @@ public:
     void popPickNode();
     void renderGroup(SgGroup* group);
     void renderTransform(SgTransform* transform);
+    void renderAutoScale(SgAutoScale* autoScale);
     void renderSwitch(SgSwitch* node);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     VertexResource* getOrCreateVertexResource(SgObject* obj);
@@ -510,6 +511,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgGroup* node){ renderGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
+    renderingFunctions.setFunction<SgAutoScale>(
+        [&](SgAutoScale* node){ renderAutoScale(node); });
     renderingFunctions.setFunction<SgSwitch>(
         [&](SgSwitch* node){ renderSwitch(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
@@ -1495,7 +1498,24 @@ void GLSLSceneRenderer::renderCustomTransform(SgTransform* transform, std::funct
 
     impl->popPickNode();
     impl->modelMatrixStack.pop_back();
-}    
+}
+
+
+void GLSLSceneRendererImpl::renderAutoScale(SgAutoScale* autoScale)
+{
+    auto vp = self->viewport();
+    Affine3 MV = viewTransform * modelMatrixStack.back();
+    Vector4 p(1.0, 0.0, MV.translation().z(), 1.0);
+    Vector4 q = projectionMatrix * p;
+    double o = (q.x() / q[3]) * vp[2] / 2.0;
+    double s = autoScale->pixelSizeRatio() / o;
+    Vector3 scale(s, s, s);
+    Affine3 S(scale.asDiagonal());
+    
+    modelMatrixStack.push_back(modelMatrixStack.back() * S);
+    renderGroup(autoScale);
+    modelMatrixStack.pop_back();
+}
     
 
 VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj)

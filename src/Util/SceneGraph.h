@@ -164,7 +164,7 @@ public:
     }
 
 protected:
-    SgNode(int polymorhicId);
+    SgNode(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
@@ -252,7 +252,7 @@ public:
     }
 
 protected:
-    SgGroup(int polymorhicId);
+    SgGroup(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     mutable BoundingBox bboxCache;
     mutable bool isBboxCacheValid;
@@ -275,6 +275,7 @@ public:
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
+
 typedef ref_ptr<SgInvariantGroup> SgInvariantGroupPtr;
     
     
@@ -286,10 +287,11 @@ public:
     virtual void getTransform(Affine3& out_T) const = 0;
     
 protected:
-    SgTransform(int polymorhicId);
+    SgTransform(int classId);
     SgTransform(const SgTransform& org, CloneMap* cloneMap = nullptr);
     mutable BoundingBox untransformedBboxCache;
 };
+
 typedef ref_ptr<SgTransform> SgTransformPtr;
 
 
@@ -343,12 +345,13 @@ public:
     }
 
 protected:
-    SgPosTransform(int polymorhicId);
+    SgPosTransform(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Affine3 T_;
 };
+
 typedef ref_ptr<SgPosTransform> SgPosTransformPtr;
 
 
@@ -373,12 +376,13 @@ public:
     Eigen::DiagonalWrapper<const Vector3> T() const { return scale_.asDiagonal(); }
 
 protected:
-    SgScaleTransform(int polymorhicId);
+    SgScaleTransform(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Vector3 scale_;
 };
+
 typedef ref_ptr<SgScaleTransform> SgScaleTransformPtr;
 
 
@@ -425,13 +429,35 @@ public:
     }
 
 protected:
-    SgAffineTransform(int polymorhicId);
+    SgAffineTransform(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Affine3 T_;
 };
+
 typedef ref_ptr<SgAffineTransform> SgAffineTransformPtr;
+
+
+class CNOID_EXPORT SgAutoScale : public SgGroup
+{
+public:
+    SgAutoScale();
+    SgAutoScale(double pixelSizeRatio);
+    SgAutoScale(const SgAutoScale& org, CloneMap* cloneMap = nullptr);
+
+    void setPixelSizeRatio(double ratio){ pixelSizeRatio_ = ratio; }
+    double pixelSizeRatio() const { return pixelSizeRatio_; }
+
+protected:
+    SgAutoScale(int classId);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    float pixelSizeRatio_;
+};
+
+typedef ref_ptr<SgAutoScale> SgAutoScalePtr;
 
 
 class CNOID_EXPORT SgSwitch : public SgGroup
@@ -454,6 +480,7 @@ protected:
 private:
     bool isTurnedOn_;
 };
+
 typedef ref_ptr<SgSwitch> SgSwitchPtr;
 
 
@@ -467,13 +494,14 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 };
+
 typedef ref_ptr<SgUnpickableGroup> SgUnpickableGroupPtr;
 
 
 class CNOID_EXPORT SgPreprocessed : public SgNode
 {
 protected:
-    SgPreprocessed(int polymorhicId);
+    SgPreprocessed(int classId);
     SgPreprocessed(const SgPreprocessed& org);
 };
 
