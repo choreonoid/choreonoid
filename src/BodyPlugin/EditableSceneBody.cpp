@@ -299,8 +299,8 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
 
     positionDragger = new PositionDragger;
     positionDragger->setRotationHandlerSizeRatio(0.5);
-    positionDragger->setAutoScaleMode(true, 64.0);
-    positionDragger->setOverlayMode(true);
+    //positionDragger->setAutoScaleMode(true, 64.0);
+    //positionDragger->setOverlayMode(true);
     positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
     positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
     positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
@@ -834,16 +834,11 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         }
     } else {
         if(pointedType == PT_SCENE_LINK){
-            targetLink = pointedSceneLink->link();
-
             if(event.button() == Qt::LeftButton){
+                targetLink = pointedSceneLink->link();
                 updateMarkersAndManipulators(true);
                 BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
                 startKinematicsDragOperation(event);
-                handled = true;
-
-            } else if(event.button() == Qt::MiddleButton){
-                togglePin(pointedSceneLink, true, true);
                 handled = true;
             }
         } else if(pointedType == PT_ZMP){

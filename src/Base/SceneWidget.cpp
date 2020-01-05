@@ -1309,10 +1309,18 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
         os << "SceneWidgetImpl::keyPressEvent()" << endl;
     }
 
+    /*
+    if(isEditMode && event->key() == Qt::Key_Alt){
+        setCursor(defaultCursor);
+        return;
+    }
+    */
+    
     updateLatestEvent(event);
     updateLatestEventPath();
 
     bool handled = false;
+
     if(isEditMode){
         handled = applyFunction(
             focusedEditablePath,
@@ -1382,10 +1390,17 @@ void SceneWidgetImpl::keyReleaseEvent(QKeyEvent* event)
         os << "SceneWidgetImpl::keyReleaseEvent()" << endl;
     }
 
+    /*
+    if(isEditMode && event->key() == Qt::Key_Alt){
+        setCursor(editModeCursor);
+        return;
+    }
+    */
+
     bool handled = false;
     
     updateLatestEvent(event);
-    
+
     if(event->key() == Qt::Key_Space){
         dragMode = NO_DRAGGING;
         handled = true;
@@ -1646,7 +1661,7 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
     latestEvent.wheelSteps_ = s;
 
     bool handled = false;
-    if(isEditMode){
+    if(isEditMode && !(event->modifiers() & Qt::AltModifier)){
         if(eventFilter){
             handled = eventFilter->onScrollEvent(latestEvent);
         }
@@ -1658,11 +1673,9 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
         }
     }    
 
-    if(interactiveCameraTransform){
-        if(!handled || !isEditMode){
-            if(event->orientation() == Qt::Vertical){
-                zoomView(0.25 * s);
-            }
+    if(interactiveCameraTransform && !handled){
+        if(event->orientation() == Qt::Vertical){
+            zoomView(0.25 * s);
         }
     }
 }
