@@ -1335,6 +1335,10 @@ void GLSLSceneRendererImpl::renderOverlayObjects()
     }
     overlayRenderingQueue.clear();
 
+    if(!transparentRenderingQueue.empty()){
+        renderTransparentObjects();
+    }
+
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, defaultDepthBuffer);
 }
 
@@ -1583,7 +1587,7 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
         SgMaterial* material = shape->material();
-        if(material && material->transparency() > 0.0){
+        if(material && material->transparency() > 0.0 && !isPicking){
             if(!isRenderingShadowMap){
                 SgShapePtr shapePtr = shape;
                 int matrixIndex = modelMatrixBuffer.size();
