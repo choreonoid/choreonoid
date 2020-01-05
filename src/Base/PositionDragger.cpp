@@ -19,9 +19,11 @@ using namespace cnoid;
 
 namespace {
 
-const char* axisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
+const char* AxisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
 
-constexpr double axisCylinderRadius = 0.04;
+constexpr double AxisCylinderRadius = 0.04;
+
+constexpr float DefaultTransparency = 0.6f;
 
 /**
    \note This node is not inserted the node path obtained by SceneWidgetEvent::nodePath()
@@ -100,7 +102,7 @@ public:
     Signal<void(int axisSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
     bool isOverlayMode;
-    bool isAutoScaleMode;
+    bool isConstantPixelSizeMode;
     bool isContainerMode;
     bool isDragEnabled;
     bool isContentsDragEnabled;
@@ -112,6 +114,7 @@ public:
     SgScaleTransformPtr rotationAxisScale;
     double rotationHandleSizeRatio;
     array<SgMaterialPtr, 3> axisMaterials;
+    float transparency;
     SceneDragProjector dragProjector;
     Signal<void()> sigDragStarted;
     Signal<void()> sigPositionDragged;
@@ -124,7 +127,7 @@ public:
     void createRotationDragger(MeshGenerator& meshGenerator);
     void setDraggableAxes(int axisSet);
     void setOverlayMode(bool on);
-    void setAutoScaleMode(bool on, double pixelSizeRatio);
+    void setConstantPixelSizeMode(bool on, double pixelSizeRatio);
     void showDragMarkers(bool on);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
     bool onTranslationDraggerPressed(const SceneWidgetEvent& event, int axis, int topNodeIndex);
@@ -159,16 +162,18 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
 
     displayMode = DisplayInFocus;
     isOverlayMode = false;
-    isAutoScaleMode = false;
+    isConstantPixelSizeMode = false;
     isContainerMode = false;
     isDragEnabled = true;
     isContentsDragEnabled = true;
-    isUndoEnabled = false;    
+    isUndoEnabled = false;
 }
 
 
 void PositionDragger::Impl::createDraggers()
 {
+    transparency = DefaultTransparency;
+
     for(int i=0; i < 3; ++i){
         auto material = new SgMaterial;
         Vector3f color(0.2f, 0.2f, 0.2f);
@@ -176,7 +181,7 @@ void PositionDragger::Impl::createDraggers()
         material->setDiffuseColor(Vector3f::Zero());
         material->setEmissiveColor(color);
         material->setAmbientIntensity(0.0f);
-        material->setTransparency(0.6f);
+        material->setTransparency(transparency);
         axisMaterials[i] = material;
     }
 
@@ -203,7 +208,7 @@ void PositionDragger::Impl::createTranslationDragger(MeshGenerator& meshGenerato
         } else if(i == 2){
             arrow->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
         }
-        arrow->setName(axisNames[i]);
+        arrow->setName(AxisNames[i]);
 
         auto axis = new SgSwitch;
         axis->addChild(arrow);
@@ -248,7 +253,7 @@ void PositionDragger::Impl::createRotationDragger(MeshGenerator& meshGenerator)
             selector->setAxis(Vector3::UnitZ());
         }
         belt1->addChild(beltShape1);
-        belt1->setName(axisNames[i + 3]);
+        belt1->setName(AxisNames[i + 3]);
         selector->addChild(belt1);
 
         auto belt2 = new SgPosTransform;
@@ -258,7 +263,7 @@ void PositionDragger::Impl::createRotationDragger(MeshGenerator& meshGenerator)
             belt2->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
         }
         belt2->addChild(beltShape2);
-        belt2->setName(axisNames[i + 3]);
+        belt2->setName(AxisNames[i + 3]);
         selector->addChild(belt2);
 
         auto axis = new SgSwitch;
@@ -326,7 +331,7 @@ double PositionDragger::rotationHandleSizeRatio() const
 }
 
 
-void PositionDragger::setRotationHandlerSizeRatio(double r)
+void PositionDragger::setRotationHandleSizeRatio(double r)
 {
     impl->rotationHandleSizeRatio = r;
     impl->rotationAxisScale->setScale(handleSize() * r);
@@ -346,19 +351,21 @@ double PositionDragger::radius() const
 }
 
 
-void PositionDragger::adjustSize(const BoundingBox& bb)
+bool PositionDragger::adjustSize(const BoundingBox& bb)
 {
-    if(!bb.empty()){
-        Vector3 s = bb.size() / 2.0;
-        std::sort(s.data(), s.data() + 3);
-        double a = Vector2(s[0], s[1]).norm() * 1.1;
-        double r = std::max(a, s[2] * 1.2);
-        setHandleSize(2.0 * r);
+    if(bb.empty()){
+        return false;
     }
+
+    Vector3 s = bb.size() / 2.0;
+    std::sort(s.data(), s.data() + 3);
+    double r = Vector2(s[0], s[1]).norm() * 1.05;
+    setHandleSize(r / impl->rotationHandleSizeRatio);
+    return true;
 }
 
 
-void PositionDragger::adjustSize()
+bool PositionDragger::adjustSize()
 {
     BoundingBox bb;
     for(int i=0; i < numChildren(); ++i){
@@ -367,7 +374,22 @@ void PositionDragger::adjustSize()
             bb.expandBy(node->boundingBox());
         }
     }
-    adjustSize(bb);
+    return adjustSize(bb);
+}
+
+
+void PositionDragger::setTransparency(float t)
+{
+    impl->transparency = t;
+    for(int i=0; i < 3; ++i){
+        impl->axisMaterials[i]->setTransparency(t);
+    }
+}
+    
+
+float PositionDragger::transparency() const
+{
+    return impl->transparency;
 }
 
 
@@ -380,7 +402,6 @@ void PositionDragger::setOverlayMode(bool on)
 void PositionDragger::Impl::setOverlayMode(bool on)
 {
     if(on != isOverlayMode){
-        double transparency;
         if(on){
             if(!overlay){
                 overlay = new SgOverlay;
@@ -390,7 +411,6 @@ void PositionDragger::Impl::setOverlayMode(bool on)
             if(axisGroup == self){
                 axisGroup = overlay;
             }
-            transparency = 0.0f;
         } else {
             SgGroup* parent;
             if(self->contains(overlay)){
@@ -401,16 +421,12 @@ void PositionDragger::Impl::setOverlayMode(bool on)
             parent->removeChild(overlay);
             overlay->moveChildrenTo(parent);
             if(axisGroup == overlay){
-                if(isAutoScaleMode){
+                if(isConstantPixelSizeMode){
                     axisGroup = autoScale;
                 } else {
                     axisGroup = self;
                 }
             }
-            transparency = 1.0f;
-        }
-        for(int i=0; i < 3; ++i){
-            axisMaterials[i]->setTransparency(transparency);
         }
         isOverlayMode = on;
     }
@@ -423,18 +439,18 @@ bool PositionDragger::isOverlayMode() const
 }
 
 
-void PositionDragger::setAutoScaleMode(bool on, double pixelSizeRatio)
+void PositionDragger::setConstantPixelSizeMode(bool on, double pixelSizeRatio)
 {
-    impl->setAutoScaleMode(on, pixelSizeRatio);
+    impl->setConstantPixelSizeMode(on, pixelSizeRatio);
 }
 
 
-void PositionDragger::Impl::setAutoScaleMode(bool on, double pixelSizeRatio)
+void PositionDragger::Impl::setConstantPixelSizeMode(bool on, double pixelSizeRatio)
 {
     if(autoScale){
         autoScale->setPixelSizeRatio(pixelSizeRatio);
     }
-    if(on != isAutoScaleMode){
+    if(on != isConstantPixelSizeMode){
         if(on){
             if(!autoScale){
                 autoScale = new SgAutoScale(pixelSizeRatio);
@@ -461,14 +477,14 @@ void PositionDragger::Impl::setAutoScaleMode(bool on, double pixelSizeRatio)
                 }
             }
         }
-        isAutoScaleMode = on;
+        isConstantPixelSizeMode = on;
     }
 }
 
 
-bool PositionDragger::isAutoScaleMode() const
+bool PositionDragger::isConstantPixelSizeMode() const
 {
-    return impl->isAutoScaleMode;
+    return impl->isConstantPixelSizeMode;
 }
     
 
@@ -631,7 +647,7 @@ static bool detectAxisFromNodePath
                 auto& name = path[j]->name();
                 if(!name.empty()){
                     for(int k=0; k < 6; ++k){
-                        if(name == axisNames[k]){
+                        if(name == AxisNames[k]){
                             out_axis = k;
                             return true;
                         }
@@ -707,7 +723,7 @@ bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& 
     
     dragProjector.setInitialPosition(T_global);
     
-    if(p_local.norm() < 2.0 * axisCylinderRadius){
+    if(p_local.norm() < 2.0 * AxisCylinderRadius){
         dragProjector.setTranslationAlongViewPlane();
     } else {
         dragProjector.setTranslationAxis(T_global.linear().col(axis));

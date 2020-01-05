@@ -30,22 +30,26 @@ public:
 
     double handleSize() const;
     void setHandleSize(double s);
+
     double rotationHandleSizeRatio() const;
-    void setRotationHandlerSizeRatio(double r);
+    void setRotationHandleSizeRatio(double r);
 
     //! \deprecated. Use the setHandleSize and setRotationHandlerSizeRatio functions.
     void setRadius(double r, double translationAxisRatio = 2.0f);
     //! \deprecated. Use the handleSize and rotationHandleSizeRatio function.
     double radius() const;
     
-    void adjustSize();
-    void adjustSize(const BoundingBox& bb);
+    bool adjustSize();
+    bool adjustSize(const BoundingBox& bb);
+
+    void setTransparency(float t);
+    float transparency() const;
 
     void setOverlayMode(bool on);
     bool isOverlayMode() const;
 
-    void setAutoScaleMode(bool on, double pixelSizeRatio = 1.0);
-    bool isAutoScaleMode() const;
+    void setConstantPixelSizeMode(bool on, double pixelSizeRatio = 1.0);
+    bool isConstantPixelSizeMode() const;
     
     bool isContainerMode() const;
     void setContainerMode(bool on);
