@@ -212,6 +212,7 @@ public:
     const Scalar* data() const { return values.front().data(); }
     iterator insert(const_iterator pos, std::initializer_list<T> il){ return values.insert(pos, il); }
     void push_back(const T& v) { values.push_back(v); }
+    template<class... Args> void emplace_back(Args&&... args) { values.emplace_back(args...); }
     void pop_back() { values.pop_back(); }
     iterator erase(iterator p) { return values.erase(p); }
     iterator erase(iterator first, iterator last) { return values.erase(first, last); }

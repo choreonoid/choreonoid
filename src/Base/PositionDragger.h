@@ -13,15 +13,25 @@ namespace cnoid {
 class CNOID_EXPORT PositionDragger : public SgPosTransform, public SceneWidgetEditable
 {
 public:
-    enum Axis { TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
-                TRANSLATION_AXES = (TX | TY | TZ),
-                RX = 1 << 3, RY = 1 << 4, RZ = 1 << 5,
-                ROTATION_AXES = (RX | RY | RZ),
-                ALL_AXES = (TX | TY | TZ | RX | RY | RZ)
+    enum Axis {
+        TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
+        TranslationAxes = (TX | TY | TZ),
+        RX = 1 << 3, RY = 1 << 4, RZ = 1 << 5,
+        RotationAxes = (RX | RY | RZ),
+        AllAxes = (TX | TY | TZ | RX | RY | RZ),
+
+        // deprecated
+        TRANSLATION_AXES = TranslationAxes,
+        ROTATION_AXES = RotationAxes,
+        ALL_AXES = AllAxes
     };
 
-    PositionDragger();
-    PositionDragger(int axisSet);
+    enum HandleType {
+        StandardHandle = 0,
+        WideHandle = 1
+    };
+        
+    PositionDragger(int axes = AllAxes, int handleType = StandardHandle);
     PositionDragger(const PositionDragger& org) = delete;
 
     void setDraggableAxes(int axisSet);

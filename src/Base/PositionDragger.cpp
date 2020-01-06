@@ -21,8 +21,6 @@ namespace {
 
 const char* AxisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
 
-constexpr double AxisCylinderRadius = 0.04;
-
 constexpr float DefaultTransparency = 0.6f;
 
 /**
@@ -99,6 +97,8 @@ class PositionDragger::Impl
 public:
     PositionDragger* self;
     int draggableAxes;
+    int handleType;
+    double handleWidth;
     Signal<void(int axisSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
     bool isOverlayMode;
@@ -113,7 +113,8 @@ public:
     SgScaleTransformPtr translationAxisScale;
     SgScaleTransformPtr rotationAxisScale;
     double rotationHandleSizeRatio;
-    array<SgMaterialPtr, 3> axisMaterials;
+    array<SgMaterialPtr, 3> translationAxisMaterials;
+    array<SgMaterialPtr, 3> rotationAxisMaterials;
     float transparency;
     SceneDragProjector dragProjector;
     Signal<void()> sigDragStarted;
@@ -121,11 +122,13 @@ public:
     Signal<void()> sigDragFinished;
     std::deque<Affine3> history;
 
-    Impl(PositionDragger* self, int axisSet);
+    Impl(PositionDragger* self, int mode, int axes);
     void createDraggers();
-    void createTranslationDragger(MeshGenerator& meshGenerator);
-    void createRotationDragger(MeshGenerator& meshGenerator);
+    void createTranslationAxisArrows(MeshGenerator& meshGenerator);
+    void createRotationAxisRings(MeshGenerator& meshGenerator);
+    void createRotationAxisDiscs(MeshGenerator& meshGenerator);
     void setDraggableAxes(int axisSet);
+    void setTransparency(float t);
     void setOverlayMode(bool on);
     void setConstantPixelSizeMode(bool on, double pixelSizeRatio);
     void showDragMarkers(bool on);
@@ -138,24 +141,23 @@ public:
 }
 
 
-PositionDragger::PositionDragger()
-    : PositionDragger(ALL_AXES)
+PositionDragger::PositionDragger(int mode, int axes)
 {
-
+    impl = new Impl(this, mode, axes);
 }
 
 
-PositionDragger::PositionDragger(int axisSet)
+PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
+    : self(self),
+      draggableAxes(axes),
+      handleType(handleType)
 {
-    impl = new Impl(this, axisSet);
-}
-
-
-PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
-    : self(self)
-{
-    draggableAxes = axisSet;
-    rotationHandleSizeRatio = 0.5;
+    if(handleType == WideHandle){
+        handleWidth = 0.08;
+    } else {
+        handleWidth = 0.04;
+    }
+    rotationHandleSizeRatio = 0.6;
     axisGroup = self;
 
     createDraggers();
@@ -181,25 +183,40 @@ void PositionDragger::Impl::createDraggers()
         material->setDiffuseColor(Vector3f::Zero());
         material->setEmissiveColor(color);
         material->setAmbientIntensity(0.0f);
-        material->setTransparency(transparency);
-        axisMaterials[i] = material;
+        material->setTransparency(1.0f - (1.0f - transparency) / 2.0f);
+        translationAxisMaterials[i] = material;
+
+        auto rotationAxisMaterial = new SgMaterial(*material);
+        if(handleType == WideHandle){
+            rotationAxisMaterial->setTransparency(transparency);
+        }
+        rotationAxisMaterials[i] = rotationAxisMaterial;
     }
 
     MeshGenerator meshGenerator;
-    createTranslationDragger(meshGenerator);
-    createRotationDragger(meshGenerator);
+
+    createTranslationAxisArrows(meshGenerator);
+
+    if(handleType == StandardHandle){
+        createRotationAxisRings(meshGenerator);
+    } else {
+        createRotationAxisDiscs(meshGenerator);
+    }
 }
 
     
-void PositionDragger::Impl::createTranslationDragger(MeshGenerator& meshGenerator)
+void PositionDragger::Impl::createTranslationAxisArrows(MeshGenerator& meshGenerator)
 {
     translationAxisScale = new SgScaleTransform;
+
+    double endLength = handleWidth * 2.5;
+    double stickLength = 2.0 - endLength * 2.0;
+    SgMeshPtr mesh = meshGenerator.generateArrow(handleWidth / 2.0, stickLength, handleWidth * 1.25, endLength);
     
-    SgMeshPtr mesh = meshGenerator.generateArrow(0.04, 1.8, 0.1, 0.18);
     for(int i=0; i < 3; ++i){
         auto shape = new SgShape;
         shape->setMesh(mesh);
-        shape->setMaterial(axisMaterials[i]);
+        shape->setMaterial(translationAxisMaterials[i]);
             
         auto arrow = new SgPosTransform;
         arrow->addChild(shape);
@@ -220,56 +237,72 @@ void PositionDragger::Impl::createTranslationDragger(MeshGenerator& meshGenerato
 }
 
 
-void PositionDragger::Impl::createRotationDragger(MeshGenerator& meshGenerator)
+void PositionDragger::Impl::createRotationAxisRings(MeshGenerator& meshGenerator)
 {
     rotationAxisScale = new SgScaleTransform;
 
     meshGenerator.setDivisionNumber(36);
-    auto beltMesh1 = meshGenerator.generateDisc(1.0, 1.0 - 0.2);
-    meshGenerator.setDivisionNumber(24);
-    auto beltMesh2 = meshGenerator.generateCylinder(1.0, 0.2, false, false);
+    auto ringMesh = meshGenerator.generateTorus(1.0, handleWidth / 2.0 / rotationHandleSizeRatio);
 
     for(int i=0; i < 3; ++i){
-        auto material = axisMaterials[i];
+        auto material = rotationAxisMaterials[i];
         
-        auto beltShape1 = new SgShape;
-        beltShape1->setMesh(beltMesh1);
-        beltShape1->setMaterial(material);
+        auto ringShape = new SgShape;
+        ringShape->setMesh(ringMesh);
+        ringShape->setMaterial(material);
 
-        auto beltShape2 = new SgShape;
-        beltShape2->setMesh(beltMesh2);
-        beltShape2->setMaterial(material);
-        
+        auto ring = new SgPosTransform;
+        if(i == 0){ // x-axis
+            ring->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+        } else if(i == 2) { // z-axis
+            ring->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
+        }
+        ring->addChild(ringShape);
+        ring->setName(AxisNames[i + 3]);
+
+        auto axis = new SgSwitch;
+        axis->addChild(ring);
+        axis->setTurnedOn(draggableAxes & (1 << (i + 3)));
+
+        rotationAxisScale->addChild(axis);
+    }
+
+    axisGroup->addChild(rotationAxisScale);
+}
+
+
+void PositionDragger::Impl::createRotationAxisDiscs(MeshGenerator& meshGenerator)
+{
+    rotationAxisScale = new SgScaleTransform;
+
+    SgMesh* mesh[2];
+    meshGenerator.setDivisionNumber(36);
+    mesh[0] = meshGenerator.generateDisc(1.0, 1.0 - 0.2);
+    meshGenerator.setDivisionNumber(24);
+    mesh[1] = meshGenerator.generateCylinder(1.0, 0.2, false, false);
+
+    for(int i=0; i < 3; ++i){
         auto selector = new SgViewpointDependentSelector;
-        
-        auto belt1 = new SgPosTransform;
-        if(i == 0){ // x-axis
-            selector->setAxis(Vector3::UnitX());
-            belt1->setRotation(AngleAxis(PI / 2.0, Vector3::UnitY()));
-        } else if(i == 1){ // y-axis
-            selector->setAxis(Vector3::UnitY());
-            belt1->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitX()));
-        } else if(i == 2) { // z-axis
-            selector->setAxis(Vector3::UnitZ());
+        Vector3 a = Vector3::Zero();
+        a(i) = 1.0;
+        selector->setAxis(a);
+        for(int j=0; j < 2; ++j){
+            auto shape = new SgShape;
+            shape->setMesh(mesh[j]);
+            shape->setMaterial(rotationAxisMaterials[i]);
+            auto disc = new SgPosTransform;
+            if(i == 0){ // x-axis
+                disc->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+            } else if(i == 2) { // z-axis
+                disc->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
+            }
+            disc->addChild(shape);
+            disc->setName(AxisNames[i + 3]);
+            selector->addChild(disc);
         }
-        belt1->addChild(beltShape1);
-        belt1->setName(AxisNames[i + 3]);
-        selector->addChild(belt1);
-
-        auto belt2 = new SgPosTransform;
-        if(i == 0){ // x-axis
-            belt2->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
-        } else if(i == 2) { // z-axis
-            belt2->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
-        }
-        belt2->addChild(beltShape2);
-        belt2->setName(AxisNames[i + 3]);
-        selector->addChild(belt2);
-
         auto axis = new SgSwitch;
         axis->addChild(selector);
         axis->setTurnedOn(draggableAxes & (1 << (i + 3)));
-
         rotationAxisScale->addChild(axis);
     }
 
@@ -380,9 +413,21 @@ bool PositionDragger::adjustSize()
 
 void PositionDragger::setTransparency(float t)
 {
-    impl->transparency = t;
+    impl->setTransparency(t);
+}
+
+
+void PositionDragger::Impl::setTransparency(float t)
+{
+    transparency = t;
     for(int i=0; i < 3; ++i){
-        impl->axisMaterials[i]->setTransparency(t);
+        float t2 = 1.0f - (1.0f - t) / 2.0f;
+        translationAxisMaterials[i]->setTransparency(t2);
+        if(handleType == StandardHandle){
+            rotationAxisMaterials[i]->setTransparency(t2);
+        } else {
+            rotationAxisMaterials[i]->setTransparency(t);
+        }
     }
 }
     
@@ -723,7 +768,7 @@ bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& 
     
     dragProjector.setInitialPosition(T_global);
     
-    if(p_local.norm() < 2.0 * AxisCylinderRadius){
+    if(p_local.norm() < handleWidth){
         dragProjector.setTranslationAlongViewPlane();
     } else {
         dragProjector.setTranslationAxis(T_global.linear().col(axis));
