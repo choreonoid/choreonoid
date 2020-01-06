@@ -86,20 +86,19 @@ public:
 };
 
 
-struct NodeClassRegistration {
-    NodeClassRegistration() {
-        SceneNodeClassRegistry::instance().registerClass<SgViewpointDependentSelector, SgGroup>();
+void registerViewpointDependentSelector(SceneNodeClassRegistry& registry)
+{
+    registry.registerClass<SgViewpointDependentSelector, SgGroup>();
 
-        SceneRenderer::addExtension(
-            [](SceneRenderer* renderer){
-                auto functions = renderer->renderingFunctions();
-                functions->setFunction<SgViewpointDependentSelector>(
-                    [=](SgNode* node){
-                        static_cast<SgViewpointDependentSelector*>(node)->render(renderer);
-                    });
-            });
-    }
-} registration;
+    SceneRenderer::addExtension(
+        [](SceneRenderer* renderer){
+            auto functions = renderer->renderingFunctions();
+            functions->setFunction<SgViewpointDependentSelector>(
+                [=](SgNode* node){
+                    static_cast<SgViewpointDependentSelector*>(node)->render(renderer);
+                });
+        });
+}
 
 }
 
@@ -166,11 +165,18 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
       draggableAxes(axes),
       handleType(handleType)
 {
-    if(handleType == WideHandle){
-        handleWidth = 0.08;
-    } else {
+    auto& registry = SceneNodeClassRegistry::instance();
+    
+    if(handleType != WideHandle){
         handleWidth = 0.04;
+
+    } else {
+        if(!registry.hasRegistration<SgViewpointDependentSelector>()){
+            registerViewpointDependentSelector(registry);
+        }
+        handleWidth = 0.08;
     }
+    
     rotationHandleSizeRatio = 0.6;
     axisGroup = self;
 
