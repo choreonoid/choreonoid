@@ -21,6 +21,19 @@ namespace {
 
 const char* AxisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
 
+const Vector3f AxisColors[3] = {
+    { 1.0f, 0.2f, 0.2f },
+    { 0.2f, 1.0f, 0.2f },
+    { 0.2f, 0.2f, 1.0f }
+};
+
+const Vector3f HighlightedAxisColors[3] = {
+    { 1.0f, 0.4f, 0.4f },
+    { 0.5f, 1.0f, 0.4f },
+    { 0.4f, 0.5f, 1.0f }
+};
+
+
 constexpr float DefaultTransparency = 0.4f;
 
 /**
@@ -113,9 +126,9 @@ public:
     SgScaleTransformPtr translationAxisScale;
     SgScaleTransformPtr rotationAxisScale;
     double rotationHandleSizeRatio;
-    array<SgMaterialPtr, 3> translationAxisMaterials;
-    array<SgMaterialPtr, 3> rotationAxisMaterials;
+    array<SgMaterialPtr, 6> axisMaterials;
     float transparency;
+    int highlightedAxisSet;
     SceneDragProjector dragProjector;
     Signal<void()> sigDragStarted;
     Signal<void()> sigPositionDragged;
@@ -128,7 +141,8 @@ public:
     void createRotationAxisRings(MeshGenerator& meshGenerator);
     void createRotationAxisDiscs(MeshGenerator& meshGenerator);
     void setDraggableAxes(int axisSet);
-    void setTransparency(float t);
+    void setMaterialParameters(int axisSet, float t, bool isHighlighted);
+    void highlightAxes(int axisSet);
     void setOverlayMode(bool on);
     void setConstantPixelSizeMode(bool on, double pixelSizeRatio);
     void showDragMarkers(bool on);
@@ -175,22 +189,21 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
 void PositionDragger::Impl::createDraggers()
 {
     transparency = DefaultTransparency;
+    highlightedAxisSet = 0;
 
     for(int i=0; i < 3; ++i){
         auto material = new SgMaterial;
-        Vector3f color(0.2f, 0.2f, 0.2f);
-        color[i] = 1.0f;
         material->setDiffuseColor(Vector3f::Zero());
-        material->setEmissiveColor(color);
+        material->setEmissiveColor(AxisColors[i]);
         material->setAmbientIntensity(0.0f);
         material->setTransparency(1.0f - (1.0f - transparency) / 2.0f);
-        translationAxisMaterials[i] = material;
+        axisMaterials[i] = material;
 
         auto rotationAxisMaterial = new SgMaterial(*material);
         if(handleType == WideHandle){
             rotationAxisMaterial->setTransparency(transparency);
         }
-        rotationAxisMaterials[i] = rotationAxisMaterial;
+        axisMaterials[i+3] = rotationAxisMaterial;
     }
 
     MeshGenerator meshGenerator;
@@ -219,7 +232,7 @@ void PositionDragger::Impl::createTranslationAxisArrows(MeshGenerator& meshGener
     for(int i=0; i < 3; ++i){
         auto shape = new SgShape;
         shape->setMesh(mesh);
-        shape->setMaterial(translationAxisMaterials[i]);
+        shape->setMaterial(axisMaterials[i]);
             
         auto arrow = new SgPosTransform;
         arrow->addChild(shape);
@@ -253,7 +266,7 @@ void PositionDragger::Impl::createRotationAxisRings(MeshGenerator& meshGenerator
     auto ringMesh = meshGenerator.generateTorus(1.0, radius, 0.0, endAngle);
 
     for(int i=0; i < 3; ++i){
-        auto material = rotationAxisMaterials[i];
+        auto material = axisMaterials[i+3];
         
         auto ringShape = new SgShape;
         ringShape->setMesh(ringMesh);
@@ -298,7 +311,7 @@ void PositionDragger::Impl::createRotationAxisDiscs(MeshGenerator& meshGenerator
         for(int j=0; j < 2; ++j){
             auto shape = new SgShape;
             shape->setMesh(mesh[j]);
-            shape->setMaterial(rotationAxisMaterials[i]);
+            shape->setMaterial(axisMaterials[i+3]);
             auto disc = new SgPosTransform;
             if(i == 0){ // x-axis
                 disc->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
@@ -425,20 +438,40 @@ bool PositionDragger::adjustSize()
 
 void PositionDragger::setTransparency(float t)
 {
-    impl->setTransparency(t);
+    impl->setMaterialParameters(AllAxes, t, false);
+    impl->transparency = t;
+    impl->highlightedAxisSet = 0;
 }
 
 
-void PositionDragger::Impl::setTransparency(float t)
+void PositionDragger::Impl::setMaterialParameters(int axisSet, float t, bool isHighlighted)
 {
-    transparency = t;
-    for(int i=0; i < 3; ++i){
-        float t2 = 1.0f - (1.0f - t) / 2.0f;
-        translationAxisMaterials[i]->setTransparency(t2);
-        if(handleType == WideHandle){
-            rotationAxisMaterials[i]->setTransparency(t);
-        } else {
-            rotationAxisMaterials[i]->setTransparency(t2);
+    float t2 = (t == 0.0f) ? 0.0f : (1.0f - (1.0f - t) / 2.0f);
+    
+    for(int i=0; i < 6; ++i){
+        int axis = i < 3 ? i : i - 3;
+        if(i == 3){
+            if(handleType == WideHandle){
+                t2 = t;
+            }
+        }
+        if(axisSet & (1 << i)){
+            bool updated = false;
+            auto& material = axisMaterials[i];
+            if(t != material->transparency()){
+                material->setTransparency(t2);
+                updated = true;
+            }
+            if(transparency == 0.0f){
+                const Vector3f& color = isHighlighted ? HighlightedAxisColors[axis] : AxisColors[axis];
+                if(color != material->emissiveColor()){
+                    material->setEmissiveColor(color);
+                    updated = true;
+                }
+            }
+            if(updated){
+                material->notifyUpdate();
+            }
         }
     }
 }
@@ -447,6 +480,20 @@ void PositionDragger::Impl::setTransparency(float t)
 float PositionDragger::transparency() const
 {
     return impl->transparency;
+}
+
+
+void PositionDragger::Impl::highlightAxes(int axisSet)
+{
+    if(axisSet != highlightedAxisSet){
+        if(highlightedAxisSet){
+            setMaterialParameters(highlightedAxisSet, transparency, false);
+        }
+        if(axisSet){
+            setMaterialParameters(axisSet, 0.0f, true);
+        }
+        highlightedAxisSet = axisSet;
+    }
 }
 
 
@@ -819,15 +866,24 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 
 bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    if(impl->dragProjector.drag(event)){
+    if(!impl->dragProjector.isDragging()){
+        int axisSet = 0;
+        int axis;
+        int topNodeIndex;
+        if(detectAxisFromNodePath(event.nodePath(), this, axis, topNodeIndex)){
+            axisSet = 1 << axis;
+        }
+        impl->highlightAxes(axisSet);
+
+    } else if(impl->dragProjector.drag(event)){
         if(isContainerMode()){
             setPosition(impl->dragProjector.position());
             notifyUpdate();
         }
         impl->sigPositionDragged();
-        return true;
     }
-    return false;
+    
+    return true;
 }
 
 
@@ -837,6 +893,8 @@ void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
         impl->sigDragFinished();
         impl->dragProjector.resetDragMode();
     }
+
+    impl->highlightAxes(0);
 }
 
 
