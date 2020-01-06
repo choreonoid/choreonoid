@@ -480,16 +480,28 @@ SgMesh* MeshGenerator::generateArrow(double cylinderRadius, double cylinderHeigh
 
 SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
 {
-    int divisionNumber2 = divisionNumber_ / 4;
+    return generateTorus(radius, crossSectionRadius, 0.0, 2.0 * PI);
+}
+
+
+SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius, double beginAngle, double endAngle)
+{
+    bool isSemiTorus = (beginAngle > 0.0) || (endAngle < 2.0 * PI);
+    int phiDivisionNumber = divisionNumber_ * endAngle / (2.0 * PI);
+    double phiStep = (endAngle - beginAngle) / phiDivisionNumber;
+    if(isSemiTorus){
+        phiDivisionNumber += 1;
+    }
+    int thetaDivisionNumber = divisionNumber_ / 4;
 
     auto mesh = new SgMesh;
     auto& vertices = *mesh->getOrCreateVertices();
-    vertices.reserve(divisionNumber_ * divisionNumber2);
+    vertices.reserve(phiDivisionNumber * thetaDivisionNumber);
 
-    for(int i=0; i < divisionNumber_; ++i){
-        double phi = i * 2.0 * PI / divisionNumber_;
-        for(int j=0; j < divisionNumber2; ++j){
-            double theta = j * 2.0 * PI / divisionNumber2;
+    double phi = beginAngle;
+    for(int i=0; i < phiDivisionNumber; ++i){
+        for(int j=0; j < thetaDivisionNumber; ++j){
+            double theta = j * 2.0 * PI / thetaDivisionNumber;
             Vector3f v;
             double r = crossSectionRadius * cos(theta) + radius;
             v.x() = cos(phi) * r;
@@ -497,15 +509,17 @@ SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
             v.z() = sin(phi) * r;
             vertices.push_back(v);
         }
+        phi += phiStep;
     }
 
-    mesh->reserveNumTriangles(2 * divisionNumber_ * divisionNumber2);
+    mesh->reserveNumTriangles(2 * phiDivisionNumber * thetaDivisionNumber);
 
-    for(int i=0; i < divisionNumber_; ++i){
-        int current = i * divisionNumber2;
-        int next = ((i + 1) % divisionNumber_) * divisionNumber2;
-        for(int j=0; j < divisionNumber2; ++j){
-            int j_next = (j + 1) % divisionNumber2;
+    const int n = (endAngle == 2.0 * PI) ? phiDivisionNumber : (phiDivisionNumber - 1);
+    for(int i=0; i < n; ++i){
+        int current = i * thetaDivisionNumber;
+        int next = ((i + 1) % phiDivisionNumber) * thetaDivisionNumber;
+        for(int j=0; j < thetaDivisionNumber; ++j){
+            int j_next = (j + 1) % thetaDivisionNumber;
             mesh->addTriangle(current + j, next + j_next, next + j);
             mesh->addTriangle(current + j, current + j_next, next + j_next);
         }

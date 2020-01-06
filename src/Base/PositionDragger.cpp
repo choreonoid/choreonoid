@@ -21,7 +21,7 @@ namespace {
 
 const char* AxisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
 
-constexpr float DefaultTransparency = 0.6f;
+constexpr float DefaultTransparency = 0.4f;
 
 /**
    \note This node is not inserted the node path obtained by SceneWidgetEvent::nodePath()
@@ -197,10 +197,10 @@ void PositionDragger::Impl::createDraggers()
 
     createTranslationAxisArrows(meshGenerator);
 
-    if(handleType == StandardHandle){
-        createRotationAxisRings(meshGenerator);
-    } else {
+    if(handleType == WideHandle){
         createRotationAxisDiscs(meshGenerator);
+    } else {
+        createRotationAxisRings(meshGenerator);
     }
 }
 
@@ -210,7 +210,10 @@ void PositionDragger::Impl::createTranslationAxisArrows(MeshGenerator& meshGener
     translationAxisScale = new SgScaleTransform;
 
     double endLength = handleWidth * 2.5;
-    double stickLength = 2.0 - endLength * 2.0;
+    double stickLength = 1.0 - endLength;
+    if(!(handleType == PositiveOnlyHandle)){
+        stickLength *= 2.0;
+    }
     SgMeshPtr mesh = meshGenerator.generateArrow(handleWidth / 2.0, stickLength, handleWidth * 1.25, endLength);
     
     for(int i=0; i < 3; ++i){
@@ -223,7 +226,10 @@ void PositionDragger::Impl::createTranslationAxisArrows(MeshGenerator& meshGener
         if(i == 0){
             arrow->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
         } else if(i == 2){
-            arrow->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
+            arrow->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
+        }
+        if(handleType == PositiveOnlyHandle){
+            arrow->translation()[i] = stickLength / 2.0;
         }
         arrow->setName(AxisNames[i]);
 
@@ -242,7 +248,9 @@ void PositionDragger::Impl::createRotationAxisRings(MeshGenerator& meshGenerator
     rotationAxisScale = new SgScaleTransform;
 
     meshGenerator.setDivisionNumber(36);
-    auto ringMesh = meshGenerator.generateTorus(1.0, handleWidth / 2.0 / rotationHandleSizeRatio);
+    double radius = handleWidth / 2.0 / rotationHandleSizeRatio;
+    double endAngle = (handleType == PositiveOnlyHandle) ? (PI / 2.0) : 2.0 * PI;
+    auto ringMesh = meshGenerator.generateTorus(1.0, radius, 0.0, endAngle);
 
     for(int i=0; i < 3; ++i){
         auto material = rotationAxisMaterials[i];
@@ -253,9 +261,9 @@ void PositionDragger::Impl::createRotationAxisRings(MeshGenerator& meshGenerator
 
         auto ring = new SgPosTransform;
         if(i == 0){ // x-axis
-            ring->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+            ring->setRotation(AngleAxis(PI / 2.0, Vector3::UnitZ()));
         } else if(i == 2) { // z-axis
-            ring->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
+            ring->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitX()));
         }
         ring->addChild(ringShape);
         ring->setName(AxisNames[i + 3]);
@@ -276,10 +284,11 @@ void PositionDragger::Impl::createRotationAxisDiscs(MeshGenerator& meshGenerator
     rotationAxisScale = new SgScaleTransform;
 
     SgMesh* mesh[2];
+    double width = handleWidth / rotationHandleSizeRatio;
     meshGenerator.setDivisionNumber(36);
-    mesh[0] = meshGenerator.generateDisc(1.0, 1.0 - 0.2);
+    mesh[0] = meshGenerator.generateDisc(1.0, 1.0 - width);
     meshGenerator.setDivisionNumber(24);
-    mesh[1] = meshGenerator.generateCylinder(1.0, 0.2, false, false);
+    mesh[1] = meshGenerator.generateCylinder(1.0, width, false, false);
 
     for(int i=0; i < 3; ++i){
         auto selector = new SgViewpointDependentSelector;
@@ -392,7 +401,10 @@ bool PositionDragger::adjustSize(const BoundingBox& bb)
 
     Vector3 s = bb.size() / 2.0;
     std::sort(s.data(), s.data() + 3);
-    double r = Vector2(s[0], s[1]).norm() * 1.05;
+    double r = Vector2(s[0], s[1]).norm();
+    if(!impl->isOverlayMode){
+        r *= 1.05;
+    }
     setHandleSize(r / impl->rotationHandleSizeRatio);
     return true;
 }
@@ -423,10 +435,10 @@ void PositionDragger::Impl::setTransparency(float t)
     for(int i=0; i < 3; ++i){
         float t2 = 1.0f - (1.0f - t) / 2.0f;
         translationAxisMaterials[i]->setTransparency(t2);
-        if(handleType == StandardHandle){
-            rotationAxisMaterials[i]->setTransparency(t2);
-        } else {
+        if(handleType == WideHandle){
             rotationAxisMaterials[i]->setTransparency(t);
+        } else {
+            rotationAxisMaterials[i]->setTransparency(t2);
         }
     }
 }

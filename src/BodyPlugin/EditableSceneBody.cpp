@@ -297,9 +297,8 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     outlinedLink = nullptr;
     targetLink = nullptr;
 
-    positionDragger = new PositionDragger;
+    positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
     //positionDragger->setAutoScaleMode(true, 64.0);
-    //positionDragger->setTransparency(0.0f);
     positionDragger->setOverlayMode(true);
     positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
     positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });

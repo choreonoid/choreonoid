@@ -28,7 +28,8 @@ public:
 
     enum HandleType {
         StandardHandle = 0,
-        WideHandle = 1
+        PositiveOnlyHandle = 1,
+        WideHandle = 2,
     };
         
     PositionDragger(int axes = AllAxes, int handleType = StandardHandle);
