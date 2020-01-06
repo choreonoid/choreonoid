@@ -1485,7 +1485,9 @@ bool BodyItemImpl::store(Archive& archive)
     archive.setDoubleFormat("% .6f");
 
     archive.writeRelocatablePath("modelFile", self->filePath());
-    archive.write("currentBaseLink", (currentBaseLink ? currentBaseLink->name() : ""), DOUBLE_QUOTED);
+    if(currentBaseLink){
+        archive.write("currentBaseLink", currentBaseLink->name(), DOUBLE_QUOTED);
+    }
 
     /// \todo Improve the following for current / initial position representations
     write(archive, "rootPosition", body->rootLink()->p());
@@ -1652,7 +1654,9 @@ bool BodyItemImpl::restore(const Archive& archive)
     read(archive, "zmp", zmp);
         
     body->calcForwardKinematics();
-    setCurrentBaseLink(body->link(archive.get("currentBaseLink", "")));
+    string baseLinkName;
+    archive.read("currentBaseLink", baseLinkName);
+    setCurrentBaseLink(body->link(baseLinkName));
 
     bool staticModel;
     if(archive.read("staticModel", staticModel)){
