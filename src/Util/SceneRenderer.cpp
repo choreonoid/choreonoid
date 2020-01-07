@@ -275,6 +275,12 @@ bool SceneRenderer::doPick(int /* x */, int /* y */)
 }
 
 
+bool SceneRenderer::isPicking() const
+{
+    return false;
+}
+
+
 void SceneRenderer::setProperty(PropertyKey key, bool value)
 {
     impl->setProperty(key, value);

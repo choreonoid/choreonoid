@@ -87,7 +87,6 @@ public:
     
     virtual const Vector3& pickedPoint() const = 0;
     virtual const SgNodePath& pickedNodePath() const = 0;
-    virtual bool isPicking() const = 0;
 
     virtual void setColor(const Vector3f& color) = 0;
 

@@ -78,6 +78,8 @@ public:
     
     void render();
     bool pick(int x, int y);
+
+    virtual bool isPicking() const;
     
     virtual void flush() = 0;
 

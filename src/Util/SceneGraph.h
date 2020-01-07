@@ -234,6 +234,11 @@ public:
     void copyChildrenTo(SgGroup* group, bool doNotify = false);
     void moveChildrenTo(SgGroup* group, bool doNotify = false);
 
+    SgGroup* nextChainedGroup();
+    SgGroup* lastChainedGroup();
+    void insertChainedGroup(SgGroup* group);
+    void removeChainedGroup(SgGroup* group);
+
     template<class NodeType> NodeType* findNodeOfType(int depth = -1) {
         for(int i=0; i < numChildren(); ++i){
             if(NodeType* node = dynamic_cast<NodeType*>(child(i))) return node;

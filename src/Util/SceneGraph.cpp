@@ -422,6 +422,52 @@ void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
 }
 
 
+SgGroup* SgGroup::nextChainedGroup()
+{
+    SgGroup* nextGroup = nullptr;
+    if(children.size() == 1){
+        nextGroup = dynamic_cast<SgGroup*>(children.front().get());
+    }
+    return nextGroup;
+}
+
+
+SgGroup* SgGroup::lastChainedGroup()
+{
+    auto group = this;
+    while(true){
+        if(auto next = group->nextChainedGroup()){
+            group = next;
+        } else {
+            break;
+        }
+    }
+    return group;
+}
+
+
+void SgGroup::insertChainedGroup(SgGroup* group)
+{
+    moveChildrenTo(group);
+    addChild(group);
+}
+
+
+void SgGroup::removeChainedGroup(SgGroup* group)
+{
+    SgGroup* parent = this;
+    auto next = nextChainedGroup();
+    while(next){
+        if(next == group){
+            parent->removeChild(next);
+            next->moveChildrenTo(parent);
+            break;
+        }
+        next = next->nextChainedGroup();
+    }
+}
+
+
 void SgGroup::throwTypeMismatchError()
 {
     throw type_mismatch_error();

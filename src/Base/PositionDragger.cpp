@@ -36,6 +36,39 @@ const Vector3f HighlightedAxisColors[3] = {
 
 constexpr float DefaultTransparency = 0.4f;
 
+
+class SgPickingSwitch : public SgGroup
+{
+    int switchBoundaryIndex;
+    
+public:
+    SgPickingSwitch() : SgGroup(findClassId<SgPickingSwitch>())
+    {
+        switchBoundaryIndex = 0;
+    }
+
+    void setBoundaryIndex(int index)
+    {
+        switchBoundaryIndex = index;
+    }
+    
+    void render(SceneRenderer* renderer)
+    {
+        if(!renderer->isPicking()){
+            const int n = std::min(switchBoundaryIndex, numChildren());
+            for(int i=0; i < n; ++i){
+                renderer->renderNode(child(i));
+            }
+        } else {
+            const int n = numChildren();
+            for(int i=switchBoundaryIndex; i < n; ++i){
+                renderer->renderNode(child(i));
+            }
+        }
+    }
+};
+    
+
 /**
    \note This node is not inserted the node path obtained by SceneWidgetEvent::nodePath()
 */
@@ -46,30 +79,24 @@ class SgViewpointDependentSelector : public SgGroup
     
 public:
     SgViewpointDependentSelector()
-        : SgGroup(findClassId<SgViewpointDependentSelector>()) {
+        : SgGroup(findClassId<SgViewpointDependentSelector>())
+    {
         axis = Vector3::UnitX();
         thresh = cos(radian(45.0));
     }
 
-    SgViewpointDependentSelector(const SgViewpointDependentSelector& org, CloneMap* cloneMap)
-        : SgGroup(org, cloneMap) {
-        axis = org.axis;
-        thresh = org.thresh;
-    }
-
-    virtual Referenced* doClone(CloneMap* cloneMap) const override {
-        return new SgViewpointDependentSelector(*this, cloneMap);
-    }
-
-    void setAxis(const Vector3& axis){
+    void setAxis(const Vector3& axis)
+    {
         this->axis = axis;
     }
 
-    void setSwitchAngle(double rad){
+    void setSwitchAngle(double rad)
+    {
         thresh = cos(rad);
     }
 
-    void render(SceneRenderer* renderer) {
+    void render(SceneRenderer* renderer)
+    {
         const Affine3& C = renderer->currentCameraPosition();
         const Affine3& M = renderer->currentModelTransform();
         double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
@@ -84,6 +111,21 @@ public:
         }
     }
 };
+
+
+void registerPickingSwitch(SceneNodeClassRegistry& registry)
+{
+    registry.registerClass<SgPickingSwitch, SgGroup>();
+
+    SceneRenderer::addExtension(
+        [](SceneRenderer* renderer){
+            auto functions = renderer->renderingFunctions();
+            functions->setFunction<SgPickingSwitch>(
+                [=](SgNode* node){
+                    static_cast<SgPickingSwitch*>(node)->render(renderer);
+                });
+        });
+}
 
 
 void registerViewpointDependentSelector(SceneNodeClassRegistry& registry)
@@ -142,8 +184,6 @@ public:
     void setDraggableAxes(int axisSet);
     void setMaterialParameters(int axisSet, float t, bool isHighlighted);
     void highlightAxes(int axisSet);
-    void setOverlayMode(bool on);
-    void setConstantPixelSizeMode(bool on, double pixelSizeRatio);
     void showDragMarkers(bool on);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
     bool onTranslationDraggerPressed(const SceneWidgetEvent& event, int axis, int topNodeIndex);
@@ -168,6 +208,9 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     auto& registry = SceneNodeClassRegistry::instance();
     
     if(handleType != WideHandle){
+        if(!registry.hasRegistration<SgPickingSwitch>()){
+            registerPickingSwitch(registry);
+        }
         handleWidth = 0.04;
 
     } else {
@@ -505,40 +548,17 @@ void PositionDragger::Impl::highlightAxes(int axisSet)
 
 void PositionDragger::setOverlayMode(bool on)
 {
-    impl->setOverlayMode(on);
-}
-
-
-void PositionDragger::Impl::setOverlayMode(bool on)
-{
-    if(on != isOverlayMode){
+    if(on != impl->isOverlayMode){
         if(on){
-            if(!overlay){
-                overlay = new SgOverlay;
+            if(!impl->overlay){
+                impl->overlay = new SgOverlay;
             }
-            self->moveChildrenTo(overlay);
-            self->addChild(overlay);
-            if(axisGroup == self){
-                axisGroup = overlay;
-            }
+            insertChainedGroup(impl->overlay);
         } else {
-            SgGroup* parent;
-            if(self->contains(overlay)){
-                parent = self;
-            } else {
-                parent = autoScale;
-            }
-            parent->removeChild(overlay);
-            overlay->moveChildrenTo(parent);
-            if(axisGroup == overlay){
-                if(isConstantPixelSizeMode){
-                    axisGroup = autoScale;
-                } else {
-                    axisGroup = self;
-                }
-            }
+            removeChainedGroup(impl->overlay);
         }
-        isOverlayMode = on;
+        impl->axisGroup = lastChainedGroup();
+        impl->isOverlayMode = on;
     }
 }
 
@@ -551,43 +571,20 @@ bool PositionDragger::isOverlayMode() const
 
 void PositionDragger::setConstantPixelSizeMode(bool on, double pixelSizeRatio)
 {
-    impl->setConstantPixelSizeMode(on, pixelSizeRatio);
-}
-
-
-void PositionDragger::Impl::setConstantPixelSizeMode(bool on, double pixelSizeRatio)
-{
-    if(autoScale){
-        autoScale->setPixelSizeRatio(pixelSizeRatio);
+    if(impl->autoScale){
+        impl->autoScale->setPixelSizeRatio(pixelSizeRatio);
     }
-    if(on != isConstantPixelSizeMode){
+    if(on != impl->isConstantPixelSizeMode){
         if(on){
-            if(!autoScale){
-                autoScale = new SgAutoScale(pixelSizeRatio);
+            if(!impl->autoScale){
+                impl->autoScale = new SgAutoScale(pixelSizeRatio);
             }
-            self->moveChildrenTo(autoScale);
-            self->addChild(autoScale);
-            if(axisGroup == self){
-                axisGroup = autoScale;
-            }
+            insertChainedGroup(impl->autoScale);
         } else {
-            SgGroup* parent;
-            if(self->contains(autoScale)){
-                parent = self;
-            } else {
-                parent = overlay;
-            }
-            parent->removeChild(autoScale);
-            autoScale->moveChildrenTo(parent);
-            if(axisGroup == autoScale){
-                if(isOverlayMode){
-                    axisGroup = overlay;
-                } else {
-                    axisGroup = self;
-                }
-            }
+            removeChainedGroup(impl->autoScale);
         }
-        isConstantPixelSizeMode = on;
+        impl->axisGroup = lastChainedGroup();
+        impl->isConstantPixelSizeMode = on;
     }
 }
 
