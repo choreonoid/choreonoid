@@ -151,6 +151,7 @@ class PositionDragger::Impl
 public:
     PositionDragger* self;
     int draggableAxes;
+    SgSwitchPtr axisSwitch[6];
     int handleType;
     double handleWidth;
     Signal<void(int axisSet)> sigDraggableAxesChanged;
@@ -218,6 +219,10 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
             registerViewpointDependentSelector(registry);
         }
         handleWidth = 0.08;
+    }
+
+    for(int i=0; i < 6; ++i){
+        axisSwitch[i] = new SgSwitch(draggableAxes & (1 << i));
     }
     
     rotationHandleSizeRatio = 0.6;
@@ -295,9 +300,8 @@ void PositionDragger::Impl::createTranslationAxisArrows(MeshGenerator& meshGener
         }
         arrow->setName(AxisNames[i]);
 
-        auto axis = new SgSwitch;
+        auto axis = new SgSwitchableGroup(axisSwitch[i]);
         axis->addChild(arrow);
-        axis->setTurnedOn(draggableAxes & (1 << i));
         translationAxisScale->addChild(axis);
     }
 
@@ -330,9 +334,8 @@ void PositionDragger::Impl::createRotationAxisRings(MeshGenerator& meshGenerator
         ring->addChild(ringShape);
         ring->setName(AxisNames[i + 3]);
 
-        auto axis = new SgSwitch;
+        auto axis = new SgSwitchableGroup(axisSwitch[i + 3]);
         axis->addChild(ring);
-        axis->setTurnedOn(draggableAxes & (1 << (i + 3)));
 
         rotationAxisScale->addChild(axis);
     }
@@ -371,9 +374,8 @@ void PositionDragger::Impl::createRotationAxisDiscs(MeshGenerator& meshGenerator
             disc->setName(AxisNames[i + 3]);
             selector->addChild(disc);
         }
-        auto axis = new SgSwitch;
+        auto axis = new SgSwitchableGroup(axisSwitch[i + 3]);
         axis->addChild(selector);
-        axis->setTurnedOn(draggableAxes & (1 << (i + 3)));
         rotationAxisScale->addChild(axis);
     }
 
@@ -390,16 +392,10 @@ void PositionDragger::setDraggableAxes(int axisSet)
 void PositionDragger::Impl::setDraggableAxes(int axisSet)
 {
     if(axisSet != draggableAxes){
-        for(int i=0; i < 3; ++i){
-            if(auto axis = dynamic_cast<SgSwitch*>(translationAxisScale->child(i))){
-                axis->setTurnedOn(axisSet & (1 << i));
-            }
-            if(auto axis = dynamic_cast<SgSwitch*>(rotationAxisScale->child(i))){
-                axis->setTurnedOn(axisSet & (1 << (i + 3)));
-            }
+        for(int i=0; i < 6; ++i){
+            axisSwitch[i]->setTurnedOn(axisSet & (1 << i), true);
         }
         draggableAxes = axisSet;
-        self->notifyUpdate();
     }
 }
 

@@ -727,15 +727,14 @@ Referenced* SgAutoScale::doClone(CloneMap* cloneMap) const
 }
 
 
-SgSwitch::SgSwitch()
-    : SgGroup(findClassId<SgSwitch>())
+SgSwitch::SgSwitch(bool on)
 {
-    isTurnedOn_ = true;
+    isTurnedOn_ = on;
 }
 
 
-SgSwitch::SgSwitch(const SgSwitch& org, CloneMap* cloneMap)
-    : SgGroup(org, cloneMap)
+SgSwitch::SgSwitch(const SgSwitch& org)
+    : SgObject(org)
 {
     isTurnedOn_ = org.isTurnedOn_;
 }
@@ -743,15 +742,85 @@ SgSwitch::SgSwitch(const SgSwitch& org, CloneMap* cloneMap)
 
 Referenced* SgSwitch::doClone(CloneMap* cloneMap) const
 {
-    return new SgSwitch(*this, cloneMap);
+    return new SgSwitch(*this);
 }
 
 
 void SgSwitch::setTurnedOn(bool on, bool doNotify)
 {
-    isTurnedOn_ = on;
-    if(doNotify){
-        notifyUpdate();
+    if(on != isTurnedOn_){
+        isTurnedOn_ = on;
+        if(doNotify){
+            notifyUpdate();
+        }
+    }
+}    
+
+
+SgSwitchableGroup::SgSwitchableGroup()
+    : SgGroup(findClassId<SgSwitchableGroup>())
+{
+    isTurnedOn_ = true;
+}
+
+
+SgSwitchableGroup::SgSwitchableGroup(SgSwitch* switchObject)
+    : SgSwitchableGroup()
+{
+    setSwitch(switchObject);
+}
+
+
+SgSwitchableGroup::SgSwitchableGroup(const SgSwitchableGroup& org, CloneMap* cloneMap)
+    : SgGroup(org, cloneMap)
+{
+    if(org.switchObject){
+        if(cloneMap){
+            switchObject = cloneMap->getClone<SgSwitch>(org.switchObject);
+        } else {
+            switchObject = org.switchObject;
+        }
+    } 
+    isTurnedOn_ = org.isTurnedOn_;
+}
+
+
+SgSwitchableGroup::~SgSwitchableGroup()
+{
+    if(switchObject){
+        switchObject->removeParent(this);
+    }
+}
+
+
+void SgSwitchableGroup::setSwitch(SgSwitch* newSwitchObject)
+{
+    if(switchObject){
+        switchObject->removeParent(this);
+    }
+    switchObject = newSwitchObject;
+    if(newSwitchObject){
+        newSwitchObject->addParent(this);
+    }
+}
+        
+        
+Referenced* SgSwitchableGroup::doClone(CloneMap* cloneMap) const
+{
+    return new SgSwitchableGroup(*this, cloneMap);
+}
+
+
+void SgSwitchableGroup::setTurnedOn(bool on, bool doNotify)
+{
+    if(switchObject){
+        switchObject->setTurnedOn(on, doNotify);
+
+    } else if(on != isTurnedOn_){
+        isTurnedOn_ = on;
+        if(doNotify){
+            notifyUpdate();
+        }
     }
 }
 
@@ -802,7 +871,7 @@ struct NodeClassRegistration {
             .registerClass<SgPosTransform, SgTransform>()
             .registerClass<SgScaleTransform, SgTransform>()
             .registerClass<SgAutoScale, SgGroup>()
-            .registerClass<SgSwitch, SgGroup>()
+            .registerClass<SgSwitchableGroup, SgGroup>()
             .registerClass<SgUnpickableGroup, SgGroup>()
             .registerClass<SgPreprocessed, SgNode>();
     }

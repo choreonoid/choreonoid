@@ -40,7 +40,7 @@ LinkManager::initialize()
 
     for(int i=0 ; i<VISIBLE_ROOT_NODE_SIZE ; ++i){
         if( !_visRootNodeAry[i] ){
-            _visRootNodeAry[i] = new SgSwitch();
+            _visRootNodeAry[i] = new SgSwitchableGroup();
             _visRootNodeAry[i]->setTurnedOn(true);
             SceneView::instance()->scene()->addChild(_visRootNodeAry[i]);
         }
@@ -48,7 +48,7 @@ LinkManager::initialize()
 
 
     if( !_nonVisRootNode ){
-        _nonVisRootNode = new SgSwitch();
+        _nonVisRootNode = new SgSwitchableGroup();
         _nonVisRootNode->setTurnedOn(true);
         SceneView::instance()->scene()->addChild(_nonVisRootNode);
     }
@@ -174,13 +174,13 @@ LinkManager::mesh(const Link* link, vector<Triangle3d>& triAry)
     }
 }
 
-SgSwitchPtr
+SgSwitchableGroupPtr
 LinkManager::visibleRootNode(int idx)
 {
     return _visRootNodeAry[idx];
 }
 
-SgSwitchPtr
+SgSwitchableGroupPtr
 LinkManager::nonVisibleRootNode()
 {
     return _nonVisRootNode;

@@ -465,14 +465,40 @@ private:
 typedef ref_ptr<SgAutoScale> SgAutoScalePtr;
 
 
-class CNOID_EXPORT SgSwitch : public SgGroup
+class CNOID_EXPORT SgSwitch : public SgObject
 {
 public:
-    SgSwitch();
-    SgSwitch(const SgSwitch& org, CloneMap* cloneMap = nullptr);
-
+    SgSwitch(bool on = true);
+    SgSwitch(const SgSwitch& org);
+    
     void setTurnedOn(bool on, bool doNotify = false);
     bool isTurnedOn() const { return isTurnedOn_; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    bool isTurnedOn_;
+};
+
+typedef ref_ptr<SgSwitch> SgSwitchPtr;
+
+
+class CNOID_EXPORT SgSwitchableGroup : public SgGroup
+{
+public:
+    SgSwitchableGroup();
+    SgSwitchableGroup(SgSwitch* switchObject);
+    SgSwitchableGroup(const SgSwitchableGroup& org, CloneMap* cloneMap = nullptr);
+    ~SgSwitchableGroup();
+
+    void setSwitch(SgSwitch* newSwitchObject);
+
+    void setTurnedOn(bool on, bool doNotify = false);
+
+    bool isTurnedOn() const {
+        return switchObject ? switchObject->isTurnedOn() : isTurnedOn_;
+    }
 
     //! \deprecated
     void turnOn(bool doNotify = false) { setTurnedOn(true, doNotify); }
@@ -483,10 +509,11 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
+    SgSwitchPtr switchObject;
     bool isTurnedOn_;
 };
 
-typedef ref_ptr<SgSwitch> SgSwitchPtr;
+typedef ref_ptr<SgSwitchableGroup> SgSwitchableGroupPtr;
 
 
 class CNOID_EXPORT SgUnpickableGroup : public SgGroup

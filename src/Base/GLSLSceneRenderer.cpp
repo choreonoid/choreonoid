@@ -375,7 +375,7 @@ public:
     void renderGroup(SgGroup* group);
     void renderTransform(SgTransform* transform);
     void renderAutoScale(SgAutoScale* autoScale);
-    void renderSwitch(SgSwitch* node);
+    void renderSwitchableGroup(SgSwitchableGroup* group);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     VertexResource* getOrCreateVertexResource(SgObject* obj);
     void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position);
@@ -513,8 +513,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgTransform* node){ renderTransform(node); });
     renderingFunctions.setFunction<SgAutoScale>(
         [&](SgAutoScale* node){ renderAutoScale(node); });
-    renderingFunctions.setFunction<SgSwitch>(
-        [&](SgSwitch* node){ renderSwitch(node); });
+    renderingFunctions.setFunction<SgSwitchableGroup>(
+        [&](SgSwitchableGroup* node){ renderSwitchableGroup(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
         [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
     renderingFunctions.setFunction<SgShape>(
@@ -1461,10 +1461,10 @@ void GLSLSceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> 
 }
 
 
-void GLSLSceneRendererImpl::renderSwitch(SgSwitch* node)
+void GLSLSceneRendererImpl::renderSwitchableGroup(SgSwitchableGroup* group)
 {
-    if(node->isTurnedOn()){
-        renderGroup(node);
+    if(group->isTurnedOn()){
+        renderGroup(group);
     }
 }
 
