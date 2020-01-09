@@ -1379,6 +1379,20 @@ Matrix4 GLSLSceneRenderer::modelViewProjectionMatrix() const
 }
 
 
+double GLSLSceneRenderer::currentProjectedPixelSizeRatio() const
+{
+    auto vp = viewport();
+    Affine3 MV = impl->viewTransform * impl->modelMatrixStack.back();
+    Vector4 p(1.0, 0.0, MV.translation().z(), 1.0);
+    Vector4 q = impl->projectionMatrix * p;
+    double r = (q.x() / q[3]) * vp[2] / 2.0;
+    if(r < 0.0){
+        r = 0.0;
+    }
+    return r;
+}
+
+    
 bool GLSLSceneRenderer::isPicking() const
 {
     return impl->isPicking;
@@ -1479,15 +1493,17 @@ void GLSLSceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 
 void GLSLSceneRendererImpl::renderTransform(SgTransform* transform)
 {
-    Affine3 T;
-    transform->getTransform(T);
-    modelMatrixStack.push_back(modelMatrixStack.back() * T);
-    pushPickNode(transform);
+    if(!transform->empty()){
+        Affine3 T;
+        transform->getTransform(T);
+        modelMatrixStack.push_back(modelMatrixStack.back() * T);
+        pushPickNode(transform);
 
-    renderChildNodes(transform);
+        renderChildNodes(transform);
 
-    popPickNode();
-    modelMatrixStack.pop_back();
+        popPickNode();
+        modelMatrixStack.pop_back();
+    }
 }
 
 
@@ -1507,18 +1523,17 @@ void GLSLSceneRenderer::renderCustomTransform(SgTransform* transform, std::funct
 
 void GLSLSceneRendererImpl::renderAutoScale(SgAutoScale* autoScale)
 {
-    auto vp = self->viewport();
-    Affine3 MV = viewTransform * modelMatrixStack.back();
-    Vector4 p(1.0, 0.0, MV.translation().z(), 1.0);
-    Vector4 q = projectionMatrix * p;
-    double o = (q.x() / q[3]) * vp[2] / 2.0;
-    double s = autoScale->pixelSizeRatio() / o;
-    Vector3 scale(s, s, s);
-    Affine3 S(scale.asDiagonal());
+    double r = self->currentProjectedPixelSizeRatio();
+
+    if(r > 0.0){
+        double s = autoScale->pixelSizeRatio() / r;
+        Vector3 scale(s, s, s);
+        Affine3 S(scale.asDiagonal());
     
-    modelMatrixStack.push_back(modelMatrixStack.back() * S);
-    renderGroup(autoScale);
-    modelMatrixStack.pop_back();
+        modelMatrixStack.push_back(modelMatrixStack.back() * S);
+        renderGroup(autoScale);
+        modelMatrixStack.pop_back();
+    }
 }
     
 

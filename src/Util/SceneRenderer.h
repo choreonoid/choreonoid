@@ -69,6 +69,7 @@ public:
 
     virtual const Affine3& currentModelTransform() const = 0;
     virtual const Matrix4& projectionMatrix() const = 0;
+    virtual double currentProjectedPixelSizeRatio() const = 0;
 
     /**
        This function updates the information on preprocessed nodes such as

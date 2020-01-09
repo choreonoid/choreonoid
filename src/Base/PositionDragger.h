@@ -102,8 +102,9 @@ public:
     void setDraggerAlwaysHidden(bool on);
     bool isDraggerAlwaysHidden() const;
 
-private:
     class Impl;
+
+private:
     Impl* impl;
 };
     

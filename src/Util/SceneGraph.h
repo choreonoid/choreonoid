@@ -235,7 +235,6 @@ public:
     void moveChildrenTo(SgGroup* group, bool doNotify = false);
 
     SgGroup* nextChainedGroup();
-    SgGroup* lastChainedGroup();
     void insertChainedGroup(SgGroup* group);
     void removeChainedGroup(SgGroup* group);
 
@@ -364,6 +363,7 @@ class CNOID_EXPORT SgScaleTransform : public SgTransform
 {
 public:
     SgScaleTransform();
+    SgScaleTransform(double scale);
     SgScaleTransform(const Vector3& scale);
     SgScaleTransform(const SgScaleTransform& org, CloneMap* cloneMap);
     virtual const BoundingBox& boundingBox() const override;

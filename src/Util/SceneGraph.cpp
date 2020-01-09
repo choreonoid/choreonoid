@@ -432,20 +432,6 @@ SgGroup* SgGroup::nextChainedGroup()
 }
 
 
-SgGroup* SgGroup::lastChainedGroup()
-{
-    auto group = this;
-    while(true){
-        if(auto next = group->nextChainedGroup()){
-            group = next;
-        } else {
-            break;
-        }
-    }
-    return group;
-}
-
-
 void SgGroup::insertChainedGroup(SgGroup* group)
 {
     moveChildrenTo(group);
@@ -585,6 +571,14 @@ SgScaleTransform::SgScaleTransform(int classId)
 
 SgScaleTransform::SgScaleTransform()
     : SgScaleTransform(findClassId<SgScaleTransform>())
+{
+
+}
+
+
+SgScaleTransform::SgScaleTransform(double scale)
+    : SgTransform(findClassId<SgScaleTransform>()),
+      scale_(scale, scale, scale)
 {
 
 }

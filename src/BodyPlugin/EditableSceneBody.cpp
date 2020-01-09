@@ -298,6 +298,7 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     targetLink = nullptr;
 
     positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
+    //positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::WideHandle);
     //positionDragger->setConstantPixelSizeMode(true, 64.0);
     positionDragger->setOverlayMode(true);
     positionDragger->setDisplayMode(PositionDragger::DisplayAlways);

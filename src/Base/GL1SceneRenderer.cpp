@@ -961,34 +961,37 @@ void GL1SceneRendererImpl::renderSwitchableGroup(SgSwitchableGroup* group)
 
 void GL1SceneRendererImpl::renderTransform(SgTransform* transform)
 {
-    Affine3 T;
-    transform->getTransform(T);
+    if(!transform->empty()){
+        
+        Affine3 T;
+        transform->getTransform(T);
 
-    Vstack.push_back(Vstack.back() * T);
+        Vstack.push_back(Vstack.back() * T);
 
-    glPushMatrix();
-    glMultMatrixd(T.data());
+        glPushMatrix();
+        glMultMatrixd(T.data());
 
-    /*
-      if(isNotRotationMatrix){
-      glPushAttrib(GL_ENABLE_BIT);
-      glEnable(GL_NORMALIZE);
-      }
-    */
+        /*
+        if(isNotRotationMatrix){
+          glPushAttrib(GL_ENABLE_BIT);
+          glEnable(GL_NORMALIZE);
+        }
+        */
 
-    // renderGroup(transform);
-    pushPickName(transform);
-    renderChildNodes(transform);
-    popPickName();
+        // renderGroup(transform);
+        pushPickName(transform);
+        renderChildNodes(transform);
+        popPickName();
     
-    /*
-      if(isNotRotationMatrix){
-      glPopAttrib();
-      }
-    */
+        /*
+        if(isNotRotationMatrix){
+          glPopAttrib();
+        }
+        */
     
-    glPopMatrix();
-    Vstack.pop_back();
+        glPopMatrix();
+        Vstack.pop_back();
+    }
 }
 
 
@@ -2176,6 +2179,20 @@ const Affine3& GL1SceneRenderer::currentModelTransform() const
 const Matrix4& GL1SceneRenderer::projectionMatrix() const
 {
     return impl->lastProjectionMatrix;
+}
+
+
+double GL1SceneRenderer::currentProjectedPixelSizeRatio() const
+{
+    auto vp = viewport();
+    double z = impl->Vstack.back().translation().z();
+    Vector4 p(1.0, 0.0, z, 1.0);
+    Vector4 q = impl->lastProjectionMatrix * p;
+    double r = (q.x() / q[3]) * vp[2] / 2.0;
+    if(r < 0.0){
+        r = 0.0;
+    }
+    return r;
 }
 
 
