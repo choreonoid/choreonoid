@@ -42,6 +42,7 @@
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QGridLayout>
+#include <QPainter>
 #include <fmt/format.h>
 #include <set>
 #include <iostream>
@@ -186,11 +187,17 @@ public:
         box->addWidget(&label);
         setLayout(box);
     }
-    void setImage(const Image& image){
+    void setImage(const Image& image, int cursorX, int cursorY){
         if(image.numComponents() == 4){
             pixmap.convertFromImage(
                 QImage(image.pixels(), image.width(), image.height(), QImage::Format_RGBA8888));
             pixmap.setDevicePixelRatio(devicePixelRatio());
+
+            QPainter painter(&pixmap);
+            painter.setPen(Qt::white);
+            painter.drawLine(cursorX - 4, cursorY, cursorX + 4, cursorY);
+            painter.drawLine(cursorX, cursorY - 4, cursorX, cursorY + 4);
+            
             label.setPixmap(pixmap);
         }
     }
@@ -1172,12 +1179,14 @@ void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
     makeCurrent();
 
     const int r = devicePixelRatio();
-    bool picked = renderer->pick(r * latestEvent.x(), r * latestEvent.y());
+    int px = r * latestEvent.x();
+    int py = r * latestEvent.y();
+    bool picked = renderer->pick(px, py);
 
     if(isPickingBufferVisualizationEnabled){
         Image image;
         if(renderer->getPickingBufferImage(image)){
-            pickingBufferImageWindow->setImage(image);
+            pickingBufferImageWindow->setImage(image, px, image.height() - py - 1);
         }
     }
 
