@@ -27,12 +27,15 @@
 #include <QKeyEvent>
 #include <QApplication>
 #include <QFileDialog>
+#include <fmt/format.h>
+#include <regex>
 #include <cmath>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -76,14 +79,6 @@ typedef stdx::variant<
     std::function<bool(double)>,
     std::function<bool(const string&)>
     > FunctionVariant;
-
-template<class ValueType> class ReturnTrue {
-public:
-    typedef bool result_type;
-    std::function<void(ValueType)> func;
-    ReturnTrue(std::function<void(ValueType)> func) : func(func) { }
-    bool operator()(ValueType value) const { func(value); return true; }
-};
 
 enum TypeId { TYPE_BOOL, TYPE_INT, TYPE_DOUBLE, TYPE_STRING, TYPE_SELECTION, TYPE_FILEPATH };
 
@@ -330,13 +325,24 @@ public:
                 value.setBaseDirectory("");
             }
             string filename(filenames.at(0).toStdString());
-            if(value.baseDirectory().empty()){
-                value.setFilename(filename);
-            } else {
-                value.setFilename(filesystem::path(filename).filename().string());
+            if(!value.baseDirectory().empty()){
+                filename = filesystem::path(filename).filename().string();
             }
+            if(value.isExtensionRemovalModeForFileDialogSelection()){
+                regex pattern1(".+\\(\\*\\.(.+)\\)");
+                std::smatch match;
+                for(auto& filter : value.filters()){
+                    if(regex_match(filter, match, pattern1)){
+                        regex pattern2(format("^(.+)(\\.{})$", match.str(1)), std::regex_constants::icase);
+                        if(regex_match(filename, match, pattern2)){
+                            filename = regex_replace(filename, pattern2, "$1");
+                            break;
+                        }
+                    }
+                }
+            }
+            value.setFilename(filename);
             editor->setValue(value);
-
             commitData(editor);
         }
     }
@@ -446,22 +452,14 @@ public:
     virtual void operator()(const std::string& name, bool value, const std::function<bool(bool)>& func) {
         addProperty(name, new PropertyItem(this, value, func));
     }
-    virtual void operator()(const std::string& name, bool value,
-                            const std::function<void(bool)>& func, bool /* forceUpdate */) {
-        addProperty(name, new PropertyItem
-                    (this, value, std::function<bool(bool)>(ReturnTrue<bool>(func))));
-    }
+
     virtual void operator()(const std::string& name, int value){
         addProperty(name, new PropertyItem(this, Int(value)));
     }
     virtual void operator()(const std::string& name, int value, const std::function<bool(int)>& func){
         addProperty(name, new PropertyItem(this, Int(value, imin, imax), func));
     }
-    virtual void operator()(const std::string& name, int value,
-                            const std::function<void(int)>& func, bool /* forceUpdate */){
-        addProperty(name, new PropertyItem(this, Int(value, imin, imax),
-                                           std::function<bool(int)>(ReturnTrue<int>(func))));
-    }
+
     virtual void operator()(const std::string& name, double value){
         addProperty(name, new PropertyItem(this, Double(value, decimals_)));
     }
@@ -469,11 +467,7 @@ public:
                             const std::function<bool(double)>& func){
         addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax), func));
     }
-    virtual void operator()(const std::string& name, double value,
-                            const std::function<void(double)>& func, bool /* forceUpdate */){
-        addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax),
-                                           std::function<bool(double)>(ReturnTrue<double>(func))));
-    }
+
     virtual void operator()(const std::string& name, const std::string& value){
         addProperty(name, new PropertyItem(this, value));
     }
@@ -481,11 +475,7 @@ public:
                             const std::function<bool(const std::string&)>& func){
         addProperty(name, new PropertyItem(this, value, func));
     }
-    virtual void operator()(const std::string& name, const std::string& value,
-                            const std::function<void(const std::string&)>& func, bool /* forceUpdate */){
-        addProperty(name, new PropertyItem
-                    (this, value, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
-    }
+
     void operator()(const std::string& name, const Selection& selection){
         addProperty(name, new PropertyItem(this, selection));
     }
@@ -493,21 +483,13 @@ public:
                     const std::function<bool(int which)>& func){
         addProperty(name, new PropertyItem(this, selection, func));
     }
-    void operator()(const std::string& name, const Selection& selection,
-                    const std::function<void(int which)>& func, bool /* forceUpdate */){
-        addProperty(name, new PropertyItem
-                    (this, selection,  std::function<bool(int)>(ReturnTrue<int>(func))));
-    }
+
     void operator()(const std::string& name, const FilePathProperty& filepath){
         addProperty(name, new PropertyItem(this, filepath) );
     }
     void operator()(const std::string& name, const FilePathProperty& filepath,
                     const std::function<bool(const std::string&)>& func){
         addProperty(name, new PropertyItem(this, filepath, func) );
-    }
-    void operator()(const std::string& name, const FilePathProperty& filepath,
-                    const std::function<void(const std::string&)>& func, bool /* forceUpdate */){
-        addProperty(name, new PropertyItem(this, filepath, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
     }
 
     void clear();

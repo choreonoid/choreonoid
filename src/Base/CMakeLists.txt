@@ -21,6 +21,7 @@ set(sources
   ItemClassRegistry.cpp
   Item.cpp
   PolymorphicItemFunctionSet.cpp
+  PutPropertyFunction.cpp
   RootItem.cpp
   ItemList.cpp
   ItemPath.cpp
