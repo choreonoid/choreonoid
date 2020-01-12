@@ -13,6 +13,9 @@
 #include <cnoid/CloneMap>
 #include <deque>
 #include <array>
+#include <unordered_map>
+
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -35,7 +38,9 @@ const Vector3f HighlightedAxisColors[3] = {
     { 0.4f, 0.5f, 1.0f }
 };
 
-
+constexpr double StandardSceneHandleWidth = 0.02;
+constexpr double StandardPixelHandleWidth = 6.0;
+constexpr double MaxPixelHandleWidthCorrectionRatio = 3.0;
 constexpr float DefaultTransparency = 0.4f;
 
 
@@ -102,7 +107,7 @@ class PositionDragger::Impl
 {
 public:
     PositionDragger* self;
-    array<SgNodePtr, NumHandleVariants> handleVariants;
+    unordered_map<double, SgNodePtr> handleVariantMap;
     int draggableAxes;
     SgSwitchPtr axisSwitch[6];
     int handleType;
@@ -135,7 +140,7 @@ public:
     SgNode* createTranslationHandle(double widthRatio);
     SgNode* createRotationRingHandle(double widthRatio);
     SgNode* createRotationDiscHandle(double widthRatio);
-    SgNode* getOrCreateHandleVariant(double pixelSizeRatio);
+    SgNode* getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking);
     void clearHandleVariants();
     void setDraggableAxes(int axisSet);
     void setMaterialParameters(int axisSet, float t, bool isHighlighted);
@@ -160,14 +165,17 @@ SgHandleVariantSelector::SgHandleVariantSelector(PositionDragger::Impl* dragger)
 
 void SgHandleVariantSelector::render(SceneRenderer* renderer)
 {
-    double r;
-    if(renderer->isPicking() && !dragger->isConstantPixelSizeMode){
-        r = renderer->currentProjectedPixelSizeRatio();
-    } else {
-        r = -1.0;
+    double pixelSizeRatio = -1.0;
+    bool isForPicking = false;
+    if(!dragger->isConstantPixelSizeMode){
+        pixelSizeRatio = renderer->currentProjectedPixelSizeRatio();
+        isForPicking = renderer->isPicking();
     }
-        
-    if(auto node = dragger->getOrCreateHandleVariant(r)){
+
+    //
+    clearChildren();
+    
+    if(auto node = dragger->getOrCreateHandleVariant(pixelSizeRatio, isForPicking)){
         addChildOnce(node);
         renderer->renderNode(node);
     }
@@ -231,12 +239,12 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     }
 
     if(handleType != WideHandle){
-        handleWidth = 0.04;
+        handleWidth = StandardSceneHandleWidth;
     } else {
         if(!registry.hasRegistration<SgViewpointDependentSelector>()){
             registerViewpointDependentSelector(registry);
         }
-        handleWidth = 0.08;
+        handleWidth = 2.0 * StandardSceneHandleWidth;
     }
 
     for(int i=0; i < 6; ++i){
@@ -304,6 +312,7 @@ SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
         stickLength *= 2.0;
     }
     stickLength -= extraEndLength / 2.0;
+    meshGenerator.setDivisionNumber(16);
     SgMeshPtr mesh = meshGenerator.generateArrow(
         (handleWidth / 2.0) * widthRatio,
         stickLength,
@@ -342,12 +351,11 @@ SgNode* PositionDragger::Impl::createRotationRingHandle(double widthRatio)
 {
     auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
-    meshGenerator.setDivisionNumber(36);
-
     //! \todo The mesh should be regenerated with a new radius when rotationHandleSizeRatio is updated
-    double radius = handleWidth / 2.0 / rotationHandleSizeRatio;
+    double radius = widthRatio * handleWidth / 2.0 / rotationHandleSizeRatio;
     
     double endAngle = (handleType == PositiveOnlyHandle) ? (PI / 2.0) : 2.0 * PI;
+    meshGenerator.setDivisionNumber(36);
     auto ringMesh = meshGenerator.generateTorus(1.0, radius, 0.0, endAngle);
 
     for(int i=0; i < 3; ++i){
@@ -381,7 +389,7 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
     auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
     SgMesh* mesh[2];
-    double width = handleWidth / rotationHandleSizeRatio;
+    double width = handleWidth / rotationHandleSizeRatio * widthRatio;
     meshGenerator.setDivisionNumber(36);
     mesh[0] = meshGenerator.generateDisc(1.0, 1.0 - width);
     meshGenerator.setDivisionNumber(24);
@@ -415,34 +423,36 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
 }
 
 
-SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio)
+/**
+   \todo
+    - Make the handles for picking a bit wider
+    - Cache the generated handles in handleVariantMap
+    - Adjust the width considering the DPI of the display
+    - Add the API to customize the width
+*/
+SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking)
 {
-    int level = 0;
     double widthRatio = 1.0;
     if(pixelSizeRatio >= 0.0){
         double pixelWidth = handleWidth * handleSize * pixelSizeRatio;
-        if(pixelWidth <= 0.0){
-            pixelWidth = 1.0;
+        if(pixelWidth < 0.1){
+            return nullptr;
         }
-        if(pixelWidth < 10.0){
-            level = static_cast<int>((10.0 - pixelWidth) * (NumHandleVariants / 10.0));
-            double levelPixelWidth = (NumHandleVariants - level) * (10.0 / NumHandleVariants);
-            widthRatio = 10.0 / levelPixelWidth;
+        if(pixelWidth < StandardPixelHandleWidth){
+            widthRatio = StandardPixelHandleWidth / pixelWidth;
+        }
+        if(widthRatio > MaxPixelHandleWidthCorrectionRatio){
+            widthRatio = MaxPixelHandleWidthCorrectionRatio;
         }
     }
-    auto& handle = handleVariants[level];
-    if(!handle){
-        handle = createHandle(widthRatio);
-    }
-    return handle;
+    //cout << "widthRatio: " << widthRatio << endl;
+    return createHandle(widthRatio);
 }
 
 
 void PositionDragger::Impl::clearHandleVariants()
 {
-    for(int i=0; i < NumHandleVariants; ++i){
-        handleVariants[i].reset();
-    }
+    handleVariantMap.clear();
 }
 
 
