@@ -98,6 +98,7 @@ void View::setName(const std::string& name)
 {
     impl->name = name;
     setObjectName(name.c_str());
+    impl->updateTitle();
 }
 
 

@@ -165,9 +165,9 @@ public:
     {
         if(overlapJointName){
             grid.addWidget(&nameLabel, row++, col, 1, 6);
-            grid.addWidget(&idLabel, row, col);
+            grid.addWidget(&idLabel, row, col++);
         } else {
-            grid.addWidget(&idLabel, row, col);
+            grid.addWidget(&idLabel, row, col++);
             grid.addWidget(&nameLabel, row, col++);
         }
         grid.addWidget(&spin, row, col++);
