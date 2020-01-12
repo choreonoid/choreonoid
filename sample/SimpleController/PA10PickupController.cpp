@@ -41,17 +41,12 @@ class PA10PickupController : public SimpleController
 
 public:
 
-    Vector3 toRadianVector3(double x, double y, double z)
-    {
-        return Vector3(radian(x), radian(y), radian(z));
-    }
-    
     virtual bool initialize(SimpleControllerIO* io) override
     {
         ioBody = io->body();
 
-        ioLeftHand  = ioBody->link("HAND_L");
-        ioRightHand = ioBody->link("HAND_R");
+        ioLeftHand  = ioBody->joint(7);
+        ioRightHand = ioBody->joint(8);
 
         ikBody = ioBody->clone();
         ikWrist = ikBody->link("J7");
@@ -81,7 +76,7 @@ public:
 
         VectorXd p1(6);
         p1.head<3>() = Vector3(0.9, 0.0, 0.25);
-        p1.tail<3>() = toRadianVector3(180.0, 0.0, 0.0);
+        p1.tail<3>() = radian(Vector3(180.0, 0.0, 0.0));
 
         wristInterpolator.clear();
         wristInterpolator.appendSample(0.0, p0);
@@ -130,11 +125,11 @@ public:
             } else {
                 VectorXd p2(6);
                 p2.head<3>() = Vector3(0.0, 0.5, 1.0);
-                p2.tail<3>() = toRadianVector3(180.0, -45, 90.0);
+                p2.tail<3>() = radian(Vector3(180.0, -45, 90.0));
 
                 VectorXd p3(6);
                 p3.head<3>() = Vector3(0.0, 0.7, 0.52);
-                p3.tail<3>() = toRadianVector3(180.0, 0, 90.0);
+                p3.tail<3>() = radian(Vector3(180.0, 0, 90.0));
 
                 wristInterpolator.clear();
                 wristInterpolator.appendSample(time, p);
