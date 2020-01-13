@@ -312,7 +312,8 @@ SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
         stickLength *= 2.0;
     }
     stickLength -= extraEndLength / 2.0;
-    meshGenerator.setDivisionNumber(16);
+    int divisionNumber = std::max((int)(24 / widthRatio), 8);
+    meshGenerator.setDivisionNumber(divisionNumber);
     SgMeshPtr mesh = meshGenerator.generateArrow(
         (handleWidth / 2.0) * widthRatio,
         stickLength,
@@ -351,11 +352,10 @@ SgNode* PositionDragger::Impl::createRotationRingHandle(double widthRatio)
 {
     auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
-    //! \todo The mesh should be regenerated with a new radius when rotationHandleSizeRatio is updated
     double radius = widthRatio * handleWidth / 2.0 / rotationHandleSizeRatio;
-    
     double endAngle = (handleType == PositiveOnlyHandle) ? (PI / 2.0) : 2.0 * PI;
-    meshGenerator.setDivisionNumber(36);
+    int divisionNumber = std::max((int)(72 / widthRatio), 24);
+    meshGenerator.setDivisionNumber(divisionNumber);
     auto ringMesh = meshGenerator.generateTorus(1.0, radius, 0.0, endAngle);
 
     for(int i=0; i < 3; ++i){
