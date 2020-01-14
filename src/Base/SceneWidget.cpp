@@ -1193,10 +1193,12 @@ void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
     doneCurrent();
 
     latestEvent.nodePath_.clear();
+    latestEvent.pixelSizeRatio_ = 0.0;
     pointedEditablePath.clear();
 
     if(picked){
         latestEvent.point_ = renderer->pickedPoint();
+        latestEvent.pixelSizeRatio_ = renderer->projectedPixelSizeRatio(latestEvent.point_);
         latestEvent.nodePath_ = renderer->pickedNodePath();
 
         SgNodePath& path = latestEvent.nodePath_;

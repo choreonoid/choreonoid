@@ -14,6 +14,7 @@ SceneWidgetEvent::SceneWidgetEvent()
     point_.setZero();
     x_ = 0.0;
     y_ = 0.0;
+    pixelSizeRatio_ = 0.0;
     key_ = 0;
     modifiers_ = 0;
     button_ = 0;
@@ -26,6 +27,7 @@ SceneWidgetEvent::SceneWidgetEvent(const SceneWidgetEvent& org)
 {
     x_ = org.x_;
     y_ = org.y_;
+    pixelSizeRatio_ = org.pixelSizeRatio_;
     key_ = org.key_;
     modifiers_ = org.modifiers_;
     button_ = org.button_;

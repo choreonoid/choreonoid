@@ -115,7 +115,7 @@ public:
     SgSwitchPtr axisSwitch[6];
     int handleType;
     double handleSize;
-    double handleWidth;
+    double unitHandleWidth;
     Signal<void(int axisBitSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
     bool isOverlayMode;
@@ -143,14 +143,16 @@ public:
     SgNode* createTranslationHandle(double widthRatio);
     SgNode* createRotationRingHandle(double widthRatio);
     SgNode* createRotationDiscHandle(double widthRatio);
+    double calcWidthRatio(double pixelSizeRatio);
     SgNode* getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking);
     void clearHandleVariants();
     void setDraggableAxes(AxisBitSet axisBitSet);
     void setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted);
     void highlightAxes(AxisBitSet axisBitSet);
     void showDragMarkers(bool on);
+    AxisBitSet detectTargetAxes(const SceneWidgetEvent& event);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
-    bool onTranslationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet, int topNodeIndex);
+    bool onTranslationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet);
     bool onRotationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet);
     void storeCurrentPositionToHistory();
 };
@@ -171,7 +173,8 @@ void SgHandleVariantSelector::render(SceneRenderer* renderer)
     double pixelSizeRatio = -1.0;
     bool isForPicking = false;
     if(!dragger->isConstantPixelSizeMode){
-        pixelSizeRatio = renderer->currentProjectedPixelSizeRatio();
+        pixelSizeRatio = renderer->projectedPixelSizeRatio(
+            renderer->currentModelTransform().translation());
         isForPicking = renderer->isRenderingPickingImage();
     }
 
@@ -242,12 +245,12 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     }
 
     if(handleType != WideHandle){
-        handleWidth = StandardSceneHandleWidth;
+        unitHandleWidth = StandardSceneHandleWidth;
     } else {
         if(!registry.hasRegistration<SgViewpointDependentSelector>()){
             registerViewpointDependentSelector(registry);
         }
-        handleWidth = 2.0 * StandardSceneHandleWidth;
+        unitHandleWidth = 2.0 * StandardSceneHandleWidth;
     }
 
     for(int i=0; i < 6; ++i){
@@ -308,7 +311,7 @@ SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
 {
     auto scale = new SgScaleTransform(handleSize);
 
-    double endLength = handleWidth * 2.5;
+    double endLength = unitHandleWidth * 2.5;
     double extraEndLength = endLength * (widthRatio - 1.0);
     double stickLength = 1.0 - endLength;
     if(!(handleType == PositiveOnlyHandle)){
@@ -318,9 +321,9 @@ SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
     int divisionNumber = std::max((int)(24 / widthRatio), 8);
     meshGenerator.setDivisionNumber(divisionNumber);
     SgMeshPtr mesh = meshGenerator.generateArrow(
-        (handleWidth / 2.0) * widthRatio,
+        (unitHandleWidth / 2.0) * widthRatio,
         stickLength,
-        handleWidth * 1.25 * widthRatio,
+        unitHandleWidth * 1.25 * widthRatio,
         endLength * widthRatio);
     
     for(int i=0; i < 3; ++i){
@@ -355,7 +358,7 @@ SgNode* PositionDragger::Impl::createRotationRingHandle(double widthRatio)
 {
     auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
-    double radius = widthRatio * handleWidth / 2.0 / rotationHandleSizeRatio;
+    double radius = widthRatio * unitHandleWidth / 2.0 / rotationHandleSizeRatio;
     double endAngle = (handleType == PositiveOnlyHandle) ? (PI / 2.0) : 2.0 * PI;
     int divisionNumber = std::max((int)(72 / widthRatio), 24);
     meshGenerator.setDivisionNumber(divisionNumber);
@@ -392,7 +395,7 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
     auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
     SgMesh* mesh[2];
-    double width = handleWidth / rotationHandleSizeRatio * widthRatio;
+    double width = unitHandleWidth / rotationHandleSizeRatio * widthRatio;
     meshGenerator.setDivisionNumber(36);
     mesh[0] = meshGenerator.generateDisc(1.0, 1.0 - width);
     meshGenerator.setDivisionNumber(24);
@@ -426,6 +429,24 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
 }
 
 
+double PositionDragger::Impl::calcWidthRatio(double pixelSizeRatio)
+{
+    double widthRatio = 1.0;
+    if(pixelSizeRatio >= 0.0){
+        double pixelWidth = unitHandleWidth * handleSize * pixelSizeRatio;
+        if(pixelWidth > 0.1){
+            if(pixelWidth < StandardPixelHandleWidth){
+                widthRatio = StandardPixelHandleWidth / pixelWidth;
+            }
+            if(widthRatio > MaxPixelHandleWidthCorrectionRatio){
+                widthRatio = MaxPixelHandleWidthCorrectionRatio;
+            }
+        }
+    }
+    return widthRatio;
+}
+    
+
 /**
    \todo
     - Make the handles for picking a bit wider
@@ -435,20 +456,7 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
 */
 SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking)
 {
-    double widthRatio = 1.0;
-    if(pixelSizeRatio >= 0.0){
-        double pixelWidth = handleWidth * handleSize * pixelSizeRatio;
-        if(pixelWidth < 0.1){
-            return nullptr;
-        }
-        if(pixelWidth < StandardPixelHandleWidth){
-            widthRatio = StandardPixelHandleWidth / pixelWidth;
-        }
-        if(widthRatio > MaxPixelHandleWidthCorrectionRatio){
-            widthRatio = MaxPixelHandleWidthCorrectionRatio;
-        }
-    }
-    //cout << "widthRatio: " << widthRatio << endl;
+    double widthRatio = calcWidthRatio(pixelSizeRatio);
     return createHandle(widthRatio);
 }
 
@@ -798,14 +806,13 @@ SignalProxy<void()> PositionDragger::sigDragFinished()
 }
 
 
-static AxisBitSet detectAxisFromNodePath(const SgNodePath& path, SgNode* topNode, int& out_topNodeIndex)
+AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event)
 {
     AxisBitSet axisBitSet(0);
-    out_topNodeIndex = -1;
-    
+
+    auto& path = event.nodePath();
     for(size_t i=0; i < path.size(); ++i){
-        if(path[i] == topNode){
-            out_topNodeIndex = i;
+        if(path[i] == self){
             for(size_t j=i+1; j < path.size(); ++j){
                 auto& name = path[j]->name();
                 if(!name.empty()){
@@ -820,9 +827,18 @@ static AxisBitSet detectAxisFromNodePath(const SgNodePath& path, SgNode* topNode
             break;
         }
     }
+
+    if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
+        const Affine3 T = calcTotalTransform(event.nodePath(), self);
+        const Vector3 p_local = T.inverse() * event.point();
+        double width = handleSize * unitHandleWidth * calcWidthRatio(event.pixelSizeRatio());
+        if(p_local.norm() < 1.5 * width){
+            axisBitSet |= AxisBitSet(TRANSLATION_AXES);
+        }
+    }
+
     return axisBitSet;
 }
-
 
 
 bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
@@ -839,8 +855,7 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         return processed;
     }
 
-    int topNodeIndex;
-    auto axisBitSet = detectAxisFromNodePath(event.nodePath(), self, topNodeIndex);
+    auto axisBitSet = detectTargetAxes(event);
 
     if(axisBitSet.none()){
         if(self->isContainerMode() && isContentsDragEnabled){
@@ -855,7 +870,7 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         }
     } else {
         if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
-            processed = onTranslationDraggerPressed(event, axisBitSet, topNodeIndex);
+            processed = onTranslationDraggerPressed(event, axisBitSet);
         } else if((axisBitSet & AxisBitSet(ROTATION_AXES)).any()){
             processed = onRotationDraggerPressed(event, axisBitSet);
         }
@@ -872,30 +887,23 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool PositionDragger::Impl::onTranslationDraggerPressed
-(const SceneWidgetEvent& event, AxisBitSet axisBitSet, int topNodeIndex)
+bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet)
 {
     bool processed = false;
 
-    auto& path = event.nodePath();
-    auto pnode = path.begin() + topNodeIndex + 1;
-    const Affine3 T_global = calcTotalTransform(path.begin(), pnode);
-    const Affine3 T_axis = calcTotalTransform(pnode, path.end());
-    const Vector3 p_local = (T_global * T_axis).inverse() * event.point();
+    const Affine3 T = calcTotalTransform(event.nodePath(), self);
+    dragProjector.setInitialPosition(T);
     
-    dragProjector.setInitialPosition(T_global);
-    
-    if(p_local.norm() < handleWidth){
-        dragProjector.setTranslationAlongViewPlane();
-
-    } else if(axisBitSet.count() == 1){
+    if(axisBitSet.count() == 1){
         for(int i=0; i < 3; ++i){
             if(axisBitSet[i]){
-                dragProjector.setTranslationAxis(T_global.linear().col(i));
+                dragProjector.setTranslationAxis(T.linear().col(i));
                 break;
             }
         }
-    }
+    } else {
+        dragProjector.setTranslationAlongViewPlane();
+    }        
     
     if(dragProjector.startTranslation(event)){
         processed = true;
@@ -941,8 +949,7 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
     if(!impl->dragProjector.isDragging()){
-        int topNodeIndex;
-        auto axisBitSet = detectAxisFromNodePath(event.nodePath(), this, topNodeIndex);
+        auto axisBitSet = impl->detectTargetAxes(event);
         if(axisBitSet.any()){
             impl->highlightAxes(axisBitSet);
         }

@@ -1391,12 +1391,12 @@ Matrix4 GLSLSceneRenderer::modelViewProjectionMatrix() const
 }
 
 
-double GLSLSceneRenderer::currentProjectedPixelSizeRatio() const
+double GLSLSceneRenderer::projectedPixelSizeRatio(const Vector3& position) const
 {
     auto vp = viewport();
-    Affine3 MV = impl->viewTransform * impl->modelMatrixStack.back();
-    Vector4 p(1.0, 0.0, MV.translation().z(), 1.0);
-    Vector4 q = impl->projectionMatrix * p;
+    Vector3 p2 = impl->viewTransform * position;
+    Vector4 p3(1.0, 0.0, p2.z(), 1.0);
+    Vector4 q = impl->projectionMatrix * p3;
     double r = (q.x() / q[3]) * vp[2] / 2.0;
     if(r < 0.0){
         r = 0.0;
@@ -1404,7 +1404,7 @@ double GLSLSceneRenderer::currentProjectedPixelSizeRatio() const
     return r;
 }
 
-    
+
 bool GLSLSceneRenderer::isRenderingPickingImage() const
 {
     return impl->isRenderingPickingImage;
@@ -1535,7 +1535,7 @@ void GLSLSceneRenderer::renderCustomTransform(SgTransform* transform, std::funct
 
 void GLSLSceneRenderer::Impl::renderAutoScale(SgAutoScale* autoScale)
 {
-    double r = self->currentProjectedPixelSizeRatio();
+    double r = self->projectedPixelSizeRatio(modelMatrixStack.back().translation());
 
     if(r > 0.0){
         double s = autoScale->pixelSizeRatio() / r;

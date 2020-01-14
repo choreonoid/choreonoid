@@ -24,7 +24,7 @@ public:
     virtual void renderNode(SgNode* node) override;
     virtual const Affine3& currentModelTransform() const override;
     virtual const Matrix4& projectionMatrix() const override;
-    virtual double currentProjectedPixelSizeRatio() const override;
+    virtual double projectedPixelSizeRatio(const Vector3& position) const override;
     virtual bool initializeGL() override;
     virtual void flush() override;
     virtual void setViewport(int x, int y, int width, int height) override;

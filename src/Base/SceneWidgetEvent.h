@@ -25,6 +25,8 @@ public:
     double x() const { return x_; }
     double y() const { return y_; }
 
+    double pixelSizeRatio() const { return pixelSizeRatio_; }
+
     /**
        @return a Qt::Key value
     */
@@ -57,6 +59,7 @@ private:
     Vector3 point_;
     double x_;
     double y_;
+    double pixelSizeRatio_;
     double wheelSteps_;
     SgNodePath nodePath_;
     SgNodePath cameraPath_;

@@ -2182,12 +2182,12 @@ const Matrix4& GL1SceneRenderer::projectionMatrix() const
 }
 
 
-double GL1SceneRenderer::currentProjectedPixelSizeRatio() const
+double GL1SceneRenderer::projectedPixelSizeRatio(const Vector3& position) const
 {
     auto vp = viewport();
-    double z = impl->Vstack.back().translation().z();
-    Vector4 p(1.0, 0.0, z, 1.0);
-    Vector4 q = impl->lastProjectionMatrix * p;
+    Vector3 p2 = impl->lastViewMatrix * position;
+    Vector4 p3(1.0, 0.0, p2.z(), 1.0);
+    Vector4 q = impl->lastProjectionMatrix * p3;
     double r = (q.x() / q[3]) * vp[2] / 2.0;
     if(r < 0.0){
         r = 0.0;
