@@ -13,7 +13,7 @@ namespace cnoid {
 class CNOID_EXPORT PositionDragger : public SgPosTransform, public SceneWidgetEditable
 {
 public:
-    enum Axis {
+    enum AxisBit {
         TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
         TranslationAxes = (TX | TY | TZ),
         RX = 1 << 3, RY = 1 << 4, RZ = 1 << 5,
@@ -35,9 +35,9 @@ public:
     PositionDragger(int axes = AllAxes, int handleType = StandardHandle);
     PositionDragger(const PositionDragger& org) = delete;
 
-    void setDraggableAxes(int axisSet);
+    void setDraggableAxes(int axisBitSet);
     int draggableAxes() const;
-    SignalProxy<void(int axisSet)> sigDraggableAxesChanged();
+    SignalProxy<void(int axisBitSet)> sigDraggableAxesChanged();
 
     double handleSize() const;
     void setHandleSize(double s);
@@ -80,8 +80,6 @@ public:
     void setDragEnabled(bool on);
     bool isDragging() const;
     Affine3 draggedPosition() const;
-    const Vector3& draggedTranslation() const;
-    const AngleAxis& draggedAngleAxis() const;
 
     SignalProxy<void()> sigDragStarted();
     SignalProxy<void()> sigPositionDragged();

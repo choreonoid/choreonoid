@@ -11,6 +11,7 @@
 #include <cnoid/MeshGenerator>
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
+#include <bitset>
 #include <deque>
 #include <array>
 #include <unordered_map>
@@ -23,6 +24,8 @@ using namespace cnoid;
 namespace {
 
 constexpr int NumHandleVariants = 5;
+
+typedef bitset<6> AxisBitSet;
 
 const char* AxisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
 
@@ -108,12 +111,12 @@ class PositionDragger::Impl
 public:
     PositionDragger* self;
     unordered_map<double, SgNodePtr> handleVariantMap;
-    int draggableAxes;
+    AxisBitSet draggableAxisBitSet;
     SgSwitchPtr axisSwitch[6];
     int handleType;
     double handleSize;
     double handleWidth;
-    Signal<void(int axisSet)> sigDraggableAxesChanged;
+    Signal<void(int axisBitSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
     bool isOverlayMode;
     bool isConstantPixelSizeMode;
@@ -127,7 +130,7 @@ public:
     double rotationHandleSizeRatio;
     array<SgMaterialPtr, 6> axisMaterials;
     float transparency;
-    int highlightedAxisSet;
+    AxisBitSet highlightedAxisBitSet;
     MeshGenerator meshGenerator;
     SceneDragProjector dragProjector;
     Signal<void()> sigDragStarted;
@@ -142,13 +145,13 @@ public:
     SgNode* createRotationDiscHandle(double widthRatio);
     SgNode* getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking);
     void clearHandleVariants();
-    void setDraggableAxes(int axisSet);
-    void setMaterialParameters(int axisSet, float t, bool isHighlighted);
-    void highlightAxes(int axisSet);
+    void setDraggableAxes(AxisBitSet axisBitSet);
+    void setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted);
+    void highlightAxes(AxisBitSet axisBitSet);
     void showDragMarkers(bool on);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
-    bool onTranslationDraggerPressed(const SceneWidgetEvent& event, int axis, int topNodeIndex);
-    bool onRotationDraggerPressed(const SceneWidgetEvent& event, int axis);
+    bool onTranslationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet, int topNodeIndex);
+    bool onRotationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet);
     void storeCurrentPositionToHistory();
 };
 
@@ -227,7 +230,7 @@ PositionDragger::PositionDragger(int mode, int axes)
 
 PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     : self(self),
-      draggableAxes(axes),
+      draggableAxisBitSet(axes),
       handleType(handleType)
 {
     auto& registry = SceneNodeClassRegistry::instance();
@@ -248,7 +251,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     }
 
     for(int i=0; i < 6; ++i){
-        axisSwitch[i] = new SgSwitch(draggableAxes & (1 << i));
+        axisSwitch[i] = new SgSwitch(draggableAxisBitSet[i]);
     }
     
     rotationHandleSizeRatio = 0.6;
@@ -262,7 +265,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     isUndoEnabled = false;
 
     transparency = DefaultTransparency;
-    highlightedAxisSet = 0;
+    highlightedAxisBitSet.reset();
 
     for(int i=0; i < 3; ++i){
         auto material = new SgMaterial;
@@ -456,26 +459,26 @@ void PositionDragger::Impl::clearHandleVariants()
 }
 
 
-void PositionDragger::setDraggableAxes(int axisSet)
+void PositionDragger::setDraggableAxes(int axisBitSet)
 {
-    impl->setDraggableAxes(axisSet);
+    impl->setDraggableAxes(axisBitSet);
 }
 
 
-void PositionDragger::Impl::setDraggableAxes(int axisSet)
+void PositionDragger::Impl::setDraggableAxes(AxisBitSet axisBitSet)
 {
-    if(axisSet != draggableAxes){
+    if(axisBitSet != draggableAxisBitSet){
         for(int i=0; i < 6; ++i){
-            axisSwitch[i]->setTurnedOn(axisSet & (1 << i), true);
+            axisSwitch[i]->setTurnedOn(axisBitSet[i], true);
         }
-        draggableAxes = axisSet;
+        draggableAxisBitSet = axisBitSet;
     }
 }
 
 
 int PositionDragger::draggableAxes() const
 {
-    return impl->draggableAxes;
+    return static_cast<int>(impl->draggableAxisBitSet.to_ulong());
 }
 
 
@@ -562,11 +565,11 @@ void PositionDragger::setTransparency(float t)
 {
     impl->setMaterialParameters(AllAxes, t, false);
     impl->transparency = t;
-    impl->highlightedAxisSet = 0;
+    impl->highlightedAxisBitSet.reset();
 }
 
 
-void PositionDragger::Impl::setMaterialParameters(int axisSet, float t, bool isHighlighted)
+void PositionDragger::Impl::setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted)
 {
     float t2 = (t == 0.0f) ? 0.0f : (1.0f - (1.0f - t) / 2.0f);
     
@@ -577,7 +580,7 @@ void PositionDragger::Impl::setMaterialParameters(int axisSet, float t, bool isH
                 t2 = t;
             }
         }
-        if(axisSet & (1 << i)){
+        if(axisBitSet[i]){
             bool updated = false;
             auto& material = axisMaterials[i];
             if(t != material->transparency()){
@@ -605,16 +608,16 @@ float PositionDragger::transparency() const
 }
 
 
-void PositionDragger::Impl::highlightAxes(int axisSet)
+void PositionDragger::Impl::highlightAxes(AxisBitSet axisBitSet)
 {
-    if(axisSet != highlightedAxisSet){
-        if(highlightedAxisSet){
-            setMaterialParameters(highlightedAxisSet, transparency, false);
+    if(axisBitSet != highlightedAxisBitSet){
+        if(highlightedAxisBitSet.any()){
+            setMaterialParameters(highlightedAxisBitSet, transparency, false);
         }
-        if(axisSet){
-            setMaterialParameters(axisSet, 0.0f, true);
+        if(axisBitSet.any()){
+            setMaterialParameters(axisBitSet, 0.0f, true);
         }
-        highlightedAxisSet = axisSet;
+        highlightedAxisBitSet = axisBitSet;
     }
 }
 
@@ -777,18 +780,6 @@ Affine3 PositionDragger::draggedPosition() const
 }
 
 
-const Vector3& PositionDragger::draggedTranslation() const
-{
-    return impl->dragProjector.translation();
-}
-
-
-const AngleAxis& PositionDragger::draggedAngleAxis() const
-{
-    return impl->dragProjector.rotationAngleAxis();
-}
-
-
 SignalProxy<void()> PositionDragger::sigDragStarted()
 {
     return impl->sigDragStarted;
@@ -807,9 +798,9 @@ SignalProxy<void()> PositionDragger::sigDragFinished()
 }
 
 
-static bool detectAxisFromNodePath
-(const SgNodePath& path, SgNode* topNode, int& out_axis, int& out_topNodeIndex)
+static AxisBitSet detectAxisFromNodePath(const SgNodePath& path, SgNode* topNode, int& out_topNodeIndex)
 {
+    AxisBitSet axisBitSet(0);
     out_topNodeIndex = -1;
     
     for(size_t i=0; i < path.size(); ++i){
@@ -820,8 +811,8 @@ static bool detectAxisFromNodePath
                 if(!name.empty()){
                     for(int k=0; k < 6; ++k){
                         if(name == AxisNames[k]){
-                            out_axis = k;
-                            return true;
+                            axisBitSet.set(k);
+                            break;
                         }
                     }
                 }
@@ -829,7 +820,7 @@ static bool detectAxisFromNodePath
             break;
         }
     }
-    return false;
+    return axisBitSet;
 }
 
 
@@ -848,11 +839,10 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         return processed;
     }
 
-    int axis;
     int topNodeIndex;
+    auto axisBitSet = detectAxisFromNodePath(event.nodePath(), self, topNodeIndex);
 
-    if(!::detectAxisFromNodePath(event.nodePath(), self, axis, topNodeIndex)){
-        
+    if(axisBitSet.none()){
         if(self->isContainerMode() && isContentsDragEnabled){
             if(displayMode == DisplayInFocus){
                 showDragMarkers(true);
@@ -864,11 +854,10 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
             }
         }
     } else {
-        int axisBit = 1 << axis;
-        if(axisBit & TRANSLATION_AXES){
-            processed = onTranslationDraggerPressed(event, axis, topNodeIndex);
-        } else if(axisBit & ROTATION_AXES){
-            processed = onRotationDraggerPressed(event, axis);
+        if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
+            processed = onTranslationDraggerPressed(event, axisBitSet, topNodeIndex);
+        } else if((axisBitSet & AxisBitSet(ROTATION_AXES)).any()){
+            processed = onRotationDraggerPressed(event, axisBitSet);
         }
     }
 
@@ -883,23 +872,31 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& event, int axis, int topNodeIndex)
+bool PositionDragger::Impl::onTranslationDraggerPressed
+(const SceneWidgetEvent& event, AxisBitSet axisBitSet, int topNodeIndex)
 {
     bool processed = false;
 
     auto& path = event.nodePath();
-    auto axisIter = path.begin() + topNodeIndex + 1;
-    const Affine3 T_global = calcTotalTransform(path.begin(), axisIter);
-    const Affine3 T_axis = calcTotalTransform(axisIter, path.end());
+    auto pnode = path.begin() + topNodeIndex + 1;
+    const Affine3 T_global = calcTotalTransform(path.begin(), pnode);
+    const Affine3 T_axis = calcTotalTransform(pnode, path.end());
     const Vector3 p_local = (T_global * T_axis).inverse() * event.point();
     
     dragProjector.setInitialPosition(T_global);
     
     if(p_local.norm() < handleWidth){
         dragProjector.setTranslationAlongViewPlane();
-    } else {
-        dragProjector.setTranslationAxis(T_global.linear().col(axis));
+
+    } else if(axisBitSet.count() == 1){
+        for(int i=0; i < 3; ++i){
+            if(axisBitSet[i]){
+                dragProjector.setTranslationAxis(T_global.linear().col(i));
+                break;
+            }
+        }
     }
+    
     if(dragProjector.startTranslation(event)){
         processed = true;
     }
@@ -908,15 +905,24 @@ bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& 
 }
 
 
-bool PositionDragger::Impl::onRotationDraggerPressed(const SceneWidgetEvent& event, int axis)
+bool PositionDragger::Impl::onRotationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet)
 {
     bool processed = false;
     const Affine3 T = calcTotalTransform(event.nodePath(), self);
-    dragProjector.setInitialPosition(T);
-    dragProjector.setRotationAxis(T.linear().col(axis - 3));
-    if(dragProjector.startRotation(event)){
-        processed = true;
+
+    if(axisBitSet.count() == 1){
+        dragProjector.setInitialPosition(T);
+        for(int i=0; i < 3; ++i){
+            if(axisBitSet[i + 3]){
+                dragProjector.setRotationAxis(T.linear().col(i));
+                if(dragProjector.startRotation(event)){
+                    processed = true;
+                }
+                break;
+            }
+        }
     }
+    
     return processed;
 }
 
@@ -935,14 +941,11 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
     if(!impl->dragProjector.isDragging()){
-        int axisSet = 0;
-        int axis;
         int topNodeIndex;
-        if(detectAxisFromNodePath(event.nodePath(), this, axis, topNodeIndex)){
-            axisSet = 1 << axis;
+        auto axisBitSet = detectAxisFromNodePath(event.nodePath(), this, topNodeIndex);
+        if(axisBitSet.any()){
+            impl->highlightAxes(axisBitSet);
         }
-        impl->highlightAxes(axisSet);
-
     } else if(impl->dragProjector.drag(event)){
         if(isContainerMode()){
             setPosition(impl->dragProjector.position());
