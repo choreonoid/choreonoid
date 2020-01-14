@@ -11,7 +11,6 @@
 
 namespace cnoid {
 
-class GLSLSceneRendererImpl;
 class ShaderProgram;
 class LightingProgram;
     
@@ -86,15 +85,16 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual bool isShadowCastingAvailable() const override;
 
-  protected:
+    class Impl;
+
+protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update) override;
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;
     virtual void onImageUpdated(SgImage* image) override;
     
   private:
-    GLSLSceneRendererImpl* impl;
-    friend class GLSLSceneRendererImpl;
+    Impl* impl;
 };
 
 }

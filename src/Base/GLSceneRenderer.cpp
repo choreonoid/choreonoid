@@ -22,7 +22,7 @@ int rendererType_ = GLSceneRenderer::GLSL_RENDERER;
 
 namespace cnoid {
 
-class GLSceneRendererImpl
+class GLSceneRenderer::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -38,8 +38,8 @@ public:
     ostream* os_;
     ostream& os(){ return *os_; };
 
-    GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
-    ~GLSceneRendererImpl();
+    Impl(GLSceneRenderer* self, SgGroup* sceneRoot);
+    ~Impl();
     void onSceneGraphUpdated(const SgUpdate& update);
 };
 
@@ -77,11 +77,11 @@ GLSceneRenderer::GLSceneRenderer(SgGroup* sceneRoot)
         sceneRoot = new SgGroup;
         sceneRoot->setName("Root");
     }
-    impl = new GLSceneRendererImpl(this, sceneRoot);
+    impl = new Impl(this, sceneRoot);
 }
 
 
-GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot)
+GLSceneRenderer::Impl::Impl(GLSceneRenderer* self, SgGroup* sceneRoot)
     : self(self),
       sceneRoot(sceneRoot)
 {
@@ -107,7 +107,7 @@ GLSceneRenderer::~GLSceneRenderer()
 }
 
 
-GLSceneRendererImpl::~GLSceneRendererImpl()
+GLSceneRenderer::Impl::~Impl()
 {
 
 }

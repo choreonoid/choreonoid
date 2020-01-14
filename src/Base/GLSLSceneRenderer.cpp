@@ -81,7 +81,7 @@ public:
     VertexResource(const VertexResource&) = delete;
     VertexResource& operator=(const VertexResource&) = delete;
 
-    VertexResource(GLSLSceneRendererImpl* renderer, SgObject* obj)
+    VertexResource(GLSLSceneRenderer::Impl* renderer, SgObject* obj)
         : sceneObject(obj)
     {
         connection.reset(
@@ -203,7 +203,7 @@ typedef std::unordered_map<SgObjectPtr, GLResourcePtr, SgObjectPtrHash> GLResour
 
 class ScopedShaderProgramActivator
 {
-    GLSLSceneRendererImpl* renderer;
+    GLSLSceneRenderer::Impl* renderer;
     ShaderProgram* prevProgram;
     NolightingProgram* prevNolightingProgram;
     LightingProgram* prevLightingProgram;
@@ -211,7 +211,7 @@ class ScopedShaderProgramActivator
     bool changed;
     
 public:
-    ScopedShaderProgramActivator(ShaderProgram& program, GLSLSceneRendererImpl* renderer);
+    ScopedShaderProgramActivator(ShaderProgram& program, GLSLSceneRenderer::Impl* renderer);
     ScopedShaderProgramActivator(ScopedShaderProgramActivator&&) noexcept;
     ScopedShaderProgramActivator(const ScopedShaderProgramActivator&) = delete;
     ScopedShaderProgramActivator& operator=(const ScopedShaderProgramActivator&) = delete;
@@ -222,7 +222,7 @@ public:
 
 namespace cnoid {
 
-class GLSLSceneRendererImpl
+class GLSLSceneRenderer::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -348,8 +348,8 @@ public:
         }
     }
     
-    GLSLSceneRendererImpl(GLSLSceneRenderer* self);
-    ~GLSLSceneRendererImpl();
+    Impl(GLSLSceneRenderer* self);
+    ~Impl();
     void initialize();
     void onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func);
     void updateDefaultFramebufferObject();
@@ -428,19 +428,19 @@ public:
 GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
-    impl = new GLSLSceneRendererImpl(this);
+    impl = new Impl(this);
     impl->initialize();
 }
 
 
-GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
+GLSLSceneRenderer::Impl::Impl(GLSLSceneRenderer* self)
     : self(self)
 {
 
 }
 
 
-void GLSLSceneRendererImpl::initialize()
+void GLSLSceneRenderer::Impl::initialize()
 {
     {
         std::lock_guard<std::mutex> guard(extensionMutex);
@@ -546,7 +546,7 @@ GLSLSceneRenderer::~GLSLSceneRenderer()
 }
 
 
-GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
+GLSLSceneRenderer::Impl::~Impl()
 {
     // clear handles to avoid the deletion of them without the corresponding GL context
     for(int i=0; i < 2; ++i){
@@ -588,7 +588,7 @@ void GLSLSceneRenderer::applyExtensions()
 }
 
 
-void GLSLSceneRendererImpl::onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func)
+void GLSLSceneRenderer::Impl::onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func)
 {
     std::lock_guard<std::mutex> guard(newExtensionMutex);
     newExtendFunctions.push_back(func);
@@ -625,7 +625,7 @@ void GLSLSceneRenderer::setOutputStream(std::ostream& os)
 }
 
 
-void GLSLSceneRendererImpl::updateDefaultFramebufferObject()
+void GLSLSceneRenderer::Impl::updateDefaultFramebufferObject()
 {
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, reinterpret_cast<GLint*>(&defaultFBO));
     phongShadowLightingProgram.setDefaultFramebufferObject(defaultFBO);
@@ -638,7 +638,7 @@ bool GLSLSceneRenderer::initializeGL()
 }
 
 
-bool GLSLSceneRendererImpl::initializeGL()
+bool GLSLSceneRenderer::Impl::initializeGL()
 {
     if(ogl_LoadFunctions() == ogl_LOAD_FAILED){
         return false;
@@ -760,7 +760,7 @@ void GLSLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 
 
 ScopedShaderProgramActivator::ScopedShaderProgramActivator
-(ShaderProgram& program, GLSLSceneRendererImpl* renderer)
+(ShaderProgram& program, GLSLSceneRenderer::Impl* renderer)
     : renderer(renderer)
 {
     if(&program == renderer->currentProgram){
@@ -815,7 +815,7 @@ ScopedShaderProgramActivator::~ScopedShaderProgramActivator()
 }
 
 
-void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program)
+void GLSLSceneRenderer::Impl::pushProgram(ShaderProgram& program)
 {
     programStack.emplace_back(program, this);
 }
@@ -826,7 +826,7 @@ void GLSLSceneRenderer::pushShaderProgram(ShaderProgram& program)
 }
 
 
-void GLSLSceneRendererImpl::popProgram()
+void GLSLSceneRenderer::Impl::popProgram()
 {
     programStack.pop_back();
 }
@@ -844,7 +844,7 @@ void GLSLSceneRenderer::doRender()
 }
 
 
-void GLSLSceneRendererImpl::doRender()
+void GLSLSceneRenderer::Impl::doRender()
 {
     updateDefaultFramebufferObject();
     
@@ -909,7 +909,7 @@ void GLSLSceneRendererImpl::doRender()
 }
 
 
-void GLSLSceneRendererImpl::setupFullLightingRendering()
+void GLSLSceneRenderer::Impl::setupFullLightingRendering()
 {
     isTextureBeingRendered = isTextureEnabled;
 
@@ -961,7 +961,7 @@ bool GLSLSceneRenderer::doPick(int x, int y)
 }
 
 
-bool GLSLSceneRendererImpl::doPick(int x, int y)
+bool GLSLSceneRenderer::Impl::doPick(int x, int y)
 {
     int vx, vy, width, height;
     self->getViewport(vx, vy, width, height);
@@ -1081,7 +1081,7 @@ bool GLSLSceneRenderer::getPickingImage(Image& out_image)
 }
 
 
-void GLSLSceneRendererImpl::renderScene()
+void GLSLSceneRenderer::Impl::renderScene()
 {
     if(auto camera = self->currentCamera()){
 
@@ -1102,7 +1102,7 @@ void GLSLSceneRendererImpl::renderScene()
 }
 
 
-bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
+bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
 {
     SgLight* light;
     Affine3 T;
@@ -1122,7 +1122,7 @@ bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
 }
     
 
-void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
+void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
 {
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
@@ -1157,7 +1157,7 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
 }
 
 
-void GLSLSceneRendererImpl::beginRendering()
+void GLSLSceneRenderer::Impl::beginRendering()
 {
     ++renderingFrameId;
     if(renderingFrameId == 0){
@@ -1182,7 +1182,7 @@ void GLSLSceneRendererImpl::beginRendering()
 }
 
 
-void GLSLSceneRendererImpl::endRendering()
+void GLSLSceneRenderer::Impl::endRendering()
 {
     if(isCheckingUnusedResources){
         currentResourceMap->clear();
@@ -1191,7 +1191,7 @@ void GLSLSceneRendererImpl::endRendering()
 }
 
 
-void GLSLSceneRendererImpl::renderSceneGraphNodes()
+void GLSLSceneRenderer::Impl::renderSceneGraphNodes()
 {
     currentProgram->initializeFrameRendering();
 
@@ -1210,7 +1210,7 @@ void GLSLSceneRenderer::renderLights(LightingProgram* program)
 }
 
 
-void GLSLSceneRendererImpl::renderLights(LightingProgram* program)
+void GLSLSceneRenderer::Impl::renderLights(LightingProgram* program)
 {
     int lightIndex = 0;
 
@@ -1251,7 +1251,7 @@ void GLSLSceneRenderer::renderFog(LightingProgram* program)
 }
 
 
-void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
+void GLSLSceneRenderer::Impl::renderFog(LightingProgram* program)
 {
     SgFog* fog = nullptr;
     if(self->isFogEnabled()){
@@ -1297,7 +1297,7 @@ void GLSLSceneRenderer::dispatchToTransparentPhase
 }
 
 
-void GLSLSceneRendererImpl::renderTransparentObjects()
+void GLSLSceneRenderer::Impl::renderTransparentObjects()
 {
     if(!isRenderingPickingImage){
         glEnable(GL_BLEND);
@@ -1318,7 +1318,7 @@ void GLSLSceneRendererImpl::renderTransparentObjects()
 }
 
 
-void GLSLSceneRendererImpl::renderOverlayObjects()
+void GLSLSceneRenderer::Impl::renderOverlayObjects()
 {
     if(!depthBufferForOverlay){
         glGenRenderbuffers(1, &depthBufferForOverlay);
@@ -1423,7 +1423,7 @@ const Vector3& GLSLSceneRenderer::pickedPoint() const
 }
 
 
-inline void GLSLSceneRendererImpl::setPickColor(int pickIndex)
+inline void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
 {
     Vector3f color;
     int id = pickIndex + 1;
@@ -1440,7 +1440,7 @@ inline void GLSLSceneRendererImpl::setPickColor(int pickIndex)
 /**
    @return the index of the current object in picking
 */
-inline int GLSLSceneRendererImpl::pushPickNode(SgNode* node, bool doSetColor)
+inline int GLSLSceneRenderer::Impl::pushPickNode(SgNode* node, bool doSetColor)
 {
     int pickIndex = 0;
     
@@ -1457,7 +1457,7 @@ inline int GLSLSceneRendererImpl::pushPickNode(SgNode* node, bool doSetColor)
 }
 
 
-inline void GLSLSceneRendererImpl::popPickNode()
+inline void GLSLSceneRenderer::Impl::popPickNode()
 {
     if(isRenderingPickingImage){
         currentNodePath.pop_back();
@@ -1471,7 +1471,7 @@ void GLSLSceneRenderer::renderNode(SgNode* node)
 }
 
 
-void GLSLSceneRendererImpl::renderGroup(SgGroup* group)
+void GLSLSceneRenderer::Impl::renderGroup(SgGroup* group)
 {
     pushPickNode(group);
     renderChildNodes(group);
@@ -1487,7 +1487,7 @@ void GLSLSceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> 
 }
 
 
-void GLSLSceneRendererImpl::renderSwitchableGroup(SgSwitchableGroup* group)
+void GLSLSceneRenderer::Impl::renderSwitchableGroup(SgSwitchableGroup* group)
 {
     if(group->isTurnedOn()){
         renderGroup(group);
@@ -1495,7 +1495,7 @@ void GLSLSceneRendererImpl::renderSwitchableGroup(SgSwitchableGroup* group)
 }
 
 
-void GLSLSceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
+void GLSLSceneRenderer::Impl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
     if(!isRenderingPickingImage){
         renderGroup(group);
@@ -1503,7 +1503,7 @@ void GLSLSceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 }
 
 
-void GLSLSceneRendererImpl::renderTransform(SgTransform* transform)
+void GLSLSceneRenderer::Impl::renderTransform(SgTransform* transform)
 {
     if(!transform->empty()){
         Affine3 T;
@@ -1533,7 +1533,7 @@ void GLSLSceneRenderer::renderCustomTransform(SgTransform* transform, std::funct
 }
 
 
-void GLSLSceneRendererImpl::renderAutoScale(SgAutoScale* autoScale)
+void GLSLSceneRenderer::Impl::renderAutoScale(SgAutoScale* autoScale)
 {
     double r = self->currentProjectedPixelSizeRatio();
 
@@ -1549,7 +1549,7 @@ void GLSLSceneRendererImpl::renderAutoScale(SgAutoScale* autoScale)
 }
     
 
-VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj)
+VertexResource* GLSLSceneRenderer::Impl::getOrCreateVertexResource(SgObject* obj)
 {
     VertexResource* resource;
     auto p = currentResourceMap->find(obj);
@@ -1566,7 +1566,7 @@ VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj)
 }
 
 
-void GLSLSceneRendererImpl::drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position)
+void GLSLSceneRenderer::Impl::drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position)
 {
     currentProgram->setTransform(PV, viewTransform, position, resource->pLocalTransform);
     glBindVertexArray(resource->vao);
@@ -1574,7 +1574,7 @@ void GLSLSceneRendererImpl::drawVertexResource(VertexResource* resource, GLenum 
 }
 
 
-void GLSLSceneRendererImpl::drawBoundingBox(VertexResource* resource, const BoundingBox& bbox)
+void GLSLSceneRenderer::Impl::drawBoundingBox(VertexResource* resource, const BoundingBox& bbox)
 {
     if(!resource->boundingBoxLines){
         auto lines = new SgLineSet;
@@ -1609,7 +1609,7 @@ void GLSLSceneRendererImpl::drawBoundingBox(VertexResource* resource, const Boun
 }
         
         
-void GLSLSceneRendererImpl::renderShape(SgShape* shape)
+void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
@@ -1634,7 +1634,7 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 }
 
 
-void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& position, int pickIndex)
+void GLSLSceneRenderer::Impl::renderShapeMain(SgShape* shape, const Affine3& position, int pickIndex)
 {
     auto mesh = shape->mesh();
     
@@ -1676,7 +1676,7 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& posit
 }
 
 
-void GLSLSceneRendererImpl::applyCullingMode(SgMesh* mesh)
+void GLSLSceneRenderer::Impl::applyCullingMode(SgMesh* mesh)
 {
     if(!stateFlag[CULL_FACE]){
         bool enableCullFace;
@@ -1716,13 +1716,13 @@ void GLSLSceneRendererImpl::applyCullingMode(SgMesh* mesh)
 }
 
 
-void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
+void GLSLSceneRenderer::Impl::renderMaterial(const SgMaterial* material)
 {
     currentProgram->setMaterial(material ? material : defaultMaterial);
 }
 
 
-bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
+bool GLSLSceneRenderer::Impl::renderTexture(SgTexture* texture)
 {
     SgImage* sgImage = texture->image();
     if(!sgImage || sgImage->empty()){
@@ -1769,7 +1769,7 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
 }
 
 
-bool GLSLSceneRendererImpl::loadTextureImage(TextureResource* resource, const Image& image)
+bool GLSLSceneRenderer::Impl::loadTextureImage(TextureResource* resource, const Image& image)
 {
     GLenum format = GL_RGB;
     switch(image.numComponents()){
@@ -1833,7 +1833,7 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 }
 
 
-void GLSLSceneRendererImpl::makeVertexBufferObjects(SgShape* shape, VertexResource* resource)
+void GLSLSceneRenderer::Impl::makeVertexBufferObjects(SgShape* shape, VertexResource* resource)
 {
     auto mesh = shape->mesh();
 
@@ -1868,7 +1868,7 @@ void GLSLSceneRendererImpl::makeVertexBufferObjects(SgShape* shape, VertexResour
 
 
 template<typename value_type, GLenum gltype, GLboolean normalized, class VertexArrayWrapper>
-void GLSLSceneRendererImpl::writeMeshVerticesSub
+void GLSLSceneRenderer::Impl::writeMeshVerticesSub
 (SgMesh* mesh, VertexResource* resource, VertexArrayWrapper& vertices)
 {
     const auto& orgVertices = *mesh->vertices();
@@ -1900,7 +1900,7 @@ void GLSLSceneRendererImpl::writeMeshVerticesSub
 }
 
 
-void GLSLSceneRendererImpl::writeMeshVerticesFloat(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRenderer::Impl::writeMeshVerticesFloat(SgMesh* mesh, VertexResource* resource)
 {
     struct VertexArrayWrapper {
         SgVertexArray array;
@@ -1911,7 +1911,7 @@ void GLSLSceneRendererImpl::writeMeshVerticesFloat(SgMesh* mesh, VertexResource*
 }
 
 
-void GLSLSceneRendererImpl::writeMeshVerticesNormalizedShort(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRenderer::Impl::writeMeshVerticesNormalizedShort(SgMesh* mesh, VertexResource* resource)
 {
     /**
        GLshort type is used for storing vertex positions.
@@ -1958,7 +1958,7 @@ void GLSLSceneRendererImpl::writeMeshVerticesNormalizedShort(SgMesh* mesh, Verte
 
 
 template<typename value_type, GLenum gltype, GLint glsize, GLboolean normalized, class NormalArrayWrapper>
-bool GLSLSceneRendererImpl::writeMeshNormalsSub
+bool GLSLSceneRenderer::Impl::writeMeshNormalsSub
 (SgMesh* mesh, VertexResource* resource, NormalArrayWrapper& normals)
 {
     bool ready = false;
@@ -2038,7 +2038,7 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
 }    
     
 
-void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRenderer::Impl::writeMeshNormalsFloat(SgMesh* mesh, VertexResource* resource)
 {
     struct NormalArrayWrapper {
         SgNormalArray array;
@@ -2050,7 +2050,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, VertexResource* 
 }
 
 
-void GLSLSceneRendererImpl::writeMeshNormalsShort(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRenderer::Impl::writeMeshNormalsShort(SgMesh* mesh, VertexResource* resource)
 {
     typedef Eigen::Matrix<GLshort,3,1> Vector3s;
 
@@ -2068,7 +2068,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsShort(SgMesh* mesh, VertexResource* 
 }
 
 
-void GLSLSceneRendererImpl::writeMeshNormalsByte(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRenderer::Impl::writeMeshNormalsByte(SgMesh* mesh, VertexResource* resource)
 {
     typedef Eigen::Matrix<GLbyte,3,1> Vector3b;
 
@@ -2091,7 +2091,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsByte(SgMesh* mesh, VertexResource* r
    the code is compiled by VC++2017 with the AVX2 option.
    VC++2015 and GCC do not cause such a problem.
 */
-void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRenderer::Impl::writeMeshNormalsPacked(SgMesh* mesh, VertexResource* resource)
 {
     struct NormalArrayWrapper {
         vector<uint32_t> array;
@@ -2125,7 +2125,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, VertexResource*
 
 
 template<typename value_type, GLenum gltype, GLboolean normalized, class TexCoordArrayWrapper>
-void GLSLSceneRendererImpl::writeMeshTexCoordsSub
+void GLSLSceneRenderer::Impl::writeMeshTexCoordsSub
 (SgMesh* mesh, SgTexture* texture, VertexResource* resource, TexCoordArrayWrapper& texCoords)
 {
     auto& triangleVertices = mesh->triangleVertices();
@@ -2183,7 +2183,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsSub
 }
 
 
-void GLSLSceneRendererImpl::writeMeshTexCoordsFloat
+void GLSLSceneRenderer::Impl::writeMeshTexCoordsFloat
 (SgMesh* mesh, SgTexture* texture, VertexResource* resource)
 {
     struct TexCoordArrayWrapper {
@@ -2197,7 +2197,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsFloat
 }
 
 
-void GLSLSceneRendererImpl::writeMeshTexCoordsHalfFloat
+void GLSLSceneRenderer::Impl::writeMeshTexCoordsHalfFloat
 (SgMesh* mesh, SgTexture* texture, VertexResource* resource)
 {
     typedef Eigen::Matrix<GLhalf,2,1> Vector2h;
@@ -2235,7 +2235,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsHalfFloat
    values is common, and such data cannot be rendererd correctly with this implementation.
    As an alternative of lightweight implementation, writeMeshTexCoordsHalfFloat is available.
 */
-void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort
+void GLSLSceneRenderer::Impl::writeMeshTexCoordsUnsignedShort
 (SgMesh* mesh, SgTexture* texture, VertexResource* resource)
 {
     typedef Eigen::Matrix<GLushort,2,1> Vector2us;
@@ -2259,7 +2259,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort
 }
 
 
-void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRenderer::Impl::writeMeshColors(SgMesh* mesh, VertexResource* resource)
 {
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
@@ -2301,7 +2301,7 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, VertexResource* resour
 }
     
 
-void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
+void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
         return;
@@ -2321,7 +2321,7 @@ void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 }
 
 
-void GLSLSceneRendererImpl::renderPlot
+void GLSLSceneRenderer::Impl::renderPlot
 (SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices)
 {
     pushPickNode(plot);
@@ -2414,7 +2414,7 @@ static SgVertexArrayPtr getLineSetVertices(SgLineSet* lineSet)
 }
 
 
-void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
+void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 {
     if(isRenderingShadowMap){
         return;
@@ -2438,7 +2438,7 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 }
 
 
-void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
+void GLSLSceneRenderer::Impl::renderOverlay(SgOverlay* overlay)
 {
     if(isRenderingVisibleImage || isRenderingPickingImage){
         int matrixIndex = modelMatrixBuffer.size();
@@ -2451,7 +2451,7 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 }
 
 
-void GLSLSceneRendererImpl::renderOverlayMain(SgOverlay* overlay, const Affine3& T, const SgNodePath& nodePath)
+void GLSLSceneRenderer::Impl::renderOverlayMain(SgOverlay* overlay, const Affine3& T, const SgNodePath& nodePath)
 {
     if(isRenderingPickingImage){
         currentNodePath = nodePath;
@@ -2463,7 +2463,7 @@ void GLSLSceneRendererImpl::renderOverlayMain(SgOverlay* overlay, const Affine3&
 }
 
 
-void GLSLSceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
+void GLSLSceneRenderer::Impl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
     if(isRenderingVisibleImage){
         overlayRenderingQueue.emplace_back(
@@ -2472,7 +2472,7 @@ void GLSLSceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 }
 
 
-void GLSLSceneRendererImpl::renderViewportOverlayMain(SgViewportOverlay* overlay)
+void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overlay)
 {
     const Matrix4 PV0 = PV;
     SgViewportOverlay::ViewVolume v;
@@ -2489,7 +2489,7 @@ void GLSLSceneRendererImpl::renderViewportOverlayMain(SgViewportOverlay* overlay
 }
 
 
-void GLSLSceneRendererImpl::renderOutline(SgOutline* outline)
+void GLSLSceneRenderer::Impl::renderOutline(SgOutline* outline)
 {
     renderGroup(outline);
 
@@ -2503,7 +2503,7 @@ void GLSLSceneRendererImpl::renderOutline(SgOutline* outline)
 }
 
 
-void GLSLSceneRendererImpl::renderOutlineEdge(SgOutline* outline, const Affine3& T)
+void GLSLSceneRenderer::Impl::renderOutlineEdge(SgOutline* outline, const Affine3& T)
 {
     modelMatrixStack.push_back(T);
 
@@ -2555,7 +2555,7 @@ void GLSLSceneRendererImpl::renderOutlineEdge(SgOutline* outline, const Affine3&
 }
 
 
-void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderingGroup* group)
+void GLSLSceneRenderer::Impl::renderLightweightRenderingGroup(SgLightweightRenderingGroup* group)
 {
     if(isRenderingShadowMap){
         return;
@@ -2595,7 +2595,7 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
 }
 
 
-void GLSLSceneRendererImpl::clearGLState()
+void GLSLSceneRenderer::Impl::clearGLState()
 {
     std::fill(stateFlag.begin(), stateFlag.end(), false);
     pointSize = defaultPointSize;    
@@ -2631,7 +2631,7 @@ void GLSLSceneRenderer::enableShadowAntiAliasing(bool on)
 }
 
 
-void GLSLSceneRendererImpl::setPointSize(float size)
+void GLSLSceneRenderer::Impl::setPointSize(float size)
 {
     if(!stateFlag[POINT_SIZE] || pointSize != size){
         float s = isRenderingPickingImage ? std::max(size, MinLineWidthForPicking) : size;
@@ -2642,7 +2642,7 @@ void GLSLSceneRendererImpl::setPointSize(float size)
 }
 
 
-void GLSLSceneRendererImpl::setLineWidth(float width)
+void GLSLSceneRenderer::Impl::setLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
         if(isRenderingPickingImage){

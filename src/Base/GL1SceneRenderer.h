@@ -11,8 +11,6 @@
 
 namespace cnoid {
 
-class GL1SceneRendererImpl;
-    
 class CNOID_EXPORT GL1SceneRenderer : public GLSceneRenderer
 {
 public:
@@ -63,8 +61,8 @@ public:
     virtual bool doPick(int x, int y) override;
     
   private:
-    GL1SceneRendererImpl* impl;
-    friend class GL1SceneRendererImpl;
+    class Impl;
+    Impl* impl;
 };
 
 }

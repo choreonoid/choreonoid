@@ -11,7 +11,6 @@
 
 namespace cnoid {
 
-class GLSceneRendererImpl;
 class Image;
     
 class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
@@ -116,8 +115,8 @@ protected:
     virtual void onImageUpdated(SgImage* image);
 
 private:
-    GLSceneRendererImpl* impl;
-    friend class GLSceneRendererImpl;
+    class Impl;
+    Impl* impl;
 };
 
 }
