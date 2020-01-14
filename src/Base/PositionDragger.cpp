@@ -41,9 +41,12 @@ const Vector3f HighlightedAxisColors[3] = {
     { 0.4f, 0.5f, 1.0f }
 };
 
-constexpr double StandardSceneHandleWidth = 0.02;
-constexpr double StandardPixelHandleWidth = 6.0;
+constexpr double StdUnitHandleWidth = 0.02;
+constexpr double StdPixelHandleWidth = 6.0;
 constexpr double MaxPixelHandleWidthCorrectionRatio = 3.0;
+constexpr double StdRotationHandleSizeRatio = 0.6;
+constexpr double WideUnitHandleWidth = 0.08;
+constexpr double WideRotationHandleSizeRatio = 0.5;
 constexpr float DefaultTransparency = 0.4f;
 
 
@@ -245,19 +248,20 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     }
 
     if(handleType != WideHandle){
-        unitHandleWidth = StandardSceneHandleWidth;
+        unitHandleWidth = StdUnitHandleWidth;
+        rotationHandleSizeRatio = StdRotationHandleSizeRatio;
     } else {
         if(!registry.hasRegistration<SgViewpointDependentSelector>()){
             registerViewpointDependentSelector(registry);
         }
-        unitHandleWidth = 2.0 * StandardSceneHandleWidth;
+        unitHandleWidth = WideUnitHandleWidth;
+        rotationHandleSizeRatio = WideRotationHandleSizeRatio;
     }
 
     for(int i=0; i < 6; ++i){
         axisSwitch[i] = new SgSwitch(draggableAxisBitSet[i]);
     }
     
-    rotationHandleSizeRatio = 0.6;
 
     displayMode = DisplayInFocus;
     isOverlayMode = false;
@@ -297,10 +301,10 @@ SgNode* PositionDragger::Impl::createHandle(double widthRatio)
     
     draggerAxes->addChild(createTranslationHandle(widthRatio));
 
-    if(handleType == WideHandle){
-        draggerAxes->addChild(createRotationDiscHandle(widthRatio));
-    } else {
+    if(handleType != WideHandle){
         draggerAxes->addChild(createRotationRingHandle(widthRatio));
+    } else {
+        draggerAxes->addChild(createRotationDiscHandle(widthRatio));
     }
 
     return draggerAxes;
@@ -398,7 +402,6 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
     double width = unitHandleWidth / rotationHandleSizeRatio * widthRatio;
     meshGenerator.setDivisionNumber(36);
     mesh[0] = meshGenerator.generateDisc(1.0, 1.0 - width);
-    meshGenerator.setDivisionNumber(24);
     mesh[1] = meshGenerator.generateCylinder(1.0, width, false, false);
 
     for(int i=0; i < 3; ++i){
@@ -435,8 +438,8 @@ double PositionDragger::Impl::calcWidthRatio(double pixelSizeRatio)
     if(pixelSizeRatio >= 0.0){
         double pixelWidth = unitHandleWidth * handleSize * pixelSizeRatio;
         if(pixelWidth > 0.1){
-            if(pixelWidth < StandardPixelHandleWidth){
-                widthRatio = StandardPixelHandleWidth / pixelWidth;
+            if(pixelWidth < StdPixelHandleWidth){
+                widthRatio = StdPixelHandleWidth / pixelWidth;
             }
             if(widthRatio > MaxPixelHandleWidthCorrectionRatio){
                 widthRatio = MaxPixelHandleWidthCorrectionRatio;
@@ -456,7 +459,12 @@ double PositionDragger::Impl::calcWidthRatio(double pixelSizeRatio)
 */
 SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking)
 {
-    double widthRatio = calcWidthRatio(pixelSizeRatio);
+    double widthRatio;
+    if(handleType != WideHandle){
+        widthRatio = calcWidthRatio(pixelSizeRatio);
+    } else {
+        widthRatio = 1.0;
+    }
     return createHandle(widthRatio);
 }
 
