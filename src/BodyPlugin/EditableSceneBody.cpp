@@ -15,6 +15,7 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/SceneDragProjector>
 #include <cnoid/PositionDragger>
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/SceneDevice>
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/PinDragIK>
@@ -297,8 +298,15 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     outlinedLink = nullptr;
     targetLink = nullptr;
 
-    positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
-    positionDragger->setOverlayMode(true);
+    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GL1_RENDERER){
+        /** GL1SceneRenderer does not support the overlay rendering with SgOverlay and use the
+            old type dragger to render it correctly. */
+        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::WideHandle);
+        positionDragger->setOverlayMode(false);
+    } else {
+        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
+        positionDragger->setOverlayMode(true);
+    }
     positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
     positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
     positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
