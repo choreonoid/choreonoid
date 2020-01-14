@@ -229,7 +229,7 @@ public:
     double normalLength;
 
     bool isCompiling;
-    bool isPicking;
+    bool isRenderingPickingImage;
     bool isRenderingOutline;
 
     GLdouble pickX;
@@ -369,7 +369,7 @@ void GL1SceneRendererImpl::initialize()
     normalLength = 0.0;
 
     isCompiling = false;
-    isPicking = false;
+    isRenderingPickingImage = false;
     isRenderingOutline = false;
     pickedPoint.setZero();
 
@@ -462,16 +462,16 @@ bool GL1SceneRendererImpl::initializeGL()
 }
 
 
-void GL1SceneRenderer::flush()
-{
-    glFlush();
-}
-
-
 void GL1SceneRenderer::setViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
     updateViewportInformation(x, y, width, height);
+}
+
+
+void GL1SceneRenderer::flush()
+{
+    glFlush();
 }
 
 
@@ -483,7 +483,7 @@ void GL1SceneRenderer::requestToClearResources()
 
 void GL1SceneRendererImpl::beginRendering()
 {
-    isCheckingUnusedResources = isPicking ? false : doUnusedResourceCheck;
+    isCheckingUnusedResources = isRenderingPickingImage ? false : doUnusedResourceCheck;
 
     if(isResourceClearRequested){
         resourceMaps[0].clear();
@@ -506,7 +506,7 @@ void GL1SceneRendererImpl::beginRendering()
         hasValidNextResourceMap = false;
     }
 
-    if(isPicking){
+    if(isRenderingPickingImage){
         currentNodePath.clear();
         pickingNodePathList.clear();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -531,7 +531,7 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
     
     renderCamera(camera, cameraPosition);
 
-    if(isPicking || !defaultLighting){
+    if(isRenderingPickingImage || !defaultLighting){
         enableLighting(false);
     } else {
         if(defaultSmoothShading){
@@ -543,7 +543,7 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
         renderFog();
     }
 
-    if(isPicking){
+    if(isRenderingPickingImage){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     } else {
         switch(self->polygonMode()){
@@ -843,9 +843,9 @@ bool GL1SceneRendererImpl::doPick(int x, int y)
         glEnable(GL_SCISSOR_TEST);
     }
     
-    isPicking = true;
+    isRenderingPickingImage = true;
     doRender();
-    isPicking = false;
+    isRenderingPickingImage = false;
 
     glPopAttrib();
 
@@ -908,7 +908,7 @@ inline unsigned int GL1SceneRendererImpl::pushPickName(SgNode* node, bool doSetC
 {
     unsigned int id = 0;
     
-    if(isPicking && !isCompiling){
+    if(isRenderingPickingImage && !isCompiling){
         id = pickingNodePathList.size() + 1;
         currentNodePath.push_back(node);
         pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
@@ -923,7 +923,7 @@ inline unsigned int GL1SceneRendererImpl::pushPickName(SgNode* node, bool doSetC
 
 inline void GL1SceneRendererImpl::popPickName()
 {
-    if(isPicking && !isCompiling){
+    if(isRenderingPickingImage && !isCompiling){
         currentNodePath.pop_back();
     }
 }
@@ -1037,7 +1037,7 @@ void GL1SceneRendererImpl::renderShape(SgShape* shape)
                 } else {
                     pushPickName(shape);
                     bool hasTexture = false;
-                    if(!isPicking){
+                    if(!isRenderingPickingImage){
                         renderMaterial(material);
                         if(texture && mesh->hasTexCoords()){
                             hasTexture = renderTexture(texture, material);
@@ -1054,7 +1054,7 @@ void GL1SceneRendererImpl::renderShape(SgShape* shape)
 
 void GL1SceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         renderGroup(group);
     }
 }
@@ -1227,7 +1227,7 @@ void GL1SceneRendererImpl::renderTransparentShapes()
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();;
     
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         enableBlend(true);
     }
     
@@ -1238,7 +1238,7 @@ void GL1SceneRendererImpl::renderTransparentShapes()
         glLoadMatrixd(info.V.data());
         SgShape* shape = info.shape;
         bool hasTexture = false;
-        if(isPicking){
+        if(isRenderingPickingImage){
             setPickColor(info.pickId);
         } else {
             renderMaterial(shape->material());
@@ -1250,7 +1250,7 @@ void GL1SceneRendererImpl::renderTransparentShapes()
         renderMesh(shape->mesh(), hasTexture);
     }
 
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         enableBlend(false);
     }
 
@@ -1422,7 +1422,7 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         glDisable(GL_TEXTURE_2D);
     }
 
-    if(doNormalVisualization && isNormalArrayActive && !isPicking){
+    if(doNormalVisualization && isNormalArrayActive && !isRenderingPickingImage){
         glDisableClientState(GL_NORMAL_ARRAY);
         if(isColorArrayActive){
             glDisableClientState(GL_COLOR_ARRAY);
@@ -1762,7 +1762,7 @@ void GL1SceneRendererImpl::renderPlot
     }
 
     bool isColorMaterialEnabled = false;
-    if(resource->colorBufferName() != GL_INVALID_VALUE && !isPicking){
+    if(resource->colorBufferName() != GL_INVALID_VALUE && !isRenderingPickingImage){
         glEnableClientState(GL_COLOR_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
         glColorPointer(4, GL_FLOAT, 0, offset);
@@ -1790,7 +1790,7 @@ void GL1SceneRendererImpl::renderPlot
 
 void GL1SceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
-    if(isPicking){
+    if(isRenderingPickingImage){
         return;
     }
 
@@ -1861,9 +1861,9 @@ void GL1SceneRendererImpl::renderOutlineGroup(SgOutline* outline)
 }
 
 
-bool GL1SceneRenderer::isPicking() const
+bool GL1SceneRenderer::isRenderingPickingImage() const
 {
-    return impl->isPicking;
+    return impl->isRenderingPickingImage;
 }
 
 
@@ -1893,7 +1893,7 @@ void GL1SceneRendererImpl::clearGLState()
 
 void GL1SceneRendererImpl::setColor(const Vector3f& color)
 {
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         if(!stateFlag[CURRENT_COLOR] || color != currentColor){
             glColor4f(color[0], color[1], color[2], 1.0f);
             currentColor = color;
@@ -1911,7 +1911,7 @@ void GL1SceneRenderer::setColor(const Vector3f& color)
 
 void GL1SceneRendererImpl::enableColorMaterial(bool on)
 {
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         if(!stateFlag[COLOR_MATERIAL] || isColorMaterialEnabled != on){
             if(on){
                 glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
@@ -2007,7 +2007,7 @@ void GL1SceneRendererImpl::setFrontCCW(bool on)
 
 void GL1SceneRendererImpl::enableLighting(bool on)
 {
-    if(isPicking || !defaultLighting){
+    if(isRenderingPickingImage || !defaultLighting){
         on = false;
     }
     if(!stateFlag[LIGHTING] || isLightingEnabled != on){
@@ -2040,7 +2040,7 @@ void GL1SceneRenderer::setHeadLightLightingFromBackEnabled(bool on)
 
 void GL1SceneRendererImpl::enableBlend(bool on)
 {
-    if(isPicking){
+    if(isRenderingPickingImage){
         return;
     }
     if(!stateFlag[BLEND] || isBlendEnabled != on){
@@ -2071,7 +2071,7 @@ void GL1SceneRendererImpl::enableDepthMask(bool on)
 void GL1SceneRendererImpl::setPointSize(float size)
 {
     if(!stateFlag[POINT_SIZE] || pointSize != size){
-        if(isPicking){
+        if(isRenderingPickingImage){
             glPointSize(std::max(size, MinLineWidthForPicking));
         } else {
             glPointSize(size);
@@ -2085,7 +2085,7 @@ void GL1SceneRendererImpl::setPointSize(float size)
 void GL1SceneRendererImpl::setLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
-        if(isPicking){
+        if(isRenderingPickingImage){
             glLineWidth(std::max(width, MinLineWidthForPicking));
         } else {
             glLineWidth(width);

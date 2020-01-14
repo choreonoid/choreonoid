@@ -32,7 +32,6 @@ public:
     SgGroupPtr scene;
     Array4i viewport;
     float aspectRatio; // width / height;
-    Signal<void(const Array4i& viewport)> sigViewportChanged;
     Vector3f backgroundColor;
     Vector3f defaultColor;
     GLSceneRenderer::PolygonMode polygonMode;
@@ -191,7 +190,6 @@ void GLSceneRenderer::updateViewportInformation(int x, int y, int width, int hei
             impl->aspectRatio = (double)width / height;
         }
         vp << x, y, width, height;
-        impl->sigViewportChanged(vp);
     }
 }
 
@@ -214,12 +212,6 @@ void GLSceneRenderer::getViewport(int& out_x, int& out_y, int& out_width, int& o
 double GLSceneRenderer::aspectRatio() const
 {
     return impl->aspectRatio;
-}
-
-
-SignalProxy<void(const Array4i& viewport)> GLSceneRenderer::sigViewportChanged()
-{
-    return impl->sigViewportChanged;
 }
 
 
@@ -326,13 +318,13 @@ bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_proje
 }
 
 
-void GLSceneRenderer::setPickingBufferImageOutputEnabled(bool)
+void GLSceneRenderer::setPickingImageOutputEnabled(bool)
 {
 
 }
     
 
-bool GLSceneRenderer::getPickingBufferImage(Image&)
+bool GLSceneRenderer::getPickingImage(Image&)
 {
     return false;
 }

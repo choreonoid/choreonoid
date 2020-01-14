@@ -33,13 +33,15 @@ public:
 
     virtual bool initializeGL() = 0;
     virtual void flush() = 0;
-    
+
     virtual void setViewport(int x, int y, int width, int height) = 0;
-    void updateViewportInformation(int x, int y, int width, int height);
+    
+    // Call this function instead of setViewport when the viewport is specified by the system.
+    virtual void updateViewportInformation(int x, int y, int width, int height);
+    
     Array4i viewport() const;
     void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
     double aspectRatio() const; // width / height;
-    SignalProxy<void(const Array4i& viewport)> sigViewportChanged();
 
     void getPerspectiveProjectionMatrix(
         double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);
@@ -104,8 +106,8 @@ public:
 
     virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on);
 
-    virtual void setPickingBufferImageOutputEnabled(bool on);
-    virtual bool getPickingBufferImage(Image& out_image);
+    virtual void setPickingImageOutputEnabled(bool on);
+    virtual bool getPickingImage(Image& out_image);
 
     virtual bool isShadowCastingAvailable() const;
 

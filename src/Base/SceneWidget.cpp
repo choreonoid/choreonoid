@@ -243,7 +243,7 @@ public:
     Signal<void()> sigStateChanged;
     LazyCaller emitSigStateChangedLater;
 
-    bool needToUpdatedViewportInformation;
+    bool needToUpdateViewportInformation;
     bool isEditMode;
 
     Selection viewpointControlMode;
@@ -313,7 +313,7 @@ public:
     Signal<void(bool isFocused)> sigWidgetFocusChanged;
     Signal<void()> sigAboutToBeDestroyed;
 
-    ImageWindow* pickingBufferImageWindow;
+    ImageWindow* pickingImageWindow;
 
 #ifdef ENABLE_SIMULATION_PROFILING
     int profiling_mode;
@@ -375,7 +375,7 @@ public:
     void onEntityAdded(SgNode* node);
     void onEntityRemoved(SgNode* node);
 
-    void showPickingBufferImageWindow();
+    void showPickingImageWindow();
     void onUpsideDownToggled(bool on);
         
     void updateLatestEvent(QKeyEvent* event);
@@ -578,7 +578,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     setAutoFillBackground(false);
     setMouseTracking(true);
 
-    needToUpdatedViewportInformation = true;
+    needToUpdateViewportInformation = true;
     isEditMode = false;
     viewpointControlMode.resize(2);
     viewpointControlMode.setSymbol(SceneWidget::THIRD_PERSON_MODE, "thirdPerson");
@@ -666,7 +666,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     sigLowMemoryConsumptionModeChanged.connect(
         [&](bool on){ onLowMemoryConsumptionModeChanged(on); });
 
-    pickingBufferImageWindow = nullptr;
+    pickingImageWindow = nullptr;
 
 #ifdef ENABLE_SIMULATION_PROFILING
     profiling_mode = 1;
@@ -687,8 +687,8 @@ SceneWidgetImpl::~SceneWidgetImpl()
     delete indicatorLabel;
     delete config;
 
-    if(pickingBufferImageWindow){
-        delete pickingBufferImageWindow;
+    if(pickingImageWindow){
+        delete pickingImageWindow;
     }
 }
 
@@ -767,7 +767,7 @@ void SceneWidgetImpl::resizeGL(int width, int height)
     if(TRACE_FUNCTIONS){
         os << "SceneWidgetImpl::resizeGL()" << endl;
     }
-    needToUpdatedViewportInformation = true;
+    needToUpdateViewportInformation = true;
 }
 
 
@@ -816,11 +816,11 @@ void SceneWidgetImpl::paintGL()
         os << "SceneWidgetImpl::paintGL() " << counter++ << endl;
     }
 
-    if(needToUpdatedViewportInformation){
+    if(needToUpdateViewportInformation){
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         renderer->updateViewportInformation(viewport[0], viewport[1], viewport[2], viewport[3]);
-        needToUpdatedViewportInformation = false;
+        needToUpdateViewportInformation = false;
     }
 
     bool isLightweightViewChangeActive = false;
@@ -1124,15 +1124,15 @@ void SceneWidgetImpl::viewAll()
 }
 
 
-void SceneWidgetImpl::showPickingBufferImageWindow()
+void SceneWidgetImpl::showPickingImageWindow()
 {
     auto glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer);
     if(glslRenderer){
-        if(!pickingBufferImageWindow){
+        if(!pickingImageWindow){
             auto vp = renderer->viewport();
-            pickingBufferImageWindow = new ImageWindow(vp[2], vp[3]);
+            pickingImageWindow = new ImageWindow(vp[2], vp[3]);
         }
-        pickingBufferImageWindow->show();
+        pickingImageWindow->show();
     }
 }
 
@@ -1168,13 +1168,13 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
 {
-    if(needToUpdatedViewportInformation ||
+    if(needToUpdateViewportInformation ||
        (!forceFullPicking && isLightweightViewChangeEnabled)){
         return;
     }
     
-    bool isPickingBufferVisualizationEnabled = pickingBufferImageWindow && pickingBufferImageWindow->isVisible();
-    renderer->setPickingBufferImageOutputEnabled(isPickingBufferVisualizationEnabled);
+    bool isPickingVisualizationEnabled = pickingImageWindow && pickingImageWindow->isVisible();
+    renderer->setPickingImageOutputEnabled(isPickingVisualizationEnabled);
 
     makeCurrent();
 
@@ -1183,10 +1183,10 @@ void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
     int py = r * latestEvent.y();
     bool picked = renderer->pick(px, py);
 
-    if(isPickingBufferVisualizationEnabled){
+    if(isPickingVisualizationEnabled){
         Image image;
-        if(renderer->getPickingBufferImage(image)){
-            pickingBufferImageWindow->setImage(image, px, image.height() - py - 1);
+        if(renderer->getPickingImage(image)){
+            pickingImageWindow->setImage(image, px, image.height() - py - 1);
         }
     }
 
@@ -3429,9 +3429,9 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     fpsTestIterationSpin.setValue(1);
     hbox->addWidget(&fpsTestIterationSpin);
 
-    auto pickingBufferButton = new PushButton(_("Show the picking buffer image (for debug)"));
-    pickingBufferButton->sigClicked().connect([=](){ impl->showPickingBufferImageWindow(); });
-    hbox->addWidget(pickingBufferButton);
+    auto pickingImageButton = new PushButton(_("Show the image for picking (for debug)"));
+    pickingImageButton->sigClicked().connect([=](){ impl->showPickingImageWindow(); });
+    hbox->addWidget(pickingImageButton);
     
     hbox->addStretch();
     vbox->addLayout(hbox);

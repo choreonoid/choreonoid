@@ -236,8 +236,8 @@ public:
     GLuint colorBufferForPicking;
     GLuint depthBufferForPicking;
     GLuint depthBufferForOverlay;
-    int pickingBufferWidth;
-    int pickingBufferHeight;
+    int pickingImageWidth;
+    int pickingImageHeight;
 
     ShaderProgram* currentProgram;
     NolightingProgram* currentNolightingProgram;
@@ -258,9 +258,9 @@ public:
     */
     unsigned int renderingFrameId;
     
-    bool isActuallyRendering;
-    bool isPicking;
-    bool isPickingBufferImageOutputEnabled;
+    bool isRenderingVisibleImage;
+    bool isRenderingPickingImage;
+    bool isPickingImageOutputEnabled;
     bool isShadowCastingEnabled;
     bool isRenderingShadowMap;
     bool isLightweightRenderingBeingProcessed;
@@ -451,8 +451,8 @@ void GLSLSceneRendererImpl::initialize()
     fboForPicking = 0;
     colorBufferForPicking = 0;
     depthBufferForPicking = 0;
-    pickingBufferWidth = 0;
-    pickingBufferHeight = 0;
+    pickingImageWidth = 0;
+    pickingImageHeight = 0;
 
     currentProgram = nullptr;
     currentNolightingProgram = nullptr;
@@ -460,9 +460,9 @@ void GLSLSceneRendererImpl::initialize()
     currentMaterialLightingProgram = nullptr;
 
     renderingFrameId = 1;
-    isActuallyRendering = false;
-    isPicking = false;
-    isPickingBufferImageOutputEnabled = false;
+    isRenderingVisibleImage = false;
+    isRenderingPickingImage = false;
+    isPickingImageOutputEnabled = false;
     isShadowCastingEnabled = true;
     isRenderingShadowMap = false;
     isLowMemoryConsumptionMode = false;
@@ -716,6 +716,13 @@ bool GLSLSceneRendererImpl::initializeGL()
 }
 
 
+void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
+{
+    glViewport(x, y, width, height);
+    updateViewportInformation(x, y, width, height);
+}
+
+
 void GLSLSceneRenderer::flush()
 {
     glFlush();
@@ -729,10 +736,9 @@ void GLSLSceneRenderer::flush()
 }
 
 
-void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
+void GLSLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
-    glViewport(x, y, width, height);
-    updateViewportInformation(x, y, width, height);
+    GLSceneRenderer::updateViewportInformation(x, y, width, height);
     impl->needToUpdateOverlayDepthBufferSize = true;
 }
 
@@ -880,7 +886,7 @@ void GLSLSceneRendererImpl::doRender()
         break;
     }
 
-    isActuallyRendering = true;
+    isRenderingVisibleImage = true;
     const Vector3f& c = self->backgroundColor();
     glClearColor(c[0], c[1], c[2], 1.0f);
 
@@ -912,14 +918,18 @@ void GLSLSceneRendererImpl::setupFullLightingRendering()
         pushProgram(phongLightingProgram);
             
     } else {
+        isRenderingVisibleImage = false;
+        isRenderingShadowMap = true;
+
         auto& program = phongShadowLightingProgram;
-        Array4i vp = self->viewport();
+
         int w, h;
         program.getShadowMapSize(w, h);
-        self->setViewport(0, 0, w, h);
+        Array4i vp = self->viewport();
+        glViewport(0, 0, w, h);
+        self->GLSceneRenderer::updateViewportInformation(0, 0, w, h);
+        
         pushProgram(program.shadowMapProgram());
-        isRenderingShadowMap = true;
-        isActuallyRendering = false;
         
         int shadowMapIndex = 0;
         set<int>::iterator iter = shadowLightIndices.begin();
@@ -935,8 +945,10 @@ void GLSLSceneRendererImpl::setupFullLightingRendering()
         
         popProgram();
         isRenderingShadowMap = false;
-        self->setViewport(vp[0], vp[1], vp[2], vp[3]);
-    
+
+        glViewport(0, 0, vp[2], vp[3]);
+        self->GLSceneRenderer::updateViewportInformation(0, 0, vp[2], vp[3]);
+        
         program.activateMainRenderingPass();
         pushProgram(program);
     }
@@ -959,7 +971,7 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
     }
     glBindFramebuffer(GL_FRAMEBUFFER, fboForPicking);
 
-    if(width != pickingBufferWidth || height != pickingBufferHeight){
+    if(width != pickingImageWidth || height != pickingImageHeight){
         // color buffer
         if(!colorBufferForPicking){
             glGenRenderbuffers(1, &colorBufferForPicking);
@@ -976,19 +988,19 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
 
-        pickingBufferWidth = width;
-        pickingBufferHeight = height;
+        pickingImageWidth = width;
+        pickingImageHeight = height;
     }
 
     self->extractPreprocessedNodes();
 
-    if(!isPickingBufferImageOutputEnabled){
+    if(!isPickingImageOutputEnabled){
         glScissor(x, y, 1, 1);
         glEnable(GL_SCISSOR_TEST);
     }
 
-    isPicking = true;
-    isActuallyRendering = false;
+    isRenderingPickingImage = true;
+    isRenderingVisibleImage = false;
     beginRendering();
     pushProgram(solidColorProgram);
     currentNodePath.clear();
@@ -1000,9 +1012,9 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
     renderScene();
     
     popProgram();
-    isPicking = false;
+    isRenderingPickingImage = false;
 
-    if(!isPickingBufferImageOutputEnabled){
+    if(!isPickingImageOutputEnabled){
         glDisable(GL_SCISSOR_TEST);
     }
 
@@ -1013,7 +1025,7 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
 
     GLfloat color[4];
     glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
-    if(isPickingBufferImageOutputEnabled){
+    if(isPickingImageOutputEnabled){
         color[2] = 0.0f;
     }
     int pickIndex = (int)(color[0] * 255) + ((int)(color[1] * 255) << 8) + ((int)(color[2] * 255) << 16) - 1;
@@ -1042,23 +1054,23 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
 }
 
 
-void GLSLSceneRenderer::setPickingBufferImageOutputEnabled(bool on)
+void GLSLSceneRenderer::setPickingImageOutputEnabled(bool on)
 {
-    impl->isPickingBufferImageOutputEnabled = on;
+    impl->isPickingImageOutputEnabled = on;
 }
 
 
-bool GLSLSceneRenderer::getPickingBufferImage(Image& out_image)
+bool GLSLSceneRenderer::getPickingImage(Image& out_image)
 {
-    if(!impl->isPickingBufferImageOutputEnabled){
+    if(!impl->isPickingImageOutputEnabled){
         return false;
     }
     
     glBindFramebuffer(GL_FRAMEBUFFER, impl->fboForPicking);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, impl->fboForPicking);
     glReadBuffer(GL_COLOR_ATTACHMENT0);
-    int w = impl->pickingBufferWidth;
-    int h = impl->pickingBufferHeight;
+    int w = impl->pickingImageWidth;
+    int h = impl->pickingImageHeight;
     out_image.setSize(w, h, 4);
     glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, out_image.pixels());
     out_image.applyVerticalFlip();
@@ -1152,7 +1164,7 @@ void GLSLSceneRendererImpl::beginRendering()
         renderingFrameId = 1;
     }
     
-    isCheckingUnusedResources = isPicking ? false : doUnusedResourceCheck;
+    isCheckingUnusedResources = isRenderingPickingImage ? false : doUnusedResourceCheck;
 
     if(isResourceClearRequested){
         resourceMaps[0].clear();
@@ -1287,7 +1299,7 @@ void GLSLSceneRenderer::dispatchToTransparentPhase
 
 void GLSLSceneRendererImpl::renderTransparentObjects()
 {
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDepthMask(GL_FALSE);
@@ -1297,7 +1309,7 @@ void GLSLSceneRendererImpl::renderTransparentObjects()
         func();
     }
 
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
     }
@@ -1326,7 +1338,7 @@ void GLSLSceneRendererImpl::renderOverlayObjects()
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForOverlay);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    if(isPicking){
+    if(isRenderingPickingImage){
         overlayPickIndex0 = pickingNodePathList.size();
     }
 
@@ -1393,9 +1405,9 @@ double GLSLSceneRenderer::currentProjectedPixelSizeRatio() const
 }
 
     
-bool GLSLSceneRenderer::isPicking() const
+bool GLSLSceneRenderer::isRenderingPickingImage() const
 {
-    return impl->isPicking;
+    return impl->isRenderingPickingImage;
 }
 
 
@@ -1418,7 +1430,7 @@ inline void GLSLSceneRendererImpl::setPickColor(int pickIndex)
     color[0] = (id & 0xff) / 255.0;
     color[1] = ((id >> 8) & 0xff) / 255.0;
     color[2] = ((id >> 16) & 0xff) / 255.0;
-    if(isPickingBufferImageOutputEnabled){
+    if(isPickingImageOutputEnabled){
         color[2] = 1.0f;
     }
     solidColorProgram.setColor(color);
@@ -1432,7 +1444,7 @@ inline int GLSLSceneRendererImpl::pushPickNode(SgNode* node, bool doSetColor)
 {
     int pickIndex = 0;
     
-    if(isPicking){
+    if(isRenderingPickingImage){
         pickIndex = pickingNodePathList.size();
         currentNodePath.push_back(node);
         pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
@@ -1447,7 +1459,7 @@ inline int GLSLSceneRendererImpl::pushPickNode(SgNode* node, bool doSetColor)
 
 inline void GLSLSceneRendererImpl::popPickNode()
 {
-    if(isPicking){
+    if(isRenderingPickingImage){
         currentNodePath.pop_back();
     }
 }
@@ -1485,7 +1497,7 @@ void GLSLSceneRendererImpl::renderSwitchableGroup(SgSwitchableGroup* group)
 
 void GLSLSceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         renderGroup(group);
     }
 }
@@ -1602,7 +1614,7 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
         SgMaterial* material = shape->material();
-        if(material && material->transparency() > 0.0 && !isPicking){
+        if(material && material->transparency() > 0.0 && !isRenderingPickingImage){
             if(!isRenderingShadowMap){
                 SgShapePtr shapePtr = shape;
                 int matrixIndex = modelMatrixBuffer.size();
@@ -1626,7 +1638,7 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& posit
 {
     auto mesh = shape->mesh();
     
-    if(isPicking){
+    if(isRenderingPickingImage){
         setPickColor(pickIndex);
     } else {
         renderMaterial(shape->material());
@@ -1657,7 +1669,7 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& posit
         }
         drawVertexResource(resource, GL_TRIANGLES, position);
 
-        if(isNormalVisualizationEnabled && isActuallyRendering && resource->normalVisualization){
+        if(isNormalVisualizationEnabled && isRenderingVisibleImage && resource->normalVisualization){
             renderLineSet(resource->normalVisualization);
         }
     }
@@ -2316,7 +2328,7 @@ void GLSLSceneRendererImpl::renderPlot
 
     bool hasColors = plot->hasColors();
     
-    if(isPicking){
+    if(isRenderingPickingImage){
         solidColorProgram.setVertexColorEnabled(false);
     } else {
         if(!hasColors){
@@ -2428,10 +2440,10 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 
 void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-    if(isActuallyRendering || isPicking){
+    if(isRenderingVisibleImage || isRenderingPickingImage){
         int matrixIndex = modelMatrixBuffer.size();
         modelMatrixBuffer.push_back(modelMatrixStack.back());
-        const auto& nodePath = isPicking ? currentNodePath : emptyNodePath;
+        const auto& nodePath = isRenderingPickingImage ? currentNodePath : emptyNodePath;
         overlayRenderingQueue.emplace_back(
             [this, overlay, matrixIndex, nodePath](){
                 renderOverlayMain(overlay, modelMatrixBuffer[matrixIndex], nodePath); });
@@ -2441,7 +2453,7 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 
 void GLSLSceneRendererImpl::renderOverlayMain(SgOverlay* overlay, const Affine3& T, const SgNodePath& nodePath)
 {
-    if(isPicking){
+    if(isRenderingPickingImage){
         currentNodePath = nodePath;
     }
     ScopedShaderProgramActivator programActivator(solidColorProgram, this);
@@ -2453,7 +2465,7 @@ void GLSLSceneRendererImpl::renderOverlayMain(SgOverlay* overlay, const Affine3&
 
 void GLSLSceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
-    if(isActuallyRendering){
+    if(isRenderingVisibleImage){
         overlayRenderingQueue.emplace_back(
             [this, overlay](){ renderViewportOverlayMain(overlay); });
     }
@@ -2481,7 +2493,7 @@ void GLSLSceneRendererImpl::renderOutline(SgOutline* outline)
 {
     renderGroup(outline);
 
-    if(!isPicking && isActuallyRendering){
+    if(!isRenderingPickingImage && isRenderingVisibleImage){
         int matrixIndex = modelMatrixBuffer.size();
         modelMatrixBuffer.push_back(modelMatrixStack.back());
         overlayRenderingQueue.emplace_back(
@@ -2622,7 +2634,7 @@ void GLSLSceneRenderer::enableShadowAntiAliasing(bool on)
 void GLSLSceneRendererImpl::setPointSize(float size)
 {
     if(!stateFlag[POINT_SIZE] || pointSize != size){
-        float s = isPicking ? std::max(size, MinLineWidthForPicking) : size;
+        float s = isRenderingPickingImage ? std::max(size, MinLineWidthForPicking) : size;
         solidColorProgram.setPointSize(s);
         pointSize = s;
         stateFlag[POINT_SIZE] = true;
@@ -2633,7 +2645,7 @@ void GLSLSceneRendererImpl::setPointSize(float size)
 void GLSLSceneRendererImpl::setLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
-        if(isPicking){
+        if(isRenderingPickingImage){
             glLineWidth(std::max(width, MinLineWidthForPicking));
         } else {
             glLineWidth(width);

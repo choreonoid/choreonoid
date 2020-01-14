@@ -37,7 +37,6 @@ public:
     virtual PolymorphicSceneNodeFunctionSet* renderingFunctions() = 0;
     virtual void renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction) = 0;
     virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) = 0;
-
     virtual void renderNode(SgNode* node) = 0;
 
     int numCameras() const;
@@ -80,7 +79,7 @@ public:
     void render();
     bool pick(int x, int y);
 
-    virtual bool isPicking() const;
+    virtual bool isRenderingPickingImage() const;
     
     virtual void flush() = 0;
 

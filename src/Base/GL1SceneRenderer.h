@@ -33,7 +33,7 @@ public:
 
     virtual const Vector3& pickedPoint() const override;
     virtual const SgNodePath& pickedNodePath() const override;
-    virtual bool isPicking() const override;
+    virtual bool isRenderingPickingImage() const override;
     
     virtual void setLightingMode(int mode) override;
     void setHeadLightLightingFromBackEnabled(bool on);

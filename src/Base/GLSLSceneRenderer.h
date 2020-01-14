@@ -54,11 +54,12 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual bool initializeGL() override;
     virtual void flush() override;
     virtual void setViewport(int x, int y, int width, int height) override;
+    virtual void updateViewportInformation(int x, int y, int width, int height) override;
 
     virtual const Vector3& pickedPoint() const override;
     virtual const SgNodePath& pickedNodePath() const override;
-    virtual bool isPicking() const override;
-
+    virtual bool isRenderingPickingImage() const override;
+    
     virtual void setLightingMode(int mode) override;
     void setHeadLightLightingFromBackEnabled(bool on);
     virtual void clearShadows() override;
@@ -80,8 +81,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     void setLowMemoryConsumptionMode(bool on);
 
-    virtual void setPickingBufferImageOutputEnabled(bool on) override;
-    virtual bool getPickingBufferImage(Image& out_image) override;
+    virtual void setPickingImageOutputEnabled(bool on) override;
+    virtual bool getPickingImage(Image& out_image) override;
 
     virtual bool isShadowCastingAvailable() const override;
 

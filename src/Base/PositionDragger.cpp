@@ -169,7 +169,7 @@ void SgHandleVariantSelector::render(SceneRenderer* renderer)
     bool isForPicking = false;
     if(!dragger->isConstantPixelSizeMode){
         pixelSizeRatio = renderer->currentProjectedPixelSizeRatio();
-        isForPicking = renderer->isPicking();
+        isForPicking = renderer->isRenderingPickingImage();
     }
 
     //

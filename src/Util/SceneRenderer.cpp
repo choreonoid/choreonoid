@@ -275,7 +275,7 @@ bool SceneRenderer::doPick(int /* x */, int /* y */)
 }
 
 
-bool SceneRenderer::isPicking() const
+bool SceneRenderer::isRenderingPickingImage() const
 {
     return false;
 }
