@@ -164,7 +164,7 @@ public:
     }
 
 protected:
-    SgNode(int polymorhicId);
+    SgNode(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
@@ -234,6 +234,10 @@ public:
     void copyChildrenTo(SgGroup* group, bool doNotify = false);
     void moveChildrenTo(SgGroup* group, bool doNotify = false);
 
+    SgGroup* nextChainedGroup();
+    void insertChainedGroup(SgGroup* group);
+    void removeChainedGroup(SgGroup* group);
+
     template<class NodeType> NodeType* findNodeOfType(int depth = -1) {
         for(int i=0; i < numChildren(); ++i){
             if(NodeType* node = dynamic_cast<NodeType*>(child(i))) return node;
@@ -252,7 +256,7 @@ public:
     }
 
 protected:
-    SgGroup(int polymorhicId);
+    SgGroup(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     mutable BoundingBox bboxCache;
     mutable bool isBboxCacheValid;
@@ -275,6 +279,7 @@ public:
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
+
 typedef ref_ptr<SgInvariantGroup> SgInvariantGroupPtr;
     
     
@@ -286,10 +291,11 @@ public:
     virtual void getTransform(Affine3& out_T) const = 0;
     
 protected:
-    SgTransform(int polymorhicId);
+    SgTransform(int classId);
     SgTransform(const SgTransform& org, CloneMap* cloneMap = nullptr);
     mutable BoundingBox untransformedBboxCache;
 };
+
 typedef ref_ptr<SgTransform> SgTransformPtr;
 
 
@@ -343,12 +349,13 @@ public:
     }
 
 protected:
-    SgPosTransform(int polymorhicId);
+    SgPosTransform(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Affine3 T_;
 };
+
 typedef ref_ptr<SgPosTransform> SgPosTransformPtr;
 
 
@@ -356,6 +363,7 @@ class CNOID_EXPORT SgScaleTransform : public SgTransform
 {
 public:
     SgScaleTransform();
+    SgScaleTransform(double scale);
     SgScaleTransform(const Vector3& scale);
     SgScaleTransform(const SgScaleTransform& org, CloneMap* cloneMap);
     virtual const BoundingBox& boundingBox() const override;
@@ -373,12 +381,13 @@ public:
     Eigen::DiagonalWrapper<const Vector3> T() const { return scale_.asDiagonal(); }
 
 protected:
-    SgScaleTransform(int polymorhicId);
+    SgScaleTransform(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Vector3 scale_;
 };
+
 typedef ref_ptr<SgScaleTransform> SgScaleTransformPtr;
 
 
@@ -425,23 +434,71 @@ public:
     }
 
 protected:
-    SgAffineTransform(int polymorhicId);
+    SgAffineTransform(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     Affine3 T_;
 };
+
 typedef ref_ptr<SgAffineTransform> SgAffineTransformPtr;
 
 
-class CNOID_EXPORT SgSwitch : public SgGroup
+class CNOID_EXPORT SgAutoScale : public SgGroup
 {
 public:
-    SgSwitch();
-    SgSwitch(const SgSwitch& org, CloneMap* cloneMap = nullptr);
+    SgAutoScale();
+    SgAutoScale(double pixelSizeRatio);
+    SgAutoScale(const SgAutoScale& org, CloneMap* cloneMap = nullptr);
 
+    void setPixelSizeRatio(double ratio){ pixelSizeRatio_ = ratio; }
+    double pixelSizeRatio() const { return pixelSizeRatio_; }
+
+protected:
+    SgAutoScale(int classId);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    float pixelSizeRatio_;
+};
+
+typedef ref_ptr<SgAutoScale> SgAutoScalePtr;
+
+
+class CNOID_EXPORT SgSwitch : public SgObject
+{
+public:
+    SgSwitch(bool on = true);
+    SgSwitch(const SgSwitch& org);
+    
     void setTurnedOn(bool on, bool doNotify = false);
     bool isTurnedOn() const { return isTurnedOn_; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    bool isTurnedOn_;
+};
+
+typedef ref_ptr<SgSwitch> SgSwitchPtr;
+
+
+class CNOID_EXPORT SgSwitchableGroup : public SgGroup
+{
+public:
+    SgSwitchableGroup();
+    SgSwitchableGroup(SgSwitch* switchObject);
+    SgSwitchableGroup(const SgSwitchableGroup& org, CloneMap* cloneMap = nullptr);
+    ~SgSwitchableGroup();
+
+    void setSwitch(SgSwitch* newSwitchObject);
+
+    void setTurnedOn(bool on, bool doNotify = false);
+
+    bool isTurnedOn() const {
+        return switchObject ? switchObject->isTurnedOn() : isTurnedOn_;
+    }
 
     //! \deprecated
     void turnOn(bool doNotify = false) { setTurnedOn(true, doNotify); }
@@ -452,9 +509,11 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
+    SgSwitchPtr switchObject;
     bool isTurnedOn_;
 };
-typedef ref_ptr<SgSwitch> SgSwitchPtr;
+
+typedef ref_ptr<SgSwitchableGroup> SgSwitchableGroupPtr;
 
 
 class CNOID_EXPORT SgUnpickableGroup : public SgGroup
@@ -467,13 +526,14 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 };
+
 typedef ref_ptr<SgUnpickableGroup> SgUnpickableGroupPtr;
 
 
 class CNOID_EXPORT SgPreprocessed : public SgNode
 {
 protected:
-    SgPreprocessed(int polymorhicId);
+    SgPreprocessed(int classId);
     SgPreprocessed(const SgPreprocessed& org);
 };
 

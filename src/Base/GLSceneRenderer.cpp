@@ -22,7 +22,7 @@ int rendererType_ = GLSceneRenderer::GLSL_RENDERER;
 
 namespace cnoid {
 
-class GLSceneRendererImpl
+class GLSceneRenderer::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -32,15 +32,14 @@ public:
     SgGroupPtr scene;
     Array4i viewport;
     float aspectRatio; // width / height;
-    Signal<void(const Array4i& viewport)> sigViewportChanged;
     Vector3f backgroundColor;
     Vector3f defaultColor;
     GLSceneRenderer::PolygonMode polygonMode;
     ostream* os_;
     ostream& os(){ return *os_; };
 
-    GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
-    ~GLSceneRendererImpl();
+    Impl(GLSceneRenderer* self, SgGroup* sceneRoot);
+    ~Impl();
     void onSceneGraphUpdated(const SgUpdate& update);
 };
 
@@ -78,11 +77,11 @@ GLSceneRenderer::GLSceneRenderer(SgGroup* sceneRoot)
         sceneRoot = new SgGroup;
         sceneRoot->setName("Root");
     }
-    impl = new GLSceneRendererImpl(this, sceneRoot);
+    impl = new Impl(this, sceneRoot);
 }
 
 
-GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot)
+GLSceneRenderer::Impl::Impl(GLSceneRenderer* self, SgGroup* sceneRoot)
     : self(self),
       sceneRoot(sceneRoot)
 {
@@ -108,7 +107,7 @@ GLSceneRenderer::~GLSceneRenderer()
 }
 
 
-GLSceneRendererImpl::~GLSceneRendererImpl()
+GLSceneRenderer::Impl::~Impl()
 {
 
 }
@@ -191,7 +190,6 @@ void GLSceneRenderer::updateViewportInformation(int x, int y, int width, int hei
             impl->aspectRatio = (double)width / height;
         }
         vp << x, y, width, height;
-        impl->sigViewportChanged(vp);
     }
 }
 
@@ -214,12 +212,6 @@ void GLSceneRenderer::getViewport(int& out_x, int& out_y, int& out_width, int& o
 double GLSceneRenderer::aspectRatio() const
 {
     return impl->aspectRatio;
-}
-
-
-SignalProxy<void(const Array4i& viewport)> GLSceneRenderer::sigViewportChanged()
-{
-    return impl->sigViewportChanged;
 }
 
 
@@ -326,13 +318,13 @@ bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_proje
 }
 
 
-void GLSceneRenderer::setPickingBufferImageOutputEnabled(bool)
+void GLSceneRenderer::setPickingImageOutputEnabled(bool)
 {
 
 }
     
 
-bool GLSceneRenderer::getPickingBufferImage(Image&)
+bool GLSceneRenderer::getPickingImage(Image&)
 {
     return false;
 }

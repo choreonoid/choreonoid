@@ -16,14 +16,14 @@ class SceneTrackDevice : public SceneDevice
 {
     AGXVehicleContinuousTrackDevice* m_trackDevice;
     std::vector<SgPosTransformPtr> m_sgTracks;
-    SgSwitchPtr trackSwitch;
+    SgSwitchableGroupPtr trackSwitch;
 
 public:
     SceneTrackDevice(AGXVehicleContinuousTrackDevice* device)
         : SceneDevice(device)
     {
         m_trackDevice = device;
-        trackSwitch = new SgSwitch;
+        trackSwitch = new SgSwitchableGroup;
         trackSwitch->turnOff();
         addChild(trackSwitch);
         setFunctionOnStateChanged([&](){ update(); });

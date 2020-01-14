@@ -123,7 +123,7 @@ typedef ref_ptr<TextureResource> TextureResourcePtr;
 
 namespace cnoid {
 
-class GL1SceneRendererImpl
+class GL1SceneRenderer::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -229,7 +229,7 @@ public:
     double normalLength;
 
     bool isCompiling;
-    bool isPicking;
+    bool isRenderingPickingImage;
     bool isRenderingOutline;
 
     GLdouble pickX;
@@ -256,8 +256,8 @@ public:
         return c4;
     }
 
-    GL1SceneRendererImpl(GL1SceneRenderer* self);
-    ~GL1SceneRendererImpl();
+    Impl(GL1SceneRenderer* self);
+    ~Impl();
     void initialize();
     bool initializeGL();
     void beginRendering();
@@ -275,7 +275,7 @@ public:
     void popPickName();
 
     void renderGroup(SgGroup* group);
-    void renderSwitch(SgSwitch* node);
+    void renderSwitchableGroup(SgSwitchableGroup* group);
     void renderTransform(SgTransform* transform);
     void renderShape(SgShape* shape);
     void renderUnpickableGroup(SgUnpickableGroup* group);
@@ -320,19 +320,19 @@ public:
 GL1SceneRenderer::GL1SceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
-    impl = new GL1SceneRendererImpl(this);
+    impl = new Impl(this);
     impl->initialize();
 }
 
 
-GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
+GL1SceneRenderer::Impl::Impl(GL1SceneRenderer* self)
     : self(self)
 {
 
 }
 
 
-void GL1SceneRendererImpl::initialize()
+void GL1SceneRenderer::Impl::initialize()
 {
     Vstack.reserve(16);
     
@@ -369,7 +369,7 @@ void GL1SceneRendererImpl::initialize()
     normalLength = 0.0;
 
     isCompiling = false;
-    isPicking = false;
+    isRenderingPickingImage = false;
     isRenderingOutline = false;
     pickedPoint.setZero();
 
@@ -381,8 +381,8 @@ void GL1SceneRendererImpl::initialize()
         [&](SgGroup* node){ renderGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
-    renderingFunctions.setFunction<SgSwitch>(
-        [&](SgSwitch* node){ renderSwitch(node); });
+    renderingFunctions.setFunction<SgSwitchableGroup>(
+        [&](SgSwitchableGroup* node){ renderSwitchableGroup(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
         [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
     renderingFunctions.setFunction<SgShape>(
@@ -407,7 +407,7 @@ GL1SceneRenderer::~GL1SceneRenderer()
 }
 
 
-GL1SceneRendererImpl::~GL1SceneRendererImpl()
+GL1SceneRenderer::Impl::~Impl()
 {
 
 }
@@ -432,7 +432,7 @@ bool GL1SceneRenderer::initializeGL()
 }
 
 
-bool GL1SceneRendererImpl::initializeGL()
+bool GL1SceneRenderer::Impl::initializeGL()
 {
     if(GL15_ogl_LoadFunctions() == GL15_ogl_LOAD_FAILED){
         return false;
@@ -462,16 +462,16 @@ bool GL1SceneRendererImpl::initializeGL()
 }
 
 
-void GL1SceneRenderer::flush()
-{
-    glFlush();
-}
-
-
 void GL1SceneRenderer::setViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
     updateViewportInformation(x, y, width, height);
+}
+
+
+void GL1SceneRenderer::flush()
+{
+    glFlush();
 }
 
 
@@ -481,9 +481,9 @@ void GL1SceneRenderer::requestToClearResources()
 }
 
 
-void GL1SceneRendererImpl::beginRendering()
+void GL1SceneRenderer::Impl::beginRendering()
 {
-    isCheckingUnusedResources = isPicking ? false : doUnusedResourceCheck;
+    isCheckingUnusedResources = isRenderingPickingImage ? false : doUnusedResourceCheck;
 
     if(isResourceClearRequested){
         resourceMaps[0].clear();
@@ -506,7 +506,7 @@ void GL1SceneRendererImpl::beginRendering()
         hasValidNextResourceMap = false;
     }
 
-    if(isPicking){
+    if(isRenderingPickingImage){
         currentNodePath.clear();
         pickingNodePathList.clear();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -525,13 +525,13 @@ void GL1SceneRendererImpl::beginRendering()
 }
 
 
-void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
+void GL1SceneRenderer::Impl::beginActualRendering(SgCamera* camera)
 {
     const Affine3& cameraPosition = self->currentCameraPosition();
     
     renderCamera(camera, cameraPosition);
 
-    if(isPicking || !defaultLighting){
+    if(isRenderingPickingImage || !defaultLighting){
         enableLighting(false);
     } else {
         if(defaultSmoothShading){
@@ -543,7 +543,7 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
         renderFog();
     }
 
-    if(isPicking){
+    if(isRenderingPickingImage){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     } else {
         switch(self->polygonMode()){
@@ -571,7 +571,7 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
 }
 
 
-void GL1SceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
+void GL1SceneRenderer::Impl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
 {
     // set projection
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
@@ -608,7 +608,7 @@ void GL1SceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraP
 }
 
 
-void GL1SceneRendererImpl::renderLights(const Affine3& cameraPosition)
+void GL1SceneRenderer::Impl::renderLights(const Affine3& cameraPosition)
 {
     enableLighting(true);
 
@@ -651,7 +651,7 @@ void GL1SceneRendererImpl::renderLights(const Affine3& cameraPosition)
 }
 
 
-void GL1SceneRendererImpl::renderLight(const SgLight* light, GLint id, const Affine3& T)
+void GL1SceneRenderer::Impl::renderLight(const SgLight* light, GLint id, const Affine3& T)
 {
     bool isValid = false;
 
@@ -716,7 +716,7 @@ void GL1SceneRendererImpl::renderLight(const SgLight* light, GLint id, const Aff
 }
 
 
-void GL1SceneRendererImpl::renderFog()
+void GL1SceneRenderer::Impl::renderFog()
 {
     SgFog* fog = nullptr;
     if(self->isFogEnabled()){
@@ -732,7 +732,7 @@ void GL1SceneRendererImpl::renderFog()
         } else {
             currentFogConnection.reset(
                 fog->sigUpdated().connect(
-                    std::bind(&GL1SceneRendererImpl::onCurrentFogNodeUdpated, this)));
+                    std::bind(&GL1SceneRenderer::Impl::onCurrentFogNodeUdpated, this)));
         }
     }
 
@@ -759,13 +759,13 @@ void GL1SceneRendererImpl::renderFog()
 }
 
 
-void GL1SceneRendererImpl::onCurrentFogNodeUdpated()
+void GL1SceneRenderer::Impl::onCurrentFogNodeUdpated()
 {
     isCurrentFogUpdated = true;
 }
 
 
-void GL1SceneRendererImpl::endRendering()
+void GL1SceneRenderer::Impl::endRendering()
 {
     if(isCheckingUnusedResources){
         currentResourceMap->clear();
@@ -784,7 +784,7 @@ void GL1SceneRenderer::doRender()
 }
 
 
-void GL1SceneRendererImpl::doRender()
+void GL1SceneRenderer::Impl::doRender()
 {
     if(self->applyNewExtensions()){
         renderingFunctions.updateDispatchTable();
@@ -815,7 +815,7 @@ bool GL1SceneRenderer::doPick(int x, int y)
   http://www.codeproject.com/Articles/35139/Interactive-Techniques-in-Three-dimensional-Scenes#_OpenGL_Picking_by
   http://en.wikibooks.org/wiki/OpenGL_Programming/Object_selection
 */
-bool GL1SceneRendererImpl::doPick(int x, int y)
+bool GL1SceneRenderer::Impl::doPick(int x, int y)
 {
     glPushAttrib(GL_ENABLE_BIT);
 
@@ -843,9 +843,9 @@ bool GL1SceneRendererImpl::doPick(int x, int y)
         glEnable(GL_SCISSOR_TEST);
     }
     
-    isPicking = true;
+    isRenderingPickingImage = true;
     doRender();
-    isPicking = false;
+    isRenderingPickingImage = false;
 
     glPopAttrib();
 
@@ -888,7 +888,7 @@ const Vector3& GL1SceneRenderer::pickedPoint() const
 
 
 
-inline void GL1SceneRendererImpl::setPickColor(unsigned int id)
+inline void GL1SceneRenderer::Impl::setPickColor(unsigned int id)
 {
     float r = (id & 0xff) / 255.0;
     float g = ((id >> 8) & 0xff) / 255.0;
@@ -904,11 +904,11 @@ inline void GL1SceneRendererImpl::setPickColor(unsigned int id)
 /**
    @return id of the current object
 */
-inline unsigned int GL1SceneRendererImpl::pushPickName(SgNode* node, bool doSetColor)
+inline unsigned int GL1SceneRenderer::Impl::pushPickName(SgNode* node, bool doSetColor)
 {
     unsigned int id = 0;
     
-    if(isPicking && !isCompiling){
+    if(isRenderingPickingImage && !isCompiling){
         id = pickingNodePathList.size() + 1;
         currentNodePath.push_back(node);
         pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
@@ -921,9 +921,9 @@ inline unsigned int GL1SceneRendererImpl::pushPickName(SgNode* node, bool doSetC
 }
 
 
-inline void GL1SceneRendererImpl::popPickName()
+inline void GL1SceneRenderer::Impl::popPickName()
 {
-    if(isPicking && !isCompiling){
+    if(isRenderingPickingImage && !isCompiling){
         currentNodePath.pop_back();
     }
 }
@@ -935,7 +935,7 @@ void GL1SceneRenderer::renderNode(SgNode* node)
 }
 
 
-void GL1SceneRendererImpl::renderGroup(SgGroup* group)
+void GL1SceneRenderer::Impl::renderGroup(SgGroup* group)
 {
     pushPickName(group);
     renderChildNodes(group);
@@ -951,44 +951,47 @@ void GL1SceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> t
 }
 
 
-void GL1SceneRendererImpl::renderSwitch(SgSwitch* node)
+void GL1SceneRenderer::Impl::renderSwitchableGroup(SgSwitchableGroup* group)
 {
-    if(node->isTurnedOn()){
-        renderGroup(node);
+    if(group->isTurnedOn()){
+        renderGroup(group);
     }
 }
 
 
-void GL1SceneRendererImpl::renderTransform(SgTransform* transform)
+void GL1SceneRenderer::Impl::renderTransform(SgTransform* transform)
 {
-    Affine3 T;
-    transform->getTransform(T);
+    if(!transform->empty()){
+        
+        Affine3 T;
+        transform->getTransform(T);
 
-    Vstack.push_back(Vstack.back() * T);
+        Vstack.push_back(Vstack.back() * T);
 
-    glPushMatrix();
-    glMultMatrixd(T.data());
+        glPushMatrix();
+        glMultMatrixd(T.data());
 
-    /*
-      if(isNotRotationMatrix){
-      glPushAttrib(GL_ENABLE_BIT);
-      glEnable(GL_NORMALIZE);
-      }
-    */
+        /*
+        if(isNotRotationMatrix){
+          glPushAttrib(GL_ENABLE_BIT);
+          glEnable(GL_NORMALIZE);
+        }
+        */
 
-    // renderGroup(transform);
-    pushPickName(transform);
-    renderChildNodes(transform);
-    popPickName();
+        // renderGroup(transform);
+        pushPickName(transform);
+        renderChildNodes(transform);
+        popPickName();
     
-    /*
-      if(isNotRotationMatrix){
-      glPopAttrib();
-      }
-    */
+        /*
+        if(isNotRotationMatrix){
+          glPopAttrib();
+        }
+        */
     
-    glPopMatrix();
-    Vstack.pop_back();
+        glPopMatrix();
+        Vstack.pop_back();
+    }
 }
 
 
@@ -1009,7 +1012,7 @@ void GL1SceneRenderer::renderCustomTransform(SgTransform* transform, std::functi
 }    
 
 
-void GL1SceneRendererImpl::renderShape(SgShape* shape)
+void GL1SceneRenderer::Impl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh){
@@ -1034,7 +1037,7 @@ void GL1SceneRendererImpl::renderShape(SgShape* shape)
                 } else {
                     pushPickName(shape);
                     bool hasTexture = false;
-                    if(!isPicking){
+                    if(!isRenderingPickingImage){
                         renderMaterial(material);
                         if(texture && mesh->hasTexCoords()){
                             hasTexture = renderTexture(texture, material);
@@ -1049,15 +1052,15 @@ void GL1SceneRendererImpl::renderShape(SgShape* shape)
 }
 
 
-void GL1SceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
+void GL1SceneRenderer::Impl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         renderGroup(group);
     }
 }
 
 
-void GL1SceneRendererImpl::renderMaterial(const SgMaterial* material)
+void GL1SceneRenderer::Impl::renderMaterial(const SgMaterial* material)
 {
     if(!isLightingEnabled){
         if(material){
@@ -1092,7 +1095,7 @@ void GL1SceneRendererImpl::renderMaterial(const SgMaterial* material)
 }
 
 
-bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
+bool GL1SceneRenderer::Impl::renderTexture(SgTexture* texture, bool withMaterial)
 {
     SgImage* sgImage = texture->image();
     if(!sgImage || sgImage->empty()){
@@ -1219,12 +1222,12 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
 /**
    \todo sort the shape nodes by the distance from the viewpoint
 */
-void GL1SceneRendererImpl::renderTransparentShapes()
+void GL1SceneRenderer::Impl::renderTransparentShapes()
 {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();;
     
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         enableBlend(true);
     }
     
@@ -1235,7 +1238,7 @@ void GL1SceneRendererImpl::renderTransparentShapes()
         glLoadMatrixd(info.V.data());
         SgShape* shape = info.shape;
         bool hasTexture = false;
-        if(isPicking){
+        if(isRenderingPickingImage){
             setPickColor(info.pickId);
         } else {
             renderMaterial(shape->material());
@@ -1247,7 +1250,7 @@ void GL1SceneRendererImpl::renderTransparentShapes()
         renderMesh(shape->mesh(), hasTexture);
     }
 
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         enableBlend(false);
     }
 
@@ -1257,7 +1260,7 @@ void GL1SceneRendererImpl::renderTransparentShapes()
 }
 
 
-void GL1SceneRendererImpl::putMeshData(SgMesh* mesh)
+void GL1SceneRenderer::Impl::putMeshData(SgMesh* mesh)
 {
     if(!mesh->hasColors()){
         return;
@@ -1319,7 +1322,7 @@ void GL1SceneRendererImpl::putMeshData(SgMesh* mesh)
 }
 
 
-VertexResource* GL1SceneRendererImpl::findOrCreateVertexResource(SgObject* object, bool& out_found)
+VertexResource* GL1SceneRenderer::Impl::findOrCreateVertexResource(SgObject* object, bool& out_found)
 {
     VertexResource* resource;
     auto it = currentResourceMap->find(object);
@@ -1343,7 +1346,7 @@ VertexResource* GL1SceneRendererImpl::findOrCreateVertexResource(SgObject* objec
 }
     
 
-void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
+void GL1SceneRenderer::Impl::renderMesh(SgMesh* mesh, bool hasTexture)
 {
     if(false){
         putMeshData(mesh);
@@ -1419,7 +1422,7 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         glDisable(GL_TEXTURE_2D);
     }
 
-    if(doNormalVisualization && isNormalArrayActive && !isPicking){
+    if(doNormalVisualization && isNormalArrayActive && !isRenderingPickingImage){
         glDisableClientState(GL_NORMAL_ARRAY);
         if(isColorArrayActive){
             glDisableClientState(GL_COLOR_ARRAY);
@@ -1434,7 +1437,7 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
 }
 
 
-void GL1SceneRendererImpl::setupMeshResource(SgMesh* mesh, VertexResource* resource, bool hasTexture)
+void GL1SceneRenderer::Impl::setupMeshResource(SgMesh* mesh, VertexResource* resource, bool hasTexture)
 {
     SgIndexArray& orgTriangleVertices = mesh->triangleVertices();
     const size_t totalNumVertices = orgTriangleVertices.size();
@@ -1518,7 +1521,7 @@ void GL1SceneRendererImpl::setupMeshResource(SgMesh* mesh, VertexResource* resou
 }
 
 
-void GL1SceneRendererImpl::renderNormalVisualizationLines(SgMesh* mesh, VertexResource* resource)
+void GL1SceneRenderer::Impl::renderNormalVisualizationLines(SgMesh* mesh, VertexResource* resource)
 {
     auto& bufferName = resource->normalVisualizationVertexBufferName();
 
@@ -1559,7 +1562,7 @@ void GL1SceneRendererImpl::renderNormalVisualizationLines(SgMesh* mesh, VertexRe
 }
 
 
-void GL1SceneRendererImpl::renderPointSet(SgPointSet* pointSet)
+void GL1SceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
         return;
@@ -1581,7 +1584,7 @@ void GL1SceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 }
 
 
-void GL1SceneRendererImpl::setupPointSetResource(SgPointSet* pointSet, VertexResource* resource)
+void GL1SceneRenderer::Impl::setupPointSetResource(SgPointSet* pointSet, VertexResource* resource)
 {
     const SgVertexArray& vertices = *pointSet->vertices();
     glGenBuffers(1, &resource->vertexBufferName());
@@ -1634,7 +1637,7 @@ void GL1SceneRendererImpl::setupPointSetResource(SgPointSet* pointSet, VertexRes
 }
 
 
-void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
+void GL1SceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 {
     if(!lineSet->hasVertices() || (lineSet->numLines() <= 0)){
         return;
@@ -1657,7 +1660,7 @@ void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 }
 
 
-void GL1SceneRendererImpl::setupLineSetResource(SgLineSet* lineSet, VertexResource* resource)
+void GL1SceneRenderer::Impl::setupLineSetResource(SgLineSet* lineSet, VertexResource* resource)
 {
     const auto& lineVertices = lineSet->lineVertices();
     const int totalNumVertices = lineVertices.size();
@@ -1722,7 +1725,7 @@ void GL1SceneRendererImpl::setupLineSetResource(SgLineSet* lineSet, VertexResour
 }
 
 
-void GL1SceneRendererImpl::renderPlot
+void GL1SceneRenderer::Impl::renderPlot
 (SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource)
 {
     bool found;
@@ -1759,7 +1762,7 @@ void GL1SceneRendererImpl::renderPlot
     }
 
     bool isColorMaterialEnabled = false;
-    if(resource->colorBufferName() != GL_INVALID_VALUE && !isPicking){
+    if(resource->colorBufferName() != GL_INVALID_VALUE && !isRenderingPickingImage){
         glEnableClientState(GL_COLOR_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, resource->colorBufferName());
         glColorPointer(4, GL_FLOAT, 0, offset);
@@ -1785,9 +1788,9 @@ void GL1SceneRendererImpl::renderPlot
 }
 
 
-void GL1SceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
+void GL1SceneRenderer::Impl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
-    if(isPicking){
+    if(isRenderingPickingImage){
         return;
     }
 
@@ -1820,7 +1823,7 @@ void GL1SceneRendererImpl::renderViewportOverlay(SgViewportOverlay* overlay)
 }
 
 
-void GL1SceneRendererImpl::renderOutlineGroup(SgOutline* outline)
+void GL1SceneRenderer::Impl::renderOutlineGroup(SgOutline* outline)
 {
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
@@ -1858,13 +1861,13 @@ void GL1SceneRendererImpl::renderOutlineGroup(SgOutline* outline)
 }
 
 
-bool GL1SceneRenderer::isPicking() const
+bool GL1SceneRenderer::isRenderingPickingImage() const
 {
-    return impl->isPicking;
+    return impl->isRenderingPickingImage;
 }
 
 
-void GL1SceneRendererImpl::clearGLState()
+void GL1SceneRenderer::Impl::clearGLState()
 {
     stateFlag.reset();
     
@@ -1888,9 +1891,9 @@ void GL1SceneRendererImpl::clearGLState()
 }
 
 
-void GL1SceneRendererImpl::setColor(const Vector3f& color)
+void GL1SceneRenderer::Impl::setColor(const Vector3f& color)
 {
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         if(!stateFlag[CURRENT_COLOR] || color != currentColor){
             glColor4f(color[0], color[1], color[2], 1.0f);
             currentColor = color;
@@ -1906,9 +1909,9 @@ void GL1SceneRenderer::setColor(const Vector3f& color)
 }
 
 
-void GL1SceneRendererImpl::enableColorMaterial(bool on)
+void GL1SceneRenderer::Impl::enableColorMaterial(bool on)
 {
-    if(!isPicking){
+    if(!isRenderingPickingImage){
         if(!stateFlag[COLOR_MATERIAL] || isColorMaterialEnabled != on){
             if(on){
                 glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
@@ -1923,7 +1926,7 @@ void GL1SceneRendererImpl::enableColorMaterial(bool on)
 }
 
 
-void GL1SceneRendererImpl::setDiffuseColor(const Vector4f& color)
+void GL1SceneRenderer::Impl::setDiffuseColor(const Vector4f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color.data());
@@ -1933,7 +1936,7 @@ void GL1SceneRendererImpl::setDiffuseColor(const Vector4f& color)
 }
 
 
-void GL1SceneRendererImpl::setAmbientColor(const Vector4f& color)
+void GL1SceneRenderer::Impl::setAmbientColor(const Vector4f& color)
 {
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color.data());
@@ -1943,7 +1946,7 @@ void GL1SceneRendererImpl::setAmbientColor(const Vector4f& color)
 }
 
 
-void GL1SceneRendererImpl::setEmissionColor(const Vector4f& color)
+void GL1SceneRenderer::Impl::setEmissionColor(const Vector4f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color.data());
@@ -1953,7 +1956,7 @@ void GL1SceneRendererImpl::setEmissionColor(const Vector4f& color)
 }
 
 
-void GL1SceneRendererImpl::setSpecularColor(const Vector4f& color)
+void GL1SceneRenderer::Impl::setSpecularColor(const Vector4f& color)
 {
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color.data());
@@ -1963,7 +1966,7 @@ void GL1SceneRendererImpl::setSpecularColor(const Vector4f& color)
 }
 
 
-void GL1SceneRendererImpl::setShininess(float s)
+void GL1SceneRenderer::Impl::setShininess(float s)
 {
     if(!stateFlag[SHININESS] || shininess != s){
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, s);
@@ -1973,7 +1976,7 @@ void GL1SceneRendererImpl::setShininess(float s)
 }
 
 
-void GL1SceneRendererImpl::enableCullFace(bool on)
+void GL1SceneRenderer::Impl::enableCullFace(bool on)
 {
     if(!stateFlag[CULL_FACE] || isCullFaceEnabled != on){
         if(on){
@@ -1988,7 +1991,7 @@ void GL1SceneRendererImpl::enableCullFace(bool on)
 }
 
 
-void GL1SceneRendererImpl::setFrontCCW(bool on)
+void GL1SceneRenderer::Impl::setFrontCCW(bool on)
 {
     if(!stateFlag[CCW] || isCCW != on){
         if(on){
@@ -2002,9 +2005,9 @@ void GL1SceneRendererImpl::setFrontCCW(bool on)
 }
 
 
-void GL1SceneRendererImpl::enableLighting(bool on)
+void GL1SceneRenderer::Impl::enableLighting(bool on)
 {
-    if(isPicking || !defaultLighting){
+    if(isRenderingPickingImage || !defaultLighting){
         on = false;
     }
     if(!stateFlag[LIGHTING] || isLightingEnabled != on){
@@ -2019,7 +2022,7 @@ void GL1SceneRendererImpl::enableLighting(bool on)
 }
 
 
-void GL1SceneRendererImpl::setLightModelTwoSide(bool on)
+void GL1SceneRenderer::Impl::setLightModelTwoSide(bool on)
 {
     if(!stateFlag[LIGHT_MODEL_TWO_SIDE] || isLightModelTwoSide != on){
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, on ? GL_TRUE : GL_FALSE);
@@ -2035,9 +2038,9 @@ void GL1SceneRenderer::setHeadLightLightingFromBackEnabled(bool on)
 }
 
 
-void GL1SceneRendererImpl::enableBlend(bool on)
+void GL1SceneRenderer::Impl::enableBlend(bool on)
 {
-    if(isPicking){
+    if(isRenderingPickingImage){
         return;
     }
     if(!stateFlag[BLEND] || isBlendEnabled != on){
@@ -2055,7 +2058,7 @@ void GL1SceneRendererImpl::enableBlend(bool on)
 }
 
 
-void GL1SceneRendererImpl::enableDepthMask(bool on)
+void GL1SceneRenderer::Impl::enableDepthMask(bool on)
 {
     if(!stateFlag[DEPTH_MASK] || isDepthMaskEnabled != on){
         glDepthMask(on);
@@ -2065,10 +2068,10 @@ void GL1SceneRendererImpl::enableDepthMask(bool on)
 }
 
 
-void GL1SceneRendererImpl::setPointSize(float size)
+void GL1SceneRenderer::Impl::setPointSize(float size)
 {
     if(!stateFlag[POINT_SIZE] || pointSize != size){
-        if(isPicking){
+        if(isRenderingPickingImage){
             glPointSize(std::max(size, MinLineWidthForPicking));
         } else {
             glPointSize(size);
@@ -2079,10 +2082,10 @@ void GL1SceneRendererImpl::setPointSize(float size)
 }
 
 
-void GL1SceneRendererImpl::setLineWidth(float width)
+void GL1SceneRenderer::Impl::setLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
-        if(isPicking){
+        if(isRenderingPickingImage){
             glLineWidth(std::max(width, MinLineWidthForPicking));
         } else {
             glLineWidth(width);
@@ -2176,6 +2179,20 @@ const Affine3& GL1SceneRenderer::currentModelTransform() const
 const Matrix4& GL1SceneRenderer::projectionMatrix() const
 {
     return impl->lastProjectionMatrix;
+}
+
+
+double GL1SceneRenderer::projectedPixelSizeRatio(const Vector3& position) const
+{
+    auto vp = viewport();
+    Vector3 p2 = impl->lastViewMatrix * position;
+    Vector4 p3(1.0, 0.0, p2.z(), 1.0);
+    Vector4 q = impl->lastProjectionMatrix * p3;
+    double r = (q.x() / q[3]) * vp[2] / 2.0;
+    if(r < 0.0){
+        r = 0.0;
+    }
+    return r;
 }
 
 

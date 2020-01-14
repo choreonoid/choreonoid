@@ -13,37 +13,55 @@ namespace cnoid {
 class CNOID_EXPORT PositionDragger : public SgPosTransform, public SceneWidgetEditable
 {
 public:
-    enum Axis { TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
-                TRANSLATION_AXES = (TX | TY | TZ),
-                RX = 1 << 3, RY = 1 << 4, RZ = 1 << 5,
-                ROTATION_AXES = (RX | RY | RZ),
-                ALL_AXES = (TX | TY | TZ | RX | RY | RZ)
+    enum AxisBit {
+        TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
+        TranslationAxes = (TX | TY | TZ),
+        RX = 1 << 3, RY = 1 << 4, RZ = 1 << 5,
+        RotationAxes = (RX | RY | RZ),
+        AllAxes = (TX | TY | TZ | RX | RY | RZ),
+
+        // deprecated
+        TRANSLATION_AXES = TranslationAxes,
+        ROTATION_AXES = RotationAxes,
+        ALL_AXES = AllAxes
     };
 
-    PositionDragger();
-    PositionDragger(int axisSet);
-    PositionDragger(const PositionDragger& org);
+    enum HandleType {
+        StandardHandle = 0,
+        PositiveOnlyHandle = 1,
+        WideHandle = 2,
+    };
+        
+    PositionDragger(int axes = AllAxes, int handleType = StandardHandle);
+    PositionDragger(const PositionDragger& org) = delete;
 
-    void setDraggableAxes(int axisSet);
+    void setDraggableAxes(int axisBitSet);
     int draggableAxes() const;
-    SignalProxy<void(int axisSet)> sigDraggableAxesChanged();
+    SignalProxy<void(int axisBitSet)> sigDraggableAxesChanged();
 
     double handleSize() const;
     void setHandleSize(double s);
+
     double rotationHandleSizeRatio() const;
-    void setRotationHandlerSizeRatio(double r);
+    void setRotationHandleSizeRatio(double r);
 
     //! \deprecated. Use the setHandleSize and setRotationHandlerSizeRatio functions.
     void setRadius(double r, double translationAxisRatio = 2.0f);
     //! \deprecated. Use the handleSize and rotationHandleSizeRatio function.
     double radius() const;
     
-    void adjustSize();
-    void adjustSize(const BoundingBox& bb);
+    bool adjustSize();
+    bool adjustSize(const BoundingBox& bb);
+
+    void setTransparency(float t);
+    float transparency() const;
 
     void setOverlayMode(bool on);
     bool isOverlayMode() const;
 
+    void setConstantPixelSizeMode(bool on, double pixelSizeRatio = 1.0);
+    bool isConstantPixelSizeMode() const;
+    
     bool isContainerMode() const;
     void setContainerMode(bool on);
 
@@ -62,8 +80,6 @@ public:
     void setDragEnabled(bool on);
     bool isDragging() const;
     Affine3 draggedPosition() const;
-    const Vector3& draggedTranslation() const;
-    const AngleAxis& draggedAngleAxis() const;
 
     SignalProxy<void()> sigDragStarted();
     SignalProxy<void()> sigPositionDragged();
@@ -84,12 +100,9 @@ public:
     void setDraggerAlwaysHidden(bool on);
     bool isDraggerAlwaysHidden() const;
 
-protected:
-    PositionDragger(const PositionDragger& org, CloneMap* cloneMap);
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    class Impl;
 
 private:
-    class Impl;
     Impl* impl;
 };
     

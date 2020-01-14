@@ -198,10 +198,10 @@ SgNode* LinkKinematicsKitManager::scene()
 
 void LinkKinematicsKitManager::Impl::setupPositionDragger()
 {
-    positionDragger = new PositionDragger;
-    positionDragger->setRadius(0.05);
+    positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
+    positionDragger->setOverlayMode(true);
+    positionDragger->setConstantPixelSizeMode(true, 92.0);
     positionDragger->setDisplayMode(PositionDragger::DisplayNever);
-    positionDragger->setContainerMode(true);
 
     positionDragger->sigPositionDragged().connect(
         [&](){ onDraggerPositionChanged(); });
@@ -219,13 +219,11 @@ bool LinkKinematicsKitManager::Impl::onPositionEditRequest(AbstractPositionEditT
 {
     bool accepted = false;
     if(auto frame = dynamic_cast<CoordinateFrame*>(target->getPositionObject())){
-        if(bodyItem == bodySelectionManager->currentBodyItem()){
-            if(auto frameSet = frame->ownerFrameSet()){
-                if(commonFrameSets->frameSet(BodyFrame)->contains(frameSet)){
-                    accepted = startBodyFrameEditing(target, frame);
-                } else if(commonFrameSets->frameSet(EndFrame)->contains(frameSet)){
-                    accepted = startEndFrameEditing(target, frame);
-                }
+        if(auto frameSet = frame->ownerFrameSet()){
+            if(commonFrameSets->frameSet(BodyFrame)->contains(frameSet)){
+                accepted = startBodyFrameEditing(target, frame);
+            } else if(commonFrameSets->frameSet(EndFrame)->contains(frameSet)){
+                accepted = startEndFrameEditing(target, frame);
             }
         }
     }
@@ -250,8 +248,12 @@ bool LinkKinematicsKitManager::Impl::startBodyFrameEditing
 bool LinkKinematicsKitManager::Impl::startEndFrameEditing
 (AbstractPositionEditTarget* target, CoordinateFrame* frame)
 {
-    if(auto link = bodySelectionManager->currentLink()){
-        setFrameEditTarget(target, link);
+    auto endLink = bodyItem->body()->findUniqueEndLink();
+    if(!endLink){
+        endLink = bodySelectionManager->currentLink();
+    }
+    if(endLink){
+        setFrameEditTarget(target, endLink);
         return true;
     }
     return false;

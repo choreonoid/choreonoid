@@ -275,6 +275,12 @@ bool SceneRenderer::doPick(int /* x */, int /* y */)
 }
 
 
+bool SceneRenderer::isRenderingPickingImage() const
+{
+    return false;
+}
+
+
 void SceneRenderer::setProperty(PropertyKey key, bool value)
 {
     impl->setProperty(key, value);
@@ -424,10 +430,10 @@ PreproTreeExtractor::PreproTreeExtractor()
     functions.setFunction<SgGroup>(
         [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
 
-    functions.setFunction<SgSwitch>(
-        [&](SgSwitch* node){
-            if(node->isTurnedOn()){
-                functions.dispatchAs<SgGroup>(node);
+    functions.setFunction<SgSwitchableGroup>(
+        [&](SgSwitchableGroup* group){
+            if(group->isTurnedOn()){
+                functions.dispatchAs<SgGroup>(group);
             }
         });
 

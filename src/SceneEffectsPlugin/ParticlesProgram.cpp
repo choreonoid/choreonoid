@@ -57,7 +57,7 @@ bool ParticlesProgramBase::initializeRendering(SceneParticles* particles)
 void ParticlesProgramBase::requestRendering
 (SceneParticles* particles, const std::function<void()>& renderingFunction)
 {
-    if(renderer_->isPicking()){
+    if(renderer_->isRenderingPickingImage()){
         return;
     }
 

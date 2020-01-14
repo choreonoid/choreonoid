@@ -28,7 +28,7 @@ public:
     
     MeshExtractorImpl();
     void visitGroup(SgGroup* group);
-    void visitSwitch(SgSwitch* switchNode);    
+    void visitSwitchableGroup(SgSwitchableGroup* group);
     void visitTransform(SgTransform* transform);
     void visitPosTransform(SgPosTransform* transform);
     void visitShape(SgShape* shape);
@@ -48,8 +48,8 @@ MeshExtractorImpl::MeshExtractorImpl()
 {
     functions.setFunction<SgGroup>(
         [&](SgGroup* node){ visitGroup(node); });
-    functions.setFunction<SgSwitch>(
-        [&](SgSwitch* node){ visitSwitch(node); });
+    functions.setFunction<SgSwitchableGroup>(
+        [&](SgSwitchableGroup* node){ visitSwitchableGroup(node); });
     functions.setFunction<SgTransform>(
         [&](SgTransform* node){ visitTransform(node); });
     functions.setFunction<SgPosTransform>(
@@ -68,10 +68,10 @@ void MeshExtractorImpl::visitGroup(SgGroup* group)
 }
 
 
-void MeshExtractorImpl::visitSwitch(SgSwitch* switchNode)
+void MeshExtractorImpl::visitSwitchableGroup(SgSwitchableGroup* group)
 {
-    if(switchNode->isTurnedOn()){
-        visitGroup(switchNode);
+    if(group->isTurnedOn()){
+        visitGroup(group);
     }
 }
     

@@ -11,17 +11,54 @@
 #include <cnoid/MeshGenerator>
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
+#include <bitset>
 #include <deque>
 #include <array>
+#include <unordered_map>
+
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-const char* axisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
+constexpr int NumHandleVariants = 5;
 
-constexpr double axisCylinderRadius = 0.04;
+typedef bitset<6> AxisBitSet;
+
+const char* AxisNames[6] = { "tx", "ty", "tz", "rx", "ry", "rz" };
+
+const Vector3f AxisColors[3] = {
+    { 1.0f, 0.2f, 0.2f },
+    { 0.2f, 1.0f, 0.2f },
+    { 0.2f, 0.2f, 1.0f }
+};
+
+const Vector3f HighlightedAxisColors[3] = {
+    { 1.0f, 0.4f, 0.4f },
+    { 0.5f, 1.0f, 0.4f },
+    { 0.4f, 0.5f, 1.0f }
+};
+
+constexpr double StdUnitHandleWidth = 0.02;
+constexpr double StdPixelHandleWidth = 6.0;
+constexpr double MaxPixelHandleWidthCorrectionRatio = 3.0;
+constexpr double StdRotationHandleSizeRatio = 0.6;
+constexpr double WideUnitHandleWidth = 0.08;
+constexpr double WideRotationHandleSizeRatio = 0.5;
+constexpr float DefaultTransparency = 0.4f;
+
+
+class SgHandleVariantSelector : public SgGroup
+{
+    PositionDragger::Impl* dragger;
+
+public:
+    SgHandleVariantSelector(PositionDragger::Impl* dragger);
+    void render(SceneRenderer* renderer);
+};
+    
 
 /**
    \note This node is not inserted the node path obtained by SceneWidgetEvent::nodePath()
@@ -30,63 +67,43 @@ class SgViewpointDependentSelector : public SgGroup
 {
     Vector3 axis;
     double thresh;
-    
+
 public:
-    SgViewpointDependentSelector()
-        : SgGroup(findClassId<SgViewpointDependentSelector>()) {
-        axis = Vector3::UnitX();
-        thresh = cos(radian(45.0));
-    }
-
-    SgViewpointDependentSelector(const SgViewpointDependentSelector& org, CloneMap* cloneMap)
-        : SgGroup(org, cloneMap) {
-        axis = org.axis;
-        thresh = org.thresh;
-    }
-
-    virtual Referenced* doClone(CloneMap* cloneMap) const override {
-        return new SgViewpointDependentSelector(*this, cloneMap);
-    }
-
-    void setAxis(const Vector3& axis){
-        this->axis = axis;
-    }
-
-    void setSwitchAngle(double rad){
-        thresh = cos(rad);
-    }
-
-    void render(SceneRenderer* renderer) {
-        const Affine3& C = renderer->currentCameraPosition();
-        const Affine3& M = renderer->currentModelTransform();
-        double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
-        if(d > thresh){
-            if(numChildren() > 0){
-                renderer->renderNode(child(0));
-            }
-        } else {
-            if(numChildren() > 1){
-                renderer->renderNode(child(1));
-            }
-        }
-    }
+    SgViewpointDependentSelector();
+    void setAxis(const Vector3& axis);
+    void setSwitchAngle(double rad);
+    void render(SceneRenderer* renderer);
 };
 
 
-struct NodeClassRegistration {
-    NodeClassRegistration() {
-        SceneNodeClassRegistry::instance().registerClass<SgViewpointDependentSelector, SgGroup>();
+void registerPickingShapeSelector(SceneNodeClassRegistry& registry)
+{
+    registry.registerClass<SgHandleVariantSelector, SgGroup>();
 
-        SceneRenderer::addExtension(
-            [](SceneRenderer* renderer){
-                auto functions = renderer->renderingFunctions();
-                functions->setFunction<SgViewpointDependentSelector>(
-                    [=](SgNode* node){
-                        static_cast<SgViewpointDependentSelector*>(node)->render(renderer);
-                    });
-            });
-    }
-} registration;
+    SceneRenderer::addExtension(
+        [](SceneRenderer* renderer){
+            auto functions = renderer->renderingFunctions();
+            functions->setFunction<SgHandleVariantSelector>(
+                [=](SgNode* node){
+                    static_cast<SgHandleVariantSelector*>(node)->render(renderer);
+                });
+        });
+}
+
+
+void registerViewpointDependentSelector(SceneNodeClassRegistry& registry)
+{
+    registry.registerClass<SgViewpointDependentSelector, SgGroup>();
+
+    SceneRenderer::addExtension(
+        [](SceneRenderer* renderer){
+            auto functions = renderer->renderingFunctions();
+            functions->setFunction<SgViewpointDependentSelector>(
+                [=](SgNode* node){
+                    static_cast<SgViewpointDependentSelector*>(node)->render(renderer);
+                });
+        });
+}
 
 }
 
@@ -96,150 +113,223 @@ class PositionDragger::Impl
 {
 public:
     PositionDragger* self;
-    int draggableAxes;
-    Signal<void(int axisSet)> sigDraggableAxesChanged;
+    unordered_map<double, SgNodePtr> handleVariantMap;
+    AxisBitSet draggableAxisBitSet;
+    SgSwitchPtr axisSwitch[6];
+    int handleType;
+    double handleSize;
+    double unitHandleWidth;
+    Signal<void(int axisBitSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
     bool isOverlayMode;
+    bool isConstantPixelSizeMode;
     bool isContainerMode;
     bool isDragEnabled;
     bool isContentsDragEnabled;
     bool isUndoEnabled;
-    SgGroupPtr axisGroup;
+    SgSwitchableGroupPtr topSwitch;
     SgOverlayPtr overlay;
-    SgScaleTransformPtr translationAxisScale;
-    SgScaleTransformPtr rotationAxisScale;
+    SgAutoScalePtr autoScale;
     double rotationHandleSizeRatio;
-    array<SgMaterialPtr, 3> axisMaterials;
+    array<SgMaterialPtr, 6> axisMaterials;
+    float transparency;
+    AxisBitSet highlightedAxisBitSet;
+    MeshGenerator meshGenerator;
     SceneDragProjector dragProjector;
     Signal<void()> sigDragStarted;
     Signal<void()> sigPositionDragged;
     Signal<void()> sigDragFinished;
     std::deque<Affine3> history;
 
-    Impl(PositionDragger* self, int axisSet);
-    Impl(PositionDragger* self, const Impl& org);
-    Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap);
-    void createDraggers();
-    void createTranslationDragger(MeshGenerator& meshGenerator);
-    void createRotationDragger(MeshGenerator& meshGenerator);
-    void setDraggableAxes(int axisSet);
-    void setOverlayMode(bool on);
+    Impl(PositionDragger* self, int mode, int axes);
+    SgNode* createHandle(double widthRatio);
+    SgNode* createTranslationHandle(double widthRatio);
+    SgNode* createRotationRingHandle(double widthRatio);
+    SgNode* createRotationDiscHandle(double widthRatio);
+    double calcWidthRatio(double pixelSizeRatio);
+    SgNode* getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking);
+    void clearHandleVariants();
+    void setDraggableAxes(AxisBitSet axisBitSet);
+    void setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted);
+    void highlightAxes(AxisBitSet axisBitSet);
     void showDragMarkers(bool on);
+    AxisBitSet detectTargetAxes(const SceneWidgetEvent& event);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
-    bool onTranslationDraggerPressed(const SceneWidgetEvent& event, int axis, int topNodeIndex);
-    bool onRotationDraggerPressed(const SceneWidgetEvent& event, int axis);
+    bool onTranslationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet);
+    bool onRotationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet);
     void storeCurrentPositionToHistory();
 };
 
 }
 
 
-PositionDragger::PositionDragger()
-    : PositionDragger(ALL_AXES)
+SgHandleVariantSelector::SgHandleVariantSelector(PositionDragger::Impl* dragger)
+    : SgGroup(findClassId<SgHandleVariantSelector>()),
+      dragger(dragger)
 {
 
 }
 
 
-PositionDragger::PositionDragger(int axisSet)
+void SgHandleVariantSelector::render(SceneRenderer* renderer)
 {
-    impl = new Impl(this, axisSet);
+    double pixelSizeRatio = -1.0;
+    bool isForPicking = false;
+    if(!dragger->isConstantPixelSizeMode){
+        pixelSizeRatio = renderer->projectedPixelSizeRatio(
+            renderer->currentModelTransform().translation());
+        isForPicking = renderer->isRenderingPickingImage();
+    }
+
+    //
+    clearChildren();
+    
+    if(auto node = dragger->getOrCreateHandleVariant(pixelSizeRatio, isForPicking)){
+        addChildOnce(node);
+        renderer->renderNode(node);
+    }
 }
 
 
-PositionDragger::Impl::Impl(PositionDragger* self, int axisSet)
-    : self(self)
+SgViewpointDependentSelector::SgViewpointDependentSelector()
+    : SgGroup(findClassId<SgViewpointDependentSelector>())
 {
-    draggableAxes = axisSet;
-    rotationHandleSizeRatio = 0.5;
-    axisGroup = self;
+    axis = Vector3::UnitX();
+    thresh = cos(radian(45.0));
+}
 
-    createDraggers();
+
+void SgViewpointDependentSelector::setAxis(const Vector3& axis)
+{
+    this->axis = axis;
+}
+
+
+void SgViewpointDependentSelector::setSwitchAngle(double rad)
+{
+    thresh = cos(rad);
+}
+
+
+void SgViewpointDependentSelector::render(SceneRenderer* renderer)
+{
+    const Affine3& C = renderer->currentCameraPosition();
+    const Affine3& M = renderer->currentModelTransform();
+    double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
+    if(d > thresh){
+        if(numChildren() > 0){
+            renderer->renderNode(child(0));
+        }
+    } else {
+        if(numChildren() > 1){
+            renderer->renderNode(child(1));
+        }
+    }
+}
+
+
+PositionDragger::PositionDragger(int mode, int axes)
+{
+    impl = new Impl(this, mode, axes);
+}
+
+
+PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
+    : self(self),
+      draggableAxisBitSet(axes),
+      handleType(handleType)
+{
+    auto& registry = SceneNodeClassRegistry::instance();
+
+    handleSize = 1.0;
+    
+    if(!registry.hasRegistration<SgHandleVariantSelector>()){
+        registerPickingShapeSelector(registry);
+    }
+
+    if(handleType != WideHandle){
+        unitHandleWidth = StdUnitHandleWidth;
+        rotationHandleSizeRatio = StdRotationHandleSizeRatio;
+    } else {
+        if(!registry.hasRegistration<SgViewpointDependentSelector>()){
+            registerViewpointDependentSelector(registry);
+        }
+        unitHandleWidth = WideUnitHandleWidth;
+        rotationHandleSizeRatio = WideRotationHandleSizeRatio;
+    }
+
+    for(int i=0; i < 6; ++i){
+        axisSwitch[i] = new SgSwitch(draggableAxisBitSet[i]);
+    }
+    
 
     displayMode = DisplayInFocus;
     isOverlayMode = false;
+    isConstantPixelSizeMode = false;
     isContainerMode = false;
     isDragEnabled = true;
     isContentsDragEnabled = true;
-    isUndoEnabled = false;    
-}
+    isUndoEnabled = false;
 
+    transparency = DefaultTransparency;
+    highlightedAxisBitSet.reset();
 
-PositionDragger::PositionDragger(const PositionDragger& org)
-{
-    impl = new Impl(this, *org.impl, nullptr);
-}
-
-
-PositionDragger::PositionDragger(const PositionDragger& org, CloneMap* cloneMap)
-    : SgPosTransform(org, cloneMap)
-{
-    impl = new Impl(this, *org.impl, cloneMap);
-}
-
-
-Referenced* PositionDragger::doClone(CloneMap* cloneMap) const
-{
-    if(cloneMap){
-        return new PositionDragger(*this, cloneMap);
-    } else {
-        return new PositionDragger(*this);
-    }
-}
-
-
-PositionDragger::Impl::Impl(PositionDragger* self, const Impl& org, CloneMap* cloneMap)
-    : self(self)
-{
-    draggableAxes = org.draggableAxes;
-    rotationHandleSizeRatio = org.rotationHandleSizeRatio;
-    isOverlayMode = org.isOverlayMode;
-    isContainerMode = org.isContainerMode;
-    isDragEnabled = org.isDragEnabled;
-    isContentsDragEnabled = org.isContentsDragEnabled;
-    isUndoEnabled = org.isUndoEnabled;
-
-    axisGroup = self;
-    if(cloneMap){
-        axisGroup = cloneMap->findClone(org.axisGroup);
-        translationAxisScale = cloneMap->getClone(org.translationAxisScale);
-        rotationAxisScale = cloneMap->getClone(org.rotationAxisScale);
-        for(int i=0; i < 3; ++i){
-            axisMaterials[i] = cloneMap->getClone(org.axisMaterials[i]);
-        }
-        displayMode = org.displayMode;
-    } else {
-        createDraggers();
-        displayMode = DisplayInFocus;
-        self->setDisplayMode(org.displayMode);
-    }
-}
-
-
-void PositionDragger::Impl::createDraggers()
-{
     for(int i=0; i < 3; ++i){
         auto material = new SgMaterial;
-        Vector3f color(0.2f, 0.2f, 0.2f);
-        color[i] = 1.0f;
         material->setDiffuseColor(Vector3f::Zero());
-        material->setEmissiveColor(color);
+        material->setEmissiveColor(AxisColors[i]);
         material->setAmbientIntensity(0.0f);
-        material->setTransparency(0.6f);
+        material->setTransparency(1.0f - (1.0f - transparency) / 2.0f);
         axisMaterials[i] = material;
+
+        auto rotationAxisMaterial = new SgMaterial(*material);
+        if(handleType == WideHandle){
+            rotationAxisMaterial->setTransparency(transparency);
+        }
+        axisMaterials[i+3] = rotationAxisMaterial;
     }
 
-    MeshGenerator meshGenerator;
-    createTranslationDragger(meshGenerator);
-    createRotationDragger(meshGenerator);
+    topSwitch = new SgSwitchableGroup;
+    topSwitch->addChild(new SgHandleVariantSelector(this));
+    self->addChild(topSwitch);
+}
+
+
+SgNode* PositionDragger::Impl::createHandle(double widthRatio)
+{
+    auto draggerAxes = new SgGroup;
+    
+    draggerAxes->addChild(createTranslationHandle(widthRatio));
+
+    if(handleType != WideHandle){
+        draggerAxes->addChild(createRotationRingHandle(widthRatio));
+    } else {
+        draggerAxes->addChild(createRotationDiscHandle(widthRatio));
+    }
+
+    return draggerAxes;
 }
 
     
-void PositionDragger::Impl::createTranslationDragger(MeshGenerator& meshGenerator)
+SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
 {
-    translationAxisScale = new SgScaleTransform;
+    auto scale = new SgScaleTransform(handleSize);
+
+    double endLength = unitHandleWidth * 2.5;
+    double extraEndLength = endLength * (widthRatio - 1.0);
+    double stickLength = 1.0 - endLength;
+    if(!(handleType == PositiveOnlyHandle)){
+        stickLength *= 2.0;
+    }
+    stickLength -= extraEndLength / 2.0;
+    int divisionNumber = std::max((int)(24 / widthRatio), 8);
+    meshGenerator.setDivisionNumber(divisionNumber);
+    SgMeshPtr mesh = meshGenerator.generateArrow(
+        (unitHandleWidth / 2.0) * widthRatio,
+        stickLength,
+        unitHandleWidth * 1.25 * widthRatio,
+        endLength * widthRatio);
     
-    SgMeshPtr mesh = meshGenerator.generateArrow(0.04, 1.8, 0.1, 0.18);
     for(int i=0; i < 3; ++i){
         auto shape = new SgShape;
         shape->setMesh(mesh);
@@ -250,103 +340,161 @@ void PositionDragger::Impl::createTranslationDragger(MeshGenerator& meshGenerato
         if(i == 0){
             arrow->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
         } else if(i == 2){
-            arrow->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
+            arrow->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
         }
-        arrow->setName(axisNames[i]);
+        if(handleType == PositiveOnlyHandle){
+            arrow->translation()[i] = stickLength / 2.0;
+        } else {
+            arrow->translation()[i] = -extraEndLength / 2.0;
+        }
+        arrow->setName(AxisNames[i]);
 
-        auto axis = new SgSwitch;
+        auto axis = new SgSwitchableGroup(axisSwitch[i]);
         axis->addChild(arrow);
-        axis->setTurnedOn(draggableAxes & (1 << i));
-        translationAxisScale->addChild(axis);
+        scale->addChild(axis);
     }
 
-    axisGroup->addChild(translationAxisScale);
+    return scale;
 }
 
 
-void PositionDragger::Impl::createRotationDragger(MeshGenerator& meshGenerator)
+SgNode* PositionDragger::Impl::createRotationRingHandle(double widthRatio)
 {
-    rotationAxisScale = new SgScaleTransform;
+    auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
-    meshGenerator.setDivisionNumber(36);
-    auto beltMesh1 = meshGenerator.generateDisc(1.0, 1.0 - 0.2);
-    meshGenerator.setDivisionNumber(24);
-    auto beltMesh2 = meshGenerator.generateCylinder(1.0, 0.2, false, false);
+    double radius = widthRatio * unitHandleWidth / 2.0 / rotationHandleSizeRatio;
+    double endAngle = (handleType == PositiveOnlyHandle) ? (PI / 2.0) : 2.0 * PI;
+    int divisionNumber = std::max((int)(72 / widthRatio), 24);
+    meshGenerator.setDivisionNumber(divisionNumber);
+    auto ringMesh = meshGenerator.generateTorus(1.0, radius, 0.0, endAngle);
 
     for(int i=0; i < 3; ++i){
-        auto material = axisMaterials[i];
+        auto material = axisMaterials[i+3];
         
-        auto beltShape1 = new SgShape;
-        beltShape1->setMesh(beltMesh1);
-        beltShape1->setMaterial(material);
+        auto ringShape = new SgShape;
+        ringShape->setMesh(ringMesh);
+        ringShape->setMaterial(material);
 
-        auto beltShape2 = new SgShape;
-        beltShape2->setMesh(beltMesh2);
-        beltShape2->setMaterial(material);
-        
-        auto selector = new SgViewpointDependentSelector;
-        
-        auto belt1 = new SgPosTransform;
+        auto ring = new SgPosTransform;
         if(i == 0){ // x-axis
-            selector->setAxis(Vector3::UnitX());
-            belt1->setRotation(AngleAxis(PI / 2.0, Vector3::UnitY()));
-        } else if(i == 1){ // y-axis
-            selector->setAxis(Vector3::UnitY());
-            belt1->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitX()));
+            ring->setRotation(AngleAxis(PI / 2.0, Vector3::UnitZ()));
         } else if(i == 2) { // z-axis
-            selector->setAxis(Vector3::UnitZ());
+            ring->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitX()));
         }
-        belt1->addChild(beltShape1);
-        belt1->setName(axisNames[i + 3]);
-        selector->addChild(belt1);
+        ring->addChild(ringShape);
+        ring->setName(AxisNames[i + 3]);
 
-        auto belt2 = new SgPosTransform;
-        if(i == 0){ // x-axis
-            belt2->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
-        } else if(i == 2) { // z-axis
-            belt2->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
-        }
-        belt2->addChild(beltShape2);
-        belt2->setName(axisNames[i + 3]);
-        selector->addChild(belt2);
+        auto axis = new SgSwitchableGroup(axisSwitch[i + 3]);
+        axis->addChild(ring);
 
-        auto axis = new SgSwitch;
-        axis->addChild(selector);
-        axis->setTurnedOn(draggableAxes & (1 << (i + 3)));
-
-        rotationAxisScale->addChild(axis);
+        scale->addChild(axis);
     }
 
-    axisGroup->addChild(rotationAxisScale);
+    return scale;
 }
 
 
-void PositionDragger::setDraggableAxes(int axisSet)
+SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
 {
-    impl->setDraggableAxes(axisSet);
-}
+    auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
+    SgMesh* mesh[2];
+    double width = unitHandleWidth / rotationHandleSizeRatio * widthRatio;
+    meshGenerator.setDivisionNumber(36);
+    mesh[0] = meshGenerator.generateDisc(1.0, 1.0 - width);
+    mesh[1] = meshGenerator.generateCylinder(1.0, width, false, false);
 
-void PositionDragger::Impl::setDraggableAxes(int axisSet)
-{
-    if(axisSet != draggableAxes){
-        for(int i=0; i < 3; ++i){
-            if(auto axis = dynamic_cast<SgSwitch*>(translationAxisScale->child(i))){
-                axis->setTurnedOn(axisSet & (1 << i));
+    for(int i=0; i < 3; ++i){
+        auto selector = new SgViewpointDependentSelector;
+        Vector3 a = Vector3::Zero();
+        a(i) = 1.0;
+        selector->setAxis(a);
+        for(int j=0; j < 2; ++j){
+            auto shape = new SgShape;
+            shape->setMesh(mesh[j]);
+            shape->setMaterial(axisMaterials[i+3]);
+            auto disc = new SgPosTransform;
+            if(i == 0){ // x-axis
+                disc->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+            } else if(i == 2) { // z-axis
+                disc->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
             }
-            if(auto axis = dynamic_cast<SgSwitch*>(rotationAxisScale->child(i))){
-                axis->setTurnedOn(axisSet & (1 << (i + 3)));
+            disc->addChild(shape);
+            disc->setName(AxisNames[i + 3]);
+            selector->addChild(disc);
+        }
+        auto axis = new SgSwitchableGroup(axisSwitch[i + 3]);
+        axis->addChild(selector);
+        scale->addChild(axis);
+    }
+
+    return scale;
+}
+
+
+double PositionDragger::Impl::calcWidthRatio(double pixelSizeRatio)
+{
+    double widthRatio = 1.0;
+    if(pixelSizeRatio >= 0.0){
+        double pixelWidth = unitHandleWidth * handleSize * pixelSizeRatio;
+        if(pixelWidth > 0.1){
+            if(pixelWidth < StdPixelHandleWidth){
+                widthRatio = StdPixelHandleWidth / pixelWidth;
+            }
+            if(widthRatio > MaxPixelHandleWidthCorrectionRatio){
+                widthRatio = MaxPixelHandleWidthCorrectionRatio;
             }
         }
-        draggableAxes = axisSet;
-        self->notifyUpdate();
+    }
+    return widthRatio;
+}
+    
+
+/**
+   \todo
+    - Make the handles for picking a bit wider
+    - Cache the generated handles in handleVariantMap
+    - Adjust the width considering the DPI of the display
+    - Add the API to customize the width
+*/
+SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking)
+{
+    double widthRatio;
+    if(handleType != WideHandle){
+        widthRatio = calcWidthRatio(pixelSizeRatio);
+    } else {
+        widthRatio = 1.0;
+    }
+    return createHandle(widthRatio);
+}
+
+
+void PositionDragger::Impl::clearHandleVariants()
+{
+    handleVariantMap.clear();
+}
+
+
+void PositionDragger::setDraggableAxes(int axisBitSet)
+{
+    impl->setDraggableAxes(axisBitSet);
+}
+
+
+void PositionDragger::Impl::setDraggableAxes(AxisBitSet axisBitSet)
+{
+    if(axisBitSet != draggableAxisBitSet){
+        for(int i=0; i < 6; ++i){
+            axisSwitch[i]->setTurnedOn(axisBitSet[i], true);
+        }
+        draggableAxisBitSet = axisBitSet;
     }
 }
 
 
 int PositionDragger::draggableAxes() const
 {
-    return impl->draggableAxes;
+    return static_cast<int>(impl->draggableAxisBitSet.to_ulong());
 }
 
 
@@ -358,14 +506,16 @@ SignalProxy<void(int axisSet)> PositionDragger::sigDraggableAxesChanged()
 
 double PositionDragger::handleSize() const
 {
-    return impl->translationAxisScale->scale().x();
+    return impl->handleSize;
 }
 
 
 void PositionDragger::setHandleSize(double s)
 {
-    impl->translationAxisScale->setScale(s);
-    impl->rotationAxisScale->setScale(s * impl->rotationHandleSizeRatio);
+    if(s != impl->handleSize){
+        impl->handleSize = s;
+        impl->clearHandleVariants();
+    }
 }
     
 
@@ -375,10 +525,12 @@ double PositionDragger::rotationHandleSizeRatio() const
 }
 
 
-void PositionDragger::setRotationHandlerSizeRatio(double r)
+void PositionDragger::setRotationHandleSizeRatio(double r)
 {
-    impl->rotationHandleSizeRatio = r;
-    impl->rotationAxisScale->setScale(handleSize() * r);
+    if(r != impl->rotationHandleSizeRatio){
+        impl->rotationHandleSizeRatio = r;
+        impl->clearHandleVariants();
+    }
 }
 
 
@@ -391,63 +543,113 @@ void PositionDragger::setRadius(double r, double translationAxisRatio)
 
 double PositionDragger::radius() const
 {
-    return handleSize() * impl->rotationHandleSizeRatio;
+    return impl->handleSize * impl->rotationHandleSizeRatio;
 }
 
 
-void PositionDragger::adjustSize(const BoundingBox& bb)
+bool PositionDragger::adjustSize(const BoundingBox& bb)
 {
-    if(!bb.empty()){
-        Vector3 s = bb.size() / 2.0;
-        std::sort(s.data(), s.data() + 3);
-        double a = Vector2(s[0], s[1]).norm() * 1.1;
-        double r = std::max(a, s[2] * 1.2);
-        setHandleSize(2.0 * r);
+    if(bb.empty()){
+        return false;
     }
+
+    Vector3 s = bb.size() / 2.0;
+    std::sort(s.data(), s.data() + 3);
+    double r = Vector2(s[0], s[1]).norm();
+    if(!impl->isOverlayMode){
+        r *= 1.05;
+    }
+    setHandleSize(r / impl->rotationHandleSizeRatio);
+    return true;
 }
 
 
-void PositionDragger::adjustSize()
+bool PositionDragger::adjustSize()
 {
     BoundingBox bb;
     for(int i=0; i < numChildren(); ++i){
         auto node = child(i);
-        if(node != impl->translationAxisScale && node != impl->rotationAxisScale){
+        if(node != impl->topSwitch){
             bb.expandBy(node->boundingBox());
         }
     }
-    adjustSize(bb);
+    return adjustSize(bb);
+}
+
+
+void PositionDragger::setTransparency(float t)
+{
+    impl->setMaterialParameters(AllAxes, t, false);
+    impl->transparency = t;
+    impl->highlightedAxisBitSet.reset();
+}
+
+
+void PositionDragger::Impl::setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted)
+{
+    float t2 = (t == 0.0f) ? 0.0f : (1.0f - (1.0f - t) / 2.0f);
+    
+    for(int i=0; i < 6; ++i){
+        int axis = i < 3 ? i : i - 3;
+        if(i == 3){
+            if(handleType == WideHandle){
+                t2 = t;
+            }
+        }
+        if(axisBitSet[i]){
+            bool updated = false;
+            auto& material = axisMaterials[i];
+            if(t != material->transparency()){
+                material->setTransparency(t2);
+                updated = true;
+            }
+            if(transparency == 0.0f){
+                const Vector3f& color = isHighlighted ? HighlightedAxisColors[axis] : AxisColors[axis];
+                if(color != material->emissiveColor()){
+                    material->setEmissiveColor(color);
+                    updated = true;
+                }
+            }
+            if(updated){
+                material->notifyUpdate();
+            }
+        }
+    }
+}
+    
+
+float PositionDragger::transparency() const
+{
+    return impl->transparency;
+}
+
+
+void PositionDragger::Impl::highlightAxes(AxisBitSet axisBitSet)
+{
+    if(axisBitSet != highlightedAxisBitSet){
+        if(highlightedAxisBitSet.any()){
+            setMaterialParameters(highlightedAxisBitSet, transparency, false);
+        }
+        if(axisBitSet.any()){
+            setMaterialParameters(axisBitSet, 0.0f, true);
+        }
+        highlightedAxisBitSet = axisBitSet;
+    }
 }
 
 
 void PositionDragger::setOverlayMode(bool on)
 {
-    impl->setOverlayMode(on);
-}
-
-
-void PositionDragger::Impl::setOverlayMode(bool on)
-{
-    if(on != isOverlayMode){
-        double transparency;
+    if(on != impl->isOverlayMode){
         if(on){
-            if(!overlay){
-                overlay = new SgOverlay;
+            if(!impl->overlay){
+                impl->overlay = new SgOverlay;
             }
-            self->moveChildrenTo(overlay);
-            self->addChild(overlay);
-            axisGroup = overlay;
-            transparency = 0.0f;
+            impl->topSwitch->insertChainedGroup(impl->overlay);
         } else {
-            self->removeChild(overlay);
-            overlay->moveChildrenTo(self);
-            axisGroup = self;
-            transparency = 1.0f;
+            impl->topSwitch->removeChainedGroup(impl->overlay);
         }
-        for(int i=0; i < 3; ++i){
-            axisMaterials[i]->setTransparency(transparency);
-        }
-        isOverlayMode = on;
+        impl->isOverlayMode = on;
     }
 }
 
@@ -457,6 +659,31 @@ bool PositionDragger::isOverlayMode() const
     return impl->isOverlayMode;
 }
 
+
+void PositionDragger::setConstantPixelSizeMode(bool on, double pixelSizeRatio)
+{
+    if(impl->autoScale){
+        impl->autoScale->setPixelSizeRatio(pixelSizeRatio);
+    }
+    if(on != impl->isConstantPixelSizeMode){
+        if(on){
+            if(!impl->autoScale){
+                impl->autoScale = new SgAutoScale(pixelSizeRatio);
+            }
+            impl->topSwitch->insertChainedGroup(impl->autoScale);
+        } else {
+            impl->topSwitch->removeChainedGroup(impl->autoScale);
+        }
+        impl->isConstantPixelSizeMode = on;
+    }
+}
+
+
+bool PositionDragger::isConstantPixelSizeMode() const
+{
+    return impl->isConstantPixelSizeMode;
+}
+    
 
 bool PositionDragger::isContainerMode() const
 {
@@ -509,13 +736,7 @@ void PositionDragger::Impl::showDragMarkers(bool on)
         on = true;
     }
     
-    if(on){
-        axisGroup->addChildOnce(translationAxisScale, true);
-        axisGroup->addChildOnce(rotationAxisScale, true);
-    } else {
-        axisGroup->removeChild(translationAxisScale, true);
-        axisGroup->removeChild(rotationAxisScale, true);
-    }
+    topSwitch->setTurnedOn(on, true);
 }    
 
 
@@ -575,18 +796,6 @@ Affine3 PositionDragger::draggedPosition() const
 }
 
 
-const Vector3& PositionDragger::draggedTranslation() const
-{
-    return impl->dragProjector.translation();
-}
-
-
-const AngleAxis& PositionDragger::draggedAngleAxis() const
-{
-    return impl->dragProjector.rotationAngleAxis();
-}
-
-
 SignalProxy<void()> PositionDragger::sigDragStarted()
 {
     return impl->sigDragStarted;
@@ -605,21 +814,20 @@ SignalProxy<void()> PositionDragger::sigDragFinished()
 }
 
 
-static bool detectAxisFromNodePath
-(const SgNodePath& path, SgNode* topNode, int& out_axis, int& out_topNodeIndex)
+AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event)
 {
-    out_topNodeIndex = -1;
-    
+    AxisBitSet axisBitSet(0);
+
+    auto& path = event.nodePath();
     for(size_t i=0; i < path.size(); ++i){
-        if(path[i] == topNode){
-            out_topNodeIndex = i;
+        if(path[i] == self){
             for(size_t j=i+1; j < path.size(); ++j){
                 auto& name = path[j]->name();
                 if(!name.empty()){
                     for(int k=0; k < 6; ++k){
-                        if(name == axisNames[k]){
-                            out_axis = k;
-                            return true;
+                        if(name == AxisNames[k]){
+                            axisBitSet.set(k);
+                            break;
                         }
                     }
                 }
@@ -627,9 +835,18 @@ static bool detectAxisFromNodePath
             break;
         }
     }
-    return false;
-}
 
+    if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
+        const Affine3 T = calcTotalTransform(event.nodePath(), self);
+        const Vector3 p_local = T.inverse() * event.point();
+        double width = handleSize * unitHandleWidth * calcWidthRatio(event.pixelSizeRatio());
+        if(p_local.norm() < 1.5 * width){
+            axisBitSet |= AxisBitSet(TRANSLATION_AXES);
+        }
+    }
+
+    return axisBitSet;
+}
 
 
 bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
@@ -646,11 +863,9 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         return processed;
     }
 
-    int axis;
-    int topNodeIndex;
+    auto axisBitSet = detectTargetAxes(event);
 
-    if(!::detectAxisFromNodePath(event.nodePath(), self, axis, topNodeIndex)){
-        
+    if(axisBitSet.none()){
         if(self->isContainerMode() && isContentsDragEnabled){
             if(displayMode == DisplayInFocus){
                 showDragMarkers(true);
@@ -662,11 +877,10 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
             }
         }
     } else {
-        int axisBit = 1 << axis;
-        if(axisBit & TRANSLATION_AXES){
-            processed = onTranslationDraggerPressed(event, axis, topNodeIndex);
-        } else if(axisBit & ROTATION_AXES){
-            processed = onRotationDraggerPressed(event, axis);
+        if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
+            processed = onTranslationDraggerPressed(event, axisBitSet);
+        } else if((axisBitSet & AxisBitSet(ROTATION_AXES)).any()){
+            processed = onRotationDraggerPressed(event, axisBitSet);
         }
     }
 
@@ -681,23 +895,24 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& event, int axis, int topNodeIndex)
+bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet)
 {
     bool processed = false;
 
-    auto& path = event.nodePath();
-    auto axisIter = path.begin() + topNodeIndex + 1;
-    const Affine3 T_global = calcTotalTransform(path.begin(), axisIter);
-    const Affine3 T_axis = calcTotalTransform(axisIter, path.end());
-    const Vector3 p_local = (T_global * T_axis).inverse() * event.point();
+    const Affine3 T = calcTotalTransform(event.nodePath(), self);
+    dragProjector.setInitialPosition(T);
     
-    dragProjector.setInitialPosition(T_global);
-    
-    if(p_local.norm() < 2.0 * axisCylinderRadius){
-        dragProjector.setTranslationAlongViewPlane();
+    if(axisBitSet.count() == 1){
+        for(int i=0; i < 3; ++i){
+            if(axisBitSet[i]){
+                dragProjector.setTranslationAxis(T.linear().col(i));
+                break;
+            }
+        }
     } else {
-        dragProjector.setTranslationAxis(T_global.linear().col(axis));
-    }
+        dragProjector.setTranslationAlongViewPlane();
+    }        
+    
     if(dragProjector.startTranslation(event)){
         processed = true;
     }
@@ -706,15 +921,24 @@ bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& 
 }
 
 
-bool PositionDragger::Impl::onRotationDraggerPressed(const SceneWidgetEvent& event, int axis)
+bool PositionDragger::Impl::onRotationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet)
 {
     bool processed = false;
     const Affine3 T = calcTotalTransform(event.nodePath(), self);
-    dragProjector.setInitialPosition(T);
-    dragProjector.setRotationAxis(T.linear().col(axis - 3));
-    if(dragProjector.startRotation(event)){
-        processed = true;
+
+    if(axisBitSet.count() == 1){
+        dragProjector.setInitialPosition(T);
+        for(int i=0; i < 3; ++i){
+            if(axisBitSet[i + 3]){
+                dragProjector.setRotationAxis(T.linear().col(i));
+                if(dragProjector.startRotation(event)){
+                    processed = true;
+                }
+                break;
+            }
+        }
     }
+    
     return processed;
 }
 
@@ -732,15 +956,20 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 
 bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    if(impl->dragProjector.drag(event)){
+    if(!impl->dragProjector.isDragging()){
+        auto axisBitSet = impl->detectTargetAxes(event);
+        if(axisBitSet.any()){
+            impl->highlightAxes(axisBitSet);
+        }
+    } else if(impl->dragProjector.drag(event)){
         if(isContainerMode()){
             setPosition(impl->dragProjector.position());
             notifyUpdate();
         }
         impl->sigPositionDragged();
-        return true;
     }
-    return false;
+    
+    return true;
 }
 
 
@@ -750,6 +979,8 @@ void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
         impl->sigDragFinished();
         impl->dragProjector.resetDragMode();
     }
+
+    impl->highlightAxes(0);
 }
 
 

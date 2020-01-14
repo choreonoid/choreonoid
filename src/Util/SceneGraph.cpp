@@ -422,6 +422,38 @@ void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
 }
 
 
+SgGroup* SgGroup::nextChainedGroup()
+{
+    SgGroup* nextGroup = nullptr;
+    if(children.size() == 1){
+        nextGroup = dynamic_cast<SgGroup*>(children.front().get());
+    }
+    return nextGroup;
+}
+
+
+void SgGroup::insertChainedGroup(SgGroup* group)
+{
+    moveChildrenTo(group);
+    addChild(group);
+}
+
+
+void SgGroup::removeChainedGroup(SgGroup* group)
+{
+    SgGroup* parent = this;
+    auto next = nextChainedGroup();
+    while(next){
+        if(next == group){
+            parent->removeChild(next);
+            next->moveChildrenTo(parent);
+            break;
+        }
+        next = next->nextChainedGroup();
+    }
+}
+
+
 void SgGroup::throwTypeMismatchError()
 {
     throw type_mismatch_error();
@@ -544,6 +576,14 @@ SgScaleTransform::SgScaleTransform()
 }
 
 
+SgScaleTransform::SgScaleTransform(double scale)
+    : SgTransform(findClassId<SgScaleTransform>()),
+      scale_(scale, scale, scale)
+{
+
+}
+
+
 SgScaleTransform::SgScaleTransform(const Vector3& scale)
     : SgTransform(findClassId<SgScaleTransform>()),
       scale_(scale)
@@ -565,6 +605,28 @@ Referenced* SgScaleTransform::doClone(CloneMap* cloneMap) const
     return new SgScaleTransform(*this, cloneMap);
 }
         
+
+const BoundingBox& SgScaleTransform::boundingBox() const
+{
+    if(isBboxCacheValid){
+        return bboxCache;
+    }
+    bboxCache.clear();
+    for(const_iterator p = begin(); p != end(); ++p){
+        bboxCache.expandBy((*p)->boundingBox());
+    }
+    untransformedBboxCache = bboxCache;
+    bboxCache.transform(Affine3(scale_.asDiagonal()));
+    isBboxCacheValid = true;
+    return bboxCache;
+}
+
+
+void SgScaleTransform::getTransform(Affine3& out_T) const
+{
+    out_T = scale_.asDiagonal();
+}
+
 
 SgAffineTransform::SgAffineTransform(int classId)
     : SgTransform(classId),
@@ -625,37 +687,48 @@ void SgAffineTransform::getTransform(Affine3& out_T) const
 }
 
 
-const BoundingBox& SgScaleTransform::boundingBox() const
+SgAutoScale::SgAutoScale()
+    : SgAutoScale(1.0)
 {
-    if(isBboxCacheValid){
-        return bboxCache;
-    }
-    bboxCache.clear();
-    for(const_iterator p = begin(); p != end(); ++p){
-        bboxCache.expandBy((*p)->boundingBox());
-    }
-    untransformedBboxCache = bboxCache;
-    bboxCache.transform(Affine3(scale_.asDiagonal()));
-    isBboxCacheValid = true;
-    return bboxCache;
+
 }
 
 
-void SgScaleTransform::getTransform(Affine3& out_T) const
+SgAutoScale::SgAutoScale(double pixelSizeRatio)
+    : SgGroup(findClassId<SgAutoScale>())
 {
-    out_T = scale_.asDiagonal();
+    pixelSizeRatio_ = pixelSizeRatio;
+}
+      
+
+SgAutoScale::SgAutoScale(int classId)
+    : SgGroup(classId)
+{
+    pixelSizeRatio_ = 1.0;
 }
 
 
-SgSwitch::SgSwitch()
-    : SgGroup(findClassId<SgSwitch>())
-{
-    isTurnedOn_ = true;
-}
-
-
-SgSwitch::SgSwitch(const SgSwitch& org, CloneMap* cloneMap)
+SgAutoScale::SgAutoScale(const SgAutoScale& org, CloneMap* cloneMap)
     : SgGroup(org, cloneMap)
+{
+    pixelSizeRatio_ = org.pixelSizeRatio_;
+}
+
+
+Referenced* SgAutoScale::doClone(CloneMap* cloneMap) const
+{
+    return new SgAutoScale(*this, cloneMap);
+}
+
+
+SgSwitch::SgSwitch(bool on)
+{
+    isTurnedOn_ = on;
+}
+
+
+SgSwitch::SgSwitch(const SgSwitch& org)
+    : SgObject(org)
 {
     isTurnedOn_ = org.isTurnedOn_;
 }
@@ -663,15 +736,85 @@ SgSwitch::SgSwitch(const SgSwitch& org, CloneMap* cloneMap)
 
 Referenced* SgSwitch::doClone(CloneMap* cloneMap) const
 {
-    return new SgSwitch(*this, cloneMap);
+    return new SgSwitch(*this);
 }
 
 
 void SgSwitch::setTurnedOn(bool on, bool doNotify)
 {
-    isTurnedOn_ = on;
-    if(doNotify){
-        notifyUpdate();
+    if(on != isTurnedOn_){
+        isTurnedOn_ = on;
+        if(doNotify){
+            notifyUpdate();
+        }
+    }
+}    
+
+
+SgSwitchableGroup::SgSwitchableGroup()
+    : SgGroup(findClassId<SgSwitchableGroup>())
+{
+    isTurnedOn_ = true;
+}
+
+
+SgSwitchableGroup::SgSwitchableGroup(SgSwitch* switchObject)
+    : SgSwitchableGroup()
+{
+    setSwitch(switchObject);
+}
+
+
+SgSwitchableGroup::SgSwitchableGroup(const SgSwitchableGroup& org, CloneMap* cloneMap)
+    : SgGroup(org, cloneMap)
+{
+    if(org.switchObject){
+        if(cloneMap){
+            switchObject = cloneMap->getClone<SgSwitch>(org.switchObject);
+        } else {
+            switchObject = org.switchObject;
+        }
+    } 
+    isTurnedOn_ = org.isTurnedOn_;
+}
+
+
+SgSwitchableGroup::~SgSwitchableGroup()
+{
+    if(switchObject){
+        switchObject->removeParent(this);
+    }
+}
+
+
+void SgSwitchableGroup::setSwitch(SgSwitch* newSwitchObject)
+{
+    if(switchObject){
+        switchObject->removeParent(this);
+    }
+    switchObject = newSwitchObject;
+    if(newSwitchObject){
+        newSwitchObject->addParent(this);
+    }
+}
+        
+        
+Referenced* SgSwitchableGroup::doClone(CloneMap* cloneMap) const
+{
+    return new SgSwitchableGroup(*this, cloneMap);
+}
+
+
+void SgSwitchableGroup::setTurnedOn(bool on, bool doNotify)
+{
+    if(switchObject){
+        switchObject->setTurnedOn(on, doNotify);
+
+    } else if(on != isTurnedOn_){
+        isTurnedOn_ = on;
+        if(doNotify){
+            notifyUpdate();
+        }
     }
 }
 
@@ -721,7 +864,8 @@ struct NodeClassRegistration {
             .registerClass<SgAffineTransform, SgTransform>()
             .registerClass<SgPosTransform, SgTransform>()
             .registerClass<SgScaleTransform, SgTransform>()
-            .registerClass<SgSwitch, SgGroup>()
+            .registerClass<SgAutoScale, SgGroup>()
+            .registerClass<SgSwitchableGroup, SgGroup>()
             .registerClass<SgUnpickableGroup, SgGroup>()
             .registerClass<SgPreprocessed, SgNode>();
     }

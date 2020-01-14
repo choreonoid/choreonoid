@@ -15,6 +15,7 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/SceneDragProjector>
 #include <cnoid/PositionDragger>
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/SceneDevice>
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/PinDragIK>
@@ -297,7 +298,15 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     outlinedLink = nullptr;
     targetLink = nullptr;
 
-    positionDragger = new PositionDragger;
+    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GL1_RENDERER){
+        /** GL1SceneRenderer does not support the overlay rendering with SgOverlay and use the
+            old type dragger to render it correctly. */
+        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::WideHandle);
+        positionDragger->setOverlayMode(false);
+    } else {
+        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
+        positionDragger->setOverlayMode(true);
+    }
     positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
     positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
     positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
@@ -729,7 +738,9 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 {
     SceneLink* sceneLink = self->sceneLink(link->index());
-    positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
+    if(!positionDragger->isConstantPixelSizeMode()){
+        positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
+    }
     sceneLink->addChildOnce(positionDragger);
 }
 
@@ -829,16 +840,11 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         }
     } else {
         if(pointedType == PT_SCENE_LINK){
-            targetLink = pointedSceneLink->link();
-
             if(event.button() == Qt::LeftButton){
+                targetLink = pointedSceneLink->link();
                 updateMarkersAndManipulators(true);
                 BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
                 startKinematicsDragOperation(event);
-                handled = true;
-
-            } else if(event.button() == Qt::MiddleButton){
-                togglePin(pointedSceneLink, true, true);
                 handled = true;
             }
         } else if(pointedType == PT_ZMP){

@@ -14,7 +14,7 @@ using namespace cnoid;
 
 namespace {
 
-const int defaultDivisionNumber = 20;
+constexpr int defaultDivisionNumber = 20;
 
 }
 
@@ -101,14 +101,14 @@ bool MeshGenerator::isBoundingBoxUpdateEnabled() const
 SgMesh* MeshGenerator::generateBox(Vector3 size, bool enableTextureCoordinate)
 {
     if(size.x() < 0.0 || size.y() < 0.0 || size.z() < 0.0){
-        return 0;
+        return nullptr;
     }
 
     const float x = size.x() * 0.5;
     const float y = size.y() * 0.5;
     const float z = size.z() * 0.5;
 
-    SgMesh* mesh = new SgMesh;
+    auto mesh = new SgMesh;
     
     mesh->setVertices(
         new SgVertexArray{
@@ -154,12 +154,12 @@ SgMesh* MeshGenerator::generateSphere(double radius, bool enableTextureCoordinat
         return 0;
     }
 
-    SgMesh* mesh = new SgMesh();
+    auto mesh = new SgMesh;
     
     const int vdn = divisionNumber_ / 2;  // latitudinal division number
     const int hdn = divisionNumber_;      // longitudinal division number
 
-    SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
+    auto& vertices = *mesh->setVertices(new SgVertexArray());
     vertices.reserve((vdn - 1) * hdn + 2);
 
     for(int i=1; i < vdn; i++){ // latitudinal direction
@@ -224,9 +224,9 @@ SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool botto
         return 0;
     }
 
-    SgMesh* mesh = new SgMesh();
+    auto mesh = new SgMesh;
     
-    SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
+    auto& vertices = *mesh->setVertices(new SgVertexArray());
     vertices.resize(divisionNumber_ * 2);
 
     const double y = height / 2.0;
@@ -287,9 +287,9 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
         return 0;
     }
 
-    SgMesh* mesh = new SgMesh();
+    auto mesh = new SgMesh;
     
-    SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
+    auto& vertices = *mesh->setVertices(new SgVertexArray());
     vertices.reserve(divisionNumber_ + 2);
 
     for(int i=0;  i < divisionNumber_; ++i){
@@ -334,10 +334,10 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
 SgMesh* MeshGenerator::generateCapsule(double radius, double height)
 {
     if(height < 0.0 || radius < 0.0){
-        return 0;
+        return nullptr;
     }
 
-    SgMesh* mesh = new SgMesh();
+    auto mesh = new SgMesh;
 
     int vdn = divisionNumber_ / 2;  // latitudinal division number
     if(vdn%2)
@@ -345,7 +345,7 @@ SgMesh* MeshGenerator::generateCapsule(double radius, double height)
 
     const int hdn = divisionNumber_;      // longitudinal division number
 
-    SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
+    auto& vertices = *mesh->setVertices(new SgVertexArray());
     vertices.reserve( vdn * hdn + 2);
 
     for(int i=1; i < vdn+1; i++){ // latitudinal direction
@@ -410,25 +410,25 @@ SgMesh* MeshGenerator::generateCapsule(double radius, double height)
 SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
 {
     if(innerRadius <= 0.0 || radius <= innerRadius){
-        return 0;
+        return nullptr;
     }
 
-    SgMesh* mesh = new SgMesh();
+    auto mesh = new SgMesh;
 
-    SgVertexArray& vertices = *mesh->getOrCreateVertices();
+    auto& vertices = *mesh->getOrCreateVertices();
     vertices.reserve(divisionNumber_ * 2);
 
     for(int i=0;  i < divisionNumber_; ++i){
         const double angle = i * 2.0 * PI / divisionNumber_;
         const double x = cos(angle);
-        const double y = sin(angle);
-        vertices.push_back(Vector3f(innerRadius * x, innerRadius * y, 0.0f));
-        vertices.push_back(Vector3f(radius * x, radius * y, 0.0f));
+        const double z = sin(angle);
+        vertices.emplace_back(innerRadius * x, 0.0f, innerRadius * z);
+        vertices.emplace_back(radius * x, 0.0f, radius * z);
     }
 
     mesh->reserveNumTriangles(divisionNumber_ * 2);
     mesh->getOrCreateNormals()->push_back(Vector3f::UnitZ());
-    SgIndexArray& normalIndices = mesh->normalIndices();
+    auto& normalIndices = mesh->normalIndices();
     normalIndices.reserve(divisionNumber_ * 2 * 3);
 
     for(int i=0; i < divisionNumber_; ++i){
@@ -455,7 +455,7 @@ SgMesh* MeshGenerator::generateArrow(double cylinderRadius, double cylinderHeigh
     auto cone = new SgShape;
     //setDivisionNumber(20);
     cone->setMesh(generateCone(coneRadius, coneHeight));
-    SgPosTransform* conePos = new SgPosTransform;
+    auto conePos = new SgPosTransform;
     conePos->setTranslation(Vector3(0.0, cylinderHeight / 2.0 + coneHeight / 2.0, 0.0));
     conePos->addChild(cone);
 
@@ -480,16 +480,28 @@ SgMesh* MeshGenerator::generateArrow(double cylinderRadius, double cylinderHeigh
 
 SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
 {
-    int divisionNumber2 = divisionNumber_ / 4;
+    return generateTorus(radius, crossSectionRadius, 0.0, 2.0 * PI);
+}
 
-    SgMesh* mesh = new SgMesh();
-    SgVertexArray& vertices = *mesh->getOrCreateVertices();
-    vertices.reserve(divisionNumber_ * divisionNumber2);
 
-    for(int i=0; i < divisionNumber_; ++i){
-        double phi = i * 2.0 * PI / divisionNumber_;
-        for(int j=0; j < divisionNumber2; ++j){
-            double theta = j * 2.0 * PI / divisionNumber2;
+SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius, double beginAngle, double endAngle)
+{
+    bool isSemiTorus = (beginAngle > 0.0) || (endAngle < 2.0 * PI);
+    int phiDivisionNumber = divisionNumber_ * endAngle / (2.0 * PI);
+    double phiStep = (endAngle - beginAngle) / phiDivisionNumber;
+    if(isSemiTorus){
+        phiDivisionNumber += 1;
+    }
+    int thetaDivisionNumber = divisionNumber_ / 4;
+
+    auto mesh = new SgMesh;
+    auto& vertices = *mesh->getOrCreateVertices();
+    vertices.reserve(phiDivisionNumber * thetaDivisionNumber);
+
+    double phi = beginAngle;
+    for(int i=0; i < phiDivisionNumber; ++i){
+        for(int j=0; j < thetaDivisionNumber; ++j){
+            double theta = j * 2.0 * PI / thetaDivisionNumber;
             Vector3f v;
             double r = crossSectionRadius * cos(theta) + radius;
             v.x() = cos(phi) * r;
@@ -497,15 +509,17 @@ SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
             v.z() = sin(phi) * r;
             vertices.push_back(v);
         }
+        phi += phiStep;
     }
 
-    mesh->reserveNumTriangles(2 * divisionNumber_ * divisionNumber2);
+    mesh->reserveNumTriangles(2 * phiDivisionNumber * thetaDivisionNumber);
 
-    for(int i=0; i < divisionNumber_; ++i){
-        int current = i * divisionNumber2;
-        int next = ((i + 1) % divisionNumber_) * divisionNumber2;
-        for(int j=0; j < divisionNumber2; ++j){
-            int j_next = (j + 1) % divisionNumber2;
+    const int n = (endAngle == 2.0 * PI) ? phiDivisionNumber : (phiDivisionNumber - 1);
+    for(int i=0; i < n; ++i){
+        int current = i * thetaDivisionNumber;
+        int next = ((i + 1) % phiDivisionNumber) * thetaDivisionNumber;
+        for(int j=0; j < thetaDivisionNumber; ++j){
+            int j_next = (j + 1) % thetaDivisionNumber;
             mesh->addTriangle(current + j, next + j_next, next + j);
             mesh->addTriangle(current + j, current + j_next, next + j_next);
         }
@@ -526,7 +540,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
     int numCrosses = extrusion.crossSection.size();
 
     if(numSpines < 2 || numCrosses < 2){
-        return 0;
+        return nullptr;
     }
     
     bool isClosed = (extrusion.spine[0] == extrusion.spine[numSpines - 1]);
@@ -541,8 +555,8 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
         return 0;
     }
 
-    SgMesh* mesh = new SgMesh;
-    SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
+    auto mesh = new SgMesh;
+    auto& vertices = *mesh->setVertices(new SgVertexArray());
     vertices.reserve(numSpines * numCrosses);
 
     Vector3 preZaxis(Vector3::Zero());
@@ -721,10 +735,11 @@ SgLineSet* MeshGenerator::generateExtrusionLineSet(const Extrusion& extrusion, S
 {
     const int nc = extrusion.crossSection.size();
     const int ns = extrusion.spine.size();
+
     if(nc < 4 || ns < 2){
-        return 0;
+        return nullptr;
     }
-    SgLineSet* lineSet = new SgLineSet;
+    auto lineSet = new SgLineSet;
     lineSet->setVertices(mesh->vertices());
 
     const int n = ns - 1;
@@ -754,13 +769,13 @@ SgLineSet* MeshGenerator::generateExtrusionLineSet(const Extrusion& extrusion, S
 
 SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid, bool enableTextureCoordinate)
 {
-    SgMesh* mesh = new SgMesh;
     if(grid.xDimension * grid.zDimension != static_cast<int>(grid.height.size())){
-        return mesh;
+        return nullptr;
     }
 
+    auto mesh = new SgMesh;
     mesh->setVertices(new SgVertexArray());
-    SgVertexArray& vertices = *mesh->vertices();
+    auto& vertices = *mesh->vertices();
     vertices.reserve(grid.zDimension * grid.xDimension);
 
     for(int z=0; z < grid.zDimension; z++){
@@ -842,8 +857,8 @@ int MeshGenerator::findTexCoordPoint(const SgTexCoordArray& texCoords, const Vec
 
 void MeshGenerator::generateTextureCoordinateForSphere(SgMesh* mesh)
 {
-    const SgMesh::Sphere& sphere = mesh->primitive<SgMesh::Sphere>();
-    const SgVertexArray& vertices = *mesh->vertices();
+    const auto& sphere = mesh->primitive<SgMesh::Sphere>();
+    const auto& vertices = *mesh->vertices();
 
     mesh->setTexCoords(new SgTexCoordArray());
     SgTexCoordArray& texCoords = *mesh->texCoords();
@@ -857,7 +872,7 @@ void MeshGenerator::generateTextureCoordinateForSphere(SgMesh* mesh)
         const Vector3f* point[3];
         bool over = false;
         double s[3] = { 0.0, 0.0, 0.0 };
-        const SgMesh::TriangleRef triangle = mesh->triangle(i);
+        const auto triangle = mesh->triangle(i);
         for(int j=0; j < 3; ++j){
             point[j] = &vertices[triangle[j]];
             s[j] = ( atan2(point[j]->x(), point[j]->z()) + PI ) / 2.0 / PI;
@@ -890,7 +905,7 @@ void MeshGenerator::generateTextureCoordinateForSphere(SgMesh* mesh)
 
 void MeshGenerator::generateTextureCoordinateForCylinder(SgMesh* mesh)
 {
-    const SgVertexArray& vertices = *mesh->vertices();
+    const auto& vertices = *mesh->vertices();
     mesh->setTexCoords(new SgTexCoordArray());
     SgTexCoordArray& texCoords = *mesh->texCoords();
     SgIndexArray& texCoordIndices = mesh->texCoordIndices();
@@ -982,7 +997,7 @@ void MeshGenerator::generateTextureCoordinateForCone(SgMesh* mesh)
     Vector2f texPoint(0.5, 0.5); //center of bottom index=0
     texCoords.push_back(texPoint);
 
-    const SgVertexArray& vertices = *mesh->vertices();
+    const auto& vertices = *mesh->vertices();
 
     int texIndex = 1;
     const int numTriangles = mesh->numTriangles();
@@ -1049,8 +1064,8 @@ void MeshGenerator::generateTextureCoordinateForCone(SgMesh* mesh)
 }
 
 
-void MeshGenerator::generateTextureCoordinateForExtrusion(SgMesh* mesh, const Extrusion& extrusion,
-        int numTriOfbeginCap, int numTriOfendCap, int indexOfendCap)
+void MeshGenerator::generateTextureCoordinateForExtrusion
+(SgMesh* mesh, const Extrusion& extrusion, int numTriOfbeginCap, int numTriOfendCap, int indexOfendCap)
 {
     const int numSpine = extrusion.spine.size();
     const int numcross = extrusion.crossSection.size();
@@ -1095,8 +1110,13 @@ void MeshGenerator::generateTextureCoordinateForExtrusion(SgMesh* mesh, const Ex
 
         for(int j=0; j < numcross - 1; ++j) {
             int jj = j + 1;
-            texCoordIndices.push_back(j+upper); texCoordIndices.push_back(j+lower); texCoordIndices.push_back(jj+lower);
-            texCoordIndices.push_back(j+upper); texCoordIndices.push_back(jj+lower); texCoordIndices.push_back(jj+upper);
+            texCoordIndices.push_back(j + upper);
+            texCoordIndices.push_back(j + lower);
+            texCoordIndices.push_back(jj + lower);
+
+            texCoordIndices.push_back(j + upper);
+            texCoordIndices.push_back(jj + lower);
+            texCoordIndices.push_back(jj + upper);
         }
     }
 

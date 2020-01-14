@@ -11,7 +11,6 @@
 
 namespace cnoid {
 
-class GLSLSceneRendererImpl;
 class ShaderProgram;
 class LightingProgram;
     
@@ -39,6 +38,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     const Matrix4& viewProjectionMatrix() const;
     Matrix4 modelViewMatrix() const;
     Matrix4 modelViewProjectionMatrix() const;
+    virtual double projectedPixelSizeRatio(const Vector3& position) const override;
 
     void pushShaderProgram(ShaderProgram& program);
     void popShaderProgram();
@@ -53,11 +53,12 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual bool initializeGL() override;
     virtual void flush() override;
     virtual void setViewport(int x, int y, int width, int height) override;
+    virtual void updateViewportInformation(int x, int y, int width, int height) override;
 
     virtual const Vector3& pickedPoint() const override;
     virtual const SgNodePath& pickedNodePath() const override;
-    virtual bool isPicking() const override;
-
+    virtual bool isRenderingPickingImage() const override;
+    
     virtual void setLightingMode(int mode) override;
     void setHeadLightLightingFromBackEnabled(bool on);
     virtual void clearShadows() override;
@@ -79,20 +80,21 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     void setLowMemoryConsumptionMode(bool on);
 
-    virtual void setPickingBufferImageOutputEnabled(bool on) override;
-    virtual bool getPickingBufferImage(Image& out_image) override;
+    virtual void setPickingImageOutputEnabled(bool on) override;
+    virtual bool getPickingImage(Image& out_image) override;
 
     virtual bool isShadowCastingAvailable() const override;
 
-  protected:
+    class Impl;
+
+protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update) override;
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;
     virtual void onImageUpdated(SgImage* image) override;
     
   private:
-    GLSLSceneRendererImpl* impl;
-    friend class GLSLSceneRendererImpl;
+    Impl* impl;
 };
 
 }

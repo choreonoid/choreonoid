@@ -31,11 +31,18 @@ public:
     HierarchicalClassRegistry() {
         registerClassAsTypeInfo(typeid(BaseClass), typeid(BaseClass));
     }
+
+    HierarchicalClassRegistry(const HierarchicalClassRegistry& org) = delete;
     
     template<class TargetClass, class SuperClass = BaseClass>
     HierarchicalClassRegistry<BaseClass>& registerClass() {
         registerClassAsTypeInfo(typeid(TargetClass), typeid(SuperClass));
         return *this;
+    }
+
+    template<class Object>
+    bool hasRegistration() const {
+        return getClassId(typeid(Object)) >= 0;
     }
 
     template<class Object>

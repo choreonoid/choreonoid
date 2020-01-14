@@ -54,9 +54,9 @@ public:
         }
     }
 
-    cnoid::SgSwitchPtr visibleRootNode(int idx = 0);
+    cnoid::SgSwitchableGroupPtr visibleRootNode(int idx = 0);
 
-    cnoid::SgSwitchPtr nonVisibleRootNode();
+    cnoid::SgSwitchableGroupPtr nonVisibleRootNode();
 
     void showVisibleNode(bool flg, int idx = 0);
 
@@ -127,8 +127,8 @@ private:
     cnoid::Body* _curBody;
     cnoid::Link* _curLink;
 
-    cnoid::SgSwitchPtr _visRootNodeAry[VISIBLE_ROOT_NODE_SIZE];
-    cnoid::SgSwitchPtr _nonVisRootNode;
+    cnoid::SgSwitchableGroupPtr _visRootNodeAry[VISIBLE_ROOT_NODE_SIZE];
+    cnoid::SgSwitchableGroupPtr _nonVisRootNode;
     
     bool _isInitialized = false;
     bool _isFinalized = false;

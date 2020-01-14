@@ -43,6 +43,7 @@ public:
     SgMesh* generateDisc(double radius, double innerRadius);
     SgMesh* generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight);
     SgMesh* generateTorus(double radius, double crossSectionRadius);
+    SgMesh* generateTorus(double radius, double crossSectionRadius, double beginAngle, double endAngle);
 
     typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2>> Vector2Array;
     typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3>> Vector3Array;
