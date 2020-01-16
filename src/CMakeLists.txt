@@ -4,7 +4,6 @@ add_subdirectory(AISTCollisionDetector)
 add_subdirectory(AssimpSceneLoader)
 add_subdirectory(Body)
 add_subdirectory(Corba)
-add_subdirectory(OpenRTM)
 
 if(ENABLE_GUI)
   add_subdirectory(Base)
@@ -34,7 +33,6 @@ if(ENABLE_GUI)
   add_subdirectory(MulticopterPlugin)
 
   add_subdirectory(CorbaPlugin)
-  add_subdirectory(OpenRTMPlugin)
   add_subdirectory(TrafficControlPlugin)
 
   add_subdirectory(RobotAccessPlugin)

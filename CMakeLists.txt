@@ -856,61 +856,6 @@ if(ENABLE_CORBA)
 
 endif(ENABLE_CORBA)
 
-# OpenRTM
-if(BUILD_OPENRTM_PLUGIN)
-  find_package(OpenRTM REQUIRED CONFIG)
-
-  # Check version
-  if(NOT OPENRTM_VERSION VERSION_LESS "1.2.0")
-    list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION12)
-    list(APPEND OPENRTM_DEFINITIONS -Wno-deprecated)
-
-  elseif(OPENRTM_VERSION VERSION_EQUAL "1.1.2")
-    list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
-    # Remove extra "-I" from the elements of OPENRTM_INCLUDE_DIRS
-    unset(include_dirs)
-    foreach(dir ${OPENRTM_INCLUDE_DIRS})
-      string(REGEX REPLACE "^-I" "" stripped ${dir})
-      list(APPEND include_dirs ${stripped})
-    endforeach()
-    set(OPENRTM_INCLUDE_DIRS ${include_dirs})
-    # Remove extra "-L" from the elements of OPENRTM_LIBRARY_DIRS
-    unset(library_dirs)
-    foreach(dir ${OPENRTM_LIBRARY_DIRS})
-      string(REGEX REPLACE "^-L" "" stripped ${dir})
-      list(APPEND library_dirs ${stripped})
-    endforeach()
-    set(OPENRTM_LIBRARY_DIRS ${library_dirs})
-
-  else()
-    message(FATAL_ERROR "OpenRTM version is INVALID.")
-  endif()
-
-  set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} ${OPENRTM_INCLUDE_DIRS})
-
-  option(USE_BUILTIN_CAMERA_IMAGE_IDL "Enable this option when you run hrpsys-base on Choreonoid" OFF)
-  if(USE_BUILTIN_CAMERA_IMAGE_IDL)
-    list(APPEND OPENRTM_DEFINITIONS -DUSE_BUILTIN_CAMERA_IMAGE_IDL)
-  else()
-    if(MSVC)
-      unset(camera_library)
-      foreach(dir ${OPENRTM_LIBRARY_DIRS})
-        file(GLOB libs "${dir}/rtmCamera*.lib")
-        foreach(lib ${libs})
-          if(lib MATCHES "(rtmCamera.*d)\\.lib$")
-            list(APPEND camera_library debug;${CMAKE_MATCH_1})
-          elseif(lib MATCHES "(rtmCamera.*)\\.lib$")
-            list(APPEND camera_library optimized;${CMAKE_MATCH_1})
-          endif()
-        endforeach()
-      endforeach()
-      set(OPENRTM_CAMERA_LIBRARY ${camera_library})
-    else()
-      set(OPENRTM_CAMERA_LIBRARY rtmCamera)
-    endif()
-  endif()
-endif()
-
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
 
 if(UNIX)
