@@ -152,6 +152,8 @@ public:
     int numUniqueYawSamples;
     int pixelWidth;
     int pixelHeight;
+    vector<unsigned char> colorBuf;
+    vector<float> depthBuf;
     std::shared_ptr<Image> tmpImage;
     std::shared_ptr<RangeCamera::PointData> tmpPoints;
     std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
@@ -1492,24 +1494,13 @@ bool SensorScreenRenderer::getCameraImage(Image& image)
 
 bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
 {
-#ifndef _WIN32
-    unsigned char* colorBuf = nullptr;
-#else
-    vector<unsigned char> colorBuf;
-#endif
-
     unsigned char* pixels = nullptr;
 
     const bool extractColors = (cameraForRendering->imageType() == Camera::COLOR_IMAGE);
     if(extractColors){
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
-#ifndef _WIN32
-        colorBuf = (unsigned char*)alloca(pixelWidth * pixelHeight * 3 * sizeof(unsigned char));
-        glReadPixels(0, 0, pixelWidth, pixelHeight, GL_RGB, GL_UNSIGNED_BYTE, colorBuf);
-#else
         colorBuf.resize(pixelWidth * pixelHeight * 3 * sizeof(unsigned char));
         glReadPixels(0, 0, pixelWidth, pixelHeight, GL_RGB, GL_UNSIGNED_BYTE, &colorBuf[0]);
-#endif
         if(rangeCameraForRendering->isOrganized()){
             image.setSize(pixelWidth, pixelHeight, 3);
         } else {
@@ -1518,13 +1509,9 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
         pixels = image.pixels();
     }
 
-#ifndef _WIN32
-    float* depthBuf = (float*)alloca(pixelWidth * pixelHeight * sizeof(float));
-    glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuf);
-#else
-    vector<float> depthBuf(pixelWidth * pixelHeight * sizeof(float));
+    depthBuf.resize(pixelWidth * pixelHeight * sizeof(float));
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
-#endif
+
     const Matrix4f Pinv = renderer->projectionMatrix().inverse().cast<float>();
     const float fw = pixelWidth;
     const float fh = pixelHeight;
@@ -1542,11 +1529,7 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
     for(int y = pixelHeight - 1; y >= 0; --y){
         int srcpos = y * pixelWidth;
         if(extractColors){
-#ifndef _WIN32
-            colorSrc = colorBuf + y * pixelWidth * 3;
-#else
-            colorSrc = &colorBuf[0] + y *pixelWidth * 3;
-#endif
+            colorSrc = &colorBuf[0] + y * pixelWidth * 3;
         }
         for(int x=0; x < pixelWidth; ++x){
             const float z = depthBuf[srcpos + x];
@@ -1617,20 +1600,9 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
     const double Pinv_33 = Pinv(3, 3);
     const double fw = pixelWidth;
     const double fh = pixelHeight;
-    const int wh = pixelWidth * pixelHeight;
 
-#ifndef _WIN32
-    float* depthBuf;
-    if(wh > 1e6){
-        depthBuf = (float*)malloc(pixelWidth * pixelHeight * sizeof(float));
-    }else{
-        depthBuf = (float*)alloca(pixelWidth * pixelHeight * sizeof(float));
-    }
-    glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuf);
-#else
-    vector<float> depthBuf(pixelWidth * pixelHeight * sizeof(float));
+    depthBuf.resize(pixelWidth * pixelHeight * sizeof(float));
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
-#endif
 
     rangeData.reserve(numUniqueYawSamples * numPitchSamples);
 
@@ -1704,12 +1676,6 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
             }
         }
     }
-
-#ifndef _WIN32
-    if(wh > 1e6){
-        free(depthBuf);
-    }
-#endif
 
     return true;
 }
