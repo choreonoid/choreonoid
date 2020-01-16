@@ -17,18 +17,18 @@ class SpringheadCollisionDetector : public CollisionDetector
 public:
     SpringheadCollisionDetector();
     virtual ~SpringheadCollisionDetector();
-    virtual const char* name() const override;
+
+	virtual const char* name() const override;
     virtual CollisionDetector* clone() const override;
     virtual void clearGeometries() override;
-    virtual int  numGeometries() const override;
-    virtual int  addGeometry(SgNodePtr geometry) override;
-    virtual void setGeometryStatic(int geometryId, bool isStatic = true) override;
-    virtual bool enableGeometryCache(bool on) override;
-    virtual void clearGeometryCache(SgNode* geometry) override;
-    virtual void clearAllGeometryCaches() override;
-    virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2) override;
+    virtual int numGeometries() const override;
+    virtual boost::optional<GeometryHandle> addGeometry(SgNode* geometry) override;
+    virtual void setCustomObject(GeometryHandle geometry, Referenced* object) override;
+    virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) override;
+    virtual void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2) override;
     virtual bool makeReady() override;
-    virtual void updatePosition(int geometryId, const Position& position) override;
+    virtual void updatePosition(GeometryHandle geometry, const Position& position) override;
+    virtual void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery) override;
     virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) override;
 
 private:

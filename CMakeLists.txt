@@ -1157,6 +1157,8 @@ endfunction()
 
 
 if(ENABLE_PYTHON)
+  function(apply_common_setting_for_python_module target)
+  endfunction()
   function(add_cnoid_python_module)
   
     set(target ${ARGV0})
@@ -1324,14 +1326,21 @@ if(UNIX)
   include_directories(${JPEG_INCLUDE_DIR})
   
 elseif(MSVC)
-  set(PNG_LIBRARY libpng)
-  set(JPEG_LIBRARY jpeg)
-  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lpng1232)
-  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/Jpeg-9c)
-  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib123)
-  add_subdirectory(thirdparty/lpng1232)
-  add_subdirectory(thirdparty/Jpeg-9c)
-  add_subdirectory(thirdparty/zlib123)
+# png
+  find_package(PNG REQUIRED)
+  include_directories(${PNG_INCLUDE_DIR})
+  # jpeg
+  find_package(JPEG REQUIRED)
+  include_directories(${JPEG_INCLUDE_DIR})
+
+  #set(PNG_LIBRARY libpng)
+  #set(JPEG_LIBRARY jpeg)
+  #include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lpng1232)
+  #include_directories(${PROJECT_SOURCE_DIR}/thirdparty/Jpeg-9c)
+  #include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib123)
+  #add_subdirectory(thirdparty/lpng1232)
+  #add_subdirectory(thirdparty/Jpeg-9c)
+  #add_subdirectory(thirdparty/zlib123)
 endif()
 
 # fmtlib

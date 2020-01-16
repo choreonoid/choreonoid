@@ -207,7 +207,7 @@ void CrossMarker::setSize(double size)
 
 SphereMarker::SphereMarker()
 {
-    initialize(1.0, Vector3f(0.8, 0.8, 0.8), 0.0);
+    initialize(1.0, Vector3f(0.8f, 0.8f, 0.8f), 0.0f);
 }
 
 SphereMarker::SphereMarker(double radius, const Vector3f& color, float transparency)

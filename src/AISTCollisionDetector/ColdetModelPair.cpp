@@ -728,7 +728,7 @@ int ColdetModelPair::calculateCentroidIntersection(float &cx, float &cy, float &
 		
         int start = -1;
         bool finished = false;
-        int next1, next2, next3, next4;
+        //int next1, next2, next3, next4;
 		
         std::vector<figStruct> figure;
         figStruct f;

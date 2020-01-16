@@ -8,3 +8,4 @@ add_cnoid_python_module(${target}
 )
 
 target_link_libraries(${target} CnoidBodyPlugin CnoidPyBase)
+apply_common_setting_for_python_module(${target})
