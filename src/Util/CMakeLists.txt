@@ -219,7 +219,6 @@ if(UNIX)
   
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  #set(libraries ${LIBYAML_LIBRARIES} libpng jpeg zlib winmm ${GETTEXT_LIBRARIES} fmt::fmt)
   set(libraries ${LIBYAML_LIBRARIES} ${PNG_LIBRARY} ${JPEG_LIBRARY} zlib winmm ${GETTEXT_LIBRARIES} fmt::fmt)
   find_file(XINPUT_DLL "XInput1_4.dll")
   if(XINPUT_DLL)

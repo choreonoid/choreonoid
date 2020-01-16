@@ -6,4 +6,3 @@ add_cnoid_python_module(PyBody
   )
 
 target_link_libraries(PyBody CnoidBody CnoidPyUtil)
-apply_common_setting_for_python_module(PyBody)
