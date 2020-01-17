@@ -11,12 +11,12 @@
 # CHOREONOID_LIBRARY_DIRS     - List of directories of Choreonoid and it's dependencies
 # CHOREONOID_LIBRARIES        - List of directories of Choreonoid and it's dependencies
 
-set(CHOREONOID_ROOT_DIR "@CNOID_DIR@")
+set(CHOREONOID_ROOT_DIR @CHOREONOID_DIR@)
 
-set(CHOREONOID_VERSION_STRING "@CNOID_FULL_VERSION@")
-set(CHOREONOID_VERSION_MAJOR "@CNOID_MAJOR_VERSION@")
-set(CHOREONOID_VERSION_MINOR "@CNOID_MINOR_VERSION@")
-set(CHOREONOID_VERSION_PATCH "@CNOID_PATCH_VERSION@")
+set(CHOREONOID_VERSION_STRING @CHOREONOID_VERSION_STRING@)
+set(CHOREONOID_VERSION_MAJOR @CHOREONOID_VERSION_MAJOR@)
+set(CHOREONOID_VERSION_MINOR @CHOREONOID_VERSION_MINOR@)
+set(CHOREONOID_VERSION_PATCH @CHOREONOID_VERSION_PATCH@)
 
 set(CHOREONOID_CXX_STANDARD @CMAKE_CXX_STANDARD@)
 set(CHOREONOID_DEFINITIONS @definitions@)
@@ -27,11 +27,15 @@ set(CHOREONOID_BASE_LIBRARIES ${CHOREONOID_UTIL_LIBRARIES} CnoidBase)
 set(CHOREONOID_BODY_LIBRARIES ${CHOREONOID_UTIL_LIBRARIES} CnoidBody)
 set(CHOREONOID_BODY_PLUGIN_LIBRARIES ${CHOREONOID_BASE_LIBRARIES} CnoidBody CnoidBodyPlugin)
 set(CHOREONOID_LIBRARIES ${CNOD_BODY_LIBRARIES} ${CHOREONOID_BODY_PLUGIN_LIBRARIES})
-set(CHOREONOID_VERSION_SUBDIR @CNOID_VERSION_SUBDIR@)
-set(CHOREONOID_PLUGIN_SUBDIR @CNOID_PLUGIN_SUBDIR@)
-set(CHOREONOID_PLUGIN_DIR @CNOID_DIR@/@CNOID_PLUGIN_SUBDIR@)
-set(CHOREONOID_SHARE_SUBDIR @CNOID_SHARE_SUBDIR@)
-set(CHOREONOID_SHARE_DIR @CNOID_DIR@/@CNOID_SHARE_DIR@)
+set(CHOREONOID_VERSION_SUBDIR @CHOREONOID_VERSION_SUBDIR@)
+set(CHOREONOID_BIN_SUBDIR bin)
+set(CHOREONOID_BIN_DIR @CHOREONOID_DIR@bin)
+set(CHOREONOID_LIB_SUBDIR lib)
+set(CHOREONOID_LIB_DIR @CHOREONOID_DIR@/lib)
+set(CHOREONOID_PLUGIN_SUBDIR @CHOREONOID_PLUGIN_SUBDIR@)
+set(CHOREONOID_PLUGIN_DIR @CHOREONOID_DIR@/@CHOREONOID_PLUGIN_SUBDIR@)
+set(CHOREONOID_SHARE_SUBDIR @CHOREONOID_SHARE_SUBDIR@)
+set(CHOREONOID_SHARE_DIR @CHOREONOID_DIR@/@CHOREONOID_SHARE_DIR@)
 
 set(CHOREONOID_ENABLE_PYTHON @ENABLE_PYTHON@)
 set(CHOREONOID_PYTHON_LIBRARIES CnoidPyUtil CnoidPyBase)
@@ -48,22 +52,39 @@ MARK_AS_ADVANCED(
   CHOREONOID_LIBRARY_SUFFIX
   )
 
+function(add_choreonoid_library)
+  add_library(${ARGV})
+  get_target_property(compile_flags ${ARGV0} COMPILE_FLAGS)
+  if(NOT compile_flags)
+    set(compile_flags "")
+  endif()
+  if(ARGV1 STREQUAL "STATIC")
+    set(compile_flags "${compile_flags} -fPIC")
+  endif()
+  set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
+  set_target_properties(${ARGV0} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CHOREONOID_LIB_SUBDIR}
+    ARCHIVE_OUTPUT_DIRECTORY ${CHOREONOID_LIB_SUBDIR}
+    RUNTIME_OUTPUT_DIRECTORY ${CHOREONOID_BIN_SUBDIR})
+endfunction()
 
-function(add_cnoid_plugin)
+function(add_choreonoid_plugin)
   set(target ${ARGV0})
   add_library(${ARGV})
   get_target_property(compile_flags ${target} COMPILE_FLAGS)
-  if(compile_flags)
-    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
-  else()
-    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  if(NOT compile_flags)
+    set(compile_flags "")
   endif()
+  set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
   set_target_properties(${target} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR}
     ARCHIVE_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR}
     RUNTIME_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR})
 endfunction()
 
+function(add_cnoid_plugin)
+  add_choreonoid_plugin(${ARGV})
+endfunction()
 
 function(cnoid_make_gettext_mofiles target out_mofiles)
   set(${out_mofiles} "" PARENT_SCOPE)

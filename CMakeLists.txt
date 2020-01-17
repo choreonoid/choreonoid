@@ -16,21 +16,73 @@ project(Choreonoid)
 
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules/)
 
-set(CNOID_MAJOR_VERSION 1) 
-set(CNOID_MINOR_VERSION 8)
-set(CNOID_PATCH_VERSION 0)
-set(CNOID_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION})
-set(CNOID_FULL_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION}.${CNOID_PATCH_VERSION})
-set(CNOID_VERSION_ID "0x010800")
-set(CNOID_INTERNAL_VERSION 1)
+set(CHOREONOID_VERSION_MAJOR 1)
+set(CHOREONOID_VERSION_MINOR 8)
+set(CHOREONOID_VERSION_PATCH 0)
+set(CHOREONOID_VERSION ${CHOREONOID_VERSION_MAJOR}.${CHOREONOID_VERSION_MINOR})
+set(CHOREONOID_VERSION_STRING ${CHOREONOID_VERSION}.${CHOREONOID_VERSION_PATCH})
+set(CHOREONOID_VERSION_ID "0x010800")
+set(CHOREONOID_INTERNAL_VERSION 1)
+
+set(CHOREONOID_DIR ${CMAKE_INSTALL_PREFIX})
+set(CHOREONOID_VERSION_SUBDIR choreonoid-${CHOREONOID_VERSION})
+set(CHOREONOID_LIB_SUBDIR lib)
+set(CHOREONOID_PLUGIN_SUBDIR ${CHOREONOID_LIB_SUBDIR}/${CHOREONOID_VERSION_SUBDIR})
+set(CHOREONOID_HEADER_SUBDIR include)
+set(CHOREONOID_SHARE_SUBDIR share)
+set(CHOREONOID_DOC_SUBDIR share/doc)
+
+if(UNIX)
+  set(CHOREONOID_HEADER_SUBDIR ${CHOREONOID_HEADER_SUBDIR}/${CHOREONOID_VERSION_SUBDIR})
+  set(CHOREONOID_SHARE_SUBDIR ${CHOREONOID_SHARE_SUBDIR}/${CHOREONOID_VERSION_SUBDIR})
+  set(CHOREONOID_DOC_SUBDIR ${CHOREONOID_DOC_SUBDIR}/${CHOREONOID_VERSION_SUBDIR})
+endif()
+
+set(CHOREONOID_SHARE_DIR ${CHOREONOID_DIR}/${CHOREONOID_SHARE_SUBDIR})
+set(CHOREONOID_SOURCE_SHARE_DIR ${PROJECT_SOURCE_DIR}/share)
+
+if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
+  set(CHOREONOID_BINARY_SHARE_DIR ${CHOREONOID_SOURCE_SHARE_DIR})
+else()
+  set(CHOREONOID_BINARY_SHARE_DIR ${PROJECT_BINARY_DIR}/${CHOREONOID_SHARE_SUBDIR})
+endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
-set(CNOID_DIR ${CMAKE_INSTALL_PREFIX})
-set(CNOID_VERSION_SUBDIR choreonoid-${CNOID_VERSION})
-set(CNOID_PLUGIN_SUBDIR lib/${CNOID_VERSION_SUBDIR})
+if(WIN32)
+  set(DEFAULT_INSTALL_SDK OFF)
+  set(DEFAULT_INSTALL_RUNTIME_DEPENDENCIES ON)
+else()
+  set(DEFAULT_INSTALL_SDK ON)
+  set(DEFAULT_INSTALL_RUNTIME_DEPENDENCIES OFF)
+endif()
+
+option(INSTALL_RUNTIME_DEPENDENCIES "Installing the runtimes of external libraries" ${DEFAULT_INSTALL_RUNTIME_DEPENDENCIES})
+option(INSTALL_SDK "Installing SDK files such as header files" ${DEFAULT_INSTALL_SDK})
+if(MSVC)
+  option(INSTALL_SDK_WITH_EXTLIBS "The SDK installation includes the external libraries" OFF)
+endif()
+set(CHOREONOID_SDK_INCLUDE_DIRS ${CHOREONOID_DIR}/${CHOREONOID_HEADER_SUBDIR})
+
+set(CNOID_MAJOR_VERSION ${CHOREONOID_VERSION_MAJOR}) 
+set(CNOID_MINOR_VERSION ${CHOREONOID_VERSION_MINOR})
+set(CNOID_PATCH_VERSION ${CHOREONOID_VERSION_PATCH})
+set(CNOID_VERSION ${CHOREONOID_VERSION})
+set(CNOID_FULL_VERSION ${CHOREONOID_VERSION_STRING})
+set(CNOID_VERSION_ID ${CHOREONOID_VERSION_ID})
+set(CNOID_INTERNAL_VERSION ${CHOREONOID_INTERNAL_VERSION})
+set(CNOID_DIR ${CHOREONOID_DIR})
+set(CNOID_VERSION_SUBDIR ${CHOREONOID_VERSION_SUBDIR})
+set(CNOID_PLUGIN_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR})
+set(CNOID_HEADER_SUBDIR ${CHOREONOID_HEADER_SUBDIR})
+set(CNOID_SHARE_SUBDIR ${CHOREONOID_SHARE_SUBDIR})
+set(CNOID_DOC_SUBDIR ${CHOREONOID_DOC_SUBDIR})
+set(CNOID_SHARE_DIR ${CHOREONOID_SHARE_DIR})
+set(CNOID_SOURCE_SHARE_DIR ${CHOREONOID_SOURCE_SHARE_DIR})
+set(CNOID_BINARY_SHARE_DIR ${CHOREONOID_BINARY_SHARE_DIR})
+set(CNOID_SDK_INCLUDE_DIRS ${CHOREONOID_SDK_INCLUDE_DIRS})
 
 # C++ version
 set(CMAKE_CXX_STANDARD 11)
@@ -82,44 +134,6 @@ elseif(MSVC)
   endif()
 endif()
 
-if(WIN32)
-  set(CNOID_HEADER_SUBDIR "include")
-  set(CNOID_SHARE_SUBDIR "share")
-  set(CNOID_DOC_SUBDIR "share/doc")
-else()
-  set(CNOID_HEADER_SUBDIR "include/${CNOID_VERSION_SUBDIR}")
-  set(CNOID_SHARE_SUBDIR "share/${CNOID_VERSION_SUBDIR}")
-  set(CNOID_DOC_SUBDIR "share/doc/${CNOID_VERSION_SUBDIR}")
-endif()
-
-set(CNOID_SHARE_DIR "${CNOID_DIR}/${CNOID_SHARE_SUBDIR}")
-
-set(CNOID_SOURCE_SHARE_DIR "${PROJECT_SOURCE_DIR}/share")
-
-if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
-  set(CNOID_BINARY_SHARE_DIR ${CNOID_SOURCE_SHARE_DIR})
-else()
-  set(CNOID_BINARY_SHARE_DIR "${PROJECT_BINARY_DIR}/${CNOID_SHARE_SUBDIR}")
-endif()
-
-option(ENABLE_GUI "Enable GUI components" ON)
-
-if(WIN32)
-  set(DEFAULT_INSTALL_SDK OFF)
-  set(DEFAULT_INSTALL_RUNTIME_DEPENDENCIES ON)
-else()
-  set(DEFAULT_INSTALL_SDK ON)
-  set(DEFAULT_INSTALL_RUNTIME_DEPENDENCIES OFF)
-endif()
-
-option(INSTALL_RUNTIME_DEPENDENCIES "Installing the runtimes of external libraries" ${DEFAULT_INSTALL_RUNTIME_DEPENDENCIES})
-option(INSTALL_SDK "Installing SDK files such as header files" ${DEFAULT_INSTALL_SDK})
-if(MSVC)
-  option(INSTALL_SDK_WITH_EXTLIBS "The SDK installation includes the external libraries" OFF)
-endif()
-
-set(CNOID_SDK_INCLUDE_DIRS ${CNOID_DIR}/${CNOID_HEADER_SUBDIR})
-
 if(MSVC AND CMAKE_CL_64)
   add_definitions(-D_WIN64)
 endif()
@@ -136,7 +150,7 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 link_directories(${PROJECT_BINARY_DIR}/lib)
-link_directories(${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
+link_directories(${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR})
 
 if(NOT CMAKE_BUILD_TYPE)
   set(
@@ -330,7 +344,7 @@ if(CNOID_ENABLE_GETTEXT)
       else()
         install(FILES thirdparty/windows/lib/intl.lib DESTINATION lib)
       endif()
-      install(FILES "${GETTEXT_INCLUDE_DIR}/libintl.h" DESTINATION ${CNOID_HEADER_SUBDIR})
+      install(FILES "${GETTEXT_INCLUDE_DIR}/libintl.h" DESTINATION ${CHOREONOID_HEADER_SUBDIR})
     endif()
   endif()
 else()
@@ -338,6 +352,8 @@ else()
 endif()
 
 find_package(Threads)
+
+option(ENABLE_GUI "Enable GUI components" ON)
 
 # OpenGL
 if(ENABLE_GUI)
@@ -363,7 +379,7 @@ else()
   set(CNOID_USE_PYTHON2 ON)
 endif()
 
-set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
+set(CNOID_PYTHON_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/python)
 
 if(MSVC)
   set(USE_EXTERNAL_PYBIND11_DEFAULT OFF)
@@ -391,7 +407,7 @@ if(ENABLE_PYTHON)
   if(MSVC)
     add_definitions(-DHAVE_SNPRINTF)
   endif()
-  list(APPEND CNOID_SDK_INCLUDE_DIRS ${PYTHON_INCLUDE_PATH})
+  list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${PYTHON_INCLUDE_PATH})
 
   if(USE_EXTERNAL_PYBIND11)
     find_package(pybind11 2.2.4 QUIET)
@@ -400,20 +416,20 @@ if(ENABLE_PYTHON)
       if(INSTALL_SDK_WITH_EXTLIBS)
 	foreach(dir ${PYBIND11_INCLUDE_DIRS})
 	  if(EXISTS ${dir}/pybind11)
-            install(DIRECTORY ${dir}/pybind11 DESTINATION ${CNOID_HEADER_SUBDIR})
+            install(DIRECTORY ${dir}/pybind11 DESTINATION ${CHOREONOID_HEADER_SUBDIR})
 	  endif()
 	endforeach()
       else()
-	list(APPEND CNOID_SDK_INCLUDE_DIRS ${PYBIND11_INCLUDE_DIRS})
+	list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${PYBIND11_INCLUDE_DIRS})
       endif()
     endif()
   endif()
   if(NOT USE_EXTERNAL_PYBIND11 OR NOT pybind11_FOUND)
     set(PYBIND11_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.4.3/include)
     if(INSTALL_SDK)
-      install(DIRECTORY ${PYBIND11_INCLUDE_DIRS}/pybind11 DESTINATION ${CNOID_HEADER_SUBDIR})
+      install(DIRECTORY ${PYBIND11_INCLUDE_DIRS}/pybind11 DESTINATION ${CHOREONOID_HEADER_SUBDIR})
     else()
-      list(APPEND CNOID_SDK_INCLUDE_DIRS ${PYBIND11_INCLUDE_DIRS})
+      list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${PYBIND11_INCLUDE_DIRS})
     endif()
   endif()
   include_directories(${PYBIND11_INCLUDE_DIRS})
@@ -440,7 +456,7 @@ if(ENABLE_LUA)
     include_directories(${LUA_INCLUDE_DIRS})
     include_directories(${LUA_SOL2_DIR})
   endif()
-  set(CNOID_LUA_SUBDIR ${CNOID_PLUGIN_SUBDIR}/lua)
+  set(CNOID_LUA_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/lua)
 endif()
 
 # boost
@@ -470,7 +486,7 @@ if(MSVC)
   if(INSTALL_SDK_WITH_EXTLIBS)
     foreach(dir ${Boost_INCLUDE_DIRS})
       if(EXISTS ${dir}/boost)
-	install(DIRECTORY ${dir}/boost DESTINATION ${CNOID_HEADER_SUBDIR})
+	install(DIRECTORY ${dir}/boost DESTINATION ${CHOREONOID_HEADER_SUBDIR})
       endif()
     endforeach()
   endif()
@@ -490,14 +506,14 @@ if(USE_EXTERNAL_EIGEN)
     if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir ${EIGEN3_INCLUDE_DIRS})
 	if(EXISTS ${dir}/Eigen)
-	  install(DIRECTORY ${dir}/Eigen DESTINATION ${CNOID_HEADER_SUBDIR})
+	  install(DIRECTORY ${dir}/Eigen DESTINATION ${CHOREONOID_HEADER_SUBDIR})
 	endif()
 	if(EXISTS ${dir}/unsupported)
-	  install(DIRECTORY ${dir}/unsupported DESTINATION ${CNOID_HEADER_SUBDIR})
+	  install(DIRECTORY ${dir}/unsupported DESTINATION ${CHOREONOID_HEADER_SUBDIR})
 	endif()
       endforeach()
     else()
-      list(APPEND CNOID_SDK_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
+      list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
     endif()
   endif()
 endif()
@@ -506,9 +522,9 @@ if(NOT USE_EXTERNAL_EIGEN OR NOT EIGEN3_FOUND)
   set(EIGEN3_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/eigen-3.2.10)
   if(INSTALL_SDK)
     install(DIRECTORY ${EIGEN3_INCLUDE_DIRS}/Eigen ${EIGEN3_INCLUDE_DIRS}/unsupported
-      DESTINATION ${CNOID_HEADER_SUBDIR})
+      DESTINATION ${CHOREONOID_HEADER_SUBDIR})
   else()
-    list(APPEND CNOID_SDK_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
+    list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
   endif()
 endif()
 
@@ -562,12 +578,12 @@ if(ENABLE_GUI)
 	endif()
       endforeach()
       list(REMOVE_DUPLICATES include_dirs)
-      install(DIRECTORY ${include_dirs} DESTINATION ${CNOID_HEADER_SUBDIR})
+      install(DIRECTORY ${include_dirs} DESTINATION ${CHOREONOID_HEADER_SUBDIR})
     endif()
   endif()
 
   if(NOT INSTALL_SDK_WITH_EXTLIBS)
-    list(APPEND CNOID_SDK_INCLUDE_DIRS
+    list(APPEND CHOREONOID_SDK_INCLUDE_DIRS
       ${Qt5Core_INCLUDE_DIRS}
       ${Qt5Gui_INCLUDE_DIRS}
       ${Qt5Widgets_INCLUDE_DIRS}
@@ -767,7 +783,7 @@ if(ENABLE_CORBA)
             )
 	endif()
       endforeach()
-      install(FILES ${idl_files} ${idl_h_files} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${subdir})
+      install(FILES ${idl_files} ${idl_h_files} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${subdir})
     endif()
 
     set(${out_cpp_files} ${idl_cpp_files} PARENT_SCOPE)
@@ -779,7 +795,7 @@ if(ENABLE_CORBA)
 
   if(ENABLE_PYTHON)
     
-    install(DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR} DESTINATION ${CNOID_PLUGIN_SUBDIR}
+    install(DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR} DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
       FILES_MATCHING PATTERN "*.py")
 
     function(idl_compile_python target src_subdir dest_subdir global_scope)
@@ -944,8 +960,8 @@ if(ENABLE_SIMULATION_PROFILING)
 endif()
 
 # Document installaiton
-install(FILES NEWS DESTINATION ${CNOID_DOC_SUBDIR})
-install(FILES LICENSE DESTINATION ${CNOID_DOC_SUBDIR})
+install(FILES NEWS DESTINATION ${CHOREONOID_DOC_SUBDIR})
+install(FILES LICENSE DESTINATION ${CHOREONOID_DOC_SUBDIR})
 
 option(BUILD_DOCUMENTS "Build the API reference manual" OFF)
 if(BUILD_DOCUMENTS)
@@ -973,7 +989,7 @@ function(make_header_public)
   set(public_file ${PROJECT_BINARY_DIR}/include/cnoid/${header})
   file(WRITE ${public_file} "#include \"${header_path}\"\n")
   if(INSTALL_SDK)
-    install(FILES ${public_file} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid)
+    install(FILES ${public_file} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid)
   endif()
 endfunction()
 
@@ -983,7 +999,7 @@ function(make_headers_public)
   endforeach()
 endfunction()
 
-function(add_cnoid_library)
+function(add_choreonoid_library)
 
   add_library(${ARGV})
 
@@ -1018,8 +1034,11 @@ function(add_cnoid_library)
 
 endfunction()
 
+function(add_cnoid_library)
+  add_choreonoid_library(${ARGV})
+endfunction()
 
-function(add_cnoid_plugin)
+function(add_choreonoid_plugin)
 
   add_library(${ARGV})
 
@@ -1033,9 +1052,9 @@ function(add_cnoid_plugin)
   endif()
 
   set_target_properties(${ARGV0} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}
-    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
+    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR})
 
   if(ENABLE_INSTALL_RPATH)
     if(APPLE)
@@ -1054,6 +1073,9 @@ function(add_cnoid_plugin)
 
 endfunction()
 
+function(add_cnoid_plugin)
+  add_choreonoid_plugin(${ARGV})
+endfunction()
 
 function(add_cnoid_executable)
 
@@ -1110,7 +1132,7 @@ endfunction()
 function(apply_common_setting_for_library_core target)
 
   set(headers ${ARGV1})
-  set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
+  set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
   apply_common_setting_for_target(${target} "${headers}")
 
   get_target_property(target_type ${target} TYPE)
@@ -1143,7 +1165,7 @@ function(apply_common_setting_for_library target)
     set(headers ${ARGV1})
     if(headers)
       file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-      install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
+      install(FILES ${headers} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
     endif()
   endif()
 endfunction()
@@ -1161,17 +1183,17 @@ function(apply_common_setting_for_plugin target)
 
   if(INSTALL_SDK)
     install(TARGETS ${target}
-      RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
     if(headers)
       file(RELATIVE_PATH header_subdir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-      install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${header_subdir})
+      install(FILES ${headers} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${header_subdir})
     endif()
   else()
     install(TARGETS ${target}
-      RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   endif()
 
 endfunction()
@@ -1275,7 +1297,7 @@ if(ENABLE_LUA)
 
   function(apply_common_setting_for_lua_module target)
     set(headers ${ARGV1})
-    set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
+    set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
     apply_common_setting_for_target(${target} "${headers}")
 
     if(INSTALL_SDK)
@@ -1285,7 +1307,7 @@ if(ENABLE_LUA)
       endif()
       if(headers)
 	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-	install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
+	install(FILES ${headers} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
       endif()
     endif()
   endfunction()
@@ -1301,7 +1323,7 @@ function(make_gettext_mofiles target out_mofiles)
     get_filename_component(lang ${pofile} NAME_WE)
     set(message_location share/locale/${lang}/LC_MESSAGES)
     file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${message_location})
-    set(mofile ${PROJECT_BINARY_DIR}/${message_location}/${target}-${CNOID_VERSION}.mo)
+    set(mofile ${PROJECT_BINARY_DIR}/${message_location}/${target}-${CHOREONOID_VERSION}.mo)
     add_custom_command(
       OUTPUT ${mofile}
       COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${mofile} ${pofile}
