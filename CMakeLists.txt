@@ -1351,6 +1351,8 @@ elseif(MSVC)
     include_directories(${PNG_INCLUDE_DIR})
   else()
     set(PNG_LIBRARY libpng)
+    include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib123)
+    add_subdirectory(thirdparty/zlib123)
     include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lpng1232)
     add_subdirectory(thirdparty/lpng1232)
   endif()
@@ -1363,9 +1365,6 @@ elseif(MSVC)
     include_directories(${PROJECT_SOURCE_DIR}/thirdparty/Jpeg-9c)
     add_subdirectory(thirdparty/Jpeg-9c)
   endif()
-  # zlib
-  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib123)
-  add_subdirectory(thirdparty/zlib123)
 endif()
 
 # fmtlib
