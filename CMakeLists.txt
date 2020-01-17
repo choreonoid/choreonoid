@@ -15,7 +15,6 @@ include(CheckCXXCompilerFlag)
 project(Choreonoid)
 
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules/)
-
 set(CHOREONOID_VERSION_MAJOR 1)
 set(CHOREONOID_VERSION_MINOR 8)
 set(CHOREONOID_VERSION_PATCH 0)
@@ -283,8 +282,12 @@ if(UNIX AND NOT APPLE)
   endif()
 endif()
 
-option(CNOID_ENABLE_BACKWARD_COMPATIBILITY "Enable some backward compatibility" OFF)
-if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
+set(ENABLE_BACKWARD_COMPATIBILITY_DEFAULT OFF)
+if(CNOID_ENABLE_BACKWARD_COMPATIBILITY) # Old option name
+  set(ENABLE_BACKWARD_COMPATIBILITY_DEFAULT ${CNOID_ENABLE_BACKWARD_COMPATIBILITY})
+endif()
+option(ENABLE_BACKWARD_COMPATIBILITY "Enable some backward compatibility" ${ENABLE_BACKWARD_COMPATIBILITY_DEFAULT})
+if(ENABLE_BACKWARD_COMPATIBILITY)
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS CNOID_BACKWARD_COMPATIBILITY)
 endif()
 
@@ -304,9 +307,8 @@ if(UNIX)
 endif()
 
 # gettext
-option(CNOID_ENABLE_GETTEXT "Enable the gettext library and translation messages for the internationalization" ON)
-
-if(CNOID_ENABLE_GETTEXT)
+option(ENABLE_GETTEXT "Enable the gettext library and translation messages for the internationalization" ON)
+if(ENABLE_GETTEXT)
   if(WIN32)
     FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt ${PROJECT_SOURCE_DIR}/thirdparty/windows/bin)
   else()
@@ -379,7 +381,8 @@ else()
   set(CNOID_USE_PYTHON2 ON)
 endif()
 
-set(CNOID_PYTHON_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/python)
+set(CHOREONOID_PYTHON_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/python)
+set(CNOID_PYTHON_SUBDIR ${CHOREONOID_PYTHON_SUBDIR})
 
 if(MSVC)
   set(USE_EXTERNAL_PYBIND11_DEFAULT OFF)
@@ -400,9 +403,9 @@ if(ENABLE_PYTHON)
     find_package(PythonLibs 2 REQUIRED)
   endif()
   include_directories(${PYTHON_INCLUDE_DIRS})
-  set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
+  set(init_py "${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
-  install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
+  install(FILES ${init_py} DESTINATION ${CHOREONOID_PYTHON_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   if(MSVC)
     add_definitions(-DHAVE_SNPRINTF)
@@ -456,7 +459,7 @@ if(ENABLE_LUA)
     include_directories(${LUA_INCLUDE_DIRS})
     include_directories(${LUA_SOL2_DIR})
   endif()
-  set(CNOID_LUA_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/lua)
+  set(CHOREONOID_LUA_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/lua)
 endif()
 
 # boost
@@ -795,7 +798,7 @@ if(ENABLE_CORBA)
 
   if(ENABLE_PYTHON)
     
-    install(DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR} DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
+    install(DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR} DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
       FILES_MATCHING PATTERN "*.py")
 
     function(idl_compile_python target src_subdir dest_subdir global_scope)
@@ -830,7 +833,7 @@ if(ENABLE_CORBA)
 	get_filename_component(path ${path} PATH)
       endwhile()
 
-      set(python_dir ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR})
+      set(python_dir ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR})
       set(output_dir ${python_dir}/${dest_subdir})
       file(MAKE_DIRECTORY ${output_dir})
 
@@ -1238,8 +1241,8 @@ if(ENABLE_PYTHON)
     endif()
 
     set_target_properties(${target}  PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid
       RUNTIME_OUTPUT_NAME ${module}
       LIBRARY_OUTPUT_NAME ${module}
       PREFIX "")
@@ -1258,8 +1261,8 @@ if(ENABLE_PYTHON)
     endif()
 
     install(TARGETS ${target}
-      RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      RUNTIME DESTINATION ${CHOREONOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CHOREONOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   endfunction()
 
 endif()
@@ -1284,15 +1287,15 @@ if(ENABLE_LUA)
     endif()
     
     set_target_properties(${target}  PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_LUA_SUBDIR}/cnoid
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_LUA_SUBDIR}/cnoid
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid
       RUNTIME_OUTPUT_NAME ${module}
       LIBRARY_OUTPUT_NAME ${module}
       PREFIX "")
 
     install(TARGETS ${target}
-      RUNTIME DESTINATION ${CNOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CNOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      RUNTIME DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   endfunction()
 
   function(apply_common_setting_for_lua_module target)
@@ -1315,7 +1318,7 @@ endif()
 
 function(make_gettext_mofiles target out_mofiles)
   set(${out_mofiles} "" PARENT_SCOPE)
-  if(NOT CNOID_ENABLE_GETTEXT)
+  if(NOT ENABLE_GETTEXT)
     return()
   endif()
   file(GLOB pofiles ${CMAKE_CURRENT_SOURCE_DIR}/po/*.po)

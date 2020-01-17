@@ -1,6 +1,7 @@
 #set(CMAKE_BUILD_TYPE Debug)
 #set_source_files_properties(STLSceneLoader.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
+set(CNOID_ENABLE_GETTEXT ${ENABLE_GETTEXT})
 configure_file(Config.h.in Config.h)
 
 if(INSTALL_SDK)
