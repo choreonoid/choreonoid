@@ -212,15 +212,20 @@ function(add_cnoid_simple_controller)
 
   target_link_libraries(${target} CnoidBody)
 
+  if(MSVC)
+    target_link_options(${target} PRIVATE "/NODEFAULTLIB:LIBCMT")
+  endif()
+
   set_target_properties(${target} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
     PREFIX "")
+
   if(ENABLE_INSTALL_RPATH)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
 
-  apply_common_setting_for_target(${target})
+  set_header_files(${ARGV})
 
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel

@@ -159,8 +159,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(UNIX)
+  set(ENABLE_GCC_FVISIBILITY_HIDDEN ON)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -finline-functions")
-  option(ENABLE_GCC_FVISIBILITY_HIDDEN "Use the -fvisibility=hidden option when the sources are compiled" ON)
   option(ENABLE_NATIVE_CPU_ARCHITECTURE "Use the -march=native option to enable instruction set supported by the native processor architecture" OFF)
   if(ENABLE_NATIVE_ARCHITECTURE)
     set(compiler_general_options "-march=native")
@@ -168,6 +168,7 @@ if(UNIX)
 endif()
 
 if(MSVC)
+  set(compiler_general_options "/MP /wd4250 /wd4251 /wd4275 /wd4819 /wd4800 /wd4018 /wd4244 /wd4267")
   set(compiler_optimization_options "/O2 /Ob2 /Oi /Gy /GS- /fp:fast")
 
   if(${MSVC_VERSION} GREATER_EQUAL 1915)
@@ -178,14 +179,14 @@ if(MSVC)
     option(MSVC_ENABLE_AVX "Enable AVX instructions on VC++." OFF)
     option(MSVC_ENABLE_AVX2 "Enable AVX2 instructions on VC++." OFF)
     if(MSVC_ENABLE_AVX2)
-      set(compiler_general_options "/arch:AVX2")
+      set(compiler_general_options "${compiler_general_options} /arch:AVX2")
     elseif(MSVC_ENABLE_AVX)
-      set(compiler_general_options "/arch:AVX")
+      set(compiler_general_options "${compiler_general_options} /arch:AVX")
     endif()
   else()
     option(MSVC_ENABLE_SSE "Enable SSE instructions" ON)
     if(MSVC_ENABLE_SSE)
-      set(compiler_general_options "/arch:SSE /arch:SSE2")
+      set(compiler_general_options "${compiler_general_options} /arch:SSE /arch:SSE2")
     endif()
   endif()
 
@@ -258,11 +259,7 @@ endfunction()
 option(ENABLE_INSTALL_RPATH "Enable RPATH setting for installed binary files" ON)
 if(ENABLE_INSTALL_RPATH)
   set(CMAKE_SKIP_BUILD_RPATH FALSE)
-  if(APPLE)
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE) 
-  else()
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
-  endif()
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 else()
   set(CMAKE_SKIP_BUILD_RPATH FALSE)
@@ -271,7 +268,7 @@ else()
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 endif()
 
-if(UNIX AND NOT APPLE)
+if(UNIX)
   option(ENABLE_NEW_DTAGS "Make LD_LIBRARY_PATH take precedence over RPATH with --enable-new-dtags" OFF)
   if(ENABLE_NEW_DTAGS)
     set(CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-new-dtags")
@@ -328,8 +325,6 @@ if(ENABLE_GETTEXT)
   include_directories(${GETTEXT_INCLUDE_DIR})
   link_directories(${GETTEXT_LIBRARY_DIR})
   if(WIN32)
-    set(GETTEXT_LIBRARIES intl)
-  elseif(APPLE)
     set(GETTEXT_LIBRARIES intl)
   else()
     set(GETTEXT_LIBRARIES "")
@@ -946,9 +941,7 @@ if(UNIX)
 
   option(CHECK_UNRESOLVED_SYMBOLS "check unresolved symbols in the object files when creating shared libraries" OFF)
   if(CHECK_UNRESOLVED_SYMBOLS)
-    if(NOT APPLE)
-      set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,--warn-unresolved-symbols")
-    endif()
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,--warn-unresolved-symbols")
   endif()
 
 elseif(MSVC)
@@ -1002,144 +995,65 @@ function(make_headers_public)
   endforeach()
 endfunction()
 
-function(add_choreonoid_library)
-
-  add_library(${ARGV})
-
+function(set_target_common_properties target)
   if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-    get_target_property(compile_flags ${ARGV0} COMPILE_FLAGS)
-    if(NOT compile_flags)
-      set(compile_flags "")
-    endif()
-    if(ARGV1 STREQUAL "STATIC")
-      set(compile_flags "${compile_flags} -fPIC")
-    endif()
-    set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
+    target_compile_options(${target} PRIVATE "-fvisibility=hidden")
   endif()
-
-  set_target_properties(${ARGV0} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
-
-  if(ENABLE_INSTALL_RPATH)
-    if(APPLE)
-      set_target_properties(${ARGV0} PROPERTIES INSTALL_NAME_DIR "@rpath")
-      set_target_properties(${ARGV0} PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path")
-    else()
-      set_target_properties(${ARGV0} PROPERTIES INSTALL_RPATH "$ORIGIN")
-    endif()
-  else()
-    if(APPLE)
-      set_target_properties(${ARGV0} PROPERTIES INSTALL_NAME_DIR "")
-    endif()      
-  endif()
-
-endfunction()
-
-function(add_cnoid_library)
-  add_choreonoid_library(${ARGV})
-endfunction()
-
-function(add_choreonoid_plugin)
-
-  add_library(${ARGV})
-
-  if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-    get_target_property(compile_flags ${ARGV0} COMPILE_FLAGS)
-    if(compile_flags)
-      set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
-    else()
-      set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
-    endif()
-  endif()
-
-  set_target_properties(${ARGV0} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
-    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR})
-
-  if(ENABLE_INSTALL_RPATH)
-    if(APPLE)
-      set_target_properties(${ARGV0} PROPERTIES INSTALL_NAME_DIR "@rpath")
-      set_target_properties(${ARGV0} PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path,-rpath,@loader_path/..")
-    else()
-      set_target_properties(${ARGV0} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
-    endif()
-  else()
-    if(APPLE)
-      set_target_properties(${ARGV0} PROPERTIES INSTALL_NAME_DIR "")
-    else()
-      set_target_properties(${ARGV0} PROPERTIES INSTALL_RPATH "$ORIGIN")
-    endif()
-  endif()
-
-endfunction()
-
-function(add_cnoid_plugin)
-  add_choreonoid_plugin(${ARGV})
-endfunction()
-
-function(add_cnoid_executable)
-
-  add_executable(${ARGV})
-
-  set_target_properties(${ARGV0} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
-
-  if(ENABLE_INSTALL_RPATH)
-    if(APPLE)
-      set_target_properties(${ARGV0} PROPERTIES LINK_FLAGS "-Wl,-rpath,@executable_path/../lib")
-    elseif(UNIX)
-      set_target_properties(${ARGV0} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
-    endif()
-  endif()
-
-  apply_common_setting_for_target(${ARGV0})
-
-  install(TARGETS ${ARGV0} RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
-endfunction()
-
-
-function(apply_common_setting_for_target target)
-
-  set(headers ${ARGV1})
-
   if(MSVC)
-    if(MSVC_IDE)
-      if(headers)
-        source_group("Header Files" FILES ${headers})
-      endif()
-    endif()
-
-    get_target_property(existing_compile_flags ${target} COMPILE_FLAGS)
-    if(existing_compile_flags STREQUAL existing_compile_flags-NOTFOUND)
-      set(existing_compile_flags "")
-    endif()
-    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${existing_compile_flags} /MP /wd4250 /wd4251 /wd4275 /wd4819 /wd4800 /wd4018 /wd4244 /wd4267")
-
-    get_target_property(existing_link_flags ${target} LINK_FLAGS)
-    if(existing_link_flags STREQUAL existing_link_flags-NOTFOUND)
-      set(existing_link_flags "")
-    endif()
-    set_target_properties(${target} PROPERTIES LINK_FLAGS "${existing_link_flags} /NODEFAULTLIB:LIBCMT")
-
+    target_link_options(${target} PRIVATE "/NODEFAULTLIB:LIBCMT")
     set_target_properties(${target} PROPERTIES DEBUG_POSTFIX d)
   endif()
-
 endfunction()
 
-function(apply_common_setting_for_library_core target)
+function(set_header_files)
+  if(INSTALL_SDK OR MSVC_IDE)
+    cmake_parse_arguments(ARG "INSTALL_HEADERS" "" "HEADERS" ${ARGV})
+    if(NOT ARG_HEADERS)
+      set(ARG_HEADERS "")
+      foreach(file ${ARGN})
+	get_filename_component(extension ${file} EXT)
+	if(extension STREQUAL ".h")
+	  list(APPEND ARG_HEADERS ${file})
+	endif()
+      endforeach()
+    endif()
+    if(ARG_HEADERS)
+      if(MSVC_IDE)
+	source_group("Header Files" FILES ${ARG_HEADERS})
+      endif()
+      if(INSTALL_SDK AND ARG_INSTALL_HEADERS)
+	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+	install(FILES ${ARG_HEADERS} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
+      endif()
+    endif()
+  endif()
+endfunction()
 
-  set(headers ${ARGV1})
+function(CHOREONOID_ADD_LIBRARY target)
+
+  set(args ${ARGN})
+  list(REMOVE_ITEM args HEADERS)
+  add_library(${target} ${args})
+
   set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
-  apply_common_setting_for_target(${target} "${headers}")
+  set_target_common_properties(${target})
 
-  get_target_property(target_type ${target} TYPE)
-  if(target_type STREQUAL STATIC_LIBRARY)
+  if(ENABLE_GCC_FVISIBILITY_HIDDEN AND (ARGV1 STREQUAL "STATIC"))
+    target_compile_options(${target} PRIVATE "-fPIC")
+  endif()
+
+  set_target_properties(${target} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+  if(ENABLE_INSTALL_RPATH)
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
+  endif()
+
+  set_header_files(${ARGN} INSTALL_HEADERS)
+
+  if(ARGV1 STREQUAL "STATIC")
     if(INSTALL_SDK)
       install(TARGETS ${target}
         LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
@@ -1160,39 +1074,44 @@ function(apply_common_setting_for_library_core target)
 
 endfunction()
 
+# Deprecated. Use CHOREONOID_ADD_LIBRARY().
+# If this function is used with apply_common_setting_for_library(${headers}),
+# use the signature CHOREONOID_ADD_LIBRARY(... HEADERS ${headers}) without using
+# apply_common_setting_for_library.
+function(add_cnoid_library)
+  CHOREONOID_ADD_LIBRARY(${ARGV})
+endfunction()
 
-# (target "header1 header2 header3 ...")
+# Deprecated. Use CHOREONOID_ADD_LIBRARY with the HEADERS sigunature.
 function(apply_common_setting_for_library target)
-  apply_common_setting_for_library_core(${ARGV})
-  if(INSTALL_SDK)
-    set(headers ${ARGV1})
-    if(headers)
-      file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-      install(FILES ${headers} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
-    endif()
+endfunction()
+
+function(CHOREONOID_ADD_PLUGIN target)
+
+  set(add_library_args ${ARGN})
+  list(REMOVE_ITEM add_library_args SHARED HEADERS)
+  add_library(${target} SHARED ${add_library_args})
+
+  set_target_common_properties(${target})
+
+  set_target_properties(${target} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
+    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR})
+
+  if(ENABLE_INSTALL_RPATH)
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
+  else()
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
-endfunction()
 
-
-function(apply_common_setting_for_ext_library)
-  apply_common_setting_for_library_core(${ARGV})
-endfunction()
-
-
-function(apply_common_setting_for_plugin target)
-
-  set(headers ${ARGV1})
-  apply_common_setting_for_target(${target} "${headers}")
+  set_header_files(${ARGN} INSTALL_HEADERS)
 
   if(INSTALL_SDK)
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-    if(headers)
-      file(RELATIVE_PATH header_subdir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-      install(FILES ${headers} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${header_subdir})
-    endif()
   else()
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
@@ -1201,6 +1120,40 @@ function(apply_common_setting_for_plugin target)
 
 endfunction()
 
+# Deprecated.
+function(add_cnoid_plugin)
+  CHOREONOID_ADD_PLUGIN(${ARGV})
+endfunction()
+
+# Deprecated.
+function(apply_common_setting_for_plugin target)
+endfunction()
+
+function(CHOREONOID_ADD_EXECUTABLE target)
+
+  add_executable(${target} ${ARGN})
+
+  set_target_common_properties(${target})
+
+  set_target_properties(${target} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+  if(ENABLE_INSTALL_RPATH)
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+  endif()
+
+  set_header_files(${ARGN})
+
+  install(TARGETS ${target} RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+
+endfunction()
+
+# Deprecated.
+function(add_cnoid_executable)
+  CHOREONOID_ADD_EXECUTABLE(${ARGV})
+endfunction()
 
 if(ENABLE_PYTHON)
   function(add_cnoid_python_module)
@@ -1216,12 +1169,7 @@ if(ENABLE_PYTHON)
       set_target_properties(${target} PROPERTIES SUFFIX .pyd)
     else()
       if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-	get_target_property(compile_flags ${target} COMPILE_FLAGS)
-	if(compile_flags)
-	  set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
-	else()
-	  set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
-	endif()
+	target_compile_options(${target} PRIVATE "-fvisibility=hidden")
       endif()
       if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
 	if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -1248,16 +1196,7 @@ if(ENABLE_PYTHON)
       PREFIX "")
 
     if(ENABLE_INSTALL_RPATH)
-      if(APPLE)
-	set_target_properties(${target} PROPERTIES INSTALL_NAME_DIR "@rpath")
-	set_target_properties(${target} PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path")
-      else()
-	set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/../..:$ORIGIN/../../..")
-      endif()
-    else()
-      if(APPLE)
-	set_target_properties(${target} PROPERTIES INSTALL_NAME_DIR "")
-      endif()
+      set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/../..:$ORIGIN/../../..")
     endif()
 
     install(TARGETS ${target}
@@ -1277,14 +1216,9 @@ if(ENABLE_LUA)
 
     add_library(${target} SHARED ${sources})
 
-    if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-      get_target_property(compile_flags ${ARGV0} COMPILE_FLAGS)
-      if(compile_flags)
-	set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
-      else()
-	set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
-      endif()
-    endif()
+    set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
+    set_target_common_properties(${target})
+    set_header_files(${sources} INSTALL_HEADERS)
     
     set_target_properties(${target}  PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid
@@ -1293,27 +1227,20 @@ if(ENABLE_LUA)
       LIBRARY_OUTPUT_NAME ${module}
       PREFIX "")
 
-    install(TARGETS ${target}
-      RUNTIME DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-  endfunction()
-
-  function(apply_common_setting_for_lua_module target)
-    set(headers ${ARGV1})
-    set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
-    apply_common_setting_for_target(${target} "${headers}")
-
-    if(INSTALL_SDK)
-      if(MSVC)
-	install(TARGETS ${target}
-	  ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-      endif()
-      if(headers)
-	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-	install(FILES ${headers} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
-      endif()
+    if(INSTALL_SDK AND MSVC)
+      install(TARGETS ${target} ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    else()
+      install(TARGETS ${target}
+	RUNTIME DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+	LIBRARY DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
     endif()
   endfunction()
+
+  # Deprecated
+  function(apply_common_setting_for_lua_module target)
+    set_header_files(${target} ${ARGV})
+  endfunction()
+
 endif()
 
 function(make_gettext_mofiles target out_mofiles)
