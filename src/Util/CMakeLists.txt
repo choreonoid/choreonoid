@@ -4,10 +4,6 @@
 set(CNOID_ENABLE_GETTEXT ${ENABLE_GETTEXT})
 configure_file(Config.h.in Config.h)
 
-if(INSTALL_SDK)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Config.h DESTINATION ${CNOID_HEADER_SUBDIR}/src/Util/)
-endif()
-
 set(sources
   Config.cpp
   Referenced.cpp
@@ -92,6 +88,7 @@ elseif(APPLE)
 endif()
 
 set(headers
+  ${CMAKE_CURRENT_BINARY_DIR}/Config.h
   Referenced.h
   CloneMap.h
   CloneableReferenced.h
