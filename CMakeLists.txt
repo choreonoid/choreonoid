@@ -1089,26 +1089,10 @@ if(ENABLE_LUA)
 
 endif()
 
-function(make_gettext_mofiles target out_mofiles)
-  set(${out_mofiles} "" PARENT_SCOPE)
-  if(NOT ENABLE_GETTEXT)
-    return()
-  endif()
-  file(GLOB pofiles ${CMAKE_CURRENT_SOURCE_DIR}/po/*.po)
-  foreach(pofile ${pofiles})
-    get_filename_component(lang ${pofile} NAME_WE)
-    set(message_location share/locale/${lang}/LC_MESSAGES)
-    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${message_location})
-    set(mofile ${PROJECT_BINARY_DIR}/${message_location}/${target}-${CHOREONOID_VERSION}.mo)
-    add_custom_command(
-      OUTPUT ${mofile}
-      COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${mofile} ${pofile}
-      DEPENDS ${pofile}
-      )
-    list(APPEND mofiles ${mofile})
-    install(FILES ${mofile} DESTINATION "share/locale/${lang}/LC_MESSAGES")
-  endforeach()
-  set(${out_mofiles} ${mofiles} PARENT_SCOPE)
+# Deprecated
+function(make_gettext_mofiles target out_mo_files)
+  CHOREONOID_MAKE_GETTEXT_MO_FILES(${target}, ${out_mo_files})
+  set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)
 endfunction()
 
 # libyaml

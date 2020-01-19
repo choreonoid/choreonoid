@@ -152,3 +152,25 @@ function(CHOREONOID_MAKE_HEADERS_PUBLIC)
     CHOREONOID_MAKE_HEADER_PUBLIC(${header_file})
   endforeach()
 endfunction()
+
+function(CHOREONOID_MAKE_GETTEXT_MO_FILES target out_mo_files)
+  set(${out_mo_files} "" PARENT_SCOPE)
+  if(NOT ENABLE_GETTEXT)
+    return()
+  endif()
+  file(GLOB pofiles ${CMAKE_CURRENT_SOURCE_DIR}/po/*.po)
+  foreach(pofile ${pofiles})
+    get_filename_component(lang ${pofile} NAME_WE)
+    set(message_location share/locale/${lang}/LC_MESSAGES)
+    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${message_location})
+    set(mo_file ${PROJECT_BINARY_DIR}/${message_location}/${target}-${CHOREONOID_VERSION}.mo)
+    add_custom_command(
+      OUTPUT ${mo_file}
+      COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${mo_file} ${pofile}
+      DEPENDS ${pofile}
+      )
+    list(APPEND mo_files ${mo_file})
+    install(FILES ${mo_file} DESTINATION "share/locale/${lang}/LC_MESSAGES")
+  endforeach()
+  set(${out_mo_files} ${mo_files} PARENT_SCOPE)
+endfunction()
