@@ -77,6 +77,18 @@ function(CHOREONOID_ADD_LIBRARY target)
 
 endfunction()
 
+# Deprecated. Use CHOREONOID_ADD_LIBRARY().
+# If this function is used with apply_common_setting_for_library(${headers}),
+# use the signature CHOREONOID_ADD_LIBRARY(... HEADERS ${headers}) without using
+# apply_common_setting_for_library.
+function(add_cnoid_library)
+  CHOREONOID_ADD_LIBRARY(${ARGV})
+endfunction()
+
+# Deprecated. Use CHOREONOID_ADD_LIBRARY with the HEADERS sigunature.
+function(apply_common_setting_for_library target)
+endfunction()
+
 function(CHOREONOID_ADD_PLUGIN target)
 
   set(add_library_args ${ARGN})
@@ -109,6 +121,15 @@ function(CHOREONOID_ADD_PLUGIN target)
       LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   endif()
 
+endfunction()
+
+# Deprecated.
+function(add_cnoid_plugin)
+  CHOREONOID_ADD_PLUGIN(${ARGV})
+endfunction()
+
+# Deprecated.
+function(apply_common_setting_for_plugin target)
 endfunction()
 
 function(CHOREONOID_ADD_EXECUTABLE target)
@@ -147,6 +168,11 @@ function(CHOREONOID_MAKE_HEADER_PUBLIC)
   endif()
 endfunction()
 
+# Deprecated.
+function(add_cnoid_executable)
+  CHOREONOID_ADD_EXECUTABLE(${ARGV})
+endfunction()
+
 function(CHOREONOID_MAKE_HEADERS_PUBLIC)
   foreach(header_file ${ARGV})
     CHOREONOID_MAKE_HEADER_PUBLIC(${header_file})
@@ -173,4 +199,10 @@ function(CHOREONOID_MAKE_GETTEXT_MO_FILES target out_mo_files)
     install(FILES ${mo_file} DESTINATION "share/locale/${lang}/LC_MESSAGES")
   endforeach()
   set(${out_mo_files} ${mo_files} PARENT_SCOPE)
+endfunction()
+
+# Deprecated
+function(make_gettext_mofiles target out_mo_files)
+  CHOREONOID_MAKE_GETTEXT_MO_FILES(${target} ${out_mo_files})
+  set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)
 endfunction()

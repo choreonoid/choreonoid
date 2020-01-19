@@ -431,6 +431,7 @@ if(ENABLE_PYTHON)
     endif()
   endif()
   include_directories(${PYBIND11_INCLUDE_DIRS})
+
 endif()
 
 # This variable is kept for backward compatibility
@@ -690,182 +691,9 @@ if(ENABLE_CORBA)
     message(FATAL_ERROR "CORBA-related modules require the omniORB library but the library is not found.")
   endif()
 
-  function(idl_compile_cpp)
-
-    set(options LOCAL)
-    cmake_parse_arguments(args LOCAL "" "" ${ARGN})
-    list(GET args_UNPARSED_ARGUMENTS 0 out_cpp_files)
-    list(GET args_UNPARSED_ARGUMENTS 1 out_header_files)
-    list(GET args_UNPARSED_ARGUMENTS 2 subdir)
-    set(idl_names ${args_UNPARSED_ARGUMENTS})
-    list(REMOVE_AT idl_names 0 1 2)
-
-    set(corba_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
-    set(corba_binary_dir ${CMAKE_CURRENT_BINARY_DIR}/${subdir})
-    file(MAKE_DIRECTORY ${corba_binary_dir})
-    set(idl_flags -C ${corba_binary_dir} -bcxx -Wbh=.hh -Wbs=Sk.cpp -Wba -Wbd=DynSk.cpp -Wbkeep_inc_path
-      -I${PROJECT_SOURCE_DIR}/include -I${PROJECT_BINARY_DIR}/include)
-    foreach(idl_include_dir ${IDL_INCLUDE_DIRS})
-      set(idl_flags ${idl_flags} -I${idl_include_dir})
-    endforeach()
-
-    if(args_LOCAL)
-      unset(idl_files)
-      foreach(idl_name ${idl_names})
-	set(idl_files ${idl_files} ${corba_src_dir}/${idl_name}.idl)
-	set(idl_cpp_files ${idl_cpp_files} ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp)
-	set(idl_h_files ${idl_h_files} ${corba_binary_dir}/${idl_name}.hh)
-      endforeach()
-      foreach(idl_name ${idl_names})
-	if(UNIX)
-	  add_custom_command(
-	    OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}DynSk.cpp ${corba_binary_dir}/${idl_name}Sk.cpp
-	    COMMAND omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
-	    DEPENDS ${idl_files}
-	    COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
-	    )
-	elseif(MSVC)
-	  add_custom_command(
-	    OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp
-	    COMMAND for %%A in \("${OMNIDYNAMIC_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
-	    DEPENDS ${idl_files}
-	    COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
-	    )
-	endif()
-      endforeach()
-    else() # Make public
-      # copy idl files to the system include directory
-      set(corba_dir ${PROJECT_BINARY_DIR}/include/cnoid/${subdir})
-      file(MAKE_DIRECTORY ${corba_dir})
-      foreach(idl_name ${idl_names})
-	set(idl_file ${corba_src_dir}/${idl_name}.idl)
-	if(UNIX)
-	  add_custom_command(
-	    OUTPUT ${corba_dir}/${idl_name}.idl
-	    COMMAND cp ${idl_file} ${corba_dir}
-	    DEPENDS ${idl_file}
-	    COMMENT "Copying ${idl_name}.idl to ${corba_dir}"
-	    )
-	elseif(MSVC)
-	  file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.idl src)
-	  file(TO_NATIVE_PATH ${corba_dir} dest)
-	  add_custom_command(
-	    OUTPUT ${corba_dir}/${idl_name}.idl
-	    COMMAND copy ${src} ${dest}
-	    DEPENDS ${idl_file}
-	    COMMENT "Copying ${idl_name}.idl to ${corba_dir}")
-	endif()
-	set(idl_files ${idl_files} ${corba_dir}/${idl_name}.idl)
-	set(idl_cpp_files ${idl_cpp_files} ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp)
-	set(idl_h_files ${idl_h_files} ${corba_dir}/${idl_name}.hh)
-      endforeach()
-      # idl compile
-      foreach(idl_name ${idl_names})
-	if(UNIX)
-	  add_custom_command(
-	    OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}DynSk.cpp ${corba_binary_dir}/${idl_name}Sk.cpp
-            COMMAND omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
-            COMMAND cp ${corba_binary_dir}/${idl_name}.hh ${corba_dir}
-            DEPENDS ${idl_files}
-            COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
-            )
-	elseif(MSVC)
-	  file(TO_NATIVE_PATH ${corba_binary_dir}/${idl_name}.hh src)
-	  file(TO_NATIVE_PATH ${corba_dir} dest)
-	  add_custom_command(
-            OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp
-            COMMAND for %%A in \("${OMNIDYNAMIC_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
-            COMMAND copy ${src} ${dest}
-            DEPENDS ${idl_files}
-            COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
-            )
-	endif()
-      endforeach()
-      install(FILES ${idl_files} ${idl_h_files} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${subdir})
-    endif()
-
-    set(${out_cpp_files} ${idl_cpp_files} PARENT_SCOPE)
-    set(${out_header_files} ${idl_h_files} PARENT_SCOPE)
-
-    set_source_files_properties(${idl_cpp_files} PROPERTIES GENERATED true COMPILE_FLAGS -DOMNI_UNLOADABLE_STUBS)
-    
-  endfunction()
-
   if(ENABLE_PYTHON)
-    
     install(DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR} DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
       FILES_MATCHING PATTERN "*.py")
-
-    function(idl_compile_python target src_subdir dest_subdir global_scope)
-
-      set(args ${ARGV})
-      list(REMOVE_AT args 0 1 2 3)
-      set(is_dependencies FALSE)
-      foreach(arg ${args})
-	if(arg STREQUAL "DEPENDS")
-	  set(is_dependencies TRUE)
-	else()
-	  if(is_dependencies)
-	    set(dependencies ${dependencies} ${arg})
-	  else()
-	    set(idl_names ${idl_names} ${arg})
-	  endif()
-	endif()
-      endforeach()
-
-      set(package "")
-      set(path ${dest_subdir})
-      set(dir "dummy")
-      while(path AND dir)
-	get_filename_component(dir ${path} NAME)
-	if(dir)
-	  if(package)
-	    set(package "${dir}.${package}")
-	  else()
-	    set(package ${dir})
-	  endif()
-	endif()
-	get_filename_component(path ${path} PATH)
-      endwhile()
-
-      set(python_dir ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR})
-      set(output_dir ${python_dir}/${dest_subdir})
-      file(MAKE_DIRECTORY ${output_dir})
-
-      set(idl_flags -bpython -Wbglobal=${global_scope} -Wbpackage=${package} -I${PROJECT_SOURCE_DIR}/include)
-      foreach(idl_include_dir ${IDL_INCLUDE_DIRS})
-	set(idl_flags ${idl_flags} -I${idl_include_dir})
-      endforeach()
-    
-      foreach(idl_name ${idl_names})
-	set(idl_files ${idl_files} ${PROJECT_SOURCE_DIR}/include/cnoid/corba/${src_subdir}/${idl_name}.idl)
-	set(outputs ${outputs} ${output_dir}/${idl_name}_idl.py)
-      endforeach()
-
-      set(prev_output)
-      foreach(idl_name ${idl_names})
-	set(idl_file ${PROJECT_SOURCE_DIR}/include/cnoid/corba/${src_subdir}/${idl_name}.idl)
-	if(UNIX)
-	  add_custom_command(
-	    OUTPUT ${output_dir}/${idl_name}_idl.py
-	    COMMAND omniidl ${idl_flags} ${idl_file}
-	    DEPENDS ${idl_files} ${dependencies} ${prev_output} # prev_output is necessary to make the compile sequential
-	    WORKING_DIRECTORY ${python_dir}
-	    )
-	elseif(MSVC)
-	  add_custom_command(
-	    OUTPUT ${output_dir}/${idl_name}_idl.py
-	    COMMAND for %%A in \("${PYTHON_INCLUDE_PATH}/../bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${idl_file}
-	    DEPENDS ${idl_files} ${dependencies}
-	    WORKING_DIRECTORY ${python_dir}
-	    )
-	endif()
-	set(prev_output ${output_dir}/${idl_name}_idl.py)
-      endforeach()
-
-      add_custom_target(${target} ALL DEPENDS ${outputs})
-
-    endfunction()
   endif()
 
 endif(ENABLE_CORBA)
@@ -974,126 +802,17 @@ if(MSVC)
   endif()
 endif()
 
-include(CMakeModules/ChoreonoidBuildFunctions.cmake)
-
-# Deprecated. Use CHOREONOID_ADD_LIBRARY().
-# If this function is used with apply_common_setting_for_library(${headers}),
-# use the signature CHOREONOID_ADD_LIBRARY(... HEADERS ${headers}) without using
-# apply_common_setting_for_library.
-function(add_cnoid_library)
-  CHOREONOID_ADD_LIBRARY(${ARGV})
-endfunction()
-
-# Deprecated. Use CHOREONOID_ADD_LIBRARY with the HEADERS sigunature.
-function(apply_common_setting_for_library target)
-endfunction()
-
-# Deprecated.
-function(add_cnoid_plugin)
-  CHOREONOID_ADD_PLUGIN(${ARGV})
-endfunction()
-
-# Deprecated.
-function(apply_common_setting_for_plugin target)
-endfunction()
-
-# Deprecated.
-function(add_cnoid_executable)
-  CHOREONOID_ADD_EXECUTABLE(${ARGV})
-endfunction()
+include(CMakeModules/ChoreonoidBasicBuildFunctions.cmake)
 
 if(ENABLE_PYTHON)
-  function(add_cnoid_python_module)
-  
-    set(target ${ARGV0})
-    string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
-    set(sources ${ARGV})
-    list(REMOVE_AT sources 0)
-
-    add_library(${target} SHARED ${sources})
-    
-    if(MSVC)
-      set_target_properties(${target} PROPERTIES SUFFIX .pyd)
-    else()
-      if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-	target_compile_options(${target} PRIVATE "-fvisibility=hidden")
-      endif()
-      if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
-	if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-	  target_compile_options(${target} PRIVATE "-flto;-fno-fat-lto-objects")
-	  set(link_lto_flags "-flto")
-	elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	  target_compile_options(${target} PRIVATE "-flto=thin")
-	  set(link_lto_flags "-flto=thin")
-	endif()
-	get_target_property(existing_link_flags ${target} LINK_FLAGS)
-	if(existing_link_flags STREQUAL existing_link_flags-NOTFOUND)
-	  set(existing_link_flags "")
-	endif()
-	set_target_properties(${target} PROPERTIES LINK_FLAGS "${existing_link_flags} ${link_lto_flags}")
-        #add_custom_command(TARGET ${target} POST_BUILD COMMAND strip $<TARGET_FILE:${target}>)
-      endif()
-    endif()
-
-    set_target_properties(${target}  PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid
-      RUNTIME_OUTPUT_NAME ${module}
-      LIBRARY_OUTPUT_NAME ${module}
-      PREFIX "")
-
-    if(ENABLE_INSTALL_RPATH)
-      set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/../..:$ORIGIN/../../..")
-    endif()
-
-    install(TARGETS ${target}
-      RUNTIME DESTINATION ${CHOREONOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CHOREONOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-  endfunction()
-
+  include(CMakeModules/ChoreonoidPythonBuildFunctions.cmake)
 endif()
-
-
 if(ENABLE_LUA)
-  function(add_cnoid_lua_module)
-    set(target ${ARGV0})
-    string(REGEX REPLACE "^Lua(.+)$" "\\1" module ${target})
-    set(sources ${ARGV})
-    list(REMOVE_AT sources 0)
-
-    add_library(${target} SHARED ${sources})
-
-    set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
-    CHOREONOID_SET_TARGET_COMMON_PROPERTIES(${target})
-    CHOREONOID_SET_HEADER_FILES(${sources} INSTALL_HEADERS)
-    
-    set_target_properties(${target}  PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid
-      RUNTIME_OUTPUT_NAME ${module}
-      LIBRARY_OUTPUT_NAME ${module}
-      PREFIX "")
-
-    if(INSTALL_SDK AND MSVC)
-      install(TARGETS ${target} ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-    else()
-      install(TARGETS ${target}
-	RUNTIME DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-	LIBRARY DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-    endif()
-  endfunction()
-
-  # Deprecated
-  function(apply_common_setting_for_lua_module target)
-  endfunction()
-
+  include(CMakeModules/ChoreonoidLuaBuildFunctions.cmake)
 endif()
-
-# Deprecated
-function(make_gettext_mofiles target out_mo_files)
-  CHOREONOID_MAKE_GETTEXT_MO_FILES(${target}, ${out_mo_files})
-  set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)
-endfunction()
+if(ENABLE_CORBA)
+  include(CMakeModules/ChoreonoidCorbaBuildFunctions.cmake)
+endif()
 
 # libyaml
 if(MSVC)

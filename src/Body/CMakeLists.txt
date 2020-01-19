@@ -202,12 +202,7 @@ if(BODY_CUSTOMIZERS)
   endforeach()
 endif()
 
-include(CMakeModules/BodyBuildFunctions.cmake)
-
-# Deprecated
-function(add_cnoid_simple_controller)
-  CHOREONOID_ADD_SIMPLE_CONTROLLER(${ARGV})
-endfunction()
+include(ChoreonoidBodyBuildFunctions.cmake)
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller)
 

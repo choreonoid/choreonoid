@@ -1,4 +1,4 @@
-function(CHOREONOID_ADD_SIMPLE_CONTROLLER target)
+function(CHOREONOID_BODY_ADD_SIMPLE_CONTROLLER target)
 
   add_library(${target} SHARED ${ARGN})
 
@@ -23,4 +23,9 @@ function(CHOREONOID_ADD_SIMPLE_CONTROLLER target)
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
     LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
 
+endfunction()
+
+# Deprecated
+function(add_cnoid_simple_controller)
+  CHOREONOID_BODY_ADD_SIMPLE_CONTROLLER(${ARGV})
 endfunction()
