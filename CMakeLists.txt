@@ -974,105 +974,7 @@ if(MSVC)
   endif()
 endif()
 
-function(make_header_public)
-  set(header_file ${ARGV0})
-  if(ARGC EQUAL 1)
-    get_filename_component(header ${header_file} NAME_WE)
-  else()
-    set(header ${ARGV1})
-  endif()
-  file(RELATIVE_PATH header_path ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${header_file})
-  set(public_file ${PROJECT_BINARY_DIR}/include/cnoid/${header})
-  file(WRITE ${public_file} "#include \"${header_path}\"\n")
-  if(INSTALL_SDK)
-    install(FILES ${public_file} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid)
-  endif()
-endfunction()
-
-function(make_headers_public)
-  foreach(header_file ${ARGV})
-    make_header_public(${header_file})
-  endforeach()
-endfunction()
-
-function(set_target_common_properties target)
-  if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-    target_compile_options(${target} PRIVATE "-fvisibility=hidden")
-  endif()
-  if(MSVC)
-    target_link_options(${target} PRIVATE "/NODEFAULTLIB:LIBCMT")
-    set_target_properties(${target} PROPERTIES DEBUG_POSTFIX d)
-  endif()
-endfunction()
-
-function(set_header_files)
-  if(INSTALL_SDK OR MSVC_IDE)
-    cmake_parse_arguments(ARG "INSTALL_HEADERS" "" "HEADERS" ${ARGV})
-    if(NOT ARG_HEADERS)
-      set(ARG_HEADERS "")
-      foreach(file ${ARGN})
-	get_filename_component(extension ${file} EXT)
-	if(extension STREQUAL ".h")
-	  list(APPEND ARG_HEADERS ${file})
-	endif()
-      endforeach()
-    endif()
-    if(ARG_HEADERS)
-      if(MSVC_IDE)
-	source_group("Header Files" FILES ${ARG_HEADERS})
-      endif()
-      if(INSTALL_SDK AND ARG_INSTALL_HEADERS)
-	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-	install(FILES ${ARG_HEADERS} DESTINATION ${CHOREONOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
-      endif()
-    endif()
-  endif()
-endfunction()
-
-function(CHOREONOID_ADD_LIBRARY target)
-
-  set(args ${ARGN})
-  list(REMOVE_ITEM args HEADERS)
-  add_library(${target} ${args})
-
-  set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
-  set_target_common_properties(${target})
-
-  if(ENABLE_GCC_FVISIBILITY_HIDDEN AND (ARGV1 STREQUAL "STATIC"))
-    target_compile_options(${target} PRIVATE "-fPIC")
-  endif()
-
-  set_target_properties(${target} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
-
-  if(ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
-  endif()
-
-  set_header_files(${ARGN} INSTALL_HEADERS)
-
-  if(ARGV1 STREQUAL "STATIC")
-    if(INSTALL_SDK)
-      install(TARGETS ${target}
-        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-        ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-    endif()
-  else()
-    if(INSTALL_SDK)
-      install(TARGETS ${target}
-        RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-        ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-    else()
-      install(TARGETS ${target}
-        RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-    endif()
-  endif()
-
-endfunction()
+include(CMakeModules/ChoreonoidBuildFunctions.cmake)
 
 # Deprecated. Use CHOREONOID_ADD_LIBRARY().
 # If this function is used with apply_common_setting_for_library(${headers}),
@@ -1086,40 +988,6 @@ endfunction()
 function(apply_common_setting_for_library target)
 endfunction()
 
-function(CHOREONOID_ADD_PLUGIN target)
-
-  set(add_library_args ${ARGN})
-  list(REMOVE_ITEM add_library_args SHARED HEADERS)
-  add_library(${target} SHARED ${add_library_args})
-
-  set_target_common_properties(${target})
-
-  set_target_properties(${target} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
-    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR})
-
-  if(ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
-  else()
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
-  endif()
-
-  set_header_files(${ARGN} INSTALL_HEADERS)
-
-  if(INSTALL_SDK)
-    install(TARGETS ${target}
-      RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-  else()
-    install(TARGETS ${target}
-      RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-  endif()
-
-endfunction()
-
 # Deprecated.
 function(add_cnoid_plugin)
   CHOREONOID_ADD_PLUGIN(${ARGV})
@@ -1127,27 +995,6 @@ endfunction()
 
 # Deprecated.
 function(apply_common_setting_for_plugin target)
-endfunction()
-
-function(CHOREONOID_ADD_EXECUTABLE target)
-
-  add_executable(${target} ${ARGN})
-
-  set_target_common_properties(${target})
-
-  set_target_properties(${target} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
-
-  if(ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
-  endif()
-
-  set_header_files(${ARGN})
-
-  install(TARGETS ${target} RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
 endfunction()
 
 # Deprecated.
@@ -1217,8 +1064,8 @@ if(ENABLE_LUA)
     add_library(${target} SHARED ${sources})
 
     set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
-    set_target_common_properties(${target})
-    set_header_files(${sources} INSTALL_HEADERS)
+    CHOREONOID_SET_TARGET_COMMON_PROPERTIES(${target})
+    CHOREONOID_SET_HEADER_FILES(${sources} INSTALL_HEADERS)
     
     set_target_properties(${target}  PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid
@@ -1238,7 +1085,6 @@ if(ENABLE_LUA)
 
   # Deprecated
   function(apply_common_setting_for_lua_module target)
-    set_header_files(${target} ${ARGV})
   endfunction()
 
 endif()

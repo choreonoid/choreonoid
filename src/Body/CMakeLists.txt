@@ -225,7 +225,7 @@ function(add_cnoid_simple_controller)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
 
-  set_header_files(${ARGV})
+  CHOREONOID_SET_HEADER_FILES(${ARGV})
 
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
