@@ -202,35 +202,11 @@ if(BODY_CUSTOMIZERS)
   endforeach()
 endif()
 
-# SimpleController
+include(CMakeModules/BodyBuildFunctions.cmake)
+
+# Deprecated
 function(add_cnoid_simple_controller)
-
-  set(target ${ARGV0})
-  list(REMOVE_AT ARGV 0)
-
-  add_library(${target} SHARED ${ARGV})
-
-  target_link_libraries(${target} CnoidBody)
-
-  if(MSVC)
-    target_link_options(${target} PRIVATE "/NODEFAULTLIB:LIBCMT")
-  endif()
-
-  set_target_properties(${target} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
-    PREFIX "")
-
-  if(ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
-  endif()
-
-  CHOREONOID_SET_HEADER_FILES(${ARGV})
-
-  install(TARGETS ${target}
-    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
+  CHOREONOID_ADD_SIMPLE_CONTROLLER(${ARGV})
 endfunction()
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller)
