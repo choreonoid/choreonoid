@@ -159,39 +159,10 @@ endif()
 
 apply_common_setting_for_library(${target} "${headers}")
 
-# Body handler
-function(add_cnoid_body_handler)
-  set(target ${ARGV0})
-  list(REMOVE_AT ARGV 0)
-  add_library(${target} SHARED ${ARGV})
-  set_target_properties(${target} PROPERTIES
-    PREFIX "" LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/bodyhandler)
-  if(ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
-  endif()
-  target_link_libraries(${target} CnoidBody)
-  install(TARGETS ${target}
-    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-endfunction()
-
-# Body customizer (deprecated)
-function(add_cnoid_body_customizer)
-  set(target ${ARGV0})
-  list(REMOVE_AT ARGV 0)
-  add_library(${target} SHARED ${ARGV})
-  set_target_properties(${target} PROPERTIES
-    PREFIX ""
-    COMPILE_DEFINITIONS "CNOID_BODY_CUSTOMIZER"
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/customizer)
-  if(ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
-  endif()
-  target_link_libraries(${target} CnoidBase)
-  install(TARGETS ${target}
-    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-endfunction()
+include(ChoreonoidBodyBuildFunctions.cmake)
+if(CHOREONOID_INSTALL_SDK)
+  install(FILES ChoreonoidBodyBuildFunctions.cmake DESTINATION ${CHOREONOID_CMAKE_CONFIG_SUBDIR}/ext)
+endif()
 
 set(BODY_CUSTOMIZERS ${BODY_CUSTOMIZERS} CACHE FILEPATH "Source files of body customizers")
 
@@ -202,14 +173,12 @@ if(BODY_CUSTOMIZERS)
   endforeach()
 endif()
 
-include(ChoreonoidBodyBuildFunctions.cmake)
-
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller)
-
-install(
-  DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
-  DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller
-  FILES_MATCHING PATTERN "*" EXCLUDE)
+# TODO: Remove the following code. It is written in CHOREONID_BODY_ADD_SIMPLE_CONTROLLER
+#file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller)
+#install(
+#  DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
+#  DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller
+#  FILES_MATCHING PATTERN "*" EXCLUDE)
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

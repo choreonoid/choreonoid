@@ -1,7 +1,10 @@
 if(MSVC)
-  cmake_minimum_required(VERSION 3.10.0) # CMAKE_CXX_STANDARD 17 is supported for MSVC
+  # CMAKE_CXX_STANDARD 17 is supported for MSVC since version 3.10
+  # The target_link_options command is available since version 3.13
+  cmake_minimum_required(VERSION 3.13.0)
 else()
-  cmake_minimum_required(VERSION 3.5.0) # Ubuntu 16.04
+  # Cmake version installed in Ubuntu 16.04
+  cmake_minimum_required(VERSION 3.5.0)
 endif()
 
 cmake_policy(SET CMP0003 NEW)
@@ -23,7 +26,6 @@ set(CHOREONOID_VERSION_STRING ${CHOREONOID_VERSION}.${CHOREONOID_VERSION_PATCH})
 set(CHOREONOID_VERSION_ID "0x010800")
 set(CHOREONOID_INTERNAL_VERSION 1)
 
-set(CHOREONOID_DIR ${CMAKE_INSTALL_PREFIX})
 set(CHOREONOID_VERSION_SUBDIR choreonoid-${CHOREONOID_VERSION})
 set(CHOREONOID_LIB_SUBDIR lib)
 set(CHOREONOID_PLUGIN_SUBDIR ${CHOREONOID_LIB_SUBDIR}/${CHOREONOID_VERSION_SUBDIR})
@@ -31,13 +33,16 @@ set(CHOREONOID_HEADER_SUBDIR include)
 set(CHOREONOID_SHARE_SUBDIR share)
 set(CHOREONOID_DOC_SUBDIR share/doc)
 
+set(CHOREONOID_CMAKE_CONFIG_SUBDIR share/choreonoid/cmake) # ROS compliant
+#set(CHOREONOID_CMAKE_CONFIG_SUBDIR lib/choreonoid-${CNOID_VERSION}/cmake)
+
 if(UNIX)
   set(CHOREONOID_HEADER_SUBDIR ${CHOREONOID_HEADER_SUBDIR}/${CHOREONOID_VERSION_SUBDIR})
   set(CHOREONOID_SHARE_SUBDIR ${CHOREONOID_SHARE_SUBDIR}/${CHOREONOID_VERSION_SUBDIR})
   set(CHOREONOID_DOC_SUBDIR ${CHOREONOID_DOC_SUBDIR}/${CHOREONOID_VERSION_SUBDIR})
 endif()
 
-set(CHOREONOID_SHARE_DIR ${CHOREONOID_DIR}/${CHOREONOID_SHARE_SUBDIR})
+set(CHOREONOID_SHARE_DIR ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_SHARE_SUBDIR})
 set(CHOREONOID_SOURCE_SHARE_DIR ${PROJECT_SOURCE_DIR}/share)
 
 if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
@@ -63,7 +68,8 @@ option(INSTALL_SDK "Installing SDK files such as header files" ${DEFAULT_INSTALL
 if(MSVC)
   option(INSTALL_SDK_WITH_EXTLIBS "The SDK installation includes the external libraries" OFF)
 endif()
-set(CHOREONOID_SDK_INCLUDE_DIRS ${CHOREONOID_DIR}/${CHOREONOID_HEADER_SUBDIR})
+set(CHOREONOID_SDK_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_HEADER_SUBDIR})
+set(CHOREONOID_INSTALL_SDK ${INSTALL_SDK})
 
 set(CNOID_MAJOR_VERSION ${CHOREONOID_VERSION_MAJOR}) 
 set(CNOID_MINOR_VERSION ${CHOREONOID_VERSION_MINOR})
@@ -72,7 +78,6 @@ set(CNOID_VERSION ${CHOREONOID_VERSION})
 set(CNOID_FULL_VERSION ${CHOREONOID_VERSION_STRING})
 set(CNOID_VERSION_ID ${CHOREONOID_VERSION_ID})
 set(CNOID_INTERNAL_VERSION ${CHOREONOID_INTERNAL_VERSION})
-set(CNOID_DIR ${CHOREONOID_DIR})
 set(CNOID_VERSION_SUBDIR ${CHOREONOID_VERSION_SUBDIR})
 set(CNOID_PLUGIN_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR})
 set(CNOID_HEADER_SUBDIR ${CHOREONOID_HEADER_SUBDIR})
@@ -159,7 +164,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(UNIX)
-  set(ENABLE_GCC_FVISIBILITY_HIDDEN ON)
+  set(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN ON)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -finline-functions")
   option(ENABLE_NATIVE_CPU_ARCHITECTURE "Use the -march=native option to enable instruction set supported by the native processor architecture" OFF)
   if(ENABLE_NATIVE_ARCHITECTURE)
@@ -267,6 +272,7 @@ else()
   set(CMAKE_INSTALL_RPATH "")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 endif()
+set(CHOREONOID_ENABLE_INSTALL_RPATH ${ENABLE_INSTALL_RPATH})
 
 if(UNIX)
   option(ENABLE_NEW_DTAGS "Make LD_LIBRARY_PATH take precedence over RPATH with --enable-new-dtags" OFF)
@@ -802,16 +808,16 @@ if(MSVC)
   endif()
 endif()
 
-include(CMakeModules/ChoreonoidBasicBuildFunctions.cmake)
+include(cmake/ChoreonoidBasicBuildFunctions.cmake)
 
 if(ENABLE_PYTHON)
-  include(CMakeModules/ChoreonoidPythonBuildFunctions.cmake)
+  include(cmake/ChoreonoidPythonBuildFunctions.cmake)
 endif()
 if(ENABLE_LUA)
-  include(CMakeModules/ChoreonoidLuaBuildFunctions.cmake)
+  include(cmake/ChoreonoidLuaBuildFunctions.cmake)
 endif()
 if(ENABLE_CORBA)
-  include(CMakeModules/ChoreonoidCorbaBuildFunctions.cmake)
+  include(cmake/ChoreonoidCorbaBuildFunctions.cmake)
 endif()
 
 # libyaml
@@ -954,4 +960,5 @@ if(INSTALL_RUNTIME_DEPENDENCIES)
   endif()
 endif()
 
+add_subdirectory(cmake)
 add_subdirectory(misc)

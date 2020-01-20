@@ -15,7 +15,7 @@ function(CHOREONOID_LUA_ADD_MODULE target)
     LIBRARY_OUTPUT_NAME ${module}
     PREFIX "")
 
-  if(INSTALL_SDK AND MSVC)
+  if(CHOREONOID_INSTALL_SDK AND MSVC)
     install(TARGETS ${target} ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   else()
     install(TARGETS ${target}
