@@ -412,6 +412,7 @@ if(ENABLE_PYTHON)
     add_definitions(-DHAVE_SNPRINTF)
   endif()
   list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${PYTHON_INCLUDE_PATH})
+  set(CHOREONOID_PYTHON_INCLUDE_PATH ${PYTHON_INCLUDE_PATH})
 
   if(USE_EXTERNAL_PYBIND11)
     find_package(pybind11 2.2.4 QUIET)
@@ -702,6 +703,8 @@ if(ENABLE_CORBA)
       FILES_MATCHING PATTERN "*.py")
   endif()
 
+  set(CHOREONOID_OMNIDYNAMIC_DIR ${OMNIDYNAMIC_DIR})
+
 endif(ENABLE_CORBA)
 
 # OpenRTM
@@ -880,6 +883,7 @@ if(NOT fmt_FOUND)
   add_subdirectory(thirdparty/fmt-5.3.0)
   # Is this necessary when building on Windows?
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/fmt-5.3.0/include)
+  install(DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/fmt-5.3.0/include/fmt DESTINATION ${CHOREONOID_HEADER_SUBDIR})
 endif()
 
 add_subdirectory(src)
