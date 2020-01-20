@@ -1,11 +1,8 @@
 #set(CMAKE_BUILD_TYPE Debug)
 #set_source_files_properties(STLSceneLoader.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
+set(CNOID_ENABLE_GETTEXT ${CHOREONOID_ENABLE_GETTEXT})
 configure_file(Config.h.in Config.h)
-
-if(INSTALL_SDK)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Config.h DESTINATION ${CNOID_HEADER_SUBDIR}/src/Util/)
-endif()
 
 set(sources
   Config.cpp
@@ -91,6 +88,7 @@ elseif(APPLE)
 endif()
 
 set(headers
+  ${CMAKE_CURRENT_BINARY_DIR}/Config.h
   Referenced.h
   CloneMap.h
   CloneableReferenced.h
@@ -219,7 +217,7 @@ if(UNIX)
   
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries ${LIBYAML_LIBRARIES} libpng jpeg zlib winmm ${GETTEXT_LIBRARIES} fmt::fmt)
+  set(libraries ${LIBYAML_LIBRARIES} ${PNG_LIBRARY} ${JPEG_LIBRARY} zlib winmm ${GETTEXT_LIBRARIES} fmt::fmt)
   find_file(XINPUT_DLL "XInput1_4.dll")
   if(XINPUT_DLL)
     target_link_libraries(${target} ${libraries} XInput)

@@ -50,10 +50,6 @@ public:
         return *this;
     }
 
-    bool operator==(const DataMap<ElementType, Allocator>& rhs) const {
-        return *this == rhs;
-    }
-    
 #ifndef _MSC_VER
     using typename MapType::iterator;
     using MapType::size;

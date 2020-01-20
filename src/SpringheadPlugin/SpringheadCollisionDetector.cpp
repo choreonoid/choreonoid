@@ -19,6 +19,8 @@ using namespace cnoid;
 
 namespace {
 
+typedef CollisionDetector::GeometryHandle GeometryHandle;
+
 CollisionDetector* factory()
 {
     return new SpringheadCollisionDetector;
@@ -31,7 +33,7 @@ struct FactoryRegistration
     }
 } factoryRegistration;
 
-class GeometryEx
+class GeometryEx : public Referenced
 {
 public :
      GeometryEx();
@@ -42,8 +44,10 @@ public :
 	Spr::PHSolidIf*          phSolid;
     vector<Spr::CDShapeIf*>  cdShapes;
 
+	ReferencedPtr object;
+
 };
-typedef std::shared_ptr<GeometryEx> GeometryExPtr;
+typedef ref_ptr<GeometryEx> GeometryExPtr;
 
 GeometryEx::GeometryEx()
 {
@@ -69,8 +73,8 @@ public:
 
     vector<GeometryExPtr> models;
 
-	typedef set< std::pair<int, int> > GeometryIDPairSet;
-	GeometryIDPairSet nonInterferencePairs;
+	typedef set< std::pair<GeometryEx*, GeometryEx*> > GeometryPairSet;
+	GeometryPairSet nonInterferencePairs;
 
 	vector<CollisionPair> collisionPairs;
 
@@ -86,11 +90,11 @@ public:
 
     MeshExtractor* meshExtractor;
 
-    int  addGeometry(SgNode* geometry);
-    void addMesh(GeometryEx* model);
-    void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
+    boost::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    void addMesh(GeometryExPtr model);
+    void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2);
     bool makeReady();
-    void updatePosition(int geometryId, const Position& position);
+    void updatePosition(GeometryHandle geometry, const Position& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
 
 private :
@@ -151,19 +155,19 @@ int SpringheadCollisionDetector::numGeometries() const
 }
 
 
-int SpringheadCollisionDetector::addGeometry(SgNode* geometry)
+boost::optional<GeometryHandle> SpringheadCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-int SpringheadCollisionDetectorImpl::addGeometry(SgNode* geometry)
+boost::optional<GeometryHandle> SpringheadCollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
     const int index = models.size();
     bool isValid = false;
 
     if(geometry){
-        GeometryExPtr model = std::make_shared<GeometryEx>();
+        GeometryExPtr model = new GeometryEx();
         model->phSolid = phScene->CreateSolid();
 
         if(meshExtractor->extract(geometry, [&](){ addMesh(model); })){
@@ -184,7 +188,7 @@ int SpringheadCollisionDetectorImpl::addGeometry(SgNode* geometry)
 
 }
 
-void SpringheadCollisionDetectorImpl::addMesh(GeometryEx* model)
+void SpringheadCollisionDetectorImpl::addMesh(GeometryExPtr model)
 {
     SgMesh* mesh = meshExtractor->currentMesh();
     const Affine3& T = meshExtractor->currentTransform();
@@ -293,49 +297,36 @@ void SpringheadCollisionDetectorImpl::addMesh(GeometryEx* model)
     }
 }
 
-
-void SpringheadCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
+void SpringheadCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
 {
-    GeometryExPtr& model = impl->models[geometryId];
+    GeometryEx* model = (GeometryEx*)geometry;
+    if(model){
+        model->object = object;
+    }
+}
+
+void SpringheadCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
+{
+    GeometryEx* model = (GeometryEx*)geometry;
     if(model){
         model->isStatic = isStatic;
     }
 }
 
-
-bool SpringheadCollisionDetector::enableGeometryCache(bool)
+void SpringheadCollisionDetector::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-    return false;
+    impl->setNonInterfarenceGeometyrPair(geometry1, geometry2);
 }
 
-
-void SpringheadCollisionDetector::clearGeometryCache(SgNode*)
+void SpringheadCollisionDetectorImpl::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-    
-}
-
-
-void SpringheadCollisionDetector::clearAllGeometryCaches()
-{
-
-}
-
-
-void SpringheadCollisionDetector::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
-{
-    impl->setNonInterfarenceGeometyrPair(geometryId1, geometryId2);
-}
-
-
-void SpringheadCollisionDetectorImpl::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
-{
-    GeometryExPtr& model1 = models[geometryId1];
-    GeometryExPtr& model2 = models[geometryId2];
+    GeometryEx* model1 = (GeometryEx*)geometry1;
+    GeometryEx* model2 = (GeometryEx*)geometry2;
     if(model1 && model2){
         //dSpaceID space1 = model1->spaceID;
         //dSpaceID space2 = model2->spaceID;
         //if(nonInterfarencePairs.find(make_pair(space1, space2)) == nonInterfarencePairs.end())
-        nonInterferencePairs.insert(make_pair(geometryId1, geometryId2));
+        nonInterferencePairs.insert(make_pair(model1, model2));
     }
 }
 
@@ -370,15 +361,23 @@ bool SpringheadCollisionDetectorImpl::makeReady()
 }
 
 
-void SpringheadCollisionDetector::updatePosition(int geometryId, const Position& position)
+void SpringheadCollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
 {
-    impl->updatePosition(geometryId, position);
+    impl->updatePosition(geometry, position);
 }
 
-
-void SpringheadCollisionDetectorImpl::updatePosition(int geometryId, const Position& _position)
+void SpringheadCollisionDetector::updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
 {
-    GeometryExPtr& model = models[geometryId];
+    for(GeometryEx* model : impl->models){
+        Position* T;
+        positionQuery(model->object, T);
+        impl->updatePosition((GeometryHandle)model, *T);
+    }
+}
+
+void SpringheadCollisionDetectorImpl::updatePosition(GeometryHandle geometry, const Position& _position)
+{
+    GeometryEx* model = (GeometryEx*)geometry;
     if(model){
 		Spr::Posed pose;
 		pose.Pos() = ToSpr((Vector3)(_position.translation()));
@@ -468,8 +467,8 @@ void SpringheadCollisionDetectorImpl::detectCollisions(std::function<void(const 
 	for(int i = 0; i < ncon; i++){
 		Spr::PHContactPoint* con = phScene->GetContact(i)->Cast();
 		Spr::PHShapePair* sp = con->shapePair;
-		so[0] = sp->solidPair->solid[0]->Cast();
-		so[1] = sp->solidPair->solid[1]->Cast();
+		so[0] = sp->solidPair->body[0]->Cast();
+		so[1] = sp->solidPair->body[1]->Cast();
 		sh[0] = sp->frame[0]->shape->Cast();
 		sh[1] = sp->frame[1]->shape->Cast();
 
@@ -490,7 +489,7 @@ void SpringheadCollisionDetectorImpl::detectCollisions(std::function<void(const 
 		c.normal = FromSpr(p.Ori() * Spr::Vec3d(1.0, 0.0, 0.0));
 		c.depth  = 0.0;
 
-		cp.collisions.push_back(c);
+		cp.addCollision(c);
 	}
 
 	// call callback for all collision pairs

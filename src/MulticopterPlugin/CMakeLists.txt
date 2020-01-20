@@ -9,7 +9,10 @@ endif()
 
 set(headers
   RotorDevice.h
+  exportdecl.h
   )
+
+CHOREONOID_MAKE_HEADER_PUBLIC(RotorDevice.h)
 
 set(sources
   FFCalc_LinkState.cpp

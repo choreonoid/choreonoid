@@ -22,6 +22,7 @@ set(sources
 
 set(headers
   CorbaPlugin.h
+  exportdecl.h
   )
 
 make_gettext_mofiles(${target} mofiles)

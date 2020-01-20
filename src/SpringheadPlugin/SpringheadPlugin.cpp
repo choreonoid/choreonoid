@@ -6,7 +6,7 @@
 #include "SpringheadSimulatorItem.h"
 #include <cnoid/Plugin>
 #include <Springhead.h>
-#define PLUGIN_NAME "SPRINGHEAD"
+#define PLUGIN_NAME "Springhead"
 
 using namespace std;
 using namespace cnoid;

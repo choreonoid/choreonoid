@@ -9,8 +9,12 @@
 #include <fmt/format.h>
 
 #ifdef _MSC_VER
-#define INFINITY (DBL_MAX+DBL_MAX)
-#define NAN (INFINITY-INFINITY)
+#if !defined(INFINITY)
+# define INFINITY (DBL_MAX+DBL_MAX)
+#endif
+#if !defined(NAN)
+# define NAN (INFINITY-INFINITY)
+#endif
 #else
 #include <cmath>
 #endif

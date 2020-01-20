@@ -27,24 +27,8 @@ add_dependencies(${target} CnoidPoseSeqPlugin)
 
 if(WIN32)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "CNOID_USE_GETTEXT_WRAPPER")
-  target_link_libraries(${target} CnoidBase CnoidPoseSeqPlugin )
-elseif(APPLE)
-  if(ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "CNOID_USE_GETTEXT_WRAPPER")
-    target_link_libraries(${target}
-      ${QT_QTCORE_LIBRARY}
-      ${QT_QTGUI_LIBRARY}
-      libCnoidUtil.dylib
-      libCnoidBase.dylib
-      libCnoidBody.dylib
-      libCnoidBodyPlugin.dylib
-      libCnoidPoseSeqPlugin.dylib
-      )
-  else()
-    target_link_libraries(${target} CnoidBase CnoidPoseSeqPlugin)
-  endif()
-else()
-  target_link_libraries(${target} CnoidBase CnoidPoseSeqPlugin)
 endif()
+
+target_link_libraries(${target} CnoidBase CnoidPoseSeqPlugin)
 
 apply_common_setting_for_plugin(${target} "${headers}")
