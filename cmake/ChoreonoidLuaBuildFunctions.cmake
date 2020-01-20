@@ -16,11 +16,11 @@ function(CHOREONOID_LUA_ADD_MODULE target)
     PREFIX "")
 
   if(CHOREONOID_INSTALL_SDK AND MSVC)
-    install(TARGETS ${target} ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    install(TARGETS ${target} ARCHIVE DESTINATION lib)
   else()
     install(TARGETS ${target}
-      RUNTIME DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      RUNTIME DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid
+      LIBRARY DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid)
   endif()
 endfunction()
 

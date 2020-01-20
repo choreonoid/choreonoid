@@ -80,19 +80,15 @@ function(CHOREONOID_ADD_LIBRARY target)
   if(ARGV1 STREQUAL "STATIC")
     if(CHOREONOID_INSTALL_SDK)
       install(TARGETS ${target}
-        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-        ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+	LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
     endif()
   else()
     if(CHOREONOID_INSTALL_SDK)
       install(TARGETS ${target}
-        RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-        ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+        RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
     else()
       install(TARGETS ${target}
-        RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+        RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
     endif()
   endif()
 
@@ -133,13 +129,13 @@ function(CHOREONOID_ADD_PLUGIN target)
 
   if(CHOREONOID_INSTALL_SDK)
     install(TARGETS ${target}
-      RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
+      LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
+      ARCHIVE DESTINATION lib)
   else()
     install(TARGETS ${target}
-      RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
+      LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR})
   endif()
 
 endfunction()
@@ -170,7 +166,7 @@ function(CHOREONOID_ADD_EXECUTABLE target)
 
   CHOREONOID_SET_HEADER_FILES(${ARGN})
 
-  install(TARGETS ${target} RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+  install(TARGETS ${target} RUNTIME DESTINATION bin)
 
 endfunction()
 
@@ -181,7 +177,7 @@ endfunction()
 
 function(CHOREONOID_MAKE_GETTEXT_MO_FILES target out_mo_files)
   set(${out_mo_files} "" PARENT_SCOPE)
-  if(NOT ENABLE_GETTEXT)
+  if(NOT CHOREONOID_ENABLE_GETTEXT)
     return()
   endif()
   file(GLOB pofiles ${CMAKE_CURRENT_SOURCE_DIR}/po/*.po)
@@ -193,7 +189,7 @@ function(CHOREONOID_MAKE_GETTEXT_MO_FILES target out_mo_files)
     set(mo_file ${PROJECT_BINARY_DIR}/${message_location}/${target}-${version}.mo)
     add_custom_command(
       OUTPUT ${mo_file}
-      COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${mo_file} ${pofile}
+      COMMAND ${CHOREONOID_GETTEXT_MSGFMT_EXECUTABLE} -o ${mo_file} ${pofile}
       DEPENDS ${pofile}
       )
     list(APPEND mo_files ${mo_file})
@@ -203,6 +199,11 @@ function(CHOREONOID_MAKE_GETTEXT_MO_FILES target out_mo_files)
 endfunction()
 
 # Deprecated
+function(cnoid_make_gettext_mofiles target out_mo_files)
+  CHOREONOID_MAKE_GETTEXT_MO_FILES(${target} ${out_mo_files})
+  set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)
+endfunction()
+
 function(make_gettext_mofiles target out_mo_files)
   CHOREONOID_MAKE_GETTEXT_MO_FILES(${target} ${out_mo_files})
   set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)

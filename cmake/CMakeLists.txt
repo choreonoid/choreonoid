@@ -17,4 +17,7 @@ endif()
 
 if(INSTALL_SDK)
   install(FILES ${modules} DESTINATION ${CHOREONOID_CMAKE_CONFIG_SUBDIR})
+  if(UNIX)
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_CMAKE_CONFIG_SUBDIR}/ChoreonoidConfig.cmake ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_CMAKE_CONFIG_SUBDIR}/choreonoid-config.cmake)")
+  endif()
 endif()

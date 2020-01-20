@@ -32,5 +32,4 @@ target_link_libraries(${target} CnoidBase CnoidPyUtil)
 apply_common_setting_for_plugin(${target} "${headers}")
 
 configure_file(rbimporter.py ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/ COPYONLY)
-install(FILES rbimporter.py DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
-  CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+install(FILES rbimporter.py DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid)

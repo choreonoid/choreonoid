@@ -7,7 +7,7 @@ set(headers
   exportdecl.h
   )
 
-add_cnoid_library(CnoidPyBase SHARED PyItemList.cpp)
+add_cnoid_library(CnoidPyBase SHARED PyItemList.cpp ${headers})
 target_link_libraries(CnoidPyBase CnoidBase CnoidPyUtil)
 apply_common_setting_for_library(CnoidPyBase "${headers}")
 

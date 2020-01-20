@@ -9,8 +9,8 @@ function(CHOREONOID_BODY_ADD_SIMPLE_CONTROLLER target)
   endif()
 
   set_target_properties(${target} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}/simplecontroller
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}/simplecontroller
     PREFIX "")
 
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
@@ -20,8 +20,8 @@ function(CHOREONOID_BODY_ADD_SIMPLE_CONTROLLER target)
   CHOREONOID_SET_HEADER_FILES(${ARGN})
 
   install(TARGETS ${target}
-    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/simplecontroller
+    LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/simplecontroller)
 
 endfunction()
 
@@ -42,8 +42,8 @@ function(add_cnoid_body_handler)
   endif()
   target_link_libraries(${target} CnoidBody)
   install(TARGETS ${target}
-    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler
+    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler)
 endfunction()
 
 # Body customizer (deprecated)
@@ -60,6 +60,6 @@ function(add_cnoid_body_customizer)
   endif()
   target_link_libraries(${target} CnoidBase)
   install(TARGETS ${target}
-    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer
+    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer)
 endfunction()
