@@ -1,4 +1,4 @@
-function(CHOREONOID_LUA_ADD_MODULE target)
+function(choreonoid_lua_add_module target)
   string(REGEX REPLACE "^Lua(.+)$" "\\1" module ${target})
   set(sources ${ARGN})
 
@@ -26,7 +26,7 @@ endfunction()
 
 # Deprecated
 function(add_cnoid_lua_module)
-  CHOREONOID_LUA_ADD_MODULE(${ARGV})
+  choreonoid_lua_add_module(${ARGV})
 endfunction()
 
 # Deprecated

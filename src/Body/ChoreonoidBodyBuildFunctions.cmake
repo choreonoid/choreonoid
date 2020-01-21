@@ -1,4 +1,4 @@
-function(CHOREONOID_BODY_ADD_SIMPLE_CONTROLLER target)
+function(choreonoid_body_add_simple_controller target)
 
   add_library(${target} SHARED ${ARGN})
 
@@ -27,7 +27,7 @@ endfunction()
 
 # Deprecated
 function(add_cnoid_simple_controller)
-  CHOREONOID_BODY_ADD_SIMPLE_CONTROLLER(${ARGV})
+  choreonoid_body_add_simple_controller(${ARGV})
 endfunction()
 
 # Body handler

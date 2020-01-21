@@ -1,4 +1,4 @@
-function(CHOREONOID_SET_TARGET_COMMON_PROPERTIES target)
+function(choreonoid_set_target_common_properties target)
   if(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN)
     target_compile_options(${target} PRIVATE "-fvisibility=hidden")
   endif()
@@ -8,7 +8,7 @@ function(CHOREONOID_SET_TARGET_COMMON_PROPERTIES target)
   endif()
 endfunction()
 
-function(CHOREONOID_SET_HEADER_FILES)
+function(choreonoid_set_header_files)
   if(CHOREONOID_INSTALL_SDK OR MSVC_IDE)
     cmake_parse_arguments(ARG "INSTALL_HEADERS" "" "HEADERS" ${ARGV})
     if(NOT ARG_HEADERS)
@@ -32,7 +32,7 @@ function(CHOREONOID_SET_HEADER_FILES)
   endif()
 endfunction()
 
-function(CHOREONOID_MAKE_HEADER_PUBLIC)
+function(choreonoid_make_header_public)
   set(header_file ${ARGV0})
   if(ARGC EQUAL 1)
     get_filename_component(header ${header_file} NAME_WE)
@@ -47,20 +47,20 @@ function(CHOREONOID_MAKE_HEADER_PUBLIC)
   endif()
 endfunction()
 
-function(CHOREONOID_MAKE_HEADERS_PUBLIC)
+function(choreonoid_make_headers_public)
   foreach(header_file ${ARGV})
-    CHOREONOID_MAKE_HEADER_PUBLIC(${header_file})
+    choreonoid_make_header_public(${header_file})
   endforeach()
 endfunction()
 
-function(CHOREONOID_ADD_LIBRARY target)
+function(choreonoid_add_library target)
 
   set(args ${ARGN})
   list(REMOVE_ITEM args HEADERS)
   add_library(${target} ${args})
 
   set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION_MAJOR}.${CHOREONOID_VERSION_MINOR})
-  CHOREONOID_SET_TARGET_COMMON_PROPERTIES(${target})
+  choreonoid_set_target_common_properties(${target})
 
   if(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN AND (ARGV1 STREQUAL "STATIC"))
     target_compile_options(${target} PRIVATE "-fPIC")
@@ -75,7 +75,7 @@ function(CHOREONOID_ADD_LIBRARY target)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
 
-  CHOREONOID_SET_HEADER_FILES(${ARGN} INSTALL_HEADERS)
+  choreonoid_set_header_files(${ARGN} INSTALL_HEADERS)
 
   if(ARGV1 STREQUAL "STATIC")
     if(CHOREONOID_INSTALL_SDK)
@@ -94,25 +94,25 @@ function(CHOREONOID_ADD_LIBRARY target)
 
 endfunction()
 
-# Deprecated. Use CHOREONOID_ADD_LIBRARY().
+# Deprecated. Use choreonoid_add_library().
 # If this function is used with apply_common_setting_for_library(${headers}),
-# use the signature CHOREONOID_ADD_LIBRARY(... HEADERS ${headers}) without using
+# use the signature choreonoid_add_library(... HEADERS ${headers}) without using
 # apply_common_setting_for_library.
 function(add_cnoid_library)
-  CHOREONOID_ADD_LIBRARY(${ARGV})
+  choreonoid_add_library(${ARGV})
 endfunction()
 
-# Deprecated. Use CHOREONOID_ADD_LIBRARY with the HEADERS sigunature.
+# Deprecated. Use choreonoid_add_library with the HEADERS sigunature.
 function(apply_common_setting_for_library target)
 endfunction()
 
-function(CHOREONOID_ADD_PLUGIN target)
+function(choreonoid_add_plugin target)
 
   set(add_library_args ${ARGN})
   list(REMOVE_ITEM add_library_args SHARED HEADERS)
   add_library(${target} SHARED ${add_library_args})
 
-  CHOREONOID_SET_TARGET_COMMON_PROPERTIES(${target})
+  choreonoid_set_target_common_properties(${target})
 
   set_target_properties(${target} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
@@ -125,7 +125,7 @@ function(CHOREONOID_ADD_PLUGIN target)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
 
-  CHOREONOID_SET_HEADER_FILES(${ARGN} INSTALL_HEADERS)
+  choreonoid_set_header_files(${ARGN} INSTALL_HEADERS)
 
   if(CHOREONOID_INSTALL_SDK)
     install(TARGETS ${target}
@@ -142,18 +142,18 @@ endfunction()
 
 # Deprecated.
 function(add_cnoid_plugin)
-  CHOREONOID_ADD_PLUGIN(${ARGV})
+  choreonoid_add_plugin(${ARGV})
 endfunction()
 
 # Deprecated.
 function(apply_common_setting_for_plugin target)
 endfunction()
 
-function(CHOREONOID_ADD_EXECUTABLE target)
+function(choreonoid_add_executable target)
 
   add_executable(${target} ${ARGN})
 
-  CHOREONOID_SET_TARGET_COMMON_PROPERTIES(${target})
+  choreonoid_set_target_common_properties(${target})
 
   set_target_properties(${target} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
@@ -164,7 +164,7 @@ function(CHOREONOID_ADD_EXECUTABLE target)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
   endif()
 
-  CHOREONOID_SET_HEADER_FILES(${ARGN})
+  choreonoid_set_header_files(${ARGN})
 
   install(TARGETS ${target} RUNTIME DESTINATION bin)
 
@@ -172,10 +172,10 @@ endfunction()
 
 # Deprecated.
 function(add_cnoid_executable)
-  CHOREONOID_ADD_EXECUTABLE(${ARGV})
+  choreonoid_add_executable(${ARGV})
 endfunction()
 
-function(CHOREONOID_MAKE_GETTEXT_MO_FILES target out_mo_files)
+function(choreonoid_make_gettext_mo_files target out_mo_files)
   set(${out_mo_files} "" PARENT_SCOPE)
   if(NOT CHOREONOID_ENABLE_GETTEXT)
     return()
@@ -200,11 +200,11 @@ endfunction()
 
 # Deprecated
 function(cnoid_make_gettext_mofiles target out_mo_files)
-  CHOREONOID_MAKE_GETTEXT_MO_FILES(${target} ${out_mo_files})
+  choreonoid_make_gettext_mo_files(${target} ${out_mo_files})
   set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)
 endfunction()
 
 function(make_gettext_mofiles target out_mo_files)
-  CHOREONOID_MAKE_GETTEXT_MO_FILES(${target} ${out_mo_files})
+  choreonoid_make_gettext_mo_files(${target} ${out_mo_files})
   set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)
 endfunction()
