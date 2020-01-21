@@ -14,7 +14,7 @@ function(choreonoid_add_simple_controller target)
     PREFIX "")
 
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..:$ORIGIN/../..")
   endif()
 
   CHOREONOID_SET_HEADER_FILES(${ARGN})
@@ -38,7 +38,7 @@ function(choreonoid_add_body_handler)
   set_target_properties(${target} PROPERTIES
     PREFIX "" LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/bodyhandler)
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..:$ORIGIN/../..")
   endif()
   target_link_libraries(${target} CnoidBody)
   install(TARGETS ${target}

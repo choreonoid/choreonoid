@@ -121,8 +121,6 @@ function(choreonoid_add_plugin target)
 
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
-  else()
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
 
   choreonoid_set_header_files(${ARGN} INSTALL_HEADERS)
