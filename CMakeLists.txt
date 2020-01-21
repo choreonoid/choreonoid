@@ -787,10 +787,6 @@ if(NOT USE_EXTERNAL_LIBYAML OR NOT LIBYAML_FOUND)
   set(LIBYAML_LIBRARIES yaml)
 endif()
 
-# pugixml
-add_subdirectory(thirdparty/pugixml-1.9)
-include_directories(${PROJECT_SOURCE_DIR}/thirdparty/pugixml-1.9/src)
-
 if(UNIX)
   # png
   find_package(PNG REQUIRED)
