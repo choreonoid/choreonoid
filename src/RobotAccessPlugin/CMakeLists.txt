@@ -20,10 +20,9 @@ set(headers
   RobotAccessItem.h
   )
 
-make_gettext_mofiles(${target} mofiles)
+choreonoid_make_gettext_mo_files(${target} mofiles)
 
-QT5_ADD_RESOURCES(RC_SRCS RobotAccessPlugin.qrc)
+qt5_add_resources(RC_SRCS RobotAccessPlugin.qrc)
 
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
+choreonoid_add_plugin(${target} ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
 target_link_libraries(${target} CnoidBodyPlugin)
-apply_common_setting_for_plugin(${target} "${headers}")

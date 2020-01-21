@@ -13,8 +13,6 @@ set(sources
 )
 
 set(target CnoidSubmersibleSamplePlugin)
-add_cnoid_plugin(${target} SHARED ${sources})
+choreonoid_add_plugin(${target} ${sources})
 target_link_libraries(${target} CnoidBodyPlugin)
-apply_common_setting_for_plugin(${target})
-
 install(FILES SubmersibleSample.cnoid DESTINATION ${CNOID_SHARE_SUBDIR}/project)

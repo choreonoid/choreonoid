@@ -10,10 +10,10 @@ endif()
 set(project_files "")
 
 # SR1
-add_cnoid_simple_controller(SR1MinimumController SR1MinimumController.cpp)
-add_cnoid_simple_controller(SR1WalkPatternController SR1WalkPatternController.cpp)
-add_cnoid_simple_controller(SR1LiftupController SR1LiftupController.cpp)
-add_cnoid_simple_controller(SR1WalkGraspController SR1WalkGraspController.cpp)
+choreonoid_add_simple_controller(SR1MinimumController SR1MinimumController.cpp)
+choreonoid_add_simple_controller(SR1WalkPatternController SR1WalkPatternController.cpp)
+choreonoid_add_simple_controller(SR1LiftupController SR1LiftupController.cpp)
+choreonoid_add_simple_controller(SR1WalkGraspController SR1WalkGraspController.cpp)
 set(sr1-pattern-files SR1WalkPattern1.seq SR1WalkPattern2.pseq SR1WalkPattern2.seq SR1WalkPattern3.seq)
 file(COPY ${sr1-pattern-files} DESTINATION ${CNOID_BINARY_SHARE_DIR}/motion/SR1)
 install(FILES ${sr1-pattern-files} DESTINATION ${CNOID_SHARE_SUBDIR}/motion/SR1)
@@ -21,53 +21,53 @@ list(APPEND project_files
   SR1Minimum.cnoid SR1Walk.cnoid SR1Walk2D.cnoid SR1Liftup.cnoid SR1WalkinHouse.cnoid)
 
 # PA10
-add_cnoid_simple_controller(PA10PickupController PA10PickupController.cpp)
+choreonoid_add_simple_controller(PA10PickupController PA10PickupController.cpp)
 list(APPEND project_files PA10Pickup.cnoid)
 
 # Universal Robots
-add_cnoid_simple_controller(UniversalRobotPickupController UniversalRobotPickupController.cpp)
+choreonoid_add_simple_controller(UniversalRobotPickupController UniversalRobotPickupController.cpp)
 list(APPEND project_files UR3Pickup.cnoid UR5Pickup.cnoid UR10Pickup.cnoid)
 
 # Crawler
-add_cnoid_simple_controller(SampleCrawlerController SampleCrawlerController.cpp)
-add_cnoid_simple_controller(SampleCrawlerJoystickController SampleCrawlerJoystickController.cpp)
+choreonoid_add_simple_controller(SampleCrawlerController SampleCrawlerController.cpp)
+choreonoid_add_simple_controller(SampleCrawlerJoystickController SampleCrawlerJoystickController.cpp)
 list(APPEND project_files SampleCrawler.cnoid SampleCrawlerJoystick.cnoid SampleCrawlerSlope.cnoid)
 
 # Tank
-add_cnoid_simple_controller(TankJoystickController TankJoystickController.cpp)
+choreonoid_add_simple_controller(TankJoystickController TankJoystickController.cpp)
 list(APPEND project_files Tank.cnoid TankVisionSensors.cnoid)
 
 # DoubleArmV7
-add_cnoid_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
+choreonoid_add_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
 list(APPEND project_files DoubleArmV7S.cnoid)
 
 # JACO2
-add_cnoid_simple_controller(Jaco2Controller Jaco2Controller.cpp)
+choreonoid_add_simple_controller(Jaco2Controller Jaco2Controller.cpp)
 
 # AizuSpider
-add_cnoid_simple_controller(AizuSpiderController AizuSpiderController.cpp)
+choreonoid_add_simple_controller(AizuSpiderController AizuSpiderController.cpp)
 list(APPEND project_files AizuSpiderNS.cnoid AizuSpiderSS.cnoid AizuSpiderDS.cnoid)
 
 # AizuWheel
-add_cnoid_simple_controller(AizuWheelController AizuWheelController.cpp)
+choreonoid_add_simple_controller(AizuWheelController AizuWheelController.cpp)
 list(APPEND project_files AizuWheel.cnoid)
 
 # Other samples
-add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)
+choreonoid_add_simple_controller(ConveyorController ConveyorController.cpp)
 list(APPEND project_files ConveyorSample.cnoid)
 
-add_cnoid_simple_controller(CameraSampleController CameraSampleController.cpp)
+choreonoid_add_simple_controller(CameraSampleController CameraSampleController.cpp)
 
-add_cnoid_simple_controller(FourWheelCarJoystickController FourWheelCarJoystickController.cpp)
+choreonoid_add_simple_controller(FourWheelCarJoystickController FourWheelCarJoystickController.cpp)
 list(APPEND project_files FourWheelCarJoystick.cnoid)
 
-add_cnoid_simple_controller(LinkPositionController LinkPositionController.cpp)
+choreonoid_add_simple_controller(LinkPositionController LinkPositionController.cpp)
 list(APPEND project_files LinkPositionControl.cnoid)
 
-add_cnoid_simple_controller(LinkForceController LinkForceController.cpp)
+choreonoid_add_simple_controller(LinkForceController LinkForceController.cpp)
 list(APPEND project_files LinkForceControl.cnoid)
 
-add_cnoid_simple_controller(HandyRockDrillController HandyRockDrillController.cpp)
+choreonoid_add_simple_controller(HandyRockDrillController HandyRockDrillController.cpp)
 list(APPEND project_files HandyRockDrill.cnoid)
 
 # Install project files

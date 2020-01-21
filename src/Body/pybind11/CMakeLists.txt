@@ -1,4 +1,4 @@
-add_cnoid_python_module(PyBody
+choreonoid_add_python_module(PyBody
   PyBodyModule.cpp
   PyBody.cpp
   PyLink.cpp

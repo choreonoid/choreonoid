@@ -17,14 +17,13 @@ set(headers
   exportdecl.h
   )
 
-add_cnoid_library(${target} SHARED ${sources} ${headers})
+choreonoid_add_library(${target} SHARED ${sources} HEADERS ${headers})
 target_link_libraries(${target} ${OMNIDYNAMIC_LIBRARIES} fmt::fmt)
-apply_common_setting_for_library(${target} "${headers}")
 
 # name server
 set(target cnoid-nameserver)
-idl_compile_cpp(idl_cpp_files idl_h_files corba Naming LOCAL)
-add_cnoid_executable(${target} NameServer.cpp CosNaming_impl.cpp ${idl_cpp_files})
+choreonoid_compile_corba_idl_to_cpp(idl_cpp_files idl_h_files corba Naming LOCAL)
+choreonoid_add_executable(${target} NameServer.cpp CosNaming_impl.cpp ${idl_cpp_files})
 target_link_libraries(${target} ${OMNIDYNAMIC_LIBRARIES})
 
 if(UNIX)

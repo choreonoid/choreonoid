@@ -7,8 +7,8 @@ if(NOT BUILD_SPRING_MODEL_SAMPLE)
   return()
 endif()
 
-add_cnoid_simple_controller(SpringModelController SpringModelController.cpp)
-add_cnoid_body_customizer(SpringModelCustomizer SpringModelCustomizer.cpp)
+choreonoid_add_simple_controller(SpringModelController SpringModelController.cpp)
+choreonoid_add_body_customizer(SpringModelCustomizer SpringModelCustomizer.cpp)
 
 install(FILES
   ControlledSpringModel.cnoid

@@ -5,11 +5,10 @@ set(headers
   PyEigenTypes.h
   )
 
-add_cnoid_library(CnoidPyUtil SHARED PyUtil.cpp ${headers})
+choreonoid_add_library(CnoidPyUtil SHARED PyUtil.cpp HEADERS ${headers})
 target_link_libraries(CnoidPyUtil ${PYTHON_LIBRARIES})
-apply_common_setting_for_library(CnoidPyUtil "${headers}")
 
-add_cnoid_python_module(PyUtil
+choreonoid_add_python_module(PyUtil
   PyUtilModule.cpp
   PyReferenced.cpp
   PySignal.cpp

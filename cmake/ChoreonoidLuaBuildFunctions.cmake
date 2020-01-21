@@ -1,12 +1,13 @@
-function(choreonoid_lua_add_module target)
-  string(REGEX REPLACE "^Lua(.+)$" "\\1" module ${target})
-  set(sources ${ARGN})
+function(choreonoid_add_lua_module target)
 
+  set(sources ${ARGN})
+  list(REMOVE_ITEM sources HEADERS)
+  string(REGEX REPLACE "^Lua(.+)$" "\\1" module ${target})
   add_library(${target} SHARED ${sources})
 
-  set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION})
-  CHOREONOID_SET_TARGET_COMMON_PROPERTIES(${target})
-  CHOREONOID_SET_HEADER_FILES(${sources} INSTALL_HEADERS)
+  set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION_MAJOR}.${CHOREONOID_VERSION_MINOR})
+  choreonoid_set_target_common_properties(${target})
+  choreonoid_set_header_files(${ARGN} INSTALL_HEADERS)
     
   set_target_properties(${target}  PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid
@@ -26,7 +27,7 @@ endfunction()
 
 # Deprecated
 function(add_cnoid_lua_module)
-  choreonoid_lua_add_module(${ARGV})
+  choreonoid_add_lua_module(${ARGV})
 endfunction()
 
 # Deprecated

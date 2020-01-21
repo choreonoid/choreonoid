@@ -193,7 +193,7 @@ link_directories(${LIBYAML_LIBRARY_DIRS})
 
 set(target CnoidUtil)
 make_gettext_mofiles(${target} mofiles)
-add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles})
+choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
 
 if(UNIX)
   set(libraries 
@@ -230,8 +230,6 @@ elseif(MSVC)
     endif()
   endif()
 endif()
-
-apply_common_setting_for_library(${target} "${headers}")
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

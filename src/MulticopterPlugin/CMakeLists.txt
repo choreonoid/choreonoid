@@ -39,10 +39,9 @@ qt5_wrap_ui(qtforms MonitorForm.ui)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(target CnoidMulticopterPlugin)
-make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${headers} ${sources} ${qtsources} ${qtforms} ${mofiles})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_plugin(${target} ${sources} ${qtsources} ${qtforms} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} CnoidBodyPlugin)
-apply_common_setting_for_plugin(${target} "${headers}")
 
 if(ENABLE_PYTHON AND USE_PYBIND11)
   add_subdirectory(pybind11)

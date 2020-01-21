@@ -1,6 +1,5 @@
 if(ENABLE_ASSIMP AND ENABLE_GUI)
   link_directories(${ASSIMP_LIBRARY_DIRS})
-  add_cnoid_plugin(CnoidAssimpPlugin SHARED AssimpPlugin)
+  choreonoid_add_plugin(CnoidAssimpPlugin AssimpPlugin)
   target_link_libraries(CnoidAssimpPlugin CnoidBase CnoidAssimpSceneLoader)
-  apply_common_setting_for_plugin(CnoidAssimpPlugin)
 endif()

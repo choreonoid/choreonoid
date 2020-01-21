@@ -10,11 +10,11 @@ endif()
 
 set(target CnoidGRobotPlugin)
 
-make_gettext_mofiles(${target} mofiles)
+choreonoid_make_gettext_mo_files(${target} mofiles)
 
-QT5_ADD_RESOURCES(RC_SRCS GRobotPlugin.qrc)
+qt5_add_resources(RC_SRCS GRobotPlugin.qrc)
 
-add_cnoid_plugin(${target} SHARED
+choreonoid_add_plugin(${target}
   GRobotPlugin.cpp
   GRobotBar.cpp
   GRobotControllerItem.cpp
@@ -30,11 +30,7 @@ elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "BOOST_ASIO_DISABLE_STD_ARRAY")
 endif()
 
-apply_common_setting_for_plugin(${target})
-
-install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${Boost_THREAD_LIBRARY} ${Boost_DATE_TIME_LIBRARY})
-
-add_cnoid_body_handler(GRobotHandler GRobotHandler.cpp)
+choreonoid_add_body_handler(GRobotHandler GRobotHandler.cpp)
 
 # Deprecated
-# add_cnoid_body_customizer(GRobotCustomizer deprecated/GRobotCustomizer.cpp)
+# choreonoid_add_body_customizer(GRobotCustomizer deprecated/GRobotCustomizer.cpp)

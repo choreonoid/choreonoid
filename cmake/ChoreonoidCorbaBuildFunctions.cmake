@@ -1,4 +1,4 @@
-function(choreonoid_corba_compile_idl_to_cpp out_cpp_files out_h_files subdir)
+function(choreonoid_compile_corba_idl_to_cpp out_cpp_files out_h_files subdir)
 
   cmake_parse_arguments(args LOCAL "" "" ${ARGN})
   set(idl_names ${args_UNPARSED_ARGUMENTS})
@@ -96,14 +96,14 @@ endfunction()
 
 # Deprecated
 function(idl_compile_cpp out_cpp_files out_h_files subdir)
-  choreonoid_corba_compile_idl_to_cpp(cpp_files h_files ${subdir} ${ARGN})
+  choreonoid_compile_corba_idl_to_cpp(cpp_files h_files ${subdir} ${ARGN})
   set(${out_cpp_files} ${cpp_files} PARENT_SCOPE)
   set(${out_h_files} ${h_files} PARENT_SCOPE)
 endfunction()
 
 if(ENABLE_PYTHON)
 
-  function(choreonoid_corba_compile_idl_to_python target src_subdir dest_subdir global_scope)
+  function(choreonoid_compile_corba_idl_to_python target src_subdir dest_subdir global_scope)
 
     set(args ${ARGV})
     list(REMOVE_AT args 0 1 2 3)
@@ -176,7 +176,7 @@ if(ENABLE_PYTHON)
 
   # Deprecated
   function(idl_compile_python target src_subdir dest_subdir global_scope)
-    choreonoid_corba_compile_idl_to_python(${target} ${src_subdir} ${dest_subdir} ${global_scope})
+    choreonoid_compile_corba_idl_to_python(${target} ${src_subdir} ${dest_subdir} ${global_scope})
   endfunction()
 
 endif()

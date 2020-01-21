@@ -86,8 +86,8 @@ set(headers
   AGXConvert.h
   )
 
-make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 
 # Specify which libraries to be used when building in release
 AGX_TARGET_LINK_LIBRARIES(${target} optimized ${AGX_LIBRARIES_RELEASE})
@@ -106,7 +106,6 @@ if(NOT compile_flags)
   set(compile_flags "")
 endif()
 set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -msse3")
-apply_common_setting_for_plugin(${target} "${headers}")
 
 #add_subdirectory(AGXSubSimulator)
 add_subdirectory(AGXBodyExtensionPlugin)

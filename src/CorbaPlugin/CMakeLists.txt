@@ -10,7 +10,7 @@ elseif(NOT ENABLE_CORBA)
   message(FATAL_ERROR "CorbaPlugin needs to ENABLE_CORBA")
 endif()
 
-idl_compile_cpp(idl_cpp_files idl_h_files corba MessageView)
+choreonoid_compile_corba_idl_to_cpp(idl_cpp_files idl_h_files corba MessageView)
 
 set(target CnoidCorbaPlugin)
 
@@ -25,12 +25,10 @@ set(headers
   exportdecl.h
   )
 
-make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${idl_cpp_files})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_plugin(${target} ${sources} ${mofiles} ${idl_cpp_files} HEADERS ${headers})
 target_link_libraries(${target} CnoidUtil CnoidCorba CnoidBase)
-apply_common_setting_for_plugin(${target} "${headers}")
 
 # test program
 # add_cnoid_executable(corba-test test.cpp ${idl_cpp_files})
 # target_link_libraries(corba-test CnoidCorba ${OMNIDYNAMIC_LIBRARIES})
-

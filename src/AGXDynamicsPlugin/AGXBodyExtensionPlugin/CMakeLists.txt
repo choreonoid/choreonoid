@@ -19,11 +19,8 @@ set(sources
   AGXWire.cpp
 )
 
-set(headers
-)
-
-make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_plugin(${target} ${sources})
 
 AGX_TARGET_LINK_LIBRARIES(${target} optimized ${AGX_LIBRARIES_RELEASE})
 if(AGX_LIBRARIES_DEBUG)
@@ -39,6 +36,3 @@ if(NOT compile_flags)
   set(compile_flags "")
 endif()
 set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -msse3")
-
-apply_common_setting_for_plugin(${target})
-
