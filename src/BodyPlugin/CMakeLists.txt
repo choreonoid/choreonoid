@@ -93,15 +93,15 @@ set(headers
 
 set(target CnoidBodyPlugin)
 
-make_gettext_mofiles(${target} mofiles)
+choreonoid_make_gettext_mo_files(${target} mofiles)
 
-QT5_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
-QT5_WRAP_CPP(qtsources LinkTreeWidget.h)
+qt5_add_resources(RC_SRCS BodyPlugin.qrc)
+qt5_wrap_cpp(qtsources LinkTreeWidget.h)
 set(sources ${sources} ${qtsources})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
+choreonoid_add_plugin(${target} ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
 
 set(boost_libraries ${Boost_IOSTREAMS_LIBRARY})
 if(MSVC)
@@ -109,7 +109,6 @@ if(MSVC)
 endif()
 
 target_link_libraries(${target} CnoidBase CnoidBody ${boost_libraries})
-apply_common_setting_for_plugin(${target} "${headers}")
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

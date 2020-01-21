@@ -148,16 +148,14 @@ set(headers
   CnoidBody.h
   )
 
-make_gettext_mofiles(${target} mofiles)
-add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
 
 if(UNIX)
   target_link_libraries(${target} CnoidUtil CnoidAISTCollisionDetector dl)
 elseif(MSVC)
   target_link_libraries(${target} CnoidUtil CnoidAISTCollisionDetector)
 endif()
-
-apply_common_setting_for_library(${target} "${headers}")
 
 include(ChoreonoidBodyBuildFunctions.cmake)
 if(CHOREONOID_INSTALL_SDK)

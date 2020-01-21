@@ -1,4 +1,4 @@
-function(CHOREONOID_BODY_ADD_SIMPLE_CONTROLLER target)
+function(choreonoid_add_simple_controller target)
 
   add_library(${target} SHARED ${ARGN})
 
@@ -27,11 +27,11 @@ endfunction()
 
 # Deprecated
 function(add_cnoid_simple_controller)
-  CHOREONOID_BODY_ADD_SIMPLE_CONTROLLER(${ARGV})
+  choreonoid_add_simple_controller(${ARGV})
 endfunction()
 
 # Body handler
-function(add_cnoid_body_handler)
+function(choreonoid_add_body_handler)
   set(target ${ARGV0})
   list(REMOVE_AT ARGV 0)
   add_library(${target} SHARED ${ARGV})
@@ -46,8 +46,13 @@ function(add_cnoid_body_handler)
     LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler)
 endfunction()
 
+# Deprecated
+function(add_cnoid_body_handler)
+  choreonoid_add_body_handler(${ARGV})
+endfunction()
+
 # Body customizer (deprecated)
-function(add_cnoid_body_customizer)
+function(choreonoid_add_body_customizer)
   set(target ${ARGV0})
   list(REMOVE_AT ARGV 0)
   add_library(${target} SHARED ${ARGV})
@@ -62,4 +67,9 @@ function(add_cnoid_body_customizer)
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer
     LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer)
+endfunction()
+
+# Deprecated
+function(add_cnoid_body_customizer)
+  choreonoid_add_body_customizer(${ARGV})
 endfunction()

@@ -1,6 +1,6 @@
 set(target PyBodyPlugin)
 
-add_cnoid_python_module(${target}
+choreonoid_add_python_module(${target}
   PyBodyPluginModule.cpp
   PyBodyItem.cpp
   PyItems.cpp

@@ -62,6 +62,5 @@ elseif(UNIX)
  endif()
 
 set(target CnoidAISTCollisionDetector)
-add_cnoid_library(${target} SHARED ${sources})
+choreonoid_add_library(${target} SHARED ${sources} HEADERS ${headers})
 target_link_libraries(${target} CnoidUtil)
-apply_common_setting_for_library(${target} "${headers}")

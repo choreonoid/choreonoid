@@ -277,7 +277,7 @@ set(sources ${sources} ${qtsources})
 
 make_gettext_mofiles(${target} mofiles)
 
-add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
+choreonoid_add_library(${target} SHARED ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   target_link_libraries(${target}
@@ -298,8 +298,6 @@ else()
     icuuc X11 Xfixes
     )
 endif()
-
-apply_common_setting_for_library(${target} "${headers}")
 
 file(MAKE_DIRECTORY ${CNOID_BINARY_SHARE_DIR}/icon)
 file(COPY icons/choreonoid.svg DESTINATION ${CNOID_BINARY_SHARE_DIR}/icon)

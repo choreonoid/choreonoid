@@ -36,12 +36,11 @@ set(headers
   exportdecl.h
   )
 
-QT5_ADD_RESOURCES(RC_SRCS PoseSeqPlugin.qrc)
+qt5_add_resources(RC_SRCS PoseSeqPlugin.qrc)
 
-make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_plugin(${target} ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
 target_link_libraries(${target} CnoidUtil CnoidBody CnoidBodyPlugin)
-apply_common_setting_for_plugin(${target} "${headers}")
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

@@ -1,4 +1,3 @@
-
 #set(CMAKE_BUILD_TYPE Debug)
 
 if(NOT ENABLE_GUI)
@@ -20,7 +19,6 @@ set(headers
 )
 
 set(target CnoidAGXSubSimulatorPlugin)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers})
+choreonoid_add_plugin(${target} ${sources} HEADERS ${headers})
 #target_link_libraries(${target} CnoidBodyPlugin)
 target_link_libraries(${target} CnoidAGXDynamicsPlugin ${AGX_LIBRARIES} ${AGX_LIBRARIES_RELEASE})
-apply_common_setting_for_plugin(${target})

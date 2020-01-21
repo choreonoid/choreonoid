@@ -1,1 +1,1 @@
-add_cnoid_body_customizer(Labo1Customizer Labo1Customizer.cpp)
+choreonoid_add_body_customizer(Labo1Customizer Labo1Customizer.cpp)

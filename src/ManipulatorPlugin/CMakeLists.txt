@@ -37,16 +37,14 @@ set(headers
   ManipulatorVariableList.h
   ManipulatorVariableSetGroup.h
   ManipulatorProgramItemBase.h
-  ManipulatorControllerItemBase
-  ManipulatorVariableListItemBase.cpp
+  ManipulatorControllerItemBase.h
+  ManipulatorVariableListItemBase.h
   ManipulatorProgramViewBase.h
   ManipulatorStatementViewBase.h
   ManipulatorVariableListViewBase.h
   exportdecl.h
   )
 
-make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} CnoidBodyPlugin)
-
-apply_common_setting_for_plugin(${target} "${headers}")

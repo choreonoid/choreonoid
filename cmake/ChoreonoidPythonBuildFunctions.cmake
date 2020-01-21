@@ -1,4 +1,4 @@
-function(CHOREONOID_PYTHON_ADD_MODULE)
+function(choreonoid_add_python_module)
   
   set(target ${ARGV0})
   string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
@@ -51,5 +51,5 @@ endfunction()
 
 # Deprecated.
 function(add_cnoid_python_module)
-  CHOREONOID_PYTHON_ADD_MODULE(${ARGV})
+  choreonoid_add_python_module(${ARGV})
 endfunction()

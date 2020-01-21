@@ -4,7 +4,7 @@ set(sources main.cpp)
 if(WIN32)
   set(sources ${sources} choreonoid.rc)
 endif()
-add_cnoid_executable(${target} ${sources})
+choreonoid_add_executable(${target} ${sources})
 target_link_libraries(${target} CnoidUtil CnoidBase)
 set_target_properties(${target} PROPERTIES PROJECT_LABEL Application)
 

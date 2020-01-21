@@ -12,7 +12,6 @@ set(sources
   )
 
 set(target CnoidTrafficControlPlugin)
-make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${mofiles})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_plugin(${target} ${sources} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin)
-apply_common_setting_for_plugin(${target})

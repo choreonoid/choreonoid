@@ -1,4 +1,3 @@
-
 option(BUILD_SCENEEDIT_PLUGIN "Building Scene Edit Plugin" OFF)
 
 if(NOT BUILD_SCENEEDIT_PLUGIN)
@@ -18,8 +17,7 @@ set(headers
 
 set(target CnoidSceneEditPlugin)
 
-make_gettext_mofiles(${target} mofiles)
+choreonoid_make_gettext_mo_files(${target} mofiles)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} )
+choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} CnoidUtil CnoidBase )
-apply_common_setting_for_plugin(${target} "${headers}")

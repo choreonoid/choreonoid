@@ -3,9 +3,8 @@ set(sources GLGearsPlugin.cpp GLGearsView.cpp)
 
 if(CMAKE_PROJECT_NAME STREQUAL "Choreonoid")
   # Build inside the Choreonoid project
-  add_cnoid_plugin(${target} SHARED ${sources})
+  choreonoid_add_plugin(${target} ${sources})
   target_link_libraries(${target} CnoidBase)
-  apply_common_setting_for_plugin(${target})
 else()
   # Stand alone build
   cmake_minimum_required(VERSION 3.1.0)
