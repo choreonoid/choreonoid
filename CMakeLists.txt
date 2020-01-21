@@ -872,7 +872,9 @@ if(NOT fmt_FOUND)
   add_subdirectory(thirdparty/fmt-5.3.0)
   # Is this necessary when building on Windows?
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/fmt-5.3.0/include)
-  install(DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/fmt-5.3.0/include/fmt DESTINATION ${CHOREONOID_HEADER_SUBDIR})
+  if(INSTALL_SDK)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/fmt-5.3.0/include/fmt DESTINATION ${CHOREONOID_HEADER_SUBDIR})
+  endif()
 endif()
 
 add_subdirectory(src)
