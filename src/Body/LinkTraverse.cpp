@@ -13,7 +13,7 @@ using namespace cnoid;
 
 LinkTraverse::LinkTraverse()
 {
-
+    numUpwardConnections = 0;
 }
 
 

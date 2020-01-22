@@ -252,7 +252,10 @@ BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
 {
     if(org.currentBaseLink){
         setCurrentBaseLink(body->link(org.currentBaseLink->index()), true);
+    } else {
+        setCurrentBaseLink(nullptr, true);
     }
+        
     zmp = org.zmp;
     isOriginalModelStatic = org.isOriginalModelStatic;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
