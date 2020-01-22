@@ -99,6 +99,10 @@ public:
     ~Impl();
     void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
     bool setSubTreeItemsSelectedIter(Item* item, bool on);
+    Item* findItem(const std::function<bool(Item* item)>& pred, bool isFromDirectChild, bool isSubItem) const;
+    Item* findItem(
+        ItemPath::iterator iter, ItemPath::iterator end,  const std::function<bool(Item* item)>& pred,
+        bool isFromDirectChild, bool isSubItem) const;
     void getDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
     void getSelectedDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
     Item* duplicateSubTreeIter(Item* duplicated) const;
@@ -809,105 +813,75 @@ SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
         return impl->checkIdToSignalMap[checkId];
     }
 }
-    
 
-static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+
+Item* Item::find(const std::string& path, const std::function<bool(Item* item)>& pred)
 {
-    if(it == end){
-        return current;
-    }
-    Item* item = nullptr;
-    for(Item* child = current->childItem(); child; child = child->nextItem()){
-        if(child->name() == *it){
-            item = findItemSub(child, ++it, end);
-            if(item){
-                break;
-            }
-        }
-    }
-    if(!item){
-        for(Item* child = current->childItem(); child; child = child->nextItem()){
-            item = findItemSub(child, it, end);
-            if(item){
-                break;
-            }
-        }
-    }
-    return item;
+    return RootItem::instance()->findItem(path, pred, false, false);
 }
 
 
-Item* Item::find(const std::string& path)
-{
-    return RootItem::instance()->findItem(path);
-}
-
-
-Item* Item::findItem(const std::string& path) const
+Item* Item::findItem
+(const std::string& path, std::function<bool(Item* item)> pred,
+ bool isFromDirectChild, bool isSubItem) const
 {
     ItemPath ipath(path);
-    return findItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
-}
-
-
-static Item* findChildItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
-{
-    if(it == end){
-        return current;
+    if(ipath.begin() == ipath.end()){
+        return impl->findItem(pred, isFromDirectChild, isSubItem);
     }
-    Item* item = nullptr;
-    for(Item* child = current->childItem(); child; child = child->nextItem()){
-        if(child->name() == *it){
-            item = findChildItemSub(child, ++it, end);
-            if(item){
-                break;
-            }
-        }
-    }
-    return item;
+    return impl->findItem(ipath.begin(), ipath.end(), pred, isFromDirectChild, isSubItem);
 }
 
 
-Item* Item::findChildItem(const std::string& path) const
+// Use the breadth-first search
+Item* Item::Impl::findItem(const std::function<bool(Item* item)>& pred, bool isFromDirectChild, bool isSubItem) const
 {
-    ItemPath ipath(path);
-    return findChildItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
-}
-
-
-Item* Item::findChildItem(const std::function<bool(Item* item)>& checkType) const
-{
-    for(auto child = childItem(); child; child = child->nextItem()){
-        if(checkType(child)){
+    for(auto child = self->childItem(); child; child = child->nextItem()){
+        if((!isSubItem || child->isSubItem()) && (!pred || pred(child))){
             return child;
+        }
+    }
+    if(!isFromDirectChild){
+        for(auto child = self->childItem(); child; child = child->nextItem()){
+            if(!isSubItem || child->isSubItem()){
+                if(auto found = child->impl->findItem(pred, isFromDirectChild, isSubItem)){
+                    return found;
+                }
+            }
         }
     }
     return nullptr;
 }
 
 
-static Item* findSubItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+// Use the breadth-first search
+Item* Item::Impl::findItem
+(ItemPath::iterator iter, ItemPath::iterator end,  const std::function<bool(Item* item)>& pred,
+ bool isFromDirectChild, bool isSubItem) const
 {
-    if(it == end){
-        return current;
+    if(iter == end){
+        if(!pred || pred(self)){
+            return self;
+        }
+        return nullptr;
     }
-    Item* item = nullptr;
-    for(Item* child = current->childItem(); child; child = child->nextItem()){
-        if(child->name() == *it && child->isSubItem()){
-            item = findSubItemSub(child, ++it, end);
-            if(item){
-                break;
+    for(auto child = self->childItem(); child; child = child->nextItem()){
+        if((child->name() == *iter) && (!isSubItem || child->isSubItem())){
+            if(auto item = child->impl->findItem(iter + 1, end, pred, true, isSubItem)){
+                return item;
             }
         }
     }
-    return item;
-}
-
-
-Item* Item::findSubItem(const std::string& path) const
-{
-    ItemPath ipath(path);
-    return findSubItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
+    if(!isFromDirectChild){
+        for(auto child = self->childItem(); child; child = child->nextItem()){
+            if(!isSubItem || child->isSubItem()){
+                if(auto item = child->impl->findItem(iter, end, pred, false, isSubItem)){
+                    return item;
+                }
+            }
+        }
+    }
+    return nullptr;
 }
 
 

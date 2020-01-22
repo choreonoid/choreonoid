@@ -123,43 +123,58 @@ public:
     void detachFromParentItem();
 
     /**
-       Find an item that has the corresponding path to it in the sub tree
+       This is equivalent to RootItem::instance()->findItem(path);
     */
-    Item* findItem(const std::string& path) const;
-    template<class ItemType>
-    ItemType* findItem(const std::string& path) const {
-        return dynamic_cast<ItemType*>(findItem(path));
+    static Item* find(const std::string& path) {
+        return find(path, nullptr);
     }
-
-    static Item* find(const std::string& path);
+    
     template<class ItemType>
-    ItemType* find(const std::string& path) {
-        return dynamic_cast<ItemType*>(find(path));
+    ItemType* find(const std::string& path = "") {
+        return static_cast<ItemType*>(
+            find(path, [](Item* item) -> bool { return dynamic_cast<ItemType*>(item); }));
     }
     
     /**
-       Find an item that has the corresponding path from a child item to it
+       Find an item that has the corresponding path to it in the sub tree
     */
-    Item* findChildItem(const std::string& path) const;
+    Item* findItem(const std::string& path) const {
+        return findItem(path, nullptr, false, false);
+    }
+    
     template<class ItemType>
-    ItemType* findChildItem(const std::string& path) const {
-        return dynamic_cast<ItemType*>(findChildItem(path));
+    ItemType* findItem(const std::string& path = "") const {
+        return static_cast<ItemType*>(
+            findItem(
+                path, [](Item* item) -> bool { return dynamic_cast<ItemType*>(item); }, false, false));
     }
 
+    /**
+       Find an item that has the corresponding path from a child item to it
+    */
+    Item* findChildItem(const std::string& path) const {
+        return findItem(path, nullptr, true, false);
+    }
+    
     template<class ItemType>
-    ItemType* findChildItem() const {
+    ItemType* findChildItem(const std::string& path = "") const {
         return static_cast<ItemType*>(
-            findChildItem(
-                [](Item* item)->bool { return dynamic_cast<ItemType*>(item); }));
+            findItem(
+                path, [](Item* item) -> bool { return dynamic_cast<ItemType*>(item); }, true, false));
     }
 
     /**
        Find a sub item that has the corresponding path from a direct sub item to it
     */
-    Item* findSubItem(const std::string& path) const;
+    Item* findSubItem(const std::string& path) const {
+        return findItem(path, nullptr, true, true);
+    }
+
     template<class ItemType>
-    ItemType* findSubItem(const std::string& path) const {
-        return dynamic_cast<ItemType*>(findSubItem(path));
+    ItemType* findSubItem(const std::string& path = "") const {
+        return static_cast<ItemType*>(
+            findItem(
+                path, [](Item* item) -> bool { return dynamic_cast<ItemType*>(item); }, true, true));
     }
     
     template <class ItemType> ItemType* findOwnerItem(bool includeSelf = false) const {
@@ -333,9 +348,11 @@ private:
     std::string name_;
     bool isSelected_;
 
-    Item* findChildItem(const std::function<bool(Item* item)>& checkType) const;
+    static Item* find(const std::string& path, const std::function<bool(Item* item)>& pred);
+    Item* findItem(
+        const std::string& path, std::function<bool(Item* item)> pred,
+        bool isFromDirectChild, bool isSubItem) const;
     void validateClassId() const;
-    
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED
