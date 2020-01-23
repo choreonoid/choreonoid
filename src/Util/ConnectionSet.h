@@ -46,6 +46,7 @@ public:
     bool empty() const { return ConnectionSet::empty(); }
     size_t numConnections() const { return ConnectionSet::numConnections(); }
     void add(const Connection& connection) { ConnectionSet::add(connection); }
+    void add(const ConnectionSet& connections) { ConnectionSet::add(connections); }
     void block() { ConnectionSet::block(); }
     void block(int index) { ConnectionSet::block(index); }
     void unblock() { ConnectionSet::unblock(); }
