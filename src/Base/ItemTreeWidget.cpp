@@ -45,19 +45,23 @@ class ItemTreeWidget::Impl : public TreeWidget
 {
 public:
     ItemTreeWidget* self;
-    RootItemPtr rootItem;
+    RootItemPtr projectRootItem;
+    ScopedConnectionSet projectRootItemConnections;
+    ConnectionSet subTreeAddedOrMovedConnections;
+    ItemPtr localRootItem;
+    ScopedConnection localRootItemConnection;
+    std::function<Item*(bool doCreate)> localRootItemUpdateFunction;
     ScopedConnection treeWidgetSelectionChangeConnection;
-    ScopedConnectionSet rootItemConnections;
     vector<ItemPtr> topLevelItems;
     unordered_map<Item*, ItwItem*> itemToItwItemMap;
     ItemPtr lastClickedItem;
     map<int, int> checkIdToColumnMap;
-    unordered_set<Item*> itemsBeingOperated;
+    unordered_set<Item*> itemsUnderTreeWidgetInternalOperation;
     int isProcessingSlotForRootItemSignals;
     bool isCheckColumnShown;
     bool isDropping;
 
-    function<bool(Item* item, bool isTopLevelItem)> isVisibleItem;
+    function<bool(Item* item, bool isTopLevelItemCandidate)> isVisibleItem;
 
     ProjectManager* projectManager;
     ScopedConnectionSet projectManagerConnections;
@@ -69,24 +73,27 @@ public:
 
     PolymorphicItemFunctionSet contextMenuFunctions;
 
-    Impl(ItemTreeWidget* self, RootItem* rootItem);
+    Impl(ItemTreeWidget* self);
     ~Impl();
     void initialize();
-    void registerTopLevelItem(Item* item);
-    bool registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
-    Item* findTopLevelItemOf(Item* item);
+    Item* findOrCreateLocalRootItem(bool doCreate);
+    void setLocalRootItem(Item* item);
     void setCheckColumnShown(int column, bool on);
+    void clearTreeWidgetItems();
     void updateTreeWidgetItems();
     ItwItem* findItwItem(Item* item);
     ItwItem* findOrCreateItwItem(Item* item);
     void addCheckColumn(int checkId);
     void updateCheckColumnIter(QTreeWidgetItem* twItem, int checkId, int column);
     void releaseCheckColumn(int checkId);
-    bool isItemBeingOperated(Item* item);
-    void onSubTreeAddedOrMoved(Item* item);
-    void insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItem);
+    void registerTopLevelItem(Item* item);
+    bool registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
+    void unregisterTopLevelItem(Item* item);
+    void insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItemCandidate);
     ItwItem* findNextItwItem(Item* item, bool isTopLevelItem);
     ItwItem* findNextItwItemInSubTree(Item* item, bool doTraverse);
+    bool isItemUnderTreeWidgetInternalOperation(Item* item);
+    void onSubTreeAddedOrMoved(Item* item);
     void onSubTreeRemoved(Item* item);
     void onItemAssigned(Item* assigned, Item* srcItem);
 
@@ -150,7 +157,7 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
                 this->widgetImpl->setItwItemSelected(this, on); });
 
     if(widgetImpl->isCheckColumnShown){
-        auto rootItem = widgetImpl->rootItem;
+        auto rootItem = widgetImpl->projectRootItem;
         int numCheckColumns = rootItem->numCheckEntries();
         for(int i=0; i < numCheckColumns; ++i){
             setCheckState(i + 1, item->isChecked(i) ? Qt::Checked : Qt::Unchecked);
@@ -211,10 +218,10 @@ void ItwItem::setData(int column, int role, const QVariant& value)
 }
 
 
-ItemTreeWidget::ItemTreeWidget(RootItem* rootItem, QWidget* parent)
+ItemTreeWidget::ItemTreeWidget(QWidget* parent)
     : QWidget(parent)
 {
-    impl = new Impl(this, rootItem);
+    impl = new Impl(this);
     auto box = new QVBoxLayout;
     box->setContentsMargins(0, 0, 0, 0);
     box->addWidget(impl);
@@ -222,12 +229,25 @@ ItemTreeWidget::ItemTreeWidget(RootItem* rootItem, QWidget* parent)
 }
 
 
-ItemTreeWidget::Impl::Impl(ItemTreeWidget* self, RootItem* rootItem)
+ItemTreeWidget::Impl::Impl(ItemTreeWidget* self)
     : self(self),
-      rootItem(rootItem),
+      projectRootItem(RootItem::instance()),
+      localRootItem(projectRootItem),
       projectManager(ProjectManager::instance())
 {
     initialize();
+}
+
+
+ItemTreeWidget::~ItemTreeWidget()
+{
+    delete impl;
+}
+
+
+ItemTreeWidget::Impl::~Impl()
+{
+    clear();
 }
 
 
@@ -258,28 +278,30 @@ void ItemTreeWidget::Impl::initialize()
         sigItemSelectionChanged().connect(
             [&](){ onTreeWidgetSelectionChanged(); });
 
-    rootItemConnections.add(
-        rootItem->sigCheckEntryAdded().connect(
+    projectRootItemConnections.add(
+        projectRootItem->sigCheckEntryAdded().connect(
             [&](int checkId){ addCheckColumn(checkId); }));
 
-    rootItemConnections.add(
-        rootItem->sigCheckEntryReleased().connect(
+    projectRootItemConnections.add(
+        projectRootItem->sigCheckEntryReleased().connect(
             [&](int checkId){ releaseCheckColumn(checkId); }));
 
-    rootItemConnections.add(
-        rootItem->sigSubTreeAdded().connect(
+    subTreeAddedOrMovedConnections.add(
+        projectRootItem->sigSubTreeAdded().connect(
             [&](Item* item){ onSubTreeAddedOrMoved(item); }));
 
-    rootItemConnections.add(
-        rootItem->sigSubTreeMoved().connect(
+    subTreeAddedOrMovedConnections.add(
+        projectRootItem->sigSubTreeMoved().connect(
             [&](Item* item){ onSubTreeAddedOrMoved(item); }));
 
-    rootItemConnections.add(
-        rootItem->sigSubTreeRemoved().connect(
+    projectRootItemConnections.add(subTreeAddedOrMovedConnections);
+
+    projectRootItemConnections.add(
+        projectRootItem->sigSubTreeRemoved().connect(
             [&](Item* item, bool){ onSubTreeRemoved(item); }));
 
-    rootItemConnections.add(
-        rootItem->sigItemAssigned().connect(
+    projectRootItemConnections.add(
+        projectRootItem->sigItemAssigned().connect(
             [&](Item* assigned, Item* srcItem){ onItemAssigned(assigned, srcItem); }));
 
     sigRowsAboutToBeRemoved().connect(
@@ -304,60 +326,72 @@ void ItemTreeWidget::Impl::initialize()
 }
 
 
-ItemTreeWidget::~ItemTreeWidget()
+RootItem* ItemTreeWidget::projectRootItem()
 {
-    delete impl;
+    return impl->projectRootItem;
 }
 
 
-ItemTreeWidget::Impl::~Impl()
+Item* ItemTreeWidget::findRootItem()
 {
-    clear();
+    return impl->findOrCreateLocalRootItem(false);
 }
 
 
-RootItem* ItemTreeWidget::rootItem()
+Item* ItemTreeWidget::findOrCreateRootItem()
 {
-    return impl->rootItem;
+    return impl->findOrCreateLocalRootItem(true);
 }
 
 
-void ItemTreeWidget::Impl::registerTopLevelItem(Item* item)
+Item* ItemTreeWidget::Impl::findOrCreateLocalRootItem(bool doCreate)
 {
-    auto pos = topLevelItems.begin();
-    registerTopLevelItemIter(rootItem, item, pos);
-}
-
-
-bool ItemTreeWidget::Impl::registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos)
-{
-    if(item == newTopLevelItem){
-        topLevelItems.insert(pos, newTopLevelItem);
-        return true;
-    }
-    if(pos != topLevelItems.end() && item == *pos){
-        ++pos;
-    }
-    for(auto child = item->childItem(); child; child = child->nextItem()){
-        if(registerTopLevelItemIter(child, newTopLevelItem, pos)){
-            return true;
+    if(!localRootItem){
+        if(localRootItemUpdateFunction){
+            if(auto item = localRootItemUpdateFunction(doCreate)){
+                setLocalRootItem(item);
+            }
         }
     }
-    return false;
+    return localRootItem;
 }
 
 
-Item* ItemTreeWidget::Impl::findTopLevelItemOf(Item* item)
+void ItemTreeWidget::setRootItem(Item* item)
 {
-    while(item){
-        if(findItwItem(item)){
-            return item;
-        }
-        item = item->parentItem();
-    }
-    return nullptr;
+    impl->setLocalRootItem(item);
 }
 
+
+void ItemTreeWidget::Impl::setLocalRootItem(Item* item)
+{
+    if(item != localRootItem /* && (!item || item->findRootItem() == projectRootItem) */){
+        localRootItem = item;
+        localRootItemConnection.disconnect();
+        if(item && item != projectRootItem){
+            localRootItemConnection =
+                item->sigDisconnectedFromRoot().connect(
+                    [&](){ setLocalRootItem(nullptr); });
+            /*
+            localRootItemConnection =
+                item->sigPositionChanged().connect(
+                    [&](){
+                        setLocalRootItem(nullptr);
+                        findOrCreateLocalRootItem(false);
+                    });
+            */
+        }
+        updateTreeWidgetItems();
+    }
+}
+
+
+void ItemTreeWidget::setRootItemUpdateFunction(std::function<Item*(bool doCreate)> callback)
+{
+    impl->localRootItemUpdateFunction = callback;
+    impl->localRootItem = nullptr;
+}
+    
 
 void ItemTreeWidget::setDragDropEnabled(bool on)
 {
@@ -391,7 +425,7 @@ void ItemTreeWidget::Impl::setCheckColumnShown(int column, bool on)
 }
             
         
-void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred)
+void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItemCandidate)> pred)
 {
     impl->isVisibleItem = pred;
 }
@@ -403,11 +437,21 @@ void ItemTreeWidget::updateTreeWidgetItems()
 }
 
 
-void ItemTreeWidget::Impl::updateTreeWidgetItems()
+void ItemTreeWidget::Impl::clearTreeWidgetItems()
 {
     clear();
-    for(auto item = rootItem->childItem(); item; item = item->nextItem()){
-        insertItem(invisibleRootItem(), item, true);
+    topLevelItems.clear();
+}
+
+
+void ItemTreeWidget::Impl::updateTreeWidgetItems()
+{
+    clearTreeWidgetItems();
+
+    if(localRootItem){
+        for(auto item = localRootItem->childItem(); item; item = item->nextItem()){
+            insertItem(invisibleRootItem(), item, true);
+        }
     }
 }
 
@@ -497,52 +541,55 @@ void ItemTreeWidget::Impl::releaseCheckColumn(int checkId)
 }
 
 
-bool ItemTreeWidget::Impl::isItemBeingOperated(Item* item)
+void ItemTreeWidget::Impl::registerTopLevelItem(Item* item)
 {
-    return itemsBeingOperated.find(item) != itemsBeingOperated.end();
+    auto pos = topLevelItems.begin();
+    registerTopLevelItemIter(localRootItem, item, pos);
 }
 
 
-void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
+bool ItemTreeWidget::Impl::registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos)
 {
-    if(isItemBeingOperated(item)){
+    if(item == newTopLevelItem){
+        topLevelItems.insert(pos, newTopLevelItem);
+        return true;
+    }
+    if(pos != topLevelItems.end() && item == *pos){
+        ++pos;
+    }
+    for(auto child = item->childItem(); child; child = child->nextItem()){
+        if(registerTopLevelItemIter(child, newTopLevelItem, pos)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+void ItemTreeWidget::Impl::unregisterTopLevelItem(Item* item)
+{
+    topLevelItems.erase(
+        std::remove(topLevelItems.begin(), topLevelItems.end(), item),
+        topLevelItems.end());
+}
+ 
+
+void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItemCandidate)
+{
+    if(!findOrCreateLocalRootItem(false)){
         return;
     }
     
-    auto parentItem = item->parentItem();
-    if(auto parentItwItem = findItwItem(parentItem)){
-        insertItem(parentItwItem, item, false);
-    } else {
-        bool isUpperLevelItemInserted = false;
-        parentItem = parentItem->parentItem();
-        while(parentItem){
-            if(findItwItem(parentItem)){
-                isUpperLevelItemInserted = true;
-                break;
-            }
-            parentItem = parentItem->parentItem();
-        }
-        if(!isUpperLevelItemInserted){
-            insertItem(invisibleRootItem(), item, true);
-        }
-    }
-}
-
-
-void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItem)
-{
-    isProcessingSlotForRootItemSignals++;
-
-    if(!isVisibleItem(item, isTopLevelItem)){
-        if(!isTopLevelItem){
+    if(!isVisibleItem(item, isTopLevelItemCandidate)){
+        if(!isTopLevelItemCandidate){
             parentTwItem = nullptr;
         }
     } else {
         auto itwItem = findOrCreateItwItem(item);
-        if(isTopLevelItem){
+        if(isTopLevelItemCandidate){
             registerTopLevelItem(item);
         }
-        auto nextItwItem = findNextItwItem(item, isTopLevelItem);
+        auto nextItwItem = findNextItwItem(item, isTopLevelItemCandidate);
         if(nextItwItem){
             int index = parentTwItem->indexOfChild(nextItwItem);
             parentTwItem->insertChild(index, itwItem);
@@ -557,17 +604,15 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
             }
         }
 
-        isTopLevelItem = false;
+        isTopLevelItemCandidate = false;
         parentTwItem = itwItem;
     }
 
     if(parentTwItem){
         for(Item* child = item->childItem(); child; child = child->nextItem()){
-            insertItem(parentTwItem, child, isTopLevelItem);
+            insertItem(parentTwItem, child, isTopLevelItemCandidate);
         }
     }
-
-    isProcessingSlotForRootItemSignals--;
 }
 
 
@@ -610,9 +655,49 @@ ItwItem* ItemTreeWidget::Impl::findNextItwItemInSubTree(Item* item, bool doTrave
 }
 
 
+bool ItemTreeWidget::Impl::isItemUnderTreeWidgetInternalOperation(Item* item)
+{
+    return itemsUnderTreeWidgetInternalOperation.find(item) != itemsUnderTreeWidgetInternalOperation.end();
+}
+
+
+void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
+{
+    if(isItemUnderTreeWidgetInternalOperation(item) /* || !localRootItem */){
+        return;
+    }
+
+    subTreeAddedOrMovedConnections.block();
+
+    isProcessingSlotForRootItemSignals++;
+
+    auto parentItem = item->parentItem();
+    if(auto parentItwItem = findItwItem(parentItem)){
+        insertItem(parentItwItem, item, false);
+    } else {
+        bool isUpperLevelItemInserted = false;
+        parentItem = parentItem->parentItem();
+        while(parentItem){
+            if(findItwItem(parentItem)){
+                isUpperLevelItemInserted = true;
+                break;
+            }
+            parentItem = parentItem->parentItem();
+        }
+        if(!isUpperLevelItemInserted){
+            insertItem(invisibleRootItem(), item, true);
+        }
+    }
+
+    isProcessingSlotForRootItemSignals--;
+
+    subTreeAddedOrMovedConnections.unblock();
+}
+
+
 void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
 {
-    if(isItemBeingOperated(item)){
+    if(isItemUnderTreeWidgetInternalOperation(item) || !localRootItem){
         return;
     }
     
@@ -623,7 +708,7 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
             parentTwItem->removeChild(itwItem);
         } else {
             takeTopLevelItem(indexOfTopLevelItem(itwItem));
-            std::remove(topLevelItems.begin(), topLevelItems.end(), item);
+            unregisterTopLevelItem(item);
         }
         delete itwItem;
     } else {
@@ -640,7 +725,7 @@ void ItemTreeWidget::Impl::onItemAssigned(Item* assigned, Item* srcItem)
 {
     if(findItwItem(assigned)){
         assigned->setSelected(srcItem->isSelected());
-        int numCheckColumns = rootItem->numCheckEntries();
+        int numCheckColumns = projectRootItem->numCheckEntries();
         for(int i=0; i < numCheckColumns; ++i){
             assigned->setChecked(i, srcItem->isChecked(i));
         }
@@ -889,7 +974,7 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& p
                 if(!item->isSubItem()){
                     items.push_back(item);
                 }
-                itemsBeingOperated.insert(item);
+                itemsUnderTreeWidgetInternalOperation.insert(item);
             }
         }
     }
@@ -898,13 +983,13 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& p
         item->detachFromParentItem();
     }
 
-    itemsBeingOperated.clear();
+    itemsUnderTreeWidgetInternalOperation.clear();
 }
 
 
 void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end)
 {
-    if(isProcessingSlotForRootItemSignals){
+    if(isProcessingSlotForRootItemSignals || !localRootItem){
         return;
     }
     
@@ -916,7 +1001,7 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, i
     }
 
     auto parentItwItem = dynamic_cast<ItwItem*>(parentTwItem);
-    auto parentItem = parentItwItem ? parentItwItem->item : rootItem.get();
+    auto parentItem = parentItwItem ? parentItwItem->item : localRootItem.get();
 
     ItemPtr nextItem;
     if(end + 1 < parentTwItem->childCount()){
@@ -935,7 +1020,7 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, i
             if(itwItem->isExpandedBeforeRemoving){
                 itwItem->setExpanded(true);
             }
-            itemsBeingOperated.insert(item);
+            itemsUnderTreeWidgetInternalOperation.insert(item);
         }
     }
 
@@ -943,7 +1028,7 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, i
         parentItem->insertChildItem(item, nextItem, true);
     }
 
-    itemsBeingOperated.clear();    
+    itemsUnderTreeWidgetInternalOperation.clear();    
 }
 
 
@@ -1008,7 +1093,7 @@ void ItemTreeWidget::Impl::zoomFontSize(int pointSizeDiff)
 void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
 {
     ItwItem* itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()));
-    Item* item = itwItem ? itwItem->item : rootItem.get();
+    Item* item = itwItem ? itwItem->item : findOrCreateLocalRootItem(true);
     lastClickedItem = nullptr;
 
     // Emit sigSelectionChanged when clicking on an already selected item
@@ -1027,7 +1112,7 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
     
     TreeWidget::mousePressEvent(event);
 
-    if(event->button() == Qt::RightButton){
+    if(item && event->button() == Qt::RightButton){
         menuManager.setNewPopupMenu(this);
         contextMenuFunctions.dispatch(item);
         if(menuManager.numItems() > 0){

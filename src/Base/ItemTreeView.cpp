@@ -54,7 +54,7 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     self->setDefaultLayoutArea(View::LEFT);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
-    itemTreeWidget = new ItemTreeWidget(RootItem::instance(), self);
+    itemTreeWidget = new ItemTreeWidget(self);
 
     auto vbox = new QVBoxLayout;
     vbox->addWidget(itemTreeWidget);
