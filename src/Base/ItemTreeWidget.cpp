@@ -57,7 +57,12 @@ public:
     ItemPtr lastClickedItem;
     map<int, int> checkIdToColumnMap;
     unordered_set<Item*> itemsUnderTreeWidgetInternalOperation;
-    int isProcessingSlotForRootItemSignals;
+
+    // The use of this variable might be replaced with just blocking
+    // the connections to TreeWidget's signals when calling TreeWidget's
+    // functions to change its tree structure.
+    int isChangingTreeWidgetTreeStructure;
+    
     bool isCheckColumnShown;
     bool isDropping;
 
@@ -253,7 +258,7 @@ ItemTreeWidget::Impl::~Impl()
 
 void ItemTreeWidget::Impl::initialize()
 {
-    isProcessingSlotForRootItemSignals = 0;
+    isChangingTreeWidgetTreeStructure = 0;
     isCheckColumnShown = true;
     isDropping = false;
     
@@ -365,22 +370,29 @@ void ItemTreeWidget::setRootItem(Item* item)
 
 void ItemTreeWidget::Impl::setLocalRootItem(Item* item)
 {
-    if(item != localRootItem /* && (!item || item->findRootItem() == projectRootItem) */){
+    if(item != localRootItem){
         localRootItem = item;
         localRootItemConnection.disconnect();
+
         if(item && item != projectRootItem){
+            // When the position of the local root item is changed,
+            // the local root item may also be changed.
+            // Check it in the following callback function.
             localRootItemConnection =
-                item->sigDisconnectedFromRoot().connect(
-                    [&](){ setLocalRootItem(nullptr); });
-            /*
-            localRootItemConnection =
-                item->sigPositionChanged().connect(
-                    [&](){
-                        setLocalRootItem(nullptr);
-                        findOrCreateLocalRootItem(false);
+                item->sigPositionChanged2().connect(
+                    [&,item](Item* topItem, Item* prevTopParentItem){
+                        if(prevTopParentItem){ // Exclude a newly added item
+                            setLocalRootItem(nullptr);
+
+                            // The following code is dangerous because it may add a
+                            // connection to sigPositionChanged2 during processing the
+                            // signal. It may go into an infinte loop to call this
+                            // lambda function. It's better to redesign the logic.
+                            findOrCreateLocalRootItem(false);
+                        }
                     });
-            */
         }
+        
         updateTreeWidgetItems();
     }
 }
@@ -449,9 +461,11 @@ void ItemTreeWidget::Impl::updateTreeWidgetItems()
     clearTreeWidgetItems();
 
     if(localRootItem){
+        isChangingTreeWidgetTreeStructure++;
         for(auto item = localRootItem->childItem(); item; item = item->nextItem()){
             insertItem(invisibleRootItem(), item, true);
         }
+        isChangingTreeWidgetTreeStructure--;
     }
 }
 
@@ -663,13 +677,13 @@ bool ItemTreeWidget::Impl::isItemUnderTreeWidgetInternalOperation(Item* item)
 
 void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
 {
-    if(isItemUnderTreeWidgetInternalOperation(item) /* || !localRootItem */){
+    if(isItemUnderTreeWidgetInternalOperation(item)){
         return;
     }
 
     subTreeAddedOrMovedConnections.block();
 
-    isProcessingSlotForRootItemSignals++;
+    isChangingTreeWidgetTreeStructure++;
 
     auto parentItem = item->parentItem();
     if(auto parentItwItem = findItwItem(parentItem)){
@@ -689,7 +703,7 @@ void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
         }
     }
 
-    isProcessingSlotForRootItemSignals--;
+    isChangingTreeWidgetTreeStructure--;
 
     subTreeAddedOrMovedConnections.unblock();
 }
@@ -701,7 +715,7 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
         return;
     }
     
-    isProcessingSlotForRootItemSignals++;
+    isChangingTreeWidgetTreeStructure++;
 
     if(auto itwItem = findItwItem(item)){
         if(auto parentTwItem = itwItem->parent()){
@@ -717,7 +731,7 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
         }
     }
 
-    isProcessingSlotForRootItemSignals--;
+    isChangingTreeWidgetTreeStructure--;
 }
 
 
@@ -956,7 +970,7 @@ void ItemTreeWidget::Impl::pasteItems()
 
 void ItemTreeWidget::Impl::onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end)
 {
-    if(isProcessingSlotForRootItemSignals){
+    if(isChangingTreeWidgetTreeStructure){
         return;
     }
 
@@ -989,7 +1003,7 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& p
 
 void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end)
 {
-    if(isProcessingSlotForRootItemSignals || !localRootItem){
+    if(isChangingTreeWidgetTreeStructure || !localRootItem){
         return;
     }
     
