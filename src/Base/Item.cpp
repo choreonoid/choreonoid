@@ -79,6 +79,7 @@ public:
     Signal<void()> sigDisconnectedFromRoot;
     Signal<void()> sigUpdated;
     Signal<void()> sigPositionChanged;
+    Signal<void(Item* topItem, Item* prevTopParentItem)> sigPositionChanged2;
     Signal<void()> sigSubTreeChanged;
 
     Signal<void(bool on)> sigSelectionChanged;
@@ -108,7 +109,7 @@ public:
     Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void doDetachFromParentItem(bool isMoving);
-    void callSlotsOnPositionChanged();
+    void callSlotsOnPositionChanged(Item* topItem, Item* prevTopParentItem);
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
@@ -532,8 +533,10 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     bool isMoving = false;
     RootItem* rootItem = self->findRootItem();
 
-    if(item->parent_){
-        RootItem* srcRootItem = item->parent_->findRootItem();
+    Item* prevParentItem = item->parent_;
+
+    if(prevParentItem){
+        RootItem* srcRootItem = prevParentItem->findRootItem();
         if(srcRootItem){
             if(srcRootItem == rootItem){
                 isMoving = true;
@@ -578,7 +581,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
             item->impl->requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(item, rootItem);
         }
         if(!isItemBeingAddedOrRemoved(self)){
-            item->impl->callSlotsOnPositionChanged();
+            item->impl->callSlotsOnPositionChanged(item, prevParentItem);
         }
     }
 
@@ -628,7 +631,8 @@ void Item::detachFromParentItem()
 
 void Item::Impl::doDetachFromParentItem(bool isMoving)
 {
-    if(!self->parent_){
+    Item* prevParent = self->parent_;
+    if(!prevParent){
         return;
     }
 
@@ -667,7 +671,7 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
             if(!isItemBeingAddedOrRemoved(self->parent_)){
-                callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
+                callSlotsOnPositionChanged(self, prevParent); // sigPositionChanged is also emitted
             }
             emitSigDisconnectedFromRootForSubTree();
         }
@@ -687,13 +691,14 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
 }
 
 
-void Item::Impl::callSlotsOnPositionChanged()
+void Item::Impl::callSlotsOnPositionChanged(Item* topItem, Item* prevTopParentItem)
 {
     self->onPositionChanged();
     sigPositionChanged();
+    sigPositionChanged2(topItem, prevTopParentItem);
 
     for(Item* child = self->childItem(); child; child = child->nextItem()){
-        child->impl->callSlotsOnPositionChanged();
+        child->impl->callSlotsOnPositionChanged(topItem, prevTopParentItem);
     }
 }
 
@@ -778,6 +783,12 @@ void Item::Impl::requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems
 SignalProxy<void()> Item::sigPositionChanged()
 {
     return impl->sigPositionChanged;
+}
+
+
+SignalProxy<void(Item* topItem, Item* prevTopParentItem)> Item::sigPositionChanged2()
+{
+    return impl->sigPositionChanged2;
 }
 
 

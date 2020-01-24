@@ -232,6 +232,17 @@ public:
     */
     SignalProxy<void()> sigPositionChanged();
 
+    /**
+       The following signal name is temporary.
+       This is a variant of sigPositionChanged, and should be a standard sigunature.
+       When the template implementation of the Signal class is improved to connect to functions
+       omitting some arguments defined in a signal, this sigunare should replace the old
+       sigunature with no arguments.
+       Do not use this signal if you don't have a special reason because this function name
+       will be removed.
+    */
+    SignalProxy<void(Item* topItem, Item* prevTopParentItem)> sigPositionChanged2();
+    
     SignalProxy<void()> sigSubTreeChanged();
 
     SignalProxy<void()> sigDisconnectedFromRoot();
