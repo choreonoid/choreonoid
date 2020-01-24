@@ -79,6 +79,7 @@ public:
     Signal<void()> sigDisconnectedFromRoot;
     Signal<void()> sigUpdated;
     Signal<void()> sigPositionChanged;
+    Signal<void(Item* topItem, Item* prevTopParentItem)> sigPositionChanged2;
     Signal<void()> sigSubTreeChanged;
 
     Signal<void(bool on)> sigSelectionChanged;
@@ -99,12 +100,17 @@ public:
     ~Impl();
     void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
     bool setSubTreeItemsSelectedIter(Item* item, bool on);
+    Item* findItem(const std::function<bool(Item* item)>& pred, bool isFromDirectChild, bool isSubItem) const;
+    Item* findItem(
+        ItemPath::iterator iter, ItemPath::iterator end,  const std::function<bool(Item* item)>& pred,
+        bool isFromDirectChild, bool isSubItem) const;
     void getDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
     void getSelectedDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
     Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void doDetachFromParentItem(bool isMoving);
-    void callSlotsOnPositionChanged();
+    void callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling);
+    void callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem);
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
@@ -518,24 +524,29 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         return false; // rejected
     }
 
-    ++recursiveTreeChangeCounter;
-    memorizeItemBeingAddedOrRemoved(item);
-    
-    if(!item->impl->attributes[SUB_ITEM]){
-        attributes.reset(TEMPORAL);
-    }
-
-    bool isMoving = false;
     RootItem* rootItem = self->findRootItem();
-
-    if(item->parent_){
-        RootItem* srcRootItem = item->parent_->findRootItem();
-        if(srcRootItem){
+    Item* prevParentItem = item->parentItem();
+    Item* prevNextSibling = nullptr;
+    bool isMoving = false;
+    
+    if(prevParentItem){
+        prevNextSibling = item->nextItem();
+        if(prevParentItem == self && prevNextSibling == newNextItem){
+            return false; // try to insert the same position
+        }
+        if(auto srcRootItem = prevParentItem->findRootItem()){
             if(srcRootItem == rootItem){
                 isMoving = true;
             }
         }
         item->impl->doDetachFromParentItem(isMoving);
+    }
+
+    ++recursiveTreeChangeCounter;
+    memorizeItemBeingAddedOrRemoved(item);
+    
+    if(!item->impl->attributes[SUB_ITEM]){
+        attributes.reset(TEMPORAL);
     }
 
     item->parent_ = self;
@@ -574,7 +585,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
             item->impl->requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(item, rootItem);
         }
         if(!isItemBeingAddedOrRemoved(self)){
-            item->impl->callSlotsOnPositionChanged();
+            item->impl->callSlotsOnPositionChanged(prevParentItem, prevNextSibling);
         }
     }
 
@@ -624,9 +635,11 @@ void Item::detachFromParentItem()
 
 void Item::Impl::doDetachFromParentItem(bool isMoving)
 {
-    if(!self->parent_){
+    Item* prevParent = self->parentItem();
+    if(!prevParent){
         return;
     }
+    Item* prevNextSibling = self->nextItem();
 
     ++recursiveTreeChangeCounter;
     memorizeItemBeingAddedOrRemoved(self);
@@ -663,7 +676,7 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
             if(!isItemBeingAddedOrRemoved(self->parent_)){
-                callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
+                callSlotsOnPositionChanged(prevParent, prevNextSibling); // sigPositionChanged is also emitted
             }
             emitSigDisconnectedFromRootForSubTree();
         }
@@ -683,13 +696,63 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
 }
 
 
-void Item::Impl::callSlotsOnPositionChanged()
+void Item::Impl::callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling)
+{
+    Item* newParentItem = self->parentItem();
+
+    if(prevParentItem == newParentItem){
+        if(prevNextSibling == self->nextItem()){
+            return; // position has not been changed
+        }
+        std::unordered_set<Item*> changedItems(prevParentItem->numChildren());
+        changedItems.insert(self);
+        // Younger siblings at the previous position
+        for(Item* sibling = prevNextSibling; sibling; sibling = sibling->nextItem()){
+            changedItems.insert(sibling);
+        }
+        // Younger sibling at the new position
+        for(Item* sibling = self->nextItem(); sibling; sibling = sibling->nextItem()){
+            changedItems.insert(sibling);
+        }
+        for(Item* sibling = prevParentItem->childItem(); sibling; sibling = sibling->nextItem()){
+            if(changedItems.find(sibling) != changedItems.end()){
+                callSlotsOnPositionChangedIter(sibling, prevParentItem);
+            }
+        }
+    } else {
+        // Check if the item at the new position is included in the sub trees of the previous younger siblings
+        bool isUnderPreviousYoungerSibling = false;
+        for(Item* sibling = prevNextSibling; sibling; sibling = sibling->nextItem()){
+            if(self->isOwnedBy(sibling)){
+                isUnderPreviousYoungerSibling = true;
+                break;
+            }
+        }
+        if(!isUnderPreviousYoungerSibling){
+            callSlotsOnPositionChangedIter(self, prevParentItem);
+        }
+        // Younger siblings at the previous position
+        for(Item* sibling = prevNextSibling; sibling; sibling = sibling->nextItem()){
+            sibling->impl->callSlotsOnPositionChangedIter(sibling, prevParentItem);
+        }
+        // Younger sibling at the new position
+        if(newParentItem){
+            for(Item* sibling = self->nextItem(); sibling; sibling = sibling->nextItem()){
+                sibling->impl->callSlotsOnPositionChangedIter(sibling, newParentItem);
+            }
+        }
+    }
+}
+
+
+void Item::Impl::callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem)
 {
     self->onPositionChanged();
     sigPositionChanged();
+    sigPositionChanged2(topItem, prevTopParentItem);
 
     for(Item* child = self->childItem(); child; child = child->nextItem()){
-        child->impl->callSlotsOnPositionChanged();
+        child->impl->callSlotsOnPositionChangedIter(topItem, prevTopParentItem);
     }
 }
 
@@ -777,6 +840,12 @@ SignalProxy<void()> Item::sigPositionChanged()
 }
 
 
+SignalProxy<void(Item* topItem, Item* prevTopParentItem)> Item::sigPositionChanged2()
+{
+    return impl->sigPositionChanged2;
+}
+
+
 SignalProxy<void()> Item::sigSubTreeChanged()
 {
     return impl->sigSubTreeChanged;
@@ -809,105 +878,75 @@ SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
         return impl->checkIdToSignalMap[checkId];
     }
 }
-    
 
-static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+
+Item* Item::find(const std::string& path, const std::function<bool(Item* item)>& pred)
 {
-    if(it == end){
-        return current;
-    }
-    Item* item = nullptr;
-    for(Item* child = current->childItem(); child; child = child->nextItem()){
-        if(child->name() == *it){
-            item = findItemSub(child, ++it, end);
-            if(item){
-                break;
-            }
-        }
-    }
-    if(!item){
-        for(Item* child = current->childItem(); child; child = child->nextItem()){
-            item = findItemSub(child, it, end);
-            if(item){
-                break;
-            }
-        }
-    }
-    return item;
+    return RootItem::instance()->findItem(path, pred, false, false);
 }
 
 
-Item* Item::find(const std::string& path)
-{
-    return RootItem::instance()->findItem(path);
-}
-
-
-Item* Item::findItem(const std::string& path) const
+Item* Item::findItem
+(const std::string& path, std::function<bool(Item* item)> pred,
+ bool isFromDirectChild, bool isSubItem) const
 {
     ItemPath ipath(path);
-    return findItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
-}
-
-
-static Item* findChildItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
-{
-    if(it == end){
-        return current;
+    if(ipath.begin() == ipath.end()){
+        return impl->findItem(pred, isFromDirectChild, isSubItem);
     }
-    Item* item = nullptr;
-    for(Item* child = current->childItem(); child; child = child->nextItem()){
-        if(child->name() == *it){
-            item = findChildItemSub(child, ++it, end);
-            if(item){
-                break;
-            }
-        }
-    }
-    return item;
+    return impl->findItem(ipath.begin(), ipath.end(), pred, isFromDirectChild, isSubItem);
 }
 
 
-Item* Item::findChildItem(const std::string& path) const
+// Use the breadth-first search
+Item* Item::Impl::findItem(const std::function<bool(Item* item)>& pred, bool isFromDirectChild, bool isSubItem) const
 {
-    ItemPath ipath(path);
-    return findChildItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
-}
-
-
-Item* Item::findChildItem(const std::function<bool(Item* item)>& checkType) const
-{
-    for(auto child = childItem(); child; child = child->nextItem()){
-        if(checkType(child)){
+    for(auto child = self->childItem(); child; child = child->nextItem()){
+        if((!isSubItem || child->isSubItem()) && (!pred || pred(child))){
             return child;
+        }
+    }
+    if(!isFromDirectChild){
+        for(auto child = self->childItem(); child; child = child->nextItem()){
+            if(!isSubItem || child->isSubItem()){
+                if(auto found = child->impl->findItem(pred, isFromDirectChild, isSubItem)){
+                    return found;
+                }
+            }
         }
     }
     return nullptr;
 }
 
 
-static Item* findSubItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+// Use the breadth-first search
+Item* Item::Impl::findItem
+(ItemPath::iterator iter, ItemPath::iterator end,  const std::function<bool(Item* item)>& pred,
+ bool isFromDirectChild, bool isSubItem) const
 {
-    if(it == end){
-        return current;
+    if(iter == end){
+        if(!pred || pred(self)){
+            return self;
+        }
+        return nullptr;
     }
-    Item* item = nullptr;
-    for(Item* child = current->childItem(); child; child = child->nextItem()){
-        if(child->name() == *it && child->isSubItem()){
-            item = findSubItemSub(child, ++it, end);
-            if(item){
-                break;
+    for(auto child = self->childItem(); child; child = child->nextItem()){
+        if((child->name() == *iter) && (!isSubItem || child->isSubItem())){
+            if(auto item = child->impl->findItem(iter + 1, end, pred, true, isSubItem)){
+                return item;
             }
         }
     }
-    return item;
-}
-
-
-Item* Item::findSubItem(const std::string& path) const
-{
-    ItemPath ipath(path);
-    return findSubItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
+    if(!isFromDirectChild){
+        for(auto child = self->childItem(); child; child = child->nextItem()){
+            if(!isSubItem || child->isSubItem()){
+                if(auto item = child->impl->findItem(iter, end, pred, false, isSubItem)){
+                    return item;
+                }
+            }
+        }
+    }
+    return nullptr;
 }
 
 

@@ -61,7 +61,7 @@ ManipulatorProgramItemBase::ManipulatorProgramItemBase(const ManipulatorProgramI
 ManipulatorProgramItemBase::Impl::Impl(ManipulatorProgramItemBase* self, const Impl& org)
     : self(self)
 {
-    program = new ManipulatorProgram(*org.program);
+    program = org.program->clone();
     setupSignalConnections();
     targetBodyItem = nullptr;
 }

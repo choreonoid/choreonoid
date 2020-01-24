@@ -17,14 +17,29 @@ class Archive;
 class CNOID_EXPORT ItemTreeWidget : public QWidget
 {
 public:
-    ItemTreeWidget(RootItem* rootItem, QWidget* parent = nullptr);
+    ItemTreeWidget(QWidget* parent = nullptr);
     ~ItemTreeWidget();
 
-    RootItem* rootItem();
+    RootItem* projectRootItem();
+
+    /*
+      The following root item is the top item of a sub tree the item tree widget covers.
+      The item is not necessarily the project root item of the RootItem type but it may
+      be any item in the project item tree.
+    */
+    Item* findRootItem();
+    template<class ItemType>
+    ItemType* findRootItem(){ return dynamic_cast<ItemType*>(findRootItem()); }
+    Item* findOrCreateRootItem();
+    template<class ItemType>
+    ItemType* findOrCreateRootItem(){ return dynamic_cast<ItemType*>(findRootItem()); }
+    
+    void setRootItem(Item* item);
+    void setRootItemUpdateFunction(std::function<Item*(bool doCreate)> func);
 
     void setDragDropEnabled(bool on);
     void setCheckColumnShown(bool on);
-    void setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItem)> pred);
+    void setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItemCandidate)> pred);
 
     template<class ItemType>
     void setContextMenuFunctionFor(

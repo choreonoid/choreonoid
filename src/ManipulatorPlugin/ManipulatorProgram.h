@@ -77,7 +77,7 @@ public:
     bool write(Mapping& archive) const;
 
 protected:
-    ManipulatorProgram(const ManipulatorProgram& org, CloneMap* cloneMap);
+    ManipulatorProgram(const ManipulatorProgram& org, CloneMap* cloneMap = nullptr);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:

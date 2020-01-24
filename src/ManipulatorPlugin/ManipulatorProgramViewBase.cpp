@@ -896,7 +896,7 @@ bool ManipulatorProgramViewBase::Impl::onTimeChanged(double time)
     bool hit = false;
     if(programItem){
         if(auto controllerItem = programItem->findOwnerItem<ManipulatorControllerItemBase>()){
-            if(auto logItem = controllerItem->descendantItems<ReferencedObjectSeqItem>().toSingle()){
+            if(auto logItem = controllerItem->findItem<ReferencedObjectSeqItem>()){
                 auto seq = logItem->seq();
                 if(!seq->empty()){
                     auto data = seq->at(seq->lastFrameOfTime(time)).get();

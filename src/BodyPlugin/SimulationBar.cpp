@@ -128,16 +128,11 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
 
     auto simulators =  RootItem::instance()->selectedItems<SimulatorItem>();
     if(simulators.empty()){
-        simulators = RootItem::instance()->descendantItems<SimulatorItem>();
-        if(simulators.empty()){
-            mv->notify(_("There is no simulator item."));
-        } else  if(simulators.size() > 1){
-            simulators.clear();
-            mv->notify(_("Please select a simulator item to simulate."));
+        if(auto simulator = RootItem::instance()->findItem<SimulatorItem>()){
+            simulator->setSelected(doSelect);
+            simulators.push_back(simulator);
         } else {
-            if(doSelect){
-                simulators.front()->setSelected(true);
-            }
+            mv->notify(_("There is no simulator item."));
         }
     }
 
@@ -152,7 +147,7 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
             if(p == worldToSimulator.end()){
                 worldToSimulator[world] = simulator;
             } else {
-                p->second = 0; // skip if multiple simulators are selected
+                p->second = nullptr; // skip if multiple simulators are selected
             }
         }
     }
