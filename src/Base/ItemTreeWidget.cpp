@@ -50,6 +50,7 @@ public:
     ConnectionSet subTreeAddedOrMovedConnections;
     ItemPtr localRootItem;
     ScopedConnection localRootItemConnection;
+    bool isProcessingSlotOnlocalRootItemPositionChanged;
     std::function<Item*(bool doCreate)> localRootItemUpdateFunction;
     ScopedConnection treeWidgetSelectionChangeConnection;
     vector<ItemPtr> topLevelItems;
@@ -325,6 +326,7 @@ void ItemTreeWidget::Impl::initialize()
         projectManager->sigProjectLoaded().connect(
             [&](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
 
+    isProcessingSlotOnlocalRootItemPositionChanged = false;
     isVisibleItem = [&](Item*, bool){ return true; };
     
     fontPointSizeDiff = 0;
@@ -381,14 +383,19 @@ void ItemTreeWidget::Impl::setLocalRootItem(Item* item)
             localRootItemConnection =
                 item->sigPositionChanged2().connect(
                     [&,item](Item* topItem, Item* prevTopParentItem){
-                        if(prevTopParentItem){ // Exclude a newly added item
-                            setLocalRootItem(nullptr);
+                        if(!isProcessingSlotOnlocalRootItemPositionChanged){
+                            isProcessingSlotOnlocalRootItemPositionChanged = true;
+                            if(prevTopParentItem){ // Exclude a newly added item
+                                setLocalRootItem(nullptr);
 
-                            // The following code is dangerous because it may add a
-                            // connection to sigPositionChanged2 during processing the
-                            // signal. It may go into an infinte loop to call this
-                            // lambda function. It's better to redesign the logic.
-                            findOrCreateLocalRootItem(false);
+                                // The following code is dangerous because it may add a
+                                // connection to sigPositionChanged2 during processing the
+                                // signal. It may go into an infinte loop to call this
+                                // lambda function. It's better to redesign the logic.
+
+                                // findOrCreateLocalRootItem(false);
+                            }
+                            isProcessingSlotOnlocalRootItemPositionChanged = false;
                         }
                     });
         }
