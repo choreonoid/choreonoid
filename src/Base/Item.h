@@ -92,6 +92,8 @@ public:
     void setChecked(bool on); // for PrimaryCheck
     void setChecked(int checkId, bool on);
 
+    int numChildren() const { return numChildren_; }
+
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }
     Item* nextItem() const { return nextItem_; }

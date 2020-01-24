@@ -109,7 +109,8 @@ public:
     Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void doDetachFromParentItem(bool isMoving);
-    void callSlotsOnPositionChanged(Item* topItem, Item* prevTopParentItem);
+    void callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling);
+    void callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem);
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
@@ -523,26 +524,29 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         return false; // rejected
     }
 
-    ++recursiveTreeChangeCounter;
-    memorizeItemBeingAddedOrRemoved(item);
-    
-    if(!item->impl->attributes[SUB_ITEM]){
-        attributes.reset(TEMPORAL);
-    }
-
-    bool isMoving = false;
     RootItem* rootItem = self->findRootItem();
-
-    Item* prevParentItem = item->parent_;
-
+    Item* prevParentItem = item->parentItem();
+    Item* prevNextSibling = nullptr;
+    bool isMoving = false;
+    
     if(prevParentItem){
-        RootItem* srcRootItem = prevParentItem->findRootItem();
-        if(srcRootItem){
+        prevNextSibling = item->nextItem();
+        if(prevParentItem == self && prevNextSibling == newNextItem){
+            return false; // try to insert the same position
+        }
+        if(auto srcRootItem = prevParentItem->findRootItem()){
             if(srcRootItem == rootItem){
                 isMoving = true;
             }
         }
         item->impl->doDetachFromParentItem(isMoving);
+    }
+
+    ++recursiveTreeChangeCounter;
+    memorizeItemBeingAddedOrRemoved(item);
+    
+    if(!item->impl->attributes[SUB_ITEM]){
+        attributes.reset(TEMPORAL);
     }
 
     item->parent_ = self;
@@ -581,7 +585,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
             item->impl->requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(item, rootItem);
         }
         if(!isItemBeingAddedOrRemoved(self)){
-            item->impl->callSlotsOnPositionChanged(item, prevParentItem);
+            item->impl->callSlotsOnPositionChanged(prevParentItem, prevNextSibling);
         }
     }
 
@@ -631,10 +635,11 @@ void Item::detachFromParentItem()
 
 void Item::Impl::doDetachFromParentItem(bool isMoving)
 {
-    Item* prevParent = self->parent_;
+    Item* prevParent = self->parentItem();
     if(!prevParent){
         return;
     }
+    Item* prevNextSibling = self->nextItem();
 
     ++recursiveTreeChangeCounter;
     memorizeItemBeingAddedOrRemoved(self);
@@ -671,7 +676,7 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
             if(!isItemBeingAddedOrRemoved(self->parent_)){
-                callSlotsOnPositionChanged(self, prevParent); // sigPositionChanged is also emitted
+                callSlotsOnPositionChanged(prevParent, prevNextSibling); // sigPositionChanged is also emitted
             }
             emitSigDisconnectedFromRootForSubTree();
         }
@@ -691,14 +696,63 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
 }
 
 
-void Item::Impl::callSlotsOnPositionChanged(Item* topItem, Item* prevTopParentItem)
+void Item::Impl::callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling)
+{
+    Item* newParentItem = self->parentItem();
+
+    if(prevParentItem == newParentItem){
+        if(prevNextSibling == self->nextItem()){
+            return; // position has not been changed
+        }
+        std::unordered_set<Item*> changedItems(prevParentItem->numChildren());
+        changedItems.insert(self);
+        // Younger siblings at the previous position
+        for(Item* sibling = prevNextSibling; sibling; sibling = sibling->nextItem()){
+            changedItems.insert(sibling);
+        }
+        // Younger sibling at the new position
+        for(Item* sibling = self->nextItem(); sibling; sibling = sibling->nextItem()){
+            changedItems.insert(sibling);
+        }
+        for(Item* sibling = prevParentItem->childItem(); sibling; sibling = sibling->nextItem()){
+            if(changedItems.find(sibling) != changedItems.end()){
+                callSlotsOnPositionChangedIter(sibling, prevParentItem);
+            }
+        }
+    } else {
+        // Check if the item at the new position is included in the sub trees of the previous younger siblings
+        bool isUnderPreviousYoungerSibling = false;
+        for(Item* sibling = prevNextSibling; sibling; sibling = sibling->nextItem()){
+            if(self->isOwnedBy(sibling)){
+                isUnderPreviousYoungerSibling = true;
+                break;
+            }
+        }
+        if(!isUnderPreviousYoungerSibling){
+            callSlotsOnPositionChangedIter(self, prevParentItem);
+        }
+        // Younger siblings at the previous position
+        for(Item* sibling = prevNextSibling; sibling; sibling = sibling->nextItem()){
+            sibling->impl->callSlotsOnPositionChangedIter(sibling, prevParentItem);
+        }
+        // Younger sibling at the new position
+        if(newParentItem){
+            for(Item* sibling = self->nextItem(); sibling; sibling = sibling->nextItem()){
+                sibling->impl->callSlotsOnPositionChangedIter(sibling, newParentItem);
+            }
+        }
+    }
+}
+
+
+void Item::Impl::callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem)
 {
     self->onPositionChanged();
     sigPositionChanged();
     sigPositionChanged2(topItem, prevTopParentItem);
 
     for(Item* child = self->childItem(); child; child = child->nextItem()){
-        child->impl->callSlotsOnPositionChanged(topItem, prevTopParentItem);
+        child->impl->callSlotsOnPositionChangedIter(topItem, prevTopParentItem);
     }
 }
 
