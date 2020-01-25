@@ -527,21 +527,8 @@ include_directories(${EIGEN3_INCLUDE_DIRS})
 
 if(ENABLE_GUI)
   # Qt5
-  set(qt5_components Core Gui Widgets Network)
-  if(UNIX)
-    list(APPEND qt5_components X11Extras)
-  elseif(MSVC)
-    file(GLOB qt_cmake_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake" "d:/Qt/5.??.?/msvc20??_??/lib/cmake")
-    list(SORT qt_cmake_dirs)
-    list(REVERSE qt_cmake_dirs)
-  endif()
-  find_package(Qt5 COMPONENTS ${qt5_components} HINTS ${qt_cmake_dirs})
-  foreach(component ${qt5_components})
-    list(APPEND libs "Qt5::${component}")
-  endforeach()
-  set(QT_LIBRARIES ${libs})
-  add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
-  set(CMAKE_AUTOMOC OFF)
+  include(cmake/ChoreonoidFindQt.cmake)
+  choreonoid_find_qt_package(Core Gui Widgets Network)
 
   if(MSVC)
     list(APPEND QT_INST_LIBRARIES 
