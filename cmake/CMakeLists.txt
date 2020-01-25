@@ -8,7 +8,9 @@ set(definitions -DEIGEN_NO_DEBUG -DQT_NO_DEBUG -DQT_NO_KEYWORDS -DQT_NO_OPENGL_E
 
 set(modules
   ${CMAKE_CURRENT_BINARY_DIR}/ChoreonoidConfig.cmake
-  ChoreonoidBasicBuildFunctions.cmake)
+  ChoreonoidBasicBuildFunctions.cmake
+  ChoreonoidFindQt.cmake
+  )
 
 if(ENABLE_PYTHON)
   list(APPEND modules ChoreonoidPythonBuildFunctions.cmake)
