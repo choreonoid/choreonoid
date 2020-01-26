@@ -185,7 +185,6 @@ set(headers
   AbstractTaskSequencer.h
   exportdecl.h
   CnoidUtil.h
-  
   )
 
 include_directories(${LIBYAML_INCLUDE_DIRS})
@@ -197,11 +196,11 @@ choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers}
 
 if(UNIX)
   set(libraries 
-    ${LIBYAML_LIBRARIES} ${PNG_LIBRARY} ${JPEG_LIBRARY}
+    fmt::fmt
+    ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
-    fmt::fmt
     m dl
     )
 
@@ -217,7 +216,7 @@ if(UNIX)
   
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries ${LIBYAML_LIBRARIES} ${PNG_LIBRARY} ${JPEG_LIBRARY} zlib winmm ${GETTEXT_LIBRARIES} fmt::fmt)
+  set(libraries fmt::fmt ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${GETTEXT_LIBRARIES} winmm)
   find_file(XINPUT_DLL "XInput1_4.dll")
   if(XINPUT_DLL)
     target_link_libraries(${target} ${libraries} XInput)

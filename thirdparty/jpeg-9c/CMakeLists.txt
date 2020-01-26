@@ -62,17 +62,17 @@ set(headers
   transupp.h
 )
 
-add_library(${JPEG_LIBRARY} STATIC ${sources} ${headers})
+add_library(jpeg STATIC ${sources} ${headers})
 
 if(WIN32)
-  #set_target_properties(${JPEG_LIBRARY} PROPERTIES COMPILE_FLAGS -Ob1)
-  set_target_properties(${JPEG_LIBRARY} PROPERTIES DEBUG_POSTFIX d)
+  #set_target_properties(jpeg PROPERTIES COMPILE_FLAGS -Ob1)
+  set_target_properties(jpeg PROPERTIES DEBUG_POSTFIX d)
 endif()
 
 if(INSTALL_SDK)
   install(FILES
     jpeglib.h jconfig.h jmorecfg.h
     DESTINATION ${CHOREONOID_HEADER_SUBDIR})
-  install(TARGETS ${JPEG_LIBRARY}
+  install(TARGETS jpeg
     LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()

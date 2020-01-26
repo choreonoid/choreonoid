@@ -1,13 +1,10 @@
-set(library_dirs ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_LIB_SUBDIR} ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_PLUGIN_SUBDIR} ${Boost_LIBRARY_DIRS})
+set(include_dirs ${CHOREONOID_SDK_INCLUDE_DIRS})
+list(REMOVE_DUPLICATES include_dirs)
+
+set(library_dirs ${CHOREONOID_SDK_LIBRARY_DIRS})
 list(REMOVE_DUPLICATES library_dirs)
 
-#get_directory_property(definitions COMPILE_DEFINITIONS)
-#message(STATUS "definitions: ${definitions}")
-
-set(definitions -DEIGEN_NO_DEBUG -DQT_NO_DEBUG -DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
-if(MSVC)
-  list(APPEND definitions -D_CRT_SECURE_NO_WARNINGS -DNOMINMAX -D_USE_MATH_DEFINES)
-endif()
+get_directory_property(compile_definitions COMPILE_DEFINITIONS)
 
 set(modules
   ${CMAKE_CURRENT_BINARY_DIR}/ChoreonoidConfig.cmake

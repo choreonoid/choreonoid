@@ -21,14 +21,14 @@ set(headers
   pngconf.h
 )
 
-add_library(${PNG_LIBRARY} STATIC ${sources})
+add_library(png STATIC ${sources})
 
-add_definitions(-DPNG_NO_MMX_CODE -D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-DPNG_NO_MMX_CODE)
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 if(WIN32)
-  set_target_properties(${PNG_LIBRARY} PROPERTIES COMPILE_FLAGS -Ob1)
-  set_target_properties(${PNG_LIBRARY} PROPERTIES DEBUG_POSTFIX d)
+  set_target_properties(png PROPERTIES COMPILE_FLAGS -Ob1)
+  set_target_properties(png PROPERTIES DEBUG_POSTFIX d)
 endif()
