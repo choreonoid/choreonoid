@@ -1,15 +1,19 @@
 # Use the following variables to compile and link against Choreonoid:
-# CHOREONOID_FOUND            - True if Choreonoid was found on your system
-# CHOREONOID_VERSION_STRING   - A human-readable string containing the version
-# CHOREONOID_VERSION_MAJOR    - The major version of Choreonoid
-# CHOREONOID_VERSION_MINOR    - The minor version of Choreonoid
-# CHOREONOID_VERSION_PATCH    - The patch version of Choreonoid
-# CHOREONOID_ROOT_DIR         - The base directory of Choreonoid
-# CHOREONOID_CXX_STANDARD     - The c++ standard version used to build Choreonoid (11, 14, or 17)
-# CHOREONOID_DEFINITIONS      - Definitions needed to build with Choreonoid
-# CHOREONOID_INCLUDE_DIRS     - List of directories of Choreonoid and it's dependencies
-# CHOREONOID_LIBRARY_DIRS     - List of directories of Choreonoid and it's dependencies
-# CHOREONOID_LIBRARIES        - List of directories of Choreonoid and it's dependencies
+# CHOREONOID_FOUND               - True if Choreonoid was found on your system
+# CHOREONOID_VERSION_STRING      - A human-readable string containing the version
+# CHOREONOID_VERSION_MAJOR       - The major version of Choreonoid
+# CHOREONOID_VERSION_MINOR       - The minor version of Choreonoid
+# CHOREONOID_VERSION_PATCH       - The patch version of Choreonoid
+# CHOREONOID_ROOT_DIR            - The base directory of Choreonoid
+# CHOREONOID_CXX_STANDARD        - The c++ standard version used to build Choreonoid (11, 14, or 17)
+# CHOREONOID_COMPILE_DEFINITIONS - Definitions needed to build with Choreonoid
+# CHOREONOID_INCLUDE_DIRS        - List of directories of Choreonoid and it's dependencies
+# CHOREONOID_LIBRARY_DIRS        - List of directories of Choreonoid and it's dependencies
+# CHOREONOID_UTIL_LIBRARIES      - List of libraries to use the CnoidUtil libary
+# CHOREONOID_BASE_LIBRARIES      - List of libraries to use the CnoidBase libary
+# CHOREONOID_BODY_LIBRARIES      - List of libraries to use the CnoidBody libary
+# CHOREONOID_BODY_PLUGIN_LIBRARIES - List of libraries to use the CnoidBody libary
+# CHOREONOID_DISABLE_QT_SETUP    - Set true in advance to disable the Qt library setup
 #
 # Set the following variables to change the behaviour of the functions provided by this module
 # CHOREONOID_INSTALL_SDK      - Set on if you want to install SDK files
@@ -28,10 +32,10 @@ set(CHOREONOID_VERSION_MINOR @CHOREONOID_VERSION_MINOR@)
 set(CHOREONOID_VERSION_PATCH @CHOREONOID_VERSION_PATCH@)
 
 set(CHOREONOID_VERSION_SUBDIR @CHOREONOID_VERSION_SUBDIR@)
-set(CHOREONOID_BIN_SUBDIR bin)
-set(CHOREONOID_BIN_DIR "@CMAKE_INSTALL_PREFIX@bin")
-set(CHOREONOID_LIB_SUBDIR lib)
-set(CHOREONOID_LIB_DIR "@CMAKE_INSTALL_PREFIX@/lib")
+set(CHOREONOID_BIN_SUBDIR @CHOREONOID_BIN_SUBDIR@)
+set(CHOREONOID_BIN_DIR "@CMAKE_INSTALL_PREFIX@/@CHOREONOID_BIN_SUBDIR@")
+set(CHOREONOID_LIB_SUBDIR @CHOREONOID_LIB_SUBDIR@)
+set(CHOREONOID_LIB_DIR "@CMAKE_INSTALL_PREFIX@/@CHOREONOID_LIB_SUBDIR@")
 set(CHOREONOID_PLUGIN_SUBDIR @CHOREONOID_PLUGIN_SUBDIR@)
 set(CHOREONOID_PLUGIN_DIR "@CMAKE_INSTALL_PREFIX@/@CHOREONOID_PLUGIN_SUBDIR@")
 set(CHOREONOID_HEADER_SUBDIR @CHOREONOID_HEADER_SUBDIR@)
@@ -67,7 +71,14 @@ if(CHOREONOID_ENABLE_GETTEXT)
 endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/ChoreonoidBasicBuildFunctions.cmake)
+
 include(${CMAKE_CURRENT_LIST_DIR}/ChoreonoidFindQt.cmake)
+if(NOT CHOREONOID_DISABLE_QT_SETUP)
+  choreonoid_find_qt_package(Core Gui Widgets Network)
+  set(CMAKE_AUTOMOC OFF)
+  list(APPEND CHOREONOID_COMPILE_DEFINITIONS ${CHOREONOID_QT_COMPILE_DEFINITIONS})
+  list(APPEND CHOREONOID_BASE_LIBRARIES ${CHOREONOID_QT_LIBRARIES})
+endif()
 
 set(CHOREONOID_ENABLE_PYTHON @ENABLE_PYTHON@)
 if(CHOREONOID_ENABLE_PYTHON)

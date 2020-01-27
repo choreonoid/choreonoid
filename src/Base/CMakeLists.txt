@@ -279,25 +279,21 @@ make_gettext_mofiles(${target} mofiles)
 
 choreonoid_add_library(${target} SHARED ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(MSVC)
   target_link_libraries(${target}
     CnoidUtil
-    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARIES}
-    intl
-    )
-elseif(MSVC)
-  target_link_libraries(${target}
-    CnoidUtil
-    ${QT_LIBRARIES}
+    ${CHOREONOID_QT_LIBRARIES}
     general glu32 opengl32
     )
 else()
   target_link_libraries(${target}
     CnoidUtil
-    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY}
+    ${CHOREONOID_QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY}
     icuuc X11 Xfixes
     )
 endif()
+
+target_compile_definitions(${target} PUBLIC ${CHOREONOID_QT_COMPILE_DEFINITIONS})
 
 file(MAKE_DIRECTORY ${CNOID_BINARY_SHARE_DIR}/icon)
 file(COPY icons/choreonoid.svg DESTINATION ${CNOID_BINARY_SHARE_DIR}/icon)

@@ -21,15 +21,13 @@ if(ENABLE_CORBA AND BUILD_CORBA_PLUGIN)
   list(APPEND modules ChoreonoidCorbaBuildFunctions.cmake)
 endif()
 
-if(INSTALL_SDK)
-  install(FILES ${modules} DESTINATION ${CHOREONOID_CMAKE_CONFIG_SUBDIR})
-  if(UNIX)
-    string(CONCAT code
-      "execute_process(COMMAND ${CMAKE_COMMAND} "
-      "-E create_symlink ChoreonoidConfig.cmake choreonoid-config.cmake "
-      "WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_CMAKE_CONFIG_SUBDIR})")
-    install(CODE ${code})
-  endif()
+install(FILES ${modules} DESTINATION ${CHOREONOID_CMAKE_CONFIG_SUBDIR})
+if(UNIX)
+  string(CONCAT code
+    "execute_process(COMMAND ${CMAKE_COMMAND} "
+    "-E create_symlink ChoreonoidConfig.cmake choreonoid-config.cmake "
+    "WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_CMAKE_CONFIG_SUBDIR})")
+  install(CODE ${code})
 endif()
 
 configure_file(ChoreonoidConfig.cmake.in ChoreonoidConfig.cmake @ONLY)

@@ -16,12 +16,12 @@ macro(choreonoid_find_qt_package)
     list(REVERSE qt_hint_dirs)
   endif()
 
-  find_package(Qt5 COMPONENTS ${components} HINTS ${qt_hint_dirs})
+  set(CHOREONOID_QT_COMPILE_DEFINITIONS QT_NO_KEYWORDS QT_NO_OPENGL_ES_2)
+
+  find_package(Qt5 REQUIRED COMPONENTS ${components} HINTS ${qt_hint_dirs})
   foreach(component ${components})
     list(APPEND libs "Qt5::${component}")
   endforeach()
-  set(QT_LIBRARIES ${libs})
-  set(CMAKE_AUTOMOC OFF)
-  add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
+  set(CHOREONOID_QT_LIBRARIES ${libs})
   
 endmacro()

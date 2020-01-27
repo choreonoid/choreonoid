@@ -1,3 +1,5 @@
+include_directories(${PNG_INCLUDE_DIRS})
+
 add_library(png STATIC
   png.c
   pngerror.c
