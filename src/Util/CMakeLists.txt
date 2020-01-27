@@ -187,7 +187,7 @@ set(headers
   CnoidUtil.h
   )
 
-include_directories(${LIBYAML_INCLUDE_DIRS})
+include_directories(${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS})
 link_directories(${LIBYAML_LIBRARY_DIRS})
 
 set(target CnoidUtil)

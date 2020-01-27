@@ -1,4 +1,4 @@
-set(sources
+add_library(jpeg STATIC
   jaricom.c
   jcapimin.c
   jcapistd.c
@@ -45,9 +45,6 @@ set(sources
   jutils.c
   jmemmgr.c
   jmemnobs.c
-  )
-
-set(headers
   jconfig.h
   jdct.h
   jerror.h
@@ -60,19 +57,17 @@ set(headers
   cdjpeg.h
   cderror.h
   transupp.h
-)
+  )
 
-add_library(jpeg STATIC ${sources} ${headers})
-
-if(WIN32)
-  #set_target_properties(jpeg PROPERTIES COMPILE_FLAGS -Ob1)
-  set_target_properties(jpeg PROPERTIES DEBUG_POSTFIX d)
+if(MSVC)
+  set_target_properties(jpeg PROPERTIES
+    COMPILE_OPTIONS -Ob1
+    DEBUG_POSTFIX d)
+else()
+  set_target_properties(jpeg PROPERTIES COMPILE_OPTIONS -fPIC)
 endif()
 
 if(INSTALL_SDK)
-  install(FILES
-    jpeglib.h jconfig.h jmorecfg.h
-    DESTINATION ${CHOREONOID_HEADER_SUBDIR})
-  install(TARGETS jpeg
-    LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+  install(FILES jpeglib.h jconfig.h jmorecfg.h DESTINATION ${CHOREONOID_HEADER_SUBDIR})
+  install(TARGETS jpeg LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()

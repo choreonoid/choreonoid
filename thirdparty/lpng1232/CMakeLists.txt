@@ -1,4 +1,4 @@
-set(sources
+add_library(png STATIC
   png.c
   pngerror.c
   pngget.c
@@ -14,21 +14,19 @@ set(sources
   pngwrite.c
   pngwtran.c
   pngwutil.c
-  )
-
-set(headers
   png.h
-  pngconf.h
-)
+  pngconf.h)
 
-add_library(png STATIC ${sources})
-
-add_definitions(-DPNG_NO_MMX_CODE)
 if(MSVC)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  set_target_properties(png PROPERTIES
+    COMPILE_DEFINITIONS "PNG_NO_MMX_CODE;_CRT_SECURE_NO_WARNINGS"
+    COMPILE_OPTIONS -Ob1
+    DEBUG_POSTFIX d)
+else()
+  set_target_properties(png PROPERTIES COMPILE_OPTIONS -fPIC)
 endif()
 
-if(WIN32)
-  set_target_properties(png PROPERTIES COMPILE_FLAGS -Ob1)
-  set_target_properties(png PROPERTIES DEBUG_POSTFIX d)
+if(INSTALL_SDK)
+  install(FILES png.h pngconf.h DESTINATION ${CHOREONOID_HEADER_SUBDIR})
+  install(TARGETS png LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()

@@ -1,6 +1,4 @@
-set(ZLIB_LIBRARY zlib)
-
-set(sources
+add_library(zlib STATIC
   adler32.c
   compress.c
   crc32.c
@@ -13,9 +11,6 @@ set(sources
   infback.c
   inftrees.c
   inffast.c
-  )
-
-set(headers
   crc32.h
   deflate.h
   inffast.h
@@ -26,11 +21,17 @@ set(headers
   zconf.h
   zlib.h
   zutil.h
-)
+  )
 
-add_library(${ZLIB_LIBRARY} STATIC ${sources})
+if(MSVC)
+  set_target_properties(zlib PROPERTIES
+    COMPILE_OPTIONS -Ob1
+    DEBUG_POSTFIX d)
+else()
+  set_target_properties(zlib PROPERTIES COMPILE_OPTIONS -fPIC)
+endif()
 
-if(WIN32)
-  set_target_properties(${ZLIB_LIBRARY} PROPERTIES COMPILE_FLAGS -Ob1)
-  set_target_properties(${ZLIB_LIBRARY} PROPERTIES DEBUG_POSTFIX d )
-endif() 
+if(INSTALL_SDK)
+  install(FILES zlib.h zconf.h DESTINATION ${CHOREONOID_HEADER_SUBDIR})
+  install(TARGETS zlib LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+endif()
