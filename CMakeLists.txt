@@ -148,12 +148,28 @@ if(NOT CMAKE_BUILD_TYPE)
     FORCE)
 endif()
 
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
+
 if(UNIX)
   set(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN ON)
+
+  set(compiler_general_options "-Wreturn-type")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -finline-functions")
+
   option(ENABLE_NATIVE_CPU_ARCHITECTURE "Use the -march=native option to enable instruction set supported by the native processor architecture" OFF)
   if(ENABLE_NATIVE_ARCHITECTURE)
-    set(compiler_general_options "-march=native")
+    set(compiler_general_options "${compiler_general_options} -march=native")
+  endif()
+
+  option(CHECK_UNRESOLVED_SYMBOLS "check unresolved symbols in the object files when creating shared libraries" OFF)
+  if(CHECK_UNRESOLVED_SYMBOLS)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,--warn-unresolved-symbols")
+  endif()
+
+  option(PUT_EXTRA_WARNINGS "Put extra warnings in compile" OFF)
+  if(PUT_EXTRA_WARNINGS)
+    set(compiler_general_options "${compiler_general_options} -Wall -Wunused -Woverloaded-virtual -Wsign-compare")
+    # -Wparentheses -Wformat=2 -Wformat-nonliteral -Wunknown-pragmas -Wunused-parameter -Wuninitialized -Winit-self -pedantic -Wconversion -Wno-variadic-macros -Wno-long-long -Wno-import -Wno-missing-braces
   endif()
 endif()
 
@@ -188,6 +204,9 @@ if(MSVC)
     set(compiler_optimization_options "${compiler_optimization_options} /GL")
     set(linker_optimization_options "${linker_optimization_options} /LTCG")
   endif()
+
+  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS
+    NOMINMAX _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
 endif()
 
 set(ADDITIONAL_CXX_FLAGS ${ADDITIONAL_CXX_FLAGS} CACHE STRING "Additional c++ compiler optimization flags")
@@ -541,77 +560,76 @@ endif()
 option(ENABLE_CORBA "Enable CORBA related modules / plugins" OFF)
 
 if(ENABLE_CORBA)
-  # The OMNIDYNAMIC_XXX variables are used for storing the omniORB information
-  # because the OMNIORB_XXX varialbes collide with the OpenRTM-aist configuration
-  # and the omniDynamic4 library is actually required to build some modules.
+  # Note that the OMNIORB_XXX varialbes cannot be used because
+  # the variables collide with those of OpenRTM-aist configuration.
   if(UNIX)
-    if(NOT OMNIDYNAMIC_DIR)
-      pkg_check_modules(OMNIDYNAMIC omniDynamic4)
-      if(OMNIDYNAMIC_FOUND)
-	set(OMNIDYNAMIC_DIR ${OMNIDYNAMIC_PREFIX})
+    if(NOT CHOREONOID_OMNIORB_DIR)
+      pkg_check_modules(CHOREONOID_OMNIORB omniDynamic4)
+      if(CHOREONOID_OMNIORB_FOUND)
+	set(CHOREONOID_OMNIORB_DIR ${CHOREONOID_OMNIORB_PREFIX})
       endif()
     else()
-      set(OMNIDYNAMIC_FOUND TRUE)
-      set(OMNIDYNAMIC_INCLUDE_DIRS ${OMNIDYNAMIC_DIR}/include)
-      set(OMNIDYNAMIC_LIBRARY_DIRS ${OMNIDYNAMIC_DIR}/lib)
+      set(CHOREONOID_OMNIORB_FOUND TRUE)
+      set(CHOREONOID_OMNIORB_INCLUDE_DIRS ${CHOREONOID_OMNIORB_DIR}/include)
+      set(CHOREONOID_OMNIORB_LIBRARY_DIRS ${CHOREONOID_OMNIORB_DIR}/lib)
     endif()
   elseif(MSVC)
-    if(NOT OMNIDYNAMIC_DIR)
+    if(NOT CHOREONOID_OMNIORB_DIR)
       if(NOT $ENV{OMNI_ROOT} STREQUAL "")
-	set(OMNIDYNAMIC_DIR $ENV{OMNI_ROOT})
+	set(CHOREONOID_OMNIORB_DIR $ENV{OMNI_ROOT})
       endif()
     endif()
-    if(OMNIDYNAMIC_DIR)
-      set(OMNIDYNAMIC_FOUND TRUE)
-      set(OMNIDYNAMIC_INCLUDE_DIRS ${OMNIDYNAMIC_DIR}/include)
-      set(OMNIDYNAMIC_LIBRARY_DIRS ${OMNIDYNAMIC_DIR}/lib/x86_win32)
-      set(OMNIDYNAMIC_BINARY_DIR ${OMNIDYNAMIC_DIR}/bin/x86_win32)
-      set(OMNIDYNAMIC_CFLAGS -D__WIN32__ -D__x86__ )
+    if(CHOREONOID_OMNIORB_DIR)
+      set(CHOREONOID_OMNIORB_FOUND TRUE)
+      set(CHOREONOID_OMNIORB_INCLUDE_DIRS "${CHOREONOID_OMNIORB_DIR}/include")
+      set(CHOREONOID_OMNIORB_LIBRARY_DIRS "${CHOREONOID_OMNIORB_DIR}/lib/x86_win32")
+      set(CHOREONOID_OMNIORB_BINARY_DIR "${CHOREONOID_OMNIORB_DIR}/bin/x86_win32")
+      set(CHOREONOID_OMNIORB_CFLAGS -D__WIN32__ -D__x86__ )
 
-      file(GLOB libomniorb RELATIVE ${OMNIDYNAMIC_LIBRARY_DIRS} "${OMNIDYNAMIC_LIBRARY_DIRS}/omniORB???_rt.lib")
+      file(GLOB libomniorb RELATIVE ${CHOREONOID_OMNIORB_LIBRARY_DIRS} "${CHOREONOID_OMNIORB_LIBRARY_DIRS}/omniORB???_rt.lib")
       get_filename_component(libomniorb ${libomniorb} NAME_WE)
 
-      file(GLOB libomnithread RELATIVE ${OMNIDYNAMIC_LIBRARY_DIRS} "${OMNIDYNAMIC_LIBRARY_DIRS}/omnithread??_rt.lib")
+      file(GLOB libomnithread RELATIVE ${CHOREONOID_OMNIORB_LIBRARY_DIRS} "${CHOREONOID_OMNIORB_LIBRARY_DIRS}/omnithread??_rt.lib")
       get_filename_component(libomnithread ${libomnithread} NAME_WE)
 
-      file(GLOB libomnidynamic RELATIVE ${OMNIDYNAMIC_LIBRARY_DIRS} "${OMNIDYNAMIC_LIBRARY_DIRS}/omniDynamic???_rt.lib")
+      file(GLOB libomnidynamic RELATIVE ${CHOREONOID_OMNIORB_LIBRARY_DIRS} "${CHOREONOID_OMNIORB_LIBRARY_DIRS}/omniDynamic???_rt.lib")
       get_filename_component(libomnidynamic ${libomnidynamic} NAME_WE)
 
-      set(OMNIDYNAMIC_LIBRARIES_RELEASE ${libomniorb} ${libomnithread} ${libomnidynamic})
-      foreach(library ${OMNIDYNAMIC_LIBRARIES_RELEASE})
-	list(APPEND OMNIDYNAMIC_LIBRARIES optimized ${library} debug ${library}d )
+      set(CHOREONOID_OMNIORB_LIBRARIES_RELEASE ${libomniorb} ${libomnithread} ${libomnidynamic})
+      foreach(library ${CHOREONOID_OMNIORB_LIBRARIES_RELEASE})
+	list(APPEND CHOREONOID_OMNIORB_LIBRARIES optimized ${library} debug ${library}d )
       endforeach()
 
-      file(GLOB libomniorb RELATIVE ${OMNIDYNAMIC_BINARY_DIR} "${OMNIDYNAMIC_BINARY_DIR}/omniORB*_rt.dll")
+      file(GLOB libomniorb RELATIVE ${CHOREONOID_OMNIORB_BINARY_DIR} "${CHOREONOID_OMNIORB_BINARY_DIR}/omniORB*_rt.dll")
       get_filename_component(libomniorb ${libomniorb} NAME_WE)
 
-      file(GLOB libomnithread RELATIVE ${OMNIDYNAMIC_BINARY_DIR} "${OMNIDYNAMIC_BINARY_DIR}/omnithread*_rt.dll")
+      file(GLOB libomnithread RELATIVE ${CHOREONOID_OMNIORB_BINARY_DIR} "${CHOREONOID_OMNIORB_BINARY_DIR}/omnithread*_rt.dll")
       get_filename_component(libomnithread ${libomnithread} NAME_WE)
 
-      file(GLOB libomnidynamic RELATIVE ${OMNIDYNAMIC_BINARY_DIR} "${OMNIDYNAMIC_BINARY_DIR}/omniDynamic*_rt.dll")
+      file(GLOB libomnidynamic RELATIVE ${CHOREONOID_OMNIORB_BINARY_DIR} "${CHOREONOID_OMNIORB_BINARY_DIR}/omniDynamic*_rt.dll")
       get_filename_component(libomnidynamic ${libomnidynamic} NAME_WE)
 
-      set(OMNIDYNAMIC_DLL_BASES ${libomniorb} ${libomnithread} ${libomnidynamic})
+      set(CHOREONOID_OMNIORB_DLL_BASES ${libomniorb} ${libomnithread} ${libomnidynamic})
 
       if(INSTALL_RUNTIME_DEPENDENCIES)
-	foreach(library ${OMNIDYNAMIC_DLL_BASES})
-	  install(PROGRAMS "${OMNIDYNAMIC_BINARY_DIR}/${library}.dll" DESTINATION bin CONFIGURATIONS Release RelWithDebInfo MinSizeRel)
-	  install(PROGRAMS "${OMNIDYNAMIC_BINARY_DIR}/${library}d.dll" DESTINATION bin CONFIGURATIONS Debug)
+	foreach(library ${CHOREONOID_OMNIORB_DLL_BASES})
+	  install(PROGRAMS "${CHOREONOID_OMNIORB_BINARY_DIR}/${library}.dll" DESTINATION bin CONFIGURATIONS Release RelWithDebInfo MinSizeRel)
+	  install(PROGRAMS "${CHOREONOID_OMNIORB_BINARY_DIR}/${library}d.dll" DESTINATION bin CONFIGURATIONS Debug)
 	endforeach()
       endif()
     endif()
   endif()
   
-  include_directories(${OMNIDYNAMIC_INCLUDE_DIRS})
-  link_directories(${OMNIDYNAMIC_LIBRARY_DIRS})
-  list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${OMNIDYNAMIC_INCLUDE_DIRS})
-  list(APPEND CHOREONOID_SDK_LIBRARY_DIRS ${OMNIDYNAMIC_LIBRARY_DIRS})
-  add_definitions(${OMNIDYNAMIC_CFLAGS})
+  include_directories(${CHOREONOID_OMNIORB_INCLUDE_DIRS})
+  link_directories(${CHOREONOID_OMNIORB_LIBRARY_DIRS})
+  list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${CHOREONOID_OMNIORB_INCLUDE_DIRS})
+  list(APPEND CHOREONOID_SDK_LIBRARY_DIRS ${CHOREONOID_OMNIORB_LIBRARY_DIRS})
+  add_definitions(${CHOREONOID_OMNIORB_CFLAGS})
 
-  set(OMNIDYNAMIC_DIR ${OMNIDYNAMIC_DIR} CACHE PATH "The top directory of omniORB")
-  set(OMNIDYNAMIC_CFLAGS ${OMNIDYNAMIC_CFLAGS} CACHE STRING "Compile flags for omniORB")
+  set(CHOREONOID_OMNIORB_DIR ${CHOREONOID_OMNIORB_DIR} CACHE PATH "The top directory of omniORB")
+  set(CHOREONOID_OMNIORB_CFLAGS ${CHOREONOID_OMNIORB_CFLAGS} CACHE STRING "Compile flags for omniORB")
 
-  if(NOT OMNIDYNAMIC_FOUND)
+  if(NOT CHOREONOID_OMNIORB_FOUND)
     message(FATAL_ERROR "CORBA-related modules require the omniORB library but the library is not found.")
   endif()
 
@@ -620,33 +638,7 @@ if(ENABLE_CORBA)
       FILES_MATCHING PATTERN "*.py")
   endif()
 
-  set(CHOREONOID_OMNIDYNAMIC_DIR ${OMNIDYNAMIC_DIR})
-
 endif(ENABLE_CORBA)
-
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
-
-if(UNIX)
-  option(PUT_EXTRA_WARNINGS "Put extra warnings in compile" OFF)
-  if(PUT_EXTRA_WARNINGS)
-    set(extra_warning_options "-Wunused -Woverloaded-virtual -Wsign-compare")
-    #set(extra_warning_options "-Wparentheses -Wformat=2 -Wformat-nonliteral -Wunknown-pragmas -Wunused-parameter -Wuninitialized -Winit-self -pedantic -Wconversion -Wno-variadic-macros -Wno-long-long -Wno-import -Wno-missing-braces")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ${extra_warning_options}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ${extra_warning_options}")
-  endif()
-
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wreturn-type")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wreturn-type")
-
-  option(CHECK_UNRESOLVED_SYMBOLS "check unresolved symbols in the object files when creating shared libraries" OFF)
-  if(CHECK_UNRESOLVED_SYMBOLS)
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,--warn-unresolved-symbols")
-  endif()
-
-elseif(MSVC)
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS _CRT_SECURE_NO_WARNINGS)
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS NOMINMAX _USE_MATH_DEFINES)
-endif()
 
 # Simulation profiling
 option(ENABLE_SIMULATION_PROFILING "Enable simulation plofiling" OFF)

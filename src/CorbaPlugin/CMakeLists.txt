@@ -31,4 +31,4 @@ target_link_libraries(${target} CnoidUtil CnoidCorba CnoidBase)
 
 # test program
 # add_cnoid_executable(corba-test test.cpp ${idl_cpp_files})
-# target_link_libraries(corba-test CnoidCorba ${OMNIDYNAMIC_LIBRARIES})
+# target_link_libraries(corba-test CnoidCorba ${CHOREONOID_OMNIORB_LIBRARIES})

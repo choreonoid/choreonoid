@@ -30,7 +30,8 @@ function(choreonoid_compile_corba_idl_to_cpp out_cpp_files out_h_files subdir)
       elseif(MSVC)
 	add_custom_command(
 	  OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp
-	  COMMAND for %%A in \("${CHOREONOID_OMNIDYNAMIC_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
+	  # The command path including spaces can only be invoked by the following variable expansion
+	  COMMAND for %%A in \("${CHOREONOID_OMNIORB_BINARY_DIR}"\) do %%~sA\\omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
 	  DEPENDS ${idl_files}
 	  COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
 	  )
@@ -77,7 +78,7 @@ function(choreonoid_compile_corba_idl_to_cpp out_cpp_files out_h_files subdir)
 	file(TO_NATIVE_PATH ${corba_dir} dest)
 	add_custom_command(
           OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp
-          COMMAND for %%A in \("${CHOREONOID_OMNIDYNAMIC_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
+          COMMAND for %%A in \("${CHOREONOID_OMNIORB_BINARY_DIR}"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
           COMMAND copy ${src} ${dest}
           DEPENDS ${idl_files}
           COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"

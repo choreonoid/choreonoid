@@ -18,13 +18,13 @@ set(headers
   )
 
 choreonoid_add_library(${target} SHARED ${sources} HEADERS ${headers})
-target_link_libraries(${target} ${OMNIDYNAMIC_LIBRARIES} fmt::fmt)
+target_link_libraries(${target} ${CHOREONOID_OMNIORB_LIBRARIES} fmt::fmt)
 
 # name server
 set(target cnoid-nameserver)
 choreonoid_compile_corba_idl_to_cpp(idl_cpp_files idl_h_files corba Naming LOCAL)
 choreonoid_add_executable(${target} NameServer.cpp CosNaming_impl.cpp ${idl_cpp_files})
-target_link_libraries(${target} ${OMNIDYNAMIC_LIBRARIES})
+target_link_libraries(${target} ${CHOREONOID_OMNIORB_LIBRARIES})
 
 if(UNIX)
   configure_file(reset-omninames.sh ${PROJECT_BINARY_DIR}/bin/reset-omninames.sh COPYONLY)
