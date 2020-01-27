@@ -62,7 +62,13 @@ function(choreonoid_add_library target)
   set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION_MAJOR}.${CHOREONOID_VERSION_MINOR})
   choreonoid_set_target_common_properties(${target})
 
-  if(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN AND (ARGV1 STREQUAL "STATIC"))
+  if(ARGV1 STREQUAL "STATIC")
+    set(is_static true)
+  else()
+    set(is_static false)
+  endif()
+
+  if(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN AND is_static)
     target_compile_options(${target} PRIVATE "-fPIC")
   endif()
 
@@ -71,13 +77,13 @@ function(choreonoid_add_library target)
     ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
-  if(CHOREONOID_ENABLE_INSTALL_RPATH)
+  if(CHOREONOID_ENABLE_INSTALL_RPATH AND (NOT is_static))
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
 
   choreonoid_set_header_files(${ARGN} INSTALL_HEADERS)
 
-  if(ARGV1 STREQUAL "STATIC")
+  if(is_static)
     if(CHOREONOID_INSTALL_SDK)
       install(TARGETS ${target}
 	LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
