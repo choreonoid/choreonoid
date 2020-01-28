@@ -493,9 +493,9 @@ Item* ItemManager::getSingletonInstance(const std::string& typeId)
 }
 
 
-ItemPtr ItemManager::create(const std::string& moduleName, const std::string& className)
+Item* ItemManager::createItem(const std::string& moduleName, const std::string& className)
 {
-    ItemPtr item;
+    Item* item = nullptr;
 
     ModuleNameToItemManagerImplMap::iterator p = moduleNameToItemManagerImplMap.find(moduleName);
     if(p != moduleNameToItemManagerImplMap.end()){
@@ -518,6 +518,36 @@ ItemPtr ItemManager::create(const std::string& moduleName, const std::string& cl
     }
 
     return item;
+}
+
+
+Item* ItemManager::createItemWithDialog_
+(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem)
+{
+    Item* newItem = nullptr;
+    
+    auto iter = typeIdToClassInfoMap.find(type.name());
+    if(iter == typeIdToClassInfoMap.end()){
+        showWarningDialog(format(_("Class {} is not registered as an item class."), type.name()));
+
+    } else {
+        auto& info = iter->second;
+        auto panel = info->creationPanelBase;
+        if(!panel){
+            showWarningDialog(format(_("The panel to create {} is not registered."), info->className));
+        } else {
+            if(!parentItem){
+                parentItem = RootItem::instance();
+            }
+            newItem = panel->createItem(parentItem);
+        }
+    }
+
+    if(newItem && doAddition){
+        parentItem->insertChildItem(newItem, nextItem);
+    }
+    
+    return newItem;
 }
 
 
@@ -609,30 +639,6 @@ void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
             parentItem->addChildItem(newItem, true);
         }
     }
-}
-
-
-Item* ItemManager::createNewItem_(const std::type_info& type, Item* parentItem)
-{
-    Item* newItem = nullptr;
-    
-    auto iter = typeIdToClassInfoMap.find(type.name());
-    if(iter == typeIdToClassInfoMap.end()){
-        showWarningDialog(format(_("Class {} is not registered as an item class."), type.name()));
-
-    } else {
-        auto& info = iter->second;
-        auto panel = info->creationPanelBase;
-        if(!panel){
-            showWarningDialog(format(_("The panel to create {} is not registered."), info->className));
-        } else {
-            if(!parentItem){
-                parentItem = RootItem::instance();
-            }
-            newItem = panel->createItem(parentItem);
-        }
-    }
-    return newItem;
 }
 
 

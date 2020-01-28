@@ -338,12 +338,11 @@ bool SensorVisualizerItem::restore(const Archive& archive)
             subArchive->read("class", className);
             subArchive->read("name", itemName);
 
-            ItemPtr item;
-            item = ItemManager::create("Body", className);
-            item->setName(itemName);
-
-            item->restore(*subArchive);
-            impl->restoredSubItems.push_back(item);
+            if(ItemPtr item = ItemManager::createItem("Body", className)){
+                item->setName(itemName);
+                item->restore(*subArchive);
+                impl->restoredSubItems.push_back(item);
+            }
         }
     }
     return true;

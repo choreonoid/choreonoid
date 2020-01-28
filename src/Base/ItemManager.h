@@ -126,8 +126,6 @@ public:
         return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType).name()));
     }
 
-    static ItemPtr create(const std::string& moduleName, const std::string& itemClassName);
-
     template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel = 0) {
         addCreationPanelSub(typeid(ItemType).name(), panel);
         return *this;
@@ -147,11 +145,6 @@ public:
             typeid(ItemType).name(),
             std::make_shared<CreationPanelFilter<ItemType>>(filter),
             true);
-    }
-
-    template <class ItemType>
-    static ItemType* createNewItem(Item* parentItem){
-        return static_cast<ItemType*>(createNewItem_(typeid(ItemType), parentItem));
     }
 
     template <class ItemType>
@@ -214,6 +207,19 @@ public:
     
     void addMenuItemToImport(const std::string& caption, std::function<void()> slot);
 
+    static Item* createItem(const std::string& moduleName, const std::string& itemClassName);
+
+    /**
+       Create a new item interactively using the corresponding dialog
+       @param parentItem The item that will be a parent of the new item.
+       @doAddition The created item is actually added to the parent item if this flag is true.
+       @nextItem The position to insert the created item can be specifid by this parameter.
+    */
+    template <class ItemType>
+    static ItemType* createItemWithDialog(Item* parentItem, bool doAddition = true, Item* nextItem = nullptr){
+        return static_cast<ItemType*>(createItemWithDialog_(typeid(ItemType), parentItem, doAddition, nextItem));
+    }
+
     static void reloadItems(const ItemList<>& items);
     static Item* findOriginalItemForReloadedItem(Item* item);
 
@@ -233,7 +239,7 @@ private:
 
     static Item* getSingletonInstance(const std::string& typeId);
 
-    static Item* createNewItem_(const std::type_info& type, Item* parentItem);
+    static Item* createItemWithDialog_(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem);
 
     // The following static functions are called from functions in the Item class
     static bool load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId);

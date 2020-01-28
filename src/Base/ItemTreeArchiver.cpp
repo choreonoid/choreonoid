@@ -285,7 +285,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
 
     const char* actualPluginName = PluginManager::instance()->guessActualPluginName(pluginName);
     if(actualPluginName){
-        item = ItemManager::create(actualPluginName, className);
+        item = ItemManager::createItem(actualPluginName, className);
     } else {
         io_isOptional = (pOptionalPlugins->find(pluginName) != pOptionalPlugins->end());
         if(!io_isOptional){
