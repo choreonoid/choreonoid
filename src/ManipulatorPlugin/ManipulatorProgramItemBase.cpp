@@ -3,6 +3,7 @@
 #include "ManipulatorPositionList.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
+#include <cnoid/ControllerItem>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
@@ -20,6 +21,7 @@ public:
     ManipulatorProgramPtr program;
     BodyItem* targetBodyItem;
     LinkKinematicsKitPtr kinematicsKit;
+    bool isStartupProgram;
 
     Impl(ManipulatorProgramItemBase* self);
     Impl(ManipulatorProgramItemBase* self, const Impl& org);
@@ -48,6 +50,7 @@ ManipulatorProgramItemBase::Impl::Impl(ManipulatorProgramItemBase* self)
     program = new ManipulatorProgram;
     setupSignalConnections();
     targetBodyItem = nullptr;
+    isStartupProgram = false;
 }
 
 
@@ -64,6 +67,7 @@ ManipulatorProgramItemBase::Impl::Impl(ManipulatorProgramItemBase* self, const I
     program = org.program->clone();
     setupSignalConnections();
     targetBodyItem = nullptr;
+    isStartupProgram = false;
 }
 
 
@@ -108,6 +112,17 @@ void ManipulatorProgramItemBase::onPositionChanged()
     auto ownerBodyItem = findOwnerItem<BodyItem>();
     if(ownerBodyItem != impl->targetBodyItem){
         impl->setTargetBodyItem(ownerBodyItem);
+    }
+    if(impl->isStartupProgram){
+        if(auto controller = findOwnerItem<ControllerItem>()){
+            auto startupProgram =
+                controller->findItem<ManipulatorProgramItemBase>(
+                    [this](ManipulatorProgramItemBase* item){
+                        return item != this && item->isStartupProgram(); });
+            if(startupProgram){
+                setAsStartupProgram(false);
+            }
+        }
     }
 }
 
@@ -154,6 +169,42 @@ const ManipulatorProgram* ManipulatorProgramItemBase::program() const
 }
 
 
+bool ManipulatorProgramItemBase::isStartupProgram() const
+{
+    return impl->isStartupProgram;
+}
+
+
+bool ManipulatorProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
+{
+    if(on != impl->isStartupProgram){
+        if(!on){
+            impl->isStartupProgram = false;
+        } else {
+            if(!parentItem()){
+                impl->isStartupProgram = on;
+            } else {
+                if(auto controller = findOwnerItem<ControllerItem>()){
+                    // Reset existing startup program
+                    auto startupProgram =
+                        controller->findItem<ManipulatorProgramItemBase>(
+                            [this](ManipulatorProgramItemBase* item){
+                                return item != this && item->isStartupProgram(); });
+                    if(startupProgram){
+                        startupProgram->setAsStartupProgram(false);
+                    }
+                }
+                impl->isStartupProgram = true;
+            }
+        }
+        if(on == impl->isStartupProgram){
+            notifyUpdate();
+        }
+    }
+    return (on == impl->isStartupProgram);
+}
+
+
 void ManipulatorProgramItemBase::notifyUpdate()
 {
     Item::notifyUpdate();
@@ -163,6 +214,8 @@ void ManipulatorProgramItemBase::notifyUpdate()
 
 void ManipulatorProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
 {
+    putProperty(_("Startup"), impl->isStartupProgram,
+                [&](bool on){ return setAsStartupProgram(on); });
     putProperty(_("Num statements"), impl->program->numStatements());
     putProperty(_("Num positions"), impl->program->positions()->numPositions());
 }
@@ -173,6 +226,9 @@ bool ManipulatorProgramItemBase::store(Archive& archive)
     if(overwrite()){
         archive.writeRelocatablePath("filename", filePath());
         archive.write("format", fileFormat());
+        if(impl->isStartupProgram){
+            archive.write("isStartupProgram", true);
+        }
         return true;
     }
     return true;
@@ -181,5 +237,9 @@ bool ManipulatorProgramItemBase::store(Archive& archive)
 
 bool ManipulatorProgramItemBase::restore(const Archive& archive)
 {
-    return archive.loadItemFile(this, "filename", "format");
+    if(archive.loadItemFile(this, "filename", "foramat")){
+        setAsStartupProgram(archive.get("isStartupProgram", false));
+        return true;
+    }
+    return false;
 }

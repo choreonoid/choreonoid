@@ -151,6 +151,17 @@ public:
                 path, [](Item* item) -> bool { return dynamic_cast<ItemType*>(item); }, false, false));
     }
 
+    template<class ItemType>
+    ItemType* findItem(const std::function<bool(ItemType* item)>& pred) const {
+        return static_cast<ItemType*>(
+            findItem(
+                "",
+                [pred](Item* item) -> bool {
+                    if(auto casted = dynamic_cast<ItemType*>(item)){ return pred(casted); }
+                    return false; },
+                false, false));
+    }
+    
     /**
        Find an item that has the corresponding path from a child item to it
     */

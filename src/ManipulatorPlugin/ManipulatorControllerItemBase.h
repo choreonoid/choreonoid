@@ -44,13 +44,13 @@ protected:
               used in the controller. The instance returned by the getManipulatorProgram
               function can be used instead of it.
     */
-    ManipulatorProgramItemBase* getProgramItem();
+    ManipulatorProgramItemBase* getStartupProgramItem();
 
     /**
        This function returns the program instance cloned by the controller
        for the purpose of control.
     */
-    ManipulatorProgram* getMainProgram();
+    ManipulatorProgram* getStartupProgram();
 
     ManipulatorProgram* getCurrentProgram();
     ManipulatorProgram::iterator getCurrentIterator();

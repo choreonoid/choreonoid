@@ -87,8 +87,8 @@ class ManipulatorControllerItemBase::Impl
 public:
     ManipulatorControllerItemBase* self;
     ControllerIO* io;
-    ManipulatorProgramItemBasePtr programItem;
-    ManipulatorProgramPtr mainProgram;
+    ManipulatorProgramItemBasePtr startupProgramItem;
+    ManipulatorProgramPtr startupProgram;
     ManipulatorProgramPtr currentProgram;
     unordered_map<string, ManipulatorProgramPtr> otherProgramMap;
     CloneMap cloneMap;
@@ -271,39 +271,36 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
     clear();
     
     auto programItems = self->descendantItems<ManipulatorProgramItemBase>();
-    
+
     if(programItems.empty()){
-        mv->putln(
-            MessageView::ERROR,
-            format(_("Any program item for {} is not found."), self->name()));
+        mv->putln(format(_("Any program item for {} is not found."),
+                         self->name()), MessageView::ERROR);
         return false;
     }
-
-    programItem = programItems.front();
     
-    // find the first checked item
-    for(size_t i=0; i < programItems.size(); ++i){
-        if(programItems[i]->isChecked()){
-            programItem = programItems[i];
+    startupProgramItem = programItems.front();
+    for(auto& programItem : programItems){
+        if(programItem->isStartupProgram()){
+            startupProgramItem = programItem;
             break;
         }
     }
-
-    mainProgram = cloneMap.getClone(programItem->program());
-    currentProgram = mainProgram;
+            
+    startupProgram = cloneMap.getClone(startupProgramItem->program());
+    currentProgram = startupProgram;
 
     if(!createKinematicsKitForControl()){
         return false;
     }
 
     for(auto& item : programItems){
-        if(item != programItem){
+        if(item != startupProgramItem){
             auto program = cloneMap.getClone(item->program());
             otherProgramMap.insert(make_pair(item->name(), program));
         }
     }
     
-    variables = createVariableSet(programItem);
+    variables = createVariableSet(startupProgramItem);
 
     iterator = currentProgram->begin();
 
@@ -318,7 +315,7 @@ bool ManipulatorControllerItemBase::Impl::initialize(ControllerIO* io)
 
 bool ManipulatorControllerItemBase::Impl::createKinematicsKitForControl()
 {
-    auto orgKit = programItem->kinematicsKit();
+    auto orgKit = startupProgramItem->kinematicsKit();
 
     if(!orgKit->baseLink()){
         return false;
@@ -445,15 +442,15 @@ bool ManipulatorControllerItemBase::onInitialize(ControllerIO* /* io */)
 }
 
 
-ManipulatorProgramItemBase* ManipulatorControllerItemBase::getProgramItem()
+ManipulatorProgramItemBase* ManipulatorControllerItemBase::getStartupProgramItem()
 {
-    return impl->programItem;
+    return impl->startupProgramItem;
 }
 
 
-ManipulatorProgram* ManipulatorControllerItemBase::getMainProgram()
+ManipulatorProgram* ManipulatorControllerItemBase::getStartupProgram()
 {
-    return impl->mainProgram;
+    return impl->startupProgram;
 }
 
 
@@ -681,8 +678,8 @@ void ManipulatorControllerItemBase::onDisconnectedFromRoot()
 
 void ManipulatorControllerItemBase::Impl::clear()
 {
-    programItem.reset();
-    mainProgram.reset();
+    startupProgramItem.reset();
+    startupProgram.reset();
     currentProgram.reset();
     cloneMap.clear();
     kinematicsKit.reset();
