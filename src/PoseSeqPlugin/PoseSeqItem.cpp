@@ -90,7 +90,7 @@ void PoseSeqItem::initializeClass(ExtensionManager* ext)
             return item->poseSeq()->exportSeqFileForFaceController(filename); },
         ItemManager::PRIORITY_CONVERSION);
 
-    ItemTreeView::instance()->setContextMenuFunctionFor<PoseSeqItem>(
+    ItemTreeView::instance()->customizeContextMenu<PoseSeqItem>(
         [](PoseSeqItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.addItem(_("Generate"))->sigTriggered().connect([item](){ item->updateTrajectory(true); });
             menuManager.addSeparator();

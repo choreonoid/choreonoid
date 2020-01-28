@@ -53,7 +53,7 @@ public:
             });
     }
 
-    class Display {
+    class CNOID_EXPORT Display {
     public:
         QBrush foreground() const;
         void setForeground(const QBrush& brush);
