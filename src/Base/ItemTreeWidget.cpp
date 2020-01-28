@@ -600,8 +600,10 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
     if(!findOrCreateLocalRootItem(false)){
         return;
     }
+
+    bool isVisible = item->isOwnedBy(localRootItem) && isVisibleItem(item, isTopLevelItemCandidate);
     
-    if(!isVisibleItem(item, isTopLevelItemCandidate)){
+    if(!isVisible){
         if(!isTopLevelItemCandidate){
             parentTwItem = nullptr;
         }
@@ -617,14 +619,12 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         } else {
             parentTwItem->addChild(itwItem);
         }
-
         if(projectLoadingWithItemExpansionInfoStack.empty() ||
            !projectLoadingWithItemExpansionInfoStack.top()){
             if(!parentTwItem->isExpanded() && !item->isSubItem()){
                 parentTwItem->setExpanded(true);
             }
         }
-
         isTopLevelItemCandidate = false;
         parentTwItem = itwItem;
     }
