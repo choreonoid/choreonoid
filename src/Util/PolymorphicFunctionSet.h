@@ -121,6 +121,17 @@ public:
         return functionId;
     }
 
+    bool hasFunctionFor(ObjectBase* obj)
+    {
+        auto id = obj->classId();
+        if(id >= validDispatchTableSize){
+            if(!updateDispatchTable(id)){
+                return false;
+            }
+        }
+        return dispatchTable[id] != nullptr;
+    }
+
     inline void dispatch(ObjectBase* obj, const int id)
     {
         if(id >= validDispatchTableSize){

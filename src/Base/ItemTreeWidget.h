@@ -7,6 +7,8 @@
 #include <functional>
 #include "exportdecl.h"
 
+class QTreeWidgetItem;
+
 namespace cnoid {
 
 class Item;
@@ -17,6 +19,8 @@ class Archive;
 class CNOID_EXPORT ItemTreeWidget : public QWidget
 {
 public:
+    class Impl;
+
     ItemTreeWidget(QWidget* parent = nullptr);
     ~ItemTreeWidget();
 
@@ -39,12 +43,47 @@ public:
 
     void setDragDropEnabled(bool on);
     void setCheckColumnShown(bool on);
-    void setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItemCandidate)> pred);
 
     template<class ItemType>
-    void setContextMenuFunctionFor(
+    void customizeVisibility(std::function<bool(ItemType* item, bool isTopLevelItemCandidate)> func){
+        customizeVisibility_(
+            typeid(ItemType),
+            [func](Item* item, bool isTopLevelItemCandidate){
+                return func(static_cast<ItemType*>(item), isTopLevelItemCandidate);
+            });
+    }
+
+    class Display {
+    public:
+        QBrush foreground() const;
+        void setForeground(const QBrush& brush);
+        QBrush background() const;
+        void setBackground(const QBrush& brush);
+        QFont font() const;
+        void setFont(const QFont& font);
+        QIcon icon() const;
+        void setIcon(const QIcon& icon);
+        void setText(const std::string& text);
+        void setToolTip(const std::string& toolTip);
+        void setStatusTip(const std::string& statusTip);
+    private:
+        QTreeWidgetItem* item;
+        friend class Impl;
+    };
+
+    template<class ItemType>
+    void customizeDisplay(std::function<void(ItemType* item, Display& display)> func){
+        customizeDisplay_(
+            typeid(ItemType),
+            [func](Item* item, Display& display){
+                return func(static_cast<ItemType*>(item), display);
+            });
+    }
+
+    template<class ItemType>
+    void customizeContextMenu(
         std::function<void(ItemType* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func){
-        setContextMenuFunctionFor(
+        customizeContextMenu_(
             typeid(ItemType),
             [func](Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
                 func(static_cast<ItemType*>(item), menuManager, menuFunction);
@@ -70,10 +109,12 @@ public:
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 
-    class Impl;
-
 private:
-    void setContextMenuFunctionFor(
+    void customizeVisibility_(
+        const std::type_info& type, std::function<bool(Item* item, bool isTopLevelItemCandidate)> func);
+    void customizeDisplay_(
+        const std::type_info& type, std::function<void(Item* item, Display& display)> func);
+    void customizeContextMenu_(
         const std::type_info& type,
         std::function<void(Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func);
     

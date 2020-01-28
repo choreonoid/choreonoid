@@ -26,9 +26,9 @@ public:
     ItemTreeWidget* itemTreeWidget();
 
     template<class ItemType>
-    void setContextMenuFunctionFor(
+    void customizeContextMenu(
         std::function<void(ItemType* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func){
-        itemTreeWidget()->setContextMenuFunctionFor(func);
+        itemTreeWidget()->customizeContextMenu(func);
     }
 
     /*

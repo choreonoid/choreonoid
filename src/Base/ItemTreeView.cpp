@@ -60,7 +60,7 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     vbox->addWidget(itemTreeWidget);
     self->setLayout(vbox);
 
-    itemTreeWidget->setContextMenuFunctionFor<Item>(
+    itemTreeWidget->customizeContextMenu<Item>(
         [&](Item* item, MenuManager& menuManager, ItemFunctionDispatcher){
             onContextMenuRequested(item, menuManager); });
 }

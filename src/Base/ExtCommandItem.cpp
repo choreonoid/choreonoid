@@ -26,7 +26,7 @@ void ExtCommandItem::initializeClass(ExtensionManager* ext)
     im.registerClass<ExtCommandItem>(N_("ExtCommandItem"));
     im.addCreationPanel<ExtCommandItem>();
 
-    ItemTreeView::instance()->setContextMenuFunctionFor<ExtCommandItem>(
+    ItemTreeView::instance()->customizeContextMenu<ExtCommandItem>(
         [](ExtCommandItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.addItem(_("Execute"))->sigTriggered().connect([item](){ item->execute(); });
             menuManager.addItem(_("Terminate"))->sigTriggered().connect([item](){ item->terminate(); });

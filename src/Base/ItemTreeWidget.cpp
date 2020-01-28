@@ -29,6 +29,7 @@ public:
     ItemTreeWidget::Impl* widgetImpl;
     ScopedConnection itemSelectionConnection;
     ScopedConnection itemCheckConnection;
+    ScopedConnection displayUpdateConnection;
     bool isExpandedBeforeRemoving;
 
     ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl);
@@ -67,7 +68,12 @@ public:
     bool isCheckColumnShown;
     bool isDropping;
 
-    function<bool(Item* item, bool isTopLevelItemCandidate)> isVisibleItem;
+    PolymorphicItemFunctionSet  visibilityFunctions;
+    bool visibilityFunction_isTopLevelItemCandidate;
+    bool visibilityFunction_result;
+
+    PolymorphicItemFunctionSet  displayFunctions;
+    Display itemDisplay;
 
     ProjectManager* projectManager;
     ScopedConnectionSet projectManagerConnections;
@@ -77,7 +83,7 @@ public:
     MenuManager menuManager;
     int fontPointSizeDiff;
 
-    PolymorphicItemFunctionSet contextMenuFunctions;
+    PolymorphicItemFunctionSet  contextMenuFunctions;
 
     Impl(ItemTreeWidget* self);
     ~Impl();
@@ -95,6 +101,7 @@ public:
     void registerTopLevelItem(Item* item);
     bool registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
     void unregisterTopLevelItem(Item* item);
+    void updateItemDisplay(ItwItem* itwItem);
     void insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItemCandidate);
     ItwItem* findNextItwItem(Item* item, bool isTopLevelItem);
     ItwItem* findNextItwItemInSubTree(Item* item, bool doTraverse);
@@ -138,6 +145,62 @@ public:
 }
 
 
+QBrush ItemTreeWidget::Display::foreground() const
+{
+    return item->foreground(0);
+}
+
+void ItemTreeWidget::Display::setForeground(const QBrush& brush)
+{
+    item->setForeground(0, brush);
+}
+
+QBrush ItemTreeWidget::Display::background() const
+{
+    return item->background(0);
+}
+    
+void ItemTreeWidget::Display::setBackground(const QBrush& brush)
+{
+    item->setBackground(0, brush);
+}
+
+QFont ItemTreeWidget::Display::font() const
+{
+    return item->font(0);
+}
+
+void ItemTreeWidget::Display::setFont(const QFont& font)
+{
+    item->setFont(0, font);
+}
+
+QIcon ItemTreeWidget::Display::icon() const
+{
+    return item->icon(0);
+}
+
+void ItemTreeWidget::Display::setIcon(const QIcon& icon)
+{
+    item->setIcon(0, icon);
+}
+
+void ItemTreeWidget::Display::setText(const std::string& text)
+{
+    item->setText(0, text.c_str());
+}
+
+void ItemTreeWidget::Display::setToolTip(const std::string& toolTip)
+{
+    item->setText(0, toolTip.c_str());
+}
+
+void ItemTreeWidget::Display::setStatusTip(const std::string& statusTip)
+{
+    item->setStatusTip(0, statusTip.c_str());
+}
+
+
 ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     : item(item),
       widgetImpl(widgetImpl)
@@ -176,6 +239,13 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     }
 
     isExpandedBeforeRemoving = false;
+
+    if(widgetImpl->displayFunctions.hasFunctionFor(item)){
+        widgetImpl->updateItemDisplay(this);
+        displayUpdateConnection =
+            item->sigUpdated().connect(
+                [this](){ this->widgetImpl->updateItemDisplay(this); });
+    }
 }
 
 
@@ -327,7 +397,6 @@ void ItemTreeWidget::Impl::initialize()
             [&](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
 
     isProcessingSlotOnlocalRootItemPositionChanged = false;
-    isVisibleItem = [&](Item*, bool){ return true; };
     
     fontPointSizeDiff = 0;
 }
@@ -443,10 +512,24 @@ void ItemTreeWidget::Impl::setCheckColumnShown(int column, bool on)
     }
 }
             
-        
-void ItemTreeWidget::setVisibleItemPredicate(std::function<bool(Item* item, bool isTopLevelItemCandidate)> pred)
+
+void ItemTreeWidget::customizeVisibility_
+(const std::type_info& type, std::function<bool(Item* item, bool isTopLevelItemCandidate)> func)
 {
-    impl->isVisibleItem = pred;
+    impl->visibilityFunctions.setFunction(
+        type,
+        [this, func](Item* item){
+            impl->visibilityFunction_result =
+                func(item, impl->visibilityFunction_isTopLevelItemCandidate); });
+}
+
+
+void ItemTreeWidget::customizeDisplay_
+(const std::type_info& type, std::function<void(Item* item, Display& display)> func)
+{
+    impl->displayFunctions.setFunction(
+        type,
+        [this, func](Item* item){ func(item, impl->itemDisplay); });
 }
 
 
@@ -595,13 +678,25 @@ void ItemTreeWidget::Impl::unregisterTopLevelItem(Item* item)
 }
  
 
+void ItemTreeWidget::Impl::updateItemDisplay(ItwItem* itwItem)
+{
+    itemDisplay.item = itwItem;
+    displayFunctions.dispatch(itwItem->item);
+}
+
+
 void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItemCandidate)
 {
     if(!findOrCreateLocalRootItem(false)){
         return;
     }
 
-    bool isVisible = item->isOwnedBy(localRootItem) && isVisibleItem(item, isTopLevelItemCandidate);
+    bool isVisible = item->isOwnedBy(localRootItem);
+    if(isVisible){
+        visibilityFunction_isTopLevelItemCandidate = isTopLevelItemCandidate;
+        visibilityFunctions.dispatch(item);
+        isVisible = visibilityFunction_result;
+    }
     
     if(!isVisible){
         if(!isTopLevelItemCandidate){
@@ -1205,7 +1300,7 @@ void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
 }
 
 
-void ItemTreeWidget::setContextMenuFunctionFor
+void ItemTreeWidget::customizeContextMenu_
 (const std::type_info& type,
  std::function<void(Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func)
 {

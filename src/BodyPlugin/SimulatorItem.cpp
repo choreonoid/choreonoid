@@ -486,7 +486,7 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
     ext->itemManager().registerAbstractClass<SimulatorItem>();
     ext->manage(new SimulatedMotionEngineManager());
 
-    ItemTreeView::instance()->setContextMenuFunctionFor<SimulatorItem>(
+    ItemTreeView::instance()->customizeContextMenu<SimulatorItem>(
         [](SimulatorItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.setPath("/").setPath(_("Simulation"));
             menuManager.addItem(_("Start"))->sigTriggered().connect(
