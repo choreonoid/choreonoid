@@ -17,7 +17,6 @@
 namespace cnoid {
 
 class BodyState;
-class BodyItemImpl;
 class LinkKinematicsKit;
 class InverseKinematics;
 class PinDragIK;
@@ -37,6 +36,9 @@ public:
     Body* body() const;
     void setBody(Body* body);
     virtual void setName(const std::string& name) override;
+
+    bool makeBodyStatic();
+    bool makeBodyDynamic();
 
     //! \deprecated. Use EditableSceneBody::isDraggable().
     bool isEditable() const;
@@ -149,6 +151,8 @@ public:
     EditableSceneBody* sceneBody();
     EditableSceneBody* existingSceneBody();
 
+    class Impl;
+
 protected:
     virtual Item* doDuplicate() const override;
     virtual void doAssign(Item* item) override;
@@ -158,13 +162,13 @@ protected:
     virtual bool restore(const Archive& archive) override;
             
 private:
-    friend class BodyItemImpl;
-    friend class PyBodyPlugin;
-    BodyItemImpl* impl;
+    Impl* impl;
     std::vector<CollisionLinkPairPtr> collisions_;
     std::vector<bool> collisionLinkBitSet_;
     std::vector<std::vector<CollisionLinkPairPtr>> collisionsOfLink_;
     Signal<void()> sigCollisionsUpdated_;
+
+    friend class PyBodyPlugin;
 };
 
 typedef ref_ptr<BodyItem> BodyItemPtr;

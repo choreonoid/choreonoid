@@ -63,11 +63,11 @@ struct BodyAttachment {
 class MyCompositeBodyIK : public CompositeBodyIK
 {
 public:
-    MyCompositeBodyIK(BodyItemImpl* bodyItemImpl);
+    MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl);
     virtual bool calcInverseKinematics(const Position& T) override;
     virtual std::shared_ptr<InverseKinematics> getParentBodyIK() override;
 
-    BodyItemImpl* bodyItemImpl;
+    BodyItem::Impl* bodyItemImpl;
     unique_ptr<BodyAttachment>& bodyAttachment;
     shared_ptr<InverseKinematics> holderIK;
 };
@@ -76,7 +76,7 @@ public:
 
 namespace cnoid {
 
-class BodyItemImpl
+class BodyItem::Impl
 {
 public:
     BodyItem* self;
@@ -108,8 +108,6 @@ public:
     bool isCurrentKinematicStateInHistory;
     bool needToAppendKinematicStateToHistory;
 
-    bool isOriginalModelStatic;
-
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
     bool isSceneBodyDraggableByDefault;
@@ -121,14 +119,16 @@ public:
     LeggedBodyHelperPtr legged;
     Vector3 zmp;
 
-    BodyItemImpl(BodyItem* self);
-    BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
-    BodyItemImpl(BodyItem* self, Body* body);
-    ~BodyItemImpl();
+    Impl(BodyItem* self);
+    Impl(BodyItem* self, const Impl& org);
+    Impl(BodyItem* self, Body* body);
+    ~Impl();
     void init(bool calledFromCopyConstructor);
     void initBody(bool calledFromCopyConstructor);
     bool loadModelFile(const std::string& filename);
     void setBody(Body* body);
+    bool makeBodyStatic(bool makeAllJointsFixed = false);
+    bool makeBodyDynamic();
     void setCurrentBaseLink(Link* link, bool forceUpdate = false);
     void appendKinematicStateToHistory();
     bool undoKinematicState();
@@ -149,7 +149,6 @@ public:
     bool enableSelfCollisionDetection(bool on);
     void updateCollisionDetectorLater();
     void doAssign(Item* srcItem);
-    bool onStaticModelPropertyChanged(bool on);
     void createSceneBody();
     bool isSceneBodyDraggable() const;
     void setSceneBodyDraggable(bool on, bool doNotify);
@@ -225,13 +224,13 @@ void BodyItem::initializeClass(ExtensionManager* ext)
 
 BodyItem::BodyItem()
 {
-    impl = new BodyItemImpl(this);
+    impl = new Impl(this);
     impl->init(false);
 }
     
 
-BodyItemImpl::BodyItemImpl(BodyItem* self)
-    : BodyItemImpl(self, new Body)
+BodyItem::Impl::Impl(BodyItem* self)
+    : Impl(self, new Body)
 {
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
@@ -242,13 +241,13 @@ BodyItemImpl::BodyItemImpl(BodyItem* self)
 BodyItem::BodyItem(const BodyItem& org)
     : Item(org)
 {
-    impl = new BodyItemImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
     impl->init(true);
 }
 
 
-BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
-    : BodyItemImpl(self, org.body->clone())
+BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
+    : Impl(self, org.body->clone())
 {
     if(org.currentBaseLink){
         setCurrentBaseLink(body->link(org.currentBaseLink->index()), true);
@@ -257,7 +256,6 @@ BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
     }
         
     zmp = org.zmp;
-    isOriginalModelStatic = org.isOriginalModelStatic;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
     isSceneBodyDraggableByDefault = org.isSceneBodyDraggableByDefault;
@@ -266,7 +264,7 @@ BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
 }
 
 
-BodyItemImpl::BodyItemImpl(BodyItem* self, Body* body)
+BodyItem::Impl::Impl(BodyItem* self, Body* body)
     : self(self),
       body(body),
       sigKinematicStateChanged([&](){ emitSigKinematicStateChanged(); }),
@@ -282,13 +280,13 @@ BodyItem::~BodyItem()
 }
 
 
-BodyItemImpl::~BodyItemImpl()
+BodyItem::Impl::~Impl()
 {
 
 }
 
 
-void BodyItemImpl::init(bool calledFromCopyConstructor)
+void BodyItem::Impl::init(bool calledFromCopyConstructor)
 {
     self->setAttribute(Item::LOAD_ONLY);
     
@@ -303,7 +301,7 @@ void BodyItemImpl::init(bool calledFromCopyConstructor)
 }
 
 
-void BodyItemImpl::initBody(bool calledFromCopyConstructor)
+void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
 {
     if(pinDragIK){
         pinDragIK.reset();
@@ -314,8 +312,6 @@ void BodyItemImpl::initBody(bool calledFromCopyConstructor)
     self->collisionsOfLink_.resize(n);
     self->collisionLinkBitSet_.resize(n);
     
-    isOriginalModelStatic = body->isStaticModel();
-
     if(!calledFromCopyConstructor){
         setCurrentBaseLink(nullptr, true);
         zmp.setZero();
@@ -330,7 +326,7 @@ bool BodyItem::loadModelFile(const std::string& filename)
 }
 
 
-bool BodyItemImpl::loadModelFile(const std::string& filename)
+bool BodyItem::Impl::loadModelFile(const std::string& filename)
 {
     bodyLoader.setMessageSink(MessageView::instance()->cout());
 
@@ -366,7 +362,7 @@ void BodyItem::setBody(Body* body)
 }
 
 
-void BodyItemImpl::setBody(Body* body_)
+void BodyItem::Impl::setBody(Body* body_)
 {
     body = body_;
     body->initializePosition();
@@ -381,6 +377,73 @@ void BodyItem::setName(const std::string& name)
         impl->body->setName(name);
     }
     Item::setName(name);
+}
+
+
+bool BodyItem::makeBodyStatic()
+{
+    return impl->makeBodyStatic(false);
+}
+
+
+bool BodyItem::Impl::makeBodyStatic(bool makeAllJointsFixed)
+{
+    bool isStatic = body->isStaticModel();
+    if(!isStatic){
+        bool hasMovableJoint = false;
+        if(body->numLinks() > 1){
+            if(makeAllJointsFixed){
+                for(auto& link : body->links()){
+                    link->setJointType(Link::FixedJoint);
+                }
+            } else {
+                for(auto& link : body->links()){
+                    if(!link->isFixedJoint()){
+                        hasMovableJoint = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if(!hasMovableJoint){
+            body->rootLink()->setJointType(Link::FIXED_JOINT);
+            body->updateLinkTree();
+            isStatic = true;
+        }
+    }
+    return isStatic;
+}
+     
+    
+bool BodyItem::makeBodyDynamic()
+{
+    return impl->makeBodyDynamic();
+}
+
+
+bool BodyItem::Impl::makeBodyDynamic()
+{
+    bool isDynamic = !body->isStaticModel();
+    if(!isDynamic){
+        bool hasFixedJoint = false;
+        if(body->numLinks() > 1){
+            for(auto& link : body->links()){
+                if(link->isFixedJoint()){
+                    hasFixedJoint = true;
+                    break;
+                }
+            }
+        }
+        // If the body has a fixed joint, the conversion to the dynamic
+        // model is impossible because which joint type shoulde be used
+        // for each fixed joint is unkown.
+        if(!hasFixedJoint){
+            body->rootLink()->setJointType(Link::FREE_JOINT);
+            body->updateLinkTree();
+            isDynamic = true;
+        }
+    }
+    return isDynamic;
 }
 
 
@@ -432,7 +495,7 @@ void BodyItem::setCurrentBaseLink(Link* link)
 }
 
 
-void BodyItemImpl::setCurrentBaseLink(Link* link, bool forceUpdate)
+void BodyItem::Impl::setCurrentBaseLink(Link* link, bool forceUpdate)
 {
     if(link != currentBaseLink || forceUpdate){
         if(link){
@@ -524,7 +587,7 @@ void BodyItem::beginKinematicStateEdit()
 }
 
 
-void BodyItemImpl::appendKinematicStateToHistory()
+void BodyItem::Impl::appendKinematicStateToHistory()
 {
     if(TRACE_FUNCTIONS){
         cout << "BodyItem::appendKinematicStateToHistory()" << endl;
@@ -590,7 +653,7 @@ bool BodyItem::undoKinematicState()
 }
 
 
-bool BodyItemImpl::undoKinematicState()
+bool BodyItem::Impl::undoKinematicState()
 {
     bool done = false;
     bool modified = false;
@@ -632,7 +695,7 @@ bool BodyItem::redoKinematicState()
 }
 
 
-bool BodyItemImpl::redoKinematicState()
+bool BodyItem::Impl::redoKinematicState()
 {
     if(currentHistoryIndex + 1 < kinematicStateHistory.size()){
         self->restoreKinematicState(*kinematicStateHistory[++currentHistoryIndex]);
@@ -645,7 +708,7 @@ bool BodyItemImpl::redoKinematicState()
 }
 
 
-LinkKinematicsKitManager* BodyItemImpl::getOrCreateLinkKinematicsKitManager()
+LinkKinematicsKitManager* BodyItem::Impl::getOrCreateLinkKinematicsKitManager()
 {
     if(!linkKinematicsKitManager){
         linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
@@ -661,7 +724,7 @@ LinkKinematicsKit* BodyItem::getLinkKinematicsKit(Link* targetLink, Link* baseLi
 }
 
 
-LinkKinematicsKit* BodyItemImpl::getLinkKinematicsKit(Link* targetLink, Link* baseLink)
+LinkKinematicsKit* BodyItem::Impl::getLinkKinematicsKit(Link* targetLink, Link* baseLink)
 {
     LinkKinematicsKit* kit = nullptr;
 
@@ -698,7 +761,7 @@ std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 }
 
 
-std::shared_ptr<InverseKinematics> BodyItemImpl::getCurrentIK(Link* targetLink)
+std::shared_ptr<InverseKinematics> BodyItem::Impl::getCurrentIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;
     
@@ -738,7 +801,7 @@ std::shared_ptr<InverseKinematics> BodyItem::getDefaultIK(Link* targetLink)
 }
 
 
-std::shared_ptr<InverseKinematics> BodyItemImpl::getDefaultIK(Link* targetLink)
+std::shared_ptr<InverseKinematics> BodyItem::Impl::getDefaultIK(Link* targetLink)
 {
     if(!targetLink){
         return nullptr;
@@ -785,7 +848,7 @@ std::shared_ptr<PenetrationBlocker> BodyItem::createPenetrationBlocker(Link* lin
 }
 
 
-void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker)
+void BodyItem::Impl::createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker)
 {
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){
@@ -821,7 +884,7 @@ void BodyItem::setPresetPose(PresetPoseID id)
 }
 
 
-void BodyItemImpl::setPresetPose(BodyItem::PresetPoseID id)
+void BodyItem::Impl::setPresetPose(BodyItem::PresetPoseID id)
 {
     int jointIndex = 0;
 
@@ -852,9 +915,9 @@ void BodyItemImpl::setPresetPose(BodyItem::PresetPoseID id)
 
 const Vector3& BodyItem::centerOfMass()
 {
-    if(!impl->updateFlags.test(BodyItemImpl::UF_CM)){
+    if(!impl->updateFlags.test(BodyItem::Impl::UF_CM)){
         impl->body->calcCenterOfMass();
-        impl->updateFlags.set(BodyItemImpl::UF_CM);
+        impl->updateFlags.set(BodyItem::Impl::UF_CM);
     }
 
     return impl->body->centerOfMass();
@@ -878,7 +941,7 @@ bool BodyItem::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor)
 }
 
 
-bool BodyItemImpl::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor)
+bool BodyItem::Impl::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor)
 {
     bool result = false;
 
@@ -909,7 +972,7 @@ bool BodyItem::setStance(double width)
 }
 
 
-bool BodyItemImpl::setStance(double width)
+bool BodyItem::Impl::setStance(double width)
 {
     bool result = false;
     
@@ -941,7 +1004,7 @@ stdx::optional<Vector3> BodyItem::getParticularPosition(PositionType position)
 }
 
 
-void BodyItemImpl::getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos)
+void BodyItem::Impl::getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos)
 {
     if(position == BodyItem::ZERO_MOMENT_POINT){
         pos = zmp;
@@ -987,7 +1050,7 @@ void BodyItem::editZmp(const Vector3& zmp)
 }
 
 
-void BodyItemImpl::notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect)
+void BodyItem::Impl::notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect)
 {
     if(!isCallingSlotsOnKinematicStateEdited){
         isCurrentKinematicStateInHistory = false;
@@ -1015,7 +1078,7 @@ void BodyItemImpl::notifyKinematicStateChange(bool requestFK, bool requestVelFK,
 }
 
 
-void BodyItemImpl::emitSigKinematicStateChanged()
+void BodyItem::Impl::emitSigKinematicStateChanged()
 {
     if(isFkRequested){
         fkTraverse.calcForwardKinematics(isVelFkRequested, isAccFkRequested);
@@ -1059,7 +1122,7 @@ void BodyItem::notifyKinematicStateChangeLater
 }
 
 
-void BodyItemImpl::emitSigKinematicStateEdited()
+void BodyItem::Impl::emitSigKinematicStateEdited()
 {
     isCallingSlotsOnKinematicStateEdited = true;
     sigKinematicStateEdited.signal()();
@@ -1078,7 +1141,7 @@ void BodyItem::enableCollisionDetection(bool on)
 }
 
 
-bool BodyItemImpl::enableCollisionDetection(bool on)
+bool BodyItem::Impl::enableCollisionDetection(bool on)
 {
     if(on != isCollisionDetectionEnabled){
         isCollisionDetectionEnabled = on;
@@ -1095,7 +1158,7 @@ void BodyItem::enableSelfCollisionDetection(bool on)
 }
 
 
-bool BodyItemImpl::enableSelfCollisionDetection(bool on)
+bool BodyItem::Impl::enableSelfCollisionDetection(bool on)
 {
     if(on != isSelfCollisionDetectionEnabled){
         isSelfCollisionDetectionEnabled = on;
@@ -1106,10 +1169,10 @@ bool BodyItemImpl::enableSelfCollisionDetection(bool on)
 }
 
 
-void BodyItemImpl::updateCollisionDetectorLater()
+void BodyItem::Impl::updateCollisionDetectorLater()
 {
     if(TRACE_FUNCTIONS){
-        cout << "BodyItemImpl::updateCollisionDetectorLater(): " << self->name() << endl;
+        cout << "BodyItem::Impl::updateCollisionDetectorLater(): " << self->name() << endl;
     }
     
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
@@ -1157,7 +1220,7 @@ void BodyItem::doAssign(Item* srcItem)
 }
 
 
-void BodyItemImpl::doAssign(Item* srcItem)
+void BodyItem::Impl::doAssign(Item* srcItem)
 {
     BodyItem* srcBodyItem = dynamic_cast<BodyItem*>(srcItem);
     if(srcBodyItem){
@@ -1213,23 +1276,6 @@ void BodyItem::onPositionChanged()
 }
 
 
-bool BodyItemImpl::onStaticModelPropertyChanged(bool on)
-{
-    if(on){
-        if(!body->isStaticModel() && body->numLinks() == 1){
-            body->rootLink()->setJointType(Link::FIXED_JOINT);
-            body->updateLinkTree();
-            return body->isStaticModel();
-        }
-    } else if(body->isStaticModel()){
-        body->rootLink()->setJointType(Link::FREE_JOINT);
-        body->updateLinkTree();
-        return !body->isStaticModel();
-    }
-    return false;
-}
-
-
 SignalProxy<void()> BodyItem::sigLocationChanged()
 {
     return impl->sigKinematicStateChanged.signal();
@@ -1264,7 +1310,7 @@ EditableSceneBody* BodyItem::sceneBody()
 }
 
 
-void BodyItemImpl::createSceneBody()
+void BodyItem::Impl::createSceneBody()
 {
     sceneBody = new EditableSceneBody(self);
     sceneBody->setSceneDeviceUpdateConnection(true);
@@ -1284,13 +1330,13 @@ EditableSceneBody* BodyItem::existingSceneBody()
 }
 
 
-bool BodyItemImpl::isSceneBodyDraggable() const
+bool BodyItem::Impl::isSceneBodyDraggable() const
 {
     return sceneBody ? sceneBody->isDraggable() : isSceneBodyDraggableByDefault;
 }
 
     
-void BodyItemImpl::setSceneBodyDraggable(bool on, bool doNotify)
+void BodyItem::Impl::setSceneBodyDraggable(bool on, bool doNotify)
 {
     if(on != isSceneBodyDraggable()){
         if(sceneBody){
@@ -1323,7 +1369,7 @@ Link* BodyItem::parentLink()
 }
 
 
-void BodyItemImpl::tryToAttachToBodyItem(BodyItem* bodyItem)
+void BodyItem::Impl::tryToAttachToBodyItem(BodyItem* bodyItem)
 {
     bool attached = false;
     auto attachments = body->devices<AttachmentDevice>();
@@ -1345,7 +1391,7 @@ void BodyItemImpl::tryToAttachToBodyItem(BodyItem* bodyItem)
 }
 
 
-bool BodyItemImpl::attachToBodyItem
+bool BodyItem::Impl::attachToBodyItem
 (AttachmentDevice* attachment, BodyItem* bodyItem, HolderDevice* holder)
 {
     if(holder->attachment()){
@@ -1378,7 +1424,7 @@ bool BodyItemImpl::attachToBodyItem
 }
 
 
-void BodyItemImpl::clearBodyAttachment()
+void BodyItem::Impl::clearBodyAttachment()
 {
     if(bodyAttachment){
         auto attachment = bodyAttachment->attachment;
@@ -1399,7 +1445,7 @@ void BodyItemImpl::clearBodyAttachment()
 }
 
 
-void BodyItemImpl::onHolderBodyKinematicStateChanged()
+void BodyItem::Impl::onHolderBodyKinematicStateChanged()
 {
     auto attachment = bodyAttachment->attachment;
     auto holder = attachment->holder();
@@ -1414,7 +1460,7 @@ void BodyItemImpl::onHolderBodyKinematicStateChanged()
 }
 
 
-MyCompositeBodyIK::MyCompositeBodyIK(BodyItemImpl* bodyItemImpl)
+MyCompositeBodyIK::MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl)
     : bodyItemImpl(bodyItemImpl),
       bodyAttachment(bodyItemImpl->bodyAttachment)
 {
@@ -1457,7 +1503,7 @@ void BodyItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Model name"), body->modelName());
     putProperty(_("Num links"), body->numLinks());
@@ -1466,8 +1512,8 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Root link"), body->rootLink()->name());
     putProperty(_("Base link"), currentBaseLink ? currentBaseLink->name() : "none");
     putProperty.decimals(3)(_("Mass"), body->mass());
-    putProperty(_("Static model"), body->isStaticModel(),
-                [&](bool on){ return onStaticModelPropertyChanged(on); });
+    putProperty(_("Static"), body->isStaticModel(),
+                [&](bool on){ return on ? makeBodyStatic() : makeBodyDynamic(); });
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
                 [&](bool on){ return enableCollisionDetection(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
@@ -1483,7 +1529,7 @@ bool BodyItem::store(Archive& archive)
 }
 
 
-bool BodyItemImpl::store(Archive& archive)
+bool BodyItem::Impl::store(Archive& archive)
 {
     archive.setDoubleFormat("% .6f");
 
@@ -1544,12 +1590,7 @@ bool BodyItemImpl::store(Archive& archive)
         }
     }
 
-    write(archive, "zmp", zmp);
-
-    if(isOriginalModelStatic != body->isStaticModel()){
-        archive.write("staticModel", body->isStaticModel());
-    }
-
+    archive.write("staticModel", body->isStaticModel());
     archive.write("collisionDetection", isCollisionDetectionEnabled);
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
     archive.write("isSceneBodyDraggable", isSceneBodyDraggable());
@@ -1561,6 +1602,8 @@ bool BodyItemImpl::store(Archive& archive)
         }
     }
 
+    write(archive, "zmp", zmp);
+
     return true;
 }
 
@@ -1571,7 +1614,7 @@ bool BodyItem::restore(const Archive& archive)
 }
 
 
-bool BodyItemImpl::restore(const Archive& archive)
+bool BodyItem::Impl::restore(const Archive& archive)
 {
     if(!archive.loadItemFile(self, "modelFile")){
         return false;
@@ -1654,19 +1697,20 @@ bool BodyItemImpl::restore(const Archive& archive)
         }
     }
 
-    read(archive, "zmp", zmp);
-        
     body->calcForwardKinematics();
     string baseLinkName;
     archive.read("currentBaseLink", baseLinkName);
     setCurrentBaseLink(body->link(baseLinkName));
 
-    bool staticModel;
-    if(archive.read("staticModel", staticModel)){
-        onStaticModelPropertyChanged(staticModel);
+    bool on;
+    if(archive.read("staticModel", on)){
+        if(on){
+            makeBodyStatic(true);
+        } else {
+            makeBodyDynamic();
+        }
     }
 
-    bool on;
     if(archive.read("collisionDetection", on)){
         enableCollisionDetection(on);
     }
@@ -1684,6 +1728,8 @@ bool BodyItemImpl::restore(const Archive& archive)
         getOrCreateLinkKinematicsKitManager()->restoreState(*kinematicsNode);
     }
 
+    read(archive, "zmp", zmp);
+        
     self->notifyKinematicStateChange();
 
     return true;
