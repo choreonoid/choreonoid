@@ -121,21 +121,21 @@ public:
         return functionId;
     }
 
-    bool hasFunctionFor(ObjectBase* obj)
+    bool hasFunctionFor(ObjectBase* obj) const
     {
         auto id = obj->classId();
         if(id >= validDispatchTableSize){
-            if(!updateDispatchTable(id)){
+            if(!const_cast<PolymorphicFunctionSet*>(this)->updateDispatchTable(id)){
                 return false;
             }
         }
         return dispatchTable[id] != nullptr;
     }
 
-    inline void dispatch(ObjectBase* obj, const int id)
+    inline void dispatch(ObjectBase* obj, const int id) const
     {
         if(id >= validDispatchTableSize){
-            if(!updateDispatchTable(id)){
+            if(!const_cast<PolymorphicFunctionSet*>(this)->updateDispatchTable(id)){
                 return;
             }
         }
@@ -145,27 +145,28 @@ public:
         }
     }
 
-    inline void dispatch(ObjectBase* obj)
+    inline void dispatch(ObjectBase* obj) const
     {
         dispatch(obj, obj->classId());
     }
 
     template <class Object>
-    inline void dispatchAs(Object* obj){
+    inline void dispatchAs(Object* obj) const
+    {
         dispatch(obj, registry.template classId<Object>(0));
     }
 
     class Dispatcher {
     public:
-        Dispatcher(PolymorphicFunctionSet<ObjectBase>& pfs) : pfs(pfs) { }
-        template<class Object> void dispatchAs(Object* obj){
+        Dispatcher(const PolymorphicFunctionSet<ObjectBase>& pfs) : pfs(pfs) { }
+        template<class Object> void dispatchAs(Object* obj) const {
             pfs.dispatchAs<Object>(obj);
         }
     private:
-        PolymorphicFunctionSet<ObjectBase>& pfs;
+        const PolymorphicFunctionSet<ObjectBase>& pfs;
     };
 
-    Dispatcher dispatcher(){
+    Dispatcher dispatcher() const {
         return Dispatcher(*this);
     }
 };
