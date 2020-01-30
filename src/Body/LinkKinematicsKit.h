@@ -85,7 +85,7 @@ public:
     SignalProxy<void()> sigCurrentFrameChanged();
     void notifyCurrentFrameChange();
 
-    Body* findAttachedEndEffector() const;
+    //Body* findAttachedEndEffector() const;
 
 private:
     class Impl;

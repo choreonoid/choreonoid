@@ -30,7 +30,6 @@ public:
     virtual void on(bool on) override;
 
     HolderDevice* holder();
-    void setHolder(HolderDevice* holder);
 
     std::string category() const;
     void setCategory(const std::string& category);
@@ -43,10 +42,13 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    HolderDevicePtr holder_;
+    weak_ref_ptr<HolderDevice> weak_holder;
     bool on_;
 
     std::string* category_; // Not a state
+
+    friend class HolderDevice;
+    void setHolder(HolderDevice* holder);
 };
 
 typedef ref_ptr<AttachmentDevice> AttachmentDevicePtr;

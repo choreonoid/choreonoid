@@ -1377,7 +1377,8 @@ void BodyItem::Impl::tryToAttachToBodyItem(BodyItem* bodyItem)
         auto holders = bodyItem->body()->devices<HolderDevice>();
         for(auto& holder : holders){
             if(attachment->category() == holder->category()){
-                if(attachToBodyItem(attachment, bodyItem, holder)){
+                attachToBodyItem(attachment, bodyItem, holder);
+                if(attachment->holder() == holder){
                     attached = true;
                     break;
                 }
@@ -1394,16 +1395,10 @@ void BodyItem::Impl::tryToAttachToBodyItem(BodyItem* bodyItem)
 bool BodyItem::Impl::attachToBodyItem
 (AttachmentDevice* attachment, BodyItem* bodyItem, HolderDevice* holder)
 {
-    if(holder->attachment()){
+    if(!holder->addAttachment(attachment)){
         return false;
     }
-
     body->setParent(holder->link());
-    
-    holder->setAttachment(attachment);
-    holder->on(true);
-    attachment->setHolder(holder);
-    attachment->on(true);
 
     bodyAttachment.reset(new BodyAttachment);
     bodyAttachment->attachment = attachment;
@@ -1430,16 +1425,12 @@ void BodyItem::Impl::clearBodyAttachment()
         auto attachment = bodyAttachment->attachment;
         auto holder = attachment->holder();
         if(holder){
-            holder->setAttachment(nullptr);
-            holder->on(false);
+            holder->removeAttachment(attachment);
             auto holderLink = holder->link();
             mvout() << format(_("{0} has been detached from {1} of {2}."),
                               self->name(), holderLink->name(), holderLink->body()->name()) << endl;
         }
-        attachment->setHolder(nullptr);
-        attachment->on(false);
         body->resetParent();
-
         bodyAttachment.reset();
     }
 }

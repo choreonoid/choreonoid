@@ -20,11 +20,24 @@ registerHolderDevice(
 
 }
 
+namespace cnoid {
+
+class HolderDevice::NonState
+{
+public:
+    std::string category;
+    vector<AttachmentDevicePtr> attachments;
+    NonState(){ }
+    NonState(const NonState& org, CloneMap* cloneMap);
+};
+
+}
+
 
 HolderDevice::HolderDevice()
 {
     on_ = false;
-    category_ = nullptr;
+    ns = new NonState;
 }
 
 
@@ -33,23 +46,33 @@ HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly, CloneMap
 {
     copyHolderDeviceStateFrom(org);
 
-    if(org.attachment_ && cloneMap){
-        attachment_ = cloneMap->findCloneOrReplaceLater<AttachmentDevice>(
-            org.attachment_, [&](AttachmentDevice* clone){ attachment_ = clone; });
-    }
-
-    category_ = nullptr;
-    if(!copyStateOnly){
-        if(org.category_){
-            setCategory(*org.category_);
-        }
+    if(copyStateOnly){
+        ns = nullptr;
+    } else {
+        ns = new NonState(*org.ns, cloneMap);
     }
 }
 
 
+HolderDevice::NonState::NonState(const NonState& org, CloneMap* cloneMap)
+    : category(org.category)
+{
+    if(cloneMap && !org.attachments.empty()){
+        for(size_t i=0; i < org.attachments.size(); ++i){
+            attachments.push_back(
+                cloneMap->findCloneOrReplaceLater<AttachmentDevice>(
+                    org.attachments[i],
+                    [this, i](AttachmentDevice* clone){ attachments[i] = clone; }));
+        }
+    }
+}
+    
+
 HolderDevice::~HolderDevice()
 {
-    clearCategory();
+    if(ns){
+        delete ns;
+    }
 }
 
 
@@ -107,22 +130,10 @@ void HolderDevice::on(bool on)
 }
 
 
-AttachmentDevice* HolderDevice::attachment()
-{
-    return attachment_;
-}
-
-
-void HolderDevice::setAttachment(AttachmentDevice* attachment)
-{
-    attachment_ = attachment;
-}
-
-
 std::string HolderDevice::category() const
 {
-    if(category_){
-        return *category_;
+    if(ns){
+        return ns->category;
     }
     return string();
 }
@@ -130,20 +141,67 @@ std::string HolderDevice::category() const
 
 void HolderDevice::setCategory(const std::string& category)
 {
-    clearCategory();
-    category_ = new string;
-    *category_ = category;
-}
-
-
-void HolderDevice::clearCategory()
-{
-    if(category_){
-        delete category_;
+    if(ns){
+        ns->category = category;
     }
-    category_ = nullptr;
 }
-        
+
+
+int HolderDevice::numAttachments() const
+{
+    if(ns){
+        return ns->attachments.size();
+    }
+    return 0;
+}
+
+
+AttachmentDevice* HolderDevice::attachment(int index)
+{
+    if(ns){
+        return ns->attachments[index];
+    }
+    return nullptr;
+}
+
+    
+bool HolderDevice::addAttachment(AttachmentDevice* attachment)
+{
+    if(ns){
+        auto& a = ns->attachments;
+        if(std::find(a.begin(), a.end(), attachment) == a.end()){
+            a.push_back(attachment);
+            attachment->setHolder(this);
+            attachment->on(true);
+            on_ = true;
+            return true;
+        }
+    }
+    return false;
+}
+    
+
+bool HolderDevice::removeAttachment(AttachmentDevice* attachment)
+{
+    if(ns){
+        auto& a = ns->attachments;
+        auto iter = a.begin();
+        while(iter != a.end()){
+            if(*iter == attachment){
+                attachment->setHolder(nullptr);
+                attachment->on(false);
+                a.erase(iter);
+                if(a.empty()){
+                    on_ = false;
+                }
+                return true;
+            }
+            ++iter;
+        }
+    }
+    return false;
+}
+
 
 int HolderDevice::stateSize() const
 {
@@ -169,11 +227,10 @@ double* HolderDevice::writeState(double* out_buf) const
 
 bool HolderDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
 {
-    string symbol;
-    if(node.read("category", symbol)){
-        setCategory(symbol);
-    } else {
-        clearCategory();
+    if(ns){
+        if(!node.read("category", ns->category)){
+            ns->category.clear();
+        }
     }
     return loader.readDevice(this, node);
 }

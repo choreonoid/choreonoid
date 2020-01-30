@@ -383,6 +383,7 @@ void LinkKinematicsKit::notifyCurrentFrameChange()
 }
 
 
+/*
 Body* LinkKinematicsKit::findAttachedEndEffector() const
 {
     if(auto body = impl->body){
@@ -396,3 +397,4 @@ Body* LinkKinematicsKit::findAttachedEndEffector() const
     }
     return nullptr;
 }
+*/

@@ -29,12 +29,13 @@ public:
     virtual bool on() const override;
     virtual void on(bool on) override;
 
-    AttachmentDevice* attachment();
-    void setAttachment(AttachmentDevice* attachment);
-
     std::string category() const;
     void setCategory(const std::string& category);
-    void clearCategory();
+
+    int numAttachments() const;
+    AttachmentDevice* attachment(int index);
+    bool addAttachment(AttachmentDevice* attachment);
+    bool removeAttachment(AttachmentDevice* attachment);
 
     bool readDescription(YAMLBodyLoader& loader, Mapping& node);
 
@@ -43,10 +44,9 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    AttachmentDevicePtr attachment_;
     bool on_;
-
-    std::string* category_; // Not a state
+    class NonState;
+    NonState* ns;
 };
 
 typedef ref_ptr<HolderDevice> HolderDevicePtr;

@@ -33,9 +33,10 @@ AttachmentDevice::AttachmentDevice(const AttachmentDevice& org, bool copyStateOn
 {
     copyAttachmentDeviceStateFrom(org);
 
-    if(org.holder_ && cloneMap){
-        holder_ = cloneMap->findCloneOrReplaceLater<HolderDevice>(
-            org.holder_, [&](HolderDevice* clone){ holder_ = clone; });
+    auto orgHolder = org.weak_holder.lock();
+    if(orgHolder && cloneMap){
+        weak_holder = cloneMap->findCloneOrReplaceLater<HolderDevice>(
+            orgHolder, [&](HolderDevice* clone){ weak_holder = clone; });
     }
 
     category_ = nullptr;
@@ -109,13 +110,13 @@ void AttachmentDevice::on(bool on)
 
 HolderDevice* AttachmentDevice::holder()
 {
-    return holder_;
+    return weak_holder.lock();
 }
 
 
 void AttachmentDevice::setHolder(HolderDevice* holder)
 {
-    holder_ = holder;
+    weak_holder = holder;
 }
 
 
