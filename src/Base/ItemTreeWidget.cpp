@@ -5,12 +5,15 @@
 #include "ProjectManager.h"
 #include "ItemManager.h"
 #include "MenuManager.h"
+#include "MessageView.h"
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
 #include <QMouseEvent>
 #include <QHeaderView>
 #include <QModelIndex>
 #include <QBoxLayout>
+//#include <QMimeData>
+#include <fmt/format.h>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
@@ -19,6 +22,7 @@
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -66,7 +70,6 @@ public:
     int isChangingTreeWidgetTreeStructure;
     
     bool isCheckColumnShown;
-    bool isDropping;
 
     PolymorphicItemFunctionSet  visibilityFunctions;
     bool visibilityFunction_isTopLevelItemCandidate;
@@ -74,6 +77,13 @@ public:
 
     PolymorphicItemFunctionSet  displayFunctions;
     Display itemDisplay;
+
+    ItemList<Item> dragItems;
+    bool isDropping;
+
+    PolymorphicItemFunctionSet  positionAcceptanceFunctions;
+    mutable bool positionAcceptanceFunction_result;
+    mutable Item* positionAcceptanceFunction_parentItem;
 
     ProjectManager* projectManager;
     ScopedConnectionSet projectManagerConnections;
@@ -91,6 +101,7 @@ public:
     Item* findOrCreateLocalRootItem(bool doCreate);
     void setLocalRootItem(Item* item);
     void setCheckColumnShown(int column, bool on);
+    bool checkPositionAcceptance(Item* item, Item* parentItem) const;
     void clearTreeWidgetItems();
     void updateTreeWidgetItems();
     ItwItem* findItwItem(Item* item);
@@ -121,7 +132,8 @@ public:
     void copySelectedItemsInSubTree(Item* item, Item* duplicated, unordered_set<Item*>& itemSet);
     void copySelectedItemsWithSubTrees();
     void cutSelectedItems();
-    void pasteItems();
+    bool pasteItems(bool doCheckPositionAcceptance);
+    bool checkPastable(Item* pasteParentItem) const;
     void onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
     void onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end);
     void onTreeWidgetSelectionChanged();
@@ -132,6 +144,9 @@ public:
     
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;
+    virtual void dragEnterEvent(QDragEnterEvent *event) override;
+    virtual void dragMoveEvent(QDragMoveEvent *event) override;
+    virtual void dragLeaveEvent(QDragLeaveEvent *event) override;
     virtual void dropEvent(QDropEvent* event) override;
 
     void storeExpandedItems(Archive& archive);
@@ -479,7 +494,7 @@ void ItemTreeWidget::setRootItemUpdateFunction(std::function<Item*(bool doCreate
     impl->localRootItemUpdateFunction = callback;
     impl->localRootItem = nullptr;
 }
-    
+
 
 void ItemTreeWidget::setDragDropEnabled(bool on)
 {
@@ -530,6 +545,44 @@ void ItemTreeWidget::customizeDisplay_
     impl->displayFunctions.setFunction(
         type,
         [this, func](Item* item){ func(item, impl->itemDisplay); });
+}
+
+
+void ItemTreeWidget::customizePositionAcceptance_
+(const std::type_info& type, std::function<bool(Item* item, Item* parentItem)> func)
+{
+    impl->positionAcceptanceFunctions.setFunction(
+        type,
+        [this, func](Item* item){
+            impl->positionAcceptanceFunction_result =
+                func(item, impl->positionAcceptanceFunction_parentItem); });
+}
+
+
+bool ItemTreeWidget::checkPositionAcceptance(Item* item, Item* parentItem) const
+{
+    return impl->checkPositionAcceptance(item, parentItem);
+}
+
+
+bool ItemTreeWidget::Impl::checkPositionAcceptance(Item* item, Item* parentItem) const
+{
+    positionAcceptanceFunction_parentItem = parentItem;
+    positionAcceptanceFunction_result = true;
+    positionAcceptanceFunctions.dispatch(item);
+    return positionAcceptanceFunction_result;
+}
+    
+
+void ItemTreeWidget::customizeContextMenu_
+(const std::type_info& type,
+ std::function<void(Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func)
+{
+    impl->contextMenuFunctions.setFunction(
+        type,
+        [this, func](Item* item){
+            func(item, impl->menuManager, impl->contextMenuFunctions.dispatcher()); }
+        );
 }
 
 
@@ -694,6 +747,7 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
     bool isVisible = item->isOwnedBy(localRootItem);
     if(isVisible){
         visibilityFunction_isTopLevelItemCandidate = isTopLevelItemCandidate;
+        visibilityFunction_result = true;
         visibilityFunctions.dispatch(item);
         isVisible = visibilityFunction_result;
     }
@@ -1035,38 +1089,65 @@ void ItemTreeWidget::Impl::cutSelectedItems()
 }
 
 
-void ItemTreeWidget::pasteItems()
+bool ItemTreeWidget::pasteItems(bool doCheckPositionAcceptance)
 {
-    impl->pasteItems();
+    return impl->pasteItems(doCheckPositionAcceptance);
 }
 
 
-void ItemTreeWidget::Impl::pasteItems()
+bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
 {
-    if(topLevelItems.empty()){
-        return;
-    }
-    
+    bool pasted = false;
     auto selected = getSelectedItems();
     ItemPtr parentItem;
     if(selected.empty()){
-        parentItem = topLevelItems.front();
+        parentItem = localRootItem;
     } else {
         parentItem = selected.back();
     }
-    if(parentItem){
-        auto it = copiedItems.begin();
-        while(it != copiedItems.end()){
-            auto& item = *it;
-            if(auto duplicated = item->duplicateSubTree()){
-                parentItem->addChildItem(duplicated, true);
-                ++it;
-            } else {
-                parentItem->addChildItem(item, true);
-                it = copiedItems.erase(it);
+    if(parentItem && !copiedItems.empty()){
+        bool isPastable = true;
+        if(doCheckPositionAcceptance){
+            if(!checkPastable(parentItem)){
+                showWarningDialog(
+                    format(_("The copied items cannot be pasted to \"{0}\"."),
+                           parentItem->name()));
+                isPastable = false;
+            }
+        }
+        if(isPastable){
+            auto it = copiedItems.begin();
+            while(it != copiedItems.end()){
+                auto& item = *it;
+                if(auto duplicated = item->duplicateSubTree()){
+                    parentItem->addChildItem(duplicated, true);
+                    ++it;
+                } else {
+                    parentItem->addChildItem(item, true);
+                    it = copiedItems.erase(it);
+                }
+                pasted = true;
             }
         }
     }
+    return pasted;
+}
+
+
+bool ItemTreeWidget::checkPastable(Item* pasteParentItem) const
+{
+    return impl->checkPastable(pasteParentItem);
+}
+
+
+bool ItemTreeWidget::Impl::checkPastable(Item* pasteParentItem) const
+{
+    for(auto& item : copiedItems){
+        if(!checkPositionAcceptance(item, pasteParentItem)){
+            return false;
+        }
+    }
+    return true;
 }
 
 
@@ -1292,23 +1373,87 @@ void ItemTreeWidget::Impl::keyPressEvent(QKeyEvent* event)
 }
 
 
+void ItemTreeWidget::Impl::dragEnterEvent(QDragEnterEvent* event)
+{
+    auto srcWidget = dynamic_cast<ItemTreeWidget::Impl*>(event->source());
+    if(srcWidget && srcWidget != this){ // drag from another widget
+        return;
+    }
+
+    TreeWidget::dragEnterEvent(event);
+
+    dragItems.clear();
+
+    /**
+       The information of the items being dragged can be obtained from the mimeData
+       of QDragEvent using the following code. However, this method only gives the
+       local position (local row index) of each item and the corresponding item object
+       is unknown. Therefore this method cannot be used to get the item objects being dragged.
+    */
+    /*
+    QByteArray encoded = event->mimeData()->data("application/x-qabstractitemmodeldatalist");
+    QDataStream stream(&encoded, QIODevice::ReadOnly);
+    while(!stream.atEnd()){
+        int row, col;
+        QMap<int, QVariant> roleDataMap;
+        stream >> row >> col >> roleDataMap;
+        auto twItem = itemFromIndex(model()->index(row, col));
+        if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
+            dragItems.push_back(itwItem->item);
+        }
+    }
+    */
+
+    // Instead of the above method, the current selected items are used as the items being dragged.
+    forEachTopItems(
+        getSelectedItems(),
+        [&](Item* item, unordered_set<Item*>&){
+            dragItems.push_back(item);
+        });
+}
+
+
+void ItemTreeWidget::Impl::dragMoveEvent(QDragMoveEvent* event)
+{
+    TreeWidget::dragMoveEvent(event);
+
+    Item* itemAtDropPosition = localRootItem;
+    if(auto itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()))){
+        itemAtDropPosition = itwItem->item;
+    }
+
+    Item* parentItem = nullptr;
+    switch(dropIndicatorPosition()){
+    case QAbstractItemView::AboveItem:
+    case QAbstractItemView::BelowItem:
+        parentItem = itemAtDropPosition->parentItem();
+        break;
+    default:
+        parentItem = itemAtDropPosition;
+        break;
+    }
+    
+    for(auto& item : dragItems){
+        if(!checkPositionAcceptance(item, parentItem)){
+            event->ignore();
+            break;
+        }
+    }
+}
+
+
+void ItemTreeWidget::Impl::dragLeaveEvent(QDragLeaveEvent *event)
+{
+    dragItems.clear();
+}
+
+
 void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
 {
     isDropping = true;
     TreeWidget::dropEvent(event);
+    dragItems.clear();
     isDropping = false;
-}
-
-
-void ItemTreeWidget::customizeContextMenu_
-(const std::type_info& type,
- std::function<void(Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func)
-{
-    impl->contextMenuFunctions.setFunction(
-        type,
-        [this, func](Item* item){
-            func(item, impl->menuManager, impl->contextMenuFunctions.dispatcher()); }
-        );
 }
 
 

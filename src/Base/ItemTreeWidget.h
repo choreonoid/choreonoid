@@ -81,6 +81,18 @@ public:
     }
 
     template<class ItemType>
+    void customizePositionAcceptance(
+        std::function<bool(ItemType* item, Item* parentItem)> func){
+        customizePositionAcceptance_(
+            typeid(ItemType),
+            [func](Item* item, Item* parentItem){
+                return func(static_cast<ItemType*>(item), parentItem);
+            });
+    }
+
+    bool checkPositionAcceptance(Item* item, Item* parentItem) const;
+
+    template<class ItemType>
     void customizeContextMenu(
         std::function<void(ItemType* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func){
         customizeContextMenu_(
@@ -104,7 +116,8 @@ public:
     void cutSelectedItems();
     void copySelectedItems();
     void copySelectedItemsWithSubTrees();
-    void pasteItems();
+    bool pasteItems(bool doCheckPositionAcceptance = true);
+    bool checkPastable(Item* pasteParentItem) const;
     
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
@@ -114,6 +127,8 @@ private:
         const std::type_info& type, std::function<bool(Item* item, bool isTopLevelItemCandidate)> func);
     void customizeDisplay_(
         const std::type_info& type, std::function<void(Item* item, Display& display)> func);
+    void customizePositionAcceptance_(
+        const std::type_info& type, std::function<bool(Item* item, Item* parentItem)> func);
     void customizeContextMenu_(
         const std::type_info& type,
         std::function<void(Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func);
