@@ -120,6 +120,14 @@ void AttachmentDevice::setHolder(HolderDevice* holder)
 }
 
 
+void AttachmentDevice::detach()
+{
+    if(auto holder = weak_holder.lock()){
+        holder->removeAttachment(this);
+    }
+}
+
+
 std::string AttachmentDevice::category() const
 {
     if(category_){

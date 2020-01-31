@@ -4,8 +4,8 @@ Changes since 1.7.0:
 * Introduced BodyHandler. BodyCustomizer is deprecated.
 * Introduced JointPathConfigurationHandler
 * Remove the python plugins and wrappers implemented with boost.python
-* Remove OpenHRPPlugin and OpenHRPModelLoader
-* Remove GrxUIPlugin
+* Separate the OpenRTM modules from the main source tree
+* Separate the OpenHRP modules and GrxUI plugin from the main source tree
 * Remove ScenarioPlugin
 * Stop supporting Qt4
 * Replace QGLWidget with QOpenGLWidget in the implementation of SceneWidget
@@ -19,7 +19,7 @@ Changes since 1.7.0:
 * The Eigen library contained in the thirdparty directory is used by default on Windows
 * Support Visual C++ 2019
 * Support Ubuntu 19.04
-* Add LinkPositionView
+* Add LinkPositionView and LocationView
 * Modify the default material colors
 * Fix a bug in picking objects on SceneView when a high DPI display is used
 * Improve JointSliderView and rename it to JointDisplacementView
@@ -36,7 +36,10 @@ Changes since 1.7.0:
 * Add DigitalIODevice, SignalIOConnectionItem, SignalIOConnectionView
 * Make the vertical axis of SceneWidget modifiable
 * Add the "export symbols" property to SimpleControllerItem
-* Improove the context menu in ItemTreeView
+* Improve the context menu in ItemTreeView
+* Improve the position dragger
+* The parent-child relationship betwen body items is reflected in editing body positions
+* Arrange the cmake files for building programs outside the Choreonoid source
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

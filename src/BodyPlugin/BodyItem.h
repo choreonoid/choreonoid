@@ -46,8 +46,16 @@ public:
     void setEditable(bool on);
 
     // API for a composite body
+    // The following body and link pair is basically determined by
+    // the parent-child relationship in the item tree
     BodyItem* parentBodyItem();
-    Link* parentLink();
+    // True if the body is attached to the parent body with a holder device and an attachment device
+    bool isAttachedToParentBody() const;
+    // The current parent body can temporarily be changed by this function
+    void setTemporalParentBodyItem(BodyItem* parentBodyItem);
+    // The parent body item defined by the parent-child relationship in the item tree is restored
+    // if the relationship exists. Otherwise, the parent body item is cleared.
+    void resetParentBodyItem();
         
     void moveToOrigin();
     enum PresetPoseID { INITIAL_POSE, STANDARD_POSE };

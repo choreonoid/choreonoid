@@ -475,7 +475,7 @@ void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
     if(bodyItem && link){
         if(link->hasParentBody()){
             if(auto parentBodyItem = bodyItem->parentBodyItem()){
-                link = bodyItem->parentLink();
+                link = bodyItem->body()->parentBodyLink();
                 bodyItem = parentBodyItem;
             }
         }
