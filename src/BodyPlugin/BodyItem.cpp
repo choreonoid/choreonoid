@@ -1302,7 +1302,7 @@ void BodyItem::setLocation(const Position& T)
 
 bool BodyItem::isLocationEditable() const
 {
-    return const_cast<BodyItem*>(this)->parentBodyItem() == nullptr;
+    return impl->attachmentToParent == nullptr;
 }
         
 
