@@ -9,6 +9,7 @@
 #include "ItemManager.h"
 #include "ItemClassRegistry.h"
 #include "PutPropertyFunction.h"
+#include <cnoid/ValueTree>
 #include <cnoid/stdx/filesystem>
 #include <typeinfo>
 #include <bitset>
@@ -92,6 +93,7 @@ public:
     bool isConsistentWithFile;
     std::string filePath;
     std::string fileFormat;
+    MappingPtr fileOptions;
     std::time_t fileModificationTime;
 
     Impl(Item* self);
@@ -1045,15 +1047,15 @@ SignalProxy<void()> Item::sigUpdated()
 }
 
 
-bool Item::load(const std::string& filename, const std::string& format)
+bool Item::load(const std::string& filename, const std::string& format, const Mapping* options)
 {
-    return ItemManager::load(this, filename, parentItem(), format);
+    return ItemManager::load(this, filename, parentItem(), format, options);
 }
 
 
-bool Item::load(const std::string& filename, Item* parent, const std::string& format)
+bool Item::load(const std::string& filename, Item* parent, const std::string& format, const Mapping* options)
 {
-    return ItemManager::load(this, filename, parent, format);
+    return ItemManager::load(this, filename, parent, format, options);
 }
 
 
@@ -1078,6 +1080,12 @@ const std::string& Item::filePath() const
 const std::string& Item::fileFormat() const
 {
     return impl->fileFormat;
+}
+
+
+const Mapping* Item::fileOptions() const
+{
+    return impl->fileOptions;
 }
 
 
@@ -1119,7 +1127,7 @@ void Item::suggestFileUpdate()
 }
 
 
-void Item::updateFileInformation(const std::string& filename, const std::string& format)
+void Item::updateFileInformation(const std::string& filename, const std::string& format, Mapping* options)
 {
     filesystem::path fpath(filename);
     if(filesystem::exists(fpath)){
@@ -1131,6 +1139,7 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
     }        
     impl->filePath = filename;
     impl->fileFormat = format;
+    impl->fileOptions = options;
 }
 
 

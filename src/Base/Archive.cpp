@@ -353,7 +353,7 @@ bool Archive::loadItemFile(Item* item, const std::string& fileNameKey, const std
         if(!fileFormatKey.empty()){
             read(fileFormatKey, format);
         }
-        return item->load(filename, currentParentItem(), format);
+        return item->load(filename, currentParentItem(), format, this);
     }
     return false;
 }

@@ -23,6 +23,7 @@ typedef ref_ptr<Item> ItemPtr;
 
 class ItemManagerImpl;
 class ItemFileIOBase;
+class Mapping;
 
 class ItemCreationPanel : public QWidget
 {
@@ -250,7 +251,9 @@ private:
     static Item* createItemWithDialog_(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem);
 
     // The following static functions are called from functions in the Item class
-    static bool load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId);
+    static bool load(
+        Item* item, const std::string& filename, Item* parentItem, const std::string& formatId,
+        const Mapping* options = nullptr);
     static bool save(Item* item, const std::string& filename, const std::string& formatId);
     static bool overwrite(Item* item, bool forceOverwrite, const std::string& formatId); // overwrite
 

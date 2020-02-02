@@ -32,11 +32,20 @@ mutex loaderMapMutex;
 class SceneLoaderAdapter : public AbstractBodyLoader
 {
     SceneLoader loader;
+    BodyLoader::LengthUnit lengthUnitHint;
+    BodyLoader::UpperAxis upperAxisHint;
     ostream* os;
 
 public:
-    SceneLoaderAdapter(){
+    SceneLoaderAdapter()
+    {
         os = &nullout();
+    }
+
+    void setMeshImportHint(BodyLoader::LengthUnit unit, BodyLoader::UpperAxis axis)
+    {
+        lengthUnitHint = unit;
+        upperAxisHint = axis;
     }
 
     virtual void setMessageSink(std::ostream& os_) override {
@@ -54,11 +63,38 @@ public:
         if(scene){
             Link* link = body->createLink();
             link->setName("Root");
-            link->setShape(scene);
             link->setMass(1.0);
             link->setInertia(Matrix3::Identity());
             body->setRootLink(link);
             body->setModelName(filesystem::path(filename).stem().string());
+
+            SgNodePtr topNode = scene;
+            /**
+               \note Modifying the vertex positions might be better than
+               inserting the transform nodes.
+               \note This should be implemented in SceneLoader.
+            */
+            if(lengthUnitHint != BodyLoader::Meter){
+                auto scale = new SgScaleTransform;
+                if(lengthUnitHint == BodyLoader::Millimeter){
+                    scale->setScale(1.0 / 1000.0);
+                } else if(lengthUnitHint == BodyLoader::Inch){
+                    scale->setScale(0.0254);
+                }
+                scale->addChild(topNode);
+                topNode = scale;
+            }
+            if(upperAxisHint == BodyLoader::Y){
+                auto transform = new SgPosTransform;
+                Matrix3 R;
+                R << 0, 0, 1,
+                    1, 0, 0,
+                    0, 1, 0;
+                transform->setRotation(R);
+                transform->addChild(topNode);
+                topNode = transform;
+            }
+            link->setShape(topNode);
         }
         if(!isSupported){
             (*os) <<
@@ -104,11 +140,13 @@ public:
     ostream* os;
     AbstractBodyLoaderPtr actualLoader;
     map<string, AbstractBodyLoaderPtr> loaderMap;
-    AbstractBodyLoaderPtr generalLoader;
+    shared_ptr<SceneLoaderAdapter> loaderAdapter;
     bool isVerbose;
     bool isShapeLoadingEnabled;
     int defaultDivisionNumber;
     double defaultCreaseAngle;
+    BodyLoader::LengthUnit lengthUnitHint;
+    BodyLoader::UpperAxis upperAxisHint;
 
     BodyLoaderImpl();
     ~BodyLoaderImpl();
@@ -177,6 +215,13 @@ void BodyLoader::setDefaultCreaseAngle(double theta)
 }
 
 
+void BodyLoader::setMeshImportHint(LengthUnit unit, UpperAxis upperAxis)
+{
+    impl->lengthUnitHint = unit;
+    impl->upperAxisHint = upperAxis;
+}
+
+
 bool BodyLoader::load(Body* body, const std::string& filename)
 {
     body->info()->clear();    
@@ -218,10 +263,11 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
     }
     
     if(!actualLoader){
-        if(!generalLoader){
-            generalLoader = make_shared<SceneLoaderAdapter>();
+        if(!loaderAdapter){
+            loaderAdapter = make_shared<SceneLoaderAdapter>();
         }
-        actualLoader = generalLoader;
+        loaderAdapter->setMeshImportHint(lengthUnitHint, upperAxisHint);
+        actualLoader = loaderAdapter;
     }
     
     actualLoader->setMessageSink(*os);

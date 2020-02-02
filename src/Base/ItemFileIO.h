@@ -25,8 +25,8 @@ public:
         Save = 1 << 3,
         OptionPanelForSaving = 1 << 4,
     };
-
     enum InterfaceLevel { Standard, Conversion, Compatibility };
+    enum InvocationType { Direct, Dialog, DragAndDrop };
 
     ItemFileIOBase(const std::string& formatId, int api);
     ~ItemFileIOBase();
@@ -35,8 +35,8 @@ public:
     virtual bool load(Item* item, const std::string& filename) = 0;
     // Options API
     virtual void resetOptions();
-    virtual void storeOptions(Mapping& archive);
-    virtual bool restoreOptions(Mapping& archive);
+    virtual void storeOptions(Mapping* archive);
+    virtual bool restoreOptions(const Mapping* archive);
     // OptionPanelForLoading API
     virtual QWidget* optionPanelForLoading();
     virtual void fetchOptionPanelForLoading();
@@ -70,7 +70,6 @@ protected:
     void putError(const std::string& message);
 
     Item* parentItem();
-    enum InvocationType { Direct, Dialog, DragAndDrop };
     InvocationType invocationType() const;
 
 private:

@@ -30,13 +30,13 @@ void ItemFileIOBase::resetOptions()
 }
 
 
-void ItemFileIOBase::storeOptions(Mapping& /* archive */)
+void ItemFileIOBase::storeOptions(Mapping* /* archive */)
 {
 
 }
 
 
-bool ItemFileIOBase::restoreOptions(Mapping& /* archive */)
+bool ItemFileIOBase::restoreOptions(const Mapping* /* archive */)
 {
     return true;
 }

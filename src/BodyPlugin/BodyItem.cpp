@@ -166,15 +166,11 @@ namespace {
 class BodyItemFileIO : public ItemFileIO<BodyItem>
 {
     BodyLoader bodyLoader;
-
-    enum LengthUnit { Meter, Millimeter, Inchi, NumUnits };
     Selection meshLengthUnitHint;
-    enum UpperAxis { Z, Y, NumUpperAxes };
     Selection meshUpperAxisHint;
-
-    QWidget optionPanel;
-    ComboBox unitCombo;
-    ComboBox axisCombo;
+    QWidget* optionPanel;
+    ComboBox* unitCombo;
+    ComboBox* axisCombo;
     
 public:
     BodyItemFileIO()
@@ -182,8 +178,8 @@ public:
             //"CHOREONOID-BODY",
             "OpenHRP-VRML-MODEL", // temporary
             Load | Options | OptionPanelForLoading),
-          meshLengthUnitHint(NumUnits, CNOID_GETTEXT_DOMAIN_NAME),
-          meshUpperAxisHint(NumUpperAxes, CNOID_GETTEXT_DOMAIN_NAME)
+          meshLengthUnitHint(BodyLoader::NumLengthUnitIds),
+          meshUpperAxisHint(BodyLoader::NumUpperAxisIds, CNOID_GETTEXT_DOMAIN_NAME)
     {
         setCaption(_("Body"));
         registerExtensions({ "body", "scen", "wrl", "yaml", "yml", "dae", "stl" });
@@ -195,64 +191,84 @@ public:
 
         bodyLoader.setMessageSink(os());
         
-        meshLengthUnitHint.setSymbol(Meter, N_("Meter"));
-        meshLengthUnitHint.setSymbol(Millimeter, N_("Millimeter"));
-        meshLengthUnitHint.setSymbol(Inchi, N_("Inchi"));
+        meshLengthUnitHint.setSymbol(BodyLoader::Meter, "meter");
+        meshLengthUnitHint.setSymbol(BodyLoader::Millimeter, "millimeter");
+        meshLengthUnitHint.setSymbol(BodyLoader::Inch, "inch");
 
-        meshUpperAxisHint.setSymbol(Z, "Z");
-        meshUpperAxisHint.setSymbol(Y, "Y");
+        meshUpperAxisHint.setSymbol(BodyLoader::Z, "Z");
+        meshUpperAxisHint.setSymbol(BodyLoader::Y, "Y");
 
-        auto hbox = new QHBoxLayout;
-        optionPanel.setLayout(hbox);
-        hbox->addWidget(&unitCombo);
-        hbox->addWidget(&axisCombo);
-        for(int i=0; i < NumUnits; ++i){
-            unitCombo.addItem(meshLengthUnitHint.label(i));
-        }
-        for(int i=0; i < NumUnits; ++i){
-            axisCombo.addItem(meshUpperAxisHint.label(i));
+        optionPanel = nullptr;
+        unitCombo = nullptr;
+        axisCombo = nullptr;
+    }
+
+    ~BodyItemFileIO()
+    {
+        if(optionPanel){
+            delete optionPanel;
         }
     }
 
     virtual void resetOptions() override
     {
-        meshLengthUnitHint.select(Meter);
-        meshUpperAxisHint.select(Z);
+        meshLengthUnitHint.select(BodyLoader::Meter);
+        meshUpperAxisHint.select(BodyLoader::Z);
     }
         
-    virtual bool restoreOptions(Mapping& archive) override
+    virtual bool restoreOptions(const Mapping* archive) override
     {
         string value;
-        if(archive.read("meshLengthUnitHint", value)){
+        if(archive->read("meshLengthUnitHint", value)){
             meshLengthUnitHint.select(value);
         }
-        if(archive.read("meshUpperAxisHint", value)){
+        if(archive->read("meshUpperAxisHint", value)){
             meshUpperAxisHint.select(value);
         }
         return true;
     }
         
-    virtual void storeOptions(Mapping& archive) override
+    virtual void storeOptions(Mapping* archive) override
     {
-        archive.write("meshLengthUnitHint", meshLengthUnitHint.selectedSymbol(), DOUBLE_QUOTED);
-        archive.write("meshUpperAxisHint", meshUpperAxisHint.selectedSymbol(), DOUBLE_QUOTED);
+        archive->write("meshLengthUnitHint", meshLengthUnitHint.selectedSymbol());
+        archive->write("meshUpperAxisHint", meshUpperAxisHint.selectedSymbol());
     }
         
     virtual QWidget* optionPanelForLoading() override
     {
-        return &optionPanel;
+        if(!optionPanel){
+            optionPanel = new QWidget;
+            auto hbox = new QHBoxLayout;
+            hbox->setContentsMargins(0, 0, 0, 0);
+            optionPanel->setLayout(hbox);
+            hbox->addWidget(new QLabel(_("[ Mesh import hints ]")));
+            hbox->addWidget(new QLabel(_("Unit:")));
+            unitCombo = new ComboBox;
+            unitCombo->addItem(_("Meter"));
+            unitCombo->addItem(_("Millimeter"));
+            unitCombo->addItem(_("Inch"));
+            hbox->addWidget(unitCombo);
+            hbox->addWidget(new QLabel(_("Upper axis:")));
+            axisCombo = new ComboBox;
+            for(int i=0; i < BodyLoader::NumUpperAxisIds; ++i){
+                axisCombo->addItem(meshUpperAxisHint.label(i));
+            }
+            hbox->addWidget(axisCombo);
+        }
+        return optionPanel;
     }
         
     virtual void fetchOptionPanelForLoading() override
     {
-        meshLengthUnitHint.select(unitCombo.currentIndex());
-        meshUpperAxisHint.select(axisCombo.currentIndex());
+        meshLengthUnitHint.select(unitCombo->currentIndex());
+        meshUpperAxisHint.select(axisCombo->currentIndex());
     }
     
     virtual bool load(BodyItem* item, const std::string& filename) override
     {
-        //bodyLoader.setMeshImportHint(
-        //    meshLengthUnitHint.which(), meshUpperAxisHint.which());
+        bodyLoader.setMeshImportHint(
+            (BodyLoader::LengthUnit)meshLengthUnitHint.which(),
+            (BodyLoader::UpperAxis)meshUpperAxisHint.which());
         
         BodyPtr newBody = new Body;
         if(!bodyLoader.load(newBody, filename)){
@@ -264,6 +280,11 @@ public:
             newBody->setName(item->name());
         }
         item->setBody(newBody);
+
+        auto itype = invocationType();
+        if(itype == Dialog || itype == DragAndDrop){
+            item->setChecked(true);
+        }
         
         return true;
     }
@@ -1590,6 +1611,11 @@ bool BodyItem::Impl::store(Archive& archive)
     archive.setDoubleFormat("% .6f");
 
     archive.writeRelocatablePath("modelFile", self->filePath());
+    archive.write("format", self->fileFormat());
+    if(auto fileOptions = self->fileOptions()){
+        archive.insert(fileOptions);
+    }
+
     if(currentBaseLink){
         archive.write("currentBaseLink", currentBaseLink->name(), DOUBLE_QUOTED);
     }
@@ -1672,7 +1698,7 @@ bool BodyItem::restore(const Archive& archive)
 
 bool BodyItem::Impl::restore(const Archive& archive)
 {
-    if(!archive.loadItemFile(self, "modelFile")){
+    if(!archive.loadItemFile(self, "modelFile", "format")){
         return false;
     }
 

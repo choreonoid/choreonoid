@@ -20,6 +20,7 @@ template<class ItemType = Item> class ItemList;
     
 class RootItem;
 class Archive;
+class Mapping;
 class ExtensionManager;
 class PutPropertyFunction;
 
@@ -278,14 +279,18 @@ public:
        this function cannot be used.
        Note that this function should not be overloaded or overridden in the derived classes.
     */
-    bool load(const std::string& filename, const std::string& format = std::string());
+    bool load(
+        const std::string& filename, const std::string& format = std::string(),
+        const Mapping* options = nullptr);
 
     /**
        @param parentItem specify this when the item is newly created one and will be attached to a parent item
        if loading succeeds.
     */
-    bool load(const std::string& filename, Item* parent, const std::string& format = std::string());
-
+    bool load(
+        const std::string& filename, Item* parent, const std::string& format = std::string(),
+        const Mapping* options = nullptr);
+    
     /**
        This function saves the data of the item to a file by using a pre-registered saving function.
    
@@ -304,10 +309,11 @@ public:
 
     const std::string& filePath() const;
     const std::string& fileFormat() const;
+    const Mapping* fileOptions() const;
     std::time_t fileModificationTime() const;
     bool isConsistentWithFile() const;
 
-    void updateFileInformation(const std::string& filename, const std::string& format);
+    void updateFileInformation(const std::string& filename, const std::string& format, Mapping* options = nullptr);
     void setConsistentWithFile(bool isConsistent);
     void suggestFileUpdate();
 

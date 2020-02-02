@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-19 00:38+0900\n"
+"POT-Creation-Date: 2020-02-03 01:36+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -44,7 +44,7 @@ msgstr "レンジセンサビジュアライザ"
 msgid "CameraImageVisualizer"
 msgstr "カメラ画像ビジュアライザ"
 
-#: SensorVisualizerItem.cpp:471
+#: SensorVisualizerItem.cpp:470
 msgid "Visual ratio"
 msgstr "表示比率"
 
@@ -94,7 +94,7 @@ msgstr "{}の重心を指定の位置まで移動できません\n"
 msgid "Velocity Limiting Filter"
 msgstr "速度制限フィルタ"
 
-#: FilterDialogs.cpp:53 JointDisplacementView.cpp:490
+#: FilterDialogs.cpp:53 JointDisplacementView.cpp:488
 msgid "Selected joints only"
 msgstr "選択関節のみ"
 
@@ -106,7 +106,7 @@ msgstr "Pollard手法"
 msgid "Gaussian Filter"
 msgstr "ガウシアンフィルタ"
 
-#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 LinkPositionView.cpp:214
+#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 LinkPositionView.cpp:220
 msgid "Apply"
 msgstr "適用"
 
@@ -226,23 +226,23 @@ msgstr "タイムスタンプ接尾辞"
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
 
-#: SimpleControllerItem.cpp:155
+#: SimpleControllerItem.cpp:156
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
 
-#: SimpleControllerItem.cpp:182
+#: SimpleControllerItem.cpp:183
 msgid "None"
 msgstr "無"
 
-#: SimpleControllerItem.cpp:183
+#: SimpleControllerItem.cpp:184
 msgid "Controller directory"
 msgstr "コントローラディレクトリ"
 
-#: SimpleControllerItem.cpp:184
+#: SimpleControllerItem.cpp:185
 msgid "Project directory"
 msgstr "プロジェクトディレクトリ"
 
-#: SimpleControllerItem.cpp:292
+#: SimpleControllerItem.cpp:294
 msgid ""
 "Controller module \"{0}\" of {1} is specified as a relative path from the "
 "project directory, but the project directory has not been determined yet."
@@ -250,23 +250,23 @@ msgstr ""
 "{1}のコントローラモジュール \"{0}\" はプロジェクトディレクトリからの相対パス"
 "で指定されていますが，プロジェクトディレクトリはまだ決まっていません．"
 
-#: SimpleControllerItem.cpp:306
+#: SimpleControllerItem.cpp:308
 msgid "The controller module of {} has already been loaded."
 msgstr "{}のコントローラモジュールは既にロードされています．"
 
-#: SimpleControllerItem.cpp:313
+#: SimpleControllerItem.cpp:315
 msgid "Loading the controller module \"{1}\" of {0} ... "
 msgstr "{0}のコントローラモジュール\"{1}\"をロード中･･･"
 
-#: SimpleControllerItem.cpp:316
+#: SimpleControllerItem.cpp:318
 msgid "Failed.\n"
 msgstr "失敗．\n"
 
-#: SimpleControllerItem.cpp:320
+#: SimpleControllerItem.cpp:322
 msgid "OK!"
 msgstr ""
 
-#: SimpleControllerItem.cpp:326
+#: SimpleControllerItem.cpp:328
 msgid ""
 "The factory function \"createSimpleController()\" is not found in the "
 "controller module."
@@ -274,52 +274,52 @@ msgstr ""
 "ファクトリ関数 \"createSimpleController()\" がコントローラモジュール内に見つ"
 "かりません．"
 
-#: SimpleControllerItem.cpp:333
+#: SimpleControllerItem.cpp:335
 msgid "The controller factory of {} failed to create a controller instance."
 msgstr ""
 "{}のコントローラファクトリはコントローラインスタンスの生成に失敗しました．"
 
-#: SimpleControllerItem.cpp:340
+#: SimpleControllerItem.cpp:342
 msgid "{} failed to configure the controller"
 msgstr "{}はコントローラインスタンスの生成に失敗しました"
 
-#: SimpleControllerItem.cpp:345
+#: SimpleControllerItem.cpp:347
 msgid "A controller instance has successfully been created."
 msgstr "コントローラインスタンスを生成しました．"
 
-#: SimpleControllerItem.cpp:366
+#: SimpleControllerItem.cpp:368
 msgid "The controller module \"{1}\" of {0} has been unloaded."
 msgstr "{0}のコントローラモジュール \"{1}\" をアンロードしました．"
 
-#: SimpleControllerItem.cpp:457
+#: SimpleControllerItem.cpp:459
 msgid "{}'s initialize method failed."
 msgstr "{}のinitializeメソッドが失敗しました．"
 
-#: SimpleControllerItem.cpp:725
+#: SimpleControllerItem.cpp:727
 msgid "{} failed to start"
 msgstr "{}を稼働できませんでした"
 
-#: SimpleControllerItem.cpp:944
+#: SimpleControllerItem.cpp:950
 msgid "Simple Controller Module (*.{})"
 msgstr "シンプルコントローラモジュール (*.{})"
 
-#: SimpleControllerItem.cpp:952
+#: SimpleControllerItem.cpp:953
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:954
+#: SimpleControllerItem.cpp:956
 msgid "Base directory"
 msgstr "ベースディレクトリ"
 
-#: SimpleControllerItem.cpp:956
+#: SimpleControllerItem.cpp:958
 msgid "Reloading"
 msgstr "再読込"
 
-#: SimpleControllerItem.cpp:958
+#: SimpleControllerItem.cpp:960
 msgid "Export symbols"
 msgstr "シンボルのエクスポート"
 
-#: SimpleControllerItem.cpp:960
+#: SimpleControllerItem.cpp:962
 msgid "Old target value variable mode"
 msgstr "旧指令値変数モード"
 
@@ -427,7 +427,7 @@ msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:500 BodyItem.cpp:1445
+#: WorldItem.cpp:500 BodyItem.cpp:1578
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -451,91 +451,91 @@ msgstr "リンク座標フレームリスト一式アイテム"
 msgid "Link Position"
 msgstr "リンクポジション"
 
-#: LinkPositionView.cpp:211
+#: LinkPositionView.cpp:217
 msgid "Fetch"
 msgstr "取込"
 
-#: LinkPositionView.cpp:220
+#: LinkPositionView.cpp:226
 msgid "Coord:"
 msgstr "座標系"
 
-#: LinkPositionView.cpp:225
+#: LinkPositionView.cpp:231
 msgid "World"
 msgstr "ワールド"
 
-#: LinkPositionView.cpp:232 BodyItem.cpp:211
+#: LinkPositionView.cpp:238 BodyItem.cpp:188
 msgid "Body"
 msgstr "ボディ"
 
-#: LinkPositionView.cpp:238
+#: LinkPositionView.cpp:244
 msgid "Local"
 msgstr "ローカル"
 
-#: LinkPositionView.cpp:266
+#: LinkPositionView.cpp:272
 msgid "Base"
 msgstr "ベース"
 
-#: LinkPositionView.cpp:267
+#: LinkPositionView.cpp:273
 msgid "End"
 msgstr "エンド"
 
-#: LinkPositionView.cpp:282
+#: LinkPositionView.cpp:288
 msgid "Config"
 msgstr "形態"
 
-#: LinkPositionView.cpp:289
+#: LinkPositionView.cpp:295
 msgid "Pref."
 msgstr "希望形態"
 
-#: LinkPositionView.cpp:298
+#: LinkPositionView.cpp:304
 msgid "Req."
 msgstr "必須"
 
-#: LinkPositionView.cpp:379
+#: LinkPositionView.cpp:385
 msgid "Target link type"
 msgstr "対象リンクタイプ"
 
-#: LinkPositionView.cpp:381
-msgid "IK priority link"
-msgstr "逆運動学優先リンク"
-
-#: LinkPositionView.cpp:382
-msgid "IK priority link and root link"
-msgstr "逆運動学優先／ルートリンク"
-
-#: LinkPositionView.cpp:383
+#: LinkPositionView.cpp:387
 msgid "Any links"
 msgstr "全リンク"
 
-#: LinkPositionView.cpp:395
+#: LinkPositionView.cpp:388
+msgid "IK priority link and root link"
+msgstr "逆運動学優先／ルートリンク"
+
+#: LinkPositionView.cpp:389
+msgid "IK priority link"
+msgstr "逆運動学優先リンク"
+
+#: LinkPositionView.cpp:401
 msgid "Disable custom IK"
 msgstr "カスタムIKを使用しない"
 
-#: LinkPositionView.cpp:537
+#: LinkPositionView.cpp:561
 msgid "World Origin"
 msgstr "ワールド原点"
 
-#: LinkPositionView.cpp:541
+#: LinkPositionView.cpp:565
 msgid "Origin"
 msgstr "原点"
 
-#: LinkPositionView.cpp:837
+#: LinkPositionView.cpp:861
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionView.cpp:945
+#: LinkPositionView.cpp:969
 msgid "Solved"
 msgstr "解有り"
 
-#: LinkPositionView.cpp:949
+#: LinkPositionView.cpp:973
 msgid "Not Solved"
 msgstr "解無し"
 
-#: LinkPositionView.cpp:969
+#: LinkPositionView.cpp:993
 msgid "Accepted"
 msgstr ""
 
-#: LinkPositionView.cpp:972
+#: LinkPositionView.cpp:996
 msgid "Not Accepted"
 msgstr ""
 
@@ -575,35 +575,35 @@ msgstr "遠クリッピング距離"
 msgid "field Of View"
 msgstr "視野角"
 
-#: JointDisplacementView.cpp:395
+#: JointDisplacementView.cpp:393
 msgid "Joint Displacement"
 msgstr "関節変位"
 
-#: JointDisplacementView.cpp:455
+#: JointDisplacementView.cpp:453
 msgid "Option"
 msgstr "オプション"
 
-#: JointDisplacementView.cpp:494
+#: JointDisplacementView.cpp:492
 msgid "Joint ID"
 msgstr "関節ID"
 
-#: JointDisplacementView.cpp:498
+#: JointDisplacementView.cpp:496
 msgid "Joint name"
 msgstr "関節名"
 
-#: JointDisplacementView.cpp:503
+#: JointDisplacementView.cpp:501
 msgid "Overlap joint name"
 msgstr "関節名を上に表示"
 
-#: JointDisplacementView.cpp:507
+#: JointDisplacementView.cpp:505
 msgid "Slider"
 msgstr "スライダ"
 
-#: JointDisplacementView.cpp:512
+#: JointDisplacementView.cpp:510
 msgid "Dial"
 msgstr "ダイヤル"
 
-#: JointDisplacementView.cpp:516
+#: JointDisplacementView.cpp:514
 msgid "Phase"
 msgstr "位相"
 
@@ -647,19 +647,15 @@ msgstr "シミュレーションの停止"
 msgid "Current state of {} has been set to the initial state."
 msgstr "{}の現在の状態を初期状態にセットしました．"
 
-#: SimulationBar.cpp:133
+#: SimulationBar.cpp:135
 msgid "There is no simulator item."
 msgstr "シミュレータアイテムが存在しません．"
 
-#: SimulationBar.cpp:136
-msgid "Please select a simulator item to simulate."
-msgstr "対象シミュレータアイテムを選択してください．"
-
-#: SimulationBar.cpp:164
+#: SimulationBar.cpp:159
 msgid "{} cannot be processed because it is not related with a world."
 msgstr "{}はワールドと関連付けられていないため処理出来ません．"
 
-#: SimulationBar.cpp:170
+#: SimulationBar.cpp:165
 msgid ""
 "{} cannot be processed because another simulatorin the same world is also "
 "selected."
@@ -790,7 +786,7 @@ msgstr ""
 msgid "Root relative"
 msgstr "ルート相対"
 
-#: KinematicSimulatorItem.cpp:62
+#: KinematicSimulatorItem.cpp:74
 msgid "KinematicSimulatorItem"
 msgstr "運動学シミュレータアイテム"
 
@@ -822,7 +818,7 @@ msgstr ""
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:118 BodyItem.cpp:1442
+#: LinkPropertyView.cpp:118 BodyItem.cpp:1575
 msgid "Mass"
 msgstr "質量"
 
@@ -858,63 +854,83 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
+#: BodyItem.cpp:198
+msgid "Meter"
+msgstr "メートル"
+
+#: BodyItem.cpp:199
+msgid "Millimeter"
+msgstr "ミリメートル"
+
+#: BodyItem.cpp:200
+msgid "Inch"
+msgstr "インチ"
+
 #: BodyItem.cpp:209
+msgid "[ Mesh import hints ]"
+msgstr "[ メッシュインポートのヒント ]"
+
+#: BodyItem.cpp:210
+msgid "Unit:"
+msgstr "単位："
+
+#: BodyItem.cpp:212
+msgid "Upper axis:"
+msgstr "上方軸："
+
+#: BodyItem.cpp:309
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1316
-msgid "{0} cannot be attached to {1}."
-msgstr "{0}は{1}にアタッチできません．"
-
-#: BodyItem.cpp:1346
-msgid "{0} has been attached to {1} of {2}."
-msgstr "{0}は{2}の{1}にアタッチされました．"
-
-#: BodyItem.cpp:1364
+#: BodyItem.cpp:1451
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1436
+#: BodyItem.cpp:1495
+msgid "{0} has been attached to {1} of {2}."
+msgstr "{0}は{2}の{1}にアタッチされました．"
+
+#: BodyItem.cpp:1569
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1437
+#: BodyItem.cpp:1570
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1438
+#: BodyItem.cpp:1571
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1439
+#: BodyItem.cpp:1572
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1440
+#: BodyItem.cpp:1573
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1441
+#: BodyItem.cpp:1574
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1443
-msgid "Static model"
-msgstr "静的モデル"
+#: BodyItem.cpp:1576
+msgid "Static"
+msgstr "スタティック"
 
-#: BodyItem.cpp:1447
+#: BodyItem.cpp:1580
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1449
-msgid "Editable"
-msgstr "編集可能"
+#: BodyItem.cpp:1582 EditableSceneBody.cpp:1025
+msgid "Draggable"
+msgstr ""
 
-#: BodyItem.cpp:1597
+#: BodyItem.cpp:1729
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1614
+#: BodyItem.cpp:1746
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1225,83 +1241,83 @@ msgstr "サイズ"
 msgid "Color"
 msgstr "色"
 
-#: GLVisionSimulatorItem.cpp:295
+#: GLVisionSimulatorItem.cpp:297
 msgid "GLVisionSimulatorItem"
 msgstr "GLビジョンシミュレータアイテム"
 
-#: GLVisionSimulatorItem.cpp:324
+#: GLVisionSimulatorItem.cpp:326
 msgid "Single"
 msgstr "単一"
 
-#: GLVisionSimulatorItem.cpp:325
+#: GLVisionSimulatorItem.cpp:327
 msgid "Sensor"
 msgstr "センサ"
 
-#: GLVisionSimulatorItem.cpp:326
+#: GLVisionSimulatorItem.cpp:328
 msgid "Screen"
 msgstr "スクリーン"
 
-#: GLVisionSimulatorItem.cpp:521
+#: GLVisionSimulatorItem.cpp:523
 msgid "{0} detected vision sensor \"{1}\" of {2} as a target."
 msgstr "{0}は{2}の \"{1}\" を対象視覚センサとして検出しました．"
 
-#: GLVisionSimulatorItem.cpp:531
+#: GLVisionSimulatorItem.cpp:533
 msgid "{} has no target sensors"
 msgstr "{}は対象センサを有していません"
 
-#: GLVisionSimulatorItem.cpp:556
+#: GLVisionSimulatorItem.cpp:558
 msgid "{0}: Target sensor \"{1}\" cannot be initialized."
 msgstr "{0}: 対象センサ \"{1}\" の初期化に失敗しました．"
 
-#: GLVisionSimulatorItem.cpp:1788
+#: GLVisionSimulatorItem.cpp:1754
 msgid "Target bodies"
 msgstr "対象ボディ"
 
-#: GLVisionSimulatorItem.cpp:1790
+#: GLVisionSimulatorItem.cpp:1756
 msgid "Target sensors"
 msgstr "対象センサ"
 
-#: GLVisionSimulatorItem.cpp:1792
+#: GLVisionSimulatorItem.cpp:1758
 msgid "Max frame rate"
 msgstr "最大フレームレート"
 
-#: GLVisionSimulatorItem.cpp:1793
+#: GLVisionSimulatorItem.cpp:1759
 msgid "Max latency [s]"
 msgstr "最大レイテンシ[秒]"
 
-#: GLVisionSimulatorItem.cpp:1794
+#: GLVisionSimulatorItem.cpp:1760
 msgid "Record vision data"
 msgstr "ビジョンデータの記録"
 
-#: GLVisionSimulatorItem.cpp:1795
+#: GLVisionSimulatorItem.cpp:1761
 msgid "Thread mode"
 msgstr "スレッドモード"
 
-#: GLVisionSimulatorItem.cpp:1796
+#: GLVisionSimulatorItem.cpp:1762
 msgid "Best effort"
 msgstr "ベストエフォート"
 
-#: GLVisionSimulatorItem.cpp:1797
+#: GLVisionSimulatorItem.cpp:1763
 msgid "All scene objects"
 msgstr "全てのシーンオブジェクト"
 
-#: GLVisionSimulatorItem.cpp:1798
+#: GLVisionSimulatorItem.cpp:1764
 msgid "Precision ratio of range sensors"
 msgstr "レンジセンサ精度係数"
 
-#: GLVisionSimulatorItem.cpp:1800
+#: GLVisionSimulatorItem.cpp:1766
 msgid "Depth error"
 msgstr "深度エラー"
 
-#: GLVisionSimulatorItem.cpp:1801
+#: GLVisionSimulatorItem.cpp:1767
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: GLVisionSimulatorItem.cpp:1802
+#: GLVisionSimulatorItem.cpp:1768
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: GLVisionSimulatorItem.cpp:1803
+#: GLVisionSimulatorItem.cpp:1769
 msgid "Anti-aliasing"
 msgstr "アンチエイリアシング"
 
@@ -1325,61 +1341,57 @@ msgstr ""
 msgid "OFF"
 msgstr ""
 
-#: EditableSceneBody.cpp:1034
+#: EditableSceneBody.cpp:1043
 msgid "Move Forcibly"
 msgstr "強制移動"
 
-#: EditableSceneBody.cpp:1039
+#: EditableSceneBody.cpp:1048
 msgid "Hold Forcibly"
 msgstr "強制保持"
 
-#: EditableSceneBody.cpp:1047
+#: EditableSceneBody.cpp:1056
 msgid "Set Free"
 msgstr "フリーに"
 
-#: EditableSceneBody.cpp:1049
+#: EditableSceneBody.cpp:1058
 msgid "Set Base"
 msgstr "ベースに"
 
-#: EditableSceneBody.cpp:1051
+#: EditableSceneBody.cpp:1060
 msgid "Set Translation Pin"
 msgstr "並進ピンをセット"
 
-#: EditableSceneBody.cpp:1053
+#: EditableSceneBody.cpp:1062
 msgid "Set Rotation Pin"
 msgstr "回転ピンをセット"
 
-#: EditableSceneBody.cpp:1055
+#: EditableSceneBody.cpp:1064
 msgid "Set Both Pins"
 msgstr "両方のピンをセット"
 
-#: EditableSceneBody.cpp:1060
+#: EditableSceneBody.cpp:1069
 msgid "Level Attitude"
 msgstr "水平姿勢に"
 
-#: EditableSceneBody.cpp:1066
+#: EditableSceneBody.cpp:1075
 msgid "Markers"
 msgstr "マーカー"
 
-#: EditableSceneBody.cpp:1068
+#: EditableSceneBody.cpp:1077
 msgid "Center of Mass"
 msgstr "重心"
 
-#: EditableSceneBody.cpp:1072
+#: EditableSceneBody.cpp:1081
 msgid "Projection Point of CoM"
 msgstr "重心投影点"
 
-#: EditableSceneBody.cpp:1076
+#: EditableSceneBody.cpp:1085
 msgid "ZMP"
 msgstr "ZMP"
 
-#: EditableSceneBody.cpp:1550
+#: EditableSceneBody.cpp:1572
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
-
-#: EditableSceneBody.cpp:1551
-msgid "Enable editing static models"
-msgstr "静的モデルの編集を許可"
 
 #: BodyStateView.cpp:78
 msgid "Body State"
@@ -1679,3 +1691,6 @@ msgstr "{}のフレームレートはワールドのフレームレートと異�
 #: BodyMotionControllerItem.cpp:199
 msgid "Control mode"
 msgstr "制御モード"
+
+#~ msgid "[ Assumed mesh attributes ]"
+#~ msgstr "[ 想定メッシュ属性 ]"

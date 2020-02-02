@@ -23,6 +23,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFileDialog>
+#include <QStyle>
 #include <QSignalMapper>
 #include <QRegExp>
 #include <fmt/format.h>
@@ -106,7 +107,8 @@ public:
 
     void addFileIO(const string& typeId, ItemFileIOBasePtr fileIO);
 
-    static bool load(Item* item, const string& filename, Item* parentItem, const string& formatId);
+    static bool load(
+        Item* item, const string& filename, Item* parentItem, const string& formatId, const Mapping* options);
     static bool load(ItemFileIOBase* fileIO, Item* item, const string& filename, Item* parentItem);
 
     static bool save(Item* item, bool useDialogToGetFilename, bool doExport, string filename, const string& formatId);
@@ -815,13 +817,15 @@ void ItemManagerImpl::addFileIO(const string& typeId, ItemFileIOBasePtr fileIO)
 }
 
 
-bool ItemManager::load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId)
+bool ItemManager::load
+(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId, const Mapping* options)
 {
-    return ItemManagerImpl::load(item, filename, parentItem, formatId);
+    return ItemManagerImpl::load(item, filename, parentItem, formatId, options);
 }
 
 
-bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem, const string& formatId)
+bool ItemManagerImpl::load
+(Item* item, const string& filename, Item* parentItem, const string& formatId, const Mapping* options)
 {
     if(filename.empty()){
         messageView->putln(
@@ -894,6 +898,13 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
                 MessageView::ERROR);
         }
     } else {
+        targetFileIO->impl->invocationType = ItemFileIOBase::Direct;
+        if(targetFileIO->impl->api & ItemFileIOBase::Options){
+            targetFileIO->resetOptions();
+            if(options){
+                targetFileIO->restoreOptions(options);
+            }
+        }
         if(load(targetFileIO, item, pathString, parentItem)){
             loaded = true;
         }
@@ -926,7 +937,12 @@ bool ItemManagerImpl::load(ItemFileIOBase* fileIO, Item* item, const string& fil
         if(item->name().empty()){
             item->setName(filesystem::path(filename).stem().string());
         }
-        item->updateFileInformation(filename, fileIO->impl->formatId);
+        MappingPtr optionArchive;
+        if(fileIO->impl->api & ItemFileIOBase::Options){
+            optionArchive = new Mapping;
+            fileIO->storeOptions(optionArchive);
+        }
+        item->updateFileInformation(filename, fileIO->impl->formatId, optionArchive);
         messageView->put(_(" -> ok!\n"));
     }
     messageView->flush();
@@ -953,71 +969,76 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(ItemFileIOBasePtr fileIO)
             return;
         }
     }
+
+    QDialog dialog(MainWindow::instance());
+    dialog.setSizeGripEnabled(true);
+    auto vbox = new QVBoxLayout;
+    vbox->setSpacing(0);
+    dialog.setLayout(vbox);
     
-    QFileDialog dialog(MainWindow::instance());
-    //dialog.setOption(QFileDialog::DontUseNativeDialog);
-    dialog.setWindowTitle(QString(_("Load %1")).arg(fileIO->impl->caption.c_str()));
-    dialog.setViewMode(QFileDialog::List);
-    dialog.setLabelText(QFileDialog::Accept, _("Open"));
-    dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
-    dialog.setDirectory(AppConfig::archive()->get
+    QFileDialog fileDialog(&dialog);
+    fileDialog.setWindowFlags(fileDialog.windowFlags() & ~Qt::Dialog);
+    fileDialog.setOption(QFileDialog::DontUseNativeDialog);
+    fileDialog.setWindowTitle(QString(_("Load %1")).arg(fileIO->impl->caption.c_str()));
+    fileDialog.setSizeGripEnabled(false);
+    fileDialog.setViewMode(QFileDialog::List);
+    fileDialog.setLabelText(QFileDialog::Accept, _("Open"));
+    fileDialog.setLabelText(QFileDialog::Reject, _("Cancel"));
+    fileDialog.setDirectory(AppConfig::archive()->get
                         ("currentFileDialogDirectory", shareDirectory()).c_str());
 
-    static const char* checkConfigKey = "defaultChecked";
+    QObject::connect(&fileDialog, SIGNAL(finished(int)), &dialog, SLOT(done(int)));
 
-    bool isCheckedByDefault = false;
-    CheckBox checkCheckBox(_("Check the item(s)"));
-    QGridLayout* layout = dynamic_cast<QGridLayout*>(dialog.layout());
+    vbox->addWidget(&fileDialog);
 
-    if(layout){
-        Mapping* conf = AppConfig::archive()->findMapping("ItemManager");
-        if(!conf->isValid()){
-            // for backward compatibility
-            conf = AppConfig::archive()->findMapping("ItemTreeView");
-        }
-        if(conf->isValid()){
-            conf = conf->findMapping(checkConfigKey);
-            if(conf->isValid()){
-                conf = conf->findMapping(classInfo->moduleName);
-                if(conf->isValid() && conf->read(classInfo->className, isCheckedByDefault)){
-                    checkCheckBox.setChecked(isCheckedByDefault);
-                }
+    QWidget* optionPanel = nullptr;
+    if(fileIO->impl->api & ItemFileIOBase::Options){
+        fileIO->resetOptions();
+        if(fileIO->impl->api & ItemFileIOBase::OptionPanelForLoading){
+            optionPanel = fileIO->optionPanelForLoading();
+            if(optionPanel){
+                auto hbox = new QHBoxLayout;
+                auto style = dialog.style();
+                int left = style->pixelMetric(QStyle::PM_LayoutLeftMargin);
+                int right = style->pixelMetric(QStyle::PM_LayoutRightMargin);
+                int bottom = style->pixelMetric(QStyle::PM_LayoutBottomMargin);
+                hbox->setContentsMargins(left, 0, right, bottom);
+                hbox->addWidget(optionPanel);
+                hbox->addStretch();
+                vbox->addLayout(hbox);
             }
         }
-        layout->addWidget(&checkCheckBox, 4, 0, 1, 3);
     }
 
-    dialog.setNameFilters(makeExtensionFilterList(fileIO->impl->caption, fileIO->impl->extensionFunction()));
+    fileDialog.setNameFilters(makeExtensionFilterList(fileIO->impl->caption, fileIO->impl->extensionFunction()));
 
     if(classInfo->isSingleton){
-        dialog.setFileMode(QFileDialog::ExistingFile);
+        fileDialog.setFileMode(QFileDialog::ExistingFile);
     } else {
-        dialog.setFileMode(QFileDialog::ExistingFiles);
+        fileDialog.setFileMode(QFileDialog::ExistingFiles);
     }
+
     
-    if(dialog.exec()){
+    if(dialog.exec() == QDialog::Accepted){
         Mapping* config = AppConfig::archive();
 
         config->writePath(
             "currentFileDialogDirectory",
-            dialog.directory().absolutePath().toStdString());
-
-        if(checkCheckBox.isChecked() != isCheckedByDefault){
-            Mapping* checkConfig = config
-                ->openMapping("ItemManager")
-                ->openMapping(checkConfigKey)
-                ->openMapping(classInfo->moduleName);
-            checkConfig->write(classInfo->className, checkCheckBox.isChecked());
-            AppConfig::flush();
-        }
+            fileDialog.directory().absolutePath().toStdString());
                   
-        QStringList filenames = dialog.selectedFiles();
+        QStringList filenames = fileDialog.selectedFiles();
 
         Item* parentItem = RootItem::instance()->selectedItems().toSingle();
         if(!parentItem){
             parentItem = RootItem::instance();
         }
 
+        fileIO->impl->invocationType = ItemFileIOBase::Dialog;
+
+        if(optionPanel){
+            fileIO->fetchOptionPanelForLoading();
+        }
+        
         for(int i=0; i < filenames.size(); ++i){
             if(!classInfo->isSingleton){
                 item = classInfo->factory();
@@ -1025,12 +1046,12 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(ItemFileIOBasePtr fileIO)
             string filename = getNativePathString(filesystem::path(filenames[i].toStdString()));
             if(load(fileIO, item.get(), filename, parentItem)){
                 parentItem->addChildItem(item, true);
-
-                if(checkCheckBox.isChecked()){
-                    item->setChecked(true);
-                }
             }
         }
+    }
+
+    if(optionPanel){
+        optionPanel->setParent(nullptr);
     }
 }
 
@@ -1090,7 +1111,7 @@ bool ItemManagerImpl::save
             messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
         } else {
             if(targetFileIO->impl->interfaceLevel == ItemFileIOBase::Conversion){
-                item->updateFileInformation(filename, targetFileIO->impl->formatId);
+                item->updateFileInformation(filename, targetFileIO->impl->formatId, nullptr);
             }
             messageView->put(_(" -> ok!\n"));
         }
