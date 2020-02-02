@@ -12,6 +12,7 @@ ItemFileIOBase::ItemFileIOBase(const std::string& formatId, int api)
     impl = new Impl;
     impl->api = api;
     impl->formatId = formatId;
+    impl->interfaceLevel = Standard;
     impl->parentItem = nullptr;
     impl->mv = MessageView::instance();
     impl->os = &impl->mv->cout(true);
