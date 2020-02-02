@@ -229,6 +229,18 @@ Action* MenuManager::addItem(const QString& text)
 }
 
 
+Action* MenuManager::addItem(const std::string& text)
+{
+    return addItem(QString(text.c_str()));
+}
+
+
+Action* MenuManager::addItem(const char* text)
+{
+    return addItem(QString(text));
+}
+
+
 Action* MenuManager::addCheckItem(const QString& text)
 {
     Action* item = addItem(text);

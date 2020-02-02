@@ -24,7 +24,6 @@ void exportBodyItem(py::module m)
 
     bodyItem
         .def(py::init<>())
-        .def("loadModelFile", &BodyItem::loadModelFile)
         .def_property_readonly("body", &BodyItem::body)
         .def("isEditable", &BodyItem::isEditable)
         .def("moveToOrigin", &BodyItem::moveToOrigin)

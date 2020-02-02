@@ -24,7 +24,6 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_BodyPlugin(lua_State* L)
         sol::base_classes, sol::bases<Item>(),
         "new", sol::factories([]() -> BodyItemPtr { return new BodyItem(); }),
         "cast", [](Item* item) -> BodyItemPtr { return dynamic_cast<BodyItem*>(item); },
-        "loadModelFile", &BodyItem::loadModelFile,
         "setName", &BodyItem::setName,
         "body", [](BodyItem* self) -> BodyPtr { return self->body(); },
         "isEditable", &BodyItem::isEditable,

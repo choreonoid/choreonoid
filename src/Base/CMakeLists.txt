@@ -19,6 +19,7 @@ set(sources
   MessageView.cpp
   ItemManager.cpp
   ItemClassRegistry.cpp
+  ItemFileIO.cpp
   Item.cpp
   PolymorphicItemFunctionSet.cpp
   PutPropertyFunction.cpp
@@ -203,6 +204,7 @@ set(headers
   GraphBar.h
   ItemManager.h
   ItemClassRegistry.h
+  ItemFileIO.h
   PolymorphicItemFunctionSet.h
   AppConfig.h
   AppUtil.h

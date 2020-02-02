@@ -22,11 +22,12 @@ class Item;
 typedef ref_ptr<Item> ItemPtr;
 
 class ItemManagerImpl;
+class ItemFileIOBase;
 
 class ItemCreationPanel : public QWidget
 {
 public:
-    ItemCreationPanel(QWidget* parent = 0) : QWidget(parent) { }
+    ItemCreationPanel(QWidget* parent = nullptr) : QWidget(parent) { }
 
     virtual bool initializePanel(Item* protoItem) = 0;
     virtual bool initializeItem(Item* protoItem) = 0;
@@ -35,7 +36,7 @@ protected:
     ItemCreationPanel* findPanelOnTheSameDialog(const std::string& name);
 };
 
-    
+
 class CNOID_EXPORT ItemManager
 {
 public:
@@ -57,6 +58,14 @@ private:
         virtual bool operator()(Item* protoItem, Item* parentItem) = 0;
     };
 
+    class OverwritingCheckFunctionBase
+    {
+    public:
+        ~OverwritingCheckFunctionBase();
+        virtual bool operator()(Item* item) = 0;
+    };
+
+public:
     class FileFunctionBase
     {
     public:
@@ -64,14 +73,6 @@ private:
         virtual bool operator()(Item* item, const std::string& filename, std::ostream& os, Item* parentItem) = 0;
     };
 
-    class OverwritingCheckFunctionBase
-    {
-    public:
-        ~OverwritingCheckFunctionBase();
-        virtual bool operator()(Item* item) = 0;
-    };
-        
-public:
     void bindTextDomain(const std::string& domain);
 
     enum { PRIORITY_COMPATIBILITY, PRIORITY_CONVERSION = -10, PRIORITY_OPTIONAL = 0, PRIORITY_DEFAULT = 10, PRIORITY_FORCE = 20 };
@@ -145,6 +146,12 @@ public:
             typeid(ItemType).name(),
             std::make_shared<CreationPanelFilter<ItemType>>(filter),
             true);
+    }
+
+    template <class ItemType>
+    ItemManager& addFileIO(ItemFileIOBase* fileIO) {
+        addFileIO_(typeid(ItemType).name(), fileIO);
+        return *this;
     }
 
     template <class ItemType>
@@ -230,6 +237,7 @@ private:
     void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilterSub(
         const std::string& typeId, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
+    void addFileIO_(const std::string& typeId, ItemFileIOBase* fileIO);
     void addLoaderSub(
         const std::string& typeId, const std::string& caption, const std::string& formatId,
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);

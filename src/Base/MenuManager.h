@@ -43,6 +43,8 @@ public:
     void addAction(QAction* action);
 
     Action* addItem(const QString& text);
+    Action* addItem(const std::string& text);
+    Action* addItem(const char* text);
     Action* addCheckItem(const QString& text);
     Action* addRadioItem(QActionGroup* group, const QString& text);
 

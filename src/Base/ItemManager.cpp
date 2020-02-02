@@ -6,6 +6,8 @@
 #include "Item.h"
 #include "RootItem.h"
 #include "ItemClassRegistry.h"
+#include "ItemFileIO.h"
+#include "ItemFileIOBaseImpl.h"
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
@@ -44,13 +46,7 @@ public:
 
     class CreationPanelBase;
 
-    struct Saver;
-    typedef shared_ptr<Saver> SaverPtr;
-    
-    struct Loader;
-    typedef shared_ptr<Loader> LoaderPtr;
-
-    struct ClassInfo
+    struct ClassInfo : public Referenced
     {
         ClassInfo() { creationPanelBase = nullptr; }
         ~ClassInfo() { delete creationPanelBase; }
@@ -59,12 +55,11 @@ public:
         string name; // without the 'Item' suffix
         function<Item*()> factory;
         CreationPanelBase* creationPanelBase;
-        list<LoaderPtr> loaders;
-        list<SaverPtr> savers;
+        vector<ItemFileIOBasePtr> fileIOs;
         ItemPtr singletonInstance;
         bool isSingleton;
     };
-    typedef shared_ptr<ClassInfo> ClassInfoPtr;
+    typedef ref_ptr<ClassInfo> ClassInfoPtr;
     
     typedef map<string, ClassInfoPtr> ClassInfoMap;
 
@@ -74,39 +69,18 @@ public:
     class CreationPanelBase : public QDialog
     {
     public:
-        CreationPanelBase(const QString& title, ClassInfo& classInfo, ItemPtr protoItem, bool isSingleton);
+        CreationPanelBase(const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton);
         void addPanel(ItemCreationPanel* panel);
         Item* createItem(Item* parentItem);
         CreationPanelFilterList preFilters;
         CreationPanelFilterList postFilters;
     private:
-        ClassInfo& classInfo;
+        ClassInfo* classInfo;
         QVBoxLayout* panelLayout;
         ItemPtr protoItem;
         bool isSingleton;
     };
-    
-    struct Loader : public QObject
-    {
-        string typeId;
-        string formatId;
-        string caption;
-        int priority;
-        std::shared_ptr<ItemManager::FileFunctionBase> loadingFunction;
-        weak_ptr<ClassInfo> classInfo;
-        function<string()> getExtensions;
-    };
-        
-    struct Saver
-    {
-        string typeId;
-        string formatId;
-        string caption;
-        int priority;
-        function<string()> getExtensions;
-        std::shared_ptr<ItemManager::FileFunctionBase> savingFunction;
-    };
-    
+
     string moduleName;
     string textDomain;
     MenuManager& menuManager;
@@ -115,8 +89,7 @@ public:
     set<string> registeredTypeIds;
     set<ItemCreationPanel*> registeredCreationPanels;
     CreationPanelFilterSet registeredCreationPanelFilters;
-    set<LoaderPtr> registeredLoaders;
-    set<SaverPtr> registeredSavers;
+    set<ItemFileIOBasePtr> registeredFileIOs;
     
     QSignalMapper* mapperForNewItemActivated;
     QSignalMapper* mapperForLoadSpecificTypeItemActivated;
@@ -131,27 +104,22 @@ public:
         const string& typeId, shared_ptr<ItemManager::CreationPanelFilterBase> filter, bool afterInitializionByPanels);
     CreationPanelBase* getOrCreateCreationPanelBase(const string& typeId);
 
-    void addLoader
-    (const string& typeId, const string& caption, const string& formatId, function<string()>& getExtensions,
-     const shared_ptr<ItemManager::FileFunctionBase> function, int priority);
+    void addFileIO(const string& typeId, ItemFileIOBasePtr fileIO);
 
     static bool load(Item* item, const string& filename, Item* parentItem, const string& formatId);
-    static bool load(LoaderPtr loader, Item* item, const string& filename, Item* parentItem);
-
-    void addSaver
-    (const string& typeId, const string& caption, const string& formatId, function<string()>& getExtensions, 
-     shared_ptr<ItemManager::FileFunctionBase> function, int priority);
+    static bool load(ItemFileIOBase* fileIO, Item* item, const string& filename, Item* parentItem);
 
     static bool save(Item* item, bool useDialogToGetFilename, bool doExport, string filename, const string& formatId);
-    static SaverPtr getSaverAndFilenameFromSaveDialog(
-        list<SaverPtr>& savers, bool doExport,
+    static ItemFileIOBasePtr getFileIOAndFilenameFromSaveDialog(
+        vector<ItemFileIOBasePtr>& fileIOs, bool doExport,
         const string& itemLabel, const string& formatId, string& io_filename);
-    static SaverPtr determineSaver(list<SaverPtr>& savers, const string& filename, const string& formatId);
+    static ItemFileIOBasePtr determineFileIOForSaving(
+        vector<ItemFileIOBasePtr>& fileIOs, const string& filename, const string& formatId);
     static bool overwrite(Item* item, bool forceOverwrite, const string& formatId);
 
     void onNewItemActivated(CreationPanelBase* base);
     void onLoadItemActivated();
-    void onLoadSpecificTypeItemActivated(LoaderPtr loader);
+    void onLoadSpecificTypeItemActivated(ItemFileIOBasePtr fileIO);
     void onReloadSelectedItemsActivated();
     void onSaveSelectedItemsActivated();
     void onSaveSelectedItemsAsActivated();
@@ -191,7 +159,7 @@ public:
     }
 };
 
-MessageView* messageView = 0;
+MessageView* messageView = nullptr;
 bool isStaticMembersInitialized = false;
 
 typedef map<string, ItemManagerImpl::ClassInfoPtr> ClassInfoMap;
@@ -335,41 +303,14 @@ ItemManagerImpl::~ItemManagerImpl()
         ItemCreationPanel* panel = *it;
         delete panel;
     }
-    
-    // unregister loaders
-    for(auto it = registeredLoaders.begin(); it != registeredLoaders.end(); ++it){
-        LoaderPtr loader = *it;
-        ClassInfoMap::iterator p = typeIdToClassInfoMap.find(loader->typeId);
-        if(p != typeIdToClassInfoMap.end()){
-            list<LoaderPtr>& loaders = p->second->loaders;
-            list<LoaderPtr>::iterator q = loaders.begin();
-            while(q != loaders.end()){
-                if(loader == *q){
-                    q = loaders.erase(q);
-                } else {
-                    q++;
-                }
-            }
+
+    // unregister fileIO objects
+    for(auto& fileIO : registeredFileIOs){
+        if(auto classInfo = static_pointer_cast<ClassInfo>(fileIO->impl->classInfo.lock())){
+            auto& fileIOs = classInfo->fileIOs;
+            fileIOs.erase(std::remove(fileIOs.begin(), fileIOs.end(), fileIO), fileIOs.end());
         }
     }
-
-    // unregister savers
-    for(auto it = registeredSavers.begin(); it != registeredSavers.end(); ++it){
-        SaverPtr saver = *it;
-        ClassInfoMap::iterator p = typeIdToClassInfoMap.find(saver->typeId);
-        if(p != typeIdToClassInfoMap.end()){
-            list<SaverPtr>& savers = p->second->savers;
-            list<SaverPtr>::iterator q = savers.begin();
-            while(q != savers.end()){
-                if(saver == *q){
-                    q = savers.erase(q);
-                } else {
-                    q++;
-                }
-            }
-        }
-    }
-
     for(auto q = registeredTypeIds.begin(); q != registeredTypeIds.end(); ++q){
         const string& id = *q;
         typeIdToClassInfoMap.erase(id);
@@ -434,7 +375,7 @@ void ItemManagerImpl::registerClass
     auto inserted = classNameToClassInfoMap.insert(make_pair(className, ClassInfoPtr()));
     ClassInfoPtr& info = inserted.first->second;
     if(inserted.second){
-        info = std::make_shared<ClassInfo>();
+        info = new ClassInfo;
         info->moduleName = moduleName;
         info->className = className;
 
@@ -464,9 +405,9 @@ bool ItemManager::getClassIdentifier(ItemPtr item, std::string& out_moduleName, 
 {
     bool result;
 
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeid(*item).name());
+    auto p = typeIdToClassInfoMap.find(typeid(*item).name());
     if(p != typeIdToClassInfoMap.end()){
-        ItemManagerImpl::ClassInfoPtr& info = p->second;
+        auto& info = p->second;
         out_moduleName = info->moduleName;
         out_className = info->className;
         result = true;
@@ -482,14 +423,14 @@ bool ItemManager::getClassIdentifier(ItemPtr item, std::string& out_moduleName, 
 
 Item* ItemManager::getSingletonInstance(const std::string& typeId)
 {
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
+    auto p = typeIdToClassInfoMap.find(typeId);
     if(p != typeIdToClassInfoMap.end()){
-        ItemManagerImpl::ClassInfoPtr& info = p->second;
+        auto& info = p->second;
         if(info->isSingleton){
             return info->singletonInstance;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -500,9 +441,9 @@ Item* ItemManager::createItem(const std::string& moduleName, const std::string& 
     ModuleNameToItemManagerImplMap::iterator p = moduleNameToItemManagerImplMap.find(moduleName);
     if(p != moduleNameToItemManagerImplMap.end()){
         ClassInfoMap& classNameToClassInfoMap = p->second->classNameToClassInfoMap;
-        ClassInfoMap::iterator q = classNameToClassInfoMap.find(className);
+        auto q = classNameToClassInfoMap.find(className);
         if(q != classNameToClassInfoMap.end()){
-            ItemManagerImpl::ClassInfoPtr& info = q->second;
+            auto& info = q->second;
             if(info->isSingleton){
                 if(info->singletonInstance->parentItem()){
                     //! \todo put a warning message to notify that the instance of this singleton class has been in the item tree
@@ -593,9 +534,9 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
 {
     CreationPanelBase* base = nullptr;
     
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
+    auto p = typeIdToClassInfoMap.find(typeId);
     if(p != typeIdToClassInfoMap.end()){
-        ClassInfoPtr& info = p->second;
+        auto& info = p->second;
         base = info->creationPanelBase;
         if(!base){
             const char* className_c_str = info->className.c_str();
@@ -613,7 +554,7 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
             if(info->isSingleton){
                 protoItem = info->singletonInstance;
             }
-            base = new CreationPanelBase(title, *info, protoItem, info->isSingleton);
+            base = new CreationPanelBase(title, info, protoItem, info->isSingleton);
             base->hide();
             menuManager.setPath("/File/New ...").addItem(translatedName)
                 ->sigTriggered().connect([=](){ onNewItemActivated(base); });
@@ -643,7 +584,7 @@ void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
 
 
 ItemManagerImpl::CreationPanelBase::CreationPanelBase
-(const QString& title, ClassInfo& classInfo, ItemPtr protoItem, bool isSingleton)
+(const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton)
     : QDialog(MainWindow::instance()),
       classInfo(classInfo),
       protoItem(protoItem),
@@ -698,13 +639,13 @@ Item* ItemManagerImpl::CreationPanelBase::createItem(Item* parentItem)
     bool result = true;
 
     if(!protoItem && (!preFilters.empty() || !postFilters.empty())){
-        protoItem = classInfo.factory();
-        protoItem->setName(classInfo.name);
+        protoItem = classInfo->factory();
+        protoItem->setName(classInfo->name);
     }
     ItemPtr item = protoItem;
     if(!item){
-        item = classInfo.factory();
-        item->setName(classInfo.name);
+        item = classInfo->factory();
+        item->setName(classInfo->name);
     }
 
     for(CreationPanelFilterList::iterator p = preFilters.begin(); p != preFilters.end(); ++p){
@@ -771,7 +712,46 @@ ItemCreationPanel* ItemCreationPanel::findPanelOnTheSameDialog(const std::string
             }
         }
     }
-    return 0;
+    return nullptr;
+}
+
+namespace {
+
+// Defined to use existing loaders and savers based on FileFunctionBase for the backward compatiblity
+class FileFunctionAdapter : public ItemFileIOBase
+{
+    std::shared_ptr<ItemManager::FileFunctionBase> func;
+    
+public:
+    FileFunctionAdapter(
+        int api, const std::string& caption, const std::string& formatId,
+        const std::function<std::string()>& getExtensions, std::shared_ptr<ItemManager::FileFunctionBase> function,
+        int priority)
+        : ItemFileIOBase(formatId, api),
+          func(function)
+    {
+        setCaption(caption);
+        setExtensionFunction(getExtensions);
+        if(priority >= ItemManager::PRIORITY_DEFAULT){
+            setInterfaceLevel(Standard);
+        } else if(priority >= ItemManager::PRIORITY_COMPATIBILITY){
+            setInterfaceLevel(Compatibility);
+        } else {
+            setInterfaceLevel(Conversion);
+        }
+    }
+
+    virtual bool load(Item* item, const std::string& filename) override
+    {
+        return (*func)(item, filename, os(), parentItem());
+    };
+
+    virtual bool save(Item* item, const std::string& filename) override
+    {
+        return (*func)(item, filename, os(), parentItem());
+    };
+};
+
 }
 
 
@@ -779,57 +759,57 @@ void ItemManager::addLoaderSub
 (const std::string& typeId, const std::string& caption, const std::string& formatId,
  std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority)
 {
-    impl->addLoader(typeId, caption, formatId, getExtensions, function, priority);
+    auto adapter = new FileFunctionAdapter(
+        ItemFileIOBase::Load, caption, formatId, getExtensions, function, priority);
+    impl->addFileIO(typeId, adapter);
 }
 
 
-void ItemManagerImpl::addLoader
-(const string& typeId, const string& caption, const string& formatId,
- function<string()>& getExtensions, shared_ptr<ItemManager::FileFunctionBase> function, int priority)
+void ItemManager::addSaverSub
+(const std::string& typeId, const std::string& caption, const std::string& formatId,
+ std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority)
+{
+    auto adapter = new FileFunctionAdapter(
+        ItemFileIOBase::Save, caption, formatId, getExtensions, function, priority);
+    impl->addFileIO(typeId, adapter);
+}
+
+
+void ItemManager::addFileIO_(const std::string& typeId, ItemFileIOBase* fileIO)
+{
+    impl->addFileIO(typeId, fileIO);
+}
+
+
+void ItemManagerImpl::addFileIO(const string& typeId, ItemFileIOBasePtr fileIO)
 {
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p != typeIdToClassInfoMap.end()){
+        auto& classInfo = p->second;
+        auto& ioImpl = fileIO->impl;
+        ioImpl->typeId = typeId;
+        ioImpl->classInfo = classInfo;
 
-        ClassInfoPtr& classInfo = p->second;
-        
-        LoaderPtr loader = make_shared<Loader>();
-        loader->typeId = typeId;
-        loader->caption = caption;
-        loader->formatId = formatId;
-        loader->priority = priority;
-        loader->loadingFunction = function;
-        loader->classInfo = classInfo;
-        loader->getExtensions = getExtensions;
+        registeredFileIOs.insert(fileIO);
 
-        if(priority != ItemManager::PRIORITY_COMPATIBILITY){
-            bool isImporter = (priority <= ItemManager::PRIORITY_CONVERSION);
-
-            if(!isImporter){
-                menuManager.setPath("/File/Open ...");
-            } else {
-                menuManager.setPath("/File/Import ...");
-            }
-            menuManager.addItem(caption.c_str())
-                ->sigTriggered().connect(
-                    [=](){ onLoadSpecificTypeItemActivated(loader); });
+        auto& fileIOs = classInfo->fileIOs;
+        if(ioImpl->interfaceLevel == ItemFileIOBase::Standard){
+            fileIOs.insert(fileIOs.begin(), fileIO);
+        } else {
+            fileIOs.push_back(fileIO);
         }
-        
-        registeredLoaders.insert(loader);
 
-        // insert loader to a proper position of the list considering priorities 
-        list<LoaderPtr>& loaders = classInfo->loaders;
-        list<LoaderPtr>::iterator it = loaders.begin();
-        while(true){
-            if(it == loaders.end()){
-                loaders.push_back(loader);
-                break;
+        if(ioImpl->api & ItemFileIOBase::Load){
+            if(ioImpl->interfaceLevel != ItemFileIOBase::Compatibility){
+                if(ioImpl->interfaceLevel == ItemFileIOBase::Standard){
+                    menuManager.setPath("/File/Open ...");
+                } else {
+                    menuManager.setPath("/File/Import ...");
+                }
+                menuManager.addItem(ioImpl->caption)
+                    ->sigTriggered().connect(
+                        [=](){ onLoadSpecificTypeItemActivated(fileIO); });
             }
-            LoaderPtr loader2 = *it;
-            if(loader->priority > loader2->priority){
-                loaders.insert(it, loader);
-                break;
-            }
-            ++it;
         }
     }
 }
@@ -871,36 +851,38 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
     }
     
     ClassInfoPtr& classInfo = p->second;
-    list<LoaderPtr>& loaders = classInfo->loaders;
+    auto& fileIOs = classInfo->fileIOs;
     bool loaded = false;
-    LoaderPtr targetLoader;
+    ItemFileIOBasePtr targetFileIO;
 
     if(!formatId.empty()){
-        for(list<LoaderPtr>::iterator p = loaders.begin(); p != loaders.end(); ++p){
-            LoaderPtr& loader = *p;
-            if(loader->formatId == formatId){
-                targetLoader = loader;
-                break;
+        for(auto& fileIO : fileIOs){
+            if(fileIO->impl->api & ItemFileIOBase::Load){
+                if(fileIO->impl->formatId == formatId){
+                    targetFileIO = fileIO;
+                    break;
+                }
             }
         }
     } else {
         string dotextension = filepath.extension().string();
         if(dotextension.size() >= 2){
             string extension = dotextension.substr(1); // remove dot
-            for(list<LoaderPtr>::iterator p = loaders.begin(); p != loaders.end(); ++p){
-                LoaderPtr& loader = *p;
-                auto exts = separateExtensions(loader->getExtensions());
-                for(auto& ext : exts){
-                    if(ext == extension){
-                        targetLoader = loader;
-                        break;
+            for(auto& fileIO : fileIOs){
+                if(fileIO->impl->api & ItemFileIOBase::Load){
+                    auto exts = separateExtensions(fileIO->impl->extensionFunction());
+                    for(auto& ext : exts){
+                        if(ext == extension){
+                            targetFileIO = fileIO;
+                            break;
+                        }
                     }
                 }
             }
         }
     }
 
-    if(!targetLoader){
+    if(!targetFileIO){
         if(formatId.empty()){
             messageView->putln(
                 format(_("\"{}\" cannot be loaded because the file format is unknown."), pathString),
@@ -912,7 +894,7 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
                 MessageView::ERROR);
         }
     } else {
-        if(load(targetLoader, item, pathString, parentItem)){
+        if(load(targetFileIO, item, pathString, parentItem)){
             loaded = true;
         }
     }
@@ -921,36 +903,33 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
 }
         
 
-bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const string& filename_, Item* parentItem)
+bool ItemManagerImpl::load(ItemFileIOBase* fileIO, Item* item, const string& filename_, Item* parentItem)
 {
     bool loaded = false;
     
-    if(loader->loadingFunction){
-
-        string filename(toActualPathName(filename_));
+    string filename(toActualPathName(filename_));
         
-        messageView->notify(format(_("Loading {0} \"{1}\""), loader->caption, filename));
-        messageView->flush();
+    messageView->notify(format(_("Loading {0} \"{1}\""), fileIO->impl->caption, filename));
+    messageView->flush();
 
-        if(!parentItem){
-            parentItem = RootItem::mainInstance();
-        }
-
-        ostream& os = messageView->cout(true);
-        loaded = (*loader->loadingFunction)(item, filename, os, parentItem);
-        os.flush();
-        
-        if(!loaded){
-            messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
-        } else {
-            if(item->name().empty()){
-                item->setName(filesystem::path(filename).stem().string());
-            }
-            item->updateFileInformation(filename, loader->formatId);
-            messageView->put(_(" -> ok!\n"));
-        }
-        messageView->flush();
+    if(!parentItem){
+        parentItem = RootItem::instance();
     }
+    fileIO->impl->parentItem = parentItem;
+
+    loaded = fileIO->load(item, filename);
+    fileIO->impl->os->flush();
+        
+    if(!loaded){
+        messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
+    } else {
+        if(item->name().empty()){
+            item->setName(filesystem::path(filename).stem().string());
+        }
+        item->updateFileInformation(filename, fileIO->impl->formatId);
+        messageView->put(_(" -> ok!\n"));
+    }
+    messageView->flush();
 
     return loaded;
 }
@@ -958,13 +937,14 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const string& filename_
 
 void ItemManagerImpl::onLoadItemActivated()
 {
+
 }
 
 
-void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
+void ItemManagerImpl::onLoadSpecificTypeItemActivated(ItemFileIOBasePtr fileIO)
 {
     ItemPtr item;
-    ClassInfoPtr classInfo = loader->classInfo.lock();
+    auto classInfo = static_pointer_cast<ClassInfo>(fileIO->impl->classInfo.lock());
     if(classInfo->isSingleton){
         item = classInfo->singletonInstance;
         if(item->parentItem()){
@@ -976,7 +956,7 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
     
     QFileDialog dialog(MainWindow::instance());
     //dialog.setOption(QFileDialog::DontUseNativeDialog);
-    dialog.setWindowTitle(QString(_("Load %1")).arg(loader->caption.c_str()));
+    dialog.setWindowTitle(QString(_("Load %1")).arg(fileIO->impl->caption.c_str()));
     dialog.setViewMode(QFileDialog::List);
     dialog.setLabelText(QFileDialog::Accept, _("Open"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
@@ -1007,7 +987,7 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
         layout->addWidget(&checkCheckBox, 4, 0, 1, 3);
     }
 
-    dialog.setNameFilters(makeExtensionFilterList(loader->caption, loader->getExtensions()));
+    dialog.setNameFilters(makeExtensionFilterList(fileIO->impl->caption, fileIO->impl->extensionFunction()));
 
     if(classInfo->isSingleton){
         dialog.setFileMode(QFileDialog::ExistingFile);
@@ -1043,7 +1023,7 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
                 item = classInfo->factory();
             }
             string filename = getNativePathString(filesystem::path(filenames[i].toStdString()));
-            if(load(loader, item.get(), filename, parentItem)){
+            if(load(fileIO, item.get(), filename, parentItem)){
                 parentItem->addChildItem(item, true);
 
                 if(checkCheckBox.isChecked()){
@@ -1051,51 +1031,6 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
                 }
             }
         }
-    }
-}
-
-
-void ItemManager::addSaverSub
-(const std::string& typeId, const std::string& caption, const std::string& formatId,
- std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority)
-{
-    impl->addSaver(typeId, caption, formatId, getExtensions, function, priority);
-}
-
-
-void ItemManagerImpl::addSaver
-(const string& typeId, const string& caption, const string& formatId, function<string()>& getExtensions,
- shared_ptr<ItemManager::FileFunctionBase> function, int priority)
-{
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
-    if(p != typeIdToClassInfoMap.end()){
-
-        SaverPtr saver = make_shared<Saver>();
-        
-        saver->typeId = typeId;
-        saver->formatId = formatId;
-        saver->caption = caption;
-        saver->priority = priority;
-        saver->savingFunction = function;
-        saver->getExtensions = getExtensions;
-
-        // insert saver to a proper position of the list considering priorities
-        list<SaverPtr>& savers = p->second->savers;
-        list<SaverPtr>::iterator it = savers.begin();
-        while(true){
-            if(it == savers.end()){
-                savers.push_back(saver);
-                break;
-            }
-            SaverPtr saver2 = *it;
-            if(saver->priority > saver2->priority){
-                savers.insert(it, saver);
-                break;
-            }
-            ++it;
-        }
-
-        registeredSavers.insert(saver);
     }
 }
 
@@ -1122,16 +1057,17 @@ bool ItemManagerImpl::save
     bool tryToSave = false;
 
     string itemLabel = classInfo->className + " \"" + item->name() + "\"";
-    list<SaverPtr>& savers = classInfo->savers;
-    SaverPtr targetSaver;
+
+    auto& fileIOs = classInfo->fileIOs;
+    ItemFileIOBasePtr targetFileIO;
     
     if(useDialogToGetFilename){
-        targetSaver = getSaverAndFilenameFromSaveDialog(savers, doExport, itemLabel, formatId, filename);
+        targetFileIO = getFileIOAndFilenameFromSaveDialog(fileIOs, doExport, itemLabel, formatId, filename);
     } else {
-        targetSaver = determineSaver(savers, filename, formatId);
+        targetFileIO = determineFileIOForSaving(fileIOs, filename, formatId);
     }
     
-    if(targetSaver && targetSaver->savingFunction){
+    if(targetFileIO && targetFileIO->impl->api & ItemFileIOBase::Save){
         
         tryToSave = true;
         
@@ -1143,26 +1079,25 @@ bool ItemManagerImpl::save
         
         Item* parentItem = item->parentItem();
         if(!parentItem){
-            parentItem = RootItem::mainInstance();
+            parentItem = RootItem::instance();
         }
+        targetFileIO->impl->parentItem = parentItem;
 
-        ostream& os = messageView->cout(true);
-        saved = (*targetSaver->savingFunction)(item, filename, os, parentItem);
-        os.flush();
+        saved = targetFileIO->save(item, filename);
+        targetFileIO->impl->os->flush();
         
         if(!saved){
             messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
         } else {
-            bool isExporter = (targetSaver->priority <= ItemManager::PRIORITY_CONVERSION);
-            if(!isExporter){
-                item->updateFileInformation(filename, targetSaver->formatId);
+            if(targetFileIO->impl->interfaceLevel == ItemFileIOBase::Conversion){
+                item->updateFileInformation(filename, targetFileIO->impl->formatId);
             }
             messageView->put(_(" -> ok!\n"));
         }
     }
     
     if(!tryToSave){
-        string actualFormatId = targetSaver ? targetSaver->formatId : formatId;
+        string actualFormatId = targetFileIO ? targetFileIO->impl->formatId : formatId;
         if(actualFormatId.empty()){
             if(!doExport){
                 messageView->put(format(_("{} cannot be saved.\n"), itemLabel));
@@ -1184,8 +1119,9 @@ bool ItemManagerImpl::save
 }
 
 
-ItemManagerImpl::SaverPtr ItemManagerImpl::getSaverAndFilenameFromSaveDialog
-(list<SaverPtr>& savers, bool doExport, const string& itemLabel, const string& formatId, string& io_filename)
+ItemFileIOBasePtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
+(vector<ItemFileIOBasePtr>& fileIOs, bool doExport, const string& itemLabel, const string& formatId,
+ string& io_filename)
 {
     QFileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(QString(_("Save %1 as")).arg(itemLabel.c_str()));
@@ -1201,33 +1137,29 @@ ItemManagerImpl::SaverPtr ItemManagerImpl::getSaverAndFilenameFromSaveDialog
     }
 
     QStringList filters;
-    vector<SaverPtr> activeSavers;
+    vector<ItemFileIOBasePtr> activeFileIOs;
     
-    for(list<SaverPtr>::iterator p = savers.begin(); p != savers.end(); ++p){
-
-        SaverPtr& saver = *p;
-
-        if(saver->priority == ItemManager::PRIORITY_COMPATIBILITY){
+    for(auto& fileIO : fileIOs){
+        if(!(fileIO->impl->api & ItemFileIOBase::Save)){
             continue;
         }
-
-        bool isExporter = (saver->priority <= ItemManager::PRIORITY_CONVERSION);
+        if(fileIO->impl->interfaceLevel == ItemFileIOBase::Compatibility){
+            continue;
+        }
+        bool isExporter = (fileIO->impl->interfaceLevel == ItemFileIOBase::Conversion);
         if((doExport && !isExporter) || (!doExport && isExporter)){
             continue;
         }
-
-        if(!formatId.empty() && saver->formatId != formatId){
+        if(!formatId.empty() && fileIO->impl->formatId != formatId){
             continue;
         }
-
-        filters << makeExtensionFilter(saver->caption, saver->getExtensions(), true);
-        
-        activeSavers.push_back(saver);
+        filters << makeExtensionFilter(fileIO->impl->caption, fileIO->impl->extensionFunction(), true);
+        activeFileIOs.push_back(fileIO);
     }
 
     dialog.setNameFilters(filters);
 
-    SaverPtr targetSaver;
+    ItemFileIOBasePtr targetFileIO;
 
     if(filters.size() > 0){
     
@@ -1242,17 +1174,17 @@ ItemManagerImpl::SaverPtr ItemManagerImpl::getSaverAndFilenameFromSaveDialog
 
             io_filename = dialog.selectedFiles()[0].toStdString();
             if(!io_filename.empty()){
-                int saverIndex = -1;
+                int fileIOIndex = -1;
                 QString selectedFilter = dialog.selectedNameFilter();
                 for(int i=0; i < filters.size(); ++i){
                     if(filters[i] == selectedFilter){
-                        saverIndex = i;
+                        fileIOIndex = i;
                         break;
                     }
                 }
-                if(saverIndex >= 0){
-                    targetSaver = activeSavers[saverIndex];
-                    string extensions = targetSaver->getExtensions();
+                if(fileIOIndex >= 0){
+                    targetFileIO = activeFileIOs[fileIOIndex];
+                    string extensions = targetFileIO->impl->extensionFunction();
                     // add a lacking extension automatically
                     if(!extensions.empty()){
                         bool hasExtension = false;
@@ -1274,44 +1206,51 @@ ItemManagerImpl::SaverPtr ItemManagerImpl::getSaverAndFilenameFromSaveDialog
         }
     }
 
-    return targetSaver;
+    return targetFileIO;
 }
 
 
-ItemManagerImpl::SaverPtr ItemManagerImpl::determineSaver
-(list<SaverPtr>& savers, const string& filename, const string& formatId)
+ItemFileIOBasePtr ItemManagerImpl::determineFileIOForSaving
+(vector<ItemFileIOBasePtr>& fileIOs, const string& filename, const string& formatId)
 {
-    SaverPtr targetSaver;
+    ItemFileIOBasePtr targetFileIO;
 
     if(!formatId.empty()){
-        for(list<SaverPtr>::iterator p = savers.begin(); p != savers.end(); ++p){
-            SaverPtr& saver = *p;
-            if(saver->formatId == formatId){
-                targetSaver = saver;
-                break;
+        for(auto& fileIO : fileIOs){
+            if(fileIO->impl->api & ItemFileIOBase::Save){
+                if(fileIO->impl->formatId == formatId){
+                    targetFileIO = fileIO;
+                    break;
+                }
             }
         }
     } else {
         string dotextension = filesystem::path(filename).extension().string();
         if(!dotextension.empty()){
             string extension = dotextension.substr(1);
-            for(list<SaverPtr>::iterator p = savers.begin(); p != savers.end(); ++p){
-                SaverPtr& saver = *p;
-                auto exts = separateExtensions(saver->getExtensions());
-                for(auto& ext : exts){
-                    if(ext == extension){
-                        targetSaver = saver;
-                        break;
+            for(auto& fileIO : fileIOs){
+                if(fileIO->impl->api & ItemFileIOBase::Save){
+                    auto exts = separateExtensions(fileIO->impl->extensionFunction());
+                    for(auto& ext : exts){
+                        if(ext == extension){
+                            targetFileIO = fileIO;
+                            break;
+                        }
                     }
                 }
             }
         }
-        if(!targetSaver && !savers.empty()){
-            targetSaver = savers.front();
+        if(!targetFileIO){
+            for(auto& fileIO : fileIOs){
+                if(fileIO->impl->api & ItemFileIOBase::Save){
+                    targetFileIO = fileIO;
+                    break;
+                }
+            }
         }
     }
 
-    return targetSaver;
+    return targetFileIO;
 }
 
 

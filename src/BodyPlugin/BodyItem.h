@@ -32,7 +32,6 @@ public:
     BodyItem(const BodyItem& org);
     virtual ~BodyItem();
 
-    bool loadModelFile(const std::string& filename);
     Body* body() const;
     void setBody(Body* body);
     virtual void setName(const std::string& name) override;

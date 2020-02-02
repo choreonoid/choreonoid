@@ -20,6 +20,8 @@
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>
 #include <cnoid/ItemManager>
+#include <cnoid/ItemFileIO>
+#include <cnoid/ComboBox>
 #include <cnoid/OptionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/PutPropertyFunction>
@@ -50,7 +52,6 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
-BodyLoader bodyLoader;
 BodyState kinematicStateCopy;
 
 class MyCompositeBodyIK : public CompositeBodyIK
@@ -160,24 +161,121 @@ public:
 
 }
 
+namespace {
 
-static bool loadBodyItem(BodyItem* item, const std::string& filename)
+class BodyItemFileIO : public ItemFileIO<BodyItem>
 {
-    if(item->loadModelFile(filename)){
-        if(item->name().empty()){
-            item->setName(item->body()->modelName());
+    BodyLoader bodyLoader;
+
+    enum LengthUnit { Meter, Millimeter, Inchi, NumUnits };
+    Selection meshLengthUnitHint;
+    enum UpperAxis { Z, Y, NumUpperAxes };
+    Selection meshUpperAxisHint;
+
+    QWidget optionPanel;
+    ComboBox unitCombo;
+    ComboBox axisCombo;
+    
+public:
+    BodyItemFileIO()
+        : ItemFileIO<BodyItem>(
+            //"CHOREONOID-BODY",
+            "OpenHRP-VRML-MODEL", // temporary
+            Load | Options | OptionPanelForLoading),
+          meshLengthUnitHint(NumUnits, CNOID_GETTEXT_DOMAIN_NAME),
+          meshUpperAxisHint(NumUpperAxes, CNOID_GETTEXT_DOMAIN_NAME)
+    {
+        setCaption(_("Body"));
+        registerExtensions({ "body", "scen", "wrl", "yaml", "yml", "dae", "stl" });
+
+        // temporary
+        setExtensionFunction([](){ return string("body;scen;wrl;yaml;yml;dae;stl"); });
+        
+        addFormatIdAlias("OpenHRP-VRML-MODEL");
+
+        bodyLoader.setMessageSink(os());
+        
+        meshLengthUnitHint.setSymbol(Meter, N_("Meter"));
+        meshLengthUnitHint.setSymbol(Millimeter, N_("Millimeter"));
+        meshLengthUnitHint.setSymbol(Inchi, N_("Inchi"));
+
+        meshUpperAxisHint.setSymbol(Z, "Z");
+        meshUpperAxisHint.setSymbol(Y, "Y");
+
+        auto hbox = new QHBoxLayout;
+        optionPanel.setLayout(hbox);
+        hbox->addWidget(&unitCombo);
+        hbox->addWidget(&axisCombo);
+        for(int i=0; i < NumUnits; ++i){
+            unitCombo.addItem(meshLengthUnitHint.label(i));
         }
-        item->setEditable(!item->body()->isStaticModel());
+        for(int i=0; i < NumUnits; ++i){
+            axisCombo.addItem(meshUpperAxisHint.label(i));
+        }
+    }
+
+    virtual void resetOptions() override
+    {
+        meshLengthUnitHint.select(Meter);
+        meshUpperAxisHint.select(Z);
+    }
+        
+    virtual bool restoreOptions(Mapping& archive) override
+    {
+        string value;
+        if(archive.read("meshLengthUnitHint", value)){
+            meshLengthUnitHint.select(value);
+        }
+        if(archive.read("meshUpperAxisHint", value)){
+            meshUpperAxisHint.select(value);
+        }
         return true;
     }
-    return false;
-}
+        
+    virtual void storeOptions(Mapping& archive) override
+    {
+        archive.write("meshLengthUnitHint", meshLengthUnitHint.selectedSymbol(), DOUBLE_QUOTED);
+        archive.write("meshUpperAxisHint", meshUpperAxisHint.selectedSymbol(), DOUBLE_QUOTED);
+    }
+        
+    virtual QWidget* optionPanelForLoading() override
+    {
+        return &optionPanel;
+    }
+        
+    virtual void fetchOptionPanelForLoading() override
+    {
+        meshLengthUnitHint.select(unitCombo.currentIndex());
+        meshUpperAxisHint.select(axisCombo.currentIndex());
+    }
     
+    virtual bool load(BodyItem* item, const std::string& filename) override
+    {
+        //bodyLoader.setMeshImportHint(
+        //    meshLengthUnitHint.which(), meshUpperAxisHint.which());
+        
+        BodyPtr newBody = new Body;
+        if(!bodyLoader.load(newBody, filename)){
+            return false;
+        }
+        if(item->name().empty()){
+            item->setName(newBody->modelName());
+        } else {
+            newBody->setName(item->name());
+        }
+        item->setBody(newBody);
+        
+        return true;
+    }
+};
+
+}
+
 
 static void onSigOptionsParsed(boost::program_options::variables_map& variables)
 {
     if(variables.count("hrpmodel")){
-        vector<string> modelFileNames = variables["hrpmodel"].as< vector<string> >();
+        vector<string> modelFileNames = variables["hrpmodel"].as<vector<string>>();
         for(size_t i=0; i < modelFileNames.size(); ++i){
             BodyItemPtr item(new BodyItem());
             if(item->load(modelFileNames[i], "OpenHRP-VRML-MODEL")){
@@ -204,13 +302,9 @@ void BodyItem::initializeClass(ExtensionManager* ext)
     if(!initialized){
         ItemManager& im = ext->itemManager();
         im.registerClass<BodyItem>(N_("BodyItem"));
-        im.addLoader<BodyItem>(
-            _("Body"), "OpenHRP-VRML-MODEL", "body;scen;wrl;yaml;yml;dae;stl",
-            [](BodyItem* item, const std::string& filename, std::ostream&, Item*){
-                return loadBodyItem(item, filename); });
+        im.addFileIO<BodyItem>(new BodyItemFileIO);
 
         OptionManager& om = ext->optionManager();
-        om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
         om.addOption("body", boost::program_options::value< vector<string> >(), "load a body file");
         om.sigOptionsParsed().connect(onSigOptionsParsed);
 
@@ -321,36 +415,6 @@ void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
 }
 
 
-bool BodyItem::loadModelFile(const std::string& filename)
-{
-    return impl->loadModelFile(filename);
-}
-
-
-bool BodyItem::Impl::loadModelFile(const std::string& filename)
-{
-    bodyLoader.setMessageSink(MessageView::instance()->cout());
-
-    BodyPtr newBody = new Body;
-    newBody->setName(self->name());
-
-    bool loaded = bodyLoader.load(newBody, filename);
-    if(loaded){
-        body = newBody;
-        body->initializePosition();
-        body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
-
-        if(!sceneBody){
-            isSceneBodyDraggableByDefault = !body->isStaticModel();
-        }
-    }
-
-    initBody(false);
-
-    return loaded;
-}
-
-
 Body* BodyItem::body() const
 {
     return impl->body.get();
@@ -367,6 +431,12 @@ void BodyItem::Impl::setBody(Body* body_)
 {
     body = body_;
     body->initializePosition();
+    body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
+
+    if(!sceneBody){
+        isSceneBodyDraggableByDefault = !body->isStaticModel();
+    }
+    self->setEditable(!body->isStaticModel());
 
     initBody(false);
 }
