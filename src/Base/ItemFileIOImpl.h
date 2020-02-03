@@ -18,7 +18,7 @@ public:
     ItemFileIO* self;
     int api;
     std::string formatId;
-    std::vector<std::string> formatIdAlias;
+    std::vector<std::string> formatIdAliases;
     std::string caption;
     std::vector<std::string> extensions;
     std::function<std::string()> extensionFunction;
@@ -34,9 +34,19 @@ public:
     Impl(ItemFileIO* self, const std::string& formatId, int api);
     Impl(ItemFileIO* self, const Impl& org);
 
-    bool loadItem(
-        InvocationType invocationType, Item* item, const std::string& filename,
-        Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options);
+    bool isFormat(const std::string& id){
+        if(!id.empty()){
+            if(formatId == id){
+                return true;
+            }
+            for(auto& alias : formatIdAliases){
+                if(alias == id){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     std::vector<std::string> getExtensions(){
         if(extensionFunction){
@@ -44,6 +54,10 @@ public:
         }
         return extensions;
     }
+
+    bool loadItem(
+        InvocationType invocationType, Item* item, const std::string& filename,
+        Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options);
 
     static std::vector<std::string> separateExtensions(const std::string& multiExtString);
     static QString makeExtensionFilter(

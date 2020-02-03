@@ -175,8 +175,7 @@ class BodyItemFileIO : public ItemFileIOBase<BodyItem>
 public:
     BodyItemFileIO()
         : ItemFileIOBase<BodyItem>(
-            //"CHOREONOID-BODY",
-            "OpenHRP-VRML-MODEL", // temporary
+            "CHOREONOID-BODY",
             Load | Options | OptionPanelForLoading),
           meshLengthUnitHint(BodyLoader::NumLengthUnitIds),
           meshUpperAxisHint(BodyLoader::NumUpperAxisIds, CNOID_GETTEXT_DOMAIN_NAME)

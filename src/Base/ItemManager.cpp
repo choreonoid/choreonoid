@@ -104,7 +104,7 @@ public:
         const string& typeId, shared_ptr<ItemManager::CreationPanelFilterBase> filter, bool afterInitializionByPanels);
     CreationPanelBase* getOrCreateCreationPanelBase(const string& typeId);
 
-    ClassInfoPtr registerFileIO(const string& typeId, ItemFileIOPtr fileIO);
+    ClassInfoPtr registerFileIO(const type_info& typeId, ItemFileIOPtr fileIO);
 
     static bool load(
         Item* item, const string& filename, Item* parentItem, const string& formatId, const Mapping* options);
@@ -704,37 +704,37 @@ public:
 
 
 void ItemManager::addLoaderSub
-(const std::string& typeId, const std::string& caption, const std::string& formatId,
+(const std::type_info& type, const std::string& caption, const std::string& formatId,
  std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority)
 {
     auto adapter = new FileFunctionAdapter(
         ItemFileIO::Load, caption, formatId, getExtensions, function, priority);
-    auto classInfo = impl->registerFileIO(typeId, adapter);
+    auto classInfo = impl->registerFileIO(type, adapter);
     adapter->factory = classInfo->factory;
 }
 
 
 void ItemManager::addSaverSub
-(const std::string& typeId, const std::string& caption, const std::string& formatId,
+(const std::type_info& type, const std::string& caption, const std::string& formatId,
  std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority)
 {
     auto adapter = new FileFunctionAdapter(
         ItemFileIO::Save, caption, formatId, getExtensions, function, priority);
-    impl->registerFileIO(typeId, adapter);
+    impl->registerFileIO(type, adapter);
 }
 
 
-void ItemManager::registerFileIO_(const std::string& typeId, ItemFileIO* fileIO)
+void ItemManager::registerFileIO_(const std::type_info& type, ItemFileIO* fileIO)
 {
-    impl->registerFileIO(typeId, fileIO);
+    impl->registerFileIO(type, fileIO);
 }
 
 
-ItemManagerImpl::ClassInfoPtr ItemManagerImpl::registerFileIO(const string& typeId, ItemFileIOPtr fileIO)
+ItemManagerImpl::ClassInfoPtr ItemManagerImpl::registerFileIO(const type_info& type, ItemFileIOPtr fileIO)
 {
     ClassInfoPtr classInfo;
     
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
+    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(type.name());
     if(p != typeIdToClassInfoMap.end()){
         classInfo = p->second;
         auto& ioImpl = fileIO->impl;
@@ -776,7 +776,7 @@ ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::strin
         auto& classInfo = p->second;
         auto& fileIOs = classInfo->fileIOs;
         for(auto& fileIO : fileIOs){
-            if(formatId.empty() || formatId == fileIO->impl->formatId){
+            if(formatId.empty() || fileIO->impl->isFormat(formatId)){
                 found = fileIO;
                 break;
             }
@@ -834,7 +834,7 @@ ItemFileIO* ItemManagerImpl::findFileIOForLoading
     if(!formatId.empty() || filename.empty()){
         for(auto& fileIO : fileIOs){
             if(fileIO->impl->api & ItemFileIO::Load){
-                if(formatId.empty() || formatId == fileIO->impl->formatId){
+                if(formatId.empty() || fileIO->impl->isFormat(formatId)){
                     targetFileIO = fileIO;
                     break;
                 }
@@ -1004,7 +1004,7 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
         if((doExport && !isExporter) || (!doExport && isExporter)){
             continue;
         }
-        if(!formatId.empty() && fileIO->impl->formatId != formatId){
+        if(!formatId.empty() && !fileIO->impl->isFormat(formatId)){
             continue;
         }
         filters << ItemFileIO::Impl::makeExtensionFilter(
@@ -1074,7 +1074,7 @@ ItemFileIOPtr ItemManagerImpl::determineFileIOForSaving
     if(!formatId.empty()){
         for(auto& fileIO : fileIOs){
             if(fileIO->impl->api & ItemFileIO::Save){
-                if(fileIO->impl->formatId == formatId){
+                if(fileIO->impl->isFormat(formatId)){
                     targetFileIO = fileIO;
                     break;
                 }

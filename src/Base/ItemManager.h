@@ -151,7 +151,7 @@ public:
 
     template <class ItemType>
     ItemManager& registerFileIO(ItemFileIO* fileIO) {
-        registerFileIO_(typeid(ItemType).name(), fileIO);
+        registerFileIO_(typeid(ItemType), fileIO);
         return *this;
     }
 
@@ -161,7 +161,7 @@ public:
     ItemManager& addLoader(
         const std::string& caption, const std::string& formatId, const std::string& extensions, 
         const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
-        addLoaderSub(typeid(ItemType).name(), caption, formatId, [extensions](){ return extensions; },
+        addLoaderSub(typeid(ItemType), caption, formatId, [extensions](){ return extensions; },
                      std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
@@ -170,7 +170,7 @@ public:
     ItemManager& addLoader(
         const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
         const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
-        addLoaderSub(typeid(ItemType).name(), caption, formatId, getExtensions,
+        addLoaderSub(typeid(ItemType), caption, formatId, getExtensions,
                      std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
@@ -179,7 +179,7 @@ public:
     ItemManager& addSaver(
         const std::string& caption, const std::string& formatId, const std::string& extensions,
         const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
-        addSaverSub(typeid(ItemType).name(), caption, formatId, [extensions](){ return extensions; },
+        addSaverSub(typeid(ItemType), caption, formatId, [extensions](){ return extensions; },
                     std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
@@ -188,7 +188,7 @@ public:
     ItemManager& addSaver(
         const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
         const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
-        addSaverSub(typeid(ItemType).name(), caption, formatId, getExtensions, 
+        addSaverSub(typeid(ItemType), caption, formatId, getExtensions, 
                     std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
@@ -246,12 +246,12 @@ private:
     void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilterSub(
         const std::string& typeId, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
-    void registerFileIO_(const std::string& typeId, ItemFileIO* fileIO);
+    void registerFileIO_(const std::type_info& type, ItemFileIO* fileIO);
     void addLoaderSub(
-        const std::string& typeId, const std::string& caption, const std::string& formatId,
+        const std::type_info& type, const std::string& caption, const std::string& formatId,
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
     void addSaverSub(
-        const std::string& typeId, const std::string& caption, const std::string& formatId,
+        const std::type_info& type, const std::string& caption, const std::string& formatId,
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
 
     static Item* getSingletonInstance(const std::string& typeId);

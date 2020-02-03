@@ -62,7 +62,7 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const Impl& org)
     : self(self),
       api(org.api),
       formatId(org.formatId),
-      formatIdAlias(org.formatIdAlias),
+      formatIdAliases(org.formatIdAliases),
       caption(org.caption),
       extensions(org.extensions),
       extensionFunction(org.extensionFunction),
@@ -100,7 +100,7 @@ void ItemFileIO::setCaption(const std::string& name)
 
 void ItemFileIO::addFormatIdAlias(const std::string& formatId)
 {
-    impl->formatIdAlias.push_back(formatId);
+    impl->formatIdAliases.push_back(formatId);
 }
 
 
