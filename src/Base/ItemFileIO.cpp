@@ -23,16 +23,57 @@ using fmt::format;
 
 ItemFileIO::ItemFileIO(const std::string& formatId, int api)
 {
-    impl = new Impl;
-    impl->self = this;
-    impl->api = api;
-    impl->formatId = formatId;
-    impl->interfaceLevel = Standard;
-    impl->parentItem = nullptr;
-    impl->mv = MessageView::instance();
-    impl->os = &impl->mv->cout(true);
+    impl = new Impl(this, formatId, api);
 }
 
+
+ItemFileIO::Impl::Impl(ItemFileIO* self, const std::string& formatId, int api)
+    : self(self),
+      api(api),
+      formatId(formatId)
+{
+    interfaceLevel = Standard;
+    invocationType = Direct;
+    parentItem = nullptr;
+    mv = MessageView::instance();
+    os = &mv->cout(true);
+}
+
+
+ItemFileIO::ItemFileIO(const ItemFileIO& org)
+{
+    impl = new Impl(this, *org.impl);
+}
+
+
+ItemFileIO::ItemFileIO()
+{
+
+}
+
+
+void ItemFileIO::copyFrom(const ItemFileIO& org)
+{
+    impl = new Impl(this, *org.impl);
+}
+
+
+ItemFileIO::Impl::Impl(ItemFileIO* self, const Impl& org)
+    : self(self),
+      api(org.api),
+      formatId(org.formatId),
+      formatIdAlias(org.formatIdAlias),
+      caption(org.caption),
+      extensions(org.extensions),
+      extensionFunction(org.extensionFunction),
+      interfaceLevel(org.interfaceLevel),
+      invocationType(org.invocationType)
+{
+    parentItem = nullptr;
+    mv = MessageView::instance();
+    os = &mv->cout(true);
+}
+    
 
 ItemFileIO::~ItemFileIO()
 {
@@ -383,10 +424,11 @@ void ItemFileIO::putError(const std::string& message)
 
 
 ItemFileIOExtenderBase::ItemFileIOExtenderBase(const std::type_info& type, const std::string& formatId)
-    : ItemFileIO(formatId, 0)
 {
     baseFileIO = ItemManager::findFileIO(type, formatId);
-    setApi(baseFileIO->api());
+    if(baseFileIO){
+        copyFrom(*baseFileIO);
+    }
 }
 
 

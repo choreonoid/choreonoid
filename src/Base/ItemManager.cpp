@@ -738,7 +738,6 @@ ItemManagerImpl::ClassInfoPtr ItemManagerImpl::registerFileIO(const string& type
     if(p != typeIdToClassInfoMap.end()){
         classInfo = p->second;
         auto& ioImpl = fileIO->impl;
-        ioImpl->typeId = typeId;
         ioImpl->classInfo = classInfo;
 
         registeredFileIOs.insert(fileIO);
@@ -892,6 +891,10 @@ bool ItemManager::save(Item* item, const std::string& filename, const std::strin
 }
 
 
+/**
+   \todo Move the implementation except for finding the target ItemFileIO into
+   the ItemFileIO class like the functions for loading.
+*/
 bool ItemManagerImpl::save
 (Item* item, bool useDialogToGetFilename, bool doExport, string filename, const string& formatId)
 {
@@ -1006,7 +1009,7 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
         }
         filters << ItemFileIO::Impl::makeExtensionFilter(
             fileIO->impl->caption,
-            ItemFileIO::Impl::separateExtensions(fileIO->impl->extensionFunction()),
+            fileIO->impl->getExtensions(),
             true);
         activeFileIOs.push_back(fileIO);
     }
@@ -1038,11 +1041,10 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
                 }
                 if(fileIOIndex >= 0){
                     targetFileIO = activeFileIOs[fileIOIndex];
-                    string extensions = targetFileIO->impl->extensionFunction();
+                    auto exts = targetFileIO->impl->getExtensions();
                     // add a lacking extension automatically
-                    if(!extensions.empty()){
+                    if(!exts.empty()){
                         bool hasExtension = false;
-                        auto exts = ItemFileIO::Impl::separateExtensions(extensions);
                         string dotextension = filesystem::path(io_filename).extension().string();
                         if(!dotextension.empty()){
                             string extension = dotextension.substr(1); // remove the first dot
@@ -1084,8 +1086,7 @@ ItemFileIOPtr ItemManagerImpl::determineFileIOForSaving
             string extension = dotextension.substr(1);
             for(auto& fileIO : fileIOs){
                 if(fileIO->impl->api & ItemFileIO::Save){
-                    auto exts = ItemFileIO::Impl::separateExtensions(fileIO->impl->extensionFunction());
-                    for(auto& ext : exts){
+                    for(auto& ext : fileIO->impl->getExtensions()){
                         if(ext == extension){
                             targetFileIO = fileIO;
                             break;

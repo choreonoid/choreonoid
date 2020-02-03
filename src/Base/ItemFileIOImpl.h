@@ -23,14 +23,16 @@ public:
     std::vector<std::string> extensions;
     std::function<std::string()> extensionFunction;
     ItemFileIO::InterfaceLevel interfaceLevel;
-    Item* parentItem;
     ItemFileIO::InvocationType invocationType;
+    Item* parentItem;
     std::ostream* os;
     MessageView* mv;
-    std::string typeId;
 
     // This variable actualy points a instance of the ClassInfo class defined in ItemManager.cpp
     weak_ref_ptr<Referenced> classInfo;
+
+    Impl(ItemFileIO* self, const std::string& formatId, int api);
+    Impl(ItemFileIO* self, const Impl& org);
 
     bool loadItem(
         InvocationType invocationType, Item* item, const std::string& filename,

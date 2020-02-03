@@ -163,7 +163,7 @@ public:
 
 namespace {
 
-class BodyItemFileIO : public ItemFileIOBaseFor<BodyItem>
+class BodyItemFileIO : public ItemFileIOBase<BodyItem>
 {
     BodyLoader bodyLoader;
     Selection meshLengthUnitHint;
@@ -174,7 +174,7 @@ class BodyItemFileIO : public ItemFileIOBaseFor<BodyItem>
     
 public:
     BodyItemFileIO()
-        : ItemFileIOBaseFor<BodyItem>(
+        : ItemFileIOBase<BodyItem>(
             //"CHOREONOID-BODY",
             "OpenHRP-VRML-MODEL", // temporary
             Load | Options | OptionPanelForLoading),

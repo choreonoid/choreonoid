@@ -76,7 +76,7 @@ public:
 
     void bindTextDomain(const std::string& domain);
 
-    enum { PRIORITY_COMPATIBILITY, PRIORITY_CONVERSION = -10, PRIORITY_OPTIONAL = 0, PRIORITY_DEFAULT = 10, PRIORITY_FORCE = 20 };
+    enum { PRIORITY_CONVERSION = -10, PRIORITY_COMPATIBILITY = 0, PRIORITY_OPTIONAL = 0, PRIORITY_DEFAULT = 10 };
 
     template <class ItemType> class CreationPanelFilter : public CreationPanelFilterBase
     {

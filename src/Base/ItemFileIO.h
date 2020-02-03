@@ -33,7 +33,10 @@ public:
 
 protected:
     ItemFileIO(const std::string& formatId, int api);
-
+    ItemFileIO(const ItemFileIO& org);
+    ItemFileIO();
+    void copyFrom(const ItemFileIO& org);
+    
 public:
     ~ItemFileIO();
 
@@ -104,10 +107,10 @@ private:
 typedef ref_ptr<ItemFileIO> ItemFileIOPtr;
 
 template<class ItemType>
-class ItemFileIOBaseFor : public ItemFileIO
+class ItemFileIOBase : public ItemFileIO
 {
 public:
-    ItemFileIOBaseFor(const std::string& formatId, int api)
+    ItemFileIOBase(const std::string& formatId, int api)
         : ItemFileIO(formatId, api) {
     }
     virtual Item* createItem() override {
