@@ -155,25 +155,18 @@ ItemList<Item> ItemFileIO::loadItemsWithDialog
 (Item* parentItem, bool doAddition, Item* nextItem)
 {
     ItemList<Item> loadedItems;
-    ItemPtr item;
 
-    // temporary
-    bool isSingleton = false; 
-    if(isSingleton){
-        return loadedItems;
-    }
-
-    /*
-    if(isSingleton){
-        item = classInfo->singletonInstance;
+    bool isSingleton = false;
+    ItemPtr item = ItemManager::singletonInstance(this);
+    if(item){
+        isSingleton = true;
         if(item->parentItem()){
             showWarningDialog(
-                format(_("The singleton instance of {} is already loaded."),
-                       classInfo->className));
+                format(_("The singleton instance of {} has already been loaded."),
+                       impl->caption));
             return loadedItems;
         }
     }
-    */
 
     QDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(QString(_("Load %1")).arg(impl->caption.c_str()));

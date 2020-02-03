@@ -111,7 +111,6 @@ public:
     //! This function registers a singleton item class
     template <class ItemType, class SuperItemType = Item>
     ItemManager& registerClass(const std::string& className, ItemType* singletonInstance){
-        registerClassSub(className, typeid(ItemType), typeid(SuperItemType), Factory<ItemType>(), nullptr);
         registerClassSub(className, typeid(ItemType), typeid(SuperItemType), nullptr, singletonInstance);
         return *this;
     }
@@ -127,6 +126,8 @@ public:
     template <class ItemType> static ItemType* singletonInstance() {
         return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType).name()));
     }
+
+    static Item* singletonInstance(ItemFileIO* fileIO);
 
     template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel = 0) {
         addCreationPanelSub(typeid(ItemType).name(), panel);

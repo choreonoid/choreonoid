@@ -376,6 +376,15 @@ Item* ItemManager::getSingletonInstance(const std::string& typeId)
 }
 
 
+Item* ItemManager::singletonInstance(ItemFileIO* fileIO)
+{
+    if(auto classInfo = static_pointer_cast<ItemManagerImpl::ClassInfo>(fileIO->impl->classInfo.lock())){
+        return classInfo->singletonInstance;
+    }
+    return nullptr;
+}
+
+
 Item* ItemManager::createItem(const std::string& moduleName, const std::string& className)
 {
     Item* item = nullptr;
@@ -686,7 +695,10 @@ public:
 
     virtual Item* createItem() override
     {
-        return factory();
+        if(factory){
+            return factory();
+        }
+        return nullptr;
     }
 
     virtual bool load(Item* item, const std::string& filename) override
