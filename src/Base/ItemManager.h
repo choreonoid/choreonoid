@@ -22,7 +22,7 @@ class Item;
 typedef ref_ptr<Item> ItemPtr;
 
 class ItemManagerImpl;
-class ItemFileIOBase;
+class ItemFileIO;
 class Mapping;
 
 class ItemCreationPanel : public QWidget
@@ -150,10 +150,12 @@ public:
     }
 
     template <class ItemType>
-    ItemManager& addFileIO(ItemFileIOBase* fileIO) {
-        addFileIO_(typeid(ItemType).name(), fileIO);
+    ItemManager& registerFileIO(ItemFileIO* fileIO) {
+        registerFileIO_(typeid(ItemType).name(), fileIO);
         return *this;
     }
+
+    static ItemFileIO* findFileIO(const std::type_info& type, const std::string& formatId);
 
     template <class ItemType>
     ItemManager& addLoader(
@@ -228,6 +230,12 @@ public:
         return static_cast<ItemType*>(createItemWithDialog_(typeid(ItemType), parentItem, doAddition, nextItem));
     }
 
+    template <class ItemType>
+    static ItemList<ItemType> loadItemsWithDialog(
+        Item* parentItem, bool doAddtion = true, Item* nextItem = nullptr){
+        return loadItemsWithDialog_(typeid(ItemType), parentItem, doAddtion, nextItem);
+    }
+
     static void reloadItems(const ItemList<>& items);
     static Item* findOriginalItemForReloadedItem(Item* item);
 
@@ -238,7 +246,7 @@ private:
     void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilterSub(
         const std::string& typeId, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
-    void addFileIO_(const std::string& typeId, ItemFileIOBase* fileIO);
+    void registerFileIO_(const std::string& typeId, ItemFileIO* fileIO);
     void addLoaderSub(
         const std::string& typeId, const std::string& caption, const std::string& formatId,
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
@@ -249,6 +257,8 @@ private:
     static Item* getSingletonInstance(const std::string& typeId);
 
     static Item* createItemWithDialog_(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem);
+    static ItemList<Item> loadItemsWithDialog_(
+        const std::type_info& type, Item* parentItem, bool doAddtion, Item* nextItem);
 
     // The following static functions are called from functions in the Item class
     static bool load(

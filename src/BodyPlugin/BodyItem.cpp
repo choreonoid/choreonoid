@@ -163,7 +163,7 @@ public:
 
 namespace {
 
-class BodyItemFileIO : public ItemFileIO<BodyItem>
+class BodyItemFileIO : public ItemFileIOBaseFor<BodyItem>
 {
     BodyLoader bodyLoader;
     Selection meshLengthUnitHint;
@@ -174,7 +174,7 @@ class BodyItemFileIO : public ItemFileIO<BodyItem>
     
 public:
     BodyItemFileIO()
-        : ItemFileIO<BodyItem>(
+        : ItemFileIOBaseFor<BodyItem>(
             //"CHOREONOID-BODY",
             "OpenHRP-VRML-MODEL", // temporary
             Load | Options | OptionPanelForLoading),
@@ -182,11 +182,7 @@ public:
           meshUpperAxisHint(BodyLoader::NumUpperAxisIds, CNOID_GETTEXT_DOMAIN_NAME)
     {
         setCaption(_("Body"));
-        registerExtensions({ "body", "scen", "wrl", "yaml", "yml", "dae", "stl" });
-
-        // temporary
-        setExtensionFunction([](){ return string("body;scen;wrl;yaml;yml;dae;stl"); });
-        
+        setExtensions({ "body", "scen", "wrl", "yaml", "yml", "dae", "stl" });
         addFormatIdAlias("OpenHRP-VRML-MODEL");
 
         bodyLoader.setMessageSink(os());
@@ -230,11 +226,15 @@ public:
         
     virtual void storeOptions(Mapping* archive) override
     {
-        archive->write("meshLengthUnitHint", meshLengthUnitHint.selectedSymbol());
-        archive->write("meshUpperAxisHint", meshUpperAxisHint.selectedSymbol());
+        if(meshLengthUnitHint != BodyLoader::Meter){
+            archive->write("meshLengthUnitHint", meshLengthUnitHint.selectedSymbol());
+        }
+        if(meshUpperAxisHint != BodyLoader::Z){
+            archive->write("meshUpperAxisHint", meshUpperAxisHint.selectedSymbol());
+        }
     }
         
-    virtual QWidget* optionPanelForLoading() override
+    virtual QWidget* getOptionPanelForLoading() override
     {
         if(!optionPanel){
             optionPanel = new QWidget;
@@ -323,7 +323,7 @@ void BodyItem::initializeClass(ExtensionManager* ext)
     if(!initialized){
         ItemManager& im = ext->itemManager();
         im.registerClass<BodyItem>(N_("BodyItem"));
-        im.addFileIO<BodyItem>(new BodyItemFileIO);
+        im.registerFileIO<BodyItem>(new BodyItemFileIO);
 
         OptionManager& om = ext->optionManager();
         om.addOption("body", boost::program_options::value< vector<string> >(), "load a body file");
