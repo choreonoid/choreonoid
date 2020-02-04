@@ -55,13 +55,10 @@ public:
         registerStatementDelegate(typeid(StatementType), delegate);
     }
 
-    virtual bool storeState(Archive& archive) override;
-    virtual bool restoreState(const Archive& archive) override;
-
     class Impl;
 
 protected:
-    enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageSync };
+    enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageBodySync };
     void setBodySyncMode(BodySyncMode mode);
     BodySyncMode bodySyncMode() const;
 
@@ -77,6 +74,8 @@ protected:
     virtual void onStatementActivated(ManipulatorStatement* statement);
     virtual void onStatementDoubleClicked(ManipulatorStatement* statement);
     virtual void onOptionMenuRequest(MenuManager& menuManager);
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
 
 private:
     void registerStatementDelegate(std::type_index statementType, StatementDelegate* delegate);

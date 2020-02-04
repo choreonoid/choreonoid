@@ -21,7 +21,6 @@ public:
     ScopedConnectionSet bodyItemConnections;
     BodyPtr superimposedBody;
     SgSwitchableGroupPtr topSwitch;
-    SgUnpickableGroupPtr mainGroup;
     SceneBodyPtr sceneBody;
     float transparency;
     SgUpdate sgUpdate;
@@ -54,9 +53,7 @@ BodySuperimposerItem::Impl::Impl(BodySuperimposerItem* self)
     bodyItem = nullptr;
     topSwitch = new SgSwitchableGroup;
     topSwitch->setTurnedOn(false);
-    mainGroup = new SgUnpickableGroup;
-    topSwitch->addChild(mainGroup);
-    transparency = 0.7;
+    transparency = 0.5;
     SgObject::setNonNodeCloning(cloneMap, false);
 }
 
@@ -107,7 +104,7 @@ void BodySuperimposerItem::Impl::setBodyItem(BodyItem* newBodyItem)
     if(newBodyItem != bodyItem){
         bodyItem = newBodyItem;
         superimposedBody.reset();
-        mainGroup->clearChildren();
+        topSwitch->clearChildren();
         sceneBody.reset();
         bodyItemConnections.disconnect();
 
@@ -115,7 +112,7 @@ void BodySuperimposerItem::Impl::setBodyItem(BodyItem* newBodyItem)
             superimposedBody = bodyItem->body()->clone(cloneMap);
             sceneBody = new SceneBody(superimposedBody);
             sceneBody->makeTransparent(transparency, cloneMap);
-            mainGroup->addChild(sceneBody);
+            topSwitch->addChild(sceneBody);
             cloneMap.clear();
 
             bodyItemConnections.add(

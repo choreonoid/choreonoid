@@ -739,7 +739,7 @@ void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase
     logTopLevelProgramName.reset();
     currentStatement = nullptr;
 
-    if(bodySyncMode == TwoStageSync){
+    if(bodySyncMode == TwoStageBodySync){
         if(bodySuperimposer){
             bodySuperimposer->clearSuperimposition();
             bodySuperimposer.reset();
@@ -775,7 +775,7 @@ void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase
         programNameLabel.setStyleSheet("font-weight: bold");
         programNameLabel.setText(programItem->name().c_str());
 
-        if(bodySyncMode == TwoStageSync){
+        if(bodySyncMode == TwoStageBodySync){
             auto bodyItem = programItem->targetBodyItem();
             if(bodyItem){
                 initializeBodySuperimposer(bodyItem);
@@ -907,7 +907,7 @@ void ManipulatorProgramViewBase::onStatementActivated(ManipulatorStatement* stat
     if(auto ps = dynamic_cast<PositionStatement*>(statement)){
         if(impl->bodySyncMode == DirectBodySync){
             impl->updateBodyPositionWithPositionStatement(ps, true, true);
-        } else if(impl->bodySyncMode == TwoStageSync){
+        } else if(impl->bodySyncMode == TwoStageBodySync){
             impl->superimposePosition(ps);
         }
     }
@@ -926,7 +926,7 @@ void ManipulatorProgramViewBase::Impl::onTreeWidgetItemDoubleClicked(QTreeWidget
 
 void ManipulatorProgramViewBase::onStatementDoubleClicked(ManipulatorStatement* statement)
 {
-    if(impl->bodySyncMode == TwoStageSync){
+    if(impl->bodySyncMode == TwoStageBodySync){
         if(auto ps = dynamic_cast<PositionStatement*>(statement)){
             impl->updateBodyPositionWithPositionStatement(ps, true, true);
         }
