@@ -32,6 +32,7 @@ set(headers
   ManipulatorStatementRegistration.h
   ManipulatorStatement.h
   BasicManipulatorStatements.h
+  PositionStatement.h
   ManipulatorVariable.h
   ManipulatorVariableSet.h
   ManipulatorVariableList.h

@@ -7,13 +7,17 @@
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
 #include <cnoid/TreeWidget>
-#include <cnoid/Archive>
-#include <cnoid/ConnectionSet>
-#include <cnoid/BodyItem>
-#include <cnoid/Buttons>
-#include <cnoid/StringListComboBox>
+#include <cnoid/MessageView>
 #include <cnoid/TimeBar>
+#include <cnoid/BodyItem>
+#include <cnoid/BodySuperimposerItem>
+#include <cnoid/LinkKinematicsKit>
+#include <cnoid/BodyState>
 #include <cnoid/ReferencedObjectSeqItem>
+#include <cnoid/StringListComboBox>
+#include <cnoid/Buttons>
+#include <cnoid/ConnectionSet>
+#include <cnoid/Archive>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
@@ -22,12 +26,14 @@
 #include <QPainter>
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
+#include <fmt/format.h>
 #include <unordered_map>
 #include <array>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -131,14 +137,18 @@ public:
     Signal<void(ManipulatorStatement* statement)> sigCurrentStatementChanged;
     ManipulatorStatementPtr prevCurrentStatement;
     vector<ManipulatorStatementPtr> statementsToPaste;
+
+    BodySyncMode bodySyncMode;
+    BodySuperimposerItemPtr bodySuperimposer;
+    
+    QLabel programNameLabel;
+    QHBoxLayout buttonBox[2];
     ProgramViewDelegate* mainDelegate;
     ref_ptr<StatementDelegate> defaultStatementDelegate;
     unordered_map<type_index, ref_ptr<StatementDelegate>> statementDelegateMap;
-    QLabel programNameLabel;
     ToolButton optionMenuButton;
     MenuManager optionMenuManager;
     MenuManager contextMenuManager;
-    QHBoxLayout buttonBox[2];
 
     Impl(ManipulatorProgramViewBase* self);
     ~Impl();
@@ -153,6 +163,7 @@ public:
     void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void setCurrentStatement(ManipulatorStatement* statement, bool doSetCurrentItem, bool doActivate);
     void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
+    void onTreeWidgetItemDoubleClicked(QTreeWidgetItem* item, int /* column */);
     ManipulatorStatement* findStatementAtHierachicalPosition(const vector<int>& position);
     ManipulatorStatement* findStatementAtHierachicalPositionIter(
         const vector<int>& position, ManipulatorProgram* program, int level);
@@ -173,6 +184,10 @@ public:
     void showContextMenu(QPoint globalPos);
     void copySelectedStatements(bool doCut);
     void pasteStatements();
+    bool updateBodyPositionWithPositionStatement(
+        PositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange);
+    void initializeBodySuperimposer(BodyItem* bodyItem);
+    void superimposePosition(PositionStatement* ps);
 
     QModelIndex indexFromItem(QTreeWidgetItem* item, int column = 0) const {
         return TreeWidget::indexFromItem(item, column);
@@ -527,6 +542,8 @@ ManipulatorProgramViewBase::Impl::Impl(ManipulatorProgramViewBase* self)
 
     TimeBar::instance()->sigTimeChanged().connect(
         [&](double time){ return onTimeChanged(time); });
+
+    bodySyncMode = DirectBodySync;
 }
 
 
@@ -613,6 +630,10 @@ void ManipulatorProgramViewBase::Impl::setupWidgets()
         [&](QTreeWidgetItem* item, int column){
             onTreeWidgetItemClicked(item, column); });
 
+    sigItemDoubleClicked().connect(
+        [&](QTreeWidgetItem* item, int column){
+            onTreeWidgetItemDoubleClicked(item, column); });
+
     sigRowsInserted().connect(
         [&](const QModelIndex& parent, int start, int end){
             onRowsInserted(parent, start, end);  });
@@ -647,6 +668,18 @@ ManipulatorProgramViewBase::Impl::findStatementDelegate(ManipulatorStatement* st
         return iter->second;
     }
     return defaultStatementDelegate;
+}
+
+
+void ManipulatorProgramViewBase::setBodySyncMode(BodySyncMode mode)
+{
+    impl->bodySyncMode = mode;
+}
+
+
+ManipulatorProgramViewBase::BodySyncMode ManipulatorProgramViewBase::bodySyncMode() const
+{
+    return impl->bodySyncMode;
 }
 
 
@@ -706,6 +739,13 @@ void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase
     logTopLevelProgramName.reset();
     currentStatement = nullptr;
 
+    if(bodySyncMode == TwoStageSync){
+        if(bodySuperimposer){
+            bodySuperimposer->clearSuperimposition();
+            bodySuperimposer.reset();
+        }
+    }
+
     bool accepted = self->onCurrentProgramItemChanged(item);
     if(!accepted){
         programItem = nullptr;
@@ -735,6 +775,12 @@ void ManipulatorProgramViewBase::Impl::setProgramItem(ManipulatorProgramItemBase
         programNameLabel.setStyleSheet("font-weight: bold");
         programNameLabel.setText(programItem->name().c_str());
 
+        if(bodySyncMode == TwoStageSync){
+            auto bodyItem = programItem->targetBodyItem();
+            if(bodyItem){
+                initializeBodySuperimposer(bodyItem);
+            }
+        }
     }
 
     updateStatementTree();
@@ -831,7 +877,7 @@ void ManipulatorProgramViewBase::Impl::setCurrentStatement
     sigCurrentStatementChanged(statement);
 
     if(doActivate){
-        self->onCurrentStatementActivated(statement);
+        self->onStatementActivated(statement);
     }
 }
 
@@ -849,18 +895,44 @@ void ManipulatorProgramViewBase::Impl::onTreeWidgetItemClicked(QTreeWidgetItem* 
         // If the clicked statement is different from the current one,
         // onCurrentTreeWidgetItemChanged is processed
         if(statement == prevCurrentStatement){
-            self->onCurrentStatementActivated(statement);
+            self->onStatementActivated(statement);
         }
         prevCurrentStatement = statement;
     }
 }
 
 
-void ManipulatorProgramViewBase::onCurrentStatementActivated(ManipulatorStatement*)
+void ManipulatorProgramViewBase::onStatementActivated(ManipulatorStatement* statement)
 {
-
+    if(auto ps = dynamic_cast<PositionStatement*>(statement)){
+        if(impl->bodySyncMode == DirectBodySync){
+            impl->updateBodyPositionWithPositionStatement(ps, true, true);
+        } else if(impl->bodySyncMode == TwoStageSync){
+            impl->superimposePosition(ps);
+        }
+    }
 }
 
+
+void ManipulatorProgramViewBase::Impl::onTreeWidgetItemDoubleClicked(QTreeWidgetItem* item, int /* column */)
+{
+    if(auto statementItem = dynamic_cast<StatementItem*>(item)){
+        auto statement = statementItem->statement();
+        self->onStatementDoubleClicked(statement);
+        prevCurrentStatement = nullptr;
+    }
+}
+
+
+void ManipulatorProgramViewBase::onStatementDoubleClicked(ManipulatorStatement* statement)
+{
+    if(impl->bodySyncMode == TwoStageSync){
+        if(auto ps = dynamic_cast<PositionStatement*>(statement)){
+            impl->updateBodyPositionWithPositionStatement(ps, true, true);
+        }
+    }
+}
+    
 
 ManipulatorStatement* ManipulatorProgramViewBase::Impl::findStatementAtHierachicalPosition(const vector<int>& position)
 {
@@ -1309,6 +1381,67 @@ void ManipulatorProgramViewBase::Impl::pasteStatements()
     for(auto& statement : statementsToPaste){
         pos = program->insert(pos, statement->clone());
         ++pos;
+    }
+}
+
+
+bool ManipulatorProgramViewBase::Impl::updateBodyPositionWithPositionStatement
+(PositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange)
+{
+    bool updated = false;
+    if(auto kinematicsKit = programItem->kinematicsKit()){
+        auto positions = programItem->program()->positions();
+        auto position = ps->position(positions);
+        if(!position){
+            MessageView::instance()->putln(
+                format(_("Position {0} is not found."), ps->positionLabel()), MessageView::WARNING);
+        } else {
+            updated = position->apply(kinematicsKit);
+            if(updated){
+                if(doUpdateCurrentCoordinateFrames){
+                    if(auto ikPosition = dynamic_cast<ManipulatorIkPosition*>(position)){
+                        kinematicsKit->setCurrentBaseFrameType(ikPosition->baseFrameType());
+                        kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
+                        kinematicsKit->setCurrentEndFrame(ikPosition->toolFrameId());
+                        kinematicsKit->notifyCurrentFrameChange();
+                    }
+                }
+                if(doNotifyKinematicStateChange){
+                    programItem->targetBodyItem()->notifyKinematicStateChange();
+                }
+            }
+        }
+    }
+    return updated;
+}
+
+
+void ManipulatorProgramViewBase::Impl::initializeBodySuperimposer(BodyItem* bodyItem)
+{
+    bodySuperimposer = bodyItem->findChildItem<BodySuperimposerItem>("ManipulatorPositionSuperimposer");
+
+    if(!bodySuperimposer){
+        bodySuperimposer = new BodySuperimposerItem;
+        bodySuperimposer->setName("ManipulatorPositionSuperimposer");
+        bodySuperimposer->setTemporal();
+        bodyItem->addChildItem(bodySuperimposer);
+    }
+}
+
+
+void ManipulatorProgramViewBase::Impl::superimposePosition(PositionStatement* ps)
+{
+    if(bodySuperimposer){
+        auto body1 = programItem->targetBodyItem()->body();
+        BodyState orgBodyState(*body1);
+        if(updateBodyPositionWithPositionStatement(ps, false, false)){
+            auto body2 = bodySuperimposer->superimposedBody();
+            BodyState bodyState(*body1);
+            bodyState.restorePositions(*body2);
+            body2->calcForwardKinematics();
+            bodySuperimposer->updateSuperimposition();
+            orgBodyState.restorePositions(*body1);
+        }
     }
 }
 

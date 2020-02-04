@@ -29,9 +29,6 @@ public:
 
     void updateStatementTree();
 
-    virtual bool storeState(Archive& archive) override;
-    virtual bool restoreState(const Archive& archive) override;
-
     class CNOID_EXPORT StatementDelegate : public Referenced
     {
     public:
@@ -58,9 +55,16 @@ public:
         registerStatementDelegate(typeid(StatementType), delegate);
     }
 
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
+
     class Impl;
 
 protected:
+    enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageSync };
+    void setBodySyncMode(BodySyncMode mode);
+    BodySyncMode bodySyncMode() const;
+
     void addStatementButton(QWidget* button, int row);
 
     enum InsertionType { BeforeTargetPosition, AfterTargetPosition };
@@ -69,12 +73,9 @@ protected:
 
     virtual bool onCurrentProgramItemChanged(ManipulatorProgramItemBase* item) = 0;
     virtual void onCurrentStatementChanged(ManipulatorStatement* statement);
-
-    /**
-       This function is called when the current statemet is changed or clicked.
-    */
-    virtual void onCurrentStatementActivated(ManipulatorStatement* statement);
-
+    // This function is called when the current statemet is changed or clicked.
+    virtual void onStatementActivated(ManipulatorStatement* statement);
+    virtual void onStatementDoubleClicked(ManipulatorStatement* statement);
     virtual void onOptionMenuRequest(MenuManager& menuManager);
 
 private:

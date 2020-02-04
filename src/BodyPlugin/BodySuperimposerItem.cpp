@@ -5,6 +5,7 @@
 #include <cnoid/SceneBody>
 #include <cnoid/CloneMap>
 #include <cnoid/Archive>
+#include <cnoid/ConnectionSet>
 #include "gettext.h"
 
 using namespace std;
@@ -17,7 +18,7 @@ class BodySuperimposerItem::Impl
 public:
     BodySuperimposerItem* self;
     BodyItem* bodyItem;
-    ScopedConnection bodyItemConnection;
+    ScopedConnectionSet bodyItemConnections;
     BodyPtr superimposedBody;
     SgSwitchableGroupPtr topSwitch;
     SgUnpickableGroupPtr mainGroup;
@@ -48,6 +49,7 @@ BodySuperimposerItem::BodySuperimposerItem()
 
 
 BodySuperimposerItem::Impl::Impl(BodySuperimposerItem* self)
+    : self(self)
 {
     bodyItem = nullptr;
     topSwitch = new SgSwitchableGroup;
@@ -107,6 +109,7 @@ void BodySuperimposerItem::Impl::setBodyItem(BodyItem* newBodyItem)
         superimposedBody.reset();
         mainGroup->clearChildren();
         sceneBody.reset();
+        bodyItemConnections.disconnect();
 
         if(bodyItem){
             superimposedBody = bodyItem->body()->clone(cloneMap);
@@ -115,9 +118,14 @@ void BodySuperimposerItem::Impl::setBodyItem(BodyItem* newBodyItem)
             mainGroup->addChild(sceneBody);
             cloneMap.clear();
 
-            bodyItemConnection =
+            bodyItemConnections.add(
                 bodyItem->sigKinematicStateChanged().connect(
-                    [&](){ self->clearSuperimposition(); });
+                    [&](){ self->clearSuperimposition(); }));
+            bodyItemConnections.add(
+                bodyItem->sigCheckToggled().connect(
+                    [&](bool on){ self->setChecked(on); }));
+
+            self->setChecked(bodyItem->isChecked());
         }
     }
 }
@@ -163,7 +171,8 @@ void BodySuperimposerItem::updateSuperimposition()
 {
     if(impl->sceneBody){
         impl->sceneBody->updateLinkPositions(impl->sgUpdate);
-        impl->topSwitch->setTurnedOn(true, true);
+        impl->topSwitch->setTurnedOn(true);
+        impl->topSwitch->notifyUpdate(impl->sgUpdate);
     }
 }
 

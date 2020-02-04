@@ -197,14 +197,6 @@ private:
 
 typedef ref_ptr<ManipulatorFkPosition> ManipulatorFkPositionPtr;
 
-
-class ManipulatorPositionReferencer
-{
-public:
-    virtual GeneralId getManipulatorPositionId() const = 0;
-    virtual void setManipulatorPositionId(const GeneralId& id) = 0;
-};
-
 }
 
 #endif

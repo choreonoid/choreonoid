@@ -131,12 +131,9 @@ void ManipulatorProgramItemBase::Impl::setTargetBodyItem(BodyItem* bodyItem)
 {
     if(!bodyItem){
         kinematicsKit.reset();
-
     } else {
-        auto body = bodyItem->body();
         kinematicsKit = bodyItem->getLinkKinematicsKit();
     }
-
     if(kinematicsKit){
         targetBodyItem = bodyItem;
     } else {

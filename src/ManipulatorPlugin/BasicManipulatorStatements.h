@@ -2,6 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_BASIC_MANIPULATOR_STATEMENTS_H
 
 #include "ManipulatorStatement.h"
+#include "PositionStatement.h"
 #include <cnoid/GeneralId>
 #include "exportdecl.h"
 
@@ -258,7 +259,7 @@ private:
     double time_;
 };
 
-typedef ref_ptr<DelayStatement> DelayStatementPtr;    
+typedef ref_ptr<DelayStatement> DelayStatementPtr;
 
 }
 

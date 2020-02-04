@@ -2,6 +2,7 @@
 #include "ManipulatorStatementRegistration.h"
 #include "ManipulatorProgram.h"
 #include "ManipulatorVariableSet.h"
+#include "ManipulatorPositionList.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
@@ -522,6 +523,75 @@ bool DelayStatement::write(Mapping& archive) const
 }
 
 
+PositionStatement::PositionStatement()
+{
+
+}
+
+
+PositionStatement::PositionStatement(const PositionStatement& org)
+    : ManipulatorStatement(org),
+      positionId_(org.positionId_)
+{
+
+}
+
+
+Referenced* PositionStatement::doClone(CloneMap*) const
+{
+    return new PositionStatement(*this);
+}
+    
+
+std::string PositionStatement::label(int index) const
+{
+    if(index == 0){
+        return "Position";
+
+    } else if(index == 1){
+        return positionLabel();
+    }
+    return string();
+}
+
+
+const ManipulatorPosition* PositionStatement::position(const ManipulatorPositionList* positions) const
+{
+    return positions->findPosition(positionId_);
+}
+
+
+ManipulatorPosition* PositionStatement::position(ManipulatorPositionList* positions) const
+{
+    return positions->findPosition(positionId_);
+}
+
+
+std::string PositionStatement::positionLabel() const
+{
+    if(positionId_.isInt()){
+        return format("P{0}", positionId_.toInt());
+    } else {
+        return positionId_.toString();
+    }
+}
+
+
+bool PositionStatement::read(ManipulatorProgram* program, const Mapping& archive)
+{
+    string symbol;
+    positionId_.read(archive, "position");
+    return true;
+}
+
+
+bool PositionStatement::write(Mapping& archive) const
+{
+    archive.write("position", positionId_.label());
+    return true;
+}
+
+
 namespace {
 
 struct StatementTypeRegistration {
@@ -536,7 +606,9 @@ struct StatementTypeRegistration {
             .registerType<CallStatement>("Call")
             .registerType<AssignStatement>("Assign")
             .registerType<SetSignalStatement>("SetSignal")
-            .registerType<DelayStatement>("Delay");
+            .registerType<DelayStatement>("Delay")
+            .registerType<PositionStatement>("Position")
+            ;
     }
 } registration;
 
