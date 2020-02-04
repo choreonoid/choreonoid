@@ -28,16 +28,8 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 
 unordered_set<Item*> itemsToEmitSigSubTreeChanged;
-
 int recursiveTreeChangeCounter = 0;
-unordered_set<Item*> itemsBeingAddedOrRemoved;
 bool isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
-
-void clearItemsBeingAddedOrRemoved()
-{
-    itemsBeingAddedOrRemoved.clear();
-    isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
-}
 
 bool checkIfAnyItemInSubTreeSelected(Item* item)
 {
@@ -48,20 +40,6 @@ bool checkIfAnyItemInSubTreeSelected(Item* item)
         return checkIfAnyItemInSubTreeSelected(child);
     }
     return false;
-}
-
-void memorizeItemBeingAddedOrRemoved(Item* item)
-{
-    itemsBeingAddedOrRemoved.insert(item);
-
-    if(checkIfAnyItemInSubTreeSelected(item)){
-        isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
-    }
-}
-
-bool isItemBeingAddedOrRemoved(Item* item)
-{
-    return itemsBeingAddedOrRemoved.find(item) != itemsBeingAddedOrRemoved.end();
 }
 
 }
@@ -545,7 +523,10 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     }
 
     ++recursiveTreeChangeCounter;
-    memorizeItemBeingAddedOrRemoved(item);
+
+    if(checkIfAnyItemInSubTreeSelected(item)){
+        isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
+    }
     
     if(!item->impl->attributes[SUB_ITEM]){
         attributes.reset(TEMPORAL);
@@ -578,16 +559,27 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     ++self->numChildren_;
 
     if(rootItem){
+        /**
+           The order to process the following notifications was modified on February 4, 2020.
+           (The revision just before this modification is 2401bde85eb50340ea5ea1e915d1355fa6b85582.)
+           The order in which callSlotsOnPositionChanged is called was changed before
+           notifyEventOnSubTreeAdded or notifyEventOnSubTreeMoved because Item::onPositionChanged
+           is frequently used for initializing an item by itself, and the initialization outside
+           the item should be processed after it. (There is a case where the condition is required.)
+           Keep in mind that this change may affect what worked well before.
+           Note that this order was originally used before revision a970f786c2f7021c336e3c61ad76b01c9a967e6c
+           committed on October 31, 2018, and the reason why the order was changed at that time is not clear.
+        */
+        if(!isMoving){
+            item->impl->callFuncOnConnectedToRoot();
+        }
+        item->impl->callSlotsOnPositionChanged(prevParentItem, prevNextSibling);
         if(isMoving){
             rootItem->notifyEventOnSubTreeMoved(item);
         } else {
             rootItem->notifyEventOnSubTreeAdded(item);
-            item->impl->callFuncOnConnectedToRoot();
             item->impl->requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(item, rootItem);
             item->impl->requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(item, rootItem);
-        }
-        if(!isItemBeingAddedOrRemoved(self)){
-            item->impl->callSlotsOnPositionChanged(prevParentItem, prevNextSibling);
         }
     }
 
@@ -600,7 +592,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         if(rootItem && isAnyItemInSubTreesBeingAddedOrRemovedSelected){
             rootItem->emitSigSelectedItemsChangedLater();
         }
-        clearItemsBeingAddedOrRemoved();
+        isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
     }
 
     return true;
@@ -644,7 +636,10 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
     Item* prevNextSibling = self->nextItem();
 
     ++recursiveTreeChangeCounter;
-    memorizeItemBeingAddedOrRemoved(self);
+
+    if(checkIfAnyItemInSubTreeSelected(self)){
+        isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
+    }
 
     // Clear all the selection of the sub tree to remove
     setSubTreeItemsSelectedIter(self, false);
@@ -677,9 +672,7 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
-            if(!isItemBeingAddedOrRemoved(self->parent_)){
-                callSlotsOnPositionChanged(prevParent, prevNextSibling); // sigPositionChanged is also emitted
-            }
+            callSlotsOnPositionChanged(prevParent, prevNextSibling); // sigPositionChanged is also emitted
             emitSigDisconnectedFromRootForSubTree();
         }
     }
@@ -693,7 +686,7 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
         if(rootItem && isAnyItemInSubTreesBeingAddedOrRemovedSelected){
             rootItem->emitSigSelectedItemsChangedLater();
         }
-        clearItemsBeingAddedOrRemoved();
+        isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
     }
 }
 
