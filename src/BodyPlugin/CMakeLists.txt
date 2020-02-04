@@ -29,6 +29,7 @@ set(sources
   SensorVisualizerItem.cpp
   BodyTrackingCameraItem.cpp
   BodyMarkerItem.cpp
+  BodySuperimposerItem.cpp
   BodyMotionEngine.cpp
   KinematicFaultChecker.cpp
   SplineFilterDialog.cpp
@@ -76,6 +77,7 @@ set(headers
   SensorVisualizerItem.h
   BodyTrackingCameraItem.h
   BodyMarkerItem.h
+  BodySuperimposerItem.h
   KinematicFaultChecker.h
   BodyBar.h
   KinematicsBar.h
