@@ -65,6 +65,7 @@ public:
     bool doKeepOrgTransparency;
     float transparency;
     int numModified;
+    SgMaterialPtr defaultMaterial;
 
     Transparenter(CloneMap& cloneMap, bool doKeepOrgTransparency)
         : cloneMap(cloneMap),
@@ -101,8 +102,14 @@ public:
     {
         if(shape->material()){
             shape->setMaterial(getTransparentMaterial(shape->material()));
-            ++numModified;
+        } else {
+            if(!defaultMaterial){
+                defaultMaterial = new SgMaterial;
+                defaultMaterial->setTransparency(transparency);
+            }
+            shape->setMaterial(defaultMaterial);
         }
+        ++numModified;
     }
                 
     void visitPlot(SgPlot* plot)
