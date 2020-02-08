@@ -34,8 +34,9 @@ public:
     virtual void stop() override;
 
 protected:
-    virtual void onDisconnectedFromRoot() override;
     virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
+    virtual void onDisconnectedFromRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

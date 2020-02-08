@@ -82,6 +82,7 @@ public:
     MessageView* mv;
 
     SimpleControllerConfig config;
+    bool isConfigured;
 
     std::string controllerModuleName;
     std::string controllerModuleFilename;
@@ -101,8 +102,10 @@ public:
     SimpleControllerItemImpl(SimpleControllerItem* self);
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
     ~SimpleControllerItemImpl();
+    void doCommonInitializationInConstructor();
     void setController(const std::string& name);
     bool loadController();
+    bool configureController();
     void unloadController();
     void initializeIoBody();
     void clearIoTargets();
@@ -170,11 +173,9 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
       config(this),
       baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    controller = nullptr;
-    ioBody = nullptr;
-    io = nullptr;
+    doCommonInitializationInConstructor();
+    
     isOldTargetVariableMode = false;
-    mv = MessageView::instance();
     doReloading = false;
     isSymbolExportEnabled = false;
 
@@ -201,11 +202,9 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
       controllerDirectory(org.controllerDirectory),
       baseDirectoryType(org.baseDirectoryType)
 {
-    controller = nullptr;
-    ioBody = nullptr;
-    io = nullptr;
+    doCommonInitializationInConstructor();
+    
     isOldTargetVariableMode = org.isOldTargetVariableMode;
-    mv = MessageView::instance();
     doReloading = org.doReloading;
     isSymbolExportEnabled = org.isSymbolExportEnabled;
 }
@@ -224,18 +223,42 @@ SimpleControllerItemImpl::~SimpleControllerItemImpl()
 }
 
 
+void SimpleControllerItemImpl::doCommonInitializationInConstructor()
+{
+    controller = nullptr;
+    isConfigured = false;
+    ioBody = nullptr;
+    io = nullptr;
+    mv = MessageView::instance();
+}    
+
+
+Item* SimpleControllerItem::doDuplicate() const
+{
+    return new SimpleControllerItem(*this);
+}
+
+
+void SimpleControllerItem::onPositionChanged()
+{
+    if(impl->doReloading){
+        return;
+    }
+    if(!impl->controller){
+        impl->loadController();
+    }
+    if(impl->controller){
+        impl->configureController();
+    }
+}
+
+
 void SimpleControllerItem::onDisconnectedFromRoot()
 {
     if(!isActive()){
         impl->unloadController();
     }
     impl->childControllerItems.clear();
-}
-
-
-Item* SimpleControllerItem::doDuplicate() const
-{
-    return new SimpleControllerItem(*this);
 }
 
 
@@ -272,10 +295,6 @@ void SimpleControllerItemImpl::setController(const std::string& name)
 
     controllerModuleName = modulePath.string();
     controllerModuleFilename.clear();
-
-    if(!doReloading){
-        loadController();
-    }
 }
 
 
@@ -338,14 +357,27 @@ bool SimpleControllerItemImpl::loadController()
         return false;
     }
 
-    if(!controller->configure(&config)){
-        mv->putln(format(_("{} failed to configure the controller"), self->name()),
-                  MessageView::ERROR);
-        return false;
-    }
-
     mv->putln(_("A controller instance has successfully been created."));
     return true;
+}
+
+
+bool SimpleControllerItemImpl::configureController()
+{
+    bool result = false;
+    if(controller){
+        if(body()){ // Is config ready?
+            result = controller->configure(&config);
+            if(result){
+                isConfigured = true;
+            }
+        }
+    }
+    if(!result){
+        mv->putln(format(_("{} failed to configure the controller"), self->name()),
+                  MessageView::ERROR);
+    }
+    return result;
 }
 
 
@@ -368,6 +400,8 @@ void SimpleControllerItemImpl::unloadController()
         mv->putln(format(_("The controller module \"{1}\" of {0} has been unloaded."),
                          self->name(), controllerModuleFilename));
     }
+
+    isConfigured = false;
 }
 
 
@@ -440,6 +474,11 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
     if(!controller){
         if(!loadController()){
             return nullptr;
+        }
+        if(!isConfigured){
+            if(!configureController()){
+                return nullptr;
+            }
         }
     }
 
