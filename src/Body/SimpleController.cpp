@@ -99,3 +99,8 @@ void SimpleController::stop()
 {
 
 }
+
+void SimpleController::unconfigure()
+{
+
+}

@@ -241,7 +241,7 @@ Item* SimpleControllerItem::doDuplicate() const
 
 void SimpleControllerItem::onPositionChanged()
 {
-    if(impl->doReloading){
+    if(impl->doReloading || !isConnectedToRoot()){
         return;
     }
     if(!impl->controller){
@@ -364,25 +364,32 @@ bool SimpleControllerItemImpl::loadController()
 
 bool SimpleControllerItemImpl::configureController()
 {
-    bool result = false;
     if(controller){
-        if(body()){ // Is config ready?
-            result = controller->configure(&config);
-            if(result){
+        bool hasTargetBody = (body() != nullptr);
+        if(!hasTargetBody){
+            if(isConfigured){
+                controller->unconfigure();
+                isConfigured = false;
+            }
+        } else {
+            if(controller->configure(&config)){
                 isConfigured = true;
+            } else {
+                mv->putln(format(_("{} failed to configure the controller"), self->name()),
+                          MessageView::ERROR);
             }
         }
     }
-    if(!result){
-        mv->putln(format(_("{} failed to configure the controller"), self->name()),
-                  MessageView::ERROR);
-    }
-    return result;
+    return isConfigured;
 }
 
 
 void SimpleControllerItemImpl::unloadController()
 {
+    if(controller && isConfigured){
+        controller->unconfigure();
+    }
+    
     /** The following code is necessary to clear the ioBody object that may have the reference
         to the objects defined in the controller DLL. When the controller DLL is unloaded,
         the definition is removed from the process, and the process may crash if the object is

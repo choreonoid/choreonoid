@@ -98,6 +98,7 @@ class CNOID_EXPORT SimpleController
     virtual bool start();
     virtual bool control() = 0;
     virtual void stop();
+    virtual void unconfigure();
 
     enum StateType {
         JOINT_ANGLE        = SimpleControllerIO::JOINT_ANGLE,
