@@ -496,14 +496,19 @@ void AISTSimulatorItemImpl::stepKinematicsSimulation(const std::vector<Simulatio
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         SimulationBody* simBody = activeSimBodies[i];
         Body* body = simBody->body();
-
+        bool hasJointAngleActuation = false;
         for(auto& joint : body->allJoints()){
-            joint->q() = joint->q_target();
-            joint->dq() = joint->dq_target();
+            if(joint->actuationMode() == Link::JointDisplacement){
+                joint->q() = joint->q_target();
+                joint->dq() = joint->dq_target();
+                hasJointAngleActuation = true;
+            }
         }
         
         if(!isKinematicWalkingEnabled){
-            body->calcForwardKinematics(true, true);
+            if(hasJointAngleActuation){
+                body->calcForwardKinematics(true, true);
+            }
         } else {
             KinematicWalkBody* walkBody = dynamic_cast<KinematicWalkBody*>(simBody);
             if(!walkBody){
