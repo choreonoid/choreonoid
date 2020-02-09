@@ -78,11 +78,12 @@ public:
     vector<SimpleControllerItemPtr> childControllerItems;
 
     vector<char> linkIndexToInputStateTypeMap;
-        
-    MessageView* mv;
 
+    BodyItem* targetBodyItem;
     SimpleControllerConfig config;
     bool isConfigured;
+
+    MessageView* mv;
 
     std::string controllerModuleName;
     std::string controllerModuleFilename;
@@ -229,6 +230,7 @@ void SimpleControllerItemImpl::doCommonInitializationInConstructor()
     isConfigured = false;
     ioBody = nullptr;
     io = nullptr;
+    targetBodyItem = nullptr;
     mv = MessageView::instance();
 }    
 
@@ -241,13 +243,20 @@ Item* SimpleControllerItem::doDuplicate() const
 
 void SimpleControllerItem::onPositionChanged()
 {
+    bool isTargetBodyItemChanged = false;
+    auto bodyItem = findOwnerItem<BodyItem>();
+    if(bodyItem != impl->targetBodyItem){
+        isTargetBodyItemChanged = true;
+        impl->targetBodyItem = bodyItem;
+    }
+    
     if(impl->doReloading || !isConnectedToRoot()){
         return;
     }
     if(!impl->controller){
         impl->loadController();
     }
-    if(impl->controller){
+    if(impl->controller && isTargetBodyItemChanged){
         impl->configureController();
     }
 }
@@ -365,19 +374,16 @@ bool SimpleControllerItemImpl::loadController()
 bool SimpleControllerItemImpl::configureController()
 {
     if(controller){
-        bool hasTargetBody = (body() != nullptr);
-        if(!hasTargetBody){
-            if(isConfigured){
-                controller->unconfigure();
-                isConfigured = false;
-            }
-        } else {
+        if(targetBodyItem){
             if(controller->configure(&config)){
                 isConfigured = true;
             } else {
                 mv->putln(format(_("{} failed to configure the controller"), self->name()),
                           MessageView::ERROR);
             }
+        } else if(isConfigured){
+            controller->unconfigure();
+            isConfigured = false;
         }
     }
     return isConfigured;
@@ -581,8 +587,8 @@ Body* SimpleControllerItemImpl::body()
     if(ioBody){
         return ioBody;
     } else {
-        if(auto bodyItem = self->findOwnerItem<BodyItem>()){
-            return bodyItem->body();
+        if(targetBodyItem){
+            return targetBodyItem->body();
         }
     }
     return nullptr;
@@ -943,7 +949,7 @@ void SimpleControllerItem::stop()
 
     impl->clearIoTargets();
 
-    if(impl->doReloading || !findRootItem()){
+    if(impl->doReloading || !isConnectedToRoot()){
         impl->unloadController();
     } else {
         impl->sharedInfo.reset();
