@@ -1432,15 +1432,25 @@ void ManipulatorProgramViewBase::Impl::initializeBodySuperimposer(BodyItem* body
 void ManipulatorProgramViewBase::Impl::superimposePosition(PositionStatement* ps)
 {
     if(bodySuperimposer){
-        auto body1 = programItem->targetBodyItem()->body();
-        BodyState orgBodyState(*body1);
+        auto orgBody = programItem->targetBodyItem()->body();
+        BodyState orgBodyState(*orgBody);
+
         if(updateBodyPositionWithPositionStatement(ps, false, false)){
-            auto body2 = bodySuperimposer->superimposedBody();
-            BodyState bodyState(*body1);
-            bodyState.restorePositions(*body2);
-            body2->calcForwardKinematics();
+            // Main body
+            auto superBody = bodySuperimposer->superimposedBody(0);
+            BodyState bodyState(*orgBody);
+            bodyState.restorePositions(*superBody);
+            superBody->calcForwardKinematics();
+
+            // Child bodies
+            const int n = bodySuperimposer->numSuperimposedBodies();
+            for(int i=1; i < n; ++i){
+                auto childBody = bodySuperimposer->superimposedBody(i);
+                childBody->syncPositionWithParentBody();
+            }
+            
             bodySuperimposer->updateSuperimposition();
-            orgBodyState.restorePositions(*body1);
+            orgBodyState.restorePositions(*orgBody);
         }
     }
 }

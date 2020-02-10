@@ -1179,7 +1179,7 @@ void BodyItem::Impl::emitSigKinematicStateChanged()
     if(isKinematicStateChangeNotifiedByParentBodyItem){
         isKinematicStateChangeNotifiedByParentBodyItem = false;
     } else {
-        if(parentBodyItem){
+        if(parentBodyItem && !attachmentToParent){
             setRelativeOffsetPositionFromParentBody();
         }
     }
@@ -1392,7 +1392,7 @@ void BodyItem::setLocation(const Position& T)
 
 bool BodyItem::isLocationEditable() const
 {
-    return impl->attachmentToParent == nullptr;
+    return !isAttachedToParentBody();
 }
         
 
@@ -1452,6 +1452,12 @@ BodyItem* BodyItem::parentBodyItem()
 }
 
 
+bool BodyItem::isAttachedToParentBody() const
+{
+    return impl->attachmentToParent != nullptr;
+}
+
+
 void BodyItem::resetParentBodyItem()
 {
     impl->setParentBodyItem(findOwnerItem<BodyItem>());
@@ -1466,7 +1472,6 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
             mvout() << format(_("{0} has been detached from {1} of {2}."),
                               self->name(), holderLink->name(), holderLink->body()->name()) << endl;
         }
-        body->rootLink()->setOffsetPosition(Position::Identity());
     }
 
     parentBodyItem = bodyItem;
@@ -1502,14 +1507,16 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     holder->addAttachment(attachment);
                     attachmentToParent = attachment;
                     linkToAttach = holder->link();
+                    Position T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
+                    body->rootLink()->setOffsetPosition(T_offset);
+                    mvout() << format(_("{0} has been attached to {1} of {2}."),
+                                      self->name(), linkToAttach->name(), bodyItem->name()) << endl;
+                    goto found;
                 }
             }
         }
     }
-    if(linkToAttach){
-        mvout() << format(_("{0} has been attached to {1} of {2}."),
-                          self->name(), linkToAttach->name(), bodyItem->name()) << endl;
-    }
+found:
     return linkToAttach;
 }
 
@@ -1524,16 +1531,14 @@ void BodyItem::Impl::setRelativeOffsetPositionFromParentBody()
 
 void BodyItem::Impl::onParentBodyKinematicStateChanged()
 {
-    auto rootLink = body->rootLink();
+    Link* parentLink;
     if(attachmentToParent){
-        auto holder = attachmentToParent->holder();
-        Position T_base = holder->link()->T() * holder->T_local();
-        rootLink->setPosition(T_base * attachmentToParent->T_local().inverse(Eigen::Isometry));
+        parentLink = attachmentToParent->holder()->link();
     } else {
-        const auto& T_parent = parentBodyItem->body()->rootLink()->T();
-        const auto& T_local = rootLink->Tb();
-        rootLink->setPosition(T_parent * T_local);
+        parentLink = parentBodyItem->body()->rootLink();
     }
+    auto rootLink = body->rootLink();
+    rootLink->setPosition(parentLink->T() * rootLink->Tb());
 
     isKinematicStateChangeNotifiedByParentBodyItem = true;
     isProcessingInverseKinematicsIncludingParentBody = false;

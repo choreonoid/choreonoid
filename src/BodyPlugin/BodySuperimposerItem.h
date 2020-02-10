@@ -20,11 +20,11 @@ public:
 
     virtual void setName(const std::string& name) override;
 
-    // RenderableItem
+    // RenderableItem's function
     virtual SgNode* getScene() override;
 
-    Body* superimposedBody();
-    const Body* superimposedBody() const;
+    int numSuperimposedBodies() const;
+    Body* superimposedBody(int index);
 
     void setTransparency(float transparency);
 

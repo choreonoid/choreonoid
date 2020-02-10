@@ -64,6 +64,7 @@ public:
     }
     void setParent(Link* parentBodyLink);
     void resetParent();
+    void syncPositionWithParentBody(bool doForwardKinematics = true);
 
     /**
        The number of all the links the body has.

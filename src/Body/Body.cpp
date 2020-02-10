@@ -111,8 +111,10 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
     impl->info = org->impl->info;
 
     setRootLink(cloneLinkTree(org->rootLink(), cloneMap));
+    if(cloneMap){
+        rootLink_->parent_ = cloneMap->findClone<Link>(org->rootLink()->parent());
+    }
 
-    // deep copy of the devices
     for(auto& device : org->devices()){
         Device* clone;
         if(cloneMap){
@@ -123,7 +125,6 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
         addDevice(clone, link(device->link()->index()));
     }
 
-    // deep copy of the extraJoints
     for(auto& orgExtraJoint : org->extraJoints_){
         ExtraJoint extraJoint(orgExtraJoint);
         for(int j=0; j < 2; ++j){
@@ -323,6 +324,17 @@ void Body::setParent(Link* parentBodyLink)
 void Body::resetParent()
 {
     rootLink_->parent_ = nullptr;
+}
+
+
+void Body::syncPositionWithParentBody(bool doForwardKinematics)
+{
+    if(auto parentBodyLink = rootLink_->parent_){
+        rootLink_->setPosition(parentBodyLink->T() * rootLink_->Tb());
+        if(doForwardKinematics){
+            calcForwardKinematics();
+        }
+    }
 }
 
 
