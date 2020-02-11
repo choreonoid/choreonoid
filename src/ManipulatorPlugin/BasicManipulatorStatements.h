@@ -2,7 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_BASIC_MANIPULATOR_STATEMENTS_H
 
 #include "ManipulatorStatement.h"
-#include "PositionStatement.h"
+#include "ManipulatorPositionStatement.h"
 #include <cnoid/GeneralId>
 #include "exportdecl.h"
 

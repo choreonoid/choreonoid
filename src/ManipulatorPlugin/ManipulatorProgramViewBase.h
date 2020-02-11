@@ -1,6 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_PROGRAM_VIEW_BASE_H
 #define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_PROGRAM_VIEW_BASE_H
 
+#include "ManipulatorStatement.h"
 #include <cnoid/View>
 #include <cnoid/Signal>
 #include <cnoid/Referenced>
@@ -12,7 +13,8 @@ namespace cnoid {
 class Archive;
 class ManipulatorProgramItemBase;
 class ManipulatorProgram;
-class ManipulatorStatement;
+class ManipulatorPositionStatement;
+class MenuManager;
 
 class CNOID_EXPORT ManipulatorProgramViewBase : public View
 {
@@ -55,13 +57,29 @@ public:
         registerStatementDelegate(typeid(StatementType), delegate);
     }
 
-    class Impl;
+    template<class StatementType>
+    void customizeContextMenu(
+        std::function<void(StatementType* statement, MenuManager& menuManager,
+                           ManipulatorStatementFunctionDispatcher menuFunction)> func){
+        customizeContextMenu_(
+            typeid(StatementType),
+            [func](ManipulatorStatement* statement, MenuManager& menuManager,
+                   ManipulatorStatementFunctionDispatcher menuFunction){
+                func(static_cast<StatementType*>(statement), menuManager, menuFunction);
+            });
+    }
 
-protected:
     enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageBodySync };
     void setBodySyncMode(BodySyncMode mode);
     BodySyncMode bodySyncMode() const;
 
+    bool updateBodyPositionWithPositionStatement(
+        ManipulatorPositionStatement* ps,
+        bool doUpdateCurrentCoordinateFrames = true, bool doNotifyKinematicStateChange = true);
+
+    class Impl;
+
+protected:
     void addStatementButton(QWidget* button, int row);
 
     enum InsertionType { BeforeTargetPosition, AfterTargetPosition };
@@ -80,6 +98,11 @@ protected:
 private:
     void registerStatementDelegate(std::type_index statementType, StatementDelegate* delegate);
     void registerBaseStatementDelegates();
+
+    void customizeContextMenu_(
+        const std::type_info& type,
+        std::function<void(ManipulatorStatement* statement, MenuManager& menuManager,
+                           ManipulatorStatementFunctionDispatcher menuFunction)> func);
     
     Impl* impl;
 };

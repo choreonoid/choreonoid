@@ -148,7 +148,9 @@ public:
     unordered_map<type_index, ref_ptr<StatementDelegate>> statementDelegateMap;
     ToolButton optionMenuButton;
     MenuManager optionMenuManager;
+
     MenuManager contextMenuManager;
+    PolymorphicManipulatorStatementFunctionSet contextMenuFunctions;
 
     Impl(ManipulatorProgramViewBase* self);
     ~Impl();
@@ -181,13 +183,14 @@ public:
     void onRowsInserted(const QModelIndex& parent, int start, int end);
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
-    void showContextMenu(QPoint globalPos);
+    void showContextMenu(ManipulatorStatement* statement, QPoint globalPos);
+    void setBaseContextMenu(MenuManager& menuManager);
     void copySelectedStatements(bool doCut);
     void pasteStatements();
     bool updateBodyPositionWithPositionStatement(
-        PositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange);
+        ManipulatorPositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange);
     void initializeBodySuperimposer(BodyItem* bodyItem);
-    void superimposePosition(PositionStatement* ps);
+    void superimposePosition(ManipulatorPositionStatement* ps);
 
     QModelIndex indexFromItem(QTreeWidgetItem* item, int column = 0) const {
         return TreeWidget::indexFromItem(item, column);
@@ -522,6 +525,10 @@ ManipulatorProgramViewBase::ManipulatorProgramViewBase()
     impl = new Impl(this);
 
     registerBaseStatementDelegates();
+
+    customizeContextMenu<ManipulatorStatement>(
+        [this](ManipulatorStatement*, MenuManager& menuManager, ManipulatorStatementFunctionDispatcher){
+            impl->setBaseContextMenu(menuManager); });
 }
 
 
@@ -904,7 +911,7 @@ void ManipulatorProgramViewBase::Impl::onTreeWidgetItemClicked(QTreeWidgetItem* 
 
 void ManipulatorProgramViewBase::onStatementActivated(ManipulatorStatement* statement)
 {
-    if(auto ps = dynamic_cast<PositionStatement*>(statement)){
+    if(auto ps = dynamic_cast<ManipulatorPositionStatement*>(statement)){
         if(impl->bodySyncMode == DirectBodySync){
             impl->updateBodyPositionWithPositionStatement(ps, true, true);
         } else if(impl->bodySyncMode == TwoStageBodySync){
@@ -927,7 +934,7 @@ void ManipulatorProgramViewBase::Impl::onTreeWidgetItemDoubleClicked(QTreeWidget
 void ManipulatorProgramViewBase::onStatementDoubleClicked(ManipulatorStatement* statement)
 {
     if(impl->bodySyncMode == TwoStageBodySync){
-        if(auto ps = dynamic_cast<PositionStatement*>(statement)){
+        if(auto ps = dynamic_cast<ManipulatorPositionStatement*>(statement)){
             impl->updateBodyPositionWithPositionStatement(ps, true, true);
         }
     }
@@ -1276,35 +1283,63 @@ void ManipulatorProgramViewBase::Impl::mousePressEvent(QMouseEvent* event)
 {
     TreeWidget::mousePressEvent(event);
 
+    ManipulatorStatement* statement = nullptr;
+    if(auto statementItem = dynamic_cast<StatementItem*>(itemAt(event->pos()))){
+        statement = statementItem->statement();
+    }
+    
     if(event->button() == Qt::RightButton){
-        showContextMenu(event->globalPos());
+        showContextMenu(statement, event->globalPos());
     }
 }
 
 
-void ManipulatorProgramViewBase::Impl::showContextMenu(QPoint globalPos)
+void ManipulatorProgramViewBase::Impl::showContextMenu(ManipulatorStatement* statement, QPoint globalPos)
 {
     contextMenuManager.setNewPopupMenu(this);
+    
+    if(statement){
+        contextMenuFunctions.dispatch(statement);
+    } else {
+        setBaseContextMenu(contextMenuManager);
+    }
 
-    contextMenuManager.addItem(_("Cut"))
+    contextMenuManager.popupMenu()->popup(globalPos);
+}
+
+
+void ManipulatorProgramViewBase::Impl::setBaseContextMenu(MenuManager& menuManager)
+{
+    menuManager.addItem(_("Cut"))
         ->sigTriggered().connect([=](){ copySelectedStatements(true); });
 
-    contextMenuManager.addItem(_("Copy"))
+    menuManager.addItem(_("Copy"))
         ->sigTriggered().connect([=](){ copySelectedStatements(false); });
 
-    auto pasteAction = contextMenuManager.addItem(_("Paste"));
+    auto pasteAction = menuManager.addItem(_("Paste"));
     if(statementsToPaste.empty()){
         pasteAction->setEnabled(false);
     } else {
         pasteAction->sigTriggered().connect([=](){ pasteStatements(); });
     }
 
-    contextMenuManager.addSeparator();
+    menuManager.addSeparator();
 
-    contextMenuManager.addItem(_("Insert empty line"))
+    menuManager.addItem(_("Insert empty line"))
         ->sigTriggered().connect([=](){ insertStatement(new EmptyStatement, BeforeTargetPosition); });
+}
 
-    contextMenuManager.popupMenu()->popup(globalPos);
+
+void ManipulatorProgramViewBase::customizeContextMenu_
+(const std::type_info& type,
+ std::function<void(ManipulatorStatement* statement, MenuManager& menuManager,
+                    ManipulatorStatementFunctionDispatcher menuFunction)> func)
+{
+    impl->contextMenuFunctions.setFunction(
+        type,
+        [this, func](ManipulatorStatement* statement){
+            func(statement, impl->contextMenuManager, impl->contextMenuFunctions.dispatcher()); }
+        );
 }
 
 
@@ -1385,8 +1420,16 @@ void ManipulatorProgramViewBase::Impl::pasteStatements()
 }
 
 
+bool ManipulatorProgramViewBase::updateBodyPositionWithPositionStatement
+(ManipulatorPositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange)
+{
+    return impl->updateBodyPositionWithPositionStatement(
+        ps, doUpdateCurrentCoordinateFrames, doNotifyKinematicStateChange);
+}
+
+
 bool ManipulatorProgramViewBase::Impl::updateBodyPositionWithPositionStatement
-(PositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange)
+(ManipulatorPositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange)
 {
     bool updated = false;
     if(auto kinematicsKit = programItem->kinematicsKit()){
@@ -1429,7 +1472,7 @@ void ManipulatorProgramViewBase::Impl::initializeBodySuperimposer(BodyItem* body
 }
 
 
-void ManipulatorProgramViewBase::Impl::superimposePosition(PositionStatement* ps)
+void ManipulatorProgramViewBase::Impl::superimposePosition(ManipulatorPositionStatement* ps)
 {
     if(bodySuperimposer){
         auto orgBody = programItem->targetBodyItem()->body();

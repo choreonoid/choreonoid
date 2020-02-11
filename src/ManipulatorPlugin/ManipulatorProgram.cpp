@@ -316,7 +316,7 @@ void ManipulatorProgram::removeUnreferencedPositions()
 
     traverseAllStatements(
         [&](ManipulatorStatement* statement){
-            if(auto ps = dynamic_cast<PositionStatement*>(statement)){
+            if(auto ps = dynamic_cast<ManipulatorPositionStatement*>(statement)){
                 referencedIds.insert(ps->positionId());
             }
             return true;
@@ -338,7 +338,7 @@ void ManipulatorProgram::renumberPositionIds()
 
     traverseAllStatements(
         [&](ManipulatorStatement* statement){
-            if(auto ps = dynamic_cast<PositionStatement*>(statement)){
+            if(auto ps = dynamic_cast<ManipulatorPositionStatement*>(statement)){
                 auto id = ps->positionId();
                 if(id.isInt()){
                     auto it = idMap.find(id.toInt());

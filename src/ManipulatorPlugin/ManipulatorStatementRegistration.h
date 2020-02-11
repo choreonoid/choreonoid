@@ -15,9 +15,15 @@ public:
     ManipulatorStatementRegistration();
     ManipulatorStatementRegistration(const char* module);
 
-    template<class StatementType>
+    template<class StatementType, class SuperType>
     ManipulatorStatementRegistration& registerType(const char* type){
-        registerFactory(type, typeid(StatementType), []() -> ManipulatorStatement* { return new StatementType; });
+        registerFactory_(type, typeid(StatementType), typeid(SuperType),
+                        []() -> ManipulatorStatement* { return new StatementType; });
+        return *this;
+    }
+    template<class StatementType, class SuperType>
+    ManipulatorStatementRegistration& registerAbstractType(){
+        registerFactory_("", typeid(StatementType), typeid(SuperType), nullptr);
         return *this;
     }
 
@@ -26,7 +32,8 @@ public:
     static const std::string& fullTypeName(const ManipulatorStatement* statement);
 
 private:
-    void registerFactory(const char* typeName, const std::type_info& type, FactoryFunction factory);
+void registerFactory_(
+    const char* typeName, const std::type_info& type, const std::type_info& superType, FactoryFunction factory);
     class Impl;
     Impl* impl;
 };

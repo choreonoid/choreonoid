@@ -37,10 +37,12 @@ namespace cnoid {
 class ManipulatorStatementRegistration::Impl
 {
 public:
+    ManipulatorStatementClassRegistry& classRegistry;
     string moduleName;
     FactoryMap& factoryMap;
     Impl(const char* moduleName, FactoryMap& factoryMap)
-        : moduleName(moduleName),
+        : classRegistry(ManipulatorStatementClassRegistry::instance()),
+          moduleName(moduleName),
           factoryMap(factoryMap) { }
 };
 
@@ -61,13 +63,18 @@ ManipulatorStatementRegistration::ManipulatorStatementRegistration(const char* m
 }
 
 
-void ManipulatorStatementRegistration::registerFactory
-(const char* typeName, const std::type_info& type, FactoryFunction factory)
+void ManipulatorStatementRegistration::registerFactory_
+(const char* typeName, const std::type_info& type, const std::type_info& superType, FactoryFunction factory)
 {
-    lock_guard<mutex> lock(factoryMutex);
-    impl->factoryMap[typeName] = factory;
+    impl->classRegistry.registerClassAsTypeInfo(type, superType);
+
     statementTypeInfoMap.insert(
         StatementTypeInfoMap::value_type(type, StatementTypeInfo(impl->moduleName, typeName)));
+    
+    if(factory){
+        lock_guard<mutex> lock(factoryMutex);
+        impl->factoryMap[typeName] = factory;
+    }
 }
 
 

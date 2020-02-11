@@ -5,16 +5,42 @@
 using namespace std;
 using namespace cnoid;
 
+ManipulatorStatementClassRegistry& ManipulatorStatementClassRegistry::instance()
+{
+    static ManipulatorStatementClassRegistry registry;
+    return registry;
+}
 
-ManipulatorStatement::ManipulatorStatement()
+
+ManipulatorStatementClassRegistry::ManipulatorStatementClassRegistry()
 {
 
 }
 
 
-ManipulatorStatement::ManipulatorStatement(const ManipulatorStatement& org)
+PolymorphicManipulatorStatementFunctionSet::PolymorphicManipulatorStatementFunctionSet()
+    : PolymorphicFunctionSet<ManipulatorStatement>(ManipulatorStatementClassRegistry::instance())
 {
 
+}
+
+
+ManipulatorStatement::ManipulatorStatement()
+{
+    classId_ = -1;
+}
+
+
+ManipulatorStatement::ManipulatorStatement(const ManipulatorStatement& org)
+    : ManipulatorStatement()
+{
+
+}
+
+
+void ManipulatorStatement::validateClassId() const
+{
+    classId_ = ManipulatorStatementClassRegistry::instance().classId(this);
 }
 
 

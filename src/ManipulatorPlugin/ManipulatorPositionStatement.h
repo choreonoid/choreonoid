@@ -1,5 +1,5 @@
-#ifndef CNOID_MANIPULATOR_PLUGIN_POSITION_STATEMENT_H
-#define CNOID_MANIPULATOR_PLUGIN_POSITION_STATEMENT_H
+#ifndef CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_STATEMENT_H
+#define CNOID_MANIPULATOR_PLUGIN_MANIPULATOR_POSITION_STATEMENT_H
 
 #include "ManipulatorStatement.h"
 #include "ManipulatorPosition.h"
@@ -8,10 +8,10 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT PositionStatement : public ManipulatorStatement
+class CNOID_EXPORT ManipulatorPositionStatement : public ManipulatorStatement
 {
 public:
-    PositionStatement();
+    ManipulatorPositionStatement();
 
     virtual std::string label(int index) const override;
     
@@ -27,14 +27,14 @@ public:
     virtual bool write(Mapping& archive) const;
 
 protected:
-    PositionStatement(const PositionStatement& org);
+    ManipulatorPositionStatement(const ManipulatorPositionStatement& org);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     GeneralId positionId_;
 };
 
-typedef ref_ptr<PositionStatement> PositionStatementPtr;
+typedef ref_ptr<ManipulatorPositionStatement> ManipulatorPositionStatementPtr;
 
 }
 

@@ -523,13 +523,13 @@ bool DelayStatement::write(Mapping& archive) const
 }
 
 
-PositionStatement::PositionStatement()
+ManipulatorPositionStatement::ManipulatorPositionStatement()
 {
 
 }
 
 
-PositionStatement::PositionStatement(const PositionStatement& org)
+ManipulatorPositionStatement::ManipulatorPositionStatement(const ManipulatorPositionStatement& org)
     : ManipulatorStatement(org),
       positionId_(org.positionId_)
 {
@@ -537,13 +537,13 @@ PositionStatement::PositionStatement(const PositionStatement& org)
 }
 
 
-Referenced* PositionStatement::doClone(CloneMap*) const
+Referenced* ManipulatorPositionStatement::doClone(CloneMap*) const
 {
-    return new PositionStatement(*this);
+    return new ManipulatorPositionStatement(*this);
 }
     
 
-std::string PositionStatement::label(int index) const
+std::string ManipulatorPositionStatement::label(int index) const
 {
     if(index == 0){
         return "Position";
@@ -555,19 +555,19 @@ std::string PositionStatement::label(int index) const
 }
 
 
-const ManipulatorPosition* PositionStatement::position(const ManipulatorPositionList* positions) const
+const ManipulatorPosition* ManipulatorPositionStatement::position(const ManipulatorPositionList* positions) const
 {
     return positions->findPosition(positionId_);
 }
 
 
-ManipulatorPosition* PositionStatement::position(ManipulatorPositionList* positions) const
+ManipulatorPosition* ManipulatorPositionStatement::position(ManipulatorPositionList* positions) const
 {
     return positions->findPosition(positionId_);
 }
 
 
-std::string PositionStatement::positionLabel() const
+std::string ManipulatorPositionStatement::positionLabel() const
 {
     if(positionId_.isInt()){
         return format("P{0}", positionId_.toInt());
@@ -577,7 +577,7 @@ std::string PositionStatement::positionLabel() const
 }
 
 
-bool PositionStatement::read(ManipulatorProgram* program, const Mapping& archive)
+bool ManipulatorPositionStatement::read(ManipulatorProgram* program, const Mapping& archive)
 {
     string symbol;
     positionId_.read(archive, "position");
@@ -585,7 +585,7 @@ bool PositionStatement::read(ManipulatorProgram* program, const Mapping& archive
 }
 
 
-bool PositionStatement::write(Mapping& archive) const
+bool ManipulatorPositionStatement::write(Mapping& archive) const
 {
     archive.write("position", positionId_.label());
     return true;
@@ -597,17 +597,19 @@ namespace {
 struct StatementTypeRegistration {
     StatementTypeRegistration(){
         ManipulatorStatementRegistration()
-            .registerType<EmptyStatement>("Empty")
-            .registerType<DummyStatement>("Dummy")
-            .registerType<CommentStatement>("Comment")
-            .registerType<IfStatement>("If")
-            .registerType<ElseStatement>("Else")
-            .registerType<WhileStatement>("While")
-            .registerType<CallStatement>("Call")
-            .registerType<AssignStatement>("Assign")
-            .registerType<SetSignalStatement>("SetSignal")
-            .registerType<DelayStatement>("Delay")
-            .registerType<PositionStatement>("Position")
+            .registerType<EmptyStatement, ManipulatorStatement>("Empty")
+            .registerType<DummyStatement, EmptyStatement>("Dummy")
+            .registerType<CommentStatement, ManipulatorStatement>("Comment")
+            .registerAbstractType<StructuredStatement, ManipulatorStatement>()
+            .registerAbstractType<ConditionalStatement, StructuredStatement>()
+            .registerType<IfStatement, ConditionalStatement>("If")
+            .registerType<ElseStatement, StructuredStatement>("Else")
+            .registerType<WhileStatement, ConditionalStatement>("While")
+            .registerType<CallStatement, ManipulatorStatement>("Call")
+            .registerType<AssignStatement, ManipulatorStatement>("Assign")
+            .registerType<SetSignalStatement, ManipulatorStatement>("SetSignal")
+            .registerType<DelayStatement, ManipulatorStatement>("Delay")
+            .registerAbstractType<ManipulatorPositionStatement, ManipulatorStatement>()
             ;
     }
 } registration;
