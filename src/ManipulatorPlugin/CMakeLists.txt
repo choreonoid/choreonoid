@@ -7,42 +7,42 @@ set(target CnoidManipulatorPlugin)
 
 set(sources
   ManipulatorPlugin.cpp
-  ManipulatorPosition.cpp
-  ManipulatorPositionList.cpp
-  ManipulatorProgram.cpp
-  ManipulatorStatementRegistration.cpp
-  ManipulatorStatement.cpp
-  BasicManipulatorStatements.cpp
-  ManipulatorVariable.cpp
-  ManipulatorVariableSet.cpp
-  ManipulatorVariableList.cpp
-  ManipulatorVariableSetGroup.cpp
-  ManipulatorProgramItemBase.cpp
-  ManipulatorControllerItemBase.cpp
-  ManipulatorVariableListItemBase.cpp
-  ManipulatorProgramViewBase.cpp
-  ManipulatorProgramViewDelegates.cpp
-  ManipulatorStatementViewBase.cpp
-  ManipulatorVariableListViewBase.cpp
+  MprPosition.cpp
+  MprPositionList.cpp
+  MprProgram.cpp
+  MprStatementRegistration.cpp
+  MprStatement.cpp
+  BasicMprStatements.cpp
+  MprVariable.cpp
+  MprVariableSet.cpp
+  MprVariableList.cpp
+  MprVariableSetGroup.cpp
+  MprProgramItemBase.cpp
+  MprControllerItemBase.cpp
+  MprVariableListItemBase.cpp
+  MprProgramViewBase.cpp
+  MprProgramViewDelegates.cpp
+  MprStatementViewBase.cpp
+  MprVariableListViewBase.cpp
   )
 
 set(headers
-  ManipulatorProgram.h
-  ManipulatorPositionList.h
-  ManipulatorStatementRegistration.h
-  ManipulatorStatement.h
-  BasicManipulatorStatements.h
-  ManipulatorPositionStatement.h
-  ManipulatorVariable.h
-  ManipulatorVariableSet.h
-  ManipulatorVariableList.h
-  ManipulatorVariableSetGroup.h
-  ManipulatorProgramItemBase.h
-  ManipulatorControllerItemBase.h
-  ManipulatorVariableListItemBase.h
-  ManipulatorProgramViewBase.h
-  ManipulatorStatementViewBase.h
-  ManipulatorVariableListViewBase.h
+  MprProgram.h
+  MprPositionList.h
+  MprStatementRegistration.h
+  MprStatement.h
+  BasicMprStatements.h
+  MprPositionStatement.h
+  MprVariable.h
+  MprVariableSet.h
+  MprVariableList.h
+  MprVariableSetGroup.h
+  MprProgramItemBase.h
+  MprControllerItemBase.h
+  MprVariableListItemBase.h
+  MprProgramViewBase.h
+  MprStatementViewBase.h
+  MprVariableListViewBase.h
   exportdecl.h
   )
 

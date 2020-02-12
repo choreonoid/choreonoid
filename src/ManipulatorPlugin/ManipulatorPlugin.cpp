@@ -1,6 +1,6 @@
-#include "ManipulatorProgramItemBase.h"
-#include "ManipulatorVariableListItemBase.h"
-#include "ManipulatorControllerItemBase.h"
+#include "MprProgramItemBase.h"
+#include "MprVariableListItemBase.h"
+#include "MprControllerItemBase.h"
 #include <cnoid/Plugin>
 
 using namespace cnoid;
@@ -17,9 +17,9 @@ public:
 
     virtual bool initialize()
     {
-        ManipulatorProgramItemBase::initializeClass(this);
-        ManipulatorVariableListItemBase::initializeClass(this);
-        ManipulatorControllerItemBase::initializeClass(this);
+        MprProgramItemBase::initializeClass(this);
+        MprVariableListItemBase::initializeClass(this);
+        MprControllerItemBase::initializeClass(this);
         
         return true;
     }
