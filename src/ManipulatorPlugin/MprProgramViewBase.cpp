@@ -142,7 +142,7 @@ public:
     BodySuperimposerItemPtr bodySuperimposer;
     
     QLabel programNameLabel;
-    QHBoxLayout buttonBox[2];
+    QHBoxLayout buttonBox[3];
     ProgramViewDelegate* mainDelegate;
     ref_ptr<StatementDelegate> defaultStatementDelegate;
     unordered_map<type_index, ref_ptr<StatementDelegate>> statementDelegateMap;
@@ -587,6 +587,11 @@ void MprProgramViewBase::Impl::setupWidgets()
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    hbox = new QHBoxLayout;
+    hbox->addLayout(&buttonBox[2]);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+    
     programNameLabel.setFrameStyle(QFrame::Box | QFrame::Sunken);
     vbox->addWidget(&programNameLabel);
 
@@ -690,7 +695,7 @@ MprProgramViewBase::BodySyncMode MprProgramViewBase::bodySyncMode() const
 }
 
 
-void MprProgramViewBase::addStatementButton(QWidget* button, int row)
+void MprProgramViewBase::addEditButton(QWidget* button, int row)
 {
     impl->buttonBox[row].addWidget(button);
 }

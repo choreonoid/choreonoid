@@ -80,7 +80,7 @@ public:
     class Impl;
 
 protected:
-    void addStatementButton(QWidget* button, int row);
+    void addEditButton(QWidget* button, int row);
 
     enum InsertionType { BeforeTargetPosition, AfterTargetPosition };
     bool insertStatement(
