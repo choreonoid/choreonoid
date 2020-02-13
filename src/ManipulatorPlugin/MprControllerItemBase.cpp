@@ -726,7 +726,7 @@ bool MprControllerItemBase::Impl::interpretIfStatement(MprIfStatement* statement
 
     } else if(nextElseStatement){
         ++iterator;
-        auto program = statement->lowerLevelProgram();
+        auto program = nextElseStatement->lowerLevelProgram();
         setCurrent(program, program->begin(), next);
     }
 
