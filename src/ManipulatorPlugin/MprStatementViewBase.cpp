@@ -20,6 +20,7 @@ public:
     MprStatementPanel* self;
     MprProgramItemBasePtr programItem;
     MprStatementPtr statement;
+    ScopedConnection statementUpdateConnection;
 
     Impl(MprStatementPanel* self);
     void activate(MprProgramItemBase* programItem, MprStatement* statement);
@@ -71,10 +72,18 @@ MprStatementPanel::Impl::Impl(MprStatementPanel* self)
 
 
 void MprStatementPanel::Impl::activate
-(MprProgramItemBase* programItem, MprStatement* statement)
+(MprProgramItemBase* programItem_, MprStatement* statement_)
 {
-    this->programItem = programItem;
-    this->statement = statement;
+    programItem = programItem_;
+    statement = statement_;
+
+    statementUpdateConnection =
+        programItem->program()->sigStatementUpdated().connect(
+            [this](MprStatement* updated){
+                if(updated == statement){
+                    self->onStatementUpdated();
+                }
+            });
 
     self->onActivated();
 }
@@ -86,10 +95,17 @@ void MprStatementPanel::Impl::deactivate()
     
     programItem.reset();
     statement.reset();
+    statementUpdateConnection.disconnect();
 }
 
 
 void MprStatementPanel::onDeactivated()
+{
+
+}
+
+
+void MprStatementPanel::onStatementUpdated()
 {
 
 }

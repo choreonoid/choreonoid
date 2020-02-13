@@ -174,6 +174,7 @@ public:
     bool insertStatement(MprStatement* statement, int insertionType);
     void onStatementInserted(MprProgram::iterator iter);
     void onStatementRemoved(MprProgram* program, MprStatement* statement);
+    void onStatementUpdated(MprStatement* statement);
     void forEachStatementInTreeEditEvent(
         const QModelIndex& parent, int start, int end,
         function<void(MprStructuredStatement* parentStatement, MprProgram* program,
@@ -600,7 +601,8 @@ void MprProgramViewBase::Impl::setupWidgets()
     setFrameShape(QFrame::NoFrame);
     setHeaderHidden(true);
     setRootIsDecorated(true);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setAutoScroll(false);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setDragDropMode(QAbstractItemView::InternalMove);
     setDropIndicatorShown(true);
@@ -783,6 +785,11 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
             program->sigStatementRemoved().connect(
                 [&](MprProgram* program, MprStatement* statement){
                     onStatementRemoved(program, statement); }));
+
+        programConnections.add(
+            program->sigStatementUpdated().connect(
+                [&](MprStatement* statement){
+                    onStatementUpdated(statement); }));
         
         programNameLabel.setStyleSheet("font-weight: bold");
         programNameLabel.setText(programItem->name().c_str());
@@ -1135,6 +1142,16 @@ void MprProgramViewBase::Impl::onStatementRemoved
             // Keep at least one dummy statement item in a sub program
             parentItem->addChild(new StatementItem(dummyStatement, this));
         }
+    }
+}
+
+
+void MprProgramViewBase::Impl::onStatementUpdated(MprStatement* statement)
+{
+    auto iter = statementItemMap.find(statement);
+    if(iter != statementItemMap.end()){
+        auto statementItem = iter->second;
+        Q_EMIT dataChanged(indexFromItem(statementItem), indexFromItem(statementItem, NumColumns - 1));
     }
 }
 

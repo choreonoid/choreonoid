@@ -20,6 +20,7 @@ public:
     
     virtual void onActivated() = 0;
     virtual void onDeactivated();
+    virtual void onStatementUpdated();
 
     MprProgramItemBase* currentProgramItem();
 
