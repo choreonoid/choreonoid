@@ -78,9 +78,11 @@ public:
         bool isStationaryPoint() const { return isStationaryPoint_; }
         bool isTouching() const { return isTouching_; }
         const Vector3& partingDirection() const { return partingDirection_; }
-        void setTouching(const Vector3& partingDirection) {
+        const std::vector<Vector3>& contactPoints() const { return contactPoints_; }
+        void setTouching(const Vector3& partingDirection, const std::vector<Vector3>& contactPoints) {
             isTouching_ = true;
             partingDirection_ = partingDirection;
+            contactPoints_ = contactPoints;
         }
         void clearTouching() { isTouching_ = false; }
         bool isSlave() const { return isSlave_; }
@@ -92,6 +94,7 @@ public:
         bool isTouching_;
         bool isSlave_;
         Vector3 partingDirection_;
+        std::vector<Vector3> contactPoints_;
         friend class Pose;
     };
 
