@@ -633,14 +633,8 @@ void BodyItem::storeKinematicState(BodyState& state)
 */
 bool BodyItem::restoreKinematicState(const BodyState& state)
 {
-    BodyState currentState;
-    storeKinematicState(currentState);
-
     state.getZMP(impl->zmp);
     state.restorePositions(*impl->body);
-
-    //cout << "(currentState == state):" << (currentState == state) << endl;
-    //return (currentState == state);
     return true;
 }
 

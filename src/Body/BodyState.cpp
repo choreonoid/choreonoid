@@ -61,8 +61,12 @@ void BodyState::storePositions(const Body& body)
         q[i] = body.joint(i)->q();
     }
 
-    const Link* rootLink = body.rootLink();
-    setRootLinkPosition(rootLink->T());
+    auto rootLink = body.rootLink();
+    if(auto parentLink = body.parentBodyLink()){
+        setRootLinkPosition(parentLink->T().inverse(Eigen::Isometry) * rootLink->T());
+    } else {
+        setRootLinkPosition(rootLink->T());
+    }
 }
 
 
@@ -99,34 +103,6 @@ bool BodyState::getRootLinkPosition(Position& T) const
 }
 
 
-#ifdef CNOID_BACKWARD_COMPATIBILITY
-
-void BodyState::setRootLinkPosition(const Vector3& translation, const Matrix3& rotation)
-{
-    Data& p = data(LINK_POSITIONS);
-    p.resize(7);
-    Eigen::Map<Vector3> pmap(&p[0]);
-    pmap = translation;
-    Eigen::Map<Quat> qmap(&p[3]);
-    qmap = rotation;
-}
-
-
-bool BodyState::getRootLinkPosition(Vector3& translation, Matrix3& rotation) const
-{
-    const Data& p = data(LINK_POSITIONS);
-    if(p.size() >= 7){
-        translation = Eigen::Map<const Vector3>(&p[0]);
-        rotation = Eigen::Map<const Quat>(&p[3]);
-        return true;
-    }
-    return false;
-}
-
-#endif
-
-
-
 bool BodyState::restorePositions(Body& io_body) const
 {
     bool isComplete = true;
@@ -142,29 +118,30 @@ bool BodyState::restorePositions(Body& io_body) const
         io_body.joint(i)->q() = q[i];
     }
 
-    if(io_body.parentBody()){
-        io_body.calcForwardKinematics();
-        isComplete = true;
-
+    const Data& p = data(LINK_POSITIONS);
+    if(p.size() < 7){
+        isComplete = false;
     } else {
-        //! \todo Use relative coordinates for a child body
-        const Data& p = data(LINK_POSITIONS);
-        if(p.size() < 7){
-            isComplete = false;
+        Position T0;
+        if(auto parentLink = io_body.parentBodyLink()){
+            T0 = parentLink->T();
         } else {
-            Link* rootLink = io_body.rootLink();
-            rootLink->p() = Eigen::Map<const Vector3>(&p[0]);
-            rootLink->R() = Eigen::Map<const Quat>(&p[3]).toRotationMatrix();
+            T0.setIdentity();
         }
+        Position T;
+        T.translation() = Eigen::Map<const Vector3>(&p[0]);
+        T.linear() = Eigen::Map<const Quat>(&p[3]).toRotationMatrix();
+        io_body.rootLink()->setPosition(T0 * T);
 
         io_body.calcForwardKinematics();
 
         if(p.size() > 7){
-            const int numNonRootLinks = (p.size() - 7) / 7;
-            for(int i=1; i < numNonRootLinks + 1; ++i){
+            const int numRemainingLinks = (p.size() - 7) / 7;
+            for(int i = 1; i < numRemainingLinks + 1; ++i){
                 Link* link = io_body.link(i);
-                link->p() = Eigen::Map<const Vector3>(&p[i*7]);
-                link->R() = Eigen::Map<const Quat>(&p[i*7 + 3]).toRotationMatrix();
+                T.translation() = Eigen::Map<const Vector3>(&p[i*7]);
+                T.linear() = Eigen::Map<const Quat>(&p[i*7 + 3]).toRotationMatrix();
+                link->setPosition(T0 * T);
             }
         }
     }

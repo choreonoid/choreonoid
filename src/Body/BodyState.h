@@ -8,7 +8,6 @@
 
 #include <cnoid/EigenTypes>
 #include <cnoid/DataMap>
-#include <bitset>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -47,11 +46,6 @@ public:
 
     void setZMP(const Vector3& zmp);
     bool getZMP(Vector3& out_zmp) const;
-
-#ifdef CNOID_BACKWARD_COMPATIBILITY
-    void setRootLinkPosition(const Vector3& translation, const Matrix3& rotation);
-    bool getRootLinkPosition(Vector3& translation, Matrix3& rotation) const;
-#endif
 
 protected:
     virtual std::map<std::string, int>& nameToIdMap();
