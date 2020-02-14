@@ -1643,23 +1643,25 @@ bool PoseSeqViewBase::setCurrentLinkStateToIkLink(Link* link, Pose::LinkInfo* li
         updated = true;
     }
     
-    bool collided = false;
+    std::vector<Vector3> contactPoints;
     const std::vector<CollisionLinkPairPtr>& collisions = currentBodyItem->collisionsOfLink(link->index());
     for(size_t i=0; i < collisions.size(); ++i){
         if(!collisions[i]->isSelfCollision()){
-            collided = true;
-            break;
+            CollisionLinkPair& collisionPair = *collisions[i];
+            for(std::vector<Collision>::iterator iter = collisionPair.collisions.begin(); iter != collisionPair.collisions.end(); ++iter){
+                contactPoints.push_back(link->R().transpose()*(iter->point - link->p()));
+            }
         }
     }
 
-    if(collided){
+    if(contactPoints.size() > 0){
         /**
            \todo set a parting direction correctly
            (now it is assumed that the touching only happens for the flat and level floor).
         */
         Vector3 partingDirection(0.0, 0.0, 1.0);
-        if(!linkInfo->isTouching() || linkInfo->partingDirection() != partingDirection){
-            linkInfo->setTouching(partingDirection);
+        if(!linkInfo->isTouching() || linkInfo->partingDirection() != partingDirection || linkInfo->contactPoints() != contactPoints){
+            linkInfo->setTouching(partingDirection, contactPoints);
             updated = true;
         }
     } else {

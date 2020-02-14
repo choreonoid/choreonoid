@@ -214,9 +214,20 @@ bool Pose::restore(const Mapping& archive, const BodyPtr body)
                         setBaseLink(index);
                     }
                     Vector3 partingDirection;
+                    const Listing& contactPointNodes = *ikLinkNode.findListing("contactPoints");
                     if(ikLinkNode.get("isTouching", false) &&
-                       read(ikLinkNode, "partingDirection", partingDirection)){
-                        info->setTouching(partingDirection);
+                       read(ikLinkNode, "partingDirection", partingDirection) &&
+                       contactPointNodes.isValid()){
+                        std::vector<Vector3> contactPoints;
+                        for(int j=0; j < contactPointNodes.size(); ++j){
+                            const Listing& pointVectorNode = *contactPointNodes[j].toListing();
+                            Vector3 pointVector;
+                            for(int k=0; k < pointVectorNode.size(); ++k){
+                                pointVector[k] = pointVectorNode[k].toDouble();
+                            }
+                            contactPoints.push_back(pointVector);
+                        }
+                        info->setTouching(partingDirection, contactPoints);
                     }
                     info->setSlave(ikLinkNode.get("isSlave", false));
                 }
@@ -287,6 +298,15 @@ void Pose::store(Mapping& archive, const BodyPtr body) const
             if(info.isTouching()){
                 ikLinkNode.write("isTouching", true);
                 write(ikLinkNode, "partingDirection", info.partingDirection());
+                ListingPtr contactPointNodes = new Listing();
+                std::vector<Vector3> contactPoints = info.contactPoints();
+                for(auto contactPoint : contactPoints){
+                    ListingPtr pointVectorNodes = new Listing();
+                    pointVectorNodes->setFlowStyle();
+                    for(int k=0; k < contactPoint.size(); ++k) pointVectorNodes->append(contactPoint[k]);
+                    contactPointNodes->append(pointVectorNodes);
+                }
+                ikLinkNode.insert("contactPoints", contactPointNodes);
             }
             if(info.isSlave()){
                 ikLinkNode.write("isSlave", true);

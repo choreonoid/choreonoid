@@ -282,7 +282,9 @@ bool FlipFilter::flipPose(PosePtr pose)
         }
         info->setStationaryPoint(orgInfo.isStationaryPoint());
         if(orgInfo.isTouching()){
-            info->setTouching(orgInfo.partingDirection());
+            std::vector<Vector3> contactPoints = orgInfo.contactPoints();
+            for(auto& pointVector : contactPoints) pointVector.y() *= -1;
+            info->setTouching(orgInfo.partingDirection(), contactPoints);
         }
         info->setSlave(orgInfo.isSlave());
 
