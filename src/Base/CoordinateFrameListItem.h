@@ -7,6 +7,7 @@
 namespace cnoid {
 
 class CoordinateFrameList;
+class LocatableItem;
 
 class CNOID_EXPORT CoordinateFrameListItem : public Item
 {
@@ -19,6 +20,8 @@ public:
 
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;
+
+    virtual LocatableItem* getParentLocatableItem() const;
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

@@ -1,11 +1,11 @@
 #include "PositionWidget.h"
-#include <cnoid/MenuManager>
+#include "MenuManager.h"
+#include "Archive.h"
+#include "Buttons.h"
+#include "SpinBox.h"
+#include "Separator.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
-#include <cnoid/Archive>
-#include <cnoid/Buttons>
-#include <cnoid/SpinBox>
-#include <cnoid/Separator>
 #include <QLabel>
 #include <QGridLayout>
 #include <QMouseEvent>
@@ -48,24 +48,20 @@ public:
     vector<QWidget*> inputSpins;
     ScopedConnectionSet userInputConnections;
 
-    QLabel caption;
+    QVBoxLayout* mainvbox;
 
     DoubleSpinBox xyzSpin[3];
-
     enum AttitudeMode { RollPitchYawMode, QuaternionMode };
     AttitudeMode lastInputAttitudeMode;
-    
     bool isRpyEnabled;
     bool isUniqueRpyMode;
+    bool isQuaternionEnabled;
+    bool isRotationMatrixEnabled;
     Vector3 referenceRpy;
     DoubleSpinBox rpySpin[3];
     vector<QWidget*> rpyWidgets;
-    
-    bool isQuaternionEnabled;
     DoubleSpinBox quatSpin[4];
     vector<QWidget*> quatWidgets;
-    
-    bool isRotationMatrixEnabled;
     QWidget rotationMatrixPanel;
     QLabel rotationMatrixElementLabel[3][3];
 
@@ -109,16 +105,12 @@ PositionWidget::Impl::Impl(PositionWidget* self)
 {
     //self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
-    auto mainvbox = new QVBoxLayout;
+    mainvbox = new QVBoxLayout;
     mainvbox->setContentsMargins(0, 0, 0, 0);
     self->setLayout(mainvbox);
 
     auto grid = new QGridLayout;
     int row = 0;
-
-    caption.setStyleSheet("font-weight: bold");
-    grid->addWidget(&caption, row++, 1, 1, 5);
-    caption.setVisible(false);
 
     static const char* xyzLabels[] = { "X", "Y", "Z" };
     for(int i=0; i < 3; ++i){
@@ -248,18 +240,6 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     lastInputAttitudeMode = RollPitchYawMode;
 
     clearPosition();
-}
-
-
-void PositionWidget::setCaptionVisible(bool on)
-{
-    impl->caption.setVisible(on);
-}
-
-
-void PositionWidget::setCaption(const std::string& caption)
-{
-    impl->caption.setText(caption.c_str());
 }
 
 

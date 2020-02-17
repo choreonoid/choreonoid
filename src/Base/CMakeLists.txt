@@ -21,6 +21,7 @@ set(sources
   ItemClassRegistry.cpp
   ItemFileIO.cpp
   Item.cpp
+  LocatableItem.cpp
   PolymorphicItemFunctionSet.cpp
   PutPropertyFunction.cpp
   RootItem.cpp
@@ -176,7 +177,7 @@ set(headers
   ItemTreeView.h
   ItemList.h
   Item.h
-  PlaceableItem.h
+  LocatableItem.h
   RenderableItem.h
   ImageableItem.h
   TargetItemPicker.h

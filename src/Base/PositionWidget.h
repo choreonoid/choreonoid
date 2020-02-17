@@ -17,8 +17,9 @@ public:
     PositionWidget(QWidget* parent);
     ~PositionWidget();
 
-    void setCaptionVisible(bool on);
-    void setCaption(const std::string& caption);
+    //void setCaptionVisible(bool on);
+    //void setCaption(const std::string& caption);
+    //void setBuiltinCoordinateSystemComboEnabled(bool on);
     void setOptionMenu(MenuManager& menuManager);
     void setEditable(bool on);
     void setPositionCallback(std::function<bool(const Position& T)> callback);

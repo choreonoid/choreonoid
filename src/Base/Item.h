@@ -194,8 +194,7 @@ public:
     template <class ItemType> ItemType* findOwnerItem(bool includeSelf = false) const {
         Item* parentItem__ = includeSelf ? const_cast<Item*>(this) : parentItem();
         while(parentItem__){
-            ItemType* ownerItem = dynamic_cast<ItemType*>(parentItem__);
-            if(ownerItem){
+            if(ItemType* ownerItem = dynamic_cast<ItemType*>(parentItem__)){
                 return ownerItem;
             }
             parentItem__ = parentItem__->parentItem();

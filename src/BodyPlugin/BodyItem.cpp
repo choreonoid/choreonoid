@@ -1388,8 +1388,32 @@ bool BodyItem::isLocationEditable() const
 {
     return !isAttachedToParentBody();
 }
-        
 
+
+bool BodyItem::hasParentLocation() const
+{
+    return impl->body->parentBodyLink() != nullptr;
+}
+
+
+std::string BodyItem::getParentLocationName() const
+{
+    if(auto parentLink = impl->body->parentBodyLink()){
+        return parentLink->body()->name() + " - " + parentLink->name();
+    }
+    return string();
+}
+
+
+Position BodyItem::getParentLocation() const
+{
+    if(auto parentLink = impl->body->parentBodyLink()){
+        return parentLink->T();
+    }
+    return Position::Identity();
+}
+
+        
 EditableSceneBody* BodyItem::sceneBody()
 {
     if(!impl->sceneBody){

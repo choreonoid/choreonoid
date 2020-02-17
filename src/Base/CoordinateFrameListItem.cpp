@@ -1,5 +1,6 @@
 #include "CoordinateFrameListItem.h"
 #include "ItemManager.h"
+#include "LocatableItem.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
 #include <cnoid/CoordinateFrameSet>
@@ -77,6 +78,15 @@ CoordinateFrameList* CoordinateFrameListItem::frameList()
 const CoordinateFrameList* CoordinateFrameListItem::frameList() const
 {
     return impl->frameList;
+}
+
+
+LocatableItem* CoordinateFrameListItem::getParentLocatableItem() const
+{
+    if(auto locatableItem = findOwnerItem<LocatableItem>()){
+        return locatableItem;
+    }
+    return nullptr;
 }
 
 
