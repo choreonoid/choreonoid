@@ -39,11 +39,6 @@ public:
     bool makeBodyStatic();
     bool makeBodyDynamic();
 
-    //! \deprecated. Use EditableSceneBody::isDraggable().
-    bool isEditable() const;
-    //! \deprecated. Use EditableSceneBody::setDraggable().
-    void setEditable(bool on);
-
     // API for a composite body
     // The following body and link pair is basically determined by
     // the parent-child relationship in the item tree
@@ -147,13 +142,11 @@ public:
     bool setStance(double width);
 
     // LocatableItem functions
-    virtual SignalProxy<void()> sigLocationChanged() override;
     virtual Position getLocation() const override;
+    virtual SignalProxy<void()> sigLocationChanged() override;
+    virtual void setLocationEditable(bool on) override;
     virtual void setLocation(const Position& T) override;
-    virtual bool isLocationEditable() const override;
-    virtual bool hasParentLocation() const override;
-    virtual std::string getParentLocationName() const override;
-    virtual Position getParentLocation() const override;
+    virtual LocatableItem* getParentLocatableItem() const override;
 
     // RenderableItem function
     virtual SgNode* getScene() override;

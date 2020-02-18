@@ -19,8 +19,20 @@ public:
             
     virtual ~KinematicsBar();
 
-    enum Mode { AUTO_MODE, FK_MODE, IK_MODE };
+    enum Mode {
+        NoKinematics = 0,
+        PresetKinematics = 1,
+        ForwardKinematics = 2,
+        InverseKinematics = 3,
+        // deprecated
+        AUTO_MODE = PresetKinematics,
+        FK_MODE = ForwardKinematics,
+        IK_MODE = InverseKinematics
+    };
     int mode() const;
+    
+    bool isForwardKinematicsEnabled() const;
+    bool isInverseKinematicsEnabled() const;
 
     bool isPositionDraggerEnabled() const;
     bool isFootSnapMode() const;

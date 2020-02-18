@@ -15,7 +15,6 @@ namespace cnoid {
 class ExtensionManager;
 
 class BodyItem;
-typedef ref_ptr<BodyItem> BodyItemPtr;
 
 class CNOID_EXPORT EditableSceneLink : public SceneLink
 {
@@ -45,13 +44,10 @@ public:
 
     static void initializeClass(ExtensionManager* ext);
 
-    EditableSceneBody(BodyItemPtr bodyItem);
+    EditableSceneBody(BodyItem* bodyItem);
 
     EditableSceneLink* editableSceneLink(int index);
     void setLinkVisibilities(const std::vector<bool>& visibilities);
-
-    bool isDraggable() const;
-    void setDraggable(bool on);
 
     virtual void updateModel() override;
 

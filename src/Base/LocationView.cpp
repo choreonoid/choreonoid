@@ -8,6 +8,7 @@
 #include "CheckBox.h"
 #include "ComboBox.h"
 #include <cnoid/CoordinateFrameList>
+#include <cnoid/ConnectionSet>
 #include <QBoxLayout>
 #include <QLabel>
 #include <fmt/format.h>
@@ -46,15 +47,19 @@ public:
     LocationView* self;
     LocatableItem* targetItem;
     TargetItemPicker<Item> targetItemPicker;
-    ScopedConnection targetItemConnection;
+    ScopedConnectionSet targetItemConnections;
     QLabel caption;
     CheckBox lockCheck;
     PositionWidget* positionWidget;
     vector<CoordinateInfoPtr> coordinates;
+    QLabel coordinateLabel;
     ComboBox coordinateCombo;
+    int defaultCoordIndex;
         
     Impl(LocationView* self);
     void setTargetItem(Item* item);
+    void setLocked(bool on);
+    void onLockCheckToggled(bool on);
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
     bool setInputPositionToTargetItem(const Position& T);
@@ -89,11 +94,14 @@ LocationView::Impl::Impl(LocationView* self)
     caption.setStyleSheet("font-weight: bold");
     hbox->addWidget(&caption, 1);
     lockCheck.setText(_("Lock"));
+    lockCheck.sigToggled().connect(
+        [&](bool on){ onLockCheckToggled(on); });
     hbox->addWidget(&lockCheck);
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(_("Coord :")), 0);
+    coordinateLabel.setText(_("Coord :"));
+    hbox->addWidget(&coordinateLabel, 0);
     coordinateCombo.sigAboutToShowPopup().connect(
         [&](){ updateBaseCoordinateSystems(); });
     hbox->addWidget(&coordinateCombo, 1);
@@ -113,6 +121,9 @@ LocationView::Impl::Impl(LocationView* self)
     targetItemPicker.sigTargetItemChanged().connect(
         [&](Item* item){ setTargetItem(item); });
     setTargetItem(nullptr);
+
+    // Use the parent coordinate system by default
+    defaultCoordIndex = 1;
 }
 
 
@@ -130,22 +141,52 @@ void LocationView::onAttachedMenuRequest(MenuManager& menuManager)
 
 void LocationView::Impl::setTargetItem(Item* item)
 {
+    targetItemConnections.disconnect();
     targetItem = dynamic_cast<LocatableItem*>(item);
     
     if(!targetItem){
-        targetItemConnection.disconnect();
         caption.setText("-----");
+        setLocked(false);
         positionWidget->setEditable(false);
         clearBaseCoordinateSystems();
+        
     } else {
         caption.setText(item->name().c_str());
+        setLocked(!targetItem->getLocationEditable());
         positionWidget->updatePosition(targetItem->getLocation());
-        positionWidget->setEditable(targetItem->isLocationEditable());
-        targetItemConnection =
+
+        targetItemConnections.add(
             targetItem->sigLocationChanged().connect(
                 [this](){
-                    positionWidget->updatePosition(targetItem->getLocation()); });
+                    positionWidget->updatePosition(targetItem->getLocation()); }));
+        
+        targetItemConnections.add(
+            targetItem->sigLocationEditableToggled().connect(
+                [this](bool on){ setLocked(!on); }));
+            
         updateBaseCoordinateSystems();
+    }
+
+    lockCheck.blockSignals(false);
+}
+
+
+void LocationView::Impl::setLocked(bool on)
+{
+    lockCheck.blockSignals(true);
+    lockCheck.setChecked(on);
+    positionWidget->setEditable(!on);
+    lockCheck.blockSignals(false);
+}
+    
+
+void LocationView::Impl::onLockCheckToggled(bool on)
+{
+    if(targetItem){
+        targetItemConnections.block();
+        targetItem->setLocationEditable(!on);
+        positionWidget->setEditable(!on);
+        targetItemConnections.unblock();
     }
 }
 
@@ -154,15 +195,18 @@ void LocationView::Impl::clearBaseCoordinateSystems()
 {
     coordinates.clear();
     coordinateCombo.clear();
+    coordinateLabel.setEnabled(false);
+    coordinateCombo.setEnabled(false);
 }
 
 
 void LocationView::Impl::updateBaseCoordinateSystems()
 {
-    int index = coordinateCombo.currentIndex();
-    if(index < 0){
-        index = 0;
+    if(!targetItem){
+        return;
     }
+    
+    int currentIndex = coordinateCombo.currentIndex();
 
     clearBaseCoordinateSystems();
 
@@ -172,13 +216,16 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 
     if(targetItem){
         CoordinateInfo* parentCoord;
-        if(!targetItem->hasParentLocation()){
+        LocatableItem* parentLocatable = targetItem->getParentLocatableItem();
+        if(!parentLocatable){
             parentCoord = new CoordinateInfo(_("Parent ( World )"));
         } else {
-            string parentName = targetItem->getParentLocationName();
-            parentCoord = new CoordinateInfo(format(_("Parent ( {} )"), parentName));
+            ItemPtr parentItem = parentLocatable->getCorrespondingItem();
+            parentCoord = new CoordinateInfo(
+                format(_("Parent ( {} )"), parentLocatable->getLocationName()));
+            // parentItem is captured to keep parentLocatable alive until the function is disposed
             parentCoord->parentPositionFunc =
-                [&](){ return targetItem->getParentLocation(); };
+                [parentItem, parentLocatable](){ return parentLocatable->getLocation(); };
         }
         coordinates.push_back(parentCoord);
         
@@ -209,11 +256,17 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             }
         }
     }
-            
+
+    coordinateLabel.setEnabled(true);
+    coordinateCombo.setEnabled(true);
     for(auto& coord : coordinates){
         coordinateCombo.addItem(coord->name.c_str());
     }
-    coordinateCombo.setCurrentIndex(index);
+
+    if(currentIndex < 0){
+        currentIndex = defaultCoordIndex;
+    }
+    coordinateCombo.setCurrentIndex(currentIndex);
 }
         
 
@@ -230,6 +283,10 @@ bool LocationView::Impl::setInputPositionToTargetItem(const Position& T)
 bool LocationView::storeState(Archive& archive)
 {
     impl->positionWidget->storeState(archive);
+    int coordIndex = impl->coordinateCombo.currentIndex();
+    if(coordIndex >= 0){
+        archive.write("current_coord_index", coordIndex);
+    }
     return true;
 }
 
@@ -237,5 +294,11 @@ bool LocationView::storeState(Archive& archive)
 bool LocationView::restoreState(const Archive& archive)
 {
     impl->positionWidget->restoreState(archive);
+
+    if(archive.read("current_coord_index", impl->defaultCoordIndex)){
+        if(impl->coordinateCombo.count() > impl->defaultCoordIndex){
+            impl->coordinateCombo.setCurrentIndex(impl->defaultCoordIndex);
+        }
+    }
     return true;
 }

@@ -5,49 +5,62 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
 
-typedef pair<const Item*, const LocatableItem*> ConstItemPair;
-
-static ConstItemPair getParentLocatableItem(const LocatableItem* locatable)
+LocatableItem::LocatableItem()
 {
-    if(auto item = dynamic_cast<const Item*>(locatable)){
+    isLocationEditable_ = true;
+}
+
+
+Item* LocatableItem::getCorrespondingItem()
+{
+    if(auto item = dynamic_cast<Item*>(this)){
+        return item;
+    }
+    return nullptr;
+}
+
+
+std::string LocatableItem::getLocationName() const
+{
+    return const_cast<LocatableItem*>(this)->getCorrespondingItem()->name();
+}
+
+
+bool LocatableItem::getLocationEditable() const
+{
+    return isLocationEditable_;
+}
+
+
+void LocatableItem::setLocationEditable(bool on)
+{
+    if(on != isLocationEditable_){
+        isLocationEditable_ = on;
+        sigLocationEditableToggled_(on);
+    }
+}
+
+
+SignalProxy<void(bool on)> LocatableItem::sigLocationEditableToggled()
+{
+    return sigLocationEditableToggled_;
+}
+
+
+LocatableItem* LocatableItem::getParentLocatableItem() const
+{
+    if(auto item = dynamic_cast<Item*>(const_cast<LocatableItem*>(this))){
         while(true){
             item = item->parentItem();
             if(item){
-                if(auto locatable = dynamic_cast<const LocatableItem*>(item)){
-                    return make_pair(item, locatable);
+                if(auto locatable = dynamic_cast<LocatableItem*>(item)){
+                    return locatable;
                 }
             } else {
                 break;
             }
         }
     }
-    return ConstItemPair(nullptr, nullptr);
-}
-
-}
- 
-
-bool LocatableItem::hasParentLocation() const
-{
-    return getParentLocatableItem(this).first != nullptr;
-}
-
-
-std::string LocatableItem::getParentLocationName() const
-{
-    if(auto parent = getParentLocatableItem(this).first){
-        return parent->name();
-    }
-    return std::string();
-}
-
-
-Position LocatableItem::getParentLocation() const
-{
-    if(auto parent = getParentLocatableItem(this).second){
-        return parent->getLocation();
-    }
-    return Position::Identity();
+    return nullptr;
 }

@@ -10,13 +10,20 @@ namespace cnoid {
 class CNOID_EXPORT LocatableItem
 {
 public:
-    virtual SignalProxy<void()> sigLocationChanged() = 0;
+    LocatableItem();
+    virtual Item* getCorrespondingItem();
+    virtual std::string getLocationName() const;
     virtual Position getLocation() const = 0;
+    virtual bool getLocationEditable() const;
+    virtual void setLocationEditable(bool on);
+    virtual SignalProxy<void(bool on)> sigLocationEditableToggled();
     virtual void setLocation(const Position& T) = 0;
-    virtual bool isLocationEditable() const = 0;
-    virtual bool hasParentLocation() const;
-    virtual std::string getParentLocationName() const;
-    virtual Position getParentLocation() const;
+    virtual LocatableItem* getParentLocatableItem() const;
+    virtual SignalProxy<void()> sigLocationChanged() = 0;
+    
+private:
+    bool isLocationEditable_;
+    Signal<void(bool on)> sigLocationEditableToggled_;
 };
 
 }

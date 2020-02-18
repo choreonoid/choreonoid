@@ -4,6 +4,7 @@
 */
 
 #include "Link.h"
+#include "Body.h"
 #include "Material.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
@@ -150,6 +151,12 @@ void Link::setBodySub(Body* newBody)
     for(Link* link = child_; link; link = link->sibling_){
         link->setBodySub(newBody);
     }
+}
+
+
+bool Link::isBodyRoot() const
+{
+    return !parent_ || this == body_->rootLink();
 }
 
 

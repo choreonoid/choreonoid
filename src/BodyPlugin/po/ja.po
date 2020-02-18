@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-03 01:36+0900\n"
+"POT-Creation-Date: 2020-02-18 18:47+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -24,131 +24,25 @@ msgstr "ボディモーションエンジン"
 msgid "Update Joint Velocities"
 msgstr "関節角速度の更新"
 
-#: SensorVisualizerItem.cpp:176
-msgid "SensorVisualizer"
-msgstr "センサビジュアライザ"
+#: JointGraphView.cpp:20
+msgid "Joint Trajectories"
+msgstr "関節軌道"
 
-#: SensorVisualizerItem.cpp:179
-msgid "ForceSensorVisualizer"
-msgstr "力センサビジュアライザ"
-
-#: SensorVisualizerItem.cpp:180
-msgid "PointCloudVisualizer"
-msgstr "ポイントクラウドビジュアライザ"
-
-#: SensorVisualizerItem.cpp:181
-msgid "RangeSensorVisualizer"
-msgstr "レンジセンサビジュアライザ"
-
-#: SensorVisualizerItem.cpp:182
-msgid "CameraImageVisualizer"
-msgstr "カメラ画像ビジュアライザ"
-
-#: SensorVisualizerItem.cpp:470
-msgid "Visual ratio"
-msgstr "表示比率"
-
-#: LeggedBodyBar.cpp:41
-msgid "LeggedBodyBar"
-msgstr "脚型ボディバー"
-
-#: LeggedBodyBar.cpp:51
-msgid ""
-"Move the center of mass to the position where its projection corresponds to "
-"the support feet cener"
-msgstr "重心投影点が支持脚中心に一致するよう移動"
-
-#: LeggedBodyBar.cpp:54
-msgid "Move the center of mass to fit its projection to ZMP"
-msgstr "重心投影点がZMPに一致するよう移動"
-
-#: LeggedBodyBar.cpp:57
-msgid "Set ZMP to the projection of the center of mass"
-msgstr "ZMPを重心投影点に移動"
-
-#: LeggedBodyBar.cpp:60
-msgid "Set ZMP under the right foot"
-msgstr "ZMPを右足に移動"
-
-#: LeggedBodyBar.cpp:63
-msgid "Set ZMP at the center of the feet"
-msgstr "ZMPを両足中心に移動"
-
-#: LeggedBodyBar.cpp:66
-msgid "Set ZMP under the left foot"
-msgstr "ZMPを左足に移動"
-
-#: LeggedBodyBar.cpp:71
-msgid "Adjust the width between the feet"
-msgstr "足幅の調整"
-
-#: LeggedBodyBar.cpp:76
-msgid "Width between the feet [m]"
-msgstr "両足中心間距離"
-
-#: LeggedBodyBar.cpp:104
-msgid "The center of mass of {} cannt be moved to the target position\n"
-msgstr "{}の重心を指定の位置まで移動できません\n"
-
-#: FilterDialogs.cpp:46 FilterDialogs.cpp:303
-msgid "Velocity Limiting Filter"
-msgstr "速度制限フィルタ"
-
-#: FilterDialogs.cpp:53 JointDisplacementView.cpp:488
-msgid "Selected joints only"
-msgstr "選択関節のみ"
-
-#: FilterDialogs.cpp:69
-msgid "Pollard method"
-msgstr "Pollard手法"
-
-#: FilterDialogs.cpp:86
-msgid "Gaussian Filter"
-msgstr "ガウシアンフィルタ"
-
-#: FilterDialogs.cpp:108 FilterDialogs.cpp:212 LinkPositionView.cpp:220
-msgid "Apply"
-msgstr "適用"
-
-#: FilterDialogs.cpp:109 FilterDialogs.cpp:213
-msgid "Cancel"
-msgstr "キャンセル"
-
-#: FilterDialogs.cpp:179 FilterDialogs.cpp:307
-msgid "Range Limiting Filter"
-msgstr "範囲制限フィルタ"
-
-#: FilterDialogs.cpp:187
-msgid "limit grad."
-msgstr "制約勾配"
-
-#: FilterDialogs.cpp:194
-msgid "edge grad. ratio"
-msgstr "辺勾配比率"
-
-#: FilterDialogs.cpp:201
-msgid "margin"
-msgstr "マージン"
-
-#: FilterDialogs.cpp:310
-msgid "Merge selected MultiValueSeqItems (Temporary version)"
-msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
-
-#: KinematicsBar.cpp:78
+#: KinematicsBar.cpp:76
 msgid "KinematicsBar"
 msgstr "運動学バー"
 
-#: KinematicsBar.cpp:90
-msgid "Forward kinematics mode"
-msgstr "順運動学モード"
+#: KinematicsBar.cpp:88
+msgid "Enable forward kinematics"
+msgstr "順運動学を有効化"
 
-#: KinematicsBar.cpp:91
-msgid "Preset kinematics mode"
-msgstr "プリセット運動学モード"
+#: KinematicsBar.cpp:90
+msgid "Use preset Kinematics"
+msgstr "プリセット運動学を使用"
 
 #: KinematicsBar.cpp:92
-msgid "Inverse kinematics mode"
-msgstr "逆運動学モード"
+msgid "Enable inverse kinematics"
+msgstr "逆運動学を有効化"
 
 #: KinematicsBar.cpp:96
 msgid "Enable link orientation editing"
@@ -162,166 +56,89 @@ msgstr "貫通ブロックモード"
 msgid "Highlight colliding links"
 msgstr "干渉リンクのハイライト表示"
 
-#: KinematicsBar.cpp:265
+#: KinematicsBar.cpp:296
 msgid "Kinematics Operation Setup"
 msgstr "運動学操作の設定"
 
-#: KinematicsBar.cpp:271
+#: KinematicsBar.cpp:302
 msgid "Snap thresholds:"
 msgstr "スナップ閾値"
 
-#: KinematicsBar.cpp:274
+#: KinematicsBar.cpp:305
 msgid "distance"
 msgstr "足幅"
 
-#: KinematicsBar.cpp:281 KinematicsBar.cpp:300
+#: KinematicsBar.cpp:312 KinematicsBar.cpp:331
 msgid "[m]"
 msgstr ""
 
-#: KinematicsBar.cpp:284
+#: KinematicsBar.cpp:315
 msgid "angle"
 msgstr "角度"
 
-#: KinematicsBar.cpp:289
+#: KinematicsBar.cpp:320
 msgid "[deg]"
 msgstr ""
 
-#: KinematicsBar.cpp:293
+#: KinematicsBar.cpp:324
 msgid "Penetration block depth"
 msgstr "貫通防止における許容深度"
 
-#: KinematicsBar.cpp:304
+#: KinematicsBar.cpp:335
 msgid "Lazy collision detection mode"
 msgstr "遅延干渉検出モード"
 
-#: KinematicsBar.cpp:310
+#: KinematicsBar.cpp:341
 msgid "OK"
 msgstr "了解"
 
-#: WorldLogFileItem.cpp:451
-msgid "WorldLogFileItem"
-msgstr "ワールドログファイルアイテム"
+#: BodyMotionControllerItem.cpp:42
+msgid "BodyMotionControllerItem"
+msgstr "ボディモーションコントローラアイテム"
 
-#: WorldLogFileItem.cpp:454
-msgid "World Log"
-msgstr "ワールドログ"
+#: BodyMotionControllerItem.cpp:86
+msgid "Any body motion item for {} is not found."
+msgstr "{}用のボディモーションアイテムが見つかりません．"
 
-#: WorldLogFileItem.cpp:1153
-msgid "World Log File (*.log)"
-msgstr "ワールドログファイル (*.log)"
+#: BodyMotionControllerItem.cpp:103
+msgid "{0} for {1} is empty."
+msgstr "{1}用の{0}は空です．"
 
-#: WorldLogFileItem.cpp:1155
-msgid "Log file"
-msgstr "ログファイル"
+#: BodyMotionControllerItem.cpp:109
+msgid "The frame rate of {} is different from the world frame rate."
+msgstr "{}のフレームレートはワールドのフレームレートと異なります．"
 
-#: WorldLogFileItem.cpp:1157
-msgid "Actual log file"
-msgstr "実際のログファイル"
+#: BodyMotionControllerItem.cpp:199
+msgid "Control mode"
+msgstr "制御モード"
 
-#: WorldLogFileItem.cpp:1158
-msgid "Time-stamp suffix"
-msgstr "タイムスタンプ接尾辞"
+#: BodyMotionItem.cpp:121
+msgid "BodyMotionItem"
+msgstr "ボディモーションアイテム"
 
-#: WorldLogFileItem.cpp:1160
-msgid "Recording frame rate"
-msgstr "記録フレームレート"
+#: BodyMotionItem.cpp:123
+msgid "Number of joints"
+msgstr "関節数"
 
-#: SimpleControllerItem.cpp:156
-msgid "SimpleControllerItem"
-msgstr "シンプルコントローラアイテム"
+#: BodyMotionItem.cpp:128
+msgid "Body Motion"
+msgstr "ボディモーション"
 
-#: SimpleControllerItem.cpp:183
-msgid "None"
-msgstr "無"
+#: BodyMotionItem.cpp:137
+msgid "Body Motion (version 1.0)"
+msgstr "ボディモーション バージョン 1.0"
 
-#: SimpleControllerItem.cpp:184
-msgid "Controller directory"
-msgstr "コントローラディレクトリ"
+#: BodyMotionItem.cpp:349 BodyMotionItem.cpp:359
+msgid "Confirm"
+msgstr "確認"
 
-#: SimpleControllerItem.cpp:185
-msgid "Project directory"
-msgstr "プロジェクトディレクトリ"
+#: BodyMotionItem.cpp:350
+msgid "Do you want to replace the data of {}?"
+msgstr "{}のデータを置き換えますか？"
 
-#: SimpleControllerItem.cpp:294
-msgid ""
-"Controller module \"{0}\" of {1} is specified as a relative path from the "
-"project directory, but the project directory has not been determined yet."
-msgstr ""
-"{1}のコントローラモジュール \"{0}\" はプロジェクトディレクトリからの相対パス"
-"で指定されていますが，プロジェクトディレクトリはまだ決まっていません．"
-
-#: SimpleControllerItem.cpp:308
-msgid "The controller module of {} has already been loaded."
-msgstr "{}のコントローラモジュールは既にロードされています．"
-
-#: SimpleControllerItem.cpp:315
-msgid "Loading the controller module \"{1}\" of {0} ... "
-msgstr "{0}のコントローラモジュール\"{1}\"をロード中･･･"
-
-#: SimpleControllerItem.cpp:318
-msgid "Failed.\n"
-msgstr "失敗．\n"
-
-#: SimpleControllerItem.cpp:322
-msgid "OK!"
-msgstr ""
-
-#: SimpleControllerItem.cpp:328
-msgid ""
-"The factory function \"createSimpleController()\" is not found in the "
-"controller module."
-msgstr ""
-"ファクトリ関数 \"createSimpleController()\" がコントローラモジュール内に見つ"
-"かりません．"
-
-#: SimpleControllerItem.cpp:335
-msgid "The controller factory of {} failed to create a controller instance."
-msgstr ""
-"{}のコントローラファクトリはコントローラインスタンスの生成に失敗しました．"
-
-#: SimpleControllerItem.cpp:342
-msgid "{} failed to configure the controller"
-msgstr "{}はコントローラインスタンスの生成に失敗しました"
-
-#: SimpleControllerItem.cpp:347
-msgid "A controller instance has successfully been created."
-msgstr "コントローラインスタンスを生成しました．"
-
-#: SimpleControllerItem.cpp:368
-msgid "The controller module \"{1}\" of {0} has been unloaded."
-msgstr "{0}のコントローラモジュール \"{1}\" をアンロードしました．"
-
-#: SimpleControllerItem.cpp:459
-msgid "{}'s initialize method failed."
-msgstr "{}のinitializeメソッドが失敗しました．"
-
-#: SimpleControllerItem.cpp:727
-msgid "{} failed to start"
-msgstr "{}を稼働できませんでした"
-
-#: SimpleControllerItem.cpp:950
-msgid "Simple Controller Module (*.{})"
-msgstr "シンプルコントローラモジュール (*.{})"
-
-#: SimpleControllerItem.cpp:953
-msgid "Controller module"
-msgstr "コントローラモジュール"
-
-#: SimpleControllerItem.cpp:956
-msgid "Base directory"
-msgstr "ベースディレクトリ"
-
-#: SimpleControllerItem.cpp:958
-msgid "Reloading"
-msgstr "再読込"
-
-#: SimpleControllerItem.cpp:960
-msgid "Export symbols"
-msgstr "シンボルのエクスポート"
-
-#: SimpleControllerItem.cpp:962
-msgid "Old target value variable mode"
-msgstr "旧指令値変数モード"
+#: BodyMotionItem.cpp:360
+msgid "Do you want to set {0} as a sequence data of {1}?"
+msgstr "{1}のシーケンスデータとして{0}をセットしますか？"
 
 #: BodyLinkView.cpp:151
 msgid "Body / Link"
@@ -407,321 +224,6 @@ msgstr "関節並進位置 [m]"
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
-#: LinkGraphView.cpp:21
-msgid "Link Trajectories"
-msgstr "リンク軌道"
-
-#: MultiDeviceStateSeqItem.cpp:86
-msgid "MultiDeviceStateSeqItem"
-msgstr ""
-
-#: WorldItem.cpp:106
-msgid "WorldItem"
-msgstr "ワールドアイテム"
-
-#: WorldItem.cpp:474
-msgid "Material table \"{}\" has been reloaded."
-msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
-
-#: WorldItem.cpp:485
-msgid "Reloading material table \"{}\" failed."
-msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
-
-#: WorldItem.cpp:500 BodyItem.cpp:1578
-msgid "Collision detection"
-msgstr "干渉検出"
-
-#: WorldItem.cpp:502
-msgid "Collision detector"
-msgstr "干渉検出器"
-
-#: WorldItem.cpp:505
-msgid "Contact material definition file (*.yaml)"
-msgstr "接触マテリアル定義ファイル (*.yaml)"
-
-#: WorldItem.cpp:506
-msgid "Material table"
-msgstr "マテリアルテーブル"
-
-#: LinkCoordinateFrameListSetItem.cpp:24
-msgid "LinkCoordinateFrameListSetItem"
-msgstr "リンク座標フレームリスト一式アイテム"
-
-#: LinkPositionView.cpp:148
-msgid "Link Position"
-msgstr "リンクポジション"
-
-#: LinkPositionView.cpp:217
-msgid "Fetch"
-msgstr "取込"
-
-#: LinkPositionView.cpp:226
-msgid "Coord:"
-msgstr "座標系"
-
-#: LinkPositionView.cpp:231
-msgid "World"
-msgstr "ワールド"
-
-#: LinkPositionView.cpp:238 BodyItem.cpp:188
-msgid "Body"
-msgstr "ボディ"
-
-#: LinkPositionView.cpp:244
-msgid "Local"
-msgstr "ローカル"
-
-#: LinkPositionView.cpp:272
-msgid "Base"
-msgstr "ベース"
-
-#: LinkPositionView.cpp:273
-msgid "End"
-msgstr "エンド"
-
-#: LinkPositionView.cpp:288
-msgid "Config"
-msgstr "形態"
-
-#: LinkPositionView.cpp:295
-msgid "Pref."
-msgstr "希望形態"
-
-#: LinkPositionView.cpp:304
-msgid "Req."
-msgstr "必須"
-
-#: LinkPositionView.cpp:385
-msgid "Target link type"
-msgstr "対象リンクタイプ"
-
-#: LinkPositionView.cpp:387
-msgid "Any links"
-msgstr "全リンク"
-
-#: LinkPositionView.cpp:388
-msgid "IK priority link and root link"
-msgstr "逆運動学優先／ルートリンク"
-
-#: LinkPositionView.cpp:389
-msgid "IK priority link"
-msgstr "逆運動学優先リンク"
-
-#: LinkPositionView.cpp:401
-msgid "Disable custom IK"
-msgstr "カスタムIKを使用しない"
-
-#: LinkPositionView.cpp:561
-msgid "World Origin"
-msgstr "ワールド原点"
-
-#: LinkPositionView.cpp:565
-msgid "Origin"
-msgstr "原点"
-
-#: LinkPositionView.cpp:861
-msgid "Actual State"
-msgstr "実状態"
-
-#: LinkPositionView.cpp:969
-msgid "Solved"
-msgstr "解有り"
-
-#: LinkPositionView.cpp:973
-msgid "Not Solved"
-msgstr "解無し"
-
-#: LinkPositionView.cpp:993
-msgid "Accepted"
-msgstr ""
-
-#: LinkPositionView.cpp:996
-msgid "Not Accepted"
-msgstr ""
-
-#: BodyTrackingCameraItem.cpp:158
-msgid "BodyTrackingCameraItem"
-msgstr "ボディ追尾カメラ"
-
-#: BodyTrackingCameraItem.cpp:180
-msgid "Perspective"
-msgstr "透視投影"
-
-#: BodyTrackingCameraItem.cpp:181
-msgid "Orthographic"
-msgstr "並行投影"
-
-#: BodyTrackingCameraItem.cpp:247
-msgid "Target link"
-msgstr "対象リンク"
-
-#: BodyTrackingCameraItem.cpp:249
-msgid "Keep relative attitude"
-msgstr "姿勢保持"
-
-#: BodyTrackingCameraItem.cpp:251
-msgid "Camera type"
-msgstr "カメラ タイプ"
-
-#: BodyTrackingCameraItem.cpp:253
-msgid "Near clip distance"
-msgstr "近クリッピング距離"
-
-#: BodyTrackingCameraItem.cpp:255
-msgid "Far clip distance"
-msgstr "遠クリッピング距離"
-
-#: BodyTrackingCameraItem.cpp:257
-msgid "field Of View"
-msgstr "視野角"
-
-#: JointDisplacementView.cpp:393
-msgid "Joint Displacement"
-msgstr "関節変位"
-
-#: JointDisplacementView.cpp:453
-msgid "Option"
-msgstr "オプション"
-
-#: JointDisplacementView.cpp:492
-msgid "Joint ID"
-msgstr "関節ID"
-
-#: JointDisplacementView.cpp:496
-msgid "Joint name"
-msgstr "関節名"
-
-#: JointDisplacementView.cpp:501
-msgid "Overlap joint name"
-msgstr "関節名を上に表示"
-
-#: JointDisplacementView.cpp:505
-msgid "Slider"
-msgstr "スライダ"
-
-#: JointDisplacementView.cpp:510
-msgid "Dial"
-msgstr "ダイヤル"
-
-#: JointDisplacementView.cpp:514
-msgid "Phase"
-msgstr "位相"
-
-#: JointGraphView.cpp:20
-msgid "Joint Trajectories"
-msgstr "関節軌道"
-
-#: LinkSelectionView.cpp:42
-msgid "Links"
-msgstr "リンク"
-
-#: SimulationBar.cpp:52
-msgid "SimulationBar"
-msgstr "シミュレーションバー"
-
-#: SimulationBar.cpp:57
-msgid "Store body positions to the initial world state"
-msgstr "現在の状態をワールド初期状態に設定"
-
-#: SimulationBar.cpp:61
-msgid "Restore body positions from the initial world state"
-msgstr "ワールド初期状態の呼び出し"
-
-#: SimulationBar.cpp:64
-msgid "Start simulation from the beginning"
-msgstr "初期位置からのシミュレーションを開始"
-
-#: SimulationBar.cpp:68
-msgid "Start simulation from the current state"
-msgstr "現在位置からのシミュレーションを開始"
-
-#: SimulationBar.cpp:71
-msgid "Pause simulation"
-msgstr "シミュレーションの一時停止"
-
-#: SimulationBar.cpp:75
-msgid "Stop simulation"
-msgstr "シミュレーションの停止"
-
-#: SimulationBar.cpp:108
-msgid "Current state of {} has been set to the initial state."
-msgstr "{}の現在の状態を初期状態にセットしました．"
-
-#: SimulationBar.cpp:135
-msgid "There is no simulator item."
-msgstr "シミュレータアイテムが存在しません．"
-
-#: SimulationBar.cpp:159
-msgid "{} cannot be processed because it is not related with a world."
-msgstr "{}はワールドと関連付けられていないため処理出来ません．"
-
-#: SimulationBar.cpp:165
-msgid ""
-"{} cannot be processed because another simulatorin the same world is also "
-"selected."
-msgstr "{}はこのワールドの他のシミュレータも選択されているため処理出来ません．"
-
-#: SplineFilterDialog.cpp:224
-msgid "Spline filter"
-msgstr "スプラインフィルタ"
-
-#: SplineFilterDialog.cpp:237
-msgid "Spline Filter"
-msgstr "スプラインフィルタ"
-
-#: SplineFilterDialog.cpp:243
-msgid "Input frame rate"
-msgstr "入力フレームレート"
-
-#: SplineFilterDialog.cpp:256
-msgid "Output frame rate"
-msgstr "出力フレームレート"
-
-#: SplineFilterDialog.cpp:269
-msgid "Time length ratio"
-msgstr "時間長比率"
-
-#: SplineFilterDialog.cpp:277 KinematicFaultChecker.cpp:225
-msgid "&Apply"
-msgstr "適用(&A)"
-
-#: SplineFilterDialog.cpp:318 SplineFilterDialog.cpp:330
-#: SplineFilterDialog.cpp:342 SplineFilterDialog.cpp:354
-msgid ""
-"Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = "
-"{2}"
-msgstr ""
-"B-Splineフィルタを{0}に適用中: 入力フレームレート = {1}, 出力フレームレート "
-"= {2}"
-
-#: BodyMotionItem.cpp:121
-msgid "BodyMotionItem"
-msgstr "ボディモーションアイテム"
-
-#: BodyMotionItem.cpp:123
-msgid "Number of joints"
-msgstr "関節数"
-
-#: BodyMotionItem.cpp:128
-msgid "Body Motion"
-msgstr "ボディモーション"
-
-#: BodyMotionItem.cpp:137
-msgid "Body Motion (version 1.0)"
-msgstr "ボディモーション バージョン 1.0"
-
-#: BodyMotionItem.cpp:349 BodyMotionItem.cpp:359
-msgid "Confirm"
-msgstr "確認"
-
-#: BodyMotionItem.cpp:350
-msgid "Do you want to replace the data of {}?"
-msgstr "{}のデータを置き換えますか？"
-
-#: BodyMotionItem.cpp:360
-msgid "Do you want to set {0} as a sequence data of {1}?"
-msgstr "{1}のシーケンスデータとして{0}をセットしますか？"
-
 #: IoConnectionView.cpp:178
 msgid "Output Device"
 msgstr "出力デバイス"
@@ -753,341 +255,6 @@ msgstr "ワールドにI/Oデバイスが存在しません。"
 #: IoConnectionView.cpp:702
 msgid "Remove"
 msgstr "削除"
-
-#: IoConnectionMapItem.cpp:35
-msgid "IoConnectionMapItem"
-msgstr "IO接続マップアイテム"
-
-#: ZMPSeqItem.cpp:76
-msgid "ZMPSeqItem"
-msgstr "ZMP軌道アイテム"
-
-#: ZMPSeqItem.cpp:116
-msgid "{0} of {1} has been converted to {2}."
-msgstr "{1}の{0}は{2}に変換されました．"
-
-#: ZMPSeqItem.cpp:118
-msgid "the root relative coordinate"
-msgstr "ルート相対座標"
-
-#: ZMPSeqItem.cpp:118
-msgid "the global coordinate"
-msgstr "グローバル座標"
-
-#: ZMPSeqItem.cpp:123
-msgid ""
-"{0}'s coordinate system cannot be changed because there is no root link "
-"motion associated with {0}."
-msgstr ""
-"{0}と関連付けられた動作はルートリンクが含まれていないため{0}の座標系は変更で"
-"きません．"
-
-#: ZMPSeqItem.cpp:139
-msgid "Root relative"
-msgstr "ルート相対"
-
-#: KinematicSimulatorItem.cpp:74
-msgid "KinematicSimulatorItem"
-msgstr "運動学シミュレータアイテム"
-
-#: LinkPropertyView.cpp:48
-msgid "Link Properties"
-msgstr "リンクプロパティ"
-
-#: LinkPropertyView.cpp:112
-msgid "Name"
-msgstr "名前"
-
-#: LinkPropertyView.cpp:113
-msgid "Index"
-msgstr "インデックス"
-
-#: LinkPropertyView.cpp:114
-msgid "Offset translation"
-msgstr "並進オフセット"
-
-#: LinkPropertyView.cpp:115
-msgid "Offset rotation"
-msgstr "回転オフセット"
-
-#: LinkPropertyView.cpp:116
-msgid "Rs"
-msgstr ""
-
-#: LinkPropertyView.cpp:117
-msgid "Center of mass"
-msgstr "重心"
-
-#: LinkPropertyView.cpp:118 BodyItem.cpp:1575
-msgid "Mass"
-msgstr "質量"
-
-#: LinkPropertyView.cpp:119
-msgid "Inertia tensor"
-msgstr "慣性テンソル"
-
-#: LinkPropertyView.cpp:120
-msgid "Joint type"
-msgstr "関節タイプ"
-
-#: LinkPropertyView.cpp:122
-msgid "Joint axis"
-msgstr "関節軸"
-
-#: LinkPropertyView.cpp:123
-msgid "Upper joint limit"
-msgstr "関節変位上限"
-
-#: LinkPropertyView.cpp:124
-msgid "Lower joint limit"
-msgstr "関節変位下限"
-
-#: LinkPropertyView.cpp:125
-msgid "Upper joint velocity"
-msgstr "関節速度上限"
-
-#: LinkPropertyView.cpp:126
-msgid "Lower joint velocity"
-msgstr "関節速度下限"
-
-#: LinkPropertyView.cpp:127
-msgid "Joint inertia"
-msgstr "関節慣性"
-
-#: BodyItem.cpp:198
-msgid "Meter"
-msgstr "メートル"
-
-#: BodyItem.cpp:199
-msgid "Millimeter"
-msgstr "ミリメートル"
-
-#: BodyItem.cpp:200
-msgid "Inch"
-msgstr "インチ"
-
-#: BodyItem.cpp:209
-msgid "[ Mesh import hints ]"
-msgstr "[ メッシュインポートのヒント ]"
-
-#: BodyItem.cpp:210
-msgid "Unit:"
-msgstr "単位："
-
-#: BodyItem.cpp:212
-msgid "Upper axis:"
-msgstr "上方軸："
-
-#: BodyItem.cpp:309
-msgid "BodyItem"
-msgstr "ボディアイテム"
-
-#: BodyItem.cpp:1451
-msgid "{0} has been detached from {1} of {2}."
-msgstr "{0}は{2}の{1}からデタッチされました．"
-
-#: BodyItem.cpp:1495
-msgid "{0} has been attached to {1} of {2}."
-msgstr "{0}は{2}の{1}にアタッチされました．"
-
-#: BodyItem.cpp:1569
-msgid "Model name"
-msgstr "モデル名"
-
-#: BodyItem.cpp:1570
-msgid "Num links"
-msgstr "リンク数"
-
-#: BodyItem.cpp:1571
-msgid "Num joints"
-msgstr "関節数"
-
-#: BodyItem.cpp:1572
-msgid "Num devices"
-msgstr "デバイス数"
-
-#: BodyItem.cpp:1573
-msgid "Root link"
-msgstr "ルートリンク"
-
-#: BodyItem.cpp:1574
-msgid "Base link"
-msgstr "ベースリンク"
-
-#: BodyItem.cpp:1576
-msgid "Static"
-msgstr "スタティック"
-
-#: BodyItem.cpp:1580
-msgid "Self-collision detection"
-msgstr "自己干渉検出"
-
-#: BodyItem.cpp:1582 EditableSceneBody.cpp:1025
-msgid "Draggable"
-msgstr ""
-
-#: BodyItem.cpp:1729
-msgid "Mismatched size of the stored joint positions for {}"
-msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
-
-#: BodyItem.cpp:1746
-msgid "Mismatched size of the stored initial joint positions for {}"
-msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
-
-#: ControllerItem.cpp:99
-msgid "No delay mode"
-msgstr "無遅延モード"
-
-#: ControllerItem.cpp:101 SimulatorItem.cpp:2747
-msgid "Controller options"
-msgstr "コントローラオプション"
-
-#: AISTSimulatorItem.cpp:132
-msgid "AISTSimulatorItem"
-msgstr "AISTシミュレータアイテム"
-
-#: AISTSimulatorItem.cpp:149
-msgid "Forward dynamics"
-msgstr "順動力学"
-
-#: AISTSimulatorItem.cpp:150
-msgid "Kinematics"
-msgstr "運動学"
-
-#: AISTSimulatorItem.cpp:152
-msgid "Euler"
-msgstr "オイラー"
-
-#: AISTSimulatorItem.cpp:153
-msgid "Runge Kutta"
-msgstr "ルンゲクッタ"
-
-#: AISTSimulatorItem.cpp:258
-msgid ""
-"AISTSimulatorItem::setFriction(Link* link1, Link* link2, double "
-"staticFriction, double dynamicFriction) is not supported in this version.\n"
-"Please use the material table instead of it."
-msgstr ""
-"AISTSimulatorItem::setFriction(Link* link1, Link* link2, double "
-"staticFriction, double dynamicFriction)はこのバージョンではサポートされていま"
-"せん．\n"
-"代わりにマテリアルテーブルご使用ください．"
-
-#: AISTSimulatorItem.cpp:361
-msgid ""
-"The joint {0} of {1} is a free joint. AISTSimulator does not allow for a "
-"free joint except for the root link."
-msgstr ""
-"{1}の関節{0}は関節タイプがフリーの関節です．AISTSimulatorはルートリンク以外で"
-"フリーの関節タイプを使用することができません．"
-
-#: AISTSimulatorItem.cpp:423
-msgid "{} uses the ForwardDynamicsCBM module to perform the high-gain control."
-msgstr "{}はハイゲイン制御を行うためForwardDynamicsCBMモジュールを使います．"
-
-#: AISTSimulatorItem.cpp:654
-msgid "Dynamics mode"
-msgstr "動力学モード"
-
-#: AISTSimulatorItem.cpp:656
-msgid "Integration mode"
-msgstr "積分モード"
-
-#: AISTSimulatorItem.cpp:658
-msgid "Gravity"
-msgstr "重力加速度"
-
-#: AISTSimulatorItem.cpp:660
-msgid "Static friction"
-msgstr "静止摩擦係数"
-
-#: AISTSimulatorItem.cpp:661
-msgid "Slip friction"
-msgstr "動摩擦係数"
-
-#: AISTSimulatorItem.cpp:662
-msgid "Contact culling distance"
-msgstr "接触間引き距離"
-
-#: AISTSimulatorItem.cpp:664
-msgid "Contact culling depth"
-msgstr "接触間引き深度"
-
-#: AISTSimulatorItem.cpp:666
-msgid "Error criterion"
-msgstr "収束判定誤差基準"
-
-#: AISTSimulatorItem.cpp:668
-msgid "Max iterations"
-msgstr "最大反復計算回数"
-
-#: AISTSimulatorItem.cpp:669
-msgid "CC depth"
-msgstr "接触補正深度"
-
-#: AISTSimulatorItem.cpp:671
-msgid "CC v-ratio"
-msgstr "接触補正速度係数"
-
-#: AISTSimulatorItem.cpp:673
-msgid "Kinematic walking"
-msgstr "運動学歩行モード"
-
-#: AISTSimulatorItem.cpp:675
-msgid "2D mode"
-msgstr "2Dモード"
-
-#: AISTSimulatorItem.cpp:676
-msgid "Old accel sensor mode"
-msgstr "旧加速センサモード"
-
-#: CollisionSeq.cpp:79
-msgid "The function to read CollisionSeq is not implemented."
-msgstr "CollisionSeqを読み込む機能は実装されていません．"
-
-#: CollisionSeqItem.cpp:66
-msgid "CollisionSeqItem"
-msgstr "干渉列アイテム"
-
-#: CollisionSeqItem.cpp:68
-msgid "Collision Data"
-msgstr "干渉データ"
-
-#: BodyBar.cpp:51
-msgid "BodyBar"
-msgstr "ボディバー"
-
-#: BodyBar.cpp:61
-msgid "Memory the current pose"
-msgstr "現在姿勢を記憶"
-
-#: BodyBar.cpp:64
-msgid "Recall the memorized pose"
-msgstr "記憶した姿勢の呼び出し"
-
-#: BodyBar.cpp:67
-msgid "Move the selected bodies to the origin"
-msgstr "選択ボディを原点へ移動"
-
-#: BodyBar.cpp:70
-msgid "Set the preset initial pose to the selected bodies"
-msgstr "選択ボディを初期姿勢に"
-
-#: BodyBar.cpp:73
-msgid "Set the preset standard pose to the selected bodies"
-msgstr "選択ボディを標準姿勢に"
-
-#: BodyBar.cpp:78
-msgid "Copy the right side pose to the left side"
-msgstr "右側の姿勢を左側にコピー"
-
-#: BodyBar.cpp:81
-msgid "Mirror copy"
-msgstr "反転コピー"
-
-#: BodyBar.cpp:84
-msgid "Copy the left side pose to the right side"
-msgstr "左側の姿勢を右側にコピー"
 
 #: KinematicFaultChecker.cpp:108 KinematicFaultChecker.cpp:141
 msgid "Kinematic Fault Checker"
@@ -1132,6 +299,10 @@ msgstr "自己干渉チェック"
 #: KinematicFaultChecker.cpp:217
 msgid "Time bar's range only"
 msgstr "タイムバーの範囲内に適用"
+
+#: KinematicFaultChecker.cpp:225 SplineFilterDialog.cpp:277
+msgid "&Apply"
+msgstr "適用(&A)"
 
 #: KinematicFaultChecker.cpp:277
 msgid "No BodyMotionItems are selected."
@@ -1186,10 +357,24 @@ msgstr ""
 msgid "{0:7.3f} [s]: Collision between {1} and {2}"
 msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
 
-#: BodyPlugin.cpp:145
-msgid ""
-"The Collision deteciton module used in this plugin is implemented using the "
-"OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
+#: JointStateView.cpp:66
+msgid "Joint State"
+msgstr "関節状態"
+
+#: JointStateView.cpp:99
+msgid "Angle"
+msgstr "角度"
+
+#: JointStateView.cpp:100
+msgid "Torque"
+msgstr "トルク"
+
+#: JointStateView.cpp:361 BodyStateView.cpp:284
+msgid "ON"
+msgstr ""
+
+#: JointStateView.cpp:361 BodyStateView.cpp:284
+msgid "OFF"
 msgstr ""
 
 #: BodyMarkerItem.cpp:79
@@ -1208,38 +393,162 @@ msgstr "球"
 msgid "Axes"
 msgstr "座標軸"
 
-#: BodyMarkerItem.cpp:253
+#: BodyMarkerItem.cpp:254
 msgid "Target link \"{0}\" of \"{1}\" is not found."
 msgstr "\"{1}\"の対象リンク\"{0}\"がみつかりません．"
 
-#: BodyMarkerItem.cpp:262
+#: BodyMarkerItem.cpp:263
 msgid "Target node \"{0}\" of \"{1}\" is not found."
 msgstr "\"{1}\"の対象ノード\"{0}\"がみつかりません．"
 
-#: BodyMarkerItem.cpp:350
+#: BodyMarkerItem.cpp:351
 msgid "Marker type"
 msgstr "マーカタイプ"
 
-#: BodyMarkerItem.cpp:353 LinkTreeWidget.cpp:277 LinkTreeWidget.cpp:654
+#: BodyMarkerItem.cpp:354 LinkTreeWidget.cpp:277 LinkTreeWidget.cpp:654
 #: LinkTreeWidget.cpp:659 LinkTreeWidget.cpp:674
 msgid "Link"
 msgstr "リンク"
 
-#: BodyMarkerItem.cpp:356
+#: BodyMarkerItem.cpp:357
 msgid "Node"
 msgstr "ノード"
 
-#: BodyMarkerItem.cpp:359
+#: BodyMarkerItem.cpp:360
 msgid "Translation"
 msgstr "位置"
 
-#: BodyMarkerItem.cpp:381
+#: BodyMarkerItem.cpp:382
 msgid "Size"
 msgstr "サイズ"
 
-#: BodyMarkerItem.cpp:384
+#: BodyMarkerItem.cpp:385
 msgid "Color"
 msgstr "色"
+
+#: EditableSceneBody.cpp:1068
+msgid "Lock location"
+msgstr "配置ロック"
+
+#: EditableSceneBody.cpp:1085
+msgid "Move Forcibly"
+msgstr "強制移動"
+
+#: EditableSceneBody.cpp:1090
+msgid "Hold Forcibly"
+msgstr "強制保持"
+
+#: EditableSceneBody.cpp:1098
+msgid "Set Free"
+msgstr "フリーに"
+
+#: EditableSceneBody.cpp:1100
+msgid "Set Base"
+msgstr "ベースに"
+
+#: EditableSceneBody.cpp:1102
+msgid "Set Translation Pin"
+msgstr "並進ピンをセット"
+
+#: EditableSceneBody.cpp:1104
+msgid "Set Rotation Pin"
+msgstr "回転ピンをセット"
+
+#: EditableSceneBody.cpp:1106
+msgid "Set Both Pins"
+msgstr "両方のピンをセット"
+
+#: EditableSceneBody.cpp:1111
+msgid "Level Attitude"
+msgstr "水平姿勢に"
+
+#: EditableSceneBody.cpp:1117
+msgid "Markers"
+msgstr "マーカー"
+
+#: EditableSceneBody.cpp:1119
+msgid "Center of Mass"
+msgstr "重心"
+
+#: EditableSceneBody.cpp:1123
+msgid "Projection Point of CoM"
+msgstr "重心投影点"
+
+#: EditableSceneBody.cpp:1127
+msgid "ZMP"
+msgstr "ZMP"
+
+#: EditableSceneBody.cpp:1557
+msgid "Show selected links only"
+msgstr "選択リンクのみ表示"
+
+#: SubSimulatorItem.cpp:61
+msgid "Enabled"
+msgstr "有効"
+
+#: LinkPropertyView.cpp:48
+msgid "Link Properties"
+msgstr "リンクプロパティ"
+
+#: LinkPropertyView.cpp:112
+msgid "Name"
+msgstr "名前"
+
+#: LinkPropertyView.cpp:113
+msgid "Index"
+msgstr "インデックス"
+
+#: LinkPropertyView.cpp:114
+msgid "Offset translation"
+msgstr "並進オフセット"
+
+#: LinkPropertyView.cpp:115
+msgid "Offset rotation"
+msgstr "回転オフセット"
+
+#: LinkPropertyView.cpp:116
+msgid "Rs"
+msgstr ""
+
+#: LinkPropertyView.cpp:117
+msgid "Center of mass"
+msgstr "重心"
+
+#: LinkPropertyView.cpp:118 BodyItem.cpp:1592
+msgid "Mass"
+msgstr "質量"
+
+#: LinkPropertyView.cpp:119
+msgid "Inertia tensor"
+msgstr "慣性テンソル"
+
+#: LinkPropertyView.cpp:120
+msgid "Joint type"
+msgstr "関節タイプ"
+
+#: LinkPropertyView.cpp:122
+msgid "Joint axis"
+msgstr "関節軸"
+
+#: LinkPropertyView.cpp:123
+msgid "Upper joint limit"
+msgstr "関節変位上限"
+
+#: LinkPropertyView.cpp:124
+msgid "Lower joint limit"
+msgstr "関節変位下限"
+
+#: LinkPropertyView.cpp:125
+msgid "Upper joint velocity"
+msgstr "関節速度上限"
+
+#: LinkPropertyView.cpp:126
+msgid "Lower joint velocity"
+msgstr "関節速度下限"
+
+#: LinkPropertyView.cpp:127
+msgid "Joint inertia"
+msgstr "関節慣性"
 
 #: GLVisionSimulatorItem.cpp:297
 msgid "GLVisionSimulatorItem"
@@ -1321,140 +630,113 @@ msgstr "追加のライト"
 msgid "Anti-aliasing"
 msgstr "アンチエイリアシング"
 
-#: JointStateView.cpp:66
-msgid "Joint State"
-msgstr "関節状態"
+#: KinematicSimulatorItem.cpp:74
+msgid "KinematicSimulatorItem"
+msgstr "運動学シミュレータアイテム"
 
-#: JointStateView.cpp:99
-msgid "Angle"
-msgstr "角度"
+#: CollisionSeq.cpp:79
+msgid "The function to read CollisionSeq is not implemented."
+msgstr "CollisionSeqを読み込む機能は実装されていません．"
 
-#: JointStateView.cpp:100
-msgid "Torque"
-msgstr "トルク"
+#: LinkPositionView.cpp:148
+msgid "Link Position"
+msgstr "リンクポジション"
 
-#: JointStateView.cpp:361 BodyStateView.cpp:284
-msgid "ON"
+#: LinkPositionView.cpp:217
+msgid "Fetch"
+msgstr "取込"
+
+#: LinkPositionView.cpp:220 FilterDialogs.cpp:108 FilterDialogs.cpp:212
+msgid "Apply"
+msgstr "適用"
+
+#: LinkPositionView.cpp:226
+msgid "Coord:"
+msgstr "座標系"
+
+#: LinkPositionView.cpp:231
+msgid "World"
+msgstr "ワールド"
+
+#: LinkPositionView.cpp:238 BodyItem.cpp:204
+msgid "Body"
+msgstr "ボディ"
+
+#: LinkPositionView.cpp:244
+msgid "Local"
+msgstr "ローカル"
+
+#: LinkPositionView.cpp:272
+msgid "Base"
+msgstr "ベース"
+
+#: LinkPositionView.cpp:273
+msgid "End"
+msgstr "エンド"
+
+#: LinkPositionView.cpp:288
+msgid "Config"
+msgstr "形態"
+
+#: LinkPositionView.cpp:295
+msgid "Pref."
+msgstr "希望形態"
+
+#: LinkPositionView.cpp:304
+msgid "Req."
+msgstr "必須"
+
+#: LinkPositionView.cpp:385
+msgid "Target link type"
+msgstr "対象リンクタイプ"
+
+#: LinkPositionView.cpp:387
+msgid "Any links"
+msgstr "全リンク"
+
+#: LinkPositionView.cpp:388
+msgid "IK priority link and root link"
+msgstr "逆運動学優先／ルートリンク"
+
+#: LinkPositionView.cpp:389
+msgid "IK priority link"
+msgstr "逆運動学優先リンク"
+
+#: LinkPositionView.cpp:401
+msgid "Disable custom IK"
+msgstr "カスタムIKを使用しない"
+
+#: LinkPositionView.cpp:561
+msgid "World Origin"
+msgstr "ワールド原点"
+
+#: LinkPositionView.cpp:565
+msgid "Origin"
+msgstr "原点"
+
+#: LinkPositionView.cpp:861
+msgid "Actual State"
+msgstr "実状態"
+
+#: LinkPositionView.cpp:969
+msgid "Solved"
+msgstr "解有り"
+
+#: LinkPositionView.cpp:973
+msgid "Not Solved"
+msgstr "解無し"
+
+#: LinkPositionView.cpp:993
+msgid "Accepted"
 msgstr ""
 
-#: JointStateView.cpp:361 BodyStateView.cpp:284
-msgid "OFF"
+#: LinkPositionView.cpp:996
+msgid "Not Accepted"
 msgstr ""
 
-#: EditableSceneBody.cpp:1043
-msgid "Move Forcibly"
-msgstr "強制移動"
-
-#: EditableSceneBody.cpp:1048
-msgid "Hold Forcibly"
-msgstr "強制保持"
-
-#: EditableSceneBody.cpp:1056
-msgid "Set Free"
-msgstr "フリーに"
-
-#: EditableSceneBody.cpp:1058
-msgid "Set Base"
-msgstr "ベースに"
-
-#: EditableSceneBody.cpp:1060
-msgid "Set Translation Pin"
-msgstr "並進ピンをセット"
-
-#: EditableSceneBody.cpp:1062
-msgid "Set Rotation Pin"
-msgstr "回転ピンをセット"
-
-#: EditableSceneBody.cpp:1064
-msgid "Set Both Pins"
-msgstr "両方のピンをセット"
-
-#: EditableSceneBody.cpp:1069
-msgid "Level Attitude"
-msgstr "水平姿勢に"
-
-#: EditableSceneBody.cpp:1075
-msgid "Markers"
-msgstr "マーカー"
-
-#: EditableSceneBody.cpp:1077
-msgid "Center of Mass"
-msgstr "重心"
-
-#: EditableSceneBody.cpp:1081
-msgid "Projection Point of CoM"
-msgstr "重心投影点"
-
-#: EditableSceneBody.cpp:1085
-msgid "ZMP"
-msgstr "ZMP"
-
-#: EditableSceneBody.cpp:1572
-msgid "Show selected links only"
-msgstr "選択リンクのみ表示"
-
-#: BodyStateView.cpp:78
-msgid "Body State"
-msgstr "ボディ状態"
-
-#: HrpsysFileIO.cpp:102
-msgid "\"{}\" cannot be opened."
-msgstr "\"{}\"が開けません．"
-
-#: HrpsysFileIO.cpp:140
-msgid "\"{}\" contains different size columns."
-msgstr "\"{}\"に異なるサイズの列が含まれています．"
-
-#: HrpsysFileIO.cpp:227
-msgid "Warning"
-msgstr "警告"
-
-#: HrpsysFileIO.cpp:254
-msgid ""
-"The frame rate of a body motion exported as HRPSYS files should be standard "
-"value 200, but the frame rate of \"{0}\" is {1}. The exported data may cause "
-"a problem.\n"
-"\n"
-"Do you continue to export ?"
-msgstr ""
-"HRPSYS用ファイルのフレームレートは標準で200となっていますが，エクスポートしよ"
-"うとしている \"{0}\" のフレームレートは{1}となっており，これによって問題が起"
-"こる可能性があります．\n"
-"\n"
-"エクスポートを続けますか？"
-
-#: HrpsysFileIO.cpp:271
-msgid ""
-"A fault has been detected. Please check the report in the MessageView.\n"
-"\n"
-"Do you continue to export ?"
-msgstr ""
-"障害を検出しました．メッセージビュー内に出力される内容を確認してください．\n"
-"\n"
-"エクスポートを続けますか ?"
-
-#: HrpsysFileIO.cpp:276
-msgid ""
-"{} faults have been detected. Please check the report in the MessageView.\n"
-"\n"
-"Do you continue to export ?"
-msgstr ""
-"{} 箇所の障害を検出しました．メッセージビュー内に出力される内容を確認してくだ"
-"さい．\n"
-"\n"
-"エクスポートを続けますか ?"
-
-#: HrpsysFileIO.cpp:287
-msgid "There is no ZMP data. Do you continue to export ?"
-msgstr "ZMPのデータがありませんが，エクスポートを続けますか？"
-
-#: HrpsysFileIO.cpp:303
-msgid "HRPSYS Sequence File Set"
-msgstr "HRPSYSシーケンスファイル一式"
-
-#: HrpsysFileIO.cpp:313
-msgid "HRPSYS Log File"
-msgstr "HRPSYSログファイル"
+#: LinkGraphView.cpp:21
+msgid "Link Trajectories"
+msgstr "リンク軌道"
 
 #: SimulationScriptItem.cpp:49
 msgid "Before init."
@@ -1488,9 +770,654 @@ msgstr "遅延"
 msgid "Simulation only"
 msgstr "シミュレーション用に限定"
 
-#: SubSimulatorItem.cpp:61
-msgid "Enabled"
-msgstr "有効"
+#: ZMPSeqItem.cpp:76
+msgid "ZMPSeqItem"
+msgstr "ZMP軌道アイテム"
+
+#: ZMPSeqItem.cpp:116
+msgid "{0} of {1} has been converted to {2}."
+msgstr "{1}の{0}は{2}に変換されました．"
+
+#: ZMPSeqItem.cpp:118
+msgid "the root relative coordinate"
+msgstr "ルート相対座標"
+
+#: ZMPSeqItem.cpp:118
+msgid "the global coordinate"
+msgstr "グローバル座標"
+
+#: ZMPSeqItem.cpp:123
+msgid ""
+"{0}'s coordinate system cannot be changed because there is no root link "
+"motion associated with {0}."
+msgstr ""
+"{0}と関連付けられた動作はルートリンクが含まれていないため{0}の座標系は変更で"
+"きません．"
+
+#: ZMPSeqItem.cpp:139
+msgid "Root relative"
+msgstr "ルート相対"
+
+#: SensorVisualizerItem.cpp:176
+msgid "SensorVisualizer"
+msgstr "センサビジュアライザ"
+
+#: SensorVisualizerItem.cpp:179
+msgid "ForceSensorVisualizer"
+msgstr "力センサビジュアライザ"
+
+#: SensorVisualizerItem.cpp:180
+msgid "PointCloudVisualizer"
+msgstr "ポイントクラウドビジュアライザ"
+
+#: SensorVisualizerItem.cpp:181
+msgid "RangeSensorVisualizer"
+msgstr "レンジセンサビジュアライザ"
+
+#: SensorVisualizerItem.cpp:182
+msgid "CameraImageVisualizer"
+msgstr "カメラ画像ビジュアライザ"
+
+#: SensorVisualizerItem.cpp:470
+msgid "Visual ratio"
+msgstr "表示比率"
+
+#: CollisionSeqItem.cpp:66
+msgid "CollisionSeqItem"
+msgstr "干渉列アイテム"
+
+#: CollisionSeqItem.cpp:68
+msgid "Collision Data"
+msgstr "干渉データ"
+
+#: LinkCoordinateFrameListSetItem.cpp:24
+msgid "LinkCoordinateFrameListSetItem"
+msgstr "リンク座標フレームリスト一式アイテム"
+
+#: SimulationBar.cpp:52
+msgid "SimulationBar"
+msgstr "シミュレーションバー"
+
+#: SimulationBar.cpp:57
+msgid "Store body positions to the initial world state"
+msgstr "現在の状態をワールド初期状態に設定"
+
+#: SimulationBar.cpp:61
+msgid "Restore body positions from the initial world state"
+msgstr "ワールド初期状態の呼び出し"
+
+#: SimulationBar.cpp:64
+msgid "Start simulation from the beginning"
+msgstr "初期位置からのシミュレーションを開始"
+
+#: SimulationBar.cpp:68
+msgid "Start simulation from the current state"
+msgstr "現在位置からのシミュレーションを開始"
+
+#: SimulationBar.cpp:71
+msgid "Pause simulation"
+msgstr "シミュレーションの一時停止"
+
+#: SimulationBar.cpp:75
+msgid "Stop simulation"
+msgstr "シミュレーションの停止"
+
+#: SimulationBar.cpp:108
+msgid "Current state of {} has been set to the initial state."
+msgstr "{}の現在の状態を初期状態にセットしました．"
+
+#: SimulationBar.cpp:135
+msgid "There is no simulator item."
+msgstr "シミュレータアイテムが存在しません．"
+
+#: SimulationBar.cpp:159
+msgid "{} cannot be processed because it is not related with a world."
+msgstr "{}はワールドと関連付けられていないため処理出来ません．"
+
+#: SimulationBar.cpp:165
+msgid ""
+"{} cannot be processed because another simulatorin the same world is also "
+"selected."
+msgstr "{}はこのワールドの他のシミュレータも選択されているため処理出来ません．"
+
+#: BodySuperimposerItem.cpp:42
+msgid "BodySuperimposerItem"
+msgstr "ボディスーパーインポーズアイテム"
+
+#: BodySuperimposerItem.cpp:217
+msgid "Transparency"
+msgstr "透明度"
+
+#: LeggedBodyBar.cpp:41
+msgid "LeggedBodyBar"
+msgstr "脚型ボディバー"
+
+#: LeggedBodyBar.cpp:51
+msgid ""
+"Move the center of mass to the position where its projection corresponds to "
+"the support feet cener"
+msgstr "重心投影点が支持脚中心に一致するよう移動"
+
+#: LeggedBodyBar.cpp:54
+msgid "Move the center of mass to fit its projection to ZMP"
+msgstr "重心投影点がZMPに一致するよう移動"
+
+#: LeggedBodyBar.cpp:57
+msgid "Set ZMP to the projection of the center of mass"
+msgstr "ZMPを重心投影点に移動"
+
+#: LeggedBodyBar.cpp:60
+msgid "Set ZMP under the right foot"
+msgstr "ZMPを右足に移動"
+
+#: LeggedBodyBar.cpp:63
+msgid "Set ZMP at the center of the feet"
+msgstr "ZMPを両足中心に移動"
+
+#: LeggedBodyBar.cpp:66
+msgid "Set ZMP under the left foot"
+msgstr "ZMPを左足に移動"
+
+#: LeggedBodyBar.cpp:71
+msgid "Adjust the width between the feet"
+msgstr "足幅の調整"
+
+#: LeggedBodyBar.cpp:76
+msgid "Width between the feet [m]"
+msgstr "両足中心間距離"
+
+#: LeggedBodyBar.cpp:104
+msgid "The center of mass of {} cannt be moved to the target position\n"
+msgstr "{}の重心を指定の位置まで移動できません\n"
+
+#: FilterDialogs.cpp:46 FilterDialogs.cpp:303
+msgid "Velocity Limiting Filter"
+msgstr "速度制限フィルタ"
+
+#: FilterDialogs.cpp:53 JointDisplacementView.cpp:488
+msgid "Selected joints only"
+msgstr "選択関節のみ"
+
+#: FilterDialogs.cpp:69
+msgid "Pollard method"
+msgstr "Pollard手法"
+
+#: FilterDialogs.cpp:86
+msgid "Gaussian Filter"
+msgstr "ガウシアンフィルタ"
+
+#: FilterDialogs.cpp:109 FilterDialogs.cpp:213
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: FilterDialogs.cpp:179 FilterDialogs.cpp:307
+msgid "Range Limiting Filter"
+msgstr "範囲制限フィルタ"
+
+#: FilterDialogs.cpp:187
+msgid "limit grad."
+msgstr "制約勾配"
+
+#: FilterDialogs.cpp:194
+msgid "edge grad. ratio"
+msgstr "辺勾配比率"
+
+#: FilterDialogs.cpp:201
+msgid "margin"
+msgstr "マージン"
+
+#: FilterDialogs.cpp:310
+msgid "Merge selected MultiValueSeqItems (Temporary version)"
+msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
+
+#: LinkTreeWidget.cpp:281
+msgid "ID"
+msgstr ""
+
+#: LinkTreeWidget.cpp:302
+msgid "Link List"
+msgstr "リンク一覧"
+
+#: LinkTreeWidget.cpp:303
+msgid "Link Tree"
+msgstr "リンクツリー"
+
+#: LinkTreeWidget.cpp:304
+msgid "Joint List"
+msgstr "関節一覧"
+
+#: LinkTreeWidget.cpp:305
+msgid "Joint Tree"
+msgstr "関節ツリー"
+
+#: LinkTreeWidget.cpp:306
+msgid "Part Tree"
+msgstr "身体部位ツリー"
+
+#: LinkTreeWidget.cpp:664 LinkTreeWidget.cpp:669
+msgid "Joint"
+msgstr "関節"
+
+#: SimpleControllerItem.cpp:160
+msgid "SimpleControllerItem"
+msgstr "シンプルコントローラアイテム"
+
+#: SimpleControllerItem.cpp:185
+msgid "None"
+msgstr "無"
+
+#: SimpleControllerItem.cpp:186
+msgid "Controller directory"
+msgstr "コントローラディレクトリ"
+
+#: SimpleControllerItem.cpp:187
+msgid "Project directory"
+msgstr "プロジェクトディレクトリ"
+
+#: SimpleControllerItem.cpp:322
+msgid ""
+"Controller module \"{0}\" of {1} is specified as a relative path from the "
+"project directory, but the project directory has not been determined yet."
+msgstr ""
+"{1}のコントローラモジュール \"{0}\" はプロジェクトディレクトリからの相対パス"
+"で指定されていますが，プロジェクトディレクトリはまだ決まっていません．"
+
+#: SimpleControllerItem.cpp:336
+msgid "The controller module of {} has already been loaded."
+msgstr "{}のコントローラモジュールは既にロードされています．"
+
+#: SimpleControllerItem.cpp:343
+msgid "Loading the controller module \"{1}\" of {0} ... "
+msgstr "{0}のコントローラモジュール\"{1}\"をロード中･･･"
+
+#: SimpleControllerItem.cpp:346
+msgid "Failed.\n"
+msgstr "失敗．\n"
+
+#: SimpleControllerItem.cpp:350
+msgid "OK!"
+msgstr ""
+
+#: SimpleControllerItem.cpp:356
+msgid ""
+"The factory function \"createSimpleController()\" is not found in the "
+"controller module."
+msgstr ""
+"ファクトリ関数 \"createSimpleController()\" がコントローラモジュール内に見つ"
+"かりません．"
+
+#: SimpleControllerItem.cpp:363
+msgid "The controller factory of {} failed to create a controller instance."
+msgstr ""
+"{}のコントローラファクトリはコントローラインスタンスの生成に失敗しました．"
+
+#: SimpleControllerItem.cpp:369
+msgid "A controller instance has successfully been created."
+msgstr "コントローラインスタンスを生成しました．"
+
+#: SimpleControllerItem.cpp:381
+msgid "{} failed to configure the controller"
+msgstr "{}はコントローラインスタンスの生成に失敗しました"
+
+#: SimpleControllerItem.cpp:413
+msgid "The controller module \"{1}\" of {0} has been unloaded."
+msgstr "{0}のコントローラモジュール \"{1}\" をアンロードしました．"
+
+#: SimpleControllerItem.cpp:511
+msgid "{}'s initialize method failed."
+msgstr "{}のinitializeメソッドが失敗しました．"
+
+#: SimpleControllerItem.cpp:779
+msgid "{} failed to start"
+msgstr "{}を稼働できませんでした"
+
+#: SimpleControllerItem.cpp:1002
+msgid "Simple Controller Module (*.{})"
+msgstr "シンプルコントローラモジュール (*.{})"
+
+#: SimpleControllerItem.cpp:1005
+msgid "Controller module"
+msgstr "コントローラモジュール"
+
+#: SimpleControllerItem.cpp:1008
+msgid "Base directory"
+msgstr "ベースディレクトリ"
+
+#: SimpleControllerItem.cpp:1010
+msgid "Reloading"
+msgstr "再読込"
+
+#: SimpleControllerItem.cpp:1012
+msgid "Export symbols"
+msgstr "シンボルのエクスポート"
+
+#: SimpleControllerItem.cpp:1014
+msgid "Old target value variable mode"
+msgstr "旧指令値変数モード"
+
+#: WorldLogFileItem.cpp:451
+msgid "WorldLogFileItem"
+msgstr "ワールドログファイルアイテム"
+
+#: WorldLogFileItem.cpp:454
+msgid "World Log"
+msgstr "ワールドログ"
+
+#: WorldLogFileItem.cpp:1153
+msgid "World Log File (*.log)"
+msgstr "ワールドログファイル (*.log)"
+
+#: WorldLogFileItem.cpp:1155
+msgid "Log file"
+msgstr "ログファイル"
+
+#: WorldLogFileItem.cpp:1157
+msgid "Actual log file"
+msgstr "実際のログファイル"
+
+#: WorldLogFileItem.cpp:1158
+msgid "Time-stamp suffix"
+msgstr "タイムスタンプ接尾辞"
+
+#: WorldLogFileItem.cpp:1160
+msgid "Recording frame rate"
+msgstr "記録フレームレート"
+
+#: BodyStateView.cpp:78
+msgid "Body State"
+msgstr "ボディ状態"
+
+#: SplineFilterDialog.cpp:224
+msgid "Spline filter"
+msgstr "スプラインフィルタ"
+
+#: SplineFilterDialog.cpp:237
+msgid "Spline Filter"
+msgstr "スプラインフィルタ"
+
+#: SplineFilterDialog.cpp:243
+msgid "Input frame rate"
+msgstr "入力フレームレート"
+
+#: SplineFilterDialog.cpp:256
+msgid "Output frame rate"
+msgstr "出力フレームレート"
+
+#: SplineFilterDialog.cpp:269
+msgid "Time length ratio"
+msgstr "時間長比率"
+
+#: SplineFilterDialog.cpp:318 SplineFilterDialog.cpp:330
+#: SplineFilterDialog.cpp:342 SplineFilterDialog.cpp:354
+msgid ""
+"Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = "
+"{2}"
+msgstr ""
+"B-Splineフィルタを{0}に適用中: 入力フレームレート = {1}, 出力フレームレート "
+"= {2}"
+
+#: BodyItem.cpp:264
+msgid "[ Mesh import hints ]"
+msgstr "[ メッシュインポートのヒント ]"
+
+#: BodyItem.cpp:265
+msgid "Unit:"
+msgstr "単位："
+
+#: BodyItem.cpp:267
+msgid "Meter"
+msgstr "メートル"
+
+#: BodyItem.cpp:268
+msgid "Millimeter"
+msgstr "ミリメートル"
+
+#: BodyItem.cpp:269
+msgid "Inch"
+msgstr "インチ"
+
+#: BodyItem.cpp:271
+msgid "Upper axis:"
+msgstr "上方軸："
+
+#: BodyItem.cpp:345
+msgid "BodyItem"
+msgstr "ボディアイテム"
+
+#: BodyItem.cpp:1468
+msgid "{0} has been detached from {1} of {2}."
+msgstr "{0}は{2}の{1}からデタッチされました．"
+
+#: BodyItem.cpp:1509
+msgid "{0} has been attached to {1} of {2}."
+msgstr "{0}は{2}の{1}にアタッチされました．"
+
+#: BodyItem.cpp:1586
+msgid "Model name"
+msgstr "モデル名"
+
+#: BodyItem.cpp:1587
+msgid "Num links"
+msgstr "リンク数"
+
+#: BodyItem.cpp:1588
+msgid "Num joints"
+msgstr "関節数"
+
+#: BodyItem.cpp:1589
+msgid "Num devices"
+msgstr "デバイス数"
+
+#: BodyItem.cpp:1590
+msgid "Root link"
+msgstr "ルートリンク"
+
+#: BodyItem.cpp:1591
+msgid "Base link"
+msgstr "ベースリンク"
+
+#: BodyItem.cpp:1593
+msgid "Static"
+msgstr "スタティック"
+
+#: BodyItem.cpp:1595 WorldItem.cpp:500
+msgid "Collision detection"
+msgstr "干渉検出"
+
+#: BodyItem.cpp:1597
+msgid "Self-collision detection"
+msgstr "自己干渉検出"
+
+#: BodyItem.cpp:1599
+msgid "Location editable"
+msgstr "配置編集"
+
+#: BodyItem.cpp:1751
+msgid "Mismatched size of the stored joint positions for {}"
+msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
+
+#: BodyItem.cpp:1768
+msgid "Mismatched size of the stored initial joint positions for {}"
+msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
+
+#: IoConnectionMapItem.cpp:35
+msgid "IoConnectionMapItem"
+msgstr "IO接続マップアイテム"
+
+#: LinkSelectionView.cpp:42
+msgid "Links"
+msgstr "リンク"
+
+#: BodyBar.cpp:51
+msgid "BodyBar"
+msgstr "ボディバー"
+
+#: BodyBar.cpp:61
+msgid "Memory the current pose"
+msgstr "現在姿勢を記憶"
+
+#: BodyBar.cpp:64
+msgid "Recall the memorized pose"
+msgstr "記憶した姿勢の呼び出し"
+
+#: BodyBar.cpp:67
+msgid "Move the selected bodies to the origin"
+msgstr "選択ボディを原点へ移動"
+
+#: BodyBar.cpp:70
+msgid "Set the preset initial pose to the selected bodies"
+msgstr "選択ボディを初期姿勢に"
+
+#: BodyBar.cpp:73
+msgid "Set the preset standard pose to the selected bodies"
+msgstr "選択ボディを標準姿勢に"
+
+#: BodyBar.cpp:78
+msgid "Copy the right side pose to the left side"
+msgstr "右側の姿勢を左側にコピー"
+
+#: BodyBar.cpp:81
+msgid "Mirror copy"
+msgstr "反転コピー"
+
+#: BodyBar.cpp:84
+msgid "Copy the left side pose to the right side"
+msgstr "左側の姿勢を右側にコピー"
+
+#: WorldItem.cpp:106
+msgid "WorldItem"
+msgstr "ワールドアイテム"
+
+#: WorldItem.cpp:474
+msgid "Material table \"{}\" has been reloaded."
+msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
+
+#: WorldItem.cpp:485
+msgid "Reloading material table \"{}\" failed."
+msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
+
+#: WorldItem.cpp:502
+msgid "Collision detector"
+msgstr "干渉検出器"
+
+#: WorldItem.cpp:505
+msgid "Contact material definition file (*.yaml)"
+msgstr "接触マテリアル定義ファイル (*.yaml)"
+
+#: WorldItem.cpp:506
+msgid "Material table"
+msgstr "マテリアルテーブル"
+
+#: MultiDeviceStateSeqItem.cpp:86
+msgid "MultiDeviceStateSeqItem"
+msgstr "マルチデバイス状態列アイテム"
+
+#: ControllerItem.cpp:99
+msgid "No delay mode"
+msgstr "無遅延モード"
+
+#: ControllerItem.cpp:101 SimulatorItem.cpp:2747
+msgid "Controller options"
+msgstr "コントローラオプション"
+
+#: AISTSimulatorItem.cpp:132
+msgid "AISTSimulatorItem"
+msgstr "AISTシミュレータアイテム"
+
+#: AISTSimulatorItem.cpp:149
+msgid "Forward dynamics"
+msgstr "順動力学"
+
+#: AISTSimulatorItem.cpp:150
+msgid "Kinematics"
+msgstr "運動学"
+
+#: AISTSimulatorItem.cpp:152
+msgid "Euler"
+msgstr "オイラー"
+
+#: AISTSimulatorItem.cpp:153
+msgid "Runge Kutta"
+msgstr "ルンゲクッタ"
+
+#: AISTSimulatorItem.cpp:258
+msgid ""
+"AISTSimulatorItem::setFriction(Link* link1, Link* link2, double "
+"staticFriction, double dynamicFriction) is not supported in this version.\n"
+"Please use the material table instead of it."
+msgstr ""
+"AISTSimulatorItem::setFriction(Link* link1, Link* link2, double "
+"staticFriction, double dynamicFriction)はこのバージョンではサポートされていま"
+"せん．\n"
+"代わりにマテリアルテーブルご使用ください．"
+
+#: AISTSimulatorItem.cpp:361
+msgid ""
+"The joint {0} of {1} is a free joint. AISTSimulator does not allow for a "
+"free joint except for the root link."
+msgstr ""
+"{1}の関節{0}は関節タイプがフリーの関節です．AISTSimulatorはルートリンク以外で"
+"フリーの関節タイプを使用することができません．"
+
+#: AISTSimulatorItem.cpp:423
+msgid "{} uses the ForwardDynamicsCBM module to perform the high-gain control."
+msgstr "{}はハイゲイン制御を行うためForwardDynamicsCBMモジュールを使います．"
+
+#: AISTSimulatorItem.cpp:659
+msgid "Dynamics mode"
+msgstr "動力学モード"
+
+#: AISTSimulatorItem.cpp:661
+msgid "Integration mode"
+msgstr "積分モード"
+
+#: AISTSimulatorItem.cpp:663
+msgid "Gravity"
+msgstr "重力加速度"
+
+#: AISTSimulatorItem.cpp:665
+msgid "Static friction"
+msgstr "静止摩擦係数"
+
+#: AISTSimulatorItem.cpp:666
+msgid "Slip friction"
+msgstr "動摩擦係数"
+
+#: AISTSimulatorItem.cpp:667
+msgid "Contact culling distance"
+msgstr "接触間引き距離"
+
+#: AISTSimulatorItem.cpp:669
+msgid "Contact culling depth"
+msgstr "接触間引き深度"
+
+#: AISTSimulatorItem.cpp:671
+msgid "Error criterion"
+msgstr "収束判定誤差基準"
+
+#: AISTSimulatorItem.cpp:673
+msgid "Max iterations"
+msgstr "最大反復計算回数"
+
+#: AISTSimulatorItem.cpp:674
+msgid "CC depth"
+msgstr "接触補正深度"
+
+#: AISTSimulatorItem.cpp:676
+msgid "CC v-ratio"
+msgstr "接触補正速度係数"
+
+#: AISTSimulatorItem.cpp:678
+msgid "Kinematic walking"
+msgstr "運動学歩行モード"
+
+#: AISTSimulatorItem.cpp:680
+msgid "2D mode"
+msgstr "2Dモード"
+
+#: AISTSimulatorItem.cpp:681
+msgid "Old accel sensor mode"
+msgstr "旧加速センサモード"
 
 #: SimulatorItem.cpp:491
 msgid "Simulation"
@@ -1644,53 +1571,138 @@ msgstr "干渉データの記録"
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
-#: LinkTreeWidget.cpp:281
-msgid "ID"
+#: BodyPlugin.cpp:147
+msgid ""
+"The Collision deteciton module used in this plugin is implemented using the "
+"OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
 msgstr ""
 
-#: LinkTreeWidget.cpp:302
-msgid "Link List"
-msgstr "リンク一覧"
+#: HrpsysFileIO.cpp:102
+msgid "\"{}\" cannot be opened."
+msgstr "\"{}\"が開けません．"
 
-#: LinkTreeWidget.cpp:303
-msgid "Link Tree"
-msgstr "リンクツリー"
+#: HrpsysFileIO.cpp:140
+msgid "\"{}\" contains different size columns."
+msgstr "\"{}\"に異なるサイズの列が含まれています．"
 
-#: LinkTreeWidget.cpp:304
-msgid "Joint List"
-msgstr "関節一覧"
+#: HrpsysFileIO.cpp:227
+msgid "Warning"
+msgstr "警告"
 
-#: LinkTreeWidget.cpp:305
-msgid "Joint Tree"
-msgstr "関節ツリー"
+#: HrpsysFileIO.cpp:254
+msgid ""
+"The frame rate of a body motion exported as HRPSYS files should be standard "
+"value 200, but the frame rate of \"{0}\" is {1}. The exported data may cause "
+"a problem.\n"
+"\n"
+"Do you continue to export ?"
+msgstr ""
+"HRPSYS用ファイルのフレームレートは標準で200となっていますが，エクスポートしよ"
+"うとしている \"{0}\" のフレームレートは{1}となっており，これによって問題が起"
+"こる可能性があります．\n"
+"\n"
+"エクスポートを続けますか？"
 
-#: LinkTreeWidget.cpp:306
-msgid "Part Tree"
-msgstr "身体部位ツリー"
+#: HrpsysFileIO.cpp:271
+msgid ""
+"A fault has been detected. Please check the report in the MessageView.\n"
+"\n"
+"Do you continue to export ?"
+msgstr ""
+"障害を検出しました．メッセージビュー内に出力される内容を確認してください．\n"
+"\n"
+"エクスポートを続けますか ?"
 
-#: LinkTreeWidget.cpp:664 LinkTreeWidget.cpp:669
-msgid "Joint"
-msgstr "関節"
+#: HrpsysFileIO.cpp:276
+msgid ""
+"{} faults have been detected. Please check the report in the MessageView.\n"
+"\n"
+"Do you continue to export ?"
+msgstr ""
+"{} 箇所の障害を検出しました．メッセージビュー内に出力される内容を確認してくだ"
+"さい．\n"
+"\n"
+"エクスポートを続けますか ?"
 
-#: BodyMotionControllerItem.cpp:42
-msgid "BodyMotionControllerItem"
-msgstr "ボディモーションコントローラアイテム"
+#: HrpsysFileIO.cpp:287
+msgid "There is no ZMP data. Do you continue to export ?"
+msgstr "ZMPのデータがありませんが，エクスポートを続けますか？"
 
-#: BodyMotionControllerItem.cpp:86
-msgid "Any body motion item for {} is not found."
-msgstr "{}用のボディモーションアイテムが見つかりません．"
+#: HrpsysFileIO.cpp:303
+msgid "HRPSYS Sequence File Set"
+msgstr "HRPSYSシーケンスファイル一式"
 
-#: BodyMotionControllerItem.cpp:103
-msgid "{0} for {1} is empty."
-msgstr "{1}用の{0}は空です．"
+#: HrpsysFileIO.cpp:313
+msgid "HRPSYS Log File"
+msgstr "HRPSYSログファイル"
 
-#: BodyMotionControllerItem.cpp:109
-msgid "The frame rate of {} is different from the world frame rate."
-msgstr "{}のフレームレートはワールドのフレームレートと異なります．"
+#: BodyTrackingCameraItem.cpp:158
+msgid "BodyTrackingCameraItem"
+msgstr "ボディ追尾カメラ"
 
-#: BodyMotionControllerItem.cpp:199
-msgid "Control mode"
-msgstr "制御モード"
+#: BodyTrackingCameraItem.cpp:180
+msgid "Perspective"
+msgstr "透視投影"
+
+#: BodyTrackingCameraItem.cpp:181
+msgid "Orthographic"
+msgstr "並行投影"
+
+#: BodyTrackingCameraItem.cpp:247
+msgid "Target link"
+msgstr "対象リンク"
+
+#: BodyTrackingCameraItem.cpp:249
+msgid "Keep relative attitude"
+msgstr "姿勢保持"
+
+#: BodyTrackingCameraItem.cpp:251
+msgid "Camera type"
+msgstr "カメラ タイプ"
+
+#: BodyTrackingCameraItem.cpp:253
+msgid "Near clip distance"
+msgstr "近クリッピング距離"
+
+#: BodyTrackingCameraItem.cpp:255
+msgid "Far clip distance"
+msgstr "遠クリッピング距離"
+
+#: BodyTrackingCameraItem.cpp:257
+msgid "field Of View"
+msgstr "視野角"
+
+#: JointDisplacementView.cpp:393
+msgid "Joint Displacement"
+msgstr "関節変位"
+
+#: JointDisplacementView.cpp:453
+msgid "Option"
+msgstr "オプション"
+
+#: JointDisplacementView.cpp:492
+msgid "Joint ID"
+msgstr "関節ID"
+
+#: JointDisplacementView.cpp:496
+msgid "Joint name"
+msgstr "関節名"
+
+#: JointDisplacementView.cpp:501
+msgid "Overlap joint name"
+msgstr "関節名を上に表示"
+
+#: JointDisplacementView.cpp:505
+msgid "Slider"
+msgstr "スライダ"
+
+#: JointDisplacementView.cpp:510
+msgid "Dial"
+msgstr "ダイヤル"
+
+#: JointDisplacementView.cpp:514
+msgid "Phase"
+msgstr "位相"
 
 #~ msgid "[ Assumed mesh attributes ]"
 #~ msgstr "[ 想定メッシュ属性 ]"

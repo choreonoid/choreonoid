@@ -19,8 +19,6 @@ using namespace cnoid;
 
 namespace {
 
-const char* modeSymbol[] = { "AUTO", "FK", "IK" };
-
 class KinematicsBarSetupDialog : public Dialog
 {
 public:
@@ -42,9 +40,9 @@ namespace cnoid {
 class KinematicsBarImpl
 {
 public:
-    ToolButton* autoModeRadio;
-    ToolButton* fkModeRadio;
-    ToolButton* ikModeRadio;
+    ToolButton* fkToggle;
+    ToolButton* presetToggle;
+    ToolButton* ikToggle;
 
     ToolButton* draggerToggle;
     ToolButton* footSnapToggle;
@@ -87,10 +85,12 @@ KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
     
     setup = new KinematicsBarSetupDialog();
     
-    fkModeRadio = self->addRadioButton(QIcon(":/Body/icons/fk.png"), _("Forward kinematics mode"));
-    autoModeRadio = self->addRadioButton(QIcon(":/Body/icons/fkik.png"), _("Preset kinematics mode"));
-    ikModeRadio = self->addRadioButton(QIcon(":/Body/icons/ik.png"), _("Inverse kinematics mode"));
-    autoModeRadio->setChecked(true);
+    fkToggle = self->addToggleButton(QIcon(":/Body/icons/fk.png"), _("Enable forward kinematics"));
+    fkToggle->setChecked(true);
+    presetToggle = self->addToggleButton(QIcon(":/Body/icons/fkik.png"), _("Use preset Kinematics"));
+    presetToggle->setChecked(true);
+    ikToggle = self->addToggleButton(QIcon(":/Body/icons/ik.png"), _("Enable inverse kinematics"));
+    ikToggle->setChecked(true);
     self->addSeparator(2);
 
     draggerToggle = self->addToggleButton(QIcon(":/Body/icons/rotation.png"), _("Enable link orientation editing"));
@@ -133,15 +133,33 @@ KinematicsBar::~KinematicsBar()
 
 int KinematicsBar::mode() const
 {
-    if(impl->fkModeRadio->isChecked()){
-        return FK_MODE;
-    } else if(impl->ikModeRadio->isChecked()){
-        return IK_MODE;
+    if(impl->presetToggle->isChecked()){
+        return PresetKinematics;
+    } else if(impl->fkToggle->isChecked()){
+        if(impl->ikToggle->isChecked()){
+            return PresetKinematics;
+        } else {
+            return ForwardKinematics;
+        }
+    } else if(impl->ikToggle->isChecked()){
+        return InverseKinematics;
     }
-    return AUTO_MODE;
+    return NoKinematics;
 }
 
 
+bool KinematicsBar::isForwardKinematicsEnabled() const
+{
+    return impl->fkToggle->isChecked();
+}
+
+
+bool KinematicsBar::isInverseKinematicsEnabled() const
+{
+    return impl->ikToggle->isChecked();
+}
+
+        
 bool KinematicsBar::isPositionDraggerEnabled() const
 {
     return impl->draggerToggle->isChecked();
@@ -215,13 +233,15 @@ void KinematicsBarImpl::onLazyCollisionDetectionModeToggled()
 
 bool KinematicsBar::storeState(Archive& archive)
 {
-    archive.write("mode", modeSymbol[mode()]);
     return impl->storeState(archive);
 }
 
 
 bool KinematicsBarImpl::storeState(Archive& archive)
 {
+    archive.write("forward_kinematics", fkToggle->isChecked());
+    archive.write("inverse_kinematics", ikToggle->isChecked());
+    archive.write("preset_kinematics", presetToggle->isChecked());
     archive.write("enablePositionDragger", draggerToggle->isChecked());
     archive.write("penetrationBlock", penetrationBlockToggle->isChecked());
     //archive.write("footSnap", footSnapToggle->isChecked());
@@ -239,17 +259,28 @@ bool KinematicsBar::restoreState(const Archive& archive)
 
 bool KinematicsBarImpl::restoreState(const Archive& archive)
 {
-    string storedModeSymbol = archive.get("mode", "AUTO");
-    if(storedModeSymbol == "FK"){
-        fkModeRadio->setChecked(true);
-    } else if(storedModeSymbol == "IK"){
-        ikModeRadio->setChecked(true);
-    } else {
-        autoModeRadio->setChecked(true);
-        fkModeRadio->setChecked(false);
-        ikModeRadio->setChecked(false);
+    presetToggle->setChecked(archive.get("preset_kinematics", presetToggle->isChecked()));
+    fkToggle->setChecked(archive.get("forward_kinematics", fkToggle->isChecked()));
+    ikToggle->setChecked(archive.get("inverse_kinematics", ikToggle->isChecked()));
+    
+    // old format
+    string mode;
+    if(archive.read("mode", mode)){
+        if(mode == "FK"){
+            fkToggle->setChecked(true);
+            ikToggle->setChecked(false);
+            presetToggle->setChecked(false);
+        } else if(mode == "IK"){
+            fkToggle->setChecked(false);
+            ikToggle->setChecked(true);
+            presetToggle->setChecked(false);
+        } else if(mode == "AUTO"){
+            fkToggle->setChecked(true);
+            ikToggle->setChecked(true);
+            presetToggle->setChecked(true);
+        }
     }
-
+    
     draggerToggle->setChecked(archive.get("enablePositionDragger", draggerToggle->isChecked()));
     penetrationBlockToggle->setChecked(archive.get("penetrationBlock", penetrationBlockToggle->isChecked()));
     //footSnapToggle->setChecked(archive.get("footSnap", footSnapToggle->isChecked()));
@@ -258,7 +289,7 @@ bool KinematicsBarImpl::restoreState(const Archive& archive)
     
     return true;
 }
-
+    
 
 KinematicsBarSetupDialog::KinematicsBarSetupDialog()
 {

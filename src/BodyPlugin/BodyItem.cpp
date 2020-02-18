@@ -54,6 +54,29 @@ const bool TRACE_FUNCTIONS = false;
 
 BodyState kinematicStateCopy;
 
+class ParentLinkLocation : public LocatableItem
+{
+public:
+    BodyItem* bodyItem;
+    Link* link;
+
+    void setTarget(BodyItem* parentBodyItem, Link* parentLink){
+        bodyItem = parentBodyItem;
+        link = parentLink;
+    }
+    virtual std::string getLocationName() const override {
+        return link->body()->name() + " - " + link->name();
+    }
+    virtual SignalProxy<void()> sigLocationChanged() override {
+        return bodyItem->sigKinematicStateChanged();
+    }
+    virtual Position getLocation() const override { return link->position(); }
+    virtual void setLocation(const Position& T) override { }
+    virtual bool getLocationEditable() const override { return false; }
+    virtual LocatableItem* getParentLocatableItem() const override { return nullptr; }
+    virtual Item* getCorrespondingItem() override { return bodyItem; }
+};
+
 class MyCompositeBodyIK : public CompositeBodyIK
 {
 public:
@@ -77,6 +100,7 @@ public:
     BodyPtr body;
 
     BodyItem* parentBodyItem;
+    unique_ptr<ParentLinkLocation> parentLinkLocation;
     AttachmentDevicePtr attachmentToParent;
     ScopedConnection parentBodyItemConnection;
     bool isKinematicStateChangeNotifiedByParentBodyItem;
@@ -110,7 +134,6 @@ public:
 
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
-    bool isSceneBodyDraggableByDefault;
 
     Signal<void()> sigModelUpdated;
 
@@ -148,8 +171,6 @@ public:
     void updateCollisionDetectorLater();
     void doAssign(Item* srcItem);
     void createSceneBody();
-    bool isSceneBodyDraggable() const;
-    void setSceneBodyDraggable(bool on, bool doNotify);
     void setParentBodyItem(BodyItem* bodyItem);
     Link* attachToBodyItem(BodyItem* bodyItem);
     void setRelativeOffsetPositionFromParentBody();
@@ -345,7 +366,6 @@ BodyItem::Impl::Impl(BodyItem* self)
 {
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
-    isSceneBodyDraggableByDefault = true;
 }
 
 
@@ -369,7 +389,6 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
     zmp = org.zmp;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
-    isSceneBodyDraggableByDefault = org.isSceneBodyDraggableByDefault;
 
     initialState = org.initialState;
 }
@@ -400,7 +419,7 @@ BodyItem::Impl::~Impl()
 void BodyItem::Impl::init(bool calledFromCopyConstructor)
 {
     self->setAttribute(Item::LOAD_ONLY);
-    
+
     kinematicsBar = KinematicsBar::instance();
     isFkRequested = isVelFkRequested = isAccFkRequested = false;
     currentHistoryIndex = 0;
@@ -452,11 +471,6 @@ void BodyItem::Impl::setBody(Body* body_)
     body = body_;
     body->initializePosition();
     body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
-
-    if(!sceneBody){
-        isSceneBodyDraggableByDefault = !body->isStaticModel();
-    }
-    self->setEditable(!body->isStaticModel());
 
     initBody(false);
 }
@@ -535,18 +549,6 @@ bool BodyItem::Impl::makeBodyDynamic()
         }
     }
     return isDynamic;
-}
-
-
-bool BodyItem::isEditable() const
-{
-    return impl->isSceneBodyDraggable();
-}
-
-
-void BodyItem::setEditable(bool on)
-{
-    impl->setSceneBodyDraggable(on, true);
 }
 
 
@@ -1377,6 +1379,17 @@ Position BodyItem::getLocation() const
 }
 
 
+void BodyItem::setLocationEditable(bool on)
+{
+    if(on != getLocationEditable()){
+        LocatableItem::setLocationEditable(on);
+        if(impl->sceneBody){
+            impl->sceneBody->notifyUpdate();
+        }
+    }
+}
+
+
 void BodyItem::setLocation(const Position& T)
 {
     impl->body->rootLink()->setPosition(T);
@@ -1384,36 +1397,23 @@ void BodyItem::setLocation(const Position& T)
 }
 
 
-bool BodyItem::isLocationEditable() const
+LocatableItem* BodyItem::getParentLocatableItem() const
 {
-    return !isAttachedToParentBody();
-}
-
-
-bool BodyItem::hasParentLocation() const
-{
-    return impl->body->parentBodyLink() != nullptr;
-}
-
-
-std::string BodyItem::getParentLocationName() const
-{
-    if(auto parentLink = impl->body->parentBodyLink()){
-        return parentLink->body()->name() + " - " + parentLink->name();
+    if(impl->parentBodyItem){
+        if(auto parentLink = impl->body->parentBodyLink()){
+            if(!impl->parentLinkLocation){
+                impl->parentLinkLocation.reset(new ParentLinkLocation);
+            }
+            impl->parentLinkLocation->setTarget(impl->parentBodyItem, parentLink);
+            return impl->parentLinkLocation.get();
+        } else {
+            return impl->parentBodyItem;
+        }
     }
-    return string();
+    return nullptr;
 }
 
 
-Position BodyItem::getParentLocation() const
-{
-    if(auto parentLink = impl->body->parentBodyLink()){
-        return parentLink->T();
-    }
-    return Position::Identity();
-}
-
-        
 EditableSceneBody* BodyItem::sceneBody()
 {
     if(!impl->sceneBody){
@@ -1427,7 +1427,6 @@ void BodyItem::Impl::createSceneBody()
 {
     sceneBody = new EditableSceneBody(self);
     sceneBody->setSceneDeviceUpdateConnection(true);
-    sceneBody->setDraggable(isSceneBodyDraggableByDefault);
 }
 
 
@@ -1440,27 +1439,6 @@ SgNode* BodyItem::getScene()
 EditableSceneBody* BodyItem::existingSceneBody()
 {
     return impl->sceneBody;
-}
-
-
-bool BodyItem::Impl::isSceneBodyDraggable() const
-{
-    return sceneBody ? sceneBody->isDraggable() : isSceneBodyDraggableByDefault;
-}
-
-    
-void BodyItem::Impl::setSceneBodyDraggable(bool on, bool doNotify)
-{
-    if(on != isSceneBodyDraggable()){
-        if(sceneBody){
-            sceneBody->setDraggable(on);
-        } else {
-            isSceneBodyDraggableByDefault = on;
-        }
-        if(doNotify){
-            self->notifyUpdate();
-        }
-    }
 }
 
 
@@ -1527,6 +1505,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     linkToAttach = holder->link();
                     Position T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
                     body->rootLink()->setOffsetPosition(T_offset);
+                    self->setLocationEditable(false);
                     mvout() << format(_("{0} has been attached to {1} of {2}."),
                                       self->name(), linkToAttach->name(), bodyItem->name()) << endl;
                     goto found;
@@ -1617,8 +1596,8 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ return enableCollisionDetection(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
                 [&](bool on){ return enableSelfCollisionDetection(on); });
-    putProperty(_("Draggable"), isSceneBodyDraggable(),
-                [&](bool on){ setSceneBodyDraggable(on, false); return true; });
+    putProperty(_("Location editable"), self->getLocationEditable(),
+                [&](bool on){ self->setLocationEditable(on); return true; });
 }
 
 
@@ -1697,7 +1676,7 @@ bool BodyItem::Impl::store(Archive& archive)
     archive.write("staticModel", body->isStaticModel());
     archive.write("collisionDetection", isCollisionDetectionEnabled);
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
-    archive.write("isSceneBodyDraggable", isSceneBodyDraggable());
+    archive.write("location_editable", self->getLocationEditable());
 
     if(linkKinematicsKitManager){
         MappingPtr kinematicsNode = new Mapping;
@@ -1822,9 +1801,10 @@ bool BodyItem::Impl::restore(const Archive& archive)
         enableSelfCollisionDetection(on);
     }
 
-    if(archive.read("isSceneBodyDraggable", isSceneBodyDraggableByDefault) ||
-       archive.read("isEditable", isSceneBodyDraggableByDefault)){
-        setSceneBodyDraggable(isSceneBodyDraggableByDefault, false);
+    if(archive.read("location_editable", on) ||
+       archive.read("isEditable", on) ||
+       archive.read("isSceneBodyDraggable", on)){
+        self->setLocationEditable(on);
     }
        
     auto kinematicsNode = archive.findMapping("linkKinematics");

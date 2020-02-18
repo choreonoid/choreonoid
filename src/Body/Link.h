@@ -59,6 +59,7 @@ public:
     Link* child() const { return child_; }
         
     bool isRoot() const { return !parent_; }
+    bool isBodyRoot() const;
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }
