@@ -259,6 +259,7 @@ void LinkPositionView::Impl::createPanel()
     vbox->addLayout(hbox);
 
     positionWidget = new PositionWidget(self);
+    positionWidget->setUserInputValuePriorityMode(true);
     positionWidget->setPositionCallback(
         [&](const Position& T){ return applyPositionInput(T); });
     vbox->addWidget(positionWidget);

@@ -53,6 +53,7 @@ public:
     DoubleSpinBox xyzSpin[3];
     enum AttitudeMode { RollPitchYawMode, QuaternionMode };
     AttitudeMode lastInputAttitudeMode;
+    bool isUserInputValuePriorityMode;
     bool isRpyEnabled;
     bool isUniqueRpyMode;
     bool isQuaternionEnabled;
@@ -224,6 +225,7 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     hbox->addWidget(separator);
     hbox->addStretch();
 
+    isUserInputValuePriorityMode = false;
     isRpyEnabled = true;
     isUniqueRpyMode = false;
     referenceRpy.setZero();
@@ -278,6 +280,12 @@ void PositionWidget::setEditable(bool on)
     for(auto& widget : impl->inputPanelWidgets){
         widget->setEnabled(on);
     }
+}
+
+
+void PositionWidget::setUserInputValuePriorityMode(bool on)
+{
+    impl->isUserInputValuePriorityMode = on;
 }
     
 
@@ -378,7 +386,7 @@ void PositionWidget::Impl::updatePosition(const Position& T)
     Vector3 p = T.translation();
     for(int i=0; i < 3; ++i){
         auto& spin = xyzSpin[i];
-        if(!spin.hasFocus()){
+        if(!isUserInputValuePriorityMode || !spin.hasFocus()){
             spin.setValue(p[i]);
         }
     }
@@ -402,10 +410,16 @@ void PositionWidget::Impl::updatePosition(const Position& T)
     }
     
     if(isQuaternionEnabled){
-        if(!quatSpin[0].hasFocus() &&
-           !quatSpin[1].hasFocus() &&
-           !quatSpin[2].hasFocus() &&
-           !quatSpin[3].hasFocus()){
+        bool skipUpdate = false;
+        if(isUserInputValuePriorityMode){
+            for(int i=0; i < 4; ++i){
+                if(quatSpin[i].hasFocus()){
+                    skipUpdate = true;
+                    break;
+                }
+            }
+        }
+        if(!skipUpdate){
             Eigen::Quaterniond quat(R);
             quatSpin[0].setValue(quat.x());
             quatSpin[1].setValue(quat.y());

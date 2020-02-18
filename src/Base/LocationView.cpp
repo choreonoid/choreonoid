@@ -62,6 +62,7 @@ public:
     void onLockCheckToggled(bool on);
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
+    void updatePositionWidgetWithTargetLocation();
     bool setInputPositionToTargetItem(const Position& T);
 };
 
@@ -104,12 +105,12 @@ LocationView::Impl::Impl(LocationView* self)
     hbox->addWidget(&coordinateLabel, 0);
     coordinateCombo.sigAboutToShowPopup().connect(
         [&](){ updateBaseCoordinateSystems(); });
+    coordinateCombo.sigCurrentIndexChanged().connect(
+        [&](int index){ updatePositionWidgetWithTargetLocation(); });
     hbox->addWidget(&coordinateCombo, 1);
     vbox->addLayout(hbox);
 
     positionWidget = new PositionWidget(self);
-    //positionWidget->setCaptionVisible(true);
-    //positionWidget->setBuiltinCoordinateSystemComboEnabled(true);
     positionWidget->setPositionCallback(
         [&](const Position& T){ return setInputPositionToTargetItem(T); });
     vbox->addWidget(positionWidget);
@@ -147,24 +148,24 @@ void LocationView::Impl::setTargetItem(Item* item)
     if(!targetItem){
         caption.setText("-----");
         setLocked(false);
+        positionWidget->updatePosition(Position::Identity());
         positionWidget->setEditable(false);
         clearBaseCoordinateSystems();
         
     } else {
         caption.setText(item->name().c_str());
         setLocked(!targetItem->getLocationEditable());
-        positionWidget->updatePosition(targetItem->getLocation());
 
         targetItemConnections.add(
             targetItem->sigLocationChanged().connect(
-                [this](){
-                    positionWidget->updatePosition(targetItem->getLocation()); }));
+                [this](){ updatePositionWidgetWithTargetLocation(); }));
         
         targetItemConnections.add(
             targetItem->sigLocationEditableToggled().connect(
                 [this](bool on){ setLocked(!on); }));
             
         updateBaseCoordinateSystems();
+        updatePositionWidgetWithTargetLocation();
     }
 
     lockCheck.blockSignals(false);
@@ -193,10 +194,12 @@ void LocationView::Impl::onLockCheckToggled(bool on)
 
 void LocationView::Impl::clearBaseCoordinateSystems()
 {
+    coordinateCombo.blockSignals(true);
     coordinates.clear();
     coordinateCombo.clear();
     coordinateLabel.setEnabled(false);
     coordinateCombo.setEnabled(false);
+    coordinateCombo.blockSignals(false);
 }
 
 
@@ -259,6 +262,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 
     coordinateLabel.setEnabled(true);
     coordinateCombo.setEnabled(true);
+    coordinateCombo.blockSignals(true);
     for(auto& coord : coordinates){
         coordinateCombo.addItem(coord->name.c_str());
     }
@@ -267,13 +271,42 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         currentIndex = defaultCoordIndex;
     }
     coordinateCombo.setCurrentIndex(currentIndex);
+    coordinateCombo.blockSignals(false);
+}
+
+
+void LocationView::Impl::updatePositionWidgetWithTargetLocation()
+{
+    if(!targetItem){
+        return;
+    }
+    auto& coord = coordinates[coordinateCombo.currentIndex()];
+    Position T_world = targetItem->getLocation();
+    Position T;
+    if(coord->parentPositionFunc){
+        Position T_base = coord->parentPositionFunc() * coord->T;
+        T = T_base.inverse(Eigen::Isometry) * T_world;
+    } else {
+        T = coord->T.inverse(Eigen::Isometry) * T_world;
+    }
+    positionWidget->updatePosition(T);
 }
         
 
 bool LocationView::Impl::setInputPositionToTargetItem(const Position& T)
 {
     if(targetItem){
-        targetItem->setLocation(T);
+        auto& coord = coordinates[coordinateCombo.currentIndex()];
+        Position T_world;
+        if(coord->parentPositionFunc){
+            Position T_base = coord->parentPositionFunc() * coord->T;
+            T_world = T_base * T;
+        } else {
+            T_world = coord->T * T;
+        }
+        targetItemConnections.block();
+        targetItem->setLocation(T_world);
+        targetItemConnections.unblock();
         return true;
     }
     return false;
