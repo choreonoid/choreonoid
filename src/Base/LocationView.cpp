@@ -242,11 +242,13 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         for(auto& frameListItem : frameListItems){
             basename.clear();
             function<Position()> parentPositionFunc;
-            if(auto parentItem = frameListItem->getParentLocatableItem()){
-                basename += dynamic_cast<Item*>(parentItem)->name() + " : ";
-                parentPositionFunc =
-                    [parentItem](){ return parentItem->getLocation(); };
+            auto parentItem = frameListItem->getParentLocatableItem();
+            if(!parentItem || parentItem == targetItem){
+                continue;
             }
+            basename += dynamic_cast<Item*>(parentItem)->name() + " : ";
+            parentPositionFunc =
+                [parentItem](){ return parentItem->getLocation(); };
             basename += frameListItem->name();
             auto frames = frameListItem->frameList();
             int n = frames->numFrames();
