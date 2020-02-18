@@ -73,7 +73,7 @@ public:
     virtual Position getLocation() const override { return link->position(); }
     virtual void setLocation(const Position& T) override { }
     virtual bool getLocationEditable() const override { return false; }
-    virtual LocatableItem* getParentLocatableItem() const override { return nullptr; }
+    virtual LocatableItem* getParentLocatableItem() override { return nullptr; }
     virtual Item* getCorrespondingItem() override { return bodyItem; }
 };
 
@@ -1379,6 +1379,13 @@ Position BodyItem::getLocation() const
 }
 
 
+bool BodyItem::prefersLocalLocation() const
+{
+    // Prefers the local location coordinate if the body is attached to the parent body
+    return impl->attachmentToParent != nullptr;
+}
+
+
 void BodyItem::setLocationEditable(bool on)
 {
     if(on != getLocationEditable()){
@@ -1397,13 +1404,14 @@ void BodyItem::setLocation(const Position& T)
 }
 
 
-LocatableItem* BodyItem::getParentLocatableItem() const
+LocatableItem* BodyItem::getParentLocatableItem()
 {
     if(impl->parentBodyItem){
-        if(auto parentLink = impl->body->parentBodyLink()){
+        if(impl->attachmentToParent){
             if(!impl->parentLinkLocation){
                 impl->parentLinkLocation.reset(new ParentLinkLocation);
             }
+            auto parentLink = impl->body->parentBodyLink();
             impl->parentLinkLocation->setTarget(impl->parentBodyItem, parentLink);
             return impl->parentLinkLocation.get();
         } else {

@@ -143,10 +143,11 @@ public:
 
     // LocatableItem functions
     virtual Position getLocation() const override;
+    virtual bool prefersLocalLocation() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
     virtual void setLocationEditable(bool on) override;
     virtual void setLocation(const Position& T) override;
-    virtual LocatableItem* getParentLocatableItem() const override;
+    virtual LocatableItem* getParentLocatableItem() override;
 
     // RenderableItem function
     virtual SgNode* getScene() override;

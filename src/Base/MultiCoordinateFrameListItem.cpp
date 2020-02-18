@@ -138,6 +138,13 @@ int MultiCoordinateFrameListItem::numFrameLists() const
 }
 
 
+void MultiCoordinateFrameListItem::setNumFrameLists(int n)
+{
+    impl->frameListItems.resize(n);
+    impl->frameLists->setNumFrameSets(n);
+}
+
+
 CoordinateFrameList* MultiCoordinateFrameListItem::frameList(int index)
 {
     return dynamic_cast<CoordinateFrameList*>(impl->frameLists->frameSet(index));
@@ -159,6 +166,17 @@ CoordinateFrameListItem* MultiCoordinateFrameListItem::frameListItem(int index)
 const CoordinateFrameListItem* MultiCoordinateFrameListItem::frameListItem(int index) const
 {
     return impl->frameListItems[index];
+}
+
+
+void MultiCoordinateFrameListItem::setFrameListItem(int index, CoordinateFrameListItem* item)
+{
+    if(index >= static_cast<int>(impl->frameListItems.size())){
+        setNumFrameLists(index + 1);
+    }
+    impl->frameLists->setFrameSet(index, item->frameList());
+    addSubItem(item);
+    impl->frameListItems[index] = item;
 }
 
 

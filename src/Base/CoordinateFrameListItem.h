@@ -21,7 +21,7 @@ public:
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;
 
-    virtual LocatableItem* getParentLocatableItem() const;
+    virtual LocatableItem* getParentLocatableItem();
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

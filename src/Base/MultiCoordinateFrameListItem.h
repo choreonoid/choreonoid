@@ -40,6 +40,8 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
+    void setNumFrameLists(int n);
+    void setFrameListItem(int index, CoordinateFrameListItem* item);
     void replaceFrameListContainer(MultiCoordinateFrameSet* container);
 
 private:

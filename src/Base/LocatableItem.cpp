@@ -27,6 +27,12 @@ std::string LocatableItem::getLocationName() const
 }
 
 
+bool LocatableItem::prefersLocalLocation() const
+{
+    return false;
+}
+
+
 bool LocatableItem::getLocationEditable() const
 {
     return isLocationEditable_;
@@ -48,9 +54,9 @@ SignalProxy<void(bool on)> LocatableItem::sigLocationEditableToggled()
 }
 
 
-LocatableItem* LocatableItem::getParentLocatableItem() const
+LocatableItem* LocatableItem::getParentLocatableItem()
 {
-    if(auto item = dynamic_cast<Item*>(const_cast<LocatableItem*>(this))){
+    if(auto item = dynamic_cast<Item*>(this)){
         while(true){
             item = item->parentItem();
             if(item){

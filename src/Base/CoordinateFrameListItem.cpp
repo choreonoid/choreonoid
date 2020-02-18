@@ -81,7 +81,7 @@ const CoordinateFrameList* CoordinateFrameListItem::frameList() const
 }
 
 
-LocatableItem* CoordinateFrameListItem::getParentLocatableItem() const
+LocatableItem* CoordinateFrameListItem::getParentLocatableItem()
 {
     if(auto locatableItem = findOwnerItem<LocatableItem>()){
         return locatableItem;

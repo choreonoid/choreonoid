@@ -14,12 +14,13 @@ public:
     virtual Item* getCorrespondingItem();
     virtual std::string getLocationName() const;
     virtual Position getLocation() const = 0;
+    virtual bool prefersLocalLocation() const;
     virtual bool getLocationEditable() const;
     virtual void setLocationEditable(bool on);
     virtual SignalProxy<void(bool on)> sigLocationEditableToggled();
     virtual void setLocation(const Position& T) = 0;
-    virtual LocatableItem* getParentLocatableItem() const;
     virtual SignalProxy<void()> sigLocationChanged() = 0;
+    virtual LocatableItem* getParentLocatableItem();
     
 private:
     bool isLocationEditable_;
