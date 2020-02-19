@@ -34,7 +34,7 @@ namespace {
 
 Action* linkVisibilityCheck;
 
-enum KinematicsType { None, Forward, Inverse, Simulation };
+enum LinkOperationType { None, FK, IK, SimInterference };
 
 }
 
@@ -226,7 +226,8 @@ public:
     void makeLinkAttitudeLevel();
         
     PointedType findPointedObject(const vector<SgNode*>& path);
-    int checkLinkKinematics(SceneLink* sceneLink);
+    int checkLinkOperationType(SceneLink* sceneLink);
+    int checkLinkKinematicsType(Link* link);
     void updateMarkersAndManipulators(bool on);
     void attachPositionDragger(Link* link);
 
@@ -706,38 +707,53 @@ EditableSceneBody::Impl::PointedType EditableSceneBody::Impl::findPointedObject(
 }
 
 
-int EditableSceneBody::Impl::checkLinkKinematics(SceneLink* sceneLink)
+int EditableSceneBody::Impl::checkLinkOperationType(SceneLink* sceneLink)
 {
     currentIK.reset();
     
     if(!sceneLink){
-        return KinematicsType::None;
+        return LinkOperationType::None;
     }
     auto link = sceneLink->link();
     if(!link){
-        return KinematicsType::None;
+        return LinkOperationType::None;
     }
-    
+
+    int type = LinkOperationType::None;
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
-        return KinematicsType::Simulation;
+        if(link->body()->isStaticModel() || (link->isRoot() && link->isFixedJoint())){
+            type = LinkOperationType::None;
+        } else {
+            if(checkLinkKinematicsType(link) != LinkOperationType::None){
+                type = LinkOperationType::SimInterference;
+            }
+        }
+    } else {
+        type = checkLinkKinematicsType(link);
     }
-    
+
+    return type;
+}
+
+
+int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
+{
     int mode = kinematicsBar->mode();
-    int type = KinematicsType::None;
+    int type = LinkOperationType::None;
     if(mode == KinematicsBar::PresetKinematics){
         currentIK = bodyItem->getDefaultIK(link);
         if(currentIK){
             if(kinematicsBar->isInverseKinematicsEnabled()){
-                type = KinematicsType::Inverse;
+                type = LinkOperationType::IK;
             }
         } else if(link->isBodyRoot()){
             if(bodyItem->getLocationEditable()){
-                type = KinematicsType::Inverse;
+                type = LinkOperationType::IK;
             }
         } else {
             if(kinematicsBar->isForwardKinematicsEnabled()){
-                type = KinematicsType::Forward;
+                type = LinkOperationType::FK;
             }
         }
     } else if(mode == KinematicsBar::ForwardKinematics){
@@ -745,19 +761,19 @@ int EditableSceneBody::Impl::checkLinkKinematics(SceneLink* sceneLink)
         if(link->isBodyRoot()){
             if(bodyItem->getLocationEditable()){
                 if(!baseLink || link == baseLink){
-                    type = KinematicsType::Inverse;
+                    type = LinkOperationType::IK;
                 }
             }
         } else {
             if(baseLink && link == baseLink){
-                type = KinematicsType::Inverse;
+                type = LinkOperationType::IK;
             } else if(kinematicsBar->isForwardKinematicsEnabled()){
-                type = KinematicsType::Forward;
+                type = LinkOperationType::FK;
             }
         }
     } else if(mode == KinematicsBar::InverseKinematics){
         if(!link->isBodyRoot() || bodyItem->getLocationEditable()){
-            type = KinematicsType::Inverse;
+            type = LinkOperationType::IK;
         }
     }
     
@@ -860,9 +876,14 @@ bool EditableSceneBody::onButtonPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
+    if(outlinedLink){
+        outlinedLink->showOutline(false);
+        outlinedLink = nullptr;
+    }
+    
     PointedType pointedType = findPointedObject(event.nodePath());
 
-    if(pointedType == PT_ZMP){
+    if(pointedType == PT_ZMP && event.button() == Qt::LeftButton){
         startZmpTranslation(event);
         return true;
     }    
@@ -872,7 +893,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     }
     targetLink = pointedSceneLink->link();
 
-    int kinematics = KinematicsType::None;
+    int operationType = LinkOperationType::None;
     bool showOutline = false;
         
     if(event.button() == Qt::RightButton){
@@ -880,8 +901,8 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
         showOutline = true;
     } else {
-        kinematics = checkLinkKinematics(pointedSceneLink);
-        if(kinematics != KinematicsType::None){
+        operationType = checkLinkOperationType(pointedSceneLink);
+        if(operationType != LinkOperationType::None){
             showOutline = true;
         }
     }
@@ -890,24 +911,24 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         pointedSceneLink->showOutline(true);
         outlinedLink = pointedSceneLink;
     }
-    if(kinematics == KinematicsType::None){
+    if(operationType == LinkOperationType::None){
         return false;
     }
 
     bool handled = false;
     isDragging = false;
 
-    if(kinematics == KinematicsType::Simulation){
+    if(operationType == LinkOperationType::SimInterference){
         startLinkOperationDuringSimulation(event);
         handled = true;
     } else {
         if(event.button() == Qt::LeftButton){
             updateMarkersAndManipulators(true);
             BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
-            if(kinematics == KinematicsType::Forward){
+            if(operationType == LinkOperationType::FK){
                 startFK(event);
                 handled = true;
-            } else if(kinematics == KinematicsType::Inverse){
+            } else if(operationType == LinkOperationType::IK){
                 startIK(event);
                 handled = true;
             }
@@ -976,7 +997,7 @@ bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
         if(!pointedSceneLink){
             event.updateIndicator("");
         } else {
-            if(checkLinkKinematics(pointedSceneLink) != KinematicsType::None){
+            if(checkLinkOperationType(pointedSceneLink) != LinkOperationType::None){
                 if(pointedSceneLink != outlinedLink){
                     if(outlinedLink){
                         outlinedLink->showOutline(false);
@@ -1148,7 +1169,7 @@ void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
 
 void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    if(checkLinkKinematics(outlinedLink) == KinematicsType::None){
+    if(checkLinkOperationType(outlinedLink) == LinkOperationType::None){
         isEditMode = false;
         return;
     }
