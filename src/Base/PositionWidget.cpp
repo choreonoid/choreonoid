@@ -74,7 +74,7 @@ public:
     void resetInputWidgetStyles();
     void clearPosition();
     void refreshPosition();
-    void updatePosition(const Position& T);
+    void setPosition(const Position& T);
     void updateRotationMatrix(const Matrix3& R);
     Vector3 getRpyInput();
     void onPositionInput(InputElementSet inputElements);
@@ -363,7 +363,7 @@ void PositionWidget::refreshPosition()
 
 void PositionWidget::Impl::refreshPosition()
 {
-    updatePosition(T_last);
+    setPosition(T_last);
 }
 
 
@@ -373,13 +373,13 @@ void PositionWidget::setReferenceRpy(const Vector3& rpy)
 }
 
 
-void PositionWidget::updatePosition(const Position& T)
+void PositionWidget::setPosition(const Position& T)
 {
-    impl->updatePosition(T);
+    impl->setPosition(T);
 }
 
 
-void PositionWidget::Impl::updatePosition(const Position& T)
+void PositionWidget::Impl::setPosition(const Position& T)
 {
     userInputConnections.block();
 

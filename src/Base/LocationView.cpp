@@ -34,6 +34,7 @@ struct CoordinateInfo : public Referenced
     int index;
     Position T;
     std::function<Position()> parentPositionFunc;
+    Matrix3 R0; // the initial rotation of the local coordinate system
     bool isLocal;
     CoordinateInfo(const std::string& name, int index, const Position& T, const std::function<Position()>& func)
         : name(name), index(index), T(T), parentPositionFunc(func), isLocal(false) { }
@@ -114,8 +115,8 @@ LocationView::Impl::Impl(LocationView* self)
     hbox->addWidget(&coordinateLabel, 0);
     coordinateCombo.sigAboutToShowPopup().connect(
         [&](){ updateBaseCoordinateSystems(); });
-    coordinateCombo.sigCurrentIndexChanged().connect(
-        [&](int index){ updatePositionWidgetWithTargetLocation(); });
+    coordinateCombo.sigActivated().connect(
+        [&](int){ updatePositionWidgetWithTargetLocation(); });
     hbox->addWidget(&coordinateCombo, 1);
     vbox->addLayout(hbox);
 
@@ -156,7 +157,7 @@ void LocationView::Impl::setTargetItem(Item* item)
     if(!targetItem){
         caption.setText("-----");
         setLocked(false);
-        positionWidget->updatePosition(Position::Identity());
+        positionWidget->setPosition(Position::Identity());
         positionWidget->setEditable(false);
         clearBaseCoordinateSystems();
         
@@ -239,9 +240,11 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             defaultComboIndex = coordinates.size();
             coordinates.push_back(parentCoord);
         }
-        
-        auto localCoord = new CoordinateInfo(_("Local"), LocalCoordIndex, targetItem->getLocation());
+
+        Position T = targetItem->getLocation();
+        auto localCoord = new CoordinateInfo(_("Local"), LocalCoordIndex, T);
         localCoord->isLocal = true;
+        localCoord->R0 = T.linear();
         coordinates.push_back(localCoord);
 
         if(!targetItem->prefersLocalLocation()){
@@ -302,14 +305,26 @@ void LocationView::Impl::updatePositionWidgetWithTargetLocation()
     auto& coord = coordinates[coordinateCombo.currentIndex()];
     lastCoordIndex = coord->index;
     Position T_world = targetItem->getLocation();
+
     Position T;
-    if(coord->parentPositionFunc){
-        Position T_base = coord->parentPositionFunc() * coord->T;
-        T = T_base.inverse(Eigen::Isometry) * T_world;
+    if(!coord->isLocal){
+        if(coord->parentPositionFunc){
+            Position T_base = coord->parentPositionFunc() * coord->T;
+            T = T_base.inverse(Eigen::Isometry) * T_world;
+        } else {
+            T = coord->T.inverse(Eigen::Isometry) * T_world;
+        }
+        
     } else {
+        Matrix3 R_prev = coord->T.linear();
+        Matrix3 R_current = T_world.linear();
+        if(!R_current.isApprox(R_prev)){
+            coord->T = T_world;
+        }
         T = coord->T.inverse(Eigen::Isometry) * T_world;
+        T.linear() = coord->R0.transpose() * T_world.linear();
     }
-    positionWidget->updatePosition(T);
+    positionWidget->setPosition(T);
 }
         
 
@@ -318,11 +333,23 @@ bool LocationView::Impl::setInputPositionToTargetItem(const Position& T)
     if(targetItem){
         auto& coord = coordinates[coordinateCombo.currentIndex()];
         Position T_world;
-        if(coord->parentPositionFunc){
-            Position T_base = coord->parentPositionFunc() * coord->T;
-            T_world = T_base * T;
+        if(!coord->isLocal){
+            if(coord->parentPositionFunc){
+                Position T_base = coord->parentPositionFunc() * coord->T;
+                T_world = T_base * T;
+            } else {
+                T_world = coord->T * T;
+            }
         } else {
-            T_world = coord->T * T;
+            T_world.linear() = coord->R0 * T.linear();
+            T_world.translation() = coord->T * T.translation();
+            if(!T_world.linear().isApprox(coord->T.linear())){
+                coord->T = T_world;
+                Position T_user;
+                T_user.linear() = T.linear();
+                T_user.translation().setZero();
+                positionWidget->setPosition(T_user);
+            }
         }
         targetItemConnections.block();
         targetItem->setLocation(T_world);

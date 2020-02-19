@@ -872,7 +872,7 @@ void LinkPositionView::Impl::updatePanelWithCurrentLinkPosition()
             T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
         }
         positionWidget->setReferenceRpy(kinematicsKit->referenceRpy());
-        positionWidget->updatePosition(T);
+        positionWidget->setPosition(T);
 
         updateConfigurationPanel();
     }
@@ -883,7 +883,7 @@ void LinkPositionView::Impl::updatePanelWithPositionEditTarget()
 {
     if(positionEditTarget){
         positionWidget->setReferenceRpy(Vector3::Zero());
-        positionWidget->updatePosition(positionEditTarget->getPosition());
+        positionWidget->setPosition(positionEditTarget->getPosition());
     }
 }
 
