@@ -105,7 +105,19 @@ class SlotCallIterator
 {
     typedef typename SlotHolderType::result_type result_type;
 
-    SlotHolderType* currentSlotHolder;
+    /**
+       A smart pointer must be used to store the current slot holder object to
+       guarantee the existence of the slot function and the next slot during
+       the slot is being called.
+       There is a case where the slot is disconnected when it is being called.
+       Or when the corresponding cnoid::Connection object is holded in a Lua
+       script, the connection may be deleted by the garbage collection in the
+       Lua interperter when a slot function defined in the Lua script is called.
+       In this case, the function does not exist when it is actually called
+       unless the reference to currentSlotHolder is kept here.
+    */
+    ref_ptr<SlotHolderType> currentSlotHolder;
+    
     std::tuple<Args...>& args;
 
 public:
@@ -139,17 +151,6 @@ public:
     }
     
     result_type operator*() const {
-        /**
-           The reference to currentSlotHolder should be kept when the slot
-           function is called to guarantee the existence of the slot function.
-           For example, if the corresponding cnoid::Connection object is holded
-           in a Lua script, the connection may be deleted by the garbage collection
-           in the Lua interperter when a slot function defined in the Lua script
-           is called. In this case, the function does not exist when it is actually
-           called unless the reference to currentSlotHolder is kept here.
-        */
-        ref_ptr<SlotHolderBase> holder = currentSlotHolder;
-
         return apply(currentSlotHolder->func, args);
     }
 };
@@ -222,7 +223,7 @@ public:
     void disconnect() {
         if(slot) {
             slot->disconnect();
-            slot = nullptr;
+            slot.reset();
         }
     }
 
@@ -391,7 +392,7 @@ public:
         typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
         Combiner combiner;
         std::tuple<Args...> argset(args...);
-        return combiner(IteratorType(firstSlot, argset), IteratorType(0, argset));
+        return combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
     }
 };
 
