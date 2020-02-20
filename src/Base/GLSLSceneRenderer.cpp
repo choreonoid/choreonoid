@@ -2533,8 +2533,8 @@ void GLSLSceneRenderer::Impl::renderOutlineEdge(SgOutline* outline, const Affine
         float orgLineWidth = lineWidth;
         setLineWidth(outline->lineWidth()*2+1);
 
-        GLint polygonMode;
-        glGetIntegerv(GL_POLYGON_MODE, &polygonMode);
+        GLint polygonMode[2]; // front and back
+        glGetIntegerv(GL_POLYGON_MODE, polygonMode);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
@@ -2542,7 +2542,7 @@ void GLSLSceneRenderer::Impl::renderOutlineEdge(SgOutline* outline, const Affine
         renderChildNodes(outline);
 
         setLineWidth(orgLineWidth);
-        glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
+        glPolygonMode(GL_FRONT_AND_BACK, polygonMode[0]);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
         solidColorProgram.setColorChangable(true);
