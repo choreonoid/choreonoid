@@ -220,7 +220,7 @@ public:
     ostream& os;
 
     SceneWidgetRootPtr sceneRoot;
-    SgGroupPtr systemGroup;
+    SgUnpickableGroupPtr systemGroup;
     SgGroup* scene;
     GLSceneRenderer* renderer;
     LazyCaller extractPreprocessedNodesLater;
@@ -483,7 +483,7 @@ void SceneWidgetImpl::onLowMemoryConsumptionModeChanged(bool on, bool doConfigOu
 SceneWidgetRoot::SceneWidgetRoot(SceneWidget* sceneWidget)
     : sceneWidget_(sceneWidget)
 {
-    systemGroup = new SgGroup;
+    systemGroup = new SgUnpickableGroup;
     systemGroup->setName("System");
     addChild(systemGroup);
 }

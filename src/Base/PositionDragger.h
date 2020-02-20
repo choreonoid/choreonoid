@@ -35,6 +35,9 @@ public:
     PositionDragger(int axes = AllAxes, int handleType = StandardHandle);
     PositionDragger(const PositionDragger& org) = delete;
 
+    //! \param T Local position from the virtual origin to the dragger central position
+    void setOffset(const Affine3& T);
+
     void setDraggableAxes(int axisBitSet);
     int draggableAxes() const;
     SignalProxy<void(int axisBitSet)> sigDraggableAxesChanged();

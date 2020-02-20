@@ -112,6 +112,8 @@ namespace cnoid {
 class PositionDragger::Impl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     PositionDragger* self;
     unordered_map<double, SgNodePtr> handleVariantMap;
     AxisBitSet draggableAxisBitSet;
@@ -127,6 +129,8 @@ public:
     bool isDragEnabled;
     bool isContentsDragEnabled;
     bool isUndoEnabled;
+    bool hasOffset;
+    Position T_offset;
     SgSwitchableGroupPtr topSwitch;
     SgOverlayPtr overlay;
     SgAutoScalePtr autoScale;
@@ -270,6 +274,9 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     isDragEnabled = true;
     isContentsDragEnabled = true;
     isUndoEnabled = false;
+
+    hasOffset = false;
+    T_offset.setIdentity();
 
     transparency = DefaultTransparency;
     highlightedAxisBitSet.reset();
@@ -472,6 +479,13 @@ SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, b
 void PositionDragger::Impl::clearHandleVariants()
 {
     handleVariantMap.clear();
+}
+
+
+void PositionDragger::setOffset(const Affine3& T)
+{
+    impl->T_offset = T;
+    impl->hasOffset = (T.matrix() != Affine3::Identity().matrix());
 }
 
 
@@ -788,11 +802,16 @@ bool PositionDragger::isDragging() const
 
 Affine3 PositionDragger::draggedPosition() const
 {
+    Affine3 T1;
     if(impl->dragProjector.isDragging()){
-        return impl->dragProjector.position();
+        T1 = impl->dragProjector.position();
     } else {
-        return T();
+        T1 = T();
     }
+    if(impl->hasOffset){
+        return T1 * impl->T_offset.inverse(Eigen::Isometry);
+    }
+    return T1;
 }
 
 

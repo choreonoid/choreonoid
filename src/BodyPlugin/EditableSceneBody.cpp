@@ -8,6 +8,7 @@
 #include "KinematicsBar.h"
 #include "SimulatorItem.h"
 #include <cnoid/JointPath>
+#include <cnoid/LinkKinematicsKit>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/MenuManager>
 #include <cnoid/SceneWidget>
@@ -392,7 +393,7 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
         onKinematicStateChanged();
 
         connections.add(
-            bodyItem->sigLocationEditableToggled().connect(
+            bodyItem->sigLocationEditableChanged().connect(
                 [&](bool on){
                     if(!on){
                         if(outlinedLink){
@@ -748,7 +749,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
                 type = LinkOperationType::IK;
             }
         } else if(link->isBodyRoot()){
-            if(bodyItem->getLocationEditable()){
+            if(bodyItem->isLocationEditable()){
                 type = LinkOperationType::IK;
             }
         } else {
@@ -759,7 +760,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
     } else if(mode == KinematicsBar::ForwardKinematics){
         auto baseLink = bodyItem->currentBaseLink();
         if(link->isBodyRoot()){
-            if(bodyItem->getLocationEditable()){
+            if(bodyItem->isLocationEditable()){
                 if(!baseLink || link == baseLink){
                     type = LinkOperationType::IK;
                 }
@@ -772,7 +773,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
             }
         }
     } else if(mode == KinematicsBar::InverseKinematics){
-        if(!link->isBodyRoot() || bodyItem->getLocationEditable()){
+        if(!link->isBodyRoot() || bodyItem->isLocationEditable()){
             type = LinkOperationType::IK;
         }
     }
@@ -811,10 +812,31 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 
 void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 {
+    LinkKinematicsKit* kinematics = nullptr;
+    if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
+        auto parentBodyItem = bodyItem->parentBodyItem();
+        auto parentBodyLink = bodyItem->body()->parentBodyLink();
+        kinematics = parentBodyItem->getLinkKinematicsKit(parentBodyLink);
+        if(kinematics){
+            positionDragger->setPosition(
+                link->Tb().inverse(Eigen::Isometry) * kinematics->currentEndFrame()->T());
+        }
+    }
+    if(!kinematics){
+        kinematics = bodyItem->getLinkKinematicsKit(link);
+        if(kinematics){
+            positionDragger->setPosition(kinematics->currentEndFrame()->T());
+        } else {
+            positionDragger->setPosition(Affine3::Identity());
+        }
+    }
+    positionDragger->setOffset(positionDragger->T());
+    
     SceneLink* sceneLink = self->sceneLink(link->index());
     if(!positionDragger->isConstantPixelSizeMode()){
         positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
     }
+    
     sceneLink->addChildOnce(positionDragger);
 }
 
@@ -1102,13 +1124,13 @@ void EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
     if(bodyItem && pointedType == PT_SCENE_LINK){
 
         auto locationLockCheck = mm.addCheckItem(_("Lock location"));
-        locationLockCheck->setChecked(!bodyItem->getLocationEditable());
+        locationLockCheck->setChecked(!bodyItem->isLocationEditable());
         locationLockCheck->sigToggled().connect(
             [&](bool on){ bodyItem->setLocationEditable(!on); });
                     
         activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
         if(activeSimulatorItem){
-            if(pointedSceneLink->link()->isBodyRoot() && bodyItem->getLocationEditable()){
+            if(pointedSceneLink->link()->isBodyRoot() && bodyItem->isLocationEditable()){
                 Action* item1 = mm.addCheckItem(_("Move Forcibly"));
                 item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
                 item1->sigToggled().connect(

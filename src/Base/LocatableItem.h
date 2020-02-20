@@ -15,16 +15,16 @@ public:
     virtual std::string getLocationName() const;
     virtual Position getLocation() const = 0;
     virtual bool prefersLocalLocation() const;
-    virtual bool getLocationEditable() const;
+    virtual bool isLocationEditable() const;
     virtual void setLocationEditable(bool on);
-    virtual SignalProxy<void(bool on)> sigLocationEditableToggled();
+    virtual SignalProxy<void(bool on)> sigLocationEditableChanged();
     virtual void setLocation(const Position& T) = 0;
     virtual SignalProxy<void()> sigLocationChanged() = 0;
     virtual LocatableItem* getParentLocatableItem();
     
 private:
     bool isLocationEditable_;
-    Signal<void(bool on)> sigLocationEditableToggled_;
+    Signal<void(bool on)> sigLocationEditableChanged_;
 };
 
 }

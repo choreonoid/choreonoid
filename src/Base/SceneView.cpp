@@ -11,6 +11,7 @@
 #include "Buttons.h"
 #include "CheckBox.h"
 #include <cnoid/SceneGraph>
+#include <cnoid/ConnectionSet>
 #include <list>
 #include "gettext.h"
 
@@ -18,8 +19,24 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 vector<SceneView*> instances;
 Connection sigItemAddedConnection;
+
+struct SceneInfo {
+    Item* item;
+    RenderableItem* renderable;
+    SgNodePtr node;
+    bool isShown;
+    ScopedConnectionSet itemConnections;
+    ScopedConnection itemCheckConnection;
+
+    SceneInfo(Item* item, RenderableItem* renderable)
+        : item(item), renderable(renderable) {
+        isShown = false;
+    }
+};
+
 }
 
 namespace cnoid {
@@ -30,23 +47,7 @@ public:
     SceneView* self;
     SceneWidget* sceneWidget;
     SgGroup* scene;
-
-    struct SceneInfo {
-        Item* item;
-        RenderableItem* renderable;
-        SgNodePtr scene;
-        bool isShown;
-        Connection sigDisconnectedFromRootConnection;
-        Connection sigCheckToggledConnection;
-        SceneInfo(Item* item, RenderableItem* renderable)
-            : item(item), renderable(renderable) {
-            isShown = false;
-        }
-        ~SceneInfo(){
-            sigDisconnectedFromRootConnection.disconnect();
-            sigCheckToggledConnection.disconnect();
-        }
-    };
+    SgUnpickableGroup* unpickableScene;
 
     list<SceneInfo> sceneInfos;
 
@@ -58,8 +59,9 @@ public:
     ~SceneViewImpl();
     void onRenderableItemAdded(Item* item, RenderableItem* renderable);
     void onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iterator infoIter);
-    void showScene(list<SceneInfo>::iterator infoIter, bool show);
     void onDedicatedCheckToggled(bool on);
+    void onSensitiveChanged(list<SceneInfo>::iterator infoIter, bool on);
+    void showScene(list<SceneInfo>::iterator infoIter, bool show);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
     void restoreDedicatedItemChecks(const Archive& archive);
@@ -118,6 +120,8 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
     sceneWidget->setObjectName(self->windowTitle());
     self->sigWindowTitleChanged().connect(
         [this](string title){ sceneWidget->setObjectName(title.c_str()); });
+    unpickableScene = new SgUnpickableGroup;
+    scene->addChild(unpickableScene);
 
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->addWidget(sceneWidget);
@@ -206,18 +210,22 @@ void SceneView::onItemAdded(Item* item)
 
 void SceneViewImpl::onRenderableItemAdded(Item* item, RenderableItem* renderable)
 {
-    sceneInfos.push_back(SceneInfo(item, renderable));
+    sceneInfos.emplace_back(item, renderable);
     list<SceneInfo>::iterator infoIter = sceneInfos.end();
     --infoIter;
     SceneInfo& info = *infoIter;
         
-    info.sigDisconnectedFromRootConnection =
+    info.itemConnections.add(
         item->sigDisconnectedFromRoot().connect(
-            [this, infoIter](){ onRenderableItemDisconnectedFromRoot(infoIter); });
+            [this, infoIter](){ onRenderableItemDisconnectedFromRoot(infoIter); }));
+
+    info.itemConnections.add(
+        renderable->sigSceneSensitiveChanged().connect(
+            [this, infoIter](bool on){ onSensitiveChanged(infoIter, on); }));
 
     int checkId = dedicatedCheckCheck.isChecked() ? dedicatedCheckId : Item::PrimaryCheck;
         
-    info.sigCheckToggledConnection =
+    info.itemCheckConnection =
         item->sigCheckToggled(checkId).connect(
             [this, infoIter](bool on){ showScene(infoIter, on); });
         
@@ -231,26 +239,6 @@ void SceneViewImpl::onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iterat
 {
     showScene(infoIter, false);
     sceneInfos.erase(infoIter);
-}
-
-
-void SceneViewImpl::showScene(list<SceneInfo>::iterator infoIter, bool show)
-{
-    if(infoIter->isShown && !show){
-        if(infoIter->scene){
-            scene->removeChild(infoIter->scene, true);
-        }
-        infoIter->isShown = false;
-        
-    } else if(!infoIter->isShown && show){
-        if(!infoIter->scene){
-            infoIter->scene = infoIter->renderable->getScene();
-        }
-        if(infoIter->scene){
-            scene->addChild(infoIter->scene, true);
-            infoIter->isShown = true;
-        }
-    }
 }
 
 
@@ -272,12 +260,56 @@ void SceneViewImpl::onDedicatedCheckToggled(bool on)
     }
 
     for(list<SceneInfo>::iterator p = sceneInfos.begin(); p != sceneInfos.end(); ++p){
-        p->sigCheckToggledConnection.disconnect();
-        p->sigCheckToggledConnection =
+        p->itemCheckConnection.disconnect();
+        p->itemCheckConnection =
             p->item->sigCheckToggled(checkId).connect(
                 [this, p](bool on) { showScene(p, on); });
         
         showScene(p, p->item->isChecked(checkId));
+    }
+}
+
+
+void SceneViewImpl::onSensitiveChanged(list<SceneInfo>::iterator infoIter, bool on)
+{
+    if(infoIter->isShown){
+        if(auto node = infoIter->node){
+            if(on){
+                unpickableScene->removeChild(node, true);
+                scene->addChild(node, true);
+            } else {
+                scene->removeChild(node, true);
+                unpickableScene->addChild(node, true);
+            }
+        }
+    }
+}
+
+
+void SceneViewImpl::showScene(list<SceneInfo>::iterator infoIter, bool show)
+{
+    if(infoIter->isShown && !show){
+        if(auto node = infoIter->node){
+            if(infoIter->renderable->isSceneSensitive()){
+                scene->removeChild(node, true);
+            } else {
+                unpickableScene->removeChild(node, true);
+            }
+        }
+        infoIter->isShown = false;
+        
+    } else if(!infoIter->isShown && show){
+        if(!infoIter->node){
+            infoIter->node = infoIter->renderable->getScene();
+        }
+        if(auto node = infoIter->node){
+            if(infoIter->renderable->isSceneSensitive()){
+                scene->addChild(node, true);
+            } else {
+                unpickableScene->addChild(node, true);
+            }
+            infoIter->isShown = true;
+        }
     }
 }
 

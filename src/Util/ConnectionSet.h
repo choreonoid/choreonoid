@@ -16,6 +16,7 @@ class CNOID_EXPORT ConnectionSet
 public:
     ConnectionSet();
     ConnectionSet(const ConnectionSet& org);
+    ConnectionSet(ConnectionSet&& org);
     ConnectionSet& operator=(const ConnectionSet& org);
     ~ConnectionSet();
 
@@ -38,10 +39,12 @@ private:
 };
 
 
-class CNOID_EXPORT ScopedConnectionSet : private ConnectionSet
+class ScopedConnectionSet : private ConnectionSet
 {
 public:
     ScopedConnectionSet() { }
+    ScopedConnectionSet(ScopedConnectionSet&& org)
+        : ConnectionSet(std::move(org)) { }
     ~ScopedConnectionSet() { ConnectionSet::disconnect(); }
     bool empty() const { return ConnectionSet::empty(); }
     size_t numConnections() const { return ConnectionSet::numConnections(); }

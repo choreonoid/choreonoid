@@ -72,7 +72,7 @@ public:
     }
     virtual Position getLocation() const override { return link->position(); }
     virtual void setLocation(const Position& T) override { }
-    virtual bool getLocationEditable() const override { return false; }
+    virtual bool isLocationEditable() const override { return false; }
     virtual LocatableItem* getParentLocatableItem() override { return nullptr; }
     virtual Item* getCorrespondingItem() override { return bodyItem; }
 };
@@ -1388,7 +1388,7 @@ bool BodyItem::prefersLocalLocation() const
 
 void BodyItem::setLocationEditable(bool on)
 {
-    if(on != getLocationEditable()){
+    if(on != isLocationEditable()){
         LocatableItem::setLocationEditable(on);
         if(impl->sceneBody){
             impl->sceneBody->notifyUpdate();
@@ -1604,8 +1604,10 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ return enableCollisionDetection(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
                 [&](bool on){ return enableSelfCollisionDetection(on); });
-    putProperty(_("Location editable"), self->getLocationEditable(),
+    putProperty(_("Location editable"), self->isLocationEditable(),
                 [&](bool on){ self->setLocationEditable(on); return true; });
+    putProperty(_("Scene sensitive"), self->isSceneSensitive(),
+                [&](bool on){ self->setSceneSensitive(on); return true; });
 }
 
 
@@ -1684,7 +1686,8 @@ bool BodyItem::Impl::store(Archive& archive)
     archive.write("staticModel", body->isStaticModel());
     archive.write("collisionDetection", isCollisionDetectionEnabled);
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
-    archive.write("location_editable", self->getLocationEditable());
+    archive.write("location_editable", self->isLocationEditable());
+    archive.write("scene_sensitive", self->isSceneSensitive());
 
     if(linkKinematicsKitManager){
         MappingPtr kinematicsNode = new Mapping;
@@ -1813,6 +1816,9 @@ bool BodyItem::Impl::restore(const Archive& archive)
        archive.read("isEditable", on) ||
        archive.read("isSceneBodyDraggable", on)){
         self->setLocationEditable(on);
+    }
+    if(archive.read("scene_sensitive", on)){
+        self->setSceneSensitive(on);
     }
        
     auto kinematicsNode = archive.findMapping("linkKinematics");

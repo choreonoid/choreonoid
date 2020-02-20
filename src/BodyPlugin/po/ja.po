@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-18 18:47+0900\n"
+"POT-Creation-Date: 2020-02-20 21:04+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -426,59 +426,59 @@ msgstr "サイズ"
 msgid "Color"
 msgstr "色"
 
-#: EditableSceneBody.cpp:1068
+#: EditableSceneBody.cpp:1126
 msgid "Lock location"
 msgstr "配置ロック"
 
-#: EditableSceneBody.cpp:1085
+#: EditableSceneBody.cpp:1134
 msgid "Move Forcibly"
 msgstr "強制移動"
 
-#: EditableSceneBody.cpp:1090
+#: EditableSceneBody.cpp:1139
 msgid "Hold Forcibly"
 msgstr "強制保持"
 
-#: EditableSceneBody.cpp:1098
+#: EditableSceneBody.cpp:1147
 msgid "Set Free"
 msgstr "フリーに"
 
-#: EditableSceneBody.cpp:1100
+#: EditableSceneBody.cpp:1149
 msgid "Set Base"
 msgstr "ベースに"
 
-#: EditableSceneBody.cpp:1102
+#: EditableSceneBody.cpp:1151
 msgid "Set Translation Pin"
 msgstr "並進ピンをセット"
 
-#: EditableSceneBody.cpp:1104
+#: EditableSceneBody.cpp:1153
 msgid "Set Rotation Pin"
 msgstr "回転ピンをセット"
 
-#: EditableSceneBody.cpp:1106
+#: EditableSceneBody.cpp:1155
 msgid "Set Both Pins"
 msgstr "両方のピンをセット"
 
-#: EditableSceneBody.cpp:1111
+#: EditableSceneBody.cpp:1160
 msgid "Level Attitude"
 msgstr "水平姿勢に"
 
-#: EditableSceneBody.cpp:1117
+#: EditableSceneBody.cpp:1166
 msgid "Markers"
 msgstr "マーカー"
 
-#: EditableSceneBody.cpp:1119
+#: EditableSceneBody.cpp:1168
 msgid "Center of Mass"
 msgstr "重心"
 
-#: EditableSceneBody.cpp:1123
+#: EditableSceneBody.cpp:1172
 msgid "Projection Point of CoM"
 msgstr "重心投影点"
 
-#: EditableSceneBody.cpp:1127
+#: EditableSceneBody.cpp:1176
 msgid "ZMP"
 msgstr "ZMP"
 
-#: EditableSceneBody.cpp:1557
+#: EditableSceneBody.cpp:1606
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
@@ -514,7 +514,7 @@ msgstr ""
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:118 BodyItem.cpp:1592
+#: LinkPropertyView.cpp:118 BodyItem.cpp:1600
 msgid "Mass"
 msgstr "質量"
 
@@ -666,71 +666,71 @@ msgstr "ボディ"
 msgid "Local"
 msgstr "ローカル"
 
-#: LinkPositionView.cpp:272
+#: LinkPositionView.cpp:273
 msgid "Base"
 msgstr "ベース"
 
-#: LinkPositionView.cpp:273
+#: LinkPositionView.cpp:274
 msgid "End"
 msgstr "エンド"
 
-#: LinkPositionView.cpp:288
+#: LinkPositionView.cpp:289
 msgid "Config"
 msgstr "形態"
 
-#: LinkPositionView.cpp:295
+#: LinkPositionView.cpp:296
 msgid "Pref."
 msgstr "希望形態"
 
-#: LinkPositionView.cpp:304
+#: LinkPositionView.cpp:305
 msgid "Req."
 msgstr "必須"
 
-#: LinkPositionView.cpp:385
+#: LinkPositionView.cpp:386
 msgid "Target link type"
 msgstr "対象リンクタイプ"
 
-#: LinkPositionView.cpp:387
+#: LinkPositionView.cpp:388
 msgid "Any links"
 msgstr "全リンク"
 
-#: LinkPositionView.cpp:388
+#: LinkPositionView.cpp:389
 msgid "IK priority link and root link"
 msgstr "逆運動学優先／ルートリンク"
 
-#: LinkPositionView.cpp:389
+#: LinkPositionView.cpp:390
 msgid "IK priority link"
 msgstr "逆運動学優先リンク"
 
-#: LinkPositionView.cpp:401
+#: LinkPositionView.cpp:402
 msgid "Disable custom IK"
 msgstr "カスタムIKを使用しない"
 
-#: LinkPositionView.cpp:561
+#: LinkPositionView.cpp:562
 msgid "World Origin"
 msgstr "ワールド原点"
 
-#: LinkPositionView.cpp:565
+#: LinkPositionView.cpp:566
 msgid "Origin"
 msgstr "原点"
 
-#: LinkPositionView.cpp:861
+#: LinkPositionView.cpp:862
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionView.cpp:969
+#: LinkPositionView.cpp:970
 msgid "Solved"
 msgstr "解有り"
 
-#: LinkPositionView.cpp:973
+#: LinkPositionView.cpp:974
 msgid "Not Solved"
 msgstr "解無し"
 
-#: LinkPositionView.cpp:993
+#: LinkPositionView.cpp:994
 msgid "Accepted"
 msgstr ""
 
-#: LinkPositionView.cpp:996
+#: LinkPositionView.cpp:997
 msgid "Not Accepted"
 msgstr ""
 
@@ -830,7 +830,7 @@ msgstr "干渉列アイテム"
 msgid "Collision Data"
 msgstr "干渉データ"
 
-#: LinkCoordinateFrameListSetItem.cpp:24
+#: LinkCoordinateFrameListSetItem.cpp:58
 msgid "LinkCoordinateFrameListSetItem"
 msgstr "リンク座標フレームリスト一式アイテム"
 
@@ -1184,59 +1184,63 @@ msgstr "上方軸："
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1468
+#: BodyItem.cpp:1476
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1509
+#: BodyItem.cpp:1517
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1586
+#: BodyItem.cpp:1594
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1587
+#: BodyItem.cpp:1595
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1588
+#: BodyItem.cpp:1596
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1589
+#: BodyItem.cpp:1597
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1590
+#: BodyItem.cpp:1598
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1591
+#: BodyItem.cpp:1599
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1593
+#: BodyItem.cpp:1601
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1595 WorldItem.cpp:500
+#: BodyItem.cpp:1603 WorldItem.cpp:500
 msgid "Collision detection"
 msgstr "干渉検出"
 
-#: BodyItem.cpp:1597
+#: BodyItem.cpp:1605
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1599
+#: BodyItem.cpp:1607
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1751
+#: BodyItem.cpp:1609
+msgid "Scene sensitive"
+msgstr "シーン感知"
+
+#: BodyItem.cpp:1762
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1768
+#: BodyItem.cpp:1779
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1704,5 +1708,3 @@ msgstr "ダイヤル"
 msgid "Phase"
 msgstr "位相"
 
-#~ msgid "[ Assumed mesh attributes ]"
-#~ msgstr "[ 想定メッシュ属性 ]"

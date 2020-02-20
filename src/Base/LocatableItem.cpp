@@ -33,7 +33,7 @@ bool LocatableItem::prefersLocalLocation() const
 }
 
 
-bool LocatableItem::getLocationEditable() const
+bool LocatableItem::isLocationEditable() const
 {
     return isLocationEditable_;
 }
@@ -43,14 +43,14 @@ void LocatableItem::setLocationEditable(bool on)
 {
     if(on != isLocationEditable_){
         isLocationEditable_ = on;
-        sigLocationEditableToggled_(on);
+        sigLocationEditableChanged_(on);
     }
 }
 
 
-SignalProxy<void(bool on)> LocatableItem::sigLocationEditableToggled()
+SignalProxy<void(bool on)> LocatableItem::sigLocationEditableChanged()
 {
-    return sigLocationEditableToggled_;
+    return sigLocationEditableChanged_;
 }
 
 

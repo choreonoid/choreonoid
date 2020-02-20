@@ -156,7 +156,7 @@ public:
 private:
     SceneWidgetRoot(SceneWidget* sceneWidget);
     SceneWidget* sceneWidget_;
-    SgGroupPtr systemGroup;
+    SgUnpickableGroupPtr systemGroup;
     friend class SceneWidgetImpl;
 };
 typedef ref_ptr<SceneWidgetRoot> SceneWidgetRootPtr;

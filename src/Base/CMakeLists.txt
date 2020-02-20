@@ -22,6 +22,7 @@ set(sources
   ItemFileIO.cpp
   Item.cpp
   LocatableItem.cpp
+  RenderableItem.cpp
   PolymorphicItemFunctionSet.cpp
   PutPropertyFunction.cpp
   RootItem.cpp

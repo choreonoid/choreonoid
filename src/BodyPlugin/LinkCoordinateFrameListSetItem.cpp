@@ -32,7 +32,7 @@ public:
     virtual Item* getCorrespondingItem() override;
     virtual std::string getLocationName() const override;
     virtual Position getLocation() const  override;
-    virtual bool getLocationEditable() const override;
+    virtual bool isLocationEditable() const override;
     virtual void setLocation(const Position& T) override;
     virtual SignalProxy<void()> sigLocationChanged()  override;
     virtual LocatableItem* getParentLocatableItem() override;
@@ -248,7 +248,7 @@ Position EndLocatableItem::getLocation() const
 }
 
 
-bool EndLocatableItem::getLocationEditable() const
+bool EndLocatableItem::isLocationEditable() const
 {
     return false;
 }

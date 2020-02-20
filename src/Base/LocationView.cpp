@@ -163,14 +163,14 @@ void LocationView::Impl::setTargetItem(Item* item)
         
     } else {
         caption.setText(item->name().c_str());
-        setLocked(!targetItem->getLocationEditable());
+        setLocked(!targetItem->isLocationEditable());
 
         targetItemConnections.add(
             targetItem->sigLocationChanged().connect(
                 [this](){ updatePositionWidgetWithTargetLocation(); }));
         
         targetItemConnections.add(
-            targetItem->sigLocationEditableToggled().connect(
+            targetItem->sigLocationEditableChanged().connect(
                 [this](bool on){ setLocked(!on); }));
             
         updateBaseCoordinateSystems();

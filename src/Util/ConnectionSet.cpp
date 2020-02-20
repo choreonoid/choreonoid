@@ -19,6 +19,13 @@ ConnectionSet::ConnectionSet(const ConnectionSet& org)
 }
 
 
+ConnectionSet::ConnectionSet(ConnectionSet&& org)
+    : connections(std::move(org.connections))
+{
+
+}
+
+
 /**
    This operator disconnects existing connections.
 */
