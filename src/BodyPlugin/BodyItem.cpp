@@ -28,8 +28,8 @@
 #include <cnoid/JointPath>
 #include <cnoid/BodyLoader>
 #include <cnoid/BodyState>
+#include <cnoid/LinkKinematicsKit>
 #include <cnoid/InverseKinematics>
-#include <cnoid/CompositeIK>
 #include <cnoid/CompositeBodyIK>
 #include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
@@ -155,9 +155,7 @@ public:
     bool undoKinematicState();
     bool redoKinematicState();
     LinkKinematicsKitManager* getOrCreateLinkKinematicsKitManager();
-    LinkKinematicsKit* getLinkKinematicsKit(Link* baseLink, Link* endLink);
     std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);
-    std::shared_ptr<InverseKinematics> getDefaultIK(Link* targetLink);
     void createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker);
     void setPresetPose(BodyItem::PresetPoseID id);
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor);
@@ -805,46 +803,18 @@ LinkKinematicsKitManager* BodyItem::Impl::getOrCreateLinkKinematicsKitManager()
 }
 
 
-LinkKinematicsKit* BodyItem::getLinkKinematicsKit(Link* targetLink, Link* baseLink)
+LinkKinematicsKit* BodyItem::findLinkKinematicsKit(Link* targetLink)
 {
-    return impl->getLinkKinematicsKit(targetLink, baseLink);
+    return impl->getOrCreateLinkKinematicsKitManager()->findKinematicsKit(targetLink);
 }
+    
 
-
-LinkKinematicsKit* BodyItem::Impl::getLinkKinematicsKit(Link* targetLink, Link* baseLink)
+std::shared_ptr<InverseKinematics> BodyItem::findPresetIK(Link* targetLink)
 {
-    LinkKinematicsKit* kit = nullptr;
-
-    if(!targetLink){
-        targetLink = body->findUniqueEndLink();
+    if(auto kinematicsKit = findLinkKinematicsKit(targetLink)){
+        return kinematicsKit->inverseKinematics();
     }
-    if(targetLink){
-        getOrCreateLinkKinematicsKitManager();
-        if(baseLink){
-            kit = linkKinematicsKitManager->getOrCreateKinematicsKit(targetLink, baseLink);
-        } else {
-            if(auto ik = getCurrentIK(targetLink)){
-                kit = linkKinematicsKitManager->getOrCreateKinematicsKit(targetLink, ik);
-            }
-        }
-    }
-
-    return kit;
-}
-        
-        
-std::shared_ptr<PinDragIK> BodyItem::pinDragIK()
-{
-    if(!impl->pinDragIK){
-        impl->pinDragIK = std::make_shared<PinDragIK>(impl->body);
-    }
-    return impl->pinDragIK;
-}
-
-
-std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
-{
-    return impl->getCurrentIK(targetLink);
+    return nullptr;
 }
 
 
@@ -859,8 +829,8 @@ std::shared_ptr<InverseKinematics> BodyItem::Impl::getCurrentIK(Link* targetLink
     }
 
     if(!ik){
-        if(KinematicsBar::instance()->mode() == KinematicsBar::AUTO_MODE){
-            ik = getDefaultIK(targetLink);
+        if(KinematicsBar::instance()->mode() == KinematicsBar::PresetKinematics){
+            ik = self->findPresetIK(targetLink);
         }
     }
 
@@ -874,56 +844,38 @@ std::shared_ptr<InverseKinematics> BodyItem::Impl::getCurrentIK(Link* targetLink
         }
     }
     if(!ik){
-        auto baseLink = currentBaseLink ? currentBaseLink.get() : rootLink;
-        ik = JointPath::getCustomPath(body, baseLink, targetLink);
-    }
-
-    return ik;
-}
-
-
-std::shared_ptr<InverseKinematics> BodyItem::getDefaultIK(Link* targetLink)
-{
-    return impl->getDefaultIK(targetLink);
-}
-
-
-std::shared_ptr<InverseKinematics> BodyItem::Impl::getDefaultIK(Link* targetLink)
-{
-    if(!targetLink){
-        return nullptr;
-    }
-
-    if(attachmentToParent && targetLink == body->rootLink()){
-        return make_shared<MyCompositeBodyIK>(this);
-    }
-    
-    std::shared_ptr<InverseKinematics> ik;
-    const Mapping& setupMap = *body->info()->findMapping("defaultIKsetup");
-    if(setupMap.isValid()){
-        const Listing& setup = *setupMap.findListing(targetLink->name());
-        if(setup.isValid() && !setup.empty()){
-            Link* baseLink = body->link(setup[0].toString());
-            if(baseLink){
-                if(setup.size() == 1){
-                    ik = JointPath::getCustomPath(body, baseLink, targetLink);
-                } else {
-                    auto compositeIK = make_shared<CompositeIK>(body, targetLink);
-                    ik = compositeIK;
-                    for(int i=0; i < setup.size(); ++i){
-                        Link* baseLink = body->link(setup[i].toString());
-                        if(baseLink){
-                            if(!compositeIK->addBaseLink(baseLink)){
-                                ik.reset();
-                                break;
-                            }
-                        }
-                    }
+        if(auto kinematicsKit = self->findLinkKinematicsKit(targetLink)){
+            if(currentBaseLink){
+                if(kinematicsKit->baseLink() != currentBaseLink){
+                    kinematicsKit = nullptr;
                 }
             }
+            if(kinematicsKit){
+                ik = kinematicsKit->inverseKinematics();
+            }
+        }
+        if(!ik){
+            Link* baseLink = baseLink ? currentBaseLink.get() : rootLink;
+            ik = JointPath::getCustomPath(body, baseLink, targetLink);
         }
     }
+
     return ik;
+}
+
+
+std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
+{
+    return impl->getCurrentIK(targetLink);
+}
+
+
+std::shared_ptr<PinDragIK> BodyItem::pinDragIK()
+{
+    if(!impl->pinDragIK){
+        impl->pinDragIK = std::make_shared<PinDragIK>(impl->body);
+    }
+    return impl->pinDragIK;
 }
 
 

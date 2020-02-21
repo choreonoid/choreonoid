@@ -2,6 +2,8 @@
 #include "BodySelectionManager.h"
 #include <cnoid/Link>
 #include <cnoid/LinkKinematicsKit>
+#include <cnoid/JointPath>
+#include <cnoid/CompositeIK>
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/LinkCoordinateFrameSet>
 #include <cnoid/LinkCoordinateFrameListSetItem>
@@ -34,6 +36,8 @@ class LinkKinematicsKitManager::Impl
 {
 public:
     BodyItem* bodyItem;
+
+    // Use an integer value as a key to keep the number of instances growing
     map<int, LinkKinematicsKitPtr> linkIndexToKinematicsKitMap;
 
     ScopedConnection treeChangeConnection;
@@ -48,7 +52,7 @@ public:
     ScopedConnectionSet frameEditConnections;
 
     Impl(BodyItem* bodyItem);
-    LinkKinematicsKit* getOrCreateKinematicsKit(Link* targetLink);
+    std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
     LinkCoordinateFrameSetPtr extractCoordinateFrameSets();
     LinkCoordinateFrameSetPtr extractWorldCoordinateFrameSets(Item* item);
     void onTreeChanged();
@@ -90,52 +94,70 @@ LinkKinematicsKitManager::~LinkKinematicsKitManager()
 }
 
 
-LinkKinematicsKit* LinkKinematicsKitManager::getOrCreateKinematicsKit(Link* targetLink)
+LinkKinematicsKit* LinkKinematicsKitManager::findKinematicsKit(Link* targetLink)
 {
-    return impl->getOrCreateKinematicsKit(targetLink);
-}
-
-
-LinkKinematicsKit* LinkKinematicsKitManager::Impl::getOrCreateKinematicsKit(Link* targetLink)
-{
-    auto iter = linkIndexToKinematicsKitMap.find(targetLink->index());
-    if(iter != linkIndexToKinematicsKitMap.end()){
-        auto kit = iter->second;
-        if(kit->link() == targetLink){
-            return kit;
+    if(!targetLink){
+        targetLink = impl->bodyItem->body()->findUniqueEndLink();
+        if(!targetLink){
+            return nullptr;
         }
     }
     
-    auto kit = new LinkKinematicsKit(targetLink);
-
-    kit->setFrameSets(commonFrameSets);
+    LinkKinematicsKit* kit = nullptr;
     
-    linkIndexToKinematicsKitMap[targetLink->index()] = kit;
-
-    return kit;
-}
-    
-
-LinkKinematicsKit* LinkKinematicsKitManager::getOrCreateKinematicsKit(Link* targetLink, Link* baseLink)
-{
-    auto kit = impl->getOrCreateKinematicsKit(targetLink);
-    if(kit){
-        kit->setBaseLink(baseLink);
+    auto iter = impl->linkIndexToKinematicsKitMap.find(targetLink->index());
+    if(iter != impl->linkIndexToKinematicsKitMap.end()){
+        auto foundKit = iter->second;
+        if(foundKit->link() == targetLink){
+            kit = foundKit;
+        }
     }
-    return kit;
-}
 
-
-LinkKinematicsKit* LinkKinematicsKitManager::getOrCreateKinematicsKit
-(Link* targetLink, std::shared_ptr<InverseKinematics> ik)
-{
-    auto kit = impl->getOrCreateKinematicsKit(targetLink);
-    if(kit){
-        kit->setInversetKinematics(ik);
+    if(!kit){
+        // A link kinematics kit can be created only for a link path
+        // included in the preset inverse kinematics paths
+        if(auto presetIK = impl->findPresetIK(targetLink)){
+            kit = new LinkKinematicsKit(targetLink);
+            kit->setInversetKinematics(presetIK);
+            kit->setFrameSets(impl->commonFrameSets);
+            impl->linkIndexToKinematicsKitMap[targetLink->index()] = kit;
+        }
     }
-    return kit;
+
+    return kit;        
 }
 
+
+std::shared_ptr<InverseKinematics> LinkKinematicsKitManager::Impl::findPresetIK(Link* targetLink)
+{
+    std::shared_ptr<InverseKinematics> ik;
+    auto body = bodyItem->body();
+    const Mapping& setupMap = *body->info()->findMapping("defaultIKsetup");
+    if(setupMap.isValid()){
+        const Listing& setup = *setupMap.findListing(targetLink->name());
+        if(setup.isValid() && !setup.empty()){
+            Link* baseLink = body->link(setup[0].toString());
+            if(baseLink){
+                if(setup.size() == 1){
+                    ik = JointPath::getCustomPath(body, baseLink, targetLink);
+                } else {
+                    auto compositeIK = make_shared<CompositeIK>(body, targetLink);
+                    ik = compositeIK;
+                    for(int i=0; i < setup.size(); ++i){
+                        Link* baseLink = body->link(setup[i].toString());
+                        if(baseLink){
+                            if(!compositeIK->addBaseLink(baseLink)){
+                                ik.reset();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return ik;
+}
 
 
 LinkCoordinateFrameSetPtr LinkKinematicsKitManager::Impl::extractCoordinateFrameSets()
@@ -235,10 +257,11 @@ bool LinkKinematicsKitManager::Impl::startBodyFrameEditing
 (AbstractPositionEditTarget* target, CoordinateFrame* frame)
 {
     if(auto link = bodySelectionManager->currentLink()){
-        auto kit = bodyItem->getLinkKinematicsKit(link);
-        if(auto baseLink = kit->baseLink()){
-            setFrameEditTarget(target, baseLink);
-            return true;
+        if(auto kit = bodyItem->findLinkKinematicsKit(link)){
+            if(auto baseLink = kit->baseLink()){
+                setFrameEditTarget(target, baseLink);
+                return true;
+            }
         }
     }
     return false;
@@ -355,18 +378,18 @@ bool LinkKinematicsKitManager::restoreState(const Mapping& archive)
 
     for(auto& kv : archive){
         auto& linkName = kv.first;
-        auto link = body->link(linkName);
-        if(link){
-            auto kit = getOrCreateKinematicsKit(link);
-            auto& node = *kv.second->toMapping();
-            if(id.read(node, "currentWorldFrame")){
-                kit->setCurrentWorldFrame(id);
-            }
-            if(id.read(node, "currentBodyFrame")){
-                kit->setCurrentBodyFrame(id);
-            }
-            if(id.read(node, "currentEndFrame")){
-                kit->setCurrentEndFrame(id);
+        if(auto link = body->link(linkName)){
+            if(auto kit = findKinematicsKit(link)){
+                auto& node = *kv.second->toMapping();
+                if(id.read(node, "currentWorldFrame")){
+                    kit->setCurrentWorldFrame(id);
+                }
+                if(id.read(node, "currentBodyFrame")){
+                    kit->setCurrentBodyFrame(id);
+                }
+                if(id.read(node, "currentEndFrame")){
+                    kit->setCurrentEndFrame(id);
+                }
             }
         }
     }

@@ -485,11 +485,11 @@ void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
             isIkLinkRequired = !link->isRoot();
         }
         if(isIkLinkRequired){
-            if(!bodyItem->getDefaultIK(link)){
+            if(!bodyItem->findPresetIK(link)){
                 LinkTraverse traverse(link);
                 link = nullptr;
                 for(int i=1; i < traverse.numLinks(); ++i){
-                    if(bodyItem->getDefaultIK(traverse[i])){
+                    if(bodyItem->findPresetIK(traverse[i])){
                         link = traverse[i];
                         break;
                     }
@@ -549,21 +549,23 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
 
         targetLabel.setText(format("{0} / {1}", body->name(), targetLink->name()).c_str());
 
-        kinematicsKit = targetBodyItem->getLinkKinematicsKit(targetLink);
-        kinematicsKitConnection =
-            kinematicsKit->sigCurrentFrameChanged().connect(
-                [&](){ onCurrentFrameChanged(); });
-
-        if(functionToGetDefaultFrameNames){
-            tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[EndFrame]) =
-                functionToGetDefaultFrameNames(kinematicsKit);
-        }
         if(defaultCoordName[WorldFrame].empty()){
             defaultCoordName[WorldFrame] = _("World Origin");
         }
         for(int i=0; i < 2; ++i){
             if(defaultCoordName[i].empty()){
                 defaultCoordName[i] = _("Origin");
+            }
+        }
+
+        kinematicsKit = targetBodyItem->findLinkKinematicsKit(targetLink);
+        if(kinematicsKit){
+            kinematicsKitConnection =
+                kinematicsKit->sigCurrentFrameChanged().connect(
+                    [&](){ onCurrentFrameChanged(); });
+            if(functionToGetDefaultFrameNames){
+                tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[EndFrame]) =
+                    functionToGetDefaultFrameNames(kinematicsKit);
             }
         }
         
@@ -948,9 +950,8 @@ bool LinkPositionView::Impl::findBodyIkSolution(const Position& T_input)
             T = kinematicsKit->baseLink()->Ta() * T;
         }
         T.linear() = targetLink->calcRfromAttitude(T.linear());
-        
-        solved = ik->calcInverseKinematics(T);
 
+        solved = ik->calcInverseKinematics(T);
         if(solved){
             if(requireConfigurationCheck.isChecked() && !isCustomIkDisabled){
                 if(auto configurationHandler = kinematicsKit->configurationHandler()){

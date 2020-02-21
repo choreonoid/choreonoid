@@ -33,12 +33,14 @@ public:
     Body* body();
     Link* link();
     Link* baseLink();
+    bool isManipulator() const;
+    
     std::shared_ptr<InverseKinematics> inverseKinematics();
     std::shared_ptr<JointPath> jointPath();
+    
     std::shared_ptr<JointPathConfigurationHandler> configurationHandler();
     int currentConfiguration() const;
     std::string configurationName(int index) const;
-    bool isManipulator() const;
 
     Vector3 referenceRpy() const;
     void setReferenceRpy(const Vector3& rpy);
@@ -84,8 +86,6 @@ public:
 
     SignalProxy<void()> sigCurrentFrameChanged();
     void notifyCurrentFrameChange();
-
-    //Body* findAttachedEndEffector() const;
 
 private:
     class Impl;

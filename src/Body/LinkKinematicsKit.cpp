@@ -17,11 +17,11 @@ class LinkKinematicsKit::Impl
 public:
     BodyPtr body;
     LinkPtr link;
-    Vector3 referenceRpy;
-    bool isRpySpecified;
     shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointPathConfigurationHandler> configurationHandler;
+    Vector3 referenceRpy;
+    bool isRpySpecified;
     LinkCoordinateFrameSetPtr frameSets;
     GeneralId currentFrameId[3];
     int currentBaseFrameType;
@@ -381,20 +381,3 @@ void LinkKinematicsKit::notifyCurrentFrameChange()
 {
     impl->sigCurrentFrameChanged();
 }
-
-
-/*
-Body* LinkKinematicsKit::findAttachedEndEffector() const
-{
-    if(auto body = impl->body){
-        for(auto& holder : body->devices<HolderDevice>()){
-            if(holder->category() == "EndEffector"){
-                if(auto attachment = holder->attachment()){
-                    return attachment->link()->body();
-                }
-            }
-        }
-    }
-    return nullptr;
-}
-*/

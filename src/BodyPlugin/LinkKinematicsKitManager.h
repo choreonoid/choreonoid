@@ -19,9 +19,7 @@ public:
     LinkKinematicsKitManager(BodyItem* bodyItem);
     ~LinkKinematicsKitManager();
 
-    LinkKinematicsKit* getOrCreateKinematicsKit(Link* targetLink);
-    LinkKinematicsKit* getOrCreateKinematicsKit(Link* targetLink, Link* baseLink);
-    LinkKinematicsKit* getOrCreateKinematicsKit(Link* targetLink, std::shared_ptr<InverseKinematics> ik);
+    LinkKinematicsKit* findKinematicsKit(Link* targetLink = nullptr);
 
     SgNode* scene();
 

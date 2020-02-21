@@ -743,7 +743,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
     int mode = kinematicsBar->mode();
     int type = LinkOperationType::None;
     if(mode == KinematicsBar::PresetKinematics){
-        currentIK = bodyItem->getDefaultIK(link);
+        currentIK = bodyItem->findPresetIK(link);
         if(currentIK){
             if(kinematicsBar->isInverseKinematicsEnabled()){
                 type = LinkOperationType::IK;
@@ -816,14 +816,14 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
         auto parentBodyItem = bodyItem->parentBodyItem();
         auto parentBodyLink = bodyItem->body()->parentBodyLink();
-        kinematics = parentBodyItem->getLinkKinematicsKit(parentBodyLink);
+        kinematics = parentBodyItem->findLinkKinematicsKit(parentBodyLink);
         if(kinematics){
             positionDragger->setPosition(
                 link->Tb().inverse(Eigen::Isometry) * kinematics->currentEndFrame()->T());
         }
     }
     if(!kinematics){
-        kinematics = bodyItem->getLinkKinematicsKit(link);
+        kinematics = bodyItem->findLinkKinematicsKit(link);
         if(kinematics){
             positionDragger->setPosition(kinematics->currentEndFrame()->T());
         } else {
