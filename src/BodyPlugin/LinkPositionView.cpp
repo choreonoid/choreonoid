@@ -559,7 +559,9 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
         }
 
         kinematicsKit = targetBodyItem->findLinkKinematicsKit(targetLink);
-        if(kinematicsKit){
+        if(!kinematicsKit){
+            kinematicsKit = dummyKinematicsKit;
+        } else {
             kinematicsKitConnection =
                 kinematicsKit->sigCurrentFrameChanged().connect(
                     [&](){ onCurrentFrameChanged(); });
@@ -567,17 +569,16 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
                 tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[EndFrame]) =
                     functionToGetDefaultFrameNames(kinematicsKit);
             }
+            if(coordinateMode == WorldCoordinateMode){
+                kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::WorldFrame);
+            } else {
+                kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::BodyFrame);
+            }
+            baseFrame = kinematicsKit->currentBaseFrame();
+            endFrame = kinematicsKit->currentEndFrame();
+            
+            updateIkMode();
         }
-        
-        updateIkMode();
-
-        if(coordinateMode == WorldCoordinateMode){
-            kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::WorldFrame);
-        } else {
-            kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::BodyFrame);
-        }
-        baseFrame = kinematicsKit->currentBaseFrame();
-        endFrame = kinematicsKit->currentEndFrame();
     }
 
     bool isValid = kinematicsKit->inverseKinematics() != nullptr;
@@ -597,8 +598,10 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
 
 void LinkPositionView::Impl::updateIkMode()
 {
-    if(auto jointPath = kinematicsKit->jointPath()){
-        jointPath->setNumericalIKenabled(isCustomIkDisabled);
+    if(kinematicsKit){
+        if(auto jointPath = kinematicsKit->jointPath()){
+            jointPath->setNumericalIKenabled(isCustomIkDisabled);
+        }
     }
 }
 

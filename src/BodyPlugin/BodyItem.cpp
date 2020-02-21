@@ -811,10 +811,16 @@ LinkKinematicsKit* BodyItem::findLinkKinematicsKit(Link* targetLink)
 
 std::shared_ptr<InverseKinematics> BodyItem::findPresetIK(Link* targetLink)
 {
-    if(auto kinematicsKit = findLinkKinematicsKit(targetLink)){
-        return kinematicsKit->inverseKinematics();
+    std::shared_ptr<InverseKinematics> ik;    
+    
+    if(impl->attachmentToParent && targetLink->isBodyRoot()){
+        ik = make_shared<MyCompositeBodyIK>(impl);
+
+    } else if(auto kinematicsKit = findLinkKinematicsKit(targetLink)){
+        ik = kinematicsKit->inverseKinematics();
     }
-    return nullptr;
+    
+    return ik;
 }
 
 
