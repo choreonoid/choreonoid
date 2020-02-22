@@ -177,6 +177,7 @@ public:
     shared_ptr<PinDragIK> pinDragIK;
     shared_ptr<PenetrationBlocker> penetrationBlocker;
     PositionDraggerPtr positionDragger;
+    ScopedConnection kinematicsKitConnection;
 
     bool isEditMode;
     bool isFocused;
@@ -806,37 +807,57 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
         }
     }
 
+    kinematicsKitConnection.disconnect();
+
     self->notifyUpdate(modified);
 }
 
 
 void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 {
-    LinkKinematicsKit* kinematics = nullptr;
+    LinkKinematicsKit* kinematicsKit = nullptr;
     if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
         auto parentBodyItem = bodyItem->parentBodyItem();
         auto parentBodyLink = bodyItem->body()->parentBodyLink();
-        kinematics = parentBodyItem->findLinkKinematicsKit(parentBodyLink);
-        if(kinematics){
+        kinematicsKit = parentBodyItem->findLinkKinematicsKit(parentBodyLink);
+        if(kinematicsKit){
             positionDragger->setPosition(
-                link->Tb().inverse(Eigen::Isometry) * kinematics->currentEndFrame()->T());
+                link->Tb().inverse(Eigen::Isometry) * kinematicsKit->currentEndFrame()->T());
         }
     }
-    if(!kinematics){
-        kinematics = bodyItem->findLinkKinematicsKit(link);
-        if(kinematics){
-            positionDragger->setPosition(kinematics->currentEndFrame()->T());
+    if(!kinematicsKit){
+        kinematicsKit = bodyItem->findLinkKinematicsKit(link);
+        if(kinematicsKit){
+            positionDragger->setPosition(kinematicsKit->currentEndFrame()->T());
         } else {
             positionDragger->setPosition(Affine3::Identity());
         }
     }
+
     positionDragger->setOffset(positionDragger->T());
+
+    // Even if the connection to sigCurrentFrameChanged is remade, it must
+    // first be disconnected to avoid the infinite loop to call the newly
+    // connected slot when this function is called by the signal.
+    kinematicsKitConnection.disconnect();
+    if(kinematicsKit){
+        kinematicsKitConnection =
+            kinematicsKit->sigCurrentFrameChanged().connect(
+                [this, link](){ attachPositionDragger(link); });
+    }
     
     SceneLink* sceneLink = self->sceneLink(link->index());
     if(!positionDragger->isConstantPixelSizeMode()){
-        positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
+        if(auto shape = sceneLink->visualShape()){
+            if(auto transform = dynamic_cast<SgTransform*>(shape)){
+                positionDragger->adjustSize(transform->untransformedBoundingBox());
+            } else {
+                positionDragger->adjustSize(shape->boundingBox());
+            }
+        }
     }
-    
+
+    positionDragger->notifyUpdate();
     sceneLink->addChildOnce(positionDragger);
 }
 

@@ -721,6 +721,7 @@ void LinkPositionView::Impl::onFrameComboActivated(int frameComboIndex, int inde
             endFrame = kinematicsKit->currentEndFrame();
         }
         updatePanel();
+        kinematicsKit->notifyCurrentFrameChange();
     }
 }
 
