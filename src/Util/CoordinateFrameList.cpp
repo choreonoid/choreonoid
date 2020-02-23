@@ -254,11 +254,14 @@ bool CoordinateFrameList::read(const Mapping& archive)
         typeNode.throwException(
             format(_("{0} cannot be loaded as a coordinate frame list"), typeNode.toString()));
     }
-        
-    auto& versionNode = archive.get("formatVersion");
-    auto version = versionNode.toDouble();
+
+    auto versionNode = archive.find("format_version");
+    if(!*versionNode){
+        versionNode = archive.find("formatVersion"); // Old key
+    }
+    auto version = versionNode->toDouble();
     if(version != 1.0){
-        versionNode.throwException(format(_("Format version {0} is not supported."), version));
+        versionNode->throwException(format(_("Format version {0} is not supported."), version));
     }
 
     string name;
@@ -286,7 +289,7 @@ bool CoordinateFrameList::read(const Mapping& archive)
 bool CoordinateFrameList::write(Mapping& archive) const
 {
     archive.write("type", "CoordinateFrameList");
-    archive.write("formatVersion", 1.0);
+    archive.write("format_version", 1.0);
     if(!name().empty()){
         archive.write("name", name());
     }

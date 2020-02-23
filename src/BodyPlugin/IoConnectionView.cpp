@@ -708,13 +708,13 @@ void IoConnectionView::Impl::showContextMenu(int row, QPoint globalPos)
 
 bool IoConnectionView::storeState(Archive& archive)
 {
-    impl->targetItemPicker.storeTargetItem(archive, "currentConnectionMapItem");
+    impl->targetItemPicker.storeTargetItem(archive, "current_connection_map_item");
     return true;
 }
 
 
 bool IoConnectionView::restoreState(const Archive& archive)
 {
-    impl->targetItemPicker.restoreTargetItemLater(archive, "currentConnectionMapItem");
+    impl->targetItemPicker.restoreTargetItemLater(archive, "current_connection_map_item");
     return true;
 }

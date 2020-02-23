@@ -465,7 +465,9 @@ std::string MprSignalStatement::label(int index) const
 
 bool MprSignalStatement::read(MprProgram* program, const Mapping& archive)
 {
-    archive.read("signalIndex", signalIndex_);
+    if(!archive.read("signal_index", signalIndex_)){
+        archive.read("signalIndex", signalIndex_); // Old
+    }
     archive.read("on", on_);
     return true;
 }
@@ -473,7 +475,7 @@ bool MprSignalStatement::read(MprProgram* program, const Mapping& archive)
 
 bool MprSignalStatement::write(Mapping& archive) const
 {
-    archive.write("signalIndex", signalIndex_);
+    archive.write("signal_index", signalIndex_);
     archive.write("on", on_);
     return true;
 }

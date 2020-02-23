@@ -214,7 +214,7 @@ bool MultiCoordinateFrameListItem::store(Archive& archive)
         }
     }
     if(!nodes->empty()){
-        archive.insert("frameLists", nodes);
+        archive.insert("frame_lists", nodes);
     }
     return true;
 }
@@ -222,9 +222,12 @@ bool MultiCoordinateFrameListItem::store(Archive& archive)
 
 bool MultiCoordinateFrameListItem::restore(const Archive& archive)
 {
-    auto& nodes = *archive.findListing("frameLists");
-    if(nodes.isValid()){
-        for(auto& node : nodes){
+    auto nodes = archive.findListing("frame_lists");
+    if(!nodes->isValid()){
+        nodes = archive.findListing("frameLists"); // Old
+    }
+    if(nodes->isValid()){
+        for(auto& node : *nodes){
             auto listNode = node->toMapping();
             int id = listNode->find("id")->toInt();
             if(id >= 0 && id < impl->frameListItems.size()){

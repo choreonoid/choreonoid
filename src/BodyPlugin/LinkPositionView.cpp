@@ -171,9 +171,9 @@ LinkPositionView::Impl::Impl(LinkPositionView* self)
     
     targetType = LinkTarget;
 
-    targetLinkTypeSelection.setSymbol(AnyLink, "anyLink");    
-    targetLinkTypeSelection.setSymbol(RootOrIkLink, "rootOrIkLink");    
-    targetLinkTypeSelection.setSymbol(IkLink, "ikLink");    
+    targetLinkTypeSelection.setSymbol(AnyLink, "any_link");    
+    targetLinkTypeSelection.setSymbol(RootOrIkLink, "root_or_ik_link");    
+    targetLinkTypeSelection.setSymbol(IkLink, "ik_link");    
     targetLinkTypeSelection.select(RootOrIkLink);
     
     dummyKinematicsKit = new LinkKinematicsKit(nullptr);
@@ -1005,11 +1005,11 @@ bool LinkPositionView::storeState(Archive& archive)
 
 bool LinkPositionView::Impl::storeState(Archive& archive)
 {
-    archive.write("targetLinkType", targetLinkTypeSelection.selectedSymbol());
+    archive.write("target_link_type", targetLinkTypeSelection.selectedSymbol());
     coordinateModeSelection.select(coordinateMode);
-    archive.write("coordinateMode", coordinateModeSelection.selectedSymbol());
+    archive.write("coordinate_mode", coordinateModeSelection.selectedSymbol());
     coordinateModeSelection.select(preferredCoordinateMode);
-    archive.write("preferredCoordinateMode", coordinateModeSelection.selectedSymbol());
+    archive.write("preferred_coordinate_mode", coordinateModeSelection.selectedSymbol());
 
     positionWidget->storeState(archive);
 
@@ -1029,15 +1029,15 @@ bool LinkPositionView::Impl::restoreState(const Archive& archive)
     
     string symbol;
 
-    if(archive.read("targetLinkType", symbol)){
+    if(archive.read("target_link_type", symbol)){
         targetLinkTypeSelection.select(symbol);
     }
-    if(archive.read("preferredCoordinateMode", symbol)){
+    if(archive.read("preferred_coordinate_mode", symbol)){
         if(coordinateModeSelection.select(symbol)){
             preferredCoordinateMode = coordinateModeSelection.which();
         }
     }
-    if(archive.read("coordinateMode", symbol)){
+    if(archive.read("coordinate_mode", symbol)){
         if(coordinateModeSelection.select(symbol)){
             setCoordinateMode(coordinateModeSelection.which(), true);
         }

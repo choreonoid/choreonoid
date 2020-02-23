@@ -746,13 +746,13 @@ SignalProxy<void()> CoordinateFrameListView::Impl::sigPositionEditTargetExpired(
 
 bool CoordinateFrameListView::storeState(Archive& archive)
 {
-    impl->targetItemPicker.storeTargetItem(archive, "currentItem");
+    impl->targetItemPicker.storeTargetItem(archive, "current_item");
     return true;
 }
 
 
 bool CoordinateFrameListView::restoreState(const Archive& archive)
 {
-    impl->targetItemPicker.restoreTargetItemLater(archive, "currentItem");
+    impl->targetItemPicker.restoreTargetItemLater(archive, "current_item");
     return true;
 }
