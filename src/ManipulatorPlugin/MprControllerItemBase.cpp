@@ -330,6 +330,12 @@ bool MprControllerItemBase::Impl::createKinematicsKitForControl()
     kinematicsKit->setFrameSets(new LinkCoordinateFrameSet(*orgKit->frameSets()));
     kinematicsKit->setCustomIkDisabled(orgKit->isCustomIkDisabled());
 
+    if(kinematicsKit->isCustomIkDisabled()){
+        io->os() << format(_("Warning: The custom inverse kinematics is disabled in controller \"{0}\" for robot \"{1}\"."),
+                           self->name(), body->name())
+                 << endl;
+    }
+
     return true;
 }
 
@@ -682,6 +688,7 @@ void MprControllerItemBase::Impl::clear()
     startupProgramItem.reset();
     startupProgram.reset();
     currentProgram.reset();
+    otherProgramMap.clear();
     cloneMap.clear();
     kinematicsKit.reset();
     variables.reset();
