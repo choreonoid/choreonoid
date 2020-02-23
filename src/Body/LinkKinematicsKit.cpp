@@ -6,6 +6,7 @@
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
 #include <cnoid/LinkCoordinateFrameSet>
+#include <cnoid/ValueTree>
 
 using namespace std;
 using namespace cnoid;
@@ -20,8 +21,9 @@ public:
     shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointPathConfigurationHandler> configurationHandler;
-    Vector3 referenceRpy;
+    bool isCustomIkDisabled;
     bool isRpySpecified;
+    Vector3 referenceRpy;
     LinkCoordinateFrameSetPtr frameSets;
     GeneralId currentFrameId[3];
     int currentBaseFrameType;
@@ -44,6 +46,7 @@ LinkKinematicsKit::LinkKinematicsKit(Link* link)
 
 LinkKinematicsKit::Impl::Impl(Link* link)
     : link(link),
+      isCustomIkDisabled(false),
       referenceRpy(Vector3::Zero()),
       currentFrameId{ 0, 0, 0 },
       currentBaseFrameType(WorldFrame)
@@ -108,6 +111,9 @@ void LinkKinematicsKit::Impl::setInversetKinematics(std::shared_ptr<InverseKinem
     }
 
     jointPath = dynamic_pointer_cast<JointPath>(ik);
+    if(jointPath){
+        jointPath->setNumericalIKenabled(isCustomIkDisabled);
+    }
 }
 
 
@@ -177,6 +183,29 @@ std::string LinkKinematicsKit::configurationName(int index) const
         return impl->configurationHandler->getConfigurationName(index);
     }
     return std::string();
+}
+
+
+bool LinkKinematicsKit::isCustomIkAvaiable() const
+{
+    return (impl->jointPath && impl->jointPath->hasCustomIK());
+}
+
+
+bool LinkKinematicsKit::isCustomIkDisabled() const
+{
+    return impl->isCustomIkDisabled;
+}
+
+
+void LinkKinematicsKit::setCustomIkDisabled(bool on)
+{
+    if(on != impl->isCustomIkDisabled){
+        if(impl->jointPath){
+            impl->jointPath->setNumericalIKenabled(on);
+        }
+        impl->isCustomIkDisabled = on;
+    }
 }
 
 
@@ -257,25 +286,25 @@ CoordinateFrame* LinkKinematicsKit::endFrame(const GeneralId& id)
 }
 
 
-const GeneralId& LinkKinematicsKit::currentFrameId(int frameType)
+const GeneralId& LinkKinematicsKit::currentFrameId(int frameType) const
 {
     return impl->currentFrameId[frameType];
 }
 
 
-const GeneralId& LinkKinematicsKit::currentWorldFrameId()
+const GeneralId& LinkKinematicsKit::currentWorldFrameId() const
 {
     return impl->currentFrameId[WorldFrame];
 }
 
 
-const GeneralId& LinkKinematicsKit::currentBodyFrameId()
+const GeneralId& LinkKinematicsKit::currentBodyFrameId() const
 {
     return impl->currentFrameId[BodyFrame];
 }
 
 
-const GeneralId& LinkKinematicsKit::currentEndFrameId()
+const GeneralId& LinkKinematicsKit::currentEndFrameId() const
 {
     return impl->currentFrameId[EndFrame];
 }
@@ -341,7 +370,7 @@ void LinkKinematicsKit::setCurrentBaseFrameType(int frameType)
 }
 
 
-const GeneralId& LinkKinematicsKit::currentBaseFrameId()
+const GeneralId& LinkKinematicsKit::currentBaseFrameId() const
 {
     if(impl->currentBaseFrameType == WorldFrame){
         return currentWorldFrameId();
@@ -380,4 +409,56 @@ SignalProxy<void()> LinkKinematicsKit::sigFrameUpdate()
 void LinkKinematicsKit::notifyFrameUpdate()
 {
     impl->sigFrameUpdate();
+}
+
+
+bool LinkKinematicsKit::storeState(Mapping& archive) const
+{
+    const auto defaultId = CoordinateFrame::defaultFrameId();
+    auto& worldId = currentWorldFrameId();
+    if(worldId != defaultId){
+        archive.write("current_world_frame", worldId.label(),
+                      worldId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
+    }
+    auto& bodyId = currentBodyFrameId();
+    if(bodyId != defaultId){
+        archive.write("current_body_frame", bodyId.label(),
+                      bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
+    }
+    auto& endId = currentEndFrameId();
+    if(endId != defaultId){
+        archive.write("current_link_frame", endId.label(),
+                      bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
+    }
+    if(impl->isCustomIkDisabled){
+        archive.write("disable_custom_ik", true);
+    }
+    return true;
+}
+
+
+bool LinkKinematicsKit::restoreState(const Mapping& archive)
+{
+    bool updated = false;
+    GeneralId id;
+    if(id.read(archive, "current_world_frame")){
+        setCurrentWorldFrame(id);
+        updated = true;
+    }
+    if(id.read(archive, "current_body_frame")){
+        setCurrentBodyFrame(id);
+        updated = true;
+    }
+    if(id.read(archive, "current_link_frame")){
+        setCurrentEndFrame(id);
+        updated = true;
+    }
+    bool on;
+    if(archive.read("disable_custom_ik", on)){
+        setCustomIkDisabled(on);
+    }
+    if(updated){
+        notifyFrameUpdate();
+    }
+    return true;
 }

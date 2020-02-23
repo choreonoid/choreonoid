@@ -69,7 +69,6 @@ public:
     LinkKinematicsKitPtr kinematicsKit;
     LinkKinematicsKitPtr dummyKinematicsKit;
     ScopedConnection kinematicsKitConnection;
-    bool isCustomIkDisabled;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
     CoordinateFramePtr endFrame;
@@ -113,7 +112,6 @@ public:
     void setTargetLinkType(int type);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
-    void updateIkMode();
     void setCoordinateFrameInterfaceEnabled(bool on);
     void updateCoordinateFrameCandidates();
     void updateCoordinateFrameCandidates(int frameComboIndex);
@@ -264,8 +262,6 @@ void LinkPositionView::Impl::createPanel()
         [&](const Position& T){ return applyPositionInput(T); });
     vbox->addWidget(positionWidget);
 
-    isCustomIkDisabled = false;
-
     auto grid = new QGridLayout;
     int row = 0;
     grid->setColumnStretch(1, 1);
@@ -400,12 +396,17 @@ void LinkPositionView::Impl::onAttachedMenuRequest(MenuManager& menu)
     menu.addSeparator();
 
     auto disableCustomIkCheck = menu.addCheckItem(_("Disable custom IK"));
-    disableCustomIkCheck->setChecked(isCustomIkDisabled);
+    if(!kinematicsKit || kinematicsKit == dummyKinematicsKit){
+        disableCustomIkCheck->setEnabled(false);
+    } else if(kinematicsKit->isCustomIkDisabled()){
+        disableCustomIkCheck->setChecked(true);
+    }
     disableCustomIkCheck->sigToggled().connect(
         [&](bool on){
-            isCustomIkDisabled = on;
-            updateIkMode();
-            updatePanel();
+            if(kinematicsKit){
+                kinematicsKit->setCustomIkDisabled(on);
+                updatePanel();
+            }
         });
 }
 
@@ -578,8 +579,6 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
             }
             baseFrame = kinematicsKit->currentBaseFrame();
             endFrame = kinematicsKit->currentEndFrame();
-            
-            updateIkMode();
         }
     }
 
@@ -595,16 +594,6 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
 
     setBodyCoordinateModeEnabled(
         !(!kinematicsKit->baseLink() || link == kinematicsKit->baseLink()));
-}
-
-
-void LinkPositionView::Impl::updateIkMode()
-{
-    if(kinematicsKit){
-        if(auto jointPath = kinematicsKit->jointPath()){
-            jointPath->setNumericalIKenabled(isCustomIkDisabled);
-        }
-    }
 }
 
 
@@ -808,7 +797,7 @@ void LinkPositionView::Impl::updateConfigurationCandidates()
             configurationCombo.setCurrentIndex(
                 configurationHandler->getCurrentConfiguration());
         }
-        isConfigurationComboActive = !isCustomIkDisabled;
+        isConfigurationComboActive = !kinematicsKit->isCustomIkDisabled();
     }
 
     setConfigurationInterfaceEnabled(isConfigurationComboActive);
@@ -957,7 +946,7 @@ bool LinkPositionView::Impl::findBodyIkSolution(const Position& T_input)
 
         solved = ik->calcInverseKinematics(T);
         if(solved){
-            if(requireConfigurationCheck.isChecked() && !isCustomIkDisabled){
+            if(requireConfigurationCheck.isChecked() && !kinematicsKit->isCustomIkDisabled()){
                 if(auto configurationHandler = kinematicsKit->configurationHandler()){
                     int preferred = configurationCombo.currentIndex();
                     if(!configurationHandler->checkConfiguration(preferred)){
@@ -1021,7 +1010,6 @@ bool LinkPositionView::Impl::storeState(Archive& archive)
     archive.write("coordinateMode", coordinateModeSelection.selectedSymbol());
     coordinateModeSelection.select(preferredCoordinateMode);
     archive.write("preferredCoordinateMode", coordinateModeSelection.selectedSymbol());
-    archive.write("disableCustomIK", isCustomIkDisabled);
 
     positionWidget->storeState(archive);
 
@@ -1057,8 +1045,6 @@ bool LinkPositionView::Impl::restoreState(const Archive& archive)
 
     positionWidget->restoreState(archive);
     
-    archive.read("disableCustomIK", isCustomIkDisabled);
-
     userInputConnections.unblock();
 
     return true;

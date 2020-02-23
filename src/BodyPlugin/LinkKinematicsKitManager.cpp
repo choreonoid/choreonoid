@@ -326,36 +326,21 @@ void LinkKinematicsKitManager::Impl::onDraggerPositionChanged()
 
 bool LinkKinematicsKitManager::storeState(Mapping& archive) const
 {
-    const auto defaultId = CoordinateFrame::defaultFrameId();
-    archive.setKeyQuoteStyle(DOUBLE_QUOTED);
     auto body = impl->bodyItem->body();
-    
+    archive.setKeyQuoteStyle(DOUBLE_QUOTED);
     for(auto& kv : impl->linkIndexToKinematicsKitMap){
-        auto& kit = kv.second;
-        auto worldId = kit->currentWorldFrameId();
-        auto bodyId = kit->currentBodyFrameId();
-        auto endId = kit->currentEndFrameId();
-        if(worldId != defaultId || bodyId != defaultId || endId != defaultId){
-            int linkIndex = kv.first;
-            auto& linkName = body->link(linkIndex)->name();
-            if(!linkName.empty()){
-                auto& node = *archive.openMapping(linkName);
-                if(worldId != defaultId){
-                    node.write("current_world_frame", worldId.label(),
-                               worldId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
-                }
-                if(bodyId != defaultId){
-                    node.write("current_body_frame", bodyId.label(),
-                               bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
-                }
-                if(endId != defaultId){
-                    node.write("current_link_frame", endId.label(),
-                               bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
-                }
+        int linkIndex = kv.first;
+        if(auto link = body->link(linkIndex)){
+            auto& kit = kv.second;
+            MappingPtr state = new Mapping;
+            if(!kit->storeState(*state)){
+                return false;
+            }
+            if(!state->empty()){
+                archive.insert(link->name(), state);
             }
         }
     }
-
     return true;
 }
 
@@ -363,32 +348,13 @@ bool LinkKinematicsKitManager::storeState(Mapping& archive) const
 bool LinkKinematicsKitManager::restoreState(const Mapping& archive)
 {
     auto body = impl->bodyItem->body();
-    GeneralId id;
-
     for(auto& kv : archive){
         auto& linkName = kv.first;
         if(auto link = body->link(linkName)){
             if(auto kit = findKinematicsKit(link)){
-                auto& node = *kv.second->toMapping();
-                bool updated = false;
-                if(id.read(node, "current_world_frame")){
-                    kit->setCurrentWorldFrame(id);
-                    updated = true;
-                }
-                if(id.read(node, "current_body_frame")){
-                    kit->setCurrentBodyFrame(id);
-                    updated = true;
-                }
-                if(id.read(node, "current_link_frame")){
-                    kit->setCurrentEndFrame(id);
-                    updated = true;
-                }
-                if(updated){
-                    kit->notifyFrameUpdate();
-                }
+                kit->restoreState(*kv.second->toMapping());
             }
         }
     }
-
     return true;
 }

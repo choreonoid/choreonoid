@@ -324,9 +324,11 @@ bool MprControllerItemBase::Impl::createKinematicsKitForControl()
     auto targetLink = body->link(orgKit->link()->index());
     auto baseLink = body->link(orgKit->baseLink()->index());
 
+    //! \todo Define and use the copy construcot of LinkKinematicsKit using a clone map
     kinematicsKit = new LinkKinematicsKit(targetLink);
     kinematicsKit->setBaseLink(baseLink);
     kinematicsKit->setFrameSets(new LinkCoordinateFrameSet(*orgKit->frameSets()));
+    kinematicsKit->setCustomIkDisabled(orgKit->isCustomIkDisabled());
 
     return true;
 }

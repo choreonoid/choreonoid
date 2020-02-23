@@ -42,6 +42,10 @@ public:
     int currentConfiguration() const;
     std::string configurationName(int index) const;
 
+    bool isCustomIkAvaiable() const;
+    bool isCustomIkDisabled() const;
+    void setCustomIkDisabled(bool on);
+
     Vector3 referenceRpy() const;
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();
@@ -63,10 +67,10 @@ public:
     CoordinateFrame* bodyFrame(const GeneralId& id);
     CoordinateFrame* endFrame(const GeneralId& id);
 
-    const GeneralId& currentFrameId(int frameType);
-    const GeneralId& currentWorldFrameId();
-    const GeneralId& currentBodyFrameId();
-    const GeneralId& currentEndFrameId();
+    const GeneralId& currentFrameId(int frameType) const;
+    const GeneralId& currentWorldFrameId() const;
+    const GeneralId& currentBodyFrameId() const;
+    const GeneralId& currentEndFrameId() const;
     
     CoordinateFrame* currentFrame(int frameType);
     CoordinateFrame* currentWorldFrame();
@@ -80,13 +84,16 @@ public:
 
     int currentBaseFrameType(); // WorldFrame or BodyFrame
     void setCurrentBaseFrameType(int frameType);
-    const GeneralId& currentBaseFrameId();
+    const GeneralId& currentBaseFrameId() const;
     CoordinateFrame* currentBaseFrame();
     void setCurrentBaseFrame(const GeneralId& id);
 
     // Any update on frames (frame lists, current frames, etc.)
     SignalProxy<void()> sigFrameUpdate();
     void notifyFrameUpdate();
+
+    bool storeState(Mapping& archive) const;
+    bool restoreState(const Mapping& archive);
 
 private:
     class Impl;
