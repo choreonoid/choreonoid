@@ -836,13 +836,13 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 
     positionDragger->setOffset(positionDragger->T());
 
-    // Even if the connection to sigCurrentFrameChanged is remade, it must
+    // Even if the connection to sigFrameUpdate is remade, it must
     // first be disconnected to avoid the infinite loop to call the newly
     // connected slot when this function is called by the signal.
     kinematicsKitConnection.disconnect();
     if(kinematicsKit){
         kinematicsKitConnection =
-            kinematicsKit->sigCurrentFrameChanged().connect(
+            kinematicsKit->sigFrameUpdate().connect(
                 [this, link](){ attachPositionDragger(link); });
     }
     

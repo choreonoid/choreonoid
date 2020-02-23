@@ -84,8 +84,9 @@ public:
     CoordinateFrame* currentBaseFrame();
     void setCurrentBaseFrame(const GeneralId& id);
 
-    SignalProxy<void()> sigCurrentFrameChanged();
-    void notifyCurrentFrameChange();
+    // Any update on frames (frame lists, current frames, etc.)
+    SignalProxy<void()> sigFrameUpdate();
+    void notifyFrameUpdate();
 
 private:
     class Impl;

@@ -1650,7 +1650,7 @@ bool BodyItem::Impl::store(Archive& archive)
     if(linkKinematicsKitManager){
         MappingPtr kinematicsNode = new Mapping;
         if(linkKinematicsKitManager->storeState(*kinematicsNode) && !kinematicsNode->empty()){
-            archive.insert("linkKinematics", kinematicsNode);
+            archive.insert("link_kinematics", kinematicsNode);
         }
     }
 
@@ -1779,7 +1779,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
         self->setSceneSensitive(on);
     }
        
-    auto kinematicsNode = archive.findMapping("linkKinematics");
+    auto kinematicsNode = archive.findMapping("link_kinematics");
     if(kinematicsNode->isValid()){
         getOrCreateLinkKinematicsKitManager()->restoreState(*kinematicsNode);
     }

@@ -40,7 +40,7 @@ public:
     // Use an integer value as a key to keep the number of instances growing
     map<int, LinkKinematicsKitPtr> linkIndexToKinematicsKitMap;
 
-    ScopedConnection treeChangeConnection;
+    ScopedConnection frameListConnection;
     LinkCoordinateFrameSetPtr commonFrameSets;
 
     BodySelectionManager* bodySelectionManager;
@@ -53,9 +53,7 @@ public:
 
     Impl(BodyItem* bodyItem);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
-    LinkCoordinateFrameSetPtr extractCoordinateFrameSets();
-    LinkCoordinateFrameSetPtr extractWorldCoordinateFrameSets(Item* item);
-    void onTreeChanged();
+    void onFrameListSetItemAddedOrUpdated(LinkCoordinateFrameListSetItem* frameListSetItem);
     void setupPositionDragger();
     bool onPositionEditRequest(AbstractPositionEditTarget* target);
     bool startBodyFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
@@ -78,9 +76,12 @@ LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
     : bodyItem(bodyItem)
 {
     commonFrameSets = new LinkCoordinateFrameSet;
-    
-    treeChangeConnection =
-        RootItem::instance()->sigTreeChanged().connect([&](){ onTreeChanged(); });
+
+    frameListConnection =
+        LinkCoordinateFrameListSetItem::sigInstanceAddedOrUpdated().connect(
+            [&](LinkCoordinateFrameListSetItem* frameListSetItem){
+                onFrameListSetItemAddedOrUpdated(frameListSetItem);
+            });
 
     bodySelectionManager = BodySelectionManager::instance();
     
@@ -160,54 +161,39 @@ std::shared_ptr<InverseKinematics> LinkKinematicsKitManager::Impl::findPresetIK(
 }
 
 
-LinkCoordinateFrameSetPtr LinkKinematicsKitManager::Impl::extractCoordinateFrameSets()
+void LinkKinematicsKitManager::Impl::onFrameListSetItemAddedOrUpdated
+(LinkCoordinateFrameListSetItem* frameListSetItem)
 {
-    LinkCoordinateFrameSetPtr extracted;
+    bool isTargetFrameList = false;
     
-    auto lowerItems = bodyItem->descendantItems<LinkCoordinateFrameListSetItem>();
-    
-    if(!lowerItems.empty()){
-        extracted = lowerItems.front()->frameSets();
+    auto upperItem = frameListSetItem->parentItem();
+    while(upperItem){
+        if(auto upperBodyItem = dynamic_cast<BodyItem*>(upperItem)){
+            if(upperBodyItem == bodyItem){
+                isTargetFrameList = true;
+                break;
+            }
+        } else if(auto worldItem = dynamic_cast<WorldItem*>(upperItem)){
+            if(bodyItem->findOwnerItem<WorldItem>() == worldItem){
+                isTargetFrameList = true;
+                break;
+            }
+        }
+        upperItem = upperItem->parentItem();
+    }
+    if(!isTargetFrameList){
+        if(bodyItem->findOwnerItem<LinkCoordinateFrameListSetItem>() == frameListSetItem){
+            isTargetFrameList = true;
+        }
+    }
         
-    } else {
-        auto upperItem = bodyItem->parentItem();
-        while(upperItem){
-            if(auto listSetItem = dynamic_cast<LinkCoordinateFrameListSetItem*>(upperItem)){
-                extracted = listSetItem->frameSets();
-                break;
-            }
-            if(auto worldItem = dynamic_cast<WorldItem*>(upperItem)){
-                extracted = extractWorldCoordinateFrameSets(worldItem);
-                break;
-            }
-            upperItem = upperItem->parentItem();
+    if(isTargetFrameList){
+        *commonFrameSets = *frameListSetItem->frameSets();
+
+        for(auto& kv : linkIndexToKinematicsKitMap){
+            auto& kit = kv.second;
+            kit->notifyFrameUpdate();
         }
-    }
-
-    return extracted;
-}
-
-
-LinkCoordinateFrameSetPtr LinkKinematicsKitManager::Impl::extractWorldCoordinateFrameSets(Item* item)
-{
-    if(auto listSetItem = dynamic_cast<LinkCoordinateFrameListSetItem*>(item)){
-        return listSetItem->frameSets();
-    } else if(auto bodyItem = dynamic_cast<BodyItem*>(item)){
-        return nullptr;
-    }
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        if(auto frameSets = extractWorldCoordinateFrameSets(child)){
-            return frameSets;
-        }
-    }
-    return nullptr;
-}
-
-
-void LinkKinematicsKitManager::Impl::onTreeChanged()
-{
-    if(auto fsets = extractCoordinateFrameSets()){
-        *commonFrameSets = *fsets;
     }
 }
 
@@ -355,13 +341,16 @@ bool LinkKinematicsKitManager::storeState(Mapping& archive) const
             if(!linkName.empty()){
                 auto& node = *archive.openMapping(linkName);
                 if(worldId != defaultId){
-                    node.write("currentWorldFrame", worldId.label(), DOUBLE_QUOTED);
+                    node.write("current_world_frame", worldId.label(),
+                               worldId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
                 }
                 if(bodyId != defaultId){
-                    node.write("currentBodyFrame", bodyId.label(), DOUBLE_QUOTED);
+                    node.write("current_body_frame", bodyId.label(),
+                               bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
                 }
                 if(endId != defaultId){
-                    node.write("currentEndFrame", endId.label(), DOUBLE_QUOTED);
+                    node.write("current_link_frame", endId.label(),
+                               bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
                 }
             }
         }
@@ -381,14 +370,21 @@ bool LinkKinematicsKitManager::restoreState(const Mapping& archive)
         if(auto link = body->link(linkName)){
             if(auto kit = findKinematicsKit(link)){
                 auto& node = *kv.second->toMapping();
-                if(id.read(node, "currentWorldFrame")){
+                bool updated = false;
+                if(id.read(node, "current_world_frame")){
                     kit->setCurrentWorldFrame(id);
+                    updated = true;
                 }
-                if(id.read(node, "currentBodyFrame")){
+                if(id.read(node, "current_body_frame")){
                     kit->setCurrentBodyFrame(id);
+                    updated = true;
                 }
-                if(id.read(node, "currentEndFrame")){
+                if(id.read(node, "current_link_frame")){
                     kit->setCurrentEndFrame(id);
+                    updated = true;
+                }
+                if(updated){
+                    kit->notifyFrameUpdate();
                 }
             }
         }

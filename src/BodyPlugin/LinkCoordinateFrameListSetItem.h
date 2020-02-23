@@ -13,6 +13,8 @@ class CNOID_EXPORT LinkCoordinateFrameListSetItem : public MultiCoordinateFrameL
 public:
     static void initializeClass(ExtensionManager* ext);
 
+    static SignalProxy<void(LinkCoordinateFrameListSetItem* frameListSetItem)> sigInstanceAddedOrUpdated();
+
     enum FrameType {
         WorldFrame = LinkCoordinateFrameSet::WorldFrame,
         BodyFrame  = LinkCoordinateFrameSet::BodyFrame,
@@ -41,6 +43,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
 
 private:
     void initializeFrameListEnabling();

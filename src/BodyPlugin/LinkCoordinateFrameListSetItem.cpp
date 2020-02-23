@@ -17,6 +17,7 @@ string endFrameListLabel;
 bool enabledFlags[] = { 1, 1, 1 };
 
 Signal<void(LinkCoordinateFrameListSetItem::FrameType type, bool on)> sigEnabledFrameListsChanged;
+Signal<void(LinkCoordinateFrameListSetItem* frameListSetItem)> sigInstanceAddedOrUpdated_;
 
 class EndCoordinateFrameListItem;
 
@@ -67,6 +68,13 @@ void LinkCoordinateFrameListSetItem::initializeClass(ExtensionManager* ext)
 }
 
 
+SignalProxy<void(LinkCoordinateFrameListSetItem* frameListSetItem)>
+LinkCoordinateFrameListSetItem::sigInstanceAddedOrUpdated()
+{
+    return ::sigInstanceAddedOrUpdated_;
+}
+
+
 void LinkCoordinateFrameListSetItem::setFrameListLabels
 (const char* worldFrameLabel, const char* bodyFrameLabel, const char* endFrameLabel)
 {
@@ -90,15 +98,15 @@ LinkCoordinateFrameListSetItem::LinkCoordinateFrameListSetItem()
     
     auto worldFrameListItem = new CoordinateFrameListItem;
     worldFrameListItem->setName(::worldFrameListLabel);
-    setFrameListItem(0, worldFrameListItem);
+    setFrameListItem(WorldFrame, worldFrameListItem);
 
     auto bodyFrameListItem = new CoordinateFrameListItem;
     bodyFrameListItem->setName(::bodyFrameListLabel);
-    setFrameListItem(1, bodyFrameListItem);
+    setFrameListItem(BodyFrame, bodyFrameListItem);
 
     auto endFrameListItem = new EndCoordinateFrameListItem;
     endFrameListItem->setName(::endFrameListLabel);
-    setFrameListItem(2, endFrameListItem);
+    setFrameListItem(EndFrame, endFrameListItem);
     
     replaceFrameListContainer(new LinkCoordinateFrameSet);
     initializeFrameListEnabling();
@@ -130,6 +138,12 @@ void LinkCoordinateFrameListSetItem::initializeFrameListEnabling()
 Item* LinkCoordinateFrameListSetItem::doDuplicate() const
 {
     return new LinkCoordinateFrameListSetItem(*this);
+}
+
+
+void LinkCoordinateFrameListSetItem::onPositionChanged()
+{
+    ::sigInstanceAddedOrUpdated_(this);
 }
 
 

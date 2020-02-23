@@ -25,7 +25,7 @@ public:
     LinkCoordinateFrameSetPtr frameSets;
     GeneralId currentFrameId[3];
     int currentBaseFrameType;
-    Signal<void()> sigCurrentFrameChanged;
+    Signal<void()> sigFrameUpdate;
     
     Impl(Link* link);
     void setBaseLink(Link* link);
@@ -371,13 +371,13 @@ void LinkKinematicsKit::setCurrentBaseFrame(const GeneralId& id)
 }
     
 
-SignalProxy<void()> LinkKinematicsKit::sigCurrentFrameChanged()
+SignalProxy<void()> LinkKinematicsKit::sigFrameUpdate()
 {
-    return impl->sigCurrentFrameChanged;
+    return impl->sigFrameUpdate;
 }
 
 
-void LinkKinematicsKit::notifyCurrentFrameChange()
+void LinkKinematicsKit::notifyFrameUpdate()
 {
-    impl->sigCurrentFrameChanged();
+    impl->sigFrameUpdate();
 }

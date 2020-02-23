@@ -1468,7 +1468,7 @@ bool MprProgramViewBase::Impl::updateBodyPositionWithPositionStatement
                         kinematicsKit->setCurrentBaseFrameType(ikPosition->baseFrameType());
                         kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
                         kinematicsKit->setCurrentEndFrame(ikPosition->toolFrameId());
-                        kinematicsKit->notifyCurrentFrameChange();
+                        kinematicsKit->notifyFrameUpdate();
                     }
                 }
                 if(doNotifyKinematicStateChange){
