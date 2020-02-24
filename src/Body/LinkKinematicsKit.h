@@ -2,7 +2,7 @@
 #define CNOID_BODY_LINK_KINEMATICS_KIT_H
 
 #include <cnoid/LinkCoordinateFrameSet>
-#include <cnoid/Referenced>
+#include <cnoid/CloneableReferenced>
 #include <cnoid/Signal>
 #include <memory>
 #include <string>
@@ -20,7 +20,7 @@ class CoordinateFrameSet;
 class LinkCoordinateFrameSet;
 class InverseKinematics;
 
-class CNOID_EXPORT LinkKinematicsKit : public Referenced
+class CNOID_EXPORT LinkKinematicsKit : public CloneableReferenced
 {
 public:
     LinkKinematicsKit(Link* link);
@@ -94,6 +94,10 @@ public:
 
     bool storeState(Mapping& archive) const;
     bool restoreState(const Mapping& archive);
+
+protected:
+    LinkKinematicsKit(const LinkKinematicsKit& org, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     class Impl;

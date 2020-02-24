@@ -6,6 +6,7 @@
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
 #include <cnoid/LinkCoordinateFrameSet>
+#include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 
 using namespace std;
@@ -30,9 +31,11 @@ public:
     Signal<void()> sigFrameUpdate;
     
     Impl(Link* link);
+    Impl(const Impl& org, CloneMap* cloneMap);
     void setBaseLink(Link* link);
     void setInversetKinematics(std::shared_ptr<InverseKinematics> ik);
     void setFrameSets(LinkCoordinateFrameSet* frameSets);
+    Link* baseLink();
 };
 
 }
@@ -55,7 +58,42 @@ LinkKinematicsKit::Impl::Impl(Link* link)
         body = link->body();
     }
 }
+
+
+LinkKinematicsKit::LinkKinematicsKit(const LinkKinematicsKit& org, CloneMap* cloneMap)
+{
+    impl = new Impl(*org.impl, cloneMap);
+}
+
+
+LinkKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
+{
+    isCustomIkDisabled = org.isCustomIkDisabled;
+    referenceRpy.setZero();
+    for(int i=0; i < 3; ++i){
+        currentFrameId[i] = org.currentFrameId[i];
+    }
+    currentBaseFrameType = org.currentBaseFrameType;
     
+    if(cloneMap){
+        body = cloneMap->getClone(org.body);
+        if(body){
+            link = body->link(org.link->index());
+            if(auto orgBaseLink = const_cast<Impl&>(org).baseLink()){
+                auto baseLink = body->link(orgBaseLink->index());
+                setBaseLink(baseLink);
+            }
+        }
+        setFrameSets(cloneMap->getClone(org.frameSets));
+    }
+}
+
+
+Referenced* LinkKinematicsKit::doClone(CloneMap* cloneMap) const
+{
+    return new LinkKinematicsKit(*this, cloneMap);
+}
+
 
 LinkKinematicsKit::~LinkKinematicsKit()
 {
@@ -82,6 +120,7 @@ void LinkKinematicsKit::Impl::setBaseLink(Link* baseLink)
             if(jointPath->hasCustomIK()){
                 configurationHandler =
                     dynamic_pointer_cast<JointPathConfigurationHandler>(jointPath);
+                jointPath->setNumericalIKenabled(isCustomIkDisabled);
             }
         }
     }
@@ -141,12 +180,18 @@ Link* LinkKinematicsKit::link()
 }
 
 
-Link* LinkKinematicsKit::baseLink()
+Link* LinkKinematicsKit::Impl::baseLink()
 {
-    if(impl->jointPath){
-        return impl->jointPath->baseLink();
+    if(jointPath){
+        return jointPath->baseLink();
     }
     return nullptr;
+}
+
+
+Link* LinkKinematicsKit::baseLink()
+{
+    return impl->baseLink();
 }
 
 
