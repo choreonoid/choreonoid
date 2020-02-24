@@ -462,17 +462,17 @@ bool LinkKinematicsKit::storeState(Mapping& archive) const
     const auto defaultId = CoordinateFrame::defaultFrameId();
     auto& worldId = currentWorldFrameId();
     if(worldId != defaultId){
-        archive.write("current_world_frame", worldId.label(),
+        archive.write("world_frame", worldId.label(),
                       worldId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
     }
     auto& bodyId = currentBodyFrameId();
     if(bodyId != defaultId){
-        archive.write("current_body_frame", bodyId.label(),
+        archive.write("body_frame", bodyId.label(),
                       bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
     }
     auto& endId = currentEndFrameId();
     if(endId != defaultId){
-        archive.write("current_link_frame", endId.label(),
+        archive.write("link_frame", endId.label(),
                       bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
     }
     if(impl->isCustomIkDisabled){
@@ -486,15 +486,15 @@ bool LinkKinematicsKit::restoreState(const Mapping& archive)
 {
     bool updated = false;
     GeneralId id;
-    if(id.read(archive, "current_world_frame")){
+    if(id.read(archive, "world_frame")){
         setCurrentWorldFrame(id);
         updated = true;
     }
-    if(id.read(archive, "current_body_frame")){
+    if(id.read(archive, "body_frame")){
         setCurrentBodyFrame(id);
         updated = true;
     }
-    if(id.read(archive, "current_link_frame")){
+    if(id.read(archive, "link_frame")){
         setCurrentEndFrame(id);
         updated = true;
     }
