@@ -143,6 +143,7 @@ void DigitalIoDevice::setOut(int index, bool on, bool doNotify)
 
     if(doNotify && ns){
         ns->sigOutputMap[index](on);
+        notifyStateChange();
     }
 }
 
@@ -166,6 +167,7 @@ void DigitalIoDevice::setIn(int index, bool on, bool doNotify)
     
     if(doNotify && ns){
         ns->sigInputMap[index](on);
+        notifyStateChange();
     }
 }
 
