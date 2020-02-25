@@ -45,6 +45,7 @@ set(sources
   JointDisplacementView.cpp
   JointStateView.cpp
   BodyStateView.cpp
+  DigitalIoDeviceView.cpp
   IoConnectionView.cpp
   JointGraphView.cpp
   LinkGraphView.cpp

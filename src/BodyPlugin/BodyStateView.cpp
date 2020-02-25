@@ -69,6 +69,7 @@ public:
     void updateDeviceStates(DevicePtr device, int rowIndex);
     void updateExtraStates();
 };
+
 }
 
 

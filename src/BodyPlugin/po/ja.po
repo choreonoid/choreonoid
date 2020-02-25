@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-20 21:04+0900\n"
+"POT-Creation-Date: 2020-02-25 22:08+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -369,11 +369,11 @@ msgstr "角度"
 msgid "Torque"
 msgstr "トルク"
 
-#: JointStateView.cpp:361 BodyStateView.cpp:284
+#: JointStateView.cpp:361 BodyStateView.cpp:285
 msgid "ON"
 msgstr ""
 
-#: JointStateView.cpp:361 BodyStateView.cpp:284
+#: JointStateView.cpp:361 BodyStateView.cpp:285
 msgid "OFF"
 msgstr ""
 
@@ -426,59 +426,59 @@ msgstr "サイズ"
 msgid "Color"
 msgstr "色"
 
-#: EditableSceneBody.cpp:1126
+#: EditableSceneBody.cpp:1147
 msgid "Lock location"
 msgstr "配置ロック"
 
-#: EditableSceneBody.cpp:1134
+#: EditableSceneBody.cpp:1155
 msgid "Move Forcibly"
 msgstr "強制移動"
 
-#: EditableSceneBody.cpp:1139
+#: EditableSceneBody.cpp:1160
 msgid "Hold Forcibly"
 msgstr "強制保持"
 
-#: EditableSceneBody.cpp:1147
+#: EditableSceneBody.cpp:1168
 msgid "Set Free"
 msgstr "フリーに"
 
-#: EditableSceneBody.cpp:1149
+#: EditableSceneBody.cpp:1170
 msgid "Set Base"
 msgstr "ベースに"
 
-#: EditableSceneBody.cpp:1151
+#: EditableSceneBody.cpp:1172
 msgid "Set Translation Pin"
 msgstr "並進ピンをセット"
 
-#: EditableSceneBody.cpp:1153
+#: EditableSceneBody.cpp:1174
 msgid "Set Rotation Pin"
 msgstr "回転ピンをセット"
 
-#: EditableSceneBody.cpp:1155
+#: EditableSceneBody.cpp:1176
 msgid "Set Both Pins"
 msgstr "両方のピンをセット"
 
-#: EditableSceneBody.cpp:1160
+#: EditableSceneBody.cpp:1181
 msgid "Level Attitude"
 msgstr "水平姿勢に"
 
-#: EditableSceneBody.cpp:1166
+#: EditableSceneBody.cpp:1187
 msgid "Markers"
 msgstr "マーカー"
 
-#: EditableSceneBody.cpp:1168
+#: EditableSceneBody.cpp:1189
 msgid "Center of Mass"
 msgstr "重心"
 
-#: EditableSceneBody.cpp:1172
+#: EditableSceneBody.cpp:1193
 msgid "Projection Point of CoM"
 msgstr "重心投影点"
 
-#: EditableSceneBody.cpp:1176
+#: EditableSceneBody.cpp:1197
 msgid "ZMP"
 msgstr "ZMP"
 
-#: EditableSceneBody.cpp:1606
+#: EditableSceneBody.cpp:1627
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
@@ -514,7 +514,7 @@ msgstr ""
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:118 BodyItem.cpp:1600
+#: LinkPropertyView.cpp:118 BodyItem.cpp:1558
 msgid "Mass"
 msgstr "質量"
 
@@ -638,99 +638,99 @@ msgstr "運動学シミュレータアイテム"
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
 
-#: LinkPositionView.cpp:148
+#: LinkPositionView.cpp:144
 msgid "Link Position"
 msgstr "リンクポジション"
 
-#: LinkPositionView.cpp:217
+#: LinkPositionView.cpp:209
 msgid "Fetch"
 msgstr "取込"
 
-#: LinkPositionView.cpp:220 FilterDialogs.cpp:108 FilterDialogs.cpp:212
+#: LinkPositionView.cpp:212 FilterDialogs.cpp:108 FilterDialogs.cpp:212
 msgid "Apply"
 msgstr "適用"
 
-#: LinkPositionView.cpp:226
+#: LinkPositionView.cpp:218
 msgid "Coord:"
 msgstr "座標系"
 
-#: LinkPositionView.cpp:231
+#: LinkPositionView.cpp:223
 msgid "World"
 msgstr "ワールド"
 
-#: LinkPositionView.cpp:238 BodyItem.cpp:204
+#: LinkPositionView.cpp:230 BodyItem.cpp:202
 msgid "Body"
 msgstr "ボディ"
 
-#: LinkPositionView.cpp:244
+#: LinkPositionView.cpp:236
 msgid "Local"
 msgstr "ローカル"
 
-#: LinkPositionView.cpp:273
+#: LinkPositionView.cpp:263
 msgid "Base"
 msgstr "ベース"
 
-#: LinkPositionView.cpp:274
+#: LinkPositionView.cpp:264
 msgid "End"
 msgstr "エンド"
 
-#: LinkPositionView.cpp:289
+#: LinkPositionView.cpp:279
 msgid "Config"
 msgstr "形態"
 
-#: LinkPositionView.cpp:296
+#: LinkPositionView.cpp:286
 msgid "Pref."
 msgstr "希望形態"
 
-#: LinkPositionView.cpp:305
+#: LinkPositionView.cpp:295
 msgid "Req."
 msgstr "必須"
 
-#: LinkPositionView.cpp:386
+#: LinkPositionView.cpp:376
 msgid "Target link type"
 msgstr "対象リンクタイプ"
 
-#: LinkPositionView.cpp:388
+#: LinkPositionView.cpp:378
 msgid "Any links"
 msgstr "全リンク"
 
-#: LinkPositionView.cpp:389
+#: LinkPositionView.cpp:379
 msgid "IK priority link and root link"
 msgstr "逆運動学優先／ルートリンク"
 
-#: LinkPositionView.cpp:390
+#: LinkPositionView.cpp:380
 msgid "IK priority link"
 msgstr "逆運動学優先リンク"
 
-#: LinkPositionView.cpp:402
+#: LinkPositionView.cpp:392
 msgid "Disable custom IK"
 msgstr "カスタムIKを使用しない"
 
-#: LinkPositionView.cpp:562
+#: LinkPositionView.cpp:553
 msgid "World Origin"
 msgstr "ワールド原点"
 
-#: LinkPositionView.cpp:566
+#: LinkPositionView.cpp:557
 msgid "Origin"
 msgstr "原点"
 
-#: LinkPositionView.cpp:862
+#: LinkPositionView.cpp:857
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionView.cpp:970
+#: LinkPositionView.cpp:974
 msgid "Solved"
 msgstr "解有り"
 
-#: LinkPositionView.cpp:974
+#: LinkPositionView.cpp:978
 msgid "Not Solved"
 msgstr "解無し"
 
-#: LinkPositionView.cpp:994
+#: LinkPositionView.cpp:997
 msgid "Accepted"
 msgstr ""
 
-#: LinkPositionView.cpp:997
+#: LinkPositionView.cpp:1000
 msgid "Not Accepted"
 msgstr ""
 
@@ -830,9 +830,41 @@ msgstr "干渉列アイテム"
 msgid "Collision Data"
 msgstr "干渉データ"
 
-#: LinkCoordinateFrameListSetItem.cpp:58
+#: LinkCoordinateFrameListSetItem.cpp:59
 msgid "LinkCoordinateFrameListSetItem"
 msgstr "リンク座標フレームリスト一式アイテム"
+
+#: DigitalIoDeviceView.cpp:131
+msgid "Input label"
+msgstr "入力名"
+
+#: DigitalIoDeviceView.cpp:133
+msgid "Input"
+msgstr "入力"
+
+#: DigitalIoDeviceView.cpp:135
+msgid "Output label"
+msgstr "出力名"
+
+#: DigitalIoDeviceView.cpp:137
+msgid "Output"
+msgstr "出力"
+
+#: DigitalIoDeviceView.cpp:197 DigitalIoDeviceView.cpp:251
+msgid "On"
+msgstr "オン"
+
+#: DigitalIoDeviceView.cpp:197 DigitalIoDeviceView.cpp:252
+msgid "Off"
+msgstr "オフ"
+
+#: DigitalIoDeviceView.cpp:293
+msgid "I/O device"
+msgstr "I/Oデバイス"
+
+#: DigitalIoDeviceView.cpp:405
+msgid "{0} (No I/O)"
+msgstr "{0} (I/O無し)"
 
 #: SimulationBar.cpp:52
 msgid "SimulationBar"
@@ -1123,7 +1155,7 @@ msgstr "タイムスタンプ接尾辞"
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
 
-#: BodyStateView.cpp:78
+#: BodyStateView.cpp:79
 msgid "Body State"
 msgstr "ボディ状態"
 
@@ -1156,91 +1188,91 @@ msgstr ""
 "B-Splineフィルタを{0}に適用中: 入力フレームレート = {1}, 出力フレームレート "
 "= {2}"
 
-#: BodyItem.cpp:264
+#: BodyItem.cpp:262
 msgid "[ Mesh import hints ]"
 msgstr "[ メッシュインポートのヒント ]"
 
-#: BodyItem.cpp:265
+#: BodyItem.cpp:263
 msgid "Unit:"
 msgstr "単位："
 
-#: BodyItem.cpp:267
+#: BodyItem.cpp:265
 msgid "Meter"
 msgstr "メートル"
 
-#: BodyItem.cpp:268
+#: BodyItem.cpp:266
 msgid "Millimeter"
 msgstr "ミリメートル"
 
-#: BodyItem.cpp:269
+#: BodyItem.cpp:267
 msgid "Inch"
 msgstr "インチ"
 
-#: BodyItem.cpp:271
+#: BodyItem.cpp:269
 msgid "Upper axis:"
 msgstr "上方軸："
 
-#: BodyItem.cpp:345
+#: BodyItem.cpp:343
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1476
+#: BodyItem.cpp:1434
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1517
+#: BodyItem.cpp:1475
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1594
+#: BodyItem.cpp:1552
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1595
+#: BodyItem.cpp:1553
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1596
+#: BodyItem.cpp:1554
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1597
+#: BodyItem.cpp:1555
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1598
+#: BodyItem.cpp:1556
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1599
+#: BodyItem.cpp:1557
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1601
+#: BodyItem.cpp:1559
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1603 WorldItem.cpp:500
+#: BodyItem.cpp:1561 WorldItem.cpp:500
 msgid "Collision detection"
 msgstr "干渉検出"
 
-#: BodyItem.cpp:1605
+#: BodyItem.cpp:1563
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1607
+#: BodyItem.cpp:1565
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1609
+#: BodyItem.cpp:1567
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1762
+#: BodyItem.cpp:1720
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1779
+#: BodyItem.cpp:1737
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1575,7 +1607,7 @@ msgstr "干渉データの記録"
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
-#: BodyPlugin.cpp:147
+#: BodyPlugin.cpp:149
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -1707,4 +1739,3 @@ msgstr "ダイヤル"
 #: JointDisplacementView.cpp:514
 msgid "Phase"
 msgstr "位相"
-

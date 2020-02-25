@@ -39,7 +39,6 @@ public:
     VariableListModel(QObject* parent);
     void setVariableList(MprVariableList* variables);
     void refresh();
-    bool isValid() const;
     int numVariables() const;
     MprVariable* variableAtRow(int row);
     int rowOfVariable(MprVariable* variable) const;
@@ -165,12 +164,6 @@ void VariableListModel::refresh()
     beginResetModel();
     endResetModel();
 }    
-
-
-bool VariableListModel::isValid() const
-{
-    return variables != nullptr;
-}
 
 
 int VariableListModel::numVariables() const
@@ -550,7 +543,7 @@ MprVariableListViewBase::Impl::Impl(MprVariableListViewBase* self)
     : self(self),
       targetItemPicker(self)
 {
-    self->setDefaultLayoutArea(View::RIGHT);
+    self->setDefaultLayoutArea(View::BOTTOM);
 
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);

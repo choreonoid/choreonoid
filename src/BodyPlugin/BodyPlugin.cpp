@@ -32,6 +32,7 @@
 #include "JointDisplacementView.h"
 #include "JointStateView.h"
 #include "BodyStateView.h"
+#include "DigitalIoDeviceView.h"
 #include "IoConnectionView.h"
 #include "JointGraphView.h"
 #include "LinkGraphView.h"
@@ -121,6 +122,7 @@ public:
         JointDisplacementView::initializeClass(this);
         JointStateView::initializeClass(this);
         BodyStateView::initializeClass(this);
+        DigitalIoDeviceView::initializeClass(this);
         IoConnectionView::initializeClass(this);
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
