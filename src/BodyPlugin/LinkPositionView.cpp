@@ -538,10 +538,10 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
     }
     
     targetLink = link;
+    kinematicsKit.reset();
+    kinematicsKitConnection.reset();
     
     if(!targetLink){
-        kinematicsKit.reset();
-        kinematicsKitConnection.reset();
         targetLabel.setText("------");
 
     } else {
