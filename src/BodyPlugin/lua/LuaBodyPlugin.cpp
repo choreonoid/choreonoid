@@ -26,7 +26,6 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_BodyPlugin(lua_State* L)
         "cast", [](Item* item) -> BodyItemPtr { return dynamic_cast<BodyItem*>(item); },
         "setName", &BodyItem::setName,
         "body", [](BodyItem* self) -> BodyPtr { return self->body(); },
-        "isEditable", &BodyItem::isEditable,
         "moveToOrigin", &BodyItem::moveToOrigin,
         "setPresetPose", &BodyItem::setPresetPose,
         "currentBaseLink", [](BodyItem* self) -> LinkPtr { return self->currentBaseLink(); },

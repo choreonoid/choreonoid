@@ -25,7 +25,6 @@ void exportBodyItem(py::module m)
     bodyItem
         .def(py::init<>())
         .def_property_readonly("body", &BodyItem::body)
-        .def("isEditable", &BodyItem::isEditable)
         .def("moveToOrigin", &BodyItem::moveToOrigin)
         .def("setPresetPose", &BodyItem::setPresetPose)
         .def_property_readonly("currentBaseLink", &BodyItem::currentBaseLink)
