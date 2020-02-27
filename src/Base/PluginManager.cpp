@@ -478,14 +478,12 @@ bool PluginManager::Impl::loadPlugin(int index)
           If some plugins do not work correctly due to a dynamic link problem, the problem might be solved
           by enabling the following option. However, this option might cause the symbol conflicts amaong
           internally used libraries and the functions provided by plugins may not be able to work correctly.
-          Currently the options is enabled by default to follow the previous configuration, the option is
-          going to be disabled after a while.
-          Note that this options is originally introduced to make the Python plugin work correctly with
-          binary Python modules. However, it is now handled inside the Python plugin, and it is not neccessary
-          to enable the option to use Python modules.
+          Note that this options is originally required to make the Python plugin able to import binary
+          Python modules on Linux. However, it is now handled inside the Python plugin, and it is not
+          neccessary to enable the option to use Python modules.
         */
         char* CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS = getenv("CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS");
-        if(!CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS || (strcmp(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS, "1") == 0)){
+        if(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS && (strcmp(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS, "1") == 0)){
             info->dll.setLoadHints(QLibrary::ExportExternalSymbolsHint);
         }
         
