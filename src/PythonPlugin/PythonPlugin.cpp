@@ -20,8 +20,12 @@ nnn*/
 #include <fmt/format.h>
 #include <regex>
 #include <iostream>
+
+#ifdef Q_OS_LINUX
 #include <dlfcn.h>
 #include <link.h>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
