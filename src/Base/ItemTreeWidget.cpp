@@ -1,6 +1,5 @@
 #include "ItemTreeWidget.h"
 #include "TreeWidget.h"
-#include "PolymorphicItemFunctionSet.h"
 #include "RootItem.h"
 #include "ProjectManager.h"
 #include "ItemManager.h"

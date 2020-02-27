@@ -30,6 +30,7 @@ set(sources
   ItemPath.cpp
   ItemTreeWidget.cpp
   ItemTreeView.cpp
+  ItemPropertyWidget.cpp
   ItemPropertyView.cpp
   TargetItemPicker.cpp
   StringListComboBox.cpp
@@ -176,6 +177,7 @@ set(headers
   MessageView.h
   ItemTreeWidget.h
   ItemTreeView.h
+  ItemPropertyWidget.h
   ItemList.h
   Item.h
   LocatableItem.h
