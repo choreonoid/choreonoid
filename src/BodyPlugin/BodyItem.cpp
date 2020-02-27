@@ -861,7 +861,7 @@ std::shared_ptr<InverseKinematics> BodyItem::Impl::getCurrentIK(Link* targetLink
             }
         }
         if(!ik){
-            Link* baseLink = baseLink ? currentBaseLink.get() : rootLink;
+            Link* baseLink = currentBaseLink ? currentBaseLink.get() : rootLink;
             ik = JointPath::getCustomPath(body, baseLink, targetLink);
         }
     }
