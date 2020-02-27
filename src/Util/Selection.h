@@ -14,8 +14,8 @@ namespace cnoid {
 class CNOID_EXPORT Selection
 {
 public:
-    explicit Selection(const char* domainname = 0);
-    explicit Selection(size_t size, const char* domainname = 0);
+    explicit Selection(const char* domainname = nullptr);
+    explicit Selection(size_t size, const char* domainname = nullptr);
     Selection(const Selection& org);
         
     int size() const {

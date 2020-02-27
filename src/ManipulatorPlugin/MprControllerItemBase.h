@@ -26,6 +26,7 @@ public:
 
     virtual double timeStep() const override;
     double speedRatio() const;
+    void setSpeedRatio(double r);
         
 protected:
     template<class StatementType>

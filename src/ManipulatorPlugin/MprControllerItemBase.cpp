@@ -693,6 +693,14 @@ double MprControllerItemBase::speedRatio() const
 }
 
 
+void MprControllerItemBase::setSpeedRatio(double r)
+{
+    if(r > 0.0 && r <= 1.0){
+        impl->speedRatio = r;
+    }
+}
+
+
 bool MprControllerItemBase::Impl::interpretCommentStatement(MprCommentStatement*)
 {
     ++iterator;
