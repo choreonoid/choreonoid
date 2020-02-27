@@ -13,12 +13,13 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class PluginImpl
+class Plugin::Impl
 {
 public:
-    PluginImpl(const char* name);
+    Impl(const std::string& name);
 
     string name;
+    string filePath;
     vector<string> requisites;
     vector<string> subsequences;
     vector<string> oldNames;
@@ -30,14 +31,14 @@ public:
 }
 
 
-Plugin::Plugin(const char* name)
+Plugin::Plugin(const std::string& name)
     : ExtensionManager(name, true)
 {
-    impl = new PluginImpl(name);
+    impl = new Impl(name);
 }
 
 
-PluginImpl::PluginImpl(const char* name)
+Plugin::Impl::Impl(const std::string& name)
     : name(name)
 {
     activationPriority = std::numeric_limits<int>::max();
@@ -52,9 +53,21 @@ Plugin::~Plugin()
 }
 
 
-const char* Plugin::name()
+const std::string& Plugin::name() const
 {
-    return impl->name.c_str();
+    return impl->name;
+}
+
+
+const std::string& Plugin::filePath() const
+{
+    return impl->filePath;
+}
+
+
+void Plugin::setFilePath(const std::string& filePath)
+{
+    impl->filePath = filePath;
 }
 
 
@@ -98,7 +111,7 @@ void Plugin::setUnloadable(bool on)
    When the plugin depends on some other plugins,
    please specify the plugins to depend with this function in the constructor.
 */
-void Plugin::require(const char* pluginName)
+void Plugin::require(const std::string& pluginName)
 {
     impl->requisites.push_back(pluginName);
 }
@@ -108,22 +121,22 @@ void Plugin::require(const char* pluginName)
 /**
    Deprecated. Please use require() instead of this function.
 */
-void Plugin::depend(const char* pluginName)
+void Plugin::depend(const std::string& pluginName)
 {
     require(pluginName);
 }
 #endif
 
 
-void Plugin::precede(const char* pluginName)
+void Plugin::precede(const std::string& pluginName)
 {
     impl->subsequences.push_back(pluginName);
 }
 
 
-const char* Plugin::requisite(int index) const
+const string& Plugin::requisite(int index) const
 {
-    return impl->requisites[index].c_str();
+    return impl->requisites[index];
 }
 
 
@@ -133,9 +146,9 @@ int Plugin::numRequisites() const
 }
 
 
-const char* Plugin::subsequence(int index) const
+const std::string& Plugin::subsequence(int index) const
 {
-    return impl->subsequences[index].c_str();
+    return impl->subsequences[index];
 }
 
 
@@ -145,15 +158,15 @@ int Plugin::numSubsequences() const
 }
 
 
-void Plugin::addOldName(const char* name)
+void Plugin::addOldName(const std::string& name)
 {
     impl->oldNames.push_back(name);
 }
 
 
-const char* Plugin::oldName(int index) const
+const std::string& Plugin::oldName(int index) const
 {
-    return impl->oldNames[index].c_str();
+    return impl->oldNames[index];
 }
 
 

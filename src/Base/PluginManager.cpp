@@ -51,17 +51,49 @@ static const char* DEBUG_SUFFIX = "";
 #endif
 
 namespace {
+
 PluginManager* instance_ = 0;
+
+struct PluginInfo;
+typedef std::shared_ptr<PluginInfo> PluginInfoPtr;
+typedef map<std::string, PluginInfoPtr> PluginMap;
+
+struct PluginInfo
+{
+    QLibrary dll;
+    std::string pathString;
+    Plugin* plugin;
+    string name;
+    vector<string> requisites;
+    vector<string> dependents;
+    set<string> subsequences;
+    int status;
+    bool areAllRequisitiesResolved;
+    bool doReloading;
+    Action* aboutMenuItem;
+    DescriptionDialog* aboutDialog;
+
+    PluginInfo(){
+        plugin = 0;
+        status = PluginManager::NOT_LOADED;
+        areAllRequisitiesResolved = false;
+        doReloading = false;
+        aboutMenuItem = 0;
+        aboutDialog = 0;
+    }
+};
+
+typedef vector<PluginInfoPtr> PluginInfoArray;
+
 }
 
 namespace cnoid {
 
-class PluginManagerImpl
+class PluginManager::Impl
 {
 public:
-
-    PluginManagerImpl(ExtensionManager* ext);
-    ~PluginManagerImpl();
+    Impl(ExtensionManager* ext);
+    ~Impl();
 
     Action* startupLoadingCheck;
     Action* namingConventionCheck;
@@ -70,35 +102,6 @@ public:
 
     string pluginDirectory;
     QRegExp pluginNamePattern;
-
-    struct PluginInfo;
-    typedef std::shared_ptr<PluginInfo> PluginInfoPtr;
-    typedef map<std::string, PluginInfoPtr> PluginMap;
-
-    struct PluginInfo {
-        PluginInfo(){
-            plugin = 0;
-            status = PluginManager::NOT_LOADED;
-            areAllRequisitiesResolved = false;
-            doReloading = false;
-            aboutMenuItem = 0;
-            aboutDialog = 0;
-        }
-        QLibrary dll;
-        std::string pathString;
-        Plugin* plugin;
-        string name;
-        vector<string> requisites;
-        vector<string> dependents;
-        set<string> subsequences;
-        int status;
-        bool areAllRequisitiesResolved;
-        bool doReloading;
-        Action* aboutMenuItem;
-        DescriptionDialog* aboutDialog;
-    };
-
-    typedef vector<PluginInfoPtr> PluginInfoArray;
 
     PluginInfoArray allPluginInfos;
     PluginMap nameToPluginInfoMap;
@@ -128,7 +131,7 @@ public:
     bool loadPlugin(int index);
     bool activatePlugin(int index);
     void onLoadPluginTriggered();
-    void onAboutDialogTriggered(PluginInfo* info);
+    void onAboutDialogTriggered(PluginInfoPtr info);
     const char* guessActualPluginName(const std::string& name);
     bool unloadPlugin(const std::string& name, bool doReloading);
     bool unloadPlugin(int index);
@@ -138,7 +141,7 @@ public:
 }
 
 
-static bool comparePluginInfo(const PluginManagerImpl::PluginInfoPtr& p, const PluginManagerImpl::PluginInfoPtr& q)
+static bool comparePluginInfo(const PluginInfoPtr& p, const PluginInfoPtr& q)
 {
     int priority1 = p->plugin ? p->plugin->activationPriority() : std::numeric_limits<int>::min();
     int priority2 = q->plugin ? q->plugin->activationPriority() : std::numeric_limits<int>::min();
@@ -176,14 +179,14 @@ void PluginManager::finalize()
 
 PluginManager::PluginManager(ExtensionManager* ext)
 {
-    impl = new PluginManagerImpl(ext);
+    impl = new Impl(ext);
 }
 
 
-PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
+PluginManager::Impl::Impl(ExtensionManager* ext)
     : mv(MessageView::mainInstance()),
-      unloadPluginsLater(std::bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW),
-      reloadPluginsLater(std::bind(&PluginManagerImpl::loadPlugins, this), LazyCaller::PRIORITY_LOW)
+      unloadPluginsLater([&](){ unloadPluginsActually(); }, LazyCaller::PRIORITY_LOW),
+      reloadPluginsLater([&](){ loadPlugins(); }, LazyCaller::PRIORITY_LOW)
 {
     pluginDirectory = getNativePathString(
         filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR);
@@ -207,7 +210,7 @@ PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
     MenuManager& mm = ext->menuManager();
     mm.setPath("/File").setPath(N_("Plugin"));
     mm.addItem(_("Load Plugin"))
-        ->sigTriggered().connect(std::bind(&PluginManagerImpl::onLoadPluginTriggered, this));
+        ->sigTriggered().connect([&](){ onLoadPluginTriggered(); });
 
     mm.addSeparator();
 
@@ -227,7 +230,7 @@ PluginManager::~PluginManager()
 }
 
 
-PluginManagerImpl::~PluginManagerImpl()
+PluginManager::Impl::~Impl()
 {
     finalizePlugins();
 
@@ -263,7 +266,7 @@ int PluginManager::pluginStatus(int index) const
 
 Plugin* PluginManager::findPlugin(const std::string& name)
 {
-    PluginManagerImpl::PluginMap::iterator p = impl->nameToPluginInfoMap.find(name);
+    auto p = impl->nameToPluginInfoMap.find(name);
     if(p != impl->nameToPluginInfoMap.end()){
         return p->second->plugin;
     }
@@ -294,7 +297,7 @@ void PluginManager::scanPluginFilesInPathList(const std::string& pathList)
 }
 
 
-void PluginManagerImpl::scanPluginFilesInPathList(const std::string& pathList)
+void PluginManager::Impl::scanPluginFilesInPathList(const std::string& pathList)
 {
     for(auto& path : Tokenizer<CharSeparator<char>>(pathList, CharSeparator<char>(PATH_DELIMITER))){
         scanPluginFiles(path, false);
@@ -308,7 +311,7 @@ void PluginManager::scanPluginFilesInDirectoyOfExecFile()
 }
 
 
-void PluginManagerImpl::scanPluginFilesInDirectoyOfExecFile()
+void PluginManager::Impl::scanPluginFilesInDirectoyOfExecFile()
 {
     scanPluginFiles(pluginDirectory, false);
 } 
@@ -320,7 +323,7 @@ void PluginManager::scanPluginFiles(const std::string& pathString)
 }
 
 
-void PluginManagerImpl::scanPluginFiles(const std::string& pathString, bool isRecursive)
+void PluginManager::Impl::scanPluginFiles(const std::string& pathString, bool isRecursive)
 {
     filesystem::path pluginPath(pathString);
 
@@ -367,7 +370,7 @@ void PluginManager::clearUnusedPlugins()
 }
 
 
-void PluginManagerImpl::clearUnusedPlugins()
+void PluginManager::Impl::clearUnusedPlugins()
 {
     vector<PluginInfoPtr> oldList = allPluginInfos;
     allPluginInfos.clear();
@@ -389,7 +392,7 @@ void PluginManager::loadPlugins()
 }
 
 
-void PluginManagerImpl::loadPlugins()
+void PluginManager::Impl::loadPlugins()
 {
     while(true){
         int numLoaded = 0;
@@ -459,7 +462,7 @@ bool PluginManager::loadPlugin(int index)
 }
 
 
-bool PluginManagerImpl::loadPlugin(int index)
+bool PluginManager::Impl::loadPlugin(int index)
 {
     PluginInfoPtr& info = allPluginInfos[index];
     
@@ -471,11 +474,18 @@ bool PluginManagerImpl::loadPlugin(int index)
 
         info->dll.setFileName(info->pathString.c_str());
 
+        /*
+          If some plugins do not work correctly due to a dynamic link problem, the problem might be solved
+          by enabling the following option. However, this option might cause the symbol conflicts amaong
+          internally used libraries and the functions provided by plugins may not be able to work correctly.
+          Currently the options is enabled by default to follow the previous configuration, the option is
+          going to be disabled after a while.
+          Note that this options is originally introduced to make the Python plugin work correctly with
+          binary Python modules. However, it is now handled inside the Python plugin, and it is not neccessary
+          to enable the option to use Python modules.
+        */
         char* CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS = getenv("CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS");
         if(!CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS || (strcmp(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS, "1") == 0)){
-            // Some Python modules written in C/C++ requires the following options
-            // to link with the python runtime library, but this might cause the symbol conflicts
-            // amaong internal use libraries such as OPCODE used in both the Body module and ODE.
             info->dll.setLoadHints(QLibrary::ExportExternalSymbolsHint);
         }
         
@@ -502,6 +512,7 @@ bool PluginManagerImpl::loadPlugin(int index)
 
                     info->status = PluginManager::LOADED;
                     info->name = plugin->name();
+                    plugin->setFilePath(info->pathString.c_str());
 
                     if(plugin->internalVersion() != CNOID_INTERNAL_VERSION){
                         mv->putln(
@@ -554,11 +565,11 @@ bool PluginManagerImpl::loadPlugin(int index)
 }
 
 
-bool PluginManagerImpl::activatePlugin(int index)
+bool PluginManager::Impl::activatePlugin(int index)
 {
     QString errorMessage;
 
-    PluginInfoPtr& info = allPluginInfos[index];
+    PluginInfoPtr info = allPluginInfos[index];
     
     if(info->status == PluginManager::ACTIVE){
         mv->putln(fmt::format(_("Plugin file \"{}\" has already been activated."), info->pathString));
@@ -627,7 +638,7 @@ bool PluginManagerImpl::activatePlugin(int index)
                     info->plugin->menuManager().setPath("/Help").setPath(_("About Plugins"))
                     .addItem(fmt::format(_("About {} Plugin"), info->name).c_str());
                 info->aboutMenuItem->sigTriggered().connect(
-                    std::bind(&PluginManagerImpl::onAboutDialogTriggered, this, info.get()));
+                    [this, info]{ onAboutDialogTriggered(info); });
                 
                 // register old names
                 int numOldNames = info->plugin->numOldNames();
@@ -653,7 +664,7 @@ bool PluginManagerImpl::activatePlugin(int index)
 }
 
 
-void PluginManagerImpl::onLoadPluginTriggered()
+void PluginManager::Impl::onLoadPluginTriggered()
 {
     QFileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(_("Load plugins"));
@@ -693,7 +704,7 @@ void PluginManagerImpl::onLoadPluginTriggered()
 }
 
 
-void PluginManagerImpl::onAboutDialogTriggered(PluginInfo* info)
+void PluginManager::Impl::onAboutDialogTriggered(PluginInfoPtr info)
 {
     if(!info->aboutDialog){
         info->aboutDialog = new DescriptionDialog();
@@ -711,7 +722,7 @@ const char* PluginManager::guessActualPluginName(const std::string& name)
 }
 
 
-const char* PluginManagerImpl::guessActualPluginName(const std::string& name)
+const char* PluginManager::Impl::guessActualPluginName(const std::string& name)
 {
     PluginMap::iterator p = nameToPluginInfoMap.find(name);
     if(p != nameToPluginInfoMap.end()){
@@ -745,11 +756,11 @@ bool PluginManager::reloadPlugin(const std::string& name)
 }
 
 
-bool PluginManagerImpl::unloadPlugin(const std::string& name, bool doReloading)
+bool PluginManager::Impl::unloadPlugin(const std::string& name, bool doReloading)
 {
     PluginMap::iterator p = nameToPluginInfoMap.find(name);
     if(p != nameToPluginInfoMap.end()){
-        PluginManagerImpl::PluginInfoPtr info = p->second;
+        auto info = p->second;
         size_t index = 0;
         while(index < allPluginInfos.size()){
             if(allPluginInfos[index] == info){
@@ -769,7 +780,7 @@ bool PluginManager::unloadPlugin(int index)
 }
 
 
-bool PluginManagerImpl::unloadPlugin(int index)
+bool PluginManager::Impl::unloadPlugin(int index)
 {
     PluginInfoPtr& info = allPluginInfos[index];
     if(info->plugin && info->plugin->isUnloadable()){
@@ -779,7 +790,7 @@ bool PluginManagerImpl::unloadPlugin(int index)
 }
 
 
-bool PluginManagerImpl::finalizePlugin(PluginInfoPtr info)
+bool PluginManager::Impl::finalizePlugin(PluginInfoPtr info)
 {
     if(info->status == PluginManager::ACTIVE){
 
@@ -828,7 +839,7 @@ bool PluginManagerImpl::finalizePlugin(PluginInfoPtr info)
 }
 
 
-void PluginManagerImpl::unloadPluginsActually()
+void PluginManager::Impl::unloadPluginsActually()
 {
     bool doReloading = false;
     
@@ -860,7 +871,7 @@ bool PluginManager::finalizePlugins()
 }
 
 
-bool PluginManagerImpl::finalizePlugins()
+bool PluginManager::Impl::finalizePlugins()
 {
     bool failed = false;
 

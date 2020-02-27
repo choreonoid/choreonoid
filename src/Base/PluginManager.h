@@ -12,7 +12,6 @@ namespace cnoid {
 
 class Plugin;
 class ExtensionManager;
-class PluginManagerImpl;
 
 class CNOID_EXPORT PluginManager
 {
@@ -52,7 +51,8 @@ public:
 private:
     PluginManager(ExtensionManager* ext);
 
-    PluginManagerImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

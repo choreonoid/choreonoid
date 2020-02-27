@@ -7,6 +7,7 @@
 
 #include "ExtensionManager.h"
 #include <cnoid/Config>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -14,30 +15,31 @@ namespace cnoid {
 class Item;
 class View;
 class ToolBar;
-class PluginImpl;
+class PluginManager;
 
 class CNOID_EXPORT Plugin : public ExtensionManager
 {
 public:
     typedef Plugin* (*PluginEntry)();
 
-    Plugin(const char* name);
+    Plugin(const std::string& name);
     virtual ~Plugin();
 
-    const char* name();
+    const std::string& name() const;
+    const std::string& filePath() const;
 
     virtual bool initialize();
     virtual bool finalize();
 
     bool isUnloadable() const;
 
-    const char* requisite(int index) const;
+    const std::string& requisite(int index) const;
     int numRequisites() const;
 
-    const char* subsequence(int index) const;
+    const std::string& subsequence(int index) const;
     int numSubsequences() const;
 
-    const char* oldName(int index) const;
+    const std::string& oldName(int index) const;
     int numOldNames() const;
 
     virtual const char* description() const;
@@ -56,8 +58,8 @@ protected:
 
     void setUnloadable(bool on);
 
-    void require(const char* pluginName);
-    void precede(const char* pluginName);
+    void require(const std::string& pluginName);
+    void precede(const std::string& pluginName);
 
     /**
        Call this function in the constructor if necessary.
@@ -72,10 +74,10 @@ protected:
        When the plugin name is changed but the old project files should be loadable,
        specify old names of the plugin with this function in the constructor.
     */
-    void addOldName(const char* name);
+    void addOldName(const std::string& name);
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
-    void depend(const char* pluginName);
+    void depend(const std::string& pluginName);
 #endif
 
     static const char* MITLicenseText();
@@ -83,8 +85,12 @@ protected:
 
 private:
     Plugin(const Plugin& org); // disable the copy constructor
+    void setFilePath(const std::string& filePath);
 
-    PluginImpl* impl;
+    class Impl;
+    Impl* impl;
+
+    friend class PluginManager;
 };
 
 }
