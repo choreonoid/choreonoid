@@ -233,6 +233,12 @@ PythonConsoleViewImpl::~PythonConsoleViewImpl()
 }
 
 
+void PythonConsoleView::onActivated()
+{
+    impl->setFocus();
+}
+    
+
 void PythonConsoleViewImpl::setPrompt(const char* newPrompt)
 {
     prompt = newPrompt;

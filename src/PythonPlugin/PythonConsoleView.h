@@ -23,6 +23,9 @@ public:
         
     void inputCommand(const std::string& command);
     SignalProxy<void(const std::string& output)> sigOutput();
+
+protected:
+    virtual void onActivated() override;
     
 private:
     PythonConsoleViewImpl* impl;

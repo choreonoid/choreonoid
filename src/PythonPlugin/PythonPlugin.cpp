@@ -18,7 +18,10 @@ nnn*/
 #include <cnoid/Archive>
 #include <pybind11/embed.h>
 #include <fmt/format.h>
+#include <regex>
 #include <iostream>
+#include <dlfcn.h>
+#include <link.h>
 #include "gettext.h"
 
 using namespace std;
@@ -85,6 +88,11 @@ public:
     PythonPlugin();
     virtual bool initialize();
     bool initializeInterpreter();
+
+#ifdef Q_OS_LINUX
+    void exportLibPythonSymbols();
+#endif
+    
     virtual bool finalize();
 
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
@@ -143,6 +151,10 @@ bool PythonPlugin::initialize()
     if(!initializeInterpreter()){
         return false;
     }
+
+#ifdef Q_OS_LINUX
+    exportLibPythonSymbols();
+#endif
 
     PythonScriptItem::initializeClass(this);
     PythonConsoleView::initializeClass(this);
@@ -223,16 +235,16 @@ bool PythonPlugin::initializeInterpreter()
     mainModule = python::module::import("__main__");
     globalNamespace = mainModule.attr("__dict__");
 
-	/*
-	 In Windows, the bin directory must be added to the PATH environment variable
-	 so that the DLL in the directory can be loaded in loading Python modules.
-	 Note that the corresponding Python variable must be updated instead of using C functions
-	 because the Python caches the environment variables and updates the OS variables when
-	 the cached variable is updated and the variable values updated using C functions are
-	 discarded at that time. For example, the numpy module also updates the PATH variable
-	 using the Python variable, and it invalidates the updated PATH value if the value is
-	 set using C functions.
-	*/	
+    /*
+      In Windows, the bin directory must be added to the PATH environment variable
+      so that the DLL in the directory can be loaded in loading Python modules.
+      Note that the corresponding Python variable must be updated instead of using C functions
+      because the Python caches the environment variables and updates the OS variables when
+      the cached variable is updated and the variable values updated using C functions are
+      discarded at that time. For example, the numpy module also updates the PATH variable
+      using the Python variable, and it invalidates the updated PATH value if the value is
+      set using C functions.
+    */	
 #ifdef _WIN32
     python::module env = python::module::import("os").attr("environ");
     env["PATH"] = python::str(executableDirectory() + ";" + std::string(python::str(env["PATH"])));
@@ -279,6 +291,41 @@ bool PythonPlugin::initializeInterpreter()
 
     return true;
 }
+
+
+/*
+  The symbols of shared library "libpython" must be exported so that Python modules written in the C API
+  can be imported because usually C-API Python modules are not explicitly linked with a particular
+  libpython file. This is probably because the modules should not depend on a particular minor version of
+  Python. Symbols can be exported to use the dlopen function with the RTLD_GLOBAL option in Linux.
+ */
+#ifdef Q_OS_LINUX
+void PythonPlugin::exportLibPythonSymbols()
+{
+    bool exported = false;
+    auto handle = dlopen(filePath().c_str(), RTLD_LAZY);
+    if(handle != nullptr){
+        regex pattern(".*libpython.+\\.so.*");
+        struct link_map* linkMap;
+        std::cmatch match;
+        if(dlinfo(handle, RTLD_DI_LINKMAP, &linkMap) == 0){
+            while(linkMap){
+                if(regex_match(linkMap->l_name, match, pattern)){
+                    dlopen(linkMap->l_name, RTLD_LAZY | RTLD_GLOBAL);
+                    exported = true;
+                    break;
+                }
+                linkMap = linkMap->l_next;
+            }
+        }
+    }
+    if(!exported){
+        MessageView::instance()->putln(
+            _("Failed to export the libpython symbols. The system may not be able to load binary Python modules."),
+            MessageView::WARNING);
+    }
+}
+#endif
 
 
 bool PythonPlugin::storeProperties(Archive& archive)
