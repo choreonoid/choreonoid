@@ -293,7 +293,7 @@ bool ItemFileIO::Impl::loadItem
     if(parentItem){
         this->parentItem = parentItem;
     } else {
-        this->parentItem = RootItem::instance();
+        this->parentItem = nullptr;
     }
 
     bool loaded = self->load(item, actualFilename);
@@ -312,13 +312,15 @@ bool ItemFileIO::Impl::loadItem
         }
         item->updateFileInformation(actualFilename, formatId, optionArchive);
 
-        if(doAddition){
+        if(doAddition && parentItem){
             parentItem->insertChildItem(item, nextItem, true);
         }
         
         mv->put(_(" -> ok!\n"));
     }
     mv->flush();
+
+    this->parentItem = nullptr;
 
     return loaded;
 }
