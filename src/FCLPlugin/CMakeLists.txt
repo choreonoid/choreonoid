@@ -31,10 +31,11 @@ endif()
 
 if(FCL_DIR)
   if(UNIX)
-  set(FCL_LIBRARIES fcl ccd)
+    set(FCL_LIBRARIES fcl ccd)
   elseif(MSVC)
-    set(FCL_LIBRARIES optimized fcl debug fcld
-                      optimized ccd debug ccdd)
+    set(FCL_LIBRARIES
+      optimized fcl debug fcld
+      optimized ccd debug ccdd)
   endif()
   set(FCL_INCLUDE_DIRS ${FCL_DIR}/include )
   set(FCL_LIBRARY_DIRS ${FCL_DIR}/lib/)
@@ -59,4 +60,4 @@ add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin ${FCL_LIBRARIES})
 set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-std=c++11")
 apply_common_setting_for_plugin(${target} "${headers}")
-install_external_libraries(${FCL_DIR}/bin ${FCL_DIR}/lib ${FCL_LIBRARIES})
+install_runtime_dlls(${FCL_DIR}/bin ${FCL_LIBRARIES})

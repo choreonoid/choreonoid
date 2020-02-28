@@ -30,5 +30,4 @@ make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin ${ROKI_LIBRARIES})
 apply_common_setting_for_plugin(${target} "${headers}")
-install_external_libraries(${ROKI_DIR}/bin ${ROKI_DIR}/lib ${ROKI_LIBRARIES})
-
+install_runtime_dlls(${ROKI_DIR}/bin ${ROKI_LIBRARIES})
