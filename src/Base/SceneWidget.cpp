@@ -1501,6 +1501,18 @@ void SceneWidgetImpl::mouseDoubleClickEvent(QMouseEvent* event)
     }
     if(!handled){
         toggleEditMode();
+
+        if(isEditMode){
+            setFocusToPointedEditablePath(
+                applyFunction(
+                    pointedEditablePath,
+                    [&](SceneWidgetEditable* editable){
+                        if(editable->onButtonPressEvent(latestEvent)){
+                            return editable->onButtonReleaseEvent(latestEvent);
+                        }
+                        return false;
+                    }));
+        }
     }
 }
 

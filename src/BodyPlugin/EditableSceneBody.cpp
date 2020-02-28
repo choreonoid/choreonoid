@@ -237,7 +237,6 @@ public:
     bool onKeyReleaseEvent(const SceneWidgetEvent& event);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
     bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    bool onDoubleClickEvent(const SceneWidgetEvent& event);
     bool onPointerMoveEvent(const SceneWidgetEvent& event);
     void onPointerLeaveEvent(const SceneWidgetEvent& event);
     bool onScrollEvent(const SceneWidgetEvent& event);
@@ -774,7 +773,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
             }
         }
     } else if(mode == KinematicsBar::InverseKinematics){
-        if(!link->isBodyRoot() || bodyItem->isLocationEditable()){
+        if(!link->isBodyRoot() || bodyItem->isLocationEditable() || bodyItem->isAttachedToParentBody()){
             type = LinkOperationType::IK;
         }
     }
@@ -1008,23 +1007,30 @@ bool EditableSceneBody::Impl::onButtonReleaseEvent(const SceneWidgetEvent& event
 
 bool EditableSceneBody::onDoubleClickEvent(const SceneWidgetEvent& event)
 {
-    return impl->onDoubleClickEvent(event);
+    if(impl->targetLink){
+        if(impl->checkLinkKinematicsType(impl->targetLink) != LinkOperationType::None){
+            // prevent returning from the edit mode to the view mode
+            return true;
+        }
+    }
+    return false;
+            
+    // return impl->makePointedLinkCurrent();
 }
 
 
-bool EditableSceneBody::Impl::onDoubleClickEvent(const SceneWidgetEvent& event)
+/*
+bool EditableSceneBody::Impl::makePointedLinkCurrent()
 {
-    /*
     if(event.button() == Qt::LeftButton){
         if(findPointedObject(event.nodePath()) == PT_SCENE_LINK){
             BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
             return true
         }
     }
-    */
-    
     return false;
 }
+*/
 
 
 bool EditableSceneBody::onPointerMoveEvent(const SceneWidgetEvent& event)
