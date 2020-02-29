@@ -994,7 +994,17 @@ bool MprProgramViewBase::Impl::onTimeChanged(double time)
                     if(auto logData = dynamic_cast<MprControllerLog*>(data)){
                         auto& programName = logData->topLevelProgramName;
                         if(programName != logTopLevelProgramName){
-                            if(auto logProgramItem = controllerItem->findItem<MprProgramItemBase>(*programName)){
+                            MprProgramItemBase* logProgramItem = nullptr;
+                            auto programItems = controllerItem->descendantItems<MprProgramItemBase>();
+                            for(auto& programItem : programItems){
+                                if(!logProgramItem && programItem->name() == *programName){
+                                    logProgramItem = programItem;
+                                    programItem->setSelected(true);
+                                } else {
+                                    programItem->setSelected(false);
+                                }
+                            }
+                            if(logProgramItem){
                                 setProgramItem(logProgramItem);
                                 logTopLevelProgramName = programName;
                             }
