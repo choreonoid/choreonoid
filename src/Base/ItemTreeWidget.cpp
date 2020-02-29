@@ -56,7 +56,7 @@ public:
     ScopedConnection localRootItemConnection;
     bool isProcessingSlotOnlocalRootItemPositionChanged;
     std::function<Item*(bool doCreate)> localRootItemUpdateFunction;
-    ScopedConnection treeWidgetSelectionChangeConnection;
+    ScopedConnectionSet treeWidgetSelectionChangeConnections;
     vector<ItemPtr> topLevelItems;
     unordered_map<Item*, ItwItem*> itemToItwItemMap;
     ItemPtr lastClickedItem;
@@ -136,6 +136,7 @@ public:
     void onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
     void onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end);
     void onTreeWidgetSelectionChanged();
+    void onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet);
     void setItwItemSelected(ItwItem* itwItem, bool on);
     void toggleItwItemCheck(ItwItem* itwItem, int checkId, bool on);
@@ -364,10 +365,15 @@ void ItemTreeWidget::Impl::initialize()
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setDragDropMode(QAbstractItemView::InternalMove);
 
-    treeWidgetSelectionChangeConnection =
+    treeWidgetSelectionChangeConnections.add(
         sigItemSelectionChanged().connect(
-            [&](){ onTreeWidgetSelectionChanged(); });
+            [&](){ onTreeWidgetSelectionChanged(); }));
 
+    treeWidgetSelectionChangeConnections.add(
+        sigCurrentItemChanged().connect(
+            [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
+                onTreeWidgetCurrentItemChanged(current, previous); }));
+    
     projectRootItemConnections.add(
         projectRootItem->sigCheckEntryAdded().connect(
             [&](int checkId){ addCheckColumn(checkId); }));
@@ -1240,15 +1246,38 @@ void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
 }
 
 
+/**
+   When the selection changed with the cursor keys, the newly selected item should be
+   the current item, and the sigCurrentItemChanged signal is the only way to detect it.
+*/
+void ItemTreeWidget::Impl::onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+{
+    auto selected = selectedItems();
+    if(selected.size() == 1 && current == selected.front()){
+        if(auto itwItem = dynamic_cast<ItwItem*>(current)){
+            itwItem->itemSelectionConnection.block();
+            itwItem->item->setSelected(true, true);
+            itwItem->itemSelectionConnection.unblock();
+        }
+    }
+}
+
+
 void ItemTreeWidget::Impl::updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet)
 {
     if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
         auto item = itwItem->item;
         bool on = selectedItemSet.find(item) != selectedItemSet.end();
-        bool isFocused = (item == lastClickedItem);
-        if(on != item->isSelected() || isFocused){
+        bool doUpdate = (on != item->isSelected());
+        bool isCurrent = (item == lastClickedItem) && on;
+        if(!doUpdate){
+            if(isCurrent && (item != projectRootItem->currentItem())){
+                doUpdate = true;
+            }
+        }
+        if(doUpdate){
             itwItem->itemSelectionConnection.block();
-            item->setSelected(on, isFocused);
+            item->setSelected(on, isCurrent);
             itwItem->itemSelectionConnection.unblock();
         }
     }
@@ -1262,9 +1291,9 @@ void ItemTreeWidget::Impl::updateItemSelectionIter(QTreeWidgetItem* twItem, unor
 void ItemTreeWidget::Impl::setItwItemSelected(ItwItem* itwItem, bool on)
 {
     if(on != itwItem->isSelected()){
-        treeWidgetSelectionChangeConnection.block();
+        treeWidgetSelectionChangeConnections.block();
         itwItem->setSelected(on);
-        treeWidgetSelectionChangeConnection.unblock();
+        treeWidgetSelectionChangeConnections.unblock();
     }
 }
 

@@ -104,7 +104,7 @@ void TargetItemPickerBase::Impl::onSelectedItemsChanged(const ItemList<>& items)
 {
     tmpSelectedItems = items;
     auto candidate = self->extractTargetItemCandidates(
-        tmpSelectedItems, rootItem->focusedItem(), true);
+        tmpSelectedItems, rootItem->currentItem(), true);
     setTargetItem(candidate, true, false);
     tmpSelectedItems.clear();
 }

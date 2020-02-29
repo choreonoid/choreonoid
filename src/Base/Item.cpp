@@ -301,19 +301,19 @@ void Item::setTemporal(bool on)
 }
 
 
-void Item::setSelected(bool on, bool isFocused)
+void Item::setSelected(bool on, bool isCurrent)
 {
-    impl->setSelected(on, isFocused, true);
+    impl->setSelected(on, isCurrent, true);
 }
 
 
-void Item::Impl::setSelected(bool on, bool isFocused, bool doEmitSigSelectedItemsChangedLater)
+void Item::Impl::setSelected(bool on, bool isCurrent, bool doEmitSigSelectedItemsChangedLater)
 {
-    if(on != self->isSelected_ || isFocused){
+    if(on != self->isSelected_ || (isCurrent && on)){
         self->isSelected_ = on;
         sigSelectionChanged(on);
         if(auto rootItem = self->findRootItem()){
-            rootItem->emitSigSelectionChanged(self, on, isFocused);
+            rootItem->emitSigSelectionChanged(self, on, isCurrent);
             if(doEmitSigSelectedItemsChangedLater){
                 rootItem->emitSigSelectedItemsChangedLater();
             }

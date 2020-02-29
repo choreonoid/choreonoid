@@ -80,7 +80,7 @@ public:
     void setTemporal(bool on = true);
 
     bool isSelected() const { return isSelected_; }
-    void setSelected(bool on, bool isFocused = false);
+    void setSelected(bool on, bool isCurrent = false);
     void setSubTreeItemsSelected(bool on);
 
     /**
