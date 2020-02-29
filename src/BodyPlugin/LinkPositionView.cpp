@@ -43,10 +43,10 @@ const char* errorStyle = "font-weight: bold; color: red";
 enum FrameType {
     WorldFrame = LinkKinematicsKit::WorldFrame,
     BodyFrame = LinkKinematicsKit::BodyFrame,
-    EndFrame = LinkKinematicsKit::EndFrame
+    LinkFrame = LinkKinematicsKit::LinkFrame
 };
 
-enum FrameComboType { BaseFrameCombo, EndFrameCombo };
+enum FrameComboType { BaseFrameCombo, LinkFrameCombo };
 
 }
 
@@ -70,7 +70,7 @@ public:
     ScopedConnection kinematicsKitConnection;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
-    CoordinateFramePtr endFrame;
+    CoordinateFramePtr linkFrame;
     std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
     AbstractPositionEditTarget* positionEditTarget;
     
@@ -176,7 +176,7 @@ LinkPositionView::Impl::Impl(LinkPositionView* self)
     
     identityFrame = new CoordinateFrame;
     baseFrame = identityFrame;
-    endFrame = identityFrame;
+    linkFrame = identityFrame;
 
     positionEditTarget = nullptr;
 }
@@ -261,7 +261,7 @@ void LinkPositionView::Impl::createPanel()
     grid->setColumnStretch(1, 1);
 
     frameComboLabel[BaseFrameCombo].setText(_("Base"));
-    frameComboLabel[EndFrameCombo].setText(_("End"));
+    frameComboLabel[LinkFrameCombo].setText(_("Link"));
 
     for(int i=0; i < 2; ++i){
         grid->addWidget(&frameComboLabel[i], row + i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
@@ -314,10 +314,10 @@ void LinkPositionView::setCoordinateModeLabels
 }
 
 
-void LinkPositionView::setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* endOffsetLabel)
+void LinkPositionView::setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* linkOffsetLabel)
 {
     impl->frameComboLabel[BaseFrameCombo].setText(baseOffsetLabel);
-    impl->frameComboLabel[EndFrameCombo].setText(endOffsetLabel);
+    impl->frameComboLabel[LinkFrameCombo].setText(linkOffsetLabel);
 }
 
 
@@ -564,7 +564,7 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
                 kinematicsKit->sigFrameUpdate().connect(
                     [&](){ onFrameUpdate(); });
             if(functionToGetDefaultFrameNames){
-                tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[EndFrame]) =
+                tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[LinkFrame]) =
                     functionToGetDefaultFrameNames(kinematicsKit);
             }
             if(coordinateMode == WorldCoordinateMode){
@@ -573,7 +573,7 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
                 kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::BodyFrame);
             }
             baseFrame = kinematicsKit->currentBaseFrame();
-            endFrame = kinematicsKit->currentEndFrame();
+            linkFrame = kinematicsKit->currentLinkFrame();
         }
     }
 
@@ -616,8 +616,8 @@ void LinkPositionView::Impl::updateCoordinateFrameCandidates(int frameComboIndex
 {
     int frameType;
 
-    if(frameComboIndex == EndFrameCombo){
-        frameType = EndFrame;
+    if(frameComboIndex == LinkFrameCombo){
+        frameType = LinkFrame;
     } else {
         if(coordinateMode == WorldCoordinateMode){
             frameType = WorldFrame;
@@ -697,14 +697,14 @@ void LinkPositionView::Impl::onFrameComboActivated(int frameComboIndex, int inde
                 frameType = BodyFrame;
             }
         } else {
-            frameType = EndFrame;
+            frameType = LinkFrame;
         }
         if(kinematicsKit){
             kinematicsKit->setCurrentFrame(frameType, id);
             if(frameComboIndex == BaseFrameCombo){
                 baseFrame = kinematicsKit->currentFrame(frameType);
             } else {
-                endFrame = kinematicsKit->currentEndFrame();
+                linkFrame = kinematicsKit->currentLinkFrame();
             }
             kinematicsKit->notifyFrameUpdate();
         }
@@ -735,7 +735,7 @@ void LinkPositionView::Impl::onFrameUpdate()
         if(i == BaseFrameCombo){
             newId = kinematicsKit->currentBaseFrameId();
         } else {
-            newId = kinematicsKit->currentEndFrameId();
+            newId = kinematicsKit->currentLinkFrameId();
         }
         auto& combo = frameCombo[i];
         int currentIndex = combo.currentIndex();
@@ -758,7 +758,7 @@ void LinkPositionView::Impl::onFrameUpdate()
     }
 
     baseFrame = kinematicsKit->currentBaseFrame();
-    endFrame = kinematicsKit->currentEndFrame();
+    linkFrame = kinematicsKit->currentLinkFrame();
     
     updatePanel();
 }
@@ -812,7 +812,7 @@ bool LinkPositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* t
     targetType = PositionEditTarget;
     positionEditTarget = target;
     baseFrame = identityFrame;
-    endFrame = identityFrame;
+    linkFrame = identityFrame;
 
     targetConnections.add(
         target->sigPositionChanged().connect(
@@ -862,7 +862,7 @@ void LinkPositionView::Impl::updatePanel()
 void LinkPositionView::Impl::updatePanelWithCurrentLinkPosition()
 {
     if(targetLink){
-        Position T = baseFrame->T().inverse(Eigen::Isometry) * targetLink->Ta() * endFrame->T();
+        Position T = baseFrame->T().inverse(Eigen::Isometry) * targetLink->Ta() * linkFrame->T();
         if(kinematicsKit){
             if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
                 T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
@@ -948,7 +948,7 @@ bool LinkPositionView::Impl::findBodyIkSolution(const Position& T_input)
 
     targetBodyItem->beginKinematicStateEdit();
         
-    Position T = baseFrame->T() * T_input * endFrame->T().inverse(Eigen::Isometry);
+    Position T = baseFrame->T() * T_input * linkFrame->T().inverse(Eigen::Isometry);
     if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
         T = kinematicsKit->baseLink()->Ta() * T;
     }

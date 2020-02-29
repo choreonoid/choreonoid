@@ -27,7 +27,7 @@ public:
     void setCoordinateModeLabels(
         const char* worldModeLabel, const char* modelModeLabel, const char* localModeLabel);
 
-    void setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* endOffsetLabel);
+    void setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* linkOffsetLabel);
 
     void customizeDefaultCoordinateFrameNames(
         std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> getNames);

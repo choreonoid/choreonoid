@@ -18,11 +18,11 @@ public:
     enum FrameType {
         WorldFrame = LinkCoordinateFrameSet::WorldFrame,
         BodyFrame  = LinkCoordinateFrameSet::BodyFrame,
-        EndFrame   = LinkCoordinateFrameSet::EndFrame
+        LinkFrame   = LinkCoordinateFrameSet::LinkFrame
     };
 
     static void setFrameListLabels(
-        const char* worldFrameLabel, const char* bodyFrameLabel, const char* endFrameLabel);
+        const char* worldFrameLabel, const char* bodyFrameLabel, const char* linkFrameLabel);
 
     static void setFrameListEnabledForAllItems(FrameType type, bool on);
 
@@ -38,8 +38,8 @@ public:
     CoordinateFrameListItem* bodyFrameListItem(int index);
     const CoordinateFrameListItem* bodyFrameListItem(int index) const;
 
-    CoordinateFrameListItem* endFrameListItem(int index);
-    const CoordinateFrameListItem* endFrameListItem(int index) const;
+    CoordinateFrameListItem* linkFrameListItem(int index);
+    const CoordinateFrameListItem* linkFrameListItem(int index) const;
 
 protected:
     virtual Item* doDuplicate() const override;

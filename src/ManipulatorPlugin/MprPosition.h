@@ -112,7 +112,7 @@ public:
         return frames->frameSet(baseFrameType_)->getFrame(baseFrameId_);
     }
     CoordinateFrame* toolFrame(LinkCoordinateFrameSet* frames){
-        return frames->endFrameSet()->getFrame(toolFrameId_);
+        return frames->linkFrameSet()->getFrame(toolFrameId_);
     }
     CoordinateFrame* frame(LinkCoordinateFrameSet* frames, int frameType){
         return (frameType == BaseFrame) ? baseFrame(frames) : toolFrame(frames);

@@ -307,9 +307,9 @@ CoordinateFrameSet* LinkKinematicsKit::bodyFrameSet()
 }
 
 
-CoordinateFrameSet* LinkKinematicsKit::endFrameSet()
+CoordinateFrameSet* LinkKinematicsKit::linkFrameSet()
 {
-    return impl->frameSets->endFrameSet();
+    return impl->frameSets->linkFrameSet();
 }
 
 
@@ -325,9 +325,9 @@ CoordinateFrame* LinkKinematicsKit::bodyFrame(const GeneralId& id)
 }
 
 
-CoordinateFrame* LinkKinematicsKit::endFrame(const GeneralId& id)
+CoordinateFrame* LinkKinematicsKit::linkFrame(const GeneralId& id)
 {
-    return impl->frameSets->endFrame(id);
+    return impl->frameSets->linkFrame(id);
 }
 
 
@@ -349,9 +349,9 @@ const GeneralId& LinkKinematicsKit::currentBodyFrameId() const
 }
 
 
-const GeneralId& LinkKinematicsKit::currentEndFrameId() const
+const GeneralId& LinkKinematicsKit::currentLinkFrameId() const
 {
-    return impl->currentFrameId[EndFrame];
+    return impl->currentFrameId[LinkFrame];
 }
 
 
@@ -373,9 +373,9 @@ CoordinateFrame* LinkKinematicsKit::currentBodyFrame()
 }
 
 
-CoordinateFrame* LinkKinematicsKit::currentEndFrame()
+CoordinateFrame* LinkKinematicsKit::currentLinkFrame()
 {
-    return impl->frameSets->endFrameSet()->getFrame(currentEndFrameId());
+    return impl->frameSets->linkFrameSet()->getFrame(currentLinkFrameId());
 }
 
 
@@ -397,9 +397,9 @@ void LinkKinematicsKit::setCurrentBodyFrame(const GeneralId& id)
 }
 
 
-void LinkKinematicsKit::setCurrentEndFrame(const GeneralId& id)
+void LinkKinematicsKit::setCurrentLinkFrame(const GeneralId& id)
 {
-    impl->currentFrameId[EndFrame] = id;
+    impl->currentFrameId[LinkFrame] = id;
 }
 
 
@@ -470,9 +470,9 @@ bool LinkKinematicsKit::storeState(Mapping& archive) const
         archive.write("body_frame", bodyId.label(),
                       bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
     }
-    auto& endId = currentEndFrameId();
-    if(endId != defaultId){
-        archive.write("link_frame", endId.label(),
+    auto& linkId = currentLinkFrameId();
+    if(linkId != defaultId){
+        archive.write("link_frame", linkId.label(),
                       bodyId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
     }
     if(impl->isCustomIkDisabled){
@@ -495,7 +495,7 @@ bool LinkKinematicsKit::restoreState(const Mapping& archive)
         updated = true;
     }
     if(id.read(archive, "link_frame")){
-        setCurrentEndFrame(id);
+        setCurrentLinkFrame(id);
         updated = true;
     }
     bool on;

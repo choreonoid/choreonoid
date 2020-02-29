@@ -821,13 +821,13 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
         kinematicsKit = parentBodyItem->findLinkKinematicsKit(parentBodyLink);
         if(kinematicsKit){
             positionDragger->setPosition(
-                link->Tb().inverse(Eigen::Isometry) * kinematicsKit->currentEndFrame()->T());
+                link->Tb().inverse(Eigen::Isometry) * kinematicsKit->currentLinkFrame()->T());
         }
     }
     if(!kinematicsKit){
         kinematicsKit = bodyItem->findLinkKinematicsKit(link);
         if(kinematicsKit){
-            positionDragger->setPosition(kinematicsKit->currentEndFrame()->T());
+            positionDragger->setPosition(kinematicsKit->currentLinkFrame()->T());
         } else {
             positionDragger->setPosition(Affine3::Identity());
         }

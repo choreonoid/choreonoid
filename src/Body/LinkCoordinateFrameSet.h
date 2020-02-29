@@ -11,7 +11,7 @@ class CNOID_EXPORT LinkCoordinateFrameSet : public MultiCoordinateFrameSet
 public:
     LinkCoordinateFrameSet();
     LinkCoordinateFrameSet(
-        CoordinateFrameSet* worldFrameSet, CoordinateFrameSet* bodyFrameSet, CoordinateFrameSet* endFrameSet);
+        CoordinateFrameSet* worldFrameSet, CoordinateFrameSet* bodyFrameSet, CoordinateFrameSet* linkFrameSet);
     LinkCoordinateFrameSet(const LinkCoordinateFrameSet& org);
 
     LinkCoordinateFrameSet& operator=(const LinkCoordinateFrameSet& rhs);
@@ -19,13 +19,13 @@ public:
     /**
        WorldFrame: Offset from the world origin frame
        BodyFrame: Offset from the base link origin frame
-       EndFrame: Local offset from the end link origin frame
+       LinkFrame: Local offset from the target link origin frame
     */
-    enum FrameType { WorldFrame = 0, BodyFrame = 1, EndFrame = 2 };
+    enum FrameType { WorldFrame = 0, BodyFrame = 1, LinkFrame = 2 };
 
     CoordinateFrameSet* worldFrameSet() { return frameSet(WorldFrame); }
     CoordinateFrameSet* bodyFrameSet() { return frameSet(BodyFrame); }
-    CoordinateFrameSet* endFrameSet() { return frameSet(EndFrame); }
+    CoordinateFrameSet* linkFrameSet() { return frameSet(LinkFrame); }
 
     CoordinateFrame* worldFrame(const GeneralId& id) {
         return worldFrameSet()->getFrame(id);
@@ -33,8 +33,8 @@ public:
     CoordinateFrame* bodyFrame(const GeneralId& id) {
         return bodyFrameSet()->getFrame(id);
     }
-    CoordinateFrame* endFrame(const GeneralId& id) {
-        return endFrameSet()->getFrame(id);
+    CoordinateFrame* linkFrame(const GeneralId& id) {
+        return linkFrameSet()->getFrame(id);
     }
 
 protected:

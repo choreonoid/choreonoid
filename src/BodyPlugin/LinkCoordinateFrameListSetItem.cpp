@@ -12,23 +12,23 @@ namespace {
 
 string worldFrameListLabel;
 string bodyFrameListLabel;
-string endFrameListLabel;
+string linkFrameListLabel;
 
 bool enabledFlags[] = { 1, 1, 1 };
 
 Signal<void(LinkCoordinateFrameListSetItem::FrameType type, bool on)> sigEnabledFrameListsChanged;
 Signal<void(LinkCoordinateFrameListSetItem* frameListSetItem)> sigInstanceAddedOrUpdated_;
 
-class EndCoordinateFrameListItem;
+class LinkCoordinateFrameListItem;
 
-class EndLocatableItem : public LocatableItem
+class LinkCoordLocatableItem : public LocatableItem
 {
 public:
-    EndCoordinateFrameListItem* frameListItem;
+    LinkCoordinateFrameListItem* frameListItem;
     weak_ref_ptr<BodyItem> weakBodyItem;
     LinkPtr parentLink;
     
-    EndLocatableItem(EndCoordinateFrameListItem* frameListItem);
+    LinkCoordLocatableItem(LinkCoordinateFrameListItem* frameListItem);
     void setTarget(BodyItem* bodyItem, Link* link);
     virtual Item* getCorrespondingItem() override;
     virtual std::string getLocationName() const override;
@@ -39,13 +39,13 @@ public:
     virtual LocatableItem* getParentLocatableItem() override;
 };
 
-class EndCoordinateFrameListItem : public CoordinateFrameListItem
+class LinkCoordinateFrameListItem : public CoordinateFrameListItem
 {
 public:
-    EndLocatableItem endLocatableItem;
+    LinkCoordLocatableItem linkCoordLocatableItem;
     
-    EndCoordinateFrameListItem();
-    EndCoordinateFrameListItem(const EndCoordinateFrameListItem& org);
+    LinkCoordinateFrameListItem();
+    LinkCoordinateFrameListItem(const LinkCoordinateFrameListItem& org);
     virtual Item* doDuplicate() const override;
     virtual LocatableItem* getParentLocatableItem() override;
 };
@@ -59,12 +59,12 @@ void LinkCoordinateFrameListSetItem::initializeClass(ExtensionManager* ext)
         N_("LinkCoordinateFrameListSetItem"));
     im.addCreationPanel<LinkCoordinateFrameListSetItem>();
 
-    im.registerClass<EndCoordinateFrameListItem, CoordinateFrameListItem>(
-        "EndCoordinateFrameListItem");
+    im.registerClass<LinkCoordinateFrameListItem, CoordinateFrameListItem>(
+        "LinkCoordinateFrameListItem");
 
     worldFrameListLabel = "World";
     bodyFrameListLabel = "Body";
-    endFrameListLabel = "End";
+    linkFrameListLabel = "Link";
 }
 
 
@@ -76,11 +76,11 @@ LinkCoordinateFrameListSetItem::sigInstanceAddedOrUpdated()
 
 
 void LinkCoordinateFrameListSetItem::setFrameListLabels
-(const char* worldFrameLabel, const char* bodyFrameLabel, const char* endFrameLabel)
+(const char* worldFrameLabel, const char* bodyFrameLabel, const char* linkFrameLabel)
 {
     ::worldFrameListLabel = worldFrameLabel;
     ::bodyFrameListLabel = bodyFrameLabel;
-    ::endFrameListLabel = endFrameLabel;
+    ::linkFrameListLabel = linkFrameLabel;
 }
 
 
@@ -104,9 +104,9 @@ LinkCoordinateFrameListSetItem::LinkCoordinateFrameListSetItem()
     bodyFrameListItem->setName(::bodyFrameListLabel);
     setFrameListItem(BodyFrame, bodyFrameListItem);
 
-    auto endFrameListItem = new EndCoordinateFrameListItem;
-    endFrameListItem->setName(::endFrameListLabel);
-    setFrameListItem(EndFrame, endFrameListItem);
+    auto linkFrameListItem = new LinkCoordinateFrameListItem;
+    linkFrameListItem->setName(::linkFrameListLabel);
+    setFrameListItem(LinkFrame, linkFrameListItem);
     
     replaceFrameListContainer(new LinkCoordinateFrameSet);
     initializeFrameListEnabling();
@@ -183,104 +183,104 @@ const CoordinateFrameListItem* LinkCoordinateFrameListSetItem::bodyFrameListItem
 }    
 
 
-CoordinateFrameListItem* LinkCoordinateFrameListSetItem::endFrameListItem(int index)
+CoordinateFrameListItem* LinkCoordinateFrameListSetItem::linkFrameListItem(int index)
 {
-    return frameListItem(EndFrame);
+    return frameListItem(LinkFrame);
 }
     
 
-const CoordinateFrameListItem* LinkCoordinateFrameListSetItem::endFrameListItem(int index) const
+const CoordinateFrameListItem* LinkCoordinateFrameListSetItem::linkFrameListItem(int index) const
 {
-    return frameListItem(EndFrame);
+    return frameListItem(LinkFrame);
 }
 
 
-EndCoordinateFrameListItem::EndCoordinateFrameListItem()
+LinkCoordinateFrameListItem::LinkCoordinateFrameListItem()
     : CoordinateFrameListItem(),
-      endLocatableItem(this)
+      linkCoordLocatableItem(this)
 {
 
 }
 
 
-EndCoordinateFrameListItem::EndCoordinateFrameListItem(const EndCoordinateFrameListItem& org)
+LinkCoordinateFrameListItem::LinkCoordinateFrameListItem(const LinkCoordinateFrameListItem& org)
     : CoordinateFrameListItem(org),
-      endLocatableItem(this)
+      linkCoordLocatableItem(this)
 {
 
 }
 
 
-Item* EndCoordinateFrameListItem::doDuplicate() const
+Item* LinkCoordinateFrameListItem::doDuplicate() const
 {
-    return new EndCoordinateFrameListItem(*this);
+    return new LinkCoordinateFrameListItem(*this);
 }
 
 
-LocatableItem* EndCoordinateFrameListItem::getParentLocatableItem()
+LocatableItem* LinkCoordinateFrameListItem::getParentLocatableItem()
 {
     if(auto bodyItem = findOwnerItem<BodyItem>()){
         auto body = bodyItem->body();
         if(auto link = body->findUniqueEndLink()){
-            endLocatableItem.setTarget(bodyItem, link);
-            return &endLocatableItem;
+            linkCoordLocatableItem.setTarget(bodyItem, link);
+            return &linkCoordLocatableItem;
         }
     }
     return nullptr;
 }
 
 
-EndLocatableItem::EndLocatableItem(EndCoordinateFrameListItem* frameListItem)
+LinkCoordLocatableItem::LinkCoordLocatableItem(LinkCoordinateFrameListItem* frameListItem)
     : frameListItem(frameListItem)
 {
 
 }
 
 
-void EndLocatableItem::setTarget(BodyItem* bodyItem, Link* link)
+void LinkCoordLocatableItem::setTarget(BodyItem* bodyItem, Link* link)
 {
     weakBodyItem = bodyItem;
     parentLink = link;
 }
 
 
-Item* EndLocatableItem::getCorrespondingItem()
+Item* LinkCoordLocatableItem::getCorrespondingItem()
 {
     return weakBodyItem.lock();
 }
 
 
-std::string EndLocatableItem::getLocationName() const
+std::string LinkCoordLocatableItem::getLocationName() const
 {
     return parentLink->body()->name() + " - " +  parentLink->name();
 }
 
 
-Position EndLocatableItem::getLocation() const
+Position LinkCoordLocatableItem::getLocation() const
 {
     return parentLink->position();
 }
 
 
-bool EndLocatableItem::isLocationEditable() const
+bool LinkCoordLocatableItem::isLocationEditable() const
 {
     return false;
 }
 
 
-void EndLocatableItem::setLocation(const Position&)
+void LinkCoordLocatableItem::setLocation(const Position&)
 {
 
 }
 
 
-LocatableItem* EndLocatableItem::getParentLocatableItem()
+LocatableItem* LinkCoordLocatableItem::getParentLocatableItem()
 {
     return nullptr;
 }
 
 
-SignalProxy<void()> EndLocatableItem::sigLocationChanged()
+SignalProxy<void()> LinkCoordLocatableItem::sigLocationChanged()
 {
     return weakBodyItem.lock()->sigKinematicStateChanged();
 }

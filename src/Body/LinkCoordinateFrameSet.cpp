@@ -13,8 +13,8 @@ LinkCoordinateFrameSet::LinkCoordinateFrameSet()
 
 
 LinkCoordinateFrameSet::LinkCoordinateFrameSet
-(CoordinateFrameSet* worldFrameSet, CoordinateFrameSet* bodyFrameSet, CoordinateFrameSet* endFrameSet)
-    : MultiCoordinateFrameSet{ worldFrameSet, bodyFrameSet, endFrameSet }
+(CoordinateFrameSet* worldFrameSet, CoordinateFrameSet* bodyFrameSet, CoordinateFrameSet* linkFrameSet)
+    : MultiCoordinateFrameSet{ worldFrameSet, bodyFrameSet, linkFrameSet }
 {
 
 }

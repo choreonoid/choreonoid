@@ -1477,7 +1477,7 @@ bool MprProgramViewBase::Impl::updateBodyPositionWithPositionStatement
                     if(auto ikPosition = dynamic_cast<MprIkPosition*>(position)){
                         kinematicsKit->setCurrentBaseFrameType(ikPosition->baseFrameType());
                         kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
-                        kinematicsKit->setCurrentEndFrame(ikPosition->toolFrameId());
+                        kinematicsKit->setCurrentLinkFrame(ikPosition->toolFrameId());
                         kinematicsKit->notifyFrameUpdate();
                     }
                 }

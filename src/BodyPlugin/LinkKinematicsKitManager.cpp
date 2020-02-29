@@ -25,7 +25,7 @@ namespace {
 enum FrameType {
     WorldFrame = LinkKinematicsKit::WorldFrame,
     BodyFrame = LinkKinematicsKit::BodyFrame,
-    EndFrame = LinkKinematicsKit::EndFrame
+    LinkFrame = LinkKinematicsKit::LinkFrame
 };
 
 }
@@ -57,7 +57,7 @@ public:
     void setupPositionDragger();
     bool onPositionEditRequest(AbstractPositionEditTarget* target);
     bool startBodyFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
-    bool startEndFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
+    bool startLinkFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
     void setFrameEditTarget(AbstractPositionEditTarget* target, Link* link);
     void onFrameEditPositionChanged(const Position& T);
     void onDraggerPositionChanged();
@@ -230,8 +230,8 @@ bool LinkKinematicsKitManager::Impl::onPositionEditRequest(AbstractPositionEditT
         if(auto frameSet = frame->ownerFrameSet()){
             if(commonFrameSets->frameSet(BodyFrame)->contains(frameSet)){
                 accepted = startBodyFrameEditing(target, frame);
-            } else if(commonFrameSets->frameSet(EndFrame)->contains(frameSet)){
-                accepted = startEndFrameEditing(target, frame);
+            } else if(commonFrameSets->frameSet(LinkFrame)->contains(frameSet)){
+                accepted = startLinkFrameEditing(target, frame);
             }
         }
     }
@@ -254,7 +254,7 @@ bool LinkKinematicsKitManager::Impl::startBodyFrameEditing
 }
 
 
-bool LinkKinematicsKitManager::Impl::startEndFrameEditing
+bool LinkKinematicsKitManager::Impl::startLinkFrameEditing
 (AbstractPositionEditTarget* target, CoordinateFrame* frame)
 {
     auto endLink = bodyItem->body()->findUniqueEndLink();

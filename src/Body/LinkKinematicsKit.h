@@ -53,7 +53,7 @@ public:
     enum FrameType {
         WorldFrame = LinkCoordinateFrameSet::WorldFrame,
         BodyFrame = LinkCoordinateFrameSet::BodyFrame,
-        EndFrame = LinkCoordinateFrameSet::EndFrame
+        LinkFrame = LinkCoordinateFrameSet::LinkFrame
     };
 
     LinkCoordinateFrameSet* frameSets();
@@ -61,26 +61,26 @@ public:
     CoordinateFrameSet* frameSet(int frameType);
     CoordinateFrameSet* worldFrameSet();
     CoordinateFrameSet* bodyFrameSet();
-    CoordinateFrameSet* endFrameSet();
+    CoordinateFrameSet* linkFrameSet();
     
     CoordinateFrame* worldFrame(const GeneralId& id);
     CoordinateFrame* bodyFrame(const GeneralId& id);
-    CoordinateFrame* endFrame(const GeneralId& id);
+    CoordinateFrame* linkFrame(const GeneralId& id);
 
     const GeneralId& currentFrameId(int frameType) const;
     const GeneralId& currentWorldFrameId() const;
     const GeneralId& currentBodyFrameId() const;
-    const GeneralId& currentEndFrameId() const;
+    const GeneralId& currentLinkFrameId() const;
     
     CoordinateFrame* currentFrame(int frameType);
     CoordinateFrame* currentWorldFrame();
     CoordinateFrame* currentBodyFrame();
-    CoordinateFrame* currentEndFrame();
+    CoordinateFrame* currentLinkFrame();
 
     void setCurrentFrame(int frameType, const GeneralId& id);
     void setCurrentWorldFrame(const GeneralId& id);
     void setCurrentBodyFrame(const GeneralId& id);
-    void setCurrentEndFrame(const GeneralId& id);
+    void setCurrentLinkFrame(const GeneralId& id);
 
     int currentBaseFrameType(); // WorldFrame or BodyFrame
     void setCurrentBaseFrameType(int frameType);

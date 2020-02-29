@@ -197,9 +197,9 @@ bool MprIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool u
         T_base = baseLink->Ta() * baseFrame->T();
     }
 
-    toolFrameId_ = kinematicsKit->currentEndFrameId();
-    auto endFrame = kinematicsKit->currentEndFrame();
-    Position T_end = kinematicsKit->link()->Ta() * endFrame->T();
+    toolFrameId_ = kinematicsKit->currentLinkFrameId();
+    auto toolFrame = kinematicsKit->currentLinkFrame();
+    Position T_end = kinematicsKit->link()->Ta() * toolFrame->T();
 
     T = T_base.inverse(Eigen::Isometry) * T_end;
 
@@ -233,7 +233,7 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
         T_base = kinematicsKit->baseLink()->Ta() * bodyFrame->T();
     }
     
-    Position T_tool = kinematicsKit->endFrame(toolFrameId_)->T();
+    Position T_tool = kinematicsKit->linkFrame(toolFrameId_)->T();
     Position Ta_end = T_base * T * T_tool.inverse(Eigen::Isometry);
     Position T_end;
     T_end.translation() = Ta_end.translation();
