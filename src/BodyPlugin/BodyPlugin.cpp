@@ -4,7 +4,7 @@
 
 #include "WorldItem.h"
 #include "BodyItem.h"
-#include "LinkCoordinateFrameListSetItem.h"
+#include "LinkCoordFrameListSuiteItem.h"
 #include "SimulatorItem.h"
 #include "AISTSimulatorItem.h"
 #include "KinematicSimulatorItem.h"
@@ -82,7 +82,7 @@ public:
 
         WorldItem::initializeClass(this);
         BodyItem::initializeClass(this);
-        LinkCoordinateFrameListSetItem::initializeClass(this);
+        LinkCoordFrameListSuiteItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
         KinematicSimulatorItem::initializeClass(this);

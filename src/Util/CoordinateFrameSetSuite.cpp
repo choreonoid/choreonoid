@@ -1,4 +1,4 @@
-#include "MultiCoordinateFrameSet.h"
+#include "CoordinateFrameSetSuite.h"
 #include "CoordinateFrameList.h"
 #include <cnoid/CloneMap>
 
@@ -6,20 +6,20 @@ using namespace std;
 using namespace cnoid;
 
 
-MultiCoordinateFrameSet::MultiCoordinateFrameSet()
+CoordinateFrameSetSuite::CoordinateFrameSetSuite()
 {
 
 }
 
 
-MultiCoordinateFrameSet::MultiCoordinateFrameSet(int numFrameSets)
+CoordinateFrameSetSuite::CoordinateFrameSetSuite(int numFrameSets)
     : frameSets_(numFrameSets)
 {
 
 }
 
 
-MultiCoordinateFrameSet::MultiCoordinateFrameSet(std::initializer_list<CoordinateFrameSet*> frameSets)
+CoordinateFrameSetSuite::CoordinateFrameSetSuite(std::initializer_list<CoordinateFrameSet*> frameSets)
 {
     frameSets_.reserve(frameSets.size());
     for(auto& frameSet : frameSets){
@@ -28,7 +28,7 @@ MultiCoordinateFrameSet::MultiCoordinateFrameSet(std::initializer_list<Coordinat
 }
 
 
-MultiCoordinateFrameSet::MultiCoordinateFrameSet(const MultiCoordinateFrameSet& org)
+CoordinateFrameSetSuite::CoordinateFrameSetSuite(const CoordinateFrameSetSuite& org)
 {
     frameSets_.reserve(org.numFrameSets());
     for(auto& frameSet : org.frameSets_){
@@ -37,7 +37,7 @@ MultiCoordinateFrameSet::MultiCoordinateFrameSet(const MultiCoordinateFrameSet& 
 }
 
 
-MultiCoordinateFrameSet::MultiCoordinateFrameSet(const MultiCoordinateFrameSet& org, CloneMap* cloneMap)
+CoordinateFrameSetSuite::CoordinateFrameSetSuite(const CoordinateFrameSetSuite& org, CloneMap* cloneMap)
 {
     frameSets_.reserve(org.numFrameSets());
     for(auto& frameSet : org.frameSets_){
@@ -46,17 +46,17 @@ MultiCoordinateFrameSet::MultiCoordinateFrameSet(const MultiCoordinateFrameSet& 
 }
     
     
-Referenced* MultiCoordinateFrameSet::doClone(CloneMap* cloneMap) const
+Referenced* CoordinateFrameSetSuite::doClone(CloneMap* cloneMap) const
 {
     if(cloneMap){
-        return new MultiCoordinateFrameSet(*this, cloneMap);
+        return new CoordinateFrameSetSuite(*this, cloneMap);
     } else {
-        return new MultiCoordinateFrameSet(*this);
+        return new CoordinateFrameSetSuite(*this);
     }
 }
 
 
-MultiCoordinateFrameSet& MultiCoordinateFrameSet::operator=(const MultiCoordinateFrameSet& rhs)
+CoordinateFrameSetSuite& CoordinateFrameSetSuite::operator=(const CoordinateFrameSetSuite& rhs)
 {
     const int n = rhs.numFrameSets();
     frameSets_.resize(n);
@@ -67,7 +67,7 @@ MultiCoordinateFrameSet& MultiCoordinateFrameSet::operator=(const MultiCoordinat
 }
 
 
-void MultiCoordinateFrameSet::setFrameSet(int index, CoordinateFrameSet* frameSet)
+void CoordinateFrameSetSuite::setFrameSet(int index, CoordinateFrameSet* frameSet)
 {
     if(index >= frameSets_.size()){
         frameSets_.resize(index + 1);

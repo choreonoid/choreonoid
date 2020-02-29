@@ -1,24 +1,24 @@
-#ifndef CNOID_BODY_PLUGIN_LINK_COORDINATE_FRAME_LIST_SET_ITEM_H
-#define CNOID_BODY_PLUGIN_LINK_COORDINATE_FRAME_LIST_SET_ITEM_H
+#ifndef CNOID_BODY_PLUGIN_LINK_COORD_FRAME_LIST_SUITE_ITEM_H
+#define CNOID_BODY_PLUGIN_LINK_COORD_FRAME_LIST_SUITE_ITEM_H
 
-#include <cnoid/MultiCoordinateFrameListItem>
-#include <cnoid/LinkCoordinateFrameSet>
+#include <cnoid/CoordinateFrameListSuiteItem>
+#include <cnoid/LinkCoordFrameSetSuite>
 #include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT LinkCoordinateFrameListSetItem : public MultiCoordinateFrameListItem
+class CNOID_EXPORT LinkCoordFrameListSuiteItem : public CoordinateFrameListSuiteItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    static SignalProxy<void(LinkCoordinateFrameListSetItem* frameListSetItem)> sigInstanceAddedOrUpdated();
+    static SignalProxy<void(LinkCoordFrameListSuiteItem* frameListSetItem)> sigInstanceAddedOrUpdated();
 
     enum FrameType {
-        WorldFrame = LinkCoordinateFrameSet::WorldFrame,
-        BodyFrame  = LinkCoordinateFrameSet::BodyFrame,
-        LinkFrame   = LinkCoordinateFrameSet::LinkFrame
+        WorldFrame = LinkCoordFrameSetSuite::WorldFrame,
+        BodyFrame  = LinkCoordFrameSetSuite::BodyFrame,
+        LinkFrame   = LinkCoordFrameSetSuite::LinkFrame
     };
 
     static void setFrameListLabels(
@@ -26,11 +26,11 @@ public:
 
     static void setFrameListEnabledForAllItems(FrameType type, bool on);
 
-    LinkCoordinateFrameListSetItem();
-    LinkCoordinateFrameListSetItem(const LinkCoordinateFrameListSetItem& org);
+    LinkCoordFrameListSuiteItem();
+    LinkCoordFrameListSuiteItem(const LinkCoordFrameListSuiteItem& org);
 
-    LinkCoordinateFrameSet* frameSets();
-    const LinkCoordinateFrameSet* frameSets() const;
+    LinkCoordFrameSetSuite* frameSetSuite();
+    const LinkCoordFrameSetSuite* frameSetSuite() const;
 
     CoordinateFrameListItem* worldFrameListItem(int index);
     const CoordinateFrameListItem* worldFrameListItem(int index) const;
@@ -51,7 +51,7 @@ private:
     ScopedConnection connection;
 };
 
-typedef ref_ptr<LinkCoordinateFrameListSetItem> LinkCoordinateFrameListSetItemItemPtr;
+typedef ref_ptr<LinkCoordFrameListSuiteItem> LinkCoordFrameListSuiteItemItemPtr;
 
 }
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-01 03:39+0900\n"
+"POT-Creation-Date: 2020-03-01 04:50+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -475,10 +475,6 @@ msgstr "接触マテリアル定義ファイル (*.yaml)"
 msgid "Material table"
 msgstr "マテリアルテーブル"
 
-#: LinkCoordinateFrameListSetItem.cpp:59
-msgid "LinkCoordinateFrameListSetItem"
-msgstr "リンク座標フレームリスト一式アイテム"
-
 #: LinkPositionView.cpp:144
 msgid "Link Position"
 msgstr "リンクポジション"
@@ -818,6 +814,10 @@ msgstr ""
 #: ZMPSeqItem.cpp:139
 msgid "Root relative"
 msgstr "ルート相対"
+
+#: LinkCoordFrameListSuiteItem.cpp:59
+msgid "LinkCoordFrameListSuiteItem"
+msgstr "リンク座標フレームリスト一式アイテム"
 
 #: KinematicSimulatorItem.cpp:74
 msgid "KinematicSimulatorItem"
@@ -1735,4 +1735,3 @@ msgstr "{}のフレームレートはワールドのフレームレートと異�
 #: BodyMotionControllerItem.cpp:199
 msgid "Control mode"
 msgstr "制御モード"
-

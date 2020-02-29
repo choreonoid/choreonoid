@@ -6,7 +6,7 @@
 #include "MprVariableSetGroup.h"
 #include <cnoid/ItemManager>
 #include <cnoid/LinkKinematicsKit>
-#include <cnoid/LinkCoordinateFrameSet>
+#include <cnoid/LinkCoordFrameSetSuite>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
 #include <cnoid/BodyItem>

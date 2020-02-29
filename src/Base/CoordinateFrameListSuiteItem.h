@@ -1,5 +1,5 @@
-#ifndef CNOID_BASE_MULTI_COORDINATE_FRAME_LIST_ITEM_H
-#define CNOID_BASE_MULTI_COORDINATE_FRAME_LIST_ITEM_H
+#ifndef CNOID_BASE_COORDINATE_FRAME_LIST_SUITE_ITEM_H
+#define CNOID_BASE_COORDINATE_FRAME_LIST_SUITE_ITEM_H
 
 #include <cnoid/Item>
 #include <initializer_list>
@@ -10,20 +10,20 @@ namespace cnoid {
 
 class CoordinateFrameList;
 class CoordinateFrameListItem;
-class MultiCoordinateFrameSet;
+class CoordinateFrameSetSuite;
 
-class CNOID_EXPORT MultiCoordinateFrameListItem : public Item
+class CNOID_EXPORT CoordinateFrameListSuiteItem : public Item
 {
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    MultiCoordinateFrameListItem();
-    MultiCoordinateFrameListItem(std::initializer_list<std::string> frameSetNames);
-    MultiCoordinateFrameListItem(const MultiCoordinateFrameListItem& org);
-    virtual ~MultiCoordinateFrameListItem();
+    CoordinateFrameListSuiteItem();
+    CoordinateFrameListSuiteItem(std::initializer_list<std::string> frameSetNames);
+    CoordinateFrameListSuiteItem(const CoordinateFrameListSuiteItem& org);
+    virtual ~CoordinateFrameListSuiteItem();
 
-    MultiCoordinateFrameSet* frameSets();
-    const MultiCoordinateFrameSet* frameSets() const;
+    CoordinateFrameSetSuite* frameSetSuite();
+    const CoordinateFrameSetSuite* frameSetSuite() const;
 
     int numFrameLists() const;
     CoordinateFrameList* frameList(int index);
@@ -42,14 +42,14 @@ protected:
     virtual Item* doDuplicate() const override;
     void setNumFrameLists(int n);
     void setFrameListItem(int index, CoordinateFrameListItem* item);
-    void replaceFrameListContainer(MultiCoordinateFrameSet* container);
+    void replaceFrameListContainer(CoordinateFrameSetSuite* container);
 
 private:
     class Impl;
     Impl* impl;
 };
 
-typedef ref_ptr<MultiCoordinateFrameListItem> MultiCoordinateFrameListItemItemPtr;
+typedef ref_ptr<CoordinateFrameListSuiteItem> CoordinateFrameListSuiteItemItemPtr;
 
 }
 

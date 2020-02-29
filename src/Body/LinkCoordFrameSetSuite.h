@@ -1,20 +1,20 @@
-#ifndef CNOID_BODY_LINK_COORDINATE_FRAME_SET_H
-#define CNOID_BODY_LINK_COORDINATE_FRAME_SET_H
+#ifndef CNOID_BODY_LINK_COORD_FRAME_SET_SUITE_H
+#define CNOID_BODY_LINK_COORD_FRAME_SET_SUITE_H
 
-#include <cnoid/MultiCoordinateFrameSet>
+#include <cnoid/CoordinateFrameSetSuite>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT LinkCoordinateFrameSet : public MultiCoordinateFrameSet
+class CNOID_EXPORT LinkCoordFrameSetSuite : public CoordinateFrameSetSuite
 {
 public:
-    LinkCoordinateFrameSet();
-    LinkCoordinateFrameSet(
+    LinkCoordFrameSetSuite();
+    LinkCoordFrameSetSuite(
         CoordinateFrameSet* worldFrameSet, CoordinateFrameSet* bodyFrameSet, CoordinateFrameSet* linkFrameSet);
-    LinkCoordinateFrameSet(const LinkCoordinateFrameSet& org);
+    LinkCoordFrameSetSuite(const LinkCoordFrameSetSuite& org);
 
-    LinkCoordinateFrameSet& operator=(const LinkCoordinateFrameSet& rhs);
+    LinkCoordFrameSetSuite& operator=(const LinkCoordFrameSetSuite& rhs);
 
     /**
        WorldFrame: Offset from the world origin frame
@@ -38,11 +38,11 @@ public:
     }
 
 protected:
-    LinkCoordinateFrameSet(const LinkCoordinateFrameSet& org, CloneMap* cloneMap);
+    LinkCoordFrameSetSuite(const LinkCoordFrameSetSuite& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
-typedef ref_ptr<LinkCoordinateFrameSet> LinkCoordinateFrameSetPtr;
+typedef ref_ptr<LinkCoordFrameSetSuite> LinkCoordFrameSetSuitePtr;
 
 }
 

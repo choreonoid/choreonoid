@@ -1,8 +1,8 @@
-#include "MultiCoordinateFrameListItem.h"
+#include "CoordinateFrameListSuiteItem.h"
 #include "CoordinateFrameListItem.h"
 #include <cnoid/CoordinateFrameSet>
 #include <cnoid/CoordinateFrameList>
-#include <cnoid/MultiCoordinateFrameSet>
+#include <cnoid/CoordinateFrameSetSuite>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include "gettext.h"
@@ -12,53 +12,53 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class MultiCoordinateFrameListItem::Impl
+class CoordinateFrameListSuiteItem::Impl
 {
 public:
-    MultiCoordinateFrameListItem* self;
-    MultiCoordinateFrameSetPtr frameLists;
+    CoordinateFrameListSuiteItem* self;
+    CoordinateFrameSetSuitePtr frameLists;
     vector<CoordinateFrameListItemPtr> frameListItems;
 
-    Impl(MultiCoordinateFrameListItem* self);
-    Impl(MultiCoordinateFrameListItem* self, std::initializer_list<std::string> frameSetNames);
-    Impl(MultiCoordinateFrameListItem* self, const Impl& org);
+    Impl(CoordinateFrameListSuiteItem* self);
+    Impl(CoordinateFrameListSuiteItem* self, std::initializer_list<std::string> frameSetNames);
+    Impl(CoordinateFrameListSuiteItem* self, const Impl& org);
 };
 
 }
 
 
-void MultiCoordinateFrameListItem::initializeClass(ExtensionManager* ext)
+void CoordinateFrameListSuiteItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
-    im.registerClass<MultiCoordinateFrameListItem>(N_("MultiCoordinateFrameListItem"));
+    im.registerClass<CoordinateFrameListSuiteItem>(N_("CoordinateFrameListSuiteItem"));
 }
 
 
-MultiCoordinateFrameListItem::MultiCoordinateFrameListItem()
+CoordinateFrameListSuiteItem::CoordinateFrameListSuiteItem()
 {
     impl = new Impl(this);
 }
 
 
-MultiCoordinateFrameListItem::Impl::Impl(MultiCoordinateFrameListItem* self)
+CoordinateFrameListSuiteItem::Impl::Impl(CoordinateFrameListSuiteItem* self)
     : self(self)
 {
-    frameLists = new MultiCoordinateFrameSet;
+    frameLists = new CoordinateFrameSetSuite;
 }
 
 
-MultiCoordinateFrameListItem::MultiCoordinateFrameListItem(std::initializer_list<std::string> frameSetNames)
+CoordinateFrameListSuiteItem::CoordinateFrameListSuiteItem(std::initializer_list<std::string> frameSetNames)
 {
     impl = new Impl(this, frameSetNames);
 }
 
 
-MultiCoordinateFrameListItem::Impl::Impl
-(MultiCoordinateFrameListItem* self, std::initializer_list<std::string> frameSetNames)
+CoordinateFrameListSuiteItem::Impl::Impl
+(CoordinateFrameListSuiteItem* self, std::initializer_list<std::string> frameSetNames)
     : self(self)
 {
     const int n = frameSetNames.size();
-    frameLists = new MultiCoordinateFrameSet(n);
+    frameLists = new CoordinateFrameSetSuite(n);
     frameListItems.resize(n);
 
     int i = 0;
@@ -73,18 +73,18 @@ MultiCoordinateFrameListItem::Impl::Impl
 }
 
 
-MultiCoordinateFrameListItem::MultiCoordinateFrameListItem(const MultiCoordinateFrameListItem& org)
+CoordinateFrameListSuiteItem::CoordinateFrameListSuiteItem(const CoordinateFrameListSuiteItem& org)
     : Item(org)
 {
     impl = new Impl(this, *org.impl);
 }
 
 
-MultiCoordinateFrameListItem::Impl::Impl(MultiCoordinateFrameListItem* self, const Impl& org)
+CoordinateFrameListSuiteItem::Impl::Impl(CoordinateFrameListSuiteItem* self, const Impl& org)
     : self(self)
 {
     const int n = org.frameLists->numFrameSets();
-    frameLists = new MultiCoordinateFrameSet(n);
+    frameLists = new CoordinateFrameSetSuite(n);
     frameListItems.resize(n);
 
     int index = 0;
@@ -97,19 +97,19 @@ MultiCoordinateFrameListItem::Impl::Impl(MultiCoordinateFrameListItem* self, con
 }
 
 
-MultiCoordinateFrameListItem::~MultiCoordinateFrameListItem()
+CoordinateFrameListSuiteItem::~CoordinateFrameListSuiteItem()
 {
     delete impl;
 }
 
 
-Item* MultiCoordinateFrameListItem::doDuplicate() const
+Item* CoordinateFrameListSuiteItem::doDuplicate() const
 {
-    return new MultiCoordinateFrameListItem(*this);
+    return new CoordinateFrameListSuiteItem(*this);
 }
 
 
-void MultiCoordinateFrameListItem::replaceFrameListContainer(MultiCoordinateFrameSet* container)
+void CoordinateFrameListSuiteItem::replaceFrameListContainer(CoordinateFrameSetSuite* container)
 {
     const int n = impl->frameLists->numFrameSets();
     container->setNumFrameSets(n);
@@ -120,56 +120,56 @@ void MultiCoordinateFrameListItem::replaceFrameListContainer(MultiCoordinateFram
 }
     
 
-MultiCoordinateFrameSet* MultiCoordinateFrameListItem::frameSets()
+CoordinateFrameSetSuite* CoordinateFrameListSuiteItem::frameSetSuite()
 {
     return impl->frameLists;
 }
 
 
-const MultiCoordinateFrameSet* MultiCoordinateFrameListItem::frameSets() const
+const CoordinateFrameSetSuite* CoordinateFrameListSuiteItem::frameSetSuite() const
 {
     return impl->frameLists;
 }
 
 
-int MultiCoordinateFrameListItem::numFrameLists() const
+int CoordinateFrameListSuiteItem::numFrameLists() const
 {
     return impl->frameLists->numFrameSets();
 }
 
 
-void MultiCoordinateFrameListItem::setNumFrameLists(int n)
+void CoordinateFrameListSuiteItem::setNumFrameLists(int n)
 {
     impl->frameListItems.resize(n);
     impl->frameLists->setNumFrameSets(n);
 }
 
 
-CoordinateFrameList* MultiCoordinateFrameListItem::frameList(int index)
+CoordinateFrameList* CoordinateFrameListSuiteItem::frameList(int index)
 {
     return dynamic_cast<CoordinateFrameList*>(impl->frameLists->frameSet(index));
 }
 
 
-const CoordinateFrameList* MultiCoordinateFrameListItem::frameList(int index) const
+const CoordinateFrameList* CoordinateFrameListSuiteItem::frameList(int index) const
 {
     return dynamic_cast<CoordinateFrameList*>(impl->frameLists->frameSet(index));
 }
 
 
-CoordinateFrameListItem* MultiCoordinateFrameListItem::frameListItem(int index)
+CoordinateFrameListItem* CoordinateFrameListSuiteItem::frameListItem(int index)
 {
     return impl->frameListItems[index];
 }
 
 
-const CoordinateFrameListItem* MultiCoordinateFrameListItem::frameListItem(int index) const
+const CoordinateFrameListItem* CoordinateFrameListSuiteItem::frameListItem(int index) const
 {
     return impl->frameListItems[index];
 }
 
 
-void MultiCoordinateFrameListItem::setFrameListItem(int index, CoordinateFrameListItem* item)
+void CoordinateFrameListSuiteItem::setFrameListItem(int index, CoordinateFrameListItem* item)
 {
     if(index >= static_cast<int>(impl->frameListItems.size())){
         setNumFrameLists(index + 1);
@@ -180,7 +180,7 @@ void MultiCoordinateFrameListItem::setFrameListItem(int index, CoordinateFrameLi
 }
 
 
-void MultiCoordinateFrameListItem::setFrameListEnabled(int index, bool on)
+void CoordinateFrameListSuiteItem::setFrameListEnabled(int index, bool on)
 {
     auto item = impl->frameListItems[index];
     if(on && !item->parentItem()){
@@ -191,13 +191,13 @@ void MultiCoordinateFrameListItem::setFrameListEnabled(int index, bool on)
 }
     
 
-bool MultiCoordinateFrameListItem::isFrameListEnabled(int index) const
+bool CoordinateFrameListSuiteItem::isFrameListEnabled(int index) const
 {
     return impl->frameListItems[index]->parentItem() != nullptr;
 }
     
 
-bool MultiCoordinateFrameListItem::store(Archive& archive)
+bool CoordinateFrameListSuiteItem::store(Archive& archive)
 {
     ListingPtr nodes = new Listing;
     const int n = impl->frameListItems.size();
@@ -220,7 +220,7 @@ bool MultiCoordinateFrameListItem::store(Archive& archive)
 }
 
 
-bool MultiCoordinateFrameListItem::restore(const Archive& archive)
+bool CoordinateFrameListSuiteItem::restore(const Archive& archive)
 {
     auto nodes = archive.findListing("frame_lists");
     if(!nodes->isValid()){

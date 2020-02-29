@@ -1,4 +1,4 @@
-#include "LinkCoordinateFrameListSetItem.h"
+#include "LinkCoordFrameListSuiteItem.h"
 #include "BodyItem.h"
 #include <cnoid/CoordinateFrameListItem>
 #include <cnoid/LocatableItem>
@@ -16,19 +16,19 @@ string linkFrameListLabel;
 
 bool enabledFlags[] = { 1, 1, 1 };
 
-Signal<void(LinkCoordinateFrameListSetItem::FrameType type, bool on)> sigEnabledFrameListsChanged;
-Signal<void(LinkCoordinateFrameListSetItem* frameListSetItem)> sigInstanceAddedOrUpdated_;
+Signal<void(LinkCoordFrameListSuiteItem::FrameType type, bool on)> sigEnabledFrameListsChanged;
+Signal<void(LinkCoordFrameListSuiteItem* frameListSetItem)> sigInstanceAddedOrUpdated_;
 
-class LinkCoordinateFrameListItem;
+class LinkCoordFrameListItem;
 
 class LinkCoordLocatableItem : public LocatableItem
 {
 public:
-    LinkCoordinateFrameListItem* frameListItem;
+    LinkCoordFrameListItem* frameListItem;
     weak_ref_ptr<BodyItem> weakBodyItem;
     LinkPtr parentLink;
     
-    LinkCoordLocatableItem(LinkCoordinateFrameListItem* frameListItem);
+    LinkCoordLocatableItem(LinkCoordFrameListItem* frameListItem);
     void setTarget(BodyItem* bodyItem, Link* link);
     virtual Item* getCorrespondingItem() override;
     virtual std::string getLocationName() const override;
@@ -39,28 +39,28 @@ public:
     virtual LocatableItem* getParentLocatableItem() override;
 };
 
-class LinkCoordinateFrameListItem : public CoordinateFrameListItem
+class LinkCoordFrameListItem : public CoordinateFrameListItem
 {
 public:
     LinkCoordLocatableItem linkCoordLocatableItem;
     
-    LinkCoordinateFrameListItem();
-    LinkCoordinateFrameListItem(const LinkCoordinateFrameListItem& org);
+    LinkCoordFrameListItem();
+    LinkCoordFrameListItem(const LinkCoordFrameListItem& org);
     virtual Item* doDuplicate() const override;
     virtual LocatableItem* getParentLocatableItem() override;
 };
 
 }
 
-void LinkCoordinateFrameListSetItem::initializeClass(ExtensionManager* ext)
+void LinkCoordFrameListSuiteItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
-    im.registerClass<LinkCoordinateFrameListSetItem, MultiCoordinateFrameListItem>(
-        N_("LinkCoordinateFrameListSetItem"));
-    im.addCreationPanel<LinkCoordinateFrameListSetItem>();
+    im.registerClass<LinkCoordFrameListSuiteItem, CoordinateFrameListSuiteItem>(
+        N_("LinkCoordFrameListSuiteItem"));
+    im.addCreationPanel<LinkCoordFrameListSuiteItem>();
 
-    im.registerClass<LinkCoordinateFrameListItem, CoordinateFrameListItem>(
-        "LinkCoordinateFrameListItem");
+    im.registerClass<LinkCoordFrameListItem, CoordinateFrameListItem>(
+        "LinkCoordFrameListItem");
 
     worldFrameListLabel = "World";
     bodyFrameListLabel = "Body";
@@ -68,14 +68,14 @@ void LinkCoordinateFrameListSetItem::initializeClass(ExtensionManager* ext)
 }
 
 
-SignalProxy<void(LinkCoordinateFrameListSetItem* frameListSetItem)>
-LinkCoordinateFrameListSetItem::sigInstanceAddedOrUpdated()
+SignalProxy<void(LinkCoordFrameListSuiteItem* frameListSetItem)>
+LinkCoordFrameListSuiteItem::sigInstanceAddedOrUpdated()
 {
     return ::sigInstanceAddedOrUpdated_;
 }
 
 
-void LinkCoordinateFrameListSetItem::setFrameListLabels
+void LinkCoordFrameListSuiteItem::setFrameListLabels
 (const char* worldFrameLabel, const char* bodyFrameLabel, const char* linkFrameLabel)
 {
     ::worldFrameListLabel = worldFrameLabel;
@@ -84,15 +84,15 @@ void LinkCoordinateFrameListSetItem::setFrameListLabels
 }
 
 
-void LinkCoordinateFrameListSetItem::setFrameListEnabledForAllItems(FrameType type, bool on)
+void LinkCoordFrameListSuiteItem::setFrameListEnabledForAllItems(FrameType type, bool on)
 {
     enabledFlags[type] = on;
     sigEnabledFrameListsChanged(type, on);
 }
 
 
-LinkCoordinateFrameListSetItem::LinkCoordinateFrameListSetItem()
-    : MultiCoordinateFrameListItem()
+LinkCoordFrameListSuiteItem::LinkCoordFrameListSuiteItem()
+    : CoordinateFrameListSuiteItem()
 {
     setNumFrameLists(3);
     
@@ -104,24 +104,24 @@ LinkCoordinateFrameListSetItem::LinkCoordinateFrameListSetItem()
     bodyFrameListItem->setName(::bodyFrameListLabel);
     setFrameListItem(BodyFrame, bodyFrameListItem);
 
-    auto linkFrameListItem = new LinkCoordinateFrameListItem;
+    auto linkFrameListItem = new LinkCoordFrameListItem;
     linkFrameListItem->setName(::linkFrameListLabel);
     setFrameListItem(LinkFrame, linkFrameListItem);
     
-    replaceFrameListContainer(new LinkCoordinateFrameSet);
+    replaceFrameListContainer(new LinkCoordFrameSetSuite);
     initializeFrameListEnabling();
 }
 
 
-LinkCoordinateFrameListSetItem::LinkCoordinateFrameListSetItem(const LinkCoordinateFrameListSetItem& org)
-    : MultiCoordinateFrameListItem(org)
+LinkCoordFrameListSuiteItem::LinkCoordFrameListSuiteItem(const LinkCoordFrameListSuiteItem& org)
+    : CoordinateFrameListSuiteItem(org)
 {
-    replaceFrameListContainer(new LinkCoordinateFrameSet);
+    replaceFrameListContainer(new LinkCoordFrameSetSuite);
     initializeFrameListEnabling();
 }
 
 
-void LinkCoordinateFrameListSetItem::initializeFrameListEnabling()
+void LinkCoordFrameListSuiteItem::initializeFrameListEnabling()
 {
     for(size_t i=0; i < 3; ++i){
         if(!enabledFlags[i]){
@@ -135,67 +135,67 @@ void LinkCoordinateFrameListSetItem::initializeFrameListEnabling()
 }
 
 
-Item* LinkCoordinateFrameListSetItem::doDuplicate() const
+Item* LinkCoordFrameListSuiteItem::doDuplicate() const
 {
-    return new LinkCoordinateFrameListSetItem(*this);
+    return new LinkCoordFrameListSuiteItem(*this);
 }
 
 
-void LinkCoordinateFrameListSetItem::onPositionChanged()
+void LinkCoordFrameListSuiteItem::onPositionChanged()
 {
     ::sigInstanceAddedOrUpdated_(this);
 }
 
 
-LinkCoordinateFrameSet* LinkCoordinateFrameListSetItem::frameSets()
+LinkCoordFrameSetSuite* LinkCoordFrameListSuiteItem::frameSetSuite()
 {
-    return static_cast<LinkCoordinateFrameSet*>(MultiCoordinateFrameListItem::frameSets());
+    return static_cast<LinkCoordFrameSetSuite*>(CoordinateFrameListSuiteItem::frameSetSuite());
 }
 
 
-const LinkCoordinateFrameSet* LinkCoordinateFrameListSetItem::frameSets() const
+const LinkCoordFrameSetSuite* LinkCoordFrameListSuiteItem::frameSetSuite() const
 {
-    return static_cast<const LinkCoordinateFrameSet*>(MultiCoordinateFrameListItem::frameSets());
+    return static_cast<const LinkCoordFrameSetSuite*>(CoordinateFrameListSuiteItem::frameSetSuite());
 }
 
 
-CoordinateFrameListItem* LinkCoordinateFrameListSetItem::worldFrameListItem(int index)
+CoordinateFrameListItem* LinkCoordFrameListSuiteItem::worldFrameListItem(int index)
 {
     return frameListItem(WorldFrame);
 }
 
 
-const CoordinateFrameListItem* LinkCoordinateFrameListSetItem::worldFrameListItem(int index) const
+const CoordinateFrameListItem* LinkCoordFrameListSuiteItem::worldFrameListItem(int index) const
 {
     return frameListItem(WorldFrame);
 }    
 
 
-CoordinateFrameListItem* LinkCoordinateFrameListSetItem::bodyFrameListItem(int index)
+CoordinateFrameListItem* LinkCoordFrameListSuiteItem::bodyFrameListItem(int index)
 {
     return frameListItem(BodyFrame);
 }
     
 
-const CoordinateFrameListItem* LinkCoordinateFrameListSetItem::bodyFrameListItem(int index) const
+const CoordinateFrameListItem* LinkCoordFrameListSuiteItem::bodyFrameListItem(int index) const
 {
     return frameListItem(BodyFrame);
 }    
 
 
-CoordinateFrameListItem* LinkCoordinateFrameListSetItem::linkFrameListItem(int index)
+CoordinateFrameListItem* LinkCoordFrameListSuiteItem::linkFrameListItem(int index)
 {
     return frameListItem(LinkFrame);
 }
     
 
-const CoordinateFrameListItem* LinkCoordinateFrameListSetItem::linkFrameListItem(int index) const
+const CoordinateFrameListItem* LinkCoordFrameListSuiteItem::linkFrameListItem(int index) const
 {
     return frameListItem(LinkFrame);
 }
 
 
-LinkCoordinateFrameListItem::LinkCoordinateFrameListItem()
+LinkCoordFrameListItem::LinkCoordFrameListItem()
     : CoordinateFrameListItem(),
       linkCoordLocatableItem(this)
 {
@@ -203,7 +203,7 @@ LinkCoordinateFrameListItem::LinkCoordinateFrameListItem()
 }
 
 
-LinkCoordinateFrameListItem::LinkCoordinateFrameListItem(const LinkCoordinateFrameListItem& org)
+LinkCoordFrameListItem::LinkCoordFrameListItem(const LinkCoordFrameListItem& org)
     : CoordinateFrameListItem(org),
       linkCoordLocatableItem(this)
 {
@@ -211,13 +211,13 @@ LinkCoordinateFrameListItem::LinkCoordinateFrameListItem(const LinkCoordinateFra
 }
 
 
-Item* LinkCoordinateFrameListItem::doDuplicate() const
+Item* LinkCoordFrameListItem::doDuplicate() const
 {
-    return new LinkCoordinateFrameListItem(*this);
+    return new LinkCoordFrameListItem(*this);
 }
 
 
-LocatableItem* LinkCoordinateFrameListItem::getParentLocatableItem()
+LocatableItem* LinkCoordFrameListItem::getParentLocatableItem()
 {
     if(auto bodyItem = findOwnerItem<BodyItem>()){
         auto body = bodyItem->body();
@@ -230,7 +230,7 @@ LocatableItem* LinkCoordinateFrameListItem::getParentLocatableItem()
 }
 
 
-LinkCoordLocatableItem::LinkCoordLocatableItem(LinkCoordinateFrameListItem* frameListItem)
+LinkCoordLocatableItem::LinkCoordLocatableItem(LinkCoordFrameListItem* frameListItem)
     : frameListItem(frameListItem)
 {
 

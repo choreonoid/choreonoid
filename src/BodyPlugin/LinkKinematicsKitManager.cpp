@@ -5,8 +5,8 @@
 #include <cnoid/JointPath>
 #include <cnoid/CompositeIK>
 #include <cnoid/CoordinateFrameList>
-#include <cnoid/LinkCoordinateFrameSet>
-#include <cnoid/LinkCoordinateFrameListSetItem>
+#include <cnoid/LinkCoordFrameSetSuite>
+#include <cnoid/LinkCoordFrameListSuiteItem>
 #include <cnoid/RootItem>
 #include <cnoid/BodyItem>
 #include <cnoid/WorldItem>
@@ -41,7 +41,7 @@ public:
     map<int, LinkKinematicsKitPtr> linkIndexToKinematicsKitMap;
 
     ScopedConnection frameListConnection;
-    LinkCoordinateFrameSetPtr commonFrameSets;
+    LinkCoordFrameSetSuitePtr commonFrameSetSuite;
 
     BodySelectionManager* bodySelectionManager;
     AbstractPositionEditTarget* frameEditTarget;
@@ -53,7 +53,7 @@ public:
 
     Impl(BodyItem* bodyItem);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
-    void onFrameListSetItemAddedOrUpdated(LinkCoordinateFrameListSetItem* frameListSetItem);
+    void onFrameListSuiteItemAddedOrUpdated(LinkCoordFrameListSuiteItem* frameListSuiteItem);
     void setupPositionDragger();
     bool onPositionEditRequest(AbstractPositionEditTarget* target);
     bool startBodyFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
@@ -75,12 +75,12 @@ LinkKinematicsKitManager::LinkKinematicsKitManager(BodyItem* bodyItem)
 LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
     : bodyItem(bodyItem)
 {
-    commonFrameSets = new LinkCoordinateFrameSet;
+    commonFrameSetSuite = new LinkCoordFrameSetSuite;
 
     frameListConnection =
-        LinkCoordinateFrameListSetItem::sigInstanceAddedOrUpdated().connect(
-            [&](LinkCoordinateFrameListSetItem* frameListSetItem){
-                onFrameListSetItemAddedOrUpdated(frameListSetItem);
+        LinkCoordFrameListSuiteItem::sigInstanceAddedOrUpdated().connect(
+            [&](LinkCoordFrameListSuiteItem* frameListSuiteItem){
+                onFrameListSuiteItemAddedOrUpdated(frameListSuiteItem);
             });
 
     bodySelectionManager = BodySelectionManager::instance();
@@ -120,7 +120,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::findKinematicsKit(Link* targetLink)
         if(auto presetIK = impl->findPresetIK(targetLink)){
             kit = new LinkKinematicsKit(targetLink);
             kit->setInversetKinematics(presetIK);
-            kit->setFrameSets(impl->commonFrameSets);
+            kit->setFrameSetSuite(impl->commonFrameSetSuite);
             impl->linkIndexToKinematicsKitMap[targetLink->index()] = kit;
         }
     }
@@ -161,12 +161,12 @@ std::shared_ptr<InverseKinematics> LinkKinematicsKitManager::Impl::findPresetIK(
 }
 
 
-void LinkKinematicsKitManager::Impl::onFrameListSetItemAddedOrUpdated
-(LinkCoordinateFrameListSetItem* frameListSetItem)
+void LinkKinematicsKitManager::Impl::onFrameListSuiteItemAddedOrUpdated
+(LinkCoordFrameListSuiteItem* frameListSuiteItem)
 {
     bool isTargetFrameList = false;
     
-    auto upperItem = frameListSetItem->parentItem();
+    auto upperItem = frameListSuiteItem->parentItem();
     while(upperItem){
         if(auto upperBodyItem = dynamic_cast<BodyItem*>(upperItem)){
             if(upperBodyItem == bodyItem){
@@ -182,13 +182,13 @@ void LinkKinematicsKitManager::Impl::onFrameListSetItemAddedOrUpdated
         upperItem = upperItem->parentItem();
     }
     if(!isTargetFrameList){
-        if(bodyItem->findOwnerItem<LinkCoordinateFrameListSetItem>() == frameListSetItem){
+        if(bodyItem->findOwnerItem<LinkCoordFrameListSuiteItem>() == frameListSuiteItem){
             isTargetFrameList = true;
         }
     }
         
     if(isTargetFrameList){
-        *commonFrameSets = *frameListSetItem->frameSets();
+        *commonFrameSetSuite = *frameListSuiteItem->frameSetSuite();
 
         for(auto& kv : linkIndexToKinematicsKitMap){
             auto& kit = kv.second;
@@ -228,9 +228,9 @@ bool LinkKinematicsKitManager::Impl::onPositionEditRequest(AbstractPositionEditT
     bool accepted = false;
     if(auto frame = dynamic_cast<CoordinateFrame*>(target->getPositionObject())){
         if(auto frameSet = frame->ownerFrameSet()){
-            if(commonFrameSets->frameSet(BodyFrame)->contains(frameSet)){
+            if(commonFrameSetSuite->frameSet(BodyFrame)->contains(frameSet)){
                 accepted = startBodyFrameEditing(target, frame);
-            } else if(commonFrameSets->frameSet(LinkFrame)->contains(frameSet)){
+            } else if(commonFrameSetSuite->frameSet(LinkFrame)->contains(frameSet)){
                 accepted = startLinkFrameEditing(target, frame);
             }
         }

@@ -9,7 +9,7 @@ set(sources
   WorldItem.cpp
   BodySelectionManager.cpp
   BodyItem.cpp
-  LinkCoordinateFrameListSetItem.cpp
+  LinkCoordFrameListSuiteItem.cpp
   LinkKinematicsKitManager.cpp
   SimulatorItem.cpp
   SubSimulatorItem.cpp
@@ -60,7 +60,7 @@ set(headers
   WorldItem.h
   BodySelectionManager.h
   BodyItem.h
-  LinkCoordinateFrameListSetItem.h
+  LinkCoordFrameListSuiteItem.h
   LinkKinematicsKitManager.h
   SimulatorItem.h
   SubSimulatorItem.h

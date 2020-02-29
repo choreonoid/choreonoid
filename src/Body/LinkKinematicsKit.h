@@ -1,7 +1,7 @@
 #ifndef CNOID_BODY_LINK_KINEMATICS_KIT_H
 #define CNOID_BODY_LINK_KINEMATICS_KIT_H
 
-#include <cnoid/LinkCoordinateFrameSet>
+#include <cnoid/LinkCoordFrameSetSuite>
 #include <cnoid/CloneableReferenced>
 #include <cnoid/Signal>
 #include <memory>
@@ -17,7 +17,6 @@ class JointPathConfigurationHandler;
 class GeneralId;
 class CoordinateFrame;
 class CoordinateFrameSet;
-class LinkCoordinateFrameSet;
 class InverseKinematics;
 
 class CNOID_EXPORT LinkKinematicsKit : public CloneableReferenced
@@ -28,7 +27,7 @@ public:
 
     void setBaseLink(Link* baseLink);
     void setInversetKinematics(std::shared_ptr<InverseKinematics> ik);
-    void setFrameSets(LinkCoordinateFrameSet* frameSets);
+    void setFrameSetSuite(LinkCoordFrameSetSuite* frameSetSuite);
 
     Body* body();
     Link* link();
@@ -51,12 +50,12 @@ public:
     void resetReferenceRpy();
 
     enum FrameType {
-        WorldFrame = LinkCoordinateFrameSet::WorldFrame,
-        BodyFrame = LinkCoordinateFrameSet::BodyFrame,
-        LinkFrame = LinkCoordinateFrameSet::LinkFrame
+        WorldFrame = LinkCoordFrameSetSuite::WorldFrame,
+        BodyFrame = LinkCoordFrameSetSuite::BodyFrame,
+        LinkFrame = LinkCoordFrameSetSuite::LinkFrame
     };
 
-    LinkCoordinateFrameSet* frameSets();
+    LinkCoordFrameSetSuite* frameSetSuite();
 
     CoordinateFrameSet* frameSet(int frameType);
     CoordinateFrameSet* worldFrameSet();

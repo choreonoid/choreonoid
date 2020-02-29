@@ -11,7 +11,7 @@
 #include <cnoid/JointPath>
 #include <cnoid/JointPathConfigurationHandler>
 #include <cnoid/CompositeBodyIK>
-#include <cnoid/LinkCoordinateFrameSet>
+#include <cnoid/LinkCoordFrameSetSuite>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
@@ -718,11 +718,11 @@ void LinkPositionView::Impl::onFrameUpdate()
     bool coordinateModeUpdated = false;
     auto baseFrameType = kinematicsKit->currentBaseFrameType();
     
-    if(baseFrameType == LinkCoordinateFrameSet::WorldFrame && coordinateMode != WorldCoordinateMode){
+    if(baseFrameType == LinkCoordFrameSetSuite::WorldFrame && coordinateMode != WorldCoordinateMode){
         setCoordinateMode(WorldCoordinateMode, false);
         preferredCoordinateMode = WorldCoordinateMode;
 
-    } else if(baseFrameType == LinkCoordinateFrameSet::BodyFrame && coordinateMode != BodyCoordinateMode){
+    } else if(baseFrameType == LinkCoordFrameSetSuite::BodyFrame && coordinateMode != BodyCoordinateMode){
         setCoordinateMode(BodyCoordinateMode, false);
         preferredCoordinateMode = BodyCoordinateMode;
 

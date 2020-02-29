@@ -1,7 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MPR_POSITION_H
 #define CNOID_MANIPULATOR_PLUGIN_MPR_POSITION_H
 
-#include <cnoid/LinkCoordinateFrameSet>
+#include <cnoid/LinkCoordFrameSetSuite>
 #include <cnoid/CloneableReferenced>
 #include <cnoid/EigenTypes>
 #include <cnoid/GeneralId>
@@ -87,8 +87,8 @@ public:
     void resetReferenceRpy();
 
     enum BaseFrameType {
-        WorldFrame = LinkCoordinateFrameSet::WorldFrame,
-        BodyFrame = LinkCoordinateFrameSet::BodyFrame
+        WorldFrame = LinkCoordFrameSetSuite::WorldFrame,
+        BodyFrame = LinkCoordFrameSetSuite::BodyFrame
     };
 
     void setBaseFrameType(int type) { baseFrameType_ = type; }
@@ -108,13 +108,13 @@ public:
         return (frameType == BaseFrame) ? baseFrameId_ : toolFrameId_;
     }
 
-    CoordinateFrame* baseFrame(LinkCoordinateFrameSet* frames){
+    CoordinateFrame* baseFrame(LinkCoordFrameSetSuite* frames){
         return frames->frameSet(baseFrameType_)->getFrame(baseFrameId_);
     }
-    CoordinateFrame* toolFrame(LinkCoordinateFrameSet* frames){
+    CoordinateFrame* toolFrame(LinkCoordFrameSetSuite* frames){
         return frames->linkFrameSet()->getFrame(toolFrameId_);
     }
-    CoordinateFrame* frame(LinkCoordinateFrameSet* frames, int frameType){
+    CoordinateFrame* frame(LinkCoordFrameSetSuite* frames, int frameType){
         return (frameType == BaseFrame) ? baseFrame(frames) : toolFrame(frames);
     }
     
