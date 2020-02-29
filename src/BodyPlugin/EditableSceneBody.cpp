@@ -937,10 +937,11 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 
     int operationType = LinkOperationType::None;
     bool showOutline = false;
+    auto bsm = BodySelectionManager::instance();
         
     if(event.button() == Qt::RightButton){
         // The context menu is about to be shown
-        BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
+        bsm->setCurrent(bodyItem, targetLink, true);
         showOutline = true;
     } else {
         operationType = checkLinkOperationType(pointedSceneLink);
@@ -966,7 +967,14 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     } else {
         if(event.button() == Qt::LeftButton){
             updateMarkersAndManipulators(true);
-            BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
+            if(!bodyItem->isAttachedToParentBody()){
+                bsm->setCurrent(bodyItem, targetLink, true);
+            } else {
+                bsm->setCurrent(
+                    bodyItem->parentBodyItem(),
+                    bodyItem->body()->parentBodyLink(),
+                    true);
+            }
             if(operationType == LinkOperationType::FK){
                 startFK(event);
                 handled = true;
