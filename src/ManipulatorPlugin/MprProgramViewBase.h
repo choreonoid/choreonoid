@@ -15,6 +15,7 @@ class MprProgramItemBase;
 class MprProgram;
 class MprPositionStatement;
 class MenuManager;
+class ToolButton;
 
 class CNOID_EXPORT MprProgramViewBase : public View
 {
@@ -80,7 +81,7 @@ public:
     class Impl;
 
 protected:
-    void addEditButton(QWidget* button, int row);
+    void addEditButton(ToolButton* button, int row);
 
     enum InsertionType { BeforeTargetPosition, AfterTargetPosition };
     bool insertStatement(

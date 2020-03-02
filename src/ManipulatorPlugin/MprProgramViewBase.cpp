@@ -23,6 +23,7 @@
 #include <QMouseEvent>
 #include <QProxyStyle>
 #include <QStyledItemDelegate>
+#include <QStyle>
 #include <QPainter>
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
@@ -143,6 +144,7 @@ public:
     
     QLabel programNameLabel;
     QHBoxLayout buttonBox[3];
+    QSize buttonIconSize;
     ProgramViewDelegate* mainDelegate;
     ref_ptr<StatementDelegate> defaultStatementDelegate;
     unordered_map<type_index, ref_ptr<StatementDelegate>> statementDelegateMap;
@@ -659,6 +661,15 @@ void MprProgramViewBase::Impl::setupWidgets()
     vbox->addWidget(this);
     
     self->setLayout(vbox);
+
+    int s = self->style()->pixelMetric(QStyle::PM_ButtonIconSize);
+    buttonIconSize = QSize(s, s);
+    if(s != 24){
+        if(s >= 16 && s < 24){
+            buttonIconSize = QSize(24, 24);
+        }
+    }
+
 }
 
 
@@ -693,8 +704,9 @@ MprProgramViewBase::BodySyncMode MprProgramViewBase::bodySyncMode() const
 }
 
 
-void MprProgramViewBase::addEditButton(QWidget* button, int row)
+void MprProgramViewBase::addEditButton(ToolButton* button, int row)
 {
+    button->setIconSize(impl->buttonIconSize);
     impl->buttonBox[row].addWidget(button);
 }
 
