@@ -15,6 +15,7 @@ libjpeg-dev \
 libpng-dev \
 qt5-default \
 libqt5x11extras5-dev \
+libqt5svg5-dev \
 qt5-style-plugins \
 python3-dev \
 python3-numpy \
