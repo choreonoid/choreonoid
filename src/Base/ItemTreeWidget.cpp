@@ -1312,6 +1312,15 @@ void ItemTreeWidget::Impl::zoomFontSize(int pointSizeDiff)
     font.setPointSize(font.pointSize() + pointSizeDiff);
     setFont(font);
     fontPointSizeDiff += pointSizeDiff;
+
+    int defaultIconSize = style()->pixelMetric(QStyle::PM_SmallIconSize);
+    QFontInfo info(font);
+    int fontSize = info.pixelSize();
+    if(fontSize > defaultIconSize){
+        setIconSize(QSize(fontSize, fontSize));
+    } else {
+        setIconSize(QSize(defaultIconSize, defaultIconSize));
+    }
 }
 
 
