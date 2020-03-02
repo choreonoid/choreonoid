@@ -74,10 +74,6 @@ public:
     void setBodySyncMode(BodySyncMode mode);
     BodySyncMode bodySyncMode() const;
 
-    bool updateBodyPositionWithPositionStatement(
-        MprPositionStatement* ps,
-        bool doUpdateCurrentCoordinateFrames = true, bool doNotifyKinematicStateChange = true);
-
     class Impl;
 
 protected:

@@ -1,16 +1,20 @@
 #include "MprProgramItemBase.h"
 #include "MprProgram.h"
 #include "MprPositionList.h"
+#include "MprPositionStatement.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/ControllerItem>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
+#include <cnoid/MessageView>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace cnoid {
 
@@ -199,6 +203,72 @@ bool MprProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
         }
     }
     return (on == impl->isStartupProgram);
+}
+
+
+bool MprProgramItemBase::moveTo
+(MprPositionStatement* statement, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange)
+{
+    bool updated = false;
+    if(impl->kinematicsKit){
+        auto positions = impl->program->positions();
+        auto position = statement->position(positions);
+        if(!position){
+            MessageView::instance()->putln(
+                format(_("Position {0} is not found."), statement->positionLabel()),
+                MessageView::WARNING);
+        } else {
+            updated = position->apply(impl->kinematicsKit);
+            if(updated){
+                if(doUpdateCurrentCoordinateFrames){
+                    if(auto ikPosition = dynamic_cast<MprIkPosition*>(position)){
+                        impl->kinematicsKit->setCurrentBaseFrameType(ikPosition->baseFrameType());
+                        impl->kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
+                        impl->kinematicsKit->setCurrentLinkFrame(ikPosition->toolFrameId());
+                        impl->kinematicsKit->notifyFrameUpdate();
+                    }
+                }
+                if(doNotifyKinematicStateChange){
+                    impl->targetBodyItem->notifyKinematicStateChange();
+                }
+            }
+        }
+    }
+    return updated;
+}
+
+
+bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement)
+{
+    if(!impl->kinematicsKit){
+        showWarningDialog(_("Program item is not associated with any manipulator"));
+        return false;
+    }
+
+    if(impl->kinematicsKit->currentBaseFrameType() == LinkKinematicsKit::WorldFrame){
+        showWarningDialog(
+            _("The world coordinate system is currently selected for the robot, "
+              "but the position of the move statement must be described in the "
+              "robot coordinate system.\n"
+              "Please switch to the robot coordinate system to add a new move statement."));
+        return false;
+    }
+
+    auto positions = impl->program->positions();
+    auto position = statement->position(positions);
+    if(!position){
+        position = new MprIkPosition(statement->positionId());
+        positions->append(position);
+    }
+
+    bool result = position->setCurrentPosition(impl->kinematicsKit);
+
+    if(result){
+        impl->program->notifyStatementUpdate(statement);
+        suggestFileUpdate();
+    }
+
+    return result;
 }
 
 

@@ -188,8 +188,6 @@ public:
     void setBaseContextMenu(MenuManager& menuManager);
     void copySelectedStatements(bool doCut);
     void pasteStatements();
-    bool updateBodyPositionWithPositionStatement(
-        MprPositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange);
     void initializeBodySuperimposer(BodyItem* bodyItem);
     void superimposePosition(MprPositionStatement* ps);
 
@@ -925,7 +923,7 @@ void MprProgramViewBase::onStatementActivated(MprStatement* statement)
 {
     if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
         if(impl->bodySyncMode == DirectBodySync){
-            impl->updateBodyPositionWithPositionStatement(ps, true, true);
+            impl->programItem->moveTo(ps, true, true);
         } else if(impl->bodySyncMode == TwoStageBodySync){
             impl->superimposePosition(ps);
         }
@@ -947,7 +945,7 @@ void MprProgramViewBase::onStatementDoubleClicked(MprStatement* statement)
 {
     if(impl->bodySyncMode == TwoStageBodySync){
         if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
-            impl->updateBodyPositionWithPositionStatement(ps, true, true);
+            impl->programItem->moveTo(ps, true, true);
         }
     }
 }
@@ -1452,45 +1450,6 @@ void MprProgramViewBase::Impl::pasteStatements()
 }
 
 
-bool MprProgramViewBase::updateBodyPositionWithPositionStatement
-(MprPositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange)
-{
-    return impl->updateBodyPositionWithPositionStatement(
-        ps, doUpdateCurrentCoordinateFrames, doNotifyKinematicStateChange);
-}
-
-
-bool MprProgramViewBase::Impl::updateBodyPositionWithPositionStatement
-(MprPositionStatement* ps, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange)
-{
-    bool updated = false;
-    if(auto kinematicsKit = programItem->kinematicsKit()){
-        auto positions = programItem->program()->positions();
-        auto position = ps->position(positions);
-        if(!position){
-            MessageView::instance()->putln(
-                format(_("Position {0} is not found."), ps->positionLabel()), MessageView::WARNING);
-        } else {
-            updated = position->apply(kinematicsKit);
-            if(updated){
-                if(doUpdateCurrentCoordinateFrames){
-                    if(auto ikPosition = dynamic_cast<MprIkPosition*>(position)){
-                        kinematicsKit->setCurrentBaseFrameType(ikPosition->baseFrameType());
-                        kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
-                        kinematicsKit->setCurrentLinkFrame(ikPosition->toolFrameId());
-                        kinematicsKit->notifyFrameUpdate();
-                    }
-                }
-                if(doNotifyKinematicStateChange){
-                    programItem->targetBodyItem()->notifyKinematicStateChange();
-                }
-            }
-        }
-    }
-    return updated;
-}
-
-
 void MprProgramViewBase::Impl::initializeBodySuperimposer(BodyItem* bodyItem)
 {
     bodySuperimposer = bodyItem->findChildItem<BodySuperimposerItem>("MprPositionSuperimposer");
@@ -1510,7 +1469,7 @@ void MprProgramViewBase::Impl::superimposePosition(MprPositionStatement* ps)
         auto orgBody = programItem->targetBodyItem()->body();
         BodyState orgBodyState(*orgBody);
 
-        if(updateBodyPositionWithPositionStatement(ps, false, false)){
+        if(programItem->moveTo(ps, false, false)){
             // Main body
             auto superBody = bodySuperimposer->superimposedBody(0);
             BodyState bodyState(*orgBody);
