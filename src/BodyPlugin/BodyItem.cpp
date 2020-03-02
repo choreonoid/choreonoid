@@ -313,21 +313,13 @@ public:
 
 static void onSigOptionsParsed(boost::program_options::variables_map& variables)
 {
-    if(variables.count("hrpmodel")){
-        vector<string> modelFileNames = variables["hrpmodel"].as<vector<string>>();
-        for(size_t i=0; i < modelFileNames.size(); ++i){
-            BodyItemPtr item(new BodyItem());
-            if(item->load(modelFileNames[i], "OpenHRP-VRML-MODEL")){
-                RootItem::mainInstance()->addChildItem(item);
-            }
-        }
-    }
-    else if(variables.count("body")){
+    if(variables.count("body")){
     	vector<string> bodyFileNames = variables["body"].as<vector<string>>();
     	for(size_t i=0; i < bodyFileNames.size(); ++i){
     		BodyItemPtr item(new BodyItem());
-    		if(item->load(bodyFileNames[i], "OpenHRP-VRML-MODEL")){
-    			RootItem::mainInstance()->addChildItem(item);
+    		if(item->load(bodyFileNames[i], "CHOREONOID-BODY")){
+                    item->setChecked(true);
+                    RootItem::mainInstance()->addChildItem(item);
     		}
     	}
     }
