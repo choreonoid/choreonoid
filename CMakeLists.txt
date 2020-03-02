@@ -507,7 +507,7 @@ include_directories(${EIGEN3_INCLUDE_DIRS})
 if(ENABLE_GUI)
   # Qt
   include(cmake/ChoreonoidFindQt.cmake)
-  choreonoid_find_qt_package(Core Gui Widgets Network)
+  choreonoid_find_qt_package(Core Gui Widgets Network Svg)
   set(CMAKE_AUTOMOC OFF)
 
   if(MSVC)
@@ -516,6 +516,7 @@ if(ENABLE_GUI)
       optimized Qt5Gui debug Qt5Guid
       optimized Qt5Network debug Qt5Networkd
       optimized Qt5Widgets debug Qt5Widgetsd
+      optimized Qt5Svg debug Qt5Svgd
       optimized libEGL debug libEGLd
       optimized libGLESv2 debug libGLESv2d
       optimized icuin51 debug icuin51d
