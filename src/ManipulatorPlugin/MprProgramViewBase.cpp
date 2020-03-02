@@ -146,8 +146,6 @@ public:
     ProgramViewDelegate* mainDelegate;
     ref_ptr<StatementDelegate> defaultStatementDelegate;
     unordered_map<type_index, ref_ptr<StatementDelegate>> statementDelegateMap;
-    ToolButton optionMenuButton;
-    MenuManager optionMenuManager;
 
     MenuManager contextMenuManager;
     PolymorphicMprStatementFunctionSet contextMenuFunctions;
@@ -575,12 +573,10 @@ void MprProgramViewBase::Impl::setupWidgets()
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);
 
-    auto hbox = new QHBoxLayout;
+    QHBoxLayout* hbox;
+    hbox = new QHBoxLayout;
     hbox->addLayout(&buttonBox[0]);
     hbox->addStretch();
-    optionMenuButton.setText(_("*"));
-    optionMenuButton.sigClicked().connect([&](){ onOptionMenuClicked(); });
-    hbox->addWidget(&optionMenuButton);
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
@@ -710,15 +706,7 @@ void MprProgramViewBase::onDeactivated()
 }
 
 
-void MprProgramViewBase::Impl::onOptionMenuClicked()
-{
-    optionMenuManager.setNewPopupMenu();
-    self->onOptionMenuRequest(optionMenuManager);
-    optionMenuManager.popupMenu()->popup(optionMenuButton.mapToGlobal(QPoint(0,0)));
-}
-
-
-void MprProgramViewBase::onOptionMenuRequest(MenuManager& menuManager)
+void MprProgramViewBase::onAttachedMenuRequest(MenuManager& menuManager)
 {
     menuManager.addItem(_("Refresh"))->sigTriggered().connect(
         [&](){ updateStatementTree(); });

@@ -91,7 +91,8 @@ protected:
     // This function is called when the current statemet is changed or clicked.
     virtual void onStatementActivated(MprStatement* statement);
     virtual void onStatementDoubleClicked(MprStatement* statement);
-    virtual void onOptionMenuRequest(MenuManager& menuManager);
+
+    virtual void onAttachedMenuRequest(MenuManager& menuManager) override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
