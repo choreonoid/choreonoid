@@ -151,6 +151,7 @@ App::Impl::Impl(App* self, int& argc, char**& argv)
     descriptionDialog = 0;
 
     QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
     // OpenGL settings
     GLSceneRenderer::initializeClass();
