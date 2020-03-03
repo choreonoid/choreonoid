@@ -217,6 +217,57 @@ public:
 };
 
 
+class WaitStatementDelegate : public Delegate
+{
+public:
+    virtual QVariant dataOfEditRole(MprStatement* statement, int column) const override
+    {
+        auto wait = static_cast<MprWaitStatement*>(statement);
+        if(column == 1){
+            return QStringList{ QString::number(wait->conditionType()), "Signal" };
+        } else if(column == 2){
+            return wait->signalIndex();
+        } else if(column == 3){
+            return wait->signalStateCondition();
+        }
+        return QVariant();
+    }
+
+    virtual void setDataOfEditRole(MprStatement* statement, int column, const QVariant& value) const override
+    {
+        bool updated = false;
+        auto wait = static_cast<MprWaitStatement*>(statement);
+        if(column == 1){
+            int type = value.toStringList().first().toInt();
+            if(type != wait->conditionType()){
+                wait->setConditionType(type);
+                updated = true;
+            }
+        } else if(column == 2){
+            wait->setSignalIndex(value.toInt());
+            updated = true;
+        } else if(column == 3){
+            wait->setSignalStateCondition(value.toBool());
+            updated = true;
+        }
+        if(updated){
+            wait->notifyUpdate();
+        }
+    }
+
+    virtual QWidget* createEditor(MprStatement* statement, int column, QWidget* parent) const override
+    {
+        auto editor = createDefaultEditor();
+        if(column == 2){
+            if(auto spin = dynamic_cast<QSpinBox*>(editor)){
+                spin->setRange(0, 999);
+            }
+        }
+        return editor;
+    }
+};
+
+
 class DelayStatementDelegate : public Delegate
 {
 public:
@@ -257,6 +308,7 @@ void MprProgramViewBase::registerBaseStatementDelegates()
     registerStatementDelegate<MprCallStatement>(new CallStatementDelegate);
     registerStatementDelegate<MprAssignStatement>(new AssignStatementDelegate);
     registerStatementDelegate<MprSignalStatement>(new SignalStatementDelegate);
+    registerStatementDelegate<MprWaitStatement>(new WaitStatementDelegate);
     registerStatementDelegate<MprDelayStatement>(new DelayStatementDelegate);
 }
 

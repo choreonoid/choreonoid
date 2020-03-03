@@ -226,7 +226,7 @@ public:
     virtual bool write(Mapping& archive) const;
 
 protected:
-    MprSignalStatement(const MprSignalStatement& org);
+   MprSignalStatement(const MprSignalStatement& org);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
@@ -236,6 +236,38 @@ private:
 };
 
 typedef ref_ptr<MprSignalStatement> MprSignalStatementPtr;
+
+
+class CNOID_EXPORT MprWaitStatement : public MprStatement
+{
+public:
+    MprWaitStatement();
+    virtual std::string label(int index) const override;
+
+    enum ConditionType { SignalInput };
+
+    int conditionType() const { return conditionType_; }
+    void setConditionType(int type) { conditionType_ = type; }
+    
+    int signalIndex() const { return signalIndex_; }
+    void setSignalIndex(int index) { signalIndex_ = index; }
+    bool signalStateCondition() const { return signalStateCondition_; }
+    void setSignalStateCondition(bool state) { signalStateCondition_ = state; }
+
+    virtual bool read(MprProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+    
+protected:
+   MprWaitStatement(const MprWaitStatement& org);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    int conditionType_;
+    int signalIndex_;
+    bool signalStateCondition_;
+};
+
+typedef ref_ptr<MprWaitStatement> MprWaitStatementPtr;
 
 
 class CNOID_EXPORT MprDelayStatement : public MprStatement

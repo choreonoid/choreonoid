@@ -6,6 +6,7 @@
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -371,7 +372,8 @@ MprAssignStatement::MprAssignStatement()
 
 
 MprAssignStatement::MprAssignStatement(const MprAssignStatement& org)
-    : variableId_(org.variableId_),
+    : MprStatement(org),
+      variableId_(org.variableId_),
       expression_(org.expression_)
 {
 
@@ -438,6 +440,7 @@ MprSignalStatement::MprSignalStatement()
 
 
 MprSignalStatement::MprSignalStatement(const MprSignalStatement& org)
+    : MprStatement(org)
 {
     signalIndex_ = org.signalIndex_;
     on_ = org.on_;
@@ -478,6 +481,81 @@ bool MprSignalStatement::write(Mapping& archive) const
     archive.write("signal_index", signalIndex_);
     archive.write("on", on_);
     return true;
+}
+
+
+MprWaitStatement::MprWaitStatement()
+{
+    conditionType_ = SignalInput;
+    signalIndex_ = 0;
+    signalStateCondition_ = true;
+}
+
+
+MprWaitStatement::MprWaitStatement(const MprWaitStatement& org)
+    : MprStatement(org)
+{
+    conditionType_ = org.conditionType_;
+    signalIndex_ = org.signalIndex_;
+    signalStateCondition_ = org.signalStateCondition_;
+}
+
+
+Referenced* MprWaitStatement::doClone(CloneMap*) const
+{
+    return new MprWaitStatement(*this);
+}
+
+
+std::string MprWaitStatement::label(int index) const
+{
+    if(index == 0){
+        return "Wait";
+    } else if(index == 1){
+        if(conditionType_ == SignalInput){
+            return "Signal";
+        } else {
+            return "None";
+        }
+    } else if(index == 2){
+        if(conditionType_ == SignalInput){
+            return std::to_string(signalIndex_);
+        }
+    } else if(index == 3){
+        if(conditionType_ == SignalInput){
+            return signalStateCondition_ ? "On" : "Off";
+        }
+    }
+    return string();
+}
+    
+
+bool MprWaitStatement::read(MprProgram* program, const Mapping& archive)
+{
+    if(MprStatement::read(program, archive)){
+        auto& typeNode = archive["condition_type"];
+        string type = typeNode.toString();
+        if(type == "signal_input"){
+            signalIndex_ = archive["signal_index"].toInt();
+            signalStateCondition_ = archive["condition"].toBool();
+        } else {
+            typeNode.throwException(_("Invalid condition type"));
+        }
+        return true;
+    }
+    return false;
+}
+    
+    
+bool MprWaitStatement::write(Mapping& archive) const
+{
+    if(conditionType_ == SignalInput){
+        archive.write("condition_type", "signal_input");
+        archive.write("signal_index", signalIndex_);
+        archive.write("condition", signalStateCondition_);
+        return MprStatement::write(archive);
+    }
+    return false;
 }
     
 
@@ -610,6 +688,7 @@ struct StatementTypeRegistration {
             .registerType<MprCallStatement, MprStatement>("Call")
             .registerType<MprAssignStatement, MprStatement>("Assign")
             .registerType<MprSignalStatement, MprStatement>("SetSignal")
+            .registerType<MprWaitStatement, MprStatement>("Wait")
             .registerType<MprDelayStatement, MprStatement>("Delay")
             .registerAbstractType<MprPositionStatement, MprStatement>()
             ;
