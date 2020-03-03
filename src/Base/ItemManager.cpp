@@ -955,7 +955,7 @@ bool ItemManagerImpl::save
         if(!saved){
             messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
         } else {
-            if(targetFileIO->impl->interfaceLevel == ItemFileIO::Conversion){
+            if(targetFileIO->impl->interfaceLevel != ItemFileIO::Conversion){
                 item->updateFileInformation(filename, targetFileIO->impl->formatId, nullptr);
             }
             messageView->put(_(" -> ok!\n"));
