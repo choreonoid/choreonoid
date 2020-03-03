@@ -40,6 +40,7 @@ public:
     // Use an integer value as a key to keep the number of instances growing
     map<int, LinkKinematicsKitPtr> linkIndexToKinematicsKitMap;
 
+    ScopedConnection bodyItemConnection;
     ScopedConnection frameListConnection;
     LinkCoordFrameSetSuitePtr commonFrameSetSuite;
 
@@ -53,6 +54,8 @@ public:
 
     Impl(BodyItem* bodyItem);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
+    void onBodyItemPositionChanged();
+    void findFrameListSuiteItem();
     void onFrameListSuiteItemAddedOrUpdated(LinkCoordFrameListSuiteItem* frameListSuiteItem);
     void setupPositionDragger();
     bool onPositionEditRequest(AbstractPositionEditTarget* target);
@@ -75,7 +78,14 @@ LinkKinematicsKitManager::LinkKinematicsKitManager(BodyItem* bodyItem)
 LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
     : bodyItem(bodyItem)
 {
+    bodyItemConnection =
+        bodyItem->sigPositionChanged().connect(
+            [&](){ onBodyItemPositionChanged(); });
+    
+    bodySelectionManager = BodySelectionManager::instance();
+    
     commonFrameSetSuite = new LinkCoordFrameSetSuite;
+    findFrameListSuiteItem();
 
     frameListConnection =
         LinkCoordFrameListSuiteItem::sigInstanceAddedOrUpdated().connect(
@@ -83,8 +93,6 @@ LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
                 onFrameListSuiteItemAddedOrUpdated(frameListSuiteItem);
             });
 
-    bodySelectionManager = BodySelectionManager::instance();
-    
     setupPositionDragger();
 }
 
@@ -161,35 +169,37 @@ std::shared_ptr<InverseKinematics> LinkKinematicsKitManager::Impl::findPresetIK(
 }
 
 
+void LinkKinematicsKitManager::Impl::onBodyItemPositionChanged()
+{
+    commonFrameSetSuite->resetFrameSets();
+    findFrameListSuiteItem();
+}
+
+
+void LinkKinematicsKitManager::Impl::findFrameListSuiteItem()
+{
+    if(auto suiteItem = bodyItem->findItem<LinkCoordFrameListSuiteItem>()){
+        *commonFrameSetSuite = *suiteItem->frameSetSuite();
+    }
+}
+
+
 void LinkKinematicsKitManager::Impl::onFrameListSuiteItemAddedOrUpdated
 (LinkCoordFrameListSuiteItem* frameListSuiteItem)
 {
     bool isTargetFrameList = false;
-    
     auto upperItem = frameListSuiteItem->parentItem();
     while(upperItem){
         if(auto upperBodyItem = dynamic_cast<BodyItem*>(upperItem)){
             if(upperBodyItem == bodyItem){
                 isTargetFrameList = true;
-                break;
             }
-        } else if(auto worldItem = dynamic_cast<WorldItem*>(upperItem)){
-            if(bodyItem->findOwnerItem<WorldItem>() == worldItem){
-                isTargetFrameList = true;
-                break;
-            }
+            break;
         }
         upperItem = upperItem->parentItem();
     }
-    if(!isTargetFrameList){
-        if(bodyItem->findOwnerItem<LinkCoordFrameListSuiteItem>() == frameListSuiteItem){
-            isTargetFrameList = true;
-        }
-    }
-        
     if(isTargetFrameList){
         *commonFrameSetSuite = *frameListSuiteItem->frameSetSuite();
-
         for(auto& kv : linkIndexToKinematicsKitMap){
             auto& kit = kv.second;
             kit->notifyFrameUpdate();

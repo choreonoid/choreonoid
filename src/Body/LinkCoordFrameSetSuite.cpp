@@ -49,3 +49,12 @@ LinkCoordFrameSetSuite& LinkCoordFrameSetSuite::operator=(const LinkCoordFrameSe
     CoordinateFrameSetSuite::operator=(rhs);
     return *this;
 }
+
+
+void LinkCoordFrameSetSuite::resetFrameSets()
+{
+    int n = numFrameSets();
+    for(int i=0; i < n; ++i){
+        setFrameSet(0, new CoordinateFrameList);
+    }
+}

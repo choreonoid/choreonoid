@@ -16,6 +16,8 @@ public:
 
     LinkCoordFrameSetSuite& operator=(const LinkCoordFrameSetSuite& rhs);
 
+    void resetFrameSets();
+
     /**
        WorldFrame: Offset from the world origin frame
        BodyFrame: Offset from the base link origin frame
