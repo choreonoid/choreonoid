@@ -30,6 +30,7 @@ class ItwItem : public QTreeWidgetItem
 public:
     Item* item;
     ItemTreeWidget::Impl* widgetImpl;
+    ScopedConnection itemNameConnection;
     ScopedConnection itemSelectionConnection;
     ScopedConnection itemCheckConnection;
     ScopedConnection displayUpdateConnection;
@@ -37,7 +38,6 @@ public:
 
     ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl);
     virtual ~ItwItem();
-    virtual QVariant data(int column, int role) const override;
     virtual void setData(int column, int role, const QVariant& value) override;
 };
 
@@ -200,11 +200,6 @@ void ItemTreeWidget::Display::setIcon(const QIcon& icon)
     item->setIcon(0, icon);
 }
 
-void ItemTreeWidget::Display::setText(const std::string& text)
-{
-    item->setText(0, text.c_str());
-}
-
 void ItemTreeWidget::Display::setToolTip(const std::string& toolTip)
 {
     item->setText(0, toolTip.c_str());
@@ -213,6 +208,15 @@ void ItemTreeWidget::Display::setToolTip(const std::string& toolTip)
 void ItemTreeWidget::Display::setStatusTip(const std::string& statusTip)
 {
     item->setStatusTip(0, statusTip.c_str());
+}
+
+void ItemTreeWidget::Display::setNameEditable(bool on)
+{
+    if(on){
+        item->setFlags(item->flags() | Qt::ItemIsEditable);
+    } else {
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+    }
 }
 
 
@@ -232,6 +236,13 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     setFlags(flags);
 
     setToolTip(0, QString());
+
+    setText(0, item->name().c_str());
+    itemNameConnection =
+        item->sigNameChanged().connect(
+            [this](const std::string& /* oldName */){
+                setText(0, this->item->name().c_str());
+            });
 
     widgetImpl->setItwItemSelected(this, item->isSelected());
 
@@ -271,15 +282,6 @@ ItwItem::~ItwItem()
     if(widgetImpl->lastClickedItem == item){
         widgetImpl->lastClickedItem = nullptr;
     }
-}
-
-
-QVariant ItwItem::data(int column, int role) const
-{
-    if((role == Qt::DisplayRole || role == Qt::EditRole) && column == 0){
-        return item->name().c_str();
-    }
-    return QTreeWidgetItem::data(column, role);
 }
 
 
@@ -364,6 +366,7 @@ void ItemTreeWidget::Impl::initialize()
     setIndentation(12);
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setDragDropMode(QAbstractItemView::InternalMove);
+    setExpandsOnDoubleClick(false);
 
     treeWidgetSelectionChangeConnections.add(
         sigItemSelectionChanged().connect(

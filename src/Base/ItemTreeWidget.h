@@ -63,9 +63,9 @@ public:
         void setFont(const QFont& font);
         QIcon icon() const;
         void setIcon(const QIcon& icon);
-        void setText(const std::string& text);
         void setToolTip(const std::string& toolTip);
         void setStatusTip(const std::string& statusTip);
+        void setNameEditable(bool on);
     private:
         QTreeWidgetItem* item;
         friend class Impl;
