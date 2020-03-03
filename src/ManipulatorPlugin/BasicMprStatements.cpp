@@ -532,18 +532,15 @@ std::string MprWaitStatement::label(int index) const
 
 bool MprWaitStatement::read(MprProgram* program, const Mapping& archive)
 {
-    if(MprStatement::read(program, archive)){
-        auto& typeNode = archive["condition_type"];
-        string type = typeNode.toString();
-        if(type == "signal_input"){
-            signalIndex_ = archive["signal_index"].toInt();
-            signalStateCondition_ = archive["condition"].toBool();
-        } else {
-            typeNode.throwException(_("Invalid condition type"));
-        }
-        return true;
+    auto& typeNode = archive["condition_type"];
+    string type = typeNode.toString();
+    if(type == "signal_input"){
+        signalIndex_ = archive["signal_index"].toInt();
+        signalStateCondition_ = archive["condition"].toBool();
+    } else {
+        typeNode.throwException(_("Invalid condition type"));
     }
-    return false;
+    return true;
 }
     
     
@@ -553,7 +550,7 @@ bool MprWaitStatement::write(Mapping& archive) const
         archive.write("condition_type", "signal_input");
         archive.write("signal_index", signalIndex_);
         archive.write("condition", signalStateCondition_);
-        return MprStatement::write(archive);
+        return true;
     }
     return false;
 }

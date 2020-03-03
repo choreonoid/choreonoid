@@ -226,7 +226,7 @@ public:
     virtual bool write(Mapping& archive) const;
 
 protected:
-   MprSignalStatement(const MprSignalStatement& org);
+    MprSignalStatement(const MprSignalStatement& org);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
