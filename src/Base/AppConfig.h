@@ -17,8 +17,6 @@ public:
     static bool initialize(const std::string& application, const std::string& organization);
     static Mapping* archive();
     static bool flush();
-    static bool save(const std::string& filename);
-    static bool load(const std::string& filename);
 };
 
 }

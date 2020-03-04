@@ -24,9 +24,13 @@ filesystem::path configDirPath;
 filesystem::path filePath;
 filesystem::path fullPath;
 
-std::shared_ptr<YAMLReader> pYAMLReader;
+MappingPtr configArchive;
 
 }
+
+static bool loadConfig(const string& filename);
+static void putLoadError(const string& filename, const string& message);
+
 
 bool AppConfig::initialize(const std::string& application_, const std::string& organization_)
 {
@@ -47,26 +51,57 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
     
     filePath = application + ".conf";
 
+    bool loaded = false;
     if(!configDirPath.empty()){
         fullPath = configDirPath / filePath;
-        std::string fullPathString = getPathString(fullPath);
-        load(fullPathString);
+        loaded = loadConfig(getPathString(fullPath));
     }
 
-    return !fullPath.empty();
+    if(!loaded){
+        configArchive = new Mapping;
+    }
+
+    return loaded;
 }
 
-/**
-   \note A pointer returned by archive() must be replaced with a new one
-   when a new config is loaed.
-*/
+
+static bool loadConfig(const std::string& filename)
+{
+    bool loaded = false;
+    YAMLReader reader;
+
+    if(filesystem::exists(filesystem::path(filename))){
+        try {
+            if(reader.load(filename)){
+                if(reader.numDocuments() == 1 && reader.document()->isMapping()){
+                    configArchive = reader.document()->toMapping();
+                    loaded = true;
+                } else {
+                    putLoadError(filename, _("Invalid file format."));
+                }
+            }
+        } catch (const ValueNode::Exception& ex){
+            ostream& os = MessageView::mainInstance()->cout();
+            putLoadError(filename, ex.message());
+        }
+    }
+
+    return loaded;
+}
+
+
+static void putLoadError(const string& filename, const string& message)
+{
+    MessageView::instance()->putln(
+        format(_("Application config file \"{0}\" cannot be loaded.\n{1})."),
+               filename, message),
+        MessageView::ERROR);
+}
+
+
 Mapping* AppConfig::archive()
 {
-    if(pYAMLReader && pYAMLReader->numDocuments()){
-        return pYAMLReader->document()->toMapping();
-    }
-    static MappingPtr appArchive(new Mapping);
-    return appArchive.get();
+    return configArchive;
 }
   
 
@@ -79,12 +114,11 @@ bool AppConfig::flush()
     if(!filesystem::exists(fullPath)){
         if(filesystem::exists(configDirPath)){
             if(!filesystem::is_directory(configDirPath)){
-
                 const char* m =
                     "\"{}\" is not a directory.\n"
                     "It should be directory to contain the config file.\n"
                     "The configuration cannot be stored into the file system";
-                showWarningDialog(format(_(m),configDirPath.string()));
+                showWarningDialog(format(_(m), configDirPath.string()));
                 return false;
             }
         } else {
@@ -92,50 +126,15 @@ bool AppConfig::flush()
         }
     }
 
-    return save(fullPath.string());
-}
-
-
-bool AppConfig::save(const std::string& filename)
-{
     try {
-        YAMLWriter writer(filename);
+        YAMLWriter writer(fullPath.string());
         writer.setKeyOrderPreservationMode(true);
-        writer.putNode(archive());
+        writer.putNode(configArchive);
     }
     catch(const ValueNode::Exception& ex){
         showWarningDialog(ex.message());
         return false;
     }
-    return true;
-}
-
-
-/**
-   \note A pointer returned by archive() must be replaced after calling this function
-   because a new YAMLReader instance is created in it.
-*/
-bool AppConfig::load(const std::string& filename)
-{
-    YAMLReader* pyaml = new YAMLReader();
-
-    if(filesystem::exists(filesystem::path(filename))){
-        try {
-            if(pyaml->load(filename)){
-                if(pyaml->numDocuments() != 1 || !pyaml->document()->isMapping()){
-                    pyaml->clearDocuments();
-                }
-            }
-        } catch (const ValueNode::Exception& ex){
-            ostream& os = MessageView::mainInstance()->cout();
-            os << format("Application config file \"{0}\" cannot be loaded ({1}).",
-                    filename, ex.message() ) << endl;
-            pyaml->clearDocuments();
-            delete pyaml;
-            return false;
-        }
-    }
     
-    pYAMLReader = std::shared_ptr<YAMLReader>(pyaml);
     return true;
 }
