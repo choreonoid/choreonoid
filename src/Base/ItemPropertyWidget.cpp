@@ -560,7 +560,7 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
         if(filenamePath.is_absolute()){
             directory = filenamePath.parent_path();
         } else {
-            directory = AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory());
+            directory = AppConfig::archive()->get("file_dialog_directory", shareDirectory());
         }
     } else {
         directory = value.baseDirectory();
@@ -579,7 +579,7 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
         filenames = dialog.selectedFiles();
         filesystem::path newDirectory(dialog.directory().absolutePath().toStdString());
         if(newDirectory != directory){
-            AppConfig::archive()->writePath("currentFileDialogDirectory", newDirectory.string());
+            AppConfig::archive()->writePath("file_dialog_directory", newDirectory.string());
             value.setBaseDirectory("");
         }
         string filename(filenames.at(0).toStdString());

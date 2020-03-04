@@ -46,11 +46,10 @@ public:
     filesystem::path projectDirPath;
     filesystem::path topDirPath;
     filesystem::path shareDirPath;
-    filesystem::path homeDirPath;
     QString projectDirString;
     QString topDirString;
     QString shareDirString;
-    QString homeDirString;
+    QString homeDirString; // for the backward compatiblity
 
     IdToItemMap idToItemMap;
     ItemToIdMap itemToIdMap;
@@ -152,7 +151,7 @@ Archive::~Archive()
 }
 
 
-void Archive::initSharedInfo(bool useHomeRelativeDirectories)
+void Archive::initSharedInfo()
 {
     shared = new ArchiveSharedData;
     
@@ -161,12 +160,10 @@ void Archive::initSharedInfo(bool useHomeRelativeDirectories)
 
     shared->topDirString = executableTopDirectory().c_str();
     shared->shareDirString = shareDirectory().c_str();
-    
+
+    // for the backward compatiblity
     char* home = getenv("HOME");
     if(home){
-        if(useHomeRelativeDirectories){
-            shared->homeDirPath = filesystem::path(home);
-        }
         shared->homeDirString = home;
     }
     
@@ -174,9 +171,9 @@ void Archive::initSharedInfo(bool useHomeRelativeDirectories)
 }    
 
 
-void Archive::initSharedInfo(const std::string& projectFile, bool useHomeRelativeDirectories)
+void Archive::initSharedInfo(const std::string& projectFile)
 {
-    initSharedInfo(useHomeRelativeDirectories);
+    initSharedInfo();
     
     shared->directoryVariableMap = AppConfig::archive()->openMapping("pathVariables");
     
@@ -295,10 +292,10 @@ std::string Archive::expandPathVariables(const std::string& path) const
                 qpath.replace(pos, len, shared->shareDirString);
             } else if(varname == "PROGRAM_TOP"){
                 qpath.replace(pos, len, shared->topDirString);
-            } else if(varname == "HOME"){
-                qpath.replace(pos, len, shared->homeDirString);
             } else if (varname == "PROJECT_DIR"){
                 qpath.replace(pos, len, shared->projectDirString);
+            } else if(varname == "HOME"){  // for the backward compatiblity
+                qpath.replace(pos, len, shared->homeDirString);
             } else {
                 if(!replaceDirectoryVariable(shared, qpath, varname, pos, len)){
                     qpath.clear();
@@ -383,10 +380,6 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
 
     } else if(findSubDirectory(shared->topDirPath, orgPath, relativePath)){
         return string("${PROGRAM_TOP}/") + getGenericPathString(relativePath);
-
-    } else if(findSubDirectory(shared->homeDirPath, orgPath, relativePath)){
-        return string("${HOME}/") + getGenericPathString(relativePath);
-
     }
 
     return getGenericPathString(orgPath);

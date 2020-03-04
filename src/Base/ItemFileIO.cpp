@@ -183,7 +183,7 @@ ItemList<Item> ItemFileIO::loadItemsWithDialog
     fileDialog.setLabelText(QFileDialog::Accept, _("Open"));
     fileDialog.setLabelText(QFileDialog::Reject, _("Cancel"));
     fileDialog.setDirectory(AppConfig::archive()->get
-                        ("currentFileDialogDirectory", shareDirectory()).c_str());
+                        ("file_dialog_directory", shareDirectory()).c_str());
 
     QObject::connect(&fileDialog, SIGNAL(finished(int)), &dialog, SLOT(done(int)));
 
@@ -226,7 +226,7 @@ ItemList<Item> ItemFileIO::loadItemsWithDialog
     if(dialog.exec() == QDialog::Accepted){
         Mapping* config = AppConfig::archive();
         config->writePath(
-            "currentFileDialogDirectory",
+            "file_dialog_directory",
             fileDialog.directory().absolutePath().toStdString());
                   
         QStringList filenames = fileDialog.selectedFiles();

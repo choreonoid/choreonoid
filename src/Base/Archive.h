@@ -26,8 +26,8 @@ public:
     Archive(int line, int column);
     virtual ~Archive();
 
-    void initSharedInfo(bool useHomeRelativeDirectories = false);
-    void initSharedInfo(const std::string& projectFile, bool useHomeRelativeDirectories = false);
+    void initSharedInfo();
+    void initSharedInfo(const std::string& projectFile);
     void inheritSharedInfoFrom(Archive& archive);
 
     void addPostProcess(const std::function<void()>& func, int priority = 0) const;

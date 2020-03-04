@@ -37,7 +37,6 @@ namespace {
 ProjectManager* instance_ = nullptr;
 int projectBeingLoadedCounter = 0;
 Action* perspectiveCheck = nullptr;
-Action* homeRelativeCheck = nullptr;
 MainWindow* mainWindow = nullptr;
 MessageView* mv = nullptr;
 
@@ -53,6 +52,9 @@ class ProjectManager::Impl
 public:
     Impl(ProjectManager* self);
     Impl(ProjectManager* self, ExtensionManager* ext);
+
+    void setCurrentProjectFile(const string& filename);
+    void clearCurrentProjectFile();
         
     template <class TObject>
     bool restoreObjectStates(
@@ -72,7 +74,6 @@ public:
     void openDialogToSaveProject();
 
     void onPerspectiveCheckToggled(bool on);
-    void onHomeRelativeCheckToggled(bool on);
         
     void connectArchiver(
         const std::string& name,
@@ -82,7 +83,8 @@ public:
     ProjectManager* self;
     ItemTreeArchiver itemTreeArchiver;
     string currentProjectName;
-    string lastAccessedProjectFile;
+    string currentProjectFile;
+    string currentProjectDirectory;
 
     struct ArchiverInfo {
         std::function<bool(Archive&)> storeFunction;
@@ -91,6 +93,9 @@ public:
     typedef map<string, ArchiverInfo> ArchiverMap;
     typedef map<string, ArchiverMap> ArchiverMapMap;
     ArchiverMapMap archivers;
+
+    MappingPtr config;
+    MappingPtr managerConfig;
 };
 
 }
@@ -133,7 +138,8 @@ ProjectManager::ProjectManager(ExtensionManager* ext)
 ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
     : Impl(self)
 {
-    MappingPtr config = AppConfig::archive()->openMapping("ProjectManager");
+    config = AppConfig::archive();
+    managerConfig = config->openMapping("ProjectManager");
     
     MenuManager& mm = ext->menuManager();
 
@@ -149,12 +155,8 @@ ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
     mm.setPath(N_("Project File Options"));
 
     perspectiveCheck = mm.addCheckItem(_("Perspective"));
-    perspectiveCheck->setChecked(config->get("storePerspective", true));
+    perspectiveCheck->setChecked(managerConfig->get("store_perspective", true));
     perspectiveCheck->sigToggled().connect([&](bool on){ onPerspectiveCheckToggled(on); });
-
-    homeRelativeCheck = mm.addCheckItem(_("Use HOME relative directories"));
-    homeRelativeCheck->setChecked(config->get("useHomeRelative", false));
-    homeRelativeCheck->sigToggled().connect([&](bool on){ onHomeRelativeCheckToggled(on); });
 
     mm.setPath("/File");
     mm.addSeparator();
@@ -192,6 +194,52 @@ SignalProxy<void(int recursiveLevel)> ProjectManager::sigProjectLoaded()
 bool ProjectManager::isLoadingProject() const
 {
     return projectBeingLoadedCounter > 0;
+}
+
+
+void ProjectManager::setCurrentProjectName(const std::string& name)
+{
+    impl->currentProjectName = name;
+    mainWindow->setProjectTitle(name);
+
+    if(!impl->currentProjectFile.empty()){
+        auto path = filesystem::path(impl->currentProjectFile);
+        impl->currentProjectFile = (path.parent_path() / (name + ".cnoid")).string();
+    }
+}
+        
+
+void ProjectManager::Impl::setCurrentProjectFile(const string& filename)
+{
+    auto name = getBasename(filename);
+    currentProjectName = name;
+    mainWindow->setProjectTitle(name);
+
+    // filesystem::canonical can only be used with C++17
+    auto path = getCompactPath(filesystem::absolute(filename));
+
+    currentProjectFile = path.string();
+    currentProjectDirectory = path.parent_path().string();
+
+    config->writePath("file_dialog_directory", currentProjectDirectory);
+}
+
+
+void ProjectManager::Impl::clearCurrentProjectFile()
+{
+    currentProjectFile.clear();
+}
+
+
+std::string ProjectManager::currentProjectFile() const
+{
+    return impl->currentProjectFile;
+}
+
+
+std::string ProjectManager::currentProjectDirectory() const
+{
+    return impl->currentProjectDirectory;
 }
 
 
@@ -360,11 +408,10 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
 
             if(loaded){
                 if(!isSubProject){
-                    self->setCurrentProjectName(getBasename(filename));
                     if(archive->get("isNewProjectTemplate", false)){
-                        lastAccessedProjectFile.clear();
+                        clearCurrentProjectFile();
                     } else {
-                        lastAccessedProjectFile = filename;
+                        setCurrentProjectFile(filename);
                     }
                 }
 
@@ -387,7 +434,7 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
         mv->notify(
             format(_("Loading project \"{}\" failed. Any valid objects were not loaded."), filename),
             MessageView::ERROR);
-        lastAccessedProjectFile.clear();
+        clearCurrentProjectFile();
     }
 
     --projectBeingLoadedCounter;
@@ -397,16 +444,6 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
     return loadedItems;
 }
 
-
-void ProjectManager::setCurrentProjectName(const std::string& name)
-{
-    impl->currentProjectName = name;
-    mainWindow->setProjectTitle(name);
-
-    filesystem::path path(impl->lastAccessedProjectFile);
-    impl->lastAccessedProjectFile = (path.parent_path() / (name + ".cnoid")).string();
-}
-        
 
 template<class TObject> bool ProjectManager::Impl::storeObjects
 (Archive& parentArchive, const char* key, vector<TObject*> objects)
@@ -472,7 +509,7 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
     itemTreeArchiver.reset();
     
     ArchivePtr archive = new Archive();
-    archive->initSharedInfo(filename, homeRelativeCheck->isChecked());
+    archive->initSharedInfo(filename);
 
     ArchivePtr itemArchive = itemTreeArchiver.store(archive, item);
 
@@ -519,26 +556,16 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
         stored = true;
     }
 
-    // Storing the file dialog directory from the project file.
-    // This should be disabled.
-    /*
-      string currentFileDialogDirectory;
-      if(AppConfig::archive()->read("currentFileDialogDirectory", currentFileDialogDirectory)){
-      archive->writeRelocatablePath("currentFileDialogDirectory", currentFileDialogDirectory);
-      }
-    */
-
     if(stored){
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
         mv->notify(_("Saving the project file has been finished."));
         if(!isSubProject){
-            mainWindow->setProjectTitle(getBasename(filename));
-            lastAccessedProjectFile = filename;
+            setCurrentProjectFile(filename);
         }
     } else {
         mv->notify(_("Saving the project file failed."), MessageView::ERROR);
-        lastAccessedProjectFile.clear();
+        clearCurrentProjectFile();
     }
 }
 
@@ -551,10 +578,10 @@ void ProjectManager::overwriteCurrentProject()
 
 void ProjectManager::Impl::overwriteCurrentProject()
 {
-    if(lastAccessedProjectFile.empty()){
+    if(currentProjectFile.empty()){
         openDialogToSaveProject();
     } else {
-        saveProject(lastAccessedProjectFile);
+        saveProject(currentProjectFile);
     } 
 }
 
@@ -598,11 +625,11 @@ void ProjectManager::Impl::openDialogToLoadProject()
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
-    dialog.setDirectory(AppConfig::archive()->get
-                        ("currentFileDialogDirectory", shareDirectory()).c_str());
+    dialog.setDirectory(
+        managerConfig->get("project_file_dialog_directory", shareDirectory()).c_str());
     
     if(dialog.exec()){
-        AppConfig::archive()->writePath("currentFileDialogDirectory", dialog.directory().absolutePath().toStdString());
+        managerConfig->writePath("project_file_dialog_directory", dialog.directory().absolutePath().toStdString());
         string filename = getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString()));
         loadProject(filename, nullptr, false);
     }
@@ -624,13 +651,13 @@ void ProjectManager::Impl::openDialogToSaveProject()
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
-    dialog.setDirectory(AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory()).c_str());
-    if(!currentProjectName.empty() && !lastAccessedProjectFile.empty()){
+    dialog.setDirectory(managerConfig->get("project_file_dialog_directory", shareDirectory()).c_str());
+    if(!currentProjectName.empty() && !currentProjectFile.empty()){
         dialog.selectFile(currentProjectName.c_str());
     }
 
     if(dialog.exec()){
-        AppConfig::archive()->writePath("currentFileDialogDirectory", dialog.directory().absolutePath().toStdString());        
+        managerConfig->writePath("project_file_dialog_directory", dialog.directory().absolutePath().toStdString());        
         filesystem::path path(dialog.selectedFiles().front().toStdString());
         string filename = getNativePathString(path);
         string ext = path.extension().string();
@@ -644,17 +671,9 @@ void ProjectManager::Impl::openDialogToSaveProject()
 
 void ProjectManager::Impl::onPerspectiveCheckToggled(bool on)
 {
-    AppConfig::archive()->openMapping("ProjectManager")
-        ->write("storePerspective", perspectiveCheck->isChecked());
+    managerConfig->write("store_perspective", perspectiveCheck->isChecked());
 }
 
-
-void ProjectManager::Impl::onHomeRelativeCheckToggled(bool on)
-{
-    AppConfig::archive()->openMapping("ProjectManager")
-        ->write("useHomeRelative", homeRelativeCheck->isChecked());
-}
-                                           
 
 void ProjectManager::setArchiver(
     const std::string& moduleName,
@@ -671,25 +690,4 @@ void ProjectManager::setArchiver(
 void ProjectManager::resetArchivers(const std::string& moduleName)
 {
     impl->archivers.erase(moduleName);
-}
-
-
-std::string ProjectManager::currentProjectFile() const
-{
-    if(impl->lastAccessedProjectFile.empty()){
-        return "";
-    } else {
-        return filesystem::absolute(filesystem::path(impl->lastAccessedProjectFile)).string();
-    }
-}
-
-
-std::string ProjectManager::currentProjectDirectory() const
-{
-    if(impl->lastAccessedProjectFile.empty()){
-        return "";
-    } else {
-        filesystem::path projectFilePath(impl->lastAccessedProjectFile);
-        return filesystem::absolute(projectFilePath.parent_path()).string();
-    }
 }

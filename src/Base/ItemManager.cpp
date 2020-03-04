@@ -1033,12 +1033,12 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
     if(filters.size() > 0){
     
         dialog.setDirectory(AppConfig::archive()->get
-                            ("currentFileDialogDirectory", shareDirectory()).c_str());
+                            ("file_dialog_directory", shareDirectory()).c_str());
     
         if(dialog.exec() == QFileDialog::Accepted){
 
             AppConfig::archive()->writePath(
-                "currentFileDialogDirectory",
+                "file_dialog_directory",
                 dialog.directory().absolutePath().toStdString());
 
             io_filename = dialog.selectedFiles()[0].toStdString();
@@ -1272,7 +1272,7 @@ string getOpenFileName(const string& caption, const string& extensions)
         QFileDialog::getOpenFileName(
             MainWindow::instance(),
             caption.c_str(),
-            AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory()).c_str(),
+            AppConfig::archive()->get("file_dialog_directory", shareDirectory()).c_str(),
             ItemFileIO::Impl::makeExtensionFilterString(
                 caption,
                 ItemFileIO::Impl::separateExtensions(extensions)));
@@ -1281,7 +1281,7 @@ string getOpenFileName(const string& caption, const string& extensions)
 
     if(!filename.empty()){
         AppConfig::archive()->writePath(
-            "currentFileDialogDirectory",
+            "file_dialog_directory",
             filesystem::path(filename).parent_path().string());
     }
 
@@ -1294,7 +1294,7 @@ vector<string> getOpenFileNames(const string& caption, const string& extensions)
         QFileDialog::getOpenFileNames(
             MainWindow::instance(),
             caption.c_str(),
-            AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory()).c_str(),
+            AppConfig::archive()->get("file_dialog_directory", shareDirectory()).c_str(),
             ItemFileIO::Impl::makeExtensionFilterString(
                 caption,
                 ItemFileIO::Impl::separateExtensions(extensions)));
@@ -1306,7 +1306,7 @@ vector<string> getOpenFileNames(const string& caption, const string& extensions)
             filenames.push_back(qfilenames[i].toStdString());
         }
         AppConfig::archive()->writePath(
-            "currentFileDialogDirectory",
+            "file_dialog_directory",
             filesystem::path(filenames[0]).parent_path().string());
     }
         
