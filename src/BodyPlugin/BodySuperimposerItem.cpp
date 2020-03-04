@@ -6,10 +6,23 @@
 #include <cnoid/CloneMap>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
+#include <set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+
+namespace {
+
+struct BodyInfo : public Referenced
+{
+    weak_ref_ptr<BodyItem> bodyItem;
+    BodyPtr superimposedBody;
+    SceneBodyPtr sceneBody;
+};
+typedef ref_ptr<BodyInfo> BodyInfoPtr;
+
+}
 
 namespace cnoid {
 
@@ -19,9 +32,9 @@ public:
     BodySuperimposerItem* self;
     BodyItem* bodyItem;
     ScopedConnectionSet bodyItemConnections;
-    vector<BodyPtr> superimposedBodies;
+    vector<BodyInfoPtr> bodyInfos;
+    bool needToUpdateSuperimposedBodies;
     SgSwitchableGroupPtr topSwitch;
-    vector<SceneBodyPtr> sceneBodies;
     float transparency;
     SgUpdate sgUpdate;
     CloneMap cloneMap;
@@ -30,6 +43,8 @@ public:
     Impl(BodySuperimposerItem* self, const Impl& org);
     void setBodyItem(BodyItem* newBodyItem);
     void addSuperimposedBodies(BodyItem* bodyItem);
+    void updateSuperimposedBodies();
+    bool checkBodySetChange(Item* parentItem, set<BodyItem*>& bodyItemSet);
     void setTransparency(float t);
     void updateSuperimposition();
 };
@@ -53,6 +68,7 @@ BodySuperimposerItem::Impl::Impl(BodySuperimposerItem* self)
     : self(self)
 {
     bodyItem = nullptr;
+    needToUpdateSuperimposedBodies = false;
     topSwitch = new SgSwitchableGroup;
     topSwitch->setTurnedOn(false);
     transparency = 0.5;
@@ -105,14 +121,12 @@ void BodySuperimposerItem::Impl::setBodyItem(BodyItem* newBodyItem)
 {
     if(newBodyItem != bodyItem){
         bodyItem = newBodyItem;
-        superimposedBodies.clear();
         topSwitch->clearChildren();
-        sceneBodies.clear();
+        bodyInfos.clear();
         bodyItemConnections.disconnect();
 
         if(bodyItem){
-            addSuperimposedBodies(bodyItem);
-            cloneMap.clear();
+            needToUpdateSuperimposedBodies = true;
 
             bodyItemConnections.add(
                 bodyItem->sigKinematicStateChanged().connect(
@@ -120,6 +134,9 @@ void BodySuperimposerItem::Impl::setBodyItem(BodyItem* newBodyItem)
             bodyItemConnections.add(
                 bodyItem->sigCheckToggled().connect(
                     [&](bool on){ self->setChecked(on); }));
+            bodyItemConnections.add(
+                bodyItem->sigSubTreeChanged().connect(
+                    [&](){ needToUpdateSuperimposedBodies = true; } ));
 
             self->setChecked(bodyItem->isChecked());
         }
@@ -127,35 +144,93 @@ void BodySuperimposerItem::Impl::setBodyItem(BodyItem* newBodyItem)
 }
 
 
+void BodySuperimposerItem::Impl::updateSuperimposedBodies()
+{
+    if(!needToUpdateSuperimposedBodies){
+        return;
+    }
+    needToUpdateSuperimposedBodies = false;
+
+    bool bodiesChanged = false;
+    set<BodyItem*> bodyItemSet;
+    for(size_t i=1; i < bodyInfos.size(); ++i){
+        auto& info = bodyInfos[i];
+        if(BodyItem* bodyItem = info->bodyItem.lock()){
+            bodyItemSet.insert(bodyItem);
+        } else {
+            bodiesChanged = true;
+            break;
+        }
+    }
+    if(!bodiesChanged){
+        if(checkBodySetChange(bodyItem, bodyItemSet) || !bodyItemSet.empty()){
+            bodiesChanged = true;
+        }
+    }
+    if(!bodiesChanged){
+        return;
+    }
+    
+    bodyInfos.clear();
+    topSwitch->clearChildren();
+    addSuperimposedBodies(bodyItem);
+    cloneMap.clear();
+}
+
+
+bool BodySuperimposerItem::Impl::checkBodySetChange(Item* parentItem, set<BodyItem*>& bodyItemSet)
+{
+    for(Item* childItem = parentItem->childItem(); childItem; childItem = childItem->nextItem()){
+        if(auto childBodyItem = dynamic_cast<BodyItem*>(childItem)){
+            if(childBodyItem->isAttachedToParentBody()){
+                auto p = bodyItemSet.find(childBodyItem);
+                if(p == bodyItemSet.end()){
+                    return true;
+                }
+                bodyItemSet.erase(p);
+            }
+        }
+        if(checkBodySetChange(childItem, bodyItemSet)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 void BodySuperimposerItem::Impl::addSuperimposedBodies(BodyItem* bodyItem)
 {
-    auto superimposedBody = bodyItem->body()->clone(cloneMap);
-    superimposedBodies.push_back(superimposedBody);
-    auto sceneBody = new SceneBody(superimposedBody);
-    sceneBody->makeTransparent(transparency, cloneMap);
-    topSwitch->addChild(sceneBody);
-    sceneBodies.push_back(sceneBody);
+    BodyInfoPtr info = new BodyInfo;
+    info->bodyItem = bodyItem;
+    info->superimposedBody = bodyItem->body()->clone(cloneMap);
+    info->sceneBody = new SceneBody(info->superimposedBody);
+    info->sceneBody->makeTransparent(transparency, cloneMap);
+    topSwitch->addChild(info->sceneBody);
+    bodyInfos.push_back(info);
 
     for(Item* childItem = bodyItem->childItem(); childItem; childItem = childItem->nextItem()){
         if(auto childBodyItem = dynamic_cast<BodyItem*>(childItem)){
-            if(childBodyItem->isAttachedToParentBody()){
-                addSuperimposedBodies(childBodyItem);
-            }
+             if(childBodyItem->isAttachedToParentBody()){
+                 addSuperimposedBodies(childBodyItem);
+             }
         }
     }
 }
-    
+
 
 int BodySuperimposerItem::numSuperimposedBodies() const
 {
-    return impl->superimposedBodies.size();
+    impl->updateSuperimposedBodies();
+    return impl->bodyInfos.size();
 }
 
 
 Body* BodySuperimposerItem::superimposedBody(int index)
 {
-    if(index < impl->superimposedBodies.size()){
-        return impl->superimposedBodies[index];
+    impl->updateSuperimposedBodies();
+    
+    if(index < impl->bodyInfos.size()){
+        return impl->bodyInfos[index]->superimposedBody;
     }
     return nullptr;
 }
@@ -176,9 +251,9 @@ void BodySuperimposerItem::setTransparency(float transparency)
 void BodySuperimposerItem::Impl::setTransparency(float t)
 {
     if(t != transparency){
-        if(!sceneBodies.empty()){
-            for(auto& sceneBody : sceneBodies){
-                sceneBody->makeTransparent(t, cloneMap);
+        if(!bodyInfos.empty()){
+            for(auto& info : bodyInfos){
+                info->sceneBody->makeTransparent(t, cloneMap);
             }
             cloneMap.clear();
         }
@@ -195,9 +270,11 @@ void BodySuperimposerItem::updateSuperimposition()
 
 void BodySuperimposerItem::Impl::updateSuperimposition()
 {
-    if(!sceneBodies.empty()){
-        for(auto& sceneBody : sceneBodies){
-            sceneBody->updateLinkPositions(sgUpdate);
+    updateSuperimposedBodies();
+    
+    if(!bodyInfos.empty()){
+        for(auto& info : bodyInfos){
+            info->sceneBody->updateLinkPositions(sgUpdate);
         }
         topSwitch->setTurnedOn(true);
         topSwitch->notifyUpdate(sgUpdate);
