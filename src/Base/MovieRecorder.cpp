@@ -646,7 +646,7 @@ void ConfigDialog::showDirectorySelectionDialog()
             MainWindow::instance(),
             _("Select Directory"),
             directoryEntry.text(),
-            0);
+            QFileDialog::DontUseNativeDialog | QFileDialog::ShowDirsOnly);
     if(!directory.isNull()){
         directoryEntry.setText(directory);
     }

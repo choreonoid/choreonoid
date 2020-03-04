@@ -89,6 +89,7 @@ void save(QWidget* widget, std::function<bool(const QString& filename)> saveImag
     QString filename;
         
     QFileDialog dialog(MainWindow::instance());
+    dialog.setOptions(QFileDialog::DontUseNativeDialog);
     dialog.setWindowTitle(QString(_("Save the image of %1")).arg(name));
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setAcceptMode(QFileDialog::AcceptSave);

@@ -910,29 +910,30 @@ bool ItemManager::save(Item* item, const std::string& filename, const std::strin
 bool ItemManagerImpl::save
 (Item* item, bool useDialogToGetFilename, bool doExport, string filename, const string& formatId)
 {
-    item->setTemporal(false);
-    
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeid(*item).name());
     if(p == typeIdToClassInfoMap.end()){
         return false;
     }
-
     ClassInfoPtr& classInfo = p->second;
    
-    bool saved = false;
-    bool tryToSave = false;
-
     string itemLabel = classInfo->className + " \"" + item->name() + "\"";
 
     auto& fileIOs = classInfo->fileIOs;
     ItemFileIOPtr targetFileIO;
-    
     if(useDialogToGetFilename){
         targetFileIO = getFileIOAndFilenameFromSaveDialog(fileIOs, doExport, itemLabel, formatId, filename);
+        if(!targetFileIO){ // Canceled by a user
+            messageView->put(format(_("Saving {0} was canceled."), itemLabel), MessageView::WARNING);
+            return false;
+        }
     } else {
         targetFileIO = determineFileIOForSaving(fileIOs, filename, formatId);
     }
-    
+
+    item->setTemporal(false);
+    bool saved = false;
+    bool tryToSave = false;
+
     if(targetFileIO && targetFileIO->impl->api & ItemFileIO::Save){
         
         tryToSave = true;
@@ -989,22 +990,10 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
 (vector<ItemFileIOPtr>& fileIOs, bool doExport, const string& itemLabel, const string& formatId,
  string& io_filename)
 {
-    QFileDialog dialog(MainWindow::instance());
-    dialog.setWindowTitle(QString(_("Save %1 as")).arg(itemLabel.c_str()));
-    dialog.setFileMode(QFileDialog::AnyFile);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    dialog.setViewMode(QFileDialog::List);
-    dialog.setLabelText(QFileDialog::Accept, _("Save"));
-    dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
-
-    if(!io_filename.empty()){
-        dialog.selectFile(io_filename.c_str());
-        io_filename.clear();
-    }
+    ItemFileIOPtr targetFileIO;
 
     QStringList filters;
     vector<ItemFileIOPtr> activeFileIOs;
-    
     for(auto& fileIO : fileIOs){
         if(!(fileIO->impl->api & ItemFileIO::Save)){
             continue;
@@ -1026,15 +1015,26 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
         activeFileIOs.push_back(fileIO);
     }
 
-    dialog.setNameFilters(filters);
-
-    ItemFileIOPtr targetFileIO;
-
     if(filters.size() > 0){
-    
-        dialog.setDirectory(AppConfig::archive()->get
-                            ("file_dialog_directory", shareDirectory()).c_str());
-    
+
+        QFileDialog dialog(MainWindow::instance());
+        dialog.setOptions(QFileDialog::DontUseNativeDialog);
+        dialog.setWindowTitle(QString(_("Save %1 as")).arg(itemLabel.c_str()));
+        dialog.setFileMode(QFileDialog::AnyFile);
+        dialog.setAcceptMode(QFileDialog::AcceptSave);
+        dialog.setViewMode(QFileDialog::List);
+        dialog.setLabelText(QFileDialog::Accept, _("Save"));
+        dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
+        dialog.setNameFilters(filters);
+
+        auto dir = AppConfig::archive()->get("file_dialog_directory", shareDirectory());
+        dialog.setDirectory(dir.c_str());
+
+        if(!io_filename.empty()){
+            dialog.selectFile(io_filename.c_str());
+            io_filename.clear();
+        }
+
         if(dialog.exec() == QFileDialog::Accepted){
 
             AppConfig::archive()->writePath(
@@ -1275,7 +1275,9 @@ string getOpenFileName(const string& caption, const string& extensions)
             AppConfig::archive()->get("file_dialog_directory", shareDirectory()).c_str(),
             ItemFileIO::Impl::makeExtensionFilterString(
                 caption,
-                ItemFileIO::Impl::separateExtensions(extensions)));
+                ItemFileIO::Impl::separateExtensions(extensions)),
+            Q_NULLPTR,
+            QFileDialog::DontUseNativeDialog);
 
     string filename = qfilename.toStdString();
 
@@ -1297,7 +1299,9 @@ vector<string> getOpenFileNames(const string& caption, const string& extensions)
             AppConfig::archive()->get("file_dialog_directory", shareDirectory()).c_str(),
             ItemFileIO::Impl::makeExtensionFilterString(
                 caption,
-                ItemFileIO::Impl::separateExtensions(extensions)));
+                ItemFileIO::Impl::separateExtensions(extensions)),
+            Q_NULLPTR,
+            QFileDialog::DontUseNativeDialog);
 
     vector<string> filenames;
 

@@ -35,7 +35,6 @@
 #include <QLabel>
 #include <QKeyEvent>
 #include <QMouseEvent>
-#include <QFileDialog>
 #include <QDialogButtonBox>
 #include <QColorDialog>
 #include <QElapsedTimer>

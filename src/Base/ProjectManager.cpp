@@ -614,6 +614,7 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 void ProjectManager::Impl::openDialogToLoadProject()
 {
     QFileDialog dialog(MainWindow::instance());
+    dialog.setOptions(QFileDialog::DontUseNativeDialog);
     dialog.setWindowTitle(_("Open a Choreonoid project file"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
@@ -639,6 +640,7 @@ void ProjectManager::Impl::openDialogToLoadProject()
 void ProjectManager::Impl::openDialogToSaveProject()
 {
     QFileDialog dialog(MainWindow::instance());
+    dialog.setOptions(QFileDialog::DontUseNativeDialog);
     dialog.setWindowTitle(_("Save a choreonoid project file"));
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setAcceptMode(QFileDialog::AcceptSave);

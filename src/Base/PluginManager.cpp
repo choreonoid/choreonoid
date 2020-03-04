@@ -665,6 +665,7 @@ bool PluginManager::Impl::activatePlugin(int index)
 void PluginManager::Impl::onLoadPluginTriggered()
 {
     QFileDialog dialog(MainWindow::instance());
+    dialog.setOptions(QFileDialog::DontUseNativeDialog);
     dialog.setWindowTitle(_("Load plugins"));
     dialog.setFileMode(QFileDialog::ExistingFiles);
     dialog.setViewMode(QFileDialog::List);

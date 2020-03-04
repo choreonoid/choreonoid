@@ -11,7 +11,6 @@
 #include "ComboBox.h"
 #include "Dialog.h"
 #include <cnoid/ConnectionSet>
-#include <QFileDialog>
 #include <cmath>
 #include "gettext.h"
 

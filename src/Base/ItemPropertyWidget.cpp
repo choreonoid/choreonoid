@@ -543,6 +543,7 @@ void CustomizedItemDelegate::paint
 void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEditor* editor)
 {
     QFileDialog dialog(MainWindow::instance());
+    dialog.setOptions(QFileDialog::DontUseNativeDialog);
     dialog.setWindowTitle(_("Select File"));
     dialog.setViewMode(QFileDialog::List);
     if(value.isExistingFileMode()){

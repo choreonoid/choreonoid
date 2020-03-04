@@ -227,6 +227,7 @@ void invokeFaceControllerPatternFileImportDialog()
     /// \todo The function by the following code shoulde be provided by ItemManger
 
     QFileDialog dialog(MainWindow::instance());
+    dialog.setOptions(QFileDialog::DontUseNativeDialog);
     dialog.setWindowTitle(_("Choose poseset file"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
