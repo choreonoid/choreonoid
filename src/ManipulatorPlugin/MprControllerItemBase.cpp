@@ -151,6 +151,7 @@ public:
     bool interpretAssignStatement(MprAssignStatement* statement);
     bool applyExpressionTerm(MprVariable::Value& value, ExpressionTerm term, char op);
     bool interpretSetSignalStatement(MprSignalStatement* statement);
+    bool interpretWaitStatement(MprWaitStatement* statement);
     bool interpretDelayStatement(MprDelayStatement* statement);
 };
 
@@ -225,6 +226,10 @@ void MprControllerItemBase::registerBaseStatementInterpreters()
         [impl_](MprSignalStatement* statement){
             return impl_->interpretSetSignalStatement(statement); });
 
+    registerStatementInterpreter<MprWaitStatement>(
+        [impl_](MprWaitStatement* statement){
+            return impl_->interpretWaitStatement(statement); });
+    
     registerStatementInterpreter<MprDelayStatement>(
         [impl_](MprDelayStatement* statement){
             return impl_->interpretDelayStatement(statement); });
@@ -305,6 +310,15 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
 
     auto body = io->body();
     ioDevice = body->findDevice<DigitalIoDevice>();
+
+    if(ioDevice){
+        // Reset all the signals
+        const int n = ioDevice->numSignalLines();
+        for(int i=0; i < n; ++i){
+            ioDevice->setOut(i, false, false);
+            ioDevice->setIn(i, false, false);
+        }
+    }
 
     isLogEnabled = io->enableLog();
     
@@ -1145,6 +1159,25 @@ bool MprControllerItemBase::Impl::interpretSetSignalStatement(MprSignalStatement
         self->pushOutputOnceFunction(
             [this, statement](){
                 ioDevice->setOut(statement->signalIndex(), statement->on(), true); });
+    }
+
+    ++iterator;
+    
+    return true;
+}
+
+
+bool MprControllerItemBase::Impl::interpretWaitStatement(MprWaitStatement* statement)
+{
+    if(statement->conditionType() == MprWaitStatement::SignalInput){
+        if(!ioDevice){
+            self->pushControlFunctions([]() { return true; });
+        } else {
+            self->pushControlFunctions(
+                [this, statement](){
+                    return ioDevice->in(statement->signalIndex()) != statement->signalStateCondition();
+                });
+        }
     }
 
     ++iterator;

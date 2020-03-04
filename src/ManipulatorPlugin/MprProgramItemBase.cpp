@@ -304,7 +304,7 @@ bool MprProgramItemBase::store(Archive& archive)
 
 bool MprProgramItemBase::restore(const Archive& archive)
 {
-    if(archive.loadItemFile(this, "filename", "foramat")){
+    if(archive.loadItemFile(this, "filename", "format")){
         setAsStartupProgram(archive.get("is_startup_program", false));
         return true;
     }
