@@ -790,7 +790,12 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
                     onStatementUpdated(statement); }));
         
         programNameLabel.setStyleSheet("font-weight: bold");
-        programNameLabel.setText(programItem->name().c_str());
+        if(auto bodyItem = programItem->targetBodyItem()){
+            programNameLabel.setText(
+                format("{0} - {1}", bodyItem->name(), programItem->name()).c_str());
+        } else {
+            programNameLabel.setText(programItem->name().c_str());
+        }
 
         if(bodySyncMode == TwoStageBodySync){
             auto bodyItem = programItem->targetBodyItem();
@@ -1074,7 +1079,7 @@ bool MprProgramViewBase::Impl::insertStatement(MprStatement* statement, int inse
 
     if(insertionType == AfterTargetPosition){
         clearSelection();
-        findStatementItem(statement)->setSelected(true);
+        setCurrentItem(findStatementItem(statement));
     }
 
     return true;

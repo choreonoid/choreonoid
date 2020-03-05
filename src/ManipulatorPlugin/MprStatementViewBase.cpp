@@ -55,6 +55,7 @@ public:
 MprStatementPanel::MprStatementPanel()
 {
     impl = new Impl(this);
+    setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 }
 
 
