@@ -1620,7 +1620,7 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
     if(mesh && mesh->hasVertices()){
         SgMaterial* material = shape->material();
         bool isTransparent = false;
-        if(!isRenderingPickingImage){
+        if(currentProgram->hasCapability(ShaderProgram::Transparency)){
             if(minTransparency > 0.0f || (material && material->transparency() > 0.0)){
                 isTransparent = true;
             }

@@ -49,11 +49,22 @@ public:
     virtual void setMaterial(const SgMaterial* material);
     virtual void setVertexColorEnabled(bool on);
 
+    enum Capability {
+        NoCapability = 0,
+        Lighting = 1,
+        Transparency = 2
+    };
+
+    int capabilities() const { return capabilities_; }
+    bool hasCapability(int capability) const { return capabilities_ & capability; }
+
 protected:
     ShaderProgram(const char* vertexShader, const char* fragmentShader);
+    void setCapability(int capability) { capabilities_ |= capability; }
 
 private:
     GLSLProgram* glslProgram_;
+    int capabilities_;
     ShaderProgramImpl* impl;
 };
 

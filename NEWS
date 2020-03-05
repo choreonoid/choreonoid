@@ -32,7 +32,7 @@ Changes since 1.7.0:
 * Improve the CMake configuration files for developing plugins and controllers externally
 * Fix a bug in the calcMassMatrix function
 * Add KinematicsSimulatorItem, which replaces the kinematics mode of AISTSimulatorItem
-* Add HolderDevice, AttachmentDevice
+* Add HolderDevice, AttachmentDevice and a body can be attached to the parent body using them
 * Add DigitalIODevice, SignalIOConnectionItem, SignalIOConnectionView
 * Make the vertical axis of SceneWidget modifiable
 * Add the "export symbols" property to SimpleControllerItem
@@ -40,6 +40,8 @@ Changes since 1.7.0:
 * Improve the position dragger
 * The parent-child relationship betwen body items is reflected in editing body positions
 * Arrange the cmake files for building programs outside the Choreonoid source
+* The transparency of a body shown in the scene view can be modified as a property of the corresponding BodyItem
+* Coordinate system for editing model positions can be selected on the location view and the link position view
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
