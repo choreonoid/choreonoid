@@ -10,6 +10,26 @@ using namespace std;
 using namespace cnoid;
 
 
+SgTransparentGroup::SgTransparentGroup()
+    : SgGroup(findClassId<SgTransparentGroup>())
+{
+    transparency_ = 0.5f;
+}
+
+
+SgTransparentGroup::SgTransparentGroup(const SgTransparentGroup& org, CloneMap* cloneMap)
+    : SgGroup(org, cloneMap)
+{
+    transparency_ = org.transparency_;
+}
+    
+
+Referenced* SgTransparentGroup::doClone(CloneMap* cloneMap) const
+{
+    return new SgTransparentGroup(*this, cloneMap);
+}
+
+
 SgFog::SgFog(int classId)
     : SgPreprocessed(classId)
 {
@@ -78,6 +98,7 @@ namespace {
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SceneNodeClassRegistry::instance()
+            .registerClass<SgTransparentGroup, SgGroup>()
             .registerClass<SgFog, SgPreprocessed>()
             .registerClass<SgOutline, SgGroup>()
             .registerClass<SgLightweightRenderingGroup, SgGroup>();

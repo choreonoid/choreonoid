@@ -186,6 +186,7 @@ public:
     virtual void setMaterial(const SgMaterial* material) override;
     virtual void setVertexColorEnabled(bool on) override;
     void setTextureEnabled(bool on);
+    void setMinimumTransparency(float t);
 
 private:
     MaterialLightingProgramImpl* impl;

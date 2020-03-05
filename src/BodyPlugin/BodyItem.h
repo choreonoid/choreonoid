@@ -153,7 +153,9 @@ public:
 
     EditableSceneBody* sceneBody();
     EditableSceneBody* existingSceneBody();
-
+    float transparency() const;
+    void setTransparency(float t);
+    
     class Impl;
 
 protected:

@@ -5,6 +5,7 @@
 #include "SceneBody.h"
 #include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneDrawables>
+#include <cnoid/SceneEffects>
 #include <cnoid/SceneUtil>
 #include <cnoid/SceneRenderer>
 #include <cnoid/CloneMap>
@@ -134,12 +135,13 @@ public:
     bool isVisible;
     std::vector<SceneDevicePtr> sceneDevices;
     SgGroupPtr deviceGroup;
-    float transparency;
+    SgTransparentGroupPtr transparentGroup;
 
     SceneLinkImpl(SceneLink* self, Link* link);
-    bool removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup);
+    void insertEffectGroup(SgGroup* group, bool doNotify);
+    bool removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup, bool doNotify);
     void cloneShape(CloneMap& cloneMap);
-    void makeTransparent(float transparency, CloneMap& cloneMap);
+    void setTransparency(float transparency, bool doNotify);
 };
 
 class SceneBodyImpl
@@ -176,8 +178,6 @@ SceneLinkImpl::SceneLinkImpl(SceneLink* self, Link* link)
 
     shapeTransform->addChild(topShapeGroup);
     self->addChild(shapeTransform);
-    
-    transparency = 0.0;
 }
 
 
@@ -218,23 +218,31 @@ SgNode* SceneLink::collisionShape()
 }
 
 
-void SceneLink::insertEffectGroup(SgGroup* group)
+void SceneLink::insertEffectGroup(SgGroup* group, bool doNotify)
 {
-    impl->shapeTransform->removeChild(impl->topShapeGroup);
-    group->addChild(impl->topShapeGroup);
-    impl->shapeTransform->addChild(group);
-    impl->topShapeGroup = group;
-    impl->shapeTransform->notifyUpdate(SgUpdate::ADDED|SgUpdate::REMOVED);
+    impl->insertEffectGroup(group, doNotify);
 }
 
 
-void SceneLink::removeEffectGroup(SgGroup* group)
+void SceneLinkImpl::insertEffectGroup(SgGroup* group, bool doNotify)
 {
-    impl->removeEffectGroup(impl->shapeTransform, group);
+    shapeTransform->removeChild(topShapeGroup);
+    group->addChild(topShapeGroup);
+    shapeTransform->addChild(group);
+    topShapeGroup = group;
+    if(doNotify){
+        shapeTransform->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+    }
 }
 
 
-bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup)
+void SceneLink::removeEffectGroup(SgGroup* group, bool doNotify)
+{
+    impl->removeEffectGroup(impl->shapeTransform, group, doNotify);
+}
+
+
+bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup, bool doNotify)
 {
     if(parent == mainShapeGroup){
         return false;
@@ -256,12 +264,14 @@ bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup)
             }
         }
         effectGroup->clearChildren();
-        parent->notifyUpdate(SgUpdate::ADDED|SgUpdate::REMOVED);
+        if(doNotify){
+            parent->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+        }
         return true;
     } else {
         for(auto child : *parent){
             if(auto childGroup = dynamic_cast<SgGroup*>(child.get())){
-                if(removeEffectGroup(childGroup, effectGroup)){
+                if(removeEffectGroup(childGroup, effectGroup, doNotify)){
                     return true;
                 }
             }
@@ -283,23 +293,48 @@ void SceneLink::setVisible(bool on)
 }
 
 
-void SceneLink::makeTransparent(float transparency)
+float SceneLink::transparency() const
 {
-    CloneMap cloneMap;
-    SgObject::setNonNodeCloning(cloneMap, false);
-    impl->makeTransparent(transparency, cloneMap);
+    if(!impl->transparentGroup && impl->transparentGroup->hasParents()){
+        return impl->transparentGroup->transparency();
+    }
+    return 0.0f;
 }
 
 
-void SceneLinkImpl::makeTransparent(float transparency, CloneMap& cloneMap)
+void SceneLink::setTransparency(float transparency, bool doNotify)
 {
-    if(transparency == this->transparency){
-        return;
-    }
-    this->transparency = transparency;
+    impl->setTransparency(transparency, doNotify);
+}
 
-    cloneShape(cloneMap);
-    cnoid::makeTransparent(mainShapeGroup->visualShape, transparency, cloneMap, true);
+
+void SceneLinkImpl::setTransparency(float transparency, bool doNotify)
+{
+    if(!transparentGroup){
+        transparentGroup = new SgTransparentGroup;
+        transparentGroup->setTransparency(transparency);
+    } else if(transparency != transparentGroup->transparency()){
+        transparentGroup->setTransparency(transparency);
+        if(doNotify){
+            transparentGroup->notifyUpdate();
+        }
+    }
+
+    if(transparency > 0.0f){
+        if(!transparentGroup->hasParents()){
+            insertEffectGroup(transparentGroup, doNotify);
+        }
+    } else {
+        if(transparentGroup->hasParents()){
+            self->removeEffectGroup(transparentGroup, doNotify);
+        }
+    }
+}
+
+
+void SceneLink::makeTransparent(float transparency)
+{
+    setTransparency(transparency, true);
 }
 
 
@@ -457,17 +492,22 @@ void SceneBody::updateSceneDevices(double time)
 }
 
 
-void SceneBody::makeTransparent(float transparency, CloneMap& cloneMap)
+void SceneBody::setTransparency(float transparency)
 {
     for(size_t i=0; i < sceneLinks_.size(); ++i){
-        sceneLinks_[i]->impl->makeTransparent(transparency, cloneMap);
+        sceneLinks_[i]->impl->setTransparency(transparency, false);
     }
+    notifyUpdate();
+}
+
+
+void SceneBody::makeTransparent(float transparency, CloneMap&)
+{
+    setTransparency(transparency);
 }
 
 
 void SceneBody::makeTransparent(float transparency)
 {
-    CloneMap cloneMap;
-    SgObject::setNonNodeCloning(cloneMap, false);
-    makeTransparent(transparency, cloneMap);
+    setTransparency(transparency);
 }

@@ -285,6 +285,7 @@ public:
     SgMaterialPtr defaultMaterial;
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
+    float minTransparency;
     
     GLResourceMap resourceMaps[2];
     GLResourceMap* currentResourceMap;
@@ -384,7 +385,8 @@ public:
     void renderShapeMain(SgShape* shape, const Affine3& position, int pickIndex);
     void applyCullingMode(SgMesh* mesh);
     void renderPointSet(SgPointSet* pointSet);        
-    void renderLineSet(SgLineSet* lineSet);        
+    void renderLineSet(SgLineSet* lineSet);
+    void renderTransparentGroup(SgTransparentGroup* transparentGroup);
     void renderOverlay(SgOverlay* overlay);
     void renderOverlayMain(SgOverlay* overlay, const Affine3& T, const SgNodePath& nodePath);
     void renderViewportOverlay(SgViewportOverlay* overlay);
@@ -488,6 +490,7 @@ void GLSLSceneRenderer::Impl::initialize()
     defaultMaterial = new SgMaterial;
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
+    minTransparency = 0.0f;
     isTextureEnabled = true;
 
     isNormalVisualizationEnabled = false;
@@ -523,6 +526,8 @@ void GLSLSceneRenderer::Impl::initialize()
         [&](SgPointSet* node){ renderPointSet(node); });
     renderingFunctions.setFunction<SgLineSet>(
         [&](SgLineSet* node){ renderLineSet(node); });
+    renderingFunctions.setFunction<SgTransparentGroup>(
+        [&](SgTransparentGroup* node){ renderTransparentGroup(node); });
     renderingFunctions.setFunction<SgOverlay>(
         [&](SgOverlay* node){ renderOverlay(node); });
     renderingFunctions.setFunction<SgViewportOverlay>(
@@ -1614,7 +1619,17 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
         SgMaterial* material = shape->material();
-        if(material && material->transparency() > 0.0 && !isRenderingPickingImage){
+        bool isTransparent = false;
+        if(!isRenderingPickingImage){
+            if(minTransparency > 0.0f || (material && material->transparency() > 0.0)){
+                isTransparent = true;
+            }
+        }
+        if(!isTransparent){
+            auto pickIndex = pushPickNode(shape, false);
+            renderShapeMain(shape, modelMatrixStack.back(), pickIndex);
+            popPickNode();
+        } else {
             if(!isRenderingShadowMap){
                 SgShapePtr shapePtr = shape;
                 int matrixIndex = modelMatrixBuffer.size();
@@ -1625,10 +1640,6 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
                         renderShapeMain(shapePtr, modelMatrixBuffer[matrixIndex], pickIndex); });
                 popPickNode();
             }
-        } else {
-            auto pickIndex = pushPickNode(shape, false);
-            renderShapeMain(shape, modelMatrixStack.back(), pickIndex);
-            popPickNode();
         }
     }
 }
@@ -2435,6 +2446,33 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 
     renderPlot(lineSet, GL_LINES,
                [lineSet](){ return getLineSetVertices(lineSet); });
+}
+
+
+void GLSLSceneRenderer::Impl::renderTransparentGroup(SgTransparentGroup* transparentGroup)
+{
+    float prevMinTransparency = minTransparency;
+
+    float transparency = transparentGroup->transparency();
+    if(transparency > minTransparency){
+        minTransparency = transparency;
+        transparentRenderingQueue.emplace_back(
+            [this, transparency](){
+                phongLightingProgram.setMinimumTransparency(transparency);
+                phongShadowLightingProgram.setMinimumTransparency(transparency);
+            });
+    }
+
+    renderGroup(transparentGroup);
+
+    if(prevMinTransparency != minTransparency){
+        minTransparency = prevMinTransparency;
+        transparentRenderingQueue.emplace_back(
+            [this, prevMinTransparency](){
+                phongLightingProgram.setMinimumTransparency(prevMinTransparency);
+                phongShadowLightingProgram.setMinimumTransparency(prevMinTransparency);
+            });
+    }
 }
 
 

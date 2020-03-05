@@ -30,10 +30,13 @@ public:
     const SgNode* collisionShape() const;
     SgNode* collisionShape();
 
-    void insertEffectGroup(SgGroup* group);
-    void removeEffectGroup(SgGroup* group);
+    void insertEffectGroup(SgGroup* group, bool doNotify);
+    void removeEffectGroup(SgGroup* group, bool doNotify);
     
     void setVisible(bool on);
+    float transparency() const;
+    void setTransparency(float transparency, bool doNotify);
+    //! \deprecated. Use setTransparency.
     void makeTransparent(float transparency);
     
     void addSceneDevice(SceneDevice* sdev);
@@ -76,7 +79,11 @@ public:
     void setSceneDeviceUpdateConnection(bool on);
     void updateSceneDevices(double time);
 
+    void setTransparency(float transparency);
+
+    //! \deprecated. Use setTransparency.
     void makeTransparent(float transparency);
+    //! \deprecated. Use setTransparency.
     void makeTransparent(float transparency, CloneMap& cloneMap);
 
     virtual void updateModel();

@@ -11,6 +11,25 @@
 
 namespace cnoid {
 
+class CNOID_EXPORT SgTransparentGroup : public SgGroup
+{
+public:
+    SgTransparentGroup();
+    SgTransparentGroup(const SgTransparentGroup& org, CloneMap* cloneMap = nullptr);
+
+    float transparency() const { return transparency_; }
+    void setTransparency(float t) { transparency_ = t; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    float transparency_;
+};
+
+typedef ref_ptr<SgTransparentGroup> SgTransparentGroupPtr;
+
+
 class CNOID_EXPORT SgFog : public SgPreprocessed
 {
 protected:

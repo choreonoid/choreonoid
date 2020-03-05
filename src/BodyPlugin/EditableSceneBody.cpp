@@ -89,11 +89,11 @@ void EditableSceneLink::showOutline(bool on)
             outline->setColor(Vector3f(1.0f, 1.0f, 0.0f));
         }
         if(!outline->hasParents()){
-            insertEffectGroup(outline);
+            insertEffectGroup(outline, true);
         }
     } else {
         if(outline && outline->hasParents()){
-            removeEffectGroup(outline);
+            removeEffectGroup(outline, true);
         }
     }
 }

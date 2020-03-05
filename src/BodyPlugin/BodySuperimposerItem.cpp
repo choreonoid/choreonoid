@@ -71,7 +71,7 @@ BodySuperimposerItem::Impl::Impl(BodySuperimposerItem* self)
     needToUpdateSuperimposedBodies = false;
     topSwitch = new SgSwitchableGroup;
     topSwitch->setTurnedOn(false);
-    transparency = 0.5;
+    transparency = 0.5f;
     SgObject::setNonNodeCloning(cloneMap, false);
 }
 
@@ -204,7 +204,7 @@ void BodySuperimposerItem::Impl::addSuperimposedBodies(BodyItem* bodyItem)
     info->bodyItem = bodyItem;
     info->superimposedBody = bodyItem->body()->clone(cloneMap);
     info->sceneBody = new SceneBody(info->superimposedBody);
-    info->sceneBody->makeTransparent(transparency, cloneMap);
+    info->sceneBody->setTransparency(transparency);
     topSwitch->addChild(info->sceneBody);
     bodyInfos.push_back(info);
 
@@ -253,9 +253,8 @@ void BodySuperimposerItem::Impl::setTransparency(float t)
     if(t != transparency){
         if(!bodyInfos.empty()){
             for(auto& info : bodyInfos){
-                info->sceneBody->makeTransparent(t, cloneMap);
+                info->sceneBody->setTransparency(t);
             }
-            cloneMap.clear();
         }
         transparency = t;
     }
@@ -290,9 +289,9 @@ void BodySuperimposerItem::clearSuperimposition()
 
 void BodySuperimposerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty.min(0.0).max(1.0);
-    putProperty(_("Transparency"), static_cast<double>(impl->transparency),
-                [&](double value){ impl->setTransparency(value); return true; });
+    putProperty.min(0.0).max(0.9).decimals(1);
+    putProperty(_("Transparency"), impl->transparency,
+                [&](float value){ impl->setTransparency(value); return true; });
 }
 
 

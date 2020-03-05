@@ -134,7 +134,7 @@ public:
 
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
-
+    float transparency;
     Signal<void()> sigModelUpdated;
 
     LeggedBodyHelperPtr legged;
@@ -169,6 +169,7 @@ public:
     void updateCollisionDetectorLater();
     void doAssign(Item* srcItem);
     void createSceneBody();
+    void setTransparency(float t);
     void setParentBodyItem(BodyItem* bodyItem);
     Link* attachToBodyItem(BodyItem* bodyItem);
     void setRelativeOffsetPositionFromParentBody();
@@ -375,7 +376,8 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
     } else {
         setCurrentBaseLink(nullptr, true);
     }
-        
+
+    transparency = org.transparency;
     zmp = org.zmp;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
@@ -411,6 +413,7 @@ void BodyItem::Impl::init(bool calledFromCopyConstructor)
     self->setAttribute(Item::LOAD_ONLY);
 
     kinematicsBar = KinematicsBar::instance();
+    transparency = 0.0f;
     isFkRequested = isVelFkRequested = isAccFkRequested = false;
     currentHistoryIndex = 0;
     isCurrentKinematicStateInHistory = false;
@@ -1385,6 +1388,9 @@ void BodyItem::Impl::createSceneBody()
 {
     sceneBody = new EditableSceneBody(self);
     sceneBody->setSceneDeviceUpdateConnection(true);
+    if(transparency > 0.0f){
+        sceneBody->setTransparency(transparency);
+    }
 }
 
 
@@ -1397,6 +1403,30 @@ SgNode* BodyItem::getScene()
 EditableSceneBody* BodyItem::existingSceneBody()
 {
     return impl->sceneBody;
+}
+
+
+float BodyItem::transparency() const
+{
+    return impl->transparency;
+}
+
+
+
+void BodyItem::setTransparency(float t)
+{
+    impl->setTransparency(t);
+}
+
+
+void BodyItem::Impl::setTransparency(float t)
+{
+    if(t != transparency){
+        if(sceneBody){
+            sceneBody->setTransparency(t);
+        }
+        transparency = t;
+    }
 }
 
 
@@ -1558,6 +1588,9 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ self->setLocationEditable(on); return true; });
     putProperty(_("Scene sensitive"), self->isSceneSensitive(),
                 [&](bool on){ self->setSceneSensitive(on); return true; });
+    putProperty.min(0.0).max(0.9).decimals(1);
+    putProperty(_("Transparency"), transparency,
+                [&](float value){ setTransparency(value); return true; });
 }
 
 
@@ -1644,6 +1677,10 @@ bool BodyItem::Impl::store(Archive& archive)
         if(linkKinematicsKitManager->storeState(*kinematicsNode) && !kinematicsNode->empty()){
             archive.insert("link_kinematics", kinematicsNode);
         }
+    }
+
+    if(transparency > 0.0f){
+        archive.write("transparency", transparency);
     }
 
     write(archive, "zmp", zmp);
@@ -1774,6 +1811,11 @@ bool BodyItem::Impl::restore(const Archive& archive)
     auto kinematicsNode = archive.findMapping("link_kinematics");
     if(kinematicsNode->isValid()){
         getOrCreateLinkKinematicsKitManager()->restoreState(*kinematicsNode);
+    }
+
+    double t;
+    if(archive.read("transparency", t)){
+        setTransparency(t);
     }
 
     read(archive, "zmp", zmp);

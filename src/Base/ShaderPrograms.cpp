@@ -125,6 +125,7 @@ public:
     Vector3f emissionColor;
     float shininess;
     float alpha;
+    float minTransparency;
 
     GLint diffuseColorLocation;
     GLint ambientColorLocation;
@@ -671,6 +672,8 @@ void MaterialLightingProgramImpl::initialize(GLSLProgram& glsl)
 {
     stateFlag.resize(NUM_STATE_FLAGS, false);
 
+    minTransparency = 0.0f;
+
     diffuseColorLocation = glsl.getUniformLocation("diffuseColor");
     ambientColorLocation = glsl.getUniformLocation("ambientColor");
     specularColorLocation = glsl.getUniformLocation("specularColor");
@@ -745,7 +748,8 @@ void MaterialLightingProgramImpl::setMaterial(const SgMaterial* material)
         stateFlag[SHININESS] = true;
     }
 
-    float a = 1.0 - material->transparency();
+    float transparency = std::max(material->transparency(), minTransparency);
+    float a = 1.0 - transparency;
     if(!stateFlag[ALPHA] || alpha != a){
         glUniform1f(alphaLocation, a);
         alpha = a;
@@ -769,6 +773,12 @@ void MaterialLightingProgram::setTextureEnabled(bool on)
         glUniform1i(impl->isTextureEnabledLocation, on);
         impl->isTextureEnabled = on;
     }
+}
+
+
+void MaterialLightingProgram::setMinimumTransparency(float t)
+{
+    impl->minTransparency = t;
 }
 
 
