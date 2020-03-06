@@ -45,12 +45,14 @@ class EditableSceneLink::Impl
 {
 public:
     EditableSceneLink* self;
+    PositionDraggerPtr originMarker;
     SgOutlinePtr outline;
     BoundingBoxMarkerPtr bbMarker;
     bool isPointed;
     bool isColliding;
 
     Impl(EditableSceneLink* self);
+    void showOrigin(bool on);
 };
 
 }
@@ -74,6 +76,40 @@ EditableSceneLink::Impl::Impl(EditableSceneLink* self)
 EditableSceneLink::~EditableSceneLink()
 {
     delete impl;
+}
+
+
+void EditableSceneLink::showOrigin(bool on)
+{
+    impl->showOrigin(on);
+}
+
+
+void EditableSceneLink::Impl::showOrigin(bool on)
+{
+    if(on){
+        if(!originMarker){
+            originMarker = new PositionDragger(
+                PositionDragger::TranslationAxes, PositionDragger::PositiveOnlyHandle);
+            originMarker->setOverlayMode(true);
+            originMarker->setHandleWidthRatio(0.05);
+            originMarker->setConstantPixelSizeMode(true, 48);
+            originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
+            originMarker->setTransparency(0.0f);
+            originMarker->setDragEnabled(false);
+        }
+        self->addChildOnce(originMarker, true);
+    } else {
+        if(originMarker && originMarker->hasParents()){
+            self->removeChild(originMarker, true);
+        }
+    }
+}
+
+
+bool EditableSceneLink::isOriginShown() const
+{
+    return (impl->originMarker && impl->originMarker->hasParents());
 }
 
 
@@ -804,6 +840,9 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
                 }
             }
         }
+        if(sceneLink->impl->originMarker){
+            sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
+        }
     }
 
     kinematicsKitConnection.disconnect();
@@ -845,7 +884,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
                 [this, link](){ attachPositionDragger(link); });
     }
     
-    SceneLink* sceneLink = self->sceneLink(link->index());
+    auto sceneLink = editableSceneLink(link->index());
     if(!positionDragger->isConstantPixelSizeMode()){
         if(auto shape = sceneLink->visualShape()){
             if(auto transform = dynamic_cast<SgTransform*>(shape)){
@@ -858,6 +897,10 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 
     positionDragger->notifyUpdate();
     sceneLink->addChildOnce(positionDragger);
+
+    if(sceneLink->impl->originMarker){
+        sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayNever);
+    }
 }
 
 

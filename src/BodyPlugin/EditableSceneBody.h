@@ -24,6 +24,8 @@ public:
     EditableSceneLink(Link* link);
     ~EditableSceneLink();
 
+    void showOrigin(bool on);
+    bool isOriginShown() const;
     void showOutline(bool on);
     void showMarker(const Vector3f& color, float transparency);
     void hideMarker();
@@ -32,7 +34,8 @@ public:
 private:
     class Impl;
     Impl* impl;
-    
+
+    friend class EditableSceneBody;
 };
 typedef ref_ptr<EditableSceneLink> EditableSceneLinkPtr;
 
