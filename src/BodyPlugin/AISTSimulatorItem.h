@@ -77,10 +77,6 @@ protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
-#ifdef ENABLE_SIMULATION_PROFILING
-    virtual void getProfilingNames(std::vector<std::string>& profilingNames) override;
-    virtual void getProfilingTimes(std::vector<double>& profilingTimes) override;
-#endif
 
 private:
     AISTSimulatorItemImpl* impl;

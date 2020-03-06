@@ -74,11 +74,6 @@ public:
     */
     virtual void stop();
 
-#ifdef ENABLE_SIMULATION_PROFILING
-    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
-    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
-#endif
-
     //! \deprecated Use isNoDelayMode.
     bool isImmediateMode() const { return isNoDelayMode(); }
     //! \deprecated Use setsNoDelayMode.

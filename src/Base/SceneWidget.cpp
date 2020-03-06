@@ -314,10 +314,6 @@ public:
 
     ImageWindow* pickingImageWindow;
 
-#ifdef ENABLE_SIMULATION_PROFILING
-    int profiling_mode;
-#endif
-
     static void onOpenGLVSyncToggled(bool on, bool doConfigOutput);
     static void onLowMemoryConsumptionModeChanged(bool on, bool doConfigOutput);
 
@@ -666,10 +662,6 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
         [&](bool on){ onLowMemoryConsumptionModeChanged(on); });
 
     pickingImageWindow = nullptr;
-
-#ifdef ENABLE_SIMULATION_PROFILING
-    profiling_mode = 1;
-#endif
 }
 
 
@@ -843,37 +835,6 @@ void SceneWidgetImpl::paintGL()
     if(fpsTimer.isActive()){
         renderFPS();
     }
-
-#ifdef ENABLE_SIMULATION_PROFILING
-    renderer->setColor(Vector3f(1.0f, 1.0f, 1.0f));
-    int n = self->profilingNames.size();
-    if(self->profilingTimes.size() == n){
-        QFont font("monospace");
-        font.setStyleHint(QFont::Monospace);
-        for(int i=0; i<n; i++){
-            switch(profiling_mode){
-            case 0:{
-                double percentage;
-                if(i!=n-1)
-                    percentage = self->profilingTimes[i] / self->profilingTimes[n-1] * 100;
-                else
-                    percentage = self->profilingTimes[i] / self->worldTimeStep * 100;
-                renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 %").arg(percentage,7,'f',1), font);
-                }
-                break;
-            case 1:{
-                renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 ns").arg(self->profilingTimes[i],9,'f',0), font);
-                }
-                break;
-            case 2:{
-                renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 micros").arg(self->profilingTimes[i]*1.0e-3,6,'f',0), font);
-                }
-                break;
-            }
-        }
-    }
-#endif
-
 }
 
 
@@ -1377,12 +1338,6 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
             handled = true;
             break;
         }
-#ifdef ENABLE_SIMULATION_PROFILING
-        case Qt::Key_P:
-            profiling_mode++;
-            profiling_mode %= 3;
-            break;
-#endif
         default:
             break;
         }

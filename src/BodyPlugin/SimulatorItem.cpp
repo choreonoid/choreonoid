@@ -43,13 +43,6 @@
 #include <set>
 #include <deque>
 #include <fmt/format.h>
-
-#ifdef ENABLE_SIMULATION_PROFILING
-#include <cnoid/ViewManager>
-#include <cnoid/SceneView>
-#include <cnoid/SceneWidget>
-#endif
-
 #include "gettext.h"
 
 using namespace std;
@@ -307,14 +300,6 @@ public:
 
     CloneMap cloneMap;
         
-#ifdef ENABLE_SIMULATION_PROFILING
-    double controllerTime;
-    QElapsedTimer timer;
-    Deque2D<double> simProfilingBuf;
-    MultiValueSeq simProfilingSeq;
-    SceneWidget* sw;
-#endif
-
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
     void clearSimulation();
     bool startSimulation(bool doReset);
@@ -1847,32 +1832,6 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             timeBar->startPlayback();
         }
 
-#ifdef ENABLE_SIMULATION_PROFILING
-        vector<string> profilingNames;
-        self->getProfilingNames(profilingNames);
-        profilingNames.push_back("Controller calculation time");
-        for(size_t i=0; i < activeControllers.size(); ++i){
-            vector<string> profilingNames0;
-            activeControllers[i]->getProfilingNames(profilingNames0);
-            std::copy(profilingNames0.begin(),profilingNames0.end(),std::back_inserter(profilingNames));
-        }
-        profilingNames.push_back("Total computation time");
-        int n = profilingNames.size();
-        SceneView* view = ViewManager::findView<SceneView>("Simulation Scene");
-        if(!view){
-            view = SceneView::instance();
-        }
-        sw = view->sceneWidget();
-        sw->profilingNames.resize(n);
-        copy(profilingNames.begin(), profilingNames.end(), sw->profilingNames.begin());
-        simProfilingBuf.resizeColumn(n);
-
-        //simProfilingSeq = std::make_shared<MultiValueSeq>();
-        simProfilingSeq.setFrameRate(worldFrameRate);
-        simProfilingSeq.setNumParts(n);
-        simProfilingSeq.setNumFrames(0);
-#endif
-
         flushResults();
         start();
         flushTimer.start(1000.0 / timeBar->playbackFrameRate());
@@ -1950,10 +1909,6 @@ void SimulatorItem::Impl::run()
     QElapsedTimer timer;
     timer.start();
 
-#ifdef ENABLE_SIMULATION_PROFILING
-    QElapsedTimer oneStepTimer;
-#endif
-
     int frame = 0;
     bool isOnPause = false;
 
@@ -1979,31 +1934,9 @@ void SimulatorItem::Impl::run()
                     isOnPause = false;
                     sigSimulationResumed();
                 }
-#ifdef ENABLE_SIMULATION_PROFILING
-                oneStepTimer.start();
-#endif
                 if(!stepSimulationMain() || stopRequested || frame >= maxFrame){
                     break;
                 }
-#ifdef ENABLE_SIMULATION_PROFILING
-                double oneStepTime = oneStepTimer.nsecsElapsed();
-                vector<double> profilingTimes;
-                self->getProfilingTimes(profilingTimes);
-                Deque2D<double>::Row buf = simProfilingBuf.append();
-                int i=0;
-                for(; i<profilingTimes.size(); i++){
-                    buf[i] = profilingTimes[i] * 1.0e9;
-                }
-                buf[i++] = controllerTime;
-                for(size_t k=0; k < activeControllers.size(); k++){
-                    profilingTimes.clear();
-                    activeControllers[k]->getProfilingTimes(profilingTimes);
-                    for(int j=0; j<profilingTimes.size(); j++){
-                        buf[i++] = profilingTimes[j] * 1.0e9;
-                    }
-                }
-                buf[i] = oneStepTime;
-#endif
                 double diff = (double)compensatedSimulationTime - (elapsedTime + timer.elapsed());
                 if(diff >= 1.0){
                     QThread::msleep(diff);
@@ -2038,31 +1971,9 @@ void SimulatorItem::Impl::run()
                     isOnPause = false;
                     sigSimulationResumed();
                 }
-#ifdef ENABLE_SIMULATION_PROFILING
-                oneStepTimer.start();
-#endif
                 if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame){
                     break;
                 }
-#ifdef ENABLE_SIMULATION_PROFILING
-                double oneStepTime = oneStepTimer.nsecsElapsed();
-                vector<double> profilingTimes;
-                self->getProfilingTimes(profilingTimes);
-                Deque2D<double>::Row buf = simProfilingBuf.append();
-                int i=0;
-                for(; i<profilingTimes.size(); i++){
-                    buf[i] = profilingTimes[i] * 1.0e9;
-                }
-                buf[i++] = controllerTime;
-                for(size_t k=0; k < activeControllers.size(); k++){
-                    profilingTimes.clear();
-                    activeControllers[k]->getProfilingTimes(profilingTimes);
-                    for(int j=0; j<profilingTimes.size(); j++){
-                        buf[i++] = profilingTimes[j] * 1.0e9;
-                    }
-                }
-                buf[i] = oneStepTime;
-#endif
             }
         }
     }
@@ -2130,21 +2041,12 @@ bool SimulatorItem::Impl::stepSimulationMain()
     preDynamicsFunctions.call();
 
     if(useControllerThreads){
-#ifdef ENABLE_SIMULATION_PROFILING
-        controllerTime = 0.0;
-#endif
         if(activeControllers.empty()){
             isControlFinished = true;
         } else {
-#ifdef ENABLE_SIMULATION_PROFILING
-            timer.start();
-#endif
             for(size_t i=0; i < activeControllers.size(); ++i){
                 activeControllers[i]->input();
             }
-#ifdef ENABLE_SIMULATION_PROFILING
-            controllerTime += timer.nsecsElapsed();
-#endif
             {
                 std::lock_guard<std::mutex> lock(controlMutex);                
                 isControlRequested = true;
@@ -2152,10 +2054,6 @@ bool SimulatorItem::Impl::stepSimulationMain()
             controlCondition.notify_all();
         }
     } else {
-#ifdef ENABLE_SIMULATION_PROFILING
-        controllerTime = 0.0;
-        timer.start();
-#endif
         for(size_t i=0; i < activeControllers.size(); ++i){
             ControllerItem* controller = activeControllers[i];
             controller->input();
@@ -2164,9 +2062,6 @@ bool SimulatorItem::Impl::stepSimulationMain()
                 controller->output();
             }
         }
-#ifdef ENABLE_SIMULATION_PROFILING
-        controllerTime += timer.nsecsElapsed();
-#endif
     }
 
     midDynamicsFunctions.call();
@@ -2205,28 +2100,16 @@ bool SimulatorItem::Impl::stepSimulationMain()
     }
 
     if(useControllerThreads){
-#ifdef ENABLE_SIMULATION_PROFILING
-        timer.start();
-#endif
         for(size_t i=0; i < activeControllers.size(); ++i){
             activeControllers[i]->output();
         }
-#ifdef ENABLE_SIMULATION_PROFILING
-        controllerTime += timer.nsecsElapsed();
-#endif
     } else {
-#ifdef ENABLE_SIMULATION_PROFILING
-        timer.start();
-#endif
         for(size_t i=0; i < activeControllers.size(); ++i){
             ControllerItem* controller = activeControllers[i];
             if(!controller->isImmediateMode()){
                 controller->output(); 
             }
         }
-#ifdef ENABLE_SIMULATION_PROFILING
-        controllerTime += timer.nsecsElapsed();
-#endif
     }
 
     return doContinue;
@@ -2252,15 +2135,9 @@ void SimulatorItem::Impl::concurrentControlLoop()
         }
 
         bool doContinue = false;
-#ifdef ENABLE_SIMULATION_PROFILING
-        timer.start();
-#endif
         for(size_t i=0; i < activeControllers.size(); ++i){
             doContinue |= activeControllers[i]->control();
         }
-#ifdef ENABLE_SIMULATION_PROFILING
-        controllerTime += timer.nsecsElapsed();
-#endif
         
         {
             std::lock_guard<std::mutex> lock(controlMutex);
@@ -2337,22 +2214,6 @@ int SimulatorItem::Impl::flushMainResults()
         }
     }
     collisionPairsBuf.clear();
-
-#ifdef ENABLE_SIMULATION_PROFILING
-    offsetChanged = false;
-    for(int i=0 ; i < simProfilingBuf.rowSize(); i++){
-        auto buf = simProfilingBuf.row(i);
-        if(simProfilingSeq.numFrames() >= ringBufferSize){
-            simProfilingSeq.popFrontFrame();
-            offsetChanged = true;
-        }
-        std::copy(buf.begin(), buf.end(), simProfilingSeq.appendFrame().begin());
-    }
-    if(offsetChanged){
-        simProfilingSeq.setOffsetTimeFrame(currentFrame + 1 - simProfilingSeq.numFrames());
-    }
-    simProfilingBuf.resizeRow(0);
-#endif
 
     int frame = frameAtLastBufferWriting;
     
@@ -2913,20 +2774,6 @@ bool SimulatorItem::Impl::setPlaybackTime(double time)
         processed |= collisionSeqEngine->onTimeChanged(time);
     }
 
-#ifdef ENABLE_SIMULATION_PROFILING
-    const int numFrames = simProfilingSeq.numFrames();
-    if(numFrames > 0){
-        const int frame = simProfilingSeq.frameOfTime(time);
-        const int clampedFrame = simProfilingSeq.clampFrameIndex(frame);
-        auto profilingTimes = simProfilingSeq.frame(clampedFrame);
-        sw->profilingTimes.clear();
-        for(int i=0; i<profilingTimes.size(); i++){
-            sw->profilingTimes.push_back(profilingTimes[i]);
-        }
-        sw->worldTimeStep = worldTimeStep_ * 1.0e9;
-    }
-#endif
-
     return processed;
 }
 
@@ -2939,16 +2786,3 @@ bool SimulatedMotionEngineManager::setTime(double time)
     }
     return isActive;
 }
-
-#ifdef ENABLE_SIMULATION_PROFILING
-void SimulatorItem::getProfilingNames(vector<string>& profilingNames)
-{
-
-}
-
-
-void SimulatorItem::getProfilingTimes(vector<double>& profilingToimes)
-{
-
-}
-#endif

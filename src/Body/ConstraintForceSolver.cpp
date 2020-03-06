@@ -407,12 +407,6 @@ public:
     }
 
     shared_ptr<CollisionLinkPairList> getCollisions();
-
-#ifdef ENABLE_SIMULATION_PROFILING
-    double collisionTime;
-    TimeMeasure timer;
-#endif
-
 };
 
 }
@@ -831,17 +825,9 @@ void CFSImpl::solve()
 
 void CFSImpl::setConstraintPoints()
 {
-#ifdef ENABLE_SIMULATION_PROFILING
-    timer.begin();
-#endif
-
     bodyCollisionDetector.detectCollisions(
         [&](const CollisionPair& collisionPair){
             extractConstraintPoints(collisionPair); });
-
-#ifdef ENABLE_SIMULATION_PROFILING
-        collisionTime = timer.measure();
-#endif
 
     globalNumContactNormalVectors = globalNumConstraintVectors;
 
@@ -2511,11 +2497,3 @@ shared_ptr<CollisionLinkPairList> CFSImpl::getCollisions()
 
     return collisionPairs;
 }
-
-
-#ifdef ENABLE_SIMULATION_PROFILING
-double ConstraintForceSolver::getCollisionTime()
-{
-    return impl->collisionTime;
-}
-#endif

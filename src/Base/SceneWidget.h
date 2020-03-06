@@ -138,12 +138,6 @@ public:
     SignalProxy<void(bool isFocused)> sigWidgetFocusChanged();
     SignalProxy<void()> sigAboutToBeDestroyed();
 
-#ifdef ENABLE_SIMULATION_PROFILING
-    std::vector<std::string> profilingNames;
-    std::vector<double> profilingTimes;
-    double worldTimeStep;
-#endif
-
 private:
     SceneWidgetImpl* impl;
 };

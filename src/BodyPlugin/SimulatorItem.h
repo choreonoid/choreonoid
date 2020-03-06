@@ -15,12 +15,6 @@
 
 namespace cnoid {
 
-#ifdef ENABLE_SIMULATION_PROFILING
-const bool SIMULATION_PROFILING = true;
-#else
-const bool SIMULATION_PROFILING = false;
-#endif
-
 class Body;
 class Link;
 class Device;
@@ -251,11 +245,6 @@ protected:
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
-#ifdef ENABLE_SIMULATION_PROFILING
-    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
-    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
-#endif
-            
 private:
     Impl* impl;
 

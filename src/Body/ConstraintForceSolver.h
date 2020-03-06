@@ -65,10 +65,6 @@ public:
 
     std::shared_ptr<CollisionLinkPairList> getCollisions();
 
-#ifdef ENABLE_SIMULATION_PROFILING
-    double getCollisionTime();
-#endif
-
     // experimental functions
     typedef std::function<bool(Link* link1, Link* link2,
                                const CollisionArray& collisions,
