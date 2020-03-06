@@ -4,6 +4,7 @@
 */
 
 #include "Item.h"
+#include "ItemAddon.h"
 #include "RootItem.h"
 #include "ItemPath.h"
 #include "ItemManager.h"
@@ -16,6 +17,8 @@
 #include <vector>
 #include <map>
 #include <unordered_set>
+#include <unordered_map>
+#include <typeindex>
 #include <iostream> // for debug
 #include "gettext.h"
 
@@ -54,15 +57,15 @@ public:
     bitset<NUM_ATTRIBUTES> attributes;
     vector<bool> checkStates;
 
+    std::unordered_map<std::type_index, ItemAddonPtr> addonMap;
+
     Signal<void(const std::string& oldName)> sigNameChanged;
     Signal<void()> sigDisconnectedFromRoot;
     Signal<void()> sigUpdated;
     Signal<void()> sigPositionChanged;
     Signal<void(Item* topItem, Item* prevTopParentItem)> sigPositionChanged2;
     Signal<void()> sigSubTreeChanged;
-
     Signal<void(bool on)> sigSelectionChanged;
-
     Signal<void(int checkId, bool on)> sigAnyCheckToggled;
     Signal<void(bool on)> sigLogicalSumOfAllChecksToggled;
     map<int, Signal<void(bool on)>> checkIdToSignalMap;
@@ -1037,6 +1040,65 @@ void Item::notifyUpdate()
 SignalProxy<void()> Item::sigUpdated()
 {
     return impl->sigUpdated;
+}
+
+
+bool Item::addAddon(ItemAddon* addon)
+{
+    if(auto owner = addon->ownerItem()){
+        owner->removeAddon(addon);
+    }
+    bool accepted = addon->setOwnerItem(this);
+    if(accepted){
+        impl->addonMap[typeid(*addon)] = addon;
+    }
+    return accepted;
+}
+
+
+void Item::removeAddon(ItemAddon* addon)
+{
+    if(auto owner = addon->ownerItem()){
+        if(owner == this){
+            impl->addonMap.erase(typeid(*addon));
+        }
+    }
+}
+
+
+ItemAddon* Item::findAddon_(const std::type_info& type)
+{
+    auto p = impl->addonMap.find(type);
+    if(p != impl->addonMap.end()){
+        return p->second;
+    }
+    return nullptr;
+}
+
+
+ItemAddon* Item::getAddon_(const std::type_info& type)
+{
+    ItemAddonPtr addon = findAddon_(type);
+    if(!addon){
+        addon = ItemManager::createAddon(type);
+        if(addon){
+            if(!addAddon(addon)){
+                addon.reset();
+            }
+        }
+    }
+    return addon;
+}
+
+
+std::vector<ItemAddon*> Item::addons()
+{
+    std::vector<ItemAddon*> addons_;
+    addons_.reserve(impl->addonMap.size());
+    for(auto& kv : impl->addonMap){
+        addons_.push_back(kv.second);
+    }
+    return addons_;
 }
 
 

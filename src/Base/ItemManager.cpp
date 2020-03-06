@@ -4,6 +4,7 @@
 
 #include "ItemManager.h"
 #include "Item.h"
+#include "ItemAddon.h"
 #include "RootItem.h"
 #include "ItemClassRegistry.h"
 #include "ItemFileIO.h"
@@ -29,12 +30,92 @@
 #include <chrono>
 #include <set>
 #include <sstream>
+#include <typeindex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
+
+namespace {
+
+class CreationPanelBase;
+
+struct ClassInfo : public Referenced
+{
+    ItemManagerImpl* manager;
+    string className;
+    string name; // without the 'Item' suffix
+    function<Item*()> factory;
+    CreationPanelBase* creationPanelBase;
+    vector<ItemFileIOPtr> fileIOs;
+    ItemPtr singletonInstance;
+    bool isSingleton;
+
+    ClassInfo();
+    ~ClassInfo();
+};
+typedef ref_ptr<ClassInfo> ClassInfoPtr;
+    
+typedef map<std::type_index, ClassInfoPtr> ItemTypeToInfoMap;
+typedef map<string, ClassInfoPtr> ItemClassNameToInfoMap;
+
+class DefaultCreationPanel : public ItemCreationPanel
+{
+    QLineEdit* nameEntry;
+        
+public:
+
+    DefaultCreationPanel(QWidget* parent)
+        : ItemCreationPanel(parent) {
+        QHBoxLayout* layout = new QHBoxLayout();
+        layout->addWidget(new QLabel(_("Name:")));
+        nameEntry = new QLineEdit();
+        layout->addWidget(nameEntry);
+        setLayout(layout);
+    }
+        
+    virtual bool initializePanel(Item* protoItem) {
+        nameEntry->setText(protoItem->name().c_str());
+        return true;
+    }
+            
+    virtual bool initializeItem(Item* protoItem) {
+        protoItem->setName(nameEntry->text().toStdString());
+        return true;
+    }
+};
+
+ItemClassRegistry* itemClassRegistry = nullptr;
+MessageView* messageView = nullptr;
+bool isStaticMembersInitialized = false;
+
+ItemTypeToInfoMap itemTypeToInfoMap;
+
+typedef map<string, ItemManagerImpl*> ModuleNameToItemManagerImplMap;
+ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
+    
+QWidget* importMenu;
+
+std::map<ItemPtr, ItemPtr> reloadedItemToOriginalItemMap;
+
+class AddonClassInfo : public Referenced
+{
+public:
+    ItemManagerImpl* manager;
+    std::string name;
+    std::function<ItemAddon*(void)> factory;
+};
+
+typedef ref_ptr<AddonClassInfo> AddonClassInfoPtr;
+
+typedef map<std::type_index, AddonClassInfoPtr> AddonTypeToInfoMap;
+typedef map<string, AddonClassInfoPtr> AddonNameToInfoMap;
+    
+AddonTypeToInfoMap addonTypeToInfoMap;
+
+}
 
 namespace cnoid {
 
@@ -44,65 +125,36 @@ public:
     ItemManagerImpl(const string& moduleName, MenuManager& menuManager);
     ~ItemManagerImpl();
 
-    class CreationPanelBase;
-
-    struct ClassInfo : public Referenced
-    {
-        ClassInfo() { creationPanelBase = nullptr; }
-        ~ClassInfo() { delete creationPanelBase; }
-        string moduleName;
-        string className;
-        string name; // without the 'Item' suffix
-        function<Item*()> factory;
-        CreationPanelBase* creationPanelBase;
-        vector<ItemFileIOPtr> fileIOs;
-        ItemPtr singletonInstance;
-        bool isSingleton;
-    };
-    typedef ref_ptr<ClassInfo> ClassInfoPtr;
-    
-    typedef map<string, ClassInfoPtr> ClassInfoMap;
-
-    typedef list<shared_ptr<ItemManager::CreationPanelFilterBase>> CreationPanelFilterList;
-    typedef set<pair<string, shared_ptr<ItemManager::CreationPanelFilterBase>>> CreationPanelFilterSet;
-    
-    class CreationPanelBase : public QDialog
-    {
-    public:
-        CreationPanelBase(const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton);
-        void addPanel(ItemCreationPanel* panel);
-        Item* createItem(Item* parentItem);
-        CreationPanelFilterList preFilters;
-        CreationPanelFilterList postFilters;
-    private:
-        ClassInfo* classInfo;
-        QVBoxLayout* panelLayout;
-        ItemPtr protoItem;
-        bool isSingleton;
-    };
-
     string moduleName;
     string textDomain;
     MenuManager& menuManager;
 
-    ClassInfoMap classNameToClassInfoMap;
-    set<string> registeredTypeIds;
+    ItemClassNameToInfoMap itemClassNameToInfoMap;
+    set<std::type_index> registeredTypes;
+
+    typedef list<shared_ptr<ItemManager::CreationPanelFilterBase>> CreationPanelFilterList;
+    typedef set<pair<std::type_index, shared_ptr<ItemManager::CreationPanelFilterBase>>> CreationPanelFilterSet;
+    
     set<ItemCreationPanel*> registeredCreationPanels;
     CreationPanelFilterSet registeredCreationPanelFilters;
+    
     set<ItemFileIOPtr> registeredFileIOs;
     
     QSignalMapper* mapperForNewItemActivated;
     QSignalMapper* mapperForLoadSpecificTypeItemActivated;
 
+    AddonNameToInfoMap addonNameToInfoMap;
+
+
     void detachManagedTypeItems(Item* parentItem);
         
     void registerClass(
-        function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className);
+        function<Item*()>& factory, Item* singletonInstance, const std::type_info& type, const string& className);
     
-    void addCreationPanel(const string& typeId, ItemCreationPanel* panel);
+    void addCreationPanel(const std::type_info& type, ItemCreationPanel* panel);
     void addCreationPanelFilter(
-        const string& typeId, shared_ptr<ItemManager::CreationPanelFilterBase> filter, bool afterInitializionByPanels);
-    CreationPanelBase* getOrCreateCreationPanelBase(const string& typeId);
+        const std::type_info& type, shared_ptr<ItemManager::CreationPanelFilterBase> filter, bool afterInitializionByPanels);
+    CreationPanelBase* getOrCreateCreationPanelBase(const std::type_info& type);
 
     ClassInfoPtr registerFileIO(const type_info& typeId, ItemFileIOPtr fileIO);
 
@@ -131,47 +183,32 @@ public:
 
 namespace {
 
-ItemClassRegistry* itemClassRegistry = nullptr;
-
-class DefaultCreationPanel : public ItemCreationPanel
+class CreationPanelBase : public QDialog
 {
-    QLineEdit* nameEntry;
-        
 public:
-
-    DefaultCreationPanel(QWidget* parent)
-        : ItemCreationPanel(parent) {
-        QHBoxLayout* layout = new QHBoxLayout();
-        layout->addWidget(new QLabel(_("Name:")));
-        nameEntry = new QLineEdit();
-        layout->addWidget(nameEntry);
-        setLayout(layout);
-    }
-        
-    virtual bool initializePanel(Item* protoItem) {
-        nameEntry->setText(protoItem->name().c_str());
-        return true;
-    }
-            
-    virtual bool initializeItem(Item* protoItem) {
-        protoItem->setName(nameEntry->text().toStdString());
-        return true;
-    }
+    CreationPanelBase(const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton);
+    void addPanel(ItemCreationPanel* panel);
+    Item* createItem(Item* parentItem);
+    ItemManagerImpl::CreationPanelFilterList preFilters;
+    ItemManagerImpl::CreationPanelFilterList postFilters;
+    ClassInfo* classInfo;
+    QVBoxLayout* panelLayout;
+    ItemPtr protoItem;
+    bool isSingleton;
 };
 
-MessageView* messageView = nullptr;
-bool isStaticMembersInitialized = false;
+}
 
-typedef map<string, ItemManagerImpl::ClassInfoPtr> ClassInfoMap;
-ClassInfoMap typeIdToClassInfoMap;
-    
-typedef map<string, ItemManagerImpl*> ModuleNameToItemManagerImplMap;
-ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
-    
-QWidget* importMenu;
 
-std::map<ItemPtr, ItemPtr> reloadedItemToOriginalItemMap;
+ClassInfo::ClassInfo()
+{
+    creationPanelBase = nullptr;
+}
 
+
+ClassInfo::~ClassInfo()
+{
+    delete creationPanelBase;
 }
 
 
@@ -253,21 +290,21 @@ ItemManagerImpl::~ItemManagerImpl()
             fileIOs.erase(std::remove(fileIOs.begin(), fileIOs.end(), fileIO), fileIOs.end());
         }
     }
-    for(auto q = registeredTypeIds.begin(); q != registeredTypeIds.end(); ++q){
-        const string& id = *q;
-        typeIdToClassInfoMap.erase(id);
+    for(auto& type : registeredTypes){
+        itemTypeToInfoMap.erase(type);
+        addonTypeToInfoMap.erase(type);
     }
 
     // unregister creation panel filters
     for(auto p = registeredCreationPanelFilters.begin(); p != registeredCreationPanelFilters.end(); ++p){
-        ClassInfoMap::iterator q = typeIdToClassInfoMap.find(p->first);
-        if(q != typeIdToClassInfoMap.end()){
+        auto q = itemTypeToInfoMap.find(p->first);
+        if(q != itemTypeToInfoMap.end()){
             ClassInfoPtr& classInfo = q->second;
             classInfo->creationPanelBase->preFilters.remove(p->second);
             classInfo->creationPanelBase->postFilters.remove(p->second);
         }
     }
-    
+
     moduleNameToItemManagerImplMap.erase(moduleName);
 }
 
@@ -283,8 +320,7 @@ void ItemManagerImpl::detachManagedTypeItems(Item* parentItem)
     Item* item = parentItem->childItem();
     while(item){
         Item* nextItem = item->nextItem();
-        set<string>::iterator p = registeredTypeIds.find(typeid(*item).name());
-        if(p != registeredTypeIds.end()){
+        if(registeredTypes.find(typeid(*item)) != registeredTypes.end()){
             item->detachFromParentItem();
         } else {
             detachManagedTypeItems(item);
@@ -300,25 +336,25 @@ void ItemManager::bindTextDomain(const std::string& domain)
 }
 
 
-void ItemManager::registerClassSub
+void ItemManager::registerClass_
 (const std::string& className, const std::type_info& type, const std::type_info& superType,
  std::function<Item*()> factory, Item* singletonInstance)
 {
     if(factory || singletonInstance){
-        impl->registerClass(factory, singletonInstance, type.name(), className);
+        impl->registerClass(factory, singletonInstance, type, className);
     }
     itemClassRegistry->registerClassAsTypeInfo(type, superType);
 }
 
 
 void ItemManagerImpl::registerClass
-(std::function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className)
+(std::function<Item*()>& factory, Item* singletonInstance, const std::type_info& type, const string& className)
 {
-    auto inserted = classNameToClassInfoMap.insert(make_pair(className, ClassInfoPtr()));
+    auto inserted = itemClassNameToInfoMap.insert(make_pair(className, ClassInfoPtr()));
     ClassInfoPtr& info = inserted.first->second;
     if(inserted.second){
         info = new ClassInfo;
-        info->moduleName = moduleName;
+        info->manager  = this;
         info->className = className;
 
         // set the class name without the "Item" suffix
@@ -338,19 +374,19 @@ void ItemManagerImpl::registerClass
         info->isSingleton = false;
     }
 
-    registeredTypeIds.insert(typeId);
-    typeIdToClassInfoMap[typeId] = info;
+    registeredTypes.insert(type);
+    itemTypeToInfoMap[type] = info;
 }
 
 
-bool ItemManager::getClassIdentifier(ItemPtr item, std::string& out_moduleName, std::string& out_className)
+bool ItemManager::getClassIdentifier(Item* item, std::string& out_moduleName, std::string& out_className)
 {
     bool result;
 
-    auto p = typeIdToClassInfoMap.find(typeid(*item).name());
-    if(p != typeIdToClassInfoMap.end()){
+    auto p = itemTypeToInfoMap.find(typeid(*item));
+    if(p != itemTypeToInfoMap.end()){
         auto& info = p->second;
-        out_moduleName = info->moduleName;
+        out_moduleName = info->manager->moduleName;
         out_className = info->className;
         result = true;
     } else {
@@ -363,10 +399,10 @@ bool ItemManager::getClassIdentifier(ItemPtr item, std::string& out_moduleName, 
 }
 
 
-Item* ItemManager::getSingletonInstance(const std::string& typeId)
+Item* ItemManager::getSingletonInstance(const std::type_info& type)
 {
-    auto p = typeIdToClassInfoMap.find(typeId);
-    if(p != typeIdToClassInfoMap.end()){
+    auto p = itemTypeToInfoMap.find(type);
+    if(p != itemTypeToInfoMap.end()){
         auto& info = p->second;
         if(info->isSingleton){
             return info->singletonInstance;
@@ -378,7 +414,7 @@ Item* ItemManager::getSingletonInstance(const std::string& typeId)
 
 Item* ItemManager::singletonInstance(ItemFileIO* fileIO)
 {
-    if(auto classInfo = static_pointer_cast<ItemManagerImpl::ClassInfo>(fileIO->impl->classInfo.lock())){
+    if(auto classInfo = static_pointer_cast<ClassInfo>(fileIO->impl->classInfo.lock())){
         return classInfo->singletonInstance;
     }
     return nullptr;
@@ -389,11 +425,11 @@ Item* ItemManager::createItem(const std::string& moduleName, const std::string& 
 {
     Item* item = nullptr;
 
-    ModuleNameToItemManagerImplMap::iterator p = moduleNameToItemManagerImplMap.find(moduleName);
+    auto p = moduleNameToItemManagerImplMap.find(moduleName);
     if(p != moduleNameToItemManagerImplMap.end()){
-        ClassInfoMap& classNameToClassInfoMap = p->second->classNameToClassInfoMap;
-        auto q = classNameToClassInfoMap.find(className);
-        if(q != classNameToClassInfoMap.end()){
+        auto& itemClassNameToInfoMap = p->second->itemClassNameToInfoMap;
+        auto q = itemClassNameToInfoMap.find(className);
+        if(q != itemClassNameToInfoMap.end()){
             auto& info = q->second;
             if(info->isSingleton){
                 if(info->singletonInstance->parentItem()){
@@ -418,8 +454,8 @@ Item* ItemManager::createItemWithDialog_
 {
     Item* newItem = nullptr;
     
-    auto iter = typeIdToClassInfoMap.find(type.name());
-    if(iter == typeIdToClassInfoMap.end()){
+    auto iter = itemTypeToInfoMap.find(type);
+    if(iter == itemTypeToInfoMap.end()){
         showWarningDialog(format(_("Class {} is not registered as an item class."), type.name()));
 
     } else {
@@ -443,15 +479,15 @@ Item* ItemManager::createItemWithDialog_
 }
 
 
-void ItemManager::addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel)
+void ItemManager::addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel)
 {
-    impl->addCreationPanel(typeId, panel);
+    impl->addCreationPanel(type, panel);
 }
 
 
-void ItemManagerImpl::addCreationPanel(const string& typeId, ItemCreationPanel* panel)
+void ItemManagerImpl::addCreationPanel(const std::type_info& type, ItemCreationPanel* panel)
 {
-    CreationPanelBase* base = getOrCreateCreationPanelBase(typeId);
+    CreationPanelBase* base = getOrCreateCreationPanelBase(type);
     if(panel){
         base->addPanel(panel);
     } else {
@@ -461,32 +497,32 @@ void ItemManagerImpl::addCreationPanel(const string& typeId, ItemCreationPanel* 
 }
 
 
-void ItemManager::addCreationPanelFilterSub
-(const string& typeId, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels)
+void ItemManager::addCreationPanelFilter_
+(const std::type_info& type, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels)
 {
-    impl->addCreationPanelFilter(typeId, filter, afterInitializionByPanels);
+    impl->addCreationPanelFilter(type, filter, afterInitializionByPanels);
 }
 
 
 void ItemManagerImpl::addCreationPanelFilter
-(const string& typeId, shared_ptr<ItemManager::CreationPanelFilterBase> filter, bool afterInitializionByPanels)
+(const std::type_info& type, shared_ptr<ItemManager::CreationPanelFilterBase> filter, bool afterInitializionByPanels)
 {
-    CreationPanelBase* base = getOrCreateCreationPanelBase(typeId);
+    CreationPanelBase* base = getOrCreateCreationPanelBase(type);
     if(!afterInitializionByPanels){
         base->preFilters.push_back(filter);
     } else {
         base->postFilters.push_back(filter);
     }
-    registeredCreationPanelFilters.insert(make_pair(typeId, filter));
+    registeredCreationPanelFilters.insert(make_pair(std::type_index(type), filter));
 }
 
 
-ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBase(const string& typeId)
+CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBase(const std::type_info& type)
 {
     CreationPanelBase* base = nullptr;
     
-    auto p = typeIdToClassInfoMap.find(typeId);
-    if(p != typeIdToClassInfoMap.end()){
+    auto p = itemTypeToInfoMap.find(type);
+    if(p != itemTypeToInfoMap.end()){
         auto& info = p->second;
         base = info->creationPanelBase;
         if(!base){
@@ -534,7 +570,7 @@ void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
 }
 
 
-ItemManagerImpl::CreationPanelBase::CreationPanelBase
+CreationPanelBase::CreationPanelBase
 (const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton)
     : QDialog(MainWindow::instance()),
       classInfo(classInfo),
@@ -562,13 +598,13 @@ ItemManagerImpl::CreationPanelBase::CreationPanelBase
 }
 
 
-void ItemManagerImpl::CreationPanelBase::addPanel(ItemCreationPanel* panel)
+void CreationPanelBase::addPanel(ItemCreationPanel* panel)
 {
     panelLayout->addWidget(panel);
 }
 
 
-Item* ItemManagerImpl::CreationPanelBase::createItem(Item* parentItem)
+Item* CreationPanelBase::createItem(Item* parentItem)
 {
     if(isSingleton){
         if(protoItem->parentItem()){
@@ -599,7 +635,7 @@ Item* ItemManagerImpl::CreationPanelBase::createItem(Item* parentItem)
         item->setName(classInfo->name);
     }
 
-    for(CreationPanelFilterList::iterator p = preFilters.begin(); p != preFilters.end(); ++p){
+    for(auto p = preFilters.begin(); p != preFilters.end(); ++p){
         auto filter = *p;
         if(!(*filter)(item, parentItem)){
             result = false;
@@ -625,7 +661,7 @@ Item* ItemManagerImpl::CreationPanelBase::createItem(Item* parentItem)
                 }
             }
             if(result){
-                for(CreationPanelFilterList::iterator p = postFilters.begin(); p != postFilters.end(); ++p){
+                for(auto p = postFilters.begin(); p != postFilters.end(); ++p){
                     auto filter = *p;
                     if(!(*filter)(item, parentItem)){
                         result = false;
@@ -742,12 +778,12 @@ void ItemManager::registerFileIO_(const std::type_info& type, ItemFileIO* fileIO
 }
 
 
-ItemManagerImpl::ClassInfoPtr ItemManagerImpl::registerFileIO(const type_info& type, ItemFileIOPtr fileIO)
+ClassInfoPtr ItemManagerImpl::registerFileIO(const type_info& type, ItemFileIOPtr fileIO)
 {
     ClassInfoPtr classInfo;
     
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(type.name());
-    if(p != typeIdToClassInfoMap.end()){
+    auto p = itemTypeToInfoMap.find(type);
+    if(p != itemTypeToInfoMap.end()){
         classInfo = p->second;
         auto& ioImpl = fileIO->impl;
         ioImpl->classInfo = classInfo;
@@ -782,9 +818,8 @@ ItemManagerImpl::ClassInfoPtr ItemManagerImpl::registerFileIO(const type_info& t
 ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::string& formatId)
 {
     ItemFileIO* found = nullptr;
-    const string& typeId = type.name();
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
-    if(p != typeIdToClassInfoMap.end()){
+    auto p = itemTypeToInfoMap.find(type);
+    if(p != itemTypeToInfoMap.end()){
         auto& classInfo = p->second;
         auto& fileIOs = classInfo->fileIOs;
         for(auto& fileIO : fileIOs){
@@ -830,12 +865,11 @@ ItemFileIO* ItemManagerImpl::findFileIOForLoading
 {
     ItemFileIO* targetFileIO = nullptr;
     
-    const string& typeId = type.name();
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
-    if(p == typeIdToClassInfoMap.end()){
+    auto p = itemTypeToInfoMap.find(type);
+    if(p == itemTypeToInfoMap.end()){
         messageView->putln(
             format(_("\"{0}\" cannot be loaded because item type \"{1}\" is not registered."),
-            filename, typeId),
+                   filename, type.name()),
             MessageView::ERROR);
         return targetFileIO;;
     }
@@ -910,8 +944,8 @@ bool ItemManager::save(Item* item, const std::string& filename, const std::strin
 bool ItemManagerImpl::save
 (Item* item, bool useDialogToGetFilename, bool doExport, string filename, const string& formatId)
 {
-    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeid(*item).name());
-    if(p == typeIdToClassInfoMap.end()){
+    auto p = itemTypeToInfoMap.find(typeid(*item));
+    if(p == itemTypeToInfoMap.end()){
         return false;
     }
     ClassInfoPtr& classInfo = p->second;
@@ -1263,6 +1297,64 @@ void ItemManagerImpl::onExportSelectedItemsActivated()
     }
 }
 
+
+void ItemManager::registerAddon_
+(const std::type_info& type, const std::string& name, const std::function<ItemAddon*(void)>& factory)
+{
+    auto info = new AddonClassInfo;
+    info->manager = impl;
+    info->name = name;
+    info->factory = factory;
+    impl->addonNameToInfoMap[name] = info;
+    addonTypeToInfoMap[type] = info;
+}
+
+
+ItemAddon* ItemManager::createAddon(const std::type_info& type)
+{
+    ItemAddon* addon = nullptr;
+    auto p = addonTypeToInfoMap.find(type);
+    if(p != addonTypeToInfoMap.end()){
+        auto& info = p->second;
+        addon = info->factory();
+    }
+    return addon;
+}
+
+
+ItemAddon* ItemManager::createAddon(const std::string& moduleName, const std::string& addonName)
+{
+    ItemAddon* addon = nullptr;
+    auto p = moduleNameToItemManagerImplMap.find(moduleName);
+    if(p != moduleNameToItemManagerImplMap.end()){
+        auto& addonNameToInfoMap = p->second->addonNameToInfoMap;
+        auto q = addonNameToInfoMap.find(addonName);
+        if(q != addonNameToInfoMap.end()){
+            auto& info = q->second;
+            addon = info->factory();
+        }
+    }
+    return addon;
+}
+
+
+bool ItemManager::getAddonIdentifier(ItemAddon* addon, std::string& out_moduleName, std::string& out_addonName)
+{
+    bool result;
+    auto p = addonTypeToInfoMap.find(typeid(*addon));
+    if(p != addonTypeToInfoMap.end()){
+        auto& info = p->second;
+        out_moduleName = info->manager->moduleName;
+        out_addonName = info->name;
+        result = true;
+    } else {
+        out_moduleName.clear();
+        out_addonName = typeid(*addon).name();
+        result = false;
+    }
+    return result;
+}
+    
 
 namespace cnoid {
 

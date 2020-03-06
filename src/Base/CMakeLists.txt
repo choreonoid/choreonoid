@@ -21,6 +21,7 @@ set(sources
   ItemClassRegistry.cpp
   ItemFileIO.cpp
   Item.cpp
+  ItemAddon.cpp
   LocatableItem.cpp
   RenderableItem.cpp
   PolymorphicItemFunctionSet.cpp
@@ -180,6 +181,7 @@ set(headers
   ItemPropertyWidget.h
   ItemList.h
   Item.h
+  ItemAddon.h
   LocatableItem.h
   RenderableItem.h
   ImageableItem.h

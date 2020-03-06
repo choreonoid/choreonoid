@@ -19,11 +19,10 @@ namespace cnoid {
 class MenuManager;
 
 class Item;
-typedef ref_ptr<Item> ItemPtr;
-
-class ItemManagerImpl;
 class ItemFileIO;
+class ItemAddon;
 class Mapping;
+class ItemManagerImpl;
 
 class ItemCreationPanel : public QWidget
 {
@@ -104,48 +103,48 @@ public:
 
     template <class ItemType, class SuperItemType = Item>
     ItemManager& registerClass(const std::string& className) {
-        registerClassSub(className, typeid(ItemType), typeid(SuperItemType), Factory<ItemType>(), nullptr);
+        registerClass_(className, typeid(ItemType), typeid(SuperItemType), Factory<ItemType>(), nullptr);
         return *this;
     }
 
     //! This function registers a singleton item class
     template <class ItemType, class SuperItemType = Item>
     ItemManager& registerClass(const std::string& className, ItemType* singletonInstance){
-        registerClassSub(className, typeid(ItemType), typeid(SuperItemType), nullptr, singletonInstance);
+        registerClass_(className, typeid(ItemType), typeid(SuperItemType), nullptr, singletonInstance);
         return *this;
     }
 
     template <class ItemType, class SuperItemType = Item>
     ItemManager& registerAbstractClass() {
-        registerClassSub("", typeid(ItemType), typeid(SuperItemType), nullptr, nullptr);
+        registerClass_("", typeid(ItemType), typeid(SuperItemType), nullptr, nullptr);
         return *this;
     }
 
-    static bool getClassIdentifier(ItemPtr item, std::string& out_moduleName, std::string& out_className);
+    static bool getClassIdentifier(Item* item, std::string& out_moduleName, std::string& out_className);
 
     template <class ItemType> static ItemType* singletonInstance() {
-        return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType).name()));
+        return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType)));
     }
 
     static Item* singletonInstance(ItemFileIO* fileIO);
 
     template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel = 0) {
-        addCreationPanelSub(typeid(ItemType).name(), panel);
+        addCreationPanel_(typeid(ItemType), panel);
         return *this;
     }
 
     template <class ItemType>
     void addCreationPanelPreFilter(const typename CreationPanelFilter<ItemType>::Function& filter) {
-        addCreationPanelFilterSub(
-            typeid(ItemType).name(),
+        addCreationPanelFilter_(
+            typeid(ItemType),
             std::make_shared<CreationPanelFilter<ItemType>>(filter),
             false);
     }
         
     template <class ItemType>
     void addCreationPanelPostFilter(const typename CreationPanelFilter<ItemType>::Function& filter){
-        addCreationPanelFilterSub(
-            typeid(ItemType).name(),
+        addCreationPanelFilter_(
+            typeid(ItemType),
             std::make_shared<CreationPanelFilter<ItemType>>(filter),
             true);
     }
@@ -240,13 +239,21 @@ public:
     static void reloadItems(const ItemList<>& items);
     static Item* findOriginalItemForReloadedItem(Item* item);
 
+    template<class AddonType>
+    void registerAddon(const std::string& name, std::function<ItemAddon*(void)> factory = nullptr){
+        registerAddon_(typeid(AddonType), name, factory ? factory : [](){ return new AddonType; });
+    }
+    static ItemAddon* createAddon(const std::type_info& type);
+    static ItemAddon* createAddon(const std::string& moduleName, const std::string& addonName);
+    static bool getAddonIdentifier(ItemAddon* addon, std::string& out_moduleName, std::string& out_addonName);
+
 private:
-    void registerClassSub(
+    void registerClass_(
         const std::string& className, const std::type_info& type, const std::type_info& superType,
         std::function<Item*()> factory, Item* singletonInstance);
-    void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
-    void addCreationPanelFilterSub(
-        const std::string& typeId, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
+    void addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel);
+    void addCreationPanelFilter_(
+        const std::type_info& type, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
     void registerFileIO_(const std::type_info& type, ItemFileIO* fileIO);
     void addLoaderSub(
         const std::type_info& type, const std::string& caption, const std::string& formatId,
@@ -255,7 +262,7 @@ private:
         const std::type_info& type, const std::string& caption, const std::string& formatId,
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
 
-    static Item* getSingletonInstance(const std::string& typeId);
+    static Item* getSingletonInstance(const std::type_info& type);
 
     static Item* createItemWithDialog_(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem);
     static ItemList<Item> loadItemsWithDialog_(
@@ -267,6 +274,9 @@ private:
         const Mapping* options = nullptr);
     static bool save(Item* item, const std::string& filename, const std::string& formatId);
     static bool overwrite(Item* item, bool forceOverwrite, const std::string& formatId); // overwrite
+
+    void registerAddon_(
+        const std::type_info& type, const std::string& name, const std::function<ItemAddon*(void)>& factory);
 
     friend class Item;
     friend class ItemManagerImpl;

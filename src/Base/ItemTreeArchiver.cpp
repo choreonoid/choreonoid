@@ -3,6 +3,7 @@
 */
 
 #include "ItemTreeArchiver.h"
+#include "ItemAddon.h"
 #include "RootItem.h"
 #include "SubProjectItem.h"
 #include "ItemManager.h"
@@ -34,10 +35,12 @@ public:
     Impl();
     ArchivePtr store(Archive& parentArchive, Item* item);
     ArchivePtr storeIter(Archive& parentArchive, Item* item, bool& isComplete);
+    void storeAddons(Archive& archive, Item* item);
     ItemList<> restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
     void restoreItemIter(Archive& archive, Item* parentItem, ItemList<>& restoredItems);
     ItemPtr restoreItem(
         Archive& archive, Item* parentItem, ItemList<>& restoredItems, string& out_itemName, bool& io_isOptional);
+    void restoreAddons(Archive& archive, Item* item);
     void restoreItemStates(Archive& archive, Item* item);
 };
 
@@ -116,7 +119,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
         return nullptr;
     }
 
-    ArchivePtr archive = new Archive();
+    ArchivePtr archive = new Archive;
     archive->inheritSharedInfoFrom(parentArchive);
 
     ArchivePtr dataArchive;
@@ -125,7 +128,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
         mv->putln(format(_("Storing {0} \"{1}\""), className, item->name()));
         mv->flush();
 
-        dataArchive = new Archive();
+        dataArchive = new Archive;
         dataArchive->inheritSharedInfoFrom(parentArchive);
 
         if(!item->store(*dataArchive)){
@@ -163,6 +166,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
         if(!dataArchive->empty()){
             archive->insert("data", dataArchive);
         }
+        storeAddons(*archive, item);
     }
 
     if(subProjectItem && !subProjectItem->isSavingSubProject()){
@@ -187,6 +191,39 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     }
 
     return archive;
+}
+
+
+void ItemTreeArchiver::Impl::storeAddons(Archive& archive, Item* item)
+{
+    auto addons = item->addons();
+    if(!addons.empty()){
+        ListingPtr addonList = new Listing;
+        for(auto& addon : addons){
+            string name, moduleName;
+            if(!ItemManager::getAddonIdentifier(addon, moduleName, name)){
+                mv->putln(
+                    format(_("Addon \"{0}\" of item \"{1}\" cannot be stored. Its type is not registered."),
+                           typeid(*addon).name(), item->name()),
+                    MessageView::ERROR);
+            } else {
+                ArchivePtr addonArchive = new Archive;
+                addonArchive->inheritSharedInfoFrom(archive);
+                addonArchive->write("name", name);
+                addonArchive->write("plugin", moduleName);
+                if(!addon->store(*addonArchive)){
+                    mv->putln(format(_("Addon \"{0}\" of item \"{1}\" cannot be stored."),
+                                     name, item->name()),
+                              MessageView::ERROR);
+                } else {
+                    addonList->append(addonArchive);
+                }
+            }
+        }
+        if(!addonList->empty()){
+            archive.insert("addons", addonList);
+        }
+    }
 }
 
 
@@ -317,7 +354,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         ValueNodePtr dataNode = archive.find("data");
         if(dataNode->isValid()){
             if(!dataNode->isMapping()){
-                mv->putln(_("The 'data' key does not have mapping-type data"), MessageView::ERROR);
+                mv->putln(_("The 'data' key does not have mapping-type data."), MessageView::ERROR);
                 item.reset();
             } else {
                 Archive* dataArchive = static_cast<Archive*>(dataNode->toMapping());
@@ -325,6 +362,8 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
                 dataArchive->setCurrentParentItem(parentItem);
                 if(!item->restore(*dataArchive)){
                     item.reset();
+                } else {
+                    restoreAddons(archive, item);
                 }
             }
         }
@@ -336,6 +375,45 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
     }
 
     return item;
+}
+
+
+void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
+{
+    auto addonsNode = archive.find("addons");
+    if(addonsNode->isValid()){
+        if(!addonsNode->isListing()){
+            mv->putln(_("The 'addons' value must be a listing."), MessageView::ERROR);
+        } else {
+            string name;
+            string moduleName;
+            auto addonList = addonsNode->toListing();
+            for(int i=0; i < addonList->size(); ++i){
+                auto addonArchive = dynamic_cast<Archive*>(addonList->at(i)->toMapping());
+                if(!(addonArchive->read("name", name) && addonArchive->read("plugin", moduleName))){
+                    mv->putln(format(_("The name and plugin are not specified at addon {0}."), i),
+                              MessageView::ERROR);
+                } else {
+                    ItemAddonPtr addon = ItemManager::createAddon(moduleName, name);
+                    if(!addon){
+                        mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be created."),
+                                         name, moduleName), MessageView::ERROR);
+                    } else {
+                        if(!item->addAddon(addon)){
+                            mv->putln(format(_("Addon \"{0}\" is cannot be added to item \"{1}\"."),
+                                             name, item->name()), MessageView::ERROR);
+                        } else {
+                            if(!addon->restore(*addonArchive)){
+                                item->removeAddon(addon);
+                                mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be restored."),
+                                                 name, moduleName), MessageView::ERROR);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 

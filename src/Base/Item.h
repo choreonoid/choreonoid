@@ -8,6 +8,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/Signal>
 #include <string>
+#include <vector>
 #include <ctime>
 #include "exportdecl.h"
 
@@ -18,6 +19,7 @@ typedef ref_ptr<Item> ItemPtr;
 
 template<class ItemType = Item> class ItemList;
     
+class ItemAddon;
 class RootItem;
 class Archive;
 class Mapping;
@@ -270,6 +272,16 @@ public:
     virtual void notifyUpdate();
     SignalProxy<void()> sigUpdated();
 
+    bool addAddon(ItemAddon* addon);
+    void removeAddon(ItemAddon* addon);
+    template<class AddonType> AddonType* findAddon(){
+        return static_cast<AddonType*>(findAddon_(typeid(AddonType)));
+    }
+    template<class AddonType> AddonType* getAddon(){
+        return static_cast<AddonType*>(getAddon_(typeid(AddonType)));
+    }
+    std::vector<ItemAddon*> addons();
+
     /**
        This function loads the data of the item from a file by using a pre-registered loading function.
    
@@ -382,6 +394,8 @@ private:
         const std::string& path, std::function<bool(Item* item)> pred,
         bool isFromDirectChild, bool isSubItem) const;
     void validateClassId() const;
+    ItemAddon* findAddon_(const std::type_info& type);
+    ItemAddon* getAddon_(const std::type_info& type);
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED
