@@ -2494,7 +2494,6 @@ void GLSLSceneRenderer::Impl::renderOverlayMain(SgOverlay* overlay, const Affine
     if(isRenderingPickingImage){
         currentNodePath = nodePath;
     }
-    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
     modelMatrixStack.push_back(T);
     renderGroup(overlay);
     modelMatrixStack.pop_back();
@@ -2520,6 +2519,9 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
     self->getOrthographicProjectionMatrix(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar, PV);
 
     pickedNodePath.clear();
+
+    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
+    
     renderOverlayMain(overlay, Affine3::Identity(), emptyNodePath);
 
     PV = PV0;
