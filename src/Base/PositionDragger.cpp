@@ -120,9 +120,11 @@ public:
     SgSwitchPtr axisSwitch[6];
     int handleType;
     double handleSize;
+    double handleWidth;
     double unitHandleWidth;
     Signal<void(int axisBitSet)> sigDraggableAxesChanged;
     DisplayMode displayMode;
+    bool isEditMode;
     bool isOverlayMode;
     bool isConstantPixelSizeMode;
     bool isContainerMode;
@@ -268,6 +270,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     
 
     displayMode = DisplayInFocus;
+    isEditMode = false;
     isOverlayMode = false;
     isConstantPixelSizeMode = false;
     isContainerMode = false;
@@ -336,7 +339,7 @@ SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
         stickLength,
         unitHandleWidth * 1.25 * widthRatio,
         endLength * widthRatio);
-    
+
     for(int i=0; i < 3; ++i){
         auto shape = new SgShape;
         shape->setMesh(mesh);
@@ -462,7 +465,6 @@ double PositionDragger::Impl::calcWidthRatio(double pixelSizeRatio)
     - Make the handles for picking a bit wider
     - Cache the generated handles in handleVariantMap
     - Adjust the width considering the DPI of the display
-    - Add the API to customize the width
 */
 SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking)
 {
@@ -531,7 +533,16 @@ void PositionDragger::setHandleSize(double s)
         impl->clearHandleVariants();
     }
 }
-    
+
+
+void PositionDragger::setHandleWidthRatio(double w)
+{
+    if(w != impl->unitHandleWidth){
+        impl->unitHandleWidth = w;
+        impl->clearHandleVariants();
+    }
+}
+
 
 double PositionDragger::rotationHandleSizeRatio() const
 {
@@ -735,6 +746,10 @@ void PositionDragger::setDisplayMode(DisplayMode mode)
         impl->displayMode = mode;
         if(mode == DisplayAlways){
             impl->showDragMarkers(true);
+        } else if(mode == DisplayInEditMode){
+            if(impl->isEditMode){
+                impl->showDragMarkers(true);
+            }
         } else if(mode == DisplayNever){
             impl->showDragMarkers(false);
         }
@@ -976,9 +991,11 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
     if(!impl->dragProjector.isDragging()){
-        auto axisBitSet = impl->detectTargetAxes(event);
-        if(axisBitSet.any()){
-            impl->highlightAxes(axisBitSet);
+        if(impl->isDragEnabled){
+            auto axisBitSet = impl->detectTargetAxes(event);
+            if(axisBitSet.any()){
+                impl->highlightAxes(axisBitSet);
+            }
         }
     } else if(impl->dragProjector.drag(event)){
         if(isContainerMode()){
@@ -1016,10 +1033,12 @@ void PositionDragger::onFocusChanged(const SceneWidgetEvent&, bool on)
 void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
 {
     if(event.sceneWidget()->isEditMode()){
+        impl->isEditMode = true;
         if(impl->displayMode == DisplayInEditMode){
             impl->showDragMarkers(true);
         }
     } else {
+        impl->isEditMode = false;
         if(impl->displayMode == DisplayInEditMode || impl->displayMode == DisplayInFocus){
             impl->showDragMarkers(false);
         }

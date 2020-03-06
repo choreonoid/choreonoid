@@ -44,6 +44,8 @@ public:
 
     double handleSize() const;
     void setHandleSize(double s);
+    void setHandleWidthRatio(double w); // width ratio
+    //void setHandleWidth(double w); // constant width
 
     double rotationHandleSizeRatio() const;
     void setRotationHandleSizeRatio(double r);
