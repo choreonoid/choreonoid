@@ -138,6 +138,7 @@ AISTSimulatorItem::AISTSimulatorItem()
 {
     impl = new AISTSimulatorItemImpl(this);
     setName("AISTSimulator");
+    setAllLinkPositionOutputMode(false);
 }
 
 
@@ -409,7 +410,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setGaussSeidelMaxNumIterations(maxNumIterations);
     cfs.setContactDepthCorrection(contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
     
-    self->addPreDynamicsFunction([&](){ clearExternalForces(); });
+    self->addPostDynamicsFunction([&](){ clearExternalForces(); });
 
     world.clearBodies();
     bodyIndexMap.clear();

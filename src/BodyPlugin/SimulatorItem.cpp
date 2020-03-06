@@ -2058,7 +2058,7 @@ bool SimulatorItem::Impl::stepSimulationMain()
             ControllerItem* controller = activeControllers[i];
             controller->input();
             doContinue |= controller->control();
-            if(controller->isImmediateMode()){
+            if(controller->isNoDelayMode()){
                 controller->output();
             }
         }
@@ -2106,7 +2106,7 @@ bool SimulatorItem::Impl::stepSimulationMain()
     } else {
         for(size_t i=0; i < activeControllers.size(); ++i){
             ControllerItem* controller = activeControllers[i];
-            if(!controller->isImmediateMode()){
+            if(!controller->isNoDelayMode()){
                 controller->output(); 
             }
         }
