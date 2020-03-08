@@ -241,13 +241,13 @@ ItemList<> ItemTreeArchiver::Impl::restore
     pOptionalPlugins = &optionalPlugins;
     ItemList<> restoredItems;
 
-    archive.setCurrentParentItem(0);
+    archive.setCurrentParentItem(nullptr);
     try {
         restoreItemIter(archive, parentItem, restoredItems);
     } catch (const ValueNode::Exception& ex){
         mv->putln(ex.message(), MessageView::ERROR);
     }
-    archive.setCurrentParentItem(0);
+    archive.setCurrentParentItem(nullptr);
 
     numRestoredItems = restoredItems.size();
     return restoredItems;
@@ -399,14 +399,15 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
                         mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be created."),
                                          name, moduleName), MessageView::ERROR);
                     } else {
-                        if(!item->addAddon(addon)){
+                        if(!addon->setOwnerItem(item)){
                             mv->putln(format(_("Addon \"{0}\" is cannot be added to item \"{1}\"."),
                                              name, item->name()), MessageView::ERROR);
                         } else {
                             if(!addon->restore(*addonArchive)){
-                                item->removeAddon(addon);
                                 mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be restored."),
                                                  name, moduleName), MessageView::ERROR);
+                            } else {
+                                item->addAddon(addon);
                             }
                         }
                     }

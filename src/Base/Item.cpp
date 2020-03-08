@@ -1045,10 +1045,16 @@ SignalProxy<void()> Item::sigUpdated()
 
 bool Item::addAddon(ItemAddon* addon)
 {
+    bool accepted = false;
     if(auto owner = addon->ownerItem()){
-        owner->removeAddon(addon);
+        if(owner == this){
+            accepted = true;
+        } else {
+            owner->removeAddon(addon);
+        }
+    } else {
+        accepted = addon->setOwnerItem(this);
     }
-    bool accepted = addon->setOwnerItem(this);
     if(accepted){
         impl->addonMap[typeid(*addon)] = addon;
     }

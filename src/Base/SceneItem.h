@@ -50,6 +50,7 @@ private:
 };
 
 typedef ref_ptr<SceneItem> SceneItemPtr;
+
 }
     
 #endif

@@ -111,6 +111,7 @@ set(sources
   SceneView.cpp
   SceneBar.cpp
   SceneItem.cpp
+  SceneItemFileIO.cpp
   PointSetItem.cpp
   MultiPointSetItem.cpp
   MovieRecorder.cpp
@@ -232,6 +233,7 @@ set(headers
   GLSLSceneRenderer.h
   SceneView.h
   SceneItem.h
+  SceneItemFileIO.h
   PointSetItem.h
   MultiPointSetItem.h
   TextEditView.h

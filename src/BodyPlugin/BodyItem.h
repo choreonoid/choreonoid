@@ -22,11 +22,14 @@ class InverseKinematics;
 class PinDragIK;
 class PenetrationBlocker;
 class EditableSceneBody;
+class ItemFileIO;
 
 class CNOID_EXPORT BodyItem : public Item, public LocatableItem, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
+    static ItemFileIO* bodyFileIO();
+    static ItemFileIO* meshFileIO();
         
     BodyItem();
     BodyItem(const BodyItem& org);

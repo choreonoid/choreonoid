@@ -20,6 +20,7 @@ public:
     std::string formatId;
     std::vector<std::string> formatIdAliases;
     std::string caption;
+    std::string fileTypeCaption;
     std::vector<std::string> extensions;
     std::function<std::string()> extensionFunction;
     ItemFileIO::InterfaceLevel interfaceLevel;
@@ -48,24 +49,16 @@ public:
         return false;
     }
 
-    std::vector<std::string> getExtensions(){
-        if(extensionFunction){
-            return separateExtensions(extensionFunction());
-        }
-        return extensions;
-    }
+    bool isRegisteredForSingletonItem() const;
+    Item* findSingletonItemInstance() const;
 
     bool loadItem(
         InvocationType invocationType, Item* item, const std::string& filename,
         Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options);
 
     static std::vector<std::string> separateExtensions(const std::string& multiExtString);
-    static QString makeExtensionFilter(
-        const std::string& caption, const std::vector<std::string>& extensions, bool isAnyEnabled = false);
-    static QStringList makeExtensionFilterList(
-        const std::string& caption, const std::vector<std::string>& extensions);
-    static QString makeExtensionFilterString(
-        const std::string& caption, const std::vector<std::string>& extensions);
+    static QString makeNameFilter(
+        const std::string& caption, const std::vector<std::string>& extensions, bool isNayEnabled = false);
 };
 
 

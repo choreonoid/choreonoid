@@ -49,6 +49,7 @@ CNOID_EXPORT std::string str(const Vector2& v);
 CNOID_EXPORT std::string str(const AngleAxis& a);
 CNOID_EXPORT bool toVector3(const std::string& s, Vector3& out_v);
 CNOID_EXPORT bool toVector3(const std::string& s, Vector3f& out_v);
+CNOID_EXPORT bool toVector6(const std::string& s, Vector6& out_v);
 
 
 CNOID_EXPORT void normalizeRotation(Matrix3& R);

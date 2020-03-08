@@ -126,8 +126,6 @@ public:
         return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType)));
     }
 
-    static Item* singletonInstance(ItemFileIO* fileIO);
-
     template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel = 0) {
         addCreationPanel_(typeid(ItemType), panel);
         return *this;

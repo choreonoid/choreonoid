@@ -95,6 +95,9 @@ ItemTypeToInfoMap itemTypeToInfoMap;
 
 typedef map<string, ItemManagerImpl*> ModuleNameToItemManagerImplMap;
 ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
+
+typedef map<string, vector<ItemFileIO*>> CaptionToFileIoMap;
+CaptionToFileIoMap captionToStandardLoaderMap;
     
 QWidget* importMenu;
 
@@ -162,6 +165,8 @@ public:
         Item* item, const string& filename, Item* parentItem, const string& formatId, const Mapping* options);
     static ItemFileIO* findFileIOForLoading(const type_info& type, const string& filename, const string& formatId);
 
+    static void loadItemsWithDialog(const vector<ItemFileIO*>& fileIOs);
+
     static bool save(Item* item, bool useDialogToGetFilename, bool doExport, string filename, const string& formatId);
     static ItemFileIOPtr getFileIOAndFilenameFromSaveDialog(
         vector<ItemFileIOPtr>& fileIOs, bool doExport,
@@ -171,7 +176,6 @@ public:
     static bool overwrite(Item* item, bool forceOverwrite, const string& formatId);
 
     void onNewItemActivated(CreationPanelBase* base);
-    void onLoadSpecificTypeItemActivated(ItemFileIOPtr fileIO);
     void onReloadSelectedItemsActivated();
     void onSaveSelectedItemsActivated();
     void onSaveSelectedItemsAsActivated();
@@ -277,25 +281,24 @@ ItemManager::~ItemManager()
 
 ItemManagerImpl::~ItemManagerImpl()
 {
-    // unregister creation panels
     for(auto it = registeredCreationPanels.begin(); it != registeredCreationPanels.end(); ++it){
         ItemCreationPanel* panel = *it;
         delete panel;
     }
 
-    // unregister fileIO objects
     for(auto& fileIO : registeredFileIOs){
-        if(auto classInfo = static_pointer_cast<ClassInfo>(fileIO->impl->classInfo.lock())){
-            auto& fileIOs = classInfo->fileIOs;
-            fileIOs.erase(std::remove(fileIOs.begin(), fileIOs.end(), fileIO), fileIOs.end());
+        auto& ioImpl = fileIO->impl;
+        if((ioImpl->api & ItemFileIO::Load) && (ioImpl->interfaceLevel == ItemFileIO::Standard)){
+            auto& loaders = captionToStandardLoaderMap[ioImpl->caption];
+            loaders.erase(std::remove(loaders.begin(), loaders.end(), fileIO), loaders.end());
         }
     }
+    
     for(auto& type : registeredTypes){
         itemTypeToInfoMap.erase(type);
         addonTypeToInfoMap.erase(type);
     }
 
-    // unregister creation panel filters
     for(auto p = registeredCreationPanelFilters.begin(); p != registeredCreationPanelFilters.end(); ++p){
         auto q = itemTypeToInfoMap.find(p->first);
         if(q != itemTypeToInfoMap.end()){
@@ -412,10 +415,19 @@ Item* ItemManager::getSingletonInstance(const std::type_info& type)
 }
 
 
-Item* ItemManager::singletonInstance(ItemFileIO* fileIO)
+bool ItemFileIO::Impl::isRegisteredForSingletonItem() const
 {
-    if(auto classInfo = static_pointer_cast<ClassInfo>(fileIO->impl->classInfo.lock())){
-        return classInfo->singletonInstance;
+    if(auto info = static_pointer_cast<ClassInfo>(classInfo.lock())){
+        return info->isSingleton;
+    }
+    return false;
+}
+
+
+Item* ItemFileIO::Impl::findSingletonItemInstance() const
+{
+    if(auto info = static_pointer_cast<ClassInfo>(classInfo.lock())){
+        return info->singletonInstance;
     }
     return nullptr;
 }
@@ -790,23 +802,33 @@ ClassInfoPtr ItemManagerImpl::registerFileIO(const type_info& type, ItemFileIOPt
 
         registeredFileIOs.insert(fileIO);
 
-        auto& fileIOs = classInfo->fileIOs;
-        if(ioImpl->interfaceLevel == ItemFileIO::Standard){
-            fileIOs.insert(fileIOs.begin(), fileIO);
-        } else {
-            fileIOs.push_back(fileIO);
+        auto p = classInfo->fileIOs.begin();
+        while(p != classInfo->fileIOs.end()){
+            if((*p)->impl->interfaceLevel > ioImpl->interfaceLevel){
+                break;
+            }
+            ++p;
         }
+        classInfo->fileIOs.insert(p, fileIO);
 
         if(ioImpl->api & ItemFileIO::Load){
-            if(ioImpl->interfaceLevel != ItemFileIO::Internal){
-                if(ioImpl->interfaceLevel == ItemFileIO::Standard){
-                    menuManager.setPath("/File/Open ...");
-                } else {
-                    menuManager.setPath("/File/Import ...");
+            if(ioImpl->interfaceLevel == ItemFileIO::Standard){
+                menuManager.setPath("/File/Open ...");
+                auto& loaders = captionToStandardLoaderMap[ioImpl->caption];
+                if(loaders.empty()){
+                    string caption = ioImpl->caption;
+                    menuManager.addItem(caption)
+                        ->sigTriggered().connect(
+                            [this, caption](){
+                                loadItemsWithDialog(captionToStandardLoaderMap[caption]); });
                 }
+                loaders.push_back(fileIO);
+
+            } else if(ioImpl->interfaceLevel == ItemFileIO::Conversion){
+                menuManager.setPath("/File/Import ...");
                 menuManager.addItem(ioImpl->caption)
                     ->sigTriggered().connect(
-                        [=](){ onLoadSpecificTypeItemActivated(fileIO); });
+                        [this, fileIO](){ loadItemsWithDialog({fileIO}); });
             }
         }
     }
@@ -821,8 +843,7 @@ ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::strin
     auto p = itemTypeToInfoMap.find(type);
     if(p != itemTypeToInfoMap.end()){
         auto& classInfo = p->second;
-        auto& fileIOs = classInfo->fileIOs;
-        for(auto& fileIO : fileIOs){
+        for(auto& fileIO : classInfo->fileIOs){
             if(formatId.empty() || fileIO->impl->isFormat(formatId)){
                 found = fileIO;
                 break;
@@ -844,7 +865,7 @@ bool ItemManagerImpl::load
 (Item* item, const string& filename, Item* parentItem, const string& formatId, const Mapping* options)
 {
     if(auto fileIO = findFileIOForLoading(typeid(*item), filename, formatId)){
-        return fileIO->loadItem(item, filename, parentItem, true, nullptr, options);
+        return fileIO->loadItem(item, filename, parentItem, false, nullptr, options);
     }
     return false;
 }
@@ -854,7 +875,8 @@ ItemList<Item> ItemManager::loadItemsWithDialog_
 (const std::type_info& type, Item* parentItem, bool doAddtion, Item* nextItem)
 {
     if(auto fileIO = ItemManagerImpl::findFileIOForLoading(type, "", "")){
-        return fileIO->loadItemsWithDialog(parentItem, doAddtion, nextItem);
+        typename ItemFileIO::Dialog dialog;
+        return dialog.loadItems({fileIO}, parentItem, doAddtion, nextItem);
     }
     return ItemList<Item>();
 }
@@ -893,7 +915,7 @@ ItemFileIO* ItemManagerImpl::findFileIOForLoading
             string extension = dotextension.substr(1); // remove dot
             for(auto& fileIO : fileIOs){
                 if(fileIO->impl->api & ItemFileIO::Load){
-                    for(auto& ext : fileIO->impl->getExtensions()){
+                    for(auto& ext : fileIO->extensions()){
                         if(ext == extension){
                             targetFileIO = fileIO;
                             break;
@@ -921,13 +943,15 @@ ItemFileIO* ItemManagerImpl::findFileIOForLoading
 }
         
 
-void ItemManagerImpl::onLoadSpecificTypeItemActivated(ItemFileIOPtr fileIO)
+void ItemManagerImpl::loadItemsWithDialog(const vector<ItemFileIO*>& fileIOs)
 {
     Item* parentItem = RootItem::instance()->selectedItems().toSingle();
     if(!parentItem){
         parentItem = RootItem::instance();
     }
-    fileIO->loadItemsWithDialog(parentItem, true);
+    
+    typename ItemFileIO::Dialog dialog;
+    dialog.loadItems(fileIOs, parentItem, true);
 }
 
 
@@ -1042,9 +1066,9 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
         if(!formatId.empty() && !fileIO->impl->isFormat(formatId)){
             continue;
         }
-        filters << ItemFileIO::Impl::makeExtensionFilter(
-            fileIO->impl->caption,
-            fileIO->impl->getExtensions(),
+        filters << ItemFileIO::Impl::makeNameFilter(
+            fileIO->caption(),
+            fileIO->extensions(),
             true);
         activeFileIOs.push_back(fileIO);
     }
@@ -1087,7 +1111,7 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
                 }
                 if(fileIOIndex >= 0){
                     targetFileIO = activeFileIOs[fileIOIndex];
-                    auto exts = targetFileIO->impl->getExtensions();
+                    auto exts = targetFileIO->extensions();
                     // add a lacking extension automatically
                     if(!exts.empty()){
                         bool hasExtension = false;
@@ -1132,7 +1156,7 @@ ItemFileIOPtr ItemManagerImpl::determineFileIOForSaving
             string extension = dotextension.substr(1);
             for(auto& fileIO : fileIOs){
                 if(fileIO->impl->api & ItemFileIO::Save){
-                    for(auto& ext : fileIO->impl->getExtensions()){
+                    for(auto& ext : fileIO->extensions()){
                         if(ext == extension){
                             targetFileIO = fileIO;
                             break;
@@ -1356,6 +1380,17 @@ bool ItemManager::getAddonIdentifier(ItemAddon* addon, std::string& out_moduleNa
 }
     
 
+static QString makeNameFilterString(const std::string& caption, const string& extensions)
+{
+    QString filters =
+        ItemFileIO::Impl::makeNameFilter(
+            caption,
+            ItemFileIO::Impl::separateExtensions(extensions));
+    filters += _(";;Any files (*)");
+    return filters;
+}
+
+
 namespace cnoid {
 
 string getOpenFileName(const string& caption, const string& extensions)
@@ -1365,9 +1400,7 @@ string getOpenFileName(const string& caption, const string& extensions)
             MainWindow::instance(),
             caption.c_str(),
             AppConfig::archive()->get("file_dialog_directory", shareDirectory()).c_str(),
-            ItemFileIO::Impl::makeExtensionFilterString(
-                caption,
-                ItemFileIO::Impl::separateExtensions(extensions)),
+            makeNameFilterString(caption, extensions),
             Q_NULLPTR,
             QFileDialog::DontUseNativeDialog);
 
@@ -1382,6 +1415,7 @@ string getOpenFileName(const string& caption, const string& extensions)
     return filename;
 }
     
+
 vector<string> getOpenFileNames(const string& caption, const string& extensions)
 {
     QStringList qfilenames =
@@ -1389,9 +1423,7 @@ vector<string> getOpenFileNames(const string& caption, const string& extensions)
             MainWindow::instance(),
             caption.c_str(),
             AppConfig::archive()->get("file_dialog_directory", shareDirectory()).c_str(),
-            ItemFileIO::Impl::makeExtensionFilterString(
-                caption,
-                ItemFileIO::Impl::separateExtensions(extensions)),
+            makeNameFilterString(caption, extensions),
             Q_NULLPTR,
             QFileDialog::DontUseNativeDialog);
 

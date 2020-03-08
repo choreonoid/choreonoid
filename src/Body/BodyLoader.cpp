@@ -8,8 +8,6 @@
 #include "VRMLBodyLoader.h"
 #include "Body.h"
 #include <cnoid/SceneLoader>
-#include <cnoid/STLSceneLoader>
-#include <cnoid/YAMLSceneLoader>
 #include <cnoid/ValueTree>
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>

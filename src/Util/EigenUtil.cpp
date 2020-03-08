@@ -225,11 +225,11 @@ std::string str(const AngleAxis& a)
 
 
 template<class VectorType>
-static bool toVector3_(const std::string& s, VectorType& out_v)
+static bool toVectorX_(const std::string& s, VectorType& out_v)
 {
     const char* nptr = s.c_str();
     char* endptr;
-    for(int i=0; i < 3; ++i){
+    for(int i=0; i < out_v.rows(); ++i){
         out_v[i] = strtod(nptr, &endptr);
         if(endptr == nptr){
             return false;
@@ -248,13 +248,19 @@ static bool toVector3_(const std::string& s, VectorType& out_v)
 
 bool toVector3(const std::string& s, Vector3& out_v)
 {
-    return toVector3_(s, out_v);
+    return toVectorX_(s, out_v);
 }
 
 
 bool toVector3(const std::string& s, Vector3f& out_v)
 {
-    return toVector3_(s, out_v);
+    return toVectorX_(s, out_v);
+}
+
+
+bool toVector6(const std::string& s, Vector6& out_v)
+{
+    return toVectorX_(s, out_v);
 }
 
 
