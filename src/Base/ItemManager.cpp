@@ -875,7 +875,7 @@ ItemList<Item> ItemManager::loadItemsWithDialog_
 (const std::type_info& type, Item* parentItem, bool doAddtion, Item* nextItem)
 {
     if(auto fileIO = ItemManagerImpl::findFileIOForLoading(type, "", "")){
-        typename ItemFileIO::Dialog dialog;
+        class ItemFileIO::Dialog dialog;
         return dialog.loadItems({fileIO}, parentItem, doAddtion, nextItem);
     }
     return ItemList<Item>();
@@ -950,7 +950,7 @@ void ItemManagerImpl::loadItemsWithDialog(const vector<ItemFileIO*>& fileIOs)
         parentItem = RootItem::instance();
     }
     
-    typename ItemFileIO::Dialog dialog;
+    class ItemFileIO::Dialog dialog;
     dialog.loadItems(fileIOs, parentItem, true);
 }
 

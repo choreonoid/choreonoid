@@ -105,7 +105,7 @@ public:
     bool isRegisteredForSingletonItem() const;
     Item* findSingletonItemInstance() const;
 
-    class Dialog : public QDialog
+    class CNOID_EXPORT Dialog : public QDialog
     {
     public:
         Dialog();
