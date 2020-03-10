@@ -103,13 +103,6 @@ void exportPyItems(py::module m)
         .def("getSigSubTreeChanged", &Item::sigSubTreeChanged)
         ;
 
-    py::enum_<Item::Attribute>(itemClass, "Attribute")
-        .value("SUB_ITEM", Item::Attribute::SUB_ITEM)
-        .value("TEMPORAL", Item::Attribute::TEMPORAL)
-        .value("LOAD_ONLY", Item::Attribute::LOAD_ONLY)
-        .value("NUM_ATTRIBUTES", Item::Attribute::NUM_ATTRIBUTES)
-        .export_values();
-
     PyItemList<Item>(m, "ItemList");
 
     py::class_<RootItem, RootItemPtr, Item>(m, "RootItem")
