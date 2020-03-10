@@ -9,6 +9,8 @@
 #include <fmt/format.h>
 #include "gettext.h"
 
+#include <iostream>
+
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
@@ -249,6 +251,7 @@ bool ItemFileIO::Impl::loadItem
         this->parentItem = nullptr;
     }
 
+    actuallyLoadedItem = item;
     bool loaded = self->load(item, actualFilename);
     os->flush();
 
@@ -258,12 +261,15 @@ bool ItemFileIO::Impl::loadItem
         if(item->name().empty()){
             item->setName(filesystem::path(filename).stem().string());
         }
+        if(actuallyLoadedItem != item && actuallyLoadedItem->name().empty()){
+            actuallyLoadedItem->setName(item->name());
+        }
         MappingPtr optionArchive;
         if(api & ItemFileIO::Options){
             optionArchive = new Mapping;
             self->storeOptions(optionArchive);
         }
-        item->updateFileInformation(actualFilename, formatId, optionArchive);
+        actuallyLoadedItem->updateFileInformation(actualFilename, formatId, optionArchive);
 
         if(doAddition && parentItem){
             parentItem->insertChildItem(item, nextItem, true);
@@ -276,6 +282,12 @@ bool ItemFileIO::Impl::loadItem
     this->parentItem = nullptr;
 
     return loaded;
+}
+
+
+void ItemFileIO::setActuallyLoadedItem(Item* item)
+{
+    impl->actuallyLoadedItem = item;
 }
 
 

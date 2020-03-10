@@ -155,6 +155,9 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     } else {
         archive->write("plugin", pluginName);
         archive->write("class", className);
+        if(item->hasAttribute(Item::Attached)){
+            archive->write("is_attached_item", true);
+        }
     }
     if(item->isSelected()){
         archive->write("isSelected", true);
@@ -347,7 +350,12 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
     if(isRootItem){
         item = parentItem;
         --numArchivedItems;
+
     } else {
+        if(archive.get("is_attached_item", false)){
+            item->setAttribute(Item::Attached);
+        }
+        
         mv->putln(format(_("Restoring {0} \"{1}\""), className, name));
         mv->flush();
 

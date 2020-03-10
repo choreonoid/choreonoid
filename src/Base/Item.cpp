@@ -54,7 +54,7 @@ class Item::Impl
 public:
     Item* self;
     Item* lastChild;
-    bitset<NUM_ATTRIBUTES> attributes;
+    bitset<NumAttributes> attributes;
     vector<bool> checkStates;
 
     std::unordered_map<std::type_index, ItemAddonPtr> addonMap;
@@ -132,7 +132,7 @@ Item::Impl::Impl(Item* self, const Impl& org)
 {
     initialize();
 
-    if(attributes[LOAD_ONLY]){
+    if(attributes[LoadOnly]){
         filePath = org.filePath;
         fileFormat = org.fileFormat;
     }
@@ -149,8 +149,8 @@ void Item::Impl::initialize()
     self->numChildren_ = 0;
     self->isSelected_ = false;
 
-    attributes.reset(SUB_ITEM);
-    attributes.reset(TEMPORAL);
+    attributes.reset(SubItem);
+    attributes.reset(Temporal);
 
     isConsistentWithFile = false;
     fileModificationTime = 0;
@@ -288,19 +288,19 @@ void Item::unsetAttribute(Attribute attribute)
 
 bool Item::isSubItem() const
 {
-    return impl->attributes[SUB_ITEM];
+    return impl->attributes[SubItem];
 }
 
 
 bool Item::isTemporal() const
 {
-    return impl->attributes[TEMPORAL];
+    return impl->attributes[Temporal];
 }
 
 
 void Item::setTemporal(bool on)
 {
-    impl->attributes.set(TEMPORAL, on);
+    impl->attributes.set(Temporal, on);
 }
 
 
@@ -489,14 +489,14 @@ bool Item::insertChildItem(Item* item, Item* nextItem, bool isManualOperation)
 
 bool Item::addSubItem(Item* item)
 {
-    item->impl->attributes.set(SUB_ITEM);
-    return addChildItem(item, false);
+    return insertSubItem(item, nullptr);
 }
 
 
 bool Item::insertSubItem(Item* item, Item* nextItem)
 {
-    item->impl->attributes.set(SUB_ITEM);
+    item->impl->attributes.set(SubItem);
+    item->impl->attributes.set(Attached);
     return impl->doInsertChildItem(item, nextItem, false);
 }
 
@@ -531,8 +531,8 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
     }
     
-    if(!item->impl->attributes[SUB_ITEM]){
-        attributes.reset(TEMPORAL);
+    if(!item->impl->attributes[SubItem]){
+        attributes.reset(Temporal);
     }
 
     item->parent_ = self;
@@ -670,7 +670,7 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
     self->prevItem_ = nullptr;
     self->nextItem_ = nullptr;
 
-    attributes.reset(SUB_ITEM);
+    attributes.reset(SubItem);
 
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);

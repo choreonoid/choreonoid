@@ -109,6 +109,13 @@ protected:
     std::ostream& os();
     void putWarning(const std::string& message);
     void putError(const std::string& message);
+
+    /**
+       When the file is loaded as a composite item tree and the item
+       that actually loads the file is different from the top item,
+       the following function must be called with the corresponding item.
+    */
+    void setActuallyLoadedItem(Item* item);
     
 private:
     Impl* impl;

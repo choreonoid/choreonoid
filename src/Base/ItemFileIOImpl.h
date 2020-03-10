@@ -26,6 +26,7 @@ public:
     ItemFileIO::InterfaceLevel interfaceLevel;
     ItemFileIO::InvocationType invocationType;
     Item* parentItem;
+    Item* actuallyLoadedItem;
     std::ostream* os;
     MessageView* mv;
 

@@ -343,6 +343,22 @@ bool Archive::readRelocatablePath(const std::string& key, std::string& out_value
 }
 
 
+bool Archive::loadFileTo(Item* item) const
+{
+    string file, format;
+    if(readRelocatablePath("file", file)){
+        read("format", format);
+        return item->load(file, currentParentItem(), format, this);
+    }
+    // for the backward compatibility
+    else if(readRelocatablePath("filename", file)){
+        read("format", format);
+        return item->load(file, currentParentItem(), format, this);
+    }
+    return false;
+}
+
+
 bool Archive::loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey) const
 {
     string filename, format;
@@ -354,7 +370,7 @@ bool Archive::loadItemFile(Item* item, const std::string& fileNameKey, const std
     }
     return false;
 }
-            
+
 
 /**
    \todo Use integated nested map whose node is a single path element to be more efficient.
@@ -386,9 +402,27 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
 }
 
 
-void Archive::writeRelocatablePath(const std::string& key, const std::string& path)
+bool Archive::writeRelocatablePath(const std::string& key, const std::string& path)
 {
-    write(key, getRelocatablePath(path), DOUBLE_QUOTED);
+    if(!path.empty()){
+        write(key, getRelocatablePath(path), DOUBLE_QUOTED);
+        return true;
+    }
+    return false;
+}
+
+
+bool Archive::writeFileInformation(Item* item)
+{
+    if(writeRelocatablePath("file", item->filePath())){
+        auto& format = item->fileFormat();
+        write("format", format);
+        if(auto fileOptions = item->fileOptions()){
+            insert(fileOptions);
+        }
+        return true;
+    }
+    return false;
 }
 
 

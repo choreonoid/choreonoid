@@ -778,7 +778,7 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         }
         if(projectLoadingWithItemExpansionInfoStack.empty() ||
            !projectLoadingWithItemExpansionInfoStack.top()){
-            if(!parentTwItem->isExpanded() && !item->isSubItem()){
+            if(!parentTwItem->isExpanded() && !item->hasAttribute(Item::Attached)){
                 parentTwItem->setExpanded(true);
             }
         }

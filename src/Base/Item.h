@@ -34,10 +34,14 @@ protected:
     
 public:
     enum Attribute {
-        SUB_ITEM,
-        TEMPORAL,
-        LOAD_ONLY,
-        NUM_ATTRIBUTES
+        SubItem,
+        Attached,
+        Temporal,
+        LoadOnly,
+        NumAttributes,
+        SUB_ITEM = SubItem,
+        TEMPORAL = Temporal,
+        LOAD_ONLY = LoadOnly
     };
 
     virtual ~Item();
@@ -66,7 +70,10 @@ public:
     virtual void setName(const std::string& name);
     SignalProxy<void(const std::string& oldName)> sigNameChanged();
 
+    void setAttribute(Attribute attribute);
+    void unsetAttribute(Attribute attribute);
     bool hasAttribute(Attribute attribute) const;
+
     bool isSubItem() const;
 
     /**
@@ -348,9 +355,6 @@ protected:
 
     //! Override this function to allow duplication of an instance.
     virtual Item* doDuplicate() const;
-
-    void setAttribute(Attribute attribute);
-    void unsetAttribute(Attribute attribute);
 
     /**
        This function is called when the item has been connected to the tree including the root item.
