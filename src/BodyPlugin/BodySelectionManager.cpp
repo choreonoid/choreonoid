@@ -198,7 +198,7 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
         for(auto& item : RootItem::instance()->descendantItems<BodyItem>()){
             bool on = item == bodyItem;
             if(on != item->isSelected()){
-                item->setSelected(on);
+                item->setSelected(on, true);
                 selectionChanged = true;
             }
         }

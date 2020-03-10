@@ -1747,8 +1747,9 @@ bool BodyItem::Impl::restore(const Archive& archive)
 
     body->calcForwardKinematics();
     string baseLinkName;
-    archive.read("currentBaseLink", baseLinkName);
-    setCurrentBaseLink(body->link(baseLinkName));
+    if(archive.read("currentBaseLink", baseLinkName)){
+        setCurrentBaseLink(body->link(baseLinkName));
+    }
 
     bool on;
     if(archive.read("staticModel", on)){
