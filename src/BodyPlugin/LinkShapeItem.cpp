@@ -4,6 +4,7 @@
 #include <cnoid/SceneItemFileIO>
 #include <cnoid/SceneGraph>
 #include <cnoid/Archive>
+#include <cnoid/EigenArchive>
 #include "gettext.h"
 
 using namespace std;
@@ -64,6 +65,7 @@ void LinkShapeItem::initializeClass(ExtensionManager* ext)
 LinkShapeItem::LinkShapeItem()
 {
     impl = new Impl;
+    setLocationEditable(false);
 }
 
 
@@ -78,6 +80,7 @@ LinkShapeItem::LinkShapeItem(const LinkShapeItem& org)
     : Item(org)
 {
     impl = new Impl(*org.impl);
+    setLocationEditable(false);
 }
 
 
@@ -144,12 +147,19 @@ Position LinkShapeItem::shapeOffset() const
 void LinkShapeItem::setShapeOffset(const Position& T)
 {
     impl->topNode->setPosition(T);
+    impl->topNode->notifyUpdate();
+    impl->sigOffsetChanged();
+    notifyUpdate();
 }
 
 
 Position LinkShapeItem::getLocation() const
 {
-    return impl->topNode->T();
+    if(impl->bodyItem){
+        return impl->bodyItem->body()->rootLink()->T() * shapeOffset();
+    } else {
+        return shapeOffset();
+    }
 }
 
 
@@ -165,15 +175,16 @@ SignalProxy<void()> LinkShapeItem::sigLocationChanged()
 }
 
 
-void LinkShapeItem::setLocationEditable(bool on)
-{
-
-}
-
-
 void LinkShapeItem::setLocation(const Position& T)
 {
-
+    if(impl->bodyItem){
+        impl->topNode->setPosition(
+            impl->bodyItem->body()->rootLink()->T().inverse(Eigen::Isometry) * T);
+    } else {
+        impl->topNode->setPosition(T);
+    }
+    impl->topNode->notifyUpdate();
+    notifyUpdate();
 }
 
 
@@ -191,11 +202,33 @@ void LinkShapeItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool LinkShapeItem::store(Archive& archive)
 {
-    return archive.writeFileInformation(this);
+    if(archive.writeFileInformation(this)){
+        auto& T = impl->topNode->T();
+        if(T.translation() != Vector3::Zero()){
+            write(archive, "translation", T.translation());
+        }
+        Matrix3 R = T.linear();
+        if(!R.isApprox(Matrix3::Identity())){
+            write(archive, "rotation", AngleAxis(R));
+        }
+        return true;
+    }
+    return false;
 }
 
 
 bool LinkShapeItem::restore(const Archive& archive)
 {
-    return archive.loadFileTo(this);
+    if(archive.loadFileTo(this)){
+        Vector3 translation;
+        if(read(archive, "translation", translation)){
+            impl->topNode->setTranslation(translation);
+        }
+        AngleAxis rot;
+        if(read(archive, "rotation", rot)){
+            impl->topNode->setRotation(rot);
+        }
+        return true;
+    }
+    return false;
 }
