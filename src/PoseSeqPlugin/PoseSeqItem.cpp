@@ -610,8 +610,7 @@ void PoseSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 bool PoseSeqItem::store(Archive& archive)
 {
     if(overwrite()){
-        archive.writeRelocatablePath("filename", filePath());
-        archive.write("format", fileFormat());
+        archive.writeFileInformation(this);
         archive.write("barLength", barLength_);
         return true;
     }
@@ -621,6 +620,9 @@ bool PoseSeqItem::store(Archive& archive)
 
 bool PoseSeqItem::restore(const Archive& archive)
 {
-    archive.read("barLength", barLength_);
-    return archive.loadItemFile(this, "filename", "format");
+    if(archive.loadFileTo(this)){
+        archive.read("barLength", barLength_);
+        return true;
+    }
+    return false;
 }

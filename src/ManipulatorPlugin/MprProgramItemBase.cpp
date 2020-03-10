@@ -291,8 +291,7 @@ void MprProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
 bool MprProgramItemBase::store(Archive& archive)
 {
     if(overwrite()){
-        archive.writeRelocatablePath("filename", filePath());
-        archive.write("format", fileFormat());
+        archive.writeFileInformation(this);
         if(impl->isStartupProgram){
             archive.write("is_startup_program", true);
         }
@@ -304,7 +303,7 @@ bool MprProgramItemBase::store(Archive& archive)
 
 bool MprProgramItemBase::restore(const Archive& archive)
 {
-    if(archive.loadItemFile(this, "filename", "format")){
+    if(archive.loadFileTo(this)){
         setAsStartupProgram(archive.get("is_startup_program", false));
         return true;
     }
