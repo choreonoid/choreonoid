@@ -20,6 +20,7 @@ set(sources
   ItemManager.cpp
   ItemClassRegistry.cpp
   ItemFileIO.cpp
+  ItemFileDialog.cpp
   Item.cpp
   ItemAddon.cpp
   LocatableItem.cpp
@@ -212,6 +213,7 @@ set(headers
   ItemManager.h
   ItemClassRegistry.h
   ItemFileIO.h
+  ItemFileDialog.h
   PolymorphicItemFunctionSet.h
   AppConfig.h
   AppUtil.h

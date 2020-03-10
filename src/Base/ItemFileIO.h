@@ -3,7 +3,6 @@
 
 #include "ItemList.h"
 #include <cnoid/Referenced>
-#include <QDialog>
 #include <string>
 #include <vector>
 #include "exportdecl.h"
@@ -16,6 +15,7 @@ class Item;
 class ItemManager;
 class ItemManagerImpl;
 class ItemFileIOExtenderBase;
+class ItemFileDialog;
 class Mapping;
 
 class CNOID_EXPORT ItemFileIO : public Referenced
@@ -105,24 +105,6 @@ public:
     bool isRegisteredForSingletonItem() const;
     Item* findSingletonItemInstance() const;
 
-    class CNOID_EXPORT Dialog : public QDialog
-    {
-    public:
-        Dialog();
-        ~Dialog();
-
-        ItemList<Item> loadItems(
-            const std::vector<ItemFileIO*>& fileIoList,
-            Item* parentItem = nullptr,
-            bool doAddition = true,
-            Item* nextItem = nullptr);
-
-    private:
-        class Impl;
-        Impl* impl;
-    };
-    
-
 protected:
     std::ostream& os();
     void putWarning(const std::string& message);
@@ -133,6 +115,7 @@ private:
     friend class ItemManager;
     friend class ItemManagerImpl;
     friend class ItemFileIOExtenderBase;
+    friend class ItemFileDialog;
 };
 
 typedef ref_ptr<ItemFileIO> ItemFileIOPtr;

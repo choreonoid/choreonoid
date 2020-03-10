@@ -9,6 +9,7 @@
 #include "ItemClassRegistry.h"
 #include "ItemFileIO.h"
 #include "ItemFileIOImpl.h"
+#include "ItemFileDialog.h"
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
@@ -875,7 +876,7 @@ ItemList<Item> ItemManager::loadItemsWithDialog_
 (const std::type_info& type, Item* parentItem, bool doAddtion, Item* nextItem)
 {
     if(auto fileIO = ItemManagerImpl::findFileIOForLoading(type, "", "")){
-        class ItemFileIO::Dialog dialog;
+        ItemFileDialog dialog;
         return dialog.loadItems({fileIO}, parentItem, doAddtion, nextItem);
     }
     return ItemList<Item>();
@@ -950,7 +951,7 @@ void ItemManagerImpl::loadItemsWithDialog(const vector<ItemFileIO*>& fileIOs)
         parentItem = RootItem::instance();
     }
     
-    class ItemFileIO::Dialog dialog;
+    ItemFileDialog dialog;
     dialog.loadItems(fileIOs, parentItem, true);
 }
 
