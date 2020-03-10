@@ -18,15 +18,13 @@
 namespace cnoid {
 
 class Body;
+class SgNode;
+class SgGroup;
+class SgPosTransform;
+class Mapping;
 
 class Link;
 typedef ref_ptr<Link> LinkPtr;
-
-class SgNode;
-typedef ref_ptr<SgNode> SgNodePtr;
-
-class Mapping;
-typedef ref_ptr<Mapping> MappingPtr;
 
 class CNOID_EXPORT Link : public CloneableReferenced
 {
@@ -259,9 +257,9 @@ public:
     int materialId() const { return materialId_; }
     std::string materialName() const;
     
-    SgNode* shape() const { return visualShape_; }
-    SgNode* visualShape() const { return visualShape_; }
-    SgNode* collisionShape() const { return collisionShape_; }
+    SgGroup* shape() const;
+    SgGroup* visualShape() const;
+    SgGroup* collisionShape() const;
 
     void setName(const std::string& name);
 
@@ -312,9 +310,11 @@ public:
     void setMaterial(int id) { materialId_ = id; }
     void setMaterial(const std::string& name);
     
-    void setShape(SgNode* shape);
-    void setVisualShape(SgNode* shape);
-    void setCollisionShape(SgNode* shape);
+    void addShapeNode(SgNode* shape, bool doNotify = false);
+    void addVisualShapeNode(SgNode* shape, bool doNotify = false);
+    void addCollisionShapeNode(SgNode* shape, bool doNotify = false);
+    void removeShapeNode(SgNode* shape, bool doNotify = false);
+    void updateShapeRs();
 
     // The following two methods should be deprecated after introducing Tb
     Position Ta() const;
@@ -381,9 +381,13 @@ private:
     double dq_lower_;
     int materialId_;
     std::string name_;
-    SgNodePtr visualShape_;
-    SgNodePtr collisionShape_;
-    MappingPtr info_;
+
+    // SgPosTransform is used as the type of the following variables so that Rs can
+    // be reflected. When Rs is invalidated, the types should be modified to SgGroup.
+    ref_ptr<SgPosTransform> visualShape_;
+    ref_ptr<SgPosTransform> collisionShape_;
+    
+    ref_ptr<Mapping> info_;
 
     friend class Body;
     

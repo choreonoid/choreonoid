@@ -3,9 +3,9 @@
 */
 
 #include "PenetrationBlocker.h"
+#include <cnoid/SceneGraph>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {

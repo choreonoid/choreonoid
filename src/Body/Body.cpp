@@ -62,7 +62,6 @@ public:
 
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
     void expandLinkOffsetRotations(Body* body, Link* link, const Matrix3& parentRs, vector<bool>& validRsFlags);
-    void setRsToShape(const Matrix3& Rs, SgNode* shape, std::function<void(SgNode* node)> setShape);
     void applyLinkOffsetRotationsToDevices(Body* body, vector<bool>& validRsFlags);    
 };
 
@@ -179,17 +178,11 @@ void Body::cloneShapes(CloneMap& cloneMap)
     const int n = linkTraverse_.numLinks();
     for(int i=0; i < n; ++i){
         Link* link = linkTraverse_[i];
-        SgNode* visualShape = link->visualShape();
-        if(visualShape){
-            link->setVisualShape(visualShape->cloneNode(cloneMap));
+        for(auto& node : *link->visualShape()){
+            link->addVisualShapeNode(node->cloneNode(cloneMap));
         }
-        SgNode* collisionShape = link->collisionShape();
-        if(collisionShape){
-            if(collisionShape == visualShape){
-                link->setCollisionShape(link->visualShape());
-            } else {
-                link->setCollisionShape(collisionShape->cloneNode(cloneMap));
-            }
+        for(auto& node : *link->collisionShape()){
+            link->addCollisionShapeNode(node->cloneNode(cloneMap));
         }
     }
 }
@@ -601,34 +594,12 @@ void BodyImpl::expandLinkOffsetRotations(Body* body, Link* link, const Matrix3& 
         link->setCenterOfMass(Rs * link->centerOfMass());
         link->setInertia(Rs * link->I() * Rs.transpose());
         link->setJointAxis(Rs * link->jointAxis());
-
-        SgNode* visualShape = link->visualShape();
-        SgNode* collisionShape = link->collisionShape();
-
-        if(visualShape && visualShape == collisionShape){
-            setRsToShape(Rs, visualShape, [&](SgNode* node) { link->setShape(node); });
-        } else {
-            if(visualShape){
-                setRsToShape(Rs, visualShape, [&](SgNode* node) { link->setVisualShape(node); });
-            }
-            if(collisionShape){
-                setRsToShape(Rs, collisionShape, [&](SgNode* node) { link->setCollisionShape(node); });
-            }
-        }
+        link->updateShapeRs();
     }
     
     for(Link* child = link->child(); child; child = child->sibling()){
         expandLinkOffsetRotations(body, child, Rs, validRsFlags);
     }
-}
-
-
-void BodyImpl::setRsToShape(const Matrix3& Rs, SgNode* shape, std::function<void(SgNode* node)> setShape)
-{
-    SgPosTransform* transformRs = new SgPosTransform;
-    transformRs->setRotation(Rs);
-    transformRs->addChild(shape);
-    setShape(transformRs);
 }
 
 

@@ -92,7 +92,7 @@ public:
                 transform->addChild(topNode);
                 topNode = transform;
             }
-            link->setShape(topNode);
+            link->addShapeNode(topNode);
         }
         if(!isSupported){
             (*os) <<

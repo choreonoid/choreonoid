@@ -997,16 +997,22 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
         hasVisualOrCollisionNodes = false;
 
         sceneGroupSetStack.push_back(SceneGroupSet());
-        currentSceneGroupSet().newGroup<SgInvariantGroup>();
+        currentSceneGroupSet().newGroup<SgGroup>();
         
         if(readElementContents(*elements) && !isSubBodyNode){
             SceneGroupSet& sgs = currentSceneGroupSet();
             sgs.setName(link->name());
             if(hasVisualOrCollisionNodes){
-                link->setVisualShape(sgs.visual);
-                link->setCollisionShape(sgs.collision);
+                for(auto& node : *sgs.visual){
+                    link->addVisualShapeNode(node);
+                }
+                for(auto& node : *sgs.collision){
+                    link->addCollisionShapeNode(node);
+                }
             } else {
-                link->setShape(sgs.visual);
+                for(auto& node : *sgs.visual){
+                    link->addShapeNode(node);
+                }
             }
         }
 

@@ -37,7 +37,7 @@ Link::Link()
     dw_.setZero();
     c_.setZero();
     wc_.setZero();
-    m_ = 0.0;
+    m_ = 1.0;
     I_.setIdentity();
     Jm2_ = 0.0;
     F_ext_.setZero();
@@ -47,6 +47,8 @@ Link::Link()
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
     materialId_ = 0;
+    visualShape_ = new SgPosTransform;
+    collisionShape_ = new SgPosTransform;
     info_ = new Mapping;
 }
 
@@ -98,8 +100,10 @@ Link::Link(const Link& org)
     materialId_ = org.materialId_;
 
     //! \todo add the mode for doing deep copy of the following objects
-    visualShape_ = org.visualShape_;
-    collisionShape_ = org.collisionShape_;
+    visualShape_ = new SgPosTransform;
+    org.visualShape_->copyChildrenTo(visualShape_);
+    collisionShape_ = new SgPosTransform;
+    org.collisionShape_->copyChildrenTo(collisionShape_);
     info_ = org.info_;
 }
 
@@ -309,21 +313,54 @@ void Link::setMaterial(const std::string& name)
 }
 
 
-void Link::setShape(SgNode* shape)
+SgGroup* Link::shape() const
 {
-    visualShape_ = shape;
-    collisionShape_ = shape;
-}
-
-void Link::setVisualShape(SgNode* shape)
-{
-    visualShape_ = shape;
+    return visualShape_;
 }
 
 
-void Link::setCollisionShape(SgNode* shape)
+SgGroup* Link::visualShape() const
 {
-    collisionShape_ = shape;
+    return visualShape_;
+}
+
+
+SgGroup* Link::collisionShape() const
+{
+    return collisionShape_;
+}
+
+
+void Link::addShapeNode(SgNode* shape, bool doNotify)
+{
+    visualShape_->addChild(shape, doNotify);
+    collisionShape_->addChild(shape, doNotify);
+}
+
+
+void Link::addVisualShapeNode(SgNode* shape, bool doNotify)
+{
+    visualShape_->addChild(shape, doNotify);
+}
+
+
+void Link::addCollisionShapeNode(SgNode* shape, bool doNotify)
+{
+    collisionShape_->addChild(shape, doNotify);
+}
+
+
+void Link::removeShapeNode(SgNode* shape, bool doNotify)
+{
+    visualShape_->removeChild(shape, doNotify);
+    collisionShape_->removeChild(shape, doNotify);
+}
+
+
+void Link::updateShapeRs()
+{
+    visualShape_->setRotation(Rs_);
+    collisionShape_->setRotation(Rs_);
 }
 
 

@@ -4,6 +4,7 @@
 */
 
 #include "BodyCollisionDetectorUtil.h"
+#include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
 #include <vector>
 

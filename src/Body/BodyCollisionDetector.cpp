@@ -6,6 +6,7 @@
 #include "BodyCollisionDetector.h"
 #include "Body.h"
 #include "Link.h"
+#include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
 #include <unordered_map>
 #include <vector>

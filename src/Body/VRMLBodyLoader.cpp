@@ -464,9 +464,7 @@ void VRMLBodyLoaderImpl::readTopNodes()
         if(scene){
             Link* link = body->createLink();
             link->setName("Root");
-            link->setShape(scene);
-            link->setMass(1.0);
-            link->setInertia(Matrix3::Identity());
+            link->addShapeNode(scene);
             body->setRootLink(link);
             loaded = true;
         }
@@ -672,33 +670,6 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
 }
 
 
-static void setShape(Link* link, SgGroup* shape, bool isVisual)
-{
-    SgNodePtr node;
-    if(shape->empty()){
-        node = new SgNode;
-    } else {
-        SgInvariantGroup* invariant = new SgInvariantGroup;
-        if(link->Rs().isApprox(Matrix3::Identity())){
-            shape->copyChildrenTo(invariant);
-        } else {
-            SgPosTransform* transformRs = new SgPosTransform;
-            transformRs->setRotation(link->Rs());
-            shape->copyChildrenTo(transformRs);
-            invariant->addChild(transformRs);
-        }
-        node = invariant;
-    }
-    if(node){
-        if(isVisual){
-            link->setVisualShape(node);
-        } else {
-            link->setCollisionShape(node);
-        }
-    }
-}
-
-
 Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matrix3& parentRs)
 {
     if(isVerbose) putMessage(string("Joint node") + jointNode->defName);
@@ -747,13 +718,19 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
     link->setCenterOfMass(link->Rs() * iLink.c);
     link->setInertia(link->Rs() * iLink.I * link->Rs().transpose());
 
-    setShape(link, iLink.visualShape, true);
-
-    if(iLink.isSurfaceNodeUsed){
-        setShape(link, iLink.collisionShape, false);
-    } else {
-        link->setCollisionShape(link->visualShape());
+    for(auto& node : *iLink.visualShape){
+        if(!iLink.isSurfaceNodeUsed){
+            link->addShapeNode(node);
+        } else {
+            link->addVisualShapeNode(node);
+        }
     }
+    if(iLink.isSurfaceNodeUsed){
+        for(auto& node : *iLink.collisionShape){
+            link->addCollisionShapeNode(node);
+        }
+    }
+    link->updateShapeRs();
         
     return link;
 }

@@ -3,6 +3,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/SceneItemFileIO>
 #include <cnoid/SceneGraph>
+#include <cnoid/Archive>
 #include "gettext.h"
 
 using namespace std;
@@ -123,10 +124,11 @@ void LinkShapeItem::Impl::setBodyItem(BodyItem* newBodyItem)
 {
     if(newBodyItem != bodyItem){
         if(bodyItem){
-            bodyItem->body()->rootLink()->setShape(nullptr);
+            bodyItem->body()->rootLink()->removeShapeNode(topNode, true);
         }
         if(newBodyItem){
-            newBodyItem->body()->rootLink()->setShape(topNode);
+            auto rootLink = newBodyItem->body()->rootLink();
+            rootLink->addShapeNode(topNode, true);
         }
         bodyItem = newBodyItem;
     }
@@ -189,11 +191,11 @@ void LinkShapeItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool LinkShapeItem::store(Archive& archive)
 {
-    return true;
+    return archive.writeFileInformation(this);
 }
 
 
 bool LinkShapeItem::restore(const Archive& archive)
 {
-    return true;
+    return archive.loadFileTo(this);
 }
