@@ -224,12 +224,10 @@ public:
     }
 };
 
-class MeshFileIO : public SceneItemFileIO
+class SceneFileIO : public SceneItemFileIO
 {
 public:
-    MeshFileIO()
-        //! \todo The file information should not be stored in a body item by specifying the empty format.
-        //: SceneItemFileIO("")
+    SceneFileIO()
     {
         setCaption(_("Body"));
         setFileTypeCaption(_("Scene / Mesh"));
@@ -242,28 +240,20 @@ public:
 
     virtual bool load(Item* item, const std::string& filename) override
     {
-        auto itype = invocationType();
-
-        /*
-        if(itype != Dialog && itype != DragAndDrop){
-            return false;
-        }
-        */
-        
         SgNode* shape = loadScene(filename);
         if(!shape){
             return false;
         }
 
         LinkShapeItem* shapeItem = new LinkShapeItem;
-        shapeItem->setName(stdx::filesystem::path(filename).stem().string());
-
+        shapeItem->setAttribute(Item::Attached);
         shapeItem->setShape(shape);
+        setActuallyLoadedItem(shapeItem);
 
         auto bodyItem = static_cast<BodyItem*>(item);
-        //bodyItem->addChildItem(shapeItem);
-        bodyItem->addSubItem(shapeItem);
-        
+        bodyItem->addChildItem(shapeItem);
+
+        auto itype = invocationType();
         if(itype == Dialog || itype == DragAndDrop){
             item->setChecked(true);
         }
@@ -296,7 +286,7 @@ void BodyItem::initializeClass(ExtensionManager* ext)
     im.registerClass<BodyItem>(N_("BodyItem"));
     ::bodyFileIO = new BodyFileIO;
     im.registerFileIO<BodyItem>(::bodyFileIO);
-    ::meshFileIO = new MeshFileIO;
+    ::meshFileIO = new SceneFileIO;
     im.registerFileIO<BodyItem>(::meshFileIO);
 
     OptionManager& om = ext->optionManager();
@@ -327,6 +317,7 @@ BodyItem::BodyItem()
 BodyItem::Impl::Impl(BodyItem* self)
     : Impl(self, new Body)
 {
+    body->rootLink()->setName("Root");
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
 }
@@ -443,8 +434,12 @@ void BodyItem::Impl::setBody(Body* body_)
 
 void BodyItem::setName(const std::string& name)
 {
-    if(impl->body){
-        impl->body->setName(name);
+    auto body = impl->body;
+    if(body){
+        body->setName(name);
+        if(body->modelName().empty()){
+            body->setModelName(name);
+        }
     }
     Item::setName(name);
 }
@@ -1576,11 +1571,7 @@ bool BodyItem::Impl::store(Archive& archive)
 {
     archive.setDoubleFormat("% .6f");
 
-    archive.writeRelocatablePath("modelFile", self->filePath());
-    archive.write("format", self->fileFormat());
-    if(auto fileOptions = self->fileOptions()){
-        archive.insert(fileOptions);
-    }
+    archive.writeFileInformation(self);
 
     if(currentBaseLink){
         archive.write("currentBaseLink", currentBaseLink->name(), DOUBLE_QUOTED);
@@ -1669,8 +1660,12 @@ bool BodyItem::restore(const Archive& archive)
 
 bool BodyItem::Impl::restore(const Archive& archive)
 {
-    if(!archive.loadItemFile(self, "modelFile", "format")){
-        return false;
+    string filename;
+    if(archive.read("file", filename)){
+        archive.loadFileTo(self);
+    } else {
+        // for the backward compatibiliy
+        archive.loadItemFile(self, "modelFile", "format");
     }
 
     Vector3 p = Vector3::Zero();

@@ -182,9 +182,7 @@ void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool SceneItem::store(Archive& archive)
 {
-    if(!filePath().empty()){
-        archive.writeRelocatablePath("file", filePath());
-        archive.write("format", fileFormat());
+    if(archive.writeFileInformation(this)){
         write(archive, "translation", topNode_->translation());
         write(archive, "rotation", AngleAxis(topNode_->rotation()));
         archive.write("lightweightRendering", isLightweightRenderingEnabled_);
@@ -195,8 +193,7 @@ bool SceneItem::store(Archive& archive)
 
 bool SceneItem::restore(const Archive& archive)
 {
-    std::string filename, formatId;
-    if(archive.readRelocatablePath("file", filename) && archive.read("format", formatId)){
+    if(archive.loadFileTo(this)){
         Vector3 translation;
         if(read(archive, "translation", translation)){
             topNode_->setTranslation(translation);
@@ -205,12 +202,7 @@ bool SceneItem::restore(const Archive& archive)
         if(read(archive, "rotation", rot)){
             topNode_->setRotation(rot);
         }
-
         archive.read("lightweightRendering", isLightweightRenderingEnabled_);
-        
-        if(load(filename, archive.currentParentItem(), formatId)){
-            return true;
-        }
     }
     return false;
 }

@@ -18,8 +18,6 @@ namespace {
 enum LengthUnit { Meter, Millimeter, Inch, NumLengthUnitIds };
 enum UpperAxis { Z_Upper, Y_Upper, NumUpperAxisIds };
 
-unique_ptr<SceneLoader> sceneLoader;
-
 }
 
 namespace cnoid {
@@ -28,7 +26,10 @@ namespace cnoid {
 class SceneItemFileIO::Impl
 {
 public:
-    SceneItemFileIO* self;
+    static Impl* sharedImpl;
+    static int sharedImplCounter;
+    
+    unique_ptr<SceneLoader> sceneLoader;
     QWidget* optionPanel;
 
     Selection lengthUnitHint;
@@ -37,34 +38,40 @@ public:
     Selection upperAxisHint;
     ComboBox* axisCombo;
     
-    Impl(SceneItemFileIO* self);
+    Impl();
     ~Impl();
-    SgNode* loadScene(const std::string& filename);
+    SgNode* loadScene(SceneItemFileIO* self, const std::string& filename);
     void createOptionPanel();    
 };
 
+SceneItemFileIO::Impl* SceneItemFileIO::Impl::sharedImpl = nullptr;
+int SceneItemFileIO::Impl::sharedImplCounter = 0;
+
+}
+
+
+SceneItemFileIO::SceneItemFileIO(int api)
+    : ItemFileIO("GENERAL-3D-MODEL", api)
+{
+    setExtensions({ "scen", "wrl", "dae", "stl" });
+
+    if(!Impl::sharedImpl){
+        Impl::sharedImpl = new Impl;
+    }
+    impl = Impl::sharedImpl;
+    ++Impl::sharedImplCounter;
 }
 
 
 SceneItemFileIO::SceneItemFileIO()
-    : SceneItemFileIO("GENERAL-3D-MODEL", Load | Options | OptionPanelForLoading)
+    : SceneItemFileIO(Load | Options | OptionPanelForLoading)
 {
 
 }
 
 
-SceneItemFileIO::SceneItemFileIO(const std::string& formatId, int api)
-    : ItemFileIO(formatId, api)
-{
-    setExtensions({ "scen", "wrl", "dae", "stl" });
-
-    impl = new Impl(this);
-}
-
-
-SceneItemFileIO::Impl::Impl(SceneItemFileIO* self)
-    : self(self),
-      lengthUnitHint(NumLengthUnitIds),
+SceneItemFileIO::Impl::Impl()
+    : lengthUnitHint(NumLengthUnitIds),
       upperAxisHint(NumUpperAxisIds, CNOID_GETTEXT_DOMAIN_NAME)
 {
     lengthUnitHint.setSymbol(Meter, "meter");
@@ -82,7 +89,10 @@ SceneItemFileIO::Impl::Impl(SceneItemFileIO* self)
 
 SceneItemFileIO::~SceneItemFileIO()
 {
-    delete impl;
+    if(--Impl::sharedImplCounter == 0){
+        delete Impl::sharedImpl;
+        Impl::sharedImpl = nullptr;
+    }
 }
 
 
@@ -96,11 +106,11 @@ SceneItemFileIO::Impl::~Impl()
 
 SgNode* SceneItemFileIO::loadScene(const std::string& filename)
 {
-    return impl->loadScene(filename);
+    return impl->loadScene(this, filename);
 }
 
 
-SgNode* SceneItemFileIO::Impl::loadScene(const std::string& filename)
+SgNode* SceneItemFileIO::Impl::loadScene(SceneItemFileIO* self, const std::string& filename)
 {
     if(!sceneLoader){
         sceneLoader.reset(new SceneLoader);

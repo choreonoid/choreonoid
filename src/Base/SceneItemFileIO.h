@@ -12,7 +12,7 @@ class CNOID_EXPORT SceneItemFileIO : public ItemFileIO
 {
 public:
     SceneItemFileIO();
-    SceneItemFileIO(const std::string& formatId, int api);
+    SceneItemFileIO(int api);
     ~SceneItemFileIO();
 
 protected:
