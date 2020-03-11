@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-03 16:23+0900\n"
+"POT-Creation-Date: 2020-03-11 15:35+0900\n"
 "PO-Revision-Date: 2019-10-01 23:57+0900\n"
 "Last-Translator: nakaoka <nakaoka@choreonoid.co.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,205 +17,236 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ManipulatorVariableListViewBase.cpp:222
-msgid "ID"
-msgstr ""
+#: MprPosition.cpp:78
+msgid "The \"id\" key is not found in a manipulator position node"
+msgstr "マニピュレータ位置ノードの\"id\"キーが見つかりません"
 
-#: ManipulatorVariableListViewBase.cpp:224
-msgid "Type"
-msgstr "型"
-
-#: ManipulatorVariableListViewBase.cpp:226
-msgid "Value"
-msgstr "値"
-
-#: ManipulatorVariableListViewBase.cpp:228
-msgid "Note"
-msgstr "注釈"
-
-#: ManipulatorVariableListViewBase.cpp:278
-#: ManipulatorVariableListViewBase.cpp:449
-msgid "Integer"
-msgstr "整数"
-
-#: ManipulatorVariableListViewBase.cpp:280
-#: ManipulatorVariableListViewBase.cpp:450
-msgid "Real"
-msgstr "実数"
-
-#: ManipulatorVariableListViewBase.cpp:282
-#: ManipulatorVariableListViewBase.cpp:451
-msgid "Logical"
-msgstr "論理"
-
-#: ManipulatorVariableListViewBase.cpp:284
-#: ManipulatorVariableListViewBase.cpp:452
-msgid "String"
-msgstr "文字列"
-
-#: ManipulatorVariableListViewBase.cpp:286
-msgid "Unknown"
-msgstr "不明"
-
-#: ManipulatorVariableListViewBase.cpp:294
-#: ManipulatorVariableListViewBase.cpp:496
-msgid "True"
-msgstr ""
-
-#: ManipulatorVariableListViewBase.cpp:294
-#: ManipulatorVariableListViewBase.cpp:497
-msgid "False"
-msgstr ""
-
-#: ManipulatorVariableListViewBase.cpp:324
-msgid "Negative number cannot be used as ID."
-msgstr "マイナスの値はIDとして使用できません．"
-
-#: ManipulatorVariableListViewBase.cpp:330
-msgid "ID {0} is already in use."
-msgstr "ID{0}は既に使用されています．"
-
-#: ManipulatorVariableListViewBase.cpp:566
-#: ManipulatorVariableListViewBase.cpp:736
-msgid "Add"
-msgstr "追加"
-
-#: ManipulatorVariableListViewBase.cpp:572
-msgid "refresh"
-msgstr "リフレッシュ"
-
-#: ManipulatorVariableListViewBase.cpp:575 ManipulatorProgramViewBase.cpp:544
-msgid "*"
-msgstr ""
-
-#: ManipulatorVariableListViewBase.cpp:740
-msgid "Remove"
-msgstr "削除"
-
-#: ManipulatorPositionList.cpp:237
+#: MprPositionList.cpp:246
 msgid "{0} cannot be loaded as a manipulator position set"
 msgstr "{0}はマニピュレータ位置集として読み込むことができません"
 
-#: ManipulatorPositionList.cpp:243 ManipulatorProgram.cpp:428
-#: ManipulatorVariableList.cpp:311
+#: MprPositionList.cpp:255 MprProgram.cpp:433 MprVariableList.cpp:314
 msgid "Format version {0} is not supported."
 msgstr "フォーマットバージョン{0}はサポートされていません．"
 
-#: ManipulatorPositionList.cpp:260
+#: MprPositionList.cpp:272
 msgid "{0} is not supported"
 msgstr "{0}はサポートされていません"
 
-#: ManipulatorVariableListItemBase.cpp:76
+#: MprVariableListViewBase.cpp:215
+msgid "ID"
+msgstr ""
+
+#: MprVariableListViewBase.cpp:217
+msgid "Type"
+msgstr "型"
+
+#: MprVariableListViewBase.cpp:219
+msgid "Value"
+msgstr "値"
+
+#: MprVariableListViewBase.cpp:221
+msgid "Note"
+msgstr "注釈"
+
+#: MprVariableListViewBase.cpp:271 MprVariableListViewBase.cpp:442
+msgid "Integer"
+msgstr "整数"
+
+#: MprVariableListViewBase.cpp:273 MprVariableListViewBase.cpp:443
+msgid "Real"
+msgstr "実数"
+
+#: MprVariableListViewBase.cpp:275 MprVariableListViewBase.cpp:444
+msgid "Logical"
+msgstr "論理"
+
+#: MprVariableListViewBase.cpp:277 MprVariableListViewBase.cpp:445
+msgid "String"
+msgstr "文字列"
+
+#: MprVariableListViewBase.cpp:279
+msgid "Unknown"
+msgstr "不明"
+
+#: MprVariableListViewBase.cpp:287 MprVariableListViewBase.cpp:489
+msgid "True"
+msgstr ""
+
+#: MprVariableListViewBase.cpp:287 MprVariableListViewBase.cpp:490
+msgid "False"
+msgstr ""
+
+#: MprVariableListViewBase.cpp:317
+msgid "Negative number cannot be used as ID."
+msgstr "マイナスの値はIDとして使用できません．"
+
+#: MprVariableListViewBase.cpp:323
+msgid "ID {0} is already in use."
+msgstr "ID{0}は既に使用されています．"
+
+#: MprVariableListViewBase.cpp:559 MprVariableListViewBase.cpp:729
+msgid "Add"
+msgstr "追加"
+
+#: MprVariableListViewBase.cpp:565
+msgid "refresh"
+msgstr "リフレッシュ"
+
+#: MprVariableListViewBase.cpp:568
+msgid "*"
+msgstr ""
+
+#: MprVariableListViewBase.cpp:733
+msgid "Remove"
+msgstr "削除"
+
+#: MprVariableListItemBase.cpp:83
 msgid "Num variables"
 msgstr "変数個数"
 
-#: ManipulatorVariable.cpp:166
-msgid "Invalid value type"
-msgstr "無効な値型"
+#: MprProgramItemBase.cpp:218
+msgid "Position {0} is not found."
+msgstr "ポジション{}がみつかりません．"
 
-#: ManipulatorControllerItemBase.cpp:254
-msgid "Any program item for {} is not found."
-msgstr "{}用のプログラムアイテムがみつかりません．"
+#: MprProgramItemBase.cpp:244
+msgid "Program item is not associated with any manipulator"
+msgstr "プログラムアイテムはどのマニピュレータとも関連付けられていません．"
 
-#: ManipulatorControllerItemBase.cpp:522
-msgid "{0} cannot be executed because the interpreter for it is not found."
-msgstr "{0}はこれに対応したインタプリタがみつからないため実行できません．"
-
-#: ManipulatorControllerItemBase.cpp:693
-msgid "The conditional expression of a While statement is empty."
-msgstr ""
-
-#: ManipulatorControllerItemBase.cpp:704
-msgid "The conditional expression of a While statement is invalid."
-msgstr ""
-
-#: ManipulatorControllerItemBase.cpp:748
+#: MprProgramItemBase.cpp:250
 msgid ""
-"Type / operator mismatch in the conditional expression of a While statement."
+"The world coordinate system is currently selected for the robot, but the "
+"position of the move statement must be described in the robot coordinate "
+"system.\n"
+"Please switch to the robot coordinate system to add a new move statement."
 msgstr ""
 
-#: ManipulatorControllerItemBase.cpp:779 ManipulatorControllerItemBase.cpp:860
-msgid "Variable {0} is not defined."
-msgstr ""
+#: MprProgramItemBase.cpp:284
+msgid "Startup"
+msgstr "スタートアップ"
 
-#: ManipulatorControllerItemBase.cpp:825
-msgid "Variable {0} is not available."
-msgstr ""
-
-#: ManipulatorControllerItemBase.cpp:832
-msgid "Expression assigned to variable {0} is empty."
-msgstr ""
-
-#: ManipulatorControllerItemBase.cpp:872
-msgid "Term {0} is invalid."
-msgstr ""
-
-#: ManipulatorControllerItemBase.cpp:891
-msgid "Expression ends with operator {0}."
-msgstr ""
-
-#: ManipulatorControllerItemBase.cpp:912
-msgid "Type mismatch in expresion {0}"
-msgstr ""
-
-#: ManipulatorControllerItemBase.cpp:1027
-msgid "{0} cannot be executed because {1} does not have a signal I/O device"
-msgstr "{0}は{1}がシグナルI/Oデバイスを有していないため実行できません．"
-
-#: ManipulatorControllerItemBase.cpp:1052
-msgid "Speed ratio"
-msgstr "速度比率"
-
-#: ManipulatorProgram.cpp:422
-msgid "{0} cannot be loaded as a Manipulator program file"
-msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"
-
-#: ManipulatorProgram.cpp:451
-msgid "Statement type \"{0}\" is not supported"
-msgstr "ステートメント型\"{0}\"はサポートされていません"
-
-#: ManipulatorProgramViewBase.cpp:663
-msgid "Refresh"
-msgstr "リフレッシュ"
-
-#: ManipulatorProgramViewBase.cpp:666
-msgid "Renumbering"
-msgstr "リナンバリング"
-
-#: ManipulatorProgramViewBase.cpp:1123
-msgid "Cut"
-msgstr "カット"
-
-#: ManipulatorProgramViewBase.cpp:1126
-msgid "Copy"
-msgstr "コピー"
-
-#: ManipulatorProgramViewBase.cpp:1129
-msgid "Paste"
-msgstr "ペースト"
-
-#: ManipulatorProgramViewBase.cpp:1138
-msgid "Insert empty line"
-msgstr "空行の挿入"
-
-#: ManipulatorProgramItemBase.cpp:151
+#: MprProgramItemBase.cpp:286
 msgid "Num statements"
 msgstr "ステートメント数"
 
-#: ManipulatorProgramItemBase.cpp:152
+#: MprProgramItemBase.cpp:287
 msgid "Num positions"
 msgstr "位置数"
 
-#: ManipulatorVariableList.cpp:305
+#: MprVariable.cpp:169
+msgid "Invalid value type"
+msgstr "無効な値型"
+
+#: BasicMprStatements.cpp:541
+msgid "Invalid condition type"
+msgstr "無効な条件型"
+
+#: MprProgramViewBase.cpp:721
+msgid "Refresh"
+msgstr "リフレッシュ"
+
+#: MprProgramViewBase.cpp:724
+msgid "Renumbering"
+msgstr "リナンバリング"
+
+#: MprProgramViewBase.cpp:1348
+msgid "Cut"
+msgstr "カット"
+
+#: MprProgramViewBase.cpp:1351
+msgid "Copy"
+msgstr "コピー"
+
+#: MprProgramViewBase.cpp:1354
+msgid "Paste"
+msgstr "ペースト"
+
+#: MprProgramViewBase.cpp:1363
+msgid "Insert empty line"
+msgstr "空行の挿入"
+
+#: MprControllerItemBase.cpp:280
+msgid "Any program item for {} is not found."
+msgstr "{}用のプログラムアイテムがみつかりません．"
+
+#: MprControllerItemBase.cpp:337
+msgid ""
+"Warning: The custom inverse kinematics is disabled in controller \"{0}\" for "
+"robot \"{1}\"."
+msgstr "警告： ロボット \"{1}\" 用のコントローラ \"{0}\" においてカスタム逆運動学は無効化されています．"
+
+#: MprControllerItemBase.cpp:606
+msgid "{0} cannot be executed because the interpreter for it is not found."
+msgstr "{0}はこれに対応したインタプリタがみつからないため実行できません．"
+
+#: MprControllerItemBase.cpp:777
+msgid "A program specified in a call statement is empty."
+msgstr "Callステートメントのプログラムが指定されていません．"
+
+#: MprControllerItemBase.cpp:784
+msgid "Program \"{0}\" specified in a call statement does not exist."
+msgstr "Callステートメントに指定されているプログラム \"{0}\" が存在しません．"
+
+#: MprControllerItemBase.cpp:822
+msgid "The conditional expression of a While statement is empty."
+msgstr "Whileステートメントの条件式が空です．"
+
+#: MprControllerItemBase.cpp:833
+msgid "The conditional expression of a While statement is invalid."
+msgstr "Whileステートメントの条件式が無効です．"
+
+#: MprControllerItemBase.cpp:877
+msgid ""
+"Type / operator mismatch in the conditional expression of a While statement."
+msgstr "Whileステートメントの条件式における型とオペレータがマッチしていません．"
+
+#: MprControllerItemBase.cpp:908 MprControllerItemBase.cpp:989
+msgid "Variable {0} is not defined."
+msgstr "変数 {0} は定義されていません．"
+
+#: MprControllerItemBase.cpp:954
+msgid "Variable {0} is not available."
+msgstr "変数 {0} は利用できません．"
+
+#: MprControllerItemBase.cpp:961
+msgid "Expression assigned to variable {0} is empty."
+msgstr "変数 {0} に式が設定されていません．"
+
+#: MprControllerItemBase.cpp:1001
+msgid "Term {0} is invalid."
+msgstr "{0}項は無効です．"
+
+#: MprControllerItemBase.cpp:1020
+msgid "Expression ends with operator {0}."
+msgstr "オペレータ {0} で式が終了しています．"
+
+#: MprControllerItemBase.cpp:1041
+msgid "Type mismatch in expresion {0}"
+msgstr "式 {0} において型の不整合があります．"
+
+#: MprControllerItemBase.cpp:1156
+msgid "{0} cannot be executed because {1} does not have a signal I/O device"
+msgstr "{0}は{1}がシグナルI/Oデバイスを有していないため実行できません．"
+
+#: MprControllerItemBase.cpp:1200
+msgid "Speed ratio"
+msgstr "速度比率"
+
+#: MprProgram.cpp:424
+msgid "{0} cannot be loaded as a Manipulator program file"
+msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"
+
+#: MprProgram.cpp:465
+msgid "Statement type \"{0}\" is not supported"
+msgstr "ステートメント型\"{0}\"はサポートされていません"
+
+#: MprVariableList.cpp:305
 msgid "{0} cannot be loaded as a manipulator variable list"
 msgstr "{0}はマニピュレータ変数リストとして読み込むことができません"
 
-#: ManipulatorVariableList.cpp:329
+#: MprVariableList.cpp:332
 msgid ""
 "String \"{0}\" is specified as ID, but the string id type is not supported "
 "in this system"
-msgstr ""
+msgstr "文字列 \"{0}\" はIDとして指定されていますが、文字列型のIDはこのシステムではサポートされていません．"
 
-#: ManipulatorPosition.cpp:78
-msgid "The \"id\" key is not found in a manipulator position node"
-msgstr "マニピュレータ位置ノードの\"id\"キーが見つかりません"
