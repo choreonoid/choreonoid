@@ -87,12 +87,16 @@ Listing& write(Mapping& mapping, const std::string& key, const Eigen::Transform<
     return write(mapping, key, T.matrix());
 }
 
-
+CNOID_EXPORT bool readAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
+CNOID_EXPORT bool readDegreeAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
+//! \deprecated
 CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
-CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxisf& r);
 
+CNOID_EXPORT Listing& writeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
+CNOID_EXPORT Listing& writeDegreeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
+//! \deprecated
 CNOID_EXPORT Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
-CNOID_EXPORT Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisf& r);
+
 
 CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, std::function<void(const Eigen::Vector3d& value)> setterFunc);
 

@@ -406,7 +406,7 @@ bool BodyMarkerItemImpl::store(Archive& archive)
     archive.write("link", targetLinkName, DOUBLE_QUOTED);
     archive.write("node", targetNodeName, DOUBLE_QUOTED);
     write(archive, "translation", Vector3(localPosition.translation()));
-    write(archive, "rotation", AngleAxis(localPosition.linear()));
+    writeDegreeAngleAxis(archive, "rotation", AngleAxis(localPosition.linear()));
     archive.write("size", self->markerSize());
     write(archive, "color", self->markerColor());
     return true;
@@ -434,7 +434,7 @@ bool BodyMarkerItemImpl::restore(const Archive& archive)
         localPosition.translation() = translation;
     }
     AngleAxis a;
-    if(read(archive, "rotation", a)){
+    if(readDegreeAngleAxis(archive, "rotation", a)){
         localPosition.linear() = a.toRotationMatrix();
     }
 

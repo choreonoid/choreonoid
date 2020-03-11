@@ -209,7 +209,7 @@ bool LinkShapeItem::store(Archive& archive)
         }
         Matrix3 R = T.linear();
         if(!R.isApprox(Matrix3::Identity())){
-            write(archive, "rotation", AngleAxis(R));
+            writeDegreeAngleAxis(archive, "rotation", AngleAxis(R));
         }
         return true;
     }
@@ -225,7 +225,7 @@ bool LinkShapeItem::restore(const Archive& archive)
             impl->topNode->setTranslation(translation);
         }
         AngleAxis rot;
-        if(read(archive, "rotation", rot)){
+        if(readDegreeAngleAxis(archive, "rotation", rot)){
             impl->topNode->setRotation(rot);
         }
         return true;

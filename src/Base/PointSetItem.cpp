@@ -581,7 +581,12 @@ bool PointSetItem::store(Archive& archive)
         archive.write("format", fileFormat());
     }
     write(archive, "translation", Vector3(scene->translation()));
-    write(archive, "rotation", AngleAxis(scene->rotation()));
+
+    writeDegreeAngleAxis(archive, "rotation", AngleAxis(scene->rotation()));
+    // The following element is used to distinguish the value type from the old one using radian.
+    // The old format is deprecated, and writing the following element should be omitted in the future.
+    archive.write("angle_unit", "degree");
+
     archive.write("renderingMode", scene->renderingMode.selectedSymbol());
     archive.write("pointSize", pointSize());
     archive.write("voxelSize", scene->voxelSize);
@@ -599,7 +604,14 @@ bool PointSetItem::restore(const Archive& archive)
         scene->setTranslation(translation);
     }
     AngleAxis rot;
-    if(read(archive, "rotation", rot)){
+    string unit;
+    bool hasRot = false;
+    if(archive.read("angle_unit", unit) && unit == "degree"){
+        hasRot = readDegreeAngleAxis(archive, "rotation", rot);
+    } else { // for the backward compatibility
+        hasRot = readAngleAxis(archive, "rotation", rot);
+    }
+    if(hasRot){
         scene->setRotation(rot);
     }
     
