@@ -99,6 +99,7 @@ ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
 
 typedef map<string, vector<ItemFileIO*>> CaptionToFileIoMap;
 CaptionToFileIoMap captionToStandardLoaderMap;
+CaptionToFileIoMap captionToConversionLoaderMap;
     
 QWidget* importMenu;
 
@@ -161,6 +162,7 @@ public:
     CreationPanelBase* getOrCreateCreationPanelBase(const std::type_info& type);
 
     ClassInfoPtr registerFileIO(const type_info& typeId, ItemFileIOPtr fileIO);
+    void addLoader(ItemFileIO* fileIO, CaptionToFileIoMap& loaderMap);
 
     static bool load(
         Item* item, const string& filename, Item* parentItem, const string& formatId, const Mapping* options);
@@ -290,8 +292,16 @@ ItemManagerImpl::~ItemManagerImpl()
     for(auto& fileIO : registeredFileIOs){
         auto& ioImpl = fileIO->impl;
         if((ioImpl->api & ItemFileIO::Load) && (ioImpl->interfaceLevel == ItemFileIO::Standard)){
-            auto& loaders = captionToStandardLoaderMap[ioImpl->caption];
-            loaders.erase(std::remove(loaders.begin(), loaders.end(), fileIO), loaders.end());
+            auto p = captionToStandardLoaderMap.find(ioImpl->caption);
+            if(p != captionToStandardLoaderMap.end()){
+                auto& loaders = p->second;
+                loaders.erase(std::remove(loaders.begin(), loaders.end(), fileIO), loaders.end());
+            }
+            p = captionToConversionLoaderMap.find(ioImpl->caption);
+            if(p != captionToConversionLoaderMap.end()){
+                auto& loaders = p->second;
+                loaders.erase(std::remove(loaders.begin(), loaders.end(), fileIO), loaders.end());
+            }
         }
     }
     
@@ -815,26 +825,29 @@ ClassInfoPtr ItemManagerImpl::registerFileIO(const type_info& type, ItemFileIOPt
         if(ioImpl->api & ItemFileIO::Load){
             if(ioImpl->interfaceLevel == ItemFileIO::Standard){
                 menuManager.setPath("/File/Open ...");
-                auto& loaders = captionToStandardLoaderMap[ioImpl->caption];
-                if(loaders.empty()){
-                    string caption = ioImpl->caption;
-                    menuManager.addItem(caption)
-                        ->sigTriggered().connect(
-                            [this, caption](){
-                                loadItemsWithDialog(captionToStandardLoaderMap[caption]); });
-                }
-                loaders.push_back(fileIO);
-
+                addLoader(fileIO, captionToStandardLoaderMap);
             } else if(ioImpl->interfaceLevel == ItemFileIO::Conversion){
                 menuManager.setPath("/File/Import ...");
-                menuManager.addItem(ioImpl->caption)
-                    ->sigTriggered().connect(
-                        [this, fileIO](){ loadItemsWithDialog({fileIO}); });
+                addLoader(fileIO, captionToConversionLoaderMap);
             }
         }
     }
 
     return classInfo;
+}
+
+
+void ItemManagerImpl::addLoader(ItemFileIO* fileIO, CaptionToFileIoMap& loaderMap)
+{
+    auto& caption = fileIO->caption();
+    auto& loaders = loaderMap[caption];
+    if(loaders.empty()){
+        menuManager.addItem(caption)
+            ->sigTriggered().connect(
+                [this, caption, &loaderMap]() mutable {
+                    loadItemsWithDialog(loaderMap[caption]); });
+    }
+    loaders.push_back(fileIO);
 }
 
 
