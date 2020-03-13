@@ -1,136 +1,104 @@
-/**
-   \file
-   \author Shizuko Hattori
-*/
-
 #include "FCLCollisionDetector.h"
 #include <cnoid/Plugin>
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/stdx/optional>
-#include <fcl/narrowphase/collision.h>
-#include <fcl/geometry/bvh/BVH_model.h>
+#include <fcl/collision.h>
+#include <fcl/BVH/BVH_model.h>
+#include <fcl/BV/BV.h>
+#include <fcl/narrowphase/gjk.h>
 #include <memory>
 
 using namespace std;
-using namespace fcl;
 using namespace cnoid;
 
 namespace {
+
 const bool USE_PRIMITIVE = true;
 
-class FCLPlugin : public Plugin
-{
-public:
-    FCLPlugin() : Plugin("FCL")
-        { 
-            require("Body");
-        }
-        
-    virtual ~FCLPlugin()
-        {
+typedef shared_ptr<fcl::CollisionObject> CollisionObjectPtr;
+typedef fcl::BVHModel<fcl::OBBRSS> MeshModel;
+typedef shared_ptr<MeshModel> MeshModelPtr;
 
-        }
-
-    virtual bool initialize()
-        {
-            return true;
-        }
-        
-    virtual bool finalize()
-        {
-            return true;
-        }
-};
-CNOID_IMPLEMENT_PLUGIN_ENTRY(FCLPlugin);
-
-
-CollisionDetectorPtr factory()
-{
-    return new FCLCollisionDetector;
-}
-
-struct FactoryRegistration
-{
-    FactoryRegistration(){
-        CollisionDetector::registerFactory("FCLCollisionDetector", factory);
-    }
-} factoryRegistration;
-
-typedef std::shared_ptr<CollisionObjectd> CollisionObjectPtr;
-typedef BVHModel<OBBRSSd> MeshModel;
-typedef std::shared_ptr<MeshModel> MeshModelPtr;
-
-class CollisionObjectEx
+class CollisionModel : public Referenced
 {
 public :
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    CollisionObjectEx();
-    ~CollisionObjectEx();
     CollisionObjectPtr meshObject;
     MeshModelPtr meshModel;
     vector<CollisionObjectPtr> primitiveObjects;
-    vector<Transform3d, Eigen::aligned_allocator<Transform3d> > primitiveLocalT;
-    vector<Vector3d> points;
-    vector<Triangle> tri_indices;
+    vector<fcl::Transform3f> primitiveLocalPositions;
+    ReferencedPtr object;
+    vector<fcl::Vec3f> points;
+    vector<fcl::Triangle> tri_indices;
     bool isStatic;
+
+    CollisionModel(){
+        primitiveObjects.clear();
+        primitiveLocalPositions.clear();
+        isStatic = false;
+    }
 };
-typedef std::shared_ptr<CollisionObjectEx> CollisionObjectExPtr;
 
-CollisionObjectEx::CollisionObjectEx()
+typedef ref_ptr<CollisionModel> CollisionModelPtr;
+
+typedef CollisionDetector::GeometryHandle GeometryHandle;
+
+CollisionModel* getCollisionModel(GeometryHandle handle)
 {
-    primitiveObjects.clear();
-    primitiveLocalT.clear();
-    isStatic = false;
+    return reinterpret_cast<CollisionModel*>(handle);
 }
 
-CollisionObjectEx::~CollisionObjectEx()
+GeometryHandle getHandle(CollisionModel* model)
 {
-        
-}
+    return reinterpret_cast<GeometryHandle>(model);
 }
 
+inline fcl::Transform3f convertToFclTransform(const Position& T)
+{
+    fcl::Transform3f T_fcl;
+    
+    auto M = T.linear();
+    T_fcl.setRotation(
+        fcl::Matrix3f(
+            M(0,0), M(0, 1), M(0, 2),
+            M(1,0), M(1, 1), M(1, 2),
+            M(2,0), M(2, 1), M(2, 2)));
+
+    auto p = T.translation();
+    T_fcl.setTranslation(fcl::Vec3f(p.x(), p.y(), p.z()));
+
+    return T_fcl;
+}
+
+}
 
 namespace cnoid {
 
-class FCLCollisionDetectorImpl
+class FCLCollisionDetector::Impl
 {
 public:
-    FCLCollisionDetectorImpl();
-    ~FCLCollisionDetectorImpl();
+    vector<CollisionModelPtr> models;
+    vector<pair<CollisionModelPtr, CollisionModelPtr>> modelPairs;
+    set<IdPair<GeometryHandle>> nonInterfarencePairs;
+    MeshExtractor meshExtractor;
 
-    vector<CollisionObjectExPtr> models;
-    typedef set< IdPair<> > IdPairSet;
-    IdPairSet modelPairs;
-    IdPairSet nonInterfarencePairs;
-
-    MeshExtractor* meshExtractor;
-
-    int addGeometry(SgNode* geometry);
-    void addMesh(CollisionObjectEx* model);
+    stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    void addMesh(CollisionModel* geometry, SgMesh* mesh);
+    bool addPrimitive(CollisionModel* model, SgMesh* mesh);
     bool makeReady();
-    void updatePosition(int geometryId, const Position& position);
+    void updatePosition(CollisionModel* model, const Position& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
-    void detectObjectCollisions(CollisionObjectd* object1, CollisionObjectd* object2, CollisionPair& collisionPair);
-
-private :
-
-
+    void detectObjectCollisions(
+        fcl::CollisionObject* object1, fcl::CollisionObject* object2, CollisionPair& collisionPair);
 };
+
 }
 
 
 FCLCollisionDetector::FCLCollisionDetector()
 {
-    impl = new FCLCollisionDetectorImpl();
-}
-
-
-FCLCollisionDetectorImpl::FCLCollisionDetectorImpl()
-{
-    meshExtractor = new MeshExtractor();
+    impl = new Impl;
 }
 
 
@@ -140,29 +108,23 @@ FCLCollisionDetector::~FCLCollisionDetector()
 }
 
 
-FCLCollisionDetectorImpl::~FCLCollisionDetectorImpl()
-{
-    delete meshExtractor;
-}
-
-
 const char* FCLCollisionDetector::name() const
 {
     return "FCLCollisionDetector";
 }
 
 
-CollisionDetectorPtr FCLCollisionDetector::clone() const
+CollisionDetector* FCLCollisionDetector::clone() const
 {
-    return std::make_shared<FCLCollisionDetector>();
+    return new FCLCollisionDetector;
 }
 
         
 void FCLCollisionDetector::clearGeometries()
 {
     impl->models.clear();
-    impl->nonInterfarencePairs.clear();
     impl->modelPairs.clear();
+    impl->nonInterfarencePairs.clear();
 }
 
 
@@ -172,145 +134,71 @@ int FCLCollisionDetector::numGeometries() const
 }
 
 
-int FCLCollisionDetector::addGeometry(SgNode* geometry)
+stdx::optional<GeometryHandle> FCLCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-int FCLCollisionDetectorImpl::addGeometry(SgNode* geometry)
+stdx::optional<GeometryHandle> FCLCollisionDetector::Impl::addGeometry(SgNode* geometry)
 {
     const int index = models.size();
-    bool isValid = false;
+    CollisionModel* model = nullptr;
 
     if(geometry){
-        CollisionObjectExPtr model =  std::make_shared<CollisionObjectEx>();
-        if(meshExtractor->extract(geometry, std::bind(&FCLCollisionDetectorImpl::addMesh, this, model.get()))){
+        model = new CollisionModel;
+        bool extracted =
+            meshExtractor.extract(
+                geometry,
+                [this, model](SgMesh* mesh){ addMesh(model, mesh); });
+
+        if(extracted){
             if(!model->points.empty()){
-                model->meshModel = std::make_shared<MeshModel>();
+                model->meshModel = make_shared<MeshModel>();
                 model->meshModel->beginModel();
                 model->meshModel->addSubModel(model->points, model->tri_indices);
-                //for (size_t i = 0; i < model->tri_indices.size(); ++i){
-                //    model->meshModel->addTriangle(model->points[model->tri_indices[i][0]], model->points[model->tri_indices[i][1]], model->points[model->tri_indices[i][2]]);
-                //}
+                /*
+                for(size_t i = 0; i < model->tri_indices.size(); ++i){
+                    model->meshModel->addTriangle(
+                        model->points[model->tri_indices[i][0]],
+                        model->points[model->tri_indices[i][1]],
+                        model->points[model->tri_indices[i][2]]);
+                }
+                */
                 model->meshModel->endModel();
-                model->meshObject = std::make_shared<CollisionObjectd>(model->meshModel);
+                model->meshObject = make_shared<fcl::CollisionObject>(model->meshModel);
             }
-            models.push_back(model);
-            isValid = true;
         }
     }
 
-    if(!isValid){
-        models.push_back(CollisionObjectExPtr());
-    }
+    models.push_back(model);
     
-    return index;
-
+    return getHandle(model);
 }
 
 
-void FCLCollisionDetectorImpl::addMesh(CollisionObjectEx* model)
+void FCLCollisionDetector::Impl::addMesh(CollisionModel* model, SgMesh* mesh)
 {
-    SgMesh* mesh = meshExtractor->currentMesh();
-    const Affine3& T = meshExtractor->currentTransform();
+    const Affine3& T = meshExtractor.currentTransform();
 
     bool meshAdded = false;
-    
+
     if(USE_PRIMITIVE){
         if(mesh->primitiveType() != SgMesh::MESH){
-            bool doAddPrimitive = false;
-            Vector3 scale;
-            stdx::optional<Vector3> translation;
-            if(!meshExtractor->isCurrentScaled()){
-                scale.setOnes();
-                doAddPrimitive = true;
-            } else {
-                Affine3 S = meshExtractor->currentTransformWithoutScaling().inverse() *
-                    meshExtractor->currentTransform();
-
-                if(S.linear().isDiagonal()){
-                    if(!S.translation().isZero()){
-                        translation = S.translation();
-                    }
-                    scale = S.linear().diagonal();
-                    if(mesh->primitiveType() == SgMesh::BOX){
-                        doAddPrimitive = true;
-                    } else if(mesh->primitiveType() == SgMesh::SPHERE){
-                        // check if the sphere is uniformly scaled for all the axes
-                        if(scale.x() == scale.y() && scale.x() == scale.z()){
-                            doAddPrimitive = true;
-                        }
-                    } else if(mesh->primitiveType() == SgMesh::CYLINDER){
-                        // check if the bottom circle face is uniformly scaled
-                        if(scale.x() == scale.z()){
-                            doAddPrimitive = true;
-                        }
-                    } else if(mesh->primitiveType() == SgMesh::CONE){
-                        if(scale.x() == scale.z()){
-                            doAddPrimitive = true;
-                        }
-                    }
-                }
-            }
-
-            if(doAddPrimitive){
-                bool created = false;
-
-                switch(mesh->primitiveType()){
-                case SgMesh::BOX : {
-                    const Vector3& s = mesh->primitive<SgMesh::Box>().size;
-                    std::shared_ptr< CollisionGeometry<double> > box = std::make_shared<fcl::Boxd>(s.x() * scale.x(), s.y() * scale.y(), s.z() * scale.z());
-                    CollisionObjectPtr obj = std::make_shared<CollisionObjectd>(box);
-                    model->primitiveObjects.push_back(obj);
-                    created = true;
-                    break; }
-                case SgMesh::SPHERE : {
-                    double radius = mesh->primitive<SgMesh::Sphere>().radius;
-                    std::shared_ptr< CollisionGeometry<double> > sphere = std::make_shared<fcl::Sphered>(radius * scale.x());
-                    CollisionObjectPtr obj = std::make_shared<CollisionObjectd>(sphere);
-                    model->primitiveObjects.push_back(obj);
-                    created = true;
-                    break; }
-                case SgMesh::CYLINDER : {
-                    SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
-                    std::shared_ptr< CollisionGeometry<double> > cylinder_ = std::make_shared<fcl::Cylinderd>(cylinder.radius * scale.x(), cylinder.height * scale.y());
-                    CollisionObjectPtr obj = std::make_shared<CollisionObjectd>(cylinder_);
-                    model->primitiveObjects.push_back(obj);
-                    created = true;
-                    break; }
-                case SgMesh::CONE : {
-                    SgMesh::Cone cone = mesh->primitive<SgMesh::Cone>();
-                    std::shared_ptr< CollisionGeometry<double> > cone_ = std::make_shared<fcl::Coned>(cone.radius * scale.x(), cone.height * scale.y());
-                    CollisionObjectPtr obj = std::make_shared<CollisionObjectd>(cone_);
-                    model->primitiveObjects.push_back(obj);
-                    created = true;
-                    break; }
-                default :
-                    break;
-                }
-                if(created){
-                    Position t;
-                    if(translation){
-                        t = meshExtractor->currentTransformWithoutScaling() * Translation3(*translation);
-                    } else {
-                        t = meshExtractor->currentTransformWithoutScaling();
-                    }
-                    model->primitiveLocalT.push_back(t);
-                    meshAdded = true;
-                }
-            }
+            meshAdded = addPrimitive(model, mesh);
         }
     }
 
     if(!meshAdded){
         const int vertexIndexTop = model->points.size();
 
-        const SgVertexArray& vertices_ = *mesh->vertices();
-        const int numVertices = vertices_.size();
+        const SgVertexArray& vertices = *mesh->vertices();
+        const int numVertices = vertices.size();
+        auto& points = model->points;
+        points.resize(numVertices);
         for(int i=0; i < numVertices; ++i){
-            const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
-            model->points.push_back(v);
+            const Vector3 v = T * vertices[i].cast<Position::Scalar>();;
+            points[i].setValue(v.x(), v.y(), v.z());
         }
 
         const int numTriangles = mesh->numTriangles();
@@ -319,43 +207,117 @@ void FCLCollisionDetectorImpl::addMesh(CollisionObjectEx* model)
             int i0 = vertexIndexTop + src[0];
             int i1 = vertexIndexTop + src[1];
             int i2 = vertexIndexTop + src[2];
-            model->tri_indices.push_back(Triangle(i0, i1, i2));
+            model->tri_indices.emplace_back(i0, i1, i2);
         }
     }
 }
 
 
-
-void FCLCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
+bool FCLCollisionDetector::Impl::addPrimitive(CollisionModel* model, SgMesh* mesh)
 {
-    CollisionObjectExPtr& model = impl->models[geometryId];
-    if(model){
-        model->isStatic = isStatic;
+    bool meshAdded = false;
+    bool doAddPrimitive = false;
+    Vector3 scale;
+    stdx::optional<Vector3> translation;
+    if(!meshExtractor.isCurrentScaled()){
+        scale.setOnes();
+        doAddPrimitive = true;
+    } else {
+        Affine3 S = meshExtractor.currentTransformWithoutScaling().inverse() *
+            meshExtractor.currentTransform();
+
+        if(S.linear().isDiagonal()){
+            if(!S.translation().isZero()){
+                translation = S.translation();
+            }
+            scale = S.linear().diagonal();
+            if(mesh->primitiveType() == SgMesh::BOX){
+                doAddPrimitive = true;
+            } else if(mesh->primitiveType() == SgMesh::SPHERE){
+                // check if the sphere is uniformly scaled for all the axes
+                if(scale.x() == scale.y() && scale.x() == scale.z()){
+                    doAddPrimitive = true;
+                }
+            } else if(mesh->primitiveType() == SgMesh::CYLINDER){
+                // check if the bottom circle face is uniformly scaled
+                if(scale.x() == scale.z()){
+                    doAddPrimitive = true;
+                }
+            } else if(mesh->primitiveType() == SgMesh::CONE){
+                if(scale.x() == scale.z()){
+                    doAddPrimitive = true;
+                }
+            }
+        }
     }
+
+    if(doAddPrimitive){
+        bool created = false;
+        
+        switch(mesh->primitiveType()){
+        case SgMesh::BOX : {
+            const Vector3& s = mesh->primitive<SgMesh::Box>().size;
+            auto box = make_shared<fcl::Box>(s.x() * scale.x(), s.y() * scale.y(), s.z() * scale.z());
+            model->primitiveObjects.push_back(make_shared<fcl::CollisionObject>(box));
+            created = true;
+            break;
+        }
+        case SgMesh::SPHERE : {
+            double radius = mesh->primitive<SgMesh::Sphere>().radius;
+            auto sphere = make_shared<fcl::Sphere>(radius * scale.x());
+            model->primitiveObjects.push_back(make_shared<fcl::CollisionObject>(sphere));
+            created = true;
+            break;
+        }
+        case SgMesh::CYLINDER : {
+            SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
+            auto cylinder_ = make_shared<fcl::Cylinder>(cylinder.radius * scale.x(), cylinder.height * scale.y());
+            model->primitiveObjects.push_back(make_shared<fcl::CollisionObject>(cylinder_));
+            created = true;
+            break;
+        }
+        case SgMesh::CONE : {
+            SgMesh::Cone cone = mesh->primitive<SgMesh::Cone>();
+            auto cone_ = make_shared<fcl::Cone>(cone.radius * scale.x(), cone.height * scale.y());
+            model->primitiveObjects.push_back(make_shared<fcl::CollisionObject>(cone_));
+            created = true;
+            break;
+        }
+        default :
+            break;
+        }
+        if(created){
+            Position T;
+            if(translation){
+                T = meshExtractor.currentTransformWithoutScaling() * Translation3(*translation);
+            } else {
+                T = meshExtractor.currentTransformWithoutScaling();
+            }
+            model->primitiveLocalPositions.push_back(convertToFclTransform(T));
+            meshAdded = true;
+        }
+    }
+
+    return meshAdded;
 }
 
 
-bool FCLCollisionDetector::enableGeometryCache(bool on)
+void FCLCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
 {
-    return false;
+    getCollisionModel(geometry)->object = object;
 }
 
 
-void FCLCollisionDetector::clearGeometryCache(SgNode* geometry)
+void FCLCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
 {
-    
+    getCollisionModel(geometry)->isStatic = isStatic;
 }
 
 
-void FCLCollisionDetector::clearAllGeometryCaches()
+void FCLCollisionDetector::setNonInterfarenceGeometyrPair
+(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-
-}
-
-
-void FCLCollisionDetector::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
-{
-    impl->nonInterfarencePairs.insert(IdPair<>(geometryId1, geometryId2));
+    impl->nonInterfarencePairs.insert(IdPair<GeometryHandle>(geometry1, geometry2));
 }
 
 
@@ -365,20 +327,18 @@ bool FCLCollisionDetector::makeReady()
 }
 
 
-bool FCLCollisionDetectorImpl::makeReady()
+bool FCLCollisionDetector::Impl::makeReady()
 {
     modelPairs.clear();
-
     const int n = models.size();
     for(int i=0; i < n; ++i){
-        CollisionObjectExPtr& model1 = models[i];
-        if(model1){
+        if(auto& model1 = models[i]){
             for(int j = i+1; j < n; ++j){
-                CollisionObjectExPtr& model2 = models[j];
-                if(model2){
+                if(auto& model2 = models[j]){
                     if(!model1->isStatic || !model2->isStatic){
-                        if(nonInterfarencePairs.find(IdPair<>(i, j)) == nonInterfarencePairs.end()){
-                            modelPairs.insert(IdPair<>(i,j));
+                        IdPair<GeometryHandle> handlePair(getHandle(model1), getHandle(model2));
+                        if(nonInterfarencePairs.find(handlePair) == nonInterfarencePairs.end()){
+                            modelPairs.push_back(make_pair(model1, model2));
                         }
                     }
                 }
@@ -389,27 +349,40 @@ bool FCLCollisionDetectorImpl::makeReady()
 }
 
 
-void FCLCollisionDetector::updatePosition(int geometryId, const Position& position)
+void FCLCollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
 {
-    impl->updatePosition(geometryId, position);
+    if(auto model = getCollisionModel(geometry)){
+        impl->updatePosition(model, position);
+    }
 }
 
 
-void FCLCollisionDetectorImpl::updatePosition(int geometryId, const Position& position)
+void FCLCollisionDetector::Impl::updatePosition(CollisionModel* model, const Position& position)
 {
-    CollisionObjectExPtr& model = models[geometryId];
-    if(model){
-        if(model->meshObject){
-            model->meshObject->setTransform(position);
+    auto T = convertToFclTransform(position);
+    if(model->meshObject){
+        model->meshObject->setTransform(T);
+    }
+    auto pLocalPosition = model->primitiveLocalPositions.begin();
+    for(auto& primitive : model->primitiveObjects){
+        if(primitive){
+            const auto& T_local = *pLocalPosition;
+            primitive->setTransform(T * T_local);
         }
-        vector<Transform3d, Eigen::aligned_allocator<Transform3d> >::iterator itt = model->primitiveLocalT.begin();
-        for(vector<CollisionObjectPtr>::iterator it = model->primitiveObjects.begin();
-            it!=model->primitiveObjects.end(); it++, itt++)
-            if(*it){
-                fcl::Transform3d trans;
-                trans = position * (*itt);
-                (*it)->setTransform(trans);
-            }
+        ++pLocalPosition;
+    }
+}
+
+
+void FCLCollisionDetector::updatePositions
+(std::function<void(Referenced* object, Position*& out_position)> positionQuery)
+{
+    for(auto& model : impl->models){
+        if(model && model->object){
+            Position* pPosition;
+            positionQuery(model->object, pPosition);
+            impl->updatePosition(model, *pPosition);
+        }
     }
 }
 
@@ -420,68 +393,93 @@ void FCLCollisionDetector::detectCollisions(std::function<void(const CollisionPa
 }
 
 
-void FCLCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
+void FCLCollisionDetector::Impl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     CollisionPair collisionPair;
-    vector<Collision>& collisions = collisionPair.collisions;
+    auto& collisions = collisionPair.collisions();
 
-    for(IdPairSet::iterator it = modelPairs.begin(); it!=modelPairs.end(); it++){
-        CollisionObjectExPtr& model1 = models[(*it)(0)];
-        CollisionObjectExPtr& model2 = models[(*it)(1)];
+    for(auto& modelPair : modelPairs){
+        auto& model1 = modelPair.first;
+        auto& model2 = modelPair.second;
         collisions.clear();
 
         if(model1->meshObject){
-            if(model2->meshObject)
+            if(model2->meshObject){
                 detectObjectCollisions(model1->meshObject.get(), model2->meshObject.get(), collisionPair);
-            for(vector<CollisionObjectPtr>::iterator itt = model2->primitiveObjects.begin();
-                itt!=model2->primitiveObjects.end(); itt++)
-                detectObjectCollisions(model1->meshObject.get(), (*itt).get(), collisionPair);
+            }
+            for(auto& primitive : model2->primitiveObjects){
+                detectObjectCollisions(model1->meshObject.get(), primitive.get(), collisionPair);
+            }
         }
-        for(vector<CollisionObjectPtr>::iterator iter = model1->primitiveObjects.begin();
-            iter!=model1->primitiveObjects.end(); iter++){
-            if(model2->meshObject)
-                detectObjectCollisions((*iter).get(), model2->meshObject.get(), collisionPair);
-            for(vector<CollisionObjectPtr>::iterator itt = model2->primitiveObjects.begin();
-                itt!=model2->primitiveObjects.end(); itt++)
-                detectObjectCollisions((*iter).get(), (*itt).get(), collisionPair);
+        for(auto& primitive1 : model1->primitiveObjects){
+            if(model2->meshObject){
+                detectObjectCollisions(primitive1.get(), model2->meshObject.get(), collisionPair);
+            }
+            for(auto& primitive2 : model2->primitiveObjects){
+                detectObjectCollisions(primitive1.get(), primitive2.get(), collisionPair);
+            }
         }
 
         if(!collisions.empty()){
-            collisionPair.geometryId[0] = (*it)(0);
-            collisionPair.geometryId[1] = (*it)(1);
+            collisionPair.geometry(0) = getHandle(model1);
+            collisionPair.geometry(1) = getHandle(model2);
+            collisionPair.object(0) = model1->object;
+            collisionPair.object(1) = model2->object;
             callback(collisionPair);
         }
     }
-
 }
 
 
-void FCLCollisionDetectorImpl::detectObjectCollisions(CollisionObjectd* object1, CollisionObjectd* object2, CollisionPair& collisionPair)
+void FCLCollisionDetector::Impl::detectObjectCollisions
+(fcl::CollisionObject* object1, fcl::CollisionObject* object2, CollisionPair& collisionPair)
 {
-    vector<Collision>& collisions = collisionPair.collisions;
-    CollisionRequestd request(std::numeric_limits<int>::max(), true);
-    CollisionResultd result;
-    std::vector<Contactd> contacts;
-    int numContacts = collide(object1, object2, request, result);
+    vector<Collision>& collisions = collisionPair.collisions();
 
+    fcl::CollisionRequest request(std::numeric_limits<int>::max(), true);
+    fcl::CollisionResult result;
+    int numContacts = collide(object1, object2, request, result);
+    std::vector<fcl::Contact> contacts;
     result.getContacts(contacts);
 
-    for (int j=0;j<result.numContacts();j++)
-    {
-        if(contacts[j].penetration_depth<0)
-            contacts[j].penetration_depth *= -1;
-        if(contacts[j].penetration_depth < 1e-6)
+    for(auto& contact : contacts){
+        if(contact.penetration_depth < 0.0){
+            contact.penetration_depth *= -1.0;
+        }
+        if(contact.penetration_depth < 1.0e-6){
             continue;
+        }
 
-        fcl::Vector3d& pos = contacts[j].pos;
-        fcl::Vector3d& normal = contacts[j].normal;
         collisions.push_back(Collision());
-        Collision& collision = collisions.back();
-        collision.point = Vector3(pos[0], pos[1], pos[2]);
-        collision.normal = Vector3(normal[0], normal[1], normal[2]);
-        collision.depth = contacts[j].penetration_depth;
+        auto& collision = collisions.back();
+        auto& p = contact.pos;
+        collision.point << p[0], p[1], p[2];
+        auto& n = contact.normal;
+        collision.normal << n[0], n[1], n[2];
+        collision.depth = contact.penetration_depth;
     }
-
-
 }
 
+
+class FCLPlugin : public Plugin
+{
+public:
+    FCLPlugin() : Plugin("FCL")
+    { 
+        require("Body");
+    }
+        
+    virtual bool initialize()
+    {
+        return CollisionDetector::registerFactory(
+            "FCLCollisionDetector",
+            []() -> CollisionDetector* { return new FCLCollisionDetector; });
+    }
+        
+    virtual bool finalize()
+    {
+        return true;
+    }
+};
+
+CNOID_IMPLEMENT_PLUGIN_ENTRY(FCLPlugin);

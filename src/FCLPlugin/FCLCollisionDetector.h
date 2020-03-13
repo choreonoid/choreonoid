@@ -1,41 +1,36 @@
-/**
-   \file
-   \author Shizuko Hattori
-*/
-
-#ifndef CNOID_FCLPLUGIN__FCL_COLLISION_DETECTOR_H_INCLUDED
-#define CNOID_FCLPLUGIN__FCL_COLLISION_DETECTOR_H_INCLUDED
+#ifndef CNOID_FCLPLUGIN_FCL_COLLISION_DETECTOR_H
+#define CNOID_FCLPLUGIN_FCL_COLLISION_DETECTOR_H
 
 #include <cnoid/CollisionDetector>
-#include <memory>
-namespace cnoid {
 
-class FCLCollisionDetectorImpl;
+namespace cnoid {
 
 class FCLCollisionDetector : public CollisionDetector
 {
 public:
     FCLCollisionDetector();
     virtual ~FCLCollisionDetector();
-    virtual const char* name() const;
-    virtual CollisionDetector* clone() const;
-    virtual void clearGeometries();
-    virtual int numGeometries() const;
-    virtual int addGeometry(SgNode* geometry);
-    virtual void setGeometryStatic(int geometryId, bool isStatic = true);
-    virtual bool enableGeometryCache(bool on);
-    virtual void clearGeometryCache(SgNode* geometry);
-    virtual void clearAllGeometryCaches();
-    virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
-    virtual bool makeReady();
-    virtual void updatePosition(int geometryId, const Position& position);
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback);
+    virtual const char* name() const override;
+    virtual CollisionDetector* clone() const override;
+    virtual void clearGeometries() override;
+    virtual int numGeometries() const override;
+    virtual stdx::optional<GeometryHandle> addGeometry(SgNode* geometry) override;
+    virtual void setCustomObject(GeometryHandle geometry, Referenced* object) override;
+    virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) override;
+    virtual void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2) override;
+    virtual bool makeReady() override;
+    virtual void updatePosition(GeometryHandle geometry, const Position& position) override;
+    virtual void updatePositions(
+        std::function<void(Referenced* object, Position*& out_position)> positionQuery) override;
+    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) override;
 
 private:
-    FCLCollisionDetectorImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<FCLCollisionDetector> FCLCollisionDetectorPtr;
+
 }
 
 #endif

@@ -26,6 +26,7 @@ libassimp-dev \
 libsdformat6-dev \
 libogre-1.9-dev \
 libode-dev \
+libfcl-dev \
 libomniorb4-dev \
 libcos4-dev \
 omniidl \
