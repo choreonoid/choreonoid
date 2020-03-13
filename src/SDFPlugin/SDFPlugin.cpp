@@ -3,53 +3,99 @@
   @author Shizuko Hattori, Shin'ichiro Nakaoka
 */
 
+#include "SDFBodyLoader.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
+#include <cnoid/ItemFileIO>  
 #include <cnoid/BodyLoader>
 #include <cnoid/BodyItem>
+#include <sdf/sdf.hh>
+#include <OGRE/OgreRoot.h>
 #include <memory>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-#include <sdf/sdf.hh>
-#include "SDFBodyLoader.h"
-#include <OGRE/OgreRoot.h>
+#include "gettext.h"
 
 using namespace std;
-
 using namespace cnoid;
 
 namespace {
-    
-bool loadBodyItem(BodyItem* item, const std::string& filename)
-{
-    SDFBodyLoader loader;
-    return loader.load(item, filename);
-
-}
     
 AbstractBodyLoaderPtr sdfBodyLoaderFactory()
 {
     return make_shared<SDFBodyLoader>();
 }
 
+class UrdfFileIO : public ItemFileIOBase<BodyItem>
+{
+    unique_ptr<SDFBodyLoader> loader;
+
+public:
+    UrdfFileIO()
+        : ItemFileIOBase<BodyItem>("URDF", Load)
+    {
+        setCaption(_("ROS / Gazebo model"));
+        setFileTypeCaption(_("URDF"));
+        setExtensions({ "urdf", "xacro" });
+        addFormatIdAlias("GAZEBO-MODEL"); // for the backward compatibility
+        setInterfaceLevel(Conversion);
+    }
+
+    virtual bool load(BodyItem* item, const std::string& filename) override
+    {
+        if(!loader){
+            loader.reset(new SDFBodyLoader);
+            loader->setMessageSink(os());
+        }
+        return loader->load(item, filename);
+    }
+};
+
+class SdfFileIO : public ItemFileIOBase<BodyItem>
+{
+    unique_ptr<SDFBodyLoader> loader;
+
+public:
+    SdfFileIO()
+        : ItemFileIOBase<BodyItem>("SDF", Load)
+    {
+        setCaption(_("ROS / Gazebo model"));
+        setFileTypeCaption(_("SDF"));
+        setExtensions({ "sdf", "xacro" });
+        addFormatIdAlias("GAZEBO-MODEL"); // for the backward compatibility
+        setInterfaceLevel(Conversion);
+    }
+
+    virtual bool load(BodyItem* item, const std::string& filename) override
+    {
+        if(!loader){
+            loader.reset(new SDFBodyLoader);
+            loader->setMessageSink(os());
+        }
+        return loader->load(item, filename);
+    }
+};
+
+
 class SDFPlugin : public Plugin
 {
+    Ogre::Root* ogreRoot;
+
 public:
-    SDFPlugin() : Plugin("SDF") {
+    SDFPlugin() : Plugin("SDF")
+    {
         require("Body");
         require("Assimp");
     }
         
-    virtual ~SDFPlugin() {
-    }
-    
-    virtual bool initialize() {
+    virtual bool initialize()
+    {
         BodyLoader::registerLoader("sdf", sdfBodyLoaderFactory);
         BodyLoader::registerLoader("urdf", sdfBodyLoaderFactory);
-        itemManager().addLoader<BodyItem>(
-            "Gazebo Model File", "GAZEBO-MODEL", "sdf;urdf",
-            [](SceneItem* item, const std::string& filename, std::ostream&, Item*){
-                return loadBodyItem(item, filename); });
+
+        auto& im = itemManager();
+        im.registerFileIO<BodyItem>(new UrdfFileIO);
+        im.registerFileIO<BodyItem>(new SdfFileIO);
 
         addModelSearchPath("GAZEBO_MODEL_PATH");
         addModelSearchPath("ROS_PACKAGE_PATH");
@@ -60,9 +106,9 @@ public:
         return true;
     }
         
-    virtual bool finalize() {
+    virtual bool finalize()
+    {
         delete ogreRoot;
-
         return true;
     }
 
@@ -88,10 +134,6 @@ public:
 
         return;
     }
-
-private:
-
-    Ogre::Root* ogreRoot;
 };
 
 }

@@ -19,7 +19,8 @@
 #include <cnoid/RootItem>
 #include <cnoid/EigenUtil>
 #include <cnoid/PolymorphicFunctionSet>
-#include <cnoid/std/filesystem>
+#include <cnoid/NullOut>
+#include <cnoid/stdx/filesystem>
 #include <sdf/sdf.hh>
 #include <sdf/parser_urdf.hh>
 #include <ignition/math.hh>
@@ -56,44 +57,6 @@ double getLimitValue(double val, double defaultValue)
 }
 
 namespace cnoid {
-
-class MaterialTextureInstructor
-{
-public:
-    PolymorphicFunctionSet<SgNode> functions;
-
-    MaterialTextureInstructor( SgMaterial* material, SgTexture* texture ) :
-        material(material), texture(texture) {
-        functions.setFunction<SgGroup>(
-                [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
-        functions.setFunction<SgShape>(
-                [&](SgNode* node){ visitShape(static_cast<SgShape*>(node)); });
-        functions.updateDispatchTable();
-    };
-
-    bool set(SgNode* node){
-        functions.dispatch(node);
-        return true;
-    }
-
-    void visitGroup(SgGroup* group)
-    {
-        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-            functions.dispatch(*p);
-        }
-    }
-
-    void visitShape(SgShape* shape){
-        if(material)
-            shape->setMaterial(material);
-        if(texture)
-            shape->setTexture(texture);
-    };
-
-private:
-    SgMaterial* material;
-    SgTexture* texture;
-};
 
 class GeometryInfo : public Referenced
 {
@@ -227,8 +190,10 @@ public:
     }
 
     Link* createLink(Body* body);
-    SgNode* convertVisualShape(Matrix3& Rs);
-    SgNode* convertCollisionShape(Matrix3& Rs);
+    void setVisualShape(Link* link);
+    void setMaterialAndTextureForSubTree(
+        SgNode* node, SgMaterial* material, SgTexture* texture);
+    void setCollisionShape(Link* link);
     void ConvertForceSensorFrame(SensorInfo* sensorInfo, Affine3& pose);
 
 };
@@ -299,8 +264,6 @@ class SDFBodyLoaderImpl
 public:   
     ostream* os_;
     bool isVerbose;
-    std::vector<JointInfoPtr> joints;
-    std::map<std::string, LinkInfoPtr> linkdataMap;
     typedef std::map<std::string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
     SceneLoader sceneLoader;
@@ -408,8 +371,9 @@ Link* LinkInfo::createLink(Body* body_)
     link->setCenterOfMass(link->Rs() * c_.translation());
     link->setInertia(link->Rs() * c_.linear() * I * c_.linear().transpose() * link->Rs().transpose());
 
-    link->setVisualShape(convertVisualShape(link->Rs()));
-    link->setCollisionShape(convertCollisionShape(link->Rs()));
+    setVisualShape(link);
+    setCollisionShape(link);
+    link->updateShapeRs();
 
     link->setJointType( jointInfo->convertJointType() );
 
@@ -478,16 +442,12 @@ void LinkInfo::ConvertForceSensorFrame(SensorInfo* sensorInfo, Affine3& pose)
 }
 
 
-SgNode* LinkInfo::convertVisualShape(Matrix3& Rs)
+void LinkInfo::setVisualShape(Link* link)
 {
-    if(!visuals.size())
-        return 0;
+    if(visuals.empty())
+        return;
 
-    SgPosTransform* transformRs = new SgPosTransform;
-    transformRs->setRotation(Rs);
-
-    for(vector<VisualInfoPtr>::iterator it = visuals.begin();
-            it != visuals.end(); it++){
+    for(auto it = visuals.begin(); it != visuals.end(); ++it){
         SgMaterial* material = impl->convertMaterial((*it)->material.get(), (*it)->transparency);
         SgTexture* texture = impl->convertTexture((*it)->material.get(), body->modelName());
 
@@ -497,9 +457,8 @@ SgNode* LinkInfo::convertVisualShape(Matrix3& Rs)
             if(!node)
                 continue;
 
-            MaterialTextureInstructor materialTextureInstructor(material, texture);
-            materialTextureInstructor.set(node);
-
+            setMaterialAndTextureForSubTree(node, material, texture);
+            
             SgShape* shape = dynamic_cast<SgShape*>(node);
             Affine3& pose = (*it)->pose;
             if(shape && shape->getOrCreateMesh()->primitiveType() == SgMesh::CYLINDER){
@@ -517,24 +476,35 @@ SgNode* LinkInfo::convertVisualShape(Matrix3& Rs)
             }else{
                 transform->addChild(node);
             }
-            transformRs->addChild(transform);
+            link->addVisualShapeNode(transform);
         }
     }
-
-    return transformRs;
 }
 
 
-SgNode* LinkInfo::convertCollisionShape(Matrix3& Rs)
+void LinkInfo::setMaterialAndTextureForSubTree(SgNode* node, SgMaterial* material, SgTexture* texture)
 {
-    if(!collisions.size())
-        return 0;
+    if(auto group = node->toGroup()){
+        for(auto& child : *group){
+            setMaterialAndTextureForSubTree(child, material, texture);
+        }
+    } else if(auto shape = dynamic_cast<SgShape*>(node)){
+        if(material){
+            shape->setMaterial(material);
+        }
+        if(texture){
+            shape->setTexture(texture);
+        }
+    }
+}
 
-    SgPosTransform* transformRs = new SgPosTransform;
-    transformRs->setRotation(Rs);
 
-    for(vector<CollisionInfoPtr>::iterator it = collisions.begin();
-            it != collisions.end(); it++){
+void LinkInfo::setCollisionShape(Link* link)
+{
+    if(collisions.empty())
+        return;
+
+    for(auto it = collisions.begin(); it != collisions.end(); it++){
         GeometryInfo* geometry = (*it)->geometry.get();
         if(geometry){
             SgNode* node = geometry->sgNode.get();
@@ -558,11 +528,9 @@ SgNode* LinkInfo::convertCollisionShape(Matrix3& Rs)
             }else{
                 transform->addChild(node);
             }
-            transformRs->addChild(transform);
+            link->addCollisionShapeNode(transform);
         }
     }
-
-    return transformRs;
 }
 
 
@@ -755,7 +723,6 @@ bool SDFBodyLoaderImpl::load(BodyItem* item, const std::string& filename)
         if(bodyItem->name().empty()){
             bodyItem->setName(body->modelName());
         }
-        bodyItem->setEditable(!body->isStaticModel());
     }
 
     if(worldItem)
@@ -767,6 +734,8 @@ bool SDFBodyLoaderImpl::load(BodyItem* item, const std::string& filename)
 
 void  SDFBodyLoaderImpl::readSDF(const std::string& filename, vector<ModelInfoPtr>& models)
 {
+    imagePathToSgImageMap.clear();
+    
     try {
         sdf::ElementPtr root = NULL;
 
