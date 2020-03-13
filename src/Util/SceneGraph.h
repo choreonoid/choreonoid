@@ -17,9 +17,10 @@
 namespace cnoid {
 
 class CloneMap;
-
 class SgObject;
-typedef ref_ptr<SgObject> SgObjectPtr;
+class SgNode;
+class SgGroup;
+typedef std::vector<SgNode*> SgNodePath;
 
 class CNOID_EXPORT SgUpdate
 {
@@ -120,10 +121,8 @@ private:
     Signal<void(bool on)> sigGraphConnection_;
 };
 
+typedef ref_ptr<SgObject> SgObjectPtr;
 
-class SgNode;
-typedef ref_ptr<SgNode> SgNodePtr;
-typedef std::vector<SgNode*> SgNodePath;
 
 class CNOID_EXPORT SgNode : public SgObject
 {
@@ -146,7 +145,6 @@ public:
     }
 
     virtual const BoundingBox& boundingBox() const;
-    virtual bool isGroup() const;
 
     SgNodePath findNode(const std::string& name, Affine3& out_T);
 
@@ -163,16 +161,25 @@ public:
         return findClassId(typeid(NodeType));
     }
 
+    enum NodeAttribute { GroupAttribute = 1, NumAttributes };
+    
+    bool isGroup() const { return attributes_ & GroupAttribute; }
+    SgGroup* toGroup();
+
 protected:
     SgNode(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    void setAttribute(int attribute){ attributes_ &= attribute; }
 
 private:
     int classId_;
+    unsigned char attributes_;
 
     //! \deprecated
     static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);    
 };
+
+typedef ref_ptr<SgNode> SgNodePtr;
 
 
 class CNOID_EXPORT SgGroup : public SgNode
@@ -193,7 +200,6 @@ public:
     virtual SgObject* childObject(int index) override;
     virtual void onUpdated(SgUpdate& update) override;
     virtual const BoundingBox& boundingBox() const override;
-    virtual bool isGroup() const override;
     
     void invalidateBoundingBox() { isBboxCacheValid = false; }
 
@@ -268,6 +274,12 @@ private:
 };
 
 typedef ref_ptr<SgGroup> SgGroupPtr;
+
+
+inline SgGroup* SgNode::toGroup()
+{
+    return isGroup() ? static_cast<SgGroup*>(this) : nullptr;
+}
 
 
 class CNOID_EXPORT SgInvariantGroup : public SgGroup

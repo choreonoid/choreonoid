@@ -120,19 +120,21 @@ int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_inf
 SgNode::SgNode()
 {
     classId_ = findClassId<SgNode>();
+    attributes_ = 0;
 }
 
 
 SgNode::SgNode(int classId)
     : classId_(classId)
 {
-
+    attributes_ = 0;
 }
 
 
 SgNode::SgNode(const SgNode& org)
     : SgObject(org),
-      classId_(org.classId_)
+      classId_(org.classId_),
+      attributes_(org.attributes_)
 {
 
 }
@@ -154,12 +156,6 @@ const BoundingBox& SgNode::boundingBox() const
 {
     static const BoundingBox bbox; // empty one
     return bbox;
-}
-
-
-bool SgNode::isGroup() const
-{
-    return false;
 }
 
 
@@ -210,6 +206,7 @@ SgNodePath SgNode::findNode(const std::string& name, Affine3& out_T)
 SgGroup::SgGroup()
     : SgNode(findClassId<SgGroup>())
 {
+    setAttribute(GroupAttribute);
     isBboxCacheValid = false;
 }
 
@@ -217,6 +214,7 @@ SgGroup::SgGroup()
 SgGroup::SgGroup(int classId)
     : SgNode(classId)
 {
+    setAttribute(GroupAttribute);
     isBboxCacheValid = false;
 }
 
@@ -294,12 +292,6 @@ const BoundingBox& SgGroup::boundingBox() const
     isBboxCacheValid = true;
 
     return bboxCache;
-}
-
-
-bool SgGroup::isGroup() const
-{
-    return true;
 }
 
 
