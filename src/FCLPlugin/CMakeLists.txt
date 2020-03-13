@@ -22,12 +22,6 @@ else()
   endif()
 endif()
 
-message(STATUS "FCL_FOUND: ${FCL_FOUND}")
-message(STATUS "FCL_DIR: ${FCL_DIR}")
-message(STATUS "FCL_INCLUDE_DIRS: ${FCL_INCLUDE_DIRS}")
-message(STATUS "FCL_LIBRARY_DIRS: ${FCL_LIBRARY_DIRS}")
-message(STATUS "FCL_LIBRARIES: ${FCL_LIBRARIES}")
-
 include_directories(${FCL_INCLUDE_DIRS})
 link_directories(${FCL_LIBRARY_DIRS})
 
