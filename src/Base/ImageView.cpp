@@ -193,8 +193,10 @@ void ImageViewImpl::setImageableItem(ImageableItem* imageable)
         this->imageable = imageable;
         imageWidget->clear();
         sigUpdatedConnection.disconnect();
-        sigUpdatedConnection = imageable->sigImageUpdated().connect([&](){ updateImage(); });
-        updateImage();
+        if(imageable){
+            sigUpdatedConnection = imageable->sigImageUpdated().connect([&](){ updateImage(); });
+            updateImage();
+        }
     }
 }
 
