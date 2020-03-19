@@ -104,6 +104,7 @@ Link::Link(const Link& org)
     org.visualShape_->copyChildrenTo(visualShape_);
     collisionShape_ = new SgPosTransform;
     org.collisionShape_->copyChildrenTo(collisionShape_);
+    updateShapeRs();
     info_ = org.info_;
 }
 
