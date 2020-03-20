@@ -41,6 +41,7 @@ DigitalIoConnection::DigitalIoConnection(const DigitalIoConnection& org, CloneMa
         bodyName_[i] = org.bodyName_[i];
         deviceName_[i] = org.deviceName_[i];
     }
+    note_ = org.note_;
 }
 
 
@@ -119,14 +120,16 @@ bool DigitalIoConnection::read(const Mapping& archive)
     device_[Out] = nullptr;
     device_[In] = nullptr;
 
-    bodyName_[Out] = archive.get<string>("outBody");
-    bodyName_[In] = archive.get<string>("inBody");
+    bodyName_[Out] = archive.get<string>("out_body");
+    bodyName_[In] = archive.get<string>("in_body");
     
-    deviceName_[Out] = archive.get("outDevice", "");
-    deviceName_[In] = archive.get("inDevice", "");
+    deviceName_[Out] = archive.get("out_device", "");
+    deviceName_[In] = archive.get("in_device", "");
 
-    signalIndex_[Out] = archive.get<int>("outSignalIndex");
-    signalIndex_[In] = archive.get<int>("inSignalIndex");
+    signalIndex_[Out] = archive.get<int>("out_signal_index");
+    signalIndex_[In] = archive.get<int>("in_signal_index");
+
+    archive.read("note", note_);
 
     return true;
 }
@@ -134,19 +137,23 @@ bool DigitalIoConnection::read(const Mapping& archive)
 
 bool DigitalIoConnection::write(Mapping& archive) const
 {
-    archive.write("outBody", bodyName(Out), DOUBLE_QUOTED);
+    archive.write("out_body", bodyName(Out), DOUBLE_QUOTED);
     auto& outDeviceName = deviceName(Out);
     if(!outDeviceName.empty()){
-        archive.write("outDevice", outDeviceName, DOUBLE_QUOTED);
+        archive.write("out_device", outDeviceName, DOUBLE_QUOTED);
     }
-    archive.write("outSignalIndex", signalIndex(Out));
+    archive.write("out_signal_index", signalIndex(Out));
 
-    archive.write("inBody", bodyName(In), DOUBLE_QUOTED);
+    archive.write("in_body", bodyName(In), DOUBLE_QUOTED);
     auto& inDeviceName = deviceName(In);
     if(!inDeviceName.empty()){
-        archive.write("inDevice", inDeviceName, DOUBLE_QUOTED);
+        archive.write("in_device", inDeviceName, DOUBLE_QUOTED);
     }
-    archive.write("inSignalIndex", signalIndex(In));
+    archive.write("in_signal_index", signalIndex(In));
+
+    if(!note_.empty()){
+        archive.write("note", note_, DOUBLE_QUOTED);
+    }
 
     return true;
 }
@@ -226,7 +233,7 @@ bool IoConnectionMap::read(const Mapping& archive)
             format(_("{0} cannot be loaded as a signal I/O connection map"), typeNode.toString()));
     }
         
-    auto& versionNode = archive.get("formatVersion");
+    auto& versionNode = archive.get("format_version");
     auto version = versionNode.toDouble();
     if(version != 1.0){
         versionNode.throwException(format(_("Format version {0} is not supported."), version));
@@ -250,7 +257,7 @@ bool IoConnectionMap::read(const Mapping& archive)
 bool IoConnectionMap::write(Mapping& archive) const
 {
     archive.write("type", "IoConnectionMap");
-    archive.write("formatVersion", 1.0);
+    archive.write("format_version", 1.0);
 
     if(!connections_.empty()){
         Listing& connectionNodes = *archive.createListing("connections");

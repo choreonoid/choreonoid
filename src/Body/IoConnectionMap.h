@@ -58,6 +58,9 @@ public:
     void setOutDevice(DigitalIoDevice* device){ setDevice(Out, device); }
     void setOutSignalIndex(int index){ setSignalIndex(Out, index); }
 
+    const std::string& note(){ return note_; }
+    void setNote(const std::string& note){ note_ = note; }
+
     bool establishConnection();
     void releaseConnection();
 
@@ -73,6 +76,7 @@ private:
     int signalIndex_[2];
     std::string bodyName_[2];
     std::string deviceName_[2];
+    std::string note_;
     ScopedConnection connection;
 };
 typedef ref_ptr<DigitalIoConnection> DigitalIoConnectionPtr;

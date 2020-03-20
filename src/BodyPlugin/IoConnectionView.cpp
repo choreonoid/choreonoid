@@ -244,12 +244,14 @@ QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
             return getDeviceLabel(connection, DigitalIoConnection::In);
         case InSignalIndexColumn:
             return connection->inSignalIndex();
+        case NoteColumn:
+            return connection->note().c_str();
         default:
             break;
         }
     } else if(role == Qt::TextAlignmentRole){
         if(index.column() == NoteColumn){
-            return Qt::AlignLeft;
+            return Qt::AlignLeft + Qt::AlignVCenter;
         } else {
             return Qt::AlignCenter;
         }
@@ -310,6 +312,12 @@ bool ConnectionMapModel::setData(const QModelIndex& index, const QVariant& value
             connection->setInSignalIndex(value.toInt());
             Q_EMIT dataChanged(index, index, {role});
             return true;
+
+        case NoteColumn:
+            connection->setNote(value.toString().toStdString());
+            Q_EMIT dataChanged(index, index, {role});
+            return true;
+            
         default:
             break;
         }
