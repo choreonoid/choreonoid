@@ -290,7 +290,11 @@ public:
     virtual QWidget* createEditor(MprStatement* statement, int column, QWidget* parent) const override
     {
         if(column == 1){
-            return createDefaultEditor();
+            if(auto spin = dynamic_cast<QDoubleSpinBox*>(createDefaultEditor())){
+                spin->setRange(0.0, 999.99);
+                spin->setSingleStep(0.1);
+                return spin;
+            }
         }
         return nullptr;
     }
