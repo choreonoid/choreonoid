@@ -205,6 +205,8 @@ if(MSVC)
     set(linker_optimization_options "${linker_optimization_options} /LTCG")
   endif()
 
+  option(USE_SUBSYSTEM_CONSOLE "Attaching a console of Windows for debugging" OFF)
+
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS
     NOMINMAX _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
 endif()
