@@ -151,22 +151,27 @@ void BodySuperimposerItem::Impl::updateSuperimposedBodies()
     }
     needToUpdateSuperimposedBodies = false;
 
-    bool bodiesChanged = false;
-    set<BodyItem*> bodyItemSet;
-    for(size_t i=1; i < bodyInfos.size(); ++i){
-        auto& info = bodyInfos[i];
-        if(BodyItem* bodyItem = info->bodyItem.lock()){
-            bodyItemSet.insert(bodyItem);
-        } else {
-            bodiesChanged = true;
-            break;
-        }
-    }
+    bool bodiesChanged = bodyInfos.empty();
+
     if(!bodiesChanged){
-        if(checkBodySetChange(bodyItem, bodyItemSet) || !bodyItemSet.empty()){
-            bodiesChanged = true;
+        set<BodyItem*> bodyItemSet;
+        for(size_t i=1; i < bodyInfos.size(); ++i){
+            auto& info = bodyInfos[i];
+            auto bodyItem = info->bodyItem.lock();
+            if(bodyItem && bodyItem->isConnectedToRoot()){
+                bodyItemSet.insert(bodyItem);
+            } else {
+                bodiesChanged = true;
+                break;
+            }
+        }
+        if(!bodiesChanged){
+            if(checkBodySetChange(bodyItem, bodyItemSet) || !bodyItemSet.empty()){
+                bodiesChanged = true;
+            }
         }
     }
+    
     if(!bodiesChanged){
         return;
     }
