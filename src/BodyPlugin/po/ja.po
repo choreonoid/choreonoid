@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-11 15:33+0900\n"
+"POT-Creation-Date: 2020-03-20 14:10+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -514,7 +514,7 @@ msgstr ""
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:118 BodyItem.cpp:1547
+#: LinkPropertyView.cpp:118 BodyItem.cpp:1592
 msgid "Mass"
 msgstr "質量"
 
@@ -658,7 +658,7 @@ msgstr "座標系"
 msgid "World"
 msgstr "ワールド"
 
-#: LinkPositionView.cpp:230 BodyItem.cpp:198 BodyItem.cpp:232
+#: LinkPositionView.cpp:230 BodyItem.cpp:201 BodyItem.cpp:235
 msgid "Body"
 msgstr "ボディ"
 
@@ -908,7 +908,7 @@ msgstr "{}はこのワールドの他のシミュレータも選択されてい�
 msgid "BodySuperimposerItem"
 msgstr "ボディスーパーインポーズアイテム"
 
-#: BodySuperimposerItem.cpp:293 BodyItem.cpp:1559
+#: BodySuperimposerItem.cpp:298 BodyItem.cpp:1604
 msgid "Transparency"
 msgstr "透明度"
 
@@ -1188,71 +1188,75 @@ msgstr ""
 "B-Splineフィルタを{0}に適用中: 入力フレームレート = {1}, 出力フレームレート "
 "= {2}"
 
-#: BodyItem.cpp:233
+#: BodyItem.cpp:236
 msgid "Scene / Mesh"
 msgstr "シーン／メッシュ"
 
-#: BodyItem.cpp:286
+#: BodyItem.cpp:289
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1423
+#: BodyItem.cpp:1468
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1464
+#: BodyItem.cpp:1509
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1541
+#: BodyItem.cpp:1586
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1542
+#: BodyItem.cpp:1587
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1543
+#: BodyItem.cpp:1588
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1544
+#: BodyItem.cpp:1589
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1545
+#: BodyItem.cpp:1590
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1546
+#: BodyItem.cpp:1591
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1548
+#: BodyItem.cpp:1593
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1550 WorldItem.cpp:500
+#: BodyItem.cpp:1595 WorldItem.cpp:500
 msgid "Collision detection"
 msgstr "干渉検出"
 
-#: BodyItem.cpp:1552
+#: BodyItem.cpp:1597
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1554
+#: BodyItem.cpp:1599
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1556
+#: BodyItem.cpp:1601
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1716
+#: BodyItem.cpp:1608
+msgid "Enable attachment"
+msgstr "アタッチメント有効化"
+
+#: BodyItem.cpp:1770
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1733
+#: BodyItem.cpp:1787
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1724,20 +1728,3 @@ msgstr "ダイヤル"
 msgid "Phase"
 msgstr "位相"
 
-#~ msgid "[ Mesh import hints ]"
-#~ msgstr "[ メッシュインポートのヒント ]"
-
-#~ msgid "Unit:"
-#~ msgstr "単位："
-
-#~ msgid "Meter"
-#~ msgstr "メートル"
-
-#~ msgid "Millimeter"
-#~ msgstr "ミリメートル"
-
-#~ msgid "Inch"
-#~ msgstr "インチ"
-
-#~ msgid "Upper axis:"
-#~ msgstr "上方軸："

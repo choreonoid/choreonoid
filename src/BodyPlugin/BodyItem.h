@@ -48,11 +48,14 @@ public:
     BodyItem* parentBodyItem();
     // True if the body is attached to the parent body with a holder device and an attachment device
     bool isAttachedToParentBody() const;
+    void setAttachmentEnabled(bool on);
+    bool isAttachmentEnabled() const;
+
     // The current parent body can temporarily be changed by this function
-    void setTemporalParentBodyItem(BodyItem* parentBodyItem);
+    //void setTemporalParentBodyItem(BodyItem* parentBodyItem);
     // The parent body item defined by the parent-child relationship in the item tree is restored
     // if the relationship exists. Otherwise, the parent body item is cleared.
-    void resetParentBodyItem();
+    //void resetParentBodyItem();
         
     void moveToOrigin();
     enum PresetPoseID { INITIAL_POSE, STANDARD_POSE };

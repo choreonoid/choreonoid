@@ -109,6 +109,7 @@ public:
     ScopedConnection parentBodyItemConnection;
     bool isKinematicStateChangeNotifiedByParentBodyItem;
     bool isProcessingInverseKinematicsIncludingParentBody;
+    bool isAttachmentEnabled;
 
     enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_FLAGS };
     std::bitset<NUM_UPUDATE_FLAGS> updateFlags;
@@ -174,6 +175,8 @@ public:
     void doAssign(Item* srcItem);
     void createSceneBody();
     void setTransparency(float t);
+    void updateAttachment(bool on, bool forceUpdate);
+    bool isAttachable() const;
     void setParentBodyItem(BodyItem* bodyItem);
     Link* attachToBodyItem(BodyItem* bodyItem);
     void setRelativeOffsetPositionFromParentBody();
@@ -314,10 +317,21 @@ BodyItem::BodyItem()
 }
     
 
+BodyItem::Impl::Impl(BodyItem* self, Body* body)
+    : self(self),
+      body(body),
+      sigKinematicStateChanged([&](){ emitSigKinematicStateChanged(); }),
+      sigKinematicStateEdited([&](){ emitSigKinematicStateEdited(); })
+{
+
+}
+
+
 BodyItem::Impl::Impl(BodyItem* self)
     : Impl(self, new Body)
 {
     body->rootLink()->setName("Root");
+    isAttachmentEnabled = true;
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
 }
@@ -340,22 +354,13 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
         setCurrentBaseLink(nullptr, true);
     }
 
+    isAttachmentEnabled = org.isAttachmentEnabled;
     transparency = org.transparency;
     zmp = org.zmp;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
 
     initialState = org.initialState;
-}
-
-
-BodyItem::Impl::Impl(BodyItem* self, Body* body)
-    : self(self),
-      body(body),
-      sigKinematicStateChanged([&](){ emitSigKinematicStateChanged(); }),
-      sigKinematicStateEdited([&](){ emitSigKinematicStateEdited(); })
-{
-
 }
 
 
@@ -1276,10 +1281,8 @@ void BodyItem::Impl::doAssign(Item* srcItem)
 
 void BodyItem::onPositionChanged()
 {
-    auto ownerBodyItem = findOwnerItem<BodyItem>();
-    if(ownerBodyItem != impl->parentBodyItem){
-        impl->setParentBodyItem(ownerBodyItem);
-    }
+    impl->updateAttachment(true, true);
+
     auto worldItem = findOwnerItem<WorldItem>();
     if(!worldItem){
         clearCollisions();
@@ -1403,16 +1406,58 @@ BodyItem* BodyItem::parentBodyItem()
 }
 
 
+void BodyItem::setAttachmentEnabled(bool on)
+{
+    if(on != impl->isAttachmentEnabled){
+        impl->isAttachmentEnabled = on;
+        impl->updateAttachment(on, false);
+    }
+}
+
+
+void BodyItem::Impl::updateAttachment(bool on, bool forceUpdate)
+{
+    BodyItem* newParentBodyItem = nullptr;
+    if(on && isAttachmentEnabled){
+        if(forceUpdate || !self->isAttachedToParentBody()){
+            newParentBodyItem = self->findOwnerItem<BodyItem>();
+        }
+    }
+    if(newParentBodyItem != parentBodyItem){
+        setParentBodyItem(newParentBodyItem);
+    }
+}
+
+
+bool BodyItem::isAttachmentEnabled() const
+{
+    return impl->isAttachmentEnabled;
+}
+
+
 bool BodyItem::isAttachedToParentBody() const
 {
     return impl->attachmentToParent != nullptr;
 }
 
 
+bool BodyItem::Impl::isAttachable() const
+{
+    for(auto& attachment : body->devices<AttachmentDevice>()){
+        if(attachment->link()->isBodyRoot()){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+/*
 void BodyItem::resetParentBodyItem()
 {
     impl->setParentBodyItem(findOwnerItem<BodyItem>());
 }
+*/
 
 
 void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
@@ -1558,6 +1603,11 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.min(0.0).max(0.9).decimals(1);
     putProperty(_("Transparency"), transparency,
                 [&](float value){ setTransparency(value); return true; });
+
+    if(isAttachable()){
+        putProperty(_("Enable attachment"), isAttachmentEnabled,
+                    [&](bool on){ self->setAttachmentEnabled(on); return true; });
+    }
 }
 
 
@@ -1640,6 +1690,10 @@ bool BodyItem::Impl::store(Archive& archive)
         if(linkKinematicsKitManager->storeState(*kinematicsNode) && !kinematicsNode->empty()){
             archive.insert("link_kinematics", kinematicsNode);
         }
+    }
+
+    if(isAttachable()){
+        archive.write("enable_attachment", isAttachmentEnabled);
     }
 
     if(transparency > 0.0f){
@@ -1780,6 +1834,8 @@ bool BodyItem::Impl::restore(const Archive& archive)
     if(kinematicsNode->isValid()){
         getOrCreateLinkKinematicsKitManager()->restoreState(*kinematicsNode);
     }
+
+    archive.read("enable_attachment", isAttachmentEnabled);
 
     double t;
     if(archive.read("transparency", t)){
