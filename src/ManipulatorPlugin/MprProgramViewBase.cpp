@@ -726,6 +726,7 @@ void MprProgramViewBase::onAttachedMenuRequest(MenuManager& menuManager)
             if(impl->programItem){
                 impl->programItem->program()->renumberPositionIds();
                 impl->programItem->notifyUpdate();
+                impl->programItem->suggestFileUpdate();
                 updateStatementTree();
             }
         });

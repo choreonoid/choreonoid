@@ -106,8 +106,10 @@ Item* MprProgramItemBase::doDuplicate() const
 void MprProgramItemBase::setName(const std::string& name)
 {
     Item::setName(name);
-    impl->program->setName(name);
-    suggestFileUpdate();
+    if(name != impl->program->name()){
+        impl->program->setName(name);
+        suggestFileUpdate();
+    }
 }
 
 
@@ -265,19 +267,11 @@ bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement)
 
     if(result){
         impl->program->notifyStatementUpdate(statement);
-        suggestFileUpdate();
     }
 
     return result;
 }
 
-
-void MprProgramItemBase::notifyUpdate()
-{
-    Item::notifyUpdate();
-    suggestFileUpdate();
-}
-    
 
 void MprProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
 {

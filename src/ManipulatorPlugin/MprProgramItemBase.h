@@ -38,7 +38,6 @@ public:
     
     bool touchupPosition(MprPositionStatement* statement);
 
-    virtual void notifyUpdate() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
