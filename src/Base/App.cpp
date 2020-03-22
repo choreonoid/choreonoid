@@ -72,9 +72,11 @@
 #include <QStyleFactory>
 #include <iostream>
 #include <csignal>
+#include <cstdlib>
 
 #ifdef Q_OS_WIN32
 #include <windows.h>
+#include <mbctype.h>
 #endif
 
 #include "gettext.h"
@@ -95,6 +97,9 @@ void onCtrl_C_Input(int)
 }
 
 #ifdef Q_OS_WIN32
+int argc_winmain;
+vector<char*> argv_winmain{ "application" };
+
 BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 {
     callLater([](){ MainWindow::instance()->close(); });
@@ -111,7 +116,7 @@ class App::Impl : public QObject
     App* self;
     QApplication* qapplication;
     int& argc;
-    char**& argv;
+    char** argv;
     ExtensionManager* ext;
     MainWindow* mainWindow;
     MessageView* messageView;
@@ -120,7 +125,7 @@ class App::Impl : public QObject
     DescriptionDialog* descriptionDialog;
     bool doQuit;
     
-    Impl(App* self, int& argc, char**& argv);
+    Impl(App* self, int& argc, char** argv);
     ~Impl();
     void initialize(const char* appName, const char* vendorName, const char* pluginPathList);
     int exec();
@@ -137,13 +142,13 @@ class App::Impl : public QObject
 }
 
 
-App::App(int& argc, char**& argv)
+App::App(int& argc, char** argv)
 {
     impl = new Impl(this, argc, argv);
 }
 
 
-App::Impl::Impl(App* self, int& argc, char**& argv)
+App::Impl::Impl(App* self, int& argc, char** argv)
     : self(self),
       argc(argc),
       argv(argv)
@@ -176,6 +181,40 @@ App::Impl::Impl(App* self, int& argc, char**& argv)
     connect(qapplication, &QApplication::focusChanged,
             [&](QWidget* old, QWidget* now){ onFocusChanged(old, now); });
 }
+
+
+#ifdef _WIN32
+App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+#ifndef UNICODE
+    vector<string> args = boost::program_options::split_winmain(lpCmdLine);
+    for(size_t i=0; i < args.size(); ++i){
+        char* arg = new char[args[i].size() + 1];
+        strcpy(arg, args[i].c_str());
+        argv_winmain.push_back(arg);
+    }
+#else
+    vector<wstring> wargs = boost::program_options::split_winmain(lpCmdLine);
+    vector<char> buf;
+    vector<string> args(wargs.size());
+    int codepage = _getmbcp();
+    for(size_t i=0; i < args.size(); ++i){
+        const int size = WideCharToMultiByte(codepage, 0, &wargs[i][0], wargs[i].size(), NULL, 0, NULL, NULL);
+        char* arg;
+        if(size > 0){
+            arg = new char[size + 1];
+            WideCharToMultiByte(codepage, 0, &wargs[i][0], wargs[i].size(), arg, size + 1, NULL, NULL);
+        } else {
+            arg = new char[1];
+            arg[0] = '\0';
+        }
+        argv_winmain.push_back(arg);
+    }
+#endif
+    argc_winmain = argv_winmain.size();
+    impl = new Impl(this, argc_winmain, &argv_winmain[0]);
+}
+#endif
 
 
 void App::initialize(const char* appName, const char* vendorName, const char* pluginPathList)
@@ -277,6 +316,9 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
                     Eigen::SimdInstructionSetsInUse()));
 
     PluginManager::initialize(ext);
+    if(!pluginPathList){
+        pluginPathList = getenv("CNOID_PLUGIN_PATH");
+    }
     PluginManager::instance()->doStartupLoading(pluginPathList);
 
     mainWindow->installEventFilter(this);
