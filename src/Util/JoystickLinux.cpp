@@ -184,6 +184,7 @@ class JoystickImpl
 {
 public:
     Joystick* self;
+    string device;
     ExtJoystick* extJoystick;
     int fd;
     ModelInfo currentModel;
@@ -206,8 +207,8 @@ public:
 
     JoystickImpl(Joystick* self, const string& device);
     ~JoystickImpl();
-    bool findDevice(const string& device);
-    bool openDevice(const string& device);
+    bool findDevice();
+    bool openDevice();
     bool setupDevice();
     void closeDevice();
     bool readCurrentState();
@@ -231,26 +232,27 @@ Joystick::Joystick(const char* device)
 
 
 JoystickImpl::JoystickImpl(Joystick* self, const string& device)
-    : self(self)
+    : self(self),
+      device(device)
 {
     fd = -1;
 
     extJoystick = ExtJoystick::findJoystick(device);
 
     if(!extJoystick){
-        if(!findDevice(device)){
+        if(!findDevice()){
             extJoystick = ExtJoystick::findJoystick("*");
         }
     }
 }
 
 
-bool JoystickImpl::findDevice(const string& device)
+bool JoystickImpl::findDevice()
 {
     bool found = false;
     
     if(!device.empty() && device != "*"){
-        found = openDevice(device);
+        found = openDevice();
 
     } else {
         closeDevice();
@@ -283,6 +285,9 @@ bool JoystickImpl::findDevice(const string& device)
 
             fd = tmpfd;
             found = setupDevice();
+            if(found){
+                device = file;
+            }
             break;
         }
     }
@@ -291,7 +296,7 @@ bool JoystickImpl::findDevice(const string& device)
 }
         
 
-bool JoystickImpl::openDevice(const string& device)
+bool JoystickImpl::openDevice()
 {
     closeDevice();
 
@@ -378,6 +383,15 @@ void JoystickImpl::closeDevice()
 }
 
 
+bool Joystick::makeReady()
+{
+    if(isReady()){
+        return true;
+    }
+    return impl->findDevice();
+}
+
+
 bool Joystick::isReady() const
 {
     return impl->extJoystick ? true : (impl->fd >= 0);
@@ -387,6 +401,12 @@ bool Joystick::isReady() const
 const char* Joystick::errorMessage() const
 {
     return impl->errorMessage.c_str();
+}
+
+
+std::string Joystick::device() const
+{
+    return impl->device;
 }
 
 

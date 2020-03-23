@@ -21,8 +21,10 @@ public:
     Joystick(const char* device);
     virtual ~Joystick();
 
+    std::string device() const;
     int fileDescriptor() const;
 
+    bool makeReady();
     bool isReady() const;
     const char* errorMessage() const;
 

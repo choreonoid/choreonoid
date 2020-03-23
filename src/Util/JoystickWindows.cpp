@@ -313,6 +313,13 @@ Joystick::~Joystick()
 }
 
 
+// The implementation of this function is incomplete
+bool Joystick::makeReady()
+{
+    return isReady();
+}
+
+
 bool Joystick::isReady() const
 {
     return impl->extJoystick ? true : (impl->id >= 0);
@@ -322,6 +329,12 @@ bool Joystick::isReady() const
 const char* Joystick::errorMessage() const
 {
     return impl->errorMessage.c_str();
+}
+
+
+std::string Joystick::device() const
+{
+    return std::to_string(impl->id);
 }
 
 
