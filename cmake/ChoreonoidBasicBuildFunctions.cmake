@@ -3,7 +3,6 @@ function(choreonoid_set_target_common_properties target)
     target_compile_options(${target} PRIVATE "-fvisibility=hidden")
   endif()
   if(MSVC)
-    target_link_options(${target} PRIVATE "/NODEFAULTLIB:LIBCMT")
     set_target_properties(${target} PROPERTIES DEBUG_POSTFIX d)
   endif()
 endfunction()
@@ -156,8 +155,6 @@ endfunction()
 function(choreonoid_add_executable target)
 
   add_executable(${target} ${ARGN})
-
-  choreonoid_set_target_common_properties(${target})
 
   set_target_properties(${target} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib

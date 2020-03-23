@@ -4,7 +4,6 @@ if(NOT BUILD_CHOREONOID_EXECUTABLE)
 endif()
 
 set(target choreonoid)
-
 set(sources main.cpp)
 if(WIN32)
   set(sources ${sources} choreonoid.rc)
@@ -14,12 +13,12 @@ target_link_libraries(${target} CnoidBase)
 set_target_properties(${target} PROPERTIES PROJECT_LABEL Application)
 
 if(MSVC)
-  if(USE_SUBSYSTEM_CONSOLE)
+  set_target_properties(${target} PROPERTIES DEBUG_POSTFIX -debug)
+  if(CHOREONOID_USE_SUBSYSTEM_CONSOLE)
     set_target_properties(${target} PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
   else()
     set_target_properties(${target} PROPERTIES WIN32_EXECUTABLE true)
   endif()
-  set_target_properties(${target} PROPERTIES DEBUG_POSTFIX -debug)
 endif()
 
 install(FILES choreonoid.1 DESTINATION share/man/man1)

@@ -17,16 +17,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     cnoid::App app(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
     return execute(app);
 }
-
-#else
+#endif
 
 int main(int argc, char *argv[])
 {
     cnoid::App app(argc, argv);
     return execute(app);
 }
-
-#endif
 
 int execute(cnoid::App& app)
 {
