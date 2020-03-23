@@ -63,6 +63,10 @@ public:
 
     void setLayout(QLayout* layout, double marginRatio = 0.0);
 
+    void setLayout(
+        QLayout* layout,
+        double leftMarginRatio, double topMarginRatio, double rightMarginRatio, double bottomMarginRatio);
+
     QPoint viewAreaPos() const;
 
     virtual QWidget* indicatorOnInfoBar();
@@ -76,7 +80,9 @@ public:
     virtual bool restoreState(const Archive& archive);
 
 protected:
-
+    void setLayoutContentsMarginRatio(
+        QLayout* layout,
+        double leftMarginRatio, double topMarginRatio, double rightMarginRatio, double bottomMarginRatio);
     void zoomFontSize(int zoom);
 
     virtual void onActivated();

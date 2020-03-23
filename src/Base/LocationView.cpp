@@ -99,7 +99,7 @@ LocationView::Impl::Impl(LocationView* self)
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
     auto vbox = new QVBoxLayout;
-    self->setLayout(vbox, 0.5);
+    self->setLayout(vbox, 1.0, 0.5, 1.0, 0.5);
 
     auto hbox = new QHBoxLayout;
     caption.setStyleSheet("font-weight: bold");

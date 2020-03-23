@@ -36,6 +36,7 @@ set(sources
   ItemPropertyView.cpp
   TargetItemPicker.cpp
   StringListComboBox.cpp
+  DisplayedValueFormatManager.cpp
   PositionWidget.cpp
   LocationView.cpp
   PositionEditManager.cpp
@@ -188,6 +189,7 @@ set(headers
   RenderableItem.h
   ImageableItem.h
   TargetItemPicker.h
+  DisplayedValueFormatManager.h
   PositionWidget.h
   PositionEditManager.h
   PutPropertyFunction.h

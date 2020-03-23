@@ -25,6 +25,7 @@
 #include <cnoid/ButtonGroup>
 #include <cnoid/ActionGroup>
 #include <cnoid/Selection>
+#include <QScrollArea>
 #include <QLabel>
 #include <QGridLayout>
 #include <QStyle>
@@ -190,9 +191,24 @@ LinkPositionView::~LinkPositionView()
 
 void LinkPositionView::Impl::createPanel()
 {
-    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    self->setDefaultLayoutArea(View::CENTER);
 
+    auto baseLayout = new QVBoxLayout;
+    self->setLayout(baseLayout);
+
+    auto scrollArea = new QScrollArea;
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrollArea->setWidgetResizable(true);
+    baseLayout->addWidget(scrollArea);
+    
+    auto baseWidget = new QWidget;
+    baseWidget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    scrollArea->setWidget(baseWidget);
+    
     auto vbox = new QVBoxLayout;
+    self->setLayoutContentsMarginRatio(vbox, 1.0, 0.5, 1.0, 0.0);
+    baseWidget->setLayout(vbox);
 
     auto hbox = new QHBoxLayout;
     hbox->addStretch(2);
@@ -301,7 +317,6 @@ void LinkPositionView::Impl::createPanel()
 
     vbox->addLayout(grid);
     vbox->addStretch();
-    self->setLayout(vbox, 0.5);
 }
 
 

@@ -5,6 +5,7 @@
 #include "JointDisplacementView.h"
 #include "BodySelectionManager.h"
 #include "BodyItem.h"
+#include <cnoid/DisplayedValueFormatManager>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Archive>
@@ -56,6 +57,17 @@ public:
     ScopedConnection bodySelectionManagerConnection;
     ScopedConnection linkSelectionChangeConnection;
     ScopedConnection kinematicStateChangeConnection;
+
+    DisplayedValueFormatManager* valueFormatManager;
+    ScopedConnection valueFormatManagerConnection;
+    int lengthUnit;
+    int lengthDecimals;
+    double defaultMaxLength;
+    double lengthStep;
+    int angleUnit;
+    int angleDecimals;
+    double defaultMaxAngle;
+    double angleStep;
 
     QLabel targetLabel;
     Action* selectedJointsOnlyCheck;
@@ -188,20 +200,24 @@ public:
         QWidget::setTabOrder(&phaseSpin, &next->phaseSpin);
     }
 
-    bool isDegreeMode() const { return true; }
-
-    void setRangeLabelValues(double lower, double upper, int precision)
+    bool setRangeLabelValues(double lower, double upper, int precision)
     {
-        if(fabs(lower) > 10000.0){
-            lowerLimitLabel.setText(QString::number(lower, 'g', precision));
+        bool isValid = true;
+        int lowerDigits = static_cast<int>(log10(fabs(lower))) + 1;
+        if(lowerDigits > 5){
+            lowerLimitLabel.setText("*");
+            isValid = false;
         } else {
             lowerLimitLabel.setText(QString::number(lower, 'f', precision));
         }
-        if(fabs(upper) > 10000.0){
-            upperLimitLabel.setText(QString::number(upper, 'g', precision));
+        int upperDigits = static_cast<int>(log10(fabs(upper))) + 1;
+        if(upperDigits > 5){
+            upperLimitLabel.setText("*");
+            isValid = false;
         } else {
             upperLimitLabel.setText(QString::number(upper, 'f', precision));
         }
+        return isValid;
     }
 
     void initialize(Link* joint)
@@ -220,61 +236,85 @@ public:
         lowerLimitLabel.setVisible(on);
         slider.setVisible(on);
         upperLimitLabel.setVisible(on);
+        dial.setVisible(viewImpl->dialCheck->isChecked());
 
         unitConversionRatio = 1.0;
-        double max;
-        if(joint->isRotationalJoint()){
-            if(isDegreeMode()){
-                unitConversionRatio = 180.0 / PI;
-            }
-            max = 2.0 * PI;
-        } else { // SLIDE_JOINT
-            max = std::numeric_limits<double>::max();
-        }
-        double lower = unitConversionRatio * (joint->q_lower() < -max ? -max : joint->q_lower());
-        double upper = unitConversionRatio * (joint->q_upper() > max ? max : joint->q_upper());
-
-        dial.setVisible(viewImpl->dialCheck->isChecked());
+        double lower = joint->q_lower();
+        double upper = joint->q_upper();
 
         slider.blockSignals(true);
         spin.blockSignals(true);
         dial.blockSignals(true);
         phaseSpin.blockSignals(true);
 
-        slider.setRange(lower * resolution, upper * resolution);
+        if(joint->isRevoluteJoint()){
+            bool isValidRange = true;
+            if(viewImpl->angleUnit == DisplayedValueFormatManager::Degree){
+                unitConversionRatio = 180.0 / PI;
+                lower *= unitConversionRatio;
+                upper *= unitConversionRatio;
+                if(!setRangeLabelValues(lower, upper, 0)){
+                    lower = -180.0;
+                    upper = 180.0;
+                    isValidRange = false;
+                }
+            } else {
+                if(!setRangeLabelValues(lower, upper, viewImpl->angleDecimals)){
+                    lower = -M_PI;
+                    upper = M_PI;
+                    isValidRange = false;
+                }
+            }
+            slider.setRange(lower * resolution, upper * resolution);
+            slider.setEnabled(true);
 
-        double deci;
-        if(unitConversionRatio != 1.0){ // degree mode
-            spin.setDecimals(1);
-            spin.setRange(-999.9, 999.9);
-            spin.setSingleStep(0.1);
-            setRangeLabelValues(lower, upper, 1);
-            deci = 0.1;
-        } else { // radian or meter
-            spin.setDecimals(4);
-            spin.setRange(-9.99, 9.99);
-            spin.setSingleStep(0.0001);
-            setRangeLabelValues(lower, upper, 3);
-            deci = 0.0001;
-        }
-        double v = unitConversionRatio * joint->q();
-        if(v < spin.minimum() || v > spin.maximum()){
-            int v0 = v < 0.0? (int)-v : (int)v;
-            double max = pow(10, (int)log10(v0) + 1)-deci;
-            spin.setRange(-max, max);
-        }
+            spin.setDecimals(viewImpl->angleDecimals);
+            spin.setRange(-viewImpl->defaultMaxAngle, viewImpl->defaultMaxAngle);
+            spin.setSingleStep(viewImpl->angleStep);
+            spin.setEnabled(true);
 
-        if(joint->q_lower() == -std::numeric_limits<double>::max() &&
-           joint->q_upper() == std::numeric_limits<double>::max()){
-            dial.setWrapping(true);
-            dial.setNotchesVisible(false);
-            dial.setRange(-PI * unitConversionRatio * resolution, PI * unitConversionRatio * resolution);
-        }else {
-            dial.setWrapping(false);
-            dial.setNotchesVisible(true);
+            if(!isValidRange){
+                dial.setWrapping(true);
+                dial.setNotchesVisible(false);
+            } else {
+                dial.setWrapping(false);
+                dial.setNotchesVisible(true);
+            }
             dial.setRange(lower * resolution, upper * resolution);
-        }
+            dial.setEnabled(true);
 
+        } else if(joint->isPrismaticJoint()){
+            if(viewImpl->lengthUnit == DisplayedValueFormatManager::Millimeter){
+                unitConversionRatio = 1000.0;
+                lower *= unitConversionRatio;
+                upper *= unitConversionRatio;
+                if(!setRangeLabelValues(lower, upper, viewImpl->lengthDecimals)){
+                    lower = -1000.0;
+                    upper = 1000.0;
+                }
+            } else {
+                if(!setRangeLabelValues(lower, upper, viewImpl->lengthDecimals)){
+                    lower = -1.0;
+                    upper = 1.0;
+                }
+            }
+            slider.setRange(lower * resolution, upper * resolution);
+            slider.setEnabled(true);
+            
+            spin.setDecimals(viewImpl->lengthDecimals);
+            spin.setRange(-viewImpl->defaultMaxLength, viewImpl->defaultMaxLength);
+            spin.setSingleStep(viewImpl->lengthStep);
+            spin.setEnabled(true);
+            
+        } else {
+            slider.setRange(0, 0);
+            setRangeLabelValues(0.0, 0.0, 0);
+            slider.setEnabled(false);
+            spin.setDecimals(0);
+            spin.setRange(0.0, 0.0);
+            spin.setEnabled(false);
+        }
+            
         bool hasPhases = false;
         if(viewImpl->phaseCheck->isChecked()){
             minPhase = 0;
@@ -474,6 +514,11 @@ void JointDisplacementView::Impl::createPanel()
 
     vbox->addWidget(&scrollArea, 1);
 
+    valueFormatManager = DisplayedValueFormatManager::instance();
+    valueFormatManagerConnection =
+        valueFormatManager->sigFormatChanged().connect(
+            [&](){ updateIndicatorGrid(); });
+    
     updateIndicatorGrid();
 
     updateJointDisplacementsLater.setFunction([&](){ updateJointDisplacements(); });
@@ -620,6 +665,26 @@ void JointDisplacementView::Impl::updateIndicatorGrid()
 
         int n = activeJointIds.size();
         initializeIndicators(n);
+
+        lengthUnit = valueFormatManager->lengthUnit();
+        if(lengthUnit == DisplayedValueFormatManager::Millimeter){
+            defaultMaxLength = 10000.0;
+        } else {
+            defaultMaxLength = 10.0;
+        }
+        lengthDecimals = valueFormatManager->lengthDecimals();
+        defaultMaxLength -= pow(10.0, -lengthDecimals);
+        lengthStep = valueFormatManager->lengthStep();
+        
+        angleUnit = valueFormatManager->angleUnit();
+        if(angleUnit == DisplayedValueFormatManager::Degree){
+            defaultMaxAngle = 1000.0;
+        } else {
+            defaultMaxAngle = 10.0;
+        }
+        angleDecimals = valueFormatManager->angleDecimals();
+        defaultMaxAngle -= pow(10.0, -angleDecimals);
+        angleStep = valueFormatManager->angleStep();
 
         int row = 0;
         for(int i=0; i < n; ++i){

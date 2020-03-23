@@ -1,4 +1,5 @@
 #include "PositionWidget.h"
+#include "DisplayedValueFormatManager.h"
 #include "MenuManager.h"
 #include "Archive.h"
 #include "Buttons.h"
@@ -48,8 +49,12 @@ public:
     vector<QWidget*> inputSpins;
     ScopedConnectionSet userInputConnections;
 
+    DisplayedValueFormatManager* valueFormatManager;
+    ScopedConnection valueFormatManagerConnection;
+    double lengthRatio;
+    double angleRatio;
+    
     QVBoxLayout* mainvbox;
-
     DoubleSpinBox xyzSpin[3];
     enum AttitudeMode { RollPitchYawMode, QuaternionMode };
     AttitudeMode lastInputAttitudeMode;
@@ -67,6 +72,7 @@ public:
     QLabel rotationMatrixElementLabel[3][3];
 
     Impl(PositionWidget* self);
+    void updateValueFormat(bool doRefresh);
     void setOptionMenu(MenuManager& menu);
     void setRpyEnabled(bool on);
     void setQuaternionEnabled(bool on);
@@ -104,7 +110,10 @@ PositionWidget::~PositionWidget()
 PositionWidget::Impl::Impl(PositionWidget* self)
     : self(self)
 {
-    //self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    valueFormatManager = DisplayedValueFormatManager::instance();
+    valueFormatManagerConnection =
+        valueFormatManager->sigFormatChanged().connect(
+            [&](){ updateValueFormat(true); });
 
     mainvbox = new QVBoxLayout;
     mainvbox->setContentsMargins(0, 0, 0, 0);
@@ -118,9 +127,6 @@ PositionWidget::Impl::Impl(PositionWidget* self)
         // Translation spin boxes
         auto spin = &xyzSpin[i];
         spin->setAlignment(Qt::AlignCenter);
-        spin->setDecimals(3);
-        spin->setRange(-99.999, 99.999);
-        spin->setSingleStep(0.001);
 
         InputElementSet s;
         s.set(TX + i);
@@ -147,9 +153,6 @@ PositionWidget::Impl::Impl(PositionWidget* self)
         // Roll-pitch-yaw spin boxes
         auto spin = &rpySpin[i];
         spin->setAlignment(Qt::AlignCenter);
-        spin->setDecimals(1);
-        spin->setRange(-9999.0, 9999.0);
-        spin->setSingleStep(0.1);
 
         InputElementSet s;
         s.set(RX + 1);
@@ -238,10 +241,56 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     inputPanelWidgets.push_back(&rotationMatrixPanel);
 
     T_last.setIdentity();
-    
     lastInputAttitudeMode = RollPitchYawMode;
 
+    updateValueFormat(false);
     clearPosition();
+}
+
+
+void PositionWidget::Impl::updateValueFormat(bool doRefresh)
+{
+    int lunit = valueFormatManager->lengthUnit();
+    double lmax;
+    if(lunit == DisplayedValueFormatManager::Millimeter){
+        lengthRatio = 1000.0;
+        lmax = 100000.0;
+    } else {
+        lengthRatio = 1.0;
+        lmax = 100.0;
+    }
+    int ldecimals = valueFormatManager->lengthDecimals();
+    lmax -= pow(10.0, -ldecimals);
+    double lstep = valueFormatManager->lengthStep();
+
+    int aunit = valueFormatManager->angleUnit();
+    double amax;
+    if(aunit == DisplayedValueFormatManager::Degree){
+        angleRatio = 180.0 / PI;
+        amax = 1000.0;
+    } else {
+        angleRatio = 1.0;
+        amax = 10.0;
+    }
+    int adecimals = valueFormatManager->angleDecimals();
+    amax -= pow(10.0, -adecimals);
+    double astep = valueFormatManager->angleStep();
+
+    for(int i=0; i < 3; ++i){
+        auto& tspin = xyzSpin[i];
+        tspin.setDecimals(ldecimals);
+        tspin.setRange(-lmax, lmax);
+        tspin.setSingleStep(lstep);
+
+        auto& aspin = rpySpin[i];
+        aspin.setDecimals(adecimals);
+        aspin.setRange(-amax, amax);
+        aspin.setSingleStep(astep);
+    }
+
+    if(doRefresh){
+        refreshPosition();
+    }
 }
 
 
@@ -387,7 +436,7 @@ void PositionWidget::Impl::setPosition(const Position& T)
     for(int i=0; i < 3; ++i){
         auto& spin = xyzSpin[i];
         if(!isUserInputValuePriorityMode || !spin.hasFocus()){
-            spin.setValue(p[i]);
+            spin.setValue(lengthRatio * p[i]);
         }
     }
 
@@ -405,7 +454,7 @@ void PositionWidget::Impl::setPosition(const Position& T)
             referenceRpy = rpy;
         }
         for(int i=0; i < 3; ++i){
-            rpySpin[i].setValue(degree(rpy[i]));
+            rpySpin[i].setValue(angleRatio * rpy[i]);
         }
     }
     
@@ -461,7 +510,7 @@ Vector3 PositionWidget::Impl::getRpyInput()
 {
     Vector3 rpy;
     for(int i=0; i < 3; ++i){
-        rpy[i] = radian(rpySpin[i].value());
+        rpy[i] = rpySpin[i].value() / angleRatio;
     }
     return rpy;
 }
@@ -493,8 +542,8 @@ void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
     Vector3 rpy;
 
     for(int i=0; i < 3; ++i){
-        T.translation()[i] = xyzSpin[i].value();
-        rpy[i] = radian(rpySpin[i].value());
+        T.translation()[i] = xyzSpin[i].value() / lengthRatio;
+        rpy[i] = rpySpin[i].value() / angleRatio;
     }
     T.linear() = rotFromRpy(rpy);
     
@@ -509,7 +558,7 @@ void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElemen
     Position T;
 
     for(int i=0; i < 3; ++i){
-        T.translation()[i] = xyzSpin[i].value();
+        T.translation()[i] = xyzSpin[i].value() / lengthRatio;
     }
     
     Eigen::Quaterniond quat =

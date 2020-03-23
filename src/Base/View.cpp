@@ -257,15 +257,35 @@ void View::setLayout(QLayout* layout, double marginRatio)
     if(marginRatio == 0.0){
         layout->setContentsMargins(0, 0, 0, 0);
     } else {
-        auto s = style();
-        int left = s->pixelMetric(QStyle::PM_LayoutLeftMargin);
-        int top = s->pixelMetric(QStyle::PM_LayoutTopMargin);
-        int right = s->pixelMetric(QStyle::PM_LayoutRightMargin);
-        int bottom = s->pixelMetric(QStyle::PM_LayoutBottomMargin);
-        double r = marginRatio;
-        layout->setContentsMargins(left * r, top * r, right * r, bottom * r);
+        setLayoutContentsMarginRatio(
+            layout, marginRatio, marginRatio, marginRatio, marginRatio);
     }
     QWidget::setLayout(layout);
+}
+
+
+void View::setLayout
+(QLayout* layout,
+ double leftMarginRatio, double topMarginRatio, double rightMarginRatio, double bottomMarginRatio)
+{
+    setLayoutContentsMarginRatio(
+        layout, leftMarginRatio, topMarginRatio, rightMarginRatio, bottomMarginRatio);
+    QWidget::setLayout(layout);
+}
+
+
+void View::setLayoutContentsMarginRatio
+(QLayout* layout,
+ double leftMarginRatio, double topMarginRatio, double rightMarginRatio, double bottomMarginRatio)
+{
+    auto s = style();
+    int left = s->pixelMetric(QStyle::PM_LayoutLeftMargin);
+    int top = s->pixelMetric(QStyle::PM_LayoutTopMargin);
+    int right = s->pixelMetric(QStyle::PM_LayoutRightMargin);
+    int bottom = s->pixelMetric(QStyle::PM_LayoutBottomMargin);
+
+    layout->setContentsMargins(
+        left * leftMarginRatio, top * topMarginRatio, right * rightMarginRatio, bottom * bottomMarginRatio);
 }
 
 
