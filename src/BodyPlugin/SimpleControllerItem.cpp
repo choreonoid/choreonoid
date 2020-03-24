@@ -1053,19 +1053,13 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
         baseDirectoryType.select(value);
     }
     archive.read("reloading", doReloading);
-
     bool on;
     if(archive.read("exportSymbols", on)){
         setSymbolExportEnabled(on);
     }
-
     if(archive.read("controller", value)){
         controllerModuleName = archive.expandPathVariables(value);
-        if(!doReloading){
-            loadController();
-        }
     }
-
     archive.read("isOldTargetVariableMode", isOldTargetVariableMode);
 
     return true;
