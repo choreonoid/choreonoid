@@ -8,6 +8,7 @@
 
 #include "JoystickInterface.h"
 #include "Signal.h"
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
