@@ -380,6 +380,7 @@ bool SimpleControllerItemImpl::configureController()
             } else {
                 mv->putln(format(_("{} failed to configure the controller"), self->name()),
                           MessageView::ERROR);
+                isConfigured = false;
             }
         } else if(isConfigured){
             controller->unconfigure();
@@ -493,6 +494,10 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
                 return nullptr;
             }
         }
+    }
+    if(!isConfigured){
+        mv->putln(format(_("{} is not configured."), self->name()), MessageView::ERROR);
+        return nullptr;
     }
 
     this->io = io;
