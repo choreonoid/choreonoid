@@ -614,6 +614,7 @@ bool PluginManager::Impl::activatePlugin(int index)
 
             } else {
                 info->status = PluginManager::ACTIVE;
+                info->plugin->isActive_ = true;
                 
                 pluginsInDeactivationOrder.push_front(info);
 
@@ -807,6 +808,7 @@ bool PluginManager::Impl::finalizePlugin(PluginInfoPtr info)
             }
 
             if(allDependentsFinalized){
+                info->plugin->isActive_ = false;
                 if(!info->plugin->finalize()){
                     mv->putln(fmt::format(_("Plugin {} cannot be finalized."), info->name));
                     mv->flush();

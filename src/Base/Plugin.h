@@ -31,6 +31,7 @@ public:
     virtual bool initialize();
     virtual bool finalize();
 
+    bool isActive() const { return isActive_; }
     bool isUnloadable() const;
 
     const std::string& requisite(int index) const;
@@ -89,6 +90,7 @@ private:
 
     class Impl;
     Impl* impl;
+    bool isActive_;
 
     friend class PluginManager;
 };

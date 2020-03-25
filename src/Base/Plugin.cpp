@@ -35,6 +35,7 @@ Plugin::Plugin(const std::string& name)
     : ExtensionManager(name, true)
 {
     impl = new Impl(name);
+    isActive_ = false;
 }
 
 
