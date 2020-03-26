@@ -41,6 +41,7 @@ PYBIND11_MODULE(Body, m)
         ;
 
     py::class_<BodyLoader, AbstractBodyLoader>(m, "BodyLoader")
+        .def(py::init<>())
         .def("load", (Body*(BodyLoader::*)(const string&))&BodyLoader::load)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
