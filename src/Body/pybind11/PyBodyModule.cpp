@@ -48,6 +48,7 @@ PYBIND11_MODULE(Body, m)
 
     py::class_<JointPath, shared_ptr<JointPath>>(m, "JointPath")
         .def(py::init<>())
+        .def_static("getCustomPath", &JointPath::getCustomPath)
         .def_property_readonly("numJoints", &JointPath::numJoints)
         .def("joint", &JointPath::joint)
         .def_property_readonly("baseLink", &JointPath::baseLink)
