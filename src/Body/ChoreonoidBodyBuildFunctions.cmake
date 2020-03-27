@@ -2,7 +2,11 @@ function(choreonoid_add_simple_controller target)
 
   add_library(${target} SHARED ${ARGN})
 
-  target_link_libraries(${target} CnoidBody)
+  if(CHOREONOID_BODY_LIBRARIES)
+    target_link_libraries(${target} ${CHOREONOID_BODY_LIBRARIES})
+  else()
+    target_link_libraries(${target} CnoidBody)
+  endif()
 
   if(MSVC)
     target_link_options(${target} PRIVATE "/NODEFAULTLIB:LIBCMT")
@@ -40,7 +44,11 @@ function(choreonoid_add_body_handler)
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..:$ORIGIN/../..")
   endif()
-  target_link_libraries(${target} CnoidBody)
+  if(CHOREONOID_BODY_LIBRARIES)
+    target_link_libraries(${target} ${CHOREONOID_BODY_LIBRARIES})
+  else()
+    target_link_libraries(${target} CnoidBody)
+  endif()
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler
     LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler)
@@ -63,7 +71,11 @@ function(choreonoid_add_body_customizer)
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
-  target_link_libraries(${target} CnoidBase)
+  if(CHOREONOID_BASE_LIBRARIES)
+    target_link_libraries(${target} ${CHOREONOID_BASE_LIBRARIES})
+  else()
+    target_link_libraries(${target} CnoidBase)
+  endif()
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer
     LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer)
