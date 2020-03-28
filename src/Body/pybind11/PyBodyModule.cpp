@@ -56,7 +56,7 @@ PYBIND11_MODULE(Body, m)
         .def("indexOf", &JointPath::indexOf)
         .def("customizeTarget", &JointPath::customizeTarget)
         .def_property_readonly("numIterations", &JointPath::numIterations)
-        .def("calcJacobian", &JointPath::calcJacobian)
+        .def("calcJacobian", [](JointPath& self, Eigen::Ref< Eigen::Matrix<double, -1, -1, Eigen::RowMajor> > out_J){ MatrixXd J; self.calcJacobian(J); out_J = J; })
         .def("calcInverseKinematics", (bool(JointPath::*)())&JointPath::calcInverseKinematics)
         .def("calcInverseKinematics", (bool(JointPath::*)(const Position&))&JointPath::calcInverseKinematics)
 
