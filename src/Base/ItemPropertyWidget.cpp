@@ -2,11 +2,11 @@
 #include "PolymorphicItemFunctionSet.h"
 #include "PutPropertyFunction.h"
 #include "LazyCaller.h"
-#include "AppConfig.h"
 #include "MainWindow.h"
 #include "Buttons.h"
 #include "StringListComboBox.h"
 #include "MenuManager.h"
+#include "FileDialog.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExecutablePath>
 #include <cnoid/stdx/variant>
@@ -21,7 +21,6 @@
 #include <QStandardItemEditorCreator>
 #include <QKeyEvent>
 #include <QApplication>
-#include <QFileDialog>
 #include <fmt/format.h>
 #include <regex>
 #include <cmath>
@@ -542,8 +541,7 @@ void CustomizedItemDelegate::paint
 
 void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEditor* editor)
 {
-    QFileDialog dialog(MainWindow::instance());
-    dialog.setOptions(QFileDialog::DontUseNativeDialog);
+    FileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(_("Select File"));
     dialog.setViewMode(QFileDialog::List);
     if(value.isExistingFileMode()){
@@ -555,18 +553,20 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
     }
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
 
+    dialog.updatePresetDirectories();
+
     filesystem::path directory;
-    if(value.baseDirectory().empty()){
+    if(!value.baseDirectory().empty()){
+        directory = value.baseDirectory();
+    } else {
         filesystem::path filenamePath(value.filename());
         if(filenamePath.is_absolute()){
             directory = filenamePath.parent_path();
-        } else {
-            directory = AppConfig::archive()->get("file_dialog_directory", shareDirectory());
         }
-    } else {
-        directory = value.baseDirectory();
     }
-    dialog.setDirectory(directory.string().c_str());
+    if(!directory.empty()){
+        dialog.setDirectory(directory.string().c_str());
+    }
         
     QStringList filters;
     for(auto& filter : value.filters()){
@@ -580,7 +580,6 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
         filenames = dialog.selectedFiles();
         filesystem::path newDirectory(dialog.directory().absolutePath().toStdString());
         if(newDirectory != directory){
-            AppConfig::archive()->writePath("file_dialog_directory", newDirectory.string());
             value.setBaseDirectory("");
         }
         string filename(filenames.at(0).toStdString());

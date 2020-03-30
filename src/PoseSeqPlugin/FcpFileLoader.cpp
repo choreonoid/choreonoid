@@ -13,8 +13,8 @@
 #include <cnoid/MessageView>
 #include <cnoid/MenuManager>
 #include <cnoid/Tokenizer>
+#include <cnoid/FileDialog>
 #include <cnoid/stdx/filesystem>
-#include <QFileDialog>
 #include <map>
 #include <vector>
 #include <stdexcept>
@@ -226,29 +226,25 @@ void invokeFaceControllerPatternFileImportDialog()
 {
     /// \todo The function by the following code shoulde be provided by ItemManger
 
-    QFileDialog dialog(MainWindow::instance());
-    dialog.setOptions(QFileDialog::DontUseNativeDialog);
+    FileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(_("Choose poseset file"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
     dialog.setLabelText(QFileDialog::Accept, _("Open"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
+    dialog.updatePresetDirectories();
 
     QStringList filters;
     filters << _("FaceController poseset files (*.poseset)");
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
-    string currentFolder;
-    if(AppConfig::archive()->read("file_dialog_directory", currentFolder)){
-        dialog.setDirectory(currentFolder.c_str());
-    }
-
     string posesetFile;
 
     if(dialog.exec()){
         posesetFile = dialog.selectedFiles().front().toStdString();
         dialog.setWindowTitle(_("Choose poseseq files"));
+        dialog.updatePresetDirectories();
 
         QStringList filters;
         filters << _("FaceController poseseq files (*.poseseq)");
@@ -265,10 +261,6 @@ void invokeFaceControllerPatternFileImportDialog()
                 parentItem = rootItem;
             }
             QStringList poseseqFiles = dialog.selectedFiles();
-            AppConfig::archive()->write(
-                "file_dialog_directory",
-                dialog.directory().absolutePath().toStdString(),
-                DOUBLE_QUOTED);
 
             if(loadFaceControllerPoseSet(posesetFile)){
                 for(int i=0; i < poseseqFiles.size(); ++i){

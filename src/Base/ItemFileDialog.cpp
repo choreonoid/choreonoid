@@ -1,12 +1,9 @@
 #include "ItemFileDialog.h"
 #include "ItemFileIOImpl.h"
-#include "AppConfig.h"
+#include "FileDialog.h"
 #include "RootItem.h"
 #include "MainWindow.h"
 #include "MessageView.h"
-#include <cnoid/FileUtil>
-#include <cnoid/ExecutablePath>
-#include <QFileDialog>
 #include <QBoxLayout>
 #include <QStyle>
 #include <fmt/format.h>
@@ -17,13 +14,11 @@ using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
-
 namespace cnoid {
 
-class ItemFileDialog::Impl
+class ItemFileDialog::Impl : public FileDialog
 {
     ItemFileDialog* self;
-    QFileDialog fileDialog;
     const vector<ItemFileIO*>* pFileIoList;
     ItemFileIO* targetFileIO;
     QWidget* optionPanel;
@@ -56,8 +51,8 @@ ItemFileDialog::~ItemFileDialog()
 
 
 ItemFileDialog::Impl::Impl(ItemFileDialog* self)
-    : self(self),
-      fileDialog(self)
+    : FileDialog(self),
+      self(self)
 {
     pFileIoList = nullptr;
     targetFileIO = nullptr;
@@ -67,15 +62,13 @@ ItemFileDialog::Impl::Impl(ItemFileDialog* self)
     vbox->setSpacing(0);
     self->setLayout(vbox);
 
-    fileDialog.setWindowFlags(fileDialog.windowFlags() & ~Qt::Dialog);
-    fileDialog.setOption(QFileDialog::DontUseNativeDialog);
-    fileDialog.setSizeGripEnabled(false);
-    fileDialog.setViewMode(QFileDialog::List);
-    fileDialog.setLabelText(QFileDialog::Accept, _("Open"));
-    fileDialog.setLabelText(QFileDialog::Reject, _("Cancel"));
-    fileDialog.setDirectory(AppConfig::archive()->get
-                        ("file_dialog_directory", shareDirectory()).c_str());
-    vbox->addWidget(&fileDialog);
+    setWindowFlags(windowFlags() & ~Qt::Dialog);
+    setSizeGripEnabled(false);
+    setViewMode(QFileDialog::List);
+    setLabelText(QFileDialog::Accept, _("Open"));
+    setLabelText(QFileDialog::Reject, _("Cancel"));
+
+    vbox->addWidget(this);
 
     optionPanel = nullptr;
     optionPanelBox = new QHBoxLayout;
@@ -87,10 +80,10 @@ ItemFileDialog::Impl::Impl(ItemFileDialog* self)
     optionPanelBox->addStretch();
     vbox->addLayout(optionPanelBox);
 
-    QObject::connect(&fileDialog, &QFileDialog::filterSelected,
-                     [&](const QString& filter){ onFilterSelected(filter); });
-    
-    QObject::connect(&fileDialog, SIGNAL(finished(int)), self, SLOT(done(int)));
+    QObject::connect(this, &QFileDialog::filterSelected,
+                     [this](const QString& filter){ onFilterSelected(filter); });
+
+    QObject::connect(this, SIGNAL(finished(int)), self, SLOT(done(int)));
 }
 
 
@@ -120,20 +113,18 @@ ItemList<Item> ItemFileDialog::Impl::loadItems
     } else {
         // add "any file" filters for the file ios that supports it
     }
-    fileDialog.setNameFilters(filters);
+    setNameFilters(filters);
 
     if(self->windowTitle().isEmpty()){
         self->setWindowTitle(QString(_("Load %1")).arg(fileIoList.front()->caption().c_str()));
     }
     setTargetFileIO(fileIoList.front());
 
+    updatePresetDirectories();
+
     if(self->exec() == QDialog::Accepted){
 
-        AppConfig::archive()->writePath(
-            "file_dialog_directory",
-            fileDialog.directory().absolutePath().toStdString());
-
-        QStringList filenames = fileDialog.selectedFiles();
+        QStringList filenames = selectedFiles();
 
         if(!parentItem){
             parentItem = RootItem::instance();
@@ -159,9 +150,8 @@ ItemList<Item> ItemFileDialog::Impl::loadItems
             if(!isSingleton){
                 item = targetFileIO->createItem();
             }
-            string filename = getNativePathString(filesystem::path(filenames[i].toStdString()));
             bool loaded = targetFileIO->impl->loadItem(
-                ItemFileIO::Dialog, item, filename, parentItem, doAddition, nextItem, nullptr);
+                ItemFileIO::Dialog, item, filenames[i].toStdString(), parentItem, doAddition, nextItem, nullptr);
             if(loaded){
                 loadedItems.push_back(item);
             }
@@ -183,8 +173,6 @@ void ItemFileDialog::Impl::setTargetFileIO(ItemFileIO* fileIO)
 {
     targetFileIO = fileIO;
 
-    //self->setWindowTitle(QString(_("Load %1")).arg(fileIO->caption().c_str()));
-
     if(optionPanel){
         optionPanel->setParent(nullptr);
         optionPanel = nullptr;
@@ -201,16 +189,16 @@ void ItemFileDialog::Impl::setTargetFileIO(ItemFileIO* fileIO)
     }
 
     if(fileIO->isRegisteredForSingletonItem()){
-        fileDialog.setFileMode(QFileDialog::ExistingFile);
+        setFileMode(QFileDialog::ExistingFile);
     } else {
-        fileDialog.setFileMode(QFileDialog::ExistingFiles);
+        setFileMode(QFileDialog::ExistingFiles);
     }
 }
 
 
 void ItemFileDialog::Impl::onFilterSelected(const QString& filter)
 {
-    auto filters = fileDialog.nameFilters();
+    auto filters = nameFilters();
     int index = filters.indexOf(QRegExp(filter, Qt::CaseSensitive, QRegExp::FixedString));
     if(index >= pFileIoList->size()){
         index = 0;

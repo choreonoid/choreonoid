@@ -10,10 +10,10 @@
 #include "AppConfig.h"
 #include "SceneView.h"
 #include "SceneWidget.h"
+#include "FileDialog.h"
 #include <QApplication>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QFileDialog>
 #include <QTabWidget>
 #include <functional>
 #include "gettext.h"
@@ -88,8 +88,7 @@ void save(QWidget* widget, std::function<bool(const QString& filename)> saveImag
     const QString name(widget->windowTitle());
     QString filename;
         
-    QFileDialog dialog(MainWindow::instance());
-    dialog.setOptions(QFileDialog::DontUseNativeDialog);
+    FileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(QString(_("Save the image of %1")).arg(name));
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
@@ -101,8 +100,9 @@ void save(QWidget* widget, std::function<bool(const QString& filename)> saveImag
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
+    dialog.updatePresetDirectories();
+
     MappingPtr config = AppConfig::archive()->openMapping("CaptureBar");
-        
     dialog.setDirectory(config->get("directory", QDir::currentPath().toStdString()).c_str());
         
     if(widget != lastCaptureWidget){

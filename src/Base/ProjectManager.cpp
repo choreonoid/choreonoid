@@ -15,12 +15,12 @@
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "LazyCaller.h"
+#include "FileDialog.h"
 #include <cnoid/MainWindow>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
-#include <QFileDialog>
 #include <QCoreApplication>
 #include <string>
 #include <vector>
@@ -220,8 +220,6 @@ void ProjectManager::Impl::setCurrentProjectFile(const string& filename)
 
     currentProjectFile = path.string();
     currentProjectDirectory = path.parent_path().string();
-
-    config->writePath("file_dialog_directory", currentProjectDirectory);
 }
 
 
@@ -613,8 +611,7 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 
 void ProjectManager::Impl::openDialogToLoadProject()
 {
-    QFileDialog dialog(MainWindow::instance());
-    dialog.setOptions(QFileDialog::DontUseNativeDialog);
+    FileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(_("Open a Choreonoid project file"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
@@ -626,11 +623,9 @@ void ProjectManager::Impl::openDialogToLoadProject()
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
-    dialog.setDirectory(
-        managerConfig->get("project_file_dialog_directory", shareDirectory()).c_str());
+    dialog.updatePresetDirectories();
     
     if(dialog.exec()){
-        managerConfig->writePath("project_file_dialog_directory", dialog.directory().absolutePath().toStdString());
         string filename = getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString()));
         loadProject(filename, nullptr, false);
     }
@@ -639,8 +634,7 @@ void ProjectManager::Impl::openDialogToLoadProject()
 
 void ProjectManager::Impl::openDialogToSaveProject()
 {
-    QFileDialog dialog(MainWindow::instance());
-    dialog.setOptions(QFileDialog::DontUseNativeDialog);
+    FileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(_("Save a choreonoid project file"));
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
@@ -653,13 +647,13 @@ void ProjectManager::Impl::openDialogToSaveProject()
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
-    dialog.setDirectory(managerConfig->get("project_file_dialog_directory", shareDirectory()).c_str());
+    dialog.updatePresetDirectories();
+
     if(!currentProjectName.empty() && !currentProjectFile.empty()){
         dialog.selectFile(currentProjectName.c_str());
     }
 
     if(dialog.exec()){
-        managerConfig->writePath("project_file_dialog_directory", dialog.directory().absolutePath().toStdString());        
         filesystem::path path(dialog.selectedFiles().front().toStdString());
         string filename = getNativePathString(path);
         string ext = path.extension().string();

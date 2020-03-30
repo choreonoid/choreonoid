@@ -10,6 +10,7 @@
 #include "ItemFileIO.h"
 #include "ItemFileIOImpl.h"
 #include "ItemFileDialog.h"
+#include "FileDialog.h"
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
@@ -24,7 +25,6 @@
 #include <QPushButton>
 #include <QDialog>
 #include <QDialogButtonBox>
-#include <QFileDialog>
 #include <QSignalMapper>
 #include <QRegExp>
 #include <fmt/format.h>
@@ -1089,8 +1089,7 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
 
     if(filters.size() > 0){
 
-        QFileDialog dialog(MainWindow::instance());
-        dialog.setOptions(QFileDialog::DontUseNativeDialog);
+        FileDialog dialog(MainWindow::instance());
         dialog.setWindowTitle(QString(_("Save %1 as")).arg(itemLabel.c_str()));
         dialog.setFileMode(QFileDialog::AnyFile);
         dialog.setAcceptMode(QFileDialog::AcceptSave);
@@ -1098,9 +1097,7 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
         dialog.setLabelText(QFileDialog::Accept, _("Save"));
         dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
         dialog.setNameFilters(filters);
-
-        auto dir = AppConfig::archive()->get("file_dialog_directory", shareDirectory());
-        dialog.setDirectory(dir.c_str());
+        dialog.updatePresetDirectories();
 
         if(!io_filename.empty()){
             dialog.selectFile(io_filename.c_str());
@@ -1108,10 +1105,6 @@ ItemFileIOPtr ItemManagerImpl::getFileIOAndFilenameFromSaveDialog
         }
 
         if(dialog.exec() == QFileDialog::Accepted){
-
-            AppConfig::archive()->writePath(
-                "file_dialog_directory",
-                dialog.directory().absolutePath().toStdString());
 
             io_filename = dialog.selectedFiles()[0].toStdString();
             if(!io_filename.empty()){
@@ -1409,49 +1402,32 @@ namespace cnoid {
 
 string getOpenFileName(const string& caption, const string& extensions)
 {
-    QString qfilename =
-        QFileDialog::getOpenFileName(
-            MainWindow::instance(),
-            caption.c_str(),
-            AppConfig::archive()->get("file_dialog_directory", shareDirectory()).c_str(),
-            makeNameFilterString(caption, extensions),
-            Q_NULLPTR,
-            QFileDialog::DontUseNativeDialog);
-
-    string filename = qfilename.toStdString();
-
-    if(!filename.empty()){
-        AppConfig::archive()->writePath(
-            "file_dialog_directory",
-            filesystem::path(filename).parent_path().string());
+    string filename;
+    FileDialog dialog(MainWindow::instance());
+    dialog.setWindowTitle(caption.c_str());
+    dialog.setNameFilter(makeNameFilterString(caption, extensions));
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.updatePresetDirectories();
+    if(dialog.exec() == QDialog::Accepted){
+        filename = dialog.selectedFiles().value(0).toStdString();
     }
-
     return filename;
 }
     
 
 vector<string> getOpenFileNames(const string& caption, const string& extensions)
 {
-    QStringList qfilenames =
-        QFileDialog::getOpenFileNames(
-            MainWindow::instance(),
-            caption.c_str(),
-            AppConfig::archive()->get("file_dialog_directory", shareDirectory()).c_str(),
-            makeNameFilterString(caption, extensions),
-            Q_NULLPTR,
-            QFileDialog::DontUseNativeDialog);
-
     vector<string> filenames;
-
-    if(!qfilenames.empty()){
-        for(int i=0; i < qfilenames.size(); ++i){
-            filenames.push_back(qfilenames[i].toStdString());
+    FileDialog dialog(MainWindow::instance());
+    dialog.setWindowTitle(caption.c_str());
+    dialog.setNameFilter(makeNameFilterString(caption, extensions));
+    dialog.setFileMode(QFileDialog::ExistingFiles);
+    dialog.updatePresetDirectories();
+    if(dialog.exec() == QDialog::Accepted){
+        for(auto& file : dialog.selectedFiles()){
+            filenames.push_back(file.toStdString());
         }
-        AppConfig::archive()->writePath(
-            "file_dialog_directory",
-            filesystem::path(filenames[0]).parent_path().string());
     }
-        
     return filenames;
 }
 

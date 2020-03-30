@@ -67,6 +67,7 @@ set(sources
   LineEdit.cpp
   ComboBox.cpp
   Dialog.cpp
+  FileDialog.cpp
   DescriptionDialog.cpp
   Timer.cpp
   SocketNotifier.cpp
@@ -159,6 +160,7 @@ set(headers
   LineEdit.h
   ComboBox.h
   Dialog.h
+  FileDialog.h
   Timer.h
   SocketNotifier.h
   ImageWidget.h
