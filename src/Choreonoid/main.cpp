@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 
 int execute(cnoid::App& app)
 {
-    app.initialize("Choreonoid", "Choreonoid Inc.");
+    app.initialize("Choreonoid", "Choreonoid");
     app.exec();
     return 0;
 }
