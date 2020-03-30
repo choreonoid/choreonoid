@@ -47,7 +47,7 @@ public:
     static ScalarNode* createScalar(const yaml_event_t& event);
 
     YAMLReader* self;
-    
+
     yaml_parser_t parser;
     FILE* file;
 
@@ -74,6 +74,7 @@ public:
 
     string errorMessage;
 };
+
 }
 
 
@@ -86,7 +87,7 @@ YAMLReader::YAMLReader()
 YAMLReaderImpl::YAMLReaderImpl(YAMLReader* self)
     : self(self)
 {
-    file = 0;
+    file = nullptr;
     mappingFactory = new YAMLReader::MappingFactory<Mapping>();
     currentDocumentIndex = 0;
     isRegularMultiListingExpected = false;
@@ -101,11 +102,9 @@ YAMLReader::~YAMLReader()
 
 YAMLReaderImpl::~YAMLReaderImpl()
 {
-    yaml_parser_delete(&parser);
-    
     if(file){
         fclose(file);
-        file = 0;
+        file = nullptr;
     }
 
     delete mappingFactory;
@@ -156,6 +155,7 @@ bool YAMLReader::load(const std::string& filename)
 bool YAMLReaderImpl::load(const std::string& filename)
 {
     yaml_parser_initialize(&parser);
+    
     clearDocuments();
 
     if(isRegularMultiListingExpected){
@@ -181,6 +181,8 @@ bool YAMLReaderImpl::load(const std::string& filename)
         }
         fclose(file);
     }
+
+    yaml_parser_delete(&parser);
 
     return result;
 }
@@ -212,6 +214,8 @@ bool YAMLReaderImpl::parse(const std::string& yamlstring)
         errorMessage = format(_("{0} at line {1}, column {2}"),
                 ex.message(), ex.line(), ex.column());
     }
+
+    yaml_parser_delete(&parser);
 
     return result;
 }
@@ -476,7 +480,7 @@ void YAMLReaderImpl::onScalar(yaml_event_t& event)
     NodeInfo& info = nodeStack.top();
     ValueNodePtr& parent = info.node;
 
-    ScalarNode* scalar = 0;
+    ScalarNode* scalar = nullptr;
      
     if(parent->isMapping()){
         if(info.key.empty()){

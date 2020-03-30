@@ -68,9 +68,9 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
 static bool loadConfig(const std::string& filename)
 {
     bool loaded = false;
-    YAMLReader reader;
 
     if(filesystem::exists(filesystem::path(filename))){
+        YAMLReader reader;
         try {
             if(reader.load(filename)){
                 if(reader.numDocuments() == 1 && reader.document()->isMapping()){
