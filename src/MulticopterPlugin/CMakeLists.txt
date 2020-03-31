@@ -12,7 +12,7 @@ set(headers
   exportdecl.h
   )
 
-CHOREONOID_MAKE_HEADER_PUBLIC(RotorDevice.h)
+choreonoid_make_header_public(RotorDevice.h)
 
 set(sources
   FFCalc_LinkState.cpp
