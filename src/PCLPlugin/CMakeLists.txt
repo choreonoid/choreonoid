@@ -1,4 +1,3 @@
-
 option(BUILD_PCL_PLUGIN "Building PCLPlugin" OFF)
 
 if(NOT BUILD_PCL_PLUGIN)
@@ -23,6 +22,5 @@ set(headers
 set(target CnoidPCLPlugin)
 
 make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
+choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} CnoidBase ${PCL_COMMON_LIBRARIES} ${PCL_SURFACE_LIBRARIES} ${PCL_FEATURES_LIBRARIES} pcl_io)
-apply_common_setting_for_plugin(${target} "${headers}")

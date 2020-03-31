@@ -1,5 +1,3 @@
-# @author Shin'ichiro Nakaoka
-
 option(BUILD_HRPSYS31_PLUGIN "Building the Hrpsys31 Plugin" OFF)
 if(NOT BUILD_HRPSYS31_PLUGIN)
   return()
@@ -11,8 +9,6 @@ else()
     message(FATAL_ERROR "Hrpsys31Plugin requires OpenRTMPlugin")
   endif()
 endif()
-
-#set(CMAKE_BUILD_TYPE Debug)
 
 set(target CnoidHrpsys31Plugin)
 
@@ -34,6 +30,5 @@ idl_compile_cpp(idl_cpp_files idl_h_files corba/hrpsys
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
 make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${idl_cpp_files} ${mofiles})
+choreonoid_add_plugin(${target} ${sources} ${idl_cpp_files} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} CnoidRobotAccessPlugin CnoidOpenRTMPlugin)
-apply_common_setting_for_plugin(${target} "${headers}")

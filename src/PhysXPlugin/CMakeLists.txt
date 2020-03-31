@@ -1,4 +1,3 @@
-
 # @author Shizuko Hattori
 
 option(BUILD_PhysX_PLUGIN "Building PhysXPlugin" OFF)
@@ -153,6 +152,5 @@ set(headers
   )
 
 make_gettext_mofiles(${target} mofiles)
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
+choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} CnoidBodyPlugin ${PhysX_LIBRARIES})
-apply_common_setting_for_plugin(${target} "${headers}")

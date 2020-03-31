@@ -4,6 +4,6 @@ if(NOT BUILD_TRACKED_VEHICLE_SAMPLE)
   return()
 endif()
 
-add_cnoid_simple_controller(TrackedVehicleController TrackedVehicleController.cpp)
+choreonoid_add_simple_controller(TrackedVehicleController TrackedVehicleController.cpp)
 configure_file(TrackedVehicle.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
 configure_file(TrackedVehicle.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

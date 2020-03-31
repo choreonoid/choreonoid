@@ -1,13 +1,8 @@
-
-# @author Shin'ichiro Nakaoka
-
 option(BUILD_SPRINGHEAD_PLUGIN "Building SpringheadPlugin" OFF)
 
 if(NOT BUILD_SPRINGHEAD_PLUGIN)
   return()
 endif()
-
-# set(CMAKE_BUILD_TYPE Debug)
 
 set(SPRINGHEAD_DIR             ${SPRINGHEAD_DIR}             CACHE PATH     "set the top directory of Springhead")
 set(SPRINGHEAD_LIBRARY_DEBUG   ${SPRINGHEAD_LIBRARY_DEBUG}   CACHE FILEPATH "set the debug library path of Springhead")
@@ -47,10 +42,5 @@ set(headers
   )
 
 make_gettext_mofiles(${target} mofiles) 
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
+choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} CnoidBodyPlugin ${SPRINGHEAD_LIBRARIES})
-apply_common_setting_for_plugin(${target} "${headers}")
-
-
-  
-  

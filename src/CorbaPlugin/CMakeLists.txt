@@ -30,5 +30,5 @@ choreonoid_add_plugin(${target} ${sources} ${mofiles} ${idl_cpp_files} HEADERS $
 target_link_libraries(${target} CnoidUtil CnoidCorba CnoidBase)
 
 # test program
-# add_cnoid_executable(corba-test test.cpp ${idl_cpp_files})
+# choreonoid_add_executable(corba-test test.cpp ${idl_cpp_files})
 # target_link_libraries(corba-test CnoidCorba ${CHOREONOID_OMNIORB_LIBRARIES})

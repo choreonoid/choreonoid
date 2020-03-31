@@ -167,7 +167,7 @@ set(BODY_CUSTOMIZERS ${BODY_CUSTOMIZERS} CACHE FILEPATH "Source files of body cu
 if(BODY_CUSTOMIZERS)
   foreach(src ${BODY_CUSTOMIZERS})
     get_filename_component(customizer ${src} NAME_WE)
-    add_cnoid_body_customizer(${customizer} ${src})
+    choreonoid_add_body_customizer(${customizer} ${src})
   endforeach()
 endif()
 

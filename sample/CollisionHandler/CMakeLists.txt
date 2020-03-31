@@ -15,6 +15,5 @@ set(sources
 )
 
 set(target CnoidSpringDamperContactPlugin)
-add_cnoid_plugin(${target} SHARED ${sources})
+choreonoid_add_plugin(${target} SHARED ${sources})
 target_link_libraries(${target} CnoidBodyPlugin)
-apply_common_setting_for_plugin(${target})

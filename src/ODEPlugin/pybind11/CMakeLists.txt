@@ -8,6 +8,6 @@ set(versions ${ode} ${gazebo_ode})
 
 foreach(version ${versions})
   set(target Py${version}Plugin)
-  add_cnoid_python_module(${target} PyODEPlugin.cpp)
+  choreonoid_add_python_module(${target} PyODEPlugin.cpp)
   target_link_libraries(${target} Cnoid${version}Plugin CnoidPyBase)
 endforeach()

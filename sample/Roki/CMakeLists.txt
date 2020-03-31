@@ -2,7 +2,7 @@ if(NOT (BUILD_ROKI_PLUGIN AND ENABLE_GUI))
   return()
 endif()
 
-add_cnoid_simple_controller(Arm2dofController Arm2dofController.cpp)
+choreonoid_add_simple_controller(Arm2dofController Arm2dofController.cpp)
 
 set(models
   arm_2dof.body

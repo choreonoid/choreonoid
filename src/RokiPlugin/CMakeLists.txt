@@ -1,4 +1,3 @@
-
 option(BUILD_ROKI_PLUGIN "Building RokiPlugin" OFF)
 
 if(NOT BUILD_ROKI_PLUGIN)
@@ -27,7 +26,6 @@ set(headers
 )
 
 make_gettext_mofiles(${target} mofiles) 
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
+choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} CnoidBodyPlugin ${ROKI_LIBRARIES})
-apply_common_setting_for_plugin(${target} "${headers}")
 install_runtime_dlls(${ROKI_DIR}/bin ${ROKI_LIBRARIES})
