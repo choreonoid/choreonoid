@@ -215,7 +215,8 @@ void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H)
 
     if(!base){
         const int c = nj;
-        H.block(0, c, 3, 3).setIdentity();
+        H.block(0, c, 3, 3).setZero();
+        H.block(0, c+3, 3, 3) = subMasses[rootLink->index()].Iw;
 
         Vector3 cm = body->calcCenterOfMass();
         Matrix3d cm_cross;
@@ -223,7 +224,7 @@ void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H)
             0.0,  -cm(2), cm(1),
             cm(2),    0.0,  -cm(0),
             -cm(1), cm(0),    0.0;
-        H -= cm_cross * M;
+        H.block(0,0,3,c) -= cm_cross * M;
 
     }
     
