@@ -488,9 +488,13 @@ void LinkPositionView::Impl::setTargetLinkType(int type)
 
 void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
+    bool isTargetTypeChanged = (targetType != LinkTarget);
+    bool isBodyItemChanged = isTargetTypeChanged || (bodyItem != targetBodyItem);
+    bool isLinkChanged = isTargetTypeChanged || (link != targetLink);
+
     // Sub body's root link is recognized as the parent body's end link
     if(bodyItem && link){
-        if(link->hasParentBody()){
+        if(bodyItem->isAttachedToParentBody()){
             if(auto parentBodyItem = bodyItem->parentBodyItem()){
                 link = bodyItem->body()->parentBodyLink();
                 bodyItem = parentBodyItem;
@@ -499,7 +503,7 @@ void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
         bool isIkLinkRequired = false;
         if(!targetLinkTypeSelection.is(AnyLink)){
             if(targetLinkTypeSelection.is(RootOrIkLink)){
-                isIkLinkRequired = !link->isRoot();
+                isIkLinkRequired = !link->isBodyRoot();
             } else {
                 isIkLinkRequired = true;
             }
@@ -517,11 +521,15 @@ void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
             }
         }
     }
+
+    if(!link){
+        if(isLinkChanged){
+            return;
+        } else {
+            isLinkChanged = true;
+        }
+    }
                 
-    bool isTargetTypeChanged = (targetType != LinkTarget);
-    bool isBodyItemChanged = isTargetTypeChanged || (bodyItem != targetBodyItem);
-    bool isLinkChanged = isTargetTypeChanged || (link != targetLink);
-    
     if(isBodyItemChanged || isLinkChanged){
 
         if(isBodyItemChanged){

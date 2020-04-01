@@ -61,7 +61,7 @@ public:
     ScopedConnectionSet frameEditConnections;
 
     Impl(BodyItem* bodyItem);
-    LinkKinematicsKit* findKinematicsKit(Link* targetLink, bool needPreset);
+    LinkKinematicsKit* findKinematicsKit(Link* targetLink, bool isPresetOnly);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
     void onBodyItemPositionChanged();
     void findFrameListSuiteItem();
@@ -124,11 +124,11 @@ LinkKinematicsKit* LinkKinematicsKitManager::findPresetKinematicsKit(Link* targe
 }
 
 
-LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targetLink, bool needPreset)
+LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targetLink, bool isPresetOnly)
 {
     LinkKinematicsKit* kit = nullptr;
 
-    if(needPreset && !targetLink){
+    if(isPresetOnly && !targetLink){
         targetLink = bodyItem->body()->findUniqueEndLink();
     }
     if(!targetLink){
@@ -138,17 +138,24 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
     bool isPresetMode = KinematicsBar::instance()->mode() == KinematicsBar::PresetKinematics;
     Link* baseLink = nullptr;
     int baseLinkIndex;
-    if(needPreset){
+    shared_ptr<InverseKinematics> presetIK;
+    bool hasNoPresetIK = false;
+    
+    if(isPresetOnly){
         baseLinkIndex = PresetBaseLink;
     } else {
         baseLink = bodyItem->currentBaseLink();
         if(baseLink){
             baseLinkIndex = baseLink->index();
         } else {
+            baseLinkIndex = FreeBaseLink;
             if(isPresetMode){
-                baseLinkIndex = PresetBaseLink;
-            } else {
-                baseLinkIndex = FreeBaseLink;
+                presetIK = findPresetIK(targetLink);
+                if(presetIK){
+                    baseLinkIndex = PresetBaseLink;
+                } else {
+                    hasNoPresetIK = true;
+                }
             }
         }
     }
@@ -163,14 +170,17 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
     }
 
     if(!kit){
-        if(needPreset || isPresetMode){
-            if(auto presetIK = findPresetIK(targetLink)){
+        if(isPresetOnly || isPresetMode){
+            if(!presetIK && !hasNoPresetIK){
+                presetIK = findPresetIK(targetLink);
+            }
+            if(presetIK){
                 kit = new LinkKinematicsKit(targetLink);
                 kit->setInversetKinematics(presetIK);
                 kit->setFrameSetSuite(commonFrameSetSuite);
             }
         }
-        if(!kit && !needPreset){
+        if(!kit && !isPresetOnly){
             kit = new LinkKinematicsKit(targetLink);
 
             auto pinDragIK = bodyItem->pinDragIK(); // create if not created
