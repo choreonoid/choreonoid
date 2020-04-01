@@ -85,8 +85,9 @@ public:
     bool undoKinematicState();
     bool redoKinematicState();
 
-    LinkKinematicsKit* findLinkKinematicsKit(Link* targetLink = nullptr);
+    LinkKinematicsKit* findPresetLinkKinematicsKit(Link* targetLink = nullptr);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
+    LinkKinematicsKit* getCurrentLinkKinematicsKit(Link* targetLink);
     std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);
     std::shared_ptr<PinDragIK> pinDragIK();
     std::shared_ptr<PenetrationBlocker> createPenetrationBlocker(Link* link, bool excludeSelfCollisions = false);

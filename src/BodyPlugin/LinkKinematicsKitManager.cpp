@@ -1,9 +1,11 @@
 #include "LinkKinematicsKitManager.h"
 #include "BodySelectionManager.h"
+#include "KinematicsBar.h"
 #include <cnoid/Link>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/JointPath>
 #include <cnoid/CompositeIK>
+#include <cnoid/PinDragIK>
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/LinkCoordFrameSetSuite>
 #include <cnoid/LinkCoordFrameListSuiteItem>
@@ -22,6 +24,11 @@ using namespace cnoid;
 
 namespace {
 
+enum BaseLinkId {
+    PresetBaseLink = -1,
+    FreeBaseLink = -2
+};
+
 enum FrameType {
     WorldFrame = LinkKinematicsKit::WorldFrame,
     BodyFrame = LinkKinematicsKit::BodyFrame,
@@ -37,8 +44,9 @@ class LinkKinematicsKitManager::Impl
 public:
     BodyItem* bodyItem;
 
-    // Use an integer value as a key to keep the number of instances growing
-    map<int, LinkKinematicsKitPtr> linkIndexToKinematicsKitMap;
+    // Key is pair(target link index, base link index);
+    // Use an integer index value as a key to keep the number of instances growing
+    map<std::pair<int, int>, LinkKinematicsKitPtr> linkPairToKinematicsKitMap;
 
     ScopedConnection bodyItemConnection;
     ScopedConnection frameListConnection;
@@ -53,6 +61,7 @@ public:
     ScopedConnectionSet frameEditConnections;
 
     Impl(BodyItem* bodyItem);
+    LinkKinematicsKit* findKinematicsKit(Link* targetLink, bool needPreset);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
     void onBodyItemPositionChanged();
     void findFrameListSuiteItem();
@@ -103,19 +112,50 @@ LinkKinematicsKitManager::~LinkKinematicsKitManager()
 }
 
 
-LinkKinematicsKit* LinkKinematicsKitManager::findKinematicsKit(Link* targetLink)
+LinkKinematicsKit* LinkKinematicsKitManager::getCurrentKinematicsKit(Link* targetLink)
 {
+    return impl->findKinematicsKit(targetLink, false);
+}
+
+
+LinkKinematicsKit* LinkKinematicsKitManager::findPresetKinematicsKit(Link* targetLink)
+{
+    return impl->findKinematicsKit(targetLink, true);
+}
+
+
+LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targetLink, bool needPreset)
+{
+    LinkKinematicsKit* kit = nullptr;
+
+    if(needPreset && !targetLink){
+        targetLink = bodyItem->body()->findUniqueEndLink();
+    }
     if(!targetLink){
-        targetLink = impl->bodyItem->body()->findUniqueEndLink();
-        if(!targetLink){
-            return nullptr;
+        return nullptr;
+    }
+
+    bool isPresetMode = KinematicsBar::instance()->mode() == KinematicsBar::PresetKinematics;
+    Link* baseLink = nullptr;
+    int baseLinkIndex;
+    if(needPreset){
+        baseLinkIndex = PresetBaseLink;
+    } else {
+        baseLink = bodyItem->currentBaseLink();
+        if(baseLink){
+            baseLinkIndex = baseLink->index();
+        } else {
+            if(isPresetMode){
+                baseLinkIndex = PresetBaseLink;
+            } else {
+                baseLinkIndex = FreeBaseLink;
+            }
         }
     }
+    auto key = make_pair(targetLink->index(), baseLinkIndex);
     
-    LinkKinematicsKit* kit = nullptr;
-    
-    auto iter = impl->linkIndexToKinematicsKitMap.find(targetLink->index());
-    if(iter != impl->linkIndexToKinematicsKitMap.end()){
+    auto iter = linkPairToKinematicsKitMap.find(key);
+    if(iter != linkPairToKinematicsKitMap.end()){
         auto foundKit = iter->second;
         if(foundKit->link() == targetLink){
             kit = foundKit;
@@ -123,13 +163,34 @@ LinkKinematicsKit* LinkKinematicsKitManager::findKinematicsKit(Link* targetLink)
     }
 
     if(!kit){
-        // A link kinematics kit can be created only for a link path
-        // included in the preset inverse kinematics paths
-        if(auto presetIK = impl->findPresetIK(targetLink)){
+        if(needPreset || isPresetMode){
+            if(auto presetIK = findPresetIK(targetLink)){
+                kit = new LinkKinematicsKit(targetLink);
+                kit->setInversetKinematics(presetIK);
+                kit->setFrameSetSuite(commonFrameSetSuite);
+            }
+        }
+        if(!kit && !needPreset){
             kit = new LinkKinematicsKit(targetLink);
-            kit->setInversetKinematics(presetIK);
-            kit->setFrameSetSuite(impl->commonFrameSetSuite);
-            impl->linkIndexToKinematicsKitMap[targetLink->index()] = kit;
+
+            auto pinDragIK = bodyItem->pinDragIK(); // create if not created
+            if(pinDragIK->numPinnedLinks() > 0){
+                pinDragIK->setTargetLink(targetLink, true);
+                if(pinDragIK->initialize()){
+                    kit->setInversetKinematics(pinDragIK);
+                }
+            }
+            if(!kit->inverseKinematics()){
+                auto body = bodyItem->body();
+                if(!baseLink){
+                    baseLink = body->rootLink();
+                }
+                kit->setInversetKinematics(JointPath::getCustomPath(body, baseLink, targetLink));
+            }
+        }
+
+        if(kit){
+            linkPairToKinematicsKitMap[key] = kit;
         }
     }
 
@@ -200,7 +261,7 @@ void LinkKinematicsKitManager::Impl::onFrameListSuiteItemAddedOrUpdated
     }
     if(isTargetFrameList){
         *commonFrameSetSuite = *frameListSuiteItem->frameSetSuite();
-        for(auto& kv : linkIndexToKinematicsKitMap){
+        for(auto& kv : linkPairToKinematicsKitMap){
             auto& kit = kv.second;
             kit->notifyFrameUpdate();
         }
@@ -253,7 +314,7 @@ bool LinkKinematicsKitManager::Impl::startBodyFrameEditing
 (AbstractPositionEditTarget* target, CoordinateFrame* frame)
 {
     if(auto link = bodySelectionManager->currentLink()){
-        if(auto kit = bodyItem->findLinkKinematicsKit(link)){
+        if(auto kit = bodyItem->findPresetLinkKinematicsKit(link)){
             if(auto baseLink = kit->baseLink()){
                 setFrameEditTarget(target, baseLink);
                 return true;
@@ -338,16 +399,22 @@ bool LinkKinematicsKitManager::storeState(Mapping& archive) const
 {
     auto body = impl->bodyItem->body();
     archive.setKeyQuoteStyle(DOUBLE_QUOTED);
-    for(auto& kv : impl->linkIndexToKinematicsKitMap){
-        int linkIndex = kv.first;
-        if(auto link = body->link(linkIndex)){
-            auto& kit = kv.second;
-            MappingPtr state = new Mapping;
-            if(!kit->storeState(*state)){
-                return false;
-            }
-            if(!state->empty()){
-                archive.insert(link->name(), state);
+    for(auto& kv : impl->linkPairToKinematicsKitMap){
+        auto& linkIndexPair = kv.first;
+        int baseLinkIndex = linkIndexPair.second;
+
+        // This function only stores the states of preset link kinematics objects
+        if(baseLinkIndex == PresetBaseLink){
+            int linkIndex = linkIndexPair.first;
+            if(auto link = body->link(linkIndex)){
+                auto& kit = kv.second;
+                MappingPtr state = new Mapping;
+                if(!kit->storeState(*state)){
+                    return false;
+                }
+                if(!state->empty()){
+                    archive.insert(link->name(), state);
+                }
             }
         }
     }
@@ -361,7 +428,7 @@ bool LinkKinematicsKitManager::restoreState(const Mapping& archive)
     for(auto& kv : archive){
         auto& linkName = kv.first;
         if(auto link = body->link(linkName)){
-            if(auto kit = findKinematicsKit(link)){
+            if(auto kit = findPresetKinematicsKit(link)){
                 kit->restoreState(*kv.second->toMapping());
             }
         }

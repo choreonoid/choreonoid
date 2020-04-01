@@ -19,8 +19,9 @@ public:
     LinkKinematicsKitManager(BodyItem* bodyItem);
     ~LinkKinematicsKitManager();
 
-    LinkKinematicsKit* findKinematicsKit(Link* targetLink = nullptr);
-
+    LinkKinematicsKit* getCurrentKinematicsKit(Link* targetLink);
+    LinkKinematicsKit* findPresetKinematicsKit(Link* targetLink = nullptr);
+    
     SgNode* scene();
 
     bool storeState(Mapping& archive) const;

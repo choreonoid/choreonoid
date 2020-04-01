@@ -138,7 +138,7 @@ void MprProgramItemBase::Impl::setTargetBodyItem(BodyItem* bodyItem)
     if(!bodyItem){
         kinematicsKit.reset();
     } else {
-        kinematicsKit = bodyItem->findLinkKinematicsKit();
+        kinematicsKit = bodyItem->findPresetLinkKinematicsKit();
     }
     if(kinematicsKit){
         targetBodyItem = bodyItem;

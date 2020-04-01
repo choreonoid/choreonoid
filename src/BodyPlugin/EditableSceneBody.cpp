@@ -857,14 +857,14 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
         auto parentBodyItem = bodyItem->parentBodyItem();
         auto parentBodyLink = bodyItem->body()->parentBodyLink();
-        kinematicsKit = parentBodyItem->findLinkKinematicsKit(parentBodyLink);
+        kinematicsKit = parentBodyItem->getCurrentLinkKinematicsKit(parentBodyLink);
         if(kinematicsKit){
             positionDragger->setPosition(
                 link->Tb().inverse(Eigen::Isometry) * kinematicsKit->currentLinkFrame()->T());
         }
     }
     if(!kinematicsKit){
-        kinematicsKit = bodyItem->findLinkKinematicsKit(link);
+        kinematicsKit = bodyItem->getCurrentLinkKinematicsKit(link);
         if(kinematicsKit){
             positionDragger->setPosition(kinematicsKit->currentLinkFrame()->T());
         } else {

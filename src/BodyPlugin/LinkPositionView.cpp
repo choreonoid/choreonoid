@@ -496,9 +496,13 @@ void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
                 bodyItem = parentBodyItem;
             }
         }
-        bool isIkLinkRequired = !targetLinkTypeSelection.is(AnyLink);
-        if(targetLinkTypeSelection.is(RootOrIkLink)){
-            isIkLinkRequired = !link->isRoot();
+        bool isIkLinkRequired = false;
+        if(!targetLinkTypeSelection.is(AnyLink)){
+            if(targetLinkTypeSelection.is(RootOrIkLink)){
+                isIkLinkRequired = !link->isRoot();
+            } else {
+                isIkLinkRequired = true;
+            }
         }
         if(isIkLinkRequired){
             if(!bodyItem->findPresetIK(link)){
@@ -555,6 +559,7 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
     targetLink = link;
     kinematicsKit.reset();
     kinematicsKitConnection.reset();
+    bool hasCoordinaeteFrames = false;
     
     if(!targetLink){
         targetLabel.setText("------");
@@ -573,7 +578,7 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
             }
         }
 
-        kinematicsKit = targetBodyItem->findLinkKinematicsKit(targetLink);
+        kinematicsKit = targetBodyItem->getCurrentLinkKinematicsKit(targetLink);
         if(kinematicsKit){
             kinematicsKitConnection =
                 kinematicsKit->sigFrameUpdate().connect(
@@ -581,6 +586,9 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
             if(functionToGetDefaultFrameNames){
                 tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[LinkFrame]) =
                     functionToGetDefaultFrameNames(kinematicsKit);
+            }
+            if(kinematicsKit->frameSetSuite()){
+                hasCoordinaeteFrames = true;
             }
             if(coordinateMode == WorldCoordinateMode){
                 kinematicsKit->setCurrentBaseFrameType(LinkKinematicsKit::WorldFrame);
@@ -592,9 +600,8 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
         }
     }
 
-    bool isValid = kinematicsKit != nullptr;
-    self->setEnabled(isValid);
-    setCoordinateFrameInterfaceEnabled(isValid);
+    self->setEnabled(kinematicsKit != nullptr);
+    setCoordinateFrameInterfaceEnabled(hasCoordinaeteFrames);
     resultLabel.setText("");
 
     updateCoordinateFrameCandidates();
@@ -603,7 +610,7 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
     setCoordinateMode(preferredCoordinateMode, false);
 
     setBodyCoordinateModeEnabled(
-        kinematicsKit && kinematicsKit->baseLink() && link != kinematicsKit->baseLink());
+        kinematicsKit && kinematicsKit->baseLink() && link != kinematicsKit->baseLink() && hasCoordinaeteFrames);
 }
 
 
