@@ -1,4 +1,3 @@
-
 add_subdirectory(Util)
 add_subdirectory(AISTCollisionDetector)
 add_subdirectory(AssimpSceneLoader)
@@ -34,9 +33,6 @@ if(ENABLE_GUI)
 
   add_subdirectory(CorbaPlugin)
   add_subdirectory(TrafficControlPlugin)
-
-  add_subdirectory(RobotAccessPlugin)
-  add_subdirectory(Hrpsys31Plugin)
 
   add_subdirectory(FCLPlugin)
   add_subdirectory(SDFPlugin)
