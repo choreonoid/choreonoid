@@ -384,4 +384,4 @@ selfCollisionDetection:
   excludeTreeDepth: 3
   excludeLinks: [ ]
 
-bodyHandlers: GRobotHandler
+body_handlers: GRobotHandler

@@ -694,7 +694,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
                 topNode->insert(subBody->info());
             }
 
-            auto bodyHandlers = topNode->extract("bodyHandlers");
+            auto bodyHandlers = topNode->extract("body_handlers");
 
             if(isDegreeMode()){
                 setDegreeModeAttributeToValueTreeNodes(topNode);
