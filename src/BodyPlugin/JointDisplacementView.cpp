@@ -31,6 +31,11 @@ using namespace cnoid;
 
 namespace {
 
+const QString normalStyle("font-weight: normal");
+const QString warningStyle("font-weight: bold; color: red");
+const QString handleNormalStyle("");
+const QString handleWarningStyle("QSlider::handle:horizontal {background-color: red;}");
+
 class JointIndicator;
 
 /**
@@ -123,6 +128,7 @@ public:
     DoubleSpinBox spin;
     Slider slider;
     Dial dial;
+    bool isWarningState;
     SpinBox phaseSpin;
     int minPhase;
     int maxPhase;
@@ -137,6 +143,7 @@ public:
           joint(nullptr),
           spin(&viewImpl->gridBase),
           slider(Qt::Horizontal, &viewImpl->gridBase),
+          isWarningState(false),
           dial(&viewImpl->gridBase),
           phaseSpin(&viewImpl->gridBase),
           idLabel(&viewImpl->gridBase),
@@ -342,10 +349,34 @@ public:
 
     void updateDisplacement(bool forceUpdate)
     {
-        double v = unitConversionRatio * joint->q();
+        double q = joint->q();
+        double v = unitConversionRatio * q;
 
         if(forceUpdate || v != spin.value()){
 
+            if(q > joint->q_upper() || q < joint->q_lower()){
+                spin.setStyleSheet(warningStyle);
+                slider.setStyleSheet(handleWarningStyle);
+                if(q > joint->q_upper()){
+                    upperLimitLabel.setStyleSheet(warningStyle);
+                } else {
+                    upperLimitLabel.setStyleSheet(normalStyle);
+                }
+                if(q < joint->q_lower()){
+                    lowerLimitLabel.setStyleSheet(warningStyle);
+                } else {
+                    lowerLimitLabel.setStyleSheet(normalStyle);
+                }
+                isWarningState = true;
+                
+            } else if(isWarningState){
+                spin.setStyleSheet(normalStyle);
+                slider.setStyleSheet(handleNormalStyle);
+                lowerLimitLabel.setStyleSheet(normalStyle);
+                upperLimitLabel.setStyleSheet(normalStyle);
+                isWarningState = false;
+            }
+            
             spin.blockSignals(true);
             if(v > spin.maximum()){
                 spin.setRange(spin.minimum(), v);

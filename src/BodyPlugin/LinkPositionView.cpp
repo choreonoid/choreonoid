@@ -38,8 +38,8 @@ using fmt::format;
 
 namespace {
 
-const char* normalStyle = "font-weight: normal";
-const char* errorStyle = "font-weight: bold; color: red";
+const QString normalStyle("font-weight: normal");
+const QString errorStyle("font-weight: bold; color: red");
 
 enum FrameType {
     WorldFrame = LinkKinematicsKit::WorldFrame,
@@ -930,7 +930,7 @@ void LinkPositionView::Impl::updateConfigurationPanel()
            !configuration->checkConfiguration(preferred)){
             configurationCombo.setStyleSheet(errorStyle);
         } else {
-            configurationCombo.setStyleSheet("font-weight: normal");
+            configurationCombo.setStyleSheet(normalStyle);
         }
         int actual = configuration->getCurrentConfiguration();
         configurationLabel.setText(configurationCombo.itemText(actual));
@@ -1006,7 +1006,7 @@ bool LinkPositionView::Impl::findBodyIkSolution(const Position& T_input)
     } else {
         targetBodyItem->cancelKinematicStateEdit();
         resultLabel.setText(_("Not Solved"));
-        resultLabel.setStyleSheet("font-weight: bold; color: red");
+        resultLabel.setStyleSheet(errorStyle);
     }
 
     return solved;
@@ -1028,7 +1028,7 @@ bool LinkPositionView::Impl::applyInputToPositionEditTarget(const Position& T_in
             resultLabel.setStyleSheet(normalStyle);
         } else {
             resultLabel.setText(_("Not Accepted"));
-            resultLabel.setStyleSheet("font-weight: bold; color: red");
+            resultLabel.setStyleSheet(errorStyle);
         }
     }
 
