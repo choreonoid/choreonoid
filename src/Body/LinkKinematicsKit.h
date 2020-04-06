@@ -13,7 +13,7 @@ namespace cnoid {
 class Body;
 class Link;
 class JointPath;
-class JointPathConfigurationHandler;
+class JointSpaceConfigurationHandler;
 class GeneralId;
 class CoordinateFrame;
 class CoordinateFrameSet;
@@ -37,8 +37,8 @@ public:
     std::shared_ptr<InverseKinematics> inverseKinematics();
     std::shared_ptr<JointPath> jointPath();
     
-    std::shared_ptr<JointPathConfigurationHandler> configurationHandler();
-    int currentConfiguration() const;
+    std::shared_ptr<JointSpaceConfigurationHandler> configurationHandler();
+    int currentConfigurationType() const;
     std::string configurationLabel(int id) const;
 
     bool isCustomIkAvaiable() const;

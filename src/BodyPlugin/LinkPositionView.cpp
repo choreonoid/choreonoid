@@ -9,7 +9,7 @@
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/JointPath>
-#include <cnoid/JointPathConfigurationHandler>
+#include <cnoid/JointSpaceConfigurationHandler>
 #include <cnoid/CompositeBodyIK>
 #include <cnoid/LinkCoordFrameSetSuite>
 #include <cnoid/LinkKinematicsKit>
@@ -25,13 +25,16 @@
 #include <cnoid/ButtonGroup>
 #include <cnoid/ActionGroup>
 #include <cnoid/Dialog>
+#include <cnoid/TreeWidget>
+#include <cnoid/LineEdit>
 #include <cnoid/Selection>
 #include <QScrollArea>
 #include <QLabel>
 #include <QGridLayout>
 #include <QStyle>
-#include <QListWidget>
+#include <QDialogButtonBox>
 #include <fmt/format.h>
+#include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
@@ -50,6 +53,35 @@ enum FrameType {
 };
 
 enum FrameComboType { BaseFrameCombo, LinkFrameCombo };
+
+class ConfTreeWidget : public TreeWidget
+{
+public:
+    virtual QSize sizeHint() const override;
+};
+
+class JointSpaceConfigurationDialog : public Dialog
+{
+public:
+    LinkPositionView::Impl* view;
+    shared_ptr<JointPath> jointPath;
+    shared_ptr<JointSpaceConfigurationHandler> configuration;
+    ConfTreeWidget treeWidget;
+    LineEdit searchBox;
+    CheckBox feasibleCheck;
+    int lastSortedSection;
+    Qt::SortOrder lastSortOrder;
+    QRect lastPosition;
+
+    JointSpaceConfigurationDialog(LinkPositionView::Impl* view);
+    void reset();
+    bool updateConfigurationTypes();
+    void onSectionClicked(int index);
+    void updateFeasibility();
+    void applyConfiguration(int id);
+    void onCanceled();
+    virtual void closeEvent(QCloseEvent* event) override;
+};
 
 }
 
@@ -97,12 +129,13 @@ public:
     ComboBox frameCombo[2];
     
     QLabel configurationLabel;
+    vector<int> currentConfigurationTypes;
+    string configurationString;
+    std::unordered_set<string> tmpConfigurationLabelSet;
     ToolButton configurationButton;
     vector<QWidget*> configurationWidgets;
-    Dialog* configurationDialog;
-    QListWidget* configurationListWidget;
-    QLabel* configurationDialogLabel;
-
+    JointSpaceConfigurationDialog* configurationDialog;
+    
     ScopedConnectionSet userInputConnections;
 
     Impl(LinkPositionView* self);
@@ -110,7 +143,7 @@ public:
     void onActivated();
     void onAttachedMenuRequest(MenuManager& menuManager);
     void setCoordinateModeInterfaceEnabled(bool on);
-    void setCoordinateMode(int mode, bool doUpdatePanel);
+    void setCoordinateMode(int mode, bool doUpdateDisplay);
     void setBodyCoordinateModeEnabled(bool on);
     void onCoordinateModeRadioToggled(int mode);
     void setTargetLinkType(int type);
@@ -129,12 +162,11 @@ public:
     void applyConfiguration(int id);
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onPositionEditTargetExpired();
-    void updatePanel();
-    void updatePanelWithCurrentLinkPosition();
-    void updatePanelWithPositionEditTarget();
-    void updateConfigurationPanel();
+    void updateDisplay();
+    void updateDisplayWithCurrentLinkPosition();
+    void updateDisplayWithPositionEditTarget();
+    void updateConfigurationDisplay();
     void setFramesToCombo(CoordinateFrameSet* frames, QComboBox& combo);
-    void onConfigurationInput(int index);
     bool applyPositionInput(const Position& T);
     bool findBodyIkSolution(const Position& T_input, bool isRawT);
     bool applyInputToPositionEditTarget(const Position& T_input);
@@ -229,7 +261,7 @@ void LinkPositionView::Impl::createPanel()
     resultLabel.setAlignment(Qt::AlignCenter);
     hbox->addWidget(&resultLabel, 1);
     auto actualButton = new PushButton(_("Fetch"));
-    actualButton->sigClicked().connect([&](){ updatePanel(); });
+    actualButton->sigClicked().connect([&](){ updateDisplay(); });
     hbox->addWidget(actualButton);
     auto applyButton = new PushButton(_("Apply"));
     applyButton->sigClicked().connect([&](){ positionWidget->applyPositionInput(); });
@@ -283,7 +315,7 @@ void LinkPositionView::Impl::createPanel()
     grid->setColumnStretch(1, 1);
 
     frameComboLabel[BaseFrameCombo].setText(_("Base"));
-    frameComboLabel[LinkFrameCombo].setText(_("Link"));
+    frameComboLabel[LinkFrameCombo].setText(_("End"));
 
     for(int i=0; i < 2; ++i){
         grid->addWidget(&frameComboLabel[i], row + i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
@@ -310,8 +342,8 @@ void LinkPositionView::Impl::createPanel()
     grid->addWidget(&configurationButton, row, 2);
     configurationWidgets.push_back(&configurationButton);
     configurationDialog = nullptr;
-
     vbox->addLayout(grid);
+
     vbox->addStretch();
 }
 
@@ -410,7 +442,7 @@ void LinkPositionView::Impl::onAttachedMenuRequest(MenuManager& menu)
                 if(kinematicsKit){
                     kinematicsKit->setCustomIkDisabled(on);
                     initializeConfigurationInterface();
-                    updatePanel();
+                    updateDisplay();
                 }
             });
     }
@@ -426,7 +458,7 @@ void LinkPositionView::Impl::setCoordinateModeInterfaceEnabled(bool on)
 }
 
 
-void LinkPositionView::Impl::setCoordinateMode(int mode, bool doUpdatePanel)
+void LinkPositionView::Impl::setCoordinateMode(int mode, bool doUpdateDisplay)
 {
     coordinateModeGroup.blockSignals(true);
     
@@ -454,8 +486,8 @@ void LinkPositionView::Impl::setCoordinateMode(int mode, bool doUpdatePanel)
         updateCoordinateFrameCandidates();
     }
 
-    if(doUpdatePanel){
-        updatePanel();
+    if(doUpdateDisplay){
+        updateDisplay();
     }
 }
 
@@ -542,13 +574,13 @@ void LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
 
                 targetConnections.add(
                     bodyItem->sigKinematicStateChanged().connect(
-                        [&](){ updatePanelWithCurrentLinkPosition(); }));
+                        [&](){ updateDisplayWithCurrentLinkPosition(); }));
             }
         }
 
         targetType = LinkTarget;
         updateTargetLink(link);
-        updatePanelWithCurrentLinkPosition();
+        updateDisplayWithCurrentLinkPosition();
     }
 }
 
@@ -735,7 +767,7 @@ void LinkPositionView::Impl::onFrameComboActivated(int frameComboIndex, int inde
             }
             kinematicsKit->notifyFrameUpdate();
         }
-        updatePanel();
+        updateDisplay();
     }
 }
 
@@ -787,7 +819,7 @@ void LinkPositionView::Impl::onFrameUpdate()
     baseFrame = kinematicsKit->currentBaseFrame();
     linkFrame = kinematicsKit->currentLinkFrame();
     
-    updatePanel();
+    updateDisplay();
 }
 
 
@@ -804,8 +836,9 @@ void LinkPositionView::Impl::setConfigurationInterfaceEnabled(bool on)
 
 void LinkPositionView::Impl::initializeConfigurationInterface()
 {
-    bool isConfigurationValid = false;
+    currentConfigurationTypes.clear();
 
+    bool isConfigurationValid = false;
     if(kinematicsKit && !kinematicsKit->isCustomIkDisabled()){
         if(auto configurationHandler = kinematicsKit->configurationHandler()){
             isConfigurationValid = true;
@@ -813,73 +846,204 @@ void LinkPositionView::Impl::initializeConfigurationInterface()
     }
 
     setConfigurationInterfaceEnabled(isConfigurationValid);
+
+    if(configurationDialog){
+        if(isConfigurationValid){
+            configurationDialog->updateConfigurationTypes();
+        } else {
+            configurationDialog->reset();
+        }
+    }
+
 }
 
 
 void LinkPositionView::Impl::showConfigurationDialog()
 {
-    if(!kinematicsKit){
-        return;
+    if(!configurationDialog){
+        configurationDialog = new JointSpaceConfigurationDialog(this);
     }
-    auto jointPath = kinematicsKit->jointPath();
-    auto configurationHandler = kinematicsKit->configurationHandler();
-    if(!jointPath || !configurationHandler){
-        return;
-    }
-
-    auto& dialog = configurationDialog;
-    auto& listWidget = configurationListWidget;
     
-    if(!dialog){
-        dialog = new Dialog(self);
-        auto vbox = new QVBoxLayout;
-        listWidget = new QListWidget(dialog);
-        QObject::connect(
-            listWidget, &QListWidget::itemClicked,
-            [&](QListWidgetItem* item){
-                int id = item->data(Qt::UserRole).toInt();
-                applyConfiguration(id);
-            });
-        configurationDialogLabel = new QLabel(_("No feasible configuration is available."));
-        vbox->addWidget(listWidget);
-        dialog->setLayout(vbox);
-    }
-
-    auto name = jointPath->name();
-    if(name.empty()){
-        dialog->setWindowTitle(_("Joint-space configuration"));
-    } else {
-        dialog->setWindowTitle(format(_("{} configuration"), name).c_str());
-    }
-
-    listWidget->clear();
-
-    int n = configurationHandler->checkFeasibleConfigurations();
-    if(n == 0){
-        listWidget->hide();
-        configurationDialogLabel->show();
-    } else {
-        for(int i=0; i < n; ++i){
-            int id = configurationHandler->feasibleConfiguration(i);
-            auto item = new QListWidgetItem(
-                configurationHandler->getConfigurationLabel(id).c_str());
-            item->setData(Qt::UserRole, id);
-            listWidget->addItem(item);
+    if(configurationDialog->updateConfigurationTypes()){
+        configurationDialog->show();
+        if(!configurationDialog->lastPosition.isNull()){
+            configurationDialog->treeWidget.setSizeAdjustPolicy(
+                QAbstractScrollArea::AdjustIgnored);
+            configurationDialog->setGeometry(configurationDialog->lastPosition);
         }
-        listWidget->show();
-        configurationDialogLabel->hide();
     }
-
-    dialog->show();
 }
 
 
-void LinkPositionView::Impl::applyConfiguration(int id)
+JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionView::Impl* view)
+    : Dialog(view->self, Qt::Tool),
+      view(view)
 {
-    auto handler = kinematicsKit->configurationHandler();
-    handler->setPreferredConfiguration(id);
-    findBodyIkSolution(kinematicsKit->link()->T(), true);
-    handler->resetPreferredConfiguration();
+    // Keep the position and size after hiding the dialog
+    QSizePolicy sp = sizePolicy();
+    sp.setRetainSizeWhenHidden(true);
+    setSizePolicy(sp);
+    
+    setSizeGripEnabled(true);
+    
+    auto vbox = new QVBoxLayout;
+
+    auto hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Search")));
+    hbox->addWidget(&searchBox, 1);
+    feasibleCheck.setText(_("Feasible"));
+    hbox->addWidget(&feasibleCheck);
+    vbox->addLayout(hbox);
+
+    auto header = treeWidget.header();
+    header->setMinimumSectionSize(1);
+    header->setSectionResizeMode(QHeaderView::ResizeToContents);
+    header->setSectionsClickable(true);
+    QObject::connect(header, &QHeaderView::sectionClicked,
+                     [&](int index){ onSectionClicked(index); });
+
+    treeWidget.setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContentsOnFirstShow);
+    treeWidget.setRootIsDecorated(false);
+
+    treeWidget.sigCurrentItemChanged().connect(
+        [&](QTreeWidgetItem* item, QTreeWidgetItem*){
+            if(item){
+                int id = item->data(0, Qt::UserRole).toInt();
+                applyConfiguration(id);
+            }
+        });
+    vbox->addWidget(&treeWidget);
+
+    hbox = new QHBoxLayout;
+    auto updateButton = new PushButton(_("&Update"));
+    updateButton->sigClicked().connect([&](){ updateFeasibility(); });
+    hbox->addWidget(updateButton);
+    hbox->addStretch();
+
+    auto applyButton = new PushButton(_("&Apply"));
+    applyButton->setDefault(true);
+    auto cancelButton = new PushButton(_("&Cancel"));
+    auto buttonBox = new QDialogButtonBox(this);
+    buttonBox->addButton(applyButton, QDialogButtonBox::AcceptRole);
+    buttonBox->addButton(cancelButton, QDialogButtonBox::RejectRole);
+    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+    connect(buttonBox, &QDialogButtonBox::rejected, [&](){ onCanceled(); });
+    hbox->addWidget(buttonBox);
+
+    vbox->addLayout(hbox);
+    
+    setLayout(vbox);
+}
+
+
+void JointSpaceConfigurationDialog::reset()
+{
+    jointPath.reset();
+    configuration.reset();
+    treeWidget.clear();
+    lastSortedSection = -1;
+}
+
+
+bool JointSpaceConfigurationDialog::updateConfigurationTypes()
+{
+    reset();
+
+    auto& kinematicsKit = view->kinematicsKit;
+    if(!kinematicsKit){
+        return false;
+    }
+    jointPath = kinematicsKit->jointPath();
+    configuration = kinematicsKit->configurationHandler();
+    if(!jointPath || !configuration){
+        return false;
+    }
+    
+    auto name = jointPath->name();
+    if(name.empty()){
+        setWindowTitle(_("Joint-space configuration"));
+    } else {
+        setWindowTitle(format(_("{} configuration"), name).c_str());
+    }
+
+    int n = configuration->getNumConfigurationTypes();
+    auto targetNames = configuration->getConfigurationTargetNames();
+    treeWidget.setColumnCount(targetNames.size() + 1);
+    QStringList headerLabels;
+    headerLabels.append("No");
+    for(auto& label : targetNames){
+        headerLabels.append(label.c_str());
+    }
+    treeWidget.setHeaderLabels(headerLabels);
+    
+    for(int i=0; i < n; ++i){
+        int typeId = configuration->getConfigurationTypeId(i);
+        auto labels = configuration->getConfigurationStateNames(typeId);
+        auto item = new QTreeWidgetItem;
+        item->setData(0, Qt::DisplayRole, i + 1);
+        item->setTextAlignment(0, Qt::AlignCenter);
+        item->setData(0, Qt::UserRole, typeId);
+        for(size_t j=0; j < labels.size(); ++j){
+            item->setText(j + 1, labels[j].c_str());
+        }
+        treeWidget.addTopLevelItem(item);
+    }
+
+    return true;
+}
+
+
+void JointSpaceConfigurationDialog::onSectionClicked(int index)
+{
+    Qt::SortOrder order;
+    if(index != lastSortedSection){
+        order = Qt::AscendingOrder;
+    } else {
+        order = (lastSortOrder != Qt::AscendingOrder) ? Qt::AscendingOrder : Qt::DescendingOrder;
+    }
+    treeWidget.sortByColumn(index, order);
+    
+    lastSortedSection = index;
+    lastSortOrder = order;
+}
+
+
+void JointSpaceConfigurationDialog::updateFeasibility()
+{
+
+}
+
+
+void JointSpaceConfigurationDialog::applyConfiguration(int id)
+{
+    configuration->setPreferredConfigurationType(id);
+    view->findBodyIkSolution(view->kinematicsKit->link()->T(), true);
+    configuration->resetPreferredConfigurationType();
+}
+
+
+void JointSpaceConfigurationDialog::onCanceled()
+{
+    hide();
+}
+
+
+void JointSpaceConfigurationDialog::closeEvent(QCloseEvent* event)
+{
+    lastPosition = geometry();
+}
+
+
+QSize ConfTreeWidget::sizeHint() const
+{
+    int c = topLevelItemCount();
+    if(c == 0){
+        return TreeWidget::sizeHint();
+    }
+    const int frameWidth = style()->pixelMetric(QStyle::PM_DefaultFrameWidth);
+    auto header_ = header();
+    auto r = visualItemRect(topLevelItem(c - 1));
+    return QSize(-1, r.bottom() + header_->height() + frameWidth * 2 + r.height() / 2);
 }
 
 
@@ -895,7 +1059,7 @@ bool LinkPositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* t
 
     targetConnections.add(
         target->sigPositionChanged().connect(
-            [&](const Position&){ updatePanelWithPositionEditTarget(); }));
+            [&](const Position&){ updateDisplayWithPositionEditTarget(); }));
 
     targetConnections.add(
         target->sigPositionEditTargetExpired().connect(
@@ -908,7 +1072,7 @@ bool LinkPositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* t
     setBodyCoordinateModeEnabled(false);
     setCoordinateModeInterfaceEnabled(false);
 
-    updatePanelWithPositionEditTarget();
+    updateDisplayWithPositionEditTarget();
 
     return true;
 }
@@ -920,15 +1084,15 @@ void LinkPositionView::Impl::onPositionEditTargetExpired()
 }
 
 
-void LinkPositionView::Impl::updatePanel()
+void LinkPositionView::Impl::updateDisplay()
 {
     userInputConnections.block();
     
     if(targetType == LinkTarget){
-        updatePanelWithCurrentLinkPosition();
+        updateDisplayWithCurrentLinkPosition();
 
     } else if(targetType == PositionEditTarget){
-        updatePanelWithPositionEditTarget();
+        updateDisplayWithPositionEditTarget();
     }
 
     userInputConnections.unblock();
@@ -938,7 +1102,7 @@ void LinkPositionView::Impl::updatePanel()
 }
 
 
-void LinkPositionView::Impl::updatePanelWithCurrentLinkPosition()
+void LinkPositionView::Impl::updateDisplayWithCurrentLinkPosition()
 {
     if(targetLink){
         Position T = baseFrame->T().inverse(Eigen::Isometry) * targetLink->Ta() * linkFrame->T();
@@ -949,12 +1113,12 @@ void LinkPositionView::Impl::updatePanelWithCurrentLinkPosition()
             positionWidget->setReferenceRpy(kinematicsKit->referenceRpy());
         }
         positionWidget->setPosition(T);
-        updateConfigurationPanel();
+        updateConfigurationDisplay();
     }
 }
 
 
-void LinkPositionView::Impl::updatePanelWithPositionEditTarget()
+void LinkPositionView::Impl::updateDisplayWithPositionEditTarget()
 {
     if(positionEditTarget){
         positionWidget->setReferenceRpy(Vector3::Zero());
@@ -963,28 +1127,45 @@ void LinkPositionView::Impl::updatePanelWithPositionEditTarget()
 }
 
 
-void LinkPositionView::Impl::updateConfigurationPanel()
+void LinkPositionView::Impl::updateConfigurationDisplay()
 {
-    shared_ptr<JointPathConfigurationHandler> configuration;
     if(kinematicsKit){
-        configuration = kinematicsKit->configurationHandler();
+        if(auto configuration = kinematicsKit->configurationHandler()){
+            configurationString.clear();
+            auto types = configuration->getCurrentConfigurationTypes();
+            if(types != currentConfigurationTypes){
+                size_t numTypes = types.size();
+                vector<vector<string>> allLabels(numTypes);
+                int maxNumLabels = 0;
+                for(int i=0; i < numTypes; ++i){
+                    allLabels[i] = configuration->getConfigurationStateNames(types[i]);
+                    int n = allLabels[i].size();
+                    if(n > maxNumLabels){
+                        maxNumLabels = n;
+                    }
+                }
+                for(size_t i=0; i < maxNumLabels; ++i){
+                    for(size_t j=0; j < numTypes; ++j){
+                        auto& labels = allLabels[j];
+                        if(i < labels.size()){
+                            auto& label = labels[i];
+                            auto p = tmpConfigurationLabelSet.insert(label);
+                            if(p.second){ // newly inserted
+                                if(!configurationString.empty()){
+                                    //configurationString.append(" / ");
+                                    configurationString.append("-");
+                                }
+                                configurationString.append(label);
+                            }
+                        }
+                    }
+                }
+                configurationLabel.setText(configurationString.c_str());
+                currentConfigurationTypes = types;
+            }
+            tmpConfigurationLabelSet.clear();
+        }
     }
-
-    if(!configuration){
-        configurationLabel.setText("-----");
-    } else {
-        int id = configuration->getCurrentConfiguration();
-        configurationLabel.setText(configuration->getConfigurationLabel(id).c_str());
-    }
-}
-
-
-void LinkPositionView::Impl::onConfigurationInput(int index)
-{
-    if(auto configurationHandler = kinematicsKit->configurationHandler()){
-        configurationHandler->setPreferredConfiguration(index);
-    }
-    positionWidget->applyPositionInput();
 }
 
 

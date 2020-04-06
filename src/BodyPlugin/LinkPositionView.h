@@ -32,6 +32,8 @@ public:
     void customizeDefaultCoordinateFrameNames(
         std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> getNames);
 
+    class Impl;
+
 protected:
     virtual void onActivated() override;
     virtual void onDeactivated() override;
@@ -40,7 +42,6 @@ protected:
     virtual bool restoreState(const Archive& archive) override;
 
 private:
-    class Impl;
     Impl* impl;
 };
 

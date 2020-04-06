@@ -1,7 +1,7 @@
 #include "LinkKinematicsKit.h"
 #include "Body.h"
 #include "JointPath.h"
-#include "JointPathConfigurationHandler.h"
+#include "JointSpaceConfigurationHandler.h"
 #include "CompositeBodyIK.h"
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
@@ -21,7 +21,7 @@ public:
     LinkPtr link;
     shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPath> jointPath;
-    shared_ptr<JointPathConfigurationHandler> configurationHandler;
+    shared_ptr<JointSpaceConfigurationHandler> configurationHandler;
     bool isCustomIkDisabled;
     bool isRpySpecified;
     Vector3 referenceRpy;
@@ -126,7 +126,7 @@ void LinkKinematicsKit::Impl::setBaseLink(Link* baseLink)
             inverseKinematics = jointPath;
             if(jointPath->hasCustomIK()){
                 configurationHandler =
-                    dynamic_pointer_cast<JointPathConfigurationHandler>(jointPath);
+                    dynamic_pointer_cast<JointSpaceConfigurationHandler>(jointPath);
                 jointPath->setNumericalIKenabled(isCustomIkDisabled);
             }
         }
@@ -150,10 +150,10 @@ void LinkKinematicsKit::Impl::setInversetKinematics(std::shared_ptr<InverseKinem
 
     if(auto compositeBodyIK = dynamic_pointer_cast<CompositeBodyIK>(ik)){
         configurationHandler =
-            dynamic_pointer_cast<JointPathConfigurationHandler>(
+            dynamic_pointer_cast<JointSpaceConfigurationHandler>(
                 compositeBodyIK->getParentBodyIK());
     } else {
-        configurationHandler = dynamic_pointer_cast<JointPathConfigurationHandler>(ik);
+        configurationHandler = dynamic_pointer_cast<JointSpaceConfigurationHandler>(ik);
     }
 
     jointPath = dynamic_pointer_cast<JointPath>(ik);
@@ -214,16 +214,16 @@ std::shared_ptr<JointPath> LinkKinematicsKit::jointPath()
 }
 
 
-std::shared_ptr<JointPathConfigurationHandler> LinkKinematicsKit::configurationHandler()
+std::shared_ptr<JointSpaceConfigurationHandler> LinkKinematicsKit::configurationHandler()
 {
     return impl->configurationHandler;
 }
 
 
-int LinkKinematicsKit::currentConfiguration() const
+int LinkKinematicsKit::currentConfigurationType() const
 {
     if(impl->configurationHandler){
-        impl->configurationHandler->getCurrentConfiguration();
+        impl->configurationHandler->getCurrentConfigurationType();
     }
     return 0;
 }
@@ -232,7 +232,14 @@ int LinkKinematicsKit::currentConfiguration() const
 std::string LinkKinematicsKit::configurationLabel(int id) const
 {
     if(impl->configurationHandler){
-        return impl->configurationHandler->getConfigurationLabel(id);
+        string label;
+        for(auto& element : impl->configurationHandler->getConfigurationStateNames(id)){
+            if(!label.empty()){
+                label.append(" / ");
+            }
+            label.append(element);
+        }
+        return label;
     }
     return std::string();
 }
