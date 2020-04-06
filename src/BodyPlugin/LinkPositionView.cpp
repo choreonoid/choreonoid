@@ -13,6 +13,7 @@
 #include <cnoid/CompositeBodyIK>
 #include <cnoid/LinkCoordFrameSetSuite>
 #include <cnoid/LinkKinematicsKit>
+#include <cnoid/BodyState>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ViewManager>
@@ -57,15 +58,25 @@ enum FrameComboType { BaseFrameCombo, LinkFrameCombo };
 class ConfTreeWidget : public TreeWidget
 {
 public:
+    /*
+    QModelIndex indexFromItem(const QTreeWidgetItem* item, int column = 0) const {
+        return QTreeWidget::indexFromItem(item, column);
+    }
+    */
     virtual QSize sizeHint() const override;
 };
 
 class JointSpaceConfigurationDialog : public Dialog
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     LinkPositionView::Impl* view;
+    BodyPtr body;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointSpaceConfigurationHandler> configuration;
+    Position T0;
+    BodyState bodyState0;
     ConfTreeWidget treeWidget;
     LineEdit searchBox;
     CheckBox feasibleCheck;
@@ -76,11 +87,12 @@ public:
     JointSpaceConfigurationDialog(LinkPositionView::Impl* view);
     void reset();
     bool updateConfigurationTypes();
+    void updateConfigurationStates();
+    void updateItemDisplay();
     void onSectionClicked(int index);
-    void updateFeasibility();
     void applyConfiguration(int id);
     void onCanceled();
-    virtual void closeEvent(QCloseEvent* event) override;
+    virtual void hideEvent(QHideEvent* event) override;
 };
 
 }
@@ -865,11 +877,13 @@ void LinkPositionView::Impl::showConfigurationDialog()
     }
     
     if(configurationDialog->updateConfigurationTypes()){
-        configurationDialog->show();
-        if(!configurationDialog->lastPosition.isNull()){
-            configurationDialog->treeWidget.setSizeAdjustPolicy(
-                QAbstractScrollArea::AdjustIgnored);
-            configurationDialog->setGeometry(configurationDialog->lastPosition);
+        if(configurationDialog->isHidden()){
+            configurationDialog->show();
+            if(!configurationDialog->lastPosition.isNull()){
+                configurationDialog->treeWidget.setSizeAdjustPolicy(
+                    QAbstractScrollArea::AdjustIgnored);
+                configurationDialog->setGeometry(configurationDialog->lastPosition);
+            }
         }
     }
 }
@@ -879,11 +893,6 @@ JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionView::I
     : Dialog(view->self, Qt::Tool),
       view(view)
 {
-    // Keep the position and size after hiding the dialog
-    QSizePolicy sp = sizePolicy();
-    sp.setRetainSizeWhenHidden(true);
-    setSizePolicy(sp);
-    
     setSizeGripEnabled(true);
     
     auto vbox = new QVBoxLayout;
@@ -892,6 +901,7 @@ JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionView::I
     hbox->addWidget(new QLabel(_("Search")));
     hbox->addWidget(&searchBox, 1);
     feasibleCheck.setText(_("Feasible"));
+    feasibleCheck.sigToggled().connect([&](bool){ updateItemDisplay(); });
     hbox->addWidget(&feasibleCheck);
     vbox->addLayout(hbox);
 
@@ -916,7 +926,7 @@ JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionView::I
 
     hbox = new QHBoxLayout;
     auto updateButton = new PushButton(_("&Update"));
-    updateButton->sigClicked().connect([&](){ updateFeasibility(); });
+    updateButton->sigClicked().connect([&](){ updateConfigurationStates(); });
     hbox->addWidget(updateButton);
     hbox->addStretch();
 
@@ -938,6 +948,7 @@ JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionView::I
 
 void JointSpaceConfigurationDialog::reset()
 {
+    body.reset();
     jointPath.reset();
     configuration.reset();
     treeWidget.clear();
@@ -953,11 +964,15 @@ bool JointSpaceConfigurationDialog::updateConfigurationTypes()
     if(!kinematicsKit){
         return false;
     }
+    body = kinematicsKit->body();
     jointPath = kinematicsKit->jointPath();
     configuration = kinematicsKit->configurationHandler();
     if(!jointPath || !configuration){
         return false;
     }
+
+    T0 = jointPath->endLink()->T();
+    bodyState0.storePositions(*body);
     
     auto name = jointPath->name();
     if(name.empty()){
@@ -989,7 +1004,77 @@ bool JointSpaceConfigurationDialog::updateConfigurationTypes()
         treeWidget.addTopLevelItem(item);
     }
 
+    updateConfigurationStates();
+
     return true;
+}
+
+
+void JointSpaceConfigurationDialog::updateConfigurationStates()
+{
+    int n = treeWidget.topLevelItemCount();
+    if(n == 0){
+        return;
+    }
+    
+    T0 = jointPath->endLink()->T();
+    bodyState0.storePositions(*body);
+
+    for(int i=0; i < n; ++i){
+        auto item = treeWidget.topLevelItem(i);
+        int id = item->data(0, Qt::UserRole).toInt();
+        configuration->setPreferredConfigurationType(id);
+        bool solved = jointPath->calcInverseKinematics(T0);
+        if(solved){
+            for(auto& joint : jointPath->joints()){
+                if(joint->q() > joint->q_upper() || joint->q() < joint->q_lower()){
+                    solved = false;
+                    break;
+                }
+            }
+        }
+        item->setData(0, Qt::UserRole + 1, solved);
+    }
+
+    configuration->resetPreferredConfigurationType();
+    bodyState0.restorePositions(*body);
+    jointPath->endLink()->T() = T0;
+
+    updateItemDisplay();
+}
+
+
+void JointSpaceConfigurationDialog::updateItemDisplay()
+{
+    int n = treeWidget.topLevelItemCount();
+    if(n == 0){
+        return;
+    }
+    QBrush red(Qt::red);
+    QVariant none;
+    for(int i=0; i < n; ++i){
+        auto item = treeWidget.topLevelItem(i);
+        bool solved = item->data(0, Qt::UserRole + 1).toBool();
+        for(int j=0; j < item->columnCount(); ++j){
+            if(solved){
+                item->setData(j, Qt::ForegroundRole, none);
+            } else {
+                item->setForeground(j, red);
+            }
+            if(feasibleCheck.isChecked()){
+                item->setHidden(!solved);
+            } else {
+                item->setHidden(false);
+            }
+        }
+    }
+    /*
+    auto index1 = treeWidget.indexFromItem(treeWidget.topLevelItem(0), 0);
+    auto index2 = treeWidget.indexFromItem(treeWidget.topLevelItem(n - 1), treeWidget.columnCount() - 1);
+    treeWidget.model()->dataChanged(index1, index2);
+    */
+    // treeWidget.update();
+    // treeWidget.repaint();
 }
 
 
@@ -1008,12 +1093,6 @@ void JointSpaceConfigurationDialog::onSectionClicked(int index)
 }
 
 
-void JointSpaceConfigurationDialog::updateFeasibility()
-{
-
-}
-
-
 void JointSpaceConfigurationDialog::applyConfiguration(int id)
 {
     configuration->setPreferredConfigurationType(id);
@@ -1024,13 +1103,20 @@ void JointSpaceConfigurationDialog::applyConfiguration(int id)
 
 void JointSpaceConfigurationDialog::onCanceled()
 {
+    if(body){
+        bodyState0.restorePositions(*body);
+        jointPath->endLink()->T() = T0;
+        view->targetBodyItem->notifyKinematicStateChange();
+    }
+        
     hide();
 }
 
 
-void JointSpaceConfigurationDialog::closeEvent(QCloseEvent* event)
+void JointSpaceConfigurationDialog::hideEvent(QHideEvent* event)
 {
     lastPosition = geometry();
+    Dialog::hideEvent(event);
 }
 
 
