@@ -899,6 +899,7 @@ JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionView::I
 
     auto hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Search")));
+    searchBox.setEnabled(false);
     hbox->addWidget(&searchBox, 1);
     feasibleCheck.setText(_("Feasible"));
     feasibleCheck.sigToggled().connect([&](bool){ updateItemDisplay(); });

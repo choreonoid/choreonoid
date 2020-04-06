@@ -223,7 +223,7 @@ std::shared_ptr<JointSpaceConfigurationHandler> LinkKinematicsKit::configuration
 int LinkKinematicsKit::currentConfigurationType() const
 {
     if(impl->configurationHandler){
-        impl->configurationHandler->getCurrentConfigurationType();
+        return impl->configurationHandler->getCurrentConfigurationType();
     }
     return 0;
 }
@@ -235,7 +235,7 @@ std::string LinkKinematicsKit::configurationLabel(int id) const
         string label;
         for(auto& element : impl->configurationHandler->getConfigurationStateNames(id)){
             if(!label.empty()){
-                label.append(" / ");
+                label.append("-");
             }
             label.append(element);
         }

@@ -1466,7 +1466,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
 {
     Link* linkToAttach = nullptr;
     for(auto& attachment : body->devices<AttachmentDevice>()){
-        if(attachment->link()->isRoot()){
+        if(attachment->link()->isBodyRoot()){
             for(auto& holder : bodyItem->body()->devices<HolderDevice>()){
                 if(attachment->category() == holder->category()){
                     holder->addAttachment(attachment);
