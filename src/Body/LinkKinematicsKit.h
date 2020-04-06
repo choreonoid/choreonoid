@@ -39,7 +39,7 @@ public:
     
     std::shared_ptr<JointPathConfigurationHandler> configurationHandler();
     int currentConfiguration() const;
-    std::string configurationName(int index) const;
+    std::string configurationLabel(int id) const;
 
     bool isCustomIkAvaiable() const;
     bool isCustomIkDisabled() const;

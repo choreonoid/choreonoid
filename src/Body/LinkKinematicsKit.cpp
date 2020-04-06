@@ -229,10 +229,10 @@ int LinkKinematicsKit::currentConfiguration() const
 }
 
 
-std::string LinkKinematicsKit::configurationName(int index) const
+std::string LinkKinematicsKit::configurationLabel(int id) const
 {
     if(impl->configurationHandler){
-        return impl->configurationHandler->getConfigurationName(index);
+        return impl->configurationHandler->getConfigurationLabel(id);
     }
     return std::string();
 }

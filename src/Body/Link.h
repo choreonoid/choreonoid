@@ -321,6 +321,8 @@ public:
     Matrix3 attitude() const { return R() * Rs_; }
     void setAttitude(const Matrix3& Ra) { R() = Ra * Rs_.transpose(); }
     Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra * Rs_.transpose(); }
+    void getAttitudeAndTranslation(Position& out_T) {
+        out_T.linear() = attitude(); out_T.translation() = translation(); };
 
     const Mapping* info() const { return info_; }
     Mapping* info() { return info_; }

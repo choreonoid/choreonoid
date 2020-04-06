@@ -120,6 +120,9 @@ public:
 
     virtual bool hasCustomIK() const;
 
+    std::string name() const { return name_; }
+    void setName(const std::string& name){ name_ = name; }
+
     //! deprecated
     bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
         return InverseKinematics::calcInverseKinematics(p, R);
@@ -150,6 +153,7 @@ private:
     bool needForwardKinematicsBeforeIK;
     NumericalIK* numericalIK;
     std::shared_ptr<LinkTraverse> remainingLinkTraverse;
+    std::string name_;
 };
 
 //! \deprecated Use JointPath::getCustomPath instead of this.

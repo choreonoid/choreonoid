@@ -40,8 +40,7 @@ bool CustomJointPathBase::calcInverseKinematics(const Position& T)
 
     bool solved = false;
     Position T_base_att;
-    T_base_att.linear() = baseLink()->attitude();
-    T_base_att.translation() = baseLink()->translation();
+    baseLink()->getAttitudeAndTranslation(T_base_att);
     Position T_att;
     T_att.linear() = T.linear() * endLink()->Rs();
     T_att.translation() = T.translation();

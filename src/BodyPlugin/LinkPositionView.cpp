@@ -24,11 +24,13 @@
 #include <cnoid/ComboBox>
 #include <cnoid/ButtonGroup>
 #include <cnoid/ActionGroup>
+#include <cnoid/Dialog>
 #include <cnoid/Selection>
 #include <QScrollArea>
 #include <QLabel>
 #include <QGridLayout>
 #include <QStyle>
+#include <QListWidget>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -95,9 +97,11 @@ public:
     ComboBox frameCombo[2];
     
     QLabel configurationLabel;
-    ComboBox configurationCombo;
-    CheckBox requireConfigurationCheck;
+    ToolButton configurationButton;
     vector<QWidget*> configurationWidgets;
+    Dialog* configurationDialog;
+    QListWidget* configurationListWidget;
+    QLabel* configurationDialogLabel;
 
     ScopedConnectionSet userInputConnections;
 
@@ -120,7 +124,9 @@ public:
     void onFrameComboActivated(int frameComboIndex, int index);
     void onFrameUpdate();
     void setConfigurationInterfaceEnabled(bool on);
-    void updateConfigurationCandidates();
+    void initializeConfigurationInterface();
+    void showConfigurationDialog();
+    void applyConfiguration(int id);
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onPositionEditTargetExpired();
     void updatePanel();
@@ -130,7 +136,7 @@ public:
     void setFramesToCombo(CoordinateFrameSet* frames, QComboBox& combo);
     void onConfigurationInput(int index);
     bool applyPositionInput(const Position& T);
-    bool findBodyIkSolution(const Position& T_input);
+    bool findBodyIkSolution(const Position& T_input, bool isRawT);
     bool applyInputToPositionEditTarget(const Position& T_input);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
@@ -295,25 +301,15 @@ void LinkPositionView::Impl::createPanel()
     auto configTitle = new QLabel(_("Config"));
     grid->addWidget(configTitle, row, 0, Qt::AlignLeft);
     configurationWidgets.push_back(configTitle);
-    grid->addWidget(&configurationLabel, row, 1, 1, 2, Qt::AlignLeft);
+    grid->addWidget(&configurationLabel, row, 1,  Qt::AlignLeft);
     configurationWidgets.push_back(&configurationLabel);
-    row += 1;
-
-    auto configComboTitle = new QLabel(_("Pref."));
-    grid->addWidget(configComboTitle, row, 0, Qt::AlignLeft);
-    configurationWidgets.push_back(configComboTitle);
-    grid->addWidget(&configurationCombo, row, 1);
-    configurationWidgets.push_back(&configurationCombo);
+    configurationButton.setText(_("Set"));
     userInputConnections.add(
-        configurationCombo.sigActivated().connect(
-            [this](int index){ onConfigurationInput(index); }));
-
-    requireConfigurationCheck.setText(_("Req."));
-    grid->addWidget(&requireConfigurationCheck, row, 2);
-    configurationWidgets.push_back(&requireConfigurationCheck);
-    userInputConnections.add(
-        requireConfigurationCheck.sigToggled().connect(
-            [this](bool){ onConfigurationInput(configurationCombo.currentIndex()); }));
+        configurationButton.sigClicked().connect(
+            [this](){ showConfigurationDialog(); }));
+    grid->addWidget(&configurationButton, row, 2);
+    configurationWidgets.push_back(&configurationButton);
+    configurationDialog = nullptr;
 
     vbox->addLayout(grid);
     vbox->addStretch();
@@ -413,6 +409,7 @@ void LinkPositionView::Impl::onAttachedMenuRequest(MenuManager& menu)
             [&](bool on){
                 if(kinematicsKit){
                     kinematicsKit->setCustomIkDisabled(on);
+                    initializeConfigurationInterface();
                     updatePanel();
                 }
             });
@@ -613,12 +610,12 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
     resultLabel.setText("");
 
     updateCoordinateFrameCandidates();
-    updateConfigurationCandidates();
-
     setCoordinateMode(preferredCoordinateMode, false);
 
     setBodyCoordinateModeEnabled(
         kinematicsKit && kinematicsKit->baseLink() && link != kinematicsKit->baseLink() && hasCoordinaeteFrames);
+
+    initializeConfigurationInterface();
 }
 
 
@@ -801,36 +798,88 @@ void LinkPositionView::Impl::setConfigurationInterfaceEnabled(bool on)
     }
     if(!on){
         configurationLabel.setText("-----");
-        configurationCombo.clear();
     }
 }
     
 
-void LinkPositionView::Impl::updateConfigurationCandidates()
+void LinkPositionView::Impl::initializeConfigurationInterface()
 {
-    configurationCombo.clear();
+    bool isConfigurationValid = false;
+
+    if(kinematicsKit && !kinematicsKit->isCustomIkDisabled()){
+        if(auto configurationHandler = kinematicsKit->configurationHandler()){
+            isConfigurationValid = true;
+        }
+    }
+
+    setConfigurationInterfaceEnabled(isConfigurationValid);
+}
+
+
+void LinkPositionView::Impl::showConfigurationDialog()
+{
     if(!kinematicsKit){
         return;
     }
-    
-    bool isConfigurationComboActive = false;
-
-    if(auto configurationHandler = kinematicsKit->configurationHandler()){
-        int n = configurationHandler->getNumConfigurations();
-        for(int i=0; i < n; ++i){
-            configurationCombo.addItem(
-                configurationHandler->getConfigurationName(i).c_str());
-        }
-        if(configurationHandler->checkConfiguration(0)){
-            configurationCombo.setCurrentIndex(0);
-        } else {
-            configurationCombo.setCurrentIndex(
-                configurationHandler->getCurrentConfiguration());
-        }
-        isConfigurationComboActive = !kinematicsKit->isCustomIkDisabled();
+    auto jointPath = kinematicsKit->jointPath();
+    auto configurationHandler = kinematicsKit->configurationHandler();
+    if(!jointPath || !configurationHandler){
+        return;
     }
 
-    setConfigurationInterfaceEnabled(isConfigurationComboActive);
+    auto& dialog = configurationDialog;
+    auto& listWidget = configurationListWidget;
+    
+    if(!dialog){
+        dialog = new Dialog(self);
+        auto vbox = new QVBoxLayout;
+        listWidget = new QListWidget(dialog);
+        QObject::connect(
+            listWidget, &QListWidget::itemClicked,
+            [&](QListWidgetItem* item){
+                int id = item->data(Qt::UserRole).toInt();
+                applyConfiguration(id);
+            });
+        configurationDialogLabel = new QLabel(_("No feasible configuration is available."));
+        vbox->addWidget(listWidget);
+        dialog->setLayout(vbox);
+    }
+
+    auto name = jointPath->name();
+    if(name.empty()){
+        dialog->setWindowTitle(_("Joint-space configuration"));
+    } else {
+        dialog->setWindowTitle(format(_("{} configuration"), name).c_str());
+    }
+
+    listWidget->clear();
+
+    int n = configurationHandler->checkFeasibleConfigurations();
+    if(n == 0){
+        listWidget->hide();
+        configurationDialogLabel->show();
+    } else {
+        for(int i=0; i < n; ++i){
+            int id = configurationHandler->feasibleConfiguration(i);
+            auto item = new QListWidgetItem(
+                configurationHandler->getConfigurationLabel(id).c_str());
+            item->setData(Qt::UserRole, id);
+            listWidget->addItem(item);
+        }
+        listWidget->show();
+        configurationDialogLabel->hide();
+    }
+
+    dialog->show();
+}
+
+
+void LinkPositionView::Impl::applyConfiguration(int id)
+{
+    auto handler = kinematicsKit->configurationHandler();
+    handler->setPreferredConfiguration(id);
+    findBodyIkSolution(kinematicsKit->link()->T(), true);
+    handler->resetPreferredConfiguration();
 }
 
 
@@ -923,17 +972,9 @@ void LinkPositionView::Impl::updateConfigurationPanel()
 
     if(!configuration){
         configurationLabel.setText("-----");
-        
     } else {
-        int preferred = configurationCombo.currentIndex();
-        if(requireConfigurationCheck.isChecked() &&
-           !configuration->checkConfiguration(preferred)){
-            configurationCombo.setStyleSheet(errorStyle);
-        } else {
-            configurationCombo.setStyleSheet(normalStyle);
-        }
-        int actual = configuration->getCurrentConfiguration();
-        configurationLabel.setText(configurationCombo.itemText(actual));
+        int id = configuration->getCurrentConfiguration();
+        configurationLabel.setText(configuration->getConfigurationLabel(id).c_str());
     }
 }
 
@@ -952,7 +993,7 @@ bool LinkPositionView::Impl::applyPositionInput(const Position& T)
     bool accepted = false;
     
     if(targetType == LinkTarget){
-        accepted = findBodyIkSolution(T);
+        accepted = findBodyIkSolution(T, false);
 
     } else if(targetType == PositionEditTarget){
         accepted = applyInputToPositionEditTarget(T);
@@ -962,7 +1003,7 @@ bool LinkPositionView::Impl::applyPositionInput(const Position& T)
 }
 
 
-bool LinkPositionView::Impl::findBodyIkSolution(const Position& T_input)
+bool LinkPositionView::Impl::findBodyIkSolution(const Position& T_input, bool isRawT)
 {
     shared_ptr<InverseKinematics> ik;
     if(kinematicsKit){
@@ -977,24 +1018,16 @@ bool LinkPositionView::Impl::findBodyIkSolution(const Position& T_input)
     kinematicsKit->setReferenceRpy(positionWidget->getRpyInput());
 
     targetBodyItem->beginKinematicStateEdit();
-        
-    Position T = baseFrame->T() * T_input * linkFrame->T().inverse(Eigen::Isometry);
-    if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
-        T = kinematicsKit->baseLink()->Ta() * T;
-    }
-    T.linear() = targetLink->calcRfromAttitude(T.linear());
 
-    solved = ik->calcInverseKinematics(T);
-    if(solved){
-        if(requireConfigurationCheck.isChecked() && !kinematicsKit->isCustomIkDisabled()){
-            if(auto configurationHandler = kinematicsKit->configurationHandler()){
-                int preferred = configurationCombo.currentIndex();
-                if(!configurationHandler->checkConfiguration(preferred)){
-                    configurationCombo.setStyleSheet(errorStyle);
-                    solved = false;
-                }
-            }
+    if(isRawT){
+        solved = ik->calcInverseKinematics(T_input);
+    } else {
+        Position T = baseFrame->T() * T_input * linkFrame->T().inverse(Eigen::Isometry);
+        if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
+            T = kinematicsKit->baseLink()->Ta() * T;
         }
+        T.linear() = targetLink->calcRfromAttitude(T.linear());
+        solved = ik->calcInverseKinematics(T);
     }
 
     if(solved){
