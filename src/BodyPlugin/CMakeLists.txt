@@ -42,8 +42,10 @@ set(sources
   LinkTreeWidget.cpp
   LinkSelectionView.cpp
   LinkPositionView.cpp
+  LinkPositionWidget.cpp
   LinkPropertyView.cpp
   JointDisplacementView.cpp
+  JointDisplacementWidget.cpp
   JointStateView.cpp
   BodyStateView.cpp
   DigitalIoDeviceView.cpp
@@ -88,6 +90,8 @@ set(headers
   LinkTreeWidget.h
   LinkSelectionView.h
   LinkPositionView.h
+  LinkPositionWidget.h
+  JointDisplacementWidget.h
   EditableSceneBody.h
   CollisionSeq.h
   CollisionSeqItem.h

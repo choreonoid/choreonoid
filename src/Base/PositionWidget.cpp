@@ -74,7 +74,7 @@ public:
 
     Impl(PositionWidget* self);
     void updateValueFormat(bool doRefresh);
-    void setOptionMenu(MenuManager& menu);
+    void setOptionMenuTo(MenuManager& menu);
     void setRpyEnabled(bool on);
     void setQuaternionEnabled(bool on);
     void setRotationMatrixEnabled(bool on);
@@ -296,13 +296,13 @@ void PositionWidget::Impl::updateValueFormat(bool doRefresh)
 }
 
 
-void PositionWidget::setOptionMenu(MenuManager& menuManager)
+void PositionWidget::setOptionMenuTo(MenuManager& menuManager)
 {
-    impl->setOptionMenu(menuManager);
+    impl->setOptionMenuTo(menuManager);
 }
 
 
-void PositionWidget::Impl::setOptionMenu(MenuManager& menu)
+void PositionWidget::Impl::setOptionMenuTo(MenuManager& menu)
 {
     auto rpyCheck = menu.addCheckItem(_("Roll-pitch-yaw"));
     rpyCheck->setChecked(isRpyEnabled);

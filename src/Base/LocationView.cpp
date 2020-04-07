@@ -145,7 +145,7 @@ LocationView::~LocationView()
 
 void LocationView::onAttachedMenuRequest(MenuManager& menuManager)
 {
-    impl->positionWidget->setOptionMenu(menuManager);
+    impl->positionWidget->setOptionMenuTo(menuManager);
 }
 
 

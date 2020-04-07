@@ -17,7 +17,7 @@ public:
     PositionWidget(QWidget* parent);
     ~PositionWidget();
 
-    void setOptionMenu(MenuManager& menuManager);
+    void setOptionMenuTo(MenuManager& menuManager);
     void setEditable(bool on);
     void setUserInputValuePriorityMode(bool on);
     void setPositionCallback(std::function<bool(const Position& T)> callback);

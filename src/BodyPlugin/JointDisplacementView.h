@@ -1,15 +1,11 @@
-/*! @file
-  @author Shin'ichiro Nakaoka
-*/
-
-#ifndef CNOID_BODYPLUGIN_JOINT_DISPLACEMENT_VIEW_H
-#define CNOID_BODYPLUGIN_JOINT_DISPLACEMENT_VIEW_H
+#ifndef CNOID_BODY_PLUGIN_JOINT_DISPLACEMENT_VIEW_H
+#define CNOID_BODY_PLUGIN_JOINT_DISPLACEMENT_VIEW_H
 
 #include <cnoid/View>
 
 namespace cnoid {
 
-class JointDisplacementView : public cnoid::View
+class JointDisplacementView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -22,7 +18,8 @@ public:
 protected:
     virtual void onActivated() override;
     virtual void onDeactivated() override;
-            
+    virtual void onAttachedMenuRequest(MenuManager& menuManager) override;
+    
 private:
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
