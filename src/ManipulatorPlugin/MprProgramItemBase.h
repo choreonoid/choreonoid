@@ -31,11 +31,7 @@ public:
     bool isStartupProgram() const;
     bool setAsStartupProgram(bool on, bool doNotify = true);
 
-    bool moveTo(
-        MprPositionStatement* statement,
-        bool doUpdateCurrentCoordinateFrames = true,
-        bool doNotifyKinematicStateChange = true);
-    
+    bool moveTo(MprPositionStatement* statement, bool doUpdateAll = true);
     bool touchupPosition(MprPositionStatement* statement);
 
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

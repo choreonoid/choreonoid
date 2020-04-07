@@ -114,7 +114,7 @@ public:
     enum TargetLinkType { AnyLink, RootOrIkLink, IkLink, NumTargetLinkTypes };
     Selection targetLinkTypeSelection;
     LinkKinematicsKitPtr kinematicsKit;
-    ScopedConnection kinematicsKitConnection;
+    ScopedConnectionSet kinematicsKitConnections;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
     CoordinateFramePtr linkFrame;
@@ -174,7 +174,10 @@ public:
     void applyConfiguration(int id);
     bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onPositionEditTargetExpired();
+    void onKinematicsKitPositionError(const Position& T_frameCoordinate);
     void updateDisplay();
+    void updateDisplayWithPosition(const Position& position);
+    void updateDisplayWithGlobalLinkPosition(const Position& Ta_global);
     void updateDisplayWithCurrentLinkPosition();
     void updateDisplayWithPositionEditTarget();
     void updateConfigurationDisplay();
@@ -607,7 +610,7 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
     
     targetLink = link;
     kinematicsKit.reset();
-    kinematicsKitConnection.reset();
+    kinematicsKitConnections.disconnect();
     bool hasCoordinaeteFrames = false;
     
     if(!targetLink){
@@ -629,9 +632,14 @@ void LinkPositionView::Impl::updateTargetLink(Link* link)
 
         kinematicsKit = targetBodyItem->getCurrentLinkKinematicsKit(targetLink);
         if(kinematicsKit){
-            kinematicsKitConnection =
+            kinematicsKitConnections.add(
                 kinematicsKit->sigFrameUpdate().connect(
-                    [&](){ onFrameUpdate(); });
+                    [&](){ onFrameUpdate(); }));
+            kinematicsKitConnections.add(
+                kinematicsKit->sigPositionError().connect(
+                    [&](const Position& T_frameCoordinate){
+                        onKinematicsKitPositionError(T_frameCoordinate); }));
+            
             if(functionToGetDefaultFrameNames){
                 tie(defaultCoordName[WorldFrame], defaultCoordName[BodyFrame], defaultCoordName[LinkFrame]) =
                     functionToGetDefaultFrameNames(kinematicsKit);
@@ -842,6 +850,7 @@ void LinkPositionView::Impl::setConfigurationInterfaceEnabled(bool on)
     }
     if(!on){
         configurationLabel.setText("-----");
+        configurationLabel.setToolTip(QString::Null());
     }
 }
     
@@ -1171,6 +1180,18 @@ void LinkPositionView::Impl::onPositionEditTargetExpired()
 }
 
 
+void LinkPositionView::Impl::onKinematicsKitPositionError(const Position& T_frameCoordinate)
+{
+    auto T_base = kinematicsKit->globalBasePosition();
+    const auto& T_end = kinematicsKit->currentLinkFrame()->T();
+    Position Ta_global = T_base * T_frameCoordinate * T_end.inverse(Eigen::Isometry);
+    updateDisplayWithGlobalLinkPosition(Ta_global);
+    positionWidget->setErrorHighlight(true);
+    resultLabel.setText(_("Not Solved"));
+    resultLabel.setStyleSheet(errorStyle);
+}
+
+
 void LinkPositionView::Impl::updateDisplay()
 {
     userInputConnections.block();
@@ -1189,18 +1210,24 @@ void LinkPositionView::Impl::updateDisplay()
 }
 
 
+void LinkPositionView::Impl::updateDisplayWithGlobalLinkPosition(const Position& Ta_global)
+{
+    Position T = baseFrame->T().inverse(Eigen::Isometry) * Ta_global * linkFrame->T();
+    if(kinematicsKit){
+        if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
+            T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
+        }
+        positionWidget->setReferenceRpy(kinematicsKit->referenceRpy());
+    }
+    positionWidget->setPosition(T);
+    updateConfigurationDisplay();
+}
+
+
 void LinkPositionView::Impl::updateDisplayWithCurrentLinkPosition()
 {
     if(targetLink){
-        Position T = baseFrame->T().inverse(Eigen::Isometry) * targetLink->Ta() * linkFrame->T();
-        if(kinematicsKit){
-            if(coordinateMode == BodyCoordinateMode && kinematicsKit->baseLink()){
-                T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
-            }
-            positionWidget->setReferenceRpy(kinematicsKit->referenceRpy());
-        }
-        positionWidget->setPosition(T);
-        updateConfigurationDisplay();
+        updateDisplayWithGlobalLinkPosition(targetLink->Ta());
     }
 }
 
@@ -1239,8 +1266,11 @@ void LinkPositionView::Impl::updateConfigurationDisplay()
                             auto p = tmpConfigurationLabelSet.insert(label);
                             if(p.second){ // newly inserted
                                 if(!configurationString.empty()){
-                                    //configurationString.append(" / ");
-                                    configurationString.append("-");
+                                    if(j == 0){
+                                        configurationString.append("-");
+                                    } else {
+                                        configurationString.append("/");
+                                    }
                                 }
                                 configurationString.append(label);
                             }
@@ -1248,6 +1278,7 @@ void LinkPositionView::Impl::updateConfigurationDisplay()
                     }
                 }
                 configurationLabel.setText(configurationString.c_str());
+                configurationLabel.setToolTip(configurationLabel.text());
                 currentConfigurationTypes = types;
             }
             tmpConfigurationLabelSet.clear();

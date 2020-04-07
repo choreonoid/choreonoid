@@ -81,15 +81,19 @@ public:
     void setCurrentBodyFrame(const GeneralId& id);
     void setCurrentLinkFrame(const GeneralId& id);
 
-    int currentBaseFrameType(); // WorldFrame or BodyFrame
+    int currentBaseFrameType() const; // WorldFrame or BodyFrame
     void setCurrentBaseFrameType(int frameType);
     const GeneralId& currentBaseFrameId() const;
     CoordinateFrame* currentBaseFrame();
     void setCurrentBaseFrame(const GeneralId& id);
+    Position globalBasePosition() const;
 
     // Any update on frames (frame lists, current frames, etc.)
     SignalProxy<void()> sigFrameUpdate();
     void notifyFrameUpdate();
+
+    SignalProxy<void(const Position& T_frameCoordinate)> sigPositionError();
+    void notifyPositionError(const Position& T_frameCoordinate);
 
     bool storeState(Mapping& archive) const;
     bool restoreState(const Mapping& archive);

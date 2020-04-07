@@ -27,6 +27,7 @@ public:
     Vector3 getRpyInput() const;
     void setReferenceRpy(const Vector3& rpy);
     void setPosition(const Position& T);
+    void setErrorHighlight(bool on);
     void storeState(Archive& archive);
     void restoreState(const Archive& archive);
 

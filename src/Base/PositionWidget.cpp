@@ -47,6 +47,7 @@ public:
     std::function<bool(const Position& T)> positionCallback;
     vector<QWidget*> inputPanelWidgets;
     vector<QWidget*> inputSpins;
+    vector<bool> inputSpinErrorStates;
     ScopedConnectionSet userInputConnections;
 
     DisplayedValueFormatManager* valueFormatManager;
@@ -201,6 +202,7 @@ PositionWidget::Impl::Impl(PositionWidget* self)
         inputPanelWidgets.push_back(label);
         inputPanelWidgets.push_back(spin);
     }
+    inputSpinErrorStates.resize(inputSpins.size(), false);
     mainvbox->addLayout(grid);
 
     auto hbox = new QHBoxLayout;
@@ -375,8 +377,9 @@ void PositionWidget::Impl::setRotationMatrixEnabled(bool on)
 
 void PositionWidget::Impl::resetInputWidgetStyles()
 {
-    for(auto& widget : inputSpins){
-        widget->setStyleSheet(normalStyle);
+    for(size_t i=0; i < inputSpins.size(); ++i){
+        inputSpins[i]->setStyleSheet(normalStyle);
+        inputSpinErrorStates[i] = false;
     }
 }
 
@@ -582,7 +585,33 @@ void PositionWidget::Impl::notifyPositionInput(const Position& T, InputElementSe
     if(!accepted){
         for(size_t i=0; i < inputSpins.size(); ++i){
             if(inputElements[i]){
-                inputSpins[i]->setStyleSheet(errorStyle);
+                if(!inputSpinErrorStates[i]){
+                    inputSpins[i]->setStyleSheet(errorStyle);
+                    inputSpinErrorStates[i] = true;
+                }
+            } else {
+                if(inputSpinErrorStates[i]){
+                    inputSpins[i]->setStyleSheet(normalStyle);
+                    inputSpinErrorStates[i] = false;
+                }
+            }
+        }
+    }
+}
+
+
+void PositionWidget::setErrorHighlight(bool on)
+{
+    for(size_t i=0; i < impl->inputSpins.size(); ++i){
+        if(on){
+            if(!impl->inputSpinErrorStates[i]){
+                impl->inputSpins[i]->setStyleSheet(errorStyle);
+                impl->inputSpinErrorStates[i] = true;
+            }
+        } else {
+            if(impl->inputSpinErrorStates[i]){
+                impl->inputSpins[i]->setStyleSheet(normalStyle);
+                impl->inputSpinErrorStates[i] = false;
             }
         }
     }

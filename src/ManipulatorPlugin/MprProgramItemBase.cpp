@@ -30,7 +30,8 @@ public:
     Impl(MprProgramItemBase* self);
     Impl(MprProgramItemBase* self, const Impl& org);
     void setupSignalConnections();
-    void setTargetBodyItem(BodyItem* bodyItem);    
+    void setTargetBodyItem(BodyItem* bodyItem);
+    bool moveTo(MprPositionStatement* statement, bool doUpdateAll);
 };
 
 }
@@ -208,32 +209,62 @@ bool MprProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
 }
 
 
-bool MprProgramItemBase::moveTo
-(MprPositionStatement* statement, bool doUpdateCurrentCoordinateFrames, bool doNotifyKinematicStateChange)
+bool MprProgramItemBase::moveTo(MprPositionStatement* statement, bool doUpdateAll)
+{
+    return impl->moveTo(statement, doUpdateAll);
+}
+
+
+bool MprProgramItemBase::Impl::moveTo(MprPositionStatement* statement, bool doUpdateAll)
 {
     bool updated = false;
-    if(impl->kinematicsKit){
-        auto positions = impl->program->positions();
+    if(kinematicsKit){
+        auto positions = program->positions();
         auto position = statement->position(positions);
         if(!position){
             MessageView::instance()->putln(
                 format(_("Position {0} is not found."), statement->positionLabel()),
                 MessageView::WARNING);
         } else {
-            updated = position->apply(impl->kinematicsKit);
+            auto ikPosition = dynamic_cast<MprIkPosition*>(position);
+            if(doUpdateAll && ikPosition){
+                kinematicsKit->setReferenceRpy(ikPosition->referenceRpy());
+                kinematicsKit->setCurrentBaseFrameType(ikPosition->baseFrameType());
+                kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
+                kinematicsKit->setCurrentLinkFrame(ikPosition->toolFrameId());
+                kinematicsKit->notifyFrameUpdate();
+            }
+            updated = position->apply(kinematicsKit);
             if(updated){
-                if(doUpdateCurrentCoordinateFrames){
-                    if(auto ikPosition = dynamic_cast<MprIkPosition*>(position)){
-                        impl->kinematicsKit->setCurrentBaseFrameType(ikPosition->baseFrameType());
-                        impl->kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
-                        impl->kinematicsKit->setCurrentLinkFrame(ikPosition->toolFrameId());
-                        impl->kinematicsKit->notifyFrameUpdate();
+                if(doUpdateAll){
+                    targetBodyItem->notifyKinematicStateChange();
+                }
+            } else {
+                if(doUpdateAll && ikPosition){
+                    kinematicsKit->notifyPositionError(ikPosition->position());
+                }
+                string tcpName;
+                if(ikPosition){
+                    if(auto tcpFrame = kinematicsKit->linkFrame(ikPosition->toolFrameId())){
+                        tcpName = tcpFrame->note();
+                        if(tcpName.empty()){
+                            auto& id = tcpFrame->id();
+                            if(id.isInt()){
+                                tcpName = format(_("TCP {0}"), id.toInt());
+                            } else {
+                                tcpName = id.toString();
+                            }
+                        }
                     }
                 }
-                if(doNotifyKinematicStateChange){
-                    impl->targetBodyItem->notifyKinematicStateChange();
+                if(tcpName.empty()){
+                    tcpName = "TCP";
                 }
+                showWarningDialog(
+                    format(_("{0} of {1} cannot be moved to position {2}"),
+                           tcpName, targetBodyItem->name(), position->id().label()));
             }
+                
         }
     }
     return updated;

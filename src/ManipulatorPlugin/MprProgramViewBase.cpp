@@ -188,7 +188,7 @@ public:
     void setBaseContextMenu(MenuManager& menuManager);
     void copySelectedStatements(bool doCut);
     void pasteStatements();
-    void initializeBodySuperimposer(BodyItem* bodyItem);
+    void initializeBodySuperimposer();
     void superimposePosition(MprPositionStatement* ps);
 
     QModelIndex indexFromItem(QTreeWidgetItem* item, int column = 0) const {
@@ -692,7 +692,10 @@ MprProgramViewBase::Impl::findStatementDelegate(MprStatement* statement)
 
 void MprProgramViewBase::setBodySyncMode(BodySyncMode mode)
 {
-    impl->bodySyncMode = mode;
+    if(mode != impl->bodySyncMode){
+        impl->bodySyncMode = mode;
+        impl->initializeBodySuperimposer();
+    }
 }
 
 
@@ -752,13 +755,6 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
     logTopLevelProgramName.reset();
     currentStatement = nullptr;
 
-    if(bodySyncMode == TwoStageBodySync){
-        if(bodySuperimposer){
-            bodySuperimposer->clearSuperimposition();
-            bodySuperimposer.reset();
-        }
-    }
-
     bool accepted = self->onCurrentProgramItemChanged(item);
     if(!accepted){
         programItem = nullptr;
@@ -797,14 +793,9 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
         } else {
             programNameLabel.setText(programItem->name().c_str());
         }
-
-        if(bodySyncMode == TwoStageBodySync){
-            auto bodyItem = programItem->targetBodyItem();
-            if(bodyItem){
-                initializeBodySuperimposer(bodyItem);
-            }
-        }
     }
+
+    initializeBodySuperimposer();
 
     updateStatementTree();
 }
@@ -929,7 +920,7 @@ void MprProgramViewBase::onStatementActivated(MprStatement* statement)
 {
     if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
         if(impl->bodySyncMode == DirectBodySync){
-            impl->programItem->moveTo(ps, true, true);
+            impl->programItem->moveTo(ps, true);
         } else if(impl->bodySyncMode == TwoStageBodySync){
             impl->superimposePosition(ps);
         }
@@ -951,7 +942,7 @@ void MprProgramViewBase::onStatementDoubleClicked(MprStatement* statement)
 {
     if(impl->bodySyncMode == TwoStageBodySync){
         if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
-            impl->programItem->moveTo(ps, true, true);
+            impl->programItem->moveTo(ps, true);
         }
     }
 }
@@ -1456,15 +1447,26 @@ void MprProgramViewBase::Impl::pasteStatements()
 }
 
 
-void MprProgramViewBase::Impl::initializeBodySuperimposer(BodyItem* bodyItem)
+void MprProgramViewBase::Impl::initializeBodySuperimposer()
 {
-    bodySuperimposer = bodyItem->findChildItem<BodySuperimposerItem>("MprPositionSuperimposer");
-
-    if(!bodySuperimposer){
-        bodySuperimposer = new BodySuperimposerItem;
-        bodySuperimposer->setName("MprPositionSuperimposer");
-        bodySuperimposer->setTemporal();
-        bodyItem->addChildItem(bodySuperimposer);
+    if(bodySuperimposer){
+        bodySuperimposer->clearSuperimposition();
+        bodySuperimposer.reset();
+    }
+    if(!programItem){
+        return;
+    }
+    if(bodySyncMode == TwoStageBodySync){
+        if(auto bodyItem = programItem->targetBodyItem()){
+            bodySuperimposer =
+                bodyItem->findChildItem<BodySuperimposerItem>("MprPositionSuperimposer");
+            if(!bodySuperimposer){
+                bodySuperimposer = new BodySuperimposerItem;
+                bodySuperimposer->setName("MprPositionSuperimposer");
+                bodySuperimposer->setTemporal();
+                bodyItem->addChildItem(bodySuperimposer);
+            }
+        }
     }
 }
 
@@ -1475,7 +1477,7 @@ void MprProgramViewBase::Impl::superimposePosition(MprPositionStatement* ps)
         auto orgBody = programItem->targetBodyItem()->body();
         BodyState orgBodyState(*orgBody);
 
-        if(programItem->moveTo(ps, false, false)){
+        if(programItem->moveTo(ps, false)){
             // Main body
             auto superBody = bodySuperimposer->superimposedBody(0);
             BodyState bodyState(*orgBody);

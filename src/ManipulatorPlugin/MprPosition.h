@@ -83,6 +83,7 @@ public:
     const Position& position() const { return T; }
     Vector3 rpy() const;
     void setRpy(const Vector3& rpy);
+    const Vector3 referenceRpy() const { return referenceRpy_; }
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();
 

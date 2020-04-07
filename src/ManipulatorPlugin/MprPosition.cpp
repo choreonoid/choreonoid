@@ -220,10 +220,6 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
         return false;
     }
 
-    if(auto handler = kinematicsKit->configurationHandler()){
-        handler->setPreferredConfigurationType(configuration_);
-    }
-
     Position T_base;
     if(baseFrameType_ == WorldFrame){
         auto worldFrame = kinematicsKit->worldFrame(baseFrameId_);
@@ -241,7 +237,18 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 
     kinematicsKit->setReferenceRpy(rpyFromRot(T.linear(), referenceRpy_));
 
-    return jointPath->calcInverseKinematics(T_end);
+    auto configHandler = kinematicsKit->configurationHandler();
+    if(configHandler){
+        configHandler->setPreferredConfigurationType(configuration_);
+    }
+
+    bool solved = jointPath->calcInverseKinematics(T_end);
+
+    if(configHandler){
+        configHandler->resetPreferredConfigurationType();
+    }
+    
+    return solved;
 }
 
 

@@ -31,6 +31,7 @@ public:
     GeneralId currentFrameId[3];
     int currentBaseFrameType;
     Signal<void()> sigFrameUpdate;
+    Signal<void(const Position& T_frameCoordinate)> sigPositionError;
     
     Impl(Link* link);
     Impl(const Impl& org, CloneMap* cloneMap);
@@ -462,7 +463,7 @@ void LinkKinematicsKit::setCurrentLinkFrame(const GeneralId& id)
 }
 
 
-int LinkKinematicsKit::currentBaseFrameType()
+int LinkKinematicsKit::currentBaseFrameType() const
 {
     return impl->currentBaseFrameType;
 }
@@ -502,6 +503,18 @@ void LinkKinematicsKit::setCurrentBaseFrame(const GeneralId& id)
         setCurrentBodyFrame(id);
     }
 }
+
+
+Position LinkKinematicsKit::globalBasePosition() const
+{
+    auto self = const_cast<LinkKinematicsKit*>(this);
+    
+    if(impl->currentBaseFrameType == WorldFrame){
+        return self->currentWorldFrame()->T();
+    } else {
+        return self->baseLink()->Ta() * self->currentBodyFrame()->T();
+    }
+}
     
 
 SignalProxy<void()> LinkKinematicsKit::sigFrameUpdate()
@@ -513,6 +526,18 @@ SignalProxy<void()> LinkKinematicsKit::sigFrameUpdate()
 void LinkKinematicsKit::notifyFrameUpdate()
 {
     impl->sigFrameUpdate();
+}
+
+
+SignalProxy<void(const Position& T_frameCoordinate)> LinkKinematicsKit::sigPositionError()
+{
+    return impl->sigPositionError;
+}
+
+
+void LinkKinematicsKit::notifyPositionError(const Position& T_frameCoordinate)
+{
+    impl->sigPositionError(T_frameCoordinate);
 }
 
 
