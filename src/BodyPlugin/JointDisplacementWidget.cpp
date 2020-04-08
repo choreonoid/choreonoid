@@ -143,8 +143,7 @@ JointDisplacementWidget::Impl::Impl(JointDisplacementWidget* self)
     int vspacing = style->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
 
     auto vbox = new QVBoxLayout;
-    vbox->setContentsMargins(lmargin / 2, 0, rmargin / 2, 0);
-    //vbox->setContentsMargins(lmargin, 0, rmargin, 0);
+    vbox->setContentsMargins(lmargin, 0, rmargin, 0);
     self->setLayout(vbox);
 
     grid.setHorizontalSpacing(hspacing / 2);

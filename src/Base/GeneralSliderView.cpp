@@ -246,10 +246,12 @@ GeneralSliderViewImpl::GeneralSliderViewImpl(GeneralSliderView* self) :
     gridVBox->addStretch();
     sliderGridBase.setLayout(gridVBox);
     scrollArea.setFrameShape(QFrame::NoFrame);
+    scrollArea.setStyleSheet("QScrollArea {background: transparent;}");
     scrollArea.setWidgetResizable(true);
     scrollArea.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea.setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     scrollArea.setWidget(&sliderGridBase);
+    sliderGridBase.setAutoFillBackground(false);
 
     vbox->addWidget(&scrollArea, 1);
     self->setLayout(vbox);

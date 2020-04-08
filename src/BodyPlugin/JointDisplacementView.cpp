@@ -71,11 +71,13 @@ JointDisplacementView::Impl::Impl(JointDisplacementView* self)
     vbox->addLayout(hbox);
 
     auto scrollArea = new QScrollArea;
+    scrollArea->setStyleSheet("QScrollArea {background: transparent;}");
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setWidgetResizable(true);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     scrollArea->setWidget(&jointDisplacementWidget);
+    jointDisplacementWidget.setAutoFillBackground(false);
     vbox->addWidget(scrollArea);
 
     jointDisplacementWidget.sigJointWidgetFocused().connect(

@@ -214,9 +214,11 @@ void BodyLinkView::Impl::setupWidgets()
     //topVBox->setContentsMargins(4);
     topWidget->setLayout(topVBox);
 
+    scrollArea.setStyleSheet("QScrollArea {background: transparent;}");
     scrollArea.setFrameShape(QFrame::NoFrame);
     scrollArea.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea.setWidget(topWidget);
+    topWidget->setAutoFillBackground(false);
     QVBoxLayout* baseLayout = new QVBoxLayout();
     scrollArea.setWidgetResizable(true);
     baseLayout->addWidget(&scrollArea);

@@ -84,6 +84,7 @@ LinkPositionView::Impl::Impl(LinkPositionView* self)
     topLayout->addLayout(hbox);
     
     auto scrollArea = new QScrollArea;
+    scrollArea->setStyleSheet("QScrollArea {background: transparent;}");
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setWidgetResizable(true);
@@ -92,6 +93,7 @@ LinkPositionView::Impl::Impl(LinkPositionView* self)
     positionWidget = new LinkPositionWidget(self);
     positionWidget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     scrollArea->setWidget(positionWidget);
+    positionWidget->setAutoFillBackground(false);
 }
 
 

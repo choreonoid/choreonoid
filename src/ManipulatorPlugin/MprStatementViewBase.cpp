@@ -142,6 +142,7 @@ MprStatementViewBase::Impl::Impl(MprStatementViewBase* self)
     vbox->addWidget(&statementLabel);
 
     scrollArea.setFrameShape(QFrame::NoFrame);
+    scrollArea.setStyleSheet("QScrollArea {background: transparent;}");
     scrollArea.setWidgetResizable(true);
     scrollArea.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea.setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -251,6 +252,7 @@ void MprStatementViewBase::Impl::setStatement(MprProgramItemBase* programItem, M
         scrollArea.takeWidget();
         if(panel){
             scrollArea.setWidget(panel);
+            panel->setAutoFillBackground(false);
         }
     }
 
