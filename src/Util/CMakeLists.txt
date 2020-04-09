@@ -58,6 +58,7 @@ set(sources
   MeshGenerator.cpp
   MeshFilter.cpp
   MeshExtractor.cpp
+  SceneNodeExtractor.cpp
   PolygonMeshTriangulator.cpp
   Image.cpp
   ImageIO.cpp
@@ -161,6 +162,7 @@ set(headers
   MeshGenerator.h
   MeshFilter.h
   MeshExtractor.h
+  SceneNodeExtractor.h
   Triangulator.h
   PolygonMeshTriangulator.h
   PolyhedralRegion.h
