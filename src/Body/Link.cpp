@@ -332,6 +332,16 @@ SgGroup* Link::collisionShape() const
 }
 
 
+bool Link::hasDedicatedCollisionShape() const
+{
+    if(visualShape_->numChildren() != collisionShape_->numChildren() ||
+       !std::equal(visualShape_->begin(), visualShape_->end(), collisionShape_->begin())){
+        return true;
+    }
+    return false;
+}
+
+
 void Link::addShapeNode(SgNode* shape, bool doNotify)
 {
     visualShape_->addChild(shape, doNotify);

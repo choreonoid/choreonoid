@@ -260,6 +260,7 @@ public:
     SgGroup* shape() const;
     SgGroup* visualShape() const;
     SgGroup* collisionShape() const;
+    bool hasDedicatedCollisionShape() const;
 
     void setName(const std::string& name);
 
