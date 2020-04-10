@@ -169,7 +169,7 @@ public:
 protected:
     SgNode(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-    void setAttribute(int attribute){ attributes_ &= attribute; }
+    void setAttribute(int attribute){ attributes_ |= attribute; }
 
 private:
     int classId_;

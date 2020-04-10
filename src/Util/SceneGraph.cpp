@@ -240,6 +240,7 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
         }
     }
 
+    setAttribute(GroupAttribute);
     isBboxCacheValid = true;
     bboxCache = org.bboxCache;
 }
