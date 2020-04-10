@@ -30,7 +30,6 @@ public:
     }
 
 protected:
-
     virtual void onAccepted();
     virtual void onRejected();
 

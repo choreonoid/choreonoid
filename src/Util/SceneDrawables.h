@@ -375,7 +375,11 @@ public:
         triangleVertices_.push_back(v2);
     }
         
-    enum PrimitiveType { MESH = 0, BOX, SPHERE, CYLINDER, CONE, CAPSULE };
+    enum PrimitiveType {
+        MESH = 0, BOX, SPHERE, CYLINDER, CONE, CAPSULE,
+        MesyType = MESH, BoxType = BOX, SphereType = SPHERE,
+        CylinderType = CYLINDER, ConeType = CONE, CapsuleType = CAPSULE
+    };
 
     class Mesh { }; // defined for no primitive information
 

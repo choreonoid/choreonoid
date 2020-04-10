@@ -20,15 +20,15 @@ public:
                 }
                 return false;
             });
-        return std::move(nodePaths);
+        return std::move(nodePathList_);
     }
 
 private:
     void extractNodes_(SgNode* root, std::function<bool(SgNode* node)> pred);
     void extractNodesIter(SgNode* node, const std::function<bool(SgNode* node)>& pred);
 
-    SgNodePath nodePath;
-    std::vector<SgNodePath> nodePaths;
+    SgNodePath nodePath_;
+    std::vector<SgNodePath> nodePathList_;
 };
 
 }
