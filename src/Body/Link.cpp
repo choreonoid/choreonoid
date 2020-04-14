@@ -368,6 +368,13 @@ void Link::removeShapeNode(SgNode* shape, bool doNotify)
 }
 
 
+void Link::clearShapeNodes(bool doNotify)
+{
+    visualShape_->clearChildren(doNotify);
+    collisionShape_->clearChildren(doNotify);
+}
+
+
 void Link::updateShapeRs()
 {
     visualShape_->setRotation(Rs_);

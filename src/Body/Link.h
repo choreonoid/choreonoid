@@ -315,6 +315,7 @@ public:
     void addVisualShapeNode(SgNode* shape, bool doNotify = false);
     void addCollisionShapeNode(SgNode* shape, bool doNotify = false);
     void removeShapeNode(SgNode* shape, bool doNotify = false);
+    void clearShapeNodes(bool doNotify = false);
     void updateShapeRs();
 
     // The following two methods should be deprecated after introducing Tb
