@@ -98,7 +98,7 @@ ItemTypeToInfoMap itemTypeToInfoMap;
 typedef map<string, ItemManagerImpl*> ModuleNameToItemManagerImplMap;
 ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
 
-map<string, map<string, vector<string>>> classNameToAliasModuleNameToModuleNameCandidatesMap;
+map<string, map<string, pair<string, string>>> aliasClassNameToAliasModuleNameToTrueNamePairMap;
 
 typedef map<string, vector<ItemFileIO*>> CaptionToFileIoMap;
 CaptionToFileIoMap captionToStandardLoaderMap;
@@ -396,12 +396,14 @@ void ItemManagerImpl::registerClass
 }
 
 
-void ItemManager::addAliasModuleNameFor_(const std::type_info& type, const std::string& alias)
+void ItemManager::addAlias_
+(const std::type_info& type, const std::string& aliasClassName, const std::string& aliasModuleName)
 {
     auto p = itemTypeToInfoMap.find(type);
     if(p != itemTypeToInfoMap.end()){
-        auto& className = p->second->className;
-        classNameToAliasModuleNameToModuleNameCandidatesMap[className][alias].push_back(impl->moduleName);
+        auto classInfo =  p->second;
+        aliasClassNameToAliasModuleNameToTrueNamePairMap[aliasClassName][aliasModuleName] =
+            make_pair(classInfo->manager->moduleName, classInfo->className);
     }
 }
 
@@ -489,18 +491,13 @@ static Item* createItem
                 }
             }
         } else if(searchOtherModules){
-            auto r = classNameToAliasModuleNameToModuleNameCandidatesMap.find(className);
-            if(r != classNameToAliasModuleNameToModuleNameCandidatesMap.end()){
-                auto& aliasModuleNameToModuleNameCandidatesMap = r->second;
-                auto s = aliasModuleNameToModuleNameCandidatesMap.find(moduleName);
-                if(s != aliasModuleNameToModuleNameCandidatesMap.end()){
-                    auto& candidates = s->second;
-                    for(auto t = candidates.rbegin(); t != candidates.rend(); ++t){
-                        item = createItem(*t, className, false);
-                        if(item){
-                            break;
-                        }
-                    }
+            auto r = aliasClassNameToAliasModuleNameToTrueNamePairMap.find(className);
+            if(r != aliasClassNameToAliasModuleNameToTrueNamePairMap.end()){
+                auto& aliasModuleNameToTrueNamePairMap = r->second;
+                auto s = aliasModuleNameToTrueNamePairMap.find(moduleName);
+                if(s != aliasModuleNameToTrueNamePairMap.end()){
+                    auto& trueNamePair = s->second;
+                    item = createItem(trueNamePair.first, trueNamePair.second, false);
                 }
             }
         }

@@ -121,8 +121,8 @@ public:
     }
 
     template <class ItemType>
-    ItemManager& addAliasModuleNameFor(const std::string& name){
-        addAliasModuleNameFor_(typeid(ItemType), name);
+        ItemManager& addAlias(const std::string& className, const std::string& moduleName){
+        addAlias_(typeid(ItemType), className, moduleName);
         return *this;
     }
 
@@ -255,7 +255,7 @@ private:
     void registerClass_(
         const std::string& className, const std::type_info& type, const std::type_info& superType,
         std::function<Item*()> factory, Item* singletonInstance);
-    void addAliasModuleNameFor_(const std::type_info& type, const std::string& moduleName);
+    void addAlias_(const std::type_info& type, const std::string& className, const std::string& moduleName);
     void addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel);
     void addCreationPanelFilter_(
         const std::type_info& type, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
