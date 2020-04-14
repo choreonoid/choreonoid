@@ -740,7 +740,7 @@ const char* PluginManager::Impl::guessActualPluginName(const std::string& name)
         }
     }
 
-    return 0;
+    return nullptr;
 }
 
 

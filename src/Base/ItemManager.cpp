@@ -7,6 +7,7 @@
 #include "ItemAddon.h"
 #include "RootItem.h"
 #include "ItemClassRegistry.h"
+#include "PluginManager.h"
 #include "ItemFileIO.h"
 #include "ItemFileIOImpl.h"
 #include "ItemFileDialog.h"
@@ -97,6 +98,8 @@ ItemTypeToInfoMap itemTypeToInfoMap;
 typedef map<string, ItemManagerImpl*> ModuleNameToItemManagerImplMap;
 ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
 
+map<string, map<string, vector<string>>> classNameToAliasModuleNameToModuleNameCandidatesMap;
+
 typedef map<string, vector<ItemFileIO*>> CaptionToFileIoMap;
 CaptionToFileIoMap captionToStandardLoaderMap;
 CaptionToFileIoMap captionToConversionLoaderMap;
@@ -155,7 +158,7 @@ public:
         
     void registerClass(
         function<Item*()>& factory, Item* singletonInstance, const std::type_info& type, const string& className);
-    
+
     void addCreationPanel(const std::type_info& type, ItemCreationPanel* panel);
     void addCreationPanelFilter(
         const std::type_info& type, shared_ptr<ItemManager::CreationPanelFilterBase> filter, bool afterInitializionByPanels);
@@ -393,6 +396,16 @@ void ItemManagerImpl::registerClass
 }
 
 
+void ItemManager::addAliasModuleNameFor_(const std::type_info& type, const std::string& alias)
+{
+    auto p = itemTypeToInfoMap.find(type);
+    if(p != itemTypeToInfoMap.end()){
+        auto& className = p->second->className;
+        classNameToAliasModuleNameToModuleNameCandidatesMap[className][alias].push_back(impl->moduleName);
+    }
+}
+
+
 bool ItemManager::getClassIdentifier(Item* item, std::string& out_moduleName, std::string& out_className)
 {
     bool result;
@@ -444,11 +457,21 @@ Item* ItemFileIO::Impl::findSingletonItemInstance() const
 }
 
 
-Item* ItemManager::createItem(const std::string& moduleName, const std::string& className)
+static Item* createItem
+(const std::string& moduleName, const std::string& className, bool searchOtherModules)
 {
+    auto p = moduleNameToItemManagerImplMap.find(moduleName);
+
+    if(p == moduleNameToItemManagerImplMap.end()){
+        auto alias = PluginManager::instance()->guessActualPluginName(moduleName);
+        if(!alias){
+            return nullptr;
+        }
+        p = moduleNameToItemManagerImplMap.find(alias);
+    }
+    
     Item* item = nullptr;
 
-    auto p = moduleNameToItemManagerImplMap.find(moduleName);
     if(p != moduleNameToItemManagerImplMap.end()){
         auto& itemClassNameToInfoMap = p->second->itemClassNameToInfoMap;
         auto q = itemClassNameToInfoMap.find(className);
@@ -465,10 +488,31 @@ Item* ItemManager::createItem(const std::string& moduleName, const std::string& 
                     item = info->factory();
                 }
             }
+        } else if(searchOtherModules){
+            auto r = classNameToAliasModuleNameToModuleNameCandidatesMap.find(className);
+            if(r != classNameToAliasModuleNameToModuleNameCandidatesMap.end()){
+                auto& aliasModuleNameToModuleNameCandidatesMap = r->second;
+                auto s = aliasModuleNameToModuleNameCandidatesMap.find(moduleName);
+                if(s != aliasModuleNameToModuleNameCandidatesMap.end()){
+                    auto& candidates = s->second;
+                    for(auto t = candidates.rbegin(); t != candidates.rend(); ++t){
+                        item = createItem(*t, className, false);
+                        if(item){
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
     return item;
+}
+
+
+Item* ItemManager::createItem(const std::string& moduleName, const std::string& className)
+{
+    return ::createItem(moduleName, className, true);
 }
 
 

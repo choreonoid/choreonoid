@@ -7,7 +7,6 @@
 #include "RootItem.h"
 #include "SubProjectItem.h"
 #include "ItemManager.h"
-#include "PluginManager.h"
 #include "MessageView.h"
 #include "Archive.h"
 #include <cnoid/YAMLReader>
@@ -297,16 +296,14 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem,
 ItemPtr ItemTreeArchiver::Impl::restoreItem
 (Archive& archive, Item* parentItem, ItemList<>& restoredItems, string& out_itemName, bool& io_isOptional)
 {
-    ItemPtr item;
     string& name = out_itemName;
-
     if(!archive.read("name", name)){
-        return item;
+        return nullptr;
     }
 
     const bool isSubItem = archive.get("isSubItem", false);
     if(isSubItem){
-        item = parentItem->findSubItem(name);
+        ItemPtr item = parentItem->findSubItem(name);
         if(!item){
             mv->putln(
                 format(_("Sub item \"{}\" is not found. Its children cannot be restored."), name),
@@ -320,27 +317,19 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
     string className;
     if(!(archive.read("plugin", pluginName) && archive.read("class", className))){
         mv->putln(_("Archive is broken."), MessageView::ERROR);
-        return item;
+        return nullptr;
     }
 
-    const char* actualPluginName = PluginManager::instance()->guessActualPluginName(pluginName);
-    if(actualPluginName){
-        item = ItemManager::createItem(actualPluginName, className);
-    } else {
-        io_isOptional = (pOptionalPlugins->find(pluginName) != pOptionalPlugins->end());
-        if(!io_isOptional){
-            mv->putln(format(_("{}Plugin is not loaded."), pluginName), MessageView::ERROR);
-        }
-    }
-
+    ItemPtr item = ItemManager::createItem(pluginName, className);
     if(!item){
+        io_isOptional = (pOptionalPlugins->find(pluginName) != pOptionalPlugins->end());
         if(!io_isOptional){
             mv->putln(
                 format(_("{0} of {1}Plugin is not a registered item type."), className, pluginName),
                 MessageView::ERROR);
             ++numArchivedItems;
         }
-        return item;
+        return nullptr;
     }
 
     ++numArchivedItems;

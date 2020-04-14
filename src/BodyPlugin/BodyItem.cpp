@@ -4,7 +4,6 @@
 */
 
 #include "BodyItem.h"
-#include "LinkShapeItem.h"
 #include "WorldItem.h"
 #include "EditableSceneBody.h"
 #include "LinkSelectionView.h"
@@ -247,13 +246,8 @@ public:
             return false;
         }
 
-        LinkShapeItem* shapeItem = new LinkShapeItem;
-        shapeItem->setAttribute(Item::Attached);
-        shapeItem->setShape(shape);
-        setActuallyLoadedItem(shapeItem);
-
         auto bodyItem = static_cast<BodyItem*>(item);
-        bodyItem->addChildItem(shapeItem);
+        bodyItem->body()->rootLink()->addShapeNode(shape);
 
         auto itype = invocationType();
         if(itype == Dialog || itype == DragAndDrop){

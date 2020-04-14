@@ -120,6 +120,12 @@ public:
         return *this;
     }
 
+    template <class ItemType>
+    ItemManager& addAliasModuleNameFor(const std::string& name){
+        addAliasModuleNameFor_(typeid(ItemType), name);
+        return *this;
+    }
+
     static bool getClassIdentifier(Item* item, std::string& out_moduleName, std::string& out_className);
 
     template <class ItemType> static ItemType* singletonInstance() {
@@ -249,6 +255,7 @@ private:
     void registerClass_(
         const std::string& className, const std::type_info& type, const std::type_info& superType,
         std::function<Item*()> factory, Item* singletonInstance);
+    void addAliasModuleNameFor_(const std::type_info& type, const std::string& moduleName);
     void addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel);
     void addCreationPanelFilter_(
         const std::type_info& type, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);

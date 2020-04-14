@@ -6,6 +6,7 @@
 
 namespace cnoid {
 
+class ExtensionManager;
 class Item;
 class Archive;
 
