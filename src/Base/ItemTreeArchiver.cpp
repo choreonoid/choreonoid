@@ -213,12 +213,15 @@ void ItemTreeArchiver::Impl::storeAddons(Archive& archive, Item* item)
                 addonArchive->inheritSharedInfoFrom(archive);
                 addonArchive->write("name", name);
                 addonArchive->write("plugin", moduleName);
-                if(!addon->store(*addonArchive)){
+                if(addon->store(*addonArchive)){
+                    addonList->append(addonArchive);
+                } else {
+                    //! \note Storing the addon data is just skipped when the store function returns false.
+                    /*
                     mv->putln(format(_("Addon \"{0}\" of item \"{1}\" cannot be stored."),
                                      name, item->name()),
                               MessageView::ERROR);
-                } else {
-                    addonList->append(addonArchive);
+                    */
                 }
             }
         }
