@@ -321,8 +321,7 @@ bool MprIkPosition::write(Mapping& archive) const
     
     MprPosition::write(archive);
     
-    archive.setDoubleFormat("%.9g");
-
+    archive.setDoubleFormat("%.10g");
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", degree(rpy()));
 

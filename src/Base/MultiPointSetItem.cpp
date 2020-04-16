@@ -889,6 +889,7 @@ bool MultiPointSetItem::Impl::outputPointSetItem(int index)
 
             MappingPtr info = new Mapping();
             info->write("file", filename);
+            info->setDoubleFormat("%.9g");
             write(*info, "offsetTransform", item->offsetTransform());
             outputFileListing->insert(index, info);
             result = true;

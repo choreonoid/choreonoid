@@ -41,7 +41,6 @@ template<typename Scalar, int mode>
 static Listing& writeAngleAxis_(Mapping& mapping, const std::string& key, const Eigen::AngleAxis<Scalar>& r)
 {
     Listing& s = *mapping.createFlowStyleListing(key);
-    s.setDoubleFormat("%.9g");
     s.append(r.axis()[0]);
     s.append(r.axis()[1]);
     s.append(r.axis()[2]);

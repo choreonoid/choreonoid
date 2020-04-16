@@ -292,6 +292,7 @@ void Pose::store(Mapping& archive, const BodyPtr body) const
             if(info.isStationaryPoint()){
                 ikLinkNode.write("isStationaryPoint", info.isStationaryPoint());
             }
+            ikLinkNode.setDoubleFormat("%.9g");
             write(ikLinkNode, "translation", info.p);
             write(ikLinkNode, "rotation", info.R);
 

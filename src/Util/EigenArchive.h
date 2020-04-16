@@ -62,7 +62,6 @@ template<typename Derived>
 Listing& write(Mapping& mapping, const std::string& key, const Eigen::MatrixBase<Derived>& x)
 {
     Listing& s = *mapping.createFlowStyleListing(key);
-    s.setDoubleFormat("%.9g");
     const int nr = x.rows();
     const int nc = x.cols();
     if(nc == 1){

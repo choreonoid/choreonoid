@@ -68,6 +68,7 @@ bool CoordinateFrame::read(const Mapping& archive)
 bool CoordinateFrame::write(Mapping& archive) const
 {
     if(id_.write(archive, "id")){
+        archive.setDoubleFormat("%.9g");
         cnoid::write(archive, "translation", Vector3(T_.translation()));
         cnoid::write(archive, "rotation", degree(rpyFromRot(T_.linear())));
         if(!note_.empty()){
