@@ -162,6 +162,7 @@ private:
 
     // This function is only used by YAMLWriter
     int indexInMapping() const { return indexInMapping_; }
+    void setAsHeaderInMapping(int priority = 1) { indexInMapping_ = -priority; }
 
 protected:
 

@@ -35,7 +35,7 @@ const char* getTypeName(int typeBits){
 
 map<string, bool> booleanSymbols;
 
-const char* defaultDoubleFormat = "%.6g";
+const char* defaultDoubleFormat = "%g";
 
 ValueNodePtr invalidNode;
 MappingPtr invalidMapping;
@@ -51,9 +51,9 @@ ValueNode::Initializer ValueNode::initializer;
 ValueNode::Initializer::Initializer()
 {
     invalidNode = new ValueNode(INVALID_NODE);
-    invalidMapping = new Mapping();
+    invalidMapping = new Mapping;
     invalidMapping->typeBits = INVALID_NODE;
-    invalidListing = new Listing();
+    invalidListing = new Listing;
     invalidListing->typeBits = INVALID_NODE;
     
     booleanSymbols["true"] = true;
@@ -128,10 +128,10 @@ ValueNode& ValueNode::operator=(const ValueNode&)
 
   invalidNode = new ValueNode(INVALID_NODE);
 
-  invalidMapping = new Mapping();
+  invalidMapping = new Mapping;
   invalidMapping->typeBits = INVALID_NODE;
 
-  invalidListing = new Listing();
+  invalidListing = new Listing;
   invalidListing->typeBits = INVALID_NODE;
         
   booleanSymbols["true"] = true;
@@ -576,7 +576,7 @@ ValueNodePtr Mapping::extract(const std::string& key)
         values.erase(p);
         return value;
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -665,7 +665,7 @@ Mapping* Mapping::openMapping_(const std::string& key, bool doOverwrite)
         throwNotMappingException();
     }
 
-    Mapping* mapping = 0;
+    Mapping* mapping = nullptr;
     const string uKey(key);
     iterator p = values.find(uKey);
     if(p != values.end()){
@@ -682,7 +682,7 @@ Mapping* Mapping::openMapping_(const std::string& key, bool doOverwrite)
     }
 
     if(!mapping){
-        mapping = new Mapping();
+        mapping = new Mapping;
         mapping->doubleFormat_ = doubleFormat_;
         insertSub(uKey, mapping);
     }
@@ -705,7 +705,7 @@ Listing* Mapping::openListing_(const std::string& key, bool doOverwrite)
         throwNotMappingException();
     }
 
-    Listing* sequence = 0;
+    Listing* sequence = nullptr;
     const string uKey(key);
     iterator p = values.find(uKey);
     if(p != values.end()){
@@ -722,7 +722,7 @@ Listing* Mapping::openListing_(const std::string& key, bool doOverwrite)
     }
 
     if(!sequence){
-        sequence = new Listing();
+        sequence = new Listing;
         sequence->doubleFormat_ = doubleFormat_;
         insertSub(uKey, sequence);
     }
@@ -978,7 +978,7 @@ void Listing::appendLF()
 
 Mapping* Listing::newMapping()
 {
-    Mapping* mapping = new Mapping();
+    Mapping* mapping = new Mapping;
     mapping->doubleFormat_ = doubleFormat_;
     append(mapping);
     return mapping;
