@@ -161,7 +161,7 @@ public:
     /// deprecated
     bool isSlideJoint() const { return jointType_ == SLIDE_JOINT; }
 
-    std::string jointTypeString() const;
+    std::string jointTypeString(bool useUnderscore = false) const;
         
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }

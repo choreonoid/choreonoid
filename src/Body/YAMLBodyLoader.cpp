@@ -1095,7 +1095,8 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
             link->setJointType(Link::FREE_JOINT);
         } else if(jointType == "fixed"){
             link->setJointType(Link::FIXED_JOINT);
-        } else if(jointType == "pseudoContinuousTrack"){ // deprecated
+        } else if(jointType == "pseudoContinuousTrack" ||
+                  jointType == "pseudo_continuous_track"){  // deprecated
             link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
             link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
         } else {
