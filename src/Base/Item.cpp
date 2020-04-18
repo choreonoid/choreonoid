@@ -1120,9 +1120,9 @@ bool Item::load(const std::string& filename, Item* parent, const std::string& fo
 }
 
 
-bool Item::save(const std::string& filename, const std::string& format)
+bool Item::save(const std::string& filename, const std::string& format, const Mapping* options)
 {
-    return ItemManager::save(this, filename, format);
+    return ItemManager::save(this, filename, format, options);
 }
 
 

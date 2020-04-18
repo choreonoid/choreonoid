@@ -317,7 +317,8 @@ public:
        this function cannot be used.
        Note that this function should not be overloaded or overridden in the derived classes.
     */
-    bool save(const std::string& filename, const std::string& format = std::string());
+    bool save(const std::string& filename, const std::string& format = std::string(),
+              const Mapping* options = nullptr);
 
     /**
        This function save the data of the item to the file from which the data of the item has been loaded.

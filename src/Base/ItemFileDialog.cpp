@@ -18,19 +18,24 @@ namespace cnoid {
 
 class ItemFileDialog::Impl : public FileDialog
 {
+public:
     ItemFileDialog* self;
+    enum Mode { Load, Save };
+    Mode mode;
     const vector<ItemFileIO*>* pFileIoList;
     ItemFileIO* targetFileIO;
+    ItemPtr currentItemToSave;
+    bool isCurrentItemOptionsApplied;
     QWidget* optionPanel;
     QBoxLayout* optionPanelBox;
     bool isSingletonItem;
+    bool isExportMode;
     
-public:
     Impl(ItemFileDialog* self);
     ItemList<Item>  loadItems(
         const std::vector<ItemFileIO*>& fileIoList, Item* parentItem, bool doAddition, Item* nextItem);
-
-private:
+    bool saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList);
+    bool initializeFileIoFilters(const vector<ItemFileIO*>& fileIoList);
     void setTargetFileIO(ItemFileIO* fileIO);
     void onFilterSelected(const QString& filter);
 };
@@ -65,7 +70,6 @@ ItemFileDialog::Impl::Impl(ItemFileDialog* self)
     setWindowFlags(windowFlags() & ~Qt::Dialog);
     setSizeGripEnabled(false);
     setViewMode(QFileDialog::List);
-    setLabelText(QFileDialog::Accept, _("Open"));
     setLabelText(QFileDialog::Reject, _("Cancel"));
 
     vbox->addWidget(this);
@@ -84,6 +88,8 @@ ItemFileDialog::Impl::Impl(ItemFileDialog* self)
                      [this](const QString& filter){ onFilterSelected(filter); });
 
     QObject::connect(this, SIGNAL(finished(int)), self, SLOT(done(int)));
+
+    isExportMode = false;
 }
 
 
@@ -97,28 +103,32 @@ ItemList<Item> ItemFileDialog::loadItems
 ItemList<Item> ItemFileDialog::Impl::loadItems
 (const vector<ItemFileIO*>& fileIoList, Item* parentItem, bool doAddition, Item* nextItem)
 {
+    mode = Load;
+    
     ItemList<Item> loadedItems;
 
-    if(fileIoList.empty()){
+    if(!initializeFileIoFilters(fileIoList)){
         return loadedItems;
     }
-    pFileIoList = &fileIoList;
 
-    QStringList filters;
-    for(auto& fileIO : fileIoList){
-        filters << ItemFileIO::Impl::makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions());
-    }
-    if(filters.size() == 1){
-        filters << _("Any files (*)");
-    } else {
-        // add "any file" filters for the file ios that supports it
-    }
-    setNameFilters(filters);
+    bool isImportMode = (fileIoList.front()->interfaceLevel() == ItemFileIO::Conversion);
 
     if(self->windowTitle().isEmpty()){
-        self->setWindowTitle(QString(_("Load %1")).arg(fileIoList.front()->caption().c_str()));
+        string title;
+        if(!isImportMode){
+            title = _("Load {0}");
+        } else {
+            title = _("Import {0}");
+        }
+        self->setWindowTitle(format(title, fileIoList.front()->caption()).c_str());
     }
-    setTargetFileIO(fileIoList.front());
+    setAcceptMode(QFileDialog::AcceptOpen);
+
+    if(!isImportMode){
+        setLabelText(QFileDialog::Accept, _("Load"));
+    } else {
+        setLabelText(QFileDialog::Accept, _("Import"));
+    }
 
     updatePresetDirectories();
 
@@ -169,6 +179,135 @@ exit:
 }
 
 
+void ItemFileDialog::setExportMode(bool on)
+{
+    impl->isExportMode = on;
+}
+
+
+bool ItemFileDialog::saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList)
+{
+    return impl->saveItem(item, fileIoList);
+}
+
+
+bool ItemFileDialog::Impl::saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList)
+{
+    mode = Save;
+    currentItemToSave = item;
+    isCurrentItemOptionsApplied = false;
+    
+    if(!initializeFileIoFilters(fileIoList)){
+        string message;
+        if(!isExportMode){
+            message = _("Saving {0} to a file is not supported");
+        } else {
+            message = _("Exporting {0} to a file is not supported");
+        }
+        MessageView::instance()->putln(format(message, item->name()), MessageView::HIGHLIGHT);
+        currentItemToSave.reset();
+        return false;
+    }
+
+
+    string itemLabel = format("{0} \"{1}\"", fileIoList.front()->caption(), item->name());
+    
+    if(self->windowTitle().isEmpty()){
+        string title;
+        if(!isExportMode){
+            title = _("Save {} as");
+        } else {
+            title = _("Export {} as");
+        }
+        self->setWindowTitle(format(title, itemLabel).c_str());
+    }
+    setAcceptMode(QFileDialog::AcceptSave);
+    setLabelText(QFileDialog::Accept, _("Save"));
+    setFileMode(QFileDialog::AnyFile);
+
+    updatePresetDirectories();
+
+    // default filename
+    selectFile(item->name().c_str());
+
+    bool saved = false;
+    
+    if(self->exec() == QDialog::Accepted){
+        auto filenames = selectedFiles();
+        if(!filenames.isEmpty()){
+            auto filename = filenames.front().toStdString();
+            if(optionPanel){
+                targetFileIO->fetchOptionPanelForSaving();
+            }
+            
+            // add a lacking extension automatically
+            auto exts = targetFileIO->extensions();
+            if(!exts.empty()){
+                bool hasExtension = false;
+                string dotextension = filesystem::path(filename).extension().string();
+                if(!dotextension.empty()){
+                    string extension = dotextension.substr(1); // remove the first dot
+                    if(std::find(exts.begin(), exts.end(), extension) != exts.end()){
+                        hasExtension = true;
+                    }
+                }
+                if(!hasExtension && !exts.empty()){
+                    filename += ".";
+                    filename += exts[0];
+                }
+            }
+
+            saved = targetFileIO->impl->saveItem(ItemFileIO::Dialog, item, filename, nullptr);
+        }
+    }
+    /*
+    else {
+        string message;
+        if(!isExportMode){
+            message = _("Saving {0} was canceled.");
+        } else {
+            message = _("Exporting {0} was canceled.");
+        }
+        MessageView::instance()->putln(format(message, itemLabel), MessageView::HIGHLIGHT);
+    }
+    */
+
+    for(auto& fileIO : fileIoList){
+        if(auto panel = fileIO->getOptionPanelForLoading()){
+            panel->setParent(nullptr);
+        }
+    }
+
+    currentItemToSave.reset();
+
+    return saved;
+}
+
+
+bool ItemFileDialog::Impl::initializeFileIoFilters(const vector<ItemFileIO*>& fileIoList)
+{
+    if(fileIoList.empty()){
+        return false;
+    }
+    pFileIoList = &fileIoList;
+
+    QStringList filters;
+    for(auto& fileIO : fileIoList){
+        filters << ItemFileIO::Impl::makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions());
+    }
+    if(filters.size() == 1){
+        filters << _("Any files (*)");
+    } else {
+        // add "any file" filters for the file ios that supports it
+    }
+    setNameFilters(filters);
+
+    setTargetFileIO(fileIoList.front());
+
+    return true;
+}
+
+
 void ItemFileDialog::Impl::setTargetFileIO(ItemFileIO* fileIO)
 {
     targetFileIO = fileIO;
@@ -179,19 +318,33 @@ void ItemFileDialog::Impl::setTargetFileIO(ItemFileIO* fileIO)
     }
     int api = fileIO->api();
     if(api & ItemFileIO::Options){
-        fileIO->resetOptions();
+        if(mode == Save){
+            if(!isCurrentItemOptionsApplied &&
+               fileIO->isFormat(currentItemToSave->fileFormat())){
+                fileIO->resetOptions();
+                fileIO->restoreOptions(currentItemToSave->fileOptions());
+                isCurrentItemOptionsApplied = true;
+            }
+        }
         if(api & ItemFileIO::OptionPanelForLoading){
             optionPanel = fileIO->getOptionPanelForLoading();
+            if(optionPanel){
+                optionPanelBox->insertWidget(0, optionPanel);
+            }
+        } else if(api & ItemFileIO::OptionPanelForSaving){
+            optionPanel = fileIO->getOptionPanelForSaving(currentItemToSave);
             if(optionPanel){
                 optionPanelBox->insertWidget(0, optionPanel);
             }
         }
     }
 
-    if(fileIO->isRegisteredForSingletonItem()){
-        setFileMode(QFileDialog::ExistingFile);
-    } else {
-        setFileMode(QFileDialog::ExistingFiles);
+    if(mode == Load){
+        if(fileIO->isRegisteredForSingletonItem()){
+            setFileMode(QFileDialog::ExistingFile);
+        } else {
+            setFileMode(QFileDialog::ExistingFiles);
+        }
     }
 }
 

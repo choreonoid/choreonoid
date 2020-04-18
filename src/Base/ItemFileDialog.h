@@ -20,6 +20,9 @@ public:
         bool doAddition = true,
         Item* nextItem = nullptr);
 
+    void setExportMode(bool on = true);
+    bool saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList);
+
 private:
     class Impl;
     Impl* impl;

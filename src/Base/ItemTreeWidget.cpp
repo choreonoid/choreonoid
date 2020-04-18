@@ -230,7 +230,7 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     if(widgetImpl->isCheckColumnShown){
         flags |= Qt::ItemIsUserCheckable;
     }
-    if(!item->isSubItem()){
+    if(!item->isSubItem() && !item->hasAttribute(Item::Attached)){
         flags |= Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
     }
     setFlags(flags);

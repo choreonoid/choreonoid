@@ -165,8 +165,8 @@ public:
     ItemManager& addLoader(
         const std::string& caption, const std::string& formatId, const std::string& extensions, 
         const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
-        addLoaderSub(typeid(ItemType), caption, formatId, [extensions](){ return extensions; },
-                     std::make_shared<FileFunction<ItemType>>(function), priority);
+        addLoader_(typeid(ItemType), caption, formatId, [extensions](){ return extensions; },
+                   std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
 
@@ -174,8 +174,8 @@ public:
     ItemManager& addLoader(
         const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
         const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
-        addLoaderSub(typeid(ItemType), caption, formatId, getExtensions,
-                     std::make_shared<FileFunction<ItemType>>(function), priority);
+        addLoader_(typeid(ItemType), caption, formatId, getExtensions,
+                   std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
     
@@ -183,8 +183,8 @@ public:
     ItemManager& addSaver(
         const std::string& caption, const std::string& formatId, const std::string& extensions,
         const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
-        addSaverSub(typeid(ItemType), caption, formatId, [extensions](){ return extensions; },
-                    std::make_shared<FileFunction<ItemType>>(function), priority);
+        addSaver_(typeid(ItemType), caption, formatId, [extensions](){ return extensions; },
+                  std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
 
@@ -192,8 +192,8 @@ public:
     ItemManager& addSaver(
         const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
         const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
-        addSaverSub(typeid(ItemType), caption, formatId, getExtensions, 
-                    std::make_shared<FileFunction<ItemType>>(function), priority);
+        addSaver_(typeid(ItemType), caption, formatId, getExtensions, 
+                  std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
     
@@ -240,6 +240,11 @@ public:
         return loadItemsWithDialog_(typeid(ItemType), parentItem, doAddtion, nextItem);
     }
 
+    template <class ItemType>
+    static bool saveItemWithDialog(ItemType* item){
+        return saveItemWithDialog_(typeid(ItemType), item);
+    }
+
     static void reloadItems(const ItemList<>& items);
     static Item* findOriginalItemForReloadedItem(Item* item);
 
@@ -260,10 +265,10 @@ private:
     void addCreationPanelFilter_(
         const std::type_info& type, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
     void registerFileIO_(const std::type_info& type, ItemFileIO* fileIO);
-    void addLoaderSub(
+    void addLoader_(
         const std::type_info& type, const std::string& caption, const std::string& formatId,
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
-    void addSaverSub(
+    void addSaver_(
         const std::type_info& type, const std::string& caption, const std::string& formatId,
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
 
@@ -272,13 +277,15 @@ private:
     static Item* createItemWithDialog_(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem);
     static ItemList<Item> loadItemsWithDialog_(
         const std::type_info& type, Item* parentItem, bool doAddtion, Item* nextItem);
+    static bool saveItemWithDialog_(const std::type_info& type, Item* item);
 
     // The following static functions are called from functions in the Item class
     static bool load(
         Item* item, const std::string& filename, Item* parentItem, const std::string& formatId,
         const Mapping* options = nullptr);
-    static bool save(Item* item, const std::string& filename, const std::string& formatId);
-    static bool overwrite(Item* item, bool forceOverwrite, const std::string& formatId); // overwrite
+    static bool save(
+        Item* item, const std::string& filename, const std::string& formatId, const Mapping* options = nullptr);
+    static bool overwrite(Item* item, bool forceOverwrite, const std::string& formatId);
 
     void registerAddon_(
         const std::type_info& type, const std::string& name, const std::function<ItemAddon*(void)>& factory);

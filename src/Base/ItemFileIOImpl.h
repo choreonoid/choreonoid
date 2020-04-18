@@ -29,6 +29,7 @@ public:
     Item* actuallyLoadedItem;
     std::ostream* os;
     MessageView* mv;
+    std::string errorMessage;
 
     // This variable actualy points a instance of the ClassInfo class defined in ItemManager.cpp
     weak_ref_ptr<Referenced> classInfo;
@@ -36,33 +37,23 @@ public:
     Impl(ItemFileIO* self, const std::string& formatId, int api);
     Impl(ItemFileIO* self, const Impl& org);
 
-    bool isFormat(const std::string& id){
-        if(!id.empty()){
-            if(formatId == id){
-                return true;
-            }
-            for(auto& alias : formatIdAliases){
-                if(alias == id){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     bool isRegisteredForSingletonItem() const;
     Item* findSingletonItemInstance() const;
 
+    bool preprocessLoadingOrSaving(
+        InvocationType invocationType, Item* item, std::string& io_filename, const Mapping* options);
+
     bool loadItem(
-        InvocationType invocationType, Item* item, const std::string& filename,
+        InvocationType invocationType, Item* item, std::string filename,
         Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options);
+
+    bool saveItem(
+        InvocationType invocationType, Item* item, std::string filename, const Mapping* options);
 
     static std::vector<std::string> separateExtensions(const std::string& multiExtString);
     static QString makeNameFilter(
         const std::string& caption, const std::vector<std::string>& extensions, bool isNayEnabled = false);
 };
-
-
 
 }
 
