@@ -16,11 +16,16 @@ class YAMLWriterImpl;
 class CNOID_EXPORT YAMLWriter
 {
 public:
+    YAMLWriter();
     YAMLWriter(const std::string filename);
     YAMLWriter(std::ostream& os);
     ~YAMLWriter();
 
-    bool isOpen();
+    void setOutput(std::ostream& os);
+    void flush();
+    bool openFile(const std::string& filename);
+    bool isFileOpen();
+    void closeFile();
 
     void setMessageSink(std::ostream& os);
     void putMessage(const std::string& message);
@@ -68,7 +73,7 @@ public:
         putKey(key);
         putScalar(value);
     }
-    
+
     void endMapping();
 
     void startListing();

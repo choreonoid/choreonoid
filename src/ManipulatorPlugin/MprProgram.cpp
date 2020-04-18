@@ -478,11 +478,9 @@ bool MprProgram::save(const std::string& filename)
 {
     bool result = false;
     
-    YAMLWriter writer(filename);
-
-    if(writer.isOpen()){
+    YAMLWriter writer;
+    if(writer.openFile(filename)){
         removeUnreferencedPositions();
-        
         writer.setKeyOrderPreservationMode(true);
         MappingPtr archive = new Mapping();
         if(write(*archive)){

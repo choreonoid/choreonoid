@@ -28,7 +28,7 @@ class YAMLWriterImpl
 {
 public:
     std::ofstream ofs;
-    std::ostream& os;
+    std::ostream* os_;
     std::ostream* messageSink_;
 
     int indentWidth;
@@ -51,6 +51,7 @@ public:
     YAMLWriterImpl(std::ostream& os);
     ~YAMLWriterImpl();
 
+    ostream& os() { return *os_; }
     bool isTopLevel();
     State& pushState(int type, bool isFlowStyle);
     void popState();
@@ -78,6 +79,12 @@ public:
 }
 
 
+YAMLWriter::YAMLWriter()
+{
+    impl = new YAMLWriterImpl(nullout());
+}
+
+
 YAMLWriter::YAMLWriter(const std::string filename)
 {
     impl = new YAMLWriterImpl(filename);
@@ -98,7 +105,7 @@ YAMLWriter::YAMLWriter(std::ostream& os)
 
 
 YAMLWriterImpl::YAMLWriterImpl(std::ostream& os)
-    : os(os)
+    : os_(&os)
 {
     indentWidth = 2;
     isCurrentNewLine = true;
@@ -107,7 +114,7 @@ YAMLWriterImpl::YAMLWriterImpl(std::ostream& os)
     isKeyOrderPreservationMode = false;
     messageSink_ = &nullout();
 
-    doubleFormat = "%.7g";
+    doubleFormat = "%g";
 
     pushState(TOP, false);
 
@@ -123,14 +130,45 @@ YAMLWriter::~YAMLWriter()
 
 YAMLWriterImpl::~YAMLWriterImpl()
 {
-    os.flush();
+    os().flush();
     ofs.close();
 }
 
 
-bool YAMLWriter::isOpen()
+void YAMLWriter::setOutput(std::ostream& os)
+{
+    impl->os_ = &os;
+}
+
+
+void YAMLWriter::flush()
+{
+    impl->os().flush();
+}
+
+
+bool YAMLWriter::openFile(const std::string& filename)
+{
+    impl->ofs.open(filename.c_str());
+    if(impl->ofs.is_open()){
+        setOutput(impl->ofs);
+        return true;
+    }
+    return false;
+}
+
+
+bool YAMLWriter::isFileOpen()
 {
     return impl->ofs.is_open();
+}
+
+
+void YAMLWriter::closeFile()
+{
+    impl->os().flush();
+    impl->ofs.close();
+    setOutput(nullout());
 }
 
 
@@ -198,7 +236,7 @@ void YAMLWriterImpl::popState()
 void YAMLWriterImpl::newLine()
 {
     if(!isCurrentNewLine){
-        os << "\n";
+        os() << "\n";
         isCurrentNewLine = true;
     }
 }
@@ -209,7 +247,7 @@ void YAMLWriterImpl::indent()
     if(!isCurrentNewLine){
         newLine();
     }
-    os << current->indentString;
+    os() << current->indentString;
 }
 
 
@@ -217,9 +255,9 @@ void YAMLWriter::startDocument()
 {
     impl->newLine();
     if(impl->numDocuments > 0){
-        impl->os << "\n";
+        impl->os() << "\n";
     }
-     impl->os << "---\n";
+     impl->os() << "---\n";
     
     ++ impl->numDocuments;
 }
@@ -230,7 +268,7 @@ void YAMLWriter::putComment(const std::string& comment, bool doNewLine)
     if(doNewLine){
         impl->indent();
     }
-    impl->os << "# " << comment;
+    impl->os() << "# " << comment;
     impl->isCurrentNewLine = false;
     impl->newLine();
 }
@@ -244,7 +282,7 @@ bool YAMLWriterImpl::makeValuePutReady()
     case LISTING:
         if(!current->isFlowStyle){
             indent();
-            os << "- ";
+            os() << "- ";
         }
         isCurrentNewLine = false;
         return true;
@@ -259,7 +297,7 @@ bool YAMLWriterImpl::startValuePut()
     if(makeValuePutReady()){
         if(current->type == LISTING && current->isFlowStyle){
             if(current->hasValuesBeenPut){
-                os << ", ";
+                os() << ", ";
             }
             if(doInsertLineFeed){
                 newLine();
@@ -290,9 +328,9 @@ void YAMLWriterImpl::putString(const std::string& value)
 {
     if(startValuePut()){
         if(value.empty()){
-            os << "\"\"";
+            os() << "\"\"";
         } else {
-            os << value;
+            os() << value;
         }
         endValuePut();
     }
@@ -303,9 +341,9 @@ void YAMLWriterImpl::putString(const char* value)
 {
     if(startValuePut()){
         if(value[0] == '\0'){
-            os << "\"\"";
+            os() << "\"\"";
         } else {
-            os << value;
+            os() << value;
         }
         endValuePut();
     }
@@ -327,7 +365,7 @@ void YAMLWriter::putString(const std::string& value)
 template<class StringType> void YAMLWriterImpl::putSingleQuotedString(const StringType& value)
 {
     if(startValuePut()){
-        os << "'" << value << "'";
+        os() << "'" << value << "'";
         endValuePut();
     }
 }
@@ -348,7 +386,7 @@ void YAMLWriter::putSingleQuotedString(const std::string& value)
 template<class StringType> void YAMLWriterImpl::putDoubleQuotedString(const StringType& value)
 {
     if(startValuePut()){
-        os << "\"" << value << "\"";
+        os() << "\"" << value << "\"";
         endValuePut();
     }
 }
@@ -377,13 +415,13 @@ void YAMLWriterImpl::putBlockStyleString(const std::string& value, bool isLitera
     if(startValuePut()){
 
         if(isLiteral){
-            os << "|\n";
+            os() << "|\n";
         } else {
-            os << ">\n";
+            os() << ">\n";
         }
         const int level = std::max(static_cast<int>(states.size() - 1), 0);
         string indentString(level * indentWidth, ' ');
-        os << indentString;
+        os() << indentString;
 
         const auto size = value.size();
         string::size_type pos = 0;
@@ -402,10 +440,10 @@ void YAMLWriterImpl::putBlockStyleString(const std::string& value, bool isLitera
             }
             
             if(lineNumber > 0){
-                os << "\n";
-                os << indentString;
+                os() << "\n";
+                os() << indentString;
             }
-            os << linebuf;
+            os() << linebuf;
 
             if(pos == size){
                 break;
@@ -488,7 +526,7 @@ void YAMLWriterImpl::startMappingSub(bool isFlowStyle)
                 newLine();
             }
         } else {
-            os << "{ ";
+            os() << "{ ";
             isCurrentNewLine = false;
         }
     }
@@ -500,7 +538,7 @@ template<class KeyStringType> void YAMLWriterImpl::putKey(const KeyStringType& k
     if(current->type == MAPPING && !current->isKeyPut){
         if(current->isFlowStyle){
             if(current->hasValuesBeenPut){
-                os << ", ";
+                os() << ", ";
             }
         } else {
             indent();
@@ -508,13 +546,13 @@ template<class KeyStringType> void YAMLWriterImpl::putKey(const KeyStringType& k
 
         switch(style){
         case SINGLE_QUOTED:
-            os << "'" << key << "': ";
+            os() << "'" << key << "': ";
             break;
         case DOUBLE_QUOTED:
-            os << "\"" << key << "\": ";
+            os() << "\"" << key << "\": ";
             break;
         default:
-            os << key << ": ";
+            os() << key << ": ";
             break;
         }
 
@@ -540,7 +578,7 @@ void YAMLWriterImpl::endMapping()
 {
     if(current->type == MAPPING){
         if(current->isFlowStyle){
-            os << " }";
+            os() << " }";
         }
         popState();
         endValuePut();
@@ -575,7 +613,7 @@ void YAMLWriterImpl::startListingSub(bool isFlowStyle)
                 newLine();
             }
         } else {
-            os << "[ ";
+            os() << "[ ";
             isCurrentNewLine = false;
             doInsertLineFeed = false;
         }
@@ -587,7 +625,7 @@ void YAMLWriterImpl::endListing()
 {
     if(current->type == LISTING){
         if(current->isFlowStyle){
-            os << " ]";
+            os() << " ]";
         }
         popState();
         endValuePut();

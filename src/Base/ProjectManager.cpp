@@ -481,7 +481,7 @@ void ProjectManager::saveProject(const string& filename, Item* item)
 void ProjectManager::Impl::saveProject(const string& filename, Item* item)
 {
     YAMLWriter writer(filename);
-    if(!writer.isOpen()){
+    if(!writer.isFileOpen()){
         mv->put(
             format(_("Can't open file \"{}\" for writing.\n"), filename),
             MessageView::ERROR);
