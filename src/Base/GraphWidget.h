@@ -8,6 +8,7 @@
 #include <cnoid/Archive>
 #include <QWidget>
 #include <QLabel>
+#include <memory>
 #include <string>
 #include <vector>
 #include "exportdecl.h"

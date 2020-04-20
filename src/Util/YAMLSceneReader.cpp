@@ -4,21 +4,22 @@
 */
 
 #include "YAMLSceneReader.h"
-#include <cnoid/SceneDrawables>
-#include <cnoid/SceneLights>
-#include <cnoid/MeshGenerator>
-#include <cnoid/PolygonMeshTriangulator>
-#include <cnoid/MeshFilter>
-#include <cnoid/SceneLoader>
-#include <cnoid/EigenArchive>
-#include <cnoid/YAMLReader>
-#include <cnoid/FileUtil>
-#include <cnoid/NullOut>
-#include <cnoid/Exception>
-#include <cnoid/ImageIO>
+#include "SceneDrawables.h"
+#include "SceneLights.h"
+#include "MeshGenerator.h"
+#include "PolygonMeshTriangulator.h"
+#include "MeshFilter.h"
+#include "SceneLoader.h"
+#include "YAMLReader.h"
+#include "EigenArchive.h"
+#include "FilePathVariableProcessor.h"
+#include "FileUtil.h"
+#include "NullOut.h"
+#include "Exception.h"
+#include "ImageIO.h"
 #include <cnoid/Config>
-#include <unordered_map>
 #include <fmt/format.h>
+#include <unordered_map>
 #include <mutex>
 #include <regex>
 #include "gettext.h"
@@ -26,6 +27,7 @@
 using namespace std;
 using namespace cnoid;
 using fmt::format;
+namespace filesystem = stdx::filesystem;
 
 namespace {
 
@@ -88,7 +90,7 @@ public:
 
     map<string, ResourceInfoPtr> resourceInfoMap;
     SceneLoader sceneLoader;
-    stdx::filesystem::path baseDirectory;
+    FilePathVariableProcessorPtr pathVariableProcessor;
     regex uriSchemeRegex;
     bool isUriSchemeRegexReady;
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
@@ -102,6 +104,7 @@ public:
         return self->readAngle(info, key, angle);
     }
 
+    FilePathVariableProcessor* getOrCreatePathVariableProcessor();
     SgNode* readNode(Mapping& info);
     SgNode* readNode(Mapping& info, const string& type);
     SgNode* readNodeNode(Mapping& info);
@@ -236,13 +239,32 @@ int YAMLSceneReader::defaultDivisionNumber() const
 
 void YAMLSceneReader::setBaseDirectory(const std::string& directory)
 {
-    impl->baseDirectory = directory;
+    impl->pathVariableProcessor = new FilePathVariableProcessor;
+    impl->pathVariableProcessor->setBaseDirectory(directory);
 }
 
 
 std::string YAMLSceneReader::baseDirectory()
 {
-    return impl->baseDirectory.string();
+    if(impl->pathVariableProcessor){
+        return impl->pathVariableProcessor->baseDirectory();
+    }
+    return string();
+}
+
+
+void YAMLSceneReader::setFilePathVariableProcessor(FilePathVariableProcessor* processor)
+{
+    impl->pathVariableProcessor = processor;
+}
+
+
+FilePathVariableProcessor* YAMLSceneReaderImpl::getOrCreatePathVariableProcessor()
+{
+    if(!pathVariableProcessor){
+        pathVariableProcessor = new FilePathVariableProcessor;
+    }
+    return pathVariableProcessor;
 }
 
 
@@ -981,20 +1003,25 @@ void YAMLSceneReaderImpl::readTexture(SgShape* shape, Mapping& info)
     string& url = symbol;
     if(info.read("url", url)){
         if(!url.empty()){
-            SgImagePtr image=0;
+            SgImagePtr image;
             ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(url);
             if(p != imagePathToSgImageMap.end()){
                 image = p->second;
             }else{
                 try{
                     image = new SgImage;
-                    stdx::filesystem::path filepath(url);
-                    if(!checkAbsolute(filepath)){
-                        filepath = stdx::filesystem::lexically_normal(baseDirectory / filepath);
+                    auto fpvp = getOrCreatePathVariableProcessor();
+                    auto filename = fpvp->expand(url, true);
+                    if(!filename.empty()){
+                        imageIO.load(image->image(), filename);
+                        imagePathToSgImageMap[url] = image;
+                    } else {
+                        os() << format(_("Warning: texture url \"{0}\" is not valid: {1}"),
+                                       url, fpvp->errorMessage()) << endl; 
+                        image.reset();
                     }
-                    imageIO.load(image->image(), getAbsolutePathString(filepath));
-                    imagePathToSgImageMap[url] = image;
-                }catch(const exception_base& ex){
+                }
+                catch(const exception_base& ex){
                     info.throwException(*boost::get_error_info<error_info_message>(ex));
                 }
             }
@@ -1219,7 +1246,7 @@ void YAMLSceneReaderImpl::decoupleResourceNode(Mapping& resourceNode, const stri
             SceneNodeInfo& nodeInfo = iter->second;
             if(nodeInfo.parent){
                 nodeInfo.parent->removeChild(nodeInfo.node);
-                nodeInfo.parent = 0;
+                nodeInfo.parent.reset();
                 adjustNodeCoordinate(nodeInfo);
             }
         }
@@ -1235,21 +1262,22 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
         return iter->second;
     }
 
-    stdx::filesystem::path filepath;
-        
     if(!isUriSchemeRegexReady){
         uriSchemeRegex.assign("^(.+)://(.+)$");
         isUriSchemeRegexReady = true;
     }
     smatch match;
+    string filename;
     bool hasScheme = false;
+    bool isFileScheme = false;
         
     if(regex_match(uri, match, uriSchemeRegex)){
         hasScheme = true;
         if(match.size() == 3){
             const string scheme = match.str(1);
             if(scheme == "file"){
-                filepath = match.str(2);
+                filename = match.str(2);
+                isFileScheme = true;
             } else {
                 std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
                 auto iter = uriSchemeHandlerMap.find(scheme);
@@ -1258,27 +1286,36 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
                         format(_("The \"{0}\" scheme of \"{1}\" is not available"), scheme, uri));
                 } else {
                     auto& handler = iter->second;
-                    filepath = handler(match.str(2), os());
+                    filename = handler(match.str(2), os());
+                    isFileScheme = true;
                 }
             }
         }
     }
 
     if(!hasScheme){
-        filepath = uri;
-        if(!checkAbsolute(filepath)){
-            filepath = stdx::filesystem::lexically_normal(baseDirectory / filepath);
-        }
+        filename = uri;
+        isFileScheme = true;
     }
-    
-    if(filepath.empty()){
-        resourceNode.throwException(
-            format(_("The resource URI \"{}\" is not valid"), uri));
+
+    if(isFileScheme){
+        auto pvp = getOrCreatePathVariableProcessor();
+        filename = pvp->expand(filename, true);
+        if(filename.empty()){
+            resourceNode.throwException(
+                format(_("The resource URI \"{0}\" is not valid: {1}"),
+                       uri, pvp->errorMessage()));
+        }
+    } else {
+        if(filename.empty()){
+            resourceNode.throwException(
+                format(_("The resource URI \"{}\" is not valid"), uri));
+        }
     }
 
     ResourceInfoPtr info = new ResourceInfo;
 
-    string filename = stdx::filesystem::absolute(filepath).string();
+    filesystem::path filepath(filename);
     string ext = filepath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 

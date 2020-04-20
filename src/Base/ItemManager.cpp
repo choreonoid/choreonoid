@@ -18,7 +18,6 @@
 #include "CheckBox.h"
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
-#include <cnoid/ParametricPathProcessor>
 #include <QLayout>
 #include <QLabel>
 #include <QLineEdit>

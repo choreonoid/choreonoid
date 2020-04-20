@@ -3,6 +3,7 @@
 #include "RootItem.h"
 #include "MainWindow.h"
 #include "MessageView.h"
+#include <cnoid/stdx/filesystem>
 #include <QBoxLayout>
 #include <QStyle>
 #include <fmt/format.h>

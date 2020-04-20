@@ -6,7 +6,6 @@
 #define CNOID_BASE_ARCHIVE_H
 
 #include <cnoid/ValueTree>
-#include <cnoid/stdx/filesystem>
 #include <string>
 #include <functional>
 #include "exportdecl.h"
@@ -17,6 +16,7 @@ class Item;
 class View;
 class ViewManager;
 class ProjectManager;
+class FilePathVariableProcessor;
 class ArchiveSharedData;
 
 class CNOID_EXPORT Archive : public Mapping
@@ -76,7 +76,9 @@ public:
 
     Item* currentParentItem() const;
 
-    stdx::filesystem::path getProjectDir() const { return projectDirPath; }
+    std::string projectDirectory() const;
+
+    FilePathVariableProcessor* filePathVariableProcessor() const;
 
 private:
 
@@ -94,8 +96,6 @@ private:
     friend class ItemTreeArchiver;
     friend class ViewManager;
     friend class ProjectManager;
-
-    stdx::filesystem::path projectDirPath;
 };
 
 typedef ref_ptr<Archive> ArchivePtr;

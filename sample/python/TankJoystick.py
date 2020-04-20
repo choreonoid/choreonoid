@@ -25,12 +25,12 @@ worldItem = WorldItem()
 RootItem.instance.addChildItem(worldItem)
 
 laboItem = BodyItem()
-laboItem.load(shareDirectory + "/model/Labo1/Labo1.body")
+laboItem.load("${SHARE}/model/Labo1/Labo1.body")
 worldItem.addChildItem(laboItem)
 itv.checkItem(laboItem)
 
 tankItem = BodyItem()
-tankItem.load(shareDirectory + "/model/Tank/Tank.body")
+tankItem.load("${SHARE}/model/Tank/Tank.body")
 tank = tankItem.body
 tank.rootLink.setTranslation([-0.8, 2.4, 0.1])
 tank.rootLink.setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))

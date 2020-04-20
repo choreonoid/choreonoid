@@ -61,7 +61,7 @@
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/CnoidUtil>
-#include <cnoid/ParametricPathProcessor>
+#include <cnoid/FilePathVariableProcessor>
 #include <fmt/format.h>
 #include <Eigen/Core>
 #include <QApplication>
@@ -241,7 +241,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 
     AppConfig::initialize(appName, vendorName);
 
-    ParametricPathProcessor::instance()->setVariables(
+    FilePathVariableProcessor::systemInstance()->setUserVariables(
         AppConfig::archive()->openMapping("pathVariables"));
 
     ext = new ExtensionManager("Base", false);

@@ -14,6 +14,7 @@
 namespace cnoid {
 
 class YAMLReader;
+class FilePathVariableProcessor;
 class YAMLSceneReaderImpl;
   
 class CNOID_EXPORT YAMLSceneReader
@@ -25,12 +26,14 @@ public:
     void setMessageSink(std::ostream& os);
     void setDefaultDivisionNumber(int n);
     int defaultDivisionNumber() const;
+
+    // One of the settings is valid for the following two functions
     void setBaseDirectory(const std::string& directory);
+    void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
+
     std::string baseDirectory();
     void setYAMLReader(YAMLReader* reader);
-
     void clear();
-
     void readHeader(Mapping& info);
 
     enum AngleUnit { DEGREE, RADIAN };

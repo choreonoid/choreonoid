@@ -4,7 +4,7 @@
 #include <cnoid/NullOut>
 #include <cnoid/FileUtil>
 #include <cnoid/ValueTree>
-#include <cnoid/ParametricPathProcessor>
+#include <cnoid/FilePathVariableProcessor>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -241,15 +241,14 @@ void ItemFileIO::setInvocationType(int type)
 bool ItemFileIO::Impl::preprocessLoadingOrSaving
 (Item* item, std::string& io_filename, const Mapping* options)
 {
-    ParametricPathProcessor* pathProcessor = ParametricPathProcessor::instance();
-    auto expanded = pathProcessor->expand(io_filename);
-    if(!expanded){
-        errorMessage = pathProcessor->errorMessage();
-        return false;
+    if(invocationType == Direct){
+        FilePathVariableProcessor* pathProcessor = FilePathVariableProcessor::systemInstance();
+        io_filename = pathProcessor->expand(io_filename, true);
+        if(io_filename.empty()){
+            errorMessage = pathProcessor->errorMessage();
+            return false;
+        }
     }
-
-    filesystem::path filepath = cnoid::getAbsolutePath(*expanded);
-    io_filename = toActualPathName(cnoid::getPathString(filepath));
 
     if((invocationType == Direct) && (api & ItemFileIO::Options)){
         self->resetOptions();

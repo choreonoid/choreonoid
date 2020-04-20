@@ -8,7 +8,7 @@ worldItem = WorldItem()
 RootItem.instance.addChildItem(worldItem)
 
 robotItem = BodyItem()
-robotItem.load(shareDirectory + "/model/SR1/SR1.body")
+robotItem.load("${SHARE}/model/SR1/SR1.body")
 
 robot = robotItem.body
 robot.rootLink.setTranslation([0.0, 0.0, 0.7135])
@@ -34,7 +34,7 @@ worldItem.addChildItem(robotItem)
 ItemTreeView.instance.checkItem(robotItem)
 
 floorItem = BodyItem()
-floorItem.load(shareDirectory + "/model/misc/floor.body")
+floorItem.load("${SHARE}/model/misc/floor.body")
 worldItem.addChildItem(floorItem)
 
 simulatorItem = AISTSimulatorItem()

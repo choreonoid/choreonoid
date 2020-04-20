@@ -4,15 +4,10 @@
 
 #include "Archive.h"
 #include "Item.h"
-#include "AppConfig.h"
 #include "MessageView.h"
-#include <cnoid/ExecutablePath>
-#include <cnoid/Referenced>
-#include <cnoid/FileUtil>
-#include <cnoid/UTF8>
-#include <QRegExp>
+#include <cnoid/FilePathVariableProcessor>
+#include <cnoid/stdx/filesystem>
 #include <map>
-#include <cstdlib>
 #include "gettext.h"
 
 using namespace std;
@@ -21,19 +16,12 @@ namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
-QRegExp regexVar("^\\$\\{(\\w+)\\}");
-
 typedef map<Item*, int> ItemToIdMap;
 typedef map<int, Item*> IdToItemMap;
 typedef map<View*, int> ViewToIdMap;
 typedef map<int, View*> IdToViewMap;
 
-typedef list< std::function<void()> > PostProcessList;
-
-void putWarning(const QString& message)
-{
-    MessageView::instance()->putln(MessageView::WARNING, message);
-}
+typedef list<std::function<void()>> PostProcessList;
 
 }
 
@@ -42,15 +30,8 @@ namespace cnoid {
 class ArchiveSharedData : public Referenced
 {
 public:
-    Mapping* directoryVariableMap;
-    filesystem::path projectDirPath;
-    filesystem::path topDirPath;
-    filesystem::path shareDirPath;
-    QString projectDirString;
-    QString topDirString;
-    QString shareDirString;
-    QString homeDirString; // for the backward compatiblity
-
+    FilePathVariableProcessorPtr pathVariableProcessor;
+    
     IdToItemMap idToItemMap;
     ItemToIdMap itemToIdMap;
 
@@ -61,65 +42,6 @@ public:
 
     PostProcessList postProcesses;
 };
-
-
-/**
-   \todo Introduce a tree structure to improve the efficiency of searching matched directories
-*/
-bool findSubDirectoryOfDirectoryVariable
-(ArchiveSharedData* shared, const filesystem::path& path, std::string& out_varName, filesystem::path& out_relativePath)
-{
-    out_relativePath.clear();
-    int maxMatchSize = 0;
-    filesystem::path relativePath;
-    Mapping::const_iterator p;
-    for(p = shared->directoryVariableMap->begin(); p != shared->directoryVariableMap->end(); ++p){
-        Listing* paths = p->second->toListing();
-        if(paths){
-            for(int i=0; i < paths->size(); ++i){
-                filesystem::path dirPath(paths->at(i)->toString());
-                int n = findSubDirectory(dirPath, path, relativePath);
-                if(n > maxMatchSize){
-                    maxMatchSize = n;
-                    out_relativePath = relativePath;
-                    out_varName = fromUTF8(p->first);
-                }
-            }
-        }
-    }
-    return (maxMatchSize > 0);
-}
-
-
-bool replaceDirectoryVariable(ArchiveSharedData* shared, QString& io_pathString, const QString& varname, int pos, int len)
-{
-    Listing* paths = shared->directoryVariableMap->findListing(varname.toStdString());
-
-    if(!paths->isValid()){
-        putWarning(QString(_("${%1} of \"%2\" is not defined.")).arg(varname).arg(io_pathString));
-        return false;
-    }
-
-    if(paths->size() == 1){
-        io_pathString.replace(pos, len, paths->at(0)->toString().c_str());
-        return true;
-
-    } else {
-        QString replaced;
-        for(int i=0; i < paths->size(); ++i){
-            replaced = io_pathString;
-            replaced.replace(pos, len, paths->at(i)->toString().c_str());
-            filesystem::file_status fstatus = filesystem::status(filesystem::path(replaced.toStdString()));
-            if(filesystem::is_directory(fstatus) || filesystem::exists(fstatus)) {
-                io_pathString = replaced;
-                return true;
-            }
-        }
-        putWarning(QString(_("\"%1\" does not exist.")).arg(io_pathString));
-    }
-
-    return false;
-}
 
 }
 
@@ -154,32 +76,18 @@ Archive::~Archive()
 void Archive::initSharedInfo()
 {
     shared = new ArchiveSharedData;
-    
-    shared->topDirPath = executableTopDirectory();
-    shared->shareDirPath = shareDirectory();
-
-    shared->topDirString = executableTopDirectory().c_str();
-    shared->shareDirString = shareDirectory().c_str();
-
-    // for the backward compatiblity
-    char* home = getenv("HOME");
-    if(home){
-        shared->homeDirString = home;
-    }
-    
-    shared->currentParentItem = 0;
+    shared->pathVariableProcessor = FilePathVariableProcessor::systemInstance();
+    shared->currentParentItem = nullptr;
 }    
 
 
 void Archive::initSharedInfo(const std::string& projectFile)
 {
     initSharedInfo();
-    
-    shared->directoryVariableMap = AppConfig::archive()->openMapping("pathVariables");
-    
-    shared->projectDirPath = projectDirPath = getAbsolutePath(filesystem::path(projectFile)).parent_path();
-    
-    shared->projectDirString = shared->projectDirPath.string().c_str();
+
+    auto projectDir = filesystem::absolute(projectFile).parent_path().generic_string();
+    shared->pathVariableProcessor->setBaseDirectory(projectDir);
+    shared->pathVariableProcessor->setProjectDirectory(projectDir);
 }
 
 
@@ -247,7 +155,7 @@ bool Archive::forSubArchive(const std::string& name, std::function<bool(const Ar
 Archive* Archive::openSubArchive(const std::string& name)
 {
     Mapping* mapping = findMapping(name);
-    Archive* archive = 0;
+    Archive* archive = nullptr;
     if(mapping->isValid()){
         archive = dynamic_cast<Archive*>(mapping);
     }
@@ -280,56 +188,25 @@ Archive* Archive::subArchive(Mapping* node)
 
 std::string Archive::expandPathVariables(const std::string& path) const
 {
-    QString qpath(path.c_str());
-
-    // expand variables in the path
-    int pos = regexVar.indexIn(qpath);
-    if(pos != -1){
-        int len = regexVar.matchedLength();
-        if(regexVar.captureCount() > 0){
-            QString varname = regexVar.cap(1);
-            if(varname == "SHARE"){
-                qpath.replace(pos, len, shared->shareDirString);
-            } else if(varname == "PROGRAM_TOP"){
-                qpath.replace(pos, len, shared->topDirString);
-            } else if (varname == "PROJECT_DIR"){
-                qpath.replace(pos, len, shared->projectDirString);
-            } else if(varname == "HOME"){  // for the backward compatiblity
-                qpath.replace(pos, len, shared->homeDirString);
-            } else {
-                if(!replaceDirectoryVariable(shared, qpath, varname, pos, len)){
-                    qpath.clear();
-                }
-            }
-        }
+    auto expanded = shared->pathVariableProcessor->expand(path, false);
+    if(expanded.empty()){
+        MessageView::instance()->putln(
+            shared->pathVariableProcessor->errorMessage(), MessageView::WARNING);
     }
-            
-    return qpath.toStdString();
+    return expanded;
 }
 
 
 std::string Archive::resolveRelocatablePath(const std::string& relocatable) const
 {
-    string expanded = expandPathVariables(relocatable);
-
+    auto expanded = shared->pathVariableProcessor->expand(relocatable, true);
     if(expanded.empty()){
-        return relocatable;
+        expanded = relocatable; // Follow the past specification
+        MessageView::instance()->putln(
+            shared->pathVariableProcessor->errorMessage(), MessageView::WARNING);
     }
-    
-    filesystem::path path(expanded);
-
-    if(checkAbsolute(path)){
-        return getNativePathString(path);
-    } else {
-        filesystem::path fullPath = shared->projectDirPath / path;
-        if(!path.empty() && (*path.begin() == "..")){
-            return getNativePathString(getCompactPath(fullPath));
-        } else {
-            return getNativePathString(fullPath);
-        }
-    }
-    return relocatable;
-}    
+    return expanded;
+}
 
 
 bool Archive::readRelocatablePath(const std::string& key, std::string& out_value) const
@@ -372,33 +249,9 @@ bool Archive::loadItemFile(Item* item, const std::string& fileNameKey, const std
 }
 
 
-/**
-   \todo Use integated nested map whose node is a single path element to be more efficient.
-*/
 std::string Archive::getRelocatablePath(const std::string& orgPathString) const
 {
-    filesystem::path orgPath(orgPathString);
-    filesystem::path relativePath;
-    string varName;
-
-    // In the case where the path is originally relative one
-    if(!orgPath.is_absolute()){
-        return getGenericPathString(orgPath);
-
-    } else if(findSubDirectory(shared->projectDirPath, orgPath, relativePath)){
-        return string("${PROJECT_DIR}/") + getGenericPathString(relativePath);
-    
-    } else if(findSubDirectoryOfDirectoryVariable(shared, orgPath, varName, relativePath)){
-        return string("${") + varName + ("}/") + getGenericPathString(relativePath);
-
-    } else if(findSubDirectory(shared->shareDirPath, orgPath, relativePath)){
-        return string("${SHARE}/") + getGenericPathString(relativePath);
-
-    } else if(findSubDirectory(shared->topDirPath, orgPath, relativePath)){
-        return string("${PROGRAM_TOP}/") + getGenericPathString(relativePath);
-    }
-
-    return getGenericPathString(orgPath);
+    return shared->pathVariableProcessor->parameterize(orgPathString);
 }
 
 
@@ -501,7 +354,7 @@ Item* Archive::findItem(int id) const
 
 Item* Archive::findItem(const ValueNodePtr idNode) const
 {
-    Item* item = 0;
+    Item* item = nullptr;
     if(idNode && shared){
         if(idNode->isScalar()){
             item = findItem(idNode->toInt());
@@ -514,7 +367,7 @@ Item* Archive::findItem(const ValueNodePtr idNode) const
                     for(int i=1; i < n; ++i){
                         item = item->findSubItem(idPath[i].toString());
                         if(!item){
-                            item = 0;
+                            item = nullptr;
                             break;
                         }
                     }
@@ -577,3 +430,25 @@ void Archive::setCurrentParentItem(Item* parentItem)
         shared->currentParentItem = parentItem;
     }
 }
+
+
+std::string Archive::projectDirectory() const
+{
+    if(shared){
+        return shared->pathVariableProcessor->projectDirectory();
+    }
+    return string();
+}
+
+
+FilePathVariableProcessor* Archive::filePathVariableProcessor() const
+{
+    if(shared){
+        return shared->pathVariableProcessor;
+    }
+    return nullptr;
+}
+
+    
+
+

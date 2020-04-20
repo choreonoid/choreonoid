@@ -18,6 +18,7 @@
 #include <QMouseEvent>
 #include <QDesktopWidget>
 #include <QLabel>
+#include <memory>
 #include <bitset>
 #include "gettext.h"
 
@@ -111,7 +112,7 @@ public:
     bool viewTabsVisible;
     bool isMaximizedBeforeFullScreen;
     bool needToUpdateDefaultPaneAreas;
-    std::unique_ptr< vector<View*> > defaultViewsToShow;
+    std::unique_ptr<vector<View*>> defaultViewsToShow;
 
     ViewPane* areaToPane[View::NUM_AREAS];
 
