@@ -17,6 +17,21 @@ using namespace cnoid;
 using fmt::format;
 namespace filesystem = stdx::filesystem;
 
+namespace {
+
+int countPathElements(filesystem::path& path)
+{
+    int count = 0;
+    auto iter = path.begin();
+    while(iter != path.end()){
+        ++count;
+        ++iter;
+    }
+    return count;
+}
+
+}
+
 namespace cnoid {
 
 class FilePathVariableProcessor::Impl
@@ -28,6 +43,7 @@ public:
     bool isBaseDirInHome;
     filesystem::path projectDirPath;
     string projectDirString;
+    bool isProjectDirDifferentFromBaseDir;
 
     bool isSystemVariableSetEnabled;
     filesystem::path topDirPath;
@@ -36,7 +52,11 @@ public:
     string shareDirString;
     filesystem::path homeDirPath;
     string homeDirString;
-    
+
+    string varName;
+    enum BaseType { Base, Project, Var, Share, Top, Home, NumCandidates };
+    filesystem::path relativePath[NumCandidates];
+
     string errorMessage;
 
     Impl();
@@ -74,6 +94,7 @@ FilePathVariableProcessor::Impl::Impl()
 {
     isSystemVariableSetEnabled = false;
     isBaseDirInHome = false;
+    isProjectDirDifferentFromBaseDir = false;
 }
 
 
@@ -131,6 +152,7 @@ void FilePathVariableProcessor::setBaseDirectory(const std::string& directory)
     if(impl->baseDirPath.is_relative()){
         impl->baseDirPath = filesystem::current_path() /  impl->baseDirPath;
     }
+    impl->isProjectDirDifferentFromBaseDir = (impl->baseDirPath != impl->projectDirPath);
 
     if(impl->homeDirPath.empty()){
         impl->isBaseDirInHome = false;
@@ -154,6 +176,8 @@ void FilePathVariableProcessor::setProjectDirectory(const std::string& directory
         impl->projectDirPath = filesystem::current_path() /  impl->projectDirPath;
     }
     impl->projectDirString = impl->projectDirPath.generic_string();
+
+    impl->isProjectDirDifferentFromBaseDir = (impl->baseDirPath != impl->projectDirPath);
 }
 
 
@@ -181,31 +205,59 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
         return orgPath.generic_string();
 
     } else {
-        filesystem::path relativePath;
-        string varName;
+        int distance[NumCandidates];
+        for(int i=0; i < NumCandidates; ++i){
+            distance[i] = std::numeric_limits<int>::max();
+        }
+        
+        if(!baseDirPath.empty() &&
+           findSubDirectory(baseDirPath, orgPath, relativePath[Base])){
+            distance[Base] = countPathElements(relativePath[Base]);
+        }
+        if(isProjectDirDifferentFromBaseDir &&
+           findSubDirectory(projectDirPath, orgPath, relativePath[Project])){
+            distance[Project] = countPathElements(relativePath[Project]);
+        }
+        if(findSubDirectoryOfDirectoryVariable(orgPath, varName, relativePath[Var])){
+            distance[Var] = countPathElements(relativePath[Var]);
+        }
+        if(isSystemVariableSetEnabled){
 
-        if(!baseDirPath.empty() && findSubDirectory(baseDirPath, orgPath, relativePath)){
-            return relativePath.generic_string();
-    
-        } else if(findSubDirectory(projectDirPath, orgPath, relativePath)){
-            return string("${PROJECT_DIR}/") + relativePath.generic_string();
+            if(findSubDirectory(shareDirPath, orgPath, relativePath[Share])){
+                distance[Share] = countPathElements(relativePath[Share]);
 
-        } else if(findSubDirectoryOfDirectoryVariable(orgPath, varName, relativePath)){
-            return format("${{{0}}}/{1}", varName, relativePath.generic_string());
+            } else if(findSubDirectory(topDirPath, orgPath, relativePath[Top])){
+                distance[Top] = countPathElements(relativePath[Top]);
+            }
+            if(!isBaseDirInHome && findSubDirectory(homeDirPath, orgPath, relativePath[Home])){
+                distance[Home] = countPathElements(relativePath[Home]);
+            }
+        }
 
-        } else if(isSystemVariableSetEnabled){
-
-            if(findSubDirectory(shareDirPath, orgPath, relativePath)){
-                return string("${SHARE}/") + relativePath.generic_string();
-
-            } else if(findSubDirectory(topDirPath, orgPath, relativePath)){
-                return string("${PROGRAM_TOP}/") + relativePath.generic_string();
-
-            } else if(!isBaseDirInHome && findSubDirectory(homeDirPath, orgPath, relativePath)){
-                return string("${HOME}/") + relativePath.generic_string();
-
-            } else if(!baseDirPath.empty() && findRelativePath(baseDirPath, orgPath, relativePath)){
-                return relativePath.generic_string();
+        int minDistance = std::numeric_limits<int>::max();
+        int index = -1;
+        for(int i=0; i < NumCandidates; ++i){
+            if(distance[i] < minDistance){
+                minDistance = distance[i];
+                index = i;
+            }
+        }
+        if(index >= 0){
+            switch(index){
+            case Base:
+                return relativePath[Base].generic_string();
+            case Project:
+                return string("${PROJECT_DIR}/") + relativePath[Project].generic_string();
+            case Var:
+                return format("${{{0}}}/{1}", varName, relativePath[Var].generic_string());
+            case Share:
+                return string("${SHARE}/") + relativePath[Share].generic_string();
+            case Top:
+                return string("${PROGRAM_TOP}/") + relativePath[Top].generic_string();
+            case Home:
+                return string("${HOME}/") + relativePath[Home].generic_string();
+            default:
+                break;
             }
         }
     }
