@@ -9,7 +9,6 @@
 #include "ItemClassRegistry.h"
 #include "PluginManager.h"
 #include "ItemFileIO.h"
-#include "ItemFileIOImpl.h"
 #include "ItemFileDialog.h"
 #include "FileDialog.h"
 #include "MenuManager.h"
@@ -46,7 +45,7 @@ class CreationPanelBase;
 
 struct ClassInfo : public Referenced
 {
-    ItemManagerImpl* manager;
+    ItemManager::Impl* manager;
     string className;
     string name; // without the 'Item' suffix
     function<Item*()> factory;
@@ -95,7 +94,7 @@ bool isStaticMembersInitialized = false;
 
 ItemTypeToInfoMap itemTypeToInfoMap;
 
-typedef map<string, ItemManagerImpl*> ModuleNameToItemManagerImplMap;
+typedef map<string, ItemManager::Impl*> ModuleNameToItemManagerImplMap;
 ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
 
 map<string, map<string, pair<string, string>>> aliasClassNameToAliasModuleNameToTrueNamePairMap;
@@ -111,7 +110,7 @@ std::map<ItemPtr, ItemPtr> reloadedItemToOriginalItemMap;
 class AddonClassInfo : public Referenced
 {
 public:
-    ItemManagerImpl* manager;
+    ItemManager::Impl* manager;
     std::string name;
     std::function<ItemAddon*(void)> factory;
 };
@@ -127,11 +126,11 @@ AddonTypeToInfoMap addonTypeToInfoMap;
 
 namespace cnoid {
 
-class ItemManagerImpl
+class ItemManager::Impl
 {
 public:
-    ItemManagerImpl(const string& moduleName, MenuManager& menuManager);
-    ~ItemManagerImpl();
+    Impl(const string& moduleName, MenuManager& menuManager);
+    ~Impl();
 
     string moduleName;
     string textDomain;
@@ -140,8 +139,8 @@ public:
     ItemClassNameToInfoMap itemClassNameToInfoMap;
     set<std::type_index> registeredTypes;
 
-    typedef list<shared_ptr<ItemManager::CreationPanelFilterBase>> CreationPanelFilterList;
-    typedef set<pair<std::type_index, shared_ptr<ItemManager::CreationPanelFilterBase>>> CreationPanelFilterSet;
+    typedef list<shared_ptr<CreationPanelFilterBase>> CreationPanelFilterList;
+    typedef set<pair<std::type_index, shared_ptr<CreationPanelFilterBase>>> CreationPanelFilterSet;
     
     set<ItemCreationPanel*> registeredCreationPanels;
     CreationPanelFilterSet registeredCreationPanelFilters;
@@ -160,7 +159,7 @@ public:
 
     void addCreationPanel(const std::type_info& type, ItemCreationPanel* panel);
     void addCreationPanelFilter(
-        const std::type_info& type, shared_ptr<ItemManager::CreationPanelFilterBase> filter,
+        const std::type_info& type, shared_ptr<CreationPanelFilterBase> filter,
         bool afterInitializionByPanels);
     CreationPanelBase* getOrCreateCreationPanelBase(const std::type_info& type);
     static void onNewItemActivated(CreationPanelBase* base);
@@ -187,8 +186,8 @@ public:
     CreationPanelBase(const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton);
     void addPanel(ItemCreationPanel* panel);
     Item* createItem(Item* parentItem);
-    ItemManagerImpl::CreationPanelFilterList preFilters;
-    ItemManagerImpl::CreationPanelFilterList postFilters;
+    ItemManager::Impl::CreationPanelFilterList preFilters;
+    ItemManager::Impl::CreationPanelFilterList postFilters;
     ClassInfo* classInfo;
     QVBoxLayout* panelLayout;
     ItemPtr protoItem;
@@ -212,11 +211,11 @@ ClassInfo::~ClassInfo()
 
 ItemManager::ItemManager(const std::string& moduleName, MenuManager& menuManager)
 {
-    impl = new ItemManagerImpl(moduleName, menuManager);
+    impl = new Impl(moduleName, menuManager);
 }
 
 
-ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuManager)
+ItemManager::Impl::Impl(const string& moduleName, MenuManager& menuManager)
     : moduleName(moduleName),
       menuManager(menuManager)
 {
@@ -271,7 +270,7 @@ ItemManager::~ItemManager()
 }
 
 
-ItemManagerImpl::~ItemManagerImpl()
+ItemManager::Impl::~Impl()
 {
     for(auto it = registeredCreationPanels.begin(); it != registeredCreationPanels.end(); ++it){
         ItemCreationPanel* panel = *it;
@@ -279,14 +278,14 @@ ItemManagerImpl::~ItemManagerImpl()
     }
 
     for(auto& fileIO : registeredFileIOs){
-        auto& ioImpl = fileIO->impl;
-        if((ioImpl->api & ItemFileIO::Load) && (ioImpl->interfaceLevel == ItemFileIO::Standard)){
-            auto p = captionToStandardLoadersMap.find(ioImpl->caption);
+        if(fileIO->hasApi(ItemFileIO::Load) && (fileIO->interfaceLevel() == ItemFileIO::Standard)){
+            auto& caption = fileIO->caption();
+            auto p = captionToStandardLoadersMap.find(caption);
             if(p != captionToStandardLoadersMap.end()){
                 auto& loaders = p->second;
                 loaders.erase(std::remove(loaders.begin(), loaders.end(), fileIO), loaders.end());
             }
-            p = captionToConversionLoadersMap.find(ioImpl->caption);
+            p = captionToConversionLoadersMap.find(caption);
             if(p != captionToConversionLoadersMap.end()){
                 auto& loaders = p->second;
                 loaders.erase(std::remove(loaders.begin(), loaders.end(), fileIO), loaders.end());
@@ -318,7 +317,7 @@ void ItemManager::detachAllManagedTypeItemsFromRoot()
 }
 
 
-void ItemManagerImpl::detachManagedTypeItems(Item* parentItem)
+void ItemManager::Impl::detachManagedTypeItems(Item* parentItem)
 {
     Item* item = parentItem->childItem();
     while(item){
@@ -350,7 +349,7 @@ void ItemManager::registerClass_
 }
 
 
-void ItemManagerImpl::registerClass
+void ItemManager::Impl::registerClass
 (std::function<Item*()>& factory, Item* singletonInstance, const std::type_info& type, const string& className)
 {
     auto inserted = itemClassNameToInfoMap.insert(make_pair(className, ClassInfoPtr()));
@@ -427,18 +426,18 @@ Item* ItemManager::getSingletonInstance(const std::type_info& type)
 }
 
 
-bool ItemFileIO::Impl::isRegisteredForSingletonItem() const
+bool ItemFileIO::isRegisteredForSingletonItem() const
 {
-    if(auto info = static_pointer_cast<ClassInfo>(classInfo.lock())){
+    if(auto info = dynamic_cast<const ClassInfo*>(itemClassInfo())){
         return info->isSingleton;
     }
     return false;
 }
 
 
-Item* ItemFileIO::Impl::findSingletonItemInstance() const
+Item* ItemFileIO::findSingletonItemInstance() const
 {
-    if(auto info = static_pointer_cast<ClassInfo>(classInfo.lock())){
+    if(auto info = dynamic_cast<const ClassInfo*>(itemClassInfo())){
         return info->singletonInstance;
     }
     return nullptr;
@@ -535,7 +534,7 @@ void ItemManager::addCreationPanel_(const std::type_info& type, ItemCreationPane
 }
 
 
-void ItemManagerImpl::addCreationPanel(const std::type_info& type, ItemCreationPanel* panel)
+void ItemManager::Impl::addCreationPanel(const std::type_info& type, ItemCreationPanel* panel)
 {
     CreationPanelBase* base = getOrCreateCreationPanelBase(type);
     if(panel){
@@ -554,8 +553,8 @@ void ItemManager::addCreationPanelFilter_
 }
 
 
-void ItemManagerImpl::addCreationPanelFilter
-(const std::type_info& type, shared_ptr<ItemManager::CreationPanelFilterBase> filter, bool afterInitializionByPanels)
+void ItemManager::Impl::addCreationPanelFilter
+(const std::type_info& type, shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels)
 {
     CreationPanelBase* base = getOrCreateCreationPanelBase(type);
     if(!afterInitializionByPanels){
@@ -567,7 +566,7 @@ void ItemManagerImpl::addCreationPanelFilter
 }
 
 
-CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBase(const std::type_info& type)
+CreationPanelBase* ItemManager::Impl::getOrCreateCreationPanelBase(const std::type_info& type)
 {
     CreationPanelBase* base = nullptr;
     
@@ -603,7 +602,7 @@ CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBase(const std::type
 }
 
 
-void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
+void ItemManager::Impl::onNewItemActivated(CreationPanelBase* base)
 {
     ItemList<Item> parentItems = RootItem::instance()->selectedItems();
 
@@ -759,32 +758,32 @@ void ItemManager::registerFileIO_(const std::type_info& type, ItemFileIO* fileIO
 }
 
 
-ClassInfoPtr ItemManagerImpl::registerFileIO(const type_info& type, ItemFileIOPtr fileIO)
+ClassInfoPtr ItemManager::Impl::registerFileIO(const type_info& type, ItemFileIOPtr fileIO)
 {
     ClassInfoPtr classInfo;
     
     auto p = itemTypeToInfoMap.find(type);
     if(p != itemTypeToInfoMap.end()){
         classInfo = p->second;
-        auto& ioImpl = fileIO->impl;
-        ioImpl->classInfo = classInfo;
+        fileIO->setItemClassInfo(classInfo);
         
         registeredFileIOs.insert(fileIO);
+        auto interfaceLevel = fileIO->interfaceLevel();
         
         auto p = classInfo->fileIOs.begin();
         while(p != classInfo->fileIOs.end()){
-            if((*p)->impl->interfaceLevel > ioImpl->interfaceLevel){
+            if((*p)->interfaceLevel() > interfaceLevel){
                 break;
             }
             ++p;
         }
         classInfo->fileIOs.insert(p, fileIO);
         
-        if(ioImpl->api & ItemFileIO::Load){
-            if(ioImpl->interfaceLevel == ItemFileIO::Standard){
+        if(fileIO->hasApi(ItemFileIO::Load)){
+            if(interfaceLevel == ItemFileIO::Standard){
                 menuManager.setPath("/File/Load ...");
                 addLoader(fileIO, captionToStandardLoadersMap);
-            } else if(ioImpl->interfaceLevel == ItemFileIO::Conversion){
+            } else if(interfaceLevel == ItemFileIO::Conversion){
                 menuManager.setPath("/File/Import ...");
                 addLoader(fileIO, captionToConversionLoadersMap);
             }
@@ -795,7 +794,7 @@ ClassInfoPtr ItemManagerImpl::registerFileIO(const type_info& type, ItemFileIOPt
 }
 
 
-void ItemManagerImpl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& loaderMap)
+void ItemManager::Impl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& loaderMap)
 {
     auto& caption = fileIO->caption();
     auto& loaders = loaderMap[caption];
@@ -809,7 +808,7 @@ void ItemManagerImpl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& load
 }
 
 
-vector<ItemFileIO*> ItemManagerImpl::getFileIoList(Item* item, function<bool(ItemFileIO* fileIO)> pred)
+vector<ItemFileIO*> ItemManager::Impl::getFileIoList(Item* item, function<bool(ItemFileIO* fileIO)> pred)
 {
     vector<ItemFileIO*> fileIoList;
     auto p = itemTypeToInfoMap.find(typeid(*item));
@@ -842,7 +841,7 @@ ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::strin
 }
 
 
-ItemFileIO* ItemManagerImpl::findMatchedFileIO
+ItemFileIO* ItemManager::Impl::findMatchedFileIO
 (const type_info& type, const string& filename, const string& formatId, int ioTypeFlag)
 {
     ItemFileIO* targetFileIO = nullptr;
@@ -861,7 +860,7 @@ ItemFileIO* ItemManagerImpl::findMatchedFileIO
 
     if(!formatId.empty() || filename.empty()){
         for(auto& fileIO : fileIOs){
-            if(fileIO->impl->api & ioTypeFlag){
+            if(fileIO->hasApi(ioTypeFlag)){
                 if(formatId.empty() || fileIO->isFormat(formatId)){
                     targetFileIO = fileIO;
                     break;
@@ -874,7 +873,7 @@ ItemFileIO* ItemManagerImpl::findMatchedFileIO
         if(dotextension.size() >= 2){
             string extension = dotextension.substr(1); // remove dot
             for(auto& fileIO : fileIOs){
-                if(fileIO->impl->api & ioTypeFlag){
+                if(fileIO->hasApi(ioTypeFlag)){
                     for(auto& ext : fileIO->extensions()){
                         if(ext == extension){
                             targetFileIO = fileIO;
@@ -976,7 +975,7 @@ void ItemManager::addSaver_
 bool ItemManager::load
 (Item* item, const std::string& filename, Item* parentItem, const std::string& formatId, const Mapping* options)
 {
-    if(auto fileIO = ItemManagerImpl::findMatchedFileIO(typeid(*item), filename, formatId, ItemFileIO::Load)){
+    if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, formatId, ItemFileIO::Load)){
         return fileIO->loadItem(item, filename, parentItem, false, nullptr, options);
     }
     return false;
@@ -986,7 +985,7 @@ bool ItemManager::load
 ItemList<Item> ItemManager::loadItemsWithDialog_
 (const std::type_info& type, Item* parentItem, bool doAddtion, Item* nextItem)
 {
-    if(auto fileIO = ItemManagerImpl::findMatchedFileIO(type, "", "", ItemFileIO::Load)){
+    if(auto fileIO = Impl::findMatchedFileIO(type, "", "", ItemFileIO::Load)){
         ItemFileDialog dialog;
         return dialog.loadItems({fileIO}, parentItem, doAddtion, nextItem);
     }
@@ -994,7 +993,7 @@ ItemList<Item> ItemManager::loadItemsWithDialog_
 }
 
 
-void ItemManagerImpl::onLoadOrImportItemsActivated(const vector<ItemFileIO*>& fileIOs)
+void ItemManager::Impl::onLoadOrImportItemsActivated(const vector<ItemFileIO*>& fileIOs)
 {
     Item* parentItem = RootItem::instance()->selectedItems().toSingle();
     if(!parentItem){
@@ -1057,16 +1056,16 @@ Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
 }
 
 
-void ItemManagerImpl::onReloadSelectedItemsActivated()
+void ItemManager::Impl::onReloadSelectedItemsActivated()
 {
-    ItemManager::reloadItems(RootItem::instance()->selectedItems());
+    reloadItems(RootItem::instance()->selectedItems());
 }
 
 
 bool ItemManager::save
 (Item* item, const std::string& filename, const std::string& formatId, const Mapping* options)
 {
-    if(auto fileIO = ItemManagerImpl::findMatchedFileIO(typeid(*item), filename, formatId, ItemFileIO::Save)){
+    if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, formatId, ItemFileIO::Save)){
         return fileIO->saveItem(item, filename, options);
     }
     return false;
@@ -1075,7 +1074,7 @@ bool ItemManager::save
 
 bool ItemManager::saveItemWithDialog_(const std::type_info& type, Item* item)
 {
-    if(auto fileIO = ItemManagerImpl::findMatchedFileIO(type, "", "", ItemFileIO::Save)){
+    if(auto fileIO = Impl::findMatchedFileIO(type, "", "", ItemFileIO::Save)){
         ItemFileDialog dialog;
         return dialog.saveItem(item, {fileIO});
     }
@@ -1083,7 +1082,7 @@ bool ItemManager::saveItemWithDialog_(const std::type_info& type, Item* item)
 }
 
 
-void ItemManagerImpl::onSaveSelectedItemsAsActivated()
+void ItemManager::Impl::onSaveSelectedItemsAsActivated()
 {
     ItemFileDialog dialog;
     for(auto& item : RootItem::instance()->selectedItems()){
@@ -1099,7 +1098,7 @@ void ItemManagerImpl::onSaveSelectedItemsAsActivated()
 }
 
 
-void ItemManagerImpl::onExportSelectedItemsActivated()
+void ItemManager::Impl::onExportSelectedItemsActivated()
 {
     ItemFileDialog dialog;
     dialog.setExportMode();
@@ -1147,7 +1146,7 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
         } 
         if(!synchronized){
             auto fileIoList =
-                ItemManagerImpl::getFileIoList(
+                Impl::getFileIoList(
                     item,
                     [&](ItemFileIO* fileIO){
                         return (fileIO->hasApi(ItemFileIO::Save) &&
@@ -1164,10 +1163,10 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
 }
 
 
-void ItemManagerImpl::onSaveSelectedItemsActivated()
+void ItemManager::Impl::onSaveSelectedItemsActivated()
 {
     for(auto& item : RootItem::instance()->selectedItems()){
-        ItemManager::overwrite(item, true, "");
+        overwrite(item, true, "");
     }
 }
 
@@ -1233,9 +1232,9 @@ bool ItemManager::getAddonIdentifier(ItemAddon* addon, std::string& out_moduleNa
 static QString makeNameFilterString(const std::string& caption, const string& extensions)
 {
     QString filters =
-        ItemFileIO::Impl::makeNameFilter(
-            caption,
-            ItemFileIO::Impl::separateExtensions(extensions));
+        ItemFileDialog::makeNameFilter(
+            caption, ItemFileIO::separateExtensions(extensions));
+    
     filters += _(";;Any files (*)");
     return filters;
 }

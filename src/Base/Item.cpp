@@ -70,7 +70,7 @@ public:
     Signal<void(bool on)> sigLogicalSumOfAllChecksToggled;
     map<int, Signal<void(bool on)>> checkIdToSignalMap;
 
-    // for file overwriting management, mainly accessed by ItemManagerImpl
+    // for file overwriting management, mainly accessed by ItemManager::Impl
     bool isConsistentWithFile;
     std::string filePath;
     std::string fileFormat;

@@ -13,7 +13,6 @@ namespace cnoid {
 
 class Item;
 class ItemManager;
-class ItemManagerImpl;
 class ItemFileIOExtenderBase;
 class ItemFileDialog;
 class Mapping;
@@ -44,7 +43,7 @@ public:
     bool isFormat(const std::string& id) const;
     int api() const;
     void setApi(int apiSet);
-    bool hasApi(int api);
+    bool hasApi(int api) const;
     void setCaption(const std::string& caption);
     const std::string& caption() const;
     void setFileTypeCaption(const std::string& caption);
@@ -65,6 +64,10 @@ public:
     int interfaceLevel() const;
     
     virtual Item* createItem() = 0;
+
+    // Set the invocation type before calling the loadItem or saveItem function
+    // if the invocation type is not "Direct".
+    void setInvocationType(int type);
 
     // Load API
     Item* loadItem(
@@ -102,10 +105,15 @@ public:
     virtual void fetchOptionPanelForSaving();
 
     Item* parentItem();
-    InvocationType invocationType() const;
+    int invocationType() const;
 
     bool isRegisteredForSingletonItem() const;
     Item* findSingletonItemInstance() const;
+
+    void setItemClassInfo(Referenced* info);
+    const Referenced* itemClassInfo() const;
+
+    static std::vector<std::string> separateExtensions(const std::string& multiExtString);
 
 protected:
     std::ostream& os();
@@ -122,7 +130,6 @@ protected:
 private:
     Impl* impl;
     friend class ItemManager;
-    friend class ItemManagerImpl;
     friend class ItemFileIOExtenderBase;
     friend class ItemFileDialog;
 };

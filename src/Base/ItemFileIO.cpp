@@ -1,5 +1,4 @@
 #include "ItemFileIO.h"
-#include "ItemFileIOImpl.h"
 #include "ItemManager.h"
 #include "MessageView.h"
 #include <cnoid/NullOut>
@@ -13,6 +12,42 @@ using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
+
+
+namespace cnoid {
+
+class ItemFileIO::Impl
+{
+public:
+    ItemFileIO* self;
+    int api;
+    std::string formatId;
+    std::vector<std::string> formatIdAliases;
+    std::string caption;
+    std::string fileTypeCaption;
+    std::vector<std::string> extensions;
+    std::function<std::string()> extensionFunction;
+    ItemFileIO::InterfaceLevel interfaceLevel;
+    int invocationType;
+    Item* parentItem;
+    Item* actuallyLoadedItem;
+    std::ostream* os;
+    MessageView* mv;
+    std::string errorMessage;
+
+    // This variable actualy points a instance of the ClassInfo class defined in ItemManager.cpp
+    mutable weak_ref_ptr<Referenced> itemClassInfo;
+
+    Impl(ItemFileIO* self, const std::string& formatId, int api);
+    Impl(ItemFileIO* self, const Impl& org);
+    bool preprocessLoadingOrSaving(Item* item, std::string& io_filename, const Mapping* options);
+    bool loadItem(
+        Item* item, std::string filename,
+        Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options);
+    bool saveItem(Item* item, std::string filename, const Mapping* options);
+};
+
+}
 
 
 ItemFileIO::ItemFileIO(const std::string& formatId, int api)
@@ -63,6 +98,7 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const Impl& org)
       interfaceLevel(org.interfaceLevel),
       invocationType(org.invocationType)
 {
+    invocationType = Direct;
     parentItem = nullptr;
     mv = MessageView::instance();
     os = &mv->cout(true);
@@ -103,7 +139,7 @@ void ItemFileIO::setApi(int api)
 }
 
 
-bool ItemFileIO::hasApi(int api)
+bool ItemFileIO::hasApi(int api) const
 {
     return impl->api & api;
 }
@@ -164,13 +200,13 @@ void ItemFileIO::setExtensionFunction(std::function<std::string()> func)
 std::vector<std::string> ItemFileIO::extensions() const
 {
     if(impl->extensionFunction){
-        return impl->separateExtensions(impl->extensionFunction());
+        return separateExtensions(impl->extensionFunction());
     }    
     return impl->extensions;
 }
 
 
-std::vector<std::string> ItemFileIO::Impl::separateExtensions(const std::string& multiExtString)
+std::vector<std::string> ItemFileIO::separateExtensions(const std::string& multiExtString)
 {
     std::vector<std::string> extensions;
     const char* str = multiExtString.c_str();
@@ -181,28 +217,6 @@ std::vector<std::string> ItemFileIO::Impl::separateExtensions(const std::string&
     } while(0 != *str++);
 
     return extensions;
-}
-
-
-QString ItemFileIO::Impl::makeNameFilter
-(const std::string& caption, const std::vector<std::string>& extensions, bool isAnyEnabled)
-{
-    QString filter(caption.c_str());
-
-    if(!extensions.empty()){
-        QString prefix = " (";
-        for(auto& ext : extensions){
-            filter += prefix;
-            filter += "*.";
-            filter += ext.c_str();
-            prefix = " ";
-        }
-        filter += ")";
-    } else if(isAnyEnabled){
-        filter += " (*)";
-    }
-
-    return filter;
 }
 
 
@@ -218,8 +232,14 @@ int ItemFileIO::interfaceLevel() const
 }
 
 
+void ItemFileIO::setInvocationType(int type)
+{
+    impl->invocationType = type;
+}
+
+
 bool ItemFileIO::Impl::preprocessLoadingOrSaving
-(InvocationType invocationType, Item* item, std::string& io_filename, const Mapping* options)
+(Item* item, std::string& io_filename, const Mapping* options)
 {
     ParametricPathProcessor* pathProcessor = ParametricPathProcessor::instance();
     auto expanded = pathProcessor->expand(io_filename);
@@ -231,7 +251,6 @@ bool ItemFileIO::Impl::preprocessLoadingOrSaving
     filesystem::path filepath = cnoid::getAbsolutePath(*expanded);
     io_filename = toActualPathName(cnoid::getPathString(filepath));
 
-    this->invocationType = invocationType;
     if((invocationType == Direct) && (api & ItemFileIO::Options)){
         self->resetOptions();
         if(options){
@@ -247,12 +266,14 @@ Item* ItemFileIO::loadItem
 (const std::string& filename,
  Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options)
 {
-    if(auto item = createItem()){
-        if(loadItem(item, filename, parentItem, doAddition, nextItem, options)){
-            return item;
+    ItemPtr item;
+    if(item = createItem()){
+        if(!loadItem(item, filename, parentItem, doAddition, nextItem, options)){
+            item.reset();
         }
     }
-    return nullptr;
+    impl->invocationType = Direct;
+    return item.retn();
 }
 
 
@@ -260,12 +281,14 @@ bool ItemFileIO::loadItem
 (Item* item, const std::string& filename,
  Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options)
 {
-    return impl->loadItem(Direct, item, filename, parentItem, doAddition, nextItem, options);
+    bool loaded = impl->loadItem(item, filename, parentItem, doAddition, nextItem, options);
+    impl->invocationType = Direct;
+    return loaded;
 }
 
 
 bool ItemFileIO::Impl::loadItem
-(InvocationType invocationType, Item* item, std::string filename,
+(Item* item, std::string filename,
  Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options)
 {
     if(filename.empty()){
@@ -273,7 +296,7 @@ bool ItemFileIO::Impl::loadItem
         return false;
     }
 
-    if(!preprocessLoadingOrSaving(invocationType, item, filename, options)){
+    if(!preprocessLoadingOrSaving(item, filename, options)){
         self->putError(format(_("{0} cannot be loaded because {1}"), item->name(), errorMessage));
         return false;
     }
@@ -331,19 +354,21 @@ void ItemFileIO::setActuallyLoadedItem(Item* item)
 
 bool ItemFileIO::saveItem(Item* item, const std::string& filename, const Mapping* options)
 {
-    return impl->saveItem(Direct, item, filename, options);
+    bool saved = impl->saveItem(item, filename, options);
+    impl->invocationType = Direct;
+    return saved;
 }
 
 
 bool ItemFileIO::Impl::saveItem
-(InvocationType invocationType, Item* item, std::string filename, const Mapping* options)
+(Item* item, std::string filename, const Mapping* options)
 {
     if(filename.empty()){
         self->putError(format(_("{0} cannot be saved with empty filename."), item->name()));
         return false;
     }
 
-    if(!preprocessLoadingOrSaving(invocationType, item, filename, options)){
+    if(!preprocessLoadingOrSaving(item, filename, options)){
         self->putError(format(_("{0} cannot be saved because {1}"), item->name(), errorMessage));
         return false;
     }
@@ -442,21 +467,9 @@ Item* ItemFileIO::parentItem()
 }
 
 
-ItemFileIO::InvocationType ItemFileIO::invocationType() const
+int ItemFileIO::invocationType() const
 {
     return impl->invocationType;
-}
-
-
-bool ItemFileIO::isRegisteredForSingletonItem() const
-{
-    return impl->isRegisteredForSingletonItem();
-}
-
-
-Item* ItemFileIO::findSingletonItemInstance() const
-{
-    return impl->findSingletonItemInstance();
 }
 
 
@@ -475,6 +488,18 @@ void ItemFileIO::putWarning(const std::string& message)
 void ItemFileIO::putError(const std::string& message)
 {
     impl->mv->putln(message, MessageView::ERROR);
+}
+
+
+void ItemFileIO::setItemClassInfo(Referenced* info)
+{
+    impl->itemClassInfo = info;
+}
+
+
+const Referenced* ItemFileIO::itemClassInfo() const
+{
+    return impl->itemClassInfo.lock();
 }
 
 

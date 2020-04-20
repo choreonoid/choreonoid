@@ -1,5 +1,4 @@
 #include "ItemFileDialog.h"
-#include "ItemFileIOImpl.h"
 #include "FileDialog.h"
 #include "RootItem.h"
 #include "MainWindow.h"
@@ -160,8 +159,9 @@ ItemList<Item> ItemFileDialog::Impl::loadItems
             if(!isSingleton){
                 item = targetFileIO->createItem();
             }
-            bool loaded = targetFileIO->impl->loadItem(
-                ItemFileIO::Dialog, item, filenames[i].toStdString(), parentItem, doAddition, nextItem, nullptr);
+            targetFileIO->setInvocationType(ItemFileIO::Dialog);
+            bool loaded = targetFileIO->loadItem(
+                item, filenames[i].toStdString(), parentItem, doAddition, nextItem, nullptr);
             if(loaded){
                 loadedItems.push_back(item);
             }
@@ -257,7 +257,8 @@ bool ItemFileDialog::Impl::saveItem(Item* item, const std::vector<ItemFileIO*>& 
                 }
             }
 
-            saved = targetFileIO->impl->saveItem(ItemFileIO::Dialog, item, filename, nullptr);
+            targetFileIO->setInvocationType(ItemFileIO::Dialog);
+            saved = targetFileIO->saveItem(item, filename, nullptr);
         }
     }
     /*
@@ -293,7 +294,7 @@ bool ItemFileDialog::Impl::initializeFileIoFilters(const vector<ItemFileIO*>& fi
 
     QStringList filters;
     for(auto& fileIO : fileIoList){
-        filters << ItemFileIO::Impl::makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions());
+        filters << makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions(), false);
     }
     if(filters.size() == 1){
         filters << _("Any files (*)");
@@ -357,4 +358,26 @@ void ItemFileDialog::Impl::onFilterSelected(const QString& filter)
         index = 0;
     }
     setTargetFileIO((*pFileIoList)[index]);
+}
+
+
+QString ItemFileDialog::makeNameFilter
+(const std::string& caption, const std::vector<std::string>& extensions, bool isAnyEnabled)
+{
+    QString filter(caption.c_str());
+
+    if(!extensions.empty()){
+        QString prefix = " (";
+        for(auto& ext : extensions){
+            filter += prefix;
+            filter += "*.";
+            filter += ext.c_str();
+            prefix = " ";
+        }
+        filter += ")";
+    } else if(isAnyEnabled){
+        filter += " (*)";
+    }
+
+    return filter;
 }

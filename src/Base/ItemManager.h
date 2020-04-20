@@ -22,7 +22,6 @@ class Item;
 class ItemFileIO;
 class ItemAddon;
 class Mapping;
-class ItemManagerImpl;
 
 class ItemCreationPanel : public QWidget
 {
@@ -256,6 +255,8 @@ public:
     static ItemAddon* createAddon(const std::string& moduleName, const std::string& addonName);
     static bool getAddonIdentifier(ItemAddon* addon, std::string& out_moduleName, std::string& out_addonName);
 
+    class Impl;
+
 private:
     void registerClass_(
         const std::string& className, const std::type_info& type, const std::type_info& superType,
@@ -291,8 +292,8 @@ private:
         const std::type_info& type, const std::string& name, const std::function<ItemAddon*(void)>& factory);
 
     friend class Item;
-    friend class ItemManagerImpl;
-    ItemManagerImpl* impl;
+
+    Impl* impl;
 };
 
 CNOID_EXPORT std::string getOpenFileName(const std::string& caption, const std::string& extensions);

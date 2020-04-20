@@ -23,6 +23,9 @@ public:
     void setExportMode(bool on = true);
     bool saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList);
 
+    static QString makeNameFilter(
+        const std::string& caption, const std::vector<std::string>& extensions, bool isAnyEnabled = false);
+
 private:
     class Impl;
     Impl* impl;
