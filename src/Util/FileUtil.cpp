@@ -91,6 +91,11 @@ int findSubDirectory(const filesystem::path& directory, const filesystem::path& 
 
 bool findRelativePath(const filesystem::path& from_, const filesystem::path& to, filesystem::path& out_relativePath)
 {
+#if __cplusplus > 201402L
+    out_relativePath = to.lexically_relative(from_);
+    return !out_relativePath.empty();
+
+#else
     if(from_.is_absolute() && to.is_absolute()){
 
         filesystem::path from(getCompactPath(from_));
@@ -118,6 +123,7 @@ bool findRelativePath(const filesystem::path& from_, const filesystem::path& to,
     }
     
     return false;
+#endif
 }
 
 

@@ -11,7 +11,7 @@ namespace std::experimental::filesystem {
 inline path lexically_normal(const path& p){
     // lexically_normal or any other normalization functions are not
     // implemented in the experimental filesystem implementation
-    return p; 
+    return p;
 }
 
 #else
@@ -37,13 +37,15 @@ namespace filesystem = std::filesystem;
 #endif
 }
 
-#else
+#else // __cplusplus > 201402L
 
 #include <boost/filesystem.hpp>
 namespace boost { namespace filesystem {
+
 inline std::time_t last_write_time_to_time_t(const path& p){
     return last_write_time(p);
 }
+
 inline path lexically_normal(const path& p){
 #if BOOST_VERSION < 106000
     path n(p);
@@ -52,7 +54,9 @@ inline path lexically_normal(const path& p){
     return p.lexically_normal();
 #endif
 }
+
 } }
+
 namespace cnoid { namespace stdx {
 namespace filesystem = boost::filesystem;
 } }
