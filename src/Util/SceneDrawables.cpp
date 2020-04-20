@@ -247,6 +247,7 @@ SgTextureTransform* SgTexture::setTextureTransform(SgTextureTransform* textureTr
 
 SgMeshBase::SgMeshBase()
 {
+    creaseAngle_ = 0.0f;
     isSolid_ = false;
 }
 
@@ -276,6 +277,7 @@ SgMeshBase::SgMeshBase(const SgMeshBase& org, CloneMap* cloneMap)
         setColors(const_cast<SgColorArray*>(org.colors()));
         setTexCoords(const_cast<SgTexCoordArray*>(org.texCoords()));
     }
+    creaseAngle_ = org.creaseAngle_;
     isSolid_ = org.isSolid_;
     bbox = org.bbox;
 }

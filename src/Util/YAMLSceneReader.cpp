@@ -255,7 +255,7 @@ void YAMLSceneReader::setYAMLReader(YAMLReader* reader)
 void YAMLSceneReader::clear()
 {
     isDegreeMode_ = true;
-    impl->defaultMaterial = 0;
+    impl->defaultMaterial.reset();
     impl->resourceInfoMap.clear();
     impl->imagePathToSgImageMap.clear();
 }
@@ -623,7 +623,7 @@ SgNode* YAMLSceneReaderImpl::readShape(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& info)
 {
-    SgMesh* mesh = 0;
+    SgMesh* mesh = nullptr;
     ValueNode& typeNode = info["type"];
     string type = typeNode.toString();
     if(type == "Box"){
@@ -801,7 +801,7 @@ SgMesh* YAMLSceneReaderImpl::readElevationGrid(Mapping& info)
         }
     }
 
-    SgTexCoordArray* texCoord = 0;
+    SgTexCoordArray* texCoord = nullptr;
     Listing& texCoordNode = *info.findListing("texCoord");
     if(texCoordNode.isValid()){
         const int size = texCoordNode.size() / 2;
@@ -903,30 +903,29 @@ SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& info)
 {
+    SgMesh* mesh = nullptr;
     SgNode* resource = readResource(info);
     if(resource){
         SgShape* shape = dynamic_cast<SgShape*>(resource);
         if(!shape){
             info.throwException(_("A resouce specified as a geometry must be a single mesh"));
         }
+        mesh = shape->mesh();
         double creaseAngle;
         if(readAngle(info, "creaseAngle", creaseAngle)){
+            mesh->setCreaseAngle(creaseAngle);
             meshFilter.setNormalOverwritingEnabled(true);
             bool removeRedundantVertices = info.get("removeRedundantVertices", false);
-            meshFilter.generateNormals(shape->mesh(), creaseAngle, removeRedundantVertices);
+            meshFilter.generateNormals(mesh, creaseAngle, removeRedundantVertices);
             meshFilter.setNormalOverwritingEnabled(false);
         }
-        if(!generateTexCoord){
-            return shape->mesh();
-        } else {
-            SgMesh* mesh = shape->mesh();
+        if(generateTexCoord){
             if(mesh && !mesh->hasTexCoords()){
                 meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
             }
-            return mesh;
         }
     }
-    return 0;
+    return mesh;
 }
 
 
@@ -1194,7 +1193,7 @@ void YAMLSceneReaderImpl::extractNamedSceneNodes
             SceneNodeInfo& nodeInfo = iter->second;
             if(nodeInfo.parent){
                 nodeInfo.parent->removeChild(nodeInfo.node);
-                nodeInfo.parent = 0;
+                nodeInfo.parent.reset();
                 adjustNodeCoordinate(nodeInfo);
             }
             if(group){

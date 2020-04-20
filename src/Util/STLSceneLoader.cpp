@@ -697,6 +697,8 @@ SgNode* STLSceneLoaderImpl::load(const string& filename)
         return nullptr;
     }
 
+    mesh->setUri(filename);
+
     auto shape = new SgShape;
     shape->setMesh(mesh);
     return shape; 

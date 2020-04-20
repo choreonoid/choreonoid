@@ -96,7 +96,6 @@ public:
     int numParents() const { return static_cast<int>(parents.size()); }
     bool hasParents() const { return !parents.empty(); }
 
-public:
     const_parentIter parentBegin() const { return parents.begin(); }
     const_parentIter parentEnd() const { return parents.end(); }
     
@@ -108,10 +107,13 @@ public:
         return sigGraphConnection_;
     }
 
+    const std::string& uri() const { return uri_; }
+    void setUri(const std::string& uri) { uri_ = uri; }
+
 protected:
     SgObject();
     SgObject(const SgObject& org);
-    virtual Referenced* doClone(CloneMap* cloneMap) const;
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
     virtual void onUpdated(SgUpdate& update);
             
 private:
@@ -119,6 +121,7 @@ private:
     ParentContainer parents;
     Signal<void(const SgUpdate& update)> sigUpdated_;
     Signal<void(bool on)> sigGraphConnection_;
+    std::string uri_;
 };
 
 typedef ref_ptr<SgObject> SgObjectPtr;

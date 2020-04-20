@@ -296,6 +296,9 @@ public:
     const SgIndexArray& texCoordIndices() const { return texCoordIndices_; }
     SgIndexArray& texCoordIndices() { return texCoordIndices_; }
 
+    float creaseAngle() const { return creaseAngle_; }
+    void setCreaseAngle(float angle) { creaseAngle_ = angle; }
+
     bool isSolid() const { return isSolid_; }
     void setSolid(bool on) { isSolid_ = on; }
 
@@ -310,6 +313,7 @@ private:
     SgIndexArray colorIndices_;
     SgTexCoordArrayPtr texCoords_;
     SgIndexArray texCoordIndices_;
+    float creaseAngle_;
     bool isSolid_;
 };
 
