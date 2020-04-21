@@ -22,6 +22,7 @@
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
 #include <QCoreApplication>
+#include <QMessageBox>
 #include <string>
 #include <vector>
 #include <fmt/format.h>
@@ -72,6 +73,7 @@ public:
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     void openDialogToLoadProject();
     void openDialogToSaveProject();
+    bool onSaveDialogAboutToFinished(FileDialog& dialog, int result);
 
     void onPerspectiveCheckToggled(bool on);
         
@@ -641,6 +643,7 @@ void ProjectManager::Impl::openDialogToSaveProject()
     dialog.setViewMode(QFileDialog::List);
     dialog.setLabelText(QFileDialog::Accept, _("Save"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
+    dialog.setOption(QFileDialog::DontConfirmOverwrite);
     
     QStringList filters;
     filters << _("Project files (*.cnoid)");
@@ -653,15 +656,38 @@ void ProjectManager::Impl::openDialogToSaveProject()
         dialog.selectFile(currentProjectName.c_str());
     }
 
-    if(dialog.exec()){
+    dialog.sigAboutToFinished().connect(
+        [&](int result){ return onSaveDialogAboutToFinished(dialog, result); });
+
+    dialog.exec();
+}
+
+
+bool ProjectManager::Impl::onSaveDialogAboutToFinished(FileDialog& dialog, int result)
+{
+    bool finished = true;
+    if(result == QFileDialog::Accepted){
         filesystem::path path(dialog.selectedFiles().front().toStdString());
         string filename = getNativePathString(path);
         string ext = path.extension().string();
         if(ext != ".cnoid"){
             filename += ".cnoid";
+            if(filesystem::exists(filename)){
+                dialog.fileDialog()->show();
+                QString file(filesystem::path(filename).filename().native().c_str());
+                QString message(QString(_("%1 already exists. Do you want to replace it? ")).arg(file));
+                auto button =
+                    QMessageBox::warning(&dialog, dialog.windowTitle(), message, QMessageBox::Ok | QMessageBox::Cancel);
+                if(button == QMessageBox::Cancel){
+                    finished = false;
+                }
+            }
         }
-        saveProject(filename);
+        if(finished){
+            saveProject(filename);
+        }
     }
+    return finished;
 }
 
 

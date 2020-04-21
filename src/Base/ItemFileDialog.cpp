@@ -4,8 +4,7 @@
 #include "MainWindow.h"
 #include "MessageView.h"
 #include <cnoid/stdx/filesystem>
-#include <QBoxLayout>
-#include <QStyle>
+#include <QMessageBox>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -16,7 +15,7 @@ using fmt::format;
 
 namespace cnoid {
 
-class ItemFileDialog::Impl : public FileDialog
+class ItemFileDialog::Impl
 {
 public:
     ItemFileDialog* self;
@@ -27,7 +26,6 @@ public:
     ItemPtr currentItemToSave;
     bool isCurrentItemOptionsApplied;
     QWidget* optionPanel;
-    QBoxLayout* optionPanelBox;
     bool isSingletonItem;
     bool isExportMode;
     
@@ -35,15 +33,17 @@ public:
     ItemList<Item>  loadItems(
         const std::vector<ItemFileIO*>& fileIoList, Item* parentItem, bool doAddition, Item* nextItem);
     bool saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList);
+    std::string getSaveFilename();
     bool initializeFileIoFilters(const vector<ItemFileIO*>& fileIoList);
     void setTargetFileIO(ItemFileIO* fileIO);
     void onFilterSelected(const QString& filter);
+    bool onFileDialogFinished(int result);
 };
 
 }
 
 ItemFileDialog::ItemFileDialog()
-    : QDialog(MainWindow::instance())
+    : FileDialog(MainWindow::instance())
 {
     impl = new Impl(this);
 }
@@ -56,38 +56,22 @@ ItemFileDialog::~ItemFileDialog()
 
 
 ItemFileDialog::Impl::Impl(ItemFileDialog* self)
-    : FileDialog(self),
-      self(self)
+    : self(self)
 {
     pFileIoList = nullptr;
     targetFileIO = nullptr;
     
-    self->setSizeGripEnabled(true);
-    auto vbox = new QVBoxLayout;
-    vbox->setSpacing(0);
-    self->setLayout(vbox);
-
-    setWindowFlags(windowFlags() & ~Qt::Dialog);
-    setSizeGripEnabled(false);
-    setViewMode(QFileDialog::List);
-    setLabelText(QFileDialog::Reject, _("Cancel"));
-
-    vbox->addWidget(this);
+    self->setViewMode(QFileDialog::List);
+    self->setLabelText(QFileDialog::Reject, _("Cancel"));
+    self->setOption(QFileDialog::DontConfirmOverwrite);
 
     optionPanel = nullptr;
-    optionPanelBox = new QHBoxLayout;
-    auto sty = self->style();
-    int left = sty->pixelMetric(QStyle::PM_LayoutLeftMargin);
-    int right = sty->pixelMetric(QStyle::PM_LayoutRightMargin);
-    int bottom = sty->pixelMetric(QStyle::PM_LayoutBottomMargin);
-    optionPanelBox->setContentsMargins(left, 0, right, bottom);
-    optionPanelBox->addStretch();
-    vbox->addLayout(optionPanelBox);
-
-    QObject::connect(this, &QFileDialog::filterSelected,
+    
+    QObject::connect(self->fileDialog(), &QFileDialog::filterSelected,
                      [this](const QString& filter){ onFilterSelected(filter); });
 
-    QObject::connect(this, SIGNAL(finished(int)), self, SLOT(done(int)));
+    self->sigAboutToFinished().connect(
+        [this](int result){ return onFileDialogFinished(result); });
 
     isExportMode = false;
 }
@@ -122,19 +106,19 @@ ItemList<Item> ItemFileDialog::Impl::loadItems
         }
         self->setWindowTitle(format(title, fileIoList.front()->caption()).c_str());
     }
-    setAcceptMode(QFileDialog::AcceptOpen);
+    self->setAcceptMode(QFileDialog::AcceptOpen);
 
     if(!isImportMode){
-        setLabelText(QFileDialog::Accept, _("Load"));
+        self->setLabelText(QFileDialog::Accept, _("Load"));
     } else {
-        setLabelText(QFileDialog::Accept, _("Import"));
+        self->setLabelText(QFileDialog::Accept, _("Import"));
     }
 
-    updatePresetDirectories();
+    self->updatePresetDirectories();
 
     if(self->exec() == QDialog::Accepted){
 
-        QStringList filenames = selectedFiles();
+        QStringList filenames = self->selectedFiles();
 
         if(!parentItem){
             parentItem = RootItem::instance();
@@ -222,57 +206,27 @@ bool ItemFileDialog::Impl::saveItem(Item* item, const std::vector<ItemFileIO*>& 
         }
         self->setWindowTitle(format(title, itemLabel).c_str());
     }
-    setAcceptMode(QFileDialog::AcceptSave);
-    setLabelText(QFileDialog::Accept, _("Save"));
-    setFileMode(QFileDialog::AnyFile);
+    self->setAcceptMode(QFileDialog::AcceptSave);
+    self->setLabelText(QFileDialog::Accept, _("Save"));
+    self->setFileMode(QFileDialog::AnyFile);
 
-    updatePresetDirectories();
+    self->updatePresetDirectories();
 
     // default filename
-    selectFile(item->name().c_str());
+    self->selectFile(item->name().c_str());
 
     bool saved = false;
     
     if(self->exec() == QDialog::Accepted){
-        auto filenames = selectedFiles();
-        if(!filenames.isEmpty()){
-            auto filename = filenames.front().toStdString();
+        auto filename = getSaveFilename();
+        if(!filename.empty()){
             if(optionPanel){
                 targetFileIO->fetchOptionPanelForSaving();
             }
-            
-            // add a lacking extension automatically
-            auto exts = targetFileIO->extensions();
-            if(!exts.empty()){
-                bool hasExtension = false;
-                string dotextension = filesystem::path(filename).extension().string();
-                if(!dotextension.empty()){
-                    string extension = dotextension.substr(1); // remove the first dot
-                    if(std::find(exts.begin(), exts.end(), extension) != exts.end()){
-                        hasExtension = true;
-                    }
-                }
-                if(!hasExtension && !exts.empty()){
-                    filename += ".";
-                    filename += exts[0];
-                }
-            }
-
             targetFileIO->setInvocationType(ItemFileIO::Dialog);
             saved = targetFileIO->saveItem(item, filename, nullptr);
         }
     }
-    /*
-    else {
-        string message;
-        if(!isExportMode){
-            message = _("Saving {0} was canceled.");
-        } else {
-            message = _("Exporting {0} was canceled.");
-        }
-        MessageView::instance()->putln(format(message, itemLabel), MessageView::HIGHLIGHT);
-    }
-    */
 
     for(auto& fileIO : fileIoList){
         if(auto panel = fileIO->getOptionPanelForLoading()){
@@ -283,6 +237,36 @@ bool ItemFileDialog::Impl::saveItem(Item* item, const std::vector<ItemFileIO*>& 
     currentItemToSave.reset();
 
     return saved;
+}
+
+
+std::string ItemFileDialog::Impl::getSaveFilename()
+{
+    std::string filename;
+    
+    auto filenames = self->selectedFiles();
+    if(!filenames.isEmpty()){
+        filename = filenames.front().toStdString();
+
+        // add a lacking extension automatically
+        auto exts = targetFileIO->extensions();
+        if(!exts.empty()){
+            bool hasExtension = false;
+            string dotextension = filesystem::path(filename).extension().string();
+            if(!dotextension.empty()){
+                string extension = dotextension.substr(1); // remove the first dot
+                if(std::find(exts.begin(), exts.end(), extension) != exts.end()){
+                    hasExtension = true;
+                }
+            }
+            if(!hasExtension && !exts.empty()){
+                filename += ".";
+                filename += exts[0];
+            }
+        }
+    }
+
+    return filename;
 }
 
 
@@ -302,7 +286,7 @@ bool ItemFileDialog::Impl::initializeFileIoFilters(const vector<ItemFileIO*>& fi
     } else {
         // add "any file" filters for the file ios that supports it
     }
-    setNameFilters(filters);
+    self->setNameFilters(filters);
 
     setTargetFileIO(fileIoList.front());
 
@@ -331,21 +315,21 @@ void ItemFileDialog::Impl::setTargetFileIO(ItemFileIO* fileIO)
         if(api & ItemFileIO::OptionPanelForLoading){
             optionPanel = fileIO->getOptionPanelForLoading();
             if(optionPanel){
-                optionPanelBox->insertWidget(0, optionPanel);
+                self->insertOptionPanel(optionPanel);
             }
         } else if(api & ItemFileIO::OptionPanelForSaving){
             optionPanel = fileIO->getOptionPanelForSaving(currentItemToSave);
             if(optionPanel){
-                optionPanelBox->insertWidget(0, optionPanel);
+                self->insertOptionPanel(optionPanel);
             }
         }
     }
 
     if(mode == Load){
         if(fileIO->isRegisteredForSingletonItem()){
-            setFileMode(QFileDialog::ExistingFile);
+            self->setFileMode(QFileDialog::ExistingFile);
         } else {
-            setFileMode(QFileDialog::ExistingFiles);
+            self->setFileMode(QFileDialog::ExistingFiles);
         }
     }
 }
@@ -353,12 +337,34 @@ void ItemFileDialog::Impl::setTargetFileIO(ItemFileIO* fileIO)
 
 void ItemFileDialog::Impl::onFilterSelected(const QString& filter)
 {
-    auto filters = nameFilters();
+    auto filters = self->nameFilters();
     int index = filters.indexOf(QRegExp(filter, Qt::CaseSensitive, QRegExp::FixedString));
     if(index >= pFileIoList->size()){
         index = 0;
     }
     setTargetFileIO((*pFileIoList)[index]);
+}
+
+
+bool ItemFileDialog::Impl::onFileDialogFinished(int result)
+{
+    bool finished = true;
+    
+    if(mode == Save && result == QDialog::Accepted){
+        auto filename = getSaveFilename();
+        if(filesystem::exists(filename)){
+            self->fileDialog()->show();
+            QString file(filesystem::path(filename).filename().native().c_str());
+            QString message(QString(_("%1 already exists. Do you want to replace it? ")).arg(file));
+            auto button =
+                QMessageBox::warning(self, self->windowTitle(), message, QMessageBox::Ok | QMessageBox::Cancel);
+            if(button == QMessageBox::Cancel){
+                finished = false;
+            }
+        }
+    }
+
+    return finished;
 }
 
 

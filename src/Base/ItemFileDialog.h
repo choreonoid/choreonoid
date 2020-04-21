@@ -3,12 +3,12 @@
 
 #include "ItemFileIO.h"
 #include "ItemList.h"
-#include <QDialog>
+#include "FileDialog.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT ItemFileDialog : public QDialog
+class CNOID_EXPORT ItemFileDialog : public FileDialog
 {
 public:
     ItemFileDialog();
