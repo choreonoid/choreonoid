@@ -1,5 +1,6 @@
 #include "ItemFileDialog.h"
 #include "FileDialog.h"
+#include "ItemManager.h"
 #include "RootItem.h"
 #include "MainWindow.h"
 #include "MessageView.h"
@@ -19,9 +20,13 @@ class ItemFileDialog::Impl
 {
 public:
     ItemFileDialog* self;
-    enum Mode { Load, Save };
-    Mode mode;
-    const vector<ItemFileIO*>* pFileIoList;
+    enum Mode {
+        Load = ItemFileIO::Load,
+        Save = ItemFileIO::Save
+    };
+    int mode;
+    vector<ItemFileIO*> givenFileIOs;
+    vector<ItemFileIO*> validFileIOs;
     ItemFileIO* targetFileIO;
     ItemPtr currentItemToSave;
     bool isCurrentItemOptionsApplied;
@@ -30,11 +35,10 @@ public:
     bool isExportMode;
     
     Impl(ItemFileDialog* self);
-    ItemList<Item>  loadItems(
-        const std::vector<ItemFileIO*>& fileIoList, Item* parentItem, bool doAddition, Item* nextItem);
-    bool saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList);
+    ItemList<Item>  loadItems(Item* parentItem, bool doAddition, Item* nextItem);
+    bool saveItem(Item* item);
     std::string getSaveFilename();
-    bool initializeFileIoFilters(const vector<ItemFileIO*>& fileIoList);
+    bool initializeFileIoFilters();
     void setTargetFileIO(ItemFileIO* fileIO);
     void onFilterSelected(const QString& filter);
     bool onFileDialogFinished(int result);
@@ -42,10 +46,17 @@ public:
 
 }
 
-ItemFileDialog::ItemFileDialog()
-    : FileDialog(MainWindow::instance())
+ItemFileDialog::ItemFileDialog(QWidget* parent)
+    : FileDialog(parent)
 {
     impl = new Impl(this);
+}
+
+
+ItemFileDialog::ItemFileDialog()
+    : ItemFileDialog(MainWindow::instance())
+{
+
 }
 
 
@@ -58,7 +69,6 @@ ItemFileDialog::~ItemFileDialog()
 ItemFileDialog::Impl::Impl(ItemFileDialog* self)
     : self(self)
 {
-    pFileIoList = nullptr;
     targetFileIO = nullptr;
     
     self->setViewMode(QFileDialog::List);
@@ -77,25 +87,48 @@ ItemFileDialog::Impl::Impl(ItemFileDialog* self)
 }
 
 
-ItemList<Item> ItemFileDialog::loadItems
-(const std::vector<ItemFileIO*>& fileIoList, Item* parentItem, bool doAddition, Item* nextItem)
+void ItemFileDialog::setRegisteredFileIOsFor_(const std::type_info& type)
 {
-    return impl->loadItems(fileIoList, parentItem, doAddition, nextItem);
+    impl->givenFileIOs = ItemManager::getFileIOs(type);
 }
 
 
-ItemList<Item> ItemFileDialog::Impl::loadItems
-(const vector<ItemFileIO*>& fileIoList, Item* parentItem, bool doAddition, Item* nextItem)
+void ItemFileDialog::setFileIOs(const std::vector<ItemFileIO*>& fileIOs)
+{
+    impl->givenFileIOs = fileIOs;
+}
+
+
+void ItemFileDialog::setFileIO(ItemFileIO* fileIO)
+{
+    impl->givenFileIOs = { fileIO };
+}
+
+
+void ItemFileDialog::clearFileIOs()
+{
+    impl->givenFileIOs.clear();
+    impl->validFileIOs.clear();
+}
+
+
+ItemList<Item> ItemFileDialog::loadItems(Item* parentItem, bool doAddition, Item* nextItem)
+{
+    return impl->loadItems(parentItem, doAddition, nextItem);
+}
+
+
+ItemList<Item> ItemFileDialog::Impl::loadItems(Item* parentItem, bool doAddition, Item* nextItem)
 {
     mode = Load;
     
     ItemList<Item> loadedItems;
 
-    if(!initializeFileIoFilters(fileIoList)){
+    if(!initializeFileIoFilters()){
         return loadedItems;
     }
 
-    bool isImportMode = (fileIoList.front()->interfaceLevel() == ItemFileIO::Conversion);
+    bool isImportMode = (validFileIOs.front()->interfaceLevel() == ItemFileIO::Conversion);
 
     if(self->windowTitle().isEmpty()){
         string title;
@@ -104,7 +137,7 @@ ItemList<Item> ItemFileDialog::Impl::loadItems
         } else {
             title = _("Import {0}");
         }
-        self->setWindowTitle(format(title, fileIoList.front()->caption()).c_str());
+        self->setWindowTitle(format(title, validFileIOs.front()->caption()).c_str());
     }
     self->setAcceptMode(QFileDialog::AcceptOpen);
 
@@ -154,7 +187,7 @@ ItemList<Item> ItemFileDialog::Impl::loadItems
     }
 
 exit:
-    for(auto& fileIO : fileIoList){
+    for(auto& fileIO : validFileIOs){
         if(auto panel = fileIO->getOptionPanelForLoading()){
             panel->setParent(nullptr);
         }
@@ -170,19 +203,19 @@ void ItemFileDialog::setExportMode(bool on)
 }
 
 
-bool ItemFileDialog::saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList)
+bool ItemFileDialog::saveItem(Item* item)
 {
-    return impl->saveItem(item, fileIoList);
+    return impl->saveItem(item);
 }
 
 
-bool ItemFileDialog::Impl::saveItem(Item* item, const std::vector<ItemFileIO*>& fileIoList)
+bool ItemFileDialog::Impl::saveItem(Item* item)
 {
     mode = Save;
     currentItemToSave = item;
     isCurrentItemOptionsApplied = false;
     
-    if(!initializeFileIoFilters(fileIoList)){
+    if(!initializeFileIoFilters()){
         string message;
         if(!isExportMode){
             message = _("Saving {0} to a file is not supported");
@@ -194,8 +227,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item, const std::vector<ItemFileIO*>& 
         return false;
     }
 
-
-    string itemLabel = format("{0} \"{1}\"", fileIoList.front()->caption(), item->name());
+    string itemLabel = format("{0} \"{1}\"", validFileIOs.front()->caption(), item->name());
     
     if(self->windowTitle().isEmpty()){
         string title;
@@ -228,7 +260,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item, const std::vector<ItemFileIO*>& 
         }
     }
 
-    for(auto& fileIO : fileIoList){
+    for(auto& fileIO : validFileIOs){
         if(auto panel = fileIO->getOptionPanelForLoading()){
             panel->setParent(nullptr);
         }
@@ -270,25 +302,27 @@ std::string ItemFileDialog::Impl::getSaveFilename()
 }
 
 
-bool ItemFileDialog::Impl::initializeFileIoFilters(const vector<ItemFileIO*>& fileIoList)
+bool ItemFileDialog::Impl::initializeFileIoFilters()
 {
-    if(fileIoList.empty()){
+    validFileIOs.clear();
+    QStringList filters;
+    for(auto& fileIO : givenFileIOs){
+        if(fileIO->hasApi(mode)){
+            validFileIOs.push_back(fileIO);
+            filters << makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions(), false);
+        }
+    }
+    if(validFileIOs.empty()){
         return false;
     }
-    pFileIoList = &fileIoList;
-
-    QStringList filters;
-    for(auto& fileIO : fileIoList){
-        filters << makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions(), false);
-    }
-    if(filters.size() == 1){
+    if(validFileIOs.size() == 1){
         filters << _("Any files (*)");
     } else {
         // add "any file" filters for the file ios that supports it
     }
     self->setNameFilters(filters);
 
-    setTargetFileIO(fileIoList.front());
+    setTargetFileIO(validFileIOs.front());
 
     return true;
 }
@@ -339,10 +373,10 @@ void ItemFileDialog::Impl::onFilterSelected(const QString& filter)
 {
     auto filters = self->nameFilters();
     int index = filters.indexOf(QRegExp(filter, Qt::CaseSensitive, QRegExp::FixedString));
-    if(index >= pFileIoList->size()){
+    if(index >= validFileIOs.size()){
         index = 0;
     }
-    setTargetFileIO((*pFileIoList)[index]);
+    setTargetFileIO(validFileIOs[index]);
 }
 
 

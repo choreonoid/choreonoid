@@ -158,6 +158,13 @@ public:
         return *this;
     }
 
+    template <class ItemType>
+    static std::vector<ItemFileIO*> getFileIOs(){
+        return getFileIOs(typeid(ItemType));
+    }
+
+    static std::vector<ItemFileIO*> getFileIOs(const std::type_info& type);
+
     static ItemFileIO* findFileIO(const std::type_info& type, const std::string& formatId);
 
     template <class ItemType>

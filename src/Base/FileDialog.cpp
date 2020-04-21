@@ -36,7 +36,7 @@ public:
     QBoxLayout* optionPanelBox;
     Signal<bool(int result), LogicalProduct> sigAboutToFinished;
     
-    Impl(FileDialog* self, QWidget* parent, Qt::WindowFlags f);
+    Impl(FileDialog* self);
     void updatePresetDirectories();    
     void onFinished(int result);
     void storeRecentDirectories();
@@ -46,21 +46,20 @@ public:
 
 
 FileDialog::FileDialog(QWidget* parent, Qt::WindowFlags f)
+    : QDialog(parent, f)
 {
-    impl = new Impl(this, parent, f);
+    impl = new Impl(this);
 }
 
 
-FileDialog::Impl::Impl(FileDialog* self, QWidget* parent, Qt::WindowFlags f)
-    : QFileDialog(parent, f),
-      self(self)
+FileDialog::Impl::Impl(FileDialog* self)
+    : self(self)
 {
     setWindowFlags(windowFlags() & ~Qt::Dialog);
     setOption(QFileDialog::DontUseNativeDialog);
     setSizeGripEnabled(false);
     self->setSizeGripEnabled(true);
         
-    
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);
     self->setLayout(vbox);
