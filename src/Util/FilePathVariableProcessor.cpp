@@ -17,21 +17,6 @@ using namespace cnoid;
 using fmt::format;
 namespace filesystem = stdx::filesystem;
 
-namespace {
-
-int countPathElements(filesystem::path& path)
-{
-    int count = 0;
-    auto iter = path.begin();
-    while(iter != path.end()){
-        ++count;
-        ++iter;
-    }
-    return count;
-}
-
-}
-
 namespace cnoid {
 
 class FilePathVariableProcessor::Impl
@@ -40,7 +25,6 @@ public:
     MappingPtr userVariables;
     stdx::optional<regex> variableRegex;
     filesystem::path baseDirPath;
-    bool isBaseDirInHome;
     filesystem::path projectDirPath;
     string projectDirString;
     bool isProjectDirDifferentFromBaseDir;
@@ -93,7 +77,6 @@ FilePathVariableProcessor::FilePathVariableProcessor()
 FilePathVariableProcessor::Impl::Impl()
 {
     isSystemVariableSetEnabled = false;
-    isBaseDirInHome = false;
     isProjectDirDifferentFromBaseDir = false;
 }
 
@@ -153,13 +136,6 @@ void FilePathVariableProcessor::setBaseDirectory(const std::string& directory)
         impl->baseDirPath = filesystem::current_path() /  impl->baseDirPath;
     }
     impl->isProjectDirDifferentFromBaseDir = (impl->baseDirPath != impl->projectDirPath);
-
-    if(impl->homeDirPath.empty()){
-        impl->isBaseDirInHome = false;
-    } else {
-        filesystem::path relativePath;
-        impl->isBaseDirInHome = findSubDirectory(impl->homeDirPath, impl->baseDirPath, relativePath);
-    }
 }
 
 
@@ -193,6 +169,25 @@ std::string FilePathVariableProcessor::parameterize(const std::string& orgPathSt
 }
 
 
+static int countPathElements(filesystem::path& path)
+{
+    int count = 0;
+    bool hasUpElement = false;
+    auto iter = path.begin();
+    while(iter != path.end()){
+        if(*iter == ".."){
+            hasUpElement = true;
+        }
+        ++count;
+        ++iter;
+    }
+    if(hasUpElement){
+        ++count;
+    }
+    return count;
+}
+
+
 /**
    \todo Use integated nested map whose node is a single path element to be more efficient.
 */
@@ -211,14 +206,14 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
         }
         
         if(!baseDirPath.empty() &&
-           findSubDirectory(baseDirPath, orgPath, relativePath[Base])){
+           findRelativePath(baseDirPath, orgPath, relativePath[Base])){
             distance[Base] = countPathElements(relativePath[Base]);
         }
         if(isProjectDirDifferentFromBaseDir &&
            findSubDirectory(projectDirPath, orgPath, relativePath[Project])){
             distance[Project] = countPathElements(relativePath[Project]);
         }
-        if(findSubDirectoryOfDirectoryVariable(orgPath, varName, relativePath[Var])){
+        if(userVariables && findSubDirectoryOfDirectoryVariable(orgPath, varName, relativePath[Var])){
             distance[Var] = countPathElements(relativePath[Var]);
         }
         if(isSystemVariableSetEnabled){
@@ -229,8 +224,8 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
             } else if(findSubDirectory(topDirPath, orgPath, relativePath[Top])){
                 distance[Top] = countPathElements(relativePath[Top]);
             }
-            if(!isBaseDirInHome && findSubDirectory(homeDirPath, orgPath, relativePath[Home])){
-                distance[Home] = countPathElements(relativePath[Home]);
+            if(findSubDirectory(homeDirPath, orgPath, relativePath[Home])){
+                distance[Home] = countPathElements(relativePath[Home]) + 1;
             }
         }
 
@@ -245,7 +240,11 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
         if(index >= 0){
             switch(index){
             case Base:
-                return relativePath[Base].generic_string();
+                if(countPathElements(orgPath) < minDistance){
+                    return orgPath.generic_string(); // absolute path
+                } else {
+                    return relativePath[Base].generic_string();
+                }
             case Project:
                 return string("${PROJECT_DIR}/") + relativePath[Project].generic_string();
             case Var:
@@ -360,9 +359,11 @@ std::string FilePathVariableProcessor::Impl::expand
 bool FilePathVariableProcessor::Impl::replaceUserVariable
 (string& io_pathString, const string& varname, int pos, int len)
 {
-    Listing* paths = userVariables->findListing(varname);
-
-    if(!paths->isValid()){
+    Listing* paths = nullptr;
+    if(userVariables){
+        paths = userVariables->findListing(varname);
+    }
+    if(!paths || !paths->isValid()){
         errorMessage = format(_("{0} of \"{1}\" is not defined."), varname, io_pathString);
         return false;
     }
