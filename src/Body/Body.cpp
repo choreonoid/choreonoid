@@ -386,6 +386,23 @@ void Body::addDevice(Device* device)
 }
 
 
+void Body::removeDevice(Device* device)
+{
+    int index = 0;
+    auto iter = devices_.begin();
+    while(iter != devices_.end()){
+        auto& dev = *iter;
+        if(dev == device){
+            impl->deviceNameMap.erase(dev->name());
+            iter = devices_.erase(iter);
+        } else {
+            dev->setIndex(index++);
+            ++iter;
+        }
+    }
+}
+
+
 void Body::clearDevices()
 {
     devices_.clear();

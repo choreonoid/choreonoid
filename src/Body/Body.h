@@ -208,6 +208,7 @@ public:
     void addDevice(Device* device, Link* link);
     void addDevice(Device* device); //! \deprecated
     void initializeDeviceStates();
+    void removeDevice(Device* device);
     void clearDevices();
 
     /**
