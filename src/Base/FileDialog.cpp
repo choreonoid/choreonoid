@@ -2,11 +2,13 @@
 #include "AppConfig.h"
 #include "ProjectManager.h"
 #include <cnoid/ExecutablePath>
+#include <cnoid/stdx/filesystem>
 #include <QBoxLayout>
 #include <QStyle>
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = stdx::filesystem;
 
 namespace {
 
@@ -88,13 +90,6 @@ FileDialog::~FileDialog()
 }
 
 
-int FileDialog::exec()
-{
-    impl->show();
-    return QDialog::exec();
-}
-    
-
 void FileDialog::updatePresetDirectories()
 {
     impl->updatePresetDirectories();
@@ -153,6 +148,24 @@ void FileDialog::Impl::updatePresetDirectories()
 }
 
 
+bool FileDialog::selectFilePath(const std::string& filePath)
+{
+    bool selected = false;
+    if(!filePath.empty()){
+        filesystem::path path(filePath);
+        filesystem::path dir(path.parent_path());
+        if(filesystem::exists(dir)){
+            setDirectory(dir.native());
+            if(filesystem::exists(path)){
+                selectFile(path.filename().string());
+                selected = true;
+            }
+        }
+    }
+    return selected;
+}
+
+
 void FileDialog::insertOptionPanel(QWidget* panel)
 {
     impl->optionPanelBox->insertWidget(0, panel);
@@ -164,6 +177,13 @@ SignalProxy<bool(int result), LogicalProduct> FileDialog::sigAboutToFinished()
     return impl->sigAboutToFinished;
 }
 
+
+int FileDialog::exec()
+{
+    impl->show();
+    return QDialog::exec();
+}
+    
 
 void FileDialog::Impl::onFinished(int result)
 {
@@ -225,9 +245,15 @@ QStringList FileDialog::selectedFiles() const
 }
 
 
-void FileDialog::selectFile(const QString &filename)
+void FileDialog::selectFile(const QString& filename)
 {
     impl->selectFile(filename);
+}
+
+
+void FileDialog::selectFile(const std::string& filename)
+{
+    impl->selectFile(filename.c_str());
 }
 
 
@@ -237,9 +263,15 @@ void FileDialog::setAcceptMode(QFileDialog::AcceptMode mode)
 }
 
 
-void FileDialog::setDirectory(const QString &directory)
+void FileDialog::setDirectory(const QString& directory)
 {
     impl->setDirectory(directory);
+}
+
+
+void FileDialog::setDirectory(const std::string& directory)
+{
+    impl->setDirectory(directory.c_str());
 }
 
 
@@ -255,13 +287,13 @@ void FileDialog::setLabelText(QFileDialog::DialogLabel label, const QString &tex
 }
 
 
-void FileDialog::setNameFilter(const QString &filter)
+void FileDialog::setNameFilter(const QString& filter)
 {
     impl->setNameFilter(filter);
 }
                                
 
-void FileDialog::setNameFilters(const QStringList &filters)
+void FileDialog::setNameFilters(const QStringList& filters)
 {
     impl->setNameFilters(filters);
 }

@@ -103,7 +103,7 @@ void save(QWidget* widget, std::function<bool(const QString& filename)> saveImag
     dialog.updatePresetDirectories();
 
     MappingPtr config = AppConfig::archive()->openMapping("CaptureBar");
-    dialog.setDirectory(config->get("directory", QDir::currentPath().toStdString()).c_str());
+    dialog.setDirectory(config->get("directory", QDir::currentPath().toStdString()));
         
     if(widget != lastCaptureWidget){
         lastCaptureFile = QString("%1.png").arg(name);

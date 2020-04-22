@@ -244,8 +244,9 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
 
     self->updatePresetDirectories();
 
-    // default filename
-    self->selectFile(item->name().c_str());
+    if(!self->selectFilePath(item->filePath())){
+        self->selectFile(item->name());
+    }
 
     bool saved = false;
     

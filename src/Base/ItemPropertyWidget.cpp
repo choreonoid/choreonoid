@@ -565,7 +565,7 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
         }
     }
     if(!directory.empty()){
-        dialog.setDirectory(directory.string().c_str());
+        dialog.setDirectory(directory.string());
     }
         
     QStringList filters;
