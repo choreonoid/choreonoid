@@ -389,7 +389,7 @@ bool ItemFileDialog::Impl::onFileDialogFinished(int result)
         auto filename = getSaveFilename();
         if(filesystem::exists(filename)){
             self->fileDialog()->show();
-            QString file(filesystem::path(filename).filename().native().c_str());
+            QString file(filesystem::path(filename).filename().string().c_str());
             QString message(QString(_("%1 already exists. Do you want to replace it? ")).arg(file));
             auto button =
                 QMessageBox::warning(self, self->windowTitle(), message, QMessageBox::Ok | QMessageBox::Cancel);

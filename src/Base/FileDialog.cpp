@@ -155,7 +155,7 @@ bool FileDialog::selectFilePath(const std::string& filePath)
         filesystem::path path(filePath);
         filesystem::path dir(path.parent_path());
         if(filesystem::exists(dir)){
-            setDirectory(dir.native());
+            setDirectory(dir.string());
             if(filesystem::exists(path)){
                 selectFile(path.filename().string());
                 selected = true;

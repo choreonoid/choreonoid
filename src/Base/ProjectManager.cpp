@@ -691,7 +691,7 @@ bool ProjectManager::Impl::onSaveDialogAboutToFinished(FileDialog& dialog, int r
         auto filename = getSaveFilename(dialog);
         if(filesystem::exists(filename)){
             dialog.fileDialog()->show();
-            QString file(filesystem::path(filename).filename().native().c_str());
+            QString file(filesystem::path(filename).filename().string().c_str());
             QString message(QString(_("%1 already exists. Do you want to replace it? ")).arg(file));
             auto button =
                 QMessageBox::warning(&dialog, dialog.windowTitle(), message, QMessageBox::Ok | QMessageBox::Cancel);
