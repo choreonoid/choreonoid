@@ -37,6 +37,7 @@ public:
     Impl(ItemFileDialog* self);
     ItemList<Item>  loadItems(Item* parentItem, bool doAddition, Item* nextItem);
     bool saveItem(Item* item);
+    bool selectFilePath(const std::string& filePath);
     std::string getSaveFilename();
     bool initializeFileIoFilters();
     void setTargetFileIO(ItemFileIO* fileIO);
@@ -244,7 +245,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
 
     self->updatePresetDirectories();
 
-    if(!self->selectFilePath(item->filePath())){
+    if(!selectFilePath(item->filePath())){
         self->selectFile(item->name());
     }
 
@@ -270,6 +271,45 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
     currentItemToSave.reset();
 
     return saved;
+}
+
+
+bool ItemFileDialog::Impl::selectFilePath(const std::string& filePath)
+{
+    bool selected = false;
+
+    if(!filePath.empty()){
+        
+        filesystem::path path(filePath);
+        filesystem::path dir(path.parent_path());
+
+        if(filesystem::exists(dir)){
+            self->setDirectory(dir.string());
+            
+            bool doTrySelectFile = false;
+            auto dotext = path.extension().string();
+            if(!dotext.empty()){
+                string ext = dotext.substr(1);
+                ItemFileIO* matchedFileIO = nullptr;
+                for(auto& fileIO : validFileIOs){
+                    auto exts = fileIO->extensions();
+                    if(std::find(exts.begin(), exts.end(), ext) != exts.end()){
+                        matchedFileIO = fileIO;
+                        break;
+                    }
+                }
+                if(matchedFileIO){
+                    setTargetFileIO(matchedFileIO);
+                    doTrySelectFile = true;
+                }
+            }
+            if(doTrySelectFile && filesystem::exists(path)){
+                self->selectFile(path.filename().string());
+                selected = true;
+            }
+        }
+    }
+    return selected;
 }
 
 
