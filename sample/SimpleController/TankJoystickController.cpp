@@ -55,8 +55,13 @@ public:
             if(opt == "wheels"){
                 usePseudoContinousTrackMode = false;
             }
+            if(opt == "position"){
+                turretActuationMode = Link::ActuationMode::JOINT_DISPLACEMENT;
+                os << "The joint-position command mode is used." << endl;
+            }
             if(opt == "velocity"){
                 turretActuationMode = Link::ActuationMode::JOINT_VELOCITY;
+                os << "The joint-velocity command mode is used." << endl;
             }
         }
 
@@ -150,7 +155,10 @@ public:
                 pos = 0.0;
             }
 
-            if(turretActuationMode == Link::JOINT_VELOCITY){
+            if(turretActuationMode == Link::JOINT_DISPLACEMENT){
+                joint->q_target() = joint->q() + pos * dt;
+
+            } else if(turretActuationMode == Link::JOINT_VELOCITY){
                 joint->dq_target() = pos;
 
             } else if(turretActuationMode == Link::JOINT_TORQUE){
