@@ -45,8 +45,8 @@ public:
 
     Position T_last;
     std::function<bool(const Position& T)> positionCallback;
-    vector<QWidget*> inputPanelWidgets;
-    vector<QWidget*> inputSpins;
+    //vector<QWidget*> inputPanelWidgets;
+    vector<DoubleSpinBox*> inputSpins;
     vector<bool> inputSpinErrorStates;
     ScopedConnectionSet userInputConnections;
 
@@ -143,8 +143,8 @@ PositionWidget::Impl::Impl(PositionWidget* self)
         grid->setColumnStretch(i * 2 + 1, 10);
 
         inputSpins.push_back(spin);
-        inputPanelWidgets.push_back(label);
-        inputPanelWidgets.push_back(spin);
+        //inputPanelWidgets.push_back(label);
+        //inputPanelWidgets.push_back(spin);
     }
     ++row;
 
@@ -168,8 +168,8 @@ PositionWidget::Impl::Impl(PositionWidget* self)
         inputSpins.push_back(spin);
         rpyWidgets.push_back(label);
         rpyWidgets.push_back(spin);
-        inputPanelWidgets.push_back(label);
-        inputPanelWidgets.push_back(spin);
+        //inputPanelWidgets.push_back(label);
+        //inputPanelWidgets.push_back(spin);
     }
     ++row;
     
@@ -199,8 +199,8 @@ PositionWidget::Impl::Impl(PositionWidget* self)
         inputSpins.push_back(spin);
         quatWidgets.push_back(label);
         quatWidgets.push_back(spin);
-        inputPanelWidgets.push_back(label);
-        inputPanelWidgets.push_back(spin);
+        //inputPanelWidgets.push_back(label);
+        //inputPanelWidgets.push_back(spin);
     }
     inputSpinErrorStates.resize(inputSpins.size(), false);
     mainvbox->addLayout(grid);
@@ -240,7 +240,7 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     setRotationMatrixEnabled(false);
     
     mainvbox->addWidget(&rotationMatrixPanel);
-    inputPanelWidgets.push_back(&rotationMatrixPanel);
+    //inputPanelWidgets.push_back(&rotationMatrixPanel);
 
     T_last.setIdentity();
     lastInputAttitudeMode = RollPitchYawMode;
@@ -328,9 +328,14 @@ void PositionWidget::Impl::setOptionMenuTo(MenuManager& menu)
 
 void PositionWidget::setEditable(bool on)
 {
+    for(auto& spin : impl->inputSpins){
+        spin->setReadOnly(!on);
+    }
+    /*
     for(auto& widget : impl->inputPanelWidgets){
         widget->setEnabled(on);
     }
+    */
 }
 
 
