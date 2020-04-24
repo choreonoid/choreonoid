@@ -215,6 +215,7 @@ bool SceneItem::restore(const Archive& archive)
             topNode_->setRotation(rot);
         }
         archive.read("lightweight_rendering", isLightweightRenderingEnabled_);
+        return true;
     }
     return false;
 }
