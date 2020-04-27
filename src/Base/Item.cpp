@@ -292,6 +292,13 @@ bool Item::isSubItem() const
 }
 
 
+void Item::setSubItemAttributes()
+{
+    impl->attributes.set(SubItem);
+    impl->attributes.set(Attached);
+}
+
+
 bool Item::isTemporal() const
 {
     return impl->attributes[Temporal];
@@ -481,6 +488,12 @@ bool Item::addChildItem(Item* item, bool isManualOperation)
 }
 
 
+bool Item::insertChild(Item* position, Item* item, bool isManualOperation)
+{
+    return impl->doInsertChildItem(item, position, isManualOperation);
+}
+
+
 bool Item::insertChildItem(Item* item, Item* nextItem, bool isManualOperation)
 {
     return impl->doInsertChildItem(item, nextItem, isManualOperation);
@@ -489,14 +502,14 @@ bool Item::insertChildItem(Item* item, Item* nextItem, bool isManualOperation)
 
 bool Item::addSubItem(Item* item)
 {
-    return insertSubItem(item, nullptr);
+    item->setSubItemAttributes();
+    return impl->doInsertChildItem(item, nullptr, false);
 }
 
 
 bool Item::insertSubItem(Item* item, Item* nextItem)
 {
-    item->impl->attributes.set(SubItem);
-    item->impl->attributes.set(Attached);
+    item->setSubItemAttributes();
     return impl->doInsertChildItem(item, nextItem, false);
 }
 

@@ -75,6 +75,7 @@ public:
     bool hasAttribute(Attribute attribute) const;
 
     bool isSubItem() const;
+    void setSubItemAttributes();
 
     /**
        If this is true, the item is not automatically saved or overwritten
@@ -121,7 +122,11 @@ public:
     Item* localRootItem() const;
 
     bool addChildItem(Item* item, bool isManualOperation = false);
+
+    [[deprecated("Use Item::insertChild(Item* position, Item* item, bool isManualOperation).")]]
     bool insertChildItem(Item* item, Item* nextItem, bool isManualOperation = false);
+
+    bool insertChild(Item* position, Item* item, bool isManualOperation = false);
 
     /**
        This function adds a sub item to the item.
@@ -130,6 +135,7 @@ public:
     */
     bool addSubItem(Item* item);
 
+    [[deprecated("Use Item::setSubItemAttributes and Item::insertChild(Item* position, Item* item, bool isManualOperation).")]]
     bool insertSubItem(Item* item, Item* nextItem);
 
     void detachFromParentItem();

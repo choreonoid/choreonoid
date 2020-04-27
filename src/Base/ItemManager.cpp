@@ -520,7 +520,7 @@ Item* ItemManager::createItemWithDialog_
     }
 
     if(newItem && doAddition){
-        parentItem->insertChildItem(newItem, nextItem);
+        parentItem->insertChild(nextItem, newItem);
     }
     
     return newItem;
@@ -1037,7 +1037,7 @@ void ItemManager::reloadItems(const ItemList<>& items)
                 if(reloaded){
                     reloadedItemToOriginalItemMap[reloadedItem] = item;
 
-                    item->parentItem()->insertChildItem(reloadedItem, item);
+                    item->parentItem()->insertChild(item, reloadedItem);
                     
                     // move children to the reload item
                     ItemPtr child = item->childItem();

@@ -1230,7 +1230,7 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, i
     }
 
     for(auto item : items){
-        parentItem->insertChildItem(item, nextItem, true);
+        parentItem->insertChild(nextItem, item, true);
     }
 
     itemsUnderTreeWidgetInternalOperation.clear();    

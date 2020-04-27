@@ -45,11 +45,16 @@ void exportPyItems(py::module m)
         .def("addChildItem", [](Item& self, Item* item, bool isManualOperation){ return self.addChildItem(item, isManualOperation); })
         .def("addSubItem", &Item::addSubItem)
         .def("isSubItem", &Item::isSubItem)
+        .def("setSubItemAttributes", &Item::setSubItemAttributes)
         .def("detachFromParentItem", &Item::detachFromParentItem)
-        .def("insertChildItem", [](Item& self, Item* item, Item* nextItem){ return self.insertChildItem(item, nextItem); })
+        .def("insertChildItem", [](Item& self, Item* item, Item* nextItem){
+                return self.insertChild(nextItem, item); })
         .def("insertChildItem", [](Item& self, Item* item, Item* nextItem, bool isManualOperation){
-                return self.insertChildItem(item, nextItem, isManualOperation); })
-        .def("insertSubItem", &Item::insertSubItem)
+                return self.insertChild(nextItem, item, isManualOperation); })
+        .def("insertChild", [](Item& self, Item* position, Item* item){ return self.insertChild(position, item); })
+        .def("insertChild", [](Item& self, Item* position, Item* item, bool isManualOperation){
+                return self.insertChild(position, item, isManualOperation); })
+        //.def("insertSubItem", &Item::insertSubItem) // deprecated
         .def("isTemporal", &Item::isTemporal)
         .def("setTemporal", [](Item& self){ self.setTemporal(); })
         .def("setTemporal", [](Item& self, bool on){ self.setTemporal(on); })

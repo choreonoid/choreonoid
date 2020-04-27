@@ -470,7 +470,7 @@ void BodyMotionGenerationBar::onGenerationButtonClicked()
                 if(setup->newBodyItemCheck.isChecked()){
                     BodyMotionItem* newMotionItem = new BodyMotionItem();
                     newMotionItem->setName(motionItem->name() + "'");
-                    motionItem->parentItem()->insertChildItem(newMotionItem, motionItem->nextItem());
+                    motionItem->parentItem()->insertChild(motionItem->nextItem(), newMotionItem);
                     motionItem = newMotionItem;
                 }
             }

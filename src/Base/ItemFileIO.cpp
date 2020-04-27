@@ -325,7 +325,7 @@ bool ItemFileIO::Impl::loadItem
         actuallyLoadedItem->updateFileInformation(filename, formatId, optionArchive);
 
         if(doAddition && parentItem){
-            parentItem->insertChildItem(item, nextItem, true);
+            parentItem->insertChild(nextItem, item, true);
         }
         
         mv->put(_(" -> ok!\n"));
