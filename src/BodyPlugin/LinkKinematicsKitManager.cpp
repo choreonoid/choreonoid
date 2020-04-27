@@ -7,8 +7,7 @@
 #include <cnoid/CompositeIK>
 #include <cnoid/PinDragIK>
 #include <cnoid/CoordinateFrameList>
-#include <cnoid/LinkCoordFrameSetSuite>
-#include <cnoid/LinkCoordFrameListSuiteItem>
+#include <cnoid/CoordinateFrameListItem>
 #include <cnoid/RootItem>
 #include <cnoid/BodyItem>
 #include <cnoid/WorldItem>
@@ -29,12 +28,6 @@ enum BaseLinkId {
     FreeBaseLink = -2
 };
 
-enum FrameType {
-    WorldFrame = LinkKinematicsKit::WorldFrame,
-    BodyFrame = LinkKinematicsKit::BodyFrame,
-    LinkFrame = LinkKinematicsKit::LinkFrame
-};
-
 }
     
 namespace cnoid {
@@ -50,7 +43,10 @@ public:
 
     ScopedConnection bodyItemConnection;
     ScopedConnection frameListConnection;
-    LinkCoordFrameSetSuitePtr commonFrameSetSuite;
+    CoordinateFrameListPtr baseFrames;
+    CoordinateFrameListPtr offsetFrames;
+    CoordinateFrameListPtr defaultBaseFrames;
+    CoordinateFrameListPtr defaultOffsetFrames;
 
     BodySelectionManager* bodySelectionManager;
     AbstractPositionEditTarget* frameEditTarget;
@@ -61,15 +57,16 @@ public:
     ScopedConnectionSet frameEditConnections;
 
     Impl(BodyItem* bodyItem);
+    void onBodyItemPositionChanged();
     LinkKinematicsKit* findKinematicsKit(Link* targetLink, bool isPresetOnly);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
-    void onBodyItemPositionChanged();
-    void findFrameListSuiteItem();
-    void onFrameListSuiteItemAddedOrUpdated(LinkCoordFrameListSuiteItem* frameListSuiteItem);
+    bool updateCoordinateFramesOf(LinkKinematicsKit* kit, bool forceUpdate);
+    void findFrameListItems();
+    void onFrameListItemAddedOrUpdated(CoordinateFrameListItem* frameListItem);
     void setupPositionDragger();
     bool onPositionEditRequest(AbstractPositionEditTarget* target);
-    bool startBodyFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
-    bool startLinkFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
+    bool startBaseFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
+    bool startOffsetFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
     void setFrameEditTarget(AbstractPositionEditTarget* target, Link* link);
     void onFrameEditPositionChanged(const Position& T);
     void onDraggerPositionChanged();
@@ -87,21 +84,14 @@ LinkKinematicsKitManager::LinkKinematicsKitManager(BodyItem* bodyItem)
 LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
     : bodyItem(bodyItem)
 {
+    bodySelectionManager = BodySelectionManager::instance();
+
     bodyItemConnection =
         bodyItem->sigPositionChanged().connect(
             [&](){ onBodyItemPositionChanged(); });
-    
-    bodySelectionManager = BodySelectionManager::instance();
-    
-    commonFrameSetSuite = new LinkCoordFrameSetSuite;
-    findFrameListSuiteItem();
 
-    frameListConnection =
-        LinkCoordFrameListSuiteItem::sigInstanceAddedOrUpdated().connect(
-            [&](LinkCoordFrameListSuiteItem* frameListSuiteItem){
-                onFrameListSuiteItemAddedOrUpdated(frameListSuiteItem);
-            });
-
+    onBodyItemPositionChanged();
+    
     setupPositionDragger();
 }
 
@@ -109,6 +99,27 @@ LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
 LinkKinematicsKitManager::~LinkKinematicsKitManager()
 {
     delete impl;
+}
+
+
+void LinkKinematicsKitManager::Impl::onBodyItemPositionChanged()
+{
+    if(bodyItem->isConnectedToRoot()){
+        if(!frameListConnection.connected()){
+            frameListConnection =
+                CoordinateFrameListItem::sigInstanceAddedOrUpdated().connect(
+                    [&](CoordinateFrameListItem* frameListItem){
+                        onFrameListItemAddedOrUpdated(frameListItem);
+                    });
+        }
+        findFrameListItems();
+    } else {
+        if(frameListConnection.connected()){
+            frameListConnection.disconnect();
+            baseFrames.reset();
+            offsetFrames.reset();
+        }
+    }
 }
 
 
@@ -177,7 +188,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
             if(presetIK){
                 kit = new LinkKinematicsKit(targetLink);
                 kit->setInversetKinematics(presetIK);
-                kit->setFrameSetSuite(commonFrameSetSuite);
+                updateCoordinateFramesOf(kit, true);
             }
         }
         if(!kit && !isPresetOnly){
@@ -240,26 +251,80 @@ std::shared_ptr<InverseKinematics> LinkKinematicsKitManager::Impl::findPresetIK(
 }
 
 
-void LinkKinematicsKitManager::Impl::onBodyItemPositionChanged()
+bool LinkKinematicsKitManager::Impl::updateCoordinateFramesOf(LinkKinematicsKit* kit, bool forceUpdate)
 {
-    commonFrameSetSuite->resetFrameSets();
-    findFrameListSuiteItem();
+    bool updated = false;
+    
+    auto prevBaseFrames = kit->baseFrames();
+    if(forceUpdate || prevBaseFrames){
+        CoordinateFrameList* newBaseFrames = nullptr;
+        if(baseFrames){
+            newBaseFrames = baseFrames;
+        } else {
+            if(!defaultBaseFrames){
+                defaultBaseFrames = new CoordinateFrameList;
+                defaultBaseFrames->setFrameTypeEnabled(CoordinateFrame::Local);
+            }
+            newBaseFrames = defaultBaseFrames;
+        }
+        if(newBaseFrames != prevBaseFrames){
+            kit->setBaseFrames(newBaseFrames);
+            updated = true;
+        }
+    }
+
+    auto prevOffsetFrames = kit->offsetFrames();
+    if(forceUpdate || prevOffsetFrames){
+        CoordinateFrameList* newOffsetFrames = nullptr;
+        if(offsetFrames){
+            newOffsetFrames = offsetFrames;
+        } else {
+            if(!defaultOffsetFrames){
+                defaultOffsetFrames = new CoordinateFrameList;
+                defaultOffsetFrames->setFrameTypeEnabled(CoordinateFrame::Offset);
+            }
+            newOffsetFrames = defaultOffsetFrames;
+        }
+        if(newOffsetFrames != prevOffsetFrames){
+            kit->setOffsetFrames(newOffsetFrames);
+            updated = true;
+        }
+    }
+
+    return updated;
 }
+        
 
-
-void LinkKinematicsKitManager::Impl::findFrameListSuiteItem()
+void LinkKinematicsKitManager::Impl::findFrameListItems()
 {
-    if(auto suiteItem = bodyItem->findItem<LinkCoordFrameListSuiteItem>()){
-        *commonFrameSetSuite = *suiteItem->frameSetSuite();
+    baseFrames.reset();
+    offsetFrames.reset();
+    auto items = bodyItem->descendantItems<CoordinateFrameListItem>();
+    for(auto& item : items){
+        auto frameList = item->frameList();
+        if(!baseFrames){
+            if(frameList->isFrameTypeEnabled(CoordinateFrame::Global) ||
+               frameList->isFrameTypeEnabled(CoordinateFrame::Local)){
+                baseFrames = frameList;
+            }
+        }
+        if(!offsetFrames){
+            if(frameList->isFrameTypeEnabled(CoordinateFrame::Offset)){
+                offsetFrames = frameList;
+            }
+        }
+        if(baseFrames && offsetFrames){
+            break;
+        }
     }
 }
 
 
-void LinkKinematicsKitManager::Impl::onFrameListSuiteItemAddedOrUpdated
-(LinkCoordFrameListSuiteItem* frameListSuiteItem)
+void LinkKinematicsKitManager::Impl::onFrameListItemAddedOrUpdated
+(CoordinateFrameListItem* frameListItem)
 {
     bool isTargetFrameList = false;
-    auto upperItem = frameListSuiteItem->parentItem();
+    auto upperItem = frameListItem->parentItem();
     while(upperItem){
         if(auto upperBodyItem = dynamic_cast<BodyItem*>(upperItem)){
             if(upperBodyItem == bodyItem){
@@ -270,10 +335,24 @@ void LinkKinematicsKitManager::Impl::onFrameListSuiteItemAddedOrUpdated
         upperItem = upperItem->parentItem();
     }
     if(isTargetFrameList){
-        *commonFrameSetSuite = *frameListSuiteItem->frameSetSuite();
-        for(auto& kv : linkPairToKinematicsKitMap){
-            auto& kit = kv.second;
-            kit->notifyFrameUpdate();
+        bool updated = false;
+        auto frameList = frameListItem->frameList();
+        if(frameList->isFrameTypeEnabled(CoordinateFrame::Global) ||
+           frameList->isFrameTypeEnabled(CoordinateFrame::Local)){
+            baseFrames = frameList;
+            updated = true;
+        }
+        if(frameList->isFrameTypeEnabled(CoordinateFrame::Offset)){
+            offsetFrames = frameList;
+            updated = true;
+        }
+        if(updated){
+            for(auto& kv : linkPairToKinematicsKitMap){
+                auto& kit = kv.second;
+                if(updateCoordinateFramesOf(kit, false)){
+                    kit->notifyFrameUpdate();
+                }
+            }
         }
     }
 }
@@ -308,11 +387,11 @@ bool LinkKinematicsKitManager::Impl::onPositionEditRequest(AbstractPositionEditT
 {
     bool accepted = false;
     if(auto frame = dynamic_cast<CoordinateFrame*>(target->getPositionObject())){
-        if(auto frameSet = frame->ownerFrameSet()){
-            if(commonFrameSetSuite->frameSet(BodyFrame)->contains(frameSet)){
-                accepted = startBodyFrameEditing(target, frame);
-            } else if(commonFrameSetSuite->frameSet(LinkFrame)->contains(frameSet)){
-                accepted = startLinkFrameEditing(target, frame);
+        if(auto frameList = frame->ownerFrameList()){
+            if(frameList == baseFrames){
+                accepted = startBaseFrameEditing(target, frame);
+            } else if(frameList == offsetFrames){
+                accepted = startOffsetFrameEditing(target, frame);
             }
         }
     }
@@ -320,7 +399,7 @@ bool LinkKinematicsKitManager::Impl::onPositionEditRequest(AbstractPositionEditT
 }
 
 
-bool LinkKinematicsKitManager::Impl::startBodyFrameEditing
+bool LinkKinematicsKitManager::Impl::startBaseFrameEditing
 (AbstractPositionEditTarget* target, CoordinateFrame* frame)
 {
     if(auto link = bodySelectionManager->currentLink()){
@@ -335,7 +414,7 @@ bool LinkKinematicsKitManager::Impl::startBodyFrameEditing
 }
 
 
-bool LinkKinematicsKitManager::Impl::startLinkFrameEditing
+bool LinkKinematicsKitManager::Impl::startOffsetFrameEditing
 (AbstractPositionEditTarget* target, CoordinateFrame* frame)
 {
     auto endLink = bodyItem->body()->findUniqueEndLink();

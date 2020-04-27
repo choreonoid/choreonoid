@@ -46,7 +46,6 @@ set(sources
   InverseKinematics.cpp
   CompositeIK.cpp
   PinDragIK.cpp
-  LinkCoordFrameSetSuite.cpp
   LinkKinematicsKit.cpp
   LinkGroup.cpp
   LeggedBodyHelper.cpp
@@ -121,7 +120,6 @@ set(headers
   CompositeIK.h
   CompositeBodyIK.h
   PinDragIK.h
-  LinkCoordFrameSetSuite.h
   LinkKinematicsKit.h
   LeggedBodyHelper.h
   PenetrationBlocker.h

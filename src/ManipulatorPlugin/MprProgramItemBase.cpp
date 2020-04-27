@@ -229,9 +229,8 @@ bool MprProgramItemBase::Impl::moveTo(MprPositionStatement* statement, bool doUp
             auto ikPosition = dynamic_cast<MprIkPosition*>(position);
             if(doUpdateAll && ikPosition){
                 kinematicsKit->setReferenceRpy(ikPosition->referenceRpy());
-                kinematicsKit->setCurrentBaseFrameType(ikPosition->baseFrameType());
                 kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
-                kinematicsKit->setCurrentLinkFrame(ikPosition->toolFrameId());
+                kinematicsKit->setCurrentOffsetFrame(ikPosition->offsetFrameId());
                 kinematicsKit->notifyFrameUpdate();
             }
             updated = position->apply(kinematicsKit);
@@ -245,7 +244,7 @@ bool MprProgramItemBase::Impl::moveTo(MprPositionStatement* statement, bool doUp
                 }
                 string tcpName;
                 if(ikPosition){
-                    if(auto tcpFrame = kinematicsKit->linkFrame(ikPosition->toolFrameId())){
+                    if(auto tcpFrame = kinematicsKit->offsetFrame(ikPosition->offsetFrameId())){
                         tcpName = tcpFrame->note();
                         if(tcpName.empty()){
                             auto& id = tcpFrame->id();
@@ -275,15 +274,6 @@ bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement)
 {
     if(!impl->kinematicsKit){
         showWarningDialog(_("Program item is not associated with any manipulator"));
-        return false;
-    }
-
-    if(impl->kinematicsKit->currentBaseFrameType() == LinkKinematicsKit::WorldFrame){
-        showWarningDialog(
-            _("The world coordinate system is currently selected for the robot, "
-              "but the position of the move statement must be described in the "
-              "robot coordinate system.\n"
-              "Please switch to the robot coordinate system to add a new move statement."));
         return false;
     }
 

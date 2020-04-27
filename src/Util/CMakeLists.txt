@@ -37,10 +37,7 @@ set(sources
   PlainSeqFileLoader.cpp
   RangeLimiter.cpp
   CoordinateFrame.cpp
-  CoordinateFrameSet.cpp
   CoordinateFrameList.cpp
-  CoordinateFrameSetGroup.cpp
-  CoordinateFrameSetSuite.cpp
   BoundingBox.cpp
   SceneNodeClassRegistry.cpp # This must be before any scene graph classes
   PolymorphicSceneNodeFunctionSet.cpp
@@ -141,10 +138,7 @@ set(headers
   GaussianFilter.h
   UniformCubicBSpline.h
   CoordinateFrame.h
-  CoordinateFrameSet.h
   CoordinateFrameList.h
-  CoordinateFrameSetGroup.h
-  CoordinateFrameSetSuite.h
   BoundingBox.h
   SceneNodeClassRegistry.h
   PolymorphicSceneNodeFunctionSet.h

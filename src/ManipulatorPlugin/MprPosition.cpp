@@ -104,11 +104,10 @@ MprIkPosition::MprIkPosition()
 MprIkPosition::MprIkPosition(const GeneralId& id)
     : MprPosition(IK, id),
       baseFrameId_(0),
-      toolFrameId_(0)
+      offsetFrameId_(0)
 {
     T.setIdentity();
     referenceRpy_.setZero();
-    baseFrameType_ = BodyFrame;
     configuration_ = 0;
     phase_.fill(0);
 }
@@ -119,8 +118,7 @@ MprIkPosition::MprIkPosition(const MprIkPosition& org)
       T(org.T),
       referenceRpy_(org.referenceRpy_),
       baseFrameId_(org.baseFrameId_),
-      toolFrameId_(org.toolFrameId_),
-      baseFrameType_(org.baseFrameType_),
+      offsetFrameId_(org.offsetFrameId_),
       configuration_(org.configuration_),
       phase_(org.phase_)
 {
@@ -159,19 +157,24 @@ void MprIkPosition::resetReferenceRpy()
 }
 
 
+/*
 bool MprIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
     return setCurrentPosition_(kinematicsKit, false);
 }
+*/
 
 
+/*
 bool MprIkPosition::setCurrentPositionWithCurrentBaseFrameType(LinkKinematicsKit* kinematicsKit)
 {
     return setCurrentPosition_(kinematicsKit, true);
 }
+*/
 
 
-bool MprIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool useCurrentBaseFrameType)
+//bool MprIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool useCurrentBaseFrameType)
+bool MprIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
     auto baseLink = kinematicsKit->baseLink();
     if(!baseLink){
@@ -179,13 +182,15 @@ bool MprIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool u
     }
 
     Position T_base;
-
+    /*
     if(useCurrentBaseFrameType){
         baseFrameType_ = kinematicsKit->currentBaseFrameType();
     } else {
         baseFrameType_ = BodyFrame;
     }
+    */
 
+    /*
     if(baseFrameType_ == WorldFrame){
         baseFrameId_ = kinematicsKit->currentWorldFrameId();
         auto baseFrame = kinematicsKit->currentWorldFrame();
@@ -196,10 +201,19 @@ bool MprIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool u
         auto baseFrame = kinematicsKit->currentBodyFrame();
         T_base = baseLink->Ta() * baseFrame->T();
     }
+    */
 
-    toolFrameId_ = kinematicsKit->currentLinkFrameId();
-    auto toolFrame = kinematicsKit->currentLinkFrame();
-    Position T_end = kinematicsKit->link()->Ta() * toolFrame->T();
+    baseFrameId_ = kinematicsKit->currentBaseFrameId();
+    auto baseFrame = kinematicsKit->currentBaseFrame();
+    if(baseFrame->isGlobal()){
+        T_base = baseFrame->T();
+    } else {
+        T_base = baseLink->Ta() * baseFrame->T();
+    }
+
+    offsetFrameId_ = kinematicsKit->currentOffsetFrameId();
+    auto offsetFrame = kinematicsKit->currentOffsetFrame();
+    Position T_end = kinematicsKit->link()->Ta() * offsetFrame->T();
 
     T = T_base.inverse(Eigen::Isometry) * T_end;
 
@@ -221,6 +235,13 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
     }
 
     Position T_base;
+    auto baseFrame = kinematicsKit->baseFrame(baseFrameId_);
+    if(baseFrame->isGlobal()){
+        T_base = baseFrame->T();
+    } else {
+        T_base = kinematicsKit->baseLink()->Ta() * baseFrame->T();
+    }
+    /*
     if(baseFrameType_ == WorldFrame){
         auto worldFrame = kinematicsKit->worldFrame(baseFrameId_);
         T_base = worldFrame->T();
@@ -228,9 +249,10 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
         auto bodyFrame = kinematicsKit->bodyFrame(baseFrameId_);
         T_base = kinematicsKit->baseLink()->Ta() * bodyFrame->T();
     }
+    */
     
-    Position T_tool = kinematicsKit->linkFrame(toolFrameId_)->T();
-    Position Ta_end = T_base * T * T_tool.inverse(Eigen::Isometry);
+    Position T_offset = kinematicsKit->offsetFrame(offsetFrameId_)->T();
+    Position Ta_end = T_base * T * T_offset.inverse(Eigen::Isometry);
     Position T_end;
     T_end.translation() = Ta_end.translation();
     T_end.linear() = kinematicsKit->link()->calcRfromAttitude(Ta_end.linear());
@@ -274,10 +296,13 @@ bool MprIkPosition::read(const Mapping& archive)
     if(!baseFrameId_.read(archive, "base_frame")){
         baseFrameId_.read(archive, "baseFrame"); // old
     }
-    if(!toolFrameId_.read(archive, "tool_frame")){
-        toolFrameId_.read(archive, "toolFrame"); // old
+    if(!offsetFrameId_.read(archive, "offset_frame")){
+        if(!offsetFrameId_.read(archive, "tool_frame")){ // old
+            offsetFrameId_.read(archive, "toolFrame"); // old
+        }
     }
 
+    /*
     string type;
     if(!archive.read("base_frame_type", type)){
         archive.read("baseFrameType", type); // old
@@ -289,6 +314,7 @@ bool MprIkPosition::read(const Mapping& archive)
             baseFrameType_ = BodyFrame;
         }
     }
+    */
 
     configuration_ = 0;
     if(!archive.read("config_id", configuration_)){
@@ -298,6 +324,7 @@ bool MprIkPosition::read(const Mapping& archive)
         }
     }
 
+    /*
     auto& phaseNodes = *archive.findListing("phases");
     if(phaseNodes.isValid()){
         int i = 0;
@@ -310,6 +337,7 @@ bool MprIkPosition::read(const Mapping& archive)
             phase_[i] = 0;
         }
     }
+    */
 
     return true;
 }
@@ -325,20 +353,25 @@ bool MprIkPosition::write(Mapping& archive) const
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", degree(rpy()));
 
+    /*
     if(baseFrameType_ == WorldFrame){
         archive.write("base_frame_type", "world");
     } else if(baseFrameType_ == BodyFrame){
         archive.write("base_frame_type", "body");
     }
+    */
 
     baseFrameId_.write(archive, "base_frame");
-    toolFrameId_.write(archive, "tool_frame");
+    offsetFrameId_.write(archive, "offset_frame");
 
     archive.write("config_id", configuration_);
+
+    /*
     auto& phaseNodes = *archive.createFlowStyleListing("phases");
     for(auto& phase : phase_){
         phaseNodes.append(phase);
     }
+    */
     
     return true;
 }

@@ -9,6 +9,7 @@
 #include "SimulatorItem.h"
 #include <cnoid/JointPath>
 #include <cnoid/LinkKinematicsKit>
+#include <cnoid/CoordinateFrame>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/MenuManager>
 #include <cnoid/SceneWidget>
@@ -864,13 +865,13 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
             Tb_org.linear() = Rt * link->Tb().linear();
             Tb_org.translation() = Rt * link->Tb().translation();
             positionDragger->setPosition(
-                Tb_org.inverse(Eigen::Isometry) * kinematicsKit->currentLinkFrame()->T());
+                Tb_org.inverse(Eigen::Isometry) * kinematicsKit->currentOffsetFrame()->T());
         }
     }
     if(!kinematicsKit){
         kinematicsKit = bodyItem->getCurrentLinkKinematicsKit(link);
         if(kinematicsKit){
-            positionDragger->setPosition(kinematicsKit->currentLinkFrame()->T());
+            positionDragger->setPosition(kinematicsKit->currentOffsetFrame()->T());
         } else {
             positionDragger->setPosition(Affine3::Identity());
         }

@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <functional>
 #include <string>
-#include <tuple>
+#include <utility>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -25,10 +25,10 @@ public:
     void setCoordinateModeLabels(
         const char* worldModeLabel, const char* modelModeLabel, const char* localModeLabel);
 
-    void setCoordinateOffsetLabels(const char* baseOffsetLabel, const char* linkOffsetLabel);
+    void setCoordinateLabels(const char* baseCoordinateLabel, const char* offsetCoordinateLabel);
 
     void customizeDefaultCoordinateFrameNames(
-        std::function<std::tuple<std::string,std::string,std::string>(LinkKinematicsKit*)> getNames);
+        std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> getNames);
 
     enum TargetLinkType { AnyLink, RootOrIkLink, IkLink, NumTargetLinkTypes };
     void setTargetLinkType(int type);

@@ -1,7 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MPR_POSITION_H
 #define CNOID_MANIPULATOR_PLUGIN_MPR_POSITION_H
 
-#include <cnoid/LinkCoordFrameSetSuite>
+#include <cnoid/CoordinateFrameList>
 #include <cnoid/CloneableReferenced>
 #include <cnoid/EigenTypes>
 #include <cnoid/GeneralId>
@@ -87,36 +87,24 @@ public:
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();
 
-    enum BaseFrameType {
-        WorldFrame = LinkCoordFrameSetSuite::WorldFrame,
-        BodyFrame = LinkCoordFrameSetSuite::BodyFrame
-    };
-
-    void setBaseFrameType(int type) { baseFrameType_ = type; }
-    int baseFrameType() const { return baseFrameType_; }
-    bool isBasedOnWorldFrame() const { return (baseFrameType_ == WorldFrame); }
-    bool isBasedOnBodyFrame() const { return (baseFrameType_ == BodyFrame); }
-
     void setBaseFrameId(const GeneralId& id){ baseFrameId_ = id; }
-    void setToolFrameId(const GeneralId& id){ toolFrameId_ = id; }
-    
+    void setOffsetFrameId(const GeneralId& id){ offsetFrameId_ = id; }
     const GeneralId& baseFrameId() const { return baseFrameId_; }
-    const GeneralId& toolFrameId() const { return toolFrameId_; }
+    const GeneralId& offsetFrameId() const { return offsetFrameId_; }
 
-    enum FrameType { BaseFrame = 0, ToolFrame = 1 };
-
+    enum FrameType { BaseFrame = 0, OffsetFrame = 1 };
     const GeneralId& frameId(int frameType) const {
-        return (frameType == BaseFrame) ? baseFrameId_ : toolFrameId_;
+        return (frameType == BaseFrame) ? baseFrameId_ : offsetFrameId_;
     }
 
-    CoordinateFrame* baseFrame(LinkCoordFrameSetSuite* frames){
-        return frames->frameSet(baseFrameType_)->getFrame(baseFrameId_);
+    CoordinateFrame* baseFrame(CoordinateFrameList* baseFrames){
+        return baseFrames->getFrame(baseFrameId_);
     }
-    CoordinateFrame* toolFrame(LinkCoordFrameSetSuite* frames){
-        return frames->linkFrameSet()->getFrame(toolFrameId_);
+    CoordinateFrame* offsetFrame(CoordinateFrameList* offsetFrames){
+        return offsetFrames->getFrame(offsetFrameId_);
     }
-    CoordinateFrame* frame(LinkCoordFrameSetSuite* frames, int frameType){
-        return (frameType == BaseFrame) ? baseFrame(frames) : toolFrame(frames);
+    CoordinateFrame* frame(CoordinateFrameList* frames, int frameType){
+        return (frameType == BaseFrame) ? baseFrame(frames) : offsetFrame(frames);
     }
     
     int configuration() const { return configuration_; }
@@ -126,11 +114,6 @@ public:
     */
     virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit);
 
-    /**
-       \note This function specifies the current base frame type specified in the kinematics kit.
-    */
-    bool setCurrentPositionWithCurrentBaseFrameType(LinkKinematicsKit* kinematicsKit);
-    
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
@@ -142,12 +125,9 @@ private:
     Position T;
     Vector3 referenceRpy_;
     GeneralId baseFrameId_;
-    GeneralId toolFrameId_;
-    int baseFrameType_;
+    GeneralId offsetFrameId_;
     int configuration_;
     std::array<int, MaxNumJoints> phase_;
-
-    bool setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool useCurrentBaseFrameType);    
 };
 
 typedef ref_ptr<MprIkPosition> MprIkPositionPtr;

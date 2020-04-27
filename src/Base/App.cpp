@@ -31,7 +31,6 @@
 #include "Vector3SeqItem.h"
 #include "ReferencedObjectSeqItem.h"
 #include "CoordinateFrameListItem.h"
-#include "CoordinateFrameListSuiteItem.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -299,7 +298,6 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     
     LightingItem::initializeClass(ext);
     CoordinateFrameListItem::initializeClass(ext);
-    CoordinateFrameListSuiteItem::initializeClass(ext);
 
     MovieRecorder::initialize(ext);
 

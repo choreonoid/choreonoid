@@ -3,13 +3,18 @@
 #include "LocatableItem.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
-#include <cnoid/CoordinateFrameSet>
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/ConnectionSet>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+
+namespace {
+
+Signal<void(CoordinateFrameListItem* frameListItem)> sigInstanceAddedOrUpdated_;
+
+}
 
 namespace cnoid {
 
@@ -29,6 +34,13 @@ void CoordinateFrameListItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
     im.registerClass<CoordinateFrameListItem>(N_("CoordinateFrameListItem"));
+}
+
+
+SignalProxy<void(CoordinateFrameListItem* frameListItem)>
+CoordinateFrameListItem::sigInstanceAddedOrUpdated()
+{
+    return ::sigInstanceAddedOrUpdated_;
 }
 
 
@@ -66,6 +78,12 @@ CoordinateFrameListItem::~CoordinateFrameListItem()
 Item* CoordinateFrameListItem::doDuplicate() const
 {
     return new CoordinateFrameListItem(*this);
+}
+
+
+void CoordinateFrameListItem::onPositionChanged()
+{
+    ::sigInstanceAddedOrUpdated_(this);
 }
 
 
