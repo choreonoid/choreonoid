@@ -154,6 +154,7 @@ BodyMotionItem::BodyMotionItem()
     : bodyMotion_(new BodyMotion())
 {
     impl = new BodyMotionItemImpl(this);
+    impl->initialize();
 }
 
 
@@ -161,6 +162,7 @@ BodyMotionItem::BodyMotionItem(std::shared_ptr<BodyMotion> bodyMotion)
     : bodyMotion_(bodyMotion)
 {
     impl = new BodyMotionItemImpl(this);
+    impl->initialize();
 }
 
 
@@ -169,13 +171,14 @@ BodyMotionItem::BodyMotionItem(const BodyMotionItem& org)
       bodyMotion_(new BodyMotion(*org.bodyMotion_))
 {
     impl = new BodyMotionItemImpl(this);
+    impl->initialize();
 }
 
 
 BodyMotionItemImpl::BodyMotionItemImpl(BodyMotionItem* self)
     : self(self)
 {
-    initialize();
+
 }
 
 

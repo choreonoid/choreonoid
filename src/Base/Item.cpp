@@ -30,7 +30,14 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+/**
+   \note The element type of the following container must be a raw pointer
+   because a newly created item that is not contained in a smart pointer
+   may be set to the container and such an item is deleted when the container
+   is cleared if its element type is the smart pointer.
+*/
 unordered_set<Item*> itemsToEmitSigSubTreeChanged;
+
 int recursiveTreeChangeCounter = 0;
 bool isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
 
@@ -83,6 +90,7 @@ public:
     ~Impl();
     void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
     bool setSubTreeItemsSelectedIter(Item* item, bool on);
+    int countDescendantItems(const Item* item) const;
     Item* findItem(const std::function<bool(Item* item)>& pred, bool isFromDirectChild, bool isSubItem) const;
     Item* findItem(
         ItemPath::iterator iter, ItemPath::iterator end,  const std::function<bool(Item* item)>& pred,
@@ -91,7 +99,7 @@ public:
     void getSelectedDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
     Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
-    void doDetachFromParentItem(bool isMoving);
+    void doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted);
     void callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling);
     void callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem);
     void callFuncOnConnectedToRoot();
@@ -163,10 +171,10 @@ Item::~Item()
         cout << "Item::~Item() of " << name_ << endl;
     }
     
-    Item* child = childItem();
+    ItemPtr child = childItem();
     while(child){
         Item* next = child->nextItem();
-        child->detachFromParentItem();
+        child->impl->doDetachFromParentItem(false, true);
         child = next;
     }
 
@@ -438,6 +446,22 @@ void Item::setChecked(int checkId, bool on)
 }
 
 
+int Item::countDescendantItems() const
+{
+    return impl->countDescendantItems(this);
+}
+
+
+int Item::Impl::countDescendantItems(const Item* item) const
+{
+    int n = item->numChildren();
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        n += countDescendantItems(child);
+    }
+    return n;
+}
+        
+
 Item* Item::headItem() const
 {
     Item* head = const_cast<Item*>(this);
@@ -535,7 +559,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
                 isMoving = true;
             }
         }
-        item->impl->doDetachFromParentItem(isMoving);
+        item->impl->doDetachFromParentItem(isMoving, false);
     }
 
     ++recursiveTreeChangeCounter;
@@ -639,11 +663,11 @@ void Item::onConnectedToRoot()
 void Item::detachFromParentItem()
 {
     ItemPtr self = this;
-    impl->doDetachFromParentItem(false);
+    impl->doDetachFromParentItem(false, false);
 }
 
 
-void Item::Impl::doDetachFromParentItem(bool isMoving)
+void Item::Impl::doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted)
 {
     Item* prevParent = self->parentItem();
     if(!prevParent){
@@ -651,22 +675,24 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
     }
     Item* prevNextSibling = self->nextItem();
 
+    RootItem* rootItem = nullptr;
+    
     ++recursiveTreeChangeCounter;
 
-    if(checkIfAnyItemInSubTreeSelected(self)){
-        isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
+    if(!isParentBeingDeleted){
+        if(checkIfAnyItemInSubTreeSelected(self)){
+            isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
+        }
+        // Clear all the selection of the sub tree to remove
+        setSubTreeItemsSelectedIter(self, false);
+
+        rootItem = self->findRootItem();
+        if(rootItem){
+            rootItem->notifyEventOnSubTreeRemoving(self, isMoving);
+        }
+        self->parent_->impl->addToItemsToEmitSigSubTreeChanged();
     }
 
-    // Clear all the selection of the sub tree to remove
-    setSubTreeItemsSelectedIter(self, false);
-
-    RootItem* rootItem = self->findRootItem();
-  
-    if(rootItem){
-        rootItem->notifyEventOnSubTreeRemoving(self, isMoving);
-    }
-
-    self->parent_->impl->addToItemsToEmitSigSubTreeChanged();
     if(self->prevItem_){
         self->prevItem_->nextItem_ = self->nextItem_;
     } else {
@@ -703,6 +729,14 @@ void Item::Impl::doDetachFromParentItem(bool isMoving)
             rootItem->emitSigSelectedItemsChangedLater();
         }
         isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
+    }
+}
+
+
+void Item::clearChildren()
+{
+    while(childItem()){
+        childItem()->detachFromParentItem();
     }
 }
 

@@ -104,6 +104,7 @@ public:
     void setChecked(int checkId, bool on);
 
     int numChildren() const { return numChildren_; }
+    int countDescendantItems() const;
 
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }
@@ -139,6 +140,7 @@ public:
     bool insertSubItem(Item* item, Item* nextItem);
 
     void detachFromParentItem();
+    void clearChildren();
 
     /**
        This is equivalent to RootItem::instance()->findItem(path);
