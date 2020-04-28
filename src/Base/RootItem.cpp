@@ -18,6 +18,8 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+RootItem* instance_ = nullptr;
+
 class CheckEntry
 {
 public:
@@ -113,7 +115,9 @@ void RootItem::initializeClass(ExtensionManager* ext)
     static bool initialized = false;
     if(!initialized){
         ext->itemManager().registerClass<RootItem>(N_("RootItem"));
-        ext->manage(RootItemPtr(mainInstance()));
+        instance_ = new RootItem;
+        instance_->setName("Root");
+        ext->manage(RootItemPtr(instance_));
         initialized = true;
 
         // debug
@@ -125,9 +129,7 @@ void RootItem::initializeClass(ExtensionManager* ext)
 
 RootItem* RootItem::instance()
 {
-    static RootItem* rootItem = new RootItem();
-    rootItem->setName("Root");
-    return rootItem;
+    return instance_;
 }
 
 

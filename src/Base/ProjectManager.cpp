@@ -56,6 +56,7 @@ public:
 
     void setCurrentProjectFile(const string& filename);
     void clearCurrentProjectFile();
+    void clearProject();
         
     template <class TObject>
     bool restoreObjectStates(
@@ -241,6 +242,21 @@ std::string ProjectManager::currentProjectFile() const
 std::string ProjectManager::currentProjectDirectory() const
 {
     return impl->currentProjectDirectory;
+}
+
+
+void ProjectManager::clearProject()
+{
+    impl->clearProject();
+}
+
+
+void ProjectManager::Impl::clearProject()
+{
+    RootItem::instance()->clearChildren();
+    currentProjectName.clear();
+    currentProjectFile.clear();
+    mainWindow->setProjectTitle("");
 }
 
 
@@ -495,7 +511,7 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
     if(item){
         isSubProject = true;
     } else {
-        item = RootItem::mainInstance();
+        item = RootItem::instance();
         isSubProject = false;
     }
     
@@ -614,7 +630,37 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 
 void ProjectManager::Impl::openDialogToLoadProject()
 {
-    FileDialog dialog(MainWindow::instance());
+    auto mw = MainWindow::instance();
+    int numItems = RootItem::instance()->countDescendantItems();
+    if(numItems > 0){
+        QString title = _("Warning");
+        QString message;
+        QMessageBox::StandardButton clicked;
+        if(currentProjectFile.empty()){
+            if(numItems == 1){
+                message = _("A project item exists. "
+                            "Do you want to save it as a project file before loading a new project?");
+            } else {
+                message = _("Project items exist. "
+                            "Do you want to save them as a project file before loading a new project?");
+            }
+            clicked = QMessageBox::warning(
+                mw, title, message, QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
+        } else {
+            message = _("Project \"%1\" exists. Do you want to save it before loading a new project?");
+            clicked = QMessageBox::warning(
+                mw, title, message.arg(currentProjectName.c_str()),
+                QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
+        }
+        if(clicked == QMessageBox::Cancel){
+            return;
+        }
+        if(clicked == QMessageBox::Save){
+            overwriteCurrentProject();
+        }
+    }
+    
+    FileDialog dialog(mw);
     dialog.setWindowTitle(_("Open a Choreonoid project file"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
@@ -629,6 +675,8 @@ void ProjectManager::Impl::openDialogToLoadProject()
     dialog.updatePresetDirectories();
     
     if(dialog.exec()){
+        clearProject();
+        mv->flush();
         string filename = getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString()));
         loadProject(filename, nullptr, false);
     }

@@ -25,7 +25,8 @@ public:
     ProjectManager();
     
     ~ProjectManager();
-    
+
+    void clearProject();
     ItemList<> loadProject(const std::string& filename, Item* parentItem = nullptr);
     bool isLoadingProject() const;
     void saveProject(const std::string& filename, Item* item = nullptr);

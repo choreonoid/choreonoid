@@ -269,7 +269,7 @@ static void onSigOptionsParsed(boost::program_options::variables_map& variables)
     		BodyItemPtr item(new BodyItem());
     		if(item->load(bodyFileNames[i], "CHOREONOID-BODY")){
                     item->setChecked(true);
-                    RootItem::mainInstance()->addChildItem(item);
+                    RootItem::instance()->addChildItem(item);
     		}
     	}
     }

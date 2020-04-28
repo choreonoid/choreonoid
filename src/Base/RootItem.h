@@ -19,7 +19,7 @@ public:
     static void initializeClass(ExtensionManager* ext);
     static RootItem* instance();
 
-    //! \deprecated
+    [[deprecated("Use RootItem::instance()")]]
     static RootItem* mainInstance() { return instance(); }
 
     RootItem();
