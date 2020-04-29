@@ -243,6 +243,10 @@ public:
     ostream* os_;
     ostream& os() { return *os_; }
 
+    string glVersionString;
+    string glVendorString;
+    string glRendererString;
+
     void renderChildNodes(SgGroup* group){
         for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
             renderingFunctions.dispatch(*p);
@@ -438,11 +442,12 @@ bool GL1SceneRenderer::Impl::initializeGL()
         return false;
     }
 
-    const GLubyte* version = glGetString(GL_VERSION);
-    const GLubyte* vendor = glGetString(GL_VENDOR);
-    const GLubyte* renderer = glGetString(GL_RENDERER);
+    glVersionString = (const char*)glGetString(GL_VERSION);
+    glVendorString = (const char*)glGetString(GL_VENDOR);
+    glRendererString = (const char*)glGetString(GL_RENDERER);
     os() << fmt::format(_("OpenGL {0} ({1} {2}) is available for the \"{3}\" view."),
-                        version, vendor, renderer, self->name()) << endl;
+                        glVersionString, glVendorString, glRendererString, self->name())
+         << endl;
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
@@ -472,6 +477,12 @@ void GL1SceneRenderer::setViewport(int x, int y, int width, int height)
 void GL1SceneRenderer::flush()
 {
     glFlush();
+}
+
+
+const std::string& GL1SceneRenderer::glVendor() const
+{
+    return impl->glVendorString;
 }
 
 

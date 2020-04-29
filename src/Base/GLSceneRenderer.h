@@ -43,6 +43,8 @@ public:
     */
     virtual void clearGL();
 
+    virtual const std::string& glVendor() const = 0;
+
     virtual void setViewport(int x, int y, int width, int height) = 0;
     
     // Call this function instead of setViewport when the viewport is specified by the system.

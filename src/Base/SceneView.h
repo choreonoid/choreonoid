@@ -28,8 +28,6 @@ public:
     SgGroup* scene();
         
 protected:
-    virtual void onActivated();
-    virtual void onDeactivated();
     virtual QWidget* indicatorOnInfoBar();
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);

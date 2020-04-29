@@ -175,18 +175,6 @@ SceneViewImpl::~SceneViewImpl()
 }
 
 
-void SceneView::onActivated()
-{
-    impl->sceneWidget->activate();
-}
-
-
-void SceneView::onDeactivated()
-{
-    impl->sceneWidget->deactivate();
-}
-
-
 SceneWidget* SceneView::sceneWidget()
 {
     return impl->sceneWidget;

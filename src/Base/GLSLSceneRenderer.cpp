@@ -258,7 +258,7 @@ public:
     */
     unsigned int renderingFrameId;
 
-    bool is_GL_UnInitialized;
+    bool isGLCleared;
     bool isRenderingVisibleImage;
     bool isRenderingPickingImage;
     bool isPickingImageOutputEnabled;
@@ -344,6 +344,11 @@ public:
     std::mutex newExtensionMutex;
     vector<std::function<void(GLSLSceneRenderer* renderer)>> newExtendFunctions;
 
+    string glVersionString;
+    string glVendorString;
+    string glRendererString;
+    string glslVersionString;
+
     void renderChildNodes(SgGroup* group){
         for(auto p = group->cbegin(); p != group->cend(); ++p){
             renderingFunctions.dispatch(*p);
@@ -358,6 +363,7 @@ public:
     void clearGL(bool isGLContextActive, bool isCalledFromConstructor, bool isCalledFromDestructor);
     void clearResourceMap();
     bool initializeGL();
+    bool initializeGLForRendering();
     void doRender();
     void setupFullLightingRendering();
     bool doPick(int x, int y);
@@ -456,7 +462,7 @@ GLSLSceneRenderer::~GLSLSceneRenderer()
 
 GLSLSceneRenderer::Impl::~Impl()
 {
-    if(!is_GL_UnInitialized){
+    if(!isGLCleared){
         clearGL(false, false, true);
     }
 }
@@ -604,7 +610,9 @@ void GLSLSceneRenderer::setOutputStream(std::ostream& os)
 
 void GLSLSceneRenderer::clearGL()
 {
-    impl->clearGL(true, false, false);
+    if(!impl->isGLCleared){
+        impl->clearGL(true, false, false);
+    }
 }
 
 
@@ -666,7 +674,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
 
         clearGLState();
 
-        is_GL_UnInitialized = true;
+        isGLCleared = true;
     }
 }
 
@@ -699,21 +707,21 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
-    const GLubyte* version = glGetString(GL_VERSION);
-    const GLubyte* vendor = glGetString(GL_VENDOR);
-    const GLubyte* renderer = glGetString(GL_RENDERER);
-    const GLubyte* glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    glVersionString = (const char*)glGetString(GL_VERSION);
+    glVendorString = (const char*)glGetString(GL_VENDOR);
+    glRendererString = (const char*)glGetString(GL_RENDERER);
+    glslVersionString = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 
     os() << fmt::format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view.\n"),
-                        major, minor, vendor, renderer, glsl, self->name());
+                        major, minor, glVendorString, glRendererString, glslVersionString, self->name());
 
-    std::cmatch match;
+    std::smatch match;
 
     // Check the Intel GPU
-    if(regex_match((const char*)renderer, match, regex("Mesa DRI Intel\\(R\\) (\\S+).*$"))){
+    if(regex_match(glRendererString, match, regex("Mesa DRI Intel\\(R\\) (\\S+).*$"))){
         if(match.str(1) == "Sandybridge"){
             isShadowCastingEnabled = false;
-        } else if(regex_match((const char*)version, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
+        } else if(regex_match(glVersionString, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
             int mesaMajor = stoi(match.str(1));
             if(mesaMajor >= 19){
                 isShadowCastingEnabled = false;
@@ -721,17 +729,16 @@ bool GLSLSceneRenderer::Impl::initializeGL()
         }
     }
     // Check if the GPU is AMD's Radeon GPU
-    else if(regex_match((const char*)renderer, regex("AMD Radeon.*"))){
+    else if(regex_match(glRendererString, regex("AMD Radeon.*"))){
         isShadowCastingEnabled = false;
     }
     // CHeck if the VMWare's virtual driver is used
-    else if(regex_match((const char*)vendor, regex("VMware, Inc\\..*"))){
+    else if(regex_match(glVendorString, regex("VMware, Inc\\..*"))){
         isShadowCastingEnabled = false;
     }
     // Check if the GPU driver is Nouveau
-    else if(regex_match((const char*)vendor, regex(".*nouveau.*"))){
+    else if(regex_match(glVendorString, regex(".*nouveau.*"))){
         isShadowCastingEnabled = false;
-
     }
 
     if(!isShadowCastingEnabled){
@@ -740,8 +747,14 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     
     os().flush();
 
-    is_GL_UnInitialized = false;
-    
+    return initializeGLForRendering();
+}
+
+
+bool GLSLSceneRenderer::Impl::initializeGLForRendering()
+{
+    isGLCleared = false;
+
     updateDefaultFramebufferObject();
 
     try {
@@ -767,6 +780,11 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     isCurrentFogUpdated = false;
 
     return true;
+}
+
+const std::string& GLSLSceneRenderer::glVendor() const
+{
+    return impl->glVendorString;
 }
 
 
@@ -908,7 +926,11 @@ void GLSLSceneRenderer::doRender()
 
 void GLSLSceneRenderer::Impl::doRender()
 {
-    updateDefaultFramebufferObject();
+    if(isGLCleared){
+        initializeGLForRendering();
+    } else {
+        updateDefaultFramebufferObject();
+    }
     
     if(self->applyNewExtensions()){
         renderingFunctions.updateDispatchTable();
@@ -1025,6 +1047,10 @@ bool GLSLSceneRenderer::doPick(int x, int y)
 
 bool GLSLSceneRenderer::Impl::doPick(int x, int y)
 {
+    if(isGLCleared){
+        initializeGLForRendering();
+    }
+    
     int vx, vy, width, height;
     self->getViewport(vx, vy, width, height);
 

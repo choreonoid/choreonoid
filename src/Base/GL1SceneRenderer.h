@@ -27,6 +27,7 @@ public:
     virtual double projectedPixelSizeRatio(const Vector3& position) const override;
     virtual bool initializeGL() override;
     virtual void flush() override;
+    virtual const std::string& glVendor() const override;
     virtual void setViewport(int x, int y, int width, int height) override;
 
     virtual const Vector3& pickedPoint() const override;
