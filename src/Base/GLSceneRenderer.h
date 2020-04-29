@@ -33,6 +33,16 @@ public:
     virtual bool initializeGL() = 0;
     virtual void flush() = 0;
 
+    /**
+       This function clears all the OpenGL resourses used in the renderer.
+       The function should be called when the renderer is deleted.
+       The function must be called when the OpenGL context is changed, and
+       then the initializeGL function must be called again for the new OpenGL
+       context. Note that the corresponding OpenGL context must be made current
+       when the function is called.
+    */
+    virtual void clearGL();
+
     virtual void setViewport(int x, int y, int width, int height) = 0;
     
     // Call this function instead of setViewport when the viewport is specified by the system.

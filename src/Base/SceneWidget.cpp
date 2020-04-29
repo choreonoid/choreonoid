@@ -44,7 +44,6 @@
 #include <QPainter>
 #include <fmt/format.h>
 #include <set>
-#include <iostream>
 #include "gettext.h"
 
 #ifdef _WIN32
@@ -204,11 +203,33 @@ public:
             
 Signal<void(SceneWidget*)> sigSceneWidgetCreated;
 
+class OpenGLWidget : public QOpenGLWidget
+{
+public:
+    SceneWidgetImpl* impl;
+    ScopedConnection rendererConnection;
+    
+    OpenGLWidget(SceneWidgetImpl* impl);
+    virtual void initializeGL() override;
+    virtual void resizeGL(int width, int height) override;
+    virtual void paintGL() override;
+
+    virtual void keyPressEvent(QKeyEvent* event) override;
+    virtual void keyReleaseEvent(QKeyEvent* event) override;
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void mouseDoubleClickEvent(QMouseEvent* event) override;
+    virtual void mouseMoveEvent(QMouseEvent* event) override;
+    virtual void mouseReleaseEvent(QMouseEvent* event) override;
+    virtual void wheelEvent(QWheelEvent* event) override;
+    virtual void focusInEvent(QFocusEvent* event) override;
+    virtual void focusOutEvent(QFocusEvent* event) override;
+};
+
 }
 
 namespace cnoid {
 
-class SceneWidgetImpl : public QOpenGLWidget
+class SceneWidgetImpl
 {
     friend class SceneWidget;
     
@@ -218,6 +239,8 @@ public:
     SceneWidget* self;
     ostream& os;
 
+    QVBoxLayout* vbox;
+    OpenGLWidget* glWidget;
     SceneWidgetRootPtr sceneRoot;
     SgUnpickableGroupPtr systemGroup;
     SgGroup* scene;
@@ -322,17 +345,13 @@ public:
 
     void onVSyncModeChanged();
     void onLowMemoryConsumptionModeChanged(bool on);
-
-    virtual void initializeGL();
-    virtual void resizeGL(int width, int height);
-    virtual void paintGL();
-
     void tryToResumeNormalRendering();
-
     void updateGrids();
     SgLineSet* createGrid(int index);
 
     void onSceneGraphUpdated(const SgUpdate& update);
+    void paintGL();
+    void update();
 
     void showFPS(bool on);
     void onFPSTestButtonClicked();
@@ -385,16 +404,14 @@ public:
     bool setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable);
     void clearFocusToEditables();
 
-    virtual void keyPressEvent(QKeyEvent* event);
-    virtual void keyReleaseEvent(QKeyEvent* event);
-    virtual void mousePressEvent(QMouseEvent* event);
-    virtual void mouseDoubleClickEvent(QMouseEvent* event);
-    virtual void mouseMoveEvent(QMouseEvent* event);
+    void keyPressEvent(QKeyEvent* event);
+    void keyReleaseEvent(QKeyEvent* event);
+    void mousePressEvent(QMouseEvent* event);
+    void mouseDoubleClickEvent(QMouseEvent* event);
+    void mouseMoveEvent(QMouseEvent* event);
     void updatePointerPosition();
-    virtual void mouseReleaseEvent(QMouseEvent* event);
-    virtual void wheelEvent(QWheelEvent* event);
-    virtual void focusInEvent(QFocusEvent* event);
-    virtual void focusOutEvent(QFocusEvent* event);
+    void mouseReleaseEvent(QMouseEvent* event);
+    void wheelEvent(QWheelEvent* event);
 
     Affine3 getNormalizedCameraTransform(const Affine3& T);
     void startViewChange();
@@ -415,7 +432,6 @@ public:
 
     void activateSystemNode(SgNode* node, bool on);
 
-    bool saveImage(const std::string& filename);
     void setScreenSize(int width, int height);
     void updateIndicator(const std::string& text);
     bool storeState(Archive& archive);
@@ -519,29 +535,28 @@ void SceneWidget::forEachInstance(SgNode* node, std::function<void(SceneWidget* 
 }
 
 
-SceneWidget::SceneWidget()
+SceneWidget::SceneWidget(QWidget* parent)
+    : Widget(parent)
 {
     impl = new SceneWidgetImpl(this);
-
-    QVBoxLayout* vbox = new QVBoxLayout;
-    vbox->setContentsMargins(0, 0, 0, 0);
-    vbox->addWidget(impl);
-    setLayout(vbox);
 
     ::sigSceneWidgetCreated(this);
 }
 
 
 SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
-    : QOpenGLWidget(self),
-      self(self),
+    : self(self),
       os(MessageView::mainInstance()->cout()),
       sceneRoot(new SceneWidgetRoot(self)),
       systemGroup(sceneRoot->systemGroup),
       emitSigStateChangedLater(std::ref(sigStateChanged)),
       updateGridsLater([this](){ updateGrids(); })
 {
-    setFocusPolicy(Qt::WheelFocus);
+    vbox = new QVBoxLayout;
+    vbox->setContentsMargins(0, 0, 0, 0);
+    self->setLayout(vbox);
+
+    glWidget = nullptr;
 
     renderer = GLSceneRenderer::create(sceneRoot);
     if(auto glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer)){
@@ -550,12 +565,9 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
         
     renderer->setOutputStream(os);
     renderer->enableUnusedResourceCheck(true);
-    renderer->sigRenderingRequest().connect([&](){ update(); });
     renderer->sigCamerasChanged().connect([&](){ onCamerasChanged(); });
     renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
-
     self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
-
     sceneRoot->sigUpdated().connect([this](const SgUpdate& update){ onSceneGraphUpdated(update); });
 
     scene = renderer->scene();
@@ -569,9 +581,6 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     for(auto& color : gridColor){
     	color << 0.9f, 0.9f, 0.9f, 1.0f;
     }
-
-    setAutoFillBackground(false);
-    setMouseTracking(true);
 
     needToUpdateViewportInformation = true;
     isEditMode = false;
@@ -681,6 +690,42 @@ SceneWidgetImpl::~SceneWidgetImpl()
     if(pickingImageWindow){
         delete pickingImageWindow;
     }
+
+    self->deactivate();
+}
+
+
+void SceneWidget::activate()
+{
+    if(!impl->glWidget){
+        impl->glWidget = new OpenGLWidget(impl);
+        impl->vbox->addWidget(impl->glWidget);
+    }
+}
+        
+
+void SceneWidget::deactivate()
+{
+    if(impl->glWidget){
+        impl->glWidget->makeCurrent();
+        impl->renderer->clearGL();
+        delete impl->glWidget;
+        impl->glWidget = nullptr;
+    }
+}
+
+
+OpenGLWidget::OpenGLWidget(SceneWidgetImpl* impl)
+    : QOpenGLWidget(impl->self),
+      impl(impl)
+{
+    setFocusPolicy(Qt::WheelFocus);
+    setAutoFillBackground(false);
+    setMouseTracking(true);
+
+    rendererConnection =
+        impl->renderer->sigRenderingRequest().connect(
+            [&](){ update(); });
 }
 
 
@@ -729,8 +774,10 @@ SceneRenderer* SceneWidget::renderer()
 */
 void SceneWidget::draw()
 {
-    impl->repaint();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers);
+    if(impl->glWidget){
+        impl->glWidget->repaint();
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers);
+    }
 }
 
 
@@ -740,25 +787,22 @@ QWidget* SceneWidget::indicator()
 }
 
 
-void SceneWidgetImpl::initializeGL()
+void OpenGLWidget::initializeGL()
 {
-    if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::initializeGL()" << endl;
-    }
-
-    if(!renderer->initializeGL()){
-        os << "OpenGL initialization failed." << endl;
+    if(!impl->renderer->initializeGL()){
+        impl->os << "OpenGL initialization failed." << endl;
+        impl->self->deactivate();
         // This view shoulbe be disabled when the glew initialization is failed.
     }
 }
 
 
-void SceneWidgetImpl::resizeGL(int width, int height)
+void OpenGLWidget::resizeGL(int width, int height)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::resizeGL()" << endl;
+        impl->os << "SceneWidgetImpl::resizeGL()" << endl;
     }
-    needToUpdateViewportInformation = true;
+    impl->needToUpdateViewportInformation = true;
 }
 
 
@@ -800,6 +844,12 @@ void SceneWidgetImpl::onSceneGraphUpdated(const SgUpdate& update)
 }
 
 
+void OpenGLWidget::paintGL()
+{
+    impl->paintGL();
+}
+
+
 void SceneWidgetImpl::paintGL()
 {
     if(TRACE_FUNCTIONS){
@@ -834,6 +884,14 @@ void SceneWidgetImpl::paintGL()
 
     if(fpsTimer.isActive()){
         renderFPS();
+    }
+}
+
+
+void SceneWidgetImpl::update()
+{
+    if(glWidget){
+        glWidget->update();
     }
 }
 
@@ -908,6 +966,9 @@ void SceneWidgetImpl::onFPSTestButtonClicked()
 
 void SceneWidgetImpl::doFPSTest()
 {
+    if(!glWidget){
+        return;
+    }
     isDoingFPSTest = true;
     isFPSTestCanceled = false;
     
@@ -927,7 +988,7 @@ void SceneWidgetImpl::doFPSTest()
                 AngleAxis(a, Vector3::UnitZ()) *
                 Translation3(-p) *
                 C);
-            repaint();
+            glWidget->repaint();
             QCoreApplication::processEvents();
             ++numFrames;
             if(isFPSTestCanceled){
@@ -941,7 +1002,7 @@ void SceneWidgetImpl::doFPSTest()
     fpsCounter = 0;
 
     builtinCameraTransform->setTransform(C);
-    update();
+    glWidget->update();
 
     QMessageBox::information(config, _("FPS Test Result"),
                              QString(_("FPS: %1 frames / %2 [s] = %3")).arg(numFrames).arg(time).arg(fps));
@@ -950,15 +1011,17 @@ void SceneWidgetImpl::doFPSTest()
 }
 
 
+/*
 void SceneWidget::setCursor(const QCursor cursor)
 {
-    impl->setCursor(cursor);
+    setCursor(cursor);
 }
+*/
 
 
 void SceneWidgetImpl::resetCursor()
 {
-    setCursor(isEditMode ? editModeCursor : defaultCursor);
+    self->setCursor(isEditMode ? editModeCursor : defaultCursor);
 }
 
 
@@ -1114,7 +1177,7 @@ void SceneWidgetImpl::updateLatestEvent(QKeyEvent* event)
 void SceneWidgetImpl::updateLatestEvent(int x, int y, int modifiers)
 {
     latestEvent.x_ = x;
-    latestEvent.y_ = height() - y - 1;
+    latestEvent.y_ = glWidget->height() - y - 1;
     latestEvent.modifiers_ = modifiers;
 }
 
@@ -1136,9 +1199,9 @@ void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
     bool isPickingVisualizationEnabled = pickingImageWindow && pickingImageWindow->isVisible();
     renderer->setPickingImageOutputEnabled(isPickingVisualizationEnabled);
 
-    makeCurrent();
+    glWidget->makeCurrent();
 
-    const int r = devicePixelRatio();
+    const int r = glWidget->devicePixelRatio();
     int px = r * latestEvent.x();
     int py = r * latestEvent.y();
     bool picked = renderer->pick(px, py);
@@ -1150,7 +1213,7 @@ void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
         }
     }
 
-    doneCurrent();
+    glWidget->doneCurrent();
 
     latestEvent.nodePath_.clear();
     latestEvent.pixelSizeRatio_ = 0.0;
@@ -1274,6 +1337,12 @@ bool SceneWidget::setSceneFocus(const SgNodePath& path)
 }
 
 
+void OpenGLWidget::keyPressEvent(QKeyEvent* event)
+{
+    impl->keyPressEvent(event);
+}
+
+
 void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
 {
     if(TRACE_FUNCTIONS){
@@ -1349,6 +1418,12 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
 }
 
 
+void OpenGLWidget::keyReleaseEvent(QKeyEvent* event)
+{
+    impl->keyReleaseEvent(event);
+}
+
+
 void SceneWidgetImpl::keyReleaseEvent(QKeyEvent* event)
 {
     if(TRACE_FUNCTIONS){
@@ -1383,6 +1458,12 @@ void SceneWidgetImpl::keyReleaseEvent(QKeyEvent* event)
     if(!handled){
         event->setAccepted(false);
     }
+}
+
+
+void OpenGLWidget::mousePressEvent(QMouseEvent* event)
+{
+    impl->mousePressEvent(event);
 }
 
 
@@ -1436,6 +1517,12 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
 }
 
 
+void OpenGLWidget::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    impl->mouseDoubleClickEvent(event);
+}
+
+
 void SceneWidgetImpl::mouseDoubleClickEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
@@ -1471,6 +1558,12 @@ void SceneWidgetImpl::mouseDoubleClickEvent(QMouseEvent* event)
 }
 
 
+void OpenGLWidget::mouseReleaseEvent(QMouseEvent* event)
+{
+    impl->mouseReleaseEvent(event);
+}
+
+
 void SceneWidgetImpl::mouseReleaseEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
@@ -1489,6 +1582,12 @@ void SceneWidgetImpl::mouseReleaseEvent(QMouseEvent* event)
     }
     
     dragMode = NO_DRAGGING;
+}
+
+
+void OpenGLWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    impl->mouseMoveEvent(event);
 }
 
 
@@ -1606,8 +1705,8 @@ void SceneWidgetImpl::updatePointerPosition()
             [&](SceneWidgetEditable* editable){ return editable->onPointerMoveEvent(latestEvent); });
 
         if(mouseMovedEditable){
-            if(!QWidget::hasFocus()){
-                QWidget::setFocus(Qt::MouseFocusReason);
+            if(!glWidget->hasFocus()){
+                glWidget->setFocus(Qt::MouseFocusReason);
             }
         }
         if(lastMouseMovedEditable != mouseMovedEditable){
@@ -1620,6 +1719,12 @@ void SceneWidgetImpl::updatePointerPosition()
             lastMouseMovedEditable = mouseMovedEditable;
         }
     }
+}
+
+
+void OpenGLWidget::wheelEvent(QWheelEvent* event)
+{
+    impl->wheelEvent(event);
 }
 
 
@@ -1677,15 +1782,15 @@ SignalProxy<void(bool isFocused)> SceneWidget::sigWidgetFocusChanged()
 }
 
 
-void SceneWidgetImpl::focusInEvent(QFocusEvent*)
+void OpenGLWidget::focusInEvent(QFocusEvent*)
 {
-    sigWidgetFocusChanged(true);
+    impl->sigWidgetFocusChanged(true);
 }
 
 
-void SceneWidgetImpl::focusOutEvent(QFocusEvent*)
+void OpenGLWidget::focusOutEvent(QFocusEvent*)
 {
-    sigWidgetFocusChanged(false);
+    impl->sigWidgetFocusChanged(false);
 }
 
 
@@ -2057,7 +2162,7 @@ void SceneWidgetImpl::translateBuiltinCameraView(const Vector3& dp_local)
 
 void SceneWidgetImpl::showViewModePopupMenu(const QPoint& globalPos)
 {
-    menuManager.setNewPopupMenu(this);
+    menuManager.setNewPopupMenu(self);
     
     sigContextMenuRequest(latestEvent, menuManager);
 
@@ -2070,7 +2175,7 @@ void SceneWidgetImpl::showViewModePopupMenu(const QPoint& globalPos)
 
 void SceneWidgetImpl::showEditModePopupMenu(const QPoint& globalPos)
 {
-    menuManager.setNewPopupMenu(this);
+    menuManager.setNewPopupMenu(self);
 
     int prevNumItems = 0;
 
@@ -2624,19 +2729,19 @@ QVBoxLayout* SceneWidget::configDialogVBox()
 
 bool SceneWidget::saveImage(const std::string& filename)
 {
-    return impl->saveImage(filename);
-}
-
-
-bool SceneWidgetImpl::saveImage(const std::string& filename)
-{
-    return grabFramebuffer().save(filename.c_str());
+    if(impl->glWidget){
+        return impl->glWidget->grabFramebuffer().save(filename.c_str());
+    }
+    return false;
 }
 
 
 QImage SceneWidget::getImage()
 {
-    return impl->grabFramebuffer();
+    if(impl->glWidget){
+        return impl->glWidget->grabFramebuffer();
+    }
+    return QImage();
 }
 
 
@@ -2648,8 +2753,10 @@ void SceneWidget::setScreenSize(int width, int height)
 
 void SceneWidgetImpl::setScreenSize(int width, int height)
 {
-    QRect r = self->geometry();
-    setGeometry((r.width() - width) / 2, (r.height() - height) / 2, width, height);
+    if(glWidget){
+        QRect r = self->geometry();
+        glWidget->setGeometry((r.width() - width) / 2, (r.height() - height) / 2, width, height);
+    }
 }
 
 
@@ -3419,6 +3526,11 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     upsideDownCheck.setChecked(false);
     upsideDownCheck.sigToggled().connect([=](bool on){ impl->onUpsideDownToggled(on); });
     hbox->addWidget(&upsideDownCheck);
+
+    auto reactivateButton = new PushButton("Reactivate");
+    hbox->addWidget(reactivateButton);
+    reactivateButton->sigClicked().connect([=](){ impl->self->deactivate(); impl->self->activate(); impl->update(); });
+
     hbox->addStretch();
     vbox->addLayout(hbox);
 

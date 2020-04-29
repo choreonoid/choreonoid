@@ -52,6 +52,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual bool initializeGL() override;
     virtual void flush() override;
+    virtual void clearGL() override;
     virtual void setViewport(int x, int y, int width, int height) override;
     virtual void updateViewportInformation(int x, int y, int width, int height) override;
 

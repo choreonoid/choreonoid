@@ -232,6 +232,12 @@ void ShaderProgram::initialize()
 }
 
 
+void ShaderProgram::release()
+{
+    glslProgram_->release();
+}
+
+
 void ShaderProgram::activate()
 {
     glslProgram_->use();
@@ -979,19 +985,16 @@ void PhongShadowLightingProgramImpl::initializeShadowInfo(GLSLProgram& glsl, int
 }
 
 
-void PhongShadowLightingProgram::activateShadowMapGenerationPass(int shadowIndex)
+void PhongShadowLightingProgram::release()
 {
-    if(shadowIndex >= impl->maxNumShadows){
-        impl->currentShadowIndex = impl->maxNumShadows - 1;
-    } else {
-        impl->currentShadowIndex = shadowIndex;
+    for(int i=0; i < impl->maxNumShadows; ++i){
+        auto& shadow = impl->shadowInfos[i];
+        glDeleteRenderbuffers(1, &shadow.frameBuffer);
+        glDeleteTextures(1, &shadow.depthTexture);
     }
-}
+    impl->shadowInfos.clear();
 
-
-void PhongShadowLightingProgram::activateMainRenderingPass()
-{
-    impl->currentShadowIndex = 0;
+    PhongLightingProgram::release();
 }
 
 
@@ -1014,6 +1017,22 @@ void PhongShadowLightingProgram::activate()
 }
 
     
+void PhongShadowLightingProgram::activateShadowMapGenerationPass(int shadowIndex)
+{
+    if(shadowIndex >= impl->maxNumShadows){
+        impl->currentShadowIndex = impl->maxNumShadows - 1;
+    } else {
+        impl->currentShadowIndex = shadowIndex;
+    }
+}
+
+
+void PhongShadowLightingProgram::activateMainRenderingPass()
+{
+    impl->currentShadowIndex = 0;
+}
+
+
 int PhongShadowLightingProgram::maxNumShadows() const
 {
     return impl->maxNumShadows;

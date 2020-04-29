@@ -27,6 +27,7 @@ public:
     virtual ~ShaderProgram();
     GLSLProgram& glslProgram(){ return *glslProgram_; }
     virtual void initialize();
+    virtual void release();
 
     /**
        This function is called once when the rendering starts
@@ -241,6 +242,7 @@ public:
     GLuint defaultFramebufferObject() const;
 
     virtual void initialize() override;
+    virtual void release() override;
     virtual void initializeFrameRendering() override;
     virtual void activate() override;
     virtual bool setLight(

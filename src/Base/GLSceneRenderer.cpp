@@ -131,6 +131,12 @@ SgGroup* GLSceneRenderer::scene()
 }
 
 
+void GLSceneRenderer::clearGL()
+{
+
+}
+
+
 void GLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 {
     if(SgImage* image = dynamic_cast<SgImage*>(update.path().front())){

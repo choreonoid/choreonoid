@@ -29,10 +29,13 @@ public:
     static void initializeClass(ExtensionManager* ext);
     static SignalProxy<void(SceneWidget*)> sigSceneWidgetCreated();
 
-    SceneWidget();
+    SceneWidget(QWidget* parent);
     ~SceneWidget();
 
     static void forEachInstance(SgNode* node, std::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function);
+
+    void activate();
+    void deactivate();
 
     SceneWidgetRoot* sceneRoot();
     SgGroup* scene();
@@ -112,7 +115,7 @@ public:
     //int setCursor(const QCursor cursor);
     //void releaseCursor(int cursorId);
 
-    void setCursor(const QCursor cursor);
+    //void setCursor(const QCursor cursor);
 
     Menu* contextMenu();
     void showContextMenu();
