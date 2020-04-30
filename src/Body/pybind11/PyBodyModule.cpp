@@ -41,12 +41,14 @@ PYBIND11_MODULE(Body, m)
         ;
 
     py::class_<BodyLoader, AbstractBodyLoader>(m, "BodyLoader")
+        .def(py::init<>())
         .def("load", (Body*(BodyLoader::*)(const string&))&BodyLoader::load)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
 
     py::class_<JointPath, shared_ptr<JointPath>>(m, "JointPath")
         .def(py::init<>())
+        .def_static("getCustomPath", &JointPath::getCustomPath)
         .def_property_readonly("numJoints", &JointPath::numJoints)
         .def("joint", &JointPath::joint)
         .def_property_readonly("baseLink", &JointPath::baseLink)
@@ -54,7 +56,7 @@ PYBIND11_MODULE(Body, m)
         .def("indexOf", &JointPath::indexOf)
         .def("customizeTarget", &JointPath::customizeTarget)
         .def_property_readonly("numIterations", &JointPath::numIterations)
-        .def("calcJacobian", &JointPath::calcJacobian)
+        .def("calcJacobian", [](JointPath& self, Eigen::Ref< Eigen::Matrix<double, -1, -1, Eigen::RowMajor> > out_J){ MatrixXd J; self.calcJacobian(J); out_J = J; })
         .def("calcInverseKinematics", (bool(JointPath::*)())&JointPath::calcInverseKinematics)
         .def("calcInverseKinematics", (bool(JointPath::*)(const Position&))&JointPath::calcInverseKinematics)
 
