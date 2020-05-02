@@ -743,10 +743,12 @@ bool MprControllerItemBase::Impl::interpretIfStatement(MprIfStatement* statement
         auto program = statement->lowerLevelProgram();
         setCurrent(program, program->begin(), next);
 
-    } else if(nextElseStatement){
+    } else {
         ++iterator;
-        auto program = nextElseStatement->lowerLevelProgram();
-        setCurrent(program, program->begin(), next);
+        if(nextElseStatement){
+            auto program = nextElseStatement->lowerLevelProgram();
+            setCurrent(program, program->begin(), next);
+        }
     }
 
     return true;
@@ -841,7 +843,7 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
     switch(stdx::get_variant_index(lhs)){
     case Int:
     {
-        int lhsValue = stdx::get<int>(lhs);
+        auto lhsValue = stdx::get<int>(lhs);
         if(rhsValueType == Int){
             pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<int>(rhs));
         } else if(rhsValueType == Double){
@@ -851,7 +853,7 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
     }
     case Double:
     {
-        int lhsValue = stdx::get<double>(lhs);
+        auto lhsValue = stdx::get<double>(lhs);
         if(rhsValueType == Int){
             pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<int>(rhs));
         } else if(rhsValueType == Double){
