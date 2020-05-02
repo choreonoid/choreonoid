@@ -245,7 +245,12 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
 
     self->updatePresetDirectories();
 
-    if(!selectFilePath(item->filePath())){
+    bool selected = false;
+    auto path = filesystem::path(item->filePath());
+    if(path.stem().string() == item->name()){
+        selected = selectFilePath(item->filePath());
+    }
+    if(!selected){
         self->selectFile(item->name());
     }
 
