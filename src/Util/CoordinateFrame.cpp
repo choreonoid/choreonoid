@@ -10,7 +10,7 @@ using namespace cnoid;
 CoordinateFrame::CoordinateFrame()
 {
     T_.setIdentity();
-    frameType_ = Any;
+    isGlobal_ = false;
 }
 
 
@@ -18,14 +18,14 @@ CoordinateFrame::CoordinateFrame(const GeneralId& id)
     : id_(id)
 {
     T_.setIdentity();
-    frameType_ = Any;
+    isGlobal_ = false;
 }
 
 
 CoordinateFrame::CoordinateFrame(const CoordinateFrame& org)
     : T_(org.T_),
       id_(org.id_),
-      frameType_(org.frameType_),
+      isGlobal_(org.isGlobal_),
       note_(org.note_)
 {
 
@@ -54,18 +54,6 @@ CoordinateFrameList* CoordinateFrame::ownerFrameList() const
 bool CoordinateFrame::read(const Mapping& archive)
 {
     if(id_.read(archive, "id")){
-        string type;
-        if(archive.read("frame_type", type)){
-            if(type == "global"){
-                frameType_ = Global;
-            } else if(type == "local"){
-                frameType_ = Local;
-            } else if(type == "offset"){
-                frameType_ = Offset;
-            } else {
-                frameType_ = Any;
-            }
-        }
         Vector3 v;
         if(cnoid::read(archive, "translation", v)){
             T_.translation() = v;
@@ -73,6 +61,7 @@ bool CoordinateFrame::read(const Mapping& archive)
         if(cnoid::read(archive, "rotation", v)){
             T_.linear() = rotFromRpy(radian(v));
         }
+        isGlobal_ = archive.get("is_global", false);
         archive.read("note", note_);
         return true;
     }
@@ -83,18 +72,12 @@ bool CoordinateFrame::read(const Mapping& archive)
 bool CoordinateFrame::write(Mapping& archive) const
 {
     if(id_.write(archive, "id")){
-        if(frameType_ != Any){
-            if(frameType_ == Global){
-                archive.write("frame_type", "global");
-            } else if(frameType_ == Local){
-                archive.write("frame_type", "local");
-            } else if(frameType_ == Offset){
-                archive.write("frame_type", "offset");
-            }
-        }
         archive.setDoubleFormat("%.9g");
         cnoid::write(archive, "translation", Vector3(T_.translation()));
         cnoid::write(archive, "rotation", degree(rpyFromRot(T_.linear())));
+        if(isGlobal_){
+            archive.write("is_global", true);
+        }
         if(!note_.empty()){
             archive.write("note", note_, DOUBLE_QUOTED);
         }

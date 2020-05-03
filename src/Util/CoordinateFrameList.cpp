@@ -4,7 +4,6 @@
 #include <fmt/format.h>
 #include <vector>
 #include <unordered_map>
-#include <bitset>
 #include "gettext.h"
 
 using namespace std;
@@ -16,15 +15,14 @@ namespace cnoid {
 class CoordinateFrameList::Impl
 {
 public:
-    bitset<4> frameTypeBitset;
     std::vector<CoordinateFramePtr> frames;
     unordered_map<GeneralId, CoordinateFramePtr, GeneralId::Hash> idToFrameMap;
     CoordinateFramePtr identityFrame;
+    int frameType;
     int idCounter;
     std::string name;
     
     Impl();
-    void enableFrameType(const std::string& type);
 };
 
 }
@@ -39,6 +37,7 @@ CoordinateFrameList::CoordinateFrameList()
 CoordinateFrameList::Impl::Impl()
 {
     identityFrame = new CoordinateFrame(0);
+    frameType = Base;
     idCounter = 1;
 }
 
@@ -51,6 +50,7 @@ CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org)
     for(auto& frame : org.impl->frames){
         append(frame->clone());
     }
+    impl->frameType = org.impl->frameType;
     impl->name = org.impl->name;
 }
 
@@ -61,15 +61,15 @@ Referenced* CoordinateFrameList::doClone(CloneMap* cloneMap) const
 }
 
 
-void CoordinateFrameList::setFrameTypeEnabled(int type)
+void CoordinateFrameList::setFrameType(int type)
 {
-    impl->frameTypeBitset.set(type);
+    impl->frameType = type;
 }
 
 
-bool CoordinateFrameList::isFrameTypeEnabled(int type) const
+int CoordinateFrameList::frameType() const
 {
-    return impl->frameTypeBitset[type];
+    return impl->frameType;
 }
 
 
@@ -245,20 +245,16 @@ bool CoordinateFrameList::read(const Mapping& archive)
         versionNode->throwException(format(_("Format version {0} is not supported."), version));
     }
 
-    string name;
-    if(archive.read("name", name)){
-        setName(name);
+    string symbol;
+    if(archive.read("name", symbol)){
+        setName(symbol);
     }
 
-    impl->frameTypeBitset.reset();
-    auto type = archive.find("frame_type");
-    if(type->isValid()){
-        if(type->isString()){
-            impl->enableFrameType(type->toString());
-        } else if(type->isListing()){
-            for(auto& node : *type->toListing()){
-                impl->enableFrameType(node->toString());
-            }
+    if(archive.read("frame_type", symbol)){
+        if(symbol == "base"){
+            impl->frameType = Base;
+        } else if(symbol == "offset"){
+            impl->frameType = Offset;
         }
     }
 
@@ -279,18 +275,6 @@ bool CoordinateFrameList::read(const Mapping& archive)
 }
 
 
-void CoordinateFrameList::Impl::enableFrameType(const std::string& type)
-{
-    if(type == "global"){
-        frameTypeBitset.set(CoordinateFrame::Global);
-    } else if(type == "local"){
-        frameTypeBitset.set(CoordinateFrame::Local);
-    } else if(type == "offset"){
-        frameTypeBitset.set(CoordinateFrame::Offset);
-    }
-}
-
-
 bool CoordinateFrameList::write(Mapping& archive) const
 {
     archive.write("type", "CoordinateFrameList");
@@ -298,22 +282,10 @@ bool CoordinateFrameList::write(Mapping& archive) const
     if(!name().empty()){
         archive.write("name", name());
     }
-
-    ListingPtr types = new Listing;
-    if(isFrameTypeEnabled(CoordinateFrame::Global)){
-        types->append("global");
-    }
-    if(isFrameTypeEnabled(CoordinateFrame::Local)){
-        types->append("local");
-    }
-    if(isFrameTypeEnabled(CoordinateFrame::Offset)){
-        types->append("offset");
-    }
-    if(types->size() == 1){
-        archive.write("frame_type", types->at(0)->toString());
-    } else if(types->size() >= 2){
-        types->setFlowStyle();
-        archive.insert("frame_type", types);
+    if(impl->frameType == Base){
+        archive.write("frame_type", "base");
+    } else if(impl->frameType == Offset){
+        archive.write("frame_type", "offset");
     }
 
     if(!impl->frames.empty()){

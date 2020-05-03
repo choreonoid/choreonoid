@@ -64,7 +64,6 @@ LinkKinematicsKit::Impl::Impl(Link* link)
     }
     defaultBaseFrame = new CoordinateFrame;
     defaultOffsetFrame = new CoordinateFrame;
-    defaultOffsetFrame->setFrameType(CoordinateFrame::Offset);
 }
 
 
@@ -97,7 +96,6 @@ LinkKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
 
     defaultBaseFrame = new CoordinateFrame;
     defaultOffsetFrame = new CoordinateFrame;
-    defaultOffsetFrame->setFrameType(CoordinateFrame::Offset);
 }
 
 
@@ -379,7 +377,7 @@ Position LinkKinematicsKit::globalBasePosition() const
 {
     auto casted = const_cast<LinkKinematicsKit*>(this);
     auto baseFrame = casted->currentBaseFrame();
-    if(baseFrame->frameType() == CoordinateFrame::Global){
+    if(baseFrame->isGlobal()){
         return baseFrame->T();
     } else {
         return casted->baseLink()->Ta() * baseFrame->T();
