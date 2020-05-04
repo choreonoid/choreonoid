@@ -94,6 +94,7 @@ public:
     LinkKinematicsKitPtr kinematicsKit;
     MprVariableSetPtr variables;
 
+    bool isControlActive;
     typedef MprProgram::iterator Iterator;
     Iterator iterator;
 
@@ -179,6 +180,7 @@ MprControllerItemBase::MprControllerItemBase(const MprControllerItemBase& org)
 MprControllerItemBase::Impl::Impl(MprControllerItemBase* self)
     : self(self)
 {
+    isControlActive = false;
     speedRatio = 1.0;
     currentLog = new MprControllerLog;
 }
@@ -258,10 +260,13 @@ double MprControllerItemBase::timeStep() const
 
 bool MprControllerItemBase::initialize(ControllerIO* io)
 {
+    impl->isControlActive = false;
     if(impl->initialize(io)){
-        return onInitialize(io);
+        if(onInitialize(io)){
+            impl->isControlActive = true;
+        }
     }
-    return false;
+    return impl->isControlActive;
 }    
 
 
@@ -562,18 +567,22 @@ bool MprControllerItemBase::control()
 
 bool MprControllerItemBase::Impl::control()
 {
-    bool isActive = false;
+    if(!isControlActive){
+        return false;
+    }
+    
     bool stateChanged = false;
 
     while(true){
+        bool isProcessorActive = false;
         while(!processorStack.empty()){
-            isActive = processorStack.back()->control();
-            if(isActive){
+            isProcessorActive = processorStack.back()->control();
+            if(isProcessorActive){
                 break;
             }
             processorStack.pop_back();
         }
-        if(isActive){
+        if(isProcessorActive){
             break;
         }
 
@@ -590,6 +599,7 @@ bool MprControllerItemBase::Impl::control()
             hasNextStatement = (iterator != currentProgram->end());
         }
         if(!hasNextStatement){
+            isControlActive = false;
             break;
         }
 
@@ -608,10 +618,9 @@ bool MprControllerItemBase::Impl::control()
             continue;
         }
         auto& interpret = p->second;
-        bool result = interpret(statement);
+        isControlActive = interpret(statement);
 
-        if(!result){
-            isActive = false;
+        if(!isControlActive){
             break;
         }
     }
@@ -620,7 +629,7 @@ bool MprControllerItemBase::Impl::control()
         io->outputLog(new MprControllerLog(*currentLog));
     }
         
-    return isActive;
+    return isControlActive;
 }
 
 
