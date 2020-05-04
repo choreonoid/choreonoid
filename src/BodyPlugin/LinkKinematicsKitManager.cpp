@@ -263,7 +263,7 @@ bool LinkKinematicsKitManager::Impl::updateCoordinateFramesOf(LinkKinematicsKit*
         } else {
             if(!defaultBaseFrames){
                 defaultBaseFrames = new CoordinateFrameList;
-                defaultBaseFrames->setFrameTypeEnabled(CoordinateFrame::Local);
+                defaultBaseFrames->setFrameType(CoordinateFrameList::Base);
             }
             newBaseFrames = defaultBaseFrames;
         }
@@ -281,7 +281,7 @@ bool LinkKinematicsKitManager::Impl::updateCoordinateFramesOf(LinkKinematicsKit*
         } else {
             if(!defaultOffsetFrames){
                 defaultOffsetFrames = new CoordinateFrameList;
-                defaultOffsetFrames->setFrameTypeEnabled(CoordinateFrame::Offset);
+                defaultOffsetFrames->setFrameType(CoordinateFrameList::Offset);
             }
             newOffsetFrames = defaultOffsetFrames;
         }
@@ -303,13 +303,12 @@ void LinkKinematicsKitManager::Impl::findFrameListItems()
     for(auto& item : items){
         auto frameList = item->frameList();
         if(!baseFrames){
-            if(frameList->isFrameTypeEnabled(CoordinateFrame::Global) ||
-               frameList->isFrameTypeEnabled(CoordinateFrame::Local)){
+            if(frameList->frameType() == CoordinateFrameList::Base){
                 baseFrames = frameList;
             }
         }
         if(!offsetFrames){
-            if(frameList->isFrameTypeEnabled(CoordinateFrame::Offset)){
+            if(frameList->frameType() == CoordinateFrameList::Offset){
                 offsetFrames = frameList;
             }
         }
@@ -337,12 +336,11 @@ void LinkKinematicsKitManager::Impl::onFrameListItemAddedOrUpdated
     if(isTargetFrameList){
         bool updated = false;
         auto frameList = frameListItem->frameList();
-        if(frameList->isFrameTypeEnabled(CoordinateFrame::Global) ||
-           frameList->isFrameTypeEnabled(CoordinateFrame::Local)){
+        if(frameList->frameType() == CoordinateFrameList::Base){
             baseFrames = frameList;
             updated = true;
         }
-        if(frameList->isFrameTypeEnabled(CoordinateFrame::Offset)){
+        if(frameList->frameType() == CoordinateFrameList::Offset){
             offsetFrames = frameList;
             updated = true;
         }

@@ -19,9 +19,10 @@ public:
     CoordinateFrameList(const CoordinateFrameList& org);
     ~CoordinateFrameList();
 
-    void setFrameTypeEnabled(int type);
-    bool isFrameTypeEnabled(int type) const;
-
+    enum FrameType { Base, Offset };
+    void setFrameType(int type);
+    int frameType() const;
+    
     const std::string& name() const;
     void setName(const std::string& name);
     

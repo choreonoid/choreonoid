@@ -1640,6 +1640,7 @@ bool BodyItem::Impl::store(Archive& archive)
     BodyState::Data& initialJointPositions = initialState.data(BodyState::JOINT_POSITIONS);
     if(!initialJointPositions.empty()){
         qs = archive.createFlowStyleListing("initialJointPositions");
+        qs->setDoubleFormat("%g");
         for(size_t i=0; i < initialJointPositions.size(); ++i){
             qs->append(initialJointPositions[i], 10, n);
         }

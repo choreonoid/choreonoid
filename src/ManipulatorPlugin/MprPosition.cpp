@@ -241,15 +241,6 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
     } else {
         T_base = kinematicsKit->baseLink()->Ta() * baseFrame->T();
     }
-    /*
-    if(baseFrameType_ == WorldFrame){
-        auto worldFrame = kinematicsKit->worldFrame(baseFrameId_);
-        T_base = worldFrame->T();
-    } else {
-        auto bodyFrame = kinematicsKit->bodyFrame(baseFrameId_);
-        T_base = kinematicsKit->baseLink()->Ta() * bodyFrame->T();
-    }
-    */
     
     Position T_offset = kinematicsKit->offsetFrame(offsetFrameId_)->T();
     Position Ta_end = T_base * T * T_offset.inverse(Eigen::Isometry);

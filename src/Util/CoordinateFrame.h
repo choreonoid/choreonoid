@@ -32,12 +32,8 @@ public:
     const GeneralId& id() const { return id_; }
     static GeneralId defaultFrameId() { return GeneralId(0); }
 
-    enum FrameType { Any, Global, Local, Offset };
-    void setFrameType(int type) { frameType_ = type; }
-    int frameType() const { return frameType_; }
-    bool isGlobal() const { return frameType_ == Global; }
-    bool isLocal() const { return frameType_ == Local; }
-    bool isOffset() const { return frameType_ == Offset; }
+    void setGloal(bool on) { isGlobal_ = on; }
+    bool isGlobal() const { return isGlobal_; }
 
     const Position& T() const { return T_; }
     Position& T() { return T_; }
@@ -53,13 +49,10 @@ public:
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
 
-protected:
-    //virtual Referenced* doClone(CloneMap* cloneMap) const override;
-
 private:
     Position T_;
     GeneralId id_;
-    int frameType_;
+    bool isGlobal_;
     std::string note_;
     weak_ref_ptr<CoordinateFrameList> ownerFrameList_;
 

@@ -16,8 +16,8 @@ public:
     virtual int getCurrentConfigurationType() const = 0;
 
     // This function returns a set of IDs corresponding to the current state
-    virtual std::vector<int> getCurrentConfigurationTypes() const = 0;
-    
+    virtual std::vector<int> getCurrentConfigurationTypes(double precision = 1.0e-6) const = 0;
+
     virtual std::vector<std::string> getConfigurationTargetNames() const = 0;
     virtual std::vector<std::string> getConfigurationStateNames(int id) const = 0;
     virtual void setPreferredConfigurationType(int id) = 0;
