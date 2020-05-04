@@ -3,6 +3,7 @@
 
 #include "CloneableReferenced.h"
 #include "CoordinateFrame.h"
+#include "Signal.h"
 #include <string>
 #include "exportdecl.h"
 
@@ -42,6 +43,9 @@ public:
     bool insert(int index, CoordinateFrame* frame);
     bool append(CoordinateFrame* frame);
     void removeAt(int index);
+
+    SignalProxy<void(int index)> sigFrameAdded();
+    SignalProxy<void(int index, CoordinateFrame* frame)> sigFrameRemoved();
 
     /**
        @return true if the id is successfully changed. false if the id is not

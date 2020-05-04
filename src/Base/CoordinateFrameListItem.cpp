@@ -1,4 +1,5 @@
 #include "CoordinateFrameListItem.h"
+#include "CoordinateFrameItem.h"
 #include "ItemManager.h"
 #include "LocatableItem.h"
 #include "PutPropertyFunction.h"
@@ -21,10 +22,17 @@ namespace cnoid {
 class CoordinateFrameListItem::Impl
 {
 public:
+    CoordinateFrameListItem* self;
     CoordinateFrameListPtr frameList;
+    int itemizationMode;
+    ScopedConnectionSet frameListConnections;
 
-    Impl();
-    Impl(const Impl& org);
+    Impl(CoordinateFrameListItem* self);
+    Impl(CoordinateFrameListItem* self, const Impl& org);
+    void setItemizationMode(int mode);
+    Item* findFrameItemAt(int index);
+    void onFrameAdded(int index);
+    void onFrameRemoved(int index);
 };
 
 }
@@ -46,26 +54,30 @@ CoordinateFrameListItem::sigInstanceAddedOrUpdated()
 
 CoordinateFrameListItem::CoordinateFrameListItem()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
-CoordinateFrameListItem::Impl::Impl()
+CoordinateFrameListItem::Impl::Impl(CoordinateFrameListItem* self)
+    : self(self)
 {
     frameList = new CoordinateFrameList;
+    itemizationMode = NoItemization;
 }
 
 
 CoordinateFrameListItem::CoordinateFrameListItem(const CoordinateFrameListItem& org)
     : Item(org)
 {
-    impl = new Impl(*org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
-CoordinateFrameListItem::Impl::Impl(const Impl& org)
+CoordinateFrameListItem::Impl::Impl(CoordinateFrameListItem* self, const Impl& org)
+    : self(self)
 {
     frameList = new CoordinateFrameList(*org.frameList);
+    itemizationMode = org.itemizationMode;
 }
 
 
@@ -84,6 +96,80 @@ Item* CoordinateFrameListItem::doDuplicate() const
 void CoordinateFrameListItem::onPositionChanged()
 {
     ::sigInstanceAddedOrUpdated_(this);
+}
+
+
+int CoordinateFrameListItem::itemizationMode() const
+{
+    return impl->itemizationMode;
+}
+
+
+void CoordinateFrameListItem::setItemizationMode(int mode)
+{
+    impl->setItemizationMode(mode);
+}
+
+
+void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
+{
+    if(mode != itemizationMode){
+        frameListConnections.disconnect();
+        if(mode == SubItemization){
+            frameListConnections.add(
+                frameList->sigFrameAdded().connect(
+                    [&](int index){ onFrameAdded(index); }));
+            frameListConnections.add(
+                frameList->sigFrameRemoved().connect(
+                    [&](int index, CoordinateFrame*){ onFrameRemoved(index); }));
+        }
+        itemizationMode = mode;
+    }
+}
+
+
+Item* CoordinateFrameListItem::Impl::findFrameItemAt(int index)
+{
+    CoordinateFrameItem* frameItem = nullptr;
+    int childIndex = 0;
+    Item* childItem = self->childItem();
+    while(childItem){
+        frameItem = dynamic_cast<CoordinateFrameItem*>(childItem);
+        if(!frameItem){
+            continue;
+        }
+        if(childIndex == index){
+            break;
+        }
+        ++childIndex;
+        childItem = childItem->nextItem();
+    }
+    return frameItem;
+}
+
+
+void CoordinateFrameListItem::Impl::onFrameAdded(int index)
+{
+    auto frame = frameList->frameAt(index);
+    auto newFrameItem = new CoordinateFrameItem;
+    newFrameItem->setFrameId(frame->id());
+    newFrameItem->setName(frame->id().label());
+    newFrameItem->setSubItemAttributes();
+    self->insertChild(findFrameItemAt(index), newFrameItem);
+}
+
+
+void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
+{
+    if(auto frameItem = findFrameItemAt(index)){
+        frameItem->detachFromParentItem();
+    }
+}    
+
+
+bool CoordinateFrameListItem::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
+{
+    return true;
 }
 
 
@@ -116,13 +202,32 @@ void CoordinateFrameListItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool CoordinateFrameListItem::store(Archive& archive)
 {
-    return impl->frameList->write(archive);
+    if(impl->itemizationMode == SubItemization){
+        archive.write("itemization", "sub");
+    } else if(impl->itemizationMode == IndependentItemization){
+        archive.write("itemization", "independent");
+    }
+    bool stored = true;
+    if(impl->itemizationMode != IndependentItemization){
+        stored = impl->frameList->write(archive);
+    }
+    return stored;
 }
 
 
 bool CoordinateFrameListItem::restore(const Archive& archive)
 {
-    impl->frameList->resetIdCounter();
-    impl->frameList->read(archive);
+    string mode;
+    if(archive.read("itemization", mode)){
+        if(mode == "sub"){
+            setItemizationMode(SubItemization);
+        } else if(mode == "independent"){
+            setItemizationMode(IndependentItemization);
+        }
+    }
+    if(impl->itemizationMode != IndependentItemization){
+        impl->frameList->resetIdCounter();
+        impl->frameList->read(archive);
+    }
     return true;
 }

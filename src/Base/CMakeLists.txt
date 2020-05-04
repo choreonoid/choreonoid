@@ -87,6 +87,7 @@ set(sources
   Vector3SeqItem.cpp
   ReferencedObjectSeqItem.cpp
   CoordinateFrameListItem.cpp
+  CoordinateFrameItem.cpp
   ExtCommandItem.cpp
   AbstractTextItem.cpp
   ScriptItem.cpp
@@ -205,7 +206,7 @@ set(headers
   Vector3SeqItem.h
   ReferencedObjectSeqItem.h
   CoordinateFrameListItem.h
-  #CoordinateFrameListSuiteItem.h
+  CoordinateFrameItem.h
   ExtCommandItem.h
   AbstractTextItem.h
   ScriptItem.h

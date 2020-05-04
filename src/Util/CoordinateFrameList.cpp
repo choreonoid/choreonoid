@@ -21,6 +21,8 @@ public:
     int frameType;
     int idCounter;
     std::string name;
+    Signal<void(int index)> sigFrameAdded;
+    Signal<void(int index, CoordinateFrame* frame)> sigFrameRemoved;
     
     Impl();
 };
@@ -97,9 +99,14 @@ void CoordinateFrameList::clear()
     for(auto& frame : impl->frames){
         frame->ownerFrameList_.reset();
     }
+    vector<CoordinateFramePtr> tmpFrames(impl->frames);
     impl->frames.clear();
     impl->idToFrameMap.clear();
     impl->idCounter = 1;
+
+    for(size_t i=0; i < tmpFrames.size(); ++i){
+        impl->sigFrameRemoved(i, tmpFrames[i]);
+    }
 }
 
 
@@ -162,6 +169,8 @@ bool CoordinateFrameList::insert(int index, CoordinateFrame* frame)
         index = numFrames();
     }
     impl->frames.insert(impl->frames.begin() + index, frame);
+
+    impl->sigFrameAdded(index);
     
     return true;
 }
@@ -178,10 +187,24 @@ void CoordinateFrameList::removeAt(int index)
     if(index >= numFrames()){
         return;
     }
-    auto frame_ = impl->frames[index];
+    CoordinateFramePtr frame_ = impl->frames[index];
     frame_->ownerFrameList_.reset();
     impl->idToFrameMap.erase(frame_->id());
     impl->frames.erase(impl->frames.begin() + index);
+
+    impl->sigFrameRemoved(index, frame_);
+}
+
+
+SignalProxy<void(int index)> CoordinateFrameList::sigFrameAdded()
+{
+    return impl->sigFrameAdded;
+}
+
+
+SignalProxy<void(int index, CoordinateFrame* frame)> CoordinateFrameList::sigFrameRemoved()
+{
+    return impl->sigFrameRemoved;
 }
 
 

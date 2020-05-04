@@ -20,6 +20,10 @@ public:
     CoordinateFrameListItem(const CoordinateFrameListItem& org);
     virtual ~CoordinateFrameListItem();
 
+    enum ItemizationMode { NoItemization, SubItemization, IndependentItemization };
+    int itemizationMode() const;
+    void setItemizationMode(int mode);
+
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;
 
@@ -31,6 +35,7 @@ public:
 protected:
     virtual Item* doDuplicate() const override;
     virtual void onPositionChanged() override;
+    virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation) override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
