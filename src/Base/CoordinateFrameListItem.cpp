@@ -6,10 +6,12 @@
 #include "Archive.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/ConnectionSet>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -26,13 +28,18 @@ public:
     CoordinateFrameListPtr frameList;
     int itemizationMode;
     ScopedConnectionSet frameListConnections;
+    std::function<void(CoordinateFrameItem* item)> newFrameItemCallback;
 
     Impl(CoordinateFrameListItem* self);
     Impl(CoordinateFrameListItem* self, const Impl& org);
     void setItemizationMode(int mode);
+    void updateFrameItems();
+    CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
+    void updateFrameAttribute(CoordinateFrameItem* item, CoordinateFrame* frame);
     Item* findFrameItemAt(int index);
     void onFrameAdded(int index);
     void onFrameRemoved(int index);
+    void onFrameAttributeChanged(int index);
 };
 
 }
@@ -99,6 +106,12 @@ void CoordinateFrameListItem::onPositionChanged()
 }
 
 
+void CoordinateFrameListItem::setNewFrameItemCallback(std::function<void(CoordinateFrameItem* item)> callback)
+{
+    impl->newFrameItemCallback = callback;
+}
+
+
 int CoordinateFrameListItem::itemizationMode() const
 {
     return impl->itemizationMode;
@@ -122,40 +135,85 @@ void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
             frameListConnections.add(
                 frameList->sigFrameRemoved().connect(
                     [&](int index, CoordinateFrame*){ onFrameRemoved(index); }));
+            frameListConnections.add(
+                frameList->sigFrameAttributeChanged().connect(
+                    [&](int index){ onFrameAttributeChanged(index); }));
         }
         itemizationMode = mode;
     }
 }
 
 
+void CoordinateFrameListItem::updateFrameItems()
+{
+    impl->updateFrameItems();
+}
+
+
+void CoordinateFrameListItem::Impl::updateFrameItems()
+{
+    if(itemizationMode == NoItemization){
+        return;
+    }
+
+    // clear existing frame items
+    for(auto& item : self->childItems<CoordinateFrameItem>()){
+        item->detachFromParentItem();
+    }
+
+    const int numFrames = frameList->numFrames();
+    for(int i=0; i < numFrames; ++i){
+        self->addChildItem(createFrameItem(frameList->frameAt(i)));
+    }
+}
+
+
+CoordinateFrameItem* CoordinateFrameListItem::Impl::createFrameItem(CoordinateFrame* frame)
+{
+    auto item = new CoordinateFrameItem;
+    updateFrameAttribute(item, frame);
+    if(itemizationMode == SubItemization){
+        item->setSubItemAttributes();
+    } else if(itemizationMode == IndependentItemization){
+        item->setAttribute(Item::Attached);
+    }
+    if(newFrameItemCallback){
+        newFrameItemCallback(item);
+    }
+    return item;
+}
+    
+
+void CoordinateFrameListItem::Impl::updateFrameAttribute
+(CoordinateFrameItem* item, CoordinateFrame* frame)
+{
+    item->setFrameId(frame->id());
+    item->setName(format("{0}: {1}", frame->id().label(), frame->note()));
+}
+
+
 Item* CoordinateFrameListItem::Impl::findFrameItemAt(int index)
 {
-    CoordinateFrameItem* frameItem = nullptr;
     int childIndex = 0;
     Item* childItem = self->childItem();
     while(childItem){
-        frameItem = dynamic_cast<CoordinateFrameItem*>(childItem);
-        if(!frameItem){
-            continue;
+        if(dynamic_cast<CoordinateFrameItem*>(childItem)){
+            if(childIndex == index){
+                break;
+            }
+            ++childIndex;
         }
-        if(childIndex == index){
-            break;
-        }
-        ++childIndex;
         childItem = childItem->nextItem();
     }
-    return frameItem;
+    return childItem;
 }
 
 
 void CoordinateFrameListItem::Impl::onFrameAdded(int index)
 {
     auto frame = frameList->frameAt(index);
-    auto newFrameItem = new CoordinateFrameItem;
-    newFrameItem->setFrameId(frame->id());
-    newFrameItem->setName(frame->id().label());
-    newFrameItem->setSubItemAttributes();
-    self->insertChild(findFrameItemAt(index), newFrameItem);
+    auto item = createFrameItem(frame);
+    self->insertChild(findFrameItemAt(index), item);
 }
 
 
@@ -164,7 +222,15 @@ void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
     if(auto frameItem = findFrameItemAt(index)){
         frameItem->detachFromParentItem();
     }
-}    
+}
+
+
+void CoordinateFrameListItem::Impl::onFrameAttributeChanged(int index)
+{
+    if(auto item = dynamic_cast<CoordinateFrameItem*>(findFrameItemAt(index))){
+        updateFrameAttribute(item, frameList->frameAt(index));
+    }
+}
 
 
 bool CoordinateFrameListItem::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
@@ -182,6 +248,30 @@ CoordinateFrameList* CoordinateFrameListItem::frameList()
 const CoordinateFrameList* CoordinateFrameListItem::frameList() const
 {
     return impl->frameList;
+}
+
+
+void CoordinateFrameListItem::useAsBaseFrames()
+{
+    impl->frameList->setFrameType(CoordinateFrameList::Base);
+}
+
+
+void CoordinateFrameListItem::useAsOffsetFrames()
+{
+    impl->frameList->setFrameType(CoordinateFrameList::Offset);
+}
+
+
+bool CoordinateFrameListItem::isForBaseFrames() const
+{
+    return impl->frameList->isForBaseFrames();
+}
+
+
+bool CoordinateFrameListItem::isForOffsetFrames() const
+{
+    return impl->frameList->isForOffsetFrames();
 }
 
 

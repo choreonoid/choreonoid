@@ -21,8 +21,10 @@ public:
     ~CoordinateFrameList();
 
     enum FrameType { Base, Offset };
-    void setFrameType(int type);
-    int frameType() const;
+    void setFrameType(int type) { frameType_ = type; }
+    int frameType() const { return frameType_; }
+    bool isForBaseFrames() const { return frameType_ == Base; }
+    bool isForOffsetFrames() const { return frameType_ == Offset; }
     
     const std::string& name() const;
     void setName(const std::string& name);
@@ -46,6 +48,10 @@ public:
 
     SignalProxy<void(int index)> sigFrameAdded();
     SignalProxy<void(int index, CoordinateFrame* frame)> sigFrameRemoved();
+    SignalProxy<void(int index)> sigFramePositionChanged();
+    SignalProxy<void(int index)> sigFrameAttributeChanged();
+    void notifyFramePositionChange(int index);
+    void notifyFrameAttributeChange(int index);
 
     /**
        @return true if the id is successfully changed. false if the id is not
@@ -69,6 +75,7 @@ protected:
 private:
     class Impl;
     Impl* impl;
+    int frameType_;
 };
 
 typedef ref_ptr<CoordinateFrameList> CoordinateFrameListPtr;

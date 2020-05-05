@@ -43,8 +43,8 @@ public:
     void setFrameList(CoordinateFrameList* frames);
     bool isValid() const;
     int numFrames() const;
-    CoordinateFrame* frameAtRow(int row);
     int rowOfFrame(CoordinateFrame* frame) const;
+    CoordinateFrame* frameAt(const QModelIndex& index) const;
     virtual int rowCount(const QModelIndex& parent) const override;
     virtual int columnCount(const QModelIndex& parent) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
@@ -164,19 +164,6 @@ int FrameListModel::numFrames() const
 }
 
 
-CoordinateFrame* FrameListModel::frameAtRow(int row)
-{
-    if(isDefaultFrameEnabled_){
-        if(row == 0){
-            return defaultFrame;
-        }
-        return frames->frameAt(row - 1);
-    } else {
-        return frames->frameAt(row);
-    }
-}
-
-
 int FrameListModel::rowOfFrame(CoordinateFrame* frame) const
 {
     if(frames && frame != defaultFrame){
@@ -190,6 +177,23 @@ int FrameListModel::rowOfFrame(CoordinateFrame* frame) const
 }
 
 
+CoordinateFrame* FrameListModel::frameAt(const QModelIndex& index) const
+{
+    if(!index.isValid()){
+        return nullptr;
+    }
+    int row = index.row();
+    if(isDefaultFrameEnabled_){
+        if(row == 0){
+            return defaultFrame;
+        }
+        return frames->frameAt(row - 1);
+    } else {
+        return frames->frameAt(row);
+    }
+}
+        
+    
 int FrameListModel::rowCount(const QModelIndex& parent) const
 {
     int n = 0;
@@ -241,8 +245,7 @@ QModelIndex FrameListModel::index(int row, int column, const QModelIndex& parent
         return QModelIndex();
     }
     if(row < numFrames()){
-        auto frame = const_cast<FrameListModel*>(this)->frameAtRow(row);
-        return createIndex(row, column, frame);
+        return createIndex(row, column);
     }
     return QModelIndex();
 }
@@ -260,14 +263,14 @@ Qt::ItemFlags FrameListModel::flags(const QModelIndex& index) const
 }
 
 
+
+
 QVariant FrameListModel::data(const QModelIndex& index, int role) const
 {
-    auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
-
-    if(!frame || !index.isValid()){
+    auto frame = frameAt(index);
+    if(!frame){
         return QVariant();
     }
-
     int column = index.column();
     if(role == Qt::DisplayRole || role == Qt::EditRole){
         if(column == IdColumn){
@@ -301,10 +304,12 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
 bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if(index.isValid() && role == Qt::EditRole){
-        auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
-        if(frame == defaultFrame){
+        auto frameIndex = index.internalId();
+        if(frameIndex < 0){
             return false;
         }
+        bool changed = false;
+        auto frame = frames->frameAt(frameIndex);
         int column = index.column();
         if(column == IdColumn){
             bool isInt;
@@ -315,10 +320,16 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
             } else {
                 frames->resetId(frame, stringId.toStdString());
             }
-            Q_EMIT dataChanged(index, index, {role});
+            changed = true;
+            
         } else if(column == NoteColumn){
             frame->setNote(value.toString().toStdString());
+            changed = true;
+        }
+        
+        if(changed){
             Q_EMIT dataChanged(index, index, {role});
+            frames->notifyFrameAttributeChange(frameIndex);
         }
     }
     return false;
@@ -391,16 +402,12 @@ QWidget* CustomizedItemDelegate::createEditor
 (QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     QWidget* editor = nullptr;
-    
-    auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
-    
     switch(index.column()){
     case IdColumn:
     default:
         editor = QStyledItemDelegate::createEditor(parent, option, index);
         break;
     }
-
     return editor;
 }
 
@@ -645,16 +652,14 @@ void CoordinateFrameListView::Impl::selectionChanged
     if(indexes.empty()){
         startExternalPositionEditing(nullptr);
     } else {
-        auto frame = static_cast<CoordinateFrame*>(indexes.front().internalPointer());
-        startExternalPositionEditing(frame);
+        startExternalPositionEditing(frameListModel->frameAt(indexes.front()));
     }
 }
 
 
 void CoordinateFrameListView::onTableItemClicked(const QModelIndex& index)
 {
-    auto frame = static_cast<CoordinateFrame*>(index.internalPointer());
-    impl->startExternalPositionEditing(frame);
+    impl->startExternalPositionEditing(impl->frameListModel->frameAt(index));
 }
 
 
@@ -723,7 +728,7 @@ bool CoordinateFrameListView::Impl::isEditable() const
 bool CoordinateFrameListView::Impl::setPosition(const Position& T)
 {
     if(frameBeingEditedOutside){
-        frameBeingEditedOutside->T() = T;
+        frameBeingEditedOutside->setPosition(T);
         frameListModel->notifyFramePositionUpdate(frameBeingEditedOutside);
         sigPositionChanged_(T);
         return true;

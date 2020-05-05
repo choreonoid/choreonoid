@@ -36,8 +36,6 @@ public:
     bool isGlobal() const { return isGlobal_; }
 
     const Position& T() const { return T_; }
-    Position& T() { return T_; }
-
     const Position& position() const { return T_; }
     void setPosition(const Position& T) { T_ = T; }
 

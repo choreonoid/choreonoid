@@ -302,15 +302,11 @@ void LinkKinematicsKitManager::Impl::findFrameListItems()
     auto items = bodyItem->descendantItems<CoordinateFrameListItem>();
     for(auto& item : items){
         auto frameList = item->frameList();
-        if(!baseFrames){
-            if(frameList->frameType() == CoordinateFrameList::Base){
-                baseFrames = frameList;
-            }
+        if(!baseFrames && frameList->isForBaseFrames()){
+            baseFrames = frameList;
         }
-        if(!offsetFrames){
-            if(frameList->frameType() == CoordinateFrameList::Offset){
-                offsetFrames = frameList;
-            }
+        if(!offsetFrames && frameList->isForOffsetFrames()){
+            offsetFrames = frameList;
         }
         if(baseFrames && offsetFrames){
             break;
@@ -336,11 +332,11 @@ void LinkKinematicsKitManager::Impl::onFrameListItemAddedOrUpdated
     if(isTargetFrameList){
         bool updated = false;
         auto frameList = frameListItem->frameList();
-        if(frameList->frameType() == CoordinateFrameList::Base){
+        if(frameList->isForBaseFrames()){
             baseFrames = frameList;
             updated = true;
         }
-        if(frameList->frameType() == CoordinateFrameList::Offset){
+        if(frameList->isForOffsetFrames()){
             offsetFrames = frameList;
             updated = true;
         }

@@ -18,11 +18,12 @@ public:
     std::vector<CoordinateFramePtr> frames;
     unordered_map<GeneralId, CoordinateFramePtr, GeneralId::Hash> idToFrameMap;
     CoordinateFramePtr identityFrame;
-    int frameType;
     int idCounter;
     std::string name;
     Signal<void(int index)> sigFrameAdded;
     Signal<void(int index, CoordinateFrame* frame)> sigFrameRemoved;
+    Signal<void(int index)> sigFramePositionChanged;
+    Signal<void(int index)> sigFrameAttributeChanged;
     
     Impl();
 };
@@ -33,13 +34,13 @@ public:
 CoordinateFrameList::CoordinateFrameList()
 {
     impl = new Impl;
+    frameType_ = Base;
 }
 
 
 CoordinateFrameList::Impl::Impl()
 {
     identityFrame = new CoordinateFrame(0);
-    frameType = Base;
     idCounter = 1;
 }
 
@@ -52,26 +53,15 @@ CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org)
     for(auto& frame : org.impl->frames){
         append(frame->clone());
     }
-    impl->frameType = org.impl->frameType;
     impl->name = org.impl->name;
+
+    frameType_ = org.frameType_;
 }
 
 
 Referenced* CoordinateFrameList::doClone(CloneMap* cloneMap) const
 {
     return new CoordinateFrameList(*this);
-}
-
-
-void CoordinateFrameList::setFrameType(int type)
-{
-    impl->frameType = type;
-}
-
-
-int CoordinateFrameList::frameType() const
-{
-    return impl->frameType;
 }
 
 
@@ -208,6 +198,30 @@ SignalProxy<void(int index, CoordinateFrame* frame)> CoordinateFrameList::sigFra
 }
 
 
+SignalProxy<void(int index)> CoordinateFrameList::sigFramePositionChanged()
+{
+    return impl->sigFramePositionChanged;
+}
+
+
+SignalProxy<void(int index)> CoordinateFrameList::sigFrameAttributeChanged()
+{
+    return impl->sigFrameAttributeChanged;
+}
+
+
+void CoordinateFrameList::notifyFramePositionChange(int index)
+{
+    impl->sigFramePositionChanged(index);
+}
+
+
+void CoordinateFrameList::notifyFrameAttributeChange(int index)
+{
+    impl->sigFrameAttributeChanged(index);
+}
+
+
 bool CoordinateFrameList::resetId(CoordinateFrame* frame, const GeneralId& newId)
 {
     bool changed = false;
@@ -275,9 +289,9 @@ bool CoordinateFrameList::read(const Mapping& archive)
 
     if(archive.read("frame_type", symbol)){
         if(symbol == "base"){
-            impl->frameType = Base;
+            frameType_ = Base;
         } else if(symbol == "offset"){
-            impl->frameType = Offset;
+            frameType_ = Offset;
         }
     }
 
@@ -305,9 +319,9 @@ bool CoordinateFrameList::write(Mapping& archive) const
     if(!name().empty()){
         archive.write("name", name());
     }
-    if(impl->frameType == Base){
+    if(frameType_ == Base){
         archive.write("frame_type", "base");
-    } else if(impl->frameType == Offset){
+    } else if(frameType_ == Offset){
         archive.write("frame_type", "offset");
     }
 

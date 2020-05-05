@@ -7,6 +7,7 @@
 namespace cnoid {
 
 class CoordinateFrameList;
+class CoordinateFrameItem;
 class LocatableItem;
 
 class CNOID_EXPORT CoordinateFrameListItem : public Item
@@ -20,12 +21,23 @@ public:
     CoordinateFrameListItem(const CoordinateFrameListItem& org);
     virtual ~CoordinateFrameListItem();
 
+    
+
+    // Register the callback function called when a new coordinate frame item is created
+    void setNewFrameItemCallback(std::function<void(CoordinateFrameItem* item)> callback);
+
     enum ItemizationMode { NoItemization, SubItemization, IndependentItemization };
     int itemizationMode() const;
     void setItemizationMode(int mode);
+    void updateFrameItems();
 
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;
+
+    void useAsBaseFrames();
+    void useAsOffsetFrames();
+    bool isForBaseFrames() const;
+    bool isForOffsetFrames() const;
 
     virtual LocatableItem* getParentLocatableItem();
 
