@@ -10,6 +10,10 @@ namespace cnoid {
 class CoordinateFrame;
 class CoordinateFrameList;
 
+/**
+   \note This item is not independently used, but used as a child item
+   of CoordinateFrameListItem
+*/
 class CNOID_EXPORT CoordinateFrameItem : public Item
 {
 public:
@@ -21,14 +25,15 @@ public:
 
     void setFrameId(const GeneralId& id);
     const GeneralId& frameId() const;
-    //CoordinateFrame* frame();
     CoordinateFrameList* frameList();
 
-    //virtual bool store(Archive& archive) override;
-    //virtual bool restore(const Archive& archive) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 protected:
     virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
+
     //virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:

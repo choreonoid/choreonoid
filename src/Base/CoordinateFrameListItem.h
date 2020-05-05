@@ -21,8 +21,6 @@ public:
     CoordinateFrameListItem(const CoordinateFrameListItem& org);
     virtual ~CoordinateFrameListItem();
 
-    
-
     // Register the callback function called when a new coordinate frame item is created
     void setNewFrameItemCallback(std::function<void(CoordinateFrameItem* item)> callback);
 

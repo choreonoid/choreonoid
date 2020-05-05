@@ -67,7 +67,9 @@ public:
     GeneralId createNextId(int prevId = -1);
 
     bool read(const Mapping& archive);
-    bool write(Mapping& archive) const;    
+    void write(Mapping& archive) const;
+    void writeHeader(Mapping& archive) const;
+    void writeFrames(Mapping& archive) const;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

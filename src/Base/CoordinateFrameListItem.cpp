@@ -253,13 +253,23 @@ const CoordinateFrameList* CoordinateFrameListItem::frameList() const
 
 void CoordinateFrameListItem::useAsBaseFrames()
 {
-    impl->frameList->setFrameType(CoordinateFrameList::Base);
+    if(!impl->frameList->isForBaseFrames()){
+        impl->frameList->setFrameType(CoordinateFrameList::Base);
+        if(isConnectedToRoot()){
+            ::sigInstanceAddedOrUpdated_(this);
+        }
+    }
 }
 
 
 void CoordinateFrameListItem::useAsOffsetFrames()
 {
-    impl->frameList->setFrameType(CoordinateFrameList::Offset);
+    if(!impl->frameList->isForOffsetFrames()){
+        impl->frameList->setFrameType(CoordinateFrameList::Offset);
+        if(isConnectedToRoot()){
+            ::sigInstanceAddedOrUpdated_(this);
+        }
+    }
 }
 
 
@@ -297,11 +307,11 @@ bool CoordinateFrameListItem::store(Archive& archive)
     } else if(impl->itemizationMode == IndependentItemization){
         archive.write("itemization", "independent");
     }
-    bool stored = true;
+    impl->frameList->writeHeader(archive);
     if(impl->itemizationMode != IndependentItemization){
-        stored = impl->frameList->write(archive);
+        impl->frameList->writeFrames(archive);
     }
-    return stored;
+    return true;
 }
 
 
@@ -315,9 +325,6 @@ bool CoordinateFrameListItem::restore(const Archive& archive)
             setItemizationMode(IndependentItemization);
         }
     }
-    if(impl->itemizationMode != IndependentItemization){
-        impl->frameList->resetIdCounter();
-        impl->frameList->read(archive);
-    }
-    return true;
+    impl->frameList->resetIdCounter();
+    return impl->frameList->read(archive);
 }

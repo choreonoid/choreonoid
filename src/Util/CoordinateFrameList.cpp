@@ -312,7 +312,14 @@ bool CoordinateFrameList::read(const Mapping& archive)
 }
 
 
-bool CoordinateFrameList::write(Mapping& archive) const
+void CoordinateFrameList::write(Mapping& archive) const
+{
+    writeHeader(archive);
+    writeFrames(archive);
+}
+
+
+void CoordinateFrameList::writeHeader(Mapping& archive) const
 {
     archive.write("type", "CoordinateFrameList");
     archive.write("format_version", 1.0);
@@ -324,7 +331,11 @@ bool CoordinateFrameList::write(Mapping& archive) const
     } else if(frameType_ == Offset){
         archive.write("frame_type", "offset");
     }
+}
 
+
+void CoordinateFrameList::writeFrames(Mapping& archive) const
+{
     if(!impl->frames.empty()){
         Listing& frameNodes = *archive.createListing("frames");
         for(auto& frame : impl->frames){
@@ -334,6 +345,4 @@ bool CoordinateFrameList::write(Mapping& archive) const
             }
         }
     }
-
-    return true;
 }
