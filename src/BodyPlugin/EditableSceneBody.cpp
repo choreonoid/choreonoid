@@ -26,6 +26,7 @@
 #include <cnoid/ExtensionManager>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
+#include <cnoid/CheckBoxAction>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -254,6 +255,7 @@ public:
     void changeCollisionLinkHighlightMode(bool on);
     void onLinkVisibilityCheckToggled();
     void onLinkSelectionChanged(const std::vector<bool>& selection);
+    void onLinkOriginsCheckChanged(bool on);
 
     void showCenterOfMass(bool on);
     void showPpcom(bool on);
@@ -602,6 +604,14 @@ void EditableSceneBody::Impl::onLinkSelectionChanged(const std::vector<bool>& se
 {
     if(linkVisibilityCheck->isChecked()){
         self->setLinkVisibilities(selection);
+    }
+}
+
+
+void EditableSceneBody::Impl::onLinkOriginsCheckChanged(bool on)
+{
+    for(int i=0; i < self->numSceneLinks(); ++i){
+        self->editableSceneLink(i)->showOrigin(on);
     }
 }
 
@@ -1249,8 +1259,29 @@ void EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
     }
 
     mm.setPath(_("Markers"));
+
+    auto linkOriginAction = new CheckBoxAction(_("Link Origins"));
+    int checkState = Qt::Unchecked;
+    int numLinks = self->numSceneLinks();
+    int numOriginShowns = 0;
+    for(int i=0; i < numLinks; ++i){
+        if(self->editableSceneLink(i)->isOriginShown()){
+            ++numOriginShowns;
+        }
+    }
+    auto check = linkOriginAction->checkBox();
+    check->setTristate();
+    if(numOriginShowns == 0){
+        check->setCheckState(Qt::Unchecked);
+    } else if(numOriginShowns == numLinks){
+        check->setCheckState(Qt::Checked);
+    } else {
+        check->setCheckState(Qt::PartiallyChecked);
+    }
+    mm.addAction(linkOriginAction);
+    check->sigToggled().connect([&](bool on){ onLinkOriginsCheckChanged(on); });
         
-    Action* item = mm.addCheckItem(_("Center of Mass"));
+    auto item = mm.addCheckItem(_("Center of Mass"));
     item->setChecked(isCmVisible);
     item->sigToggled().connect([&](bool on){ showCenterOfMass(on); });
             

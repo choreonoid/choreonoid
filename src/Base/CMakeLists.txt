@@ -53,6 +53,7 @@ set(sources
   MultiSE3SeqGraphView.cpp
   Process.cpp
   Action.cpp
+  CheckBoxAction.cpp
   ActionGroup.cpp
   Widget.cpp
   SpinBox.cpp
@@ -146,6 +147,7 @@ set(headers
   MainWindow.h
   Process.h
   Action.h
+  CheckBoxAction.h
   ActionGroup.h
   Widget.h
   SpinBox.h
