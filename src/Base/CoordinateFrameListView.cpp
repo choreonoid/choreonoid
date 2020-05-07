@@ -304,7 +304,7 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
 bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if(index.isValid() && role == Qt::EditRole){
-        auto frameIndex = index.internalId();
+        auto frameIndex = isDefaultFrameEnabled_ ? index.row() - 1 : index.row();
         if(frameIndex < 0){
             return false;
         }
@@ -506,9 +506,15 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     vbox->addWidget(this);
     self->setLayout(vbox);
 
+    targetItemPicker.setTargetPredicate(
+        [](CoordinateFrameListItem* item){
+            return item->itemizationMode() != CoordinateFrameListItem::IndependentItemization;
+        });
+    
     targetItemPicker.sigTargetItemChanged().connect(
         [&](CoordinateFrameListItem* item){
-            setCoordinateFrameListItem(item); });
+            setCoordinateFrameListItem(item);
+        });
 
     positionEditManager = PositionEditManager::instance();
 }
