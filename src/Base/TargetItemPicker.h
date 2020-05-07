@@ -27,8 +27,8 @@ protected:
     virtual void onDeactivated() = 0;
 
 private:
-class Impl;
-Impl* impl;
+    class Impl;
+    Impl* impl;
 
 };
 
@@ -41,9 +41,11 @@ public:
     TargetItemPicker() : TargetItemPickerBase() { }
     TargetItemPicker(View* view) : TargetItemPickerBase(view) { }
 
+    void setTargetPredicate(std::function<bool(ItemType* item)> predicate){ targetPredicate = predicate; }
+    
     template<class Interface>
     void setTargetInterface(){
-        hasTargetInterface = [](Item* item)->bool { return dynamic_cast<Interface*>(item) != nullptr; };
+        targetPredicate = [](ItemType* item)->bool { return dynamic_cast<Interface*>(item) != nullptr; };
     }
 
     ItemType* currentItem(){ return static_cast<ItemType*>(getTargetItem()); }
@@ -67,13 +69,11 @@ protected:
         
         auto iter = io_items.begin();
         while(iter != io_items.end()){
-            auto item = iter->get();
-            if(hasTargetInterface){
-                if(!hasTargetInterface(item)){
+            auto item = dynamic_cast<ItemType*>(iter->get());
+            if(item && targetPredicate){
+                if(!targetPredicate(item)){
                     item = nullptr;
                 }
-            } else {
-                item = dynamic_cast<ItemType*>(item);
             }
             if(!item){
                 iter = io_items.erase(iter);
@@ -112,7 +112,7 @@ protected:
     }
 
 private:
-    std::function<bool(Item* item)> hasTargetInterface;
+    std::function<bool(ItemType* item)> targetPredicate;
     Signal<void(ItemType* targetItem)> sigTargetItemSpecified_;
     Signal<void(ItemType* targetItem)> sigTargetItemChanged_;
     Signal<void(const ItemList<ItemType>& selected)> sigSelectedItemsChanged_;
