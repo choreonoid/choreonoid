@@ -11,78 +11,95 @@ items:
       name: "World"
       plugin: Body
       class: WorldItem
+      isChecked: true
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
           name: "PA10"
           plugin: Body
           class: BodyItem
+          isChecked: true
           data: 
-            modelFile: "${SHARE}/model/PA10/PA10.body"
-            currentBaseLink: "BASE"
+            file: "${SHARE}/model/PA10/PA10.body"
+            format: CHOREONOID-BODY
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000, -0.523599,  0.000000,  1.047198,  0.000000, -0.523599,  0.000000, -0.025000,  0.025000 ]
+            jointDisplacements: [ 0, -30, 0, 60, 0, -30, 0, -1.43239, 1.43239 ]
+            jointPositions: [ 0, -0.523599, 0, 1.0472, 0, -0.523599, 0, -0.0249999, 0.0249999 ]
             initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000, -0.523599,  0.000000,  1.047198,  0.000000, -0.523599,  0.000000, -0.025000,  0.025000 ]
-            zmp: [ 0, 0, 0 ]
+            initialJointPositions: [ 0, -0.523599, 0, 1.0472, 0, -0.523599, 0, -0.0249999, 0.0249999 ]
+            staticModel: false
+            collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: false
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
           children: 
             - 
               id: 3
               name: "SimpleController"
-              plugin: SimpleController
+              plugin: Body
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: false
+                controllerOptions: ""
                 controller: "PA10PickupController"
+                baseDirectory: "Controller directory"
                 reloading: true
-                inputLinkPositions: false
+                exportSymbols: false
+                isOldTargetVariableMode: false
         - 
           id: 4
           name: "box3"
           plugin: Body
           class: BodyItem
+          isChecked: true
           data: 
-            modelFile: "${SHARE}/model/misc/box3.body"
+            file: "${SHARE}/model/misc/box3.body"
+            format: CHOREONOID-BODY
             currentBaseLink: "WAIST"
             rootPosition: [ 0.9, 0, 0.035 ]
             rootAttitude: [ 
-              0, -1, 0, 
-              1, 0, 0, 
+              2.22044605e-16, -1, 0, 
+              1, 2.22044605e-16, 0, 
               0, 0, 1 ]
             jointPositions: [  ]
             initialRootPosition: [ 0.9, 0, 0.035 ]
             initialRootAttitude: [ 
-              2.22044605e-016, -1, 0, 
-              1, 2.22044605e-016, 0, 
+              2.22044605e-16, -1, 0, 
+              1, 2.22044605e-16, 0, 
               0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
+            staticModel: false
+            collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: true
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
         - 
           id: 5
           name: "box2"
           plugin: Body
           class: BodyItem
+          isChecked: true
           data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
+            file: "${SHARE}/model/misc/box2.body"
+            format: CHOREONOID-BODY
             currentBaseLink: "WAIST"
-            rootPosition: [ -0, 0.7, 0.1499 ]
+            rootPosition: [ 0, 0.7, 0.1499 ]
             rootAttitude: [ 
-              1, 0, -0, 
-              -0, 1, 0, 
+              1, 0, 0, 
+              0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  ]
             initialRootPosition: [ -0, 0.7, 0.1499 ]
@@ -90,18 +107,21 @@ items:
               1, 0, -0, 
               -0, 1, 0, 
               0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
             staticModel: true
+            collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: false
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
         - 
           id: 6
           name: "Floor"
           plugin: Body
           class: BodyItem
+          isChecked: true
           data: 
-            modelFile: "${SHARE}/model/misc/floor.body"
-            currentBaseLink: "BASE"
+            file: "${SHARE}/model/misc/floor.body"
+            format: CHOREONOID-BODY
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
@@ -113,37 +133,43 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
+            staticModel: true
+            collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: false
+            scene_sensitive: false
+            zmp: [ 0, 0, 0 ]
         - 
           id: 7
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
+          isSelected: true
           data: 
             timeStep: 0.001
             realtimeSync: true
             recording: "full"
-            timeRangeMode: "Time bar range"
-            onlyActiveControlPeriod: true
+            timeRangeMode: "Active control period"
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
-            dynamicsMode: Forward dynamics
-            integrationMode: Runge Kutta
+            controllerOptions: ""
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
             staticFriction: 0.5
-            slipFriction: 0.5
+            dynamicFriction: 0.5
             cullingThresh: 0.02
+            contactCullingDepth: 0.05
             errorCriterion: 0.001
             maxNumIterations: 1000
             contactCorrectionDepth: 0.0001
             contactCorrectionVelocityRatio: 30
             kinematicWalking: false
             2Dmode: false
+            oldAccelSensorMode: false
         - 
           id: 8
           name: "ODESimulator"
@@ -215,44 +241,221 @@ items:
             Restitution: 0.1
             jointLimitMode: false
 views: 
-  "Items": 
-    selected: [ 7 ]
-    checked: [ 1, 2, 4, 5, 6 ]
-    expanded: [ 1, 2, 3, 4, 5 ]
-  "Scene": 
-    viewpointControlMode: thirdPerson
-    collisionLines: false
-    polygonMode: fill
-    defaultHeadLight: true
-    defaultHeadLightIntensity: 0.75
-    headLightLightingFromBack: false
-    worldLight: true
-    worldLightIntensity: 0.5
-    worldLightAmbient: 0.3
-    additionalLights: true
-    floorGrid: false
-    floorGridSpan: 10
-    floorGridInterval: 0.5
-    texture: true
-    lineWidth: 1
-    pointSize: 1
-    normalVisualization: false
-    normalLength: 0.01
-    coordinateAxes: true
-    showFPS: false
-    useBufferForPicking: true
-    camera: 
-      current: Perspective
-      eye: [ 2.83337998, 1.46162999, 0.874503016 ]
-      direction: [ -0.90182054, -0.41758123, -0.111111067 ]
-      up: [ -0.100826629, -0.0466868281, 0.993808031 ]
-      fieldOfView: 0.6978
-      near: 0.01
-      far: 10000
-      orthoHeight: 20
-    backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-    gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 8
+  - 
+    id: 0
+    plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      expanded: [ 1, 2, 3, 4, 5 ]
+  - 
+    id: 2
+    name: "Location"
+    plugin: Base
+    class: LocationView
+    mounted: true
+    state: 
+      show_rpy: true
+      unique_rpy: false
+      show_quoternion: false
+      show_rotation_matrix: false
+      coordinate: world
+  - 
+    id: 3
+    plugin: Base
+    class: MessageView
+    mounted: true
+  - 
+    id: 4
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      restrictCameraRoll: true
+      verticalAxis: Z
+      lightingMode: full
+      cullingMode: enabled
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      shadowLights: 
+        - 0
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      lightweightViewChange: false
+      coordinateAxes: true
+      fpsTestIteration: 1
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 10000
+          eye: [ 2.51978, 1.32295, 0.988642 ]
+          direction: [ -0.872341, -0.458202, -0.170504 ]
+          up: [ -0.150948, -0.0792862, 0.985357 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 10000
+      backgroundColor: [ 0.1, 0.1, 0.3 ]
+      gridColor: [ 0.9, 0.9, 0.9, 1 ]
+      xzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      yzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      isDedicatedItemCheckEnabled: false
+  - 
+    id: 6
+    plugin: Body
+    class: JointDisplacementView
+    mounted: true
+    state: 
+      show_selected_joints: false
+      show_joint_ids: true
+      show_joint_names: false
+      overlap_joint_names: false
+      show_sliders: true
+      show_dials: false
+      show_phases: true
+      current_body_item: 2
+  - 
+    id: 7
+    name: "Link Position"
+    plugin: Body
+    class: LinkPositionView
+    mounted: true
+    state: 
+      coordinate_mode: world
+      preferred_coordinate_mode: base
+      show_rpy: true
+      unique_rpy: false
+      show_quoternion: false
+      show_rotation_matrix: false
+      target_link_type: root_or_ik_link
+  - 
+    id: 8
+    plugin: Body
+    class: LinkSelectionView
+    mounted: true
+    state: 
+      listingMode: "Link List"
+      currentBodyItem: 2
+      bodyItems: 
+        - 
+          id: 2
+          selectedLinks: [ 7 ]
+        - 
+          id: 4
+          selectedLinks: [ 0 ]
+        - 
+          id: 5
+          selectedLinks: [ 0 ]
+        - 
+          id: 6
+          selectedLinks: [ 0 ]
+  - 
+    id: 9
+    plugin: Python
+    class: PythonConsoleView
+    mounted: true
+viewAreas: 
+  - 
+    type: embedded
+    tabs: true
+    contents: 
+      type: splitter
+      orientation: horizontal
+      sizes: [ 338, 1503 ]
+      children: 
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 529, 528 ]
+          children: 
+            - 
+              type: pane
+              views: [ 1 ]
+              current: 1
+            - 
+              type: pane
+              views: [ 0 ]
+              current: 0
+        - 
+          type: splitter
+          orientation: horizontal
+          sizes: [ 1061, 437 ]
+          children: 
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 783, 274 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 4 ]
+                  current: 4
+                - 
+                  type: pane
+                  views: [ 3, 9 ]
+                  current: 3
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 273, 784 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 2 ]
+                  current: 2
+                - 
+                  type: splitter
+                  orientation: vertical
+                  sizes: [ 363, 416 ]
+                  children: 
+                    - 
+                      type: pane
+                      views: [ 7 ]
+                      current: 7
+                    - 
+                      type: pane
+                      views: [ 6, 8 ]
+                      current: 6
+layoutOfToolBars: 
+  rows: 
+    - 
+      - { name: "FileBar", x: 0, priority: 0 }
+      - { name: "ScriptBar", x: 55, priority: 0 }
+      - { name: "TimeBar", x: 110, priority: 0 }
+      - { name: "SceneBar", x: 1518, priority: 1 }
+    - 
+      - { name: "SimulationBar", x: 0, priority: 1 }
+      - { name: "BodyBar", x: 0, priority: 0 }
+      - { name: "KinematicsBar", x: 324, priority: 0 }
+      - { name: "GraphBar", x: 857, priority: 2 }

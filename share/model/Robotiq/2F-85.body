@@ -300,7 +300,7 @@ links:
     jointAxis: [ 0, 0, 1 ]
     translation: [ 0.04303959807, -0.03759940821, 0.0 ]
     rotation: [ 1, 0, 0, 0 ]
-    jointRange: [ 0, -46 ]
+    jointRange: [ -46, 0 ]
     jointVelocityRange: [ -5730, 5730 ]
     mass: 0.019555
     centerOfMass: [ 0, 0, 0 ]
@@ -448,7 +448,7 @@ links:
     jointAxis: [ 0, 0, 1 ]
     translation: [ 0.04303959807, -0.03759940821, 0.0 ]
     rotation: [ 1, 0, 0, 0 ]
-    jointRange: [ 0, -46 ]
+    jointRange: [ -46, 0 ]
     jointVelocityRange: [ -5730, 5730 ]
     mass: 0.019555
     centerOfMass: [ 0, 0, 0 ]
