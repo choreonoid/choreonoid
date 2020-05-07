@@ -28,7 +28,6 @@ public:
     CoordinateFrameListPtr frameList;
     int itemizationMode;
     ScopedConnectionSet frameListConnections;
-    std::function<void(CoordinateFrameItem* item)> newFrameItemCallback;
 
     Impl(CoordinateFrameListItem* self);
     Impl(CoordinateFrameListItem* self, const Impl& org);
@@ -106,12 +105,6 @@ void CoordinateFrameListItem::onPositionChanged()
 }
 
 
-void CoordinateFrameListItem::setNewFrameItemCallback(std::function<void(CoordinateFrameItem* item)> callback)
-{
-    impl->newFrameItemCallback = callback;
-}
-
-
 int CoordinateFrameListItem::itemizationMode() const
 {
     return impl->itemizationMode;
@@ -176,9 +169,6 @@ CoordinateFrameItem* CoordinateFrameListItem::Impl::createFrameItem(CoordinateFr
         item->setSubItemAttributes();
     } else if(itemizationMode == IndependentItemization){
         item->setAttribute(Item::Attached);
-    }
-    if(newFrameItemCallback){
-        newFrameItemCallback(item);
     }
     return item;
 }

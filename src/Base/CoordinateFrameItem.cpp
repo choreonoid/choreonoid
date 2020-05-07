@@ -97,6 +97,39 @@ CoordinateFrameList* CoordinateFrameItem::frameList()
 }
 
 
+const CoordinateFrameList* CoordinateFrameItem::frameList() const
+{
+    if(impl->listItem){
+        return impl->listItem->frameList();
+    }
+    return nullptr;
+}
+
+
+bool CoordinateFrameItem::isBaseFrame() const
+{
+    if(auto list = frameList()){
+        return list->isForBaseFrames();
+    }
+    return false;
+}
+
+
+bool CoordinateFrameItem::isOffsetFrame() const
+{
+    if(auto list = frameList()){
+        return list->isForOffsetFrames();
+    }
+    return false;
+}
+
+
+void CoordinateFrameItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("ID"), impl->frameId.label());
+}
+
+
 bool CoordinateFrameItem::store(Archive& archive)
 {
     if(auto list = frameList()){

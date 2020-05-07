@@ -26,6 +26,9 @@ public:
     void setFrameId(const GeneralId& id);
     const GeneralId& frameId() const;
     CoordinateFrameList* frameList();
+    const CoordinateFrameList* frameList() const;
+    bool isBaseFrame() const;
+    bool isOffsetFrame() const;
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
@@ -33,8 +36,7 @@ public:
 protected:
     virtual Item* doDuplicate() const override;
     virtual void onPositionChanged() override;
-
-    //virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
     class Impl;
