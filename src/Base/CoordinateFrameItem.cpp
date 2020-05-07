@@ -16,8 +16,10 @@ class CoordinateFrameItem::Impl
 {
 public:
     GeneralId frameId;
-    CoordinateFrameListItem* listItem;
-
+    CoordinateFrameListItem* frameListItem;
+    CoordinateFrameList* frameList;
+    SignalProxy<void()> sigLocationChanged;
+    
     Impl();
     Impl(const Impl& org);
 };
@@ -40,7 +42,8 @@ CoordinateFrameItem::CoordinateFrameItem()
 
 CoordinateFrameItem::Impl::Impl()
 {
-
+    frameListItem = nullptr;
+    frameList = nullptr;
 }
 
 
@@ -54,7 +57,8 @@ CoordinateFrameItem::CoordinateFrameItem(const CoordinateFrameItem& org)
 CoordinateFrameItem::Impl::Impl(const Impl& org)
     : frameId(org.frameId)
 {
-
+    frameListItem = nullptr;
+    frameList = nullptr;
 }
 
 
@@ -72,7 +76,12 @@ Item* CoordinateFrameItem::doDuplicate() const
 
 void CoordinateFrameItem::onPositionChanged()
 {
-    impl->listItem = dynamic_cast<CoordinateFrameListItem*>(parentItem());
+    impl->frameListItem = dynamic_cast<CoordinateFrameListItem*>(parentItem());
+    if(impl->frameListItem){
+        impl->frameList = impl->frameListItem->frameList();
+    } else {
+        impl->frameList = nullptr;
+    }
 }    
 
 
@@ -90,26 +99,35 @@ const GeneralId& CoordinateFrameItem::frameId() const
 
 CoordinateFrameList* CoordinateFrameItem::frameList()
 {
-    if(impl->listItem){
-        return impl->listItem->frameList();
-    }
-    return nullptr;
+    return impl->frameList;
 }
 
 
 const CoordinateFrameList* CoordinateFrameItem::frameList() const
 {
-    if(impl->listItem){
-        return impl->listItem->frameList();
+    return impl->frameList;
+}
+
+
+CoordinateFrame* CoordinateFrameItem::frame()
+{
+    if(impl->frameList){
+        return impl->frameList->findFrame(impl->frameId);
     }
     return nullptr;
 }
 
 
+const CoordinateFrame* CoordinateFrameItem::frame() const
+{
+    return const_cast<CoordinateFrameItem*>(this)->frame();
+}
+
+
 bool CoordinateFrameItem::isBaseFrame() const
 {
-    if(auto list = frameList()){
-        return list->isForBaseFrames();
+    if(impl->frameList){
+        return impl->frameList->isForBaseFrames();
     }
     return false;
 }
@@ -117,10 +135,39 @@ bool CoordinateFrameItem::isBaseFrame() const
 
 bool CoordinateFrameItem::isOffsetFrame() const
 {
-    if(auto list = frameList()){
-        return list->isForOffsetFrames();
+    if(impl->frameList){
+        return impl->frameList->isForOffsetFrames();
     }
     return false;
+}
+
+
+Position CoordinateFrameItem::getLocation() const
+{
+    if(auto frame_ = frame()){
+        return frame_->position();
+    }
+    return Position::Identity();
+}
+
+
+bool CoordinateFrameItem::prefersLocalLocation() const
+{
+    return true;
+}
+
+
+void CoordinateFrameItem::setLocation(const Position& T)
+{
+    if(auto frame_ = frame()){
+        frame_->setPosition(T);
+    }
+}
+
+
+SignalProxy<void()> CoordinateFrameItem::sigLocationChanged()
+{
+    return impl->sigLocationChanged;
 }
 
 
@@ -143,12 +190,12 @@ bool CoordinateFrameItem::store(Archive& archive)
 
 bool CoordinateFrameItem::restore(const Archive& archive)
 {
-    auto listItem = dynamic_cast<CoordinateFrameListItem*>(archive.currentParentItem());
-    if(listItem){
+    auto frameListItem = dynamic_cast<CoordinateFrameListItem*>(archive.currentParentItem());
+    if(frameListItem){
         CoordinateFramePtr frame = new CoordinateFrame;
         if(frame->read(archive)){
             impl->frameId = frame->id();
-            if(listItem->frameList()->append(frame)){
+            if(frameListItem->frameList()->append(frame)){
                 return true;
             }
         }
