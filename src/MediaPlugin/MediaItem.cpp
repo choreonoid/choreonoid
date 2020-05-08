@@ -39,7 +39,7 @@ void onSigOptionsParsed(boost::program_options::variables_map& v)
         for(size_t i=0; i < mediaFilenames.size(); ++i){
             MediaItemPtr item(new MediaItem());
             if(item->setMediaFilePath(mediaFilenames[i])){
-                RootItem::mainInstance()->addChildItem(item);
+                RootItem::instance()->addChildItem(item);
             }
         }
     }
