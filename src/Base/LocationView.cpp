@@ -227,52 +227,59 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         coordinates.push_back(worldCoord);
     }
 
-    if(targetItem){
-        CoordinateInfo* parentCoord;
-        LocatableItem* parentLocatable = targetItem->getParentLocatableItem();
-        if(parentLocatable){
-            ItemPtr parentItem = parentLocatable->getCorrespondingItem();
-            parentCoord = new CoordinateInfo(
-                format(_("Parent ( {} )"), parentLocatable->getLocationName()), ParentCoordIndex);
-            // parentItem is captured to keep parentLocatable alive until the function is disposed
-            parentCoord->parentPositionFunc =
-                [parentItem, parentLocatable](){ return parentLocatable->getLocation(); };
-            defaultComboIndex = coordinates.size();
-            coordinates.push_back(parentCoord);
-        }
+    CoordinateInfo* parentCoord;
+    LocatableItem* parentLocatable = targetItem->getParentLocatableItem();
+    if(parentLocatable){
+        ItemPtr parentItem = parentLocatable->getCorrespondingItem();
+        parentCoord = new CoordinateInfo(
+            format(_("Parent ( {} )"), parentLocatable->getLocationName()), ParentCoordIndex);
+        // parentItem is captured to keep parentLocatable alive until the function is disposed
+        parentCoord->parentPositionFunc =
+            [parentItem, parentLocatable](){ return parentLocatable->getLocation(); };
+        defaultComboIndex = coordinates.size();
+        coordinates.push_back(parentCoord);
+    }
 
-        Position T = targetItem->getLocation();
-        auto localCoord = new CoordinateInfo(_("Local"), LocalCoordIndex, T);
-        localCoord->isLocal = true;
-        localCoord->R0 = T.linear();
-        coordinates.push_back(localCoord);
+    Position T = targetItem->getLocation();
+    auto localCoord = new CoordinateInfo(_("Local"), LocalCoordIndex, T);
+    localCoord->isLocal = true;
+    localCoord->R0 = T.linear();
+    coordinates.push_back(localCoord);
 
-        if(!targetItem->prefersLocalLocation()){
-            //! \todo Use WorldItem as the root of the item search tree
-            auto frameListItems =
-                RootItem::instance()->descendantItems<CoordinateFrameListItem>();
-            string basename;
-            for(auto& frameListItem : frameListItems){
-                basename.clear();
-                function<Position()> parentPositionFunc;
-                auto parentItem = frameListItem->getParentLocatableItem();
-                if(!parentItem ||
-                   parentItem->getCorrespondingItem() == targetItem->getCorrespondingItem()){
-                    continue;
+    if(!targetItem->prefersLocalLocation()){
+        //! \todo Use WorldItem as the root of the item search tree
+        auto frameListItems =
+            RootItem::instance()->descendantItems<CoordinateFrameListItem>();
+        string basename;
+        for(auto& frameListItem : frameListItems){
+            if(!frameListItem->isForBaseFrames()){
+                continue;
+            }
+            basename.clear();
+            function<Position()> parentPositionFunc;
+            auto parentItem = frameListItem->getParentLocatableItem();
+            if(!parentItem ||
+               parentItem->getCorrespondingItem() == targetItem->getCorrespondingItem()){
+                continue;
+            }
+            basename = parentItem->getLocationName();
+            basename += " ";
+            parentPositionFunc =
+                [parentItem](){ return parentItem->getLocation(); };
+            basename += frameListItem->name();
+            basename += " ";
+            auto frames = frameListItem->frameList();
+            int n = frames->numFrames();
+            for(int i=0; i < n; ++i){
+                string name(basename);
+                auto frame = frames->frameAt(i);
+                name += frame->id().label();
+                if(!frame->note().empty()){
+                    name += " : ";
+                    name += frame->note();
                 }
-                basename += parentItem->getLocationName() + " : ";
-                parentPositionFunc =
-                    [parentItem](){ return parentItem->getLocation(); };
-                basename += frameListItem->name() + " ";
-                auto frames = frameListItem->frameList();
-                int n = frames->numFrames();
-                for(int i=0; i < n; ++i){
-                    string name(basename);
-                    auto frame = frames->frameAt(i);
-                    name += frame->id().label();
-                    auto coord = new CoordinateInfo(name, coordinates.size(), frame->T(), parentPositionFunc);
-                    coordinates.push_back(coord);
-                }
+                auto coord = new CoordinateInfo(name, coordinates.size(), frame->T(), parentPositionFunc);
+                coordinates.push_back(coord);
             }
         }
     }
