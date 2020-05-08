@@ -34,8 +34,8 @@ public:
     bool isOffsetFrame() const;
 
     // LocatableItem functions
+    virtual int getLocationType() const override;
     virtual Position getLocation() const override;
-    virtual bool prefersLocalLocation() const;
     virtual void setLocation(const Position& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 

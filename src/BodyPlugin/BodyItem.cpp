@@ -67,6 +67,7 @@ public:
         bodyItem = parentBodyItem;
         link = parentLink;
     }
+    virtual int getLocationType() const override { return GlobalLocation; }
     virtual std::string getLocationName() const override {
         return link->body()->name() + " - " + link->name();
     }
@@ -1259,16 +1260,19 @@ SignalProxy<void()> BodyItem::sigLocationChanged()
 }
 
 
-Position BodyItem::getLocation() const
+int BodyItem::getLocationType() const
 {
-    return impl->body->rootLink()->position();
+    if(impl->attachmentToParent){
+        return OffsetLocation;
+    } else {
+        return GlobalLocation;
+    }
 }
 
 
-bool BodyItem::prefersLocalLocation() const
+Position BodyItem::getLocation() const
 {
-    // Prefers the local location coordinate if the body is attached to the parent body
-    return impl->attachmentToParent != nullptr;
+    return impl->body->rootLink()->position();
 }
 
 

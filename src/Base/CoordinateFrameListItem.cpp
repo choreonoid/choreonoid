@@ -35,7 +35,7 @@ public:
     void updateFrameItems();
     CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
     void updateFrameAttribute(CoordinateFrameItem* item, CoordinateFrame* frame);
-    Item* findFrameItemAt(int index);
+    CoordinateFrameItem* findFrameItemAt(int index, Item*& out_insertionPosition);
     void onFrameAdded(int index);
     void onFrameRemoved(int index);
     void onFrameAttributeChanged(int index);
@@ -182,12 +182,15 @@ void CoordinateFrameListItem::Impl::updateFrameAttribute
 }
 
 
-Item* CoordinateFrameListItem::Impl::findFrameItemAt(int index)
+CoordinateFrameItem* CoordinateFrameListItem::Impl::findFrameItemAt
+(int index, Item*& out_insertionPosition)
 {
+    CoordinateFrameItem* frameItem = nullptr;
     int childIndex = 0;
     Item* childItem = self->childItem();
     while(childItem){
-        if(dynamic_cast<CoordinateFrameItem*>(childItem)){
+        frameItem = dynamic_cast<CoordinateFrameItem*>(childItem);
+        if(frameItem){
             if(childIndex == index){
                 break;
             }
@@ -195,21 +198,32 @@ Item* CoordinateFrameListItem::Impl::findFrameItemAt(int index)
         }
         childItem = childItem->nextItem();
     }
-    return childItem;
+    out_insertionPosition = childItem;
+    return frameItem;
 }
 
 
+CoordinateFrameItem* CoordinateFrameListItem::findFrameItemAt(int index)
+{
+    Item* position;
+    return impl->findFrameItemAt(index, position);
+}
+    
+    
 void CoordinateFrameListItem::Impl::onFrameAdded(int index)
 {
     auto frame = frameList->frameAt(index);
     auto item = createFrameItem(frame);
-    self->insertChild(findFrameItemAt(index), item);
+    Item* position;
+    findFrameItemAt(index, position);
+    self->insertChild(position, item);
 }
 
 
 void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
 {
-    if(auto frameItem = findFrameItemAt(index)){
+    Item* position;
+    if(auto frameItem = findFrameItemAt(index, position)){
         frameItem->detachFromParentItem();
     }
 }
@@ -217,7 +231,8 @@ void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
 
 void CoordinateFrameListItem::Impl::onFrameAttributeChanged(int index)
 {
-    if(auto item = dynamic_cast<CoordinateFrameItem*>(findFrameItemAt(index))){
+    Item* position;
+    if(auto item = findFrameItemAt(index, position)){
         updateFrameAttribute(item, frameList->frameAt(index));
     }
 }

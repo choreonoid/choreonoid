@@ -11,15 +11,21 @@ class CNOID_EXPORT LocatableItem
 {
 public:
     LocatableItem();
+    
+    enum LocationType {
+        InvalidLocation,
+        GlobalLocation,
+        ParentRelativeLocation,
+        OffsetLocation
+    };
+    virtual int getLocationType() const = 0;
+    
     virtual Item* getCorrespondingItem();
     virtual std::string getLocationName() const;
-    // \return global position
     virtual Position getLocation() const = 0;
-    virtual bool prefersLocalLocation() const;
     virtual bool isLocationEditable() const;
     virtual void setLocationEditable(bool on);
     virtual SignalProxy<void(bool on)> sigLocationEditableChanged();
-    // \param T global position
     virtual void setLocation(const Position& T) = 0;
     virtual SignalProxy<void()> sigLocationChanged() = 0;
     virtual LocatableItem* getParentLocatableItem();

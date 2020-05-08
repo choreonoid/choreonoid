@@ -27,12 +27,6 @@ std::string LocatableItem::getLocationName() const
 }
 
 
-bool LocatableItem::prefersLocalLocation() const
-{
-    return false;
-}
-
-
 bool LocatableItem::isLocationEditable() const
 {
     return isLocationEditable_;

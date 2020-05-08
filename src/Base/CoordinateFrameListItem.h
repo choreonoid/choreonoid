@@ -25,6 +25,7 @@ public:
     int itemizationMode() const;
     void setItemizationMode(int mode);
     void updateFrameItems();
+    CoordinateFrameItem* findFrameItemAt(int index);
 
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;

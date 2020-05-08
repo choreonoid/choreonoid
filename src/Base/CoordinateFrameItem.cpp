@@ -142,18 +142,25 @@ bool CoordinateFrameItem::isOffsetFrame() const
 }
 
 
+int CoordinateFrameItem::getLocationType() const
+{
+    if(impl->frameList){
+        if(impl->frameList->isForBaseFrames()){
+            return ParentRelativeLocation;
+        } else if(impl->frameList->isForOffsetFrames()){
+            return OffsetLocation;
+        }
+    }
+    return InvalidLocation;
+}
+
+
 Position CoordinateFrameItem::getLocation() const
 {
     if(auto frame_ = frame()){
         return frame_->position();
     }
     return Position::Identity();
-}
-
-
-bool CoordinateFrameItem::prefersLocalLocation() const
-{
-    return true;
 }
 
 

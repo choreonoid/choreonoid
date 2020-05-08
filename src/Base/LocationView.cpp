@@ -4,6 +4,7 @@
 #include "TargetItemPicker.h"
 #include "LocatableItem.h"
 #include "CoordinateFrameListItem.h"
+#include "CoordinateFrameItem.h"
 #include "RootItem.h"
 #include "CheckBox.h"
 #include "ComboBox.h"
@@ -128,9 +129,20 @@ LocationView::Impl::Impl(LocationView* self)
     vbox->addStretch();
 
     targetItem = nullptr;
-    targetItemPicker.setTargetInterface<LocatableItem>();
+
+    targetItemPicker.setTargetPredicate(
+        [](Item* item){
+            if(auto locatableItem = dynamic_cast<LocatableItem*>(item)){
+                if(locatableItem->getLocationType() != LocatableItem::InvalidLocation){
+                    return true;
+                }
+            }
+            return false;
+        });
+
     targetItemPicker.sigTargetItemChanged().connect(
         [&](Item* item){ setTargetItem(item); });
+    
     setTargetItem(nullptr);
 
     lastCoordIndex = ParentCoordIndex;
@@ -221,7 +233,8 @@ void LocationView::Impl::updateBaseCoordinateSystems()
     clearBaseCoordinateSystems();
     int defaultComboIndex = 0;
 
-    if(!targetItem->prefersLocalLocation()){
+    int locationType = targetItem->getLocationType();
+    if(locationType != LocatableItem::OffsetLocation){
         auto worldCoord = new CoordinateInfo(_("World"), WorldCoordIndex);
         worldCoord->T.setIdentity();
         coordinates.push_back(worldCoord);
@@ -246,7 +259,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
     localCoord->R0 = T.linear();
     coordinates.push_back(localCoord);
 
-    if(!targetItem->prefersLocalLocation()){
+    if(locationType != LocatableItem::OffsetLocation){
         //! \todo Use WorldItem as the root of the item search tree
         auto frameListItems =
             RootItem::instance()->descendantItems<CoordinateFrameListItem>();
@@ -271,6 +284,10 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             auto frames = frameListItem->frameList();
             int n = frames->numFrames();
             for(int i=0; i < n; ++i){
+                auto frameItem = frameListItem->findFrameItemAt(i);
+                if(frameItem && frameItem == targetItem){
+                    continue;
+                }
                 string name(basename);
                 auto frame = frames->frameAt(i);
                 name += frame->id().label();
