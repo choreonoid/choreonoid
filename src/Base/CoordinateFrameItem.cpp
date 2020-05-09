@@ -22,8 +22,10 @@ public:
     CoordinateFrameList* frameList;
     SignalProxy<void()> sigLocationChanged;
     
-    Impl();
-    Impl(const Impl& org);
+    Impl(CoordinateFrameItem* self);
+    Impl(CoordinateFrameItem* self, const Impl& org);
+    void initialize(CoordinateFrameItem* self);
+    void onCheckToggled(bool on);
 };
 
 }
@@ -38,29 +40,35 @@ void CoordinateFrameItem::initializeClass(ExtensionManager* ext)
 
 CoordinateFrameItem::CoordinateFrameItem()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
-CoordinateFrameItem::Impl::Impl()
+CoordinateFrameItem::Impl::Impl(CoordinateFrameItem* self)
 {
-    frameListItem = nullptr;
-    frameList = nullptr;
+    initialize(self);
 }
 
 
 CoordinateFrameItem::CoordinateFrameItem(const CoordinateFrameItem& org)
     : Item(org)
 {
-    impl = new Impl(*org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
-CoordinateFrameItem::Impl::Impl(const Impl& org)
+CoordinateFrameItem::Impl::Impl(CoordinateFrameItem* self, const Impl& org)
     : frameId(org.frameId)
+{
+    initialize(self);
+}
+
+
+void CoordinateFrameItem::Impl::initialize(CoordinateFrameItem* self)
 {
     frameListItem = nullptr;
     frameList = nullptr;
+    self->sigCheckToggled().connect([&](bool on){ onCheckToggled(on); });
 }
 
 
@@ -85,6 +93,14 @@ void CoordinateFrameItem::onPositionChanged()
         impl->frameList = nullptr;
     }
 }    
+
+
+void CoordinateFrameItem::Impl::onCheckToggled(bool on)
+{
+    if(frameListItem){
+        frameListItem->setFrameMarkerVisible(frameId, on);
+    }
+}
 
 
 void CoordinateFrameItem::setFrameId(const GeneralId& id)
@@ -206,6 +222,10 @@ void CoordinateFrameItem::setLocation(const Position& T)
 {
     if(auto frame_ = frame()){
         frame_->setPosition(T);
+        int index = impl->frameList->indexOf(frame_);
+        if(index >= 0){
+            impl->frameList->notifyFramePositionChange(index);
+        }
     }
 }
 

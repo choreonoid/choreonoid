@@ -119,7 +119,10 @@ int CoordinateFrameList::numFrames() const
 
 CoordinateFrame* CoordinateFrameList::frameAt(int index) const
 {
-    return impl->frames[index];
+    if(index < static_cast<int>(impl->frames.size())){
+        return impl->frames[index];
+    }
+    return nullptr;
 }
 
 

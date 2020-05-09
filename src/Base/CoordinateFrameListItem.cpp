@@ -2,11 +2,13 @@
 #include "CoordinateFrameItem.h"
 #include "ItemManager.h"
 #include "LocatableItem.h"
+#include "PositionDragger.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/ConnectionSet>
 #include <fmt/format.h>
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
@@ -16,6 +18,16 @@ using fmt::format;
 namespace {
 
 Signal<void(CoordinateFrameListItem* frameListItem)> sigInstanceAddedOrUpdated_;
+
+class FrameMarker : public PositionDragger
+{
+public:
+    bool isGlobal;
+
+    FrameMarker(CoordinateFrame* frame);
+};
+
+typedef ref_ptr<FrameMarker> FrameMarkerPtr;
 
 }
 
@@ -28,9 +40,15 @@ public:
     CoordinateFrameListPtr frameList;
     int itemizationMode;
     ScopedConnectionSet frameListConnections;
+    ScopedConnection framePositionChangeConnection;
 
-    Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList);
-    Impl(CoordinateFrameListItem* self, const Impl& org);
+    SgGroupPtr frameMarkerGroup;
+    SgPosTransformPtr relativeFrameMarkerGroup;
+    unordered_map<CoordinateFramePtr, FrameMarkerPtr> visibleFrameMarkerMap;
+    SgUpdate sgUpdate;
+    ScopedConnection parentLocatableItemConnection;
+
+    Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode);
     void setItemizationMode(int mode);
     void updateFrameItems();
     CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
@@ -39,6 +57,9 @@ public:
     void onFrameAdded(int index);
     void onFrameRemoved(int index);
     void onFrameAttributeChanged(int index);
+    void setFrameMarkerVisible(CoordinateFrame* frame, bool on);
+    void updateParentFrameForFrameMarkers(const Position& T);
+    void onFramePositionChanged(int index);
 };
 
 }
@@ -60,37 +81,34 @@ CoordinateFrameListItem::sigInstanceAddedOrUpdated()
 
 CoordinateFrameListItem::CoordinateFrameListItem()
 {
-    impl = new Impl(this, new CoordinateFrameList);
+    impl = new Impl(this, new CoordinateFrameList, NoItemization);
 }
 
 
 CoordinateFrameListItem::CoordinateFrameListItem(CoordinateFrameList* frameList)
 {
-    impl = new Impl(this, frameList);
-}
-
-
-CoordinateFrameListItem::Impl::Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList)
-    : self(self),
-      frameList(frameList)
-{
-    frameList = new CoordinateFrameList;
-    itemizationMode = NoItemization;
+    impl = new Impl(this, frameList, NoItemization);
 }
 
 
 CoordinateFrameListItem::CoordinateFrameListItem(const CoordinateFrameListItem& org)
     : Item(org)
 {
-    impl = new Impl(this, *org.impl);
+    auto frameList = new CoordinateFrameList(*org.impl->frameList);
+    impl = new Impl(this, frameList, org.impl->itemizationMode);
 }
 
 
-CoordinateFrameListItem::Impl::Impl(CoordinateFrameListItem* self, const Impl& org)
-    : self(self)
+CoordinateFrameListItem::Impl::Impl
+(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode)
+    : self(self),
+      frameList(frameList),
+      itemizationMode(itemizationMode)
 {
-    frameList = new CoordinateFrameList(*org.frameList);
-    itemizationMode = org.itemizationMode;
+    itemizationMode = NoItemization;
+    frameMarkerGroup = new SgGroup;
+    relativeFrameMarkerGroup = new SgPosTransform;
+    frameMarkerGroup->addChild(relativeFrameMarkerGroup);
 }
 
 
@@ -310,6 +328,138 @@ LocatableItem* CoordinateFrameListItem::getParentLocatableItem()
         }
     }
     return nullptr;
+}
+
+
+SgNode* CoordinateFrameListItem::getScene()
+{
+    return impl->frameMarkerGroup;
+}
+
+
+void CoordinateFrameListItem::setFrameMarkerVisible(const GeneralId& id, bool on)
+{
+    if(auto frame = impl->frameList->findFrame(id)){
+        impl->setFrameMarkerVisible(frame, on);
+    }
+}
+
+
+void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame, bool on)
+{
+    bool changed = false;
+    bool relativeMarkerChanged = false;
+    auto p = visibleFrameMarkerMap.find(frame);
+    if(p == visibleFrameMarkerMap.end()){
+        if(on){
+            auto marker = new FrameMarker(frame);
+            visibleFrameMarkerMap[frame] = marker;
+            if(marker->isGlobal){
+                frameMarkerGroup->addChild(marker, true);
+            } else {
+                relativeFrameMarkerGroup->addChild(marker, true);
+                relativeMarkerChanged = true;
+            }
+            changed = true;
+        }
+    } else {
+        if(!on){
+            auto marker = p->second;
+            if(marker->isGlobal){
+                frameMarkerGroup->removeChild(marker, true);
+            } else {
+                relativeFrameMarkerGroup->removeChild(marker, true);
+                relativeMarkerChanged = true;
+            }
+            visibleFrameMarkerMap.erase(p);
+            changed = true;
+        }
+    }
+
+    int numRelativeMarkers = 0;
+    
+    if(relativeMarkerChanged){
+        numRelativeMarkers = relativeFrameMarkerGroup->numChildren();
+        
+        if(parentLocatableItemConnection.connected()){
+            if(relativeFrameMarkerGroup->empty()){
+                parentLocatableItemConnection.disconnect();
+            }
+        } else {
+            if(!relativeFrameMarkerGroup->empty()){
+                if(auto locatable = self->getParentLocatableItem()){
+                    parentLocatableItemConnection =
+                        locatable->sigLocationChanged().connect(
+                            [this, locatable](){
+                                updateParentFrameForFrameMarkers(locatable->getLocation());
+                            });
+                    updateParentFrameForFrameMarkers(locatable->getLocation());
+                }
+            }
+        }
+    }
+    
+    if(changed){
+        if(on){
+            if(!self->isChecked()){
+                self->setChecked(true);
+                framePositionChangeConnection =
+                    frameList->sigFramePositionChanged().connect(
+                        [&](int index){ onFramePositionChanged(index); });
+            }
+        } else {
+            if(self->isChecked()){
+                if(numRelativeMarkers == 0 && frameMarkerGroup->numChildren() <= 1){
+                    self->setChecked(false);
+                    framePositionChangeConnection.disconnect();
+                }
+            }
+        }
+    }
+}
+
+
+bool CoordinateFrameListItem::isFrameMarkerVisible(const GeneralId& id) const
+{
+    if(auto frame = impl->frameList->findFrame(id)){
+        return (impl->visibleFrameMarkerMap.find(frame) != impl->visibleFrameMarkerMap.end());
+    }
+    return false;
+}
+
+
+void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Position& T)
+{
+    relativeFrameMarkerGroup->setPosition(T);
+    relativeFrameMarkerGroup->notifyUpdate(sgUpdate);
+}
+
+
+void CoordinateFrameListItem::Impl::onFramePositionChanged(int index)
+{
+    if(auto frame = frameList->frameAt(index)){
+        auto iter = visibleFrameMarkerMap.find(frame);
+        if(iter != visibleFrameMarkerMap.end()){
+            auto& marker = iter->second;
+            marker->setPosition(frame->position());
+            marker->notifyUpdate(sgUpdate);
+        }
+    }
+}
+
+
+FrameMarker::FrameMarker(CoordinateFrame* frame)
+    : PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle)
+{
+    setOverlayMode(true);
+    setConstantPixelSizeMode(true, 92.0);
+    setDisplayMode(PositionDragger::DisplayInEditMode);
+    setPosition(frame->position());
+
+    //setDragEnabled(target->isEditable());
+
+  
+    isGlobal = frame->isGlobal();
 }
 
 

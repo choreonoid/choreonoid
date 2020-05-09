@@ -143,7 +143,7 @@ SignalProxy<void()> LinkLocation::sigLocationChanged()
 Position LinkLocation::getLocation() const
 {
     if(auto link = refLink.lock()){
-        return link->position();
+        return link->Ta();
     }
     return Position::Identity();
 }
