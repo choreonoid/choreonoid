@@ -174,7 +174,7 @@ void LocationView::Impl::setTargetItem(Item* item)
         clearBaseCoordinateSystems();
         
     } else {
-        caption.setText(item->name().c_str());
+        caption.setText(targetItem->getLocationName().c_str());
         setLocked(!targetItem->isLocationEditable());
 
         targetItemConnections.add(
@@ -184,7 +184,13 @@ void LocationView::Impl::setTargetItem(Item* item)
         targetItemConnections.add(
             targetItem->sigLocationEditableChanged().connect(
                 [this](bool on){ setLocked(!on); }));
-            
+
+        targetItemConnections.add(
+            item->sigNameChanged().connect(
+                [this](const std::string& /* oldName */){
+                    caption.setText(targetItem->getLocationName().c_str());
+                }));
+        
         updateBaseCoordinateSystems();
         updatePositionWidgetWithTargetLocation();
     }
@@ -240,15 +246,25 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         coordinates.push_back(worldCoord);
     }
 
-    CoordinateInfo* parentCoord;
-    LocatableItem* parentLocatable = targetItem->getParentLocatableItem();
-    if(parentLocatable){
+    CoordinateInfo* parentCoord = nullptr;
+    
+    if(auto parentLocatable = targetItem->getParentLocatableItem()){
         ItemPtr parentItem = parentLocatable->getCorrespondingItem();
-        parentCoord = new CoordinateInfo(
-            format(_("Parent ( {} )"), parentLocatable->getLocationName()), ParentCoordIndex);
+        string label;
+        if(locationType == LocatableItem::OffsetLocation){
+            label = format(_("Offset ( {} )"), parentLocatable->getLocationName());
+        } else {
+            label = format(_("Parent ( {} )"), parentLocatable->getLocationName());
+        }
+        parentCoord = new CoordinateInfo(label, ParentCoordIndex);
         // parentItem is captured to keep parentLocatable alive until the function is disposed
         parentCoord->parentPositionFunc =
             [parentItem, parentLocatable](){ return parentLocatable->getLocation(); };
+
+    } else if(locationType == LocatableItem::OffsetLocation){
+        parentCoord = new CoordinateInfo(_("Offset"), ParentCoordIndex);
+    }
+    if(parentCoord){
         defaultComboIndex = coordinates.size();
         coordinates.push_back(parentCoord);
     }
@@ -326,27 +342,27 @@ void LocationView::Impl::updatePositionWidgetWithTargetLocation()
     if(!targetItem){
         return;
     }
+
     auto& coord = coordinates[coordinateCombo.currentIndex()];
     lastCoordIndex = coord->index;
-    Position T_world = targetItem->getLocation();
+    Position T_location = targetItem->getLocation();
 
     Position T;
     if(!coord->isLocal){
         if(coord->parentPositionFunc){
             Position T_base = coord->parentPositionFunc() * coord->T;
-            T = T_base.inverse(Eigen::Isometry) * T_world;
+            T = T_base.inverse(Eigen::Isometry) * T_location;
         } else {
-            T = coord->T.inverse(Eigen::Isometry) * T_world;
+            T = coord->T.inverse(Eigen::Isometry) * T_location;
         }
-        
     } else {
         Matrix3 R_prev = coord->T.linear();
-        Matrix3 R_current = T_world.linear();
+        Matrix3 R_current = T_location.linear();
         if(!R_current.isApprox(R_prev)){
-            coord->T = T_world;
+            coord->T = T_location;
         }
-        T = coord->T.inverse(Eigen::Isometry) * T_world;
-        T.linear() = coord->R0.transpose() * T_world.linear();
+        T = coord->T.inverse(Eigen::Isometry) * T_location;
+        T.linear() = coord->R0.transpose() * T_location.linear();
     }
     positionWidget->setPosition(T);
 }
@@ -356,19 +372,19 @@ bool LocationView::Impl::setInputPositionToTargetItem(const Position& T)
 {
     if(targetItem){
         auto& coord = coordinates[coordinateCombo.currentIndex()];
-        Position T_world;
+        Position T_location;
         if(!coord->isLocal){
             if(coord->parentPositionFunc){
                 Position T_base = coord->parentPositionFunc() * coord->T;
-                T_world = T_base * T;
+                T_location = T_base * T;
             } else {
-                T_world = coord->T * T;
+                T_location = coord->T * T;
             }
         } else {
-            T_world.linear() = coord->R0 * T.linear();
-            T_world.translation() = coord->T * T.translation();
-            if(!T_world.linear().isApprox(coord->T.linear())){
-                coord->T = T_world;
+            T_location.linear() = coord->R0 * T.linear();
+            T_location.translation() = coord->T * T.translation();
+            if(!T_location.linear().isApprox(coord->T.linear())){
+                coord->T = T_location;
                 Position T_user;
                 T_user.linear() = T.linear();
                 T_user.translation().setZero();
@@ -376,7 +392,7 @@ bool LocationView::Impl::setInputPositionToTargetItem(const Position& T)
             }
         }
         targetItemConnections.block();
-        targetItem->setLocation(T_world);
+        targetItem->setLocation(T_location);
         targetItemConnections.unblock();
         return true;
     }

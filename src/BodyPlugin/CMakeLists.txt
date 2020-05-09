@@ -10,6 +10,7 @@ set(sources
   BodySelectionManager.cpp
   BodyItem.cpp
   LinkKinematicsKitManager.cpp
+  LinkOffsetFrameListItem.cpp
   SimulatorItem.cpp
   SubSimulatorItem.cpp
   ControllerItem.cpp
@@ -62,6 +63,7 @@ set(headers
   BodySelectionManager.h
   BodyItem.h
   LinkKinematicsKitManager.h
+  LinkOffsetFrameListItem.h
   SimulatorItem.h
   SubSimulatorItem.h
   ControllerItem.h

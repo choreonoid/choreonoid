@@ -5,10 +5,12 @@
 #include "Archive.h"
 #include <cnoid/CoordinateFrame>
 #include <cnoid/CoordinateFrameList>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace cnoid {
 
@@ -152,6 +154,42 @@ int CoordinateFrameItem::getLocationType() const
         }
     }
     return InvalidLocation;
+}
+
+
+LocatableItem* CoordinateFrameItem::getParentLocatableItem()
+{
+    if(impl->frameListItem){
+        return impl->frameListItem->getParentLocatableItem();
+    }
+    return nullptr;
+}
+
+
+std::string CoordinateFrameItem::getLocationName() const
+{
+    auto frame_ = frame();
+    if(!impl->frameListItem || !frame_){
+        return name();
+    } else {
+        auto listName = impl->frameListItem->name();
+        auto id = frame_->id().label();
+        auto note = frame_->note();
+        if(auto parent = impl->frameListItem->getParentLocatableItem()){
+            auto parentName = parent->getLocationName();
+            if(note.empty()){
+                return format("{0} {1} {2}", parentName, listName, id);
+            } else {
+                return format("{0} {1} {2} ( {3} )", parentName, listName, id, note);
+            }
+        } else {
+            if(note.empty()){
+                return format("{0} {1}", listName, id);
+            } else {
+                return format("{0} {1} ( {2} )", listName, id, note);
+            }
+        }
+    }
 }
 
 

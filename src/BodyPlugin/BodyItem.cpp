@@ -75,7 +75,6 @@ public:
         return bodyItem->sigKinematicStateChanged();
     }
     virtual Position getLocation() const override { return link->position(); }
-    virtual void setLocation(const Position& T) override { }
     virtual bool isLocationEditable() const override { return false; }
     virtual LocatableItem* getParentLocatableItem() override { return nullptr; }
     virtual Item* getCorrespondingItem() override { return bodyItem; }

@@ -48,19 +48,16 @@ SignalProxy<void(bool on)> LocatableItem::sigLocationEditableChanged()
 }
 
 
+void LocatableItem::setLocation(const Position& /* T */)
+{
+
+}
+
+
 LocatableItem* LocatableItem::getParentLocatableItem()
 {
     if(auto item = dynamic_cast<Item*>(this)){
-        while(true){
-            item = item->parentItem();
-            if(item){
-                if(auto locatable = dynamic_cast<LocatableItem*>(item)){
-                    return locatable;
-                }
-            } else {
-                break;
-            }
-        }
+        return item->findOwnerItem<LocatableItem>();
     }
     return nullptr;
 }

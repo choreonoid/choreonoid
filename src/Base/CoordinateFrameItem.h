@@ -35,6 +35,8 @@ public:
 
     // LocatableItem functions
     virtual int getLocationType() const override;
+    virtual LocatableItem* getParentLocatableItem() override;
+    virtual std::string getLocationName() const override;
     virtual Position getLocation() const override;
     virtual void setLocation(const Position& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;

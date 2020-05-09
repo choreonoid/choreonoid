@@ -178,7 +178,12 @@ void CoordinateFrameListItem::Impl::updateFrameAttribute
 (CoordinateFrameItem* item, CoordinateFrame* frame)
 {
     item->setFrameId(frame->id());
-    item->setName(format("{0}: {1}", frame->id().label(), frame->note()));
+    auto& note = frame->note();
+    if(note.empty()){
+        item->setName(frame->id().label());
+    } else {
+        item->setName(format("{0}: {1}", frame->id().label(), note));
+    }
 }
 
 
@@ -292,8 +297,10 @@ bool CoordinateFrameListItem::isForOffsetFrames() const
 
 LocatableItem* CoordinateFrameListItem::getParentLocatableItem()
 {
-    if(auto locatableItem = findOwnerItem<LocatableItem>()){
-        return locatableItem;
+    if(isForBaseFrames()){
+        if(auto locatableItem = findOwnerItem<LocatableItem>()){
+            return locatableItem;
+        }
     }
     return nullptr;
 }

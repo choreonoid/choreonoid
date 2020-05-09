@@ -19,6 +19,7 @@ public:
         OffsetLocation
     };
     virtual int getLocationType() const = 0;
+    virtual LocatableItem* getParentLocatableItem();
     
     virtual Item* getCorrespondingItem();
     virtual std::string getLocationName() const;
@@ -26,9 +27,8 @@ public:
     virtual bool isLocationEditable() const;
     virtual void setLocationEditable(bool on);
     virtual SignalProxy<void(bool on)> sigLocationEditableChanged();
-    virtual void setLocation(const Position& T) = 0;
+    virtual void setLocation(const Position& T);
     virtual SignalProxy<void()> sigLocationChanged() = 0;
-    virtual LocatableItem* getParentLocatableItem();
     
 private:
     bool isLocationEditable_;
