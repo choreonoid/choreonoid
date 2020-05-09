@@ -12,6 +12,7 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     LinkOffsetFrameListItem();
+    LinkOffsetFrameListItem(CoordinateFrameList* frameList);
     LinkOffsetFrameListItem(const LinkOffsetFrameListItem& org);
     ~LinkOffsetFrameListItem();
 

@@ -18,6 +18,7 @@ public:
     static SignalProxy<void(CoordinateFrameListItem* frameListItem)> sigInstanceAddedOrUpdated();
 
     CoordinateFrameListItem();
+    CoordinateFrameListItem(CoordinateFrameList* frameList);
     CoordinateFrameListItem(const CoordinateFrameListItem& org);
     virtual ~CoordinateFrameListItem();
 

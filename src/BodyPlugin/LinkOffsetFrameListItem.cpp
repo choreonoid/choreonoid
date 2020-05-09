@@ -54,6 +54,14 @@ LinkOffsetFrameListItem::LinkOffsetFrameListItem()
 }
 
 
+LinkOffsetFrameListItem::LinkOffsetFrameListItem(CoordinateFrameList* frameList)
+    : CoordinateFrameListItem(frameList)
+{
+    useAsOffsetFrames();
+    impl = new Impl;
+}
+
+
 LinkOffsetFrameListItem::LinkOffsetFrameListItem(const LinkOffsetFrameListItem& org)
     : CoordinateFrameListItem(org)
 {

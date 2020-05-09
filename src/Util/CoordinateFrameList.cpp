@@ -65,6 +65,17 @@ Referenced* CoordinateFrameList::doClone(CloneMap* cloneMap) const
 }
 
 
+CoordinateFrameList& CoordinateFrameList::operator=(const CoordinateFrameList& rhs)
+{
+    clear();
+    const int n = rhs.numFrames();
+    for(int i=0; i < n; ++i){
+        append(new CoordinateFrame(*rhs.frameAt(i)));
+    }
+    return *this;
+}
+
+
 const std::string& CoordinateFrameList::name() const
 {
     return impl->name;

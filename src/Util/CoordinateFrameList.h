@@ -20,6 +20,8 @@ public:
     CoordinateFrameList(const CoordinateFrameList& org);
     ~CoordinateFrameList();
 
+    CoordinateFrameList& operator=(const CoordinateFrameList& rhs);
+
     enum FrameType { Base, Offset };
     void setFrameType(int type) { frameType_ = type; }
     int frameType() const { return frameType_; }

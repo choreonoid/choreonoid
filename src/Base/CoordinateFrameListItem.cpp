@@ -29,7 +29,7 @@ public:
     int itemizationMode;
     ScopedConnectionSet frameListConnections;
 
-    Impl(CoordinateFrameListItem* self);
+    Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList);
     Impl(CoordinateFrameListItem* self, const Impl& org);
     void setItemizationMode(int mode);
     void updateFrameItems();
@@ -60,12 +60,19 @@ CoordinateFrameListItem::sigInstanceAddedOrUpdated()
 
 CoordinateFrameListItem::CoordinateFrameListItem()
 {
-    impl = new Impl(this);
+    impl = new Impl(this, new CoordinateFrameList);
 }
 
 
-CoordinateFrameListItem::Impl::Impl(CoordinateFrameListItem* self)
-    : self(self)
+CoordinateFrameListItem::CoordinateFrameListItem(CoordinateFrameList* frameList)
+{
+    impl = new Impl(this, frameList);
+}
+
+
+CoordinateFrameListItem::Impl::Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList)
+    : self(self),
+      frameList(frameList)
 {
     frameList = new CoordinateFrameList;
     itemizationMode = NoItemization;
