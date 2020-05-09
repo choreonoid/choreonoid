@@ -61,7 +61,7 @@ protected:
 
     MprProgram* findProgram(const std::string& name);
 
-    LinkKinematicsKit* getLinkKinematicsKit();
+    LinkKinematicsKit* linkKinematicsKitForControl();
     MprVariableSet* getVariableSet();
 
     void pushControlFunctions(

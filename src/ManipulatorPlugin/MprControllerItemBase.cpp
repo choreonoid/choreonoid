@@ -524,7 +524,7 @@ MprProgram* MprControllerItemBase::findProgram(const std::string& name)
 }
 
 
-LinkKinematicsKit* MprControllerItemBase::getLinkKinematicsKit()
+LinkKinematicsKit* MprControllerItemBase::linkKinematicsKitForControl()
 {
     return impl->kinematicsKit;
 }
