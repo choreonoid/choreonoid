@@ -21,7 +21,9 @@ void exportPySceneTypes(py::module m)
         .def("isContainerMode", &PositionDragger::isContainerMode)
         .def("setContainerMode", &PositionDragger::setContainerMode)
         .def("isDragging", &PositionDragger::isDragging)
-        .def_property_readonly("draggedPosition", &PositionDragger::draggedPosition)
+        .def_property_readonly("draggingPosition", &PositionDragger::draggingPosition)
+        .def_property_readonly("globalDraggingPosition", &PositionDragger::globalDraggingPosition)
+        .def_property_readonly("draggedPosition", &PositionDragger::globalDraggingPosition) // deprecated
 
         // deprecated
         .def("getDraggableAxes", &PositionDragger::draggableAxes)

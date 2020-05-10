@@ -132,6 +132,7 @@ public:
     bool isContentsDragEnabled;
     bool isUndoEnabled;
     bool hasOffset;
+    Affine3 T_parent;
     Position T_offset;
     SgSwitchableGroupPtr topSwitch;
     SgOverlayPtr overlay;
@@ -161,8 +162,10 @@ public:
     void showDragMarkers(bool on);
     AxisBitSet detectTargetAxes(const SceneWidgetEvent& event);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
-    bool onTranslationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet);
-    bool onRotationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet);
+    bool onTranslationDraggerPressed(
+        const SceneWidgetEvent& event, const Affine3& T_global, AxisBitSet axisBitSet);
+    bool onRotationDraggerPressed(
+        const SceneWidgetEvent& event, const Affine3& T_global, AxisBitSet axisBitSet);
     void storeCurrentPositionToHistory();
 };
 
@@ -815,13 +818,28 @@ bool PositionDragger::isDragging() const
 }
 
 
-Affine3 PositionDragger::draggedPosition() const
+Affine3 PositionDragger::draggingPosition() const
+{
+    Affine3 T1;
+    if(impl->dragProjector.isDragging()){
+        T1 = impl->T_parent.inverse(Eigen::Isometry) * impl->dragProjector.position();
+    } else {
+        T1 = T();
+    }
+    if(impl->hasOffset){
+        return T1 * impl->T_offset.inverse(Eigen::Isometry);
+    }
+    return T1;
+}
+
+
+Affine3 PositionDragger::globalDraggingPosition() const
 {
     Affine3 T1;
     if(impl->dragProjector.isDragging()){
         T1 = impl->dragProjector.position();
     } else {
-        T1 = T();
+        T1 = impl->T_parent * T();
     }
     if(impl->hasOffset){
         return T1 * impl->T_offset.inverse(Eigen::Isometry);
@@ -871,8 +889,8 @@ AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event
     }
 
     if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
-        const Affine3 T = calcTotalTransform(event.nodePath(), self);
-        const Vector3 p_local = T.inverse() * event.point();
+        const Affine3 T_global = calcTotalTransform(event.nodePath(), self);
+        const Vector3 p_local = T_global.inverse() * event.point();
         double width = handleSize * unitHandleWidth * calcWidthRatio(event.pixelSizeRatio());
         if(p_local.norm() < 1.5 * width){
             axisBitSet |= AxisBitSet(TRANSLATION_AXES);
@@ -897,24 +915,30 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         return processed;
     }
 
-    auto axisBitSet = detectTargetAxes(event);
+    auto& path = event.nodePath();
+    auto iter = std::find(path.begin(), path.end(), self);
+    if(iter != path.end()){
+        T_parent = calcTotalTransform(path.begin(), iter);
+        const Affine3 T_global = T_parent * self->T();
 
-    if(axisBitSet.none()){
-        if(self->isContainerMode() && isContentsDragEnabled){
-            if(displayMode == DisplayInFocus){
-                showDragMarkers(true);
+        auto axisBitSet = detectTargetAxes(event);
+        if(axisBitSet.none()){
+            if(self->isContainerMode() && isContentsDragEnabled){
+                if(displayMode == DisplayInFocus){
+                    showDragMarkers(true);
+                }
+                dragProjector.setInitialPosition(T_global);
+                dragProjector.setTranslationAlongViewPlane();
+                if(dragProjector.startTranslation(event)){
+                    processed = true;
+                }
             }
-            dragProjector.setInitialPosition(self->T());
-            dragProjector.setTranslationAlongViewPlane();
-            if(dragProjector.startTranslation(event)){
-                processed = true;
+        } else {
+            if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
+                processed = onTranslationDraggerPressed(event, T_global, axisBitSet);
+            } else if((axisBitSet & AxisBitSet(ROTATION_AXES)).any()){
+                processed = onRotationDraggerPressed(event, T_global, axisBitSet);
             }
-        }
-    } else {
-        if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
-            processed = onTranslationDraggerPressed(event, axisBitSet);
-        } else if((axisBitSet & AxisBitSet(ROTATION_AXES)).any()){
-            processed = onRotationDraggerPressed(event, axisBitSet);
         }
     }
 
@@ -929,24 +953,22 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet)
+bool PositionDragger::Impl::onTranslationDraggerPressed
+(const SceneWidgetEvent& event, const Affine3& T_global, AxisBitSet axisBitSet)
 {
     bool processed = false;
 
-    const Affine3 T = calcTotalTransform(event.nodePath(), self);
-    dragProjector.setInitialPosition(T);
-    
+    dragProjector.setInitialPosition(T_global);
     if(axisBitSet.count() == 1){
         for(int i=0; i < 3; ++i){
             if(axisBitSet[i]){
-                dragProjector.setTranslationAxis(T.linear().col(i));
+                dragProjector.setTranslationAxis(T_global.linear().col(i));
                 break;
             }
         }
     } else {
         dragProjector.setTranslationAlongViewPlane();
     }        
-    
     if(dragProjector.startTranslation(event)){
         processed = true;
     }
@@ -955,16 +977,16 @@ bool PositionDragger::Impl::onTranslationDraggerPressed(const SceneWidgetEvent& 
 }
 
 
-bool PositionDragger::Impl::onRotationDraggerPressed(const SceneWidgetEvent& event, AxisBitSet axisBitSet)
+bool PositionDragger::Impl::onRotationDraggerPressed
+(const SceneWidgetEvent& event, const Affine3& T_global, AxisBitSet axisBitSet)
 {
     bool processed = false;
-    const Affine3 T = calcTotalTransform(event.nodePath(), self);
 
     if(axisBitSet.count() == 1){
-        dragProjector.setInitialPosition(T);
+        dragProjector.setInitialPosition(T_global);
         for(int i=0; i < 3; ++i){
             if(axisBitSet[i + 3]){
-                dragProjector.setRotationAxis(T.linear().col(i));
+                dragProjector.setRotationAxis(T_global.linear().col(i));
                 if(dragProjector.startRotation(event)){
                     processed = true;
                 }
@@ -972,7 +994,6 @@ bool PositionDragger::Impl::onRotationDraggerPressed(const SceneWidgetEvent& eve
             }
         }
     }
-    
     return processed;
 }
 

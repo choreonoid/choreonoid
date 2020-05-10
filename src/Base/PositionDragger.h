@@ -84,8 +84,14 @@ public:
     bool isDragEnabled() const;
     void setDragEnabled(bool on);
     bool isDragging() const;
-    Affine3 draggedPosition() const;
 
+    [[deprecated("Use globalDraggingPosition to get the global coordinate, or "
+                 "draggingPosition to get the local position in the parent node coordinate.")]]
+    Affine3 draggedPosition() const { return globalDraggingPosition(); }
+
+    Affine3 draggingPosition() const;
+    Affine3 globalDraggingPosition() const;
+    
     SignalProxy<void()> sigDragStarted();
     SignalProxy<void()> sigPositionDragged();
     SignalProxy<void()> sigDragFinished();

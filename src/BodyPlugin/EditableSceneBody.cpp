@@ -1383,9 +1383,9 @@ void EditableSceneBody::Impl::onDraggerDragged()
 {
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
-        setForcedPosition(positionDragger->draggedPosition());
+        setForcedPosition(positionDragger->globalDraggingPosition());
     } else {
-        Affine3 T = positionDragger->draggedPosition();
+        Affine3 T = positionDragger->globalDraggingPosition();
         T.linear() = targetLink->calcRfromAttitude(T.linear());
         doIK(T);
     }
@@ -1398,7 +1398,7 @@ void EditableSceneBody::Impl::onDraggerDragFinished()
     if(activeSimulatorItem){
         finishForcedPosition();
     } else {
-        Affine3 T = positionDragger->draggedPosition();
+        Affine3 T = positionDragger->globalDraggingPosition();
         T.linear() = targetLink->calcRfromAttitude(T.linear());
         doIK(T);
     }
