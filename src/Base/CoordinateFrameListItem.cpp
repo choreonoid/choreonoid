@@ -401,18 +401,16 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
     
     if(changed){
         if(on){
-            if(!self->isChecked()){
-                self->setChecked(true);
+            self->setChecked(true);
+            if(!framePositionChangeConnection.connected()){
                 framePositionChangeConnection =
                     frameList->sigFramePositionChanged().connect(
                         [&](int index){ onFramePositionChanged(index); });
             }
         } else {
-            if(self->isChecked()){
-                if(numRelativeMarkers == 0 && frameMarkerGroup->numChildren() <= 1){
-                    self->setChecked(false);
-                    framePositionChangeConnection.disconnect();
-                }
+            if(numRelativeMarkers == 0 && frameMarkerGroup->numChildren() <= 1){
+                self->setChecked(false);
+                framePositionChangeConnection.disconnect();
             }
         }
     }
