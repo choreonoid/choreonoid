@@ -4,6 +4,7 @@
 #include "GeneralId.h"
 #include "Referenced.h"
 #include <cnoid/EigenTypes>
+#include <cnoid/Signal>
 #include <string>
 #include "exportdecl.h"
 
@@ -47,12 +48,16 @@ public:
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
 
+    SignalProxy<void()> sigPositionChanged() { return sigPositionChanged_; }
+    void notifyPositionChange() { sigPositionChanged_(); }
+
 private:
     Position T_;
     GeneralId id_;
     bool isGlobal_;
     std::string note_;
     weak_ref_ptr<CoordinateFrameList> ownerFrameList_;
+    Signal<void()> sigPositionChanged_;
 
     friend class CoordinateFrameList;
 };

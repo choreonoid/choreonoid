@@ -50,9 +50,7 @@ public:
 
     SignalProxy<void(int index)> sigFrameAdded();
     SignalProxy<void(int index, CoordinateFrame* frame)> sigFrameRemoved();
-    SignalProxy<void(int index)> sigFramePositionChanged();
     SignalProxy<void(int index)> sigFrameAttributeChanged();
-    void notifyFramePositionChange(int index);
     void notifyFrameAttributeChange(int index);
 
     /**

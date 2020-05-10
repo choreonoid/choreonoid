@@ -22,9 +22,14 @@ Signal<void(CoordinateFrameListItem* frameListItem)> sigInstanceAddedOrUpdated_;
 class FrameMarker : public PositionDragger
 {
 public:
+    CoordinateFramePtr frame;
+    ScopedConnection frameConnection;
+    SgUpdate sgUpdate;
     bool isGlobal;
 
     FrameMarker(CoordinateFrame* frame);
+    void onFramePositionChanged();
+    void onMarkerPositionDragged();
 };
 
 typedef ref_ptr<FrameMarker> FrameMarkerPtr;
@@ -40,7 +45,6 @@ public:
     CoordinateFrameListPtr frameList;
     int itemizationMode;
     ScopedConnectionSet frameListConnections;
-    ScopedConnection framePositionChangeConnection;
 
     SgGroupPtr frameMarkerGroup;
     SgPosTransformPtr relativeFrameMarkerGroup;
@@ -59,7 +63,6 @@ public:
     void onFrameAttributeChanged(int index);
     void setFrameMarkerVisible(CoordinateFrame* frame, bool on);
     void updateParentFrameForFrameMarkers(const Position& T);
-    void onFramePositionChanged(int index);
 };
 
 }
@@ -402,15 +405,9 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
     if(changed){
         if(on){
             self->setChecked(true);
-            if(!framePositionChangeConnection.connected()){
-                framePositionChangeConnection =
-                    frameList->sigFramePositionChanged().connect(
-                        [&](int index){ onFramePositionChanged(index); });
-            }
         } else {
             if(numRelativeMarkers == 0 && frameMarkerGroup->numChildren() <= 1){
                 self->setChecked(false);
-                framePositionChangeConnection.disconnect();
             }
         }
     }
@@ -433,31 +430,34 @@ void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Posit
 }
 
 
-void CoordinateFrameListItem::Impl::onFramePositionChanged(int index)
-{
-    if(auto frame = frameList->frameAt(index)){
-        auto iter = visibleFrameMarkerMap.find(frame);
-        if(iter != visibleFrameMarkerMap.end()){
-            auto& marker = iter->second;
-            marker->setPosition(frame->position());
-            marker->notifyUpdate(sgUpdate);
-        }
-    }
-}
-
-
 FrameMarker::FrameMarker(CoordinateFrame* frame)
-    : PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle)
+    : PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle),
+      frame(frame)
 {
+    setDragEnabled(true);
     setOverlayMode(true);
     setConstantPixelSizeMode(true, 92.0);
     setDisplayMode(PositionDragger::DisplayInEditMode);
     setPosition(frame->position());
 
-    //setDragEnabled(target->isEditable());
-
-  
     isGlobal = frame->isGlobal();
+
+    frameConnection = frame->sigPositionChanged().connect([&](){ onFramePositionChanged(); });
+    sigPositionDragged().connect([&](){ onMarkerPositionDragged(); });
+}
+
+
+void FrameMarker::onFramePositionChanged()
+{
+    setPosition(frame->position());
+    notifyUpdate(sgUpdate);
+}
+
+
+void FrameMarker::onMarkerPositionDragged()
+{
+    frame->setPosition(draggingPosition());
+    frame->notifyPositionChange();
 }
 
 

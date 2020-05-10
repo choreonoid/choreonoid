@@ -22,7 +22,6 @@ public:
     std::string name;
     Signal<void(int index)> sigFrameAdded;
     Signal<void(int index, CoordinateFrame* frame)> sigFrameRemoved;
-    Signal<void(int index)> sigFramePositionChanged;
     Signal<void(int index)> sigFrameAttributeChanged;
     
     Impl();
@@ -212,21 +211,9 @@ SignalProxy<void(int index, CoordinateFrame* frame)> CoordinateFrameList::sigFra
 }
 
 
-SignalProxy<void(int index)> CoordinateFrameList::sigFramePositionChanged()
-{
-    return impl->sigFramePositionChanged;
-}
-
-
 SignalProxy<void(int index)> CoordinateFrameList::sigFrameAttributeChanged()
 {
     return impl->sigFrameAttributeChanged;
-}
-
-
-void CoordinateFrameList::notifyFramePositionChange(int index)
-{
-    impl->sigFramePositionChanged(index);
 }
 
 

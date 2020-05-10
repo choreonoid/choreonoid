@@ -20,7 +20,8 @@ public:
     GeneralId frameId;
     CoordinateFrameListItem* frameListItem;
     CoordinateFrameList* frameList;
-    SignalProxy<void()> sigLocationChanged;
+    Signal<void()> sigLocationChanged;
+    ScopedConnection frameConnection;
     
     Impl(CoordinateFrameItem* self);
     Impl(CoordinateFrameItem* self, const Impl& org);
@@ -222,16 +223,17 @@ void CoordinateFrameItem::setLocation(const Position& T)
 {
     if(auto frame_ = frame()){
         frame_->setPosition(T);
-        int index = impl->frameList->indexOf(frame_);
-        if(index >= 0){
-            impl->frameList->notifyFramePositionChange(index);
-        }
+        frame_->notifyPositionChange();
     }
 }
 
 
 SignalProxy<void()> CoordinateFrameItem::sigLocationChanged()
 {
+    if(auto frame_ = frame()){
+        impl->frameConnection =
+            frame_->sigPositionChanged().connect([&](){ impl->sigLocationChanged(); });
+    }
     return impl->sigLocationChanged;
 }
 
