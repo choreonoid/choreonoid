@@ -27,3 +27,4 @@ qrc_*.cxx
 /share/locale
 /Doxyfile
 messages.pot
+/choreonoid.*
