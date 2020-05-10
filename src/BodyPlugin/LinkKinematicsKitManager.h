@@ -9,8 +9,6 @@ namespace cnoid {
 class BodyItem;
 class LinkKinematicsKit;
 class Link;
-class InverseKinematics;
-class SgNode;
 class Mapping;
 
 class CNOID_EXPORT LinkKinematicsKitManager
@@ -22,8 +20,6 @@ public:
     LinkKinematicsKit* getCurrentKinematicsKit(Link* targetLink);
     LinkKinematicsKit* findPresetKinematicsKit(Link* targetLink = nullptr);
     
-    SgNode* scene();
-
     bool storeState(Mapping& archive) const;
     bool restoreState(const Mapping& archive);
 

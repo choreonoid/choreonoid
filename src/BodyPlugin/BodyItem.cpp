@@ -757,7 +757,6 @@ LinkKinematicsKitManager* BodyItem::Impl::getOrCreateLinkKinematicsKitManager()
 {
     if(!linkKinematicsKitManager){
         linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
-        self->sceneBody()->addChild(linkKinematicsKitManager->scene(), true);
     }
     return linkKinematicsKitManager.get();
 }

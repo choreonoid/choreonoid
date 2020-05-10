@@ -12,9 +12,6 @@
 #include <cnoid/BodyItem>
 #include <cnoid/WorldItem>
 #include <cnoid/ItemList>
-#include <cnoid/PositionEditManager>
-#include <cnoid/PositionDragger>
-#include <cnoid/ConnectionSet>
 #include <cnoid/ValueTree>
 #include <map>
 
@@ -49,12 +46,6 @@ public:
     CoordinateFrameListPtr defaultOffsetFrames;
 
     BodySelectionManager* bodySelectionManager;
-    AbstractPositionEditTarget* frameEditTarget;
-    Link* frameEditLink;
-    PositionDraggerPtr positionDragger;
-    SgUpdate update;
-    ScopedConnection positionEditManagerConnection;
-    ScopedConnectionSet frameEditConnections;
 
     Impl(BodyItem* bodyItem);
     void onBodyItemPositionChanged();
@@ -63,13 +54,6 @@ public:
     bool updateCoordinateFramesOf(LinkKinematicsKit* kit, bool forceUpdate);
     void findFrameListItems();
     void onFrameListItemAddedOrUpdated(CoordinateFrameListItem* frameListItem);
-    void setupPositionDragger();
-    bool onPositionEditRequest(AbstractPositionEditTarget* target);
-    bool startBaseFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
-    bool startOffsetFrameEditing(AbstractPositionEditTarget* target, CoordinateFrame* frame);
-    void setFrameEditTarget(AbstractPositionEditTarget* target, Link* link);
-    void onFrameEditPositionChanged(const Position& T);
-    void onDraggerPositionChanged();
 };
 
 }
@@ -91,8 +75,6 @@ LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
             [&](){ onBodyItemPositionChanged(); });
 
     onBodyItemPositionChanged();
-    
-    setupPositionDragger();
 }
 
 
@@ -348,132 +330,6 @@ void LinkKinematicsKitManager::Impl::onFrameListItemAddedOrUpdated
                 }
             }
         }
-    }
-}
-
-
-SgNode* LinkKinematicsKitManager::scene()
-{
-    return impl->positionDragger;
-}
-
-
-void LinkKinematicsKitManager::Impl::setupPositionDragger()
-{
-    positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
-    positionDragger->setOverlayMode(true);
-    positionDragger->setConstantPixelSizeMode(true, 92.0);
-    positionDragger->setDisplayMode(PositionDragger::DisplayNever);
-
-    positionDragger->sigPositionDragged().connect(
-        [&](){ onDraggerPositionChanged(); });
-
-    frameEditTarget = nullptr;
-
-    positionEditManagerConnection =
-        PositionEditManager::instance()->sigPositionEditRequest().connect(
-            [&](AbstractPositionEditTarget* target){
-                return onPositionEditRequest(target); });
-}    
-
-
-bool LinkKinematicsKitManager::Impl::onPositionEditRequest(AbstractPositionEditTarget* target)
-{
-    bool accepted = false;
-    if(auto frame = dynamic_cast<CoordinateFrame*>(target->getPositionObject())){
-        if(auto frameList = frame->ownerFrameList()){
-            if(frameList == baseFrames){
-                accepted = startBaseFrameEditing(target, frame);
-            } else if(frameList == offsetFrames){
-                accepted = startOffsetFrameEditing(target, frame);
-            }
-        }
-    }
-    return accepted;
-}
-
-
-bool LinkKinematicsKitManager::Impl::startBaseFrameEditing
-(AbstractPositionEditTarget* target, CoordinateFrame* frame)
-{
-    if(auto link = bodySelectionManager->currentLink()){
-        if(auto kit = bodyItem->findPresetLinkKinematicsKit(link)){
-            if(auto baseLink = kit->baseLink()){
-                setFrameEditTarget(target, baseLink);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-
-bool LinkKinematicsKitManager::Impl::startOffsetFrameEditing
-(AbstractPositionEditTarget* target, CoordinateFrame* frame)
-{
-    auto endLink = bodyItem->body()->findUniqueEndLink();
-    if(!endLink){
-        endLink = bodySelectionManager->currentLink();
-    }
-    if(endLink){
-        setFrameEditTarget(target, endLink);
-        return true;
-    }
-    return false;
-}
-
-
-void LinkKinematicsKitManager::Impl::setFrameEditTarget(AbstractPositionEditTarget* target, Link* link)
-{
-    frameEditConnections.disconnect();
-
-    frameEditTarget = target;
-    frameEditLink = link;
-
-    if(!target){
-        positionDragger->setDisplayMode(PositionDragger::DisplayNever);
-
-    } else {
-        positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
-        positionDragger->setDragEnabled(target->isEditable());
-
-        frameEditConnections.add(
-            target->sigPositionChanged().connect(
-                [&](const Position& T){ onFrameEditPositionChanged(T); }));
-
-        frameEditConnections.add(
-            target->sigPositionEditTargetExpired().connect(
-                [=](){ setFrameEditTarget(nullptr, nullptr); }));
-
-        frameEditConnections.add(
-            bodyItem->sigKinematicStateChanged().connect(
-                [&](){ onFrameEditPositionChanged(frameEditTarget->getPosition()); }));
-
-        onFrameEditPositionChanged(target->getPosition());
-    }
-}
-
-
-void LinkKinematicsKitManager::Impl::onFrameEditPositionChanged(const Position& T)
-{
-    Position F;
-    F.linear() = frameEditLink->attitude();
-    F.translation() = frameEditLink->translation();
-    positionDragger->setPosition(F * T);
-    positionDragger->notifyUpdate(update);
-}
-
-
-void LinkKinematicsKitManager::Impl::onDraggerPositionChanged()
-{
-    if(frameEditTarget){
-        frameEditConnections.block();
-        Position F;
-        F.linear() = frameEditLink->attitude();
-        F.translation() = frameEditLink->translation();
-        Position T = F.inverse(Eigen::Isometry) * positionDragger->T();
-        frameEditTarget->setPosition(T);
-        frameEditConnections.unblock();
     }
 }
 
