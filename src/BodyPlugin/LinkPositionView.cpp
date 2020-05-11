@@ -4,7 +4,6 @@
 #include "BodyItem.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
-#include <cnoid/PositionEditManager>
 #include <cnoid/ActionGroup>
 #include <cnoid/ConnectionSet>
 #include <QLabel>
@@ -26,11 +25,10 @@ public:
     LinkPositionView* self;
     QLabel targetLabel;
     LinkPositionWidget* positionWidget;
-    ScopedConnectionSet activeStateConnections;
+    ScopedConnection activeStateConnection;
 
     Impl(LinkPositionView* self);
     bool setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
-    bool setPositionEditTarget(AbstractPositionEditTarget* target);
     void onAttachedMenuRequest(MenuManager& menuManager);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
@@ -106,25 +104,12 @@ LinkPositionView::~LinkPositionView()
 void LinkPositionView::onActivated()
 {
     auto bsm = BodySelectionManager::instance();
-    auto pem = PositionEditManager::instance();
     
-    impl->activeStateConnections.add(
+    impl->activeStateConnection =
         bsm->sigCurrentSpecified().connect(
             [&](BodyItem* bodyItem, Link* link){
                 impl->setTargetBodyAndLink(bodyItem, link);
-            }));
-
-    impl->activeStateConnections.add(
-        pem->sigPositionEditRequest().connect(
-            [&](AbstractPositionEditTarget* target){
-                return impl->setPositionEditTarget(target);
-            }));
-
-    if(!impl->setTargetBodyAndLink(bsm->currentBodyItem(), bsm->currentLink())){
-        if(auto positionEditTarget = pem->lastPositionEditTarget()){
-            impl->setPositionEditTarget(positionEditTarget);
-        }
-    }
+            });
 }
 
 
@@ -144,19 +129,9 @@ bool LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
 }
 
 
-bool LinkPositionView::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
-{
-    if(positionWidget->setPositionEditTarget(target)){
-        targetLabel.setText(target->getPositionName().c_str());
-        return true;
-    }
-    return false;
-}
-
-
 void LinkPositionView::onDeactivated()
 {
-    impl->activeStateConnections.disconnect();
+    impl->activeStateConnection.disconnect();
 }
 
 

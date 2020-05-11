@@ -9,7 +9,6 @@
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/BodyState>
-#include <cnoid/PositionEditManager>
 #include <cnoid/MenuManager>
 #include <cnoid/Archive>
 #include <cnoid/Buttons>
@@ -92,7 +91,6 @@ public:
     LinkPositionWidget* self;
 
     ScopedConnectionSet targetConnections;
-    enum TargetType { LinkTarget, PositionEditTarget } targetType;
     BodyItemPtr targetBodyItem;
     LinkPtr targetLink;
     int targetLinkType;
@@ -102,7 +100,6 @@ public:
     CoordinateFramePtr baseFrame;
     CoordinateFramePtr offsetFrame;
     std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
-    AbstractPositionEditTarget* positionEditTarget;
     
     QLabel resultLabel;
 
@@ -152,18 +149,14 @@ public:
     void initializeConfigurationInterface();
     void showConfigurationDialog();
     void applyConfiguration(int id);
-    bool setPositionEditTarget(AbstractPositionEditTarget* target);
-    void onPositionEditTargetExpired();
     void onKinematicsKitPositionError(const Position& T_frameCoordinate);
     void updateDisplay();
     void updateDisplayWithPosition(const Position& position);
     void updateDisplayWithGlobalLinkPosition(const Position& Ta_global);
     void updateDisplayWithCurrentLinkPosition();
-    void updateDisplayWithPositionEditTarget();
     void updateConfigurationDisplay();
     bool applyPositionInput(const Position& T);
     bool findBodyIkSolution(const Position& T_input, bool isRawT);
-    bool applyInputToPositionEditTarget(const Position& T_input);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -185,15 +178,11 @@ LinkPositionWidget::Impl::Impl(LinkPositionWidget* self)
     createPanel();
     self->setEnabled(false);
     
-    targetType = LinkTarget;
-
     targetLinkType = RootOrIkLink;
     
     identityFrame = new CoordinateFrame;
     baseFrame = identityFrame;
     offsetFrame = identityFrame;
-
-    positionEditTarget = nullptr;
 }
 
 
@@ -451,9 +440,8 @@ void LinkPositionWidget::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 
 void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
-    bool isTargetTypeChanged = (targetType != LinkTarget);
-    bool isBodyItemChanged = isTargetTypeChanged || (bodyItem != targetBodyItem);
-    bool isLinkChanged = isTargetTypeChanged || (link != targetLink);
+    bool isBodyItemChanged = (bodyItem != targetBodyItem);
+    bool isLinkChanged = (link != targetLink);
 
     // Sub body's root link is recognized as the parent body's end link
     if(bodyItem && link){
@@ -512,7 +500,6 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
             }
         }
 
-        targetType = LinkTarget;
         updateTargetLink(link);
         updateDisplayWithCurrentLinkPosition();
     }
@@ -522,10 +509,6 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
 void LinkPositionWidget::Impl::updateTargetLink(Link* link)
 {
     setCoordinateModeInterfaceEnabled(true);
-    
-    if(targetType != LinkTarget){
-        return;
-    }
     
     targetLink = link;
     kinematicsKit.reset();
@@ -1028,48 +1011,6 @@ QSize ConfTreeWidget::sizeHint() const
 }
 
 
-bool LinkPositionWidget::setPositionEditTarget(AbstractPositionEditTarget* target)
-{
-    return impl->setPositionEditTarget(target);
-}
-
-
-bool LinkPositionWidget::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
-{
-    positionWidget->clearPosition();
-    targetConnections.disconnect();
-
-    targetType = PositionEditTarget;
-    positionEditTarget = target;
-    baseFrame = identityFrame;
-    offsetFrame = identityFrame;
-
-    targetConnections.add(
-        target->sigPositionChanged().connect(
-            [&](const Position&){ updateDisplayWithPositionEditTarget(); }));
-
-    targetConnections.add(
-        target->sigPositionEditTargetExpired().connect(
-            [&](){ onPositionEditTargetExpired(); }));
-
-    self->setEnabled(target->isEditable());
-    setCoordinateFrameInterfaceEnabled(false, false);
-    setConfigurationInterfaceEnabled(false);
-    setBodyCoordinateModeEnabled(false);
-    setCoordinateModeInterfaceEnabled(false);
-
-    updateDisplayWithPositionEditTarget();
-
-    return true;
-}
-
-
-void LinkPositionWidget::Impl::onPositionEditTargetExpired()
-{
-
-}
-
-
 void LinkPositionWidget::Impl::onKinematicsKitPositionError(const Position& T_frameCoordinate)
 {
     Position T_base;
@@ -1091,12 +1032,7 @@ void LinkPositionWidget::Impl::updateDisplay()
 {
     userInputConnections.block();
     
-    if(targetType == LinkTarget){
-        updateDisplayWithCurrentLinkPosition();
-
-    } else if(targetType == PositionEditTarget){
-        updateDisplayWithPositionEditTarget();
-    }
+    updateDisplayWithCurrentLinkPosition();
 
     userInputConnections.unblock();
 
@@ -1128,15 +1064,6 @@ void LinkPositionWidget::Impl::updateDisplayWithCurrentLinkPosition()
 {
     if(targetLink){
         updateDisplayWithGlobalLinkPosition(targetLink->Ta());
-    }
-}
-
-
-void LinkPositionWidget::Impl::updateDisplayWithPositionEditTarget()
-{
-    if(positionEditTarget){
-        positionWidget->setReferenceRpy(Vector3::Zero());
-        positionWidget->setPosition(positionEditTarget->getPosition());
     }
 }
 
@@ -1189,16 +1116,7 @@ void LinkPositionWidget::Impl::updateConfigurationDisplay()
 
 bool LinkPositionWidget::Impl::applyPositionInput(const Position& T)
 {
-    bool accepted = false;
-    
-    if(targetType == LinkTarget){
-        accepted = findBodyIkSolution(T, false);
-
-    } else if(targetType == PositionEditTarget){
-        accepted = applyInputToPositionEditTarget(T);
-    }
-
-    return accepted;
+    return findBodyIkSolution(T, false);
 }
 
 
@@ -1247,29 +1165,6 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Position& T_input, bool 
     }
 
     return solved;
-}
-
-
-bool LinkPositionWidget::Impl::applyInputToPositionEditTarget(const Position& T_input)
-{
-    bool accepted = false;
-    
-    if(positionEditTarget){
-
-        targetConnections.block();
-        accepted = positionEditTarget->setPosition(T_input);
-        targetConnections.unblock();
-
-        if(accepted){
-            resultLabel.setText(_("Accepted"));
-            resultLabel.setStyleSheet(normalStyle);
-        } else {
-            resultLabel.setText(_("Not Accepted"));
-            resultLabel.setStyleSheet(errorStyle);
-        }
-    }
-
-    return accepted;
 }
 
 
