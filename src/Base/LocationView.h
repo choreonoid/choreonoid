@@ -14,6 +14,8 @@ public:
     ~LocationView();
 
 protected:
+    virtual void onActivated() override;
+    virtual void onDeactivated() override;
     virtual void onAttachedMenuRequest(MenuManager& menuManager) override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
