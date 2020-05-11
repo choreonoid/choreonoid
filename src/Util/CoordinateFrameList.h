@@ -51,6 +51,7 @@ public:
     SignalProxy<void(int index)> sigFrameAdded();
     SignalProxy<void(int index, CoordinateFrame* frame)> sigFrameRemoved();
     SignalProxy<void(int index)> sigFrameAttributeChanged();
+    SignalProxy<void(int index)> sigFramePositionChanged();
     void notifyFrameAttributeChange(int index);
 
     /**
@@ -75,9 +76,14 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
+    // Called from the CoordinateFrame implementation
+    void notifyFramePositionChange(int index);
+    
     class Impl;
     Impl* impl;
     int frameType_;
+
+    friend class CoordinateFrame;
 };
 
 typedef ref_ptr<CoordinateFrameList> CoordinateFrameListPtr;

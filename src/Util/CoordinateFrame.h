@@ -48,8 +48,8 @@ public:
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
 
-    SignalProxy<void()> sigPositionChanged() { return sigPositionChanged_; }
-    void notifyPositionChange() { sigPositionChanged_(); }
+    SignalProxy<void()> sigPositionChanged();
+    void notifyPositionChange();
 
 private:
     Position T_;

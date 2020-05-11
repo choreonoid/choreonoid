@@ -51,6 +51,21 @@ CoordinateFrameList* CoordinateFrame::ownerFrameList() const
 }
 
 
+SignalProxy<void()> CoordinateFrame::sigPositionChanged()
+{
+    return sigPositionChanged_;
+}
+
+
+void CoordinateFrame::notifyPositionChange()
+{
+    sigPositionChanged_();
+    if(auto frameList = ownerFrameList()){
+        frameList->notifyFramePositionChange(frameList->indexOf(this));
+    }
+}
+
+
 bool CoordinateFrame::read(const Mapping& archive)
 {
     if(id_.read(archive, "id")){

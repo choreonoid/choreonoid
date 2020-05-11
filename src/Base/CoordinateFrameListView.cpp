@@ -32,18 +32,21 @@ constexpr int PositionColumn = 2;
 class FrameListModel : public QAbstractTableModel
 {
 public:
+    CoordinateFrameListView::Impl* view;
     CoordinateFrameListPtr frames;
+    ScopedConnection frameListConnection;
     CoordinateFramePtr defaultFrame;
     QFont monoFont;
     bool isDefaultFrameEnabled_;
     
-    FrameListModel(QObject* parent);
+    FrameListModel(CoordinateFrameListView::Impl* view);
     void setDefaultFrameEnabled(bool on);
     bool isDefaultFrameEnabled() const;
     void setFrameList(CoordinateFrameList* frames);
     bool isValid() const;
     int numFrames() const;
     int rowOfFrame(CoordinateFrame* frame) const;
+    int rowOfFrameIndex(int index) const;
     CoordinateFrame* frameAt(const QModelIndex& index) const;
     virtual int rowCount(const QModelIndex& parent) const override;
     virtual int columnCount(const QModelIndex& parent) const override;
@@ -54,7 +57,7 @@ public:
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void addFrame(int row, CoordinateFrame* frame, bool doInsert);
     void removeFrames(QModelIndexList selected);
-    void notifyFramePositionUpdate(CoordinateFrame* frame);
+    void onFramePositionChanged(int frameIndex);
 };
 
 class CustomizedItemDelegate : public QStyledItemDelegate
@@ -117,8 +120,9 @@ public:
 }
 
 
-FrameListModel::FrameListModel(QObject* parent)
-    : QAbstractTableModel(parent),
+FrameListModel::FrameListModel(CoordinateFrameListView::Impl* view)
+    : QAbstractTableModel(view),
+      view(view),
       monoFont("Monospace")
 {
     monoFont.setStyleHint(QFont::TypeWriter);
@@ -142,8 +146,18 @@ bool FrameListModel::isDefaultFrameEnabled() const
 void FrameListModel::setFrameList(CoordinateFrameList* frames)
 {
     beginResetModel();
+
     this->frames = frames;
+
+    frameListConnection.disconnect();
+    if(frames){
+        frameListConnection =
+            frames->sigFramePositionChanged().connect(
+                [&](int index){ onFramePositionChanged(index); });
+    }
+            
     setDefaultFrameEnabled(isDefaultFrameEnabled_);
+            
     endResetModel();
 }
 
@@ -174,6 +188,12 @@ int FrameListModel::rowOfFrame(CoordinateFrame* frame) const
         return row;
     }
     return -1;
+}
+
+
+int FrameListModel::rowOfFrameIndex(int index) const
+{
+    return isDefaultFrameEnabled_ ? index + 1 : index;
 }
 
 
@@ -380,15 +400,20 @@ void FrameListModel::removeFrames(QModelIndexList selected)
 }
 
 
-void FrameListModel::notifyFramePositionUpdate(CoordinateFrame* frame)
+void FrameListModel::onFramePositionChanged(int frameIndex)
 {
-    int row = rowOfFrame(frame);
-    if(row >= 0){
-        auto modelIndex = index(row, PositionColumn, QModelIndex());
-        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+    int row = rowOfFrameIndex(frameIndex);
+    auto modelIndex = index(row, PositionColumn, QModelIndex());
+    Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+
+    if(view->frameBeingEditedOutside){
+        auto frame = frames->frameAt(frameIndex);
+        if(frame == view->frameBeingEditedOutside){
+            view->sigPositionChanged_(frame->position());
+        }
     }
 }
-        
+
 
 CustomizedItemDelegate::CustomizedItemDelegate(CoordinateFrameListView::Impl* view)
     : QStyledItemDelegate(view),
@@ -735,7 +760,8 @@ bool CoordinateFrameListView::Impl::setPosition(const Position& T)
 {
     if(frameBeingEditedOutside){
         frameBeingEditedOutside->setPosition(T);
-        frameListModel->notifyFramePositionUpdate(frameBeingEditedOutside);
+        frameBeingEditedOutside->notifyPositionChange();
+        //frameListModel->notifyFramePositionUpdate(frameBeingEditedOutside);
         sigPositionChanged_(T);
         return true;
     }

@@ -23,6 +23,7 @@ public:
     Signal<void(int index)> sigFrameAdded;
     Signal<void(int index, CoordinateFrame* frame)> sigFrameRemoved;
     Signal<void(int index)> sigFrameAttributeChanged;
+    Signal<void(int index)> sigFramePositionChanged;
     
     Impl();
 };
@@ -217,9 +218,21 @@ SignalProxy<void(int index)> CoordinateFrameList::sigFrameAttributeChanged()
 }
 
 
+SignalProxy<void(int index)> CoordinateFrameList::sigFramePositionChanged()
+{
+    return impl->sigFramePositionChanged;
+}
+
+
 void CoordinateFrameList::notifyFrameAttributeChange(int index)
 {
     impl->sigFrameAttributeChanged(index);
+}
+
+
+void CoordinateFrameList::notifyFramePositionChange(int index)
+{
+    impl->sigFramePositionChanged(index);
 }
 
 
