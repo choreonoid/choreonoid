@@ -104,6 +104,15 @@ void CoordinateFrameItem::Impl::onCheckToggled(bool on)
 }
 
 
+std::string CoordinateFrameItem::displayName() const
+{
+    if(impl->frameListItem){
+        return impl->frameListItem->getFrameItemDisplayName(this);
+    }
+    return name();
+}
+
+
 void CoordinateFrameItem::setFrameId(const GeneralId& id)
 {
     impl->frameId = id;
@@ -187,9 +196,9 @@ std::string CoordinateFrameItem::getLocationName() const
 {
     auto frame_ = frame();
     if(!impl->frameListItem || !frame_){
-        return name();
+        return displayName();
     } else {
-        auto listName = impl->frameListItem->name();
+        auto listName = impl->frameListItem->displayName();
         auto id = frame_->id().label();
         auto note = frame_->note();
         if(auto parent = impl->frameListItem->getParentLocatableItem()){
@@ -262,13 +271,9 @@ bool CoordinateFrameItem::restore(const Archive& archive)
         CoordinateFramePtr frame = new CoordinateFrame;
         if(frame->read(archive)){
             impl->frameId = frame->id();
-            if(frameListItem->frameList()->append(frame)){
-                return true;
-            }
+            setName(impl->frameId.label());
+            return frameListItem->frameList()->append(frame);
         }
     }
     return false;
 }
-
-                
-                

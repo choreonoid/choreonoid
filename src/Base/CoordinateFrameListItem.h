@@ -10,6 +10,7 @@ namespace cnoid {
 
 class CoordinateFrameList;
 class CoordinateFrameItem;
+class CoordinateFrame;
 class LocatableItem;
 
 class CNOID_EXPORT CoordinateFrameListItem : public Item, public RenderableItem
@@ -27,9 +28,11 @@ public:
     enum ItemizationMode { NoItemization, SubItemization, IndependentItemization };
     int itemizationMode() const;
     void setItemizationMode(int mode);
+    void customizeFrameItemDisplayName(std::function<std::string(CoordinateFrame* frame)> func);
+    std::string getFrameItemDisplayName(const CoordinateFrameItem* item) const;
     void updateFrameItems();
     CoordinateFrameItem* findFrameItemAt(int index);
-
+    
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;
 

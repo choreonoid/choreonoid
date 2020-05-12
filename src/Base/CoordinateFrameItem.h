@@ -12,8 +12,7 @@ class CoordinateFrame;
 class CoordinateFrameList;
 
 /**
-   \note This item is not independently used, but used as a child item
-   of CoordinateFrameListItem
+   \note This item is always used as a child item of CoordinateFrameListItem
 */
 class CNOID_EXPORT CoordinateFrameItem : public Item, public LocatableItem
 {
@@ -23,6 +22,8 @@ public:
     CoordinateFrameItem();
     CoordinateFrameItem(const CoordinateFrameItem& org);
     virtual ~CoordinateFrameItem();
+
+    virtual std::string displayName() const;
 
     void setFrameId(const GeneralId& id);
     const GeneralId& frameId() const;

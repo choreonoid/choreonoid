@@ -45,6 +45,7 @@ public:
     CoordinateFrameListPtr frameList;
     int itemizationMode;
     ScopedConnectionSet frameListConnections;
+    std::function<std::string(CoordinateFrame* frame)> frameItemDisplayNameFunction;
 
     SgGroupPtr frameMarkerGroup;
     SgPosTransformPtr relativeFrameMarkerGroup;
@@ -166,6 +167,28 @@ void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
 }
 
 
+void CoordinateFrameListItem::customizeFrameItemDisplayName
+(std::function<std::string(CoordinateFrame* frame)> func)
+{
+    impl->frameItemDisplayNameFunction = func;
+    for(auto& frameItem : descendantItems<CoordinateFrameItem>()){
+        frameItem->notifyNameChange();
+    }
+}
+
+
+std::string CoordinateFrameListItem::getFrameItemDisplayName(const CoordinateFrameItem* item) const
+{
+    if(impl->frameItemDisplayNameFunction){
+        auto& id = item->frameId();
+        if(auto frame = impl->frameList->findFrame(id)){
+            return impl->frameItemDisplayNameFunction(frame);
+        }
+    }
+    return item->name();
+}
+
+
 void CoordinateFrameListItem::updateFrameItems()
 {
     impl->updateFrameItems();
@@ -205,12 +228,7 @@ void CoordinateFrameListItem::Impl::updateFrameAttribute
 (CoordinateFrameItem* item, CoordinateFrame* frame)
 {
     item->setFrameId(frame->id());
-    auto& note = frame->note();
-    if(note.empty()){
-        item->setName(frame->id().label());
-    } else {
-        item->setName(format("{0}: {1}", frame->id().label(), note));
-    }
+    item->setName(frame->id().label());
 }
 
 
