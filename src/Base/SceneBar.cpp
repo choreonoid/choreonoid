@@ -486,7 +486,7 @@ void putSceneStatistics()
     for(auto& item : RootItem::instance()->selectedItems()){
         if(auto renderable = dynamic_cast<RenderableItem*>(item.get())){
             if(auto scene = renderable->getScene()){
-                os << format(_(" Scene \"{}\":"), item->name()) << endl;
+                os << format(_(" Scene \"{}\":"), item->displayName()) << endl;
                 counter.count(scene);
                 os << format(_("  Vertices: {}\n"), counter.numVertices);
                 os << format(_("  Normals: {}\n"), counter.numNormals);

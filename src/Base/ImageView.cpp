@@ -304,7 +304,7 @@ void ImageViewBarImpl::onItemAdded(Item* item)
             item->sigNameChanged().connect(
                 [&, item](const string& /* oldName */) { onItemNameChange(item); }));
 
-        imageCombo->addItem(item->name().c_str(), QVariant::fromValue(imageable));
+        imageCombo->addItem(item->displayName().c_str(), QVariant::fromValue(imageable));
     }
 }
 
@@ -324,7 +324,7 @@ void ImageViewBarImpl::onItemDisconnectedFromRoot(Item* item)
 void ImageViewBarImpl::onItemNameChange(Item* item)
 {
     int index = imageCombo->findData(QVariant::fromValue(dynamic_cast<ImageableItem*>(item)));
-    imageCombo->setItemText(index, QString(item->name().c_str()));
+    imageCombo->setItemText(index, QString(item->displayName().c_str()));
 }
 
 

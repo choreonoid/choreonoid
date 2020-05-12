@@ -251,7 +251,7 @@ bool BodyMarkerItemImpl::updateTarget()
             if(!targetLink){
                 isValid = false;
                 mv->putln(
-                    format(_("Target link \"{0}\" of \"{1}\" is not found."), targetLinkName, self->name()),
+                    format(_("Target link \"{0}\" of \"{1}\" is not found."), targetLinkName, self->displayName()),
                     MessageView::WARNING);
             }
         }
@@ -260,7 +260,7 @@ bool BodyMarkerItemImpl::updateTarget()
                 targetLink = nullptr;
                 isValid = false;
                 mv->putln(
-                    format(_("Target node \"{0}\" of \"{1}\" is not found."), targetNodeName, self->name()),
+                    format(_("Target node \"{0}\" of \"{1}\" is not found."), targetNodeName, self->displayName()),
                     MessageView::WARNING);
             }
         }

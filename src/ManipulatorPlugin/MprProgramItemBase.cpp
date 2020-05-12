@@ -261,7 +261,7 @@ bool MprProgramItemBase::Impl::moveTo(MprPositionStatement* statement, bool doUp
                 }
                 showWarningDialog(
                     format(_("{0} of {1} cannot be moved to position {2}"),
-                           tcpName, targetBodyItem->name(), position->id().label()));
+                           tcpName, targetBodyItem->displayName(), position->id().label()));
             }
                 
         }

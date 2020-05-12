@@ -130,7 +130,7 @@ void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
     } else {
         while(bodyItem){
             if(bodyItem->body()->numJoints() > 0){
-                targetLabel.setText(bodyItem->name().c_str());
+                targetLabel.setText(bodyItem->displayName().c_str());
                 jointDisplacementWidget.setBodyItem(bodyItem);
                 break;
             }

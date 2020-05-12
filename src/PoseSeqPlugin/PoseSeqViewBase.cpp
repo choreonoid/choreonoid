@@ -1423,10 +1423,14 @@ void PoseSeqViewBase::onSelectedPosesModified()
 
 void PoseSeqViewBase::setCurrentItemName(ItemPtr item)
 {
-    if(!item || item->name().empty()){
+    string name;
+    if(item){
+        name = item->displayName();
+    }
+    if(name.empty()){
         currentItemLabel.setText(textForEmptyName);
     } else {
-        currentItemLabel.setText(item->name().c_str());
+        currentItemLabel.setText(name.c_str());
     }
 }
 

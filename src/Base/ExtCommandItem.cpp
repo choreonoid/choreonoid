@@ -118,7 +118,7 @@ bool ExtCommandItem::execute()
 
         if(process.waitForStarted()){
             mv->putln(fmt::format(_("External command \"{0}\" has been executed by item \"{1}\"."),
-                    actualCommand, name()));
+                    actualCommand, displayName()));
             if(waitingTimeAfterStarted_ > 0.0){
                 msleep(waitingTimeAfterStarted_ * 1000.0);
             }

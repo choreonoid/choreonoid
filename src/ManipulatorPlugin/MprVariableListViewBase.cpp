@@ -622,7 +622,7 @@ void MprVariableListViewBase::Impl::setMprVariableListItem(MprVariableListItemBa
     variableUpdateConnection.disconnect();
 
     if(item){
-        targetLabel.setText(item->name().c_str());
+        targetLabel.setText(item->displayName().c_str());
         variables = item->variableList();
         variableListModel->setVariableList(variables);
 

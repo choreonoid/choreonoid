@@ -112,7 +112,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     
     if(!ItemManager::getClassIdentifier(item, pluginName, className)){
         mv->putln(
-            format(_("\"{}\" cannot be stored. Its type is not registered."), item->name()),
+            format(_("\"{}\" cannot be stored. Its type is not registered."), item->displayName()),
             MessageView::ERROR);
         isComplete = false;
         return nullptr;
@@ -124,14 +124,14 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     ArchivePtr dataArchive;
 
     if(!item->isSubItem()){
-        mv->putln(format(_("Storing {0} \"{1}\""), className, item->name()));
+        mv->putln(format(_("Storing {0} \"{1}\""), className, item->displayName()));
         mv->flush();
 
         dataArchive = new Archive;
         dataArchive->inheritSharedInfoFrom(parentArchive);
 
         if(!item->store(*dataArchive)){
-            mv->putln(format(_("\"{}\" cannot be stored."), item->name()), MessageView::ERROR);
+            mv->putln(format(_("\"{}\" cannot be stored."), item->displayName()), MessageView::ERROR);
             isComplete = false;
             return nullptr;
         }
@@ -206,7 +206,7 @@ void ItemTreeArchiver::Impl::storeAddons(Archive& archive, Item* item)
             if(!ItemManager::getAddonIdentifier(addon, moduleName, name)){
                 mv->putln(
                     format(_("Addon \"{0}\" of item \"{1}\" cannot be stored. Its type is not registered."),
-                           typeid(*addon).name(), item->name()),
+                           typeid(*addon).name(), item->displayName()),
                     MessageView::ERROR);
             } else {
                 ArchivePtr addonArchive = new Archive;
@@ -401,7 +401,7 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
                     } else {
                         if(!addon->setOwnerItem(item)){
                             mv->putln(format(_("Addon \"{0}\" is cannot be added to item \"{1}\"."),
-                                             name, item->name()), MessageView::ERROR);
+                                             name, item->displayName()), MessageView::ERROR);
                         } else {
                             if(!addon->restore(*addonArchive)){
                                 mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be restored."),

@@ -223,12 +223,12 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
         } else {
             message = _("Exporting {0} to a file is not supported");
         }
-        MessageView::instance()->putln(format(message, item->name()), MessageView::HIGHLIGHT);
+        MessageView::instance()->putln(format(message, item->displayName()), MessageView::HIGHLIGHT);
         currentItemToSave.reset();
         return false;
     }
 
-    string itemLabel = format("{0} \"{1}\"", validFileIOs.front()->caption(), item->name());
+    string itemLabel = format("{0} \"{1}\"", validFileIOs.front()->caption(), item->displayName());
     
     if(self->windowTitle().isEmpty()){
         string title;

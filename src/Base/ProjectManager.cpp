@@ -517,7 +517,7 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
     
     mv->putln();
     if(isSubProject){
-        mv->notify(format(_("Saving sub project {0} as \"{1}\" ..."), item->name(), filename));
+        mv->notify(format(_("Saving sub project {0} as \"{1}\" ..."), item->displayName(), filename));
     } else {
         mv->notify(format(_("Saving the project as \"{}\" ..."), filename));
     }

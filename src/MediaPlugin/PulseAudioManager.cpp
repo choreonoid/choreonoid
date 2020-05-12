@@ -324,7 +324,7 @@ void PulseAudioManagerImpl::onItemCheckToggled(Item* item, bool isChecked)
                     source->startPlayback();
                 }
             } else {
-                os << audioItem->name() << " cannot be initialized." << endl;
+                os << audioItem->displayName() << " cannot be initialized." << endl;
             }
         } else {
             activeSources.erase(audioItem);
@@ -625,7 +625,7 @@ void Source::initializePlayback(double time)
         
         if(writableSize <= 0){
             manager->os <<
-                format(_("PulseAudio stream for {} cannot be written."), audioItem->name()) << endl;
+                format(_("PulseAudio stream for {} cannot be written."), audioItem->displayName()) << endl;
             disconnectStream();
             
         } else {
@@ -729,7 +729,7 @@ void Source::adjustTime(const char* reason)
 
     manager->os <<
         format(_("PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."),
-               audioItem->name(), reason, time) << endl;
+               audioItem->displayName(), reason, time) << endl;
 }
 
 

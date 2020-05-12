@@ -399,10 +399,10 @@ void DigitalIoDeviceView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
                     deviceName = "Digital I/O";
                 }
                 targetLabel.setText(
-                    format("{0} - {1}", bodyItem->name(), deviceName).c_str());
+                    format("{0} - {1}", bodyItem->displayName(), deviceName).c_str());
             } else {
                 targetLabel.setText(
-                    format(_("{0} (No I/O)"), bodyItem->name()).c_str());
+                    format(_("{0} (No I/O)"), bodyItem->displayName()).c_str());
             }
 
         }

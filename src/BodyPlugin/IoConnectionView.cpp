@@ -577,7 +577,7 @@ void IoConnectionView::Impl::setConnectionMapItem(IoConnectionMapItem* item)
     targetItem = item;
 
     if(item){
-        targetLabel.setText(item->name().c_str());
+        targetLabel.setText(item->displayName().c_str());
         connectionMapModel->setConnectionMap(item->connectionMap());
     } else {
         targetLabel.setText("---");

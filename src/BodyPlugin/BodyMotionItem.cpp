@@ -350,7 +350,7 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                             existingFound = true;
                             if(showConfirmDialog(
                                    _("Confirm"),
-                                   format(_("Do you want to replace the data of {}?"), item->name()))){
+                                   format(_("Do you want to replace the data of {}?"), item->displayName()))){
                                 *orgSeqItem->abstractSeq() = *seqItem->abstractSeq();
                                 return false;
                             }
@@ -361,7 +361,7 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                     if(showConfirmDialog(
                            _("Confirm"),
                            format(_("Do you want to set {0} as a sequence data of {1}?"),
-                                  childItem_->name(), this->name()))){
+                                  childItem_->displayName(), this->displayName()))){
                         motion()->setExtraSeq(seqItem->name(), seqItem->abstractSeq());
                         return false;
                     }

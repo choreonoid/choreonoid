@@ -322,7 +322,7 @@ bool SimpleControllerItemImpl::loadController()
                     format(_("Controller module \"{0}\" of {1} is specified as a relative "
                              "path from the project directory, but the project directory "
                              "has not been determined yet."),
-                           controllerModuleName, self->name()),
+                           controllerModuleName, self->displayName()),
                     MessageView::ERROR);
                 return false;
             }
@@ -333,7 +333,7 @@ bool SimpleControllerItemImpl::loadController()
     controllerModule.setFileName(controllerModuleFilename.c_str());
         
     if(controllerModule.isLoaded()){
-        mv->putln(format(_("The controller module of {} has already been loaded."), self->name()));
+        mv->putln(format(_("The controller module of {} has already been loaded."), self->displayName()));
             
         // This should be called to make the reference to the DLL.
         // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
@@ -341,7 +341,7 @@ bool SimpleControllerItemImpl::loadController()
             
     } else {
         mv->put(format(_("Loading the controller module \"{1}\" of {0} ... "),
-                       self->name(), controllerModuleFilename));
+                       self->displayName(), controllerModuleFilename));
         if(!controllerModule.load()){
             mv->put(_("Failed.\n"));
             mv->putln(controllerModule.errorString(), MessageView::ERROR);
@@ -360,7 +360,8 @@ bool SimpleControllerItemImpl::loadController()
 
     controller = factory();
     if(!controller){
-        mv->putln(format(_("The controller factory of {} failed to create a controller instance."), self->name()),
+        mv->putln(format(_("The controller factory of {} failed to create a controller instance."),
+                         self->displayName()),
                   MessageView::ERROR);
         unloadController();
         return false;
@@ -378,7 +379,7 @@ bool SimpleControllerItemImpl::configureController()
             if(controller->configure(&config)){
                 isConfigured = true;
             } else {
-                mv->putln(format(_("{} failed to configure the controller"), self->name()),
+                mv->putln(format(_("{} failed to configure the controller"), self->displayName()),
                           MessageView::ERROR);
                 isConfigured = false;
             }
@@ -412,7 +413,7 @@ void SimpleControllerItemImpl::unloadController()
 
     if(controllerModule.unload()){
         mv->putln(format(_("The controller module \"{1}\" of {0} has been unloaded."),
-                         self->name(), controllerModuleFilename));
+                         self->displayName(), controllerModuleFilename));
     }
 
     isConfigured = false;
@@ -496,7 +497,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
         }
     }
     if(!isConfigured){
-        mv->putln(format(_("{} is not configured."), self->name()), MessageView::ERROR);
+        mv->putln(format(_("{} is not configured."), self->displayName()), MessageView::ERROR);
         return nullptr;
     }
 
@@ -513,7 +514,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
     clearIoTargets();
 
     if(!controller->initialize(this)){
-        mv->putln(format(_("{}'s initialize method failed."), self->name()), MessageView::ERROR);
+        mv->putln(format(_("{}'s initialize method failed."), self->displayName()), MessageView::ERROR);
         sharedInfo.reset();
         return nullptr;
     }
@@ -781,7 +782,7 @@ bool SimpleControllerItemImpl::start()
 {
     bool result = true;
     if(!controller->start()){
-        mv->putln(format(_("{} failed to start"), self->name()), MessageView::WARNING);
+        mv->putln(format(_("{} failed to start"), self->displayName()), MessageView::WARNING);
         result = false;
     } else {
         for(auto& childController : childControllerItems){

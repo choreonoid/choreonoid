@@ -282,7 +282,7 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
 
     if(programItems.empty()){
         mv->putln(format(_("Any program item for {} is not found."),
-                         self->name()), MessageView::ERROR);
+                         self->displayName()), MessageView::ERROR);
         return false;
     }
     
@@ -339,7 +339,7 @@ bool MprControllerItemBase::Impl::createKinematicsKitForControl()
 
     if(kinematicsKit->isCustomIkDisabled()){
         io->os() << format(_("Warning: The custom inverse kinematics is disabled in controller \"{0}\" for robot \"{1}\"."),
-                           self->name(), io->body()->name())
+                           self->displayName(), io->body()->name())
                  << endl;
     }
 

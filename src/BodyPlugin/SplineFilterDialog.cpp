@@ -316,7 +316,7 @@ void SplineFilterDialog::onAccepted()
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
         os << format(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
-                     vItems[i]->name(), ifps, ofps) << endl;
+                     vItems[i]->displayName(), ifps, ofps) << endl;
         
         applySplineFilter(*seq, ifps, ofps, ratio);
     }
@@ -328,7 +328,7 @@ void SplineFilterDialog::onAccepted()
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
         os << format(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
-                     v3Items[i]->name(), ifps, ofps) << endl;
+                     v3Items[i]->displayName(), ifps, ofps) << endl;
         
         applySplineFilter(*seq, ifps, ofps, ratio);
     }
@@ -340,7 +340,7 @@ void SplineFilterDialog::onAccepted()
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
         os << format(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
-                     sItems[i]->name(), ifps, ofps) << endl;
+                     sItems[i]->displayName(), ifps, ofps) << endl;
         
         applySplineFilter(*seq, ifps, ofps, ratio);
     }
@@ -352,7 +352,7 @@ void SplineFilterDialog::onAccepted()
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : motion->frameRate();
         
         os << format(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
-                     bItems[i]->name(), ifps, ofps) << endl;
+                     bItems[i]->displayName(), ifps, ofps) << endl;
 
         applySplineFilter(*motion->jointPosSeq(), ifps, ofps, ratio);
         applySplineFilter(*motion->linkPosSeq(), ifps, ofps, ratio);

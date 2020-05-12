@@ -1124,7 +1124,7 @@ bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
             const Vector3 p = pointedSceneLink->T().inverse() * event.point();
             event.updateIndicator(
                 fmt::format("{0} / {1} : ({2:.3f}, {3:.3f}, {4:.3f})",
-                            bodyItem->name(), pointedSceneLink->link()->name(),
+                            bodyItem->displayName(), pointedSceneLink->link()->name(),
                             p.x(), p.y(), p.z()));
         }
     } else {

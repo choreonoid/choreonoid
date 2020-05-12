@@ -114,7 +114,7 @@ bool ZMPSeqItem::makeRootRelative(bool on)
     if(bodyMotionItem){
         if(cnoid::makeRootRelative(*zmpseq_, *bodyMotionItem->motion(), on)){
             mvout() << format(_("{0} of {1} has been converted to {2}."),
-                              name(), bodyMotionItem->name(),
+                              displayName(), bodyMotionItem->displayName(),
                               (on ? _("the root relative coordinate") : _("the global coordinate")))
                     << endl;
             return true;
@@ -122,7 +122,7 @@ bool ZMPSeqItem::makeRootRelative(bool on)
     }
     mvout() << format(_("{0}'s coordinate system cannot be changed "
                         "because there is no root link motion associated with {0}."),
-                      name()) << endl;
+                      displayName()) << endl;
     return false;
 }
 

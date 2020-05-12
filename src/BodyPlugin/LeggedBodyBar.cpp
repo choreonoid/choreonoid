@@ -102,7 +102,7 @@ void LeggedBodyBarImpl::moveCM(BodyItem::PositionType position)
         if(!bodyItem->doLegIkToMoveCm(c, true)){
             MessageView::instance()->notify(
                 fmt::format(_("The center of mass of {} cannt be moved to the target position\n"),
-                            bodyItem->name()));
+                            bodyItem->displayName()));
         }
     }
 }

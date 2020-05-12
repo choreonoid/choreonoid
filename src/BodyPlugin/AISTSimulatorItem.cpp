@@ -422,7 +422,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     if(!highGainDynamicsList.empty()){
         mvout() << format(_("{} uses the ForwardDynamicsCBM module to perform the high-gain control."),
-                          self->name()) << endl;
+                          self->displayName()) << endl;
     }
 
     cfs.setFriction(staticFriction, dynamicFriction);

@@ -41,7 +41,7 @@ bool loadPoseSeqItem(PoseSeqItem* item, const std::string& filename, std::ostrea
             if(item->poseSeq()->targetBodyName() != bodyItem->body()->name()){
                 os<< format( _("Warning: the original target body {0} of \"{1}\" is"
                                "different from the current target {2}."),
-                             item->poseSeq()->targetBodyName(), item->name(), bodyItem->body()->name());
+                             item->poseSeq()->targetBodyName(), item->displayName(), bodyItem->body()->name());
             }
             item->notifyUpdate();
         } else {
@@ -234,7 +234,7 @@ void PoseSeqItem::convert(BodyPtr orgBody)
                         seq->setTargetBodyName(body->name());
                         MessageView::mainInstance()->notify(
                             format(_("Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"),
-                                   name(), orgBody->name(), body->name()));
+                                   displayName(), orgBody->name(), body->name()));
                         
                         return;
                     }

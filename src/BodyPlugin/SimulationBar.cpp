@@ -105,7 +105,7 @@ static void storeInitialBodyState(BodyItem* bodyItem)
 {
     bodyItem->storeInitialState();
     MessageView::instance()->putln(
-        format(_("Current state of {} has been set to the initial state."), bodyItem->name()));
+        format(_("Current state of {} has been set to the initial state."), bodyItem->displayName()));
 }
 
 
@@ -157,14 +157,14 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
         WorldItem* world = simulator->findOwnerItem<WorldItem>();
         if(!world){
             mv->notify(format(_("{} cannot be processed because it is not related with a world."),
-                              simulator->name()));
+                              simulator->displayName()));
         } else {
             WorldToSimulatorMap::iterator p = worldToSimulator.find(world);
             if(p != worldToSimulator.end()){
                 if(!p->second){
                     mv->notify(format(_("{} cannot be processed because another simulator"
                                         "in the same world is also selected."),
-                                      simulator->name()));
+                                      simulator->displayName()));
                 } else {
                     callback(simulator);
                 }

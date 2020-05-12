@@ -789,9 +789,9 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
         programNameLabel.setStyleSheet("font-weight: bold");
         if(auto bodyItem = programItem->targetBodyItem()){
             programNameLabel.setText(
-                format("{0} - {1}", bodyItem->name(), programItem->name()).c_str());
+                format("{0} - {1}", bodyItem->displayName(), programItem->displayName()).c_str());
         } else {
-            programNameLabel.setText(programItem->name().c_str());
+            programNameLabel.setText(programItem->displayName().c_str());
         }
     }
 

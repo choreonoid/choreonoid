@@ -296,7 +296,7 @@ bool ItemFileIO::Impl::loadItem
     }
 
     if(!preprocessLoadingOrSaving(item, filename, options)){
-        self->putError(format(_("{0} cannot be loaded because {1}"), item->name(), errorMessage));
+        self->putError(format(_("{0} cannot be loaded because {1}"), item->displayName(), errorMessage));
         return false;
     }
     this->parentItem = parentItem;
@@ -363,12 +363,12 @@ bool ItemFileIO::Impl::saveItem
 (Item* item, std::string filename, const Mapping* options)
 {
     if(filename.empty()){
-        self->putError(format(_("{0} cannot be saved with empty filename."), item->name()));
+        self->putError(format(_("{0} cannot be saved with empty filename."), item->displayName()));
         return false;
     }
 
     if(!preprocessLoadingOrSaving(item, filename, options)){
-        self->putError(format(_("{0} cannot be saved because {1}"), item->name(), errorMessage));
+        self->putError(format(_("{0} cannot be saved because {1}"), item->displayName(), errorMessage));
         return false;
     }
     parentItem = item->parentItem();
@@ -376,10 +376,10 @@ bool ItemFileIO::Impl::saveItem
     bool isExport = (interfaceLevel == Conversion);
     if(!isExport){
         mv->notify(format(_("Saving {0} \"{1}\" to \"{2}\""),
-                          caption, item->name(), filename));
+                          caption, item->displayName(), filename));
     } else {
         mv->notify(format(_("Exporting {0} \"{1}\" into \"{2}\""),
-                          caption, item->name(), filename));
+                          caption, item->displayName(), filename));
     }
     mv->flush();
 

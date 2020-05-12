@@ -63,7 +63,8 @@ public:
     Item* lastChild;
     bitset<NumAttributes> attributes;
     vector<bool> checkStates;
-
+    std::function<std::string(const Item* item)> displayNameModifier;
+    
     std::unordered_map<std::type_index, ItemAddonPtr> addonMap;
 
     Signal<void(const std::string& oldName)> sigNameChanged;
@@ -270,9 +271,31 @@ void Item::setName(const std::string& name)
 }
 
 
+std::string Item::displayName() const
+{
+    if(impl->displayNameModifier){
+        return impl->displayNameModifier(this);
+    }
+    return name_;
+}
+
+
+void Item::setDisplayNameModifier(std::function<std::string(const Item* item)> modifier)
+{
+    impl->displayNameModifier = modifier;
+    impl->sigNameChanged(name_);
+}
+
+
 SignalProxy<void(const std::string& oldName)> Item::sigNameChanged()
 {
     return impl->sigNameChanged;
+}
+
+
+void Item::notifyNameChange()
+{
+    impl->sigNameChanged(name_);
 }
 
 

@@ -83,7 +83,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
     auto motionItems = self->descendantItems<BodyMotionItem>();
     if(motionItems.empty()){
         mv->putln(
-            format(_("Any body motion item for {} is not found."), self->name()),
+            format(_("Any body motion item for {} is not found."), self->displayName()),
             MessageView::ERROR);
         return false;
     }
@@ -100,13 +100,13 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
 
     if(qseqRef->numFrames() == 0){
         mv->putln(
-            format(_("{0} for {1} is empty."), motionItem->name(), self->name()),
+            format(_("{0} for {1} is empty."), motionItem->displayName(), self->displayName()),
             MessageView::ERROR);
         return false;
     }
     if(fabs(qseqRef->frameRate() - (1.0 / io->timeStep())) > 1.0e-6){
         mv->putln(
-            format(_("The frame rate of {} is different from the world frame rate."), motionItem->name()),
+            format(_("The frame rate of {} is different from the world frame rate."), motionItem->displayName()),
             MessageView::ERROR);
         return false;
     }

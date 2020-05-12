@@ -521,7 +521,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
                 if(dynamic_cast<Camera*>(device) || dynamic_cast<RangeSensor*>(device)){
                     if(sensorNameSet.empty() || sensorNameSet.find(device->name()) != sensorNameSet.end()){
                         os << format(_("{0} detected vision sensor \"{1}\" of {2} as a target."),
-                                     self->name(), device->name(), simBody->body()->name()) << endl;
+                                     self->displayName(), device->name(), simBody->body()->name()) << endl;
                         sensorRenderers.push_back(new SensorRenderer(this, device, simBody, i));
                     }
                 }
@@ -530,7 +530,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     }
 
     if(sensorRenderers.empty()){
-        os << format(_("{} has no target sensors"), self->name()) << endl;
+        os << format(_("{} has no target sensors"), self->displayName()) << endl;
         return false;
     }
         
@@ -556,7 +556,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
             ++p;
         } else {
             os << format(_("{0}: Target sensor \"{1}\" cannot be initialized."),
-                    self->name(), renderer->device->name()) << endl;
+                    self->displayName(), renderer->device->name()) << endl;
             p = sensorRenderers.erase(p);
         }
     }

@@ -280,11 +280,11 @@ void KinematicFaultCheckerImpl::apply()
             BodyMotionItem* motionItem = items.get(i);
             BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
             if(!bodyItem){
-                mes.notify(format(_("{} is not owned by any BodyItem. Check skiped."), motionItem->name()));
+                mes.notify(format(_("{} is not owned by any BodyItem. Check skiped."), motionItem->displayName()));
             } else {
                 mes.putln();
                 mes.notify(format(_("Applying the Kinematic Fault Checker to {} ..."),
-                                  motionItem->headItem()->name()));
+                                  motionItem->headItem()->displayName()));
                 
                 vector<bool> linkSelection;
                 if(selectedJointsRadio.isChecked()){

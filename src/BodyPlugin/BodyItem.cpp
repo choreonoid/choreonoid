@@ -1431,7 +1431,7 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
         if(attachmentToParent){
             auto holderLink = attachmentToParent->holder()->link();
             mvout() << format(_("{0} has been detached from {1} of {2}."),
-                              self->name(), holderLink->name(), holderLink->body()->name()) << endl;
+                              self->displayName(), holderLink->name(), holderLink->body()->name()) << endl;
         }
     }
 
@@ -1472,7 +1472,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     body->rootLink()->setOffsetPosition(T_offset);
                     self->setLocationEditable(false);
                     mvout() << format(_("{0} has been attached to {1} of {2}."),
-                                      self->name(), linkToAttach->name(), bodyItem->name()) << endl;
+                                      self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
                     goto found;
                 }
             }
@@ -1736,7 +1736,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
             if(qs->size() != nj){
                 if(qs->size() != body->numJoints()){
                     MessageView::instance()->putln(
-                        format(_("Mismatched size of the stored joint positions for {}"), self->name()),
+                        format(_("Mismatched size of the stored joint positions for {}"), self->displayName()),
                         MessageView::WARNING);
                 }
                 nj = std::min(qs->size(), nj);
@@ -1753,7 +1753,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
             if(m != n){
                 if(m != body->numJoints()){
                     MessageView::instance()->putln(
-                        format(_("Mismatched size of the stored initial joint positions for {}"), self->name()),
+                        format(_("Mismatched size of the stored initial joint positions for {}"), self->displayName()),
                         MessageView::WARNING);
                 }
                 m = std::min(m, n);

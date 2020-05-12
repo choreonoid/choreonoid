@@ -254,7 +254,7 @@ bool exportHrpsysSeqFileSet(BodyMotionItem* item, const std::string& filename, s
                    _("The frame rate of a body motion exported as HRPSYS files should be standard value 200, "
                      "but the frame rate of \"{0}\" is {1}. The exported data may cause a problem.\n\n"
                      "Do you continue to export ?"),
-                   item->name(), frameRate))){
+                   item->displayName(), frameRate))){
             return false;
         }
     }

@@ -68,7 +68,10 @@ public:
 
     const std::string& name() const { return name_; }
     virtual void setName(const std::string& name);
+    virtual std::string displayName() const;
+    void setDisplayNameModifier(std::function<std::string(const Item* item)> modifier);
     SignalProxy<void(const std::string& oldName)> sigNameChanged();
+    void notifyNameChange();
 
     void setAttribute(Attribute attribute);
     void unsetAttribute(Attribute attribute);
@@ -192,6 +195,17 @@ public:
         return static_cast<ItemType*>(
             findItem(
                 path, [](Item* item) -> bool { return dynamic_cast<ItemType*>(item); }, true, false));
+    }
+
+    template<class ItemType>
+    ItemType* findChildItem(const std::function<bool(ItemType* item)>& pred) const {
+        return static_cast<ItemType*>(
+            findItem(
+                "",
+                [pred](Item* item) -> bool {
+                    if(auto casted = dynamic_cast<ItemType*>(item)){ return pred(casted); }
+                    return false; },
+                true, false));
     }
 
     /**

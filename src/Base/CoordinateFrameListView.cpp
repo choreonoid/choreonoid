@@ -524,7 +524,7 @@ void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameLi
     targetItem = item;
 
     if(item){
-        targetLabel.setText(item->name().c_str());
+        targetLabel.setText(item->displayName().c_str());
         frames = item->frameList();
         frameListModel->setFrameList(frames);
     } else {
@@ -679,13 +679,13 @@ Referenced* CoordinateFrameListView::Impl::getPositionObject()
 
 std::string CoordinateFrameListView::Impl::getPositionName() const
 {
-    if (frameBeingEditedOutside) {
+    if(frameBeingEditedOutside) {
         auto& id = frameBeingEditedOutside->id();
         auto& note = frameBeingEditedOutside->note();
         if (id.isString() || note.empty()) {
-            return format("{0}: {1}", targetItem->name(), id.label());
+            return format("{0}: {1}", targetItem->displayName(), id.label());
         } else {
-            return format("{0}: {1} ( {2} )", targetItem->name(), id.label(), note);
+            return format("{0}: {1} ( {2} )", targetItem->displayName(), id.label(), note);
         }
     }
     return string();

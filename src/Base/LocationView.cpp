@@ -366,7 +366,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             basename += " ";
             parentPositionFunc =
                 [parentItem](){ return parentItem->getLocation(); };
-            basename += frameListItem->name();
+            basename += frameListItem->displayName();
             basename += " ";
             auto frames = frameListItem->frameList();
             int n = frames->numFrames();

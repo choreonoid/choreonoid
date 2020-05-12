@@ -23,7 +23,7 @@ Item* LocatableItem::getCorrespondingItem()
 
 std::string LocatableItem::getLocationName() const
 {
-    return const_cast<LocatableItem*>(this)->getCorrespondingItem()->name();
+    return const_cast<LocatableItem*>(this)->getCorrespondingItem()->displayName();
 }
 
 

@@ -120,7 +120,7 @@ bool LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
     if(targetBodyItem){
         targetLabel.setText(
             format("{0} / {1}",
-                   targetBodyItem->name(),
+                   targetBodyItem->displayName(),
                    positionWidget->targetLink()->name()).c_str());
     } else {
         targetLabel.setText("------");

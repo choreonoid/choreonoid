@@ -1595,7 +1595,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     stopSimulation(true);
 
     if(!worldItem){
-        mv->putln(format(_("{} must be in a WorldItem to do simulation."), self->name()),
+        mv->putln(format(_("{} must be in a WorldItem to do simulation."), self->displayName()),
                   MessageView::ERROR);
         return false;
     }
@@ -1724,16 +1724,15 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             SubSimulatorItem* item = *p;
             bool initialized = false;
             if(item->isEnabled()){
-                mv->putln(format(_("SubSimulatorItem \"{}\" has been detected."), item->name()));
+                mv->putln(format(_("SubSimulatorItem \"{}\" has been detected."), item->displayName()));
                 if(item->initializeSimulation(self)){
                     initialized = true;
                 } else {
-                    mv->putln(format(_("The initialization of \"{}\" failed."),
-                                     item->name()),
+                    mv->putln(format(_("The initialization of \"{}\" failed."), item->displayName()),
                               MessageView::WARNING);
                 }
             } else {
-                mv->putln(format(_("SubSimulatorItem \"{}\" is disabled."), item->name()));
+                mv->putln(format(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
             }
             if(initialized){
                 ++p;
@@ -1756,13 +1755,13 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
                     ready = controller->start();
                     if(!ready){
                         mv->putln(format(_("{0} for {1} failed to start."),
-                                         controller->name(), simBodyImpl->bodyItem->name()),
+                                         controller->displayName(), simBodyImpl->bodyItem->displayName()),
                                   MessageView::WARNING);
                     }
                 } else {
                     ready = controller->start();
                     if(!ready){
-                        mv->putln(format(_("{} failed to start."), controller->name()),
+                        mv->putln(format(_("{} failed to start."), controller->displayName()),
                                   MessageView::WARNING);
                     }
                 }
@@ -1805,7 +1804,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             } else {
                 mv->putln(format(_("WorldLogFileItem \"{0}\" has been detected. "
                                    "A simulation result is recoreded to \"{1}\"."),
-                                 worldLogFileItem->name(), worldLogFileItem->logFile()));
+                                 worldLogFileItem->displayName(), worldLogFileItem->logFile()));
 
                 worldLogFileItem->clearOutput();
                 worldLogFileItem->beginHeaderOutput();
@@ -1836,7 +1835,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         start();
         flushTimer.start(1000.0 / timeBar->playbackFrameRate());
 
-        mv->notify(format(_("Simulation by {} has started."), self->name()));
+        mv->notify(format(_("Simulation by {} has started."), self->displayName()));
 
         sigSimulationStarted();
     }
@@ -2302,7 +2301,7 @@ void SimulatorItem::Impl::onSimulationLoopStopped()
         timeBar->stopFillLevelUpdate(fillLevelId);
     }
 
-    mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->name(), finishTime));
+    mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
 
     if(finishTime > 0.0){
         mv->putln(format(_("Computation time is {0} [s], computation time / simulation time = {1}."),

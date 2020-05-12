@@ -237,11 +237,11 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
 
     setToolTip(0, QString());
 
-    setText(0, item->name().c_str());
+    setText(0, item->displayName().c_str());
     itemNameConnection =
         item->sigNameChanged().connect(
             [this](const std::string& /* oldName */){
-                setText(0, this->item->name().c_str());
+                setText(0, this->item->displayName().c_str());
             });
 
     widgetImpl->setItwItemSelected(this, item->isSelected());
@@ -290,7 +290,7 @@ void ItwItem::setData(int column, int role, const QVariant& value)
     if(column == 0){
         QTreeWidgetItem::setData(column, role, value);
 
-        if(role == Qt::DisplayRole || role == Qt::EditRole){
+        if(role == Qt::EditRole){
             if(value.type() == QVariant::String){
                 if(!value.toString().isEmpty()){
                     item->setName(value.toString().toStdString());
@@ -1119,7 +1119,7 @@ bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
             if(!checkPastable(parentItem)){
                 showWarningDialog(
                     format(_("The copied items cannot be pasted to \"{0}\"."),
-                           parentItem->name()));
+                           parentItem->displayName()));
                 isPastable = false;
             }
         }
