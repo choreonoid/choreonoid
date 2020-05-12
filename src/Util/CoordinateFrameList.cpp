@@ -111,6 +111,17 @@ void CoordinateFrameList::setFirstElementAsDefaultFrame(bool on)
 }
 
 
+bool CoordinateFrameList::isDefaultFrame(CoordinateFrame* frame) const
+{
+    if(hasFirstElementAsDefaultFrame_){
+        if(frame == impl->frames.front()){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 void CoordinateFrameList::clear()
 {
     impl->clear(true);
@@ -128,8 +139,8 @@ void CoordinateFrameList::Impl::clear(bool doKeepDefaultFrame)
     } else {
         minIndex = 0;
     }
-    for(size_t i = frames.size() - 1; i >= minIndex; --i){
-        self->removeAt(i);
+    while(frames.size() > minIndex){
+        self->removeAt(frames.size() - 1);
     }
     self->resetIdCounter(minIndex);
 }
@@ -375,7 +386,7 @@ void CoordinateFrameList::writeFrames(Mapping& archive) const
             if(frame->write(*node)){
                 frameNodes.append(node);
             }
-            ++n;
+            ++index;
         }
     }
 }
