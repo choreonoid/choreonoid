@@ -99,7 +99,7 @@ public:
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
     CoordinateFramePtr offsetFrame;
-    std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> functionToGetDefaultFrameNames;
+    FrameLabelFunction frameLabelFunction[2];
     
     QLabel resultLabel;
 
@@ -142,7 +142,9 @@ public:
     void updateCoordinateFrameCandidates();
     void updateCoordinateFrameCandidates(int frameComboIndex);
     void updateCoordinateFrameComboItems(
-        QComboBox& combo, CoordinateFrameList* frames, const GeneralId& currentId, const std::string& originLabel);
+        QComboBox& combo, CoordinateFrameList* frames, const GeneralId& currentId,
+        const FrameLabelFunction& frameLabelFunction);
+    string getFrameLabel(CoordinateFrame* frame, bool isDefaultFrame, const char* defaultFrameNote);
     void onFrameComboActivated(int frameComboIndex, int index);
     void onFrameUpdate();
     void setConfigurationInterfaceEnabled(bool on);
@@ -261,7 +263,14 @@ void LinkPositionWidget::Impl::createPanel()
     grid->setColumnStretch(1, 1);
 
     frameComboLabel[BaseFrame].setText(_("Base"));
+    frameLabelFunction[BaseFrame] =
+        [&](LinkKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
+            return getFrameLabel(frame, isDefaultFrame, _("Body Origin")); };
+
     frameComboLabel[OffsetFrame].setText(_("Offset"));
+    frameLabelFunction[OffsetFrame] =
+        [&](LinkKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
+            return getFrameLabel(frame, isDefaultFrame, _("Link Origin")); };
 
     for(int i=0; i < 2; ++i){
         grid->addWidget(&frameComboLabel[i], row + i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
@@ -294,7 +303,7 @@ void LinkPositionWidget::Impl::createPanel()
 }
 
 
-void LinkPositionWidget::setCoordinateModeLabels
+void LinkPositionWidget::customizeCoordinateModeLabels
 (const char* worldModeLabel, const char* baseModeLabel, const char* localModeLabel)
 {
     impl->worldCoordRadio.setText(worldModeLabel);
@@ -303,18 +312,17 @@ void LinkPositionWidget::setCoordinateModeLabels
 }
 
 
-void LinkPositionWidget::setCoordinateLabels
-(const char* baseCoordinateLabel, const char* offsetCoordinateLabel)
+void LinkPositionWidget::customizeBaseFrameLabels(const char* caption, FrameLabelFunction labelFunction)
 {
-    impl->frameComboLabel[BaseFrame].setText(baseCoordinateLabel);
-    impl->frameComboLabel[OffsetFrame].setText(offsetCoordinateLabel);
+    impl->frameComboLabel[BaseFrame].setText(caption);
+    impl->frameLabelFunction[BaseFrame] = labelFunction;
 }
 
 
-void LinkPositionWidget::customizeDefaultCoordinateFrameNames
-(std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> getNames)
+void LinkPositionWidget::customizeOffsetFrameLabels(const char* caption, FrameLabelFunction labelFunction)
 {
-    impl->functionToGetDefaultFrameNames = getNames;
+    impl->frameComboLabel[OffsetFrame].setText(caption);
+    impl->frameLabelFunction[OffsetFrame] = labelFunction;
 }
 
 
@@ -537,11 +545,7 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
                 kinematicsKit->sigPositionError().connect(
                     [&](const Position& T_frameCoordinate){
                         onKinematicsKitPositionError(T_frameCoordinate); }));
-            
-            if(functionToGetDefaultFrameNames){
-                tie(defaultCoordName[BaseFrame], defaultCoordName[OffsetFrame]) =
-                    functionToGetDefaultFrameNames(kinematicsKit);
-            }
+
             hasBaseFrames = kinematicsKit->baseFrames();
             hasOffsetFrames = kinematicsKit->offsetFrames();
 
@@ -602,20 +606,16 @@ void LinkPositionWidget::Impl::updateCoordinateFrameCandidates(int frameComboInd
         }
     }
     updateCoordinateFrameComboItems(
-        frameCombo[frameComboIndex], frames, currentFrameId, defaultCoordName[frameComboIndex]);
+        frameCombo[frameComboIndex], frames, currentFrameId, frameLabelFunction[frameComboIndex]);
 }
 
 
 void LinkPositionWidget::Impl::updateCoordinateFrameComboItems
-(QComboBox& combo, CoordinateFrameList* frames, const GeneralId& currentId, const std::string& originLabel)
+(QComboBox& combo, CoordinateFrameList* frames, const GeneralId& currentId,
+ const FrameLabelFunction& frameLabelFunction)
 {
-    constexpr bool EnableToolTip = false;
-    
     combo.clear();
-    combo.addItem(QString("0: %1").arg(originLabel.c_str()), 0);
-    if(EnableToolTip){
-        combo.setItemData(0, QString(), Qt::ToolTipRole);
-    }
+
     int currentIndex = 0;
 
     if(frames){
@@ -624,16 +624,12 @@ void LinkPositionWidget::Impl::updateCoordinateFrameComboItems
             int index = combo.count();
             if(auto frame = frames->frameAt(i)){
                 auto& id = frame->id();
+                bool isDefaultFrame = (i == 0 && frames->hasFirstElementAsDefaultFrame());
+                string label = frameLabelFunction(kinematicsKit, frame, isDefaultFrame);
                 if(id.isInt()){
-                    combo.addItem(QString("%1: %2").arg(id.toInt()).arg(frame->note().c_str()), id.toInt());
-                    if(EnableToolTip){
-                        combo.setItemData(index, QString(), Qt::ToolTipRole);
-                    }
+                    combo.addItem(label.c_str(), id.toInt());
                 } else {
-                    combo.addItem(id.label().c_str(), id.toString().c_str());
-                    if(EnableToolTip){
-                        combo.setItemData(index, frame->note().c_str(), Qt::ToolTipRole);
-                    }
+                    combo.addItem(label.c_str(), id.toString().c_str());
                 }
                 if(id == currentId){
                     currentIndex = index;
@@ -643,6 +639,23 @@ void LinkPositionWidget::Impl::updateCoordinateFrameComboItems
     }
 
     combo.setCurrentIndex(currentIndex);
+}
+
+
+string LinkPositionWidget::Impl::getFrameLabel
+(CoordinateFrame* frame, bool isDefaultFrame, const char* defaultFrameNote)
+{
+    string label;
+    string note = frame->note();
+    if(note.empty() && isDefaultFrame){
+        note = defaultFrameNote;
+    }
+    if(note.empty()){
+        label = frame->id().label();
+    } else {
+        label = format("{0}: {1}", frame->id().label(), note.c_str());
+    }
+    return label;
 }
 
 

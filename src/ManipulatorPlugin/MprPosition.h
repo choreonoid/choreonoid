@@ -97,14 +97,14 @@ public:
         return (frameType == BaseFrame) ? baseFrameId_ : offsetFrameId_;
     }
 
-    CoordinateFrame* baseFrame(CoordinateFrameList* baseFrames){
-        return baseFrames->getFrame(baseFrameId_);
+    CoordinateFrame* findBaseFrame(CoordinateFrameList* baseFrames){
+        return baseFrames->findFrame(baseFrameId_);
     }
-    CoordinateFrame* offsetFrame(CoordinateFrameList* offsetFrames){
-        return offsetFrames->getFrame(offsetFrameId_);
+    CoordinateFrame* findOffsetFrame(CoordinateFrameList* offsetFrames){
+        return offsetFrames->findFrame(offsetFrameId_);
     }
-    CoordinateFrame* frame(CoordinateFrameList* frames, int frameType){
-        return (frameType == BaseFrame) ? baseFrame(frames) : offsetFrame(frames);
+    CoordinateFrame* findFrame(CoordinateFrameList* frames, int frameType){
+        return (frameType == BaseFrame) ? findBaseFrame(frames) : findOffsetFrame(frames);
     }
     
     int configuration() const { return configuration_; }

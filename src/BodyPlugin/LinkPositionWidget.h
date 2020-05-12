@@ -12,7 +12,7 @@ namespace cnoid {
 class BodyItem;
 class Link;
 class LinkKinematicsKit;
-class AbstractPositionEditTarget;
+class CoordinateFrame;
 class MenuManager;
 class Archive;
 
@@ -22,13 +22,13 @@ public:
     LinkPositionWidget(QWidget* parent);
     ~LinkPositionWidget();
 
-    void setCoordinateModeLabels(
+    void customizeCoordinateModeLabels(
         const char* worldModeLabel, const char* modelModeLabel, const char* localModeLabel);
 
-    void setCoordinateLabels(const char* baseCoordinateLabel, const char* offsetCoordinateLabel);
-
-    void customizeDefaultCoordinateFrameNames(
-        std::function<std::pair<std::string,std::string>(LinkKinematicsKit*)> getNames);
+    typedef std::function<std::string(LinkKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame)>
+        FrameLabelFunction;
+    void customizeBaseFrameLabels(const char* caption, FrameLabelFunction labelFunction);
+    void customizeOffsetFrameLabels(const char* caption, FrameLabelFunction labelFunction);
 
     enum TargetLinkType { AnyLink, RootOrIkLink, IkLink, NumTargetLinkTypes };
     void setTargetLinkType(int type);
@@ -37,7 +37,6 @@ public:
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     BodyItem* targetBodyItem();
     Link* targetLink();
-    bool setPositionEditTarget(AbstractPositionEditTarget* target);
 
     void setCustomIkEnabled(bool on);
     bool isCustomIkEnabled() const;

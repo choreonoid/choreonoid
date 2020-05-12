@@ -35,18 +35,13 @@ public:
     CoordinateFrameListView::Impl* view;
     CoordinateFrameListPtr frames;
     ScopedConnection frameListConnection;
-    CoordinateFramePtr defaultFrame;
     QFont monoFont;
-    bool isDefaultFrameEnabled_;
     
     FrameListModel(CoordinateFrameListView::Impl* view);
-    void setDefaultFrameEnabled(bool on);
-    bool isDefaultFrameEnabled() const;
     void setFrameList(CoordinateFrameList* frames);
     bool isValid() const;
     int numFrames() const;
     int rowOfFrame(CoordinateFrame* frame) const;
-    int rowOfFrameIndex(int index) const;
     CoordinateFrame* frameAt(const QModelIndex& index) const;
     virtual int rowCount(const QModelIndex& parent) const override;
     virtual int columnCount(const QModelIndex& parent) const override;
@@ -126,22 +121,8 @@ FrameListModel::FrameListModel(CoordinateFrameListView::Impl* view)
       monoFont("Monospace")
 {
     monoFont.setStyleHint(QFont::TypeWriter);
-    setDefaultFrameEnabled(true);
 }
 
-
-void FrameListModel::setDefaultFrameEnabled(bool on)
-{
-    isDefaultFrameEnabled_ = on;
-    defaultFrame = new CoordinateFrame(0, frames);
-}
-
-
-bool FrameListModel::isDefaultFrameEnabled() const
-{
-    return isDefaultFrameEnabled_;
-}
-    
 
 void FrameListModel::setFrameList(CoordinateFrameList* frames)
 {
@@ -156,8 +137,6 @@ void FrameListModel::setFrameList(CoordinateFrameList* frames)
                 [&](int index){ onFramePositionChanged(index); });
     }
             
-    setDefaultFrameEnabled(isDefaultFrameEnabled_);
-            
     endResetModel();
 }
 
@@ -171,8 +150,7 @@ bool FrameListModel::isValid() const
 int FrameListModel::numFrames() const
 {
     if(frames){
-        int n = frames->numFrames();
-        return isDefaultFrameEnabled_ ? (n + 1) : n;
+        return frames->numFrames();
     }
     return 0;
 }
@@ -180,20 +158,10 @@ int FrameListModel::numFrames() const
 
 int FrameListModel::rowOfFrame(CoordinateFrame* frame) const
 {
-    if(frames && frame != defaultFrame){
-        int row = frames->indexOf(frame);
-        if(isDefaultFrameEnabled_){
-            row += 1;
-        }
-        return row;
+    if(frames){
+        return frames->indexOf(frame);
     }
     return -1;
-}
-
-
-int FrameListModel::rowOfFrameIndex(int index) const
-{
-    return isDefaultFrameEnabled_ ? index + 1 : index;
 }
 
 
@@ -202,15 +170,7 @@ CoordinateFrame* FrameListModel::frameAt(const QModelIndex& index) const
     if(!index.isValid()){
         return nullptr;
     }
-    int row = index.row();
-    if(isDefaultFrameEnabled_){
-        if(row == 0){
-            return defaultFrame;
-        }
-        return frames->frameAt(row - 1);
-    } else {
-        return frames->frameAt(row);
-    }
+    return frames->frameAt(index.row());
 }
         
     
@@ -275,7 +235,7 @@ Qt::ItemFlags FrameListModel::flags(const QModelIndex& index) const
 {
     auto flags = QAbstractTableModel::flags(index);
     if(index.isValid() && index.column() != PositionColumn){
-        if(!isDefaultFrameEnabled_ || index.row() != 0){
+        if(index.row() > 0 || (frames && !frames->hasFirstElementAsDefaultFrame())){
             flags = flags | Qt::ItemIsEditable;
         }
     }
@@ -324,8 +284,8 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
 bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if(index.isValid() && role == Qt::EditRole){
-        auto frameIndex = isDefaultFrameEnabled_ ? index.row() - 1 : index.row();
-        if(frameIndex < 0){
+        auto frameIndex = index.row();
+        if(frameIndex == 0 && frames && frames->hasFirstElementAsDefaultFrame()){
             return false;
         }
         bool changed = false;
@@ -359,18 +319,15 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
 void FrameListModel::addFrame(int row, CoordinateFrame* frame, bool doInsert)
 {
     if(frames){
-        int newFrameRow = doInsert ? row : row + 1;
-        int newFrameIndex = isDefaultFrameEnabled_ ? (newFrameRow - 1) : newFrameRow;
+        int newFrameIndex = doInsert ? row : row + 1;
         if(frames->insert(newFrameIndex, frame)){
-            if(newFrameRow != 0 || !defaultFrame){
-                if(numFrames() == 0){
-                    // Remove the empty row first
-                    beginRemoveRows(QModelIndex(), 0, 0);
-                    endRemoveRows();
-                }
-                beginInsertRows(QModelIndex(), newFrameRow, newFrameRow);
-                endInsertRows();
+            if(numFrames() == 0){
+                // Remove the empty row first
+                beginRemoveRows(QModelIndex(), 0, 0);
+                endRemoveRows();
             }
+            beginInsertRows(QModelIndex(), newFrameIndex, newFrameIndex);
+            endInsertRows();
         }
     }
 }
@@ -383,10 +340,9 @@ void FrameListModel::removeFrames(QModelIndexList selected)
         int numRemoved = 0;
         for(auto& index : selected){
             int row = index.row() - numRemoved;
-            if(!isDefaultFrameEnabled_ || row != 0){
+            if(row > 0 || !frames->hasFirstElementAsDefaultFrame()){
                 beginRemoveRows(QModelIndex(), row, row);
-                int frameIndex = isDefaultFrameEnabled_ ? row - 1 : row;
-                frames->removeAt(frameIndex);
+                frames->removeAt(row);
                 ++numRemoved;
                 endRemoveRows();
             }
@@ -402,8 +358,7 @@ void FrameListModel::removeFrames(QModelIndexList selected)
 
 void FrameListModel::onFramePositionChanged(int frameIndex)
 {
-    int row = rowOfFrameIndex(frameIndex);
-    auto modelIndex = index(row, PositionColumn, QModelIndex());
+    auto modelIndex = index(frameIndex, PositionColumn, QModelIndex());
     Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
 
     if(view->frameBeingEditedOutside){
@@ -514,7 +469,6 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
         QAbstractItemView::AnyKeyPressed);
 
     frameListModel = new FrameListModel(this);
-    frameListModel->setDefaultFrameEnabled(true);
     setModel(frameListModel);
 
     auto hheader = horizontalHeader();
@@ -665,7 +619,7 @@ void CoordinateFrameListView::Impl::showContextMenu(int row, QPoint globalPos)
     contextMenuManager.addItem(_("Add"))
         ->sigTriggered().connect([=](){ addFrame(row, false); });
 
-    if(!frameListModel->isDefaultFrameEnabled() || row != 0){
+    if(row > 0 || (frames && !frames->hasFirstElementAsDefaultFrame())){
         contextMenuManager.addItem(_("Remove"))
             ->sigTriggered().connect([=](){ removeSelectedFrames(); });
     }
@@ -761,7 +715,6 @@ bool CoordinateFrameListView::Impl::setPosition(const Position& T)
     if(frameBeingEditedOutside){
         frameBeingEditedOutside->setPosition(T);
         frameBeingEditedOutside->notifyPositionChange();
-        //frameListModel->notifyFramePositionUpdate(frameBeingEditedOutside);
         sigPositionChanged_(T);
         return true;
     }

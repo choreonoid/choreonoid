@@ -157,23 +157,6 @@ void MprIkPosition::resetReferenceRpy()
 }
 
 
-/*
-bool MprIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
-{
-    return setCurrentPosition_(kinematicsKit, false);
-}
-*/
-
-
-/*
-bool MprIkPosition::setCurrentPositionWithCurrentBaseFrameType(LinkKinematicsKit* kinematicsKit)
-{
-    return setCurrentPosition_(kinematicsKit, true);
-}
-*/
-
-
-//bool MprIkPosition::setCurrentPosition_(LinkKinematicsKit* kinematicsKit, bool useCurrentBaseFrameType)
 bool MprIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
     auto baseLink = kinematicsKit->baseLink();
@@ -182,27 +165,6 @@ bool MprIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
     }
 
     Position T_base;
-    /*
-    if(useCurrentBaseFrameType){
-        baseFrameType_ = kinematicsKit->currentBaseFrameType();
-    } else {
-        baseFrameType_ = BodyFrame;
-    }
-    */
-
-    /*
-    if(baseFrameType_ == WorldFrame){
-        baseFrameId_ = kinematicsKit->currentWorldFrameId();
-        auto baseFrame = kinematicsKit->currentWorldFrame();
-        T_base = baseFrame->T();
-
-    } else {
-        baseFrameId_ = kinematicsKit->currentBodyFrameId();
-        auto baseFrame = kinematicsKit->currentBodyFrame();
-        T_base = baseLink->Ta() * baseFrame->T();
-    }
-    */
-
     baseFrameId_ = kinematicsKit->currentBaseFrameId();
     auto baseFrame = kinematicsKit->currentBaseFrame();
     if(baseFrame->isGlobal()){
@@ -293,20 +255,6 @@ bool MprIkPosition::read(const Mapping& archive)
         }
     }
 
-    /*
-    string type;
-    if(!archive.read("base_frame_type", type)){
-        archive.read("baseFrameType", type); // old
-    }
-    if(!type.empty()){
-        if(type == "world"){
-            baseFrameType_ = WorldFrame;
-        } else if(type == "body"){
-            baseFrameType_ = BodyFrame;
-        }
-    }
-    */
-
     configuration_ = 0;
     if(!archive.read("config_id", configuration_)){
         // old
@@ -343,14 +291,6 @@ bool MprIkPosition::write(Mapping& archive) const
     archive.setDoubleFormat("%.10g");
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", degree(rpy()));
-
-    /*
-    if(baseFrameType_ == WorldFrame){
-        archive.write("base_frame_type", "world");
-    } else if(baseFrameType_ == BodyFrame){
-        archive.write("base_frame_type", "body");
-    }
-    */
 
     baseFrameId_.write(archive, "base_frame");
     offsetFrameId_.write(archive, "offset_frame");

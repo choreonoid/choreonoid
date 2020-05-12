@@ -108,7 +108,7 @@ CoordinateFrameListItem::Impl::Impl
       frameList(frameList),
       itemizationMode(itemizationMode)
 {
-    itemizationMode = NoItemization;
+    frameList->setFirstElementAsDefaultFrame();
     frameMarkerGroup = new SgGroup;
     relativeFrameMarkerGroup = new SgPosTransform;
     frameMarkerGroup->addChild(relativeFrameMarkerGroup);
@@ -161,6 +161,7 @@ void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
                     [&](int index){ onFrameAttributeChanged(index); }));
         }
         itemizationMode = mode;
+        updateFrameItems();
     }
 }
 
@@ -173,25 +174,23 @@ void CoordinateFrameListItem::updateFrameItems()
 
 void CoordinateFrameListItem::Impl::updateFrameItems()
 {
-    if(itemizationMode == NoItemization){
-        return;
-    }
-
     // clear existing frame items
     for(auto& item : self->childItems<CoordinateFrameItem>()){
         item->detachFromParentItem();
     }
 
-    const int numFrames = frameList->numFrames();
-    for(int i=0; i < numFrames; ++i){
-        self->addChildItem(createFrameItem(frameList->frameAt(i)));
+    if(itemizationMode != NoItemization){
+        const int numFrames = frameList->numFrames();
+        for(int i=0; i < numFrames; ++i){
+            self->addChildItem(createFrameItem(frameList->frameAt(i)));
+        }
     }
 }
 
 
 CoordinateFrameItem* CoordinateFrameListItem::Impl::createFrameItem(CoordinateFrame* frame)
 {
-    auto item = new CoordinateFrameItem;
+    CoordinateFrameItem* item = new CoordinateFrameItem;
     updateFrameAttribute(item, frame);
     if(itemizationMode == SubItemization){
         item->setSubItemAttributes();

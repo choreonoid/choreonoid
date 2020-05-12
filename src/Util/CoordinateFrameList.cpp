@@ -15,9 +15,10 @@ namespace cnoid {
 class CoordinateFrameList::Impl
 {
 public:
+    CoordinateFrameList* self;
     std::vector<CoordinateFramePtr> frames;
     unordered_map<GeneralId, CoordinateFramePtr, GeneralId::Hash> idToFrameMap;
-    CoordinateFramePtr identityFrame;
+    bool hasDefaultFrame;
     int idCounter;
     std::string name;
     Signal<void(int index)> sigFrameAdded;
@@ -25,7 +26,8 @@ public:
     Signal<void(int index)> sigFrameAttributeChanged;
     Signal<void(int index)> sigFramePositionChanged;
     
-    Impl();
+    Impl(CoordinateFrameList* self);
+    void clear(bool doKeepDefaultFrame);
 };
 
 }
@@ -33,29 +35,37 @@ public:
 
 CoordinateFrameList::CoordinateFrameList()
 {
-    impl = new Impl;
+    impl = new Impl(this);
     frameType_ = Base;
 }
 
 
-CoordinateFrameList::Impl::Impl()
+CoordinateFrameList::Impl::Impl(CoordinateFrameList* self)
+    : self(self)
 {
-    identityFrame = new CoordinateFrame(0);
-    idCounter = 1;
+    self->hasFirstElementAsDefaultFrame_ = false;
+    idCounter = 0;
 }
 
 
 CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org)
 {
-    impl = new Impl;
+    impl = new Impl(this);
 
     impl->frames.reserve(org.impl->frames.size());
     for(auto& frame : org.impl->frames){
         append(frame->clone());
     }
+    hasFirstElementAsDefaultFrame_ = org.hasFirstElementAsDefaultFrame_;
     impl->name = org.impl->name;
-
     frameType_ = org.frameType_;
+}
+
+
+CoordinateFrameList::~CoordinateFrameList()
+{
+    impl->clear(false);
+    delete impl;
 }
 
 
@@ -67,11 +77,15 @@ Referenced* CoordinateFrameList::doClone(CloneMap* cloneMap) const
 
 CoordinateFrameList& CoordinateFrameList::operator=(const CoordinateFrameList& rhs)
 {
-    clear();
+    impl->clear(true);
     const int n = rhs.numFrames();
     for(int i=0; i < n; ++i){
-        append(new CoordinateFrame(*rhs.frameAt(i)));
+        append(rhs.frameAt(i)->clone());
     }
+    hasFirstElementAsDefaultFrame_ = rhs.hasFirstElementAsDefaultFrame_;
+    impl->name = rhs.impl->name;
+    frameType_ = rhs.frameType_;
+    
     return *this;
 }
 
@@ -88,27 +102,38 @@ void CoordinateFrameList::setName(const std::string& name)
 }
 
 
-CoordinateFrameList::~CoordinateFrameList()
+void CoordinateFrameList::setFirstElementAsDefaultFrame(bool on)
 {
-    clear();
-    delete impl;
+    if(on && impl->frames.empty()){
+        append(new CoordinateFrame(0));
+    }
+    hasFirstElementAsDefaultFrame_ = on;
 }
 
 
 void CoordinateFrameList::clear()
 {
-    for(auto& frame : impl->frames){
-        frame->ownerFrameList_.reset();
-    }
-    vector<CoordinateFramePtr> tmpFrames(impl->frames);
-    impl->frames.clear();
-    impl->idToFrameMap.clear();
-    impl->idCounter = 1;
-
-    for(size_t i=0; i < tmpFrames.size(); ++i){
-        impl->sigFrameRemoved(i, tmpFrames[i]);
-    }
+    impl->clear(true);
 }
+
+
+void CoordinateFrameList::Impl::clear(bool doKeepDefaultFrame)
+{
+    if(!self->hasFirstElementAsDefaultFrame_){
+        doKeepDefaultFrame = false;
+    }
+    size_t minIndex;
+    if(doKeepDefaultFrame){
+        minIndex = 1;
+    } else {
+        minIndex = 0;
+    }
+    for(size_t i = frames.size() - 1; i >= minIndex; --i){
+        self->removeAt(i);
+    }
+    self->resetIdCounter(minIndex);
+}
+
 
 
 int CoordinateFrameList::numFrames() const
@@ -138,32 +163,17 @@ int CoordinateFrameList::indexOf(CoordinateFrame* frame) const
 
 CoordinateFrame* CoordinateFrameList::findFrame(const GeneralId& id) const
 {
-    if(id == 0){
-        return impl->identityFrame;
-    }
-        
     auto iter = impl->idToFrameMap.find(id);
     if(iter != impl->idToFrameMap.end()){
         return iter->second;
     }
-    
     return nullptr;
-}
-
-
-CoordinateFrame* CoordinateFrameList::getFrame(const GeneralId& id) const
-{
-    if(auto frame = findFrame(id)){
-        return frame;
-    }
-    return impl->identityFrame;
 }
 
 
 bool CoordinateFrameList::insert(int index, CoordinateFrame* frame)
 {
-    if(frame->ownerFrameList() || !frame->id().isValid() || frame->id() == 0 ||
-       CoordinateFrameList::findFrame(frame->id())){
+    if(frame->ownerFrameList() || !frame->id().isValid() || findFrame(frame->id())){
         return false;
     }
 
@@ -195,6 +205,10 @@ void CoordinateFrameList::removeAt(int index)
     frame_->ownerFrameList_.reset();
     impl->idToFrameMap.erase(frame_->id());
     impl->frames.erase(impl->frames.begin() + index);
+
+    if(impl->frames.empty()){
+        hasFirstElementAsDefaultFrame_ = false;
+    }
 
     impl->sigFrameRemoved(index, frame_);
 }
@@ -240,7 +254,7 @@ bool CoordinateFrameList::resetId(CoordinateFrame* frame, const GeneralId& newId
 {
     bool changed = false;
 
-    if(frame->ownerFrameList() == this && newId.isValid() && newId != 0){
+    if(frame->ownerFrameList() == this && newId.isValid()){
         auto& frameMap = impl->idToFrameMap;
         auto iter = frameMap.find(newId);
         if(iter == frameMap.end()){
@@ -255,9 +269,9 @@ bool CoordinateFrameList::resetId(CoordinateFrame* frame, const GeneralId& newId
 }
 
 
-void CoordinateFrameList::resetIdCounter()
+void CoordinateFrameList::resetIdCounter(int id)
 {
-    impl->idCounter = 1;
+    impl->idCounter = id;
 }
 
 
@@ -352,11 +366,16 @@ void CoordinateFrameList::writeFrames(Mapping& archive) const
 {
     if(!impl->frames.empty()){
         Listing& frameNodes = *archive.createListing("frames");
-        for(auto& frame : impl->frames){
+
+        int n = impl->frames.size();
+        int index = hasFirstElementAsDefaultFrame_ ? 1 : 0;
+        while(index < n){
             MappingPtr node = new Mapping;
+            auto frame = impl->frames[index];
             if(frame->write(*node)){
                 frameNodes.append(node);
             }
+            ++n;
         }
     }
 }
