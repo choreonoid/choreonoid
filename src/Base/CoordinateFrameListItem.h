@@ -47,7 +47,8 @@ public:
     virtual SgNode* getScene() override;
 
     void setFrameMarkerVisible(const GeneralId& id, bool on);
-    bool isFrameMarkerVisible(const GeneralId& id) const;
+    void setFrameMarkerVisible(const CoordinateFrame* frame, bool on);
+    bool isFrameMarkerVisible(const CoordinateFrame* frame) const;
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

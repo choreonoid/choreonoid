@@ -24,21 +24,24 @@ using fmt::format;
 
 namespace {
 
-constexpr int NumColumns = 3;
+constexpr int NumColumns = 5;
 constexpr int IdColumn = 0;
 constexpr int NoteColumn = 1;
 constexpr int PositionColumn = 2;
+constexpr int GlobalCheckColumn = 3;
+constexpr int VisibleCheckColumn = 4;
 
 class FrameListModel : public QAbstractTableModel
 {
 public:
     CoordinateFrameListView::Impl* view;
-    CoordinateFrameListPtr frames;
+    CoordinateFrameListItemPtr frameListItem;
+    CoordinateFrameListPtr frameList;
     ScopedConnection frameListConnection;
     QFont monoFont;
     
     FrameListModel(CoordinateFrameListView::Impl* view);
-    void setFrameList(CoordinateFrameList* frames);
+    void setFrameListItem(CoordinateFrameListItem* frameListItem);
     bool isValid() const;
     int numFrames() const;
     int rowOfFrame(CoordinateFrame* frame) const;
@@ -55,18 +58,19 @@ public:
     void onFramePositionChanged(int frameIndex);
 };
 
-class CustomizedItemDelegate : public QStyledItemDelegate
+class CheckItemDelegate : public QStyledItemDelegate
 {
 public:
     CoordinateFrameListView::Impl* view;
     
-    CustomizedItemDelegate(CoordinateFrameListView::Impl* view);
+    CheckItemDelegate(CoordinateFrameListView::Impl* view);
+    virtual void paint(
+        QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual bool editorEvent(
+        QEvent* event, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index) override;
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    virtual void updateEditorGeometry(
-        QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
-    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+    virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 };
 
 }
@@ -79,7 +83,7 @@ public:
     CoordinateFrameListView* self;
     TargetItemPicker<CoordinateFrameListItem> targetItemPicker;
     CoordinateFrameListItemPtr targetItem;
-    CoordinateFrameListPtr frames;
+    CoordinateFrameListPtr frameList;
     FrameListModel* frameListModel;
     QLabel targetLabel;
     PushButton addButton;
@@ -124,16 +128,21 @@ FrameListModel::FrameListModel(CoordinateFrameListView::Impl* view)
 }
 
 
-void FrameListModel::setFrameList(CoordinateFrameList* frames)
+void FrameListModel::setFrameListItem(CoordinateFrameListItem* frameListItem)
 {
     beginResetModel();
 
-    this->frames = frames;
+    this->frameListItem = frameListItem;
+    if(frameListItem){
+        this->frameList = frameListItem->frameList();
+    } else {
+        this->frameList = nullptr;
+    }
 
     frameListConnection.disconnect();
-    if(frames){
+    if(frameList){
         frameListConnection =
-            frames->sigFramePositionChanged().connect(
+            frameList->sigFramePositionChanged().connect(
                 [&](int index){ onFramePositionChanged(index); });
     }
             
@@ -143,14 +152,14 @@ void FrameListModel::setFrameList(CoordinateFrameList* frames)
 
 bool FrameListModel::isValid() const
 {
-    return frames != nullptr;
+    return frameList != nullptr;
 }
 
 
 int FrameListModel::numFrames() const
 {
-    if(frames){
-        return frames->numFrames();
+    if(frameList){
+        return frameList->numFrames();
     }
     return 0;
 }
@@ -158,8 +167,8 @@ int FrameListModel::numFrames() const
 
 int FrameListModel::rowOfFrame(CoordinateFrame* frame) const
 {
-    if(frames){
-        return frames->indexOf(frame);
+    if(frameList){
+        return frameList->indexOf(frame);
     }
     return -1;
 }
@@ -170,7 +179,7 @@ CoordinateFrame* FrameListModel::frameAt(const QModelIndex& index) const
     if(!index.isValid()){
         return nullptr;
     }
-    return frames->frameAt(index.row());
+    return frameList->frameAt(index.row());
 }
         
     
@@ -199,11 +208,15 @@ QVariant FrameListModel::headerData(int section, Qt::Orientation orientation, in
         if(orientation == Qt::Horizontal){
             switch(section){
             case IdColumn:
-                return "ID";
+                return " ID ";
             case NoteColumn:
                 return _("Note");
             case PositionColumn:
                 return _("Position");
+            case GlobalCheckColumn:
+                return "G";
+            case VisibleCheckColumn:
+                return "V";
             default:
                 return QVariant();
             }
@@ -221,7 +234,7 @@ QVariant FrameListModel::headerData(int section, Qt::Orientation orientation, in
 
 QModelIndex FrameListModel::index(int row, int column, const QModelIndex& parent) const
 {
-    if(!frames || parent.isValid()){
+    if(!frameList || parent.isValid()){
         return QModelIndex();
     }
     if(row < numFrames()){
@@ -234,15 +247,20 @@ QModelIndex FrameListModel::index(int row, int column, const QModelIndex& parent
 Qt::ItemFlags FrameListModel::flags(const QModelIndex& index) const
 {
     auto flags = QAbstractTableModel::flags(index);
-    if(index.isValid() && index.column() != PositionColumn){
-        if(index.row() > 0 || (frames && !frames->hasFirstElementAsDefaultFrame())){
-            flags = flags | Qt::ItemIsEditable;
+    if(index.isValid()){
+        int column = index.column();
+        if(column != PositionColumn){
+            if(column == VisibleCheckColumn){
+                flags |= Qt::ItemIsEditable;
+            } else {
+                if(index.row() > 0 || (frameList && !frameList->hasFirstElementAsDefaultFrame())){
+                    flags |= Qt::ItemIsEditable;
+                }
+            }
         }
     }
     return flags;
 }
-
-
 
 
 QVariant FrameListModel::data(const QModelIndex& index, int role) const
@@ -253,17 +271,27 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
     }
     int column = index.column();
     if(role == Qt::DisplayRole || role == Qt::EditRole){
-        if(column == IdColumn){
+        switch(column){
+        case IdColumn:
             return frame->id().label().c_str();
 
-        } else if(column == NoteColumn){
+        case NoteColumn:
             return frame->note().c_str();
 
-        } else if(column == PositionColumn){
+        case PositionColumn: {
             auto p = frame->T().translation();
             auto rpy = degree(rpyFromRot(frame->T().linear()));
             return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
                           p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+        }
+        case GlobalCheckColumn:
+            return frame->isGlobal();
+
+        case VisibleCheckColumn:
+            return frameListItem->isFrameMarkerVisible(frame);
+
+        default:
+            break;
         }
     } else if(role == Qt::TextAlignmentRole){
         if(column == NoteColumn){
@@ -276,41 +304,60 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
             return monoFont;
         }
     }
-            
     return QVariant();
 }
 
 
 bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-    if(index.isValid() && role == Qt::EditRole){
-        auto frameIndex = index.row();
-        if(frameIndex == 0 && frames && frames->hasFirstElementAsDefaultFrame()){
-            return false;
-        }
-        bool changed = false;
-        auto frame = frames->frameAt(frameIndex);
-        int column = index.column();
-        if(column == IdColumn){
+    if(!index.isValid()){
+        return false;
+    }
+
+    auto frameIndex = index.row();
+    if(frameIndex == 0 && frameList && frameList->hasFirstElementAsDefaultFrame() &&
+       index.column() != VisibleCheckColumn){
+        return false;
+    }
+    bool changed = false;
+    auto frame = frameList->frameAt(frameIndex);
+
+    if(role == Qt::EditRole){
+        switch(index.column()){
+        case IdColumn: {
             bool isInt;
             auto stringId = value.toString();
             int intId = stringId.toInt(&isInt);
             if(isInt){
-                frames->resetId(frame, intId);
+                frameList->resetId(frame, intId);
             } else {
-                frames->resetId(frame, stringId.toStdString());
+                frameList->resetId(frame, stringId.toStdString());
             }
             changed = true;
-            
-        } else if(column == NoteColumn){
+            break;
+        }
+        case NoteColumn:
             frame->setNote(value.toString().toStdString());
             changed = true;
+            break;
+
+        case GlobalCheckColumn:
+            frame->setGlobal(value.toBool());
+            changed = true;
+            break;
+
+        case VisibleCheckColumn:
+            frameListItem->setFrameMarkerVisible(frame, value.toBool());
+            changed = true;
+            break;
+
+        default:
+            break;
         }
-        
-        if(changed){
-            Q_EMIT dataChanged(index, index, {role});
-            frames->notifyFrameAttributeChange(frameIndex);
-        }
+    }
+    if(changed){
+        Q_EMIT dataChanged(index, index, {role});
+        frameList->notifyFrameAttributeChange(frameIndex);
     }
     return false;
 }
@@ -318,9 +365,9 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
 
 void FrameListModel::addFrame(int row, CoordinateFrame* frame, bool doInsert)
 {
-    if(frames){
+    if(frameList){
         int newFrameIndex = doInsert ? row : row + 1;
-        if(frames->insert(newFrameIndex, frame)){
+        if(frameList->insert(newFrameIndex, frame)){
             if(numFrames() == 0){
                 // Remove the empty row first
                 beginRemoveRows(QModelIndex(), 0, 0);
@@ -335,19 +382,19 @@ void FrameListModel::addFrame(int row, CoordinateFrame* frame, bool doInsert)
 
 void FrameListModel::removeFrames(QModelIndexList selected)
 {
-    if(frames){
+    if(frameList){
         std::sort(selected.begin(), selected.end());
         int numRemoved = 0;
         for(auto& index : selected){
             int row = index.row() - numRemoved;
-            if(row > 0 || !frames->hasFirstElementAsDefaultFrame()){
+            if(row > 0 || !frameList->hasFirstElementAsDefaultFrame()){
                 beginRemoveRows(QModelIndex(), row, row);
-                frames->removeAt(row);
+                frameList->removeAt(row);
                 ++numRemoved;
                 endRemoveRows();
             }
         }
-        if(frames->numFrames() == 0){
+        if(frameList->numFrames() == 0){
             // This is necessary to show the empty row
             beginResetModel();
             endResetModel();
@@ -362,7 +409,7 @@ void FrameListModel::onFramePositionChanged(int frameIndex)
     Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
 
     if(view->frameBeingEditedOutside){
-        auto frame = frames->frameAt(frameIndex);
+        auto frame = frameList->frameAt(frameIndex);
         if(frame == view->frameBeingEditedOutside){
             view->sigPositionChanged_(frame->position());
         }
@@ -370,7 +417,7 @@ void FrameListModel::onFramePositionChanged(int frameIndex)
 }
 
 
-CustomizedItemDelegate::CustomizedItemDelegate(CoordinateFrameListView::Impl* view)
+CheckItemDelegate::CheckItemDelegate(CoordinateFrameListView::Impl* view)
     : QStyledItemDelegate(view),
       view(view)
 {
@@ -378,39 +425,62 @@ CustomizedItemDelegate::CustomizedItemDelegate(CoordinateFrameListView::Impl* vi
 }
 
 
-QWidget* CustomizedItemDelegate::createEditor
+void CheckItemDelegate::paint
+(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    if(index.row() == 0){
+        if(index.column() == GlobalCheckColumn){
+            if(view->frameList && view->frameList->hasFirstElementAsDefaultFrame()){
+                return;
+            }
+        }
+    }
+
+    QVariant value = index.data();
+    bool isChecked = value.toBool();
+    QStyle* style = view->style();
+    QRect checkBoxRect = style->subElementRect(QStyle::SE_CheckBoxIndicator, &option);
+    int w = checkBoxRect.width();
+    int h = checkBoxRect.height();
+    int centerX = option.rect.left() + qMax(option.rect.width() / 2 - w / 2, 0);
+    int centerY = option.rect.top() + qMax(option.rect.height() / 2 - h / 2, 0);
+    QStyleOptionViewItem modifiedOption(option);
+    modifiedOption.rect.moveTo(centerX, centerY);
+    modifiedOption.rect.setSize(QSize(w, h));
+    if(isChecked){
+        modifiedOption.state |= QStyle::State_On;
+    }
+    style->drawPrimitive(QStyle::PE_IndicatorItemViewItemCheck, &modifiedOption, painter);
+}
+
+
+bool CheckItemDelegate::editorEvent
+(QEvent* event, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
+{
+    if(event->type() == QEvent::MouseButtonRelease){
+        QVariant value = model->data(index, Qt::EditRole);
+        auto isChecked = value.toBool();
+        model->setData(index, !isChecked);
+        event->accept();
+    }
+    return QStyledItemDelegate::editorEvent(event, model, option, index);
+}
+
+
+QWidget* CheckItemDelegate::createEditor
 (QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    QWidget* editor = nullptr;
-    switch(index.column()){
-    case IdColumn:
-    default:
-        editor = QStyledItemDelegate::createEditor(parent, option, index);
-        break;
-    }
-    return editor;
+    return nullptr;
 }
 
 
-void CustomizedItemDelegate::updateEditorGeometry
-(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
+QSize CheckItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    editor->setGeometry(option.rect);
-}
-
-
-void CustomizedItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
-{
-    QStyledItemDelegate::setEditorData(editor, index);
-}
-
-
-void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
-{
-    switch(index.column()){
-    default:
-        QStyledItemDelegate::setModelData(editor, model, index);
-    }
+    QStyle* style = view->style();
+    QRect checkBoxRect = style->subElementRect(QStyle::SE_CheckBoxIndicator, &option);
+    QSize size = checkBoxRect.size();
+    size.setWidth(size.width() * 2);
+    return size;
 }
 
 
@@ -460,7 +530,8 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-    setItemDelegate(new CustomizedItemDelegate(this));
+    setItemDelegateForColumn(GlobalCheckColumn, new CheckItemDelegate(this));
+    setItemDelegateForColumn(VisibleCheckColumn, new CheckItemDelegate(this));
     setEditTriggers(
         /* QAbstractItemView::CurrentChanged | */
         QAbstractItemView::DoubleClicked |
@@ -472,9 +543,12 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     setModel(frameListModel);
 
     auto hheader = horizontalHeader();
+    hheader->setMinimumSectionSize(1);
     hheader->setSectionResizeMode(IdColumn, QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(NoteColumn, QHeaderView::Stretch);
     hheader->setSectionResizeMode(PositionColumn, QHeaderView::ResizeToContents);
+    hheader->setSectionResizeMode(GlobalCheckColumn, QHeaderView::ResizeToContents);
+    hheader->setSectionResizeMode(VisibleCheckColumn, QHeaderView::ResizeToContents);
     auto vheader = verticalHeader();
     vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     vheader->hide();
@@ -525,12 +599,12 @@ void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameLi
 
     if(item){
         targetLabel.setText(item->displayName().c_str());
-        frames = item->frameList();
-        frameListModel->setFrameList(frames);
+        frameList = item->frameList();
+        frameListModel->setFrameListItem(item);
     } else {
         targetLabel.setText("---");
-        frames = nullptr;
-        frameListModel->setFrameList(nullptr);
+        frameList = nullptr;
+        frameListModel->setFrameListItem(nullptr);
     }
     addButton.setEnabled(targetItem != nullptr);
 }
@@ -546,8 +620,8 @@ void CoordinateFrameListView::Impl::addFrameIntoCurrentIndex(bool doInsert)
 
 void CoordinateFrameListView::Impl::addFrame(int row, bool doInsert)
 {
-    if(frames){
-        auto id = frames->createNextId();
+    if(frameList){
+        auto id = frameList->createNextId();
         CoordinateFramePtr frame = new CoordinateFrame(id);
         frameListModel->addFrame(row, frame, doInsert);
         resizeColumnToContents(IdColumn);
@@ -619,7 +693,7 @@ void CoordinateFrameListView::Impl::showContextMenu(int row, QPoint globalPos)
     contextMenuManager.addItem(_("Add"))
         ->sigTriggered().connect([=](){ addFrame(row, false); });
 
-    if(row > 0 || (frames && !frames->hasFirstElementAsDefaultFrame())){
+    if(row > 0 || (frameList && !frameList->hasFirstElementAsDefaultFrame())){
         contextMenuManager.addItem(_("Remove"))
             ->sigTriggered().connect([=](){ removeSelectedFrames(); });
     }

@@ -296,7 +296,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
         phaseIndexSpin.sigValueChanged().connect(
             [&](int index){ setPhaseIndex(index, false); });
 
-    defaultCommandButton.setText(_("V"));
+    defaultCommandButton.setText("V");
     defaultCommandButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     defaultCommandButton.setToolTip(_("Execute the default command of the current phase"));
     defaultCommandButton.sigClicked().connect([&](){ onCommandButtonClicked(-1); });

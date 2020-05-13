@@ -33,7 +33,7 @@ public:
     const GeneralId& id() const { return id_; }
     static GeneralId defaultFrameId() { return GeneralId(0); }
 
-    void setGloal(bool on) { isGlobal_ = on; }
+    void setGlobal(bool on) { isGlobal_ = on; }
     bool isGlobal() const { return isGlobal_; }
 
     const Position& T() const { return T_; }

@@ -365,6 +365,12 @@ void CoordinateFrameListItem::setFrameMarkerVisible(const GeneralId& id, bool on
 }
 
 
+void CoordinateFrameListItem::setFrameMarkerVisible(const CoordinateFrame* frame, bool on)
+{
+    impl->setFrameMarkerVisible(const_cast<CoordinateFrame*>(frame), on);
+}
+
+
 void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame, bool on)
 {
     bool changed = false;
@@ -431,12 +437,10 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
 }
 
 
-bool CoordinateFrameListItem::isFrameMarkerVisible(const GeneralId& id) const
+bool CoordinateFrameListItem::isFrameMarkerVisible(const CoordinateFrame* frame) const
 {
-    if(auto frame = impl->frameList->findFrame(id)){
-        return (impl->visibleFrameMarkerMap.find(frame) != impl->visibleFrameMarkerMap.end());
-    }
-    return false;
+    auto p = impl->visibleFrameMarkerMap.find(const_cast<CoordinateFrame*>(frame));
+    return (p != impl->visibleFrameMarkerMap.end());
 }
 
 
