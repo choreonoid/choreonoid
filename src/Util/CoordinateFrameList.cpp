@@ -23,8 +23,7 @@ public:
     std::string name;
     Signal<void(int index)> sigFrameAdded;
     Signal<void(int index, CoordinateFrame* frame)> sigFrameRemoved;
-    Signal<void(int index)> sigFrameAttributeChanged;
-    Signal<void(int index)> sigFramePositionChanged;
+    Signal<void(int index, int flags)> sigFrameUpdated;
     
     Impl(CoordinateFrameList* self);
     void clear(bool doKeepDefaultFrame);
@@ -237,30 +236,16 @@ SignalProxy<void(int index, CoordinateFrame* frame)> CoordinateFrameList::sigFra
 }
 
 
-SignalProxy<void(int index)> CoordinateFrameList::sigFrameAttributeChanged()
+SignalProxy<void(int index, int flags)> CoordinateFrameList::sigFrameUpdated()
 {
-    return impl->sigFrameAttributeChanged;
+    return impl->sigFrameUpdated;
 }
 
 
-SignalProxy<void(int index)> CoordinateFrameList::sigFramePositionChanged()
+void CoordinateFrameList::notifyFrameUpdate(CoordinateFrame* frame, int flags)
 {
-    return impl->sigFramePositionChanged;
-}
-
-
-void CoordinateFrameList::notifyFrameAttributeChange(CoordinateFrame* frame)
-{
-    if(!impl->sigFrameAttributeChanged.empty()){
-        impl->sigFrameAttributeChanged(indexOf(frame));
-    }
-}
-
-
-void CoordinateFrameList::notifyFramePositionChange(CoordinateFrame* frame)
-{
-    if(!impl->sigFramePositionChanged.empty()){
-        impl->sigFramePositionChanged(indexOf(frame));
+    if(!impl->sigFrameUpdated.empty()){
+        impl->sigFrameUpdated(indexOf(frame), flags);
     }
 }
 

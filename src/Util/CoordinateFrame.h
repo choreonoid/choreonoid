@@ -32,8 +32,11 @@ public:
 
     const GeneralId& id() const { return id_; }
 
-    void setGlobal(bool on) { isGlobal_ = on; }
-    bool isGlobal() const { return isGlobal_; }
+    enum Mode { Local, Global };
+    void setMode(int mode) { mode_ = mode; }
+    int mode() const { return mode_; }
+    bool isLocal() const { return mode_ == Local; }
+    bool isGlobal() const { return mode_ == Global; }
 
     const Position& T() const { return T_; }
     const Position& position() const { return T_; }
@@ -47,19 +50,23 @@ public:
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
 
-    SignalProxy<void()> sigAttributeChanged();
-    SignalProxy<void()> sigPositionChanged();
-    void notifyAttributeChange();
-    void notifyPositionChange();
-
+    enum UpdateFlag {
+        IdUpdate = 1,
+        ModeUpdate = 1 << 2,
+        PositionUpdate = 1 << 3,
+        NoteUpdate = 1 << 4,
+        AllUpdates = IdUpdate | ModeUpdate | PositionUpdate | NoteUpdate
+    };
+    SignalProxy<void(int flags)> sigUpdated();
+    void notifyUpdate(int flags);
+        
 private:
     Position T_;
     GeneralId id_;
-    bool isGlobal_;
+    int mode_;
     std::string note_;
     weak_ref_ptr<CoordinateFrameList> ownerFrameList_;
-    Signal<void()> sigAttributeChanged_;
-    Signal<void()> sigPositionChanged_;
+    Signal<void(int flags)> sigUpdated_;
 
     friend class CoordinateFrameList;
 };

@@ -53,8 +53,7 @@ public:
 
     SignalProxy<void(int index)> sigFrameAdded();
     SignalProxy<void(int index, CoordinateFrame* frame)> sigFrameRemoved();
-    SignalProxy<void(int index)> sigFrameAttributeChanged();
-    SignalProxy<void(int index)> sigFramePositionChanged();
+    SignalProxy<void(int index, int flags)> sigFrameUpdated();
 
     /**
        @return true if the id is successfully changed. false if the id is not
@@ -78,8 +77,7 @@ protected:
     
 private:
     // Called from the CoordinateFrame implementation
-    void notifyFrameAttributeChange(CoordinateFrame* frame);
-    void notifyFramePositionChange(CoordinateFrame* frame);
+    void notifyFrameUpdate(CoordinateFrame* frame, int flags);
     
     class Impl;
     Impl* impl;

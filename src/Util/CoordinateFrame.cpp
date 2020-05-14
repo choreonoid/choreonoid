@@ -10,7 +10,7 @@ using namespace cnoid;
 CoordinateFrame::CoordinateFrame()
 {
     T_.setIdentity();
-    isGlobal_ = false;
+    mode_ = Local;
 }
 
 
@@ -18,14 +18,14 @@ CoordinateFrame::CoordinateFrame(const GeneralId& id)
     : id_(id)
 {
     T_.setIdentity();
-    isGlobal_ = false;
+    mode_ = Local;
 }
 
 
 CoordinateFrame::CoordinateFrame(const CoordinateFrame& org)
     : T_(org.T_),
       id_(org.id_),
-      isGlobal_(org.isGlobal_),
+      mode_(org.mode_),
       note_(org.note_)
 {
 
@@ -51,32 +51,17 @@ CoordinateFrameList* CoordinateFrame::ownerFrameList() const
 }
 
 
-SignalProxy<void()> CoordinateFrame::sigAttributeChanged()
+SignalProxy<void(int flags)> CoordinateFrame::sigUpdated()
 {
-    return sigAttributeChanged_;
+    return sigUpdated_;
 }
 
 
-SignalProxy<void()> CoordinateFrame::sigPositionChanged()
+void CoordinateFrame::notifyUpdate(int flags)
 {
-    return sigPositionChanged_;
-}
-
-
-void CoordinateFrame::notifyAttributeChange()
-{
-    sigAttributeChanged_();
+    sigUpdated_(flags);
     if(auto frameList = ownerFrameList()){
-        frameList->notifyFrameAttributeChange(this);
-    }
-}
-
-
-void CoordinateFrame::notifyPositionChange()
-{
-    sigPositionChanged_();
-    if(auto frameList = ownerFrameList()){
-        frameList->notifyFramePositionChange(this);
+        frameList->notifyFrameUpdate(this, flags);
     }
 }
 
@@ -91,7 +76,14 @@ bool CoordinateFrame::read(const Mapping& archive)
         if(cnoid::read(archive, "rotation", v)){
             T_.linear() = rotFromRpy(radian(v));
         }
-        isGlobal_ = archive.get("is_global", false);
+        string symbol;
+        if(archive.read("mode", symbol)){
+            if(symbol == "global"){
+                mode_ = Global;
+            } else if(symbol == "local"){
+                mode_ = Local;
+            }
+        }
         archive.read("note", note_);
         return true;
     }
@@ -105,8 +97,8 @@ bool CoordinateFrame::write(Mapping& archive) const
         archive.setDoubleFormat("%.9g");
         cnoid::write(archive, "translation", Vector3(T_.translation()));
         cnoid::write(archive, "rotation", degree(rpyFromRot(T_.linear())));
-        if(isGlobal_){
-            archive.write("is_global", true);
+        if(isGlobal()){
+            archive.write("mode", "global");
         }
         if(!note_.empty()){
             archive.write("note", note_, DOUBLE_QUOTED);

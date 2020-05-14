@@ -5,6 +5,7 @@
 #include "RenderableItem.h"
 #include <cnoid/GeneralId>
 #include <cnoid/Signal>
+#include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -43,6 +44,9 @@ public:
     bool isForOffsetFrames() const;
 
     virtual LocatableItem* getParentLocatableItem();
+    bool getRelativeFramePosition(const CoordinateFrame* frame, Position& out_T) const;
+    bool getGlobalFramePosition(const CoordinateFrame* frame, Position& out_T) const;
+    bool switchFrameMode(CoordinateFrame* frame, int mode);
 
     // RenderableItem function
     virtual SgNode* getScene() override;
@@ -55,6 +59,8 @@ public:
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
+    class Impl;
+
 protected:
     virtual Item* doDuplicate() const override;
     virtual void onPositionChanged() override;
@@ -62,7 +68,6 @@ protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
-    class Impl;
     Impl* impl;
 };
 

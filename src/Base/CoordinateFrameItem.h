@@ -10,6 +10,7 @@ namespace cnoid {
 
 class CoordinateFrame;
 class CoordinateFrameList;
+class CoordinateFrameListItem;
 
 /**
    \note This item is always used as a child item of CoordinateFrameListItem
@@ -27,6 +28,8 @@ public:
 
     bool setFrameId(const GeneralId& id);
     const GeneralId& frameId() const;
+
+    CoordinateFrameListItem* frameListItem();
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;
     CoordinateFrame* frame();

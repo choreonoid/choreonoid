@@ -24,6 +24,14 @@ Selection::Selection(size_t size, const char* domainname)
 }
 
 
+Selection::Selection(std::initializer_list<std::string> symbols, const char* domainname)
+    : symbols_(symbols),
+      domainname_(domainname)
+{
+    selectedIndex_ = -1;
+}
+
+
 Selection::Selection(const Selection& org)
     : symbols_(org.symbols_),
       selectedIndex_(org.selectedIndex_),

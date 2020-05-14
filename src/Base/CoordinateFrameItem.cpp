@@ -117,26 +117,32 @@ bool CoordinateFrameItem::setFrameId(const GeneralId& id)
 
 bool CoordinateFrameItem::Impl::setFrameId(const GeneralId& id)
 {
-    bool updated = true;
+    bool accepted = true;
     if(frameList){
         if(auto frame = frameList->findFrame(frameId)){
             if(frameList->resetId(frame, id)){
-                frame->notifyAttributeChange();
+                frame->notifyUpdate(CoordinateFrame::IdUpdate);
             } else {
-                updated = false;
+                accepted = false;
             }
         }
     }
-    if(updated){
+    if(accepted){
         frameId = id;
     }
-    return updated;
+    return accepted;
 }
 
 
 const GeneralId& CoordinateFrameItem::frameId() const
 {
     return impl->frameId;
+}
+
+
+CoordinateFrameListItem* CoordinateFrameItem::frameListItem()
+{
+    return impl->frameListItem;
 }
 
 
@@ -263,7 +269,7 @@ void CoordinateFrameItem::setLocation(const Position& T)
 {
     if(auto frame_ = frame()){
         frame_->setPosition(T);
-        frame_->notifyPositionChange();
+        frame_->notifyUpdate(CoordinateFrame::PositionUpdate);
     }
 }
 
@@ -272,7 +278,12 @@ SignalProxy<void()> CoordinateFrameItem::sigLocationChanged()
 {
     if(auto frame_ = frame()){
         impl->frameConnection =
-            frame_->sigPositionChanged().connect([&](){ impl->sigLocationChanged(); });
+            frame_->sigUpdated().connect(
+                [&](int flags){
+                    if(flags & CoordinateFrame::PositionUpdate){
+                        impl->sigLocationChanged();
+                    }
+                });
     }
     return impl->sigLocationChanged;
 }
@@ -295,17 +306,25 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
     auto& id = frameId;
     CoordinateFrame* frame = nullptr;
     bool isDefaultFrame = false;
+    Selection mode = { _("Local"), _("Global") };
+    bool isModeEditable = false;
     if(frameList){
         frame = frameList->findFrame(frameId);
-        if(frame && frameList->isDefaultFrame(frame)){
-            isDefaultFrame = true;
+        if(frame){
+            if(frameList->isDefaultFrame(frame)){
+                isDefaultFrame = true;
+            }
+            mode.select(frame->isLocal() ? 0 : 1);
+        }
+        if(frameList->isForBaseFrames() && !frameList->isDefaultFrame(frame)){
+            isModeEditable = true;
         }
     }
     if(isDefaultFrame){ // Read only
         putProperty(_("ID"), id.label());
         if(frame){
+            putProperty(_("Mode"), mode);
             putProperty(_("Note"), frame->note());
-            putProperty(_("Global"), frame->isGlobal());
         }
     } else {
         if(id.isInt()){
@@ -316,16 +335,22 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
                         [&](const string& value){ return setFrameId(value); });
         }
         if(frame){
+            if(!isModeEditable){
+                putProperty(_("Mode"), mode);
+            } else {
+                putProperty(
+                    _("Mode"), mode,
+                    [this, frame](int index){
+                        int mode = index == 0 ? CoordinateFrame::Local : CoordinateFrame::Global;
+                        frameListItem->switchFrameMode(frame, mode);
+                        frame->notifyUpdate(CoordinateFrame::ModeUpdate | CoordinateFrame::PositionUpdate);
+                        return true;
+                    });
+            }
             putProperty(_("Note"), frame->note(),
                         [frame](const string& text){
                             frame->setNote(text);
-                            frame->notifyAttributeChange();
-                            return true;
-                        });
-            putProperty(_("Global"), frame->isGlobal(),
-                        [frame](bool on){
-                            frame->setGlobal(on);
-                            frame->notifyAttributeChange();
+                            frame->notifyUpdate(CoordinateFrame::NoteUpdate);
                             return true;
                         });
         }

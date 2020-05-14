@@ -57,8 +57,7 @@ public:
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void addFrame(int row, CoordinateFrame* frame, bool doInsert);
     void removeFrames(QModelIndexList selected);
-    void onFrameAttributeChanged(int frameIndex);
-    void onFramePositionChanged(int frameIndex);
+    void onFrameUpdated(int frameIndex, int flags);
     void onFrameMarkerViisibilityChanged(int frameIndex);
 };
 
@@ -66,6 +65,7 @@ class CheckItemDelegate : public QStyledItemDelegate
 {
 public:
     CoordinateFrameListView::Impl* view;
+    bool isValid;
     
     CheckItemDelegate(CoordinateFrameListView::Impl* view);
     virtual void paint(
@@ -89,6 +89,7 @@ public:
     CoordinateFrameListItemPtr targetItem;
     CoordinateFrameListPtr frameList;
     FrameListModel* frameListModel;
+    CheckItemDelegate* globalCheckDelegate;
     ReferencedPtr transientMarkerHolder;
     QLabel targetLabel;
     PushButton addButton;
@@ -147,11 +148,8 @@ void FrameListModel::setFrameListItem(CoordinateFrameListItem* frameListItem)
     frameListConnections.disconnect();
     if(frameList){
         frameListConnections.add(
-            frameList->sigFrameAttributeChanged().connect(
-                [&](int index){ onFrameAttributeChanged(index); }));
-        frameListConnections.add(
-            frameList->sigFramePositionChanged().connect(
-                [&](int index){ onFramePositionChanged(index); }));
+            frameList->sigFrameUpdated().connect(
+                [&](int index, int flags){ onFrameUpdated(index, flags); }));
         frameListConnections.add(
             frameListItem->sigFrameMarkerVisibilityChanged().connect(
                 [&](int index, bool /* on */){ onFrameMarkerViisibilityChanged(index); }));
@@ -290,10 +288,15 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
             return frame->note().c_str();
 
         case PositionColumn: {
-            auto p = frame->T().translation();
-            auto rpy = degree(rpyFromRot(frame->T().linear()));
-            return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                          p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+            Position T;
+            if(frameListItem->getRelativeFramePosition(frame, T)){
+                auto p = T.translation();
+                auto rpy = degree(rpyFromRot(T.linear()));
+                return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                              p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+            } else {
+                return " -.---  -.---  -.---    -.-    -.-    -.-";
+            }
         }
         case GlobalCheckColumn:
             return frame->isGlobal();
@@ -330,7 +333,7 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
        index.column() != VisibleCheckColumn){
         return false;
     }
-    bool changed = false;
+    int updateFlags = 0;
     auto frame = frameList->frameAt(frameIndex);
 
     if(role == Qt::EditRole){
@@ -344,31 +347,34 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
             } else {
                 frameList->resetId(frame, stringId.toStdString());
             }
-            changed = true;
+            updateFlags = CoordinateFrame::IdUpdate;
             break;
         }
         case NoteColumn:
             frame->setNote(value.toString().toStdString());
-            changed = true;
+            updateFlags = CoordinateFrame::NoteUpdate;
             break;
 
-        case GlobalCheckColumn:
-            frame->setGlobal(value.toBool());
-            changed = true;
+        case GlobalCheckColumn: {
+            bool isGlobal = value.toBool();
+            int mode = isGlobal ? CoordinateFrame::Global : CoordinateFrame::Local;
+            if(frameListItem->switchFrameMode(frame, mode)){
+                updateFlags = CoordinateFrame::ModeUpdate | CoordinateFrame::PositionUpdate;
+            }
             break;
-
+        }
         case VisibleCheckColumn:
             frameListItem->setFrameMarkerVisible(frame, value.toBool());
-            changed = true;
+            Q_EMIT dataChanged(index, index, {role});
             break;
 
         default:
             break;
         }
     }
-    if(changed){
+    if(updateFlags){
         Q_EMIT dataChanged(index, index, {role});
-        frame->notifyAttributeChange();
+        frame->notifyUpdate(updateFlags);
     }
     return false;
 }
@@ -414,25 +420,30 @@ void FrameListModel::removeFrames(QModelIndexList selected)
 }
 
 
-void FrameListModel::onFrameAttributeChanged(int frameIndex)
+void FrameListModel::onFrameUpdated(int frameIndex, int flags)
 {
-    auto modelIndex1 = index(frameIndex, IdColumn, QModelIndex());
-    auto modelIndex2 = index(frameIndex, NoteColumn, QModelIndex());
-    auto modelIndex3 = index(frameIndex, GlobalCheckColumn, QModelIndex());
-    Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
-    Q_EMIT dataChanged(modelIndex3, modelIndex3, { Qt::EditRole });
-}
+    if(flags & CoordinateFrame::IdUpdate){
+        auto modelIndex = index(frameIndex, IdColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+    }
+    if(flags & CoordinateFrame::ModeUpdate){
+        auto modelIndex = index(frameIndex, GlobalCheckColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+        flags |= CoordinateFrame::PositionUpdate;
+    }
+    if(flags & CoordinateFrame::NoteUpdate){
+        auto modelIndex = index(frameIndex, NoteColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+    }
+    if(flags & CoordinateFrame::PositionUpdate){
+        auto modelIndex = index(frameIndex, PositionColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
 
-
-void FrameListModel::onFramePositionChanged(int frameIndex)
-{
-    auto modelIndex = index(frameIndex, PositionColumn, QModelIndex());
-    Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
-
-    if(view->frameBeingEditedOutside){
-        auto frame = frameList->frameAt(frameIndex);
-        if(frame == view->frameBeingEditedOutside){
-            view->sigPositionChanged_(frame->position());
+        if(view->frameBeingEditedOutside){
+            auto frame = frameList->frameAt(frameIndex);
+            if(frame == view->frameBeingEditedOutside){
+                view->sigPositionChanged_(frame->position());
+            }
         }
     }
 }
@@ -449,18 +460,19 @@ CheckItemDelegate::CheckItemDelegate(CoordinateFrameListView::Impl* view)
     : QStyledItemDelegate(view),
       view(view)
 {
-
+    isValid = true;
 }
 
 
 void CheckItemDelegate::paint
 (QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    if(index.row() == 0){
-        if(index.column() == GlobalCheckColumn){
-            if(view->frameList && view->frameList->hasFirstElementAsDefaultFrame()){
-                return;
-            }
+    if(!isValid){
+        return;
+    }
+    if(index.row() == 0 && index.column() == GlobalCheckColumn){
+        if(view->frameList && view->frameList->hasFirstElementAsDefaultFrame()){
+            return;
         }
     }
 
@@ -556,7 +568,8 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-    setItemDelegateForColumn(GlobalCheckColumn, new CheckItemDelegate(this));
+    globalCheckDelegate = new CheckItemDelegate(this);
+    setItemDelegateForColumn(GlobalCheckColumn, globalCheckDelegate);
     setItemDelegateForColumn(VisibleCheckColumn, new CheckItemDelegate(this));
     setEditTriggers(
         /* QAbstractItemView::CurrentChanged | */
@@ -634,6 +647,7 @@ void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameLi
         }
         frameList = item->frameList();
         frameListModel->setFrameListItem(item);
+        globalCheckDelegate->isValid = frameList->isForBaseFrames();
     } else {
         targetLabel.setText("---");
         frameList = nullptr;
@@ -824,7 +838,7 @@ bool CoordinateFrameListView::Impl::setPosition(const Position& T)
 {
     if(frameBeingEditedOutside){
         frameBeingEditedOutside->setPosition(T);
-        frameBeingEditedOutside->notifyPositionChange();
+        frameBeingEditedOutside->notifyUpdate(CoordinateFrame::PositionUpdate);
         sigPositionChanged_(T);
         return true;
     }

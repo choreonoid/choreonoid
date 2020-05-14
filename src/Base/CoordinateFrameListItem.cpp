@@ -22,15 +22,16 @@ Signal<void(CoordinateFrameListItem* frameListItem)> sigInstanceAddedOrUpdated_;
 class FrameMarker : public PositionDragger
 {
 public:
+    CoordinateFrameListItem::Impl* impl;
     CoordinateFramePtr frame;
     ScopedConnection frameConnection;
     SgUpdate sgUpdate;
     bool isGlobal;
     bool isOn;
     int transientHolderCounter;
-
-    FrameMarker(CoordinateFrame* frame);
-    void onFramePositionChanged();
+    
+    FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* frame);
+    void onFrameUpdated(int flags);
     void onMarkerPositionDragged();
 };
 
@@ -79,7 +80,7 @@ public:
     CoordinateFrameItem* findFrameItemAt(int index);
     void onFrameAdded(int index);
     void onFrameRemoved(int index);
-    void onFrameAttributeChanged(int index);
+    void onFrameUpdated(int index, int flags);
     void setFrameMarkerVisible(CoordinateFrame* frame, bool on, bool isTransient);
     void updateParentFrameForFrameMarkers(const Position& T);
 };
@@ -176,8 +177,8 @@ void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
                 frameList->sigFrameRemoved().connect(
                     [&](int index, CoordinateFrame*){ onFrameRemoved(index); }));
             frameListConnections.add(
-                frameList->sigFrameAttributeChanged().connect(
-                    [&](int index){ onFrameAttributeChanged(index); }));
+                frameList->sigFrameUpdated().connect(
+                    [&](int index, int flags){ onFrameUpdated(index, flags); }));
         }
         itemizationMode = mode;
         updateFrameItems();
@@ -307,10 +308,12 @@ void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
 }
 
 
-void CoordinateFrameListItem::Impl::onFrameAttributeChanged(int index)
+void CoordinateFrameListItem::Impl::onFrameUpdated(int index, int flags)
 {
-    if(auto item = findFrameItemAt(index)){
-        updateFrameAttribute(item, frameList->frameAt(index));
+    if(flags != CoordinateFrame::PositionUpdate){
+        if(auto item = findFrameItemAt(index)){
+            updateFrameAttribute(item, frameList->frameAt(index));
+        }
     }
 }
 
@@ -378,6 +381,56 @@ LocatableItem* CoordinateFrameListItem::getParentLocatableItem()
 }
 
 
+bool CoordinateFrameListItem::getRelativeFramePosition(const CoordinateFrame* frame, Position& out_T) const
+{
+    if(frame->isGlobal()){
+        if(auto parentLocatable = const_cast<CoordinateFrameListItem*>(this)->getParentLocatableItem()){
+            auto T_base = parentLocatable->getLocation();
+            out_T = T_base.inverse(Eigen::Isometry) * frame->T();
+            return true;
+        }
+        return false;
+    }
+    out_T = frame->T();
+    return true;
+}
+
+
+bool CoordinateFrameListItem::getGlobalFramePosition(const CoordinateFrame* frame, Position& out_T) const
+{
+    if(!frame->isGlobal()){
+        if(auto parentLocatable = const_cast<CoordinateFrameListItem*>(this)->getParentLocatableItem()){
+            auto T_base = parentLocatable->getLocation();
+            out_T = T_base * frame->T();
+            return true;
+        }
+        return false;
+    }
+    out_T = frame->T();
+    return true;
+}
+        
+
+bool CoordinateFrameListItem::switchFrameMode(CoordinateFrame* frame, int mode)
+{
+    if(frame->mode() == mode){
+        return true;
+    }
+    auto parentLocatable = getParentLocatableItem();
+    if(!parentLocatable){
+        return false;
+    }
+    auto T_base = parentLocatable->getLocation();
+    if(mode == CoordinateFrame::Global){
+        frame->setPosition(T_base * frame->T());
+    } else { // Local
+        frame->setPosition(T_base.inverse(Eigen::Isometry) * frame->T());
+    }
+    frame->setMode(mode);
+    return true;
+}
+
+
 SgNode* CoordinateFrameListItem::getScene()
 {
     return impl->frameMarkerGroup;
@@ -402,7 +455,7 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
             changed = true;
         }
     } else if(on){
-        marker = new FrameMarker(frame);
+        marker = new FrameMarker(this, frame);
         marker->isOn = false;
         marker->transientHolderCounter = 0;
         visibleFrameMarkerMap[frame] = marker;
@@ -520,8 +573,9 @@ void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Posit
 }
 
 
-FrameMarker::FrameMarker(CoordinateFrame* frame)
+FrameMarker::FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* frame)
     : PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle),
+      impl(impl),
       frame(frame)
 {
     setDragEnabled(true);
@@ -532,22 +586,49 @@ FrameMarker::FrameMarker(CoordinateFrame* frame)
 
     isGlobal = frame->isGlobal();
 
-    frameConnection = frame->sigPositionChanged().connect([&](){ onFramePositionChanged(); });
+    frameConnection =
+        frame->sigUpdated().connect(
+            [&](int flags){ onFrameUpdated(flags); });
+    
     sigPositionDragged().connect([&](){ onMarkerPositionDragged(); });
 }
 
 
-void FrameMarker::onFramePositionChanged()
+void FrameMarker::onFrameUpdated(int flags)
 {
-    setPosition(frame->position());
-    notifyUpdate(sgUpdate);
+    sgUpdate.resetAction();
+    
+    if(flags & CoordinateFrame::ModeUpdate){
+        bool isCurrentGlobal = frame->isGlobal();
+        if(isCurrentGlobal != isGlobal){
+            FrameMarkerPtr holder = this;
+            if(isCurrentGlobal){
+                impl->relativeFrameMarkerGroup->removeChild(this);
+                impl->frameMarkerGroup->addChild(this);
+            } else {
+                impl->frameMarkerGroup->removeChild(this);
+                impl->relativeFrameMarkerGroup->addChild(this);
+            }
+            isGlobal = isCurrentGlobal;
+        }
+        sgUpdate.setAction(SgUpdate::ADDED);
+    }
+
+    if(flags & CoordinateFrame::PositionUpdate){
+        setPosition(frame->position());
+        sgUpdate.setAction(SgUpdate::MODIFIED);
+    }
+
+    if(sgUpdate.action()){
+        notifyUpdate(sgUpdate);
+    }
 }
 
 
 void FrameMarker::onMarkerPositionDragged()
 {
     frame->setPosition(draggingPosition());
-    frame->notifyPositionChange();
+    frame->notifyUpdate(CoordinateFrame::PositionUpdate);
 }
 
 
