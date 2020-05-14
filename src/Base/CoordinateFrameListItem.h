@@ -47,8 +47,8 @@ public:
     // RenderableItem function
     virtual SgNode* getScene() override;
 
-    void setFrameMarkerVisible(const GeneralId& id, bool on);
     void setFrameMarkerVisible(const CoordinateFrame* frame, bool on);
+    ReferencedPtr transientFrameMarkerHolder(const CoordinateFrame* frame);
     bool isFrameMarkerVisible(const CoordinateFrame* frame) const;
     SignalProxy<void(int index, bool on)> sigFrameMarkerVisibilityChanged();
 

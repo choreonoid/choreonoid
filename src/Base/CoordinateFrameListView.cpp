@@ -89,6 +89,7 @@ public:
     CoordinateFrameListItemPtr targetItem;
     CoordinateFrameListPtr frameList;
     FrameListModel* frameListModel;
+    ReferencedPtr transientMarkerHolder;
     QLabel targetLabel;
     PushButton addButton;
     MenuManager contextMenuManager;
@@ -621,6 +622,7 @@ void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameLi
     stopExternalPositionEditing();
 
     targetItem = item;
+    transientMarkerHolder.reset();
 
     if(item){
         string caption;
@@ -741,8 +743,11 @@ void CoordinateFrameListView::Impl::selectionChanged
     auto indexes = selected.indexes();
     if(indexes.empty()){
         startExternalPositionEditing(nullptr);
+        transientMarkerHolder.reset();
     } else {
-        startExternalPositionEditing(frameListModel->frameAt(indexes.front()));
+        auto frame = frameListModel->frameAt(indexes.front());
+        startExternalPositionEditing(frame);
+        transientMarkerHolder = targetItem->transientFrameMarkerHolder(frame);
     }
 }
 

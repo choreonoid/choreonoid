@@ -188,7 +188,7 @@ bool CoordinateFrameItem::isOffsetFrame() const
 void CoordinateFrameItem::Impl::onCheckToggled(bool on)
 {
     if(!isChangingCheckStatePassively && frameListItem){
-        frameListItem->setFrameMarkerVisible(frameId, on);
+        frameListItem->setFrameMarkerVisible(frameList->findFrame(frameId), on);
     }
 }
 

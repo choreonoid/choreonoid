@@ -26,6 +26,8 @@ public:
     ScopedConnection frameConnection;
     SgUpdate sgUpdate;
     bool isGlobal;
+    bool isOn;
+    int transientHolderCounter;
 
     FrameMarker(CoordinateFrame* frame);
     void onFramePositionChanged();
@@ -54,6 +56,20 @@ public:
     ScopedConnection parentLocatableItemConnection;
     Signal<void(int index, bool on)> sigFrameMarkerVisibilityChanged;
 
+    class TransientFrameMarkerHolder : public Referenced
+    {
+    public:
+        weak_ref_ptr<CoordinateFrameListItem> weakFrameListItem;
+        CoordinateFramePtr frame;
+        TransientFrameMarkerHolder(CoordinateFrameListItem* frameListItem, CoordinateFrame* frame)
+            : weakFrameListItem(frameListItem), frame(frame) { }
+        ~TransientFrameMarkerHolder(){
+            if(auto item = weakFrameListItem.lock()){
+                item->impl->setFrameMarkerVisible(frame, false, true);
+            }
+        }
+    };
+
     Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode);
     void setItemizationMode(int mode);
     void updateFrameItems();
@@ -64,7 +80,7 @@ public:
     void onFrameAdded(int index);
     void onFrameRemoved(int index);
     void onFrameAttributeChanged(int index);
-    void setFrameMarkerVisible(CoordinateFrame* frame, bool on);
+    void setFrameMarkerVisible(CoordinateFrame* frame, bool on, bool isTransient);
     void updateParentFrameForFrameMarkers(const Position& T);
 };
 
@@ -368,40 +384,52 @@ SgNode* CoordinateFrameListItem::getScene()
 }
 
 
-void CoordinateFrameListItem::setFrameMarkerVisible(const GeneralId& id, bool on)
-{
-    if(auto frame = impl->frameList->findFrame(id)){
-        impl->setFrameMarkerVisible(frame, on);
-    }
-}
-
-
 void CoordinateFrameListItem::setFrameMarkerVisible(const CoordinateFrame* frame, bool on)
 {
-    impl->setFrameMarkerVisible(const_cast<CoordinateFrame*>(frame), on);
+    impl->setFrameMarkerVisible(const_cast<CoordinateFrame*>(frame), on, false);
 }
 
 
-void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame, bool on)
+void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame, bool on, bool isTransient)
 {
     bool changed = false;
     bool relativeMarkerChanged = false;
+    FrameMarker* marker = nullptr;
     auto p = visibleFrameMarkerMap.find(frame);
-    if(p == visibleFrameMarkerMap.end()){
-        if(on){
-            auto marker = new FrameMarker(frame);
-            visibleFrameMarkerMap[frame] = marker;
-            if(marker->isGlobal){
-                frameMarkerGroup->addChild(marker, true);
-            } else {
-                relativeFrameMarkerGroup->addChild(marker, true);
-                relativeMarkerChanged = true;
-            }
+    if(p != visibleFrameMarkerMap.end()){
+        marker = p->second;
+        if(!isTransient && !marker->isOn){
             changed = true;
         }
-    } else {
-        if(!on){
-            auto marker = p->second;
+    } else if(on){
+        marker = new FrameMarker(frame);
+        marker->isOn = false;
+        marker->transientHolderCounter = 0;
+        visibleFrameMarkerMap[frame] = marker;
+        if(marker->isGlobal){
+            frameMarkerGroup->addChild(marker, true);
+        } else {
+            relativeFrameMarkerGroup->addChild(marker, true);
+            relativeMarkerChanged = true;
+        }
+        changed = true;
+    }
+    if(on){
+        if(!isTransient){
+            marker->isOn = true;
+        } else {
+            marker->transientHolderCounter += 1;
+        }
+    } else if(marker){
+        if(!isTransient){
+            if(marker->isOn){
+                marker->isOn = false;
+                changed = true;
+            }
+        } else {
+            marker->transientHolderCounter -= 1;
+        }
+        if(!marker->isOn && marker->transientHolderCounter <= 0){
             if(marker->isGlobal){
                 frameMarkerGroup->removeChild(marker, true);
             } else {
@@ -413,30 +441,27 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
         }
     }
 
-    int numRelativeMarkers = 0;
-    
-    if(relativeMarkerChanged){
-        numRelativeMarkers = relativeFrameMarkerGroup->numChildren();
-        
-        if(parentLocatableItemConnection.connected()){
-            if(relativeFrameMarkerGroup->empty()){
-                parentLocatableItemConnection.disconnect();
-            }
-        } else {
-            if(!relativeFrameMarkerGroup->empty()){
-                if(auto locatable = self->getParentLocatableItem()){
-                    parentLocatableItemConnection =
-                        locatable->sigLocationChanged().connect(
-                            [this, locatable](){
-                                updateParentFrameForFrameMarkers(locatable->getLocation());
-                            });
-                    updateParentFrameForFrameMarkers(locatable->getLocation());
+    if(changed){
+        int numRelativeMarkers = relativeFrameMarkerGroup->numChildren();
+        if(relativeMarkerChanged){
+            if(parentLocatableItemConnection.connected()){
+                if(relativeFrameMarkerGroup->empty()){
+                    parentLocatableItemConnection.disconnect();
+                }
+            } else {
+                if(!relativeFrameMarkerGroup->empty()){
+                    if(auto locatable = self->getParentLocatableItem()){
+                        parentLocatableItemConnection =
+                            locatable->sigLocationChanged().connect(
+                                [this, locatable](){
+                                    updateParentFrameForFrameMarkers(locatable->getLocation());
+                                });
+                        updateParentFrameForFrameMarkers(locatable->getLocation());
+                    }
                 }
             }
         }
-    }
-    
-    if(changed){
+
         if(on){
             self->setChecked(true);
         } else {
@@ -444,27 +469,41 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
                 self->setChecked(false);
             }
         }
-        int frameIndex = -1;
-        if(!sigFrameMarkerVisibilityChanged.empty()){
-            frameIndex = frameList->indexOf(frame);
-            sigFrameMarkerVisibilityChanged(frameIndex, on);
-        }
-        if(itemizationMode != NoItemization){
-            if(frameIndex < 0){
+        if(!isTransient){
+            int frameIndex = -1;
+            if(!sigFrameMarkerVisibilityChanged.empty()){
                 frameIndex = frameList->indexOf(frame);
+                sigFrameMarkerVisibilityChanged(frameIndex, on);
             }
-            if(auto frameItem = findFrameItemAt(frameIndex)){
-                frameItem->setVisibilityCheck(on);
+            if(itemizationMode != NoItemization){
+                if(frameIndex < 0){
+                    frameIndex = frameList->indexOf(frame);
+                }
+                if(auto frameItem = findFrameItemAt(frameIndex)){
+                    frameItem->setVisibilityCheck(on);
+                }
             }
         }
     }
 }
 
 
+ReferencedPtr CoordinateFrameListItem::transientFrameMarkerHolder(const CoordinateFrame* frame)
+{
+    auto frame_ = const_cast<CoordinateFrame*>(frame);
+    impl->setFrameMarkerVisible(frame_, true, true);
+    return new Impl::TransientFrameMarkerHolder(this, frame_);
+}
+
+
 bool CoordinateFrameListItem::isFrameMarkerVisible(const CoordinateFrame* frame) const
 {
     auto p = impl->visibleFrameMarkerMap.find(const_cast<CoordinateFrame*>(frame));
-    return (p != impl->visibleFrameMarkerMap.end());
+    if(p != impl->visibleFrameMarkerMap.end()){
+        auto& marker = p->second;
+        return marker->isOn;
+    }
+    return false;
 }
 
 
