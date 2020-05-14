@@ -1293,6 +1293,11 @@ void Item::putProperties(PutPropertyFunction& putProperty)
                     return false;
                 });
 
+    auto dname = displayName();
+    if(dname != name_){
+        putProperty(_("Display name"), dname);
+    }
+    
     std::string moduleName, className;
     ItemManager::getClassIdentifier(this, moduleName, className);
     putProperty(_("Class"), className);
