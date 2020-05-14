@@ -51,9 +51,24 @@ CoordinateFrameList* CoordinateFrame::ownerFrameList() const
 }
 
 
+SignalProxy<void()> CoordinateFrame::sigAttributeChanged()
+{
+    return sigAttributeChanged_;
+}
+
+
 SignalProxy<void()> CoordinateFrame::sigPositionChanged()
 {
     return sigPositionChanged_;
+}
+
+
+void CoordinateFrame::notifyAttributeChange()
+{
+    sigAttributeChanged_();
+    if(auto frameList = ownerFrameList()){
+        frameList->notifyFrameAttributeChange(this);
+    }
 }
 
 
@@ -61,7 +76,7 @@ void CoordinateFrame::notifyPositionChange()
 {
     sigPositionChanged_();
     if(auto frameList = ownerFrameList()){
-        frameList->notifyFramePositionChange(frameList->indexOf(this));
+        frameList->notifyFramePositionChange(this);
     }
 }
 

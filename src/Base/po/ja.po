@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-13 14:28+0900\n"
+"POT-Creation-Date: 2020-05-14 15:04+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -37,7 +37,7 @@ msgstr "ポイントセットアイテム"
 msgid "Point Cloud (PCD)"
 msgstr "ポイントクラウド(PCD)"
 
-#: PointSetItem.cpp:523 MainWindow.cpp:232 Item.cpp:1303 SceneItem.cpp:152
+#: PointSetItem.cpp:523 MainWindow.cpp:232 Item.cpp:1308 SceneItem.cpp:152
 msgid "File"
 msgstr "ファイル"
 
@@ -121,11 +121,11 @@ msgstr "更新"
 msgid "Reset Column Sizes"
 msgstr "コラムサイズのリセット"
 
-#: CoordinateFrameListItem.cpp:75
+#: CoordinateFrameListItem.cpp:77
 msgid "CoordinateFrameListItem"
 msgstr "座標フレームリストアイテム"
 
-#: CoordinateFrameListItem.cpp:498
+#: CoordinateFrameListItem.cpp:517
 msgid "Num coordinate frames"
 msgstr "座標フレーム数"
 
@@ -1432,13 +1432,23 @@ msgstr "プラグイン{}のDLLが解放されました．"
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
 
-#: CoordinateFrameItem.cpp:38
+#: CoordinateFrameItem.cpp:41
 msgid "CoordinateFrameItem"
 msgstr "座標フレームアイテム"
 
-#: CoordinateFrameItem.cpp:252
+#: CoordinateFrameItem.cpp:303 CoordinateFrameItem.cpp:310
+#: CoordinateFrameItem.cpp:313
 msgid "ID"
 msgstr ""
+
+#: CoordinateFrameItem.cpp:305 CoordinateFrameItem.cpp:317
+#: CoordinateFrameListView.cpp:223
+msgid "Note"
+msgstr "注釈"
+
+#: CoordinateFrameItem.cpp:306 CoordinateFrameItem.cpp:323
+msgid "Global"
+msgstr "グローバル"
 
 #: ImageView.cpp:121
 msgid "Image"
@@ -1461,22 +1471,26 @@ msgid "Name"
 msgstr "名前"
 
 #: Item.cpp:1298
+msgid "Display name"
+msgstr "表示名"
+
+#: Item.cpp:1303
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:1306
+#: Item.cpp:1311
 msgid "Num children"
 msgstr "小アイテムの数"
 
-#: Item.cpp:1307
+#: Item.cpp:1312
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:1308
+#: Item.cpp:1313
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:1309
+#: Item.cpp:1314
 msgid "Refs"
 msgstr "参照数"
 
@@ -1822,23 +1836,19 @@ msgstr "クオタニオン"
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-#: CoordinateFrameListView.cpp:212
-msgid "Note"
-msgstr "注釈"
-
-#: CoordinateFrameListView.cpp:214
+#: CoordinateFrameListView.cpp:225
 msgid "Position"
 msgstr "ポジション"
 
-#: CoordinateFrameListView.cpp:442
+#: CoordinateFrameListView.cpp:517
 msgid "Coordinate Frames"
 msgstr "座標フレーム"
 
-#: CoordinateFrameListView.cpp:469 CoordinateFrameListView.cpp:641
+#: CoordinateFrameListView.cpp:545 CoordinateFrameListView.cpp:727
 msgid "Add"
 msgstr "追加"
 
-#: CoordinateFrameListView.cpp:645
+#: CoordinateFrameListView.cpp:731
 msgid "Remove"
 msgstr "削除"
 
@@ -2032,4 +2042,3 @@ msgstr "軽量レンダリング"
 #: MultiSE3MatrixSeqItem.cpp:15
 msgid "MultiSE3MatrixSeqItem"
 msgstr ""
-

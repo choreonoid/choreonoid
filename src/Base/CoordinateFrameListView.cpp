@@ -4,9 +4,11 @@
 #include "MenuManager.h"
 #include "TargetItemPicker.h"
 #include "PositionEditManager.h"
+#include "LocatableItem.h"
 #include "Buttons.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/EigenUtil>
+#include <cnoid/ConnectionSet>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QTableView>
@@ -37,7 +39,7 @@ public:
     CoordinateFrameListView::Impl* view;
     CoordinateFrameListItemPtr frameListItem;
     CoordinateFrameListPtr frameList;
-    ScopedConnection frameListConnection;
+    ScopedConnectionSet frameListConnections;
     QFont monoFont;
     
     FrameListModel(CoordinateFrameListView::Impl* view);
@@ -55,7 +57,9 @@ public:
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void addFrame(int row, CoordinateFrame* frame, bool doInsert);
     void removeFrames(QModelIndexList selected);
+    void onFrameAttributeChanged(int frameIndex);
     void onFramePositionChanged(int frameIndex);
+    void onFrameMarkerViisibilityChanged(int frameIndex);
 };
 
 class CheckItemDelegate : public QStyledItemDelegate
@@ -139,11 +143,17 @@ void FrameListModel::setFrameListItem(CoordinateFrameListItem* frameListItem)
         this->frameList = nullptr;
     }
 
-    frameListConnection.disconnect();
+    frameListConnections.disconnect();
     if(frameList){
-        frameListConnection =
+        frameListConnections.add(
+            frameList->sigFrameAttributeChanged().connect(
+                [&](int index){ onFrameAttributeChanged(index); }));
+        frameListConnections.add(
             frameList->sigFramePositionChanged().connect(
-                [&](int index){ onFramePositionChanged(index); });
+                [&](int index){ onFramePositionChanged(index); }));
+        frameListConnections.add(
+            frameListItem->sigFrameMarkerVisibilityChanged().connect(
+                [&](int index, bool /* on */){ onFrameMarkerViisibilityChanged(index); }));
     }
             
     endResetModel();
@@ -357,7 +367,7 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
     }
     if(changed){
         Q_EMIT dataChanged(index, index, {role});
-        frameList->notifyFrameAttributeChange(frameIndex);
+        frame->notifyAttributeChange();
     }
     return false;
 }
@@ -403,6 +413,16 @@ void FrameListModel::removeFrames(QModelIndexList selected)
 }
 
 
+void FrameListModel::onFrameAttributeChanged(int frameIndex)
+{
+    auto modelIndex1 = index(frameIndex, IdColumn, QModelIndex());
+    auto modelIndex2 = index(frameIndex, NoteColumn, QModelIndex());
+    auto modelIndex3 = index(frameIndex, GlobalCheckColumn, QModelIndex());
+    Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
+    Q_EMIT dataChanged(modelIndex3, modelIndex3, { Qt::EditRole });
+}
+
+
 void FrameListModel::onFramePositionChanged(int frameIndex)
 {
     auto modelIndex = index(frameIndex, PositionColumn, QModelIndex());
@@ -414,6 +434,13 @@ void FrameListModel::onFramePositionChanged(int frameIndex)
             view->sigPositionChanged_(frame->position());
         }
     }
+}
+
+
+void FrameListModel::onFrameMarkerViisibilityChanged(int frameIndex)
+{
+    auto modelIndex = index(frameIndex, VisibleCheckColumn, QModelIndex());
+    Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
 }
 
 
@@ -509,15 +536,13 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     int hs = self->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
     
     auto hbox = new QHBoxLayout;
-    hbox->setSpacing(0);
     hbox->addSpacing(hs);
     targetLabel.setStyleSheet("font-weight: bold");
     hbox->addWidget(&targetLabel, 0, Qt::AlignVCenter);
-    hbox->addSpacing(hs);
+    hbox->addStretch();
     addButton.setText(_("Add"));
     addButton.sigClicked().connect([&](){ addFrameIntoCurrentIndex(false); });
     hbox->addWidget(&addButton);
-    hbox->addStretch();
     vbox->addLayout(hbox);
 
     // Setup the table
@@ -598,7 +623,13 @@ void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameLi
     targetItem = item;
 
     if(item){
-        targetLabel.setText(item->displayName().c_str());
+        string caption;
+        if(auto parentLocatable = item->findOwnerItem<LocatableItem>()){
+            targetLabel.setText(
+                format("{0} - {1}",  parentLocatable->getLocationName(), item->displayName()).c_str());
+        } else {
+            targetLabel.setText(item->displayName().c_str());
+        }
         frameList = item->frameList();
         frameListModel->setFrameListItem(item);
     } else {

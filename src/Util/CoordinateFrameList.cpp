@@ -249,15 +249,19 @@ SignalProxy<void(int index)> CoordinateFrameList::sigFramePositionChanged()
 }
 
 
-void CoordinateFrameList::notifyFrameAttributeChange(int index)
+void CoordinateFrameList::notifyFrameAttributeChange(CoordinateFrame* frame)
 {
-    impl->sigFrameAttributeChanged(index);
+    if(!impl->sigFrameAttributeChanged.empty()){
+        impl->sigFrameAttributeChanged(indexOf(frame));
+    }
 }
 
 
-void CoordinateFrameList::notifyFramePositionChange(int index)
+void CoordinateFrameList::notifyFramePositionChange(CoordinateFrame* frame)
 {
-    impl->sigFramePositionChanged(index);
+    if(!impl->sigFramePositionChanged.empty()){
+        impl->sigFramePositionChanged(indexOf(frame));
+    }
 }
 
 

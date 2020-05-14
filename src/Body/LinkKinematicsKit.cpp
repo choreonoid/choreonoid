@@ -419,14 +419,13 @@ void LinkKinematicsKit::notifyPositionError(const Position& T_frameCoordinate)
 
 bool LinkKinematicsKit::storeState(Mapping& archive) const
 {
-    const auto defaultId = CoordinateFrame::defaultFrameId();
     auto baseId = impl->currentBaseFrameId;
-    if(baseId != defaultId){
+    if(baseId.isValid()){
         archive.write("base_frame", baseId.label(),
                       baseId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
     }
     auto offsetId = impl->currentOffsetFrameId;
-    if(offsetId != defaultId){
+    if(offsetId.isValid()){
         archive.write("offset_frame", offsetId.label(),
                       offsetId.isString() ? DOUBLE_QUOTED : PLAIN_STRING);
     }

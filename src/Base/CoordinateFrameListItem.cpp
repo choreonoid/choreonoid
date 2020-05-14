@@ -52,6 +52,7 @@ public:
     unordered_map<CoordinateFramePtr, FrameMarkerPtr> visibleFrameMarkerMap;
     SgUpdate sgUpdate;
     ScopedConnection parentLocatableItemConnection;
+    Signal<void(int index, bool on)> sigFrameMarkerVisibilityChanged;
 
     Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode);
     void setItemizationMode(int mode);
@@ -59,6 +60,7 @@ public:
     CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
     void updateFrameAttribute(CoordinateFrameItem* item, CoordinateFrame* frame);
     CoordinateFrameItem* findFrameItemAt(int index, Item*& out_insertionPosition);
+    CoordinateFrameItem* findFrameItemAt(int index);
     void onFrameAdded(int index);
     void onFrameRemoved(int index);
     void onFrameAttributeChanged(int index);
@@ -227,8 +229,13 @@ CoordinateFrameItem* CoordinateFrameListItem::Impl::createFrameItem(CoordinateFr
 void CoordinateFrameListItem::Impl::updateFrameAttribute
 (CoordinateFrameItem* item, CoordinateFrame* frame)
 {
-    item->setFrameId(frame->id());
-    item->setName(frame->id().label());
+    auto& id = frame->id();
+    if(id != item->frameId()){
+        item->setFrameId(frame->id());
+        item->setName(frame->id().label());
+    } else {
+        item->notifyNameChange();
+    }
 }
 
 
@@ -253,10 +260,16 @@ CoordinateFrameItem* CoordinateFrameListItem::Impl::findFrameItemAt
 }
 
 
-CoordinateFrameItem* CoordinateFrameListItem::findFrameItemAt(int index)
+CoordinateFrameItem* CoordinateFrameListItem::Impl::findFrameItemAt(int index)
 {
     Item* position;
-    return impl->findFrameItemAt(index, position);
+    return findFrameItemAt(index, position);
+}
+
+
+CoordinateFrameItem* CoordinateFrameListItem::findFrameItemAt(int index)
+{
+    return impl->findFrameItemAt(index);
 }
     
     
@@ -272,8 +285,7 @@ void CoordinateFrameListItem::Impl::onFrameAdded(int index)
 
 void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
 {
-    Item* position;
-    if(auto frameItem = findFrameItemAt(index, position)){
+    if(auto frameItem = findFrameItemAt(index)){
         frameItem->detachFromParentItem();
     }
 }
@@ -281,8 +293,7 @@ void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
 
 void CoordinateFrameListItem::Impl::onFrameAttributeChanged(int index)
 {
-    Item* position;
-    if(auto item = findFrameItemAt(index, position)){
+    if(auto item = findFrameItemAt(index)){
         updateFrameAttribute(item, frameList->frameAt(index));
     }
 }
@@ -433,6 +444,19 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
                 self->setChecked(false);
             }
         }
+        int frameIndex = -1;
+        if(!sigFrameMarkerVisibilityChanged.empty()){
+            frameIndex = frameList->indexOf(frame);
+            sigFrameMarkerVisibilityChanged(frameIndex, on);
+        }
+        if(itemizationMode != NoItemization){
+            if(frameIndex < 0){
+                frameIndex = frameList->indexOf(frame);
+            }
+            if(auto frameItem = findFrameItemAt(frameIndex)){
+                frameItem->setVisibilityCheck(on);
+            }
+        }
     }
 }
 
@@ -441,6 +465,12 @@ bool CoordinateFrameListItem::isFrameMarkerVisible(const CoordinateFrame* frame)
 {
     auto p = impl->visibleFrameMarkerMap.find(const_cast<CoordinateFrame*>(frame));
     return (p != impl->visibleFrameMarkerMap.end());
+}
+
+
+SignalProxy<void(int index, bool on)> CoordinateFrameListItem::sigFrameMarkerVisibilityChanged()
+{
+    return impl->sigFrameMarkerVisibilityChanged;
 }
 
 

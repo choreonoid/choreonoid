@@ -25,7 +25,7 @@ public:
 
     virtual std::string displayName() const;
 
-    void setFrameId(const GeneralId& id);
+    bool setFrameId(const GeneralId& id);
     const GeneralId& frameId() const;
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;
@@ -33,6 +33,10 @@ public:
     const CoordinateFrame* frame() const;
     bool isBaseFrame() const;
     bool isOffsetFrame() const;
+
+    void setVisibilityCheck(bool on);
+
+    void putFrameAttributes(PutPropertyFunction& putProperty);
 
     // LocatableItem functions
     virtual int getLocationType() const override;

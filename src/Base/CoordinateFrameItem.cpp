@@ -22,11 +22,14 @@ public:
     CoordinateFrameList* frameList;
     Signal<void()> sigLocationChanged;
     ScopedConnection frameConnection;
+    bool isChangingCheckStatePassively;
     
     Impl(CoordinateFrameItem* self);
     Impl(CoordinateFrameItem* self, const Impl& org);
     void initialize(CoordinateFrameItem* self);
+    bool setFrameId(const GeneralId& id);
     void onCheckToggled(bool on);
+    void putFrameAttributes(PutPropertyFunction& putProperty);
 };
 
 }
@@ -70,6 +73,7 @@ void CoordinateFrameItem::Impl::initialize(CoordinateFrameItem* self)
     frameListItem = nullptr;
     frameList = nullptr;
     self->sigCheckToggled().connect([&](bool on){ onCheckToggled(on); });
+    isChangingCheckStatePassively = false;
 }
 
 
@@ -96,14 +100,6 @@ void CoordinateFrameItem::onPositionChanged()
 }    
 
 
-void CoordinateFrameItem::Impl::onCheckToggled(bool on)
-{
-    if(frameListItem){
-        frameListItem->setFrameMarkerVisible(frameId, on);
-    }
-}
-
-
 std::string CoordinateFrameItem::displayName() const
 {
     if(impl->frameListItem){
@@ -113,9 +109,28 @@ std::string CoordinateFrameItem::displayName() const
 }
 
 
-void CoordinateFrameItem::setFrameId(const GeneralId& id)
+bool CoordinateFrameItem::setFrameId(const GeneralId& id)
 {
-    impl->frameId = id;
+    return impl->setFrameId(id);
+}
+
+
+bool CoordinateFrameItem::Impl::setFrameId(const GeneralId& id)
+{
+    bool updated = true;
+    if(frameList){
+        if(auto frame = frameList->findFrame(frameId)){
+            if(frameList->resetId(frame, id)){
+                frame->notifyAttributeChange();
+            } else {
+                updated = false;
+            }
+        }
+    }
+    if(updated){
+        frameId = id;
+    }
+    return updated;
 }
 
 
@@ -167,6 +182,22 @@ bool CoordinateFrameItem::isOffsetFrame() const
         return impl->frameList->isForOffsetFrames();
     }
     return false;
+}
+
+
+void CoordinateFrameItem::Impl::onCheckToggled(bool on)
+{
+    if(!isChangingCheckStatePassively && frameListItem){
+        frameListItem->setFrameMarkerVisible(frameId, on);
+    }
+}
+
+
+void CoordinateFrameItem::setVisibilityCheck(bool on)
+{
+    impl->isChangingCheckStatePassively = true;
+    setChecked(on);
+    impl->isChangingCheckStatePassively = false;
 }
 
 
@@ -249,7 +280,56 @@ SignalProxy<void()> CoordinateFrameItem::sigLocationChanged()
 
 void CoordinateFrameItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("ID"), impl->frameId.label());
+    impl->putFrameAttributes(putProperty);
+}
+
+
+void CoordinateFrameItem::putFrameAttributes(PutPropertyFunction& putProperty)
+{
+    impl->putFrameAttributes(putProperty);
+}
+
+
+void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putProperty)
+{
+    auto& id = frameId;
+    CoordinateFrame* frame = nullptr;
+    bool isDefaultFrame = false;
+    if(frameList){
+        frame = frameList->findFrame(frameId);
+        if(frame && frameList->isDefaultFrame(frame)){
+            isDefaultFrame = true;
+        }
+    }
+    if(isDefaultFrame){ // Read only
+        putProperty(_("ID"), id.label());
+        if(frame){
+            putProperty(_("Note"), frame->note());
+            putProperty(_("Global"), frame->isGlobal());
+        }
+    } else {
+        if(id.isInt()){
+            putProperty(_("ID"), id.toInt(),
+                        [&](int value){ return setFrameId(value); });
+        } else if(id.isString()){
+            putProperty(_("ID"), id.toString(),
+                        [&](const string& value){ return setFrameId(value); });
+        }
+        if(frame){
+            putProperty(_("Note"), frame->note(),
+                        [frame](const string& text){
+                            frame->setNote(text);
+                            frame->notifyAttributeChange();
+                            return true;
+                        });
+            putProperty(_("Global"), frame->isGlobal(),
+                        [frame](bool on){
+                            frame->setGlobal(on);
+                            frame->notifyAttributeChange();
+                            return true;
+                        });
+        }
+    }
 }
 
 

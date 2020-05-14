@@ -31,7 +31,6 @@ public:
     virtual CoordinateFrame* clone() const;
 
     const GeneralId& id() const { return id_; }
-    static GeneralId defaultFrameId() { return GeneralId(0); }
 
     void setGlobal(bool on) { isGlobal_ = on; }
     bool isGlobal() const { return isGlobal_; }
@@ -48,7 +47,9 @@ public:
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
 
+    SignalProxy<void()> sigAttributeChanged();
     SignalProxy<void()> sigPositionChanged();
+    void notifyAttributeChange();
     void notifyPositionChange();
 
 private:
@@ -57,6 +58,7 @@ private:
     bool isGlobal_;
     std::string note_;
     weak_ref_ptr<CoordinateFrameList> ownerFrameList_;
+    Signal<void()> sigAttributeChanged_;
     Signal<void()> sigPositionChanged_;
 
     friend class CoordinateFrameList;

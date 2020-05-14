@@ -4,6 +4,7 @@
 #include "Item.h"
 #include "RenderableItem.h"
 #include <cnoid/GeneralId>
+#include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -49,6 +50,7 @@ public:
     void setFrameMarkerVisible(const GeneralId& id, bool on);
     void setFrameMarkerVisible(const CoordinateFrame* frame, bool on);
     bool isFrameMarkerVisible(const CoordinateFrame* frame) const;
+    SignalProxy<void(int index, bool on)> sigFrameMarkerVisibilityChanged();
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
