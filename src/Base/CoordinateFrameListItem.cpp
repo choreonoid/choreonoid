@@ -74,6 +74,7 @@ public:
     Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode);
     void setItemizationMode(int mode);
     void updateFrameItems();
+    void arrangeFrameItems();
     CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
     void updateFrameAttribute(CoordinateFrameItem* item, CoordinateFrame* frame);
     CoordinateFrameItem* findFrameItemAt(int index, Item*& out_insertionPosition);
@@ -168,6 +169,7 @@ void CoordinateFrameListItem::setItemizationMode(int mode)
 void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
 {
     if(mode != itemizationMode){
+        itemizationMode = mode;
         frameListConnections.disconnect();
         if(mode == SubItemization){
             frameListConnections.add(
@@ -179,9 +181,8 @@ void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
             frameListConnections.add(
                 frameList->sigFrameUpdated().connect(
                     [&](int index, int flags){ onFrameUpdated(index, flags); }));
+            updateFrameItems();
         }
-        itemizationMode = mode;
-        updateFrameItems();
     }
 }
 
@@ -225,6 +226,22 @@ void CoordinateFrameListItem::Impl::updateFrameItems()
         const int numFrames = frameList->numFrames();
         for(int i=0; i < numFrames; ++i){
             self->addChildItem(createFrameItem(frameList->frameAt(i)));
+        }
+    }
+}
+
+
+/**
+   Currently this function only adds the default frame item if it does not exist.
+   This function should be improved so that any other lacking frame items can be added,
+   and extra frame items can be removed, and the order of the items can be corrected.
+*/
+void CoordinateFrameListItem::Impl::arrangeFrameItems()
+{
+    if(frameList->hasFirstElementAsDefaultFrame()){
+        auto firstFrameItem = findFrameItemAt(0);
+        if(!firstFrameItem || !frameList->isDefaultFrameId(firstFrameItem->frameId())){
+            self->insertChild(self->childItem(), createFrameItem(frameList->frameAt(0)));
         }
     }
 }
@@ -664,5 +681,10 @@ bool CoordinateFrameListItem::restore(const Archive& archive)
         }
     }
     impl->frameList->resetIdCounter();
-    return impl->frameList->read(archive);
+    bool result = impl->frameList->read(archive);
+    if(result){
+        archive.setProcessOnSubTreeRestored(
+            [&](){ impl->arrangeFrameItems(); });
+    }
+    return result;
 }

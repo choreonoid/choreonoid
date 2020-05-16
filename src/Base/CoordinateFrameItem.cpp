@@ -378,14 +378,24 @@ bool CoordinateFrameItem::store(Archive& archive)
 
 bool CoordinateFrameItem::restore(const Archive& archive)
 {
+    bool result = false;
     auto frameListItem = dynamic_cast<CoordinateFrameListItem*>(archive.currentParentItem());
     if(frameListItem){
         CoordinateFramePtr frame = new CoordinateFrame;
         if(frame->read(archive)){
             impl->frameId = frame->id();
             setName(impl->frameId.label());
-            return frameListItem->frameList()->append(frame);
+            auto frameList = frameListItem->frameList();
+            if(frameList->isDefaultFrameId(impl->frameId)){
+                if(frameListItem->findFrameItemAt(0)){
+                    archive.throwException(
+                        _("A coordinate frame item with the default frame id is duplicated"));
+                }
+                result = frameList->frameAt(0)->read(archive);
+            } else {
+                result = frameList->append(frame);
+            }
         }
     }
-    return false;
+    return result;
 }
