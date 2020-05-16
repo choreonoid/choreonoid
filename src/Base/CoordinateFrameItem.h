@@ -46,6 +46,7 @@ public:
     virtual LocatableItem* getParentLocatableItem() override;
     virtual std::string getLocationName() const override;
     virtual Position getLocation() const override;
+    virtual bool isLocationEditable() const override;
     virtual void setLocation(const Position& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 

@@ -265,6 +265,15 @@ Position CoordinateFrameItem::getLocation() const
 }
 
 
+bool CoordinateFrameItem::isLocationEditable() const
+{
+    if(impl->frameList && impl->frameList->isDefaultFrameId(impl->frameId)){
+        return false;
+    }
+    return LocatableItem::isLocationEditable();
+}
+
+
 void CoordinateFrameItem::setLocation(const Position& T)
 {
     if(auto frame_ = frame()){
@@ -309,14 +318,12 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
     Selection mode = { _("Local"), _("Global") };
     bool isModeEditable = false;
     if(frameList){
+        isDefaultFrame = frameList->isDefaultFrameId(frameId);
         frame = frameList->findFrame(frameId);
         if(frame){
-            if(frameList->isDefaultFrame(frame)){
-                isDefaultFrame = true;
-            }
             mode.select(frame->isLocal() ? 0 : 1);
         }
-        if(frameList->isForBaseFrames() && !frameList->isDefaultFrame(frame)){
+        if(frameList->isForBaseFrames() && !isDefaultFrame){
             isModeEditable = true;
         }
     }

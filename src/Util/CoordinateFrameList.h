@@ -35,7 +35,7 @@ public:
     */
     void setFirstElementAsDefaultFrame(bool on = true);
     bool hasFirstElementAsDefaultFrame() const { return hasFirstElementAsDefaultFrame_; }
-    bool isDefaultFrame(CoordinateFrame* frame) const;
+    bool isDefaultFrameId(const GeneralId& id) const;
     
     /**
        Keep the default frame if it exists

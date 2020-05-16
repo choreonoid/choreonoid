@@ -110,10 +110,10 @@ void CoordinateFrameList::setFirstElementAsDefaultFrame(bool on)
 }
 
 
-bool CoordinateFrameList::isDefaultFrame(CoordinateFrame* frame) const
+bool CoordinateFrameList::isDefaultFrameId(const GeneralId& id) const
 {
     if(hasFirstElementAsDefaultFrame_){
-        if(frame == impl->frames.front()){
+        if(impl->frames.front()->id() == id){
             return true;
         }
     }
@@ -143,7 +143,6 @@ void CoordinateFrameList::Impl::clear(bool doKeepDefaultFrame)
     }
     self->resetIdCounter(minIndex);
 }
-
 
 
 int CoordinateFrameList::numFrames() const

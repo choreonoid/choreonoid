@@ -13,6 +13,8 @@ public:
     LocationView();
     ~LocationView();
 
+    class Impl;
+
 protected:
     virtual void onActivated() override;
     virtual void onDeactivated() override;
@@ -21,7 +23,6 @@ protected:
     virtual bool restoreState(const Archive& archive) override;
 
 private:
-    class Impl;
     Impl* impl;
 };
 

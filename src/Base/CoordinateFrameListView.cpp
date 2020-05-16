@@ -95,6 +95,7 @@ public:
     QLabel targetLabel;
     PushButton addButton;
     MenuManager contextMenuManager;
+    bool isSelectionChangedAlreadyCalled;
 
     Impl(CoordinateFrameListView* self);
     void setCoordinateFrameListItem(CoordinateFrameListItem* item);
@@ -572,8 +573,12 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     vheader->hide();
 
-    connect(this, &QTableView::clicked,
-            [this](const QModelIndex& index){ startLocationEditing(index); });
+    connect(this, &QTableView::pressed,
+            [this](const QModelIndex& index){
+                if(!isSelectionChangedAlreadyCalled){
+                    startLocationEditing(index);
+                }
+            });
     
     vbox->addWidget(this);
     self->setLayout(vbox);
@@ -700,6 +705,8 @@ void CoordinateFrameListView::Impl::keyPressEvent(QKeyEvent* event)
        
 void CoordinateFrameListView::Impl::mousePressEvent(QMouseEvent* event)
 {
+    isSelectionChangedAlreadyCalled = false;
+    
     QTableView::mousePressEvent(event);
 
     if(event->button() == Qt::RightButton){
@@ -730,6 +737,8 @@ void CoordinateFrameListView::Impl::showContextMenu(int row, QPoint globalPos)
 void CoordinateFrameListView::Impl::selectionChanged
 (const QItemSelection& selected, const QItemSelection& deselected)
 {
+    isSelectionChangedAlreadyCalled = true;
+    
     QTableView::selectionChanged(selected, deselected);
 
     auto indexes = selected.indexes();

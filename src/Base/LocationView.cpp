@@ -47,6 +47,14 @@ struct CoordinateInfo : public Referenced
 
 typedef ref_ptr<CoordinateInfo> CoordinateInfoPtr;
 
+class LockCheckBox : public CheckBox
+{
+public:
+    LocationView::Impl* impl;
+    LockCheckBox(LocationView::Impl* impl) : impl(impl) { }
+    virtual void nextCheckState() override;
+};
+
 }
 
 namespace cnoid {
@@ -59,7 +67,7 @@ public:
     TargetItemPicker<Item> targetItemPicker;
     ScopedConnectionSet locatableItemConnections;
     QLabel caption;
-    CheckBox lockCheck;
+    LockCheckBox lockCheck;
     PositionWidget* positionWidget;
     vector<CoordinateInfoPtr> coordinates;
     QLabel coordinateLabel;
@@ -69,8 +77,7 @@ public:
         
     Impl(LocationView* self);
     bool setLocatableItem(LocatableItem* item);
-    void setLocked(bool on);
-    void onLockCheckToggled(bool on);
+    void setEditorLocked(bool on);
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
     void updatePositionWidgetWithLocatableItemLocation();
@@ -97,7 +104,8 @@ LocationView::LocationView()
 
 
 LocationView::Impl::Impl(LocationView* self)
-    : self(self)
+    : self(self),
+      lockCheck(this)
 {
     self->setDefaultLayoutArea(View::CENTER);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
@@ -109,8 +117,6 @@ LocationView::Impl::Impl(LocationView* self)
     caption.setStyleSheet("font-weight: bold");
     hbox->addWidget(&caption, 1);
     lockCheck.setText(_("Lock"));
-    lockCheck.sigToggled().connect(
-        [&](bool on){ onLockCheckToggled(on); });
     hbox->addWidget(&lockCheck);
     vbox->addLayout(hbox);
 
@@ -185,14 +191,14 @@ bool LocationView::Impl::setLocatableItem(LocatableItem* item)
     
     if(!locatableItem){
         caption.setText("-----");
-        setLocked(false);
+        setEditorLocked(false);
         positionWidget->clearPosition();
         positionWidget->setEditable(false);
         clearBaseCoordinateSystems();
         
     } else {
         caption.setText(locatableItem->getLocationName().c_str());
-        setLocked(!locatableItem->isLocationEditable());
+        setEditorLocked(!locatableItem->isLocationEditable());
 
         locatableItemConnections.add(
             locatableItem->sigLocationChanged().connect(
@@ -202,14 +208,12 @@ bool LocationView::Impl::setLocatableItem(LocatableItem* item)
             locatableItem->sigLocationAttributeChanged().connect(
                 [this](){
                     caption.setText(locatableItem->getLocationName().c_str());
-                    setLocked(!locatableItem->isLocationEditable());
+                    setEditorLocked(!locatableItem->isLocationEditable());
                 }));
 
-        /*
         locatableItemConnections.add(
             item->sigLocationExpired().connect(
                 [this](){ onLocationExpired(); }));
-        */
         
         updateBaseCoordinateSystems();
         updatePositionWidgetWithLocatableItemLocation();
@@ -221,25 +225,26 @@ bool LocationView::Impl::setLocatableItem(LocatableItem* item)
 }
 
 
-void LocationView::Impl::setLocked(bool on)
+void LocationView::Impl::setEditorLocked(bool on)
 {
     lockCheck.blockSignals(true);
-    lockCheck.setChecked(on);
     positionWidget->setEditable(!on);
+    lockCheck.setChecked(on);
     lockCheck.blockSignals(false);
 }
-    
 
-void LocationView::Impl::onLockCheckToggled(bool on)
+
+void LockCheckBox::nextCheckState()
 {
-    if(locatableItem){
-        locatableItemConnections.block();
-        locatableItem->setLocationEditable(!on);
-        positionWidget->setEditable(!on);
-        locatableItemConnections.unblock();
+    auto& locatable = impl->locatableItem;
+    if(locatable){
+        bool doLock = !isChecked();
+        locatable->setLocationEditable(!doLock);
+        if(locatable->isLocationEditable() == !doLock){
+            impl->setEditorLocked(doLock);
+        }
     }
 }
-
 
 void LocationView::Impl::clearBaseCoordinateSystems()
 {
@@ -425,7 +430,7 @@ bool LocationView::Impl::setInputPositionToTargetItem(const Position& T_input)
 
 void LocationView::Impl::onLocationExpired()
 {
-
+    setLocatableItem(nullptr);
 }
         
 
