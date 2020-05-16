@@ -30,6 +30,7 @@ public:
     void initSharedInfo(const std::string& projectFile);
     void inheritSharedInfoFrom(Archive& archive);
 
+    void setProcessOnSubTreeRestored(const std::function<void()>& func) const;
     void addPostProcess(const std::function<void()>& func, int priority = 0) const;
 
     Archive* findSubArchive(const std::string& name);
@@ -81,7 +82,6 @@ public:
     FilePathVariableProcessor* filePathVariableProcessor() const;
 
 private:
-
     ref_ptr<ArchiveSharedData> shared;
 
     Item* findItem(int id) const;
@@ -91,6 +91,7 @@ private:
     void registerViewId(View* view, int id);
 
     // called from ItemTreeArchiver
+    void setPointerToProcessOnSubTreeRestored(std::function<void()>* pfunc);
     void callPostProcesses();
 
     friend class ItemTreeArchiver;

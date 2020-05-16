@@ -264,6 +264,8 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem,
     ItemPtr item;
     string itemName;
     bool isOptional = false;
+    std::function<void()> processOnSubTreeRestored;
+    archive.setPointerToProcessOnSubTreeRestored(&processOnSubTreeRestored);
 
     try {
         item = restoreItem(archive, parentItem, restoredItems, itemName, isOptional);
@@ -291,6 +293,9 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem,
                 childArchive->inheritSharedInfoFrom(archive);
                 restoreItemIter(*childArchive, item, restoredItems);
             }
+        }
+        if(processOnSubTreeRestored){
+            processOnSubTreeRestored();
         }
     }
 }

@@ -40,7 +40,13 @@ public:
         
     Item* currentParentItem;
 
+    std::function<void()>* pointerToProcessOnSubTreeRestored;
     PostProcessList postProcesses;
+
+    ArchiveSharedData(){
+        currentParentItem = nullptr;
+        pointerToProcessOnSubTreeRestored = nullptr;
+    }
 };
 
 }
@@ -77,7 +83,6 @@ void Archive::initSharedInfo()
 {
     shared = new ArchiveSharedData;
     shared->pathVariableProcessor = FilePathVariableProcessor::systemInstance();
-    shared->currentParentItem = nullptr;
 }    
 
 
@@ -94,6 +99,20 @@ void Archive::initSharedInfo(const std::string& projectFile)
 void Archive::inheritSharedInfoFrom(Archive& archive)
 {
     shared = archive.shared;
+}
+
+
+void Archive::setProcessOnSubTreeRestored(const std::function<void()>& func) const
+{
+    if(shared->pointerToProcessOnSubTreeRestored){
+        *shared->pointerToProcessOnSubTreeRestored = func;
+    }
+}
+
+
+void Archive::setPointerToProcessOnSubTreeRestored(std::function<void()>* pfunc)
+{
+    shared->pointerToProcessOnSubTreeRestored = pfunc;
 }
 
 
