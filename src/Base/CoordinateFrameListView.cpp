@@ -1,9 +1,9 @@
 #include "CoordinateFrameListView.h"
 #include "CoordinateFrameListItem.h"
+#include "CoordinateFrameItem.h"
 #include "ViewManager.h"
 #include "MenuManager.h"
 #include "TargetItemPicker.h"
-#include "PositionEditManager.h"
 #include "LocatableItem.h"
 #include "Buttons.h"
 #include <cnoid/CoordinateFrameList>
@@ -69,7 +69,7 @@ public:
     
     CheckItemDelegate(CoordinateFrameListView::Impl* view);
     virtual void paint(
-        QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+        QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual bool editorEvent(
         QEvent* event, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index) override;
     virtual QWidget* createEditor(
@@ -81,25 +81,20 @@ public:
 
 namespace cnoid {
 
-class CoordinateFrameListView::Impl : public QTableView, public AbstractPositionEditTarget
+class CoordinateFrameListView::Impl : public QTableView
 {
 public:
     CoordinateFrameListView* self;
     TargetItemPicker<CoordinateFrameListItem> targetItemPicker;
     CoordinateFrameListItemPtr targetItem;
     CoordinateFrameListPtr frameList;
+    weak_ref_ptr<CoordinateFrameItem> weakFrameItem;
     FrameListModel* frameListModel;
     CheckItemDelegate* globalCheckDelegate;
     ReferencedPtr transientMarkerHolder;
     QLabel targetLabel;
     PushButton addButton;
     MenuManager contextMenuManager;
-
-    // For the position editing by external editors
-    PositionEditManager* positionEditManager;
-    CoordinateFramePtr frameBeingEditedOutside;
-    Signal<void(const Position& T)> sigPositionChanged_;
-    Signal<void()> sigPositionEditTargetExpired_;
 
     Impl(CoordinateFrameListView* self);
     void setCoordinateFrameListItem(CoordinateFrameListItem* item);
@@ -110,16 +105,8 @@ public:
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(int row, QPoint globalPos);
     virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
-
-    void startExternalPositionEditing(CoordinateFrame* frame);
-    void stopExternalPositionEditing();
-    virtual Referenced* getPositionObject() override;
-    virtual std::string getPositionName() const override;
-    virtual Position getPosition() const override;
-    virtual bool isEditable() const override;
-    virtual bool setPosition(const Position& T) override;
-    virtual SignalProxy<void(const Position& T)> sigPositionChanged() override;
-    virtual SignalProxy<void()> sigPositionEditTargetExpired() override;
+    void startLocationEditing(const QModelIndex& modelIndex);
+    void stopLocationEditing();
 };
 
 }
@@ -438,13 +425,6 @@ void FrameListModel::onFrameUpdated(int frameIndex, int flags)
     if(flags & CoordinateFrame::PositionUpdate){
         auto modelIndex = index(frameIndex, PositionColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
-
-        if(view->frameBeingEditedOutside){
-            auto frame = frameList->frameAt(frameIndex);
-            if(frame == view->frameBeingEditedOutside){
-                view->sigPositionChanged_(frame->position());
-            }
-        }
     }
 }
 
@@ -592,8 +572,8 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     vheader->hide();
 
-    connect(this, SIGNAL(clicked(const QModelIndex&)),
-            self, SLOT(onTableItemClicked(const QModelIndex&)));
+    connect(this, &QTableView::clicked,
+            [this](const QModelIndex& index){ startLocationEditing(index); });
     
     vbox->addWidget(this);
     self->setLayout(vbox);
@@ -607,8 +587,6 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
         [&](CoordinateFrameListItem* item){
             setCoordinateFrameListItem(item);
         });
-
-    positionEditManager = PositionEditManager::instance();
 }
 
 
@@ -626,13 +604,13 @@ void CoordinateFrameListView::onActivated()
 
 void CoordinateFrameListView::onDeactivated()
 {
-    impl->stopExternalPositionEditing();
+    impl->stopLocationEditing();
 }
 
 
 void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameListItem* item)
 {
-    stopExternalPositionEditing();
+    stopLocationEditing();
 
     targetItem = item;
     transientMarkerHolder.reset();
@@ -756,105 +734,35 @@ void CoordinateFrameListView::Impl::selectionChanged
 
     auto indexes = selected.indexes();
     if(indexes.empty()){
-        startExternalPositionEditing(nullptr);
+        stopLocationEditing();
         transientMarkerHolder.reset();
     } else {
-        auto frame = frameListModel->frameAt(indexes.front());
-        startExternalPositionEditing(frame);
+        auto modelIndex = indexes.front();
+        startLocationEditing(modelIndex);
+        auto frame = frameListModel->frameAt(modelIndex);
         transientMarkerHolder = targetItem->transientFrameMarkerHolder(frame);
     }
 }
 
 
-void CoordinateFrameListView::onTableItemClicked(const QModelIndex& index)
+void CoordinateFrameListView::Impl::startLocationEditing(const QModelIndex& modelIndex)
 {
-    impl->startExternalPositionEditing(impl->frameListModel->frameAt(index));
-}
-
-
-void CoordinateFrameListView::Impl::startExternalPositionEditing(CoordinateFrame* frame)
-{
-    if(frame != frameBeingEditedOutside){
-        stopExternalPositionEditing();
-
-        frameBeingEditedOutside = frame;
-
-        if(frame){
-            positionEditManager->requestPositionEdit(this);
+    stopLocationEditing();
+    int frameIndex = modelIndex.row();
+    if(auto frameItem = targetItem->findFrameItemAt(frameIndex)){
+        if(frameItem->requestLocationEdit()){
+            weakFrameItem = frameItem;
         }
     }
 }
 
 
-void CoordinateFrameListView::Impl::stopExternalPositionEditing()
+void CoordinateFrameListView::Impl::stopLocationEditing()
 {
-    if(frameBeingEditedOutside){
-        sigPositionEditTargetExpired_();
+    if(auto frameItem = weakFrameItem.lock()){
+        frameItem->expireLocation();
     }
-    frameBeingEditedOutside = nullptr;
-}
-
-
-Referenced* CoordinateFrameListView::Impl::getPositionObject()
-{
-    return frameBeingEditedOutside;
-}
-
-
-std::string CoordinateFrameListView::Impl::getPositionName() const
-{
-    if(frameBeingEditedOutside) {
-        auto& id = frameBeingEditedOutside->id();
-        auto& note = frameBeingEditedOutside->note();
-        if (id.isString() || note.empty()) {
-            return format("{0}: {1}", targetItem->displayName(), id.label());
-        } else {
-            return format("{0}: {1} ( {2} )", targetItem->displayName(), id.label(), note);
-        }
-    }
-    return string();
-}
-
-
-Position CoordinateFrameListView::Impl::getPosition() const
-{
-    if(frameBeingEditedOutside){
-        return frameBeingEditedOutside->T();
-    }
-    return Position::Identity();
-}
-
-
-bool CoordinateFrameListView::Impl::isEditable() const
-{
-    if(frameBeingEditedOutside && frameBeingEditedOutside->id() != 0){
-        return true;
-    }
-    return false;
-}
-
-
-bool CoordinateFrameListView::Impl::setPosition(const Position& T)
-{
-    if(frameBeingEditedOutside){
-        frameBeingEditedOutside->setPosition(T);
-        frameBeingEditedOutside->notifyUpdate(CoordinateFrame::PositionUpdate);
-        sigPositionChanged_(T);
-        return true;
-    }
-    return false;
-}
-
-
-SignalProxy<void(const Position& T)> CoordinateFrameListView::Impl::sigPositionChanged()
-{
-    return sigPositionChanged_;
-}
-
-
-SignalProxy<void()> CoordinateFrameListView::Impl::sigPositionEditTargetExpired()
-{
-    return sigPositionEditTargetExpired_;
+    weakFrameItem.reset();
 }
 
 

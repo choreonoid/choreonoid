@@ -39,7 +39,6 @@ set(sources
   DisplayedValueFormatManager.cpp
   PositionWidget.cpp
   LocationView.cpp
-  PositionEditManager.cpp
   MultiSeqItemCreationPanel.cpp
   ToolBar.cpp
   TimeBar.cpp
@@ -195,7 +194,6 @@ set(headers
   TargetItemPicker.h
   DisplayedValueFormatManager.h
   PositionWidget.h
-  PositionEditManager.h
   PutPropertyFunction.h
   RootItem.h
   FolderItem.h
@@ -285,7 +283,6 @@ set(qtheaders
   InfoBar.h
   StringListComboBox.h
   TextEdit.h
-  CoordinateFrameListView.h
   )
 
 QT5_ADD_RESOURCES(RC_SRCS Base.qrc)

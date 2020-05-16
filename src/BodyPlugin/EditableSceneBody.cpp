@@ -432,8 +432,9 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
         onKinematicStateChanged();
 
         connections.add(
-            bodyItem->sigLocationEditableChanged().connect(
-                [&](bool on){
+            bodyItem->sigLocationAttributeChanged().connect(
+                [&](){
+                    bool on = bodyItem->isLocationEditable();
                     if(!on){
                         if(outlinedLink){
                             outlinedLink->showOutline(false);

@@ -3,7 +3,6 @@
 #include "ViewManager.h"
 #include "TargetItemPicker.h"
 #include "LocatableItem.h"
-#include "PositionEditManager.h"
 #include "CoordinateFrameListItem.h"
 #include "CoordinateFrameItem.h"
 #include "RootItem.h"
@@ -56,11 +55,9 @@ class LocationView::Impl
 {
 public:
     LocationView* self;
-    enum TargetType { LinkTarget, PositionEditTarget } targetType;
-    LocatableItem* targetItem;
+    LocatableItem* locatableItem;
     TargetItemPicker<Item> targetItemPicker;
-    ScopedConnectionSet targetConnections;
-    AbstractPositionEditTarget* positionEditTarget;
+    ScopedConnectionSet locatableItemConnections;
     QLabel caption;
     CheckBox lockCheck;
     PositionWidget* positionWidget;
@@ -71,17 +68,14 @@ public:
     ScopedConnection activeStateConnection;
         
     Impl(LocationView* self);
-    void setTargetItem(Item* item);
-    bool setPositionEditTarget(AbstractPositionEditTarget* target);
+    bool setLocatableItem(LocatableItem* item);
     void setLocked(bool on);
     void onLockCheckToggled(bool on);
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
     void updatePositionWidgetWithLocatableItemLocation();
     bool setInputPositionToTargetItem(const Position& T_input);
-    void updatePositionWidgetWithPositionEditTargetPosition();
-    void onPositionEditTargetExpired();
-    bool setInputPositionToPositionEditTarget(const Position& T_input);
+    void onLocationExpired();
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -133,14 +127,7 @@ LocationView::Impl::Impl(LocationView* self)
     positionWidget = new PositionWidget(self);
 
     positionWidget->setPositionCallback(
-        [&](const Position& T){
-            if(targetType == LinkTarget){
-                return setInputPositionToTargetItem(T);
-            } else if(targetType == PositionEditTarget){
-                return setInputPositionToPositionEditTarget(T);
-            }
-            return false;
-        });
+        [&](const Position& T){ return setInputPositionToTargetItem(T); });
     
     vbox->addWidget(positionWidget);
 
@@ -157,12 +144,10 @@ LocationView::Impl::Impl(LocationView* self)
         });
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](Item* item){ setTargetItem(item); });
+        [&](Item* item){ setLocatableItem(dynamic_cast<LocatableItem*>(item)); });
 
-    targetType = LinkTarget;
-    targetItem = nullptr;
-    setTargetItem(nullptr);
-    positionEditTarget = nullptr;
+    locatableItem = nullptr;
+    setLocatableItem(nullptr);
     lastCoordIndex = ParentCoordIndex;
 }
 
@@ -175,18 +160,9 @@ LocationView::~LocationView()
 
 void LocationView::onActivated()
 {
-    auto pem = PositionEditManager::instance();
-    
     impl->activeStateConnection =
-        pem->sigPositionEditRequest().connect(
-            [&](AbstractPositionEditTarget* target){
-                return impl->setPositionEditTarget(target);
-            });
-
-
-    if(auto positionEditTarget = pem->lastPositionEditTarget()){
-        impl->setPositionEditTarget(positionEditTarget);
-    }
+        LocatableItem::sigLocationEditRequest().connect(
+            [&](LocatableItem* item){ return impl->setLocatableItem(item); });
 }
 
 
@@ -202,71 +178,46 @@ void LocationView::onAttachedMenuRequest(MenuManager& menuManager)
 }
 
 
-void LocationView::Impl::setTargetItem(Item* item)
+bool LocationView::Impl::setLocatableItem(LocatableItem* item)
 {
-    targetConnections.disconnect();
-    targetType = LinkTarget;
-    targetItem = dynamic_cast<LocatableItem*>(item);
+    locatableItemConnections.disconnect();
+    locatableItem = item;
     
-    if(!targetItem){
+    if(!locatableItem){
         caption.setText("-----");
         setLocked(false);
-        //positionWidget->setPosition(Position::Identity());
         positionWidget->clearPosition();
         positionWidget->setEditable(false);
         clearBaseCoordinateSystems();
         
     } else {
-        caption.setText(targetItem->getLocationName().c_str());
-        setLocked(!targetItem->isLocationEditable());
+        caption.setText(locatableItem->getLocationName().c_str());
+        setLocked(!locatableItem->isLocationEditable());
 
-        targetConnections.add(
-            targetItem->sigLocationChanged().connect(
+        locatableItemConnections.add(
+            locatableItem->sigLocationChanged().connect(
                 [this](){ updatePositionWidgetWithLocatableItemLocation(); }));
         
-        targetConnections.add(
-            targetItem->sigLocationEditableChanged().connect(
-                [this](bool on){ setLocked(!on); }));
-
-        targetConnections.add(
-            item->sigNameChanged().connect(
-                [this](const std::string& /* oldName */){
-                    caption.setText(targetItem->getLocationName().c_str());
+        locatableItemConnections.add(
+            locatableItem->sigLocationAttributeChanged().connect(
+                [this](){
+                    caption.setText(locatableItem->getLocationName().c_str());
+                    setLocked(!locatableItem->isLocationEditable());
                 }));
+
+        /*
+        locatableItemConnections.add(
+            item->sigLocationExpired().connect(
+                [this](){ onLocationExpired(); }));
+        */
         
         updateBaseCoordinateSystems();
         updatePositionWidgetWithLocatableItemLocation();
     }
 
     lockCheck.blockSignals(false);
-}
 
-
-bool LocationView::Impl::setPositionEditTarget(AbstractPositionEditTarget* target)
-{
-    targetConnections.disconnect();
-    positionWidget->clearPosition();
-
-    caption.setText(target->getPositionName().c_str());
-    
-    targetType = PositionEditTarget;
-    positionEditTarget = target;
-
-    targetConnections.add(
-        target->sigPositionChanged().connect(
-            [&](const Position&){ updatePositionWidgetWithPositionEditTargetPosition(); }));
-
-    targetConnections.add(
-        target->sigPositionEditTargetExpired().connect(
-            [&](){ onPositionEditTargetExpired(); }));
-
-    positionWidget->setEnabled(target->isEditable());
-
-    clearBaseCoordinateSystems();
-    
-    updatePositionWidgetWithPositionEditTargetPosition();
-
-    return true;
+    return locatableItem != nullptr;
 }
 
 
@@ -281,11 +232,11 @@ void LocationView::Impl::setLocked(bool on)
 
 void LocationView::Impl::onLockCheckToggled(bool on)
 {
-    if(targetItem){
-        targetConnections.block();
-        targetItem->setLocationEditable(!on);
+    if(locatableItem){
+        locatableItemConnections.block();
+        locatableItem->setLocationEditable(!on);
         positionWidget->setEditable(!on);
-        targetConnections.unblock();
+        locatableItemConnections.unblock();
     }
 }
 
@@ -303,14 +254,14 @@ void LocationView::Impl::clearBaseCoordinateSystems()
 
 void LocationView::Impl::updateBaseCoordinateSystems()
 {
-    if(!targetItem){
+    if(!locatableItem){
         return;
     }
     
     clearBaseCoordinateSystems();
     int defaultComboIndex = 0;
 
-    int locationType = targetItem->getLocationType();
+    int locationType = locatableItem->getLocationType();
     if(locationType != LocatableItem::OffsetLocation){
         auto worldCoord = new CoordinateInfo(_("World"), WorldCoordIndex);
         worldCoord->T.setIdentity();
@@ -319,7 +270,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 
     CoordinateInfo* parentCoord = nullptr;
     
-    if(auto parentLocatable = targetItem->getParentLocatableItem()){
+    if(auto parentLocatable = locatableItem->getParentLocatableItem()){
         ItemPtr parentItem = parentLocatable->getCorrespondingItem();
         string label;
         if(locationType == LocatableItem::OffsetLocation){
@@ -340,7 +291,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         coordinates.push_back(parentCoord);
     }
 
-    Position T = targetItem->getLocation();
+    Position T = locatableItem->getLocation();
     auto localCoord = new CoordinateInfo(_("Local"), LocalCoordIndex, T);
     localCoord->isLocal = true;
     localCoord->R0 = T.linear();
@@ -359,7 +310,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             function<Position()> parentPositionFunc;
             auto parentItem = frameListItem->getParentLocatableItem();
             if(!parentItem ||
-               parentItem->getCorrespondingItem() == targetItem->getCorrespondingItem()){
+               parentItem->getCorrespondingItem() == locatableItem->getCorrespondingItem()){
                 continue;
             }
             basename = parentItem->getLocationName();
@@ -372,7 +323,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             int n = frames->numFrames();
             for(int i=0; i < n; ++i){
                 auto frameItem = frameListItem->findFrameItemAt(i);
-                if(frameItem && frameItem == targetItem){
+                if(frameItem && frameItem == locatableItem){
                     continue;
                 }
                 string name(basename);
@@ -410,13 +361,13 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 
 void LocationView::Impl::updatePositionWidgetWithLocatableItemLocation()
 {
-    if(!targetItem){
+    if(!locatableItem){
         return;
     }
 
     auto& coord = coordinates[coordinateCombo.currentIndex()];
     lastCoordIndex = coord->index;
-    Position T_location = targetItem->getLocation();
+    Position T_location = locatableItem->getLocation();
 
     Position T;
     if(!coord->isLocal){
@@ -435,13 +386,14 @@ void LocationView::Impl::updatePositionWidgetWithLocatableItemLocation()
         T = coord->T.inverse(Eigen::Isometry) * T_location;
         T.linear() = coord->R0.transpose() * T_location.linear();
     }
+    // positionWidget->setReferenceRpy(Vector3::Zero());
     positionWidget->setPosition(T);
 }
 
 
 bool LocationView::Impl::setInputPositionToTargetItem(const Position& T_input)
 {
-    if(targetItem){
+    if(locatableItem){
         auto& coord = coordinates[coordinateCombo.currentIndex()];
         Position T_location;
         if(!coord->isLocal){
@@ -462,39 +414,20 @@ bool LocationView::Impl::setInputPositionToTargetItem(const Position& T_input)
                 positionWidget->setPosition(T_user);
             }
         }
-        targetConnections.block();
-        targetItem->setLocation(T_location);
-        targetConnections.unblock();
+        locatableItemConnections.block();
+        locatableItem->setLocation(T_location);
+        locatableItemConnections.unblock();
         return true;
     }
     return false;
 }
 
 
-void LocationView::Impl::updatePositionWidgetWithPositionEditTargetPosition()
-{
-    positionWidget->setReferenceRpy(Vector3::Zero());
-    positionWidget->setPosition(positionEditTarget->getPosition());
-}
-
-
-void LocationView::Impl::onPositionEditTargetExpired()
+void LocationView::Impl::onLocationExpired()
 {
 
 }
         
-
-bool LocationView::Impl::setInputPositionToPositionEditTarget(const Position& T_input)
-{
-    bool accepted = false;
-    if(positionEditTarget){
-        targetConnections.block();
-        accepted = positionEditTarget->setPosition(T_input);
-        targetConnections.unblock();
-    }
-    return accepted;
-}
-
 
 bool LocationView::storeState(Archive& archive)
 {
