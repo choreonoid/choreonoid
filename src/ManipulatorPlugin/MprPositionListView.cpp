@@ -8,6 +8,7 @@
 #include <cnoid/Buttons>
 #include <cnoid/ConnectionSet>
 #include <cnoid/BodyItem>
+#include <cnoid/EigenUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QTableView>
@@ -25,10 +26,11 @@ using fmt::format;
 
 namespace {
 
-constexpr int NumColumns = 3;
+constexpr int NumColumns = 4;
 constexpr int IdColumn = 0;
 constexpr int NoteColumn = 1;
 constexpr int JointSpaceCheckColumn = 2;
+constexpr int PositionColumn = 3;
 
 class PositionListModel : public QAbstractTableModel
 {
@@ -37,6 +39,7 @@ public:
     MprProgramItemBasePtr programItem;
     MprPositionListPtr positionList;
     ScopedConnectionSet positionListConnections;
+    QFont monoFont;
     
     PositionListModel(MprPositionListView::Impl* view);
     void setProgramItem(MprProgramItemBase* programItem);
@@ -49,6 +52,7 @@ public:
     virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
     virtual QVariant data(const QModelIndex& index, int role) const override;
+    QVariant getPositionData(MprPosition* position) const;
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void changePositionType(int positionIndex, MprPosition* position, bool isJointSpace);
     void addPosition(int row, MprPosition* position, bool doInsert);
@@ -83,14 +87,16 @@ class MprPositionListView::Impl : public QTableView
 public:
     MprPositionListView* self;
     TargetItemPicker<MprProgramItemBase> targetItemPicker;
-    MprProgramItemBasePtr targetItem;
+    MprProgramItemBasePtr programItem;
     MprPositionListPtr positionList;
     PositionListModel* positionListModel;
     CheckItemDelegate* globalCheckDelegate;
     ReferencedPtr transientMarkerHolder;
     QLabel targetLabel;
     PushButton addButton;
+    PushButton touchupButton;
     MenuManager contextMenuManager;
+    BodySyncMode bodySyncMode;
     bool isSelectionChangedAlreadyCalled;
 
     Impl(MprPositionListView* self);
@@ -102,7 +108,9 @@ public:
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(int row, QPoint globalPos);
     virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
-    void applyPosition(const QModelIndex& modelIndex);
+    void setBodySyncMode(BodySyncMode mode);
+    void applyPosition(const QModelIndex& modelIndex, bool forceDirectSync);
+    void touchupCurrentPosition();
 };
 
 }
@@ -110,9 +118,10 @@ public:
 
 PositionListModel::PositionListModel(MprPositionListView::Impl* view)
     : QAbstractTableModel(view),
-      view(view)
+      view(view),
+      monoFont("Monospace")
 {
-
+    monoFont.setStyleHint(QFont::TypeWriter);
 }
 
 
@@ -198,6 +207,8 @@ QVariant PositionListModel::headerData(int section, Qt::Orientation orientation,
                 return _("Note");
             case JointSpaceCheckColumn:
                 return _("J");
+            case PositionColumn:
+                return _("Position");
             default:
                 return QVariant();
             }
@@ -228,7 +239,7 @@ QModelIndex PositionListModel::index(int row, int column, const QModelIndex& par
 Qt::ItemFlags PositionListModel::flags(const QModelIndex& index) const
 {
     auto flags = QAbstractTableModel::flags(index);
-    if(index.isValid()){
+    if(index.isValid() && index.column() != PositionColumn){
         flags |= Qt::ItemIsEditable;
     }
     return flags;
@@ -253,15 +264,55 @@ QVariant PositionListModel::data(const QModelIndex& index, int role) const
         case JointSpaceCheckColumn:
             return position->isFK();
 
+        case PositionColumn:
+            return getPositionData(position);
+
         default:
             break;
         }
     } else if(role == Qt::TextAlignmentRole){
-        if(column == NoteColumn){
+        if(column == NoteColumn || column == PositionColumn){
             return (Qt::AlignLeft + Qt::AlignVCenter);
         } else {
             return Qt::AlignCenter;
         }
+    } else if(role == Qt::FontRole){
+        if(column == PositionColumn){
+            return monoFont;
+        }
+    }
+    return QVariant();
+}
+
+
+QVariant PositionListModel::getPositionData(MprPosition* position) const
+{
+    if(position->isIK()){
+        auto ik = position->ikPosition();
+        auto p = ik->position().translation();
+        auto rpy = degree(ik->rpy());
+        auto& baseId = ik->baseFrameId();
+        auto& offsetId = ik->offsetFrameId();
+        if(baseId.isInt() && offsetId.isInt()){
+            return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X} {7:2d} {8:2d}",
+                          p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2], ik->configuration(),
+                          baseId.toInt(), offsetId.toInt()).c_str();
+        } else {
+            return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
+                          p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2], ik->configuration()).c_str();
+        }
+    } else if(position->isFK()){
+        auto fk = position->fkPosition();
+        string data;
+        int n = fk->numJoints();
+        int m = n - 1;
+        for(int i=0; i < n; ++i){
+            data += format("{0: 6.1f}", degree(fk->q(i)));
+            if(i < m){
+                data += " ";
+            }
+        }
+        return data.c_str();
     }
     return QVariant();
 }
@@ -298,7 +349,6 @@ bool PositionListModel::setData(const QModelIndex& index, const QVariant& value,
 
         case JointSpaceCheckColumn:
             changePositionType(positionIndex, position, value.toBool());
-            Q_EMIT dataChanged(index, index, {role});
             break;
             
         default:
@@ -306,7 +356,7 @@ bool PositionListModel::setData(const QModelIndex& index, const QVariant& value,
         }
     }
     if(updateFlags){
-        Q_EMIT dataChanged(index, index, {role});
+        //Q_EMIT dataChanged(index, index, {role});
         position->notifyUpdate(updateFlags);
     }
     return false;
@@ -324,11 +374,7 @@ void PositionListModel::changePositionType(int positionIndex, MprPosition* posit
     newPosition->setId(position->id());
     newPosition->setNote(position->note());
     newPosition->setCurrentPosition(programItem->kinematicsKit());
-
-    positionListConnections.block();
-    positionList->removeAt(positionIndex);
-    positionList->insert(positionIndex, newPosition);
-    positionListConnections.unblock();
+    positionList->replace(positionIndex, newPosition);
 }
 
 
@@ -357,7 +403,7 @@ void PositionListModel::removePositions(QModelIndexList selected)
         for(auto& index : selected){
             int row = index.row() - numRemoved;
             beginRemoveRows(QModelIndex(), row, row);
-            positionList->removeAt(row);
+            positionList->remove(row);
             ++numRemoved;
             endRemoveRows();
         }
@@ -391,6 +437,15 @@ void PositionListModel::onPositionUpdated(int positionIndex, int flags)
     if(flags & MprPosition::NoteUpdate){
         auto modelIndex = index(positionIndex, NoteColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+    }
+    if(flags & MprPosition::PositionUpdate){
+        auto modelIndex = index(positionIndex, PositionColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+    }
+    if(flags & MprPosition::ObjectReplaced){
+        auto modelIndex1 = index(positionIndex, IdColumn, QModelIndex());
+        auto modelIndex2 = index(positionIndex, PositionColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
     }
 }
 
@@ -457,7 +512,7 @@ QSize CheckItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
 void MprPositionListView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MprPositionListView>(
-        "MprPositionListView", N_("Program Waypoints"), ViewManager::SINGLE_OPTIONAL);
+        "MprPositionListView", N_("Waypoints"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
@@ -473,11 +528,12 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
 {
     self->setDefaultLayoutArea(View::RIGHT);
 
+    auto sty = self->style();
+    int hs = sty->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
+
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);
 
-    int hs = self->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
-    
     auto hbox = new QHBoxLayout;
     hbox->addSpacing(hs);
     targetLabel.setStyleSheet("font-weight: bold");
@@ -486,6 +542,9 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     addButton.setText(_("Add"));
     addButton.sigClicked().connect([&](){ addPositionIntoCurrentIndex(false); });
     hbox->addWidget(&addButton);
+    touchupButton.setText(_("Touch-up"));
+    touchupButton.sigClicked().connect([&](){ touchupCurrentPosition(); });
+    hbox->addWidget(&touchupButton);
     vbox->addLayout(hbox);
 
     // Setup the table
@@ -508,9 +567,10 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     setModel(positionListModel);
 
     auto hheader = horizontalHeader();
-    hheader->setMinimumSectionSize(1);
+    hheader->setMinimumSectionSize(24);
     hheader->setSectionResizeMode(IdColumn, QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(NoteColumn, QHeaderView::Stretch);
+    hheader->setSectionResizeMode(PositionColumn, QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(JointSpaceCheckColumn, QHeaderView::ResizeToContents);
     auto vheader = verticalHeader();
     vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -519,8 +579,13 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     connect(this, &QTableView::pressed,
             [this](const QModelIndex& index){
                 if(!isSelectionChangedAlreadyCalled){
-                    applyPosition(index);
+                    applyPosition(index, false);
                 }
+            });
+
+    connect(this, &QTableView::doubleClicked,
+            [this](const QModelIndex& index){
+                applyPosition(index, true);
             });
     
     vbox->addWidget(this);
@@ -528,6 +593,8 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
 
     targetItemPicker.sigTargetItemChanged().connect(
         [&](MprProgramItemBase* item){ setProgramItem(item); });
+
+    bodySyncMode = DirectBodySync;
 }
 
 
@@ -537,9 +604,19 @@ MprPositionListView::~MprPositionListView()
 }
 
 
+void MprPositionListView::onAttachedMenuRequest(MenuManager& menuManager)
+{
+    auto twoStageCheck = menuManager.addCheckItem(_("Two-stage sync"));
+    twoStageCheck->setChecked(impl->bodySyncMode == TwoStageBodySync);
+    twoStageCheck->sigToggled().connect(
+        [&](bool on){ impl->setBodySyncMode(on ? TwoStageBodySync : DirectBodySync); });
+
+}
+
+
 void MprPositionListView::Impl::setProgramItem(MprProgramItemBase* item)
 {
-    targetItem = item;
+    programItem = item;
 
     if(item){
         string caption;
@@ -556,7 +633,7 @@ void MprPositionListView::Impl::setProgramItem(MprProgramItemBase* item)
         positionList = nullptr;
         positionListModel->setProgramItem(nullptr);
     }
-    addButton.setEnabled(targetItem != nullptr);
+    addButton.setEnabled(programItem != nullptr);
 }
 
 
@@ -573,8 +650,10 @@ void MprPositionListView::Impl::addPosition(int row, bool doInsert)
     if(positionList){
         auto id = positionList->createNextId();
         MprPositionPtr position = new MprIkPosition(id);
+        position->setCurrentPosition(programItem->kinematicsKit());
         positionListModel->addPosition(row, position, doInsert);
         resizeColumnToContents(IdColumn);
+        resizeColumnToContents(PositionColumn);
     }
 }
 
@@ -660,21 +739,58 @@ void MprPositionListView::Impl::selectionChanged
 
     auto indexes = selected.indexes();
     if(!indexes.empty()){
-        applyPosition(indexes.front());
+        applyPosition(indexes.front(), false);
     }
 }
 
 
-void MprPositionListView::Impl::applyPosition(const QModelIndex& modelIndex)
+void MprPositionListView::setBodySyncMode(BodySyncMode mode)
 {
+    impl->setBodySyncMode(mode);
+}
 
 
+void MprPositionListView::Impl::setBodySyncMode(BodySyncMode mode)
+{
+    if(mode != bodySyncMode){
+        bodySyncMode = mode;
+        if(!mode && programItem){
+            programItem->clearSuperimposition();
+        }
+    }
+}
+
+
+void MprPositionListView::Impl::applyPosition(const QModelIndex& modelIndex, bool forceDirectSync)
+{
+    auto position = positionListModel->positionAt(modelIndex);
+    if(bodySyncMode == DirectBodySync || forceDirectSync){
+        programItem->moveTo(position);
+    } else {
+        programItem->superimposePosition(position);
+    }
+}
+
+
+void MprPositionListView::Impl::touchupCurrentPosition()
+{
+    if(positionList){
+        if(auto position = positionListModel->positionAt(selectionModel()->currentIndex())){
+            programItem->touchupPosition(position);
+        }
+    }
 }
 
 
 bool MprPositionListView::storeState(Archive& archive)
 {
     impl->targetItemPicker.storeTargetItem(archive, "current_item");
+    auto mode = impl->bodySyncMode;
+    if(mode == DirectBodySync){
+        archive.write("body_sync_mode", "direct");
+    } else if(mode == TwoStageBodySync){
+        archive.write("body_sync_mode", "two-stage");
+    }
     return true;
 }
 
@@ -682,5 +798,13 @@ bool MprPositionListView::storeState(Archive& archive)
 bool MprPositionListView::restoreState(const Archive& archive)
 {
     impl->targetItemPicker.restoreTargetItemLater(archive, "current_item");
+    string mode;
+    if(archive.read("body_sync_mode", mode)){
+        if(mode == "direct"){
+            impl->setBodySyncMode(DirectBodySync);
+        } else if(mode == "two-stage"){
+            impl->setBodySyncMode(TwoStageBodySync);
+        }
+    }
     return true;
 }

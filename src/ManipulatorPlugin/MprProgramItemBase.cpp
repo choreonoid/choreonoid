@@ -36,6 +36,7 @@ public:
     MprPosition* findPosition(MprPositionStatement* statement);
     bool moveTo(MprPosition* position, bool doUpdateAll);
     bool superimposePosition(MprPosition* position);
+    bool touchupPosition(MprPosition* position);
 };
 
 }
@@ -360,22 +361,41 @@ void MprProgramItemBase::clearSuperimposition()
 
 bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement)
 {
-    if(!impl->kinematicsKit){
+    auto positions = impl->program->positionList();
+    MprPositionPtr position = statement->position(positions);
+    if(!position){
+        position = new MprIkPosition(statement->positionId());
+    }
+    bool result = impl->touchupPosition(position);
+
+    if(result){
+        positions->append(position);
+        /*
+          \todo Remove the following code and check the signal of the position
+          to update the display on the position
+        */
+        impl->program->notifyStatementUpdate(statement);
+    }
+    return result;
+}
+
+
+bool MprProgramItemBase::touchupPosition(MprPosition* position)
+{
+    return impl->touchupPosition(position);
+}
+
+
+bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position)
+{
+    if(!kinematicsKit){
         showWarningDialog(_("Program item is not associated with any manipulator"));
         return false;
     }
 
-    auto positions = impl->program->positionList();
-    auto position = statement->position(positions);
-    if(!position){
-        position = new MprIkPosition(statement->positionId());
-        positions->append(position);
-    }
-
-    bool result = position->setCurrentPosition(impl->kinematicsKit);
-
+    bool result = position->setCurrentPosition(kinematicsKit);
     if(result){
-        impl->program->notifyStatementUpdate(statement);
+        position->notifyUpdate(MprPosition::PositionUpdate);
     }
 
     return result;

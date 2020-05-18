@@ -151,7 +151,6 @@ public:
     ~Impl();
     void setupWidgets();
     StatementDelegate* findStatementDelegate(MprStatement* statement);
-    void onOptionMenuClicked();
     ScopedCounter scopedCounterOfStatementItemOperationCall();
     bool isDoingStatementItemOperation() const;
     void setProgramItem(MprProgramItemBase* item);

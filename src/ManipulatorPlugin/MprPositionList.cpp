@@ -26,6 +26,7 @@ public:
 
     Impl(MprPositionList* self);
     Impl(MprPositionList* self, const Impl& org);
+    bool remove(int index, bool doNotify);
 };
 
 }
@@ -41,6 +42,7 @@ MprPositionList::Impl::Impl(MprPositionList* self)
     : self(self)
 {
     isStringIdEnabled = true;
+    idCounter = 0;    
 }
 
 
@@ -64,6 +66,7 @@ MprPositionList::Impl::Impl(MprPositionList* self, const Impl& org)
     : self(self)
 {
     isStringIdEnabled = org.isStringIdEnabled;    
+    idCounter = 0;    
 }
 
 
@@ -99,6 +102,7 @@ void MprPositionList::clear()
     }
     impl->positions.clear();
     impl->idToPositionMap.clear();
+    impl->idCounter = 0;
 }
 
 
@@ -140,8 +144,7 @@ bool MprPositionList::insert(int index, MprPosition* position)
     auto& id = position->id();
     
     if(position->ownerPositionList() || !id.isValid()||
-       (!impl->isStringIdEnabled && id.isString()) ||
-       MprPositionList::findPosition(id)){
+       (!impl->isStringIdEnabled && id.isString()) || findPosition(id)){
         return false;
     }
 
@@ -159,22 +162,50 @@ bool MprPositionList::insert(int index, MprPosition* position)
 }
 
 
+bool MprPositionList::replace(int index, MprPosition* position)
+{
+    auto existing = positionAt(index);
+    if(existing->id() != position->id() && findPosition(position->id())){
+        return false;
+    }
+    bool replaced = false;
+    if(impl->remove(index, false)){
+        if(insert(index, position)){
+            replaced = true;
+            if(!impl->sigPositionUpdated.empty()){
+                impl->sigPositionUpdated(index, MprPosition::ObjectReplaced);
+            }
+        }
+    }
+    return replaced;
+}
+
+
 bool MprPositionList::append(MprPosition* position)
 {
     return insert(numPositions(), position);
 }
 
 
-void MprPositionList::removeAt(int index)
+void MprPositionList::remove(int index)
 {
-    if(index >= numPositions()){
-        return;
+    impl->remove(index, true);
+}
+
+
+bool MprPositionList::Impl::remove(int index, bool doNotify)
+{
+    if(index >= positions.size()){
+        return false;
     }
-    auto position_ = impl->positions[index];
-    position_->ownerPositionList_.reset();
-    impl->idToPositionMap.erase(position_->id());
-    impl->positions.erase(impl->positions.begin() + index);
-    impl->sigPositionRemoved(index, position_);
+    auto position = positions[index];
+    position->ownerPositionList_.reset();
+    idToPositionMap.erase(position->id());
+    positions.erase(positions.begin() + index);
+    if(doNotify){
+        sigPositionRemoved(index, position);
+    }
+    return true;
 }
 
 

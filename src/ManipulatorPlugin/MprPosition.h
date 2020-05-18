@@ -60,6 +60,7 @@ public:
         IdUpdate = 1 << 0,
         NoteUpdate = 1 << 1,
         PositionUpdate = 1 << 2,
+        ObjectReplaced = 1 << 3
     };
     SignalProxy<void(int flags)> sigUpdated() { return sigUpdated_; }
     void notifyUpdate(int flags);

@@ -553,7 +553,7 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     setModel(frameListModel);
 
     auto hheader = horizontalHeader();
-    hheader->setMinimumSectionSize(1);
+    hheader->setMinimumSectionSize(24);
     hheader->setSectionResizeMode(IdColumn, QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(NoteColumn, QHeaderView::Stretch);
     hheader->setSectionResizeMode(PositionColumn, QHeaderView::ResizeToContents);

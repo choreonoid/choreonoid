@@ -2,10 +2,11 @@
 #define CNOID_MANIPULATOR_PLUGIN_MPR_POSITION_LIST_VIEW_H
 
 #include <cnoid/View>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class MprPositionListView : public View
+class CNOID_EXPORT MprPositionListView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -13,9 +14,13 @@ public:
     MprPositionListView();
     virtual ~MprPositionListView();
 
+    enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageBodySync };
+    void setBodySyncMode(BodySyncMode mode);
+
     class Impl;
     
 protected:
+    virtual void onAttachedMenuRequest(MenuManager& menuManager) override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
