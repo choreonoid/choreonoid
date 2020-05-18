@@ -1,6 +1,7 @@
 #include "MprProgramItemBase.h"
 #include "MprVariableListItemBase.h"
 #include "MprControllerItemBase.h"
+#include "MprPositionListView.h"
 #include <cnoid/Plugin>
 
 using namespace cnoid;
@@ -20,6 +21,8 @@ public:
         MprProgramItemBase::initializeClass(this);
         MprVariableListItemBase::initializeClass(this);
         MprControllerItemBase::initializeClass(this);
+
+        MprPositionListView::initializeClass(this);
         
         return true;
     }

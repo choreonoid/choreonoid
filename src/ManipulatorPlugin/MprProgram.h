@@ -51,8 +51,8 @@ public:
     iterator end(){ return statements_.end(); }
     const_iterator end() const { return statements_.end(); }
 
-    MprPositionList* positions();
-    const MprPositionList* positions() const;
+    MprPositionList* positionList();
+    const MprPositionList* positionList() const;
     void removeUnreferencedPositions();
 
     SignalProxy<void(MprProgram::iterator iter)> sigStatementInserted();

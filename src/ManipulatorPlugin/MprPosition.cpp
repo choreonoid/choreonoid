@@ -42,7 +42,7 @@ MprPosition::MprPosition(const MprPosition& org)
 
 void MprPosition::setId(const GeneralId& id)
 {
-    if(!owner_){
+    if(!ownerPositionList_){
         id_ = id;
     }
 }
@@ -66,9 +66,18 @@ MprFkPosition* MprPosition::fkPosition()
 }
 
 
-MprPositionList* MprPosition::owner()
+MprPositionList* MprPosition::ownerPositionList()
 {
-    return owner_.lock();
+    return ownerPositionList_.lock();
+}
+
+
+void MprPosition::notifyUpdate(int flags)
+{
+    sigUpdated_(flags);
+    if(auto positionList = ownerPositionList()){
+        positionList->notifyPositionUpdate(this, flags);
+    }
 }
 
 

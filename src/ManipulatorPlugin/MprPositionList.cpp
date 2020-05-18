@@ -20,6 +20,9 @@ public:
     unordered_map<GeneralId, MprPositionPtr, GeneralId::Hash> idToPositionMap;
     int idCounter;
     bool isStringIdEnabled;
+    Signal<void(int index)> sigPositionAdded;
+    Signal<void(int index, MprPosition* position)> sigPositionRemoved;
+    Signal<void(int index, int flags)> sigPositionUpdated;
 
     Impl(MprPositionList* self);
     Impl(MprPositionList* self, const Impl& org);
@@ -92,7 +95,7 @@ bool MprPositionList::isStringIdEnabled() const
 void MprPositionList::clear()
 {
     for(auto& position : impl->positions){
-        position->owner_.reset();
+        position->ownerPositionList_.reset();
     }
     impl->positions.clear();
     impl->idToPositionMap.clear();
@@ -136,19 +139,21 @@ bool MprPositionList::insert(int index, MprPosition* position)
 {
     auto& id = position->id();
     
-    if(position->owner() || !id.isValid()||
+    if(position->ownerPositionList() || !id.isValid()||
        (!impl->isStringIdEnabled && id.isString()) ||
        MprPositionList::findPosition(id)){
         return false;
     }
 
-    position->owner_ = this;
+    position->ownerPositionList_ = this;
 
     impl->idToPositionMap[id] = position;
     if(index > numPositions()){
         index = numPositions();
     }
     impl->positions.insert(impl->positions.begin() + index, position);
+
+    impl->sigPositionAdded(index);
 
     return true;
 }
@@ -166,9 +171,36 @@ void MprPositionList::removeAt(int index)
         return;
     }
     auto position_ = impl->positions[index];
-    position_->owner_.reset();
+    position_->ownerPositionList_.reset();
     impl->idToPositionMap.erase(position_->id());
     impl->positions.erase(impl->positions.begin() + index);
+    impl->sigPositionRemoved(index, position_);
+}
+
+
+SignalProxy<void(int index)> MprPositionList::sigPositionAdded()
+{
+    return impl->sigPositionAdded;
+}
+
+
+SignalProxy<void(int index, MprPosition* position)> MprPositionList::sigPositionRemoved()
+{
+    return impl->sigPositionRemoved;
+}
+
+
+SignalProxy<void(int index, int flags)> MprPositionList::sigPositionUpdated()
+{
+    return impl->sigPositionUpdated;
+}
+
+
+void MprPositionList::notifyPositionUpdate(MprPosition* position, int flags)
+{
+    if(!impl->sigPositionUpdated.empty()){
+        impl->sigPositionUpdated(indexOf(position), flags);
+    }
 }
 
 
@@ -176,7 +208,7 @@ bool MprPositionList::resetId(MprPosition* position, const GeneralId& newId)
 {
     bool changed = false;
 
-    if(position->owner() == this && newId.isValid() &&
+    if(position->ownerPositionList() == this && newId.isValid() &&
        (impl->isStringIdEnabled || newId.isInt())){
 
         auto& positionMap = impl->idToPositionMap;

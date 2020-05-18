@@ -3,8 +3,9 @@
 
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/CloneableReferenced>
-#include <cnoid/EigenTypes>
 #include <cnoid/GeneralId>
+#include <cnoid/EigenTypes>
+#include <cnoid/Signal>
 #include <string>
 #include <array>
 #include <bitset>
@@ -34,7 +35,7 @@ public:
     
     const GeneralId& id() const { return id_; }
 
-    //! \note This function only works when the position is not belonging to any position set.
+    //! \note This function only works when the position is not belonging to any position list.
     void setId(const GeneralId& id);
 
     int positionType() const { return positionType_; }
@@ -44,7 +45,7 @@ public:
     MprIkPosition* ikPosition();
     MprFkPosition* fkPosition();
 
-    MprPositionList* owner();
+    MprPositionList* ownerPositionList();
 
     virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) = 0;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
@@ -55,6 +56,14 @@ public:
     virtual bool read(const Mapping& archive);
     virtual bool write(Mapping& archive) const;
 
+    enum UpdateFlag {
+        IdUpdate = 1 << 0,
+        NoteUpdate = 1 << 1,
+        PositionUpdate = 1 << 2,
+    };
+    SignalProxy<void(int flags)> sigUpdated() { return sigUpdated_; }
+    void notifyUpdate(int flags);
+
 protected:
     MprPosition(PositionType type);
     MprPosition(PositionType type, const GeneralId& id);
@@ -64,7 +73,8 @@ private:
     PositionType positionType_;
     GeneralId id_;
     std::string note_;
-    weak_ref_ptr<MprPositionList> owner_;
+    weak_ref_ptr<MprPositionList> ownerPositionList_;
+    Signal<void(int flags)> sigUpdated_;
 
     friend class MprPositionList;
 };

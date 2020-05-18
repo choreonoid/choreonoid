@@ -173,6 +173,18 @@ const MprProgram* MprProgramItemBase::program() const
 }
 
 
+MprPositionList* MprProgramItemBase::positionList()
+{
+    return impl->program->positionList();
+}
+
+
+const MprPositionList* MprProgramItemBase::positionList() const
+{
+    return impl->program->positionList();
+}
+
+
 bool MprProgramItemBase::isStartupProgram() const
 {
     return impl->isStartupProgram;
@@ -219,7 +231,7 @@ bool MprProgramItemBase::Impl::moveTo(MprPositionStatement* statement, bool doUp
 {
     bool updated = false;
     if(kinematicsKit){
-        auto positions = program->positions();
+        auto positions = program->positionList();
         auto position = statement->position(positions);
         if(!position){
             MessageView::instance()->putln(
@@ -277,7 +289,7 @@ bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement)
         return false;
     }
 
-    auto positions = impl->program->positions();
+    auto positions = impl->program->positionList();
     auto position = statement->position(positions);
     if(!position){
         position = new MprIkPosition(statement->positionId());
@@ -299,7 +311,7 @@ void MprProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Startup"), impl->isStartupProgram,
                 [&](bool on){ return setAsStartupProgram(on); });
     putProperty(_("Num statements"), impl->program->numStatements());
-    putProperty(_("Num positions"), impl->program->positions()->numPositions());
+    putProperty(_("Num positions"), positionList()->numPositions());
 }
 
 

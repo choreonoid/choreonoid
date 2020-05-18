@@ -25,7 +25,7 @@ class MprProgram::Impl
 public:
     MprProgram* self;
     weak_ref_ptr<MprStructuredStatement> holderStatement;
-    MprPositionListPtr positions;
+    MprPositionListPtr positionList;
     Signal<void(MprStatement* statement)> sigStatementUpdated;
     Signal<void(iterator iter)> sigStatementInserted;
     Signal<void(MprProgram* program, MprStatement* statement)> sigStatementRemoved;
@@ -36,7 +36,7 @@ public:
     void notifyStatementInsertion(iterator iter);
     void notifyStatementRemoval(MprProgram* program, MprStatement* statement);
     void notifyStatementUpdate(MprStatement* statement) const;
-    MprPositionList* getOrCreatePositions();
+    MprPositionList* getOrCreatePositionList();
     bool read(const Mapping& archive);    
 };
 
@@ -76,11 +76,11 @@ MprProgram::Impl::Impl(MprProgram* self, const Impl& org, CloneMap* cloneMap)
     : self(self),
       name(org.name)
 {
-    if(org.positions){
+    if(org.positionList){
         if(cloneMap){
-            positions = cloneMap->getClone(org.positions);
+            positionList = cloneMap->getClone(org.positionList);
         } else {
-            positions = org.positions->clone();
+            positionList = org.positionList->clone();
         }
     }
 }
@@ -277,38 +277,38 @@ void MprProgram::traverseAllStatements(std::function<bool(MprStatement* statemen
 }
 
 
-MprPositionList* MprProgram::Impl::getOrCreatePositions()
+MprPositionList* MprProgram::Impl::getOrCreatePositionList()
 {
-    if(!positions){
-        positions = new MprPositionList;
+    if(!positionList){
+        positionList = new MprPositionList;
     }
-    return positions;
+    return positionList;
 }
 
 
-MprPositionList* MprProgram::positions()
+MprPositionList* MprProgram::positionList()
 {
     if(!impl->holderStatement){
-        return impl->getOrCreatePositions();
+        return impl->getOrCreatePositionList();
     }
     if(auto topLevel = topLevelProgram()){
-        return topLevel->impl->getOrCreatePositions();
+        return topLevel->impl->getOrCreatePositionList();
     }
-    return impl->getOrCreatePositions();
+    return impl->getOrCreatePositionList();
 }
 
 
-const MprPositionList* MprProgram::positions() const
+const MprPositionList* MprProgram::positionList() const
 {
-    return const_cast<MprProgram*>(this)->positions();
+    return const_cast<MprProgram*>(this)->positionList();
 }
 
 
 void MprProgram::removeUnreferencedPositions()
 {
-    auto positions_ = positions();
+    auto positionList_ = positionList();
 
-    if(!positions_){
+    if(!positionList_){
         return;
     }
     
@@ -322,7 +322,7 @@ void MprProgram::removeUnreferencedPositions()
             return true;
         });
 
-    positions_->removeUnreferencedPositions(
+    positionList_->removeUnreferencedPositions(
         [&](MprPosition* position){
             return (referencedIds.find(position->id()) != referencedIds.end());
         });
@@ -347,7 +347,7 @@ void MprProgram::renumberPositionIds()
                         ps->setPositionId(newId);
                     } else {
                         int newId = idCounter++;
-                        auto position = impl->positions->findPosition(id);
+                        auto position = impl->positionList->findPosition(id);
                         idMap[id.toInt()] = newId;
                         referencedIntIdPositions.push_back(position);
                         ps->setPositionId(newId);
@@ -360,9 +360,9 @@ void MprProgram::renumberPositionIds()
     vector<MprPositionPtr> unreferencedIntIdPositions;
     vector<MprPositionPtr> stringIdPositions;
 
-    const int n = impl->positions->numPositions();
+    const int n = impl->positionList->numPositions();
     for(int i=0; i < n; ++i){
-        auto position = impl->positions->positionAt(i);
+        auto position = impl->positionList->positionAt(i);
         if(position->id().isString()){
             stringIdPositions.push_back(position);
         } else {
@@ -372,21 +372,21 @@ void MprProgram::renumberPositionIds()
         }
     }
 
-    impl->positions->clear();
+    impl->positionList->clear();
 
     for(size_t i=0; i < referencedIntIdPositions.size(); ++i){
         auto& position = referencedIntIdPositions[i];
         if(position){
             position->setId(i);
-            impl->positions->append(position);
+            impl->positionList->append(position);
         }
     }
     for(auto& position : unreferencedIntIdPositions){
         position->setId(idCounter++);
-        impl->positions->append(position);
+        impl->positionList->append(position);
     }
     for(auto& position : stringIdPositions){
-        impl->positions->append(position);
+        impl->positionList->append(position);
     }
 }
 
@@ -437,9 +437,9 @@ bool MprProgram::Impl::read(const Mapping& archive)
 
         auto& positionSetNode = *archive.findMapping("positions");
         if(positionSetNode.isValid()){
-            getOrCreatePositions();
-            positions->clear();
-            if(!positions->read(positionSetNode)){
+            getOrCreatePositionList();
+            positionList->clear();
+            if(!positionList->read(positionSetNode)){
                 return false;
             }
         }
@@ -517,9 +517,9 @@ bool MprProgram::write(Mapping& archive) const
         }
     }
 
-    if(!isSubProgram() && impl->positions){
+    if(!isSubProgram() && impl->positionList){
         MappingPtr node = new Mapping;
-        if(impl->positions->write(*node)){
+        if(impl->positionList->write(*node)){
             archive.insert("positions", node);
         }
     }
