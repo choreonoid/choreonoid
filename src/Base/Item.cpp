@@ -1137,6 +1137,7 @@ void Item::removeAddon(ItemAddon* addon)
     if(auto owner = addon->ownerItem()){
         if(owner == this){
             impl->addonMap.erase(typeid(*addon));
+            addon->setOwnerItem(nullptr);
         }
     }
 }

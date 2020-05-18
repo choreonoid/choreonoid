@@ -15,13 +15,16 @@ class CNOID_EXPORT ItemAddon : public Referenced
 public:
     ItemAddon();
     ItemAddon(const ItemAddon& org) = delete;
-    virtual bool setOwnerItem(Item* item);
     virtual Item* ownerItem();
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
+protected:
+    virtual bool setOwnerItem(Item* item);
+
 private:
     Item* ownerItem_;
+    friend class Item;
 };
 
 typedef ref_ptr<ItemAddon> ItemAddonPtr;
