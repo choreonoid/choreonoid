@@ -51,13 +51,12 @@ public:
     bool write(Mapping& archive) const;
 
     enum UpdateFlag {
-        IdUpdate = 1,
-        ModeUpdate = 1 << 2,
+        IdUpdate = 1 << 0,
+        ModeUpdate = 1 << 1,
+        NoteUpdate = 1 << 2,
         PositionUpdate = 1 << 3,
-        NoteUpdate = 1 << 4,
-        AllUpdates = IdUpdate | ModeUpdate | PositionUpdate | NoteUpdate
     };
-    SignalProxy<void(int flags)> sigUpdated();
+    SignalProxy<void(int flags)> sigUpdated() { return sigUpdated_; }
     void notifyUpdate(int flags);
         
 private:

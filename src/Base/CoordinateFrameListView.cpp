@@ -46,7 +46,6 @@ public:
     void setFrameListItem(CoordinateFrameListItem* frameListItem);
     bool isValid() const;
     int numFrames() const;
-    int rowOfFrame(CoordinateFrame* frame) const;
     CoordinateFrame* frameAt(const QModelIndex& index) const;
     virtual int rowCount(const QModelIndex& parent) const override;
     virtual int columnCount(const QModelIndex& parent) const override;
@@ -159,15 +158,6 @@ int FrameListModel::numFrames() const
         return frameList->numFrames();
     }
     return 0;
-}
-
-
-int FrameListModel::rowOfFrame(CoordinateFrame* frame) const
-{
-    if(frameList){
-        return frameList->indexOf(frame);
-    }
-    return -1;
 }
 
 

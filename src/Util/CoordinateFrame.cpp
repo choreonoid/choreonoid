@@ -51,12 +51,6 @@ CoordinateFrameList* CoordinateFrame::ownerFrameList() const
 }
 
 
-SignalProxy<void(int flags)> CoordinateFrame::sigUpdated()
-{
-    return sigUpdated_;
-}
-
-
 void CoordinateFrame::notifyUpdate(int flags)
 {
     sigUpdated_(flags);
