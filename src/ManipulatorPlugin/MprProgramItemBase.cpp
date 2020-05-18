@@ -4,6 +4,8 @@
 #include "MprPositionStatement.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
+#include <cnoid/BodySuperimposerAddon>
+#include <cnoid/BodyState>
 #include <cnoid/ControllerItem>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/PutPropertyFunction>
@@ -31,7 +33,9 @@ public:
     Impl(MprProgramItemBase* self, const Impl& org);
     void setupSignalConnections();
     void setTargetBodyItem(BodyItem* bodyItem);
-    bool moveTo(MprPositionStatement* statement, bool doUpdateAll);
+    MprPosition* findPosition(MprPositionStatement* statement);
+    bool moveTo(MprPosition* position, bool doUpdateAll);
+    bool superimposePosition(MprPosition* position);
 };
 
 }
@@ -221,64 +225,136 @@ bool MprProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
 }
 
 
-bool MprProgramItemBase::moveTo(MprPositionStatement* statement, bool doUpdateAll)
+
+
+
+bool MprProgramItemBase::moveTo(MprPositionStatement* statement)
 {
-    return impl->moveTo(statement, doUpdateAll);
+    return impl->moveTo(impl->findPosition(statement), true);
 }
 
 
-bool MprProgramItemBase::Impl::moveTo(MprPositionStatement* statement, bool doUpdateAll)
+bool MprProgramItemBase::moveTo(MprPosition* position)
 {
-    bool updated = false;
+    return impl->moveTo(position, true);
+}
+
+
+MprPosition* MprProgramItemBase::Impl::findPosition(MprPositionStatement* statement)
+{
+    MprPosition* position = nullptr;
     if(kinematicsKit){
         auto positions = program->positionList();
-        auto position = statement->position(positions);
+        position = statement->position(positions);
         if(!position){
             MessageView::instance()->putln(
                 format(_("Position {0} is not found."), statement->positionLabel()),
                 MessageView::WARNING);
-        } else {
-            auto ikPosition = dynamic_cast<MprIkPosition*>(position);
-            if(doUpdateAll && ikPosition){
-                kinematicsKit->setReferenceRpy(ikPosition->referenceRpy());
-                kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
-                kinematicsKit->setCurrentOffsetFrame(ikPosition->offsetFrameId());
-                kinematicsKit->notifyFrameUpdate();
-            }
-            updated = position->apply(kinematicsKit);
-            if(updated){
-                if(doUpdateAll){
-                    targetBodyItem->notifyKinematicStateChange();
-                }
-            } else {
-                if(doUpdateAll && ikPosition){
-                    kinematicsKit->notifyPositionError(ikPosition->position());
-                }
-                string tcpName;
-                if(ikPosition){
-                    if(auto tcpFrame = kinematicsKit->offsetFrame(ikPosition->offsetFrameId())){
-                        tcpName = tcpFrame->note();
-                        if(tcpName.empty()){
-                            auto& id = tcpFrame->id();
-                            if(id.isInt()){
-                                tcpName = format(_("TCP {0}"), id.toInt());
-                            } else {
-                                tcpName = id.toString();
-                            }
-                        }
-                    }
-                }
-                if(tcpName.empty()){
-                    tcpName = "TCP";
-                }
-                showWarningDialog(
-                    format(_("{0} of {1} cannot be moved to position {2}"),
-                           tcpName, targetBodyItem->displayName(), position->id().label()));
-            }
-                
         }
     }
+    return position;
+}
+
+
+bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll)
+{
+    if(!kinematicsKit){
+        return false;
+    }
+    bool updated = false;
+
+    auto ikPosition = position->ikPosition();
+
+    if(doUpdateAll && ikPosition){
+        kinematicsKit->setReferenceRpy(ikPosition->referenceRpy());
+        kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
+        kinematicsKit->setCurrentOffsetFrame(ikPosition->offsetFrameId());
+        kinematicsKit->notifyFrameUpdate();
+    }
+    updated = position->apply(kinematicsKit);
+    if(updated){
+        if(doUpdateAll){
+            targetBodyItem->notifyKinematicStateChange();
+        }
+    } else {
+        if(doUpdateAll && ikPosition){
+            kinematicsKit->notifyPositionError(ikPosition->position());
+        }
+        string tcpName;
+        if(ikPosition){
+            if(auto tcpFrame = kinematicsKit->offsetFrame(ikPosition->offsetFrameId())){
+                tcpName = tcpFrame->note();
+                if(tcpName.empty()){
+                    auto& id = tcpFrame->id();
+                    if(id.isInt()){
+                        tcpName = format(_("TCP {0}"), id.toInt());
+                    } else {
+                        tcpName = id.toString();
+                    }
+                }
+            }
+        }
+        if(tcpName.empty()){
+            tcpName = "TCP";
+        }
+        showWarningDialog(
+            format(_("{0} of {1} cannot be moved to position {2}"),
+                   tcpName, targetBodyItem->displayName(), position->id().label()));
+    }
+
     return updated;
+}
+
+
+bool MprProgramItemBase::superimposePosition(MprPositionStatement* statement)
+{
+    return impl->superimposePosition(impl->findPosition(statement));
+}
+
+
+bool MprProgramItemBase::superimposePosition(MprPosition* position)
+{
+    return impl->superimposePosition(position);
+}
+
+
+bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position)
+{
+    if(!targetBodyItem){
+        return false;
+    }
+    bool result = false;
+    if(auto superimposer = targetBodyItem->getAddon<BodySuperimposerAddon>()){
+        auto orgBody = targetBodyItem->body();
+        BodyState orgBodyState(*orgBody);
+        if(moveTo(position, false)){
+            // Main body
+            auto superBody = superimposer->superimposedBody(0);
+            BodyState bodyState(*orgBody);
+            bodyState.restorePositions(*superBody);
+            superBody->calcForwardKinematics();
+            // Child bodies
+            const int n = superimposer->numSuperimposedBodies();
+            for(int i=1; i < n; ++i){
+                auto childBody = superimposer->superimposedBody(i);
+                childBody->syncPositionWithParentBody();
+            }
+            superimposer->updateSuperimposition();
+            orgBodyState.restorePositions(*orgBody);
+            result = true;
+        }
+    }
+    return result;
+}
+
+
+void MprProgramItemBase::clearSuperimposition()
+{
+    if(impl->targetBodyItem){
+        if(auto superimposer = impl->targetBodyItem->findAddon<BodySuperimposerAddon>()){
+            superimposer->clearSuperimposition();
+        }
+    }
 }
 
 

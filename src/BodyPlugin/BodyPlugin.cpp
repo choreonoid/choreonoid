@@ -22,7 +22,7 @@
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
 #include "BodyMarkerItem.h"
-#include "BodySuperimposerItem.h"
+#include "BodySuperimposerAddon.h"
 #include "BodySelectionManager.h"
 #include "KinematicFaultChecker.h"
 #include "SplineFilterDialog.h"
@@ -98,7 +98,7 @@ public:
         SensorVisualizerItem::initializeClass(this);
         BodyTrackingCameraItem::initializeClass(this);
         BodyMarkerItem::initializeClass(this);
-        BodySuperimposerItem::initializeClass(this);
+        BodySuperimposerAddon::initializeClass(this);
 
         BodyMotionEngine::initializeClass(this);
         CollisionSeqEngine::initializeClass(this);
