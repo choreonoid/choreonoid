@@ -9,6 +9,12 @@ ItemAddon::ItemAddon()
 }
 
 
+ItemAddon::ItemAddon(const ItemAddon& org)
+{
+    ownerItem_ = nullptr;
+}
+
+
 bool ItemAddon::setOwnerItem(Item* item)
 {
     ownerItem_ = item;

@@ -14,7 +14,7 @@ class CNOID_EXPORT ItemAddon : public Referenced
 {
 public:
     ItemAddon();
-    ItemAddon(const ItemAddon& org) = delete;
+    ItemAddon(const ItemAddon& org);
     virtual Item* ownerItem();
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
