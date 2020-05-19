@@ -1,10 +1,5 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
-#ifndef CNOID_GUIBASE_MULTI_SEQ_ITEM_CREATION_PANEL_H_INCLUDED
-#define CNOID_GUIBASE_MULTI_SEQ_ITEM_CREATION_PANEL_H_INCLUDED
+#ifndef CNOID_BASE_MULTI_SEQ_ITEM_CREATION_PANEL_H
+#define CNOID_BASE_MULTI_SEQ_ITEM_CREATION_PANEL_H
 
 #include "SpinBox.h"
 #include <cnoid/ItemManager>
@@ -18,8 +13,8 @@ class CNOID_EXPORT MultiSeqItemCreationPanel : public ItemCreationPanel
 public:
     MultiSeqItemCreationPanel(const QString& numSeqsCaption);
         
-    virtual bool initializePanel(Item* protoItem);
-    virtual bool initializeItem(Item* protoItem);
+    virtual bool initializePanel(Item* protoItem, Item* parentItem) override;
+    virtual bool initializeItem(Item* protoItem, Item* parentItem) override;
         
 private:
     QLineEdit* nameEntry;
@@ -27,7 +22,7 @@ private:
     DoubleSpinBox* timeLengthSpin;
     DoubleSpinBox* frameRateSpin;
 };
-}
 
+}
 
 #endif

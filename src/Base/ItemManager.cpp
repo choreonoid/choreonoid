@@ -61,32 +61,6 @@ typedef ref_ptr<ClassInfo> ClassInfoPtr;
 typedef map<std::type_index, ClassInfoPtr> ItemTypeToInfoMap;
 typedef map<string, ClassInfoPtr> ItemClassNameToInfoMap;
 
-class DefaultCreationPanel : public ItemCreationPanel
-{
-    QLineEdit* nameEntry;
-        
-public:
-
-    DefaultCreationPanel(QWidget* parent)
-        : ItemCreationPanel(parent) {
-        QHBoxLayout* layout = new QHBoxLayout();
-        layout->addWidget(new QLabel(_("Name:")));
-        nameEntry = new QLineEdit();
-        layout->addWidget(nameEntry);
-        setLayout(layout);
-    }
-        
-    virtual bool initializePanel(Item* protoItem) {
-        nameEntry->setText(protoItem->name().c_str());
-        return true;
-    }
-            
-    virtual bool initializeItem(Item* protoItem) {
-        protoItem->setName(nameEntry->text().toStdString());
-        return true;
-    }
-};
-
 ItemClassRegistry* itemClassRegistry = nullptr;
 MessageView* messageView = nullptr;
 bool isStaticMembersInitialized = false;
@@ -539,7 +513,7 @@ void ItemManager::Impl::addCreationPanel(const std::type_info& type, ItemCreatio
     if(panel){
         base->addPanel(panel);
     } else {
-        base->addPanel(new DefaultCreationPanel(base));
+        base->addPanel(new DefaultItemCreationPanel);
     }
     registeredCreationPanels.insert(panel);
 }
@@ -692,8 +666,12 @@ Item* CreationPanelBase::createItem(Item* parentItem)
     }
 
     if(result){
-        for(size_t i=0; i < panels.size(); ++i){
-            if(!panels[i]->initializePanel(item)){
+        for(auto& panel : panels){
+            if(!panel->initializePanel(item, parentItem)){
+                result = false;
+                break;
+            }
+            if(!panel->initializePanel(item)){ // old
                 result = false;
                 break;
             }
@@ -702,8 +680,12 @@ Item* CreationPanelBase::createItem(Item* parentItem)
 
     if(result){
         if(exec() == QDialog::Accepted){
-            for(size_t i=0; i < panels.size(); ++i){
-                if(!panels[i]->initializeItem(item)){
+            for(auto& panel : panels){
+                if(!panel->initializeItem(item, parentItem)){
+                    result = false;
+                    break;
+                }
+                if(!panel->initializeItem(item)){ // old
                     result = false;
                     break;
                 }
@@ -732,6 +714,36 @@ Item* CreationPanelBase::createItem(Item* parentItem)
 }
 
 
+ItemCreationPanel::ItemCreationPanel()
+{
+
+}
+
+
+bool ItemCreationPanel::initializePanel(Item* /* protoItem */, Item* /* parentItem */)
+{
+    return true;
+}
+
+
+bool ItemCreationPanel::initializeItem(Item* /* protoItem */, Item* /* parentItem */)
+{
+    return true;
+}
+
+
+bool ItemCreationPanel::initializePanel(Item* /* protoItem */)
+{
+    return true;
+}
+
+
+bool ItemCreationPanel::initializeItem(Item* /* protoItem */)
+{
+    return true;
+}
+
+
 ItemCreationPanel* ItemCreationPanel::findPanelOnTheSameDialog(const std::string& name)
 {
     QBoxLayout* layout = dynamic_cast<QBoxLayout*>(parentWidget());
@@ -748,6 +760,30 @@ ItemCreationPanel* ItemCreationPanel::findPanelOnTheSameDialog(const std::string
         }
     }
     return nullptr;
+}
+
+
+DefaultItemCreationPanel::DefaultItemCreationPanel()
+{
+    QHBoxLayout* layout = new QHBoxLayout();
+    layout->addWidget(new QLabel(_("Name:")));
+    nameEntry = new QLineEdit();
+    layout->addWidget(nameEntry);
+    setLayout(layout);
+}
+        
+
+bool DefaultItemCreationPanel::initializePanel(Item* protoItem, Item* /* parentItem */)
+{
+    static_cast<QLineEdit*>(nameEntry)->setText(protoItem->name().c_str());
+    return true;
+}
+            
+
+bool DefaultItemCreationPanel::initializeItem(Item* protoItem, Item* /* parentItem */)
+{
+    protoItem->setName(static_cast<QLineEdit*>(nameEntry)->text().toStdString());
+    return true;
 }
 
 

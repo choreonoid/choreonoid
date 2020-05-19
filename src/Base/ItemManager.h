@@ -23,16 +23,30 @@ class ItemFileIO;
 class ItemAddon;
 class Mapping;
 
-class ItemCreationPanel : public QWidget
+class CNOID_EXPORT ItemCreationPanel : public QWidget
 {
 public:
-    ItemCreationPanel(QWidget* parent = nullptr) : QWidget(parent) { }
+    ItemCreationPanel();
+    virtual bool initializePanel(Item* protoItem, Item* parentItem);
+    virtual bool initializeItem(Item* protoItem, Item* parentItem);
 
-    virtual bool initializePanel(Item* protoItem) = 0;
-    virtual bool initializeItem(Item* protoItem) = 0;
+    //! \deprecated
+    virtual bool initializePanel(Item* protoItem);
+    //! \deprecated
+    virtual bool initializeItem(Item* protoItem);
 
 protected:
     ItemCreationPanel* findPanelOnTheSameDialog(const std::string& name);
+};
+
+
+class CNOID_EXPORT DefaultItemCreationPanel : public ItemCreationPanel
+{
+    QWidget* nameEntry;
+public:
+    DefaultItemCreationPanel();
+    virtual bool initializePanel(Item* protoItem, Item* parentItem) override;
+    virtual bool initializeItem(Item* protoItem, Item* parentItem) override;
 };
 
 
@@ -131,7 +145,7 @@ public:
         return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType)));
     }
 
-    template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel = 0) {
+    template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel = nullptr) {
         addCreationPanel_(typeid(ItemType), panel);
         return *this;
     }

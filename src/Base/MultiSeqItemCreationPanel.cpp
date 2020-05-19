@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "MultiSeqItemCreationPanel.h"
 #include "MultiSeqItem.h"
 #include <QBoxLayout>
@@ -12,9 +7,10 @@
 using namespace std;
 using namespace cnoid;
 
-
 namespace {
+
 const bool TRACE_FUNCTIONS = false;
+
 }
 
 
@@ -53,7 +49,7 @@ MultiSeqItemCreationPanel::MultiSeqItemCreationPanel(const QString& numSeqsCapti
 }
     
     
-bool MultiSeqItemCreationPanel::initializePanel(Item* protoItem)
+bool MultiSeqItemCreationPanel::initializePanel(Item* protoItem, Item* /* parentItem */)
 {
     nameEntry->setText(protoItem->name().c_str());
         
@@ -70,7 +66,7 @@ bool MultiSeqItemCreationPanel::initializePanel(Item* protoItem)
 }
     
     
-bool MultiSeqItemCreationPanel::initializeItem(Item* protoItem)
+bool MultiSeqItemCreationPanel::initializeItem(Item* protoItem, Item* /* parentItem */)
 {
     protoItem->setName(nameEntry->text().toStdString());
 
