@@ -17,6 +17,7 @@
 #include <QStyledItemDelegate>
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QGuiApplication>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -382,15 +383,7 @@ void PositionListModel::addPosition(int row, MprPosition* position, bool doInser
 {
     if(positionList){
         int newPositionIndex = doInsert ? row : row + 1;
-        if(positionList->insert(newPositionIndex, position)){
-            if(numPositions() == 0){
-                // Remove the empty row first
-                beginRemoveRows(QModelIndex(), 0, 0);
-                endRemoveRows();
-            }
-            beginInsertRows(QModelIndex(), newPositionIndex, newPositionIndex);
-            endInsertRows();
-        }
+        positionList->insert(newPositionIndex, position);
     }
 }
 
@@ -401,16 +394,9 @@ void PositionListModel::removePositions(QModelIndexList selected)
         std::sort(selected.begin(), selected.end());
         int numRemoved = 0;
         for(auto& index : selected){
-            int row = index.row() - numRemoved;
-            beginRemoveRows(QModelIndex(), row, row);
-            positionList->remove(row);
+            int positionIndex = index.row() - numRemoved;
+            positionList->remove(positionIndex);
             ++numRemoved;
-            endRemoveRows();
-        }
-        if(positionList->numPositions() == 0){
-            // This is necessary to show the empty row
-            beginResetModel();
-            endResetModel();
         }
     }
 }
@@ -418,13 +404,25 @@ void PositionListModel::removePositions(QModelIndexList selected)
 
 void PositionListModel::onPositionAdded(int positionIndex)
 {
-
+    if(numPositions() == 0){
+        // Remove the empty row first
+        beginRemoveRows(QModelIndex(), 0, 0);
+        endRemoveRows();
+    }
+    beginInsertRows(QModelIndex(), positionIndex, positionIndex);
+    endInsertRows();
 }
 
 
 void PositionListModel::onPositionRemoved(int positionIndex, MprPosition* position)
 {
-
+    beginRemoveRows(QModelIndex(), positionIndex, positionIndex);
+    endRemoveRows();
+    if(numPositions() == 0){
+        // This is necessary to show the empty row
+        beginResetModel();
+        endResetModel();
+    }
 }
 
 
@@ -578,8 +576,10 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
 
     connect(this, &QTableView::pressed,
             [this](const QModelIndex& index){
-                if(!isSelectionChangedAlreadyCalled){
-                    applyPosition(index, false);
+                if(QGuiApplication::mouseButtons() == Qt::LeftButton){
+                    if(!isSelectionChangedAlreadyCalled){
+                        applyPosition(index, false);
+                    }
                 }
             });
 

@@ -17,6 +17,7 @@
 #include <QStyledItemDelegate>
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QGuiApplication>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -565,8 +566,10 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
 
     connect(this, &QTableView::pressed,
             [this](const QModelIndex& index){
-                if(!isSelectionChangedAlreadyCalled){
-                    startLocationEditing(index);
+                if(QGuiApplication::mouseButtons() == Qt::LeftButton){
+                    if(!isSelectionChangedAlreadyCalled){
+                        startLocationEditing(index);
+                    }
                 }
             });
     

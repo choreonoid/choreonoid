@@ -48,6 +48,7 @@ public:
     bool checkBodySetChange(Item* parentItem, set<BodyItem*>& bodyItemSet);
     void setTransparency(float t);
     void updateSuperimposition();
+    bool checkPositionIdentity(Body* body1, Body* body2);
 };
 
 }
@@ -239,15 +240,44 @@ void BodySuperimposerAddon::Impl::updateSuperimposition()
     updateSuperimposedBodies();
     
     if(!bodyInfos.empty()){
+        bool isDifferent = false;
         for(auto& info : bodyInfos){
             sgUpdate.resetAction(SgUpdate::MODIFIED);
             info->sceneBody->updateLinkPositions(sgUpdate);
+            auto bodyItem = info->bodyItem.lock();
+            if(!bodyItem || !checkPositionIdentity(bodyItem->body(), info->superimposedBody)){
+                isDifferent = true;
+            }
         }
         auto sceneBody = bodyItem->sceneBody();
-        sceneBody->addChildOnce(topGroup);
-        sgUpdate.resetAction(SgUpdate::ADDED);
-        sceneBody->notifyUpdate(sgUpdate);
+        if(isDifferent){
+            if(sceneBody->addChildOnce(topGroup)){
+                sgUpdate.resetAction(SgUpdate::ADDED);
+                sceneBody->notifyUpdate(sgUpdate);
+            }
+        } else {
+            // Superimposition is disabled when the position is same as the original body
+            if(sceneBody->removeChild(topGroup)){
+                sgUpdate.resetAction(SgUpdate::REMOVED);
+                sceneBody->notifyUpdate(sgUpdate);
+            }
+        }
     }
+}
+
+
+bool BodySuperimposerAddon::Impl::checkPositionIdentity(Body* body1, Body* body2)
+{
+    const int n = body1->numLinks();
+    if(n != body2->numLinks()){
+        return false;
+    }
+    for(int i=0; i < n; ++i){
+        if(!body1->link(i)->T().isApprox(body2->link(i)->T())){
+            return false;
+        }
+    }
+    return true;
 }
 
 

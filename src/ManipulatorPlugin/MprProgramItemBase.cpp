@@ -231,7 +231,10 @@ bool MprProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
 
 bool MprProgramItemBase::moveTo(MprPositionStatement* statement)
 {
-    return impl->moveTo(impl->findPosition(statement), true);
+    if(auto position = impl->findPosition(statement)){
+        return impl->moveTo(position, true);
+    }
+    return false;
 }
 
 
@@ -243,15 +246,11 @@ bool MprProgramItemBase::moveTo(MprPosition* position)
 
 MprPosition* MprProgramItemBase::Impl::findPosition(MprPositionStatement* statement)
 {
-    MprPosition* position = nullptr;
-    if(kinematicsKit){
-        auto positions = program->positionList();
-        position = statement->position(positions);
-        if(!position){
-            MessageView::instance()->putln(
-                format(_("Position {0} is not found."), statement->positionLabel()),
-                MessageView::WARNING);
-        }
+    MprPosition* position = statement->position(program->positionList());
+    if(!position){
+        showWarningDialog(
+            format(_("Position {0} is not found in {1}."),
+                   statement->positionLabel(), self->name()).c_str());
     }
     return position;
 }
@@ -309,7 +308,10 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll)
 
 bool MprProgramItemBase::superimposePosition(MprPositionStatement* statement)
 {
-    return impl->superimposePosition(impl->findPosition(statement));
+    if(auto position = impl->findPosition(statement)){
+        return impl->superimposePosition(position);
+    }
+    return false;
 }
 
 
