@@ -26,7 +26,9 @@ public:
 
     Impl(MprPositionList* self);
     Impl(MprPositionList* self, const Impl& org);
+    MprPosition* findPosition(const GeneralId& id) const;
     bool remove(int index, bool doNotify);
+    bool insert(int index, MprPosition* position, bool doNotify);
 };
 
 }
@@ -130,33 +132,48 @@ int MprPositionList::indexOf(MprPosition* position)
 
 MprPosition* MprPositionList::findPosition(const GeneralId& id) const
 {
-    auto iter = impl->idToPositionMap.find(id);
-    if(iter != impl->idToPositionMap.end()){
+    return impl->findPosition(id);
+}
+
+
+MprPosition* MprPositionList::Impl::findPosition(const GeneralId& id) const
+{
+    auto iter = idToPositionMap.find(id);
+    if(iter != idToPositionMap.end()){
         return iter->second;
     }
-    
     return nullptr;
 }
 
 
 bool MprPositionList::insert(int index, MprPosition* position)
 {
+    return impl->insert(index, position, true);
+}
+
+
+bool MprPositionList::Impl::insert(int index, MprPosition* position, bool doNotify)
+{
     auto& id = position->id();
     
     if(position->ownerPositionList() || !id.isValid()||
-       (!impl->isStringIdEnabled && id.isString()) || findPosition(id)){
+       (!isStringIdEnabled && id.isString()) || findPosition(id)){
         return false;
     }
 
-    position->ownerPositionList_ = this;
+    position->ownerPositionList_ = self;
 
-    impl->idToPositionMap[id] = position;
-    if(index > numPositions()){
-        index = numPositions();
+    idToPositionMap[id] = position;
+
+    int size = positions.size();
+    if(index > size){
+        index = size;
     }
-    impl->positions.insert(impl->positions.begin() + index, position);
+    positions.insert(positions.begin() + index, position);
 
-    impl->sigPositionAdded(index);
+    if(doNotify){
+        sigPositionAdded(index);
+    }
 
     return true;
 }
@@ -170,7 +187,7 @@ bool MprPositionList::replace(int index, MprPosition* position)
     }
     bool replaced = false;
     if(impl->remove(index, false)){
-        if(insert(index, position)){
+        if(impl->insert(index, position, false)){
             replaced = true;
             if(!impl->sigPositionUpdated.empty()){
                 impl->sigPositionUpdated(index, MprPosition::ObjectReplaced);
