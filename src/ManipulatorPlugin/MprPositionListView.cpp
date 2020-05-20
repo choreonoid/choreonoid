@@ -110,7 +110,7 @@ public:
     void showContextMenu(int row, QPoint globalPos);
     virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
     void setBodySyncMode(BodySyncMode mode);
-    void applyPosition(const QModelIndex& modelIndex, bool forceDirectSync);
+    bool applyPosition(int positionIndex, bool forceDirectSync);
     void touchupCurrentPosition();
 };
 
@@ -374,8 +374,11 @@ void PositionListModel::changePositionType(int positionIndex, MprPosition* posit
     }
     newPosition->setId(position->id());
     newPosition->setNote(position->note());
-    newPosition->setCurrentPosition(programItem->kinematicsKit());
-    positionList->replace(positionIndex, newPosition);
+
+    if(view->applyPosition(positionIndex, true)){
+        newPosition->setCurrentPosition(programItem->kinematicsKit());
+        positionList->replace(positionIndex, newPosition);
+    }
 }
 
 
@@ -576,16 +579,18 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
 
     connect(this, &QTableView::pressed,
             [this](const QModelIndex& index){
-                if(QGuiApplication::mouseButtons() == Qt::LeftButton){
+                if(index.isValid() && QGuiApplication::mouseButtons() == Qt::LeftButton){
                     if(!isSelectionChangedAlreadyCalled){
-                        applyPosition(index, false);
+                        applyPosition(index.row(), false);
                     }
                 }
             });
 
     connect(this, &QTableView::doubleClicked,
             [this](const QModelIndex& index){
-                applyPosition(index, true);
+                if(index.isValid()){
+                    applyPosition(index.row(), true);
+                }
             });
     
     vbox->addWidget(this);
@@ -739,7 +744,7 @@ void MprPositionListView::Impl::selectionChanged
 
     auto indexes = selected.indexes();
     if(!indexes.empty()){
-        applyPosition(indexes.front(), false);
+        applyPosition(indexes.front().row(), false);
     }
 }
 
@@ -761,14 +766,16 @@ void MprPositionListView::Impl::setBodySyncMode(BodySyncMode mode)
 }
 
 
-void MprPositionListView::Impl::applyPosition(const QModelIndex& modelIndex, bool forceDirectSync)
+bool MprPositionListView::Impl::applyPosition(int positionIndex, bool forceDirectSync)
 {
-    auto position = positionListModel->positionAt(modelIndex);
+    bool result = false;
+    auto position = positionList->positionAt(positionIndex);
     if(bodySyncMode == DirectBodySync || forceDirectSync){
-        programItem->moveTo(position);
+        result = programItem->moveTo(position);
     } else {
-        programItem->superimposePosition(position);
+        result = programItem->superimposePosition(position);
     }
+    return result;
 }
 
 
