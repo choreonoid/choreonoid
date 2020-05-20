@@ -171,6 +171,7 @@ public:
     bool enableSelfCollisionDetection(bool on);
     void updateCollisionDetectorLater();
     void doAssign(Item* srcItem);
+    void setLocationEditable(bool on, bool updateInitialPositionWhenLocked);
     void createSceneBody();
     void setTransparency(float t);
     void updateAttachment(bool on, bool forceUpdate);
@@ -1276,10 +1277,21 @@ Position BodyItem::getLocation() const
 
 void BodyItem::setLocationEditable(bool on)
 {
-    if(on != isLocationEditable()){
-        LocatableItem::setLocationEditable(on);
-        if(impl->sceneBody){
-            impl->sceneBody->notifyUpdate();
+    impl->setLocationEditable(on, true);
+}
+
+
+void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhenLocked)
+{
+    if(on != self->isLocationEditable()){
+        self->LocatableItem::setLocationEditable(on);
+        if(!on && updateInitialPositionWhenLocked){
+            if(!self->isAttachedToParentBody()){
+                initialState.setRootLinkPosition(body->rootLink()->T());
+            }
+        }
+        if(sceneBody){
+            sceneBody->notifyUpdate();
         }
     }
 }
@@ -1470,7 +1482,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     linkToAttach = holder->link();
                     Position T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
                     body->rootLink()->setOffsetPosition(T_offset);
-                    self->setLocationEditable(false);
+                    setLocationEditable(false, false);
                     mvout() << format(_("{0} has been attached to {1} of {2}."),
                                       self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
                     goto found;
@@ -1562,7 +1574,7 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
                 [&](bool on){ return enableSelfCollisionDetection(on); });
     putProperty(_("Location editable"), self->isLocationEditable(),
-                [&](bool on){ self->setLocationEditable(on); return true; });
+                [&](bool on){ setLocationEditable(on, true); return true; });
     putProperty(_("Scene sensitive"), self->isSceneSensitive(),
                 [&](bool on){ self->setSceneSensitive(on); return true; });
     putProperty.min(0.0).max(0.9).decimals(1);
@@ -1793,7 +1805,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
     if(archive.read("location_editable", on) ||
        archive.read("isEditable", on) ||
        archive.read("isSceneBodyDraggable", on)){
-        self->setLocationEditable(on);
+        setLocationEditable(on, false);
     }
     if(archive.read("scene_sensitive", on)){
         self->setSceneSensitive(on);
