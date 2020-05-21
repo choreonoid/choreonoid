@@ -81,6 +81,12 @@ SignalProxy<void()> LocatableItem::sigLocationAttributeChanged()
 }
 
 
+void LocatableItem::notifyLocationAttributeChange()
+{
+    return sigLocationAttributeChanged_();
+}
+
+
 SignalProxy<void()> LocatableItem::sigLocationExpired()
 {
     return sigLocationExpired_;

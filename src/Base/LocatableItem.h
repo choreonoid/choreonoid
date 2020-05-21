@@ -34,6 +34,9 @@ public:
 
     bool requestLocationEdit();
     static SignalProxy<bool(LocatableItem* item), LogicalSum> sigLocationEditRequest();
+
+protected:
+    void notifyLocationAttributeChange();
     
 private:
     bool isLocationEditable_;

@@ -72,7 +72,15 @@ void CoordinateFrameItem::Impl::initialize(CoordinateFrameItem* self)
 {
     frameListItem = nullptr;
     frameList = nullptr;
-    self->sigCheckToggled().connect([&](bool on){ onCheckToggled(on); });
+
+    self->sigCheckToggled().connect(
+        [this](bool on){ onCheckToggled(on); });
+
+    self->sigNameChanged().connect(
+        [self](const std::string& /* oldName */){
+            self->notifyLocationAttributeChange();
+        });
+            
     isChangingCheckStatePassively = false;
 }
 
