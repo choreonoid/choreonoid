@@ -185,7 +185,12 @@ Item::~Item()
 
 Item::Impl::~Impl()
 {
-    
+    auto p = addonMap.begin();
+    while(p != addonMap.end()){
+        auto& addon = p->second;
+        addon->setOwnerItem(nullptr);
+        p = addonMap.erase(p);
+    }
 }
 
 
