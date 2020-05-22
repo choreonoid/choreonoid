@@ -144,11 +144,11 @@ PoseSeqItem::~PoseSeqItem()
 }
 
 
-void PoseSeqItem::setName(const std::string& name)
+bool PoseSeqItem::setName(const std::string& name)
 {
     seq->setName(name);
     suggestFileUpdate();
-    Item::setName(name);
+    return Item::setName(name);
 }
 
 

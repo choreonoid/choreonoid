@@ -131,10 +131,13 @@ BodyMarkerItem::~BodyMarkerItem()
 }
 
 
-void BodyMarkerItem::setName(const std::string& name)
+bool BodyMarkerItem::setName(const std::string& name)
 {
-    Item::setName(name);
-    impl->switchableMarker->setName(name);
+    if(Item::setName(name)){
+        impl->switchableMarker->setName(name);
+        return true;
+    }
+    return false;
 }
 
 

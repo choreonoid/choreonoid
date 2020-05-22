@@ -67,7 +67,8 @@ public:
     }
 
     const std::string& name() const { return name_; }
-    virtual void setName(const std::string& name);
+    // Return true if the name is actually changed
+    virtual bool setName(const std::string& name);
     virtual std::string displayName() const;
     void setDisplayNameModifier(std::function<std::string(const Item* item)> modifier);
     SignalProxy<void(const std::string& oldName)> sigNameChanged();
@@ -379,13 +380,23 @@ protected:
     //! Override this function to allow duplication of an instance.
     virtual Item* doDuplicate() const;
 
+    virtual void onAttachedToParent();
+
     /**
        This function is called when the item has been connected to the tree including the root item.
        The onPositionChanged function and sigSubTreeChanged are processed before calling this function.
     */
     virtual void onConnectedToRoot();
 
+    /**
+       This function is called when the item position in the whole item tree is changed.
+       Note that this function is not called when the item is not connected to the root
+       even if the item is newly attached to another item that is not connected to the root.
+       For such items, the function is called for each item when the sub tree is connected
+       to the root.
+    */
     virtual void onPositionChanged();
+    
     virtual void onDisconnectedFromRoot();
 
     /**

@@ -25,7 +25,7 @@ public:
     BodyTrackingCameraItem(const BodyTrackingCameraItem& org);
     ~BodyTrackingCameraItem();
 
-    virtual void setName(const std::string& name) override;
+    virtual bool setName(const std::string& name) override;
 
     // RenderableItem
     virtual SgNode* getScene() override;

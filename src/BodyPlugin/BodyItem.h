@@ -37,7 +37,7 @@ public:
 
     Body* body() const;
     void setBody(Body* body);
-    virtual void setName(const std::string& name) override;
+    virtual bool setName(const std::string& name) override;
 
     bool makeBodyStatic();
     bool makeBodyDynamic();

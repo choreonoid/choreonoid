@@ -266,13 +266,15 @@ Item* Item::Impl::duplicateSubTreeIter(Item* duplicated) const
 }
 
 
-void Item::setName(const std::string& name)
+bool Item::setName(const std::string& name)
 {
     if(name != name_){
         string oldName(name_);
         name_ = name;
         impl->sigNameChanged(oldName);
+        return true;
     }
+    return false;
 }
 
 
@@ -626,6 +628,8 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
 
     ++self->numChildren_;
 
+    item->onAttachedToParent();
+
     if(rootItem){
         /**
            The order to process the following notifications was modified on February 4, 2020.
@@ -670,6 +674,12 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
 bool Item::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
 {
     return true;
+}
+
+
+void Item::onAttachedToParent()
+{
+
 }
 
 

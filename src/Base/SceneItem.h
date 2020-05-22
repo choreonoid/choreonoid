@@ -21,7 +21,7 @@ public:
     SceneItem(const SceneItem& org);
     virtual ~SceneItem();
 
-    virtual void setName(const std::string& name) override;
+    virtual bool setName(const std::string& name) override;
 
     // RenderableItem
     virtual SgNode* getScene() override;

@@ -203,11 +203,11 @@ Item* PointSetItem::doDuplicate() const
 }
 
 
-void PointSetItem::setName(const std::string& name)
+bool PointSetItem::setName(const std::string& name)
 {
     impl->scene->setName(name);
     impl->pointSet->setName(name);
-    Item::setName(name);
+    return Item::setName(name);
 }
 
 

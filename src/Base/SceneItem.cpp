@@ -101,10 +101,10 @@ Item* SceneItem::doDuplicate() const
 }
 
 
-void SceneItem::setName(const std::string& name)
+bool SceneItem::setName(const std::string& name)
 {
     topNode_->setName(name);
-    Item::setName(name);
+    return Item::setName(name);
 }
 
 

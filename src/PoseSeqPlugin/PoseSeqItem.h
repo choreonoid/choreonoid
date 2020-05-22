@@ -29,7 +29,7 @@ public:
     PoseSeqItem(const PoseSeqItem& org);
     ~PoseSeqItem();
             
-    virtual void setName(const std::string& name) override;
+    virtual bool setName(const std::string& name) override;
 
     PoseSeqPtr poseSeq() { return seq; }
     PoseSeqInterpolatorPtr interpolator(){ return interpolator_; }

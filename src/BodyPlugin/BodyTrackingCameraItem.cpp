@@ -207,14 +207,16 @@ BodyTrackingCameraItem::~BodyTrackingCameraItem()
 }
 
 
-void BodyTrackingCameraItem::setName(const std::string& name)
+bool BodyTrackingCameraItem::setName(const std::string& name)
 {
-    Item::setName(name);
-    
-    impl->persCamera->setName(name);
-    impl->persCamera->notifyUpdate(impl->update);
-    impl->orthoCamera->setName(name);
-    impl->orthoCamera->notifyUpdate(impl->update);
+    if(Item::setName(name)){
+        impl->persCamera->setName(name);
+        impl->persCamera->notifyUpdate(impl->update);
+        impl->orthoCamera->setName(name);
+        impl->orthoCamera->notifyUpdate(impl->update);
+        return true;
+    }
+    return false;
 }
 
 

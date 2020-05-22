@@ -431,7 +431,7 @@ void BodyItem::Impl::setBody(Body* body_)
 }
 
 
-void BodyItem::setName(const std::string& name)
+bool BodyItem::setName(const std::string& name)
 {
     auto body = impl->body;
     if(body){
@@ -440,7 +440,7 @@ void BodyItem::setName(const std::string& name)
             body->setModelName(name);
         }
     }
-    Item::setName(name);
+    return Item::setName(name);
 }
 
 

@@ -109,13 +109,15 @@ Item* MprProgramItemBase::doDuplicate() const
 }
 
 
-void MprProgramItemBase::setName(const std::string& name)
+bool MprProgramItemBase::setName(const std::string& name)
 {
-    Item::setName(name);
+    bool updated = Item::setName(name);
     if(name != impl->program->name()){
         impl->program->setName(name);
         suggestFileUpdate();
+        updated = true;
     }
+    return updated;
 }
 
 

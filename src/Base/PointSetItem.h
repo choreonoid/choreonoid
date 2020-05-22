@@ -25,7 +25,7 @@ public:
     PointSetItem(const PointSetItem& org);
     virtual ~PointSetItem();
 
-    virtual void setName(const std::string& name) override;
+    virtual bool setName(const std::string& name) override;
 
     const SgPointSet* pointSet() const;
     SgPointSet* pointSet();
