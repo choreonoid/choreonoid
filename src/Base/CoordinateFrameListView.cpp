@@ -87,6 +87,7 @@ public:
     CoordinateFrameListView* self;
     TargetItemPicker<CoordinateFrameListItem> targetItemPicker;
     CoordinateFrameListItemPtr targetItem;
+    bool isIndependentItemizationListSupported;
     CoordinateFrameListPtr frameList;
     weak_ref_ptr<CoordinateFrameItem> weakFrameItem;
     FrameListModel* frameListModel;
@@ -576,9 +577,13 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     vbox->addWidget(this);
     self->setLayout(vbox);
 
+    isIndependentItemizationListSupported = false;
     targetItemPicker.setTargetPredicate(
-        [](CoordinateFrameListItem* item){
-            return item->itemizationMode() != CoordinateFrameListItem::IndependentItemization;
+        [&](CoordinateFrameListItem* item){
+            if(!isIndependentItemizationListSupported){
+                return item->itemizationMode() != CoordinateFrameListItem::IndependentItemization;
+            }
+            return true;
         });
     
     targetItemPicker.sigTargetItemChanged().connect(
@@ -603,6 +608,18 @@ void CoordinateFrameListView::onActivated()
 void CoordinateFrameListView::onDeactivated()
 {
     impl->stopLocationEditing();
+}
+
+
+void CoordinateFrameListView::onAttachedMenuRequest(MenuManager& menuManager)
+{
+    auto supportCheck = menuManager.addCheckItem(_("Support offset frames"));
+    supportCheck->setChecked(impl->isIndependentItemizationListSupported);
+    supportCheck->sigToggled().connect(
+        [&](bool on){
+            impl->isIndependentItemizationListSupported = on;
+            impl->targetItemPicker.refresh();
+        });
 }
 
 

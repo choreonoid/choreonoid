@@ -18,6 +18,7 @@ public:
 protected:
     virtual void onActivated() override;
     virtual void onDeactivated() override;
+    virtual void onAttachedMenuRequest(MenuManager& menuManager);    
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
