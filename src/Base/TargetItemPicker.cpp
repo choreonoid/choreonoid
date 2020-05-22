@@ -100,6 +100,12 @@ void TargetItemPickerBase::Impl::deactivate()
 }
 
 
+void TargetItemPickerBase::refresh()
+{
+    impl->onSelectedItemsChanged(impl->rootItem->selectedItems());
+}
+
+
 void TargetItemPickerBase::Impl::onSelectedItemsChanged(const ItemList<>& items)
 {
     tmpSelectedItems = items;
@@ -118,6 +124,10 @@ Item* TargetItemPickerBase::getTargetItem()
 
 void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool updateEvenIfEmpty)
 {
+    if(!item && !updateEvenIfEmpty && targetItem && !self->targetPredicate(targetItem)){
+        updateEvenIfEmpty = true;
+    }
+    
     if((item != targetItem && (item || updateEvenIfEmpty)) || (item && isBeforeAnyItemChangeNotification)){
         targetItemConnection.disconnect();
         targetItem = item;
@@ -134,6 +144,7 @@ void TargetItemPickerBase::Impl::setTargetItem(Item* item, bool doNotify, bool u
         }
     } else if(item || updateEvenIfEmpty){
         self->onTargetItemSpecified(targetItem, false);
+
     }
 
     if(!targetItem && !updateEvenIfEmpty){

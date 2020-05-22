@@ -16,6 +16,7 @@ public:
     ~TargetItemPickerBase();
 
     void clearTargetItem();
+    void refresh();
     void storeTargetItem(Archive& archive, const std::string& key);
     void restoreTargetItem(const Archive& archive, const std::string& key);
     void restoreTargetItemLater(const Archive& archive, const std::string& key);
@@ -23,6 +24,7 @@ public:
 protected:
     Item* getTargetItem();
     virtual Item* extractTargetItemCandidates(ItemList<>& io_items, Item* preferred, bool selectionChanged) = 0;
+    virtual bool targetPredicate(Item* item) = 0;
     virtual void onTargetItemSpecified(Item* item, bool isChanged) = 0;
     virtual void onDeactivated() = 0;
 
@@ -41,7 +43,7 @@ public:
     TargetItemPicker() : TargetItemPickerBase() { }
     TargetItemPicker(View* view) : TargetItemPickerBase(view) { }
 
-    void setTargetPredicate(std::function<bool(ItemType* item)> predicate){ targetPredicate = predicate; }
+    void setTargetPredicate(std::function<bool(ItemType* item)> predicate){ targetPredicate_ = predicate; }
     
     template<class Interface>
     void setTargetInterface(){
@@ -70,8 +72,8 @@ protected:
         auto iter = io_items.begin();
         while(iter != io_items.end()){
             auto item = dynamic_cast<ItemType*>(iter->get());
-            if(item && targetPredicate){
-                if(!targetPredicate(item)){
+            if(item && targetPredicate_){
+                if(!targetPredicate_(item)){
                     item = nullptr;
                 }
             }
@@ -97,6 +99,14 @@ protected:
         return candidate;
     }
 
+    virtual bool targetPredicate(Item* item) override
+    {
+        if(targetPredicate_){
+            return targetPredicate_(static_cast<ItemType*>(item));
+        }
+        return true;
+    }
+
     virtual void onTargetItemSpecified(Item* item, bool isChanged) override
     {
         auto targetItem = static_cast<ItemType*>(item);
@@ -112,7 +122,7 @@ protected:
     }
 
 private:
-    std::function<bool(ItemType* item)> targetPredicate;
+    std::function<bool(ItemType* item)> targetPredicate_;
     Signal<void(ItemType* targetItem)> sigTargetItemSpecified_;
     Signal<void(ItemType* targetItem)> sigTargetItemChanged_;
     Signal<void(const ItemList<ItemType>& selected)> sigSelectedItemsChanged_;
