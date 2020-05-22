@@ -50,6 +50,7 @@ public:
     bool insert(int index, CoordinateFrame* frame);
     bool append(CoordinateFrame* frame);
     void removeAt(int index);
+    bool remove(CoordinateFrame* frame);
 
     SignalProxy<void(int index)> sigFrameAdded();
     SignalProxy<void(int index, CoordinateFrame* frame)> sigFrameRemoved();
@@ -57,7 +58,8 @@ public:
 
     /**
        @return true if the id is successfully changed. false if the id is not
-       changed because anther coordinate frame with the same id is exists.
+       changed because the id is same as the previous id or anther coordinate
+       frame with the same id exists.
     */
     bool resetId(CoordinateFrame* frame, const GeneralId& newId);
 

@@ -223,6 +223,19 @@ void CoordinateFrameList::removeAt(int index)
 }
 
 
+bool CoordinateFrameList::remove(CoordinateFrame* frame)
+{
+    bool removed = false;
+    for(int index = impl->frames.size() - 1; index >= 0; --index){
+        if(impl->frames[index] == frame){
+            removeAt(index);
+            removed = true;
+        }
+    }
+    return removed;
+}
+
+
 SignalProxy<void(int index)> CoordinateFrameList::sigFrameAdded()
 {
     return impl->sigFrameAdded;

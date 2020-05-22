@@ -45,6 +45,17 @@ CoordinateFrame* CoordinateFrame::clone() const
 }
 
 
+bool CoordinateFrame::resetId(const GeneralId& id)
+{
+    if(!ownerFrameList_ || !ownerFrameList_.lock()){
+        id_ = id;
+        return true;
+    }
+    auto list = ownerFrameList_.lock();
+    return list->resetId(this, id);
+}
+
+
 CoordinateFrameList* CoordinateFrame::ownerFrameList() const
 {
     return ownerFrameList_.lock();

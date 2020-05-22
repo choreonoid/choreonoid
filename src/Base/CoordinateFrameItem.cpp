@@ -17,18 +17,19 @@ namespace cnoid {
 class CoordinateFrameItem::Impl
 {
 public:
-    GeneralId frameId;
+    CoordinateFrameItem* self;
+    CoordinateFramePtr frame;
     CoordinateFrameListItem* frameListItem;
     CoordinateFrameList* frameList;
-    Signal<void()> sigLocationChanged;
     ScopedConnection frameConnection;
+    Signal<void()> sigLocationChanged;
     bool isChangingCheckStatePassively;
     
-    Impl(CoordinateFrameItem* self);
-    Impl(CoordinateFrameItem* self, const Impl& org);
-    void initialize(CoordinateFrameItem* self);
-    bool setFrameId(const GeneralId& id);
+    Impl(CoordinateFrameItem* self, CoordinateFrame* frame);
+    void onFrameUpdated(int flags);
+    bool resetFrameId(const GeneralId& id);
     void onCheckToggled(bool on);
+    std::string getLocationName() const;
     void putFrameAttributes(PutPropertyFunction& putProperty);
 };
 
@@ -44,34 +45,34 @@ void CoordinateFrameItem::initializeClass(ExtensionManager* ext)
 
 CoordinateFrameItem::CoordinateFrameItem()
 {
-    impl = new Impl(this);
+    impl = new Impl(this, new CoordinateFrame);
 }
 
 
-CoordinateFrameItem::Impl::Impl(CoordinateFrameItem* self)
+CoordinateFrameItem::CoordinateFrameItem(CoordinateFrame* frame)
 {
-    initialize(self);
+    impl = new Impl(this, frame);
 }
 
 
 CoordinateFrameItem::CoordinateFrameItem(const CoordinateFrameItem& org)
     : Item(org)
 {
-    impl = new Impl(this, *org.impl);
+    impl = new Impl(this, new CoordinateFrame(*org.impl->frame));
 }
 
 
-CoordinateFrameItem::Impl::Impl(CoordinateFrameItem* self, const Impl& org)
-    : frameId(org.frameId)
+CoordinateFrameItem::Impl::Impl(CoordinateFrameItem* self, CoordinateFrame* frame)
+    : self(self),
+      frame(frame)
 {
-    initialize(self);
-}
-
-
-void CoordinateFrameItem::Impl::initialize(CoordinateFrameItem* self)
-{
+    self->setName(frame->id().label());
+    
     frameListItem = nullptr;
     frameList = nullptr;
+
+    frameConnection = frame->sigUpdated().connect(
+        [&](int flags){ onFrameUpdated(flags); });
 
     self->sigCheckToggled().connect(
         [this](bool on){ onCheckToggled(on); });
@@ -80,7 +81,7 @@ void CoordinateFrameItem::Impl::initialize(CoordinateFrameItem* self)
         [self](const std::string& /* oldName */){
             self->notifyLocationAttributeChange();
         });
-            
+
     isChangingCheckStatePassively = false;
 }
 
@@ -97,17 +98,6 @@ Item* CoordinateFrameItem::doDuplicate() const
 }
 
 
-void CoordinateFrameItem::onPositionChanged()
-{
-    impl->frameListItem = dynamic_cast<CoordinateFrameListItem*>(parentItem());
-    if(impl->frameListItem){
-        impl->frameList = impl->frameListItem->frameList();
-    } else {
-        impl->frameList = nullptr;
-    }
-}    
-
-
 std::string CoordinateFrameItem::displayName() const
 {
     if(impl->frameListItem){
@@ -117,35 +107,38 @@ std::string CoordinateFrameItem::displayName() const
 }
 
 
-bool CoordinateFrameItem::setFrameId(const GeneralId& id)
+void CoordinateFrameItem::Impl::onFrameUpdated(int flags)
 {
-    return impl->setFrameId(id);
+    bool nameChanged = false;
+    if(flags & CoordinateFrame::IdUpdate){
+        nameChanged = self->setName(frame->id().label());
+    }
+    if(!nameChanged && (flags & CoordinateFrame::NoteUpdate)){
+        self->notifyNameChange();
+    }
+    if(flags & CoordinateFrame::PositionUpdate){
+        sigLocationChanged();
+    }
+    self->notifyUpdate();
 }
 
 
-bool CoordinateFrameItem::Impl::setFrameId(const GeneralId& id)
+void CoordinateFrameItem::onAttachedToParent()
 {
-    bool accepted = true;
-    if(frameList){
-        if(auto frame = frameList->findFrame(frameId)){
-            if(frameList->resetId(frame, id)){
-                frame->notifyUpdate(CoordinateFrame::IdUpdate);
-            } else {
-                accepted = false;
-            }
+    if(impl->frameListItem){
+        impl->frameListItem->onFrameItemRemoved(this);
+    }
+    impl->frameListItem = nullptr;
+    impl->frameList = nullptr;
+
+    auto newListItem = dynamic_cast<CoordinateFrameListItem*>(parentItem());
+    if(newListItem){
+        if(newListItem->onFrameItemAdded(this)){
+            impl->frameListItem = newListItem;
+            impl->frameList = newListItem->frameList();
         }
     }
-    if(accepted){
-        frameId = id;
-    }
-    return accepted;
-}
-
-
-const GeneralId& CoordinateFrameItem::frameId() const
-{
-    return impl->frameId;
-}
+}    
 
 
 CoordinateFrameListItem* CoordinateFrameItem::frameListItem()
@@ -168,16 +161,29 @@ const CoordinateFrameList* CoordinateFrameItem::frameList() const
 
 CoordinateFrame* CoordinateFrameItem::frame()
 {
-    if(impl->frameList){
-        return impl->frameList->findFrame(impl->frameId);
-    }
-    return nullptr;
+    return impl->frame;
 }
 
 
 const CoordinateFrame* CoordinateFrameItem::frame() const
 {
-    return const_cast<CoordinateFrameItem*>(this)->frame();
+    return impl->frame;
+}
+
+
+bool CoordinateFrameItem::resetFrameId(const GeneralId& id)
+{
+    return impl->resetFrameId(id);
+}
+
+
+bool CoordinateFrameItem::Impl::resetFrameId(const GeneralId& id)
+{
+    if(frame->resetId(id)){
+        frame->notifyUpdate(CoordinateFrame::IdUpdate);
+        return true;
+    }
+    return false;
 }
 
 
@@ -202,7 +208,7 @@ bool CoordinateFrameItem::isOffsetFrame() const
 void CoordinateFrameItem::Impl::onCheckToggled(bool on)
 {
     if(!isChangingCheckStatePassively && frameListItem){
-        frameListItem->setFrameMarkerVisible(frameList->findFrame(frameId), on);
+        frameListItem->setFrameMarkerVisible(frame, on);
     }
 }
 
@@ -239,14 +245,20 @@ LocatableItem* CoordinateFrameItem::getParentLocatableItem()
 
 std::string CoordinateFrameItem::getLocationName() const
 {
-    auto frame_ = frame();
-    if(!impl->frameListItem || !frame_){
-        return displayName();
+    return impl->getLocationName();
+}
+
+
+std::string CoordinateFrameItem::Impl::getLocationName() const
+{
+    if(!frameListItem){
+        return self->displayName();
+        
     } else {
-        auto listName = impl->frameListItem->displayName();
-        auto id = frame_->id().label();
-        auto note = frame_->note();
-        if(auto parent = impl->frameListItem->getParentLocatableItem()){
+        auto listName = frameListItem->displayName();
+        auto id = frame->id().label();
+        auto note = frame->note();
+        if(auto parent = frameListItem->getParentLocatableItem()){
             auto parentName = parent->getLocationName();
             if(note.empty()){
                 return format("{0} {1} {2}", parentName, listName, id);
@@ -266,16 +278,13 @@ std::string CoordinateFrameItem::getLocationName() const
 
 Position CoordinateFrameItem::getLocation() const
 {
-    if(auto frame_ = frame()){
-        return frame_->position();
-    }
-    return Position::Identity();
+    return impl->frame->position();
 }
 
 
 bool CoordinateFrameItem::isLocationEditable() const
 {
-    if(impl->frameList && impl->frameList->isDefaultFrameId(impl->frameId)){
+    if(impl->frameList && impl->frameList->isDefaultFrameId(impl->frame->id())){
         return false;
     }
     return LocatableItem::isLocationEditable();
@@ -284,24 +293,13 @@ bool CoordinateFrameItem::isLocationEditable() const
 
 void CoordinateFrameItem::setLocation(const Position& T)
 {
-    if(auto frame_ = frame()){
-        frame_->setPosition(T);
-        frame_->notifyUpdate(CoordinateFrame::PositionUpdate);
-    }
+    impl->frame->setPosition(T);
+    impl->frame->notifyUpdate(CoordinateFrame::PositionUpdate);
 }
 
 
 SignalProxy<void()> CoordinateFrameItem::sigLocationChanged()
 {
-    if(auto frame_ = frame()){
-        impl->frameConnection =
-            frame_->sigUpdated().connect(
-                [&](int flags){
-                    if(flags & CoordinateFrame::PositionUpdate){
-                        impl->sigLocationChanged();
-                    }
-                });
-    }
     return impl->sigLocationChanged;
 }
 
@@ -320,17 +318,13 @@ void CoordinateFrameItem::putFrameAttributes(PutPropertyFunction& putProperty)
 
 void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putProperty)
 {
-    auto& id = frameId;
-    CoordinateFrame* frame = nullptr;
+    const auto& id = frame->id();
     bool isDefaultFrame = false;
     Selection mode = { _("Local"), _("Global") };
     bool isModeEditable = false;
     if(frameList){
-        isDefaultFrame = frameList->isDefaultFrameId(frameId);
-        frame = frameList->findFrame(frameId);
-        if(frame){
-            mode.select(frame->isLocal() ? 0 : 1);
-        }
+        isDefaultFrame = frameList->isDefaultFrameId(id);
+        mode.select(frame->isLocal() ? 0 : 1);
         if(frameList->isForBaseFrames() && !isDefaultFrame){
             isModeEditable = true;
         }
@@ -344,10 +338,10 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
     } else {
         if(id.isInt()){
             putProperty(_("ID"), id.toInt(),
-                        [&](int value){ return setFrameId(value); });
+                        [&](int value){ return resetFrameId(value); });
         } else if(id.isString()){
             putProperty(_("ID"), id.toString(),
-                        [&](const string& value){ return setFrameId(value); });
+                        [&](const string& value){ return resetFrameId(value); });
         }
         if(frame){
             if(!isModeEditable){
@@ -355,7 +349,7 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
             } else {
                 putProperty(
                     _("Mode"), mode,
-                    [this, frame](int index){
+                    [this](int index){
                         int mode = index == 0 ? CoordinateFrame::Local : CoordinateFrame::Global;
                         frameListItem->switchFrameMode(frame, mode);
                         frame->notifyUpdate(CoordinateFrame::ModeUpdate | CoordinateFrame::PositionUpdate);
@@ -363,7 +357,7 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
                     });
             }
             putProperty(_("Note"), frame->note(),
-                        [frame](const string& text){
+                        [this](const string& text){
                             frame->setNote(text);
                             frame->notifyUpdate(CoordinateFrame::NoteUpdate);
                             return true;
@@ -375,35 +369,15 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
 
 bool CoordinateFrameItem::store(Archive& archive)
 {
-    if(auto list = frameList()){
-        if(auto frame = list->findFrame(impl->frameId)){
-            return frame->write(archive);
-        }
-    }
-    return false;
+    return impl->frame->write(archive);
 }
     
 
 bool CoordinateFrameItem::restore(const Archive& archive)
 {
-    bool result = false;
-    auto frameListItem = dynamic_cast<CoordinateFrameListItem*>(archive.currentParentItem());
-    if(frameListItem){
-        CoordinateFramePtr frame = new CoordinateFrame;
-        if(frame->read(archive)){
-            impl->frameId = frame->id();
-            setName(impl->frameId.label());
-            auto frameList = frameListItem->frameList();
-            if(frameList->isDefaultFrameId(impl->frameId)){
-                if(frameListItem->findFrameItemAt(0)){
-                    archive.throwException(
-                        _("A coordinate frame item with the default frame id is duplicated"));
-                }
-                result = frameList->frameAt(0)->read(archive);
-            } else {
-                result = frameList->append(frame);
-            }
-        }
+    if(impl->frame->read(archive)){
+        setName(impl->frame->id().label());
+        return true;
     }
-    return result;
+    return false;
 }

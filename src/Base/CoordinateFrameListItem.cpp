@@ -48,7 +48,8 @@ public:
     CoordinateFrameListPtr frameList;
     int itemizationMode;
     ScopedConnectionSet frameListConnections;
-    std::function<std::string(CoordinateFrame* frame)> frameItemDisplayNameFunction;
+    std::function<std::string(const CoordinateFrameItem* item)> frameItemDisplayNameFunction;
+    bool isUpdatingFrameItems;
 
     SgGroupPtr frameMarkerGroup;
     SgPosTransformPtr relativeFrameMarkerGroup;
@@ -76,12 +77,11 @@ public:
     void updateFrameItems();
     void arrangeFrameItems();
     CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
-    void updateFrameAttribute(CoordinateFrameItem* item, CoordinateFrame* frame);
     CoordinateFrameItem* findFrameItemAt(int index, Item*& out_insertionPosition);
     CoordinateFrameItem* findFrameItemAt(int index);
     void onFrameAdded(int index);
     void onFrameRemoved(int index);
-    void onFrameUpdated(int index, int flags);
+    bool onFrameItemAdded(CoordinateFrameItem* frameItem);
     void setFrameMarkerVisible(CoordinateFrame* frame, bool on, bool isTransient);
     void updateParentFrameForFrameMarkers(const Position& T);
 };
@@ -130,6 +130,8 @@ CoordinateFrameListItem::Impl::Impl
       itemizationMode(itemizationMode)
 {
     frameList->setFirstElementAsDefaultFrame();
+    isUpdatingFrameItems = false;    
+
     frameMarkerGroup = new SgGroup;
     relativeFrameMarkerGroup = new SgPosTransform;
     frameMarkerGroup->addChild(relativeFrameMarkerGroup);
@@ -160,6 +162,12 @@ int CoordinateFrameListItem::itemizationMode() const
 }
 
 
+bool CoordinateFrameListItem::isNoItemizationMode() const
+{
+    return impl->itemizationMode == NoItemization;
+}
+
+
 void CoordinateFrameListItem::setItemizationMode(int mode)
 {
     impl->setItemizationMode(mode);
@@ -171,24 +179,21 @@ void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
     if(mode != itemizationMode){
         itemizationMode = mode;
         frameListConnections.disconnect();
-        if(mode == SubItemization){
+        if(mode != NoItemization){
             frameListConnections.add(
                 frameList->sigFrameAdded().connect(
                     [&](int index){ onFrameAdded(index); }));
             frameListConnections.add(
                 frameList->sigFrameRemoved().connect(
                     [&](int index, CoordinateFrame*){ onFrameRemoved(index); }));
-            frameListConnections.add(
-                frameList->sigFrameUpdated().connect(
-                    [&](int index, int flags){ onFrameUpdated(index, flags); }));
-            updateFrameItems();
         }
+        updateFrameItems();
     }
 }
 
 
 void CoordinateFrameListItem::customizeFrameItemDisplayName
-(std::function<std::string(CoordinateFrame* frame)> func)
+(std::function<std::string(const CoordinateFrameItem* frame)> func)
 {
     impl->frameItemDisplayNameFunction = func;
     for(auto& frameItem : descendantItems<CoordinateFrameItem>()){
@@ -200,10 +205,7 @@ void CoordinateFrameListItem::customizeFrameItemDisplayName
 std::string CoordinateFrameListItem::getFrameItemDisplayName(const CoordinateFrameItem* item) const
 {
     if(impl->frameItemDisplayNameFunction){
-        auto& id = item->frameId();
-        if(auto frame = impl->frameList->findFrame(id)){
-            return impl->frameItemDisplayNameFunction(frame);
-        }
+        return impl->frameItemDisplayNameFunction(item);
     }
     return item->name();
 }
@@ -217,6 +219,8 @@ void CoordinateFrameListItem::updateFrameItems()
 
 void CoordinateFrameListItem::Impl::updateFrameItems()
 {
+    isUpdatingFrameItems = true;
+    
     // clear existing frame items
     for(auto& item : self->childItems<CoordinateFrameItem>()){
         item->detachFromParentItem();
@@ -228,6 +232,8 @@ void CoordinateFrameListItem::Impl::updateFrameItems()
             self->addChildItem(createFrameItem(frameList->frameAt(i)));
         }
     }
+
+    isUpdatingFrameItems = false;
 }
 
 
@@ -240,7 +246,7 @@ void CoordinateFrameListItem::Impl::arrangeFrameItems()
 {
     if(frameList->hasFirstElementAsDefaultFrame()){
         auto firstFrameItem = findFrameItemAt(0);
-        if(!firstFrameItem || !frameList->isDefaultFrameId(firstFrameItem->frameId())){
+        if(!firstFrameItem || !frameList->isDefaultFrameId(firstFrameItem->frame()->id())){
             self->insertChild(self->childItem(), createFrameItem(frameList->frameAt(0)));
         }
     }
@@ -249,9 +255,8 @@ void CoordinateFrameListItem::Impl::arrangeFrameItems()
 
 CoordinateFrameItem* CoordinateFrameListItem::Impl::createFrameItem(CoordinateFrame* frame)
 {
-    CoordinateFrameItem* item = new CoordinateFrameItem;
-    updateFrameAttribute(item, frame);
-    if(itemizationMode == SubItemization){
+    CoordinateFrameItem* item = new CoordinateFrameItem(frame);
+    if(itemizationMode == SubItemization || frameList->isDefaultFrameId(frame->id())){
         item->setSubItemAttributes();
     } else if(itemizationMode == IndependentItemization){
         item->setAttribute(Item::Attached);
@@ -259,19 +264,6 @@ CoordinateFrameItem* CoordinateFrameListItem::Impl::createFrameItem(CoordinateFr
     return item;
 }
     
-
-void CoordinateFrameListItem::Impl::updateFrameAttribute
-(CoordinateFrameItem* item, CoordinateFrame* frame)
-{
-    auto& id = frame->id();
-    if(id != item->frameId()){
-        item->setFrameId(frame->id());
-        item->setName(frame->id().label());
-    } else {
-        item->notifyNameChange();
-    }
-}
-
 
 CoordinateFrameItem* CoordinateFrameListItem::Impl::findFrameItemAt
 (int index, Item*& out_insertionPosition)
@@ -313,31 +305,89 @@ void CoordinateFrameListItem::Impl::onFrameAdded(int index)
     auto item = createFrameItem(frame);
     Item* position;
     findFrameItemAt(index, position);
+    isUpdatingFrameItems = true;
     self->insertChild(position, item);
+    isUpdatingFrameItems = false;
 }
 
 
 void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
 {
     if(auto frameItem = findFrameItemAt(index)){
+        isUpdatingFrameItems = true;
         frameItem->detachFromParentItem();
-    }
-}
-
-
-void CoordinateFrameListItem::Impl::onFrameUpdated(int index, int flags)
-{
-    if(flags != CoordinateFrame::PositionUpdate){
-        if(auto item = findFrameItemAt(index)){
-            updateFrameAttribute(item, frameList->frameAt(index));
-        }
+        isUpdatingFrameItems = false;
     }
 }
 
 
 bool CoordinateFrameListItem::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
 {
-    return true;
+    if(impl->isUpdatingFrameItems){
+        return true;
+    }
+    if(isNoItemizationMode()){
+        return false;
+    }
+    if(auto frameItem = dynamic_cast<CoordinateFrameItem*>(childItem)){
+        // check the existing frame with the same id
+        if(!impl->frameList->findFrame(frameItem->frame()->id())){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool CoordinateFrameListItem::onFrameItemAdded(CoordinateFrameItem* frameItem)
+{
+    return impl->onFrameItemAdded(frameItem);
+}
+
+
+bool CoordinateFrameListItem::Impl::onFrameItemAdded(CoordinateFrameItem* frameItem)
+{
+    if(isUpdatingFrameItems || self->isNoItemizationMode()){
+        return true;
+    }
+    
+    bool result = false;
+    
+    frameListConnections.block();
+
+    auto frame = frameItem->frame();
+    if(!frameItem->nextItem()){
+        result = frameList->append(frame);
+    } else {
+        int index = 0;
+        Item* item = self->childItem();
+        while(item){
+            if(item == frameItem){
+                break;
+            }
+            item = item->nextItem();
+            ++index;
+        }
+        if(item){
+            result = frameList->insert(index, frame);
+        }
+    }
+
+    frameListConnections.unblock();
+
+    return result;
+}
+
+
+void CoordinateFrameListItem::onFrameItemRemoved(CoordinateFrameItem* frameItem)
+{
+    if(!impl->isUpdatingFrameItems){
+        if(!isNoItemizationMode()){
+            impl->frameListConnections.block();
+            impl->frameList->remove(frameItem->frame());
+            impl->frameListConnections.unblock();
+        }
+    }
 }
 
 

@@ -31,6 +31,7 @@ public:
     virtual CoordinateFrame* clone() const;
 
     const GeneralId& id() const { return id_; }
+    bool resetId(const GeneralId& id);
 
     enum Mode { Local, Global };
     void setMode(int mode) { mode_ = mode; }

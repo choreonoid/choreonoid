@@ -21,19 +21,23 @@ public:
     static void initializeClass(ExtensionManager* ext);
     
     CoordinateFrameItem();
+    CoordinateFrameItem(CoordinateFrame* frame);
     CoordinateFrameItem(const CoordinateFrameItem& org);
     virtual ~CoordinateFrameItem();
 
     virtual std::string displayName() const;
-
-    bool setFrameId(const GeneralId& id);
-    const GeneralId& frameId() const;
 
     CoordinateFrameListItem* frameListItem();
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;
     CoordinateFrame* frame();
     const CoordinateFrame* frame() const;
+
+    /**
+       This function emits CoordinateFrame::sigUpdated when the id is successfully changed.
+    */
+    bool resetFrameId(const GeneralId& id);
+    
     bool isBaseFrame() const;
     bool isOffsetFrame() const;
 
@@ -55,7 +59,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
-    virtual void onPositionChanged() override;
+    virtual void onAttachedToParent() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
