@@ -141,6 +141,16 @@ void CoordinateFrameItem::onAttachedToParent()
 }    
 
 
+void CoordinateFrameItem::onDetachedFromParent()
+{
+    if(impl->frameListItem){
+        impl->frameListItem->onFrameItemRemoved(this);
+    }
+    impl->frameListItem = nullptr;
+    impl->frameList = nullptr;
+}    
+
+
 CoordinateFrameListItem* CoordinateFrameItem::frameListItem()
 {
     return impl->frameListItem;

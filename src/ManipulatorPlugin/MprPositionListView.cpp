@@ -59,7 +59,7 @@ public:
     void addPosition(int row, MprPosition* position, bool doInsert);
     void removePositions(QModelIndexList selected);
     void onPositionAdded(int positionIndex);
-    void onPositionRemoved(int positionIndex, MprPosition* position);
+    void onPositionRemoved(int positionIndex);
     void onPositionUpdated(int positionIndex, int flags);
 };
 
@@ -144,7 +144,7 @@ void PositionListModel::setProgramItem(MprProgramItemBase* programItem)
                 [&](int index){ onPositionAdded(index); }));
         positionListConnections.add(
             positionList->sigPositionRemoved().connect(
-                [&](int index, MprPosition* position){ onPositionRemoved(index, position); }));
+                [&](int index, MprPosition*){ onPositionRemoved(index); }));
         positionListConnections.add(
             positionList->sigPositionUpdated().connect(
                 [&](int index, int flags){ onPositionUpdated(index, flags); }));
@@ -417,7 +417,7 @@ void PositionListModel::onPositionAdded(int positionIndex)
 }
 
 
-void PositionListModel::onPositionRemoved(int positionIndex, MprPosition* position)
+void PositionListModel::onPositionRemoved(int positionIndex)
 {
     beginRemoveRows(QModelIndex(), positionIndex, positionIndex);
     endRemoveRows();
