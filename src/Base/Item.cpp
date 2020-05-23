@@ -749,6 +749,8 @@ void Item::Impl::doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted
 
     attributes.reset(SubItem);
 
+    self->onDetachedFromParent();
+
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
@@ -768,6 +770,12 @@ void Item::Impl::doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted
         }
         isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
     }
+}
+
+
+void Item::onDetachedFromParent()
+{
+
 }
 
 

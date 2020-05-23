@@ -396,6 +396,8 @@ protected:
        to the root.
     */
     virtual void onPositionChanged();
+
+    virtual void onDetachedFromParent();
     
     virtual void onDisconnectedFromRoot();
 
