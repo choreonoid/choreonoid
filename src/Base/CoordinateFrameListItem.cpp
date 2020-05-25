@@ -1,10 +1,11 @@
 #include "CoordinateFrameListItem.h"
 #include "CoordinateFrameItem.h"
+#include "CoordinateFrameMarker.h"
 #include "ItemManager.h"
 #include "LocatableItem.h"
-#include "PositionDragger.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
+#include "MessageView.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/ConnectionSet>
 #include <fmt/format.h>
@@ -19,20 +20,16 @@ namespace {
 
 Signal<void(CoordinateFrameListItem* frameListItem)> sigInstanceAddedOrUpdated_;
 
-class FrameMarker : public PositionDragger
+class FrameMarker : public CoordinateFrameMarker
 {
 public:
     CoordinateFrameListItem::Impl* impl;
-    CoordinateFramePtr frame;
-    ScopedConnection frameConnection;
-    SgUpdate sgUpdate;
     bool isGlobal;
     bool isOn;
     int transientHolderCounter;
     
     FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* frame);
-    void onFrameUpdated(int flags);
-    void onMarkerPositionDragged();
+    virtual void onFrameUpdated(int flags) override;
 };
 
 typedef ref_ptr<FrameMarker> FrameMarkerPtr;
@@ -331,8 +328,14 @@ bool CoordinateFrameListItem::onChildItemAboutToBeAdded(Item* childItem, bool is
     }
     if(auto frameItem = dynamic_cast<CoordinateFrameItem*>(childItem)){
         // check the existing frame with the same id
-        if(!impl->frameList->findFrame(frameItem->frame()->id())){
+        auto frame = frameItem->frame();
+        if(!impl->frameList->findFrame(frame->id())){
             return true;
+        } else if(isManualOperation){
+            showWarningDialog(
+                format(_("\"{0}\" cannot be added to \"{1}\" because "
+                         "the item of ID {2} already exists in it. "),
+                       getFrameItemDisplayName(frameItem), displayName(), frame->id().label()));
         }
     }
     return false;
@@ -388,6 +391,19 @@ void CoordinateFrameListItem::onFrameItemRemoved(CoordinateFrameItem* frameItem)
             impl->frameListConnections.unblock();
         }
     }
+}
+
+
+CoordinateFrameItem* CoordinateFrameListItem::findFrameItem(const GeneralId& id)
+{
+    for(auto item = childItem(); item; item = item->nextItem()){
+        if(auto frameItem = dynamic_cast<CoordinateFrameItem*>(item)){
+            if(frameItem->frame()->id() == id){
+                return frameItem;
+            }
+        }
+    }
+    return nullptr;
 }
 
 
@@ -641,61 +657,31 @@ void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Posit
 
 
 FrameMarker::FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* frame)
-    : PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle),
-      impl(impl),
-      frame(frame)
+    : CoordinateFrameMarker(frame),
+      impl(impl)
 {
-    setDragEnabled(true);
-    setOverlayMode(true);
-    setConstantPixelSizeMode(true, 92.0);
-    setDisplayMode(PositionDragger::DisplayInEditMode);
-    setPosition(frame->position());
-
     isGlobal = frame->isGlobal();
-
-    frameConnection =
-        frame->sigUpdated().connect(
-            [&](int flags){ onFrameUpdated(flags); });
-    
-    sigPositionDragged().connect([&](){ onMarkerPositionDragged(); });
 }
 
 
 void FrameMarker::onFrameUpdated(int flags)
 {
-    sgUpdate.resetAction();
-    
     if(flags & CoordinateFrame::ModeUpdate){
-        bool isCurrentGlobal = frame->isGlobal();
+        bool isCurrentGlobal = frame()->isGlobal();
         if(isCurrentGlobal != isGlobal){
             FrameMarkerPtr holder = this;
             if(isCurrentGlobal){
-                impl->relativeFrameMarkerGroup->removeChild(this);
-                impl->frameMarkerGroup->addChild(this);
+                impl->relativeFrameMarkerGroup->removeChild(this, true);
+                impl->frameMarkerGroup->addChild(this, true);
             } else {
-                impl->frameMarkerGroup->removeChild(this);
-                impl->relativeFrameMarkerGroup->addChild(this);
+                impl->frameMarkerGroup->removeChild(this, true);
+                impl->relativeFrameMarkerGroup->addChild(this, true);
             }
             isGlobal = isCurrentGlobal;
         }
-        sgUpdate.setAction(SgUpdate::ADDED);
     }
 
-    if(flags & CoordinateFrame::PositionUpdate){
-        setPosition(frame->position());
-        sgUpdate.setAction(SgUpdate::MODIFIED);
-    }
-
-    if(sgUpdate.action()){
-        notifyUpdate(sgUpdate);
-    }
-}
-
-
-void FrameMarker::onMarkerPositionDragged()
-{
-    frame->setPosition(draggingPosition());
-    frame->notifyUpdate(CoordinateFrame::PositionUpdate);
+    CoordinateFrameMarker::onFrameUpdated(flags);
 }
 
 

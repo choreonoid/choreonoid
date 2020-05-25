@@ -111,6 +111,7 @@ set(sources
   SceneDragProjector.cpp
   PositionDragger.cpp
   RectRegionMarker.cpp
+  CoordinateFrameMarker.cpp
   SceneView.cpp
   SceneBar.cpp
   SceneItem.cpp
@@ -234,6 +235,7 @@ set(headers
   SceneWidgetEditable.h
   InteractiveCameraTransform.h
   RectRegionMarker.h
+  CoordinateFrameMarker.h
   GLSceneRenderer.h
   GL1SceneRenderer.h
   GLSLSceneRenderer.h

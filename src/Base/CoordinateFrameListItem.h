@@ -35,6 +35,7 @@ public:
     std::string getFrameItemDisplayName(const CoordinateFrameItem* item) const;
     void updateFrameItems();
     CoordinateFrameItem* findFrameItemAt(int index);
+    CoordinateFrameItem* findFrameItem(const GeneralId& id);
 
     CoordinateFrameList* frameList();
     const CoordinateFrameList* frameList() const;

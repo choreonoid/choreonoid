@@ -53,7 +53,7 @@ CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org)
 
     impl->frames.reserve(org.impl->frames.size());
     for(auto& frame : org.impl->frames){
-        append(frame->clone());
+        append(new CoordinateFrame(*frame));
     }
     hasFirstElementAsDefaultFrame_ = org.hasFirstElementAsDefaultFrame_;
     impl->name = org.impl->name;
@@ -79,7 +79,7 @@ CoordinateFrameList& CoordinateFrameList::operator=(const CoordinateFrameList& r
     impl->clear(true);
     const int n = rhs.numFrames();
     for(int i=0; i < n; ++i){
-        append(rhs.frameAt(i)->clone());
+        append(new CoordinateFrame(*rhs.frameAt(i)));
     }
     hasFirstElementAsDefaultFrame_ = rhs.hasFirstElementAsDefaultFrame_;
     impl->name = rhs.impl->name;

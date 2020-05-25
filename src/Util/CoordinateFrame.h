@@ -28,8 +28,6 @@ public:
     */
     CoordinateFrame(const GeneralId& id, CoordinateFrameList* owner);
 
-    virtual CoordinateFrame* clone() const;
-
     const GeneralId& id() const { return id_; }
     bool resetId(const GeneralId& id);
 

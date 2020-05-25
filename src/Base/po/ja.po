@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-15 17:56+0900\n"
+"POT-Creation-Date: 2020-05-25 03:10+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -25,7 +25,7 @@ msgstr "シーンアイテム"
 msgid "Scene"
 msgstr "シーン"
 
-#: SceneItem.cpp:152 MainWindow.cpp:232 Item.cpp:1308 PointSetItem.cpp:523
+#: SceneItem.cpp:152 MainWindow.cpp:232 Item.cpp:1332 PointSetItem.cpp:523
 msgid "File"
 msgstr "ファイル"
 
@@ -107,11 +107,17 @@ msgstr "保存モード"
 msgid "Updated"
 msgstr "更新"
 
-#: CoordinateFrameListItem.cpp:94
+#: CoordinateFrameListItem.cpp:92
 msgid "CoordinateFrameListItem"
 msgstr "座標フレームリストアイテム"
 
-#: CoordinateFrameListItem.cpp:637
+#: CoordinateFrameListItem.cpp:336
+msgid ""
+"\"{0}\" cannot be added to \"{1}\" because the item of ID {2} already exists "
+"in it. "
+msgstr "アイテム \"{0}\" のID{2}は既に \"{1}\" に存在するためアイテムを追加できません．"
+
+#: CoordinateFrameListItem.cpp:690
 msgid "Num coordinate frames"
 msgstr "座標フレーム数"
 
@@ -742,30 +748,30 @@ msgstr ""
 msgid "Number of SE3 values in a frame"
 msgstr "フレームあたりSE3要素数"
 
-#: CoordinateFrameItem.cpp:41
+#: CoordinateFrameItem.cpp:42
 msgid "CoordinateFrameItem"
 msgstr "座標フレームアイテム"
 
-#: CoordinateFrameItem.cpp:303 LocationView.cpp:344
+#: CoordinateFrameItem.cpp:333 LocationView.cpp:300
 msgid "Local"
 msgstr "ローカル"
 
-#: CoordinateFrameItem.cpp:303
+#: CoordinateFrameItem.cpp:333
 msgid "Global"
 msgstr "グローバル"
 
-#: CoordinateFrameItem.cpp:318 CoordinateFrameItem.cpp:325
-#: CoordinateFrameItem.cpp:328
+#: CoordinateFrameItem.cpp:343 CoordinateFrameItem.cpp:350
+#: CoordinateFrameItem.cpp:353
 msgid "ID"
 msgstr ""
 
-#: CoordinateFrameItem.cpp:320 CoordinateFrameItem.cpp:333
-#: CoordinateFrameItem.cpp:335
+#: CoordinateFrameItem.cpp:345 CoordinateFrameItem.cpp:358
+#: CoordinateFrameItem.cpp:361
 msgid "Mode"
 msgstr "モード"
 
-#: CoordinateFrameItem.cpp:321 CoordinateFrameItem.cpp:342
-#: CoordinateFrameListView.cpp:222
+#: CoordinateFrameItem.cpp:346 CoordinateFrameItem.cpp:369
+#: CoordinateFrameListView.cpp:210
 msgid "Note"
 msgstr "注釈"
 
@@ -857,19 +863,23 @@ msgstr " 法線: {}\n"
 msgid " Triangles: {}"
 msgstr " トライアングル: {}"
 
-#: CoordinateFrameListView.cpp:224
+#: CoordinateFrameListView.cpp:212
 msgid "Position"
 msgstr "ポジション"
 
-#: CoordinateFrameListView.cpp:530
+#: CoordinateFrameListView.cpp:520
 msgid "Coordinate Frames"
 msgstr "座標フレーム"
 
-#: CoordinateFrameListView.cpp:556 CoordinateFrameListView.cpp:740
+#: CoordinateFrameListView.cpp:546 CoordinateFrameListView.cpp:752
 msgid "Add"
 msgstr "追加"
 
-#: CoordinateFrameListView.cpp:744
+#: CoordinateFrameListView.cpp:633
+msgid "Support offset frames"
+msgstr "オフセットフレームのサポート"
+
+#: CoordinateFrameListView.cpp:756
 msgid "Remove"
 msgstr "削除"
 
@@ -979,7 +989,7 @@ msgstr "制御点の表示"
 msgid "Step"
 msgstr "ステップ"
 
-#: GraphBar.cpp:256 LocationView.cpp:336
+#: GraphBar.cpp:256 LocationView.cpp:292
 msgid "Offset"
 msgstr "オフセット"
 
@@ -999,31 +1009,31 @@ msgstr "連続"
 msgid "page"
 msgstr "ページ"
 
-#: Item.cpp:1287 MultiSeqItemCreationPanel.cpp:27
+#: Item.cpp:1311 MultiSeqItemCreationPanel.cpp:23
 msgid "Name"
 msgstr "名前"
 
-#: Item.cpp:1298
+#: Item.cpp:1322
 msgid "Display name"
 msgstr "表示名"
 
-#: Item.cpp:1303
+#: Item.cpp:1327
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:1311
+#: Item.cpp:1335
 msgid "Num children"
 msgstr "小アイテムの数"
 
-#: Item.cpp:1312
+#: Item.cpp:1336
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:1313
+#: Item.cpp:1337
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:1314
+#: Item.cpp:1338
 msgid "Refs"
 msgstr "参照数"
 
@@ -1043,77 +1053,77 @@ msgstr "画像アイテムの選択"
 msgid "Adjust image size according to view"
 msgstr "画像サイスをビューに合わせる"
 
-#: ItemManager.cpp:73 ViewManager.cpp:270
-msgid "Name:"
-msgstr "名前"
-
-#: ItemManager.cpp:225
+#: ItemManager.cpp:199
 msgid "New ..."
 msgstr "新規"
 
-#: ItemManager.cpp:228
+#: ItemManager.cpp:202
 msgid "Load ..."
 msgstr "読み込み"
 
-#: ItemManager.cpp:230
+#: ItemManager.cpp:204
 msgid "Reload Selected Items"
 msgstr "選択アイテムの再読み込み"
 
-#: ItemManager.cpp:235
+#: ItemManager.cpp:209
 msgid "Save Selected Items"
 msgstr "選択アイテムの保存"
 
-#: ItemManager.cpp:237
+#: ItemManager.cpp:211
 msgid "Save Selected Items As"
 msgstr "名前を付けて選択アイテムを保存"
 
-#: ItemManager.cpp:242
+#: ItemManager.cpp:216
 msgid "Import ..."
 msgstr "インポート"
 
-#: ItemManager.cpp:246
+#: ItemManager.cpp:220
 msgid "Export Selected Items"
 msgstr "選択アイテムのエクスポート"
 
-#: ItemManager.cpp:507
+#: ItemManager.cpp:481
 msgid "Class {} is not registered as an item class."
 msgstr "クラス{}はアイテムクラスとして登録されていません．"
 
-#: ItemManager.cpp:513
+#: ItemManager.cpp:487
 msgid "The panel to create {} is not registered."
 msgstr "{}を生成するパネルは登録されていません．"
 
-#: ItemManager.cpp:585
+#: ItemManager.cpp:559
 msgid "Item$"
 msgstr "アイテム$"
 
-#: ItemManager.cpp:587
+#: ItemManager.cpp:561
 msgid "Create New %1"
 msgstr "新しい%1の生成"
 
-#: ItemManager.cpp:630 ViewManager.cpp:276
+#: ItemManager.cpp:604 ViewManager.cpp:276
 msgid "&Create"
 msgstr "生成(&C)"
 
-#: ItemManager.cpp:633 ViewManager.cpp:281 PathVariableEditor.cpp:98
+#: ItemManager.cpp:607 ViewManager.cpp:281 PathVariableEditor.cpp:98
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
-#: ItemManager.cpp:865
+#: ItemManager.cpp:769 ViewManager.cpp:270
+msgid "Name:"
+msgstr "名前"
+
+#: ItemManager.cpp:901
 msgid ""
 "\"{0}\" cannot be accessed because the specified item type \"{1}\" is not "
 "registered."
 msgstr "\"{0}\"へのアクセスにおいて指定されたアイテム型\"{1}\"は未登録です．"
 
-#: ItemManager.cpp:904
+#: ItemManager.cpp:940
 msgid "The file format for accessing \"{0}\" cannot be determined."
 msgstr "\"{0}\"のファイル形式を確定できません．"
 
-#: ItemManager.cpp:908
+#: ItemManager.cpp:944
 msgid "Unknown file format \"{0}\" is specified in accessing \"{1}\"."
 msgstr "\"{1}\"に対して不明なファイル形式\"{0}\"が指定されています．"
 
-#: ItemManager.cpp:1255
+#: ItemManager.cpp:1291
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
@@ -1283,11 +1293,11 @@ msgstr "現在時刻で状態を更新"
 msgid "Stop animation"
 msgstr "アニメーションの停止"
 
-#: LocationView.cpp:95
+#: LocationView.cpp:96
 msgid "Location"
 msgstr "配置"
 
-#: LocationView.cpp:117
+#: LocationView.cpp:119
 msgid "Lock"
 msgstr "ロック"
 
@@ -1295,15 +1305,15 @@ msgstr "ロック"
 msgid "Coord :"
 msgstr "座標系："
 
-#: LocationView.cpp:315
+#: LocationView.cpp:271
 msgid "World"
 msgstr "ワールド"
 
-#: LocationView.cpp:326
+#: LocationView.cpp:282
 msgid "Offset ( {} )"
 msgstr "オフセット（ {} ）"
 
-#: LocationView.cpp:328
+#: LocationView.cpp:284
 msgid "Parent ( {} )"
 msgstr "親（ {} ）"
 
@@ -1330,51 +1340,51 @@ msgstr ""
 "アイテム \"{1}\" のアドオン \"{0}\" は型が登録されていないため書き出しできま"
 "せん．"
 
-#: ItemTreeArchiver.cpp:277
+#: ItemTreeArchiver.cpp:279
 msgid "Item cannot be restored."
 msgstr "アイテムを読み出すことができません。"
 
-#: ItemTreeArchiver.cpp:279
+#: ItemTreeArchiver.cpp:281
 msgid "\"{}\" cannot be restored."
 msgstr "\"{}\" を読み出すことができません．"
 
-#: ItemTreeArchiver.cpp:312
+#: ItemTreeArchiver.cpp:317
 msgid "Sub item \"{}\" is not found. Its children cannot be restored."
 msgstr "サブアイテム\"{}\"が見つからないため読み出しができません．"
 
-#: ItemTreeArchiver.cpp:322
+#: ItemTreeArchiver.cpp:327
 msgid "Archive is broken."
 msgstr "アーカイブが壊れています．"
 
-#: ItemTreeArchiver.cpp:331
+#: ItemTreeArchiver.cpp:336
 msgid "{0} of {1}Plugin is not a registered item type."
 msgstr "{1}Pluginの{0}は未登録のタイプであるため読み込みできません．"
 
-#: ItemTreeArchiver.cpp:351
+#: ItemTreeArchiver.cpp:356
 msgid "Restoring {0} \"{1}\""
 msgstr "{0} \"{1}\" を読み出し中"
 
-#: ItemTreeArchiver.cpp:357
+#: ItemTreeArchiver.cpp:362
 msgid "The 'data' key does not have mapping-type data."
 msgstr "'data'の値がマッピング型でありません．"
 
-#: ItemTreeArchiver.cpp:386
+#: ItemTreeArchiver.cpp:391
 msgid "The 'addons' value must be a listing."
 msgstr "'addons'の値はリストでなければなりません．"
 
-#: ItemTreeArchiver.cpp:394
+#: ItemTreeArchiver.cpp:399
 msgid "The name and plugin are not specified at addon {0}."
 msgstr "アドオン {0} の名前とプラグインが指定されていません．"
 
-#: ItemTreeArchiver.cpp:399
+#: ItemTreeArchiver.cpp:404
 msgid "Addon \"{0}\" of plugin \"{1}\" cannot be created."
 msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を生成できません．"
 
-#: ItemTreeArchiver.cpp:403
+#: ItemTreeArchiver.cpp:408
 msgid "Addon \"{0}\" is cannot be added to item \"{1}\"."
 msgstr "アドオン \"{0}\" はアイテム \"{1}\" に追加できません．"
 
-#: ItemTreeArchiver.cpp:407
+#: ItemTreeArchiver.cpp:412
 msgid "Addon \"{0}\" of plugin \"{1}\" cannot be restored."
 msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を読み出すことができません．"
 
@@ -1462,11 +1472,11 @@ msgstr ""
 msgid "Input file \"{}\" was not processed."
 msgstr "入力ファイル \"{}\" は処理されませんでした．"
 
-#: MultiSeqItemCreationPanel.cpp:39 AbstractSeqItem.cpp:62
+#: MultiSeqItemCreationPanel.cpp:35 AbstractSeqItem.cpp:62
 msgid "Time length"
 msgstr "時間長"
 
-#: MultiSeqItemCreationPanel.cpp:46 MovieRecorder.cpp:385
+#: MultiSeqItemCreationPanel.cpp:42 MovieRecorder.cpp:385
 #: AbstractSeqItem.cpp:44
 msgid "Frame rate"
 msgstr "フレームレート"
