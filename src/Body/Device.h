@@ -103,6 +103,7 @@ public:
     
     Isometry3& T_local() { return ns->T_local; }
     const Isometry3& T_local() const { return ns->T_local; }
+    Isometry3 T_local_org() const;
         
     Isometry3::ConstLinearPart R_local() const { return ns->const_T_local().linear(); }
     Isometry3::LinearPart R_local() { return ns->T_local.linear(); }

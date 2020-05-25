@@ -108,6 +108,7 @@ public:
     
     // To, Ro?
     const Position& Tb() const { return Tb_; }
+    const Position& offsetPosition() const { return Tb_; }
         
     Position::ConstTranslationPart b() const { return Tb_.translation(); }
     Position::ConstTranslationPart offsetTranslation() const { return Tb_.translation(); }
