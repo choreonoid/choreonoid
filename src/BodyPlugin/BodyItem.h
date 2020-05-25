@@ -155,6 +155,8 @@ public:
     virtual void setLocation(const Position& T) override;
     virtual LocatableItem* getParentLocatableItem() override;
 
+    LocatableItem* createLinkLocationProxy(Link* link);
+
     // RenderableItem function
     virtual SgNode* getScene() override;
 

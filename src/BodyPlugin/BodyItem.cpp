@@ -74,10 +74,25 @@ public:
     virtual SignalProxy<void()> sigLocationChanged() override {
         return bodyItem->sigKinematicStateChanged();
     }
-    virtual Position getLocation() const override { return link->position(); }
+    virtual Position getLocation() const override { return link->Ta(); }
     virtual bool isLocationEditable() const override { return false; }
     virtual LocatableItem* getParentLocatableItem() override { return nullptr; }
     virtual Item* getCorrespondingItem() override { return bodyItem; }
+};
+
+class LinkLocation : public LocatableItem
+{
+public:
+    weak_ref_ptr<BodyItem> refBodyItem;
+    weak_ref_ptr<Link> refLink;
+
+    LinkLocation(BodyItem* bodyItem, Link* link);
+    virtual int getLocationType() const override;
+    virtual std::string getLocationName() const override;
+    virtual SignalProxy<void()> sigLocationChanged() override;
+    virtual Position getLocation() const override;
+    virtual bool isLocationEditable() const override;
+    virtual LocatableItem* getParentLocatableItem() override;
 };
 
 class MyCompositeBodyIK : public CompositeBodyIK
@@ -1318,6 +1333,67 @@ LocatableItem* BodyItem::getParentLocatableItem()
             return impl->parentBodyItem;
         }
     }
+    return nullptr;
+}
+
+
+LocatableItem* BodyItem::createLinkLocationProxy(Link* link)
+{
+    return new LinkLocation(this, link);
+}
+
+
+LinkLocation::LinkLocation(BodyItem* bodyItem, Link* link)
+    : refBodyItem(bodyItem),
+      refLink(link)
+{
+
+}
+
+
+int LinkLocation::getLocationType() const
+{
+    return GlobalLocation;
+}
+
+
+std::string LinkLocation::getLocationName() const
+{
+    if(auto link = refLink.lock()){
+        return link->body()->name() + " - " + link->name();
+    }
+    return string();
+}
+
+
+SignalProxy<void()> LinkLocation::sigLocationChanged()
+{
+    if(auto bodyItem = refBodyItem.lock()){
+        return bodyItem->sigKinematicStateChanged();
+    } else {
+        static Signal<void()> dummySignal;
+        return dummySignal;
+    }
+}
+
+
+Position LinkLocation::getLocation() const
+{
+    if(auto link = refLink.lock()){
+        return link->Ta();
+    }
+    return Position::Identity();
+}
+
+
+bool LinkLocation::isLocationEditable() const
+{
+    return false;
+}
+
+
+LocatableItem* LinkLocation::getParentLocatableItem()
+{
     return nullptr;
 }
 
