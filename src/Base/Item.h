@@ -302,7 +302,7 @@ public:
     virtual void notifyUpdate();
     SignalProxy<void()> sigUpdated();
 
-    bool addAddon(ItemAddon* addon);
+    bool setAddon(ItemAddon* addon);
     void removeAddon(ItemAddon* addon);
     template<class AddonType> AddonType* findAddon(){
         return static_cast<AddonType*>(findAddon_(typeid(AddonType)));

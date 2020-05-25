@@ -1136,7 +1136,7 @@ SignalProxy<void()> Item::sigUpdated()
 }
 
 
-bool Item::addAddon(ItemAddon* addon)
+bool Item::setAddon(ItemAddon* addon)
 {
     bool accepted = false;
     if(auto owner = addon->ownerItem()){
@@ -1182,7 +1182,7 @@ ItemAddon* Item::getAddon_(const std::type_info& type)
     if(!addon){
         addon = ItemManager::createAddon(type);
         if(addon){
-            if(!addAddon(addon)){
+            if(!setAddon(addon)){
                 addon.reset();
             }
         }

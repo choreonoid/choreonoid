@@ -404,7 +404,7 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
                         mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be created."),
                                          name, moduleName), MessageView::ERROR);
                     } else {
-                        if(!item->addAddon(addon)){
+                        if(!item->setAddon(addon)){
                             mv->putln(format(_("Addon \"{0}\" is cannot be added to item \"{1}\"."),
                                              name, item->displayName()), MessageView::ERROR);
                         } else {
