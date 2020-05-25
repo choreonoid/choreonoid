@@ -57,42 +57,22 @@ ItemFileIO* meshFileIO;
 
 BodyState kinematicStateCopy;
 
-class ParentLinkLocation : public LocatableItem
-{
-public:
-    BodyItem* bodyItem;
-    Link* link;
-
-    void setTarget(BodyItem* parentBodyItem, Link* parentLink){
-        bodyItem = parentBodyItem;
-        link = parentLink;
-    }
-    virtual int getLocationType() const override { return GlobalLocation; }
-    virtual std::string getLocationName() const override {
-        return link->body()->name() + " - " + link->name();
-    }
-    virtual SignalProxy<void()> sigLocationChanged() override {
-        return bodyItem->sigKinematicStateChanged();
-    }
-    virtual Position getLocation() const override { return link->Ta(); }
-    virtual bool isLocationEditable() const override { return false; }
-    virtual LocatableItem* getParentLocatableItem() override { return nullptr; }
-    virtual Item* getCorrespondingItem() override { return bodyItem; }
-};
-
 class LinkLocation : public LocatableItem
 {
 public:
     weak_ref_ptr<BodyItem> refBodyItem;
     weak_ref_ptr<Link> refLink;
 
+    LinkLocation();
     LinkLocation(BodyItem* bodyItem, Link* link);
+    void setTarget(BodyItem* bodyItem, Link* link);
     virtual int getLocationType() const override;
     virtual std::string getLocationName() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
     virtual Position getLocation() const override;
     virtual bool isLocationEditable() const override;
     virtual LocatableItem* getParentLocatableItem() override;
+    virtual Item* getCorrespondingItem() override;
 };
 
 class MyCompositeBodyIK : public CompositeBodyIK
@@ -118,7 +98,7 @@ public:
     BodyPtr body;
 
     BodyItem* parentBodyItem;
-    unique_ptr<ParentLinkLocation> parentLinkLocation;
+    unique_ptr<LinkLocation> parentLinkLocation;
     AttachmentDevicePtr attachmentToParent;
     ScopedConnection parentBodyItemConnection;
     bool isKinematicStateChangeNotifiedByParentBodyItem;
@@ -1286,7 +1266,14 @@ int BodyItem::getLocationType() const
 
 Position BodyItem::getLocation() const
 {
-    return impl->body->rootLink()->position();
+    auto rootLink = impl->body->rootLink();
+    if(impl->attachmentToParent){
+        // relative position from the parent link
+        return rootLink->offsetPosition();
+    } else {
+        // global position
+        return rootLink->Ta();
+    }
 }
 
 
@@ -1314,8 +1301,14 @@ void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhen
 
 void BodyItem::setLocation(const Position& T)
 {
-    impl->body->rootLink()->setPosition(T);
-    notifyKinematicStateChange(true);
+    auto rootLink = impl->body->rootLink();
+    if(impl->attachmentToParent){
+        rootLink->setOffsetPosition(T);
+        impl->parentBodyItem->notifyKinematicStateChange(true);
+    } else {
+        rootLink->setPosition(T);
+        notifyKinematicStateChange(true);
+    }
 }
 
 
@@ -1324,7 +1317,7 @@ LocatableItem* BodyItem::getParentLocatableItem()
     if(impl->parentBodyItem){
         if(impl->attachmentToParent){
             if(!impl->parentLinkLocation){
-                impl->parentLinkLocation.reset(new ParentLinkLocation);
+                impl->parentLinkLocation.reset(new LinkLocation);
             }
             auto parentLink = impl->body->parentBodyLink();
             impl->parentLinkLocation->setTarget(impl->parentBodyItem, parentLink);
@@ -1343,11 +1336,24 @@ LocatableItem* BodyItem::createLinkLocationProxy(Link* link)
 }
 
 
+LinkLocation::LinkLocation()
+{
+
+}
+
+
 LinkLocation::LinkLocation(BodyItem* bodyItem, Link* link)
     : refBodyItem(bodyItem),
       refLink(link)
 {
 
+}
+
+
+void LinkLocation::setTarget(BodyItem* bodyItem, Link* link)
+{
+    refBodyItem = bodyItem;
+    refLink = link;
 }
 
 
@@ -1395,6 +1401,12 @@ bool LinkLocation::isLocationEditable() const
 LocatableItem* LinkLocation::getParentLocatableItem()
 {
     return nullptr;
+}
+
+
+Item* LinkLocation::getCorrespondingItem()
+{
+    return refBodyItem.lock();
 }
 
 
@@ -1556,7 +1568,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     holder->addAttachment(attachment);
                     attachmentToParent = attachment;
                     linkToAttach = holder->link();
-                    Position T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
+                    Position T_offset = holder->T_local_org() * attachment->T_local_org().inverse(Eigen::Isometry);
                     body->rootLink()->setOffsetPosition(T_offset);
                     setLocationEditable(false, false);
                     mvout() << format(_("{0} has been attached to {1} of {2}."),
@@ -1588,7 +1600,7 @@ void BodyItem::Impl::onParentBodyKinematicStateChanged()
         parentLink = parentBodyItem->body()->rootLink();
     }
     auto rootLink = body->rootLink();
-    rootLink->setPosition(parentLink->T() * rootLink->Tb());
+    rootLink->setPosition(parentLink->Ta() * rootLink->Tb());
 
     isKinematicStateChangeNotifiedByParentBodyItem = true;
     isProcessingInverseKinematicsIncludingParentBody = false;
