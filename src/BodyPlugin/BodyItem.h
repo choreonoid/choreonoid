@@ -147,15 +147,12 @@ public:
 
     bool setStance(double width);
 
-    // LocatableItem functions
-    virtual int getLocationType() const override;
-    virtual Position getLocation() const override;
-    virtual SignalProxy<void()> sigLocationChanged() override;
-    virtual void setLocationEditable(bool on) override;
-    virtual void setLocation(const Position& T) override;
-    virtual LocatableItem* getParentLocatableItem() override;
-
-    LocatableItem* createLinkLocationProxy(Link* link);
+    // LocatableItem function
+    virtual LocationProxyPtr getLocationProxy() override;
+    
+    bool isLocationEditable() const;
+    void setLocationEditable(bool on);
+    LocationProxyPtr createLinkLocationProxy(Link* link);
 
     // RenderableItem function
     virtual SgNode* getScene() override;

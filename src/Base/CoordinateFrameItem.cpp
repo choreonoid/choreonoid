@@ -12,6 +12,26 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace {
+
+class FrameLocation : public LocationProxy
+{
+public:
+    CoordinateFrameItem::Impl* impl;
+
+    FrameLocation(CoordinateFrameItem::Impl* impl);
+    virtual int getType() const override;
+    virtual Item* getCorrespondingItem() override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
+    virtual std::string getName() const override;
+    virtual Position getLocation() const override;
+    virtual bool isEditable() const override;
+    virtual void setLocation(const Position& T) override;
+    virtual SignalProxy<void()> sigLocationChanged() override;
+};
+
+}
+
 namespace cnoid {
 
 class CoordinateFrameItem::Impl
@@ -22,6 +42,7 @@ public:
     CoordinateFrameListItem* frameListItem;
     CoordinateFrameList* frameList;
     ScopedConnection frameConnection;
+    ref_ptr<FrameLocation> frameLocation;
     Signal<void()> sigLocationChanged;
     bool isChangingCheckStatePassively;
     
@@ -76,11 +97,6 @@ CoordinateFrameItem::Impl::Impl(CoordinateFrameItem* self, CoordinateFrame* fram
 
     self->sigCheckToggled().connect(
         [this](bool on){ onCheckToggled(on); });
-
-    self->sigNameChanged().connect(
-        [self](const std::string& /* oldName */){
-            self->notifyLocationAttributeChange();
-        });
 
     isChangingCheckStatePassively = false;
 }
@@ -231,89 +247,6 @@ void CoordinateFrameItem::setVisibilityCheck(bool on)
 }
 
 
-int CoordinateFrameItem::getLocationType() const
-{
-    if(impl->frameList){
-        if(impl->frameList->isForBaseFrames()){
-            return ParentRelativeLocation;
-        } else if(impl->frameList->isForOffsetFrames()){
-            return OffsetLocation;
-        }
-    }
-    return InvalidLocation;
-}
-
-
-LocatableItem* CoordinateFrameItem::getParentLocatableItem()
-{
-    if(impl->frameListItem){
-        return impl->frameListItem->getParentLocatableItem();
-    }
-    return nullptr;
-}
-
-
-std::string CoordinateFrameItem::getLocationName() const
-{
-    return impl->getLocationName();
-}
-
-
-std::string CoordinateFrameItem::Impl::getLocationName() const
-{
-    if(!frameListItem){
-        return self->displayName();
-        
-    } else {
-        auto listName = frameListItem->displayName();
-        auto id = frame->id().label();
-        auto note = frame->note();
-        if(auto parent = frameListItem->getParentLocatableItem()){
-            auto parentName = parent->getLocationName();
-            if(note.empty()){
-                return format("{0} {1} {2}", parentName, listName, id);
-            } else {
-                return format("{0} {1} {2} ( {3} )", parentName, listName, id, note);
-            }
-        } else {
-            if(note.empty()){
-                return format("{0} {1}", listName, id);
-            } else {
-                return format("{0} {1} ( {2} )", listName, id, note);
-            }
-        }
-    }
-}
-
-
-Position CoordinateFrameItem::getLocation() const
-{
-    return impl->frame->position();
-}
-
-
-bool CoordinateFrameItem::isLocationEditable() const
-{
-    if(impl->frameList && impl->frameList->isDefaultFrameId(impl->frame->id())){
-        return false;
-    }
-    return LocatableItem::isLocationEditable();
-}
-
-
-void CoordinateFrameItem::setLocation(const Position& T)
-{
-    impl->frame->setPosition(T);
-    impl->frame->notifyUpdate(CoordinateFrame::PositionUpdate);
-}
-
-
-SignalProxy<void()> CoordinateFrameItem::sigLocationChanged()
-{
-    return impl->sigLocationChanged;
-}
-
-
 void CoordinateFrameItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     impl->putFrameAttributes(putProperty);
@@ -390,4 +323,104 @@ bool CoordinateFrameItem::restore(const Archive& archive)
         return true;
     }
     return false;
+}
+
+
+LocationProxyPtr CoordinateFrameItem::getLocationProxy()
+{
+    if(!impl->frameLocation){
+        impl->frameLocation = new FrameLocation(impl);
+    }
+    return impl->frameLocation;
+}
+
+
+FrameLocation::FrameLocation(CoordinateFrameItem::Impl* impl)
+    : impl(impl)
+{
+    impl->self->sigNameChanged().connect(
+        [&](const std::string& /* oldName */){ notifyAttributeChange(); });
+}
+
+
+int FrameLocation::getType() const
+{
+    if(impl->frameList){
+        if(impl->frameList->isForBaseFrames()){
+            return ParentRelativeLocation;
+        } else if(impl->frameList->isForOffsetFrames()){
+            return OffsetLocation;
+        }
+    }
+    return InvalidLocation;
+}
+
+
+Item* FrameLocation::getCorrespondingItem()
+{
+    return impl->self;
+}
+
+
+LocationProxyPtr FrameLocation::getParentLocationProxy()
+{
+    if(impl->frameListItem){
+        return impl->frameListItem->getFrameParentLocationProxy();
+    }
+    return nullptr;
+}
+
+    
+std::string FrameLocation::getName() const
+{
+    if(!impl->frameListItem){
+        return impl->self->displayName();
+        
+    } else {
+        auto listName = impl->frameListItem->displayName();
+        auto id = impl->frame->id().label();
+        auto note = impl->frame->note();
+        if(auto parent = const_cast<FrameLocation*>(this)->getParentLocationProxy()){
+            auto parentName = parent->getName();
+            if(note.empty()){
+                return format("{0} {1} {2}", parentName, listName, id);
+            } else {
+                return format("{0} {1} {2} ( {3} )", parentName, listName, id, note);
+            }
+        } else {
+            if(note.empty()){
+                return format("{0} {1}", listName, id);
+            } else {
+                return format("{0} {1} ( {2} )", listName, id, note);
+            }
+        }
+    }
+}
+
+
+Position FrameLocation::getLocation() const
+{
+    return impl->frame->position();
+}
+
+
+bool FrameLocation::isEditable() const
+{
+    if(impl->frameList && impl->frameList->isDefaultFrameId(impl->frame->id())){
+        return false;
+    }
+    return LocationProxy::isEditable();
+}
+
+
+void FrameLocation::setLocation(const Position& T)
+{
+    impl->frame->setPosition(T);
+    impl->frame->notifyUpdate(CoordinateFrame::PositionUpdate);
+}
+
+
+SignalProxy<void()> FrameLocation::sigLocationChanged()
+{
+    return impl->sigLocationChanged;
 }

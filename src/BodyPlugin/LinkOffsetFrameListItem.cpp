@@ -1,7 +1,6 @@
 #include "LinkOffsetFrameListItem.h"
 #include "BodyItem.h"
 #include <cnoid/ItemManager>
-#include <cnoid/LocatableItem>
 #include <cnoid/Link>
 #include <cnoid/LinkKinematicsKit>
 #include "gettext.h"
@@ -14,7 +13,7 @@ namespace cnoid {
 class LinkOffsetFrameListItem::Impl
 {
 public:
-    unique_ptr<LocatableItem> linkLocation;
+    LocationProxyPtr linkLocation;
 };
 
 }
@@ -61,15 +60,15 @@ Item* LinkOffsetFrameListItem::doDuplicate() const
 }
 
 
-LocatableItem* LinkOffsetFrameListItem::getParentLocatableItem()
+LocationProxyPtr LinkOffsetFrameListItem::getFrameParentLocationProxy()
 {
     if(!impl->linkLocation){
         if(auto bodyItem = findOwnerItem<BodyItem>()){
             // Currently a body that has a unique end link is supported.
             if(auto kinematicsKit = bodyItem->findPresetLinkKinematicsKit()){
-                impl->linkLocation.reset(bodyItem->createLinkLocationProxy(kinematicsKit->link()));
+                impl->linkLocation = bodyItem->createLinkLocationProxy(kinematicsKit->link());
             }
         }
     }
-    return impl->linkLocation.get();
+    return impl->linkLocation;
 }

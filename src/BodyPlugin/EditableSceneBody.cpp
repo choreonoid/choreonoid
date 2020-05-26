@@ -432,7 +432,7 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
         onKinematicStateChanged();
 
         connections.add(
-            bodyItem->sigLocationAttributeChanged().connect(
+            bodyItem->getLocationProxy()->sigAttributeChanged().connect(
                 [&](){
                     bool on = bodyItem->isLocationEditable();
                     if(!on){

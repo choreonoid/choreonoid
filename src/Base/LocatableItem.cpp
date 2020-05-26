@@ -1,105 +1,103 @@
 #include "Item.h"
 #include "LocatableItem.h"
-#include <utility>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-Signal<bool(LocatableItem* item), LogicalSum> sigLocationEditRequest;
+Signal<bool(LocationProxyPtr location), LogicalSum> sigEditRequest;
 
 }
 
 
-LocatableItem::LocatableItem()
+LocationProxy::LocationProxy()
 {
-    isLocationEditable_ = true;
+    isEditable_ = true;
 }
 
 
-LocatableItem::~LocatableItem()
+LocationProxy::~LocationProxy()
 {
-    sigLocationExpired_();
+    sigExpired_();
 }
 
 
-LocatableItem* LocatableItem::getParentLocatableItem()
+std::string LocationProxy::getName() const
 {
-    if(auto item = dynamic_cast<Item*>(this)){
-        return item->findOwnerItem<LocatableItem>();
+    return const_cast<LocationProxy*>(this)->getCorrespondingItem()->displayName();
+}
+
+
+bool LocationProxy::isEditable() const
+{
+    return isEditable_;
+}
+
+
+void LocationProxy::setEditable(bool on)
+{
+    if(on != isEditable_){
+        isEditable_ = on;
+        sigAttributeChanged_();
+    }
+}
+
+
+void LocationProxy::setLocation(const Position& /* T */)
+{
+
+}
+
+
+Item* LocationProxy::getCorrespondingItem()
+{
+    return nullptr;
+}
+
+
+LocationProxyPtr LocationProxy::getParentLocationProxy()
+{
+    if(auto item = getCorrespondingItem()){
+        if(auto parentLocatableItem = item->findOwnerItem<LocatableItem>()){
+            return parentLocatableItem->getLocationProxy();
+        }
     }
     return nullptr;
 }
 
 
-Item* LocatableItem::getCorrespondingItem()
+void LocationProxy::expire()
 {
-    if(auto item = dynamic_cast<Item*>(this)){
-        return item;
-    }
-    return nullptr;
+    sigExpired_();
 }
 
 
-std::string LocatableItem::getLocationName() const
+SignalProxy<void()> LocationProxy::sigAttributeChanged()
 {
-    return const_cast<LocatableItem*>(this)->getCorrespondingItem()->displayName();
+    return sigAttributeChanged_;
 }
 
 
-bool LocatableItem::isLocationEditable() const
+void LocationProxy::notifyAttributeChange()
 {
-    return isLocationEditable_;
+    return sigAttributeChanged_();
 }
 
 
-void LocatableItem::setLocationEditable(bool on)
+SignalProxy<void()> LocationProxy::sigExpired()
 {
-    if(on != isLocationEditable_){
-        isLocationEditable_ = on;
-        sigLocationAttributeChanged_();
-    }
+    return sigExpired_;
 }
 
 
-void LocatableItem::setLocation(const Position& /* T */)
+bool LocationProxy::requestEdit()
 {
-
+    return ::sigEditRequest(this);
 }
 
 
-void LocatableItem::expireLocation()
+SignalProxy<bool(LocationProxyPtr item), LogicalSum> LocationProxy::sigEditRequest()
 {
-    sigLocationExpired_();
-}
-
-
-SignalProxy<void()> LocatableItem::sigLocationAttributeChanged()
-{
-    return sigLocationAttributeChanged_;
-}
-
-
-void LocatableItem::notifyLocationAttributeChange()
-{
-    return sigLocationAttributeChanged_();
-}
-
-
-SignalProxy<void()> LocatableItem::sigLocationExpired()
-{
-    return sigLocationExpired_;
-}
-
-
-bool LocatableItem::requestLocationEdit()
-{
-    return ::sigLocationEditRequest(this);
-}
-
-
-SignalProxy<bool(LocatableItem* item), LogicalSum> LocatableItem::sigLocationEditRequest()
-{
-    return ::sigLocationEditRequest;
+    return ::sigEditRequest;
 }

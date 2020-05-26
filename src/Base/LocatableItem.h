@@ -1,17 +1,22 @@
 #ifndef CNOID_BASE_LOCATABLE_ITEM_H
 #define CNOID_BASE_LOCATABLE_ITEM_H
 
+#include <cnoid/Referenced>
 #include <cnoid/Signal>
 #include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT LocatableItem
+class Item;
+class LocationProxy;
+typedef ref_ptr<LocationProxy> LocationProxyPtr;
+
+class CNOID_EXPORT LocationProxy : public Referenced
 {
 public:
-    LocatableItem();
-    virtual ~LocatableItem();
+    LocationProxy();
+    virtual ~LocationProxy();
 
     enum LocationType {
         InvalidLocation,
@@ -19,29 +24,33 @@ public:
         ParentRelativeLocation,
         OffsetLocation
     };
-    virtual int getLocationType() const = 0;
-    virtual LocatableItem* getParentLocatableItem();
-    virtual Item* getCorrespondingItem();
-    virtual std::string getLocationName() const;
+    virtual int getType() const = 0;
+    virtual std::string getName() const;
     virtual Position getLocation() const = 0;
-    virtual bool isLocationEditable() const;
-    virtual void setLocationEditable(bool on);
+    virtual bool isEditable() const;
+    virtual void setEditable(bool on);
     virtual void setLocation(const Position& T);
-    virtual void expireLocation();
+    virtual Item* getCorrespondingItem();
+    virtual LocationProxyPtr getParentLocationProxy();
+    virtual void expire();
     virtual SignalProxy<void()> sigLocationChanged() = 0;
-    virtual SignalProxy<void()> sigLocationAttributeChanged();
-    virtual SignalProxy<void()> sigLocationExpired();
+    virtual SignalProxy<void()> sigAttributeChanged();
+    virtual SignalProxy<void()> sigExpired();
+    void notifyAttributeChange();
+    bool requestEdit();
 
-    bool requestLocationEdit();
-    static SignalProxy<bool(LocatableItem* item), LogicalSum> sigLocationEditRequest();
+    static SignalProxy<bool(LocationProxyPtr location), LogicalSum> sigEditRequest();
 
-protected:
-    void notifyLocationAttributeChange();
-    
 private:
-    bool isLocationEditable_;
-    Signal<void()> sigLocationAttributeChanged_;
-    Signal<void()> sigLocationExpired_;
+    bool isEditable_;
+    Signal<void()> sigAttributeChanged_;
+    Signal<void()> sigExpired_;
+};
+
+class LocatableItem
+{
+public:
+    virtual LocationProxyPtr getLocationProxy() = 0;
 };
 
 }

@@ -45,17 +45,13 @@ public:
 
     void putFrameAttributes(PutPropertyFunction& putProperty);
 
-    // LocatableItem functions
-    virtual int getLocationType() const override;
-    virtual LocatableItem* getParentLocatableItem() override;
-    virtual std::string getLocationName() const override;
-    virtual Position getLocation() const override;
-    virtual bool isLocationEditable() const override;
-    virtual void setLocation(const Position& T) override;
-    virtual SignalProxy<void()> sigLocationChanged() override;
-
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
+
+    // LocatableItem function
+    virtual LocationProxyPtr getLocationProxy() override;
+    
+    class Impl;
 
 protected:
     virtual Item* doDuplicate() const override;
@@ -64,7 +60,6 @@ protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
-    class Impl;
     Impl* impl;
 };
 

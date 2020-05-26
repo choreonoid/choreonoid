@@ -91,7 +91,7 @@ public:
     CoordinateFrameListItemPtr targetItem;
     bool isIndependentItemizationListSupported;
     CoordinateFrameListPtr frameList;
-    weak_ref_ptr<CoordinateFrameItem> weakFrameItem;
+    LocationProxyPtr locationProxy;
     FrameListModel* frameListModel;
     CheckItemDelegate* globalCheckDelegate;
     ReferencedPtr transientMarkerHolder;
@@ -649,9 +649,9 @@ void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameLi
 
     if(item){
         string caption;
-        if(auto parentLocatable = item->findOwnerItem<LocatableItem>()){
+        if(auto parentLocation = item->getFrameParentLocationProxy()){
             targetLabel.setText(
-                format("{0} - {1}",  parentLocatable->getLocationName(), item->displayName()).c_str());
+                format("{0} - {1}",  parentLocation->getName(), item->displayName()).c_str());
         } else {
             targetLabel.setText(item->displayName().c_str());
         }
@@ -786,19 +786,18 @@ void CoordinateFrameListView::Impl::startLocationEditing(const QModelIndex& mode
     stopLocationEditing();
     int frameIndex = modelIndex.row();
     if(auto frameItem = targetItem->findFrameItemAt(frameIndex)){
-        if(frameItem->requestLocationEdit()){
-            weakFrameItem = frameItem;
-        }
+        locationProxy = frameItem->getLocationProxy();
+        locationProxy->requestEdit();
     }
 }
 
 
 void CoordinateFrameListView::Impl::stopLocationEditing()
 {
-    if(auto frameItem = weakFrameItem.lock()){
-        frameItem->expireLocation();
+    if(locationProxy){
+        locationProxy->expire();
+        locationProxy.reset();
     }
-    weakFrameItem.reset();
 }
 
 

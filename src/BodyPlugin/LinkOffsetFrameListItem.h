@@ -16,7 +16,7 @@ public:
     LinkOffsetFrameListItem(const LinkOffsetFrameListItem& org);
     ~LinkOffsetFrameListItem();
 
-    virtual LocatableItem* getParentLocatableItem() override;
+    virtual LocationProxyPtr getFrameParentLocationProxy() override;
 
 protected:
     virtual Item* doDuplicate() const override;

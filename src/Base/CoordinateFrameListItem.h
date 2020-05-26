@@ -3,6 +3,7 @@
 
 #include "Item.h"
 #include "RenderableItem.h"
+#include "LocatableItem.h"
 #include <cnoid/GeneralId>
 #include <cnoid/Signal>
 #include <cnoid/EigenTypes>
@@ -45,7 +46,7 @@ public:
     bool isForBaseFrames() const;
     bool isForOffsetFrames() const;
 
-    virtual LocatableItem* getParentLocatableItem();
+    virtual LocationProxyPtr getFrameParentLocationProxy();
     bool getRelativeFramePosition(const CoordinateFrame* frame, Position& out_T) const;
     bool getGlobalFramePosition(const CoordinateFrame* frame, Position& out_T) const;
     bool switchFrameMode(CoordinateFrame* frame, int mode);

@@ -57,7 +57,23 @@ ItemFileIO* meshFileIO;
 
 BodyState kinematicStateCopy;
 
-class LinkLocation : public LocatableItem
+class BodyLocation : public LocationProxy
+{
+public:
+    BodyItem::Impl* impl;
+
+    BodyLocation(BodyItem::Impl* impl);
+    virtual int getType() const override;
+    virtual Position getLocation() const override;
+    virtual bool isEditable() const override;
+    virtual void setEditable(bool on) override;
+    virtual void setLocation(const Position& T) override;
+    virtual Item* getCorrespondingItem() override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
+    virtual SignalProxy<void()> sigLocationChanged() override;
+};
+    
+class LinkLocation : public LocationProxy
 {
 public:
     weak_ref_ptr<BodyItem> refBodyItem;
@@ -66,13 +82,13 @@ public:
     LinkLocation();
     LinkLocation(BodyItem* bodyItem, Link* link);
     void setTarget(BodyItem* bodyItem, Link* link);
-    virtual int getLocationType() const override;
-    virtual std::string getLocationName() const override;
-    virtual SignalProxy<void()> sigLocationChanged() override;
+    virtual int getType() const override;
+    virtual std::string getName() const override;
     virtual Position getLocation() const override;
-    virtual bool isLocationEditable() const override;
-    virtual LocatableItem* getParentLocatableItem() override;
+    virtual bool isEditable() const override;
     virtual Item* getCorrespondingItem() override;
+    virtual LocationProxyPtr getParentLocationProxy();
+    virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
 class MyCompositeBodyIK : public CompositeBodyIK
@@ -98,12 +114,14 @@ public:
     BodyPtr body;
 
     BodyItem* parentBodyItem;
-    unique_ptr<LinkLocation> parentLinkLocation;
+    ref_ptr<BodyLocation> bodyLocation;
+    ref_ptr<LinkLocation> parentLinkLocation;
     AttachmentDevicePtr attachmentToParent;
     ScopedConnection parentBodyItemConnection;
     bool isKinematicStateChangeNotifiedByParentBodyItem;
     bool isProcessingInverseKinematicsIncludingParentBody;
     bool isAttachmentEnabled;
+    bool isLocationEditable;
 
     enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_FLAGS };
     std::bitset<NUM_UPUDATE_FLAGS> updateFlags;
@@ -344,6 +362,7 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
     }
 
     isAttachmentEnabled = org.isAttachmentEnabled;
+    isLocationEditable = true;
     transparency = org.transparency;
     zmp = org.zmp;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
@@ -1248,13 +1267,54 @@ void BodyItem::onPositionChanged()
 }
 
 
-SignalProxy<void()> BodyItem::sigLocationChanged()
+LocationProxyPtr BodyItem::getLocationProxy()
 {
-    return impl->sigKinematicStateChanged.signal();
+    if(!impl->bodyLocation){
+        impl->bodyLocation = new BodyLocation(impl);
+    }
+    return impl->bodyLocation;
 }
 
 
-int BodyItem::getLocationType() const
+bool BodyItem::isLocationEditable() const
+{
+    return impl->isLocationEditable;
+}
+
+
+void BodyItem::setLocationEditable(bool on)
+{
+    impl->setLocationEditable(on, true);
+}
+
+
+void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhenLocked)
+{
+    if(on != isLocationEditable){
+        isLocationEditable = on;
+        if(!on && updateInitialPositionWhenLocked){
+            if(!self->isAttachedToParentBody()){
+                initialState.setRootLinkPosition(body->rootLink()->T());
+            }
+        }
+        if(sceneBody){
+            sceneBody->notifyUpdate();
+        }
+        if(bodyLocation){
+            bodyLocation->notifyAttributeChange();
+        }
+    }
+}
+
+
+BodyLocation::BodyLocation(BodyItem::Impl* impl)
+    : impl(impl)
+{
+
+}
+
+
+int BodyLocation::getType() const
 {
     if(impl->attachmentToParent){
         return OffsetLocation;
@@ -1264,7 +1324,7 @@ int BodyItem::getLocationType() const
 }
 
 
-Position BodyItem::getLocation() const
+Position BodyLocation::getLocation() const
 {
     auto rootLink = impl->body->rootLink();
     if(impl->attachmentToParent){
@@ -1277,29 +1337,19 @@ Position BodyItem::getLocation() const
 }
 
 
-void BodyItem::setLocationEditable(bool on)
+bool BodyLocation::isEditable() const
+{
+    return impl->isLocationEditable;
+}
+
+
+void BodyLocation::setEditable(bool on)
 {
     impl->setLocationEditable(on, true);
 }
 
 
-void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhenLocked)
-{
-    if(on != self->isLocationEditable()){
-        self->LocatableItem::setLocationEditable(on);
-        if(!on && updateInitialPositionWhenLocked){
-            if(!self->isAttachedToParentBody()){
-                initialState.setRootLinkPosition(body->rootLink()->T());
-            }
-        }
-        if(sceneBody){
-            sceneBody->notifyUpdate();
-        }
-    }
-}
-
-
-void BodyItem::setLocation(const Position& T)
+void BodyLocation::setLocation(const Position& T)
 {
     auto rootLink = impl->body->rootLink();
     if(impl->attachmentToParent){
@@ -1307,30 +1357,42 @@ void BodyItem::setLocation(const Position& T)
         impl->parentBodyItem->notifyKinematicStateChange(true);
     } else {
         rootLink->setPosition(T);
-        notifyKinematicStateChange(true);
+        impl->self->notifyKinematicStateChange(true);
     }
 }
 
 
-LocatableItem* BodyItem::getParentLocatableItem()
+Item* BodyLocation::getCorrespondingItem()
+{
+    return impl->self;
+}
+
+
+LocationProxyPtr BodyLocation::getParentLocationProxy()
 {
     if(impl->parentBodyItem){
         if(impl->attachmentToParent){
             if(!impl->parentLinkLocation){
-                impl->parentLinkLocation.reset(new LinkLocation);
+                impl->parentLinkLocation = new LinkLocation;
             }
             auto parentLink = impl->body->parentBodyLink();
             impl->parentLinkLocation->setTarget(impl->parentBodyItem, parentLink);
-            return impl->parentLinkLocation.get();
+            return impl->parentLinkLocation;
         } else {
-            return impl->parentBodyItem;
+            return impl->parentBodyItem->getLocationProxy();
         }
     }
     return nullptr;
 }
 
 
-LocatableItem* BodyItem::createLinkLocationProxy(Link* link)
+SignalProxy<void()> BodyLocation::sigLocationChanged()
+{
+    return impl->sigKinematicStateChanged.signal();
+}
+
+
+LocationProxyPtr BodyItem::createLinkLocationProxy(Link* link)
 {
     return new LinkLocation(this, link);
 }
@@ -1357,29 +1419,18 @@ void LinkLocation::setTarget(BodyItem* bodyItem, Link* link)
 }
 
 
-int LinkLocation::getLocationType() const
+int LinkLocation::getType() const
 {
     return GlobalLocation;
 }
 
 
-std::string LinkLocation::getLocationName() const
+std::string LinkLocation::getName() const
 {
     if(auto link = refLink.lock()){
         return link->body()->name() + " - " + link->name();
     }
     return string();
-}
-
-
-SignalProxy<void()> LinkLocation::sigLocationChanged()
-{
-    if(auto bodyItem = refBodyItem.lock()){
-        return bodyItem->sigKinematicStateChanged();
-    } else {
-        static Signal<void()> dummySignal;
-        return dummySignal;
-    }
 }
 
 
@@ -1392,21 +1443,32 @@ Position LinkLocation::getLocation() const
 }
 
 
-bool LinkLocation::isLocationEditable() const
+bool LinkLocation::isEditable() const
 {
     return false;
-}
-
-
-LocatableItem* LinkLocation::getParentLocatableItem()
-{
-    return nullptr;
 }
 
 
 Item* LinkLocation::getCorrespondingItem()
 {
     return refBodyItem.lock();
+}
+
+
+LocationProxyPtr LinkLocation::getParentLocationProxy()
+{
+    return nullptr;
+}
+
+
+SignalProxy<void()> LinkLocation::sigLocationChanged()
+{
+    if(auto bodyItem = refBodyItem.lock()){
+        return bodyItem->sigKinematicStateChanged();
+    } else {
+        static Signal<void()> dummySignal;
+        return dummySignal;
+    }
 }
 
 

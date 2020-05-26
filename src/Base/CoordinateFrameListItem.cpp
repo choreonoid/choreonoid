@@ -2,7 +2,6 @@
 #include "CoordinateFrameItem.h"
 #include "CoordinateFrameMarker.h"
 #include "ItemManager.h"
-#include "LocatableItem.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
 #include "MessageView.h"
@@ -52,7 +51,7 @@ public:
     SgPosTransformPtr relativeFrameMarkerGroup;
     unordered_map<CoordinateFramePtr, FrameMarkerPtr> visibleFrameMarkerMap;
     SgUpdate sgUpdate;
-    ScopedConnection parentLocatableItemConnection;
+    ScopedConnection parentLocationConnection;
     Signal<void(int index, bool on)> sigFrameMarkerVisibilityChanged;
 
     class TransientFrameMarkerHolder : public Referenced
@@ -453,11 +452,11 @@ bool CoordinateFrameListItem::isForOffsetFrames() const
 }
 
 
-LocatableItem* CoordinateFrameListItem::getParentLocatableItem()
+LocationProxyPtr CoordinateFrameListItem::getFrameParentLocationProxy()
 {
     if(isForBaseFrames()){
         if(auto locatableItem = findOwnerItem<LocatableItem>()){
-            return locatableItem;
+            return locatableItem->getLocationProxy();
         }
     }
     return nullptr;
@@ -467,8 +466,8 @@ LocatableItem* CoordinateFrameListItem::getParentLocatableItem()
 bool CoordinateFrameListItem::getRelativeFramePosition(const CoordinateFrame* frame, Position& out_T) const
 {
     if(frame->isGlobal()){
-        if(auto parentLocatable = const_cast<CoordinateFrameListItem*>(this)->getParentLocatableItem()){
-            auto T_base = parentLocatable->getLocation();
+        if(auto parentLocation = const_cast<CoordinateFrameListItem*>(this)->getFrameParentLocationProxy()){
+            auto T_base = parentLocation->getLocation();
             out_T = T_base.inverse(Eigen::Isometry) * frame->T();
             return true;
         }
@@ -482,8 +481,8 @@ bool CoordinateFrameListItem::getRelativeFramePosition(const CoordinateFrame* fr
 bool CoordinateFrameListItem::getGlobalFramePosition(const CoordinateFrame* frame, Position& out_T) const
 {
     if(!frame->isGlobal()){
-        if(auto parentLocatable = const_cast<CoordinateFrameListItem*>(this)->getParentLocatableItem()){
-            auto T_base = parentLocatable->getLocation();
+        if(auto parentLocation = const_cast<CoordinateFrameListItem*>(this)->getFrameParentLocationProxy()){
+            auto T_base = parentLocation->getLocation();
             out_T = T_base * frame->T();
             return true;
         }
@@ -499,11 +498,11 @@ bool CoordinateFrameListItem::switchFrameMode(CoordinateFrame* frame, int mode)
     if(frame->mode() == mode){
         return true;
     }
-    auto parentLocatable = getParentLocatableItem();
-    if(!parentLocatable){
+    auto parentLocation = getFrameParentLocationProxy();
+    if(!parentLocation){
         return false;
     }
-    auto T_base = parentLocatable->getLocation();
+    auto T_base = parentLocation->getLocation();
     if(mode == CoordinateFrame::Global){
         frame->setPosition(T_base * frame->T());
     } else { // Local
@@ -580,19 +579,19 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
     if(changed){
         int numRelativeMarkers = relativeFrameMarkerGroup->numChildren();
         if(relativeMarkerChanged){
-            if(parentLocatableItemConnection.connected()){
+            if(parentLocationConnection.connected()){
                 if(relativeFrameMarkerGroup->empty()){
-                    parentLocatableItemConnection.disconnect();
+                    parentLocationConnection.disconnect();
                 }
             } else {
                 if(!relativeFrameMarkerGroup->empty()){
-                    if(auto locatable = self->getParentLocatableItem()){
-                        parentLocatableItemConnection =
-                            locatable->sigLocationChanged().connect(
-                                [this, locatable](){
-                                    updateParentFrameForFrameMarkers(locatable->getLocation());
+                    if(auto location = self->getFrameParentLocationProxy()){
+                        parentLocationConnection =
+                            location->sigLocationChanged().connect(
+                                [this, location](){
+                                    updateParentFrameForFrameMarkers(location->getLocation());
                                 });
-                        updateParentFrameForFrameMarkers(locatable->getLocation());
+                        updateParentFrameForFrameMarkers(location->getLocation());
                     }
                 }
             }
