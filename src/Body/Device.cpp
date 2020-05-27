@@ -62,13 +62,21 @@ Body* Device::body()
 }
 
 
-Isometry3 Device::T_local_org() const
+Position Device::T_local_org() const
 {
-    Isometry3 T;
+    Position T;
     const auto& Rs = link()->Rs();
     T.linear() = Rs.transpose() * T_local().linear();
     T.translation() = Rs.transpose() * T_local().translation();
     return T;
+}
+
+
+void Device::setLocalAttitude(const Position& Ta)
+{
+    const auto& Rs = link()->Rs();
+    T_local().linear() = Rs * Ta.linear();
+    T_local().translation() = Rs * Ta.translation();
 }
 
 

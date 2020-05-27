@@ -59,9 +59,9 @@ class CNOID_EXPORT Device : public DeviceState
         int id; // pre-defined id
         std::string name;
         Link* link;
-        Isometry3 T_local;
+        Position T_local;
         double cycle;
-        const Isometry3& const_T_local() const { return T_local; }
+        const Position& const_T_local() const { return T_local; }
         Signal<void()> sigStateChanged;
         Signal<void(double time)> sigTimeChanged;
     };
@@ -101,24 +101,26 @@ public:
     const Body* body() const;
     Body* body();
     
-    Isometry3& T_local() { return ns->T_local; }
-    const Isometry3& T_local() const { return ns->T_local; }
-    Isometry3 T_local_org() const;
-        
-    Isometry3::ConstLinearPart R_local() const { return ns->const_T_local().linear(); }
-    Isometry3::LinearPart R_local() { return ns->T_local.linear(); }
+    Position& T_local() { return ns->T_local; }
+    const Position& T_local() const { return ns->T_local; }
+    Position T_local_org() const;
 
-    Isometry3::ConstLinearPart localRotation() const { return ns->const_T_local().linear(); }
-    Isometry3::LinearPart localRotaion() { return ns->T_local.linear(); }
+    void setLocalAttitude(const Position& Ta);
+        
+    Position::ConstLinearPart R_local() const { return ns->const_T_local().linear(); }
+    Position::LinearPart R_local() { return ns->T_local.linear(); }
+
+    Position::ConstLinearPart localRotation() const { return ns->const_T_local().linear(); }
+    Position::LinearPart localRotaion() { return ns->T_local.linear(); }
 
     template<typename Derived>
-        void setLocalRotation(const Eigen::MatrixBase<Derived>& R) { ns->T_local.linear() = R; }
+    void setLocalRotation(const Eigen::MatrixBase<Derived>& R) { ns->T_local.linear() = R; }
 
-    Isometry3::ConstTranslationPart p_local() const { return ns->const_T_local().translation(); }
-    Isometry3::TranslationPart p_local() { return ns->T_local.translation(); }
+    Position::ConstTranslationPart p_local() const { return ns->const_T_local().translation(); }
+    Position::TranslationPart p_local() { return ns->T_local.translation(); }
 
-    Isometry3::ConstTranslationPart localTranslation() const { return ns->const_T_local().translation(); }
-    Isometry3::TranslationPart localTranslation() { return ns->T_local.translation(); }
+    Position::ConstTranslationPart localTranslation() const { return ns->const_T_local().translation(); }
+    Position::TranslationPart localTranslation() { return ns->T_local.translation(); }
 
     template<typename Derived>
         void setLocalTranslation(const Eigen::MatrixBase<Derived>& p) { ns->T_local.translation() = p; }
