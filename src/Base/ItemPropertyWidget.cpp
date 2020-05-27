@@ -699,7 +699,7 @@ void ItemPropertyWidget::Impl::setCurrentItem(Item* item)
                 item->sigNameChanged().connect(
                     [&](const std::string& /* oldName */){ updateProperties(); }));
             itemConnections.add(
-                item->sigDetachedFromRoot().connect(
+                item->sigDisconnectedFromRoot().connect(
                     [&](){ setCurrentItem(nullptr); }));
         }
         currentItem = item;

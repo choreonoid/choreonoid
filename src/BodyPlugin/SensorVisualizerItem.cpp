@@ -229,7 +229,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
     if(newBodyItem != bodyItem){
         bodyItem = newBodyItem;
         for(size_t i=0; i < subItems.size(); i++){
-            subItems[i]->detachFromParentItem();
+            subItems[i]->removeFromParentItem();
         }
         subItems.clear();
 
@@ -297,7 +297,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
 void SensorVisualizerItem::onDisconnectedFromRoot()
 {
     for(size_t i=0; i < impl->subItems.size(); i++){
-        impl->subItems[i]->detachFromParentItem();
+        impl->subItems[i]->removeFromParentItem();
     }
     impl->subItems.clear();
 }

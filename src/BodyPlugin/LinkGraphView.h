@@ -69,9 +69,9 @@ private:
 
     void setupElementToggleSet(QBoxLayout* box, ToggleToolButton toggles[], const char* labels[], bool isActive);
     void onSelectedItemsChanged(ItemList<MultiSE3SeqItem> items);
-    void onDataItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
+    void onDataItemDisconnectedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
     void updateBodyItems();
-    void onBodyItemDetachedFromRoot(BodyItemPtr bodyItem);
+    void onBodyItemDisconnectedFromRoot(BodyItemPtr bodyItem);
     void setupGraphWidget();
     void addPositionTrajectory(std::list<ItemInfo>::iterator itemInfoIter, Link* link, std::shared_ptr<MultiSE3Seq> seq);
     void onDataItemUpdated(std::list<ItemInfo>::iterator itemInfoIter);

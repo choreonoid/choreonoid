@@ -19,8 +19,8 @@ public:
     BodyItemPtr currentBodyItem;
     ItemList<BodyItem> selectedBodyItems;
     ItemList<BodyItem> targetBodyItems;
-    Connection connectionOfItemSelectionChanged;
-    Connection connectionOfCurrentBodyItemDetachedFromRoot;
+    Connection rootItemConnection;
+    Connection bodyItemConnection;
     Signal<void(const ItemList<BodyItem>& selectedBodyItems)> sigBodyItemSelectionChanged;
     Signal<void(BodyItem* currentBodyItem)> sigCurrentBodyItemChanged;
 
@@ -28,7 +28,7 @@ public:
     ~Impl();
     bool makeSingleSelection(BodyItem* bodyItem);
     void onSelectedItemsChanged(ItemList<BodyItem> bodyItems);
-    void onBodyItemDetachedFromRoot();
+    void onBodyItemDisconnectedFromRoot();
     void onCopyButtonClicked();
     void onPasteButtonClicked();
     void onOriginButtonClicked();
@@ -84,7 +84,7 @@ BodyBar::Impl::Impl(BodyBar* self)
     self->addButton(QIcon(":/Body/icons/left-to-right.png"), _("Copy the left side pose to the right side"))
         ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, false); });
 
-    connectionOfItemSelectionChanged = 
+    rootItemConnection = 
         RootItem::instance()->sigSelectedItemsChanged().connect(
             [&](const ItemList<>& items){ onSelectedItemsChanged(items); });
 }
@@ -98,8 +98,8 @@ BodyBar::~BodyBar()
 
 BodyBar::Impl::~Impl()
 {
-    connectionOfItemSelectionChanged.disconnect();
-    connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
+    rootItemConnection.disconnect();
+    bodyItemConnection.disconnect();
 }
 
 
@@ -166,10 +166,10 @@ void BodyBar::Impl::onSelectedItemsChanged(ItemList<BodyItem> bodyItems)
 
     if(firstItem && firstItem != currentBodyItem){
         currentBodyItem = firstItem;
-        connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
-        connectionOfCurrentBodyItemDetachedFromRoot =
-            currentBodyItem->sigDetachedFromRoot().connect(
-                [&](){ onBodyItemDetachedFromRoot(); });
+        bodyItemConnection.disconnect();
+        bodyItemConnection =
+            currentBodyItem->sigDisconnectedFromRoot().connect(
+                [&](){ onBodyItemDisconnectedFromRoot(); });
         sigCurrentBodyItemChanged(currentBodyItem);
     }
 
@@ -204,10 +204,10 @@ void BodyBar::Impl::onPasteButtonClicked()
 }
 
 
-void BodyBar::Impl::onBodyItemDetachedFromRoot()
+void BodyBar::Impl::onBodyItemDisconnectedFromRoot()
 {
     currentBodyItem = 0;
-    connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
+    bodyItemConnection.disconnect();
     sigCurrentBodyItemChanged(nullptr);
 }
 

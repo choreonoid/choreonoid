@@ -88,8 +88,8 @@ void JointGraphView::onSelectedItemsChanged(ItemList<MultiValueSeqItem> items)
                     [=]{ onDataItemUpdated(it); }));
 
             it->connections.add(
-                it->item->sigDetachedFromRoot().connect(
-                    [=](){ onDataItemDetachedFromRoot(it); }));
+                it->item->sigDisconnectedFromRoot().connect(
+                    [=](){ onDataItemDisconnectedFromRoot(it); }));
         }
     }
 
@@ -98,7 +98,7 @@ void JointGraphView::onSelectedItemsChanged(ItemList<MultiValueSeqItem> items)
 }
 
 
-void JointGraphView::onDataItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter)
+void JointGraphView::onDataItemDisconnectedFromRoot(std::list<ItemInfo>::iterator itemInfoIter)
 {
     itemInfos.erase(itemInfoIter);
     updateBodyItems();
@@ -124,14 +124,14 @@ void JointGraphView::updateBodyItems()
                     [=](){ setupGraphWidget(); }));
             
             bodyItemConnections.add(
-                it->bodyItem->sigDetachedFromRoot().connect(
-                    [=](){ onBodyItemDetachedFromRoot(it->bodyItem); }));
+                it->bodyItem->sigDisconnectedFromRoot().connect(
+                    [=](){ onBodyItemDisconnectedFromRoot(it->bodyItem); }));
         }
     }
 }
 
 
-void JointGraphView::onBodyItemDetachedFromRoot(BodyItemPtr bodyItem)
+void JointGraphView::onBodyItemDisconnectedFromRoot(BodyItemPtr bodyItem)
 {
     bool erased = false;
     list<ItemInfo>::iterator it = itemInfos.begin();

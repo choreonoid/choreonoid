@@ -55,9 +55,9 @@ private:
     Connection rootItemConnection;
 
     void onSelectedItemsChanged(ItemList<MultiValueSeqItem> items);
-    void onDataItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
+    void onDataItemDisconnectedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
     void updateBodyItems();
-    void onBodyItemDetachedFromRoot(BodyItemPtr bodyItem);
+    void onBodyItemDisconnectedFromRoot(BodyItemPtr bodyItem);
     void setupGraphWidget();
     void addJointTrajectory(std::list<ItemInfo>::iterator itemInfoIter, Link* joint, std::shared_ptr<MultiValueSeq> seq);
     void onDataItemUpdated(std::list<ItemInfo>::iterator itemInfoIter);

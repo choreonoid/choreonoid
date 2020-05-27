@@ -80,7 +80,7 @@ public:
     map<Item*, ConnectionSet> itemToConnectionSetMap;
 
     void onSelectedItemsChanged(const ItemList<>& items);
-    void onItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
+    void onItemDisconnectedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);
     void updatePartList();
     void updateSelections();
     void onItemUpdated(std::list<ItemInfo>::iterator itemInfoIter);
@@ -206,15 +206,15 @@ void GraphViewBaseImpl::onSelectedItemsChanged(const ItemList<>& allItems)
                 [this, it](){ onItemUpdated(it); }));
 
         connections.add(
-            it->item->sigDetachedFromRoot().connect(
-                [this, it](){ onItemDetachedFromRoot(it); }));
+            it->item->sigDisconnectedFromRoot().connect(
+                [this, it](){ onItemDisconnectedFromRoot(it); }));
     }
 
     updatePartList();
 }
 
 
-void GraphViewBaseImpl::onItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter)
+void GraphViewBaseImpl::onItemDisconnectedFromRoot(std::list<ItemInfo>::iterator itemInfoIter)
 {
     itemInfos.erase(itemInfoIter);
     updatePartList();

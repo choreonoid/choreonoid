@@ -20,7 +20,7 @@ void exportLuaItems(sol::table& module)
         "addChildItem", [](Item* self, Item* item) { return self->addChildItem(item); },
         "addSubItem", &Item::addSubItem,
         "isSubItem", &Item::isSubItem,
-        "detachFromParentItem", &Item::detachFromParentItem,
+        "removeFromParentItem", &Item::removeFromParentItem,
         "isTemporal", &Item::isTemporal,
         "setTemporal", &Item::setTemporal,
         "notifyUpdate", &Item::notifyUpdate,

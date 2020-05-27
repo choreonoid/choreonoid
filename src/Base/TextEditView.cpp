@@ -41,7 +41,7 @@ public:
     
 private:
     ConnectionSet connections;
-    Connection connectionOfCurrentBodyItemDetachedFromRoot;
+    Connection textItemConnection;
     AbstractTextItemPtr currentTextItem_;
     ItemList<AbstractTextItem> selectedTextItems_;
     bool viewActive;
@@ -59,7 +59,7 @@ private:
     QAction* actionPaste;
 
     void onItemSelectionChanged(const ItemList<AbstractTextItem>& textItems);
-    void onTextItemDetachedFromRoot();
+    void onTextItemDisconnectedFromRoot();
     void open();
     void maybeSave();
     void save();
@@ -147,7 +147,7 @@ TextEditViewImpl::TextEditViewImpl(TextEditView* self)
 TextEditViewImpl::~TextEditViewImpl()
 {
     connections.disconnect();
-    connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
+    textItemConnection.disconnect();
 }
 
 
@@ -166,22 +166,22 @@ void TextEditViewImpl::onItemSelectionChanged(const ItemList<AbstractTextItem>& 
             maybeSave();
         }
         currentTextItem_ = firstItem;
-        connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
-        connectionOfCurrentBodyItemDetachedFromRoot =
-            currentTextItem_->sigDetachedFromRoot().connect(
-                [&](){ onTextItemDetachedFromRoot(); });
+        textItemConnection.disconnect();
+        textItemConnection =
+            currentTextItem_->sigDisconnectedFromRoot().connect(
+                [&](){ onTextItemDisconnectedFromRoot(); });
         open();
     }
 }
 
 
-void TextEditViewImpl::onTextItemDetachedFromRoot()
+void TextEditViewImpl::onTextItemDisconnectedFromRoot()
 {
     maybeSave();
     textEdit.clear();
     currentTextItem_ = 0;
     setCurrentFileName();
-    connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
+    textItemConnection.disconnect();
 }
 
 

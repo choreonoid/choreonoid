@@ -118,8 +118,8 @@ void LinkGraphView::onSelectedItemsChanged(ItemList<MultiSE3SeqItem> items)
                     [=](){ onDataItemUpdated(it); }));
 
             it->connections.add(
-                it->item->sigDetachedFromRoot().connect(
-                    [=](){ onDataItemDetachedFromRoot(it); }));
+                it->item->sigDisconnectedFromRoot().connect(
+                    [=](){ onDataItemDisconnectedFromRoot(it); }));
         }
     }
 
@@ -128,7 +128,7 @@ void LinkGraphView::onSelectedItemsChanged(ItemList<MultiSE3SeqItem> items)
 }
 
 
-void LinkGraphView::onDataItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter)
+void LinkGraphView::onDataItemDisconnectedFromRoot(std::list<ItemInfo>::iterator itemInfoIter)
 {
     itemInfos.erase(itemInfoIter);
     updateBodyItems();
@@ -154,14 +154,14 @@ void LinkGraphView::updateBodyItems()
                     [=](){ setupGraphWidget(); }));
             
             bodyItemConnections.add(
-                it->bodyItem->sigDetachedFromRoot().connect(
-                    [=](){ onBodyItemDetachedFromRoot(it->bodyItem); }));
+                it->bodyItem->sigDisconnectedFromRoot().connect(
+                    [=](){ onBodyItemDisconnectedFromRoot(it->bodyItem); }));
         }
     }
 }
 
 
-void LinkGraphView::onBodyItemDetachedFromRoot(BodyItemPtr bodyItem)
+void LinkGraphView::onBodyItemDisconnectedFromRoot(BodyItemPtr bodyItem)
 {
     bool erased = false;
     list<ItemInfo>::iterator it = itemInfos.begin();

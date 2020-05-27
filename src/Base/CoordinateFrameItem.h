@@ -55,8 +55,8 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
-    virtual void onAttachedToParent() override;
-    virtual void onDetachedFromParent() override;
+    virtual void onAddedToParent() override;
+    virtual void onRemovedFromParent(Item* parentItem) override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:

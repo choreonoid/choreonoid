@@ -46,7 +46,8 @@ void exportPyItems(py::module m)
         .def("addSubItem", &Item::addSubItem)
         .def("isSubItem", &Item::isSubItem)
         .def("setSubItemAttributes", &Item::setSubItemAttributes)
-        .def("detachFromParentItem", &Item::detachFromParentItem)
+        .def("removeFromParentItem", &Item::removeFromParentItem)
+        .def("detachFromParentItem", &Item::removeFromParentItem) // deprecated
         .def("insertChildItem", [](Item& self, Item* item, Item* nextItem){
                 return self.insertChild(nextItem, item); })
         .def("insertChildItem", [](Item& self, Item* item, Item* nextItem, bool isManualOperation){

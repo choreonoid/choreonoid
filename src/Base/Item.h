@@ -62,9 +62,7 @@ public:
     Item* duplicateSubTree() const;
 
     [[deprecated("Use Item::duplicateSubTree.")]]
-    Item* duplicateAll() const {
-        return duplicateSubTree();
-    }
+    Item* duplicateAll() const { return duplicateSubTree(); }
 
     const std::string& name() const { return name_; }
     // Return true if the name is actually changed
@@ -143,7 +141,11 @@ public:
     [[deprecated("Use Item::setSubItemAttributes and Item::insertChild(Item* position, Item* item, bool isManualOperation).")]]
     bool insertSubItem(Item* item, Item* nextItem);
 
-    void detachFromParentItem();
+    void removeFromParentItem();
+
+    [[deprecated("Use Item::removeFromParentItem.")]]
+    void detachFromParentItem() { removeFromParentItem(); }
+    
     void clearChildren();
 
     /**
@@ -292,7 +294,7 @@ public:
 
     SignalProxy<void()> sigDisconnectedFromRoot();
 
-    //! \deprecated
+    [[deprecated("Use Item::sigDisconnectedFromRoot.")]]
     SignalProxy<void()> sigDetachedFromRoot() { return sigDisconnectedFromRoot(); }
 
     SignalProxy<void(bool on)> sigSelectionChanged();
@@ -380,9 +382,8 @@ protected:
     //! Override this function to allow duplication of an instance.
     virtual Item* doDuplicate() const;
 
-    virtual void onAttachedToParent();
-
     virtual bool onCheckNewPosition(bool isManualOperation);
+    virtual void onAddedToParent();
 
     /**
        This function is called when the item has been connected to the tree including the root item.
@@ -399,11 +400,7 @@ protected:
     */
     virtual void onPositionChanged();
 
-    //[[deprecated("Use Item::onRemovedFromParent.")]]
-    virtual void onDetachedFromParent();
-
     virtual void onRemovedFromParent(Item* parentItem);
-    
     virtual void onDisconnectedFromRoot();
 
     /**

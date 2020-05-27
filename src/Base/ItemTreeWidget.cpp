@@ -1092,7 +1092,7 @@ void ItemTreeWidget::Impl::cutSelectedItems()
         getSelectedItems(),
         [&](Item* item, unordered_set<Item*>&){
             copiedItems.push_back(item);
-            item->detachFromParentItem();
+            item->removeFromParentItem();
         });
 }
 
@@ -1185,7 +1185,7 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& p
     }
 
     for(auto item : items){
-        item->detachFromParentItem();
+        item->removeFromParentItem();
     }
 
     itemsUnderTreeWidgetInternalOperation.clear();

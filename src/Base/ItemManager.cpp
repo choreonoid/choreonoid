@@ -296,7 +296,7 @@ void ItemManager::Impl::detachManagedTypeItems(Item* parentItem)
     while(item){
         Item* nextItem = item->nextItem();
         if(registeredTypes.find(typeid(*item)) != registeredTypes.end()){
-            item->detachFromParentItem();
+            item->removeFromParentItem();
         } else {
             detachManagedTypeItems(item);
         }
@@ -1080,14 +1080,14 @@ void ItemManager::reloadItems(const ItemList<>& items)
                     while(child){
                         ItemPtr nextChild = child->nextItem();
                         if(!child->isSubItem()){
-                            child->detachFromParentItem();
+                            child->removeFromParentItem();
                             reloadedItem->addChildItem(child);
                         }
                         child = nextChild;
                     }
                     reloadedItem->assign(item);
 
-                    item->detachFromParentItem();
+                    item->removeFromParentItem();
                 }
             }
         }

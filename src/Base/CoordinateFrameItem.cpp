@@ -139,7 +139,7 @@ void CoordinateFrameItem::Impl::onFrameUpdated(int flags)
 }
 
 
-void CoordinateFrameItem::onAttachedToParent()
+void CoordinateFrameItem::onAddedToParent()
 {
     if(impl->frameListItem){
         impl->frameListItem->onFrameItemRemoved(this);
@@ -157,7 +157,7 @@ void CoordinateFrameItem::onAttachedToParent()
 }    
 
 
-void CoordinateFrameItem::onDetachedFromParent()
+void CoordinateFrameItem::onRemovedFromParent(Item* /* parentItem */)
 {
     if(impl->frameListItem){
         impl->frameListItem->onFrameItemRemoved(this);

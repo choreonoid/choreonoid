@@ -115,7 +115,7 @@ public:
     void initialize();
     void enableCache(bool on);
     BodyItemInfoPtr getBodyItemInfo(BodyItem* bodyItem);
-    void onBodyItemDetachedFromRoot(BodyItem* bodyItem);
+    void onBodyItemDisconnectedFromRoot(BodyItem* bodyItem);
     void clearTreeItems();
     void setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUpdate);
     void restoreTreeState();
@@ -549,8 +549,8 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
 
         if(isInfoForNewBody){
             info->linkGroup = LinkGroup::create(*bodyItem->body());
-            info->detachedFromRootConnection = bodyItem->sigDetachedFromRoot().connect(
-                [this, bodyItem](){ onBodyItemDetachedFromRoot(bodyItem); });
+            info->detachedFromRootConnection = bodyItem->sigDisconnectedFromRoot().connect(
+                [this, bodyItem](){ onBodyItemDisconnectedFromRoot(bodyItem); });
             bodyItemInfoCache[bodyItem] = info;
         }
 
@@ -563,10 +563,10 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
 }
 
 
-void LinkTreeWidgetImpl::onBodyItemDetachedFromRoot(BodyItem* bodyItem)
+void LinkTreeWidgetImpl::onBodyItemDisconnectedFromRoot(BodyItem* bodyItem)
 {
     if(TRACE_FUNCTIONS){
-        cout << "LinkTreeWidgetImpl::onBodyItemDetachedFromRoot(" << bodyItem->name() << ")" << endl;
+        cout << "LinkTreeWidgetImpl::onBodyItemDisconnectedFromRoot(" << bodyItem->name() << ")" << endl;
     }
     
     if(currentBodyItem == bodyItem){

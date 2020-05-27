@@ -33,7 +33,7 @@ struct ExtraSeqItemInfo : public Referenced
     ExtraSeqItemInfo(const string& key, AbstractSeqItemPtr& item) : key(key), item(item) { }
     ~ExtraSeqItemInfo() {
         sigUpdateConnection.disconnect();
-        item->detachFromParentItem();
+        item->removeFromParentItem();
     }
 };
 

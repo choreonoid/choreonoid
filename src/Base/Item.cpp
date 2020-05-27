@@ -106,7 +106,7 @@ public:
     bool onCheckNewPositionAcceptance(bool isManualOperation);
     void callFuncOnConnectedToRoot();
     void justRemoveSelfFromParent(bool doClearSelf);
-    void doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted);
+    void doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted);
     void callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling);
     void callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem);
     void addToItemsToEmitSigSubTreeChanged();
@@ -180,7 +180,7 @@ Item::~Item()
     ItemPtr child = childItem();
     while(child){
         Item* next = child->nextItem();
-        child->impl->doDetachFromParentItem(false, true);
+        child->impl->doRemoveFromParentItem(false, true);
         child = next;
     }
 
@@ -601,7 +601,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
                 isMoving = true;
             }
         }
-        item->impl->doDetachFromParentItem(isMoving, false);
+        item->impl->doRemoveFromParentItem(isMoving, false);
     }
 
     ++recursiveTreeChangeCounter;
@@ -616,7 +616,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
 
     justInsertChildItem(newNextItem, item);
 
-    item->onAttachedToParent();
+    item->onAddedToParent();
 
     if(rootItem){
         /**
@@ -731,7 +731,7 @@ bool Item::onCheckNewPosition(bool isManualOperation)
 }
 
 
-void Item::onAttachedToParent()
+void Item::onAddedToParent()
 {
 
 }
@@ -780,14 +780,14 @@ void Item::Impl::justRemoveSelfFromParent(bool doClearSelf)
 }
 
 
-void Item::detachFromParentItem()
+void Item::removeFromParentItem()
 {
     ItemPtr self = this;
-    impl->doDetachFromParentItem(false, false);
+    impl->doRemoveFromParentItem(false, false);
 }
 
 
-void Item::Impl::doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted)
+void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted)
 {
     Item* prevParent = self->parentItem();
     if(!prevParent){
@@ -817,7 +817,6 @@ void Item::Impl::doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted
 
     attributes.reset(SubItem);
 
-    self->onDetachedFromParent();
     self->onRemovedFromParent(prevParent);
 
     if(rootItem){
@@ -842,12 +841,6 @@ void Item::Impl::doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted
 }
 
 
-void Item::onDetachedFromParent()
-{
-
-}
-
-
 void Item::onRemovedFromParent(Item* /* parentItem */)
 {
 
@@ -857,7 +850,7 @@ void Item::onRemovedFromParent(Item* /* parentItem */)
 void Item::clearChildren()
 {
     while(childItem()){
-        childItem()->detachFromParentItem();
+        childItem()->removeFromParentItem();
     }
 }
 

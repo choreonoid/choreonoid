@@ -181,7 +181,7 @@ RootItem::~RootItem()
     Item* child = childItem();
     while(child){
         Item* next = child->nextItem();
-        child->detachFromParentItem();
+        child->removeFromParentItem();
         child = next;
     }
 

@@ -888,7 +888,7 @@ void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItemPtr poseSeqItem)
                 std::bind(&PoseSeqViewBase::onPoseModified, this, _1)));
 
         poseSeqConnections.add(
-            poseSeqItem->sigDetachedFromRoot().connect(
+            poseSeqItem->sigDisconnectedFromRoot().connect(
                 std::bind(&PoseSeqViewBase::setCurrentPoseSeqItem, this, PoseSeqItemPtr())));
     }
 }

@@ -219,7 +219,7 @@ void CoordinateFrameListItem::Impl::updateFrameItems()
     
     // clear existing frame items
     for(auto& item : self->childItems<CoordinateFrameItem>()){
-        item->detachFromParentItem();
+        item->removeFromParentItem();
     }
 
     if(itemizationMode != NoItemization){
@@ -311,7 +311,7 @@ void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
 {
     if(auto frameItem = findFrameItemAt(index)){
         isUpdatingFrameItems = true;
-        frameItem->detachFromParentItem();
+        frameItem->removeFromParentItem();
         isUpdatingFrameItems = false;
     }
 }

@@ -406,8 +406,8 @@ int App::Impl::exec()
     }
 
     for(Item* item = RootItem::instance()->childItem(); item; ){
-        Item* next = item->nextItem(); // detachFromParentItem() may deallocate item
-        item->detachFromParentItem();
+        Item* next = item->nextItem(); // removeFromParentItem() may deallocate item
+        item->removeFromParentItem();
         item = next;
     }
 
