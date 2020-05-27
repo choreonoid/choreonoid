@@ -100,10 +100,15 @@ public:
     void getSelectedDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
     Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
+    void justInsertChildItem(Item* newNextItem, Item* item);
+    bool checkNewPositionAcceptance(Item* newParentItem, Item* newNextItem, bool isManualOperation);
+    bool checkNewPositionAcceptanceIter(bool isManualOperation);
+    bool onCheckNewPositionAcceptance(bool isManualOperation);
+    void callFuncOnConnectedToRoot();
+    void justRemoveSelfFromParent(bool doClearSelf);
     void doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted);
     void callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling);
     void callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem);
-    void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
     void emitSigDisconnectedFromRootForSubTree();
@@ -584,6 +589,13 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         if(prevParentItem == self && prevNextSibling == newNextItem){
             return false; // try to insert the same position
         }
+    }
+
+    if(!item->impl->checkNewPositionAcceptance(self, newNextItem, isManualOperation)){
+        return false;
+    }
+
+    if(prevParentItem){
         if(auto srcRootItem = prevParentItem->findRootItem()){
             if(srcRootItem == rootItem){
                 isMoving = true;
@@ -602,31 +614,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         attributes.reset(Temporal);
     }
 
-    item->parent_ = self;
-
-    if(newNextItem && (newNextItem->parent_ == self)){
-        item->nextItem_ = newNextItem;
-        Item* prevItem = newNextItem->prevItem_;
-        if(prevItem){
-            prevItem->nextItem_ = item;
-            item->prevItem_ = prevItem;
-        } else {
-            self->firstChild_ = item;
-            item->prevItem_ = nullptr;
-        }
-        newNextItem->prevItem_ = item;
-
-    } else if(lastChild){
-        lastChild->nextItem_ = item;
-        item->prevItem_ = lastChild;
-        item->nextItem_ = nullptr;
-        lastChild = item;
-    } else {
-        self->firstChild_ = item;
-        lastChild = item;
-    }
-
-    ++self->numChildren_;
+    justInsertChildItem(newNextItem, item);
 
     item->onAttachedToParent();
 
@@ -671,7 +659,73 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
 }
 
 
-bool Item::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
+void Item::Impl::justInsertChildItem(Item* newNextItem, Item* item)
+{
+    item->parent_ = self;
+
+    if(newNextItem && (newNextItem->parent_ == self)){
+        item->nextItem_ = newNextItem;
+        Item* prevItem = newNextItem->prevItem_;
+        if(prevItem){
+            prevItem->nextItem_ = item;
+            item->prevItem_ = prevItem;
+        } else {
+            self->firstChild_ = item;
+            item->prevItem_ = nullptr;
+        }
+        newNextItem->prevItem_ = item;
+
+    } else if(lastChild){
+        lastChild->nextItem_ = item;
+        item->prevItem_ = lastChild;
+        item->nextItem_ = nullptr;
+        lastChild = item;
+    } else {
+        self->firstChild_ = item;
+        lastChild = item;
+    }
+
+    ++self->numChildren_;
+    
+}    
+
+
+bool Item::Impl::checkNewPositionAcceptance(Item* newParentItem, Item* newNextItem, bool isManualOperation)
+{
+    auto currentParentItem = self->parent_;
+    auto currentNextItem = self->nextItem_;
+
+    if(currentParentItem){
+        justRemoveSelfFromParent(false);
+    }
+    newParentItem->impl->justInsertChildItem(newNextItem, self);
+
+    bool accepted = checkNewPositionAcceptanceIter(isManualOperation);
+
+    justRemoveSelfFromParent(false);
+    if(currentParentItem){
+        currentParentItem->impl->justInsertChildItem(currentNextItem, self);
+    }
+
+    return accepted;
+}
+
+
+bool Item::Impl::checkNewPositionAcceptanceIter(bool isManualOperation)
+{
+    if(!self->onCheckNewPosition(isManualOperation)){
+        return false;
+    }
+    for(auto child = self->childItem(); child; child = child->nextItem()){
+        if(!child->impl->checkNewPositionAcceptanceIter(isManualOperation)){
+            return false;
+        }
+    }
+    return true;
+}
+
+
+bool Item::onCheckNewPosition(bool isManualOperation)
 {
     return true;
 }
@@ -680,6 +734,12 @@ bool Item::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
 void Item::onAttachedToParent()
 {
 
+}
+
+
+bool Item::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
+{
+    return true;
 }
 
 
@@ -695,6 +755,28 @@ void Item::Impl::callFuncOnConnectedToRoot()
 void Item::onConnectedToRoot()
 {
 
+}
+
+
+void Item::Impl::justRemoveSelfFromParent(bool doClearSelf)
+{
+    if(self->prevItem_){
+        self->prevItem_->nextItem_ = self->nextItem_;
+    } else {
+        self->parent_->firstChild_ = self->nextItem_;
+    }
+    if(self->nextItem_){
+        self->nextItem_->prevItem_ = self->prevItem_;
+    } else {
+        self->parent_->impl->lastChild = self->prevItem_;
+    }
+    --self->parent_->numChildren_;
+
+    if(doClearSelf){
+        self->parent_ = nullptr;
+        self->prevItem_ = nullptr;
+        self->nextItem_ = nullptr;
+    }
 }
 
 
@@ -731,25 +813,12 @@ void Item::Impl::doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted
         self->parent_->impl->addToItemsToEmitSigSubTreeChanged();
     }
 
-    if(self->prevItem_){
-        self->prevItem_->nextItem_ = self->nextItem_;
-    } else {
-        self->parent_->firstChild_ = self->nextItem_;
-    }
-    if(self->nextItem_){
-        self->nextItem_->prevItem_ = self->prevItem_;
-    } else {
-        self->parent_->impl->lastChild = self->prevItem_;
-    }
-    
-    --self->parent_->numChildren_;
-    self->parent_ = nullptr;
-    self->prevItem_ = nullptr;
-    self->nextItem_ = nullptr;
+    justRemoveSelfFromParent(true);
 
     attributes.reset(SubItem);
 
     self->onDetachedFromParent();
+    self->onRemovedFromParent(prevParent);
 
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
@@ -774,6 +843,12 @@ void Item::Impl::doDetachFromParentItem(bool isMoving, bool isParentBeingDeleted
 
 
 void Item::onDetachedFromParent()
+{
+
+}
+
+
+void Item::onRemovedFromParent(Item* /* parentItem */)
 {
 
 }

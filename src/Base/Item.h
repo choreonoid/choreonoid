@@ -61,7 +61,7 @@ public:
     //! This function creates a copy of the item including its descendant items
     Item* duplicateSubTree() const;
 
-    //! \deprecated. Use duplicateSubTree.
+    [[deprecated("Use Item::duplicateSubTree.")]]
     Item* duplicateAll() const {
         return duplicateSubTree();
     }
@@ -382,6 +382,8 @@ protected:
 
     virtual void onAttachedToParent();
 
+    virtual bool onCheckNewPosition(bool isManualOperation);
+
     /**
        This function is called when the item has been connected to the tree including the root item.
        The onPositionChanged function and sigSubTreeChanged are processed before calling this function.
@@ -397,7 +399,10 @@ protected:
     */
     virtual void onPositionChanged();
 
+    //[[deprecated("Use Item::onRemovedFromParent.")]]
     virtual void onDetachedFromParent();
+
+    virtual void onRemovedFromParent(Item* parentItem);
     
     virtual void onDisconnectedFromRoot();
 
