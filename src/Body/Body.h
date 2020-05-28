@@ -108,6 +108,7 @@ public:
     }
 
     Link* findUniqueEndLink() const;
+    Link* findLastSerialLink() const;
 
     /**
        The number of the links that are actual joints.

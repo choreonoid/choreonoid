@@ -351,6 +351,19 @@ Link* Body::findUniqueEndLink() const
 }
 
 
+Link* Body::findLastSerialLink() const
+{
+    Link* link = rootLink_;
+    while(true){
+        if(!link->child_ || link->child_->sibling_){
+            break;
+        }
+        link = link->child_;
+    }
+    return link;
+}
+
+
 const Mapping* Body::info() const
 {
     return impl->info;
