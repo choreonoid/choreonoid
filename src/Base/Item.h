@@ -111,6 +111,7 @@ public:
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }
     Item* nextItem() const { return nextItem_; }
+    Item* lastChildItem() const { return lastChild_; }
     Item* parentItem() const { return parent_; }
 
     /**
@@ -427,6 +428,7 @@ private:
     ItemPtr firstChild_;
     ItemPtr nextItem_;
     Item* prevItem_;
+    Item* lastChild_;
     int numChildren_;
     std::string name_;
     bool isSelected_;

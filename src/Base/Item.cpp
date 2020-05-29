@@ -60,7 +60,6 @@ class Item::Impl
 {
 public:
     Item* self;
-    Item* lastChild;
     bitset<NumAttributes> attributes;
     vector<bool> checkStates;
     std::function<std::string(const Item* item)> displayNameModifier;
@@ -158,8 +157,8 @@ void Item::Impl::initialize()
     self->classId_ = -1;
     
     self->parent_ = nullptr;
-    lastChild = nullptr;
     self->prevItem_ = nullptr;
+    self->lastChild_ = nullptr;
     self->numChildren_ = 0;
     self->isSelected_ = false;
 
@@ -176,12 +175,12 @@ Item::~Item()
     if(TRACE_FUNCTIONS){
         cout << "Item::~Item() of " << name_ << endl;
     }
-    
-    ItemPtr child = childItem();
+
+    ItemPtr child = lastChild_;
     while(child){
-        Item* next = child->nextItem();
+        Item* prev = child->prevItem_;
         child->impl->doRemoveFromParentItem(false, true);
-        child = next;
+        child = prev;
     }
 
     delete impl;
@@ -675,14 +674,14 @@ void Item::Impl::justInsertChildItem(Item* newNextItem, Item* item)
         }
         newNextItem->prevItem_ = item;
 
-    } else if(lastChild){
-        lastChild->nextItem_ = item;
-        item->prevItem_ = lastChild;
+    } else if(self->lastChild_){
+        self->lastChild_->nextItem_ = item;
+        item->prevItem_ = self->lastChild_;
         item->nextItem_ = nullptr;
-        lastChild = item;
+        self->lastChild_ = item;
     } else {
         self->firstChild_ = item;
-        lastChild = item;
+        self->lastChild_ = item;
     }
 
     ++self->numChildren_;
@@ -768,7 +767,7 @@ void Item::Impl::justRemoveSelfFromParent(bool doClearSelf)
     if(self->nextItem_){
         self->nextItem_->prevItem_ = self->prevItem_;
     } else {
-        self->parent_->impl->lastChild = self->prevItem_;
+        self->parent_->lastChild_ = self->prevItem_;
     }
     --self->parent_->numChildren_;
 
