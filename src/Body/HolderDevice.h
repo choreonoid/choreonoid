@@ -32,6 +32,14 @@ public:
     std::string category() const;
     void setCategory(const std::string& category);
 
+    enum HoldCondition { Distance, Collision, Name };
+    int holdCondition() const;
+    void setHoldCondition(int condition);
+    double maxHoldDistance() const;
+    void setMaxHoldDistance(double distance);
+    const std::string& holdTargetName() const;
+    void setHoldTargetName(const std::string& name);
+    
     int numAttachments() const;
     AttachmentDevice* attachment(int index);
     bool addAttachment(AttachmentDevice* attachment);

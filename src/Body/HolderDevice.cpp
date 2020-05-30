@@ -26,8 +26,11 @@ class HolderDevice::NonState
 {
 public:
     std::string category;
+    int holdCondition;
+    double maxHoldDistance;
+    std::string holdTargetName;
     vector<AttachmentDevicePtr> attachments;
-    NonState(){ }
+    NonState();
     NonState(const NonState& org, CloneMap* cloneMap);
 };
 
@@ -38,6 +41,13 @@ HolderDevice::HolderDevice()
 {
     on_ = false;
     ns = new NonState;
+}
+
+
+HolderDevice::NonState::NonState()
+{
+    holdCondition = Distance;
+    maxHoldDistance = 0.1;
 }
 
 
@@ -55,8 +65,12 @@ HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly, CloneMap
 
 
 HolderDevice::NonState::NonState(const NonState& org, CloneMap* cloneMap)
-    : category(org.category)
+    : category(org.category),
+      holdTargetName(org.holdTargetName)
 {
+    holdCondition = org.holdCondition;
+    maxHoldDistance = org.maxHoldDistance;
+    
     if(cloneMap && !org.attachments.empty()){
         for(size_t i=0; i < org.attachments.size(); ++i){
             attachments.push_back(
@@ -144,6 +158,42 @@ void HolderDevice::setCategory(const std::string& category)
     if(ns){
         ns->category = category;
     }
+}
+
+
+int HolderDevice::holdCondition() const
+{
+    return ns->holdCondition;
+}
+
+
+void HolderDevice::setHoldCondition(int condition)
+{
+    ns->holdCondition = condition;
+}
+
+
+double HolderDevice::maxHoldDistance() const
+{
+    return ns->maxHoldDistance;
+}
+
+
+void HolderDevice::setMaxHoldDistance(double distance)
+{
+    ns->maxHoldDistance = distance;
+}
+
+
+const std::string& HolderDevice::holdTargetName() const
+{
+    return ns->holdTargetName;
+}
+
+
+void HolderDevice::setHoldTargetName(const std::string& name)
+{
+    ns->holdTargetName = name;
 }
 
 
