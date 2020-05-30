@@ -29,6 +29,7 @@ public:
     virtual void on(bool on) override;
 
     int numSignalLines() const { return out_.size(); }
+    void setNumSignalLines(int n);
 
     bool out(int index) const { return out_[index]; }
     void setOut(int index, bool on, bool doNotify = true);
@@ -37,13 +38,22 @@ public:
 
     const std::string& outLabel(int index) const;
     void setOutLabel(int index, const std::string& label);
+    std::vector<std::pair<int, std::string&>> getOutLabels() const;
     const std::string& inLabel(int index) const;
     void setInLabel(int index, const std::string& label);
+    std::vector<std::pair<int, std::string&>> getInLabels() const;
     
     SignalProxy<void(bool on)> sigOutput(int index);
     SignalProxy<void(bool on)> sigInput(int index);
 
     bool readDescription(YAMLBodyLoader& loader, Mapping& node);
+
+    // Tentative api. The role of this API will be replaced with the StdActionController device.
+    void setInputToDeviceSwitchConnection(int inputIndex, const std::string& deviceName);
+    std::vector<std::pair<int, std::string&>> getInputToDeviceSwitchConnections() const;
+    void removeInputToDeviceSwitchConnection(int inputIndex);
+    void clearInputToDeviceSwitchConnections();
+    bool readInputToDeviceSwitchConnections(const Mapping& archive);
 
 protected:
     DigitalIoDevice(const DigitalIoDevice& org, bool copyStateOnly, CloneMap* cloneMap);
@@ -54,8 +64,8 @@ private:
     std::vector<bool> in_;
     bool on_;
 
-    class NonState;
-    NonState* ns;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<DigitalIoDevice> DigitalIoDevicePtr;
