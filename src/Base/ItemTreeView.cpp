@@ -112,7 +112,7 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menuMan
     menuManager.addSeparator();
     
     menuManager.addItem(_("Reload"))->sigTriggered().connect(
-        [&](){ ItemManager::reloadItems(itemTreeWidget->selectedItems()); });
+        [&](){ ItemManager::reloadItems(itemTreeWidget->getSelectedItems()); });
 
     menuManager.addSeparator();
     

@@ -122,6 +122,7 @@ public:
     void onSubTreeRemoved(Item* item);
     void onItemAssigned(Item* assigned, Item* srcItem);
 
+    void getItemsIter(ItwItem* itwItem, ItemList<>& itemList);
     ItemList<> getSelectedItems() const;
     void selectAllItems();
     void clearSelection();
@@ -913,13 +914,34 @@ void ItemTreeWidget::Impl::onItemAssigned(Item* assigned, Item* srcItem)
 }
 
 
+ItemList<> ItemTreeWidget::getItems() const
+{
+    ItemList<> itemList;
+    impl->getItemsIter(static_cast<ItwItem*>(impl->invisibleRootItem()), itemList);
+    return itemList;
+}
+
+
+void ItemTreeWidget::Impl::getItemsIter(ItwItem* itwItem, ItemList<>& itemList)
+{
+    const int n = itwItem->childCount();
+    for(int i=0; i < n; ++i){
+        auto child = static_cast<ItwItem*>(itwItem->child(i));
+        itemList.push_back(child->item);
+        if(child->childCount() > 0){
+            getItemsIter(child, itemList);
+        }
+    }
+}
+
+
 SignalProxy<void(const ItemList<>&)> ItemTreeWidget::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
 }
 
 
-ItemList<> ItemTreeWidget::selectedItems() const
+ItemList<> ItemTreeWidget::getSelectedItems() const
 {
     return impl->getSelectedItems();
 }
@@ -931,9 +953,7 @@ ItemList<> ItemTreeWidget::Impl::getSelectedItems() const
     ItemList<> items;
     items.reserve(selectedTwItems.size());
     for(auto& twItem : selectedTwItems){
-        if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
-            items.push_back(itwItem->item);
-        }
+        items.push_back(static_cast<ItwItem*>(twItem)->item);
     }
     return items;
 }
@@ -951,6 +971,26 @@ void ItemTreeWidget::Impl::selectAllItems()
         auto& item = kv.first;
         item->setSelected(true);
     }
+}
+
+
+bool ItemTreeWidget::selectOnly(Item* item)
+{
+    bool isSelected = false;
+    for(auto& selected : impl->getSelectedItems()){
+        if(selected == item){
+            isSelected = true;
+        } else {
+            selected->setSelected(false);
+        }
+    }
+    if(!isSelected){
+        if(impl->findItwItem(item)){
+            item->setSelected(true);
+            isSelected = true;
+        }
+    }
+    return isSelected;
 }
 
 
