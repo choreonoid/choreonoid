@@ -31,6 +31,8 @@ public:
         itemTreeWidget()->customizeContextMenu(func);
     }
 
+    void setExpanded(Item* item, bool on = true);
+
     /*
        All the following functions are deprecated.
        Use the corresponding functions defined in the RootItem class.

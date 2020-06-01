@@ -78,6 +78,12 @@ ItemTreeWidget* ItemTreeView::itemTreeWidget()
 }
 
 
+void ItemTreeView::setExpanded(Item* item, bool on)
+{
+    impl->itemTreeWidget->setExpanded(item, on);
+}
+
+
 void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menuManager)
 {
     menuManager.addItem(_("Cut"))->sigTriggered().connect(

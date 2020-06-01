@@ -22,6 +22,8 @@ void exportPyItemTreeView(py::module m)
     py::class_<ItemTreeView, View>(m, "ItemTreeView")
         .def_property_readonly_static(
             "instance", [](py::object){ return ItemTreeView::instance(); }, py::return_value_policy::reference)
+        .def("setExpanded", [](ItemTreeView& self, Item* item){ self.setExpanded(item); })
+        .def("setExpanded", [](ItemTreeView& self, Item* item, bool on){ self.setExpanded(item, on); })
         .def("selectedItems", &ItemTreeView::selectedItems<Item>)
         .def("selectedItems", [](ItemTreeView& self, py::object itemClass){
                 return getPyNarrowedItemList(self.selectedItems(), itemClass); })
