@@ -105,6 +105,8 @@ public:
     void updateTreeWidgetItems();
     void setExpanded(Item* item, bool on = true);
 
+    SignalProxy<void(const ItemList<>&)> sigSelectionChanged();
+
     ItemList<> selectedItems() const;
     template <class ItemType> ItemList<ItemType> selectedItems() {
         return selectedItems();

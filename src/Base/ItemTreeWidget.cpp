@@ -70,6 +70,8 @@ public:
     
     bool isCheckColumnShown;
 
+    Signal<void(const ItemList<>&)> sigSelectionChanged;    
+
     PolymorphicItemFunctionSet  visibilityFunctions;
     bool visibilityFunction_isTopLevelItemCandidate;
     bool visibilityFunction_result;
@@ -911,6 +913,12 @@ void ItemTreeWidget::Impl::onItemAssigned(Item* assigned, Item* srcItem)
 }
 
 
+SignalProxy<void(const ItemList<>&)> ItemTreeWidget::sigSelectionChanged()
+{
+    return impl->sigSelectionChanged;
+}
+
+
 ItemList<> ItemTreeWidget::selectedItems() const
 {
     return impl->getSelectedItems();
@@ -1239,13 +1247,27 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, i
 
 void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
 {
+    auto selectedTwItems = selectedItems();
+    ItemList<> items;
+    bool doEmitSignal = !sigSelectionChanged.empty();
+    if(doEmitSignal){
+        items.reserve(selectedTwItems.size());
+    }
     unordered_set<Item*> selectedItemSet;
-    for(auto& twItem : selectedItems()){
+    for(auto& twItem : selectedTwItems){
         if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
-            selectedItemSet.insert(itwItem->item);
+            auto item = itwItem->item;
+            selectedItemSet.insert(item);
+            if(doEmitSignal){
+                items.push_back(item);
+            }
         }
     }
     updateItemSelectionIter(invisibleRootItem(), selectedItemSet);
+
+    if(doEmitSignal){
+        sigSelectionChanged(items);
+    }
 }
 
 
