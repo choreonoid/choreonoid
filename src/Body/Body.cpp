@@ -351,7 +351,7 @@ Link* Body::findUniqueEndLink() const
 }
 
 
-Link* Body::findLastSerialLink() const
+Link* Body::lastSerialLink() const
 {
     Link* link = rootLink_;
     while(true){
