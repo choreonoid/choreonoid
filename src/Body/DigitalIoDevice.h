@@ -46,7 +46,8 @@ public:
     SignalProxy<void(bool on)> sigOutput(int index);
     SignalProxy<void(bool on)> sigInput(int index);
 
-    bool readDescription(YAMLBodyLoader& loader, Mapping& node);
+    bool readDescription(const Mapping* info);
+    bool writeDescription(Mapping* info);
 
     // Tentative api. The role of this API will be replaced with the StdActionController device.
     void setInputToDeviceSwitchConnection(int inputIndex, const std::string& deviceName);

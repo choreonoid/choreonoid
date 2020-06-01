@@ -15,7 +15,10 @@ registerHolderDevice(
     "Holder",
     [](YAMLBodyLoader& loader, Mapping& node){
         HolderDevicePtr holder = new HolderDevice;
-        return holder->readDescription(loader, node);
+        if(holder->readDescription(&node)){
+            return loader.readDevice(holder, node);
+        }
+        return false;
     });
 
 }
@@ -275,12 +278,41 @@ double* HolderDevice::writeState(double* out_buf) const
 }
 
 
-bool HolderDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
+bool HolderDevice::readDescription(const Mapping* info)
 {
-    if(ns){
-        if(!node.read("category", ns->category)){
-            ns->category.clear();
+    if(!info->read("category", ns->category)){
+        ns->category.clear();
+    }
+    string condition;
+    if(info->read("hold_condition", condition)){
+        if(condition == "distance"){
+            ns->holdCondition = Distance;
+        } else if(condition == "collision"){
+            ns->holdCondition = Collision;
+        } else if(condition == "name"){
+            ns->holdCondition = Name;
         }
     }
-    return loader.readDevice(this, node);
+    info->read("max_hold_distance", ns->maxHoldDistance);
+    info->read("hold_target_name", ns->holdTargetName);
+    return true;
+}
+
+
+bool HolderDevice::writeDescription(Mapping* info)
+{
+    if(!ns->category.empty()){
+        info->write("category", ns->category);
+    }
+    string condition;
+    switch(ns->holdCondition){
+    case HolderDevice::Collision: condition = "collision"; break;
+    case HolderDevice::Name: condition = "name"; break;
+    default: /* HolderDevice::Distance */ condition = "distance"; break;
+    }
+    info->write("hold_condition", condition);
+
+    info->write("max_hold_distance", ns->maxHoldDistance);
+    info->write("hold_target_name", ns->holdTargetName);
+    return true;
 }

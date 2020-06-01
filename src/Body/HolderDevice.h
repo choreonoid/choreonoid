@@ -45,7 +45,8 @@ public:
     bool addAttachment(AttachmentDevice* attachment);
     bool removeAttachment(AttachmentDevice* attachment);
 
-    bool readDescription(YAMLBodyLoader& loader, Mapping& node);
+    bool readDescription(const Mapping* info);
+    bool writeDescription(Mapping* info);
 
 protected:
     HolderDevice(const HolderDevice& org, bool copyStateOnly, CloneMap* cloneMap);

@@ -15,7 +15,10 @@ registerHolderDevice(
     "DigitalIO",
     [](YAMLBodyLoader& loader, Mapping& node){
         DigitalIoDevicePtr device = new DigitalIoDevice;
-        return device->readDescription(loader, node);
+        if(device->readDescription(&node)){
+            return loader.readDevice(device, node);
+        }
+        return false;
     });
 }
 
@@ -33,7 +36,8 @@ public:
 
     Impl();
     Impl(const Impl& org);
-    void readActions(DigitalIoDevice* self, const Mapping& info);
+    bool readInputToDeviceSwitchConnections(DigitalIoDevice* self, const Mapping* info);
+    void readActions(DigitalIoDevice* self, const Mapping* info);
 };
 
 }
@@ -278,17 +282,99 @@ double* DigitalIoDevice::writeState(double* out_buf) const
 }
 
 
-bool DigitalIoDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
+bool DigitalIoDevice::readDescription(const Mapping* info)
 {
     int n;
-    if(node.read("numSignalLines", n)){
+    if(info->read("num_signal_lines", n)){
         setNumSignalLines(n);
     }
-    impl->inputToDeviceSwitchConnectionMap.clear();
-    if(!readInputToDeviceSwitchConnections(node)){
-        impl->readActions(this, node); // old format
+    if(auto& outLabelsNode = *info->findMapping("out_labels")){
+        for(auto& kv : outLabelsNode){
+            setOutLabel(std::stoi(kv.first), kv.second->toString());
+        }
     }
-    return loader.readDevice(this, node);
+    if(auto& inLabelsNode = *info->findMapping("in_labels")){
+        for(auto& kv : inLabelsNode){
+            setInLabel(std::stoi(kv.first), kv.second->toString());
+        }
+    }
+    impl->inputToDeviceSwitchConnectionMap.clear();
+    if(!impl->readInputToDeviceSwitchConnections(this, info)){
+        impl->readActions(this, info); // old format
+    }
+    return true;
+}
+
+
+bool DigitalIoDevice::Impl::readInputToDeviceSwitchConnections(DigitalIoDevice* self, const Mapping* info)
+{
+    bool done = false;
+    if(auto& activationsNode = *info->findListing("input_to_device_switch_connections")){
+        self->clearInputToDeviceSwitchConnections();
+        for(auto& node : activationsNode){
+            if(auto& nodePair = *node->toListing()){
+                if(nodePair.size() != 2){
+                    nodePair.throwException(
+                        _("The element is not the pair of the input number and the target name"));
+                }
+                self->setInputToDeviceSwitchConnection(nodePair[0].toInt(), nodePair[1].toString());
+                done = true;
+            }
+        }
+    }
+    return done;
+}
+
+
+void DigitalIoDevice::Impl::readActions(DigitalIoDevice* self, const Mapping* info)
+{
+    auto action = info->findMapping("action");
+    if(action->isValid()){
+        auto input = action->findMapping("input");
+        if(input->isValid()){
+            for(auto& kv : *input){
+                int signalIndex = stoi(kv.first);
+                Listing* target = kv.second->toListing();
+                if(target->size() == 3 &&
+                   target->at(0)->toString() == "device" &&
+                   target->at(2)->toString() == "on"){
+                    auto& deviceName = target->at(1)->toString();
+                    self->setInputToDeviceSwitchConnection(signalIndex, deviceName);
+                }
+            }
+        }
+    }
+}
+
+
+bool DigitalIoDevice::writeDescription(Mapping* info)
+{
+    info->write("num_signal_lines", numSignalLines());
+
+    if(!impl->outLabelMap.empty()){
+        auto outLabelsNode = info->openMapping("out_labels");
+        for(auto& kv : impl->outLabelMap){
+            outLabelsNode->write(std::to_string(kv.first), kv.second, DOUBLE_QUOTED);
+        }
+    }
+    if(!impl->inLabelMap.empty()){
+        auto inLabelsNode = info->openMapping("in_labels");
+        for(auto& kv : impl->inLabelMap){
+            inLabelsNode->write(std::to_string(kv.first), kv.second, DOUBLE_QUOTED);
+        }
+    }
+    if(!impl->inputToDeviceSwitchConnectionMap.empty()){
+        auto connectionsNode = info->openListing("input_to_device_switch_connections");
+        for(auto& kv : impl->inputToDeviceSwitchConnectionMap){
+            auto node = new Listing;
+            node->setFlowStyle();
+            node->append(kv.first);
+            node->append(kv.second, DOUBLE_QUOTED);
+            connectionsNode->append(node);
+        }
+    }
+
+    return true;
 }
 
 
@@ -318,45 +404,4 @@ void DigitalIoDevice::removeInputToDeviceSwitchConnection(int inputIndex)
 void DigitalIoDevice::clearInputToDeviceSwitchConnections()
 {
     impl->inputToDeviceSwitchConnectionMap.clear();
-}
-
-
-bool DigitalIoDevice::readInputToDeviceSwitchConnections(const Mapping& info)
-{
-    bool done = false;
-    if(auto& activationsNode = *info.findListing("input_to_device_activations")){
-        clearInputToDeviceSwitchConnections();
-        for(auto& node : activationsNode){
-            if(auto& nodePair = *node->toListing()){
-                if(nodePair.size() != 2){
-                    nodePair.throwException(
-                        _("The element is not the pair of the input number and the target name"));
-                }
-                setInputToDeviceSwitchConnection(nodePair[0].toInt(), nodePair[1].toString());
-                done = true;
-            }
-        }
-    }
-    return done;
-}
-
-
-void DigitalIoDevice::Impl::readActions(DigitalIoDevice* self, const Mapping& info)
-{
-    auto action = info.findMapping("action");
-    if(action->isValid()){
-        auto input = action->findMapping("input");
-        if(input->isValid()){
-            for(auto& kv : *input){
-                int signalIndex = stoi(kv.first);
-                Listing* target = kv.second->toListing();
-                if(target->size() == 3 &&
-                   target->at(0)->toString() == "device" &&
-                   target->at(2)->toString() == "on"){
-                    auto& deviceName = target->at(1)->toString();
-                    self->setInputToDeviceSwitchConnection(signalIndex, deviceName);
-                }
-            }
-        }
-    }
 }
