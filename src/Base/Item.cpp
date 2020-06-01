@@ -91,12 +91,15 @@ public:
     void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
     bool setSubTreeItemsSelectedIter(Item* item, bool on);
     int countDescendantItems(const Item* item) const;
-    Item* findItem(const std::function<bool(Item* item)>& pred, bool isFromDirectChild, bool isSubItem) const;
+    Item* findItem(const std::function<bool(Item* item)>& pred, bool isRecursive) const;
     Item* findItem(
         ItemPath::iterator iter, ItemPath::iterator end,  const std::function<bool(Item* item)>& pred,
-        bool isFromDirectChild, bool isSubItem) const;
-    void getDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
-    void getSelectedDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const;
+        bool isRecursive) const;
+    void getDescendantItemsIter(
+        const Item* parentItem, ItemList<>& io_items, const std::function<bool(Item* item)>& pred,
+        bool isRecursive) const;
+    void getSelectedDescendantItemsIter(
+        const Item* parentItem, ItemList<>& io_items, std::function<bool(Item* item)> pred) const;
     Item* duplicateSubTreeIter(Item* duplicated) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void justInsertChildItem(Item* newNextItem, Item* item);
@@ -113,7 +116,7 @@ public:
     void emitSigDisconnectedFromRootForSubTree();
     void requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(Item* item, RootItem* root);
     void requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(Item* item, RootItem* root);
-    bool traverse(Item* item, const std::function<bool(Item*)>& function);
+    bool traverse(Item* item, const std::function<bool(Item*)>& pred);
 };
 
 }
@@ -1040,36 +1043,33 @@ SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
 
 Item* Item::find(const std::string& path, const std::function<bool(Item* item)>& pred)
 {
-    return RootItem::instance()->findItem(path, pred, false, false);
+    return RootItem::instance()->findItem(path, pred, true);
 }
 
 
 Item* Item::findItem
-(const std::string& path, std::function<bool(Item* item)> pred,
- bool isFromDirectChild, bool isSubItem) const
+(const std::string& path, std::function<bool(Item* item)> pred, bool isRecursive) const
 {
     ItemPath ipath(path);
     if(ipath.begin() == ipath.end()){
-        return impl->findItem(pred, isFromDirectChild, isSubItem);
+        return impl->findItem(pred, isRecursive);
     }
-    return impl->findItem(ipath.begin(), ipath.end(), pred, isFromDirectChild, isSubItem);
+    return impl->findItem(ipath.begin(), ipath.end(), pred, isRecursive);
 }
 
 
 // Use the breadth-first search
-Item* Item::Impl::findItem(const std::function<bool(Item* item)>& pred, bool isFromDirectChild, bool isSubItem) const
+Item* Item::Impl::findItem(const std::function<bool(Item* item)>& pred, bool isRecursive) const
 {
     for(auto child = self->childItem(); child; child = child->nextItem()){
-        if((!isSubItem || child->isSubItem()) && (!pred || pred(child))){
+        if(!pred || pred(child)){
             return child;
         }
     }
-    if(!isFromDirectChild){
+    if(isRecursive){
         for(auto child = self->childItem(); child; child = child->nextItem()){
-            if(!isSubItem || child->isSubItem()){
-                if(auto found = child->impl->findItem(pred, isFromDirectChild, isSubItem)){
-                    return found;
-                }
+            if(auto found = child->impl->findItem(pred, isRecursive)){
+                return found;
             }
         }
     }
@@ -1080,7 +1080,7 @@ Item* Item::Impl::findItem(const std::function<bool(Item* item)>& pred, bool isF
 // Use the breadth-first search
 Item* Item::Impl::findItem
 (ItemPath::iterator iter, ItemPath::iterator end,  const std::function<bool(Item* item)>& pred,
- bool isFromDirectChild, bool isSubItem) const
+ bool isRecursive) const
 {
     if(iter == end){
         if(!pred || pred(self)){
@@ -1089,18 +1089,16 @@ Item* Item::Impl::findItem
         return nullptr;
     }
     for(auto child = self->childItem(); child; child = child->nextItem()){
-        if((child->name() == *iter) && (!isSubItem || child->isSubItem())){
-            if(auto item = child->impl->findItem(iter + 1, end, pred, true, isSubItem)){
+        if(child->name() == *iter){
+            if(auto item = child->impl->findItem(iter + 1, end, pred, false)){
                 return item;
             }
         }
     }
-    if(!isFromDirectChild){
+    if(isRecursive){
         for(auto child = self->childItem(); child; child = child->nextItem()){
-            if(!isSubItem || child->isSubItem()){
-                if(auto item = child->impl->findItem(iter, end, pred, false, isSubItem)){
-                    return item;
-                }
+            if(auto item = child->impl->findItem(iter, end, pred, true)){
+                return item;
             }
         }
     }
@@ -1121,69 +1119,76 @@ bool Item::isOwnedBy(Item* item) const
 }
 
 
-ItemList<> Item::childItems() const
+ItemList<> Item::childItems(std::function<bool(Item* item)> pred) const
+{
+    return getDescendantItems(pred, false);
+}
+
+
+ItemList<> Item::descendantItems(std::function<bool(Item* item)> pred) const
+{
+    return getDescendantItems(pred, true);
+}
+
+
+ItemList<Item> Item::getDescendantItems(std::function<bool(Item* item)> pred, bool isRecursive) const
 {
     ItemList<> items;
-    for(auto child = childItem(); child; child = child->nextItem()){
-        items.push_back(child);
-    }
+    impl->getDescendantItemsIter(this, items, pred, isRecursive);
     return items;
 }
 
 
-ItemList<> Item::descendantItems() const
-{
-    ItemList<> items;
-    impl->getDescendantItemsIter(this, items);
-    return items;
-}
-
-
-void Item::Impl::getDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const
+void Item::Impl::getDescendantItemsIter
+(const Item* parentItem, ItemList<>& io_items, const std::function<bool(Item* item)>& pred,
+ bool isRecursive) const
 {
     for(auto child = parentItem->childItem(); child; child = child->nextItem()){
-        io_items.push_back(child);
-        if(child->childItem()){
-            getDescendantItemsIter(child, io_items);
+        if(!pred || pred(child)){
+            io_items.push_back(child);
+        }
+        if(isRecursive && child->childItem()){
+            getDescendantItemsIter(child, io_items, pred, isRecursive);
         }
     }
 }
 
 
-ItemList<> Item::selectedDescendantItems() const
+ItemList<> Item::selectedDescendantItems(std::function<bool(Item* item)> pred) const
 {
     ItemList<> items;
-    impl->getSelectedDescendantItemsIter(this, items);
+    impl->getSelectedDescendantItemsIter(this, items, pred);
     return items;
 }
 
 
-void Item::Impl::getSelectedDescendantItemsIter(const Item* parentItem, ItemList<>& io_items) const
+void Item::Impl::getSelectedDescendantItemsIter
+(const Item* parentItem, ItemList<>& io_items, std::function<bool(Item* item)> pred) const
 {
     for(auto child = parentItem->childItem(); child; child = child->nextItem()){
-        if(child->isSelected()){
+        if(child->isSelected() && (!pred || pred(child))){
             io_items.push_back(child);
         }
         if(child->childItem()){
-            getSelectedDescendantItemsIter(child, io_items);
+            getSelectedDescendantItemsIter(child, io_items, pred);
         }
     }
 }
 
 
-bool Item::traverse(std::function<bool(Item*)> function)
+bool Item::traverse(std::function<bool(Item*)> pred)
 {
-    return impl->traverse(this, function);
+    return impl->traverse(this, pred);
 }
 
 
-bool Item::Impl::traverse(Item* item, const std::function<bool(Item*)>& function)
+bool Item::Impl::traverse(Item* item, const std::function<bool(Item*)>& pred)
 {
-    if(function(item)){
+    if(pred(item)){
         return true;
     }
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        if(traverse(child, function)){
+        if(traverse(child, pred)){
             return true;
         }
     }

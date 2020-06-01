@@ -311,14 +311,14 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
 
     const bool isSubItem = archive.get("isSubItem", false);
     if(isSubItem){
-        ItemPtr item = parentItem->findSubItem(name);
-        if(!item){
+        ItemPtr subItem = parentItem->findChildItem(name, [](Item* item){ return item->isSubItem(); });
+        if(!subItem){
             mv->putln(
                 format(_("Sub item \"{}\" is not found. Its children cannot be restored."), name),
                 MessageView::ERROR);
         }
-        restoreItemStates(archive, item);
-        return item;
+        restoreItemStates(archive, subItem);
+        return subItem;
     }
     
     string pluginName;

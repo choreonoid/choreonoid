@@ -384,7 +384,8 @@ Item* Archive::findItem(const ValueNodePtr idNode) const
                 item = findItem(idPath.front()->toInt());
                 if(item){
                     for(int i=1; i < n; ++i){
-                        item = item->findSubItem(idPath[i].toString());
+                        item = item->findChildItem(
+                            idPath[i].toString(), [](Item* item){ return item->isSubItem(); });
                         if(!item){
                             item = nullptr;
                             break;
