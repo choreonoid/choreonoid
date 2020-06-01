@@ -146,7 +146,7 @@ public:
     virtual Item* createItem() override {
         return new ItemType;
     }
-    virtual bool load(Item* item, const std::string& filename) final {
+    virtual bool load(Item* item, const std::string& filename) override final {
         if(auto derived = dynamic_cast<ItemType*>(item)){
             return load(derived, filename);
         }
@@ -155,7 +155,7 @@ public:
     virtual bool load(ItemType* /* item */, const std::string& /* filename */) {
         return false;
     }
-    virtual bool save(Item* item, const std::string& filename) final {
+    virtual bool save(Item* item, const std::string& filename) override final {
         if(auto derived = dynamic_cast<ItemType*>(item)){
             return save(derived, filename);
         }
@@ -164,7 +164,7 @@ public:
     virtual bool save(ItemType* /* item */, const std::string& /* filename */) {
         return false;
     }
-    virtual QWidget* getOptionPanelForSaving(Item* item) final {
+    virtual QWidget* getOptionPanelForSaving(Item* item) override final {
         return getOptionPanelForSaving(static_cast<ItemType*>(item));
     }
     virtual QWidget* getOptionPanelForSaving(ItemType* item) {
@@ -182,14 +182,14 @@ protected:
     
 public:
     bool isAvailable() const;
-    virtual bool load(Item* item, const std::string& filename) final;
+    virtual bool load(Item* item, const std::string& filename) override final;
     virtual void resetOptions() override;
     virtual void storeOptions(Mapping* options) override;
     virtual bool restoreOptions(const Mapping* options) override;
     virtual QWidget* getOptionPanelForLoading() override;
     virtual void fetchOptionPanelForLoading() override;
-    virtual bool save(Item* item, const std::string& filename) final;
-    virtual QWidget* getOptionPanelForSaving(Item* item) final;
+    virtual bool save(Item* item, const std::string& filename) override final;
+    virtual QWidget* getOptionPanelForSaving(Item* item) override final;
     virtual void fetchOptionPanelForSaving() override;
 };
 
