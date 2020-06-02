@@ -32,6 +32,7 @@ set(sources
   ItemPath.cpp
   ItemTreeWidget.cpp
   ItemTreeView.cpp
+  ItemTreePanelDialog.cpp
   ItemPropertyWidget.cpp
   ItemPropertyView.cpp
   TargetItemPicker.cpp
@@ -185,6 +186,7 @@ set(headers
   MessageView.h
   ItemTreeWidget.h
   ItemTreeView.h
+  ItemTreePanelDialog.h
   ItemPropertyWidget.h
   ItemList.h
   Item.h
