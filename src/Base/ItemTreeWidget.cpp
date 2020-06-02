@@ -764,9 +764,7 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
     }
     
     if(!isVisible){
-        if(!isTopLevelItemCandidate){
-            parentTwItem = nullptr;
-        }
+        parentTwItem = nullptr;
     } else {
         auto itwItem = findOrCreateItwItem(item);
         if(isTopLevelItemCandidate){
