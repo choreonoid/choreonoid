@@ -139,8 +139,8 @@ public:
     void onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
     void onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end);
     void onTreeWidgetSelectionChanged();
-    void onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet);
+    void onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void setItwItemSelected(ItwItem* itwItem, bool on);
     void toggleItwItemCheck(ItwItem* itwItem, int checkId, bool on);
     void zoomFontSize(int pointSizeDiff);
@@ -1311,23 +1311,6 @@ void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
 }
 
 
-/**
-   When the selection changed with the cursor keys, the newly selected item should be
-   the current item, and the sigCurrentItemChanged signal is the only way to detect it.
-*/
-void ItemTreeWidget::Impl::onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
-{
-    auto selected = selectedItems();
-    if(selected.size() == 1 && current == selected.front()){
-        if(auto itwItem = dynamic_cast<ItwItem*>(current)){
-            itwItem->itemSelectionConnection.block();
-            itwItem->item->setSelected(true, true);
-            itwItem->itemSelectionConnection.unblock();
-        }
-    }
-}
-
-
 void ItemTreeWidget::Impl::updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet)
 {
     if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
@@ -1353,12 +1336,33 @@ void ItemTreeWidget::Impl::updateItemSelectionIter(QTreeWidgetItem* twItem, unor
 }
 
 
+/**
+   When the selection changed with the cursor keys, the newly selected item should be
+   the current item, and the sigCurrentItemChanged signal is the only way to detect it.
+*/
+void ItemTreeWidget::Impl::onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+{
+    auto selected = selectedItems();
+    if(selected.size() == 1 && current == selected.front()){
+        if(auto itwItem = dynamic_cast<ItwItem*>(current)){
+            itwItem->itemSelectionConnection.block();
+            itwItem->item->setSelected(true, true);
+            itwItem->itemSelectionConnection.unblock();
+        }
+    }
+}
+
+
 void ItemTreeWidget::Impl::setItwItemSelected(ItwItem* itwItem, bool on)
 {
     if(on != itwItem->isSelected()){
         treeWidgetSelectionChangeConnections.block();
         itwItem->setSelected(on);
         treeWidgetSelectionChangeConnections.unblock();
+
+        if(!sigSelectionChanged.empty()){
+            sigSelectionChanged(getSelectedItems());
+        }
     }
 }
 
