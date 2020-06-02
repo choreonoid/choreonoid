@@ -110,17 +110,18 @@ void ItemTreePanelDialog::Impl::initialize()
     itemTreeWidget.setCheckColumnShown(false);
     hbox->addWidget(&itemTreeWidget);
 
+    int mh = self->style()->pixelMetric(QStyle::PM_LayoutLeftMargin);
+    int mv = self->style()->pixelMetric(QStyle::PM_LayoutTopMargin);
+
     panelFrame.setFrameStyle(QFrame::StyledPanel);
     panelFrame.setLineWidth(2);
     panelFrame.setLayout(&panelLayout);
     panelCaptionLabel.setStyleSheet("font-weight: bold");
     panelCaptionLabel.setAlignment(Qt::AlignHCenter);
     panelLayout.addWidget(&panelCaptionLabel);
-    panelLayout.setContentsMargins(0, 0, 0, 0);
+    panelLayout.setContentsMargins(0, mh / 2, 0, 0);
     panelLayout.setSpacing(0);
     defaultPanelLabel.setAlignment(Qt::AlignCenter);
-    int mh = self->style()->pixelMetric(QStyle::PM_LayoutLeftMargin);
-    int mv = self->style()->pixelMetric(QStyle::PM_LayoutTopMargin);
     defaultPanelLabel.setContentsMargins(mh * 2, mv, mh * 2, mv);
     panelLayout.addWidget(&defaultPanelLabel, Qt::AlignCenter);
 
