@@ -1603,6 +1603,7 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
     attachmentToParent = nullptr;
     for(auto& attachment : body->devices<AttachmentDevice>()){
         attachment->detach();
+        attachment->on(false);
     }
 
     if(parentBodyItem){
@@ -1628,6 +1629,8 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
             for(auto& holder : bodyItem->body()->devices<HolderDevice>()){
                 if(attachment->category() == holder->category()){
                     holder->addAttachment(attachment);
+                    holder->on(true);
+                    attachment->on(true);
                     attachmentToParent = attachment;
                     linkToAttach = holder->link();
                     Position T_offset = holder->T_local_org() * attachment->T_local_org().inverse(Eigen::Isometry);

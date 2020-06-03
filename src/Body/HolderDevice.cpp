@@ -217,7 +217,7 @@ AttachmentDevice* HolderDevice::attachment(int index)
     return nullptr;
 }
 
-    
+
 bool HolderDevice::addAttachment(AttachmentDevice* attachment)
 {
     if(ns){
@@ -225,36 +225,50 @@ bool HolderDevice::addAttachment(AttachmentDevice* attachment)
         if(std::find(a.begin(), a.end(), attachment) == a.end()){
             a.push_back(attachment);
             attachment->setHolder(this);
-            attachment->on(true);
-            on_ = true;
             return true;
         }
     }
     return false;
 }
-    
+
+
+void HolderDevice::removeAttachment(int index)
+{
+    if(ns){
+        auto& attachments = ns->attachments;
+        auto& attachment = attachments[index];
+        attachment->setHolder(nullptr);
+        attachments.erase(attachments.begin() + index);
+    }
+}
+
 
 bool HolderDevice::removeAttachment(AttachmentDevice* attachment)
 {
     if(ns){
-        auto& a = ns->attachments;
-        auto iter = a.begin();
-        while(iter != a.end()){
-            if(*iter == attachment){
-                attachment->setHolder(nullptr);
-                attachment->on(false);
-                a.erase(iter);
-                if(a.empty()){
-                    on_ = false;
-                }
+        auto& attachments = ns->attachments;
+        const int n = attachments.size();
+        for(int i=0; i < n; ++i){
+            if(attachments[i] == attachment){
+                removeAttachment(i);
                 return true;
             }
-            ++iter;
         }
     }
     return false;
 }
 
+
+void HolderDevice::clearAttachments()
+{
+    if(ns){
+        for(auto& attachment : ns->attachments){
+            attachment->setHolder(nullptr);
+        }
+        ns->attachments.clear();
+    }
+}
+    
 
 int HolderDevice::stateSize() const
 {

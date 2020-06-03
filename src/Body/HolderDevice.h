@@ -39,11 +39,13 @@ public:
     void setMaxHoldDistance(double distance);
     const std::string& holdTargetName() const;
     void setHoldTargetName(const std::string& name);
-    
+
     int numAttachments() const;
     AttachmentDevice* attachment(int index);
     bool addAttachment(AttachmentDevice* attachment);
+    void removeAttachment(int index);
     bool removeAttachment(AttachmentDevice* attachment);
+    void clearAttachments();
 
     bool readDescription(const Mapping* info);
     bool writeDescription(Mapping* info);

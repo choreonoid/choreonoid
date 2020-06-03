@@ -39,11 +39,9 @@ class HolderInfo : public Referenced
 public:
     HolderDevicePtr holder;
     vector<AttachmentInfoPtr> extraAttachments;
+    bool isActive;
     
-    //bool on_prev;
-    HolderInfo(HolderDevice* holder)
-        : holder(holder) /* , on_prev(holder->on()) */ { }
-    bool isActive() const { return holder->on() || !extraAttachments.empty(); }
+    HolderInfo(HolderDevice* holder) : holder(holder), isActive(false) { }
 };
 typedef ref_ptr<HolderInfo> HolderInfoPtr;
 
@@ -64,11 +62,11 @@ public:
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void onHolderStateChanged(HolderInfo* info);
     void activateHolder(HolderInfo* info);
-    void deactivateHolder(HolderInfo* info);
     vector<Body*> findAttachableBodies(HolderDevice* holder, const Position& T_holder);
     void findAttachableBodiesByDistance(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies);
     void findAttachableBodiesByCollision(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies);
     void findAttachableBodiesByName(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies);
+    void deactivateHolder(HolderInfo* info);
 };
 
 }
@@ -161,6 +159,7 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
             auto info = new HolderInfo(holder);
             holders.push_back(info);
             if(holder->numAttachments() > 0){
+                info->isActive = true;
                 activeHolders.push_back(info);
             }
             holder->sigStateChanged().connect(
@@ -188,19 +187,16 @@ bool KinematicSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& 
         auto& holder = info->holder;
         Position T_base = holder->link()->T() * holder->T_local();
         int n = holder->numAttachments();
-        if(n > 0){
-            for(int i=0; i < n; ++i){
-                auto attachment = holder->attachment(i);
-                attachment->link()->T() = T_base * attachment->T_local().inverse(Eigen::Isometry);
-                attachment->link()->body()->calcForwardKinematics();
-            }
-        } else {
-            for(auto& extra : info->extraAttachments){
-                auto body = extra->body;
-                auto link = body->rootLink();
-                link->T() = T_base * extra->T_offset;
-                body->calcForwardKinematics();
-            }
+        for(int i=0; i < n; ++i){
+            auto attachment = holder->attachment(i);
+            attachment->link()->T() = T_base * attachment->T_local().inverse(Eigen::Isometry);
+            attachment->link()->body()->calcForwardKinematics();
+        }
+        for(auto& extra : info->extraAttachments){
+            auto body = extra->body;
+            auto link = body->rootLink();
+            link->T() = T_base * extra->T_offset;
+            body->calcForwardKinematics();
         }
     }
     
@@ -222,29 +218,27 @@ void KinematicSimulatorItem::Impl::onHolderStateChanged(HolderInfo* info)
 void KinematicSimulatorItem::Impl::activateHolder(HolderInfo* info)
 {
     auto holder = info->holder;
-    if(holder->numAttachments() == 0){
-        bool wasActive = !info->extraAttachments.empty();
-        info->extraAttachments.clear();
-        Position T_holder = holder->link()->T() * holder->T_local();
-        for(auto& body : findAttachableBodies(holder, T_holder)){
-            Position T_attached = body->rootLink()->T();
+    info->extraAttachments.clear();
+    Position T_holder = holder->link()->T() * holder->T_local();
+    for(auto& body : findAttachableBodies(holder, T_holder)){
+        auto rootLink = body->rootLink();
+        AttachmentDevice* attachment = nullptr;
+        for(auto& device : body->devices<AttachmentDevice>()){
+            if(device->link() == rootLink && device->category() == holder->category()){
+                attachment = device;
+                break;
+            }
+        }
+        if(attachment){
+            holder->addAttachment(attachment);
+        } else {
+            Position T_attached = rootLink->T();
             Position T_offset = T_holder.inverse(Eigen::Isometry) * T_attached;
             info->extraAttachments.push_back(new AttachmentInfo(body, T_offset));
         }
-        if(!wasActive && !info->extraAttachments.empty()){
-            activeHolders.push_back(info);
-        }
     }
-}
-
-
-void KinematicSimulatorItem::Impl::deactivateHolder(HolderInfo* info)
-{
-    info->extraAttachments.clear();
-    if(!info->isActive()){
-        activeHolders.erase(
-            std::find(activeHolders.begin(), activeHolders.end(), info),
-            activeHolders.end());
+    if(!info->isActive){
+        activeHolders.push_back(info);
     }
 }
 
@@ -312,6 +306,20 @@ void KinematicSimulatorItem::Impl::findAttachableBodiesByName
                 }
             }
         }
+    }
+}
+
+
+void KinematicSimulatorItem::Impl::deactivateHolder(HolderInfo* info)
+{
+    info->holder->clearAttachments();
+    info->extraAttachments.clear();
+
+    if(info->isActive){
+        activeHolders.erase(
+            std::find(activeHolders.begin(), activeHolders.end(), info),
+            activeHolders.end());
+        info->isActive = false;
     }
 }
 
