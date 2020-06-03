@@ -247,6 +247,9 @@ bool Link::removeChild(Link* childToRemove)
 
 void Link::setName(const std::string& name)
 {
+    if(body_){
+        body_->resetLinkName(this, name);
+    }
     name_ = name;
 }
 

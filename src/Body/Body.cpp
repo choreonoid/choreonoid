@@ -480,8 +480,20 @@ void Body::removeCache(const std::string& name)
 
 Link* Body::link(const std::string& name) const
 {
-    NameToLinkMap::const_iterator p = impl->nameToLinkMap.find(name);
+    auto p = impl->nameToLinkMap.find(name);
     return (p != impl->nameToLinkMap.end()) ? p->second : 0;
+}
+
+
+void Body::resetLinkName(Link* link, const std::string& name)
+{
+    auto p = impl->nameToLinkMap.find(link->name());
+    if(p != impl->nameToLinkMap.end()){
+        if(p->second == link){
+            impl->nameToLinkMap.erase(p);
+        }
+    }
+    impl->nameToLinkMap[name] = link;
 }
 
 
