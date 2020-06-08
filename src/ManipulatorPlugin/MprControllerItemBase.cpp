@@ -1,9 +1,8 @@
 #include "MprControllerItemBase.h"
 #include "MprProgramItemBase.h"
-#include "BasicMprStatements.h"
+#include "MprBasicStatements.h"
 #include "MprVariableList.h"
 #include "MprVariableListItemBase.h"
-#include "MprVariableSetGroup.h"
 #include <cnoid/ItemManager>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/DigitalIoDevice>
@@ -71,11 +70,6 @@ public:
     }
 };
 
-enum ExpressionTermId {
-    Int, Double, Bool, String, Variable, Char };
-
-typedef stdx::variant<int, double, bool, string, GeneralId, char> ExpressionTerm;
-
 }
     
     
@@ -92,7 +86,9 @@ public:
     unordered_map<string, MprProgramPtr> otherProgramMap;
     CloneMap cloneMap;
     LinkKinematicsKitPtr kinematicsKit;
-    MprVariableSetPtr variables;
+
+    // Used for the default variable mappings
+    vector<MprVariableListPtr> variableLists;
 
     bool isControlActive;
     typedef MprProgram::iterator Iterator;
@@ -126,17 +122,22 @@ public:
     regex floatPattern;
     regex boolPattern;
     regex stringPattern;
-    regex variablePattern;
+    regex variablePattern; // for the default variable expression syntax
 
     Impl(MprControllerItemBase* self);
     bool initialize(ControllerIO* io);
     bool createKinematicsKitForControl();
-    MprVariableSetPtr createVariableSet(MprProgramItemBase* programItem);
-    void extractProgramLocalVariables(MprVariableSetGroup* variables, Item* item);
-    void extractControllerLocalVariables(MprVariableSetGroup* variables, Item* item);
-    void extractBodyLocalVariables(MprVariableSetGroup* variables, Item* item);
-    void addVariableList(MprVariableSetGroup* group, MprVariableListItemBase* listItem);
-    void updateOrgVariableList(MprVariableList* orgList, MprVariable* variable);
+
+    // Default variable mappings
+    bool initializeDefaultVariableMappings();
+    void extractProgramLocalVariables(Item* item, vector<MprVariableListPtr>& variableLists);
+    void extractControllerGlobalVariables(Item* item, vector<MprVariableListPtr>& variableLists);
+    void addVariableList(vector<MprVariableListPtr>& variableLists, MprVariableListItemBase* listItem);
+    void notifyGuiOfVariableUpdate(
+        MprVariableList* listInController, MprVariableList* listInGui, int variableIndex);
+    void updateVariableListInGui(MprVariableList* listInGui, MprVariable* variableForNotification);
+    MprVariable* findVariable(const GeneralId& id);
+
     void setCurrent(MprProgram* program, MprProgram::iterator iter, MprProgram::iterator upperNext);
     bool control();
     void setCurrentProgramPositionToLog(MprControllerLog* log);
@@ -146,10 +147,10 @@ public:
     bool interpretWhileStatement(MprWhileStatement* statement);
     bool interpretCallStatement(MprCallStatement* statement);
     stdx::optional<bool> evalConditionalExpression(const string& expression);
-    stdx::optional<ExpressionTerm> getTermValue(string::const_iterator& iter, string::const_iterator& end);
-    stdx::optional<string> getComparisonOperator(string::const_iterator& iter, string::const_iterator& end);
+    stdx::optional<MprVariable::Value> getTermValue(string::const_iterator& pos, string::const_iterator end);
+    stdx::optional<string> getComparisonOperator(string::const_iterator& pos, string::const_iterator end);
     bool interpretAssignStatement(MprAssignStatement* statement);
-    bool applyExpressionTerm(MprVariable::Value& value, ExpressionTerm term, char op);
+    bool applyBinaryOperation(MprVariable::Value& lhsValue, char op, const MprVariable::Value& rhsValue);
     bool interpretSetSignalStatement(MprSignalStatement* statement);
     bool interpretWaitStatement(MprWaitStatement* statement);
     bool interpretDelayStatement(MprDelayStatement* statement);
@@ -162,6 +163,7 @@ void MprControllerItemBase::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerAbstractClass<MprControllerItemBase, ControllerItem>();
 }
+
 
 
 MprControllerItemBase::MprControllerItemBase()
@@ -308,7 +310,11 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
         }
     }
     
-    variables = createVariableSet(startupProgramItem);
+    if(!self->initializeVariableMappings()){
+        mv->putln(format(_("Variables for {} cannot be initialized."), self->displayName()),
+                  MessageView::ERROR);
+        return false;
+    }
 
     iterator = currentProgram->begin();
 
@@ -347,106 +353,150 @@ bool MprControllerItemBase::Impl::createKinematicsKitForControl()
 }
 
 
-MprVariableSetPtr MprControllerItemBase::Impl::createVariableSet
-(MprProgramItemBase* programItem)
+bool MprControllerItemBase::initializeVariableMappings()
 {
-    MprVariableSetGroupPtr group = new MprVariableSetGroup;
+    return impl->initializeDefaultVariableMappings();
+}
+
+
+bool MprControllerItemBase::Impl::initializeDefaultVariableMappings()
+{
+    variableLists.clear();
     
-    extractProgramLocalVariables(group, programItem);
-    extractControllerLocalVariables(group, self);
-
-    if(auto bodyItem = self->findOwnerItem<BodyItem>()){
-        extractBodyLocalVariables(group, bodyItem);
+    extractProgramLocalVariables(startupProgramItem, variableLists);
+    extractControllerGlobalVariables(self, variableLists);
+    
+    if(variableLists.empty()){
+        variableLists.push_back(new MprVariableList);
     }
 
-    MprVariableSetPtr variableSet;
-    int n = group->numVariableSets();
-    if(n == 0){
-        variableSet = new MprVariableList;
-    } else if(n == 1){
-        variableSet = group->variableSet(0);
-    } else {
-        variableSet = group;
-    }
-
-    return variableSet;
+    return true;
 }
 
 
 void MprControllerItemBase::Impl::extractProgramLocalVariables
-(MprVariableSetGroup* group, Item* item)
+(Item* item, vector<MprVariableListPtr>& variableLists)
 {
     for(Item* child = item->childItem(); child; child = child->nextItem()){
         if(auto variableListItem = dynamic_cast<MprVariableListItemBase*>(child)){
-            addVariableList(group, variableListItem);
+            addVariableList(variableLists, variableListItem);
         }
-        extractProgramLocalVariables(group, child);
+        extractProgramLocalVariables(child, variableLists);
     }
 }
 
 
-void MprControllerItemBase::Impl::extractControllerLocalVariables
-(MprVariableSetGroup* group, Item* item)
+void MprControllerItemBase::Impl::extractControllerGlobalVariables
+(Item* item, vector<MprVariableListPtr>& variableLists)
 {
     for(Item* child = item->childItem(); child; child = child->nextItem()){
         if(auto programItem = dynamic_cast<MprProgramItemBase*>(child)){
             continue;
         }
         if(auto variableListItem = dynamic_cast<MprVariableListItemBase*>(child)){
-            addVariableList(group, variableListItem);
+            addVariableList(variableLists, variableListItem);
         }
-        extractControllerLocalVariables(group, child);
-    }
-}
-
-
-void MprControllerItemBase::Impl::extractBodyLocalVariables
-(MprVariableSetGroup* group, Item* item)
-{
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        if(auto controllerItem = dynamic_cast<ControllerItem*>(child)){
-            continue;
-        }
-        if(auto variableListItem = dynamic_cast<MprVariableListItemBase*>(child)){
-            addVariableList(group, variableListItem);
-        }
-        extractBodyLocalVariables(group, child);
+        extractControllerGlobalVariables(child, variableLists);
     }
 }
 
 
 void MprControllerItemBase::Impl::addVariableList
-(MprVariableSetGroup* group, MprVariableListItemBase* listItem)
+(vector<MprVariableListPtr>& variableLists, MprVariableListItemBase* listItem)
 {
-    MprVariableListPtr orgList = listItem->variableList();
-    auto cloneList = orgList->clone();
+    MprVariableListPtr listInGui = listItem->variableList();
+    auto listInController = listInGui->clone();
 
-    cloneList->sigVariableUpdated().connect(
-        [this, orgList](MprVariableSet*, MprVariable* variable){
-            MprVariablePtr clone = variable->clone();
-            callLater([this, &orgList, clone](){ updateOrgVariableList(orgList, clone); });
+    listInController->sigVariableAdded().connect(
+        [this, listInController, listInGui](int index){
+            notifyGuiOfVariableUpdate(listInController, listInGui, index); });
+
+    listInController->sigVariableUpdated().connect(
+        [this, listInController, listInGui](int index, int flags){
+            if(flags & MprVariable::ValueUpdate){
+                notifyGuiOfVariableUpdate(listInController, listInGui, index);
+            }
         });
 
-    group->addVariableSet(cloneList);
+    variableLists.push_back(listInController);
 }
 
+
+void MprControllerItemBase::Impl::notifyGuiOfVariableUpdate
+(MprVariableList* listInController, MprVariableList* listInGui, int variableIndex)
+{
+    auto variableInController = listInController->variableAt(variableIndex);
+    MprVariablePtr variableForNotification = new MprVariable(*variableInController);
+    callLater(
+        [this, listInGui, variableForNotification](){
+            updateVariableListInGui(listInGui, variableForNotification); });
+}
+    
 
 /**
    This is a temporary implementation to update the original variables managed in the main GUI thread.
    The variables should be updated with the simulation log data which records the variable states for
    each time frame.
 */
-void MprControllerItemBase::Impl::updateOrgVariableList
-(MprVariableList* orgList, MprVariable* variable)
+void MprControllerItemBase::Impl::updateVariableListInGui
+(MprVariableList* listInGui, MprVariable* variableForNotification)
 {
-    auto orgVariable = orgList->findVariable(variable->id());
-    if(!orgVariable){
-        orgList->append(variable);
-        orgVariable = variable;
+    auto variable = listInGui->findVariable(variableForNotification->id());
+    if(!variable){
+        listInGui->append(variableForNotification);
     } else {
-        *orgVariable = *variable;
+        variable->setValue(variableForNotification->value());
+        variable->notifyUpdate(MprVariable::ValueUpdate);
     }
-    orgList->notifyVariableUpdate(orgVariable);
+}
+
+
+MprVariable* MprControllerItemBase::Impl::findVariable(const GeneralId& id)
+{
+    for(auto& list : variableLists){
+        if(auto variable = list->findVariable(id)){
+            return variable;
+        }
+    }
+    return nullptr;
+}
+
+
+stdx::optional<MprVariable::Value> MprControllerItemBase::evalExpressionAsVariableValue
+(std::string::const_iterator& io_expressionBegin, std::string::const_iterator expressionEnd)
+{
+    std::smatch match;
+    if(regex_search(io_expressionBegin, expressionEnd, match, impl->variablePattern)){
+        io_expressionBegin = match[0].second;
+        GeneralId id(std::stoi(match.str(1)));
+        if(auto variable = impl->findVariable(id)){
+            return variable->value();
+        }
+        impl->io->os() << format(_("Variable {0} is not defined."), id.label()) << endl;
+        return MprVariable::Value(); // InvalidValue
+    }
+    return stdx::nullopt;
+}
+
+
+std::function<bool(MprVariable::Value value)> MprControllerItemBase::evalExpressionAsVariableToAssginValue
+(const std::string& expression)
+{
+    std::smatch match;
+    if(regex_search(expression, match, impl->variablePattern)){
+        GeneralId id(std::stoi(match.str(1)));
+        if(auto variable = impl->findVariable(id)){
+            return
+                [this, variable](MprVariable::Value value){
+                    if(variable->setValue(value)){
+                        pushOutputOnceFunction([variable](){ variable->notifyUpdate(); });
+                        return true;
+                    }
+                    return false;
+                };
+        }
+    }
+    return nullptr;
 }
     
     
@@ -527,12 +577,6 @@ MprProgram* MprControllerItemBase::findProgram(const std::string& name)
 LinkKinematicsKit* MprControllerItemBase::linkKinematicsKitForControl()
 {
     return impl->kinematicsKit;
-}
-
-
-MprVariableSet* MprControllerItemBase::getVariableSet()
-{
-    return impl->variables;
 }
 
 
@@ -702,7 +746,7 @@ void MprControllerItemBase::Impl::clear()
     otherProgramMap.clear();
     cloneMap.clear();
     kinematicsKit.reset();
-    variables.reset();
+    variableLists.clear();
     programStack.clear();
     processorStack.clear();
     topLevelProgramToSharedNameMap.clear();
@@ -768,13 +812,16 @@ bool MprControllerItemBase::Impl::interpretWhileStatement(MprWhileStatement* sta
 {
     auto condition = evalConditionalExpression(statement->condition());
 
+    if(!condition){
+        return false;
+    }
+
     if(*condition){
         auto program = statement->lowerLevelProgram();
         setCurrent(program, program->begin(), iterator);
     } else {
         ++iterator;
     }
-    
     return true;
 }
 
@@ -829,56 +876,65 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
     stdx::optional<bool> pResult;
 
     if(expression.empty()){
-        io->os() << _("The conditional expression of a While statement is empty.") << endl;
+        io->os() << _("Empty conditional expression.") << endl;
         return pResult;
     }
-    auto iter = expression.cbegin();
+    auto pos = expression.cbegin();
     auto end = expression.cend();
 
-    stdx::optional<ExpressionTerm> pLhs = getTermValue(iter, end);
-    stdx::optional<string> pCmpOp = getComparisonOperator(iter, end);
-    stdx::optional<ExpressionTerm> pRhs = getTermValue(iter, end);
-
-    if(!pLhs || !pCmpOp || !pRhs){
-        io->os() << _("The conditional expression of a While statement is invalid.") << endl;
+    bool isExpressionValid = false;
+    stdx::optional<MprVariable::Value> pLhs;
+    stdx::optional<string> pCmpOp;
+    stdx::optional<MprVariable::Value> pRhs;
+    if(pLhs = getTermValue(pos, end)){
+        if(pCmpOp = getComparisonOperator(pos, end)){
+            if(pRhs = getTermValue(pos, end)){
+                isExpressionValid = true;
+            }
+        }
+    }
+    if(!isExpressionValid){
+        io->os() << _("Invalid conditional expression") << endl;
         return pResult;
     }
 
-    ExpressionTerm& lhs = *pLhs;
-    ExpressionTerm& rhs = *pRhs;
+    auto& lhs = *pLhs;
+    auto& rhs = *pRhs;
     string& cmpOp = *pCmpOp;
 
-    int rhsValueType = stdx::get_variant_index(rhs);
-    switch(stdx::get_variant_index(lhs)){
-    case Int:
+    int rhsValueType = MprVariable::valueType(rhs);
+    switch(MprVariable::valueType(lhs)){
+    case MprVariable::Int:
     {
-        auto lhsValue = stdx::get<int>(lhs);
-        if(rhsValueType == Int){
-            pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<int>(rhs));
-        } else if(rhsValueType == Double){
-            pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<double>(rhs));
+        auto lhsValue = MprVariable::intValue(lhs);
+        if(rhsValueType == MprVariable::Int){
+            pResult = checkNumericalComparison(cmpOp, lhsValue, MprVariable::intValue(rhs));
+        } else if(rhsValueType == MprVariable::Double){
+            pResult = checkNumericalComparison(cmpOp, lhsValue, MprVariable::doubleValue(rhs));
         }
         break;
     }
-    case Double:
+    case MprVariable::Double:
     {
-        auto lhsValue = stdx::get<double>(lhs);
-        if(rhsValueType == Int){
-            pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<int>(rhs));
-        } else if(rhsValueType == Double){
-            pResult = checkNumericalComparison(cmpOp, lhsValue, stdx::get<double>(rhs));
+        auto lhsValue = MprVariable::doubleValue(lhs);
+        if(rhsValueType == MprVariable::Int){
+            pResult = checkNumericalComparison(cmpOp, lhsValue, MprVariable::intValue(rhs));
+        } else if(rhsValueType == MprVariable::Double){
+            pResult = checkNumericalComparison(cmpOp, lhsValue, MprVariable::doubleValue(rhs));
         }
         break;
     }
-    case Bool:
-        if(rhsValueType == Bool && cmpOp == "="){
-            pResult = checkNumericalComparison(cmpOp, stdx::get<bool>(lhs), stdx::get<bool>(rhs));
+    case MprVariable::Bool:
+        if(rhsValueType == MprVariable::Bool && cmpOp == "="){
+            pResult = checkNumericalComparison(
+                cmpOp, MprVariable::boolValue(lhs), MprVariable::boolValue(rhs));
         }
         break;
 
-    case String:
-        if(rhsValueType == String && cmpOp == "="){
-            pResult = checkNumericalComparison(cmpOp, stdx::get<string>(lhs), stdx::get<string>(rhs));
+    case MprVariable::String:
+        if(rhsValueType == MprVariable::String && cmpOp == "="){
+            pResult = checkNumericalComparison(
+                cmpOp, MprVariable::stringValue(lhs), MprVariable::stringValue(rhs));
         }
         break;
     }
@@ -891,53 +947,32 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
 }
     
     
-stdx::optional<ExpressionTerm> MprControllerItemBase::Impl::getTermValue
-(string::const_iterator& iter, string::const_iterator& end)
+stdx::optional<MprVariable::Value> MprControllerItemBase::Impl::getTermValue
+(string::const_iterator& pos, string::const_iterator end)
 {
-    stdx::optional<ExpressionTerm> value;
+    stdx::optional<MprVariable::Value> value;
     std::smatch match;
 
-    if(regex_search(iter, end,  match, stringPattern)){
-        value = ExpressionTerm(match.str(1));
+    if(regex_search(pos, end,  match, stringPattern)){
+        value = match.str(1);
+        pos = match[0].second;
                 
-    } else if(regex_search(iter, end, match, floatPattern)){
-        value = ExpressionTerm(std::stod(match.str(0)));
+    } else if(regex_search(pos, end, match, floatPattern)){
+        value = std::stod(match.str(0));
+        pos = match[0].second;
             
-    } else if(regex_search(iter, end, match, intPattern)){
-        value = ExpressionTerm(std::stoi(match.str(0)));
+    } else if(regex_search(pos, end, match, intPattern)){
+        value = std::stoi(match.str(0));
+        pos = match[0].second;
 
-    } else if(regex_search(iter, end, match, boolPattern)){
+    } else if(regex_search(pos, end, match, boolPattern)){
         auto label = match.str(1);
         std::transform(label.begin(), label.end(), label.begin(), ::tolower);
-        value = ExpressionTerm(label == "true" ? true : false);
+        value = (label == "true") ? true : false;
+        pos = match[0].second;
                 
-    } else if(regex_search(iter, end, match, variablePattern)){
-        GeneralId id(std::stoi(match.str(1)));
-        auto variable = variables->findVariable(id);
-        if(!variable){
-            io->os() << format(_("Variable {0} is not defined."), id.label()) << endl;
-        } else {
-            switch(variable->valueTypeId()){
-            case MprVariable::Int:
-                value = ExpressionTerm(variable->toInt());
-                break;
-            case MprVariable::Double:
-                value = ExpressionTerm(variable->toDouble());
-                break;
-            case MprVariable::Bool:
-                value = ExpressionTerm(variable->toBool());
-                break;
-            case MprVariable::String:
-                value = ExpressionTerm(variable->toString());
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
-    if(value){
-        iter = match[0].second;
+    } else {
+        value = self->evalExpressionAsVariableValue(pos, end);
     }
     
     return value;
@@ -945,11 +980,11 @@ stdx::optional<ExpressionTerm> MprControllerItemBase::Impl::getTermValue
 
 
 stdx::optional<string> MprControllerItemBase::Impl::getComparisonOperator
-(string::const_iterator& iter, string::const_iterator& end)
+(string::const_iterator& pos, string::const_iterator end)
 {
     std::smatch match;
-    if(regex_search(iter, end,  match, cmpOperatorPattern)){
-        iter = match[0].second;
+    if(regex_search(pos, end,  match, cmpOperatorPattern)){
+        pos = match[0].second;
         return match.str(1);
     }
     return stdx::nullopt;
@@ -958,102 +993,90 @@ stdx::optional<string> MprControllerItemBase::Impl::getComparisonOperator
 
 bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* statement)
 {
-    auto variable = statement->variable(variables);
-
-    if(!variable){
-        io->os() << format(_("Variable {0} is not available."), statement->variableId().label()) << endl;
+    auto assignValueToVariable =
+        self->evalExpressionAsVariableToAssginValue(statement->variableExpression());
+    if(!assignValueToVariable){
         return false;
     }
         
-    std::vector<ExpressionTerm> terms;
-    auto& expression = statement->expression();
+    auto& expression = statement->valueExpression();
     if(expression.empty()){
-        io->os() << format(_("Expression assigned to variable {0} is empty."), variable->id().label()) << endl;
+        io->os() << format(_("Expression assigned to variable {0} is empty."),
+                           statement->variableExpression()) << endl;
         return false;
     }
 
-    auto iter = expression.cbegin();
+    vector<MprVariable::Value> termValues;
+    vector<char> operators;
+    vector<string> termStrings;
+    string invalidTerm;
+    auto pos = expression.cbegin();
     auto end = expression.cend();
     std::smatch match;
-    bool isExpressionValid = true;
+    bool isValidExpression = true;
+    bool isNextTermOperator = false;
         
-    while(iter != end){
-        if(terms.empty() || stdx::get_variant_index(terms.back()) == Char){
-            if(regex_search(iter, end,  match, stringPattern)){
-                terms.push_back(match.str(1));
-                
-            } else if(regex_search(iter, end, match, floatPattern)){
-                terms.push_back(std::stod(match.str(0)));
-            
-            } else if(regex_search(iter, end, match, intPattern)){
-                terms.push_back(stoi(match.str(0)));
-
-            } else if(regex_search(iter, end, match, boolPattern)){
-                auto label = match.str(1);
-                std::transform(label.begin(), label.end(), label.begin(), ::tolower);
-                terms.push_back(label == "true" ? true : false);
-                
-            } else if(regex_search(iter, end, match, variablePattern)){
-                GeneralId id(std::stoi(match.str(1)));
-                if(!variables->findVariable(id)){
-                    io->os() << format(_("Variable {0} is not defined."), id.label()) << endl;
-                    isExpressionValid = false;
-                } else {
-                    terms.push_back(id);
-                }
+    while(pos != end){
+        if(!isNextTermOperator){
+            auto pos0 = pos;
+            if(auto term = getTermValue(pos, end)){
+                termValues.push_back(*term);
+                termStrings.push_back(string(pos0, pos));
+                isNextTermOperator = true;
             } else {
-                string term;
-                if(regex_search(iter, end, match, termPattern)){
-                    term = match.str(1);
+                if(regex_search(pos, end, match, termPattern)){
+                    invalidTerm = match.str(1);
                 } else {
-                    term = string(match[0].first, match[0].second);
+                    invalidTerm = string(match[0].first, match[0].second);
                 }
-                io->os() << format(_("Term {0} is invalid."), term) << endl;
-                isExpressionValid = false;
+                isValidExpression = false;
             }
         } else {
-            if(regex_search(iter, end, match, operatorPattern)){
+            if(regex_search(pos, end, match, operatorPattern)){
                 char op = match.str(1)[0];
-                terms.push_back(op);
+                operators.push_back(op);
+                pos = match[0].second;
+                isNextTermOperator = false;
+            } else {
+                invalidTerm = string(match[0].first, match[0].second);
+                isValidExpression = false;
             }
         }
-        if(!isExpressionValid){
+        if(!isValidExpression){
+            io->os() << format(_("Term {0} is invalid."), invalidTerm) << endl;
             break;
         }
-        iter = match[0].second;
     }
 
-    if(terms.empty()){
-        isExpressionValid = false;
-
-    } else if(stdx::get_variant_index(terms.back()) == Char){
-        io->os() << format(_("Expression ends with operator {0}."), stdx::get<char>(terms.back())) << endl;
-        isExpressionValid = false;
+    if(termValues.empty()){
+        isValidExpression = false;
+    } else if(!isNextTermOperator){
+        io->os() << format(_("Expression ends with operator {0}."), operators.back()) << endl;
+        isValidExpression = false;
     }
-
-    if(!isExpressionValid){
+    if(!isValidExpression){
         return false;
     }
 
-    MprVariable::Value value = variable->variantValue();
-    if(applyExpressionTerm(value, terms[0], '=')){
-        int index = 1;
-        while(index + 1 < terms.size()){
-            char op = stdx::get<char>(terms[index++]);
-            if(!applyExpressionTerm(value, terms[index++], op)){
-                isExpressionValid = false;
-                break;
-            }
+    size_t termIndex = 0;
+    size_t operatorIndex = 0;
+    MprVariable::Value value = termValues[termIndex++];
+    while(operatorIndex < operators.size()){
+        char op = operators[operatorIndex++];
+        if(!applyBinaryOperation(value, op, termValues[termIndex++])){
+            isValidExpression = false;
+            io->os() << format(_("Type mismatch in expresion {0} {1} {2}"),
+                               termStrings[termIndex-2],
+                               op,
+                               termStrings[termIndex-1]) << endl;
+            break;
         }
     }
-
-    if(!isExpressionValid){
-        io->os() << format(_("Type mismatch in expresion {0}"), expression) << endl;
-        return false;
+    if(isValidExpression){
+        if(!assignValueToVariable(value)){
+            return false;
+        }
     }
-
-    variable->setValue(value);
-    self->pushOutputOnceFunction([variable](){ variable->notifyUpdate(); });
 
     ++iterator;
 
@@ -1084,79 +1107,57 @@ static string applyStringOperation(char op, const string& lhs, const string& rhs
 }
 
 
-bool MprControllerItemBase::Impl::applyExpressionTerm
-(MprVariable::Value& value, ExpressionTerm term, char op)
+bool MprControllerItemBase::Impl::applyBinaryOperation
+(MprVariable::Value& lhsValue, char op, const MprVariable::Value& rhsValue)
 {
-    int termType = stdx::get_variant_index(term);
-
-    if(termType == Variable){
-        auto id = stdx::get<GeneralId>(term);
-        auto variable = variables->findVariable(id);
-        switch(variable->valueTypeId()){
-        case MprVariable::Int:    term = variable->toInt();    break;
-        case MprVariable::Double: term = variable->toDouble(); break;
-        case MprVariable::Bool:   term = variable->toBool();   break;
-        case MprVariable::String: term = variable->toString(); break;
-        default: return false;
-        }
-        termType = stdx::get_variant_index(term);
-    }
-
-    int valueType = stdx::get_variant_index(value);
-
-    switch(termType){
-    case Int:
+    bool result = false;
+    int lhsType = MprVariable::valueType(lhsValue);
+    int rhsType = MprVariable::valueType(rhsValue);
+    
+    switch(rhsType){
+        
+    case MprVariable::Int:
     {
-        int rhs = stdx::get<int>(term);
-        if(op == '='){
-            value = rhs;
-        } else if(valueType == MprVariable::Int){
-            value = applyNumericalOperation<int>(op, stdx::get<int>(value), rhs);
-        } else if(valueType == MprVariable::Double){
-            value = applyNumericalOperation<double>(op, stdx::get<double>(value), rhs);
-        } else {
-            return false;
+        int rhs = MprVariable::intValue(rhsValue);
+        if(lhsType == MprVariable::Int){
+            lhsValue = applyNumericalOperation<int>(op, MprVariable::intValue(lhsValue), rhs);
+            result = true;
+        } else if(lhsType == MprVariable::Double){
+            lhsValue = applyNumericalOperation<double>(op, MprVariable::doubleValue(lhsValue), rhs);
+            result = true;
         }
         break;
     }
-    case Double:
+    case MprVariable::Double:
     {
-        double rhs = stdx::get<double>(term);
-        if(op == '='){
-            value = rhs;
-        } else if(valueType == MprVariable::Int){
-            value = applyNumericalOperation<double>(op, stdx::get<int>(value), rhs);
-        } else if(valueType == MprVariable::Double){
-            value = applyNumericalOperation<double>(op, stdx::get<double>(value), rhs);
-        } else {
-            return false;
+        double rhs = MprVariable::doubleValue(rhsValue);
+        if(lhsType == MprVariable::Int){
+            lhsValue = applyNumericalOperation<double>(op, MprVariable::intValue(lhsValue), rhs);
+            result = true;
+        } else if(lhsType == MprVariable::Double){
+            lhsValue = applyNumericalOperation<double>(op, MprVariable::doubleValue(lhsValue), rhs);
+            result = true;
         }
         break;
     }
-    case Bool:
+    case MprVariable::Bool:
     {
-        bool rhs = stdx::get<bool>(term);
-        if(op == '='){
-            value = rhs;
-        } else if(valueType == MprVariable::Bool && op == '+'){
-            value = stdx::get<bool>(value) || rhs;
-        } else {
-            return false;
+        bool rhs = MprVariable::boolValue(rhsValue);
+        if(lhsType == MprVariable::Bool && op == '+'){
+            lhsValue = MprVariable::boolValue(lhsValue) || rhs;
+            result = true;
         }
         break;
     }
-    case String:
-        if(op == '='){
-            value = stdx::get<string>(term);
-        } else if(valueType == MprVariable::String && op == '+'){
-            value = stdx::get<string>(value) + stdx::get<string>(term);
-        } else {
-            return false;
+    case MprVariable::String:
+        if(lhsType == MprVariable::String && op == '+'){
+            lhsValue = MprVariable::stringValue(lhsValue) + MprVariable::stringValue(rhsValue);
+            result = true;
         }
         break;
     }
 
-    return true;
+    return result;
 }
 
 

@@ -1,5 +1,5 @@
 #include "MprProgramViewBase.h"
-#include "BasicMprStatements.h"
+#include "MprBasicStatements.h"
 #include "MprProgram.h"
 #include <QSpinBox>
 #include "gettext.h"
@@ -124,58 +124,30 @@ public:
     virtual QVariant dataOfEditRole(MprStatement* statement, int column) const override
     {
         auto assign = static_cast<MprAssignStatement*>(statement);
-
         if(column == 1){
-            auto& id = assign->variableId();
-            if(!id.isValid()){
-                return 0;
-            } else if(id.isInt()){
-                return id.toInt();
-            } else {
-                return id.toString().c_str();
-            }
+            return assign->variableExpression().c_str();
         } else if(column == 2){
-            return assign->expression().c_str();
+            return assign->valueExpression().c_str();
         }
-        
         return QVariant();
     }
 
     virtual void setDataOfEditRole(MprStatement* statement, int column, const QVariant& value) const override
     {
         auto assign = static_cast<MprAssignStatement*>(statement);
-
         if(column == 1){
-            bool ok;
-            GeneralId newId = value.toInt(&ok);
-            if(!ok){
-                newId = value.toString().toStdString();
-            }
-            assign->setVariableId(newId);
-
+            assign->setVariableExpression(value.toString().toStdString());
         } else if(column == 2){
-            assign->setExpression(value.toString().toStdString());
+            assign->setValueExpression(value.toString().toStdString());
         }
         assign->notifyUpdate();
     }
     
     virtual QWidget* createEditor(MprStatement* statement, int column, QWidget* parent) const override
     {
-        auto assign = static_cast<MprAssignStatement*>(statement);
-
-        if(column == 1){
-            auto editor = createDefaultEditor();
-            if(auto spin = dynamic_cast<QSpinBox*>(editor)){
-                //spin->setPrefix("Var[ ");
-                //spin->setSuffix(" ]");
-                spin->setRange(0, 999);
-            }
-            return editor;
-
-        } else if(column == 2){
+        if(column == 1 || column == 2){
             return createDefaultEditor();
         }
-        
         return nullptr;
     }
 };

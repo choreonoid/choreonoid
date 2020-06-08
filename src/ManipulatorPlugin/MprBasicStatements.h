@@ -1,5 +1,5 @@
-#ifndef CNOID_MANIPULATOR_PLUGIN_BASIC_MPR_STATEMENTS_H
-#define CNOID_MANIPULATOR_PLUGIN_BASIC_MPR_STATEMENTS_H
+#ifndef CNOID_MANIPULATOR_PLUGIN_MPR_BASIC_STATEMENTS_H
+#define CNOID_MANIPULATOR_PLUGIN_MPR_BASIC_STATEMENTS_H
 
 #include "MprStatement.h"
 #include "MprPositionStatement.h"
@@ -187,13 +187,11 @@ public:
 
     virtual std::string label(int index) const override;
 
-    const GeneralId& variableId() const { return variableId_; }
-    void setVariableId(const GeneralId& id) { variableId_ = id; }
-    
-    MprVariable* variable(MprVariableSet* variables) const;
-    
-    const std::string expression() const { return expression_; }
-    void setExpression(const std::string& expression) { expression_ = expression; }
+    const std::string variableExpression() const { return variableExpression_; }
+    void setVariableExpression(const std::string& expression) { variableExpression_ = expression; }
+
+    const std::string valueExpression() const { return valueExpression_; }
+    void setValueExpression(const std::string& expression) { valueExpression_ = expression; }
 
     virtual bool read(MprProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
@@ -203,8 +201,8 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    GeneralId variableId_;
-    std::string expression_;
+    std::string variableExpression_;
+    std::string valueExpression_;
 };
 
 typedef ref_ptr<MprAssignStatement> MprAssignStatementPtr;

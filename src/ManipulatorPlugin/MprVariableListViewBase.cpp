@@ -5,6 +5,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
 #include <cnoid/TargetItemPicker>
+#include <cnoid/ConnectionSet>
 #include <cnoid/Buttons>
 #include <QBoxLayout>
 #include <QLabel>
@@ -34,7 +35,8 @@ constexpr int NoteColumn = 3;
 class VariableListModel : public QAbstractTableModel
 {
 public:
-    MprVariableListPtr variables;
+    MprVariableListPtr variableList;
+    ScopedConnectionSet variableListConnections;
     
     VariableListModel(QObject* parent);
     void setVariableList(MprVariableList* variables);
@@ -51,7 +53,9 @@ public:
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void addVariable(int row, MprVariable* variable, bool doInsert);
     void removeVariables(QModelIndexList selected);
-    void notifyVariableUpdate(MprVariable* variable);
+    void onVariableAdded(int variableIndex);
+    void onVariableRemoved(int variableIndex);
+    void onVariableUpdated(int variableIndex, int flags);
 };
 
 class CustomizedItemDelegate : public QStyledItemDelegate
@@ -121,8 +125,7 @@ public:
     MprVariableListViewBase* self;
     TargetItemPicker<MprVariableListItemBase> targetItemPicker;
     MprVariableListItemBasePtr targetItem;
-    MprVariableListPtr variables;
-    ScopedConnection variableUpdateConnection;
+    MprVariableListPtr variableList;
     VariableListModel* variableListModel;
     QLabel targetLabel;
     PushButton addButton;
@@ -131,7 +134,7 @@ public:
     MenuManager contextMenuManager;
 
     Impl(MprVariableListViewBase* self);
-    void setMprVariableListItem(MprVariableListItemBase* item);
+    void setVariableListItem(MprVariableListItemBase* item);
     void addVariableIntoCurrentIndex(bool doInsert);
     void addVariable(int row, bool doInsert);
     void removeSelectedVariables();
@@ -151,10 +154,25 @@ VariableListModel::VariableListModel(QObject* parent)
 }
 
 
-void VariableListModel::setVariableList(MprVariableList* variables)
+void VariableListModel::setVariableList(MprVariableList* variableList)
 {
     beginResetModel();
-    this->variables = variables;
+    
+    this->variableList = variableList;
+
+    variableListConnections.disconnect();
+    if(variableList){
+        variableListConnections.add(
+            variableList->sigVariableAdded().connect(
+                [&](int index){ onVariableAdded(index); }));
+        variableListConnections.add(
+            variableList->sigVariableRemoved().connect(
+                [&](int index, MprVariable*){ onVariableRemoved(index); }));
+        variableListConnections.add(
+            variableList->sigVariableUpdated().connect(
+                [&](int index, int flags){ onVariableUpdated(index, flags); }));
+    }
+    
     endResetModel();
 }
 
@@ -168,20 +186,20 @@ void VariableListModel::refresh()
 
 int VariableListModel::numVariables() const
 {
-    return variables ?  variables->numVariables() : 0;
+    return variableList ?  variableList->numVariables() : 0;
 }
 
 
 MprVariable* VariableListModel::variableAtRow(int row)
 {
-    return variables->variableAt(row);
+    return variableList->variableAt(row);
 }
 
 
 int VariableListModel::rowOfVariable(MprVariable* variable) const
 {
-    if(variables){
-        return variables->indexOf(variable);
+    if(variableList){
+        return variableList->indexOf(variable);
     }
     return -1;
 }
@@ -235,7 +253,7 @@ QVariant VariableListModel::headerData(int section, Qt::Orientation orientation,
 
 QModelIndex VariableListModel::index(int row, int column, const QModelIndex& parent) const
 {
-    if(!variables || parent.isValid()){
+    if(!variableList || parent.isValid()){
         return QModelIndex();
     }
     if(row < numVariables()){
@@ -248,6 +266,10 @@ QModelIndex VariableListModel::index(int row, int column, const QModelIndex& par
 
 Qt::ItemFlags VariableListModel::flags(const QModelIndex& index) const
 {
+    if(index.column() == ValueTypeColumn && variableList
+       && variableList->isGeneralVariableValueTypeUnchangeable()){
+        return QAbstractTableModel::flags(index); // Non-editable
+    }
     return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
 }
 
@@ -266,7 +288,7 @@ QVariant VariableListModel::data(const QModelIndex& index, int role) const
             return variable->id().label().c_str();
 
         } else if(column == ValueTypeColumn){
-            switch(variable->valueTypeId()){
+            switch(variable->valueType()){
             case MprVariable::Int:
                 return _("Integer");
             case MprVariable::Double:
@@ -280,13 +302,13 @@ QVariant VariableListModel::data(const QModelIndex& index, int role) const
             }
 
         } else if(column == ValueColumn){
-            switch(variable->valueTypeId()){
+            switch(variable->valueType()){
             case MprVariable::Double:
-                return QString("%1").arg(variable->toDouble(), 0, 'g');
+                return QString("%1").arg(variable->doubleValue(), 0, 'g');
             case MprVariable::Bool:
-                return variable->toBool() ? _("True") : _("False");
+                return variable->boolValue() ? _("True") : _("False");
             default:
-                return variable->valueString().c_str();
+                return variable->toString().c_str();
             }
 
         } else if(column == NoteColumn){
@@ -316,7 +338,7 @@ bool VariableListModel::setData(const QModelIndex& index, const QVariant& value,
                 if(newId.isInt() && newId.toInt() < 0){
                     showWarningDialog(_("Negative number cannot be used as ID."));
                 } else {
-                    if(variables->resetId(variable, newId)){
+                    if(variableList->resetId(variable, newId)){
                         Q_EMIT dataChanged(index, index, {role});
                     } else {
                         showWarningDialog(
@@ -326,11 +348,12 @@ bool VariableListModel::setData(const QModelIndex& index, const QVariant& value,
             }
 
         } else if(column == ValueTypeColumn){
-            variable->changeValueType(value.toInt());
-            Q_EMIT dataChanged(index, index, {role});
+            if(variable->changeValueType(value.toInt())){
+                Q_EMIT dataChanged(index, index, {role});
+            }
 
         } else if(column == ValueColumn){
-            switch(variable->valueTypeId()){
+            switch(variable->valueType()){
             case MprVariable::Bool:
                 variable->setValue(value.toBool());
                 break;
@@ -359,48 +382,65 @@ bool VariableListModel::setData(const QModelIndex& index, const QVariant& value,
 
 void VariableListModel::addVariable(int row, MprVariable* variable, bool doInsert)
 {
-    if(variables){
-        int newVariableRow = doInsert ? row : row + 1;
-        if(numVariables() == 0){
-            // Remove the empty row first
-            beginRemoveRows(QModelIndex(), 0, 0);
-            endRemoveRows();
-        }
-        beginInsertRows(QModelIndex(), newVariableRow, newVariableRow);
-        variables->insert(newVariableRow, variable);
-        endInsertRows();
+    if(variableList){
+        int newVariableIndex = doInsert ? row : row + 1;
+        variableList->insert(newVariableIndex, variable);
     }
 }
 
 
 void VariableListModel::removeVariables(QModelIndexList selected)
 {
-    if(variables){
+    if(variableList){
         std::sort(selected.begin(), selected.end());
         int numRemoved = 0;
         for(auto& index : selected){
-            int row = index.row() - numRemoved;
-            beginRemoveRows(QModelIndex(), row, row);
-            variables->removeAt(row);
+            int variableIndex = index.row() - numRemoved;
+            variableList->removeAt(variableIndex);
             ++numRemoved;
-            endRemoveRows();
-        }
-        if(variables->numVariables() == 0){
-            // This is necessary to show the empty row
-            beginResetModel();
-            endResetModel();
         }
     }
 }
 
 
-void VariableListModel::notifyVariableUpdate(MprVariable* variable)
+void VariableListModel::onVariableAdded(int variableIndex)
 {
-    int row = rowOfVariable(variable);
-    if(row >= 0){
-        auto index1 = index(row, IdColumn, QModelIndex());
-        auto index2 = index(row, NoteColumn, QModelIndex());
-        Q_EMIT dataChanged(index1, index2, { Qt::EditRole });
+    if(numVariables() == 0){
+        // Remove the empty row first
+        beginRemoveRows(QModelIndex(), 0, 0);
+        endRemoveRows();
+    }
+    beginInsertRows(QModelIndex(), variableIndex, variableIndex);
+    endInsertRows();
+}
+
+
+void VariableListModel::onVariableRemoved(int variableIndex)
+{
+    beginRemoveRows(QModelIndex(), variableIndex, variableIndex);
+    endRemoveRows();
+    if(numVariables() == 0){
+        // This is necessary to show the empty row
+        beginResetModel();
+        endResetModel();
+    }
+}
+
+
+void VariableListModel::onVariableUpdated(int variableIndex, int flags)
+{
+    if(flags & MprVariable::IdUpdate){
+        auto modelIndex = index(variableIndex, IdColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+    }
+    if(flags & MprVariable::ValueUpdate){
+        auto modelIndex1 = index(variableIndex, ValueTypeColumn, QModelIndex());
+        auto modelIndex2 = index(variableIndex, ValueColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
+    }
+    if(flags & MprVariable::NoteUpdate){
+        auto modelIndex = index(variableIndex, NoteColumn, QModelIndex());
+        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
     }
 }
         
@@ -426,7 +466,7 @@ QWidget* CustomizedItemDelegate::createEditor
     {
         auto& id = variable->id();
         if(id.isInt()){
-            auto spin = new IdSpinBox(view->variables->isStringIdEnabled(), parent);
+            auto spin = new IdSpinBox(view->variableList->isStringIdEnabled(), parent);
             spin->setFrame(false);
             spin->setRange(0, 9999);
             spin->setValue(id.toInt());
@@ -439,11 +479,11 @@ QWidget* CustomizedItemDelegate::createEditor
     case ValueTypeColumn:
     {
         auto combo = new QComboBox(parent);
-        combo->addItem(_("Integer"));
-        combo->addItem(_("Real"));
-        combo->addItem(_("Logical"));
-        combo->addItem(_("String"));
-        combo->setCurrentIndex(variable->valueTypeId());
+        combo->addItem(_("Integer"), MprVariable::Int);
+        combo->addItem(_("Real"), MprVariable::Double);
+        combo->addItem(_("Logical"), MprVariable::Bool);
+        combo->addItem(_("String"), MprVariable::String);
+        combo->setCurrentIndex(variable->valueType());
         editor = combo;
         break;
     }
@@ -465,12 +505,12 @@ QWidget* CustomizedItemDelegate::createEditor
 
 QWidget* CustomizedItemDelegate::createVariableValueEditor(MprVariable* variable, QWidget* parent) const
 {
-    switch(variable->valueTypeId()){
+    switch(variable->valueType()){
     case MprVariable::Int:
     {
         auto spin = new QSpinBox(parent);
         spin->setRange(-999999, 999999);
-        spin->setValue(variable->toInt());
+        spin->setValue(variable->intValue());
         return spin;
         break;
     }
@@ -479,7 +519,7 @@ QWidget* CustomizedItemDelegate::createVariableValueEditor(MprVariable* variable
         auto spin = new QDoubleSpinBox(parent);
         spin->setDecimals(3);
         spin->setRange(-999999.0, 999999.0);
-        spin->setValue(variable->toDouble());
+        spin->setValue(variable->doubleValue());
         return spin;
         break;
     }
@@ -488,7 +528,7 @@ QWidget* CustomizedItemDelegate::createVariableValueEditor(MprVariable* variable
         auto combo = new QComboBox(parent);
         combo->addItem(_("True"));
         combo->addItem(_("False"));
-        combo->setCurrentIndex(variable->toBool() ? 0 : 1);
+        combo->setCurrentIndex(variable->boolValue() ? 0 : 1);
         return combo;
     }
     default:
@@ -517,7 +557,7 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
         break;
     case ValueTypeColumn:
         if(auto combo = dynamic_cast<QComboBox*>(editor)){
-            model->setData(index, combo->currentIndex());
+            model->setData(index, combo->currentData().toInt());
         }
         break;
     case ValueColumn:
@@ -605,8 +645,7 @@ MprVariableListViewBase::Impl::Impl(MprVariableListViewBase* self)
     self->setLayout(vbox);
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](MprVariableListItemBase* item){
-            setMprVariableListItem(item); });
+        [&](MprVariableListItemBase* item){ setVariableListItem(item); });
 }
 
 
@@ -616,25 +655,17 @@ MprVariableListViewBase::~MprVariableListViewBase()
 }
 
 
-void MprVariableListViewBase::Impl::setMprVariableListItem(MprVariableListItemBase* item)
+void MprVariableListViewBase::Impl::setVariableListItem(MprVariableListItemBase* item)
 {
     targetItem = item;
-    variableUpdateConnection.disconnect();
-
     if(item){
         targetLabel.setText(item->displayName().c_str());
-        variables = item->variableList();
-        variableListModel->setVariableList(variables);
-
-        variableUpdateConnection =
-            variables->sigVariableUpdated().connect(
-                [&](MprVariableSet*, MprVariable* variable){
-                    variableListModel->notifyVariableUpdate(variable); });
+        variableList = item->variableList();
     } else {
         targetLabel.setText("---");
-        variables = nullptr;
-        variableListModel->setVariableList(nullptr);
+        variableList = nullptr;
     }
+    variableListModel->setVariableList(variableList);
     addButton.setEnabled(targetItem != nullptr);
 }
 
@@ -649,8 +680,8 @@ void MprVariableListViewBase::Impl::addVariableIntoCurrentIndex(bool doInsert)
 
 void MprVariableListViewBase::Impl::addVariable(int row, bool doInsert)
 {
-    if(variables){
-        auto id = variables->createNextId();
+    if(variableList){
+        auto id = variableList->createNextId();
         MprVariablePtr variable = new MprVariable(id);
         variable->setValue(0);
         variableListModel->addVariable(row, variable, doInsert);

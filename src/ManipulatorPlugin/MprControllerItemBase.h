@@ -3,6 +3,7 @@
 
 #include <cnoid/ControllerItem>
 #include "MprProgram.h"
+#include "MprVariable.h"
 #include <typeindex>
 #include <memory>
 #include "exportdecl.h"
@@ -27,7 +28,14 @@ public:
     virtual double timeStep() const override;
     double speedRatio() const;
     void setSpeedRatio(double r);
-        
+
+    virtual bool initialize(ControllerIO* io) override final;
+    virtual bool start() override final;
+    virtual void input() override final;
+    virtual bool control() override final;
+    virtual void output() override final;
+    virtual void stop() override final;
+    
 protected:
     template<class StatementType>
     void registerStatementInterpreter(std::function<bool(StatementType* statement)> interpret){
@@ -62,7 +70,6 @@ protected:
     MprProgram* findProgram(const std::string& name);
 
     LinkKinematicsKit* linkKinematicsKitForControl();
-    MprVariableSet* getVariableSet();
 
     void pushControlFunctions(
         std::function<bool()> control, std::function<void()> input = nullptr, std::function<void()> output = nullptr);
@@ -73,6 +80,13 @@ protected:
     virtual bool onStart();
     virtual bool onStop();
 
+    // Virtual functions for evaluatiing variables
+    virtual bool initializeVariableMappings();
+    virtual stdx::optional<MprVariable::Value> evalExpressionAsVariableValue(
+        std::string::const_iterator& io_expressionBegin, std::string::const_iterator expressionEnd);
+    virtual std::function<bool(MprVariable::Value value)> evalExpressionAsVariableToAssginValue(
+        const std::string& expression);
+
     virtual void onDisconnectedFromRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
@@ -81,13 +95,6 @@ protected:
 private:
     void registerStatementInterpreter(
         std::type_index statementType, const std::function<bool(MprStatement* statement)>& interpret);
-    
-    virtual bool initialize(ControllerIO* io) override;
-    virtual bool start() override;
-    virtual void input() override;
-    virtual bool control() override;
-    virtual void output() override;
-    virtual void stop() override;
     
     class Impl;
     Impl* impl;

@@ -398,7 +398,7 @@ void PositionListModel::removePositions(QModelIndexList selected)
         int numRemoved = 0;
         for(auto& index : selected){
             int positionIndex = index.row() - numRemoved;
-            positionList->remove(positionIndex);
+            positionList->removeAt(positionIndex);
             ++numRemoved;
         }
     }

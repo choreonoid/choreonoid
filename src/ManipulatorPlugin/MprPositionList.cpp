@@ -27,8 +27,8 @@ public:
     Impl(MprPositionList* self);
     Impl(MprPositionList* self, const Impl& org);
     MprPosition* findPosition(const GeneralId& id) const;
-    bool remove(int index, bool doNotify);
     bool insert(int index, MprPosition* position, bool doNotify);
+    bool removeAt(int index, bool doNotify);
 };
 
 }
@@ -99,12 +99,10 @@ bool MprPositionList::isStringIdEnabled() const
 
 void MprPositionList::clear()
 {
-    for(auto& position : impl->positions){
-        position->ownerPositionList_.reset();
+    while(!impl->positions.empty()){
+        removeAt(impl->positions.size() - 1);
     }
-    impl->positions.clear();
-    impl->idToPositionMap.clear();
-    impl->idCounter = 0;
+    resetIdCounter();
 }
 
 
@@ -156,7 +154,7 @@ bool MprPositionList::Impl::insert(int index, MprPosition* position, bool doNoti
 {
     auto& id = position->id();
     
-    if(position->ownerPositionList() || !id.isValid()||
+    if(position->ownerPositionList_ || !id.isValid()||
        (!isStringIdEnabled && id.isString()) || findPosition(id)){
         return false;
     }
@@ -186,7 +184,7 @@ bool MprPositionList::replace(int index, MprPosition* position)
         return false;
     }
     bool replaced = false;
-    if(impl->remove(index, false)){
+    if(impl->removeAt(index, false)){
         if(impl->insert(index, position, false)){
             replaced = true;
             if(!impl->sigPositionUpdated.empty()){
@@ -204,13 +202,13 @@ bool MprPositionList::append(MprPosition* position)
 }
 
 
-void MprPositionList::remove(int index)
+void MprPositionList::removeAt(int index)
 {
-    impl->remove(index, true);
+    impl->removeAt(index, true);
 }
 
 
-bool MprPositionList::Impl::remove(int index, bool doNotify)
+bool MprPositionList::Impl::removeAt(int index, bool doNotify)
 {
     if(index >= positions.size()){
         return false;

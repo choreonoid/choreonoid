@@ -1,6 +1,6 @@
 #include "MprStatement.h"
 #include "MprProgram.h"
-#include "BasicMprStatements.h"
+#include "MprBasicStatements.h"
 
 using namespace std;
 using namespace cnoid;

@@ -1,7 +1,7 @@
 #include "MprProgramViewBase.h"
 #include "MprProgramItemBase.h"
 #include "MprProgram.h"
-#include "BasicMprStatements.h"
+#include "MprBasicStatements.h"
 #include "MprControllerItemBase.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>

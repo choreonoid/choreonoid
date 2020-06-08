@@ -37,7 +37,7 @@ public:
     bool insert(int index, MprPosition* position);
     bool append(MprPosition* position);
     bool replace(int index, MprPosition* position);
-    void remove(int index);
+    void removeAt(int index);
 
     SignalProxy<void(int index)> sigPositionAdded();
     SignalProxy<void(int index, MprPosition* position)> sigPositionRemoved();

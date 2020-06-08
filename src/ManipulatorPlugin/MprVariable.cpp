@@ -29,17 +29,139 @@ MprVariable::MprVariable(const MprVariable& org)
 }
 
 
-Referenced* MprVariable::doClone(CloneMap*) const
+bool MprVariable::resetId(const GeneralId& id)
 {
-    return new MprVariable(*this);
+    if(!ownerVariableList_ || !ownerVariableList_.lock()){
+        id_ = id;
+        return true;
+    }
+    auto list = ownerVariableList_.lock();
+    return list->resetId(this, id);
 }
 
 
-MprVariable& MprVariable::operator=(const MprVariable& rhs)
+MprVariableList* MprVariable::ownerVariableList() const
 {
-    value_ = rhs.value_;
-    note_ = rhs.note_;
-    return *this;
+    return ownerVariableList_.lock();
+}
+
+
+template<class ValueType>
+bool MprVariable::setScalarValue(ValueType value)
+{
+    if(auto list = ownerVariableList()){
+
+        switch(list->variableType()){
+
+        case MprVariableList::GeneralVariable:
+            if(!list->isGeneralVariableValueTypeUnchangeable()){
+                value_ = value;
+                return true;
+            } else {
+                switch(valueType()){
+                case Int:
+                    value_ = value;
+                    return true;
+                case Double:
+                    value_ = static_cast<double>(value);
+                    return true;
+                case Bool:
+                    value_ = static_cast<bool>(value);
+                    return true;
+                case String:
+                    return false;
+                }
+            }
+            return false;
+
+        case MprVariableList::IntVariable:
+            value_ = value;
+            return true;
+
+        case MprVariableList::DoubleVariable:
+            value_ = static_cast<double>(value);
+            return true;
+
+        case MprVariableList::BoolVariable:
+            value_ = static_cast<bool>(value);
+            return true;
+
+        case MprVariableList::StringVariable:
+            return false;
+        }
+    }
+    value_ = value;
+    return true;
+}
+
+
+bool MprVariable::setValue(int value)
+{
+    return setScalarValue(value);
+}
+
+
+bool MprVariable::setValue(double value)
+{
+    return setScalarValue(value);
+}
+
+
+bool MprVariable::setValue(bool value)
+{
+    return setScalarValue(value);
+}
+
+
+bool MprVariable::setValue(const std::string& value)
+{
+    if(auto list = ownerVariableList()){
+
+        switch(list->variableType()){
+
+        case MprVariableList::GeneralVariable:
+            if(!list->isGeneralVariableValueTypeUnchangeable()){
+                value_ = value;
+                return true;
+            } else {
+                switch(valueType()){
+                case Int:
+                case Double:
+                case Bool:
+                    return false;
+                case String:
+                    value_ = value;
+                    return true;
+                }
+            }
+            return false;
+
+        case MprVariableList::IntVariable:
+        case MprVariableList::DoubleVariable:
+        case MprVariableList::BoolVariable:
+            return false;
+
+        case MprVariableList::StringVariable:
+            value_ = value;
+            return false;
+        }
+    }
+    value_ = value;
+    return true;
+}
+
+
+bool MprVariable::setValue(const Value& value)
+{
+    switch(valueType(value)){
+    case Invalid: return false;
+    case Int:     return setValue(intValue(value));
+    case Double:  return setValue(doubleValue(value));
+    case String:  return setValue(stringValue(value));
+    default:
+        break;
+    }
+    return false;
 }
 
 
@@ -91,58 +213,50 @@ static void changeValueToBool(MprVariable::Value& value)
 }
 
 
-void MprVariable::changeValueType(int typeId)
+bool MprVariable::changeValueType(int typeId)
 {
-    int prevTypeId = valueTypeId();
+    int prevTypeId = valueType();
     if(typeId == prevTypeId){
-        return;
+        return true;
     }
-    switch(typeId){
-    case Int:
-        changeValueToInt(value_);
-        break;
-    case Double:
-        changeValueToDouble(value_);
-        break;
-    case Bool:
-        changeValueToBool(value_);
-        break;
-    case String:
-        value_ = string();
-        break;
-    default:
-        break;
+    if(auto list = ownerVariableList()){
+        if(list->variableType() == MprVariableList::GeneralVariable &&
+           !list->isGeneralVariableValueTypeUnchangeable()){
+            switch(typeId){
+            case Int:    changeValueToInt(value_);    return true;
+            case Double: changeValueToDouble(value_); return true;
+            case Bool:   changeValueToBool(value_);   return true;
+            case String: value_ = string();           return true;
+            default: break;
+            }
+        }
     }
+    return false;
 }
-        
 
-std::string MprVariable::valueString() const
+
+std::string MprVariable::toString() const
 {
-    switch(valueTypeId()){
+    switch(valueType()){
     case Int:
-        return std::to_string(toInt());
+        return std::to_string(intValue());
     case Double:
-        return std::to_string(toDouble());
+        return std::to_string(doubleValue());
     case Bool:
-        return toBool() ? "true" : "false";
+        return boolValue() ? "true" : "false";
     case String:
-        return toString();
+        return stringValue();
     default:
         return string();
     }
 }
 
 
-MprVariableList* MprVariable::owner() const
+void MprVariable::notifyUpdate(int flags)
 {
-    return owner_.lock();
-}
-
-
-void MprVariable::notifyUpdate()
-{
-    if(auto owner__ = owner()){
-        owner__->notifyVariableUpdate(this);
+    sigUpdated_(flags);
+    if(auto list = ownerVariableList()){
+        list->notifyVariableUpdate(this, flags);
     }
 }
 

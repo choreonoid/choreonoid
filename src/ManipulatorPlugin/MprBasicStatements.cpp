@@ -1,11 +1,11 @@
-#include "BasicMprStatements.h"
+#include "MprBasicStatements.h"
 #include "MprStatementRegistration.h"
 #include "MprProgram.h"
-#include "MprVariableSet.h"
 #include "MprPositionList.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -373,8 +373,8 @@ MprAssignStatement::MprAssignStatement()
 
 MprAssignStatement::MprAssignStatement(const MprAssignStatement& org)
     : MprStatement(org),
-      variableId_(org.variableId_),
-      expression_(org.expression_)
+      variableExpression_(org.variableExpression_),
+      valueExpression_(org.valueExpression_)
 {
 
 }
@@ -392,42 +392,41 @@ std::string MprAssignStatement::label(int index) const
         return "Assign";
 
     } else if(index == 1){
-        if(!variableId_.isValid()){
+        if(variableExpression_.empty()){
             return "..... = ";
-        } else if(variableId_.isInt()){
-            return format("var[{0}] =", variableId_.toInt());
         } else {
-            return format("{0} = ", variableId_.label());
+            return variableExpression_ + " = ";
         }
     } else if(index == 2){
-        if(expression_.empty()){
+        if(valueExpression_.empty()){
             return ".....";
         } else {
-            return expression_;
+            return valueExpression_;
         }
     }
     return string();
 }
 
 
-MprVariable* MprAssignStatement::variable(MprVariableSet* variables) const
-{
-    return variables->findOrCreateVariable(variableId_, 0);
-}
-
-
 bool MprAssignStatement::read(MprProgram* program, const Mapping& archive)
 {
-    variableId_.read(archive, "variable");
-    archive.read("expression", expression_);
+    if(archive.read("variable", variableExpression_)){
+        std::smatch match;
+        if(regex_match(variableExpression_, match, regex("^[+-]?\\d+$"))){
+            variableExpression_ = format("var[{}]", variableExpression_);
+        }
+    }
+    if(!archive.read("value", valueExpression_)){
+        archive.read("expression", valueExpression_); // for backward compatibility
+    }
     return true;
 }
 
 
 bool MprAssignStatement::write(Mapping& archive) const
 {
-    variableId_.write(archive, "variable");
-    archive.write("expression", expression_, SINGLE_QUOTED);
+    archive.write("variable", variableExpression_);
+    archive.write("value", valueExpression_, DOUBLE_QUOTED);
     return true;
 }
 

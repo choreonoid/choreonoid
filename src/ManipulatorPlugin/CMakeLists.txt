@@ -12,11 +12,9 @@ set(sources
   MprProgram.cpp
   MprStatementRegistration.cpp
   MprStatement.cpp
-  BasicMprStatements.cpp
+  MprBasicStatements.cpp
   MprVariable.cpp
-  MprVariableSet.cpp
   MprVariableList.cpp
-  MprVariableSetGroup.cpp
   MprProgramItemBase.cpp
   MprControllerItemBase.cpp
   MprVariableListItemBase.cpp
@@ -32,12 +30,10 @@ set(headers
   MprPositionList.h
   MprStatementRegistration.h
   MprStatement.h
-  BasicMprStatements.h
+  MprBasicStatements.h
   MprPositionStatement.h
   MprVariable.h
-  MprVariableSet.h
   MprVariableList.h
-  MprVariableSetGroup.h
   MprProgramItemBase.h
   MprControllerItemBase.h
   MprVariableListItemBase.h
