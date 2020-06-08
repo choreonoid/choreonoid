@@ -53,7 +53,7 @@ public:
         IdUpdate = 1 << 0,
         ModeUpdate = 1 << 1,
         NoteUpdate = 1 << 2,
-        PositionUpdate = 1 << 3,
+        PositionUpdate = 1 << 3
     };
     SignalProxy<void(int flags)> sigUpdated() { return sigUpdated_; }
     void notifyUpdate(int flags);

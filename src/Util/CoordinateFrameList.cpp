@@ -89,18 +89,6 @@ CoordinateFrameList& CoordinateFrameList::operator=(const CoordinateFrameList& r
 }
 
 
-const std::string& CoordinateFrameList::name() const
-{
-    return impl->name;
-}
-
-
-void CoordinateFrameList::setName(const std::string& name)
-{
-    impl->name = name;
-}
-
-
 void CoordinateFrameList::setFirstElementAsDefaultFrame(bool on)
 {
     if(on && impl->frames.empty()){
@@ -182,7 +170,7 @@ CoordinateFrame* CoordinateFrameList::findFrame(const GeneralId& id) const
 
 bool CoordinateFrameList::insert(int index, CoordinateFrame* frame)
 {
-    if(frame->ownerFrameList() || !frame->id().isValid() || findFrame(frame->id())){
+    if(frame->ownerFrameList_ || !frame->id().isValid() || findFrame(frame->id())){
         return false;
     }
 
@@ -323,10 +311,6 @@ bool CoordinateFrameList::read(const Mapping& archive)
     }
 
     string symbol;
-    if(archive.read("name", symbol)){
-        setName(symbol);
-    }
-
     if(archive.read("frame_type", symbol)){
         if(symbol == "base"){
             frameType_ = Base;
@@ -363,9 +347,6 @@ void CoordinateFrameList::writeHeader(Mapping& archive) const
 {
     archive.write("type", "CoordinateFrameList");
     archive.write("format_version", 1.0);
-    if(!name().empty()){
-        archive.write("name", name());
-    }
     if(frameType_ == Base){
         archive.write("frame_type", "base");
     } else if(frameType_ == Offset){
@@ -376,11 +357,10 @@ void CoordinateFrameList::writeHeader(Mapping& archive) const
 
 void CoordinateFrameList::writeFrames(Mapping& archive) const
 {
-    if(!impl->frames.empty()){
+    int n = impl->frames.size();
+    int index = hasFirstElementAsDefaultFrame_ ? 1 : 0;
+    if(index < n){
         Listing& frameNodes = *archive.createListing("frames");
-
-        int n = impl->frames.size();
-        int index = hasFirstElementAsDefaultFrame_ ? 1 : 0;
         while(index < n){
             MappingPtr node = new Mapping;
             auto frame = impl->frames[index];

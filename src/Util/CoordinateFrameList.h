@@ -23,9 +23,6 @@ public:
     int frameType() const { return frameType_; }
     bool isForBaseFrames() const { return frameType_ == Base; }
     bool isForOffsetFrames() const { return frameType_ == Offset; }
-    
-    const std::string& name() const;
-    void setName(const std::string& name);
 
     /**
        This function set the flag to treat the first element as a special element called default frame.
