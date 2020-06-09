@@ -17,10 +17,12 @@
 #include <QPushButton>
 #include <fmt/format.h>
 #include <list>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -537,17 +539,25 @@ ViewClass* ViewManager::viewClass(const std::type_info& view_type_info)
 
 
 namespace {
-ViewInfo* findViewInfo(const std::string& moduleName, const std::string& className)
+
+ViewInfo* findViewInfo(const std::string& moduleName, const std::string& className, bool checkAlias = true)
 {
     ViewInfo* info = nullptr;
     auto p = moduleNameToClassNameToViewInfoMap.find(moduleName);
     if(p != moduleNameToClassNameToViewInfoMap.end()){
         auto& infoMap = *p->second;
         auto q = infoMap.find(className);
-        if(q == infoMap.end()){
+        if(q == infoMap.end() && checkAlias){
             auto r = classNameAliasMap.find(className);
             if(r != classNameAliasMap.end()){
-                q = infoMap.find(r->second);
+                auto& actualClass = r->second;
+                static regex re("^(.+)::(.+)$");
+                std::smatch match;
+                if(!regex_match(actualClass, match, re)){
+                    q = infoMap.find(actualClass);
+                } else {
+                    return findViewInfo(match.str(1), match.str(2), false);
+                }
             }
         }
         if(q != infoMap.end()){
@@ -556,6 +566,7 @@ ViewInfo* findViewInfo(const std::string& moduleName, const std::string& classNa
     }
     return info;
 }
+
 }
         
 
@@ -778,15 +789,18 @@ ViewManager::ViewStateInfo::~ViewStateInfo()
 
 static View* restoreView(Archive* archive, const string& moduleName, const string& className, ViewInfoToViewsMap& remainingViewsMap)
 {
+    ViewInfo* info = nullptr;
     View* view = nullptr;
     string instanceName;
                     
     if(!archive->read("name", instanceName)){
-        view = ViewManager::getOrCreateView(moduleName, className);
+        if(info = findViewInfo(moduleName, className)){
+            view = ViewManager::getOrCreateView(moduleName, className);
+        }
     } else {
         // get one of the view instances having the instance name, or create a new instance.
         // Different instances are assigned even if there are instances with the same name in the archive
-        ViewInfo* info = findViewInfo(moduleName, className);
+        info = findViewInfo(moduleName, className);
         if(info){
             vector<View*>* remainingViews;
 
@@ -815,13 +829,30 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
             if(!view){
                 if(!info->isSingleton() || info->instances.empty()){
                     view = info->createView(instanceName, true);
-                } else {
-                    MessageView::instance()->putln(
-                        MessageView::ERROR,
-                        fmt::format(
-                            _("A singleton view \"{0}\" of the {1} type cannot be created because its singleton instance has already been created."),
-                        instanceName, info->className()));
                 }
+            }
+        }
+    }
+    if(!info){
+        MessageView::instance()->putln(
+            format(_("{0} is not registered in {1}."), className, moduleName),
+            MessageView::ERROR);
+    }
+    if(!view){
+        if(info && info->isSingleton()){
+            MessageView::instance()->putln(
+                format(_("A singleton view \"{0}\" of the {1} type cannot be created "
+                         "because its singleton instance has already been created."),
+                       instanceName, info->className()),
+                MessageView::ERROR);
+        } else {
+            if(instanceName.empty()){
+                MessageView::instance()->putln(
+                    format(_("{0} cannot be restored."), className), MessageView::ERROR);
+            } else {
+                MessageView::instance()->putln(
+                    format(_("The \"{0}\" view of {1} cannot be restored."), instanceName, className),
+                    MessageView::ERROR);
             }
         }
     }
@@ -857,10 +888,9 @@ bool ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewM
                     const char* actualModuleName = PluginManager::instance()->guessActualPluginName(moduleName);
                     if(!actualModuleName){
                         MessageView::instance()->putln(
-                            MessageView::ERROR,
-                            fmt::format(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
-                            moduleName, className));
-                        
+                            format(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
+                                   moduleName, className),
+                            MessageView::ERROR);
                     } else {
                         View* view = restoreView(viewArchive, actualModuleName, className, remainingViewsMap);
                         if(view){
