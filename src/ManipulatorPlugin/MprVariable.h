@@ -18,8 +18,8 @@ public:
     typedef stdx::variant<int, double, bool, std::string> Value;
     enum TypeId { Int, Double, Bool, String };
 
-    MprVariable(TypeId type = Int);
-    MprVariable(const GeneralId& id, TypeId type = Int);
+    MprVariable();
+    MprVariable(const GeneralId& id, Value value = 0);
     MprVariable(const MprVariable& org);
     MprVariable& operator=(const MprVariable&) = delete;
 

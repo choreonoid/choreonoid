@@ -22,7 +22,7 @@ set(sources
   MprProgramViewDelegates.cpp
   MprStatementViewBase.cpp
   MprPositionListView.cpp
-  MprMultiVariableListView.cpp
+  MprVariableListView.cpp
   )
 
 set(headers
@@ -40,7 +40,7 @@ set(headers
   MprProgramViewBase.h
   MprStatementViewBase.h
   MprPositionListView.h
-  MprMultiVariableListView.h
+  MprVariableListView.h
   exportdecl.h
   )
 

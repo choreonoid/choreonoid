@@ -426,7 +426,7 @@ bool MprAssignStatement::read(MprProgram* program, const Mapping& archive)
 bool MprAssignStatement::write(Mapping& archive) const
 {
     archive.write("variable", variableExpression_);
-    archive.write("value", valueExpression_, DOUBLE_QUOTED);
+    archive.write("value", valueExpression_, SINGLE_QUOTED);
     return true;
 }
 

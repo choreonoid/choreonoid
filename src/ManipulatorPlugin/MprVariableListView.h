@@ -1,22 +1,23 @@
-#ifndef CNOID_MANIPULATOR_PLUGIN_MPR_MULTI_VARIABLE_LIST_VIEW_H
-#define CNOID_MANIPULATOR_PLUGIN_MPR_MULTI_VARIABLE_LIST_VIEW_H
+#ifndef CNOID_MANIPULATOR_PLUGIN_MPR_VARIABLE_LIST_VIEW_H
+#define CNOID_MANIPULATOR_PLUGIN_MPR_VARIABLE_LIST_VIEW_H
 
 #include <cnoid/View>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT MprMultiVariableListView : public View
+class CNOID_EXPORT MprVariableListView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
     
-    MprMultiVariableListView();
-    virtual ~MprMultiVariableListView();
+    MprVariableListView();
+    virtual ~MprVariableListView();
 
     class Impl;
 
 protected:
+    virtual void onAttachedMenuRequest(MenuManager& menuManager);    
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 

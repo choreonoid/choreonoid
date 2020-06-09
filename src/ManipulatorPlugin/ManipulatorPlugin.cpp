@@ -2,7 +2,7 @@
 #include "MprMultiVariableListItem.h"
 #include "MprControllerItemBase.h"
 #include "MprPositionListView.h"
-#include "MprMultiVariableListView.h"
+#include "MprVariableListView.h"
 #include <cnoid/Plugin>
 
 using namespace cnoid;
@@ -24,7 +24,7 @@ public:
         MprMultiVariableListItem::initializeClass(this);
 
         MprPositionListView::initializeClass(this);
-        MprMultiVariableListView::initializeClass(this);
+        MprVariableListView::initializeClass(this);
         
         return true;
     }

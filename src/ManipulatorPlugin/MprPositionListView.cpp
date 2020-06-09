@@ -528,7 +528,7 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
       targetItemPicker(self)
 {
     self->setDefaultLayoutArea(View::RIGHT);
-
+    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     auto sty = self->style();
     int hs = sty->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
 

@@ -38,16 +38,15 @@ public:
     bool isGeneralVariableValueTypeUnchangeable() const {
         return isGeneralVariableValueTypeUnchangeable_;
     }
-    bool isNumberIdEnabled() const;
-    bool isStringIdEnabled() const;
+    bool isNumberIdEnabled() const { return isNumberIdEnabled_; }
+    bool isStringIdEnabled() const { return isStringIdEnabled_; }
 
     void clear();
     int numVariables() const;
     MprVariable* variableAt(int index) const;
     int indexOf(MprVariable* variable) const;
     MprVariable* findVariable(const GeneralId& id) const;
-    MprVariable* findOrCreateVariable(
-        const GeneralId& id, const MprVariable::Value& defaultValue);
+    MprVariable::Value defaultValue() const;
 
     bool insert(int index, MprVariable* variable);
     bool append(MprVariable* variable);
@@ -82,6 +81,8 @@ private:
 
     VariableType variableType_;
     bool isGeneralVariableValueTypeUnchangeable_;
+    bool isNumberIdEnabled_;
+    bool isStringIdEnabled_;
 
     friend class MprVariable;
 };

@@ -493,8 +493,9 @@ std::function<bool(MprVariable::Value value)> MprControllerItemBase::evalExpress
         GeneralId id(std::stoi(match.str(1)));
         auto variable = impl->findVariable(id);
         if(!variable){
-            MprVariablePtr newVariable = new MprVariable(id);
-            if(impl->variableLists.front()->append(newVariable)){
+            auto list = impl->variableLists.front();
+            MprVariablePtr newVariable = new MprVariable(id, list->defaultValue());
+            if(list->append(newVariable)){
                 variable = newVariable;
             }
         }
@@ -1074,7 +1075,7 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
         char op = operators[operatorIndex++];
         if(!applyBinaryOperation(value, op, termValues[termIndex++])){
             isValidExpression = false;
-            io->os() << format(_("Type mismatch in expresion {0} {1} {2}"),
+            io->os() << format(_("Type mismatch in expresion \"{0} {1} {2}\""),
                                termStrings[termIndex-2],
                                op,
                                termStrings[termIndex-1]) << endl;

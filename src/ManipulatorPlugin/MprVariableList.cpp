@@ -20,8 +20,6 @@ public:
     std::vector<MprVariablePtr> variables;
     unordered_map<GeneralId, MprVariablePtr, GeneralId::Hash> idToVariableMap;
     int idCounter;
-    bool isNumberIdEnabled;
-    bool isStringIdEnabled;
     Signal<void(int index)> sigVariableAdded;
     Signal<void(int index, MprVariable* variable)> sigVariableRemoved;
     Signal<void(int index, int flags)> sigVariableUpdated;
@@ -29,7 +27,9 @@ public:
     Impl(MprVariableList* self);
     Impl(MprVariableList* self, const Impl& org);
     bool isIdAvailableAsNewId(const GeneralId& id);
-    bool insert(int index, MprVariable* variable);
+    bool checkType(MprVariable* variable);
+    bool insert(int index, MprVariable* variable, bool doTypeCheck);
+    bool append(MprVariable* variable, bool doTypeCheck);
 };
 
 }
@@ -44,7 +44,9 @@ MprVariableList::MprVariableList()
 
 MprVariableList::MprVariableList(VariableType variableType)
     : variableType_(variableType),
-      isGeneralVariableValueTypeUnchangeable_(false)
+      isGeneralVariableValueTypeUnchangeable_(false),
+      isNumberIdEnabled_(true),
+      isStringIdEnabled_(false)
 {
     impl = new Impl(this);
 }
@@ -54,35 +56,37 @@ MprVariableList::Impl::Impl(MprVariableList* self)
     : self(self)
 {
     idCounter = 0;
-    isNumberIdEnabled = true;
-    isStringIdEnabled = false;
 }
 
 
 MprVariableList::MprVariableList(const MprVariableList& org)
     : variableType_(org.variableType_),
-      isGeneralVariableValueTypeUnchangeable_(org.isGeneralVariableValueTypeUnchangeable_)
+      isGeneralVariableValueTypeUnchangeable_(org.isGeneralVariableValueTypeUnchangeable_),
+      isNumberIdEnabled_(org.isNumberIdEnabled_),
+      isStringIdEnabled_(org.isStringIdEnabled_)
 {
     impl = new Impl(this, *org.impl);
 
     auto& orgVariables = org.impl->variables;
     impl->variables.reserve(orgVariables.size());
     for(auto& variable : orgVariables){
-        append(new MprVariable(*variable));
+        impl->append(new MprVariable(*variable), false);
     }
 }
 
 
 MprVariableList::MprVariableList(const MprVariableList& org, CloneMap* cloneMap)
     : variableType_(org.variableType_),
-      isGeneralVariableValueTypeUnchangeable_(org.isGeneralVariableValueTypeUnchangeable_)
+      isGeneralVariableValueTypeUnchangeable_(org.isGeneralVariableValueTypeUnchangeable_),
+      isNumberIdEnabled_(org.isNumberIdEnabled_),
+      isStringIdEnabled_(org.isStringIdEnabled_)
 {
     impl = new Impl(this, *org.impl);
 
     auto& orgVariables = org.impl->variables;
     impl->variables.reserve(orgVariables.size());
     for(auto& variable : orgVariables){
-        append(cloneMap->getClone<MprVariable>(variable));
+        impl->append(cloneMap->getClone<MprVariable>(variable), false);
     }
 }
 
@@ -91,8 +95,6 @@ MprVariableList::Impl::Impl(MprVariableList* self, const Impl& org)
     : self(self)
 {
     idCounter = 0;
-    isNumberIdEnabled = org.isNumberIdEnabled;
-    isStringIdEnabled = org.isStringIdEnabled;
 }
 
 
@@ -140,7 +142,7 @@ void MprVariableList::setNumberIdEnabled(bool on)
         throw std::invalid_argument(
             "The flag to enable number IDs cannot be modified when the list has elements");
     }
-    impl->isNumberIdEnabled = on;
+    isNumberIdEnabled_ = on;
 }
     
 
@@ -150,19 +152,7 @@ void MprVariableList::setStringIdEnabled(bool on)
         throw std::invalid_argument(
             "The flag to enable string IDs cannot be modified when the list has elements");
     }
-    impl->isStringIdEnabled = on;
-}
-
-
-bool MprVariableList::isNumberIdEnabled() const
-{
-    return impl->isNumberIdEnabled;
-}
-
-
-bool MprVariableList::isStringIdEnabled() const
-{
-    return impl->isStringIdEnabled;
+    isStringIdEnabled_ = on;
 }
 
 
@@ -208,41 +198,80 @@ MprVariable* MprVariableList::findVariable(const GeneralId& id) const
 }
 
 
-MprVariable* MprVariableList::findOrCreateVariable
-(const GeneralId& id, const MprVariable::Value& defaultValue)
+MprVariable::Value MprVariableList::defaultValue() const
 {
-    auto variable = findVariable(id);
-    if(!variable){
-        MprVariablePtr variable = new MprVariable(id);
-        if(!append(variable)){
-            variable.reset();
-        }
+    switch(variableType_){
+    case GeneralVariable: return 0;
+    case IntVariable:     return 0;
+    case DoubleVariable:  return 0.0;
+    case BoolVariable:    return false;
+    case StringVariable:  return string();
+    default:
+        break;
     }
-    return variable;
+    return MprVariable::Value();
 }
 
 
 bool MprVariableList::Impl::isIdAvailableAsNewId(const GeneralId& id)
 {
     return (id.isValid() &&
-            !(!isNumberIdEnabled && id.isInt()) &&
-            !(!isStringIdEnabled && id.isString()) &&
+            !(!self->isNumberIdEnabled_ && id.isInt()) &&
+            !(!self->isStringIdEnabled_ && id.isString()) &&
             !self->findVariable(id));
+}
+
+
+bool MprVariableList::Impl::checkType(MprVariable* variable)
+{
+    bool isAcceptable = true;
+    switch(self->variableType_){
+    case IntVariable:
+        if(!variable->isInt()){
+            isAcceptable = false;
+        }
+        break;
+    case DoubleVariable:
+        if(!variable->isDouble()){
+            isAcceptable = false;
+        }
+        break;
+    case BoolVariable:
+        if(!variable->isBool()){
+            isAcceptable = false;
+        }
+        break;
+    case StringVariable:
+        if(!variable->isString()){
+            isAcceptable = false;
+        }
+        break;
+    default:
+        isAcceptable = false;
+        break;
+    }
+    return isAcceptable;
 }
 
 
 bool MprVariableList::insert(int index, MprVariable* variable)
 {
-    return impl->insert(index, variable);
+    return impl->insert(index, variable, true);
 }
 
 
-bool MprVariableList::Impl::insert(int index, MprVariable* variable)
+bool MprVariableList::Impl::insert(int index, MprVariable* variable, bool doTypeCheck)
 {
     auto& id = variable->id();
     if(variable->ownerVariableList_ || !isIdAvailableAsNewId(id)){
         return false;
     }
+    if(doTypeCheck){
+        if(!checkType(variable)){
+            return false;
+        }
+    }
+    
     variable->ownerVariableList_ = self;
     idToVariableMap[id] = variable;
     int numVariables = static_cast<int>(variables.size());
@@ -259,7 +288,13 @@ bool MprVariableList::Impl::insert(int index, MprVariable* variable)
 
 bool MprVariableList::append(MprVariable* variable)
 {
-    return insert(numVariables(), variable);
+    return impl->insert(numVariables(), variable, true);
+}
+
+
+bool MprVariableList::Impl::append(MprVariable* variable, bool doTypeCheck)
+{
+    return insert(variables.size(), variable, doTypeCheck);
 }
 
 
@@ -387,8 +422,8 @@ bool MprVariableList::read(const Mapping& archive)
     }
 
     archive.read("is_value_type_unchangeable", isGeneralVariableValueTypeUnchangeable_);
-    archive.read("is_number_id_enabled", impl->isNumberIdEnabled);
-    archive.read("is_string_id_enabled", impl->isStringIdEnabled);
+    archive.read("is_number_id_enabled", isNumberIdEnabled_);
+    archive.read("is_string_id_enabled", isStringIdEnabled_);
 
     auto& variableNodes = *archive.findListing("variables");
     if(variableNodes.isValid()){
@@ -396,7 +431,7 @@ bool MprVariableList::read(const Mapping& archive)
             auto& node = *variableNodes[i].toMapping();
             MprVariablePtr variable = new MprVariable;
             if(variable->read(node)){
-                if(!impl->isStringIdEnabled && variable->id().isString()){
+                if(!isStringIdEnabled_ && variable->id().isString()){
                     node.throwException(
                         format(_("String \"{0}\" is specified as ID, but "
                                  "the string id type is not supported in this system"),
@@ -431,10 +466,10 @@ bool MprVariableList::write(Mapping& archive) const
     if(variableType_ == GeneralVariable && isGeneralVariableValueTypeUnchangeable_){
         archive.write("is_value_type_unchangeable", true);
     }
-    if(impl->isNumberIdEnabled){
+    if(isNumberIdEnabled_){
         archive.write("is_number_id_enabled", true);
     }
-    if(impl->isStringIdEnabled){
+    if(isStringIdEnabled_){
         archive.write("is_string_id_enabled", true);
     }
 

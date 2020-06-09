@@ -1,5 +1,6 @@
-#include "MprMultiVariableListView.h"
+#include "MprVariableListView.h"
 #include "MprMultiVariableListItem.h"
+#include "MprControllerItemBase.h"
 #include <cnoid/MprVariableList>
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
@@ -7,6 +8,7 @@
 #include <cnoid/TargetItemPicker>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Buttons>
+#include <cnoid/ButtonGroup>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QTableView>
@@ -51,7 +53,6 @@ public:
     virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
     virtual QVariant data(const QModelIndex& index, int role) const override;
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
-    void addVariable(int row, MprVariable* variable, bool doInsert);
     void removeVariables(QModelIndexList selected);
     void onVariableAdded(int variableIndex);
     void onVariableRemoved(int variableIndex);
@@ -61,9 +62,9 @@ public:
 class CustomizedItemDelegate : public QStyledItemDelegate
 {
 public:
-    MprMultiVariableListView::Impl* view;
+    MprVariableListView::Impl* view;
     
-    CustomizedItemDelegate(MprMultiVariableListView::Impl* view);
+    CustomizedItemDelegate(MprVariableListView::Impl* view);
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     QWidget* createVariableValueEditor(MprVariable* variable, QWidget* parent) const;
@@ -119,26 +120,30 @@ public:
 
 namespace cnoid {
 
-class MprMultiVariableListView::Impl : public QTableView
+class MprVariableListView::Impl : public QTableView
 {
 public:
-    MprMultiVariableListView* self;
+    MprVariableListView* self;
     TargetItemPicker<MprMultiVariableListItem> targetItemPicker;
-    MprMultiVariableListItemPtr targetItem;
-    MprVariableListPtr variableList;
+    MprMultiVariableListItemPtr targetMultiVariableListItem;
+    MprVariableListPtr currentVariableList;
+    int lastVariableListIndex;
     VariableListModel* variableListModel;
+    int hSpacing;
     QLabel targetLabel;
+    QHBoxLayout listTypeBox;
+    ButtonGroup listTypeGroup;
+    vector<RadioButton*> listTypeRadios;
     PushButton addButton;
-    ToolButton optionMenuButton;
-    MenuManager optionMenuManager;
     MenuManager contextMenuManager;
 
-    Impl(MprMultiVariableListView* self);
-    void setMultiVariableListItem(MprMultiVariableListItem* item);
+    Impl(MprVariableListView* self);
+    void setTargetMultiVariableListItem(MprMultiVariableListItem* item);
+    void updateTypeSelectionRadioButtons();
+    void setCurrentVariableList(int listIndex);
     void addVariableIntoCurrentIndex(bool doInsert);
     void addVariable(int row, bool doInsert);
     void removeSelectedVariables();
-    void onOptionMenuClicked();
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(int row, QPoint globalPos);
@@ -230,7 +235,17 @@ QVariant VariableListModel::headerData(int section, Qt::Orientation orientation,
         if(orientation == Qt::Horizontal){
             switch(section){
             case IdColumn:
+                if(variableList){
+                    if(variableList->isNumberIdEnabled()){
+                        if(!variableList->isStringIdEnabled()){
+                            return _("No.");
+                        }
+                    } else {
+                        return _("Name");
+                    }
+                }
                 return _("ID");
+                break;
             case ValueTypeColumn:
                 return _("Type");
             case ValueColumn:
@@ -303,12 +318,16 @@ QVariant VariableListModel::data(const QModelIndex& index, int role) const
 
         } else if(column == ValueColumn){
             switch(variable->valueType()){
+            case MprVariable::Int:
+                return variable->intValue();
             case MprVariable::Double:
                 return QString("%1").arg(variable->doubleValue(), 0, 'g');
             case MprVariable::Bool:
                 return variable->boolValue() ? _("True") : _("False");
+            case MprVariable::String:
+                return variable->stringValue().c_str();
             default:
-                return variable->toString().c_str();
+                break;
             }
 
         } else if(column == NoteColumn){
@@ -354,14 +373,14 @@ bool VariableListModel::setData(const QModelIndex& index, const QVariant& value,
 
         } else if(column == ValueColumn){
             switch(variable->valueType()){
-            case MprVariable::Bool:
-                variable->setValue(value.toBool());
-                break;
             case MprVariable::Int:
                 variable->setValue(value.toInt());
                 break;
             case MprVariable::Double:
                 variable->setValue(value.toDouble());
+                break;
+            case MprVariable::Bool:
+                variable->setValue(value.toBool());
                 break;
             case MprVariable::String:
                 variable->setValue(value.toString().toStdString());
@@ -377,15 +396,6 @@ bool VariableListModel::setData(const QModelIndex& index, const QVariant& value,
         }
     }
     return false;
-}
-
-
-void VariableListModel::addVariable(int row, MprVariable* variable, bool doInsert)
-{
-    if(variableList){
-        int newVariableIndex = doInsert ? row : row + 1;
-        variableList->insert(newVariableIndex, variable);
-    }
 }
 
 
@@ -445,7 +455,7 @@ void VariableListModel::onVariableUpdated(int variableIndex, int flags)
 }
         
 
-CustomizedItemDelegate::CustomizedItemDelegate(MprMultiVariableListView::Impl* view)
+CustomizedItemDelegate::CustomizedItemDelegate(MprVariableListView::Impl* view)
     : QStyledItemDelegate(view),
       view(view)
 {
@@ -466,7 +476,7 @@ QWidget* CustomizedItemDelegate::createEditor
     {
         auto& id = variable->id();
         if(id.isInt()){
-            auto spin = new IdSpinBox(view->variableList->isStringIdEnabled(), parent);
+            auto spin = new IdSpinBox(view->currentVariableList->isStringIdEnabled(), parent);
             spin->setFrame(false);
             spin->setRange(0, 9999);
             spin->setValue(id.toInt());
@@ -573,49 +583,48 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
 }
 
 
-void MprMultiVariableListView::initializeClass(ExtensionManager* ext)
+void MprVariableListView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<MprMultiVariableListView>(
-        "MprMultiVariableListView", N_("Variables"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<MprVariableListView>(
+        "MprVariableListView", N_("Variables"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
-MprMultiVariableListView::MprMultiVariableListView()
+MprVariableListView::MprVariableListView()
 {
     impl = new Impl(this);
 }
 
 
-MprMultiVariableListView::Impl::Impl(MprMultiVariableListView* self)
+MprVariableListView::Impl::Impl(MprVariableListView* self)
     : self(self),
       targetItemPicker(self)
 {
     self->setDefaultLayoutArea(View::BOTTOM);
+    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    hSpacing = self->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
 
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);
 
-    int hs = self->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
-    
     auto hbox = new QHBoxLayout;
     hbox->setSpacing(0);
-    hbox->addSpacing(hs);
+    hbox->addSpacing(hSpacing );
     targetLabel.setStyleSheet("font-weight: bold");
     hbox->addWidget(&targetLabel, 0, Qt::AlignVCenter);
-    hbox->addSpacing(hs);
+    hbox->addSpacing(hSpacing * 2);
+
+    hbox->addLayout(&listTypeBox);
+    listTypeGroup.sigButtonToggled().connect(
+        [&](int id, bool checked){
+            if(checked){ setCurrentVariableList(id); }
+        });
+    hbox->addSpacing(hSpacing);
+    hbox->addStretch();
+    
     addButton.setText(_("Add"));
     addButton.sigClicked().connect([&](){ addVariableIntoCurrentIndex(false); });
     hbox->addWidget(&addButton);
-    hbox->addStretch();
-
-    optionMenuManager.setNewPopupMenu(this);
-    optionMenuManager.addItem(_("refresh"))
-        ->sigTriggered().connect([&](){ variableListModel->refresh(); });
-    
-    optionMenuButton.setText(_("*"));
-    optionMenuButton.sigClicked().connect([&](){ onOptionMenuClicked(); });
-    hbox->addWidget(&optionMenuButton);
-
     vbox->addLayout(hbox);
     
     // Setup the table
@@ -652,35 +661,127 @@ MprMultiVariableListView::Impl::Impl(MprMultiVariableListView* self)
     self->setLayout(vbox);
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](MprMultiVariableListItem* item){ setMultiVariableListItem(item); });
+        [&](MprMultiVariableListItem* item){ setTargetMultiVariableListItem(item); });
+
+    lastVariableListIndex = 0;
 }
 
 
-MprMultiVariableListView::~MprMultiVariableListView()
+MprVariableListView::~MprVariableListView()
 {
     delete impl;
 }
 
 
-void MprMultiVariableListView::Impl::setMultiVariableListItem(MprMultiVariableListItem* item)
+void MprVariableListView::onAttachedMenuRequest(MenuManager& menuManager)
 {
-    targetItem = item;
-    variableList.reset();
-    
+    menuManager.addItem(_("Refresh"))->sigTriggered().connect(
+        [&](){ impl->variableListModel->refresh(); });
+}
+
+
+void MprVariableListView::Impl::setTargetMultiVariableListItem(MprMultiVariableListItem* item)
+{
+    targetMultiVariableListItem = item;
+    currentVariableList.reset();
+
     if(item){
-        targetLabel.setText(item->displayName().c_str());
-        if(item->numVariableLists() > 0){
-            variableList = item->variableListAt(0);
+        if(auto controller = item->findOwnerItem<MprControllerItemBase>()){
+            targetLabel.setText(
+                format("{0} - {1}", controller->displayName(), item->displayName()).c_str());
+        } else {
+            targetLabel.setText(item->displayName().c_str());
         }
     } else {
         targetLabel.setText("---");
     }
-    variableListModel->setVariableList(variableList);
-    addButton.setEnabled(targetItem != nullptr);
+
+    updateTypeSelectionRadioButtons();
+    setCurrentVariableList(lastVariableListIndex);
+    
+    addButton.setEnabled(currentVariableList != nullptr);
 }
 
 
-void MprMultiVariableListView::Impl::addVariableIntoCurrentIndex(bool doInsert)
+void MprVariableListView::Impl::updateTypeSelectionRadioButtons()
+{
+    while(listTypeBox.count()){
+        listTypeBox.takeAt(0);
+    }
+    for(auto& radio : listTypeRadios){
+        listTypeGroup.removeButton(radio);
+        delete radio;
+    }
+    listTypeRadios.clear();
+
+    auto& target = targetMultiVariableListItem;
+    if(!target){
+        return;
+    }
+    int n = target->numVariableLists();
+    for(int i=0; i < n; ++i){
+        if(auto list = target->variableListAt(i)){
+            QString caption;
+            switch(list->variableType()){
+            case MprVariableList::GeneralVariable:
+                caption = _("General");
+                break;
+            case MprVariableList::IntVariable:
+                caption = _("Integer");
+                break;
+            case MprVariableList::DoubleVariable:
+                caption = _("Real");
+                break;
+            case MprVariableList::BoolVariable:
+                caption = _("Boolean");
+                break;
+            case MprVariableList::StringVariable:
+                caption = _("String");
+                break;
+            default:
+                continue;
+            }
+            auto radio = new RadioButton(caption);
+            listTypeGroup.addButton(radio, i);
+            listTypeBox.addWidget(radio);
+            listTypeBox.addSpacing(hSpacing / 2);
+            listTypeRadios.push_back(radio);
+        }
+    }
+}
+
+
+void MprVariableListView::Impl::setCurrentVariableList(int listIndex)
+{
+    currentVariableList.reset();
+    
+    auto& target = targetMultiVariableListItem;
+    bool hideValueTypeColumn = true;
+
+    if(target && target->numVariableLists() > 0){
+        int n = target->numVariableLists();
+        if(listIndex >= n){
+            listIndex = n - 1;
+        }
+        currentVariableList = target->variableListAt(listIndex);
+        lastVariableListIndex = listIndex;
+
+        if(currentVariableList->variableType() == MprVariableList::GeneralVariable){
+            hideValueTypeColumn = false;
+        }
+        if(auto button = listTypeGroup.button(listIndex)){
+            listTypeGroup.blockSignals(true);
+            button->setChecked(true);
+            listTypeGroup.blockSignals(false);
+        }
+    }
+
+    setColumnHidden(ValueTypeColumn, hideValueTypeColumn);
+    variableListModel->setVariableList(currentVariableList);
+}
+
+
+void MprVariableListView::Impl::addVariableIntoCurrentIndex(bool doInsert)
 {
     auto current = selectionModel()->currentIndex();
     int row = current.isValid() ? current.row() : variableListModel->numVariables();
@@ -688,32 +789,26 @@ void MprMultiVariableListView::Impl::addVariableIntoCurrentIndex(bool doInsert)
 }
 
 
-void MprMultiVariableListView::Impl::addVariable(int row, bool doInsert)
+void MprVariableListView::Impl::addVariable(int row, bool doInsert)
 {
-    if(variableList){
-        auto id = variableList->createNextId();
-        MprVariablePtr variable = new MprVariable(id);
-        variable->setValue(0);
-        variableListModel->addVariable(row, variable, doInsert);
+    if(currentVariableList){
+        auto id = currentVariableList->createNextId();
+        MprVariablePtr variable = new MprVariable(id, currentVariableList->defaultValue());
+        int newVariableIndex = doInsert ? row : row + 1;
+        currentVariableList->insert(newVariableIndex, variable);
         resizeColumnToContents(IdColumn);
         //resizeColumnToContents(ValueColumn);
     }
 }
 
 
-void MprMultiVariableListView::Impl::removeSelectedVariables()
+void MprVariableListView::Impl::removeSelectedVariables()
 {
     variableListModel->removeVariables(selectionModel()->selectedRows());
 }
 
 
-void MprMultiVariableListView::Impl::onOptionMenuClicked()
-{
-    optionMenuManager.popupMenu()->popup(optionMenuButton.mapToGlobal(QPoint(0,0)));
-}
-
-
-void MprMultiVariableListView::Impl::keyPressEvent(QKeyEvent* event)
+void MprVariableListView::Impl::keyPressEvent(QKeyEvent* event)
 {
     bool processed = true;
 
@@ -750,7 +845,7 @@ void MprMultiVariableListView::Impl::keyPressEvent(QKeyEvent* event)
 }
 
        
-void MprMultiVariableListView::Impl::mousePressEvent(QMouseEvent* event)
+void MprVariableListView::Impl::mousePressEvent(QMouseEvent* event)
 {
     QTableView::mousePressEvent(event);
 
@@ -763,7 +858,7 @@ void MprMultiVariableListView::Impl::mousePressEvent(QMouseEvent* event)
 }
 
 
-void MprMultiVariableListView::Impl::showContextMenu(int row, QPoint globalPos)
+void MprVariableListView::Impl::showContextMenu(int row, QPoint globalPos)
 {
     contextMenuManager.setNewPopupMenu(this);
 
@@ -779,15 +874,17 @@ void MprMultiVariableListView::Impl::showContextMenu(int row, QPoint globalPos)
 }
 
 
-bool MprMultiVariableListView::storeState(Archive& archive)
+bool MprVariableListView::storeState(Archive& archive)
 {
     impl->targetItemPicker.storeTargetItem(archive, "current_item");
+    archive.write("variable_list_index", impl->lastVariableListIndex);
     return true;
 }
 
 
-bool MprMultiVariableListView::restoreState(const Archive& archive)
+bool MprVariableListView::restoreState(const Archive& archive)
 {
     impl->targetItemPicker.restoreTargetItemLater(archive, "current_item");
+    archive.read("variable_list_index", impl->lastVariableListIndex);
     return true;
 }

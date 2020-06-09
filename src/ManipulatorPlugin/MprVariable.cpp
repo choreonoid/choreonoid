@@ -7,32 +7,18 @@ using namespace std;
 using namespace cnoid;
 
 
-MprVariable::MprVariable(TypeId type)
-    : MprVariable(0, type)
+MprVariable::MprVariable()
+    : MprVariable(0, 0)
 {
 
 }
 
 
-MprVariable::MprVariable(const GeneralId& id, TypeId valueType)
-    : id_(id)
+MprVariable::MprVariable(const GeneralId& id, Value value)
+    : id_(id),
+      value_(value)
 {
-    switch(valueType){
-    case Int:
-        value_ = 0;
-        break;
-    case Double:
-        value_ = 0.0;
-        break;
-    case Bool:
-        value_ = false;
-        break;
-    case String:
-        value_ = string();
-        break;
-    default:
-        break;
-    }
+
 }
 
 
@@ -65,8 +51,13 @@ MprVariableList* MprVariable::ownerVariableList() const
 template<class ValueType>
 bool MprVariable::setScalarValue(ValueType value)
 {
-    if(auto list = ownerVariableList()){
+    auto list = ownerVariableList();
 
+    if(!list){
+        value_ = value;
+        return true;
+
+    } else {
         switch(list->variableType()){
 
         case MprVariableList::GeneralVariable:
@@ -76,7 +67,7 @@ bool MprVariable::setScalarValue(ValueType value)
             } else {
                 switch(valueType()){
                 case Int:
-                    value_ = value;
+                    value_ = static_cast<int>(value);
                     return true;
                 case Double:
                     value_ = static_cast<double>(value);
@@ -91,7 +82,7 @@ bool MprVariable::setScalarValue(ValueType value)
             return false;
 
         case MprVariableList::IntVariable:
-            value_ = value;
+            value_ = static_cast<int>(value);
             return true;
 
         case MprVariableList::DoubleVariable:
@@ -106,8 +97,8 @@ bool MprVariable::setScalarValue(ValueType value)
             return false;
         }
     }
-    value_ = value;
-    return true;
+
+    return false;
 }
 
 
@@ -131,8 +122,13 @@ bool MprVariable::setValue(bool value)
 
 bool MprVariable::setValue(const std::string& value)
 {
-    if(auto list = ownerVariableList()){
+    auto list = ownerVariableList();
 
+    if(!list){
+        value_ = value;
+        return true;
+
+    } else {
         switch(list->variableType()){
 
         case MprVariableList::GeneralVariable:
@@ -159,20 +155,21 @@ bool MprVariable::setValue(const std::string& value)
 
         case MprVariableList::StringVariable:
             value_ = value;
-            return false;
+            return true;
         }
     }
-    value_ = value;
-    return true;
+
+    return false;
 }
 
 
 bool MprVariable::setValue(const Value& value)
 {
     switch(valueType(value)){
-    case Int:     return setValue(intValue(value));
-    case Double:  return setValue(doubleValue(value));
-    case String:  return setValue(stringValue(value));
+    case Int:    return setValue(intValue(value));
+    case Double: return setValue(doubleValue(value));
+    case Bool:   return setValue(boolValue(value));
+    case String: return setValue(stringValue(value));
     default:
         break;
     }
