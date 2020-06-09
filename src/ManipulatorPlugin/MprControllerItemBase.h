@@ -80,8 +80,9 @@ protected:
     virtual bool onStart();
     virtual bool onStop();
 
-    // Virtual functions for evaluatiing variables
-    virtual bool initializeVariableMappings();
+    // Virtual functions for customizing variables
+    virtual bool initializeVariables();
+    void setVariableListSync(MprVariableList* listInGui, MprVariableList* listInController);
     virtual stdx::optional<MprVariable::Value> evalExpressionAsVariableValue(
         std::string::const_iterator& io_expressionBegin, std::string::const_iterator expressionEnd);
     virtual std::function<bool(MprVariable::Value value)> evalExpressionAsVariableToAssginValue(

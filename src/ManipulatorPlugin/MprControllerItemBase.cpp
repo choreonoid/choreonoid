@@ -2,7 +2,7 @@
 #include "MprProgramItemBase.h"
 #include "MprBasicStatements.h"
 #include "MprVariableList.h"
-#include "MprVariableListItemBase.h"
+#include "MprMultiVariableListItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/DigitalIoDevice>
@@ -132,7 +132,7 @@ public:
     bool initializeDefaultVariableMappings();
     void extractProgramLocalVariables(Item* item, vector<MprVariableListPtr>& variableLists);
     void extractControllerGlobalVariables(Item* item, vector<MprVariableListPtr>& variableLists);
-    void addVariableList(vector<MprVariableListPtr>& variableLists, MprVariableListItemBase* listItem);
+    void addVariableList(vector<MprVariableListPtr>& variableLists, MprMultiVariableListItem* listItem);
     void notifyGuiOfVariableUpdate(
         MprVariableList* listInController, MprVariableList* listInGui, int variableIndex);
     void updateVariableListInGui(MprVariableList* listInGui, MprVariable* variableForNotification);
@@ -310,7 +310,7 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
         }
     }
     
-    if(!self->initializeVariableMappings()){
+    if(!self->initializeVariables()){
         mv->putln(format(_("Variables for {} cannot be initialized."), self->displayName()),
                   MessageView::ERROR);
         return false;
@@ -353,7 +353,7 @@ bool MprControllerItemBase::Impl::createKinematicsKitForControl()
 }
 
 
-bool MprControllerItemBase::initializeVariableMappings()
+bool MprControllerItemBase::initializeVariables()
 {
     return impl->initializeDefaultVariableMappings();
 }
@@ -378,8 +378,8 @@ void MprControllerItemBase::Impl::extractProgramLocalVariables
 (Item* item, vector<MprVariableListPtr>& variableLists)
 {
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        if(auto variableListItem = dynamic_cast<MprVariableListItemBase*>(child)){
-            addVariableList(variableLists, variableListItem);
+        if(auto listItem = dynamic_cast<MprMultiVariableListItem*>(child)){
+            addVariableList(variableLists, listItem);
         }
         extractProgramLocalVariables(child, variableLists);
     }
@@ -393,8 +393,8 @@ void MprControllerItemBase::Impl::extractControllerGlobalVariables
         if(auto programItem = dynamic_cast<MprProgramItemBase*>(child)){
             continue;
         }
-        if(auto variableListItem = dynamic_cast<MprVariableListItemBase*>(child)){
-            addVariableList(variableLists, variableListItem);
+        if(auto listItem = dynamic_cast<MprMultiVariableListItem*>(child)){
+            addVariableList(variableLists, listItem);
         }
         extractControllerGlobalVariables(child, variableLists);
     }
@@ -402,23 +402,30 @@ void MprControllerItemBase::Impl::extractControllerGlobalVariables
 
 
 void MprControllerItemBase::Impl::addVariableList
-(vector<MprVariableListPtr>& variableLists, MprVariableListItemBase* listItem)
+(vector<MprVariableListPtr>& variableLists, MprMultiVariableListItem* listItem)
 {
-    MprVariableListPtr listInGui = listItem->variableList();
-    auto listInController = listInGui->clone();
+    MprVariableListPtr listInGui = listItem->findVariableList(MprVariableList::GeneralVariable);
+    if(listInGui){
+        auto listInController = listInGui->clone();
+        self->setVariableListSync(listInGui, listInController);
+        variableLists.push_back(listInController);
+    }
+}
 
+
+void MprControllerItemBase::setVariableListSync
+(MprVariableList* listInGui, MprVariableList* listInController)
+{
     listInController->sigVariableAdded().connect(
         [this, listInController, listInGui](int index){
-            notifyGuiOfVariableUpdate(listInController, listInGui, index); });
+            impl->notifyGuiOfVariableUpdate(listInController, listInGui, index); });
 
     listInController->sigVariableUpdated().connect(
         [this, listInController, listInGui](int index, int flags){
             if(flags & MprVariable::ValueUpdate){
-                notifyGuiOfVariableUpdate(listInController, listInGui, index);
+                impl->notifyGuiOfVariableUpdate(listInController, listInGui, index);
             }
         });
-
-    variableLists.push_back(listInController);
 }
 
 
@@ -473,7 +480,6 @@ stdx::optional<MprVariable::Value> MprControllerItemBase::evalExpressionAsVariab
             return variable->value();
         }
         impl->io->os() << format(_("Variable {0} is not defined."), id.label()) << endl;
-        return MprVariable::Value(); // InvalidValue
     }
     return stdx::nullopt;
 }
@@ -485,7 +491,14 @@ std::function<bool(MprVariable::Value value)> MprControllerItemBase::evalExpress
     std::smatch match;
     if(regex_search(expression, match, impl->variablePattern)){
         GeneralId id(std::stoi(match.str(1)));
-        if(auto variable = impl->findVariable(id)){
+        auto variable = impl->findVariable(id);
+        if(!variable){
+            MprVariablePtr newVariable = new MprVariable(id);
+            if(impl->variableLists.front()->append(newVariable)){
+                variable = newVariable;
+            }
+        }
+        if(variable){
             return
                 [this, variable](MprVariable::Value value){
                     if(variable->setValue(value)){
@@ -662,11 +675,13 @@ bool MprControllerItemBase::Impl::control()
             continue;
         }
         auto& interpret = p->second;
-        isControlActive = interpret(statement);
-
-        if(!isControlActive){
+        if(!interpret(statement)){
+            isControlActive = false;
+            io->os() << format(_("Failed to execute {0} statement. The control was terminated."),
+                               statement->label(0)) << endl;
             break;
         }
+        isControlActive = true;
     }
 
     if(isLogEnabled && stateChanged){
@@ -993,12 +1008,6 @@ stdx::optional<string> MprControllerItemBase::Impl::getComparisonOperator
 
 bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* statement)
 {
-    auto assignValueToVariable =
-        self->evalExpressionAsVariableToAssginValue(statement->variableExpression());
-    if(!assignValueToVariable){
-        return false;
-    }
-        
     auto& expression = statement->valueExpression();
     if(expression.empty()){
         io->os() << format(_("Expression assigned to variable {0} is empty."),
@@ -1072,15 +1081,18 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
             break;
         }
     }
+    
+    bool assigned = false;
     if(isValidExpression){
-        if(!assignValueToVariable(value)){
-            return false;
+        auto assignValue =
+            self->evalExpressionAsVariableToAssginValue(statement->variableExpression());
+        if(assignValue && assignValue(value)){
+            assigned = true;
+            ++iterator;
         }
     }
 
-    ++iterator;
-
-    return true;
+    return assigned;
 }
 
 

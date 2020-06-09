@@ -1,5 +1,5 @@
-#include "MprVariableListViewBase.h"
-#include "MprVariableListItemBase.h"
+#include "MprMultiVariableListView.h"
+#include "MprMultiVariableListItem.h"
 #include <cnoid/MprVariableList>
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
@@ -61,9 +61,9 @@ public:
 class CustomizedItemDelegate : public QStyledItemDelegate
 {
 public:
-    MprVariableListViewBase::Impl* view;
+    MprMultiVariableListView::Impl* view;
     
-    CustomizedItemDelegate(MprVariableListViewBase::Impl* view);
+    CustomizedItemDelegate(MprMultiVariableListView::Impl* view);
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     QWidget* createVariableValueEditor(MprVariable* variable, QWidget* parent) const;
@@ -119,12 +119,12 @@ public:
 
 namespace cnoid {
 
-class MprVariableListViewBase::Impl : public QTableView
+class MprMultiVariableListView::Impl : public QTableView
 {
 public:
-    MprVariableListViewBase* self;
-    TargetItemPicker<MprVariableListItemBase> targetItemPicker;
-    MprVariableListItemBasePtr targetItem;
+    MprMultiVariableListView* self;
+    TargetItemPicker<MprMultiVariableListItem> targetItemPicker;
+    MprMultiVariableListItemPtr targetItem;
     MprVariableListPtr variableList;
     VariableListModel* variableListModel;
     QLabel targetLabel;
@@ -133,8 +133,8 @@ public:
     MenuManager optionMenuManager;
     MenuManager contextMenuManager;
 
-    Impl(MprVariableListViewBase* self);
-    void setVariableListItem(MprVariableListItemBase* item);
+    Impl(MprMultiVariableListView* self);
+    void setMultiVariableListItem(MprMultiVariableListItem* item);
     void addVariableIntoCurrentIndex(bool doInsert);
     void addVariable(int row, bool doInsert);
     void removeSelectedVariables();
@@ -348,7 +348,7 @@ bool VariableListModel::setData(const QModelIndex& index, const QVariant& value,
             }
 
         } else if(column == ValueTypeColumn){
-            if(variable->changeValueType(value.toInt())){
+            if(variable->changeValueType(MprVariable::TypeId(value.toInt()))){
                 Q_EMIT dataChanged(index, index, {role});
             }
 
@@ -445,7 +445,7 @@ void VariableListModel::onVariableUpdated(int variableIndex, int flags)
 }
         
 
-CustomizedItemDelegate::CustomizedItemDelegate(MprVariableListViewBase::Impl* view)
+CustomizedItemDelegate::CustomizedItemDelegate(MprMultiVariableListView::Impl* view)
     : QStyledItemDelegate(view),
       view(view)
 {
@@ -573,13 +573,20 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
 }
 
 
-MprVariableListViewBase::MprVariableListViewBase()
+void MprMultiVariableListView::initializeClass(ExtensionManager* ext)
+{
+    ext->viewManager().registerClass<MprMultiVariableListView>(
+        "MprMultiVariableListView", N_("Variables"), ViewManager::SINGLE_OPTIONAL);
+}
+
+
+MprMultiVariableListView::MprMultiVariableListView()
 {
     impl = new Impl(this);
 }
 
 
-MprVariableListViewBase::Impl::Impl(MprVariableListViewBase* self)
+MprMultiVariableListView::Impl::Impl(MprMultiVariableListView* self)
     : self(self),
       targetItemPicker(self)
 {
@@ -645,32 +652,35 @@ MprVariableListViewBase::Impl::Impl(MprVariableListViewBase* self)
     self->setLayout(vbox);
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](MprVariableListItemBase* item){ setVariableListItem(item); });
+        [&](MprMultiVariableListItem* item){ setMultiVariableListItem(item); });
 }
 
 
-MprVariableListViewBase::~MprVariableListViewBase()
+MprMultiVariableListView::~MprMultiVariableListView()
 {
     delete impl;
 }
 
 
-void MprVariableListViewBase::Impl::setVariableListItem(MprVariableListItemBase* item)
+void MprMultiVariableListView::Impl::setMultiVariableListItem(MprMultiVariableListItem* item)
 {
     targetItem = item;
+    variableList.reset();
+    
     if(item){
         targetLabel.setText(item->displayName().c_str());
-        variableList = item->variableList();
+        if(item->numVariableLists() > 0){
+            variableList = item->variableListAt(0);
+        }
     } else {
         targetLabel.setText("---");
-        variableList = nullptr;
     }
     variableListModel->setVariableList(variableList);
     addButton.setEnabled(targetItem != nullptr);
 }
 
 
-void MprVariableListViewBase::Impl::addVariableIntoCurrentIndex(bool doInsert)
+void MprMultiVariableListView::Impl::addVariableIntoCurrentIndex(bool doInsert)
 {
     auto current = selectionModel()->currentIndex();
     int row = current.isValid() ? current.row() : variableListModel->numVariables();
@@ -678,7 +688,7 @@ void MprVariableListViewBase::Impl::addVariableIntoCurrentIndex(bool doInsert)
 }
 
 
-void MprVariableListViewBase::Impl::addVariable(int row, bool doInsert)
+void MprMultiVariableListView::Impl::addVariable(int row, bool doInsert)
 {
     if(variableList){
         auto id = variableList->createNextId();
@@ -691,19 +701,19 @@ void MprVariableListViewBase::Impl::addVariable(int row, bool doInsert)
 }
 
 
-void MprVariableListViewBase::Impl::removeSelectedVariables()
+void MprMultiVariableListView::Impl::removeSelectedVariables()
 {
     variableListModel->removeVariables(selectionModel()->selectedRows());
 }
 
 
-void MprVariableListViewBase::Impl::onOptionMenuClicked()
+void MprMultiVariableListView::Impl::onOptionMenuClicked()
 {
     optionMenuManager.popupMenu()->popup(optionMenuButton.mapToGlobal(QPoint(0,0)));
 }
 
 
-void MprVariableListViewBase::Impl::keyPressEvent(QKeyEvent* event)
+void MprMultiVariableListView::Impl::keyPressEvent(QKeyEvent* event)
 {
     bool processed = true;
 
@@ -740,7 +750,7 @@ void MprVariableListViewBase::Impl::keyPressEvent(QKeyEvent* event)
 }
 
        
-void MprVariableListViewBase::Impl::mousePressEvent(QMouseEvent* event)
+void MprMultiVariableListView::Impl::mousePressEvent(QMouseEvent* event)
 {
     QTableView::mousePressEvent(event);
 
@@ -753,7 +763,7 @@ void MprVariableListViewBase::Impl::mousePressEvent(QMouseEvent* event)
 }
 
 
-void MprVariableListViewBase::Impl::showContextMenu(int row, QPoint globalPos)
+void MprMultiVariableListView::Impl::showContextMenu(int row, QPoint globalPos)
 {
     contextMenuManager.setNewPopupMenu(this);
 
@@ -769,14 +779,14 @@ void MprVariableListViewBase::Impl::showContextMenu(int row, QPoint globalPos)
 }
 
 
-bool MprVariableListViewBase::storeState(Archive& archive)
+bool MprMultiVariableListView::storeState(Archive& archive)
 {
     impl->targetItemPicker.storeTargetItem(archive, "current_item");
     return true;
 }
 
 
-bool MprVariableListViewBase::restoreState(const Archive& archive)
+bool MprMultiVariableListView::restoreState(const Archive& archive)
 {
     impl->targetItemPicker.restoreTargetItemLater(archive, "current_item");
     return true;

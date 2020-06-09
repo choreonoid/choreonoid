@@ -17,12 +17,12 @@ set(sources
   MprVariableList.cpp
   MprProgramItemBase.cpp
   MprControllerItemBase.cpp
-  MprVariableListItemBase.cpp
+  MprMultiVariableListItem.cpp
   MprProgramViewBase.cpp
   MprProgramViewDelegates.cpp
   MprStatementViewBase.cpp
   MprPositionListView.cpp
-  MprVariableListViewBase.cpp
+  MprMultiVariableListView.cpp
   )
 
 set(headers
@@ -36,11 +36,11 @@ set(headers
   MprVariableList.h
   MprProgramItemBase.h
   MprControllerItemBase.h
-  MprVariableListItemBase.h
+  MprMultiVariableListItem.h
   MprProgramViewBase.h
   MprStatementViewBase.h
   MprPositionListView.h
-  MprVariableListViewBase.h
+  MprMultiVariableListView.h
   exportdecl.h
   )
 

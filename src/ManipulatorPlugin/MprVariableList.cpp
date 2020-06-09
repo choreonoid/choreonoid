@@ -36,10 +36,16 @@ public:
 
 
 MprVariableList::MprVariableList()
+    : MprVariableList(GeneralVariable)
 {
-    variableType_ = GeneralVariable;
-    isGeneralVariableValueTypeUnchangeable_ = false;
-    
+    impl = new Impl(this);
+}
+
+
+MprVariableList::MprVariableList(VariableType variableType)
+    : variableType_(variableType),
+      isGeneralVariableValueTypeUnchangeable_(false)
+{
     impl = new Impl(this);
 }
 

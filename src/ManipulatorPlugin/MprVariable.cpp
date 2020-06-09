@@ -7,16 +7,32 @@ using namespace std;
 using namespace cnoid;
 
 
-MprVariable::MprVariable()
+MprVariable::MprVariable(TypeId type)
+    : MprVariable(0, type)
 {
 
 }
 
 
-MprVariable::MprVariable(const GeneralId& id)
+MprVariable::MprVariable(const GeneralId& id, TypeId valueType)
     : id_(id)
 {
-
+    switch(valueType){
+    case Int:
+        value_ = 0;
+        break;
+    case Double:
+        value_ = 0.0;
+        break;
+    case Bool:
+        value_ = false;
+        break;
+    case String:
+        value_ = string();
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -154,7 +170,6 @@ bool MprVariable::setValue(const std::string& value)
 bool MprVariable::setValue(const Value& value)
 {
     switch(valueType(value)){
-    case Invalid: return false;
     case Int:     return setValue(intValue(value));
     case Double:  return setValue(doubleValue(value));
     case String:  return setValue(stringValue(value));
@@ -213,7 +228,7 @@ static void changeValueToBool(MprVariable::Value& value)
 }
 
 
-bool MprVariable::changeValueType(int typeId)
+bool MprVariable::changeValueType(TypeId typeId)
 {
     int prevTypeId = valueType();
     if(typeId == prevTypeId){

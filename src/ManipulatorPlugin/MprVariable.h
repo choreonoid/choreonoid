@@ -15,15 +15,13 @@ class MprVariableList;
 class CNOID_EXPORT MprVariable : public Referenced
 {
 public:
-    MprVariable();
-    MprVariable(const GeneralId& id);
+    typedef stdx::variant<int, double, bool, std::string> Value;
+    enum TypeId { Int, Double, Bool, String };
+
+    MprVariable(TypeId type = Int);
+    MprVariable(const GeneralId& id, TypeId type = Int);
     MprVariable(const MprVariable& org);
-
     MprVariable& operator=(const MprVariable&) = delete;
-
-    struct InvalidValue { };
-    typedef stdx::variant<InvalidValue, int, double, bool, std::string> Value;
-    enum ValueTypeId { Invalid, Int, Double, Bool, String };
 
     static int valueType(const Value& value) { return stdx::get_variant_index(value); }
     static int intValue(const Value& value) { return stdx::get<int>(value); }
@@ -35,7 +33,7 @@ public:
     bool resetId(const GeneralId& id);
 
     int valueType() const { return stdx::get_variant_index(value_); }
-    bool changeValueType(int typeId);
+    bool changeValueType(TypeId type);
     
     bool isInt() const { return valueType() == Int; }
     bool isDouble() const { return valueType() == Double; }

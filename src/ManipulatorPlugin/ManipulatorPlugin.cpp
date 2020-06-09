@@ -1,7 +1,8 @@
 #include "MprProgramItemBase.h"
-#include "MprVariableListItemBase.h"
+#include "MprMultiVariableListItem.h"
 #include "MprControllerItemBase.h"
 #include "MprPositionListView.h"
+#include "MprMultiVariableListView.h"
 #include <cnoid/Plugin>
 
 using namespace cnoid;
@@ -18,11 +19,12 @@ public:
 
     virtual bool initialize()
     {
-        MprProgramItemBase::initializeClass(this);
-        MprVariableListItemBase::initializeClass(this);
         MprControllerItemBase::initializeClass(this);
+        MprProgramItemBase::initializeClass(this);
+        MprMultiVariableListItem::initializeClass(this);
 
         MprPositionListView::initializeClass(this);
+        MprMultiVariableListView::initializeClass(this);
         
         return true;
     }

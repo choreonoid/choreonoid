@@ -16,6 +16,7 @@ public:
         GeneralVariable, IntVariable, DoubleVariable, BoolVariable, StringVariable };
 
     MprVariableList();
+    MprVariableList(VariableType variableType);
     MprVariableList(const MprVariableList& org);
     ~MprVariableList();
 
