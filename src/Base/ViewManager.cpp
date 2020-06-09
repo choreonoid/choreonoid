@@ -137,9 +137,14 @@ public:
             return nullptr;
         }
         View* view = createView();
-        view->setName(name);
-        if(setTranslatedNameToWindowTitle){
-            view->setWindowTitle(dgettext(textDomain.c_str(), name.c_str()));
+        if(isSingleton()){
+            view->setName(defaultInstanceName);
+            view->setWindowTitle(translatedDefaultInstanceName.c_str());
+        } else {
+            view->setName(name);
+            if(setTranslatedNameToWindowTitle){
+                view->setWindowTitle(dgettext(textDomain.c_str(), name.c_str()));
+            }
         }
         sigViewCreated_(view);
         return view;
@@ -795,7 +800,7 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
                     
     if(!archive->read("name", instanceName)){
         if(info = findViewInfo(moduleName, className)){
-            view = ViewManager::getOrCreateView(moduleName, className);
+            view = info->getOrCreateView();
         }
     } else {
         // get one of the view instances having the instance name, or create a new instance.
