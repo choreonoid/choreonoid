@@ -316,8 +316,14 @@ void MainWindow::setInitialLayout(ArchivePtr archive)
         cout << "MainWindow::setInitialLayout()" << endl;
     }
     if(impl->isBeforeDoingInitialLayout){
-        impl->initialLayoutArchive = archive;
-        impl->toolBarArea->setInitialLayout(archive);
+        auto viewLayout = archive->findListing("viewAreas");
+        if(viewLayout->isValid()){
+            impl->initialLayoutArchive = archive;
+        }
+        auto toolBarLayout = archive->findMapping("layoutOfToolBars");
+        if(toolBarLayout->isValid()){
+            impl->toolBarArea->setInitialLayout(archive);
+        }
     }
 }
 
