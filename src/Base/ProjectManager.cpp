@@ -22,6 +22,7 @@
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
 #include <QCoreApplication>
+#include <QResource>
 #include <QMessageBox>
 #include <string>
 #include <vector>
@@ -36,10 +37,12 @@ using fmt::format;
 namespace {
 
 ProjectManager* instance_ = nullptr;
+bool defaultOptionToSotreLayoutInProjectFile = true;
 int projectBeingLoadedCounter = 0;
 Action* perspectiveCheck = nullptr;
 MainWindow* mainWindow = nullptr;
 MessageView* mv = nullptr;
+
 
 Signal<void(int recursiveLevel)> sigProjectAboutToBeLoaded;
 Signal<void(int recursiveLevel)> sigProjectLoaded;
@@ -61,8 +64,9 @@ public:
     template <class TObject>
     bool restoreObjectStates(
         Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
-        
-    ItemList<> loadProject(const string& filename, Item* parentItem, bool isInvokingApplication);
+
+    ItemList<> loadProject(
+        const std::string& filename, Item* parentItem, bool isInvokingApplication, bool isBuiltinProject);
 
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
@@ -102,6 +106,12 @@ public:
     MappingPtr managerConfig;
 };
 
+}
+
+
+void ProjectManager::setDefaultOptionToStoreLayoutInProjectFile(bool on)
+{
+    defaultOptionToSotreLayoutInProjectFile = on;
 }
 
 
@@ -159,7 +169,8 @@ ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
     mm.setPath(N_("Project File Options"));
 
     perspectiveCheck = mm.addCheckItem(_("Perspective"));
-    perspectiveCheck->setChecked(managerConfig->get("store_perspective", true));
+    bool isPerspectiveChecked = managerConfig->get("store_perspective", defaultOptionToSotreLayoutInProjectFile);
+    perspectiveCheck->setChecked(isPerspectiveChecked);
     perspectiveCheck->sigToggled().connect([&](bool on){ onPerspectiveCheckToggled(on); });
 
     mm.setPath("/File");
@@ -289,11 +300,18 @@ bool ProjectManager::Impl::restoreObjectStates
 
 ItemList<> ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 {
-    return impl->loadProject(filename, parentItem, false);
+    return impl->loadProject(filename, parentItem, false, false);
 }
 
 
-ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* parentItem, bool isInvokingApplication)
+ItemList<> ProjectManager::loadBuiltinProject(const std::string& resourceFile, Item* parentItem)
+{
+    return impl->loadProject(resourceFile, parentItem, true, true);
+}
+
+
+ItemList<> ProjectManager::Impl::loadProject
+(const std::string& filename, Item* parentItem, bool isInvokingApplication, bool isBuiltinProject)
 {
     ItemList<> loadedItems;
     
@@ -306,21 +324,39 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
     reader.setMappingClass<Archive>();
 
     try {
-        mv->notify(format(_("Loading project file \"{}\" ..."), filename));
-        if(!isInvokingApplication){
-            mv->flush();
+        if(!isBuiltinProject){
+            mv->notify(format(_("Loading project file \"{}\" ..."), filename));
+            if(!isInvokingApplication){
+                mv->flush();
+            }
         }
 
         int numArchivedItems = 0;
         int numRestoredItems = 0;
-        
-        if(!reader.load(filename)){
-            mv->put(reader.errorMessage() + "\n");
 
-        } else if(reader.numDocuments() == 0){
+        bool parsed = false;
+        if(!isBuiltinProject){
+            parsed = reader.load(filename);
+            if(!parsed){
+                mv->putln(reader.errorMessage(), MessageView::ERROR);
+            }
+        } else {
+            QResource resource(filename.c_str());
+            if(resource.isValid()){
+                auto data = qUncompress(QByteArray((const char*)resource.data(), (int)resource.size()));
+                parsed = reader.parse(data.constData(), data.size());
+                if(!parsed){
+                    mv->putln(reader.errorMessage(), MessageView::ERROR);
+                }
+            } else {
+                mv->putln(format(_("Resource \"{0}\" is not found."), filename), MessageView::ERROR);
+            }
+        }
+        
+        if(parsed && reader.numDocuments() == 0){
             mv->putln(_("The project file is empty."), MessageView::WARNING);
 
-        } else {
+        } else if(parsed){
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
             archive->initSharedInfo(filename);
 
@@ -339,14 +375,16 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
 
             MainWindow* mainWindow = MainWindow::instance();
             if(isInvokingApplication){
-                if(perspectiveCheck->isChecked()){
+                if(isBuiltinProject || perspectiveCheck->isChecked()){
                     mainWindow->setInitialLayout(archive);
                 }
-                mainWindow->show();
-                mv->flush();
-                mainWindow->repaint();
+                if(!isBuiltinProject){
+                    mainWindow->show();
+                    mv->flush();
+                    mainWindow->repaint();
+                }
             } else {
-                if(perspectiveCheck->isChecked()){
+                if(isBuiltinProject || perspectiveCheck->isChecked()){
                     mainWindow->restoreLayout(archive);
                 }
             }
@@ -410,12 +448,18 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
                 
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
-                mv->putln(format(_("{0} / {1} item(s) have been loaded."), numRestoredItems, numArchivedItems));
+                if(!isBuiltinProject){
+                    mv->putln(format(_("{0} / {1} item(s) have been loaded."), numRestoredItems, numArchivedItems));
+                }
 
                 if(numRestoredItems < numArchivedItems){
-                    mv->putln(
-                        format(_("{} item(s) were not loaded."), (numArchivedItems - numRestoredItems)),
-                        MessageView::WARNING);
+                    int numUnloaded = numArchivedItems - numRestoredItems;
+                    if(!isBuiltinProject){
+                        mv->putln(format(_("{0} item(s) were not loaded."), numUnloaded), MessageView::WARNING);
+                    } else {
+                        mv->putln(format(_("{0} item(s) were not loaded in the builtin project \"{1}\"."),
+                                         numUnloaded, filename), MessageView::WARNING);
+                    }
                 }
                 
                 if(numRestoredItems > 0){
@@ -436,10 +480,12 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
                 
                 archive->callPostProcesses();
 
-                if(numRestoredItems == numArchivedItems){
-                    mv->notify(format(_("Project \"{}\" has been completely loaded."), filename));
-                } else {
-                    mv->notify(format(_("Project \"{}\" has been partially loaded."), filename));
+                if(!isBuiltinProject){
+                    if(numRestoredItems == numArchivedItems){
+                        mv->notify(format(_("Project \"{}\" has been completely loaded."), filename));
+                    } else {
+                        mv->notify(format(_("Project \"{}\" has been partially loaded."), filename));
+                    }
                 }
             }
         }
@@ -447,7 +493,7 @@ ItemList<> ProjectManager::Impl::loadProject(const std::string& filename, Item* 
         mv->put(ex.message());
     }
 
-    if(!loaded){                
+    if(!loaded){
         mv->notify(
             format(_("Loading project \"{}\" failed. Any valid objects were not loaded."), filename),
             MessageView::ERROR);
@@ -608,7 +654,7 @@ void ProjectManager::Impl::onProjectOptionsParsed(boost::program_options::variab
     if(v.count("project")){
         vector<string> projectFileNames = v["project"].as<vector<string>>();
         for(size_t i=0; i < projectFileNames.size(); ++i){
-            loadProject(toActualPathName(projectFileNames[i]), nullptr, true);
+            loadProject(toActualPathName(projectFileNames[i]), nullptr, true, false);
         }
     }
 }
@@ -619,7 +665,7 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
     auto iter = inputFiles.begin();
     while(iter != inputFiles.end()){
         if(getExtension(*iter) == "cnoid"){
-            loadProject(toActualPathName(*iter), nullptr, true);
+            loadProject(toActualPathName(*iter), nullptr, true, false);
             iter = inputFiles.erase(iter);
         } else {
             ++iter;
@@ -678,7 +724,7 @@ void ProjectManager::Impl::openDialogToLoadProject()
         clearProject();
         mv->flush();
         string filename = getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString()));
-        loadProject(filename, nullptr, false);
+        loadProject(filename, nullptr, false, false);
     }
 }
 

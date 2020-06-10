@@ -18,6 +18,9 @@ class Archive;
 class CNOID_EXPORT ProjectManager
 {
 public:
+     // This function is called before initializaing the App class
+    static void setDefaultOptionToStoreLayoutInProjectFile(bool on);
+    
     static void initializeClass(ExtensionManager* ext);
     static ProjectManager* instance();
 
@@ -28,6 +31,7 @@ public:
 
     void clearProject();
     ItemList<> loadProject(const std::string& filename, Item* parentItem = nullptr);
+    ItemList<> loadBuiltinProject(const std::string& resourceFile, Item* parentItem = nullptr);
     bool isLoadingProject() const;
     void saveProject(const std::string& filename, Item* item = nullptr);
     void overwriteCurrentProject();
