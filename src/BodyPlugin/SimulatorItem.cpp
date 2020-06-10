@@ -224,7 +224,8 @@ public:
     bool isControlRequested;
     bool isControlFinished;
     bool isControlToBeContinued;
-    bool doCheckContinue;
+    bool doStopSimulationWhenNoActiveControllers;
+    bool hasControllers; // Includes non-active controllers
 
     CollisionDetectorPtr collisionDetector;
 
@@ -725,6 +726,7 @@ bool SimulationBody::Impl::initialize(SimulatorItem* simulatorItem, BodyItem* bo
 bool SimulationBody::Impl::initialize(SimulatorItem::Impl* simImpl, ControllerItem* controllerItem)
 {
     this->simImpl = simImpl;
+    simImpl->hasControllers = true;
 
     ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
 
@@ -748,6 +750,7 @@ void SimulationBody::Impl::extractAssociatedItems(bool doReset)
         Item* srcItem = *iter;
         auto controllerItem = dynamic_cast<ControllerItem*>(srcItem);
         if(controllerItem){
+            simImpl->hasControllers = true;
             ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
             if(controllerItem->initialize(info)){
                 controllerInfos.push_back(info);
@@ -1560,6 +1563,8 @@ void SimulatorItem::Impl::clearSimulation()
 
     subSimulatorItems.clear();
 
+    hasControllers = false;
+
     self->clearSimulation();
 }
 
@@ -1699,25 +1704,6 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
     if(result){
 
-        frameAtLastBufferWriting = 0;
-        isDoingSimulationLoop = true;
-        isWaitingForSimulationToStop = false;
-        stopRequested = false;
-        pauseRequested = false;
-
-        ringBufferSize = std::numeric_limits<int>::max();
-        
-        if(timeRangeMode.is(SimulatorItem::TR_SPECIFIED)){
-            maxFrame = specifiedTimeLength / worldTimeStep_;
-        } else if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
-            maxFrame = TimeBar::instance()->maxTime() / worldTimeStep_;
-        } else if(isRingBufferMode){
-            maxFrame = std::numeric_limits<int>::max();
-            ringBufferSize = specifiedTimeLength / worldTimeStep_;
-        } else {
-            maxFrame = std::numeric_limits<int>::max();
-        }
-
         subSimulatorItems.extractAssociatedItems(self);
         auto p = subSimulatorItems.begin();
         while(p != subSimulatorItems.end()){
@@ -1776,8 +1762,36 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
         updateSimBodyLists();
 
-        doCheckContinue = timeRangeMode.is(SimulatorItem::TR_ACTIVE_CONTROL) && !activeControllers.empty();
-            
+        doStopSimulationWhenNoActiveControllers =
+            timeRangeMode.is(SimulatorItem::TR_ACTIVE_CONTROL) && hasControllers;
+
+        if(doStopSimulationWhenNoActiveControllers && activeControllers.empty()){
+            mv->putln(_("The simulation cannot be started because all the controllers are inactive."),
+                      MessageView::ERROR);
+            result = false;
+        }
+    }
+
+    if(result){
+        frameAtLastBufferWriting = 0;
+        isDoingSimulationLoop = true;
+        isWaitingForSimulationToStop = false;
+        stopRequested = false;
+        pauseRequested = false;
+
+        ringBufferSize = std::numeric_limits<int>::max();
+        
+        if(timeRangeMode.is(SimulatorItem::TR_SPECIFIED)){
+            maxFrame = specifiedTimeLength / worldTimeStep_;
+        } else if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
+            maxFrame = TimeBar::instance()->maxTime() / worldTimeStep_;
+        } else if(isRingBufferMode){
+            maxFrame = std::numeric_limits<int>::max();
+            ringBufferSize = specifiedTimeLength / worldTimeStep_;
+        } else {
+            maxFrame = std::numeric_limits<int>::max();
+        }
+
         useControllerThreads = useControllerThreadsProperty;
         if(useControllerThreads){
             isExitingControlLoopRequested = false;
@@ -1838,6 +1852,10 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         mv->notify(format(_("Simulation by {} has started."), self->displayName()));
 
         sigSimulationStarted();
+    }
+
+    if(!result){
+        clearSimulation();
     }
 
     return result;
@@ -2035,7 +2053,7 @@ bool SimulatorItem::Impl::stepSimulationMain()
         updateSimBodyLists();
     }
     
-    bool doContinue = !doCheckContinue;
+    bool doContinue = !doStopSimulationWhenNoActiveControllers;
 
     preDynamicsFunctions.call();
 
