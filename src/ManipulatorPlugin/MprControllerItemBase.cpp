@@ -281,21 +281,24 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     clear();
     
     auto programItems = self->descendantItems<MprProgramItemBase>();
-
     if(programItems.empty()){
         mv->putln(format(_("Any program item for {} is not found."),
                          self->displayName()), MessageView::ERROR);
         return false;
     }
     
-    startupProgramItem = programItems.front();
+    startupProgramItem.reset();
     for(auto& programItem : programItems){
         if(programItem->isStartupProgram()){
             startupProgramItem = programItem;
             break;
         }
     }
-            
+    if(!startupProgramItem){
+        mv->putln(format(_("The startup program for {0} is not specified."),
+                         self->displayName()), MessageView::WARNING);
+        return false;
+    }
     startupProgram = cloneMap.getClone(startupProgramItem->program());
     currentProgram = startupProgram;
 
