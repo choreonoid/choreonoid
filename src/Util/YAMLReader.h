@@ -42,6 +42,7 @@ public:
 
     bool load(const std::string& filename);
     bool parse(const std::string& yamlstring);
+    bool parse(const char* input, size_t size);
 
     ValueNode* loadDocument(const std::string& filename);
 

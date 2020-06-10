@@ -30,7 +30,7 @@ public:
     void setMappingFactory(YAMLReader::MappingFactoryBase* factory);
     void clearDocuments();
     bool load(const std::string& filename);
-    bool parse(const std::string& yamlstring);
+    bool parse(const char* input, size_t size);
     bool parse();
     void popNode(yaml_event_t& event);
     void addNode(ValueNode* node, yaml_event_t& event);
@@ -190,10 +190,17 @@ bool YAMLReaderImpl::load(const std::string& filename)
 
 bool YAMLReader::parse(const std::string& yamlstring)
 {
-    return impl->parse(yamlstring);
+    return impl->parse(yamlstring.c_str(), yamlstring.length());
 }
 
-bool YAMLReaderImpl::parse(const std::string& yamlstring)
+
+bool YAMLReader::parse(const char* input, size_t size)
+{
+    return impl->parse(input, size);
+}
+
+
+bool YAMLReaderImpl::parse(const char* input, size_t size)
 {
     yaml_parser_initialize(&parser);
     clearDocuments();
@@ -206,7 +213,7 @@ bool YAMLReaderImpl::parse(const std::string& yamlstring)
 
     bool result = false;
     
-    yaml_parser_set_input_string(&parser, (const unsigned char *)(yamlstring.c_str()), yamlstring.length());
+    yaml_parser_set_input_string(&parser, (const unsigned char*)input, size);
     try {
         result = parse();
     }
