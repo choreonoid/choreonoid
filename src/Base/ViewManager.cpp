@@ -595,22 +595,6 @@ View* ViewManager::getOrCreateView(const std::string& moduleName, const std::str
 }
 
 
-/**
-   This is implemented for the compatibility to version 1.4 or earlier.
-   This is only used for loading the view layout configuration created by those verions.
-*/
-View* ViewManager::getOrCreateViewOfDefaultName(const std::string& defaultName)
-{
-    for(TypeToViewInfoMap::iterator p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
-        ViewInfo& info = *p->second;
-        if(info.defaultInstanceName == defaultName){
-            return info.getOrCreateView();
-        }
-    }
-    return nullptr;
-}
-
-
 std::vector<View*> ViewManager::allViews()
 {
     std::vector<View*> views;

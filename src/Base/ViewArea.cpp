@@ -981,14 +981,7 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
     
     if(archive){
         Listing& layouts = *archive->findListing("viewAreas");
-        if(!layouts.isValid()){
-            // for the compatibility with the older (1.4 or earlier) versions
-            Archive* layoutOfViews = archive->findSubArchive("layoutOfViews");
-            if(layoutOfViews->isValid()){
-                layoutOfViews->inheritSharedInfoFrom(*archive);
-                mainViewAreaImpl->restoreLayout(layoutOfViews);
-            }
-        } else {
+        if(layouts.isValid()){
             QDesktopWidget* desktop = QApplication::desktop();
             const int numScreens = desktop->screenCount();
             
@@ -1213,10 +1206,7 @@ ViewPane* ViewAreaImpl::restorePane(const Mapping& state, Archive* archive)
     if(views.isValid() && !views.empty()){
         pane = new ViewPane(this);
         int currentId = 0;
-        string currentName;
-        if(!state.read("current", currentId)){
-            state.read("current", currentName);
-        }
+        state.read("current", currentId);
         for(int i=0; i < views.size(); ++i){
             const ValueNode& node = views[i];
             View* view = 0;
@@ -1226,14 +1216,6 @@ ViewPane* ViewAreaImpl::restorePane(const Mapping& state, Archive* archive)
                 view = archive->findView(id);
                 if(view){
                     isCurrent = (id == currentId);
-                }
-            } else if(node.isString()){
-                // for the Choreonoid version 1.4 or earlier
-                view = ViewManager::getOrCreateViewOfDefaultName(node.toString());
-                if(view){
-                    if(view->name() == currentName){
-                        isCurrent = true;
-                    }
                 }
             }
             if(view){
@@ -1368,7 +1350,7 @@ MappingPtr ViewAreaImpl::storePaneState(ViewPane* pane, Archive* archive)
         int id = archive->getViewId(view);
         if(id >= 0){
             views->append(id);
-            if(i == pane->currentIndex()){
+            if(n >= 2 && (i == pane->currentIndex())){
                 state->write("current", id);
             }
         }

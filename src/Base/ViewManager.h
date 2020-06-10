@@ -65,9 +65,6 @@ public:
     static View* getOrCreateView(
         const std::string& moduleName, const std::string& className, const std::string& instanceName);
 
-    // for loading the view layout format of the version 1.4 or earlier
-    static View* getOrCreateViewOfDefaultName(const std::string& defaultName);
-
     static std::vector<View*> allViews();
     static std::vector<View*> activeViews();
         
