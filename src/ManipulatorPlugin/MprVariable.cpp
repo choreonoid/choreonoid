@@ -247,6 +247,20 @@ bool MprVariable::changeValueType(TypeId typeId)
 }
 
 
+bool MprVariable::toBool(const Value& value)
+{
+    switch(stdx::get_variant_index(value)){
+    case Int:    return intValue(value);
+    case Double: return doubleValue(value);
+    case Bool:   return boolValue(value);
+    case String: return !stringValue(value).empty();
+    default:
+        break;
+    }
+    return false;
+}
+
+
 std::string MprVariable::toString() const
 {
     switch(valueType()){

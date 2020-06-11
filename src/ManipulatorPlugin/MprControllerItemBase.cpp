@@ -631,7 +631,8 @@ bool MprControllerItemBase::Impl::control()
     if(!isControlActive){
         return false;
     }
-    
+
+    int loopCounter = 0;
     bool stateChanged = false;
 
     while(true){
@@ -644,6 +645,10 @@ bool MprControllerItemBase::Impl::control()
             processorStack.pop_back();
         }
         if(isProcessorActive){
+            break;
+        }
+
+        if(loopCounter > 10){
             break;
         }
 
@@ -676,16 +681,17 @@ bool MprControllerItemBase::Impl::control()
             io->os() << format(_("{0} cannot be executed because the interpreter for it is not found."),
                                statement->label(0)) << endl;
             ++iterator;
-            continue;
+        } else {
+            auto& interpret = p->second;
+            if(!interpret(statement)){
+                isControlActive = false;
+                io->os() << format(_("Failed to execute {0} statement. The control was terminated."),
+                                   statement->label(0)) << endl;
+                break;
+            }
+            isControlActive = true;
         }
-        auto& interpret = p->second;
-        if(!interpret(statement)){
-            isControlActive = false;
-            io->os() << format(_("Failed to execute {0} statement. The control was terminated."),
-                               statement->label(0)) << endl;
-            break;
-        }
-        isControlActive = true;
+        ++loopCounter;
     }
 
     if(isLogEnabled && stateChanged){
@@ -892,11 +898,9 @@ static stdx::optional<bool> checkNumericalComparison(const string& op, LhsType l
 
 stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(const string& expression)
 {
-    stdx::optional<bool> pResult;
-
     if(expression.empty()){
         io->os() << _("Empty conditional expression.") << endl;
-        return pResult;
+        return stdx::nullopt;
     }
     auto pos = expression.cbegin();
     auto end = expression.cend();
@@ -906,18 +910,30 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
     stdx::optional<string> pCmpOp;
     stdx::optional<MprVariable::Value> pRhs;
     if(pLhs = getTermValue(pos, end)){
-        if(pCmpOp = getComparisonOperator(pos, end)){
-            if(pRhs = getTermValue(pos, end)){
-                isExpressionValid = true;
+        if(pos == end){
+            isExpressionValid = true;
+        } else if(pCmpOp = getComparisonOperator(pos, end)){
+            if(pos != end){
+                if(pRhs = getTermValue(pos, end)){
+                    if(pos == end){
+                        isExpressionValid = true;
+                    }
+                }
             }
         }
     }
     if(!isExpressionValid){
-        io->os() << _("Invalid conditional expression") << endl;
-        return pResult;
+        io->os() << format(_("Conditional expression \"{0}\" is invalid."), expression) << endl;
+        return stdx::nullopt;
     }
 
     auto& lhs = *pLhs;
+
+    if(!pRhs){
+        return MprVariable::toBool(lhs);
+    }
+            
+    stdx::optional<bool> pResult;
     auto& rhs = *pRhs;
     string& cmpOp = *pCmpOp;
 

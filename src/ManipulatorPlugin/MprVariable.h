@@ -28,6 +28,7 @@ public:
     static double doubleValue(const Value& value) { return stdx::get<double>(value); }
     static bool boolValue(const Value& value) { return stdx::get<bool>(value); }
     static const std::string& stringValue(const Value& value) { return stdx::get<std::string>(value); }
+    static bool toBool(const Value& value);
 
     const GeneralId& id() const { return id_; }
     bool resetId(const GeneralId& id);
@@ -53,6 +54,7 @@ public:
     bool setValue(const std::string& value);
     bool setValue(const Value& value);
 
+    bool toBool() const { return toBool(value_); }
     std::string toString() const;
 
     const std::string& note() const { return note_; }
