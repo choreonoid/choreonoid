@@ -315,12 +315,18 @@ bool SensorVisualizerItem::store(Archive& archive)
         ArchivePtr subArchive = new Archive();
         subArchive->write("class", className);
         subArchive->write("name", item->name());
+        if(item->isSelected()){
+            subArchive->write("is_selected", true);
+        }
+        if(item->isChecked()){
+            subArchive->write("is_checked", true);
+        }
         item->store(*subArchive);
 
         subItems->append(subArchive);
     }
 
-    archive.insert("subItems", subItems);
+    archive.insert("sub_items", subItems);
 
     return true;
 }
@@ -330,17 +336,25 @@ bool SensorVisualizerItem::restore(const Archive& archive)
 {
     impl->restoredSubItems.clear();
 
-    ListingPtr subItems = archive.findListing("subItems");
+    ListingPtr subItems = archive.findListing("sub_items");
+    if(!subItems->isValid()){
+        subItems = archive.findListing("subItems"); // Old
+    }
     if(subItems->isValid()){
         for(int i=0; i < subItems->size(); i++){
             Archive* subArchive = dynamic_cast<Archive*>(subItems->at(i)->toMapping());
             string className, itemName;
             subArchive->read("class", className);
             subArchive->read("name", itemName);
-
             if(ItemPtr item = ItemManager::createItem("Body", className)){
                 item->setName(itemName);
                 item->restore(*subArchive);
+                if(subArchive->get("is_selected", false)){
+                    item->setSelected(true);
+                }
+                if(subArchive->get("is_checked", false)){
+                    item->setChecked(true);
+                }
                 impl->restoredSubItems.push_back(item);
             }
         }

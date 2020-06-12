@@ -9,6 +9,7 @@ items:
       name: "World"
       plugin: Body
       class: WorldItem
+      isChecked: true
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
@@ -19,25 +20,29 @@ items:
           name: "Tank"
           plugin: Body
           class: BodyItem
+          isChecked: true
           data: 
-            modelFile: "${SHARE}/model/Tank/Tank.body"
-            currentBaseLink: ""
+            file: "${SHARE}/model/Tank/Tank.body"
+            format: CHOREONOID-BODY
             rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000 ]
+            jointDisplacements: [ 0, 0 ]
+            jointPositions: [ 0, 0 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
+            initialJointPositions: [ 0, 0 ]
+            staticModel: false
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: true
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
           children: 
             - 
               id: 3
@@ -50,16 +55,22 @@ items:
                 controller: "TankJoystickController"
                 baseDirectory: "Controller directory"
                 reloading: true
+                exportSymbols: false
+                isOldTargetVariableMode: false
             - 
               id: 4
               name: "SensorVisualizer"
               plugin: Body
               class: SensorVisualizer
               data: 
-                subItems: 
+                sub_items: 
                   - 
                     class: PointCloudVisualizer
                     name: Kinect
+                    is_checked: true
+                    translation: [ -2.01, -0.5, 0.43 ]
+                    rotation: [ 0.57735, -0.57735, -0.57735, 120 ]
+                    angle_unit: degree
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
@@ -67,6 +78,10 @@ items:
                   - 
                     class: RangeSensorVisualizer
                     name: VLP-16
+                    is_checked: true
+                    translation: [ -2.01, -0.5, 0.53 ]
+                    rotation: [ 0.57735, -0.57735, -0.57735, 120 ]
+                    angle_unit: degree
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
@@ -74,31 +89,38 @@ items:
                   - 
                     class: CameraImageVisualizer
                     name: Kinect Camera
+                    is_checked: true
                   - 
                     class: CameraImageVisualizer
                     name: Theta
+                    is_checked: true
         - 
           id: 5
           name: "Labo1"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/Labo1/Labo1.body"
-            currentBaseLink: ""
+            file: "${SHARE}/model/Labo1/Labo1.body"
+            format: CHOREONOID-BODY
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointDisplacements: [ 0 ]
+            jointPositions: [ 0 ]
             initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
+            initialJointPositions: [ 0 ]
+            staticModel: false
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: false
+            location_editable: false
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
         - 
           id: 6
           name: "AISTSimulator"
@@ -147,6 +169,7 @@ items:
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
+                antiAliasing: false
 views: 
   - 
     id: 0
@@ -175,8 +198,6 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 6 ]
-      checked: [ 1, 2, [ 4, "Kinect" ], [ 4, "VLP-16" ], [ 4, "Kinect Camera" ], [ 4, "Theta" ] ]
       expanded: [ 1, 2, 3, 4, 5, 6 ]
   - 
     id: 4
@@ -193,6 +214,10 @@ views:
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
+      restrictCameraRoll: true
+      verticalAxis: Z
+      lightingMode: full
+      cullingMode: enabled
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.75
       headLightLightingFromBack: false
@@ -214,11 +239,9 @@ views:
       pointSize: 2
       normalVisualization: false
       normalLength: 0.01
+      lightweightViewChange: false
       coordinateAxes: true
       fpsTestIteration: 1
-      showFPS: true
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
       upsideDown: false
       cameras: 
         - 
@@ -227,48 +250,54 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -7.55000311, -3.78400786, 3.39380608 ]
-          direction: [ 0.844599733, 0.410130528, -0.344157291 ]
-          up: [ 0.309587218, 0.15033295, 0.938912008 ]
+          eye: [ -7.55, -3.78401, 3.39381 ]
+          direction: [ 0.8446, 0.410131, -0.344157 ]
+          up: [ 0.309587, 0.150333, 0.938912 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
           far: 10000
       backgroundColor: [ 0, 0, 0 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
+      gridColor: [ 0.9, 0.9, 0.9, 1 ]
+      xzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      yzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      isDedicatedItemCheckEnabled: false
   - 
     id: 6
-    name: "Joystick"
+    name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 7
-    plugin: Body
-    class: BodyLinkView
-    mounted: true
-    state: 
-      showRotationMatrix: false
-  - 
     id: 8
     plugin: Body
-    class: JointSliderView
+    class: JointDisplacementView
     mounted: true
     state: 
-      showAllJoints: true
-      jointId: true
-      name: true
-      numColumns: 1
-      spinBox: true
-      slider: true
-      labelOnLeft: true
-      currentBodyItem: 2
+      show_selected_joints: false
+      show_joint_ids: false
+      show_joint_names: true
+      overlap_joint_names: false
+      show_sliders: true
+      show_dials: false
+      show_phases: true
   - 
     id: 9
+    name: "Link Position"
+    plugin: Body
+    class: LinkPositionView
+    mounted: true
+    state: 
+      coordinate_mode: world
+      preferred_coordinate_mode: base
+      show_rpy: true
+      unique_rpy: false
+      show_quoternion: false
+      show_rotation_matrix: false
+      target_link_type: root_or_ik_link
+  - 
+    id: 10
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -280,11 +309,65 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 10
+    id: 11
     plugin: Python
     class: PythonConsoleView
     mounted: true
-
+toolbars: 
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
+  "TimeBar": 
+    minTime: 0
+    maxTime: 30
+    frameRate: 1000
+    playbackFrameRate: 60
+    idleLoopDrivenMode: false
+    currentTime: 0
+    speedScale: 1
+    syncToOngoingUpdates: true
+    autoExpansion: true
+Body: 
+  "BodySelectionManager": 
+    currentBodyItem: 2
+    currentLink: "CHASSIS"
+  "EditableSceneBody": 
+    editableSceneBodies: 
+      - 
+        bodyItem: 2
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
 viewAreas: 
   - 
     type: embedded
@@ -292,61 +375,57 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 363, 1551 ]
+      sizes: [ 363, 1553 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 530, 530 ]
+          sizes: [ 454, 453 ]
           children: 
             - 
               type: pane
               views: [ 3 ]
-              current: 3
             - 
               type: pane
-              views: [ 2, 9 ]
+              views: [ 2, 10 ]
               current: 2
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 822, 238 ]
+          sizes: [ 703, 204 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 724, 821 ]
+              sizes: [ 726, 823 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 408, 408 ]
+                  sizes: [ 350, 349 ]
                   children: 
                     - 
                       type: pane
-                      views: [ 7, 8, 0 ]
+                      views: [ 9, 8, 0 ]
                       current: 0
                     - 
                       type: pane
                       views: [ 1 ]
-                      current: 1
                 - 
                   type: pane
                   views: [ 5 ]
-                  current: 5
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 890, 655 ]
+              sizes: [ 892, 657 ]
               children: 
                 - 
                   type: pane
-                  views: [ 4, 10 ]
+                  views: [ 4, 11 ]
                   current: 4
                 - 
                   type: pane
                   views: [ 6 ]
-                  current: 6
 layoutOfToolBars: 
   rows: 
     - 
