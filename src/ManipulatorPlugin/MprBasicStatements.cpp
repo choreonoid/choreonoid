@@ -220,6 +220,9 @@ std::string MprIfStatement::label(int index) const
     if(index == 0){
         return "IF";
     } else if(index == 1){
+        if(condition().empty()){
+            return "---";
+        }
         return condition();
     }
     return string();
@@ -302,6 +305,9 @@ std::string MprWhileStatement::label(int index) const
     if(index == 0){
         return "WHILE";
     } else if(index == 1){
+        if(condition().empty()){
+            return "---";
+        }
         return condition();
     }
     return string();
@@ -345,6 +351,9 @@ std::string MprCallStatement::label(int index) const
     if(index == 0){
         return "Call";
     } else if(index == 1){
+        if(programName_.empty()){
+            return "-----";
+        }
         return programName_;
     }
     return string();

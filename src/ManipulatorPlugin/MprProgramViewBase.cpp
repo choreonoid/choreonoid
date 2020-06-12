@@ -226,13 +226,8 @@ QVariant StatementItem::data(int column, int role) const
         int span = delegate->labelSpan(statement(), column);
         if(span == 1){
             QString label(statement()->label(column).c_str());
-            if(!label.isEmpty()){
-                // Add the margin
-                if(column == 0){
-                    label.append("     ");
-                } else {
-                    label.append("     ");
-                }
+            if(label.size() < 6){
+                label.append(QString(6 - label.size(), ' '));
             }
             return label;
         } else {
