@@ -38,8 +38,8 @@ set(sources
   LeggedBodyBar.cpp
   KinematicsBar.cpp
   SimulationBar.cpp
-  BodyElementTreeWidget.cpp
-  BodyElementView.cpp
+  LinkDeviceTreeWidget.cpp
+  LinkDeviceListView.cpp
   LinkTreeWidget.cpp
   LinkSelectionView.cpp
   LinkPositionView.cpp
@@ -87,8 +87,8 @@ set(headers
   BodyBar.h
   KinematicsBar.h
   SimulationBar.h
-  BodyElementTreeWidget.h
-  BodyElementView.h
+  LinkDeviceTreeWidget.h
+  LinkDeviceListView.h
   LinkTreeWidget.h
   LinkSelectionView.h
   LinkPositionView.h

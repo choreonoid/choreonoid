@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-14 14:38+0900\n"
+"POT-Creation-Date: 2020-06-15 02:16+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -588,7 +588,7 @@ msgid ""
 msgstr "{}はこのワールドの他のシミュレータも選択されているため処理出来ません．"
 
 #: LinkTreeWidget.cpp:277 LinkTreeWidget.cpp:654 LinkTreeWidget.cpp:659
-#: LinkTreeWidget.cpp:674 BodyElementTreeWidget.cpp:277 BodyMarkerItem.cpp:357
+#: LinkTreeWidget.cpp:674 BodyElementTreeWidget.cpp:291 BodyMarkerItem.cpp:357
 msgid "Link"
 msgstr "リンク"
 
@@ -596,7 +596,7 @@ msgstr "リンク"
 msgid "ID"
 msgstr ""
 
-#: LinkTreeWidget.cpp:302 BodyElementView.cpp:63
+#: LinkTreeWidget.cpp:302
 msgid "Link List"
 msgstr "リンク一覧"
 
@@ -604,7 +604,7 @@ msgstr "リンク一覧"
 msgid "Link Tree"
 msgstr "リンクツリー"
 
-#: LinkTreeWidget.cpp:304 BodyElementView.cpp:64
+#: LinkTreeWidget.cpp:304
 msgid "Joint List"
 msgstr "関節一覧"
 
@@ -1033,7 +1033,7 @@ msgstr "干渉データ"
 msgid "LinkOffsetFrameListItem"
 msgstr "リンクオフセットフレームリストアイテム"
 
-#: LinkSelectionView.cpp:42
+#: LinkSelectionView.cpp:42 BodyElementView.cpp:86
 msgid "Links"
 msgstr "リンク"
 
@@ -1267,27 +1267,31 @@ msgstr "IO接続マップアイテム"
 msgid "Joint Trajectories"
 msgstr "関節軌道"
 
-#: BodyElementTreeWidget.cpp:281 BodyElementTreeWidget.cpp:348
+#: BodyElementTreeWidget.cpp:295 BodyElementTreeWidget.cpp:362
 msgid " No "
 msgstr ""
 
-#: BodyElementTreeWidget.cpp:346
+#: BodyElementTreeWidget.cpp:360
 msgid " ID "
 msgstr ""
 
-#: BodyElementTreeWidget.cpp:648
+#: BodyElementTreeWidget.cpp:662
 msgid " Link / Device "
 msgstr " リンク／デバイス "
 
-#: BodyElementTreeWidget.cpp:653
+#: BodyElementTreeWidget.cpp:667
 msgid " Link "
 msgstr " リンク "
 
-#: BodyElementTreeWidget.cpp:658
+#: BodyElementTreeWidget.cpp:672
 msgid " Joint "
 msgstr " 関節 "
 
-#: BodyElementTreeWidget.cpp:663
+#: BodyElementTreeWidget.cpp:677
+msgid " Device "
+msgstr "デバイス"
+
+#: BodyElementTreeWidget.cpp:682
 msgid " Part / Link "
 msgstr " 部位／リンク "
 
@@ -1778,18 +1782,18 @@ msgstr "サイズ"
 msgid "Color"
 msgstr "色"
 
-#: BodyElementView.cpp:37
+#: BodyElementView.cpp:44
 msgid "Links / Devices"
 msgstr "リンク／デバイス"
 
-#: BodyElementView.cpp:62
-msgid "Link / Device Tree"
-msgstr "リンク／デバイスツリー"
+#: BodyElementView.cpp:81
+msgid "Tree"
+msgstr "ツリー"
 
-#: BodyElementView.cpp:65
-msgid "Device List"
-msgstr "デバイス一覧"
+#: BodyElementView.cpp:83
+msgid "All"
+msgstr "全要素"
 
-#: BodyElementView.cpp:66
-msgid "Body Part Hierarchy"
-msgstr "身体部位階層"
+#: BodyElementView.cpp:88
+msgid "Devices"
+msgstr "デバイス"

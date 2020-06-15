@@ -1,5 +1,5 @@
-#ifndef CNOID_BODY_PLUGIN_BODY_ELEMENT_VIEW_H
-#define CNOID_BODY_PLUGIN_BODY_ELEMENT_VIEW_H
+#ifndef CNOID_BODY_PLUGIN_LINK_DEVICE_LIST_VIEW_H
+#define CNOID_BODY_PLUGIN_LINK_DEVICE_LIST_VIEW_H
 
 #include <cnoid/View>
 #include <vector>
@@ -9,14 +9,14 @@ namespace cnoid {
 
 class BodyItem;
 
-class CNOID_EXPORT BodyElementView : public View
+class CNOID_EXPORT LinkDeviceListView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
-    static BodyElementView* instance();
+    static LinkDeviceListView* instance();
             
-    BodyElementView();
-    virtual ~BodyElementView();
+    LinkDeviceListView();
+    virtual ~LinkDeviceListView();
 
     BodyItem* currentBodyItem();
 
