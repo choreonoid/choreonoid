@@ -6,7 +6,6 @@
 #define CNOID_BODY_PLUGIN_JOINT_GRAPH_VIEW_H
 
 #include "BodyItem.h"
-#include "LinkSelectionView.h"
 #include <cnoid/MultiValueSeqItem>
 #include <cnoid/View>
 #include <cnoid/GraphWidget>
@@ -34,7 +33,6 @@ protected:
             
 private:
     GraphWidget graph;
-    LinkSelectionView* linkSelection;
 
     struct ItemInfo
     {

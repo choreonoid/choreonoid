@@ -3,6 +3,7 @@
 */
 
 #include "MulticopterPluginHeader.h"
+#include <cnoid/BodySelectionManager>
 
 using namespace std;
 using namespace cnoid;
@@ -29,12 +30,9 @@ EventManager::initialize()
     }
 
     if( _lnkSelChangedCon.connected() == false ){
-        LinkSelectionView* lnkSelView = LinkSelectionView::instance();
-        if( lnkSelView ){            
-            _lnkSelChangedCon =
-                lnkSelView->sigSelectionChanged(_curBodyItem).connect(
-                    std::bind(&EventManager::onLinkItemSelected, this));
-        }
+        _lnkSelChangedCon =
+            BodySelectionManager::instance()->sigLinkSelectionChanged(_curBodyItem).connect(
+                std::bind(&EventManager::onLinkItemSelected, this));
     }
     
     RootItem* rootItem = RootItem::instance();
@@ -174,11 +172,10 @@ EventManager::onCurrentBodyItemChanged(BodyItem* bodyItem)
       _lnkSelChangedCon.disconnect();
     }
     if( _lnkSelChangedCon.connected() == false ){
-        LinkSelectionView* lnkSelView = LinkSelectionView::instance();
-        if( lnkSelView ){
-            _lnkSelChangedCon = lnkSelView->sigSelectionChanged(_curBodyItem).connect(std::bind(&EventManager::onLinkItemSelected, this));
-        }
+        _lnkSelChangedCon = BodySelectionManager::instance()->sigLinkSelectionChanged(_curBodyItem).connect(
+            std::bind(&EventManager::onLinkItemSelected, this));
     }
+
     LinkManager::instance()->setCurrentBodyLink(_curBodyItem->body(), _curLink);
 
     for(auto it = begin(_curLinkChangedEvMap) ; it != end(_curLinkChangedEvMap) ; ++it){
@@ -189,11 +186,12 @@ EventManager::onCurrentBodyItemChanged(BodyItem* bodyItem)
 void
 EventManager::onLinkItemSelected()
 {
-    const vector<int>& selectedLinkIndices = LinkSelectionView::instance()->selectedLinkIndices(_curBodyItem);
-    if(selectedLinkIndices.empty()){
-        _curLink = _curBodyItem->body()->rootLink();
+    auto bsm = BodySelectionManager::instance();
+    auto link = bsm->currentLink();
+    if(link && bsm->currentBodyItem() == _curBodyItem){
+        _curLink = link;
     } else {
-	  _curLink = _curBodyItem->body()->link(selectedLinkIndices.front());
+        _curLink = _curBodyItem->body()->rootLink();
     }
 
     LinkManager::instance()->setCurrentBodyLink(_curBodyItem->body(), _curLink);

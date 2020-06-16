@@ -9,7 +9,7 @@
 #include "BodyMotionGenerationBar.h"
 #include <cnoid/RootItem>
 #include <cnoid/LeggedBodyHelper>
-#include <cnoid/LinkSelectionView>
+#include <cnoid/BodySelectionManager>
 #include <cnoid/MessageView>
 #include <cnoid/InfoBar>
 #include <cnoid/Dialog>
@@ -1305,7 +1305,7 @@ void PoseSeqViewBase::onYawOrientationRotationDialogAccepted()
           PosePtr pose = poseIter->get<Pose>();
           if(pose){
           const std::vector<int>& selectedLinkIndices =
-          LinkSelectionView::mainInstance()->getSelectedLinkIndices(currentBodyItem);
+          LinkSelectionView::instance()->getSelectedLinkIndices(currentBodyItem);
 
           if(selectedLinkIndices.size() == 1){
           Pose::LinkInfo* linkInfo = pose->ikLinkInfo(selectedLinkIndices.front());
@@ -1592,8 +1592,7 @@ void PoseSeqViewBase::setCurrentBodyStateToSelectedPoses(bool onlySelected)
 
 bool PoseSeqViewBase::setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected)
 {
-    const auto& linkSelection =
-        LinkSelectionView::instance()->linkSelection(currentBodyItem);
+    auto& linkSelection = BodySelectionManager::instance()->linkSelection(currentBodyItem);
             
     bool updated = false;
             

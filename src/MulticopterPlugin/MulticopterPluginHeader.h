@@ -17,7 +17,6 @@
 #include <cnoid/ViewManager>
 #include <cnoid/ItemManager>
 #include <cnoid/BodyBar>
-#include <cnoid/LinkSelectionView>
 #include <cnoid/RootItem>
 #include <cnoid/BodyItem>
 #include <cnoid/SimulatorItem>

@@ -41,7 +41,6 @@ set(sources
   LinkDeviceTreeWidget.cpp
   LinkDeviceListView.cpp
   LinkTreeWidget.cpp
-  LinkSelectionView.cpp
   LinkPositionView.cpp
   LinkPositionWidget.cpp
   LinkPropertyView.cpp
@@ -90,7 +89,6 @@ set(headers
   LinkDeviceTreeWidget.h
   LinkDeviceListView.h
   LinkTreeWidget.h
-  LinkSelectionView.h
   LinkPositionView.h
   LinkPositionWidget.h
   JointDisplacementWidget.h

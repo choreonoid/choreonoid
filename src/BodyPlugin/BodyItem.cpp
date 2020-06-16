@@ -6,7 +6,6 @@
 #include "BodyItem.h"
 #include "WorldItem.h"
 #include "EditableSceneBody.h"
-#include "LinkSelectionView.h"
 #include "LinkKinematicsKitManager.h"
 #include "KinematicsBar.h"
 #include <cnoid/LeggedBodyHelper>

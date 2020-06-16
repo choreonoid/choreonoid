@@ -3,6 +3,7 @@
 */
 
 #include "JointGraphView.h"
+#include "BodySelectionManager.h"
 #include <cnoid/RootItem>
 #include <cnoid/Archive>
 #include <cnoid/Link>
@@ -34,8 +35,6 @@ JointGraphView::JointGraphView()
         RootItem::instance()->sigSelectedItemsChanged().connect(
             [&](const ItemList<>& selectedItems){
                 onSelectedItemsChanged(selectedItems); });
-
-    linkSelection = LinkSelectionView::instance();
 }
 
 
@@ -120,8 +119,8 @@ void JointGraphView::updateBodyItems()
             bodyItems.insert(it->bodyItem);
 
             bodyItemConnections.add(
-                linkSelection->sigSelectionChanged(it->bodyItem).connect(
-                    [=](){ setupGraphWidget(); }));
+                BodySelectionManager::instance()->sigLinkSelectionChanged(it->bodyItem).connect(
+                    [=](const std::vector<bool>&){ setupGraphWidget(); }));
             
             bodyItemConnections.add(
                 it->bodyItem->sigDisconnectedFromRoot().connect(
@@ -152,21 +151,23 @@ void JointGraphView::onBodyItemDisconnectedFromRoot(BodyItemPtr bodyItem)
 
 void JointGraphView::setupGraphWidget()
 {
+    auto bsm = BodySelectionManager::instance();
     graph.clearDataHandlers();
 
     for(list<ItemInfo>::iterator it = itemInfos.begin(); it != itemInfos.end(); ++it){
-
         if(it->bodyItem){
-
             auto seq = it->item->seq();
             int numParts = seq->numParts();
             auto body = it->bodyItem->body();
-            const std::vector<int>& selectedLinkIndices = linkSelection->selectedLinkIndices(it->bodyItem);
-            
-            for(size_t i=0; i < selectedLinkIndices.size(); ++i){
-                Link* link = body->link(selectedLinkIndices[i]);
-                if(link && link->jointId() >= 0 && link->jointId() < numParts){
-                    addJointTrajectory(it, link, seq);
+            auto linkSelection = bsm->linkSelection(it->bodyItem);
+            for(size_t i=0; i < linkSelection.size(); ++i){
+                if(linkSelection[i]){
+                    if(auto link = body->link(i)){
+                        int id = link->jointId();
+                        if(id >= 0 && id < numParts){
+                            addJointTrajectory(it, link, seq);
+                        }
+                    }
                 }
             }
         }

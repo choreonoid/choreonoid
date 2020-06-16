@@ -18,7 +18,6 @@
 namespace cnoid {
 
 class Archive;
-class LinkSelectionView;
 
 /**
    @todo Define and implement the API for installing an index selection interface
@@ -36,17 +35,12 @@ public:
     virtual bool restoreState(const Archive& archive);
             
 protected:
-            
     virtual QWidget* indicatorOnInfoBar();
             
 private:
-            
     GraphWidget graph;
-    LinkSelectionView* linkSelection;
-
     ToggleToolButton xyzToggles[3];
     ToggleToolButton rpyToggles[3];
-
     ConnectionSet toggleConnections;
     Connection rootItemConnection;
 

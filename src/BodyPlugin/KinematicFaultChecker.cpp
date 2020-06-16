@@ -6,7 +6,7 @@
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
 #include "WorldItem.h"
-#include "LinkSelectionView.h"
+#include "BodySelectionManager.h"
 #include <cnoid/RootItem>
 #include <cnoid/BodyState>
 #include <cnoid/Archive>
@@ -287,13 +287,13 @@ void KinematicFaultCheckerImpl::apply()
                                   motionItem->headItem()->displayName()));
                 
                 vector<bool> linkSelection;
-                if(selectedJointsRadio.isChecked()){
-                    linkSelection = LinkSelectionView::instance()->linkSelection(bodyItem);
-                } else if(nonSelectedJointsRadio.isChecked()){
-                    linkSelection = LinkSelectionView::instance()->linkSelection(bodyItem);
-                    linkSelection.flip();
-                } else {
+                if(allJointsRadio.isChecked()){
                     linkSelection.resize(bodyItem->body()->numLinks(), true);
+                } else {
+                    linkSelection = BodySelectionManager::instance()->linkSelection(bodyItem);
+                    if(nonSelectedJointsRadio.isChecked()){
+                        linkSelection.flip();
+                    }
                 }
                 
                 double beginningTime = 0.0;

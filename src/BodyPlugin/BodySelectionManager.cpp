@@ -278,13 +278,23 @@ const ItemList<BodyItem>& BodySelectionManager::selectedBodyItems() const
 
 SignalProxy<void(const std::vector<bool>& selection)> BodySelectionManager::sigLinkSelectionChanged(BodyItem* bodyItem)
 {
-    return impl->getOrCreateBodyItemInfo(bodyItem, nullptr)->sigLinkSelectionChanged;
+    if(bodyItem){
+        return impl->getOrCreateBodyItemInfo(bodyItem, nullptr)->sigLinkSelectionChanged;
+    } else {
+        static Signal<void(const std::vector<bool>& selection)> dummySigLinkSelectionChanged;
+        return dummySigLinkSelectionChanged;
+    }
 }
 
 
 const std::vector<bool>& BodySelectionManager::linkSelection(BodyItem* bodyItem)
 {
-    return impl->getOrCreateBodyItemInfo(bodyItem, nullptr)->linkSelection;
+    if(bodyItem){
+        return impl->getOrCreateBodyItemInfo(bodyItem, nullptr)->linkSelection;
+    } else {
+        static std::vector<bool> dummySelection;
+        return dummySelection;
+    }
 }
 
 
