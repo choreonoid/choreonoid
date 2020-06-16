@@ -61,34 +61,15 @@ public:
         return links_[index];
     }
 
-    class accessor {
-        container& links;
-    public:
-        accessor(container& links) : links(links) { }
-        container::iterator begin() { return links.begin(); }
-        container::iterator end() { return links.end(); }
-        container::reverse_iterator rbegin() { return links.rbegin(); }
-        container::reverse_iterator rend() { return links.rend(); }
-    };
-    class const_accessor {
-        const container& links;
-    public:
-        const_accessor(const container& links) : links(links) { }
-        container::const_iterator begin() const { return links.begin(); }
-        container::const_iterator end() const { return links.end(); }
-        container::const_reverse_iterator rbegin() const { return links.rbegin(); }
-        container::const_reverse_iterator rend() const { return links.rend(); }
-    };
-
-    accessor links(){ return accessor(links_); }
-    const_accessor links() const { return const_accessor(links_); }
+    const std::vector<Link*>& links() const { return links_; }
 
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
-    iterator begin() { return links().begin(); }
-    iterator end() { return links().end(); }
-    const_iterator begin() const { return links().begin(); }
-    const_iterator end() const { return links().end(); }
+
+iterator begin() { return links_.begin(); }
+    iterator end() { return links_.end(); }
+    const_iterator begin() const { return links_.begin(); }
+    const_iterator end() const { return links_.end(); }
 	
     /**
        If the connection from the queried link to the next link is downward (forward) direction,
@@ -100,6 +81,8 @@ public:
     }
 	
     void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const;
+
+    std::vector<Link*> getStdVectorCopy() const { return std::vector<Link*>(links_); }
 
 protected:
     std::vector<Link*> links_;

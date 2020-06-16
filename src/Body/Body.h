@@ -166,10 +166,7 @@ public:
             jointIdToLinkArray.begin(), jointIdToLinkArray.begin() + numActualJoints);
     }
     
-    ContainerWrapper<std::vector<LinkPtr>> allJoints() {
-        return ContainerWrapper<std::vector<LinkPtr>>(
-            jointIdToLinkArray.begin(), jointIdToLinkArray.end());
-    }
+    const std::vector<LinkPtr>& allJoints() const { return jointIdToLinkArray; }
 
     int numDevices() const {
         return static_cast<int>(devices_.size());

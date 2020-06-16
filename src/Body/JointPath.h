@@ -65,16 +65,15 @@ public:
         return (index >= numUpwardJointConnections);
     }
 
-    LinkPath::accessor joints() { return LinkPath::accessor(joints_); }
-    LinkPath::const_accessor joints() const { return LinkPath::const_accessor(joints_); }
+    const std::vector<Link*>& joints() const { return joints_; }
 
-    typedef LinkPath::iterator iterator;
-    typedef LinkPath::const_iterator const_iterator;
+    typedef LinkTraverse::iterator iterator;
+    typedef LinkTraverse::const_iterator const_iterator;
 
-    iterator begin() { return joints().begin(); }
-    iterator end() { return joints().end(); }
-    const_iterator begin() const { return joints().begin(); }
-    const_iterator end() const { return joints().end(); }
+    iterator begin() { return joints_.begin(); }
+    iterator end() { return joints_.end(); }
+    const_iterator begin() const { return joints_.begin(); }
+    const_iterator end() const { return joints_.end(); }
 
     LinkPath& linkPath() { return linkPath_; }
     const LinkPath& linkPath() const { return linkPath_; }
