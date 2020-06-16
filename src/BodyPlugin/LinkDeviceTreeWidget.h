@@ -102,9 +102,11 @@ private:
 class CNOID_EXPORT LinkDeviceTreeItem : public QTreeWidgetItem
 {
 public:
+    LinkDeviceTreeItem(const std::string& name, LinkDeviceTreeWidget::Impl* treeImpl = nullptr);
     int rowIndex() const { return rowIndex_; }
     const std::string& name() const { return name_; }
     const QString& nameText() const { return nameText_; }
+    Link* link() { return link_; }
     const Link* link() const { return link_; }
     const Device* device() const { return device_; }
     bool isLinkGroup() const { return isLinkGroup_; }
@@ -122,7 +124,6 @@ private:
     LinkDeviceTreeWidget::Impl* treeImpl;
     bool isLinkGroup_;
 
-    LinkDeviceTreeItem(const std::string& name, LinkDeviceTreeWidget::Impl* treeImpl);
     LinkDeviceTreeItem(Link* link, LinkDeviceTreeWidget::Impl* treeImpl);
     LinkDeviceTreeItem(Device* device, LinkDeviceTreeWidget::Impl* treeImpl);
     LinkDeviceTreeItem(LinkGroup* linkGroup, LinkDeviceTreeWidget::Impl* treeImpl);

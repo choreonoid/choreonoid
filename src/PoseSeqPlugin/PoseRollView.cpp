@@ -111,9 +111,9 @@ public:
     };
     vector<RowInfo> itemIndexToRowInfoMap;
                 
-    vector<LinkTreeItem*> visibleRows;
-    vector<LinkTreeItem*> linkIndexToVisibleRowAncestorMap;
-    LinkTreeItem* visibleRowAncestorOfZmp;
+    vector<LinkDeviceTreeItem*> visibleRows;
+    vector<LinkDeviceTreeItem*> linkIndexToVisibleRowAncestorMap;
+    LinkDeviceTreeItem* visibleRowAncestorOfZmp;
 
     struct RowRenderInfo {
         bool rendered;
@@ -171,10 +171,10 @@ public:
     virtual void onLinkTreeUpdateRequest(bool isInitialCreation);
     void updateRowRects();
     void updateRowRectsSub(QTreeWidgetItem* treeWidgetItem);
-    LinkTreeItem* getFirstVisibleAncestor(const LinkTreeItem* item);
-    bool checkIfPoseHasRow(const PosePtr& pose, const LinkTreeItem* item);
-    double searchLastPoseTime(const LinkTreeItem* item);
-    void processKeyPoseMarkersSub(LinkTreeItem* item, std::function<void()> func);
+    LinkDeviceTreeItem* getFirstVisibleAncestor(const LinkDeviceTreeItem* item);
+    bool checkIfPoseHasRow(const PosePtr& pose, const LinkDeviceTreeItem* item);
+    double searchLastPoseTime(const LinkDeviceTreeItem* item);
+    void processKeyPoseMarkersSub(LinkDeviceTreeItem* item, std::function<void()> func);
     void processKeyPoseMarkers(std::function<void()> func);
             
     bool onScreenPaintEvent(QPaintEvent* event);        
@@ -710,7 +710,7 @@ void PoseRollViewImpl::onLinkTreeUpdateRequest(bool isInitialCreation)
 {
     PoseSeqViewBase::onLinkTreeUpdateRequest(isInitialCreation);
 
-    itemIndexToRowInfoMap.resize(linkTreeWidget->numLinkTreeItems());
+    itemIndexToRowInfoMap.resize(linkTreeWidget->numLinkDeviceTreeItems());
     
     updateRowRectsNeeded = true;
 }
@@ -746,7 +746,7 @@ void PoseRollViewImpl::updateRowRects()
 
 void PoseRollViewImpl::updateRowRectsSub(QTreeWidgetItem* treeWidgetItem)
 {
-    LinkTreeItem* item = dynamic_cast<LinkTreeItem*>(treeWidgetItem);
+    LinkDeviceTreeItem* item = dynamic_cast<LinkDeviceTreeItem*>(treeWidgetItem);
     if(item){
         QRect rect = linkTreeWidget->visualItemRect(item);
         RowInfo& rowInfo = itemIndexToRowInfoMap[item->rowIndex()];
@@ -762,7 +762,7 @@ void PoseRollViewImpl::updateRowRectsSub(QTreeWidgetItem* treeWidgetItem)
             rowInfo.height = rect.height();
             visibleRows.push_back(item);
         }
-        Link* link = item->link();
+        auto link = item->link();
         if(!link){
             rowInfo.linkIndex = -1;
             rowInfo.jointId = -1;
@@ -783,10 +783,10 @@ void PoseRollViewImpl::updateRowRectsSub(QTreeWidgetItem* treeWidgetItem)
 }
 
 
-LinkTreeItem* PoseRollViewImpl::getFirstVisibleAncestor(const LinkTreeItem* item)
+LinkDeviceTreeItem* PoseRollViewImpl::getFirstVisibleAncestor(const LinkDeviceTreeItem* item)
 {
     for(QTreeWidgetItem* parent = item->parent(); parent; parent = parent->parent()){
-        LinkTreeItem* row = dynamic_cast<LinkTreeItem*>(parent);
+        LinkDeviceTreeItem* row = dynamic_cast<LinkDeviceTreeItem*>(parent);
         if(row){
             const RowInfo& info = itemIndexToRowInfoMap[row->rowIndex()];
             if(info.isVisible){
@@ -798,7 +798,7 @@ LinkTreeItem* PoseRollViewImpl::getFirstVisibleAncestor(const LinkTreeItem* item
 }
 
 
-bool PoseRollViewImpl::checkIfPoseHasRow(const PosePtr& pose, const LinkTreeItem* item)
+bool PoseRollViewImpl::checkIfPoseHasRow(const PosePtr& pose, const LinkDeviceTreeItem* item)
 {
     if(item == zmpRow && pose->isZmpValid()){
         return true;
@@ -809,7 +809,7 @@ bool PoseRollViewImpl::checkIfPoseHasRow(const PosePtr& pose, const LinkTreeItem
     }
     int n = item->childCount();
     for(int i=0; i < n; ++i){
-        LinkTreeItem* childItem = dynamic_cast<LinkTreeItem*>(item->child(i));
+        LinkDeviceTreeItem* childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i));
         if(childItem && checkIfPoseHasRow(pose, childItem)){
             return true;
         }
@@ -818,7 +818,7 @@ bool PoseRollViewImpl::checkIfPoseHasRow(const PosePtr& pose, const LinkTreeItem
 }
 
 
-double PoseRollViewImpl::searchLastPoseTime(const LinkTreeItem* item)
+double PoseRollViewImpl::searchLastPoseTime(const LinkDeviceTreeItem* item)
 {
     PoseSeq::iterator last = markerPoseIter;
 
@@ -835,7 +835,7 @@ double PoseRollViewImpl::searchLastPoseTime(const LinkTreeItem* item)
 }
 
 
-void PoseRollViewImpl::processKeyPoseMarkersSub(LinkTreeItem* item, std::function<void()> func)
+void PoseRollViewImpl::processKeyPoseMarkersSub(LinkDeviceTreeItem* item, std::function<void()> func)
 {
     while(item){
         const RowInfo& rowInfo = itemIndexToRowInfoMap[item->rowIndex()];
@@ -860,7 +860,7 @@ void PoseRollViewImpl::processKeyPoseMarkersSub(LinkTreeItem* item, std::functio
                 renderInfo.lastPoseTime = timeScale * markerPoseIter->time();
             }
         }
-        item = dynamic_cast<LinkTreeItem*>(item->parent());
+        item = dynamic_cast<LinkDeviceTreeItem*>(item->parent());
     }
 }
 
@@ -978,7 +978,7 @@ void PoseRollViewImpl::drawBackground()
         double x = timeToScreenX * (floor(left) - left);
 
         for(size_t i=0; i < visibleRows.size(); ++i){
-            LinkTreeItem* item = visibleRows[i];
+            LinkDeviceTreeItem* item = visibleRows[i];
             const RowInfo& r = itemIndexToRowInfoMap[item->rowIndex()];
             if(r.y < 0.0){
                 continue;

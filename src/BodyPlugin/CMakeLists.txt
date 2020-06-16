@@ -40,7 +40,6 @@ set(sources
   SimulationBar.cpp
   LinkDeviceTreeWidget.cpp
   LinkDeviceListView.cpp
-  LinkTreeWidget.cpp
   LinkPositionView.cpp
   LinkPositionWidget.cpp
   LinkPropertyView.cpp
@@ -88,7 +87,6 @@ set(headers
   SimulationBar.h
   LinkDeviceTreeWidget.h
   LinkDeviceListView.h
-  LinkTreeWidget.h
   LinkPositionView.h
   LinkPositionWidget.h
   JointDisplacementWidget.h
@@ -105,8 +103,6 @@ set(target CnoidBodyPlugin)
 choreonoid_make_gettext_mo_files(${target} mofiles)
 
 qt5_add_resources(RC_SRCS BodyPlugin.qrc)
-qt5_wrap_cpp(qtsources LinkTreeWidget.h)
-set(sources ${sources} ${qtsources})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 

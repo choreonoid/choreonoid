@@ -191,7 +191,7 @@ LinkDeviceTreeItem::LinkDeviceTreeItem
       treeImpl(treeImpl),
       isLinkGroup_(false)
 {
-    if(treeImpl->isNameColumnMarginEnabled){
+    if(treeImpl && treeImpl->isNameColumnMarginEnabled){
         nameText_ = QString(" %1 ").arg(name_.c_str());
     } else {
         nameText_ = name_.c_str();
@@ -228,7 +228,7 @@ LinkDeviceTreeItem::LinkDeviceTreeItem(LinkGroup* linkGroup, LinkDeviceTreeWidge
 
 int LinkDeviceTreeItem::numberColumnMode() const
 {
-    return treeImpl->numberColumnMode;
+    return treeImpl ? treeImpl->numberColumnMode : LinkDeviceTreeWidget::Index;
 }
 
 

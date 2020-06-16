@@ -48,10 +48,10 @@ public:
     std::function<void(Qt::CheckState)> slotOnClicked;        
 };
 
-class LinkTreeWidgetEx : public LinkTreeWidget
+class LinkTreeWidgetEx : public LinkDeviceTreeWidget
 {
 public:
-    LinkTreeWidgetEx(QWidget* parent) : LinkTreeWidget(parent) {
+    LinkTreeWidgetEx(QWidget* parent) : LinkDeviceTreeWidget(parent) {
         header()->setSectionResizeMode(nameColumn(), QHeaderView::ResizeToContents);
     }
     virtual QSize sizeHint() const {
@@ -387,29 +387,27 @@ void PoseSeqViewBase::setupLinkTreeWidget()
     //linkTreeWidget->setStyleSheet("QTreeView::item { border-right: 1px solid black }");
     
     QHeaderView* header = linkTreeWidget->header();
-    header->hideSection(linkTreeWidget->jointIdColumn());
+    header->hideSection(linkTreeWidget->numberColumn());
 
     poseForDefaultStateSetting = new Pose();
     
     baseLinkColumn = linkTreeWidget->addColumn("BL");
     linkTreeWidget->moveVisualColumnIndex(baseLinkColumn, 0);
-    baseLinkRadioGroup = 0;
+    baseLinkRadioGroup = nullptr;
 
     validPartColumn = linkTreeWidget->addColumn("ON");
     stationaryPointColumn = linkTreeWidget->addColumn("SP");
     ikPartColumn = linkTreeWidget->addColumn("IK");
     
-    zmpRow = new LinkTreeItem("ZMP");
+    zmpRow = new LinkDeviceTreeItem("ZMP");
     linkTreeWidget->addCustomRow(zmpRow);
 
     linkTreeWidget->sigUpdateRequest().connect(
         std::bind(&PoseSeqViewBase::onLinkTreeUpdateRequest, this, _1));
 
     linkTreeWidget->setFrameShape(QFrame::NoFrame);
-    linkTreeWidget->setDefaultExpansionLevel(1);
-    linkTreeWidget->enableCache(true);
-    linkTreeWidget->setListingMode(LinkTreeWidget::PART_TREE);
-    linkTreeWidget->fixListingMode(true);
+    linkTreeWidget->setCacheEnabled(true);
+    linkTreeWidget->setListingMode(LinkDeviceTreeWidget::GroupedTree);
 
     MenuManager& mm = linkTreeWidget->popupMenuManager();
     mm.addItem(_("Select key poses having the selected links"))->sigTriggered().connect(
@@ -421,14 +419,14 @@ void PoseSeqViewBase::setupLinkTreeWidget()
 }
 
 
-bool PoseSeqViewBase::isChecked(LinkTreeItem* item, int column)
+bool PoseSeqViewBase::isChecked(LinkDeviceTreeItem* item, int column)
 {
     QAbstractButton* check = dynamic_cast<QAbstractButton*>(linkTreeWidget->alignedItemWidget(item, column));
     return check ? check->isChecked() : Qt::Unchecked;
 }
 
 
-void PoseSeqViewBase::setChecked(LinkTreeItem* item, int column, bool checked)
+void PoseSeqViewBase::setChecked(LinkDeviceTreeItem* item, int column, bool checked)
 {
     QAbstractButton* check = dynamic_cast<QAbstractButton*>(linkTreeWidget->alignedItemWidget(item, column));
     if(check){
@@ -437,7 +435,7 @@ void PoseSeqViewBase::setChecked(LinkTreeItem* item, int column, bool checked)
 }
 
 
-void PoseSeqViewBase::setCheckState(LinkTreeItem* item, int column, Qt::CheckState state)
+void PoseSeqViewBase::setCheckState(LinkDeviceTreeItem* item, int column, Qt::CheckState state)
 {
     QCheckBox* check = dynamic_cast<QCheckBox*>(linkTreeWidget->alignedItemWidget(item, column));
     if(check){
@@ -494,7 +492,7 @@ void PoseSeqViewBase::initializeLinkTreeIkLinkColumn()
                 Link* link = body->link(possibleIkLinks[i]);
                 if(link){
                     possibleIkLinkFlag[link->index()] = true;
-                    LinkTreeItem* item = linkTreeWidget->itemOfLink(link->index());
+                    LinkDeviceTreeItem* item = linkTreeWidget->itemOfLink(link->index());
                     if(item){
                         ColumnCheckBox* checkBox = new ColumnCheckBox(
                             std::bind(&PoseSeqViewBase::onIkPartCheckClicked, this, item, _1));
@@ -524,11 +522,11 @@ void PoseSeqViewBase::initializeLinkTreeTraverse(QTreeWidgetItem* parentItem)
 {
     int n = parentItem->childCount();
     for(int i=0; i < n; ++i){
-        LinkTreeItem* item = dynamic_cast<LinkTreeItem*>(parentItem->child(i));
+        LinkDeviceTreeItem* item = dynamic_cast<LinkDeviceTreeItem*>(parentItem->child(i));
         if(!item){
             continue;
         }
-        Link* link = item->link();
+        auto link = item->link();
 
         if(!link || link->parent()){
 
@@ -621,15 +619,14 @@ bool PoseSeqViewBase::setBaseLink(PosePtr& pose, Link* link)
 }
 
 
-void PoseSeqViewBase::onValidPartCheckClicked(LinkTreeItem* item, Qt::CheckState checkState)
+void PoseSeqViewBase::onValidPartCheckClicked(LinkDeviceTreeItem* item, Qt::CheckState checkState)
 {
     bool on = ((checkState == Qt::Unchecked) || (checkState == Qt::PartiallyChecked));
     
     if(item == zmpRow){
         togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleZmp, this, _1, on));
     } else {
-        Link* link = item->link();
-        if(link){
+        if(auto link = item->link()){
             bool isIkPartChecked = isChecked(item, ikPartColumn);
             togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleLink, this, _1, item, link, on, isIkPartChecked));
         } else {
@@ -659,7 +656,7 @@ bool PoseSeqViewBase::toggleZmp(PosePtr& pose, bool on)
 
 
 
-bool PoseSeqViewBase::toggleLink(PosePtr& pose, LinkTreeItem* item, Link* link, bool partOn, bool ikOn)
+bool PoseSeqViewBase::toggleLink(PosePtr& pose, LinkDeviceTreeItem* item, Link* link, bool partOn, bool ikOn)
 {
     bool modified = false;
     int jId = link->jointId();
@@ -701,12 +698,11 @@ bool PoseSeqViewBase::toggleLink(PosePtr& pose, LinkTreeItem* item, Link* link, 
 }
 
 
-bool PoseSeqViewBase::togglePart(PosePtr& pose, LinkTreeItem* item, bool on)
+bool PoseSeqViewBase::togglePart(PosePtr& pose, LinkDeviceTreeItem* item, bool on)
 {
     bool modified = false;
     
-    Link* link = item->link();
-    if(link){
+    if(auto link = item->link()){
         bool ikOn = false;
         if(possibleIkLinkFlag[link->index()]){
             if(isChecked(item, validPartColumn)){
@@ -720,7 +716,7 @@ bool PoseSeqViewBase::togglePart(PosePtr& pose, LinkTreeItem* item, bool on)
 
     int n = item->childCount();
     for(int i=0; i < n; ++i){
-        LinkTreeItem* childItem = dynamic_cast<LinkTreeItem*>(item->child(i));
+        LinkDeviceTreeItem* childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i));
         if(childItem){
             modified |= togglePart(pose, childItem, on);
         }
@@ -730,14 +726,13 @@ bool PoseSeqViewBase::togglePart(PosePtr& pose, LinkTreeItem* item, bool on)
 }
 
 
-void PoseSeqViewBase::onStationaryPointCheckClicked(LinkTreeItem* item, Qt::CheckState checkState)
+void PoseSeqViewBase::onStationaryPointCheckClicked(LinkDeviceTreeItem* item, Qt::CheckState checkState)
 {
     bool on = (checkState == Qt::Unchecked);
     if(item == zmpRow){
         togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleZmpStationaryPoint, this, _1, on));
     } else {
-        Link* link = item->link();
-        if(link){
+        if(auto link = item->link()){
             togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleStationaryPoint, this, _1, link, on));
         } else {
             if(checkState == Qt::PartiallyChecked){
@@ -785,17 +780,16 @@ bool PoseSeqViewBase::toggleStationaryPoint(PosePtr& pose, Link* link, bool on)
 }
 
 
-bool PoseSeqViewBase::togglePartStationaryPoints(PosePtr& pose, LinkTreeItem* item, bool on)
+bool PoseSeqViewBase::togglePartStationaryPoints(PosePtr& pose, LinkDeviceTreeItem* item, bool on)
 {
     bool modified = false;
     
-    Link* link = item->link();
-    if(link){
+    if(auto link = item->link()){
         modified = toggleStationaryPoint(pose, link, on);
     }
     int n = item->childCount();
     for(int i=0; i < n; ++i){
-        LinkTreeItem* childItem = dynamic_cast<LinkTreeItem*>(item->child(i));
+        LinkDeviceTreeItem* childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i));
         if(childItem){
             modified |= togglePartStationaryPoints(pose, childItem, on);
         }
@@ -804,10 +798,9 @@ bool PoseSeqViewBase::togglePartStationaryPoints(PosePtr& pose, LinkTreeItem* it
 }
 
 
-void PoseSeqViewBase::onIkPartCheckClicked(LinkTreeItem* item, Qt::CheckState checkState)
+void PoseSeqViewBase::onIkPartCheckClicked(LinkDeviceTreeItem* item, Qt::CheckState checkState)
 {
-    Link* link = item->link();
-    if(link){
+    if(auto link = item->link()){
         bool ikOn = (checkState == Qt::Unchecked);
         bool partOn = ikOn | isChecked(item, validPartColumn);
         togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleLink, this, _1, item, link, partOn, ikOn));
@@ -853,14 +846,14 @@ void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItemPtr poseSeqItem)
 
     connectionOfBodyKinematicStateEdited.disconnect();
 
-    seq = 0;
-    currentBodyItem = 0;
+    seq.reset();
+    currentBodyItem.reset();
     body.reset();
     selectedPoseIters.clear();
 
     if(!poseSeqItem){
         if(linkTreeWidget->bodyItem()){
-            linkTreeWidget->setBodyItem(0);
+            linkTreeWidget->setBodyItem(nullptr);
         }
 
     } else {
@@ -1473,7 +1466,7 @@ PoseSeq::iterator PoseSeqViewBase::insertPose()
 
     for(int i=0; i < body->numLinks(); ++i){
         Link* link = body->link(i);
-        LinkTreeItem* item = linkTreeWidget->itemOfLink(link->index());
+        LinkDeviceTreeItem* item = linkTreeWidget->itemOfLink(link->index());
         if(item){
             if(link->jointId() >= 0 && isChecked(item, validPartColumn)){
                 pose->setJointPosition(link->jointId(), link->q());
@@ -1758,7 +1751,7 @@ void PoseSeqViewBase::updateLinkTreeModel()
 
     int n = linkTreeWidget->topLevelItemCount();
     for(int i=0; i < n; ++i){
-        LinkTreeItem* item = dynamic_cast<LinkTreeItem*>(linkTreeWidget->topLevelItem(i));
+        LinkDeviceTreeItem* item = dynamic_cast<LinkDeviceTreeItem*>(linkTreeWidget->topLevelItem(i));
         if(item){
             updateLinkTreeModelSub(item, linkTreeWidget->bodyItem()->body(), *pose);
         }
@@ -1769,13 +1762,13 @@ void PoseSeqViewBase::updateLinkTreeModel()
 
 
 PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
-(LinkTreeItem* item, const BodyPtr& body, const Pose& pose)
+(LinkDeviceTreeItem* item, const BodyPtr& body, const Pose& pose)
 {
     ChildrenState state;
 
     int n = item->childCount();
     for(int i=0; i < n; ++i){
-        LinkTreeItem* childItem = dynamic_cast<LinkTreeItem*>(item->child(i));
+        LinkDeviceTreeItem* childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i));
         if(childItem){
             ChildrenState childrenState = updateLinkTreeModelSub(childItem, body, pose);
             state.validChildExists |= childrenState.validChildExists;
@@ -1794,9 +1787,7 @@ PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
             setChecked(item, stationaryPointColumn, false);
         }
     } else {
-        Link* link = item->link();
-
-        if(link){
+        if(auto link = item->link()){
             bool isBaseLink = false;
             bool isValidPart = false;
             bool isStationaryPoint = false;
@@ -1903,14 +1894,14 @@ bool PoseSeqViewBase::restoreState(const Archive& archive)
     archive.addPostProcess(
         std::bind(&PoseSeqViewBase::restoreCurrentPoseSeqItem, this, std::ref(archive)));
 
-    linkTreeWidget->restoreState(archive);
-        
     return true;
 }
 
 
 void PoseSeqViewBase::restoreCurrentPoseSeqItem(const Archive& archive)
 {
+    linkTreeWidget->restoreState(archive);
+        
     PoseSeqItem* item = archive.findItem<PoseSeqItem>("currentPoseSeqItem");
     if(item){
         setCurrentPoseSeqItem(item);

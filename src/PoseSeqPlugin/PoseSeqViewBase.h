@@ -8,6 +8,7 @@
 #include "PoseSeqItem.h"
 #include <cnoid/ItemList>
 #include <cnoid/View>
+#include <cnoid/LinkDeviceTreeWidget>
 #include <cnoid/ConnectionSet>
 #include <cnoid/TimeBar>
 #include <cnoid/Archive>
@@ -18,7 +19,6 @@
 #include <cnoid/ButtonGroup>
 #include <cnoid/SpinBox>
 #include <cnoid/BodyItem>
-#include <cnoid/LinkTreeWidget>
 #include <QBoxLayout>
 #include <QLabel>
 #include <ostream>
@@ -71,14 +71,14 @@ public:
     TimeBar* timeBar;
     Connection connectionOfTimeChanged;
 
-    LinkTreeWidget* linkTreeWidget;
+    LinkDeviceTreeWidget* linkTreeWidget;
     int baseLinkColumn;
     ButtonGroup* baseLinkRadioGroup;
     int validPartColumn;
     int stationaryPointColumn;
     int ikPartColumn;
     std::vector<bool> possibleIkLinkFlag;
-    LinkTreeItem* zmpRow;
+    LinkDeviceTreeItem* zmpRow;
         
     PosePtr poseForDefaultStateSetting;
 
@@ -161,9 +161,9 @@ public:
     void onTimeSyncCheckToggled();
     void setupOperationParts();
     void setupLinkTreeWidget();
-    bool isChecked(LinkTreeItem* item, int column);
-    void setChecked(LinkTreeItem* item, int column, bool checked);
-    void setCheckState(LinkTreeItem* item, int column, Qt::CheckState state);
+    bool isChecked(LinkDeviceTreeItem* item, int column);
+    void setChecked(LinkDeviceTreeItem* item, int column, bool checked);
+    void setCheckState(LinkDeviceTreeItem* item, int column, Qt::CheckState state);
     void initializeLinkTree();
     void initializeLinkTreeIkLinkColumn();
     void initializeLinkTreeTraverse(QTreeWidgetItem* parentItem);
@@ -171,15 +171,15 @@ public:
     void togglePoseAttribute(std::function<bool(PosePtr& pose)> toggleFunction);
     void onBaseLinkRadioClicked();
     bool setBaseLink(PosePtr& pose, Link* link);
-    void onValidPartCheckClicked(LinkTreeItem* item, Qt::CheckState checkState);
+    void onValidPartCheckClicked(LinkDeviceTreeItem* item, Qt::CheckState checkState);
     bool toggleZmp(PosePtr& pose, bool on);
-    bool toggleLink(PosePtr& pose, LinkTreeItem* item, Link* link, bool partOn, bool ikOn);
-    bool togglePart(PosePtr& pose, LinkTreeItem* item, bool on);
-    void onStationaryPointCheckClicked(LinkTreeItem* linkTreeItem, Qt::CheckState checkState);
+    bool toggleLink(PosePtr& pose, LinkDeviceTreeItem* item, Link* link, bool partOn, bool ikOn);
+    bool togglePart(PosePtr& pose, LinkDeviceTreeItem* item, bool on);
+    void onStationaryPointCheckClicked(LinkDeviceTreeItem* linkTreeItem, Qt::CheckState checkState);
     bool toggleZmpStationaryPoint(PosePtr& pose, bool on);
     bool toggleStationaryPoint(PosePtr& pose, Link* link, bool on);
-    bool togglePartStationaryPoints(PosePtr& pose, LinkTreeItem* item, bool on);
-    void onIkPartCheckClicked(LinkTreeItem* item, Qt::CheckState checkState);
+    bool togglePartStationaryPoints(PosePtr& pose, LinkDeviceTreeItem* item, bool on);
+    void onIkPartCheckClicked(LinkDeviceTreeItem* item, Qt::CheckState checkState);
 
     void onInterpolationParametersChanged();
     void onSelectedItemsChanged(ItemList<PoseSeqItem> selectedItems);
@@ -190,7 +190,7 @@ public:
     void setCurrentBodyStateToSelectedPoses(bool onlySelected);
     bool setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected);
     bool setCurrentLinkStateToIkLink(Link* link, Pose::LinkInfo* linkInfo);
-    ChildrenState updateLinkTreeModelSub(LinkTreeItem* item,  const BodyPtr& body, const Pose& pose);
+    ChildrenState updateLinkTreeModelSub(LinkDeviceTreeItem* item,  const BodyPtr& body, const Pose& pose);
 
 private:
     void restoreCurrentPoseSeqItem(const Archive& archive);
