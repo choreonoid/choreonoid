@@ -7,7 +7,6 @@
 #include <cnoid/Buttons>
 #include <cnoid/ButtonGroup>
 #include <cnoid/CheckBox>
-#include <cnoid/ComboBox>
 #include <QBoxLayout>
 #include "gettext.h"
 
@@ -70,6 +69,8 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     vbox->setSpacing(0);
 
     auto hbox = new QHBoxLayout;
+    int lmargin = self->style()->pixelMetric(QStyle::PM_LayoutLeftMargin);
+    hbox->addSpacing(lmargin / 2);
     allRadio.setText(_("All"));
     elementRadioGroup.addButton(&allRadio, 0);
     hbox->addWidget(&allRadio);
@@ -98,7 +99,8 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     vbox->addWidget(hframe);
 
     treeWidget.setFrameShape(QFrame::NoFrame);
-    treeWidget.setMode(LinkDeviceTreeWidget::List);
+    treeWidget.setListingMode(LinkDeviceTreeWidget::List);
+    treeWidget.setNumberColumnMode(LinkDeviceTreeWidget::Index);
     treeWidget.setLinkItemVisible(true);
     treeWidget.setDeviceItemVisible(false);
     treeWidget.setCacheEnabled(true);
@@ -143,7 +145,7 @@ void LinkDeviceListView::Impl::onTargetElementTypeChanged(int id)
 void LinkDeviceListView::Impl::onTreeModeToggled(bool on)
 {
     if(on){
-        treeWidget.setMode(LinkDeviceTreeWidget::Tree);
+        treeWidget.setListingMode(LinkDeviceTreeWidget::Tree);
 
         if(deviceRadio.isChecked()){
             elementRadioGroup.blockSignals(true);
@@ -155,7 +157,7 @@ void LinkDeviceListView::Impl::onTreeModeToggled(bool on)
         deviceRadio.setEnabled(false);
             
     } else {
-        treeWidget.setMode(LinkDeviceTreeWidget::List);
+        treeWidget.setListingMode(LinkDeviceTreeWidget::List);
         deviceRadio.setEnabled(true);
     }
     

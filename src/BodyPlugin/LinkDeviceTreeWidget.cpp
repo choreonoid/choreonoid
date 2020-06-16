@@ -10,8 +10,9 @@
 #include <QBoxLayout>
 #include <QEvent>
 #include <QApplication>
-#include <set>
+#include <QFontMetrics>
 #include <map>
+#include <set>
 #include <iostream>
 #include <cassert>
 #include "gettext.h"
@@ -27,17 +28,13 @@ class BodyItemInfo
 {
 public:
     bool isRestoringTreeStateNeeded;
-    
     LinkGroupPtr linkGroup;
-    
     vector<bool> selection;
     vector<int> selectedLinkIndices;
     Signal<void()> sigSelectionChanged;
-    
     bool needTreeExpansionUpdate;
     vector<bool> linkExpansions;
     set<string> expandedParts;
-    
     Connection detachedFromRootConnection;
     
     BodyItemInfo() {
@@ -70,7 +67,8 @@ public:
 
     LinkDeviceTreeWidget* self;
 
-    int mode;
+    int listingMode;
+    int numberColumnMode;
     bool isLinkItemVisible;
     bool isDeviceItemVisible;
     bool isSortByIdEnabled;
@@ -85,7 +83,7 @@ public:
 
     QTreeWidgetItem* headerItem;
     int nameColumn;
-    int idColumn;
+    int numberColumn;
     int rowIndexCounter;
     int itemWidgetWidthAdjustment;
     vector<LinkDeviceTreeItem*> customRows;
@@ -114,6 +112,7 @@ public:
 
     void initialize();
     void setCacheEnabled(bool on);
+    void onNumberSectionClicked();
     void setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUpdate);
     void updateTreeItems();
     void clearTreeItems();
@@ -121,8 +120,7 @@ public:
     void onBodyItemDisconnectedFromRoot(BodyItem* bodyItem);
     void addTreeItem(QTreeWidgetItem* item, QTreeWidgetItem* parentItem);
     void addLinkDeviceTreeItem(LinkDeviceTreeItem* item, QTreeWidgetItem* parentItem = nullptr);
-    void createLinkDeviceList(Body* body);    
-    void createLinkList(Body* body);
+    void createLinkDeviceList(Body* body);
     void createDeviceList(Body* body);
     void createLinkDeviceTree(Body* body);
     void createLinkDeviceTreeSub(
@@ -152,24 +150,38 @@ public:
 
 namespace {
 
-QVariant idData(const LinkDeviceTreeItem* item, int role)
-{
-    if(role == Qt::DisplayRole){
-        if(auto link = item->link()){
-            return link->index();
-        } else if(auto device = item->device()){
-            return device->index();
-        }
-    } else if(role == Qt::TextAlignmentRole){
-        return Qt::AlignHCenter;
-    }
-    return QVariant();
-}
-
 QVariant nameData(const LinkDeviceTreeItem* item, int role)
 {
     if(role == Qt::DisplayRole){
         return item->nameText();
+    }
+    return QVariant();
+}
+
+QVariant numberData(const LinkDeviceTreeItem* item, int role)
+{
+    if(role == Qt::DisplayRole){
+        if(auto link = item->link()){
+            if(item->numberColumnMode() == LinkDeviceTreeWidget::Index){
+                return link->index();
+            } else {
+                int id = link->jointId();
+                if(id >= 0){
+                    return id;
+                }
+            }
+        } else if(auto device = item->device()){
+            if(item->numberColumnMode() == LinkDeviceTreeWidget::Index){
+                return device->index();
+            } else {
+                int id = device->id();
+                if(id >= 0){
+                    return id;
+                }
+            }
+        }
+    } else if(role == Qt::TextAlignmentRole){
+        return Qt::AlignHCenter;
     }
     return QVariant();
 }
@@ -221,6 +233,12 @@ LinkDeviceTreeItem::LinkDeviceTreeItem(LinkGroup* linkGroup, LinkDeviceTreeWidge
 }
 
 
+int LinkDeviceTreeItem::numberColumnMode() const
+{
+    return treeImpl->numberColumnMode;
+}
+
+
 QVariant LinkDeviceTreeItem::data(int column, int role) const
 {
     QVariant value;
@@ -266,8 +284,10 @@ void LinkDeviceTreeWidget::Impl::initialize()
 {
     headerItem = new QTreeWidgetItem;
     auto header = self->header();
-    header->setMinimumSectionSize(0);
+    QFontMetrics metrics(self->font());
+    header->setMinimumSectionSize(metrics.averageCharWidth() * 4);
     header->setStretchLastSection(false);
+    header->setSectionsClickable(true);
 
     self->sigSectionResized().connect(
         [&](int, int, int){ self->updateGeometry(); });
@@ -279,16 +299,20 @@ void LinkDeviceTreeWidget::Impl::initialize()
     self->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     self->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
 
-    nameColumn = self->addColumn(_("Link"));
+    nameColumn = self->addColumn();
     header->setSectionResizeMode(nameColumn, QHeaderView::Stretch);
     self->setColumnDataGetter(nameColumn, &nameData);
 
-    idColumn = self->addColumn(_(" No "));
-    self->setColumnDataGetter(idColumn, &idData);
-    header->setSectionResizeMode(idColumn, QHeaderView::ResizeToContents);
-    
-    headerItem->setTextAlignment(idColumn, Qt::AlignCenter);
-    self->moveVisualColumnIndex(idColumn, 0);
+    numberColumn = self->addColumn();
+    self->setColumnDataGetter(numberColumn, &numberData);
+    header->setSectionResizeMode(numberColumn, QHeaderView::ResizeToContents);
+    headerItem->setTextAlignment(numberColumn, Qt::AlignCenter);
+    QObject::connect(header, &QHeaderView::sectionClicked,
+                     [&](int logicalIndex){
+                         if(logicalIndex == 1){ onNumberSectionClicked(); }
+                     });
+
+    self->moveVisualColumnIndex(numberColumn, 0);
 
     QObject::connect(self, &QTreeWidget::itemChanged,
                      [&](QTreeWidgetItem* item, int column){ onItemChanged(item, column); });
@@ -302,7 +326,8 @@ void LinkDeviceTreeWidget::Impl::initialize()
     QObject::connect(self, &QTreeWidget::itemSelectionChanged,
                      [&](){ onSelectionChanged(); });
 
-    mode = List;
+    listingMode = List;
+    numberColumnMode = Index;
     isLinkItemVisible = true;
     isDeviceItemVisible = false;
     isSortByIdEnabled = false;
@@ -329,15 +354,32 @@ LinkDeviceTreeWidget::Impl::~Impl()
 }
 
 
-void LinkDeviceTreeWidget::setMode(int mode)
+void LinkDeviceTreeWidget::setListingMode(int mode)
 {
-    impl->mode = mode;
+    impl->listingMode = mode;
 }
 
 
-int LinkDeviceTreeWidget::mode() const
+int LinkDeviceTreeWidget::listingMode() const
 {
-    return impl->mode;
+    return impl->listingMode;
+}
+
+
+void LinkDeviceTreeWidget::setNumberColumnMode(int mode)
+{
+    impl->numberColumnMode = mode;
+    if(mode == Index){
+        impl->headerItem->setText(impl->numberColumn, _("No"));
+    } else {
+        impl->headerItem->setText(impl->numberColumn, _("ID"));
+    }
+}
+
+
+int LinkDeviceTreeWidget::numberColumnMode() const
+{
+    return impl->numberColumnMode;
 }
 
 
@@ -411,9 +453,9 @@ int LinkDeviceTreeWidget::nameColumn() const
 }
 
 
-int LinkDeviceTreeWidget::idColumn() const
+int LinkDeviceTreeWidget::numberColumn() const
 {
-    return impl->idColumn;
+    return impl->numberColumn;
 }
 
 
@@ -427,18 +469,15 @@ int LinkDeviceTreeWidget::setNumColumns(int n)
 
 int LinkDeviceTreeWidget::addColumn()
 {
-    int column = impl->columnInfos.size();
-    impl->columnInfos.push_back(Impl::ColumnInfo());
-    setColumnCount(impl->columnInfos.size());
-    impl->headerItem->setText(column, QString());
-    header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
-    return column;
+    return addColumn(QString());
 }
 
 
 int LinkDeviceTreeWidget::addColumn(const QString& headerText)
 {
-    int column = addColumn();
+    int column = impl->columnInfos.size();
+    impl->columnInfos.push_back(Impl::ColumnInfo());
+    setColumnCount(impl->columnInfos.size());
     impl->headerItem->setText(column, headerText);
     header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
     return column;
@@ -535,6 +574,17 @@ SignalProxy<void(bool isInitialCreation)> LinkDeviceTreeWidget::sigUpdateRequest
 }
 
 
+void LinkDeviceTreeWidget::Impl::onNumberSectionClicked()
+{
+    if(numberColumnMode == Index){
+        self->setNumberColumnMode(Identifier);
+    } else {
+        self->setNumberColumnMode(Index);
+    }
+    updateTreeItems();
+}
+
+
 void LinkDeviceTreeWidget::setBodyItem(BodyItem* bodyItem)
 {
     impl->setCurrentBodyItem(bodyItem, false);
@@ -583,7 +633,7 @@ void LinkDeviceTreeWidget::Impl::updateTreeItems()
         auto body = currentBodyItem->body();
         linkIndexToItemMap.resize(body->numLinks(), 0);
 
-        if(mode == GroupedTree){
+        if(listingMode == GroupedTree){
             self->setRootIsDecorated(true);
             headerItem->setText(nameColumn, _(" Part / Link "));
             createGroupedLinkTree(body, currentBodyItemInfo->linkGroup);
@@ -592,22 +642,19 @@ void LinkDeviceTreeWidget::Impl::updateTreeItems()
             if(isLinkItemVisible){
                 if(isDeviceItemVisible){
                     headerItem->setText(nameColumn, _(" Link / Device "));
-                    if(mode == List){
-                        createLinkDeviceList(body);
-                    }
                 } else {
                     headerItem->setText(nameColumn, _(" Link "));
-                    if(mode == List){
-                        createLinkList(body);
-                    }
+                }
+                if(listingMode == List){
+                    createLinkDeviceList(body);
                 }
             } else if(isDeviceItemVisible){
                 headerItem->setText(nameColumn, _(" Device "));
-                if(mode == List){
+                if(listingMode == List){
                     createDeviceList(body);
                 }
             }
-            if(mode == Tree){
+            if(listingMode == Tree){
                 if(isLinkItemVisible){
                     createLinkDeviceTree(body);
                 }
@@ -740,33 +787,39 @@ void LinkDeviceTreeWidget::Impl::addLinkDeviceTreeItem(LinkDeviceTreeItem* item,
 
 void LinkDeviceTreeWidget::Impl::createLinkDeviceList(Body* body)
 {
-    map<Link*, vector<Device*>> devices;
-    for(auto& device : body->devices()){
-        devices[device->link()].push_back(device);
+    map<const Link*, vector<Device*>> devices;
+    if(isDeviceItemVisible){
+        for(auto& device : body->devices()){
+            devices[device->link()].push_back(device);
+        }
     }
-    int numDevices = 0;
-    for(auto& link : body->links()){
+    auto links = body->links().getStdVectorCopy();
+    if(numberColumnMode == Identifier){
+        std::stable_sort(links.begin(), links.end(),
+                  [&](Link* l0, Link* l1){
+                      if(l0->jointId() < 0 || l1->jointId() < 0){
+                          return false;
+                      }
+                      return l0->jointId() < l1->jointId();
+                  });
+    }
+        
+    for(auto& link : links){
+
         auto linkItem = new LinkDeviceTreeItem(link, this);
         addLinkDeviceTreeItem(linkItem);
-        auto it = devices.find(link);
+
+        auto it = devices.find(linkItem->link());
         if(it != devices.end()){
             for(auto& device : it->second){
                 auto deviceItem = new LinkDeviceTreeItem(device, this);
                 addLinkDeviceTreeItem(deviceItem, linkItem);
-                ++numDevices;
             }
         }
     }
-    if(numDevices > 0){
+
+    if(!devices.empty()){
         self->setRootIsDecorated(true);
-    }
-}
-
-
-void LinkDeviceTreeWidget::Impl::createLinkList(Body* body)
-{
-    for(auto& link : body->links()){
-        addLinkDeviceTreeItem(new LinkDeviceTreeItem(link, this));
     }
 }
 
@@ -909,7 +962,7 @@ void LinkDeviceTreeWidget::Impl::restoreSubTreeStateIter(QTreeWidgetItem* parent
             }
             if(item->childCount() > 0){ // Tree
                 bool expanded = item->isExpanded();
-                if(mode == GroupedTree){
+                if(listingMode == GroupedTree){
                     if(!link){
                         auto& parts = currentBodyItemInfo->expandedParts;                        
                         expanded = (parts.find(item->name()) != parts.end());
@@ -1085,12 +1138,12 @@ void LinkDeviceTreeWidget::Impl::onCustomContextMenuRequested(const QPoint& pos)
 
 void LinkDeviceTreeWidget::Impl::setExpansionState(const LinkDeviceTreeItem* item, bool on)
 {
-    if(mode == Tree){
+    if(listingMode == Tree){
         if(item->link()){
             currentBodyItemInfo->linkExpansions[item->link()->index()] = on;
         }
 
-    } else if(mode == GroupedTree){
+    } else if(listingMode == GroupedTree){
         if(on){
             currentBodyItemInfo->expandedParts.insert(item->name());
         } else {

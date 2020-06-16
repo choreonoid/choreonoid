@@ -22,9 +22,12 @@ public:
     LinkDeviceTreeWidget(QWidget* parent = 0);
     virtual ~LinkDeviceTreeWidget();
 
-    enum Mode { List, Tree, GroupedTree };
-    void setMode(int mode);
-    int mode() const;
+    enum ListingMode { List, Tree, GroupedTree };
+    void setListingMode(int mode);
+    int listingMode() const;
+    enum NumberColumnMode { Index, Identifier };
+    void setNumberColumnMode(int mode);
+    int numberColumnMode() const;
     void setLinkItemVisible(bool on);
     bool isLinkItemVisible() const;
     void setDeviceItemVisible(bool on);
@@ -36,7 +39,7 @@ public:
     bool isCacheEnabled() const;
 
     int nameColumn() const;
-    int idColumn() const;
+    int numberColumn() const;
     int setNumColumns(int n);
     int addColumn();
     int addColumn(const QString& headerText);
@@ -103,12 +106,12 @@ class CNOID_EXPORT LinkDeviceTreeItem : public QTreeWidgetItem
 {
 public:
     int rowIndex() const { return rowIndex_; }
-        
     const std::string& name() const { return name_; }
     const QString& nameText() const { return nameText_; }
     const Link* link() const { return link_; }
     const Device* device() const { return device_; }
     bool isLinkGroup() const { return isLinkGroup_; }
+    int numberColumnMode() const;
 
     virtual QVariant data(int column, int role) const override;
     virtual void setData(int column, int role, const QVariant& value) override;
