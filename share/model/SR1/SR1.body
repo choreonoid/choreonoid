@@ -677,7 +677,7 @@ links:
       -
         type: ForceSensor
         name: RightAnkleForceSensor
-        id: 0
+        id: 1
       - *LegShape6
 
 standardPose: [ 
