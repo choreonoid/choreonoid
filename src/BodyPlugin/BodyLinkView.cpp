@@ -177,9 +177,9 @@ BodyLinkView::Impl::Impl(BodyLinkView* self)
 {
     self->setDefaultLayoutArea(View::CENTER);
 
-    currentWorldItem = 0;
-    currentBodyItem = 0;
-    currentLink = 0;
+    currentWorldItem = nullptr;
+    currentBodyItem = nullptr;
+    currentLink = nullptr;
 
     setupWidgets();
 
@@ -486,12 +486,10 @@ void BodyLinkView::Impl::onCurrentLinkChanged(BodyItem* bodyItem, Link* link)
     if(bodyItem != currentBodyItem){
         activateCurrentBodyItem(false);
         currentBodyItem = bodyItem;
-        if(link){
-            currentLink = link;
-        }
+        currentLink = link;
         activateCurrentBodyItem(true);
 
-    } else if(link != currentLink){
+    } else if(link && link != currentLink){
         currentLink = link;
         update();
     }

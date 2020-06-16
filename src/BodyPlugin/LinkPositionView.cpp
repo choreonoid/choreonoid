@@ -107,7 +107,8 @@ void LinkPositionView::onActivated()
     
     impl->activeStateConnection =
         bsm->sigCurrentSpecified().connect(
-            [&](BodyItem* bodyItem, Link* link){
+            [this, bsm](BodyItem* bodyItem, Link* link){
+                if(!link) link = bsm->currentLink();
                 impl->setTargetBodyAndLink(bodyItem, link);
             });
 }

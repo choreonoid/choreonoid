@@ -84,10 +84,13 @@ LinkPropertyView::Impl::Impl(LinkPropertyView* self)
         zoomFontSize(storedFontPointSizeDiff);
     }
 
+    auto bsm = BodySelectionManager::instance();
     connection.reset(
-        BodySelectionManager::instance()->sigCurrentChanged().connect(
-            [&](BodyItem* bodyItem, Link* link){
-                onCurrentLinkChanged(bodyItem, link); }));
+        bsm->sigCurrentChanged().connect(
+            [this, bsm](BodyItem* bodyItem, Link* link){
+                if(!link) link = bsm->currentLink();
+                onCurrentLinkChanged(bodyItem, link);
+            }));
 }
 
 

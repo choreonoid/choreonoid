@@ -49,13 +49,6 @@ void LinkDeviceListView::initializeClass(ExtensionManager* ext)
 }
 
 
-LinkDeviceListView* LinkDeviceListView::instance()
-{
-    static LinkDeviceListView* instance_ = ViewManager::getOrCreateView<LinkDeviceListView>();
-    return instance_;
-}
-
-
 LinkDeviceListView::LinkDeviceListView()
 {
     impl = new Impl(this);
@@ -100,12 +93,9 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     hframe->setFrameStyle(QFrame::HLine | QFrame::Sunken);
     vbox->addWidget(hframe);
 
-    treeWidget.setFrameShape(QFrame::NoFrame);
-    treeWidget.setListingMode(LinkDeviceTreeWidget::List);
-    treeWidget.setNumberColumnMode(LinkDeviceTreeWidget::Index);
-    treeWidget.setLinkItemVisible(true);
-    treeWidget.setDeviceItemVisible(false);
     treeWidget.setCacheEnabled(true);
+    treeWidget.setFrameShape(QFrame::NoFrame);
+    treeWidget.setVerticalGridLineShown(true);
     vbox->addWidget(&treeWidget);
     
     self->setLayout(vbox);
@@ -169,54 +159,12 @@ void LinkDeviceListView::Impl::onTreeModeToggled(bool on)
 }    
 
 
-BodyItem* LinkDeviceListView::currentBodyItem()
-{
-    return impl->treeWidget.bodyItem();
-}
-
-
-SignalProxy<void(int linkIndex)> LinkDeviceListView::sigCurrentLinkChanged()
-{
-    return impl->treeWidget.sigCurrentLinkChanged();
-}
-
-
-int LinkDeviceListView::currentLinkIndex() const
-{
-    return impl->treeWidget.currentLinkIndex();
-}
-
-
-void LinkDeviceListView::setCurrentLink(int index)
-{
-    impl->treeWidget.setCurrentLink(index);
-}
-
-
-SignalProxy<void()> LinkDeviceListView::sigLinkSelectionChanged()
-{
-    return impl->treeWidget.sigLinkSelectionChanged();
-}
-
-
-const std::vector<int>& LinkDeviceListView::selectedLinkIndices() const
-{
-    return impl->treeWidget.selectedLinkIndices();
-}
-
-
-const std::vector<bool>& LinkDeviceListView::linkSelection() const
-{
-    return impl->treeWidget.linkSelection();
-}
-
-
 void LinkDeviceListView::Impl::onCurrentBodySelectionChanged(BodyItem* bodyItem, Link* link)
 {
-    treeWidget.setBodyItem(bodyItem);
     if(bodyItem && link){
-        treeWidget.setCurrentLink(link->index());
+        treeWidget.setLinkSelection(bodyItem, bodySelectionManager->linkSelection(bodyItem));
     }
+    treeWidget.setBodyItem(bodyItem);
 }
 
 
@@ -278,17 +226,16 @@ bool LinkDeviceListView::Impl::restoreState(const Archive& archive)
     elementRadioGroup.button(etype)->setChecked(true);
     isTreeWidgetUpdateEnabled = true;
 
-    if(treeWidget.restoreState(archive)){
-        archive.addPostProcess(
-            [this, &archive](){
+    archive.addPostProcess(
+        [this, &archive](){
+            if(treeWidget.restoreState(archive)){
                 if(auto item = archive.findItem<BodyItem>("current_body_item")){
-                    treeWidget.setBodyItem(item);
+                    treeWidget.setBodyItem(item, true);
                 } else {
                     treeWidget.updateTreeItems();
                 }
-            });
-        return true;
-    }
+            }
+        });
 
-    return false;
+    return true;
 }

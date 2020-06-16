@@ -25,15 +25,14 @@ public:
     enum ListingMode { List, Tree, GroupedTree };
     void setListingMode(int mode);
     int listingMode() const;
+    void setLinkItemVisible(bool on);
+    bool isLinkItemVisible() const;
+    void setVisibleLinkPredicate(std::function<bool(Link* link)> pred);
+    void setDeviceItemVisible(bool on);
+    bool isDeviceItemVisible() const;
     enum NumberColumnMode { Index, Identifier };
     void setNumberColumnMode(int mode);
     int numberColumnMode() const;
-    void setLinkItemVisible(bool on);
-    bool isLinkItemVisible() const;
-    void setDeviceItemVisible(bool on);
-    bool isDeviceItemVisible() const;
-    void setSortByIdEnabled(bool on);
-    bool isSortByIdEnabled() const;
     void setDefaultExpansionLevel(int level);
     void setCacheEnabled(bool on);
     bool isCacheEnabled() const;
@@ -61,7 +60,7 @@ public:
         LinkDeviceTreeItem* item, int column, QWidget* widget, Qt::Alignment alignment = Qt::AlignCenter);
     QWidget* alignedItemWidget(LinkDeviceTreeItem* item, int column);
 
-    void setBodyItem(BodyItem* bodyItem);
+    void setBodyItem(BodyItem* bodyItem, bool forceTreeUpdate = false);
     BodyItem* bodyItem();
     void updateTreeItems();
     void addCustomRow(LinkDeviceTreeItem* treeItem);
@@ -69,27 +68,25 @@ public:
     LinkDeviceTreeItem* itemOfLink(int linkIndex);
     int numLinkDeviceTreeItems();
             
-    SignalProxy<void(LinkDeviceTreeItem* item, int column)> sigItemChanged();
+    SignalProxy<void(LinkDeviceTreeItem* item, int column)> sigTreeItemChanged();
                     
-    SignalProxy<void(int linkIndex)> sigCurrentLinkChanged();
-    int currentLinkIndex() const;
-    bool setCurrentLink(int linkIndex);
     SignalProxy<void()> sigLinkSelectionChanged();
-    const std::vector<int>& selectedLinkIndices() const;
     const std::vector<bool>& linkSelection() const;
+    const std::vector<int>& selectedLinkIndices() const;
 
-    /// This signal is available after calling 'enableCache(true)'.
+    // The following functions are available when the cache is enabled
     SignalProxy<void()> sigSelectionChanged(BodyItem* bodyItem);
-    /// This function is available after calling 'enableCache(true)'.
-    int selectedLinkIndex(BodyItem* bodyItem) const;
-    /// This function is available after calling 'enableCache(true)'.
-    const std::vector<int>& selectedLinkIndices(BodyItem* bodyItem);
-    /// This function is available after calling 'enableCache(true)'.
     const std::vector<bool>& linkSelection(BodyItem* bodyItem);
+    const std::vector<int>& selectedLinkIndices(BodyItem* bodyItem);
+
+    // This funtions does not emit sigSelectionChanged.
+    void setLinkSelection(BodyItem* bodyItem, const std::vector<bool>& selection);
 
     MenuManager& popupMenuManager();
 
     bool storeState(Archive& archive);
+    
+    // This function must be called after all the items are restored
     bool restoreState(const Archive& archive);
 
 protected:

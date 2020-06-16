@@ -13,8 +13,6 @@
 #include <QFontMetrics>
 #include <map>
 #include <set>
-#include <iostream>
-#include <cassert>
 #include "gettext.h"
 
 using namespace std;
@@ -22,26 +20,23 @@ using namespace cnoid;
 
 namespace {
 
-const bool TRACE_FUNCTIONS = false;
-
 class BodyItemInfo
 {
 public:
-    bool isRestoringTreeStateNeeded;
     LinkGroupPtr linkGroup;
     vector<bool> selection;
     vector<int> selectedLinkIndices;
     Signal<void()> sigSelectionChanged;
-    bool needTreeExpansionUpdate;
     vector<bool> linkExpansions;
     set<string> expandedParts;
-    Connection detachedFromRootConnection;
+    bool isSelectedLinkIndicesValid;
+    bool isRestoringTreeStateNeeded;
+    bool needTreeExpansionUpdate;
+    ScopedConnection bodyItemConnection;
     
     BodyItemInfo() {
+        isSelectedLinkIndicesValid = false;
         isRestoringTreeStateNeeded = true;
-    }
-    ~BodyItemInfo() {
-        detachedFromRootConnection.disconnect();
     }
     void setNumLinks(int n, bool doInitialize) {
         if(doInitialize){
@@ -51,6 +46,7 @@ public:
         }
         selection.resize(n, false);
         linkExpansions.resize(n, true);
+        isSelectedLinkIndicesValid = false;
     }
 };
 typedef shared_ptr<BodyItemInfo> BodyItemInfoPtr;
@@ -71,8 +67,8 @@ public:
     int numberColumnMode;
     bool isLinkItemVisible;
     bool isDeviceItemVisible;
-    bool isSortByIdEnabled;
     bool isCacheEnabled;
+    std::function<bool(Link* link)> visibleLinkPredicate;
 
     struct ColumnInfo {
         ColumnDataGetter dataGetter;
@@ -92,23 +88,20 @@ public:
     MenuManager popupMenuManager;
 
     Signal<void(bool isInitialCreation)> sigUpdateRequest;
-    Signal<void(LinkDeviceTreeItem* item, int column)> sigItemChanged;
-    Signal<void(int linkIndex)> sigCurrentLinkChanged;
+    Signal<void(LinkDeviceTreeItem* item, int column)> sigTreeItemChanged;
     Signal<void()> sigLinkSelectionChanged;
 
     int defaultExpansionLevel;
 
     typedef map<BodyItemPtr, BodyItemInfoPtr> BodyItemInfoMap;
-    BodyItemInfoMap bodyItemInfoCache;
+    BodyItemInfoMap bodyItemInfoMap;
 
     vector<LinkDeviceTreeItem*> linkIndexToItemMap;
 
     BodyItemPtr currentBodyItem;
     BodyItemInfoPtr currentBodyItemInfo;
 
-    Signal<void()> dummySigSelectionChanged; // never emitted
     vector<int> emptyLinkIndices;
-    vector<bool> emptySelection;
 
     void initialize();
     void setCacheEnabled(bool on);
@@ -116,7 +109,7 @@ public:
     void setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUpdate);
     void updateTreeItems();
     void clearTreeItems();
-    BodyItemInfoPtr getBodyItemInfo(BodyItem* bodyItem);
+    BodyItemInfoPtr getOrCreateBodyItemInfo(BodyItem* bodyItem);
     void onBodyItemDisconnectedFromRoot(BodyItem* bodyItem);
     void addTreeItem(QTreeWidgetItem* item, QTreeWidgetItem* parentItem);
     void addLinkDeviceTreeItem(LinkDeviceTreeItem* item, QTreeWidgetItem* parentItem = nullptr);
@@ -134,7 +127,7 @@ public:
     void onSelectionChanged();
     void onItemChanged(QTreeWidgetItem* item, int column);
     Signal<void()>& sigSelectionChangedOf(BodyItem* bodyItem);
-    int selectedLinkIndex(BodyItem* bodyItem) const;
+    int selectedLinkIndex(BodyItem* bodyItem);
     const vector<int>& selectedLinkIndices(BodyItem* bodyItem);
     const vector<bool>& linkSelection(BodyItem* bodyItem);
     void onCustomContextMenuRequested(const QPoint& pos);
@@ -327,15 +320,14 @@ void LinkDeviceTreeWidget::Impl::initialize()
                      [&](){ onSelectionChanged(); });
 
     listingMode = List;
-    numberColumnMode = Index;
+    self->setNumberColumnMode(Index);
     isLinkItemVisible = true;
     isDeviceItemVisible = false;
-    isSortByIdEnabled = false;
     isCacheEnabled = false;
     
     rowIndexCounter = 0;
     itemWidgetWidthAdjustment = 0;
-    isNameColumnMarginEnabled = false;
+    isNameColumnMarginEnabled = true;
     defaultExpansionLevel = std::numeric_limits<int>::max();
 }
 
@@ -395,6 +387,12 @@ bool LinkDeviceTreeWidget::isLinkItemVisible() const
 }
 
 
+void LinkDeviceTreeWidget::setVisibleLinkPredicate(std::function<bool(Link* link)> pred)
+{
+    impl->visibleLinkPredicate = pred;
+}
+
+
 void LinkDeviceTreeWidget::setDeviceItemVisible(bool on)
 {
     impl->isDeviceItemVisible = on;
@@ -404,18 +402,6 @@ void LinkDeviceTreeWidget::setDeviceItemVisible(bool on)
 bool LinkDeviceTreeWidget::isDeviceItemVisible() const
 {
     return impl->isDeviceItemVisible;
-}
-
-
-void LinkDeviceTreeWidget::setSortByIdEnabled(bool on)
-{
-    impl->isSortByIdEnabled = on;
-}
-
-
-bool LinkDeviceTreeWidget::isSortByIdEnabled() const
-{
-    return impl->isSortByIdEnabled;
 }
 
 
@@ -436,7 +422,7 @@ void LinkDeviceTreeWidget::Impl::setCacheEnabled(bool on)
     isCacheEnabled = on;
 
     if(!isCacheEnabled){
-        bodyItemInfoCache.clear();
+        bodyItemInfoMap.clear();
     }
 }
 
@@ -585,9 +571,9 @@ void LinkDeviceTreeWidget::Impl::onNumberSectionClicked()
 }
 
 
-void LinkDeviceTreeWidget::setBodyItem(BodyItem* bodyItem)
+void LinkDeviceTreeWidget::setBodyItem(BodyItem* bodyItem, bool forceTreeUpdate)
 {
-    impl->setCurrentBodyItem(bodyItem, false);
+    impl->setCurrentBodyItem(bodyItem, forceTreeUpdate);
 }
 
 
@@ -600,8 +586,8 @@ BodyItem* LinkDeviceTreeWidget::bodyItem()
 void LinkDeviceTreeWidget::Impl::setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUpdate)
 {
     if(bodyItem != currentBodyItem || forceTreeUpdate){
-        currentBodyItemInfo = getBodyItemInfo(bodyItem);
         currentBodyItem = bodyItem;
+        currentBodyItemInfo.reset();
         updateTreeItems();
     }
 }
@@ -630,6 +616,8 @@ void LinkDeviceTreeWidget::Impl::updateTreeItems()
     self->blockSignals(false);
 
     if(currentBodyItem){
+        currentBodyItemInfo = getOrCreateBodyItemInfo(currentBodyItem);
+        
         auto body = currentBodyItem->body();
         linkIndexToItemMap.resize(body->numLinks(), 0);
 
@@ -662,8 +650,10 @@ void LinkDeviceTreeWidget::Impl::updateTreeItems()
         }
         
         updateCustomRows();
-        
-        restoreTreeState();
+
+        if(isCacheEnabled){
+            restoreTreeState();
+        }
     }
     
     sigUpdateRequest(true);
@@ -683,46 +673,43 @@ void LinkDeviceTreeWidget::Impl::clearTreeItems()
 }
 
 
-BodyItemInfoPtr LinkDeviceTreeWidget::Impl::getBodyItemInfo(BodyItem* bodyItem)
+BodyItemInfoPtr LinkDeviceTreeWidget::Impl::getOrCreateBodyItemInfo(BodyItem* bodyItem)
 {
     BodyItemInfoPtr info;
-    bool isInfoForNewBody = false;
+    bool isNewBodyInfo = false;
 
     if(bodyItem){
-        if(bodyItem == currentBodyItem){
-            info = currentBodyItemInfo;
-        } else if(isCacheEnabled){
-            auto p = bodyItemInfoCache.find(bodyItem);
-            if(p != bodyItemInfoCache.end()){
+        if(isCacheEnabled){
+            auto p = bodyItemInfoMap.find(bodyItem);
+            if(p != bodyItemInfoMap.end()){
                 info = p->second;
-            } else if(isCacheEnabled){
+            } else {
                 auto originalItem = ItemManager::findOriginalItemForReloadedItem(bodyItem);
-                auto q = bodyItemInfoCache.find(dynamic_cast<BodyItem*>(originalItem));
-                if(q != bodyItemInfoCache.end()){
+                auto q = bodyItemInfoMap.find(dynamic_cast<BodyItem*>(originalItem));
+                if(q != bodyItemInfoMap.end()){
                     info = q->second;
-                    isInfoForNewBody = true;
-                    bodyItemInfoCache.erase(q);
+                    isNewBodyInfo = true;
+                    bodyItemInfoMap.erase(q);
                 }
             }
         }
-
         if(!info && bodyItem->findRootItem()){
-            if(!isCacheEnabled){
-                bodyItemInfoCache.clear();
-            }
             info = std::make_shared<BodyItemInfo>();
-            isInfoForNewBody = true;
+            isNewBodyInfo = true;
         }
-
-        if(isInfoForNewBody){
-            info->linkGroup = LinkGroup::create(*bodyItem->body());
-            info->detachedFromRootConnection = bodyItem->sigDisconnectedFromRoot().connect(
+        if(isNewBodyInfo){
+            info->bodyItemConnection = bodyItem->sigDisconnectedFromRoot().connect(
                 [this, bodyItem](){ onBodyItemDisconnectedFromRoot(bodyItem); });
-            bodyItemInfoCache[bodyItem] = info;
+            if(isCacheEnabled){
+                bodyItemInfoMap[bodyItem] = info;
+            }
         }
-
         if(info){
             info->setNumLinks(bodyItem->body()->numLinks(), false);
+
+            if(listingMode == GroupedTree && !info->linkGroup){
+                info->linkGroup = LinkGroup::create(*bodyItem->body());
+            }
         }
     }
 
@@ -741,18 +728,11 @@ LinkDeviceTreeItem* LinkDeviceTreeWidget::itemOfLink(int linkIndex)
 
 void LinkDeviceTreeWidget::Impl::onBodyItemDisconnectedFromRoot(BodyItem* bodyItem)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "LinkDeviceTreeWidgetImpl::onBodyItemDisconnectedFromRoot(" << bodyItem->name() << ")" << endl;
-    }
-    
     if(currentBodyItem == bodyItem){
-        setCurrentBodyItem(0, false);
+        setCurrentBodyItem(nullptr, false);
     }
-
-    auto p = bodyItemInfoCache.find(bodyItem);
-    if(p != bodyItemInfoCache.end()){
-        p->second->detachedFromRootConnection.disconnect();
-        bodyItemInfoCache.erase(p);
+    if(isCacheEnabled){
+        bodyItemInfoMap.erase(bodyItem);
     }
 }
 
@@ -805,7 +785,9 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceList(Body* body)
     }
         
     for(auto& link : links){
-
+        if(visibleLinkPredicate && !visibleLinkPredicate(link)){
+            continue;
+        }
         auto linkItem = new LinkDeviceTreeItem(link, this);
         addLinkDeviceTreeItem(linkItem);
 
@@ -853,6 +835,10 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceTree(Body* body)
 void LinkDeviceTreeWidget::Impl::createLinkDeviceTreeSub
 (Link* link, LinkDeviceTreeItem* parentItem, map<Link*, vector<Device*>>& devices)
 {
+    if(visibleLinkPredicate && !visibleLinkPredicate(link)){
+        return;
+    }
+    
     auto item = new LinkDeviceTreeItem(link, this);
     addLinkDeviceTreeItem(item, parentItem);
     item->setExpanded(true);
@@ -928,10 +914,6 @@ void LinkDeviceTreeWidget::Impl::updateCustomRows()
 
 void LinkDeviceTreeWidget::Impl::restoreTreeState()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "LinkDeviceTreeWidget::Impl::restoreTreeState()" << endl;
-    }
-    
     if(currentBodyItemInfo){
         restoreSubTreeState(self->invisibleRootItem());
         currentBodyItemInfo->isRestoringTreeStateNeeded = false;
@@ -949,10 +931,6 @@ void LinkDeviceTreeWidget::Impl::restoreSubTreeState(QTreeWidgetItem* item)
 
 void LinkDeviceTreeWidget::Impl::restoreSubTreeStateIter(QTreeWidgetItem* parentItem)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "LinkDeviceTreeWidget::Impl::restoreTreeStateSub()" << endl;
-    }
-
     int n = parentItem->childCount();
     for(int i=0; i < n; ++i){
         if(auto item = dynamic_cast<LinkDeviceTreeItem*>(parentItem->child(i))){
@@ -983,29 +961,28 @@ void LinkDeviceTreeWidget::Impl::restoreSubTreeStateIter(QTreeWidgetItem* parent
 
 void LinkDeviceTreeWidget::Impl::onSelectionChanged()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "LinkDeviceTreeWidgetImpl::onSelectionChanged()" << endl;
-    }
-
-    if(currentBodyItem){
+    if(currentBodyItemInfo){
         auto& selection = currentBodyItemInfo->selection;
         std::fill(selection.begin(), selection.end(), false);
         QList<QTreeWidgetItem*> selected = self->selectedItems();
         for(int i=0; i < selected.size(); ++i){
-            LinkDeviceTreeItem* item = dynamic_cast<LinkDeviceTreeItem*>(selected[i]);
+            auto item = dynamic_cast<LinkDeviceTreeItem*>(selected[i]);
             if(item && item->link()){
                 selection[item->link()->index()] = true;
             }
         }
-        currentBodyItemInfo->sigSelectionChanged();
+        currentBodyItemInfo->isSelectedLinkIndicesValid = false;
+        if(isCacheEnabled){
+            currentBodyItemInfo->sigSelectionChanged();
+        }
         sigLinkSelectionChanged();
     }
 }
 
 
-SignalProxy<void(LinkDeviceTreeItem* item, int column)> LinkDeviceTreeWidget::sigItemChanged()
+SignalProxy<void(LinkDeviceTreeItem* item, int column)> LinkDeviceTreeWidget::sigTreeItemChanged()
 {
-    return impl->sigItemChanged;
+    return impl->sigTreeItemChanged;
 }
 
 
@@ -1013,26 +990,8 @@ void LinkDeviceTreeWidget::Impl::onItemChanged(QTreeWidgetItem* item, int column
 {
     LinkDeviceTreeItem* linkTreeItem = dynamic_cast<LinkDeviceTreeItem*>(item);
     if(linkTreeItem){
-        sigItemChanged(linkTreeItem, column);
+        sigTreeItemChanged(linkTreeItem, column);
     }
-}
-
-
-SignalProxy<void(int linkIndex)> LinkDeviceTreeWidget::sigCurrentLinkChanged()
-{
-    return impl->sigCurrentLinkChanged;
-}
-
-
-int LinkDeviceTreeWidget::currentLinkIndex() const
-{
-    return impl->selectedLinkIndex(impl->currentBodyItem);
-}
-
-
-bool LinkDeviceTreeWidget::setCurrentLink(int linkIndex)
-{
-    return impl->makeSingleSelection(impl->currentBodyItem, linkIndex);
 }
 
 
@@ -1042,15 +1001,15 @@ SignalProxy<void()> LinkDeviceTreeWidget::sigLinkSelectionChanged()
 }
 
 
-const std::vector<int>& LinkDeviceTreeWidget::selectedLinkIndices() const
-{
-    return impl->selectedLinkIndices(impl->currentBodyItem);
-}
-
-
 const std::vector<bool>& LinkDeviceTreeWidget::linkSelection() const
 {
     return impl->linkSelection(impl->currentBodyItem);
+}
+
+
+const std::vector<int>& LinkDeviceTreeWidget::selectedLinkIndices() const
+{
+    return impl->selectedLinkIndices(impl->currentBodyItem);
 }
 
 
@@ -1062,55 +1021,12 @@ SignalProxy<void()> LinkDeviceTreeWidget::sigSelectionChanged(BodyItem* bodyItem
 
 Signal<void()>& LinkDeviceTreeWidget::Impl::sigSelectionChangedOf(BodyItem* bodyItem)
 {
-    BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
-    if(info){
-        return info->sigSelectionChanged;
+    if(isCacheEnabled && bodyItem){
+        return getOrCreateBodyItemInfo(bodyItem)->sigSelectionChanged;
+    } else {
+        static Signal<void()> dummySigSelectionChanged;
+        return dummySigSelectionChanged;
     }
-    return dummySigSelectionChanged;
-}
-
-
-int LinkDeviceTreeWidget::selectedLinkIndex(BodyItem* bodyItem) const
-{
-    return const_cast<Impl*>(impl)->selectedLinkIndex(bodyItem);
-}
-
-
-int LinkDeviceTreeWidget::Impl::selectedLinkIndex(BodyItem* bodyItem) const
-{
-    BodyItemInfoPtr info = const_cast<Impl*>(this)->getBodyItemInfo(bodyItem);
-    if(info){
-        const auto& selection = info->selection;
-        for(size_t i=0; i < selection.size(); ++i){
-            if(selection[i]){
-                return i;
-            }
-        }
-    }
-    return -1;
-}
-
-
-const std::vector<int>& LinkDeviceTreeWidget::selectedLinkIndices(BodyItem* bodyItem)
-{
-    return impl->selectedLinkIndices(bodyItem);
-}
-
-
-const vector<int>& LinkDeviceTreeWidget::Impl::selectedLinkIndices(BodyItem* bodyItem)
-{
-    BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
-    if(info){
-        info->selectedLinkIndices.clear();
-        const auto& selection = info->selection;
-        for(size_t i=0; i < selection.size(); ++i){
-            if(selection[i]){
-                info->selectedLinkIndices.push_back(i);
-            }
-        }
-        return info->selectedLinkIndices;
-    }
-    return emptyLinkIndices;
 }
 
 
@@ -1122,11 +1038,52 @@ const std::vector<bool>& LinkDeviceTreeWidget::linkSelection(BodyItem* bodyItem)
 
 const vector<bool>& LinkDeviceTreeWidget::Impl::linkSelection(BodyItem* bodyItem)
 {
-    BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
-    if(info){
+    if(auto info = getOrCreateBodyItemInfo(bodyItem)){
         return info->selection;
+    } else {
+        static vector<bool> emptySelection;
+        return emptySelection;
     }
-    return emptySelection;
+}
+
+
+const std::vector<int>& LinkDeviceTreeWidget::selectedLinkIndices(BodyItem* bodyItem)
+{
+    return impl->selectedLinkIndices(bodyItem);
+}
+
+
+const vector<int>& LinkDeviceTreeWidget::Impl::selectedLinkIndices(BodyItem* bodyItem)
+{
+    if(auto info = getOrCreateBodyItemInfo(bodyItem)){
+        if(info->isSelectedLinkIndicesValid){
+            return info->selectedLinkIndices;
+        }
+        auto& selected = info->selectedLinkIndices;
+        selected.clear();
+        const auto& selection = info->selection;
+        for(size_t i=0; i < selection.size(); ++i){
+            if(selection[i]){
+                selected.push_back(i);
+            }
+        }
+        info->isSelectedLinkIndicesValid = true;
+        return selected;
+    }
+    return emptyLinkIndices;
+}
+
+
+void LinkDeviceTreeWidget::setLinkSelection(BodyItem* bodyItem, const std::vector<bool>& selection)
+{
+    if(auto info = impl->getOrCreateBodyItemInfo(bodyItem)){
+        info->selection = selection;
+        info->selection.resize(bodyItem->body()->numLinks(), false);
+        info->isSelectedLinkIndicesValid = false;
+        if(bodyItem == impl->currentBodyItem){
+            impl->restoreTreeState();
+        }
+    }
 }
 
 
@@ -1155,11 +1112,7 @@ void LinkDeviceTreeWidget::Impl::setExpansionState(const LinkDeviceTreeItem* ite
 
 void LinkDeviceTreeWidget::Impl::onItemExpanded(QTreeWidgetItem* treeWidgetItem)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "LinkDeviceTreeWidget::Impl::onItemExpanded()" << endl;
-    }
-    LinkDeviceTreeItem* item = dynamic_cast<LinkDeviceTreeItem*>(treeWidgetItem);
-    if(item){
+    if(auto item = dynamic_cast<LinkDeviceTreeItem*>(treeWidgetItem)){
         setExpansionState(item, true);
         restoreSubTreeState(item);
     }
@@ -1168,46 +1121,9 @@ void LinkDeviceTreeWidget::Impl::onItemExpanded(QTreeWidgetItem* treeWidgetItem)
 
 void LinkDeviceTreeWidget::Impl::onItemCollapsed(QTreeWidgetItem* treeWidgetItem)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "LinkDeviceTreeWidget::Impl::onItemCollapsed()" << endl;
-    }
-    LinkDeviceTreeItem* item = dynamic_cast<LinkDeviceTreeItem*>(treeWidgetItem);
-    if(item){
+    if(auto item = dynamic_cast<LinkDeviceTreeItem*>(treeWidgetItem)){
         setExpansionState(item, false);
     }
-}
-
-
-bool LinkDeviceTreeWidget::Impl::makeSingleSelection(BodyItem* bodyItem, int linkIndex)
-{
-    BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
-
-    if(!info){
-        return false;
-    }
-
-    auto& selection = info->selection;
-    if(static_cast<size_t>(linkIndex) < selection.size()){
-        if(!selection[linkIndex] || std::count(selection.begin(), selection.end(), true) > 1){
-            std::fill(selection.begin(), selection.end(), false);
-            selection[linkIndex] = true;
-            
-            if(bodyItem == currentBodyItem){
-                restoreTreeState();
-
-                LinkDeviceTreeItem* item = linkIndexToItemMap[linkIndex];
-                if(item){
-                    self->scrollToItem(item);
-                }
-                
-                currentBodyItemInfo->sigSelectionChanged();
-                sigLinkSelectionChanged();
-            } else {
-                info->sigSelectionChanged();
-            }
-        }
-    }
-    return true;
 }
 
 
@@ -1234,13 +1150,13 @@ bool LinkDeviceTreeWidget::storeState(Archive& archive)
 
 bool LinkDeviceTreeWidget::Impl::storeState(Archive& archive)
 {
-    if(!isCacheEnabled || !bodyItemInfoCache.empty()){
+    if(!isCacheEnabled || bodyItemInfoMap.empty()){
         return true;
     }
 
     ListingPtr bodyItemNodes = new Listing;
 
-    for(auto& kv : bodyItemInfoCache){
+    for(auto& kv : bodyItemInfoMap){
 
         BodyItem* bodyItem = kv.first;
         ValueNodePtr id = archive.getItemId(bodyItem);
@@ -1253,7 +1169,7 @@ bool LinkDeviceTreeWidget::Impl::storeState(Archive& archive)
 
         bodyItemNode->insert("id", id);
             
-        const auto& indices = selectedLinkIndices(bodyItem);
+        auto& indices = selectedLinkIndices(bodyItem);
         if(!indices.empty()){
             Listing& selected = *bodyItemNode->createFlowStyleListing("selected_links");
             for(auto& index : indices){
@@ -1266,10 +1182,10 @@ bool LinkDeviceTreeWidget::Impl::storeState(Archive& archive)
         int n = exps.size();
         int m = n - std::count(exps.begin(), exps.end(), true);
         if(m > 0){
-            Listing& nonExpanded = *bodyItemNode->createFlowStyleListing("unexpanded_links");
+            Listing& unexpanded = *bodyItemNode->createFlowStyleListing("unexpanded_links");
             for(int i=0; i < n; ++i){
                 if(!exps[i]){
-                    nonExpanded.append(i, 20, m);
+                    unexpanded.append(i, 20, m);
                 }
             }
             isEmpty = false;
@@ -1299,15 +1215,15 @@ bool LinkDeviceTreeWidget::Impl::storeState(Archive& archive)
 
 bool LinkDeviceTreeWidget::restoreState(const Archive& archive)
 {
-    if(impl->isCacheEnabled){
-        archive.addPostProcess([&](){ impl->restoreState(archive); });
-    }
-    return true;
+    return impl->restoreState(archive);
 }
 
 
 bool LinkDeviceTreeWidget::Impl::restoreState(const Archive& archive)
 {
+    if(!isCacheEnabled){
+        return true;
+    }
     const Listing& nodes = *archive.findListing("body_items");
     if(nodes.isValid() && !nodes.empty()){
         for(int i=0; i < nodes.size(); ++i){
@@ -1317,14 +1233,22 @@ bool LinkDeviceTreeWidget::Impl::restoreState(const Archive& archive)
                 BodyItem* bodyItem = archive.findItem<BodyItem>(id);
                 if(bodyItem){
                     int numLinks = bodyItem->body()->numLinks();
-                    BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
-                    const Listing& selected = *node.findListing("selected_links");
-                    if(selected.isValid()){
+                    BodyItemInfoPtr info = getOrCreateBodyItemInfo(bodyItem);
+                    if(auto& selected = *node.findListing("selected_links")){
                         info->setNumLinks(numLinks, true);
                         for(int i=0; i < selected.size(); ++i){
                             int index = selected[i].toInt();
                             if(index < numLinks){
                                 info->selection[index] = true;
+                            }
+                        }
+                        info->isSelectedLinkIndicesValid = false;
+                    }
+                    if(auto& unexpanded = *node.findListing("unexpanded_links")){
+                        for(auto& node : unexpanded){
+                            int index = node->toInt();
+                            if(index < numLinks){
+                                info->linkExpansions[index] = false;
                             }
                         }
                     }
@@ -1336,8 +1260,5 @@ bool LinkDeviceTreeWidget::Impl::restoreState(const Archive& archive)
             }
         }
     }
-
-    //restoreTreeState();
-    
     return true;
 }

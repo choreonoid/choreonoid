@@ -3,8 +3,10 @@
 */
 
 #include "JointStateView.h"
-#include "LinkTreeWidget.h"
+#include "LinkDeviceTreeWidget.h"
 #include "BodySelectionManager.h"
+#include <cnoid/BodyItem>
+#include <cnoid/Body>
 #include <cnoid/ConnectionSet>
 #include <cnoid/EigenUtil>
 #include <cnoid/ExtraBodyStateAccessor>
@@ -31,7 +33,7 @@ class JointStateView::Impl
 public:
     JointStateView* self;
 
-    LinkTreeWidget jointStateWidget;
+    LinkDeviceTreeWidget treeWidget;
     int qColumn;
     int uColumn;
 
@@ -81,50 +83,44 @@ JointStateView::Impl::Impl(JointStateView* self)
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->setSpacing(0);
 
-    //vbox->addWidget(jointStateWidget.listingModeCombo());
+    treeWidget.setVisibleLinkPredicate([](Link* link){ return link->jointId() >= 0; });
+    treeWidget.setNumberColumnMode(LinkDeviceTreeWidget::Identifier);
+    treeWidget.setSelectionMode(QAbstractItemView::NoSelection);
+    treeWidget.setAlternatingRowColors(true);
+    treeWidget.setVerticalGridLineShown(true);
+    treeWidget.setAllColumnsShowFocus(true);
 
-    jointStateWidget.setNameColumnMarginEnabled(true);
-    //jointStateWidget.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    jointStateWidget.setSelectionMode(QAbstractItemView::NoSelection);
-    jointStateWidget.setAlternatingRowColors(true);
-    jointStateWidget.setVerticalGridLineShown(true);
-    jointStateWidget.setAllColumnsShowFocus(true);
-    jointStateWidget.enableCache(true);
-    jointStateWidget.enableArchiveOfCurrentBodyItem(true);
-    jointStateWidget.setListingMode(LinkTreeWidget::JOINT_LIST);
-
-    QHeaderView* header = jointStateWidget.header();
+    QHeaderView* header = treeWidget.header();
     header->setDefaultAlignment(Qt::AlignHCenter);
 
-    qColumn = jointStateWidget.addColumn(_("Angle"));
-    uColumn = jointStateWidget.addColumn(_("Torque"));
+    qColumn = treeWidget.addColumn(_("Displacement"));
+    uColumn = treeWidget.addColumn(_("Torque"));
 
-    QTreeWidgetItem* headerItem = jointStateWidget.headerItem();
+    QTreeWidgetItem* headerItem = treeWidget.headerItem();
     headerItem->setTextAlignment(qColumn, Qt::AlignRight);
     headerItem->setTextAlignment(uColumn, Qt::AlignRight);
 
-    header->setMinimumSectionSize(0);
-    jointStateWidget.setHeaderSectionResizeMode(jointStateWidget.nameColumn(), QHeaderView::ResizeToContents);
-    jointStateWidget.setHeaderSectionResizeMode(jointStateWidget.jointIdColumn(), QHeaderView::ResizeToContents);
+    treeWidget.setHeaderSectionResizeMode(treeWidget.nameColumn(), QHeaderView::ResizeToContents);
+    treeWidget.setHeaderSectionResizeMode(treeWidget.numberColumn(), QHeaderView::ResizeToContents);
     if(doColumnStretch){
-        jointStateWidget.setHeaderSectionResizeMode(qColumn, QHeaderView::Stretch);
-        jointStateWidget.setHeaderSectionResizeMode(uColumn, QHeaderView::Stretch);
+        treeWidget.setHeaderSectionResizeMode(qColumn, QHeaderView::Stretch);
+        treeWidget.setHeaderSectionResizeMode(uColumn, QHeaderView::Stretch);
     } else {
-        jointStateWidget.setHeaderSectionResizeMode(qColumn, QHeaderView::ResizeToContents);
-        jointStateWidget.setHeaderSectionResizeMode(uColumn, QHeaderView::ResizeToContents);
+        treeWidget.setHeaderSectionResizeMode(qColumn, QHeaderView::ResizeToContents);
+        treeWidget.setHeaderSectionResizeMode(uColumn, QHeaderView::ResizeToContents);
     }
         
-    int lastColumn = jointStateWidget.addColumn();
+    int lastColumn = treeWidget.addColumn();
     if(doColumnStretch){
-        jointStateWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Fixed);
+        treeWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Fixed);
         header->resizeSection(lastColumn, 0);
     } else {
-        jointStateWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Stretch);
+        treeWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Stretch);
     }
     
-    jointStateWidget.sigUpdateRequest().connect([&](bool){ updateJointList(); });
+    treeWidget.sigUpdateRequest().connect([&](bool){ updateJointList(); });
     
-    vbox->addWidget(&jointStateWidget);
+    vbox->addWidget(&treeWidget);
 
     self->setLayout(vbox);
 
@@ -176,7 +172,7 @@ void JointStateView::Impl::onActivated(bool on)
 void JointStateView::Impl::setCurrentBodyItem(BodyItem* bodyItem)
 {
     connectionsToBody.disconnect();
-    jointStateWidget.setNumColumns(uColumn + 1);
+    treeWidget.setNumColumns(uColumn + 1);
     jointStateColumnMap.clear();
 
     if(!bodyItem){
@@ -199,31 +195,31 @@ void JointStateView::Impl::setCurrentBodyItem(BodyItem* bodyItem)
                     if(strcmp(itemName, "Pos") == 0){
                         columnMap.push_back(qColumn);
                     } else {
-                        columnMap.push_back(jointStateWidget.addColumn(accessor.getJointStateItemLabel(j)));
+                        columnMap.push_back(treeWidget.addColumn(accessor.getJointStateItemLabel(j)));
                     }
                 }
                 jointStateColumnMap.push_back(columnMap);
             }
         }
-        const int m = jointStateWidget.columnCount();
+        const int m = treeWidget.columnCount();
         for(int i = qColumn; i < m; ++i){
             if(doColumnStretch){
-                jointStateWidget.setHeaderSectionResizeMode(i, QHeaderView::Stretch);
+                treeWidget.setHeaderSectionResizeMode(i, QHeaderView::Stretch);
             } else {
-                jointStateWidget.setHeaderSectionResizeMode(i, QHeaderView::ResizeToContents);
+                treeWidget.setHeaderSectionResizeMode(i, QHeaderView::ResizeToContents);
             }
         }
     }
     
-    const int lastColumn = jointStateWidget.addColumn();
+    const int lastColumn = treeWidget.addColumn();
     if(doColumnStretch){
-        jointStateWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Fixed);
-        jointStateWidget.header()->resizeSection(lastColumn, 0);
+        treeWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Fixed);
+        treeWidget.header()->resizeSection(lastColumn, 0);
     } else {
-        jointStateWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Stretch);
+        treeWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Stretch);
     }
 
-    jointStateWidget.setBodyItem(bodyItem);
+    treeWidget.setBodyItem(bodyItem);
 
     if(bodyItem){
         connectionsToBody.add(
@@ -241,23 +237,23 @@ void JointStateView::Impl::setCurrentBodyItem(BodyItem* bodyItem)
 
 void JointStateView::Impl::updateJointList()
 {
-    // The current body item should be gotten from the jointStateWidget because
+    // The current body item should be gotten from the treeWidget because
     // this function is first called from it when the body item is detached.
-    BodyItem* bodyItem = jointStateWidget.bodyItem();
+    BodyItem* bodyItem = treeWidget.bodyItem();
     if(bodyItem){
 
-        QTreeWidgetItem* headerItem = jointStateWidget.headerItem();        
-        const int n = jointStateWidget.columnCount();
+        QTreeWidgetItem* headerItem = treeWidget.headerItem();        
+        const int n = treeWidget.columnCount();
         for(int i = uColumn + 1; i < n; ++i){
             headerItem->setTextAlignment(i, Qt::AlignRight);
         }
 
         BodyPtr body = bodyItem->body();
-        int nameColumn = jointStateWidget.nameColumn();
+        int nameColumn = treeWidget.nameColumn();
         for(int i = 0; i < currentBody->numJoints(); ++i){
             Link* joint = currentBody->joint(i);
             if(joint){
-                LinkTreeItem* item = jointStateWidget.itemOfLink(joint->index());
+                LinkDeviceTreeItem* item = treeWidget.itemOfLink(joint->index());
                 item->setTextAlignment(nameColumn, Qt::AlignHCenter);
                 item->setTextAlignment(qColumn, Qt::AlignRight);
                 item->setTextAlignment(uColumn, Qt::AlignRight);
@@ -288,7 +284,7 @@ void JointStateView::Impl::updateJointList()
                     for(int k=0; k < nj; ++k){
                         Link* joint = currentBody->joint(k);
                         if(joint){
-                            LinkTreeItem* item = jointStateWidget.itemOfLink(joint->index());
+                            LinkDeviceTreeItem* item = treeWidget.itemOfLink(joint->index());
                             item->setTextAlignment(column, alignment);
                         }
                     }
@@ -327,7 +323,7 @@ void JointStateView::Impl::updateView()
         for(int i = 0; i < currentBody->numJoints(); ++i){
             Link* joint = currentBody->joint(i);
             if(joint){
-                LinkTreeItem* item = jointStateWidget.itemOfLink(joint->index());
+                LinkDeviceTreeItem* item = treeWidget.itemOfLink(joint->index());
                 if(joint->jointType() == Link::ROTATIONAL_JOINT){
                     item->setText(qColumn, QString::number(degree(joint->q()), 'f', 2));
                 } else {
@@ -351,7 +347,7 @@ void JointStateView::Impl::updateView()
                 Link* joint = currentBody->joint(j);
                 Array2D<ExtraBodyStateAccessor::Value>::Row js = jointState.row(j);
                 if(joint){
-                    LinkTreeItem* item = jointStateWidget.itemOfLink(joint->index());
+                    LinkDeviceTreeItem* item = treeWidget.itemOfLink(joint->index());
                     for(int k=0; k < m; ++k){
                         bool isValid = true;
                         const int column = columnMap[k];

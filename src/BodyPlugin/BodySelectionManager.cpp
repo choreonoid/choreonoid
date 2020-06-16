@@ -166,13 +166,10 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
 
     if(bodyChanged || linkChanged){
         currentBodyItem = bodyItem;
-        Link* currentLink;
         if(!bodyItem){
             currentInfo = nullptr;
-            currentLink = nullptr;
         } else {
             currentInfo = getOrCreateBodyItemInfo(bodyItem, link);
-            currentLink = getCurrentLink();
         }
         if(bodyChanged){
             sigCurrentBodyItemChanged(bodyItem);
@@ -184,12 +181,12 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
                 currentInfo->sigLinkSelectionChanged(currentInfo->linkSelection);
             }
         }
-        sigCurrentChanged(bodyItem, currentLink);
-        sigCurrentSpecified(bodyItem, currentLink);
+        sigCurrentChanged(bodyItem, link);
+        sigCurrentSpecified(bodyItem, link);
 
     } else {
         sigCurrentBodyItemSpecified(bodyItem);
-        sigCurrentSpecified(bodyItem, getCurrentLink());
+        sigCurrentSpecified(bodyItem, link);
     }
 
     if(doSelectBodyItem && bodyItem){
