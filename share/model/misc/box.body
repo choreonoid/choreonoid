@@ -1,0 +1,17 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+
+name: "Box"
+rootLink: base
+links:
+  -
+    name: base
+    jointType: free
+    translation: [ 0, 0, 0.06 ]
+    elements:
+      -
+        type: Shape
+        geometry: { type: Box, size: [ 0.12, 0.12, 0.12 ] }
+        appearance:
+          material:
+            diffuseColor: [ 0.0, 0.0, 1.0 ]

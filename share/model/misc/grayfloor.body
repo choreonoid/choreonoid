@@ -1,0 +1,17 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+
+name: "Floor"
+rootLink: base
+links:
+  -
+    name: base
+    jointType: fixed
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, -0.01 ]
+        geometry: { type: Box, size: [ 10, 10, 0.02 ] }
+        appearance:
+          material:
+            diffuseColor: [ 1.0, 1.0, 1.0 ]

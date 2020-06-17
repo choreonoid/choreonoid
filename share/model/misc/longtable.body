@@ -1,0 +1,42 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+
+name: "LongTable"
+rootLink: base
+links:
+  -
+    name: base
+    jointType: fixed
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, 0.3 ]
+        geometry: { type: Box, size: [ 1.5, 0.24, 0.04 ] }
+        appearance:
+          material:
+            diffuseColor: [ 0.6, 0.6, 0.6 ]
+      -
+        type: Transform
+        translation: [ 0.74, 0.11, 0.16 ]
+        elements: &LEG
+          type: Shape
+          rotation: [ 1, 0, 0, 90 ]
+          translation: [ 0, 0, -0.01 ]
+          geometry: { type: Cylinder, radius: 0.01, height: 0.3 }
+          appearance:
+            material:
+              diffuseColor: [ 0.8, 0.8, 0.8 ]
+              specularColor: [ 1, 1, 1 ]
+              shininess: 0.02
+      -
+        type: Transform
+        translation: [ -0.74, 0.11, 0.16 ]
+        elements: *LEG
+      -
+        type: Transform
+        translation: [ 0.74, -0.11, 0.16 ]
+        elements: *LEG
+      -
+        type: Transform
+        translation: [ -0.74, -0.11, 0.16 ]
+        elements: *LEG

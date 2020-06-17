@@ -1,0 +1,71 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+
+name: "SuctionCup"
+rootLink: base
+links:
+  -
+    name: base
+    jointType: free
+    mass: 1.0
+    centerOfMass: [ 0, 0, 0.05 ]
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.1 ]
+    elements:
+      -
+        type: Transform
+        translation: [ 0, 0, 0.1 ]
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, -0.081 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.05, radius: 0.035 }
+            appearance:
+              material:
+                diffuseColor: [ 0.6, 0.6, 0.6 ]
+          -
+            type: Shape
+            translation: [ 0, 0, -0.048 ]
+            geometry: { type: Box, size: [ 0.07, 0.07, 0.016 ] }
+            appearance:
+              material:
+                diffuseColor: [ 0.3, 0.3, 0.3 ]
+          -
+            type: Shape
+            translation: [ 0, 0, -0.036 ]
+            rotation: [ 1, 0, 0, -90 ]
+            geometry: { type: Cone, radius: 0.025, height: 0.07 }
+            appearance:
+              material:
+                diffuseColor: [ 1, 1, 1 ]
+      -
+        type: DigitalIO
+        numSignalLines: 1
+        action:
+          input:
+            0: [ device, SuctionCup, on ]
+        isOptional: true
+      -
+        type: StdActionController
+        actions:
+          -
+            event:
+              type: DigitalIO
+              number: 0
+              state: on
+            action:
+              type: Device
+              name: SuctionCup
+              state: on
+        isOptional: true
+      -
+        type: Attachment
+        category: end_effector
+        translation: [ 0, 0, 0 ]
+      -
+        type: Holder
+        name: SuctionCup
+        translation: [ 0, 0, 0.1 ]

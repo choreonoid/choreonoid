@@ -1,0 +1,22 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+
+name: "Stand"
+rootLink: base
+links:
+  -
+    name: base
+    jointType: fixed
+    translation: [ 0, 0, 0.05 ]
+    elements:
+      -
+        type: Shape
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, height: 0.1, radius: 0.1 }
+        appearance:
+          material:
+            diffuseColor: [ 0.7, 0.7, 0.7 ]
+      -
+        type: Holder
+        category: manipulator
+        translation: [ 0, 0, 0.05 ]
