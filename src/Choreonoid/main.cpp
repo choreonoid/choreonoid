@@ -6,6 +6,7 @@
 */
 
 #include <cnoid/App>
+#include <cnoid/ProjectManager>
 
 int execute(cnoid::App& app);
 
@@ -28,6 +29,7 @@ int main(int argc, char *argv[])
 int execute(cnoid::App& app)
 {
     app.initialize("Choreonoid", "Choreonoid");
+    cnoid::ProjectManager::instance()->loadBuiltinProject(":/choreonoid/layout.cnoid");
     app.exec();
     return 0;
 }
