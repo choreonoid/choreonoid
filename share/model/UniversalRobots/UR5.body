@@ -5,7 +5,7 @@ name: UR5
 
 links:
   -
-    name: Base
+    name: BASE
     jointType: fixed
     mass: 4.0
     centerOfMass: [ 0, 0, 0 ]
@@ -34,9 +34,12 @@ links:
             type: Shape
             translation: [ 0, -0.09, 0.0055 ]
             geometry: { type: Cylinder, radius: 0.0052, height: 0.04 }
+      -
+        type: Attachment
+        category: manipulator
   -
-    name: Shoulder
-    parent: Base
+    name: SHOULDER
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointId: 0
@@ -73,8 +76,8 @@ links:
             translation: [ 0, 0.036, 0 ]
             geometry: { type: Cylinder, radius: 0.058, height: 0.07 }
   -
-    name: Upper_arm
-    parent: Shoulder
+    name: UPPER_ARM
+    parent: SHOULDER
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 1
@@ -131,8 +134,8 @@ links:
             rotation: [ 1, 0, 0, -90 ]
             elements: *SHOULDER_SHAPE
   -
-    name: Forearm
-    parent: Upper_arm
+    name: FOREARM
+    parent: UPPER_ARM
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 2
@@ -306,8 +309,8 @@ links:
                 translation: [ 0, -0.05, -0.0016 ]
                 geometry: { type: Cylinder, radius: 0.036, height: 0.014 }
   -
-    name: Wrist_1
-    parent: Forearm
+    name: WRIST1
+    parent: FOREARM
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 3
@@ -339,8 +342,8 @@ links:
             rotation: [ [ 1, 0, 0, 90], [ 0, 1, 0, 180 ] ]
             elements: *ARM_JOINT_SHAPE
   -
-    name: Wrist_2
-    parent: Wrist_1
+    name: WRIST2
+    parent: WRIST1
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointId: 4
@@ -372,8 +375,8 @@ links:
             translation: [ 0.0, 0, 0.0947 ]
             elements: *ARM_JOINT_SHAPE
   -
-    name: Wrist_3  
-    parent: Wrist_2
+    name: WRIST3
+    parent: WRIST2
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 5
@@ -381,30 +384,49 @@ links:
     rotation: [ 0, 1, 0, 0 ]
     jointRange: [ -360, 360 ]
     jointVelocityRange: [ -180, 180 ]
+    rotorInertia: 0.05
+  -
+    name: FLANGE
+    parent: WRIST3
+    translation: [ 0, 0.082, 0.0 ]
+    rotation: [ [ 0, 1, 0, -90 ], [ 1, 0, 0, -90 ] ]
+    jointType: fixed
     mass: 1.1879
-    centerOfMass: [ 0, 0, 0.0 ]
+    centerOfMass: [ 0, -0.082, 0.0 ]
     inertia: [
       0.0171364731454, 0,               0,
       0,               0.0171364731454, 0,
       0,               0,               0.033822 ]
-    rotorInertia: 0.05
     elements:
-      -
-        type: Visual
-        elements: { Resource: { uri: "UR5/wrist3.dae" } }
-      -
-        type: Collision
+      - type: Transform
+        translation: [ 0, 0, -0.082 ]
+        rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, 90 ] ]
         elements:
           -
-            type: Shape
-            translation: [ 0, 0.061075, 0 ]
-            geometry: { type: Cylinder, radius: 0.0376, height: 0.0275 }
+            type: Visual
+            elements: { Resource: { uri: "UR5/wrist3.dae" } }
           -
-            type: Shape
-            translation: [ 0, 0.07682, 0 ]
-            geometry: { type: Cylinder, radius: 0.0316, height: 0.01 }
-          -
-            type: Shape
-            translation: [ 0, 0.06233, 0.040 ]
-            rotation: [ 1, 0, 0, 90 ]
-            geometry: { type: Cylinder, radius: 0.0035, height: 0.006 }
+            type: Collision
+            elements:
+              -
+                type: Shape
+                translation: [ 0, 0.061075, 0 ]
+                geometry: { type: Cylinder, radius: 0.0376, height: 0.0275 }
+              -
+                type: Shape
+                translation: [ 0, 0.07682, 0 ]
+                geometry: { type: Cylinder, radius: 0.0316, height: 0.01 }
+              -
+                type: Shape
+                translation: [ 0, 0.06233, 0.040 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0035, height: 0.006 }
+      -
+        type: Holder
+        name: FLANGE
+        category: end_effector
+
+standardPose: [ 0, -90, 90, -90, -90, 0 ]
+
+defaultIKsetup:
+  FLANGE: [ BASE ]

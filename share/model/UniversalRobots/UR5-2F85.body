@@ -2,7 +2,7 @@ format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
 name: UR5-2F85
-rootLink: Base
+rootLink: BASE
 
 links:
   - # Main body
@@ -14,8 +14,7 @@ links:
   - # Gripper
     type: SubBody
     uri: "../Robotiq/2F-85.body"
-    parent: Wrist_3
-    translation: [ 0.0, 0.08, 0.0 ]
-    rotation: [ 1, 0, 0, 90 ]
+    parent: FLANGE
+    rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 180 ] ]
     jointType: fixed
     jointIdOffset: 6
