@@ -20,6 +20,7 @@ Changes since 1.7.0:
 * Supported Visual C++ 2019
 * Supported Ubuntu 19.04
 * Add LinkPositionView and LocationView
+* Coordinate system for editing model positions can be selected on the location view and the link position view
 * Modified the default material colors
 * Fixed a bug in picking objects on SceneView when a high DPI display is used
 * Improved JointSliderView and rename it to JointDisplacementView
@@ -41,9 +42,11 @@ Changes since 1.7.0:
 * The parent-child relationship betwen body items is reflected in editing body positions
 * Arranged the cmake files for building programs outside the Choreonoid source
 * The transparency of a body shown in the scene view can be modified as a property of the corresponding BodyItem
-* Coordinate system for editing model positions can be selected on the location view and the link position view
 * Improved file dialogs
 * Removed RobotAccessPlugin and Hrpsys31Plugin
+* Fix the default layout of the main window
+* Replace LinkSelectionView with LinkDeviceListView, which can list the devices of a target body
+* Improve loading a new project when there is an existing project
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
