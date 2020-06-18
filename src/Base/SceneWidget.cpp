@@ -2899,6 +2899,10 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 }
 
 
+/**
+   \todo In the second trial, the camera states that have aready restored in the first trial
+   should not be restored twice.
+*/
 bool SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing, bool isSecondTrial)
 {
     bool restored = false;
@@ -2910,26 +2914,11 @@ bool SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing, bool isS
     for(int i=0; i < cameraListing.size(); ++i){
 
         bool updated = false;
-        
         const Mapping& state = *cameraListing[i].toMapping();
-
-        bool isCurrent = false;
-        state.read("isCurrent", isCurrent);
-        if(isSecondTrial && !isCurrent){
-            continue;
-        }
-        
         int cameraIndex = readCameraPath(state, "camera");
 
         if(cameraIndex >= 0){
 
-            if(isSecondTrial){
-                renderer->setCurrentCamera(cameraIndex);
-                restored = true;
-                update();
-                break;
-            }
-                
             Vector3 eye, direction, up;
             if(read(state, "eye", eye) &&
                read(state, "direction", direction) &&
@@ -2973,9 +2962,12 @@ bool SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing, bool isS
                 camera->notifyUpdate();
             }
 
-            if(isCurrent){
+            if(state.get("isCurrent", false)){
                 renderer->setCurrentCamera(cameraIndex);
                 restored = true;
+                if(isSecondTrial){
+                    update();
+                }
             }
         }
     }
