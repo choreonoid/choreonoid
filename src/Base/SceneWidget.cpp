@@ -600,12 +600,12 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     builtinCameraTransform = new InteractiveCameraTransform;
     builtinCameraTransform->setTransform(
         SgCamera::positionLookingAt(
-            Vector3(4.0, 2.0, 1.5), Vector3(0.0, 0.0, 1.0), Vector3::UnitZ()));
+            Vector3(3.0, 1.5, 1.2), Vector3(0, 0, 0.6), Vector3::UnitZ()));
     interactiveCameraTransform = builtinCameraTransform;
 
     builtinPersCamera = new SgPerspectiveCamera;
     builtinPersCamera->setName("Perspective");
-    builtinPersCamera->setFieldOfView(radian(40.0));
+    builtinPersCamera->setFieldOfView(radian(35.0));
     builtinCameraTransform->addChild(builtinPersCamera);
 
     builtinOrthoCamera = new SgOrthographicCamera;

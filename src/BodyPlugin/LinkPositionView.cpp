@@ -80,18 +80,12 @@ LinkPositionView::Impl::Impl(LinkPositionView* self)
     hbox->addWidget(&targetLabel);
     hbox->addStretch();
     topLayout->addLayout(hbox);
-    
-    auto scrollArea = new QScrollArea;
-    scrollArea->setStyleSheet("QScrollArea {background: transparent;}");
-    scrollArea->setFrameShape(QFrame::NoFrame);
-    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scrollArea->setWidgetResizable(true);
-    topLayout->addWidget(scrollArea);
-    
+
     positionWidget = new LinkPositionWidget(self);
+    positionWidget->setTargetLinkType(LinkPositionWidget::IkLink);
     positionWidget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-    scrollArea->setWidget(positionWidget);
     positionWidget->setAutoFillBackground(false);
+    topLayout->addWidget(positionWidget);
 }
 
 
