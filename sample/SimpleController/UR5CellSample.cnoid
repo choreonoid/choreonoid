@@ -37,7 +37,7 @@ items:
             staticModel: true
             collisionDetection: true
             selfCollisionDetection: false
-            location_editable: true
+            location_editable: false
             scene_sensitive: true
             zmp: [ 0, 0, 0 ]
           children: 

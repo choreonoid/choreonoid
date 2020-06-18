@@ -263,18 +263,13 @@ views:
           near: 0.01
           far: 10000
         - 
-          camera: BodyTrackingCamera (Perspective)
+          camera: BodyTrackingCamera
           fieldOfView: 0.785398
           near: 0.01
           far: 100
           eye: [ -4.36866229, -0.521277418, 1.53144894 ]
           direction: [ 0.896052502, 5.48673914e-17, -0.443948098 ]
           up: [ 0.443948098, 2.71839808e-17, 0.896052502 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 100
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -336,18 +331,13 @@ views:
           near: 0.01
           far: 100
         - 
-          camera: BodyTrackingCamera (Perspective)
+          camera: BodyTrackingCamera
           fieldOfView: 0.785398
           near: 0.01
           far: 100
           eye: [ -4.36866229, -0.521277418, 1.53144894 ]
           direction: [ 0.896052502, 5.48673914e-17, -0.443948098 ]
           up: [ 0.443948098, 2.71839808e-17, 0.896052502 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 100
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]

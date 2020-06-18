@@ -51,18 +51,6 @@ items:
           data: 
             modelFile: "${SHARE}/model/Labo1/Labo1.body"
             currentBaseLink: "Base"
-            rootPosition: [ 0, 0, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: false
@@ -188,18 +176,13 @@ views:
           near: 0.01
           far: 1000
         - 
-          camera: BodyTrackingCamera (Perspective)
+          camera: BodyTrackingCamera
           fieldOfView: 0.785398
           near: 0.01
           far: 1000
           eye: [ -3.72299386, -0.786552187, 1.45821584 ]
           direction: [ 0.975848656, -0.00975881164, -0.218229618 ]
           up: [ 0.218218707, -0.00218225976, 0.97589745 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 100
       backgroundColor: [ 0.41568628, 0.447058827, 0.996078432 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -256,7 +239,7 @@ views:
           near: 0.01
           far: 1000
         - 
-          camera: BodyTrackingCamera (Perspective)
+          camera: BodyTrackingCamera
           isCurrent: true
           fieldOfView: 0.785398
           near: 0.01
@@ -264,11 +247,6 @@ views:
           eye: [ -3.72299386, -0.786552187, 1.45821584 ]
           direction: [ 0.975848656, -0.00975881164, -0.218229618 ]
           up: [ 0.218218707, -0.00218225976, 0.97589745 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 1000
       backgroundColor: [ 0.41568628, 0.447058827, 1 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
