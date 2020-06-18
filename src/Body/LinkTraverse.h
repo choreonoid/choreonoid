@@ -66,7 +66,7 @@ public:
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
 
-iterator begin() { return links_.begin(); }
+    iterator begin() { return links_.begin(); }
     iterator end() { return links_.end(); }
     const_iterator begin() const { return links_.begin(); }
     const_iterator end() const { return links_.end(); }
@@ -81,8 +81,6 @@ iterator begin() { return links_.begin(); }
     }
 	
     void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const;
-
-    std::vector<Link*> getStdVectorCopy() const { return std::vector<Link*>(links_); }
 
 protected:
     std::vector<Link*> links_;

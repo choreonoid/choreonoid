@@ -773,7 +773,7 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceList(Body* body)
             devices[device->link()].push_back(device);
         }
     }
-    auto links = body->links().getStdVectorCopy();
+    auto links = body->links();
     if(numberColumnMode == Identifier){
         std::stable_sort(links.begin(), links.end(),
                   [&](Link* l0, Link* l1){

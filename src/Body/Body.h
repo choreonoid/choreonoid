@@ -90,8 +90,8 @@ public:
         return linkTraverse_;
     }
 
-    const LinkTraverse& links() const {
-        return linkTraverse_;
+    const std::vector<Link*>& links() const {
+        return linkTraverse_.links();
     }
     
     /**

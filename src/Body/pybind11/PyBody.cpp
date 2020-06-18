@@ -8,6 +8,7 @@
 #include <cnoid/PyReferenced>
 #include <cnoid/PyEigenTypes>
 #include <pybind11/operators.h>
+#include <pybind11/stl.h>
 
 using namespace std;
 using namespace cnoid;
@@ -33,9 +34,15 @@ void exportPyBody(py::module& m)
         .def_property_readonly("numVirtualJoints", &Body::numVirtualJoints)
         .def_property_readonly("numAllJoints", &Body::numAllJoints)
         .def("joint", &Body::joint)
+        .def_property_readonly("joints",[](Body& self){
+                                            auto joints = self.allJoints();
+                                            joints.resize(self.numJoints());
+                                            return joints; })
+        .def_property_readonly("allJoints", &Body::allJoints)
         .def_property_readonly("numLinks", &Body::numLinks)
         .def("link", (Link*(Body::*)(int)const)&Body::link)
         .def("link", (Link*(Body::*)(const string&)const)&Body::link)
+        .def_property_readonly("links", &Body::links)
         .def_property_readonly("rootLink", &Body::rootLink)
         .def_property_readonly("numDevices", &Body::numDevices)
         .def("device", &Body::device)
