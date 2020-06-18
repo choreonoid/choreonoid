@@ -21,6 +21,7 @@
 #include <cnoid/YAMLWriter>
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
+#include <cnoid/Sleep>
 #include <QCoreApplication>
 #include <QResource>
 #include <QMessageBox>
@@ -380,8 +381,22 @@ ItemList<> ProjectManager::Impl::loadProject
                 }
                 if(!isBuiltinProject){
                     mainWindow->show();
-                    mv->flush();
-                    mainWindow->repaint();
+
+#ifdef Q_OS_UNIX
+                    /**
+                       There is a delay between executing the show function of a window and the window
+                       is actually displayed. If the event loop is blocked by an item that takes a long
+                       time to load before the window is displayed, the window will remain hidden for
+                       a while. This behavior gives the user the bad impression that the application is
+                       slow to start. To avoid this problem, the window should be displayed before any
+                       items are loaded. This can be achieved by decreasing the time difference from
+                       the window display delay by the following sleep.
+                    */
+                    usleep(500);
+#endif
+                    // The following functions are probably useless for this problem.
+                    // mv->flush();
+                    // mainWindow->repaint();
                 }
             } else {
                 if(isBuiltinProject || perspectiveCheck->isChecked()){
