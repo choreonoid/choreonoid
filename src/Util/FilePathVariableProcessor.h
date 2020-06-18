@@ -25,8 +25,10 @@ public:
     void setSystemVariablesEnabled(bool on);
     void setUserVariables(Mapping* variables);
     void setBaseDirectory(const std::string& directory);
+    void clearBaseDirectory();
     std::string baseDirectory() const;
     void setProjectDirectory(const std::string& directory);
+    void clearProjectDirectory();
     const std::string& projectDirectory() const;
     std::string parameterize(const std::string& path);
     std::string expand(const std::string& path, bool doMakeNativeAbsolutePath);

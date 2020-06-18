@@ -19,6 +19,7 @@
 #include <cnoid/MainWindow>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
+#include <cnoid/FilePathVariableProcessor>
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
 #include <cnoid/Sleep>
@@ -518,6 +519,12 @@ ItemList<> ProjectManager::Impl::loadProject
     --projectBeingLoadedCounter;
 
     ::sigProjectLoaded(projectBeingLoadedCounter);
+
+    if(!self->isLoadingProject()){
+        auto vp = FilePathVariableProcessor::systemInstance();
+        vp->clearBaseDirectory();
+        vp->clearProjectDirectory();
+    }
     
     return loadedItems;
 }

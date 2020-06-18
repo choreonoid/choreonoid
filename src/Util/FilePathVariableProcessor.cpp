@@ -139,6 +139,12 @@ void FilePathVariableProcessor::setBaseDirectory(const std::string& directory)
 }
 
 
+void FilePathVariableProcessor::clearBaseDirectory()
+{
+    setBaseDirectory("");
+}
+
+
 std::string FilePathVariableProcessor::baseDirectory() const
 {
     return impl->baseDirPath.string();
@@ -157,11 +163,17 @@ void FilePathVariableProcessor::setProjectDirectory(const std::string& directory
 }
 
 
+void FilePathVariableProcessor::clearProjectDirectory()
+{
+    setProjectDirectory("");
+}
+
+
 const std::string& FilePathVariableProcessor::projectDirectory() const
 {
     return impl->projectDirString;
 }
-    
+
 
 std::string FilePathVariableProcessor::parameterize(const std::string& orgPathString)
 {
