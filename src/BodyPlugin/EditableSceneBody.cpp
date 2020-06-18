@@ -788,30 +788,40 @@ int EditableSceneBody::Impl::checkLinkOperationType(SceneLink* sceneLink)
 
 int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
 {
+    // Check if the link is editable considering the ancestor bodies
+    BodyItem* bodyItemChain = bodyItem;
+    Link* linkChain = link;
+    while(true){
+        if(!bodyItemChain->isAttachedToParentBody()){
+            if(!bodyItemChain->isLocationEditable() && linkChain->isBodyRoot()){
+                return LinkOperationType::None;
+            }
+            break;
+        }
+        bodyItemChain = bodyItemChain->parentBodyItem();
+        linkChain = linkChain->body()->parentBodyLink();
+        if(!linkChain->isBodyRoot()){
+            break;
+        }
+    }
+
     int mode = kinematicsBar->mode();
     int type = LinkOperationType::None;
+
     if(mode == KinematicsBar::PresetKinematics){
         currentIK = bodyItem->findPresetIK(link);
-        if(currentIK){
-            if(kinematicsBar->isInverseKinematicsEnabled()){
-                type = LinkOperationType::IK;
-            }
+        if(currentIK && kinematicsBar->isInverseKinematicsEnabled()){
+            type = LinkOperationType::IK;
         } else if(link->isBodyRoot()){
-            if(bodyItem->isLocationEditable()){
-                type = LinkOperationType::IK;
-            }
-        } else {
-            if(kinematicsBar->isForwardKinematicsEnabled()){
-                type = LinkOperationType::FK;
-            }
+            type = LinkOperationType::IK;
+        } else if(kinematicsBar->isForwardKinematicsEnabled()){
+            type = LinkOperationType::FK;
         }
     } else if(mode == KinematicsBar::ForwardKinematics){
         auto baseLink = bodyItem->currentBaseLink();
         if(link->isBodyRoot()){
-            if(bodyItem->isLocationEditable()){
-                if(!baseLink || link == baseLink){
-                    type = LinkOperationType::IK;
-                }
+            if(!baseLink || link == baseLink){
+                type = LinkOperationType::IK;
             }
         } else {
             if(baseLink && link == baseLink){
@@ -821,7 +831,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
             }
         }
     } else if(mode == KinematicsBar::InverseKinematics){
-        if(!link->isBodyRoot() || bodyItem->isLocationEditable() || bodyItem->isAttachedToParentBody()){
+        if(!link->isBodyRoot() || bodyItem->isAttachedToParentBody()){
             type = LinkOperationType::IK;
         }
     }
@@ -867,12 +877,14 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 {
     LinkKinematicsKit* kinematicsKit = nullptr;
     if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
-        auto parentBodyItem = bodyItem->parentBodyItem();
         auto parentBodyLink = bodyItem->body()->parentBodyLink();
-        kinematicsKit = parentBodyItem->getCurrentLinkKinematicsKit(parentBodyLink);
-        if(kinematicsKit){
-            positionDragger->setPosition(
-                link->Tb().inverse(Eigen::Isometry) * kinematicsKit->currentOffsetFrame()->T());
+        if(!parentBodyLink->isBodyRoot()){
+            auto parentBodyItem = bodyItem->parentBodyItem();
+            kinematicsKit = parentBodyItem->getCurrentLinkKinematicsKit(parentBodyLink);
+            if(kinematicsKit){
+                positionDragger->setPosition(
+                    link->Tb().inverse(Eigen::Isometry) * kinematicsKit->currentOffsetFrame()->T());
+            }
         }
     }
     if(!kinematicsKit){
@@ -1022,9 +1034,11 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     } else {
         if(event.button() == Qt::LeftButton){
             updateMarkersAndManipulators(true);
-            if(!bodyItem->isAttachedToParentBody()){
+
+            //if(!bodyItem->isAttachedToParentBody()){
+            if(true){
                 bsm->setCurrent(bodyItem, targetLink, true);
-            } else {
+            } else{
                 bsm->setCurrent(
                     bodyItem->parentBodyItem(),
                     bodyItem->body()->parentBodyLink(),

@@ -170,7 +170,6 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
             if(presetIK){
                 kit = new LinkKinematicsKit(targetLink);
                 kit->setInversetKinematics(presetIK);
-                updateCoordinateFramesOf(kit, true);
             }
         }
         if(!kit && !isPresetOnly){
@@ -194,6 +193,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
 
         if(kit){
             linkPairToKinematicsKitMap[key] = kit;
+            updateCoordinateFramesOf(kit, true);
         }
     }
 

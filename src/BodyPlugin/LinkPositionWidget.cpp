@@ -448,11 +448,8 @@ void LinkPositionWidget::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 
 void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
-    bool isBodyItemChanged = (bodyItem != targetBodyItem);
-    bool isLinkChanged = (link != targetLink);
-
     // Sub body's root link is recognized as the parent body's end link
-    if(bodyItem && link){
+    if(bodyItem && link && link->isBodyRoot()){
         if(bodyItem->isAttachedToParentBody()){
             if(auto parentBodyItem = bodyItem->parentBodyItem()){
                 link = bodyItem->body()->parentBodyLink();
@@ -480,6 +477,9 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
             }
         }
     }
+
+    bool isBodyItemChanged = (bodyItem != targetBodyItem);
+    bool isLinkChanged = (link != targetLink);
 
     if(!link){
         if(isLinkChanged){
