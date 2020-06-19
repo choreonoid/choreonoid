@@ -5,7 +5,7 @@ name: UR10
 
 links:
   -
-    name: Base
+    name: BASE
     jointType: fixed
     mass: 4.0
     centerOfMass: [ 0, 0, 0 ]
@@ -52,8 +52,8 @@ links:
             translation: [ 0, -0.082, 0.019 ]
             geometry: { type: Box, size: [ 0.022, 0.02, 0.022 ] }
   -
-    name: Shoulder
-    parent: Base
+    name: SHOULDER
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointId: 0
@@ -90,8 +90,8 @@ links:
             translation: [ 0, 0.046, 0.001 ]
             geometry: { type: Cylinder, radius: 0.0757, height: 0.08 }
   -
-    name: Upper_arm
-    parent: Shoulder
+    name: UPPER_ARM
+    parent: SHOULDER
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 1
@@ -165,8 +165,8 @@ links:
                 rotation: [ 1, 0, 0, 7.5 ]
                 geometry: { type: Cylinder, radius: 0.057, height: 0.02 }
   -
-    name: Forearm
-    parent: Upper_arm
+    name: FOREARM
+    parent: UPPER_ARM
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 2
@@ -246,8 +246,8 @@ links:
                 rotation: [ 1, 0, 0, -5 ]
                 geometry: { type: Cylinder, radius: 0.0445, height: 0.02 } 
   -
-    name: Wrist_1
-    parent: Forearm
+    name: WRIST1
+    parent: FOREARM
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 3
@@ -275,8 +275,8 @@ links:
             rotation: [ [ 1, 0, 0, 90], [ 0, 1, 0, 180 ] ]
             elements: *ARM_JOINT_SHAPE
   -
-    name: Wrist_2
-    parent: Wrist_1
+    name: WRIST2
+    parent: WRIST1
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointId: 4
@@ -303,8 +303,8 @@ links:
             translation: [ 0.0, 0.0007, 0.116 ]
             elements: *ARM_JOINT_SHAPE
   -
-    name: Wrist_3  
-    parent: Wrist_2
+    name: WRIST3
+    parent: WRIST2
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 5

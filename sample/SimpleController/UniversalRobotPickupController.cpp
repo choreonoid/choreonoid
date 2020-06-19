@@ -33,12 +33,12 @@ const int NUM_HAND_JOINTS = 2;
 const int MAX_NUM_JOINTS = NUM_JOINTS;
 
 JointSpec specs[NUM_ROBOTS][MAX_NUM_JOINTS] = {
-        {       { "Shoulder",  500.0, 50.0 },  //UR3
-                { "Upper_arm", 500.0, 50.0 },
-                { "Forearm",  200.0, 20.0 },
-                { "Wrist_1",  30.0, 3.0 },
-                { "Wrist_2",  30.0, 3.0 },
-                { "Wrist_3",  30.0, 3.0 }
+        {       { "SHOULDER",  500.0, 50.0 },  //UR3
+                { "UPPER_ARM", 500.0, 50.0 },
+                { "FOREARM",  200.0, 20.0 },
+                { "WRIST1",  30.0, 3.0 },
+                { "WRIST2",  30.0, 3.0 },
+                { "WRIST3",  30.0, 3.0 }
         },
         {       { "SHOULDER",  5000.0, 500.0 },  //UR5
                 { "UPPER_ARM",  5000.0, 500.0 },
@@ -47,12 +47,12 @@ JointSpec specs[NUM_ROBOTS][MAX_NUM_JOINTS] = {
                 { "WRIST2",  300.0, 30.0 },
                 { "WRIST3",  300.0, 30.0 }
         },
-        {       { "Shoulder",  5000.0, 500.0 },    //UR10
-                { "Upper_arm",  5000.0, 500.0 },
-                { "Forearm",  2000.0, 200.0 },
-                { "Wrist_1",  300.0, 30.0 },
-                { "Wrist_2",  300.0, 30.0 },
-                { "Wrist_3",  300.0, 30.0 }
+        {       { "SHOULDER",  5000.0, 500.0 },    //UR10
+                { "UPPER_ARM",  5000.0, 500.0 },
+                { "FOREARM",  2000.0, 200.0 },
+                { "WRIST1",  300.0, 30.0 },
+                { "WRIST2",  300.0, 30.0 },
+                { "WRIST3",  300.0, 30.0 }
         },
         {       { "Finger1_knuckle",        30.0, 3.0 },    //2F-85
                 { "Finger2_knuckle",        30.0, 3.0 },
