@@ -61,9 +61,10 @@ void exportPyBody(py::module& m)
             self.calcTotalMomentum(P, L);
             return py::make_tuple(P, L);
             })
-        .def("calcForwardKinematics", &Body::calcForwardKinematics)
-        .def("calcForwardKinematics", [](Body& self, bool calcVelocity){ self.calcForwardKinematics(calcVelocity); })
         .def("calcForwardKinematics", [](Body& self){ self.calcForwardKinematics(); })
+        .def("calcForwardKinematics", [](Body& self, bool calcVelocity){ self.calcForwardKinematics(calcVelocity); })
+        .def("calcForwardKinematics", [](Body& self, bool calcVelocity, bool calcAcceleration)
+             { self.calcForwardKinematics(calcVelocity, calcAcceleration); })
         .def("clearExternalForces", &Body::clearExternalForces)
         .def_property_readonly("numExtraJoints", &Body::numExtraJoints)
         .def("clearExtraJoints", &Body::clearExtraJoints)
