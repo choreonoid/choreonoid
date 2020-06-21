@@ -67,7 +67,9 @@ public:
     std::string resolveRelocatablePath(const std::string& relocatable) const;
         
     bool readRelocatablePath(const std::string& key, std::string& out_value) const;
+    std::string readItemFilePath() const;
     bool loadFileTo(Item* item) const;
+    bool loadFileTo(const std::string& filepath, Item* item) const;
     //! \deprecated
     bool loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey = std::string()) const;
     

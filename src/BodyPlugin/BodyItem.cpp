@@ -1847,12 +1847,15 @@ bool BodyItem::restore(const Archive& archive)
 
 bool BodyItem::Impl::restore(const Archive& archive)
 {
-    string filename;
-    if(archive.read("file", filename)){
-        archive.loadFileTo(self);
-    } else {
+    string filepath = archive.readItemFilePath();
+    if(!filepath.empty()){
         // for the backward compatibiliy
-        archive.loadItemFile(self, "modelFile", "format");
+        archive.readRelocatablePath("modelFile", filepath);
+    }
+    if(!filepath.empty()){
+        if(!archive.loadFileTo(filepath, self)){
+            return false;
+        }
     }
 
     Vector3 p = Vector3::Zero();

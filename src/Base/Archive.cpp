@@ -239,6 +239,17 @@ bool Archive::readRelocatablePath(const std::string& key, std::string& out_value
 }
 
 
+std::string Archive::readItemFilePath() const
+{
+    string filepath;
+    if(!readRelocatablePath("file", filepath)){
+        // for the backward compatibility
+        readRelocatablePath("filename", filepath);
+    }
+    return filepath;
+}
+
+
 bool Archive::loadFileTo(Item* item) const
 {
     string file, format;
@@ -252,6 +263,14 @@ bool Archive::loadFileTo(Item* item) const
         return item->load(file, currentParentItem(), format, this);
     }
     return false;
+}
+
+
+bool Archive::loadFileTo(const std::string& filepath, Item* item) const
+{
+    string format;
+    read("format", format);
+    return item->load(filepath, currentParentItem(), format, this);
 }
 
 
