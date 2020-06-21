@@ -107,7 +107,7 @@ public:
     bool checkNewPositionAcceptanceIter(bool isManualOperation);
     bool onCheckNewPositionAcceptance(bool isManualOperation);
     void callFuncOnConnectedToRoot();
-    void justRemoveSelfFromParent(bool doClearSelf);
+    void justRemoveSelfFromParent();
     void doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted);
     void callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling);
     void callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem);
@@ -698,13 +698,13 @@ bool Item::Impl::checkNewPositionAcceptance(Item* newParentItem, Item* newNextIt
     auto currentNextItem = self->nextItem_;
 
     if(currentParentItem){
-        justRemoveSelfFromParent(false);
+        justRemoveSelfFromParent();
     }
     newParentItem->impl->justInsertChildItem(newNextItem, self);
 
     bool accepted = checkNewPositionAcceptanceIter(isManualOperation);
 
-    justRemoveSelfFromParent(false);
+    justRemoveSelfFromParent();
     if(currentParentItem){
         currentParentItem->impl->justInsertChildItem(currentNextItem, self);
     }
@@ -760,7 +760,7 @@ void Item::onConnectedToRoot()
 }
 
 
-void Item::Impl::justRemoveSelfFromParent(bool doClearSelf)
+void Item::Impl::justRemoveSelfFromParent()
 {
     if(self->prevItem_){
         self->prevItem_->nextItem_ = self->nextItem_;
@@ -774,11 +774,9 @@ void Item::Impl::justRemoveSelfFromParent(bool doClearSelf)
     }
     --self->parent_->numChildren_;
 
-    if(doClearSelf){
-        self->parent_ = nullptr;
-        self->prevItem_ = nullptr;
-        self->nextItem_ = nullptr;
-    }
+    self->parent_ = nullptr;
+    self->prevItem_ = nullptr;
+    self->nextItem_ = nullptr;
 }
 
 
@@ -815,7 +813,7 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
         self->parent_->impl->addToItemsToEmitSigSubTreeChanged();
     }
 
-    justRemoveSelfFromParent(true);
+    justRemoveSelfFromParent();
 
     attributes.reset(SubItem);
 
