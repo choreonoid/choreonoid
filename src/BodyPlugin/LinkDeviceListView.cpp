@@ -100,19 +100,11 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     
     self->setLayout(vbox);
 
-    bodySelectionManager = BodySelectionManager::instance();
-
-    bodySelectionManagerConnection =
-        bodySelectionManager->sigCurrentChanged().connect(
-            [&](BodyItem* bodyItem, Link* link){
-                onCurrentBodySelectionChanged(bodyItem, link); });
-
     treeWidgetConnection =
         treeWidget.sigLinkSelectionChanged().connect(
             [&](){ onTreeWidgetLinkSelectionChanged(); });
 
-    onCurrentBodySelectionChanged(
-        bodySelectionManager->currentBodyItem(), bodySelectionManager->currentLink());
+    bodySelectionManager = BodySelectionManager::instance();
 
     isTreeWidgetUpdateEnabled = true;
 }
@@ -121,6 +113,25 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
 LinkDeviceListView::~LinkDeviceListView()
 {
     delete impl;
+}
+
+
+void LinkDeviceListView::onActivated()
+{
+    auto bsm = impl->bodySelectionManager;
+    
+    impl->bodySelectionManagerConnection =
+        bsm->sigCurrentChanged().connect(
+            [&](BodyItem* bodyItem, Link* link){
+                impl->onCurrentBodySelectionChanged(bodyItem, link); });
+    
+    impl->onCurrentBodySelectionChanged(bsm->currentBodyItem(), bsm->currentLink());
+}
+
+
+void LinkDeviceListView::onDeactivated()
+{
+    impl->bodySelectionManagerConnection.disconnect();
 }
 
 

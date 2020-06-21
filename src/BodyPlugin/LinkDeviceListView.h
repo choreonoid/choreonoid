@@ -15,8 +15,10 @@ public:
     LinkDeviceListView();
     virtual ~LinkDeviceListView();
 
-    virtual bool storeState(Archive& archive);
-    virtual bool restoreState(const Archive& archive);
+    virtual void onActivated() override;
+    virtual void onDeactivated() override;
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
             
 private:
     class Impl;
