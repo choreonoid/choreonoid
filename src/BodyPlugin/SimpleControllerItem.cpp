@@ -323,7 +323,7 @@ bool SimpleControllerItemImpl::loadController()
                              "path from the project directory, but the project directory "
                              "has not been determined yet."),
                            controllerModuleName, self->displayName()),
-                    MessageView::ERROR);
+                    MessageView::Error);
                 return false;
             }
         }
@@ -344,7 +344,7 @@ bool SimpleControllerItemImpl::loadController()
                        self->displayName(), controllerModuleFilename));
         if(!controllerModule.load()){
             mv->put(_("Failed.\n"));
-            mv->putln(controllerModule.errorString(), MessageView::ERROR);
+            mv->putln(controllerModule.errorString(), MessageView::Error);
             return false;
         }
         mv->putln(_("OK!"));
@@ -354,7 +354,7 @@ bool SimpleControllerItemImpl::loadController()
         (SimpleController::Factory)controllerModule.resolve("createSimpleController");
     if(!factory){
         mv->putln(_("The factory function \"createSimpleController()\" is not found in the controller module."),
-                  MessageView::ERROR);
+                  MessageView::Error);
         return false;
     }
 
@@ -362,7 +362,7 @@ bool SimpleControllerItemImpl::loadController()
     if(!controller){
         mv->putln(format(_("The controller factory of {} failed to create a controller instance."),
                          self->displayName()),
-                  MessageView::ERROR);
+                  MessageView::Error);
         unloadController();
         return false;
     }
@@ -380,7 +380,7 @@ bool SimpleControllerItemImpl::configureController()
                 isConfigured = true;
             } else {
                 mv->putln(format(_("{} failed to configure the controller"), self->displayName()),
-                          MessageView::ERROR);
+                          MessageView::Error);
                 isConfigured = false;
             }
         } else if(isConfigured){
@@ -497,7 +497,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
         }
     }
     if(!isConfigured){
-        mv->putln(format(_("{} is not configured."), self->displayName()), MessageView::ERROR);
+        mv->putln(format(_("{} is not configured."), self->displayName()), MessageView::Error);
         return nullptr;
     }
 
@@ -514,7 +514,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
     clearIoTargets();
 
     if(!controller->initialize(this)){
-        mv->putln(format(_("{}'s initialize method failed."), self->displayName()), MessageView::ERROR);
+        mv->putln(format(_("{}'s initialize method failed."), self->displayName()), MessageView::Error);
         sharedInfo.reset();
         return nullptr;
     }
@@ -782,7 +782,7 @@ bool SimpleControllerItemImpl::start()
 {
     bool result = true;
     if(!controller->start()){
-        mv->putln(format(_("{} failed to start"), self->displayName()), MessageView::WARNING);
+        mv->putln(format(_("{} failed to start"), self->displayName()), MessageView::Warning);
         result = false;
     } else {
         for(auto& childController : childControllerItems){

@@ -1601,7 +1601,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
     if(!worldItem){
         mv->putln(format(_("{} must be in a WorldItem to do simulation."), self->displayName()),
-                  MessageView::ERROR);
+                  MessageView::Error);
         return false;
     }
 
@@ -1643,7 +1643,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
             if(!simBody){
                 mv->putln(format(_("The clone of {0} for the simulation cannot be created."), orgBody->name()),
-                          MessageView::WARNING);
+                          MessageView::Warning);
             } else {
                 if(simBody->body()){
                     if(simBody->initialize(self, bodyItem)){
@@ -1715,7 +1715,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
                     initialized = true;
                 } else {
                     mv->putln(format(_("The initialization of \"{}\" failed."), item->displayName()),
-                              MessageView::WARNING);
+                              MessageView::Warning);
                 }
             } else {
                 mv->putln(format(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
@@ -1742,13 +1742,13 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
                     if(!ready){
                         mv->putln(format(_("{0} for {1} failed to start."),
                                          controller->displayName(), simBodyImpl->bodyItem->displayName()),
-                                  MessageView::WARNING);
+                                  MessageView::Warning);
                     }
                 } else {
                     ready = controller->start();
                     if(!ready){
                         mv->putln(format(_("{} failed to start."), controller->displayName()),
-                                  MessageView::WARNING);
+                                  MessageView::Warning);
                     }
                 }
                 if(ready){
@@ -1767,7 +1767,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
         if(doStopSimulationWhenNoActiveControllers && activeControllers.empty()){
             mv->putln(_("The simulation cannot be started because all the controllers are inactive."),
-                      MessageView::ERROR);
+                      MessageView::Error);
             result = false;
         }
     }

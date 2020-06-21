@@ -309,7 +309,7 @@ bool ItemFileIO::Impl::loadItem
     mv->flush();
 
     if(!loaded){
-        mv->put(_(" -> failed.\n"), MessageView::HIGHLIGHT);
+        mv->put(_(" -> failed.\n"), MessageView::Highlight);
     } else {
         if(item->name().empty()){
             item->setName(filesystem::path(filename).stem().string());
@@ -387,7 +387,7 @@ bool ItemFileIO::Impl::saveItem
     mv->flush();
 
     if(!saved){
-        mv->put(_(" -> failed.\n"), MessageView::HIGHLIGHT);
+        mv->put(_(" -> failed.\n"), MessageView::Highlight);
 
     } else {
         MappingPtr optionArchive;
@@ -480,13 +480,13 @@ std::ostream& ItemFileIO::os()
 
 void ItemFileIO::putWarning(const std::string& message)
 {
-    impl->mv->putln(message, MessageView::WARNING);
+    impl->mv->putln(message, MessageView::Warning);
 }
 
 
 void ItemFileIO::putError(const std::string& message)
 {
-    impl->mv->putln(message, MessageView::ERROR);
+    impl->mv->putln(message, MessageView::Error);
 }
 
 

@@ -1139,7 +1139,7 @@ GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
             } else {
                 MessageView::instance()->putln(
                     fmt::format(_("{} not found"), el->Get<std::string>("uri")),
-                    MessageView::WARNING
+                    MessageView::Warning
                     );
             }
 
@@ -1319,7 +1319,7 @@ bool SDFBodyLoaderImpl::convertAngle(double* angle, double min, double max, cons
         MessageView::instance()->putln(
             fmt::format(_("max_angle must be greater of equal to min_angle [ min={0} max={1} ] ({2})"),
                         min, max, name),
-            MessageView::ERROR
+            MessageView::Error
             );
         return false;
     } else if (min != max) {
@@ -1339,7 +1339,7 @@ bool SDFBodyLoaderImpl::convertAngle(double* angle, double min, double max, cons
                 MessageView::instance()->putln(
                     fmt::format(_("sensor range too big [ setting={0} threshold={1} ] ({2})"),
                                 result, thresh, name),
-                    MessageView::ERROR
+                    MessageView::Error
                 );
                 return false;
             }
@@ -1348,7 +1348,7 @@ bool SDFBodyLoaderImpl::convertAngle(double* angle, double min, double max, cons
                fmt::format(_("unable to convert angle, use default value "
                              "[ min={0} max={1} default={2} ] ({3})"),
                            dmin, dmax, defaultValue, name),
-               MessageView::WARNING
+               MessageView::Warning
                );
         }
     } else {
@@ -1359,7 +1359,7 @@ bool SDFBodyLoaderImpl::convertAngle(double* angle, double min, double max, cons
                fmt::format(_("unable to convert angle, use alternate value "
                              "[ min={0} max={1} alternate={2} ] ({3})"),
                            min, max, result, name),
-               MessageView::WARNING
+               MessageView::Warning
                );
         }
     }

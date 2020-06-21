@@ -422,14 +422,14 @@ void MessageViewImpl::put(const QString& message, bool doLF, bool doNotify, bool
 
 void MessageViewImpl::put(int type, const QString& message, bool doLF, bool doNotify, bool doFlush)
 {
-    if(type == MessageView::NORMAL){
+    if(type == MessageView::Normal){
         put(message, doLF, doNotify, doFlush);
     } else {
         // add the escape sequence to make the text red
         QString highlighted("\033[31m");
-        if(type == MessageView::ERROR){
+        if(type == MessageView::Error){
             highlighted.append(_("Error: "));
-        } else if(type == MessageView::WARNING){
+        } else if(type == MessageView::Warning){
             highlighted.append(_("Warning: "));
         }
         highlighted.append(message);

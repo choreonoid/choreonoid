@@ -427,7 +427,7 @@ void GSMediaViewImpl::putGstMessage
     GError* err;
     parse(message, &err, &debug);
     g_free(debug);
-    mv->putln(fmt::format("{0}: {1}", prefix, err->message), MessageView::HIGHLIGHT);
+    mv->putln(fmt::format("{0}: {1}", prefix, err->message), MessageView::Highlight);
     g_error_free(err);
 }
     

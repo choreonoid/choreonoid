@@ -488,14 +488,14 @@ bool PluginManager::Impl::loadPlugin(int index)
         }
         
         if(!(info->dll.load())){
-            mv->putln(MessageView::ERROR, info->dll.errorString());
+            mv->putln(MessageView::Error, info->dll.errorString());
 
         } else {
             QFunctionPointer symbol = info->dll.resolve("getChoreonoidPlugin");
             if(!symbol){
                 info->status = PluginManager::INVALID;
-                mv->putln(MessageView::ERROR, _("The plugin entry function \"getChoreonoidPlugin\" is not found."));
-                mv->putln(MessageView::ERROR, info->dll.errorString());
+                mv->putln(MessageView::Error, _("The plugin entry function \"getChoreonoidPlugin\" is not found."));
+                mv->putln(MessageView::Error, info->dll.errorString());
 
             } else {
                 Plugin::PluginEntry getCnoidPluginFunc = (Plugin::PluginEntry)(symbol);
@@ -504,7 +504,7 @@ bool PluginManager::Impl::loadPlugin(int index)
 
                 if(!plugin){
                     info->status = PluginManager::INVALID;
-                    mv->putln(MessageView::ERROR, _("The plugin object cannot be created."));
+                    mv->putln(MessageView::Error, _("The plugin object cannot be created."));
 
                 } else {
 
@@ -518,7 +518,7 @@ bool PluginManager::Impl::loadPlugin(int index)
                                 _("The internal version of the {0} plugin is different from the system internal version.\n"
                                   "The plugin file \"{1}\" should be removed or updated to avoid a problem."),
                                 info->name, info->pathString),
-                            MessageView::WARNING);
+                            MessageView::Warning);
                     }
                         
                     const int numRequisites = plugin->numRequisites();
@@ -545,7 +545,7 @@ bool PluginManager::Impl::loadPlugin(int index)
                         info->status = PluginManager::CONFLICT;
                         PluginInfoPtr& another = p->second;
                         another->status = PluginManager::CONFLICT;
-                        mv->putln(MessageView::ERROR,
+                        mv->putln(MessageView::Error,
                                   fmt::format(_("Plugin file \"{0}\" conflicts with \"{1}\"."),
                                   info->pathString, another->pathString));
                     }
@@ -555,7 +555,7 @@ bool PluginManager::Impl::loadPlugin(int index)
     }
 
     if(info->status != PluginManager::LOADED){
-        mv->putln(MessageView::ERROR, _("Loading the plugin failed."));
+        mv->putln(MessageView::Error, _("Loading the plugin failed."));
         mv->flush();
     }
 

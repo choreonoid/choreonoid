@@ -189,9 +189,9 @@ bool LuaScriptItemImpl::execute()
         if(msg == nullptr){
             mv->putln(
                 fmt::format(_("Error in loading Lua script \"{}\"."), scriptFilename),
-                MessageView::ERROR);
+                MessageView::Error);
         } else {
-            mv->putln(msg, MessageView::ERROR);
+            mv->putln(msg, MessageView::Error);
         }
         hasError = true;
     }

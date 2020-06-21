@@ -30,20 +30,24 @@ public:
 #undef ERROR
 #endif
 
-    enum MessageType { NORMAL, ERROR, WARNING, HIGHLIGHT };
+    enum MessageType {
+        Normal, Error, Warning, Highlight,
+        // deprecated
+        NORMAL = Normal, ERROR = Error, WARNING = Warning, HIGHLIGHT = Highlight
+    };
 
-    void put(const char* message, int type = NORMAL);
-    void put(const std::string& message, int type = NORMAL);
-    void put(const QString& message, int type = NORMAL);
+    void put(const char* message, int type = Normal);
+    void put(const std::string& message, int type = Normal);
+    void put(const QString& message, int type = Normal);
 
     void putln();
-    void putln(const char* message, int type = NORMAL);
-    void putln(const std::string& message, int type = NORMAL);
-    void putln(const QString& message, int type = NORMAL);
+    void putln(const char* message, int type = Normal);
+    void putln(const std::string& message, int type = Normal);
+    void putln(const QString& message, int type = Normal);
 
-    void notify(const char* message, int type = NORMAL);
-    void notify(const std::string& message, int type = NORMAL);
-    void notify(const QString& message, int type = NORMAL);
+    void notify(const char* message, int type = Normal);
+    void notify(const std::string& message, int type = Normal);
+    void notify(const QString& message, int type = Normal);
 
     //! \deprecated
     void put(int type, const char* message);

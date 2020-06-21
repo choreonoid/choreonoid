@@ -482,7 +482,7 @@ MaterialTable* WorldItemImpl::getOrLoadMaterialTable(bool checkFileUpdate)
 
     if(failedToLoad){
         MessageView::instance()->putln(
-            format(_("Reloading material table \"{}\" failed."), materialTableFile), MessageView::WARNING);
+            format(_("Reloading material table \"{}\" failed."), materialTableFile), MessageView::Warning);
     }
 
     return materialTable;

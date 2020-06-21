@@ -154,7 +154,7 @@ void MessageLogItemImpl::openFile()
 
     if(!ofs){
         mv->putln(format(_("Couldn't open file \"{}\" for writing.\n"), filename),
-                  MessageView::ERROR);
+                  MessageView::Error);
     }else{
         mv->putln(format(_("Opened file \"{}\" for writing.\n"), filename));
     }

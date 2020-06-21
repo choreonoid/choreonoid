@@ -219,7 +219,7 @@ void PythonPlugin::executeScriptFileOnStartup(const string& scriptFile)
     if(!executor().hasException()){
         MessageView::instance()->putln(_("The script finished."));
     } else {
-        MessageView::instance()->putln(MessageView::WARNING, _("Failed to run the python script."));
+        MessageView::instance()->putln(MessageView::Warning, _("Failed to run the python script."));
         python::gil_scoped_acquire lock;
         MessageView::instance()->put(executor().exceptionText());
     }
@@ -335,7 +335,7 @@ void PythonPlugin::exportLibPythonSymbols()
     if(!exported){
         MessageView::instance()->putln(
             _("Failed to export the libpython symbols. The system may not be able to load binary Python modules."),
-            MessageView::WARNING);
+            MessageView::Warning);
     }
 }
 #endif

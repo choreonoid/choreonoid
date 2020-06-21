@@ -124,7 +124,7 @@ bool SubProjectItemImpl::loadSubProject(const std::string& filename)
     if(projectFilesBeingLoaded.find(filename) != projectFilesBeingLoaded.end()){
         MessageView::instance()->putln(
             format(_("Sub projects to load \"{}\" are recursively specified."),
-            filename), MessageView::ERROR);
+            filename), MessageView::Error);
         return false;
     }
 

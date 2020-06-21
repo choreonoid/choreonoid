@@ -255,7 +255,7 @@ double AISTSimulatorItem::dynamicFriction() const
 void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction)
 {
     MessageView::instance()->putln(
-        MessageView::WARNING,
+        MessageView::Warning,
         _("AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction) "
           "is not supported in this version.\n"
           "Please use the material table instead of it."));
@@ -360,7 +360,7 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap&
         if(link->isFreeJoint() && !link->isRoot()){
             MessageView::instance()->putln(
                 format(_("The joint {0} of {1} is a free joint. AISTSimulator does not allow for a free joint except for the root link."),
-                       link->name(), body->name(), MessageView::WARNING));
+                       link->name(), body->name(), MessageView::Warning));
             link->setJointType(Link::FIXED_JOINT);
         }
     }

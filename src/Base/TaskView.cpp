@@ -512,7 +512,7 @@ bool TaskViewImpl::updateTask(Task* task)
         addTask(task);
     } else {
         if(isWaiting()){
-            mv->putln(MessageView::WARNING,
+            mv->putln(MessageView::Warning,
                       format(_("Task \"{}\" cannot be updated now because it is wating for a command to finish."),
                       task->name()));
         } else {
@@ -1257,7 +1257,7 @@ void TaskViewImpl::goToNextTask()
                 if(setCurrentTaskByName(nextTask, true, true)){
                     ++currentIndexInSerializedTasks;
                 } else {
-                    mv->putln(MessageView::WARNING,
+                    mv->putln(MessageView::Warning,
                               format(_("Next task \"{}\" is not found."),
                               nextTask));
                 }
@@ -1311,7 +1311,7 @@ void TaskViewImpl::breakSequence()
     nextPhaseIndex = stdx::nullopt;
     nextCommandIndex = stdx::nullopt;
 
-    mv->putln(MessageView::HIGHLIGHT,
+    mv->putln(MessageView::Highlight,
               "Transition to the next task-command was interrupted.");
 }
 

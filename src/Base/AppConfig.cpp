@@ -95,7 +95,7 @@ static void putLoadError(const string& filename, const string& message)
     MessageView::instance()->putln(
         format(_("Application config file \"{0}\" cannot be loaded.\n{1})."),
                filename, message),
-        MessageView::ERROR);
+        MessageView::Error);
 }
 
 

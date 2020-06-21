@@ -87,7 +87,7 @@ void OptionManager::parseCommandLine2()
 
     for(auto& file : inputFiles){
         MessageView::instance()->putln(
-            MessageView::WARNING, fmt::format(_("Input file \"{}\" was not processed."), file));
+            MessageView::Warning, fmt::format(_("Input file \"{}\" was not processed."), file));
     }
 }
 

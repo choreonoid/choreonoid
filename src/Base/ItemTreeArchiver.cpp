@@ -99,7 +99,7 @@ ArchivePtr ItemTreeArchiver::Impl::store(Archive& parentArchive, Item* item)
     bool isComplete = true;
     ArchivePtr archive = storeIter(parentArchive, item, isComplete);
     if(!isComplete){
-        mv->putln(_("Not all items were stored correctly."), MessageView::WARNING);
+        mv->putln(_("Not all items were stored correctly."), MessageView::Warning);
     }
     return archive;
 }
@@ -113,7 +113,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     if(!ItemManager::getClassIdentifier(item, pluginName, className)){
         mv->putln(
             format(_("\"{}\" cannot be stored. Its type is not registered."), item->displayName()),
-            MessageView::ERROR);
+            MessageView::Error);
         isComplete = false;
         return nullptr;
     }
@@ -131,7 +131,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
         dataArchive->inheritSharedInfoFrom(parentArchive);
 
         if(!item->store(*dataArchive)){
-            mv->putln(format(_("\"{}\" cannot be stored."), item->displayName()), MessageView::ERROR);
+            mv->putln(format(_("\"{}\" cannot be stored."), item->displayName()), MessageView::Error);
             isComplete = false;
             return nullptr;
         }
@@ -207,7 +207,7 @@ void ItemTreeArchiver::Impl::storeAddons(Archive& archive, Item* item)
                 mv->putln(
                     format(_("Addon \"{0}\" of item \"{1}\" cannot be stored. Its type is not registered."),
                            typeid(*addon).name(), item->displayName()),
-                    MessageView::ERROR);
+                    MessageView::Error);
             } else {
                 ArchivePtr addonArchive = new Archive;
                 addonArchive->inheritSharedInfoFrom(archive);
@@ -220,7 +220,7 @@ void ItemTreeArchiver::Impl::storeAddons(Archive& archive, Item* item)
                     /*
                     mv->putln(format(_("Addon \"{0}\" of item \"{1}\" cannot be stored."),
                                      name, item->name()),
-                              MessageView::ERROR);
+                              MessageView::Error);
                     */
                 }
             }
@@ -250,7 +250,7 @@ ItemList<> ItemTreeArchiver::Impl::restore
     try {
         restoreItemIter(archive, parentItem, restoredItems);
     } catch (const ValueNode::Exception& ex){
-        mv->putln(ex.message(), MessageView::ERROR);
+        mv->putln(ex.message(), MessageView::Error);
     }
     archive.setCurrentParentItem(nullptr);
 
@@ -270,15 +270,15 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem,
     try {
         item = restoreItem(archive, parentItem, restoredItems, itemName, isOptional);
     } catch (const ValueNode::Exception& ex){
-        mv->putln(ex.message(), MessageView::ERROR);
+        mv->putln(ex.message(), MessageView::Error);
     }
     
     if(!item){
         if(!isOptional){
             if(itemName.empty()){
-                mv->putln(_("Item cannot be restored."), MessageView::ERROR);
+                mv->putln(_("Item cannot be restored."), MessageView::Error);
             } else {
-                mv->putln(format(_("\"{}\" cannot be restored."), itemName), MessageView::ERROR);
+                mv->putln(format(_("\"{}\" cannot be restored."), itemName), MessageView::Error);
             }
         }
     } else {
@@ -315,7 +315,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         if(!subItem){
             mv->putln(
                 format(_("Sub item \"{}\" is not found. Its children cannot be restored."), name),
-                MessageView::ERROR);
+                MessageView::Error);
         }
         restoreItemStates(archive, subItem);
         return subItem;
@@ -324,7 +324,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
     string pluginName;
     string className;
     if(!(archive.read("plugin", pluginName) && archive.read("class", className))){
-        mv->putln(_("Archive is broken."), MessageView::ERROR);
+        mv->putln(_("Archive is broken."), MessageView::Error);
         return nullptr;
     }
 
@@ -334,7 +334,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         if(!io_isOptional){
             mv->putln(
                 format(_("{0} of {1}Plugin is not a registered item type."), className, pluginName),
-                MessageView::ERROR);
+                MessageView::Error);
             ++numArchivedItems;
         }
         return nullptr;
@@ -359,7 +359,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         ValueNodePtr dataNode = archive.find("data");
         if(dataNode->isValid()){
             if(!dataNode->isMapping()){
-                mv->putln(_("The 'data' key does not have mapping-type data."), MessageView::ERROR);
+                mv->putln(_("The 'data' key does not have mapping-type data."), MessageView::Error);
                 item.reset();
             } else {
                 Archive* dataArchive = static_cast<Archive*>(dataNode->toMapping());
@@ -388,7 +388,7 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
     auto addonsNode = archive.find("addons");
     if(addonsNode->isValid()){
         if(!addonsNode->isListing()){
-            mv->putln(_("The 'addons' value must be a listing."), MessageView::ERROR);
+            mv->putln(_("The 'addons' value must be a listing."), MessageView::Error);
         } else {
             string name;
             string moduleName;
@@ -397,20 +397,20 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
                 auto addonArchive = dynamic_cast<Archive*>(addonList->at(i)->toMapping());
                 if(!(addonArchive->read("name", name) && addonArchive->read("plugin", moduleName))){
                     mv->putln(format(_("The name and plugin are not specified at addon {0}."), i),
-                              MessageView::ERROR);
+                              MessageView::Error);
                 } else {
                     ItemAddonPtr addon = ItemManager::createAddon(moduleName, name);
                     if(!addon){
                         mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be created."),
-                                         name, moduleName), MessageView::ERROR);
+                                         name, moduleName), MessageView::Error);
                     } else {
                         if(!item->setAddon(addon)){
                             mv->putln(format(_("Addon \"{0}\" is cannot be added to item \"{1}\"."),
-                                             name, item->displayName()), MessageView::ERROR);
+                                             name, item->displayName()), MessageView::Error);
                         } else {
                             if(!addon->restore(*addonArchive)){
                                 mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be restored."),
-                                                 name, moduleName), MessageView::ERROR);
+                                                 name, moduleName), MessageView::Error);
                             } else {
                                 item->removeAddon(addon);
                             }

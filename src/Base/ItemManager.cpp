@@ -900,7 +900,7 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
         messageView->putln(
             format(_("\"{0}\" cannot be accessed because the specified item type \"{1}\" is not registered."),
                    filename, type.name()),
-            MessageView::ERROR);
+            MessageView::Error);
         return targetFileIO;;
     }
     
@@ -938,12 +938,12 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
         if(formatId.empty()){
             messageView->putln(
                 format(_("The file format for accessing \"{0}\" cannot be determined."), filename),
-                MessageView::ERROR);
+                MessageView::Error);
         } else {
             messageView->putln(
                 format(_("Unknown file format \"{0}\" is specified in accessing \"{1}\"."),
                        formatId, filename),
-                MessageView::ERROR);
+                MessageView::Error);
         }
     }
 

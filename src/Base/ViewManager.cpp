@@ -825,7 +825,7 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
     if(!info){
         MessageView::instance()->putln(
             format(_("{0} is not registered in {1}."), className, moduleName),
-            MessageView::ERROR);
+            MessageView::Error);
     }
     if(!view){
         if(info && info->isSingleton()){
@@ -833,15 +833,15 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
                 format(_("A singleton view \"{0}\" of the {1} type cannot be created "
                          "because its singleton instance has already been created."),
                        instanceName, info->className()),
-                MessageView::ERROR);
+                MessageView::Error);
         } else {
             if(instanceName.empty()){
                 MessageView::instance()->putln(
-                    format(_("{0} cannot be restored."), className), MessageView::ERROR);
+                    format(_("{0} cannot be restored."), className), MessageView::Error);
             } else {
                 MessageView::instance()->putln(
                     format(_("The \"{0}\" view of {1} cannot be restored."), instanceName, className),
-                    MessageView::ERROR);
+                    MessageView::Error);
             }
         }
     }
@@ -879,7 +879,7 @@ bool ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewM
                         MessageView::instance()->putln(
                             format(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
                                    moduleName, className),
-                            MessageView::ERROR);
+                            MessageView::Error);
                     } else {
                         View* view = restoreView(viewArchive, actualModuleName, className, remainingViewsMap);
                         if(view){

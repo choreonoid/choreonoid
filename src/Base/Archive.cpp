@@ -210,7 +210,7 @@ std::string Archive::expandPathVariables(const std::string& path) const
     auto expanded = shared->pathVariableProcessor->expand(path, false);
     if(expanded.empty()){
         MessageView::instance()->putln(
-            shared->pathVariableProcessor->errorMessage(), MessageView::WARNING);
+            shared->pathVariableProcessor->errorMessage(), MessageView::Warning);
     }
     return expanded;
 }
@@ -222,7 +222,7 @@ std::string Archive::resolveRelocatablePath(const std::string& relocatable) cons
     if(expanded.empty()){
         expanded = relocatable; // Follow the past specification
         MessageView::instance()->putln(
-            shared->pathVariableProcessor->errorMessage(), MessageView::WARNING);
+            shared->pathVariableProcessor->errorMessage(), MessageView::Warning);
     }
     return expanded;
 }

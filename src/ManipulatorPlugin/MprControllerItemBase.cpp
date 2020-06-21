@@ -283,7 +283,7 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     auto programItems = self->descendantItems<MprProgramItemBase>();
     if(programItems.empty()){
         mv->putln(format(_("Any program item for {} is not found."),
-                         self->displayName()), MessageView::ERROR);
+                         self->displayName()), MessageView::Error);
         return false;
     }
     
@@ -296,7 +296,7 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     }
     if(!startupProgramItem){
         mv->putln(format(_("The startup program for {0} is not specified."),
-                         self->displayName()), MessageView::WARNING);
+                         self->displayName()), MessageView::Warning);
         return false;
     }
     startupProgram = cloneMap.getClone(startupProgramItem->program());
@@ -315,7 +315,7 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     
     if(!self->initializeVariables()){
         mv->putln(format(_("Variables for {} cannot be initialized."), self->displayName()),
-                  MessageView::ERROR);
+                  MessageView::Error);
         return false;
     }
 
