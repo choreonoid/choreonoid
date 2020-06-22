@@ -163,19 +163,25 @@ public:
 
         jointInfos.clear();
 
-        const string& BodyName = ioBody->name();
-        if(BodyName.find("UR3")!=string::npos){
-            initializeJoints( io, specs[UR3] );
+        bool initialized = false;
+        const string& bodyName = ioBody->name();
+        if(bodyName.find("UR3")!=string::npos){
+            initialized = initializeJoints( io, specs[UR3] );
             arm_model = UR3;
-        }else if (BodyName.find("UR5")!=string::npos){
-            initializeJoints( io, specs[UR5] );
+        }else if (bodyName.find("UR5")!=string::npos){
+            initialized = initializeJoints( io, specs[UR5] );
             arm_model = UR5;
-        }else if (BodyName.find("UR10")!=string::npos){
-            initializeJoints( io, specs[UR10] );
+        }else if (bodyName.find("UR10")!=string::npos){
+            initialized = initializeJoints( io, specs[UR10] );
             arm_model = UR10;
         }
-        initializeJoints( io, specs[_2F_85] );
-
+        if(initialized){
+            initialized = initializeJoints( io, specs[_2F_85] );
+        }
+        if(!initialized){
+            io->os() << fmt::format("{0} cannot be initialized.", bodyName) << endl;
+            return false;
+        }
 
         ioFinger1 = ioBody->link("Finger1_knuckle");
         ioFinger2 = ioBody->link("Finger2_knuckle");
