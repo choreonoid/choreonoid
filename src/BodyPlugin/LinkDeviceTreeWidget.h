@@ -3,6 +3,8 @@
 
 #include <cnoid/TreeWidget>
 #include <cnoid/Signal>
+#include <cnoid/Link>
+#include <cnoid/Device>
 #include <vector>
 #include "exportdecl.h"
 
@@ -119,8 +121,8 @@ private:
     int rowIndex_;
     std::string name_;
     QString nameText_;
-    Link* link_;
-    Device* device_;
+    LinkPtr link_;
+    DevicePtr device_;
     LinkDeviceTreeWidget::Impl* treeImpl;
     bool isLinkGroup_;
 

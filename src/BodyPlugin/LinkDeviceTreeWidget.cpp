@@ -1,6 +1,5 @@
 #include "LinkDeviceTreeWidget.h"
 #include "BodyItem.h"
-#include <cnoid/Link>
 #include <cnoid/LinkGroup>
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
