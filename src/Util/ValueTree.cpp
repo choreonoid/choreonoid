@@ -441,6 +441,7 @@ void ValueNode::throwNotListingException() const
 {
     NotListingException ex;
     ex.setPosition(line(), column());
+    ex.setMessage(_("The value is not a listing"));
     throw ex;
 }
 
