@@ -180,7 +180,7 @@ LinkPositionWidget::Impl::Impl(LinkPositionWidget* self)
     createPanel();
     self->setEnabled(false);
     
-    targetLinkType = RootOrIkLink;
+    targetLinkType = IkLink;
     
     identityFrame = new CoordinateFrame;
     baseFrame = identityFrame;
@@ -448,66 +448,64 @@ void LinkPositionWidget::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 
 void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link)
 {
-    // Sub body's root link is recognized as the parent body's end link
-    if(bodyItem && link && link->isBodyRoot()){
-        if(bodyItem->isAttachedToParentBody()){
+    if(bodyItem && link){
+        // Sub body's root link is recognized as the parent body's end link
+        if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
             if(auto parentBodyItem = bodyItem->parentBodyItem()){
                 link = bodyItem->body()->parentBodyLink();
                 bodyItem = parentBodyItem;
             }
         }
-        bool isIkLinkRequired = false;
-        if(targetLinkType != AnyLink){
-            if(targetLinkType == RootOrIkLink){
-                isIkLinkRequired = !link->isBodyRoot();
-            } else {
-                isIkLinkRequired = true;
-            }
+        bool isIkLinkRequired = (targetLinkType != AnyLink);
+        if(targetLinkType == RootOrIkLink){
+            isIkLinkRequired = !link->isBodyRoot();
         }
         if(isIkLinkRequired){
             if(!bodyItem->findPresetIK(link)){
-                LinkTraverse traverse(link);
+                auto orgLink = link;
                 link = nullptr;
-                for(int i=1; i < traverse.numLinks(); ++i){
-                    if(bodyItem->findPresetIK(traverse[i])){
-                        link = traverse[i];
+                LinkTraverse traverse(orgLink, false, true);
+                for(auto& node : traverse){
+                    if(bodyItem->findPresetIK(node)){
+                        link = node;
                         break;
+                    }
+                }
+                if(!link){
+                    traverse.find(orgLink, true, false);
+                    for(auto& node : traverse){
+                        if(bodyItem->findPresetIK(node)){
+                            link = node;
+                            break;
+                        }
                     }
                 }
             }
         }
     }
 
-    bool isBodyItemChanged = (bodyItem != targetBodyItem);
-    bool isLinkChanged = (link != targetLink);
-
     if(!link){
-        if(isLinkChanged){
-            return;
-        } else {
-            isLinkChanged = true;
+        return;
+    }
+
+    if(bodyItem != targetBodyItem){
+        positionWidget->clearPosition();
+        targetConnections.disconnect();
+            
+        targetBodyItem = bodyItem;
+    
+        if(bodyItem){
+            targetConnections.add(
+                bodyItem->sigNameChanged().connect(
+                    [&](const std::string&){ updateTargetLink(targetLink); }));
+
+            targetConnections.add(
+                bodyItem->sigKinematicStateChanged().connect(
+                    [&](){ updateDisplayWithCurrentLinkPosition(); }));
         }
     }
-                
-    if(isBodyItemChanged || isLinkChanged){
 
-        if(isBodyItemChanged){
-            positionWidget->clearPosition();
-            targetConnections.disconnect();
-            
-            targetBodyItem = bodyItem;
-    
-            if(bodyItem){
-                targetConnections.add(
-                    bodyItem->sigNameChanged().connect(
-                        [&](const std::string&){ updateTargetLink(targetLink); }));
-
-                targetConnections.add(
-                    bodyItem->sigKinematicStateChanged().connect(
-                        [&](){ updateDisplayWithCurrentLinkPosition(); }));
-            }
-        }
-
+    if(link != targetLink){
         updateTargetLink(link);
         updateDisplayWithCurrentLinkPosition();
     }

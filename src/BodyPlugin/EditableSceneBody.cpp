@@ -798,11 +798,11 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
             }
             break;
         }
-        bodyItemChain = bodyItemChain->parentBodyItem();
-        linkChain = linkChain->body()->parentBodyLink();
         if(!linkChain->isBodyRoot()){
             break;
         }
+        bodyItemChain = bodyItemChain->parentBodyItem();
+        linkChain = linkChain->body()->parentBodyLink();
     }
 
     int mode = kinematicsBar->mode();
