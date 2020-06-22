@@ -33,7 +33,7 @@ public:
 
     bool setTopItem(Item* topItem);
     void show();
-    bool setCurrentItem(Item* item);
+    bool setCurrentItem(Item* item, bool isNewItem = false);
 
     class Impl;
 
@@ -53,10 +53,14 @@ class CNOID_EXPORT ItemTreePanelBase : public QWidget
 public:
     ItemTreePanelBase(QWidget* parent = Q_NULLPTR, Qt::WindowFlags f = Qt::WindowFlags());
     bool activate(Item* topItem, Item* targetItem, bool isNewItem, ItemTreePanelDialog::Impl* currentDialogImpl);
-    void deactivate();
     virtual std::string caption() const = 0;
     virtual bool onActivated(Item* topItem, Item* targetItem, bool isNewItem) = 0;
     virtual void onDeactivated();
+
+protected:
+    void accept();
+    void reject();
+    
 private:
     ItemTreePanelDialog::Impl* currentDialogImpl;
 };

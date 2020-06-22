@@ -37,10 +37,11 @@ public:
     Impl(ItemTreePanelDialog* self);
     void initialize();
     ~Impl();
+    void showPanel();
     void onSelectionChanged(const ItemList<>& items);
-    void activateItem(Item* item);
-    void deactivateCurrentPanel();
-    void deactivatePanel(ItemTreePanelBase* panel);
+    void activateItem(Item* item, bool isNewItem);
+    void deactivateCurrentPanel(bool doClearCurrentItem);
+    void deactivatePanel(ItemTreePanelBase* panel, bool isPanelAccepted);
     void clear();
 };
 
@@ -62,10 +63,20 @@ bool ItemTreePanelBase::activate
 }
 
 
-void ItemTreePanelBase::deactivate()
+void ItemTreePanelBase::accept()
 {
     if(currentDialogImpl){
-        currentDialogImpl->deactivatePanel(this);
+        currentDialogImpl->deactivatePanel(this, true);
+    } else {
+        onDeactivated();
+    }
+}
+
+
+void ItemTreePanelBase::reject()
+{
+    if(currentDialogImpl){
+        currentDialogImpl->deactivatePanel(this, false);
     } else {
         onDeactivated();
     }
@@ -185,12 +196,8 @@ bool ItemTreePanelDialog::setTopItem(Item* item)
 
 void ItemTreePanelDialog::show()
 {
-    auto items = impl->itemTreeWidget.getSelectedItems();
-    if(items.empty()){
-        items = impl->itemTreeWidget.getItems();
-    }
-    impl->onSelectionChanged(items);
-    
+    impl->showPanel();
+
     Dialog::show();
     
     if(!impl->lastDialogPosition.isNull()){
@@ -199,9 +206,27 @@ void ItemTreePanelDialog::show()
 }
 
 
-bool ItemTreePanelDialog::setCurrentItem(Item* item)
+void ItemTreePanelDialog::Impl::showPanel()
 {
-    return impl->itemTreeWidget.selectOnly(item);
+    auto items = itemTreeWidget.getSelectedItems();
+    if(items.empty()){
+        items = itemTreeWidget.getItems();
+    }
+    onSelectionChanged(items);
+}
+
+
+bool ItemTreePanelDialog::setCurrentItem(Item* item, bool isNewItem)
+{
+    impl->itemTreeWidgetConnection.block();
+    bool selected = impl->itemTreeWidget.selectOnly(item);
+    impl->itemTreeWidgetConnection.unblock();
+
+    if(selected){
+        impl->activateItem(item, isNewItem);
+    }
+
+    return selected;
 }
 
 
@@ -212,16 +237,16 @@ void ItemTreePanelDialog::Impl::onSelectionChanged(const ItemList<>& items)
     if(!items.empty()){
         item = items.front();
     }
-    activateItem(item);
+    activateItem(item, false);
 }
 
 
-void ItemTreePanelDialog::Impl::activateItem(Item* item)
+void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem)
 {
     if(item == currentItem && !needToUpdatePanel){
         return;
     }
-    deactivateCurrentPanel();
+    deactivateCurrentPanel(false);
     currentItem = item;
 
     if(!item){
@@ -236,7 +261,7 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item)
         panelToActivate = nullptr;
         panelFunctions.dispatch(item);
         if(panelToActivate){
-            if(panelToActivate->activate(topItem, item, false, this)){
+            if(panelToActivate->activate(topItem, item, isNewItem, this)){
                 currentPanel = panelToActivate;
                 defaultPanelLabel.hide();
                 panelCaptionLabel.setText(currentPanel->caption().c_str());
@@ -262,7 +287,7 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item)
 }
 
 
-void ItemTreePanelDialog::Impl::deactivateCurrentPanel()
+void ItemTreePanelDialog::Impl::deactivateCurrentPanel(bool doClearCurrentItem)
 {
     if(currentPanel){
         currentPanel->onDeactivated();
@@ -270,25 +295,38 @@ void ItemTreePanelDialog::Impl::deactivateCurrentPanel()
         currentPanel->hide();
         currentPanel = nullptr;
     }
-    currentItem.reset();
+    needToUpdatePanel = true;
+    
+    if(currentItem && doClearCurrentItem){
+        itemTreeWidgetConnection.block();
+        currentItem->setSelected(false);
+        currentItem.reset();
+        itemTreeWidgetConnection.unblock();
+        activateItem(nullptr, false);
+    }
 }
 
 
-void ItemTreePanelDialog::Impl::deactivatePanel(ItemTreePanelBase* panel)
+void ItemTreePanelDialog::Impl::deactivatePanel(ItemTreePanelBase* panel, bool isPanelAccepted)
 {
+    int numItems = itemTreeWidget.getItems().size();
+    
     if(panel == currentPanel){
-        deactivateCurrentPanel();
-        needToUpdatePanel = true;
+        deactivateCurrentPanel(!isPanelAccepted);
     }
-    //if(numItems == 0) closeDialog
-    self->show();
+
+    if(numItems <= 1){
+        self->hide();
+    } else if(isPanelAccepted){
+        showPanel();
+    }
 }
 
 
 void ItemTreePanelDialog::Impl::clear()
 {
     itemTreeWidget.setRootItem(nullptr);
-    deactivateCurrentPanel();
+    deactivateCurrentPanel(true);
     topItem.reset();
     currentItem.reset();
 }
