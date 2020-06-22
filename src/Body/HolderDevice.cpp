@@ -57,7 +57,7 @@ HolderDevice::NonState::NonState()
 HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly, CloneMap* cloneMap)
     : Device(org, copyStateOnly)
 {
-    copyHolderDeviceStateFrom(org);
+    copyHolderDeviceStateFrom(&org);
 
     if(copyStateOnly){
         ns = nullptr;
@@ -99,9 +99,9 @@ const char* HolderDevice::typeName()
 }
 
 
-void HolderDevice::copyHolderDeviceStateFrom(const HolderDevice& other)
+void HolderDevice::copyHolderDeviceStateFrom(const HolderDevice* other)
 {
-    on_ = other.on_;
+    on_ = other->on_;
 }
 
 
@@ -110,7 +110,7 @@ void HolderDevice::copyStateFrom(const DeviceState& other)
     if(typeid(other) != typeid(HolderDevice)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copyHolderDeviceStateFrom(static_cast<const HolderDevice&>(other));
+    copyHolderDeviceStateFrom(static_cast<const HolderDevice*>(&other));
 }
     
 
@@ -127,6 +127,26 @@ Referenced* HolderDevice::doClone(CloneMap* cloneMap) const
 }
 
 
+void HolderDevice::copyHolderDeviceFrom(const HolderDevice* other)
+{
+    ns->category = other->ns->category;
+    ns->holdCondition = other->ns->holdCondition;
+    ns->maxHoldDistance = other->ns->maxHoldDistance;
+    ns->holdTargetName = other->ns->holdTargetName;
+    copyHolderDeviceStateFrom(other);
+}
+    
+
+bool HolderDevice::copyFrom(const Device* other)
+{
+    if(auto otherHolder = dynamic_cast<const HolderDevice*>(other)){
+        copyHolderDeviceFrom(otherHolder);
+        return true;
+    }
+    return false;
+}
+        
+        
 void HolderDevice::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(HolderDevice))){

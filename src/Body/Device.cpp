@@ -27,12 +27,25 @@ Device::Device(const Device& org, bool copyStateOnly)
     } else {
         ns = new NonState;
         ns->index = -1;
-        ns->id = org.ns->id;
-        ns->name = org.ns->name;
         ns->link = nullptr;
-        T_local() = org.T_local();
-        setCycle(org.cycle());
+        copySpecFrom(&org);
     }
+}
+
+
+void Device::copySpecFrom(const Device* other)
+{
+    ns->id = other->ns->id;
+    ns->name = other->ns->name;
+    ns->T_local = other->ns->T_local;
+    setCycle(other->cycle());
+}
+
+
+bool Device::copyFrom(const Device* other)
+{
+    copySpecFrom(other);
+    return true;
 }
 
 

@@ -27,7 +27,6 @@ public:
     virtual ~DeviceState() { }
 
     virtual const char* typeName() = 0;
-    
     virtual void copyStateFrom(const DeviceState& other) = 0;
     virtual DeviceState* cloneState() const = 0;
 
@@ -71,6 +70,7 @@ class CNOID_EXPORT Device : public DeviceState
 protected:
     Device(); 
     Device(const Device& org, bool copyStateOnly = false);
+    void copySpecFrom(const Device* other);
 
 public:
     virtual ~Device();
@@ -81,6 +81,8 @@ public:
     Device* clone(CloneMap& cloneMap) const {
         return static_cast<Device*>(doClone(&cloneMap));
     }
+
+    virtual bool copyFrom(const Device* other);
 
     void setIndex(int index) { ns->index = index; }
     void setId(int id) { ns->id = id; }
