@@ -16,7 +16,6 @@
 #include <cnoid/MessageView>
 #include <cnoid/ViewManager>
 #include <cnoid/ItemManager>
-#include <cnoid/BodyBar>
 #include <cnoid/RootItem>
 #include <cnoid/BodyItem>
 #include <cnoid/SimulatorItem>

@@ -3,7 +3,7 @@
 */
 
 #include "LeggedBodyBar.h"
-#include "BodyBar.h"
+#include "BodySelectionManager.h"
 #include "BodyItem.h"
 #include <cnoid/SpinBox>
 #include <cnoid/MessageView>
@@ -18,7 +18,7 @@ namespace cnoid {
 class LeggedBodyBarImpl
 {
 public:
-    BodyBar* bodyBar;
+    BodySelectionManager* bodySelectionManager;
     DoubleSpinBox* stanceWidthSpin;
 
     LeggedBodyBarImpl(LeggedBodyBar* self);
@@ -46,7 +46,7 @@ LeggedBodyBar::LeggedBodyBar()
 
 LeggedBodyBarImpl::LeggedBodyBarImpl(LeggedBodyBar* self)
 {
-    bodyBar = BodyBar::instance();
+    bodySelectionManager = BodySelectionManager::instance();
     
     self->addButton(QIcon(":/Body/icons/center-cm.png"), _("Move the center of mass to the position where its projection corresponds to the support feet cener"))->
         sigClicked().connect(std::bind(&LeggedBodyBarImpl::moveCM, this, BodyItem::HOME_COP));
@@ -90,12 +90,9 @@ LeggedBodyBar::~LeggedBodyBar()
 
 void LeggedBodyBarImpl::moveCM(BodyItem::PositionType position)
 {
-    const ItemList<BodyItem>& targetBodyItems = bodyBar->targetBodyItems();
-    for(size_t i=0; i < targetBodyItems.size(); ++i){
-        BodyItem* bodyItem = targetBodyItems[i];
+    for(auto& bodyItem : bodySelectionManager->selectedBodyItems()){
         Vector3 c = bodyItem->centerOfMass();
-        auto p = bodyItem->getParticularPosition(position);
-        if(p){
+        if(auto p = bodyItem->getParticularPosition(position)){
             c[0] = (*p)[0];
             c[1] = (*p)[1];
         }
@@ -110,11 +107,9 @@ void LeggedBodyBarImpl::moveCM(BodyItem::PositionType position)
 
 void LeggedBodyBarImpl::setZmp(BodyItem::PositionType position)
 {
-    const ItemList<BodyItem>& targetBodyItems = bodyBar->targetBodyItems();
-    for(size_t i=0; i < targetBodyItems.size(); ++i){
-        auto p = targetBodyItems[i]->getParticularPosition(position);
-        if(p){
-            targetBodyItems[i]->editZmp(*p);
+    for(auto& bodyItem : bodySelectionManager->selectedBodyItems()){
+        if(auto p = bodyItem->getParticularPosition(position)){
+            bodyItem->editZmp(*p);
         }
     }
 }
@@ -122,9 +117,8 @@ void LeggedBodyBarImpl::setZmp(BodyItem::PositionType position)
 
 void LeggedBodyBarImpl::setStance()
 {
-    const ItemList<BodyItem>& targetBodyItems = bodyBar->targetBodyItems();    
-    for(size_t i=0; i < targetBodyItems.size(); ++i){
-        targetBodyItems[i]->setStance(stanceWidthSpin->value());
+    for(auto& bodyItem : bodySelectionManager->selectedBodyItems()){
+        bodyItem->setStance(stanceWidthSpin->value());
     }
 }
 

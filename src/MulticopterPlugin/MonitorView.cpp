@@ -3,6 +3,7 @@
 */
 
 #include "MulticopterPluginHeader.h"
+#include <QBoxLayout>
 
 using namespace std;
 using namespace boost;

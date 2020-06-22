@@ -24,14 +24,16 @@ EventManager::instance()
 bool
 EventManager::initialize()
 {
+    auto bsm = BodySelectionManager::instance();
+    
     if( _curBodyChangedCon.connected() == false ){
-        _curBodyChangedCon = BodyBar::instance()->sigCurrentBodyItemChanged().connect(
+        _curBodyChangedCon = bsm->sigCurrentBodyItemChanged().connect(
             std::bind(&EventManager::onCurrentBodyItemChanged, this, std::placeholders::_1));
     }
 
     if( _lnkSelChangedCon.connected() == false ){
         _lnkSelChangedCon =
-            BodySelectionManager::instance()->sigLinkSelectionChanged(_curBodyItem).connect(
+            bsm->sigLinkSelectionChanged(_curBodyItem).connect(
                 std::bind(&EventManager::onLinkItemSelected, this));
     }
     

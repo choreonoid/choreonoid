@@ -4,6 +4,7 @@
 
 #include "BodyBar.h"
 #include "BodyItem.h"
+#include "BodySelectionManager.h"
 #include <cnoid/RootItem>
 #include <cnoid/Archive>
 #include "gettext.h"
@@ -16,25 +17,14 @@ namespace cnoid {
 class BodyBar::Impl
 {
 public:
-    BodyItemPtr currentBodyItem;
-    ItemList<BodyItem> selectedBodyItems;
-    ItemList<BodyItem> targetBodyItems;
-    Connection rootItemConnection;
-    Connection bodyItemConnection;
-    Signal<void(const ItemList<BodyItem>& selectedBodyItems)> sigBodyItemSelectionChanged;
-    Signal<void(BodyItem* currentBodyItem)> sigCurrentBodyItemChanged;
+    BodySelectionManager* bodySelectionManager;
 
     Impl(BodyBar* self);
-    ~Impl();
-    bool makeSingleSelection(BodyItem* bodyItem);
-    void onSelectedItemsChanged(ItemList<BodyItem> bodyItems);
-    void onBodyItemDisconnectedFromRoot();
     void onCopyButtonClicked();
     void onPasteButtonClicked();
     void onOriginButtonClicked();
     void onPoseButtonClicked(BodyItem::PresetPoseID id);
     void onSymmetricCopyButtonClicked(int direction, bool doMirrorCopy);
-    bool restoreState(const Archive& archive);
 };
 
 }
@@ -42,7 +32,7 @@ public:
 
 BodyBar* BodyBar::instance()
 {
-    static BodyBar* instance = new BodyBar();
+    static BodyBar* instance = new BodyBar;
     return instance;
 }
 
@@ -84,9 +74,7 @@ BodyBar::Impl::Impl(BodyBar* self)
     self->addButton(QIcon(":/Body/icons/left-to-right.png"), _("Copy the left side pose to the right side"))
         ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, false); });
 
-    rootItemConnection = 
-        RootItem::instance()->sigSelectedItemsChanged().connect(
-            [&](const ItemList<>& items){ onSelectedItemsChanged(items); });
+    bodySelectionManager = BodySelectionManager::instance();
 }
 
 
@@ -96,147 +84,47 @@ BodyBar::~BodyBar()
 }
 
 
-BodyBar::Impl::~Impl()
-{
-    rootItemConnection.disconnect();
-    bodyItemConnection.disconnect();
-}
-
-
-SignalProxy<void(const ItemList<BodyItem>& selectedBodyItems)> BodyBar::sigBodyItemSelectionChanged()
-{
-    return impl->sigBodyItemSelectionChanged;
-}
-
-
-SignalProxy<void(BodyItem* currentBodyItem)> BodyBar::sigCurrentBodyItemChanged()
-{
-    return impl->sigCurrentBodyItemChanged;
-}
-
-
-const ItemList<BodyItem>& BodyBar::selectedBodyItems()
-{
-    return impl->selectedBodyItems;
-}
-
-
-const ItemList<BodyItem>& BodyBar::targetBodyItems()
-{
-    return impl->targetBodyItems;
-}
-
-
-BodyItem* BodyBar::currentBodyItem()
-{
-    return impl->currentBodyItem;
-}
-
-
-bool BodyBar::makeSingleSelection(BodyItem* bodyItem)
-{
-    return impl->makeSingleSelection(bodyItem);
-}
-
-
-bool BodyBar::Impl::makeSingleSelection(BodyItem* bodyItem)
-{
-    ItemList<BodyItem> prevSelected = selectedBodyItems;
-    for(size_t i=0; i < prevSelected.size(); ++i){
-        BodyItem* item = prevSelected[i];
-        if(item != bodyItem){
-            item->setSelected(false);
-        }
-    }
-    bodyItem->setSelected(true);
-    return true;
-}
-
-
-void BodyBar::Impl::onSelectedItemsChanged(ItemList<BodyItem> bodyItems)
-{
-    bool selectedBodyItemsChanged = false;
-    
-    if(selectedBodyItems != bodyItems){
-        selectedBodyItems = bodyItems;
-        selectedBodyItemsChanged = true;
-    }
-
-    BodyItem* firstItem = bodyItems.toSingle();
-
-    if(firstItem && firstItem != currentBodyItem){
-        currentBodyItem = firstItem;
-        bodyItemConnection.disconnect();
-        bodyItemConnection =
-            currentBodyItem->sigDisconnectedFromRoot().connect(
-                [&](){ onBodyItemDisconnectedFromRoot(); });
-        sigCurrentBodyItemChanged(currentBodyItem);
-    }
-
-    if(selectedBodyItemsChanged){
-        sigBodyItemSelectionChanged(selectedBodyItems);
-    }
-
-    targetBodyItems.clear();
-    if(selectedBodyItems.empty()){
-        if(currentBodyItem){
-            targetBodyItems.push_back(currentBodyItem);
-        }
-    } else {
-        targetBodyItems = selectedBodyItems;
-    }
-}
-
-
 void BodyBar::Impl::onCopyButtonClicked()
 {
-    if(currentBodyItem){
-        currentBodyItem->copyKinematicState();
+    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
+        bodyItem->copyKinematicState();
     }
 }
 
 
 void BodyBar::Impl::onPasteButtonClicked()
 {
-    for(size_t i=0; i < targetBodyItems.size(); ++i){
-        targetBodyItems[i]->pasteKinematicState();
+    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
+        bodyItem->pasteKinematicState();
     }
-}
-
-
-void BodyBar::Impl::onBodyItemDisconnectedFromRoot()
-{
-    currentBodyItem = 0;
-    bodyItemConnection.disconnect();
-    sigCurrentBodyItemChanged(nullptr);
 }
 
 
 void BodyBar::Impl::onOriginButtonClicked()
 {
-    for(size_t i=0; i < targetBodyItems.size(); ++i){
-        targetBodyItems[i]->moveToOrigin();
+    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
+        bodyItem->moveToOrigin();
     }
 }
 
 
 void BodyBar::Impl::onPoseButtonClicked(BodyItem::PresetPoseID id)
 {
-    for(size_t i=0; i < targetBodyItems.size(); ++i){
-        targetBodyItems[i]->setPresetPose(id);
+    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
+        bodyItem->setPresetPose(id);
     }
 }
 
 
 void BodyBar::Impl::onSymmetricCopyButtonClicked(int direction, bool doMirrorCopy)
 {
-    for(size_t i=0; i < targetBodyItems.size(); ++i){
-        const Listing& slinks = *targetBodyItems[i]->body()->info()->findListing("symmetricJoints");
+    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
+        const Listing& slinks = *bodyItem->body()->info()->findListing("symmetricJoints");
         if(slinks.isValid() && !slinks.empty()){
-            targetBodyItems[i]->beginKinematicStateEdit();
+            bodyItem->beginKinematicStateEdit();
             int from = direction;
             int to = 1 - direction;
-            BodyPtr body = targetBodyItems[i]->body();
+            BodyPtr body = bodyItem->body();
             for(int j=0; j < slinks.size(); ++j){
                 const Listing& linkPair = *slinks[j].toListing();
                 if(linkPair.size() == 1 && doMirrorCopy){
@@ -263,39 +151,8 @@ void BodyBar::Impl::onSymmetricCopyButtonClicked(int direction, bool doMirrorCop
                     }
                 }
             }
-            targetBodyItems[i]->notifyKinematicStateChange(true);
-            targetBodyItems[i]->acceptKinematicStateEdit();
+            bodyItem->notifyKinematicStateChange(true);
+            bodyItem->acceptKinematicStateEdit();
         }
     }
-}
-
-
-bool BodyBar::storeState(Archive& archive)
-{
-    if(impl->currentBodyItem){
-        archive.writeItemId("current", impl->currentBodyItem);
-    }
-    return true;
-}
-
-
-bool BodyBar::restoreState(const Archive& archive)
-{
-    archive.addPostProcess([&](){ impl->restoreState(archive); });
-    return true;
-}
-
-
-bool BodyBar::Impl::restoreState(const Archive& archive)
-{
-    if(!currentBodyItem){
-        currentBodyItem = archive.findItem<BodyItem>("current");
-        if(currentBodyItem){
-            if(targetBodyItems.empty()){
-                targetBodyItems.push_back(currentBodyItem);
-            }
-            sigCurrentBodyItemChanged(currentBodyItem);
-        }
-    }
-    return true;
 }
