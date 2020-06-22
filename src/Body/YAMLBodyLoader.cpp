@@ -402,9 +402,8 @@ bool extract(Mapping* mapping, const char* key, ValueType& out_value)
 template<typename Derived>
 bool extractEigen(Mapping* mapping, const char* key, Eigen::MatrixBase<Derived>& x)
 {
-    ListingPtr listing = dynamic_pointer_cast<Listing>(mapping->extract(key));
-    if(listing){
-        read(*listing, x);
+    if(auto node = mapping->extract(key)){
+        read(*node->toListing(), x);
         return true;
     }
     return false;
