@@ -1848,7 +1848,7 @@ bool BodyItem::restore(const Archive& archive)
 bool BodyItem::Impl::restore(const Archive& archive)
 {
     string filepath = archive.readItemFilePath();
-    if(!filepath.empty()){
+    if(filepath.empty()){
         // for the backward compatibiliy
         archive.readRelocatablePath("modelFile", filepath);
     }
