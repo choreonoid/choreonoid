@@ -228,6 +228,21 @@ std::shared_ptr<InverseKinematics> LinkKinematicsKitManager::Impl::findPresetIK(
                 }
             }
         }
+    } else {
+        // If the link is an end link that has more than five degrees of freedom,
+        // the path between the link and the root link is treated as an IK link
+        // when there is no IK link specification
+        if(!targetLink->child()){
+            int dof = 0;
+            auto link = targetLink->parent();
+            while(link){
+                if(++dof >= 6){
+                    ik = JointPath::getCustomPath(body, body->rootLink(), targetLink);
+                    break;
+                }
+                link = link->parent();
+            }
+        }
     }
     return ik;
 }
