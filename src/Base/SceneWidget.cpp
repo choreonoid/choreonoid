@@ -2907,9 +2907,7 @@ bool SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing, bool isS
 {
     bool restored = false;
 
-    if(isSecondTrial){
-        renderer->extractPreprocessedNodes();
-    }
+    renderer->extractPreprocessedNodes();
     
     for(int i=0; i < cameraListing.size(); ++i){
 
