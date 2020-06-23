@@ -25,7 +25,15 @@ LocationProxy::~LocationProxy()
 
 std::string LocationProxy::getName() const
 {
-    return const_cast<LocationProxy*>(this)->getCorrespondingItem()->displayName();
+    auto self = const_cast<LocationProxy*>(this);
+    if(auto item = self->getCorrespondingItem()){
+        if(!itemNameConnection_.connected()){
+            self->itemNameConnection_ = item->sigNameChanged().connect(
+                [self](const std::string&){ self->notifyAttributeChange(); });
+        }
+        return item->displayName();
+    }
+    return std::string();
 }
 
 

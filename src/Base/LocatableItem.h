@@ -45,6 +45,7 @@ private:
     bool isEditable_;
     Signal<void()> sigAttributeChanged_;
     Signal<void()> sigExpired_;
+    ScopedConnection itemNameConnection_;
 };
 
 class LocatableItem
