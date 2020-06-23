@@ -13,6 +13,18 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace {
+
+class PanelArea : public QWidget
+{
+public:
+    vector<function<QSize()>> minimumPanelSizeHintFunctions;
+
+    virtual QSize minimumSizeHint() const override;
+};
+
+}
+
 namespace cnoid {
 
 class ItemTreePanelDialog::Impl
@@ -29,6 +41,7 @@ public:
     ItemTreeWidget itemTreeWidget;
     ScopedConnection itemTreeWidgetConnection;
     QFrame panelFrame;
+    PanelArea panelArea;
     QVBoxLayout panelLayout;
     QLabel panelCaptionLabel;
     QLabel defaultPanelLabel;
@@ -119,25 +132,33 @@ void ItemTreePanelDialog::Impl::initialize()
     hbox = new QHBoxLayout;
     itemTreeWidget.setDragDropEnabled(false);
     itemTreeWidget.setCheckColumnShown(false);
-    hbox->addWidget(&itemTreeWidget);
+    QFontMetrics metrics(itemTreeWidget.font());
+    int width = metrics.averageCharWidth() * 24;
+    itemTreeWidget.setMinimumWidth(width);
+    itemTreeWidget.setMaximumWidth(width);
+    hbox->addWidget(&itemTreeWidget, 0);
 
     int mh = self->style()->pixelMetric(QStyle::PM_LayoutLeftMargin);
     int mv = self->style()->pixelMetric(QStyle::PM_LayoutTopMargin);
 
     panelFrame.setFrameStyle(QFrame::StyledPanel);
     panelFrame.setLineWidth(2);
-    panelFrame.setLayout(&panelLayout);
+    auto frameLayout = new QVBoxLayout;
+    frameLayout->setContentsMargins(0, mh / 2, 0, 0);
+    frameLayout->setSpacing(0);
     panelCaptionLabel.setStyleSheet("font-weight: bold");
     panelCaptionLabel.setAlignment(Qt::AlignHCenter);
-    panelLayout.addWidget(&panelCaptionLabel);
-    panelLayout.setContentsMargins(0, mh / 2, 0, 0);
-    panelLayout.setSpacing(0);
+    frameLayout->addWidget(&panelCaptionLabel);
+    frameLayout->addWidget(&panelArea);
+    panelFrame.setLayout(frameLayout);
+
+    panelArea.setLayout(&panelLayout);
+    panelLayout.setContentsMargins(0, 0, 0, 0);
     defaultPanelLabel.setAlignment(Qt::AlignCenter);
     defaultPanelLabel.setContentsMargins(mh * 2, mv, mh * 2, mv);
     panelLayout.addWidget(&defaultPanelLabel, Qt::AlignCenter);
 
-    hbox->addWidget(&panelFrame);
-
+    hbox->addWidget(&panelFrame, 1);
     vbox->addLayout(hbox);
 
     itemTreeWidget.customizeVisibility<Item>(
@@ -172,10 +193,14 @@ ItemTreeWidget* ItemTreePanelDialog::itemTreeWidget()
 
 
 void ItemTreePanelDialog::registerPanel_
-(const std::type_info& type, std::function<ItemTreePanelBase*(Item* item)> panelFunction)
+(const std::type_info& type,
+ const std::function<ItemTreePanelBase*(Item* item)>& panelFunction,
+ const std::function<QSize()>& minimumSizeHintFunction)
 {
     impl->panelFunctions.setFunction(
         type, [this, panelFunction](Item* item){ impl->panelToActivate = panelFunction(item); });
+
+    impl->panelArea.minimumPanelSizeHintFunctions.push_back(minimumSizeHintFunction);
 }
 
 
@@ -198,7 +223,15 @@ void ItemTreePanelDialog::show()
 {
     impl->showPanel();
 
+    // The label must be displayed when the dialog is shown
+    // to ensure the necessary dialog size
+    bool isVisible = impl->panelCaptionLabel.isVisible();
+    impl->panelCaptionLabel.setVisible(true);
+    
     Dialog::show();
+
+    // Restore the label visibility
+    impl->panelCaptionLabel.setVisible(isVisible);
     
     if(!impl->lastDialogPosition.isNull()){
         setGeometry(impl->lastDialogPosition);
@@ -248,6 +281,7 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem)
     }
     deactivateCurrentPanel(false);
     currentItem = item;
+    panelCaptionLabel.setText(_("Unkown"));
 
     if(!item){
         panelCaptionLabel.hide();
@@ -271,7 +305,6 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem)
             }
             panelToActivate = nullptr;
         } else {
-            panelCaptionLabel.setText(_("Unkown"));
             panelCaptionLabel.show();
             defaultPanelLabel.show();
             defaultPanelLabel.setText(
@@ -350,3 +383,15 @@ void ItemTreePanelDialog::hideEvent(QHideEvent* event)
     impl->lastDialogPosition = geometry();
     Dialog::hideEvent(event);
 }
+
+
+QSize PanelArea::minimumSizeHint() const
+{
+    auto size = QWidget::minimumSizeHint();
+    for(auto& sizeHintFunc : minimumPanelSizeHintFunctions){
+        auto panelSize = sizeHintFunc();
+        size = size.expandedTo(panelSize);
+    }
+    return size;
+}
+  

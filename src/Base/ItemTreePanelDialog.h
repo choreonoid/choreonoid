@@ -20,15 +20,17 @@ public:
     void addTopAreaWidget(QWidget* widget);
     
     template<class TargetItemType>
-    void registerPanel(ItemTreePanelBase* panel){
-        registerPanel_(typeid(TargetItemType), [panel](Item*){ return panel; });
-    }
+    void registerPanel(ItemTreePanelBase* panel);
 
     template<class TargetItemType>
-    void registerPanel(std::function<ItemTreePanelBase*(TargetItemType* item)> panelFunction){
+    void registerPanel(
+        std::function<ItemTreePanelBase*(TargetItemType* item)> panelFunction,
+        std::function<QSize()> minimumSizeHintFunction)
+    {
         registerPanel_(
             typeid(TargetItemType),
-            [panelFunction](Item* item){ return panelFunction(static_cast<TargetItemType*>(item)); });
+            [panelFunction](Item* item){ return panelFunction(static_cast<TargetItemType*>(item)); },
+            minimumSizeHintFunction);
     }
 
     bool setTopItem(Item* topItem);
@@ -45,7 +47,10 @@ private:
     Impl* impl;
 
     void registerPanel_(
-        const std::type_info& type, std::function<ItemTreePanelBase*(Item* item)> panelFunction);
+        const std::type_info& type,
+        const std::function<ItemTreePanelBase*(Item* item)>& panelFunction,
+        const std::function<QSize()>& minimumSizeHintFunction);
+        
 };
 
 class CNOID_EXPORT ItemTreePanelBase : public QWidget
@@ -84,6 +89,17 @@ public:
     
     virtual bool onActivated(TopItemType* topItem, TargetItemType* targetItem, bool isNewItem) = 0;
 };
+
+
+template<class TargetItemType>
+void ItemTreePanelDialog::registerPanel(ItemTreePanelBase* panel)
+{
+    registerPanel_(
+        typeid(TargetItemType),
+        [panel](Item*){ return panel; },
+        [panel](){ return panel->minimumSizeHint(); });
+}
+
 
 }
 
