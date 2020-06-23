@@ -632,6 +632,14 @@ void ItemTreeWidget::setExpanded(Item* item, bool on)
 }
 
 
+void ItemTreeWidget::editItemName(Item* item)
+{
+    if(auto itwItem = impl->findItwItem(item)){
+        impl->editItem(itwItem);
+    }
+}
+
+
 ItwItem* ItemTreeWidget::Impl::findItwItem(Item* item)
 {
     auto iter = itemToItwItemMap.find(item);
@@ -984,7 +992,7 @@ bool ItemTreeWidget::selectOnly(Item* item)
     }
     if(!isSelected){
         if(impl->findItwItem(item)){
-            item->setSelected(true);
+            item->setSelected(true, true);
             isSelected = true;
         }
     }

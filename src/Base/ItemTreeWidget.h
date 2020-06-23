@@ -104,6 +104,7 @@ public:
 
     void updateTreeWidgetItems();
     void setExpanded(Item* item, bool on = true);
+    void editItemName(Item* item);
 
     ItemList<> getItems() const;
     template <class ItemType> ItemList<ItemType> getItems() {
