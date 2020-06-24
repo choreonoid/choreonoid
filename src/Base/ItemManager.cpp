@@ -929,6 +929,9 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
                             break;
                         }
                     }
+                    if(targetFileIO){
+                        break;
+                    }
                 }
             }
         }
