@@ -371,7 +371,7 @@ ItemList<> ProjectManager::Impl::loadProject
             }
 
             ViewManager::ViewStateInfo viewStateInfo;
-            if(ViewManager::restoreViews(archive, "views", viewStateInfo)){
+            if(ViewManager::restoreViews(archive, "views", viewStateInfo, optionalPlugins)){
                 loaded = true;
             }
 

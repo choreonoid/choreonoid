@@ -159,10 +159,10 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
         }
     }
     if(item->isSelected()){
-        archive->write("isSelected", true);
+        archive->write("is_selected", true);
     }
     if(item->isChecked()){
-        archive->write("isChecked", true);
+        archive->write("is_checked", true);
     }
     if(!item->isSubItem()){
         if(!dataArchive->empty()){
@@ -425,10 +425,11 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
 
 void ItemTreeArchiver::Impl::restoreItemStates(Archive& archive, Item* item)
 {
-    if(archive.get("isSelected", false)){
-        item->setSelected(true);
+    bool state;
+    if(archive.read("is_selected", state) || archive.read("isSelected", state)){
+        item->setSelected(state);
     }
-    if(archive.get("isChecked", false)){
-        item->setChecked(true);
+    if(archive.read("is_checked", state) || archive.read("isChecked", state)){
+        item->setChecked(state);
     }
 }

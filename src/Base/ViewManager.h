@@ -9,6 +9,7 @@
 #include "ExtensionManager.h"
 #include "Archive.h"
 #include <cnoid/Signal>
+#include <set>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -100,7 +101,9 @@ public:
         friend class ViewManager;
     };
 
-    static bool restoreViews(ArchivePtr archive, const std::string& key, ViewStateInfo& out_viewStateInfo);
+    static bool restoreViews(
+        ArchivePtr archive, const std::string& key, ViewStateInfo& out_viewStateInfo,
+        const std::set<std::string>& optionalPlugins);
     static bool restoreViewStates(ViewStateInfo& info);
 
     static SignalProxy<void(View* view)> sigViewCreated();

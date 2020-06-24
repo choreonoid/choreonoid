@@ -1,5 +1,7 @@
 isNewProjectTemplate: true
 
+optionalPlugins: [ Python ]
+
 views: 
   - 
     id: 1
@@ -13,7 +15,6 @@ views:
     mounted: true
   - 
     id: 3
-    name: "Location"
     plugin: Base
     class: LocationView
     mounted: true
@@ -39,19 +40,16 @@ views:
       show_joint_names: false
   - 
     id: 8
-    name: "Links / Devices"
     plugin: Body
     class: LinkDeviceListView
     mounted: true
   - 
     id: 9
-    name: "Link Position"
     plugin: Body
     class: LinkPositionView
     mounted: true
   - 
     id: 10
-    name: "Link Properties"
     plugin: Body
     class: LinkPropertyView
     mounted: true
@@ -60,6 +58,7 @@ views:
     plugin: Python
     class: PythonConsoleView
     mounted: true
+
 viewAreas: 
   - 
     type: embedded

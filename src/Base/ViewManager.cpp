@@ -850,7 +850,9 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
 }
 
 
-bool ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo)
+bool ViewManager::restoreViews
+(ArchivePtr archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo,
+ const std::set<std::string>& optionalPlugins)
 {
     bool restored = false;
     
@@ -876,10 +878,12 @@ bool ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewM
                 if(isHeaderValid){
                     const char* actualModuleName = PluginManager::instance()->guessActualPluginName(moduleName);
                     if(!actualModuleName){
-                        MessageView::instance()->putln(
-                            format(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
-                                   moduleName, className),
-                            MessageView::Error);
+                        if(optionalPlugins.find(moduleName) == optionalPlugins.end()){
+                            MessageView::instance()->putln(
+                                format(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
+                                       moduleName, className),
+                                MessageView::Error);
+                        }
                     } else {
                         View* view = restoreView(viewArchive, actualModuleName, className, remainingViewsMap);
                         if(view){
