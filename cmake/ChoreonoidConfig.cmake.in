@@ -1,19 +1,19 @@
 # Use the following variables to compile and link against Choreonoid:
-# CHOREONOID_FOUND               - True if Choreonoid was found on your system
-# CHOREONOID_VERSION_STRING      - A human-readable string containing the version
-# CHOREONOID_VERSION_MAJOR       - The major version of Choreonoid
-# CHOREONOID_VERSION_MINOR       - The minor version of Choreonoid
-# CHOREONOID_VERSION_PATCH       - The patch version of Choreonoid
-# CHOREONOID_ROOT_DIR            - The base directory of Choreonoid
-# CHOREONOID_CXX_STANDARD        - The c++ standard version used to build Choreonoid (11, 14, or 17)
-# CHOREONOID_COMPILE_DEFINITIONS - Definitions needed to build with Choreonoid
-# CHOREONOID_INCLUDE_DIRS        - List of directories of Choreonoid and it's dependencies
-# CHOREONOID_LIBRARY_DIRS        - List of directories of Choreonoid and it's dependencies
-# CHOREONOID_UTIL_LIBRARIES      - List of libraries to use the CnoidUtil libary
-# CHOREONOID_BASE_LIBRARIES      - List of libraries to use the CnoidBase libary
-# CHOREONOID_BODY_LIBRARIES      - List of libraries to use the CnoidBody libary
+# CHOREONOID_FOUND                 - True if Choreonoid was found on your system
+# CHOREONOID_VERSION_STRING        - A human-readable string containing the version
+# CHOREONOID_VERSION_MAJOR         - The major version of Choreonoid
+# CHOREONOID_VERSION_MINOR         - The minor version of Choreonoid
+# CHOREONOID_VERSION_PATCH         - The patch version of Choreonoid
+# CHOREONOID_ROOT_DIR              - The base directory of Choreonoid
+# CHOREONOID_CXX_STANDARD          - The c++ standard version used to build Choreonoid (11, 14, or 17)
+# CHOREONOID_COMPILE_DEFINITIONS   - Definitions needed to build with Choreonoid
+# CHOREONOID_INCLUDE_DIRS          - List of directories of Choreonoid and it's dependencies
+# CHOREONOID_LIBRARY_DIRS          - List of directories of Choreonoid and it's dependencies
+# CHOREONOID_UTIL_LIBRARIES        - List of libraries to use the CnoidUtil libary
+# CHOREONOID_BASE_LIBRARIES        - List of libraries to use the CnoidBase libary
+# CHOREONOID_BODY_LIBRARIES        - List of libraries to use the CnoidBody libary
 # CHOREONOID_BODY_PLUGIN_LIBRARIES - List of libraries to use the CnoidBody libary
-# CHOREONOID_DISABLE_QT_SETUP    - Set true in advance to disable the Qt library setup
+# CHOREONOID_SKIP_QT_CONFIG        - Set true in advance to disable the Qt library setup
 #
 # Set the following variables to change the behaviour of the functions provided by this module
 # CHOREONOID_INSTALL_SDK      - Set on if you want to install SDK files
