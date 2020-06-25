@@ -376,7 +376,7 @@ bool FilePathVariableProcessor::Impl::replaceUserVariable
         paths = userVariables->findListing(varname);
     }
     if(!paths || !paths->isValid()){
-        errorMessage = format(_("{0} of \"{1}\" is not defined."), varname, io_pathString);
+        errorMessage = format(_("The \"{0}\" variable in \"{1}\" is not defined."), varname, io_pathString);
         return false;
     }
 
