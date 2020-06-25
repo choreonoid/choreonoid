@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-16 16:41+0900\n"
+"POT-Creation-Date: 2020-06-25 12:53+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -105,10 +105,11 @@ msgid "{0} for {1} is empty."
 msgstr "{1}用の{0}は空です．"
 
 #: BodyMotionControllerItem.cpp:109
-msgid "The frame rate of {} is different from the world frame rate."
-msgstr "{}のフレームレートはワールドのフレームレートと異なります．"
+msgid ""
+"Frame rate {0} of \"{1}\" is different from the simulation frame rate {2}."
+msgstr "\"{1}\" のフレームレート {0} はシミュレーションのフレームレート {2} と異なります．"
 
-#: BodyMotionControllerItem.cpp:199
+#: BodyMotionControllerItem.cpp:200
 msgid "Control mode"
 msgstr "制御モード"
 
@@ -200,27 +201,27 @@ msgstr "自己干渉"
 msgid "ZMP [m]"
 msgstr "ZMP [m]"
 
-#: BodyLinkView.cpp:590
+#: BodyLinkView.cpp:588
 msgid "Rotation"
 msgstr "回転"
 
-#: BodyLinkView.cpp:593
+#: BodyLinkView.cpp:591
 msgid "Joint Angle [deg]"
 msgstr "関節角 [deg]"
 
-#: BodyLinkView.cpp:616
+#: BodyLinkView.cpp:614
 msgid "Joint Velocity [deg/s]"
 msgstr "関節角速度 [deg/s]"
 
-#: BodyLinkView.cpp:632
+#: BodyLinkView.cpp:630
 msgid "Slide"
 msgstr "直動"
 
-#: BodyLinkView.cpp:635
+#: BodyLinkView.cpp:633
 msgid "Joint Translation [m]:"
 msgstr "関節並進位置 [m]"
 
-#: BodyLinkView.cpp:658
+#: BodyLinkView.cpp:656
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
@@ -304,7 +305,7 @@ msgstr "自己干渉チェック"
 msgid "Time bar's range only"
 msgstr "タイムバーの範囲内に適用"
 
-#: KinematicFaultChecker.cpp:225 LinkPositionWidget.cpp:824
+#: KinematicFaultChecker.cpp:225 LinkPositionWidget.cpp:822
 #: SplineFilterDialog.cpp:277
 msgid "&Apply"
 msgstr "適用(&A)"
@@ -366,47 +367,47 @@ msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
 msgid "Joint State"
 msgstr "関節状態"
 
-#: JointStateView.cpp:98
+#: JointStateView.cpp:96
 msgid "Displacement"
 msgstr "変位"
 
-#: JointStateView.cpp:99
+#: JointStateView.cpp:97
 msgid "Torque"
 msgstr "トルク"
 
-#: JointStateView.cpp:360 BodyStateView.cpp:285
+#: JointStateView.cpp:357 BodyStateView.cpp:285
 msgid "ON"
 msgstr ""
 
-#: JointStateView.cpp:360 BodyStateView.cpp:285
+#: JointStateView.cpp:357 BodyStateView.cpp:285
 msgid "OFF"
 msgstr ""
 
-#: LinkDeviceTreeWidget.cpp:372
+#: LinkDeviceTreeWidget.cpp:364
 msgid "No"
 msgstr ""
 
-#: LinkDeviceTreeWidget.cpp:374 LinkTreeWidget.cpp:281
+#: LinkDeviceTreeWidget.cpp:366
 msgid "ID"
 msgstr ""
 
-#: LinkDeviceTreeWidget.cpp:631
+#: LinkDeviceTreeWidget.cpp:625
 msgid " Part / Link "
 msgstr " 部位／リンク "
 
-#: LinkDeviceTreeWidget.cpp:637
+#: LinkDeviceTreeWidget.cpp:631
 msgid " Link / Device "
 msgstr " リンク／デバイス "
 
-#: LinkDeviceTreeWidget.cpp:639
+#: LinkDeviceTreeWidget.cpp:633
 msgid " Link "
 msgstr " リンク "
 
-#: LinkDeviceTreeWidget.cpp:645
+#: LinkDeviceTreeWidget.cpp:639
 msgid " Device "
 msgstr "デバイス"
 
-#: LinkDeviceTreeWidget.cpp:862
+#: LinkDeviceTreeWidget.cpp:848
 msgid "Device"
 msgstr "デバイス"
 
@@ -442,8 +443,7 @@ msgstr "\"{1}\"の対象ノード\"{0}\"がみつかりません．"
 msgid "Marker type"
 msgstr "マーカタイプ"
 
-#: BodyMarkerItem.cpp:357 LinkTreeWidget.cpp:277 LinkTreeWidget.cpp:654
-#: LinkTreeWidget.cpp:659 LinkTreeWidget.cpp:674
+#: BodyMarkerItem.cpp:357
 msgid "Link"
 msgstr "リンク"
 
@@ -463,63 +463,63 @@ msgstr "サイズ"
 msgid "Color"
 msgstr "色"
 
-#: EditableSceneBody.cpp:1218
+#: EditableSceneBody.cpp:1232
 msgid "Lock location"
 msgstr "配置ロック"
 
-#: EditableSceneBody.cpp:1226
+#: EditableSceneBody.cpp:1240
 msgid "Move Forcibly"
 msgstr "強制移動"
 
-#: EditableSceneBody.cpp:1231
+#: EditableSceneBody.cpp:1245
 msgid "Hold Forcibly"
 msgstr "強制保持"
 
-#: EditableSceneBody.cpp:1239
+#: EditableSceneBody.cpp:1253
 msgid "Set Free"
 msgstr "フリーに"
 
-#: EditableSceneBody.cpp:1241
+#: EditableSceneBody.cpp:1255
 msgid "Set Base"
 msgstr "ベースに"
 
-#: EditableSceneBody.cpp:1243
+#: EditableSceneBody.cpp:1257
 msgid "Set Translation Pin"
 msgstr "並進ピンをセット"
 
-#: EditableSceneBody.cpp:1245
+#: EditableSceneBody.cpp:1259
 msgid "Set Rotation Pin"
 msgstr "回転ピンをセット"
 
-#: EditableSceneBody.cpp:1247
+#: EditableSceneBody.cpp:1261
 msgid "Set Both Pins"
 msgstr "両方のピンをセット"
 
-#: EditableSceneBody.cpp:1252
+#: EditableSceneBody.cpp:1266
 msgid "Level Attitude"
 msgstr "水平姿勢に"
 
-#: EditableSceneBody.cpp:1258
+#: EditableSceneBody.cpp:1272
 msgid "Markers"
 msgstr "マーカー"
 
-#: EditableSceneBody.cpp:1260
+#: EditableSceneBody.cpp:1274
 msgid "Link Origins"
 msgstr "リンク原点"
 
-#: EditableSceneBody.cpp:1281
+#: EditableSceneBody.cpp:1295
 msgid "Center of Mass"
 msgstr "重心"
 
-#: EditableSceneBody.cpp:1285
+#: EditableSceneBody.cpp:1299
 msgid "Projection Point of CoM"
 msgstr "重心投影点"
 
-#: EditableSceneBody.cpp:1289
+#: EditableSceneBody.cpp:1303
 msgid "ZMP"
 msgstr "ZMP"
 
-#: EditableSceneBody.cpp:1713
+#: EditableSceneBody.cpp:1727
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
@@ -575,47 +575,47 @@ msgstr "切替"
 msgid "Disable custom IK"
 msgstr "カスタムIKを使用しない"
 
-#: LinkPositionWidget.cpp:533
+#: LinkPositionWidget.cpp:531
 msgid "Origin"
 msgstr "原点"
 
-#: LinkPositionWidget.cpp:536
+#: LinkPositionWidget.cpp:534
 msgid "No Offset"
 msgstr "リンク原点"
 
-#: LinkPositionWidget.cpp:791
+#: LinkPositionWidget.cpp:789
 msgid "Search"
 msgstr "絞り込み"
 
-#: LinkPositionWidget.cpp:794
+#: LinkPositionWidget.cpp:792
 msgid "Feasible"
 msgstr "実現可能"
 
-#: LinkPositionWidget.cpp:819
+#: LinkPositionWidget.cpp:817
 msgid "&Update"
 msgstr "更新(&U)"
 
-#: LinkPositionWidget.cpp:826
+#: LinkPositionWidget.cpp:824
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
-#: LinkPositionWidget.cpp:870
+#: LinkPositionWidget.cpp:868
 msgid "Joint-space configuration"
 msgstr "関節空間形態"
 
-#: LinkPositionWidget.cpp:872
+#: LinkPositionWidget.cpp:870
 msgid "{} configuration"
 msgstr "{}の形態"
 
-#: LinkPositionWidget.cpp:1039 LinkPositionWidget.cpp:1176
+#: LinkPositionWidget.cpp:1037 LinkPositionWidget.cpp:1174
 msgid "Not Solved"
 msgstr "解無し"
 
-#: LinkPositionWidget.cpp:1052
+#: LinkPositionWidget.cpp:1050
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionWidget.cpp:1172
+#: LinkPositionWidget.cpp:1170
 msgid "Solved"
 msgstr "解有り"
 
@@ -623,63 +623,63 @@ msgstr "解有り"
 msgid "Link Properties"
 msgstr "リンクプロパティ"
 
-#: LinkPropertyView.cpp:112
+#: LinkPropertyView.cpp:115
 msgid "Name"
 msgstr "名前"
 
-#: LinkPropertyView.cpp:113
+#: LinkPropertyView.cpp:116
 msgid "Index"
 msgstr "インデックス"
 
-#: LinkPropertyView.cpp:114
+#: LinkPropertyView.cpp:117
 msgid "Offset translation"
 msgstr "並進オフセット"
 
-#: LinkPropertyView.cpp:115
+#: LinkPropertyView.cpp:118
 msgid "Offset rotation"
 msgstr "回転オフセット"
 
-#: LinkPropertyView.cpp:116
+#: LinkPropertyView.cpp:119
 msgid "Rs"
 msgstr ""
 
-#: LinkPropertyView.cpp:117
+#: LinkPropertyView.cpp:120
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:118 BodyItem.cpp:1721
+#: LinkPropertyView.cpp:121 BodyItem.cpp:1721
 msgid "Mass"
 msgstr "質量"
 
-#: LinkPropertyView.cpp:119
+#: LinkPropertyView.cpp:122
 msgid "Inertia tensor"
 msgstr "慣性テンソル"
 
-#: LinkPropertyView.cpp:120
+#: LinkPropertyView.cpp:123
 msgid "Joint type"
 msgstr "関節タイプ"
 
-#: LinkPropertyView.cpp:122
+#: LinkPropertyView.cpp:125
 msgid "Joint axis"
 msgstr "関節軸"
 
-#: LinkPropertyView.cpp:123
+#: LinkPropertyView.cpp:126
 msgid "Upper joint limit"
 msgstr "関節変位上限"
 
-#: LinkPropertyView.cpp:124
+#: LinkPropertyView.cpp:127
 msgid "Lower joint limit"
 msgstr "関節変位下限"
 
-#: LinkPropertyView.cpp:125
+#: LinkPropertyView.cpp:128
 msgid "Upper joint velocity"
 msgstr "関節速度上限"
 
-#: LinkPropertyView.cpp:126
+#: LinkPropertyView.cpp:129
 msgid "Lower joint velocity"
 msgstr "関節速度下限"
 
-#: LinkPropertyView.cpp:127
+#: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
 
@@ -775,19 +775,19 @@ msgstr "CollisionSeqを読み込む機能は実装されていません．"
 msgid "Link Position"
 msgstr "リンクポジション"
 
-#: LinkPositionView.cpp:140
+#: LinkPositionView.cpp:135
 msgid "Target link type"
 msgstr "対象リンクタイプ"
 
-#: LinkPositionView.cpp:142
+#: LinkPositionView.cpp:137
 msgid "Any links"
 msgstr "全リンク"
 
-#: LinkPositionView.cpp:143
+#: LinkPositionView.cpp:138
 msgid "IK priority link and root link"
 msgstr "逆運動学優先／ルートリンク"
 
-#: LinkPositionView.cpp:144
+#: LinkPositionView.cpp:139
 msgid "IK priority link"
 msgstr "逆運動学優先リンク"
 
@@ -1031,7 +1031,7 @@ msgstr "足幅の調整"
 msgid "Width between the feet [m]"
 msgstr "両足中心間距離"
 
-#: LeggedBodyBar.cpp:104
+#: LeggedBodyBar.cpp:101
 msgid "The center of mass of {} cannt be moved to the target position\n"
 msgstr "{}の重心を指定の位置まで移動できません\n"
 
@@ -1039,45 +1039,21 @@ msgstr "{}の重心を指定の位置まで移動できません\n"
 msgid "Links / Devices"
 msgstr "リンク／デバイス"
 
-#: LinkDeviceListView.cpp:76
+#: LinkDeviceListView.cpp:69
 msgid "All"
 msgstr "全要素"
 
-#: LinkDeviceListView.cpp:79
+#: LinkDeviceListView.cpp:72
 msgid "Links"
 msgstr "リンク"
 
-#: LinkDeviceListView.cpp:83
+#: LinkDeviceListView.cpp:76
 msgid "Devices"
 msgstr "デバイス"
 
-#: LinkDeviceListView.cpp:93
+#: LinkDeviceListView.cpp:86
 msgid "Tree"
 msgstr "ツリー"
-
-#: LinkTreeWidget.cpp:302
-msgid "Link List"
-msgstr "リンク一覧"
-
-#: LinkTreeWidget.cpp:303
-msgid "Link Tree"
-msgstr "リンクツリー"
-
-#: LinkTreeWidget.cpp:304
-msgid "Joint List"
-msgstr "関節一覧"
-
-#: LinkTreeWidget.cpp:305
-msgid "Joint Tree"
-msgstr "関節ツリー"
-
-#: LinkTreeWidget.cpp:306
-msgid "Part Tree"
-msgstr "身体部位ツリー"
-
-#: LinkTreeWidget.cpp:664 LinkTreeWidget.cpp:669
-msgid "Joint"
-msgstr "関節"
 
 #: SimpleControllerItem.cpp:160
 msgid "SimpleControllerItem"
@@ -1313,11 +1289,11 @@ msgstr "透明度"
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1903
+#: BodyItem.cpp:1906
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1920
+#: BodyItem.cpp:1923
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1325,39 +1301,39 @@ msgstr "{}に対して読み込まれる初期関節位置情報のサイズが�
 msgid "IoConnectionMapItem"
 msgstr "IO接続マップアイテム"
 
-#: BodyBar.cpp:51
+#: BodyBar.cpp:41
 msgid "BodyBar"
 msgstr "ボディバー"
 
-#: BodyBar.cpp:61
+#: BodyBar.cpp:51
 msgid "Memory the current pose"
 msgstr "現在姿勢を記憶"
 
-#: BodyBar.cpp:64
+#: BodyBar.cpp:54
 msgid "Recall the memorized pose"
 msgstr "記憶した姿勢の呼び出し"
 
-#: BodyBar.cpp:67
+#: BodyBar.cpp:57
 msgid "Move the selected bodies to the origin"
 msgstr "選択ボディを原点へ移動"
 
-#: BodyBar.cpp:70
+#: BodyBar.cpp:60
 msgid "Set the preset initial pose to the selected bodies"
 msgstr "選択ボディを初期姿勢に"
 
-#: BodyBar.cpp:73
+#: BodyBar.cpp:63
 msgid "Set the preset standard pose to the selected bodies"
 msgstr "選択ボディを標準姿勢に"
 
-#: BodyBar.cpp:78
+#: BodyBar.cpp:68
 msgid "Copy the right side pose to the left side"
 msgstr "右側の姿勢を左側にコピー"
 
-#: BodyBar.cpp:81
+#: BodyBar.cpp:71
 msgid "Mirror copy"
 msgstr "反転コピー"
 
-#: BodyBar.cpp:84
+#: BodyBar.cpp:74
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
 
@@ -1757,6 +1733,24 @@ msgstr "視野角"
 #: JointDisplacementView.cpp:39
 msgid "Joint Displacement"
 msgstr "関節変位"
+
+#~ msgid "Link List"
+#~ msgstr "リンク一覧"
+
+#~ msgid "Link Tree"
+#~ msgstr "リンクツリー"
+
+#~ msgid "Joint List"
+#~ msgstr "関節一覧"
+
+#~ msgid "Joint Tree"
+#~ msgstr "関節ツリー"
+
+#~ msgid "Part Tree"
+#~ msgstr "身体部位ツリー"
+
+#~ msgid "Joint"
+#~ msgstr "関節"
 
 #~ msgid "Angle"
 #~ msgstr "角度"

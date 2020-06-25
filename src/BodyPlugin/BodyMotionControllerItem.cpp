@@ -106,7 +106,8 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
     }
     if(fabs(qseqRef->frameRate() - (1.0 / io->timeStep())) > 1.0e-6){
         mv->putln(
-            format(_("The frame rate of {} is different from the world frame rate."), motionItem->displayName()),
+            format(_("Frame rate {0} of \"{1}\" is different from the simulation frame rate {2}."),
+                   qseqRef->frameRate(), motionItem->displayName(), 1.0 / io->timeStep()),
             MessageView::Error);
         return false;
     }
