@@ -213,19 +213,16 @@ bool Pose::restore(const Mapping& archive, const BodyPtr body)
                     if(ikLinkNode.get("isBaseLink", false)){
                         setBaseLink(index);
                     }
-                    Vector3 partingDirection;
-                    const Listing& contactPointNodes = *ikLinkNode.findListing("contactPoints");
-                    if(ikLinkNode.get("isTouching", false) &&
-                       read(ikLinkNode, "partingDirection", partingDirection) &&
-                       contactPointNodes.isValid()){
-                        std::vector<Vector3> contactPoints;
-                        for(int j=0; j < contactPointNodes.size(); ++j){
-                            const Listing& pointVectorNode = *contactPointNodes[j].toListing();
-                            Vector3 pointVector;
-                            for(int k=0; k < pointVectorNode.size(); ++k){
-                                pointVector[k] = pointVectorNode[k].toDouble();
+                    if(ikLinkNode.get("isTouching", false)){
+                        Vector3 partingDirection(0.0, 0.0, 1.0);
+                        read(ikLinkNode, "partingDirection", partingDirection);
+                        vector<Vector3> contactPoints;
+                        if(auto& contactPointNodes = *ikLinkNode.findListing("contactPoints")){
+                            int n = contactPointNodes.size();
+                            contactPoints.resize(n);
+                            for(int j=0; j < n; ++j){
+                                read(*contactPointNodes[j].toListing(), contactPoints[j]);
                             }
-                            contactPoints.push_back(pointVector);
                         }
                         info->setTouching(partingDirection, contactPoints);
                     }
@@ -297,18 +294,24 @@ void Pose::store(Mapping& archive, const BodyPtr body) const
             write(ikLinkNode, "rotation", info.R);
 
             if(info.isTouching()){
+
                 ikLinkNode.write("isTouching", true);
                 write(ikLinkNode, "partingDirection", info.partingDirection());
-                ListingPtr contactPointNodes = new Listing();
-                std::vector<Vector3> contactPoints = info.contactPoints();
-                for(auto contactPoint : contactPoints){
-                    ListingPtr pointVectorNodes = new Listing();
-                    pointVectorNodes->setFlowStyle();
-                    for(int k=0; k < contactPoint.size(); ++k) pointVectorNodes->append(contactPoint[k]);
-                    contactPointNodes->append(pointVectorNodes);
+
+                auto& points = info.contactPoints();
+                if(!points.empty()){
+                    auto& pointList = *ikLinkNode.createListing("contactPoints");
+                    for(auto& point : points){
+                        ListingPtr pointNode = new Listing;
+                        pointNode->setFlowStyle();
+                        for(int i=0; i < 3; ++i){
+                            pointNode->append(point(i));
+                        }
+                        pointList.append(pointNode);
+                    }
                 }
-                ikLinkNode.insert("contactPoints", contactPointNodes);
             }
+            
             if(info.isSlave()){
                 ikLinkNode.write("isSlave", true);
             }
