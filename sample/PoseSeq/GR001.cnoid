@@ -1,4 +1,4 @@
-optionalPlugins: [ "GRobot" ]
+optionalPlugins: [ PoseSeq, GRobot, Python ]
 
 items: 
   id: 0
@@ -67,6 +67,7 @@ items:
                   name: "SampleMotion1"
                   plugin: PoseSeq
                   class: PoseSeqItem
+                  is_selected: true
                   data: 
                     file: "${SHARE}/motion/GR001/SampleMotion1.pseq"
                     format: POSE-SEQ-YAML
@@ -109,7 +110,6 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            timeStep: 0.01
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Active control period"
@@ -133,75 +133,37 @@ items:
             kinematicWalking: false
             2Dmode: false
             oldAccelSensorMode: false
+
 views: 
   - 
-    id: 0
+    id: 1
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 1
+    id: 2
     plugin: Base
     class: ItemTreeView
     mounted: true
-    state: 
-      expanded: [ 1, 2, 3, 4 ]
-  - 
-    id: 2
-    name: "Location"
-    plugin: Base
-    class: LocationView
-    mounted: true
-    state: 
-      show_rpy: true
-      unique_rpy: false
-      show_quoternion: false
-      show_rotation_matrix: false
-      coordinate: world
   - 
     id: 3
     plugin: Base
-    class: MessageView
+    class: LocationView
     mounted: true
   - 
     id: 4
     plugin: Base
+    class: MessageView
+    mounted: true
+  - 
+    id: 5
+    plugin: Base
     class: SceneView
     mounted: true
     state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      restrictCameraRoll: true
-      verticalAxis: Z
-      lightingMode: full
-      cullingMode: enabled
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
       floorGrid: true
       floorGridSpan: 2
       floorGridInterval: 0.05
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      lightweightViewChange: false
-      coordinateAxes: true
-      fpsTestIteration: 1
-      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -217,64 +179,108 @@ views:
           orthoHeight: 0.323817
           near: 0.01
           far: 10000
-      backgroundColor: [ 0.1, 0.1, 0.3 ]
-      gridColor: [ 0.9, 0.9, 0.9, 1 ]
-      xzgridColor: [ 0.9, 0.9, 0.9, 1 ]
-      yzgridColor: [ 0.9, 0.9, 0.9, 1 ]
-      isDedicatedItemCheckEnabled: false
   - 
-    id: 5
-    plugin: Body
-    class: BodyLinkView
-    mounted: true
-    state: 
-      showRotationMatrix: false
-  - 
-    id: 6
+    id: 7
     plugin: Body
     class: JointDisplacementView
     mounted: true
     state: 
-      show_selected_joints: false
-      show_joint_ids: false
-      show_joint_names: true
-      overlap_joint_names: false
-      show_sliders: true
-      show_dials: false
-      show_phases: true
-      current_body_item: 2
-  - 
-    id: 7
-    name: "Link Position"
-    plugin: Body
-    class: LinkPositionView
-    mounted: true
-    state: 
-      coordinate_mode: world
-      preferred_coordinate_mode: base
-      show_rpy: true
-      unique_rpy: false
-      show_quoternion: false
-      show_rotation_matrix: false
-      target_link_type: root_or_ik_link
+      show_joint_ids: true
+      show_joint_names: false
   - 
     id: 8
     plugin: Body
-    class: LinkSelectionView
+    class: LinkDeviceListView
     mounted: true
-    state: 
-      listingMode: "Link List"
-      currentBodyItem: 2
-      bodyItems: 
-        - 
-          id: 2
-          selectedLinks: [ 0 ]
   - 
     id: 9
+    plugin: Body
+    class: LinkPositionView
+    mounted: true
+  - 
+    id: 10
+    plugin: Body
+    class: LinkPropertyView
+    mounted: true
+  - 
+    id: 11
     plugin: Python
     class: PythonConsoleView
     mounted: true
+  - 
+    id: 12
+    plugin: PoseSeq
+    class: PoseRollView
+    mounted: true
+
+Body: 
+  "EditableSceneBody": 
+    editableSceneBodies: 
+      - 
+        bodyItem: 2
+        showZmp: true
+
+viewAreas: 
+  - 
+    type: embedded
+    tabs: true
+    contents: 
+      type: splitter
+      orientation: horizontal
+      sizes: [ 400, 100 ]
+      children: 
+        - 
+          type: splitter
+          orientation: horizontal
+          sizes: [ 140, 400 ]
+          children: 
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 100, 100 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 2 ]
+                - 
+                  type: pane
+                  views: [ 1, 10 ]
+                  current: 1
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 300, 100 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 5 ]
+                - 
+                  type: pane
+                  views: [ 4, 11, 12 ]
+                  current: 12
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 1, 600 ]
+          children: 
+            - 
+              type: pane
+              views: [ 3 ]
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 1, 400 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 9 ]
+                - 
+                  type: pane
+                  views: [ 8, 7 ]
+                  current: 7
 toolbars: 
+  "TimeBar": 
+    frameRate: 200
   "BodyMotionGenerationBar": 
     autoGenerationForNewBody: true
     balancer: true
@@ -308,79 +314,18 @@ toolbars:
     waistHeightRelaxation: false
     gravity: 9.8
     dynamicsTimeRatio: 1
-  "TimeBar": 
-    minTime: 0
-    maxTime: 15
-    frameRate: 100
-    playbackFrameRate: 60
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-viewAreas: 
-  - 
-    type: embedded
-    tabs: true
-    contents: 
-      type: splitter
-      orientation: horizontal
-      sizes: [ 1186, 600 ]
-      children: 
-        - 
-          type: splitter
-          orientation: horizontal
-          sizes: [ 278, 903 ]
-          children: 
-            - 
-              type: splitter
-              orientation: vertical
-              sizes: [ 542, 542 ]
-              children: 
-                - 
-                  type: pane
-                  views: [ 1 ]
-                  current: 1
-                - 
-                  type: pane
-                  views: [ 0, 8 ]
-                  current: 0
-            - 
-              type: splitter
-              orientation: vertical
-              sizes: [ 779, 305 ]
-              children: 
-                - 
-                  type: pane
-                  views: [ 4 ]
-                  current: 4
-                - 
-                  type: pane
-                  views: [ 3, 9 ]
-                  current: 3
-        - 
-          type: splitter
-          orientation: vertical
-          sizes: [ 349, 735 ]
-          children: 
-            - 
-              type: pane
-              views: [ 7, 5, 2 ]
-              current: 7
-            - 
-              type: pane
-              views: [ 6 ]
-              current: 6
+
 layoutOfToolBars: 
-  rows: 
+  rows:
     - 
       - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 55, priority: 0 }
-      - { name: "TimeBar", x: 110, priority: 0 }
-      - { name: "SimulationBar", x: 1548, priority: 1 }
+      - { name: "ScriptBar", x: 0, priority: 1 }
+      - { name: "SimulationBar", x: 0, priority: 2 }
+      - { name: "TimeBar", x: 0, priority: 0 }
     - 
-      - { name: "BodyMotionGenerationBar", x: 0, priority: 1 }
+      - { name: "BodyMotionGenerationBar", x: 0, priority: 0 }
       - { name: "BodyBar", x: 0, priority: 0 }
-      - { name: "KinematicsBar", x: 324, priority: 0 }
-      - { name: "SceneBar", x: 781, priority: 2 }
-      - { name: "GraphBar", x: 1111, priority: 3 }
+      - { name: "KinematicsBar", x: 0, priority: 1 }
+      - { name: "SceneBar", x: 0, priority: 2 }
+      - { name: "GraphBar", x: 0, priority: 3 }
+      - { name: "CaptureBar", x: 0, priority: 4 }
