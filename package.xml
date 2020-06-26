@@ -5,15 +5,14 @@
   <name>choreonoid</name>
   <version>1.7.0</version>
   <description>
-    Choreonoid is integrated graphical robotics software based on functions to simulate robots
+    Choreonoid is an integrated graphical robotics application framework including a simulator, a motion editor, etc.
   </description>
   <maintainer email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</maintainer>
   <license>MIT</license>
   <author email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</author>
-  <author>Choreonoid Development Team, AIST</author>
   <url type="website">http://choreonoid.org/</url>
-  <url type="repository">https://github.com/s-nakaoka/choreonoid/</url>
-  <url type="bugtracker">https://github.com/s-nakaoka/choreonoid/issues</url>
+  <url type="repository">https://github.com/choreonoid/choreonoid/</url>
+  <url type="bugtracker">https://github.com/choreonoid/choreonoid/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
