@@ -14,7 +14,7 @@ choreonoid_add_simple_controller(SR1MinimumController SR1MinimumController.cpp)
 choreonoid_add_simple_controller(SR1WalkPatternController SR1WalkPatternController.cpp)
 choreonoid_add_simple_controller(SR1LiftupController SR1LiftupController.cpp)
 choreonoid_add_simple_controller(SR1WalkGraspController SR1WalkGraspController.cpp)
-set(sr1-pattern-files SR1WalkPattern1.seq SR1WalkPattern2.pseq SR1WalkPattern2.seq SR1WalkPattern3.seq)
+set(sr1-pattern-files SR1WalkPattern1.seq SR1WalkPattern2.seq SR1WalkPattern3.seq)
 file(COPY ${sr1-pattern-files} DESTINATION ${CNOID_BINARY_SHARE_DIR}/motion/SR1)
 install(FILES ${sr1-pattern-files} DESTINATION ${CNOID_SHARE_SUBDIR}/motion/SR1)
 list(APPEND project_files
