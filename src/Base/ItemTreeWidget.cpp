@@ -1641,6 +1641,19 @@ void ItemTreeWidget::Impl::restoreExpandedItems(const Archive& archive, const Li
         if(auto item = archive.findItem(expanded->at(i))){
             if(auto itwItem = findItwItem(item)){
                 itwItem->setExpanded(true);
+
+                /**
+                   The selection states of the child items must be restored here
+                   because a tree item is not actually selected if the item is
+                   initially inserted to an unexpanded parent item.
+                */
+                int n = itwItem->childCount();
+                for(int i=0; i < n; ++i){
+                    auto childItwItem = static_cast<ItwItem*>(itwItem->child(i));
+                    if(childItwItem->item->isSelected()){
+                        setItwItemSelected(childItwItem, true);
+                    }
+                }
             }
         }
     }
