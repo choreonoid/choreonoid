@@ -612,6 +612,12 @@ bool PoseSeqItem::store(Archive& archive)
     if(overwrite()){
         archive.writeFileInformation(this);
         archive.write("barLength", barLength_);
+        if(bodyMotionItem_->isSelected()){
+            archive.write("is_body_motion_selected", true);
+        }
+        if(bodyMotionItem_->isChecked()){
+            archive.write("is_body_motion_checked", true);
+        }
         return true;
     }
     return false;
@@ -622,6 +628,12 @@ bool PoseSeqItem::restore(const Archive& archive)
 {
     if(archive.loadFileTo(this)){
         archive.read("barLength", barLength_);
+        if(archive.get("is_body_motion_selected", false)){
+            bodyMotionItem_->setSelected(true);
+        }
+        if(archive.get("is_body_motion_checked", false)){
+            bodyMotionItem_->setChecked(true);
+        }
         return true;
     }
     return false;
