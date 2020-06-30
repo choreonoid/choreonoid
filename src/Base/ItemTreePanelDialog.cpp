@@ -37,6 +37,7 @@ public:
     PolymorphicItemFunctionSet  panelFunctions;
     ItemTreePanelBase* panelToActivate;
     ItemTreePanelBase* currentPanel;
+    QLabel topAreaLabel;
     QHBoxLayout topWidgetLayout;
     ItemTreeWidget itemTreeWidget;
     ScopedConnection itemTreeWidgetConnection;
@@ -50,6 +51,7 @@ public:
     Impl(ItemTreePanelDialog* self);
     void initialize();
     ~Impl();
+    void updateTopAreaLayout();
     void showPanel();
     void onSelectionChanged(const ItemList<>& items);
     void activateItem(Item* item, bool isNewItem);
@@ -122,9 +124,9 @@ void ItemTreePanelDialog::Impl::initialize()
     self->setLayout(vbox);
 
     auto hbox = new QHBoxLayout;
-    auto addLabel = new QLabel(_("Add : "));
-    addLabel->setStyleSheet("font-weight: bold");
-    hbox->addWidget(addLabel);
+    topAreaLabel.setText(_("Add : "));
+    topAreaLabel.setStyleSheet("font-weight: bold");
+    hbox->addWidget(&topAreaLabel);
     hbox->addLayout(&topWidgetLayout);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -210,6 +212,29 @@ void ItemTreePanelDialog::addTopAreaWidget(QWidget* widget)
 }
 
 
+void ItemTreePanelDialog::updateTopAreaLayout()
+{
+    impl->updateTopAreaLayout();
+}
+
+
+void ItemTreePanelDialog::Impl::updateTopAreaLayout()
+{
+    bool hasVisibleWidget = false;
+    int n = topWidgetLayout.count();
+    for(int i=0; i < n; ++i){
+        auto item = topWidgetLayout.itemAt(i);
+        if(auto widget = item->widget()){
+            if(!widget->isHidden()){
+                hasVisibleWidget = true;
+                break;
+            }
+        }
+    }
+    topAreaLabel.setVisible(hasVisibleWidget);
+}
+
+
 bool ItemTreePanelDialog::setTopItem(Item* item)
 {
     impl->topItem = item;
@@ -225,13 +250,15 @@ void ItemTreePanelDialog::show()
 
     // The label must be displayed when the dialog is shown
     // to ensure the necessary dialog size
-    bool isVisible = impl->panelCaptionLabel.isVisible();
-    impl->panelCaptionLabel.setVisible(true);
+    bool isPanelCaptionHidden = impl->panelCaptionLabel.isHidden();
+    impl->panelCaptionLabel.show();
     
     Dialog::show();
 
     // Restore the label visibility
-    impl->panelCaptionLabel.setVisible(isVisible);
+    if(isPanelCaptionHidden){
+        impl->panelCaptionLabel.hide();
+    }
     
     if(!impl->lastDialogPosition.isNull()){
         setGeometry(impl->lastDialogPosition);

@@ -18,6 +18,7 @@ public:
 
     ItemTreeWidget* itemTreeWidget();
     void addTopAreaWidget(QWidget* widget);
+    void updateTopAreaLayout();
     
     template<class TargetItemType>
     void registerPanel(ItemTreePanelBase* panel);
