@@ -718,7 +718,7 @@ bool CoordinateFrameListItem::restore(const Archive& archive)
     impl->frameList->resetIdCounter();
     bool result = impl->frameList->read(archive);
     if(result){
-        archive.setProcessOnSubTreeRestored(
+        archive.addProcessOnSubTreeRestored(
             [&](){ impl->arrangeFrameItems(); });
     }
     return result;

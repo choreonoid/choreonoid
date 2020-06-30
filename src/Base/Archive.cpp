@@ -40,12 +40,12 @@ public:
         
     Item* currentParentItem;
 
-    std::function<void()>* pointerToProcessOnSubTreeRestored;
+    std::vector<std::function<void()>>* pointerToProcessesOnSubTreeRestored;
     PostProcessList postProcesses;
 
     ArchiveSharedData(){
         currentParentItem = nullptr;
-        pointerToProcessOnSubTreeRestored = nullptr;
+        pointerToProcessesOnSubTreeRestored = nullptr;
     }
 };
 
@@ -102,17 +102,17 @@ void Archive::inheritSharedInfoFrom(Archive& archive)
 }
 
 
-void Archive::setProcessOnSubTreeRestored(const std::function<void()>& func) const
+void Archive::addProcessOnSubTreeRestored(const std::function<void()>& func) const
 {
-    if(shared->pointerToProcessOnSubTreeRestored){
-        *shared->pointerToProcessOnSubTreeRestored = func;
+    if(shared->pointerToProcessesOnSubTreeRestored){
+        shared->pointerToProcessesOnSubTreeRestored->push_back(func);
     }
 }
 
 
-void Archive::setPointerToProcessOnSubTreeRestored(std::function<void()>* pfunc)
+void Archive::setPointerToProcessesOnSubTreeRestored(std::vector<std::function<void()>>* pfunc)
 {
-    shared->pointerToProcessOnSubTreeRestored = pfunc;
+    shared->pointerToProcessesOnSubTreeRestored = pfunc;
 }
 
 

@@ -264,8 +264,8 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem,
     ItemPtr item;
     string itemName;
     bool isOptional = false;
-    std::function<void()> processOnSubTreeRestored;
-    archive.setPointerToProcessOnSubTreeRestored(&processOnSubTreeRestored);
+    std::vector<std::function<void()>> processesOnSubTreeRestored;
+    archive.setPointerToProcessesOnSubTreeRestored(&processesOnSubTreeRestored);
 
     try {
         item = restoreItem(archive, parentItem, restoredItems, itemName, isOptional);
@@ -294,8 +294,8 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem,
                 restoreItemIter(*childArchive, item, restoredItems);
             }
         }
-        if(processOnSubTreeRestored){
-            processOnSubTreeRestored();
+        for(auto& func : processesOnSubTreeRestored){
+            func();
         }
     }
 }
@@ -395,6 +395,7 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
             auto addonList = addonsNode->toListing();
             for(int i=0; i < addonList->size(); ++i){
                 auto addonArchive = dynamic_cast<Archive*>(addonList->at(i)->toMapping());
+                addonArchive->inheritSharedInfoFrom(archive);
                 if(!(addonArchive->read("name", name) && addonArchive->read("plugin", moduleName))){
                     mv->putln(format(_("The name and plugin are not specified at addon {0}."), i),
                               MessageView::Error);
@@ -411,7 +412,6 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
                             if(!addon->restore(*addonArchive)){
                                 mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be restored."),
                                                  name, moduleName), MessageView::Error);
-                            } else {
                                 item->removeAddon(addon);
                             }
                         }
