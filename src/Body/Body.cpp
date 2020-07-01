@@ -323,7 +323,7 @@ void Body::resetParent()
 void Body::syncPositionWithParentBody(bool doForwardKinematics)
 {
     if(auto parentBodyLink = rootLink_->parent_){
-        rootLink_->setPosition(parentBodyLink->T() * rootLink_->Tb());
+        rootLink_->setPosition(parentBodyLink->Ta() * rootLink_->Tb());
         if(doForwardKinematics){
             calcForwardKinematics();
         }

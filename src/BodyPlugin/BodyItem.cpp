@@ -186,7 +186,7 @@ public:
     void setLocationEditable(bool on, bool updateInitialPositionWhenLocked);
     void createSceneBody();
     void setTransparency(float t);
-    void updateAttachment(bool on, bool forceUpdate);
+    bool updateAttachment(bool on);
     bool isAttachable() const;
     void setParentBodyItem(BodyItem* bodyItem);
     Link* attachToBodyItem(BodyItem* bodyItem);
@@ -1257,11 +1257,13 @@ void BodyItem::Impl::doAssign(Item* srcItem)
 
 void BodyItem::onPositionChanged()
 {
-    impl->updateAttachment(true, true);
-
     auto worldItem = findOwnerItem<WorldItem>();
     if(!worldItem){
         clearCollisions();
+    }
+
+    if(impl->updateAttachment(true)){
+        notifyUpdate();
     }
 }
 
@@ -1536,22 +1538,23 @@ void BodyItem::setAttachmentEnabled(bool on)
 {
     if(on != impl->isAttachmentEnabled){
         impl->isAttachmentEnabled = on;
-        impl->updateAttachment(on, false);
+        impl->updateAttachment(on);
     }
 }
 
 
-void BodyItem::Impl::updateAttachment(bool on, bool forceUpdate)
+bool BodyItem::Impl::updateAttachment(bool on)
 {
+    bool updated = false;
     BodyItem* newParentBodyItem = nullptr;
     if(on && isAttachmentEnabled){
-        if(forceUpdate || !self->isAttachedToParentBody()){
-            newParentBodyItem = self->findOwnerItem<BodyItem>();
-        }
+        newParentBodyItem = self->findOwnerItem<BodyItem>();
     }
     if(newParentBodyItem != parentBodyItem){
         setParentBodyItem(newParentBodyItem);
+        updated = true;
     }
+    return updated;
 }
 
 
