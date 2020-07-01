@@ -34,7 +34,7 @@ public:
     BodyItem* bodyItem;
     ScopedConnectionSet bodyItemConnections;
     vector<BodyInfoPtr> bodyInfos;
-    bool needToUpdateSuperimposedBodies;
+    bool needToCheckSuperimposedBodies;
     SgGroupPtr topGroup;
     float transparency;
     SgUpdate sgUpdate;
@@ -43,7 +43,7 @@ public:
     Impl(BodySuperimposerAddon* self);
     Impl(BodySuperimposerAddon* self, const Impl& org);
     void setBodyItem(BodyItem* newBodyItem);
-    void addSuperimposedBodies(BodyItem* bodyItem);
+    void addSuperimposedBodies(BodyItem* bodyItem, bool isActive);
     void updateSuperimposedBodies();
     bool checkBodySetChange(Item* parentItem, set<BodyItem*>& bodyItemSet);
     void setTransparency(float t);
@@ -70,7 +70,7 @@ BodySuperimposerAddon::Impl::Impl(BodySuperimposerAddon* self)
     : self(self)
 {
     bodyItem = nullptr;
-    needToUpdateSuperimposedBodies = false;
+    needToCheckSuperimposedBodies = false;
     topGroup = new SgGroup;
     transparency = 0.5f;
     SgObject::setNonNodeCloning(cloneMap, false);
@@ -101,24 +101,16 @@ void BodySuperimposerAddon::Impl::setBodyItem(BodyItem* bodyItem)
     topGroup->clearChildren();
     bodyInfos.clear();
     bodyItemConnections.disconnect();
-
-    needToUpdateSuperimposedBodies = true;
-
-    bodyItemConnections.add(
-        bodyItem->sigKinematicStateChanged().connect(
-            [&](){ self->clearSuperimposition(); }));
-    bodyItemConnections.add(
-        bodyItem->sigSubTreeChanged().connect(
-            [&](){ needToUpdateSuperimposedBodies = true; } ));
+    needToCheckSuperimposedBodies = true;
 }
 
 
 void BodySuperimposerAddon::Impl::updateSuperimposedBodies()
 {
-    if(!needToUpdateSuperimposedBodies){
+    if(!needToCheckSuperimposedBodies){
         return;
     }
-    needToUpdateSuperimposedBodies = false;
+    needToCheckSuperimposedBodies = false;
 
     bool bodiesChanged = bodyInfos.empty();
 
@@ -144,10 +136,19 @@ void BodySuperimposerAddon::Impl::updateSuperimposedBodies()
     if(!bodiesChanged){
         return;
     }
-    
-    bodyInfos.clear();
+
     topGroup->clearChildren();
-    addSuperimposedBodies(bodyItem);
+    bodyInfos.clear();
+    bodyItemConnections.disconnect();
+
+    bodyItemConnections.add(
+        bodyItem->sigKinematicStateChanged().connect(
+            [&](){ self->clearSuperimposition(); }));
+    bodyItemConnections.add(
+        bodyItem->sigSubTreeChanged().connect(
+            [&](){ needToCheckSuperimposedBodies = true; } ));
+    
+    addSuperimposedBodies(bodyItem, true);
     cloneMap.clear();
 }
 
@@ -172,21 +173,27 @@ bool BodySuperimposerAddon::Impl::checkBodySetChange(Item* parentItem, set<BodyI
 }
 
 
-void BodySuperimposerAddon::Impl::addSuperimposedBodies(BodyItem* bodyItem)
+void BodySuperimposerAddon::Impl::addSuperimposedBodies(BodyItem* bodyItem, bool isActive)
 {
-    BodyInfoPtr info = new BodyInfo;
-    info->bodyItem = bodyItem;
-    info->superimposedBody = bodyItem->body()->clone(cloneMap);
-    info->sceneBody = new SceneBody(info->superimposedBody);
-    info->sceneBody->setTransparency(transparency);
-    topGroup->addChild(info->sceneBody);
-    bodyInfos.push_back(info);
+    bodyItemConnections.add(
+        bodyItem->sigUpdated().connect(
+            [&](){
+                needToCheckSuperimposedBodies = true;
+            } ));
+
+    if(isActive){
+        BodyInfoPtr info = new BodyInfo;
+        info->bodyItem = bodyItem;
+        info->superimposedBody = bodyItem->body()->clone(cloneMap);
+        info->sceneBody = new SceneBody(info->superimposedBody);
+        info->sceneBody->setTransparency(transparency);
+        topGroup->addChild(info->sceneBody);
+        bodyInfos.push_back(info);
+    }
 
     for(Item* childItem = bodyItem->childItem(); childItem; childItem = childItem->nextItem()){
         if(auto childBodyItem = dynamic_cast<BodyItem*>(childItem)){
-             if(childBodyItem->isAttachedToParentBody()){
-                 addSuperimposedBodies(childBodyItem);
-             }
+            addSuperimposedBodies(childBodyItem, isActive && childBodyItem->isAttachedToParentBody());
         }
     }
 }
@@ -242,10 +249,10 @@ void BodySuperimposerAddon::Impl::updateSuperimposition()
     if(!bodyInfos.empty()){
         bool isDifferent = false;
         for(auto& info : bodyInfos){
-            sgUpdate.resetAction(SgUpdate::MODIFIED);
-            info->sceneBody->updateLinkPositions(sgUpdate);
             auto bodyItem = info->bodyItem.lock();
-            if(!bodyItem || !checkPositionIdentity(bodyItem->body(), info->superimposedBody)){
+            if(bodyItem && !checkPositionIdentity(bodyItem->body(), info->superimposedBody)){
+                sgUpdate.resetAction(SgUpdate::MODIFIED);
+                info->sceneBody->updateLinkPositions(sgUpdate);
                 isDifferent = true;
             }
         }

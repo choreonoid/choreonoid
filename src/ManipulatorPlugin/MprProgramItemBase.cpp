@@ -333,19 +333,21 @@ bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position)
         auto orgBody = targetBodyItem->body();
         BodyState orgBodyState(*orgBody);
         if(moveTo(position, false)){
-            // Main body
-            auto superBody = superimposer->superimposedBody(0);
+            // Copy the body state to the supoerimpose body
             BodyState bodyState(*orgBody);
+            auto superBody = superimposer->superimposedBody(0);
             bodyState.restorePositions(*superBody);
             superBody->calcForwardKinematics();
-            // Child bodies
+            orgBodyState.restorePositions(*orgBody);
+            
+            // Update the kinematics states of superimpose child bodies
             const int n = superimposer->numSuperimposedBodies();
             for(int i=1; i < n; ++i){
                 auto childBody = superimposer->superimposedBody(i);
                 childBody->syncPositionWithParentBody();
             }
+            
             superimposer->updateSuperimposition();
-            orgBodyState.restorePositions(*orgBody);
             result = true;
         }
     }
