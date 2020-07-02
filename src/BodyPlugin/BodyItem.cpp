@@ -222,12 +222,13 @@ public:
         if(!bodyLoader.load(newBody, filename)){
             return false;
         }
+        item->setBody(newBody);
+
         if(item->name().empty()){
             item->setName(newBody->modelName());
         } else {
             newBody->setName(item->name());
         }
-        item->setBody(newBody);
 
         auto itype = invocationType();
         if(itype == Dialog || itype == DragAndDrop){
