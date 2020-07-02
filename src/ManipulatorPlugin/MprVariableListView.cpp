@@ -271,7 +271,7 @@ QModelIndex VariableListModel::index(int row, int column, const QModelIndex& par
     if(!variableList || parent.isValid()){
         return QModelIndex();
     }
-    if(row < numVariables()){
+    if(row >= 0 && row < numVariables()){
         auto variable = const_cast<VariableListModel*>(this)->variableAtRow(row);
         return createIndex(row, column, variable);
     }

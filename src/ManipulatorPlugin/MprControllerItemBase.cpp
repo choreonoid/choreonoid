@@ -997,9 +997,14 @@ stdx::optional<MprVariable::Value> MprControllerItemBase::Impl::getTermValue
         pos = match[0].second;
             
     } else if(regex_search(pos, end, match, intPattern)){
-        value = std::stoi(match.str(0));
-        pos = match[0].second;
-
+        errno = 0;
+        long number = strtol(match.str(0).c_str(), nullptr, 10);
+        if(errno == ERANGE || number < INT_MIN || number > INT_MAX){
+            io->os() << format(_("Integer value {0} is out of range."), match.str(0)) << endl;
+        } else {
+            value = std::stoi(match.str(0));
+            pos = match[0].second;
+        }
     } else if(regex_search(pos, end, match, boolPattern)){
         auto label = match.str(1);
         std::transform(label.begin(), label.end(), label.begin(), ::tolower);
@@ -1072,7 +1077,7 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
             }
         }
         if(!isValidExpression){
-            io->os() << format(_("Term {0} is invalid."), invalidTerm) << endl;
+            io->os() << format(_("Term \"{0}\" is invalid."), invalidTerm) << endl;
             break;
         }
     }
