@@ -107,8 +107,18 @@ typedef ref_ptr<MprControllerItemBase> MprControllerItemBasePtr;
 class CNOID_EXPORT MprControllerLog : public Referenced
 {
 public:
-    std::shared_ptr<std::string> topLevelProgramName;
-    std::vector<int> hierachicalPosition;
+    MprControllerLog();
+    const std::string& topLevelProgramName() const { return *topLevelProgramName_; }
+    std::shared_ptr<const std::string> sharedTopLevelProgramName() const { return topLevelProgramName_; }
+    const std::vector<int>& hierachicalPosition() const { return hierachicalPosition_; }
+    bool isErrorState() const { return isErrorState_; }
+
+private:
+    std::shared_ptr<std::string> topLevelProgramName_;
+    std::vector<int> hierachicalPosition_;
+    bool isErrorState_;
+    
+    friend class MprControllerItemBase;
 };
 
 typedef ref_ptr<MprControllerLog> MprControllerLogPtr;

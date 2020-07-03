@@ -25,6 +25,8 @@ public:
         
     std::shared_ptr<ReferencedObjectSeq> seq() { return seq_; }
 
+    void resetSeq();
+
 protected:
     /**
        This is for the copy constructor of an inherited class

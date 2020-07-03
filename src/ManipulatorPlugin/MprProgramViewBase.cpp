@@ -125,7 +125,8 @@ public:
     MprProgramViewBase* self;
     TargetItemPicker<MprProgramItemBase> targetItemPicker;
     MprProgramItemBasePtr programItem;
-    shared_ptr<string> logTopLevelProgramName;
+    shared_ptr<const string> logTopLevelProgramName;
+    weak_ptr<ReferencedObjectSeq> invalidLogSeq;
     unordered_map<MprStatementPtr, StatementItem*> statementItemMap;
     MprDummyStatementPtr dummyStatement;
     int statementItemOperationCallCounter;
@@ -135,6 +136,7 @@ public:
     Signal<void(MprStatement* statement)> sigCurrentStatementChanged;
     MprStatementPtr prevCurrentStatement;
     vector<MprStatementPtr> statementsToPaste;
+    weak_ref_ptr<MprStatement> weak_errorStatement;
     BodySyncMode bodySyncMode;
     
     QLabel programNameLabel;
@@ -158,12 +160,17 @@ public:
     void addProgramStatementsToTree(MprProgram* program, QTreeWidgetItem* parentItem);
     void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void setCurrentStatement(MprStatement* statement, bool doSetCurrentItem, bool doActivate);
+    void setErrorStatement(MprStatement* statement);
     void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
     void onTreeWidgetItemDoubleClicked(QTreeWidgetItem* item, int /* column */);
     MprStatement* findStatementAtHierachicalPosition(const vector<int>& position);
     MprStatement* findStatementAtHierachicalPositionIter(
         const vector<int>& position, MprProgram* program, int level);
+    bool findControllerItemAndLogItem(
+        MprControllerItemBase*& controllerItem, ReferencedObjectSeqItem*& logItem);
+    shared_ptr<ReferencedObjectSeq> findLogSeq();
     bool onTimeChanged(double time);
+    bool seekToLogPosition(MprControllerItemBase* controllerItem, MprControllerLog* log);
     StatementItem* findStatementItem(MprStatement* statement);
     bool insertStatement(MprStatement* statement, int insertionType);
     void onStatementInserted(MprProgram::iterator iter);
@@ -746,7 +753,8 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
     
     programItem = item;
     logTopLevelProgramName.reset();
-    currentStatement = nullptr;
+    currentStatement.reset();
+    weak_errorStatement.reset();
 
     bool accepted = self->onCurrentProgramItemChanged(item);
     if(!accepted){
@@ -876,13 +884,50 @@ void MprProgramViewBase::Impl::setCurrentStatement
         }
         prevCurrentStatement = statement;
     }
-    
-    currentStatement = statement;
-    self->onCurrentStatementChanged(statement);
-    sigCurrentStatementChanged(statement);
+
+    if(statement == weak_errorStatement.lock()){
+        setStyleSheet("QTreeView::item:selected { background-color: red; } "
+                      "QTreeView::branch:selected { background-color: red; }");
+    } else {
+        setStyleSheet("");
+    }
+
+    if(statement != currentStatement){
+        currentStatement = statement;
+        self->onCurrentStatementChanged(statement);
+        sigCurrentStatementChanged(statement);
+    }
 
     if(doActivate){
         self->onStatementActivated(statement);
+    }
+}
+
+
+void MprProgramViewBase::Impl::setErrorStatement(MprStatement* statement)
+{
+    auto errorStatement = weak_errorStatement.lock();
+    if(statement != errorStatement){
+        weak_errorStatement = statement;
+        if(errorStatement){
+            if(auto item = findStatementItem(errorStatement)){
+                QBrush brush;
+                for(int i=0; i < NumColumns; ++i){
+                    item->setForeground(i, brush);
+                }
+            }
+            if(errorStatement == currentStatement && !statement){
+                setCurrentStatement(currentStatement, false, false);
+            }
+        }
+        if(statement){
+            if(auto item = findStatementItem(statement)){
+                QBrush brush(Qt::red);
+                for(int i=0; i < NumColumns; ++i){
+                    item->setForeground(i, brush);
+                }
+            }
+        }
     }
 }
 
@@ -967,46 +1012,91 @@ MprStatement* MprProgramViewBase::Impl::findStatementAtHierachicalPositionIter
 }
 
 
+bool MprProgramViewBase::Impl::findControllerItemAndLogItem
+(MprControllerItemBase*& controllerItem, ReferencedObjectSeqItem*& logItem)
+{
+    if(programItem){
+        controllerItem = programItem->findOwnerItem<MprControllerItemBase>();
+        if(controllerItem){
+            logItem = controllerItem->findItem<ReferencedObjectSeqItem>();
+            if(logItem){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+shared_ptr<ReferencedObjectSeq> MprProgramViewBase::Impl::findLogSeq()
+{
+    MprControllerItemBase* controllerItem;
+    ReferencedObjectSeqItem* logItem;
+    if(findControllerItemAndLogItem(controllerItem, logItem)){
+        return logItem->seq();
+    }
+    return nullptr;
+}
+    
+
 bool MprProgramViewBase::Impl::onTimeChanged(double time)
 {
     //! \todo Store the controllerItem and logItem in advance to avoid searching them every time
     bool hit = false;
-    if(programItem){
-        if(auto controllerItem = programItem->findOwnerItem<MprControllerItemBase>()){
-            if(auto logItem = controllerItem->findItem<ReferencedObjectSeqItem>()){
-                auto seq = logItem->seq();
-                if(!seq->empty()){
-                    auto data = seq->at(seq->lastFrameOfTime(time)).get();
-                    if(auto logData = dynamic_cast<MprControllerLog*>(data)){
-                        auto& programName = logData->topLevelProgramName;
-                        if(programName != logTopLevelProgramName){
-                            MprProgramItemBase* logProgramItem = nullptr;
-                            auto programItems = controllerItem->descendantItems<MprProgramItemBase>();
-                            for(auto& programItem : programItems){
-                                if(!logProgramItem && programItem->name() == *programName){
-                                    logProgramItem = programItem;
-                                    programItem->setSelected(true);
-                                } else {
-                                    programItem->setSelected(false);
-                                }
-                            }
-                            if(logProgramItem){
-                                setProgramItem(logProgramItem);
-                                logTopLevelProgramName = programName;
-                            }
-                        }
-                        if(auto statement = findStatementAtHierachicalPosition(logData->hierachicalPosition)){
-                            setCurrentStatement(statement, true, false);
-                            if(time < seq->timeLength()){
-                                hit = true;
-                            }
-                        }
+
+    MprControllerItemBase* controllerItem;
+    ReferencedObjectSeqItem* logItem;
+
+    if(findControllerItemAndLogItem(controllerItem, logItem)){
+        auto seq = logItem->seq();
+        if(!seq->empty() && seq != invalidLogSeq.lock()){
+            auto data = seq->at(seq->lastFrameOfTime(time)).get();
+            if(auto log = dynamic_cast<MprControllerLog*>(data)){
+                if(seekToLogPosition(controllerItem, log)){
+                    if(time < seq->timeLength()){
+                        hit = true;
                     }
                 }
             }
         }
     }
     return hit;
+}
+
+
+bool MprProgramViewBase::Impl::seekToLogPosition
+(MprControllerItemBase* controllerItem, MprControllerLog* log)
+{
+    bool result = false;
+    
+    auto pProgramName = log->sharedTopLevelProgramName();
+    if(pProgramName != logTopLevelProgramName){
+        MprProgramItemBase* logProgramItem = nullptr;
+        auto programItems = controllerItem->descendantItems<MprProgramItemBase>();
+        for(auto& programItem : programItems){
+            if(!logProgramItem && programItem->name() == *pProgramName){
+                logProgramItem = programItem;
+                programItem->setSelected(true);
+            } else {
+                programItem->setSelected(false);
+            }
+        }
+        if(logProgramItem){
+            setProgramItem(logProgramItem);
+            logTopLevelProgramName = pProgramName;
+        }
+    }
+    if(auto statement = findStatementAtHierachicalPosition(log->hierachicalPosition())){
+        if(log->isErrorState()){
+            setErrorStatement(statement);
+        } else {
+            setErrorStatement(nullptr);
+        }
+        setCurrentStatement(statement, true, false);
+        result = true;
+    }
+
+    return result;
 }
 
 
@@ -1112,6 +1202,7 @@ void MprProgramViewBase::Impl::onStatementInserted(MprProgram::iterator iter)
                 addProgramStatementsToTree(lowerLevelProgram, statementItem);
             }
         }
+        invalidLogSeq = findLogSeq();
     }
 }
 
@@ -1138,6 +1229,8 @@ void MprProgramViewBase::Impl::onStatementRemoved
             // Keep at least one dummy statement item in a sub program
             parentItem->addChild(new StatementItem(dummyStatement, this));
         }
+
+        invalidLogSeq = findLogSeq();
     }
 }
 
@@ -1146,6 +1239,10 @@ void MprProgramViewBase::Impl::onStatementUpdated(MprStatement* statement)
 {
     auto iter = statementItemMap.find(statement);
     if(iter != statementItemMap.end()){
+        if(statement == weak_errorStatement.lock()){
+            setErrorStatement(nullptr);
+        }
+        invalidLogSeq = findLogSeq();
         auto statementItem = iter->second;
         Q_EMIT dataChanged(indexFromItem(statementItem), indexFromItem(statementItem, NumColumns - 1));
     }

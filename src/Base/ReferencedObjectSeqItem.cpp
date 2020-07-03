@@ -64,3 +64,9 @@ Item* ReferencedObjectSeqItem::doDuplicate() const
 {
     return new ReferencedObjectSeqItem(*this);
 }
+
+
+void ReferencedObjectSeqItem::resetSeq()
+{
+    seq_ = std::make_shared<ReferencedObjectSeq>();
+}

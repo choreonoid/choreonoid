@@ -599,6 +599,7 @@ LinkKinematicsKit* MprControllerItemBase::linkKinematicsKitForControl()
 
 bool MprControllerItemBase::start()
 {
+    impl->currentLog->isErrorState_ = false;
     return onStart();
 }
 
@@ -685,6 +686,9 @@ bool MprControllerItemBase::Impl::control()
             auto& interpret = p->second;
             if(!interpret(statement)){
                 isControlActive = false;
+                if(isLogEnabled){
+                    currentLog->isErrorState_ = true;
+                }
                 io->os() << format(_("Failed to execute {0} statement. The control was terminated."),
                                    statement->label(0)) << endl;
                 break;
@@ -707,19 +711,19 @@ void MprControllerItemBase::Impl::setCurrentProgramPositionToLog(MprControllerLo
     auto topLevelProgram = currentProgram->topLevelProgram();
     auto it = topLevelProgramToSharedNameMap.find(topLevelProgram);
     if(it != topLevelProgramToSharedNameMap.end()){
-        log->topLevelProgramName = it->second;
+        log->topLevelProgramName_ = it->second;
     } else {
-        log->topLevelProgramName = make_shared<string>(topLevelProgram->name());
-        topLevelProgramToSharedNameMap[topLevelProgram] = log->topLevelProgramName;
+        log->topLevelProgramName_ = make_shared<string>(topLevelProgram->name());
+        topLevelProgramToSharedNameMap[topLevelProgram] = log->topLevelProgramName_;
     }
         
     if(currentProgram->isTopLevelProgram()){
-        log->hierachicalPosition.clear();
+        log->hierachicalPosition_.clear();
     } else if(!programStack.empty()){
-        log->hierachicalPosition = programStack.back().hierachicalPosition;
+        log->hierachicalPosition_ = programStack.back().hierachicalPosition;
     }
     int statementIndex = iterator - currentProgram->begin();
-    log->hierachicalPosition.push_back(statementIndex);
+    log->hierachicalPosition_.push_back(statementIndex);
 }
 
 
@@ -1262,4 +1266,10 @@ bool MprControllerItemBase::restore(const Archive& archive)
         archive.read("speedRatio", impl->speedRatio); // old
     }
     return true;
+}
+
+
+MprControllerLog::MprControllerLog()
+{
+    isErrorState_ = false;
 }

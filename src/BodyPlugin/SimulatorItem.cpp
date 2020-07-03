@@ -556,7 +556,9 @@ bool ControllerInfo::enableLog()
 
     string logName = simImpl->self->name() + "-" + controller->name();
     logItem = controller->findChildItem<ReferencedObjectSeqItem>(logName);
-    if(!logItem){
+    if(logItem){
+        logItem->resetSeq();
+    } else {
         logItem = new ReferencedObjectSeqItem;
         logItem->setTemporal();
         logItem->setName(logName);
