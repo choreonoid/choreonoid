@@ -6,6 +6,7 @@
 #include "MultiValueSeqItem.h"
 #include "MultiSeqItemCreationPanel.h"
 #include "ItemManager.h"
+#include <ostream>
 #include "gettext.h"
 
 using namespace cnoid;
