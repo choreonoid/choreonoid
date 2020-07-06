@@ -5,6 +5,7 @@
 
 #include "ExecutablePath.h"
 #include "FileUtil.h"
+#include "UTF8.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -30,11 +31,11 @@
 using namespace std;
 
 namespace {
-string executablePath_;
-string executableDirectory_;
-string executableTopDirectory_;
-string pluginDirectory_;
-string shareDirectory_;
+string executableFile_;
+string executableDir_;
+string executableTopDir_;
+string pluginDir_;
+string shareDir_;
 string executableBasename_;
 }
 
@@ -43,12 +44,12 @@ namespace cnoid {
 
 namespace filesystem = stdx::filesystem;
 
-void findExecutablePath()
+void detectExecutableFile()
 {
 #ifdef __linux__
 
     Dl_info dlInfo;
-    if(dladdr((void*)(&findExecutablePath), &dlInfo) == 0){
+    if(dladdr((void*)(&detectExecutableFile), &dlInfo) == 0){
         throw std::runtime_error("The execution of the dladdr function to get the executable path failed.");
     }
     filesystem::path path(dlInfo.dli_fname);
@@ -60,69 +61,59 @@ void findExecutablePath()
             char buf[BUFSIZE];
             int n = readlink("/proc/self/exe", buf, BUFSIZE - 1);
             buf[n] = 0;
-            executablePath_ = buf;
+            executableFile_ = buf;
         }
     }
 
 #elif defined(_WIN32)
 
-    static const int BUFSIZE = 1024;
-    TCHAR execFilePath[BUFSIZE];
-    if(GetModuleFileName(NULL, execFilePath, BUFSIZE)){
-
-#ifndef UNICODE
-        executablePath_ = execFilePath;
-#else
-        int codepage = _getmbcp();
-        const int newSize = WideCharToMultiByte(codepage, 0, execFilePath, -1, NULL, 0, NULL, NULL);
-        if(newSize > 0){
-            vector<filesystem::path::String> execFilePathMB(newSize + 1);
-            newSize = WideCharToMultiByte(codepage, 0, execFilePath, -1, &execFilePathMB[0], newSize + 1, NULL, NULL);
-            executablePath_ = execFilePathUtf8;
-            ;
-        }
-#endif // UNICODE
-        
+    constexpr int BufSize = MAX_PATH + 64;
+    char execFilePath[BufSize] = "";
+    if(GetModuleFileName(NULL, execFilePath, BufSize)){
+        executableFile_ = execFilePath;
     }
-    filesystem::path path(executablePath_);
+    filesystem::path path(executableFile_);
     
 #elif defined(MACOSX)
     
     char buf[1024];
     uint32_t n = sizeof(buf);
     if(_NSGetExecutablePath(buf, &n) == 0){
-        executablePath_ = buf;
+        executableFile_ = buf;
     }
         
     filesystem::path path;
     // remove dot from a path like bin/./choreonoid
-    makePathCompact(filesystem::path(executablePath_), path);
-    //filesystem::path path = filesystem::canonical(filesystem::path(executablePath_));
+    makePathCompact(filesystem::path(executableFile_), path);
+    //filesystem::path path = filesystem::canonical(filesystem::path(executableFile_));
+    
 #endif
 
     if(path.empty()){
         throw std::runtime_error("The executable path cannot be detected.");
     }
 
-    executableDirectory_ = path.parent_path().string();
+    executableFile_ = toUTF8(executableFile_);
+
+    executableDir_ = toUTF8(path.parent_path().string());
     
     filesystem::path topPath = path.parent_path().parent_path();
-    executableTopDirectory_ = topPath.string();
+    executableTopDir_ = toUTF8(topPath.string());
 
     filesystem::path pluginPath = topPath / CNOID_PLUGIN_SUBDIR;
-    pluginDirectory_ = pluginPath.string();
+    pluginDir_ = toUTF8(pluginPath.make_preferred().string());
         
     filesystem::path sharePath = topPath / CNOID_SHARE_SUBDIR;
     if(filesystem::is_directory(sharePath)){
-        shareDirectory_ = getNativePathString(sharePath);
+        shareDir_ = toUTF8(sharePath.make_preferred().string());
 
     } else if(filesystem::is_directory(sharePath.parent_path())){
-        shareDirectory_ = getNativePathString(sharePath.parent_path());
+        shareDir_ = toUTF8(sharePath.parent_path().make_preferred().string());
 
     } else if(topPath.has_parent_path()){ // case of a sub build directory
         sharePath = topPath.parent_path() / "share";
         if(filesystem::is_directory(sharePath)){
-            shareDirectory_ = getNativePathString(sharePath);
+            shareDir_ = toUTF8(sharePath.make_preferred().string());
         }
     }
 
@@ -137,52 +128,69 @@ void findExecutablePath()
 #endif
 }
 
-const std::string& executablePath()
+const std::string& executableFile()
 {
-    if(executablePath_.empty()){
-        findExecutablePath();
+    if(executableFile_.empty()){
+        detectExecutableFile();
     }
-    return executablePath_;
+    return executableFile_;
 }
 
-const std::string& executableDirectory()
-{
-    if(executablePath_.empty()){
-        findExecutablePath();
-    }
-    return executableDirectory_;
-}
-
-const std::string& executableTopDirectory()
-{
-    if(executablePath_.empty()){
-        findExecutablePath();
-    }
-    return executableTopDirectory_;
-}
-
-const std::string& pluginDirectory()
-{
-    if(executablePath_.empty()){
-        findExecutablePath();
-    }
-    return pluginDirectory_;
-}
-
-const std::string& shareDirectory()
-{
-    if(executablePath_.empty()){
-        findExecutablePath();
-    }
-    return shareDirectory_;
-}
 
 const std::string& executableBasename()
 {
-    if(executablePath_.empty()){
-        findExecutablePath();
+    if(executableFile_.empty()){
+        detectExecutableFile();
     }
     return executableBasename_;
+}
+
+
+const std::string& executableDir()
+{
+    if(executableFile_.empty()){
+        detectExecutableFile();
+    }
+    return executableDir_;
+}
+
+const std::string& executableTopDir()
+{
+    if(executableFile_.empty()){
+        detectExecutableFile();
+    }
+    return executableTopDir_;
+}
+
+stdx::filesystem::path executableTopDirPath()
+{
+    return fromUTF8(executableTopDir());
+}
+
+const std::string& pluginDir()
+{
+    if(executableFile_.empty()){
+        detectExecutableFile();
+    }
+    return pluginDir_;
+}
+
+stdx::filesystem::path pluginDirPath()
+{
+    return fromUTF8(pluginDir());
+}
+
+const std::string& shareDir()
+{
+    if(executableFile_.empty()){
+        detectExecutableFile();
+    }
+    return shareDir_;
+}
+
+stdx::filesystem::path shareDirPath()
+{
+    return fromUTF8(shareDir());
 }
 
 }
