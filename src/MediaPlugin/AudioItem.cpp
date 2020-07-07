@@ -8,6 +8,7 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <fmt/format.h>
+#include <ostream>
 
 #ifdef CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE
 #include <sndfile.h>
