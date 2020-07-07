@@ -43,7 +43,7 @@ void exportPySeqTypes(py::module& m)
         .def("setTimeLength",[](AbstractSeq& self, double length, bool clearNewElements){ self.setTimeLength(length, clearNewElements); })
         .def_property("seqContentName", &AbstractSeq::seqContentName, &AbstractSeq::setSeqContentName)
         .def("setSeqContentName", &AbstractSeq::setSeqContentName)
-        .def("readSeq", &AbstractSeq::readSeq)
+        .def("readSeq", [](AbstractSeq& self, const Mapping* archive){ return self.readSeq(archive); })
         .def("writeSeq", &AbstractSeq::writeSeq)
         .def_property_readonly("seqMessage", &AbstractSeq::seqMessage)
         .def_property_readonly("defaultFrameRate", &AbstractSeq::defaultFrameRate)
@@ -98,9 +98,13 @@ void exportPySeqTypes(py::module& m)
         .def("getClampFrameIndex", &MultiValueSeq::clampFrameIndex)
         .def("frame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
         .def("part", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
-        .def("loadPlainFormat", &MultiValueSeq::loadPlainFormat)
-        .def("saveAsPlainFormat", &MultiValueSeq::saveAsPlainFormat)
-
+        .def("loadPlainFormat",
+             [](MultiValueSeq& self, const std::string& filename){
+                 return self.loadPlainFormat(filename); })
+        .def("saveAsPlainFormat",
+             [](MultiValueSeq& self, const std::string& filename){
+                 return self.saveAsPlainFormat(filename); })
+        
         // deprecated
         .def("isEmpty", &MultiValueSeq::empty)
         .def("getFrame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
