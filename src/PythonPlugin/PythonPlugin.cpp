@@ -14,6 +14,7 @@ nnn*/
 #include <cnoid/RootItem>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/Archive>
@@ -198,7 +199,7 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("python")){
         for(auto& script : v["python"].as<vector<string>>()){
-            executeScriptFileOnStartup(script);
+            executeScriptFileOnStartup(toUTF8(script));
         }
     } else if(v.count("python-item")){
         for(auto& script : v["python-item"].as<vector<string>>()){
@@ -231,7 +232,7 @@ bool PythonPlugin::initializeInterpreter()
     interpreter.reset(new pybind11::scoped_interpreter(false));
 
     /*
-      Some python module requires argv and missing argv may cause AttributeError.a
+      Some python modules require argv and missing argv may cause AttributeError.a
       (Ex. AttributeError: 'module' object has no attribute 'argv')
       To avoid this problem, set dummy argv to python interpreter by PySys_SetArgvEx.
     */
@@ -260,7 +261,7 @@ bool PythonPlugin::initializeInterpreter()
     */	
 #ifdef _WIN32
     python::module env = python::module::import("os").attr("environ");
-    env["PATH"] = python::str(executableDirectory() + ";" + std::string(python::str(env["PATH"])));
+    env["PATH"] = python::str(executableDir() + ";" + std::string(python::str(env["PATH"])));
 #endif
 
     sysModule = python::module::import("sys");
@@ -268,9 +269,8 @@ bool PythonPlugin::initializeInterpreter()
     sysModule.attr("dont_write_bytecode") = true;
     
     // set the choreonoid default python script path
-    filesystem::path scriptPath = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "python";
-
-    sysModule.attr("path").attr("insert")(0, getNativePathString(scriptPath));
+    filesystem::path scriptPath = pluginDirPath() / "python";
+    sysModule.attr("path").attr("insert")(0, toUTF8(scriptPath.make_preferred().string()));
 
     // Redirect the stdout and stderr to the message view
     python::object messageViewOutClass =
@@ -374,7 +374,8 @@ void PythonPlugin::restoreProperties(const Archive& archive)
                     }
                 }
                 if(!isExisting){
-                    sysModule.attr("path").attr("insert")(0, getNativePathString(filesystem::path(newPath)));
+                    filesystem::path nativePath(fromUTF8(newPath));
+                    sysModule.attr("path").attr("insert")(0, nativePath.make_preferred().string());
                     additionalSearchPathList.push_back(newPath);
                     mv->putln(
                         format(_("PythonPlugin: \"{}\" has been added to the Python module search path list."),

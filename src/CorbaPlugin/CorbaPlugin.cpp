@@ -65,7 +65,7 @@ void checkOrInvokeCorbaNameServer()
         } else {
             mv->putln(_("No external CORBA name server was detected."));
 
-            filesystem::path serverExecPath = filesystem::path(executableTopDirectory()) / "bin" / nameServerCommand;
+            auto serverExecPath = executableTopDirPath() / "bin" / nameServerCommand;
 
             if(!filesystem::exists(serverExecPath)){
                 mv->putln(format(_("Namer server {} is not found."), nameServerCommand));

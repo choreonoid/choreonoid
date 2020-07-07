@@ -9,6 +9,7 @@
 #include "YAMLWriter.h"
 #include "EigenUtil.h"
 #include "GeneralSeqReader.h"
+#include "UTF8.h"
 #include <fmt/format.h>
 #include <fstream>
 #include "gettext.h"
@@ -267,7 +268,7 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename, st
 
     if(nFrames > 0 && numParts() > 0){
 
-        ofstream file(filename.c_str());
+        ofstream file(fromUTF8(filename).c_str());
         if(!file){
             os << format(_("\"{}\" cannot be opened."), filename) << endl;
             return false;
@@ -309,7 +310,7 @@ bool MultiSE3Seq::saveTopPartAsPosAndRPYFormat(const std::string& filename, std:
 
     if(nFrames > 0 && numParts() > 0){
 
-        ofstream file(filename.c_str());
+        ofstream file(fromUTF8(filename).c_str());
         if(!file){
             os << format(_("{0} cannot be opened."), filename) << endl;
             return false;

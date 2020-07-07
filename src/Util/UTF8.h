@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_UTF8_H_INCLUDED
-#define CNOID_UTIL_UTF8_H_INCLUDED
+#ifndef CNOID_UTIL_UTF8_H
+#define CNOID_UTIL_UTF8_H
 
 #include <string>
 #include "exportdecl.h"
@@ -20,8 +20,6 @@ inline const std::string& toUTF8(const std::string& text) { return text; }
 inline const std::string& fromUTF8(const std::string& text) { return text; }
 inline const std::string toUTF8(const char* text) { return text; }
 inline const std::string fromUTF8(const char* text) { return text; }
-//inline std::string toUTF8(const std::string& text) { return text; }
-//inline std::string fromUTF8(const std::string& text) { return text; }
 #endif
 }
 

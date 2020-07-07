@@ -10,6 +10,7 @@
 #include "PutPropertyFunction.h"
 #include "Archive.h"
 #include <cnoid/ExecutablePath>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fstream>
 #include <regex>
@@ -139,7 +140,7 @@ void MessageLogItemImpl::openFile()
     if(fileMode.selectedIndex()==MessageLogItem::APPEND){
         ofs.open(filename, ios::app);
     }else{
-        stdx::filesystem::path path(filename);
+        stdx::filesystem::path path(fromUTF8(filename));
         if(stdx::filesystem::exists(path)){
             bool ok = showConfirmDialog(
                 _("Confirm"),
@@ -149,7 +150,7 @@ void MessageLogItemImpl::openFile()
                 return;
             }
         }
-        ofs.open(filename, ios::out);
+        ofs.open(path.string(), ios::out);
     }
 
     if(!ofs){
@@ -201,7 +202,7 @@ void MessageLogItemImpl::setFileName(const string& filename_)
         return;
 
     filename = filename_;
-    stdx::filesystem::path path(filename);
+    stdx::filesystem::path path(fromUTF8(filename));
     string ext = path.extension().string();
     if(ext != ".log"){
         filename += ".log";

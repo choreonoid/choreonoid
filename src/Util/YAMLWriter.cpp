@@ -4,6 +4,7 @@
 
 #include "YAMLWriter.h"
 #include "NullOut.h"
+#include "UTF8.h"
 #include <iostream>
 #include <algorithm>
 #include <stack>
@@ -94,7 +95,7 @@ YAMLWriter::YAMLWriter(const std::string filename)
 YAMLWriterImpl::YAMLWriterImpl(const std::string filename)
     : YAMLWriterImpl(ofs)
 {
-    ofs.open(filename.c_str());
+    ofs.open(fromUTF8(filename).c_str());
 }
 
 
@@ -149,7 +150,7 @@ void YAMLWriter::flush()
 
 bool YAMLWriter::openFile(const std::string& filename)
 {
-    impl->ofs.open(filename.c_str());
+    impl->ofs.open(fromUTF8(filename).c_str());
     if(impl->ofs.is_open()){
         setOutput(impl->ofs);
         return true;

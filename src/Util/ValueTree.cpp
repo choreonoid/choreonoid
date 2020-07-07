@@ -3,6 +3,7 @@
 */
 
 #include "ValueTree.h"
+#include "UTF8.h"
 #include <stack>
 #include <iostream>
 #include <yaml.h>
@@ -863,7 +864,8 @@ void Mapping::write(const std::string &key, double value)
 
 void Mapping::writePath(const std::string &key, const std::string& value)
 {
-    write(key, stdx::filesystem::path(value).string(), DOUBLE_QUOTED);
+    auto path = toUTF8(stdx::filesystem::path(fromUTF8(value)).generic_string());
+    write(key, path, DOUBLE_QUOTED);
 }
 
 

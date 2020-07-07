@@ -22,6 +22,7 @@
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
+#include <cnoid/UTF8>
 #include <cnoid/Sleep>
 #include <QCoreApplication>
 #include <QResource>
@@ -220,23 +221,24 @@ void ProjectManager::setCurrentProjectName(const std::string& name)
     mainWindow->setProjectTitle(name);
 
     if(!impl->currentProjectFile.empty()){
-        auto path = filesystem::path(impl->currentProjectFile);
-        impl->currentProjectFile = (path.parent_path() / (name + ".cnoid")).string();
+        auto path = filesystem::path(fromUTF8(impl->currentProjectFile));
+        impl->currentProjectFile = toUTF8((path.parent_path() / (name + ".cnoid")).string());
     }
 }
         
 
 void ProjectManager::Impl::setCurrentProjectFile(const string& filename)
 {
-    auto name = getBasename(filename);
+    filesystem::path path(fromUTF8(filename));
+    auto name = toUTF8(path.stem().string());
     currentProjectName = name;
     mainWindow->setProjectTitle(name);
 
     // filesystem::canonical can only be used with C++17
-    auto path = getCompactPath(filesystem::absolute(filename));
+    path = getCompactPath(filesystem::absolute(path));
 
-    currentProjectFile = path.string();
-    currentProjectDirectory = path.parent_path().string();
+    currentProjectFile = toUTF8(path.string());
+    currentProjectDirectory = toUTF8(path.parent_path().string());
 }
 
 
@@ -745,7 +747,7 @@ void ProjectManager::Impl::openDialogToLoadProject()
     if(dialog.exec()){
         clearProject();
         mv->flush();
-        string filename = getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString()));
+        string filename = dialog.selectedFiles().front().toStdString();
         loadProject(filename, nullptr, false, false);
     }
 }

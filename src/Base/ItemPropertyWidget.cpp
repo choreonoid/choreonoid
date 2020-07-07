@@ -9,6 +9,7 @@
 #include "FileDialog.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExecutablePath>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/variant>
 #include <cnoid/stdx/filesystem>
 #include <QTableWidget>
@@ -256,7 +257,8 @@ QVariant PropertyItem::data(int role) const
                 const FilePathProperty& f = stdx::get<FilePathProperty>(value);
                 string filename = f.filename();
                 if(!f.isFullpathDisplayMode()){
-                    filename = filesystem::path(filename).filename().string();
+                    filename = toUTF8(
+                        filesystem::path(fromUTF8(filename)).filename().string());
                 }
                 return filename.c_str();
             }
@@ -266,7 +268,8 @@ QVariant PropertyItem::data(int role) const
             const FilePathProperty& f = stdx::get<FilePathProperty>(value);
             if(!f.isFullpathDisplayMode()){
                 string fullpath = f.filename();
-                string filename = filesystem::path(fullpath).filename().string();
+                string filename = toUTF8(
+                    filesystem::path(fromUTF8(fullpath)).filename().string());
                 if(filename != fullpath){
                     return fullpath.c_str();
                 }
@@ -364,7 +367,9 @@ QString FilePathEditor::value() const
     if(currentValue.baseDirectory().empty()){
         return lineEdit->text();
     } else {
-        return (filesystem::path(currentValue.baseDirectory()) / lineEdit->text().toStdString()).string().c_str();
+        return toUTF8(
+            (filesystem::path(fromUTF8(currentValue.baseDirectory()))
+            / fromUTF8(lineEdit->text().toStdString())).string()).c_str();
     }
 }
 
@@ -557,15 +562,15 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
 
     filesystem::path directory;
     if(!value.baseDirectory().empty()){
-        directory = value.baseDirectory();
+        directory = fromUTF8(value.baseDirectory());
     } else {
-        filesystem::path filenamePath(value.filename());
+        filesystem::path filenamePath(fromUTF8(value.filename()));
         if(filenamePath.is_absolute()){
             directory = filenamePath.parent_path();
         }
     }
     if(!directory.empty()){
-        dialog.setDirectory(directory.string());
+        dialog.setDirectory(toUTF8(directory.string()));
     }
         
     QStringList filters;
@@ -578,13 +583,14 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
     if(dialog.exec()){
         QStringList filenames;
         filenames = dialog.selectedFiles();
-        filesystem::path newDirectory(dialog.directory().absolutePath().toStdString());
+        filesystem::path newDirectory(
+            fromUTF8(dialog.directory().absolutePath().toStdString()));
         if(newDirectory != directory){
             value.setBaseDirectory("");
         }
         string filename(filenames.at(0).toStdString());
         if(!value.baseDirectory().empty()){
-            filename = filesystem::path(filename).filename().string();
+            filename = toUTF8(filesystem::path(fromUTF8(filename)).filename().string());
         }
         if(value.isExtensionRemovalModeForFileDialogSelection()){
             regex pattern1(".+\\(\\*\\.(.+)\\)");

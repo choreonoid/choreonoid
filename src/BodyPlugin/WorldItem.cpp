@@ -16,6 +16,7 @@
 #include <cnoid/SceneCollision>
 #include <cnoid/MaterialTable>
 #include <cnoid/ExecutablePath>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -131,7 +132,7 @@ WorldItemImpl::WorldItemImpl(WorldItem* self)
 
     init();
 
-    materialTableFile = (filesystem::path(shareDirectory()) / "default" / "materials.yaml").string();
+    materialTableFile = toUTF8((shareDirPath() / "default" / "materials.yaml").string());
 }
 
 
@@ -455,16 +456,17 @@ MaterialTable* WorldItemImpl::getOrLoadMaterialTable(bool checkFileUpdate)
     if(!materialTable){
         materialTable = new MaterialTable;
         if(materialTable->load(materialTableFile, os)){
-            materialTableTimestamp = filesystem::last_write_time_to_time_t(materialTableFile);
+            materialTableTimestamp =
+                filesystem::last_write_time_to_time_t(fromUTF8(materialTableFile));
         } else {
             failedToLoad = true;
         }
 
     } else if(checkFileUpdate){
         if(!materialTableFile.empty()){
-            filesystem::path fpath(materialTableFile);
+            filesystem::path fpath(fromUTF8(materialTableFile));
             if(filesystem::exists(fpath)){
-                auto newTimestamp = filesystem::last_write_time_to_time_t(materialTableFile);
+                auto newTimestamp = filesystem::last_write_time_to_time_t(fpath);
                 if(newTimestamp > materialTableTimestamp){
                     MaterialTablePtr newMaterialTable = new MaterialTable;
                     if(newMaterialTable->load(materialTableFile, os)){

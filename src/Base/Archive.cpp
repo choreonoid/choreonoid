@@ -6,6 +6,7 @@
 #include "Item.h"
 #include "MessageView.h"
 #include <cnoid/FilePathVariableProcessor>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <map>
 #include "gettext.h"
@@ -90,7 +91,8 @@ void Archive::initSharedInfo(const std::string& projectFile)
 {
     initSharedInfo();
 
-    auto projectDir = filesystem::absolute(projectFile).parent_path().generic_string();
+    auto projectDir = toUTF8(
+        filesystem::absolute(fromUTF8(projectFile)).parent_path().generic_string());
     shared->pathVariableProcessor->setBaseDirectory(projectDir);
     shared->pathVariableProcessor->setProjectDirectory(projectDir);
 }

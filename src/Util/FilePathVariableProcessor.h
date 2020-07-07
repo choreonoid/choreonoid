@@ -7,6 +7,7 @@
 #define CNOID_UTIL_FILE_PATH_VARIABLE_PROCESSOR_H
 
 #include "Referenced.h"
+#include <cnoid/stdx/filesystem>
 #include <string>
 #include "exportdecl.h"
 
@@ -27,6 +28,7 @@ public:
     void setBaseDirectory(const std::string& directory);
     void clearBaseDirectory();
     std::string baseDirectory() const;
+    stdx::filesystem::path baseDirPath() const;
     void setProjectDirectory(const std::string& directory);
     void clearProjectDirectory();
     const std::string& projectDirectory() const;

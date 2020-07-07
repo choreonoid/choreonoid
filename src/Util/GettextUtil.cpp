@@ -29,13 +29,13 @@ const char* getText(const char* domainname, const char* msgid)
 void bindGettextDomain(const char* domainname)
 {
 #ifdef CNOID_ENABLE_GETTEXT
-    filesystem::path localePath = filesystem::path(executableTopDirectory()) / "share" / "locale";
+    filesystem::path localePath = executableTopDirPath() / "share" / "locale";
     if(filesystem::is_directory(localePath)){
-        bindtextdomain(domainname, getPathString(localePath).c_str());
+        bindtextdomain(domainname, localePath.string().c_str());
     } else {
-        localePath = filesystem::path(shareDirectory()) / "locale";
+        localePath = shareDirPath() / "locale";
         if(filesystem::is_directory(localePath)){
-            bindtextdomain(domainname, getPathString(localePath).c_str());
+            bindtextdomain(domainname, localePath.string().c_str());
         }
     }
 #endif

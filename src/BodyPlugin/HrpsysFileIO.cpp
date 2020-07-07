@@ -12,6 +12,7 @@
 #include <cnoid/ZMPSeq>
 #include <cnoid/Config>
 #include <cnoid/Tokenizer>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <QMessageBox>
 #include <fmt/format.h>
@@ -90,14 +91,14 @@ public:
         boost::iostreams::filtering_istream is;
 
 #ifndef _WINDOWS
-        string ext = filesystem::path(filename).extension().string();
+        string ext = filesystem::path(fromUTF8(filename)).extension().string();
         if(ext == ".gz"){
             is.push(boost::iostreams::gzip_decompressor());
         } else if(ext == ".bz2"){
             is.push(boost::iostreams::bzip2_decompressor());
         }
 #endif
-        ifstream ifs(filename.c_str());
+        ifstream ifs(fromUTF8(filename).c_str());
         if(!ifs){
             os << format(_("\"{}\" cannot be opened."), filename) << endl;
             return false;

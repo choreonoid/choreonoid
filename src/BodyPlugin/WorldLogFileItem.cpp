@@ -9,6 +9,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/TimeSyncItemEngine>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <QDateTime>
@@ -545,14 +546,14 @@ bool WorldLogFileItemImpl::setLogFile(const std::string& filename, bool isLoadin
 string WorldLogFileItemImpl::getActualFilename()
 {
     if(isTimeStampSuffixEnabled && recordingStartTime.isValid()){
-        stdx::filesystem::path filepath(self->filePath());
+        stdx::filesystem::path filepath(fromUTF8(self->filePath()));
         string suffix = recordingStartTime.toString("-yyyy-MM-dd-hh-mm-ss").toStdString();
-        string fname = getBasename(filepath) + suffix;
+        string fname = filepath.stem().string() + suffix;
         string ext = getExtension(filepath);
         if(!ext.empty()){
             fname = fname + "." + ext;
         }
-        return getPathString(filepath.parent_path() / stdx::filesystem::path(fname));
+        return toUTF8((filepath.parent_path() / fname).string());
     } else {
         return self->filePath();
     }
@@ -625,7 +626,7 @@ bool WorldLogFileItemImpl::readTopHeader()
     if(ifs.is_open()){
         ifs.close();
     }
-    string fname = getActualFilename();
+    string fname = fromUTF8(getActualFilename());
     if(stdx::filesystem::exists(fname)){
         ifs.open(fname.c_str(), ios::in | ios::binary);
         if(ifs.is_open()){
@@ -951,7 +952,7 @@ void WorldLogFileItemImpl::clearOutput()
     }
     recordingStartTime = QDateTime::currentDateTime();
     
-    ofs.open(getActualFilename().c_str(), ios::out | ios::binary | ios::trunc);
+    ofs.open(fromUTF8(getActualFilename()).c_str(), ios::out | ios::binary | ios::trunc);
     writeBuf.clear();
     lastOutputFramePos = 0;
 

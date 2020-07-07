@@ -48,6 +48,7 @@
 #include "CollisionSeqItem.h"
 #include <cnoid/BodyCustomizerInterface>
 #include <cnoid/ExecutablePath>
+#include <cnoid/UTF8>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
@@ -75,8 +76,8 @@ public:
         setCnoidBodyTextDomainCodeset();
 #endif
 
-        Body::addCustomizerDirectory(
-            executableTopDirectory() + "/" + CNOID_PLUGIN_SUBDIR + "/customizer");
+        auto customizerPath = pluginDirPath() / "customizer";
+        Body::addCustomizerDirectory(toUTF8(customizerPath.string()));
 
         BodySelectionManager::initializeClass(this);
 

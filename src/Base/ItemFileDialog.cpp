@@ -4,6 +4,7 @@
 #include "RootItem.h"
 #include "MainWindow.h"
 #include "MessageView.h"
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <QMessageBox>
 #include <fmt/format.h>
@@ -246,7 +247,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
     self->updatePresetDirectories();
 
     bool selected = false;
-    auto path = filesystem::path(item->filePath());
+    auto path = filesystem::path(fromUTF8(item->filePath()));
     if(path.stem().string() == item->name()){
         selected = selectFilePath(item->filePath());
     }
@@ -285,11 +286,11 @@ bool ItemFileDialog::Impl::selectFilePath(const std::string& filePath)
 
     if(!filePath.empty()){
         
-        filesystem::path path(filePath);
+        filesystem::path path(fromUTF8(filePath));
         filesystem::path dir(path.parent_path());
 
         if(filesystem::exists(dir)){
-            self->setDirectory(dir.string());
+            self->setDirectory(toUTF8(dir.string()));
             
             bool doTrySelectFile = false;
             auto dotext = path.extension().string();
@@ -309,7 +310,7 @@ bool ItemFileDialog::Impl::selectFilePath(const std::string& filePath)
                 }
             }
             if(doTrySelectFile && filesystem::exists(path)){
-                self->selectFile(path.filename().string());
+                self->selectFile(toUTF8(path.filename().string()));
                 selected = true;
             }
         }
@@ -330,7 +331,8 @@ std::string ItemFileDialog::Impl::getSaveFilename()
         auto exts = targetFileIO->extensions();
         if(!exts.empty()){
             bool hasExtension = false;
-            string dotextension = filesystem::path(filename).extension().string();
+            string dotextension =
+                filesystem::path(fromUTF8(filename)).extension().string();
             if(!dotextension.empty()){
                 string extension = dotextension.substr(1); // remove the first dot
                 if(std::find(exts.begin(), exts.end(), extension) != exts.end()){
@@ -432,9 +434,10 @@ bool ItemFileDialog::Impl::onFileDialogFinished(int result)
     
     if(mode == Save && result == QDialog::Accepted){
         auto filename = getSaveFilename();
-        if(filesystem::exists(filename)){
+        if(filesystem::exists(fromUTF8(filename))){
             self->fileDialog()->show();
-            QString file(filesystem::path(filename).filename().string().c_str());
+            QString file(
+                toUTF8(filesystem::path(fromUTF8(filename)).filename().string()).c_str());
             QString message(QString(_("%1 already exists. Do you want to replace it? ")).arg(file));
             auto button =
                 QMessageBox::warning(self, self->windowTitle(), message, QMessageBox::Ok | QMessageBox::Cancel);

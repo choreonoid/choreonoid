@@ -3,6 +3,7 @@
 */
 
 #include "YAMLReader.h"
+#include "UTF8.h"
 #include <cerrno>
 #include <stack>
 #include <iostream>
@@ -166,7 +167,7 @@ bool YAMLReaderImpl::load(const std::string& filename)
 
     bool result = false;
 
-    FILE* file = fopen(filename.c_str(), "rb");
+    FILE* file = fopen(fromUTF8(filename).c_str(), "rb");
 
     if(file==NULL){
         errorMessage = strerror(errno);

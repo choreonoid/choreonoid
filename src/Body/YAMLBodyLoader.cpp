@@ -18,6 +18,7 @@
 #include <cnoid/YAMLSceneReader>
 #include <cnoid/EigenArchive>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
 #include <cnoid/NullOut>
@@ -59,7 +60,7 @@ public:
 
     string operator()(const string& path, std::ostream& os)
     {
-        filesystem::path filepath(path);
+        filesystem::path filepath(fromUTF8(path));
         auto iter = filepath.begin();
         if(iter == filepath.end()){
             return string();
@@ -89,7 +90,7 @@ public:
         }
 
         if(found){
-            return combined.string();
+            return toUTF8(combined.string());
         } else {
             os << format(_("\"{}\" is not found in the ROS package directories."), path) << endl;
             return string();
@@ -640,7 +641,7 @@ bool YAMLBodyLoader::load(Body* body, const std::string& filename)
 
 bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
-    mainFilePath = filesystem::absolute(filename);
+    mainFilePath = filesystem::absolute(fromUTF8(filename));
     
     bool result = false;
 
@@ -649,7 +650,8 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         if(data){
             if(body->modelName().empty()){
                 // This is the default model name
-                body->setModelName(getBasename(filename));
+                body->setModelName(
+                    toUTF8(filesystem::path(fromUTF8(filename)).stem().string()));
             }
             result = readTopNode(body, data);
         }
@@ -750,7 +752,7 @@ bool YAMLBodyLoaderImpl::loadAnotherFormatBodyFile(Mapping* topNode)
         topNode->throwException(_("Neither format nor modelFile are specified"));
     }
 
-    filesystem::path path(modelFileNode->toString());
+    filesystem::path path(fromUTF8(modelFileNode->toString()));
     if(!path.has_root_path()){
         path = mainFilePath.parent_path() / path;
     }
@@ -770,7 +772,7 @@ bool YAMLBodyLoaderImpl::loadAnotherFormatBodyFile(Mapping* topNode)
     }
     bodyLoader->setDefaultDivisionNumber(dn);
 
-    bool loaded = bodyLoader->load(body, path.string());
+    bool loaded = bodyLoader->load(body, toUTF8(path.string()));
 
     if(loaded){
         auto linkInfo = topNode->findMapping("linkInfo");
@@ -806,7 +808,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         topNode->throwException(_("This version of the Choreonoid body format is not supported"));
     }
 
-    sceneReader.setBaseDirectory(mainFilePath.parent_path().string());
+    sceneReader.setBaseDirectory(toUTF8(mainFilePath.parent_path().string()));
     sceneReader.setDefaultDivisionNumber(defaultDivisionNumber);
     sceneReader.readHeader(*topNode);
 
@@ -1850,16 +1852,16 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
         node->throwException("uri must be specified");
     }
     
-    filesystem::path filepath(uri);
+    filesystem::path filepath(fromUTF8(uri));
     if(filepath.is_relative()){
-        filepath = getCompactPath(filesystem::path(sceneReader.baseDirectory()) / filepath);
+        filepath = getCompactPath(sceneReader.baseDirPath() / filepath);
     }
     if(filesystem::equivalent(mainFilePath, filepath)){
         node->throwException("recursive sub-body is prohibited");
     }
 
     BodyPtr subBody;
-    string filename = filepath.string();
+    string filename = toUTF8(filepath.string());
     auto iter = subBodyMap.find(filename);
     if(iter != subBodyMap.end()){
         subBody = iter->second;

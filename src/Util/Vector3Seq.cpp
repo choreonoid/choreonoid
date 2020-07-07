@@ -8,6 +8,7 @@
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include "GeneralSeqReader.h"
+#include "UTF8.h"
 #include <fmt/format.h>
 #include <fstream>
 #include "gettext.h"
@@ -116,7 +117,7 @@ bool Vector3Seq::loadPlainFormat(const std::string& filename, std::ostream& os)
 bool Vector3Seq::saveAsPlainFormat(const std::string& filename, std::ostream& os)
 {
     clearSeqMessage();
-    ofstream file(filename.c_str());
+    ofstream file(fromUTF8(filename).c_str());
     file.setf(ios::fixed);
 
     if(!file){

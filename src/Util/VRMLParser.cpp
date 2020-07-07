@@ -512,8 +512,9 @@ void VRMLParserImpl::load(const string& filename, bool doClearAncestorPathsList)
     protoMap.clear();
     defNodeMap.clear();
     
-    stdx::filesystem::path path(stdx::filesystem::lexically_normal(filename));
-    string pathString(path.string());
+    stdx::filesystem::path path(
+        stdx::filesystem::lexically_normal(fromUTF8(filename)));
+    string pathString(toUTF8(path.string()));
     if(doClearAncestorPathsList){
         ancestorPathsList.clear();
     }
@@ -838,12 +839,13 @@ string VRMLParserImpl::getRealPath(string url)
     if(!isFileProtocol(url)){
         return url;
     } else {
-        stdx::filesystem::path path(stdx::filesystem::lexically_normal(removeURLScheme(url)));
+        stdx::filesystem::path path(
+            stdx::filesystem::lexically_normal(fromUTF8(removeURLScheme(url))));
         if(!checkAbsolute(path)){
-            stdx::filesystem::path parentPath(scanner->filename);
+            stdx::filesystem::path parentPath(fromUTF8(scanner->filename));
             path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
         }
-        return getAbsolutePathString(path);
+        return toUTF8(stdx::filesystem::absolute(path).string());
     }
 }
 
@@ -2719,14 +2721,14 @@ void VRMLParserImpl::convertUrl(MFString& urls)
         stdx::filesystem::path path;
         string chkFile("");
         if(isFileProtocol(*it)){
-            path = stdx::filesystem::lexically_normal(removeURLScheme(*it));
+            path = stdx::filesystem::lexically_normal(fromUTF8(removeURLScheme(*it)));
 
             // Relative path check & translate to absolute path 
             if(!exists(path)){
-                stdx::filesystem::path parentPath(scanner->filename);
+                stdx::filesystem::path parentPath(fromUTF8(scanner->filename));
                 path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
             }
-            chkFile = getAbsolutePathString(path);
+            chkFile = toUTF8(stdx::filesystem::absolute(path).string());
         } else {
             // Not file protocol implements   
             scanner->throwException("Not file protocol is unsupported");

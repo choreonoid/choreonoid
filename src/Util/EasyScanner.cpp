@@ -4,6 +4,7 @@
 */
 
 #include "EasyScanner.h"
+#include "UTF8.h"
 #include "strtofloat.h"
 #include <cstdio>
 #include <cctype>
@@ -207,7 +208,7 @@ void EasyScanner::loadFile(const string& filename)
     lineNumber = 0;
     this->filename.clear();
     
-    FILE* file = fopen(filename.c_str(), "rb");
+    FILE* file = fopen(fromUTF8(filename).c_str(), "rb");
 
     if(!file){
         string message;

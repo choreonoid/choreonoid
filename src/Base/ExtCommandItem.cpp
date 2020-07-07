@@ -11,6 +11,7 @@
 #include "PutPropertyFunction.h"
 #include "Archive.h"
 #include <cnoid/Sleep>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -107,7 +108,7 @@ bool ExtCommandItem::execute()
         terminate();
         string actualCommand(command_);
 #ifdef _WIN32
-        if(filesystem::path(actualCommand).extension() != ".exe"){
+        if(filesystem::path(fromUTF8(actualCommand)).extension() != ".exe"){
             actualCommand += ".exe";
         }
         // quote the command string to support a path including spaces
@@ -127,7 +128,7 @@ bool ExtCommandItem::execute()
 
         } else {
             mv->put(fmt::format(_("External command \"{}\" cannot be executed."), actualCommand));
-            if(!filesystem::exists(actualCommand)){
+            if(!filesystem::exists(fromUTF8(actualCommand))){
                 mv->putln(_(" The command does not exist."));
             } else {
                 mv->putln("");

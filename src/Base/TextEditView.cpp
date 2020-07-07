@@ -12,6 +12,7 @@
 #include "Buttons.h"
 #include "Timer.h"
 #include <cnoid/ConnectionSet>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <QAction>
 #include <QHBoxLayout>
@@ -254,7 +255,7 @@ void TextEditViewImpl::setCurrentFileName()
         fileNameLabel.setText(fileName);
         textEdit.setReadOnly(false);
         textEdit.document()->setModified(false);
-        filesystem::path fpath(currentTextItem_->textFilename());
+        filesystem::path fpath(fromUTF8(currentTextItem_->textFilename()));
         fileTimeStamp = filesystem::last_write_time_to_time_t(fpath);
         fileSize = filesystem::file_size(fpath);
         if(viewActive){
@@ -269,7 +270,7 @@ void TextEditViewImpl::timeOut()
     if(currentTextItem_){
         std::string filename = currentTextItem_->textFilename();
         if(!filename.empty()){
-            filesystem::path fpath(filename);
+            filesystem::path fpath(fromUTF8(filename));
             if(filesystem::exists(fpath)){
                 if( filesystem::last_write_time_to_time_t(fpath) != fileTimeStamp ||
                     filesystem::file_size(fpath) != fileSize ){

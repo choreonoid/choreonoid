@@ -3,6 +3,7 @@
 #include "Body.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <fmt/format.h>
 #include <unordered_map>
 #include <iostream>
@@ -63,7 +64,7 @@ BodyHandlerManager::BodyHandlerManager()
 
 BodyHandlerManagerImpl::BodyHandlerManagerImpl()
 {
-    handlerPaths.push_back(filesystem::path(pluginDirectory()) / "bodyhandler");
+    handlerPaths.push_back(pluginDirPath() / "bodyhandler");
     os = &cout;
 }
 
@@ -84,8 +85,8 @@ bool BodyHandlerManagerImpl::loadBodyHandler(Body* body, const string& filename)
 {
     bool loaded = false;
 
-    filesystem::path path(filename);
-    string handlerName = path.stem().string();
+    filesystem::path path(fromUTF8(filename));
+    string handlerName = toUTF8(path.stem().string());
     
     CreateCnoidBodyHandlerFunc createHandler = nullptr;
     auto iter = handlerFactories.find(filename);
@@ -93,6 +94,7 @@ bool BodyHandlerManagerImpl::loadBodyHandler(Body* body, const string& filename)
         createHandler = iter->second;
     } else {
         createHandler = loadHandlerFactory(path, handlerName);
+        handlerFactories[filename] = createHandler;
     }
 
     if(createHandler){
@@ -106,10 +108,10 @@ bool BodyHandlerManagerImpl::loadBodyHandler(Body* body, const string& filename)
 
     if(loaded){
         *os << format(_("Body handler {0} has been loaded to {1}."),
-                      handlerName, body->name()) << endl;
+                      handlerName, body->modelName()) << endl;
     } else {
         *os << format(_("Body handler {0} cannot be loaded to {1}."),
-                      handlerName, body->name()) << endl;
+                      handlerName, body->modelName()) << endl;
     }
     
     return loaded;
@@ -146,25 +148,24 @@ CreateCnoidBodyHandlerFunc BodyHandlerManagerImpl::loadHandlerFactoryWithFullPat
 {
     CreateCnoidBodyHandlerFunc factory = nullptr;
 
-    auto filename = path.string();
     auto extension = getExtension(path);
     if(extension != DLL_SUFFIX){
-        filename += DLL_SUFFIX;
+        path += DLL_SUFFIX;
     }
     
-    DllHandle dll = loadDll(filename.c_str());
+    DllHandle dll = loadDll(path.string().c_str());
     if(dll){
         factory = (CreateCnoidBodyHandlerFunc)resolveDllSymbol(dll, "createCnoidBodyHandler");
         if(!factory){
             unloadDll(dll);
             *os << format(_("Body handler {0} found at \"{1}\" does not have the factory function \"createCnoidBodyHandler\"."),
-                          handlerName, filename) << endl;
+                          handlerName, toUTF8(path.string())) << endl;
         }
     }
 
     if(factory){
         *os << format(_("Body handler {0} was found at \"{1}\"."),
-                      handlerName, filename) << endl;
+                      handlerName, toUTF8(path.string())) << endl;
     }
 
     return factory;

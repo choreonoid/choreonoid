@@ -67,8 +67,8 @@ public:
             io->enableIO(joint);
         }
 
-        string filename = getNativePathString(
-            cnoid::stdx::filesystem::path(shareDirectory()) / "motion" / "SR1" / patternFile);
+        auto path = shareDirPath() / "motion" / "SR1" / patternFile;
+        auto filename = path.make_preferred().string();
         
         BodyMotion motion;
         if(!motion.loadStandardYAMLformat(filename)){

@@ -8,6 +8,7 @@
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include "GeneralSeqReader.h"
+#include "UTF8.h"
 #include <fmt/format.h>
 #include <fstream>
 #include "gettext.h"
@@ -105,7 +106,7 @@ bool MultiValueSeq::loadPlainFormat(const std::string& filename, std::ostream& o
 
 bool MultiValueSeq::saveAsPlainFormat(const std::string& filename, std::ostream& os)
 {
-    ofstream file(filename.c_str());
+    ofstream file(fromUTF8(filename).c_str());
     file.setf(ios::fixed);
 
     if(!file){

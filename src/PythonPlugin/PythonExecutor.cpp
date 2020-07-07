@@ -5,6 +5,7 @@
 #include "PythonExecutor.h"
 #include <cnoid/PyUtil>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <cnoid/LazyCaller>
 #include <QThread>
 #include <QMutex>
@@ -228,8 +229,8 @@ bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const 
     if(filename.empty()){
         scriptDirectory.clear();
     } else {
-        filepath = getAbsolutePath(filesystem::path(filename));
-        scriptDirectory = getPathString(filepath.parent_path());
+        filepath = filesystem::absolute(fromUTF8(filename));
+        scriptDirectory = toUTF8(filepath.parent_path().string());
         if(!scriptDirectory.empty()){
             pathRefIter = additionalPythonPathRefMap.find(scriptDirectory);
             if(pathRefIter == additionalPythonPathRefMap.end()){
@@ -267,7 +268,7 @@ bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const 
         if(!filename.empty()){
             filesystem::path relative;
             if(findRelativePath(filesystem::current_path(), filepath, relative)){
-                getGlobalNamespace()["__file__"] = getPathString(relative);
+                getGlobalNamespace()["__file__"] = toUTF8(relative.string());
             }
         }
 

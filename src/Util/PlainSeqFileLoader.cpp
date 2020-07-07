@@ -4,6 +4,7 @@
 */
 
 #include "PlainSeqFileLoader.h"
+#include "UTF8.h"
 #include <cnoid/Tokenizer>
 #include <fmt/format.h>
 #include <fstream>
@@ -15,7 +16,7 @@ using namespace cnoid;
 
 bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
 {
-    ifstream is(filename.c_str());
+    ifstream is(fromUTF8(filename).c_str());
   
     if(!is){
         os << fmt::format(_("\"{}\" cannot be opened."), filename) << endl;

@@ -11,6 +11,7 @@
 #include <cnoid/ValueTree>
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <cnoid/NullOut>
 #include <fmt/format.h>
 #include <mutex>
@@ -64,7 +65,7 @@ public:
             link->setMass(1.0);
             link->setInertia(Matrix3::Identity());
             body->setRootLink(link);
-            body->setModelName(filesystem::path(filename).stem().string());
+            body->setModelName(toUTF8(filesystem::path(fromUTF8(filename)).stem().string()));
 
             SgNodePtr topNode = scene;
             /**
@@ -241,7 +242,7 @@ Body* BodyLoader::load(const std::string& filename)
 
 bool BodyLoaderImpl::load(Body* body, const std::string& filename)
 {
-    filesystem::path path(filename);
+    filesystem::path path(fromUTF8(filename));
     string ext = getExtension(path);
     actualLoader = nullptr;
 

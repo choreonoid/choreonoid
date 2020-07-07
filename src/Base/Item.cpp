@@ -11,6 +11,7 @@
 #include "ItemClassRegistry.h"
 #include "PutPropertyFunction.h"
 #include <cnoid/ValueTree>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <typeinfo>
 #include <bitset>
@@ -1354,7 +1355,7 @@ void Item::suggestFileUpdate()
 
 void Item::updateFileInformation(const std::string& filename, const std::string& format, Mapping* options)
 {
-    filesystem::path fpath(filename);
+    filesystem::path fpath(fromUTF8(filename));
     if(filesystem::exists(fpath)){
         impl->fileModificationTime = filesystem::last_write_time_to_time_t(fpath);
         impl->isConsistentWithFile = true;

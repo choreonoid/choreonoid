@@ -37,16 +37,18 @@ PYBIND11_MODULE(Util, m)
     exportPyGeometryTypes(m);
     exportPyTaskTypes(m);
 
-    m.attr("shareDirectory") = shareDirectory();
-    m.attr("executablePath") = executablePath();
+    m.attr("shareDirectory") = shareDir();
+    m.attr("executableFile") = executableFile();
+    m.attr("executablePath") = executableFile(); // deprecated
     m.attr("executableBasename") = executableBasename();
-    m.attr("executableTopDirectory") = cnoid::executableTopDirectory();
+    m.attr("executableTopDir") = cnoid::executableTopDir();
+    m.attr("executableTopDirectory") = cnoid::executableTopDir(); // deprecated
 
     // deprecated
-    m.def("getShareDirectory", &cnoid::shareDirectory);
-    m.def("getExecutablePath", &cnoid::executablePath);
+    m.def("getShareDirectory", &cnoid::shareDir);
+    m.def("getExecutablePath", &cnoid::executableFile);
     m.def("getExecutableBasename", &cnoid::executableBasename);
-    m.def("getExecutableTopDirectory", &cnoid::executableTopDirectory);
+    m.def("getExecutableTopDirectory", &cnoid::executableTopDir);
 
     py::class_<FloatingNumberString>(m, "FloatingNumberString")
         .def(py::init<const std::string&>())

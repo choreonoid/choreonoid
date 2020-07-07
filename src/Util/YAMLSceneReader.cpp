@@ -14,6 +14,7 @@
 #include "EigenArchive.h"
 #include "FilePathVariableProcessor.h"
 #include "FileUtil.h"
+#include "UTF8.h"
 #include "NullOut.h"
 #include "Exception.h"
 #include "ImageIO.h"
@@ -239,17 +240,25 @@ int YAMLSceneReader::defaultDivisionNumber() const
 
 void YAMLSceneReader::setBaseDirectory(const std::string& directory)
 {
-    impl->pathVariableProcessor = new FilePathVariableProcessor;
-    impl->pathVariableProcessor->setBaseDirectory(directory);
+    impl->getOrCreatePathVariableProcessor()->setBaseDirectory(directory);
 }
 
 
-std::string YAMLSceneReader::baseDirectory()
+std::string YAMLSceneReader::baseDirectory() const
 {
     if(impl->pathVariableProcessor){
         return impl->pathVariableProcessor->baseDirectory();
     }
     return string();
+}
+
+
+stdx::filesystem::path YAMLSceneReader::baseDirPath() const
+{
+    if(impl->pathVariableProcessor){
+        return impl->pathVariableProcessor->baseDirPath();
+    }
+    return stdx::filesystem::path();
 }
 
 
@@ -1315,19 +1324,19 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
 
     ResourceInfoPtr info = new ResourceInfo;
 
-    filesystem::path filepath(filename);
+    filesystem::path filepath(fromUTF8(filename));
     string ext = filepath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if(ext == ".yaml" || ext == ".yml"){
-        auto reader = new YAMLReader;
+        unique_ptr<YAMLReader> reader(new YAMLReader);
         reader->importAnchors(*mainYamlReader);
         if(!reader->load(filename)){
             resourceNode.throwException(
                 format(_("YAML resource \"{0}\" cannot be loaded ({1})"),
                  uri, reader->errorMessage()));
         }
-        info->yamlReader.reset(reader);
+        info->yamlReader = std::move(reader);
 
     } else {
         SgNodePtr scene = sceneLoader.load(filename);
@@ -1338,7 +1347,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
         info->scene = scene;
     }
 
-    info->directory = filepath.parent_path().string();
+    info->directory = toUTF8(filepath.parent_path().string());
     
     resourceInfoMap[uri] = info;
 

@@ -8,6 +8,7 @@
 #include "NullOut.h"
 #include "FileUtil.h"
 #include "strtofloat.h"
+#include "UTF8.h"
 #include <fmt/format.h>
 #include <fstream>
 #include <thread>
@@ -52,7 +53,7 @@ public:
     void open(const string& filename)
     {
         // The binary mode is faster on Windows
-        ifs.open(filename, std::ios::in | std::ios::binary);
+        ifs.open(fromUTF8(filename), std::ios::in | std::ios::binary);
         this->filename = filename;
         clear();
     }
@@ -226,10 +227,10 @@ public:
 
     void throwEx(const string& error)
     {
-        stdx::filesystem::path path(filename);
+        stdx::filesystem::path path(fromUTF8(filename));
         throw std::runtime_error(
             format(_("{0} at line {1} of \"{2}\"."),
-                   error, lineNumber, path.filename().string()));
+                   error, lineNumber, toUTF8(path.filename().string())));
     }
 };
 
@@ -664,7 +665,7 @@ SgNode* STLSceneLoader::load(const std::string& filename)
 
 SgNode* STLSceneLoaderImpl::load(const string& filename)
 {
-    ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
+    ifstream ifs(fromUTF8(filename).c_str(), std::ios::in | std::ios::binary);
     if(!ifs.is_open()){
         os() << format(_("Unable to open file \"{}\"."), filename) << endl;
         return nullptr;

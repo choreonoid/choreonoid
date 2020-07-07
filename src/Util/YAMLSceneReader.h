@@ -9,6 +9,7 @@
 #include "EigenUtil.h"
 #include "SceneGraph.h"
 #include "ValueTree.h"
+#include <cnoid/stdx/filesystem>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -31,7 +32,8 @@ public:
     void setBaseDirectory(const std::string& directory);
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
 
-    std::string baseDirectory();
+    std::string baseDirectory() const;
+    stdx::filesystem::path baseDirPath() const;
     void setYAMLReader(YAMLReader* reader);
     void clear();
     void readHeader(Mapping& info);

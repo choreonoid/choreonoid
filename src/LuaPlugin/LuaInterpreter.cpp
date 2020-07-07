@@ -102,9 +102,9 @@ LuaInterpreterImpl::LuaInterpreterImpl()
     lua_gettable(state, -2);
     string cpath(lua_tostring(state, -1));
     lua_pop(state, 1);
-    filesystem::path path = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "lua" / "?.so";
+    auto path = pluginDirPath() / "lua" / "?.so";
     lua_pushstring(state, "cpath");
-    lua_pushstring(state, (cpath + ";" + getNativePathString(path)).c_str());
+    lua_pushstring(state, (cpath + ";" + path.make_preferred().string()).c_str());
     lua_settable(state, -3);
     lua_pop(state, 1);
 

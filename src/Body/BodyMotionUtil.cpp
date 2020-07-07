@@ -15,6 +15,7 @@
 #include <cnoid/GaussianFilter>
 #include <cnoid/RangeLimiter>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <fmt/format.h>
 #include <fstream>
 #include <vector>
@@ -34,7 +35,7 @@ static bool saveRootLinkAttAsRpyFormat(BodyMotion& motion, const std::string& fi
         
     if(nFrames > 0 && linkPosSeq->numParts() > 0){
             
-        ofstream ofs(filename.c_str());
+        ofstream ofs(fromUTF8(filename).c_str());
         if(!ofs){
             os << filename + " cannot be opened.";
             return false;
@@ -80,7 +81,7 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, Body* body, const std
         
     if(nFrames > 0){
             
-        ofstream ofs(filename.c_str());
+        ofstream ofs(fromUTF8(filename).c_str());
         ofs.setf(ios::fixed);
         if(!ofs){
             os << filename + " cannot be opened.";
@@ -148,7 +149,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
 {
     motion.setNumFrames(0);
 
-    stdx::filesystem::path orgpath(filename);
+    stdx::filesystem::path orgpath(fromUTF8(filename));
     
     bool loaded = false;
 
@@ -156,7 +157,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
     stdx::filesystem::path posFile(orgpath);
     posFile.replace_extension(".pos");
     if(stdx::filesystem::exists(posFile) && !stdx::filesystem::is_directory(posFile)){
-        string posFileString = getNativePathString(posFile);
+        string posFileString = toUTF8(posFile.make_preferred().string());
         jointPosSeq = motion.jointPosSeq();
         if(!jointPosSeq->loadPlainFormat(posFileString)){
             os << jointPosSeq->seqMessage();
@@ -172,7 +173,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
     stdx::filesystem::path hipFile(orgpath);
     hipFile.replace_extension(".hip");
     if(stdx::filesystem::exists(hipFile) && !stdx::filesystem::is_directory(hipFile)){
-        string hipFileString = getNativePathString(hipFile);
+        string hipFileString = toUTF8(hipFile.make_preferred().string());
         rootLinkAttSeq = motion.linkPosSeq();
         if(!rootLinkAttSeq->loadPlainRpyFormat(hipFileString)){
             os << rootLinkAttSeq->seqMessage();
@@ -188,7 +189,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
     stdx::filesystem::path waistFile(orgpath);
     waistFile.replace_extension(".waist");
     if(stdx::filesystem::exists(waistFile) && !stdx::filesystem::is_directory(waistFile)){
-        string waistFileString = getNativePathString(waistFile);
+        string waistFileString = toUTF8(waistFile.make_preferred().string());
         linkPosSeq = motion.linkPosSeq();
         if(!linkPosSeq->loadPlainMatrixFormat(waistFileString)){
             os << linkPosSeq->seqMessage();
@@ -205,7 +206,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
         stdx::filesystem::path zmpFile(orgpath);
         zmpFile.replace_extension(".zmp");
         if(stdx::filesystem::exists(zmpFile) && !stdx::filesystem::is_directory(zmpFile)){
-            string zmpFileString = getNativePathString(zmpFile);
+            string zmpFileString =  toUTF8(zmpFile.make_preferred().string());
             zmpseq = getOrCreateZMPSeq(motion);
             if(!zmpseq->loadPlainFormat(zmpFileString)){
                 os << zmpseq->seqMessage();
@@ -258,23 +259,19 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
 
 bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, Body* body, const std::string& filename, std::ostream& os)
 {
-    stdx::filesystem::path orgpath(filename);
+    stdx::filesystem::path orgpath(fromUTF8(filename));
 
     if(motion.jointPosSeq()->saveAsPlainFormat(
-           getNativePathString(
-               stdx::filesystem::path(orgpath).replace_extension(".pos")), os) &&
-           
+           toUTF8(stdx::filesystem::path(orgpath).replace_extension(".pos").make_preferred().string()), os) &&
+       
        motion.linkPosSeq()->saveTopPartAsPosAndRPYFormat(
-           getNativePathString(
-               stdx::filesystem::path(orgpath).replace_extension(".waist")), os) &&
+           toUTF8(stdx::filesystem::path(orgpath).replace_extension(".waist").make_preferred().string()), os) &&
            
        saveRootLinkAttAsRpyFormat(
-           motion, getNativePathString(
-               stdx::filesystem::path(orgpath).replace_extension(".hip")), os)) {
+           motion, toUTF8(stdx::filesystem::path(orgpath).replace_extension(".hip").make_preferred().string()), os)) {
 
         saveRootLinkAccAsGsensFile(
-            motion, body, getNativePathString(
-                stdx::filesystem::path(orgpath).replace_extension(".gsens")), os);
+            motion, body, toUTF8(stdx::filesystem::path(orgpath).replace_extension(".gsens").make_preferred().string()), os);
 
         auto zmpseq = getZMPSeq(motion);
         if(zmpseq){
@@ -287,7 +284,7 @@ bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, Body* body, const std::stri
                 relZMP[i].noalias() = p.rotation().inverse() * (zmpseq->at(i) - p.translation());
             }
             return relZMP.saveAsPlainFormat(
-                getNativePathString(stdx::filesystem::path(orgpath).replace_extension(".zmp")));
+                toUTF8(stdx::filesystem::path(orgpath).replace_extension(".zmp").make_preferred().string()));
         }
         return true;
     }

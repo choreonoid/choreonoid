@@ -12,6 +12,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ProjectManager>
 #include <cnoid/ItemManager>
@@ -87,7 +88,7 @@ public:
 
     std::string controllerModuleName;
     std::string controllerModuleFilename;
-    filesystem::path controllerDirectory;
+    filesystem::path controllerDirPath;
     QLibrary controllerModule;
     bool doReloading;
     bool isSymbolExportEnabled;
@@ -180,7 +181,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     doReloading = false;
     isSymbolExportEnabled = false;
 
-    controllerDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller";
+    controllerDirPath = pluginDirPath() / "simplecontroller";
 
     baseDirectoryType.setSymbol(NO_BASE_DIRECTORY, N_("None"));
     baseDirectoryType.setSymbol(CONTROLLER_DIRECTORY, N_("Controller directory"));
@@ -200,7 +201,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
     : self(self),
       config(this),
       controllerModuleName(org.controllerModuleName),
-      controllerDirectory(org.controllerDirectory),
+      controllerDirPath(org.controllerDirPath),
       baseDirectoryType(org.baseDirectoryType)
 {
     doCommonInitializationInConstructor();
@@ -287,14 +288,15 @@ void SimpleControllerItemImpl::setController(const std::string& name)
 {
     unloadController();
 
-    filesystem::path modulePath(name);
+    filesystem::path modulePath(fromUTF8(name));
     if(modulePath.is_absolute()){
         baseDirectoryType.select(NO_BASE_DIRECTORY);
-        if(modulePath.parent_path() == controllerDirectory){
+        if(modulePath.parent_path() == controllerDirPath){
             baseDirectoryType.select(CONTROLLER_DIRECTORY);
             modulePath = modulePath.filename();
         } else {
-            filesystem::path projectDir(ProjectManager::instance()->currentProjectDirectory());
+            filesystem::path projectDir(
+                fromUTF8(ProjectManager::instance()->currentProjectDirectory()));
             if(!projectDir.empty() && (modulePath.parent_path() == projectDir)){
                 baseDirectoryType.select(PROJECT_DIRECTORY);
                 modulePath = modulePath.filename();
@@ -302,21 +304,21 @@ void SimpleControllerItemImpl::setController(const std::string& name)
         }
     }
 
-    controllerModuleName = modulePath.string();
+    controllerModuleName = toUTF8(modulePath.string());
     controllerModuleFilename.clear();
 }
 
 
 bool SimpleControllerItemImpl::loadController()
 {
-    filesystem::path modulePath(controllerModuleName);
+    filesystem::path modulePath(fromUTF8(controllerModuleName));
     if(!modulePath.is_absolute()){
         if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
-            modulePath = controllerDirectory / modulePath;
+            modulePath = controllerDirPath / modulePath;
         } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
             string projectDir = ProjectManager::instance()->currentProjectDirectory();
             if(!projectDir.empty()){
-                modulePath = filesystem::path(projectDir) / modulePath;
+                modulePath = filesystem::path(fromUTF8(projectDir)) / modulePath;
             } else {
                 mv->putln(
                     format(_("Controller module \"{0}\" of {1} is specified as a relative "
@@ -329,7 +331,7 @@ bool SimpleControllerItemImpl::loadController()
         }
     }
 
-    controllerModuleFilename = modulePath.make_preferred().string();
+    controllerModuleFilename = toUTF8(modulePath.make_preferred().string());
     controllerModule.setFileName(controllerModuleFilename.c_str());
         
     if(controllerModule.isLoaded()){
@@ -1001,7 +1003,7 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     FilePathProperty moduleProperty(controllerModuleName);
     if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
-        moduleProperty.setBaseDirectory(controllerDirectory.string());
+        moduleProperty.setBaseDirectory(toUTF8(controllerDirPath.string()));
     } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
         moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
     }

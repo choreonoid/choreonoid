@@ -14,6 +14,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/Tokenizer>
 #include <cnoid/FileDialog>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <map>
 #include <vector>
@@ -143,8 +144,9 @@ bool loadFaceControllerPoseSet(const string& filename)
 PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
 {
     ostream& os = MessageView::mainInstance()->cout();
-        
-    ifstream ifs(filename.c_str());
+
+    auto filename_ = fromUTF8(filename);
+    ifstream ifs(filename_.c_str());
     if(!ifs.is_open()){
         os << filename + "is not found" << endl;
         return 0;
@@ -153,8 +155,8 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
     os << "Loading " << filename << "..." << endl;
 
     PoseSeqItemPtr item = new PoseSeqItem();
-    stdx::filesystem::path fpath(filename);
-    item->setName(fpath.stem().string());
+    stdx::filesystem::path fpath(filename_);
+    item->setName(toUTF8(fpath.stem().string()));
     PoseSeqPtr seq = item->poseSeq();
 
     int nLines = 0;

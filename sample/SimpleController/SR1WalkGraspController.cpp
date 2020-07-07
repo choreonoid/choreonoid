@@ -55,9 +55,8 @@ public:
         ostream& os = io->os();
 
         if(!qseq){
-            string filename = getNativePathString(
-                cnoid::stdx::filesystem::path(shareDirectory())
-                / "motion" / "SR1" / "SR1WalkPattern3.seq");
+            auto path = shareDirPath() / "motion" / "SR1" / "SR1WalkPattern3.seq";
+            string filename = path.make_preferred().string();
 
             BodyMotion motion;
             if(!motion.loadStandardYAMLformat(filename)){

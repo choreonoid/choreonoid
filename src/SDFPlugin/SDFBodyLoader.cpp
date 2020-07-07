@@ -18,6 +18,7 @@
 #include <cnoid/WorldItem>
 #include <cnoid/RootItem>
 #include <cnoid/EigenUtil>
+#include <cnoid/UTF8>
 #include <cnoid/PolymorphicFunctionSet>
 #include <cnoid/NullOut>
 #include <cnoid/stdx/filesystem>
@@ -1556,7 +1557,7 @@ SgTexture* SDFBodyLoaderImpl::convertTexture(MaterialInfo* material, const strin
                 gm.addResourceLocation(url, "FileSystem", "General", true);
                 gm.initialiseResourceGroup("General");
 
-                filesystem::path scriptDir(url);
+                filesystem::path scriptDir(fromUTF8(url));
                 if (filesystem::exists(scriptDir) && filesystem::is_directory(scriptDir)) {
                     vector<filesystem::path> files;
                     copy(filesystem::directory_iterator(scriptDir), filesystem::directory_iterator(),
@@ -1565,11 +1566,10 @@ SgTexture* SDFBodyLoaderImpl::convertTexture(MaterialInfo* material, const strin
 
                     for (vector<filesystem::path>::iterator it=files.begin(); it!=files.end(); it++){
                         if (it->filename().extension() == ".material") {
-                            filesystem::path fullPath = url / it->filename();
+                            filesystem::path fullPath = scriptDir / it->filename();
                             try {
-
-                                Ogre::DataStreamPtr stream = gm.openResource( fullPath.string(), "General" );
-                                Ogre::MaterialManager::getSingleton().parseScript( stream, "General" );
+                                Ogre::DataStreamPtr stream = gm.openResource(fullPath.string(), "General");
+                                Ogre::MaterialManager::getSingleton().parseScript(stream, "General");
                                 stream->close();
                             } catch (Ogre::Exception& e){
                                 cout << e.getFullDescription() << endl;

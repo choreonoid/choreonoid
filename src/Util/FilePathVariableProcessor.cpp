@@ -98,16 +98,16 @@ void FilePathVariableProcessor::Impl::setSystemVariablesEnabled(bool on)
     isSystemVariableSetEnabled = on;
     
     if(on){
-        topDirString = executableTopDirectory();
-        topDirPath = topDirString;
+        topDirString = executableTopDir();
+        topDirPath = executableTopDirPath();
 
-        shareDirString = shareDirectory();
-        shareDirPath = shareDirString;
+        shareDirString = shareDir();
+        shareDirPath = cnoid::shareDirPath();
 
         char* home = getenv("HOME");
         if(home){
-            homeDirString = home;
-            homeDirPath = homeDirString;
+            homeDirString = toUTF8(home);
+            homeDirPath = string(home);
         } else {
             homeDirString.clear();
             homeDirPath.clear();
@@ -131,7 +131,7 @@ void FilePathVariableProcessor::setUserVariables(Mapping* variables)
 
 void FilePathVariableProcessor::setBaseDirectory(const std::string& directory)
 {
-    impl->baseDirPath = filesystem::path(directory);
+    impl->baseDirPath = filesystem::path(fromUTF8(directory));
     if(impl->baseDirPath.is_relative()){
         impl->baseDirPath = filesystem::current_path() /  impl->baseDirPath;
     }
@@ -147,17 +147,23 @@ void FilePathVariableProcessor::clearBaseDirectory()
 
 std::string FilePathVariableProcessor::baseDirectory() const
 {
-    return impl->baseDirPath.string();
+    return toUTF8(impl->baseDirPath.string());
+}
+
+
+stdx::filesystem::path FilePathVariableProcessor::baseDirPath() const
+{
+    return impl->baseDirPath;
 }
 
 
 void FilePathVariableProcessor::setProjectDirectory(const std::string& directory)
 {
-    impl->projectDirPath = directory;
+    impl->projectDirPath = fromUTF8(directory);
     if(impl->projectDirPath.is_relative()){
         impl->projectDirPath = filesystem::current_path() /  impl->projectDirPath;
     }
-    impl->projectDirString = impl->projectDirPath.generic_string();
+    impl->projectDirString = toUTF8(impl->projectDirPath.generic_string());
 
     impl->isProjectDirDifferentFromBaseDir = (impl->baseDirPath != impl->projectDirPath);
 }
@@ -205,11 +211,11 @@ static int countPathElements(filesystem::path& path)
 */
 std::string FilePathVariableProcessor::Impl::parameterize(const std::string& orgPathString)
 {
-    filesystem::path orgPath(orgPathString);
+    filesystem::path orgPath(fromUTF8(orgPathString));
 
     // In the case where the path is originally relative one
     if(!orgPath.is_absolute()){
-        return orgPath.generic_string();
+        return toUTF8(orgPath.generic_string());
 
     } else {
         int distance[NumCandidates];
@@ -253,27 +259,27 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
             switch(index){
             case Base:
                 if(countPathElements(orgPath) < minDistance){
-                    return orgPath.generic_string(); // absolute path
+                    return toUTF8(orgPath.generic_string()); // absolute path
                 } else {
-                    return relativePath[Base].generic_string();
+                    return toUTF8(relativePath[Base].generic_string());
                 }
             case Project:
-                return string("${PROJECT_DIR}/") + relativePath[Project].generic_string();
+                return string("${PROJECT_DIR}/") + toUTF8(relativePath[Project].generic_string());
             case Var:
-                return format("${{{0}}}/{1}", varName, relativePath[Var].generic_string());
+                return format("${{{0}}}/{1}", varName, toUTF8(relativePath[Var].generic_string()));
             case Share:
-                return string("${SHARE}/") + relativePath[Share].generic_string();
+                return string("${SHARE}/") + toUTF8(relativePath[Share].generic_string());
             case Top:
-                return string("${PROGRAM_TOP}/") + relativePath[Top].generic_string();
+                return string("${PROGRAM_TOP}/") + toUTF8(relativePath[Top].generic_string());
             case Home:
-                return string("${HOME}/") + relativePath[Home].generic_string();
+                return string("${HOME}/") + toUTF8(relativePath[Home].generic_string());
             default:
                 break;
             }
         }
     }
     
-    return orgPath.generic_string();
+    return toUTF8(orgPath.generic_string());
 }
 
 
@@ -296,7 +302,7 @@ bool FilePathVariableProcessor::Impl::findSubDirectoryOfDirectoryVariable
                 if(n > maxMatchSize){
                     maxMatchSize = n;
                     out_relativePath = relativePath;
-                    out_varName = fromUTF8(p->first);
+                    out_varName = p->first;
                 }
             }
         }
@@ -355,7 +361,7 @@ std::string FilePathVariableProcessor::Impl::expand
         return expanded;
     }
     
-    filesystem::path path(expanded);
+    filesystem::path path(fromUTF8(expanded));
     if(!path.is_absolute()){
         if(!baseDirPath.empty()){
             path = baseDirPath / path;
@@ -364,7 +370,7 @@ std::string FilePathVariableProcessor::Impl::expand
         }
     }
     path = filesystem::lexically_normal(path);
-    return path.make_preferred().string(); // path.native() ?
+    return toUTF8(path.make_preferred().string());
 }
 
 
@@ -383,11 +389,11 @@ bool FilePathVariableProcessor::Impl::replaceUserVariable
     string replaced(io_pathString);
     replaced.replace(pos, len, paths->at(0)->toString());
 
-    if(!filesystem::exists(replaced)){
+    if(!filesystem::exists(fromUTF8(replaced))){
         for(int i=1; i < paths->size(); ++i){
             string replaced2(io_pathString);
             replaced2.replace(pos, len, paths->at(i)->toString());
-            if(filesystem::exists(replaced2)){
+            if(filesystem::exists(fromUTF8(replaced2))){
                 replaced = std::move(replaced2);
                 break;
             }

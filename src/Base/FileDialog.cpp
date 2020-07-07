@@ -2,6 +2,7 @@
 #include "AppConfig.h"
 #include "ProjectManager.h"
 #include <cnoid/ExecutablePath>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <QBoxLayout>
 #include <QStyle>
@@ -107,8 +108,9 @@ void FileDialog::Impl::updatePresetDirectories()
         urls << QUrl::fromLocalFile(QDir::homePath());
     }
     
-    urls << QUrl::fromLocalFile(shareDirectory().c_str());
+    urls << QUrl::fromLocalFile(shareDir().c_str());
     auto projectDir = ProjectManager::instance()->currentProjectDirectory();
+
     if(!projectDir.empty()){
         urls << QUrl::fromLocalFile(projectDir.c_str());
     }
@@ -152,12 +154,12 @@ bool FileDialog::selectFilePath(const std::string& filePath)
 {
     bool selected = false;
     if(!filePath.empty()){
-        filesystem::path path(filePath);
+        filesystem::path path(fromUTF8(filePath));
         filesystem::path dir(path.parent_path());
         if(filesystem::exists(dir)){
-            setDirectory(dir.string());
+            setDirectory(toUTF8(dir.string()));
             if(filesystem::exists(path)){
-                selectFile(path.filename().string());
+                selectFile(toUTF8(path.filename().string()));
                 selected = true;
             }
         }

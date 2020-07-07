@@ -27,6 +27,7 @@
 #include "LazyCaller.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/Selection>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/variant>
 #include <cnoid/stdx/filesystem>
 #include <QPainter>
@@ -221,8 +222,8 @@ public:
     std::thread imageOutputThread;
     std::mutex imageQueueMutex;
     std::condition_variable imageQueueCondition;
-   string filenameFormat;
-
+    string filenameFormat;
+    
     MovieRecorderImpl(ExtensionManager* ext);
     ~MovieRecorderImpl();
     void setTargetView(View* view);
@@ -710,8 +711,8 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
         return false;
     }
 
-    filesystem::path directory(dialog->directoryEntry.string());
-    filesystem::path basename(dialog->basenameEntry.string() + "{:08d}.png");
+    filesystem::path directory(fromUTF8(dialog->directoryEntry.string()));
+    filesystem::path basename(fromUTF8(dialog->basenameEntry.string() + "{:08d}.png"));
 
     if(directory.empty()){
         showWarningDialog(_("Please set a directory to output image files."));
@@ -728,7 +729,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
         }
     }
 
-    filenameFormat = (directory / basename).string();
+    filenameFormat = toUTF8((directory / basename).string());
 
     if(dialog->imageSizeCheck.isChecked()){
         int width = dialog->imageWidthSpin.value();

@@ -8,6 +8,7 @@
 #include "YAMLReader.h"
 #include "ValueTree.h"
 #include "NullOut.h"
+#include "UTF8.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -96,8 +97,8 @@ SgNode* YAMLSceneLoaderImpl::load(const std::string& filename)
         YAMLReader reader;
         topNode = reader.loadDocument(filename)->toMapping();
         if(topNode){
-            stdx::filesystem::path filepath(filename);
-            sceneReader.setBaseDirectory(filepath.parent_path().string());
+            stdx::filesystem::path filepath(fromUTF8(filename));
+            sceneReader.setBaseDirectory(toUTF8(filepath.parent_path().string()));
             sceneReader.readHeader(*topNode);
             ValueNodePtr sceneElements = topNode->findMapping("scene");
             if(!sceneElements->isValid()){

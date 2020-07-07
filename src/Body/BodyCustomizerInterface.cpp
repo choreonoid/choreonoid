@@ -6,7 +6,9 @@
 
 #include "BodyCustomizerInterface.h"
 #include "Body.h"
+#include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <cnoid/Tokenizer>
 #include <map>
 #include <set>
@@ -59,11 +61,12 @@ static bool checkInterface(BodyCustomizerInterface* customizerInterface)
 }
 
 
-static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string filename, std::ostream& os)
+static bool loadCustomizerDll
+(BodyInterface* bodyInterface, const std::string nativeFilename, std::ostream& os)
 {
     BodyCustomizerInterface* customizerInterface = 0;
 
-    DllHandle dll = loadDll(filename.c_str());
+    DllHandle dll = loadDll(nativeFilename.c_str());
 	
     if(dll){
 		
@@ -78,7 +81,8 @@ static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string fi
             if(customizerInterface){
 				
                 if(!checkInterface(customizerInterface)){
-                    os << format(_("Body customizer \"{}\" is incomatible and cannot be loaded."), filename) << endl;
+                    os << format(_("Body customizer \"{}\" is incomatible and cannot be loaded."),
+                                 toUTF8(nativeFilename)) << endl;
                 } else {
                 
                     const char** names = customizerInterface->getTargetModelNames();
@@ -93,7 +97,8 @@ static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string fi
                         }
                         modelNames += name;
                     }
-                    os << format(_("Body customizer \"{0}\" for {1} has been loaded."), filename, modelNames) << endl;
+                    os << format(_("Body customizer \"{0}\" for {1} has been loaded."),
+                                 toUTF8(nativeFilename), modelNames) << endl;
                 }
             }
         }
@@ -103,29 +108,30 @@ static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string fi
 }
 
 
-static int loadBodyCustomizers(BodyInterface* bodyInterface, const std::string pathString, std::ostream& os)
+static int loadBodyCustomizers
+(BodyInterface* bodyInterface, const std::string pathString, std::ostream& os)
 {
     pluginLoadingFunctionsCalled = true;
 	
     int numLoaded = 0;
 
-    filesystem::path pluginPath(pathString);
+    filesystem::path pluginPath(fromUTF8(pathString));
 	
     if(filesystem::exists(pluginPath)){
         if(!filesystem::is_directory(pluginPath)){
-            if(loadCustomizerDll(bodyInterface, pathString, os)){
+            if(loadCustomizerDll(bodyInterface, pluginPath.string(), os)){
                 numLoaded++;
             }
         } else {
             static const string pluginNamePattern(string("Customizer") + DLL_SUFFIX);
             filesystem::directory_iterator end;
             for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
-                const filesystem::path& filepath = *it;
+                filesystem::path filepath = *it;
                 if(!filesystem::is_directory(filepath)){
-                    string filename(getFilename(filepath));
+                    string filename(toUTF8(filepath.filename().string()));
                     size_t pos = filename.rfind(pluginNamePattern);
                     if(pos == (filename.size() - pluginNamePattern.size())){
-                        if(loadCustomizerDll(bodyInterface, getNativePathString(filepath), os)){
+                        if(loadCustomizerDll(bodyInterface, filepath.make_preferred().string(), os)){
                             numLoaded++;
                         }
                     }
@@ -165,25 +171,12 @@ static int loadBodyCustomizers(BodyInterface* bodyInterface, std::ostream& os)
         if(pathListEnv){
             string pathList = pathListEnv;
             for(auto& path : Tokenizer<CharSeparator<char>>(pathList, CharSeparator<char>(PATH_DELIMITER))){
-                numLoaded = ::loadBodyCustomizers(bodyInterface, path, os);
+                numLoaded = ::loadBodyCustomizers(bodyInterface, toUTF8(path), os);
             }
         }
 
-#ifndef _WIN32
-        Dl_info info;
-        if(dladdr((void*)&findBodyCustomizer, &info)){
-            filesystem::path customizerPath =
-                filesystem::path(info.dli_fname).parent_path().parent_path() / CNOID_PLUGIN_SUBDIR / "customizer";
-            customizerDirectories.insert(getNativePathString(customizerPath));
-        }
-#else
-        string customizerPath(CNOID_BODY_SHARE_DIR);
-        customizerPath.append("/customizer");
-        customizerDirectories.insert(string(CNOID_BODY_SHARE_DIR) + "/customzier");
-#endif
-
-        for(std::set<string>::iterator p = customizerDirectories.begin(); p != customizerDirectories.end(); ++p){
-            numLoaded += ::loadBodyCustomizers(bodyInterface, *p, os);
+        for(auto& dir : customizerDirectories){
+            numLoaded += ::loadBodyCustomizers(bodyInterface, dir, os);
         }
     }
 

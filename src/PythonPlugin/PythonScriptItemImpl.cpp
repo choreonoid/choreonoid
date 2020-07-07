@@ -7,6 +7,7 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -48,11 +49,11 @@ void PythonScriptItemImpl::onDisconnectedFromRoot()
 
 bool PythonScriptItemImpl::setScriptFilename(const std::string& filename)
 {
-    filesystem::path scriptPath(filename);
+    filesystem::path scriptPath(fromUTF8(filename));
     if(filesystem::exists(scriptPath)){
         scriptFilename_ = filename;
         if(scriptItem()->name().empty()){
-            scriptItem()->setName(getFilename(filesystem::path(filename)));
+            scriptItem()->setName(toUTF8(scriptPath.filename().string()));
         }
         return true;
     } else {
@@ -112,7 +113,7 @@ bool PythonScriptItemImpl::execute()
         mv->putln(format(_(" Python script \"{}\" is empty."), iname));
 
     } else {
-        filesystem::path scriptPath(scriptFilename_);
+        filesystem::path scriptPath(fromUTF8(scriptFilename_));
 
         if(!filesystem::exists(scriptPath)){
             mv->putln(format(_("The file of Python script \"{}\" does not exist."), iname));

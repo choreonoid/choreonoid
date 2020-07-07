@@ -6,6 +6,7 @@
 
 #include "ImageIO.h"
 #include "Exception.h"
+#include "UTF8.h"
 #include <fmt/format.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <png.h>
@@ -42,7 +43,7 @@ void throwSaveException(const string& filename, const std::string& description)
 void loadPNG(Image& image, const std::string& filename, bool isUpsideDown)
 {
     FILE* fp = 0;
-    fp = fopen(filename.c_str(), "rb");
+    fp = fopen(fromUTF8(filename).c_str(), "rb");
     if(!fp){
         throwLoadException(filename, strerror(errno));
     }
@@ -244,7 +245,7 @@ void savePNG(const Image& image, const std::string& filename, bool isUpsideDown)
 void loadJPEG(Image& image, const std::string& filename, bool isUpsideDown)
 {
     FILE* fp = 0;
-    fp = fopen(filename.c_str(), "rb");
+    fp = fopen(fromUTF8(filename).c_str(), "rb");
     if(!fp){
         throwLoadException(filename, strerror(errno));
     }
