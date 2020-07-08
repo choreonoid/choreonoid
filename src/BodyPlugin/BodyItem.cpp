@@ -1280,7 +1280,7 @@ LocationProxyPtr BodyItem::getLocationProxy()
 
 bool BodyItem::isLocationEditable() const
 {
-    return impl->isLocationEditable;
+    return impl->isLocationEditable && !isAttachedToParentBody();
 }
 
 
@@ -1292,12 +1292,15 @@ void BodyItem::setLocationEditable(bool on)
 
 void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhenLocked)
 {
+    if(on && self->isAttachedToParentBody()){
+        return;
+    }
+    
     if(on != isLocationEditable){
         isLocationEditable = on;
+
         if(!on && updateInitialPositionWhenLocked){
-            if(!self->isAttachedToParentBody()){
-                initialState.setRootLinkPosition(body->rootLink()->T());
-            }
+            initialState.setRootLinkPosition(body->rootLink()->T());
         }
         if(sceneBody){
             sceneBody->notifyUpdate();
@@ -1341,7 +1344,7 @@ Position BodyLocation::getLocation() const
 
 bool BodyLocation::isEditable() const
 {
-    return impl->isLocationEditable;
+    return impl->self->isLocationEditable();
 }
 
 
@@ -1551,7 +1554,7 @@ bool BodyItem::Impl::updateAttachment(bool on)
     if(on && isAttachmentEnabled){
         newParentBodyItem = self->findOwnerItem<BodyItem>();
     }
-    if(newParentBodyItem != parentBodyItem){
+    if(newParentBodyItem != parentBodyItem || on != self->isAttachedToParentBody()){
         setParentBodyItem(newParentBodyItem);
         updated = true;
     }
@@ -1579,6 +1582,17 @@ bool BodyItem::Impl::isAttachable() const
         }
     }
     return false;
+}
+
+
+bool BodyItem::attachToParentBody()
+{
+    if(!impl->isAttachmentEnabled){
+        setAttachmentEnabled(true);
+    } else {
+        impl->updateAttachment(true);
+    }
+    return isAttachedToParentBody();
 }
 
 

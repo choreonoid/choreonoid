@@ -50,6 +50,7 @@ public:
     bool isAttachedToParentBody() const;
     void setAttachmentEnabled(bool on);
     bool isAttachmentEnabled() const;
+    bool attachToParentBody();    
 
     // The current parent body can temporarily be changed by this function
     //void setTemporalParentBodyItem(BodyItem* parentBodyItem);
