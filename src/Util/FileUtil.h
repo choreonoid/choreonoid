@@ -40,8 +40,8 @@ CNOID_EXPORT bool findRelativePath(
 
 /**
    This function returs the extension without dot.
-   \note You can obtain the extension including dot by path.extesion.string().
 */
+[[deprecated("Use path.extension().string(). Note that the dot character is added to the beginning of the string.")]]
 CNOID_EXPORT std::string getExtension(const stdx::filesystem::path& path);
 
 [[deprecated("Use path.generic_string().")]]

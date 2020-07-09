@@ -2,8 +2,8 @@
 #include "BodyHandler.h"
 #include "Body.h"
 #include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
 #include <cnoid/UTF8>
+#include <cnoid/FileUtil>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <unordered_map>
@@ -149,8 +149,7 @@ CreateCnoidBodyHandlerFunc BodyHandlerManagerImpl::loadHandlerFactoryWithFullPat
 {
     CreateCnoidBodyHandlerFunc factory = nullptr;
 
-    auto extension = getExtension(path);
-    if(extension != DLL_SUFFIX){
+    if(path.extension().string() != DLL_SUFFIX){
         path += DLL_SUFFIX;
     }
     

@@ -22,7 +22,6 @@
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ExecutablePath>
 #include <cnoid/Sleep>
-#include <cnoid/FileUtil>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <QCoreApplication>
@@ -689,7 +688,7 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 {
     auto iter = inputFiles.begin();
     while(iter != inputFiles.end()){
-        if(getExtension(*iter) == "cnoid"){
+        if(filesystem::path(*iter).extension().string() == ".cnoid"){
             loadProject(*iter, nullptr, true, false);
             iter = inputFiles.erase(iter);
         } else {
