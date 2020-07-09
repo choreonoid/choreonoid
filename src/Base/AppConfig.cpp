@@ -6,7 +6,8 @@
 #include "MessageView.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
-#include <cnoid/FileUtil>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -49,12 +50,12 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
     }
 #endif
     
-    filePath = application + ".conf";
+    filePath = fromUTF8(application + ".conf");
 
     bool loaded = false;
     if(!configDirPath.empty()){
         fullPath = configDirPath / filePath;
-        loaded = loadConfig(getPathString(fullPath));
+        loaded = loadConfig(toUTF8(fullPath.string()));
     }
 
     if(!loaded){
@@ -69,7 +70,7 @@ static bool loadConfig(const std::string& filename)
 {
     bool loaded = false;
 
-    if(filesystem::exists(filesystem::path(filename))){
+    if(filesystem::exists(fromUTF8(filename))){
         YAMLReader reader;
         try {
             if(reader.load(filename)){
@@ -127,7 +128,7 @@ bool AppConfig::flush()
     }
 
     try {
-        YAMLWriter writer(fullPath.string());
+        YAMLWriter writer(toUTF8(fullPath.string()));
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(configArchive);
     }

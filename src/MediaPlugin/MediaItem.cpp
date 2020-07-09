@@ -9,7 +9,6 @@
 #include <cnoid/RootItem>
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
-#include <cnoid/FileUtil>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
@@ -101,7 +100,7 @@ bool MediaItem::setMediaFilePath(const std::string& filepath)
 
     if(filesystem::exists(fpath) && !filesystem::is_directory(fpath)){
         mediaFilePath_ = filepath;
-        filesystem::path fullpath = getAbsolutePath(fpath);
+        filesystem::path fullpath(filesystem::absolute(fpath));
         mediaURI_ = format("file://{}", toUTF8(fullpath.generic_string()));
         return true;
 

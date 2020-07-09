@@ -7,7 +7,8 @@
 #include "ItemManager.h"
 #include "ItemTreeView.h"
 #include "MenuManager.h"
-#include <cnoid/FileUtil>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include "gettext.h"
 
 using namespace std;
@@ -56,7 +57,8 @@ const std::string& ScriptItem::textFilename() const
 std::string ScriptItem::identityName() const
 {
     const string& name_ = name();
-    const string fname = getFilename(stdx::filesystem::path(scriptFilename()));
+    stdx::filesystem::path path(fromUTF8(scriptFilename()));
+    const string fname = toUTF8(path.filename().string());
     if(name_.empty()){
         return fname;
     }

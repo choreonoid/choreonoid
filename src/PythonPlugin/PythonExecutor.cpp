@@ -4,9 +4,10 @@
 
 #include "PythonExecutor.h"
 #include <cnoid/PyUtil>
-#include <cnoid/FileUtil>
-#include <cnoid/UTF8>
 #include <cnoid/LazyCaller>
+#include <cnoid/UTF8>
+#include <cnoid/FileUtil>
+#include <cnoid/stdx/filesystem>
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>

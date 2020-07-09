@@ -7,7 +7,8 @@
 #include "MainWindow.h"
 #include "MenuManager.h"
 #include "Buttons.h"
-#include <cnoid/FileUtil>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QHeaderView>
@@ -163,8 +164,8 @@ void PathVariableEditor::writePathVariablesToArchive()
             string name = tableWidget->item(i, 0)->text().toStdString();
             if(!name.empty() && !item->path.isEmpty()){
                 Listing* listing = pathVars->openListing(name);
-                stdx::filesystem::path path(item->path.toStdString());
-                listing->append(getGenericPathString(path), DOUBLE_QUOTED);
+                stdx::filesystem::path path(fromUTF8(item->path.toStdString()));
+                listing->append(toUTF8(path.generic_string()), DOUBLE_QUOTED);
             }
         }
     }

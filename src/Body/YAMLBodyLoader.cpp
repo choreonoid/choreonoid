@@ -17,11 +17,11 @@
 #include "SpotLight.h"
 #include <cnoid/YAMLSceneReader>
 #include <cnoid/EigenArchive>
-#include <cnoid/FileUtil>
-#include <cnoid/UTF8>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
 #include <cnoid/NullOut>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <unordered_map>
 #include <mutex>
@@ -1854,7 +1854,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
     
     filesystem::path filepath(fromUTF8(uri));
     if(filepath.is_relative()){
-        filepath = getCompactPath(sceneReader.baseDirPath() / filepath);
+        filepath = filesystem::lexically_normal(sceneReader.baseDirPath() / filepath);
     }
     if(filesystem::equivalent(mainFilePath, filepath)){
         node->throwException("recursive sub-body is prohibited");

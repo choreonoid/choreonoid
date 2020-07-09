@@ -7,9 +7,9 @@
 
 #include "VRMLParser.h"
 #include "EasyScanner.h"
-#include "UTF8.h"
 #include "NullOut.h"
-#include "FileUtil.h"
+#include "UTF8.h"
+#include <cnoid/stdx/filesystem>
 #include <boost/algorithm/string/predicate.hpp>
 #include <list>
 #include <cmath>
@@ -841,7 +841,7 @@ string VRMLParserImpl::getRealPath(string url)
     } else {
         stdx::filesystem::path path(
             stdx::filesystem::lexically_normal(fromUTF8(removeURLScheme(url))));
-        if(!checkAbsolute(path)){
+        if(!path.is_absolute()){
             stdx::filesystem::path parentPath(fromUTF8(scanner->filename));
             path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
         }

@@ -12,10 +12,11 @@
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
-#include <cnoid/UTF8>
 #include <cnoid/Tokenizer>
 #include <cnoid/Config>
+#include <cnoid/FileUtil>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QLibrary>
 #include <QRegExp>
 #include <QFileDialog>
@@ -340,7 +341,8 @@ void PluginManager::Impl::scanPluginFiles(const std::string& pathString, bool is
                 if(doSorting){
                     list<string> paths;
                     for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
-                        paths.push_back(getNativePathString(*it));
+                        auto path(it->path());
+                        paths.push_back(path.make_preferred().string());
                     }
                     paths.sort();
                     for(list<string>::iterator p = paths.begin(); p != paths.end(); ++p){
@@ -348,25 +350,27 @@ void PluginManager::Impl::scanPluginFiles(const std::string& pathString, bool is
                     }
                 } else {
                     for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
-                        scanPluginFiles(getNativePathString(*it), false, true);
+                        auto path(it->path());
+                        scanPluginFiles(path.make_preferred().string(), false, true);
                     }
                 }
             }
         } else {
             const string* pPathStringUtf8; //pluginPath;
-            string pathStringUtf8;
+            string tmpPathStringUtf8;
             if(isUTF8){
                 pPathStringUtf8 = &pathString;
             } else {
-                pathStringUtf8 = toUTF8(pathString);
-                pPathStringUtf8 = &pathStringUtf8;
+                tmpPathStringUtf8 = toUTF8(pathString);
+                pPathStringUtf8 = &tmpPathStringUtf8;
             }
-            QString filename(getFilename(filesystem::path(*pPathStringUtf8)).c_str());
+            const string& pathStringUtf8 = *pPathStringUtf8;
+            QString filename(filesystem::path(pathStringUtf8).filename().string().c_str());
             if(!namingConventionCheck->isChecked() || pluginNamePattern.exactMatch(filename)){
-                PluginMap::iterator p = pathToPluginInfoMap.find(*pPathStringUtf8);
+                PluginMap::iterator p = pathToPluginInfoMap.find(pathStringUtf8);
                 if(p == pathToPluginInfoMap.end()){
                     PluginInfoPtr info = std::make_shared<PluginInfo>();
-                    info->pathString = *pPathStringUtf8;
+                    info->pathString = pathStringUtf8;
                     allPluginInfos.push_back(info);
                     pathToPluginInfoMap[info->pathString] = info;
                 }
@@ -697,7 +701,8 @@ void PluginManager::Impl::onLoadPluginTriggered()
         config->writePath("pluginLoadingDialogDirectory", dialog.directory().absolutePath().toStdString());
         QStringList filenames = dialog.selectedFiles();
         for(int i=0; i < filenames.size(); ++i){
-            string filename = getNativePathString(filesystem::path(filenames[i].toStdString()));
+            auto path = filesystem::path(fromUTF8(filenames[i].toStdString()));
+            string filename = toUTF8(path.make_preferred().string());
 
             // This code was taken from 'scanPluginFiles'. This should be unified.
             //if(pluginNamePattern.exactMatch(QString(getFilename(pluginPath).c_str()))){

@@ -34,7 +34,6 @@
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/AttachmentDevice>
 #include <cnoid/HolderDevice>
-#include <cnoid/FileUtil>
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>
 #include <bitset>

@@ -6,6 +6,7 @@
 #include "PointSetUtil.h"
 #include <cnoid/EasyScanner>
 #include <cnoid/Exception>
+#include <cnoid/UTF8>
 #include <fstream>
 #include <iomanip>
 
@@ -179,7 +180,7 @@ void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Aff
     bool hasColors = pointSet->hasColors() && pointSet->colorIndices().empty();
 
     ofstream ofs;
-    ofs.open(filename.c_str());
+    ofs.open(fromUTF8(filename.c_str()));
     ofs << scientific << setprecision(9);
 
     ofs << "# .PCD v.7 - Point Cloud Data file format\n";

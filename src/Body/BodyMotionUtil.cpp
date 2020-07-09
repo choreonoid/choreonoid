@@ -14,8 +14,8 @@
 #include <cnoid/Vector3Seq>
 #include <cnoid/GaussianFilter>
 #include <cnoid/RangeLimiter>
-#include <cnoid/FileUtil>
 #include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <fstream>
 #include <vector>

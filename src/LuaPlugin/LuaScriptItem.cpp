@@ -8,9 +8,10 @@
 #include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -133,7 +134,7 @@ bool LuaScriptItem::setScriptFilename(const std::string& filename)
     } else {
         impl->scriptFilename = filename;
         if(name().empty()){
-            setName(getFilename(filesystem::path(filename)));
+            setName(toUTF8(filesystem::path(fromUTF8(filename)).filename().string()));
         }
         if(impl->doExecutionOnLoading){
             callLater([&](){ execute(); }, LazyCaller::PRIORITY_LOW);
@@ -240,7 +241,8 @@ void LuaScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void LuaScriptItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Script"), getFilename(scriptFilename));
+    auto script = toUTF8(filesystem::path(fromUTF8(scriptFilename)).filename().string());
+    putProperty(_("Script"), script);
     putProperty(_("Execution on loading"), doExecutionOnLoading, changeProperty(doExecutionOnLoading));
     putProperty(_("Use main interpreter"), isUsingMainInterpreter,
                 [&](bool on){ useMainInterpreter(on); return true; });

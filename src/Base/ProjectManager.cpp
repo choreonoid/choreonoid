@@ -20,10 +20,11 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/FilePathVariableProcessor>
-#include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
-#include <cnoid/UTF8>
 #include <cnoid/Sleep>
+#include <cnoid/FileUtil>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QCoreApplication>
 #include <QResource>
 #include <QMessageBox>
@@ -235,7 +236,7 @@ void ProjectManager::Impl::setCurrentProjectFile(const string& filename)
     mainWindow->setProjectTitle(name);
 
     // filesystem::canonical can only be used with C++17
-    path = getCompactPath(filesystem::absolute(path));
+    path = filesystem::lexically_normal(filesystem::absolute(path));
 
     currentProjectFile = toUTF8(path.string());
     currentProjectDirectory = toUTF8(path.parent_path().string());
@@ -678,7 +679,7 @@ void ProjectManager::Impl::onProjectOptionsParsed(boost::program_options::variab
     if(v.count("project")){
         vector<string> projectFileNames = v["project"].as<vector<string>>();
         for(size_t i=0; i < projectFileNames.size(); ++i){
-            loadProject(toActualPathName(projectFileNames[i]), nullptr, true, false);
+            loadProject(projectFileNames[i], nullptr, true, false);
         }
     }
 }
@@ -689,7 +690,7 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
     auto iter = inputFiles.begin();
     while(iter != inputFiles.end()){
         if(getExtension(*iter) == "cnoid"){
-            loadProject(toActualPathName(*iter), nullptr, true, false);
+            loadProject(*iter, nullptr, true, false);
             iter = inputFiles.erase(iter);
         } else {
             ++iter;
@@ -791,8 +792,7 @@ std::string ProjectManager::Impl::getSaveFilename(FileDialog& dialog)
     auto filenames = dialog.selectedFiles();
     if(!filenames.isEmpty()){
         filename = filenames.front().toStdString();
-        filesystem::path path(filename);
-        //string filename = getNativePathString(path);
+        filesystem::path path(fromUTF8(filename));
         string ext = path.extension().string();
         if(ext != ".cnoid"){
             filename += ".cnoid";
@@ -807,9 +807,10 @@ bool ProjectManager::Impl::onSaveDialogAboutToFinished(FileDialog& dialog, int r
     bool finished = true;
     if(result == QFileDialog::Accepted){
         auto filename = getSaveFilename(dialog);
-        if(filesystem::exists(filename)){
+        filesystem::path path(fromUTF8(filename));
+        if(filesystem::exists(path)){
             dialog.fileDialog()->show();
-            QString file(filesystem::path(filename).filename().string().c_str());
+            QString file(toUTF8(path.filename().string()).c_str());
             QString message(QString(_("%1 already exists. Do you want to replace it? ")).arg(file));
             auto button =
                 QMessageBox::warning(&dialog, dialog.windowTitle(), message, QMessageBox::Ok | QMessageBox::Cancel);

@@ -17,7 +17,6 @@
 #include "LazyCaller.h"
 #include <cnoid/GettextUtil>
 #include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
 #include <QMenuBar>
 #include <boost/algorithm/string.hpp>
 #include <set>

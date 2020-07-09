@@ -19,7 +19,11 @@ extern CNOID_EXPORT const char* EXEC_SUFFIX;
 extern CNOID_EXPORT const char* EXEC_EXTENSION;
 extern CNOID_EXPORT const char* PATH_DELIMITER;
 
+
+[[deprecated("Use filesystem::lexically_normal(path).")]]
 CNOID_EXPORT stdx::filesystem::path getCompactPath(const stdx::filesystem::path& path);
+
+[[deprecated("Use filesystem::lexically_normal(path).")]]
 CNOID_EXPORT void makePathCompact(stdx::filesystem::path& io_path);
 
 
@@ -33,23 +37,41 @@ CNOID_EXPORT bool findRelativePath(
     const stdx::filesystem::path& to,
     stdx::filesystem::path& out_relativePath);
 
+
+/**
+   This function returs the extension without dot.
+   \note You can obtain the extension including dot by path.extesion.string().
+*/
 CNOID_EXPORT std::string getExtension(const stdx::filesystem::path& path);
 
-/*
-   The following functions were originally defined to support both the version 2 and 3 of
-   the boost.filesystem library. However, supporting the version 2 was stopped, and the use
-   of these functions should be replaced with the original functions of the version 3.
-*/
+[[deprecated("Use path.generic_string().")]]
 CNOID_EXPORT std::string getGenericPathString(const stdx::filesystem::path& path);
+
+[[deprecated("Use path.isAbsolute().")]]
 CNOID_EXPORT bool checkAbsolute(const stdx::filesystem::path& path);
+
+[[deprecated("Use filesystemm::absolute(path).")]]
 CNOID_EXPORT stdx::filesystem::path getAbsolutePath(const stdx::filesystem::path& path);
+
+[[deprecated("Use filesystemm::absolute(path).string().")]]
 CNOID_EXPORT std::string getAbsolutePathString(const stdx::filesystem::path& path);
+
+[[deprecated("Use path.filename().string().")]]
 CNOID_EXPORT std::string getFilename(const stdx::filesystem::path& path);
+
+[[deprecated("Make a filesystem::path object and use filename().string().")]]
 CNOID_EXPORT std::string getFilename(const std::string& pathString);
+
+[[deprecated("Use path.stem().string().")]]
 CNOID_EXPORT std::string getBasename(const stdx::filesystem::path& path);
+
+[[deprecated("Use path.string().")]]
 CNOID_EXPORT std::string getPathString(const stdx::filesystem::path& path);
+
+[[deprecated("Use path.make_preferred().string().")]]
 CNOID_EXPORT std::string getNativePathString(const stdx::filesystem::path& path);
 
+[[deprecated("Use the original string value passed as an argument.")]]
 CNOID_EXPORT std::string toActualPathName(const std::string& pathName);
 
 }

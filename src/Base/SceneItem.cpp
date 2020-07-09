@@ -8,7 +8,6 @@
 #include "Archive.h"
 #include "PutPropertyFunction.h"
 #include <cnoid/SceneLoader>
-#include <cnoid/FileUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneEffects>
 #include "gettext.h"
@@ -149,7 +148,7 @@ void SceneItem::setLightweightRenderingEnabled(bool on)
 
 void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("File"), getFilename(filePath()));
+    putProperty(_("File"), fileName());
 
     putProperty(_("Translation"), str(Vector3(topNode_->translation())),
                 [&](const std::string& value){

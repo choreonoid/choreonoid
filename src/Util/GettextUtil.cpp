@@ -5,7 +5,7 @@
 
 #include "GettextUtil.h"
 #include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
+#include <cnoid/stdx/filesystem>
 #include "exportdecl.h"
 
 namespace cnoid {

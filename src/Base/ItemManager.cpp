@@ -16,8 +16,9 @@
 #include "MainWindow.h"
 #include "MessageView.h"
 #include "CheckBox.h"
-#include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -917,7 +918,7 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
             }
         }
     } else if(!filename.empty()){
-        filesystem::path filepath(filename);
+        filesystem::path filepath(fromUTF8(filename));
         string dotextension = filepath.extension().string();
         if(dotextension.size() >= 2){
             string extension = dotextension.substr(1); // remove dot
@@ -1181,7 +1182,7 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
         needToOverwrite = true;
     } else {
         if(!filename.empty()){
-            filesystem::path fpath(filename);
+            filesystem::path fpath(fromUTF8(filename));
             if(!filesystem::exists(fpath) ||
                filesystem::last_write_time_to_time_t(fpath) > item->fileModificationTime()){
                 needToOverwrite = true;

@@ -10,9 +10,10 @@
 #include <cnoid/SceneLoader>
 #include <cnoid/ValueTree>
 #include <cnoid/Exception>
+#include <cnoid/NullOut>
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
-#include <cnoid/NullOut>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <mutex>
 #include "gettext.h"
@@ -98,7 +99,7 @@ public:
         if(!isSupported){
             (*os) <<
                 fmt::format(_("The file format of \"{}\" is not supported by the body loader.\n"),
-                            filesystem::path(filename).filename().string());
+                            toUTF8(filesystem::path(fromUTF8(filename)).filename().string()));
         }
 
         return (scene != nullptr);

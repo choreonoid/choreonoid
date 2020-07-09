@@ -4,8 +4,8 @@
 */
 
 #include "ExecutablePath.h"
-#include "FileUtil.h"
 #include "UTF8.h"
+#include <cnoid/stdx/filesystem>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -119,12 +119,12 @@ void detectExecutableFile()
 
 #ifdef _WIN32
     if(path.extension() == ".exe"){
-        executableBasename_ = getBasename(path);
+        executableBasename_ = path.stem().string();
     } else {
-        executableBasename_ = getFilename(path);
+        executableBasename_ = path.filename().string();
     }
 #else
-    executableBasename_ = getFilename(path);
+    executableBasename_ = path.filename().string();
 #endif
 }
 

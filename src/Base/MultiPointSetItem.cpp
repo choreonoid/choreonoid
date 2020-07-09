@@ -16,8 +16,9 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/SceneMarkers>
-#include <cnoid/FileUtil>
 #include <cnoid/Exception>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include "gettext.h"
 
 using namespace std;
@@ -825,15 +826,15 @@ bool MultiPointSetItem::Impl::load(const std::string& filename)
         const Mapping& archive = *reader.document()->toMapping();
         const Listing& files = *archive.findListing("files");
         if(files.isValid()){
-            filesystem::path directory = filesystem::path(filename).parent_path();
+            auto directory = filesystem::path(fromUTF8(filename)).parent_path();
             for(int i=0; i < files.size(); ++i){
                 const Mapping& info = *files[i].toMapping();
-                string filename;
-                if(info.read("file", filename)){
-                    filesystem::path filePath(filename);
+                string pcdFilename;
+                if(info.read("file", pcdFilename)){
+                    filesystem::path path(fromUTF8(pcdFilename));
                     PointSetItemPtr childItem = new PointSetItem();
-                    if(childItem->load(getPathString(directory / filePath), "PCD-FILE")){
-                        childItem->setName(getBasename(filename));
+                    if(childItem->load(toUTF8((directory / path).string()), "PCD-FILE")){
+                        childItem->setName(toUTF8(path.stem().string()));
                         Affine3 T;
                         if(read(info, "offsetTransform", T)){
                             childItem->setOffsetTransform(T);
@@ -880,12 +881,11 @@ bool MultiPointSetItem::Impl::outputPointSetItem(int index)
     PointSetItem* item = self->pointSetItem(index);
     if(outputFileListing && !item->name().empty()){
         string filename = item->name() + ".pcd";
-        string filepath = getPathString(autoSaveFilePath.parent_path() / filesystem::path(filename));
-
-        // result = item->save(filepath, "PCD-FILE");
+        filesystem::path path(fromUTF8(filename));
+        string fullPathString = toUTF8((autoSaveFilePath.parent_path() / path).string());
 
         try {
-            cnoid::savePCD(item->pointSet(), filepath, item->offsetTransform());
+            cnoid::savePCD(item->pointSet(), fullPathString, item->offsetTransform());
 
             MappingPtr info = new Mapping();
             info->write("file", filename);
@@ -928,7 +928,7 @@ bool MultiPointSetItem::Impl::startAutomaticSave(const std::string& filename)
 {
     isAutoSaveMode = false;
 
-    autoSaveFilePath = cnoid::getAbsolutePath(filesystem::path(filename));
+    autoSaveFilePath = filesystem::absolute(fromUTF8(filename));
 
     if(!autoSaveFilePath.filename().empty()){
         if(self->numPointSetItems() == 0){
@@ -936,7 +936,7 @@ bool MultiPointSetItem::Impl::startAutomaticSave(const std::string& filename)
         } else {
             try {
                 if(filesystem::create_directories(autoSaveFilePath.parent_path())){
-                    if(save(getPathString(autoSaveFilePath))){
+                    if(save(toUTF8(autoSaveFilePath.string()))){
                         isAutoSaveMode = true;
                     }
                 }
@@ -956,7 +956,7 @@ void MultiPointSetItem::Impl::saveAdditionalPointSet(int index)
     if(!outputArchive){
         try {
             if(filesystem::create_directories(autoSaveFilePath.parent_path())){
-                save(getPathString(autoSaveFilePath));
+                save(toUTF8(autoSaveFilePath.string()));
             }
         }
         catch(const filesystem::filesystem_error& ex){
@@ -964,7 +964,7 @@ void MultiPointSetItem::Impl::saveAdditionalPointSet(int index)
         }
     } else {
         if(outputPointSetItem(index)){
-            writeOutputArchive(getPathString(autoSaveFilePath));
+            writeOutputArchive(toUTF8(autoSaveFilePath.string()));
         }
     }
 }

@@ -6,8 +6,8 @@
 #include "PythonScriptItemImpl.h"
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <cnoid/FileUtil>
 #include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
 

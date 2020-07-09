@@ -2,8 +2,9 @@
 #include <cnoid/SceneLoader>
 #include <cnoid/Selection>
 #include <cnoid/ValueTree>
-#include <cnoid/FileUtil>
 #include <cnoid/ComboBox>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QBoxLayout>
 #include <QLabel>
 #include <fmt/format.h>
@@ -122,8 +123,8 @@ SgNode* SceneItemFileIO::Impl::loadScene(SceneItemFileIO* self, const std::strin
 
     if(!scene){
         if(!isSupported){
-            self->putError(format(_("The file format of \"{}\" is not supported.\n"),
-                            stdx::filesystem::path(filename).filename().string()));
+            auto fname = toUTF8(stdx::filesystem::path(fromUTF8(filename)).filename().string());
+            self->putError(format(_("The file format of \"{}\" is not supported.\n"), fname));
         }
         return nullptr;
     }

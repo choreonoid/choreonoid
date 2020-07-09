@@ -351,7 +351,10 @@ public:
     */
     bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
 
+    // full path file name
     const std::string& filePath() const;
+    // file name without the directory
+    std::string fileName() const;
     const std::string& fileFormat() const;
     const Mapping* fileOptions() const;
     std::time_t fileModificationTime() const;

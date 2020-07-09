@@ -4,6 +4,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <unordered_map>
 #include <iostream>

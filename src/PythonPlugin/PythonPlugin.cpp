@@ -13,7 +13,6 @@ nnn*/
 #include <cnoid/ItemManager>
 #include <cnoid/RootItem>
 #include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
 #include <cnoid/UTF8>
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
@@ -185,7 +184,7 @@ void PythonPlugin::onInputFileOptionsParsed(std::vector<std::string>& inputFiles
 {
     auto iter = inputFiles.begin();
     while(iter != inputFiles.end()){
-        if(getExtension(*iter) == "py"){
+        if(filesystem::path(*iter).extension().string() == ".py"){
             executeScriptFileOnStartup(*iter);
             iter = inputFiles.erase(iter);
         } else {

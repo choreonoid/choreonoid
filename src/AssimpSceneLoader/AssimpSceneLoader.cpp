@@ -7,10 +7,10 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshFilter>
 #include <cnoid/ImageIO>
-#include <cnoid/FileUtil>
-#include <cnoid/UTF8>
 #include <cnoid/Exception>
 #include <cnoid/NullOut>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <cnoid/stdx/optional>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -497,7 +497,7 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
         aiString path;
         if(srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS){
             filesystem::path filepath(fromUTF8(path.data));
-            if(!checkAbsolute(filepath)){
+            if(!filepath.is_absolute()){
                 filepath = filesystem::lexically_normal(directoryPath / filepath);
             }
             string textureFile = toUTF8(stdx::filesystem::absolute(filepath).string());

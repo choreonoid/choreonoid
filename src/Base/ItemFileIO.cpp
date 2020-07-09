@@ -2,9 +2,10 @@
 #include "ItemManager.h"
 #include "MessageView.h"
 #include <cnoid/NullOut>
-#include <cnoid/FileUtil>
 #include <cnoid/ValueTree>
 #include <cnoid/FilePathVariableProcessor>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -312,7 +313,7 @@ bool ItemFileIO::Impl::loadItem
         mv->put(_(" -> failed.\n"), MessageView::Highlight);
     } else {
         if(item->name().empty()){
-            item->setName(filesystem::path(filename).stem().string());
+            item->setName(toUTF8(filesystem::path(fromUTF8(filename)).stem().string()));
         }
         if(actuallyLoadedItem != item && actuallyLoadedItem->name().empty()){
             actuallyLoadedItem->setName(item->name());

@@ -7,9 +7,10 @@
 #include "BodyCustomizerInterface.h"
 #include "Body.h"
 #include <cnoid/ExecutablePath>
+#include <cnoid/Tokenizer>
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
-#include <cnoid/Tokenizer>
+#include <cnoid/stdx/filesystem>
 #include <map>
 #include <set>
 #include <cstdlib>
@@ -126,12 +127,12 @@ static int loadBodyCustomizers
             static const string pluginNamePattern(string("Customizer") + DLL_SUFFIX);
             filesystem::directory_iterator end;
             for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
-                filesystem::path filepath = *it;
-                if(!filesystem::is_directory(filepath)){
-                    string filename(toUTF8(filepath.filename().string()));
+                auto path = it->path();
+                if(!filesystem::is_directory(path)){
+                    string filename(toUTF8(path.filename().string()));
                     size_t pos = filename.rfind(pluginNamePattern);
                     if(pos == (filename.size() - pluginNamePattern.size())){
-                        if(loadCustomizerDll(bodyInterface, filepath.make_preferred().string(), os)){
+                        if(loadCustomizerDll(bodyInterface, path.make_preferred().string(), os)){
                             numLoaded++;
                         }
                     }

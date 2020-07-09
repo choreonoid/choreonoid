@@ -1303,6 +1303,12 @@ const std::string& Item::filePath() const
 }
 
 
+std::string Item::fileName() const
+{
+    return toUTF8(filesystem::path(fromUTF8(impl->filePath)).filename().string());
+}
+
+
 const std::string& Item::fileFormat() const
 {
     return impl->fileFormat;

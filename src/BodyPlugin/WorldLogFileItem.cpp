@@ -8,10 +8,10 @@
 #include <cnoid/WorldItem>
 #include <cnoid/BodyItem>
 #include <cnoid/TimeSyncItemEngine>
-#include <cnoid/FileUtil>
-#include <cnoid/UTF8>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QDateTime>
 #include <fstream>
 #include <stack>
@@ -549,10 +549,7 @@ string WorldLogFileItemImpl::getActualFilename()
         stdx::filesystem::path filepath(fromUTF8(self->filePath()));
         string suffix = recordingStartTime.toString("-yyyy-MM-dd-hh-mm-ss").toStdString();
         string fname = filepath.stem().string() + suffix;
-        string ext = getExtension(filepath);
-        if(!ext.empty()){
-            fname = fname + "." + ext;
-        }
+        fname += filepath.extension().string();
         return toUTF8((filepath.parent_path() / fname).string());
     } else {
         return self->filePath();

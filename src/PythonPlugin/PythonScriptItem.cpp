@@ -8,7 +8,6 @@
 #include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>
 #include "gettext.h"
 
@@ -131,7 +130,7 @@ Item* PythonScriptItem::doDuplicate() const
 
 void PythonScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Script"), getFilename(filePath()));
+    putProperty(_("Script"), fileName());
     impl->doPutProperties(putProperty);
     putProperty(_("Execution on loading"), doExecutionOnLoading, changeProperty(doExecutionOnLoading));
 }

@@ -21,7 +21,6 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
-#include <cnoid/FileUtil>
 #include "gettext.h"
 
 #include <iostream>

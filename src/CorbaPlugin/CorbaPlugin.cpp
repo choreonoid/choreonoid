@@ -14,7 +14,8 @@
 #include <cnoid/MenuManager>
 #include <cnoid/Process>
 #include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QTcpSocket>
 #include <fmt/format.h>
 #include <thread>
@@ -71,7 +72,7 @@ void checkOrInvokeCorbaNameServer()
                 mv->putln(format(_("Namer server {} is not found."), nameServerCommand));
                     
             } else {
-                string command = getNativePathString(serverExecPath);
+                string command = serverExecPath.make_preferred().string();
 #ifdef _WIN32
                 nameServerProcess.start(QString("\"") + command.c_str() + "\"");
 #else
@@ -80,7 +81,7 @@ void checkOrInvokeCorbaNameServer()
                 if(nameServerProcess.waitForStarted() && nameServerProcess.waitForReadyRead()){
                     mv->putln(format(_("Name server process {} has been invoked."), nameServerCommand));
                 } else {
-                    mv->putln(format(_("Name server \"{}\" cannot be invoked."), command));
+                    mv->putln(format(_("Name server \"{}\" cannot be invoked."), toUTF8(command)));
                 }
             }
         }

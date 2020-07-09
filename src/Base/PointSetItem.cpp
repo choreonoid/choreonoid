@@ -17,7 +17,6 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/PointSetUtil>
 #include <cnoid/Exception>
-#include <cnoid/FileUtil>
 #include <cnoid/PolyhedralRegion>
 #include "gettext.h"
 
@@ -520,7 +519,7 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
 void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     ScenePointSet* scene = impl->scene;
-    putProperty(_("File"), getFilename(filePath()));
+    putProperty(_("File"), fileName());
     putProperty(_("Rendering mode"), scene->renderingMode,
                 [&](int mode){ return impl->onRenderingModePropertyChanged(mode); });
     putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),

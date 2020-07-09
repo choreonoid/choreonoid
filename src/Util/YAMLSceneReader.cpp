@@ -13,11 +13,11 @@
 #include "YAMLReader.h"
 #include "EigenArchive.h"
 #include "FilePathVariableProcessor.h"
-#include "FileUtil.h"
-#include "UTF8.h"
 #include "NullOut.h"
 #include "Exception.h"
 #include "ImageIO.h"
+#include "UTF8.h"
+#include <cnoid/stdx/filesystem>
 #include <cnoid/Config>
 #include <fmt/format.h>
 #include <unordered_map>

@@ -4,8 +4,8 @@
 
 #include "LuaInterpreter.h"
 #include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
 #include <cnoid/MessageView>
+#include <cnoid/stdx/filesystem>
 #include <iostream>
 #include <stack>
 

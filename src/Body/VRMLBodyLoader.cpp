@@ -13,19 +13,21 @@
 #include "RangeSensor.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/EasyScanner>
 #include <cnoid/VRMLParser>
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
+namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
 
@@ -398,7 +400,7 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         vrmlParser.load(filename);
         readTopNodes();
         if(body->modelName().empty()){
-            body->setModelName(getBasename(filename));
+            body->setModelName(toUTF8(filesystem::path(fromUTF8(filename)).stem().string()));
         }
         result = true;
         os().flush();
