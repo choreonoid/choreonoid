@@ -59,7 +59,6 @@ class CNOID_EXPORT Device : public DeviceState
         std::string name;
         Link* link;
         Position T_local;
-        double cycle;
         const Position& const_T_local() const { return T_local; }
         Signal<void()> sigStateChanged;
         Signal<void(double time)> sigTimeChanged;
@@ -127,9 +126,6 @@ public:
     template<typename Derived>
         void setLocalTranslation(const Eigen::MatrixBase<Derived>& p) { ns->T_local.translation() = p; }
 
-    double cycle() const { return ns->cycle; }
-    void setCycle(double msec) { ns->cycle = msec; }
-
     virtual void clearState();
 
     virtual bool on() const;
@@ -150,6 +146,11 @@ public:
     void notifyTimeChange(double time) {
         ns->sigTimeChanged(time);
     }
+
+    [[deprecated]]
+    double cycle() const { return 20.0; }
+    [[deprecated]]
+    void setCycle(double msec) { }
 };
 
 typedef ref_ptr<Device> DevicePtr;

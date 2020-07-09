@@ -16,7 +16,6 @@ Device::Device()
     ns->id = -1;
     ns->link = nullptr;
     T_local().setIdentity();
-    setCycle(20.0);
 }
 
 
@@ -38,7 +37,6 @@ void Device::copySpecFrom(const Device* other)
     ns->id = other->ns->id;
     ns->name = other->ns->name;
     ns->T_local = other->ns->T_local;
-    setCycle(other->cycle());
 }
 
 
