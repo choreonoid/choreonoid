@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   style="enable-background:new 0 0 24 24;"
+   viewBox="0 0 24 24"
+   y="0px"
+   x="0px"
+   id="レイヤー_1"
+   version="1.1"><metadata
+   id="metadata21"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs19" />
+<style
+   id="style2"
+   type="text/css">
+	.st0{fill:#F1F0EF;}
+	.st1{fill:#4D4D4D;}
+	.st2{fill:#E50012;}
+</style>
+
+<g
+   transform="matrix(1.144958,0,0,1.1764706,-1.717437,-1.2941175)"
+   id="g10">
+	<polygon
+   style="fill:#4d4d4d"
+   id="polygon6"
+   points="11.9,3.1 12.2,3.1 12,5 13.4,5 13.6,3.3 14,3.3 14.3,1.3 12.2,1.1 "
+   class="st1" />
+	<path
+   style="fill:#4d4d4d"
+   id="path8"
+   d="M 9.3,6.3 V 5.7 h 1.2 V 2.3 H 5.2 V 5.7 H 6.4 V 6.3 H 4.8 C 4.6,6.3 4.5,6.4 4.3,6.5 V 6.4 L 3.4,6.3 C 3.1,6.3 2.9,6.5 2.8,6.7 L 2.1,13.3 H 1.7 l -0.2,2 2.1,0.2 0.2,-2 H 3.5 L 4,9.1 v 4.6 c 0,0.4 0.3,0.8 0.8,0.8 H 5.2 L 4,19.9 c 0,0 0,0 0,0 H 3.2 c -0.4,0 -0.8,0.4 -0.8,0.8 v 0.8 c 0,0 0,0 0,0 h 3.8 c 0,0 0,0 0,0 V 20 c 0,0 0,0 0,0 v 0 c 0,0 0,0 0,0 L 7.4,14.6 H 8.3 L 7,19.9 c 0,0 0,0 0,0 H 6.9 c 0,0 0,0 0,0 v 1.5 c 0,0 0,0 0,0 h 3.8 c 0,0 0,0 0,0 v -0.8 c 0,-0.4 -0.4,-0.8 -0.8,-0.8 H 9.2 c 0,0 0,0 0,0 l 1.2,-5.4 h 0.3 V 6.3 Z"
+   class="st1" />
+</g>
+<polygon
+   style="fill:#e50012"
+   transform="matrix(1.144958,0,0,1.1764706,-1.717437,-1.2941175)"
+   id="polygon12"
+   points="15.3,7.5 13.3,7.5 13.3,18.8 20.5,18.8 20.5,7.5 18.7,7.5 18.7,5.5 22.5,5.5 22.5,20.8 11.3,20.8 11.3,5.5 15.3,5.5 "
+   class="st2" />
+<polygon
+   style="fill:#e50012"
+   transform="matrix(1.144958,0,0,1.1764706,-1.717437,-1.2941175)"
+   id="polygon14"
+   points="14.4,11.7 14.4,14 16.9,16.1 19.4,14 19.4,11.7 17.9,12.9 17.9,1.8 15.9,1.8 15.9,12.9 "
+   class="st2" />
+</svg>

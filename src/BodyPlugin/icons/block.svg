@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   style="enable-background:new 0 0 24 24;"
+   viewBox="0 0 24 24"
+   y="0px"
+   x="0px"
+   id="レイヤー_1"
+   version="1.1"><metadata
+   id="metadata51"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs49" />
+<style
+   id="style2"
+   type="text/css">
+	.st0{fill:#F1F0EF;}
+	.st1{fill:#E50012;}
+	.st2{fill:none;}
+	.st3{fill:#595757;}
+</style>
+
+<polygon
+   style="fill:#e50012"
+   transform="matrix(1.3559322,0,0,1.1111111,-4.4745761,-1.4444444)"
+   id="polygon6"
+   points="7.7,5.7 7.7,9 12,11.9 16.3,9 16.3,5.7 14.3,7.1 14.3,1.3 9.7,1.3 9.7,7.1 "
+   class="st1" />
+<g
+   transform="matrix(1.3559322,0,0,1.1111111,-4.4745761,-1.4444444)"
+   id="g42">
+	<polygon
+   style="fill:none"
+   id="polygon8"
+   points="5.8,12.3 4.9,13.2 9.7,13.2 11.1,12.3 "
+   class="st2" />
+	<path
+   style="fill:none"
+   id="path10"
+   d="m 17.5,13.2 1.9,-2.1 H 19 l -0.9,1 v 0 c -0.1,0.1 -0.2,0.2 -0.4,0.2 h -4.8 l 1.3,0.9 z"
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon12"
+   points="19.4,3.1 14.9,3.1 14.9,5.1 16.1,5.1 16.9,4.6 16.9,5.1 17.5,5.1 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon14"
+   points="7.1,9.3 7.1,6.1 4.3,6.1 4.3,11.3 10.1,11.3 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon16"
+   points="16.9,15 16.9,19.3 17.2,19.3 17.2,14.2 15.7,14.2 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon18"
+   points="5,5.1 7.1,5.1 7.1,4.6 7.9,5.1 9.1,5.1 9.1,3.1 6.9,3.1 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon20"
+   points="16.9,9.3 13.9,11.3 17.2,11.3 17.2,6.1 16.9,6.1 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon22"
+   points="7.1,15 8.3,14.2 4.3,14.2 4.3,19.3 7.1,19.3 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon24"
+   points="18.2,18.5 20,16.5 20,11.9 18.2,13.9 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon26"
+   points="16.5,19.3 14.9,18.2 14.9,19.3 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon28"
+   points="18.2,10.5 20,8.5 20,3.9 18.2,5.8 "
+   class="st2" />
+	<polygon
+   style="fill:none"
+   id="polygon30"
+   points="9.1,19.3 9.1,18.2 7.5,19.3 "
+   class="st2" />
+	<polygon
+   style="fill:#595757"
+   id="polygon32"
+   points="9.1,5.1 7.9,5.1 9.1,6 "
+   class="st3" />
+	<polygon
+   style="fill:#595757"
+   id="polygon34"
+   points="14.9,5.1 14.9,6 16.1,5.1 "
+   class="st3" />
+	<g
+   id="g40">
+		<path
+   style="fill:#595757"
+   id="path36"
+   d="M 21,8.7 V 2.6 C 21,2.3 20.8,2.1 20.5,2.1 h -5.6 v 1 h 4.5 l -1.9,2.1 h -0.6 v 1 h 0.3 v 5.1 h -3.3 l -1.2,0.8 0.2,0.2 h 4.8 c 0.1,0 0.3,-0.1 0.4,-0.2 v 0 l 0.9,-1 h 0.4 l -1.9,2.1 h -3.2 l 1.5,1 h 1.5 v 5.1 H 17 16.6 15 v 1 h 2.8 c 0.1,0 0.3,-0.1 0.4,-0.2 v 0 L 21,17 c 0,0 0,-0.1 0,-0.3 v -6.1 c 0,-0.3 -0.2,-0.5 -0.5,-0.5 H 19.9 L 20.9,9 C 21,8.9 21,8.8 21,8.7 Z m -1,3.2 v 4.6 l -1.8,2 v -4.6 z m 0,-3.4 -1.8,2 V 5.8 l 1.8,-2 z"
+   class="st3" />
+		<path
+   style="fill:#595757"
+   id="path38"
+   d="m 11.1,12.3 0.2,-0.2 -1.2,-0.8 H 4.3 V 6.1 h 2.8 v -1 H 5 L 6.9,3 H 9.1 V 2 H 6.7 C 6.6,2 6.4,2.1 6.3,2.2 L 3.4,5.3 v 0 c 0,0.1 -0.1,0.2 -0.1,0.3 v 6.1 c 0,0.3 0.2,0.5 0.5,0.5 h 0.6 l -1,1.1 v 0 c -0.1,0.1 -0.1,0.2 -0.1,0.3 v 6.1 c 0,0.3 0.2,0.5 0.5,0.5 h 5.3 v -1 H 7.5 7.1 4.3 v -5.1 h 4 l 1.5,-1 H 4.9 l 0.8,-0.9 h 5.4 z"
+   class="st3" />
+	</g>
+</g>
+<polygon
+   style="fill:#e50012"
+   transform="matrix(1.3559322,0,0,1.1111111,-4.4745761,-1.4444444)"
+   id="polygon44"
+   points="9.7,17.1 9.7,22.9 14.3,22.9 14.3,17.1 16.3,18.5 16.3,15.3 12,12.3 7.7,15.3 7.7,18.5 "
+   class="st1" />
+</svg>

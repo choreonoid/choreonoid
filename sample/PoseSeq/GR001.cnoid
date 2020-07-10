@@ -1,5 +1,3 @@
-optionalPlugins: [ PoseSeq, GRobot, Python ]
-
 items: 
   id: 0
   name: "Root"
@@ -11,7 +9,7 @@ items:
       name: "World"
       plugin: Body
       class: WorldItem
-      isChecked: true
+      is_checked: true
       data: 
         collisionDetection: true
         collisionDetector: AISTCollisionDetector
@@ -22,25 +20,25 @@ items:
           name: "GR001"
           plugin: Body
           class: BodyItem
-          isChecked: true
+          is_checked: true
           data: 
             file: "${SHARE}/model/GR001/GR001.body"
             format: CHOREONOID-BODY
             currentBaseLink: "L_ANKLE_R"
-            rootPosition: [ -0.002066, 0.000207, 0.154197 ]
+            rootPosition: [ -0.00206589105, 0.000206960048, 0.154197111 ]
             rootAttitude: [ 
-              1, 0, 0, 
-              -0, 1, 0, 
-              -0, -0, 1 ]
+              1, 1.99297498e-19, 4.62406793e-16, 
+              -2.32715685e-19, 1, 3.56008625e-15, 
+              -4.99600361e-16, -3.56008625e-15, 1 ]
             jointDisplacements: [ 
-              0, 0.112873, 21.2526, -40.1752, -18.9226, 0.112873, -0, 0.112873, -21.2526, 40.1752, 
-              18.9226, 0.112873, 0, 0, 20, 0, -20, -20, 0, 20 ]
+              3.25081e-09, 0.112881, 21.2526, -40.1752, -18.9226, 0.112881, -4.68592e-09, 0.112883, -21.2526, 40.1752, 
+              18.9226, 0.112883, 0, 0, 20, 0, -20, -20, 0, 20 ]
             initialJointDisplacements: [ 
               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
               0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
             jointPositions: [ 
-              0, 0.00197, 0.370928, -0.70119, -0.330262, 0.00197, -0, 0.00197, -0.370928, 0.70119, 
-              0.330262, 0.00197, 0, 0, 0.349066, 0, -0.349066, -0.349066, 0, 0.349066 ]
+              5.67374e-11, 0.00197014, 0.370928, -0.70119, -0.330262, 0.00197014, -8.17847e-11, 0.00197018, -0.370928, 0.70119, 
+              0.330262, 0.00197018, 0, 0, 0.349066, 0, -0.349066, -0.349066, 0, 0.349066 ]
             initialRootPosition: [ 0, 0, 0.1605 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -54,7 +52,11 @@ items:
             selfCollisionDetection: true
             location_editable: true
             scene_sensitive: true
-            zmp: [ 0.0202, -0, 0 ]
+            link_kinematics: 
+              "WAIST": 
+                base_frame: 0
+                offset_frame: 0
+            zmp: [ 0.0202, -5.67254577e-16, 0 ]
           children: 
             - 
               id: 3
@@ -133,37 +135,75 @@ items:
             kinematicWalking: false
             2Dmode: false
             oldAccelSensorMode: false
-
 views: 
   - 
-    id: 1
+    id: 0
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 2
+    id: 1
     plugin: Base
     class: ItemTreeView
     mounted: true
+    state: 
+      expanded: [ 1, 2, 3 ]
   - 
-    id: 3
+    id: 2
+    name: "Location"
     plugin: Base
     class: LocationView
     mounted: true
+    state: 
+      show_rpy: true
+      unique_rpy: false
+      show_quoternion: false
+      show_rotation_matrix: false
+      coordinate: world
   - 
-    id: 4
+    id: 3
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 5
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
     state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      restrictCameraRoll: true
+      verticalAxis: Z
+      lightingMode: full
+      cullingMode: enabled
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.25
+      additionalLights: true
+      fog: true
       floorGrid: true
       floorGridSpan: 2
       floorGridInterval: 0.05
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      lightweightViewChange: false
+      coordinateAxes: true
+      fpsTestIteration: 1
+      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -179,108 +219,76 @@ views:
           orthoHeight: 0.323817
           near: 0.01
           far: 10000
+      backgroundColor: [ 0.1, 0.1, 0.3 ]
+      gridColor: [ 0.9, 0.9, 0.9, 1 ]
+      xzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      yzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      isDedicatedItemCheckEnabled: false
   - 
-    id: 7
+    id: 5
+    plugin: Body
+    class: BodyLinkView
+    state: 
+      showRotationMatrix: false
+  - 
+    id: 6
     plugin: Body
     class: JointDisplacementView
     mounted: true
     state: 
+      show_selected_joints: false
       show_joint_ids: true
       show_joint_names: false
+      overlap_joint_names: false
+      show_sliders: true
+      show_dials: false
+      show_phases: true
+      current_body_item: 2
   - 
-    id: 8
+    id: 7
+    name: "Links / Devices"
     plugin: Body
     class: LinkDeviceListView
     mounted: true
+    state: 
+      mode: list
+      element_type: link
   - 
-    id: 9
+    id: 8
+    name: "Link Position"
     plugin: Body
     class: LinkPositionView
     mounted: true
+    state: 
+      coordinate_mode: world
+      preferred_coordinate_mode: base
+      show_rpy: true
+      unique_rpy: false
+      show_quoternion: false
+      show_rotation_matrix: false
+      target_link_type: ik_link
   - 
-    id: 10
+    id: 9
+    name: "Link Properties"
     plugin: Body
     class: LinkPropertyView
     mounted: true
   - 
-    id: 11
-    plugin: Python
-    class: PythonConsoleView
-    mounted: true
-  - 
-    id: 12
+    id: 10
+    name: "Pose Roll"
     plugin: PoseSeq
     class: PoseRollView
     mounted: true
-
-Body: 
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showZmp: true
-
-viewAreas: 
-  - 
-    type: embedded
-    tabs: true
-    contents: 
-      type: splitter
-      orientation: horizontal
-      sizes: [ 400, 100 ]
-      children: 
-        - 
-          type: splitter
-          orientation: horizontal
-          sizes: [ 140, 400 ]
-          children: 
-            - 
-              type: splitter
-              orientation: vertical
-              sizes: [ 100, 100 ]
-              children: 
-                - 
-                  type: pane
-                  views: [ 2 ]
-                - 
-                  type: pane
-                  views: [ 1, 10 ]
-                  current: 1
-            - 
-              type: splitter
-              orientation: vertical
-              sizes: [ 300, 100 ]
-              children: 
-                - 
-                  type: pane
-                  views: [ 5 ]
-                - 
-                  type: pane
-                  views: [ 4, 11, 12 ]
-                  current: 12
-        - 
-          type: splitter
-          orientation: vertical
-          sizes: [ 1, 600 ]
-          children: 
-            - 
-              type: pane
-              views: [ 3 ]
-            - 
-              type: splitter
-              orientation: vertical
-              sizes: [ 1, 400 ]
-              children: 
-                - 
-                  type: pane
-                  views: [ 9 ]
-                - 
-                  type: pane
-                  views: [ 8, 7 ]
-                  current: 7
+    state: 
+      currentPoseSeqItem: 4
+      defaultTransitionTime: 0
+      updateAll: true
+      autoUpdate: false
+      timeSync: true
+      timeLength: 10
+      showLipSync: false
+      gridInterval: 1
 toolbars: 
-  "TimeBar": 
-    frameRate: 200
   "BodyMotionGenerationBar": 
     autoGenerationForNewBody: true
     balancer: true
@@ -314,9 +322,115 @@ toolbars:
     waistHeightRelaxation: false
     gravity: 9.8
     dynamicsTimeRatio: 1
-
+  "TimeBar": 
+    minTime: 0
+    maxTime: 30
+    frameRate: 200
+    playbackFrameRate: 60
+    idleLoopDrivenMode: false
+    currentTime: 0
+    speedScale: 1
+    syncToOngoingUpdates: true
+    autoExpansion: true
+  "LeggedBodyBar": 
+    stanceWidth: 0.15
+  "KinematicsBar": 
+    forward_kinematics: true
+    inverse_kinematics: true
+    preset_kinematics: true
+    enablePositionDragger: true
+    penetrationBlock: false
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+Body: 
+  "BodyMotionEngine": 
+    updateJointVelocities: false
+  "BodySelectionManager": 
+    currentBodyItem: 2
+    currentLink: "WAIST"
+  "EditableSceneBody": 
+    editableSceneBodies: 
+      - 
+        bodyItem: 2
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: true
+  "KinematicFaultChecker": 
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
+viewAreas: 
+  - 
+    type: embedded
+    tabs: true
+    contents: 
+      type: splitter
+      orientation: horizontal
+      sizes: [ 1454, 462 ]
+      children: 
+        - 
+          type: splitter
+          orientation: horizontal
+          sizes: [ 376, 1074 ]
+          children: 
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 437, 436 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 1 ]
+                - 
+                  type: pane
+                  views: [ 0, 9 ]
+                  current: 0
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 655, 218 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 4 ]
+                - 
+                  type: pane
+                  views: [ 3, 10 ]
+                  current: 10
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 163, 710 ]
+          children: 
+            - 
+              type: pane
+              views: [ 2 ]
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 284, 422 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 8 ]
+                - 
+                  type: pane
+                  views: [ 7, 6 ]
+                  current: 6
 layoutOfToolBars: 
-  rows:
+  rows: 
     - 
       - { name: "FileBar", x: 0, priority: 0 }
       - { name: "ScriptBar", x: 0, priority: 1 }
@@ -329,3 +443,4 @@ layoutOfToolBars:
       - { name: "SceneBar", x: 0, priority: 2 }
       - { name: "GraphBar", x: 0, priority: 3 }
       - { name: "CaptureBar", x: 0, priority: 4 }
+      - { name: "MovieRecorderBar", x: 1239, priority: 0 }

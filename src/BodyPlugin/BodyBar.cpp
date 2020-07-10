@@ -48,30 +48,30 @@ BodyBar::Impl::Impl(BodyBar* self)
 {
     self->setVisibleByDefault(true);
 
-    self->addButton(QIcon(":/Body/icons/storepose.png"), _("Memory the current pose"))
+    self->addButton(QIcon(":/Body/icons/storepose.svg"), _("Memory the current pose"))
         ->sigClicked().connect([&](){ onCopyButtonClicked(); });
 
-    self->addButton(QIcon(":/Body/icons/restorepose.png"), _("Recall the memorized pose"))
+    self->addButton(QIcon(":/Body/icons/restorepose.svg"), _("Recall the memorized pose"))
         ->sigClicked().connect([&](){ onPasteButtonClicked(); });
     
-    self->addButton(QIcon(":/Body/icons/origin.png"), _("Move the selected bodies to the origin"))
+    self->addButton(QIcon(":/Body/icons/origin.svg"), _("Move the selected bodies to the origin"))
         ->sigClicked().connect([&](){ onOriginButtonClicked(); });
 
-    self->addButton(QIcon(":/Body/icons/initialpose.png"), _("Set the preset initial pose to the selected bodies"))
+    self->addButton(QIcon(":/Body/icons/initialpose.svg"), _("Set the preset initial pose to the selected bodies"))
         ->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::INITIAL_POSE); });
 
-    self->addButton(QIcon(":/Body/icons/stdpose.png"), _("Set the preset standard pose to the selected bodies"))
+    self->addButton(QIcon(":/Body/icons/stdpose.svg"), _("Set the preset standard pose to the selected bodies"))
         ->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::STANDARD_POSE); });
 
     self->addSeparator();
 
-    self->addButton(QIcon(":/Body/icons/right-to-left.png"), _("Copy the right side pose to the left side"))
+    self->addButton(QIcon(":/Body/icons/right-to-left.svg"), _("Copy the right side pose to the left side"))
         ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(1, false); });
 
-    self->addButton(QIcon(":/Body/icons/flip.png"), _("Mirror copy"))
+    self->addButton(QIcon(":/Body/icons/flip.svg"), _("Mirror copy"))
         ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, true); });
 
-    self->addButton(QIcon(":/Body/icons/left-to-right.png"), _("Copy the left side pose to the right side"))
+    self->addButton(QIcon(":/Body/icons/left-to-right.svg"), _("Copy the left side pose to the right side"))
         ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, false); });
 
     bodySelectionManager = BodySelectionManager::instance();

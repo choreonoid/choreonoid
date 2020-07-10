@@ -53,26 +53,26 @@ SimulationBar::SimulationBar()
 {
     setVisibleByDefault(true);    
     
-    addButton(QIcon(":/Body/icons/store-world-initial.png"),
+    addButton(QIcon(":/Body/icons/store-world-initial.svg"),
               _("Store body positions to the initial world state"))->
         sigClicked().connect([&](){ onStoreInitialClicked(); });
     
-    addButton(QIcon(":/Body/icons/restore-world-initial.png"),
+    addButton(QIcon(":/Body/icons/restore-world-initial.svg"),
               _("Restore body positions from the initial world state"))->
         sigClicked().connect([&](){ onRestoreInitialClicked(); });
 
-    addButton(QIcon(":/Body/icons/start-simulation.png"), _("Start simulation from the beginning"))->
+    addButton(QIcon(":/Body/icons/start-simulation.svg"), _("Start simulation from the beginning"))->
         sigClicked().connect([&](){ startSimulation(true); });
 
-    addButton(QIcon(":/Body/icons/restart-simulation.png"),
+    addButton(QIcon(":/Body/icons/restart-simulation.svg"),
               _("Start simulation from the current state"))->
         sigClicked().connect([&](){ startSimulation(false); });
     
-    pauseToggle = addToggleButton(QIcon(":/Body/icons/pause-simulation.png"), _("Pause simulation"));
+    pauseToggle = addToggleButton(QIcon(":/Body/icons/pause-simulation.svg"), _("Pause simulation"));
     pauseToggle->sigClicked().connect([&](){ onPauseSimulationClicked(); });
     pauseToggle->setChecked(false);
 
-    addButton(QIcon(":/Body/icons/stop-simulation.png"), _("Stop simulation"))->
+    addButton(QIcon(":/Body/icons/stop-simulation.svg"), _("Stop simulation"))->
         sigClicked().connect([&](){ onStopSimulationClicked(); });
 
 }

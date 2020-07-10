@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   style="enable-background:new 0 0 24 24;"
+   viewBox="0 0 24 24"
+   y="0px"
+   x="0px"
+   id="レイヤー_1"
+   version="1.1"><metadata
+   id="metadata25"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs23" />
+<style
+   id="style2"
+   type="text/css">
+	.st0{fill:#F1F0EF;}
+	.st1{fill:#9E9E9F;}
+	.st2{fill:#036EB7;}
+	.st3{fill:#E50012;}
+</style>
+
+<rect
+   style="fill:#9e9e9f;stroke-width:1.1347549"
+   id="rect6"
+   height="1.1320754"
+   width="23.772512"
+   class="st1"
+   y="13.698112"
+   x="-2.4424907e-15" />
+<rect
+   style="fill:#9e9e9f;stroke-width:1.1347549"
+   id="rect8"
+   height="0.4528302"
+   width="23.772512"
+   class="st1"
+   y="16.981131"
+   x="-2.4424907e-15" />
+<rect
+   style="fill:#9e9e9f;stroke-width:1.1347549"
+   id="rect10"
+   height="0.4528302"
+   width="23.772512"
+   class="st1"
+   y="19.924528"
+   x="-2.4424907e-15" />
+<rect
+   style="fill:#9e9e9f;stroke-width:1.1347549"
+   id="rect12"
+   height="1.1320754"
+   width="23.772512"
+   class="st1"
+   y="22.528301"
+   x="0.22748825" />
+
+
+
+<path
+   style="fill:#e50012;fill-opacity:1;stroke:#e50012;stroke-width:0.85513204;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+   d="m 12.000047,13.140988 11.572479,-7.4804328 -7.679481,0.00106 0.0092,-5.23402907 -7.8134903,0.001065 -0.00941,5.23402227 -7.65188713,5.335e-4 z"
+   id="path4692-0-2" /><path
+   id="path4475-2"
+   d="m 1.0489668,18.707308 c 0.5903329,-1.045705 1.589585,-4.097449 3.2040966,-4.064475 2.8497573,0.05819 2.5642141,8.218815 5.0781995,8.198082 2.3894681,-0.01971 2.2949311,-8.126251 5.5581621,-8.150348 2.612522,-0.01929 2.629351,8.148837 5.273614,8.125056 1.826241,-0.0164 2.019708,-2.79149 2.743776,-4.408245"
+   style="fill:none;stroke:#036eb7;stroke-width:2.37624025;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></svg>

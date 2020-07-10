@@ -264,8 +264,8 @@ TimeBar::TimeBar()
 TimeBarImpl::TimeBarImpl(TimeBar* self)
     : self(self),
       os(MessageView::mainInstance()->cout()),
-      resumeIcon(QIcon(":/Base/icons/resume.png")),
-      stopIcon(QIcon(":/Base/icons/stop.png"))
+      resumeIcon(QIcon(":/Base/icons/resume.svg")),
+      stopIcon(QIcon(":/Base/icons/stop.svg"))
 {
     self->setVisibleByDefault(true);
     self->setStretchable(true);
@@ -281,14 +281,14 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     fillLevel = 0;
     isFillLevelActive = false;
 
-    self->addButton(QIcon(":/Base/icons/play.png"), _("Start animation"))
+    self->addButton(QIcon(":/Base/icons/play.svg"), _("Start animation"))
         ->sigClicked().connect([&](){ onPlayActivated(); });
 
     stopResumeButton = self->addButton(resumeIcon, _("Resume animation"));
     stopResumeButton->setIcon(resumeIcon);
     stopResumeButton->sigClicked().connect([&](){ onResumeActivated(); });
 
-    self->addButton(QIcon(":/Base/icons/refresh.png"), _("Refresh state at the current time"))
+    self->addButton(QIcon(":/Base/icons/refresh.svg"), _("Refresh state at the current time"))
         ->sigClicked().connect([&](){ onRefreshButtonClicked(); });
     
     timeSpin = new DoubleSpinBox();
@@ -315,7 +315,7 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     maxTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
     self->addWidget(maxTimeSpin);
 
-    self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
+    self->addButton(QIcon(":/Base/icons/setup.svg"), _("Show the config dialog"))
         ->sigClicked().connect([&](){ config.show(); });
 
     config.frameRateSpin.sigValueChanged().connect([&](int value){ onFrameRateSpinChanged(value); });

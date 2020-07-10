@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   style="enable-background:new 0 0 24 24;"
+   viewBox="0 0 24 24"
+   y="0px"
+   x="0px"
+   id="レイヤー_1"
+   version="1.1"><metadata
+   id="metadata21"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs19" />
+<style
+   id="style2"
+   type="text/css">
+	.st0{fill:#F1F0EF;}
+	.st1{fill:#595757;}
+	.st2{fill:#E50012;}
+</style>
+
+<g
+   transform="matrix(1.1881188,0,0,1.1707317,-0.47524752,-1.4048781)"
+   id="g10">
+	<path
+   style="fill:#595757"
+   id="path6"
+   d="M 12.4,16.7 C 2.1,19.7 2,19.8 1.8,20 l 0.7,0.9 0.3,0.8 c 0.5,-0.2 5.7,-1.7 10.1,-3.1 -0.3,-0.5 -0.5,-1.2 -0.5,-1.9 0,0 0,0 0,0 z"
+   class="st1" />
+	<path
+   style="fill:#595757"
+   id="path8"
+   d="M 17.5,14.1 20.6,3.4 18.7,2.8 15.6,13.5 c 0,0 0.1,0 0.1,0 0.6,0 1.3,0.2 1.8,0.6 z"
+   class="st1" />
+</g>
+<path
+   style="fill:#e50012;stroke-width:1.17939329"
+   id="path12"
+   d="m 21.386139,18.146341 c 0,1.756098 -1.425743,3.27805 -3.326733,3.27805 -1.782178,0 -3.326732,-1.404878 -3.326732,-3.27805 0,-1.756097 1.425742,-3.278048 3.326732,-3.278048 1.90099,0.117073 3.326733,1.521951 3.326733,3.278048"
+   class="st2" />
+<path
+   style="fill:#e50012;stroke-width:1.17939329"
+   id="path14"
+   d="m 16.871287,0 h -3.326732 l 2.613861,3.1609756 C 9.5049505,4.097561 4.2772277,9.0146341 3.089109,15.336585 L 0.71287129,12.643902 0,15.804878 3.4455445,19.785366 8.3168317,17.560976 9.029703,14.4 5.3465346,16.156098 C 6.1782178,10.887805 10.336633,6.6731707 15.683168,5.7365854 l -2.019801,2.6926829 h 3.326732 L 20.19802,4.2146341 Z"
+   class="st2" />
+</svg>

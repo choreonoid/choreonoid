@@ -2,35 +2,36 @@
 <RCC version="1.0">
 <qresource prefix="/Body" >
 
-  <file>icons/fkik.png</file>
-  <file>icons/fk.png</file>
-  <file>icons/ik.png</file>
-  <file>icons/rotation.png</file>
-  <file>icons/block.png</file>
-  <file>icons/collisionoutline.png</file>
+  <file>icons/fk.svg</file>
+  <file>icons/fkik.svg</file>
+  <file>icons/ik.svg</file>
+  <file>icons/rotation.svg</file>
+  <file>icons/block.svg</file>
+  <file>icons/collisionoutline.svg</file>
 
-  <file>icons/storepose.png</file>
-  <file>icons/restorepose.png</file>
-  <file>icons/origin.png</file>
-  <file>icons/initialpose.png</file>
-  <file>icons/stdpose.png</file>
-  <file>icons/right-to-left.png</file>
-  <file>icons/left-to-right.png</file>
-  <file>icons/flip.png</file>
-  <file>icons/center-cm.png</file>
-  <file>icons/zmp-to-cm.png</file>
-  <file>icons/cm-to-zmp.png</file>
-  <file>icons/center-zmp.png</file>
-  <file>icons/left-zmp.png</file>
-  <file>icons/right-zmp.png</file>
-  <file>icons/stancelength.png</file>
+  <file>icons/storepose.svg</file>
+  <file>icons/restorepose.svg</file>
+  <file>icons/origin.svg</file>
+  <file>icons/initialpose.svg</file>
+  <file>icons/stdpose.svg</file>
+  <file>icons/right-to-left.svg</file>
+  <file>icons/left-to-right.svg</file>
+  <file>icons/flip.svg</file>
+  
+  <file>icons/center-cm.svg</file>
+  <file>icons/zmp-to-cm.svg</file>
+  <file>icons/cm-to-zmp.svg</file>
+  <file>icons/center-zmp.svg</file>
+  <file>icons/left-zmp.svg</file>
+  <file>icons/right-zmp.svg</file>
+  <file>icons/stancelength.svg</file>
 
-  <file>icons/start-simulation.png</file>
-  <file>icons/restart-simulation.png</file>
-  <file>icons/stop-simulation.png</file>
-  <file>icons/pause-simulation.png</file>
-  <file>icons/store-world-initial.png</file>
-  <file>icons/restore-world-initial.png</file>
+  <file>icons/store-world-initial.svg</file>
+  <file>icons/restore-world-initial.svg</file>
+  <file>icons/start-simulation.svg</file>
+  <file>icons/restart-simulation.svg</file>
+  <file>icons/stop-simulation.svg</file>
+  <file>icons/pause-simulation.svg</file>
 
 </qresource>
 </RCC>

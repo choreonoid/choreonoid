@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   style="enable-background:new 0 0 24 24;"
+   viewBox="0 0 24 24"
+   y="0px"
+   x="0px"
+   id="レイヤー_1"
+   version="1.1"><metadata
+   id="metadata27"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs25">
+	
+	
+	
+</defs>
+<style
+   id="style2"
+   type="text/css">
+	.st0{fill:#F1F0EF;}
+	.st1{fill:#E50012;}
+	.st2{fill:#595757;}
+</style>
+
+<path
+   style="fill:#e50012;stroke-width:1.02385294"
+   id="path6"
+   d="m 15.609476,13.765894 c 0,1.559199 -1.21017,2.910505 -2.823729,2.910505 -1.512712,0 -2.8237282,-1.24736 -2.8237282,-2.910505 0,-1.559198 1.2101692,-2.910504 2.8237282,-2.910504 1.613559,0.103951 2.823729,1.351306 2.823729,2.910504"
+   class="st1" />
+<path
+   class="st2"
+   d="M 10.826675,11.008833 7.4987176,8.5299695 C 7.2970227,9.3187006 6.8936329,9.8820746 6.2885481,10.332777 L 9.5156636,12.81165 C 9.8182024,12.022918 10.22159,11.459538 10.826675,11.008833 Z"
+   id="path8"
+   style="fill:#595757;stroke-width:1.06597817" /><path
+   class="st2"
+   d="m 11.554529,17 v 7.000001 h 2.34054 V 17 c -0.351081,0.14 -0.702162,0.28 -1.17027,0.28 -0.468108,0 -0.81919,-0.14 -1.17027,-0.28 z"
+   id="path10"
+   style="fill:#595757;stroke-width:1.27999163" /><path
+   class="st2"
+   d="M 5.5247393,3.9999999 V 8.0000002e-8 H 3.5077901 V 3.9999999 c 0.3025423,-0.093023 0.6050847,-0.1860465 1.0084746,-0.1860465 0.4033898,0 0.7059322,0.093023 1.0084746,0.1860465 z"
+   id="path12"
+   style="fill:#595757;stroke-width:0.9685638" />
+<path
+   style="fill:#e50012;stroke-width:1.02349174"
+   id="path16"
+   d="m 7.3399934,7.2286388 c 0,1.5580994 -1.2101695,2.9084412 -2.8237289,2.9084412 -1.5127118,0 -2.8237288,-1.2464695 -2.8237288,-2.9084412 0,-1.5580986 1.2101695,-2.9084506 2.8237288,-2.9084506 1.5127119,0 2.8237289,1.350352 2.8237289,2.9084506"
+   class="st1" />
+<polygon
+   style="fill:#e50012"
+   transform="matrix(1.0084746,0,0,1.19024,-0.00169492,-2.4233283)"
+   id="polygon18"
+   points="20.2,19.6 18.2,22.2 21,22.2 23.8,18.6 21,15.1 18.2,15.1 20.2,17.6 15.9,17.6 15.9,19.6 "
+   class="st1" />
+<polygon
+   style="fill:#e50012"
+   transform="matrix(1.0084746,0,0,1.1902399,1.1128971,-2.4233269)"
+   id="polygon20"
+   points="3,22.2 5.8,22.2 3.8,19.6 8.1,19.6 8.1,17.6 3.8,17.6 5.8,15.1 3,15.1 0.2,18.6 "
+   class="st1" />
+</svg>

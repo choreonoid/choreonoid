@@ -27,8 +27,8 @@ ScriptBar::ScriptBar()
 {
     setVisibleByDefault(true);
     
-    addButton(QIcon(":/Base/icons/script.png"), _("Execute scripts"))
-        ->sigClicked().connect(std::bind(&ScriptBar::executeCheckedScriptItems, this));
+    addButton(QIcon(":/Base/icons/script.svg"), _("Execute scripts"))
+        ->sigClicked().connect([&](){ executeCheckedScriptItems(); });
 }
 
 

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   style="enable-background:new 0 0 24 24;"
+   viewBox="0 0 24 24"
+   y="0px"
+   x="0px"
+   id="レイヤー_1"
+   version="1.1"><metadata
+   id="metadata27"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs25">
+	
+	
+</defs>
+<style
+   id="style2"
+   type="text/css">
+	.st0{fill:#F1F0EF;}
+	.st1{fill:#595757;}
+	.st2{fill:#036EB7;}
+</style>
+
+
+
+
+
+
+<rect
+   id="rect6"
+   height="1.1320755"
+   width="10.867926"
+   class="st1"
+   y="4.301887"
+   x="9.5094337"
+   style="fill:#595757;stroke-width:1.13207555" /><rect
+   id="rect8"
+   height="1.1320755"
+   width="10.867926"
+   class="st1"
+   y="11.433963"
+   x="9.5094337"
+   style="fill:#595757;stroke-width:1.13207555" /><rect
+   id="rect10"
+   height="1.1320755"
+   width="10.867926"
+   class="st1"
+   y="15.056604"
+   x="9.5094337"
+   style="fill:#595757;stroke-width:1.13207555" /><rect
+   id="rect12"
+   height="1.1320755"
+   width="10.867926"
+   class="st1"
+   y="18.566038"
+   x="9.5094337"
+   style="fill:#595757;stroke-width:1.13207555" /><path
+   id="polygon14"
+   d="M 6,14.72942 V 23.2 H 22 V 2 H 6 v 2.0534654 l 2,1.3 V 4 H 20 V 21.2 H 8 v -7.77058 z"
+   style="fill:#595757;fill-opacity:1"
+   transform="matrix(1.1320755,0,0,1.1320755,-0.90566042,-2.2641509)" /><path
+   style="fill:#595757;stroke-width:1.13207555"
+   class="st1"
+   d="m 20.244776,7.811321 h -6.62112 c 0.113207,0.2264151 0.226415,0.3396227 0.226415,0.5660378 0,0.2264151 0,0.3396227 -0.113208,0.5660377 h 6.621121 V 7.811321 Z"
+   id="path16" /><path
+   id="path20"
+   d="M -2e-8,1.4716982 V 15.509434 c 0,0.679246 0.79245285,1.132076 1.35849062,0.679246 L 12.905661,8.830189 c 0.339622,-0.2264151 0.339622,-0.6792453 0,-0.9056604 L 1.245283,0.6792454 C 0.67924528,0.33962275 -2e-8,0.79245295 -2e-8,1.4716982"
+   class="st2"
+   style="fill:#036eb7;stroke-width:1.13207555" />
+</svg>

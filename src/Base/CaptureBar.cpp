@@ -192,7 +192,7 @@ CaptureBar* CaptureBar::instance()
 CaptureBar::CaptureBar()
     : ToolBar(N_("CaptureBar"))
 {
-    addButton(QIcon(":/Base/icons/scenecapture.png"), _("Capture the image of a view or toolbar"))
+    addButton(QIcon(":/Base/icons/scenecapture.svg"), _("Capture the image of a view or toolbar"))
         ->sigClicked().connect(
             std::bind(static_cast<void(CaptureBar::*)()>(&CaptureBar::grabMouse), this));
 }

@@ -344,7 +344,7 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
     setup = new BodyMotionGenerationSetupDialog();
     balancer = 0;
 
-    addButton(QIcon(":/PoseSeq/icons/trajectory-generation.png"), _("Generate body motions"))
+    addButton(QIcon(":/PoseSeq/icons/trajectory-generation.svg"), _("Generate body motions"))
         ->sigClicked().connect([&](){ onGenerationButtonClicked(); });
 
     interpolationParameterWidgetsConnection.add(
@@ -365,14 +365,14 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
             [&](bool){ notifyInterpolationParametersChanged(); }));
     
     autoGenerationToggle =
-        addToggleButton(QIcon(":/PoseSeq/icons/auto-update.png"), _("Automatic Balance Adjustment Mode"));
+        addToggleButton(QIcon(":/PoseSeq/icons/auto-update.svg"), _("Automatic Balance Adjustment Mode"));
     autoGenerationToggle->setChecked(false);
     
-    balancerToggle = addToggleButton(QIcon(":/PoseSeq/icons/balancer.png"), _("Enable the balancer"));
+    balancerToggle = addToggleButton(QIcon(":/PoseSeq/icons/balancer.svg"), _("Enable the balancer"));
     balancerToggle->setEnabled(false);
     balancerToggle->setChecked(false);
 
-    addButton(QIcon(":/Base/icons/setup.png"))
+    addButton(QIcon(":/Base/icons/setup.svg"))
         ->sigClicked().connect(std::bind(&BodyMotionGenerationSetupDialog::show, setup));
     
     interpolationParameterWidgetsConnection.add(

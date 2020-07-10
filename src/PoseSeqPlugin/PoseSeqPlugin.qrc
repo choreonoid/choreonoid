@@ -2,9 +2,9 @@
 <RCC version="1.0">
 <qresource prefix="/PoseSeq" >
 
-  <file>icons/trajectory-generation.png</file>
-  <file>icons/auto-update.png</file>
-  <file>icons/balancer.png</file>
+  <file>icons/trajectory-generation.svg</file>
+  <file>icons/auto-update.svg</file>
+  <file>icons/balancer.svg</file>
 
 </qresource>
 </RCC>

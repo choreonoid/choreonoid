@@ -85,15 +85,15 @@ KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
     
     setup = new KinematicsBarSetupDialog();
     
-    fkToggle = self->addToggleButton(QIcon(":/Body/icons/fk.png"), _("Enable forward kinematics"));
+    fkToggle = self->addToggleButton(QIcon(":/Body/icons/fk.svg"), _("Enable forward kinematics"));
     fkToggle->setChecked(true);
-    presetToggle = self->addToggleButton(QIcon(":/Body/icons/fkik.png"), _("Use preset Kinematics"));
+    presetToggle = self->addToggleButton(QIcon(":/Body/icons/fkik.svg"), _("Use preset Kinematics"));
     presetToggle->setChecked(true);
-    ikToggle = self->addToggleButton(QIcon(":/Body/icons/ik.png"), _("Enable inverse kinematics"));
+    ikToggle = self->addToggleButton(QIcon(":/Body/icons/ik.svg"), _("Enable inverse kinematics"));
     ikToggle->setChecked(true);
     self->addSeparator(2);
 
-    draggerToggle = self->addToggleButton(QIcon(":/Body/icons/rotation.png"), _("Enable link orientation editing"));
+    draggerToggle = self->addToggleButton(QIcon(":/Body/icons/rotation.svg"), _("Enable link orientation editing"));
     draggerToggle->setChecked(true);
 
     /*
@@ -106,15 +106,15 @@ KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
       jointPositionLimitToggle->setChecked(true);
     */
     
-    penetrationBlockToggle = self->addToggleButton(QIcon(":/Body/icons/block.png"), _("Penetration block mode"));
+    penetrationBlockToggle = self->addToggleButton(QIcon(":/Body/icons/block.svg"), _("Penetration block mode"));
     penetrationBlockToggle->setChecked(false);
 
-    collisionLinkHighlightToggle = self->addToggleButton(QIcon(":/Body/icons/collisionoutline.png"), _("Highlight colliding links"));
+    collisionLinkHighlightToggle = self->addToggleButton(QIcon(":/Body/icons/collisionoutline.svg"), _("Highlight colliding links"));
     collisionLinkHighlightToggle->setChecked(false);
     collisionLinkHighlightToggle->sigToggled().connect(
         std::bind(&KinematicsBarImpl::onCollisionVisualizationChanged, this));
 
-    self->addButton(QIcon(":/Base/icons/setup.png"))
+    self->addButton(QIcon(":/Base/icons/setup.svg"))
         ->sigClicked().connect(
             std::bind(&KinematicsBarSetupDialog::show, setup));
     

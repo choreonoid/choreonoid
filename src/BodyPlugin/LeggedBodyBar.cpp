@@ -48,27 +48,27 @@ LeggedBodyBarImpl::LeggedBodyBarImpl(LeggedBodyBar* self)
 {
     bodySelectionManager = BodySelectionManager::instance();
     
-    self->addButton(QIcon(":/Body/icons/center-cm.png"), _("Move the center of mass to the position where its projection corresponds to the support feet cener"))->
+    self->addButton(QIcon(":/Body/icons/center-cm.svg"), _("Move the center of mass to the position where its projection corresponds to the support feet cener"))->
         sigClicked().connect(std::bind(&LeggedBodyBarImpl::moveCM, this, BodyItem::HOME_COP));
     
-    self->addButton(QIcon(":/Body/icons/zmp-to-cm.png"), _("Move the center of mass to fit its projection to ZMP"))->
+    self->addButton(QIcon(":/Body/icons/zmp-to-cm.svg"), _("Move the center of mass to fit its projection to ZMP"))->
         sigClicked().connect(std::bind(&LeggedBodyBarImpl::moveCM, this, BodyItem::ZERO_MOMENT_POINT));
     
-    self->addButton(QIcon(":/Body/icons/cm-to-zmp.png"), _("Set ZMP to the projection of the center of mass"))
+    self->addButton(QIcon(":/Body/icons/cm-to-zmp.svg"), _("Set ZMP to the projection of the center of mass"))
         ->sigClicked().connect(std::bind(&LeggedBodyBarImpl::setZmp, this, BodyItem::CM_PROJECTION));
 
-    self->addButton(QIcon(":/Body/icons/right-zmp"), _("Set ZMP under the right foot"))
+    self->addButton(QIcon(":/Body/icons/right-zmp.svg"), _("Set ZMP under the right foot"))
         ->sigClicked().connect(std::bind(&LeggedBodyBarImpl::setZmp, this, BodyItem::RIGHT_HOME_COP));
 
-    self->addButton(QIcon(":/Body/icons/center-zmp.png"), _("Set ZMP at the center of the feet"))
+    self->addButton(QIcon(":/Body/icons/center-zmp.svg"), _("Set ZMP at the center of the feet"))
         ->sigClicked().connect(std::bind(&LeggedBodyBarImpl::setZmp, this, BodyItem::HOME_COP));
 
-    self->addButton(QIcon(":/Body/icons/left-zmp.png"), _("Set ZMP under the left foot"))
+    self->addButton(QIcon(":/Body/icons/left-zmp.svg"), _("Set ZMP under the left foot"))
         ->sigClicked().connect(std::bind(&LeggedBodyBarImpl::setZmp, this, BodyItem::LEFT_HOME_COP));
 
     self->addSeparator();
 
-    self->addButton(QIcon(":/Body/icons/stancelength.png"), _("Adjust the width between the feet"))
+    self->addButton(QIcon(":/Body/icons/stancelength.svg"), _("Adjust the width between the feet"))
         ->sigClicked().connect(std::bind(&LeggedBodyBarImpl::setStance, this));
 
     stanceWidthSpin = new DoubleSpinBox();

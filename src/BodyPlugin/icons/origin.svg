@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   style="enable-background:new 0 0 24 24;"
+   viewBox="0 0 24 24"
+   y="0px"
+   x="0px"
+   id="レイヤー_1"
+   version="1.1"><metadata
+   id="metadata29"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs27" />
+<style
+   id="style2"
+   type="text/css">
+	.st0{fill:#F1F0EF;}
+	.st1{fill:#595757;}
+	.st2{fill:#E50012;}
+</style>
+
+
+
+
+<path
+   style="fill:none;stroke:#595757;stroke-width:1.4105829;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+   d="M 11.77315,12.226849 20.463498,3.5365022"
+   id="path5172" /><path
+   id="path5142"
+   d="M 0.71533658,11.999999 H 23.284663"
+   style="fill:#000055;stroke:#595757;stroke-width:1.4105829;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1" /><path
+   id="path5144"
+   d="M 11.999999,0.71533612 V 23.284664"
+   style="fill:none;stroke:#595757;stroke-width:1.4105829;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /><circle
+   style="fill:#e50012;fill-opacity:1;stroke:none;stroke-width:0.52019495"
+   id="path5160"
+   cx="11.940003"
+   cy="11.999999"
+   r="4.4309278" /><path
+   id="path5146"
+   d="M 3.5365024,20.463497 11.77315,12.226849"
+   style="fill:none;stroke:#595757;stroke-width:1.4105829;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></svg>

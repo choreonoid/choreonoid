@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   style="enable-background:new 0 0 24 24;"
+   viewBox="0 0 24 24"
+   y="0px"
+   x="0px"
+   id="レイヤー_1"
+   version="1.1"><metadata
+   id="metadata19"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs17" />
+<style
+   id="style2"
+   type="text/css">
+	.st0{fill:#F1F0EF;}
+	.st1{fill:#C8C9CA;}
+	.st2{fill:#717071;}
+	.st3{fill:#E50012;}
+</style>
+
+<path
+   style="fill:#c8c9ca;stroke-width:1.1812489"
+   id="path6"
+   d="M 14.176745,13.75 H 13.730233 L 12.948838,5.5 c 0,-0.375 -0.334885,-0.625 -0.669768,-0.5 L 11.162791,5.125 V 5.25 C 11.051163,5.125 10.827907,5 10.604651,5 H 8.8186049 V 4.25 H 10.15814 V 0 H 7.0325584 v 15.393819 h 0.5581395 v 6.785954 0 H 7.47907 v 0 1.875 0 h 4.24186 v 0 -1.000001 c 0,-0.499999 -0.446512,-0.999999 -0.893023,-0.999999 H 10.15814 v 0 -6.785954 h 0.55814 c 0.446511,0 0.893023,-0.518819 0.893023,-1.143819 V 8.5 L 12.167442,14 H 11.832558 L 12.055815,16.5 14.4,16.25 Z"
+   class="st1" />
+<path
+   style="fill:#717071;stroke-width:1.1812489"
+   id="path8"
+   d="M 4.2418606,0 V 4.25 H 5.5813955 V 5 H 3.6837211 C 3.4604652,5 3.3488373,5.125 3.1255815,5.25 V 5.125 L 2.1209303,5 C 1.7860466,5 1.5627908,5.25 1.4511628,5.5 L 0.66976746,13.75 H 0.22325582 L 0,16.25 2.3441861,16.5 2.5674419,14 H 2.2325582 L 2.7906978,8.5 v 5.75 c 0,0.5 0.3348837,1 0.8930233,1 H 4.2418606 V 22 c 0,0 0,0 0,0 H 3.5720931 c -0.4465116,0 -0.8930233,0.5 -0.8930233,1 v 1 c 0,0 0,0 0,0 h 4.2418606 c 0,0 0,0 0,0 v -1.874999 c 0,0 0,0 0,0 H 6.6976746 c 0,0 0,0 0,0 v -6.75 H 7.0325584 V 0 Z"
+   class="st2" />
+<polygon
+   style="fill:#e50012"
+   transform="matrix(1.1162791,0,0,1.25,-1.1162791,-2.875)"
+   id="polygon10"
+   points="13.4,18.8 20.5,18.8 20.5,7.5 13.4,7.5 13.4,10 11.4,10 11.4,5.5 22.5,5.5 22.5,20.8 11.4,20.8 11.4,13.8 13.4,13.8 "
+   class="st3" />
+<polygon
+   style="fill:#e50012"
+   transform="matrix(1.1162791,0,0,1.25,-1.1162791,-2.875)"
+   id="polygon12"
+   points="7.6,13 16,13 14.7,14.5 17.1,14.5 19.1,12 17.1,9.5 14.7,9.5 16,11 7.6,11 "
+   class="st3" />
+</svg>

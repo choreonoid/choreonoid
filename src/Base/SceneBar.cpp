@@ -135,12 +135,12 @@ void SceneBarImpl::initialize()
     config = AppConfig::archive()->openMapping("SceneBar");
     
     editModeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/sceneedit.png"), _("Switch to the edit mode"));
+        QIcon(":/Base/icons/sceneedit.svg"), _("Switch to the edit mode"));
     editModeToggle->sigToggled().connect(
         [&](bool on){ onEditModeButtonToggled(on); });
 
     firstPersonModeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/walkthrough.png"), _("First-person viewpoint control mode"));
+        QIcon(":/Base/icons/walkthrough.svg"), _("First-person viewpoint control mode"));
     firstPersonModeToggle->sigToggled().connect(
         [&](bool on){ onFirstPersonModeButtonToggled(on); });
 
@@ -152,39 +152,42 @@ void SceneBarImpl::initialize()
         [&](int index){ onCameraComboCurrentIndexChanged(index); });
     self->addWidget(cameraCombo);
 
-    self->addButton(QIcon(":/Base/icons/viewfitting.png"), _("Move the camera to look at the objects"))
+    self->addButton(QIcon(":/Base/icons/viewfitting.svg"), _("Move the camera to look at the objects"))
         ->sigClicked().connect([&](){
                 targetSceneWidget->viewAll();
                 targetSceneWidget->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
             });
 
     wireframeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/wireframe.png"), _("Toggle the wireframe mode"));
+        QIcon(":/Base/icons/wireframe.svg"), _("Toggle the wireframe mode"));
     wireframeToggle->sigToggled().connect(
         [&](bool on){ onWireframeButtonToggled(on); });
 
-    visualModelToggle = self->addToggleButton("V", _("Show visual models"));
+    visualModelToggle = self->addToggleButton(
+        QIcon(":/Base/icons/visualshape.svg"), _("Show visual models"));
     visualModelToggle->setChecked(true);
     visualModelToggle->sigToggled().connect(
         [&](bool){ updateCollisionModelVisibility(); });
 
-    modelTypeFlipButton = self->addButton("F", _("Flip active model types"));
+    modelTypeFlipButton = self->addButton(
+        QIcon(":/Base/icons/shapeflip.svg"), _("Flip active model types"));
     modelTypeFlipButton->sigClicked().connect(
         [&](){ flipVisibleModels(); });
 
-    collisionModelToggle = self->addToggleButton("C", _("Show the collision detection models"));
+    collisionModelToggle = self->addToggleButton(
+        QIcon(":/Base/icons/collisionshape.svg"), _("Show the collision detection models"));
     collisionModelToggle->sigToggled().connect(
         [&](bool){ updateCollisionModelVisibility(); });
     
     collisionLineToggle = self->addToggleButton(
-        QIcon(":/Base/icons/collisionlines.png"), _("Toggle the collision line visibility"));
+        QIcon(":/Base/icons/collisionlines.svg"), _("Toggle the collision line visibility"));
     collisionLineToggle->sigToggled().connect(
         [&](bool on){ onCollisionLineButtonToggled(on); });
 
     isCollisionVisualizationButtonSetVisible = config->get("collisionButtonSet", false);
     self->setCollisionVisualizationButtonSetVisible(isCollisionVisualizationButtonSetVisible);
     
-    self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
+    self->addButton(QIcon(":/Base/icons/setup.svg"), _("Show the config dialog"))
         ->sigClicked().connect([&](){ targetSceneWidget->showConfigDialog(); });
 
     SceneWidget::sigSceneWidgetCreated().connect(

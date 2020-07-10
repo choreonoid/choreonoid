@@ -2,35 +2,40 @@
 <RCC version="1.0">
   <qresource prefix="/Base" >
 
-    <file>icons/choreonoid48.png</file>
-    <file>icons/choreonoid32.png</file>
+    <file>icons/choreonoid.svg</file>
 
-    <file>icons/setup.png</file>
+    <file>icons/setup.svg</file>
 
-    <file>icons/projectsave.png</file>
+    <file>icons/projectsave.svg</file>
 
-    <file>icons/play.png</file>
-    <file>icons/resume.png</file>
-    <file>icons/stop.png</file>
-    <file>icons/refresh.png</file>
+    <file>icons/play.svg</file>
+    <file>icons/resume.svg</file>
+    <file>icons/stop.svg</file>
+    <file>icons/refresh.svg</file>
 
-    <file>icons/script.png</file>
+    <file>icons/script.svg</file>
 
-    <file>icons/sceneedit.png</file>
-    <file>icons/walkthrough.png</file>
-    <file>icons/viewfitting.png</file>
-    <file>icons/perspective.png</file>
-    <file>icons/floorgrid.png</file>
-    <file>icons/collisionlines.png</file>
-    <file>icons/wireframe.png</file>
-    <file>icons/scenecapture.png</file>
+    <file>icons/sceneedit.svg</file>
+    <file>icons/walkthrough.svg</file>
+    <file>icons/viewfitting.svg</file>
+    <file>icons/wireframe.svg</file>
+    <file>icons/visualshape.svg</file>
+    <file>icons/shapeflip.svg</file>
+    <file>icons/collisionshape.svg</file>
+    <file>icons/collisionlines.svg</file>
+    
+    <file>icons/scenecapture.svg</file>
 
-    <file>icons/graph.png</file>
-    <file>icons/velocitygraph.png</file>
-    <file>icons/accgraph.png</file>
+    <file>icons/record.svg</file>
+    <file>icons/record2.svg</file>
+    <file>icons/recordtarget.svg</file>
+    
+    <file>icons/graph.svg</file>
+    <file>icons/velocitygraph.svg</file>
+    <file>icons/accgraph.svg</file>
 
     <file>icons/eraser-cursor.png</file>
-    <file>icons/adjustSize.png</file>
+    <file>icons/adjustsize.svg</file>
   
     <file>shader/nolighting.vert</file>
     <file>shader/nolighting.frag</file>

@@ -2,10 +2,10 @@
 <RCC version="1.0">
 <qresource prefix="/GRobot" >
 
-  <file>icons/grobo-logo.png</file>
-  <file>icons/servo-on.png</file>
-  <file>icons/sendpose.png</file>
-  <file>icons/syncpose.png</file>
+  <file>icons/grobo-logo.svg</file>
+  <file>icons/servo-on.svg</file>
+  <file>icons/sendpose.svg</file>
+  <file>icons/syncpose.svg</file>
 
 </qresource>
 </RCC>

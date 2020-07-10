@@ -271,7 +271,7 @@ ImageViewBarImpl::ImageViewBarImpl(ImageViewBar* self)
     imageCombo->setCurrentIndex(0);
     self->addWidget(imageCombo);
 
-    adjustSizeToggle = self->addToggleButton(QIcon(":/Base/icons/adjustSize.png"), _("Adjust image size according to view"));
+    adjustSizeToggle = self->addToggleButton(QIcon(":/Base/icons/adjustsize.svg"), _("Adjust image size according to view"));
     adjustSizeToggle->sigToggled().connect( [&](bool on){ onAdjustSizeClicked( on ); } );
     adjustSizeToggle->setChecked(true);
 
