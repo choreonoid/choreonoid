@@ -184,7 +184,7 @@ void SceneBarImpl::initialize()
     collisionLineToggle->sigToggled().connect(
         [&](bool on){ onCollisionLineButtonToggled(on); });
 
-    isCollisionVisualizationButtonSetVisible = config->get("collisionButtonSet", false);
+    isCollisionVisualizationButtonSetVisible = true;
     self->setCollisionVisualizationButtonSetVisible(isCollisionVisualizationButtonSetVisible);
     
     self->addButton(QIcon(":/Base/icons/setup.svg"), _("Show the config dialog"))
@@ -203,7 +203,7 @@ SceneBar::~SceneBar()
 
 SceneBarImpl::~SceneBarImpl()
 {
-    config->write("collisionButtonSet", isCollisionVisualizationButtonSetVisible);
+
 }
 
 

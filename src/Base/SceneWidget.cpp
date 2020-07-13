@@ -155,7 +155,6 @@ public:
     //CheckBox fpsCheck;
     PushButton fpsTestButton;
     SpinBox fpsTestIterationSpin;
-    CheckBox collisionVisualizationButtonsCheck;
     CheckBox upsideDownCheck;
 
     LazyCaller updateDefaultLightsLater;
@@ -3115,7 +3114,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
         impl->builtinPersCamera->sigUpdated().connect(
             [&](const SgUpdate&){ updateBuiltinCameraConfig(); }));
     
-    vbox->addLayout(new HSeparatorBox(new QLabel(_("Default Camera"))));
+    vbox->addLayout(new HSeparatorBox(new QLabel(_("Camera"))));
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Field of view")));
     fieldOfViewSpin.setRange(1, 179);
@@ -3154,6 +3153,13 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     verticalAxisGroup.addButton(&verticalAxisYRadio, 0);
     verticalAxisGroup.addButton(&verticalAxisZRadio, 1);
     verticalAxisZRadio.setChecked(true);
+
+    hbox->addSpacing(8);
+    upsideDownCheck.setText(_("Upside down"));
+    upsideDownCheck.setChecked(false);
+    upsideDownCheck.sigToggled().connect([=](bool on){ impl->onUpsideDownToggled(on); });
+    hbox->addWidget(&upsideDownCheck);
+    
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -3442,25 +3448,6 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     pickingImageButton->sigClicked().connect([=](){ impl->showPickingImageWindow(); });
     hbox->addWidget(pickingImageButton);
     
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-
-    hbox = new QHBoxLayout;
-    collisionVisualizationButtonsCheck.setText(_("Show collision visualization button set"));
-    collisionVisualizationButtonsCheck.setChecked(false);
-    collisionVisualizationButtonsCheck.sigToggled().connect(
-        [&](bool on){
-            auto sceneBar = SceneBar::instance();
-            sceneBar->setCollisionVisualizationButtonSetVisible(on);
-            sceneBar->toolBarArea()->layoutToolBars();
-        });
-    hbox->addWidget(&collisionVisualizationButtonsCheck);
-    
-    upsideDownCheck.setText(_("Upside down"));
-    upsideDownCheck.setChecked(false);
-    upsideDownCheck.sigToggled().connect([=](bool on){ impl->onUpsideDownToggled(on); });
-    hbox->addWidget(&upsideDownCheck);
-
     hbox->addStretch();
     vbox->addLayout(hbox);
 
