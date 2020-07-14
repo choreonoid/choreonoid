@@ -6,6 +6,7 @@
 #include "ExecutablePath.h"
 #include "UTF8.h"
 #include <cnoid/stdx/filesystem>
+#include <algorithm>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -95,9 +96,20 @@ void detectExecutableFile()
 
     executableFile_ = toUTF8(executableFile_);
 
-    executableDir_ = toUTF8(path.parent_path().string());
+    auto executableDirPath = path.parent_path();
+    executableDir_ = toUTF8(executableDirPath.string());
     
-    filesystem::path topPath = path.parent_path().parent_path();
+    auto topPath = executableDirPath;
+    while(!topPath.empty()){
+        auto iter = --topPath.end();
+        auto dir = toUTF8(iter->string());
+        std::transform(dir.begin(), dir.end(), dir.begin(), ::tolower);
+        topPath = topPath.parent_path();
+        // The executable file may be installed under the lib directory.
+        if(dir == "bin" || dir == "lib"){
+            break;
+        }
+    }
     executableTopDir_ = toUTF8(topPath.string());
 
     filesystem::path pluginPath = topPath / CNOID_PLUGIN_SUBDIR;
@@ -136,7 +148,6 @@ const std::string& executableFile()
     return executableFile_;
 }
 
-
 const std::string& executableBasename()
 {
     if(executableFile_.empty()){
@@ -144,7 +155,6 @@ const std::string& executableBasename()
     }
     return executableBasename_;
 }
-
 
 const std::string& executableDir()
 {
