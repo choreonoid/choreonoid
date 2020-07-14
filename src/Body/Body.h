@@ -46,7 +46,8 @@ public:
         
     void setRootLink(Link* link);
 
-    void expandLinkOffsetRotations();
+    [[deprecated("This func. does nothing")]]
+    void expandLinkOffsetRotations() {}
 
     /**
        This function must be called when the structure of the link tree is changed.

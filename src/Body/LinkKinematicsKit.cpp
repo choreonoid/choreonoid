@@ -388,7 +388,7 @@ Position LinkKinematicsKit::globalBasePosition() const
     if(baseFrame->isGlobal()){
         return baseFrame->T();
     } else {
-        return casted->baseLink()->Ta() * baseFrame->T();
+        return casted->baseLink()->T() * baseFrame->T();
     }
 }
     

@@ -566,7 +566,7 @@ void BodyLinkView::Impl::updateLink()
     linkIndexLabel.setText(QString::number(currentLink->index()));
     jointIdLabel.setText(QString::number(currentLink->jointId()));
 
-    Vector3 a(currentLink->Rs().transpose() * currentLink->a());
+    Vector3 a(currentLink->a());
     jointAxisLabel.setText(QString("(%1 %2 %3)").arg(a[0], 0, 'f', 4).arg(a[1], 0, 'f', 4).arg(a[2], 0, 'f', 4));
 
     if(currentLink->isRotationalJoint()){
@@ -689,7 +689,7 @@ void BodyLinkView::Impl::updateKinematicState(bool blockSignals)
                 dqLabel.setText(QString::number(currentLink->dq(), 'f', 1));
             }
 
-            const Matrix3 R = currentLink->attitude();
+            const Matrix3 R = currentLink->R();
             const Vector3 rpy = rpyFromRot(R);
 
             if(isBeingUpdatedByLinkPositionSpins){
@@ -867,7 +867,7 @@ void BodyLinkView::Impl::onRpyChanged()
         for(int i=0; i < 3; ++i){
             rpy[i] = radian(rpySpin[i].value());
         }
-        Matrix3 R = currentLink->calcRfromAttitude(rotFromRpy(rpy));
+        Matrix3 R = rotFromRpy(rpy);
 
         isBeingUpdatedByLinkPositionSpins = true;
         setPosture(R);

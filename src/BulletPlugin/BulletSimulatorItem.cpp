@@ -1127,9 +1127,9 @@ void BulletBody::setExtraJoints()
         if(bulletLinkPair[1]){
             Link* link0 = bulletLinkPair[0]->link;
             Link* link1 = bulletLinkPair[1]->link;
-            Vector3 p0 = link0->Rs() * extraJoint.point[0];  // link0 local position
-            Vector3 a = link0->Rs() * extraJoint.axis;        // link0 local axis
-            Vector3 p1 = link1->Rs() * extraJoint.point[1];  // link1 local position
+            Vector3 p0 = extraJoint.point[0];  // link0 local position
+            Vector3 a = extraJoint.axis;        // link0 local axis
+            Vector3 p1 = extraJoint.point[1];  // link1 local position
 
             if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 Vector3 u(0,0,1);

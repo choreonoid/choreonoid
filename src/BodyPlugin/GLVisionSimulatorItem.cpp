@@ -845,7 +845,7 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
                 persCamera->setFarClipDistance(cameraForRendering->farClipDistance());
                 persCamera->setFieldOfView(radian(90.0));
                 auto cameraPos = new SgPosTransform();
-                cameraPos->setTransform(camera->link()->Rs().transpose() * cameraForRendering->T_local());
+                cameraPos->setTransform(cameraForRendering->T_local());
                 cameraPos->addChild(persCamera);
                 sceneLink->addChild(cameraPos);
                 pixelWidth = cameraForRendering->resolutionX();
@@ -860,7 +860,7 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
             persCamera->setNearClipDistance(rangeSensorForRendering->minDistance());
             persCamera->setFarClipDistance(rangeSensorForRendering->maxDistance());
             auto cameraPos = new SgPosTransform();
-            cameraPos->setTransform(rangeSensor->link()->Rs().transpose() * rangeSensorForRendering->T_local());
+            cameraPos->setTransform(rangeSensorForRendering->T_local());
             cameraPos->addChild(persCamera);
             sceneLink->addChild(cameraPos);
 

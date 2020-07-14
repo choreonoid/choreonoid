@@ -105,7 +105,7 @@ public:
             isHoseConnected = true;
             isValveOpened = true;
         } else {
-            Vector3 p = hoseConnector->attitude() * hoseConnectorEndPosition + hoseConnector->translation();
+            Vector3 p = hoseConnector->R() * hoseConnectorEndPosition + hoseConnector->translation();
             double distance = (nozzle->translation() - p).norm();
             isHoseConnected = distance < 0.001;
             if(mode == 2){
@@ -162,7 +162,7 @@ public:
         Vector3 position(v.x() * t + p.x(), v.y() * t + p.y(), 0.0);
         
         Position T_nozzle;
-        T_nozzle.linear() = nozzle->attitude();
+        T_nozzle.linear() = nozzle->R();
         T_nozzle.translation() = nozzle->translation();
 
         if(marker->on()){

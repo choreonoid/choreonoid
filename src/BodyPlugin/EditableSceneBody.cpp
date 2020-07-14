@@ -1397,7 +1397,6 @@ void EditableSceneBody::Impl::onDraggerDragged()
         setForcedPosition(positionDragger->globalDraggingPosition());
     } else {
         Affine3 T = positionDragger->globalDraggingPosition();
-        T.linear() = targetLink->calcRfromAttitude(T.linear());
         doIK(T);
     }
 }
@@ -1410,7 +1409,6 @@ void EditableSceneBody::Impl::onDraggerDragFinished()
         finishForcedPosition();
     } else {
         Affine3 T = positionDragger->globalDraggingPosition();
-        T.linear() = targetLink->calcRfromAttitude(T.linear());
         doIK(T);
     }
 }

@@ -893,10 +893,6 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     body->setRootLink(rootLink);
 
     if(!isSubLoader){
-        body->expandLinkOffsetRotations();
-    }
-
-    if(!isSubLoader){
         // Warn empty joint ids
         if(numValidJointIds < validJointIdSet.size()){
             for(size_t i=0; i < validJointIdSet.size(); ++i){

@@ -359,28 +359,25 @@ Link* LinkInfo::createLink(Body* body_)
 
     if(parent){
         origin = pose * jointInfo->pose;
-        link->setOffsetTranslation(origin.translation() -
-                parent->origin.translation());
+        link->setOffsetPosition(parent->origin.inverse(Eigen::Isometry) * origin);
     }else{
         origin = pose;
-        link->setOffsetTranslation(origin.translation());
+        link->setOffsetPosition(origin);
     }
-    link->setAccumulatedSegmentRotation(origin.linear());
 
     link->setMass(m);
     Affine3 c_ = jointInfo->pose.inverse() * c;
-    link->setCenterOfMass(link->Rs() * c_.translation());
-    link->setInertia(link->Rs() * c_.linear() * I * c_.linear().transpose() * link->Rs().transpose());
+    link->setCenterOfMass(c_.translation());
+    link->setInertia(c_.linear() * I * c_.linear().transpose());
 
     setVisualShape(link);
     setCollisionShape(link);
-    link->updateShapeRs();
 
     link->setJointType( jointInfo->convertJointType() );
 
     Vector3 axis;
     jointInfo->convertAxis(axis);
-    link->setJointAxis(link->Rs() * axis);
+    link->setJointAxis(axis);
 
     double maxlimit = numeric_limits<double>::max();
     link->setJointRange(jointInfo->lower, jointInfo->upper);
@@ -400,10 +397,9 @@ Link* LinkInfo::createLink(Body* body_)
             ConvertForceSensorFrame(*it, (*it)->pose);
         }
 
-        const Matrix3& RsT = link->Rs();
         Affine3 pose0 = jointInfo->pose.inverse() * (*it)->pose;
-        device->setLocalTranslation(RsT * pose0.translation());
-        device->setLocalRotation(RsT * pose0.linear());
+        device->setLocalTranslation(pose0.translation());
+        device->setLocalRotation(pose0.linear());
         body->addDevice(device);
     }
 

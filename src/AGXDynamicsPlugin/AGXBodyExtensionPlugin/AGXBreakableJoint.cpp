@@ -382,9 +382,9 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     AGXLink* const agxLink1 = getAGXBody()->getAGXLink(jp.link1Name);
     if(!agxLink1) return;
     Link* const link1 = agxLink1->getOrgLink();
-    const Vector3 p = link1->attitude() * jp.position + link1->p();
-    const Vector3 a = link1->attitude() * jp.jointAxis;
-    jp.validAxis = agxConvert::toAGX(link1->attitude() * jp.c_validAxis);
+    const Vector3 p = link1->R() * jp.position + link1->p();
+    const Vector3 a = link1->R() * jp.jointAxis;
+    jp.validAxis = agxConvert::toAGX(link1->R() * jp.c_validAxis);
     jp.signedAxis = agxConvert::toAGX(jp.c_signedAxis);
 
     auto createConstraint = [&](AGXConstraintDesc& jd){

@@ -165,29 +165,29 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
         switch(child->jointType()){
 
         case Link::ROTATIONAL_JOINT:
-            link->R().noalias() = child->R() * AngleAxisd(child->q(), child->a()).inverse();
+            link->R().noalias() = child->R() * AngleAxisd(child->q(), child->a()).inverse() * child->Rb().transpose();
             arm.noalias() = link->R() * child->b();
             link->p().noalias() = child->p() - arm;
 
             if(calcVelocity){
-                const Vector3 sw(link->R() * child->a());
-                link->w() = child->w() - child->dq() * sw;
-                link->v() = child->v() - link->w().cross(arm);
+                const Vector3 sw(link->R() * (child->Rb() * child->a()));
+                link->w().noalias() = child->w() - child->dq() * sw;
+                link->v().noalias() = child->v() - link->w().cross(arm);
                 
                 if(calcAcceleration){
-                    link->dw() = child->dw() - child->dq() * child->w().cross(sw) - (child->ddq() * sw);
-                    link->dv() = child->dv() - child->w().cross(child->w().cross(arm)) - child->dw().cross(arm);
+                    link->dw().noalias() = child->dw() - child->dq() * child->w().cross(sw) - (child->ddq() * sw);
+                    link->dv().noalias() = child->dv() - child->w().cross(child->w().cross(arm)) - child->dw().cross(arm);
                 }
             }
             break;
             
         case Link::SLIDE_JOINT:
-            link->R() = child->R();
-            arm.noalias() = link->R() * (child->b() + child->q() * child->d());
+            link->R().noalias() = child->R() * child->Rb().transpose();
+            arm.noalias() = link->R() * (child->b() + child->Rb() * (child->q() * child->d()));
             link->p().noalias() = child->p() - arm;
 
             if(calcVelocity){
-                const Vector3 sv(link->R() * child->d());
+                const Vector3 sv(link->R() * (child->Rb() * child->d()));
                 link->w() = child->w();
                 link->v().noalias() = child->v() - child->dq() * sv;
 
@@ -202,18 +202,18 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
             
         case Link::FIXED_JOINT:
         default:
+            link->R().noalias() = child->R() * child->Rb().transpose();
             arm.noalias() = link->R() * child->b();
-            link->R() = child->R();
             link->p().noalias() = child->p() - arm;
 
             if(calcVelocity){
                 
                 link->w() = child->w();
-                link->v() = child->v() - link->w().cross(arm);
+                link->v().noalias() = child->v() - link->w().cross(arm);
 				
                 if(calcAcceleration){
                     link->dw() = child->dw();
-                    link->dv() = child->dv() - child->w().cross(child->w().cross(arm)) - child->dw().cross(arm);;
+                    link->dv().noalias() = child->dv() - child->w().cross(child->w().cross(arm)) - child->dw().cross(arm);
                 }
             }
             break;
@@ -229,12 +229,12 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
         switch(link->jointType()){
             
         case Link::ROTATIONAL_JOINT:
-            link->R().noalias() = parent->R() * AngleAxisd(link->q(), link->a());
+            link->R().noalias() = parent->R() * link->Rb() * AngleAxisd(link->q(), link->a());
             arm.noalias() = parent->R() * link->b();
             link->p().noalias() = parent->p() + arm;
 
             if(calcVelocity){
-                const Vector3 sw(parent->R() * link->a());
+                const Vector3 sw(parent->R() * (link->Rb() * link->a()));
                 link->w().noalias() = parent->w() + sw * link->dq();
                 link->v().noalias() = parent->v() + parent->w().cross(arm);
 
@@ -246,12 +246,12 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
             break;
             
         case Link::SLIDE_JOINT:
-            link->R() = parent->R();
-            arm.noalias() = parent->R() * (link->b() + link->q() * link->d());
-            link->p() = parent->p() + arm;
+            link->R().noalias() = parent->R() * link->Rb();
+            arm.noalias() = parent->R() * (link->b() + link->Rb() * (link->q() * link->d()));
+            link->p().noalias() = parent->p() + arm;
 
             if(calcVelocity){
-                const Vector3 sv(parent->R() * link->d());
+                const Vector3 sv(parent->R() * (link->Rb() * link->d()));
                 link->w() = parent->w();
                 link->v().noalias() = parent->v() + sv * link->dq();
 
@@ -265,13 +265,13 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
 
         case Link::FIXED_JOINT:
         default:
+            link->R().noalias() = parent->R() * link->Rb();
             arm.noalias() = parent->R() * link->b();
-            link->R() = parent->R();
-            link->p().noalias() = arm + parent->p();
+            link->p().noalias() = parent->p() + arm;
 
             if(calcVelocity){
                 link->w() = parent->w();
-                link->v() = parent->v() + parent->w().cross(arm);;
+                link->v().noalias() = parent->v() + parent->w().cross(arm);
 
                 if(calcAcceleration){
                     link->dw() = parent->dw();

@@ -72,7 +72,7 @@ public:
 
         VectorXd p0(6);
         p0.head<3>() = ikWrist->p();
-        p0.tail<3>() = rpyFromRot(ikWrist->attitude());
+        p0.tail<3>() = rpyFromRot(ikWrist->R());
 
         VectorXd p1(6);
         p1.head<3>() = Vector3(0.9, 0.0, 0.25);
@@ -103,7 +103,7 @@ public:
             p = wristInterpolator.interpolate(time);
 
             if(baseToWrist->calcInverseKinematics(
-                   Vector3(p.head<3>()), ikWrist->calcRfromAttitude(rotFromRpy(Vector3(p.tail<3>()))))){
+                   Vector3(p.head<3>()), rotFromRpy(Vector3(p.tail<3>())))){
                 for(int i=0; i < baseToWrist->numJoints(); ++i){
                     Link* joint = baseToWrist->joint(i);
                     qref[joint->jointId()] = joint->q();

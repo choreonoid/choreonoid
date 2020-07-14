@@ -231,9 +231,9 @@ void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
             case Link::ROTATIONAL_JOINT:
             {
                 const Vector3 arm = parent->R() * link->b();
-                link->R().noalias() = parent->R() * AngleAxisd(link->q(), link->a());
+                link->R().noalias() = parent->R() * link->Rb() * AngleAxisd(link->q(), link->a());
                 link->p().noalias() = arm + parent->p();
-                link->sw().noalias() = parent->R() * link->a();
+                link->sw().noalias() = parent->R() * (link->Rb() * link->a());
                 link->sv().noalias() = link->p().cross(link->sw());
                 link->w().noalias() = link->dq() * link->sw() + parent->w();
                 if(updateNonSpatialVariables){
@@ -246,10 +246,10 @@ void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
             }
                 
             case Link::SLIDE_JOINT:
-                link->p().noalias() = parent->R() * (link->b() + link->q() * link->d()) + parent->p();
-                link->R() = parent->R();
+                link->p().noalias() = parent->R() * (link->b() + link->Rb() * (link->q() * link->d())) + parent->p();
+                link->R().noalias() = parent->R() * link->Rb();
                 link->sw().setZero();
-                link->sv().noalias() = parent->R() * link->d();
+                link->sv().noalias() = parent->R() * (link->Rb() * link->d());
                 link->w() = parent->w();
                 if(updateNonSpatialVariables){
                     link->dw() = parent->dw();
@@ -263,7 +263,7 @@ void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
             case Link::FIXED_JOINT:
             default:
                 link->p().noalias() = parent->R() * link->b() + parent->p();
-                link->R() = parent->R();
+                link->R().noalias() = parent->R() * link->Rb();
                 link->w() = parent->w();
                 link->vo() = parent->vo();
                 link->sw().setZero();
@@ -284,8 +284,8 @@ void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
             link->vo().noalias() = link->dq() * link->sv() + parent->vo();
             const Vector3 dsv = parent->w().cross(link->sv()) + parent->vo().cross(link->sw());
             const Vector3 dsw = parent->w().cross(link->sw());
-            link->cv() = link->dq() * dsv;
-            link->cw() = link->dq() * dsw;
+            link->cv().noalias() = link->dq() * dsv;
+            link->cw().noalias() = link->dq() * dsw;
         }
         
 COMMON_CALCS_FOR_ALL_JOINT_TYPES:

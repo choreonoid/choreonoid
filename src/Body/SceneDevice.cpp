@@ -125,7 +125,7 @@ SceneDevice* SceneDevice::create(Device* device)
 SceneDevice::SceneDevice(Device* device)
     : device_(device)
 {
-    setTransform(device->link()->Rs().transpose() * device->T_local());
+    setTransform(device->T_local());
 }
 
 

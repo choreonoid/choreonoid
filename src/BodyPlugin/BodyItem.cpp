@@ -1336,7 +1336,7 @@ Position BodyLocation::getLocation() const
         return rootLink->offsetPosition();
     } else {
         // global position
-        return rootLink->Ta();
+        return rootLink->T();
     }
 }
 
@@ -1441,7 +1441,7 @@ std::string LinkLocation::getName() const
 Position LinkLocation::getLocation() const
 {
     if(auto link = refLink.lock()){
-        return link->Ta();
+        return link->T();
     }
     return Position::Identity();
 }
@@ -1649,7 +1649,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     attachment->on(true);
                     attachmentToParent = attachment;
                     linkToAttach = holder->link();
-                    Position T_offset = holder->T_local_org() * attachment->T_local_org().inverse(Eigen::Isometry);
+                    Position T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
                     body->rootLink()->setOffsetPosition(T_offset);
                     setLocationEditable(false, false);
                     mvout() << format(_("{0} has been attached to {1} of {2}."),
@@ -1681,7 +1681,7 @@ void BodyItem::Impl::onParentBodyKinematicStateChanged()
         parentLink = parentBodyItem->body()->rootLink();
     }
     auto rootLink = body->rootLink();
-    rootLink->setPosition(parentLink->Ta() * rootLink->Tb());
+    rootLink->setPosition(parentLink->T() * rootLink->Tb());
 
     isKinematicStateChangeNotifiedByParentBodyItem = true;
     isProcessingInverseKinematicsIncludingParentBody = false;

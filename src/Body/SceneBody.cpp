@@ -171,7 +171,6 @@ SceneLinkImpl::SceneLinkImpl(SceneLink* self, Link* link)
     : self(self)
 {
     shapeTransform = new SgPosTransform;
-    shapeTransform->setRotation(link->Rs().transpose());
 
     mainShapeGroup = new LinkShapeGroup(link);
     topShapeGroup = mainShapeGroup;
@@ -446,7 +445,7 @@ void SceneBody::updateLinkPositions()
     const int n = sceneLinks_.size();
     for(int i=0; i < n; ++i){
         SceneLinkPtr& sLink = sceneLinks_[i];
-        sLink->setRotation(sLink->link()->attitude());
+        sLink->setRotation(sLink->link()->R());
         sLink->setTranslation(sLink->link()->translation());
     }
 }
@@ -457,7 +456,7 @@ void SceneBody::updateLinkPositions(SgUpdate& update)
     const int n = sceneLinks_.size();
     for(int i=0; i < n; ++i){
         SceneLinkPtr& sLink = sceneLinks_[i];
-        sLink->setRotation(sLink->link()->attitude());
+        sLink->setRotation(sLink->link()->R());
         sLink->setTranslation(sLink->link()->translation());
         sLink->notifyUpdate(update);
     }

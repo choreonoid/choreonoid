@@ -116,7 +116,6 @@ void LinkPropertyView::Impl::updateLinkProperties(Link* link)
     addProperty(_("Index"), link->index());
     addProperty(_("Offset translation"), Vector3(link->offsetTranslation()));
     addProperty(_("Offset rotation"), AngleAxis(link->offsetRotation()));
-    addProperty(_("Rs"), link->Rs());
     addProperty(_("Center of mass"), link->centerOfMass());
     addProperty(_("Mass"), link->mass());
     addProperty(_("Inertia tensor"), link->I());

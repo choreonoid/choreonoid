@@ -509,7 +509,7 @@ void CFSImpl::initExtraJointSub(ExtraJoint& extrajoint, int bodyIndex0, int body
         // generate two vectors orthogonal to the joint axis
         Vector3 u = Vector3::Zero();
         int minElem = 0;
-        Vector3 axis = extrajoint.link[0]->Rs() * extrajoint.axis;
+        Vector3 axis = extrajoint.axis;
         for(int k=1; k < 3; k++){
             if(fabs(axis(k)) < fabs(axis(minElem))){
                 minElem = k;
@@ -543,7 +543,7 @@ void CFSImpl::initExtraJointSub(ExtraJoint& extrajoint, int bodyIndex0, int body
         linkPair->link[k] = link;
         BodyData& bodyData = bodiesData[index[k]];
         linkPair->linkData[k] = &(bodyData.linksData[link->index()]);
-        linkPair->jointPoint[k] = link->Rs() * extrajoint.point[k];
+        linkPair->jointPoint[k] = extrajoint.point[k];
     }
 
     extraJointLinkPairs.push_back(linkPair);

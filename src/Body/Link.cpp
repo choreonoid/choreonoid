@@ -64,7 +64,6 @@ Link::Link(const Link& org)
 
     T_ = org.T_;
     Tb_ = org.Tb_;
-    Rs_ = org.Rs_;
     
     a_ = org.a_;
     jointType_ = org.jointType_;
@@ -104,7 +103,6 @@ Link::Link(const Link& org)
     org.visualShape_->copyChildrenTo(visualShape_);
     collisionShape_ = new SgPosTransform;
     org.collisionShape_->copyChildrenTo(collisionShape_);
-    updateShapeRs();
     info_ = org.info_;
 }
 
@@ -381,22 +379,6 @@ void Link::clearShapeNodes(bool doNotify)
 {
     visualShape_->clearChildren(doNotify);
     collisionShape_->clearChildren(doNotify);
-}
-
-
-void Link::updateShapeRs()
-{
-    visualShape_->setRotation(Rs_);
-    collisionShape_->setRotation(Rs_);
-}
-
-
-Position Link::Ta() const
-{
-    Position Ta;
-    Ta.linear() = R() * Rs();
-    Ta.translation() = translation();
-    return Ta;
 }
 
 

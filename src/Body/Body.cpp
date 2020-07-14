@@ -61,8 +61,6 @@ public:
     BodyHandle bodyHandle;
 
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
-    void expandLinkOffsetRotations(Body* body, Link* link, const Matrix3& parentRs, vector<bool>& validRsFlags);
-    void applyLinkOffsetRotationsToDevices(Body* body, vector<bool>& validRsFlags);    
 };
 
 }
@@ -323,7 +321,7 @@ void Body::resetParent()
 void Body::syncPositionWithParentBody(bool doForwardKinematics)
 {
     if(auto parentBodyLink = rootLink_->parent_){
-        rootLink_->setPosition(parentBodyLink->Ta() * rootLink_->Tb());
+        rootLink_->setPosition(parentBodyLink->T() * rootLink_->Tb());
         if(doForwardKinematics){
             calcForwardKinematics();
         }
@@ -599,61 +597,6 @@ void Body::calcTotalMomentum(Vector3& out_P, Vector3& out_L)
 
         out_P += P;
         out_L += L;
-    }
-}
-
-
-void Body::expandLinkOffsetRotations()
-{
-    Matrix3 Rs = Matrix3::Identity();
-    vector<bool> validRsFlags;
-
-    for(Link* child = rootLink()->child(); child; child = child->sibling()){
-        impl->expandLinkOffsetRotations(this, child, Rs, validRsFlags);
-    }
-
-    if(!validRsFlags.empty()){
-        impl->applyLinkOffsetRotationsToDevices(this, validRsFlags);
-    }
-}
-
-
-void BodyImpl::expandLinkOffsetRotations(Body* body, Link* link, const Matrix3& parentRs, vector<bool>& validRsFlags)
-{
-    link->setOffsetTranslation(parentRs * link->offsetTranslation());
-
-    Matrix3 Rs = parentRs * link->offsetRotation();
-
-    if(!Rs.isApprox(Matrix3::Identity())){
-
-        if(validRsFlags.empty()){
-            validRsFlags.resize(body->numLinks());
-        }
-        validRsFlags[link->index()] = true;
-        
-        link->setAccumulatedSegmentRotation(Rs);
-
-        link->setCenterOfMass(Rs * link->centerOfMass());
-        link->setInertia(Rs * link->I() * Rs.transpose());
-        link->setJointAxis(Rs * link->jointAxis());
-        link->updateShapeRs();
-    }
-    
-    for(Link* child = link->child(); child; child = child->sibling()){
-        expandLinkOffsetRotations(body, child, Rs, validRsFlags);
-    }
-}
-
-
-void BodyImpl::applyLinkOffsetRotationsToDevices(Body* body, vector<bool>& validRsFlags)
-{
-    for(int i=0; i < body->numDevices(); ++i){
-        Device* device = body->device(i);
-        Link* link = device->link();
-        if(validRsFlags[link->index()]){
-            device->setLocalTranslation(link->Rs() * device->localTranslation());
-            device->setLocalRotation(link->Rs() * device->localRotation());
-        }
     }
 }
 

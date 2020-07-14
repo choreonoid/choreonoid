@@ -179,12 +179,12 @@ bool MprIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
     if(baseFrame->isGlobal()){
         T_base = baseFrame->T();
     } else {
-        T_base = baseLink->Ta() * baseFrame->T();
+        T_base = baseLink->T() * baseFrame->T();
     }
 
     offsetFrameId_ = kinematicsKit->currentOffsetFrameId();
     auto offsetFrame = kinematicsKit->currentOffsetFrame();
-    Position T_end = kinematicsKit->link()->Ta() * offsetFrame->T();
+    Position T_end = kinematicsKit->link()->T() * offsetFrame->T();
 
     T = T_base.inverse(Eigen::Isometry) * T_end;
 
@@ -210,14 +210,11 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
     if(baseFrame->isGlobal()){
         T_base = baseFrame->T();
     } else {
-        T_base = kinematicsKit->baseLink()->Ta() * baseFrame->T();
+        T_base = kinematicsKit->baseLink()->T() * baseFrame->T();
     }
     
     Position T_offset = kinematicsKit->offsetFrame(offsetFrameId_)->T();
-    Position Ta_end = T_base * T * T_offset.inverse(Eigen::Isometry);
-    Position T_end;
-    T_end.translation() = Ta_end.translation();
-    T_end.linear() = kinematicsKit->link()->calcRfromAttitude(Ta_end.linear());
+    Position T_end = T_base * T * T_offset.inverse(Eigen::Isometry);
 
     kinematicsKit->setReferenceRpy(rpyFromRot(T.linear(), referenceRpy_));
 

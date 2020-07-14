@@ -106,8 +106,8 @@ public:
     void checkSpotLightDeviceProto(VRMLProto* proto);
     void checkExtraJointProto(VRMLProto* proto);
     void readHumanoidNode(VRMLProtoInstance* humanoidNode);
-    Link* readJointNode(VRMLProtoInstance* jointNode, const Matrix3& parentRs);
-    Link* createLink(VRMLProtoInstance* jointNode, const Matrix3& parentRs);
+    Link* readJointNode(VRMLProtoInstance* jointNode);
+    Link* createLink(VRMLProtoInstance* jointNode);
     void readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, const ProtoIdSet& acceptableProtoIds, const Affine3& T);
     void readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* segmentNode, const Affine3& T);
     void readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T);
@@ -643,8 +643,7 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
         VRMLProtoInstance* jointNode = dynamic_cast<VRMLProtoInstance*>(nodes[0].get());
         if(jointNode && jointNode->proto->protoName == "Joint"){
             rootJointNode = jointNode;
-            Matrix3 Rs = Matrix3::Identity();
-            Link* rootLink = readJointNode(jointNode, Rs);
+            Link* rootLink = readJointNode(jointNode);
 
             VRMLProtoFieldMap& f = jointNode->fields;
             Vector3 defaultRootPos;
@@ -672,11 +671,11 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
 }
 
 
-Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matrix3& parentRs)
+Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode)
 {
     if(isVerbose) putMessage(string("Joint node") + jointNode->defName);
 
-    Link* link = createLink(jointNode, parentRs);
+    Link* link = createLink(jointNode);
 
     LinkInfo iLink;
     iLink.link = link;
@@ -717,8 +716,8 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
     }
 
     link->setMass(iLink.m);
-    link->setCenterOfMass(link->Rs() * iLink.c);
-    link->setInertia(link->Rs() * iLink.I * link->Rs().transpose());
+    link->setCenterOfMass(iLink.c);
+    link->setInertia(iLink.I);
 
     for(auto& node : *iLink.visualShape){
         if(!iLink.isSurfaceNodeUsed){
@@ -732,13 +731,12 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
             link->addCollisionShapeNode(node);
         }
     }
-    link->updateShapeRs();
-        
+
     return link;
 }
 
 
-Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3& parentRs)
+Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode)
 {
     Link* link = body->createLink();
     link->setName(jointNode->defName);
@@ -760,10 +758,10 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
     if(jointNode != rootJointNode){
         Vector3 b;
         readVRMLfield(jf["translation"], b);
-        link->setOffsetTranslation(parentRs * b);
+        link->setOffsetTranslation(b);
         Matrix3 R;
         readVRMLfield(jf["rotation"], R);
-        link->setAccumulatedSegmentRotation(parentRs * R);
+        link->setOffsetRotation(R);
     }
 
     string jointType;
@@ -813,7 +811,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
             jointAxis = Vector3::UnitZ();
             break;
         }
-        link->setJointAxis(link->Rs() * jointAxis);
+        link->setJointAxis(jointAxis);
     }
 
     double Ir, gearRatio, torqueConst, encoderPulse, rotorResistor;
@@ -887,7 +885,7 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
                         throw invalid_argument(
                             format(_("Joint node \"{}\" is not in a correct place."), protoInstance->defName));
                     }
-                    iLink.link->appendChild(readJointNode(protoInstance, iLink.link->Rs()));
+                    iLink.link->appendChild(readJointNode(protoInstance));
                     break;
                 case PROTO_SEGMENT:
                     readSegmentNode(iLink, protoInstance, T);
@@ -1021,9 +1019,8 @@ void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* devi
         DevicePtr device = factory(deviceNode);
         if(device){
             device->setLink(iLink.link);
-            const Matrix3 RsT = iLink.link->Rs();
-            device->setLocalTranslation(RsT * (T * device->localTranslation()));
-            device->setLocalRotation(RsT * (T.linear() * device->localRotation()));
+            device->setLocalTranslation(T * device->localTranslation());
+            device->setLocalRotation(T.linear() * device->localRotation());
             body->addDevice(device);
 
             SgNodePtr node = sgConverter.convert(deviceNode);

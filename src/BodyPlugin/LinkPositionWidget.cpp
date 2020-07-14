@@ -1060,7 +1060,7 @@ void LinkPositionWidget::Impl::updateDisplayWithGlobalLinkPosition(const Positio
     } else if(coordinateMode == BodyCoordinateMode){
         T = baseFrame->T().inverse(Eigen::Isometry) * Ta_global * offsetFrame->T();
         if(kinematicsKit && kinematicsKit->baseLink()){
-            T = kinematicsKit->baseLink()->Ta().inverse(Eigen::Isometry) * T;
+            T = kinematicsKit->baseLink()->T().inverse(Eigen::Isometry) * T;
         }
     }
     if(kinematicsKit){
@@ -1074,7 +1074,7 @@ void LinkPositionWidget::Impl::updateDisplayWithGlobalLinkPosition(const Positio
 void LinkPositionWidget::Impl::updateDisplayWithCurrentLinkPosition()
 {
     if(targetLink){
-        updateDisplayWithGlobalLinkPosition(targetLink->Ta());
+        updateDisplayWithGlobalLinkPosition(targetLink->T());
     }
 }
 
@@ -1156,10 +1156,9 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Position& T_input, bool 
         } else if(coordinateMode == BodyCoordinateMode){
             T = baseFrame->T() * T_input * offsetFrame->T().inverse(Eigen::Isometry);
             if(kinematicsKit->baseLink()){
-                T = kinematicsKit->baseLink()->Ta() * T;
+                T = kinematicsKit->baseLink()->T() * T;
             }
         }
-        T.linear() = targetLink->calcRfromAttitude(T.linear());
         solved = ik->calcInverseKinematics(T);
     }
 

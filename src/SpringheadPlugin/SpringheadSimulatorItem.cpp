@@ -509,12 +509,12 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
 	/*
 	if(meshProp->prism){
 			Message::Out("converting to prism: %d vertices", mesh.positions.size());
-			// Šp’Œ‰»‚·‚éê‡CŠe–Ê‚©‚çŽOŠp’Œ‚ð‚Â‚­‚é
+			// ï¿½pï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê‡ï¿½Cï¿½eï¿½Ê‚ï¿½ï¿½ï¿½Oï¿½pï¿½ï¿½ï¿½ï¿½ï¿½Â‚ï¿½ï¿½ï¿½
 			Vec3f dir = meshProp->prismdir;
 
 			uint n = (uint)mesh.positions.size();
 			for(uint j = 0; j < n; j += 3){
-				// ƒvƒŠƒYƒ€‰»‚ÌŒü‚«‚É‘Î‚µ‚Ä”½‘ÎŒü‚«‚Ì–Ê‚ÍƒXƒLƒbƒv
+				// ï¿½vï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½ÌŒï¿½ï¿½ï¿½ï¿½É‘Î‚ï¿½ï¿½Ä”ï¿½ï¿½ÎŒï¿½ï¿½ï¿½ï¿½Ì–Ê‚ÍƒXï¿½Lï¿½bï¿½v
 				if(mesh.normals[j+0] * dir <= 0.0) continue;
 				if(mesh.normals[j+1] * dir <= 0.0) continue;
 				if(mesh.normals[j+2] * dir <= 0.0) continue;
@@ -523,7 +523,7 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
 				Vec3f v, vp;
 				for(int k = 0; k < 3; k++){
 					v = mesh.positions[j+k];
-					// Šp’Œ‚Ì’ê–Ê‚ÉŽË‰e‚µ‚½“_
+					// ï¿½pï¿½ï¿½ï¿½Ì’ï¿½Ê‚ÉŽË‰eï¿½ï¿½ï¿½ï¿½ï¿½_
 					float s = - (v * dir) / (dir * dir);
 					vp = v + s * dir;
 					cd.vertices.push_back(v);
@@ -692,8 +692,8 @@ void SpringheadBody::setExtraJoints()
 
         if(sprLinkPair[1]){
 			Link* link = sprLinkPair[0]->link;
-            Vector3 p = link->attitude() * extraJoint.point[0] + link->p();
-            Vector3 a = link->attitude() * extraJoint.axis;
+            Vector3 p = link->R() * extraJoint.point[0] + link->p();
+            Vector3 a = link->R() * extraJoint.axis;
             
             // \todo do the destroy management for these joints
             if(extraJoint.type == ExtraJoint::EJ_PISTON){

@@ -35,8 +35,8 @@ void AGXExtraJoint::createJoints()
         if (!agxLinkPair[0] || !agxLinkPair[1]) continue;
 
         Link* const link = extraJoint.link[0];
-        const Vector3 p = link->attitude() * extraJoint.point[0] + link->p();
-        const Vector3 a = link->attitude() * extraJoint.axis;
+        const Vector3 p = link->R() * extraJoint.point[0] + link->p();
+        const Vector3 a = link->R() * extraJoint.axis;
         agx::ConstraintRef constraint = nullptr;
         switch (extraJoint.type) {
         case ExtraJoint::EJ_PISTON: {
@@ -90,7 +90,7 @@ void AGXContinuousTrack::createTrackConstraint()
     // Create Hinge with world coordination
     LinkPtr link = agxFootLinkStart->getOrgLink();
     const Vector3& a = link->a();                       // local
-    const Vector3 aw = link->attitude() * a;            // world
+    const Vector3 aw = link->R() * a;                   // world
     const Vector3& p = link->p();                       // world
     AGXHingeDesc hd;
     hd.frameAxis = agx::Vec3(aw(0), aw(1), aw(2));

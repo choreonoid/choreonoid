@@ -726,8 +726,8 @@ void ODEBody::setExtraJoints(bool flipYZ)
 
             dJointID jointID = 0;
             Link* link = odeLinkPair[0]->link;
-            Vector3 p = link->attitude() * extraJoint.point[0] + link->p();
-            Vector3 a = link->attitude() * extraJoint.axis;
+            Vector3 p = link->R() * extraJoint.point[0] + link->p();
+            Vector3 a = link->R() * extraJoint.axis;
             if(flipYZ){
                 makeInternal(p);
                 makeInternal(a);

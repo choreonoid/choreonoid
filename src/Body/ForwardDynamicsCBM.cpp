@@ -374,9 +374,9 @@ void ForwardDynamicsCBM::preserveHighGainModeJointState()
 void ForwardDynamicsCBM::calcPositionAndVelocityFK()
 {
     DyLink* root = body->rootLink();
-    root_w_x_v = root->w().cross(root->vo() + root->w().cross(root->p()));
+    root_w_x_v.noalias() = root->w().cross(root->vo() + root->w().cross(root->p()));
     if(given_rootDof){
-        root->vo() = root->v() - root->w().cross(root->p());
+        root->vo().noalias() = root->v() - root->w().cross(root->p());
     }
 
     const LinkTraverse& traverse = body->linkTraverse();
@@ -391,25 +391,25 @@ void ForwardDynamicsCBM::calcPositionAndVelocityFK()
             switch(link->jointType()){
 
             case Link::SLIDE_JOINT:
-                link->p().noalias() = parent->R() * (link->b() + link->q() * link->d()) + parent->p();
-                link->R() = parent->R();
+                link->p().noalias() = parent->R() * (link->b() + link->Rb() * (link->q() * link->d())) + parent->p();
+                link->R().noalias() = parent->R() * link->Rb();
                 link->sw().setZero();
-                link->sv().noalias() = parent->R() * link->d();
+                link->sv().noalias() = parent->R() * (link->Rb() * link->d());
                 link->w() = parent->w();
                 break;
 
             case Link::ROTATIONAL_JOINT:
-                link->R().noalias() = parent->R() * AngleAxisd(link->q(), link->a());
+                link->R().noalias() = parent->R() * link->Rb() * AngleAxisd(link->q(), link->a());
                 link->p().noalias() = parent->R() * link->b() + parent->p();
-                link->sw().noalias() = parent->R() * link->a();
-                link->sv() = link->p().cross(link->sw());
-                link->w() = link->dq() * link->sw() + parent->w();
+                link->sw().noalias() = parent->R() * (link->Rb() * link->a());
+                link->sv().noalias() = link->p().cross(link->sw());
+                link->w().noalias() = link->dq() * link->sw() + parent->w();
                 break;
 
             case Link::FIXED_JOINT:
             default:
                 link->p().noalias() = parent->R() * link->b() + parent->p();
-                link->R() = parent->R();
+                link->R().noalias() = parent->R() * link->Rb();
                 link->w() = parent->w();
                 link->vo() = parent->vo();
                 link->sw().setZero();
@@ -419,30 +419,30 @@ void ForwardDynamicsCBM::calcPositionAndVelocityFK()
                 goto COMMON_CALCS_FOR_ALL_JOINT_TYPES;
             }
 
-            link->vo() = link->dq() * link->sv() + parent->vo();
+            link->vo().noalias() = link->dq() * link->sv() + parent->vo();
 
             const Vector3 dsv = parent->w().cross(link->sv()) + parent->vo().cross(link->sw());
             const Vector3 dsw = parent->w().cross(link->sw());
-            link->cv() = link->dq() * dsv;
-            link->cw() = link->dq() * dsw;
+            link->cv().noalias() = link->dq() * dsv;
+            link->cw().noalias() = link->dq() * dsw;
         }
 
 COMMON_CALCS_FOR_ALL_JOINT_TYPES:
 
         /// \todo remove this  equation
-        link->v() = link->vo() + link->w().cross(link->p());
+        link->v().noalias() = link->vo() + link->w().cross(link->p());
 
         link->wc().noalias() = link->R() * link->c() + link->p();
         const Matrix3 Iw = link->R() * link->I() * link->R().transpose();
         const Matrix3 c_hat = hat(link->wc());
         link->Iww().noalias() = link->m() * c_hat * c_hat.transpose() + Iw;
-        link->Iwv() = link->m() * c_hat;
+        link->Iwv().noalias() = link->m() * c_hat;
 
         const Vector3 P = link->m() * (link->vo() + link->w().cross(link->wc()));
         const Vector3 L = link->Iww() * link->w() + link->m() * link->wc().cross(link->vo());
 
-        link->pf()   = link->w().cross(P);
-        link->ptau() = link->vo().cross(P) + link->w().cross(L);
+        link->pf().noalias() = link->w().cross(P);
+        link->ptau().noalias() = link->vo().cross(P) + link->w().cross(L);
     }
 }
 

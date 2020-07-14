@@ -277,10 +277,10 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
     Link* const link2 = agxLink2->getOrgLink();
     agx::Vec3 axis1z = agxConvert::toAGX(Vector3(0, 0, 1));
     agx::Vec3 axis2z = agxConvert::toAGX(Vector3(0, 0, 1));
-    agx::Vec3 axis1 = agxConvert::toAGX(link1->Rs() * jp.connectAxis1);
-    agx::Vec3 axis2 = agxConvert::toAGX(link2->Rs() * jp.connectAxis2);
-    agx::Vec3 lp1 = agxConvert::toAGX(link1->Rs() * jp.position1);
-    agx::Vec3 lp2 = agxConvert::toAGX(link2->Rs() * jp.position2);
+    agx::Vec3 axis1 = agxConvert::toAGX(jp.connectAxis1);
+    agx::Vec3 axis2 = agxConvert::toAGX(jp.connectAxis2);
+    agx::Vec3 lp1 = agxConvert::toAGX(jp.position1);
+    agx::Vec3 lp2 = agxConvert::toAGX(jp.position2);
 
     agx::RigidBody* r[2];
     r[0] = getAGXBody()->getAGXRigidBody(jp.link1Name);

@@ -73,21 +73,9 @@ Body* Device::body()
 }
 
 
-Position Device::T_local_org() const
-{
-    Position T;
-    const auto& Rs = link()->Rs();
-    T.linear() = Rs.transpose() * T_local().linear();
-    T.translation() = Rs.transpose() * T_local().translation();
-    return T;
-}
-
-
 void Device::setLocalAttitude(const Position& Ta)
 {
-    const auto& Rs = link()->Rs();
-    T_local().linear() = Rs * Ta.linear();
-    T_local().translation() = Rs * Ta.translation();
+    T_local() = Ta;
 }
 
 

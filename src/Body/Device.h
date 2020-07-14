@@ -104,8 +104,10 @@ public:
     
     Position& T_local() { return ns->T_local; }
     const Position& T_local() const { return ns->T_local; }
-    Position T_local_org() const;
 
+    [[deprecated("Please use T_local() instead")]]
+    const Position& T_local_org() const { return ns->T_local; };
+    [[deprecated]]
     void setLocalAttitude(const Position& Ta);
         
     Position::ConstLinearPart R_local() const { return ns->const_T_local().linear(); }

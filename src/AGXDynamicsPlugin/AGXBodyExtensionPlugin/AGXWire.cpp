@@ -278,7 +278,7 @@ void SceneWireDevice::update()
     MeshGenerator meshGenerator;
     const double& radius = m_wireDevice->getWireRadius();
     const Position::TranslationPart& link_p = m_wireDevice->link()->p();
-    const Matrix3& link_attitude_inv = m_wireDevice->link()->attitude().inverse();
+    const Matrix3& link_attitude_inv = m_wireDevice->link()->R().inverse();
     const int& numNodes = (int)m_wireDevice->getWireNodeStates().size();
     for(size_t i = 0; i < numNodes - 1; ++i){
         const WireNodeState& node1 = m_wireDevice->getWireNodeStates()[i];
@@ -397,7 +397,7 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
         string linkName;
         wireWinchInfo.read("linkName", linkName);
         AGXLink* const agxLink = agxBody->getAGXLink(linkName);
-        const Matrix3& attitude = agxLink->getOrgLink()->attitude();
+        const Matrix3& attitude = agxLink->getOrgLink()->R();
 
         winchDesc.rigidBody = agxBody->getAGXRigidBody(linkName);
 
@@ -437,7 +437,7 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
             auto transformToWorld = [&](){
                 // Transform pos from link coord to world coord, if link exist
                 if(Link* const link = getAGXBody()->body()->link(linkName)){
-                    pos = link->p() + link->attitude() * pos;
+                    pos = link->p() + link->R() * pos;
                 }
                 return agxConvert::toAGX(pos);
             };
@@ -449,8 +449,6 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
                 if(Link* const link = getAGXBody()->body()->link(linkName)){
                     // set in link coord
                     agx::RigidBody* body = getAGXBody()->getAGXRigidBody(linkName);
-                    // reflect pose correction
-                    pos = link->Rs() * pos;
                     m_wire->add(AGXObjectFactory::createWireBodyFixedNode(body, agxConvert::toAGX(pos)));
                 }else{
                     // set in world coord

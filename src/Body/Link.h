@@ -116,7 +116,9 @@ public:
     Position::ConstLinearPart Rb() const { return Tb_.linear(); }
     Position::ConstLinearPart offsetRotation() const { return Tb_.linear(); }
 
+    [[deprecated("This func. always returns the identity matrix")]]
     Matrix3& Rs() { return Rs_; }
+    [[deprecated("This func. always returns the identity matrix")]]
     const Matrix3& Rs() const { return Rs_; }
 
     enum JointType {
@@ -291,8 +293,8 @@ public:
     }
     
     template<typename Derived>
-        void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
-        Rs_ = Rs;
+    [[deprecated]]
+    void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
     }
         
     void setJointType(JointType type) { jointType_ = type; }
@@ -317,15 +319,23 @@ public:
     void addCollisionShapeNode(SgNode* shape, bool doNotify = false);
     void removeShapeNode(SgNode* shape, bool doNotify = false);
     void clearShapeNodes(bool doNotify = false);
-    void updateShapeRs();
+
+    [[deprecated]]
+    void updateShapeRs() {}
 
     // The following two methods should be deprecated after introducing Tb
-    Position Ta() const;
-    Matrix3 attitude() const { return R() * Rs_; }
-    void setAttitude(const Matrix3& Ra) { R() = Ra * Rs_.transpose(); }
-    Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra * Rs_.transpose(); }
+    [[deprecated("Please use T() instead")]]
+    Position Ta() const { return T(); }
+    [[deprecated("Please use R() instead")]]
+    Matrix3 attitude() const { return R(); }
+    [[deprecated("Please use setRotation(.) instead")]]
+    void setAttitude(const Matrix3& Ra) { R() = Ra; }
+    [[deprecated]]
+    Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra; }
+    [[deprecated("Please use T() instead")]]
     void getAttitudeAndTranslation(Position& out_T) {
-        out_T.linear() = attitude(); out_T.translation() = translation(); };
+        out_T = T();
+    };
 
     const Mapping* info() const { return info_; }
     Mapping* info() { return info_; }
@@ -343,8 +353,8 @@ public:
     const double& uvlimit() const { return dq_upper_; } ///< the upper limit of joint velocities
     const double& lvlimit() const { return dq_lower_; } ///< the upper limit of joint velocities
 
-    Matrix3 segmentAttitude() const { return R() * Rs_; }
-    void setSegmentAttitude(const Matrix3& Ra) { R() = Ra * Rs_.transpose(); }
+    Matrix3 segmentAttitude() const { return R(); }
+    void setSegmentAttitude(const Matrix3& Ra) { R() = Ra; }
 #endif
 
 protected:
@@ -359,7 +369,7 @@ private:
     Body* body_;
     Position T_;
     Position Tb_;
-    Matrix3 Rs_; // temporary variable for porting. This should be removed later.
+    Matrix3 Rs_; // temporary variable for porting. This should be removed later.    
     Vector3 a_;
     JointType jointType_;
     ActuationMode actuationMode_;
