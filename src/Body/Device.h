@@ -104,29 +104,23 @@ public:
     
     Position& T_local() { return ns->T_local; }
     const Position& T_local() const { return ns->T_local; }
+    const Position& localPosition() const { return ns->T_local; }
+    template<class Scalar, int Mode, int Options>
+    void setLocalPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        ns->T_local = T.template cast<Position::Scalar>();
+    }
 
-    [[deprecated("Please use T_local() instead")]]
-    const Position& T_local_org() const { return ns->T_local; };
-    [[deprecated]]
-    void setLocalAttitude(const Position& Ta);
-        
     Position::ConstLinearPart R_local() const { return ns->const_T_local().linear(); }
     Position::LinearPart R_local() { return ns->T_local.linear(); }
-
     Position::ConstLinearPart localRotation() const { return ns->const_T_local().linear(); }
-    Position::LinearPart localRotaion() { return ns->T_local.linear(); }
-
     template<typename Derived>
     void setLocalRotation(const Eigen::MatrixBase<Derived>& R) { ns->T_local.linear() = R; }
 
     Position::ConstTranslationPart p_local() const { return ns->const_T_local().translation(); }
     Position::TranslationPart p_local() { return ns->T_local.translation(); }
-
     Position::ConstTranslationPart localTranslation() const { return ns->const_T_local().translation(); }
-    Position::TranslationPart localTranslation() { return ns->T_local.translation(); }
-
     template<typename Derived>
-        void setLocalTranslation(const Eigen::MatrixBase<Derived>& p) { ns->T_local.translation() = p; }
+    void setLocalTranslation(const Eigen::MatrixBase<Derived>& p) { ns->T_local.translation() = p; }
 
     virtual void clearState();
 
@@ -149,6 +143,10 @@ public:
         ns->sigTimeChanged(time);
     }
 
+    [[deprecated("Please use T_local() instead")]]
+    const Position& T_local_org() const { return ns->T_local; };
+    [[deprecated]]
+    void setLocalAttitude(const Position& Ta);
     [[deprecated]]
     double cycle() const { return 20.0; }
     [[deprecated]]

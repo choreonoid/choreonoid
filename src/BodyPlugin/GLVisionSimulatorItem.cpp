@@ -623,7 +623,7 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
             resolution /= 2;   //screen resolution
 
             Matrix3 R[6];
-            R[FRONT_SCREEN] = camera->localRotaion();
+            R[FRONT_SCREEN] = camera->R_local();
             if(numScreens > 1){
                 R[RIGHT_SCREEN]  = R[FRONT_SCREEN] * AngleAxis(radian(-90.0), Vector3::UnitY());
                 R[LEFT_SCREEN]   = R[FRONT_SCREEN] * AngleAxis(radian(90.0),  Vector3::UnitY());
@@ -688,7 +688,7 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
             }
 
             double centerAngle = yawOffset + adjustedYawRange / 2.0;
-            Matrix3 R = rangeSensor->localRotaion() * AngleAxis(centerAngle, Vector3::UnitY());
+            Matrix3 R = rangeSensor->R_local() * AngleAxis(centerAngle, Vector3::UnitY());
             rangeSensorForRendering->setLocalRotation(R);
             yawOffset += adjustedYawRange;
 

@@ -218,7 +218,7 @@ RotorDevice::position() const{
 void
 RotorDevice::setPosition(const Eigen::Vector3d& pos){
     _pos = pos;
-    localTranslation() = _pos;
+    setLocalTranslation(_pos);
 }
 
 RotorDevice::RotorDevice()
