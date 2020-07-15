@@ -1,4 +1,5 @@
 #include "DisplayedValueFormatManager.h"
+#include "AppConfig.h"
 
 using namespace std;
 using namespace cnoid;
@@ -135,3 +136,11 @@ SignalProxy<void()> DisplayedValueFormatManager::sigFormatChanged()
     return impl->sigFormatChanged;
 }
 
+
+void DisplayedValueFormatManager::restoreConfiguration()
+{
+    Mapping& config = *AppConfig::archive()->findMapping("geometry");
+    if(config){
+        impl->lengthStep = config.get("length_step", impl->lengthStep);
+    }
+}

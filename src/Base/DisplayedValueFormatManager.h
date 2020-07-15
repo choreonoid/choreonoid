@@ -32,6 +32,8 @@ public:
     void notifyFormatChange();
     SignalProxy<void()> sigFormatChanged();
 
+    void restoreConfiguration();
+
 private:
     DisplayedValueFormatManager();
     ~DisplayedValueFormatManager();
