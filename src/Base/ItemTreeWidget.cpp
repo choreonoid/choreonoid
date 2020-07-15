@@ -94,6 +94,7 @@ public:
     MenuManager menuManager;
     int fontPointSizeDiff;
 
+    std::function<void(MenuManager& menuManager)> rootContextMenuFunction;
     PolymorphicItemFunctionSet  contextMenuFunctions;
 
     Impl(ItemTreeWidget* self);
@@ -594,6 +595,12 @@ void ItemTreeWidget::customizeContextMenu_
         [this, func](Item* item){
             func(item, impl->menuManager, impl->contextMenuFunctions.dispatcher()); }
         );
+}
+
+
+void ItemTreeWidget::customizeRootContextMenu(std::function<void(MenuManager& menuManager)> func)
+{
+    impl->rootContextMenuFunction = func;
 }
 
 
@@ -1402,7 +1409,6 @@ void ItemTreeWidget::Impl::zoomFontSize(int pointSizeDiff)
 void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
 {
     ItwItem* itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()));
-    Item* item = itwItem ? itwItem->item : findOrCreateLocalRootItem(true);
     lastClickedItem = nullptr;
 
     // Emit sigSelectionChanged when clicking on an already selected item
@@ -1421,9 +1427,16 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
     
     TreeWidget::mousePressEvent(event);
 
-    if(item && event->button() == Qt::RightButton){
+    if(event->button() == Qt::RightButton){
         menuManager.setNewPopupMenu(this);
-        contextMenuFunctions.dispatch(item);
+        if(itwItem){
+            contextMenuFunctions.dispatch(itwItem->item);
+        } else {
+            if(rootContextMenuFunction){
+                clearSelection();
+                rootContextMenuFunction(menuManager);
+            }
+        }
         if(menuManager.numItems() > 0){
             menuManager.popupMenu()->popup(event->globalPos());
         }

@@ -92,6 +92,8 @@ public:
 
     bool checkPositionAcceptance(Item* item, Item* parentItem) const;
 
+    void customizeRootContextMenu(std::function<void(MenuManager& menuManager)> func);
+    
     template<class ItemType>
     void customizeContextMenu(
         std::function<void(ItemType* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func){
