@@ -129,7 +129,6 @@ class SceneLinkImpl
 {
 public:
     SceneLink* self;
-    SgPosTransformPtr shapeTransform;
     LinkShapeGroupPtr mainShapeGroup;
     SgGroupPtr topShapeGroup;
     bool isVisible;
@@ -170,13 +169,9 @@ SceneLink::SceneLink(Link* link)
 SceneLinkImpl::SceneLinkImpl(SceneLink* self, Link* link)
     : self(self)
 {
-    shapeTransform = new SgPosTransform;
-
     mainShapeGroup = new LinkShapeGroup(link);
     topShapeGroup = mainShapeGroup;
-
-    shapeTransform->addChild(topShapeGroup);
-    self->addChild(shapeTransform);
+    self->addChild(topShapeGroup);
 }
 
 
@@ -225,19 +220,19 @@ void SceneLink::insertEffectGroup(SgGroup* group, bool doNotify)
 
 void SceneLinkImpl::insertEffectGroup(SgGroup* group, bool doNotify)
 {
-    shapeTransform->removeChild(topShapeGroup);
+    self->removeChild(topShapeGroup);
     group->addChild(topShapeGroup);
-    shapeTransform->addChild(group);
+    self->addChild(group);
     topShapeGroup = group;
     if(doNotify){
-        shapeTransform->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+        self->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
     }
 }
 
 
 void SceneLink::removeEffectGroup(SgGroup* group, bool doNotify)
 {
-    impl->removeEffectGroup(impl->shapeTransform, group, doNotify);
+    impl->removeEffectGroup(this, group, doNotify);
 }
 
 
