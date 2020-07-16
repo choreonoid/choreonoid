@@ -509,12 +509,12 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
 	/*
 	if(meshProp->prism){
 			Message::Out("converting to prism: %d vertices", mesh.positions.size());
-			// �p��������ꍇ�C�e�ʂ���O�p��������
+			//
 			Vec3f dir = meshProp->prismdir;
 
 			uint n = (uint)mesh.positions.size();
 			for(uint j = 0; j < n; j += 3){
-				// �v���Y�����̌����ɑ΂��Ĕ��Ό����̖ʂ̓X�L�b�v
+				//
 				if(mesh.normals[j+0] * dir <= 0.0) continue;
 				if(mesh.normals[j+1] * dir <= 0.0) continue;
 				if(mesh.normals[j+2] * dir <= 0.0) continue;
@@ -523,7 +523,7 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
 				Vec3f v, vp;
 				for(int k = 0; k < 3; k++){
 					v = mesh.positions[j+k];
-					// �p���̒�ʂɎˉe�����_
+					//
 					float s = - (v * dir) / (dir * dir);
 					vp = v + s * dir;
 					cd.vertices.push_back(v);
