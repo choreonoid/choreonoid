@@ -47,6 +47,7 @@ Changes since 1.7.0:
 * Fix the default layout of the main window
 * Replace LinkSelectionView with LinkDeviceListView, which can list the devices of a target body
 * Improve loading a new project when there is an existing project
+* Make the internal link attitudes same as the original model descriptions
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
