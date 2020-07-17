@@ -15,10 +15,10 @@ void setColumnOfMassMatrix(Body* body, Eigen::MatrixBase<Derived>& out_M, int co
 {
     Link* rootLink = body->rootLink();
     Vector6 f = calcInverseDynamics(rootLink);
-        
+
     if(!rootLink->isFixedJoint()){
         f.tail<3>() -= rootLink->p().cross(f.head<3>());
-        out_M. Eigen::MatrixBase<Derived>::template block<6, 1>(0, column) = f;
+        out_M. Eigen::template MatrixBase<Derived>::template block<6, 1>(0, column) = f;
     }
     const int n = body->numJoints();
     for(int i = 0; i < n; ++i){
@@ -34,7 +34,7 @@ namespace cnoid {
 /**
    calculate the mass matrix using the unit vector method
    \todo replace the unit vector method here with a more efficient method
-       
+
    The motion equation (dv != dvo)
    |       |   | dv  |   |   |   | fext      |
    | out_M | * | dw  | + | b | = | tauext    |
@@ -47,7 +47,7 @@ void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M, Vector
     const int totaldof = rootLink->isFixedJoint() ? nj : nj + 6;
 
     out_M.resize(totaldof, totaldof);
-        
+
     // preserve and clear the joint accelerations
     VectorXd ddqorg(nj);
     VectorXd uorg(nj);
@@ -94,7 +94,7 @@ void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M, Vector
     for(int i = 0; i < out_M.cols(); ++i){
         out_M.col(i) -= out_b;
     }
-    
+
     // recover state
     for(int i = 0; i < nj; ++i){
         Link* joint = body->joint(i);
