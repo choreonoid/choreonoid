@@ -712,8 +712,10 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     glRendererString = (const char*)glGetString(GL_RENDERER);
     glslVersionString = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-    os() << fmt::format(_("OpenGL {0}.{1} ({2} {3}, GLSL {4}) is available for the \"{5}\" view.\n"),
-                        major, minor, glVendorString, glRendererString, glslVersionString, self->name());
+    os() << fmt::format(_("OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"),
+                        major, minor, glslVersionString, self->name());
+    os() << fmt::format(_("Driver profile: {0} {1} {2}.\n"),
+                        glVendorString, glRendererString, glVersionString);
 
     std::smatch match;
 
@@ -721,14 +723,21 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     if(regex_match(glRendererString, match, regex("Mesa DRI Intel\\(R\\) (\\S+).*$"))){
         if(match.str(1) == "Sandybridge"){
             isShadowCastingEnabled = false;
-        } else if(regex_match(glVersionString, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
+        }
+        /* The problem on the following driver seems to have been resolved
+        else if(regex_match(glVersionString, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
             int mesaMajor = stoi(match.str(1));
             if(mesaMajor >= 19){
                 isShadowCastingEnabled = false;
             }
         }
+        */
     }
-    // Check if the GPU is AMD's Radeon GPU
+    // Check if the GPU is a modern Radeon GPU with the proprietary driver
+    else if(glVendorString == "ATI Technologies Inc." && glRendererString.find("Radeon RX") == 0){
+        isShadowCastingEnabled = false;
+    }
+    // Check if the GPU is an old Radeon GPU
     else if(regex_match(glRendererString, regex("AMD Radeon.*"))){
         isShadowCastingEnabled = false;
     }
@@ -742,7 +751,7 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     }
 
     if(!isShadowCastingEnabled){
-        os() << fmt::format(_(" Shadow casting is disabled for this GPU due to some problems.\n"));
+        os() << fmt::format(_("Shadow casting is disabled for this GPU due to some problems.\n"));
     }
     
     os().flush();

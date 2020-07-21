@@ -445,9 +445,9 @@ bool GL1SceneRenderer::Impl::initializeGL()
     glVersionString = (const char*)glGetString(GL_VERSION);
     glVendorString = (const char*)glGetString(GL_VENDOR);
     glRendererString = (const char*)glGetString(GL_RENDERER);
-    os() << fmt::format(_("OpenGL {0} ({1} {2}) is available for the \"{3}\" view."),
-                        glVersionString, glVendorString, glRendererString, self->name())
-         << endl;
+    os() << fmt::format(_("OpenGL {0} is available for the \"{1}\" view.\n"),
+                        glVersionString, self->name());
+    os() << fmt::format(_("Driver profile: {0} {1}."), glVendorString, glRendererString) << endl;
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
