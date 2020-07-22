@@ -4,6 +4,7 @@
 
 #include "MulticopterPluginHeader.h"
 #include <fmt/format.h>
+#include <fstream>
 
 using namespace std;
 using namespace cnoid;

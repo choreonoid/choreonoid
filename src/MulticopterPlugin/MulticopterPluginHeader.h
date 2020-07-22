@@ -8,8 +8,6 @@
 
 #include <QtCore/QtCore>
 
-#include <boost/property_tree/ini_parser.hpp>
-
 #include <cnoid/LazyCaller>
 #include <cnoid/MeshExtractor>
 #include <cnoid/Plugin>
