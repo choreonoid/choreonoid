@@ -47,7 +47,7 @@ public:
     
     template<class Interface>
     void setTargetInterface(){
-        targetPredicate = [](ItemType* item)->bool { return dynamic_cast<Interface*>(item) != nullptr; };
+        targetPredicate_ = [](ItemType* item)->bool { return dynamic_cast<Interface*>(item) != nullptr; };
     }
 
     ItemType* currentItem(){ return static_cast<ItemType*>(getTargetItem()); }
