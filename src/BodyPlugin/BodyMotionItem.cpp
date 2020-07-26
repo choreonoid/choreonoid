@@ -9,7 +9,6 @@
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/ZMPSeq>
-#include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -202,7 +201,7 @@ void BodyMotionItemImpl::initialize()
 
     extraSeqsChangedConnection =
         self->bodyMotion_->sigExtraSeqsChanged().connect(
-            [&](){ callLater([&](){ updateExtraSeqItems(); }); });
+            [&](){ updateExtraSeqItems(); });
 
     updateExtraSeqItems();
 }

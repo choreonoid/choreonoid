@@ -252,7 +252,7 @@ void WorldItemImpl::enableCollisionDetection(bool on)
         updateCollisionDetector(true);
         sigSubTreeChangedConnection =
             self->sigSubTreeChanged().connect(
-                [&](){ self->updateCollisionDetector(); });
+                [&](){ updateCollisionDetectorLater(); });
         changed = true;
     }
 
@@ -296,9 +296,6 @@ void WorldItem::updateCollisionDetector()
 }
 
 
-/**
-   \todo reduce the number of calling this function when the project is loaded.
-*/
 void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
 {
     if(TRACE_FUNCTIONS){

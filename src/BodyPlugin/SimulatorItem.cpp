@@ -890,20 +890,20 @@ void SimulationBody::Impl::initializeResultItems()
     if(!parentOfResultItems){
         return;
     }
-    
+
+    bool doAddMotionItem = false;
     auto motionItem = parentOfResultItems->findChildItem<BodyMotionItem>(resultItemPrefix);
     if(!motionItem){
         motionItem = new BodyMotionItem();
         motionItem->setTemporal();
         motionItem->setName(resultItemPrefix);
-        parentOfResultItems->addChildItem(motionItem);
+        doAddMotionItem = true;
     }
 
     motion = motionItem->motion();
     motion->setFrameRate(simImpl->worldFrameRate);
     motion->setDimension(0, jointPosBuf.colSize(), linkPosBuf.colSize());
     motion->setOffsetTime(0.0);
-    simImpl->addBodyMotionEngine(motionItem);
     jointPosResults = motion->jointPosSeq();
     linkPosResultItem = motionItem->linkPosSeqItem();
     linkPosResults = motion->linkPosSeq();
@@ -915,6 +915,11 @@ void SimulationBody::Impl::initializeResultItems()
         deviceStateResults = getOrCreateMultiDeviceStateSeq(*motion);
         deviceStateResults->initialize(body_->devices());
     }
+
+    if(doAddMotionItem){
+        parentOfResultItems->addChildItem(motionItem);
+    }
+    simImpl->addBodyMotionEngine(motionItem);
 }
 
 
