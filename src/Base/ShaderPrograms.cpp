@@ -182,7 +182,9 @@ public:
     GLint numShadowsLocation;
     GLint isShadowAntiAliasingEnabledLocation;
 
+    // This value must be same as that of shader/phongshadow.[vert/flag]
     static const int maxNumShadows = 2;
+    
     int currentShadowIndex;
 
     struct ShadowInfo {
@@ -944,6 +946,16 @@ void PhongShadowLightingProgramImpl::initialize(GLSLProgram& glsl)
     isShadowAntiAliasingEnabledLocation = glsl.getUniformLocation("isShadowAntiAliasingEnabled");
 
     shadowMapProgram.initialize();
+
+    /**
+       The following code sets valid values to all the shadowMap variables
+       defined in shader/phongshadow.frag. See the comment written in it.
+    */
+    glsl.use();
+    for(int i=0; i < maxNumShadows; ++i){
+        auto& shadow = shadowInfos[i];
+        glUniform1i(shadow.shadowMapLocation, i + 1);
+    }
 }
 
 
@@ -1091,7 +1103,6 @@ bool PhongShadowLightingProgram::setLight
     if(result && shadowCasting){
         if(impl->currentShadowIndex < impl->numShadows){
             auto& shadow = impl->shadowInfos[impl->currentShadowIndex];
-            glUniform1i(shadow.shadowMapLocation, impl->currentShadowIndex + 1);
             glUniform1i(shadow.lightIndexLocation, index);
             ++impl->currentShadowIndex;
         }

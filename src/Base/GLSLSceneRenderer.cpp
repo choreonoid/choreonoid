@@ -755,10 +755,6 @@ void GLSLSceneRenderer::Impl::checkGPU()
         }
         */
     }
-    // Check if the GPU is a modern Radeon GPU with the proprietary driver
-    else if(glVendorString == "ATI Technologies Inc." && glRendererString.find("Radeon RX") == 0){
-        isShadowCastingEnabled = false;
-    }
     // Check if the GPU is an old Radeon GPU
     else if(regex_match(glRendererString, regex("AMD Radeon.*"))){
         isShadowCastingEnabled = false;
@@ -1044,7 +1040,8 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
         
         int shadowMapIndex = 0;
         set<int>::iterator iter = shadowLightIndices.begin();
-        while(iter != shadowLightIndices.end() && shadowMapIndex < program.maxNumShadows()){
+        const int maxNumShadows = program.maxNumShadows();
+        while(iter != shadowLightIndices.end() && shadowMapIndex < maxNumShadows){
             program.activateShadowMapGenerationPass(shadowMapIndex);
             int shadowLightIndex = *iter;
             if(renderShadowMap(shadowLightIndex)){

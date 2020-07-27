@@ -56,7 +56,18 @@ struct ShadowInfo {
     int lightIndex;
     sampler2DShadow shadowMap;
 };
-uniform ShadowInfo shadows[3];
+
+/*
+  All the shadowMap variable values in the following array must be valid for some GPUs
+  even if the valid number of shadow lights are less than the maximum number of shadows
+  and not all the shdaowMaps are used in rendering. The proprietary drivers of Radeon GPUs
+  require this condition. To achieve it, the initializeFrameRendering function of
+  PhongShadowLightingProgram sets all the variable values. Note that for GPUs (drivers)
+  including NVIDIA GPUs and Intel GPUs, you don't have to set a valid value to unused
+  shadowMap variables, but the same implementation is used for those GPUs.
+*/
+uniform ShadowInfo shadows[MAX_NUM_SHADOWS];
+
 uniform bool isShadowAntiAliasingEnabled;
 
 uniform vec3 fogColor;
@@ -150,24 +161,17 @@ void main()
         }
     }
 
-    /**
-       \note In a particular environment, using 'textureProj' or 'textureProjOffset"
-       makes lighting abnormal even though the function is not actually called.
-       This happens with Ubuntu Linux 19.04 with Intel UHD Graphics 630, which are
-       installed on Thinkpad P52. The shader programs phong.vert and phong.frag are
-       provided as implementations without shadow processing to avoid the defect.
-    */
     for(int i=0; i < numShadows; ++i){
         float shadow;
+        vec4 shadowCoord = shadowCoords[i];
         if(isShadowAntiAliasingEnabled){
-            vec4 shadowCoord = shadowCoords[i];
             shadow  = textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1, -1));
             shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1,  1));
             shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1,  1));
             shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1, -1));
             shadow *= 0.25;
         } else {
-            shadow = textureProj(shadows[i].shadowMap, shadowCoords[i]);
+            shadow = textureProj(shadows[i].shadowMap, shadowCoord);
         }
         reflectionElements[shadows[i].lightIndex] *= shadow;
     }
