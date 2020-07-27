@@ -363,6 +363,7 @@ public:
     void clearGL(bool isGLContextActive, bool isCalledFromConstructor, bool isCalledFromDestructor);
     void clearResourceMap();
     bool initializeGL();
+    void checkGPU();
     bool initializeGLForRendering();
     void doRender();
     void setupFullLightingRendering();
@@ -717,6 +718,27 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     os() << fmt::format(_("Driver profile: {0} {1} {2}.\n"),
                         glVendorString, glRendererString, glVersionString);
 
+    char* CNOID_ENABLE_GLSL_SHADOW = getenv("CNOID_ENABLE_GLSL_SHADOW");
+    if(CNOID_ENABLE_GLSL_SHADOW){
+        if(strcmp(CNOID_ENABLE_GLSL_SHADOW, "0") == 0){
+            isShadowCastingEnabled = false;
+            os() << _("Shadow casting is disabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n");
+        } else {
+            isShadowCastingEnabled = true;
+            os() << _("Shadow casting is enabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n");
+        }
+    } else {
+        checkGPU();
+    }
+        
+    os().flush();
+
+    return initializeGLForRendering();
+}
+
+
+void GLSLSceneRenderer::Impl::checkGPU()
+{
     std::smatch match;
 
     // Check the Intel GPU
@@ -753,10 +775,6 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     if(!isShadowCastingEnabled){
         os() << fmt::format(_("Shadow casting is disabled for this GPU due to some problems.\n"));
     }
-    
-    os().flush();
-
-    return initializeGLForRendering();
 }
 
 
