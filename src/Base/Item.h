@@ -56,7 +56,7 @@ public:
     //! Copy item properties as much as possible like the assignment operator
     void assign(Item* srcItem);
 
-    Item* duplicate() const;
+    Item* duplicate(Item* duplicatedParentItem = nullptr) const;
 
     //! This function creates a copy of the item including its descendant items
     Item* duplicateSubTree() const;
@@ -384,6 +384,14 @@ protected:
 
     //! Override this function to allow duplication of an instance.
     virtual Item* doDuplicate() const;
+
+    /**
+       Use this overload if the duplication process needs to know the duplicated parent item.
+       @note If this function is implemented and returns a valid dupulicated object, the
+       overload doDuplicate function without an argument is not called.
+       @note The parentItem argument may be nullptr.
+    */
+    virtual Item* doDuplicate(Item* duplicatedParentItem) const;
 
     virtual bool onCheckNewPosition(bool isManualOperation);
     virtual void onAddedToParent();

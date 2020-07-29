@@ -1100,11 +1100,11 @@ void ItemTreeWidget::Impl::copySelectedItemsInSubTree
 {
     for(Item* child = item->childItem(); child; child = child->nextItem()){
         ItemPtr duplicatedChild;
-        if(itemSet.find(child) != itemSet.end()){
+        if(itemSet.find(child) != itemSet.end() || child->hasAttribute(Item::Attached)){
             if(child->isSubItem()){
                 duplicatedChild = duplicated->findChildItem(child->name());
             } else {
-                duplicatedChild = child->duplicate();
+                duplicatedChild = child->duplicate(item);
                 if(duplicatedChild){
                     duplicated->addChildItem(duplicatedChild);
                 }
