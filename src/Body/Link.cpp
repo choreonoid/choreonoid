@@ -101,8 +101,11 @@ Link::Link(const Link& org)
     //! \todo add the mode for doing deep copy of the following objects
     visualShape_ = new SgPosTransform;
     org.visualShape_->copyChildrenTo(visualShape_);
+    visualShape_->invalidateBoundingBox();
     collisionShape_ = new SgPosTransform;
     org.collisionShape_->copyChildrenTo(collisionShape_);
+    collisionShape_->invalidateBoundingBox();
+    
     info_ = org.info_;
 }
 
