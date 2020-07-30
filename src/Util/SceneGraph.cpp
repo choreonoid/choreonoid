@@ -35,7 +35,8 @@ SgObject::SgObject()
 
 
 SgObject::SgObject(const SgObject& org)
-    : name_(org.name_)
+    : name_(org.name_),
+      uri_(org.uri_)
 {
 
 }
