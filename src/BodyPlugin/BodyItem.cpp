@@ -350,6 +350,8 @@ BodyItem::BodyItem(const BodyItem& org)
 {
     impl = new Impl(this, *org.impl);
     impl->init(true);
+
+    setChecked(org.isChecked());
 }
 
 
