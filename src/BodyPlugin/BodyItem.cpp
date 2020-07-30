@@ -1555,8 +1555,8 @@ BodyItem* BodyItem::parentBodyItem()
 
 void BodyItem::setAttachmentEnabled(bool on)
 {
-    if(on != impl->isAttachmentEnabled){
-        impl->isAttachmentEnabled = on;
+    impl->isAttachmentEnabled = on;
+    if(on != isAttachedToParentBody()){
         impl->updateAttachment(on);
     }
 }
