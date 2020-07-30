@@ -152,6 +152,8 @@ Item::Impl::Impl(Item* self, const Impl& org)
     if(attributes[LoadOnly]){
         filePath = org.filePath;
         fileFormat = org.fileFormat;
+        fileOptions = org.fileOptions;
+        fileModificationTime = org.fileModificationTime;
     }
 }
 
