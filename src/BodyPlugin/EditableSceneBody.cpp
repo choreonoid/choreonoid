@@ -909,12 +909,18 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     }
     
     auto sceneLink = editableSceneLink(link->index());
+
     if(!positionDragger->isConstantPixelSizeMode()){
-        if(auto shape = sceneLink->visualShape()){
-            if(auto transform = dynamic_cast<SgTransform*>(shape)){
-                positionDragger->adjustSize(transform->untransformedBoundingBox());
-            } else {
-                positionDragger->adjustSize(shape->boundingBox());
+        double size = link->info("gui_handle_size", -1.0);
+        if(size > 0.0){
+            positionDragger->setHandleSize(size);
+        } else {
+            if(auto shape = sceneLink->visualShape()){
+                if(auto transform = dynamic_cast<SgTransform*>(shape)){
+                    positionDragger->adjustSize(transform->untransformedBoundingBox());
+                } else {
+                    positionDragger->adjustSize(shape->boundingBox());
+                }
             }
         }
     }
