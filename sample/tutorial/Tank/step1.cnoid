@@ -19,7 +19,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/tank/tank.body"
+            modelFile: "${SHARE}/model/Tank/Tank.body"
             currentBaseLink: "CHASSIS"
             rootPosition: [ 0, 0, 0.11 ]
             rootAttitude: [ 

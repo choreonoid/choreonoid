@@ -19,7 +19,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/tank/tank.body"
+            modelFile: "${SHARE}/model/Tank/Tank.body"
             currentBaseLink: "CHASSIS"
             rootPosition: [ 0, 0, 0.1 ]
             rootAttitude: [ 
@@ -44,11 +44,9 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
-                controllerOptions: ""
-                controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_TurretController2.so"
+                isNoDelayMode: true
+                controller: "TankTutorial_TurretController2"
                 reloading: true
-                RelativePathBase: "Controller directory"
               children: 
                 - 
                   id: 4
@@ -56,11 +54,9 @@ items:
                   plugin: SimpleController
                   class: SimpleControllerItem
                   data: 
-                    isImmediateMode: true
-                    controllerOptions: ""
-                    controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_TrackController.so"
+                    isNoDelayMode: true
+                    controller: "TankTutorial_TrackController"
                     reloading: true
-                    RelativePathBase: "Controller directory"
         - 
           id: 6
           name: "Floor"

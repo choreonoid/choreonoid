@@ -14,7 +14,7 @@ class CameraController : public SimpleController
 public:
     virtual bool initialize(SimpleControllerIO* io) override
     {
-        camera = io->body()->findDevice<Camera>("Camera");
+        camera = io->body()->findDevice<Camera>("Kinect");
         io->enableInput(camera);
         prevButtonState = false;
         os = &io->os();
