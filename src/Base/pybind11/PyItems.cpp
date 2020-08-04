@@ -119,6 +119,11 @@ void exportPyItems(py::module m)
 
     py::class_<RootItem, RootItemPtr, Item>(m, "RootItem")
         .def_property_readonly_static("instance", [](py::object){ return RootItem::instance(); })
+        .def("selectItem", &RootItem::selectItem)
+        .def_property_readonly("sigSelectionChanged", &RootItem::sigSelectionChanged)
+        .def_property_readonly("sigSelectedItemsChanged", &RootItem::sigSelectedItemsChanged)
+        .def_property_readonly("selectedItems", [](RootItem& self){ return self.selectedItems(); })
+        .def_property_readonly("checkedItems", [](RootItem& self){ return self.checkedItems(); })
 
         // deprecated
         .def_static("getInstance", &RootItem::instance)

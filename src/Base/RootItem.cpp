@@ -73,6 +73,7 @@ public:
     void doCommonInitialization();
     void emitSigItemAddedForItemTree(Item* item);
     void emitSigItemMovedForItemTree(Item* item);
+    void selectItemIter(Item* item, Item* itemToSelect);
     bool updateSelectedItemsIter(Item* item);
     void updateCheckedItemsIter(Item* item, int checkId, ItemList<>& checkedItems);
 };
@@ -349,6 +350,25 @@ void RootItem::emitSigItemAssinged(Item* assigned, Item* srcItem)
 Item* RootItem::currentItem()
 {
     return impl->currentItem;
+}
+
+
+void RootItem::selectItem(Item* item)
+{
+    impl->selectItemIter(this, item);
+}
+
+
+void RootItem::Impl::selectItemIter(Item* item, Item* itemToSelect)
+{
+    if(item == itemToSelect){
+        item->setSelected(true, true);
+    } else {
+        item->setSelected(false);
+    }
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        selectItemIter(child, itemToSelect);
+    }
 }
 
 

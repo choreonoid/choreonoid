@@ -46,6 +46,8 @@ public:
         return getSelectedItems();
     }
 
+    void selectItem(Item* item);
+
     SignalProxy<void(Item* item, bool on)> sigSelectionChanged();
     SignalProxy<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged();
     void flushSigSelectedItemsChanged();
@@ -65,6 +67,10 @@ public:
     //! \note Item::LogicalSumOfAllChecks is not supported
     template <class ItemType> ItemList<ItemType> checkedItems(int checkId = PrimaryCheck) {
         return getCheckedItems(checkId);
+    }
+
+    const ItemList<>& checkedItems() {
+        return getSelectedItems();
     }
 
     SignalProxy<void(Item* item, bool on)> sigCheckToggled(int checkId = PrimaryCheck);
