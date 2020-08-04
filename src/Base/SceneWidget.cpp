@@ -591,7 +591,6 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     
     indicatorLabel = new QLabel;
     indicatorLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    indicatorLabel->setAlignment(Qt::AlignLeft);
     QFont font = indicatorLabel->font();
     font.setFixedPitch(true);
     indicatorLabel->setFont(font);

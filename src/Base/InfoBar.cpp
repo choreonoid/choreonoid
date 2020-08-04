@@ -5,7 +5,8 @@
 #include "InfoBar.h"
 #include "View.h"
 #include <QApplication>
-#include <iostream>
+#include <QLabel>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -20,6 +21,22 @@ InfoBar* InfoBar::instance()
 
 InfoBar::InfoBar()
 {
+    /**
+       The following label is inserted to make the height of the info bar constant.
+       The font height varies depending on the character set actually used in the text.
+       For example, in Japanese environment, the size of the label consisting of ascii characters
+       and that consisting of kanji characters are often different, and the sizeHint or
+       minimumSizeHint function of QLabel returns different height depending on the actual text.
+       This changes the layout of the main window, but the unintentional layout change should
+       be avoided.
+       By inserting the label with the space character which is translated into the space defined
+       in the local character set, the sizeHint always returns a constant size because a local
+       character is usually slightly bigger than an ascii character.
+       Note that in order for this method to work, you have to specify the translation of the space
+       character in the gettext po files.
+    */
+    addPermanentWidget(new QLabel(_(" ")));
+    
     indicatorBase = new QWidget(this);
     indicatorLayout = new QHBoxLayout();
     indicatorLayout->setContentsMargins(0, 0, 0, 0);
@@ -27,7 +44,7 @@ InfoBar::InfoBar()
     indicatorBase->setLayout(indicatorLayout);
     addPermanentWidget(indicatorBase);
     
-    currentIndicator = 0;
+    currentIndicator = nullptr;
 
     connect(qApp, SIGNAL(focusChanged(QWidget*, QWidget*)),
             this, SLOT(onFocusChanged(QWidget*, QWidget*)));
@@ -78,9 +95,9 @@ void InfoBar::removeCurrentIndicator()
     if(currentIndicator){
         indicatorLayout->removeWidget(currentIndicator);
         currentIndicator->hide();
-        currentIndicator->setParent(0);
+        currentIndicator->setParent(nullptr);
         currentIndicator->disconnect(SIGNAL(destroyed(QObject*)), this, SLOT(onIndicatorDestroyed(QObject*)));
-        currentIndicator = 0;
+        currentIndicator = nullptr;
     }
 }    
 
@@ -88,7 +105,7 @@ void InfoBar::removeCurrentIndicator()
 void InfoBar::onIndicatorDestroyed(QObject* obj)
 {
     if(obj == currentIndicator){
-        currentIndicator = 0;
+        currentIndicator = nullptr;
     }
 }
 
@@ -108,4 +125,3 @@ void InfoBar::onFocusChanged(QWidget* old, QWidget* now)
         widget = widget->parentWidget();
     }
 }
-
