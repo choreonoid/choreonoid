@@ -95,7 +95,7 @@ YAMLWriter::YAMLWriter(const std::string filename)
 YAMLWriterImpl::YAMLWriterImpl(const std::string filename)
     : YAMLWriterImpl(ofs)
 {
-    ofs.open(fromUTF8(filename).c_str());
+    ofs.open(fromUTF8(filename).c_str(), ios_base::out | ios_base::binary);
 }
 
 
@@ -150,7 +150,7 @@ void YAMLWriter::flush()
 
 bool YAMLWriter::openFile(const std::string& filename)
 {
-    impl->ofs.open(fromUTF8(filename).c_str());
+    impl->ofs.open(fromUTF8(filename).c_str(), ios_base::out | ios_base::binary);
     if(impl->ofs.is_open()){
         setOutput(impl->ofs);
         return true;

@@ -138,7 +138,7 @@ void MessageLogItemImpl::openFile()
     }
 
     if(fileMode.selectedIndex()==MessageLogItem::APPEND){
-        ofs.open(filename, ios::app);
+        ofs.open(filename, ios_base::out | ios_base::app | ios_base::binary);
     }else{
         stdx::filesystem::path path(fromUTF8(filename));
         if(stdx::filesystem::exists(path)){
@@ -150,7 +150,7 @@ void MessageLogItemImpl::openFile()
                 return;
             }
         }
-        ofs.open(path.string(), ios::out);
+        ofs.open(path.string(), ios_base::out | ios_base::binary);
     }
 
     if(!ofs){
