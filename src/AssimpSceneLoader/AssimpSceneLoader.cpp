@@ -150,8 +150,11 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
         filename,
         aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 
-    if(!scene){
-        os() << importer.GetErrorString() << endl;
+    if(!scene || !scene->mRootNode){
+        auto error = importer.GetErrorString();
+        if(error && *error != '\0'){
+            os() << error << endl;
+        }
         return nullptr;
     }
 

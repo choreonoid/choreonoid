@@ -111,15 +111,23 @@ public:
     BodyItem* self;
     BodyPtr body;
 
+    bool isSharingShapes;
+    bool isLocationEditable;
+    bool isKinematicStateChangeNotifiedByParentBodyItem;
+    bool isProcessingInverseKinematicsIncludingParentBody;
+    bool isAttachmentEnabled;
+    bool isCallingSlotsOnKinematicStateEdited;
+    bool isFkRequested;
+    bool isVelFkRequested;
+    bool isAccFkRequested;
+    bool isCollisionDetectionEnabled;
+    bool isSelfCollisionDetectionEnabled;
+    
     BodyItem* parentBodyItem;
     ref_ptr<BodyLocation> bodyLocation;
     ref_ptr<LinkLocation> parentLinkLocation;
     AttachmentDevicePtr attachmentToParent;
     ScopedConnection parentBodyItemConnection;
-    bool isKinematicStateChangeNotifiedByParentBodyItem;
-    bool isProcessingInverseKinematicsIncludingParentBody;
-    bool isAttachmentEnabled;
-    bool isLocationEditable;
 
     enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_FLAGS };
     std::bitset<NUM_UPUDATE_FLAGS> updateFlags;
@@ -131,13 +139,6 @@ public:
     LinkTraverse fkTraverse;
     unique_ptr<LinkKinematicsKitManager> linkKinematicsKitManager;
     shared_ptr<PinDragIK> pinDragIK;
-
-    bool isCallingSlotsOnKinematicStateEdited;
-    bool isFkRequested;
-    bool isVelFkRequested;
-    bool isAccFkRequested;
-    bool isCollisionDetectionEnabled;
-    bool isSelfCollisionDetectionEnabled;
 
     BodyState initialState;
             
@@ -157,7 +158,7 @@ public:
 
     Impl(BodyItem* self);
     Impl(BodyItem* self, const Impl& org);
-    Impl(BodyItem* self, Body* body);
+    Impl(BodyItem* self, Body* body, bool isSharingShapes);
     ~Impl();
     void init(bool calledFromCopyConstructor);
     void initBody(bool calledFromCopyConstructor);
@@ -323,18 +324,8 @@ BodyItem::BodyItem()
 }
     
 
-BodyItem::Impl::Impl(BodyItem* self, Body* body)
-    : self(self),
-      body(body),
-      sigKinematicStateChanged([&](){ emitSigKinematicStateChanged(); }),
-      sigKinematicStateEdited([&](){ emitSigKinematicStateEdited(); })
-{
-
-}
-
-
 BodyItem::Impl::Impl(BodyItem* self)
-    : Impl(self, new Body)
+    : Impl(self, new Body, false)
 {
     body->rootLink()->setName("Root");
     isAttachmentEnabled = true;
@@ -343,16 +334,29 @@ BodyItem::Impl::Impl(BodyItem* self)
 }
 
 
+BodyItem::Impl::Impl(BodyItem* self, Body* body, bool isSharingShapes)
+    : self(self),
+      body(body),
+      isSharingShapes(isSharingShapes),
+      sigKinematicStateChanged([&](){ emitSigKinematicStateChanged(); }),
+      sigKinematicStateEdited([&](){ emitSigKinematicStateEdited(); })
+{
+
+}
+
+
 BodyItem::BodyItem(const BodyItem& org)
     : Item(org)
 {
     impl = new Impl(this, *org.impl);
     impl->init(true);
+
+    setChecked(org.isChecked());
 }
 
 
 BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
-    : Impl(self, org.body->clone())
+    : Impl(self, org.body->clone(), true)
 {
     if(org.currentBaseLink){
         setCurrentBaseLink(body->link(org.currentBaseLink->index()), true);
@@ -422,6 +426,71 @@ void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
 }
 
 
+Item* BodyItem::doDuplicate() const
+{
+    return new BodyItem(*this);
+}
+
+
+void BodyItem::doAssign(Item* srcItem)
+{
+    Item::doAssign(srcItem);
+    impl->doAssign(srcItem);
+}
+
+
+void BodyItem::Impl::doAssign(Item* srcItem)
+{
+    BodyItem* srcBodyItem = dynamic_cast<BodyItem*>(srcItem);
+    if(srcBodyItem){
+        // copy the base link property
+        Link* baseLink = nullptr;
+        Link* srcBaseLink = srcBodyItem->currentBaseLink();
+        if(srcBaseLink){
+            baseLink = body->link(srcBaseLink->name());
+            if(baseLink){
+                setCurrentBaseLink(baseLink);
+            }
+        }
+        // copy the current kinematic state
+        Body* srcBody = srcBodyItem->body();
+        for(int i=0; i < srcBody->numLinks(); ++i){
+            Link* srcLink = srcBody->link(i);
+            Link* link = body->link(srcLink->name());
+            if(link){
+                link->q() = srcLink->q();
+            }
+        }
+
+        if(baseLink){
+            baseLink->p() = srcBaseLink->p();
+            baseLink->R() = srcBaseLink->R();
+        } else {
+            body->rootLink()->p() = srcBody->rootLink()->p();
+            body->rootLink()->R() = srcBody->rootLink()->R();
+        }
+        zmp = srcBodyItem->impl->zmp;
+
+        initialState = srcBodyItem->impl->initialState;
+        
+        self->notifyKinematicStateChange(true);
+    }
+}
+
+
+bool BodyItem::setName(const std::string& name)
+{
+    auto body = impl->body;
+    if(body){
+        body->setName(name);
+        if(body->modelName().empty()){
+            body->setModelName(name);
+        }
+    }
+    return Item::setName(name);
+}
+
+
 Body* BodyItem::body() const
 {
     return impl->body.get();
@@ -444,16 +513,15 @@ void BodyItem::Impl::setBody(Body* body_)
 }
 
 
-bool BodyItem::setName(const std::string& name)
+bool BodyItem::isSharingShapes() const
 {
-    auto body = impl->body;
-    if(body){
-        body->setName(name);
-        if(body->modelName().empty()){
-            body->setModelName(name);
-        }
-    }
-    return Item::setName(name);
+    return impl->isSharingShapes;
+}
+
+
+void BodyItem::cloneShapes(CloneMap& cloneMap)
+{
+    impl->body->cloneShapes(cloneMap);
 }
 
 
@@ -1203,58 +1271,6 @@ void BodyItem::clearCollisions()
 }
 
 
-Item* BodyItem::doDuplicate() const
-{
-    return new BodyItem(*this);
-}
-
-
-void BodyItem::doAssign(Item* srcItem)
-{
-    Item::doAssign(srcItem);
-    impl->doAssign(srcItem);
-}
-
-
-void BodyItem::Impl::doAssign(Item* srcItem)
-{
-    BodyItem* srcBodyItem = dynamic_cast<BodyItem*>(srcItem);
-    if(srcBodyItem){
-        // copy the base link property
-        Link* baseLink = nullptr;
-        Link* srcBaseLink = srcBodyItem->currentBaseLink();
-        if(srcBaseLink){
-            baseLink = body->link(srcBaseLink->name());
-            if(baseLink){
-                setCurrentBaseLink(baseLink);
-            }
-        }
-        // copy the current kinematic state
-        Body* srcBody = srcBodyItem->body();
-        for(int i=0; i < srcBody->numLinks(); ++i){
-            Link* srcLink = srcBody->link(i);
-            Link* link = body->link(srcLink->name());
-            if(link){
-                link->q() = srcLink->q();
-            }
-        }
-
-        if(baseLink){
-            baseLink->p() = srcBaseLink->p();
-            baseLink->R() = srcBaseLink->R();
-        } else {
-            body->rootLink()->p() = srcBody->rootLink()->p();
-            body->rootLink()->R() = srcBody->rootLink()->R();
-        }
-        zmp = srcBodyItem->impl->zmp;
-
-        initialState = srcBodyItem->impl->initialState;
-        
-        self->notifyKinematicStateChange(true);
-    }
-}
-
-
 void BodyItem::onPositionChanged()
 {
     auto worldItem = findOwnerItem<WorldItem>();
@@ -1539,8 +1555,8 @@ BodyItem* BodyItem::parentBodyItem()
 
 void BodyItem::setAttachmentEnabled(bool on)
 {
-    if(on != impl->isAttachmentEnabled){
-        impl->isAttachmentEnabled = on;
+    impl->isAttachmentEnabled = on;
+    if(on != isAttachedToParentBody()){
         impl->updateAttachment(on);
     }
 }

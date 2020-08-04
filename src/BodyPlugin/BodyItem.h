@@ -35,9 +35,13 @@ public:
     BodyItem(const BodyItem& org);
     virtual ~BodyItem();
 
+    virtual bool setName(const std::string& name) override;
+
     Body* body() const;
     void setBody(Body* body);
-    virtual bool setName(const std::string& name) override;
+
+    bool isSharingShapes() const;
+    void cloneShapes(CloneMap& cloneMap);
 
     bool makeBodyStatic();
     bool makeBodyDynamic();

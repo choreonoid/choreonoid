@@ -101,7 +101,7 @@ public:
         bool isRecursive) const;
     void getSelectedDescendantItemsIter(
         const Item* parentItem, ItemList<>& io_items, std::function<bool(Item* item)> pred) const;
-    Item* duplicateSubTreeIter(Item* duplicated) const;
+    Item* duplicateSubTreeIter(Item* duplicated, Item* duplicatedParent) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void justInsertChildItem(Item* newNextItem, Item* item);
     bool checkNewPositionAcceptance(Item* newParentItem, Item* newNextItem, bool isManualOperation);
@@ -152,6 +152,8 @@ Item::Impl::Impl(Item* self, const Impl& org)
     if(attributes[LoadOnly]){
         filePath = org.filePath;
         fileFormat = org.fileFormat;
+        fileOptions = org.fileOptions;
+        fileModificationTime = org.fileModificationTime;
     }
 }
 
@@ -224,9 +226,12 @@ void Item::doAssign(Item* srcItem)
 }
 
 
-Item* Item::duplicate() const
+Item* Item::duplicate(Item* duplicatedParentItem) const
 {
-    Item* duplicated = doDuplicate();
+    Item* duplicated = doDuplicate(duplicatedParentItem);
+    if(!duplicated){
+        duplicated = doDuplicate();
+    }
     if(duplicated && (typeid(*duplicated) != typeid(*this))){
         delete duplicated;
         duplicated = nullptr;
@@ -241,16 +246,22 @@ Item* Item::doDuplicate() const
 }
 
 
-Item* Item::duplicateSubTree() const
+Item* Item::doDuplicate(Item* /* duplicatedParentItem */) const
 {
-    return impl->duplicateSubTreeIter(nullptr);
+    return nullptr;
 }
 
 
-Item* Item::Impl::duplicateSubTreeIter(Item* duplicated) const
+Item* Item::duplicateSubTree() const
+{
+    return impl->duplicateSubTreeIter(nullptr, nullptr);
+}
+
+
+Item* Item::Impl::duplicateSubTreeIter(Item* duplicated, Item* duplicatedParent) const
 {
     if(!duplicated){
-        duplicated = self->duplicate();
+        duplicated = self->duplicate(duplicatedParent);
     }
     
     if(duplicated){
@@ -259,10 +270,10 @@ Item* Item::Impl::duplicateSubTreeIter(Item* duplicated) const
             if(child->isSubItem()){
                 duplicatedChildItem = duplicated->findChildItem(child->name());
                 if(duplicatedChildItem){
-                    child->impl->duplicateSubTreeIter(duplicatedChildItem);
+                    child->impl->duplicateSubTreeIter(duplicatedChildItem, duplicated);
                 }
             } else {
-                duplicatedChildItem = child->impl->duplicateSubTreeIter(nullptr);
+                duplicatedChildItem = child->impl->duplicateSubTreeIter(nullptr, duplicated);
                 if(duplicatedChildItem){
                     duplicated->addChildItem(duplicatedChildItem);
                 }
