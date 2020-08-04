@@ -149,7 +149,7 @@ struct ModelInfo {
 
     /*
       Analog stick input of PS4 gamepad is -1.0 before the first operation.
-      The following flag is used To correct it  to the neutral position.
+      The following flag is used To correct it to the neutral position.
     */
     bool doIgnoreInitialState;
 };
@@ -462,7 +462,7 @@ bool JoystickImpl::readEvent()
     js_event event;
     const float MAX_VALUE_16BIT = 32767.0f;
     
-    // read data of joystick 
+    // read data of joystick
     int len = read(fd, &event, sizeof(js_event));
     
     if(len <= 0) {
@@ -531,7 +531,7 @@ bool JoystickImpl::readEvent()
         }
         if(id != INVALID_AXIS && axisEnabled[id]){
             // normalize value (-1.0 to 1.0)
-            //pos = nearbyint(pos * 10.0) / 10.0;
+            // pos = nearbyint(pos * 10.0) / 10.0;
 
             if(currentModel.doIgnoreInitialState){
                 if(!record_init_pos[id]){
@@ -613,7 +613,7 @@ bool Joystick::getButtonUp(int button) const
 }
 
 
-bool Joystick::getButtonHold(int button, int duration/*(msec)*/) const
+bool Joystick::getButtonHold(int button, int duration /*(msec)*/) const
 {
     if(impl->buttonHoldValid[button]){
         return false;
@@ -626,7 +626,7 @@ bool Joystick::getButtonHold(int button, int duration/*(msec)*/) const
 }
 
 
-bool Joystick::getButtonHoldOn(int button, int duration/*(msec)*/) const
+bool Joystick::getButtonHoldOn(int button, int duration /*(msec)*/) const
 {
     if(button >= (int)impl->buttons.size() || !getButtonState(button)){
         return false;

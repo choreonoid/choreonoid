@@ -36,7 +36,7 @@ namespace Multicopter{
     const std::string AIR_DEFINITION_FILE_VERSION ="1.0.0";
 
     const std::string MULTICOPTER_DENSITY="Fluid Density[kg/m^3]";
-    const std::string MULTICOPTER_VISCOSITY="Viscosity[Pa･s]";
+    const std::string MULTICOPTER_VISCOSITY="Viscosity[Pa*s]";
     const std::string MULTICOPTER_VELOCITY ="Fluid Velocity[m/s]";
     const std::string MULTICOPTER_AIRDEFINITION="Air Definition File";
     const std::string MULTICOPTER_WALLEFFECT="Wall Effect";

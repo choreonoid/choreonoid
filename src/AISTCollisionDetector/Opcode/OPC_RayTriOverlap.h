@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  *	Computes a ray-triangle intersection test.
- *	Original code from Tomas Möller's "Fast Minimum Storage Ray-Triangle Intersection".
+ *	Original code from Tomas MÃ¶ller's "Fast Minimum Storage Ray-Triangle Intersection".
  *	It's been optimized a bit with integer code, and modified to return a non-intersection if distance from
  *	ray origin to triangle is negative.
  *

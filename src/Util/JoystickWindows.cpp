@@ -1,4 +1,4 @@
-﻿/**
+/**
    @author Shizuko Hattori
    @author Shin'ichiro Nakaoka
 

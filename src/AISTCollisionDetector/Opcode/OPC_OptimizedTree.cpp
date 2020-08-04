@@ -127,7 +127,7 @@ static void _BuildCollisionTree(AABBCollisionNode* linear, const udword box_id, 
 		ASSERT(!(linear[box_id].mData&1));
 		
 		//Modified by S-cubed, Inc.
-		//examine_normal_vector@InsertCollisionPair.cpp $B$G?F$rDI$($k$h$&$K$9$k(B
+		//examine_normal_vector@InsertCollisionPair.cpp で親を追えるようにする
 		((AABBCollisionNode*)linear[box_id].mData)->mB     = &linear[box_id];
 		(((AABBCollisionNode*)linear[box_id].mData)+1)->mB = &linear[box_id];
 		// Recurse with new IDs
@@ -257,7 +257,7 @@ bool AABBCollisionTree::Build(AABBTree* tree)
 	udword CurID = 1;
 
 	// Modified by S-cubed, Inc.
-	//$B%k!<%H$N?F$O<+J,<+?H(B
+	//ルートの親は自分自身
 	mNodes[0].mB = &mNodes[0];
 
 	_BuildCollisionTree(mNodes, 0, CurID, tree);
