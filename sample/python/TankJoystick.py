@@ -19,25 +19,23 @@ joystickView = ViewManager.getOrCreateView("Base", "VirtualJoystickView")
 MainWindow.instance.viewArea.addView(joystickView)
 joystickView.bringToFront()
 
-itv = ItemTreeView.instance
-
 worldItem = WorldItem()
 RootItem.instance.addChildItem(worldItem)
 
 laboItem = BodyItem()
 laboItem.load("${SHARE}/model/Labo1/Labo1.body")
+laboItem.setChecked(True)
 worldItem.addChildItem(laboItem)
-itv.checkItem(laboItem)
 
 tankItem = BodyItem()
 tankItem.load("${SHARE}/model/Tank/Tank.body")
+tankItem.setChecked(True)
 tank = tankItem.body
 tank.rootLink.setTranslation([-0.8, 2.4, 0.1])
 tank.rootLink.setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))
 tank.calcForwardKinematics()
 tankItem.storeInitialState()
 worldItem.addChildItem(tankItem)
-itv.checkItem(tankItem)
 
 controllerItem = SimpleControllerItem()
 controllerItem.setController("TankJoystickController")
@@ -48,6 +46,6 @@ simulatorItem.setTimeStep(0.001)
 simulatorItem.setRealtimeSyncMode(True)
 simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.TR_UNLIMITED)
 worldItem.addChildItem(simulatorItem)
-itv.selectItem(simulatorItem)
+simulatorItem.setSelected(True)
 
 simulatorItem.startSimulation()

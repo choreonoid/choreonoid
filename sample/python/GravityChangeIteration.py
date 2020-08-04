@@ -5,7 +5,7 @@ def doNextSimulation():
     global simulationCount, gravity
     if simulationCount < 5:
         print("Simulation trial {}, gravity: {:.1f}".format(simulationCount + 1, gravity))
-        ItemTreeView.instance.selectItem(simulatorItem)
+        RootItem.instance.selectItem(simulatorItem)
         simulatorItem.setGravity([0, 0, -gravity])
         simulatorItem.notifyUpdate()
         simulatorItem.startSimulation()

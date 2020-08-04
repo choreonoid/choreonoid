@@ -3,6 +3,8 @@ from cnoid.Base import *
 from cnoid.BodyPlugin import *
 from numpy import *
 
+rootItem = RootItem.instance
+
 class ShakeBodies:
     def __init__(self):
         toolBar = ToolBar("ShakeBar")
@@ -16,13 +18,13 @@ class ShakeBodies:
         self.dp = array([0.0, 0.0, 0.01])
         self.connections = ScopedConnectionSet()
         self.connections.add(
-            ItemTreeView.instance.sigSelectionChanged.connect(self.onSelectionChanged))
+            rootItem.sigSelectedItemsChanged.connect(self.onSelectionChanged))
         self.timer = Timer()
         self.connections.add(
             self.timer.timeout.connect(self.onTimeout))
 
     def onButtonToggled(self, on):
-        self.onSelectionChanged(ItemTreeView.instance.getSelectedItems())
+        self.onSelectionChanged(rootItem.selectedItems)
 
     def onSelectionChanged(self, items):
         self.bodyItems = BodyItemList(items)

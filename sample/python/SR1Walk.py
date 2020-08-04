@@ -28,10 +28,8 @@ robotItem.storeInitialState()
 controllerItem = SimpleControllerItem()
 controllerItem.setController("SR1WalkPatternController")
 robotItem.addChildItem(controllerItem)
-
+robotItem.setChecked(True)
 worldItem.addChildItem(robotItem)
-
-ItemTreeView.instance.checkItem(robotItem)
 
 floorItem = BodyItem()
 floorItem.load("${SHARE}/model/misc/floor.body")
@@ -41,6 +39,6 @@ simulatorItem = AISTSimulatorItem()
 simulatorItem.setTimeStep(0.002)
 simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.ACTIVE_CONTROL)
 worldItem.addChildItem(simulatorItem)
-ItemTreeView.instance.selectItem(simulatorItem)
+simulatorItem.setSelected(True)
 
 simulatorItem.startSimulation()
