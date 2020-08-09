@@ -106,6 +106,8 @@ public:
     DyBody* forcedPositionBody;
     Position forcedBodyPosition;
 
+    MessageView* mv;
+
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
@@ -171,6 +173,8 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
     isKinematicWalkingEnabled = false;
     is2Dmode = false;
     isOldAccelSensorMode = false;
+
+    mv = MessageView::instance();
 }
 
 
@@ -200,6 +204,8 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self, const AIST
     isKinematicWalkingEnabled = org.isKinematicWalkingEnabled;
     is2Dmode = org.is2Dmode;
     isOldAccelSensorMode = org.isOldAccelSensorMode;
+
+    mv = MessageView::instance();
 }
 
 
@@ -254,11 +260,11 @@ double AISTSimulatorItem::dynamicFriction() const
 
 void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction)
 {
-    MessageView::instance()->putln(
-        MessageView::Warning,
+    impl->mv->putln(
         _("AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction) "
           "is not supported in this version.\n"
-          "Please use the material table instead of it."));
+          "Please use the material table instead of it."),
+        MessageView::Warning);
 }
 
 
@@ -348,8 +354,23 @@ bool AISTSimulatorItem::startSimulation(bool doReset)
 
 SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
 {
+    if(!orgBody->isStaticModel() && orgBody->mass() <= 0.0){
+        impl->mv->putln(
+            format(_("The mass of {0} is {1}, which cannot be simulated by AISTSimulatorItem."),
+                   orgBody->name(), orgBody->mass()),
+            MessageView::Error);
+        return nullptr;
+    }
+        
+    if(orgBody->parentBody()){
+        impl->mv->putln(
+            format(_("{0} is attached to {1}, but attached bodies are not supported by AISTSimulatorItem."),
+                   orgBody->name(), orgBody->parentBody()->name()),
+            MessageView::Error);
+        return nullptr;
+    }
+    
     SimulationBody* simBody = nullptr;
-
     DyBody* body = new DyBody;
     cloneMap.setClone(orgBody, body);
     body->copyFrom(orgBody, &cloneMap);
@@ -357,10 +378,10 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap&
     const int n = orgBody->numLinks();
     for(int i=0; i < n; ++i){
         auto link = body->link(i);
-        if(link->isFreeJoint() && !link->isRoot()){
-            MessageView::instance()->putln(
-                format(_("The joint {0} of {1} is a free joint. AISTSimulator does not allow for a free joint except for the root link."),
-                       link->name(), body->name(), MessageView::Warning));
+        if(link->isFreeJoint() && !link->isBodyRoot()){
+            static const char* message =
+                _("The joint {0} of {1} is a free joint. AISTSimulator does not allow for a free joint except for the root link.");
+            impl->mv->putln(format(message, link->name(), body->name()), MessageView::Warning);
             link->setJointType(Link::FIXED_JOINT);
         }
     }
