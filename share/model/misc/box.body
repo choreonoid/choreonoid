@@ -8,6 +8,11 @@ links:
     name: base
     jointType: free
     translation: [ 0, 0, 0.06 ]
+    mass: 1.0
+    inertia: [
+      0.01, 0,       0,
+      0,       0.01, 0,
+      0,       0,       0.01 ]
     elements:
       -
         type: Shape
