@@ -1641,10 +1641,8 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
     if(parentBodyItem){
         auto linkToAttach = attachToBodyItem(parentBodyItem);
         if(!linkToAttach){
-            linkToAttach = parentBodyItem->body()->rootLink();
             setRelativeOffsetPositionFromParentBody();
         }
-        body->setParent(linkToAttach);
         parentBodyItemConnection =
             parentBodyItem->sigKinematicStateChanged().connect(
                 [&](){ onParentBodyKinematicStateChanged(); });
@@ -1667,6 +1665,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     linkToAttach = holder->link();
                     Position T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
                     body->rootLink()->setOffsetPosition(T_offset);
+                    body->setParent(linkToAttach);
                     setLocationEditable(false, false);
                     mvout() << format(_("{0} has been attached to {1} of {2}."),
                                       self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
