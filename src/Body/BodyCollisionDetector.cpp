@@ -35,9 +35,8 @@ public:
     bool addBody(Body* body, bool isSelfCollisionEnabled);
     bool addLinkRecursively(
         Link* link, vector<GeometryHandle>& linkIndexToGeometryIdSetMap, vector<bool>& exclusions, bool isParentStatic);
-    void setNonInterfarenceLinkPair(
-        int link1Index, int link2Index, vector<GeometryHandle>& linkIndexToGeometryIdSetMap);
-    void setNonInterfarenceLinkPairs(
+    void ignoreLinkPair(int link1Index, int link2Index, vector<GeometryHandle>& linkIndexToGeometryIdSetMap);
+    void ignoreLinkPairs(
         Body* body, vector<GeometryHandle>& linkIndexToGeometryIdSetMap,
         int excludeTreeDepth, vector<bool>& exclusions, vector<vector<int>>& excludeLinkGroups);
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);    
@@ -162,7 +161,7 @@ bool BodyCollisionDetectorImpl::addBody(Body* body, bool isSelfCollisionDetectio
     bool added = addLinkRecursively(body->rootLink(), linkIndexToGeometryHandleMap, exclusions, true);
 
     if(isSelfCollisionDetectionEnabled){
-        setNonInterfarenceLinkPairs(
+        ignoreLinkPairs(
             body, linkIndexToGeometryHandleMap, excludeTreeDepth, exclusions, excludeLinkGroups);
     } else {
         // exclude all the self link pairs
@@ -170,7 +169,7 @@ bool BodyCollisionDetectorImpl::addBody(Body* body, bool isSelfCollisionDetectio
             if(!exclusions[i]){
                 for(int j=i+1; j < numLinks; ++j){
                     if(!exclusions[j]){
-                        setNonInterfarenceLinkPair(i, j, linkIndexToGeometryHandleMap);
+                        ignoreLinkPair(i, j, linkIndexToGeometryHandleMap);
                     }
                 }
             }
@@ -215,16 +214,16 @@ bool BodyCollisionDetectorImpl::addLinkRecursively
 }
 
 
-void BodyCollisionDetectorImpl::setNonInterfarenceLinkPair
+void BodyCollisionDetectorImpl::ignoreLinkPair
 (int link1Index, int link2Index, vector<GeometryHandle>& linkIndexToGeometryHandleMap)
 {
     GeometryHandle geometry1 = linkIndexToGeometryHandleMap[link1Index];
     GeometryHandle geometry2 = linkIndexToGeometryHandleMap[link2Index];
-    collisionDetector->setNonInterfarenceGeometyrPair(geometry1, geometry2);
+    collisionDetector->ignoreGeometryPair(geometry1, geometry2);
 }
 
 
-void BodyCollisionDetectorImpl::setNonInterfarenceLinkPairs
+void BodyCollisionDetectorImpl::ignoreLinkPairs
 (Body* body, vector<GeometryHandle>& linkIndexToGeometryHandleMap,
  int excludeTreeDepth, vector<bool>& exclusions, vector<vector<int>>& excludeLinkGroups)
 {
@@ -251,7 +250,7 @@ void BodyCollisionDetectorImpl::setNonInterfarenceLinkPairs
                                 break;
                             }
                             if(parent1 == link2 || parent2 == link1){
-                                setNonInterfarenceLinkPair(i, j, linkIndexToGeometryHandleMap);
+                                ignoreLinkPair(i, j, linkIndexToGeometryHandleMap);
                             }
                         }
                     }
@@ -267,7 +266,7 @@ void BodyCollisionDetectorImpl::setNonInterfarenceLinkPairs
             for(int k = j + 1; k < excludeLinkGroup.size(); ++k){
                 int index2 = excludeLinkGroup[k];
                 if(!exclusions[index1] && !exclusions[index2]){
-                    setNonInterfarenceLinkPair(index1, index2, linkIndexToGeometryHandleMap);
+                    ignoreLinkPair(index1, index2, linkIndexToGeometryHandleMap);
                 }
             }
         }

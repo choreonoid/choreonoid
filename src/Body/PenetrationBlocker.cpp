@@ -109,7 +109,7 @@ void PenetrationBlockerImpl::start()
                 GeometryHandle geometry1 = opponentLinkInfos[i].geometry;
                 for(size_t j=i+1; j < opponentLinkInfos.size(); ++j){
                     GeometryHandle geometry2 = opponentLinkInfos[j].geometry;
-                    collisionDetector->setNonInterfarenceGeometyrPair(geometry1, geometry2);
+                    collisionDetector->ignoreGeometryPair(geometry1, geometry2);
                 }
             }
             collisionDetector->makeReady();

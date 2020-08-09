@@ -51,7 +51,7 @@ public:
     // the parent-child relationship in the item tree
     BodyItem* parentBodyItem();
     // True if the body is attached to the parent body with a holder device and an attachment device
-    bool isAttachedToParentBody() const;
+    bool isAttachedToParentBody() const { return isAttachedToParentBody_; }
     void setAttachmentEnabled(bool on);
     bool isAttachmentEnabled() const;
     bool attachToParentBody();    
@@ -179,6 +179,7 @@ protected:
             
 private:
     Impl* impl;
+    bool isAttachedToParentBody_;
     std::vector<CollisionLinkPairPtr> collisions_;
     std::vector<bool> collisionLinkBitSet_;
     std::vector<std::vector<CollisionLinkPairPtr>> collisionsOfLink_;

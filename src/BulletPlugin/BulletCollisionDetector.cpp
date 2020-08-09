@@ -7,6 +7,7 @@
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
+#include <cnoid/IdPair>
 #include <cnoid/stdx/optional>
 #include <btBulletDynamicsCommon.h>
 #include <HACD/hacdHACD.h>
@@ -96,8 +97,8 @@ public:
     btCollisionWorld* collisionWorld;
 
     MeshExtractor meshExtractor;
-    typedef set<pair<GeometryHandle, GeometryHandle>> GeometryHandlePairSet;
-    GeometryHandlePairSet nonInterfarencePairs;
+    typedef set<IdPair<GeometryHandle>> GeometryHandlePairSet;
+    GeometryHandlePairSet ignoredPairs;
     GeometryHandlePairSet interfarencePairs;
     std::function<void(const CollisionPair&)> callbackOnCollisionDetected;
 
@@ -105,7 +106,6 @@ public:
     ~BulletCollisionDetectorImpl();
     stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(GeometryInfo* model);
-    void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2);
     bool makeReady();
     void setGeometryPosition(GeometryInfo* ginfo, const Position& position);
     void detectCollisions();
@@ -164,7 +164,7 @@ BulletCollisionDetectorImpl::~BulletCollisionDetectorImpl()
 void BulletCollisionDetector::clearGeometries()
 {
     impl->geometryInfos.clear();
-    impl->nonInterfarencePairs.clear();
+    impl->ignoredPairs.clear();
     impl->interfarencePairs.clear();
 }
 
@@ -492,9 +492,14 @@ void BulletCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool is
 }
 
 
-void BulletCollisionDetector::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
+void BulletCollisionDetector::ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore)
 {
-    impl->nonInterfarencePairs.insert(make_pair(geometry1, geometry2));
+    IdPair<GeometryHandle> idPair(geometry1, geometry2);
+    if(ignore){
+        impl->ignoredPairs.insert(idPair);
+    } else {
+        impl->ignoredPairs.erase(idPair);
+    }
 }
 
 
@@ -510,14 +515,13 @@ bool BulletCollisionDetectorImpl::makeReady()
 
     const int n = geometryInfos.size();
     for(int i=0; i < n; ++i){
-        GeometryInfo* info1 = geometryInfos[i];
-        if(info1){
+        if(auto& info1 = geometryInfos[i]){
             for(int j = i+1; j < n; ++j){
-                GeometryInfo* info2 = geometryInfos[j];
-                if(info2){
+                if(auto& info2 = geometryInfos[j]){
                     if(!info1->isStatic || !info2->isStatic){
-                        if(nonInterfarencePairs.find(make_pair(i, j)) == nonInterfarencePairs.end()){
-                            interfarencePairs.insert(make_pair(i,j));
+                        IdPair<GeometryHandle> geometryPair(i, j);
+                        if(ignoredPairs.find(geometryPair) == ignoredPairs.end()){
+                            interfarencePairs.insert(geometryPair);
                         }
                     }
                 }
@@ -576,8 +580,8 @@ void BulletCollisionDetector::detectCollisions(std::function<void(const Collisio
 void BulletCollisionDetectorImpl::detectCollisions()
 {
     for(auto& interfarencePair : interfarencePairs){
-        GeometryInfo* ginfo1 = geometryInfos[interfarencePair.first];
-        GeometryInfo* ginfo2 = geometryInfos[interfarencePair.second];
+        GeometryInfo* ginfo1 = geometryInfos[interfarencePair[0]];
+        GeometryInfo* ginfo2 = geometryInfos[interfarencePair[1]];
 
         if(ginfo1->collisionObject && ginfo2->collisionObject){
             CollisionPair collisionPair(

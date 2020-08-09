@@ -88,7 +88,7 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
             if(!exclusions[i]){
                 for(int j=i+1; j < numLinks; ++j){
                     if(!exclusions[j]){
-                        detector.setNonInterfarenceGeometyrPair(i + idTop, j + idTop);
+                        detector.ignoreGeometryPair(i + idTop, j + idTop);
                     }
                 }
             }
@@ -114,7 +114,7 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
                                 break;
                             }
                             if(parent1 == link2 || parent2 == link1){
-                                detector.setNonInterfarenceGeometyrPair(i + idTop, j + idTop);
+                                detector.ignoreGeometryPair(i + idTop, j + idTop);
                             }
                         }
                     }
@@ -129,7 +129,7 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
                 for(int k=j+1; k<excludeLinkGroup.size(); k++){
                     int index2=excludeLinkGroup[k];
                     if(!exclusions[index1] && !exclusions[index2]){
-                        detector.setNonInterfarenceGeometyrPair(index1 + idTop, index2 + idTop);
+                        detector.ignoreGeometryPair(index1 + idTop, index2 + idTop);
                     }
                 }
             }

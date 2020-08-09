@@ -321,6 +321,7 @@ BodyItem::BodyItem()
 {
     impl = new Impl(this);
     impl->init(false);
+    isAttachedToParentBody_ = false;
 }
     
 
@@ -350,6 +351,7 @@ BodyItem::BodyItem(const BodyItem& org)
 {
     impl = new Impl(this, *org.impl);
     impl->init(true);
+    isAttachedToParentBody_ = false;
 
     setChecked(org.isChecked());
 }
@@ -854,7 +856,7 @@ std::shared_ptr<InverseKinematics> BodyItem::findPresetIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;    
     
-    if(impl->attachmentToParent && targetLink->isBodyRoot()){
+    if(isAttachedToParentBody_ && targetLink->isBodyRoot()){
         ik = make_shared<MyCompositeBodyIK>(impl);
 
     } else if(auto kinematicsKit = findPresetLinkKinematicsKit(targetLink)){
@@ -877,7 +879,7 @@ std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
     
     auto rootLink = impl->body->rootLink();
     
-    if(impl->attachmentToParent && targetLink->isBodyRoot()){
+    if(isAttachedToParentBody_ && targetLink->isBodyRoot()){
         ik = make_shared<MyCompositeBodyIK>(impl);
     } else if(auto kinematicsKit = getCurrentLinkKinematicsKit(targetLink)){
         ik = kinematicsKit->inverseKinematics();
@@ -1295,7 +1297,7 @@ LocationProxyPtr BodyItem::getLocationProxy()
 
 bool BodyItem::isLocationEditable() const
 {
-    return impl->isLocationEditable && !isAttachedToParentBody();
+    return impl->isLocationEditable && !isAttachedToParentBody_;
 }
 
 
@@ -1307,7 +1309,7 @@ void BodyItem::setLocationEditable(bool on)
 
 void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhenLocked)
 {
-    if(on && self->isAttachedToParentBody()){
+    if(on && self->isAttachedToParentBody_){
         return;
     }
     
@@ -1556,7 +1558,7 @@ BodyItem* BodyItem::parentBodyItem()
 void BodyItem::setAttachmentEnabled(bool on)
 {
     impl->isAttachmentEnabled = on;
-    if(on != isAttachedToParentBody()){
+    if(on != isAttachedToParentBody_){
         impl->updateAttachment(on);
     }
 }
@@ -1569,7 +1571,7 @@ bool BodyItem::Impl::updateAttachment(bool on)
     if(on && isAttachmentEnabled){
         newParentBodyItem = self->findOwnerItem<BodyItem>();
     }
-    if(newParentBodyItem != parentBodyItem || on != self->isAttachedToParentBody()){
+    if(newParentBodyItem != parentBodyItem || on != self->isAttachedToParentBody_){
         setParentBodyItem(newParentBodyItem);
         updated = true;
     }
@@ -1580,12 +1582,6 @@ bool BodyItem::Impl::updateAttachment(bool on)
 bool BodyItem::isAttachmentEnabled() const
 {
     return impl->isAttachmentEnabled;
-}
-
-
-bool BodyItem::isAttachedToParentBody() const
-{
-    return impl->attachmentToParent != nullptr;
 }
 
 
@@ -1607,7 +1603,7 @@ bool BodyItem::attachToParentBody()
     } else {
         impl->updateAttachment(true);
     }
-    return isAttachedToParentBody();
+    return isAttachedToParentBody_;
 }
 
 
@@ -1633,6 +1629,7 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
     body->resetParent();
     parentBodyItemConnection.disconnect();
     attachmentToParent = nullptr;
+    self->isAttachedToParentBody_ = false;
     for(auto& attachment : body->devices<AttachmentDevice>()){
         attachment->detach();
         attachment->on(false);
@@ -1662,6 +1659,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     holder->on(true);
                     attachment->on(true);
                     attachmentToParent = attachment;
+                    self->isAttachedToParentBody_ = true;
                     linkToAttach = holder->link();
                     Position T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
                     body->rootLink()->setOffsetPosition(T_offset);

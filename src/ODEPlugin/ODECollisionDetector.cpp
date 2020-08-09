@@ -8,6 +8,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
+#include <cnoid/IdPair>
 
 #ifdef GAZEBO_ODE
 #include <gazebo/ode/ode.h>
@@ -21,6 +22,7 @@ using namespace cnoid;
 namespace {
 
 typedef CollisionDetector::GeometryHandle GeometryHandle;
+typedef IdPair<dSpaceID> SpaceIdPair;
 
 struct FactoryRegistration
 {
@@ -87,8 +89,8 @@ class ODECollisionDetectorImpl
 public:
     dSpaceID spaceID;
     vector<GeometryInfoPtr> geometryInfos;
-    typedef set <pair<dSpaceID, dSpaceID>> SpaceIDPairSet;
-    SpaceIDPairSet nonInterfarencePairs;
+    
+    set<SpaceIdPair> ignoredPairs;
     std::function<void(const CollisionPair&)> callbackOnCollisionDetected;
 
     MeshExtractor meshExtractor;
@@ -103,7 +105,7 @@ public:
     ~ODECollisionDetectorImpl();
     stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(GeometryInfo* model);
-    void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2);
+    void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore);
     bool makeReady();
     void setGeometryPosition(GeometryInfo* ginfo, const Position& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
@@ -154,7 +156,7 @@ CollisionDetector* ODECollisionDetector::clone() const
 void ODECollisionDetector::clearGeometries()
 {
     impl->geometryInfos.clear();
-    impl->nonInterfarencePairs.clear();
+    impl->ignoredPairs.clear();
 }
 
 
@@ -327,21 +329,23 @@ void ODECollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isSta
 }
 
 
-void ODECollisionDetector::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
+void ODECollisionDetector::ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore)
 {
-    impl->setNonInterfarenceGeometyrPair(geometry1, geometry2);
+    impl->ignoreGeometryPair(geometry1, geometry2, ignore);
 }
 
 
-void ODECollisionDetectorImpl::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
+void ODECollisionDetectorImpl::ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore)
 {
     GeometryInfo* ginfo1 = geometryInfos[geometry1];
     GeometryInfo* ginfo2 = geometryInfos[geometry2];
     if(ginfo1 && ginfo2){
-        dSpaceID space1 = ginfo1->spaceID;
-        dSpaceID space2 = ginfo2->spaceID;
-        //if(nonInterfarencePairs.find(make_pair(space1, space2)) == nonInterfarencePairs.end())
-        nonInterfarencePairs.insert(make_pair(space1, space2));
+        SpaceIdPair idPair(ginfo1->spaceID, ginfo2->spaceID);
+        if(ignore){
+            ignoredPairs.insert(idPair);
+        } else {
+            ignoredPairs.erase(idPair);
+        }
     }
 }
 
@@ -356,17 +360,11 @@ bool ODECollisionDetectorImpl::makeReady()
 {
     const int n = geometryInfos.size();
     for(int i=0; i < n; ++i){
-        GeometryInfo* info1 = geometryInfos[i];
-        if(info1){
+        if(auto& info1 = geometryInfos[i]){
             for(int j=i + 1; j < n; ++j){
-                GeometryInfo* info2 = geometryInfos[j];
-                if(info2){
+                if(auto& info2 = geometryInfos[j]){
                     if(info1->isStatic && info2->isStatic){
-                        dSpaceID space1 = info1->spaceID;
-                        dSpaceID space2 = info2->spaceID;
-                        if(nonInterfarencePairs.find(make_pair(space1, space2)) == nonInterfarencePairs.end()){
-                            nonInterfarencePairs.insert(make_pair(space1, space2));
-                        }
+                        ignoredPairs.insert(SpaceIdPair(info1->spaceID, info2->spaceID));
                     }
                 }
             }
@@ -426,10 +424,10 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
     dSpaceID space1 = dGeomGetSpace(g1);
     dSpaceID space2 = dGeomGetSpace(g2);
     ODECollisionDetectorImpl* impl = static_cast<ODECollisionDetectorImpl*>(data);
-    if(impl->nonInterfarencePairs.find(make_pair(space1, space2)) != impl->nonInterfarencePairs.end()){
+    if(impl->ignoredPairs.find(SpaceIdPair(space1, space2)) != impl->ignoredPairs.end()){
         return;
     }
-    if(impl->nonInterfarencePairs.find(make_pair(space2, space1)) != impl->nonInterfarencePairs.end()){
+    if(impl->ignoredPairs.find(SpaceIdPair(space2, space1)) != impl->ignoredPairs.end()){
         return;
     }
 

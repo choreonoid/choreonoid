@@ -70,7 +70,7 @@ public:
 
     virtual void setGeometryStatic(GeometryHandle, bool isStatic = true) override { }
 
-    virtual void setNonInterfarenceGeometyrPair(GeometryHandle, GeometryHandle) override { }
+    virtual void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore) override { }
 
     virtual bool makeReady() override
     {

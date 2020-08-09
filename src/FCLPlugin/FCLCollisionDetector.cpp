@@ -80,13 +80,15 @@ class FCLCollisionDetector::Impl
 public:
     vector<CollisionModelPtr> models;
     vector<pair<CollisionModelPtr, CollisionModelPtr>> modelPairs;
-    set<IdPair<GeometryHandle>> nonInterfarencePairs;
+    set<IdPair<GeometryHandle>> ignoredPairs;
     MeshExtractor meshExtractor;
+    bool isReady;
 
+    Impl();
     stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(CollisionModel* geometry, SgMesh* mesh);
     bool addPrimitive(CollisionModel* model, SgMesh* mesh);
-    bool makeReady();
+    void makeReady();
     void updatePosition(CollisionModel* model, const Position& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
     void detectObjectCollisions(
@@ -100,6 +102,12 @@ FCLCollisionDetector::FCLCollisionDetector()
 {
     impl = new Impl;
 }
+
+
+FCLCollisionDetector::Impl::Impl()
+{
+    isReady = false;
+}    
 
 
 FCLCollisionDetector::~FCLCollisionDetector()
@@ -124,7 +132,8 @@ void FCLCollisionDetector::clearGeometries()
 {
     impl->models.clear();
     impl->modelPairs.clear();
-    impl->nonInterfarencePairs.clear();
+    impl->ignoredPairs.clear();
+    impl->isReady = false;
 }
 
 
@@ -172,6 +181,7 @@ stdx::optional<GeometryHandle> FCLCollisionDetector::Impl::addGeometry(SgNode* g
     }
 
     models.push_back(model);
+    isReady = false;
     
     return getHandle(model);
 }
@@ -311,23 +321,36 @@ void FCLCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* 
 void FCLCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
 {
     getCollisionModel(geometry)->isStatic = isStatic;
+    impl->isReady = false;
 }
 
 
-void FCLCollisionDetector::setNonInterfarenceGeometyrPair
-(GeometryHandle geometry1, GeometryHandle geometry2)
+void FCLCollisionDetector::ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore)
 {
-    impl->nonInterfarencePairs.insert(IdPair<GeometryHandle>(geometry1, geometry2));
+    IdPair<GeometryHandle> idPair(geometry1, geometry2);
+    if(ignore){
+        auto result = impl->ignoredPairs.insert(idPair);
+        if(result.second){
+            impl->isReady = false;
+        }
+    } else {
+        auto p = impl->ignoredPairs.find(idPair);
+        if(p != impl->ignoredPairs.end()){
+            impl->ignoredPairs.erase(p);
+            impl->isReady = false;
+        }
+    }
 }
 
 
 bool FCLCollisionDetector::makeReady()
 {
-    return impl->makeReady();
+    impl->makeReady();
+    return true;
 }
 
 
-bool FCLCollisionDetector::Impl::makeReady()
+void FCLCollisionDetector::Impl::makeReady()
 {
     modelPairs.clear();
     const int n = models.size();
@@ -337,7 +360,7 @@ bool FCLCollisionDetector::Impl::makeReady()
                 if(auto& model2 = models[j]){
                     if(!model1->isStatic || !model2->isStatic){
                         IdPair<GeometryHandle> handlePair(getHandle(model1), getHandle(model2));
-                        if(nonInterfarencePairs.find(handlePair) == nonInterfarencePairs.end()){
+                        if(ignoredPairs.find(handlePair) == ignoredPairs.end()){
                             modelPairs.push_back(make_pair(model1, model2));
                         }
                     }
@@ -345,7 +368,8 @@ bool FCLCollisionDetector::Impl::makeReady()
             }
         }
     }
-    return true;
+
+    isReady = true;
 }
 
 
@@ -389,6 +413,9 @@ void FCLCollisionDetector::updatePositions
 
 void FCLCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
+    if(!impl->isReady){
+        impl->makeReady();
+    }
     impl->detectCollisions(callback);
 }
 

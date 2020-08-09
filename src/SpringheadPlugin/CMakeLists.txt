@@ -35,7 +35,7 @@ set(target CnoidSpringheadPlugin)
 set(sources
   SpringheadPlugin.cpp
   SpringheadSimulatorItem.cpp
-  SpringheadCollisionDetector.cpp
+  #SpringheadCollisionDetector.cpp # option
 )
 
 set(headers

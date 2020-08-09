@@ -47,7 +47,7 @@ public:
     virtual stdx::optional<GeometryHandle> addGeometry(SgNode* geometry) = 0;
     virtual void setCustomObject(GeometryHandle geometry, Referenced* object) = 0;
     virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) = 0;
-    virtual void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2) = 0;
+    virtual void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) = 0;
     virtual bool makeReady() = 0;
     
     virtual void updatePosition(GeometryHandle geometry, const Position& position) = 0;

@@ -46,6 +46,7 @@ struct ColdetBodyInfo
 {
     BodyItem* bodyItem;
     vector<ColdetLinkInfoPtr> linkInfos;
+    LinkPtr parentBodyLink;
     bool kinematicStateChanged;
     bool isSelfCollisionDetectionEnabled;
 
@@ -95,6 +96,7 @@ public:
     void updateCollisionDetector(bool forceUpdate);
     void updateColdetBodyInfos(vector<ColdetBodyInfo>& infos);
     void updateCollisions(bool forceUpdate);
+    void ignoreLinkPair(CollisionDetector* detector, GeometryHandle linkGeometry, Link* parentBodyLink, bool ignore);
     void extractCollisions(const CollisionPair& collisionPair);
     MaterialTable* getOrLoadMaterialTable(bool checkFileUpdate);
 };
@@ -161,6 +163,7 @@ void WorldItemImpl::init()
 {
     kinematicsBar = KinematicsBar::instance();
     bodyCollisionDetector.setCollisionDetector(CollisionDetector::create(collisionDetectorType.selectedIndex()));
+    bodyCollisionDetector.enableGeometryHandleMap(true);
     collisions = std::make_shared<vector<CollisionLinkPairPtr>>();
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setName("Collisions");
@@ -380,21 +383,53 @@ void WorldItemImpl::updateCollisions(bool forceUpdate)
                     linkInfo->geometry, linkInfo->link->position());
             }
         }
+        Link* prevParentBodyLink = bodyInfo.parentBodyLink;
+        Link* newParentBodyLink = nullptr;
+        if(bodyItem->isAttachedToParentBody()){
+            newParentBodyLink = bodyItem->body()->parentBodyLink();
+        }
+        if(newParentBodyLink != prevParentBodyLink){
+            auto rootLinkGeometry = bodyInfo.linkInfos[0]->geometry;
+            if(prevParentBodyLink){
+                ignoreLinkPair(collisionDetector, rootLinkGeometry, prevParentBodyLink, false);
+            }
+            if(newParentBodyLink){
+                ignoreLinkPair(collisionDetector, rootLinkGeometry, newParentBodyLink, true);
+            }
+            bodyInfo.parentBodyLink = newParentBodyLink;
+        }
+        
         bodyInfo.kinematicStateChanged = false;
     }
-
+    
     collisions->clear();
-
+    
     bodyCollisionDetector.detectCollisions(
         [&](const CollisionPair& pair){ extractCollisions(pair); });
-
+    
     sceneCollision->setDirty();
-
+    
     for(auto& info : coldetBodyInfos){
         info.bodyItem->notifyCollisionUpdate();
     }
     
     sigCollisionsUpdated();
+}
+
+
+void WorldItemImpl::ignoreLinkPair
+(CollisionDetector* detector, GeometryHandle linkGeometry, Link* parentBodyLink, bool ignore)
+{
+    while(parentBodyLink){
+        if(auto pParentLinkGeometry = bodyCollisionDetector.findGeometryHandle(parentBodyLink)){
+            detector->ignoreGeometryPair(linkGeometry, *pParentLinkGeometry, ignore);
+        }
+        if(parentBodyLink->isFixedJoint()){
+            parentBodyLink = parentBodyLink->parent();
+        } else {
+            break;
+        }
+    }
 }
 
 
