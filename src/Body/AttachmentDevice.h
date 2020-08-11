@@ -30,6 +30,7 @@ public:
     virtual void on(bool on) override;
 
     HolderDevice* holder();
+    bool isAttaching() const;
     void detach();
 
     std::string category() const;

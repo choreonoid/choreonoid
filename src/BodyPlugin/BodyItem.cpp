@@ -1162,7 +1162,7 @@ void BodyItem::Impl::emitSigKinematicStateChanged()
 
 void BodyItem::notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK)
 {
-    impl->notifyKinematicStateChange(requestFK, requestVelFK,requestAccFK, true);
+    impl->notifyKinematicStateChange(requestFK, requestVelFK, requestAccFK, true);
 }
 
 
@@ -1630,8 +1630,12 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
     parentBodyItemConnection.disconnect();
     attachmentToParent = nullptr;
     self->isAttachedToParentBody_ = false;
+    bool detached = false;
     for(auto& attachment : body->devices<AttachmentDevice>()){
-        attachment->detach();
+        if(attachment->isAttaching()){
+            attachment->detach();
+            detached = true;
+        }
         attachment->on(false);
     }
 
@@ -1644,6 +1648,10 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
             parentBodyItem->sigKinematicStateChanged().connect(
                 [&](){ onParentBodyKinematicStateChanged(); });
         onParentBodyKinematicStateChanged();
+
+    } else if(detached){
+        setLocationEditable(true, false);
+        notifyKinematicStateChange(false, false, false, true);
     }
 }
 

@@ -120,6 +120,12 @@ void AttachmentDevice::setHolder(HolderDevice* holder)
 }
 
 
+bool AttachmentDevice::isAttaching() const
+{
+    return static_cast<bool>(weak_holder);
+}
+
+
 void AttachmentDevice::detach()
 {
     if(auto holder = weak_holder.lock()){
