@@ -71,15 +71,24 @@ public:
     void setDefaultColor(const Vector3f& color);
 
     enum LightingMode {
-        FULL_LIGHTING,
-        NORMAL_LIGHTING,
-        MINIMUM_LIGHTING,
-        SOLID_COLOR_LIGHTING,
-        NO_LIGHTING,
-        N_LIGHTING_MODES
+        NormalLighting,
+        MinimumLighting,
+        SolidColorLighting,
+        NoLighting,
+        NumLightingModes
     };
-    virtual void setLightingMode(int mode) = 0;
-    
+    virtual void setLightingMode(LightingMode mode) = 0;
+    virtual LightingMode lightingMode() const = 0;
+
+    //enum PolygonMode { FILL_MODE, FILL_LINE_MODE, LINE_MODE, POINT_MODE };
+    enum PolygonElement {
+        PolygonFace = 1,
+        PolygonEdge = 2,
+        PolygonVertex = 4
+    };
+    virtual void setPolygonDisplayElements(int elementFlags) = 0;
+    virtual int polygonDisplayElements() const = 0;
+
     virtual void clearShadows();
     virtual void enableShadowOfLight(int index, bool on = true);
     virtual void enableShadowAntiAliasing(bool on);
@@ -89,9 +98,6 @@ public:
     virtual void setDefaultPointSize(double size) = 0;
     virtual void setDefaultLineWidth(double width) = 0;
 
-    enum PolygonMode { FILL_MODE, LINE_MODE, POINT_MODE };
-    void setPolygonMode(PolygonMode mode);
-    PolygonMode polygonMode() const;
 
     virtual void showNormalVectors(double length) = 0;
 

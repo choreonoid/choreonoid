@@ -69,7 +69,7 @@ private:
     SceneWidgetEvent();
     SceneWidgetEvent& operator=(const SceneWidgetEvent& org); // disabled
 
-    friend class SceneWidgetImpl;
+    friend class SceneWidget;
 };
 
 }

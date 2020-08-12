@@ -13,7 +13,6 @@
 namespace cnoid {
 
 class ExtensionManager;
-class SceneWidgetImpl;
 class SceneRenderer;
 class Archive;
 class MenuManager;
@@ -68,9 +67,13 @@ public:
         
     void viewAll();
 
-    enum PolygonMode { FILL_MODE, LINE_MODE, POINT_MODE };
-    void setPolygonMode(PolygonMode mode);
-    PolygonMode polygonMode() const;
+    enum PolygonElement {
+        PolygonFace = 1,
+        PolygonEdge = 2,
+        PolygonVertex = 4
+    };
+    void setPolygonDisplayElements(int elementFlags);
+    int polygonDisplayElements() const;
 
     void setCollisionLinesVisible(bool on);
     bool collisionLinesVisible() const;
@@ -138,8 +141,10 @@ public:
     SignalProxy<void(bool isFocused)> sigWidgetFocusChanged();
     SignalProxy<void()> sigAboutToBeDestroyed();
 
+    class Impl;
+
 private:
-    SceneWidgetImpl* impl;
+    Impl* impl;
 };
 
 
@@ -151,7 +156,7 @@ private:
     SceneWidgetRoot(SceneWidget* sceneWidget);
     SceneWidget* sceneWidget_;
     SgUnpickableGroupPtr systemGroup;
-    friend class SceneWidgetImpl;
+    friend class SceneWidget;
 };
 typedef ref_ptr<SceneWidgetRoot> SceneWidgetRootPtr;
 

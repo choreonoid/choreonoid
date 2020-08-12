@@ -34,7 +34,11 @@ public:
     virtual const SgNodePath& pickedNodePath() const override;
     virtual bool isRenderingPickingImage() const override;
     
-    virtual void setLightingMode(int mode) override;
+    virtual void setLightingMode(LightingMode mode) override;
+    virtual LightingMode lightingMode() const override;
+    virtual void setPolygonDisplayElements(int elementFlags) override;
+    virtual int polygonDisplayElements() const override;
+    
     void setHeadLightLightingFromBackEnabled(bool on);
     virtual void setDefaultSmoothShading(bool on) override;
     virtual SgMaterial* defaultMaterial() override;

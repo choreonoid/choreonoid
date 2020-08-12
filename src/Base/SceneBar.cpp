@@ -12,6 +12,7 @@
 #include "MessageView.h"
 #include "AppConfig.h"
 #include "ComboBox.h"
+#include "ButtonGroup.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneRenderer>
@@ -59,7 +60,8 @@ public:
     ToolButton* editModeToggle;
     ToolButton* firstPersonModeToggle;
     ComboBox* cameraCombo;
-    ToolButton* wireframeToggle;
+    ToolButton* vertexToggle;
+    ButtonGroup polygonModeGroup;
     ToolButton* visualModelToggle;
     ToolButton* modelTypeFlipButton;
     ToolButton* collisionModelToggle;
@@ -82,7 +84,7 @@ public:
     void onSceneRendererCamerasChanged();
     void onSceneRendererCurrentCameraChanged();
     void onCameraComboCurrentIndexChanged(int index);
-    void onWireframeButtonToggled(bool on);
+    void onPolygonModeButtonToggled();
     void flipVisibleModels();
     void updateCollisionModelVisibility();
     void onCollisionLineButtonToggled(bool on);
@@ -158,10 +160,28 @@ void SceneBarImpl::initialize()
                 targetSceneWidget->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
             });
 
-    wireframeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/wireframe.svg"), _("Toggle the wireframe mode"));
-    wireframeToggle->sigToggled().connect(
-        [&](bool on){ onWireframeButtonToggled(on); });
+    vertexToggle = self->addToggleButton(
+        QIcon(":/Base/icons/vertex.svg"), _("Enable the vertex rendering"));
+    vertexToggle->sigToggled().connect(
+        [&](bool){ onPolygonModeButtonToggled(); });
+    
+    auto wireframeToggle = self->addToggleButton(
+        QIcon(":/Base/icons/wireframe.svg"), _("Wireframe mode"));
+    polygonModeGroup.addButton(wireframeToggle, 0);
+
+    auto solidWireframeToggle = self->addToggleButton(
+        QIcon(":/Base/icons/solidwireframe.svg"), _("Solid wireframe mode"));
+        
+    polygonModeGroup.addButton(solidWireframeToggle, 1);
+
+    auto solidPolygonToggle = self->addToggleButton(
+        QIcon(":/Base/icons/solidpolygon.svg"), _("Solid polygon mode"));
+    polygonModeGroup.addButton(solidPolygonToggle, 2);
+
+    polygonModeGroup.sigButtonToggled().connect(
+        [&](int, bool on){
+            if(on){ onPolygonModeButtonToggled(); }
+        });
 
     visualModelToggle = self->addToggleButton(
         QIcon(":/Base/icons/visualshape.svg"), _("Show visual models"));
@@ -295,10 +315,26 @@ void SceneBarImpl::onSceneWidgetStateChanged()
     firstPersonModeToggle->setChecked(targetSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
     firstPersonModeToggle->blockSignals(false);
 
-    wireframeToggle->blockSignals(true);
-    wireframeToggle->setChecked(targetSceneWidget->polygonMode() != SceneWidget::FILL_MODE);
-    wireframeToggle->blockSignals(false);
+    int polygonFlags = targetSceneWidget->polygonDisplayElements();
+    
+    vertexToggle->blockSignals(true);
+    vertexToggle->setChecked(polygonFlags & SceneWidget::PolygonVertex);
+    vertexToggle->blockSignals(false);
 
+    polygonModeGroup.blockSignals(true);
+    if(polygonFlags & SceneWidget::PolygonFace){
+        if(polygonFlags & SceneWidget::PolygonEdge){
+            polygonModeGroup.button(1)->setChecked(true);
+        } else {
+            polygonModeGroup.button(2)->setChecked(true);
+        }
+    } else {
+        if(polygonFlags & SceneWidget::PolygonEdge){
+            polygonModeGroup.button(0)->setChecked(true);
+        }
+    }
+    polygonModeGroup.blockSignals(false);
+    
     collisionLineToggle->blockSignals(true);
     collisionLineToggle->setChecked(targetSceneWidget->collisionLinesVisible());
     collisionLineToggle->blockSignals(false);
@@ -321,10 +357,28 @@ void SceneBarImpl::onFirstPersonModeButtonToggled(bool on)
 }
 
 
-void SceneBarImpl::onWireframeButtonToggled(bool on)
+void SceneBarImpl::onPolygonModeButtonToggled()
 {
     sceneWidgetStateConnection.block();
-    targetSceneWidget->setPolygonMode(on ? SceneWidget::LINE_MODE : SceneWidget::FILL_MODE);
+    
+    int flags = 0;
+    if(vertexToggle->isChecked()){
+        flags |= SceneWidget::PolygonVertex;
+    }
+    switch(polygonModeGroup.checkedId()){
+    case 0:
+        flags |= SceneWidget::PolygonEdge;
+        break;
+    case 1:
+        flags |= (SceneWidget::PolygonEdge | SceneWidget::PolygonFace);
+        break;
+    case 2:
+    default:
+        flags |= SceneWidget::PolygonFace;
+        break;
+    }
+    targetSceneWidget->setPolygonDisplayElements(flags);
+    
     sceneWidgetStateConnection.unblock();
 }
 

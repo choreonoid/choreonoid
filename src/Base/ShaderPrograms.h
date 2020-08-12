@@ -7,6 +7,7 @@
 
 #include "glcore.h"
 #include <cnoid/EigenTypes>
+#include <initializer_list>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -17,8 +18,6 @@ class SgLight;
 class SgMaterial;
 class SgFog;
 
-class ShaderProgramImpl;
-
 class CNOID_EXPORT ShaderProgram
 {
     ShaderProgram(const ShaderProgram&) = delete;
@@ -28,13 +27,6 @@ public:
     GLSLProgram& glslProgram(){ return *glslProgram_; }
     virtual void initialize();
     virtual void release();
-
-    /**
-       This function is called once when the rendering starts
-       if the program is used as the main shader program
-    */
-    virtual void initializeFrameRendering();
-    
     virtual void activate();
     virtual void deactivate();
 
@@ -60,17 +52,22 @@ public:
     bool hasCapability(int capability) const { return capabilities_ & capability; }
 
 protected:
-    ShaderProgram(const char* vertexShader, const char* fragmentShader);
+    struct ShaderSource {
+        const char* filename;
+        int shaderType;
+    };
+    
+    ShaderProgram(std::initializer_list<ShaderSource> sources);
     void setCapability(int capability) { capabilities_ |= capability; }
 
 private:
     GLSLProgram* glslProgram_;
     int capabilities_;
-    ShaderProgramImpl* impl;
+
+    class Impl;
+    Impl* impl;
 };
 
-
-class NolightingProgramImpl;
 
 class CNOID_EXPORT NolightingProgram : public ShaderProgram
 {
@@ -80,18 +77,16 @@ public:
     NolightingProgram();
     ~NolightingProgram();
     virtual void initialize() override;
-    virtual void initializeFrameRendering() override;
     virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
 
 protected:
-    NolightingProgram(const char* vertexShader, const char* fragmentShader);
+    NolightingProgram(std::initializer_list<ShaderSource> sources);
 
 private:
-    NolightingProgramImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
-
-class SolidColorProgramImpl;
 
 class CNOID_EXPORT SolidColorProgram : public NolightingProgram
 {
@@ -102,7 +97,6 @@ public:
     ~SolidColorProgram();
 
     virtual void initialize() override;
-    virtual void initializeFrameRendering() override;
     virtual void activate() override;
     virtual void setMaterial(const SgMaterial* material) override;
     virtual void setVertexColorEnabled(bool on) override;
@@ -113,7 +107,8 @@ public:
     void setPointSize(float s);
 
 private:
-    SolidColorProgramImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 
@@ -123,7 +118,6 @@ class CNOID_EXPORT LightingProgram : public ShaderProgram
     LightingProgram(const LightingProgram&) = delete;
 
 public:
-    virtual void initializeFrameRendering() override;
     virtual int maxNumLights() const = 0;
     virtual bool setLight(
         int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting) = 0;
@@ -131,11 +125,9 @@ public:
     virtual void setFog(const SgFog* fog);
 
 protected:
-    LightingProgram(const char* vertexShader, const char* fragmentShader);
+    LightingProgram(std::initializer_list<ShaderSource> sources);
 };
 
-
-class MinimumLightingProgramImpl;
 
 class CNOID_EXPORT MinimumLightingProgram : public LightingProgram
 {
@@ -155,11 +147,10 @@ public:
     virtual void setMaterial(const SgMaterial* material) override;
 
 private:
-    MinimumLightingProgramImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
-
-class BasicLightingProgramImpl;
 
 class CNOID_EXPORT BasicLightingProgram : public LightingProgram
 {
@@ -174,22 +165,21 @@ public:
     virtual void setFog(const SgFog* fog) override;
 
 protected:
-    BasicLightingProgram(const char* vertexShader, const char* fragmentShader);
+    BasicLightingProgram(std::initializer_list<ShaderSource> sources);
     ~BasicLightingProgram();
     
 private:
-    BasicLightingProgramImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 
-class MaterialLightingProgramImpl;
-
-class CNOID_EXPORT MaterialLightingProgram : public BasicLightingProgram
+class MaterialLightingProgram : public BasicLightingProgram
 {
     MaterialLightingProgram(const MaterialLightingProgram&) = delete;
 
 protected:
-    MaterialLightingProgram(const char* vertexShader, const char* fragmentShader);
+    MaterialLightingProgram(std::initializer_list<ShaderSource> sources);
     ~MaterialLightingProgram();
     
 public:
@@ -201,54 +191,35 @@ public:
     void setMinimumTransparency(float t);
 
 private:
-    MaterialLightingProgramImpl* impl;
-    friend class MaterialLightingProgramImpl;
+    class Impl;
+    Impl* impl;
 };
 
 
-class PhongLightingProgramImpl;
-
-class PhongLightingProgram : public MaterialLightingProgram
-{
-    PhongLightingProgram(const PhongLightingProgram&) = delete;
-
-public:
-    PhongLightingProgram();
-    PhongLightingProgram(const char* vertexShader, const char* fragmentShader);
-    ~PhongLightingProgram();
-
-    virtual void initialize() override;
-    virtual void initializeFrameRendering() override;
-    virtual void activate() override;
-    virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
-
-private:
-    PhongLightingProgramImpl* impl;
-};
-
-
-class PhongShadowLightingProgramImpl;
 class ShadowMapProgram;
 
-class PhongShadowLightingProgram : public PhongLightingProgram
+class FullLightingProgram : public MaterialLightingProgram
 {
-    PhongShadowLightingProgram(const PhongShadowLightingProgram&) = delete;
+    FullLightingProgram(const FullLightingProgram&) = delete;
 
 public:
-    PhongShadowLightingProgram();
-    ~PhongShadowLightingProgram();
+    FullLightingProgram();
+    FullLightingProgram(std::initializer_list<ShaderSource> sources);
+    ~FullLightingProgram();
 
     void setDefaultFramebufferObject(GLuint id);
     GLuint defaultFramebufferObject() const;
+    void setViewportSize(int width, int height);
 
     virtual void initialize() override;
     virtual void release() override;
-    virtual void initializeFrameRendering() override;
     virtual void activate() override;
     virtual bool setLight(
         int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting) override;
     virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
 
+    void setWireframeEnabled(bool on);
+    
     void activateShadowMapGenerationPass(int shadowIndex);
     void activateMainRenderingPass();
 
@@ -262,8 +233,8 @@ public:
     bool isShadowAntiAliasingEnabled() const;
 
 private:
-    PhongShadowLightingProgramImpl* impl;
-    friend class PhongShadowLightingProgramImpl;
+    class Impl;
+    Impl* impl;
     friend class ShadowMapProgram;
 };
 
@@ -273,14 +244,14 @@ class ShadowMapProgram : public NolightingProgram
     ShadowMapProgram(const ShadowMapProgram&) = delete;
     
 public:
-    ShadowMapProgram(PhongShadowLightingProgram* mainProgram);
+    ShadowMapProgram(FullLightingProgram* mainProgram);
     virtual void initialize() override;
-    virtual void initializeFrameRendering() override;
     virtual void activate() override;
+    void initializeShadowMapBuffer();
     virtual void deactivate() override;
 
 private:
-    PhongShadowLightingProgram* mainProgram;
+    FullLightingProgram* mainProgram;
 };
 
 }

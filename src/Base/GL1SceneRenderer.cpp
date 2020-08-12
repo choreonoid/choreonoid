@@ -166,7 +166,8 @@ public:
 
     int numSystemLights;
     int prevNumLights;
-    int lightingMode;
+    LightingMode lightingMode;
+    int polygonDisplayElements;
     bool defaultLighting;
     bool isHeadLightLightingFromBackEnabled;
 
@@ -359,7 +360,7 @@ void GL1SceneRenderer::Impl::initialize()
 
     prevFog = nullptr;
 
-    lightingMode = GLSceneRenderer::FULL_LIGHTING;
+    lightingMode = NormalLighting;
     defaultLighting = true;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
@@ -367,7 +368,7 @@ void GL1SceneRenderer::Impl::initialize()
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
 
-    backFaceCullingMode = GLSceneRenderer::ENABLE_BACK_FACE_CULLING;
+    backFaceCullingMode = ENABLE_BACK_FACE_CULLING;
     
     doNormalVisualization = false;
     normalLength = 0.0;
@@ -557,16 +558,12 @@ void GL1SceneRenderer::Impl::beginActualRendering(SgCamera* camera)
     if(isRenderingPickingImage){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     } else {
-        switch(self->polygonMode()){
-        case GLSceneRenderer::FILL_MODE:
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            break;
-        case GLSceneRenderer::LINE_MODE:
+        if(polygonDisplayElements & PolygonVertex){
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);        
+        } else if(polygonDisplayElements & PolygonEdge){
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            break;
-        case GLSceneRenderer::POINT_MODE:
-            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-            break;
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     }
 
@@ -1365,13 +1362,13 @@ void GL1SceneRenderer::Impl::renderMesh(SgMesh* mesh, bool hasTexture)
 
     bool doCullFace;
     switch(backFaceCullingMode){
-    case GLSceneRenderer::ENABLE_BACK_FACE_CULLING:
+    case ENABLE_BACK_FACE_CULLING:
         doCullFace = mesh->isSolid();
         break;
-    case GLSceneRenderer::DISABLE_BACK_FACE_CULLING:
+    case DISABLE_BACK_FACE_CULLING:
         doCullFace = false;
         break;
-    case GLSceneRenderer::FORCE_BACK_FACE_CULLING:
+    case FORCE_BACK_FACE_CULLING:
     default:
         doCullFace = true;
         break;
@@ -2107,17 +2104,35 @@ void GL1SceneRenderer::Impl::setLineWidth(float width)
 }
 
 
-void GL1SceneRenderer::setLightingMode(int mode)
+void GL1SceneRenderer::setLightingMode(LightingMode mode)
 {
     if(mode != impl->lightingMode){
         impl->lightingMode = mode;
-        if(mode == FULL_LIGHTING || mode == MINIMUM_LIGHTING){
+        if(mode == NormalLighting || mode == MinimumLighting){
             impl->defaultLighting = true;
         } else {
             impl->defaultLighting = false;
         }
         requestToClearResources();
     }
+}
+
+
+GLSceneRenderer::LightingMode GL1SceneRenderer::lightingMode() const
+{
+    return impl->lightingMode;
+}
+
+
+void GL1SceneRenderer::setPolygonDisplayElements(int elementFlags)
+{
+    impl->polygonDisplayElements = elementFlags;
+}
+
+
+int GL1SceneRenderer::polygonDisplayElements() const
+{
+    return impl->polygonDisplayElements;
 }
 
 

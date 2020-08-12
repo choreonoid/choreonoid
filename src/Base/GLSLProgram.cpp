@@ -43,18 +43,6 @@ void GLSLProgram::release()
 }
 
 
-void GLSLProgram::loadVertexShader(const char* filename)
-{
-    loadShader(filename, GL_VERTEX_SHADER);
-}
-
-
-void GLSLProgram::loadFragmentShader(const char* filename)
-{
-    loadShader(filename, GL_FRAGMENT_SHADER);
-}
-
-
 void GLSLProgram::loadShader(const char* filename, int shaderType)
 {
     QFile file(filename);

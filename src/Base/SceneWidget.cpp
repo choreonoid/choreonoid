@@ -101,7 +101,7 @@ public:
 class ConfigDialog : public Dialog
 {
 public:
-    SceneWidgetImpl* sceneWidgetImpl;
+    SceneWidget::Impl* sceneWidgetImpl;
     QVBoxLayout* vbox;
 
     ScopedConnectionSet builtinCameraConnections;
@@ -115,7 +115,6 @@ public:
 
     Selection lightingMode;
     ButtonGroup lightingModeGroup;
-    RadioButton fullLightingRadio;
     RadioButton normalLightingRadio;
     RadioButton minLightingRadio;
     RadioButton solidColorLightingRadio;
@@ -147,8 +146,6 @@ public:
     PushButton defaultColorButton;
     DoubleSpinBox pointSizeSpin;
     DoubleSpinBox lineWidthSpin;
-    CheckBox pointRenderingModeCheck;
-    Connection pointRenderingModeCheckConnection;
     CheckBox normalVisualizationCheck;
     DoubleSpinBox normalLengthSpin;
     CheckBox lightweightViewChangeCheck;
@@ -159,7 +156,7 @@ public:
 
     LazyCaller updateDefaultLightsLater;
 
-    ConfigDialog(SceneWidgetImpl* impl);
+    ConfigDialog(SceneWidget::Impl* impl);
     void showEvent(QShowEvent* event);
     void updateBuiltinCameraConfig();
     void storeState(Archive& archive);
@@ -206,7 +203,7 @@ Signal<void(SceneWidget*)> sigSceneWidgetCreated;
 
 namespace cnoid {
 
-class SceneWidgetImpl : public QOpenGLWidget
+class SceneWidget::Impl : public QOpenGLWidget
 {
     friend class SceneWidget;
     
@@ -287,7 +284,7 @@ public:
     SceneWidgetEditable* eventFilter;
     ReferencedPtr eventFilterRef;
 
-    Selection polygonMode;
+    int polygonDisplayElements;
     bool collisionLinesVisible;
 
     ref_ptr<CoordinateAxesOverlay> coordinateAxesOverlay;
@@ -318,8 +315,8 @@ public:
     static void onOpenGLVSyncToggled(bool on, bool doConfigOutput);
     static void onLowMemoryConsumptionModeChanged(bool on, bool doConfigOutput);
 
-    SceneWidgetImpl(SceneWidget* self);
-    ~SceneWidgetImpl();
+    Impl(SceneWidget* self);
+    ~Impl();
 
     void onVSyncModeChanged();
     void onLowMemoryConsumptionModeChanged(bool on);
@@ -351,8 +348,7 @@ public:
     void onTextureToggled(bool on);
     void onLineWidthChanged(double width);
     void onPointSizeChanged(double width);
-    void setPolygonMode(int mode);
-    void onPointRenderingModeToggled(bool on);
+    void setPolygonDisplayElements(int elementFlags);
     void setCollisionLinesVisible(bool on);
     void onFieldOfViewChanged(double fov);
     void onClippingDepthChanged();
@@ -436,18 +432,18 @@ void SceneWidget::initializeClass(ExtensionManager* ext)
     bool isVSyncEnabled = (glConfig->get("vsync", 0) > 0);
     auto vsyncItem = mm.setPath("/Options/OpenGL").addCheckItem(_("Vertical sync"));
     vsyncItem->setChecked(isVSyncEnabled);
-    vsyncItem->sigToggled().connect([&](bool on){ SceneWidgetImpl::onOpenGLVSyncToggled(on, true); });
-    SceneWidgetImpl::onOpenGLVSyncToggled(isVSyncEnabled, false);
+    vsyncItem->sigToggled().connect([&](bool on){ Impl::onOpenGLVSyncToggled(on, true); });
+    Impl::onOpenGLVSyncToggled(isVSyncEnabled, false);
 
     isLowMemoryConsumptionMode = glConfig->get("lowMemoryConsumption", false);
     auto memoryItem = mm.addCheckItem(_("Low GPU memory consumption mode"));
     memoryItem->setChecked(isLowMemoryConsumptionMode);
-    memoryItem->sigToggled().connect([&](bool on){ SceneWidgetImpl::onLowMemoryConsumptionModeChanged(on, true); });
-    SceneWidgetImpl::onLowMemoryConsumptionModeChanged(isVSyncEnabled, false);
+    memoryItem->sigToggled().connect([&](bool on){ Impl::onLowMemoryConsumptionModeChanged(on, true); });
+    Impl::onLowMemoryConsumptionModeChanged(isVSyncEnabled, false);
 }
 
 
-void SceneWidgetImpl::onOpenGLVSyncToggled(bool on, bool doConfigOutput)
+void SceneWidget::Impl::onOpenGLVSyncToggled(bool on, bool doConfigOutput)
 {
     auto format = QSurfaceFormat::defaultFormat();
     format.setSwapInterval(on ? 1 : 0);
@@ -461,7 +457,7 @@ void SceneWidgetImpl::onOpenGLVSyncToggled(bool on, bool doConfigOutput)
 }
 
 
-void SceneWidgetImpl::onLowMemoryConsumptionModeChanged(bool on, bool doConfigOutput)
+void SceneWidget::Impl::onLowMemoryConsumptionModeChanged(bool on, bool doConfigOutput)
 {
     sigLowMemoryConsumptionModeChanged(on);
 
@@ -519,13 +515,13 @@ void SceneWidget::forEachInstance(SgNode* node, std::function<void(SceneWidget* 
 SceneWidget::SceneWidget(QWidget* parent)
     : Widget(parent)
 {
-    impl = new SceneWidgetImpl(this);
+    impl = new Impl(this);
 
     ::sigSceneWidgetCreated(this);
 }
 
 
-SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
+SceneWidget::Impl::Impl(SceneWidget* self)
     : QOpenGLWidget(self),
       self(self),
       os(MessageView::mainInstance()->cout()),
@@ -634,11 +630,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     updateDefaultLights();
 
-    polygonMode.resize(3);
-    polygonMode.setSymbol(SceneWidget::FILL_MODE, "fill");
-    polygonMode.setSymbol(SceneWidget::LINE_MODE, "line");
-    polygonMode.setSymbol(SceneWidget::POINT_MODE, "point");
-    polygonMode.select(SceneWidget::FILL_MODE);
+    polygonDisplayElements = PolygonFace;
 
     collisionLinesVisible = false;
 
@@ -670,7 +662,7 @@ SceneWidget::~SceneWidget()
 }
 
 
-SceneWidgetImpl::~SceneWidgetImpl()
+SceneWidget::Impl::~Impl()
 {
     delete renderer;
     delete indicatorLabel;
@@ -682,7 +674,7 @@ SceneWidgetImpl::~SceneWidgetImpl()
 }
 
 
-void SceneWidgetImpl::onVSyncModeChanged()
+void SceneWidget::Impl::onVSyncModeChanged()
 {
     /**
        We want to change the swap interval value when the vsync configuration is changed.
@@ -694,7 +686,7 @@ void SceneWidgetImpl::onVSyncModeChanged()
 }
 
 
-void SceneWidgetImpl::onLowMemoryConsumptionModeChanged(bool on)
+void SceneWidget::Impl::onLowMemoryConsumptionModeChanged(bool on)
 {
     if(auto glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer)){
         glslRenderer->setLowMemoryConsumptionMode(on);
@@ -738,10 +730,10 @@ QWidget* SceneWidget::indicator()
 }
 
 
-void SceneWidgetImpl::initializeGL()
+void SceneWidget::Impl::initializeGL()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::initializeGL()" << endl;
+        os << "SceneWidget::Impl::initializeGL()" << endl;
     }
 
     if(renderer->initializeGL()){
@@ -758,16 +750,16 @@ void SceneWidgetImpl::initializeGL()
 }
 
 
-void SceneWidgetImpl::resizeGL(int width, int height)
+void SceneWidget::Impl::resizeGL(int width, int height)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::resizeGL()" << endl;
+        os << "SceneWidget::Impl::resizeGL()" << endl;
     }
     needToUpdateViewportInformation = true;
 }
 
 
-void SceneWidgetImpl::onSceneGraphUpdated(const SgUpdate& update)
+void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& update)
 {
     SgNode* node = dynamic_cast<SgNode*>(update.path().front());
 
@@ -805,11 +797,11 @@ void SceneWidgetImpl::onSceneGraphUpdated(const SgUpdate& update)
 }
 
 
-void SceneWidgetImpl::paintGL()
+void SceneWidget::Impl::paintGL()
 {
     if(TRACE_FUNCTIONS){
         static int counter = 0;
-        os << "SceneWidgetImpl::paintGL() " << counter++ << endl;
+        os << "SceneWidget::Impl::paintGL() " << counter++ << endl;
     }
 
     /**
@@ -866,7 +858,7 @@ void SceneWidgetImpl::paintGL()
 }
 
 
-void SceneWidgetImpl::tryToResumeNormalRendering()
+void SceneWidget::Impl::tryToResumeNormalRendering()
 {
     if(isDraggingView()){
         timerToRenderNormallyAfterInteractiveCameraPositionChange.start(0);
@@ -876,7 +868,7 @@ void SceneWidgetImpl::tryToResumeNormalRendering()
 }
 
 
-void SceneWidgetImpl::renderFPS()
+void SceneWidget::Impl::renderFPS()
 {
     /*
     renderer->setColor(Vector3f(1.0f, 1.0f, 1.0f));
@@ -887,7 +879,7 @@ void SceneWidgetImpl::renderFPS()
 }
 
 
-void SceneWidgetImpl::onFPSUpdateRequest()
+void SceneWidget::Impl::onFPSUpdateRequest()
 {
     double oldFps = fps;
     fps = fpsCounter / 0.5;
@@ -899,7 +891,7 @@ void SceneWidgetImpl::onFPSUpdateRequest()
 }
     
 
-void SceneWidgetImpl::onFPSRenderingRequest()
+void SceneWidget::Impl::onFPSRenderingRequest()
 {
     if(!fpsRendered){
         update();
@@ -908,7 +900,7 @@ void SceneWidgetImpl::onFPSRenderingRequest()
 }
 
 
-void SceneWidgetImpl::showFPS(bool on)
+void SceneWidget::Impl::showFPS(bool on)
 {
     if(on){
         fpsCounter = 0;
@@ -920,7 +912,7 @@ void SceneWidgetImpl::showFPS(bool on)
 }
 
 
-void SceneWidgetImpl::onFPSTestButtonClicked()
+void SceneWidget::Impl::onFPSTestButtonClicked()
 {
     if(!isDoingFPSTest){
         auto& button = config->fpsTestButton;
@@ -934,7 +926,7 @@ void SceneWidgetImpl::onFPSTestButtonClicked()
 }
         
 
-void SceneWidgetImpl::doFPSTest()
+void SceneWidget::Impl::doFPSTest()
 {
     isDoingFPSTest = true;
     isFPSTestCanceled = false;
@@ -984,7 +976,7 @@ void SceneWidget::setCursor(const QCursor cursor)
 }
 
 
-void SceneWidgetImpl::resetCursor()
+void SceneWidget::Impl::resetCursor()
 {
     self->setCursor(isEditMode ? editModeCursor : defaultCursor);
 }
@@ -1008,7 +1000,7 @@ bool SceneWidget::isEditMode() const
 }
 
 
-void SceneWidgetImpl::setEditMode(bool on)
+void SceneWidget::Impl::setEditMode(bool on)
 {
     if(on != isEditMode){
         isEditMode = on;
@@ -1038,7 +1030,7 @@ void SceneWidgetImpl::setEditMode(bool on)
 }
 
 
-void SceneWidgetImpl::toggleEditMode()
+void SceneWidget::Impl::toggleEditMode()
 {
     setEditMode(!isEditMode);
 }
@@ -1075,7 +1067,7 @@ void SceneWidget::viewAll()
 }
 
 
-void SceneWidgetImpl::viewAll()
+void SceneWidget::Impl::viewAll()
 {
     if(!interactiveCameraTransform){
         return;
@@ -1112,7 +1104,7 @@ void SceneWidgetImpl::viewAll()
 }
 
 
-void SceneWidgetImpl::showPickingImageWindow()
+void SceneWidget::Impl::showPickingImageWindow()
 {
     auto glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer);
     if(glslRenderer){
@@ -1125,21 +1117,21 @@ void SceneWidgetImpl::showPickingImageWindow()
 }
 
 
-void SceneWidgetImpl::onUpsideDownToggled(bool on)
+void SceneWidget::Impl::onUpsideDownToggled(bool on)
 {
     renderer->setUpsideDown(on);
     update();
 }
 
 
-void SceneWidgetImpl::updateLatestEvent(QKeyEvent* event)
+void SceneWidget::Impl::updateLatestEvent(QKeyEvent* event)
 {
     latestEvent.modifiers_ = event->modifiers();
     latestEvent.key_ = event->key();
 }
 
 
-void SceneWidgetImpl::updateLatestEvent(int x, int y, int modifiers)
+void SceneWidget::Impl::updateLatestEvent(int x, int y, int modifiers)
 {
     latestEvent.x_ = x;
     latestEvent.y_ = height() - y - 1;
@@ -1147,14 +1139,14 @@ void SceneWidgetImpl::updateLatestEvent(int x, int y, int modifiers)
 }
 
 
-void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
+void SceneWidget::Impl::updateLatestEvent(QMouseEvent* event)
 {
     updateLatestEvent(event->x(), event->y(), event->modifiers());
     latestEvent.button_ = event->button();
 }
 
 
-void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
+void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
 {
     if(needToUpdateViewportInformation ||
        (!forceFullPicking && isLightweightViewChangeEnabled)){
@@ -1200,7 +1192,7 @@ void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
 }
 
 
-void SceneWidgetImpl::updateLastClickedPoint()
+void SceneWidget::Impl::updateLastClickedPoint()
 {
     const SgNodePath& path = latestEvent.nodePath();
     if(!path.empty()){
@@ -1215,7 +1207,7 @@ void SceneWidgetImpl::updateLastClickedPoint()
    \return The editable object with which the given function is actually applied (the function returns true.)
    If there are no functions which returns true, null object is returned.
 */
-SceneWidgetEditable* SceneWidgetImpl::applyFunction
+SceneWidgetEditable* SceneWidget::Impl::applyFunction
 (EditablePath& editablePath, std::function<bool(SceneWidgetEditable* editable)> function)
 {
     SceneWidgetEditable* targetEditable = 0;
@@ -1230,7 +1222,7 @@ SceneWidgetEditable* SceneWidgetImpl::applyFunction
 }
     
 
-bool SceneWidgetImpl::setFocusToEditablePath(EditablePath& editablePath)
+bool SceneWidget::Impl::setFocusToEditablePath(EditablePath& editablePath)
 {
     if(editablePath.empty()){
         return false;
@@ -1258,7 +1250,7 @@ bool SceneWidgetImpl::setFocusToEditablePath(EditablePath& editablePath)
 }
 
 
-bool SceneWidgetImpl::setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable)
+bool SceneWidget::Impl::setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable)
 {
     if(targetEditable){
         EditablePath path;
@@ -1279,7 +1271,7 @@ bool SceneWidgetImpl::setFocusToPointedEditablePath(SceneWidgetEditable* targetE
 }
 
 
-void SceneWidgetImpl::clearFocusToEditables()
+void SceneWidget::Impl::clearFocusToEditables()
 {
     for(size_t i=0; i < focusedEditablePath.size(); ++i){
         focusedEditablePath[i]->onFocusChanged(latestEvent, false);
@@ -1291,7 +1283,7 @@ void SceneWidgetImpl::clearFocusToEditables()
 
 bool SceneWidget::setSceneFocus(const SgNodePath& path)
 {
-    SceneWidgetImpl::EditablePath editablePath;
+    SceneWidget::Impl::EditablePath editablePath;
     for(size_t i=0; i < path.size(); ++i){
         SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(path[i]);
         if(editable){
@@ -1302,10 +1294,10 @@ bool SceneWidget::setSceneFocus(const SgNodePath& path)
 }
 
 
-void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
+void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::keyPressEvent()" << endl;
+        os << "SceneWidget::Impl::keyPressEvent()" << endl;
     }
 
     /*
@@ -1377,10 +1369,10 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
 }
 
 
-void SceneWidgetImpl::keyReleaseEvent(QKeyEvent* event)
+void SceneWidget::Impl::keyReleaseEvent(QKeyEvent* event)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::keyReleaseEvent()" << endl;
+        os << "SceneWidget::Impl::keyReleaseEvent()" << endl;
     }
 
     /*
@@ -1414,10 +1406,10 @@ void SceneWidgetImpl::keyReleaseEvent(QKeyEvent* event)
 }
 
 
-void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
+void SceneWidget::Impl::mousePressEvent(QMouseEvent* event)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::mousePressEvent()" << endl;
+        os << "SceneWidget::Impl::mousePressEvent()" << endl;
     }
     
     updateLatestEvent(event);
@@ -1464,7 +1456,7 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
 }
 
 
-void SceneWidgetImpl::mouseDoubleClickEvent(QMouseEvent* event)
+void SceneWidget::Impl::mouseDoubleClickEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
     updateLatestEventPath();
@@ -1499,7 +1491,7 @@ void SceneWidgetImpl::mouseDoubleClickEvent(QMouseEvent* event)
 }
 
 
-void SceneWidgetImpl::mouseReleaseEvent(QMouseEvent* event)
+void SceneWidget::Impl::mouseReleaseEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
 
@@ -1520,7 +1512,7 @@ void SceneWidgetImpl::mouseReleaseEvent(QMouseEvent* event)
 }
 
 
-void SceneWidgetImpl::mouseMoveEvent(QMouseEvent* event)
+void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
 
@@ -1609,10 +1601,10 @@ static string findObjectNameFromNodePath(const SgNodePath& path)
 }
 
 
-void SceneWidgetImpl::updatePointerPosition()
+void SceneWidget::Impl::updatePointerPosition()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::updatePointerPosition()" << endl;
+        os << "SceneWidget::Impl::updatePointerPosition()" << endl;
     }
 
     updateLatestEventPath(true);
@@ -1651,10 +1643,10 @@ void SceneWidgetImpl::updatePointerPosition()
 }
 
 
-void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
+void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::wheelEvent()" << endl;
+        os << "SceneWidget::Impl::wheelEvent()" << endl;
         os << "delta: " << event->delta() << endl;
     }
 
@@ -1705,13 +1697,13 @@ SignalProxy<void(bool isFocused)> SceneWidget::sigWidgetFocusChanged()
 }
 
 
-void SceneWidgetImpl::focusInEvent(QFocusEvent*)
+void SceneWidget::Impl::focusInEvent(QFocusEvent*)
 {
     sigWidgetFocusChanged(true);
 }
 
 
-void SceneWidgetImpl::focusOutEvent(QFocusEvent*)
+void SceneWidget::Impl::focusOutEvent(QFocusEvent*)
 {
     sigWidgetFocusChanged(false);
 }
@@ -1726,7 +1718,7 @@ SignalProxy<void()> SceneWidget::sigAboutToBeDestroyed()
 /**
    \note Z axis should always be the upper vertical direciton.
 */
-Affine3 SceneWidgetImpl::getNormalizedCameraTransform(const Affine3& T)
+Affine3 SceneWidget::Impl::getNormalizedCameraTransform(const Affine3& T)
 {
     if(!config->restrictCameraRollCheck.isChecked()){
         return T;
@@ -1760,7 +1752,7 @@ Affine3 SceneWidgetImpl::getNormalizedCameraTransform(const Affine3& T)
 }
 
 
-void SceneWidgetImpl::startViewChange()
+void SceneWidget::Impl::startViewChange()
 {
     if(interactiveCameraTransform){
 
@@ -1785,10 +1777,10 @@ void SceneWidgetImpl::startViewChange()
 }
        
 
-void SceneWidgetImpl::startViewRotation()
+void SceneWidget::Impl::startViewRotation()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::startViewRotation()" << endl;
+        os << "SceneWidget::Impl::startViewRotation()" << endl;
     }
 
     if(!interactiveCameraTransform){
@@ -1812,10 +1804,10 @@ void SceneWidgetImpl::startViewRotation()
 }
 
 
-void SceneWidgetImpl::dragViewRotation()
+void SceneWidget::Impl::dragViewRotation()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::dragViewRotation()" << endl;
+        os << "SceneWidget::Impl::dragViewRotation()" << endl;
     }
 
     if(!interactiveCameraTransform){
@@ -1874,10 +1866,10 @@ void SceneWidgetImpl::dragViewRotation()
 }
 
 
-void SceneWidgetImpl::startViewTranslation()
+void SceneWidget::Impl::startViewTranslation()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::startViewTranslation()" << endl;
+        os << "SceneWidget::Impl::startViewTranslation()" << endl;
     }
 
     if(!interactiveCameraTransform){
@@ -1918,10 +1910,10 @@ void SceneWidgetImpl::startViewTranslation()
 }
 
 
-void SceneWidgetImpl::dragViewTranslation()
+void SceneWidget::Impl::dragViewTranslation()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::dragViewTranslation()" << endl;
+        os << "SceneWidget::Impl::dragViewTranslation()" << endl;
     }
     
     if(!interactiveCameraTransform){
@@ -1942,10 +1934,10 @@ void SceneWidgetImpl::dragViewTranslation()
 }
 
 
-void SceneWidgetImpl::startViewZoom()
+void SceneWidget::Impl::startViewZoom()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::startViewZoom()" << endl;
+        os << "SceneWidget::Impl::startViewZoom()" << endl;
     }
 
     if(!interactiveCameraTransform){
@@ -1964,10 +1956,10 @@ void SceneWidgetImpl::startViewZoom()
 }
 
 
-void SceneWidgetImpl::dragViewZoom()
+void SceneWidget::Impl::dragViewZoom()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidgetImpl::dragViewZoom()" << endl;
+        os << "SceneWidget::Impl::dragViewZoom()" << endl;
     }
 
     SgCamera* camera = renderer->currentCamera();
@@ -1997,7 +1989,7 @@ void SceneWidgetImpl::dragViewZoom()
 }
 
 
-void SceneWidgetImpl::zoomView(double ratio)
+void SceneWidget::Impl::zoomView(double ratio)
 {
     if(!interactiveCameraTransform){
         dragMode = NO_DRAGGING;
@@ -2032,7 +2024,7 @@ void SceneWidgetImpl::zoomView(double ratio)
 }
 
 
-void SceneWidgetImpl::notifyCameraPositionInteractivelyChanged()
+void SceneWidget::Impl::notifyCameraPositionInteractivelyChanged()
 {
     isCameraPositionInteractivelyChanged = true;
     interactiveCameraTransform->notifyUpdate(modified);
@@ -2052,7 +2044,7 @@ void SceneWidget::rotateBuiltinCameraView(double dPitch, double dYaw)
 }
 
 
-void SceneWidgetImpl::rotateBuiltinCameraView(double dPitch, double dYaw)
+void SceneWidget::Impl::rotateBuiltinCameraView(double dPitch, double dYaw)
 {
     const Affine3 T = builtinCameraTransform->T();
     builtinCameraTransform->setTransform(
@@ -2073,7 +2065,7 @@ void SceneWidget::translateBuiltinCameraView(const Vector3& dp_local)
 }
 
 
-void SceneWidgetImpl::translateBuiltinCameraView(const Vector3& dp_local)
+void SceneWidget::Impl::translateBuiltinCameraView(const Vector3& dp_local)
 {
     const Affine3 T = builtinCameraTransform->T();
     builtinCameraTransform->setTransform(
@@ -2083,7 +2075,7 @@ void SceneWidgetImpl::translateBuiltinCameraView(const Vector3& dp_local)
 }
 
 
-void SceneWidgetImpl::showViewModePopupMenu(const QPoint& globalPos)
+void SceneWidget::Impl::showViewModePopupMenu(const QPoint& globalPos)
 {
     menuManager.setNewPopupMenu(self);
     
@@ -2096,7 +2088,7 @@ void SceneWidgetImpl::showViewModePopupMenu(const QPoint& globalPos)
 }
 
 
-void SceneWidgetImpl::showEditModePopupMenu(const QPoint& globalPos)
+void SceneWidget::Impl::showEditModePopupMenu(const QPoint& globalPos)
 {
     menuManager.setNewPopupMenu(self);
 
@@ -2184,7 +2176,7 @@ void SceneWidget::removeEventFilter(SceneWidgetEditable* filter)
 }
 
 
-void SceneWidgetImpl::showBackgroundColorDialog()
+void SceneWidget::Impl::showBackgroundColorDialog()
 {
     const Vector3f& c = renderer->backgroundColor();
     QColor newColor =
@@ -2199,7 +2191,7 @@ void SceneWidgetImpl::showBackgroundColorDialog()
 }
 
 
-void SceneWidgetImpl::showGridColorDialog(int index)
+void SceneWidget::Impl::showGridColorDialog(int index)
 {
     const Vector4f& c = gridColor[index];
     QColor newColor = QColorDialog::getColor(
@@ -2213,7 +2205,7 @@ void SceneWidgetImpl::showGridColorDialog(int index)
 }
 
 
-void SceneWidgetImpl::showDefaultColorDialog()
+void SceneWidget::Impl::showDefaultColorDialog()
 {
     const Vector3f& dc = renderer->defaultColor();
     QColor c = QColorDialog::getColor(
@@ -2230,7 +2222,7 @@ void SceneWidgetImpl::showDefaultColorDialog()
 }
 
 
-void SceneWidgetImpl::updateCurrentCamera()
+void SceneWidget::Impl::updateCurrentCamera()
 {
     const int index = renderer->currentCameraIndex();
     if(index >= 0){
@@ -2269,7 +2261,7 @@ bool SceneWidget::isBuiltinCamera(SgCamera* camera) const
 }
 
 
-void SceneWidgetImpl::setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings)
+void SceneWidget::Impl::setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings)
 {
     renderer->setCurrentCameraPath(simplifiedPathStrings);
     updateCurrentCamera();
@@ -2288,13 +2280,13 @@ InteractiveCameraTransform* SceneWidget::findOwnerInteractiveCameraTransform(int
 }
 
 
-void SceneWidgetImpl::onCamerasChanged()
+void SceneWidget::Impl::onCamerasChanged()
 {
     updateCurrentCamera();
 }
 
 
-void SceneWidgetImpl::onCurrentCameraChanged()
+void SceneWidget::Impl::onCurrentCameraChanged()
 {
     interactiveCameraTransform.reset();
     isBuiltinCameraCurrent = false;
@@ -2314,86 +2306,46 @@ void SceneWidgetImpl::onCurrentCameraChanged()
 }
 
 
-void SceneWidgetImpl::onTextureToggled(bool on)
+void SceneWidget::Impl::onTextureToggled(bool on)
 {
     renderer->enableTexture(on);
     update();
 }
 
 
-void SceneWidgetImpl::onLineWidthChanged(double width)
+void SceneWidget::Impl::onLineWidthChanged(double width)
 {
     renderer->setDefaultLineWidth(width);
     update();
 }
 
 
-void SceneWidgetImpl::onPointSizeChanged(double size)
+void SceneWidget::Impl::onPointSizeChanged(double size)
 {
     renderer->setDefaultPointSize(size);
     update();
 }
 
 
-void SceneWidget::setPolygonMode(PolygonMode mode)
+void SceneWidget::setPolygonDisplayElements(int elementFlags)
 {
-    impl->setPolygonMode(mode);
+    impl->setPolygonDisplayElements(elementFlags);
 }
 
 
-void SceneWidgetImpl::setPolygonMode(int mode)
+void SceneWidget::Impl::setPolygonDisplayElements(int elementFlags)
 {
-    if(mode < 0 && mode > 2){
-        return;
-    }
-    
-    int oldMode = polygonMode.which();
-
-    if(mode == SceneWidget::POINT_MODE){
-        config->pointRenderingModeCheckConnection.block();
-        config->pointRenderingModeCheck.setChecked(true);
-        config->pointRenderingModeCheckConnection.unblock();
-    }
-    if(mode == SceneWidget::LINE_MODE && config->pointRenderingModeCheck.isChecked()){
-        polygonMode.select(SceneWidget::POINT_MODE);
-    } else {
-        polygonMode.select(mode);
-    }
-
-    if(polygonMode.which() != oldMode){
-        switch(polygonMode.which()){
-        case SceneWidget::FILL_MODE:
-            renderer->setPolygonMode(GL1SceneRenderer::FILL_MODE);
-            break;
-        case SceneWidget::LINE_MODE:
-            renderer->setPolygonMode(GL1SceneRenderer::LINE_MODE);
-            break;
-        case SceneWidget::POINT_MODE:
-            renderer->setPolygonMode(GL1SceneRenderer::POINT_MODE);
-            break;
-        default:
-            break;
-        }
+    if(elementFlags != polygonDisplayElements){
+        renderer->setPolygonDisplayElements(elementFlags);
+        polygonDisplayElements = elementFlags;
         update();
     }
 }
     
-    
-SceneWidget::PolygonMode SceneWidget::polygonMode() const
-{
-    return static_cast<SceneWidget::PolygonMode>(impl->polygonMode.which());
-}
 
-
-void SceneWidgetImpl::onPointRenderingModeToggled(bool on)
+int SceneWidget::polygonDisplayElements() const
 {
-    if(on){
-        setPolygonMode(polygonMode.which());
-    } else {
-        if(polygonMode.which() == SceneWidget::POINT_MODE){
-            setPolygonMode(SceneWidget::LINE_MODE);
-        }
-    }
+    return impl->polygonDisplayElements;
 }
 
 
@@ -2403,7 +2355,7 @@ void SceneWidget::setCollisionLinesVisible(bool on)
 }
 
 
-void SceneWidgetImpl::setCollisionLinesVisible(bool on)
+void SceneWidget::Impl::setCollisionLinesVisible(bool on)
 {
     if(on != collisionLinesVisible){
         collisionLinesVisible = on;
@@ -2420,7 +2372,7 @@ bool SceneWidget::collisionLinesVisible() const
 }
 
 
-void SceneWidgetImpl::onFieldOfViewChanged(double fov)
+void SceneWidget::Impl::onFieldOfViewChanged(double fov)
 {
     config->builtinCameraConnections.block();
     builtinPersCamera->setFieldOfView(fov);
@@ -2429,7 +2381,7 @@ void SceneWidgetImpl::onFieldOfViewChanged(double fov)
 }
 
 
-void SceneWidgetImpl::onClippingDepthChanged()
+void SceneWidget::Impl::onClippingDepthChanged()
 {
     config->builtinCameraConnections.block();
     double zNear = config->zNearSpin.value();
@@ -2444,14 +2396,14 @@ void SceneWidgetImpl::onClippingDepthChanged()
 }
 
 
-void SceneWidgetImpl::onSmoothShadingToggled(bool on)
+void SceneWidget::Impl::onSmoothShadingToggled(bool on)
 {
     renderer->setDefaultSmoothShading(on);
     update();
 }
 
 
-void SceneWidgetImpl::updateDefaultLights()
+void SceneWidget::Impl::updateDefaultLights()
 {
     SgLight* headLight = renderer->headLight();
     headLight->on(config->headLightCheck.isChecked());
@@ -2483,7 +2435,7 @@ void SceneWidgetImpl::updateDefaultLights()
 }
 
 
-void SceneWidgetImpl::onNormalVisualizationChanged()
+void SceneWidget::Impl::onNormalVisualizationChanged()
 {
     if(config->normalVisualizationCheck.isChecked()){
         renderer->showNormalVectors(config->normalLengthSpin.value());
@@ -2668,7 +2620,7 @@ void SceneWidget::setScreenSize(int width, int height)
 }
 
 
-void SceneWidgetImpl::setScreenSize(int width, int height)
+void SceneWidget::Impl::setScreenSize(int width, int height)
 {
     QRect r = self->geometry();
     setGeometry((r.width() - width) / 2, (r.height() - height) / 2, width, height);
@@ -2681,7 +2633,7 @@ void SceneWidget::updateIndicator(const std::string& text)
 }
 
 
-void SceneWidgetImpl::updateIndicator(const std::string& text)
+void SceneWidget::Impl::updateIndicator(const std::string& text)
 {
     indicatorLabel->setText(text.c_str());
 }
@@ -2693,12 +2645,11 @@ bool SceneWidget::storeState(Archive& archive)
 }
 
 
-bool SceneWidgetImpl::storeState(Archive& archive)
+bool SceneWidget::Impl::storeState(Archive& archive)
 {
     archive.write("editMode", isEditMode);
     archive.write("viewpointControlMode", viewpointControlMode.selectedSymbol());
     archive.write("collisionLines", collisionLinesVisible);
-    archive.write("polygonMode", polygonMode.selectedSymbol());
 
     config->storeState(archive);
 
@@ -2734,7 +2685,7 @@ bool SceneWidgetImpl::storeState(Archive& archive)
 }
 
 
-void SceneWidgetImpl::writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex)
+void SceneWidget::Impl::writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex)
 {
    vector<string> cameraStrings;
     if(renderer->getSimplifiedCameraPathStrings(cameraIndex, cameraStrings)){
@@ -2751,7 +2702,7 @@ void SceneWidgetImpl::writeCameraPath(Mapping& archive, const std::string& key, 
 }
 
 
-Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform)
+Mapping* SceneWidget::Impl::storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform)
 {
     Mapping* state = new Mapping;
     writeCameraPath(*state, "camera", cameraIndex);
@@ -2812,7 +2763,7 @@ bool SceneWidget::restoreState(const Archive& archive)
 }
 
 
-bool SceneWidgetImpl::restoreState(const Archive& archive)
+bool SceneWidget::Impl::restoreState(const Archive& archive)
 {
     bool doUpdate = false;
 
@@ -2821,9 +2772,6 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
     string symbol;
     if(archive.read("viewpointControlMode", symbol)){
         self->setViewpointControlMode((SceneWidget::ViewpointControlMode(viewpointControlMode.index(symbol))));
-    }
-    if(archive.read("polygonMode", symbol)){
-        setPolygonMode(polygonMode.index(symbol));
     }
 
     setCollisionLinesVisible(archive.get("collisionLines", collisionLinesVisible));
@@ -2901,7 +2849,7 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
    \todo In the second trial, the camera states that have aready restored in the first trial
    should not be restored twice.
 */
-bool SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing, bool isSecondTrial)
+bool SceneWidget::Impl::restoreCameraStates(const Listing& cameraListing, bool isSecondTrial)
 {
     bool restored = false;
 
@@ -2972,7 +2920,7 @@ bool SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing, bool isS
 }
 
 
-int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
+int SceneWidget::Impl::readCameraPath(const Mapping& archive, const char* key)
 {
     int index = -1;
 
@@ -2995,7 +2943,7 @@ int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
 
 
 // for the compatibility to the older versions
-void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
+void SceneWidget::Impl::restoreCurrentCamera(const Mapping& cameraData)
 {
     renderer->extractPreprocessedNodes();
     int index = readCameraPath(cameraData, "current");
@@ -3005,7 +2953,7 @@ void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
 }
 
 
-void SceneWidgetImpl::updateGrids()
+void SceneWidget::Impl::updateGrids()
 {
     if(gridGroup){
         activateSystemNode(gridGroup, false);
@@ -3030,7 +2978,7 @@ void SceneWidgetImpl::updateGrids()
 }
 
 
-SgLineSet* SceneWidgetImpl::createGrid(int index)
+SgLineSet* SceneWidget::Impl::createGrid(int index)
 {
     SgLineSet* grid = new SgLineSet;
     const Vector4f& c = gridColor[index];
@@ -3086,7 +3034,7 @@ SgLineSet* SceneWidgetImpl::createGrid(int index)
 }
 
 
-void SceneWidgetImpl::activateSystemNode(SgNode* node, bool on)
+void SceneWidget::Impl::activateSystemNode(SgNode* node, bool on)
 {
     if(on){
         systemGroup->addChild(node, true);
@@ -3096,7 +3044,7 @@ void SceneWidgetImpl::activateSystemNode(SgNode* node, bool on)
 }
 
 
-ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
+ConfigDialog::ConfigDialog(SceneWidget::Impl* impl)
     : sceneWidgetImpl(impl),
       lightingMode(3, CNOID_GETTEXT_DOMAIN_NAME),
       cullingMode(GLSceneRenderer::N_CULLING_MODES, CNOID_GETTEXT_DOMAIN_NAME)
@@ -3168,33 +3116,27 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Lighting mode")));
 
-    fullLightingRadio.setText(_("Full"));
-    fullLightingRadio.setChecked(true);
-    lightingModeGroup.addButton(&fullLightingRadio, GLSceneRenderer::FULL_LIGHTING);
-    lightingMode.setSymbol(GLSceneRenderer::FULL_LIGHTING, "full");
-    hbox->addWidget(&fullLightingRadio);
-
     normalLightingRadio.setText(_("Normal"));
-    normalLightingRadio.setChecked(false);
-    lightingModeGroup.addButton(&normalLightingRadio, GLSceneRenderer::NORMAL_LIGHTING);
-    lightingMode.setSymbol(GLSceneRenderer::NORMAL_LIGHTING, "normal");
+    normalLightingRadio.setChecked(true);
+    lightingModeGroup.addButton(&normalLightingRadio, GLSceneRenderer::NormalLighting);
+    lightingMode.setSymbol(GLSceneRenderer::NormalLighting, "normal");
     hbox->addWidget(&normalLightingRadio);
-    
+
     minLightingRadio.setText(_("Minimum"));
-    lightingModeGroup.addButton(&minLightingRadio, GLSceneRenderer::MINIMUM_LIGHTING);
-    lightingMode.setSymbol(GLSceneRenderer::MINIMUM_LIGHTING, "minimum");
+    lightingModeGroup.addButton(&minLightingRadio, GLSceneRenderer::MinimumLighting);
+    lightingMode.setSymbol(GLSceneRenderer::MinimumLighting, "minimum");
     hbox->addWidget(&minLightingRadio);
     
-    solidColorLightingRadio.setText(_("Solid"));
-    lightingModeGroup.addButton(&solidColorLightingRadio, GLSceneRenderer::SOLID_COLOR_LIGHTING);
-    lightingMode.setSymbol(GLSceneRenderer::SOLID_COLOR_LIGHTING, "solid");
+    solidColorLightingRadio.setText(_("Solid color"));
+    lightingModeGroup.addButton(&solidColorLightingRadio, GLSceneRenderer::SolidColorLighting);
+    lightingMode.setSymbol(GLSceneRenderer::SolidColorLighting, "solid_color");
     hbox->addWidget(&solidColorLightingRadio);
 
     lightingModeGroup.sigButtonToggled().connect(
         [&, renderer](int mode, bool checked){
             if(checked){
                 lightingMode.select(mode);
-                renderer->setLightingMode(mode);
+                renderer->setLightingMode((GLSceneRenderer::LightingMode)mode);
                 sceneWidgetImpl->update();
             }
         });
@@ -3398,15 +3340,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     hbox->addWidget(&pointSizeSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
-    
-    hbox = new QHBoxLayout;
-    pointRenderingModeCheck.setText(_("Do point rendering in the wireframe mode"));
-    pointRenderingModeCheckConnection =
-        pointRenderingModeCheck.sigToggled().connect([=](bool on){ impl->onPointRenderingModeToggled(on); });
-    hbox->addWidget(&pointRenderingModeCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-    
+
     hbox = new QHBoxLayout;
     normalVisualizationCheck.setText(_("Normal Visualization"));
     normalVisualizationCheck.sigToggled().connect([=](bool){ impl->onNormalVisualizationChanged(); });

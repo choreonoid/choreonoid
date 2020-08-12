@@ -23,6 +23,7 @@
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -231,14 +232,6 @@ public:
 
     PolymorphicSceneNodeFunctionSet renderingFunctions;
 
-    GLuint defaultFBO;
-    GLuint fboForPicking;
-    GLuint colorBufferForPicking;
-    GLuint depthBufferForPicking;
-    GLuint depthBufferForOverlay;
-    int pickingImageWidth;
-    int pickingImageHeight;
-
     ShaderProgram* currentProgram;
     NolightingProgram* currentNolightingProgram;
     LightingProgram* currentLightingProgram;
@@ -247,8 +240,7 @@ public:
     unique_ptr<NolightingProgram> nolightingProgram;
     unique_ptr<SolidColorProgram> solidColorProgram;
     unique_ptr<MinimumLightingProgram> minimumLightingProgram;
-    unique_ptr<PhongLightingProgram> phongLightingProgram;
-    unique_ptr<PhongShadowLightingProgram> phongShadowLightingProgram;
+    unique_ptr<FullLightingProgram> fullLightingProgram;
 
     vector<ScopedShaderProgramActivator> programStack;
 
@@ -271,7 +263,7 @@ public:
     bool isBoundingBoxRenderingForLightweightRenderingGroupEnabled;
     
     Affine3Array modelMatrixStack; // stack of the model matrices
-    Affine3Array modelMatrixBuffer; // Model matriices used later are stored in this buffer
+    Affine3Array modelMatrixBuffer; // Model matrices used later are stored in this buffer
     Affine3 viewTransform;
     Matrix4 projectionMatrix;
     Matrix4 PV;
@@ -280,9 +272,22 @@ public:
     deque<function<void()>> overlayRenderingQueue;
     bool needToUpdateOverlayDepthBufferSize;
     
-    std::set<int> shadowLightIndices;
+    GLuint defaultFBO;
+    GLuint fboForPicking;
+    GLuint colorBufferForPicking;
+    GLuint depthBufferForPicking;
+    GLuint depthBufferForOverlay;
+    int pickingImageWidth;
+    int pickingImageHeight;
 
-    int lightingMode;
+    LightingMode lightingMode;
+    int polygonDisplayElements;
+    bool needToUpdateRenderingMode;
+    bool isPolygonFaceRenderingPassEnabled;
+    bool isPolygonEdgeRenderingPassEnabled;
+    bool isPolygonVertexRenderingPassEnabled;
+
+    std::set<int> shadowLightIndices;
     SgMaterialPtr defaultMaterial;
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
@@ -366,9 +371,9 @@ public:
     void checkGPU();
     bool initializeGLForRendering();
     void doRender();
+    void updateRenderingMode();
     void setupFullLightingRendering();
     bool doPick(int x, int y);
-    void renderScene();
     bool renderShadowMap(int lightIndex);
     void beginRendering();
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
@@ -377,7 +382,6 @@ public:
     void renderTransparentObjects();
     void renderOverlayObjects();    
     void endRendering();
-    void renderSceneGraphNodes();
     void pushProgram(ShaderProgram& program);
     void popProgram();
     inline void setPickColor(int pickIndex);
@@ -565,13 +569,19 @@ void GLSLSceneRenderer::Impl::initialize()
     isBoundingBoxRenderingMode = false;
     isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
 
+    lightingMode = NormalLighting;
+    polygonDisplayElements = PolygonFace;
+    needToUpdateRenderingMode = true;
+    isPolygonFaceRenderingPassEnabled = true;
+    isPolygonEdgeRenderingPassEnabled = false;
+    isPolygonVertexRenderingPassEnabled = false;
+    
     doUnusedResourceCheck = true;
 
     modelMatrixStack.reserve(16);
     viewTransform.setIdentity();
     projectionMatrix.setIdentity();
 
-    lightingMode = GLSceneRenderer::FULL_LIGHTING;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
     defaultPointSize = 1.0f;
@@ -588,7 +598,7 @@ void GLSLSceneRenderer::Impl::initialize()
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
 
-    backFaceCullingMode = GLSceneRenderer::ENABLE_BACK_FACE_CULLING;
+    backFaceCullingMode = ENABLE_BACK_FACE_CULLING;
 
     pickedPoint.setZero();
 
@@ -638,10 +648,8 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         nolightingProgram->release();
         solidColorProgram->release();
         minimumLightingProgram->release();
-        phongLightingProgram->release();
-        if(isShadowCastingEnabled){
-            phongShadowLightingProgram->release();
-        }
+        fullLightingProgram->release();
+
         if(fboForPicking){
             glDeleteRenderbuffers(1, &colorBufferForPicking);
             glDeleteRenderbuffers(1, &depthBufferForPicking);
@@ -661,8 +669,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         nolightingProgram.reset(new NolightingProgram);
         solidColorProgram.reset(new SolidColorProgram);
         minimumLightingProgram.reset(new MinimumLightingProgram);
-        phongLightingProgram.reset(new PhongLightingProgram);
-        phongShadowLightingProgram.reset(new PhongShadowLightingProgram);
+        fullLightingProgram.reset(new FullLightingProgram);
     
         defaultFBO = 0;
         depthBufferForOverlay = 0;
@@ -713,10 +720,10 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     glRendererString = (const char*)glGetString(GL_RENDERER);
     glslVersionString = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-    os() << fmt::format(_("OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"),
-                        major, minor, glslVersionString, self->name());
-    os() << fmt::format(_("Driver profile: {0} {1} {2}.\n"),
-                        glVendorString, glRendererString, glVersionString);
+    os() << format(_("OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"),
+                   major, minor, glslVersionString, self->name());
+    os() << format(_("Driver profile: {0} {1} {2}.\n"),
+                   glVendorString, glRendererString, glVersionString);
 
     char* CNOID_ENABLE_GLSL_SHADOW = getenv("CNOID_ENABLE_GLSL_SHADOW");
     if(CNOID_ENABLE_GLSL_SHADOW){
@@ -730,7 +737,7 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     } else {
         checkGPU();
     }
-        
+
     os().flush();
 
     return initializeGLForRendering();
@@ -775,7 +782,7 @@ void GLSLSceneRenderer::Impl::checkGPU()
     }
 
     if(!isShadowCastingEnabled){
-        os() << fmt::format(_("Shadow casting is disabled for this GPU due to some problems.\n"));
+        os() << format(_("Shadow casting is disabled for this GPU due to some problems.\n"));
     }
 }
 
@@ -790,10 +797,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
         nolightingProgram->initialize();
         solidColorProgram->initialize();
         minimumLightingProgram->initialize();
-        phongLightingProgram->initialize();
-        if(isShadowCastingEnabled){
-            phongShadowLightingProgram->initialize();
-        }
+        fullLightingProgram->initialize();
     }
     catch(std::runtime_error& error){
         os() << error.what() << endl;
@@ -820,7 +824,7 @@ const std::string& GLSLSceneRenderer::glVendor() const
 void GLSLSceneRenderer::Impl::updateDefaultFramebufferObject()
 {
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, reinterpret_cast<GLint*>(&defaultFBO));
-    phongShadowLightingProgram->setDefaultFramebufferObject(defaultFBO);
+    fullLightingProgram->setDefaultFramebufferObject(defaultFBO);
 }
 
 
@@ -848,6 +852,7 @@ void GLSLSceneRenderer::updateViewportInformation(int x, int y, int width, int h
 {
     GLSceneRenderer::updateViewportInformation(x, y, width, height);
     impl->needToUpdateOverlayDepthBufferSize = true;
+    impl->fullLightingProgram->setViewportSize(width, height);
 }
 
 
@@ -965,60 +970,110 @@ void GLSLSceneRenderer::Impl::doRender()
         renderingFunctions.updateDispatchTable();
     }
 
-    self->extractPreprocessedNodes();
     beginRendering();
 
     isLightweightRenderingBeingProcessed = false;
     isLowMemoryConsumptionRenderingBeingProcessed = isLowMemoryConsumptionMode;
     isTextureBeingRendered = false;
 
+    if(needToUpdateRenderingMode){
+        updateRenderingMode();
+    }
+
     switch(lightingMode){
 
-    case GLSceneRenderer::NO_LIGHTING:
+    case NoLighting:
         pushProgram(*nolightingProgram);
         break;
 
-    case GLSceneRenderer::SOLID_COLOR_LIGHTING:
+    case SolidColorLighting:
         pushProgram(*solidColorProgram);
         break;
 
-    case GLSceneRenderer::MINIMUM_LIGHTING:
+    case MinimumLighting:
         pushProgram(*minimumLightingProgram);
         isLightweightRenderingBeingProcessed = true;
         isLowMemoryConsumptionRenderingBeingProcessed = true;
         break;
 
-    case GLSceneRenderer::FULL_LIGHTING:
-        setupFullLightingRendering();
-        break;
-
-    case GLSceneRenderer::NORMAL_LIGHTING:
+    case NormalLighting:
     default:
-        pushProgram(*phongLightingProgram);
-        isTextureBeingRendered = isTextureEnabled;
+        setupFullLightingRendering();
         break;
     }
 
     isRenderingVisibleImage = true;
     const Vector3f& c = self->backgroundColor();
     glClearColor(c[0], c[1], c[2], 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    switch(self->polygonMode()){
-    case GLSceneRenderer::FILL_MODE:
+    if(auto camera = self->currentCamera()){
+
+        renderCamera(camera, self->currentCameraPosition());
+
+        transparentRenderingQueue.clear();
+        overlayRenderingQueue.clear();
+
+        if(currentLightingProgram){
+            renderLights(currentLightingProgram);
+            renderFog(currentLightingProgram);
+        }
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        break;
-    case GLSceneRenderer::LINE_MODE:
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        break;
-    case GLSceneRenderer::POINT_MODE:
-        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-        break;
+        // \todo Render the system objects separately here
+        
+        if(isPolygonFaceRenderingPassEnabled){
+            renderingFunctions.dispatch(self->sceneRoot());
+        }
+        
+        /*
+          \todo Change to an appropriate shader program
+          \todo Exclude the system objects
+          \todo Render transparent objects directly
+          \todo Ignore overlay objects
+        */
+        if(isPolygonEdgeRenderingPassEnabled){
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            renderingFunctions.dispatch(self->sceneRoot());
+        }
+        if(isPolygonVertexRenderingPassEnabled){
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+            renderingFunctions.dispatch(self->sceneRoot());
+        }
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if(!transparentRenderingQueue.empty()){
+            renderTransparentObjects();
+        }
+        if(!overlayRenderingQueue.empty()){
+            renderOverlayObjects();
+        }
     }
     
-    renderScene();
-
     popProgram();
     endRendering();
+}
+
+
+void GLSLSceneRenderer::Impl::updateRenderingMode()
+{
+    bool isPolygonEdgeEnabled = (polygonDisplayElements & PolygonEdge);
+    isPolygonFaceRenderingPassEnabled = (polygonDisplayElements & PolygonFace);
+    if(isPolygonFaceRenderingPassEnabled){
+        if(lightingMode == NormalLighting){
+            fullLightingProgram->setWireframeEnabled(isPolygonEdgeEnabled);
+            isPolygonEdgeRenderingPassEnabled = false;
+        } else {
+            isPolygonEdgeRenderingPassEnabled = true;
+        }
+    } else {
+        isPolygonEdgeRenderingPassEnabled = isPolygonEdgeEnabled;
+        fullLightingProgram->setWireframeEnabled(false);
+    }
+
+    isPolygonVertexRenderingPassEnabled = (polygonDisplayElements & PolygonVertex);
+
+    needToUpdateRenderingMode = false;
 }
 
 
@@ -1026,15 +1081,14 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
 {
     isTextureBeingRendered = isTextureEnabled;
 
-    if(shadowLightIndices.empty() || !isShadowCastingEnabled){
-        // Same as NORMAL_LIGHTING
-        pushProgram(*phongLightingProgram);
-            
-    } else {
+    auto& program = *fullLightingProgram;
+
+    int shadowMapIndex = 0;
+    
+    if(isShadowCastingEnabled && !shadowLightIndices.empty()){
+
         isRenderingVisibleImage = false;
         isRenderingShadowMap = true;
-
-        auto& program = *phongShadowLightingProgram;
 
         int w, h;
         program.getShadowMapSize(w, h);
@@ -1044,7 +1098,6 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
         
         pushProgram(program.shadowMapProgram());
         
-        int shadowMapIndex = 0;
         set<int>::iterator iter = shadowLightIndices.begin();
         const int maxNumShadows = program.maxNumShadows();
         while(iter != shadowLightIndices.end() && shadowMapIndex < maxNumShadows){
@@ -1055,17 +1108,18 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
             }
             ++iter;
         }
-        program.setNumShadows(shadowMapIndex);
         
         popProgram();
         isRenderingShadowMap = false;
 
         glViewport(0, 0, vp[2], vp[3]);
         self->GLSceneRenderer::updateViewportInformation(0, 0, vp[2], vp[3]);
-        
-        program.activateMainRenderingPass();
-        pushProgram(program);
     }
+        
+    pushProgram(program);
+    program.setNumShadows(shadowMapIndex);
+    program.activateMainRenderingPass();
+    
 }
 
 
@@ -1110,8 +1164,6 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         pickingImageHeight = height;
     }
 
-    self->extractPreprocessedNodes();
-
     if(!isPickingImageOutputEnabled){
         glScissor(x, y, 1, 1);
         glEnable(GL_SCISSOR_TEST);
@@ -1120,15 +1172,32 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
     isRenderingPickingImage = true;
     isRenderingVisibleImage = false;
     beginRendering();
+    
     pushProgram(*solidColorProgram);
     currentNodePath.clear();
     pickingNodePathList.clear();
     overlayPickIndex0 = std::numeric_limits<int>::max();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    renderScene();
-    
+
+    if(auto camera = self->currentCamera()){
+
+        renderCamera(camera, self->currentCameraPosition());
+        
+        transparentRenderingQueue.clear();
+        overlayRenderingQueue.clear();
+        renderingFunctions.dispatch(self->sceneRoot());
+
+        if(!transparentRenderingQueue.empty()){
+            renderTransparentObjects();
+        }
+        if(!overlayRenderingQueue.empty()){
+            renderOverlayObjects();
+        }
+    }
+
     popProgram();
     isRenderingPickingImage = false;
 
@@ -1199,38 +1268,18 @@ bool GLSLSceneRenderer::getPickingImage(Image& out_image)
 }
 
 
-void GLSLSceneRenderer::Impl::renderScene()
-{
-    if(auto camera = self->currentCamera()){
-
-        renderCamera(camera, self->currentCameraPosition());
-
-        transparentRenderingQueue.clear();
-        overlayRenderingQueue.clear();
-
-        renderSceneGraphNodes();
-
-        if(!transparentRenderingQueue.empty()){
-            renderTransparentObjects();
-        }
-        if(!overlayRenderingQueue.empty()){
-            renderOverlayObjects();
-        }
-    }
-}
-
-
 bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
 {
     SgLight* light;
     Affine3 T;
     self->getLightInfo(lightIndex, light, T);
     if(light && light->on()){
-        SgCamera* shadowMapCamera = phongShadowLightingProgram->getShadowMapCamera(light, T);
+        SgCamera* shadowMapCamera = fullLightingProgram->getShadowMapCamera(light, T);
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
-            phongShadowLightingProgram->setShadowMapViewProjection(PV);
-            renderSceneGraphNodes();
+            fullLightingProgram->setShadowMapViewProjection(PV);
+            fullLightingProgram->shadowMapProgram().initializeShadowMapBuffer();
+            renderingFunctions.dispatch(self->sceneRoot());
             glFlush();
             glFinish();
             return true;
@@ -1282,6 +1331,8 @@ void GLSLSceneRenderer::Impl::beginRendering()
         renderingFrameId = 1;
     }
     
+    self->extractPreprocessedNodes();
+
     isCheckingUnusedResources = isRenderingPickingImage ? false : doUnusedResourceCheck;
 
     if(isResourceClearRequested){
@@ -1302,19 +1353,6 @@ void GLSLSceneRenderer::Impl::endRendering()
         currentResourceMap->clear();
         hasValidNextResourceMap = true;
     }
-}
-
-
-void GLSLSceneRenderer::Impl::renderSceneGraphNodes()
-{
-    currentProgram->initializeFrameRendering();
-
-    if(currentLightingProgram){
-        renderLights(currentLightingProgram);
-        renderFog(currentLightingProgram);
-    }
-
-    renderingFunctions.dispatch(self->sceneRoot());
 }
 
 
@@ -1801,13 +1839,13 @@ void GLSLSceneRenderer::Impl::applyCullingMode(SgMesh* mesh)
     if(!stateFlag[CULL_FACE]){
         bool enableCullFace;
         switch(backFaceCullingMode){
-        case GLSceneRenderer::ENABLE_BACK_FACE_CULLING:
+        case ENABLE_BACK_FACE_CULLING:
             enableCullFace = mesh->isSolid();
             break;
-        case GLSceneRenderer::DISABLE_BACK_FACE_CULLING:
+        case DISABLE_BACK_FACE_CULLING:
             enableCullFace = false;
             break;
-        case GLSceneRenderer::FORCE_BACK_FACE_CULLING:
+        case FORCE_BACK_FACE_CULLING:
         default:
             enableCullFace = true;
             break;
@@ -1820,7 +1858,7 @@ void GLSLSceneRenderer::Impl::applyCullingMode(SgMesh* mesh)
         isCullFaceEnabled = enableCullFace;
         stateFlag[CULL_FACE] = true;
         
-    } else if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+    } else if(backFaceCullingMode == ENABLE_BACK_FACE_CULLING){
         if(mesh->isSolid()){
             if(!isCullFaceEnabled){
                 glEnable(GL_CULL_FACE);
@@ -2567,8 +2605,7 @@ void GLSLSceneRenderer::Impl::renderTransparentGroup(SgTransparentGroup* transpa
         minTransparency = transparency;
         transparentRenderingQueue.emplace_back(
             [this, transparency](){
-                phongLightingProgram->setMinimumTransparency(transparency);
-                phongShadowLightingProgram->setMinimumTransparency(transparency);
+                fullLightingProgram->setMinimumTransparency(transparency);
             });
     }
 
@@ -2578,8 +2615,7 @@ void GLSLSceneRenderer::Impl::renderTransparentGroup(SgTransparentGroup* transpa
         minTransparency = prevMinTransparency;
         transparentRenderingQueue.emplace_back(
             [this, prevMinTransparency](){
-                phongLightingProgram->setMinimumTransparency(prevMinTransparency);
-                phongShadowLightingProgram->setMinimumTransparency(prevMinTransparency);
+                fullLightingProgram->setMinimumTransparency(prevMinTransparency);
             });
     }
 }
@@ -2775,7 +2811,7 @@ void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 
 void GLSLSceneRenderer::enableShadowAntiAliasing(bool on)
 {
-    impl->phongShadowLightingProgram->setShadowAntiAliasingEnabled(on);
+    impl->fullLightingProgram->setShadowAntiAliasingEnabled(on);
 }
 
 
@@ -2804,12 +2840,32 @@ void GLSLSceneRenderer::Impl::setLineWidth(float width)
 }
 
 
-void GLSLSceneRenderer::setLightingMode(int mode)
+void GLSLSceneRenderer::setLightingMode(LightingMode mode)
 {
     if(mode != impl->lightingMode){
         impl->lightingMode = mode;
+        impl->needToUpdateRenderingMode = true;
         requestToClearResources();
     }
+}
+
+
+GLSceneRenderer::LightingMode GLSLSceneRenderer::lightingMode() const
+{
+    return impl->lightingMode;
+}
+
+
+void GLSLSceneRenderer::setPolygonDisplayElements(int elementFlags)
+{
+    impl->polygonDisplayElements = elementFlags;
+    impl->needToUpdateRenderingMode = true;
+}
+
+
+int GLSLSceneRenderer::polygonDisplayElements() const
+{
+    return impl->polygonDisplayElements;
 }
 
 

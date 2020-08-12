@@ -23,8 +23,6 @@ public:
     GLSLProgram& operator=(const GLSLProgram&) = delete;
 
     void release();
-    void loadVertexShader(const char* filename);
-    void loadFragmentShader(const char* filename);
     void loadShader(const char* filename, int shaderType);
     void link();
     void validate();

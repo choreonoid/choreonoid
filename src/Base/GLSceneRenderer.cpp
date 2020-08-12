@@ -34,7 +34,6 @@ public:
     float aspectRatio; // width / height;
     Vector3f backgroundColor;
     Vector3f defaultColor;
-    GLSceneRenderer::PolygonMode polygonMode;
     ostream* os_;
     ostream& os(){ return *os_; };
 
@@ -95,7 +94,6 @@ GLSceneRenderer::Impl::Impl(GLSceneRenderer* self, SgGroup* sceneRoot)
     aspectRatio = 1.0f;
     backgroundColor << 0.1f, 0.1f, 0.3f; // dark blue
     defaultColor << 1.0f, 1.0f, 1.0f;
-    polygonMode = GLSceneRenderer::FILL_MODE;
 
     os_ = &nullout();
 }
@@ -173,18 +171,6 @@ const Vector3f& GLSceneRenderer::defaultColor() const
 void GLSceneRenderer::setDefaultColor(const Vector3f& color)
 {
     impl->defaultColor = color;
-}
-
-
-void GLSceneRenderer::setPolygonMode(PolygonMode mode)
-{
-    impl->polygonMode = mode;
-}
-
-
-GLSceneRenderer::PolygonMode GLSceneRenderer::polygonMode() const
-{
-    return impl->polygonMode;
 }
 
 

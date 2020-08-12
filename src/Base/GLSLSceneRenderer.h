@@ -61,8 +61,11 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual const SgNodePath& pickedNodePath() const override;
     virtual bool isRenderingPickingImage() const override;
     
-    virtual void setLightingMode(int mode) override;
-    void setHeadLightLightingFromBackEnabled(bool on);
+    virtual void setLightingMode(LightingMode mode) override;
+    virtual LightingMode lightingMode() const override;
+    virtual void setPolygonDisplayElements(int elementFlags) override;
+    virtual int polygonDisplayElements() const override;
+    
     virtual void clearShadows() override;
     virtual void enableShadowOfLight(int index, bool on) override;
     virtual void enableShadowAntiAliasing(bool on) override;
