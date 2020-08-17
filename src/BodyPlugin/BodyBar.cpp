@@ -63,8 +63,6 @@ BodyBar::Impl::Impl(BodyBar* self)
     self->addButton(QIcon(":/Body/icons/stdpose.svg"), _("Set the preset standard pose to the selected bodies"))
         ->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::STANDARD_POSE); });
 
-    self->addSeparator();
-
     self->addButton(QIcon(":/Body/icons/right-to-left.svg"), _("Copy the right side pose to the left side"))
         ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(1, false); });
 

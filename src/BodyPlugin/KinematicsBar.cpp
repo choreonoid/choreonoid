@@ -91,7 +91,7 @@ KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
     presetToggle->setChecked(true);
     ikToggle = self->addToggleButton(QIcon(":/Body/icons/ik.svg"), _("Enable inverse kinematics"));
     ikToggle->setChecked(true);
-    self->addSeparator(2);
+    self->addSpacing();
 
     draggerToggle = self->addToggleButton(QIcon(":/Body/icons/rotation.svg"), _("Enable link orientation editing"));
     draggerToggle->setChecked(true);

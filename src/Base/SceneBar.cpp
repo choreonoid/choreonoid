@@ -160,28 +160,34 @@ void SceneBarImpl::initialize()
                 targetSceneWidget->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
             });
 
+    self->addSpacing();
+
     vertexToggle = self->addToggleButton(
-        QIcon(":/Base/icons/vertex.svg"), _("Enable the vertex rendering"));
+        QIcon(":/Base/icons/vertex.svg"), _("Vertex rendering"));
     vertexToggle->sigToggled().connect(
         [&](bool){ onPolygonModeButtonToggled(); });
-    
+
+    self->addSpacing();
+
     auto wireframeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/wireframe.svg"), _("Wireframe mode"));
+        QIcon(":/Base/icons/wireframe.svg"), _("Wireframe rendering"));
     polygonModeGroup.addButton(wireframeToggle, 0);
 
     auto solidWireframeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/solidwireframe.svg"), _("Solid wireframe mode"));
+        QIcon(":/Base/icons/solidwireframe.svg"), _("Solid wireframe rendering"));
         
     polygonModeGroup.addButton(solidWireframeToggle, 1);
 
     auto solidPolygonToggle = self->addToggleButton(
-        QIcon(":/Base/icons/solidpolygon.svg"), _("Solid polygon mode"));
+        QIcon(":/Base/icons/solidpolygon.svg"), _("Polygon rendering"));
     polygonModeGroup.addButton(solidPolygonToggle, 2);
 
     polygonModeGroup.sigButtonToggled().connect(
         [&](int, bool on){
             if(on){ onPolygonModeButtonToggled(); }
         });
+
+    self->addSpacing();
 
     visualModelToggle = self->addToggleButton(
         QIcon(":/Base/icons/visualshape.svg"), _("Show visual models"));
@@ -206,7 +212,7 @@ void SceneBarImpl::initialize()
 
     isCollisionVisualizationButtonSetVisible = true;
     self->setCollisionVisualizationButtonSetVisible(isCollisionVisualizationButtonSetVisible);
-    
+
     self->addButton(QIcon(":/Base/icons/setup.svg"), _("Show the config dialog"))
         ->sigClicked().connect([&](){ targetSceneWidget->showConfigDialog(); });
 

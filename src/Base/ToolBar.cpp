@@ -25,6 +25,8 @@ namespace {
 QCleanlooksStyle cleanlooks;
 #endif
 
+int separatorExtent = -1;
+
 class ToolBarHandle : public QWidget
 {
     ToolBar* toolBar;
@@ -289,6 +291,19 @@ QLabel* ToolBar::addImage(const QString& filename)
 }
 
 
+QWidget* ToolBar::addSeparator()
+{
+    if(separatorExtent < 0){
+        separatorExtent = style()->pixelMetric(QStyle::PM_ToolBarSeparatorExtent);
+    }
+    auto sep = new VSeparator(this);
+    sep->setMinimumWidth(separatorExtent);
+    hbox->addWidget(sep);
+    return sep;
+}
+
+
+/*
 QWidget* ToolBar::addSeparator(int spacing)
 {
     VSeparator* sep = new VSeparator(this);
@@ -297,12 +312,24 @@ QWidget* ToolBar::addSeparator(int spacing)
     hbox->addSpacing(spacing);
     return sep;
 }
+*/
 
 
+void ToolBar::addSpacing()
+{
+    if(separatorExtent < 0){
+        separatorExtent = style()->pixelMetric(QStyle::PM_ToolBarSeparatorExtent);
+    }
+    hbox->addSpacing(separatorExtent);
+}
+
+
+/*
 void ToolBar::addSpacing(int size)
 {
     hbox->addSpacing(size);
 }
+*/
 
 
 void ToolBar::setEnabled(bool on)

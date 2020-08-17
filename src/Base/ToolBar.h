@@ -46,8 +46,10 @@ public:
     void addWidget(QWidget* widget);
     QLabel* addLabel(const QString& text);
     QLabel* addImage(const QString& filename);
-    QWidget* addSeparator(int spacing = 0);
-    void addSpacing(int size);
+    QWidget* addSeparator();
+    //QWidget* addSeparator(int spacing);
+    void addSpacing();
+    //void addSpacing(int size);
 
     void setVisibleByDefault(bool on);
     bool isVisibleByDefault() const { return isVisibleByDefault_; }

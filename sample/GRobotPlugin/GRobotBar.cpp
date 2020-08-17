@@ -20,7 +20,7 @@ GRobotBar::GRobotBar() : ToolBar(N_("GRobotBar"))
     addImage(":/GRobot/icons/grobo-logo.svg")
         ->setToolTip(_("G-Robot toolbar which provides buttons for handling actual G-Robots"));
 
-    addSpacing(4);
+    addSpacing();
     addSeparator();
 
     addToggleButton(QIcon(":/GRobot/icons/servo-on.svg"), _("Turn on / off servo gains"))
