@@ -2634,7 +2634,6 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
     renderOverlayMain(overlay, Affine3::Identity(), emptyNodePath);
 
     PV = PV0;
-    modelMatrixStack.pop_back();
 }
 
 
