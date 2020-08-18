@@ -17,8 +17,8 @@
 #include <deque>
 #include <mutex>
 #include <regex>
-#include <iostream>
 #include <stdexcept>
+#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -32,6 +32,10 @@ const bool USE_GL_FLOAT_FOR_NORMALS = false;
 
 // This does not seem to be necessary
 constexpr bool USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING = false;
+
+constexpr int DepthTextureIndex = 0;
+constexpr int ImageTextureIndex = 1;
+constexpr int ShadowMapTextureIndex = 2;
 
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
@@ -233,7 +237,9 @@ public:
         
     GLSLSceneRenderer* self;
 
-    PolymorphicSceneNodeFunctionSet renderingFunctions;
+    PolymorphicSceneNodeFunctionSet* renderingFunctions;
+    PolymorphicSceneNodeFunctionSet normalRenderingFunctions;
+    PolymorphicSceneNodeFunctionSet vertexRenderingFunctions;
 
     ShaderProgram* currentProgram;
     NolightingProgram* currentNolightingProgram;
@@ -242,6 +248,7 @@ public:
 
     unique_ptr<NolightingProgram> nolightingProgram;
     unique_ptr<SolidColorProgram> solidColorProgram;
+    unique_ptr<SolidPointProgram> solidPointProgram;
     unique_ptr<MinimumLightingProgram> minimumLightingProgram;
     unique_ptr<FullLightingProgram> fullLightingProgram;
 
@@ -254,6 +261,7 @@ public:
     unsigned int renderingFrameId;
 
     bool isGLCleared;
+    bool needToUpdateDepthTexture;
     bool isRenderingVisibleImage;
     bool isRenderingPickingImage;
     bool isPickingImageOutputEnabled;
@@ -273,9 +281,9 @@ public:
 
     deque<function<void()>> transparentRenderingQueue;
     deque<function<void()>> overlayRenderingQueue;
-    bool needToUpdateOverlayDepthBufferSize;
     
     GLuint defaultFBO;
+    GLuint depthTexture;
     GLuint fboForPicking;
     GLuint colorBufferForPicking;
     GLuint depthBufferForPicking;
@@ -289,7 +297,8 @@ public:
     bool isPolygonFaceRenderingPassEnabled;
     bool isPolygonEdgeRenderingPassEnabled;
     bool isPolygonVertexRenderingPassEnabled;
-
+    bool needToUpdateOverlayDepthBufferSize;
+    
     std::set<int> shadowLightIndices;
     SgMaterialPtr defaultMaterial;
     GLfloat defaultPointSize;
@@ -359,15 +368,17 @@ public:
 
     void renderChildNodes(SgGroup* group){
         for(auto p = group->cbegin(); p != group->cend(); ++p){
-            renderingFunctions.dispatch(*p);
+            renderingFunctions->dispatch(*p);
         }
     }
     
     Impl(GLSLSceneRenderer* self);
     ~Impl();
     void initialize();
+    void activateNormalRenderingFunctions();
+    void activateVertexRenderingFunctions();
     void onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func);
-    void updateDefaultFramebufferObject();
+    void initializeDepthTexture();
     void clearGL(bool isGLContextActive, bool isCalledFromConstructor, bool isCalledFromDestructor);
     void clearResourceMap();
     bool initializeGL();
@@ -401,6 +412,7 @@ public:
     void renderShape(SgShape* shape);
     void renderShapeMain(SgShape* shape, const Affine3& position, int pickIndex);
     void applyCullingMode(SgMesh* mesh);
+    void renderShapeVertices(SgShape* shape);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);
     void renderTransparentGroup(SgTransparentGroup* transparentGroup);
@@ -532,37 +544,39 @@ void GLSLSceneRenderer::Impl::initialize()
 
     os_ = &nullout();
 
-    renderingFunctions.setFunction<SgGroup>(
+    normalRenderingFunctions.setFunction<SgGroup>(
         [&](SgGroup* node){ renderGroup(node); });
-    renderingFunctions.setFunction<SgTransform>(
+    normalRenderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
-    renderingFunctions.setFunction<SgAutoScale>(
+    normalRenderingFunctions.setFunction<SgAutoScale>(
         [&](SgAutoScale* node){ renderAutoScale(node); });
-    renderingFunctions.setFunction<SgSwitchableGroup>(
+    normalRenderingFunctions.setFunction<SgSwitchableGroup>(
         [&](SgSwitchableGroup* node){ renderSwitchableGroup(node); });
-    renderingFunctions.setFunction<SgUnpickableGroup>(
+    normalRenderingFunctions.setFunction<SgUnpickableGroup>(
         [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
-    renderingFunctions.setFunction<SgShape>(
+    normalRenderingFunctions.setFunction<SgShape>(
         [&](SgShape* node){ renderShape(node); });
-    renderingFunctions.setFunction<SgPointSet>(
+    normalRenderingFunctions.setFunction<SgPointSet>(
         [&](SgPointSet* node){ renderPointSet(node); });
-    renderingFunctions.setFunction<SgLineSet>(
+    normalRenderingFunctions.setFunction<SgLineSet>(
         [&](SgLineSet* node){ renderLineSet(node); });
-    renderingFunctions.setFunction<SgTransparentGroup>(
+    normalRenderingFunctions.setFunction<SgTransparentGroup>(
         [&](SgTransparentGroup* node){ renderTransparentGroup(node); });
-    renderingFunctions.setFunction<SgOverlay>(
+    normalRenderingFunctions.setFunction<SgOverlay>(
         [&](SgOverlay* node){ renderOverlay(node); });
-    renderingFunctions.setFunction<SgViewportOverlay>(
+    normalRenderingFunctions.setFunction<SgViewportOverlay>(
         [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
-    renderingFunctions.setFunction<SgOutline>(
+    normalRenderingFunctions.setFunction<SgOutline>(
         [&](SgOutline* node){ renderOutline(node); });
-    renderingFunctions.setFunction<SgLightweightRenderingGroup>(
+    normalRenderingFunctions.setFunction<SgLightweightRenderingGroup>(
         [&](SgLightweightRenderingGroup* node){ renderLightweightRenderingGroup(node); });
 
     self->applyExtensions();
-    renderingFunctions.updateDispatchTable();
+    normalRenderingFunctions.updateDispatchTable();
 
     renderingFrameId = 1;
+    isGLCleared = false;
+    needToUpdateOverlayDepthBufferSize = true;
     isRenderingVisibleImage = false;
     isRenderingPickingImage = false;
     isPickingImageOutputEnabled = false;
@@ -572,6 +586,8 @@ void GLSLSceneRenderer::Impl::initialize()
     isBoundingBoxRenderingMode = false;
     isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
 
+    defaultFBO = 0;
+    
     lightingMode = NormalLighting;
     polygonDisplayElements = PolygonFace;
     needToUpdateRenderingMode = true;
@@ -606,12 +622,41 @@ void GLSLSceneRenderer::Impl::initialize()
     pickedPoint.setZero();
 
     clearGL(false, true, false);
+
+    activateNormalRenderingFunctions();
+}
+
+
+void GLSLSceneRenderer::Impl::activateNormalRenderingFunctions()
+{
+    renderingFunctions = &normalRenderingFunctions;
+}
+    
+
+void GLSLSceneRenderer::Impl::activateVertexRenderingFunctions()
+{
+    if(vertexRenderingFunctions.empty()){
+        vertexRenderingFunctions.setFunction<SgGroup>(
+            [&](SgGroup* node){ renderGroup(node); });
+        vertexRenderingFunctions.setFunction<SgTransform>(
+            [&](SgTransform* node){ renderTransform(node); });
+        vertexRenderingFunctions.setFunction<SgAutoScale>(
+            [&](SgAutoScale* node){ renderAutoScale(node); });
+        vertexRenderingFunctions.setFunction<SgSwitchableGroup>(
+            [&](SgSwitchableGroup* node){ renderSwitchableGroup(node); });
+        vertexRenderingFunctions.setFunction<SgShape>(
+            [&](SgShape* node){ renderShapeVertices(node); });
+        vertexRenderingFunctions.setFunction<SgOverlay>(
+            [&](SgOverlay* node){ /* do nothing */ });
+    }
+
+    renderingFunctions = &vertexRenderingFunctions;
 }
 
 
 SceneRenderer::NodeFunctionSet* GLSLSceneRenderer::renderingFunctions()
 {
-    return &impl->renderingFunctions;
+    return &impl->normalRenderingFunctions;
 }
 
 
@@ -650,8 +695,13 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
     if(isGLContextActive && !isCalledFromConstructor){
         nolightingProgram->release();
         solidColorProgram->release();
+        solidPointProgram->release();
         minimumLightingProgram->release();
         fullLightingProgram->release();
+
+        if(depthTexture){
+            glDeleteTextures(1, &depthTexture);
+        }
 
         if(fboForPicking){
             glDeleteRenderbuffers(1, &colorBufferForPicking);
@@ -671,17 +721,20 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
 
         nolightingProgram.reset(new NolightingProgram);
         solidColorProgram.reset(new SolidColorProgram);
+        solidPointProgram.reset(new SolidPointProgram);
         minimumLightingProgram.reset(new MinimumLightingProgram);
         fullLightingProgram.reset(new FullLightingProgram);
+
+        needToUpdateDepthTexture = true;
     
-        defaultFBO = 0;
-        depthBufferForOverlay = 0;
-        needToUpdateOverlayDepthBufferSize = true;
+        depthTexture = 0;
         fboForPicking = 0;
         colorBufferForPicking = 0;
         depthBufferForPicking = 0;
+        depthBufferForOverlay = 0;
         pickingImageWidth = 0;
         pickingImageHeight = 0;
+        needToUpdateOverlayDepthBufferSize = true;
 
         clearGLState();
 
@@ -800,12 +853,13 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
 {
     isGLCleared = false;
 
-    updateDefaultFramebufferObject();
-
     try {
         nolightingProgram->initialize();
         solidColorProgram->initialize();
+        solidPointProgram->initialize();
         minimumLightingProgram->initialize();
+        fullLightingProgram->setColorTextureIndex(ImageTextureIndex);
+        fullLightingProgram->setShadowMapTextureTopIndex(ShadowMapTextureIndex);
         fullLightingProgram->initialize();
     }
     catch(std::runtime_error& error){
@@ -824,16 +878,45 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
     return true;
 }
 
+
 const std::string& GLSLSceneRenderer::glVendor() const
 {
     return impl->glVendorString;
 }
 
 
-void GLSLSceneRenderer::Impl::updateDefaultFramebufferObject()
+void GLSLSceneRenderer::setDefaultFramebufferObject(unsigned int id)
 {
-    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, reinterpret_cast<GLint*>(&defaultFBO));
-    fullLightingProgram->setDefaultFramebufferObject(defaultFBO);
+    impl->defaultFBO = id;
+    impl->fullLightingProgram->setDefaultFramebufferObject(id);
+}
+
+
+void GLSLSceneRenderer::Impl::initializeDepthTexture()
+{
+    if(!depthTexture){
+        glGenTextures(1, &depthTexture);
+        glActiveTexture(GL_TEXTURE0 + DepthTextureIndex);
+        glBindTexture(GL_TEXTURE_2D, depthTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    } else {
+        glActiveTexture(GL_TEXTURE0 + DepthTextureIndex);
+        glBindTexture(GL_TEXTURE_2D, depthTexture);
+    }
+
+    Array4i vp = self->viewport();
+    // NVIDIA GPUs support only the following format for the depth texture used with the default frame buffer
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, vp[2], vp[3], 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(status != GL_FRAMEBUFFER_COMPLETE){
+        throw std::runtime_error(_("Framebuffer is not complete.\n"));
+    }
+
+    needToUpdateDepthTexture = false;
 }
 
 
@@ -860,8 +943,11 @@ void GLSLSceneRenderer::flushGL()
 void GLSLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
     GLSceneRenderer::updateViewportInformation(x, y, width, height);
+
+    impl->needToUpdateDepthTexture = true;
     impl->needToUpdateOverlayDepthBufferSize = true;
     impl->fullLightingProgram->setViewportSize(width, height);
+    impl->solidPointProgram->setViewportSize(width, height);
 }
 
 
@@ -971,12 +1057,13 @@ void GLSLSceneRenderer::Impl::doRender()
 {
     if(isGLCleared){
         initializeGLForRendering();
-    } else {
-        updateDefaultFramebufferObject();
     }
-    
+    if(needToUpdateDepthTexture){
+        initializeDepthTexture();
+    }
+
     if(self->applyNewExtensions()){
-        renderingFunctions.updateDispatchTable();
+        normalRenderingFunctions.updateDispatchTable();
     }
 
     beginRendering();
@@ -1030,9 +1117,9 @@ void GLSLSceneRenderer::Impl::doRender()
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         // \todo Render the system objects separately here
-        
+
         if(isPolygonFaceRenderingPassEnabled){
-            renderingFunctions.dispatch(self->sceneRoot());
+            renderingFunctions->dispatch(self->sceneRoot());
         }
         
         /*
@@ -1043,11 +1130,18 @@ void GLSLSceneRenderer::Impl::doRender()
         */
         if(isPolygonEdgeRenderingPassEnabled){
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            renderingFunctions.dispatch(self->sceneRoot());
+            renderingFunctions->dispatch(self->sceneRoot());
         }
+        
         if(isPolygonVertexRenderingPassEnabled){
-            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-            renderingFunctions.dispatch(self->sceneRoot());
+            ScopedShaderProgramActivator programActivator(*solidPointProgram, this);
+            solidPointProgram->setPointSize(5.0f);
+            solidPointProgram->setProjectionMatrix(projectionMatrix);
+            solidPointProgram->setColor(Vector3f(1.0f, 1.0f, 0.9f));
+
+            activateVertexRenderingFunctions();
+            renderingFunctions->dispatch(self->sceneRoot());
+            activateNormalRenderingFunctions();
         }
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1128,7 +1222,6 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
     pushProgram(program);
     program.setNumShadows(shadowMapIndex);
     program.activateMainRenderingPass();
-    
 }
 
 
@@ -1197,7 +1290,7 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         
         transparentRenderingQueue.clear();
         overlayRenderingQueue.clear();
-        renderingFunctions.dispatch(self->sceneRoot());
+        renderingFunctions->dispatch(self->sceneRoot());
 
         if(!transparentRenderingQueue.empty()){
             renderTransparentObjects();
@@ -1290,7 +1383,7 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
             renderCamera(shadowMapCamera, T);
             fullLightingProgram->setShadowMapViewProjection(PV);
             fullLightingProgram->shadowMapProgram().initializeShadowMapBuffer();
-            renderingFunctions.dispatch(self->sceneRoot());
+            renderingFunctions->dispatch(self->sceneRoot());
 
             if(USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING){
                 glFlush();
@@ -1492,14 +1585,10 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
     if(needToUpdateOverlayDepthBufferSize){
         Array4i vp = self->viewport();
         glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlay);
+        // NVIDIA GPUs support only the following format for the depth texture used with the default frame buffer
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp[2], vp[3]);
-        needToUpdateOverlayDepthBufferSize = false;
+        needToUpdateOverlayDepthBufferSize = false; 
     }
- 
-    GLuint defaultDepthBuffer;
-    glGetFramebufferAttachmentParameteriv(
-        GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
-        (GLint*)&defaultDepthBuffer);
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForOverlay);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -1517,7 +1606,7 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
         renderTransparentObjects();
     }
 
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, defaultDepthBuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
 }
 
 
@@ -1633,7 +1722,7 @@ inline void GLSLSceneRenderer::Impl::popPickNode()
 
 void GLSLSceneRenderer::renderNode(SgNode* node)
 {
-    impl->renderingFunctions.dispatch(node);
+    impl->renderingFunctions->dispatch(node);
 }
 
 
@@ -1906,9 +1995,9 @@ bool GLSLSceneRenderer::Impl::renderTexture(SgTexture* texture)
     if(p != currentResourceMap->end()){
         resource = static_cast<TextureResource*>(p->second.get());
         if(resource->isLoaded){
-            glActiveTexture(GL_TEXTURE0);
+            glActiveTexture(GL_TEXTURE0 + ImageTextureIndex);
             glBindTexture(GL_TEXTURE_2D, resource->textureId);
-            glBindSampler(0, resource->samplerId);
+            glBindSampler(ImageTextureIndex, resource->samplerId);
             if(resource->isImageUpdateNeeded){
                 loadTextureImage(resource, sgImage->constImage());
             }
@@ -1918,13 +2007,13 @@ bool GLSLSceneRenderer::Impl::renderTexture(SgTexture* texture)
         currentResourceMap->insert(GLResourceMap::value_type(sgImage, resource));
 
         GLuint samplerId;
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0 + ImageTextureIndex);
         glGenTextures(1, &resource->textureId);
         glBindTexture(GL_TEXTURE_2D, resource->textureId);
 
         if(loadTextureImage(resource, sgImage->constImage())){
             glGenSamplers(1, &samplerId);
-            glBindSampler(0, samplerId);
+            glBindSampler(ImageTextureIndex, samplerId);
             glSamplerParameteri(samplerId, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
             glSamplerParameteri(samplerId, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
             glSamplerParameteri(samplerId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -2473,6 +2562,32 @@ void GLSLSceneRenderer::Impl::writeMeshColors(SgMesh* mesh, VertexResource* reso
 }
     
 
+void GLSLSceneRenderer::Impl::renderShapeVertices(SgShape* shape)
+{
+    SgMesh* mesh = shape->mesh();
+    if(mesh && mesh->hasVertices()){
+        //auto pickIndex = pushPickNode(shape, false);
+
+        auto vertices = mesh->vertices();
+        VertexResource* resource = getOrCreateVertexResource(vertices);
+        if(!resource->isValid()){
+            glBindVertexArray(resource->vao);
+            {
+                LockVertexArrayAPI lock;
+                glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+                glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+            }
+            glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            resource->numVertices = vertices->size();
+        }
+        drawVertexResource(resource, GL_POINTS, modelMatrixStack.back());
+        
+        //popPickNode();
+    }
+}
+
+
 void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
@@ -2834,6 +2949,7 @@ void GLSLSceneRenderer::Impl::setPointSize(float size)
     if(!stateFlag[POINT_SIZE] || pointSize != size){
         float s = isRenderingPickingImage ? std::max(size, MinLineWidthForPicking) : size;
         solidColorProgram->setPointSize(s);
+        solidPointProgram->setPointSize(s);
         pointSize = s;
         stateFlag[POINT_SIZE] = true;
     }

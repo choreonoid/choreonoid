@@ -43,6 +43,21 @@ public:
     GLint colorPerVertexLocation;
     bool isColorChangable;
     bool isVertexColorEnabled;
+
+    Impl();    
+};
+
+
+class SolidPointProgram::Impl
+{
+public:
+    GLint projectionMatrixLocation;
+    GLint modelViewMatrixLocation;
+    GLint depthTextureLocation;
+    GLint viewportSizeLocation;
+    int viewportWidth;
+    int viewportHeight;
+    bool isViewportSizeInvalidated;
 };
     
 
@@ -134,8 +149,9 @@ public:
     GLint shininessLocation;
     GLint alphaLocation;
 
+    int colorTextureIndex;
     GLint isTextureEnabledLocation;
-    GLint tex1Location;
+    GLint colorTextureLocation;
     bool isTextureEnabled;
 
     GLint isVertexColorEnabledLocation;
@@ -151,6 +167,7 @@ class FullLightingProgram::Impl
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    FullLightingProgram* self;
     GLuint defaultFBO;
 
     bool useUniformBlockToPassTransformationMatrices;
@@ -172,6 +189,7 @@ public:
     
     // For the shadow casting
     bool isShadowAntiAliasingEnabled;
+    int shadowMapTextureTopIndex;
     int numShadows;
     int shadowMapWidth;
     int shadowMapHeight;
@@ -326,9 +344,21 @@ SolidColorProgram::SolidColorProgram()
           { ":/Base/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
 {
     impl = new Impl;
-    impl->color.setZero();
-    impl->isColorChangable = true;
-    impl->isVertexColorEnabled = false;
+}
+
+
+SolidColorProgram::SolidColorProgram(std::initializer_list<ShaderSource> sources)
+    : NolightingProgram(sources)
+{
+    impl = new Impl;
+}
+
+
+SolidColorProgram::Impl::Impl()
+{
+    color.setZero();
+    isColorChangable = true;
+    isVertexColorEnabled = false;
 }
 
 
@@ -345,7 +375,6 @@ void SolidColorProgram::initialize()
     auto& glsl = glslProgram();
     impl->pointSizeLocation = glsl.getUniformLocation("pointSize");
     impl->colorLocation = glsl.getUniformLocation("color");
-    glUniform3fv(impl->colorLocation, 1, impl->color.data());
     impl->colorPerVertexLocation = glsl.getUniformLocation("colorPerVertex");
 }
 
@@ -355,7 +384,10 @@ void SolidColorProgram::activate()
     ShaderProgram::activate();
     
     glUniform3fv(impl->colorLocation, 1, impl->color.data());
-    glUniform1i(impl->colorPerVertexLocation, impl->isVertexColorEnabled);
+
+    if(impl->colorPerVertexLocation >= 0){
+        glUniform1i(impl->colorPerVertexLocation, impl->isVertexColorEnabled);
+    }
 }
 
 
@@ -392,7 +424,9 @@ bool SolidColorProgram::isColorChangable() const
 void SolidColorProgram::setVertexColorEnabled(bool on)
 {
     if(on != impl->isVertexColorEnabled){
-        glUniform1i(impl->colorPerVertexLocation, on);
+        if(impl->colorPerVertexLocation >= 0){
+            glUniform1i(impl->colorPerVertexLocation, on);
+        }
         impl->isVertexColorEnabled = on;
     }
 }
@@ -401,6 +435,82 @@ void SolidColorProgram::setVertexColorEnabled(bool on)
 void SolidColorProgram::setPointSize(float s)
 {
     glUniform1f(impl->pointSizeLocation, s);
+}
+
+
+
+SolidPointProgram::SolidPointProgram()
+    : SolidColorProgram(
+        { { ":/Base/shader/SolidPoint.vert", GL_VERTEX_SHADER },
+          { ":/Base/shader/SolidPoint.geom", GL_GEOMETRY_SHADER },
+          { ":/Base/shader/SolidPoint.frag", GL_FRAGMENT_SHADER } })
+{
+    impl = new Impl;
+}
+
+
+SolidPointProgram::~SolidPointProgram()
+{
+    delete impl;
+}
+
+
+void SolidPointProgram::initialize()
+{
+    SolidColorProgram::initialize();
+
+    auto& glsl = glslProgram();
+    impl->projectionMatrixLocation = glsl.getUniformLocation("projectionMatrix");
+    impl->modelViewMatrixLocation = glsl.getUniformLocation("modelViewMatrix");
+    impl->depthTextureLocation = glsl.getUniformLocation("depthTexture");
+    impl->viewportSizeLocation = glsl.getUniformLocation("viewportSize");
+    impl->isViewportSizeInvalidated = true;
+    glsl.use();
+    glUniform1i(impl->depthTextureLocation, 0);
+}
+
+
+void SolidPointProgram::activate()
+{
+    SolidColorProgram::activate();
+
+    if(impl->isViewportSizeInvalidated){
+        glUniform2f(impl->viewportSizeLocation, impl->viewportWidth, impl->viewportHeight);
+    }
+    
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+}
+
+
+void SolidPointProgram::deactivate()
+{
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+}
+
+
+void SolidPointProgram::setProjectionMatrix(const Matrix4& P)
+{
+    Matrix4f Pf(P.cast<float>());
+    glUniformMatrix4fv(impl->projectionMatrixLocation, 1, GL_FALSE, Pf.data());
+}
+
+
+void SolidPointProgram::setTransform
+(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
+{
+    const Affine3f VM = (V * M).cast<float>();
+    glUniformMatrix4fv(impl->modelViewMatrixLocation, 1, GL_FALSE, VM.data());
+}
+
+
+
+void SolidPointProgram::setViewportSize(int width, int height)
+{
+    impl->viewportWidth = width;
+    impl->viewportHeight = height;
+    impl->isViewportSizeInvalidated = true;
 }
 
 
@@ -653,12 +763,25 @@ MaterialLightingProgram::MaterialLightingProgram(std::initializer_list<ShaderSou
 {
     setCapability(Transparency);
     impl = new Impl;
+    impl->colorTextureIndex = 1;
 }
 
 
 MaterialLightingProgram::~MaterialLightingProgram()
 {
     delete impl;
+}
+
+
+void MaterialLightingProgram::setColorTextureIndex(int textureIndex)
+{
+    impl->colorTextureIndex = textureIndex;
+}
+
+
+int MaterialLightingProgram::colorTextureIndex() const
+{
+    return impl->colorTextureIndex;
 }
 
 
@@ -683,13 +806,16 @@ void MaterialLightingProgram::Impl::initialize(GLSLProgram& glsl)
     alphaLocation = glsl.getUniformLocation("alpha");
 
     isTextureEnabledLocation = glsl.getUniformLocation("isTextureEnabled");
-    tex1Location = glsl.getUniformLocation("tex1");
-    glUniform1i(tex1Location, 0);
+    colorTextureLocation = glsl.getUniformLocation("colorTexture");
     isTextureEnabled = false;
-    glUniform1i(isTextureEnabledLocation, isTextureEnabled);
 
     isVertexColorEnabledLocation = glsl.getUniformLocation("isVertexColorEnabled");
     isVertexColorEnabled = false;
+
+
+    glsl.use();
+    glUniform1i(isTextureEnabledLocation, isTextureEnabled);
+    glUniform1i(colorTextureLocation, colorTextureIndex);
     glUniform1i(isVertexColorEnabledLocation, isVertexColorEnabled);
 }
     
@@ -801,7 +927,8 @@ FullLightingProgram::FullLightingProgram(std::initializer_list<ShaderSource> sou
 
 
 FullLightingProgram::Impl::Impl(FullLightingProgram* self)
-    : shadowMapProgram(self)
+    : self(self),
+      shadowMapProgram(self)
 {
     defaultFBO = 0;
 
@@ -809,8 +936,9 @@ FullLightingProgram::Impl::Impl(FullLightingProgram* self)
     viewportHeight = 1000;
     isWireframeEnabled = false;
 
-    numShadows = 0;
     isShadowAntiAliasingEnabled = false;
+    shadowMapTextureTopIndex = 10;
+    numShadows = 0;
     shadowMapWidth = 2048;
     shadowMapHeight = 2048;
     persShadowCamera = new SgPerspectiveCamera;
@@ -841,6 +969,12 @@ void FullLightingProgram::setDefaultFramebufferObject(GLuint id)
 GLuint FullLightingProgram::defaultFramebufferObject() const
 {
     return impl->defaultFBO;
+}
+
+
+void FullLightingProgram::setShadowMapTextureTopIndex(int textureIndex)
+{
+    impl->shadowMapTextureTopIndex = textureIndex;
 }
 
 
@@ -876,7 +1010,11 @@ void FullLightingProgram::Impl::initialize(GLSLProgram& glsl)
     for(int i=0; i < maxNumShadows; ++i){
         initializeShadowInfo(glsl, i);
     }
+    // This is necessary to make all the shadow maps work correctly.
+    // Does QOpenGLWidget do some operation on the current active texture unit
+    // just after finishing the initializeGL function?
     glActiveTexture(GL_TEXTURE0);
+    
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
 
     isShadowAntiAliasingEnabledLocation = glsl.getUniformLocation("isShadowAntiAliasingEnabled");
@@ -890,7 +1028,7 @@ void FullLightingProgram::Impl::initialize(GLSLProgram& glsl)
     glsl.use();
     for(int i=0; i < maxNumShadows; ++i){
         auto& shadow = shadowInfos[i];
-        glUniform1i(shadow.shadowMapLocation, i + 1);
+        glUniform1i(shadow.shadowMapLocation, shadowMapTextureTopIndex + i);
     }
 }
 
@@ -905,9 +1043,12 @@ void FullLightingProgram::Impl::initializeShadowInfo(GLSLProgram& glsl, int inde
     shadow.lightIndexLocation = glsl.getUniformLocation(prefix + "lightIndex");
     shadow.shadowMapLocation = glsl.getUniformLocation(prefix + "shadowMap");
 
+    glGenFramebuffers(1, &shadow.frameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
+
     static const GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
     glGenTextures(1, &shadow.depthTexture);
-    glActiveTexture(GL_TEXTURE1 + index);
+    glActiveTexture(GL_TEXTURE0 + shadowMapTextureTopIndex + index);
     glBindTexture(GL_TEXTURE_2D, shadow.depthTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapWidth, shadowMapHeight,
                  0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -919,8 +1060,6 @@ void FullLightingProgram::Impl::initializeShadowInfo(GLSLProgram& glsl, int inde
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
 
-    glGenFramebuffers(1, &shadow.frameBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow.depthTexture, 0);
     
     glDrawBuffer(GL_NONE);
@@ -937,7 +1076,7 @@ void FullLightingProgram::release()
 {
     for(int i=0; i < impl->maxNumShadows; ++i){
         auto& shadow = impl->shadowInfos[i];
-        glDeleteRenderbuffers(1, &shadow.frameBuffer);
+        glDeleteFramebuffers(1, &shadow.frameBuffer);
         glDeleteTextures(1, &shadow.depthTexture);
     }
     impl->shadowInfos.clear();
@@ -1151,7 +1290,7 @@ void ShadowMapProgram::initializeShadowMapBuffer()
     auto& mainImpl = mainProgram->impl;
     auto& shadow = mainImpl->shadowInfos[mainImpl->currentShadowIndex];
     glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
-        
+
     if(mainImpl->isShadowAntiAliasingEnabled){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

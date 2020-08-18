@@ -736,6 +736,8 @@ void SceneWidget::Impl::initializeGL()
         os << "SceneWidget::Impl::initializeGL()" << endl;
     }
 
+    renderer->setDefaultFramebufferObject(defaultFramebufferObject());
+    
     if(renderer->initializeGL()){
         if(glslRenderer){
             auto& vendor = glslRenderer->glVendor();
@@ -819,10 +821,13 @@ void SceneWidget::Impl::paintGL()
     */
     if(needToClearGLOnFrameBufferChange){
         auto newFramebuffer = defaultFramebufferObject();
-        if(prevDefaultFramebufferObject > 0 && newFramebuffer != prevDefaultFramebufferObject){
-            renderer->clearGL();
-            os << fmt::format(_("The OpenGL resources of {0} has been cleared."),
-                              self->objectName().toStdString()) << endl;
+        if(newFramebuffer != prevDefaultFramebufferObject){
+            renderer->setDefaultFramebufferObject(newFramebuffer);
+            if(prevDefaultFramebufferObject > 0){
+                renderer->clearGL();
+                os << fmt::format(_("The OpenGL resources of {0} has been cleared."),
+                                  self->objectName().toStdString()) << endl;
+            }
         }
         prevDefaultFramebufferObject = newFramebuffer;
     }

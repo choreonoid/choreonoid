@@ -43,6 +43,8 @@ public:
     */
     virtual void clearGL();
 
+    virtual void setDefaultFramebufferObject(unsigned int id);
+
     virtual const std::string& glVendor() const = 0;
 
     virtual void setViewport(int x, int y, int width, int height) = 0;

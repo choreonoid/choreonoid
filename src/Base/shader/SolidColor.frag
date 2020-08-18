@@ -7,7 +7,8 @@ in vec3 colorV;
 
 layout(location = 0) out vec4 fragColor;
 
-void main() {
+void main()
+{
     if(colorPerVertex){
         fragColor = vec4(colorV, 1.0);
     } else {

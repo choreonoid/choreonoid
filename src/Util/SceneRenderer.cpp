@@ -433,7 +433,7 @@ PreproTreeExtractor::PreproTreeExtractor()
     functions.setFunction<SgSwitchableGroup>(
         [&](SgSwitchableGroup* group){
             if(group->isTurnedOn()){
-                functions.dispatchAs<SgGroup>(group);
+                visitGroup(group);
             }
         });
 

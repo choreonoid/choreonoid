@@ -68,7 +68,7 @@ uniform LightInfo lights[10];
 vec3 reflectionElements[10];
 
 uniform bool isTextureEnabled;
-uniform sampler2D tex1;
+uniform sampler2D colorTexture;
 uniform bool isVertexColorEnabled;
 uniform vec3 fogColor;
 uniform float maxFogDist;
@@ -107,7 +107,7 @@ void main()
     float alpha2;
 
     if(isTextureEnabled){
-        vec4 texColor4 = texture(tex1, inData.texCoord);
+        vec4 texColor4 = texture(colorTexture, inData.texCoord);
         vec3 texColor = vec3(texColor4);
         alpha2 = alpha * texColor4.a;
         color = emissionColor * texColor;

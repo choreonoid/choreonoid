@@ -106,6 +106,31 @@ public:
     bool isColorChangable() const;
     void setPointSize(float s);
 
+protected:
+    SolidColorProgram(std::initializer_list<ShaderSource> sources);
+
+private:
+    class Impl;
+    Impl* impl;
+};
+
+
+class CNOID_EXPORT SolidPointProgram : public SolidColorProgram
+{
+    SolidPointProgram(const SolidPointProgram&) = delete;
+
+public:
+    SolidPointProgram();
+    ~SolidPointProgram();
+
+    virtual void initialize() override;
+    virtual void activate() override;
+    virtual void deactivate() override;
+    virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
+
+    void setProjectionMatrix(const Matrix4& P);    
+    void setViewportSize(int width, int height);
+
 private:
     class Impl;
     Impl* impl;
@@ -187,6 +212,8 @@ public:
     virtual void activate() override;
     virtual void setMaterial(const SgMaterial* material) override;
     virtual void setVertexColorEnabled(bool on) override;
+    void setColorTextureIndex(int textureIndex);
+    int colorTextureIndex() const;
     void setTextureEnabled(bool on);
     void setMinimumTransparency(float t);
 
@@ -223,6 +250,7 @@ public:
     void activateShadowMapGenerationPass(int shadowIndex);
     void activateMainRenderingPass();
 
+    void setShadowMapTextureTopIndex(int textureIndex);
     int maxNumShadows() const;
     void setNumShadows(int n);
     ShadowMapProgram& shadowMapProgram();

@@ -135,6 +135,12 @@ void GLSceneRenderer::clearGL()
 }
 
 
+void GLSceneRenderer::setDefaultFramebufferObject(unsigned int /* id */)
+{
+
+}
+
+
 void GLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 {
     if(SgImage* image = dynamic_cast<SgImage*>(update.path().front())){
