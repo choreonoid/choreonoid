@@ -31,7 +31,7 @@ public:
     virtual SgGroup* scene() override;
 
     virtual bool initializeGL() = 0;
-    virtual void flush() = 0;
+    virtual void flushGL() = 0;
 
     /**
        This function clears all the OpenGL resourses used in the renderer.

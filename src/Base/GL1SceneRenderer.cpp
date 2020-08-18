@@ -476,7 +476,7 @@ void GL1SceneRenderer::setViewport(int x, int y, int width, int height)
 }
 
 
-void GL1SceneRenderer::flush()
+void GL1SceneRenderer::flushGL()
 {
     glFlush();
 }

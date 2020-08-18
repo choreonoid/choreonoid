@@ -30,6 +30,9 @@ namespace {
 const float MinLineWidthForPicking = 5.0f;
 const bool USE_GL_FLOAT_FOR_NORMALS = false;
 
+// This does not seem to be necessary
+constexpr bool USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING = false;
+
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
 std::mutex extensionMutex;
@@ -841,7 +844,7 @@ void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
 }
 
 
-void GLSLSceneRenderer::flush()
+void GLSLSceneRenderer::flushGL()
 {
     glFlush();
 
@@ -1279,14 +1282,20 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
     SgLight* light;
     Affine3 T;
     self->getLightInfo(lightIndex, light, T);
+
     if(light && light->on()){
         SgCamera* shadowMapCamera = fullLightingProgram->getShadowMapCamera(light, T);
+
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
             fullLightingProgram->setShadowMapViewProjection(PV);
             fullLightingProgram->shadowMapProgram().initializeShadowMapBuffer();
             renderingFunctions.dispatch(self->sceneRoot());
-            glFlush();
+
+            if(USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING){
+                glFlush();
+            }
+            
             return true;
         }
     }

@@ -39,13 +39,16 @@
 #include <iostream>
 #include "gettext.h"
 
-static const bool DEBUG_MESSAGE = false;
-
 using namespace std;
 using namespace cnoid;
 using fmt::format;
 
 namespace {
+
+constexpr bool DEBUG_MESSAGE = false;
+
+// This does not seem to be necessary
+constexpr bool USE_FLUSH_GL_FUNCTION = false;
 
 enum ScreenId {
     NO_SCREEN = FisheyeLensConverter::NO_SCREEN,
@@ -1232,7 +1235,11 @@ void SensorScreenRenderer::render(SensorScreenRenderer*& currentGLContextScreen)
         currentGLContextScreen = this;
     }
     renderer->render();
-    renderer->flush();
+
+    if(USE_FLUSH_GL_FUNCTION){
+        renderer->flushGL();
+    }
+    
     storeResultToTmpDataBuffer();
 }
 

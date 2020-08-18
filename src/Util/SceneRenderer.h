@@ -81,8 +81,6 @@ public:
 
     virtual bool isRenderingPickingImage() const;
     
-    virtual void flush() = 0;
-
     Signal<void()>& sigRenderingRequest();
 
     class CNOID_EXPORT PropertyKey {

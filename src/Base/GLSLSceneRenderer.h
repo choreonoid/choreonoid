@@ -51,7 +51,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
         const std::function<void(Referenced* object, const Affine3& position, int id)>& renderingFunction);
 
     virtual bool initializeGL() override;
-    virtual void flush() override;
+    virtual void flushGL() override;
     virtual void clearGL() override;
     virtual const std::string& glVendor() const override;
     virtual void setViewport(int x, int y, int width, int height) override;
