@@ -1287,7 +1287,6 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
             fullLightingProgram->shadowMapProgram().initializeShadowMapBuffer();
             renderingFunctions.dispatch(self->sceneRoot());
             glFlush();
-            glFinish();
             return true;
         }
     }
