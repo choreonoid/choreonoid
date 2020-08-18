@@ -769,6 +769,12 @@ void GLSLSceneRenderer::Impl::checkGPU()
     // CHeck if the VMWare's virtual driver is used
     else if(regex_match(glVendorString, regex("VMware, Inc\\..*"))){
         isShadowCastingEnabled = false;
+        if(regex_match(glVersionString, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
+            int mesaMajor = stoi(match.str(1));
+            if(mesaMajor >= 20){
+                isShadowCastingEnabled = true;
+            }
+        }
     }
     // Check if the GPU driver is Nouveau
     else if(regex_match(glVendorString, regex(".*nouveau.*"))){
