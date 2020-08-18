@@ -361,6 +361,7 @@ void GL1SceneRenderer::Impl::initialize()
     prevFog = nullptr;
 
     lightingMode = NormalLighting;
+    polygonDisplayElements = PolygonFace;
     defaultLighting = true;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
