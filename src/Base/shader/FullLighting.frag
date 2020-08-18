@@ -159,8 +159,9 @@ void main()
         float dist = abs(inData.position.z);
         float f = (maxFogDist - dist) / (maxFogDist - minFogDist);
         f = clamp(f, 0.0, 1.0);
-        color = mix(fogColor, color, f);
+        color4 = mix(vec4(fogColor, 1.0), color4, f);
     }
+
 }
 
 
