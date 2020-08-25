@@ -290,6 +290,10 @@ bool BodyTrackingCameraItemImpl::setFieldOfView(double fov)
 }
 
 
+/**
+   \todo Improve the scene widget so that the current camera path described in a string list
+   can be kept even if the actual camera node is changed, and simplify the following implementation.
+*/
 bool BodyTrackingCameraItemImpl::setCameraType(int index)
 {
     if(cameraType.selectedIndex() == index){
@@ -308,11 +312,9 @@ bool BodyTrackingCameraItemImpl::setCameraType(int index)
         removeCamera = persCamera;
     }
 
-    vector<SceneWidget*> sceneWidgets;
-    SceneBar::instance()->sceneWidget(sceneWidgets);
     vector<SceneRenderer*> renderers;
-    for(auto sceneWidget : sceneWidgets){
-        renderers.push_back(sceneWidget->renderer());
+    for(auto sceneView : SceneView::instances()){
+        renderers.push_back(sceneView->sceneWidget()->renderer());
     }
 
     cameraTransform->addChild(newCamera, true);

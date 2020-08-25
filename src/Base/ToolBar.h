@@ -47,9 +47,9 @@ public:
     QLabel* addLabel(const QString& text);
     QLabel* addImage(const QString& filename);
     QWidget* addSeparator();
-    //QWidget* addSeparator(int spacing);
     void addSpacing();
-    //void addSpacing(int size);
+
+    ToolBar& setInsertionPosition(int index);
 
     void setVisibleByDefault(bool on);
     bool isVisibleByDefault() const { return isVisibleByDefault_; }
@@ -77,6 +77,7 @@ public Q_SLOTS:
 private:
 
     QHBoxLayout* hbox;
+    int insertionPosition;
     QWidget* handle;
     QButtonGroup* radioGroup;
     bool isNewRadioGroupRequested;

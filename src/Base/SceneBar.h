@@ -11,7 +11,7 @@
 namespace cnoid {
 
 class SceneWidget;
-class SceneBarImpl;
+class SceneView;
 
 class CNOID_EXPORT SceneBar : public ToolBar
 {
@@ -19,18 +19,24 @@ public:
     static void initialize(ExtensionManager* ext);
     static SceneBar* instance();
 
+    SceneView* currentSceneView();
+    
+    // [[deprecated("Use SceneBar::currentSceneView().")]]
     SceneWidget* targetSceneWidget();
-    void sceneWidget(std::vector<SceneWidget*>& widget);
-
-    bool isCollisionVisualizationButtonSetVisible() const;
-    void setCollisionVisualizationButtonSetVisible(bool on);
 
 protected:
     SceneBar();
 
 private:
     ~SceneBar();
-    SceneBarImpl* impl;
+
+    // Called from the SceneView implementation
+    friend class SceneView;
+    void addCustomModeButton(int id, const QIcon& icon, const QString& caption);
+    void removeCustomModeButton(int id);
+
+    class Impl;
+    Impl* impl;
 };
 
 }

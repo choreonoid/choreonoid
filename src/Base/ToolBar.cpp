@@ -92,6 +92,7 @@ ToolBar::ToolBar(const QString& title)
     hbox->setSpacing(0);
     hbox->setContentsMargins(0, 0, 0, 0);
     setLayout(hbox);
+    insertionPosition = -1;
 
     handle = new ToolBarHandle(this);
     hbox->addWidget(handle);
@@ -153,7 +154,8 @@ ToolButton* ToolBar::addButton(const QString& text, const QString& tooltip)
     if(!tooltip.isEmpty()){
         button->setToolTip(tooltip);
     }
-    hbox->addWidget(button);
+    hbox->insertWidget(insertionPosition, button);
+    insertionPosition = -1;
     return button;
 }
 
@@ -174,7 +176,8 @@ ToolButton* ToolBar::addButton(const QIcon& icon, const QString& tooltip)
     if(!tooltip.isEmpty()){
         button->setToolTip(tooltip);
     }
-    hbox->addWidget(button);
+    hbox->insertWidget(insertionPosition, button);
+    insertionPosition = -1;
     return button;
 }
 
@@ -263,20 +266,23 @@ void ToolBar::addAction(QAction* action)
     button->setAutoRaise(true);
     button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     button->setDefaultAction(action);
-    hbox->addWidget(button);
+    hbox->insertWidget(insertionPosition, button);
+    insertionPosition = -1;
 }
 
 
 void ToolBar::addWidget(QWidget* widget)
 {
-    hbox->addWidget(widget);
+    hbox->insertWidget(insertionPosition, widget);
+    insertionPosition = -1;
 }
 
 
 QLabel* ToolBar::addLabel(const QString& text)
 {
     QLabel* label = new QLabel(text, this);
-    hbox->addWidget(label);
+    hbox->insertWidget(insertionPosition, label);
+    insertionPosition = -1;
     return label;
 }
 
@@ -286,7 +292,8 @@ QLabel* ToolBar::addImage(const QString& filename)
 {
     QLabel* label = new QLabel(this);
     label->setPixmap(QPixmap(filename));
-    hbox->addWidget(label);
+    hbox->insertWidget(insertionPosition, label);
+    insertionPosition = -1;
     return label;
 }
 
@@ -298,21 +305,10 @@ QWidget* ToolBar::addSeparator()
     }
     auto sep = new VSeparator(this);
     sep->setMinimumWidth(separatorExtent);
-    hbox->addWidget(sep);
+    hbox->insertWidget(insertionPosition, sep);
+    insertionPosition = -1;
     return sep;
 }
-
-
-/*
-QWidget* ToolBar::addSeparator(int spacing)
-{
-    VSeparator* sep = new VSeparator(this);
-    hbox->addSpacing(spacing);
-    hbox->addWidget(sep);
-    hbox->addSpacing(spacing);
-    return sep;
-}
-*/
 
 
 void ToolBar::addSpacing()
@@ -320,16 +316,17 @@ void ToolBar::addSpacing()
     if(separatorExtent < 0){
         separatorExtent = style()->pixelMetric(QStyle::PM_ToolBarSeparatorExtent);
     }
-    hbox->addSpacing(separatorExtent);
+    hbox->insertSpacing(insertionPosition, separatorExtent);
+    insertionPosition = -1;
 }
 
 
-/*
-void ToolBar::addSpacing(int size)
+ToolBar& ToolBar::setInsertionPosition(int index)
 {
-    hbox->addSpacing(size);
+    // The handle and a spacing exist before the first tool bar item
+    insertionPosition = index + 2;
+    return *this;
 }
-*/
 
 
 void ToolBar::setEnabled(bool on)

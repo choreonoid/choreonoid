@@ -934,52 +934,51 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 }
 
 
-bool EditableSceneBody::onKeyPressEvent(const SceneWidgetEvent& event)
+void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    return impl->onKeyPressEvent(event);
+    impl->onSceneModeChanged(event);
 }
 
 
-bool EditableSceneBody::Impl::onKeyPressEvent(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    if(!outlinedLink){
-        return false;
+    isEditMode = event.sceneWidget()->isEditMode();
+
+    if(isEditMode){
+        if(outlinedLink){
+            outlinedLink->showOutline(true);
+        }
+    } else {
+        finishEditing();
+        if(outlinedLink){
+            outlinedLink->showOutline(false);
+            outlinedLink = nullptr;
+        }
+        updateMarkersAndManipulators(false);
     }
+}
 
-    bool handled = true;
 
-    switch(event.key()){
-    case Qt::Key_B:
-        toggleBaseLink(outlinedLink);
-        break;
-        
-    case Qt::Key_R:
-        togglePin(outlinedLink, false, true);
-        break;
+bool EditableSceneBody::Impl::finishEditing()
+{
+    bool finished = false;
+    
+    isDragging = false;
+    finished = true;
 
-    case Qt::Key_T:
-        togglePin(outlinedLink, true, false);
-        break;
-
-    default:
-        handled = false;
-        break;
+    if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
+        finishVirtualElasticString();
+    } else if(dragMode == LINK_FORCED_POSITION){
+        finishForcedPosition();
+    } else if(dragMode != DRAG_NONE){
+        bodyItem->acceptKinematicStateEdit();
+    } else {
+        finished = false;
     }
-        
-    return handled;
+    
+    dragMode = DRAG_NONE;
 
-}
-
-
-bool EditableSceneBody::onKeyReleaseEvent(const SceneWidgetEvent& event)
-{
-    return impl->onKeyReleaseEvent(event);
-}
-
-
-bool EditableSceneBody::Impl::onKeyReleaseEvent(const SceneWidgetEvent& event)
-{
-    return false;
+    return finished;
 }
 
 
@@ -1212,6 +1211,55 @@ bool EditableSceneBody::Impl::onScrollEvent(const SceneWidgetEvent& event)
 }
 
 
+bool EditableSceneBody::onKeyPressEvent(const SceneWidgetEvent& event)
+{
+    return impl->onKeyPressEvent(event);
+}
+
+
+bool EditableSceneBody::Impl::onKeyPressEvent(const SceneWidgetEvent& event)
+{
+    if(!outlinedLink){
+        return false;
+    }
+
+    bool handled = true;
+
+    switch(event.key()){
+    case Qt::Key_B:
+        toggleBaseLink(outlinedLink);
+        break;
+        
+    case Qt::Key_R:
+        togglePin(outlinedLink, false, true);
+        break;
+
+    case Qt::Key_T:
+        togglePin(outlinedLink, true, false);
+        break;
+
+    default:
+        handled = false;
+        break;
+    }
+        
+    return handled;
+
+}
+
+
+bool EditableSceneBody::onKeyReleaseEvent(const SceneWidgetEvent& event)
+{
+    return impl->onKeyReleaseEvent(event);
+}
+
+
+bool EditableSceneBody::Impl::onKeyReleaseEvent(const SceneWidgetEvent& event)
+{
+    return false;
+}
+
+
 void EditableSceneBody::onFocusChanged(const SceneWidgetEvent& event, bool on)
 {
     impl->isFocused = on;
@@ -1312,54 +1360,6 @@ void EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
 
     mm.setPath("/");
     mm.addSeparator();
-}
-
-
-void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
-{
-    impl->onSceneModeChanged(event);
-}
-
-
-void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
-{
-    isEditMode = event.sceneWidget()->isEditMode();
-
-    if(isEditMode){
-        if(outlinedLink){
-            outlinedLink->showOutline(true);
-        }
-    } else {
-        finishEditing();
-        if(outlinedLink){
-            outlinedLink->showOutline(false);
-            outlinedLink = nullptr;
-        }
-        updateMarkersAndManipulators(false);
-    }
-}
-
-
-bool EditableSceneBody::Impl::finishEditing()
-{
-    bool finished = false;
-    
-    isDragging = false;
-    finished = true;
-
-    if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
-        finishVirtualElasticString();
-    } else if(dragMode == LINK_FORCED_POSITION){
-        finishForcedPosition();
-    } else if(dragMode != DRAG_NONE){
-        bodyItem->acceptKinematicStateEdit();
-    } else {
-        finished = false;
-    }
-    
-    dragMode = DRAG_NONE;
-
-    return finished;
 }
 
 

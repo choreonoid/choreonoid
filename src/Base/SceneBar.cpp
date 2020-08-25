@@ -3,6 +3,7 @@
 */
 
 #include "SceneBar.h"
+#include "SceneView.h"
 #include "SceneWidget.h"
 #include "ExtensionManager.h"
 #include "MenuManager.h"
@@ -34,29 +35,16 @@ void putSceneStatistics();
 
 namespace cnoid {
 
-class SceneBarImpl
+class SceneBar::Impl
 {
 public:
     SceneBar* self;
 
-    SceneWidget* targetSceneWidget;
-    SceneRenderer* targetRenderer;
-
-    struct SceneWidgetInfo
-    {
-        Connection connectionToSigFocusChanged;
-        Connection connectionToSigAboutToBeDestroyed;
-        ~SceneWidgetInfo(){
-            connectionToSigAboutToBeDestroyed.disconnect();
-            connectionToSigAboutToBeDestroyed.disconnect();
-        }
-    };
-    typedef map<SceneWidget*, SceneWidgetInfo> InfoMap;
-    InfoMap sceneWidgetInfos;
-
-    Connection sceneWidgetStateConnection;
-    ConnectionSet rendererStateConnections;
-        
+    ScopedConnection viewFocusConnection;
+    SceneView* currentSceneView;
+    SceneWidget* currentSceneWidget;
+    ScopedConnectionSet sceneViewConnections;
+    
     ToolButton* editModeToggle;
     ToolButton* firstPersonModeToggle;
     ComboBox* cameraCombo;
@@ -67,23 +55,27 @@ public:
     ToolButton* collisionModelToggle;
     ToolButton* collisionLineToggle;
 
-    bool isCollisionVisualizationButtonSetVisible;
+    struct CustomModeButtonInfo {
+        ToolButton* button;
+        int id;
+    };
+    vector<CustomModeButtonInfo> customModeButtons;
+    ButtonGroup customModeButtonGroup;
 
     MappingPtr config;
 
-    SceneBarImpl(SceneBar* self);
-    ~SceneBarImpl();
+    Impl(SceneBar* self);
     void initialize();
-    void onSceneWidgetCreated(SceneWidget* sceneWidget);
-    void onSceneWidgetFocusChanged(SceneWidget* sceneWidget, bool isFocused);
-    void onSceneWidgetAboutToBeDestroyed(SceneWidget* sceneWidget);
-    void setTargetSceneWidget(SceneWidget* sceneWidget);
+    void onCustomModeButtonToggled(int mode, bool on);
+    void onSceneViewFocusChanged(SceneView* sceneView);
+    void onCurrentSceneViewDeactivated();
+    void setCurrentSceneView(SceneView* sceneView);
     void onSceneWidgetStateChanged();
-    void onEditModeButtonToggled(bool on);
-    void onFirstPersonModeButtonToggled(bool on);
     void onSceneRendererCamerasChanged();
     void onSceneRendererCurrentCameraChanged();
     void onCameraComboCurrentIndexChanged(int index);
+    void onEditModeButtonToggled(bool on);
+    void onFirstPersonModeButtonToggled(bool on);
     void onPolygonModeButtonToggled();
     void flipVisibleModels();
     void updateCollisionModelVisibility();
@@ -114,25 +106,25 @@ void SceneBar::initialize(ExtensionManager* ext)
 SceneBar::SceneBar()
     : ToolBar(N_("SceneBar"))
 {
-    impl = new SceneBarImpl(this);
+    impl = new Impl(this);
     impl->initialize();
 }
 
 
-SceneBarImpl::SceneBarImpl(SceneBar* self)
+SceneBar::Impl::Impl(SceneBar* self)
     : self(self)
 {
 
 }
 
 
-void SceneBarImpl::initialize()
+void SceneBar::Impl::initialize()
 {
     self->setVisibleByDefault(true);
     self->setEnabled(false);
-    
-    targetSceneWidget = 0;
-    targetRenderer = 0;
+
+    currentSceneView = nullptr;
+    currentSceneWidget = nullptr;
     
     config = AppConfig::archive()->openMapping("SceneBar");
     
@@ -141,6 +133,10 @@ void SceneBarImpl::initialize()
     editModeToggle->sigToggled().connect(
         [&](bool on){ onEditModeButtonToggled(on); });
 
+    customModeButtonGroup.setExclusive(false);
+    customModeButtonGroup.sigButtonToggled().connect(
+        [&](int mode, bool on){ onCustomModeButtonToggled(mode, on); });
+    
     firstPersonModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/walkthrough.svg"), _("First-person viewpoint control mode"));
     firstPersonModeToggle->sigToggled().connect(
@@ -156,8 +152,8 @@ void SceneBarImpl::initialize()
 
     self->addButton(QIcon(":/Base/icons/viewfitting.svg"), _("Move the camera to look at the objects"))
         ->sigClicked().connect([&](){
-                targetSceneWidget->viewAll();
-                targetSceneWidget->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
+                currentSceneWidget->viewAll();
+                currentSceneWidget->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
             });
 
     self->addSpacing();
@@ -210,14 +206,18 @@ void SceneBarImpl::initialize()
     collisionLineToggle->sigToggled().connect(
         [&](bool on){ onCollisionLineButtonToggled(on); });
 
-    isCollisionVisualizationButtonSetVisible = true;
-    self->setCollisionVisualizationButtonSetVisible(isCollisionVisualizationButtonSetVisible);
-
     self->addButton(QIcon(":/Base/icons/setup.svg"), _("Show the config dialog"))
-        ->sigClicked().connect([&](){ targetSceneWidget->showConfigDialog(); });
+        ->sigClicked().connect([&](){ currentSceneWidget->showConfigDialog(); });
 
-    SceneWidget::sigSceneWidgetCreated().connect(
-        [&](SceneWidget* widget){ onSceneWidgetCreated(widget); });
+    viewFocusConnection =
+        View::sigFocusChanged().connect(
+            [&](View* view){
+                if(auto sceneView = dynamic_cast<SceneView*>(view)){
+                    onSceneViewFocusChanged(sceneView);
+                }
+            });
+
+    setCurrentSceneView(SceneView::instance());
 }
 
 
@@ -227,101 +227,116 @@ SceneBar::~SceneBar()
 }
 
 
-SceneBarImpl::~SceneBarImpl()
+void SceneBar::addCustomModeButton(int id, const QIcon& icon, const QString& caption)
 {
-
+    int position = 1 + impl->customModeButtons.size();
+    auto button = setInsertionPosition(position).addRadioButton(icon, caption);
+    impl->customModeButtonGroup.addButton(button, id);
+    impl->customModeButtons.push_back({ button, id });
 }
 
 
-void SceneBarImpl::onSceneWidgetCreated(SceneWidget* sceneWidget)
+void SceneBar::removeCustomModeButton(int id)
 {
-    SceneWidgetInfo& info = sceneWidgetInfos[sceneWidget];
-
-    info.connectionToSigFocusChanged =
-        sceneWidget->sigWidgetFocusChanged().connect(
-            [=](bool isFocused){ onSceneWidgetFocusChanged(sceneWidget, isFocused); });
-
-    info.connectionToSigAboutToBeDestroyed =
-        sceneWidget->sigAboutToBeDestroyed().connect(
-            [=](){ onSceneWidgetAboutToBeDestroyed(sceneWidget); });
-
-    if(!targetSceneWidget){
-        setTargetSceneWidget(sceneWidget);
-    }
-}
-
-
-void SceneBarImpl::onSceneWidgetFocusChanged(SceneWidget* sceneWidget, bool isFocused)
-{
-    if(isFocused){
-        if(sceneWidget != targetSceneWidget){
-            setTargetSceneWidget(sceneWidget);
+    auto p = impl->customModeButtons.begin();
+    while(p != impl->customModeButtons.end()){
+        if(p->id == id){
+            delete p->button;
+            impl->customModeButtons.erase(p);
+            break;
         }
+        ++p;
     }
 }
 
 
-void SceneBarImpl::onSceneWidgetAboutToBeDestroyed(SceneWidget* sceneWidget)
+void SceneBar::Impl::onCustomModeButtonToggled(int mode, bool on)
 {
-    if(sceneWidget == targetSceneWidget){
-        setTargetSceneWidget(0);
+    if(on){
+        customModeButtonGroup.blockSignals(true);
+        for(auto& button : customModeButtonGroup.buttons()){
+            int id = customModeButtonGroup.id(button);
+            if(id != mode && button->isChecked()){
+                button->setChecked(false);
+            }
+        }
+        customModeButtonGroup.blockSignals(false);
+    } else {
+        mode = 0;
     }
-    sceneWidgetInfos.erase(sceneWidget);
+    currentSceneView->setCustomMode(mode);
+}
+
+
+void SceneBar::Impl::onSceneViewFocusChanged(SceneView* sceneView)
+{
+    if(sceneView != currentSceneView){
+        setCurrentSceneView(sceneView);
+    }
 }
 
 
 SceneWidget* SceneBar::targetSceneWidget()
 {
-    return impl->targetSceneWidget;
+    return impl->currentSceneWidget;
 }
 
 
-void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
+void SceneBar::Impl::setCurrentSceneView(SceneView* sceneView)
 {
-    sceneWidgetStateConnection.disconnect();
-    rendererStateConnections.disconnect();
-    
-    targetSceneWidget = sceneWidget;
+    sceneViewConnections.disconnect();
 
-    if(!sceneWidget){
-        targetRenderer = 0;
+    currentSceneView = sceneView;
+
+    if(!sceneView){
+        currentSceneWidget = nullptr;
         self->setEnabled(false);
 
     } else {
-        targetRenderer = sceneWidget->renderer();
+        currentSceneWidget = sceneView->sceneWidget();
+        auto renderer = currentSceneWidget->renderer();
 
         onSceneWidgetStateChanged();
-
-        sceneWidgetStateConnection =
-            sceneWidget->sigStateChanged().connect(
-                [&](){ onSceneWidgetStateChanged(); });
-
         onSceneRendererCamerasChanged();
+
+        sceneViewConnections.add(
+            sceneView->sigDeactivated().connect(
+                [&](){ onCurrentSceneViewDeactivated(); }));
         
-        rendererStateConnections.add(
-            targetRenderer->sigCamerasChanged().connect(
-                [&](){ onSceneRendererCamerasChanged(); }));
+        sceneViewConnections.add(
+            currentSceneWidget->sigStateChanged().connect(
+                [&](){ onSceneWidgetStateChanged(); }));
+
+        sceneViewConnections.add(
+            renderer->sigCamerasChanged().connect(
+                [this](){ onSceneRendererCamerasChanged(); }));
         
-        rendererStateConnections.add(
-            targetRenderer->sigCurrentCameraChanged().connect(
-                [&](){ onSceneRendererCurrentCameraChanged(); }));
+        sceneViewConnections.add(
+            renderer->sigCurrentCameraChanged().connect(
+                [this](){ onSceneRendererCurrentCameraChanged(); }));
 
         self->setEnabled(true);
     }
 }
 
 
-void SceneBarImpl::onSceneWidgetStateChanged()
+void SceneBar::Impl::onCurrentSceneViewDeactivated()
+{
+    setCurrentSceneView(SceneView::instance());
+}
+
+
+void SceneBar::Impl::onSceneWidgetStateChanged()
 {
     editModeToggle->blockSignals(true);
-    editModeToggle->setChecked(targetSceneWidget->isEditMode());
+    editModeToggle->setChecked(currentSceneWidget->isEditMode());
     editModeToggle->blockSignals(false);
 
     firstPersonModeToggle->blockSignals(true);
-    firstPersonModeToggle->setChecked(targetSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
+    firstPersonModeToggle->setChecked(currentSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
     firstPersonModeToggle->blockSignals(false);
 
-    int polygonFlags = targetSceneWidget->polygonDisplayElements();
+    int polygonFlags = currentSceneWidget->polygonDisplayElements();
     
     vertexToggle->blockSignals(true);
     vertexToggle->setChecked(polygonFlags & SceneWidget::PolygonVertex);
@@ -342,30 +357,73 @@ void SceneBarImpl::onSceneWidgetStateChanged()
     polygonModeGroup.blockSignals(false);
     
     collisionLineToggle->blockSignals(true);
-    collisionLineToggle->setChecked(targetSceneWidget->collisionLinesVisible());
+    collisionLineToggle->setChecked(currentSceneWidget->collisionLinesVisible());
     collisionLineToggle->blockSignals(false);
 }
 
 
-void SceneBarImpl::onEditModeButtonToggled(bool on)
+void SceneBar::Impl::onSceneRendererCamerasChanged()
 {
-    sceneWidgetStateConnection.block();
-    targetSceneWidget->setEditMode(on);
-    sceneWidgetStateConnection.unblock();
+    cameraCombo->blockSignals(true);
+    
+    vector<string> pathStrings;
+    cameraCombo->clear();
+    auto renderer = currentSceneWidget->renderer();
+    const int n = renderer->numCameras();
+    for(int i=0; i < n; ++i){
+        renderer->getSimplifiedCameraPathStrings(i, pathStrings);
+        string label;
+        if(pathStrings.empty()){
+            label = format("Camera {}", i);
+        } else if(pathStrings.size() == 1){
+            label = pathStrings.front();
+        } else {
+            label = pathStrings.back() + " - " + pathStrings.front();
+        }
+        cameraCombo->addItem(label.c_str());
+    }
+    cameraCombo->setCurrentIndex(renderer->currentCameraIndex());
+
+    cameraCombo->blockSignals(false);
 }
 
 
-void SceneBarImpl::onFirstPersonModeButtonToggled(bool on)
+void SceneBar::Impl::onSceneRendererCurrentCameraChanged()
 {
-    sceneWidgetStateConnection.block();
-    targetSceneWidget->setViewpointControlMode(on ? SceneWidget::FIRST_PERSON_MODE : SceneWidget::THIRD_PERSON_MODE);
-    sceneWidgetStateConnection.unblock();
+    cameraCombo->blockSignals(true);
+    cameraCombo->setCurrentIndex(
+        currentSceneWidget->renderer()->currentCameraIndex());
+    cameraCombo->blockSignals(false);
 }
 
 
-void SceneBarImpl::onPolygonModeButtonToggled()
+void SceneBar::Impl::onCameraComboCurrentIndexChanged(int index)
 {
-    sceneWidgetStateConnection.block();
+    sceneViewConnections.block();
+    currentSceneWidget->renderer()->setCurrentCamera(index);
+    sceneViewConnections.unblock();
+}
+
+
+void SceneBar::Impl::onEditModeButtonToggled(bool on)
+{
+    sceneViewConnections.block();
+    currentSceneWidget->setEditMode(on);
+    sceneViewConnections.unblock();
+}
+
+
+void SceneBar::Impl::onFirstPersonModeButtonToggled(bool on)
+{
+    sceneViewConnections.block();
+    currentSceneWidget->setViewpointControlMode(on ? SceneWidget::FIRST_PERSON_MODE : SceneWidget::THIRD_PERSON_MODE);
+    sceneViewConnections.unblock();
+}
+
+
+void SceneBar::Impl::onPolygonModeButtonToggled()
+{
+    sceneViewConnections.block();
     
     int flags = 0;
     if(vertexToggle->isChecked()){
@@ -383,39 +441,23 @@ void SceneBarImpl::onPolygonModeButtonToggled()
         flags |= SceneWidget::PolygonFace;
         break;
     }
-    targetSceneWidget->setPolygonDisplayElements(flags);
+    currentSceneWidget->setPolygonDisplayElements(flags);
     
-    sceneWidgetStateConnection.unblock();
+    sceneViewConnections.unblock();
 }
 
 
-bool SceneBar::isCollisionVisualizationButtonSetVisible() const
+void SceneBar::Impl::flipVisibleModels()
 {
-    return impl->isCollisionVisualizationButtonSetVisible;
-}
-
-
-void SceneBar::setCollisionVisualizationButtonSetVisible(bool on)
-{
-    impl->visualModelToggle->setVisible(on);
-    impl->modelTypeFlipButton->setVisible(on);
-    impl->collisionModelToggle->setVisible(on);
-    impl->collisionLineToggle->setVisible(on);
-    impl->isCollisionVisualizationButtonSetVisible = on;
-}
-
-
-void SceneBarImpl::flipVisibleModels()
-{
-    sceneWidgetStateConnection.block();
+    sceneViewConnections.block();
     visualModelToggle->toggle();
     collisionModelToggle->toggle();
-    sceneWidgetStateConnection.unblock();
+    sceneViewConnections.unblock();
     updateCollisionModelVisibility();
 }
 
 
-void SceneBarImpl::updateCollisionModelVisibility()
+void SceneBar::Impl::updateCollisionModelVisibility()
 {
     int mode = 0;
     if(visualModelToggle->isChecked()){
@@ -424,65 +466,17 @@ void SceneBarImpl::updateCollisionModelVisibility()
     if(collisionModelToggle->isChecked()){
         mode += 2;
     }
-    SceneRenderer* renderer = targetSceneWidget->renderer();
+    auto renderer = currentSceneWidget->renderer();
     renderer->setProperty(SceneRenderer::PropertyKey("collisionDetectionModelVisibility"), mode);
     renderer->sigRenderingRequest()();
 }
 
 
-void SceneBarImpl::onCollisionLineButtonToggled(bool on)
+void SceneBar::Impl::onCollisionLineButtonToggled(bool on)
 {
-    sceneWidgetStateConnection.block();
-    targetSceneWidget->setCollisionLinesVisible(on);
-    sceneWidgetStateConnection.unblock();
-}
-
-
-void SceneBarImpl::onSceneRendererCamerasChanged()
-{
-    cameraCombo->blockSignals(true);
-    
-    vector<string> pathStrings;
-    cameraCombo->clear();
-    const int n = targetRenderer->numCameras();
-    for(int i=0; i < n; ++i){
-        targetRenderer->getSimplifiedCameraPathStrings(i, pathStrings);
-        string label;
-        if(pathStrings.empty()){
-            label = format("Camera {}", i);
-        } else if(pathStrings.size() == 1){
-            label = pathStrings.front();
-        } else {
-            label = pathStrings.back() + " - " + pathStrings.front();
-        }
-        cameraCombo->addItem(label.c_str());
-    }
-    cameraCombo->setCurrentIndex(targetRenderer->currentCameraIndex());
-
-    cameraCombo->blockSignals(false);
-}
-
-
-void SceneBarImpl::onSceneRendererCurrentCameraChanged()
-{
-    cameraCombo->blockSignals(true);
-    cameraCombo->setCurrentIndex(targetRenderer->currentCameraIndex());
-    cameraCombo->blockSignals(false);
-}
-
-
-void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
-{
-    rendererStateConnections.block();
-    targetRenderer->setCurrentCamera(index);
-    rendererStateConnections.unblock();
-}
-
-void SceneBar::sceneWidget(vector<SceneWidget*>& widget)
-{
-    for(auto it=impl->sceneWidgetInfos.begin(); it!=impl->sceneWidgetInfos.end(); it++){
-        widget.push_back(it->first);
-    }
+    sceneViewConnections.block();
+    currentSceneWidget->setCollisionLinesVisible(on);
+    sceneViewConnections.unblock();
 }
 
 

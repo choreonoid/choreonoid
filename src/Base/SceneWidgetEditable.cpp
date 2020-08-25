@@ -7,15 +7,9 @@
 using namespace cnoid;
 
 
-bool SceneWidgetEditable::onKeyPressEvent(const SceneWidgetEvent& event)
+void SceneWidgetEditable::onSceneModeChanged(const SceneWidgetEvent&)
 {
-    return false;
-}
 
-
-bool SceneWidgetEditable::onKeyReleaseEvent(const SceneWidgetEvent& event)
-{
-    return false;
 }
 
 
@@ -55,6 +49,18 @@ bool SceneWidgetEditable::onScrollEvent(const SceneWidgetEvent&)
 }
 
 
+bool SceneWidgetEditable::onKeyPressEvent(const SceneWidgetEvent&)
+{
+    return false;
+}
+
+
+bool SceneWidgetEditable::onKeyReleaseEvent(const SceneWidgetEvent&)
+{
+    return false;
+}
+
+
 void SceneWidgetEditable::onFocusChanged(const SceneWidgetEvent&, bool)
 {
 
@@ -62,12 +68,6 @@ void SceneWidgetEditable::onFocusChanged(const SceneWidgetEvent&, bool)
 
 
 void SceneWidgetEditable::onContextMenuRequest(const SceneWidgetEvent&, MenuManager&)
-{
-
-}
-
-
-void SceneWidgetEditable::onSceneModeChanged(const SceneWidgetEvent&)
 {
 
 }

@@ -4,6 +4,7 @@
 
 #include "SceneView.h"
 #include "SceneWidget.h"
+#include "SceneBar.h"
 #include "ViewManager.h"
 #include "Separator.h"
 #include "RootItem.h"
@@ -20,7 +21,7 @@ using namespace cnoid;
 
 namespace {
 
-vector<SceneView*> instances;
+vector<SceneView*> instances_;
 Connection sigItemAddedConnection;
 
 struct SceneInfo {
@@ -37,26 +38,29 @@ struct SceneInfo {
     }
 };
 
+std::map<std::string, int> customModeNameToIdMap;
+std::map<int, SceneWidgetEditable*> customModeIdToHandlerMap;
+
 }
 
 namespace cnoid {
 
-class SceneViewImpl
+class SceneView::Impl
 {
 public:
     SceneView* self;
     SceneWidget* sceneWidget;
     SgGroup* scene;
     SgUnpickableGroup* unpickableScene;
-
     list<SceneInfo> sceneInfos;
-
     RootItem* rootItem;
     CheckBox dedicatedCheckCheck;
     int dedicatedCheckId;
+    int customMode;
+    Signal<void(int id)> sigCustomModeChanged;
         
-    SceneViewImpl(SceneView* self);
-    ~SceneViewImpl();
+    Impl(SceneView* self);
+    ~Impl();
     void onRenderableItemAdded(Item* item, RenderableItem* renderable);
     void onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iterator infoIter);
     void onDedicatedCheckToggled(bool on);
@@ -70,18 +74,9 @@ public:
 }
 
 
-SceneView* SceneView::instance()
-{
-    if(instances.empty()){
-        return 0;
-    }
-    return instances.front();
-}
-
-
 void SceneView::initializeClass(ExtensionManager* ext)
 {
-    if(instances.empty()){
+    if(instances_.empty()){
         SceneWidget::initializeClass(ext);
         
         ext->viewManager().registerClass<SceneView>(
@@ -94,23 +89,56 @@ void SceneView::initializeClass(ExtensionManager* ext)
 }
 
 
-namespace {
-
-void finalizeClass()
+SceneView* SceneView::instance()
 {
-    sigItemAddedConnection.disconnect();
+    if(!instances_.empty()){
+        return instances_.front();
+    }
+    return nullptr;
 }
 
+
+std::vector<SceneView*> SceneView::instances()
+{
+    return instances_;
+}
+
+
+int SceneView::registerCustomMode
+(SceneWidgetEditable* modeHandler, const QIcon& buttonIcon, const QString& caption)
+{
+    static int id = 1;
+    customModeIdToHandlerMap[id] = modeHandler;
+    SceneBar::instance()->addCustomModeButton(id, buttonIcon, caption);
+    return id++;
+}
+
+
+void SceneView::unregisterCustomMode(int id)
+{
+    for(auto& instance : instances_){
+        if(instance->customMode() == id){
+            instance->setCustomMode(0);
+        }
+    }
+    SceneBar::instance()->removeCustomModeButton(id);
+    customModeIdToHandlerMap.erase(id);
+}
+
+
+static void finalizeClass()
+{
+    sigItemAddedConnection.disconnect();
 }
 
 
 SceneView::SceneView()
 {
-    impl = new SceneViewImpl(this);
+    impl = new Impl(this);
 }
 
 
-SceneViewImpl::SceneViewImpl(SceneView* self)
+SceneView::Impl::Impl(SceneView* self)
     : self(self)
 {
     self->setDefaultLayoutArea(View::RIGHT);
@@ -142,16 +170,16 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
 
     dedicatedCheckId = -1;
 
-    if(!instances.empty()){
-        SceneViewImpl* mainImpl = instances.front()->impl;
+    if(!instances_.empty()){
+        auto mainImpl = instances_.front()->impl;
         list<SceneInfo>::iterator p;
         for(p = mainImpl->sceneInfos.begin(); p != mainImpl->sceneInfos.end(); ++p){
             SceneInfo& info = *p;
             onRenderableItemAdded(info.item, info.renderable);
         }
     }
-    
-    instances.push_back(self);
+
+    instances_.push_back(self);
 }
 
 
@@ -161,15 +189,15 @@ SceneView::~SceneView()
 }
 
 
-SceneViewImpl::~SceneViewImpl()
+SceneView::Impl::~Impl()
 {
     if(dedicatedCheckId >= 0){
         rootItem->releaseCheckEntry(dedicatedCheckId);
     }
 
-    instances.erase(std::find(instances.begin(), instances.end(), self));
+    instances_.erase(std::find(instances_.begin(), instances_.end(), self));
 
-    if(instances.empty()){
+    if(instances_.empty()){
         finalizeClass();
     }
 }
@@ -187,17 +215,50 @@ SgGroup* SceneView::scene()
 }
 
 
+bool SceneView::setCustomMode(int mode)
+{
+    bool isValid = true;
+    if(mode != impl->customMode){
+        auto p = customModeIdToHandlerMap.find(mode);
+        if(p != customModeIdToHandlerMap.end()){
+            impl->sceneWidget->activateCustomMode(p->second, mode);
+        } else {
+            impl->sceneWidget->deactivateCustomMode();
+            mode = 0;
+            isValid = false;
+        }
+        if(mode != impl->customMode){
+            impl->customMode = mode;
+            impl->sigCustomModeChanged(mode);
+        }
+    }
+    return isValid;
+}
+
+
+int SceneView::customMode() const
+{
+    return impl->customMode;
+}
+
+
+SignalProxy<void(int id)> SceneView::sigCustomModeChanged()
+{
+    return impl->sigCustomModeChanged;
+}
+
+
 void SceneView::onItemAdded(Item* item)
 {
     if(RenderableItem* renderable = dynamic_cast<RenderableItem*>(item)){
-        for(size_t i=0; i < instances.size(); ++i){
-            instances[i]->impl->onRenderableItemAdded(item, renderable);
+        for(size_t i=0; i < instances_.size(); ++i){
+            instances_[i]->impl->onRenderableItemAdded(item, renderable);
         }
     }
 }
 
 
-void SceneViewImpl::onRenderableItemAdded(Item* item, RenderableItem* renderable)
+void SceneView::Impl::onRenderableItemAdded(Item* item, RenderableItem* renderable)
 {
     sceneInfos.emplace_back(item, renderable);
     list<SceneInfo>::iterator infoIter = sceneInfos.end();
@@ -224,14 +285,14 @@ void SceneViewImpl::onRenderableItemAdded(Item* item, RenderableItem* renderable
 }
 
 
-void SceneViewImpl::onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iterator infoIter)
+void SceneView::Impl::onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iterator infoIter)
 {
     showScene(infoIter, false);
     sceneInfos.erase(infoIter);
 }
 
 
-void SceneViewImpl::onDedicatedCheckToggled(bool on)
+void SceneView::Impl::onDedicatedCheckToggled(bool on)
 {
     int checkId = Item::PrimaryCheck;
     
@@ -259,7 +320,7 @@ void SceneViewImpl::onDedicatedCheckToggled(bool on)
 }
 
 
-void SceneViewImpl::onSensitiveChanged(list<SceneInfo>::iterator infoIter, bool on)
+void SceneView::Impl::onSensitiveChanged(list<SceneInfo>::iterator infoIter, bool on)
 {
     if(infoIter->isShown){
         if(auto node = infoIter->node){
@@ -275,7 +336,7 @@ void SceneViewImpl::onSensitiveChanged(list<SceneInfo>::iterator infoIter, bool 
 }
 
 
-void SceneViewImpl::showScene(list<SceneInfo>::iterator infoIter, bool show)
+void SceneView::Impl::showScene(list<SceneInfo>::iterator infoIter, bool show)
 {
     if(infoIter->isShown && !show){
         if(auto node = infoIter->node){
@@ -315,7 +376,7 @@ bool SceneView::storeState(Archive& archive)
 }
 
 
-bool SceneViewImpl::storeState(Archive& archive)
+bool SceneView::Impl::storeState(Archive& archive)
 {
     bool result = true;
     result &= sceneWidget->storeState(archive);
@@ -333,7 +394,7 @@ bool SceneView::restoreState(const Archive& archive)
 }
 
 
-bool SceneViewImpl::restoreState(const Archive& archive)
+bool SceneView::Impl::restoreState(const Archive& archive)
 {
     bool result = sceneWidget->restoreState(archive);
 
@@ -348,7 +409,7 @@ bool SceneViewImpl::restoreState(const Archive& archive)
 }
 
 
-void SceneViewImpl::restoreDedicatedItemChecks(const Archive& archive)
+void SceneView::Impl::restoreDedicatedItemChecks(const Archive& archive)
 {
     rootItem->restoreCheckStates(dedicatedCheckId, archive, "checked");
 }

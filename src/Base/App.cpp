@@ -264,8 +264,9 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     TimeBar::initialize(ext);
     ItemTreeView::initializeClass(ext);
     ItemPropertyView::initializeClass(ext);
-    SceneBar::initialize(ext);
     SceneView::initializeClass(ext);
+    // SceneBar must be initialized after the initialization of SceneView
+    SceneBar::initialize(ext);
     LocationView::initializeClass(ext);
     ImageViewBar::initialize(ext);
     ImageView::initializeClass(ext);

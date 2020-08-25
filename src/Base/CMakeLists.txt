@@ -92,6 +92,7 @@ set(sources
   ExtCommandItem.cpp
   AbstractTextItem.cpp
   ScriptItem.cpp
+  WaypointListItem.cpp
   TimeSyncItemEngine.cpp
   AppConfig.cpp
   Archive.cpp
@@ -119,6 +120,8 @@ set(sources
   SceneItemFileIO.cpp
   PointSetItem.cpp
   MultiPointSetItem.cpp
+  WaypointListItem.cpp
+  SceneWaypointEditManager.cpp
   MovieRecorder.cpp
   TextEditView.cpp
   GeneralSliderView.cpp
@@ -246,6 +249,8 @@ set(headers
   SceneItemFileIO.h
   PointSetItem.h
   MultiPointSetItem.h
+  WaypointListItem.h
+  SceneWaypointEditManager.h
   TextEditView.h
   GeneralSliderView.h
   ImageView.h

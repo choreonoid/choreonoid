@@ -45,6 +45,10 @@ public:
     void setEditMode(bool on);
     bool isEditMode() const;
 
+    void activateCustomMode(SceneWidgetEditable* modeHandler, int modeId);
+    int activeCustomModeId() const;
+    void deactivateCustomMode();
+
     const SceneWidgetEvent& latestEvent() const;
     Vector3 lastClickedPoint() const;
 

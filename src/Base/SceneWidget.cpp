@@ -281,8 +281,12 @@ public:
     int mousePressX;
     int mousePressY;
 
+    //! \todo The following event filter should be integrated with the custom mode system
     SceneWidgetEditable* eventFilter;
     ReferencedPtr eventFilterRef;
+
+    SceneWidgetEditable* activeCustomModeHandler;
+    int activeCustomModeId;
 
     int polygonDisplayElements;
     bool collisionLinesVisible;
@@ -359,6 +363,7 @@ public:
     void resetCursor();
     void setEditMode(bool on);
     void toggleEditMode();
+    void advertiseSceneModeChange();
     void viewAll();
 
     void onEntityAdded(SgNode* node);
@@ -578,12 +583,15 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     defaultCursor = self->cursor();
     editModeCursor = QCursor(Qt::PointingHandCursor);
 
-    lastMouseMovedEditable = 0;
-    focusedEditable = 0;
+    lastMouseMovedEditable = nullptr;
+    focusedEditable = nullptr;
 
     latestEvent.sceneWidget_ = self;
     lastClickedPoint.setZero();
     eventFilter = nullptr;
+
+    activeCustomModeHandler = nullptr;
+    activeCustomModeId = 0;
     
     indicatorLabel = new QLabel;
     indicatorLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -1016,21 +1024,7 @@ void SceneWidget::Impl::setEditMode(bool on)
                 focusedEditablePath[i]->onFocusChanged(latestEvent, false);
             }
         }
-        if(eventFilter){
-            eventFilter->onSceneModeChanged(latestEvent);
-        }
-        set<SceneWidgetEditable*>::iterator p;
-        for(p = editableEntities.begin(); p != editableEntities.end(); ++p){
-            SceneWidgetEditable* editable = *p;
-            editable->onSceneModeChanged(latestEvent);
-        }
-        if(isEditMode){
-            for(size_t i=0; i < focusedEditablePath.size(); ++i){
-                focusedEditablePath[i]->onFocusChanged(latestEvent, true);
-            }
-        }
-
-        emitSigStateChangedLater();
+        advertiseSceneModeChange();
     }
 }
 
@@ -1038,6 +1032,54 @@ void SceneWidget::Impl::setEditMode(bool on)
 void SceneWidget::Impl::toggleEditMode()
 {
     setEditMode(!isEditMode);
+}
+
+
+void SceneWidget::activateCustomMode(SceneWidgetEditable* modeHandler, int modeId)
+{
+    auto prevHandler = impl->activeCustomModeHandler;
+    impl->activeCustomModeHandler = modeHandler;
+    impl->activeCustomModeId = modeHandler ? modeId : 0;
+
+    if(modeHandler != prevHandler){
+        if(prevHandler){
+            prevHandler->onSceneModeChanged(impl->latestEvent);
+        }
+        if(modeHandler){
+            modeHandler->onSceneModeChanged(impl->latestEvent);
+        }
+    }
+}
+
+
+int SceneWidget::activeCustomModeId() const
+{
+    return impl->activeCustomModeId;
+}
+
+
+void SceneWidget::deactivateCustomMode()
+{
+    activateCustomMode(nullptr, 0);
+}
+
+
+void SceneWidget::Impl::advertiseSceneModeChange()
+{
+   if(auto handler = eventFilter ? eventFilter : activeCustomModeHandler){
+       handler->onSceneModeChanged(latestEvent);
+   }
+   set<SceneWidgetEditable*>::iterator p;
+   for(p = editableEntities.begin(); p != editableEntities.end(); ++p){
+       SceneWidgetEditable* editable = *p;
+       editable->onSceneModeChanged(latestEvent);
+   }
+   if(isEditMode){
+       for(size_t i=0; i < focusedEditablePath.size(); ++i){
+           focusedEditablePath[i]->onFocusChanged(latestEvent, true);
+       }
+   }
+   emitSigStateChangedLater();
 }
 
 
@@ -1427,11 +1469,8 @@ void SceneWidget::Impl::mousePressEvent(QMouseEvent* event)
     bool forceViewMode = (event->modifiers() & Qt::AltModifier);
 
     if(isEditMode && !forceViewMode){
-        if(eventFilter){
-            handled = eventFilter->onButtonPressEvent(latestEvent);
-            if(handled){
-                dragMode = EDITING;
-            }
+        if(auto handler = eventFilter ? eventFilter : activeCustomModeHandler){
+            handled = handler->onButtonPressEvent(latestEvent);
         }
         if(!handled){
             handled = setFocusToPointedEditablePath(
@@ -1468,8 +1507,8 @@ void SceneWidget::Impl::mouseDoubleClickEvent(QMouseEvent* event)
     
     bool handled = false;
     if(isEditMode){
-        if(eventFilter){
-            handled = eventFilter->onDoubleClickEvent(latestEvent);
+        if(auto handler = eventFilter ? eventFilter : activeCustomModeHandler){
+            handled = handler->onDoubleClickEvent(latestEvent);
         }
         if(!handled){
             handled = setFocusToPointedEditablePath(
@@ -1501,19 +1540,21 @@ void SceneWidget::Impl::mouseReleaseEvent(QMouseEvent* event)
     updateLatestEvent(event);
 
     bool handled = false;
-    if(isEditMode && (dragMode == ABOUT_TO_EDIT || dragMode == EDITING)){
-        if(eventFilter){
-            handled = eventFilter->onButtonReleaseEvent(latestEvent);
+
+    if(isEditMode){
+        if(auto handler = eventFilter ? eventFilter : activeCustomModeHandler){
+            handled = handler->onButtonReleaseEvent(latestEvent);
         }
-        if(!handled){
+    }
+    if(!handled){
+        if(isEditMode && (dragMode == ABOUT_TO_EDIT || dragMode == EDITING)){
             if(focusedEditable){
                 updateLatestEventPath();
                 focusedEditable->onButtonReleaseEvent(latestEvent);
             }
         }
+        dragMode = NO_DRAGGING;
     }
-    
-    dragMode = NO_DRAGGING;
 }
 
 
@@ -1521,46 +1562,54 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
 
+    bool handled = false;
+
     switch(dragMode){
 
     case ABOUT_TO_EDIT:
     case EDITING:
-    {
-        bool handled = false;
-        if(eventFilter){
-            handled = eventFilter->onPointerMoveEvent(latestEvent);
-        }
-        if(!handled){
-            if(focusedEditable){
-                if(dragMode == ABOUT_TO_EDIT){
-                    const int thresh = ThreashToStartPointerMoveEventForEditableNode;
-                    if(abs(event->x() - mousePressX) > thresh || abs(event->y() - mousePressY) > thresh){
-                        dragMode = EDITING;
-                    }
-                }
-                if(dragMode == EDITING){
-                    focusedEditable->onPointerMoveEvent(latestEvent);
+        if(focusedEditable){
+            if(dragMode == ABOUT_TO_EDIT){
+                const int thresh = ThreashToStartPointerMoveEventForEditableNode;
+                if(abs(event->x() - mousePressX) > thresh || abs(event->y() - mousePressY) > thresh){
+                    dragMode = EDITING;
                 }
             }
+            if(dragMode == EDITING){
+                focusedEditable->onPointerMoveEvent(latestEvent);
+            }
+            handled = true;
         }
         break;
-    }
-
+        
     case VIEW_ROTATION:
         dragViewRotation();
+        handled = true;
         break;
         
     case VIEW_TRANSLATION:
         dragViewTranslation();
+        handled = true;
         break;
         
     case VIEW_ZOOM:
         dragViewZoom();
+        handled = true;
         break;
         
     default:
         updatePointerPosition();
         break;
+    }
+
+    if(!handled && isEditMode){
+        if(auto handler = eventFilter ? eventFilter : activeCustomModeHandler){
+            handled = handler->onPointerMoveEvent(latestEvent);
+        }
+    }
+
+    if(!handled){
+        updatePointerPosition();
     }
 }
 
@@ -1664,8 +1713,8 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 
     bool handled = false;
     if(isEditMode && !(event->modifiers() & Qt::AltModifier)){
-        if(eventFilter){
-            handled = eventFilter->onScrollEvent(latestEvent);
+        if(auto handler = eventFilter ? eventFilter : activeCustomModeHandler){
+            handled = handler->onScrollEvent(latestEvent);
         }
         if(!handled){
             handled = setFocusToPointedEditablePath(
@@ -2114,8 +2163,8 @@ void SceneWidget::Impl::showEditModePopupMenu(const QPoint& globalPos)
         setFocusToPointedEditablePath(editableToFocus);
     }
 
-    if(eventFilter){
-        eventFilter->onContextMenuRequest(latestEvent, menuManager);
+    if(auto handler = eventFilter ? eventFilter : activeCustomModeHandler){
+        handler->onContextMenuRequest(latestEvent, menuManager);
         if(menuManager.numItems() > prevNumItems){
             menuManager.addSeparator();
             prevNumItems = menuManager.numItems();
@@ -2344,6 +2393,7 @@ void SceneWidget::Impl::setPolygonDisplayElements(int elementFlags)
         renderer->setPolygonDisplayElements(elementFlags);
         polygonDisplayElements = elementFlags;
         update();
+        emitSigStateChangedLater();
     }
 }
     
