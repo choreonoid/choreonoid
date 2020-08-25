@@ -806,29 +806,29 @@ void SceneWidget::Impl::paintGL()
         os << "SceneWidget::Impl::paintGL() " << counter++ << endl;
     }
 
-    /**
-       For NVIDIA GPUs, GLSLSceneRenderer may not be able to render properly
-       when the placement or some other configurations of QOpenGLWidget used
-       with the renderer change. To avoid the problem, the OpenGL resources
-       used in the renderer should be cleared when the changes occur, and the
-       resources should be recreated in the new configurations. This is done
-       by the following code. The configuration changes can be detected by
-       checking the ID of the default frame buffer object.
+    auto newFramebuffer = defaultFramebufferObject();
+    if(newFramebuffer != prevDefaultFramebufferObject){
+        renderer->setDefaultFramebufferObject(newFramebuffer);
 
-       \todo The view layout change in loading a project should be done before
-       loading any items to avoid unnecessary re-initializations of the OpenGL
-       resources to reduce the overhead.
-    */
-    if(needToClearGLOnFrameBufferChange){
-        auto newFramebuffer = defaultFramebufferObject();
-        if(newFramebuffer != prevDefaultFramebufferObject){
-            renderer->setDefaultFramebufferObject(newFramebuffer);
-            if(prevDefaultFramebufferObject > 0){
-                renderer->clearGL();
-                os << fmt::format(_("The OpenGL resources of {0} has been cleared."),
-                                  self->objectName().toStdString()) << endl;
-            }
+        /**
+           For NVIDIA GPUs, GLSLSceneRenderer may not be able to render properly
+           when the placement or some other configurations of QOpenGLWidget used
+           with the renderer change. To avoid the problem, the OpenGL resources
+           used in the renderer should be cleared when the changes occur, and the
+           resources should be recreated in the new configurations. This is done
+           by the following code. The configuration changes can be detected by
+           checking the ID of the default frame buffer object.
+           
+           \todo The view layout change in loading a project should be done before
+           loading any items to avoid unnecessary re-initializations of the OpenGL
+           resources to reduce the overhead.
+        */
+        if(needToClearGLOnFrameBufferChange && prevDefaultFramebufferObject > 0){
+            renderer->clearGL();
+            os << fmt::format(_("The OpenGL resources of {0} has been cleared."),
+                              self->objectName().toStdString()) << endl;
         }
+        
         prevDefaultFramebufferObject = newFramebuffer;
     }
 
