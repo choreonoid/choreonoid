@@ -17,38 +17,11 @@ class PolymorphicFunctionSet
 public:
     typedef std::function<void(ObjectBase* obj)> Function;
     
-    struct FunctionInfo {
-        Function func;
-        int implementedClassId;
-        FunctionInfo(){
-            implementedClassId = -1;
-        }
-        void set(Function func, int implementedClassId){
-            this->func = func;
-            this->implementedClassId = implementedClassId;
-        }
-    };
-    
 private:
     HierarchicalClassRegistry<ObjectBase>& registry;
     int validDispatchTableSize;
-    std::vector<FunctionInfo> dispatchTable;
-
-    int setSuperClassFunction(int id)
-    {
-        if(dispatchTable[id].func){
-            return id;
-        }
-        int superClassId = registry.superClassId(id);
-        if(superClassId < 0){
-            return -1;
-        }
-        int implementedClassId = setSuperClassFunction(superClassId);
-        if(implementedClassId >= 0){
-            dispatchTable[id].implementedClassId = implementedClassId;
-        }
-        return implementedClassId;
-    }
+    std::vector<Function> dispatchTable;
+    std::vector<bool> isFixed;
 
 public:
     PolymorphicFunctionSet(HierarchicalClassRegistry<ObjectBase>& registry)
@@ -70,8 +43,10 @@ public:
             }
             if(id >= static_cast<int>(dispatchTable.size())){
                 dispatchTable.resize(id + 1);
+                isFixed.resize(id + 1, false);
             }
-            dispatchTable[id].func = func;
+            dispatchTable[id] = func;
+            isFixed[id] = true;
         }
     }
 
@@ -95,7 +70,8 @@ public:
             if(validDispatchTableSize > id){
                 validDispatchTableSize = id;
             }
-            dispatchTable[id].set(nullptr, -1);
+            dispatchTable[id] = nullptr;
+            isFixed[id] = false;
             if(doUpdate){
                 updateDispatchTable();
             }
@@ -111,15 +87,38 @@ public:
         
         if(dispatchTable.size() != numClasses){
             dispatchTable.resize(numClasses);
+            isFixed.resize(numClasses, false);
         }
 
         const int n = dispatchTable.size();
+        for(int i = validDispatchTableSize; i < n; ++i){
+            if(!isFixed[i]){
+                dispatchTable[i] = nullptr;
+            }
+        }
+
         for(int i = validDispatchTableSize; i < n; ++i){
             setSuperClassFunction(i);
         }
         validDispatchTableSize = n;
         
         return idToCheck < validDispatchTableSize;
+    }
+
+    int setSuperClassFunction(int id)
+    {
+        if(dispatchTable[id]){
+            return id;
+        }
+        int superClassId = registry.superClassId(id);
+        if(superClassId < 0){
+            return -1;
+        }
+        int functionId = setSuperClassFunction(superClassId);
+        if(functionId >= 0){
+            dispatchTable[id] = dispatchTable[functionId];
+        }
+        return functionId;
     }
 
     bool hasFunctionFor(ObjectBase* obj) const
@@ -130,8 +129,7 @@ public:
                 return false;
             }
         }
-        auto& info = dispatchTable[id];
-        return (info.func != nullptr) || (info.implementedClassId >= 0);
+        return dispatchTable[id] != nullptr;
     }
 
     inline void dispatch(ObjectBase* obj, const int id) const
@@ -141,11 +139,9 @@ public:
                 return;
             }
         }
-        auto& info = dispatchTable[id];
-        if(info.func){
-            info.func(obj);
-        } else if(info.implementedClassId >= 0){
-            dispatchTable[info.implementedClassId].func(obj);
+        auto& function = dispatchTable[id];
+        if(function){
+            function(obj);
         }
     }
 
