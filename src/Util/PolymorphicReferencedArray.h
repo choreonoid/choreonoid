@@ -71,6 +71,7 @@ public:
         const PolymorphicReferencedArray<RhsReferencedType, BaseReferencedType, RhsPointerType>& another){
         clear();
         (*this) << another;
+        return *this;
     }
 
     template <class RetReferencedType, class RetPointerType>
