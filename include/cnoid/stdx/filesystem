@@ -5,7 +5,7 @@
 
 #include <chrono>
 
-#if (defined(__GNUC__) && (__GNUC__ < 8)) || defined(_MSC_VER)
+#if (defined(__GNUC__) && (__GNUC__ < 8))
 #include <experimental/filesystem>
 namespace std::experimental::filesystem {
 inline path lexically_normal(const path& p){
@@ -30,7 +30,7 @@ inline std::time_t last_write_time_to_time_t(const path& p){
 } // namespace
 
 namespace cnoid::stdx {
-#if __GNUC__ < 8
+#if (defined(__GNUC__) && (__GNUC__ < 8))
 namespace filesystem = std::experimental::filesystem;
 #else
 namespace filesystem = std::filesystem;

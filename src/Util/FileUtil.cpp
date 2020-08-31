@@ -96,7 +96,7 @@ int findSubDirectory(const filesystem::path& directory, const filesystem::path& 
 
 bool findRelativePath(const filesystem::path& from_, const filesystem::path& to, filesystem::path& out_relativePath)
 {
-#if __cplusplus > 201402L
+#if __cplusplus > 201402L && !defined(__cpp_lib_experimental_filesystem)
     out_relativePath = to.lexically_relative(from_);
     return !out_relativePath.empty();
 
