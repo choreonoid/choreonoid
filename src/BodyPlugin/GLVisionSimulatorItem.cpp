@@ -942,6 +942,7 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
         renderer = GLSceneRenderer::create();
     }
 
+    renderer->setDefaultFramebufferObject(frameBuffer->handle());
     renderer->initializeGL();
     renderer->setViewport(0, 0, pixelWidth, pixelHeight);
     renderer->sceneRoot()->addChild(scene->root);
