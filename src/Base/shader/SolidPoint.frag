@@ -22,7 +22,7 @@ void main()
 #ifndef DO_DEPTH_TEST_IN_GEOMETRY_SHADER
     float MRD = 1.0 / ((1 << 24) - 1);
     vec2 texCoord = (pointCenter.xy + 1.0) / 2.0;
-    float depth = texture2D(depthTexture, texCoord).r;
+    float depth = texture(depthTexture, texCoord).r;
     if(depth < offsetFragCoord_z - MRD){
 
 #ifndef DO_DOUBLE_DEPTH_CHECK

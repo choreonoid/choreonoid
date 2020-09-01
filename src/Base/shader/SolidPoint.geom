@@ -31,7 +31,7 @@ void main()
     vec4 pos = gl_in[0].gl_Position;
     vec3 pos_c = pos.xy / pos.w;
     vec2 texCoord = (pos_c.xy + vec2(1.0, 1.0)) / 2.0;
-    float depth = texture2D(depthTexture, texCoord).r;
+    float depth = texture(depthTexture, texCoord).r;
     if(offsetFragCoord_z - MRD < depth){
         gl_Position = pos;
         gl_PointSize = gl_in[0].gl_PointSize;
