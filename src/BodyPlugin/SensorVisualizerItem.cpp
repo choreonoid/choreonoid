@@ -173,13 +173,21 @@ public:
 void SensorVisualizerItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
-    im.registerClass<SensorVisualizerItem>(N_("SensorVisualizer"));
+
+    im.registerClass<SensorVisualizerItem>(N_("SensorVisualizerItem"));
+    im.registerClass<ForceSensorVisualizerItem>(N_("ForceSensorVisualizerItem"));
+    im.registerClass<PointCloudVisualizerItem>(N_("PointCloudVisualizerItem"));
+    im.registerClass<RangeSensorVisualizerItem>(N_("RangeSensorVisualizerItem"));
+    im.registerClass<CameraImageVisualizerItem>(N_("CameraImageVisualizerItem"));
+
     im.addCreationPanel<SensorVisualizerItem>();
 
-    im.registerClass<ForceSensorVisualizerItem>(N_("ForceSensorVisualizer"));
-    im.registerClass<PointCloudVisualizerItem>(N_("PointCloudVisualizer"));
-    im.registerClass<RangeSensorVisualizerItem>(N_("RangeSensorVisualizer"));
-    im.registerClass<CameraImageVisualizerItem>(N_("CameraImageVisualizer"));
+    // For reading old project files
+    im.addAlias<SensorVisualizerItem>("SensorVisualizer", "Body");
+    im.addAlias<ForceSensorVisualizerItem>("ForceSensorVisualizer", "Body");
+    im.addAlias<PointCloudVisualizerItem>("PointCloudVisualizer", "Body");
+    im.addAlias<RangeSensorVisualizerItem>("RangeSensorVisualizer", "Body");
+    im.addAlias<CameraImageVisualizerItem>("CameraImageVisualizer", "Body");
 }
 
 
