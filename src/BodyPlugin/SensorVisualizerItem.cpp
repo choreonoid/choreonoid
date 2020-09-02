@@ -176,8 +176,8 @@ void SensorVisualizerItem::initializeClass(ExtensionManager* ext)
 
     im.registerClass<SensorVisualizerItem>(N_("SensorVisualizerItem"));
     im.registerClass<ForceSensorVisualizerItem>(N_("ForceSensorVisualizerItem"));
-    im.registerClass<PointCloudVisualizerItem>(N_("PointCloudVisualizerItem"));
-    im.registerClass<RangeSensorVisualizerItem>(N_("RangeSensorVisualizerItem"));
+    im.registerClass<PointCloudVisualizerItem, PointSetItem>(N_("PointCloudVisualizerItem"));
+    im.registerClass<RangeSensorVisualizerItem, PointSetItem>(N_("RangeSensorVisualizerItem"));
     im.registerClass<CameraImageVisualizerItem>(N_("CameraImageVisualizerItem"));
 
     im.addCreationPanel<SensorVisualizerItem>();

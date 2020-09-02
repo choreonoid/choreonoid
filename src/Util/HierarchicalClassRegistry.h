@@ -12,7 +12,9 @@ public:
     HierarchicalClassRegistryBase();
     ~HierarchicalClassRegistryBase();
 
+    //! \return The class ID of registered class
     int registerClassAsTypeInfo(const std::type_info& type, const std::type_info& superType);
+
     int superClassId(int classId) const;
     int numRegisteredClasses() const;
 

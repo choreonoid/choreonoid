@@ -59,14 +59,14 @@ struct ClassInfo : public Referenced
 };
 typedef ref_ptr<ClassInfo> ClassInfoPtr;
     
-typedef map<std::type_index, ClassInfoPtr> ItemTypeToInfoMap;
+typedef map<int, ClassInfoPtr> ItemClassIdToInfoMap;
 typedef map<string, ClassInfoPtr> ItemClassNameToInfoMap;
 
 ItemClassRegistry* itemClassRegistry = nullptr;
 MessageView* messageView = nullptr;
 bool isStaticMembersInitialized = false;
 
-ItemTypeToInfoMap itemTypeToInfoMap;
+ItemClassIdToInfoMap itemClassIdToInfoMap;
 
 typedef map<string, ItemManager::Impl*> ModuleNameToItemManagerImplMap;
 ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
@@ -111,10 +111,11 @@ public:
     MenuManager& menuManager;
 
     ItemClassNameToInfoMap itemClassNameToInfoMap;
-    set<std::type_index> registeredTypes;
+    set<int> registeredItemClassIds;
+    set<std::type_index> registeredAddonTypes;
 
     typedef list<shared_ptr<CreationPanelFilterBase>> CreationPanelFilterList;
-    typedef set<pair<std::type_index, shared_ptr<CreationPanelFilterBase>>> CreationPanelFilterSet;
+    typedef set<pair<int, shared_ptr<CreationPanelFilterBase>>> CreationPanelFilterSet;
     
     set<ItemCreationPanel*> registeredCreationPanels;
     CreationPanelFilterSet registeredCreationPanelFilters;
@@ -129,7 +130,7 @@ public:
     void detachManagedTypeItems(Item* parentItem);
         
     void registerClass(
-        function<Item*()>& factory, Item* singletonInstance, const std::type_info& type, const string& className);
+        function<Item*()>& factory, Item* singletonInstance, int classId, const string& className);
 
     void addCreationPanel(const std::type_info& type, ItemCreationPanel* panel);
     void addCreationPanelFilter(
@@ -140,7 +141,7 @@ public:
 
     ClassInfoPtr registerFileIO(const type_info& typeId, ItemFileIO* fileIO);
     void addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& loaderMap);
-    static vector<ItemFileIO*> getFileIOs(Item* item, function<bool(ItemFileIO* fileIO)> pred);
+    static vector<ItemFileIO*> getFileIOs(Item* item, function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos);
     static ItemFileIO* findMatchedFileIO(
         const type_info& type, const string& filename, const string& formatId, int ioTypeFlag);
     static void onLoadOrImportItemsActivated(const vector<ItemFileIO*>& fileIOs);
@@ -267,14 +268,17 @@ ItemManager::Impl::~Impl()
         }
     }
     
-    for(auto& type : registeredTypes){
-        itemTypeToInfoMap.erase(type);
+    for(auto& id : registeredItemClassIds){
+        itemClassIdToInfoMap.erase(id);
+    }
+    for(auto& type : registeredAddonTypes){
         addonTypeToInfoMap.erase(type);
     }
 
     for(auto p = registeredCreationPanelFilters.begin(); p != registeredCreationPanelFilters.end(); ++p){
-        auto q = itemTypeToInfoMap.find(p->first);
-        if(q != itemTypeToInfoMap.end()){
+        int itemClassId = p->first;
+        auto q = itemClassIdToInfoMap.find(itemClassId);
+        if(q != itemClassIdToInfoMap.end()){
             ClassInfoPtr& classInfo = q->second;
             classInfo->creationPanelBase->preFilters.remove(p->second);
             classInfo->creationPanelBase->postFilters.remove(p->second);
@@ -296,7 +300,7 @@ void ItemManager::Impl::detachManagedTypeItems(Item* parentItem)
     Item* item = parentItem->childItem();
     while(item){
         Item* nextItem = item->nextItem();
-        if(registeredTypes.find(typeid(*item)) != registeredTypes.end()){
+        if(registeredItemClassIds.find(item->classId()) != registeredItemClassIds.end()){
             item->removeFromParentItem();
         } else {
             detachManagedTypeItems(item);
@@ -316,15 +320,16 @@ void ItemManager::registerClass_
 (const std::string& className, const std::type_info& type, const std::type_info& superType,
  std::function<Item*()> factory, Item* singletonInstance)
 {
+    int classId = itemClassRegistry->registerClassAsTypeInfo(type, superType);
+
     if(factory || singletonInstance){
-        impl->registerClass(factory, singletonInstance, type, className);
+        impl->registerClass(factory, singletonInstance, classId, className);
     }
-    itemClassRegistry->registerClassAsTypeInfo(type, superType);
 }
 
 
 void ItemManager::Impl::registerClass
-(std::function<Item*()>& factory, Item* singletonInstance, const std::type_info& type, const string& className)
+(std::function<Item*()>& factory, Item* singletonInstance, int classId, const string& className)
 {
     auto inserted = itemClassNameToInfoMap.insert(make_pair(className, ClassInfoPtr()));
     ClassInfoPtr& info = inserted.first->second;
@@ -350,16 +355,16 @@ void ItemManager::Impl::registerClass
         info->isSingleton = false;
     }
 
-    registeredTypes.insert(type);
-    itemTypeToInfoMap[type] = info;
+    registeredItemClassIds.insert(classId);
+    itemClassIdToInfoMap[classId] = info;
 }
 
 
 void ItemManager::addAlias_
 (const std::type_info& type, const std::string& aliasClassName, const std::string& aliasModuleName)
 {
-    auto p = itemTypeToInfoMap.find(type);
-    if(p != itemTypeToInfoMap.end()){
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(p != itemClassIdToInfoMap.end()){
         auto classInfo =  p->second;
         aliasClassNameToAliasModuleNameToTrueNamePairMap[aliasClassName][aliasModuleName] =
             make_pair(classInfo->manager->moduleName, classInfo->className);
@@ -371,8 +376,8 @@ bool ItemManager::getClassIdentifier(Item* item, std::string& out_moduleName, st
 {
     bool result;
 
-    auto p = itemTypeToInfoMap.find(typeid(*item));
-    if(p != itemTypeToInfoMap.end()){
+    auto p = itemClassIdToInfoMap.find(item->classId());
+    if(p != itemClassIdToInfoMap.end()){
         auto& info = p->second;
         out_moduleName = info->manager->moduleName;
         out_className = info->className;
@@ -389,8 +394,8 @@ bool ItemManager::getClassIdentifier(Item* item, std::string& out_moduleName, st
 
 Item* ItemManager::getSingletonInstance(const std::type_info& type)
 {
-    auto p = itemTypeToInfoMap.find(type);
-    if(p != itemTypeToInfoMap.end()){
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(p != itemClassIdToInfoMap.end()){
         auto& info = p->second;
         if(info->isSingleton){
             return info->singletonInstance;
@@ -477,8 +482,8 @@ Item* ItemManager::createItemWithDialog_
 {
     Item* newItem = nullptr;
     
-    auto iter = itemTypeToInfoMap.find(type);
-    if(iter == itemTypeToInfoMap.end()){
+    auto iter = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(iter == itemClassIdToInfoMap.end()){
         showWarningDialog(format(_("Class {} is not registered as an item class."), type.name()));
 
     } else {
@@ -530,13 +535,16 @@ void ItemManager::addCreationPanelFilter_
 void ItemManager::Impl::addCreationPanelFilter
 (const std::type_info& type, shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels)
 {
-    CreationPanelBase* base = getOrCreateCreationPanelBase(type);
-    if(!afterInitializionByPanels){
-        base->preFilters.push_back(filter);
-    } else {
-        base->postFilters.push_back(filter);
+    int classId = itemClassRegistry->classId(type);
+    if(classId >= 0){
+        CreationPanelBase* base = getOrCreateCreationPanelBase(type);
+        if(!afterInitializionByPanels){
+            base->preFilters.push_back(filter);
+        } else {
+            base->postFilters.push_back(filter);
+        }
+        registeredCreationPanelFilters.insert(make_pair(classId, filter));
     }
-    registeredCreationPanelFilters.insert(make_pair(std::type_index(type), filter));
 }
 
 
@@ -544,8 +552,8 @@ CreationPanelBase* ItemManager::Impl::getOrCreateCreationPanelBase(const std::ty
 {
     CreationPanelBase* base = nullptr;
     
-    auto p = itemTypeToInfoMap.find(type);
-    if(p != itemTypeToInfoMap.end()){
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(p != itemClassIdToInfoMap.end()){
         auto& info = p->second;
         base = info->creationPanelBase;
         if(!base){
@@ -798,8 +806,8 @@ ClassInfoPtr ItemManager::Impl::registerFileIO(const type_info& type, ItemFileIO
 {
     ClassInfoPtr classInfo;
     
-    auto p = itemTypeToInfoMap.find(type);
-    if(p != itemTypeToInfoMap.end()){
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(p != itemClassIdToInfoMap.end()){
         classInfo = p->second;
         fileIO->setItemClassInfo(classInfo);
         
@@ -844,16 +852,26 @@ void ItemManager::Impl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& lo
 }
 
 
-vector<ItemFileIO*> ItemManager::Impl::getFileIOs(Item* item, function<bool(ItemFileIO* fileIO)> pred)
+vector<ItemFileIO*> ItemManager::Impl::getFileIOs
+(Item* item, function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos)
 {
     vector<ItemFileIO*> fileIOs;
-    auto p = itemTypeToInfoMap.find(typeid(*item));
-    if(p != itemTypeToInfoMap.end()){
-        auto& classInfo = p->second;
-        for(auto& fileIO : classInfo->fileIOs){
-            if(pred(fileIO)){
-                fileIOs.push_back(fileIO);
+
+    int classId = item->classId();
+    while(classId > 0){
+        auto p = itemClassIdToInfoMap.find(classId);
+        if(p != itemClassIdToInfoMap.end()){
+            auto& classInfo = p->second;
+            for(auto& fileIO : classInfo->fileIOs){
+                if(pred(fileIO)){
+                    fileIOs.push_back(fileIO);
+                }
             }
+        }
+        if(includeSuperClassIos){
+            classId = itemClassRegistry->superClassId(classId);
+        } else {
+            classId = 0;
         }
     }
     return fileIOs;
@@ -863,8 +881,8 @@ vector<ItemFileIO*> ItemManager::Impl::getFileIOs(Item* item, function<bool(Item
 vector<ItemFileIO*> ItemManager::getFileIOs(const std::type_info& type)
 {
     vector<ItemFileIO*> fileIOs;
-    auto p = itemTypeToInfoMap.find(type);
-    if(p != itemTypeToInfoMap.end()){
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(p != itemClassIdToInfoMap.end()){
         auto& classInfo = p->second;
         for(auto& fileIO : classInfo->fileIOs){
             fileIOs.push_back(fileIO);
@@ -877,8 +895,8 @@ vector<ItemFileIO*> ItemManager::getFileIOs(const std::type_info& type)
 ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::string& formatId)
 {
     ItemFileIO* found = nullptr;
-    auto p = itemTypeToInfoMap.find(type);
-    if(p != itemTypeToInfoMap.end()){
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(p != itemClassIdToInfoMap.end()){
         auto& classInfo = p->second;
         for(auto& fileIO : classInfo->fileIOs){
             if(formatId.empty() || fileIO->isFormat(formatId)){
@@ -896,8 +914,8 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
 {
     ItemFileIO* targetFileIO = nullptr;
     
-    auto p = itemTypeToInfoMap.find(type);
-    if(p == itemTypeToInfoMap.end()){
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(p == itemClassIdToInfoMap.end()){
         messageView->putln(
             format(_("\"{0}\" cannot be accessed because the specified item type \"{1}\" is not registered."),
                    filename, type.name()),
@@ -1148,7 +1166,8 @@ void ItemManager::Impl::onSaveSelectedItemsAsActivated()
                 [](ItemFileIO* fileIO){
                     return (fileIO->hasApi(ItemFileIO::Save) &&
                             fileIO->interfaceLevel() == ItemFileIO::Standard);
-                }));
+                },
+                false));
         dialog.saveItem(item);
     }
 }
@@ -1165,7 +1184,8 @@ void ItemManager::Impl::onExportSelectedItemsActivated()
                 [](ItemFileIO* fileIO){
                     return (fileIO->hasApi(ItemFileIO::Save) &&
                             fileIO->interfaceLevel() == ItemFileIO::Conversion);
-                }));
+                },
+                true));
         dialog.saveItem(item);
     }
 }
@@ -1208,7 +1228,8 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
                         return (fileIO->hasApi(ItemFileIO::Save) &&
                                 fileIO->interfaceLevel() == ItemFileIO::Standard &&
                                 (formatId.empty() || fileIO->isFormat(formatId)));
-                    });
+                    },
+                    false);
             
             ItemFileDialog dialog;
             dialog.setFileIOs(fileIOs);
@@ -1236,6 +1257,7 @@ void ItemManager::registerAddon_
     info->name = name;
     info->factory = factory;
     impl->addonNameToInfoMap[name] = info;
+    impl->registeredAddonTypes.insert(type);
     addonTypeToInfoMap[type] = info;
 }
 
