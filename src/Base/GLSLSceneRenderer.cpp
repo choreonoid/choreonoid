@@ -213,7 +213,7 @@ class ScopedShaderProgramActivator
 {
     GLSLSceneRenderer::Impl* renderer;
     ShaderProgram* prevProgram;
-    NolightingProgram* prevNolightingProgram;
+    SolidColorProgram* prevSolidColorProgram;
     LightingProgram* prevLightingProgram;
     MaterialLightingProgram* prevMaterialLightingProgram;
     bool changed;
@@ -242,7 +242,7 @@ public:
     PolymorphicSceneNodeFunctionSet vertexRenderingFunctions;
 
     ShaderProgram* currentProgram;
-    NolightingProgram* currentNolightingProgram;
+    SolidColorProgram* currentSolidColorProgram;
     LightingProgram* currentLightingProgram;
     MaterialLightingProgram* currentMaterialLightingProgram;
 
@@ -715,7 +715,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
 
     if(!isCalledFromDestructor){
         currentProgram = nullptr;
-        currentNolightingProgram = nullptr;
+        currentSolidColorProgram = nullptr;
         currentLightingProgram = nullptr;
         currentMaterialLightingProgram = nullptr;
 
@@ -979,12 +979,12 @@ ScopedShaderProgramActivator::ScopedShaderProgramActivator
         }
 
         prevProgram = renderer->currentProgram;
-        prevNolightingProgram = renderer->currentNolightingProgram;
+        prevSolidColorProgram = renderer->currentSolidColorProgram;
         prevLightingProgram = renderer->currentLightingProgram;
         prevMaterialLightingProgram = renderer->currentMaterialLightingProgram;
     
         renderer->currentProgram = &program;
-        renderer->currentNolightingProgram = dynamic_cast<NolightingProgram*>(&program);
+        renderer->currentSolidColorProgram = dynamic_cast<SolidColorProgram*>(&program);
         renderer->currentLightingProgram = dynamic_cast<LightingProgram*>(&program);
         renderer->currentMaterialLightingProgram = dynamic_cast<MaterialLightingProgram*>(&program);
 
@@ -999,7 +999,7 @@ ScopedShaderProgramActivator::ScopedShaderProgramActivator(ScopedShaderProgramAc
 {
     renderer = r.renderer;
     prevProgram = r.prevProgram;
-    prevNolightingProgram = r.prevNolightingProgram;
+    prevSolidColorProgram = r.prevSolidColorProgram;
     prevLightingProgram = r.prevLightingProgram;
     prevMaterialLightingProgram = r.prevMaterialLightingProgram;
     changed = r.changed;
@@ -1016,7 +1016,7 @@ ScopedShaderProgramActivator::~ScopedShaderProgramActivator()
             renderer->clearGLState();
         }
         renderer->currentProgram = prevProgram;
-        renderer->currentNolightingProgram = prevNolightingProgram;
+        renderer->currentSolidColorProgram = prevSolidColorProgram;
         renderer->currentLightingProgram = prevLightingProgram;
         renderer->currentMaterialLightingProgram = prevMaterialLightingProgram;
     }
@@ -1688,7 +1688,7 @@ inline void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
     if(isPickingImageOutputEnabled){
         color[2] = 1.0f;
     }
-    solidColorProgram->setColor(color);
+    currentSolidColorProgram->setColor(color);
 }
         
 
@@ -2948,8 +2948,7 @@ void GLSLSceneRenderer::Impl::setPointSize(float size)
 {
     if(!stateFlag[POINT_SIZE] || pointSize != size){
         float s = isRenderingPickingImage ? std::max(size, MinLineWidthForPicking) : size;
-        solidColorProgram->setPointSize(s);
-        solidPointProgram->setPointSize(s);
+        currentSolidColorProgram->setPointSize(s);
         pointSize = s;
         stateFlag[POINT_SIZE] = true;
     }
