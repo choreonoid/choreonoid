@@ -892,7 +892,7 @@ void ScenePointSet::updateVoxels()
 
 bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-	if(!isEditable_){
+    if(!isEditable_){
         return false;
     }
     

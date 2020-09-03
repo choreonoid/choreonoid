@@ -28,6 +28,7 @@ public:
     QCursor editModeCursor;
     int x0, y0;
     PolyhedralRegion region;
+    bool isDragging;
     Signal<void(const PolyhedralRegion& region)> sigRegionFixed;
     Signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest;
     
@@ -67,8 +68,9 @@ RectRegionMarkerImpl::RectRegionMarkerImpl(RectRegionMarker* self)
         colorIndices.push_back(0);
         colorIndices.push_back(0);
     }
-
     self->addChild(lineSet);
+
+    isDragging = false;
 }
 
 
@@ -214,11 +216,15 @@ bool RectRegionMarker::onButtonPressEvent(const SceneWidgetEvent& event)
 
 bool RectRegionMarkerImpl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    x0 = event.x();
-    y0 = event.y();
-    setRect(x0, y0, x0, y0);
-    showRectangle(true);
-    return true;
+    if(event.button() == Qt::LeftButton){
+        x0 = event.x();
+        y0 = event.y();
+        setRect(x0, y0, x0, y0);
+        showRectangle(true);
+        isDragging = true;
+        return true;
+    }
+    return false;
 }
 
 
@@ -230,7 +236,7 @@ bool RectRegionMarker::onButtonReleaseEvent(const SceneWidgetEvent& event)
 
 bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
-    if(left < right && bottom < top){
+    if(isDragging && (left < right && bottom < top)){
         Vector3 points[4];
         event.sceneWidget()->unproject(left, top, 0.0, points[0]);
         event.sceneWidget()->unproject(left, bottom, 0.0, points[1]);
@@ -252,6 +258,7 @@ bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
             }
         }
         sigRegionFixed(region);
+        isDragging = false;
     }
     showRectangle(false);
     return true;
@@ -266,8 +273,11 @@ bool RectRegionMarker::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 bool RectRegionMarkerImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    setRect(x0, y0, event.x(), event.y());
-    return true;
+    if(isDragging){
+        setRect(x0, y0, event.x(), event.y());
+        return true;
+    }
+    return false;
 }
 
 
