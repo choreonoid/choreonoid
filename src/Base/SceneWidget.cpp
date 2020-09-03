@@ -583,7 +583,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     latestEvent.sceneWidget_ = self;
     lastClickedPoint.setZero();
-    eventFilter = 0;
+    eventFilter = nullptr;
     
     indicatorLabel = new QLabel;
     indicatorLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -657,7 +657,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
 SceneWidget::~SceneWidget()
 {
-    sigAboutToBeDestroyed();
+    impl->sigAboutToBeDestroyed();
     delete impl;
 }
 
@@ -781,7 +781,7 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& update)
                 SceneWidgetEditable* editable = extractor.editable(i);
                 if(editable == lastMouseMovedEditable){
                     lastMouseMovedEditable->onPointerLeaveEvent(latestEvent);
-                    lastMouseMovedEditable = 0;
+                    lastMouseMovedEditable = nullptr;
                 }
                 bool isEntityFocused = false;
                 for(size_t i=0; i < focusedEditablePath.size(); ++i){
@@ -1215,7 +1215,7 @@ void SceneWidget::Impl::updateLastClickedPoint()
 SceneWidgetEditable* SceneWidget::Impl::applyFunction
 (EditablePath& editablePath, std::function<bool(SceneWidgetEditable* editable)> function)
 {
-    SceneWidgetEditable* targetEditable = 0;
+    SceneWidgetEditable* targetEditable = nullptr;
     for(EditablePath::reverse_iterator p = editablePath.rbegin(); p != editablePath.rend(); ++p){
         SceneWidgetEditable* editable = *p;
         if(function(editable)){
@@ -1282,7 +1282,7 @@ void SceneWidget::Impl::clearFocusToEditables()
         focusedEditablePath[i]->onFocusChanged(latestEvent, false);
     }
     focusedEditablePath.clear();
-    focusedEditable = 0;
+    focusedEditable = nullptr;
 }
 
 
@@ -2174,7 +2174,7 @@ SceneWidgetEditable* SceneWidget::activeEventFilter()
 void SceneWidget::removeEventFilter(SceneWidgetEditable* filter)
 {
     if(impl->eventFilter == filter){
-        impl->eventFilter = 0;
+        impl->eventFilter = nullptr;
         impl->eventFilterRef.reset();
         impl->resetCursor();
     }
@@ -2281,7 +2281,7 @@ InteractiveCameraTransform* SceneWidget::findOwnerInteractiveCameraTransform(int
             return transform;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -2662,10 +2662,10 @@ bool SceneWidget::Impl::storeState(Archive& archive)
     set<SgPosTransform*> storedTransforms;
     int numCameras = renderer->numCameras();
     for(int i=0; i < numCameras; ++i){
-        Mapping* cameraState = 0;
+        Mapping* cameraState = nullptr;
         if(InteractiveCameraTransform* transform = self->findOwnerInteractiveCameraTransform(i)){
             if(!storedTransforms.insert(transform).second){
-                transform = 0; // already stored
+                transform = nullptr; // already stored
             }
             cameraState = storeCameraState(i, true, transform);
         } else {
@@ -2962,7 +2962,7 @@ void SceneWidget::Impl::updateGrids()
 {
     if(gridGroup){
         activateSystemNode(gridGroup, false);
-        gridGroup = 0;
+        gridGroup = nullptr;
     }
         
     for(int i=0; i < 3; ++i){
