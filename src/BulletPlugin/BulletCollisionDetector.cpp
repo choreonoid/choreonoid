@@ -235,7 +235,7 @@ stdx::optional<GeometryHandle> BulletCollisionDetectorImpl::addGeometry(SgNode* 
         }
     }
 
-    return boost::none;
+    return stdx::nullopt;
 }
 
 

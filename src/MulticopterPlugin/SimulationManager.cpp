@@ -535,11 +535,11 @@ SimulationManager::midDynamicFunction(SimulatorItem* simItem, MulticopterSimulat
             for(auto itl = begin(_effectLinkBodyMap) ; itl !=end(_effectLinkBodyMap) ; ++itl){
                 int size=effectMap.size();
                 double min=-1.0;
-                CollisionDetector::GeometryHandle handle2=linkAttribute(const_cast<Link*>(itl->first)).getGeometryHandle().get();
+                CollisionDetector::GeometryHandle handle2=*linkAttribute(const_cast<Link*>(itl->first)).getGeometryHandle();
                 _collisionDetector->updatePosition(handle2,const_cast<Link*>(itl->first)->position());
 
                 for(auto itll = begin(linkAry) ; itll != end(linkAry) ; ++itll){
-                    CollisionDetector::GeometryHandle handle1=linkAttribute(const_cast<Link*>(*itll)).getGeometryHandle().get();
+                    CollisionDetector::GeometryHandle handle1=*linkAttribute(const_cast<Link*>(*itll)).getGeometryHandle();
                     _collisionDetector->updatePosition(handle1,const_cast<Link*>(*itll)->position());
                     double d = _collisionDetector->detectDistance(handle1,handle2,v1,v2);
 

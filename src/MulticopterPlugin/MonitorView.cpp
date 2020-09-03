@@ -6,7 +6,6 @@
 #include <QBoxLayout>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 using namespace Multicopter;
 
