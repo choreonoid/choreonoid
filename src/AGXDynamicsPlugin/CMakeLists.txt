@@ -53,6 +53,13 @@ if(NOT AGX_FOUND)
   MESSAGE(FATAL_ERROR "Unable to locate AGX headers and libraries. Cannot proceed.")
 endif()
 
+if(MSVC)
+  if(NOT CMAKE_CXX_STANDARD LESS 17)
+    message(WARNING "AGX with VC++ does not support C++17 or later. C++14 is used in this project.")
+    set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ version number. AGX with VC++ does not support C++17 or later." FORCE)
+  endif()
+endif()
+
 
 include_directories(${AGX_INCLUDE_DIR})
 link_directories(${AGX_LIBRARY_DIR})
