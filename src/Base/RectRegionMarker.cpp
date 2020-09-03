@@ -21,6 +21,7 @@ class RectRegionMarkerImpl
 public:
     RectRegionMarker* self;
     SceneWidget* sceneWidget;
+    ScopedConnection sceneWidgetConnection;
     SgLineSetPtr lineSet;
     int left, right, top, bottom;
     SgVertexArrayPtr vertices;
@@ -52,7 +53,7 @@ RectRegionMarker::RectRegionMarker()
 RectRegionMarkerImpl::RectRegionMarkerImpl(RectRegionMarker* self)
     : self(self)
 {
-    sceneWidget = 0;
+    sceneWidget = nullptr;
 
     lineSet = new SgLineSet;
     vertices = lineSet->getOrCreateVertices();
@@ -137,6 +138,12 @@ void RectRegionMarker::startEditing(SceneWidget* sceneWidget)
     onSceneModeChanged(sceneWidget->latestEvent());
     sceneWidget->sceneRoot()->addChildOnce(this, true);
     sceneWidget->installEventFilter(this);
+
+    impl->sceneWidgetConnection =
+        sceneWidget->sigAboutToBeDestroyed().connect(
+            [&](){
+                finishEditing();
+            });
 }
 
 
@@ -156,7 +163,7 @@ void RectRegionMarker::finishEditing()
     if(impl->sceneWidget){
         impl->sceneWidget->removeEventFilter(this);
         impl->sceneWidget->sceneRoot()->removeChild(this);
-        impl->sceneWidget = 0;
+        impl->sceneWidget = nullptr;
     }
 }
 
