@@ -5,8 +5,6 @@
 #include <map>
 #include "gettext.h"
 
-#include <iostream>
-
 using namespace std;
 using namespace cnoid;
 
@@ -24,6 +22,28 @@ public:
     }
 };
 
+class VertexInfo
+{
+public:
+    shared_ptr<SgNodePath> path;
+    int vertexIndex;
+    Vector3f position;
+
+    VertexInfo() : vertexIndex(-1) { }
+
+    bool isValid() const { return bool(path); }
+
+    bool operator==(const VertexInfo& rhs){
+        if(path == rhs.path ||
+           (path && rhs.path && *path == *rhs.path)){
+            if(vertexIndex == rhs.vertexIndex){
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
 }
 
 namespace cnoid {
@@ -33,16 +53,29 @@ class SceneWaypointEditManager::Impl
 public:
     SceneWaypointEditManager* self;
     int modeId;
-    SgOverlayPtr pointedVertexOverlay;
+    std::map<SceneWidget*, SceneWidgetInfo> sceneWidgetInfos;
+
+    SgOverlayPtr vertexOverlay;
     SgPointSetPtr pointedVertexPlot;
     SgVertexArrayPtr pointedVertexArray;
-    std::map<SceneWidget*, SceneWidgetInfo> sceneWidgetInfos;
+    SgPointSetPtr selectedVertexPlot;
+    SgVertexArrayPtr selectedVertexArray;
+    SgUpdate update;
+    
+    VertexInfo pointedVertex;
+    std::vector<VertexInfo> selectedVertices;
     
     Impl(SceneWaypointEditManager* self);
     void setupSceneWaypointEditMode(SceneWidget* sceneWidget);
     void clearSceneWaypointEditMode(SceneWidget* sceneWidget);
     bool findPointedVertex(
         const SgVertexArray& vertices, const Affine3& T, const Vector3& point, int& out_index);
+    void setPointedVertex(
+        const SgNodePath& path, SgVertexArray& vertices, const Affine3& T, int vertexIndex);
+    void clearPointedVertex();
+    bool onButtonPressEvent(const SceneWidgetEvent& event);
+    void updateSelectedVertexArray();
+    
 };
 
 }
@@ -62,12 +95,16 @@ SceneWaypointEditManager::Impl::Impl(SceneWaypointEditManager* self)
     pointedVertexPlot = new SgPointSet;
     pointedVertexPlot->setPointSize(10.0);
     pointedVertexArray = pointedVertexPlot->getOrCreateVertices();
-    auto mat = pointedVertexPlot->getOrCreateMaterial();
-    mat->setEmissiveColor(Vector3f(1.0f, 0.0f, 0.0f));
-    mat->setDiffuseColor(Vector3f(1.0f, 0.0f, 0.0f));
+    pointedVertexPlot->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
 
-    pointedVertexOverlay = new SgOverlay;
-    pointedVertexOverlay->addChild(pointedVertexPlot);
+    selectedVertexPlot = new SgPointSet;
+    selectedVertexPlot->setPointSize(10.0);
+    selectedVertexArray = selectedVertexPlot->getOrCreateVertices();
+    selectedVertexPlot->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 0.0f, 0.0f));
+    
+    vertexOverlay = new SgOverlay;
+    vertexOverlay->addChild(pointedVertexPlot);
+    vertexOverlay->addChild(selectedVertexPlot);
 }
 
 
@@ -113,7 +150,7 @@ void SceneWaypointEditManager::Impl::setupSceneWaypointEditMode(SceneWidget* sce
 
     sceneWidget->setPolygonDisplayElements(SceneWidget::PolygonVertex | SceneWidget::PolygonEdge | SceneWidget::PolygonFace);
 
-    sceneWidget->sceneRoot()->addChildOnce(pointedVertexOverlay, true);
+    sceneWidget->sceneRoot()->addChildOnce(vertexOverlay, true);
 }
 
 
@@ -122,54 +159,34 @@ void SceneWaypointEditManager::Impl::clearSceneWaypointEditMode(SceneWidget* sce
     auto p = sceneWidgetInfos.find(sceneWidget);
     if(p != sceneWidgetInfos.end()){
         sceneWidget->setPolygonDisplayElements(p->second.prevPolygonDisplayElements);
-        sceneWidget->sceneRoot()->removeChild(pointedVertexOverlay, true);
+        sceneWidget->sceneRoot()->removeChild(vertexOverlay, true);
     }
-}
-
-
-bool SceneWaypointEditManager::onButtonPressEvent(const SceneWidgetEvent& event)
-{
-    return false;
-}
-
-
-bool SceneWaypointEditManager::onButtonReleaseEvent(const SceneWidgetEvent& event)
-{
-    return false;
-}
-
-
-bool SceneWaypointEditManager::onDoubleClickEvent(const SceneWidgetEvent& event)
-{
-    return false;
 }
 
 
 bool SceneWaypointEditManager::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
+    if(!event.sceneWidget()->isEditMode()){
+        return false;
+    }
+    
     auto& path = event.nodePath();
     bool pointed = false;
     if(!path.empty()){
         if(auto shape = dynamic_cast<SgShape*>(path.back())){
             auto vertices = *shape->mesh()->vertices();
-            Position T = calcTotalTransform(path);
+            Affine3 T = calcTotalTransform(path);
             int  pointedIndex;
-            if(impl->findPointedVertex(vertices, T, event.point(), pointedIndex)){
-                impl->pointedVertexArray->resize(1);
-                Vector3 v = T * vertices[pointedIndex].cast<double>();
-                impl->pointedVertexArray->front() = v.cast<float>();
-                impl->pointedVertexArray->notifyUpdate();
-                pointed = true;
+            pointed = impl->findPointedVertex(vertices, T, event.point(), pointedIndex);
+            if(pointed){
+                impl->setPointedVertex(path, vertices, T, pointedIndex);
             }
         }
     }
     if(!pointed){
-        if(!impl->pointedVertexArray->empty()){
-            impl->pointedVertexArray->clear();
-            impl->pointedVertexArray->notifyUpdate();
-        }
+        impl->clearPointedVertex();
     }
-    return false;
+    return true;
 }
 
 
@@ -192,7 +209,7 @@ bool SceneWaypointEditManager::Impl::findPointedVertex
         Vector3 v = T * vertices[minDistanceIndex].cast<double>();
         double distance = (v - point).norm();
         //! \todo The distance threshold should be constant in the viewport coordinate
-        if(distance < 0.015){
+        if(distance < 0.01){
             out_index = minDistanceIndex;
             found = true;
         }
@@ -201,12 +218,116 @@ bool SceneWaypointEditManager::Impl::findPointedVertex
 }
 
 
+void SceneWaypointEditManager::Impl::setPointedVertex
+(const SgNodePath& path, SgVertexArray& vertices, const Affine3& T, int vertexIndex)
+{
+    Vector3f v = (T * vertices[vertexIndex].cast<double>()).cast<float>();
+    pointedVertex.path = make_shared<SgNodePath>(path);
+    pointedVertex.vertexIndex = vertexIndex;
+    pointedVertex.position = v;
+    pointedVertexArray->resize(1);
+    pointedVertexArray->front() = v;
+    pointedVertexArray->notifyUpdate(update);
+}
+
+
+void SceneWaypointEditManager::Impl::clearPointedVertex()
+{
+    pointedVertex.path.reset();
+    pointedVertex.vertexIndex = -1;
+
+    if(!pointedVertexArray->empty()){
+        pointedVertexArray->clear();
+        pointedVertexArray->notifyUpdate(update);
+    }
+}
+
+
 void SceneWaypointEditManager::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
     if(!impl->pointedVertexArray->empty()){
         impl->pointedVertexArray->clear();
-        impl->pointedVertexArray->notifyUpdate();
+        impl->pointedVertexArray->notifyUpdate(impl->update);
     }
+}
+
+
+bool SceneWaypointEditManager::onButtonPressEvent(const SceneWidgetEvent& event)
+{
+    return impl->onButtonPressEvent(event);
+}
+
+
+bool SceneWaypointEditManager::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
+{
+    bool processed = false;
+    
+    if(event.button() == Qt::LeftButton){
+        bool isVertexSelectionUpdated = false;
+        if(!pointedVertex.isValid()){
+            if(!(event.modifiers() & Qt::ControlModifier)){
+                if(!selectedVertices.empty()){
+                    selectedVertices.clear();
+                    isVertexSelectionUpdated = true;
+                }
+            }
+        } else {
+            bool removed = false;
+            shared_ptr<SgNodePath> sharedPath;
+            if(!(event.modifiers() & Qt::ControlModifier)){
+                selectedVertices.clear();
+            } else {
+                for(auto it = selectedVertices.begin(); it != selectedVertices.end(); ++it){
+                    if(*it == pointedVertex){
+                        selectedVertices.erase(it);
+                        removed = true;
+                        break;
+                    }
+                    if(!sharedPath && (*it->path == *pointedVertex.path)){
+                        sharedPath = it->path;
+                    }
+                }
+            }
+            if(!removed){
+                if(sharedPath){
+                    pointedVertex.path = sharedPath;
+                }
+                selectedVertices.push_back(pointedVertex);
+            }
+            isVertexSelectionUpdated = true;
+        }
+        if(isVertexSelectionUpdated){
+            updateSelectedVertexArray();
+        }
+        processed = true;
+    }
+
+                    
+    return processed;
+}
+
+
+void SceneWaypointEditManager::Impl::updateSelectedVertexArray()
+{
+    selectedVertexArray->clear();
+
+    for(auto& vertexInfo : selectedVertices){
+        selectedVertexArray->push_back(vertexInfo.position);
+    }
+
+    selectedVertexArray->notifyUpdate(update);
+}
+
+
+bool SceneWaypointEditManager::onButtonReleaseEvent(const SceneWidgetEvent& event)
+{
+    return false;
+}
+
+
+bool SceneWaypointEditManager::onDoubleClickEvent(const SceneWidgetEvent& event)
+{
+    return false;
 }
 
 
