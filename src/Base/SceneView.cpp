@@ -56,8 +56,6 @@ public:
     RootItem* rootItem;
     CheckBox dedicatedCheckCheck;
     int dedicatedCheckId;
-    int customMode;
-    Signal<void(int id)> sigCustomModeChanged;
         
     Impl(SceneView* self);
     ~Impl();
@@ -107,10 +105,10 @@ std::vector<SceneView*> SceneView::instances()
 int SceneView::registerCustomMode
 (SceneWidgetEditable* modeHandler, const QIcon& buttonIcon, const QString& caption)
 {
-    static int id = 1;
+    int id = SceneWidget::issueUniqueCustomModeId();
     customModeIdToHandlerMap[id] = modeHandler;
     SceneBar::instance()->addCustomModeButton(id, buttonIcon, caption);
-    return id++;
+    return id;
 }
 
 
@@ -218,18 +216,13 @@ SgGroup* SceneView::scene()
 bool SceneView::setCustomMode(int mode)
 {
     bool isValid = true;
-    if(mode != impl->customMode){
+    if(mode != customMode()){
         auto p = customModeIdToHandlerMap.find(mode);
         if(p != customModeIdToHandlerMap.end()){
             impl->sceneWidget->activateCustomMode(p->second, mode);
         } else {
             impl->sceneWidget->deactivateCustomMode();
-            mode = 0;
             isValid = false;
-        }
-        if(mode != impl->customMode){
-            impl->customMode = mode;
-            impl->sigCustomModeChanged(mode);
         }
     }
     return isValid;
@@ -238,13 +231,7 @@ bool SceneView::setCustomMode(int mode)
 
 int SceneView::customMode() const
 {
-    return impl->customMode;
-}
-
-
-SignalProxy<void(int id)> SceneView::sigCustomModeChanged()
-{
-    return impl->sigCustomModeChanged;
+    return impl->sceneWidget->activeCustomMode();
 }
 
 

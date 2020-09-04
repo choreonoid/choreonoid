@@ -45,9 +45,16 @@ public:
     void setEditMode(bool on);
     bool isEditMode() const;
 
-    void activateCustomMode(SceneWidgetEditable* modeHandler, int modeId);
-    int activeCustomModeId() const;
-    void deactivateCustomMode();
+    // Issue a unique ID from 2.
+    // ID 0 is used as the non-custom mode ID.
+    // ID 1 is used as the default (common) customo mode ID that can be used for any customo mode.
+    static int issueUniqueCustomModeId();
+
+    void activateCustomMode(SceneWidgetEditable* modeHandler, int modeId = 1);
+    SceneWidgetEditable* activeCustomModeHandler();
+    int activeCustomMode() const;
+    // If modeHandler is nullptr, any current custom mode is deactivated.
+    void deactivateCustomMode(SceneWidgetEditable* modeHandler = nullptr);
 
     const SceneWidgetEvent& latestEvent() const;
     Vector3 lastClickedPoint() const;
@@ -124,10 +131,6 @@ public:
     Menu* contextMenu();
     void showContextMenu();
     SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest();
-
-    void installEventFilter(SceneWidgetEditable* filter);
-    SceneWidgetEditable* activeEventFilter();
-    void removeEventFilter(SceneWidgetEditable* filter);
 
     void showConfigDialog();
     QVBoxLayout* configDialogVBox();

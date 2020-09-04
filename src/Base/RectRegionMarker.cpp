@@ -139,7 +139,7 @@ void RectRegionMarker::startEditing(SceneWidget* sceneWidget)
     impl->sceneWidget = sceneWidget;
     onSceneModeChanged(sceneWidget->latestEvent());
     sceneWidget->sceneRoot()->addChildOnce(this, true);
-    sceneWidget->installEventFilter(this);
+    sceneWidget->activateCustomMode(this);
 
     impl->sceneWidgetConnection =
         sceneWidget->sigAboutToBeDestroyed().connect(
@@ -151,19 +151,14 @@ void RectRegionMarker::startEditing(SceneWidget* sceneWidget)
 
 bool RectRegionMarker::isEditing() const
 {
-    if(impl->sceneWidget){
-        if(impl->sceneWidget->activeEventFilter() == this){
-            return true;
-        }
-    }
-    return false;
+    return (impl->sceneWidget && impl->sceneWidget->activeCustomModeHandler() == this);
 }
 
 
 void RectRegionMarker::finishEditing()
 {
     if(impl->sceneWidget){
-        impl->sceneWidget->removeEventFilter(this);
+        impl->sceneWidget->deactivateCustomMode(this);
         impl->sceneWidget->sceneRoot()->removeChild(this);
         impl->sceneWidget = nullptr;
     }
@@ -200,7 +195,8 @@ void RectRegionMarker::onSceneModeChanged(const SceneWidgetEvent& event)
 
 void RectRegionMarkerImpl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    if(event.sceneWidget()->isEditMode()){
+    auto sw = event.sceneWidget();
+    if(sw->activeCustomModeHandler() == self && sw->isEditMode()){
         event.sceneWidget()->setCursor(editModeCursor);
     } else {
         showRectangle(false);

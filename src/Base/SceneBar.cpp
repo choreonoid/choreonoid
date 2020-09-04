@@ -332,6 +332,17 @@ void SceneBar::Impl::onSceneWidgetStateChanged()
     editModeToggle->setChecked(currentSceneWidget->isEditMode());
     editModeToggle->blockSignals(false);
 
+    customModeButtonGroup.blockSignals(true);
+    int customMode = currentSceneWidget->activeCustomMode();
+    if(customMode >= 2){
+        customModeButtonGroup.button(customMode)->setChecked(true);
+    } else {
+        if(auto checked = customModeButtonGroup.checkedButton()){
+            checked->setChecked(false);
+        }
+    }
+    customModeButtonGroup.blockSignals(false);
+
     firstPersonModeToggle->blockSignals(true);
     firstPersonModeToggle->setChecked(currentSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
     firstPersonModeToggle->blockSignals(false);

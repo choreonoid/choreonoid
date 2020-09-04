@@ -86,7 +86,7 @@ void SceneWaypointEditManager::setCustomModeId(int id)
 void SceneWaypointEditManager::onSceneModeChanged(const SceneWidgetEvent& event)
 {
     auto sceneWidget = event.sceneWidget();
-    if(sceneWidget->activeCustomModeId() == impl->modeId && sceneWidget->isEditMode()){
+    if(sceneWidget->activeCustomMode() == impl->modeId && sceneWidget->isEditMode()){
         impl->setupSceneWaypointEditMode(sceneWidget);
     } else {
         impl->clearSceneWaypointEditMode(sceneWidget);

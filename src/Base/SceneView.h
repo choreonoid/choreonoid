@@ -44,7 +44,6 @@ public:
 
     bool setCustomMode(int mode);
     int customMode() const;
-    SignalProxy<void(int mode)> sigCustomModeChanged();
         
 protected:
     virtual QWidget* indicatorOnInfoBar() override;
