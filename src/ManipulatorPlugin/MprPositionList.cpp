@@ -112,7 +112,13 @@ int MprPositionList::numPositions() const
 }
 
 
-MprPosition* MprPositionList::positionAt(int index) const
+const MprPosition* MprPositionList::positionAt(int index) const
+{
+    return impl->positions[index];
+}
+
+
+MprPosition* MprPositionList::positionAt(int index)
 {
     return impl->positions[index];
 }

@@ -29,7 +29,8 @@ public:
 
     void clear();
     int numPositions() const;
-    MprPosition* positionAt(int index) const;
+    const MprPosition* positionAt(int index) const;
+    MprPosition* positionAt(int index);
     int indexOf(MprPosition* position);
 
     MprPosition* findPosition(const GeneralId& id) const;
