@@ -19,6 +19,9 @@ public:
     static void initialize(ExtensionManager* ext);
     static SceneBar* instance();
 
+    void addCustomModeButton(int id, const QIcon& icon, const QString& caption);
+    void removeCustomModeButton(int id);
+
     SceneView* currentSceneView();
     
     // [[deprecated("Use SceneBar::currentSceneView().")]]
@@ -29,11 +32,6 @@ protected:
 
 private:
     ~SceneBar();
-
-    // Called from the SceneView implementation
-    friend class SceneView;
-    void addCustomModeButton(int id, const QIcon& icon, const QString& caption);
-    void removeCustomModeButton(int id);
 
     class Impl;
     Impl* impl;

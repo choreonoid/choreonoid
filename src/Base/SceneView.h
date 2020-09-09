@@ -30,10 +30,18 @@ public:
     */
     static std::vector<SceneView*> instances();
 
-    //! \return Mode id
-    static int registerCustomMode(
-        SceneWidgetEditable* modeHandler, const QIcon& buttonIcon, const QString& caption);
+    /**
+       If you want to add a custom mode button to the scene bar, use the SceneBar::addCustomModeButton function.
+       \return Mode id
+    */
+    static int registerCustomMode(SceneWidgetEditable* modeHandler);
+
+    /**
+       If the corresponding custom mode button is added to the scene bar, remove it with
+       the SceneBar::removeCustomModeButton function.
+    */
     static void unregisterCustomMode(int mode);
+    
     static int customModeId(const std::string& modeName);
         
     SceneView();

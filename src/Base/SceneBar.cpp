@@ -335,7 +335,9 @@ void SceneBar::Impl::onSceneWidgetStateChanged()
     customModeButtonGroup.blockSignals(true);
     int customMode = currentSceneWidget->activeCustomMode();
     if(customMode >= 2){
-        customModeButtonGroup.button(customMode)->setChecked(true);
+        if(auto modeButton = customModeButtonGroup.button(customMode)){
+            modeButton->setChecked(true);
+        }
     } else {
         if(auto checked = customModeButtonGroup.checkedButton()){
             checked->setChecked(false);

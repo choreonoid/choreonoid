@@ -4,7 +4,6 @@
 
 #include "SceneView.h"
 #include "SceneWidget.h"
-#include "SceneBar.h"
 #include "ViewManager.h"
 #include "Separator.h"
 #include "RootItem.h"
@@ -38,7 +37,6 @@ struct SceneInfo {
     }
 };
 
-std::map<std::string, int> customModeNameToIdMap;
 std::map<int, SceneWidgetEditable*> customModeIdToHandlerMap;
 
 }
@@ -102,12 +100,10 @@ std::vector<SceneView*> SceneView::instances()
 }
 
 
-int SceneView::registerCustomMode
-(SceneWidgetEditable* modeHandler, const QIcon& buttonIcon, const QString& caption)
+int SceneView::registerCustomMode(SceneWidgetEditable* modeHandler)
 {
     int id = SceneWidget::issueUniqueCustomModeId();
     customModeIdToHandlerMap[id] = modeHandler;
-    SceneBar::instance()->addCustomModeButton(id, buttonIcon, caption);
     return id;
 }
 
@@ -119,7 +115,6 @@ void SceneView::unregisterCustomMode(int id)
             instance->setCustomMode(0);
         }
     }
-    SceneBar::instance()->removeCustomModeButton(id);
     customModeIdToHandlerMap.erase(id);
 }
 
