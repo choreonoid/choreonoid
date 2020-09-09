@@ -1,19 +1,23 @@
-#ifndef CNOID_BASE_SCENE_WAYPOINT_EDIT_MANAGER_H
-#define CNOID_BASE_SCENE_WAYPOINT_EDIT_MANAGER_H
+#ifndef CNOID_BASE_SCENE_POINT_SELECTION_MODE_H
+#define CNOID_BASE_SCENE_POINT_SELECTION_MODE_H
 
 #include "SceneWidgetEditable.h"
+#include <cnoid/EigenTypes>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT SceneWaypointEditManager : public SceneWidgetEditable
+class CNOID_EXPORT ScenePointSelectionMode : public SceneWidgetEditable
 {
 public:
-    SceneWaypointEditManager();
-    SceneWaypointEditManager(const SceneWaypointEditManager& org) = delete;
-    virtual ~SceneWaypointEditManager();
+    ScenePointSelectionMode();
+    ScenePointSelectionMode(const ScenePointSelectionMode& org) = delete;
+    virtual ~ScenePointSelectionMode();
 
     void setCustomModeId(int id);
+
+    std::vector<Vector3f> getSelectedPoints() const;
 
     // SceneWidgetEditable functions
     virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;

@@ -107,6 +107,7 @@ set(sources
   SceneWidget.cpp
   SceneWidgetEvent.cpp
   SceneWidgetEditable.cpp
+  ScenePointSelectionMode.cpp
   InteractiveCameraTransform.cpp
   SceneProjector.cpp
   SceneDragProjector.cpp
@@ -120,7 +121,6 @@ set(sources
   PointSetItem.cpp
   MultiPointSetItem.cpp
   WaypointArrayItem.cpp
-  SceneWaypointEditManager.cpp
   MovieRecorder.cpp
   TextEditView.cpp
   GeneralSliderView.cpp
@@ -237,6 +237,7 @@ set(headers
   PositionDragger.h
   SceneBar.h
   SceneWidgetEditable.h
+  ScenePointSelectionMode.h
   InteractiveCameraTransform.h
   RectRegionMarker.h
   CoordinateFrameMarker.h
@@ -249,7 +250,6 @@ set(headers
   PointSetItem.h
   MultiPointSetItem.h
   WaypointArrayItem.h
-  SceneWaypointEditManager.h
   TextEditView.h
   GeneralSliderView.h
   ImageView.h

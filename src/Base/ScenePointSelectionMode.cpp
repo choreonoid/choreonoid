@@ -1,4 +1,4 @@
-#include "SceneWaypointEditManager.h"
+#include "ScenePointSelectionMode.h"
 #include "SceneWidget.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneUtil>
@@ -48,10 +48,10 @@ public:
 
 namespace cnoid {
 
-class SceneWaypointEditManager::Impl
+class ScenePointSelectionMode::Impl
 {
 public:
-    SceneWaypointEditManager* self;
+    ScenePointSelectionMode* self;
     int modeId;
     std::map<SceneWidget*, SceneWidgetInfo> sceneWidgetInfos;
 
@@ -65,9 +65,9 @@ public:
     VertexInfo pointedVertex;
     std::vector<VertexInfo> selectedVertices;
     
-    Impl(SceneWaypointEditManager* self);
-    void setupSceneWaypointEditMode(SceneWidget* sceneWidget);
-    void clearSceneWaypointEditMode(SceneWidget* sceneWidget);
+    Impl(ScenePointSelectionMode* self);
+    void setupScenePointSelectionMode(SceneWidget* sceneWidget);
+    void clearScenePointSelectionMode(SceneWidget* sceneWidget);
     bool findPointedVertex(
         const SgVertexArray& vertices, const Affine3& T, const Vector3& point, int& out_index);
     void setPointedVertex(
@@ -81,13 +81,13 @@ public:
 }
 
 
-SceneWaypointEditManager::SceneWaypointEditManager()
+ScenePointSelectionMode::ScenePointSelectionMode()
 {
     impl = new Impl(this);
 }
 
 
-SceneWaypointEditManager::Impl::Impl(SceneWaypointEditManager* self)
+ScenePointSelectionMode::Impl::Impl(ScenePointSelectionMode* self)
     : self(self)
 {
     modeId = 0;
@@ -108,30 +108,41 @@ SceneWaypointEditManager::Impl::Impl(SceneWaypointEditManager* self)
 }
 
 
-SceneWaypointEditManager::~SceneWaypointEditManager()
+ScenePointSelectionMode::~ScenePointSelectionMode()
 {
     delete impl;
 }
 
 
-void SceneWaypointEditManager::setCustomModeId(int id)
+void ScenePointSelectionMode::setCustomModeId(int id)
 {
     impl->modeId = id;
 }
 
 
-void SceneWaypointEditManager::onSceneModeChanged(const SceneWidgetEvent& event)
+std::vector<Vector3f> ScenePointSelectionMode::getSelectedPoints() const
+{
+    std::vector<Vector3f> points;
+    points.reserve(impl->selectedVertices.size());
+    for(auto& vertex : impl->selectedVertices){
+        points.push_back(vertex.position);
+    }
+    return points;
+}
+
+
+void ScenePointSelectionMode::onSceneModeChanged(const SceneWidgetEvent& event)
 {
     auto sceneWidget = event.sceneWidget();
     if(sceneWidget->activeCustomMode() == impl->modeId && sceneWidget->isEditMode()){
-        impl->setupSceneWaypointEditMode(sceneWidget);
+        impl->setupScenePointSelectionMode(sceneWidget);
     } else {
-        impl->clearSceneWaypointEditMode(sceneWidget);
+        impl->clearScenePointSelectionMode(sceneWidget);
     }
 }
 
 
-void SceneWaypointEditManager::Impl::setupSceneWaypointEditMode(SceneWidget* sceneWidget)
+void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(SceneWidget* sceneWidget)
 {
     SceneWidgetInfo* info = nullptr;
     auto p = sceneWidgetInfos.find(sceneWidget);
@@ -154,7 +165,7 @@ void SceneWaypointEditManager::Impl::setupSceneWaypointEditMode(SceneWidget* sce
 }
 
 
-void SceneWaypointEditManager::Impl::clearSceneWaypointEditMode(SceneWidget* sceneWidget)
+void ScenePointSelectionMode::Impl::clearScenePointSelectionMode(SceneWidget* sceneWidget)
 {
     auto p = sceneWidgetInfos.find(sceneWidget);
     if(p != sceneWidgetInfos.end()){
@@ -164,7 +175,7 @@ void SceneWaypointEditManager::Impl::clearSceneWaypointEditMode(SceneWidget* sce
 }
 
 
-bool SceneWaypointEditManager::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
     if(!event.sceneWidget()->isEditMode()){
         return false;
@@ -190,7 +201,7 @@ bool SceneWaypointEditManager::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-bool SceneWaypointEditManager::Impl::findPointedVertex
+bool ScenePointSelectionMode::Impl::findPointedVertex
 (const SgVertexArray& vertices, const Affine3& T, const Vector3& point, int& out_index)
 {
     bool found = false;
@@ -218,7 +229,7 @@ bool SceneWaypointEditManager::Impl::findPointedVertex
 }
 
 
-void SceneWaypointEditManager::Impl::setPointedVertex
+void ScenePointSelectionMode::Impl::setPointedVertex
 (const SgNodePath& path, SgVertexArray& vertices, const Affine3& T, int vertexIndex)
 {
     Vector3f v = (T * vertices[vertexIndex].cast<double>()).cast<float>();
@@ -231,7 +242,7 @@ void SceneWaypointEditManager::Impl::setPointedVertex
 }
 
 
-void SceneWaypointEditManager::Impl::clearPointedVertex()
+void ScenePointSelectionMode::Impl::clearPointedVertex()
 {
     pointedVertex.path.reset();
     pointedVertex.vertexIndex = -1;
@@ -243,7 +254,7 @@ void SceneWaypointEditManager::Impl::clearPointedVertex()
 }
 
 
-void SceneWaypointEditManager::onPointerLeaveEvent(const SceneWidgetEvent& event)
+void ScenePointSelectionMode::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
     if(!impl->pointedVertexArray->empty()){
         impl->pointedVertexArray->clear();
@@ -252,13 +263,13 @@ void SceneWaypointEditManager::onPointerLeaveEvent(const SceneWidgetEvent& event
 }
 
 
-bool SceneWaypointEditManager::onButtonPressEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     return impl->onButtonPressEvent(event);
 }
 
 
-bool SceneWaypointEditManager::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     bool processed = false;
     
@@ -307,7 +318,7 @@ bool SceneWaypointEditManager::Impl::onButtonPressEvent(const SceneWidgetEvent& 
 }
 
 
-void SceneWaypointEditManager::Impl::updateSelectedVertexArray()
+void ScenePointSelectionMode::Impl::updateSelectedVertexArray()
 {
     selectedVertexArray->clear();
 
@@ -319,43 +330,43 @@ void SceneWaypointEditManager::Impl::updateSelectedVertexArray()
 }
 
 
-bool SceneWaypointEditManager::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
     return false;
 }
 
 
-bool SceneWaypointEditManager::onDoubleClickEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::onDoubleClickEvent(const SceneWidgetEvent& event)
 {
     return false;
 }
 
 
-bool SceneWaypointEditManager::onKeyPressEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::onKeyPressEvent(const SceneWidgetEvent& event)
 {
     return false;
 }
 
 
-bool SceneWaypointEditManager::onKeyReleaseEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::onKeyReleaseEvent(const SceneWidgetEvent& event)
 {
     return false;
 }
 
 
-void SceneWaypointEditManager::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+void ScenePointSelectionMode::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
 
 }
 
 
-bool SceneWaypointEditManager::onUndoRequest()
+bool ScenePointSelectionMode::onUndoRequest()
 {
     return false;
 }
 
 
-bool SceneWaypointEditManager::onRedoRequest()
+bool ScenePointSelectionMode::onRedoRequest()
 {
     return false;
 }

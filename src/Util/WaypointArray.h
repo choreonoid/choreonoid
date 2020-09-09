@@ -12,6 +12,8 @@ namespace cnoid {
 class CNOID_EXPORT Waypoint : public Referenced
 {
 public:
+    Waypoint() { }
+    Waypoint(const Vector3& p) : coord_(p) { }
     const Vector3& coord() { return coord_; }
     void setCoord(const Vector3& p) { coord_ = p; }
 
