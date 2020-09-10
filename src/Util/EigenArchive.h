@@ -32,6 +32,13 @@ void read(const Listing& listing, Eigen::MatrixBase<Derived>& x)
 
 
 template<typename Derived>
+void read(const Listing* listing, Eigen::MatrixBase<Derived>& x)
+{
+    read(*listing, x);
+}
+
+
+template<typename Derived>
 bool read(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
 {
     const Listing& s = *mapping.findListing(key);
@@ -43,10 +50,24 @@ bool read(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Deri
 }
 
 
+template<typename Derived>
+bool read(const Mapping* mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
+{
+    return read(*mapping, key, x);
+}
+
+
 template<typename Scalar, int Dim, int Mode>
 bool read(const Mapping& mapping, const std::string& key, Eigen::Transform<Scalar, Dim, Mode>& T)
 {
     return read(mapping, key, T.matrix());
+}
+
+
+template<typename Scalar, int Dim, int Mode>
+bool read(const Mapping* mapping, const std::string& key, Eigen::Transform<Scalar, Dim, Mode>& T)
+{
+    return read(*mapping, key, T.matrix());
 }
 
 
@@ -57,6 +78,14 @@ void readEx(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<De
         mapping.throwKeyNotFoundException(key);
     }
 }
+
+
+template<typename Derived>
+void readEx(const Mapping* mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
+{
+    readEx(*mapping, key, x);
+}
+
     
 template<typename Derived>
 Listing& write(Mapping& mapping, const std::string& key, const Eigen::MatrixBase<Derived>& x)
@@ -80,11 +109,26 @@ Listing& write(Mapping& mapping, const std::string& key, const Eigen::MatrixBase
 }
 
 
+template<typename Derived>
+Listing* write(Mapping* mapping, const std::string& key, const Eigen::MatrixBase<Derived>& x)
+{
+    return &write(*mapping, key, x);
+}
+
+
 template<typename Scalar, int Dim, int Mode>
 Listing& write(Mapping& mapping, const std::string& key, const Eigen::Transform<Scalar, Dim, Mode>& T)
 {
     return write(mapping, key, T.matrix());
 }
+
+
+template<typename Scalar, int Dim, int Mode>
+Listing* write(Mapping* mapping, const std::string& key, const Eigen::Transform<Scalar, Dim, Mode>& T)
+{
+    return &write(*mapping, key, T.matrix());
+}
+
 
 CNOID_EXPORT bool readAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
 CNOID_EXPORT bool readDegreeAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);

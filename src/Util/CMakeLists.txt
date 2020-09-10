@@ -38,7 +38,8 @@ set(sources
   RangeLimiter.cpp
   CoordinateFrame.cpp
   CoordinateFrameList.cpp
-  WaypointArray.cpp
+  PositionTag.cpp
+  PositionTagList.cpp  
   BoundingBox.cpp
   SceneNodeClassRegistry.cpp # This must be before any scene graph classes
   PolymorphicSceneNodeFunctionSet.cpp
@@ -140,7 +141,8 @@ set(headers
   UniformCubicBSpline.h
   CoordinateFrame.h
   CoordinateFrameList.h
-  WaypointArray.h
+  PositionTag.h
+  PositionTagList.h
   BoundingBox.h
   SceneNodeClassRegistry.h
   PolymorphicSceneNodeFunctionSet.h

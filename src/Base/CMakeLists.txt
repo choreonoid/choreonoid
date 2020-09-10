@@ -120,7 +120,7 @@ set(sources
   SceneItemFileIO.cpp
   PointSetItem.cpp
   MultiPointSetItem.cpp
-  WaypointArrayItem.cpp
+  PositionTagListItem.cpp
   MovieRecorder.cpp
   TextEditView.cpp
   GeneralSliderView.cpp
@@ -249,7 +249,7 @@ set(headers
   SceneItemFileIO.h
   PointSetItem.h
   MultiPointSetItem.h
-  WaypointArrayItem.h
+  PositionTagListItem.h
   TextEditView.h
   GeneralSliderView.h
   ImageView.h

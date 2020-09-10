@@ -1,5 +1,5 @@
-#ifndef CNOID_BASE_WAYPOINT_ARRAY_ITEM_H
-#define CNOID_BASE_WAYPOINT_ARRAY_ITEM_H
+#ifndef CNOID_BASE_POSITION_TAG_LIST_ITEM_H
+#define CNOID_BASE_POSITION_TAG_LIST_ITEM_H
 
 #include "Item.h"
 #include "RenderableItem.h"
@@ -8,19 +8,19 @@
 
 namespace cnoid {
 
-class WaypointArray;
+class PositionTagList;
 
-class CNOID_EXPORT WaypointArrayItem : public Item, public RenderableItem, public LocatableItem
+class CNOID_EXPORT PositionTagListItem : public Item, public RenderableItem, public LocatableItem
 {
 public:
-    //static void initializeClass(ExtensionManager* ext);
+    static void initializeClass(ExtensionManager* ext);
 
-    WaypointArrayItem();
-    WaypointArrayItem(const WaypointArrayItem& org);
-    virtual ~WaypointArrayItem();
+    PositionTagListItem();
+    PositionTagListItem(const PositionTagListItem& org);
+    virtual ~PositionTagListItem();
 
-    const WaypointArray* waypoints() const;
-    WaypointArray* waypoints();
+    const PositionTagList* tags() const;
+    PositionTagList* tags();
 
     // RenderableItem function
     virtual SgNode* getScene() override;
@@ -40,7 +40,7 @@ private:
     Impl* impl;
 };
 
-typedef ref_ptr<WaypointArrayItem> WaypointArrayItemPtr;
+typedef ref_ptr<PositionTagListItem> PositionTagListItemPtr;
 
 }
 
