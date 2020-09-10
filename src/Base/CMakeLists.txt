@@ -121,6 +121,7 @@ set(sources
   PointSetItem.cpp
   MultiPointSetItem.cpp
   PositionTagListItem.cpp
+  PositionTagListWidget.cpp
   MovieRecorder.cpp
   TextEditView.cpp
   GeneralSliderView.cpp
@@ -250,6 +251,7 @@ set(headers
   PointSetItem.h
   MultiPointSetItem.h
   PositionTagListItem.h
+  PositionTagListWidget.h
   TextEditView.h
   GeneralSliderView.h
   ImageView.h
