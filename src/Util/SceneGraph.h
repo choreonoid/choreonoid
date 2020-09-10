@@ -238,7 +238,12 @@ public:
     void clearChildren(bool doNotify = false);
     void addChild(SgNode* node, bool doNotify = false);
     bool addChildOnce(SgNode* node, bool doNotify = false);
+
+    void insertChild(int index, SgNode* node, bool doNotify = false);
+    
+    [[deprecated("Use insertChild(int index, SgNode* node, bool doNotify = false)")]]
     void insertChild(SgNode* node, int index = 0, bool doNotify = false);
+    
     bool removeChild(SgNode* node, bool doNotify = false);
     void removeChildAt(int index, bool doNotify = false);
     void copyChildrenTo(SgGroup* group, bool doNotify = false);

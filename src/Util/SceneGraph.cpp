@@ -327,7 +327,7 @@ bool SgGroup::addChildOnce(SgNode* node, bool doNotify)
 }
 
 
-void SgGroup::insertChild(SgNode* node, int index, bool doNotify)
+void SgGroup::insertChild(int index, SgNode* node, bool doNotify)
 {
     if(node){
         if(index > static_cast<int>(children.size())){
@@ -336,6 +336,12 @@ void SgGroup::insertChild(SgNode* node, int index, bool doNotify)
         children.insert(children.begin() + index, node);
         node->addParent(this, doNotify);
     }
+}
+
+
+void SgGroup::insertChild(SgNode* node, int index, bool doNotify)
+{
+    insertChild(index, node, doNotify);
 }
 
 
