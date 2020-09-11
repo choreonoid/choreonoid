@@ -39,6 +39,10 @@ public:
     virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) = 0;
     virtual void renderNode(SgNode* node) = 0;
 
+    typedef std::function<SgNode*(SgNode* targetNode)> NodeDecorationFunction;
+    virtual void addNodeDecoration(SgNode* targetNode, NodeDecorationFunction func, int id) = 0;
+    virtual void clearNodeDecorations(int id) = 0;
+    
     int numCameras() const;
     SgCamera* camera(int index);
     const SgNodePath& cameraPath(int index) const;

@@ -19,6 +19,13 @@ public:
 
     std::vector<Vector3f> getSelectedPoints() const;
 
+protected:
+    virtual std::vector<SgNode*> getTargetSceneNodes(const SceneWidgetEvent& event);
+
+    //virtual void onSelectionModeActivated(const SceneWidgetEvent& event);
+    //virtual void onSelectionModeDeactivated(const SceneWidgetEvent& event);
+
+private:
     // SceneWidgetEditable functions
     virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;

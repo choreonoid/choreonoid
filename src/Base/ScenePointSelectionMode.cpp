@@ -1,6 +1,8 @@
 #include "ScenePointSelectionMode.h"
 #include "SceneWidget.h"
+#include <cnoid/SceneRenderer>
 #include <cnoid/SceneDrawables>
+#include <cnoid/SceneEffects>
 #include <cnoid/SceneUtil>
 #include <map>
 #include "gettext.h"
@@ -14,9 +16,12 @@ class SceneWidgetInfo
 {
 public:
     SceneWidget* widget;
-    int prevPolygonDisplayElements;
+    int nodeDecorationId;
     QMetaObject::Connection connection;
 
+    SceneWidgetInfo(){
+        nodeDecorationId = 1; // temporary
+    }
     ~SceneWidgetInfo(){
         widget->disconnect(connection);
     }
@@ -66,7 +71,7 @@ public:
     std::vector<VertexInfo> selectedVertices;
     
     Impl(ScenePointSelectionMode* self);
-    void setupScenePointSelectionMode(SceneWidget* sceneWidget);
+    void setupScenePointSelectionMode(const SceneWidgetEvent& event);
     void clearScenePointSelectionMode(SceneWidget* sceneWidget);
     bool findPointedVertex(
         const SgVertexArray& vertices, const Affine3& T, const Vector3& point, int& out_index);
@@ -131,19 +136,41 @@ std::vector<Vector3f> ScenePointSelectionMode::getSelectedPoints() const
 }
 
 
+std::vector<SgNode*> ScenePointSelectionMode::getTargetSceneNodes(const SceneWidgetEvent& /* event */)
+{
+    return std::vector<SgNode*>();
+}
+    
+
+#if 0
+void ScenePointSelectionMode::onSelectionModeActivated(const SceneWidgetEvent& /* event */)
+{
+
+}
+
+
+void ScenePointSelectionMode::onSelectionModeDeactivated(const SceneWidgetEvent& /* event */)
+{
+
+}
+#endif
+
+
 void ScenePointSelectionMode::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    auto sceneWidget = event.sceneWidget();
-    if(sceneWidget->activeCustomMode() == impl->modeId && sceneWidget->isEditMode()){
-        impl->setupScenePointSelectionMode(sceneWidget);
+    auto sw = event.sceneWidget();
+    int activeMode = sw->activeCustomMode();
+    if(activeMode == impl->modeId && sw->isEditMode()){
+        impl->setupScenePointSelectionMode(event);
     } else {
-        impl->clearScenePointSelectionMode(sceneWidget);
+        impl->clearScenePointSelectionMode(sw);
     }
 }
 
 
-void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(SceneWidget* sceneWidget)
+void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(const SceneWidgetEvent& event)
 {
+    auto sceneWidget = event.sceneWidget();
     SceneWidgetInfo* info = nullptr;
     auto p = sceneWidgetInfos.find(sceneWidget);
     if(p != sceneWidgetInfos.end()){
@@ -157,11 +184,24 @@ void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(SceneWidget* sc
                 [this, sceneWidget](){ sceneWidgetInfos.erase(sceneWidget); });
     }
     
-    info->prevPolygonDisplayElements = sceneWidget->polygonDisplayElements();
+    sceneWidget->systemNodeGroup()->addChildOnce(vertexOverlay, true);
 
-    sceneWidget->setPolygonDisplayElements(SceneWidget::PolygonVertex | SceneWidget::PolygonEdge | SceneWidget::PolygonFace);
-
-    sceneWidget->sceneRoot()->addChildOnce(vertexOverlay, true);
+    int id = info->nodeDecorationId;
+    auto renderer = sceneWidget->renderer();
+    renderer->clearNodeDecorations(id);
+    for(auto& node : self->getTargetSceneNodes(event)){
+        SgPolygonDrawStylePtr style = new SgPolygonDrawStyle;
+        style->setPolygonElements(
+            SgPolygonDrawStyle::Face | SgPolygonDrawStyle::Edge | SgPolygonDrawStyle::Vertex);
+        renderer->addNodeDecoration(
+            node,
+            [style](SgNode* node){
+                style->setSingleChild(node);
+                return style;
+            },
+            id);
+    }
+    
 }
 
 
@@ -169,8 +209,9 @@ void ScenePointSelectionMode::Impl::clearScenePointSelectionMode(SceneWidget* sc
 {
     auto p = sceneWidgetInfos.find(sceneWidget);
     if(p != sceneWidgetInfos.end()){
-        sceneWidget->setPolygonDisplayElements(p->second.prevPolygonDisplayElements);
-        sceneWidget->sceneRoot()->removeChild(vertexOverlay, true);
+        SceneWidgetInfo& info = p->second;;
+        sceneWidget->systemNodeGroup()->removeChild(vertexOverlay, true);
+        sceneWidget->renderer()->clearNodeDecorations(info.nodeDecorationId);
     }
 }
 

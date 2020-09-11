@@ -241,6 +241,27 @@ public:
     PolymorphicSceneNodeFunctionSet normalRenderingFunctions;
     PolymorphicSceneNodeFunctionSet vertexRenderingFunctions;
 
+    class NodeDecorationInfo
+    {
+    public:
+        SgNodePtr node;
+        NodeDecorationFunction func;
+        int id;
+
+        NodeDecorationInfo(SgNode* node, NodeDecorationFunction& func, int id)
+            : node(node), func(func), id(id)
+        {
+            node->addDecorationReference();
+        }
+        ~NodeDecorationInfo()
+        {
+            node->releaseDecorationReference();
+        }
+    };
+        
+    unordered_map<SgNodePtr, shared_ptr<vector<NodeDecorationInfo>>>
+    nodeDecorationInfoArrayMap;
+
     ShaderProgram* currentProgram;
     SolidColorProgram* currentSolidColorProgram;
     LightingProgram* currentLightingProgram;
@@ -279,6 +300,16 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
+    struct DispatchedNodeInfo
+    {
+        SgNodePtr node;
+        int modelMatrixIndex;
+        DispatchedNodeInfo(SgNode* node, int modelMatrixIndex)
+            : node(node), modelMatrixIndex(modelMatrixIndex) { }
+    };
+    vector<DispatchedNodeInfo> pureWireframeRenderingNodes;
+    vector<DispatchedNodeInfo> vertexRenderingNodes;
+        
     deque<function<void()>> transparentRenderingQueue;
     deque<function<void()>> overlayRenderingQueue;
     
@@ -292,11 +323,6 @@ public:
     int pickingImageHeight;
 
     LightingMode lightingMode;
-    int polygonDisplayElements;
-    bool needToUpdateRenderingMode;
-    bool isPolygonFaceRenderingPassEnabled;
-    bool isPolygonEdgeRenderingPassEnabled;
-    bool isPolygonVertexRenderingPassEnabled;
     bool needToUpdateOverlayDepthBufferSize;
     
     std::set<int> shadowLightIndices;
@@ -366,12 +392,6 @@ public:
     string glRendererString;
     string glslVersionString;
 
-    void renderChildNodes(SgGroup* group){
-        for(auto p = group->cbegin(); p != group->cend(); ++p){
-            renderingFunctions->dispatch(*p);
-        }
-    }
-    
     Impl(GLSLSceneRenderer* self);
     ~Impl();
     void initialize();
@@ -385,7 +405,6 @@ public:
     void checkGPU();
     bool initializeGLForRendering();
     void doRender();
-    void updateRenderingMode();
     void setupFullLightingRendering();
     bool doPick(int x, int y);
     bool renderShadowMap(int lightIndex);
@@ -393,14 +412,18 @@ public:
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(LightingProgram* program);
     void renderFog(LightingProgram* program);
+    void doPureWireframeRendering();
+    void doVertexRendering();
     void renderTransparentObjects();
     void renderOverlayObjects();    
     void endRendering();
     void pushProgram(ShaderProgram& program);
     void popProgram();
-    inline void setPickColor(int pickIndex);
-    inline int pushPickNode(SgNode* node, bool doSetColor = true);
+    void setPickColor(int pickIndex);
+    int pushPickNode(SgNode* node, bool doSetColor = true);
     void popPickNode();
+    void renderChildNodes(SgGroup* group);
+    void renderChildNodesWithNodeDecorationCheck(SgGroup* group);
     void renderGroup(SgGroup* group);
     void renderTransform(SgTransform* transform);
     void renderAutoScale(SgAutoScale* autoScale);
@@ -415,6 +438,7 @@ public:
     void renderShapeVertices(SgShape* shape);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);
+    void renderPolygonDrawStyle(SgPolygonDrawStyle* style);
     void renderTransparentGroup(SgTransparentGroup* transparentGroup);
     void renderOverlay(SgOverlay* overlay);
     void renderOverlayMain(SgOverlay* overlay, const Affine3& T, const SgNodePath& nodePath);
@@ -560,6 +584,8 @@ void GLSLSceneRenderer::Impl::initialize()
         [&](SgPointSet* node){ renderPointSet(node); });
     normalRenderingFunctions.setFunction<SgLineSet>(
         [&](SgLineSet* node){ renderLineSet(node); });
+    normalRenderingFunctions.setFunction<SgPolygonDrawStyle>(
+        [&](SgPolygonDrawStyle* node){ renderPolygonDrawStyle(node); });
     normalRenderingFunctions.setFunction<SgTransparentGroup>(
         [&](SgTransparentGroup* node){ renderTransparentGroup(node); });
     normalRenderingFunctions.setFunction<SgOverlay>(
@@ -589,11 +615,6 @@ void GLSLSceneRenderer::Impl::initialize()
     defaultFBO = 0;
     
     lightingMode = NormalLighting;
-    polygonDisplayElements = PolygonFace;
-    needToUpdateRenderingMode = true;
-    isPolygonFaceRenderingPassEnabled = true;
-    isPolygonEdgeRenderingPassEnabled = false;
-    isPolygonVertexRenderingPassEnabled = false;
     
     doUnusedResourceCheck = true;
 
@@ -657,6 +678,51 @@ void GLSLSceneRenderer::Impl::activateVertexRenderingFunctions()
 SceneRenderer::NodeFunctionSet* GLSLSceneRenderer::renderingFunctions()
 {
     return &impl->normalRenderingFunctions;
+}
+
+
+void GLSLSceneRenderer::addNodeDecoration(SgNode* node, NodeDecorationFunction func, int id)
+{
+    auto& infos = impl->nodeDecorationInfoArrayMap[node];
+    bool updated = false;
+    if(!infos){
+        infos = make_shared<vector<Impl::NodeDecorationInfo>>();
+    } else {
+        for(auto& info : *infos){
+            if(info.id == id){
+                info.func = func;
+                updated = true;
+                break;
+            }
+        }
+    }
+    if(!updated){
+        infos->emplace_back(node, func, id);
+    }
+}
+
+
+void GLSLSceneRenderer::clearNodeDecorations(int id)
+{
+    auto& infoArrayMap = impl->nodeDecorationInfoArrayMap;
+    auto p = infoArrayMap.begin();
+    while(p != infoArrayMap.end()){
+        auto& infos = p->second;
+        auto q = infos->begin();
+        while(q != infos->end()){
+            auto& info = *q;
+            if(info.id == id){
+                q = infos->erase(q);
+            } else {
+                ++q;
+            }
+        }
+        if(infos->empty()){
+            p = infoArrayMap.erase(p);
+        } else {
+            ++p;
+        }
+    }
 }
 
 
@@ -1072,10 +1138,6 @@ void GLSLSceneRenderer::Impl::doRender()
     isLowMemoryConsumptionRenderingBeingProcessed = isLowMemoryConsumptionMode;
     isTextureBeingRendered = false;
 
-    if(needToUpdateRenderingMode){
-        updateRenderingMode();
-    }
-
     switch(lightingMode){
 
     case NoLighting:
@@ -1107,41 +1169,24 @@ void GLSLSceneRenderer::Impl::doRender()
 
         renderCamera(camera, self->currentCameraPosition());
 
-        transparentRenderingQueue.clear();
-        overlayRenderingQueue.clear();
-
         if(currentLightingProgram){
             renderLights(currentLightingProgram);
             renderFog(currentLightingProgram);
         }
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        // \todo Render the system objects separately here
 
-        if(isPolygonFaceRenderingPassEnabled){
-            renderingFunctions->dispatch(self->sceneRoot());
-        }
+        renderingFunctions->dispatch(self->sceneRoot());
         
         /*
-          \todo Change to an appropriate shader program
-          \todo Exclude the system objects
           \todo Render transparent objects directly
           \todo Ignore overlay objects
         */
-        if(isPolygonEdgeRenderingPassEnabled){
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            renderingFunctions->dispatch(self->sceneRoot());
+        if(!pureWireframeRenderingNodes.empty()){
+            doPureWireframeRendering();
         }
-        
-        if(isPolygonVertexRenderingPassEnabled){
-            ScopedShaderProgramActivator programActivator(*solidPointProgram, this);
-            solidPointProgram->setPointSize(5.0f);
-            solidPointProgram->setProjectionMatrix(projectionMatrix);
-            solidPointProgram->setColor(Vector3f(1.0f, 1.0f, 0.9f));
-
-            activateVertexRenderingFunctions();
-            renderingFunctions->dispatch(self->sceneRoot());
-            activateNormalRenderingFunctions();
+        if(!vertexRenderingNodes.empty()){
+            doVertexRendering();
         }
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1155,28 +1200,6 @@ void GLSLSceneRenderer::Impl::doRender()
     
     popProgram();
     endRendering();
-}
-
-
-void GLSLSceneRenderer::Impl::updateRenderingMode()
-{
-    bool isPolygonEdgeEnabled = (polygonDisplayElements & PolygonEdge);
-    isPolygonFaceRenderingPassEnabled = (polygonDisplayElements & PolygonFace);
-    if(isPolygonFaceRenderingPassEnabled){
-        if(lightingMode == NormalLighting){
-            fullLightingProgram->setWireframeEnabled(isPolygonEdgeEnabled);
-            isPolygonEdgeRenderingPassEnabled = false;
-        } else {
-            isPolygonEdgeRenderingPassEnabled = true;
-        }
-    } else {
-        isPolygonEdgeRenderingPassEnabled = isPolygonEdgeEnabled;
-        fullLightingProgram->setWireframeEnabled(false);
-    }
-
-    isPolygonVertexRenderingPassEnabled = (polygonDisplayElements & PolygonVertex);
-
-    needToUpdateRenderingMode = false;
 }
 
 
@@ -1543,6 +1566,43 @@ void GLSLSceneRenderer::Impl::renderFog(LightingProgram* program)
 }
 
 
+void GLSLSceneRenderer::Impl::doPureWireframeRendering()
+{
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+    for(auto& info : pureWireframeRenderingNodes){
+        auto style = static_cast<SgPolygonDrawStyle*>(info.node.get());
+        auto T = modelMatrixBuffer[info.modelMatrixIndex];
+        modelMatrixStack.push_back(T);
+        renderGroup(style);
+        modelMatrixStack.pop_back();
+    }
+    pureWireframeRenderingNodes.clear();
+}
+
+
+void GLSLSceneRenderer::Impl::doVertexRendering()
+{
+    ScopedShaderProgramActivator programActivator(*solidPointProgram, this);
+    solidPointProgram->setProjectionMatrix(projectionMatrix);
+
+    activateVertexRenderingFunctions();
+
+    for(auto& info : vertexRenderingNodes){
+        auto style = static_cast<SgPolygonDrawStyle*>(info.node.get());
+        auto T = modelMatrixBuffer[info.modelMatrixIndex];
+        modelMatrixStack.push_back(T);
+        solidPointProgram->setPointSize(style->vertexSize());
+        solidPointProgram->setColor(style->vertexColor());
+        renderGroup(style);
+        modelMatrixStack.pop_back();
+    }
+    vertexRenderingNodes.clear();
+
+    activateNormalRenderingFunctions();
+}
+
+
 void GLSLSceneRenderer::dispatchToTransparentPhase
 (ReferencedPtr object, int id,
  const std::function<void(Referenced* object, const Affine3& position, int id)>& renderingFunction)
@@ -1678,7 +1738,7 @@ const Vector3& GLSLSceneRenderer::pickedPoint() const
 }
 
 
-inline void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
+void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
 {
     Vector3f color;
     int id = pickIndex + 1;
@@ -1695,7 +1755,7 @@ inline void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
 /**
    @return the index of the current object in picking
 */
-inline int GLSLSceneRenderer::Impl::pushPickNode(SgNode* node, bool doSetColor)
+int GLSLSceneRenderer::Impl::pushPickNode(SgNode* node, bool doSetColor)
 {
     int pickIndex = 0;
     
@@ -1712,7 +1772,7 @@ inline int GLSLSceneRenderer::Impl::pushPickNode(SgNode* node, bool doSetColor)
 }
 
 
-inline void GLSLSceneRenderer::Impl::popPickNode()
+void GLSLSceneRenderer::Impl::popPickNode()
 {
     if(isRenderingPickingImage){
         currentNodePath.pop_back();
@@ -1723,6 +1783,43 @@ inline void GLSLSceneRenderer::Impl::popPickNode()
 void GLSLSceneRenderer::renderNode(SgNode* node)
 {
     impl->renderingFunctions->dispatch(node);
+}
+
+
+void GLSLSceneRenderer::Impl::renderChildNodes(SgGroup* group)
+{
+    if(nodeDecorationInfoArrayMap.empty()){
+        for(auto p = group->cbegin(); p != group->cend(); ++p){
+            renderingFunctions->dispatch(*p);
+        }
+    } else {
+        renderChildNodesWithNodeDecorationCheck(group);
+    }
+}
+
+
+void GLSLSceneRenderer::Impl::renderChildNodesWithNodeDecorationCheck(SgGroup* group)
+{
+    for(auto p = group->cbegin(); p != group->cend(); ++p){
+        auto node = *p;
+        if(!node->isDecoratedSomewhere() ||
+           group->hasAttribute(SgNode::NodeDecorationGroup)){
+            renderingFunctions->dispatch(node);
+        } else {
+            auto q = nodeDecorationInfoArrayMap.find(node);
+            if(q == nodeDecorationInfoArrayMap.end()){
+                renderingFunctions->dispatch(node);
+            } else {
+                SgNodePtr node2 = node;
+                auto& nodeDecorationInfos = *q->second;
+                for(auto& info : nodeDecorationInfos){
+                    node2 = info.func(node2);
+                    node2->setAttribute(SgNode::NodeDecorationGroup);
+                }
+                renderingFunctions->dispatch(node2);
+            }
+        }
+    }
 }
 
 
@@ -2725,6 +2822,37 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 }
 
 
+void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
+{
+    int elements = style->polygonElements();
+    int matrixIndex = -1;
+
+    bool isFaceEnabled = elements & SgPolygonDrawStyle::Face;
+    bool isEdgeEnabled = elements & SgPolygonDrawStyle::Edge;
+    bool isVertexEnabled = elements & SgPolygonDrawStyle::Vertex;
+    
+    if(isRenderingVisibleImage && (isVertexEnabled || (!isFaceEnabled && isEdgeEnabled))){
+        matrixIndex = modelMatrixBuffer.size();
+        modelMatrixBuffer.push_back(modelMatrixStack.back());
+    }
+        
+    if(isFaceEnabled){
+        if(lightingMode == NormalLighting){
+            bool isWireframeEnabledPreviously = fullLightingProgram->isWireframeEnabled();
+            fullLightingProgram->setWireframeEnabled(isEdgeEnabled | isWireframeEnabledPreviously);
+            renderGroup(style);
+            fullLightingProgram->setWireframeEnabled(isWireframeEnabledPreviously);
+        }
+    } else if(isRenderingVisibleImage && isEdgeEnabled){
+        pureWireframeRenderingNodes.emplace_back(style, matrixIndex);
+    }
+
+    if(isRenderingVisibleImage && isVertexEnabled){
+        vertexRenderingNodes.emplace_back(style, matrixIndex);
+    }
+}
+
+
 void GLSLSceneRenderer::Impl::renderTransparentGroup(SgTransparentGroup* transparentGroup)
 {
     float prevMinTransparency = minTransparency;
@@ -2973,7 +3101,6 @@ void GLSLSceneRenderer::setLightingMode(LightingMode mode)
 {
     if(mode != impl->lightingMode){
         impl->lightingMode = mode;
-        impl->needToUpdateRenderingMode = true;
         requestToClearResources();
     }
 }
@@ -2982,19 +3109,6 @@ void GLSLSceneRenderer::setLightingMode(LightingMode mode)
 GLSceneRenderer::LightingMode GLSLSceneRenderer::lightingMode() const
 {
     return impl->lightingMode;
-}
-
-
-void GLSLSceneRenderer::setPolygonDisplayElements(int elementFlags)
-{
-    impl->polygonDisplayElements = elementFlags;
-    impl->needToUpdateRenderingMode = true;
-}
-
-
-int GLSLSceneRenderer::polygonDisplayElements() const
-{
-    return impl->polygonDisplayElements;
 }
 
 

@@ -29,8 +29,10 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual PolymorphicSceneNodeFunctionSet* renderingFunctions() override;
     virtual void renderCustomGroup(SgGroup* transform, std::function<void()> traverseFunction) override;
     virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) override;
-
     virtual void renderNode(SgNode* node) override;
+
+    virtual void addNodeDecoration(SgNode* node, NodeDecorationFunction func, int id) override;
+    virtual void clearNodeDecorations(int id) override;
 
     virtual const Affine3& currentModelTransform() const override;
     virtual const Matrix4& projectionMatrix() const override;
@@ -64,8 +66,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     
     virtual void setLightingMode(LightingMode mode) override;
     virtual LightingMode lightingMode() const override;
-    virtual void setPolygonDisplayElements(int elementFlags) override;
-    virtual int polygonDisplayElements() const override;
     
     virtual void clearShadows() override;
     virtual void enableShadowOfLight(int index, bool on) override;

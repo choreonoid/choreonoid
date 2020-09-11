@@ -35,6 +35,7 @@ public:
 
     SceneWidgetRoot* sceneRoot();
     SgGroup* scene();
+    SgGroup* systemNodeGroup();
 
     SceneRenderer* renderer();
 
@@ -106,7 +107,6 @@ public:
     void setNormalVisualization(bool on);
     void setCoordinateAxes(bool on);
     void setShowFPS(bool on);
-    void setNewDisplayListDoubleRenderingEnabled(bool on);
        
     void setBackgroundColor(const Vector3& color);
     Vector3 backgroundColor();

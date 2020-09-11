@@ -122,6 +122,7 @@ SgNode::SgNode()
 {
     classId_ = findClassId<SgNode>();
     attributes_ = 0;
+    decorationRefCounter = 0;
 }
 
 
@@ -129,6 +130,7 @@ SgNode::SgNode(int classId)
     : classId_(classId)
 {
     attributes_ = 0;
+    decorationRefCounter = 0;
 }
 
 
@@ -137,7 +139,7 @@ SgNode::SgNode(const SgNode& org)
       classId_(org.classId_),
       attributes_(org.attributes_)
 {
-
+    decorationRefCounter = 0;
 }
 
 
@@ -342,6 +344,26 @@ void SgGroup::insertChild(int index, SgNode* node, bool doNotify)
 void SgGroup::insertChild(SgNode* node, int index, bool doNotify)
 {
     insertChild(index, node, doNotify);
+}
+
+
+void SgGroup::setSingleChild(SgNode* node, bool doNotify)
+{
+    int n = numChildren();
+    if(n > 0){
+        bool found = false;
+        for(int i = n - 1; i >= 0; --i){
+            if(child(i) == node && !found){
+                found = true;
+                continue;
+            }
+            removeChildAt(i, doNotify);
+        }
+        if(!empty()){
+            return;
+        }
+    }
+    addChild(node, doNotify);
 }
 
 

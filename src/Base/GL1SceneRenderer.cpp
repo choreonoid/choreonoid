@@ -298,6 +298,7 @@ public:
     void setupLineSetResource(SgLineSet* lineSet, VertexResource* resource);
     void renderPlot(
         SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource);
+    void renderPolygonDrawStyle(SgPolygonDrawStyle* style);
     void renderViewportOverlay(SgViewportOverlay* overlay);
     void renderOutlineGroup(SgOutline* outline);
     void clearGLState();
@@ -361,7 +362,6 @@ void GL1SceneRenderer::Impl::initialize()
     prevFog = nullptr;
 
     lightingMode = NormalLighting;
-    polygonDisplayElements = PolygonFace;
     defaultLighting = true;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
@@ -397,6 +397,8 @@ void GL1SceneRenderer::Impl::initialize()
         [&](SgPointSet* node){ renderPointSet(node); });
     renderingFunctions.setFunction<SgLineSet>(
         [&](SgLineSet* node){ renderLineSet(node); });
+    renderingFunctions.setFunction<SgPolygonDrawStyle>(
+        [&](SgPolygonDrawStyle* style){ renderPolygonDrawStyle(style); });
     renderingFunctions.setFunction<SgViewportOverlay>(
         [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
     renderingFunctions.setFunction<SgOutline>(
@@ -422,6 +424,18 @@ GL1SceneRenderer::Impl::~Impl()
 SceneRenderer::NodeFunctionSet* GL1SceneRenderer::renderingFunctions()
 {
     return &impl->renderingFunctions;
+}
+
+
+void GL1SceneRenderer::addNodeDecoration(SgNode* targetNode, NodeDecorationFunction func, int id)
+{
+
+}
+
+
+void GL1SceneRenderer::clearNodeDecorations(int id)
+{
+
 }
 
 
@@ -556,18 +570,9 @@ void GL1SceneRenderer::Impl::beginActualRendering(SgCamera* camera)
         renderFog();
     }
 
-    if(isRenderingPickingImage){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    } else {
-        if(polygonDisplayElements & PolygonVertex){
-            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);        
-        } else if(polygonDisplayElements & PolygonEdge){
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        } else {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
-    }
-
+    polygonDisplayElements = SgPolygonDrawStyle::Face;
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
     clearGLState();
     
     setColor(self->defaultColor());
@@ -1797,6 +1802,33 @@ void GL1SceneRenderer::Impl::renderPlot
 }
 
 
+void GL1SceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
+{
+    int prevElements = polygonDisplayElements;
+    
+    polygonDisplayElements = style->polygonElements();
+    if(polygonDisplayElements & SgPolygonDrawStyle::Vertex){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);        
+    } else if(polygonDisplayElements & SgPolygonDrawStyle::Edge){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    renderGroup(style);
+
+    if(prevElements & SgPolygonDrawStyle::Vertex){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);        
+    } else if(prevElements & SgPolygonDrawStyle::Edge){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    
+    polygonDisplayElements = prevElements;
+}
+
+
 void GL1SceneRenderer::Impl::renderViewportOverlay(SgViewportOverlay* overlay)
 {
     if(isRenderingPickingImage){
@@ -2122,18 +2154,6 @@ void GL1SceneRenderer::setLightingMode(LightingMode mode)
 GLSceneRenderer::LightingMode GL1SceneRenderer::lightingMode() const
 {
     return impl->lightingMode;
-}
-
-
-void GL1SceneRenderer::setPolygonDisplayElements(int elementFlags)
-{
-    impl->polygonDisplayElements = elementFlags;
-}
-
-
-int GL1SceneRenderer::polygonDisplayElements() const
-{
-    return impl->polygonDisplayElements;
 }
 
 

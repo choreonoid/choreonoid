@@ -22,6 +22,8 @@ public:
     virtual void renderCustomGroup(SgGroup* transform, std::function<void()> traverseFunction) override;
     virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) override;
     virtual void renderNode(SgNode* node) override;
+    virtual void addNodeDecoration(SgNode* targetNode, NodeDecorationFunction func, int id);
+    virtual void clearNodeDecorations(int id);
     virtual const Affine3& currentModelTransform() const override;
     virtual const Matrix4& projectionMatrix() const override;
     virtual double projectedPixelSizeRatio(const Vector3& position) const override;
@@ -36,8 +38,6 @@ public:
     
     virtual void setLightingMode(LightingMode mode) override;
     virtual LightingMode lightingMode() const override;
-    virtual void setPolygonDisplayElements(int elementFlags) override;
-    virtual int polygonDisplayElements() const override;
     
     void setHeadLightLightingFromBackEnabled(bool on);
     virtual void setDefaultSmoothShading(bool on) override;

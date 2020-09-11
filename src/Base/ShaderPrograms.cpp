@@ -23,6 +23,7 @@ class ShaderProgram::Impl
 {
 public:
     vector<ShaderSource> shaderSources;
+    bool isActive;
     Impl(std::initializer_list<ShaderSource> sources);
 };
    
@@ -224,7 +225,7 @@ public:
     void initialize(GLSLProgram& glsl);
     void initializeShadowInfo(GLSLProgram& glsl, int index);
     void activate(GLSLProgram& glsl);
-    
+    void updateShaderWireframeState();    
 };
 
 }
@@ -241,7 +242,7 @@ ShaderProgram::ShaderProgram(std::initializer_list<ShaderSource> sources)
 ShaderProgram::Impl::Impl(std::initializer_list<ShaderSource> sources)
     : shaderSources(sources)
 {
-
+    isActive = false;
 }
 
 
@@ -258,24 +259,33 @@ void ShaderProgram::initialize()
         glslProgram_->loadShader(source.filename, source.shaderType);
     }
     glslProgram_->link();
+    impl->isActive = false;
 }
 
 
 void ShaderProgram::release()
 {
     glslProgram_->release();
+    impl->isActive = false;
 }
 
 
 void ShaderProgram::activate()
 {
     glslProgram_->use();
+    impl->isActive = true;
 }
 
 
 void ShaderProgram::deactivate()
 {
+    impl->isActive = false;
+}
 
+
+bool ShaderProgram::isActive() const
+{
+    return impl->isActive;
 }
 
 
@@ -487,6 +497,8 @@ void SolidPointProgram::deactivate()
 {
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
+
+    ShaderProgram::deactivate();
 }
 
 
@@ -1100,21 +1112,7 @@ void FullLightingProgram::Impl::activate(GLSLProgram& glsl)
         transformBlockBuffer.bindBufferBase(1);
     }
 
-    // For the wireframe overlay rendering
-    if(isWireframeEnabled && isViewportMatrixInvalidated){
-        float w2 = viewportWidth / 2.0f;
-        float h2 = viewportHeight / 2.0f;
-        Matrix4f V;
-        V <<
-            w2,   0.0f, 0.0f, w2,
-            0.0f, h2,   0.0f, h2,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f;
-        
-        glUniformMatrix4fv(viewportMatrixLocation, 1, GL_FALSE, V.data());
-        isViewportMatrixInvalidated = false;
-    }
-    glUniform1i(isWireframeEnabledLocation, isWireframeEnabled);
+    updateShaderWireframeState();
 
     glDisable(GL_CULL_FACE);    
 }
@@ -1171,7 +1169,37 @@ void FullLightingProgram::setTransform
 
 void FullLightingProgram::setWireframeEnabled(bool on)
 {
-    impl->isWireframeEnabled = on;
+    if(on != impl->isWireframeEnabled){
+        impl->isWireframeEnabled = on;
+        if(isActive()){
+            impl->updateShaderWireframeState();
+        }
+    }
+}
+
+
+bool FullLightingProgram::isWireframeEnabled() const
+{
+    return impl->isWireframeEnabled;
+}
+
+
+void FullLightingProgram::Impl::updateShaderWireframeState()
+{
+    if(isWireframeEnabled && isViewportMatrixInvalidated){
+        float w2 = viewportWidth / 2.0f;
+        float h2 = viewportHeight / 2.0f;
+        Matrix4f V;
+        V <<
+            w2,   0.0f, 0.0f, w2,
+            0.0f, h2,   0.0f, h2,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f;
+        
+        glUniformMatrix4fv(viewportMatrixLocation, 1, GL_FALSE, V.data());
+        isViewportMatrixInvalidated = false;
+    }
+    glUniform1i(isWireframeEnabledLocation, isWireframeEnabled);
 }
 
 
@@ -1316,4 +1344,6 @@ void ShadowMapProgram::deactivate()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, mainProgram->impl->defaultFBO);
     glCullFace(GL_BACK);
+
+    ShadowMapProgram::deactivate();
 }

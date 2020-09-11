@@ -68,7 +68,6 @@ public:
 
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);
-
     const Vector3f& defaultColor() const;
     void setDefaultColor(const Vector3f& color);
 
@@ -82,15 +81,6 @@ public:
     virtual void setLightingMode(LightingMode mode) = 0;
     virtual LightingMode lightingMode() const = 0;
 
-    //enum PolygonMode { FILL_MODE, FILL_LINE_MODE, LINE_MODE, POINT_MODE };
-    enum PolygonElement {
-        PolygonFace = 1,
-        PolygonEdge = 2,
-        PolygonVertex = 4
-    };
-    virtual void setPolygonDisplayElements(int elementFlags) = 0;
-    virtual int polygonDisplayElements() const = 0;
-
     virtual void clearShadows();
     virtual void enableShadowOfLight(int index, bool on = true);
     virtual void enableShadowAntiAliasing(bool on);
@@ -99,18 +89,12 @@ public:
     virtual void enableTexture(bool on) = 0;
     virtual void setDefaultPointSize(double size) = 0;
     virtual void setDefaultLineWidth(double width) = 0;
-
-
     virtual void showNormalVectors(double length) = 0;
-
     virtual void requestToClearResources() = 0;
     virtual void enableUnusedResourceCheck(bool on) = 0;
-    
     virtual const Vector3& pickedPoint() const = 0;
     virtual const SgNodePath& pickedNodePath() const = 0;
-
     virtual void setColor(const Vector3f& color) = 0;
-
     virtual void setUpsideDown(bool on);
 
     enum CullingMode {

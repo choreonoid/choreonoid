@@ -11,6 +11,42 @@
 
 namespace cnoid {
 
+class CNOID_EXPORT SgPolygonDrawStyle : public SgGroup
+{
+public:
+    SgPolygonDrawStyle();
+    SgPolygonDrawStyle(const SgPolygonDrawStyle& org, CloneMap* cloneMap = nullptr);
+    
+    enum PolygonElement {
+        Face = 1,
+        Edge = 2,
+        Vertex = 4
+    };
+    void setPolygonElements(int elementFlags) { polygonElements_ = elementFlags; };
+    int polygonElements() const { return polygonElements_; }
+    const Vector3f& edgeColor() const { return edgeColor_; }
+    void setEdgeColor(const Vector3f& c) { edgeColor_ = c; }
+    float edgeWidth() const { return edgeWidth_; }
+    void setEdgeWidth(float w) { edgeWidth_ = w; }
+    const Vector3f& vertexColor() const { return vertexColor_; }
+    void setVertexColor(const Vector3f& c) { vertexColor_ = c; }
+    float vertexSize() const { return vertexSize_; }
+    void setVertexSize(float s) { vertexSize_ = s; }
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    int polygonElements_;
+    Vector3f edgeColor_;
+    float edgeWidth_;
+    Vector3f vertexColor_;
+    float vertexSize_;
+};
+
+typedef ref_ptr<SgPolygonDrawStyle> SgPolygonDrawStylePtr;
+
+
 class CNOID_EXPORT SgTransparentGroup : public SgGroup
 {
 public:

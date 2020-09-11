@@ -10,6 +10,35 @@ using namespace std;
 using namespace cnoid;
 
 
+SgPolygonDrawStyle::SgPolygonDrawStyle()
+    : SgGroup(findClassId<SgPolygonDrawStyle>())
+{
+    polygonElements_ = Face;
+    edgeColor_ << 0.4f, 0.4f, 0.4f;
+    edgeWidth_ = 0.75;
+    vertexColor_ << 1.0f, 1.0f, 0.9f;
+    vertexSize_ = 5.0f;
+}
+
+
+SgPolygonDrawStyle::SgPolygonDrawStyle(const SgPolygonDrawStyle& org, CloneMap* cloneMap)
+    : SgGroup(org, cloneMap),
+      polygonElements_(org.polygonElements_),
+      edgeColor_(org.edgeColor_),
+      edgeWidth_(org.edgeWidth_),
+      vertexColor_(org.vertexColor_),
+      vertexSize_(org.vertexSize_)
+{
+
+}
+    
+
+Referenced* SgPolygonDrawStyle::doClone(CloneMap* cloneMap) const
+{
+    return new SgPolygonDrawStyle(*this, cloneMap);
+}
+
+
 SgTransparentGroup::SgTransparentGroup()
     : SgGroup(findClassId<SgTransparentGroup>())
 {
@@ -98,6 +127,7 @@ namespace {
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SceneNodeClassRegistry::instance()
+            .registerClass<SgPolygonDrawStyle, SgGroup>()
             .registerClass<SgTransparentGroup, SgGroup>()
             .registerClass<SgFog, SgPreprocessed>()
             .registerClass<SgOutline, SgGroup>()

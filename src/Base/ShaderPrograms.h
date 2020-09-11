@@ -24,12 +24,15 @@ class CNOID_EXPORT ShaderProgram
 
 public:
     virtual ~ShaderProgram();
+
     GLSLProgram& glslProgram(){ return *glslProgram_; }
     virtual void initialize();
     virtual void release();
     virtual void activate();
     virtual void deactivate();
 
+    bool isActive() const;
+    
     /**
        @param PV Product of the project matrix and view matrix
        @param V The transform corresponding to the view matrix
@@ -246,6 +249,7 @@ public:
     virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
 
     void setWireframeEnabled(bool on);
+    bool isWireframeEnabled() const;
     
     void activateShadowMapGenerationPass(int shadowIndex);
     void activateMainRenderingPass();

@@ -165,19 +165,31 @@ public:
         return findClassId(typeid(NodeType));
     }
 
-    enum NodeAttribute { GroupAttribute = 1, NumAttributes };
+    enum NodeAttribute {
+        GroupAttribute = 1,
+        NodeDecorationGroup = 2,
+        NumAttributes = 2
+    };
+
+    void setAttribute(int attr){ attributes_ |= attr; }
+    int attributes() const { return attributes_; }
+    bool hasAttribute(int attr) const { return attributes_ & attr; }
     
-    bool isGroup() const { return attributes_ & GroupAttribute; }
+    bool isGroup() const { return hasAttribute(GroupAttribute); }
     SgGroup* toGroup();
+
+    void addDecorationReference() { ++decorationRefCounter; }
+    void releaseDecorationReference() { --decorationRefCounter; }
+    bool isDecoratedSomewhere() const { return decorationRefCounter > 0; }
 
 protected:
     SgNode(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-    void setAttribute(int attribute){ attributes_ |= attribute; }
 
 private:
     int classId_;
     unsigned char attributes_;
+    int decorationRefCounter;
 
     //! \deprecated
     static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);    
@@ -238,17 +250,16 @@ public:
     void clearChildren(bool doNotify = false);
     void addChild(SgNode* node, bool doNotify = false);
     bool addChildOnce(SgNode* node, bool doNotify = false);
-
     void insertChild(int index, SgNode* node, bool doNotify = false);
-    
-    [[deprecated("Use insertChild(int index, SgNode* node, bool doNotify = false)")]]
-    void insertChild(SgNode* node, int index = 0, bool doNotify = false);
-    
+    void setSingleChild(SgNode* node, bool doNotify = false);
     bool removeChild(SgNode* node, bool doNotify = false);
     void removeChildAt(int index, bool doNotify = false);
     void copyChildrenTo(SgGroup* group, bool doNotify = false);
     void moveChildrenTo(SgGroup* group, bool doNotify = false);
 
+    [[deprecated("Use insertChild(int index, SgNode* node, bool doNotify = false)")]]
+    void insertChild(SgNode* node, int index = 0, bool doNotify = false);
+    
     SgGroup* nextChainedGroup();
     void insertChainedGroup(SgGroup* group);
     void removeChainedGroup(SgGroup* group);

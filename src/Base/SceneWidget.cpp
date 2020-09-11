@@ -27,6 +27,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
+#include <cnoid/SceneEffects>
 #include <cnoid/CoordinateAxesOverlay>
 #include <cnoid/ConnectionSet>
 #include <QOpenGLWidget>
@@ -215,7 +216,8 @@ public:
 
     SceneWidgetRootPtr sceneRoot;
     SgUnpickableGroupPtr systemGroup;
-    SgGroup* scene;
+    SgGroupPtr scene;
+    SgPolygonDrawStylePtr polygonDrawStyle;
     GLSceneRenderer* renderer;
     GLSLSceneRenderer* glslRenderer;
     GLuint prevDefaultFramebufferObject;
@@ -284,7 +286,6 @@ public:
     SceneWidgetEditable* activeCustomModeHandler;
     int activeCustomModeId;
 
-    int polygonDisplayElements;
     bool collisionLinesVisible;
 
     ref_ptr<CoordinateAxesOverlay> coordinateAxesOverlay;
@@ -635,8 +636,6 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     updateDefaultLights();
 
-    polygonDisplayElements = PolygonFace;
-
     collisionLinesVisible = false;
 
     coordinateAxesOverlay = new CoordinateAxesOverlay;
@@ -709,6 +708,12 @@ SceneWidgetRoot* SceneWidget::sceneRoot()
 SgGroup* SceneWidget::scene()
 {
     return impl->scene;
+}
+
+
+SgGroup* SceneWidget::systemNodeGroup()
+{
+    return impl->systemGroup;
 }
 
 
@@ -2379,10 +2384,23 @@ void SceneWidget::setPolygonDisplayElements(int elementFlags)
 
 void SceneWidget::Impl::setPolygonDisplayElements(int elementFlags)
 {
-    if(elementFlags != polygonDisplayElements){
-        renderer->setPolygonDisplayElements(elementFlags);
-        polygonDisplayElements = elementFlags;
-        update();
+    if(!polygonDrawStyle){
+        polygonDrawStyle = new SgPolygonDrawStyle;
+    }
+    if(elementFlags != polygonDrawStyle->polygonElements()){
+        bool notified = false;
+        polygonDrawStyle->setPolygonElements(elementFlags);
+        if(elementFlags != SgPolygonDrawStyle::Face){
+            if(!polygonDrawStyle->hasParents()){
+                sceneRoot->removeChild(scene);
+                polygonDrawStyle->addChild(scene);
+                sceneRoot->insertChild(0, polygonDrawStyle, true);
+                notified = true;
+            }
+        }
+        if(!notified){
+            polygonDrawStyle->notifyUpdate();
+        }
         emitSigStateChangedLater();
     }
 }
@@ -2390,7 +2408,7 @@ void SceneWidget::Impl::setPolygonDisplayElements(int elementFlags)
 
 int SceneWidget::polygonDisplayElements() const
 {
-    return impl->polygonDisplayElements;
+    return impl->polygonDrawStyle ? impl->polygonDrawStyle->polygonElements() : SgPolygonDrawStyle::Face;
 }
 
 
