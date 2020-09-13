@@ -5,6 +5,7 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/SceneUtil>
 #include <map>
+#include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
@@ -59,6 +60,7 @@ public:
     ScenePointSelectionMode* self;
     int modeId;
     std::map<SceneWidget*, SceneWidgetInfo> sceneWidgetInfos;
+    unordered_set<SgNodePtr> targetNodes;
 
     SgOverlayPtr vertexOverlay;
     SgPointSetPtr pointedVertexPlot;
@@ -189,7 +191,9 @@ void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(const SceneWidg
     int id = info->nodeDecorationId;
     auto renderer = sceneWidget->renderer();
     renderer->clearNodeDecorations(id);
+    targetNodes.clear();
     for(auto& node : self->getTargetSceneNodes(event)){
+        targetNodes.insert(node);
         SgPolygonDrawStylePtr style = new SgPolygonDrawStyle;
         style->setPolygonElements(
             SgPolygonDrawStyle::Face | SgPolygonDrawStyle::Edge | SgPolygonDrawStyle::Vertex);
@@ -213,6 +217,7 @@ void ScenePointSelectionMode::Impl::clearScenePointSelectionMode(SceneWidget* sc
         sceneWidget->systemNodeGroup()->removeChild(vertexOverlay, true);
         sceneWidget->renderer()->clearNodeDecorations(info.nodeDecorationId);
     }
+    targetNodes.clear();
 }
 
 
@@ -221,10 +226,19 @@ bool ScenePointSelectionMode::onPointerMoveEvent(const SceneWidgetEvent& event)
     if(!event.sceneWidget()->isEditMode()){
         return false;
     }
-    
+
+    bool isTargetNode = false;
     auto& path = event.nodePath();
+    for(auto iter = path.rbegin(); iter != path.rend(); ++iter){
+        auto& node = *iter;
+        if(impl->targetNodes.find(node) != impl->targetNodes.end()){
+            isTargetNode = true;
+            break;
+        }
+    }
+            
     bool pointed = false;
-    if(!path.empty()){
+    if(isTargetNode){
         if(auto shape = dynamic_cast<SgShape*>(path.back())){
             auto vertices = *shape->mesh()->vertices();
             Affine3 T = calcTotalTransform(path);
