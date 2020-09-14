@@ -12,16 +12,15 @@ RangeCamera::RangeCamera()
 {
     setImageType(NO_IMAGE);
     points_ = std::make_shared<PointData>();
-    setNearClipDistance(0.5);
-    setFarClipDistance(4.0);
+    maxDistance_ = 10.0;
+    minDistance_ = 0.1;
     isOrganized_ = false;
     isDense_ = false;
 }
 
 
 RangeCamera::RangeCamera(const RangeCamera& org, bool copyStateOnly)
-    : Camera(org, copyStateOnly),
-      points_(org.points_)
+    : Camera(org, copyStateOnly)
 {
     copyRangeCameraStateFrom(org);
 }
@@ -58,6 +57,8 @@ void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other)
         points_ = std::make_shared<PointData>();
     }
 
+    maxDistance_ = other.maxDistance_;
+    minDistance_ = other.minDistance_;
     isOrganized_ = other.isOrganized_;
     isDense_ = other.isDense_;
 }

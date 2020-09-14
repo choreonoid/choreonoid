@@ -33,12 +33,27 @@ public:
     PointData& points();
     PointData& newPoints();
 
+    /**
+       The maximum measurable distance of the depth measurement. Note that this parameter
+       is different from the far clip distance, which affects the camera image. Note also that
+       it does not currently work with the depth image simulation by GLVisionSimulator.
+    */
+    double maxDistance() const { return maxDistance_; }
+    void setMaxDistance(double d) { maxDistance_ = d; }
+
+    /**
+       The minimum measurable distance of the depth measurement. The same notes as for
+       the maxDistance parameter apply to this parameter.
+    */
+    double minDistance() const { return minDistance_; }
+    void setMinDistance(double d) { minDistance_ = d; }
+            
     bool isOrganized() const { return isOrganized_; }
     void setOrganized(bool on);
 
     bool isDense() const { return isDense_; }
     void setDense(bool on) { isDense_ = on; }
-            
+
     std::shared_ptr<const PointData> sharedPoints() const { return points_; }
 
     /**
@@ -54,7 +69,9 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    std::shared_ptr< std::vector<Vector3f> > points_;
+    std::shared_ptr<std::vector<Vector3f>> points_;
+    double minDistance_;
+    double maxDistance_;
     bool isOrganized_;
     bool isDense_;
 
