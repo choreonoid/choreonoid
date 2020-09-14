@@ -32,8 +32,8 @@ class CNOID_EXPORT AGXLink : public Referenced
 {
 public:
     AGXLink(Link* const link);
-    AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic);
-    void constructAGXLink(const bool& makeStatic);
+    AGXLink(Link* const link, AGXLink* const parent, const Position& T_parent, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic);
+    void constructAGXLink(const Position& T, const bool& makeStatic);
     void setAGXMaterial();
     bool setAGXMaterialFromName(const std::string& materialName);
     void setAGXMaterialFromLinkInfo();
@@ -46,7 +46,6 @@ public:
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
     int getIndex() const;
-    Vector3    getOrigin() const;
     Link*      getOrgLink() const;
     AGXLink*   getAGXParentLink() const;
     agx::RigidBody*         getAGXRigidBody() const;
@@ -60,17 +59,16 @@ private:
     AGXBody* _agxBody;
     Link*    _orgLink;
     AGXLink* _agxParentLink;
-    Vector3     _origin;
     agx::RigidBodyRef       _rigid;
     agxCollide::GeometryRef _geometry;
     agx::ConstraintRef      _constraint;
     agx::Name               _collisionGroupName;
     AGXBody*                getAGXBody();
-    agx::RigidBodyRef       createAGXRigidBody();
+    agx::RigidBodyRef       createAGXRigidBody(const Position& T);
     agxCollide::GeometryRef createAGXGeometry();
     void createAGXShape();
     void detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td);
-    agx::ConstraintRef createAGXConstraint();
+    agx::ConstraintRef createAGXConstraint(const Position& T);
     void setTorqueToAGX();
     void setVelocityToAGX();
     void setPositionToAGX();

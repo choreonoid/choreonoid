@@ -43,11 +43,10 @@ bool createAGXVehicleContinousTrack(AGXBody* agxBody)
 ////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(Link* const link) : _orgLink(link){}
-AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic) :
+AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Position& T_parent, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic) :
     _agxBody(agxBody),
     _orgLink(link),
-    _agxParentLink(parent),
-    _origin(parentOrigin + link->b())
+    _agxParentLink(parent)
 {
     agxBody->addAGXLink(this);
     std::stringstream ss;
@@ -66,15 +65,16 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentO
         makeStatic = false;
     }
 
-    constructAGXLink(makeStatic);
+    Position T = T_parent * link->Tb();
+    constructAGXLink(T, makeStatic);
     for(Link* child = link->child(); child; child = child->sibling()){
-        new AGXLink(child, this, getOrigin(), agxBody, forceSensorLinks, makeStatic);
+        new AGXLink(child, this, T, agxBody, forceSensorLinks, makeStatic);
     }
 }
 
-void AGXLink::constructAGXLink(const bool& makeStatic)
+void AGXLink::constructAGXLink(const Position& T, const bool& makeStatic)
 {
-    _rigid = createAGXRigidBody();
+    _rigid = createAGXRigidBody(T);
     _geometry = createAGXGeometry();
     _rigid->add(_geometry);
     _geometry->addGroup(getCollisionGroupName());
@@ -83,7 +83,7 @@ void AGXLink::constructAGXLink(const bool& makeStatic)
     if(makeStatic){
         _rigid->setMotionControl(agx::RigidBody::STATIC);
     }else{
-        _constraint = createAGXConstraint();
+        _constraint = createAGXConstraint(T);
     }
 
     agxSDK::SimulationRef sim =  getAGXBody()->getAGXScene()->getSimulation();
@@ -311,11 +311,6 @@ int AGXLink::getIndex() const
     return getOrgLink()->index();
 }
 
-Vector3 AGXLink::getOrigin() const
-{
-    return _origin;
-}
-
 Link* AGXLink::getOrgLink() const
 {
     return _orgLink;
@@ -356,21 +351,20 @@ AGXBody* AGXLink::getAGXBody()
     return _agxBody;
 }
 
-agx::RigidBodyRef AGXLink::createAGXRigidBody()
+agx::RigidBodyRef AGXLink::createAGXRigidBody(const Position& T)
 {
     LinkPtr orgLink = getOrgLink();
     const Vector3& v = orgLink->v(); 
     const Vector3& w = orgLink->w(); 
-    const Vector3& p = getOrigin();
+    auto p = T.translation();
 
     AGXRigidBodyDesc desc;
     desc.name = orgLink->name();
     desc.v.set(v(0), v(1), v(2));
     desc.w.set(w(0), w(1), w(2));
     desc.p.set(p(0), p(1), p(2));
-    // First set rotation with default values. Choreonoid uses relative angles to set rotation and viewing models.
-    // When set rotation here relative angles shift from correct angles.
-    desc.R.set(agx::Quat(0,0,0,1));
+    cnoid::Quaternion q(T.linear());
+    desc.R.set(agx::Quat(q.x(), q.y(), q.z(), q.w()));
 
     Link::JointType jt = orgLink->jointType();
     if(orgLink->isRoot() && jt == Link::FIXED_JOINT){
@@ -546,7 +540,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
     }
 }
 
-agx::ConstraintRef AGXLink::createAGXConstraint()
+agx::ConstraintRef AGXLink::createAGXConstraint(const Position& T)
 {
     AGXLink* const agxParentLink = getAGXParentLink();
     if(!agxParentLink) return nullptr;
@@ -588,8 +582,8 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
     switch(orgLink->jointType()){
         case Link::REVOLUTE_JOINT :{
             AGXHingeDesc desc;
-            const Vector3& a = orgLink->a();
-            const Vector3& p = getOrigin();
+            const Vector3& a = T.linear() * orgLink->a();
+            auto p = T.translation();
             desc.set(base);
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.frameCenter.set(p(0),p(1),p(2));
@@ -628,7 +622,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
         case Link::PRISMATIC_JOINT :{
             AGXPrismaticDesc desc;
             const Vector3& a = orgLink->a();
-            const Vector3& p = getOrigin();
+            auto p = T.translation();
             desc.set(base);
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.framePoint.set(p(0),p(1),p(2));
@@ -821,7 +815,7 @@ void AGXBody::createBody(AGXScene* agxScene)
     for(auto& sensor : body()->devices<ForceSensor>()){
         forceSensorLinks.insert(sensor->link());
     }
-    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this, forceSensorLinks, makeStatic);
+    new AGXLink(body()->rootLink(), nullptr, Position::Identity(), this, forceSensorLinks, makeStatic);
     setLinkStateToAGX();
     createExtraJoint();
     callExtensionFuncs();
