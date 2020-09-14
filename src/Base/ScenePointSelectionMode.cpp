@@ -138,6 +138,13 @@ std::vector<Vector3f> ScenePointSelectionMode::getSelectedPoints() const
 }
 
 
+void ScenePointSelectionMode::clearSelection()
+{
+    impl->selectedVertices.clear();
+    impl->updateSelectedVertexArray();
+}
+
+
 std::vector<SgNode*> ScenePointSelectionMode::getTargetSceneNodes(const SceneWidgetEvent& /* event */)
 {
     return std::vector<SgNode*>();

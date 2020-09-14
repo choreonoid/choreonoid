@@ -18,6 +18,7 @@ public:
     void setCustomModeId(int id);
 
     std::vector<Vector3f> getSelectedPoints() const;
+    void clearSelection();
 
 protected:
     virtual std::vector<SgNode*> getTargetSceneNodes(const SceneWidgetEvent& event);
