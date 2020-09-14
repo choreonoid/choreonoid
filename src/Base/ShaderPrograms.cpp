@@ -498,7 +498,7 @@ void SolidPointProgram::deactivate()
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
 
-    ShaderProgram::deactivate();
+    SolidColorProgram::deactivate();
 }
 
 
@@ -1345,5 +1345,5 @@ void ShadowMapProgram::deactivate()
     glBindFramebuffer(GL_FRAMEBUFFER, mainProgram->impl->defaultFBO);
     glCullFace(GL_BACK);
 
-    ShadowMapProgram::deactivate();
+    NolightingProgram::deactivate();
 }
