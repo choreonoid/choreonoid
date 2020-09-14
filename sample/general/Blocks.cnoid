@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, AGXDynamics ]
+
 items: 
   id: 0
   name: "Root"
@@ -578,6 +580,31 @@ items:
             maxCorrectingVel: 1.0e-3
             2Dmode: false
             useWorldCollisionDetector: false
+        - 
+          id: 26
+          name: "AGXSimulator"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timeStep: 0.001
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 1
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
+            DebugMessageOnConsole: 2
 views: 
   - 
     id: 1

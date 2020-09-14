@@ -49,6 +49,12 @@ links:
         # lockToReachMergeConditionCompliance: 0.1
         # lockToReachMergeConditionSpookDamping: 0.01
         # maxAngleMergeCondition: 1.0e-5
+        nodeShape: &NODE_SHAPE
+          appearance:
+            material:
+              diffuseColor: [ 0.15, 0.15, 0.15 ]
+              specularColor: [ 0.8, 0.8, 0.8 ]
+              shininess: 0.02
       -
         type: Visual
         elements:
@@ -249,6 +255,7 @@ links:
         # lockToReachMergeConditionCompliance: 0.1
         # lockToReachMergeConditionSpookDamping: 0.01
         # maxAngleMergeCondition: 1.0e-5
+        nodeShape: *NODE_SHAPE
       -
         type: Visual
         elements:

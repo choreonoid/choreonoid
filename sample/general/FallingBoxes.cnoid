@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX ]
+optionalPlugins: [ ODE, Bullet, PhysX, AGXDynamics ]
 
 items: 
   id: 0
@@ -220,6 +220,31 @@ items:
             dynamicFriction: 0.5
             Restitution: 0.1
             jointLimitMode: false
+        - 
+          id: 11
+          name: "AGXSimulator"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timeStep: 0.001
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 1
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
+            DebugMessageOnConsole: 2
 views: 
   "Items": 
     selected: [ 7 ]

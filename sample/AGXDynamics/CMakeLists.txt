@@ -2,8 +2,6 @@ if(NOT (BUILD_AGX_DYNAMICS_PLUGIN AND ENABLE_GUI))
   return()
 endif()
 
-return()
-
 set(models
   BreachingPlate.body
   LockedDoor.body
