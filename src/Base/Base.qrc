@@ -2,6 +2,8 @@
 <RCC version="1.0">
   <qresource prefix="/Base" >
     
+    <file>project/layout.cnoid</file>
+
     <file>icon/choreonoid.svg</file>
 
     <file>icon/setup.svg</file>

@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 int execute(cnoid::App& app)
 {
     app.initialize("Choreonoid", "Choreonoid");
-    cnoid::ProjectManager::instance()->loadBuiltinProject(":/choreonoid/layout.cnoid");
+    cnoid::ProjectManager::instance()->loadBuiltinProject(":/Base/project/layout.cnoid");
     app.exec();
     return 0;
 }

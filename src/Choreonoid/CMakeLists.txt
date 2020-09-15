@@ -9,7 +9,6 @@ if(WIN32)
   set(sources ${sources} choreonoid.rc)
 endif()
 
-qt5_add_resources(resources choreonoid.qrc)
 choreonoid_add_executable(${target} ${sources} ${resources})
 target_link_libraries(${target} CnoidBase)
 set_target_properties(${target} PROPERTIES PROJECT_LABEL Application)
