@@ -56,6 +56,8 @@ public:
     TagListModel* tagListModel;
     bool isSelectionChangedAlreadyCalled;
     MenuManager contextMenuManager;
+    Signal<void(const std::vector<int>& selected)> sigTagSelectionChanged;
+    vector<int> selectedTagIndices;
     Signal<void(int tagIndex)> sigTagPressed;
     Signal<void(int tagIndex)> sigTagDoubleClicked;
     Signal<void(MenuManager& menu)> sigContextMenuRequest;
@@ -376,8 +378,17 @@ void PositionTagListWidget::selectionChanged(const QItemSelection& selected, con
     
     QTableView::selectionChanged(selected, deselected);
 
-    auto indexes = selected.indexes();
-    //sigSelectionChanged(indexes);
+    impl->selectedTagIndices.clear();
+    for(auto& index : selected.indexes()){
+        impl->selectedTagIndices.push_back(index.row());
+    }
+    impl->sigTagSelectionChanged(impl->selectedTagIndices);
+}
+
+
+SignalProxy<void(const std::vector<int>& selected)> PositionTagListWidget::sigTagSelectionChanged()
+{
+    return impl->sigTagSelectionChanged;
 }
 
 

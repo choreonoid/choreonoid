@@ -18,6 +18,7 @@ public:
     int currentTagIndex() const;
     void removeSelectedTags();
 
+    SignalProxy<void(const std::vector<int>& selected)> sigTagSelectionChanged();
     SignalProxy<void(int tagIndex)> sigTagPressed();
     SignalProxy<void(int tagIndex)> sigTagDoubleClicked();
     SignalProxy<void(MenuManager& menu)> sigContextMenuRequest();
