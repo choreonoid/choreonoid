@@ -75,10 +75,10 @@ public:
 
     void flashRecordingToggle(bool setNormal){
         if(isFlashed || setNormal){
-            recordingToggle->setIcon(QIcon(":/Base/icons/record.svg"));
+            recordingToggle->setIcon(QIcon(":/Base/icon/record.svg"));
             isFlashed = false;
         } else {
-            recordingToggle->setIcon(QIcon(":/Base/icons/record2.svg"));
+            recordingToggle->setIcon(QIcon(":/Base/icon/record2.svg"));
             isFlashed = true;
         }
     }
@@ -454,15 +454,15 @@ MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
       recorder(recorder)
 {
     
-    recordingToggle = addToggleButton(QIcon(":/Base/icons/record.svg"), _("Toggle Recording"));
+    recordingToggle = addToggleButton(QIcon(":/Base/icon/record.svg"), _("Toggle Recording"));
     recordingToggle->sigToggled().connect(
         [this](bool on){ this->recorder->activateRecording(on, false); });
 
-    viewMarkerToggle = addToggleButton(QIcon(":/Base/icons/recordtarget.svg"), _("Toggle Target View Marker"));
+    viewMarkerToggle = addToggleButton(QIcon(":/Base/icon/recordtarget.svg"), _("Toggle Target View Marker"));
     viewMarkerToggle->sigToggled().connect(
         [this](bool on){ this->recorder->onViewMarkerToggled(on); });
     
-    addButton(QIcon(":/Base/icons/setup.svg"), _("Show the config dialog"))
+    addButton(QIcon(":/Base/icon/setup.svg"), _("Show the config dialog"))
         ->sigClicked().connect([this](){ this->recorder->dialog->show(); });
 }
 

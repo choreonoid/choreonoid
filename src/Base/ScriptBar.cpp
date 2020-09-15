@@ -27,7 +27,7 @@ ScriptBar::ScriptBar()
 {
     setVisibleByDefault(true);
     
-    addButton(QIcon(":/Base/icons/script.svg"), _("Execute scripts"))
+    addButton(QIcon(":/Base/icon/script.svg"), _("Execute scripts"))
         ->sigClicked().connect([&](){ executeCheckedScriptItems(); });
 }
 

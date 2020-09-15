@@ -664,7 +664,7 @@ SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItem::Impl* multiPointSetIte
     addChild(attentionPointMarkerGroup);
 
     regionMarker = new RectRegionMarker;
-    regionMarker->setEditModeCursor(QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
+    regionMarker->setEditModeCursor(QCursor(QPixmap(":/Base/icon/eraser-cursor.png"), 3, 2));
     regionMarker->sigRegionFixed().connect(
         [&](const PolyhedralRegion& region){ onRegionFixed(region); });
     regionMarker->sigContextMenuRequest().connect(

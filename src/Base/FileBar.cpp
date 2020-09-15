@@ -33,7 +33,7 @@ FileBar::FileBar()
 {
     setVisibleByDefault(true);
     
-    addButton(QIcon(":/Base/icons/projectsave.svg"), _("Save the project"))
+    addButton(QIcon(":/Base/icon/projectsave.svg"), _("Save the project"))
         ->sigClicked().connect([](){ ProjectManager::instance()->overwriteCurrentProject(); });
 }
 

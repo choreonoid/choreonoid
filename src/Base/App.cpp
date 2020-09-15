@@ -238,7 +238,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
 
-    qapplication->setWindowIcon(QIcon(":/Base/icons/choreonoid.svg"));
+    qapplication->setWindowIcon(QIcon(":/Base/icon/choreonoid.svg"));
 
     AppConfig::initialize(appName, vendorName);
 

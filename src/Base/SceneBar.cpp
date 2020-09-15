@@ -129,7 +129,7 @@ void SceneBar::Impl::initialize()
     config = AppConfig::archive()->openMapping("SceneBar");
     
     editModeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/sceneedit.svg"), _("Switch to the edit mode"));
+        QIcon(":/Base/icon/sceneedit.svg"), _("Switch to the edit mode"));
     editModeToggle->sigToggled().connect(
         [&](bool on){ onEditModeButtonToggled(on); });
 
@@ -138,7 +138,7 @@ void SceneBar::Impl::initialize()
         [&](int mode, bool on){ onCustomModeButtonToggled(mode, on); });
     
     firstPersonModeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/walkthrough.svg"), _("First-person viewpoint control mode"));
+        QIcon(":/Base/icon/walkthrough.svg"), _("First-person viewpoint control mode"));
     firstPersonModeToggle->sigToggled().connect(
         [&](bool on){ onFirstPersonModeButtonToggled(on); });
 
@@ -150,7 +150,7 @@ void SceneBar::Impl::initialize()
         [&](int index){ onCameraComboCurrentIndexChanged(index); });
     self->addWidget(cameraCombo);
 
-    self->addButton(QIcon(":/Base/icons/viewfitting.svg"), _("Move the camera to look at the objects"))
+    self->addButton(QIcon(":/Base/icon/viewfitting.svg"), _("Move the camera to look at the objects"))
         ->sigClicked().connect([&](){
                 currentSceneWidget->viewAll();
                 currentSceneWidget->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
@@ -159,23 +159,23 @@ void SceneBar::Impl::initialize()
     self->addSpacing();
 
     vertexToggle = self->addToggleButton(
-        QIcon(":/Base/icons/vertex.svg"), _("Vertex rendering"));
+        QIcon(":/Base/icon/vertex.svg"), _("Vertex rendering"));
     vertexToggle->sigToggled().connect(
         [&](bool){ onPolygonModeButtonToggled(); });
 
     self->addSpacing();
 
     auto wireframeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/wireframe.svg"), _("Wireframe rendering"));
+        QIcon(":/Base/icon/wireframe.svg"), _("Wireframe rendering"));
     polygonModeGroup.addButton(wireframeToggle, 0);
 
     auto solidWireframeToggle = self->addToggleButton(
-        QIcon(":/Base/icons/solidwireframe.svg"), _("Solid wireframe rendering"));
+        QIcon(":/Base/icon/solidwireframe.svg"), _("Solid wireframe rendering"));
         
     polygonModeGroup.addButton(solidWireframeToggle, 1);
 
     auto solidPolygonToggle = self->addToggleButton(
-        QIcon(":/Base/icons/solidpolygon.svg"), _("Polygon rendering"));
+        QIcon(":/Base/icon/solidpolygon.svg"), _("Polygon rendering"));
     polygonModeGroup.addButton(solidPolygonToggle, 2);
 
     polygonModeGroup.sigButtonToggled().connect(
@@ -186,27 +186,27 @@ void SceneBar::Impl::initialize()
     self->addSpacing();
 
     visualModelToggle = self->addToggleButton(
-        QIcon(":/Base/icons/visualshape.svg"), _("Show visual models"));
+        QIcon(":/Base/icon/visualshape.svg"), _("Show visual models"));
     visualModelToggle->setChecked(true);
     visualModelToggle->sigToggled().connect(
         [&](bool){ updateCollisionModelVisibility(); });
 
     modelTypeFlipButton = self->addButton(
-        QIcon(":/Base/icons/shapeflip.svg"), _("Flip active model types"));
+        QIcon(":/Base/icon/shapeflip.svg"), _("Flip active model types"));
     modelTypeFlipButton->sigClicked().connect(
         [&](){ flipVisibleModels(); });
 
     collisionModelToggle = self->addToggleButton(
-        QIcon(":/Base/icons/collisionshape.svg"), _("Show the collision detection models"));
+        QIcon(":/Base/icon/collisionshape.svg"), _("Show the collision detection models"));
     collisionModelToggle->sigToggled().connect(
         [&](bool){ updateCollisionModelVisibility(); });
     
     collisionLineToggle = self->addToggleButton(
-        QIcon(":/Base/icons/collisionlines.svg"), _("Toggle the collision line visibility"));
+        QIcon(":/Base/icon/collisionlines.svg"), _("Toggle the collision line visibility"));
     collisionLineToggle->sigToggled().connect(
         [&](bool on){ onCollisionLineButtonToggled(on); });
 
-    self->addButton(QIcon(":/Base/icons/setup.svg"), _("Show the config dialog"))
+    self->addButton(QIcon(":/Base/icon/setup.svg"), _("Show the config dialog"))
         ->sigClicked().connect([&](){ currentSceneWidget->showConfigDialog(); });
 
     viewFocusConnection =

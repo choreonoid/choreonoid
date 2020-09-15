@@ -1,44 +1,44 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
   <qresource prefix="/Base" >
-
-    <file>icons/choreonoid.svg</file>
-
-    <file>icons/setup.svg</file>
-
-    <file>icons/projectsave.svg</file>
-
-    <file>icons/play.svg</file>
-    <file>icons/resume.svg</file>
-    <file>icons/stop.svg</file>
-    <file>icons/refresh.svg</file>
-
-    <file>icons/script.svg</file>
-
-    <file>icons/sceneedit.svg</file>
-    <file>icons/walkthrough.svg</file>
-    <file>icons/viewfitting.svg</file>
-    <file>icons/vertex.svg</file>
-    <file>icons/wireframe.svg</file>
-    <file>icons/solidwireframe.svg</file>
-    <file>icons/solidpolygon.svg</file>
-    <file>icons/visualshape.svg</file>
-    <file>icons/shapeflip.svg</file>
-    <file>icons/collisionshape.svg</file>
-    <file>icons/collisionlines.svg</file>
     
-    <file>icons/scenecapture.svg</file>
+    <file>icon/choreonoid.svg</file>
 
-    <file>icons/record.svg</file>
-    <file>icons/record2.svg</file>
-    <file>icons/recordtarget.svg</file>
+    <file>icon/setup.svg</file>
+
+    <file>icon/projectsave.svg</file>
+
+    <file>icon/play.svg</file>
+    <file>icon/resume.svg</file>
+    <file>icon/stop.svg</file>
+    <file>icon/refresh.svg</file>
+
+    <file>icon/script.svg</file>
+
+    <file>icon/sceneedit.svg</file>
+    <file>icon/walkthrough.svg</file>
+    <file>icon/viewfitting.svg</file>
+    <file>icon/vertex.svg</file>
+    <file>icon/wireframe.svg</file>
+    <file>icon/solidwireframe.svg</file>
+    <file>icon/solidpolygon.svg</file>
+    <file>icon/visualshape.svg</file>
+    <file>icon/shapeflip.svg</file>
+    <file>icon/collisionshape.svg</file>
+    <file>icon/collisionlines.svg</file>
     
-    <file>icons/graph.svg</file>
-    <file>icons/velocitygraph.svg</file>
-    <file>icons/accgraph.svg</file>
+    <file>icon/scenecapture.svg</file>
 
-    <file>icons/eraser-cursor.png</file>
-    <file>icons/adjustsize.svg</file>
+    <file>icon/record.svg</file>
+    <file>icon/record2.svg</file>
+    <file>icon/recordtarget.svg</file>
+    
+    <file>icon/graph.svg</file>
+    <file>icon/velocitygraph.svg</file>
+    <file>icon/accgraph.svg</file>
+
+    <file>icon/eraser-cursor.png</file>
+    <file>icon/adjustsize.svg</file>
   
     <file>shader/NoLighting.vert</file>
     <file>shader/NoLighting.frag</file>

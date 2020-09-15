@@ -2,15 +2,15 @@
 <RCC version="1.0">
 <qresource prefix="/Corba" >
 
-  <file>icons/NSCateCxt.png</file>
-  <file>icons/NSElse.png</file>
-  <file>icons/NSHostCxt.png</file>
-  <file>icons/NSMgr.png</file>
-  <file>icons/NSMgrCxt.png</file>
-  <file>icons/NSModCxt.png</file>
-  <file>icons/NSObj.png</file>
-  <file>icons/NSRTC.png</file>
-  <file>icons/NSZombi.png</file>
+  <file>icon/NSCateCxt.png</file>
+  <file>icon/NSElse.png</file>
+  <file>icon/NSHostCxt.png</file>
+  <file>icon/NSMgr.png</file>
+  <file>icon/NSMgrCxt.png</file>
+  <file>icon/NSModCxt.png</file>
+  <file>icon/NSObj.png</file>
+  <file>icon/NSRTC.png</file>
+  <file>icon/NSZombi.png</file>
 
 </qresource>
 </RCC>

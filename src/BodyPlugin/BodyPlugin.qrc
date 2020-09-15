@@ -2,36 +2,36 @@
 <RCC version="1.0">
 <qresource prefix="/Body" >
 
-  <file>icons/fk.svg</file>
-  <file>icons/fkik.svg</file>
-  <file>icons/ik.svg</file>
-  <file>icons/rotation.svg</file>
-  <file>icons/block.svg</file>
-  <file>icons/collisionoutline.svg</file>
+  <file>icon/fk.svg</file>
+  <file>icon/fkik.svg</file>
+  <file>icon/ik.svg</file>
+  <file>icon/rotation.svg</file>
+  <file>icon/block.svg</file>
+  <file>icon/collisionoutline.svg</file>
 
-  <file>icons/storepose.svg</file>
-  <file>icons/restorepose.svg</file>
-  <file>icons/origin.svg</file>
-  <file>icons/initialpose.svg</file>
-  <file>icons/stdpose.svg</file>
-  <file>icons/right-to-left.svg</file>
-  <file>icons/left-to-right.svg</file>
-  <file>icons/flip.svg</file>
+  <file>icon/storepose.svg</file>
+  <file>icon/restorepose.svg</file>
+  <file>icon/origin.svg</file>
+  <file>icon/initialpose.svg</file>
+  <file>icon/stdpose.svg</file>
+  <file>icon/right-to-left.svg</file>
+  <file>icon/left-to-right.svg</file>
+  <file>icon/flip.svg</file>
   
-  <file>icons/center-cm.svg</file>
-  <file>icons/zmp-to-cm.svg</file>
-  <file>icons/cm-to-zmp.svg</file>
-  <file>icons/center-zmp.svg</file>
-  <file>icons/left-zmp.svg</file>
-  <file>icons/right-zmp.svg</file>
-  <file>icons/stancelength.svg</file>
+  <file>icon/center-cm.svg</file>
+  <file>icon/zmp-to-cm.svg</file>
+  <file>icon/cm-to-zmp.svg</file>
+  <file>icon/center-zmp.svg</file>
+  <file>icon/left-zmp.svg</file>
+  <file>icon/right-zmp.svg</file>
+  <file>icon/stancelength.svg</file>
 
-  <file>icons/store-world-initial.svg</file>
-  <file>icons/restore-world-initial.svg</file>
-  <file>icons/start-simulation.svg</file>
-  <file>icons/restart-simulation.svg</file>
-  <file>icons/stop-simulation.svg</file>
-  <file>icons/pause-simulation.svg</file>
+  <file>icon/store-world-initial.svg</file>
+  <file>icon/restore-world-initial.svg</file>
+  <file>icon/start-simulation.svg</file>
+  <file>icon/restart-simulation.svg</file>
+  <file>icon/stop-simulation.svg</file>
+  <file>icon/pause-simulation.svg</file>
 
 </qresource>
 </RCC>

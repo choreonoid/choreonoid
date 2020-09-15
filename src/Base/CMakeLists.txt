@@ -321,8 +321,8 @@ endif()
 target_compile_definitions(${target} PUBLIC ${CHOREONOID_QT_COMPILE_DEFINITIONS})
 
 file(MAKE_DIRECTORY ${CNOID_BINARY_SHARE_DIR}/icon)
-file(COPY icons/choreonoid.svg DESTINATION ${CNOID_BINARY_SHARE_DIR}/icon)
-install(FILES icons/choreonoid.svg DESTINATION ${CNOID_SHARE_SUBDIR}/icon)
+file(COPY icon/choreonoid.svg DESTINATION ${CNOID_BINARY_SHARE_DIR}/icon)
+install(FILES icon/choreonoid.svg DESTINATION ${CNOID_SHARE_SUBDIR}/icon)
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)
