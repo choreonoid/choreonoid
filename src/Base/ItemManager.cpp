@@ -160,12 +160,12 @@ class CreationPanelBase : public QDialog
 public:
     CreationPanelBase(const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton);
     void addPanel(ItemCreationPanel* panel);
-    Item* createItem(Item* parentItem);
+    Item* createItem(Item* parentItem, Item* protoItem = nullptr);
     ItemManager::Impl::CreationPanelFilterList preFilters;
     ItemManager::Impl::CreationPanelFilterList postFilters;
     ClassInfo* classInfo;
     QVBoxLayout* panelLayout;
-    ItemPtr protoItem;
+    ItemPtr defaultProtoItem;
     bool isSingleton;
 };
 
@@ -478,7 +478,7 @@ Item* ItemManager::createItem(const std::string& moduleName, const std::string& 
 
 
 Item* ItemManager::createItemWithDialog_
-(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem)
+(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem, Item* protoItem, const std::string& title)
 {
     Item* newItem = nullptr;
     
@@ -495,7 +495,15 @@ Item* ItemManager::createItemWithDialog_
             if(!parentItem){
                 parentItem = RootItem::instance();
             }
-            newItem = panel->createItem(parentItem);
+            QString orgTitle;
+            if(!title.empty()){
+                orgTitle = panel->windowTitle();
+                panel->setWindowTitle(title.c_str());
+            }
+            newItem = panel->createItem(parentItem, protoItem);
+            if(!orgTitle.isEmpty()){
+                panel->setWindowTitle(orgTitle);
+            }
         }
     }
 
@@ -567,7 +575,7 @@ CreationPanelBase* ItemManager::Impl::getOrCreateCreationPanelBase(const std::ty
             } else {
                 translatedName.replace(QRegExp(_("Item$")), "");
             }
-            QString title(QString(_("Create New %1")).arg(translatedClassName));
+            QString title(QString(_("Create New %1")).arg(translatedName));
             ItemPtr protoItem;
             if(info->isSingleton){
                 protoItem = info->singletonInstance;
@@ -605,7 +613,7 @@ CreationPanelBase::CreationPanelBase
 (const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton)
     : QDialog(MainWindow::instance()),
       classInfo(classInfo),
-      protoItem(protoItem),
+      defaultProtoItem(protoItem),
       isSingleton(isSingleton)
 {
     setWindowTitle(title);
@@ -635,8 +643,12 @@ void CreationPanelBase::addPanel(ItemCreationPanel* panel)
 }
 
 
-Item* CreationPanelBase::createItem(Item* parentItem)
+Item* CreationPanelBase::createItem(Item* parentItem, Item* protoItem)
 {
+    if(!protoItem){
+        protoItem = defaultProtoItem;
+    }
+
     if(isSingleton){
         if(protoItem->parentItem()){
             return nullptr;
@@ -657,8 +669,9 @@ Item* CreationPanelBase::createItem(Item* parentItem)
     bool result = true;
 
     if(!protoItem && (!preFilters.empty() || !postFilters.empty())){
-        protoItem = classInfo->factory();
-        protoItem->setName(classInfo->name);
+        defaultProtoItem = classInfo->factory();
+        defaultProtoItem->setName(classInfo->name);
+        protoItem = defaultProtoItem;
     }
     ItemPtr item = protoItem;
     if(!item){

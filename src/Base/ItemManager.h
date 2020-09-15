@@ -245,13 +245,20 @@ public:
 
     /**
        Create a new item interactively using the corresponding dialog
-       @param parentItem The item that will be a parent of the new item.
-       @doAddition The created item is actually added to the parent item if this flag is true.
-       @nextItem The position to insert the created item can be specifid by this parameter.
+       \param parentItem The item that will be a parent of the new item.
+       \param doAddition The created item is actually added to the parent item if this flag is true.
+       \param nextItem The position to insert the created item can be specifid by this parameter.
+       \param protoItem The prototype item instance for creating a new item. If this parameter is
+       omitted, the default prototype item is used.
+       \param title The dialog title string
     */
     template <class ItemType>
-    static ItemType* createItemWithDialog(Item* parentItem, bool doAddition = true, Item* nextItem = nullptr){
-        return static_cast<ItemType*>(createItemWithDialog_(typeid(ItemType), parentItem, doAddition, nextItem));
+    static ItemType* createItemWithDialog(
+        Item* parentItem, bool doAddition = true, Item* nextItem = nullptr,
+        Item* protoItem = nullptr, const std::string& title = std::string()) {
+        return static_cast<ItemType*>(
+            createItemWithDialog_(
+                typeid(ItemType), parentItem, doAddition, nextItem, protoItem, title));
     }
 
     template <class ItemType>
@@ -296,7 +303,9 @@ private:
 
     static Item* getSingletonInstance(const std::type_info& type);
 
-    static Item* createItemWithDialog_(const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem);
+    static Item* createItemWithDialog_(
+        const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem,
+        Item* protoItem, const std::string& title);
     static ItemList<Item> loadItemsWithDialog_(
         const std::type_info& type, Item* parentItem, bool doAddtion, Item* nextItem);
     static bool saveItemWithDialog_(const std::type_info& type, Item* item);

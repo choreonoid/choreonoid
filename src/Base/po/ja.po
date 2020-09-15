@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-17 23:58+0900\n"
+"POT-Creation-Date: 2020-09-16 00:03+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -25,7 +25,7 @@ msgstr "参照オブジェクト時系列アイテム"
 msgid "SceneItem"
 msgstr "シーンアイテム"
 
-#: SceneItem.cpp:50 SceneView.cpp:88
+#: SceneItem.cpp:50 SceneView.cpp:79
 msgid "Scene"
 msgstr "シーン"
 
@@ -59,7 +59,7 @@ msgid "OK"
 msgstr "OK"
 
 #: ItemPropertyWidget.cpp:559 ProjectManager.cpp:738 ProjectManager.cpp:764
-#: ItemFileDialog.cpp:77 PluginManager.cpp:690 SceneWidget.cpp:920
+#: ItemFileDialog.cpp:77 PluginManager.cpp:690 SceneWidget.cpp:935
 #: CaptureBar.cpp:97 TaskView.cpp:286
 msgid "Cancel"
 msgstr "キャンセル"
@@ -317,11 +317,11 @@ msgstr "アドオン \"{0}\" はアイテム \"{1}\" に追加できません．
 msgid "Addon \"{0}\" of plugin \"{1}\" cannot be restored."
 msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を読み出すことができません．"
 
-#: GL1SceneRenderer.cpp:449
+#: GL1SceneRenderer.cpp:464
 msgid "OpenGL {0} is available for the \"{1}\" view.\n"
 msgstr "OpenGL {0} が \"{1}\" ビューで利用可能です．\n"
 
-#: GL1SceneRenderer.cpp:451
+#: GL1SceneRenderer.cpp:466
 msgid "Driver profile: {0} {1}."
 msgstr "ドライバプロファイル: {0} {1}."
 
@@ -543,7 +543,7 @@ msgstr "アニメーションの再生・停止"
 msgid "Refresh state at the current time"
 msgstr "現在時刻で状態を更新"
 
-#: TimeBar.cpp:318 GraphBar.cpp:141 SceneBar.cpp:216 MovieRecorder.cpp:465
+#: TimeBar.cpp:318 GraphBar.cpp:141 SceneBar.cpp:209 MovieRecorder.cpp:465
 msgid "Show the config dialog"
 msgstr "設定ダイアログの表示"
 
@@ -579,29 +579,33 @@ msgstr "一時的"
 msgid "Refs"
 msgstr "参照数"
 
-#: GLSLSceneRenderer.cpp:723
+#: GLSLSceneRenderer.cpp:845
 msgid "OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"
 msgstr "OpenGL {0}.{1} (GLSL {2}) が \"{3}\" ビューで利用可能です．\n"
 
-#: GLSLSceneRenderer.cpp:725
+#: GLSLSceneRenderer.cpp:847
 msgid "Driver profile: {0} {1} {2}.\n"
 msgstr "ドライバプロファイル: {0} {1} {2}.\n"
 
-#: GLSLSceneRenderer.cpp:732
+#: GLSLSceneRenderer.cpp:854
 msgid ""
 "Shadow casting is disabled according to the value of "
 "CNOID_ENABLE_GLSL_SHADOW.\n"
 msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い無効化されました．\n"
 
-#: GLSLSceneRenderer.cpp:735
+#: GLSLSceneRenderer.cpp:857
 msgid ""
 "Shadow casting is enabled according to the value of "
 "CNOID_ENABLE_GLSL_SHADOW.\n"
 msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い有効化されました．\n"
 
-#: GLSLSceneRenderer.cpp:785
+#: GLSLSceneRenderer.cpp:913
 msgid "Shadow casting is disabled for this GPU due to some problems.\n"
 msgstr "影の描画はこのGPUに対しては問題があるため無効化されます．\n"
+
+#: GLSLSceneRenderer.cpp:982 ShaderPrograms.cpp:1082
+msgid "Framebuffer is not complete.\n"
+msgstr "フレームバッファが不完全です．\n"
 
 #: ViewArea.cpp:1416
 msgid "Separate the view"
@@ -639,77 +643,77 @@ msgstr "スクリプトバー"
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
-#: ItemManager.cpp:200
+#: ItemManager.cpp:201
 msgid "New ..."
 msgstr "新規"
 
-#: ItemManager.cpp:203
+#: ItemManager.cpp:204
 msgid "Load ..."
 msgstr "読み込み"
 
-#: ItemManager.cpp:205
+#: ItemManager.cpp:206
 msgid "Reload Selected Items"
 msgstr "選択アイテムの再読み込み"
 
-#: ItemManager.cpp:210
+#: ItemManager.cpp:211
 msgid "Save Selected Items"
 msgstr "選択アイテムの保存"
 
-#: ItemManager.cpp:212
+#: ItemManager.cpp:213
 msgid "Save Selected Items As"
 msgstr "名前を付けて選択アイテムを保存"
 
-#: ItemManager.cpp:217
+#: ItemManager.cpp:218
 msgid "Import ..."
 msgstr "インポート"
 
-#: ItemManager.cpp:221
+#: ItemManager.cpp:222
 msgid "Export Selected Items"
 msgstr "選択アイテムのエクスポート"
 
-#: ItemManager.cpp:482
+#: ItemManager.cpp:487
 msgid "Class {} is not registered as an item class."
 msgstr "クラス{}はアイテムクラスとして登録されていません．"
 
-#: ItemManager.cpp:488
+#: ItemManager.cpp:493
 msgid "The panel to create {} is not registered."
 msgstr "{}を生成するパネルは登録されていません．"
 
-#: ItemManager.cpp:560
+#: ItemManager.cpp:576
 msgid "Item$"
 msgstr "アイテム$"
 
-#: ItemManager.cpp:562
+#: ItemManager.cpp:578
 msgid "Create New %1"
-msgstr "新しい%1の生成"
+msgstr "%1の新規生成"
 
-#: ItemManager.cpp:605 ViewManager.cpp:283
+#: ItemManager.cpp:621 ViewManager.cpp:283
 msgid "&Create"
-msgstr "生成(&C)"
+msgstr "作成(&C)"
 
-#: ItemManager.cpp:608 ViewManager.cpp:288 PathVariableEditor.cpp:99
+#: ItemManager.cpp:624 ViewManager.cpp:288 PathVariableEditor.cpp:99
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
-#: ItemManager.cpp:770 ViewManager.cpp:277
+#: ItemManager.cpp:791 ViewManager.cpp:277
 msgid "Name:"
 msgstr "名前"
 
-#: ItemManager.cpp:902
+#: ItemManager.cpp:933
 msgid ""
 "\"{0}\" cannot be accessed because the specified item type \"{1}\" is not "
 "registered."
 msgstr "\"{0}\"へのアクセスにおいて指定されたアイテム型\"{1}\"は未登録です．"
 
-#: ItemManager.cpp:944
+#: ItemManager.cpp:975
 msgid "The file format for accessing \"{0}\" cannot be determined."
 msgstr "\"{0}\"のファイル形式を確定できません．"
 
-#: ItemManager.cpp:948
+#: ItemManager.cpp:979
 msgid "Unknown file format \"{0}\" is specified in accessing \"{1}\"."
 msgstr "\"{1}\"に対して不明なファイル形式\"{0}\"が指定されています．"
 
-#: ItemManager.cpp:1295
+#: ItemManager.cpp:1330
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
@@ -765,6 +769,14 @@ msgstr "名前を付けて{}をエクスポート"
 msgid "Graph: Position = ({0:.5f}, {1:.5f})"
 msgstr "グラフ位置 = ({0:.5f}, {1:.5f})"
 
+#: PositionTagListItem.cpp:75
+msgid "PositionTagListItem"
+msgstr ""
+
+#: PositionTagListWidget.cpp:147 CoordinateFrameListView.cpp:212
+msgid "Position"
+msgstr "ポジション"
+
 #: ItemFileIO.cpp:295
 msgid "Item with empty filename cannot be loaded."
 msgstr "空のファイル名のアイテムを読み込むことはできません．"
@@ -801,7 +813,7 @@ msgstr "{0} \"{1}\" を \"{2}\" に保存中"
 msgid "Exporting {0} \"{1}\" into \"{2}\""
 msgstr "{0} \"{1}\" を \"{2}\" にエクスポート中"
 
-#: SceneView.cpp:134
+#: SceneView.cpp:155
 msgid "Use dedicated item tree view checks to select the target items"
 msgstr "対象アイテム選択用の専用のチェックをアイテムツリービューに追加"
 
@@ -1008,11 +1020,11 @@ msgstr "モード"
 msgid "Note"
 msgstr "注釈"
 
-#: App.cpp:310 App.cpp:472
+#: App.cpp:313 App.cpp:475
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:314
+#: App.cpp:317
 msgid ""
 "The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: "
 "{3})."
@@ -1023,10 +1035,6 @@ msgstr ""
 #: MultiSE3SeqGraphView.cpp:17
 msgid "Multi SE3 Seq"
 msgstr "SE3軌道"
-
-#: CoordinateFrameListView.cpp:212
-msgid "Position"
-msgstr "ポジション"
 
 #: CoordinateFrameListView.cpp:520
 msgid "Coordinate Frames"
@@ -1124,10 +1132,6 @@ msgstr "連続"
 msgid "page"
 msgstr "ページ"
 
-#: ShaderPrograms.cpp:931
-msgid "Framebuffer is not complete.\n"
-msgstr "フレームバッファが不完全です．\n"
-
 #: ViewManager.cpp:295
 msgid "Create %1"
 msgstr "%1の生成"
@@ -1210,243 +1214,243 @@ msgstr "全て選択"
 msgid "Clear selection"
 msgstr "選択解除"
 
-#: SceneWidget.cpp:176
+#: SceneWidget.cpp:177
 msgid "OpengGL image buffer for picking"
 msgstr "ピッキング用OpenGL画像バッファ"
 
-#: SceneWidget.cpp:433
+#: SceneWidget.cpp:437
 msgid "Vertical sync"
 msgstr "垂直同期"
 
-#: SceneWidget.cpp:439
+#: SceneWidget.cpp:443
 msgid "Low GPU memory consumption mode"
 msgstr "GPUメモリ消費低減モード"
 
-#: SceneWidget.cpp:824
+#: SceneWidget.cpp:838
 msgid "The OpenGL resources of {0} has been cleared."
 msgstr "{0}のOpenGLリソースがクリアされました．"
 
-#: SceneWidget.cpp:966
+#: SceneWidget.cpp:981
 msgid "FPS Test Result"
 msgstr "フレームレートテスト結果"
 
-#: SceneWidget.cpp:967
+#: SceneWidget.cpp:982
 msgid "FPS: %1 frames / %2 [s] = %3"
 msgstr "フレームレート: %1 フレーム / %2 [秒] = %3 [fps]"
 
-#: SceneWidget.cpp:1613
+#: SceneWidget.cpp:1655
 msgid "Global Position: ({0:.3f} {1:.3f} {2:.3f})"
 msgstr "グローバル座標位置 = ({0:.3f} {1:.3f} {2:.3f})"
 
-#: SceneWidget.cpp:1614
+#: SceneWidget.cpp:1656
 msgid "Object: {0}, Global Position: ({1:.3f} {2:.3f} {3:.3f})"
 msgstr "オブジェクト: {0}, グローバル座標位置 = ({1:.3f} {2:.3f} {3:.3f})"
 
-#: SceneWidget.cpp:2085
+#: SceneWidget.cpp:2157
 msgid "Edit Mode"
 msgstr "編集モード"
 
-#: SceneWidget.cpp:2126
+#: SceneWidget.cpp:2198
 msgid "View Mode"
 msgstr "閲覧モード"
 
-#: SceneWidget.cpp:2185
+#: SceneWidget.cpp:2234
 msgid "Background Color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:2199
+#: SceneWidget.cpp:2248
 msgid "Floor Grid Color"
 msgstr "床グリッド色"
 
-#: SceneWidget.cpp:2213
+#: SceneWidget.cpp:2262
 msgid "Default Color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:3052
+#: SceneWidget.cpp:3115
 msgid "Scene Config"
 msgstr "シーン設定"
 
-#: SceneWidget.cpp:3064
+#: SceneWidget.cpp:3127
 msgid "Camera"
 msgstr "カメラ"
 
-#: SceneWidget.cpp:3066
+#: SceneWidget.cpp:3129
 msgid "Field of view"
 msgstr "視野角"
 
-#: SceneWidget.cpp:3073
+#: SceneWidget.cpp:3136
 msgid "Clipping depth"
 msgstr "クリッピング深度"
 
-#: SceneWidget.cpp:3075
+#: SceneWidget.cpp:3138
 msgid "Near"
 msgstr "近隣"
 
-#: SceneWidget.cpp:3081
+#: SceneWidget.cpp:3144
 msgid "Far"
 msgstr "遠方"
 
-#: SceneWidget.cpp:3091
+#: SceneWidget.cpp:3154
 msgid "Restrict camera roll"
 msgstr "カメラロールを制限"
 
-#: SceneWidget.cpp:3095
+#: SceneWidget.cpp:3158
 msgid "Vertical axis"
 msgstr "垂直軸"
 
-#: SceneWidget.cpp:3105
+#: SceneWidget.cpp:3168
 msgid "Upside down"
 msgstr "上下反転"
 
-#: SceneWidget.cpp:3115
+#: SceneWidget.cpp:3178
 msgid "Lighting"
 msgstr "ライティング"
 
-#: SceneWidget.cpp:3117
+#: SceneWidget.cpp:3180
 msgid "Lighting mode"
 msgstr "ライティングモード"
 
-#: SceneWidget.cpp:3119
+#: SceneWidget.cpp:3182
 msgid "Normal"
 msgstr " 標準"
 
-#: SceneWidget.cpp:3125
+#: SceneWidget.cpp:3188
 msgid "Minimum"
 msgstr "最小限"
 
-#: SceneWidget.cpp:3130
+#: SceneWidget.cpp:3193
 msgid "Solid color"
 msgstr "ソリッドカラー"
 
-#: SceneWidget.cpp:3148
+#: SceneWidget.cpp:3211
 msgid "Smooth shading"
 msgstr "スムーズシェーディング"
 
-#: SceneWidget.cpp:3154
+#: SceneWidget.cpp:3217
 msgid "Back face culling: "
 msgstr "隠面消去"
 
-#: SceneWidget.cpp:3159
+#: SceneWidget.cpp:3222
 msgid "Enabled"
 msgstr "有効"
 
-#: SceneWidget.cpp:3160
+#: SceneWidget.cpp:3223
 msgid "Disabled"
 msgstr "無効"
 
-#: SceneWidget.cpp:3161
+#: SceneWidget.cpp:3224
 msgid "Forced"
 msgstr "強制"
 
-#: SceneWidget.cpp:3181
+#: SceneWidget.cpp:3244
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: SceneWidget.cpp:3186 SceneWidget.cpp:3203 LightingItem.cpp:498
+#: SceneWidget.cpp:3249 SceneWidget.cpp:3266 LightingItem.cpp:498
 msgid "Intensity"
 msgstr "照度"
 
-#: SceneWidget.cpp:3194
+#: SceneWidget.cpp:3257
 msgid "Back lighting"
 msgstr "裏面照射"
 
-#: SceneWidget.cpp:3198
+#: SceneWidget.cpp:3261
 msgid "World light"
 msgstr "ワールドライト"
 
-#: SceneWidget.cpp:3211
+#: SceneWidget.cpp:3274
 msgid "Ambient"
 msgstr "環境光"
 
-#: SceneWidget.cpp:3220
+#: SceneWidget.cpp:3283
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: SceneWidget.cpp:3229
+#: SceneWidget.cpp:3292
 msgid "Texture"
 msgstr "テクスチャ"
 
-#: SceneWidget.cpp:3234
+#: SceneWidget.cpp:3297
 msgid "Fog"
 msgstr "フォグ"
 
-#: SceneWidget.cpp:3244
+#: SceneWidget.cpp:3307
 msgid "Shadow %1"
 msgstr "影 %1"
 
-#: SceneWidget.cpp:3248
+#: SceneWidget.cpp:3311
 msgid "Light"
 msgstr "ライト"
 
-#: SceneWidget.cpp:3256
+#: SceneWidget.cpp:3319
 msgid "Anti-aliasing of shadows"
 msgstr "影のアンチエイリアシング"
 
-#: SceneWidget.cpp:3263
+#: SceneWidget.cpp:3326
 msgid "Background"
 msgstr "背景"
 
-#: SceneWidget.cpp:3266
+#: SceneWidget.cpp:3329
 msgid "Background color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:3270
+#: SceneWidget.cpp:3333
 msgid "Coordinate axes"
 msgstr "座標軸"
 
-#: SceneWidget.cpp:3280
+#: SceneWidget.cpp:3343
 msgid "XY Grid"
 msgstr "XYグリッド"
 
-#: SceneWidget.cpp:3282
+#: SceneWidget.cpp:3345
 msgid "XZ Grid"
 msgstr "XZグリッド"
 
-#: SceneWidget.cpp:3283
+#: SceneWidget.cpp:3346
 msgid "YZ Grid"
 msgstr "YZグリッド"
 
-#: SceneWidget.cpp:3290
+#: SceneWidget.cpp:3353
 msgid "Span"
 msgstr "長さ"
 
-#: SceneWidget.cpp:3300
+#: SceneWidget.cpp:3363
 msgid "Interval"
 msgstr "間隔"
 
-#: SceneWidget.cpp:3311 LightingItem.cpp:496
+#: SceneWidget.cpp:3374 LightingItem.cpp:496
 msgid "Color"
 msgstr "色"
 
-#: SceneWidget.cpp:3322
+#: SceneWidget.cpp:3385
 msgid "Default color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:3326
+#: SceneWidget.cpp:3389
 msgid "Default line width"
 msgstr "デフォルトの線幅"
 
-#: SceneWidget.cpp:3334
+#: SceneWidget.cpp:3397
 msgid "Default point size"
 msgstr "デフォルト点サイズ"
 
-#: SceneWidget.cpp:3345
+#: SceneWidget.cpp:3408
 msgid "Normal Visualization"
 msgstr "法線の表示"
 
-#: SceneWidget.cpp:3355
+#: SceneWidget.cpp:3418
 msgid "Lightweight view change"
 msgstr "軽量視点変更"
 
-#: SceneWidget.cpp:3373
+#: SceneWidget.cpp:3436
 msgid "FPS Test"
 msgstr "FPSテスト"
 
-#: SceneWidget.cpp:3380
+#: SceneWidget.cpp:3443
 msgid "Show the image for picking (for debug)"
 msgstr "ピッキング用バッファの表示（デバッグ用）"
 
-#: SceneWidget.cpp:3390 DescriptionDialog.cpp:28
+#: SceneWidget.cpp:3453 DescriptionDialog.cpp:28
 msgid "&Ok"
 msgstr "了解(&O)"
 
@@ -1752,99 +1756,99 @@ msgstr "親（ {} ）"
 msgid "Parent"
 msgstr "親"
 
-#: SceneBar.cpp:108
+#: SceneBar.cpp:100
 msgid "Put scene statistics"
 msgstr "シーン統計情報の表示"
 
-#: SceneBar.cpp:115
+#: SceneBar.cpp:107
 msgid "SceneBar"
 msgstr "シーンバー"
 
-#: SceneBar.cpp:140
+#: SceneBar.cpp:132
 msgid "Switch to the edit mode"
 msgstr "編集モードへの切り替え"
 
-#: SceneBar.cpp:145
+#: SceneBar.cpp:141
 msgid "First-person viewpoint control mode"
 msgstr "一人称視点制御"
 
-#: SceneBar.cpp:150
+#: SceneBar.cpp:146
 msgid "Select a camera"
 msgstr "カメラの選択"
 
-#: SceneBar.cpp:157
+#: SceneBar.cpp:153
 msgid "Move the camera to look at the objects"
 msgstr "全ての物体が見えるように視点を移動"
 
-#: SceneBar.cpp:166
+#: SceneBar.cpp:162
 msgid "Vertex rendering"
 msgstr "頂点描画"
 
-#: SceneBar.cpp:173
+#: SceneBar.cpp:169
 msgid "Wireframe rendering"
 msgstr "ワイヤフレーム描画"
 
-#: SceneBar.cpp:177
+#: SceneBar.cpp:173
 msgid "Solid wireframe rendering"
 msgstr "ワイヤフレーム+ポリゴン描画"
 
-#: SceneBar.cpp:182
+#: SceneBar.cpp:178
 msgid "Polygon rendering"
 msgstr "ポリゴン描画"
 
-#: SceneBar.cpp:193
+#: SceneBar.cpp:189
 msgid "Show visual models"
 msgstr "表示用モデルの表示"
 
-#: SceneBar.cpp:199
+#: SceneBar.cpp:195
 msgid "Flip active model types"
 msgstr "表示するモデルタイプの切り替え"
 
-#: SceneBar.cpp:204
+#: SceneBar.cpp:200
 msgid "Show the collision detection models"
 msgstr "干渉チェック用モデルを表示"
 
-#: SceneBar.cpp:209
+#: SceneBar.cpp:205
 msgid "Toggle the collision line visibility"
 msgstr "干渉線の表示"
 
-#: SceneBar.cpp:541
+#: SceneBar.cpp:548
 msgid "Scene statistics:"
 msgstr "シーン統計情報:"
 
-#: SceneBar.cpp:552
+#: SceneBar.cpp:559
 msgid " Scene \"{}\":"
 msgstr " シーン \"{}\":"
 
-#: SceneBar.cpp:554
+#: SceneBar.cpp:561
 msgid "  Vertices: {}\n"
 msgstr "  頂点: {}\n"
 
-#: SceneBar.cpp:555
+#: SceneBar.cpp:562
 msgid "  Normals: {}\n"
 msgstr "  法線: {}\n"
 
-#: SceneBar.cpp:556
+#: SceneBar.cpp:563
 msgid "  Triangles: {}"
 msgstr "  トライアングル: {}"
 
-#: SceneBar.cpp:566
+#: SceneBar.cpp:573
 msgid "No valid scene item is selected."
 msgstr "有効なシーンアイテムが選択されていません．"
 
-#: SceneBar.cpp:568
+#: SceneBar.cpp:575
 msgid "The total number of {} scene items:\n"
 msgstr "{}シーンアイテムの総数: \n"
 
-#: SceneBar.cpp:569
+#: SceneBar.cpp:576
 msgid " Vertices: {}\n"
 msgstr " 頂点: {}\n"
 
-#: SceneBar.cpp:570
+#: SceneBar.cpp:577
 msgid " Normals: {}\n"
 msgstr " 法線: {}\n"
 
-#: SceneBar.cpp:571
+#: SceneBar.cpp:578
 msgid " Triangles: {}"
 msgstr " トライアングル: {}"
 
@@ -2137,12 +2141,3 @@ msgstr ""
 #: CoordinateFrameListItem.cpp:689
 msgid "Num coordinate frames"
 msgstr "座標フレーム数"
-
-#~ msgid "Solid polygon mode"
-#~ msgstr "ソリッドポリゴンモード"
-
-#~ msgid "Do point rendering in the wireframe mode"
-#~ msgstr "ワイヤフレームモードでポイントレンダリングを行う"
-
-#~ msgid "Full"
-#~ msgstr "完全"
