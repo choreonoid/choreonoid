@@ -64,7 +64,7 @@ public:
     virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event) override;
     virtual bool onScrollEvent(const SceneWidgetEvent& event) override;
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on) override;
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
+    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
     virtual bool onUndoRequest() override;
     virtual bool onRedoRequest() override;
 

@@ -36,7 +36,7 @@ private:
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
     virtual bool onKeyPressEvent(const SceneWidgetEvent& event) override;
     virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event) override;
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
+    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
     virtual bool onUndoRequest() override;
     virtual bool onRedoRequest() override;
 

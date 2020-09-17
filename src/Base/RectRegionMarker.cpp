@@ -277,9 +277,10 @@ bool RectRegionMarkerImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-void RectRegionMarker::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool RectRegionMarker::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
     impl->sigContextMenuRequest(event, menuManager);
+    return true;
 }
 
 

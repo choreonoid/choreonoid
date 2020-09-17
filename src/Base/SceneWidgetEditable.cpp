@@ -67,9 +67,9 @@ void SceneWidgetEditable::onFocusChanged(const SceneWidgetEvent&, bool)
 }
 
 
-void SceneWidgetEditable::onContextMenuRequest(const SceneWidgetEvent&, MenuManager&)
+bool SceneWidgetEditable::onContextMenuRequest(const SceneWidgetEvent&, MenuManager&)
 {
-
+    return false;
 }
 
 

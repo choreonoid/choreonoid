@@ -52,9 +52,9 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     bool removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify);
     void notifyAttentionPointChange();
 
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
+    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
 
     void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
     void onRegionFixed(const PolyhedralRegion& region);    
@@ -779,7 +779,7 @@ bool SceneMultiPointSet::onPointerMoveEvent(const SceneWidgetEvent&)
 }
 
 
-void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
     menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
         [&](){ clearAttentionPoints(true); });
@@ -790,6 +790,8 @@ void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, Men
             menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
                 [&, sceneWidget](){ regionMarker->startEditing(sceneWidget); }));
     }
+
+    return true;
 }
 
 

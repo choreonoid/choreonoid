@@ -279,7 +279,7 @@ public:
     bool onPointerMoveEvent(const SceneWidgetEvent& event);
     void onPointerLeaveEvent(const SceneWidgetEvent& event);
     bool onScrollEvent(const SceneWidgetEvent& event);
-    void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+    bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
     void onSceneModeChanged(const SceneWidgetEvent& event);
     bool onUndoRequest();
     bool onRedoRequest();
@@ -1269,18 +1269,18 @@ void EditableSceneBody::onFocusChanged(const SceneWidgetEvent& event, bool on)
 }
 
 
-void EditableSceneBody::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool EditableSceneBody::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
-    impl->onContextMenuRequest(event, menuManager);
+    return impl->onContextMenuRequest(event, menuManager);
 }
 
 
-void EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& mm)
+bool EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& mm)
 {
     PointedType pointedType = findPointedObject(event.nodePath());
 
     if(pointedType != PT_SCENE_LINK){
-        return;
+        return false;
     }
 
     auto locationLockCheck = mm.addCheckItem(_("Lock location"));
@@ -1360,6 +1360,8 @@ void EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
 
     mm.setPath("/");
     mm.addSeparator();
+
+    return true;
 }
 
 

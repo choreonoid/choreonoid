@@ -37,7 +37,7 @@ public:
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
     virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event) override;
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
+    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
 
     SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest();
 

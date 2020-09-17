@@ -26,7 +26,7 @@ public:
     virtual bool onKeyPressEvent(const SceneWidgetEvent& event);
     virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event);
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on);
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu);
     virtual bool onUndoRequest();
     virtual bool onRedoRequest();
 };

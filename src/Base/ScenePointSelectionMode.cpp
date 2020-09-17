@@ -416,9 +416,9 @@ bool ScenePointSelectionMode::onKeyReleaseEvent(const SceneWidgetEvent& event)
 }
 
 
-void ScenePointSelectionMode::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool ScenePointSelectionMode::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
-
+    return false;
 }
 
 

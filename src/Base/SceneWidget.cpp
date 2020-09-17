@@ -2166,27 +2166,27 @@ void SceneWidget::Impl::showEditModePopupMenu(const QPoint& globalPos)
 
     int prevNumItems = 0;
 
-    if(!pointedEditablePath.empty()){
+    bool handled = false;
+    
+    if(activeCustomModeHandler){
+        handled = activeCustomModeHandler->onContextMenuRequest(latestEvent, menuManager);
+    }
+
+    if(!handled && !pointedEditablePath.empty()){
         SceneWidgetEditable* editableToFocus = pointedEditablePath.front();
         for(EditablePath::reverse_iterator p = pointedEditablePath.rbegin(); p != pointedEditablePath.rend(); ++p){
             SceneWidgetEditable* editable = *p;
-            editable->onContextMenuRequest(latestEvent, menuManager);
-            int numItems = menuManager.numItems();
-            if(numItems > prevNumItems){
-                menuManager.addSeparator();
-                prevNumItems = numItems;
-                editableToFocus = editable;
+            handled = editable->onContextMenuRequest(latestEvent, menuManager);
+            if(handled){
+                int numItems = menuManager.numItems();
+                if(numItems > prevNumItems){
+                    menuManager.addSeparator();
+                    prevNumItems = numItems;
+                    editableToFocus = editable;
+                }
             }
         }
         setFocusToPointedEditablePath(editableToFocus);
-    }
-
-    if(activeCustomModeHandler){
-        activeCustomModeHandler->onContextMenuRequest(latestEvent, menuManager);
-        if(menuManager.numItems() > prevNumItems){
-            menuManager.addSeparator();
-            prevNumItems = menuManager.numItems();
-        }
     }
 
     sigContextMenuRequest(latestEvent, menuManager);

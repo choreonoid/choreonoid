@@ -66,9 +66,9 @@ public:
     bool isEditable() const { return isEditable_; }
     void setEditable(bool on) { isEditable_ = on; }
 
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
+    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
     void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
     void onRegionFixed(const PolyhedralRegion& region);
 };
@@ -919,7 +919,7 @@ bool ScenePointSet::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
     if(isEditable_){
         menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
@@ -931,7 +931,9 @@ void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuMana
                 menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
                     [&, sceneWidget](){ regionMarker->startEditing(sceneWidget); }));
         }
+        return true;
     }
+    return false;
 }
 
 
