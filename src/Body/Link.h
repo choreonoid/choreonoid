@@ -8,11 +8,6 @@
 
 #include <cnoid/CloneableReferenced>
 #include <cnoid/EigenTypes>
-#ifdef _WIN32
-#include "Link.h"
-#include <cnoid/SceneGraph>
-#include <cnoid/ValueTree>
-#endif
 #include "exportdecl.h"
 
 namespace cnoid {
