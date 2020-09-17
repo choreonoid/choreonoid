@@ -91,7 +91,7 @@ public:
 class BasicLightingProgram::Impl
 {
 public:
-    static const int maxNumLights = 10;
+    static const int maxNumLights = 20;
 
     GLint numLightsLocation;
     
@@ -721,6 +721,10 @@ int BasicLightingProgram::maxNumLights() const
 bool BasicLightingProgram::setLight
 (int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting)
 {
+    if(index >= impl->maxNumLights){
+        return false;
+    }
+    
     auto& info = impl->lightInfos[index];
 
     if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){

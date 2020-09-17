@@ -4,6 +4,7 @@
 // See the description written in the corresponding geometry shader code
 // #define USE_DOUBLE_PRECISION_IN_WIREFRAME_RENDERING 1
 
+#define MAX_NUM_LIGHTS 20
 #define MAX_NUM_SHADOWS 2
 
 in VertexData {
@@ -63,9 +64,9 @@ struct LightInfo {
     vec3 direction;
 };
 
-uniform LightInfo lights[10];
+uniform LightInfo lights[MAX_NUM_LIGHTS];
 
-vec3 reflectionElements[10];
+vec3 reflectionElements[MAX_NUM_LIGHTS];
 
 uniform bool isTextureEnabled;
 uniform sampler2D colorTexture;

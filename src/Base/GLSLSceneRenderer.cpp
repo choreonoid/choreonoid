@@ -1496,6 +1496,14 @@ void GLSLSceneRenderer::Impl::renderLights(LightingProgram* program)
 {
     int lightIndex = 0;
 
+    SgLight* headLight = self->headLight();
+    if(headLight->on()){
+        if(program->setLight(
+               lightIndex, headLight, self->currentCameraPosition(), viewTransform, false)){
+            ++lightIndex;
+        }
+    }
+
     const int n = self->numLights();
     for(int i=0; i < n; ++i){
         if(lightIndex == program->maxNumLights()){
@@ -1508,16 +1516,6 @@ void GLSLSceneRenderer::Impl::renderLights(LightingProgram* program)
             bool isCastingShadow =
                 isShadowCastingEnabled && (shadowLightIndices.find(i) != shadowLightIndices.end());
             if(program->setLight(lightIndex, light, T, viewTransform, isCastingShadow)){
-                ++lightIndex;
-            }
-        }
-    }
-
-    if(lightIndex < program->maxNumLights()){
-        SgLight* headLight = self->headLight();
-        if(headLight->on()){
-            if(program->setLight(
-                   lightIndex, headLight, self->currentCameraPosition(), viewTransform, false)){
                 ++lightIndex;
             }
         }
