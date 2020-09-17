@@ -60,9 +60,12 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     vbox->addWidget(itemTreeWidget);
     self->setLayout(vbox);
 
+    itemTreeWidget->customizeRootContextMenu(
+        [&](MenuManager& menu){ onContextMenuRequested(nullptr, menu); });
+    
     itemTreeWidget->customizeContextMenu<Item>(
-        [&](Item* item, MenuManager& menuManager, ItemFunctionDispatcher){
-            onContextMenuRequested(item, menuManager); });
+        [&](Item* item, MenuManager& menu, ItemFunctionDispatcher){
+            onContextMenuRequested(item, menu); });
 }
 
 
@@ -84,43 +87,60 @@ void ItemTreeView::setExpanded(Item* item, bool on)
 }
 
 
-void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menuManager)
+void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
 {
-    menuManager.addItem(_("Cut"))->sigTriggered().connect(
-        [&](){ itemTreeWidget->cutSelectedItems(); });
+    auto cut = menu.addItem(_("Cut"));
+    auto copy1 = menu.addItem(_("Copy (single)"));
+    auto copy2 = menu.addItem(_("Copy (sub tree)"));
+    auto paste = menu.addItem(_("Paste"));
+
+    menu.addSeparator();
     
-    menuManager.addItem(_("Copy (single)"))->sigTriggered().connect(
-        [&](){ itemTreeWidget->copySelectedItems(); });
+    auto check = menu.addItem(_("Check"));
+    auto uncheck = menu.addItem(_("Uncheck"));
+    auto toggleCheck = menu.addItem(_("Toggle checks"));
+
+    menu.addSeparator();
+
+    auto reload = menu.addItem(_("Reload"));
+
+    menu.addSeparator();
     
-    menuManager.addItem(_("Copy (sub tree)"))->sigTriggered().connect(
-        [&](){ itemTreeWidget->copySelectedItemsWithSubTrees(); });
-    
-    menuManager.addItem(_("Paste"))->sigTriggered().connect(
+    auto selectAll = menu.addItem(_("Select all"));
+    auto clearSelection = menu.addItem(_("Clear selection"));
+
+    if(item){
+        cut->sigTriggered().connect(
+            [&](){ itemTreeWidget->cutSelectedItems(); });
+        copy1->sigTriggered().connect(
+            [&](){ itemTreeWidget->copySelectedItems(); });
+        copy2->sigTriggered().connect(
+            [&](){ itemTreeWidget->copySelectedItemsWithSubTrees(); });
+        check->sigTriggered().connect(
+            [&](){ itemTreeWidget->setSelectedItemsChecked(true); });
+        uncheck->sigTriggered().connect(
+            [&](){ itemTreeWidget->setSelectedItemsChecked(false); });
+        toggleCheck->sigTriggered().connect(
+            [&](){ itemTreeWidget->toggleSelectedItemChecks(); });
+        reload->sigTriggered().connect(
+            [&](){ ItemManager::reloadItems(itemTreeWidget->getSelectedItems()); });
+        clearSelection->sigTriggered().connect(
+            [=](){ itemTreeWidget->clearSelection(); });
+    } else {
+        cut->setEnabled(false);
+        copy1->setEnabled(false);
+        copy2->setEnabled(false);
+        check->setEnabled(false);
+        uncheck->setEnabled(false);
+        toggleCheck->setEnabled(false);
+        reload->setEnabled(false);
+        clearSelection->setEnabled(false);
+    }
+
+    paste->sigTriggered().connect(
         [&](){ itemTreeWidget->pasteItems(); });
-
-    menuManager.addSeparator();
-    
-    menuManager.addItem(_("Check"))->sigTriggered().connect(
-        [&](){ itemTreeWidget->setSelectedItemsChecked(true); });
-    
-    menuManager.addItem(_("Uncheck"))->sigTriggered().connect(
-        [&](){ itemTreeWidget->setSelectedItemsChecked(false); });
-    
-    menuManager.addItem(_("Toggle checks"))->sigTriggered().connect(
-        [&](){ itemTreeWidget->toggleSelectedItemChecks(); });
-
-    menuManager.addSeparator();
-    
-    menuManager.addItem(_("Reload"))->sigTriggered().connect(
-        [&](){ ItemManager::reloadItems(itemTreeWidget->getSelectedItems()); });
-
-    menuManager.addSeparator();
-    
-    menuManager.addItem(_("Select all"))->sigTriggered().connect(
+    selectAll->sigTriggered().connect(
         [=](){ itemTreeWidget->selectAllItems(); });
-    
-    menuManager.addItem(_("Clear selection"))->sigTriggered().connect(
-        [=](){ itemTreeWidget->clearSelection(); });
 }
 
 
