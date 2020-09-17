@@ -28,28 +28,6 @@ public:
     }
 };
 
-class VertexInfo
-{
-public:
-    shared_ptr<SgNodePath> path;
-    int vertexIndex;
-    Vector3f position;
-
-    VertexInfo() : vertexIndex(-1) { }
-
-    bool isValid() const { return bool(path); }
-
-    bool operator==(const VertexInfo& rhs){
-        if(path == rhs.path ||
-           (path && rhs.path && *path == *rhs.path)){
-            if(vertexIndex == rhs.vertexIndex){
-                return true;
-            }
-        }
-        return false;
-    }
-};
-
 }
 
 namespace cnoid {
@@ -62,29 +40,47 @@ public:
     std::map<SceneWidget*, SceneWidgetInfo> sceneWidgetInfos;
     unordered_set<SgNodePtr> targetNodes;
 
-    SgOverlayPtr vertexOverlay;
-    SgPointSetPtr pointedVertexPlot;
-    SgVertexArrayPtr pointedVertexArray;
-    SgPointSetPtr selectedVertexPlot;
-    SgVertexArrayPtr selectedVertexArray;
+    SgOverlayPtr pointOverlay;
+    SgPointSetPtr highlightedPointPlot;
+    SgVertexArrayPtr highlightedPointArray;
+    SgPointSetPtr selectedPointPlot;
+    SgVertexArrayPtr selectedPointArray;
     SgUpdate update;
     
-    VertexInfo pointedVertex;
-    std::vector<VertexInfo> selectedVertices;
+    PointInfoPtr highlightedPoint;
+    std::vector<PointInfoPtr> selectedPoints;
     
     Impl(ScenePointSelectionMode* self);
     void setupScenePointSelectionMode(const SceneWidgetEvent& event);
     void clearScenePointSelectionMode(SceneWidget* sceneWidget);
     bool findPointedVertex(
         const SgVertexArray& vertices, const Affine3& T, const Vector3& point, int& out_index);
-    void setPointedVertex(
+    void setHighlightedPoint(
         const SgNodePath& path, SgVertexArray& vertices, const Affine3& T, int vertexIndex);
-    void clearPointedVertex();
+    void clearHighlightedPoint();
     bool onButtonPressEvent(const SceneWidgetEvent& event);
-    void updateSelectedVertexArray();
+    void updateSelectedPointArray();
     
 };
 
+}
+
+
+ScenePointSelectionMode::PointInfo::PointInfo()
+{
+    vertexIndex_ = -1;
+}
+
+
+bool ScenePointSelectionMode::PointInfo::operator==(const PointInfo& rhs) const
+{
+    if(path_ == rhs.path_ ||
+       (path_ && rhs.path_ && *path_ == *rhs.path_)){
+        if(vertexIndex_ == rhs.vertexIndex_){
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -99,19 +95,19 @@ ScenePointSelectionMode::Impl::Impl(ScenePointSelectionMode* self)
 {
     modeId = 0;
 
-    pointedVertexPlot = new SgPointSet;
-    pointedVertexPlot->setPointSize(10.0);
-    pointedVertexArray = pointedVertexPlot->getOrCreateVertices();
-    pointedVertexPlot->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
+    highlightedPointPlot = new SgPointSet;
+    highlightedPointPlot->setPointSize(10.0);
+    highlightedPointArray = highlightedPointPlot->getOrCreateVertices();
+    highlightedPointPlot->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
 
-    selectedVertexPlot = new SgPointSet;
-    selectedVertexPlot->setPointSize(10.0);
-    selectedVertexArray = selectedVertexPlot->getOrCreateVertices();
-    selectedVertexPlot->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 0.0f, 0.0f));
+    selectedPointPlot = new SgPointSet;
+    selectedPointPlot->setPointSize(10.0);
+    selectedPointArray = selectedPointPlot->getOrCreateVertices();
+    selectedPointPlot->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 0.0f, 0.0f));
     
-    vertexOverlay = new SgOverlay;
-    vertexOverlay->addChild(pointedVertexPlot);
-    vertexOverlay->addChild(selectedVertexPlot);
+    pointOverlay = new SgOverlay;
+    pointOverlay->addChild(highlightedPointPlot);
+    pointOverlay->addChild(selectedPointPlot);
 }
 
 
@@ -130,9 +126,9 @@ void ScenePointSelectionMode::setCustomModeId(int id)
 std::vector<Vector3f> ScenePointSelectionMode::getSelectedPoints() const
 {
     std::vector<Vector3f> points;
-    points.reserve(impl->selectedVertices.size());
-    for(auto& vertex : impl->selectedVertices){
-        points.push_back(vertex.position);
+    points.reserve(impl->selectedPoints.size());
+    for(auto& point : impl->selectedPoints){
+        points.push_back(point->position());
     }
     return points;
 }
@@ -140,8 +136,14 @@ std::vector<Vector3f> ScenePointSelectionMode::getSelectedPoints() const
 
 void ScenePointSelectionMode::clearSelection()
 {
-    impl->selectedVertices.clear();
-    impl->updateSelectedVertexArray();
+    impl->selectedPoints.clear();
+    impl->updateSelectedPointArray();
+}
+
+
+ScenePointSelectionMode::PointInfo* ScenePointSelectionMode::highlightedPoint()
+{
+    return impl->highlightedPoint;
 }
 
 
@@ -193,7 +195,7 @@ void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(const SceneWidg
                 [this, sceneWidget](){ sceneWidgetInfos.erase(sceneWidget); });
     }
     
-    sceneWidget->systemNodeGroup()->addChildOnce(vertexOverlay, true);
+    sceneWidget->systemNodeGroup()->addChildOnce(pointOverlay, true);
 
     int id = info->nodeDecorationId;
     auto renderer = sceneWidget->renderer();
@@ -221,7 +223,7 @@ void ScenePointSelectionMode::Impl::clearScenePointSelectionMode(SceneWidget* sc
     auto p = sceneWidgetInfos.find(sceneWidget);
     if(p != sceneWidgetInfos.end()){
         SceneWidgetInfo& info = p->second;;
-        sceneWidget->systemNodeGroup()->removeChild(vertexOverlay, true);
+        sceneWidget->systemNodeGroup()->removeChild(pointOverlay, true);
         sceneWidget->renderer()->clearNodeDecorations(info.nodeDecorationId);
     }
     targetNodes.clear();
@@ -252,12 +254,12 @@ bool ScenePointSelectionMode::onPointerMoveEvent(const SceneWidgetEvent& event)
             int  pointedIndex;
             pointed = impl->findPointedVertex(vertices, T, event.point(), pointedIndex);
             if(pointed){
-                impl->setPointedVertex(path, vertices, T, pointedIndex);
+                impl->setHighlightedPoint(path, vertices, T, pointedIndex);
             }
         }
     }
     if(!pointed){
-        impl->clearPointedVertex();
+        impl->clearHighlightedPoint();
     }
     return true;
 }
@@ -291,36 +293,36 @@ bool ScenePointSelectionMode::Impl::findPointedVertex
 }
 
 
-void ScenePointSelectionMode::Impl::setPointedVertex
+void ScenePointSelectionMode::Impl::setHighlightedPoint
 (const SgNodePath& path, SgVertexArray& vertices, const Affine3& T, int vertexIndex)
 {
+    highlightedPoint = new ScenePointSelectionMode::PointInfo;
     Vector3f v = (T * vertices[vertexIndex].cast<double>()).cast<float>();
-    pointedVertex.path = make_shared<SgNodePath>(path);
-    pointedVertex.vertexIndex = vertexIndex;
-    pointedVertex.position = v;
-    pointedVertexArray->resize(1);
-    pointedVertexArray->front() = v;
-    pointedVertexArray->notifyUpdate(update);
+    highlightedPoint->path_ = make_shared<SgNodePath>(path);
+    highlightedPoint->vertexIndex_ = vertexIndex;
+    highlightedPoint->position_ = v;
+    highlightedPointArray->resize(1);
+    highlightedPointArray->front() = v;
+    highlightedPointArray->notifyUpdate(update);
 }
 
 
-void ScenePointSelectionMode::Impl::clearPointedVertex()
+void ScenePointSelectionMode::Impl::clearHighlightedPoint()
 {
-    pointedVertex.path.reset();
-    pointedVertex.vertexIndex = -1;
+    highlightedPoint.reset();
 
-    if(!pointedVertexArray->empty()){
-        pointedVertexArray->clear();
-        pointedVertexArray->notifyUpdate(update);
+    if(!highlightedPointArray->empty()){
+        highlightedPointArray->clear();
+        highlightedPointArray->notifyUpdate(update);
     }
 }
 
 
 void ScenePointSelectionMode::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    if(!impl->pointedVertexArray->empty()){
-        impl->pointedVertexArray->clear();
-        impl->pointedVertexArray->notifyUpdate(impl->update);
+    if(!impl->highlightedPointArray->empty()){
+        impl->highlightedPointArray->clear();
+        impl->highlightedPointArray->notifyUpdate(impl->update);
     }
 }
 
@@ -336,59 +338,60 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& e
     bool processed = false;
     
     if(event.button() == Qt::LeftButton){
-        bool isVertexSelectionUpdated = false;
-        if(!pointedVertex.isValid()){
+        bool isPointSelectionUpdated = false;
+        if(!highlightedPoint){
             if(!(event.modifiers() & Qt::ControlModifier)){
-                if(!selectedVertices.empty()){
-                    selectedVertices.clear();
-                    isVertexSelectionUpdated = true;
+                if(!selectedPoints.empty()){
+                    selectedPoints.clear();
+                    isPointSelectionUpdated = true;
                 }
             }
         } else {
             bool removed = false;
             shared_ptr<SgNodePath> sharedPath;
             if(!(event.modifiers() & Qt::ControlModifier)){
-                selectedVertices.clear();
+                selectedPoints.clear();
             } else {
-                for(auto it = selectedVertices.begin(); it != selectedVertices.end(); ++it){
-                    if(*it == pointedVertex){
-                        selectedVertices.erase(it);
+                for(auto it = selectedPoints.begin(); it != selectedPoints.end(); ++it){
+                    PointInfo* point = *it;
+                    if(point == highlightedPoint){
+                        selectedPoints.erase(it);
                         removed = true;
                         break;
                     }
-                    if(!sharedPath && (*it->path == *pointedVertex.path)){
-                        sharedPath = it->path;
+                    if(!sharedPath && (point->path() == highlightedPoint->path())){
+                        sharedPath = point->path_;
                     }
                 }
             }
             if(!removed){
                 if(sharedPath){
-                    pointedVertex.path = sharedPath;
+                    highlightedPoint->path_ = sharedPath;
                 }
-                selectedVertices.push_back(pointedVertex);
+                selectedPoints.push_back(highlightedPoint);
             }
-            isVertexSelectionUpdated = true;
+            isPointSelectionUpdated = true;
         }
-        if(isVertexSelectionUpdated){
-            updateSelectedVertexArray();
+        if(isPointSelectionUpdated){
+            updateSelectedPointArray();
         }
         processed = true;
-    }
 
-                    
+    }
+    
     return processed;
 }
 
 
-void ScenePointSelectionMode::Impl::updateSelectedVertexArray()
+void ScenePointSelectionMode::Impl::updateSelectedPointArray()
 {
-    selectedVertexArray->clear();
+    selectedPointArray->clear();
 
-    for(auto& vertexInfo : selectedVertices){
-        selectedVertexArray->push_back(vertexInfo.position);
+    for(auto& point : selectedPoints){
+        selectedPointArray->push_back(point->position());
     }
 
-    selectedVertexArray->notifyUpdate(update);
+    selectedPointArray->notifyUpdate(update);
 }
 
 
@@ -416,7 +419,7 @@ bool ScenePointSelectionMode::onKeyReleaseEvent(const SceneWidgetEvent& event)
 }
 
 
-bool ScenePointSelectionMode::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool ScenePointSelectionMode::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu)
 {
     return false;
 }
