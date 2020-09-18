@@ -15,10 +15,11 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     PositionTag();
+    PositionTag(const Position& T);
     PositionTag(const Vector3& location);
     PositionTag(const PositionTag& org);
 
-    Position::TranslationPart translation() {
+    Position::ConstTranslationPart translation() const {
         return position_.translation();
     }
     template<typename Derived>
@@ -26,6 +27,25 @@ public:
         position_.translation() = p.template cast<Position::Scalar>();
     }
 
+    bool hasAttitude() const { return hasAttitude_; }
+    void clearAttitude() { hasAttitude_ = false; }
+
+    const Position& position() const { return position_; }
+
+    template<class Scalar, int Mode, int Options>
+        void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& p) {
+        position_ = p.template cast<Position::Scalar>();
+        hasAttitude_ = true;
+    }
+
+    Position::ConstLinearPart rotation() const { return position_.linear(); }
+
+    template<typename Derived>
+        void setRotation(const Eigen::MatrixBase<Derived>& R) {
+        position_.linear() = R.template cast<Position::Scalar>();
+        hasAttitude_ = true;
+    }
+    
     bool read(const Mapping* archive);
     void write(Mapping* archive) const;
 

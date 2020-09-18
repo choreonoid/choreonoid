@@ -3,6 +3,7 @@
 #include "PositionTagListItem.h"
 #include <cnoid/PositionTagList>
 #include <cnoid/PositionTag>
+#include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
 #include <QHeaderView>
 #include <QAbstractTableModel>
@@ -21,7 +22,7 @@ namespace {
 
 constexpr int NumColumns = 2;
 constexpr int IndexColumn = 0;
-constexpr int CoordColumn = 1;
+constexpr int PositionColumn = 1;
 
 class TagListModel : public QAbstractTableModel
 {
@@ -40,6 +41,7 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
     virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex& index, int role) const override;
+    QVariant getPositionData(const PositionTag* tag) const;
     void onTagAdded(int tagIndex);
     void onTagRemoved(int tagIndex);
     void onTagUpdated(int tagIndex);
@@ -143,7 +145,7 @@ QVariant TagListModel::headerData(int section, Qt::Orientation orientation, int 
             switch(section){
             case IndexColumn:
                 return " No ";
-            case CoordColumn:
+            case PositionColumn:
                 return _("Position");
             default:
                 return QVariant();
@@ -184,27 +186,39 @@ QVariant TagListModel::data(const QModelIndex& index, int role) const
         case IndexColumn:
             return index.row();
 
-        case CoordColumn: {
-            auto p = tag->translation();
-            return format("{0: 1.3f} {1: 1.3f} {2: 1.3f}", p.x(), p.y(), p.z()).c_str();
-        }
+        case PositionColumn:
+            return getPositionData(tag);
 
         default:
             break;
         }
     } else if(role == Qt::TextAlignmentRole){
-        if(column == CoordColumn){
+        if(column == PositionColumn){
             return (Qt::AlignLeft + Qt::AlignVCenter);
         } else {
             return Qt::AlignCenter;
         }
     } else if(role == Qt::FontRole){
-        if(column == CoordColumn){
+        if(column == PositionColumn){
             return monoFont;
         }
     }
     return QVariant();
 }
+
+
+QVariant TagListModel::getPositionData(const PositionTag* tag) const
+{
+    auto p = tag->translation();
+    if(!tag->hasAttitude()){
+        return format("{0: 1.3f} {1: 1.3f} {2: 1.3f}", p.x(), p.y(), p.z()).c_str();
+    } else {
+        auto rpy = degree(rpyFromRot(tag->rotation()));
+        return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                      p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+    }
+}
+
 
 
 void TagListModel::onTagAdded(int tagIndex)
@@ -236,7 +250,7 @@ void TagListModel::onTagRemoved(int tagIndex)
 
 void TagListModel::onTagUpdated(int tagIndex)
 {
-    auto modelIndex = index(tagIndex, CoordColumn, QModelIndex());
+    auto modelIndex = index(tagIndex, PositionColumn, QModelIndex());
     Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
 }
 
@@ -267,7 +281,7 @@ PositionTagListWidget::PositionTagListWidget(QWidget* parent)
     auto hheader = horizontalHeader();
     hheader->setMinimumSectionSize(24);
     hheader->setSectionResizeMode(IndexColumn, QHeaderView::ResizeToContents);
-    hheader->setSectionResizeMode(CoordColumn, QHeaderView::Stretch);
+    hheader->setSectionResizeMode(PositionColumn, QHeaderView::Stretch);
     auto vheader = verticalHeader();
     vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     vheader->hide();
