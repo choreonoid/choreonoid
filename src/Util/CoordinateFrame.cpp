@@ -72,7 +72,8 @@ bool CoordinateFrame::read(const Mapping& archive)
         if(cnoid::read(archive, "translation", v)){
             T_.translation() = v;
         }
-        if(cnoid::read(archive, "rotation", v)){
+        if(cnoid::read(archive, "rpy", v) ||
+           cnoid::read(archive, "rotation", v) /* old format */){
             T_.linear() = rotFromRpy(radian(v));
         }
         string symbol;
@@ -95,7 +96,7 @@ bool CoordinateFrame::write(Mapping& archive) const
     if(id_.write(archive, "id")){
         archive.setDoubleFormat("%.9g");
         cnoid::write(archive, "translation", Vector3(T_.translation()));
-        cnoid::write(archive, "rotation", degree(rpyFromRot(T_.linear())));
+        cnoid::write(archive, "rpy", degree(rpyFromRot(T_.linear())));
         if(isGlobal()){
             archive.write("mode", "global");
         }
