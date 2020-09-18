@@ -129,7 +129,7 @@ public:
     void setCursor(const QCursor cursor);
 
     Menu* contextMenu();
-    void showContextMenu();
+    void showContextMenuAtPointerPosition();
     SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest();
 
     void showConfigDialog();

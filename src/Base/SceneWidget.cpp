@@ -279,6 +279,7 @@ public:
     double viewTranslationRatioY;
 
     SceneWidgetEvent latestEvent;
+    QPoint latestGlobalMousePos;
     Vector3 lastClickedPoint;
     int mousePressX;
     int mousePressY;
@@ -1210,6 +1211,7 @@ void SceneWidget::Impl::updateLatestEvent(QMouseEvent* event)
 {
     updateLatestEvent(event->x(), event->y(), event->modifiers());
     latestEvent.button_ = event->button();
+    latestGlobalMousePos = event->globalPos();
 }
 
 
@@ -2207,13 +2209,12 @@ Menu* SceneWidget::contextMenu()
 }
 
 
-void SceneWidget::showContextMenu()
+void SceneWidget::showContextMenuAtPointerPosition()
 {
-    QPoint pos = QWidget::mapToGlobal(QPoint(0, 0));
     if(impl->isEditMode){
-        impl->showEditModePopupMenu(pos);
+        impl->showEditModePopupMenu(impl->latestGlobalMousePos);
     } else {
-        impl->showViewModePopupMenu(pos);
+        impl->showViewModePopupMenu(impl->latestGlobalMousePos);
     }
 }
 
