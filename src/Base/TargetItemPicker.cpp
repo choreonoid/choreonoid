@@ -17,7 +17,8 @@ public:
     ItemPtr preferredTargetItem; // Use this as the target when no candidate item is selected
     ItemList<> tmpSelectedItems;
     ScopedConnection targetItemConnection;
-    bool isActive;
+    bool isEnabled;
+    bool isActive; // Whether the corresponding view is active or not
     bool isBeforeAnyItemChangeNotification;
     View* view;
     ScopedConnectionSet viewConnections;
@@ -48,6 +49,7 @@ TargetItemPickerBase::Impl::Impl(TargetItemPickerBase* self, View* view)
     : self(self),
       view(view)
 {
+    isEnabled = true;
     isActive = false;
     isBeforeAnyItemChangeNotification = true;
     
@@ -71,16 +73,31 @@ TargetItemPickerBase::~TargetItemPickerBase()
 }
 
 
+void TargetItemPickerBase::setEnabled(bool on)
+{
+    if(on != impl->isEnabled){
+        impl->isEnabled = on;
+        if(on){
+            impl->activate(true);
+        } else {
+            impl->deactivate();
+        }
+    }
+}
+
+
 void TargetItemPickerBase::Impl::activate(bool doUpdate)
 {
-    itemSelectionChangeConnection.reset(
-        rootItem->sigSelectedItemsChanged().connect(
-            [&](const ItemList<>& items){ onSelectedItemsChanged(items); }));
-
-    isActive = true;
-
-    if(doUpdate){
-        onSelectedItemsChanged(rootItem->selectedItems());
+    if(isEnabled){
+        itemSelectionChangeConnection.reset(
+            rootItem->sigSelectedItemsChanged().connect(
+                [&](const ItemList<>& items){ onSelectedItemsChanged(items); }));
+        
+        isActive = true;
+        
+        if(doUpdate){
+            onSelectedItemsChanged(rootItem->selectedItems());
+        }
     }
 }
 
@@ -95,7 +112,7 @@ void TargetItemPickerBase::Impl::deactivate()
     self->onDeactivated();
 
     if(targetItem){
-        setTargetItem(nullptr, true, true);
+        setTargetItem(nullptr, isEnabled, true);
     }
 }
 

@@ -15,6 +15,7 @@ public:
     TargetItemPickerBase(View* view = nullptr);
     ~TargetItemPickerBase();
 
+    void setEnabled(bool on);
     void clearTargetItem();
     void refresh();
     void storeTargetItem(Archive& archive, const std::string& key);
