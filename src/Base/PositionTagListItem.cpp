@@ -4,7 +4,7 @@
 #include "LazyCaller.h"
 #include "Archive.h"
 #include <cnoid/PositionTagList>
-#include <cnoid/SceneMarkers>
+#include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
 #include "gettext.h"
 
@@ -24,6 +24,7 @@ public:
     ScenePositionTagList(PositionTagListItem::Impl* itemImpl);
     void finalize();
     void addTagNode(int index, bool doNotify);
+    static SgNode* getTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
 };
@@ -206,8 +207,9 @@ void ScenePositionTagList::finalize()
 void ScenePositionTagList::addTagNode(int index, bool doNotify)
 {
     auto tag = itemImpl->tags->tagAt(index);
-    auto node = new SphereMarker(0.01, Vector3f(1.0f, 1.0f, 0.0f));
-    node->setTranslation(tag->translation());
+    auto node = new SgPosTransform;
+    node->addChild(getTagMarker());
+    node->setPosition(tag->position());
     insertChild(index, node);
     if(doNotify){
         update.setAction(SgUpdate::ADDED);
@@ -215,6 +217,49 @@ void ScenePositionTagList::addTagNode(int index, bool doNotify)
     }
 }
     
+
+SgNode* ScenePositionTagList::getTagMarker()
+{
+    static SgLineSetPtr marker;
+
+    if(!marker){
+        marker = new SgLineSet;
+
+        auto& vertices = *marker->getOrCreateVertices(4);
+        vertices[0] << 0.0f,   0.0f,   0.0f;  // Origin
+        vertices[1] << 0.0f,   0.0f,   0.01f; // Z direction
+        vertices[2] << 0.003f, 0.0f,   0.0f;  // X direction
+        vertices[3] << 0.0f,   0.003f, 0.0f;  // Y direction
+        
+        auto& colors = *marker->getOrCreateColors(3);
+        colors[0] << 1.0f, 0.0f, 0.0f; // Red
+        colors[1] << 0.0f, 1.0f, 0.0f; // Green
+        colors[2] << 0.0f, 0.0f, 1.0f; // Blue
+        
+        marker->setNumLines(5);
+        marker->resizeColorIndicesForNumLines(5);
+        // Origin -> Z, Blue
+        marker->setLine(0, 0, 1);    
+        marker->setLineColor(0, 2);
+        // Origin -> X, Red
+        marker->setLine(1, 0, 2);
+        marker->setLineColor(1, 0);
+        // Origin -> Y, Green
+        marker->setLine(2, 0, 3);
+        marker->setLineColor(2, 1);
+        // Z -> X, Red
+        marker->setLine(3, 1, 2);
+        marker->setLineColor(3, 0);
+        // Z -> Y, Green
+        marker->setLine(4, 1, 3);
+        marker->setLineColor(4, 1);
+        
+        marker->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
+    }
+
+    return marker;
+}
+
 
 void ScenePositionTagList::removeTagNode(int index)
 {

@@ -28,7 +28,11 @@ public:
     }
 
     bool hasAttitude() const { return hasAttitude_; }
-    void clearAttitude() { hasAttitude_ = false; }
+
+    void clearAttitude() {
+        position_.linear().setIdentity();
+        hasAttitude_ = false;
+    }
 
     const Position& position() const { return position_; }
 

@@ -15,12 +15,15 @@ PositionTag::PositionTag()
 PositionTag::PositionTag(const Position& T)
 {
     position_ = T;
+    hasAttitude_ = true;
 }
 
 
 PositionTag::PositionTag(const Vector3& location)
 {
+    position_.linear().setIdentity();
     position_.translation() = location;
+    hasAttitude_ = false;
 }
 
 
