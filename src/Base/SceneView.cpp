@@ -64,7 +64,6 @@ public:
     void showScene(list<SceneInfo>::iterator infoIter, bool show);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
-    void restoreDedicatedItemChecks(const Archive& archive);
 };
 
 }
@@ -384,14 +383,15 @@ bool SceneView::Impl::restoreState(const Archive& archive)
     if(archive.read("isDedicatedItemCheckEnabled", isDedicatedItemCheckEnabled) ||
        archive.read("dedicatedItemTreeViewChecks", isDedicatedItemCheckEnabled) /* old format */){
         dedicatedCheckCheck.setChecked(isDedicatedItemCheckEnabled);
-        archive.addPostProcess([&](){ restoreDedicatedItemChecks(archive); });
+    }
+
+    if(dedicatedCheckId >= 0){
+        ref_ptr<const Archive> pArchive = &archive;
+        archive.addPostProcess(
+            [this, pArchive](){
+                rootItem->restoreCheckStates(dedicatedCheckId, *pArchive, "checked");
+            });
     }
     
     return result;
-}
-
-
-void SceneView::Impl::restoreDedicatedItemChecks(const Archive& archive)
-{
-    rootItem->restoreCheckStates(dedicatedCheckId, archive, "checked");
 }
