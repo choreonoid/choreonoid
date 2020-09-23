@@ -13,8 +13,14 @@ set(models
   vmark.body
   )
 
-file(COPY ${models} DESTINATION ${CNOID_BINARY_SHARE_DIR}/model/misc)
-install(FILES ${models} DESTINATION ${CNOID_SHARE_SUBDIR}/model/misc)
+if(UNIX)
+  add_custom_target(
+    symlink_to_agx_samples ALL
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${CMAKE_CURRENT_SOURCE_DIR} ${CNOID_BINARY_SHARE_DIR}/agx)
+endif()
+
+install(FILES ${models} DESTINATION ${CNOID_SHARE_SUBDIR}/agx)
 
 install(FILES
   AizuSpiderNA.cnoid
@@ -29,4 +35,4 @@ install(FILES
   FireHose.cnoid
   agxBreaching.cnoid
   agxMaterialSample.cnoid agxWireSample.cnoid
-  DESTINATION ${CNOID_SHARE_SUBDIR}/project)
+  DESTINATION ${CNOID_SHARE_SUBDIR}/agx)
