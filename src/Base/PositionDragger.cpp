@@ -49,7 +49,6 @@ constexpr double WideUnitHandleWidth = 0.08;
 constexpr double WideRotationHandleSizeRatio = 0.5;
 constexpr float DefaultTransparency = 0.4f;
 
-
 class SgHandleVariantSelector : public SgGroup
 {
     PositionDragger::Impl* dragger;
@@ -103,6 +102,14 @@ void registerViewpointDependentSelector(SceneNodeClassRegistry& registry)
                     static_cast<SgViewpointDependentSelector*>(node)->render(renderer);
                 });
         });
+}
+
+
+float convertToTubeTransparency(float t)
+{
+    // Reduce the alpha value by half because the total alpha value of the handle
+    // is a composite of the front and back surfaces of the handle tube shape
+    return (t == 0.0f) ? 0.0f : (1.0f - (1.0f - t) / 2.0f);
 }
 
 }
@@ -292,7 +299,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
         material->setDiffuseColor(Vector3f::Zero());
         material->setEmissiveColor(AxisColors[i]);
         material->setAmbientIntensity(0.0f);
-        material->setTransparency(1.0f - (1.0f - transparency) / 2.0f);
+        material->setTransparency(convertToTubeTransparency(transparency));
         axisMaterials[i] = material;
 
         auto rotationAxisMaterial = new SgMaterial(*material);
@@ -615,7 +622,7 @@ void PositionDragger::setTransparency(float t)
 
 void PositionDragger::Impl::setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted)
 {
-    float t2 = (t == 0.0f) ? 0.0f : (1.0f - (1.0f - t) / 2.0f);
+    float t2 = convertToTubeTransparency(t);
     
     for(int i=0; i < 6; ++i){
         int axis = i < 3 ? i : i - 3;
