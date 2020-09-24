@@ -121,7 +121,7 @@ void FireProgram::updateParticleBuffers(SceneFire* fire)
     Vector3f v;
     float speed, theta, phi;
     vector<GLfloat> data(numParticles * 3);
-    srand(0);
+    setRandomSeed();
     for(GLuint i = 0; i < numParticles; ++i) {
         theta = emissionRange / 2.0f * frandom();
         phi = 2.0 * PI * frandom();
