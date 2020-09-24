@@ -119,6 +119,7 @@ void LinkPropertyView::Impl::updateLinkProperties(Link* link)
     addProperty(_("Center of mass"), link->centerOfMass());
     addProperty(_("Mass"), link->mass());
     addProperty(_("Inertia tensor"), link->I());
+    addProperty(_("Material"), link->materialName());
     addProperty(_("Joint type"), link->jointTypeString());
     if(link->isRotationalJoint() || link->isSlideJoint()){
         addProperty(_("Joint axis"), link->jointAxis());

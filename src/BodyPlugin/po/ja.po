@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-09 23:01+0900\n"
+"POT-Creation-Date: 2020-09-24 12:00+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -63,7 +63,9 @@ msgstr "{1}の質量{0}はAISTシミュレータアイテムではシミュレ�
 msgid ""
 "{0} is attached to {1}, but attached bodies are not supported by "
 "AISTSimulatorItem."
-msgstr "{0}は{1}にアタッチされています．これはAISTシミュレータアイテムではサポートされていません．"
+msgstr ""
+"{0}は{1}にアタッチされています．これはAISTシミュレータアイテムではサポートさ"
+"れていません．"
 
 #: AISTSimulatorItem.cpp:383
 msgid ""
@@ -197,63 +199,63 @@ msgstr "デバイス"
 msgid "Tree"
 msgstr "ツリー"
 
-#: EditableSceneBody.cpp:1238
+#: EditableSceneBody.cpp:1286
 msgid "Lock location"
 msgstr "配置ロック"
 
-#: EditableSceneBody.cpp:1246
+#: EditableSceneBody.cpp:1294
 msgid "Move Forcibly"
 msgstr "強制移動"
 
-#: EditableSceneBody.cpp:1251
+#: EditableSceneBody.cpp:1299
 msgid "Hold Forcibly"
 msgstr "強制保持"
 
-#: EditableSceneBody.cpp:1259
+#: EditableSceneBody.cpp:1307
 msgid "Set Free"
 msgstr "フリーに"
 
-#: EditableSceneBody.cpp:1261
+#: EditableSceneBody.cpp:1309
 msgid "Set Base"
 msgstr "ベースに"
 
-#: EditableSceneBody.cpp:1263
+#: EditableSceneBody.cpp:1311
 msgid "Set Translation Pin"
 msgstr "並進ピンをセット"
 
-#: EditableSceneBody.cpp:1265
+#: EditableSceneBody.cpp:1313
 msgid "Set Rotation Pin"
 msgstr "回転ピンをセット"
 
-#: EditableSceneBody.cpp:1267
+#: EditableSceneBody.cpp:1315
 msgid "Set Both Pins"
 msgstr "両方のピンをセット"
 
-#: EditableSceneBody.cpp:1272
+#: EditableSceneBody.cpp:1320
 msgid "Level Attitude"
 msgstr "水平姿勢に"
 
-#: EditableSceneBody.cpp:1278
+#: EditableSceneBody.cpp:1326
 msgid "Markers"
 msgstr "マーカー"
 
-#: EditableSceneBody.cpp:1280
+#: EditableSceneBody.cpp:1328
 msgid "Link Origins"
 msgstr "リンク原点"
 
-#: EditableSceneBody.cpp:1301
+#: EditableSceneBody.cpp:1349
 msgid "Center of Mass"
 msgstr "重心"
 
-#: EditableSceneBody.cpp:1305
+#: EditableSceneBody.cpp:1353
 msgid "Projection Point of CoM"
 msgstr "重心投影点"
 
-#: EditableSceneBody.cpp:1309
+#: EditableSceneBody.cpp:1357
 msgid "ZMP"
 msgstr "ZMP"
 
-#: EditableSceneBody.cpp:1731
+#: EditableSceneBody.cpp:1733
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
@@ -599,83 +601,83 @@ msgstr "関節並進位置 [m]"
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
-#: GLVisionSimulatorItem.cpp:297
+#: GLVisionSimulatorItem.cpp:300
 msgid "GLVisionSimulatorItem"
 msgstr "GLビジョンシミュレータアイテム"
 
-#: GLVisionSimulatorItem.cpp:326
+#: GLVisionSimulatorItem.cpp:329
 msgid "Single"
 msgstr "単一"
 
-#: GLVisionSimulatorItem.cpp:327
+#: GLVisionSimulatorItem.cpp:330
 msgid "Sensor"
 msgstr "センサ"
 
-#: GLVisionSimulatorItem.cpp:328
+#: GLVisionSimulatorItem.cpp:331
 msgid "Screen"
 msgstr "スクリーン"
 
-#: GLVisionSimulatorItem.cpp:523
+#: GLVisionSimulatorItem.cpp:526
 msgid "{0} detected vision sensor \"{1}\" of {2} as a target."
 msgstr "{0}は{2}の \"{1}\" を対象視覚センサとして検出しました．"
 
-#: GLVisionSimulatorItem.cpp:533
+#: GLVisionSimulatorItem.cpp:536
 msgid "{} has no target sensors"
 msgstr "{}は対象センサを有していません"
 
-#: GLVisionSimulatorItem.cpp:558
+#: GLVisionSimulatorItem.cpp:561
 msgid "{0}: Target sensor \"{1}\" cannot be initialized."
 msgstr "{0}: 対象センサ \"{1}\" の初期化に失敗しました．"
 
-#: GLVisionSimulatorItem.cpp:1754
+#: GLVisionSimulatorItem.cpp:1762
 msgid "Target bodies"
 msgstr "対象ボディ"
 
-#: GLVisionSimulatorItem.cpp:1756
+#: GLVisionSimulatorItem.cpp:1764
 msgid "Target sensors"
 msgstr "対象センサ"
 
-#: GLVisionSimulatorItem.cpp:1758
+#: GLVisionSimulatorItem.cpp:1766
 msgid "Max frame rate"
 msgstr "最大フレームレート"
 
-#: GLVisionSimulatorItem.cpp:1759
+#: GLVisionSimulatorItem.cpp:1767
 msgid "Max latency [s]"
 msgstr "最大レイテンシ[秒]"
 
-#: GLVisionSimulatorItem.cpp:1760
+#: GLVisionSimulatorItem.cpp:1768
 msgid "Record vision data"
 msgstr "ビジョンデータの記録"
 
-#: GLVisionSimulatorItem.cpp:1761
+#: GLVisionSimulatorItem.cpp:1769
 msgid "Thread mode"
 msgstr "スレッドモード"
 
-#: GLVisionSimulatorItem.cpp:1762
+#: GLVisionSimulatorItem.cpp:1770
 msgid "Best effort"
 msgstr "ベストエフォート"
 
-#: GLVisionSimulatorItem.cpp:1763
+#: GLVisionSimulatorItem.cpp:1771
 msgid "All scene objects"
 msgstr "全てのシーンオブジェクト"
 
-#: GLVisionSimulatorItem.cpp:1764
+#: GLVisionSimulatorItem.cpp:1772
 msgid "Precision ratio of range sensors"
 msgstr "レンジセンサ精度係数"
 
-#: GLVisionSimulatorItem.cpp:1766
+#: GLVisionSimulatorItem.cpp:1774
 msgid "Depth error"
 msgstr "深度エラー"
 
-#: GLVisionSimulatorItem.cpp:1767
+#: GLVisionSimulatorItem.cpp:1775
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: GLVisionSimulatorItem.cpp:1768
+#: GLVisionSimulatorItem.cpp:1776
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: GLVisionSimulatorItem.cpp:1769
+#: GLVisionSimulatorItem.cpp:1777
 msgid "Anti-aliasing"
 msgstr "アンチエイリアシング"
 
@@ -1271,31 +1273,31 @@ msgstr ""
 msgid "{0:7.3f} [s]: Collision between {1} and {2}"
 msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
 
-#: WorldItem.cpp:107
+#: WorldItem.cpp:109
 msgid "WorldItem"
 msgstr "ワールドアイテム"
 
-#: WorldItem.cpp:473
+#: WorldItem.cpp:508
 msgid "Material table \"{}\" has been reloaded."
 msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 
-#: WorldItem.cpp:484
+#: WorldItem.cpp:519
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:499 BodyItem.cpp:1756
+#: WorldItem.cpp:534 BodyItem.cpp:1762
 msgid "Collision detection"
 msgstr "干渉検出"
 
-#: WorldItem.cpp:501
+#: WorldItem.cpp:536
 msgid "Collision detector"
 msgstr "干渉検出器"
 
-#: WorldItem.cpp:504
+#: WorldItem.cpp:539
 msgid "Contact material definition file (*.yaml)"
 msgstr "接触マテリアル定義ファイル (*.yaml)"
 
-#: WorldItem.cpp:505
+#: WorldItem.cpp:540
 msgid "Material table"
 msgstr "マテリアルテーブル"
 
@@ -1311,71 +1313,71 @@ msgstr "シーン／メッシュ"
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1627
+#: BodyItem.cpp:1623
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1670
+#: BodyItem.cpp:1676
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1747
+#: BodyItem.cpp:1753
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1748
+#: BodyItem.cpp:1754
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1749
+#: BodyItem.cpp:1755
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1750
+#: BodyItem.cpp:1756
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1751
+#: BodyItem.cpp:1757
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1752
+#: BodyItem.cpp:1758
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1753 LinkPropertyView.cpp:120
+#: BodyItem.cpp:1759 LinkPropertyView.cpp:120
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1754
+#: BodyItem.cpp:1760
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1758
+#: BodyItem.cpp:1764
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1760
+#: BodyItem.cpp:1766
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1762
+#: BodyItem.cpp:1768
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1765
+#: BodyItem.cpp:1771
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1769
+#: BodyItem.cpp:1775
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1938
+#: BodyItem.cpp:1944
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1955
+#: BodyItem.cpp:1961
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1650,39 +1652,39 @@ msgstr "選択ボディを初期姿勢に"
 msgid "Set the preset standard pose to the selected bodies"
 msgstr "選択ボディを標準姿勢に"
 
-#: BodyBar.cpp:68
+#: BodyBar.cpp:66
 msgid "Copy the right side pose to the left side"
 msgstr "右側の姿勢を左側にコピー"
 
-#: BodyBar.cpp:71
+#: BodyBar.cpp:69
 msgid "Mirror copy"
 msgstr "反転コピー"
 
-#: BodyBar.cpp:74
+#: BodyBar.cpp:72
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
 
-#: SensorVisualizerItem.cpp:176
-msgid "SensorVisualizer"
-msgstr "センサビジュアライザ"
+#: SensorVisualizerItem.cpp:177
+msgid "SensorVisualizerItem"
+msgstr "センサ可視化アイテム"
+
+#: SensorVisualizerItem.cpp:178
+msgid "ForceSensorVisualizerItem"
+msgstr "力センサ可視化アイテム"
 
 #: SensorVisualizerItem.cpp:179
-msgid "ForceSensorVisualizer"
-msgstr "力センサビジュアライザ"
+msgid "PointCloudVisualizerItem"
+msgstr "ポイントクラウド可視化アイテム"
 
 #: SensorVisualizerItem.cpp:180
-msgid "PointCloudVisualizer"
-msgstr "ポイントクラウドビジュアライザ"
+msgid "RangeSensorVisualizerItem"
+msgstr "レンジセンサ可視化アイテム"
 
 #: SensorVisualizerItem.cpp:181
-msgid "RangeSensorVisualizer"
-msgstr "レンジセンサビジュアライザ"
+msgid "CameraImageVisualizerItem"
+msgstr "カメラ画像可視化アイテム"
 
-#: SensorVisualizerItem.cpp:182
-msgid "CameraImageVisualizer"
-msgstr "カメラ画像ビジュアライザ"
-
-#: SensorVisualizerItem.cpp:484
+#: SensorVisualizerItem.cpp:492
 msgid "Visual ratio"
 msgstr "表示比率"
 
@@ -1715,77 +1717,33 @@ msgid "Inertia tensor"
 msgstr "慣性テンソル"
 
 #: LinkPropertyView.cpp:122
+msgid "Material"
+msgstr "マテリアル"
+
+#: LinkPropertyView.cpp:123
 msgid "Joint type"
 msgstr "関節タイプ"
 
-#: LinkPropertyView.cpp:124
+#: LinkPropertyView.cpp:125
 msgid "Joint axis"
 msgstr "関節軸"
 
-#: LinkPropertyView.cpp:125
+#: LinkPropertyView.cpp:126
 msgid "Upper joint limit"
 msgstr "関節変位上限"
 
-#: LinkPropertyView.cpp:126
+#: LinkPropertyView.cpp:127
 msgid "Lower joint limit"
 msgstr "関節変位下限"
 
-#: LinkPropertyView.cpp:127
+#: LinkPropertyView.cpp:128
 msgid "Upper joint velocity"
 msgstr "関節速度上限"
 
-#: LinkPropertyView.cpp:128
+#: LinkPropertyView.cpp:129
 msgid "Lower joint velocity"
 msgstr "関節速度下限"
 
-#: LinkPropertyView.cpp:129
+#: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
-
-#~ msgid "Link List"
-#~ msgstr "リンク一覧"
-
-#~ msgid "Link Tree"
-#~ msgstr "リンクツリー"
-
-#~ msgid "Joint List"
-#~ msgstr "関節一覧"
-
-#~ msgid "Joint Tree"
-#~ msgstr "関節ツリー"
-
-#~ msgid "Part Tree"
-#~ msgstr "身体部位ツリー"
-
-#~ msgid "Joint"
-#~ msgstr "関節"
-
-#~ msgid "Angle"
-#~ msgstr "角度"
-
-#~ msgid "Velocity Limiting Filter"
-#~ msgstr "速度制限フィルタ"
-
-#~ msgid "Pollard method"
-#~ msgstr "Pollard手法"
-
-#~ msgid "Gaussian Filter"
-#~ msgstr "ガウシアンフィルタ"
-
-#~ msgid "Cancel"
-#~ msgstr "キャンセル"
-
-#~ msgid "Range Limiting Filter"
-#~ msgstr "範囲制限フィルタ"
-
-#~ msgid "limit grad."
-#~ msgstr "制約勾配"
-
-#~ msgid "edge grad. ratio"
-#~ msgstr "辺勾配比率"
-
-#~ msgid "margin"
-#~ msgstr "マージン"
-
-#~ msgid "Merge selected MultiValueSeqItems (Temporary version)"
-#~ msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
