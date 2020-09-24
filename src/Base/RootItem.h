@@ -86,8 +86,8 @@ private:
     Impl* impl;
 
     // The following functions are called from the implementation of the Item class
-    void notifyEventOnSubTreeAdded(Item* item);
-    void notifyEventOnSubTreeMoved(Item* item);
+    void notifyEventOnSubTreeAdded(Item* item, std::vector<Item*>& orgSubTreeItems);
+    void notifyEventOnSubTreeMoved(Item* item, std::vector<Item*>& orgSubTreeItems);
     void notifyEventOnSubTreeRemoving(Item* item, bool isMoving);
     void notifyEventOnSubTreeRemoved(Item* item, bool isMoving);
     void emitSigItemAssinged(Item* assigned, Item* srcItem);

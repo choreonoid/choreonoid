@@ -107,6 +107,7 @@ public:
     bool checkNewPositionAcceptance(Item* newParentItem, Item* newNextItem, bool isManualOperation);
     bool checkNewPositionAcceptanceIter(bool isManualOperation);
     bool onCheckNewPositionAcceptance(bool isManualOperation);
+    void collectSubTreeItems(vector<Item*>& items, Item* item);
     void callFuncOnConnectedToRoot();
     void justRemoveSelfFromParent();
     void doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted);
@@ -115,8 +116,6 @@ public:
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
     void emitSigDisconnectedFromRootForSubTree();
-    void requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(Item* item, RootItem* root);
-    void requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(Item* item, RootItem* root);
     bool traverse(Item* item, const std::function<bool(Item*)>& pred);
 };
 
@@ -633,7 +632,16 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     item->onAddedToParent();
 
     if(rootItem){
-        /**
+        /*
+          The items contained in the original sub tree. New items may be added to the sub tree
+          in the following event handler functions. For example, SubProjectItem loads its own
+          items in its onConnectedToRoot function. For those items, emitting the RootItem::sigItemAdded
+          signal twice must be avoided and the following variable is used for it.
+        */
+        vector<Item*> orgSubTreeItems;
+        collectSubTreeItems(orgSubTreeItems, item);
+        
+        /*
            The order to process the following notifications was modified on February 4, 2020.
            (The revision just before this modification is 2401bde85eb50340ea5ea1e915d1355fa6b85582.)
            The order in which callSlotsOnPositionChanged is called was changed before
@@ -647,13 +655,27 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         if(!isMoving){
             item->impl->callFuncOnConnectedToRoot();
         }
+
         item->impl->callSlotsOnPositionChanged(prevParentItem, prevNextSibling);
+
         if(isMoving){
-            rootItem->notifyEventOnSubTreeMoved(item);
+            rootItem->notifyEventOnSubTreeMoved(item, orgSubTreeItems);
+
         } else {
-            rootItem->notifyEventOnSubTreeAdded(item);
-            item->impl->requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(item, rootItem);
-            item->impl->requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(item, rootItem);
+            rootItem->notifyEventOnSubTreeAdded(item, orgSubTreeItems);
+
+            for(auto& subTreeItem : orgSubTreeItems){
+                if(subTreeItem->isSelected()){
+                    rootItem->emitSigSelectionChanged(subTreeItem, true, false);
+                }
+                auto& checks = subTreeItem->impl->checkStates;
+                int n = checks.size();
+                for(int checkId = 0; checkId < n; ++checkId){
+                    if(checks[checkId]){
+                        rootItem->emitSigCheckToggled(subTreeItem, checkId, true);
+                    }
+                }
+            }
         }
     }
 
@@ -754,6 +776,15 @@ void Item::onAddedToParent()
 bool Item::onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation)
 {
     return true;
+}
+
+
+void Item::Impl::collectSubTreeItems(vector<Item*>& items, Item* item)
+{
+    items.push_back(item);
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        collectSubTreeItems(items, child);
+    }
 }
 
 
@@ -973,34 +1004,6 @@ void Item::onDisconnectedFromRoot()
 {
     if(TRACE_FUNCTIONS){
         cout << "Item::onDisconnectedFromRoot() of " << name_ << endl;
-    }
-}
-
-
-void Item::Impl::requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems
-(Item* item, RootItem* rootItem)
-{
-    if(item->isSelected()){
-        rootItem->emitSigSelectionChanged(item, true, false);
-    }
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        requestRootItemToEmitSigSelectionChangedForNewlyAddedSelectedItems(child, rootItem);
-    }
-}
-
-
-void Item::Impl::requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems
-(Item* item, RootItem* root)
-{
-    auto& checks = item->impl->checkStates;
-    int n = checks.size();
-    for(int checkId=0; checkId < n; ++checkId){
-        if(checks[checkId]){
-            root->emitSigCheckToggled(item, checkId, true);
-        }
-    }
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        requestRootItemToEmitSigCheckToggledForNewlyAddedCheckedItems(child, root);
     }
 }
 

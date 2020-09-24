@@ -5,9 +5,12 @@
 #include "RootItem.h"
 #include "ExtensionManager.h"
 #include "ItemManager.h"
+#include "ItemClassRegistry.h"
+#include "MenuManager.h"
 #include "LazyCaller.h"
 #include "LazySignal.h"
 #include "Archive.h"
+#include <fmt/format.h>
 #include <iostream>
 #include "gettext.h"
 
@@ -71,8 +74,6 @@ public:
     Impl(RootItem* self);
     Impl(RootItem* self, const Impl& org);
     void doCommonInitialization();
-    void emitSigItemAddedForItemTree(Item* item);
-    void emitSigItemMovedForItemTree(Item* item);
     void selectItemIter(Item* item, Item* itemToSelect);
     bool updateSelectedItemsIter(Item* item);
     void updateCheckedItemsIter(Item* item, int checkId, ItemList<>& checkedItems);
@@ -96,9 +97,7 @@ CheckEntry::CheckEntry(const CheckEntry& org)
 
 }
 
-#include "MenuManager.h"
-#include "ItemClassRegistry.h"
-#include <fmt/format.h>
+
 static void putItemTreeWithPolymorphicIds()
 {
     auto& registry = ItemClassRegistry::instance();
@@ -285,45 +284,35 @@ SignalProxy<void(Item* assigned, Item* srcItem)> RootItem::sigItemAssigned()
 }
 
 
-void RootItem::notifyEventOnSubTreeAdded(Item* item)
+void RootItem::notifyEventOnSubTreeAdded(Item* item, std::vector<Item*>& orgSubTreeItems)
 {
     if(TRACE_FUNCTIONS){
         cout << "RootItem::notifyEventOnItemAdded()" << endl;
     }
 
     impl->sigSubTreeAdded(item);
-    impl->emitSigItemAddedForItemTree(item);
+
+    for(auto& item : orgSubTreeItems){
+        impl->sigItemAdded(item);
+    }
+    
     impl->sigTreeChanged.request();
 }
 
 
-void RootItem::Impl::emitSigItemAddedForItemTree(Item* item)
-{
-    sigItemAdded(item);
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        emitSigItemAddedForItemTree(child);
-    }
-}
-
-
-void RootItem::notifyEventOnSubTreeMoved(Item* item)
+void RootItem::notifyEventOnSubTreeMoved(Item* item, std::vector<Item*>& orgSubTreeItems)
 {
     if(TRACE_FUNCTIONS){
         cout << "RootItem::notifyEventOnItemMoved()" << endl;
     }
 
     impl->sigSubTreeMoved(item);
-    impl->emitSigItemMovedForItemTree(item);
-    impl->sigTreeChanged.request();
-}
 
-
-void RootItem::Impl::emitSigItemMovedForItemTree(Item* item)
-{
-    sigItemMoved(item);
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        emitSigItemMovedForItemTree(child);
+    for(auto& item : orgSubTreeItems){
+        impl->sigItemMoved(item);
     }
+    
+    impl->sigTreeChanged.request();
 }
 
 
