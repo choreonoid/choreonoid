@@ -370,10 +370,14 @@ public:
 
     GLdouble pickX;
     GLdouble pickY;
+
+    /*
+      It might be better to use the ref_ptr type as an element of SgNodePath
+      so that the instance can be kept even if it is removed from the scene graph
+    */
     typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
     SgNodePath currentNodePath;
     SgNodePath emptyNodePath;
-
     vector<SgNodePathPtr> pickingNodePathList;
     SgNodePath pickedNodePath;
     Vector3 pickedPoint;
@@ -1724,7 +1728,7 @@ bool GLSLSceneRenderer::isRenderingPickingImage() const
 }
 
 
-const std::vector<SgNode*>& GLSLSceneRenderer::pickedNodePath() const
+const SgNodePath& GLSLSceneRenderer::pickedNodePath() const
 {
     return impl->pickedNodePath;
 }

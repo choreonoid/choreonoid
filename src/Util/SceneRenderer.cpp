@@ -530,7 +530,7 @@ SgCamera* SceneRenderer::camera(int index)
 }
 
 
-const std::vector<SgNode*>& SceneRenderer::cameraPath(int index) const
+const SgNodePath& SceneRenderer::cameraPath(int index) const
 {
     if(impl->cameraPaths.empty()){
         impl->updateCameraPaths();
@@ -541,7 +541,7 @@ const std::vector<SgNode*>& SceneRenderer::cameraPath(int index) const
 
 void SceneRendererImpl::updateCameraPaths()
 {
-    vector<SgNode*> tmpPath;
+    SgNodePath tmpPath;
     const int n = cameras->size();
     cameraPaths.resize(n);
     
@@ -555,7 +555,7 @@ void SceneRendererImpl::updateCameraPaths()
         }
         if(!tmpPath.empty()){
             tmpPath.pop_back(); // remove the root node
-            vector<SgNode*>& path = cameraPaths[i];
+            SgNodePath& path = cameraPaths[i];
             path.resize(tmpPath.size());
             std::copy(tmpPath.rbegin(), tmpPath.rend(), path.begin());
         }
@@ -677,7 +677,7 @@ int SceneRenderer::findCameraPath(const std::vector<std::string>& simplifiedPath
         const string& name = simplifiedPathStrings.back();
         const int n = numCameras();
         for(int i=0; i < n; ++i){
-            const vector<SgNode*>& path = cameraPath(i);
+            const SgNodePath& path = cameraPath(i);
             if(path.back()->name() == name){
                 candidates.push_back(i);
             }
@@ -691,7 +691,7 @@ int SceneRenderer::findCameraPath(const std::vector<std::string>& simplifiedPath
             } else {
                 const string& owner = simplifiedPathStrings.front();
                 for(size_t i=0; i < candidates.size(); ++i){
-                    const vector<SgNode*>& path = cameraPath(i);
+                    const SgNodePath& path = cameraPath(i);
                     if(path.front()->name() == owner){
                         index = i;
                         break;

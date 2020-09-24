@@ -266,7 +266,7 @@ public:
     void togglePin(EditableSceneLink* sceneLink, bool toggleTranslation, bool toggleRotation);
     void makeLinkAttitudeLevel();
         
-    PointedType findPointedObject(const vector<SgNode*>& path);
+    PointedType findPointedObject(const SgNodePath& path);
     int checkLinkOperationType(SceneLink* sceneLink);
     int checkLinkKinematicsType(Link* link);
     void updateMarkersAndManipulators(bool on);
@@ -736,7 +736,7 @@ void EditableSceneBody::Impl::makeLinkAttitudeLevel()
 }
 
 
-EditableSceneBody::Impl::PointedType EditableSceneBody::Impl::findPointedObject(const vector<SgNode*>& path)
+EditableSceneBody::Impl::PointedType EditableSceneBody::Impl::findPointedObject(const SgNodePath& path)
 {
     PointedType pointedType = PT_NONE;
     pointedSceneLink = nullptr;

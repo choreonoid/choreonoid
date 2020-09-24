@@ -889,7 +889,7 @@ bool GL1SceneRenderer::Impl::doPick(int x, int y)
 }
 
 
-const std::vector<SgNode*>& GL1SceneRenderer::pickedNodePath() const
+const SgNodePath& GL1SceneRenderer::pickedNodePath() const
 {
     return impl->pickedNodePath;
 }
