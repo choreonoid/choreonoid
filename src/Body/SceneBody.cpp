@@ -102,7 +102,7 @@ public:
             }
             functions->dispatch(node);
         }
-        if(collisionShape && (visibility & 2)){
+        if((visibility & 2) && (collisionShape != visualShape) && collisionShape){
             functions->dispatch(collisionShape);
         }
     }
