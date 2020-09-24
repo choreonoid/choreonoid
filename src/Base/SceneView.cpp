@@ -79,7 +79,13 @@ void SceneView::initializeClass(ExtensionManager* ext)
 
         sigItemAddedConnection =
             RootItem::instance()->sigItemAdded().connect(
-                [](Item* item){ SceneView::onItemAdded(item); });
+                [](Item* item){
+                    if(auto renderable = dynamic_cast<RenderableItem*>(item)){
+                        for(size_t i=0; i < instances_.size(); ++i){
+                            instances_[i]->impl->onRenderableItemAdded(item, renderable);
+                        }
+                    }
+                });
     }
 }
 
@@ -226,16 +232,6 @@ bool SceneView::setCustomMode(int mode)
 int SceneView::customMode() const
 {
     return impl->sceneWidget->activeCustomMode();
-}
-
-
-void SceneView::onItemAdded(Item* item)
-{
-    if(RenderableItem* renderable = dynamic_cast<RenderableItem*>(item)){
-        for(size_t i=0; i < instances_.size(); ++i){
-            instances_[i]->impl->onRenderableItemAdded(item, renderable);
-        }
-    }
 }
 
 

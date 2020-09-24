@@ -59,8 +59,6 @@ protected:
     virtual bool restoreState(const Archive& archive) override;
         
 private:
-    static void onItemAdded(Item* item);
-
     class Impl;
     Impl* impl;
 };
