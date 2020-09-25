@@ -334,11 +334,10 @@ public:
 
     const Mapping* info() const { return info_; }
     Mapping* info() { return info_; }
-
     template<typename T> T info(const std::string& key) const;
     template<typename T> T info(const std::string& key, const T& defaultValue) const;
     template<typename T> void setInfo(const std::string& key, const T& value);
-
+    std::string info(const std::string& key, const char* defaultValue) const;
     void resetInfo(Mapping* info);
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY

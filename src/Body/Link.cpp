@@ -417,6 +417,16 @@ template<> bool Link::info(const std::string& key, const bool& defaultValue) con
 }
 
 
+std::string Link::info(const std::string& key, const char* defaultValue) const
+{
+    string value;
+    if(info_->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
 template<> void Link::setInfo(const std::string& key, const double& value)
 {
     info_->write(key, value);
