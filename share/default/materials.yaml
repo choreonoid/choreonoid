@@ -2,75 +2,76 @@ materials:
   -
     name: Default
     roughness: 1.0
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: Ground
     roughness: 0.5
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: Tire
     roughness: 1.0
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: Tracks
     roughness: 0.5
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: OilWetGround
     roughness: 0.1
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: Sole
     roughness: 0.5
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: Hand
     roughness: 1.0
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: TankTracks
     youngsModulus: 1e10
     roughness: 1.0
-    viscosity: 0.3
+    viscosity: 1.0
   -
     name: TankWheel
     youngsModulus: 1e10
     roughness: 0.0
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: SpiderTracks
     density: 1e3
     youngsModulus: 1e10
     roughness: 1.0
-    viscosity: 0.3
+    viscosity: 1.0
   -
     name: AizuSpiderTracks
     density: 1e3
     youngsModulus: 1e10
     roughness: 1.0
-    viscosity: 0.3
+    viscosity: 1.0
   -
     name: SpiderWheel
     youngsModulus: 1e10
     roughness: 0.0
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: DoubleArmV7ATracks
     youngsModulus: 1e10
     roughness: 1.0
-    viscosity: 0.3
+    viscosity: 1.0
   -
     name: DoubleArmV7AWheel
     youngsModulus: 1e10
     roughness: 0.0
-    viscosity: 0.0
+    viscosity: 1.0
   -
     name: Wire
     wireYoungsModulusBend: 1e7
+    viscosity: 1.0
   -
     name: Steel
     roughness: 1.0
-    viscosity: 0.0
+    viscosity: 1.0
     youngsModulus: 200e9
 
 contactMaterials:
