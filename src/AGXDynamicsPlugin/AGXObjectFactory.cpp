@@ -55,22 +55,27 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
 agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
 {
     agx::MaterialRef m = new agx::Material(desc.name);
-    m->getBulkMaterial()->setDensity(desc.density);
-    m->getBulkMaterial()->setYoungsModulus(desc.youngsModulus);
-    m->getBulkMaterial()->setPoissonsRatio(desc.poissonRatio);
+
+    auto bulk = m->getBulkMaterial();
+    bulk->setDensity(desc.density);
+    bulk->setYoungsModulus(desc.youngsModulus);
+    bulk->setPoissonsRatio(desc.poissonRatio);
 
     // Below are overried when ContactMaterials are used.
-    m->getBulkMaterial()->setViscosity(desc.viscosity);
-    m->getBulkMaterial()->setDamping(desc.spookDamping);
-    m->getSurfaceMaterial()->setRoughness(desc.roughness);
-    m->getSurfaceMaterial()->setViscosity(desc.surfaceViscosity);
-    m->getSurfaceMaterial()->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
+    bulk->setViscosity(desc.viscosity);
+    bulk->setDamping(desc.spookDamping);
+    
+    auto surface = m->getSurfaceMaterial();
+    surface->setRoughness(desc.roughness);
+    surface->setViscosity(desc.surfaceViscosity);
+    surface->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
 
     // WireMaterial
-    m->getWireMaterial()->setYoungsModulusBend(desc.wireYoungsModulusBend);
-    m->getWireMaterial()->setDampingBend(desc.wireSpookDampingBend);
-    m->getWireMaterial()->setYoungsModulusStretch(desc.wireYoungsModulusStretch);
-    m->getWireMaterial()->setDampingStretch(desc.wireSpookDampingStretch);
+    auto wire = m->getWireMaterial();
+    wire->setYoungsModulusBend(desc.wireYoungsModulusBend);
+    wire->setDampingBend(desc.wireSpookDampingBend);
+    wire->setYoungsModulusStretch(desc.wireYoungsModulusStretch);
+    wire->setDampingStretch(desc.wireSpookDampingStretch);
 
     return m;
 }

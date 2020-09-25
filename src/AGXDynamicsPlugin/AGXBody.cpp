@@ -95,21 +95,23 @@ void AGXLink::constructAGXLink(const Position& T, const bool& makeStatic)
     //printDebugInfo();
 }
 
-void AGXLink::setAGXMaterial(){
-    Mapping* mapping = getOrgLink()->info();
+void AGXLink::setAGXMaterial()
+{
+    auto link = getOrgLink();
+    
     // Set material
-    string materialName = mapping->get("material", "default");
+    string materialName = link->materialName();
     if(materialName == "useLinkInfo"){
         setAGXMaterialFromLinkInfo();
     }else{
-        setAGXMaterialFromName(getOrgLink()->materialName());
+        setAGXMaterialFromName(materialName);
     }
 
     // Set density or mass
-    string massType = mapping->get("massType", "mass");
+    string massType = link->info("massType", "mass");
     if(massType == "density"){
-        double density;
-        if(mapping->read("density", density)){
+        double density = link->info("density", 0.0);
+        if(density > 0.0){
             getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
         }
     }else{
