@@ -1609,12 +1609,13 @@ void GLSLSceneRenderer::dispatchToTransparentPhase
 (ReferencedPtr object, int id,
  const std::function<void(Referenced* object, const Affine3& position, int id)>& renderingFunction)
 {
-    int matrixIndex = impl->modelMatrixBuffer.size();
-    impl->modelMatrixBuffer.push_back(impl->modelMatrixStack.back());
-
-    impl->transparentRenderingQueue.emplace_back(
-        [this, renderingFunction, object, matrixIndex, id](){
-            renderingFunction(object, impl->modelMatrixBuffer[matrixIndex], id); });
+    if(!impl->isRenderingShadowMap){
+        int matrixIndex = impl->modelMatrixBuffer.size();
+        impl->modelMatrixBuffer.push_back(impl->modelMatrixStack.back());
+        impl->transparentRenderingQueue.emplace_back(
+            [this, renderingFunction, object, matrixIndex, id](){
+                renderingFunction(object, impl->modelMatrixBuffer[matrixIndex], id); });
+    }
 }
 
 
@@ -2826,6 +2827,11 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 
 void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
 {
+    if(!isRenderingVisibleImage){
+        renderGroup(style);
+        return;
+    }
+    
     int elements = style->polygonElements();
     int matrixIndex = -1;
 
@@ -2833,7 +2839,7 @@ void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
     bool isEdgeEnabled = elements & SgPolygonDrawStyle::Edge;
     bool isVertexEnabled = elements & SgPolygonDrawStyle::Vertex;
     
-    if(isRenderingVisibleImage && (isVertexEnabled || (!isFaceEnabled && isEdgeEnabled))){
+    if(isVertexEnabled || (!isFaceEnabled && isEdgeEnabled)){
         matrixIndex = modelMatrixBuffer.size();
         modelMatrixBuffer.push_back(modelMatrixStack.back());
     }
@@ -2845,11 +2851,11 @@ void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
             renderGroup(style);
             fullLightingProgram->setWireframeEnabled(isWireframeEnabledPreviously);
         }
-    } else if(isRenderingVisibleImage && isEdgeEnabled){
+    } else if(isEdgeEnabled){
         pureWireframeRenderingNodes.emplace_back(style, matrixIndex);
     }
 
-    if(isRenderingVisibleImage && isVertexEnabled){
+    if(isVertexEnabled){
         vertexRenderingNodes.emplace_back(style, matrixIndex);
     }
 }
@@ -2936,7 +2942,7 @@ void GLSLSceneRenderer::Impl::renderOutline(SgOutline* outline)
 {
     renderGroup(outline);
 
-    if(!isRenderingPickingImage && isRenderingVisibleImage){
+    if(isRenderingVisibleImage){
         int matrixIndex = modelMatrixBuffer.size();
         modelMatrixBuffer.push_back(modelMatrixStack.back());
         overlayRenderingQueue.emplace_back(
