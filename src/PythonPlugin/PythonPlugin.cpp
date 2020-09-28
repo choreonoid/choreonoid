@@ -305,38 +305,75 @@ bool PythonPlugin::initializeInterpreter()
 }
 
 
+#ifdef Q_OS_LINUX
+
+/*
+  The link_map structure instance obtained by dlfino with RTLD_DL_LINKMAP
+  has both the prev and next instances, and the instance obtained by the function
+  is a particular position in the global link_map chain. The position is determined
+  by the handle given to the function. Therefore, to find the information on a
+  particular shared library, you have to search in both the directions from the obtained
+  link_map instance. Note that the global chain can be directly obtained by the
+  dl_iterate_phdr function, which might be used to achieve more efficient implementation.
+*/
+static char* findLibPython(const std::string& pluginFilePath)
+{
+    auto handle = dlopen(pluginFilePath.c_str(), RTLD_LAZY);
+    if(handle == nullptr){
+        return nullptr;
+    }
+    struct link_map* linkMap;
+    if(dlinfo(handle, RTLD_DI_LINKMAP, &linkMap) != 0){
+        return nullptr;
+    }
+    
+    char* libPythonName = nullptr;
+    struct link_map* formerLinkMap = linkMap;
+    struct link_map* latterLinkMap = linkMap->l_next;
+    regex pattern(".*libpython.+\\.so.*");
+    std::cmatch match;
+    
+    while(true){
+        if(linkMap == formerLinkMap && latterLinkMap){
+            linkMap = latterLinkMap;
+            if(formerLinkMap){
+                formerLinkMap = formerLinkMap->l_prev;
+            }
+        } else if(formerLinkMap){
+            linkMap = formerLinkMap;
+            if(latterLinkMap){
+                latterLinkMap = latterLinkMap->l_next;
+            }
+        }
+        if(!linkMap){
+            break;
+        }
+        if(regex_match(linkMap->l_name, match, pattern)){
+            libPythonName = linkMap->l_name;
+            break;
+        }
+    }
+    
+    return libPythonName;
+}
+
 /*
   The symbols of shared library "libpython" must be exported so that Python modules written in the C API
   can be imported because usually C-API Python modules are not explicitly linked with a particular
   libpython file. This is probably because the modules should not depend on a particular minor version of
   Python. Symbols can be exported to use the dlopen function with the RTLD_GLOBAL option in Linux.
  */
-#ifdef Q_OS_LINUX
 void PythonPlugin::exportLibPythonSymbols()
 {
-    bool exported = false;
-    auto handle = dlopen(filePath().c_str(), RTLD_LAZY);
-    if(handle != nullptr){
-        regex pattern(".*libpython.+\\.so.*");
-        struct link_map* linkMap;
-        std::cmatch match;
-        if(dlinfo(handle, RTLD_DI_LINKMAP, &linkMap) == 0){
-            while(linkMap){
-                if(regex_match(linkMap->l_name, match, pattern)){
-                    dlopen(linkMap->l_name, RTLD_LAZY | RTLD_GLOBAL);
-                    exported = true;
-                    break;
-                }
-                linkMap = linkMap->l_next;
-            }
-        }
-    }
-    if(!exported){
+    if(auto libPython = findLibPython(filePath())){
+        dlopen(libPython, RTLD_LAZY | RTLD_GLOBAL);
+    } else {
         MessageView::instance()->putln(
             _("Failed to export the libpython symbols. The system may not be able to load binary Python modules."),
             MessageView::Warning);
-    }
+    }        
 }
+
 #endif
 
 
