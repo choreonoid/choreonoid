@@ -361,8 +361,13 @@ ItemList<> ProjectManager::Impl::loadProject
             mv->putln(_("The project file is empty."), MessageView::Warning);
 
         } else if(parsed){
+
+            bool isSubProject = parentItem != nullptr;
+            if(!isSubProject){
+                parentItem = RootItem::instance();
+            }
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
-            archive->initSharedInfo(filename);
+            archive->initSharedInfo(filename, isSubProject);
 
             std::set<string> optionalPlugins;
             Listing& optionalPluginsNode = *archive->findListing("optionalPlugins");
@@ -452,11 +457,6 @@ ItemList<> ProjectManager::Impl::loadProject
                 }
             }
 
-            bool isSubProject = parentItem != nullptr;
-            if(!isSubProject){
-                parentItem = RootItem::instance();
-            }
-                    
             itemTreeArchiver.reset();
             Archive* items = archive->findSubArchive("items");
             if(items->isValid()){
@@ -596,7 +596,7 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
     itemTreeArchiver.reset();
     
     ArchivePtr archive = new Archive();
-    archive->initSharedInfo(filename);
+    archive->initSharedInfo(filename, isSubProject);
 
     ArchivePtr itemArchive = itemTreeArchiver.store(archive, item);
 

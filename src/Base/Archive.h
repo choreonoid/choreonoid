@@ -26,8 +26,7 @@ public:
     Archive(int line, int column);
     virtual ~Archive();
 
-    void initSharedInfo();
-    void initSharedInfo(const std::string& projectFile);
+    void initSharedInfo(const std::string& projectFile, bool isSubProject);
     void inheritSharedInfoFrom(Archive& archive);
 
     void addProcessOnSubTreeRestored(const std::function<void()>& func) const;

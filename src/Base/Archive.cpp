@@ -80,16 +80,16 @@ Archive::~Archive()
 }
 
 
-void Archive::initSharedInfo()
+void Archive::initSharedInfo(const std::string& projectFile, bool isSubProject)
 {
     shared = new ArchiveSharedData;
-    shared->pathVariableProcessor = FilePathVariableProcessor::systemInstance();
-}    
 
-
-void Archive::initSharedInfo(const std::string& projectFile)
-{
-    initSharedInfo();
+    if(!isSubProject){
+        shared->pathVariableProcessor = FilePathVariableProcessor::systemInstance();
+    } else {
+        shared->pathVariableProcessor = new FilePathVariableProcessor;
+        shared->pathVariableProcessor->setSystemVariablesEnabled(true);
+    }
 
     auto projectDir = toUTF8(
         filesystem::absolute(fromUTF8(projectFile)).parent_path().generic_string());
