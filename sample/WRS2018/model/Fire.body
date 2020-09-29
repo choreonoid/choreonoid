@@ -6,6 +6,7 @@ links:
   -
     name: ROOT
     jointType: fixed
+    mass: 0.1
   -
     name: FIRE_JOINT
     parent: ROOT
@@ -15,6 +16,7 @@ links:
     jointDisplacement: 0.08
     actuationMode: jointDisplacement
     jointId: 0
+    mass: 0.1
     elements:
       FireDevice:
         name: FIRE
