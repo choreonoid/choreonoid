@@ -1,6 +1,6 @@
 /**
    @author Shin'ichiro Nakaoka
-nnn*/
+*/
 
 #include "PythonConsoleView.h"
 #include "PythonScriptItem.h"
@@ -334,15 +334,23 @@ static char* findLibPython(const std::string& pluginFilePath)
     std::cmatch match;
     
     while(true){
-        if(linkMap == formerLinkMap && latterLinkMap){
-            linkMap = latterLinkMap;
+        if(linkMap == formerLinkMap){
             if(formerLinkMap){
                 formerLinkMap = formerLinkMap->l_prev;
             }
-        } else if(formerLinkMap){
-            linkMap = formerLinkMap;
+            if(latterLinkMap){
+                linkMap = latterLinkMap;
+            } else {
+                linkMap = formerLinkMap;
+            }
+        } else {
             if(latterLinkMap){
                 latterLinkMap = latterLinkMap->l_next;
+            }
+            if(formerLinkMap){
+                linkMap = formerLinkMap;
+            } else {
+                linkMap = latterLinkMap;
             }
         }
         if(!linkMap){
