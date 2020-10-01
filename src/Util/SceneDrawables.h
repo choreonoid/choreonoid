@@ -261,7 +261,7 @@ public:
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }
     SgVertexArray* setVertices(SgVertexArray* vertices);
-    SgVertexArray* getOrCreateVertices(size_t size = 0);
+    SgVertexArray* getOrCreateVertices(int size = 0);
         
     bool hasNormals() const { return (normals_ && !normals_->empty()); }
     SgNormalArray* normals() { return normals_; }
@@ -273,7 +273,7 @@ public:
     SgColorArray* colors() { return colors_; }
     const SgColorArray* colors() const { return colors_; }
     SgColorArray* setColors(SgColorArray* colors);
-    SgColorArray* getOrCreateColors();
+    SgColorArray* getOrCreateColors(int size = 0);
 
     bool hasTexCoords() const { return (texCoords_ && !texCoords_->empty()); }
     SgTexCoordArray* texCoords() { return texCoords_; }
@@ -538,7 +538,7 @@ public:
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }
     SgVertexArray* setVertices(SgVertexArray* vertices);
-    SgVertexArray* getOrCreateVertices(size_t size = 0);
+    SgVertexArray* getOrCreateVertices(int size = 0);
         
     SgMaterial* material() { return material_; }
     const SgMaterial* material() const { return material_; }
@@ -558,7 +558,7 @@ public:
     SgColorArray* colors() { return colors_; }
     const SgColorArray* colors() const { return colors_; }
     SgColorArray* setColors(SgColorArray* colors);
-    SgColorArray* getOrCreateColors();
+    SgColorArray* getOrCreateColors(int size = 0);
 
     const SgIndexArray& colorIndices() const { return colorIndices_; }
     SgIndexArray& colorIndices() { return colorIndices_; }
@@ -639,6 +639,15 @@ public:
     void addLine(int v0, int v1){
         lineVertices_.push_back(v0);
         lineVertices_.push_back(v1);
+    }
+
+    void resizeColorIndicesForNumLines(int n) {
+        colorIndices().resize(n * 2);
+    }
+
+    void setLineColor(int lineIndex, int colorIndex){
+        colorIndices()[lineIndex * 2    ] = colorIndex;
+        colorIndices()[lineIndex * 2 + 1] = colorIndex;
     }
 
     void setLineWidth(float width) { lineWidth_ = width; }
