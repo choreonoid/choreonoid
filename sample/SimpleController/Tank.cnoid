@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX ]
+optionalPlugins: [ ODE ]
 
 items: 
   id: 0
@@ -84,7 +84,7 @@ items:
             rotation: [ 1, 0, 0, 0 ]
         - 
           id: 5
-          name: "AISTSimulator"
+          name: "AISTSimulator-torque"
           plugin: Body
           class: AISTSimulatorItem
           data: 
@@ -113,6 +113,36 @@ items:
             2Dmode: false
         - 
           id: 6
+          name: "AISTSimulator-position"
+          plugin: Body
+          class: AISTSimulatorItem
+          data: 
+            timeStep: 0.001
+            realtimeSync: true
+            recording: off
+            timeRangeMode: Unlimited
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: true
+            selfCollision: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "position"
+            dynamicsMode: Forward dynamics
+            integrationMode: Runge Kutta
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 0.5
+            slipFriction: 0.5
+            cullingThresh: 0.01
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
+            2Dmode: false
+        - 
+          id: 7
           name: "ODESimulator"
           plugin: ODE
           class: ODESimulatorItem
@@ -135,26 +165,6 @@ items:
             limitCorrectingVel: true
             maxCorrectingVel: 1.0e-3
             2Dmode: false
-        - 
-          id: 7
-          name: "BulletSimulator"
-          plugin: Bullet
-          class: BulletSimulatorItem
-          data: 
-            timeStep: 0.001
-            realtimeSync: true
-            recordingMode: Direct
-            onlyActiveControlPeriod: true
-            timeLength: 60
-            allLinkPositionOutputMode: true
-            deviceStateRecording: true
-            ErrorReductionParameter: 0.2
-            NumIterations: 10
-            Restitution: 0
-            Friction: 0.9
-            ERP2: 0
-            SplitImpulsePenetrationThreshold: -0.0001
-            usefeatherstoneAlgorithm: false
 views: 
   - 
     id: 0
