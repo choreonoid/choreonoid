@@ -28,14 +28,31 @@ THE SOFTWARE
 
 ---------------------------------------------------------------------------
 
-This software also includes the following software components which are
+This software includes the following robot models which are
 copyrighted by other developers.
 
- * Double Arm Construction Robot Model
+ * Aizu Spider
+   see share/model/AizuSpider/LICENSE
+
+ * Aizu Wheel
+   see share/model/AizuWheel/LICENSE
+
+ * Double Arm Construction Robot (V7)
    see share/model/DoubleArmV7/LICENSE
 
- * WAREC1 Model
+ * Kinova JACO2 Arm
+   see share/model/JACO2/LICENSE
+
+ * Universal Robots U3, U5, and U10
+   see share/model/UniversalRobots/{U3|U5|U10}/LICENSE, respectively
+
+ * WAREC1
    see share/model/WAREC1/LICENSE
+
+---------------------------------------------------------------------------
+
+This software also includes the following software components which are
+copyrighted by other developers.
 
  * Eigen (http://eigen.tuxfamily.org)
    see thirdparty/eigen/COPYING.README
