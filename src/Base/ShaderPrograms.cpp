@@ -60,7 +60,19 @@ public:
     int viewportHeight;
     bool isViewportSizeInvalidated;
 };
-    
+
+
+class ThickLineProgram::Impl
+{
+public:
+    GLint lineWidthLocation;
+    int lineWidth;
+    GLint viewportSizeLocation;
+    int viewportWidth;
+    int viewportHeight;
+    bool isViewportSizeInvalidated;
+};
+
 
 class MinimumLightingProgram::Impl
 {
@@ -517,12 +529,66 @@ void SolidPointProgram::setTransform
 }
 
 
-
 void SolidPointProgram::setViewportSize(int width, int height)
 {
     impl->viewportWidth = width;
     impl->viewportHeight = height;
     impl->isViewportSizeInvalidated = true;
+}
+
+
+ThickLineProgram::ThickLineProgram()
+    : SolidColorProgram(
+        { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
+          { ":/Base/shader/ThickLine.geom", GL_GEOMETRY_SHADER },
+          { ":/Base/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
+{
+    impl = new Impl;
+}
+
+
+ThickLineProgram::~ThickLineProgram()
+{
+    delete impl;
+}
+
+    
+void ThickLineProgram::initialize()
+{
+    SolidColorProgram::initialize();
+
+    impl->lineWidth = 1.0f;
+
+    auto& glsl = glslProgram();
+    impl->lineWidthLocation = glsl.getUniformLocation("lineWidth");
+    impl->viewportSizeLocation = glsl.getUniformLocation("viewportSize");
+    glsl.use();
+}
+
+
+void ThickLineProgram::activate()
+{
+    SolidColorProgram::activate();
+
+    glUniform1f(impl->lineWidthLocation, impl->lineWidth);
+
+    if(impl->isViewportSizeInvalidated){
+        glUniform2f(impl->viewportSizeLocation, impl->viewportWidth, impl->viewportHeight);
+    }
+}
+
+
+void ThickLineProgram::setViewportSize(int width, int height)
+{
+    impl->viewportWidth = width;
+    impl->viewportHeight = height;
+    impl->isViewportSizeInvalidated = true;
+}
+
+
+void ThickLineProgram::setLineWidth(float width)
+{
+    impl->lineWidth = width;
 }
 
 

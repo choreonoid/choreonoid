@@ -140,6 +140,26 @@ private:
 };
 
 
+class CNOID_EXPORT  ThickLineProgram : public SolidColorProgram
+{
+    ThickLineProgram(const ThickLineProgram&) = delete;
+
+public:
+    ThickLineProgram();
+    ~ThickLineProgram();
+    
+    virtual void initialize() override;
+    virtual void activate();
+
+    void setViewportSize(int width, int height);
+    void setLineWidth(float width);
+
+private:
+    class Impl;
+    Impl* impl;
+};
+
+
 class CNOID_EXPORT LightingProgram : public ShaderProgram
 {
     LightingProgram() = default;

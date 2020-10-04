@@ -19,28 +19,6 @@
 layout( triangles ) in;
 layout( triangle_strip, max_vertices = 3 ) out;
 
-/*
-out vec3 gPosition;
-out vec3 gNormal;
-out vec2 gTexCoord;
-out vec3 gColorV;
-out vec4 gShadowCoords[MAX_NUM_SHADOWS];
-flat out int gEdgeSituation;
-noperspective out vec3 gEdgeDistance;
-
-#ifndef USE_DOUBLE_PRECISION_IN_WIREFRAME_RENDERING
-flat out vec2 gVertexA;
-flat out vec2 gDirectionA;
-flat out vec2 gVertexB;
-flat out vec2 gDirectionB;
-#else
-flat out dvec2 gVertexA;
-flat out dvec2 gDirectionA;
-flat out dvec2 gVertexB;
-flat out dvec2 gDirectionB;
-#endif
-*/
-
 out VertexData {
     vec3 position;
     vec3 normal;

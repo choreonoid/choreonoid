@@ -270,6 +270,7 @@ public:
     unique_ptr<NolightingProgram> nolightingProgram;
     unique_ptr<SolidColorProgram> solidColorProgram;
     unique_ptr<SolidPointProgram> solidPointProgram;
+    unique_ptr<ThickLineProgram> thickLineProgram;
     unique_ptr<MinimumLightingProgram> minimumLightingProgram;
     unique_ptr<FullLightingProgram> fullLightingProgram;
 
@@ -477,7 +478,7 @@ public:
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
     void setPointSize(float size);
-    void setLineWidth(float width);
+    void setGlLineWidth(float width);
     void getCurrentCameraTransform(Affine3& T);
 };
 
@@ -766,6 +767,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         nolightingProgram->release();
         solidColorProgram->release();
         solidPointProgram->release();
+        thickLineProgram->release();
         minimumLightingProgram->release();
         fullLightingProgram->release();
 
@@ -792,6 +794,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         nolightingProgram.reset(new NolightingProgram);
         solidColorProgram.reset(new SolidColorProgram);
         solidPointProgram.reset(new SolidPointProgram);
+        thickLineProgram.reset(new ThickLineProgram);
         minimumLightingProgram.reset(new MinimumLightingProgram);
         fullLightingProgram.reset(new FullLightingProgram);
 
@@ -927,6 +930,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
         nolightingProgram->initialize();
         solidColorProgram->initialize();
         solidPointProgram->initialize();
+        thickLineProgram->initialize();
         minimumLightingProgram->initialize();
         fullLightingProgram->setColorTextureIndex(ImageTextureIndex);
         fullLightingProgram->setShadowMapTextureTopIndex(ShadowMapTextureIndex);
@@ -1018,6 +1022,7 @@ void GLSLSceneRenderer::updateViewportInformation(int x, int y, int width, int h
     impl->needToUpdateOverlayDepthBufferSize = true;
     impl->fullLightingProgram->setViewportSize(width, height);
     impl->solidPointProgram->setViewportSize(width, height);
+    impl->thickLineProgram->setViewportSize(width, height);
 }
 
 
@@ -2716,12 +2721,12 @@ void GLSLSceneRenderer::Impl::renderPlot
     bool hasColors = plot->hasColors();
     
     if(isRenderingPickingImage){
-        solidColorProgram->setVertexColorEnabled(false);
+        currentSolidColorProgram->setVertexColorEnabled(false);
     } else {
         if(!hasColors){
             renderMaterial(plot->material());
         } else {
-            solidColorProgram->setVertexColorEnabled(true);
+            currentSolidColorProgram->setVertexColorEnabled(true);
         }
     }
     
@@ -2811,17 +2816,21 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
         return;
     }
 
-    ScopedShaderProgramActivator programActivator(*solidColorProgram, this);
-    
-    const double w = lineSet->lineWidth();
-    if(w > 0.0){
-        setLineWidth(w);
+    float width = lineSet->lineWidth();
+    if(width <= 0.0f){
+        width = defaultLineWidth;
+    }
+    SolidColorProgram* lineShader;
+    if(width == 1.0f){
+        lineShader = solidColorProgram.get();
     } else {
-        setLineWidth(defaultLineWidth);
+        thickLineProgram->setLineWidth(width);
+        lineShader = thickLineProgram.get();
     }
 
-    renderPlot(lineSet, GL_LINES,
-               [lineSet](){ return getLineSetVertices(lineSet); });
+    ScopedShaderProgramActivator programActivator(*lineShader, this);
+    
+    renderPlot(lineSet, GL_LINES, [lineSet](){ return getLineSetVertices(lineSet); });
 }
 
 
@@ -2980,7 +2989,7 @@ void GLSLSceneRenderer::Impl::renderOutlineEdge(SgOutline* outline, const Affine
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
         float orgLineWidth = lineWidth;
-        setLineWidth(outline->lineWidth()*2+1);
+        setGlLineWidth(outline->lineWidth()*2+1);
 
         GLint polygonMode[2]; // front and back
         glGetIntegerv(GL_POLYGON_MODE, polygonMode);
@@ -2990,7 +2999,7 @@ void GLSLSceneRenderer::Impl::renderOutlineEdge(SgOutline* outline, const Affine
 
         renderChildNodes(outline);
 
-        setLineWidth(orgLineWidth);
+        setGlLineWidth(orgLineWidth);
         glPolygonMode(GL_FRONT_AND_BACK, polygonMode[0]);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
@@ -3055,6 +3064,7 @@ void GLSLSceneRenderer::Impl::clearGLState()
 void GLSLSceneRenderer::setColor(const Vector3f& color)
 {
     impl->solidColorProgram->setColor(color);
+    impl->thickLineProgram->setColor(color);
 }
 
 
@@ -3091,7 +3101,10 @@ void GLSLSceneRenderer::Impl::setPointSize(float size)
 }
 
 
-void GLSLSceneRenderer::Impl::setLineWidth(float width)
+/**
+   \note This function does not work for most GPUs.
+*/
+void GLSLSceneRenderer::Impl::setGlLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
         if(isRenderingPickingImage){

@@ -237,6 +237,7 @@ SgNode* ScenePositionTagList::getTagMarker()
         colors[2] << 0.0f, 0.0f, 1.0f; // Blue
         
         marker->setNumLines(5);
+        marker->setLineWidth(2.0f);
         marker->resizeColorIndicesForNumLines(5);
         // Origin -> Z, Blue
         marker->setLine(0, 0, 1);    
@@ -253,8 +254,6 @@ SgNode* ScenePositionTagList::getTagMarker()
         // Z -> Y, Green
         marker->setLine(4, 1, 3);
         marker->setLineColor(4, 1);
-        
-        marker->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
     }
 
     return marker;
