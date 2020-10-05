@@ -350,7 +350,7 @@ void NolightingProgram::setTransform(const Matrix4& PV, const Affine3& V, const 
 
 SolidColorProgram::SolidColorProgram()
     : NolightingProgram(
-        { { ":/Base/shader/NoLighting.vert", GL_VERTEX_SHADER },
+        { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
           { ":/Base/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
 {
     impl = new Impl;
