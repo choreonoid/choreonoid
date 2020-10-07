@@ -254,7 +254,7 @@ void SimpleControllerItem::onPositionChanged()
     if(impl->doReloading || !isConnectedToRoot()){
         return;
     }
-    if(!impl->controller){
+    if(!impl->controller && !impl->controllerModuleName.empty()){
         impl->loadController();
     }
     if(impl->controller && isTargetBodyItemChanged){
@@ -288,29 +288,40 @@ void SimpleControllerItemImpl::setController(const std::string& name)
 {
     unloadController();
 
-    filesystem::path modulePath(fromUTF8(name));
-    if(modulePath.is_absolute()){
-        baseDirectoryType.select(NO_BASE_DIRECTORY);
-        if(modulePath.parent_path() == controllerDirPath){
-            baseDirectoryType.select(CONTROLLER_DIRECTORY);
-            modulePath = modulePath.filename();
-        } else {
-            filesystem::path projectDir(
-                fromUTF8(ProjectManager::instance()->currentProjectDirectory()));
-            if(!projectDir.empty() && (modulePath.parent_path() == projectDir)){
-                baseDirectoryType.select(PROJECT_DIRECTORY);
+    if(name.empty()){
+        controllerModuleName.clear();
+    } else {
+        filesystem::path modulePath(fromUTF8(name));
+        if(modulePath.is_absolute()){
+            baseDirectoryType.select(NO_BASE_DIRECTORY);
+            if(modulePath.parent_path() == controllerDirPath){
+                baseDirectoryType.select(CONTROLLER_DIRECTORY);
                 modulePath = modulePath.filename();
+            } else {
+                filesystem::path projectDir(
+                    fromUTF8(ProjectManager::instance()->currentProjectDirectory()));
+                if(!projectDir.empty() && (modulePath.parent_path() == projectDir)){
+                    baseDirectoryType.select(PROJECT_DIRECTORY);
+                    modulePath = modulePath.filename();
+                }
             }
         }
+        controllerModuleName = toUTF8(modulePath.string());
     }
 
-    controllerModuleName = toUTF8(modulePath.string());
     controllerModuleFilename.clear();
 }
 
 
 bool SimpleControllerItemImpl::loadController()
 {
+    if(controllerModuleName.empty()){
+        mv->put(format(_("The controller module of {0} is not specified."),
+                       self->displayName()),
+                MessageView::Warning);
+        return false;
+    }
+    
     filesystem::path modulePath(fromUTF8(controllerModuleName));
     if(!modulePath.is_absolute()){
         if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
