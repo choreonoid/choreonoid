@@ -21,7 +21,7 @@ materials:
     viscosity: 1.0
   -
     name: Sole
-    roughness: 0.5
+    roughness: 1.0
     viscosity: 1.0
   -
     name: Hand
@@ -35,7 +35,7 @@ materials:
   -
     name: TankWheel
     youngsModulus: 1e10
-    roughness: 0.0
+    roughness: 1.0
     viscosity: 1.0
   -
     name: AizuSpiderTracks
@@ -46,7 +46,7 @@ materials:
   -
     name: AizuSpiderWheel
     youngsModulus: 1e10
-    roughness: 0.0
+    roughness: 1.0
     viscosity: 1.0
   -
     name: DoubleArmV7ATracks
@@ -56,7 +56,7 @@ materials:
   -
     name: DoubleArmV7AWheel
     youngsModulus: 1e10
-    roughness: 0.0
+    roughness: 1.0
     viscosity: 1.0
   -
     name: Wire
@@ -109,10 +109,11 @@ contactMaterials:
   -
     materials: [ TankWheel, TankTracks ]
     youngsModulus: 1e10
-    friction: 0.0
+    friction: 1.0
     restitution: 0.0
   -
     materials: [ Ground, AizuSpiderTracks ]
+    youngsModulus: 1e10
     friction: 1.0
     secondaryFriction: 0.5
     restitution: 0.0

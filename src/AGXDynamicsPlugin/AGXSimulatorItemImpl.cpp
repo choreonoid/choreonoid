@@ -29,13 +29,13 @@ const std::unordered_map<std::string, AGXFrictionModelType> agxFrictionModelType
     {"scaled_box", AGXFrictionModelType::SCALED_BOX},
     {"oriented_box", AGXFrictionModelType::ORIENTED_BOX},
     {"oriented_scaled_box", AGXFrictionModelType::ORIENTED_SCALED_BOX},
-    {"constant_normal_force_oriented_box", AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL},
+    {"constant_normal_force_oriented_box", AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX},
     {"iterative", AGXFrictionModelType::ITERATIVE_PROJECTED_CONE},
     {"oriented_iterative", AGXFrictionModelType::ORIENTED_ITERATIVE_PROJECTED_CONE},
     // deprecated
     {"cone", AGXFrictionModelType::ITERATIVE_PROJECTED_CONE},
     {"scaledBox", AGXFrictionModelType::SCALED_BOX},
-    {"orientedBox", AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL}
+    {"orientedBox", AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX}
 };
 
 const std::unordered_map<std::string, agx::FrictionModel::SolveType> agxSolveTypeMap{
