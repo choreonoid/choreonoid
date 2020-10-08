@@ -219,23 +219,30 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
         agx::FrictionModelRef fm = nullptr;
         switch (desc.frictionModelType){
             case AGXFrictionModelType::BOX :
-                fm = new agx::BoxFrictionModel();
+                fm = new agx::BoxFrictionModel(desc.solveType);
                 break;
             case AGXFrictionModelType::SCALED_BOX :
-                fm = new agx::ScaleBoxFrictionModel();
+                fm = new agx::ScaleBoxFrictionModel(desc.solveType);
                 break;
-            case AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL :
-                fm = new agx::ConstantNormalForceOrientedBoxFrictionModel(agx::Real(0.0), nullptr, agx::Vec3(), desc.solveType);
+            case AGXFrictionModelType::ORIENTED_BOX :
+                fm = new agx::OrientedScaleBoxFrictionModel(nullptr, agx::Vec3(), desc.solveType);
+                break;
+            case AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX :
+                fm = new agx::ConstantNormalForceOrientedBoxFrictionModel(
+                    agx::Real(0.0), nullptr, agx::Vec3(), desc.solveType);
                 break;
             case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
             case AGXFrictionModelType::DEFAULT:
-                fm = new agx::IterativeProjectedConeFriction();
+                fm = new agx::IterativeProjectedConeFriction(desc.solveType);
+                break;
+            case AGXFrictionModelType::ORIENTED_ITERATIVE_PROJECTED_CONE :
+                fm = new agx::OrientedIterativeProjectedConeFrictionModel(
+                    nullptr, agx::Vec3(), desc.solveType);
                 break;
             default:
                 break;
         }
         if(!fm) return false;
-        fm->setSolveType(desc.solveType);
         cm->setFrictionModel(fm);
     }
     return true;

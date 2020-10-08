@@ -26,9 +26,16 @@ const std::unordered_map<std::string, AGXFrictionModelType> agxFrictionModelType
     {"", AGXFrictionModelType::DEFAULT},
     {"default", AGXFrictionModelType::DEFAULT},
     {"box", AGXFrictionModelType::BOX},
+    {"scaled_box", AGXFrictionModelType::SCALED_BOX},
+    {"oriented_box", AGXFrictionModelType::ORIENTED_BOX},
+    {"oriented_scaled_box", AGXFrictionModelType::ORIENTED_SCALED_BOX},
+    {"constant_normal_force_oriented_box", AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL},
+    {"iterative", AGXFrictionModelType::ITERATIVE_PROJECTED_CONE},
+    {"oriented_iterative", AGXFrictionModelType::ORIENTED_ITERATIVE_PROJECTED_CONE},
+    // deprecated
+    {"cone", AGXFrictionModelType::ITERATIVE_PROJECTED_CONE},
     {"scaledBox", AGXFrictionModelType::SCALED_BOX},
-    {"orientedBox", AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL},
-    {"cone", AGXFrictionModelType::ITERATIVE_PROJECTED_CONE}
+    {"orientedBox", AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL}
 };
 
 const std::unordered_map<std::string, agx::FrictionModel::SolveType> agxSolveTypeMap{
@@ -37,6 +44,8 @@ const std::unordered_map<std::string, agx::FrictionModel::SolveType> agxSolveTyp
     {"split", agx::FrictionModel::SolveType::SPLIT},
     {"direct", agx::FrictionModel::SolveType::DIRECT},
     {"iterative", agx::FrictionModel::SolveType::ITERATIVE},
+    {"direct_and_iterative", agx::FrictionModel::SolveType::DIRECT_AND_ITERATIVE},
+    // deprecated
     {"directAndIterative", agx::FrictionModel::SolveType::DIRECT_AND_ITERATIVE}
 };
 
@@ -250,6 +259,59 @@ void AGXSimulatorItemImpl::createAGXContactMaterial(int id1, int id2, ContactMat
     getAGXScene()->createContactMaterial(desc);
 }
 
+template<class ContactModel>
+static void setFrameOfOrientedFrictionModel
+(AGXSimulatorItem* simulator, ContactMaterial* materialPair, const string& pairName, ContactModel* frictionModel)
+{
+    LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "An oriented friction model found at the material table " << pairName << LOGGER_ENDL();
+
+    auto info = materialPair->info();
+    string referenceBodyName, referenceLinkName;
+    if(!info->read("referenceBodyName", referenceBodyName)){
+        LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING "
+                         << "referenceBodyName is not set or correct at the material table " << pairName << LOGGER_ENDL();
+        return;
+    }
+    auto simBody = simulator->findSimulationBody(referenceBodyName);
+    auto agxBody = static_cast<AGXBody*>(simBody);
+    if(!agxBody){
+        LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "reference body " << referenceBodyName
+                         << " is not found at the material table " << pairName << LOGGER_ENDL();
+        return;
+    }
+    if(!info->read("referenceLinkName", referenceLinkName)){
+        LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING "
+                         << "referenceLinkName is not set or correct at the material table " << pairName << LOGGER_ENDL();
+        return;
+    }
+    agx::RigidBody* rigid = agxBody->getAGXRigidBody(referenceLinkName);
+    if(!rigid){
+        LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "reference rigidbody " << referenceLinkName
+                         << " is not found at the material table " << pairName << LOGGER_ENDL();
+        return;
+    }
+    
+    frictionModel->setReferenceFrame(rigid->getFrame());
+    Vector3 primaryDirection;
+    if(read(info, "primaryDirection", primaryDirection)){
+        frictionModel->setPrimaryDirection(agxConvert::toAGX(primaryDirection));
+    }else{
+        LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "primaryDirection is not set or correct" << LOGGER_ENDL();
+    }
+
+    if(auto cnfModel = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(frictionModel)){
+        double cnf;
+        if(info->read("constant_normal_force", cnf)){
+            cnfModel->setNormalForceMagnitude(cnf);
+        } else {
+            cnfModel->setNormalForceMagnitude(agx::Real(9.8) * agxBody->body()->mass() / 2.0);
+        }
+    }
+    
+    LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "The reference frame has been specified to the oriented friction model for "
+                  << pairName << LOGGER_ENDL();
+}
+
 void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
 {
     WorldItem* const worldItem = self->findOwnerItem<WorldItem>();
@@ -257,51 +319,25 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
     MaterialTable* const matTable = worldItem->materialTable();
     agxSDK::MaterialManager* mgr = agxScene->getSimulation()->getMaterialManager();
 
-    // Set params of ConstantNormalForceOrientedBoxFrictionModel
+    // Extract oriented-type friction models
     matTable->forEachMaterialPair(
-        [&](int id1, int id2, ContactMaterial* mat){
+        [&](int id1, int id2, ContactMaterial* materialPair){
             agx::Material* mat1 = mgr->getMaterial(Material::name(id1));
             agx::Material* mat2 = mgr->getMaterial(Material::name(id2));
-            if(!mat1 || !mat2) return;
-            agx::ContactMaterial* cmat = mgr->getOrCreateContactMaterial(mat1, mat2);
-            if(!cmat) return;
-            string cmatName = "[" + mat1->getName() + " " + mat2->getName() + "]";
-            LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "contact material " << cmatName  << LOGGER_ENDL();
-            auto cnfobfm = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(cmat->getFrictionModel());
-            if(!cnfobfm) return;
-            LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "cnfobfm found at the material table " << cmatName << LOGGER_ENDL();
-
-            string referenceBodyName, referenceLinkName;
-            if(mat->info()->read("referenceBodyName", referenceBodyName)){}else{
-                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "referenceBodyName is not set or correct at the material table " << cmatName << LOGGER_ENDL();
-                return;
+            if(mat1 && mat2){
+                if(auto agxMaterialPair = mgr->getOrCreateContactMaterial(mat1, mat2)){
+                    string pairName = "[" + mat1->getName() + " " + mat2->getName() + "]";
+                    LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "contact material " << pairName << LOGGER_ENDL();
+                    auto model = agxMaterialPair->getFrictionModel();
+                    if(auto oriented = dynamic_cast<agx::OrientedIterativeProjectedConeFrictionModel*>(model)){
+                        setFrameOfOrientedFrictionModel(self, materialPair, pairName, oriented);
+                    } else if(auto oriented = dynamic_cast<agx::OrientedScaleBoxFrictionModel*>(model)){
+                        setFrameOfOrientedFrictionModel(self, materialPair, pairName, oriented);
+                    } else if(auto oriented = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(model)){
+                        setFrameOfOrientedFrictionModel(self, materialPair, pairName, oriented);
+                    }
+                }
             }
-            if(mat->info()->read("referenceLinkName", referenceLinkName)){}else{
-                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "referenceLinkName is not set or correct at the material table " << cmatName << LOGGER_ENDL();
-                return;
-            }
-
-            auto simBody = self->findSimulationBody(referenceBodyName);
-            AGXBody* body = static_cast<AGXBody*>(simBody);
-            if(!body){
-                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "reference body " << referenceBodyName << " is not found at the material table " << cmatName << LOGGER_ENDL();
-                return;
-            }
-            agx::RigidBody* rigid = body->getAGXRigidBody(referenceLinkName);
-            if(!rigid){
-                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "reference rigidbody " << referenceLinkName << " is not found at the material table " << cmatName << LOGGER_ENDL();
-                return;
-            }
-
-            cnfobfm->setNormalForceMagnitude(agx::Real(10.0) * rigid->getMassProperties()->getMass());
-            cnfobfm->setReferenceFrame(rigid->getFrame());
-            Vector3 primaryDirection;
-            if(agxConvert::setVector(&mat->info()->get("primaryDirection"), primaryDirection)){
-                cnfobfm->setPrimaryDirection(agxConvert::toAGX(primaryDirection));
-            }else{
-                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "primaryDirection is not set or correct" << LOGGER_ENDL();
-            }
-            LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "cnfobfm modified at " << cmatName << LOGGER_ENDL();
         }
     );
 }
