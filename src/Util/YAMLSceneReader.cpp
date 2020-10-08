@@ -337,7 +337,7 @@ bool YAMLSceneReader::readAngle(const Mapping& info, const char* key, float& ang
 AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation) const
 {
     Vector4 r;
-    cnoid::read(rotation, r);
+    cnoid::readEx(rotation, r);
     Vector3 axis(r[0], r[1], r[2]);
     double size = axis.norm();
     if(size < 1.0e-6){
@@ -395,7 +395,7 @@ bool YAMLSceneReader::readTranslation(const ValueNode* info, Vector3& out_p) con
     const Listing& translations = *info->toListing();
     if(!translations.empty()){
         if(!translations[0].isListing()){
-            read(translations, out_p);
+            readEx(translations, out_p);
         } else {
             out_p.setZero();
             Vector3 v;

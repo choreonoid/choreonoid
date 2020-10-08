@@ -221,7 +221,7 @@ bool Pose::restore(const Mapping& archive, const BodyPtr body)
                             int n = contactPointNodes.size();
                             contactPoints.resize(n);
                             for(int j=0; j < n; ++j){
-                                read(*contactPointNodes[j].toListing(), contactPoints[j]);
+                                readEx(contactPointNodes[j].toListing(), contactPoints[j]);
                             }
                         }
                         info->setTouching(partingDirection, contactPoints);

@@ -14,7 +14,7 @@
 namespace cnoid {
 
 template<typename Derived>
-void read(const Listing& listing, Eigen::MatrixBase<Derived>& x)
+void readEx(const Listing& listing, Eigen::MatrixBase<Derived>& x)
 {
     const int nr = x.rows();
     const int nc = x.cols();
@@ -32,9 +32,9 @@ void read(const Listing& listing, Eigen::MatrixBase<Derived>& x)
 
 
 template<typename Derived>
-void read(const Listing* listing, Eigen::MatrixBase<Derived>& x)
+void readEx(const Listing* listing, Eigen::MatrixBase<Derived>& x)
 {
-    read(*listing, x);
+    readEx(*listing, x);
 }
 
 
@@ -45,7 +45,7 @@ bool read(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Deri
     if(!s.isValid()){
         return false;
     }
-    read(s, x);
+    readEx(s, x);
     return true;
 }
 
@@ -139,7 +139,6 @@ CNOID_EXPORT Listing& writeAngleAxis(Mapping& mapping, const std::string& key, c
 CNOID_EXPORT Listing& writeDegreeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
 //! \deprecated
 CNOID_EXPORT Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
-
 
 CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, std::function<void(const Eigen::Vector3d& value)> setterFunc);
 

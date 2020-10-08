@@ -404,7 +404,7 @@ template<typename Derived>
 bool extractEigen(Mapping* mapping, const char* key, Eigen::MatrixBase<Derived>& x)
 {
     if(auto node = mapping->extract(key)){
-        read(*node->toListing(), x);
+        readEx(node->toListing(), x);
         return true;
     }
     return false;
@@ -1217,7 +1217,7 @@ bool YAMLBodyLoaderImpl::readAxis(Mapping* node, const char* key, Vector3& out_a
 void YAMLBodyLoaderImpl::readAxis(ValueNode* node, Vector3& out_axis)
 {
     if(node->isListing()){
-        read(*node->toListing(), out_axis);
+        readEx(node->toListing(), out_axis);
 
     } else if(node->isString()){
         string symbol = node->toString();
@@ -1973,8 +1973,8 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
         node->throwException(format(_("Joint type \"{}\" is not available"), jointType));
     }
 
-    readEx(*node, "link1LocalPos", joint.point[0]);
-    readEx(*node, "link2LocalPos", joint.point[1]);
+    readEx(node, "link1LocalPos", joint.point[0]);
+    readEx(node, "link2LocalPos", joint.point[1]);
 
     body->addExtraJoint(joint);
 }

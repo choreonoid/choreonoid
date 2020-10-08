@@ -15,7 +15,7 @@ namespace {
 template <class T> py::object readValue(MappingPtr mapping, const string& key)
 {
     T value;
-    if(cnoid::read(*mapping, key, value)){
+    if(cnoid::read(mapping, key, value)){
         return py::cast(value);
     }
     return py::none();
@@ -23,7 +23,7 @@ template <class T> py::object readValue(MappingPtr mapping, const string& key)
 
 template <class T> ListingPtr writeValue(MappingPtr mapping, const std::string& key, const T& value)
 {
-    return &cnoid::write(*mapping, key, value);
+    return cnoid::write(mapping, key, value);
 }
 
 }

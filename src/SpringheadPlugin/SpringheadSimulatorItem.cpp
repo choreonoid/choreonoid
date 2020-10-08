@@ -1021,7 +1021,7 @@ void SpringheadSimulatorItemImpl::store(Archive& archive)
     archive.write("contactSpring"    , param.contactSpring    );
     archive.write("contactDamper"    , param.contactDamper    );
     archive.write("numIterations"    , param.numIterations    );
-	archive.write("useABA"           , param.useABA           );
+    archive.write("useABA"           , param.useABA           );
     archive.write("useWorldCollision", param.useWorldCollision);
 }
 
@@ -1034,7 +1034,7 @@ void SpringheadSimulatorItemImpl::restore(const Archive& archive)
     archive.read("contactSpring"    , param.contactSpring    );
     archive.read("contactDamper"    , param.contactDamper    );
     archive.read("numIterations"    , param.numIterations    );
-	archive.read("useABA"           , param.useABA           );
+    archive.read("useABA"           , param.useABA           );
     archive.read("useWorldCollision", param.useWorldCollision);
 }
 
