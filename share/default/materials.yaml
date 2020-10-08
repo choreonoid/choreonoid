@@ -38,19 +38,13 @@ materials:
     roughness: 0.0
     viscosity: 1.0
   -
-    name: SpiderTracks
-    density: 1e3
-    youngsModulus: 1e10
-    roughness: 1.0
-    viscosity: 1.0
-  -
     name: AizuSpiderTracks
     density: 1e3
     youngsModulus: 1e10
     roughness: 1.0
     viscosity: 1.0
   -
-    name: SpiderWheel
+    name: AizuSpiderWheel
     youngsModulus: 1e10
     roughness: 0.0
     viscosity: 1.0
@@ -94,14 +88,6 @@ contactMaterials:
     restitution: 0.0
     frictionModel: [ cone, direct ]
   -
-    materials: [ Ground, Tracks ]
-    friction: 0.5
-    restitution: 0.0
-  -
-    materials: [ OilWetGround, Tracks ]
-    friction: 0.1
-    restitution: 0.0
-  -
     materials: [ Default, Hand ]
     friction: 1.0
     restitution: 0.0
@@ -110,13 +96,14 @@ contactMaterials:
   -
     materials: [ Ground, TankTracks]
     youngsModulus: 1e10
-    friction: 0.7
+    friction: 1.0
     secondaryfriction: 0.5
     restitution: 0.0
     surfaceViscosity: 1e-7
     secondarySurfaceViscosity: 1e-5
     primaryDirection: [ 1, 0, 0 ]
-    frictionModel: [ orientedBox, direct ]
+    frictionModel: [ constant_normal_force_oriented_box, direct ]
+    #frictionModel: [ oriented_iterative, direct ]
     referenceBodyName: Tank
     referenceLinkName: CHASSIS
   -
@@ -125,53 +112,38 @@ contactMaterials:
     friction: 0.0
     restitution: 0.0
   -
-    materials: [ Ground, SpiderTracks ]
-    youngsModulus: 1e10
-    friction: 0.7
-    restitution: 0.0
-    surfaceViscosity: 1e-2
-    secondarySurfaceViscosity: 2e-2
-    primaryDirection: [ 1, 0, 0 ]
-    frictionModel: [ orientedBox, direct ]
-    referenceBodyName: ARM_SPIDER
-    referenceLinkName: B0001
-  -
-    materials: [ SpiderWheel, SpiderTracks ]
-    youngsModulus: 1e10
-    friction: 0.0
-    restitution: 0.0
-  -
     materials: [ Ground, AizuSpiderTracks ]
-    youngsModulus: 1e10
-    friction: 0.7
+    friction: 1.0
+    secondaryFriction: 0.5
     restitution: 0.0
     surfaceViscosity: 1e-3 # 1e-2
     secondarySurfaceViscosity: 2e-2
     primaryDirection: [ 1, 0, 0 ]
-    frictionModel: [ orientedBox, direct ]
+    frictionModel: [ constant_normal_force_oriented_box, direct ]
+    #frictionModel: [ oriented_iterative, direct ]
+    constant_normal_force: 500
     referenceBodyName: AizuSpider
     referenceLinkName: CHASSIS
   -
-    materials: [ SpiderWheel, AizuSpiderTracks ]
+    materials: [ AizuSpiderWheel, AizuSpiderTracks ]
     youngsModulus: 1e10
-    friction: 0.0
+    friction: 1.0
     restitution: 0.0
   -
     materials: [ Ground, DoubleArmV7ATracks ]
-    youngsModulus: 1e10
-    friction: 0.7
+    friction: 1.0
     secondaryFriction: 0.5
     restitution: 0.0
-    surfaceViscosity: 1e-7
-    secondarySurfaceViscosity: 1e-7
+    surfaceViscosity: 7.0e-7
+    secondarySurfaceViscosity: 8.0e-6
     primaryDirection: [ 1, 0, 0 ]
-    frictionModel: [ orientedBox, direct ]
+    frictionModel: [ constant_normal_force_oriented_box, direct ]
+    #frictionModel: [ oriented_iterative, direct ]
     referenceBodyName: DoubleArmV7
     referenceLinkName: TFRAME
   -
     materials: [ DoubleArmV7AWheel, DoubleArmV7ATracks ]
-    youngsModulus: 1e10
-    friction: 0.0
+    friction: 1.0
     restitution: 0.0
   -
     materials: [ Wire, Default ]
