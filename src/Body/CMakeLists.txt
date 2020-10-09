@@ -24,6 +24,7 @@ set(sources
   AbstractBodyLoader.cpp
   BodyLoader.cpp
   YAMLBodyLoader.cpp
+  StdBodyWriter.cpp
   Device.cpp
   HolderDevice.cpp
   AttachmentDevice.cpp
@@ -84,6 +85,7 @@ set(headers
   AbstractBodyLoader.h
   VRMLBodyLoader.h
   BodyLoader.h
+  StdBodyWriter.h
   ZMPSeq.h
   Link.h
   LinkTraverse.h

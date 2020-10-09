@@ -66,6 +66,7 @@ set(sources
   CollisionDetector.cpp
   YAMLSceneReader.cpp
   YAMLSceneLoader.cpp
+  StdSceneWriter.cpp
   STLSceneLoader.cpp
   VRML.cpp
   VRMLParser.cpp
@@ -172,6 +173,7 @@ set(headers
   CollisionDetector.h
   YAMLSceneReader.h
   YAMLSceneLoader.h
+  StdSceneWriter.h
   STLSceneLoader.h
   VRML.h
   VRMLParser.h
