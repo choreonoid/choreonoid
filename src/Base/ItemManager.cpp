@@ -429,11 +429,9 @@ static Item* createItem
     auto p = moduleNameToItemManagerImplMap.find(moduleName);
 
     if(p == moduleNameToItemManagerImplMap.end()){
-        auto alias = PluginManager::instance()->guessActualPluginName(moduleName);
-        if(!alias){
-            return nullptr;
+        if(auto alias = PluginManager::instance()->guessActualPluginName(moduleName)){
+            p = moduleNameToItemManagerImplMap.find(alias);
         }
-        p = moduleNameToItemManagerImplMap.find(alias);
     }
     
     Item* item = nullptr;
@@ -454,15 +452,17 @@ static Item* createItem
                     item = info->factory();
                 }
             }
-        } else if(searchOtherModules){
-            auto r = aliasClassNameToAliasModuleNameToTrueNamePairMap.find(className);
-            if(r != aliasClassNameToAliasModuleNameToTrueNamePairMap.end()){
-                auto& aliasModuleNameToTrueNamePairMap = r->second;
-                auto s = aliasModuleNameToTrueNamePairMap.find(moduleName);
-                if(s != aliasModuleNameToTrueNamePairMap.end()){
-                    auto& trueNamePair = s->second;
-                    item = createItem(trueNamePair.first, trueNamePair.second, false);
-                }
+        }
+    }
+
+    if(searchOtherModules){
+        auto r = aliasClassNameToAliasModuleNameToTrueNamePairMap.find(className);
+        if(r != aliasClassNameToAliasModuleNameToTrueNamePairMap.end()){
+            auto& aliasModuleNameToTrueNamePairMap = r->second;
+            auto s = aliasModuleNameToTrueNamePairMap.find(moduleName);
+            if(s != aliasModuleNameToTrueNamePairMap.end()){
+                auto& trueNamePair = s->second;
+                item = createItem(trueNamePair.first, trueNamePair.second, false);
             }
         }
     }
