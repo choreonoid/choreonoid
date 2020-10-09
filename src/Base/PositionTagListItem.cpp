@@ -256,11 +256,11 @@ SgNode* ScenePositionTagList::getOrCreateTagMarker()
         lines->setLine(4, 1, 3);
         lines->setLineColor(4, 1);
 
-        auto autoScale = new SgAutoScale;
-        autoScale->setPixelSizeRatio(7.0f);
-        autoScale->addChild(lines);
+        auto fixedPixelSizeGroup = new SgFixedPixelSizeGroup;
+        fixedPixelSizeGroup->setPixelSizeRatio(7.0f);
+        fixedPixelSizeGroup->addChild(lines);
         
-        marker = autoScale;
+        marker = fixedPixelSizeGroup;
     }
 
     return marker;

@@ -709,37 +709,37 @@ void SgAffineTransform::getTransform(Affine3& out_T) const
 }
 
 
-SgAutoScale::SgAutoScale()
-    : SgAutoScale(1.0)
+SgFixedPixelSizeGroup::SgFixedPixelSizeGroup()
+    : SgFixedPixelSizeGroup(1.0)
 {
 
 }
 
 
-SgAutoScale::SgAutoScale(double pixelSizeRatio)
-    : SgGroup(findClassId<SgAutoScale>())
+SgFixedPixelSizeGroup::SgFixedPixelSizeGroup(double pixelSizeRatio)
+    : SgGroup(findClassId<SgFixedPixelSizeGroup>())
 {
     pixelSizeRatio_ = pixelSizeRatio;
 }
       
 
-SgAutoScale::SgAutoScale(int classId)
+SgFixedPixelSizeGroup::SgFixedPixelSizeGroup(int classId)
     : SgGroup(classId)
 {
     pixelSizeRatio_ = 1.0;
 }
 
 
-SgAutoScale::SgAutoScale(const SgAutoScale& org, CloneMap* cloneMap)
+SgFixedPixelSizeGroup::SgFixedPixelSizeGroup(const SgFixedPixelSizeGroup& org, CloneMap* cloneMap)
     : SgGroup(org, cloneMap)
 {
     pixelSizeRatio_ = org.pixelSizeRatio_;
 }
 
 
-Referenced* SgAutoScale::doClone(CloneMap* cloneMap) const
+Referenced* SgFixedPixelSizeGroup::doClone(CloneMap* cloneMap) const
 {
-    return new SgAutoScale(*this, cloneMap);
+    return new SgFixedPixelSizeGroup(*this, cloneMap);
 }
 
 
@@ -886,7 +886,7 @@ struct NodeClassRegistration {
             .registerClass<SgAffineTransform, SgTransform>()
             .registerClass<SgPosTransform, SgTransform>()
             .registerClass<SgScaleTransform, SgTransform>()
-            .registerClass<SgAutoScale, SgGroup>()
+            .registerClass<SgFixedPixelSizeGroup, SgGroup>()
             .registerClass<SgSwitchableGroup, SgGroup>()
             .registerClass<SgUnpickableGroup, SgGroup>()
             .registerClass<SgPreprocessed, SgNode>();

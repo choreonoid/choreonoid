@@ -431,7 +431,7 @@ public:
     void renderChildNodesWithNodeDecorationCheck(SgGroup* group);
     void renderGroup(SgGroup* group);
     void renderTransform(SgTransform* transform);
-    void renderAutoScale(SgAutoScale* autoScale);
+    void renderFixedPixelSizeGroup(SgFixedPixelSizeGroup* fixedPixelSizeGroup);
     void renderSwitchableGroup(SgSwitchableGroup* group);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     VertexResource* getOrCreateVertexResource(SgObject* obj);
@@ -577,8 +577,8 @@ void GLSLSceneRenderer::Impl::initialize()
         [&](SgGroup* node){ renderGroup(node); });
     normalRenderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
-    normalRenderingFunctions.setFunction<SgAutoScale>(
-        [&](SgAutoScale* node){ renderAutoScale(node); });
+    normalRenderingFunctions.setFunction<SgFixedPixelSizeGroup>(
+        [&](SgFixedPixelSizeGroup* node){ renderFixedPixelSizeGroup(node); });
     normalRenderingFunctions.setFunction<SgSwitchableGroup>(
         [&](SgSwitchableGroup* node){ renderSwitchableGroup(node); });
     normalRenderingFunctions.setFunction<SgUnpickableGroup>(
@@ -666,8 +666,8 @@ void GLSLSceneRenderer::Impl::activateVertexRenderingFunctions()
             [&](SgGroup* node){ renderGroup(node); });
         vertexRenderingFunctions.setFunction<SgTransform>(
             [&](SgTransform* node){ renderTransform(node); });
-        vertexRenderingFunctions.setFunction<SgAutoScale>(
-            [&](SgAutoScale* node){ renderAutoScale(node); });
+        vertexRenderingFunctions.setFunction<SgFixedPixelSizeGroup>(
+            [&](SgFixedPixelSizeGroup* node){ renderFixedPixelSizeGroup(node); });
         vertexRenderingFunctions.setFunction<SgSwitchableGroup>(
             [&](SgSwitchableGroup* node){ renderSwitchableGroup(node); });
         vertexRenderingFunctions.setFunction<SgShape>(
@@ -1893,17 +1893,17 @@ void GLSLSceneRenderer::renderCustomTransform(SgTransform* transform, std::funct
 }
 
 
-void GLSLSceneRenderer::Impl::renderAutoScale(SgAutoScale* autoScale)
+void GLSLSceneRenderer::Impl::renderFixedPixelSizeGroup(SgFixedPixelSizeGroup* fixedPixelSizeGroup)
 {
     double r = self->projectedPixelSizeRatio(modelMatrixStack.back().translation());
 
     if(r > 0.0){
-        double s = autoScale->pixelSizeRatio() / r;
+        double s = fixedPixelSizeGroup->pixelSizeRatio() / r;
         Vector3 scale(s, s, s);
         Affine3 S(scale.asDiagonal());
     
         modelMatrixStack.push_back(modelMatrixStack.back() * S);
-        renderGroup(autoScale);
+        renderGroup(fixedPixelSizeGroup);
         modelMatrixStack.pop_back();
     }
 }

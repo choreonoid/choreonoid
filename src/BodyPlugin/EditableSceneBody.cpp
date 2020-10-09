@@ -95,7 +95,7 @@ void EditableSceneLink::Impl::showOrigin(bool on)
                 PositionDragger::TranslationAxes, PositionDragger::PositiveOnlyHandle);
             originMarker->setOverlayMode(true);
             originMarker->setHandleWidthRatio(0.05);
-            originMarker->setConstantPixelSizeMode(true, 48);
+            originMarker->setFixedPixelSizeMode(true, 48);
             originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
             originMarker->setTransparency(0.0f);
             originMarker->setDragEnabled(false);
@@ -910,7 +910,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     
     auto sceneLink = editableSceneLink(link->index());
 
-    if(!positionDragger->isConstantPixelSizeMode()){
+    if(!positionDragger->isFixedPixelSizeMode()){
         double size = link->info("gui_handle_size", -1.0);
         if(size > 0.0){
             positionDragger->setHandleSize(size);

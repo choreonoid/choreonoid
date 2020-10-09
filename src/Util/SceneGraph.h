@@ -476,25 +476,25 @@ private:
 typedef ref_ptr<SgAffineTransform> SgAffineTransformPtr;
 
 
-class CNOID_EXPORT SgAutoScale : public SgGroup
+class CNOID_EXPORT SgFixedPixelSizeGroup : public SgGroup
 {
 public:
-    SgAutoScale();
-    SgAutoScale(double pixelSizeRatio);
-    SgAutoScale(const SgAutoScale& org, CloneMap* cloneMap = nullptr);
+    SgFixedPixelSizeGroup();
+    SgFixedPixelSizeGroup(double pixelSizeRatio);
+    SgFixedPixelSizeGroup(const SgFixedPixelSizeGroup& org, CloneMap* cloneMap = nullptr);
 
     void setPixelSizeRatio(float ratio){ pixelSizeRatio_ = ratio; }
     float pixelSizeRatio() const { return pixelSizeRatio_; }
 
 protected:
-    SgAutoScale(int classId);
+    SgFixedPixelSizeGroup(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     float pixelSizeRatio_;
 };
 
-typedef ref_ptr<SgAutoScale> SgAutoScalePtr;
+typedef ref_ptr<SgFixedPixelSizeGroup> SgFixedPixelSizeGroupPtr;
 
 
 class CNOID_EXPORT SgSwitch : public SgObject

@@ -133,7 +133,7 @@ public:
     DisplayMode displayMode;
     bool isEditMode;
     bool isOverlayMode;
-    bool isConstantPixelSizeMode;
+    bool isFixedPixelSizeMode;
     bool isContainerMode;
     bool isDragEnabled;
     bool isContentsDragEnabled;
@@ -143,7 +143,7 @@ public:
     Position T_offset;
     SgSwitchableGroupPtr topSwitch;
     SgOverlayPtr overlay;
-    SgAutoScalePtr autoScale;
+    SgFixedPixelSizeGroupPtr fixedPixelSizeGroup;
     double rotationHandleSizeRatio;
     array<SgMaterialPtr, 6> axisMaterials;
     float transparency;
@@ -191,7 +191,7 @@ void SgHandleVariantSelector::render(SceneRenderer* renderer)
 {
     double pixelSizeRatio = -1.0;
     bool isForPicking = false;
-    if(!dragger->isConstantPixelSizeMode){
+    if(!dragger->isFixedPixelSizeMode){
         pixelSizeRatio = renderer->projectedPixelSizeRatio(
             renderer->currentModelTransform().translation());
         isForPicking = renderer->isRenderingPickingImage();
@@ -282,7 +282,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     displayMode = DisplayInFocus;
     isEditMode = false;
     isOverlayMode = false;
-    isConstantPixelSizeMode = false;
+    isFixedPixelSizeMode = false;
     isContainerMode = false;
     isDragEnabled = true;
     isContentsDragEnabled = true;
@@ -695,28 +695,28 @@ bool PositionDragger::isOverlayMode() const
 }
 
 
-void PositionDragger::setConstantPixelSizeMode(bool on, double pixelSizeRatio)
+void PositionDragger::setFixedPixelSizeMode(bool on, double pixelSizeRatio)
 {
-    if(impl->autoScale){
-        impl->autoScale->setPixelSizeRatio(pixelSizeRatio);
+    if(impl->fixedPixelSizeGroup){
+        impl->fixedPixelSizeGroup->setPixelSizeRatio(pixelSizeRatio);
     }
-    if(on != impl->isConstantPixelSizeMode){
+    if(on != impl->isFixedPixelSizeMode){
         if(on){
-            if(!impl->autoScale){
-                impl->autoScale = new SgAutoScale(pixelSizeRatio);
+            if(!impl->fixedPixelSizeGroup){
+                impl->fixedPixelSizeGroup = new SgFixedPixelSizeGroup(pixelSizeRatio);
             }
-            impl->topSwitch->insertChainedGroup(impl->autoScale);
+            impl->topSwitch->insertChainedGroup(impl->fixedPixelSizeGroup);
         } else {
-            impl->topSwitch->removeChainedGroup(impl->autoScale);
+            impl->topSwitch->removeChainedGroup(impl->fixedPixelSizeGroup);
         }
-        impl->isConstantPixelSizeMode = on;
+        impl->isFixedPixelSizeMode = on;
     }
 }
 
 
-bool PositionDragger::isConstantPixelSizeMode() const
+bool PositionDragger::isFixedPixelSizeMode() const
 {
-    return impl->isConstantPixelSizeMode;
+    return impl->isFixedPixelSizeMode;
 }
     
 

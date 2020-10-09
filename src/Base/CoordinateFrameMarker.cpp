@@ -10,7 +10,7 @@ CoordinateFrameMarker::CoordinateFrameMarker(CoordinateFrame* frame)
 {
     setDragEnabled(true);
     setOverlayMode(true);
-    setConstantPixelSizeMode(true, 92.0);
+    setFixedPixelSizeMode(true, 92.0);
     setDisplayMode(PositionDragger::DisplayInEditMode);
     setPosition(frame->position());
 

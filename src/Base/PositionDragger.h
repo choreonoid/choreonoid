@@ -64,8 +64,8 @@ public:
     void setOverlayMode(bool on);
     bool isOverlayMode() const;
 
-    void setConstantPixelSizeMode(bool on, double pixelSizeRatio = 1.0);
-    bool isConstantPixelSizeMode() const;
+    void setFixedPixelSizeMode(bool on, double pixelSizeRatio = 1.0);
+    bool isFixedPixelSizeMode() const;
     
     bool isContainerMode() const;
     void setContainerMode(bool on);
