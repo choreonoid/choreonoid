@@ -483,8 +483,8 @@ public:
     SgAutoScale(double pixelSizeRatio);
     SgAutoScale(const SgAutoScale& org, CloneMap* cloneMap = nullptr);
 
-    void setPixelSizeRatio(double ratio){ pixelSizeRatio_ = ratio; }
-    double pixelSizeRatio() const { return pixelSizeRatio_; }
+    void setPixelSizeRatio(float ratio){ pixelSizeRatio_ = ratio; }
+    float pixelSizeRatio() const { return pixelSizeRatio_; }
 
 protected:
     SgAutoScale(int classId);

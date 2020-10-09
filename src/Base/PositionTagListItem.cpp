@@ -24,7 +24,7 @@ public:
     ScenePositionTagList(PositionTagListItem::Impl* itemImpl);
     void finalize();
     void addTagNode(int index, bool doNotify);
-    static SgNode* getTagMarker();
+    static SgNode* getOrCreateTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
 };
@@ -208,7 +208,7 @@ void ScenePositionTagList::addTagNode(int index, bool doNotify)
 {
     auto tag = itemImpl->tags->tagAt(index);
     auto node = new SgPosTransform;
-    node->addChild(getTagMarker());
+    node->addChild(getOrCreateTagMarker());
     node->setPosition(tag->position());
     insertChild(index, node);
     if(doNotify){
@@ -218,42 +218,49 @@ void ScenePositionTagList::addTagNode(int index, bool doNotify)
 }
     
 
-SgNode* ScenePositionTagList::getTagMarker()
+SgNode* ScenePositionTagList::getOrCreateTagMarker()
 {
-    static SgLineSetPtr marker;
+    static SgNodePtr marker;
 
     if(!marker){
-        marker = new SgLineSet;
+        auto lines = new SgLineSet;
 
-        auto& vertices = *marker->getOrCreateVertices(4);
-        vertices[0] << 0.0f,   0.0f,   0.0f;  // Origin
-        vertices[1] << 0.0f,   0.0f,   0.01f; // Z direction
-        vertices[2] << 0.003f, 0.0f,   0.0f;  // X direction
-        vertices[3] << 0.0f,   0.003f, 0.0f;  // Y direction
+        auto& vertices = *lines->getOrCreateVertices(4);
+        constexpr float r = 1.0f;
+        vertices[0] << 0.0f,     0.0f,     0.0f;     // Origin
+        vertices[1] << 0.0f,     0.0f,     r * 3.0f; // Z direction
+        vertices[2] << r * 1.0f, 0.0f,     0.0f;     // X direction
+        vertices[3] << 0.0f,     r * 1.0f, 0.0f;     // Y direction
         
-        auto& colors = *marker->getOrCreateColors(3);
+        auto& colors = *lines->getOrCreateColors(3);
         colors[0] << 1.0f, 0.0f, 0.0f; // Red
-        colors[1] << 0.0f, 1.0f, 0.0f; // Green
+        colors[1] << 0.0f, 0.8f, 0.0f; // Green
         colors[2] << 0.0f, 0.0f, 1.0f; // Blue
         
-        marker->setNumLines(5);
-        marker->setLineWidth(2.0f);
-        marker->resizeColorIndicesForNumLines(5);
+        lines->setNumLines(5);
+        lines->setLineWidth(2.0f);
+        lines->resizeColorIndicesForNumLines(5);
         // Origin -> Z, Blue
-        marker->setLine(0, 0, 1);    
-        marker->setLineColor(0, 2);
+        lines->setLine(0, 0, 1);    
+        lines->setLineColor(0, 2);
         // Origin -> X, Red
-        marker->setLine(1, 0, 2);
-        marker->setLineColor(1, 0);
+        lines->setLine(1, 0, 2);
+        lines->setLineColor(1, 0);
         // Origin -> Y, Green
-        marker->setLine(2, 0, 3);
-        marker->setLineColor(2, 1);
+        lines->setLine(2, 0, 3);
+        lines->setLineColor(2, 1);
         // Z -> X, Red
-        marker->setLine(3, 1, 2);
-        marker->setLineColor(3, 0);
+        lines->setLine(3, 1, 2);
+        lines->setLineColor(3, 0);
         // Z -> Y, Green
-        marker->setLine(4, 1, 3);
-        marker->setLineColor(4, 1);
+        lines->setLine(4, 1, 3);
+        lines->setLineColor(4, 1);
+
+        auto autoScale = new SgAutoScale;
+        autoScale->setPixelSizeRatio(7.0f);
+        autoScale->addChild(lines);
+        
+        marker = autoScale;
     }
 
     return marker;
