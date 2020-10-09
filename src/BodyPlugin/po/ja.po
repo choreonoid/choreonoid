@@ -1747,3 +1747,39 @@ msgstr "関節速度下限"
 #: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
+
+#: BodyOverwriteDialogBase.cpp:99
+msgid "Add : "
+msgstr "追加 : "
+
+#: BodyOverwriteDialogBase.cpp:227
+msgid "There are no items to be configured."
+msgstr "設定対象のアイテムはありません．"
+
+#: BodyOverwriteDialogBase.cpp:229
+msgid "No item is selected."
+msgstr "アイテムが選択されていません．"
+
+#: BodyOverwriteDialogBase.cpp:246
+msgid "Unkown"
+msgstr ""
+
+#: BodyOverwriteDialogBase.cpp:250
+msgid "\"{0}\" is not a target item."
+msgstr "\"{0}\" は対象のアイテムではありません．"
+
+#: DeviceOverwriteItem.cpp:67
+msgid "DeviceOverwriteItem"
+msgstr "デバイスオーバーライトアイテム"
+
+#: DeviceOverwriteItem.cpp:317 LinkShapeOverwriteItem.cpp:372
+msgid "The target body item of \"{0}\" is not found."
+msgstr "\"{0}\" の対象アイテムがみつかりません．"
+
+#: LinkShapeOverwriteItem.cpp:68
+msgid "LinkShapeOverwriteItem"
+msgstr "リンク形状オーバーライトアイテム"
+
+#: LinkShapeOverwriteItem.cpp:133
+msgid "Shape ({0})"
+msgstr "形状 ({0})"

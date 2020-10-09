@@ -23,6 +23,10 @@
 #include "BodyTrackingCameraItem.h"
 #include "BodyMarkerItem.h"
 #include "BodySuperimposerAddon.h"
+#include "BodyOverwriteAddon.h"
+#include "BodyElementOverwriteItem.h"
+#include "LinkShapeOverwriteItem.h"
+#include "DeviceOverwriteItem.h"
 #include "BodySelectionManager.h"
 #include "KinematicFaultChecker.h"
 #include "SplineFilterDialog.h"
@@ -100,6 +104,10 @@ public:
         BodyTrackingCameraItem::initializeClass(this);
         BodyMarkerItem::initializeClass(this);
         BodySuperimposerAddon::initializeClass(this);
+        BodyOverwriteAddon::initializeClass(this);
+        BodyElementOverwriteItem::initializeClass(this);
+        LinkShapeOverwriteItem::initializeClass(this);
+        DeviceOverwriteItem::initializeClass(this);
 
         BodyMotionEngine::initializeClass(this);
         CollisionSeqEngine::initializeClass(this);

@@ -9,6 +9,7 @@ set(sources
   WorldItem.cpp
   BodySelectionManager.cpp
   BodyItem.cpp
+  EditableSceneBody.cpp
   LinkKinematicsKitManager.cpp
   LinkOffsetFrameListItem.cpp
   SimulatorItem.cpp
@@ -31,9 +32,12 @@ set(sources
   BodyMarkerItem.cpp
   BodySuperimposerAddon.cpp
   BodyMotionEngine.cpp
+  BodyOverwriteAddon.cpp
+  BodyElementOverwriteItem.cpp
+  LinkShapeOverwriteItem.cpp
+  DeviceOverwriteItem.cpp
   KinematicFaultChecker.cpp
   SplineFilterDialog.cpp
-  EditableSceneBody.cpp
   BodyBar.cpp
   LeggedBodyBar.cpp
   KinematicsBar.cpp
@@ -62,6 +66,7 @@ set(headers
   WorldItem.h
   BodySelectionManager.h
   BodyItem.h
+  EditableSceneBody.h
   LinkKinematicsKitManager.h
   LinkOffsetFrameListItem.h
   SimulatorItem.h
@@ -81,6 +86,10 @@ set(headers
   BodyTrackingCameraItem.h
   BodyMarkerItem.h
   BodySuperimposerAddon.h
+  BodyOverwriteAddon.h
+  BodyElementOverwriteItem.h
+  LinkShapeOverwriteItem.h
+  DeviceOverwriteItem.h
   KinematicFaultChecker.h
   BodyBar.h
   KinematicsBar.h
@@ -90,7 +99,6 @@ set(headers
   LinkPositionView.h
   LinkPositionWidget.h
   JointDisplacementWidget.h
-  EditableSceneBody.h
   CollisionSeq.h
   CollisionSeqItem.h
   CollisionSeqEngine.h

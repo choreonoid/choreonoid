@@ -4,6 +4,7 @@
 */
 
 #include "BodyItem.h"
+#include "BodyOverwriteAddon.h"
 #include "WorldItem.h"
 #include "EditableSceneBody.h"
 #include "LinkKinematicsKitManager.h"
@@ -26,6 +27,7 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/JointPath>
 #include <cnoid/BodyLoader>
+#include <cnoid/StdBodyWriter>
 #include <cnoid/BodyState>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/InverseKinematics>
@@ -204,10 +206,11 @@ namespace {
 class BodyFileIO : public ItemFileIOBase<BodyItem>
 {
     BodyLoader bodyLoader;
+    unique_ptr<StdBodyWriter> bodyWriter;
     
 public:
     BodyFileIO()
-        : ItemFileIOBase<BodyItem>("CHOREONOID-BODY", Load)
+        : ItemFileIOBase<BodyItem>("CHOREONOID-BODY", Load | Save)
     {
         setCaption(_("Body"));
         setExtensions({ "body", "yaml", "yml", "wrl" });
@@ -236,6 +239,18 @@ public:
         }
         
         return true;
+    }
+
+    virtual bool save(BodyItem* item, const std::string& filename) override
+    {
+        if(!bodyWriter){
+            bodyWriter.reset(new StdBodyWriter);
+        }
+        if(bodyWriter->writeBody(item->body(), filename)){
+            item->getAddon<BodyOverwriteAddon>()->clearOverwriteItems();
+            return true;
+        }
+        return false;
     }
 };
 
