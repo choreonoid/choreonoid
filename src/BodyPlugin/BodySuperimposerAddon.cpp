@@ -3,6 +3,7 @@
 #include "EditableSceneBody.h"
 #include <cnoid/ItemManager>
 #include <cnoid/SceneBody>
+#include <cnoid/BodyState>
 #include <cnoid/CloneMap>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
@@ -48,6 +49,8 @@ public:
     bool checkBodySetChange(Item* parentItem, set<BodyItem*>& bodyItemSet);
     void setTransparency(float t);
     void updateSuperimposition();
+    bool updateSuperimposition(
+        std::function<bool()>& setReferenceConfigurationToOrgBodiesTransiently);
     bool checkPositionIdentity(Body* body1, Body* body2);
 };
 
@@ -285,6 +288,44 @@ bool BodySuperimposerAddon::Impl::checkPositionIdentity(Body* body1, Body* body2
         }
     }
     return true;
+}
+
+
+bool BodySuperimposerAddon::updateSuperimposition
+(std::function<bool()> setReferenceConfigurationToOrgBodiesTransiently)
+{
+    return impl->updateSuperimposition(setReferenceConfigurationToOrgBodiesTransiently);
+}
+
+
+bool BodySuperimposerAddon::Impl::updateSuperimposition
+(std::function<bool()>& setReferenceConfigurationToOrgBodiesTransiently)
+{
+    bool updated = false;
+    
+    auto orgBody = bodyItem->body();
+    BodyState orgBodyState(*orgBody);
+    
+    if(setReferenceConfigurationToOrgBodiesTransiently()){
+        // Copy the body state to the supoerimpose body
+        BodyState bodyState(*orgBody);
+        auto superBody = self->superimposedBody(0);
+        bodyState.restorePositions(*superBody);
+        superBody->calcForwardKinematics();
+        orgBodyState.restorePositions(*orgBody);
+            
+        // Update the kinematics states of superimpose child bodies
+        const int n = self->numSuperimposedBodies();
+        for(int i=1; i < n; ++i){
+            auto childBody = self->superimposedBody(i);
+            childBody->syncPositionWithParentBody();
+        }
+            
+        updateSuperimposition();
+        updated = true;
+    }
+
+    return updated;
 }
 
 

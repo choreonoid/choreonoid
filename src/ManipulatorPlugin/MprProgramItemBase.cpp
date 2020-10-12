@@ -5,7 +5,6 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/BodySuperimposerAddon>
-#include <cnoid/BodyState>
 #include <cnoid/ControllerItem>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/PutPropertyFunction>
@@ -325,33 +324,13 @@ bool MprProgramItemBase::superimposePosition(MprPosition* position)
 
 bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position)
 {
-    if(!targetBodyItem){
-        return false;
-    }
-    bool result = false;
-    if(auto superimposer = targetBodyItem->getAddon<BodySuperimposerAddon>()){
-        auto orgBody = targetBodyItem->body();
-        BodyState orgBodyState(*orgBody);
-        if(moveTo(position, false)){
-            // Copy the body state to the supoerimpose body
-            BodyState bodyState(*orgBody);
-            auto superBody = superimposer->superimposedBody(0);
-            bodyState.restorePositions(*superBody);
-            superBody->calcForwardKinematics();
-            orgBodyState.restorePositions(*orgBody);
-            
-            // Update the kinematics states of superimpose child bodies
-            const int n = superimposer->numSuperimposedBodies();
-            for(int i=1; i < n; ++i){
-                auto childBody = superimposer->superimposedBody(i);
-                childBody->syncPositionWithParentBody();
-            }
-            
-            superimposer->updateSuperimposition();
-            result = true;
+    if(targetBodyItem){
+        if(auto superimposer = targetBodyItem->getAddon<BodySuperimposerAddon>()){
+            return superimposer->updateSuperimposition(
+                [&](){ return moveTo(position, false); });
         }
     }
-    return result;
+    return false;
 }
 
 

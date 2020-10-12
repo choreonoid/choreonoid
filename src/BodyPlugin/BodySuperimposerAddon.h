@@ -23,7 +23,10 @@ public:
     Body* superimposedBody(int index);
     void setTransparency(float transparency);
     void updateSuperimposition();
+    bool updateSuperimposition(
+        std::function<bool()> setReferenceConfigurationToOrgBodiesTransiently);
     void clearSuperimposition();
+    
 
 protected:
     virtual bool store(Archive& archive) override;
