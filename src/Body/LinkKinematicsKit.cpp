@@ -19,8 +19,8 @@ class LinkKinematicsKit::Impl
 public:
     BodyPtr body;
     LinkPtr link;
-    shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointPath> jointPath;
+    shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointSpaceConfigurationHandler> configurationHandler;
     bool isCustomIkDisabled;
     bool isRpySpecified;
@@ -184,7 +184,19 @@ Body* LinkKinematicsKit::body()
 }
 
 
+const Body* LinkKinematicsKit::body() const
+{
+    return impl->body;
+}
+
+
 Link* LinkKinematicsKit::link()
+{
+    return impl->link;
+}
+
+
+const Link* LinkKinematicsKit::link() const
 {
     return impl->link;
 }
@@ -205,15 +217,27 @@ Link* LinkKinematicsKit::baseLink()
 }
 
 
-std::shared_ptr<InverseKinematics> LinkKinematicsKit::inverseKinematics()
+const Link* LinkKinematicsKit::baseLink() const
 {
-    return impl->inverseKinematics;
+    return const_cast<LinkKinematicsKit::Impl*>(impl)->baseLink();
+}
+
+
+bool LinkKinematicsKit::hasJointPath() const
+{
+    return (bool)impl->jointPath;
 }
 
 
 std::shared_ptr<JointPath> LinkKinematicsKit::jointPath()
 {
     return impl->jointPath;
+}
+
+
+std::shared_ptr<InverseKinematics> LinkKinematicsKit::inverseKinematics()
+{
+    return impl->inverseKinematics;
 }
 
 
@@ -323,6 +347,12 @@ CoordinateFrame* LinkKinematicsKit::baseFrame(const GeneralId& id)
 }
 
 
+const CoordinateFrame* LinkKinematicsKit::baseFrame(const GeneralId& id) const
+{
+    return const_cast<LinkKinematicsKit*>(this)->baseFrame(id);
+}
+
+
 CoordinateFrame* LinkKinematicsKit::offsetFrame(const GeneralId& id)
 {
     if(impl->offsetFrames){
@@ -331,7 +361,12 @@ CoordinateFrame* LinkKinematicsKit::offsetFrame(const GeneralId& id)
         }
     }
     return impl->defaultOffsetFrame;
+}
 
+
+const CoordinateFrame* LinkKinematicsKit::offsetFrame(const GeneralId& id) const
+{
+    return const_cast<LinkKinematicsKit*>(this)->offsetFrame(id);
 }
 
 
@@ -358,6 +393,12 @@ CoordinateFrame* LinkKinematicsKit::currentBaseFrame()
 }
 
 
+const CoordinateFrame* LinkKinematicsKit::currentBaseFrame() const
+{
+    return const_cast<LinkKinematicsKit*>(this)->currentBaseFrame();
+}
+
+    
 CoordinateFrame* LinkKinematicsKit::currentOffsetFrame()
 {
     if(impl->offsetFrames){
@@ -366,6 +407,12 @@ CoordinateFrame* LinkKinematicsKit::currentOffsetFrame()
         }
     }
     return impl->defaultOffsetFrame;
+}
+
+
+const CoordinateFrame* LinkKinematicsKit::currentOffsetFrame() const
+{
+    return const_cast<LinkKinematicsKit*>(this)->currentOffsetFrame();
 }
 
 
@@ -381,17 +428,134 @@ void LinkKinematicsKit::setCurrentOffsetFrame(const GeneralId& id)
 }
 
 
-Position LinkKinematicsKit::globalBasePosition() const
+Position LinkKinematicsKit::endPosition
+(const GeneralId& baseFrameId, const GeneralId& offsetFrameId) const
 {
-    auto casted = const_cast<LinkKinematicsKit*>(this);
-    auto baseFrame = casted->currentBaseFrame();
-    if(baseFrame->isGlobal()){
-        return baseFrame->T();
+    Position T_base;
+    const CoordinateFrame* baseFrame_;
+    if(baseFrameId.isValid()){
+        baseFrame_ = baseFrame(baseFrameId);
     } else {
-        return casted->baseLink()->T() * baseFrame->T();
+        baseFrame_ = currentBaseFrame();
+    }
+    if(baseFrame_->isGlobal()){
+        T_base = baseFrame_->T();
+    } else {
+        T_base = impl->jointPath->baseLink()->T() * baseFrame_->T();
+    }
+    
+    const CoordinateFrame* offsetFrame_;
+    if(offsetFrameId.isValid()){
+        offsetFrame_ = offsetFrame(offsetFrameId);
+    } else {
+        offsetFrame_ = currentOffsetFrame();
+    }
+
+    Position T_end = impl->link->T() * offsetFrame_->T();
+    return T_base.inverse(Eigen::Isometry) * T_end;
+}
+
+
+Position LinkKinematicsKit::globalEndPosition(const GeneralId& offsetFrameId) const
+{
+    const CoordinateFrame* offsetFrame_;
+    if(offsetFrameId.isValid()){
+        offsetFrame_ = offsetFrame(offsetFrameId);
+    } else {
+        offsetFrame_ = currentOffsetFrame();
+    }
+    return impl->link->T() * offsetFrame_->T();
+}
+
+
+Position LinkKinematicsKit::globalBasePosition(const GeneralId& baseFrameId) const
+{
+    const CoordinateFrame* baseFrame_;
+    if(baseFrameId.isValid()){
+        baseFrame_ = baseFrame(baseFrameId);
+    } else {
+        baseFrame_ = currentBaseFrame();
+    }
+    if(baseFrame_->isGlobal()){
+        return baseFrame_->T();
+    } else {
+        return impl->jointPath->baseLink()->T() * baseFrame_->T();
     }
 }
-    
+
+
+bool LinkKinematicsKit::setEndPosition
+(const Position& T, const GeneralId& baseFrameId, const GeneralId& offsetFrameId, int configuration)
+{
+    if(!impl->jointPath){
+        return false;
+    }
+
+    Position T_base;
+    CoordinateFrame* baseFrame_;
+    if(baseFrameId.isValid()){
+        baseFrame_ = baseFrame(baseFrameId);
+    } else {
+        baseFrame_ = currentBaseFrame();
+    }
+    if(baseFrame_->isGlobal()){
+        T_base = baseFrame_->T();
+    } else {
+        T_base = baseLink()->T() * baseFrame_->T();
+    }
+
+    CoordinateFrame* offsetFrame_;
+    if(offsetFrameId.isValid()){
+        offsetFrame_ = offsetFrame(offsetFrameId);
+    } else {
+        offsetFrame_ = currentOffsetFrame();
+    }
+    Position T_offset = offsetFrame_->T();
+    Position T_link = T_base * T * T_offset.inverse(Eigen::Isometry);
+
+    if(impl->configurationHandler){
+        impl->configurationHandler->setPreferredConfigurationType(configuration);
+    }
+
+    bool solved = impl->jointPath->calcInverseKinematics(T_link);
+
+    if(impl->configurationHandler){
+        impl->configurationHandler->resetPreferredConfigurationType();
+    }
+
+    return solved;
+}
+
+
+bool LinkKinematicsKit::setGlobalEndPosition
+(const Position& T_global, const GeneralId& offsetFrameId, int configuration)
+{
+    if(!impl->jointPath){
+        return false;
+    }
+
+    CoordinateFrame* offsetFrame_;
+    if(offsetFrameId.isValid()){
+        offsetFrame_ = offsetFrame(offsetFrameId);
+    } else {
+        offsetFrame_ = currentOffsetFrame();
+    }
+    Position T_offset = offsetFrame_->T();
+    Position T_link = T_global * T_offset.inverse(Eigen::Isometry);
+
+    if(impl->configurationHandler){
+        impl->configurationHandler->setPreferredConfigurationType(configuration);
+    }
+
+    bool solved = impl->jointPath->calcInverseKinematics(T_link);
+
+    if(impl->configurationHandler){
+        impl->configurationHandler->resetPreferredConfigurationType();
+    }
+
+    return solved;
+}
+
 
 SignalProxy<void()> LinkKinematicsKit::sigFrameUpdate()
 {

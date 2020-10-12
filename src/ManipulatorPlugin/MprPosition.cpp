@@ -168,70 +168,28 @@ void MprIkPosition::resetReferenceRpy()
 
 bool MprIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
 {
-    auto baseLink = kinematicsKit->baseLink();
-    if(!baseLink){
-        return false;
+    if(kinematicsKit->hasJointPath()){
+        T = kinematicsKit->endPosition();
+        baseFrameId_ = kinematicsKit->currentBaseFrameId();
+        offsetFrameId_ = kinematicsKit->currentOffsetFrameId();
+        referenceRpy_ = rpyFromRot(T.linear(), kinematicsKit->referenceRpy());
+        configuration_ = kinematicsKit->currentConfigurationType();
+        //! \todo set phase here
+        return true;
     }
-
-    Position T_base;
-    baseFrameId_ = kinematicsKit->currentBaseFrameId();
-    auto baseFrame = kinematicsKit->currentBaseFrame();
-    if(baseFrame->isGlobal()){
-        T_base = baseFrame->T();
-    } else {
-        T_base = baseLink->T() * baseFrame->T();
-    }
-
-    offsetFrameId_ = kinematicsKit->currentOffsetFrameId();
-    auto offsetFrame = kinematicsKit->currentOffsetFrame();
-    Position T_end = kinematicsKit->link()->T() * offsetFrame->T();
-
-    T = T_base.inverse(Eigen::Isometry) * T_end;
-
-    referenceRpy_ = rpyFromRot(T.linear(), kinematicsKit->referenceRpy());
-
-    configuration_ = kinematicsKit->currentConfigurationType();
-
-    //! \todo set phase here
-
-    return true;
+    return false;
 }
 
 
 bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 {
-    auto jointPath = kinematicsKit->jointPath();
-    if(!jointPath){
-        return false;
+    if(kinematicsKit->setEndPosition(T, baseFrameId_, offsetFrameId_, configuration_)){
+        kinematicsKit->setReferenceRpy(rpyFromRot(T.linear(), referenceRpy_));
+        return true;
     }
-
-    Position T_base;
-    auto baseFrame = kinematicsKit->baseFrame(baseFrameId_);
-    if(baseFrame->isGlobal()){
-        T_base = baseFrame->T();
-    } else {
-        T_base = kinematicsKit->baseLink()->T() * baseFrame->T();
-    }
-    
-    Position T_offset = kinematicsKit->offsetFrame(offsetFrameId_)->T();
-    Position T_end = T_base * T * T_offset.inverse(Eigen::Isometry);
-
-    kinematicsKit->setReferenceRpy(rpyFromRot(T.linear(), referenceRpy_));
-
-    auto configHandler = kinematicsKit->configurationHandler();
-    if(configHandler){
-        configHandler->setPreferredConfigurationType(configuration_);
-    }
-
-    bool solved = jointPath->calcInverseKinematics(T_end);
-
-    if(configHandler){
-        configHandler->resetPreferredConfigurationType();
-    }
-    
-    return solved;
+    return false;
 }
-
+    
 
 bool MprIkPosition::read(const Mapping& archive)
 {
