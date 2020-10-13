@@ -27,6 +27,7 @@ public:
     static SgNode* getOrCreateTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
+    void updateBasePosition(const Position& T);
 };
 
 typedef ref_ptr<ScenePositionTagList> ScenePositionTagListPtr;
@@ -58,11 +59,17 @@ public:
     PositionTagListPtr tags;
     ScopedConnectionSet tagListConnections;
     LazyCaller notifyUpdateLater;
-    ScenePositionTagListPtr scene;
+    LocationProxyPtr parentLocation;
+    ScopedConnection parentLocationConnection;
     PositionTagListLocationPtr location;
-    SignalProxy<void()> sigLocationChanged;
+    ScenePositionTagListPtr scene;
+    Signal<void()> sigLocationChanged;
     
     Impl(PositionTagListItem* self);
+    void setParentLocation(LocatableItem* parentLocatableItem);
+    void convertLocalCoordinates(
+        LocationProxy* currentParentLocation, LocationProxy* newParentLocation);
+    void onParentLocationChanged();
 };
 
 }
@@ -101,13 +108,18 @@ PositionTagListItem::Impl::Impl(PositionTagListItem* self)
 
     tagListConnections.add(
         tags->sigTagAdded().connect(
-            [&](int index){ notifyUpdateLater(); }));
+            [&](int){ notifyUpdateLater(); }));
     tagListConnections.add(
         tags->sigTagRemoved().connect(
-            [&](int index, PositionTag*){ notifyUpdateLater(); }));
+            [&](int, PositionTag*){ notifyUpdateLater(); }));
     tagListConnections.add(
         tags->sigTagUpdated().connect(
-            [&](int index){ notifyUpdateLater(); }));
+            [&](int){ notifyUpdateLater(); }));
+    tagListConnections.add(
+        tags->sigBasePositionChanged().connect(
+            [&](const Position&){ notifyUpdateLater(); }));
+
+    location = new PositionTagListLocation(this);
 }
 
 
@@ -146,11 +158,72 @@ SgNode* PositionTagListItem::getScene()
 
 LocationProxyPtr PositionTagListItem::getLocationProxy()
 {
-    if(!impl->location){
-        impl->location = new PositionTagListLocation(impl);
-    }
     return impl->location;
-    
+}
+
+
+void PositionTagListItem::onPositionChanged()
+{
+    impl->setParentLocation(findOwnerItem<LocatableItem>());
+}
+
+
+void PositionTagListItem::Impl::setParentLocation(LocatableItem* parentLocatableItem)
+{
+    LocationProxyPtr newLocation;
+    if(parentLocatableItem){
+        newLocation = parentLocatableItem->getLocationProxy();
+    }
+    if(newLocation != parentLocation){
+        parentLocationConnection.disconnect();
+        
+        convertLocalCoordinates(parentLocation, newLocation);
+        
+        parentLocation = newLocation;
+
+        if(!parentLocation){
+            tags->setBasePosition(Position::Identity(), true);
+        } else {
+            parentLocationConnection =
+                parentLocation->sigLocationChanged().connect(
+                    [&](){ onParentLocationChanged(); });
+
+            onParentLocationChanged();
+        }
+    }
+}
+
+
+void PositionTagListItem::Impl::convertLocalCoordinates
+(LocationProxy* currentParentLocation, LocationProxy* newParentLocation)
+{
+    Position T0;
+    if(currentParentLocation){
+        T0 = currentParentLocation->getLocation();
+    } else {
+        T0.setIdentity();
+    }
+    Position T1;
+    if(newParentLocation){
+        T1 = newParentLocation->getLocation();
+    } else {
+        T1.setIdentity();
+    }
+
+    Position Tc = T1.inverse(Eigen::Isometry) * T0;
+    int n = tags->numTags();
+    for(int i=0; i < n; ++i){
+        auto tag = tags->tagAt(i);
+        tag->setPosition(Tc * tag->position());
+        tags->notifyTagUpdate(i);
+    }
+}
+
+
+void PositionTagListItem::Impl::onParentLocationChanged()
+{
+    tags->setBasePosition(parentLocation->getLocation(), true);
+    sigLocationChanged();
 }
 
 
@@ -186,6 +259,9 @@ ScenePositionTagList::ScenePositionTagList(PositionTagListItem::Impl* itemImpl)
     tagListConnections.add(
         tags->sigTagUpdated().connect(
             [&](int index){ updateTagNodePosition(index); }));
+    tagListConnections.add(
+        tags->sigBasePositionChanged().connect(
+            [&](const Position& T){ updateBasePosition(T); }));
 
     notifySceneUpdateLater.setFunction(
         [this](){
@@ -286,6 +362,14 @@ void ScenePositionTagList::updateTagNodePosition(int index)
     update.setAction(SgUpdate::MODIFIED);
     node->notifyUpdate(update);
     update.resetAction();
+}
+
+
+void ScenePositionTagList::updateBasePosition(const Position& T)
+{
+    setPosition(T);
+    update.setAction(SgUpdate::MODIFIED);
+    notifySceneUpdateLater();
 }
 
 

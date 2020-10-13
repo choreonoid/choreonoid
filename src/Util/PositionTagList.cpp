@@ -15,7 +15,8 @@ public:
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
     Signal<void(int index)> sigTagUpdated;
-
+    Signal<void(const Position& T)> sigBasePositionChanged;
+    
     Impl();
 };
 
@@ -23,6 +24,7 @@ public:
 
 
 PositionTagList::PositionTagList()
+    : T_base_(Position::Identity())
 {
     impl = new Impl;
 }
@@ -35,6 +37,7 @@ PositionTagList::Impl::Impl()
 
 
 PositionTagList::PositionTagList(const PositionTagList& org)
+    : T_base_(org.T_base_)
 {
     impl = new Impl;
 
@@ -51,7 +54,7 @@ PositionTagList::~PositionTagList()
 }
 
 
-void PositionTagList::clear()
+void PositionTagList::clearTags()
 {
     while(!tags_.empty()){
         removeAt(tags_.size() - 1);
@@ -107,6 +110,26 @@ SignalProxy<void(int index)> PositionTagList::sigTagUpdated()
 }
 
 
+SignalProxy<void(const Position& T)> PositionTagList::sigBasePositionChanged()
+{
+    return impl->sigBasePositionChanged;
+}
+
+
+void PositionTagList::notifyTagUpdate(int index)
+{
+    if(static_cast<size_t>(index) < tags_.size()){
+        impl->sigTagUpdated(index);
+    }
+}
+
+
+void PositionTagList::notifyBasePositionUpdate()
+{
+    impl->sigBasePositionChanged(T_base_);
+}
+
+
 bool PositionTagList::read(const Mapping* archive)
 {
     auto& typeNode = archive->get("type");
@@ -121,7 +144,7 @@ bool PositionTagList::read(const Mapping* archive)
         versionNode->throwException(format(_("Format version {0} is not supported."), version));
     }
 
-    clear();
+    clearTags();
 
     auto listing = archive->findListing("tags");
     if(listing->isValid()){

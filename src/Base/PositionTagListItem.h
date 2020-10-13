@@ -35,6 +35,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
 
 private:
     Impl* impl;
