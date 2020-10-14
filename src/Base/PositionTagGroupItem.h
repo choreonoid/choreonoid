@@ -38,7 +38,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
-    virtual void onPositionChanged() override;
+    virtual bool onCheckNewPosition(bool isManualOperation, std::function<void()>& out_callbackWhenAdded) override;
 
 private:
     Impl* impl;

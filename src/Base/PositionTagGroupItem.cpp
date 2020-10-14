@@ -70,10 +70,11 @@ public:
     Signal<void()> sigLocationChanged;
     
     Impl(PositionTagGroupItem* self);
-    void setParentLocation(LocatableItem* parentLocatableItem);
+    void setParentLocation(LocatableItem* parentLocatableItem, bool doCoordinateConversion);
     void convertLocalCoordinates(
         LocationProxy* currentParentLocation, LocationProxy* newParentLocation);
     void onParentLocationChanged();
+    void onOffsetPositionChanged();
 };
 
 }
@@ -121,7 +122,7 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self)
             [&](int){ notifyUpdateLater(); }));
     tagGroupConnections.add(
         tags->sigOffsetPositionChanged().connect(
-            [&](const Position&){ notifyUpdateLater(); }));
+            [&](const Position&){ onOffsetPositionChanged(); }));
 
     location = new PositionTagGroupLocation(this);
     parentPosition.setIdentity();
@@ -167,13 +168,17 @@ LocationProxyPtr PositionTagGroupItem::getLocationProxy()
 }
 
 
-void PositionTagGroupItem::onPositionChanged()
+bool PositionTagGroupItem::onCheckNewPosition(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
 {
-    impl->setParentLocation(findOwnerItem<LocatableItem>());
+    out_callbackWhenAdded =
+        [this, isManualOperation](){
+            impl->setParentLocation(findOwnerItem<LocatableItem>(), isManualOperation);
+        };
+    return true;
 }
 
 
-void PositionTagGroupItem::Impl::setParentLocation(LocatableItem* parentLocatableItem)
+void PositionTagGroupItem::Impl::setParentLocation(LocatableItem* parentLocatableItem, bool doCoordinateConversion)
 {
     LocationProxyPtr newLocation;
     if(parentLocatableItem){
@@ -181,20 +186,20 @@ void PositionTagGroupItem::Impl::setParentLocation(LocatableItem* parentLocatabl
     }
     if(newLocation != parentLocation){
         parentLocationConnection.disconnect();
-        
-        convertLocalCoordinates(parentLocation, newLocation);
+
+        if(doCoordinateConversion){
+            convertLocalCoordinates(parentLocation, newLocation);
+        }
         
         parentLocation = newLocation;
 
-        if(!parentLocation){
-            parentPosition.setIdentity();
-            tags->setOffsetPosition(Position::Identity(), true);
-        } else {
+        if(parentLocation){
             parentLocationConnection =
                 parentLocation->sigLocationChanged().connect(
                     [&](){ onParentLocationChanged(); });
-            onParentLocationChanged();
         }
+
+        onParentLocationChanged();
     }
 }
 
@@ -202,20 +207,23 @@ void PositionTagGroupItem::Impl::setParentLocation(LocatableItem* parentLocatabl
 void PositionTagGroupItem::Impl::convertLocalCoordinates
 (LocationProxy* currentParentLocation, LocationProxy* newParentLocation)
 {
-    Position T0;
+    Position T_o0 = tags->offsetPosition();
+    
+    Position T_p0;
     if(currentParentLocation){
-        T0 = currentParentLocation->getLocation();
+        T_p0 = currentParentLocation->getLocation();
     } else {
-        T0.setIdentity();
+        T_p0.setIdentity();
     }
-    Position T1;
+    Position T_p1;
     if(newParentLocation){
-        T1 = newParentLocation->getLocation();
+        T_p1 = newParentLocation->getLocation();
     } else {
-        T1.setIdentity();
+        T_p1.setIdentity();
     }
+    tags->setOffsetPosition(Position::Identity(), true);
 
-    Position Tc = T1.inverse(Eigen::Isometry) * T0;
+    Position Tc = T_p1.inverse(Eigen::Isometry) * T_p0 * T_o0;
     int n = tags->numTags();
     for(int i=0; i < n; ++i){
         auto tag = tags->tagAt(i);
@@ -231,11 +239,22 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
 
 void PositionTagGroupItem::Impl::onParentLocationChanged()
 {
-    parentPosition = parentLocation->getLocation();
+    if(parentLocation){
+        parentPosition = parentLocation->getLocation();
+    } else {
+        parentPosition.setIdentity();
+    }
     if(scene){
         scene->setParentPosition(parentPosition);
     }
     sigLocationChanged();
+}
+
+
+void PositionTagGroupItem::Impl::onOffsetPositionChanged()
+{
+    sigLocationChanged();
+    notifyUpdateLater();
 }
 
 
@@ -267,10 +286,14 @@ bool PositionTagGroupItem::restore(const Archive& archive)
 ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImpl)
     : itemImpl(itemImpl)
 {
+    auto tags = itemImpl->tags;
+
+    setPosition(itemImpl->parentPosition);
+
     offsetTransform = new SgPosTransform;
+    offsetTransform->setPosition(tags->offsetPosition());
     addChild(offsetTransform);
     
-    auto tags = itemImpl->tags;
     int n = tags->numTags();
     for(int i=0; i < n; ++i){
         addTagNode(i, false);
@@ -416,13 +439,13 @@ Item* PositionTagGroupLocation::getCorrespondingItem()
 
 Position PositionTagGroupLocation::getLocation() const
 {
-    return Position::Identity();
+    return itemImpl->tags->offsetPosition();
 }
 
 
 void PositionTagGroupLocation::setLocation(const Position& T)
 {
-
+    itemImpl->tags->setOffsetPosition(T, true);
 }
 
 
