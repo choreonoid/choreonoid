@@ -28,6 +28,9 @@ public:
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;
 
+    const Position& parentPosition() const;
+    Position globalOffsetPosition() const;
+
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 

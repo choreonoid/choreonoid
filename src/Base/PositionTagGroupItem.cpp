@@ -17,7 +17,7 @@ class ScenePositionTagGroup : public SgPosTransform, public SceneWidgetEditable
 {
 public:
     PositionTagGroupItem::Impl* itemImpl;
-    LazyCaller notifySceneUpdateLater;
+    SgPosTransformPtr offsetTransform;
     SgUpdate update;
     ScopedConnectionSet tagGroupConnections;
     
@@ -27,7 +27,8 @@ public:
     static SgNode* getOrCreateTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
-    void updateOffsetPosition(const Position& T);
+    void setOffsetPosition(const Position& T);
+    void setParentPosition(const Position& T);
 };
 
 typedef ref_ptr<ScenePositionTagGroup> ScenePositionTagGroupPtr;
@@ -55,13 +56,16 @@ namespace cnoid {
 class PositionTagGroupItem::Impl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     PositionTagGroupItem* self;
     PositionTagGroupPtr tags;
     ScopedConnectionSet tagGroupConnections;
     LazyCaller notifyUpdateLater;
+    PositionTagGroupLocationPtr location;
     LocationProxyPtr parentLocation;
     ScopedConnection parentLocationConnection;
-    PositionTagGroupLocationPtr location;
+    Position parentPosition;
     ScenePositionTagGroupPtr scene;
     Signal<void()> sigLocationChanged;
     
@@ -120,6 +124,7 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self)
             [&](const Position&){ notifyUpdateLater(); }));
 
     location = new PositionTagGroupLocation(this);
+    parentPosition.setIdentity();
 }
 
 
@@ -182,12 +187,12 @@ void PositionTagGroupItem::Impl::setParentLocation(LocatableItem* parentLocatabl
         parentLocation = newLocation;
 
         if(!parentLocation){
+            parentPosition.setIdentity();
             tags->setOffsetPosition(Position::Identity(), true);
         } else {
             parentLocationConnection =
                 parentLocation->sigLocationChanged().connect(
                     [&](){ onParentLocationChanged(); });
-
             onParentLocationChanged();
         }
     }
@@ -214,7 +219,11 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
     int n = tags->numTags();
     for(int i=0; i < n; ++i){
         auto tag = tags->tagAt(i);
-        tag->setPosition(Tc * tag->position());
+        if(tag->hasAttitude()){
+            tag->setPosition(Tc * tag->position());
+        } else {
+            tag->setTranslation(Tc * tag->translation());
+        }
         tags->notifyTagUpdate(i);
     }
 }
@@ -222,8 +231,23 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
 
 void PositionTagGroupItem::Impl::onParentLocationChanged()
 {
-    tags->setOffsetPosition(parentLocation->getLocation(), true);
+    parentPosition = parentLocation->getLocation();
+    if(scene){
+        scene->setParentPosition(parentPosition);
+    }
     sigLocationChanged();
+}
+
+
+const Position& PositionTagGroupItem::parentPosition() const
+{
+    return impl->parentPosition;
+}
+
+
+Position PositionTagGroupItem::globalOffsetPosition() const
+{
+    return impl->parentPosition * impl->tags->offsetPosition();
 }
 
 
@@ -243,8 +267,10 @@ bool PositionTagGroupItem::restore(const Archive& archive)
 ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImpl)
     : itemImpl(itemImpl)
 {
+    offsetTransform = new SgPosTransform;
+    addChild(offsetTransform);
+    
     auto tags = itemImpl->tags;
-
     int n = tags->numTags();
     for(int i=0; i < n; ++i){
         addTagNode(i, false);
@@ -261,15 +287,7 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
             [&](int index){ updateTagNodePosition(index); }));
     tagGroupConnections.add(
         tags->sigOffsetPositionChanged().connect(
-            [&](const Position& T){ updateOffsetPosition(T); }));
-
-    notifySceneUpdateLater.setFunction(
-        [this](){
-            notifyUpdate(update);
-            update.resetAction();
-        });
-
-    update.resetAction();
+            [&](const Position& T){ setOffsetPosition(T); }));
 }
 
 
@@ -286,10 +304,10 @@ void ScenePositionTagGroup::addTagNode(int index, bool doNotify)
     auto node = new SgPosTransform;
     node->addChild(getOrCreateTagMarker());
     node->setPosition(tag->position());
-    insertChild(index, node);
+    offsetTransform->insertChild(index, node);
     if(doNotify){
-        update.setAction(SgUpdate::ADDED);
-        notifySceneUpdateLater();
+        update.resetAction(SgUpdate::ADDED);
+        offsetTransform->notifyUpdate(update);
     }
 }
     
@@ -345,31 +363,35 @@ SgNode* ScenePositionTagGroup::getOrCreateTagMarker()
 
 void ScenePositionTagGroup::removeTagNode(int index)
 {
-    removeChildAt(index);
-    update.setAction(SgUpdate::REMOVED);
-    notifySceneUpdateLater();
+    offsetTransform->removeChildAt(index);
+    update.resetAction(SgUpdate::REMOVED);
+    offsetTransform->notifyUpdate(update);
 }
 
 
 void ScenePositionTagGroup::updateTagNodePosition(int index)
 {
-    if(notifySceneUpdateLater.isPending()){
-        notifySceneUpdateLater.flush();
-    }
     auto tag = itemImpl->tags->tagAt(index);
-    auto node = static_cast<SgPosTransform*>(child(index));
+    auto node = static_cast<SgPosTransform*>(offsetTransform->child(index));
     node->setTranslation(tag->translation());
-    update.setAction(SgUpdate::MODIFIED);
+    update.resetAction(SgUpdate::MODIFIED);
     node->notifyUpdate(update);
-    update.resetAction();
 }
 
 
-void ScenePositionTagGroup::updateOffsetPosition(const Position& T)
+void ScenePositionTagGroup::setOffsetPosition(const Position& T)
+{
+    offsetTransform->setPosition(T);
+    update.resetAction(SgUpdate::MODIFIED);
+    offsetTransform->notifyUpdate(update);
+}
+
+
+void ScenePositionTagGroup::setParentPosition(const Position& T)
 {
     setPosition(T);
-    update.setAction(SgUpdate::MODIFIED);
-    notifySceneUpdateLater();
+    update.resetAction(SgUpdate::MODIFIED);
+    notifyUpdate(update);
 }
 
 
