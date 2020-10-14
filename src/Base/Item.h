@@ -393,7 +393,7 @@ protected:
     */
     virtual Item* doDuplicate(Item* duplicatedParentItem) const;
 
-    virtual bool onCheckNewPosition(bool isManualOperation);
+    virtual bool onCheckNewPosition(bool isManualOperation, std::function<void()>& out_callbackWhenAdded);
     virtual void onAddedToParent();
 
     /**

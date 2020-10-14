@@ -42,7 +42,7 @@ BodyOverwriteAddon* BodyElementOverwriteItem::bodyOverwrite()
 }
 
 
-bool BodyElementOverwriteItem::onCheckNewPosition(bool isManualOperation)
+bool BodyElementOverwriteItem::onCheckNewPosition(bool isManualOperation, std::function<void()>&)
 {
     newBodyItem_ = findOwnerItem<BodyItem>();
     isNewBodyItemValid = true;

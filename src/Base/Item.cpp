@@ -104,9 +104,9 @@ public:
     Item* duplicateSubTreeIter(Item* duplicated, Item* duplicatedParent) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void justInsertChildItem(Item* newNextItem, Item* item);
-    bool checkNewPositionAcceptance(Item* newParentItem, Item* newNextItem, bool isManualOperation);
-    bool checkNewPositionAcceptanceIter(bool isManualOperation);
-    bool onCheckNewPositionAcceptance(bool isManualOperation);
+    bool checkNewPositionAcceptance(
+        Item* newParentItem, Item* newNextItem, bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
+    bool checkNewPositionAcceptanceIter(bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
     void collectSubTreeItems(vector<Item*>& items, Item* item);
     void callFuncOnConnectedToRoot();
     void justRemoveSelfFromParent();
@@ -604,7 +604,8 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         }
     }
 
-    if(!item->impl->checkNewPositionAcceptance(self, newNextItem, isManualOperation)){
+    vector<function<void()>> callbacksWhenAdded;
+    if(!item->impl->checkNewPositionAcceptance(self, newNextItem, isManualOperation, callbacksWhenAdded)){
         return false;
     }
 
@@ -628,6 +629,11 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     }
 
     justInsertChildItem(newNextItem, item);
+
+
+    for(auto& callback : callbacksWhenAdded){
+        callback();
+    }
 
     item->onAddedToParent();
 
@@ -726,7 +732,8 @@ void Item::Impl::justInsertChildItem(Item* newNextItem, Item* item)
 }    
 
 
-bool Item::Impl::checkNewPositionAcceptance(Item* newParentItem, Item* newNextItem, bool isManualOperation)
+bool Item::Impl::checkNewPositionAcceptance
+(Item* newParentItem, Item* newNextItem, bool isManualOperation, vector<function<void()>>& callbacksWhenAdded)
 {
     auto currentParentItem = self->parent_;
     auto currentNextItem = self->nextItem_;
@@ -736,7 +743,7 @@ bool Item::Impl::checkNewPositionAcceptance(Item* newParentItem, Item* newNextIt
     }
     newParentItem->impl->justInsertChildItem(newNextItem, self);
 
-    bool accepted = checkNewPositionAcceptanceIter(isManualOperation);
+    bool accepted = checkNewPositionAcceptanceIter(isManualOperation, callbacksWhenAdded);
 
     justRemoveSelfFromParent();
     if(currentParentItem){
@@ -747,13 +754,18 @@ bool Item::Impl::checkNewPositionAcceptance(Item* newParentItem, Item* newNextIt
 }
 
 
-bool Item::Impl::checkNewPositionAcceptanceIter(bool isManualOperation)
+bool Item::Impl::checkNewPositionAcceptanceIter
+(bool isManualOperation, vector<function<void()>>& callbacksWhenAdded)
 {
-    if(!self->onCheckNewPosition(isManualOperation)){
+    function<void()> callback;
+    if(!self->onCheckNewPosition(isManualOperation, callback)){
         return false;
     }
+    if(callback){
+        callbacksWhenAdded.push_back(callback);
+    }
     for(auto child = self->childItem(); child; child = child->nextItem()){
-        if(!child->impl->checkNewPositionAcceptanceIter(isManualOperation)){
+        if(!child->impl->checkNewPositionAcceptanceIter(isManualOperation, callbacksWhenAdded)){
             return false;
         }
     }
@@ -761,7 +773,7 @@ bool Item::Impl::checkNewPositionAcceptanceIter(bool isManualOperation)
 }
 
 
-bool Item::onCheckNewPosition(bool isManualOperation)
+bool Item::onCheckNewPosition(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
 {
     return true;
 }

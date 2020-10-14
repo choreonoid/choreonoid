@@ -20,7 +20,7 @@ public:
     BodyItem* bodyItem() { return bodyItem_; }
     BodyOverwriteAddon* bodyOverwrite();
 
-    virtual bool onCheckNewPosition(bool isManualOperation) override final;
+    virtual bool onCheckNewPosition(bool isManualOperation, std::function<void()>& out_callbackWhenAdded) override final;
     virtual void onPositionChanged() override final;
 
 protected:
