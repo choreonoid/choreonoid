@@ -1,5 +1,5 @@
-#ifndef CNOID_UTIL_POSITION_TAG_LIST_H
-#define CNOID_UTIL_POSITION_TAG_LIST_H
+#ifndef CNOID_UTIL_POSITION_TAG_GROUP_H
+#define CNOID_UTIL_POSITION_TAG_GROUP_H
 
 #include "PositionTag.h"
 #include "Signal.h"
@@ -12,14 +12,14 @@ namespace cnoid {
 class PositionTag;
 class Mapping;
 
-class CNOID_EXPORT PositionTagList : public Referenced
+class CNOID_EXPORT PositionTagGroup : public Referenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     
-    PositionTagList();
-    PositionTagList(const PositionTagList& org);
-    virtual ~PositionTagList();
+    PositionTagGroup();
+    PositionTagGroup(const PositionTagGroup& org);
+    virtual ~PositionTagGroup();
 
     void clearTags();
 
@@ -34,15 +34,15 @@ public:
         return tags_[index];
     }
 
-    const Position& basePosition() const {
-        return T_base_;
+    const Position& offsetPosition() const {
+        return T_offset_;
     }
     
     template<class Scalar, int Mode, int Options>
-    void setBasePosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T, bool doNotify){
-        T_base_ = T.template cast<Position::Scalar>();
+    void setOffsetPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T, bool doNotify){
+        T_offset_ = T.template cast<Position::Scalar>();
         if(doNotify){
-            notifyBasePositionUpdate();
+            notifyOffsetPositionUpdate();
         }
     }
 
@@ -56,23 +56,23 @@ public:
     SignalProxy<void(int index)> sigTagAdded();
     SignalProxy<void(int index, PositionTag* tag)> sigTagRemoved();
     SignalProxy<void(int index)> sigTagUpdated();
-    SignalProxy<void(const Position& T)> sigBasePositionChanged();
+    SignalProxy<void(const Position& T)> sigOffsetPositionChanged();
 
     void notifyTagUpdate(int index);
-    void notifyBasePositionUpdate();
+    void notifyOffsetPositionUpdate();
     
     bool read(const Mapping* archive);
     void write(Mapping* archive) const;
 
 private:
     Container tags_;
-    Position T_base_;
+    Position T_offset_;
     
     class Impl;
     Impl* impl;
 };
 
-typedef ref_ptr<PositionTagList> PositionTagListPtr;
+typedef ref_ptr<PositionTagGroup> PositionTagGroupPtr;
 
 }
 

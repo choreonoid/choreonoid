@@ -120,7 +120,7 @@ set(sources
   SceneItemFileIO.cpp
   PointSetItem.cpp
   MultiPointSetItem.cpp
-  PositionTagListItem.cpp
+  PositionTagGroupItem.cpp
   PositionTagListWidget.cpp
   MovieRecorder.cpp
   TextEditView.cpp
@@ -250,7 +250,7 @@ set(headers
   SceneItemFileIO.h
   PointSetItem.h
   MultiPointSetItem.h
-  PositionTagListItem.h
+  PositionTagGroupItem.h
   PositionTagListWidget.h
   TextEditView.h
   GeneralSliderView.h

@@ -1,7 +1,7 @@
 #include "PositionTagListWidget.h"
 #include "MenuManager.h"
-#include "PositionTagListItem.h"
-#include <cnoid/PositionTagList>
+#include "PositionTagGroupItem.h"
+#include <cnoid/PositionTagGroup>
 #include <cnoid/PositionTag>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
@@ -24,16 +24,16 @@ constexpr int NumColumns = 2;
 constexpr int IndexColumn = 0;
 constexpr int PositionColumn = 1;
 
-class TagListModel : public QAbstractTableModel
+class TagGroupModel : public QAbstractTableModel
 {
 public:
     PositionTagListWidget* widget;
-    PositionTagListItemPtr tagListItem;
-    ScopedConnectionSet tagListConnections;
+    PositionTagGroupItemPtr tagGroupItem;
+    ScopedConnectionSet tagGroupConnections;
     QFont monoFont;
     
-    TagListModel(PositionTagListWidget* widget);
-    void setTagListItem(PositionTagListItem* tagListItem);
+    TagGroupModel(PositionTagListWidget* widget);
+    void setTagGroupItem(PositionTagGroupItem* tagGroupItem);
     int numTags() const;
     PositionTag* tagAt(const QModelIndex& index) const;
     virtual int rowCount(const QModelIndex& parent) const override;
@@ -54,8 +54,8 @@ namespace cnoid {
 class PositionTagListWidget::Impl
 {
 public:
-    PositionTagListItemPtr tagListItem;
-    TagListModel* tagListModel;
+    PositionTagGroupItemPtr tagGroupItem;
+    TagGroupModel* tagGroupModel;
     bool isSelectionChangedAlreadyCalled;
     MenuManager contextMenuManager;
     Signal<void(const std::vector<int>& selected)> sigTagSelectionChanged;
@@ -68,7 +68,7 @@ public:
 }
 
 
-TagListModel::TagListModel(PositionTagListWidget* widget)
+TagGroupModel::TagGroupModel(PositionTagListWidget* widget)
     : QAbstractTableModel(widget),
       widget(widget),
       monoFont("Monospace")
@@ -77,22 +77,22 @@ TagListModel::TagListModel(PositionTagListWidget* widget)
 }
 
 
-void TagListModel::setTagListItem(PositionTagListItem* tagListItem)
+void TagGroupModel::setTagGroupItem(PositionTagGroupItem* tagGroupItem)
 {
     beginResetModel();
 
-    this->tagListItem = tagListItem;
+    this->tagGroupItem = tagGroupItem;
 
-    tagListConnections.disconnect();
-    if(tagListItem){
-        auto tags = tagListItem->tags();
-        tagListConnections.add(
+    tagGroupConnections.disconnect();
+    if(tagGroupItem){
+        auto tags = tagGroupItem->tags();
+        tagGroupConnections.add(
             tags->sigTagAdded().connect(
                 [&](int index){ onTagAdded(index); }));
-        tagListConnections.add(
+        tagGroupConnections.add(
             tags->sigTagRemoved().connect(
                 [&](int index, PositionTag*){ onTagRemoved(index); }));
-        tagListConnections.add(
+        tagGroupConnections.add(
             tags->sigTagUpdated().connect(
                 [&](int index){ onTagUpdated(index); }));
     }
@@ -101,25 +101,25 @@ void TagListModel::setTagListItem(PositionTagListItem* tagListItem)
 }
 
 
-int TagListModel::numTags() const
+int TagGroupModel::numTags() const
 {
-    if(tagListItem){
-        return tagListItem->tags()->numTags();
+    if(tagGroupItem){
+        return tagGroupItem->tags()->numTags();
     }
     return 0;
 }
 
 
-PositionTag* TagListModel::tagAt(const QModelIndex& index) const
+PositionTag* TagGroupModel::tagAt(const QModelIndex& index) const
 {
     if(!index.isValid()){
         return nullptr;
     }
-    return tagListItem->tags()->tagAt(index.row());
+    return tagGroupItem->tags()->tagAt(index.row());
 }
         
     
-int TagListModel::rowCount(const QModelIndex& parent) const
+int TagGroupModel::rowCount(const QModelIndex& parent) const
 {
     int n = 0;
     if(!parent.isValid()){
@@ -132,13 +132,13 @@ int TagListModel::rowCount(const QModelIndex& parent) const
 }
 
 
-int TagListModel::columnCount(const QModelIndex& parent) const
+int TagGroupModel::columnCount(const QModelIndex& parent) const
 {
     return NumColumns;
 }
         
 
-QVariant TagListModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant TagGroupModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if(role == Qt::DisplayRole){
         if(orientation == Qt::Horizontal){
@@ -162,9 +162,9 @@ QVariant TagListModel::headerData(int section, Qt::Orientation orientation, int 
 }
 
 
-QModelIndex TagListModel::index(int row, int column, const QModelIndex& parent) const
+QModelIndex TagGroupModel::index(int row, int column, const QModelIndex& parent) const
 {
-    if(!tagListItem || parent.isValid()){
+    if(!tagGroupItem || parent.isValid()){
         return QModelIndex();
     }
     if(row < numTags()){
@@ -174,7 +174,7 @@ QModelIndex TagListModel::index(int row, int column, const QModelIndex& parent) 
 }
     
 
-QVariant TagListModel::data(const QModelIndex& index, int role) const
+QVariant TagGroupModel::data(const QModelIndex& index, int role) const
 {
     auto tag = tagAt(index);
     if(!tag){
@@ -207,7 +207,7 @@ QVariant TagListModel::data(const QModelIndex& index, int role) const
 }
 
 
-QVariant TagListModel::getPositionData(const PositionTag* tag) const
+QVariant TagGroupModel::getPositionData(const PositionTag* tag) const
 {
     auto p = tag->translation();
     if(!tag->hasAttitude()){
@@ -221,7 +221,7 @@ QVariant TagListModel::getPositionData(const PositionTag* tag) const
 
 
 
-void TagListModel::onTagAdded(int tagIndex)
+void TagGroupModel::onTagAdded(int tagIndex)
 {
     if(numTags() == 0){
         // Remove the empty row first
@@ -236,7 +236,7 @@ void TagListModel::onTagAdded(int tagIndex)
 }
 
 
-void TagListModel::onTagRemoved(int tagIndex)
+void TagGroupModel::onTagRemoved(int tagIndex)
 {
     beginRemoveRows(QModelIndex(), tagIndex, tagIndex);
     endRemoveRows();
@@ -248,7 +248,7 @@ void TagListModel::onTagRemoved(int tagIndex)
 }
 
 
-void TagListModel::onTagUpdated(int tagIndex)
+void TagGroupModel::onTagUpdated(int tagIndex)
 {
     auto modelIndex = index(tagIndex, PositionColumn, QModelIndex());
     Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
@@ -275,8 +275,8 @@ PositionTagListWidget::PositionTagListWidget(QWidget* parent)
         QAbstractItemView::AnyKeyPressed);
     */
 
-    impl->tagListModel = new TagListModel(this);
-    setModel(impl->tagListModel);
+    impl->tagGroupModel = new TagGroupModel(this);
+    setModel(impl->tagGroupModel);
 
     auto hheader = horizontalHeader();
     hheader->setMinimumSectionSize(24);
@@ -304,24 +304,24 @@ PositionTagListWidget::PositionTagListWidget(QWidget* parent)
 }
 
 
-void PositionTagListWidget::setTagListItem(PositionTagListItem* item)
+void PositionTagListWidget::setTagGroupItem(PositionTagGroupItem* item)
 {
-    impl->tagListItem = item;
-    impl->tagListModel->setTagListItem(item);
+    impl->tagGroupItem = item;
+    impl->tagGroupModel->setTagGroupItem(item);
 }
 
 
 int PositionTagListWidget::currentTagIndex() const
 {
     auto current = selectionModel()->currentIndex();
-    return current.isValid() ? current.row() : impl->tagListModel->numTags();
+    return current.isValid() ? current.row() : impl->tagGroupModel->numTags();
 }
 
 
 void PositionTagListWidget::removeSelectedTags()
 {
-    if(impl->tagListItem){
-        auto tags = impl->tagListItem->tags();
+    if(impl->tagGroupItem){
+        auto tags = impl->tagGroupItem->tags();
         auto selected = selectionModel()->selectedRows();
         std::sort(selected.begin(), selected.end());
         int numRemoved = 0;

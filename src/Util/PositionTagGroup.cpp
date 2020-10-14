@@ -1,4 +1,4 @@
-#include "PositionTagList.h"
+#include "PositionTagGroup.h"
 #include "ValueTree.h"
 #include <fmt/format.h>
 #include "gettext.h"
@@ -9,13 +9,13 @@ using fmt::format;
 
 namespace cnoid {
 
-class PositionTagList::Impl
+class PositionTagGroup::Impl
 {
 public:
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
     Signal<void(int index)> sigTagUpdated;
-    Signal<void(const Position& T)> sigBasePositionChanged;
+    Signal<void(const Position& T)> sigOffsetPositionChanged;
     
     Impl();
 };
@@ -23,21 +23,21 @@ public:
 }
 
 
-PositionTagList::PositionTagList()
-    : T_base_(Position::Identity())
+PositionTagGroup::PositionTagGroup()
+    : T_offset_(Position::Identity())
 {
     impl = new Impl;
 }
 
 
-PositionTagList::Impl::Impl()
+PositionTagGroup::Impl::Impl()
 {
 
 }
 
 
-PositionTagList::PositionTagList(const PositionTagList& org)
-    : T_base_(org.T_base_)
+PositionTagGroup::PositionTagGroup(const PositionTagGroup& org)
+    : T_offset_(org.T_offset_)
 {
     impl = new Impl;
 
@@ -48,13 +48,13 @@ PositionTagList::PositionTagList(const PositionTagList& org)
 }
 
 
-PositionTagList::~PositionTagList()
+PositionTagGroup::~PositionTagGroup()
 {
     delete impl;
 }
 
 
-void PositionTagList::clearTags()
+void PositionTagGroup::clearTags()
 {
     while(!tags_.empty()){
         removeAt(tags_.size() - 1);
@@ -62,7 +62,7 @@ void PositionTagList::clearTags()
 }
 
 
-void PositionTagList::insert(int index, PositionTag* tag)
+void PositionTagGroup::insert(int index, PositionTag* tag)
 {
     int size = tags_.size();
     if(index > size){
@@ -74,13 +74,13 @@ void PositionTagList::insert(int index, PositionTag* tag)
 }
 
 
-void PositionTagList::append(PositionTag* tag)
+void PositionTagGroup::append(PositionTag* tag)
 {
     insert(tags_.size(), tag);
 }
 
 
-bool PositionTagList::removeAt(int index)
+bool PositionTagGroup::removeAt(int index)
 {
     if(index >= tags_.size()){
         return false;
@@ -92,31 +92,31 @@ bool PositionTagList::removeAt(int index)
 }
 
 
-SignalProxy<void(int index)> PositionTagList::sigTagAdded()
+SignalProxy<void(int index)> PositionTagGroup::sigTagAdded()
 {
     return impl->sigTagAdded;
 }
 
 
-SignalProxy<void(int index, PositionTag* tag)> PositionTagList::sigTagRemoved()
+SignalProxy<void(int index, PositionTag* tag)> PositionTagGroup::sigTagRemoved()
 {
     return impl->sigTagRemoved;
 }
 
 
-SignalProxy<void(int index)> PositionTagList::sigTagUpdated()
+SignalProxy<void(int index)> PositionTagGroup::sigTagUpdated()
 {
     return impl->sigTagUpdated;
 }
 
 
-SignalProxy<void(const Position& T)> PositionTagList::sigBasePositionChanged()
+SignalProxy<void(const Position& T)> PositionTagGroup::sigOffsetPositionChanged()
 {
-    return impl->sigBasePositionChanged;
+    return impl->sigOffsetPositionChanged;
 }
 
 
-void PositionTagList::notifyTagUpdate(int index)
+void PositionTagGroup::notifyTagUpdate(int index)
 {
     if(static_cast<size_t>(index) < tags_.size()){
         impl->sigTagUpdated(index);
@@ -124,18 +124,18 @@ void PositionTagList::notifyTagUpdate(int index)
 }
 
 
-void PositionTagList::notifyBasePositionUpdate()
+void PositionTagGroup::notifyOffsetPositionUpdate()
 {
-    impl->sigBasePositionChanged(T_base_);
+    impl->sigOffsetPositionChanged(T_offset_);
 }
 
 
-bool PositionTagList::read(const Mapping* archive)
+bool PositionTagGroup::read(const Mapping* archive)
 {
     auto& typeNode = archive->get("type");
-    if(typeNode.toString() != "PositionTagList"){
+    if(typeNode.toString() != "PositionTagGroup"){
         typeNode.throwException(
-            format(_("{0} cannot be loaded as a position tag list"), typeNode.toString()));
+            format(_("{0} cannot be loaded as a position tag group"), typeNode.toString()));
     }
 
     auto versionNode = archive->find("format_version");
@@ -160,9 +160,9 @@ bool PositionTagList::read(const Mapping* archive)
 }
 
 
-void PositionTagList::write(Mapping* archive) const
+void PositionTagGroup::write(Mapping* archive) const
 {
-    archive->write("type", "PositionTagList");
+    archive->write("type", "PositionTagGroup");
     archive->write("format_version", 1.0);
 
     if(!tags_.empty()){

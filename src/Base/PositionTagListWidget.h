@@ -7,14 +7,14 @@
 
 namespace cnoid {
 
-class PositionTagListItem;
+class PositionTagGroupItem;
 class MenuManager;
 
 class CNOID_EXPORT PositionTagListWidget : public QTableView
 {
 public:
     PositionTagListWidget(QWidget* parent = nullptr);
-    void setTagListItem(PositionTagListItem* item);
+    void setTagGroupItem(PositionTagGroupItem* item);
     int currentTagIndex() const;
     void removeSelectedTags();
 

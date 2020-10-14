@@ -32,7 +32,7 @@
 #include "ReferencedObjectSeqItem.h"
 #include "CoordinateFrameListItem.h"
 #include "CoordinateFrameItem.h"
-//#include "PositionTagListItem.h"
+#include "PositionTagGroupItem.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -302,7 +302,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     LightingItem::initializeClass(ext);
     CoordinateFrameListItem::initializeClass(ext);
     CoordinateFrameItem::initializeClass(ext);
-    //PositionTagListItem::initializeClass(ext);
+    PositionTagGroupItem::initializeClass(ext);
 
     MovieRecorder::initialize(ext);
 

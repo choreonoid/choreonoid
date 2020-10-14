@@ -39,7 +39,7 @@ set(sources
   CoordinateFrame.cpp
   CoordinateFrameList.cpp
   PositionTag.cpp
-  PositionTagList.cpp  
+  PositionTagGroup.cpp  
   BoundingBox.cpp
   SceneNodeClassRegistry.cpp # This must be before any scene graph classes
   PolymorphicSceneNodeFunctionSet.cpp
@@ -143,7 +143,7 @@ set(headers
   CoordinateFrame.h
   CoordinateFrameList.h
   PositionTag.h
-  PositionTagList.h
+  PositionTagGroup.h
   BoundingBox.h
   SceneNodeClassRegistry.h
   PolymorphicSceneNodeFunctionSet.h

@@ -1,5 +1,5 @@
-#ifndef CNOID_BASE_POSITION_TAG_LIST_ITEM_H
-#define CNOID_BASE_POSITION_TAG_LIST_ITEM_H
+#ifndef CNOID_BASE_POSITION_TAG_GROUP_ITEM_H
+#define CNOID_BASE_POSITION_TAG_GROUP_ITEM_H
 
 #include "Item.h"
 #include "RenderableItem.h"
@@ -8,19 +8,19 @@
 
 namespace cnoid {
 
-class PositionTagList;
+class PositionTagGroup;
 
-class CNOID_EXPORT PositionTagListItem : public Item, public RenderableItem, public LocatableItem
+class CNOID_EXPORT PositionTagGroupItem : public Item, public RenderableItem, public LocatableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    PositionTagListItem();
-    PositionTagListItem(const PositionTagListItem& org);
-    virtual ~PositionTagListItem();
+    PositionTagGroupItem();
+    PositionTagGroupItem(const PositionTagGroupItem& org);
+    virtual ~PositionTagGroupItem();
 
-    const PositionTagList* tags() const;
-    PositionTagList* tags();
+    const PositionTagGroup* tags() const;
+    PositionTagGroup* tags();
 
     // RenderableItem function
     virtual SgNode* getScene() override;
@@ -41,7 +41,7 @@ private:
     Impl* impl;
 };
 
-typedef ref_ptr<PositionTagListItem> PositionTagListItemPtr;
+typedef ref_ptr<PositionTagGroupItem> PositionTagGroupItemPtr;
 
 }
 
