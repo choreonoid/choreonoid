@@ -339,19 +339,19 @@ void BodyMotionItemImpl::updateExtraSeqItems()
 bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOperation)
 {
     if(isManualOperation){
-        AbstractSeqItem* seqItem = dynamic_cast<AbstractSeqItem*>(childItem_);
-        if(seqItem){
+        if(auto seqItem = dynamic_cast<AbstractSeqItem*>(childItem_)){
             if(!dynamic_cast<BodyMotionItem*>(seqItem)){
                 bool existingFound = false;
                 for(Item* item = childItem(); item; item = item->nextItem()){
                     if(item->isSubItem() && item->name() == seqItem->name()){
-                        if(AbstractSeqItem* orgSeqItem = dynamic_cast<AbstractSeqItem*>(item)){
+                        if(auto orgSeqItem = dynamic_cast<AbstractSeqItem*>(item)){
                             existingFound = true;
                             if(showConfirmDialog(
                                    _("Confirm"),
-                                   format(_("Do you want to replace the data of {}?"), item->displayName()))){
+                                   format(_("Do you overwrite the data of \"{}\"?"),
+                                          orgSeqItem->displayName()))){
                                 *orgSeqItem->abstractSeq() = *seqItem->abstractSeq();
-                                return false;
+                                return false; // Not replace the item itself
                             }
                         }
                     }
@@ -359,10 +359,10 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                 if(!existingFound){
                     if(showConfirmDialog(
                            _("Confirm"),
-                           format(_("Do you want to set {0} as a sequence data of {1}?"),
+                           format(_("Do you add the data of \"{0}\" to \"{1}\" as a sequence data element?"),
                                   childItem_->displayName(), this->displayName()))){
                         motion()->setExtraSeq(seqItem->name(), seqItem->abstractSeq());
-                        return false;
+                        return false; // Not replace the item itself
                     }
                 }
             }

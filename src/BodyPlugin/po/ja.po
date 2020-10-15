@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-24 12:00+0900\n"
+"POT-Creation-Date: 2020-10-15 19:54+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -20,7 +20,7 @@ msgstr ""
 msgid "Link Trajectories"
 msgstr "リンク軌道"
 
-#: BodySuperimposerAddon.cpp:59
+#: BodySuperimposerAddon.cpp:62
 msgid "BodySuperimposer"
 msgstr "ボディスーパーインポーザ"
 
@@ -517,6 +517,14 @@ msgstr "遠クリッピング距離"
 msgid "field Of View"
 msgstr "視野角"
 
+#: DeviceOverwriteItem.cpp:205
+msgid "DeviceOverwriteItem"
+msgstr "デバイスオーバーライトアイテム"
+
+#: DeviceOverwriteItem.cpp:584 LinkShapeOverwriteItem.cpp:438
+msgid "The target body item of \"{0}\" is not found."
+msgstr "\"{0}\" の対象アイテムがみつかりません．"
+
 #: BodyLinkView.cpp:151
 msgid "Body / Link"
 msgstr "ボディ／リンク"
@@ -771,7 +779,7 @@ msgstr ""
 msgid "OFF"
 msgstr ""
 
-#: BodyPlugin.cpp:150
+#: BodyPlugin.cpp:158
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -920,6 +928,18 @@ msgstr "実状態"
 #: LinkPositionWidget.cpp:1169
 msgid "Solved"
 msgstr "解有り"
+
+#: LinkShapeOverwriteItem.cpp:72
+msgid "LinkShapeOverwriteItem"
+msgstr "リンク形状オーバーライトアイテム"
+
+#: LinkShapeOverwriteItem.cpp:159
+msgid "Shape ({0})"
+msgstr "形状 ({0})"
+
+#: LinkShapeOverwriteItem.cpp:450
+msgid "The target link \"{0}\" of \"{1}\" is not found."
+msgstr "\"{1}\" の対象リンク \"{0}\" がみつかりません．"
 
 #: DigitalIoDeviceView.cpp:131
 msgid "Input label"
@@ -1285,7 +1305,7 @@ msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:534 BodyItem.cpp:1762
+#: WorldItem.cpp:534 BodyItem.cpp:1777
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -1301,83 +1321,83 @@ msgstr "接触マテリアル定義ファイル (*.yaml)"
 msgid "Material table"
 msgstr "マテリアルテーブル"
 
-#: BodyItem.cpp:212 BodyItem.cpp:247
+#: BodyItem.cpp:215 BodyItem.cpp:262
 msgid "Body"
 msgstr "ボディ"
 
-#: BodyItem.cpp:248
+#: BodyItem.cpp:263
 msgid "Scene / Mesh"
 msgstr "シーン／メッシュ"
 
-#: BodyItem.cpp:296
+#: BodyItem.cpp:311
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1623
+#: BodyItem.cpp:1638
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1676
+#: BodyItem.cpp:1691
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1753
+#: BodyItem.cpp:1768
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1754
+#: BodyItem.cpp:1769
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1755
+#: BodyItem.cpp:1770
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1756
+#: BodyItem.cpp:1771
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1757
+#: BodyItem.cpp:1772
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1758
+#: BodyItem.cpp:1773
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1759 LinkPropertyView.cpp:120
+#: BodyItem.cpp:1774 LinkPropertyView.cpp:120
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1760
+#: BodyItem.cpp:1775
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1764
+#: BodyItem.cpp:1779
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1766
+#: BodyItem.cpp:1781
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1768
+#: BodyItem.cpp:1783
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1771
+#: BodyItem.cpp:1786
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1775
+#: BodyItem.cpp:1790
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1944
+#: BodyItem.cpp:1959
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1961
+#: BodyItem.cpp:1976
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1511,17 +1531,17 @@ msgstr "ボディモーション"
 msgid "Body Motion (version 1.0)"
 msgstr "ボディモーション バージョン 1.0"
 
-#: BodyMotionItem.cpp:351 BodyMotionItem.cpp:361
+#: BodyMotionItem.cpp:350 BodyMotionItem.cpp:361
 msgid "Confirm"
 msgstr "確認"
 
-#: BodyMotionItem.cpp:352
-msgid "Do you want to replace the data of {}?"
-msgstr "{}のデータを置き換えますか？"
+#: BodyMotionItem.cpp:351
+msgid "Do you overwrite the data of \"{}\"?"
+msgstr "{}のデータを上書きしますか？"
 
 #: BodyMotionItem.cpp:362
-msgid "Do you want to set {0} as a sequence data of {1}?"
-msgstr "{1}のシーケンスデータとして{0}をセットしますか？"
+msgid "Do you add the data of \"{0}\" to \"{1}\" as a sequence data element?"
+msgstr "\"{0}\" のデータを \"{1}\" のシーケンスデータ要素として追加しますか？"
 
 #: CollisionSeq.cpp:79
 msgid "The function to read CollisionSeq is not implemented."
@@ -1543,7 +1563,11 @@ msgstr "コントローラディレクトリ"
 msgid "Project directory"
 msgstr "プロジェクトディレクトリ"
 
-#: SimpleControllerItem.cpp:324
+#: SimpleControllerItem.cpp:319
+msgid "The controller module of {0} is not specified."
+msgstr "{0}のコントローラモジュールが指定されていません．"
+
+#: SimpleControllerItem.cpp:335
 msgid ""
 "Controller module \"{0}\" of {1} is specified as a relative path from the "
 "project directory, but the project directory has not been determined yet."
@@ -1551,23 +1575,23 @@ msgstr ""
 "{1}のコントローラモジュール \"{0}\" はプロジェクトディレクトリからの相対パス"
 "で指定されていますが，プロジェクトディレクトリはまだ決まっていません．"
 
-#: SimpleControllerItem.cpp:338
+#: SimpleControllerItem.cpp:349
 msgid "The controller module of {} has already been loaded."
 msgstr "{}のコントローラモジュールは既にロードされています．"
 
-#: SimpleControllerItem.cpp:345
+#: SimpleControllerItem.cpp:356
 msgid "Loading the controller module \"{1}\" of {0} ... "
 msgstr "{0}のコントローラモジュール\"{1}\"をロード中･･･"
 
-#: SimpleControllerItem.cpp:348
+#: SimpleControllerItem.cpp:359
 msgid "Failed.\n"
 msgstr "失敗．\n"
 
-#: SimpleControllerItem.cpp:352
+#: SimpleControllerItem.cpp:363
 msgid "OK!"
 msgstr ""
 
-#: SimpleControllerItem.cpp:358
+#: SimpleControllerItem.cpp:369
 msgid ""
 "The factory function \"createSimpleController()\" is not found in the "
 "controller module."
@@ -1575,56 +1599,56 @@ msgstr ""
 "ファクトリ関数 \"createSimpleController()\" がコントローラモジュール内に見つ"
 "かりません．"
 
-#: SimpleControllerItem.cpp:365
+#: SimpleControllerItem.cpp:376
 msgid "The controller factory of {} failed to create a controller instance."
 msgstr ""
 "{}のコントローラファクトリはコントローラインスタンスの生成に失敗しました．"
 
-#: SimpleControllerItem.cpp:372
+#: SimpleControllerItem.cpp:383
 msgid "A controller instance has successfully been created."
 msgstr "コントローラインスタンスを生成しました．"
 
-#: SimpleControllerItem.cpp:384
+#: SimpleControllerItem.cpp:395
 msgid "{} failed to configure the controller"
 msgstr "{}はコントローラインスタンスの生成に失敗しました"
 
-#: SimpleControllerItem.cpp:417
+#: SimpleControllerItem.cpp:428
 msgid "The controller module \"{1}\" of {0} has been unloaded."
 msgstr "{0}のコントローラモジュール \"{1}\" をアンロードしました．"
 
-#: SimpleControllerItem.cpp:502
+#: SimpleControllerItem.cpp:513
 msgid "{} is not configured."
 msgstr ""
 
-#: SimpleControllerItem.cpp:519
+#: SimpleControllerItem.cpp:530
 msgid "{}'s initialize method failed."
 msgstr "{}のinitializeメソッドが失敗しました．"
 
-#: SimpleControllerItem.cpp:787
+#: SimpleControllerItem.cpp:798
 msgid "{} failed to start"
 msgstr "{}を稼働できませんでした"
 
-#: SimpleControllerItem.cpp:1010
+#: SimpleControllerItem.cpp:1021
 msgid "Simple Controller Module (*.{})"
 msgstr "シンプルコントローラモジュール (*.{})"
 
-#: SimpleControllerItem.cpp:1013
+#: SimpleControllerItem.cpp:1024
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:1016
+#: SimpleControllerItem.cpp:1027
 msgid "Base directory"
 msgstr "ベースディレクトリ"
 
-#: SimpleControllerItem.cpp:1018
+#: SimpleControllerItem.cpp:1029
 msgid "Reloading"
 msgstr "再読込"
 
-#: SimpleControllerItem.cpp:1020
+#: SimpleControllerItem.cpp:1031
 msgid "Export symbols"
 msgstr "シンボルのエクスポート"
 
-#: SimpleControllerItem.cpp:1022
+#: SimpleControllerItem.cpp:1033
 msgid "Old target value variable mode"
 msgstr "旧指令値変数モード"
 
@@ -1748,38 +1772,14 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
-#: BodyOverwriteDialogBase.cpp:99
-msgid "Add : "
-msgstr "追加 : "
+#~ msgid "Add : "
+#~ msgstr "追加 : "
 
-#: BodyOverwriteDialogBase.cpp:227
-msgid "There are no items to be configured."
-msgstr "設定対象のアイテムはありません．"
+#~ msgid "There are no items to be configured."
+#~ msgstr "設定対象のアイテムはありません．"
 
-#: BodyOverwriteDialogBase.cpp:229
-msgid "No item is selected."
-msgstr "アイテムが選択されていません．"
+#~ msgid "No item is selected."
+#~ msgstr "アイテムが選択されていません．"
 
-#: BodyOverwriteDialogBase.cpp:246
-msgid "Unkown"
-msgstr ""
-
-#: BodyOverwriteDialogBase.cpp:250
-msgid "\"{0}\" is not a target item."
-msgstr "\"{0}\" は対象のアイテムではありません．"
-
-#: DeviceOverwriteItem.cpp:67
-msgid "DeviceOverwriteItem"
-msgstr "デバイスオーバーライトアイテム"
-
-#: DeviceOverwriteItem.cpp:317 LinkShapeOverwriteItem.cpp:372
-msgid "The target body item of \"{0}\" is not found."
-msgstr "\"{0}\" の対象アイテムがみつかりません．"
-
-#: LinkShapeOverwriteItem.cpp:68
-msgid "LinkShapeOverwriteItem"
-msgstr "リンク形状オーバーライトアイテム"
-
-#: LinkShapeOverwriteItem.cpp:133
-msgid "Shape ({0})"
-msgstr "形状 ({0})"
+#~ msgid "\"{0}\" is not a target item."
+#~ msgstr "\"{0}\" は対象のアイテムではありません．"
