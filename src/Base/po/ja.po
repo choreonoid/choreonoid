@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-15 18:55+0900\n"
+"POT-Creation-Date: 2020-10-16 01:56+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -765,34 +765,38 @@ msgstr "名前を付けて{}を保存"
 msgid "Export {} as"
 msgstr "名前を付けて{}をエクスポート"
 
-#: PositionTagGroupItem.cpp:107
+#: PositionTagGroupItem.cpp:113
 msgid "PositionTagGroupItem"
 msgstr "ポジションタググループアイテム"
 
-#: PositionTagGroupItem.cpp:500
+#: PositionTagGroupItem.cpp:556
 msgid "Tag Group Conversion"
 msgstr "タググループ変換"
 
-#: PositionTagGroupItem.cpp:509
+#: PositionTagGroupItem.cpp:565
 msgid ""
 "Which type of positions do you want to keep in the coordinate system change?"
 msgstr "座標系の変更においてどちらのタイプの位置を保持しますか？"
 
-#: PositionTagGroupItem.cpp:512
+#: PositionTagGroupItem.cpp:569
 msgid "Global positions"
 msgstr "グローバル位置"
 
-#: PositionTagGroupItem.cpp:515
+#: PositionTagGroupItem.cpp:572
+msgid "Clear the origin offset"
+msgstr "原点オフセットをクリア"
+
+#: PositionTagGroupItem.cpp:578
 msgid "Local positions"
 msgstr "ローカル位置"
 
-#: PositionTagGroupItem.cpp:532
+#: PositionTagGroupItem.cpp:596
 msgid ""
 "The parent coordinate system of \"%1\" is changed to the coordinate system "
 "of \"%2\"."
 msgstr "\"%1\" の親座標系は \"%2\" の座標系に変更されます."
 
-#: PositionTagGroupItem.cpp:536
+#: PositionTagGroupItem.cpp:600
 msgid ""
 "The parent coordinate system of \"%1\" is changed to the global coordinate "
 "system."

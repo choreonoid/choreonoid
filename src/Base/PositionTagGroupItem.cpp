@@ -4,6 +4,7 @@
 #include "CoordinateFrameMarker.h"
 #include "Dialog.h"
 #include "Buttons.h"
+#include "CheckBox.h"
 #include "LazyCaller.h"
 #include "Archive.h"
 #include <cnoid/PositionTagGroup>
@@ -65,6 +66,7 @@ public:
     QLabel descriptionLabel;
     RadioButton globalCoordRadio;
     RadioButton localCoordRadio;
+    CheckBox clearOriginOffsetCheck;
     
     ConversionDialog();
     void setTargets(PositionTagGroupItem* tagGroupItem, LocationProxyPtr newParentLocation);
@@ -92,9 +94,10 @@ public:
     Signal<void()> sigLocationChanged;
     
     Impl(PositionTagGroupItem* self);
-    void setParentLocation(LocationProxyPtr newParentLocation, bool doCoordinateConversion);
+    void setParentLocation(
+        LocationProxyPtr newParentLocation, bool doCoordinateConversion, bool doClearOriginOffset);
     void convertLocalCoordinates(
-        LocationProxy* currentParentLocation, LocationProxy* newParentLocation);
+        LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset);
     void onParentLocationChanged();
     void onOffsetPositionChanged();
 };
@@ -219,6 +222,7 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
     }
     bool isParentLocationChanged = (newParentLocation != impl->parentLocation);
     bool doCoordinateConversion = false;
+    bool doClearOriginOffset = false;
     
     if(isManualOperation && isParentLocationChanged){
         static ConversionDialog* dialog = nullptr;
@@ -227,9 +231,8 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
         }
         dialog->setTargets(this, newParentLocation);
         if(dialog->exec() == QDialog::Accepted){
-            if(dialog->globalCoordRadio.isChecked()){
-                doCoordinateConversion = true;
-            }
+            doCoordinateConversion = dialog->globalCoordRadio.isChecked();
+            doClearOriginOffset = dialog->clearOriginOffsetCheck.isChecked();
         } else {
             accepted = false;
         }
@@ -237,8 +240,8 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
 
     if(accepted && isParentLocationChanged){
         out_callbackWhenAdded =
-            [this, newParentLocation, doCoordinateConversion](){
-            impl->setParentLocation(newParentLocation, doCoordinateConversion);
+            [this, newParentLocation, doCoordinateConversion, doClearOriginOffset](){
+                impl->setParentLocation(newParentLocation, doCoordinateConversion, doClearOriginOffset);
         };
     }
     
@@ -246,12 +249,13 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
 }
 
 
-void PositionTagGroupItem::Impl::setParentLocation(LocationProxyPtr newParentLocation, bool doCoordinateConversion)
+void PositionTagGroupItem::Impl::setParentLocation
+(LocationProxyPtr newParentLocation, bool doCoordinateConversion, bool doClearOriginOffset)
 {
     parentLocationConnection.disconnect();
 
     if(doCoordinateConversion){
-        convertLocalCoordinates(parentLocation, newParentLocation);
+        convertLocalCoordinates(parentLocation, newParentLocation, doClearOriginOffset);
     }
         
     parentLocation = newParentLocation;
@@ -267,25 +271,19 @@ void PositionTagGroupItem::Impl::setParentLocation(LocationProxyPtr newParentLoc
 
 
 void PositionTagGroupItem::Impl::convertLocalCoordinates
-(LocationProxy* currentParentLocation, LocationProxy* newParentLocation)
+(LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset)
 {
-    Position T_o0 = tags->originOffset();
-    
-    Position T_p0;
-    if(currentParentLocation){
-        T_p0 = currentParentLocation->getLocation();
-    } else {
-        T_p0.setIdentity();
-    }
-    Position T_p1;
-    if(newParentLocation){
-        T_p1 = newParentLocation->getLocation();
-    } else {
-        T_p1.setIdentity();
-    }
-    tags->setOriginOffset(Position::Identity(), true);
+    Position T0 = self->globalOriginOffset();
 
-    Position Tc = T_p1.inverse(Eigen::Isometry) * T_p0 * T_o0;
+    if(doClearOriginOffset){
+        tags->setOriginOffset(Position::Identity(), true);
+    }
+    Position T1 = tags->originOffset();
+    if(newParentLocation){
+        T1 = newParentLocation->getLocation() * T1;
+    }
+
+    Position Tc = T1.inverse(Eigen::Isometry) * T0;
     int n = tags->numTags();
     for(int i=0; i < n; ++i){
         auto tag = tags->tagAt(i);
@@ -566,10 +564,17 @@ ConversionDialog::ConversionDialog()
     descriptionLabel2->setText(
         _("Which type of positions do you want to keep in the coordinate system change?"));
     vbox->addWidget(descriptionLabel2);
-    
+
+    auto hbox = new QHBoxLayout;
     globalCoordRadio.setText(_("Global positions"));
     globalCoordRadio.setChecked(true);
-    vbox->addWidget(&globalCoordRadio);
+    hbox->addWidget(&globalCoordRadio);
+    clearOriginOffsetCheck.setText(_("Clear the origin offset"));
+    clearOriginOffsetCheck.setChecked(true);
+    hbox->addWidget(&clearOriginOffsetCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+    
     localCoordRadio.setText(_("Local positions"));
     vbox->addWidget(&localCoordRadio);
     vbox->addStretch();
