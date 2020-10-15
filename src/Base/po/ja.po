@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-14 11:21+0900\n"
+"POT-Creation-Date: 2020-10-15 18:55+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -29,7 +29,7 @@ msgstr "シーンアイテム"
 msgid "Scene"
 msgstr "シーン"
 
-#: SceneItem.cpp:151 MainWindow.cpp:232 Item.cpp:1423 PointSetItem.cpp:522
+#: SceneItem.cpp:151 MainWindow.cpp:232 Item.cpp:1435 PointSetItem.cpp:522
 msgid "File"
 msgstr "ファイル"
 
@@ -85,7 +85,7 @@ msgstr ""
 msgid "Number of SE3 values in a frame"
 msgstr "フレームあたりSE3要素数"
 
-#: ItemTreeWidget.cpp:1182
+#: ItemTreeWidget.cpp:1185
 msgid "The copied items cannot be pasted to \"{0}\"."
 msgstr "コピーされたアイテムを\"{0}\"にペーストできませんでした．"
 
@@ -551,31 +551,31 @@ msgstr "設定ダイアログの表示"
 msgid "Stop animation"
 msgstr "アニメーションの停止"
 
-#: Item.cpp:1402 MultiSeqItemCreationPanel.cpp:23
+#: Item.cpp:1414 MultiSeqItemCreationPanel.cpp:23
 msgid "Name"
 msgstr "名前"
 
-#: Item.cpp:1413
+#: Item.cpp:1425
 msgid "Display name"
 msgstr "表示名"
 
-#: Item.cpp:1418
+#: Item.cpp:1430
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:1426
+#: Item.cpp:1438
 msgid "Num children"
 msgstr "小アイテムの数"
 
-#: Item.cpp:1427
+#: Item.cpp:1439
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:1428
+#: Item.cpp:1440
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:1429
+#: Item.cpp:1441
 msgid "Refs"
 msgstr "参照数"
 
@@ -765,9 +765,38 @@ msgstr "名前を付けて{}を保存"
 msgid "Export {} as"
 msgstr "名前を付けて{}をエクスポート"
 
-#: PositionTagGroupItem.cpp:83
+#: PositionTagGroupItem.cpp:107
 msgid "PositionTagGroupItem"
 msgstr "ポジションタググループアイテム"
+
+#: PositionTagGroupItem.cpp:500
+msgid "Tag Group Conversion"
+msgstr "タググループ変換"
+
+#: PositionTagGroupItem.cpp:509
+msgid ""
+"Which type of positions do you want to keep in the coordinate system change?"
+msgstr "座標系の変更においてどちらのタイプの位置を保持しますか？"
+
+#: PositionTagGroupItem.cpp:512
+msgid "Global positions"
+msgstr "グローバル位置"
+
+#: PositionTagGroupItem.cpp:515
+msgid "Local positions"
+msgstr "ローカル位置"
+
+#: PositionTagGroupItem.cpp:532
+msgid ""
+"The parent coordinate system of \"%1\" is changed to the coordinate system "
+"of \"%2\"."
+msgstr "\"%1\" の親座標系は \"%2\" の座標系に変更されます."
+
+#: PositionTagGroupItem.cpp:536
+msgid ""
+"The parent coordinate system of \"%1\" is changed to the global coordinate "
+"system."
+msgstr "\"%1\" の親座標系はグローバル座標系に変更されます."
 
 #: GraphWidget.cpp:1151
 msgid "Graph: Position = ({0:.5f}, {1:.5f})"

@@ -1,11 +1,16 @@
 #include "PositionTagGroupItem.h"
 #include "ItemManager.h"
 #include "SceneWidgetEditable.h"
+#include "Dialog.h"
+#include "Buttons.h"
 #include "LazyCaller.h"
 #include "Archive.h"
 #include <cnoid/PositionTagGroup>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
+#include <QBoxLayout>
+#include <QLabel>
+#include <QDialogButtonBox>
 #include "gettext.h"
 
 using namespace std;
@@ -49,6 +54,19 @@ public:
 
 typedef ref_ptr<PositionTagGroupLocation> PositionTagGroupLocationPtr;
 
+
+class ConversionDialog : public Dialog
+{
+public:
+    QLabel descriptionLabel;
+    RadioButton globalCoordRadio;
+    RadioButton localCoordRadio;
+    
+    ConversionDialog();
+    void setTargets(PositionTagGroupItem* tagGroupItem, LocationProxyPtr newParentLocation);
+};
+    
+
 }
 
 namespace cnoid {
@@ -70,7 +88,7 @@ public:
     Signal<void()> sigLocationChanged;
     
     Impl(PositionTagGroupItem* self);
-    void setParentLocation(LocatableItem* parentLocatableItem, bool doCoordinateConversion);
+    void setParentLocation(LocationProxyPtr newParentLocation, bool doCoordinateConversion);
     void convertLocalCoordinates(
         LocationProxy* currentParentLocation, LocationProxy* newParentLocation);
     void onParentLocationChanged();
@@ -170,37 +188,58 @@ LocationProxyPtr PositionTagGroupItem::getLocationProxy()
 
 bool PositionTagGroupItem::onCheckNewPosition(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
 {
-    out_callbackWhenAdded =
-        [this, isManualOperation](){
-            impl->setParentLocation(findOwnerItem<LocatableItem>(), isManualOperation);
+    bool accepted = true;
+
+    LocationProxyPtr newParentLocation;
+    if(auto parentLocatableItem = findOwnerItem<LocatableItem>()){
+        newParentLocation = parentLocatableItem->getLocationProxy();
+    }
+    bool isParentLocationChanged = (newParentLocation != impl->parentLocation);
+    bool doCoordinateConversion = false;
+    
+    if(isManualOperation && isParentLocationChanged){
+        static ConversionDialog* dialog = nullptr;
+        if(!dialog){
+            dialog = new ConversionDialog;
+        }
+        dialog->setTargets(this, newParentLocation);
+        if(dialog->exec() == QDialog::Accepted){
+            if(dialog->globalCoordRadio.isChecked()){
+                doCoordinateConversion = true;
+            }
+        } else {
+            accepted = false;
+        }
+    }
+
+    if(accepted && isParentLocationChanged){
+        out_callbackWhenAdded =
+            [this, newParentLocation, doCoordinateConversion](){
+            impl->setParentLocation(newParentLocation, doCoordinateConversion);
         };
-    return true;
+    }
+    
+    return accepted;
 }
 
 
-void PositionTagGroupItem::Impl::setParentLocation(LocatableItem* parentLocatableItem, bool doCoordinateConversion)
+void PositionTagGroupItem::Impl::setParentLocation(LocationProxyPtr newParentLocation, bool doCoordinateConversion)
 {
-    LocationProxyPtr newLocation;
-    if(parentLocatableItem){
-        newLocation = parentLocatableItem->getLocationProxy();
-    }
-    if(newLocation != parentLocation){
-        parentLocationConnection.disconnect();
+    parentLocationConnection.disconnect();
 
-        if(doCoordinateConversion){
-            convertLocalCoordinates(parentLocation, newLocation);
-        }
+    if(doCoordinateConversion){
+        convertLocalCoordinates(parentLocation, newParentLocation);
+    }
         
-        parentLocation = newLocation;
+    parentLocation = newParentLocation;
 
-        if(parentLocation){
-            parentLocationConnection =
-                parentLocation->sigLocationChanged().connect(
-                    [&](){ onParentLocationChanged(); });
-        }
-
-        onParentLocationChanged();
+    if(parentLocation){
+        parentLocationConnection =
+            parentLocation->sigLocationChanged().connect(
+                [&](){ onParentLocationChanged(); });
     }
+
+    onParentLocationChanged();
 }
 
 
@@ -452,4 +491,49 @@ void PositionTagGroupLocation::setLocation(const Position& T)
 SignalProxy<void()> PositionTagGroupLocation::sigLocationChanged()
 {
     return itemImpl->sigLocationChanged;
+}
+
+
+ConversionDialog::ConversionDialog()
+{
+    setWindowTitle(_("Tag Group Conversion"));
+    auto vbox = new QVBoxLayout;
+
+    descriptionLabel.setWordWrap(true);
+    vbox->addWidget(&descriptionLabel);
+    
+    auto descriptionLabel2 = new QLabel;
+    descriptionLabel2->setWordWrap(true);
+    descriptionLabel2->setText(
+        _("Which type of positions do you want to keep in the coordinate system change?"));
+    vbox->addWidget(descriptionLabel2);
+    
+    globalCoordRadio.setText(_("Global positions"));
+    globalCoordRadio.setChecked(true);
+    vbox->addWidget(&globalCoordRadio);
+    localCoordRadio.setText(_("Local positions"));
+    vbox->addWidget(&localCoordRadio);
+    vbox->addStretch();
+    
+    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    buttonBox->button(QDialogButtonBox::Ok)->setAutoDefault(true);
+    connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    vbox->addWidget(buttonBox);
+
+    setLayout(vbox);
+}
+
+
+void ConversionDialog::setTargets(PositionTagGroupItem* tagGroupItem, LocationProxyPtr newParentLocation)
+{
+    if(newParentLocation){
+        descriptionLabel.setText(
+            QString(_("The parent coordinate system of \"%1\" is changed to the coordinate system of \"%2\"."))
+            .arg(tagGroupItem->displayName().c_str()).arg(newParentLocation->getName().c_str()));
+    } else {
+        descriptionLabel.setText(
+            QString(_("The parent coordinate system of \"%1\" is changed to the global coordinate system."))
+            .arg(tagGroupItem->displayName().c_str()));
+    }
 }
