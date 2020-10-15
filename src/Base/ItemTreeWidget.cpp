@@ -139,6 +139,7 @@ public:
     bool checkPastable(Item* pasteParentItem) const;
     void onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
     void onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end);
+    void revertItemPosition(Item* item);
     void onTreeWidgetSelectionChanged();
     void updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet);
     void onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
@@ -734,7 +735,9 @@ void ItemTreeWidget::Impl::registerTopLevelItem(Item* item)
 bool ItemTreeWidget::Impl::registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos)
 {
     if(item == newTopLevelItem){
-        topLevelItems.insert(pos, newTopLevelItem);
+        if(pos == topLevelItems.end() || newTopLevelItem != *pos){
+            topLevelItems.insert(pos, newTopLevelItem);
+        }
         return true;
     }
     if(pos != topLevelItems.end() && item == *pos){
@@ -1290,11 +1293,51 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, i
         }
     }
 
+    vector<Item*> canceledItems;
     for(auto item : items){
-        parentItem->insertChild(nextItem, item, true);
+        if(!parentItem->insertChild(nextItem, item, true)){
+            canceledItems.push_back(item);
+            //callLater([this, item](){ revertItemPosition(item); },  LazyCaller::PRIORITY_HIGH);
+        }
     }
 
-    itemsUnderTreeWidgetInternalOperation.clear();    
+    itemsUnderTreeWidgetInternalOperation.clear();
+
+    for(auto item : canceledItems){
+        revertItemPosition(item);
+    }
+}
+
+
+void ItemTreeWidget::Impl::revertItemPosition(Item* item)
+{
+    if(auto itwItem = findItwItem(item)){
+
+        isChangingTreeWidgetTreeStructure++;
+
+        QTreeWidgetItem* currentParentTwItem = itwItem->parent();
+        if(!currentParentTwItem){
+            currentParentTwItem = invisibleRootItem();
+        }
+        currentParentTwItem->removeChild(itwItem);
+
+        auto parentItem = item->parentItem();
+        bool isTopLevelItem = false;
+        QTreeWidgetItem* trueParentTwItem = findItwItem(parentItem);
+        if(!trueParentTwItem){
+            trueParentTwItem = invisibleRootItem();
+            isTopLevelItem = true;
+        }
+        auto nextItwItem = findNextItwItem(item, isTopLevelItem);
+        if(nextItwItem){
+            int index = trueParentTwItem->indexOfChild(nextItwItem);
+            trueParentTwItem->insertChild(index, itwItem);
+        } else {
+            trueParentTwItem->addChild(itwItem);
+        }
+        
+        isChangingTreeWidgetTreeStructure--;
+    }
 }
 
 
