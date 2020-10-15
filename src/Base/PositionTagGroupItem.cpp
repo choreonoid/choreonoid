@@ -1,6 +1,7 @@
 #include "PositionTagGroupItem.h"
 #include "ItemManager.h"
 #include "SceneWidgetEditable.h"
+#include "CoordinateFrameMarker.h"
 #include "Dialog.h"
 #include "Buttons.h"
 #include "LazyCaller.h"
@@ -23,6 +24,7 @@ class ScenePositionTagGroup : public SgPosTransform, public SceneWidgetEditable
 public:
     PositionTagGroupItem::Impl* itemImpl;
     SgPosTransformPtr offsetTransform;
+    CoordinateFrameMarkerPtr originMarker;
     SgUpdate update;
     ScopedConnectionSet tagGroupConnections;
     
@@ -32,8 +34,10 @@ public:
     static SgNode* getOrCreateTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
-    void setOffsetPosition(const Position& T);
+    void setOriginOffset(const Position& T);
     void setParentPosition(const Position& T);
+    void setOriginMarkerVisible(bool on);
+    bool isOriginMarkerVisible() const;
 };
 
 typedef ref_ptr<ScenePositionTagGroup> ScenePositionTagGroupPtr;
@@ -178,6 +182,25 @@ SgNode* PositionTagGroupItem::getScene()
     }
     return impl->scene;
 }
+
+
+void PositionTagGroupItem::setOriginMarkerVisible(bool on)
+{
+    if(!impl->scene){
+        if(on){
+            getScene();
+        }
+    }
+    if(impl->scene){
+        impl->scene->setOriginMarkerVisible(on);
+    }
+}
+
+
+bool PositionTagGroupItem::isOriginMarkerVisible() const
+{
+    return impl->scene ? impl->scene->isOriginMarkerVisible() : false;
+}
     
 
 LocationProxyPtr PositionTagGroupItem::getLocationProxy()
@@ -246,7 +269,7 @@ void PositionTagGroupItem::Impl::setParentLocation(LocationProxyPtr newParentLoc
 void PositionTagGroupItem::Impl::convertLocalCoordinates
 (LocationProxy* currentParentLocation, LocationProxy* newParentLocation)
 {
-    Position T_o0 = tags->offsetPosition();
+    Position T_o0 = tags->originOffset();
     
     Position T_p0;
     if(currentParentLocation){
@@ -260,7 +283,7 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
     } else {
         T_p1.setIdentity();
     }
-    tags->setOffsetPosition(Position::Identity(), true);
+    tags->setOriginOffset(Position::Identity(), true);
 
     Position Tc = T_p1.inverse(Eigen::Isometry) * T_p0 * T_o0;
     int n = tags->numTags();
@@ -303,22 +326,29 @@ const Position& PositionTagGroupItem::parentPosition() const
 }
 
 
-Position PositionTagGroupItem::globalOffsetPosition() const
+Position PositionTagGroupItem::globalOriginOffset() const
 {
-    return impl->parentPosition * impl->tags->offsetPosition();
+    return impl->parentPosition * impl->tags->originOffset();
 }
 
 
 bool PositionTagGroupItem::store(Archive& archive)
 {
     impl->tags->write(&archive);
+    archive.write("origin_marker", isOriginMarkerVisible());
     return true;
 }
 
 
 bool PositionTagGroupItem::restore(const Archive& archive)
 {
-    return impl->tags->read(&archive);
+    if(impl->tags->read(&archive)){
+        if(archive.get("origin_marker", false)){
+            setOriginMarkerVisible(true);
+        }
+        return true;
+    }
+    return false;
 }
 
 
@@ -330,7 +360,7 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
     setPosition(itemImpl->parentPosition);
 
     offsetTransform = new SgPosTransform;
-    offsetTransform->setPosition(tags->offsetPosition());
+    offsetTransform->setPosition(tags->originOffset());
     addChild(offsetTransform);
     
     int n = tags->numTags();
@@ -349,7 +379,7 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
             [&](int index){ updateTagNodePosition(index); }));
     tagGroupConnections.add(
         tags->sigOffsetPositionChanged().connect(
-            [&](const Position& T){ setOffsetPosition(T); }));
+            [&](const Position& T){ setOriginOffset(T); }));
 }
 
 
@@ -441,7 +471,7 @@ void ScenePositionTagGroup::updateTagNodePosition(int index)
 }
 
 
-void ScenePositionTagGroup::setOffsetPosition(const Position& T)
+void ScenePositionTagGroup::setOriginOffset(const Position& T)
 {
     offsetTransform->setPosition(T);
     update.resetAction(SgUpdate::MODIFIED);
@@ -454,6 +484,35 @@ void ScenePositionTagGroup::setParentPosition(const Position& T)
     setPosition(T);
     update.resetAction(SgUpdate::MODIFIED);
     notifyUpdate(update);
+}
+
+
+void ScenePositionTagGroup::setOriginMarkerVisible(bool on)
+{
+    if(!originMarker){
+        originMarker = new CoordinateFrameMarker;
+    }
+    int last = offsetTransform->numChildren() - 1;
+    if(on){
+        if(last < 0 || offsetTransform->child(last) != originMarker){
+            offsetTransform->addChild(originMarker);
+            update.resetAction(SgUpdate::ADDED);
+            offsetTransform->notifyUpdate(update);
+        }
+    } else {
+        if(last >= 0 && offsetTransform->child(last) == originMarker){
+            offsetTransform->removeChildAt(last);
+            update.resetAction(SgUpdate::REMOVED);
+            offsetTransform->notifyUpdate(update);
+        }
+    }
+}
+
+
+bool ScenePositionTagGroup::isOriginMarkerVisible() const
+{
+    int last = offsetTransform->numChildren() - 1;
+    return (last >= 0) && (offsetTransform->child(last) == originMarker);
 }
 
 
@@ -478,13 +537,13 @@ Item* PositionTagGroupLocation::getCorrespondingItem()
 
 Position PositionTagGroupLocation::getLocation() const
 {
-    return itemImpl->tags->offsetPosition();
+    return itemImpl->tags->originOffset();
 }
 
 
 void PositionTagGroupLocation::setLocation(const Position& T)
 {
-    itemImpl->tags->setOffsetPosition(T, true);
+    itemImpl->tags->setOriginOffset(T, true);
 }
 
 

@@ -24,12 +24,14 @@ public:
 
     // RenderableItem function
     virtual SgNode* getScene() override;
+    void setOriginMarkerVisible(bool on);
+    bool isOriginMarkerVisible() const;
 
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;
 
     const Position& parentPosition() const;
-    Position globalOffsetPosition() const;
+    Position globalOriginOffset() const;
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

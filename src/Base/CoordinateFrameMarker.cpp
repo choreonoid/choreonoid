@@ -1,38 +1,75 @@
 #include "CoordinateFrameMarker.h"
+#include <cnoid/CoordinateFrame>
 
 using namespace std;
 using namespace cnoid;
 
+namespace cnoid {
 
-CoordinateFrameMarker::CoordinateFrameMarker(CoordinateFrame* frame)
-    : PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle),
-      frame_(frame)
+class CoordinateFrameMarker::Impl
 {
+public:
+    CoordinateFrameMarker* self;
+    CoordinateFramePtr frame;
+    ScopedConnection frameConnection;
+
+    void updateMarkerPositionWithCoordinateFramePosition();
+};
+
+}
+
+
+CoordinateFrameMarker::CoordinateFrameMarker()
+    : PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle)
+{
+    impl = new Impl;
+    impl->self = this;
+    
     setDragEnabled(true);
     setOverlayMode(true);
     setFixedPixelSizeMode(true, 92.0);
     setDisplayMode(PositionDragger::DisplayInEditMode);
+}
+
+
+CoordinateFrameMarker::CoordinateFrameMarker(CoordinateFrame* frame)
+    : CoordinateFrameMarker()
+{
+    impl->frame = frame;
     setPosition(frame->position());
 
-    frameConnection =
+    impl->frameConnection =
         frame->sigUpdated().connect(
             [&](int flags){ onFrameUpdated(flags); });
     
-    sigPositionDragged().connect([&](){ onMarkerPositionDragged(); });
+    sigPositionDragged().connect(
+        [&](){ impl->updateMarkerPositionWithCoordinateFramePosition(); });
+}
+
+
+CoordinateFrameMarker::~CoordinateFrameMarker()
+{
+    delete impl;
+}
+
+
+CoordinateFrame* CoordinateFrameMarker::frame()
+{
+    return impl->frame;
 }
 
 
 void CoordinateFrameMarker::onFrameUpdated(int flags)
 {
     if(flags & CoordinateFrame::PositionUpdate){
-        setPosition(frame_->position());
+        setPosition(impl->frame->position());
         notifyUpdate();
     }
 }
 
 
-void CoordinateFrameMarker::onMarkerPositionDragged()
+void CoordinateFrameMarker::Impl::updateMarkerPositionWithCoordinateFramePosition()
 {
-    frame_->setPosition(draggingPosition());
-    frame_->notifyUpdate(CoordinateFrame::PositionUpdate);
+    frame->setPosition(self->draggingPosition());
+    frame->notifyUpdate(CoordinateFrame::PositionUpdate);
 }

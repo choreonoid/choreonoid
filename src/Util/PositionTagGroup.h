@@ -34,18 +34,18 @@ public:
         return tags_[index];
     }
 
-    const Position& offsetPosition() const {
+    const Position& originOffset() const {
         return T_offset_;
     }
     
     template<class Scalar, int Mode, int Options>
-    void setOffsetPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T, bool doNotify){
+    void setOriginOffset(const Eigen::Transform<Scalar, 3, Mode, Options>& T, bool doNotify){
         T_offset_ = T.template cast<Position::Scalar>();
         if(doNotify){
             notifyOffsetPositionUpdate();
         }
     }
-
+    
     typedef std::vector<PositionTagPtr> Container;
     Container::const_iterator begin() const { return tags_.begin(); }
     Container::const_iterator end() const { return tags_.end(); }
