@@ -186,7 +186,7 @@ LocationProxyPtr PositionTagGroupItem::getLocationProxy()
 }
 
 
-bool PositionTagGroupItem::onCheckNewPosition(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
+bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
 {
     bool accepted = true;
 

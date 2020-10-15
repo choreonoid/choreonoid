@@ -758,7 +758,7 @@ bool Item::Impl::checkNewPositionAcceptanceIter
 (bool isManualOperation, vector<function<void()>>& callbacksWhenAdded)
 {
     function<void()> callback;
-    if(!self->onCheckNewPosition(isManualOperation, callback)){
+    if(!self->onNewPositionCheck(isManualOperation, callback)){
         return false;
     }
     if(callback){
@@ -773,7 +773,7 @@ bool Item::Impl::checkNewPositionAcceptanceIter
 }
 
 
-bool Item::onCheckNewPosition(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
+bool Item::onNewPositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
 {
     return true;
 }
