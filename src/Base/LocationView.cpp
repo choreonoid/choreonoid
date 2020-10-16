@@ -207,9 +207,13 @@ bool LocationView::Impl::setLocationProxy(LocationProxyPtr newLocation)
     } else {
         parentLocation = location->getParentLocationProxy();
         locationType = location->getType();
-        isRelativeLocation =
-            (locationType == LocationProxy::ParentRelativeLocation ||
-             locationType == LocationProxy::OffsetLocation);
+
+        isRelativeLocation = false;
+        if(locationType == LocationProxy::ParentRelativeLocation && parentLocation){
+            isRelativeLocation = true;
+        } else if(locationType == LocationProxy::OffsetLocation){
+            isRelativeLocation = true;
+        }
         isLocationAbleToBeGlobal = (!isRelativeLocation || parentLocation);
         
         caption.setText(location->getName().c_str());
@@ -222,8 +226,12 @@ bool LocationView::Impl::setLocationProxy(LocationProxyPtr newLocation)
         locationConnections.add(
             location->sigAttributeChanged().connect(
                 [this](){
-                    caption.setText(location->getName().c_str());
-                    setEditorLocked(!location->isEditable());
+                    if(location->getParentLocationProxy() != parentLocation){
+                        setLocationProxy(location);
+                    } else {
+                        caption.setText(location->getName().c_str());
+                        setEditorLocked(!location->isEditable());
+                    }
                 }));
 
         locationConnections.add(

@@ -1668,6 +1668,11 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
         setLocationEditable(true, false);
         notifyKinematicStateChange(false, false, false, true);
     }
+
+    if(bodyLocation){
+        // Notify the change of the parent location proxy
+        bodyLocation->notifyAttributeChange();
+    }
 }
 
 

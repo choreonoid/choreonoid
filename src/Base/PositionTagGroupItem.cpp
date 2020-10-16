@@ -55,6 +55,7 @@ public:
     virtual Position getLocation() const override;
     virtual void setLocation(const Position& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
 };
 
 typedef ref_ptr<PositionTagGroupLocation> PositionTagGroupLocationPtr;
@@ -94,7 +95,7 @@ public:
     Signal<void()> sigLocationChanged;
     
     Impl(PositionTagGroupItem* self);
-    void setParentLocation(
+    void setParentLocationProxy(
         LocationProxyPtr newParentLocation, bool doCoordinateConversion, bool doClearOriginOffset);
     void convertLocalCoordinates(
         LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset);
@@ -241,7 +242,8 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
     if(accepted && isParentLocationChanged){
         out_callbackWhenAdded =
             [this, newParentLocation, doCoordinateConversion, doClearOriginOffset](){
-                impl->setParentLocation(newParentLocation, doCoordinateConversion, doClearOriginOffset);
+                impl->setParentLocationProxy(
+                    newParentLocation, doCoordinateConversion, doClearOriginOffset);
         };
     }
     
@@ -249,7 +251,7 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
 }
 
 
-void PositionTagGroupItem::Impl::setParentLocation
+void PositionTagGroupItem::Impl::setParentLocationProxy
 (LocationProxyPtr newParentLocation, bool doCoordinateConversion, bool doClearOriginOffset)
 {
     parentLocationConnection.disconnect();
@@ -267,6 +269,9 @@ void PositionTagGroupItem::Impl::setParentLocation
     }
 
     onParentLocationChanged();
+
+    // Notify the change of the parent location proxy
+    location->notifyAttributeChange();
 }
 
 
@@ -548,6 +553,12 @@ void PositionTagGroupLocation::setLocation(const Position& T)
 SignalProxy<void()> PositionTagGroupLocation::sigLocationChanged()
 {
     return itemImpl->sigLocationChanged;
+}
+
+
+LocationProxyPtr PositionTagGroupLocation::getParentLocationProxy()
+{
+    return itemImpl->parentLocation;
 }
 
 
