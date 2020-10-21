@@ -13,6 +13,11 @@ using namespace cnoid;
 
 namespace {
 
+constexpr bool MAKE_NORMALS_FIXED_PIXEL_SIZE = true;
+
+typedef ScenePointSelectionMode::PointInfo PointInfo;
+typedef ScenePointSelectionMode::PointInfoPtr PointInfoPtr;
+
 class SceneWidgetInfo
 {
 public:
@@ -28,6 +33,39 @@ public:
     }
 };
 
+class FixedPixelSizeNormal : public SgPosTransform
+{
+public:
+    SgLineSetPtr sharedLine;
+    
+    FixedPixelSizeNormal(SgLineSetPtr& sharedLine, SgMaterial* material);
+    void setNormal(const Vector3f& position, const Vector3f& normal);
+
+};
+
+class ScenePointPlot : public SgGroup
+{
+    SgPointSetPtr pointSet;
+    SgVertexArrayPtr points;
+    SgLineSetPtr lineSet;
+    SgVertexArrayPtr normalVertices;
+    SgGroupPtr fpsNormalGroup;
+    SgMaterialPtr material_;
+    SgUpdate update;
+
+public:
+    ScenePointPlot();
+    SgMaterial* material() { return material_; }
+    void clearPoints(bool doNotify);
+    void updatePoints(const std::vector<PointInfoPtr>& infos);
+    void resetPoint(PointInfo* info);
+
+private:
+    void addPoint(PointInfo* info, bool doNotify);
+};
+
+typedef ref_ptr<ScenePointPlot> ScenePointPlotPtr;
+
 }
 
 namespace cnoid {
@@ -41,11 +79,11 @@ public:
     unordered_set<SgNodePtr> targetNodes;
 
     SgOverlayPtr pointOverlay;
-    SgPointSetPtr highlightedPointPlot;
+    ScenePointPlotPtr highlightedPointPlot;
     SgVertexArrayPtr highlightedPointArray;
-    SgPointSetPtr selectedPointPlot;
+    SgLineSetPtr highlightedPointNormalPlot;
+    ScenePointPlotPtr selectedPointPlot;
     SgVertexArrayPtr selectedPointArray;
-    SgUpdate update;
     
     PointInfoPtr highlightedPoint;
     std::vector<PointInfoPtr> selectedPoints;
@@ -54,13 +92,12 @@ public:
     void setupScenePointSelectionMode(const SceneWidgetEvent& event);
     void clearScenePointSelectionMode(SceneWidget* sceneWidget);
     bool checkIfPointingTargetNode(const SceneWidgetEvent& event);
-    bool findPointedVertex(
-        const SgVertexArray& vertices, const Affine3& T, const Vector3& point, int& out_index);
+    bool findPointedTriangleVertex(
+        SgMesh* mesh, const Affine3& T, const SceneWidgetEvent& event, int& out_index);
     void setHighlightedPoint(
-        const SgNodePath& path, SgVertexArray& vertices, const Affine3& T, int vertexIndex);
+        const SgNodePath& path, SgMesh* mesh, const Affine3& T, int vertexIndex);
     void clearHighlightedPoint();
     bool onButtonPressEvent(const SceneWidgetEvent& event);
-    void updateSelectedPointArray();
 };
 
 }
@@ -69,18 +106,148 @@ public:
 ScenePointSelectionMode::PointInfo::PointInfo()
 {
     vertexIndex_ = -1;
+    triangleVertexIndex_ = -1;
+    hasNormal_ = false;
 }
 
 
-bool ScenePointSelectionMode::PointInfo::operator==(const PointInfo& rhs) const
+bool ScenePointSelectionMode::PointInfo::hasSameVertexWith(const PointInfo& point) const
 {
-    if(path_ == rhs.path_ ||
-       (path_ && rhs.path_ && *path_ == *rhs.path_)){
-        if(vertexIndex_ == rhs.vertexIndex_){
+    if(path_ == point.path_ ||
+       (path_ && point.path_ && *path_ == *point.path_)){
+        if(position_ == point.position_){
             return true;
         }
     }
     return false;
+}
+
+
+FixedPixelSizeNormal::FixedPixelSizeNormal(SgLineSetPtr& sharedLine, SgMaterial* material)
+    : sharedLine(sharedLine)
+{
+    if(!sharedLine){
+        sharedLine = new SgLineSet;
+        sharedLine->setMaterial(material);
+        auto& vertices = *sharedLine->getOrCreateVertices(2);
+        vertices[0] = Vector3f::Zero();
+        vertices[1] = Vector3f::UnitZ();
+        sharedLine->addLine(0, 1);
+    }
+
+    auto fpsg = new SgFixedPixelSizeGroup;
+    fpsg->setPixelSizeRatio(32.0f);
+    fpsg->addChild(sharedLine);
+    addChild(fpsg);
+}
+
+
+void FixedPixelSizeNormal::setNormal(const Vector3f& position, const Vector3f& normal)
+{
+    setTranslation(position);
+    Vector3 a = Vector3::UnitZ().cross(normal.cast<double>());
+    setRotation(AngleAxis(asin(a.norm()), a.normalized()));
+}
+
+
+ScenePointPlot::ScenePointPlot()
+{
+    material_ = new SgMaterial;
+    
+    pointSet = new SgPointSet;
+    pointSet->setPointSize(10.0);
+    pointSet->setMaterial(material_);
+    points = pointSet->getOrCreateVertices();
+    addChild(pointSet);
+
+    if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
+        fpsNormalGroup = new SgGroup;
+        addChild(fpsNormalGroup);
+    } else {
+        lineSet = new SgLineSet;
+        lineSet->setMaterial(material_);
+        normalVertices = lineSet->getOrCreateVertices();
+        addChild(lineSet);
+    }
+}
+
+
+void ScenePointPlot::clearPoints(bool doNotify)
+{
+    if(!points->empty()){
+        points->clear();
+        if(doNotify){
+            points->notifyUpdate(update);
+        }
+    }
+    if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
+        fpsNormalGroup->clearChildren();
+        if(doNotify){
+            fpsNormalGroup->notifyUpdate(update);
+        }
+    } else {
+        if(!normalVertices->empty()){
+            normalVertices->clear();
+            lineSet->clearLines();
+            if(doNotify){
+                normalVertices->notifyUpdate(update);
+            }
+        }
+    }
+}
+
+
+void ScenePointPlot::updatePoints(const std::vector<PointInfoPtr>& infos)
+{
+    clearPoints(false);
+
+    for(auto& info : infos){
+        addPoint(info, false);
+    }
+
+    points->notifyUpdate(update);
+
+    if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
+        fpsNormalGroup->notifyUpdate(update);
+    } else {
+        normalVertices->notifyUpdate(update);
+    }
+}
+
+
+void ScenePointPlot::resetPoint(PointInfo* info)
+{
+    clearPoints(false);
+    addPoint(info, true);
+}
+
+
+void ScenePointPlot::addPoint(PointInfo* info, bool doNotify)
+{
+    points->push_back(info->position());
+
+    if(doNotify){
+        points->notifyUpdate(update);
+    }
+    
+    if(info->hasNormal()){
+        if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
+            auto fpsNormal = new FixedPixelSizeNormal(lineSet, material_);
+            fpsNormal->setNormal(info->position(), info->normal());
+            fpsNormalGroup->addChild(fpsNormal);
+            if(doNotify){
+                fpsNormalGroup->notifyUpdate(update);
+            }
+        } else {
+            auto i = normalVertices->size();
+            normalVertices->push_back(info->position());
+            normalVertices->push_back(info->position() + info->normal() * 0.015);
+            lineSet->addLine(i, i + 1);
+            if(doNotify){
+                normalVertices->notifyUpdate(update);
+            }
+        }
+    }
 }
 
 
@@ -95,15 +262,11 @@ ScenePointSelectionMode::Impl::Impl(ScenePointSelectionMode* self)
 {
     modeId = 0;
 
-    highlightedPointPlot = new SgPointSet;
-    highlightedPointPlot->setPointSize(10.0);
-    highlightedPointArray = highlightedPointPlot->getOrCreateVertices();
-    highlightedPointPlot->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
-
-    selectedPointPlot = new SgPointSet;
-    selectedPointPlot->setPointSize(10.0);
-    selectedPointArray = selectedPointPlot->getOrCreateVertices();
-    selectedPointPlot->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 0.0f, 0.0f));
+    highlightedPointPlot = new ScenePointPlot;
+    highlightedPointPlot->material()->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
+    
+    selectedPointPlot = new ScenePointPlot;
+    selectedPointPlot->material()->setDiffuseColor(Vector3f(1.0f, 0.0f, 0.0f));
     
     pointOverlay = new SgOverlay;
     pointOverlay->addChild(highlightedPointPlot);
@@ -123,21 +286,16 @@ void ScenePointSelectionMode::setCustomModeId(int id)
 }
 
 
-std::vector<Vector3f> ScenePointSelectionMode::getSelectedPoints() const
+const std::vector<PointInfoPtr>& ScenePointSelectionMode::selectedPoints() const
 {
-    std::vector<Vector3f> points;
-    points.reserve(impl->selectedPoints.size());
-    for(auto& point : impl->selectedPoints){
-        points.push_back(point->position());
-    }
-    return points;
+    return impl->selectedPoints;
 }
 
 
 void ScenePointSelectionMode::clearSelection()
 {
     impl->selectedPoints.clear();
-    impl->updateSelectedPointArray();
+    impl->selectedPointPlot->clearPoints(true);
 }
 
 
@@ -256,12 +414,12 @@ bool ScenePointSelectionMode::onPointerMoveEvent(const SceneWidgetEvent& event)
     if(isTargetNode){
         auto& path = event.nodePath();
         if(auto shape = dynamic_cast<SgShape*>(path.back())){
-            auto vertices = *shape->mesh()->vertices();
+            auto mesh = shape->mesh();
             Affine3 T = calcTotalTransform(path);
             int  pointedIndex;
-            pointed = impl->findPointedVertex(vertices, T, event.point(), pointedIndex);
-            if(pointed){
-                impl->setHighlightedPoint(path, vertices, T, pointedIndex);
+            if(impl->findPointedTriangleVertex(mesh, T, event, pointedIndex)){
+                impl->setHighlightedPoint(path, mesh, T, pointedIndex);
+                pointed = true;
             }
         }
     }
@@ -273,27 +431,119 @@ bool ScenePointSelectionMode::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-bool ScenePointSelectionMode::Impl::findPointedVertex
-(const SgVertexArray& vertices, const Affine3& T, const Vector3& point, int& out_index)
+static bool checkRayTraiangleIntersection
+(const Vector3f& rayOrigin, const Vector3f& rayDirection,
+ const Vector3f& vertex0, const Vector3f& vertex1, const Vector3f& vertex2,
+ bool doCulling, float margin,
+ float& out_t, float& out_u, float& out_v)
+{
+    constexpr float epsilon = std::numeric_limits<float>::epsilon();
+    constexpr float GU_CULLING_EPSILON_RAY_TRIANGLE = epsilon * epsilon;
+    
+    const Vector3f edge1 = vertex1 - vertex0;
+    const Vector3f edge2 = vertex2 - vertex0;
+    const Vector3f pvec = rayDirection.cross(edge2);
+    const float det = edge1.dot(pvec);
+
+    if(doCulling){
+        if(det < GU_CULLING_EPSILON_RAY_TRIANGLE){
+            return false;
+        }
+        const Vector3f tvec = rayOrigin - vertex0;
+        const float u = tvec.dot(pvec);
+        const float marginCoeff = margin * det;
+        const float uvlimit = -marginCoeff;
+        const float uvlimit2 = det + marginCoeff;
+        if(u < uvlimit || u > uvlimit2){
+            return false;
+        }
+        const Vector3f qvec = tvec.cross(edge1);
+        const float v = rayDirection.dot(qvec);
+        if(v < uvlimit || (u + v) > uvlimit2){
+            return false;
+        }
+        const float t = edge2.dot(qvec);
+        const float inv_det = 1.0f / det;
+        out_t = t * inv_det;
+        out_u = u * inv_det;
+        out_v = v * inv_det;
+
+    } else {
+        if(fabsf(det) < GU_CULLING_EPSILON_RAY_TRIANGLE){
+            return false;
+        }
+        const float inv_det = 1.0f / det;
+        const Vector3f tvec = rayOrigin - vertex0;
+        const float u = tvec.dot(pvec) * inv_det;
+        if(u < -margin || u > 1.0f + margin){
+            return false;
+        }
+        const Vector3f qvec = tvec.cross(edge1);
+        const float v = rayDirection.dot(qvec) * inv_det;
+        if(v < -margin || ( u + v) > 1.0f + margin){
+            return false;
+        }
+        const float t = edge2.dot(qvec) * inv_det;
+        out_t = t;
+        out_u = u;
+        out_v = v;
+    }
+    
+    return true;
+}
+
+
+bool ScenePointSelectionMode::Impl::findPointedTriangleVertex
+(SgMesh* mesh, const Affine3& T, const SceneWidgetEvent& event, int& out_index)
 {
     bool found = false;
-    Vector3f localPoint = (T.inverse() * point).cast<float>();
-    int minDistanceIndex = -1;
+    const Affine3 T_inv = T.inverse();
+    const Vector3 point = event.point();
+    const Vector3f localPoint = (T_inv * point).cast<float>();
     float minDistance = std::numeric_limits<float>::max();
-    const int n = vertices.size();
+    Vector3f minDistanceVertex;
+    vector<int> minDistanceIndices;
+
+    auto& vertices = *mesh->vertices();
+    auto& vertexIndices = mesh->triangleVertices();
+    const int n = vertexIndices.size();
     for(int i=0; i < n; ++i){
-        float distance = (vertices[i] - localPoint).norm();
+        auto& vertex = vertices[vertexIndices[i]]; 
+        float distance = (vertex - localPoint).norm();
         if(distance < minDistance){
             minDistance = distance;
-            minDistanceIndex = i;
+            minDistanceVertex = vertex;
+            minDistanceIndices.clear();
+            minDistanceIndices.push_back(i);
+        } else if(distance == minDistance){
+            if(vertex == minDistanceVertex){
+                minDistanceIndices.push_back(i);
+            }
         }
+
     }
-    if(minDistanceIndex >= 0){
-        Vector3 v = T * vertices[minDistanceIndex].cast<double>();
+    if(!minDistanceIndices.empty()){
+        Vector3 v = T * minDistanceVertex.cast<double>();
         double distance = (v - point).norm();
         //! \todo The distance threshold should be constant in the viewport coordinate
         if(distance < 0.01){
-            out_index = minDistanceIndex;
+            const Vector3f origin = (T_inv * event.rayOrigin()).cast<float>();
+            const Vector3f dir = (T_inv.linear() * event.rayDirection()).cast<float>();
+            out_index = minDistanceIndices.front();
+            float minRayDistance = std::numeric_limits<float>::max();
+            for(auto& index : minDistanceIndices){
+                int triangleIndex = index / 3;
+                auto triangle = mesh->triangle(triangleIndex);
+                float t, u, v;
+                if(checkRayTraiangleIntersection(
+                       origin, dir, vertices[triangle[0]], vertices[triangle[1]], vertices[triangle[2]],
+                       false, 0.0f, t, u, v)){
+                    if(t < minRayDistance){
+                        minRayDistance = t;
+                        out_index = index;
+                    }
+                }
+            }
             found = true;
         }
     }
@@ -302,36 +552,45 @@ bool ScenePointSelectionMode::Impl::findPointedVertex
 
 
 void ScenePointSelectionMode::Impl::setHighlightedPoint
-(const SgNodePath& path, SgVertexArray& vertices, const Affine3& T, int vertexIndex)
+(const SgNodePath& path, SgMesh* mesh, const Affine3& T, int triangleVertexIndex)
 {
     highlightedPoint = new ScenePointSelectionMode::PointInfo;
-    Vector3f v = (T * vertices[vertexIndex].cast<double>()).cast<float>();
+    int vertexIndex = mesh->triangleVertices()[triangleVertexIndex];
+    auto vertex = mesh->vertices()->at(vertexIndex);
+    Vector3f v = (T * vertex.cast<double>()).cast<float>();
     highlightedPoint->path_ = make_shared<SgNodePath>(path);
     highlightedPoint->vertexIndex_ = vertexIndex;
+    highlightedPoint->triangleVertexIndex_ = triangleVertexIndex;
     highlightedPoint->position_ = v;
-    highlightedPointArray->resize(1);
-    highlightedPointArray->front() = v;
-    highlightedPointArray->notifyUpdate(update);
+
+    if(mesh->hasNormals()){
+        auto& normals = *mesh->normals();
+        int normalIndex = -1;
+        if(mesh->hasNormalIndices()){
+            normalIndex = mesh->normalIndices()[triangleVertexIndex];
+        } else if(vertexIndex < normals.size()){
+            normalIndex = vertexIndex;
+        }
+        if(normalIndex >= 0){
+            highlightedPoint->normal_ = (T.linear() * normals[normalIndex].cast<double>()).cast<float>();
+            highlightedPoint->hasNormal_ = true;
+        }
+    }
+
+    highlightedPointPlot->resetPoint(highlightedPoint);
 }
 
 
 void ScenePointSelectionMode::Impl::clearHighlightedPoint()
 {
     highlightedPoint.reset();
-
-    if(!highlightedPointArray->empty()){
-        highlightedPointArray->clear();
-        highlightedPointArray->notifyUpdate(update);
-    }
+    highlightedPointPlot->clearPoints(true);
 }
 
 
 void ScenePointSelectionMode::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    if(!impl->highlightedPointArray->empty()){
-        impl->highlightedPointArray->clear();
-        impl->highlightedPointArray->notifyUpdate(impl->update);
-    }
+    impl->clearHighlightedPoint();
 }
 
 
@@ -355,7 +614,7 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& e
             } else {
                 for(auto it = selectedPoints.begin(); it != selectedPoints.end(); ++it){
                     PointInfo* point = *it;
-                    if(point == highlightedPoint){
+                    if(point->hasSameVertexWith(*highlightedPoint)){
                         selectedPoints.erase(it);
                         removed = true;
                         break;
@@ -382,25 +641,13 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& e
             }
         }
         if(isPointSelectionUpdated){
-            updateSelectedPointArray();
+            selectedPointPlot->updatePoints(selectedPoints);
         }
     } else if(isTargetNode && event.button() == Qt::RightButton){
         event.sceneWidget()->showContextMenuAtPointerPosition();
     }
     
     return isTargetNode;
-}
-
-
-void ScenePointSelectionMode::Impl::updateSelectedPointArray()
-{
-    selectedPointArray->clear();
-
-    for(auto& point : selectedPoints){
-        selectedPointArray->push_back(point->position());
-    }
-
-    selectedPointArray->notifyUpdate(update);
 }
 
 

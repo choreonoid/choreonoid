@@ -20,26 +20,35 @@ public:
 
     void setCustomModeId(int id);
 
-    std::vector<Vector3f> getSelectedPoints() const;
-    void clearSelection();
-
     class PointInfo : public Referenced
     {
     public:
         PointInfo();
-        bool operator==(const PointInfo& rhs) const;
+
+        bool operator==(const PointInfo& rhs) const = delete;
+        bool hasSameVertexWith(const PointInfo& point) const;
+
         const SgNodePath& path() const { return *path_; }
-        const Vector3f& position() const { return position_; }
+
         /**
            \return The vertex index when the point is a mesh vertex.
            Otherwise, -1 is returned.
         */
         int vertexIndex() const { return vertexIndex_; }
 
+        int triangleVertexIndex() const { return triangleVertexIndex_; }
+        
+        const Vector3f& position() const { return position_; }
+        const Vector3f& normal() const { return normal_; }
+        bool hasNormal() const { return hasNormal_; }
+
     private:
         std::shared_ptr<SgNodePath> path_;
-        Vector3f position_;
         int vertexIndex_;
+        int triangleVertexIndex_;
+        Vector3f position_;
+        Vector3f normal_;
+        bool hasNormal_;
 
         friend class ScenePointSelectionMode::Impl;
     };
@@ -47,6 +56,9 @@ public:
     typedef ref_ptr<PointInfo> PointInfoPtr;
 
     PointInfo* highlightedPoint();
+
+    const std::vector<PointInfoPtr>& selectedPoints() const;
+    void clearSelection();
 
 protected:
     virtual std::vector<SgNode*> getTargetSceneNodes(const SceneWidgetEvent& event);
