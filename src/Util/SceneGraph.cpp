@@ -74,25 +74,45 @@ SgObject* SgObject::childObject(int /* index */)
 
 void SgObject::onUpdated(SgUpdate& update)
 {
-    update.push(this);
+    update.pushNode(this);
     sigUpdated_(update);
     for(const_parentIter p = parents.begin(); p != parents.end(); ++p){
         (*p)->onUpdated(update);
     }
-    update.pop();
+    update.popNode();
+}
+
+
+void SgObject::addParent(SgObject* parent, SgUpdate* update)
+{
+    parents.insert(parent);
+
+    if(update){
+        update->resetAction(SgUpdate::ADDED);
+        update->clearPath();
+        update->pushNode(this);
+        parent->onUpdated(*update);
+    }
+
+    if(parents.size() == 1){
+        sigGraphConnection_(true);
+    }
+}
+
+
+void SgObject::addParent(SgObject* parent, SgUpdate& update)
+{
+    addParent(parent, &update);
 }
 
 
 void SgObject::addParent(SgObject* parent, bool doNotify)
 {
-    parents.insert(parent);
     if(doNotify){
-        SgUpdate update(SgUpdate::ADDED);
-        update.push(this);
-        parent->onUpdated(update);
-    }
-    if(parents.size() == 1){
-        sigGraphConnection_(true);
+        SgUpdate update;
+        addParent(parent, &update);
+    } else {
+        addParent(parent, nullptr);
     }
 }
 
@@ -310,11 +330,28 @@ bool SgGroup::contains(SgNode* node) const
 }
 
 
-void SgGroup::addChild(SgNode* node, bool doNotify)
+void SgGroup::addChild(SgNode* node, SgUpdate* update)
 {
     if(node){
         children.push_back(node);
-        node->addParent(this, doNotify);
+        node->addParent(this, update);
+    }
+}
+
+
+void SgGroup::addChild(SgNode* node, SgUpdate& update)
+{
+    addChild(node, &update);
+}
+
+
+void SgGroup::addChild(SgNode* node, bool doNotify)
+{
+    if(doNotify){
+        SgUpdate update;
+        addChild(node, &update);
+    } else {
+        addChild(node, nullptr);
     }
 }
 
@@ -329,25 +366,47 @@ bool SgGroup::addChildOnce(SgNode* node, bool doNotify)
 }
 
 
-void SgGroup::insertChild(int index, SgNode* node, bool doNotify)
+bool SgGroup::addChildOnce(SgNode* node, SgUpdate& update)
+{
+    if(!contains(node)){
+        addChild(node, update);
+        return true;
+    }
+    return false;
+}
+
+
+void SgGroup::insertChild(int index, SgNode* node, SgUpdate* update)
 {
     if(node){
         if(index > static_cast<int>(children.size())){
             index = children.size();
         }
         children.insert(children.begin() + index, node);
-        node->addParent(this, doNotify);
+
+        node->addParent(this, update);
     }
 }
 
 
-void SgGroup::insertChild(SgNode* node, int index, bool doNotify)
+void SgGroup::insertChild(int index, SgNode* node, bool doNotify)
 {
-    insertChild(index, node, doNotify);
+    if(doNotify){
+        SgUpdate update;
+        insertChild(index, node, &update);
+    } else {
+        insertChild(index, node, nullptr);
+    }
 }
 
 
-void SgGroup::setSingleChild(SgNode* node, bool doNotify)
+void SgGroup::insertChild(int index, SgNode* node, SgUpdate& update)
+{
+    insertChild(index, node, &update);
+}
+
+
+void SgGroup::setSingleChild(SgNode* node, SgUpdate* update)
 {
     int n = numChildren();
     if(n > 0){
@@ -357,43 +416,61 @@ void SgGroup::setSingleChild(SgNode* node, bool doNotify)
                 found = true;
                 continue;
             }
-            removeChildAt(i, doNotify);
+            removeChildAt(i, update);
         }
         if(!empty()){
             return;
         }
     }
-    addChild(node, doNotify);
+    addChild(node, update);
 }
 
 
-SgGroup::iterator SgGroup::removeChild(iterator childIter, bool doNotify)
+void SgGroup::setSingleChild(SgNode* node, SgUpdate& update)
+{
+    setSingleChild(node, &update);
+}
+
+
+void SgGroup::setSingleChild(SgNode* node, bool doNotify)
+{
+    if(doNotify){
+        SgUpdate update;
+        setSingleChild(node, &update);
+    } else {
+        setSingleChild(node, nullptr);
+    }
+}
+
+
+SgGroup::iterator SgGroup::removeChild(iterator childIter, SgUpdate* update)
 {
     iterator next;
     SgNode* child = *childIter;
     child->removeParent(this);
     
-    if(!doNotify){
+    if(!update){
         next = children.erase(childIter);
     } else {
         SgNodePtr childHolder = child;
         next = children.erase(childIter);
-        SgUpdate update(SgUpdate::REMOVED);
-        update.push(child);
-        onUpdated(update);
+        update->resetAction(SgUpdate::REMOVED);
+        update->clearPath();
+        update->pushNode(child);
+        onUpdated(*update);
     }
     return next;
 }
 
 
-bool SgGroup::removeChild(SgNode* node, bool doNotify)
+bool SgGroup::removeChild(SgNode* node, SgUpdate* update)
 {
     bool removed = false;
     if(node){
         iterator p = children.begin();
         while(p != children.end()){
             if((*p) == node){
-                p = removeChild(p, doNotify);
+                p = removeChild(p, update);
                 removed = true;
             } else {
                 ++p;
@@ -404,17 +481,70 @@ bool SgGroup::removeChild(SgNode* node, bool doNotify)
 }
 
 
+bool SgGroup::removeChild(SgNode* node, SgUpdate& update)
+{
+    return removeChild(node, &update);
+}
+
+
+bool SgGroup::removeChild(SgNode* node, bool doNotify)
+{
+    if(doNotify){
+        SgUpdate update;
+        return removeChild(node, update);
+    } else {
+        return removeChild(node, nullptr);
+    }
+}
+
+
+void SgGroup::removeChildAt(int index, SgUpdate& update)
+{
+    removeChild(children.begin() + index, &update);
+}
+
+
 void SgGroup::removeChildAt(int index, bool doNotify)
 {
-    removeChild(children.begin() + index, doNotify);
+    if(doNotify){
+        SgUpdate update;
+        removeChildAt(index, &update);
+    } else {
+        removeChild(children.begin() + index, nullptr);
+    }
+}
+
+
+void SgGroup::clearChildren(SgUpdate* update)
+{
+    iterator p = children.begin();
+    while(p != children.end()){
+        p = removeChild(p, update);
+    }
+}
+
+
+void SgGroup::clearChildren(SgUpdate& update)
+{
+    clearChildren(&update);
 }
 
 
 void SgGroup::clearChildren(bool doNotify)
 {
-    iterator p = children.begin();
-    while(p != children.end()){
-        p = removeChild(p, doNotify);
+    if(doNotify){
+        SgUpdate update;
+        clearChildren(&update);
+    } else {
+        clearChildren(nullptr);
+    }
+}
+
+
+void SgGroup::copyChildrenTo(SgGroup* group, SgUpdate& update)
+{
+    for(size_t i=0; i < children.size(); ++i){
+        group->addChild(child(i), update);
     }
 }
 
@@ -427,19 +557,38 @@ void SgGroup::copyChildrenTo(SgGroup* group, bool doNotify)
 }
 
 
-void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
+void SgGroup::moveChildrenTo(SgGroup* group, SgUpdate* update)
 {
     const int destTop = group->children.size();
     
     for(size_t i=0; i < children.size(); ++i){
         group->addChild(child(i));
     }
-    clearChildren(doNotify);
-    if(doNotify){
-        SgUpdate update(SgUpdate::ADDED);
+    clearChildren(update);
+    
+    if(update){
+        update->resetAction(SgUpdate::ADDED);
+        update->clearPath();
         for(int i=destTop; i < group->numChildren(); ++i){
-            group->child(i)->notifyUpdate(update);
+            group->child(i)->notifyUpdate(*update);
         }
+    }
+}
+
+
+void SgGroup::moveChildrenTo(SgGroup* group, SgUpdate& update)
+{
+    moveChildrenTo(group, &update);
+}
+
+
+void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
+{
+    if(doNotify){
+        SgUpdate update;
+        moveChildrenTo(group, &update);
+    } else {
+        moveChildrenTo(group, nullptr);
     }
 }
 

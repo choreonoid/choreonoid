@@ -44,8 +44,11 @@ public:
     void setAction(int act) { action_ |= act; }
     void resetAction(int act = NONE) { action_ = act; }
     const Path& path() const { return path_; }
-    void push(SgObject* node) { path_.push_back(node); }
-    void pop() { path_.pop_back(); }
+    void pushNode(SgObject* node) { path_.push_back(node); }
+    void popNode() { path_.pop_back(); }
+    void clearPath() { path_.clear(); }
+
+    [[deprecated("Use clearPath()")]]
     void clear() { path_.clear(); }
 
 private:
@@ -83,7 +86,7 @@ public:
     }
         
     void notifyUpdate(SgUpdate& update) {
-        update.clear();
+        update.clearPath();
         onUpdated(update);
     }
 
@@ -93,13 +96,15 @@ public:
     }
 
     void addParent(SgObject* parent, bool doNotify = false);
+    void addParent(SgObject* parent, SgUpdate& update);
+    void addParent(SgObject* parent, SgUpdate* update);
     void removeParent(SgObject* parent);
     int numParents() const { return static_cast<int>(parents.size()); }
     bool hasParents() const { return !parents.empty(); }
 
     const_parentIter parentBegin() const { return parents.begin(); }
     const_parentIter parentEnd() const { return parents.end(); }
-    
+
     /**
        This signal is emitted when the object is first attached to an upper node
        or the object is detached from all the upper node.
@@ -248,14 +253,23 @@ public:
     }
 
     void clearChildren(bool doNotify = false);
+    void clearChildren(SgUpdate& update);
     void addChild(SgNode* node, bool doNotify = false);
+    void addChild(SgNode* node, SgUpdate& update);
     bool addChildOnce(SgNode* node, bool doNotify = false);
+    bool addChildOnce(SgNode* node, SgUpdate& update);
     void insertChild(int index, SgNode* node, bool doNotify = false);
+    void insertChild(int index, SgNode* node, SgUpdate& update);
     void setSingleChild(SgNode* node, bool doNotify = false);
+    void setSingleChild(SgNode* node, SgUpdate& update);
     bool removeChild(SgNode* node, bool doNotify = false);
+    bool removeChild(SgNode* node, SgUpdate& update);
     void removeChildAt(int index, bool doNotify = false);
+    void removeChildAt(int index, SgUpdate& update);
     void copyChildrenTo(SgGroup* group, bool doNotify = false);
+    void copyChildrenTo(SgGroup* group, SgUpdate& update);
     void moveChildrenTo(SgGroup* group, bool doNotify = false);
+    void moveChildrenTo(SgGroup* group, SgUpdate& update);
 
     [[deprecated("Use insertChild(int index, SgNode* node, bool doNotify = false)")]]
     void insertChild(SgNode* node, int index = 0, bool doNotify = false);
@@ -290,7 +304,13 @@ protected:
 private:
     Container children;
     static void throwTypeMismatchError();
-    iterator removeChild(iterator childIter, bool doNotify);    
+    void addChild(SgNode* node, SgUpdate* update);
+    void insertChild(int index, SgNode* node, SgUpdate* update);
+    void setSingleChild(SgNode* node, SgUpdate* update);
+    iterator removeChild(iterator childIter, SgUpdate* update);
+    bool removeChild(SgNode* node, SgUpdate* update);
+    void clearChildren(SgUpdate* update);
+    void moveChildrenTo(SgGroup* group, SgUpdate* update);
 };
 
 typedef ref_ptr<SgGroup> SgGroupPtr;
