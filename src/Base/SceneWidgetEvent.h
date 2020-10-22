@@ -45,8 +45,9 @@ public:
     double wheelSteps() const { return wheelSteps_; }
 
     const SgNodePath& cameraPath() const { return cameraPath_; }
-
     const Affine3& currentCameraPosition() const;
+    Vector3 rayOrigin() const;
+    Vector3 rayDirection() const;
 
     SceneWidget* sceneWidget() const { return sceneWidget_; }
 

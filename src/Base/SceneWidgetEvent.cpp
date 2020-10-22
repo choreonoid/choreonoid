@@ -41,6 +41,20 @@ const Affine3& SceneWidgetEvent::currentCameraPosition() const
 }
 
 
+Vector3 SceneWidgetEvent::rayOrigin() const
+{
+    return currentCameraPosition().translation();
+}
+
+
+Vector3 SceneWidgetEvent::rayDirection() const
+{
+    Vector3 p_near;
+    sceneWidget_->unproject(x_, y_, 0.0 /* near plane */, p_near);
+    return (p_near - rayOrigin()).normalized();
+}
+
+
 void SceneWidgetEvent::updateIndicator(const std::string& text) const
 {
     sceneWidget_->updateIndicator(text);
