@@ -145,8 +145,7 @@ FixedPixelSizeNormal::FixedPixelSizeNormal(SgLineSetPtr& sharedLine, SgMaterial*
 void FixedPixelSizeNormal::setNormal(const Vector3f& position, const Vector3f& normal)
 {
     setTranslation(position);
-    Vector3 a = Vector3::UnitZ().cross(normal.cast<double>());
-    setRotation(AngleAxis(asin(a.norm()), a.normalized()));
+    setRotation(Quaternion::FromTwoVectors(Vector3::UnitZ(), normal.cast<double>()));
 }
 
 

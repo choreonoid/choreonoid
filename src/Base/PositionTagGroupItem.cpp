@@ -7,6 +7,7 @@
 #include "CheckBox.h"
 #include "LazyCaller.h"
 #include "Archive.h"
+#include "PutPropertyFunction.h"
 #include <cnoid/PositionTagGroup>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
@@ -32,7 +33,7 @@ public:
     ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImpl);
     void finalize();
     void addTagNode(int index, bool doNotify);
-    static SgNode* getOrCreateTagMarker();
+    SgNode* getOrCreateTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
     void setOriginOffset(const Position& T);
@@ -92,6 +93,8 @@ public:
     ScopedConnection parentLocationConnection;
     Position parentPosition;
     ScenePositionTagGroupPtr scene;
+    SgNodePtr tagMarker;
+    SgFixedPixelSizeGroupPtr tagMarkerSizeGroup;
     Signal<void()> sigLocationChanged;
     
     Impl(PositionTagGroupItem* self);
@@ -149,6 +152,9 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self)
     tagGroupConnections.add(
         tags->sigOffsetPositionChanged().connect(
             [&](const Position&){ onOffsetPositionChanged(); }));
+
+    tagMarkerSizeGroup = new SgFixedPixelSizeGroup;
+    tagMarkerSizeGroup->setPixelSizeRatio(24.0f);
 
     location = new PositionTagGroupLocation(this);
     parentPosition.setIdentity();
@@ -335,10 +341,37 @@ Position PositionTagGroupItem::globalOriginOffset() const
 }
 
 
+void PositionTagGroupItem::setTagMarkerSize(double s)
+{
+    auto& sizeGroup = impl->tagMarkerSizeGroup;
+    if(s != sizeGroup->pixelSizeRatio()){
+        sizeGroup->setPixelSizeRatio(s);
+        sizeGroup->notifyUpdate();
+    }
+}
+
+
+double PositionTagGroupItem::tagMarkerSize() const
+{
+    return impl->tagMarkerSizeGroup->pixelSizeRatio();
+}
+
+
+void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Number of tags"), impl->tags->numTags());
+    putProperty(_("Origin marker"), isOriginMarkerVisible(),
+                [&](bool on){ setOriginMarkerVisible(on); return true; });
+    putProperty(_("Tag marker size"), tagMarkerSize(),
+                [&](double s){ setTagMarkerSize(s); return true; });
+}
+
+
 bool PositionTagGroupItem::store(Archive& archive)
 {
     impl->tags->write(&archive);
     archive.write("origin_marker", isOriginMarkerVisible());
+    archive.write("tag_marker_size", tagMarkerSize());
     return true;
 }
 
@@ -348,6 +381,10 @@ bool PositionTagGroupItem::restore(const Archive& archive)
     if(impl->tags->read(&archive)){
         if(archive.get("origin_marker", false)){
             setOriginMarkerVisible(true);
+        }
+        double s;
+        if(archive.read("tag_marker_size", s)){
+            setTagMarkerSize(s);
         }
         return true;
     }
@@ -409,17 +446,17 @@ void ScenePositionTagGroup::addTagNode(int index, bool doNotify)
 
 SgNode* ScenePositionTagGroup::getOrCreateTagMarker()
 {
-    static SgNodePtr marker;
+    auto& marker = itemImpl->tagMarker;
 
     if(!marker){
         auto lines = new SgLineSet;
 
         auto& vertices = *lines->getOrCreateVertices(4);
-        constexpr float r = 1.0f;
-        vertices[0] << 0.0f,     0.0f,     0.0f;     // Origin
-        vertices[1] << 0.0f,     0.0f,     r * 3.0f; // Z direction
-        vertices[2] << r * 1.0f, 0.0f,     0.0f;     // X direction
-        vertices[3] << 0.0f,     r * 1.0f, 0.0f;     // Y direction
+        constexpr float r = 3.0f;
+        vertices[0] << 0.0f,     0.0f,     0.0f; // Origin
+        vertices[1] << 0.0f,     0.0f,     1.0f; // Z direction
+        vertices[2] << 1.0f / r, 0.0f,     0.0f; // X direction
+        vertices[3] << 0.0f,     1.0f / r, 0.0f; // Y direction
         
         auto& colors = *lines->getOrCreateColors(3);
         colors[0] << 1.0f, 0.0f, 0.0f; // Red
@@ -445,11 +482,8 @@ SgNode* ScenePositionTagGroup::getOrCreateTagMarker()
         lines->setLine(4, 1, 3);
         lines->setLineColor(4, 1);
 
-        auto fixedPixelSizeGroup = new SgFixedPixelSizeGroup;
-        fixedPixelSizeGroup->setPixelSizeRatio(7.0f);
-        fixedPixelSizeGroup->addChild(lines);
-        
-        marker = fixedPixelSizeGroup;
+        itemImpl->tagMarkerSizeGroup->addChild(lines);
+        marker = itemImpl->tagMarkerSizeGroup;
     }
 
     return marker;

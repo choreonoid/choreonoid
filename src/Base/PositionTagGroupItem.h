@@ -33,6 +33,9 @@ public:
     const Position& parentPosition() const;
     Position globalOriginOffset() const;
 
+    void setTagMarkerSize(double s);
+    double tagMarkerSize() const;
+
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
@@ -41,6 +44,7 @@ public:
 protected:
     virtual Item* doDuplicate() const override;
     virtual bool onNewPositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded) override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
     Impl* impl;
