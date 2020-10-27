@@ -27,6 +27,7 @@ public:
     PositionTagGroupItem::Impl* itemImpl;
     SgPosTransformPtr offsetTransform;
     CoordinateFrameMarkerPtr originMarker;
+    SgLineSetPtr edgeLineSet;
     SgUpdate update;
     ScopedConnectionSet tagGroupConnections;
     
@@ -36,10 +37,12 @@ public:
     SgNode* getOrCreateTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
+    void updateEdges(bool doNotify);
     void setOriginOffset(const Position& T);
     void setParentPosition(const Position& T);
     void setOriginMarkerVisible(bool on);
     bool isOriginMarkerVisible() const;
+    void setEdgeVisiblility(bool on);
 };
 
 typedef ref_ptr<ScenePositionTagGroup> ScenePositionTagGroupPtr;
@@ -95,6 +98,7 @@ public:
     ScenePositionTagGroupPtr scene;
     SgNodePtr tagMarker;
     SgFixedPixelSizeGroupPtr tagMarkerSizeGroup;
+    bool edgeVisibility;
     Signal<void()> sigLocationChanged;
     
     Impl(PositionTagGroupItem* self);
@@ -155,6 +159,7 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self)
 
     tagMarkerSizeGroup = new SgFixedPixelSizeGroup;
     tagMarkerSizeGroup->setPixelSizeRatio(24.0f);
+    edgeVisibility = false;
 
     location = new PositionTagGroupLocation(this);
     parentPosition.setIdentity();
@@ -194,6 +199,12 @@ SgNode* PositionTagGroupItem::getScene()
 }
 
 
+bool PositionTagGroupItem::isOriginMarkerVisible() const
+{
+    return impl->scene ? impl->scene->isOriginMarkerVisible() : false;
+}
+    
+
 void PositionTagGroupItem::setOriginMarkerVisible(bool on)
 {
     if(!impl->scene){
@@ -206,12 +217,6 @@ void PositionTagGroupItem::setOriginMarkerVisible(bool on)
     }
 }
 
-
-bool PositionTagGroupItem::isOriginMarkerVisible() const
-{
-    return impl->scene ? impl->scene->isOriginMarkerVisible() : false;
-}
-    
 
 LocationProxyPtr PositionTagGroupItem::getLocationProxy()
 {
@@ -341,6 +346,12 @@ Position PositionTagGroupItem::globalOriginOffset() const
 }
 
 
+double PositionTagGroupItem::tagMarkerSize() const
+{
+    return impl->tagMarkerSizeGroup->pixelSizeRatio();
+}
+
+
 void PositionTagGroupItem::setTagMarkerSize(double s)
 {
     auto& sizeGroup = impl->tagMarkerSizeGroup;
@@ -351,9 +362,20 @@ void PositionTagGroupItem::setTagMarkerSize(double s)
 }
 
 
-double PositionTagGroupItem::tagMarkerSize() const
+bool PositionTagGroupItem::edgeVisibility() const
 {
-    return impl->tagMarkerSizeGroup->pixelSizeRatio();
+    return impl->edgeVisibility;
+}
+
+
+void PositionTagGroupItem::setEdgeVisiblility(bool on)
+{
+    if(on != impl->edgeVisibility){
+        impl->edgeVisibility = on;
+        if(impl->scene){
+            impl->scene->setEdgeVisiblility(on);
+        }
+    }
 }
 
 
@@ -364,6 +386,8 @@ void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ setOriginMarkerVisible(on); return true; });
     putProperty(_("Tag marker size"), tagMarkerSize(),
                 [&](double s){ setTagMarkerSize(s); return true; });
+    putProperty(_("Show edges"), impl->edgeVisibility,
+                [&](bool on){ setEdgeVisiblility(on); return true; });
 }
 
 
@@ -372,6 +396,7 @@ bool PositionTagGroupItem::store(Archive& archive)
     impl->tags->write(&archive);
     archive.write("origin_marker", isOriginMarkerVisible());
     archive.write("tag_marker_size", tagMarkerSize());
+    archive.write("show_edges", impl->edgeVisibility);
     return true;
 }
 
@@ -385,6 +410,10 @@ bool PositionTagGroupItem::restore(const Archive& archive)
         double s;
         if(archive.read("tag_marker_size", s)){
             setTagMarkerSize(s);
+        }
+        bool on;
+        if(archive.read("show_edges", on)){
+            setEdgeVisiblility(on);
         }
         return true;
     }
@@ -402,6 +431,15 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
     offsetTransform = new SgPosTransform;
     offsetTransform->setPosition(tags->originOffset());
     addChild(offsetTransform);
+
+    edgeLineSet = new SgLineSet;
+    edgeLineSet->setLineWidth(2.0f);
+    auto material = edgeLineSet->getOrCreateMaterial();
+    material->setDiffuseColor(Vector3f(0.9f, 0.9f, 0.9f));
+
+    if(itemImpl->edgeVisibility){
+        offsetTransform->addChild(edgeLineSet);
+    }
     
     int n = tags->numTags();
     for(int i=0; i < n; ++i){
@@ -441,6 +479,8 @@ void ScenePositionTagGroup::addTagNode(int index, bool doNotify)
         update.resetAction(SgUpdate::ADDED);
         offsetTransform->notifyUpdate(update);
     }
+
+    updateEdges(doNotify);
 }
     
 
@@ -495,6 +535,8 @@ void ScenePositionTagGroup::removeTagNode(int index)
     offsetTransform->removeChildAt(index);
     update.resetAction(SgUpdate::REMOVED);
     offsetTransform->notifyUpdate(update);
+
+    updateEdges(true);
 }
 
 
@@ -505,6 +547,30 @@ void ScenePositionTagGroup::updateTagNodePosition(int index)
     node->setTranslation(tag->translation());
     update.resetAction(SgUpdate::MODIFIED);
     node->notifyUpdate(update);
+
+    updateEdges(true);
+}
+
+
+void ScenePositionTagGroup::updateEdges(bool doNotify)
+{
+    auto& vertices = *edgeLineSet->getOrCreateVertices();
+    vertices.clear();
+    for(auto& tag : *itemImpl->tags){
+        vertices.push_back(tag->translation().cast<SgVertexArray::Scalar>());
+    }
+    int numLines = vertices.size() - 1;
+    int numLines0 = edgeLineSet->numLines();
+    edgeLineSet->setNumLines(numLines);
+    if(numLines > numLines0){
+        for(int i = numLines0; i < numLines; ++i){
+            edgeLineSet->setLine(i, i, i + 1);
+        }
+    }
+    if(doNotify){
+        update.resetAction(SgUpdate::MODIFIED);
+        vertices.notifyUpdate(update);
+    }
 }
 
 
@@ -550,6 +616,16 @@ bool ScenePositionTagGroup::isOriginMarkerVisible() const
 {
     int last = offsetTransform->numChildren() - 1;
     return (last >= 0) && (offsetTransform->child(last) == originMarker);
+}
+
+
+void ScenePositionTagGroup::setEdgeVisiblility(bool on)
+{
+    if(on){
+        offsetTransform->addChild(edgeLineSet, update);
+    } else {
+        offsetTransform->removeChild(edgeLineSet, update);
+    }
 }
 
 
