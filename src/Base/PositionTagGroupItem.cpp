@@ -26,6 +26,7 @@ class ScenePositionTagGroup : public SgPosTransform, public SceneWidgetEditable
 public:
     PositionTagGroupItem::Impl* itemImpl;
     SgPosTransformPtr offsetTransform;
+    SgGroupPtr tagMarkerGroup;
     CoordinateFrameMarkerPtr originMarker;
     SgLineSetPtr edgeLineSet;
     SgUpdate update;
@@ -33,15 +34,14 @@ public:
     
     ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImpl);
     void finalize();
-    void addTagNode(int index, bool doNotify);
+    void addTagNode(int index, bool doUpdateEdges, bool doNotify);
     SgNode* getOrCreateTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
     void updateEdges(bool doNotify);
     void setOriginOffset(const Position& T);
     void setParentPosition(const Position& T);
-    void setOriginMarkerVisible(bool on);
-    bool isOriginMarkerVisible() const;
+    void setOriginMarkerVisibility(bool on);
     void setEdgeVisiblility(bool on);
 };
 
@@ -98,6 +98,7 @@ public:
     ScenePositionTagGroupPtr scene;
     SgNodePtr tagMarker;
     SgFixedPixelSizeGroupPtr tagMarkerSizeGroup;
+    bool originMarkerVisibility;
     bool edgeVisibility;
     Signal<void()> sigLocationChanged;
     
@@ -159,6 +160,7 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self)
 
     tagMarkerSizeGroup = new SgFixedPixelSizeGroup;
     tagMarkerSizeGroup->setPixelSizeRatio(24.0f);
+    originMarkerVisibility = false;
     edgeVisibility = false;
 
     location = new PositionTagGroupLocation(this);
@@ -196,25 +198,6 @@ SgNode* PositionTagGroupItem::getScene()
         impl->scene = new ScenePositionTagGroup(impl);
     }
     return impl->scene;
-}
-
-
-bool PositionTagGroupItem::isOriginMarkerVisible() const
-{
-    return impl->scene ? impl->scene->isOriginMarkerVisible() : false;
-}
-    
-
-void PositionTagGroupItem::setOriginMarkerVisible(bool on)
-{
-    if(!impl->scene){
-        if(on){
-            getScene();
-        }
-    }
-    if(impl->scene){
-        impl->scene->setOriginMarkerVisible(on);
-    }
 }
 
 
@@ -362,6 +345,23 @@ void PositionTagGroupItem::setTagMarkerSize(double s)
 }
 
 
+bool PositionTagGroupItem::originMarkerVisibility() const
+{
+    return impl->originMarkerVisibility;
+}
+    
+
+void PositionTagGroupItem::setOriginMarkerVisibility(bool on)
+{
+    if(on != impl->originMarkerVisibility){
+        impl->originMarkerVisibility = on;
+        if(impl->scene){
+            impl->scene->setOriginMarkerVisibility(on);
+        }
+    }
+}
+
+
 bool PositionTagGroupItem::edgeVisibility() const
 {
     return impl->edgeVisibility;
@@ -382,8 +382,8 @@ void PositionTagGroupItem::setEdgeVisiblility(bool on)
 void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Number of tags"), impl->tags->numTags());
-    putProperty(_("Origin marker"), isOriginMarkerVisible(),
-                [&](bool on){ setOriginMarkerVisible(on); return true; });
+    putProperty(_("Origin marker"), impl->originMarkerVisibility,
+                [&](bool on){ setOriginMarkerVisibility(on); return true; });
     putProperty(_("Tag marker size"), tagMarkerSize(),
                 [&](double s){ setTagMarkerSize(s); return true; });
     putProperty(_("Show edges"), impl->edgeVisibility,
@@ -394,7 +394,7 @@ void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
 bool PositionTagGroupItem::store(Archive& archive)
 {
     impl->tags->write(&archive);
-    archive.write("origin_marker", isOriginMarkerVisible());
+    archive.write("origin_marker", impl->originMarkerVisibility);
     archive.write("tag_marker_size", tagMarkerSize());
     archive.write("show_edges", impl->edgeVisibility);
     return true;
@@ -405,7 +405,7 @@ bool PositionTagGroupItem::restore(const Archive& archive)
 {
     if(impl->tags->read(&archive)){
         if(archive.get("origin_marker", false)){
-            setOriginMarkerVisible(true);
+            setOriginMarkerVisibility(true);
         }
         double s;
         if(archive.read("tag_marker_size", s)){
@@ -432,23 +432,29 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
     offsetTransform->setPosition(tags->originOffset());
     addChild(offsetTransform);
 
+    tagMarkerGroup = new SgGroup;
+    offsetTransform->addChild(tagMarkerGroup);
+
+    int n = tags->numTags();
+    for(int i=0; i < n; ++i){
+        addTagNode(i, false, false);
+    }
+
     edgeLineSet = new SgLineSet;
     edgeLineSet->setLineWidth(2.0f);
     auto material = edgeLineSet->getOrCreateMaterial();
     material->setDiffuseColor(Vector3f(0.9f, 0.9f, 0.9f));
-
     if(itemImpl->edgeVisibility){
-        offsetTransform->addChild(edgeLineSet);
+        setEdgeVisiblility(true);
     }
-    
-    int n = tags->numTags();
-    for(int i=0; i < n; ++i){
-        addTagNode(i, false);
+
+    if(itemImpl->originMarkerVisibility){
+        setOriginMarkerVisibility(true);
     }
 
     tagGroupConnections.add(
         tags->sigTagAdded().connect(
-            [&](int index){ addTagNode(index, true); }));
+            [&](int index){ addTagNode(index, true, true); }));
     tagGroupConnections.add(
         tags->sigTagRemoved().connect(
             [&](int index, PositionTag*){ removeTagNode(index); }));
@@ -468,19 +474,21 @@ void ScenePositionTagGroup::finalize()
 }
 
 
-void ScenePositionTagGroup::addTagNode(int index, bool doNotify)
+void ScenePositionTagGroup::addTagNode(int index, bool doUpdateEdges, bool doNotify)
 {
     auto tag = itemImpl->tags->tagAt(index);
     auto node = new SgPosTransform;
     node->addChild(getOrCreateTagMarker());
     node->setPosition(tag->position());
-    offsetTransform->insertChild(index, node);
+    tagMarkerGroup->insertChild(index, node);
     if(doNotify){
         update.resetAction(SgUpdate::ADDED);
-        offsetTransform->notifyUpdate(update);
+        tagMarkerGroup->notifyUpdate(update);
     }
 
-    updateEdges(doNotify);
+    if(doUpdateEdges){
+        updateEdges(doNotify);
+    }
 }
     
 
@@ -532,9 +540,9 @@ SgNode* ScenePositionTagGroup::getOrCreateTagMarker()
 
 void ScenePositionTagGroup::removeTagNode(int index)
 {
-    offsetTransform->removeChildAt(index);
+    tagMarkerGroup->removeChildAt(index);
     update.resetAction(SgUpdate::REMOVED);
-    offsetTransform->notifyUpdate(update);
+    tagMarkerGroup->notifyUpdate(update);
 
     updateEdges(true);
 }
@@ -543,7 +551,7 @@ void ScenePositionTagGroup::removeTagNode(int index)
 void ScenePositionTagGroup::updateTagNodePosition(int index)
 {
     auto tag = itemImpl->tags->tagAt(index);
-    auto node = static_cast<SgPosTransform*>(offsetTransform->child(index));
+    auto node = static_cast<SgPosTransform*>(tagMarkerGroup->child(index));
     node->setTranslation(tag->translation());
     update.resetAction(SgUpdate::MODIFIED);
     node->notifyUpdate(update);
@@ -554,12 +562,19 @@ void ScenePositionTagGroup::updateTagNodePosition(int index)
 
 void ScenePositionTagGroup::updateEdges(bool doNotify)
 {
+    if(!itemImpl->edgeVisibility){
+        return;
+    }
+    
     auto& vertices = *edgeLineSet->getOrCreateVertices();
     vertices.clear();
     for(auto& tag : *itemImpl->tags){
         vertices.push_back(tag->translation().cast<SgVertexArray::Scalar>());
     }
     int numLines = vertices.size() - 1;
+    if(numLines < 0){
+        numLines = 0;
+    }
     int numLines0 = edgeLineSet->numLines();
     edgeLineSet->setNumLines(numLines);
     if(numLines > numLines0){
@@ -590,38 +605,25 @@ void ScenePositionTagGroup::setParentPosition(const Position& T)
 }
 
 
-void ScenePositionTagGroup::setOriginMarkerVisible(bool on)
+void ScenePositionTagGroup::setOriginMarkerVisibility(bool on)
 {
-    if(!originMarker){
-        originMarker = new CoordinateFrameMarker;
-    }
-    int last = offsetTransform->numChildren() - 1;
     if(on){
-        if(last < 0 || offsetTransform->child(last) != originMarker){
-            offsetTransform->addChild(originMarker);
-            update.resetAction(SgUpdate::ADDED);
-            offsetTransform->notifyUpdate(update);
+        if(!originMarker){
+            originMarker = new CoordinateFrameMarker;
         }
+        offsetTransform->addChild(originMarker, update);
     } else {
-        if(last >= 0 && offsetTransform->child(last) == originMarker){
-            offsetTransform->removeChildAt(last);
-            update.resetAction(SgUpdate::REMOVED);
-            offsetTransform->notifyUpdate(update);
+        if(originMarker){
+            offsetTransform->removeChild(originMarker, update);
         }
     }
-}
-
-
-bool ScenePositionTagGroup::isOriginMarkerVisible() const
-{
-    int last = offsetTransform->numChildren() - 1;
-    return (last >= 0) && (offsetTransform->child(last) == originMarker);
 }
 
 
 void ScenePositionTagGroup::setEdgeVisiblility(bool on)
 {
     if(on){
+        updateEdges(false);
         offsetTransform->addChild(edgeLineSet, update);
     } else {
         offsetTransform->removeChild(edgeLineSet, update);

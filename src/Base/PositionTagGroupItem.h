@@ -24,8 +24,6 @@ public:
 
     // RenderableItem function
     virtual SgNode* getScene() override;
-    bool isOriginMarkerVisible() const;
-    void setOriginMarkerVisible(bool on);
 
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;
@@ -35,6 +33,9 @@ public:
 
     double tagMarkerSize() const;
     void setTagMarkerSize(double s);
+
+    bool originMarkerVisibility() const;
+    void setOriginMarkerVisibility(bool on);
 
     bool edgeVisibility() const;
     void setEdgeVisiblility(bool on);

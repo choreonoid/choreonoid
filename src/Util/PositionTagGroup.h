@@ -23,9 +23,8 @@ public:
 
     void clearTags();
 
-    int numTags() const {
-        return tags_.size();
-    }
+    bool empty() const { return tags_.empty(); }
+    int numTags() const { return tags_.size(); }
     
     const PositionTag* tagAt(int index) const {
         return tags_[index];
