@@ -5,6 +5,7 @@
 #include "SceneWidgetEvent.h"
 #include "SceneWidget.h"
 #include <cnoid/SceneRenderer>
+#include <cnoid/SceneCameras>
 
 using namespace cnoid;
 
@@ -41,17 +42,25 @@ const Affine3& SceneWidgetEvent::currentCameraPosition() const
 }
 
 
-Vector3 SceneWidgetEvent::rayOrigin() const
+bool SceneWidgetEvent::getRay(Vector3& out_origin, Vector3& out_direction) const
 {
-    return currentCameraPosition().translation();
-}
-
-
-Vector3 SceneWidgetEvent::rayDirection() const
-{
+    auto T = currentCameraPosition();
     Vector3 p_near;
     sceneWidget_->unproject(x_, y_, 0.0 /* near plane */, p_near);
-    return (p_near - rayOrigin()).normalized();
+    auto camera = sceneWidget_->renderer()->currentCamera();
+
+    if(dynamic_cast<SgPerspectiveCamera*>(camera)){
+        out_origin = T.translation();
+        out_direction = (p_near - out_origin).normalized();
+        return true;
+
+    } else if(dynamic_cast<SgOrthographicCamera*>(camera)){
+        out_origin = p_near;
+        out_direction = -T.linear().col(2); // -Z
+        return true;
+    }
+    
+    return false;
 }
 
 

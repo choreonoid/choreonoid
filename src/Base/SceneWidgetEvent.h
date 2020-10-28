@@ -46,8 +46,8 @@ public:
 
     const SgNodePath& cameraPath() const { return cameraPath_; }
     const Affine3& currentCameraPosition() const;
-    Vector3 rayOrigin() const;
-    Vector3 rayDirection() const;
+
+    bool getRay(Vector3& out_origin, Vector3& out_direction) const;
 
     SceneWidget* sceneWidget() const { return sceneWidget_; }
 

@@ -431,38 +431,38 @@ bool ScenePointSelectionMode::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 
 static bool checkRayTraiangleIntersection
-(const Vector3f& rayOrigin, const Vector3f& rayDirection,
- const Vector3f& vertex0, const Vector3f& vertex1, const Vector3f& vertex2,
- bool doCulling, float margin,
- float& out_t, float& out_u, float& out_v)
+(const Vector3& rayOrigin, const Vector3& rayDirection,
+ const Vector3& vertex0, const Vector3& vertex1, const Vector3& vertex2,
+ bool doCulling, double margin,
+ double& out_t, double& out_u, double& out_v)
 {
-    constexpr float epsilon = std::numeric_limits<float>::epsilon();
-    constexpr float GU_CULLING_EPSILON_RAY_TRIANGLE = epsilon * epsilon;
+    constexpr double epsilon = std::numeric_limits<double>::epsilon();
+    constexpr double GU_CULLING_EPSILON_RAY_TRIANGLE = epsilon * epsilon;
     
-    const Vector3f edge1 = vertex1 - vertex0;
-    const Vector3f edge2 = vertex2 - vertex0;
-    const Vector3f pvec = rayDirection.cross(edge2);
-    const float det = edge1.dot(pvec);
+    const Vector3 edge1 = vertex1 - vertex0;
+    const Vector3 edge2 = vertex2 - vertex0;
+    const Vector3 pvec = rayDirection.cross(edge2);
+    const double det = edge1.dot(pvec);
 
     if(doCulling){
         if(det < GU_CULLING_EPSILON_RAY_TRIANGLE){
             return false;
         }
-        const Vector3f tvec = rayOrigin - vertex0;
-        const float u = tvec.dot(pvec);
-        const float marginCoeff = margin * det;
-        const float uvlimit = -marginCoeff;
-        const float uvlimit2 = det + marginCoeff;
+        const Vector3 tvec = rayOrigin - vertex0;
+        const double u = tvec.dot(pvec);
+        const double marginCoeff = margin * det;
+        const double uvlimit = -marginCoeff;
+        const double uvlimit2 = det + marginCoeff;
         if(u < uvlimit || u > uvlimit2){
             return false;
         }
-        const Vector3f qvec = tvec.cross(edge1);
-        const float v = rayDirection.dot(qvec);
+        const Vector3 qvec = tvec.cross(edge1);
+        const double v = rayDirection.dot(qvec);
         if(v < uvlimit || (u + v) > uvlimit2){
             return false;
         }
-        const float t = edge2.dot(qvec);
-        const float inv_det = 1.0f / det;
+        const double t = edge2.dot(qvec);
+        const double inv_det = 1.0f / det;
         out_t = t * inv_det;
         out_u = u * inv_det;
         out_v = v * inv_det;
@@ -471,18 +471,18 @@ static bool checkRayTraiangleIntersection
         if(fabsf(det) < GU_CULLING_EPSILON_RAY_TRIANGLE){
             return false;
         }
-        const float inv_det = 1.0f / det;
-        const Vector3f tvec = rayOrigin - vertex0;
-        const float u = tvec.dot(pvec) * inv_det;
+        const double inv_det = 1.0f / det;
+        const Vector3 tvec = rayOrigin - vertex0;
+        const double u = tvec.dot(pvec) * inv_det;
         if(u < -margin || u > 1.0f + margin){
             return false;
         }
-        const Vector3f qvec = tvec.cross(edge1);
-        const float v = rayDirection.dot(qvec) * inv_det;
+        const Vector3 qvec = tvec.cross(edge1);
+        const double v = rayDirection.dot(qvec) * inv_det;
         if(v < -margin || ( u + v) > 1.0f + margin){
             return false;
         }
-        const float t = edge2.dot(qvec) * inv_det;
+        const double t = edge2.dot(qvec) * inv_det;
         out_t = t;
         out_u = u;
         out_v = v;
@@ -526,24 +526,32 @@ bool ScenePointSelectionMode::Impl::findPointedTriangleVertex
         double distance = (v - point).norm();
         //! \todo The distance threshold should be constant in the viewport coordinate
         if(distance < 0.01){
-            const Vector3f origin = (T_inv * event.rayOrigin()).cast<float>();
-            const Vector3f dir = (T_inv.linear() * event.rayDirection()).cast<float>();
-            out_index = minDistanceIndices.front();
-            float minRayDistance = std::numeric_limits<float>::max();
-            for(auto& index : minDistanceIndices){
-                int triangleIndex = index / 3;
-                auto triangle = mesh->triangle(triangleIndex);
-                float t, u, v;
-                if(checkRayTraiangleIntersection(
-                       origin, dir, vertices[triangle[0]], vertices[triangle[1]], vertices[triangle[2]],
-                       false, 0.0f, t, u, v)){
-                    if(t < minRayDistance){
-                        minRayDistance = t;
-                        out_index = index;
+            Vector3 origin0, direction0;
+            if(event.getRay(origin0, direction0)){
+                const Vector3 origin = T_inv * origin0;
+                const Vector3 direction = T_inv.linear() * direction0;
+                out_index = minDistanceIndices.front();
+                double minRayDistance = std::numeric_limits<double>::max();
+                for(auto& index : minDistanceIndices){
+                    int triangleIndex = index / 3;
+                    auto triangle = mesh->triangle(triangleIndex);
+                    double t, u, v;
+                    bool intersected =
+                        checkRayTraiangleIntersection(
+                            origin, direction,
+                            vertices[triangle[0]].cast<Vector3::Scalar>(),
+                            vertices[triangle[1]].cast<Vector3::Scalar>(),
+                            vertices[triangle[2]].cast<Vector3::Scalar>(),
+                            false, 0.0, t, u, v);
+                    if(intersected){
+                        if(t < minRayDistance){
+                            minRayDistance = t;
+                            out_index = index;
+                        }
                     }
                 }
             }
-            found = true;
+            found = true;            
         }
     }
     return found;
