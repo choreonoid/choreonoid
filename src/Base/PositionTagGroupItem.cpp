@@ -180,13 +180,13 @@ Item* PositionTagGroupItem::doDuplicate() const
 }
 
 
-const PositionTagGroup* PositionTagGroupItem::tags() const
+const PositionTagGroup* PositionTagGroupItem::tagGroup() const
 {
     return impl->tags;
 }
 
 
-PositionTagGroup* PositionTagGroupItem::tags()
+PositionTagGroup* PositionTagGroupItem::tagGroup()
 {
     return impl->tags;
 }

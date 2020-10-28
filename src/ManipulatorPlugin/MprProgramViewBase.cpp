@@ -2,6 +2,7 @@
 #include "MprProgramItemBase.h"
 #include "MprProgram.h"
 #include "MprBasicStatements.h"
+#include "MprPositionStatement.h"
 #include "MprControllerItemBase.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
@@ -797,6 +798,16 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
     }
 
     updateStatementTree();
+}
+
+
+bool MprProgramViewBase::checkCurrentProgramItem() const
+{
+    if(!impl->programItem){
+        showWarningDialog(_("Program item is not specified."));
+        return false;
+    }
+    return true;
 }
 
 

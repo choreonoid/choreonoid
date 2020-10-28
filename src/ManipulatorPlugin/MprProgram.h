@@ -45,6 +45,7 @@ public:
     iterator append(MprStatement* statement, bool doNotify = true);
     iterator remove(iterator pos, bool doNotify = true);
     bool remove(MprStatement* statement, bool doNotify = true);
+    void clearStatements();
 
     iterator begin(){ return statements_.begin(); }
     const_iterator begin() const { return statements_.begin(); }

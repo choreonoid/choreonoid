@@ -19,8 +19,8 @@ public:
     PositionTagGroupItem(const PositionTagGroupItem& org);
     virtual ~PositionTagGroupItem();
 
-    const PositionTagGroup* tags() const;
-    PositionTagGroup* tags();
+    const PositionTagGroup* tagGroup() const;
+    PositionTagGroup* tagGroup();
 
     // RenderableItem function
     virtual SgNode* getScene() override;

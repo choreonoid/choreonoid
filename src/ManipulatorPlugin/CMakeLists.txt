@@ -13,6 +13,7 @@ set(sources
   MprStatementRegistration.cpp
   MprStatement.cpp
   MprBasicStatements.cpp
+  MprPositionStatement.cpp
   MprVariable.cpp
   MprVariableList.cpp
   MprProgramItemBase.cpp

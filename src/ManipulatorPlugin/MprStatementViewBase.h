@@ -27,6 +27,9 @@ public:
     template<class StatementType> StatementType* currentStatement(){
         return dynamic_cast<StatementType*>(getCurrentStatement());
     }
+    MprStatement* currentStatement(){
+        return getCurrentStatement();
+    }
 
 private:
     class Impl;

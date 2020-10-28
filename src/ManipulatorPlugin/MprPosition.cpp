@@ -166,7 +166,7 @@ void MprIkPosition::resetReferenceRpy()
 }
 
 
-bool MprIkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
+bool MprIkPosition::fetch(LinkKinematicsKit* kinematicsKit)
 {
     if(kinematicsKit->hasJointPath()){
         T = kinematicsKit->endPosition();
@@ -303,7 +303,7 @@ Referenced* MprFkPosition::doClone(CloneMap*) const
 }
 
 
-bool MprFkPosition::setCurrentPosition(LinkKinematicsKit* kinematicsKit)
+bool MprFkPosition::fetch(LinkKinematicsKit* kinematicsKit)
 {
     auto path = kinematicsKit->jointPath();
     numJoints_ = std::min(path->numJoints(), MaxNumJoints);

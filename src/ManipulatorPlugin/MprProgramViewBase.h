@@ -26,6 +26,7 @@ public:
     virtual void onDeactivated() override;
 
     MprProgramItemBase* currentProgramItem();
+    bool checkCurrentProgramItem() const;
 
     MprStatement* currentStatement();
     SignalProxy<void(MprStatement* statement)> sigCurrentStatementChanged();

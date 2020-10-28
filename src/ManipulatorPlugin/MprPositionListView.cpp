@@ -376,7 +376,7 @@ void PositionListModel::changePositionType(int positionIndex, MprPosition* posit
     newPosition->setNote(position->note());
 
     if(view->applyPosition(positionIndex, true)){
-        newPosition->setCurrentPosition(programItem->kinematicsKit());
+        newPosition->fetch(programItem->kinematicsKit());
         positionList->replace(positionIndex, newPosition);
     }
 }
@@ -655,7 +655,7 @@ void MprPositionListView::Impl::addPosition(int row, bool doInsert)
     if(positionList){
         auto id = positionList->createNextId();
         MprPositionPtr position = new MprIkPosition(id);
-        position->setCurrentPosition(programItem->kinematicsKit());
+        position->fetch(programItem->kinematicsKit());
         positionListModel->addPosition(row, position, doInsert);
         resizeColumnToContents(IdColumn);
         resizeColumnToContents(PositionColumn);

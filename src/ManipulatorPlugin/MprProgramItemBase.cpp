@@ -378,7 +378,7 @@ bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position)
         return false;
     }
 
-    bool result = position->setCurrentPosition(kinematicsKit);
+    bool result = position->fetch(kinematicsKit);
     if(result){
         position->notifyUpdate(MprPosition::PositionUpdate);
     }

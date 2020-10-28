@@ -1,5 +1,6 @@
 #include "MprProgram.h"
 #include "MprBasicStatements.h"
+#include "MprPositionStatement.h"
 #include "MprStatementRegistration.h"
 #include <cnoid/MprPosition>
 #include <cnoid/MprPositionList>
@@ -169,6 +170,14 @@ bool MprProgram::remove(MprStatement* statement, bool doNotify)
         return true;
     }
     return false;
+}
+
+
+void MprProgram::clearStatements()
+{
+    while(!statements_.empty()){
+        remove(statements_.end(), true);
+    }
 }
 
 

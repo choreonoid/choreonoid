@@ -85,7 +85,7 @@ void TagGroupModel::setTagGroupItem(PositionTagGroupItem* tagGroupItem)
 
     tagGroupConnections.disconnect();
     if(tagGroupItem){
-        auto tags = tagGroupItem->tags();
+        auto tags = tagGroupItem->tagGroup();
         tagGroupConnections.add(
             tags->sigTagAdded().connect(
                 [&](int index){ onTagAdded(index); }));
@@ -104,7 +104,7 @@ void TagGroupModel::setTagGroupItem(PositionTagGroupItem* tagGroupItem)
 int TagGroupModel::numTags() const
 {
     if(tagGroupItem){
-        return tagGroupItem->tags()->numTags();
+        return tagGroupItem->tagGroup()->numTags();
     }
     return 0;
 }
@@ -115,7 +115,7 @@ PositionTag* TagGroupModel::tagAt(const QModelIndex& index) const
     if(!index.isValid()){
         return nullptr;
     }
-    return tagGroupItem->tags()->tagAt(index.row());
+    return tagGroupItem->tagGroup()->tagAt(index.row());
 }
         
     
@@ -321,7 +321,7 @@ int PositionTagListWidget::currentTagIndex() const
 void PositionTagListWidget::removeSelectedTags()
 {
     if(impl->tagGroupItem){
-        auto tags = impl->tagGroupItem->tags();
+        auto tags = impl->tagGroupItem->tagGroup();
         auto selected = selectionModel()->selectedRows();
         std::sort(selected.begin(), selected.end());
         int numRemoved = 0;

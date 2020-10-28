@@ -2,7 +2,6 @@
 #define CNOID_MANIPULATOR_PLUGIN_MPR_BASIC_STATEMENTS_H
 
 #include "MprStatement.h"
-#include "MprPositionStatement.h"
 #include <cnoid/GeneralId>
 #include "exportdecl.h"
 

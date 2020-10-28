@@ -1,7 +1,6 @@
 #include "MprBasicStatements.h"
 #include "MprStatementRegistration.h"
 #include "MprProgram.h"
-#include "MprPositionList.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
@@ -608,75 +607,6 @@ bool MprDelayStatement::write(Mapping& archive) const
 }
 
 
-MprPositionStatement::MprPositionStatement()
-{
-
-}
-
-
-MprPositionStatement::MprPositionStatement(const MprPositionStatement& org)
-    : MprStatement(org),
-      positionId_(org.positionId_)
-{
-
-}
-
-
-Referenced* MprPositionStatement::doClone(CloneMap*) const
-{
-    return new MprPositionStatement(*this);
-}
-    
-
-std::string MprPositionStatement::label(int index) const
-{
-    if(index == 0){
-        return "Position";
-
-    } else if(index == 1){
-        return positionLabel();
-    }
-    return string();
-}
-
-
-const MprPosition* MprPositionStatement::position(const MprPositionList* positions) const
-{
-    return positions->findPosition(positionId_);
-}
-
-
-MprPosition* MprPositionStatement::position(MprPositionList* positions) const
-{
-    return positions->findPosition(positionId_);
-}
-
-
-std::string MprPositionStatement::positionLabel() const
-{
-    if(positionId_.isInt()){
-        return format("P{0}", positionId_.toInt());
-    } else {
-        return positionId_.toString();
-    }
-}
-
-
-bool MprPositionStatement::read(MprProgram* program, const Mapping& archive)
-{
-    string symbol;
-    positionId_.read(archive, "position");
-    return true;
-}
-
-
-bool MprPositionStatement::write(Mapping& archive) const
-{
-    archive.write("position", positionId_.label());
-    return true;
-}
-
-
 namespace {
 
 struct StatementTypeRegistration {
@@ -695,7 +625,6 @@ struct StatementTypeRegistration {
             .registerType<MprSignalStatement, MprStatement>("SetSignal")
             .registerType<MprWaitStatement, MprStatement>("Wait")
             .registerType<MprDelayStatement, MprStatement>("Delay")
-            .registerAbstractType<MprPositionStatement, MprStatement>()
             ;
     }
 } registration;

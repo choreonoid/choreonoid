@@ -47,7 +47,7 @@ public:
 
     MprPositionList* ownerPositionList();
 
-    virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) = 0;
+    virtual bool fetch(LinkKinematicsKit* kinematicsKit) = 0;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
 
     const std::string& note() const { return note_; }
@@ -92,6 +92,7 @@ public:
     MprIkPosition& operator=(const MprIkPosition& rhs) = delete;
 
     const Position& position() const { return T; }
+    void setPosition(const Position& T) { this->T = T; }
     Vector3 rpy() const;
     void setRpy(const Vector3& rpy);
     const Vector3 referenceRpy() const { return referenceRpy_; }
@@ -120,11 +121,8 @@ public:
     
     int configuration() const { return configuration_; }
 
-    /**
-       \note This function always specifies BodyFrame as the base frame type.
-    */
-    virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit);
-
+    //! \note This function always specifies BodyFrame as the base frame type.
+    virtual bool fetch(LinkKinematicsKit* kinematicsKit) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
@@ -154,9 +152,8 @@ public:
     MprFkPosition(const MprFkPosition& org);
     MprFkPosition& operator=(const MprFkPosition& rhs) = delete;
 
-    virtual bool setCurrentPosition(LinkKinematicsKit* kinematicsKit) override;
+    virtual bool fetch(LinkKinematicsKit* kinematicsKit) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 
