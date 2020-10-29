@@ -101,6 +101,7 @@ links:
       type: Shape
       geometry:
         type: Cylinder
+        divisionNumber: 100
         radius: 0.1
         height: 0.04
       appearance: *black
@@ -138,6 +139,7 @@ links:
       type: Shape
       geometry:
         type: Cylinder
+        divisionNumber: 100
         radius: 0.1
         height: 0.04
       appearance: *black
@@ -166,6 +168,7 @@ links:
         translation: [ 0, -0.175, 0 ]
         geometry:
           type: Cylinder
+          divisionNumber: 100
           radius: 0.1
           height: 0.04
         appearance: *black
@@ -174,6 +177,7 @@ links:
         translation: [ 0, 0.175, 0 ]
         geometry:
           type: Cylinder
+          divisionNumber: 100
           radius: 0.1
           height: 0.04
         appearance: *black

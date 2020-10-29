@@ -55,10 +55,10 @@ public:
     {
         joystick.readCurrentState();
         
-        static const double DRIVE_GAIN = 10.0;
+        static const double DRIVE_GAIN = 1.0;
         static const double STEERING_P_GAIN = 3.0;
         static const double STEERING_D_GAIN = 1.0;
-        static const double VEL_MAX = 20;
+        static const double VEL_MAX = 10;
 
         double pos[2];
         pos[0] = joystick.getPosition(2);
