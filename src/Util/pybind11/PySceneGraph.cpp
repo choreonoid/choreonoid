@@ -55,10 +55,10 @@ void exportPySceneGraph(py::module& m)
         .def(py::init<const SgGroup&>())
         .def_property_readonly("empty", &SgGroup::empty)
         .def_property_readonly("numChildren", &SgGroup::numChildren)
-        .def("clearChildren", &SgGroup::clearChildren)
+        .def("clearChildren", (void(SgGroup::*)(bool)) &SgGroup::clearChildren)
         .def("clearChildren", [](SgGroup& self){ self.clearChildren(); })
         .def_property_readonly("child", (SgNode*(SgGroup::*)(int)) &SgGroup::child)
-        .def("addChild", &SgGroup::addChild)
+        .def("addChild", (void(SgGroup::*)(SgNode*, bool)) &SgGroup::addChild)
         .def("addChild", [](SgGroup& self, SgNode* node){ self.addChild(node); })
 
         // deprecated
