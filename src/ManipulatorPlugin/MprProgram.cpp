@@ -27,6 +27,7 @@ public:
     MprProgram* self;
     weak_ref_ptr<MprStructuredStatement> holderStatement;
     MprPositionListPtr positionList;
+    bool hasLocalPositionList;
     Signal<void(MprStatement* statement)> sigStatementUpdated;
     Signal<void(iterator iter)> sigStatementInserted;
     Signal<void(MprProgram* program, MprStatement* statement)> sigStatementRemoved;
@@ -37,7 +38,6 @@ public:
     void notifyStatementInsertion(iterator iter);
     void notifyStatementRemoval(MprProgram* program, MprStatement* statement);
     void notifyStatementUpdate(MprStatement* statement) const;
-    MprPositionList* getOrCreatePositionList();
     bool read(const Mapping& archive);    
 };
 
@@ -53,7 +53,7 @@ MprProgram::MprProgram()
 MprProgram::Impl::Impl(MprProgram* self)
     : self(self)
 {
-
+    hasLocalPositionList = false;
 }
     
 
@@ -84,6 +84,7 @@ MprProgram::Impl::Impl(MprProgram* self, const Impl& org, CloneMap* cloneMap)
             positionList = org.positionList->clone();
         }
     }
+    hasLocalPositionList = org.hasLocalPositionList;
 }
 
 
@@ -176,7 +177,7 @@ bool MprProgram::remove(MprStatement* statement, bool doNotify)
 void MprProgram::clearStatements()
 {
     while(!statements_.empty()){
-        remove(statements_.end(), true);
+        remove(--statements_.end(), true);
     }
 }
 
@@ -286,24 +287,36 @@ void MprProgram::traverseAllStatements(std::function<bool(MprStatement* statemen
 }
 
 
-MprPositionList* MprProgram::Impl::getOrCreatePositionList()
+void MprProgram::setLocalPositionListEnabled(bool on)
 {
-    if(!positionList){
-        positionList = new MprPositionList;
+    if(on != impl->hasLocalPositionList){
+        if((on && impl->holderStatement) || !on){
+            impl->positionList.reset();
+            impl->hasLocalPositionList = on;
+        }
     }
-    return positionList;
+}
+
+
+bool MprProgram::hasLocalPositionList() const
+{
+    return impl->hasLocalPositionList;
 }
 
 
 MprPositionList* MprProgram::positionList()
 {
-    if(!impl->holderStatement){
-        return impl->getOrCreatePositionList();
+    if(!impl->positionList){
+        if(impl->holderStatement && !impl->hasLocalPositionList){
+            if(auto topLevel = topLevelProgram()){
+                impl->positionList = topLevel->positionList();
+            }
+        }
+        if(!impl->positionList){
+            impl->positionList = new MprPositionList;
+        }
     }
-    if(auto topLevel = topLevelProgram()){
-        return topLevel->impl->getOrCreatePositionList();
-    }
-    return impl->getOrCreatePositionList();
+    return impl->positionList;
 }
 
 
@@ -425,7 +438,7 @@ bool MprProgram::read(const Mapping& archive)
 
 bool MprProgram::Impl::read(const Mapping& archive)
 {
-    if(!self->isSubProgram()){
+    if(self->isTopLevelProgram()){
         
         auto& typeNode = archive.get("type");
         if(typeNode.toString() != "ManipulatorProgram"){
@@ -443,14 +456,17 @@ bool MprProgram::Impl::read(const Mapping& archive)
         }
 
         archive.read("name", name);
+    }
 
-        auto& positionSetNode = *archive.findMapping("positions");
-        if(positionSetNode.isValid()){
-            getOrCreatePositionList();
-            positionList->clear();
-            if(!positionList->read(positionSetNode)){
-                return false;
-            }
+    auto& positionSetNode = *archive.findMapping("positions");
+    if(positionSetNode.isValid()){
+        if(self->isSubProgram()){
+            self->setLocalPositionListEnabled(true);
+        }
+        auto positionList = self->positionList();
+        positionList->clear();
+        if(!positionList->read(positionSetNode)){
+            return false;
         }
     }
     
@@ -504,7 +520,7 @@ bool MprProgram::save(const std::string& filename)
 
 bool MprProgram::write(Mapping& archive) const
 {
-    if(!isSubProgram()){
+    if(isTopLevelProgram()){
         archive.write("type", "ManipulatorProgram");
         archive.write("format_version", 1.0);
         archive.write("name", name(), DOUBLE_QUOTED);
@@ -526,10 +542,12 @@ bool MprProgram::write(Mapping& archive) const
         }
     }
 
-    if(!isSubProgram() && impl->positionList){
-        MappingPtr node = new Mapping;
-        if(impl->positionList->write(*node)){
-            archive.insert("positions", node);
+    if(isTopLevelProgram() || hasLocalPositionList()){
+        if(impl->positionList){
+            MappingPtr node = new Mapping;
+            if(impl->positionList->write(*node)){
+                archive.insert("positions", node);
+            }
         }
     }
 

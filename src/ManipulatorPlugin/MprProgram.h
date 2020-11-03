@@ -52,6 +52,8 @@ public:
     iterator end(){ return statements_.end(); }
     const_iterator end() const { return statements_.end(); }
 
+    void setLocalPositionListEnabled(bool on);
+    bool hasLocalPositionList() const;
     MprPositionList* positionList();
     const MprPositionList* positionList() const;
     void removeUnreferencedPositions();

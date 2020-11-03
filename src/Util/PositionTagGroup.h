@@ -21,6 +21,9 @@ public:
     PositionTagGroup(const PositionTagGroup& org);
     virtual ~PositionTagGroup();
 
+    const std::string& name() const;
+    void setName(const std::string& name);
+
     void clearTags();
 
     bool empty() const { return tags_.empty(); }

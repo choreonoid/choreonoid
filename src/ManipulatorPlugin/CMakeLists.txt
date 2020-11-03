@@ -14,6 +14,7 @@ set(sources
   MprStatement.cpp
   MprBasicStatements.cpp
   MprPositionStatement.cpp
+  MprTagTraceStatement.cpp
   MprVariable.cpp
   MprVariableList.cpp
   MprProgramItemBase.cpp
@@ -33,6 +34,7 @@ set(headers
   MprStatement.h
   MprBasicStatements.h
   MprPositionStatement.h
+  MprTagTraceStatement.h
   MprVariable.h
   MprVariableList.h
   MprProgramItemBase.h

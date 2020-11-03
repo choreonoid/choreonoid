@@ -19,6 +19,8 @@ public:
     PositionTagGroupItem(const PositionTagGroupItem& org);
     virtual ~PositionTagGroupItem();
 
+    virtual bool setName(const std::string& name) override;
+
     const PositionTagGroup* tagGroup() const;
     PositionTagGroup* tagGroup();
 

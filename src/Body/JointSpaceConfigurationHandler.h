@@ -6,6 +6,9 @@
 
 namespace cnoid {
 
+/**
+   \note Configuration ID 0 should be used as the automatic configuration.
+*/
 class JointSpaceConfigurationHandler
 {
 public:

@@ -7,6 +7,8 @@
 
 namespace cnoid {
 
+class MprPositionList;
+
 class CNOID_EXPORT MprEmptyStatement : public MprStatement
 {
 public:

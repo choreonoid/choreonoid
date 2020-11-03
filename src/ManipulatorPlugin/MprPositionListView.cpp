@@ -132,7 +132,7 @@ void PositionListModel::setProgramItem(MprProgramItemBase* programItem)
 
     this->programItem = programItem;
     if(programItem){
-        this->positionList = programItem->positionList();
+        this->positionList = programItem->program()->positionList();
     } else {
         this->positionList = nullptr;
     }
@@ -631,7 +631,7 @@ void MprPositionListView::Impl::setProgramItem(MprProgramItemBase* item)
         } else {
             targetLabel.setText(item->displayName().c_str());
         }
-        positionList = item->positionList();
+        positionList = item->program()->positionList();
         positionListModel->setProgramItem(item);
     } else {
         targetLabel.setText("---");

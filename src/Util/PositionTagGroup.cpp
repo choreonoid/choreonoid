@@ -12,6 +12,7 @@ namespace cnoid {
 class PositionTagGroup::Impl
 {
 public:
+    std::string name;
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
     Signal<void(int index)> sigTagUpdated;
@@ -51,6 +52,18 @@ PositionTagGroup::PositionTagGroup(const PositionTagGroup& org)
 PositionTagGroup::~PositionTagGroup()
 {
     delete impl;
+}
+
+
+const std::string& PositionTagGroup::name() const
+{
+    return impl->name;
+}
+
+
+void PositionTagGroup::setName(const std::string& name)
+{
+    impl->name = name;
 }
 
 

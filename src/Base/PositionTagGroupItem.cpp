@@ -102,7 +102,7 @@ public:
     bool edgeVisibility;
     Signal<void()> sigLocationChanged;
     
-    Impl(PositionTagGroupItem* self);
+    Impl(PositionTagGroupItem* self, const Impl* org);
     void setParentLocationProxy(
         LocationProxyPtr newParentLocation, bool doCoordinateConversion, bool doClearOriginOffset);
     void convertLocalCoordinates(
@@ -128,22 +128,26 @@ void PositionTagGroupItem::initializeClass(ExtensionManager* ext)
 
 PositionTagGroupItem::PositionTagGroupItem()
 {
-    impl = new Impl(this);
+    impl = new Impl(this, nullptr);
 }
 
 
 PositionTagGroupItem::PositionTagGroupItem(const PositionTagGroupItem& org)
     : Item(org)
 {
-    impl = new Impl(this);
+    impl = new Impl(this, org.impl);
 }
 
 
-PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self)
+PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
     : self(self),
       notifyUpdateLater([=](){ self->notifyUpdate(); })
 {
-    tags = new PositionTagGroup;
+    if(!org){
+        tags = new PositionTagGroup;
+    } else {
+        tags = new PositionTagGroup(*org->tags);
+    }
 
     tagGroupConnections.add(
         tags->sigTagAdded().connect(
@@ -159,12 +163,22 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self)
             [&](const Position&){ onOffsetPositionChanged(); }));
 
     tagMarkerSizeGroup = new SgFixedPixelSizeGroup;
-    tagMarkerSizeGroup->setPixelSizeRatio(24.0f);
     originMarkerVisibility = false;
     edgeVisibility = false;
 
     location = new PositionTagGroupLocation(this);
-    parentPosition.setIdentity();
+
+    if(!org){
+        tagMarkerSizeGroup->setPixelSizeRatio(24.0f);
+        originMarkerVisibility = false;
+        edgeVisibility = false;
+        parentPosition.setIdentity();
+    } else {
+        tagMarkerSizeGroup->setPixelSizeRatio(org->tagMarkerSizeGroup->pixelSizeRatio());
+        originMarkerVisibility = org->originMarkerVisibility;
+        edgeVisibility = org->edgeVisibility;
+        parentPosition = org->parentPosition;
+    }
 }
 
 
@@ -177,6 +191,16 @@ PositionTagGroupItem::~PositionTagGroupItem()
 Item* PositionTagGroupItem::doDuplicate() const
 {
     return new PositionTagGroupItem(*this);
+}
+
+
+bool PositionTagGroupItem::setName(const std::string& name)
+{
+    if(Item::setName(name)){
+        impl->tags->setName(name);
+        return true;
+    }
+    return false;
 }
 
 
