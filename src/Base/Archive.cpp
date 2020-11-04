@@ -31,6 +31,8 @@ namespace cnoid {
 class ArchiveSharedData : public Referenced
 {
 public:
+    ArchiveSession* session;
+    
     FilePathVariableProcessorPtr pathVariableProcessor;
     
     IdToItemMap idToItemMap;
@@ -80,9 +82,11 @@ Archive::~Archive()
 }
 
 
-void Archive::initSharedInfo(const std::string& projectFile, bool isSubProject)
+void Archive::initSharedInfo(const std::string& projectFile, bool isSubProject, ArchiveSession* session)
 {
     shared = new ArchiveSharedData;
+
+    shared->session = session;
 
     if(!isSubProject){
         shared->pathVariableProcessor = FilePathVariableProcessor::systemInstance();
@@ -101,6 +105,12 @@ void Archive::initSharedInfo(const std::string& projectFile, bool isSubProject)
 void Archive::inheritSharedInfoFrom(Archive& archive)
 {
     shared = archive.shared;
+}
+
+
+ArchiveSession* Archive::session() const
+{
+    return const_cast<Archive*>(this)->shared->session;
 }
 
 

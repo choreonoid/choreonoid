@@ -19,6 +19,7 @@
 #include <cnoid/MainWindow>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
+#include <cnoid/ArchiveSession>
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ExecutablePath>
 #include <cnoid/Sleep>
@@ -46,9 +47,16 @@ Action* perspectiveCheck = nullptr;
 MainWindow* mainWindow = nullptr;
 MessageView* mv = nullptr;
 
-
 Signal<void(int recursiveLevel)> sigProjectAboutToBeLoaded;
 Signal<void(int recursiveLevel)> sigProjectLoaded;
+
+class ProjectArchiveSession : public ArchiveSession
+{
+public:
+    virtual void putWarning(const std::string& message) override {
+        mv->put(message, MessageView::Warning);
+    }
+};
 
 }
 
@@ -96,6 +104,8 @@ public:
     string currentProjectName;
     string currentProjectFile;
     string currentProjectDirectory;
+
+    ProjectArchiveSession archiveSession;
 
     struct ArchiverInfo {
         std::function<bool(Archive&)> storeFunction;
@@ -366,8 +376,10 @@ ItemList<> ProjectManager::Impl::loadProject
             if(!isSubProject){
                 parentItem = RootItem::instance();
             }
+
+            archiveSession.initialize();
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
-            archive->initSharedInfo(filename, isSubProject);
+            archive->initSharedInfo(filename, isSubProject, &archiveSession);
 
             std::set<string> optionalPlugins;
             Listing& optionalPluginsNode = *archive->findListing("optionalPlugins");
@@ -495,11 +507,12 @@ ItemList<> ProjectManager::Impl::loadProject
                 }
 
                 mv->flush();
-                
+
+                bool finalizationCompleted = archiveSession.finalize();
                 archive->callPostProcesses();
 
                 if(!isBuiltinProject){
-                    if(numRestoredItems == numArchivedItems){
+                    if(numRestoredItems == numArchivedItems && finalizationCompleted){
                         mv->notify(format(_("Project \"{}\" has been completely loaded."), filename));
                     } else {
                         mv->notify(format(_("Project \"{}\" has been partially loaded."), filename));
@@ -594,9 +607,10 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
     mv->flush();
     
     itemTreeArchiver.reset();
-    
+
+    archiveSession.initialize();
     ArchivePtr archive = new Archive();
-    archive->initSharedInfo(filename, isSubProject);
+    archive->initSharedInfo(filename, isSubProject, &archiveSession);
 
     ArchivePtr itemArchive = itemTreeArchiver.store(archive, item);
 
@@ -642,6 +656,8 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
         mainWindow->storeLayout(archive);
         stored = true;
     }
+
+    archiveSession.finalize();
 
     if(stored){
         writer.setKeyOrderPreservationMode(true);

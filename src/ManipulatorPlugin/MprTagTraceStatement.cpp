@@ -2,18 +2,22 @@
 #include "MprStatementRegistration.h"
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/ValueTree>
+#include <cnoid/ArchiveSession>
 #include <cnoid/EigenArchive>
 #include <cnoid/EigenUtil>
+#include <cnoid/Uuid>
+#include <fmt/format.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 
 MprTagTraceStatement::MprTagTraceStatement()
     : T_tags(Position::Identity()),
       baseFrameId_(0),
-      offsetFrameId_(0),
-      originalTagGroupId_(-1)
+      offsetFrameId_(0)
 {
     lowerLevelProgram()->setLocalPositionListEnabled(true);
 }
@@ -24,8 +28,7 @@ MprTagTraceStatement::MprTagTraceStatement(const MprTagTraceStatement& org, Clon
       tagGroup_(org.tagGroup_),
       T_tags(org.T_tags),
       baseFrameId_(org.baseFrameId_),
-      offsetFrameId_(org.offsetFrameId_),
-      originalTagGroupId_(-1)
+      offsetFrameId_(org.offsetFrameId_)
 {
 
 }
@@ -36,9 +39,10 @@ std::string MprTagTraceStatement::label(int index) const
     if(index == 0){
         return "Trace";
     } else if(index == 1){
-        const auto& name = lowerLevelProgram()->name();
-        if(!name.empty()){
-            return name;
+        if(tagGroup_){
+            return tagGroup_->name().c_str();
+        } else if(!originalTagGroupName_.empty()){
+            return originalTagGroupName_.c_str();
         } else {
             return "-----";
         }
@@ -51,7 +55,6 @@ void MprTagTraceStatement::setTagGroup(PositionTagGroup* tags)
 {
     tagGroup_ = tags;
     originalTagGroupName_.clear();
-    originalTagGroupId_ = -1;
 }
 
 
@@ -78,9 +81,23 @@ MprProgram::iterator MprTagTraceStatement::expandTraceStatements()
 
 bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
 {
+    auto session = program->archiveSession();
+    
     if(MprStructuredStatement::read(program, archive)){
-        archive.read("tag_group", originalTagGroupName_);
-        originalTagGroupId_ = 0;
+        originalTagGroupName_.clear();
+        archive.read("tag_group_name", originalTagGroupName_);
+        Uuid uuid;
+        if(uuid.read(archive, "tag_group_uuid")){
+            session->dereferenceLater<PositionTagGroup>(
+                uuid,
+                [=](PositionTagGroup* tagGroup){ setTagGroup(tagGroup); return true; },
+                [=](){
+                    session->putWarning(
+                        format(_("Tag group \"{0}\" used in a tag trace statement of \"{1}\" is not found.\n"),
+                               originalTagGroupName_, program->topLevelProgram()->name()));
+                    return false;
+                });
+        }
         Vector3 v;
         if(cnoid::read(archive, "translation", v)){
             T_tags.translation() = v;
@@ -103,8 +120,11 @@ bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
 bool MprTagTraceStatement::write(Mapping& archive) const
 {
     if(MprStructuredStatement::write(archive)){
-        if(tagGroup_ && !tagGroup_->name().empty()){
-            archive.write("tag_group", tagGroup_->name());
+        if(tagGroup_){
+            if(!tagGroup_->name().empty()){
+                archive.write("tag_group_name", tagGroup_->name());
+            }
+            archive.write("tag_group_uuid", tagGroup_->uuid().toString());
         }
         archive.setDoubleFormat("%.10g");
         cnoid::write(archive, "translation", Vector3(T_tags.translation()));

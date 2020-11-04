@@ -289,14 +289,18 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     
     startupProgramItem.reset();
     for(auto& programItem : programItems){
+        if(!programItem->resolveProgramDataReferences()){
+            mv->putln(format(_("Program \"{0}\" is incomplete due to unresolved references."),
+                             programItem->displayName(), MessageView::Error));
+            return false;
+        }
         if(programItem->isStartupProgram()){
             startupProgramItem = programItem;
-            break;
         }
     }
     if(!startupProgramItem){
         mv->putln(format(_("The startup program for {0} is not specified."),
-                         self->displayName()), MessageView::Warning);
+                         self->displayName()), MessageView::Error);
         return false;
     }
     startupProgram = cloneMap.getClone(startupProgramItem->program());

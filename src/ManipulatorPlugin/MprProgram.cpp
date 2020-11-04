@@ -32,6 +32,7 @@ public:
     Signal<void(iterator iter)> sigStatementInserted;
     Signal<void(MprProgram* program, MprStatement* statement)> sigStatementRemoved;
     std::string name;
+    ArchiveSession* archiveSession;
 
     Impl(MprProgram* self);
     Impl(MprProgram* self, const Impl& org, CloneMap* cloneMap);
@@ -54,6 +55,7 @@ MprProgram::Impl::Impl(MprProgram* self)
     : self(self)
 {
     hasLocalPositionList = false;
+    archiveSession = nullptr;
 }
     
 
@@ -85,6 +87,7 @@ MprProgram::Impl::Impl(MprProgram* self, const Impl& org, CloneMap* cloneMap)
         }
     }
     hasLocalPositionList = org.hasLocalPositionList;
+    archiveSession = nullptr;
 }
 
 
@@ -281,9 +284,9 @@ static bool traverseAllStatements
 }
 
 
-void MprProgram::traverseAllStatements(std::function<bool(MprStatement* statement)> callback)
+bool MprProgram::traverseAllStatements(std::function<bool(MprStatement* statement)> callback)
 {
-    ::traverseAllStatements(this, callback);
+    return ::traverseAllStatements(this, callback);
 }
 
 
@@ -553,3 +556,16 @@ bool MprProgram::write(Mapping& archive) const
 
     return true;
 }
+
+
+ArchiveSession* MprProgram::archiveSession()
+{
+    return impl->archiveSession;
+}
+
+
+void MprProgram::setArchiveSession(ArchiveSession* session)
+{
+    impl->archiveSession = session;
+}
+

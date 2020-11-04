@@ -8,6 +8,7 @@
 namespace cnoid {
 
 class Mapping;
+class ArchiveSession;
 
 class CNOID_EXPORT PositionTag : public Referenced
 {
@@ -50,8 +51,8 @@ public:
         hasAttitude_ = true;
     }
     
-    bool read(const Mapping* archive);
-    void write(Mapping* archive) const;
+    bool read(const Mapping* archive, ArchiveSession* session);
+    bool write(Mapping* archive, ArchiveSession* session) const;
 
 private:
     Position position_;

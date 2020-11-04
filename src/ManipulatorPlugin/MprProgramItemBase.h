@@ -3,6 +3,7 @@
 
 #include "MprProgram.h"
 #include <cnoid/Item>
+#include <typeinfo>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -39,6 +40,15 @@ public:
     bool touchupPosition(MprPositionStatement* statement);
     bool touchupPosition(MprPosition* position);
 
+    template<class StatementType>
+    static void registerUnreferenceFunction(std::function<bool(StatementType*, MprProgramItemBase*)> unreference){
+        registerUnreferenceFunction_(
+            typeid(StatementType),
+            [unreference](MprStatement* statement, MprProgramItemBase* item){
+                return unreference(static_cast<StatementType*>(statement), item); });
+    }
+    bool resolveProgramDataReferences();
+
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
@@ -50,6 +60,9 @@ protected:
     virtual void onPositionChanged() override;
 
 private:
+    static void registerUnreferenceFunction_(
+        const std::type_info& type, std::function<bool(MprStatement*, MprProgramItemBase*)> unreference);
+    
     class Impl;
     Impl* impl;
 };

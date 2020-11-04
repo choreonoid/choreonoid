@@ -16,6 +16,7 @@ class MprPosition;
 class MprPositionList;
 class MprProgram;
 class MprStructuredStatement;
+class ArchiveSession;
 
 
 class CNOID_EXPORT MprProgram : public CloneableReferenced
@@ -69,7 +70,7 @@ public:
     bool isSubProgram() const;
     MprProgram* topLevelProgram() const;
 
-    void traverseAllStatements(std::function<bool(MprStatement* statement)> callback);
+    bool traverseAllStatements(std::function<bool(MprStatement* statement)> callback);
 
     void renumberPositionIds();
 
@@ -78,6 +79,10 @@ public:
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
+
+    // Temporary
+    ArchiveSession* archiveSession();
+    void setArchiveSession(ArchiveSession* session);
 
 protected:
     MprProgram(const MprProgram& org, CloneMap* cloneMap = nullptr);

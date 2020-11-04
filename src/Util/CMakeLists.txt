@@ -21,8 +21,10 @@ set(sources
   ValueTree.cpp
   YAMLReader.cpp
   YAMLWriter.cpp
+  ArchiveSession.cpp
   EigenUtil.cpp
   EigenArchive.cpp
+  Uuid.cpp
   GeneralId.cpp
   Selection.cpp
   DataMap.cpp
@@ -117,10 +119,12 @@ set(headers
   ValueTreeUtil.h
   YAMLReader.h
   YAMLWriter.h
+  ArchiveSession.h
   EigenTypes.h
   EigenUtil.h
   EigenArchive.h
   MathUtil.h
+  Uuid.h
   GeneralId.h
   Selection.h
   DataMap.h
@@ -189,7 +193,8 @@ set(headers
   CnoidUtil.h
   )
 
-include_directories(${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS})
+include_directories(
+  ${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
 link_directories(${LIBYAML_LIBRARY_DIRS})
 
 set(target CnoidUtil)
@@ -199,7 +204,7 @@ choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers}
 if(UNIX)
   set(libraries 
     fmt::fmt
-    ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES}
+    ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${LIBUUID_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
@@ -218,7 +223,10 @@ if(UNIX)
   
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries fmt::fmt ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${GETTEXT_LIBRARIES} winmm)
+  set(libraries
+    fmt::fmt
+    ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${GETTEXT_LIBRARIES}
+    winmm Rpcrt4)
   find_file(XINPUT_DLL "XInput1_4.dll")
   if(XINPUT_DLL)
     target_link_libraries(${target} ${libraries} XInput)

@@ -18,6 +18,7 @@ class ViewManager;
 class ProjectManager;
 class FilePathVariableProcessor;
 class ArchiveSharedData;
+class ArchiveSession;
 
 class CNOID_EXPORT Archive : public Mapping
 {
@@ -26,8 +27,10 @@ public:
     Archive(int line, int column);
     virtual ~Archive();
 
-    void initSharedInfo(const std::string& projectFile, bool isSubProject);
+    void initSharedInfo(const std::string& projectFile, bool isSubProject, ArchiveSession* session);
     void inheritSharedInfoFrom(Archive& archive);
+
+    ArchiveSession* session() const;
 
     void addProcessOnSubTreeRestored(const std::function<void()>& func) const;
     void addPostProcess(const std::function<void()>& func, int priority = 0) const;

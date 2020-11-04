@@ -1,5 +1,7 @@
 #include "PositionTagGroup.h"
 #include "ValueTree.h"
+#include "ArchiveSession.h"
+#include "Uuid.h"
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -12,13 +14,15 @@ namespace cnoid {
 class PositionTagGroup::Impl
 {
 public:
-    std::string name;
+    string name;
+    Uuid uuid;
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
     Signal<void(int index)> sigTagUpdated;
     Signal<void(const Position& T)> sigOffsetPositionChanged;
     
     Impl();
+    Impl(const Impl& org);
 };
 
 }
@@ -40,12 +44,19 @@ PositionTagGroup::Impl::Impl()
 PositionTagGroup::PositionTagGroup(const PositionTagGroup& org)
     : T_offset_(org.T_offset_)
 {
-    impl = new Impl;
+    impl = new Impl(*org.impl);
 
     tags_.reserve(org.tags_.size());
     for(auto& tag : org.tags_){
         append(new PositionTag(*tag));
     }
+}
+
+
+PositionTagGroup::Impl::Impl(const Impl& org)
+    : name(org.name)
+{
+
 }
 
 
@@ -64,6 +75,12 @@ const std::string& PositionTagGroup::name() const
 void PositionTagGroup::setName(const std::string& name)
 {
     impl->name = name;
+}
+
+
+const Uuid& PositionTagGroup::uuid() const
+{
+    return impl->uuid;
 }
 
 
@@ -143,7 +160,7 @@ void PositionTagGroup::notifyOffsetPositionUpdate()
 }
 
 
-bool PositionTagGroup::read(const Mapping* archive)
+bool PositionTagGroup::read(const Mapping* archive, ArchiveSession* session)
 {
     auto& typeNode = archive->get("type");
     if(typeNode.toString() != "PositionTagGroup"){
@@ -157,13 +174,18 @@ bool PositionTagGroup::read(const Mapping* archive)
         versionNode->throwException(format(_("Format version {0} is not supported."), version));
     }
 
+    impl->uuid.read(archive);
+    if(!session->addReference(impl->uuid, this)){
+        impl->uuid = Uuid(); // assign a new UUID to resolve the duplication
+    }
+
     clearTags();
 
     auto listing = archive->findListing("tags");
     if(listing->isValid()){
         for(auto& node : *listing){
             PositionTagPtr tag = new PositionTag;
-            if(tag->read(node->toMapping())){
+            if(tag->read(node->toMapping(), session)){
                 append(tag);
             }
         }
@@ -173,17 +195,21 @@ bool PositionTagGroup::read(const Mapping* archive)
 }
 
 
-void PositionTagGroup::write(Mapping* archive) const
+bool PositionTagGroup::write(Mapping* archive, ArchiveSession* session) const
 {
     archive->write("type", "PositionTagGroup");
     archive->write("format_version", 1.0);
+    archive->write("uuid", impl->uuid.toString());
 
     if(!tags_.empty()){
         auto listing = archive->createListing("tags");
         for(auto& tag : tags_){
-            auto node = new Mapping;
-            tag->write(node);
+            MappingPtr node = new Mapping;
+            if(!tag->write(node, session)){
+                return false;
+            }
             listing->append(node);
         }
     }
+    return true;
 }

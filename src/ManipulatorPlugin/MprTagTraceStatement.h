@@ -24,7 +24,6 @@ public:
     PositionTagGroup* tagGroup() { return tagGroup_; }
 
     const std::string& originalTagGroupName() const { return originalTagGroupName_; }
-    int originalTagGroupId() const { return originalTagGroupId_; }
 
     //! The position of the tag group on the base coordinate frame
     const Position& tagGroupPosition() const { return T_tags; }
@@ -54,7 +53,6 @@ private:
     GeneralId baseFrameId_;
     GeneralId offsetFrameId_;
     std::string originalTagGroupName_;
-    int originalTagGroupId_;
 };
 
 typedef ref_ptr<MprTagTraceStatement> MprtTagTraceStatementPtr;

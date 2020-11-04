@@ -18,6 +18,12 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace {
+
+//PolymorphicFunctionSet<bool(MprStatement*, MprProgramItemBase*)> unreferenceFunctions;
+
+}
+
 namespace cnoid {
 
 class MprProgramItemBase::Impl
@@ -373,6 +379,25 @@ bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position)
 }
 
 
+void MprProgramItemBase::registerUnreferenceFunction_
+(const std::type_info& type, std::function<bool(MprStatement*, MprProgramItemBase*)> unreference)
+{
+    //unreferenceFunctions.setFunction(type, unreference);
+}
+
+
+bool MprProgramItemBase::resolveProgramDataReferences()
+{
+    /*
+    return program->traverseAllStatements(
+        [this](MprStatement* statement){
+            return unreferenceFunctions.dispatch(statement, this);
+        });
+    */
+    return true;
+}
+
+
 void MprProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
 {
     auto program = impl->topLevelProgram;
@@ -398,6 +423,9 @@ bool MprProgramItemBase::store(Archive& archive)
 
 bool MprProgramItemBase::restore(const Archive& archive)
 {
+    // temporary
+    impl->topLevelProgram->setArchiveSession(archive.session());
+    
     if(archive.loadFileTo(this)){
         setAsStartupProgram(archive.get("is_startup_program", false));
         return true;

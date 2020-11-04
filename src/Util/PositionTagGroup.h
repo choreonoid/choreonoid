@@ -11,6 +11,8 @@ namespace cnoid {
 
 class PositionTag;
 class Mapping;
+class ArchiveSession;
+class Uuid;
 
 class CNOID_EXPORT PositionTagGroup : public Referenced
 {
@@ -23,6 +25,8 @@ public:
 
     const std::string& name() const;
     void setName(const std::string& name);
+
+    const Uuid& uuid() const;
 
     void clearTags();
 
@@ -63,9 +67,9 @@ public:
     void notifyTagUpdate(int index);
     void notifyOffsetPositionUpdate();
     
-    bool read(const Mapping* archive);
-    void write(Mapping* archive) const;
-
+    bool read(const Mapping* archive, ArchiveSession* session);
+    bool write(Mapping* archive, ArchiveSession* session) const;
+    
 private:
     Container tags_;
     Position T_offset_;

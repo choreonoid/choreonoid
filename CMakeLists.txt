@@ -761,6 +761,11 @@ if((NOT fmt_FOUND) OR USE_BUNDLED_FMTLIB)
   endif()
 endif()
 
+# uuid
+if(UNIX)
+  pkg_check_modules(LIBUUID uuid QUIET)
+endif()
+
 add_subdirectory(src)
 add_subdirectory(include)
 add_subdirectory(share)

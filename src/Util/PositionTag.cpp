@@ -35,7 +35,7 @@ PositionTag::PositionTag(const PositionTag& org)
 }
 
 
-bool PositionTag::read(const Mapping* archive)
+bool PositionTag::read(const Mapping* archive, ArchiveSession*)
 {
     bool isValid = false;
     Vector3 v;
@@ -53,11 +53,12 @@ bool PositionTag::read(const Mapping* archive)
 }
 
 
-void PositionTag::write(Mapping* archive) const
+bool PositionTag::write(Mapping* archive, ArchiveSession*) const
 {
     archive->setDoubleFormat("%.9g");
     cnoid::write(archive, "translation", position_.translation());
     if(hasAttitude_){
         cnoid::write(archive, "rpy", degree(rpyFromRot(position_.linear())));
     }
+    return true;
 }

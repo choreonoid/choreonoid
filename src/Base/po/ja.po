@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-16 01:56+0900\n"
+"POT-Creation-Date: 2020-11-06 15:07+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -58,13 +58,13 @@ msgstr "選択"
 msgid "OK"
 msgstr "OK"
 
-#: ItemPropertyWidget.cpp:559 ProjectManager.cpp:738 ProjectManager.cpp:764
+#: ItemPropertyWidget.cpp:559 ProjectManager.cpp:751 ProjectManager.cpp:777
 #: ItemFileDialog.cpp:77 PluginManager.cpp:690 SceneWidget.cpp:936
 #: CaptureBar.cpp:97 TaskView.cpp:286
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: ItemPropertyWidget.cpp:580 ProjectManager.cpp:742 ProjectManager.cpp:769
+#: ItemPropertyWidget.cpp:580 ProjectManager.cpp:755 ProjectManager.cpp:782
 #: ItemFileDialog.cpp:367 PluginManager.cpp:694 CaptureBar.cpp:100
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
@@ -89,27 +89,27 @@ msgstr "フレームあたりSE3要素数"
 msgid "The copied items cannot be pasted to \"{0}\"."
 msgstr "コピーされたアイテムを\"{0}\"にペーストできませんでした．"
 
-#: ProjectManager.cpp:165
+#: ProjectManager.cpp:175
 msgid "Open Project"
 msgstr "プロジェクトの読み込み"
 
-#: ProjectManager.cpp:167
+#: ProjectManager.cpp:177
 msgid "Save Project"
 msgstr "プロジェクトの保存"
 
-#: ProjectManager.cpp:169
+#: ProjectManager.cpp:179
 msgid "Save Project As"
 msgstr "名前を付けてプロジェクトを保存"
 
-#: ProjectManager.cpp:172 PathVariableEditor.cpp:59
+#: ProjectManager.cpp:182 PathVariableEditor.cpp:59
 msgid "Project File Options"
 msgstr "プロジェクトファイルオプション"
 
-#: ProjectManager.cpp:174
+#: ProjectManager.cpp:184
 msgid "Perspective"
 msgstr "レイアウト"
 
-#: ProjectManager.cpp:295
+#: ProjectManager.cpp:305
 msgid ""
 "The state of the \"{0}\" {1} was not completely restored.\n"
 "{2}"
@@ -117,72 +117,72 @@ msgstr ""
 "\"{0}\" {1} の状態は完全には復帰できませんでした．\n"
 "{2}"
 
-#: ProjectManager.cpp:332
+#: ProjectManager.cpp:342
 msgid "Loading project file \"{}\" ..."
 msgstr "プロジェクトファイル\"{}\"を読み込み中…"
 
-#: ProjectManager.cpp:356
+#: ProjectManager.cpp:366
 msgid "Resource \"{0}\" is not found."
 msgstr "リソース \"{}\" がみつかりません．"
 
-#: ProjectManager.cpp:361
+#: ProjectManager.cpp:371
 msgid "The project file is empty."
 msgstr "プロジェクトファイルは空です．"
 
-#: ProjectManager.cpp:470
+#: ProjectManager.cpp:480
 msgid "{0} / {1} item(s) have been loaded."
 msgstr "{0} / {1} のアイテムが読みこまれました．"
 
-#: ProjectManager.cpp:476
+#: ProjectManager.cpp:486
 msgid "{0} item(s) were not loaded."
 msgstr "{0}個のアイテムが正常に読み込まれませんでした．"
 
-#: ProjectManager.cpp:478
+#: ProjectManager.cpp:488
 msgid "{0} item(s) were not loaded in the builtin project \"{1}\"."
 msgstr ""
 "ビルトインプロジェクト \"{1}\" の{}個のアイテムが正常に読み込まれませんでし"
 "た．"
 
-#: ProjectManager.cpp:503
+#: ProjectManager.cpp:514
 msgid "Project \"{}\" has been completely loaded."
 msgstr "プロジェクト \"{}\" を完全に読み込みました．"
 
-#: ProjectManager.cpp:505
-msgid "Project \"{}\" has been partially loaded."
-msgstr "プロジェクト \"{}\" 部分的にを読み込みました．"
-
 #: ProjectManager.cpp:516
+msgid "Project \"{}\" has been partially loaded."
+msgstr "プロジェクト \"{}\" を部分的に読み込みました．"
+
+#: ProjectManager.cpp:527
 msgid "Loading project \"{}\" failed. Any valid objects were not loaded."
 msgstr ""
 "プロジェクト\"{}\"の読み込みに失敗しました．いかなるオブジェクトもロードされ"
 "ていません．"
 
-#: ProjectManager.cpp:575
+#: ProjectManager.cpp:586
 msgid "Can't open file \"{}\" for writing.\n"
 msgstr "\"{}\"は書き込み用ファイルとして開けません．\n"
 
-#: ProjectManager.cpp:590
+#: ProjectManager.cpp:601
 msgid "Saving sub project {0} as \"{1}\" ..."
 msgstr "サブプロジェクト \"{0}\" を \"{1}\" に保存中…"
 
-#: ProjectManager.cpp:592
+#: ProjectManager.cpp:603
 msgid "Saving the project as \"{}\" ..."
 msgstr "プロジェクトを \"{}\" に保存中…"
 
-#: ProjectManager.cpp:649
+#: ProjectManager.cpp:662
 msgid "Saving the project file has been finished."
 msgstr "プロジェクトファイルの保存が完了しました."
 
-#: ProjectManager.cpp:654
+#: ProjectManager.cpp:667
 msgid "Saving the project file failed."
 msgstr "プロジェクトファイルの保存に失敗しました．"
 
-#: ProjectManager.cpp:706 TextEditView.cpp:217 TextEditView.cpp:278
+#: ProjectManager.cpp:719 TextEditView.cpp:217 TextEditView.cpp:278
 #: MessageView.cpp:1031
 msgid "Warning"
 msgstr "警告"
 
-#: ProjectManager.cpp:711
+#: ProjectManager.cpp:724
 msgid ""
 "A project item exists. Do you want to save it as a project file before "
 "loading a new project?"
@@ -190,7 +190,7 @@ msgstr ""
 "プロジェクトアイテムがあります．新しいプロジェクトを読み込む前にこのアイテム"
 "を保存しますか？"
 
-#: ProjectManager.cpp:714
+#: ProjectManager.cpp:727
 msgid ""
 "Project items exist. Do you want to save them as a project file before "
 "loading a new project?"
@@ -198,35 +198,35 @@ msgstr ""
 "プロジェクトアイテムあります．新しいプロジェクトを読み込む前にこのアイテムを"
 "保存しますか？"
 
-#: ProjectManager.cpp:720
+#: ProjectManager.cpp:733
 msgid ""
 "Project \"%1\" exists. Do you want to save it before loading a new project?"
 msgstr ""
 "既存のプロジェクト \"%1\" があります．新しいプロジェクトを読み込む前にこのプ"
 "ロジェクトを保存しますか？"
 
-#: ProjectManager.cpp:734
+#: ProjectManager.cpp:747
 msgid "Open a Choreonoid project file"
 msgstr "Choreonoidプロジェクトファイルの読み込み"
 
-#: ProjectManager.cpp:737 PluginManager.cpp:689
+#: ProjectManager.cpp:750 PluginManager.cpp:689
 msgid "Open"
 msgstr "読み込み"
 
-#: ProjectManager.cpp:741 ProjectManager.cpp:768
+#: ProjectManager.cpp:754 ProjectManager.cpp:781
 msgid "Project files (*.cnoid)"
 msgstr "プロジェクトファイル (*.cnoid)"
 
-#: ProjectManager.cpp:759
+#: ProjectManager.cpp:772
 msgid "Save a choreonoid project file"
 msgstr "Choreonoid プロジェクトファイルの保存"
 
-#: ProjectManager.cpp:763 TextEditView.cpp:121 ItemFileDialog.cpp:244
+#: ProjectManager.cpp:776 TextEditView.cpp:121 ItemFileDialog.cpp:244
 #: CaptureBar.cpp:96
 msgid "Save"
 msgstr "保存"
 
-#: ProjectManager.cpp:813 ItemFileDialog.cpp:441
+#: ProjectManager.cpp:826 ItemFileDialog.cpp:441
 msgid "%1 already exists. Do you want to replace it? "
 msgstr "既存のファイル %1 を上書きしてもよいですか？"
 
@@ -765,38 +765,54 @@ msgstr "名前を付けて{}を保存"
 msgid "Export {} as"
 msgstr "名前を付けて{}をエクスポート"
 
-#: PositionTagGroupItem.cpp:113
+#: PositionTagGroupItem.cpp:122
 msgid "PositionTagGroupItem"
 msgstr "ポジションタググループアイテム"
 
-#: PositionTagGroupItem.cpp:556
+#: PositionTagGroupItem.cpp:408
+msgid "Number of tags"
+msgstr "タグ数"
+
+#: PositionTagGroupItem.cpp:409
+msgid "Origin marker"
+msgstr "原点マーカ"
+
+#: PositionTagGroupItem.cpp:411
+msgid "Tag marker size"
+msgstr "マーカサイズ"
+
+#: PositionTagGroupItem.cpp:413
+msgid "Show edges"
+msgstr "エッジ表示"
+
+#: PositionTagGroupItem.cpp:703
 msgid "Tag Group Conversion"
 msgstr "タググループ変換"
 
-#: PositionTagGroupItem.cpp:565
+#: PositionTagGroupItem.cpp:712
 msgid ""
 "Which type of positions do you want to keep in the coordinate system change?"
 msgstr "座標系の変更においてどちらのタイプの位置を保持しますか？"
 
-#: PositionTagGroupItem.cpp:569
+#: PositionTagGroupItem.cpp:716
 msgid "Global positions"
 msgstr "グローバル位置"
 
-#: PositionTagGroupItem.cpp:572
+#: PositionTagGroupItem.cpp:719
 msgid "Clear the origin offset"
 msgstr "原点オフセットをクリア"
 
-#: PositionTagGroupItem.cpp:578
+#: PositionTagGroupItem.cpp:725
 msgid "Local positions"
 msgstr "ローカル位置"
 
-#: PositionTagGroupItem.cpp:596
+#: PositionTagGroupItem.cpp:743
 msgid ""
 "The parent coordinate system of \"%1\" is changed to the coordinate system "
 "of \"%2\"."
 msgstr "\"%1\" の親座標系は \"%2\" の座標系に変更されます."
 
-#: PositionTagGroupItem.cpp:600
+#: PositionTagGroupItem.cpp:747
 msgid ""
 "The parent coordinate system of \"%1\" is changed to the global coordinate "
 "system."
@@ -1030,7 +1046,7 @@ msgstr "画像サイスをビューに合わせる"
 msgid "CoordinateFrameItem"
 msgstr "座標フレームアイテム"
 
-#: CoordinateFrameItem.cpp:266 LocationView.cpp:315
+#: CoordinateFrameItem.cpp:266 LocationView.cpp:323
 msgid "Local"
 msgstr "ローカル"
 
@@ -1145,7 +1161,7 @@ msgstr "制御点の表示"
 msgid "Step"
 msgstr "ステップ"
 
-#: GraphBar.cpp:256 LocationView.cpp:304
+#: GraphBar.cpp:256 LocationView.cpp:312
 msgid "Offset"
 msgstr "オフセット"
 
@@ -1773,19 +1789,19 @@ msgstr "ロック"
 msgid "Coord :"
 msgstr "座標系："
 
-#: LocationView.cpp:285
+#: LocationView.cpp:293
 msgid "World"
 msgstr "ワールド"
 
-#: LocationView.cpp:295
+#: LocationView.cpp:303
 msgid "Offset ( {} )"
 msgstr "オフセット（ {} ）"
 
-#: LocationView.cpp:297
+#: LocationView.cpp:305
 msgid "Parent ( {} )"
 msgstr "親（ {} ）"
 
-#: LocationView.cpp:306
+#: LocationView.cpp:314
 msgid "Parent"
 msgstr "親"
 
