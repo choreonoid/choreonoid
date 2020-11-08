@@ -6,6 +6,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/EigenUtil>
 #include <cnoid/Uuid>
+#include <cnoid/CloneMap>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -25,12 +26,13 @@ MprTagTraceStatement::MprTagTraceStatement()
 
 MprTagTraceStatement::MprTagTraceStatement(const MprTagTraceStatement& org, CloneMap* cloneMap)
     : MprStructuredStatement(org, cloneMap),
-      tagGroup_(org.tagGroup_),
       T_tags(org.T_tags),
       baseFrameId_(org.baseFrameId_),
       offsetFrameId_(org.offsetFrameId_)
 {
-
+    if(org.tagGroup_){
+        tagGroup_ = cloneMap->getClone(org.tagGroup_);
+    }
 }
 
 
@@ -55,6 +57,7 @@ void MprTagTraceStatement::setTagGroup(PositionTagGroup* tags)
 {
     tagGroup_ = tags;
     originalTagGroupName_.clear();
+    updateTagTraceProgram();
 }
 
 
@@ -84,11 +87,13 @@ bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
     auto session = program->archiveSession();
     
     if(MprStructuredStatement::read(program, archive)){
+
         originalTagGroupName_.clear();
         archive.read("tag_group_name", originalTagGroupName_);
+        
         Uuid uuid;
         if(uuid.read(archive, "tag_group_uuid")){
-            session->dereferenceLater<PositionTagGroup>(
+            session->resolveReferenceLater<PositionTagGroup>(
                 uuid,
                 [=](PositionTagGroup* tagGroup){ setTagGroup(tagGroup); return true; },
                 [=](){
@@ -98,6 +103,7 @@ bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
                     return false;
                 });
         }
+        
         Vector3 v;
         if(cnoid::read(archive, "translation", v)){
             T_tags.translation() = v;
@@ -111,6 +117,7 @@ bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
         }
         baseFrameId_.read(archive, "base_frame");
         offsetFrameId_.read(archive, "offset_frame");
+
         return true;
     }
     return false;

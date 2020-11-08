@@ -127,6 +127,7 @@ bool MprCommentStatement::write(Mapping& archive) const
 
 
 MprStructuredStatement::MprStructuredStatement()
+    : attributes_(0)
 {
     program_ = new MprProgram;
     program_->setHolderStatement(this);
@@ -134,7 +135,8 @@ MprStructuredStatement::MprStructuredStatement()
 
 
 MprStructuredStatement::MprStructuredStatement(const MprStructuredStatement& org, CloneMap* cloneMap)
-    : MprStatement(org)
+    : MprStatement(org),
+      attributes_(org.attributes_)
 {
     if(cloneMap){
         program_ = cloneMap->getClone(org.program_);
@@ -154,19 +156,25 @@ MprProgram* MprStructuredStatement::getLowerLevelProgram()
 
 bool MprStructuredStatement::read(MprProgram* program, const Mapping& archive)
 {
-    return program_->read(archive);
+    if(hasStructuredStatementAttribute(ArchiveLowerLevelProgram)){
+        return program_->read(archive);
+    }
+    return true;
 }
 
 
 bool MprStructuredStatement::write(Mapping& archive) const
 {
-    return program_->write(archive);
+    if(hasStructuredStatementAttribute(ArchiveLowerLevelProgram)){
+        return program_->write(archive);
+    }
+    return true;
 }
 
 
 MprConditionStatement::MprConditionStatement()
 {
-
+    setStructuredStatementAttribute(ArchiveLowerLevelProgram);
 }
 
 
@@ -242,7 +250,7 @@ bool MprIfStatement::write(Mapping& archive) const
 
 MprElseStatement::MprElseStatement()
 {
-
+    setStructuredStatementAttribute(ArchiveLowerLevelProgram);
 }
 
 

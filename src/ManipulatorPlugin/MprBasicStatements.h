@@ -77,8 +77,15 @@ protected:
     MprStructuredStatement();
     MprStructuredStatement(const MprStructuredStatement& org, CloneMap* cloneMap);
 
+    enum Attribute {
+        ArchiveLowerLevelProgram = 1
+    };
+    void setStructuredStatementAttribute(int attr) { attributes_ |= attr; }
+    bool hasStructuredStatementAttribute(int attr) const { return attributes_ & attr; }
+
 private:
     MprProgramPtr program_;
+    int attributes_;
 };
 
 typedef ref_ptr<MprStructuredStatement> MprStructuredStatementPtr;

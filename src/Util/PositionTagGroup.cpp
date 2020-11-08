@@ -66,6 +66,12 @@ PositionTagGroup::~PositionTagGroup()
 }
 
 
+Referenced* PositionTagGroup::doClone(CloneMap*) const
+{
+    return new PositionTagGroup(*this);
+}
+
+
 const std::string& PositionTagGroup::name() const
 {
     return impl->name;
@@ -190,7 +196,7 @@ bool PositionTagGroup::read(const Mapping* archive, ArchiveSession* session)
             }
         }
     }
-    
+
     return true;
 }
 

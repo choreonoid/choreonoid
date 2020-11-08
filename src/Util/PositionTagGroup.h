@@ -1,6 +1,7 @@
 #ifndef CNOID_UTIL_POSITION_TAG_GROUP_H
 #define CNOID_UTIL_POSITION_TAG_GROUP_H
 
+#include "CloneableReferenced.h"
 #include "PositionTag.h"
 #include "Signal.h"
 #include "EigenTypes.h"
@@ -14,7 +15,7 @@ class Mapping;
 class ArchiveSession;
 class Uuid;
 
-class CNOID_EXPORT PositionTagGroup : public Referenced
+class CNOID_EXPORT PositionTagGroup : public CloneableReferenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -22,6 +23,13 @@ public:
     PositionTagGroup();
     PositionTagGroup(const PositionTagGroup& org);
     virtual ~PositionTagGroup();
+
+    PositionTagGroup* clone() const {
+        return static_cast<PositionTagGroup*>(doClone(nullptr));
+    }
+    PositionTagGroup* clone(CloneMap& cloneMap) const {
+        return static_cast<PositionTagGroup*>(doClone(&cloneMap));
+    }
 
     const std::string& name() const;
     void setName(const std::string& name);
@@ -69,6 +77,9 @@ public:
     
     bool read(const Mapping* archive, ArchiveSession* session);
     bool write(Mapping* archive, ArchiveSession* session) const;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
     
 private:
     Container tags_;

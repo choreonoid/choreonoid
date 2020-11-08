@@ -18,35 +18,57 @@ public:
 
     void initialize();
     
-    bool addReference(const Uuid& uuid, Referenced* object, bool doWarnUuidDuplication = true);
+    bool addReference(const Uuid& uuid, Referenced* object, bool doUnreferenceImmediately = false);
 
     template<class ObjectType>
-    void dereferenceLater(
+    void resolveReference(
         const Uuid& uuid,
-        std::function<bool(ObjectType* object)> onObjectFound,
-        std::function<bool()> onObjectNotFound = nullptr)
+        std::function<bool(ObjectType* object, bool isImmediate)> onResolved,
+        std::function<bool()> onNotResolved = nullptr)
     {
-        dereferenceLater_(
+        resolveReference_(
             uuid,
-            [onObjectFound](Referenced* object){
+            [onResolved](Referenced* object, bool isImmediate){
                 if(auto derived = dynamic_cast<ObjectType*>(object)){
-                    return onObjectFound(derived);
+                    return onResolved(derived, isImmediate);
                 }
                 return false;
             },
-            onObjectNotFound);
+            onNotResolved,
+            false);
+    }
+
+    template<class ObjectType>
+    void resolveReferenceLater(
+        const Uuid& uuid,
+        std::function<bool(ObjectType* object)> onResolved,
+        std::function<bool()> onNotResolved = nullptr)
+    {
+        resolveReference_(
+            uuid,
+            [onResolved](Referenced* object, bool isImmediate){
+                if(auto derived = dynamic_cast<ObjectType*>(object)){
+                    return onResolved(derived);
+                }
+                return false;
+            },
+            onNotResolved,
+            false);
     }
 
     virtual void putWarning(const std::string& message);
-        
+
+    void resolvePendingReferences();
     bool finalize();
     SignalProxy<void()> sigSessionFinalized();
 
 private:
-    void dereferenceLater_(
+    void resolveReference_(
         const Uuid& uuid,
-        std::function<bool(Referenced* object)> onObjectFound,
-        std::function<bool()> onObjectNotFound);
+        std::function<bool(Referenced* object, bool isImmediate)> onResolved,
+        std::function<bool()> onNotResolved,
+        bool doResolveLater
+        );
 
     class Impl;
     Impl* impl;

@@ -14,13 +14,13 @@ namespace {
 class CallbackSet
 {
 public:
-    std::function<bool(Referenced* object)> onObjectFound;
-    std::function<bool()> onObjectNotFound;
+    std::function<bool(Referenced* object, bool isImmediate)> onResolved;
+    std::function<bool()> onNotResolved;
 
     CallbackSet(
-        const std::function<bool(Referenced* object)>& onObjectFound,
-        const std::function<bool()>& onObjectNotFound)
-        : onObjectFound(onObjectFound), onObjectNotFound(onObjectNotFound)
+        const std::function<bool(Referenced* object, bool isImmediate)>& onResolved,
+        const std::function<bool()>& onNotResolved)
+        : onResolved(onResolved), onNotResolved(onNotResolved)
     { }
 };
 
@@ -29,9 +29,11 @@ class RefInfo
 public:
     ReferencedPtr object;
     vector<CallbackSet> callbacks;
+    bool doResolveLater;
+    bool hasFailure;
 
-    RefInfo() { }
-    RefInfo(Referenced* object) : object(object) { }
+    RefInfo() : hasFailure(false) { }
+    RefInfo(Referenced* object) : object(object), hasFailure(false) { }
 };
 
 typedef unordered_map<Uuid, RefInfo> ObjectMap;
@@ -45,6 +47,8 @@ class ArchiveSession::Impl
 public:
     ObjectMap objectMap;
     Signal<void()> sigSessionFinalized;
+
+    bool resolvePendingReferences(bool doFinalize);    
 };
 
 }
@@ -68,11 +72,27 @@ void ArchiveSession::initialize()
 }
 
 
-bool ArchiveSession::addReference(const Uuid& uuid, Referenced* object, bool doWarnOverlap)
+bool ArchiveSession::addReference(const Uuid& uuid, Referenced* object, bool doUnreferenceImmediately)
 {
     auto inserted = impl->objectMap.emplace(uuid, object);
-    if(!inserted.second){
-        RefInfo& info = inserted.first->second;
+    RefInfo& info = inserted.first->second;
+    if(inserted.second){
+        if(doUnreferenceImmediately && !info.doResolveLater){
+            auto& callbacks = info.callbacks;
+            auto it = callbacks.begin();
+            while(it != callbacks.end()){
+                auto& callbackSet = *it;
+                if(callbackSet.onResolved){
+                    if(!callbackSet.onResolved(object, false)){
+                        info.hasFailure = true;
+                    }
+                    it = callbacks.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+    } else {
         if(!info.object){
             info.object = object;
         } else if(info.object != object){
@@ -84,12 +104,32 @@ bool ArchiveSession::addReference(const Uuid& uuid, Referenced* object, bool doW
 }
 
 
-void ArchiveSession::dereferenceLater_
+void ArchiveSession::resolveReference_
 (const Uuid& uuid,
- std::function<bool(Referenced* object)> onObjectFound,
- std::function<bool()> onObjectNotFound)
+ std::function<bool(Referenced* object, bool isImmediate)> onResolved,
+ std::function<bool()> onNotResolved,
+ bool doResolveLater)
 {
-    impl->objectMap[uuid].callbacks.emplace_back(onObjectFound, onObjectNotFound);
+    bool processed = false;
+
+    if(!doResolveLater){
+        auto p = impl->objectMap.find(uuid);
+        if(p != impl->objectMap.end()){
+            RefInfo& info = p->second;
+            if(info.object){
+                if(!onResolved(info.object, true)){
+                    info.hasFailure = true;
+                }
+                processed = true;
+            }
+        }
+    }
+    
+    if(!processed){
+        RefInfo& info = impl->objectMap[uuid];
+        info.callbacks.emplace_back(onResolved, onNotResolved);
+        info.doResolveLater = doResolveLater;
+    }
 }
 
 
@@ -99,24 +139,61 @@ void ArchiveSession::putWarning(const std::string& message)
 }
 
 
-bool ArchiveSession::finalize()
+void ArchiveSession::resolvePendingReferences()
 {
-    bool isComplete = true;
-    for(auto& kv : impl->objectMap){
+    impl->resolvePendingReferences(false);
+}
+
+
+bool ArchiveSession::Impl::resolvePendingReferences(bool doFinalize)
+{
+    bool hasFailure = false;
+
+    for(auto& kv : objectMap){
         RefInfo& info = kv.second;
-        for(auto& callback : info.callbacks){
-            if(info.object){
-                if(!callback.onObjectFound(info.object)){
-                    isComplete = false;
+        if(info.object){
+            auto& callbacks = info.callbacks;
+            auto it = callbacks.begin();
+            while(it != callbacks.end()){
+                auto& callbackSet = *it;
+                if(!callbackSet.onResolved){
+                    ++it;
+                } else {
+                    if(!callbackSet.onResolved(info.object, false)){
+                        info.hasFailure = true;
+                    }
+                    if(!doFinalize){
+                        it = callbacks.erase(it);
+                    } else {
+                        ++it;
+                    }
                 }
-            } else {
-                if(!callback.onObjectNotFound()){
-                    isComplete = false;
+            }
+        } else if(doFinalize){
+            for(auto& callbackSet : info.callbacks){
+                if(callbackSet.onNotResolved){
+                    if(!callbackSet.onNotResolved()){
+                        info.hasFailure = true;
+                    }
                 }
             }
         }
+        if(info.hasFailure){
+            hasFailure = true;
+        }
     }
+
+    return !hasFailure;
+}
+
+
+bool ArchiveSession::finalize()
+{
+    bool isComplete = impl->resolvePendingReferences(true);
+
     impl->sigSessionFinalized();
+
+    impl->objectMap.clear();
 
     return isComplete;
 }
