@@ -31,7 +31,11 @@ MprTagTraceStatement::MprTagTraceStatement(const MprTagTraceStatement& org, Clon
       offsetFrameId_(org.offsetFrameId_)
 {
     if(org.tagGroup_){
-        tagGroup_ = cloneMap->getClone(org.tagGroup_);
+        if(cloneMap){
+            tagGroup_ = cloneMap->getClone(org.tagGroup_);
+        } else {
+            tagGroup_ = org.tagGroup_;
+        }
     }
 }
 
