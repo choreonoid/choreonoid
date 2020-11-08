@@ -2,14 +2,14 @@
 #define CNOID_MANIPULATOR_PLUGIN_MPR_VARIABLE_LIST_H
 
 #include "MprVariable.h"
-#include <cnoid/CloneableReferenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/Signal>
 #include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT MprVariableList : public CloneableReferenced
+class CNOID_EXPORT MprVariableList : public ClonableReferenced
 {
 public:
     enum VariableType {

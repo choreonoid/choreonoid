@@ -2,7 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MPR_POSITION_H
 
 #include <cnoid/CoordinateFrameList>
-#include <cnoid/CloneableReferenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/GeneralId>
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
@@ -20,7 +20,7 @@ class MprFkPosition;
 class MprPositionList;
 class Mapping;
 
-class CNOID_EXPORT MprPosition : public CloneableReferenced
+class CNOID_EXPORT MprPosition : public ClonableReferenced
 {
 public:
     static constexpr int MaxNumJoints = 8;

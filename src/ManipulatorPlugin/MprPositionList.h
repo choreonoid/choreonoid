@@ -1,7 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MPR_POSITION_LIST_H
 #define CNOID_MANIPULATOR_PLUGIN_MPR_POSITION_LIST_H
 
-#include <cnoid/CloneableReferenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/Signal>
 #include "exportdecl.h"
 
@@ -11,7 +11,7 @@ class MprPosition;
 class GeneralId;
 class Mapping;
 
-class CNOID_EXPORT MprPositionList : public CloneableReferenced
+class CNOID_EXPORT MprPositionList : public ClonableReferenced
 {
 public:
     MprPositionList();

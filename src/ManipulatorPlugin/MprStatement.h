@@ -1,7 +1,7 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MPR_STATEMENT_H
 #define CNOID_MANIPULATOR_PLUGIN_MPR_STATEMENT_H
 
-#include <cnoid/CloneableReferenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/HierarchicalClassRegistry>
 #include <cnoid/PolymorphicFunctionSet>
 #include <string>
@@ -14,7 +14,7 @@ typedef ref_ptr<MprProgram> MprProgramPtr;
 
 class Mapping;
 
-class CNOID_EXPORT MprStatement : public CloneableReferenced
+class CNOID_EXPORT MprStatement : public ClonableReferenced
 {
 public:
     int classId() const {

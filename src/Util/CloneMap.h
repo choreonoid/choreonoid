@@ -8,7 +8,7 @@
 
 namespace cnoid {
 
-class CloneableReferenced;
+class ClonableReferenced;
 
 class CNOID_EXPORT CloneMap
 {
@@ -34,7 +34,7 @@ public:
         return findClone<ObjectType>(org.get());
     }
 
-template<class ObjectType>
+    template<class ObjectType>
     ObjectType* getClone(const ObjectType* org){
         return static_cast<ObjectType*>(findOrCreateClone_(org));
     }
@@ -99,7 +99,7 @@ private:
 
     Referenced* findClone_(const Referenced* org);
     Referenced* findOrCreateClone_(const Referenced* org);
-    Referenced* findOrCreateClone_(const CloneableReferenced* org);
+    Referenced* findOrCreateClone_(const ClonableReferenced* org);
     Referenced* findOrCreateClone_(const Referenced* org, const CloneFunction& cloneFunction);
     Referenced* findCloneOrReplaceLater_(
         const Referenced* org, std::function<void(Referenced* clone)> replaceFunction);

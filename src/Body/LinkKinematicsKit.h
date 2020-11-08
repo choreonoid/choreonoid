@@ -2,7 +2,7 @@
 #define CNOID_BODY_LINK_KINEMATICS_KIT_H
 
 #include <cnoid/EigenTypes>
-#include <cnoid/CloneableReferenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/Signal>
 #include <cnoid/GeneralId>
 #include <memory>
@@ -20,7 +20,7 @@ class CoordinateFrameList;
 class InverseKinematics;
 class Mapping;
 
-class CNOID_EXPORT LinkKinematicsKit : public CloneableReferenced
+class CNOID_EXPORT LinkKinematicsKit : public ClonableReferenced
 {
 public:
     LinkKinematicsKit(Link* link);

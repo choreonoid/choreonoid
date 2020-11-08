@@ -94,7 +94,7 @@ set(headers
   ${CMAKE_CURRENT_BINARY_DIR}/Config.h
   Referenced.h
   CloneMap.h
-  CloneableReferenced.h
+  ClonableReferenced.h
   HierarchicalClassRegistry.h
   PolymorphicFunctionSet.h
   PolymorphicReferencedArray.h

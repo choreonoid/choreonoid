@@ -1,7 +1,7 @@
 #ifndef CNOID_UTIL_POSITION_TAG_GROUP_H
 #define CNOID_UTIL_POSITION_TAG_GROUP_H
 
-#include "CloneableReferenced.h"
+#include "ClonableReferenced.h"
 #include "PositionTag.h"
 #include "Signal.h"
 #include "EigenTypes.h"
@@ -15,7 +15,7 @@ class Mapping;
 class ArchiveSession;
 class Uuid;
 
-class CNOID_EXPORT PositionTagGroup : public CloneableReferenced
+class CNOID_EXPORT PositionTagGroup : public ClonableReferenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

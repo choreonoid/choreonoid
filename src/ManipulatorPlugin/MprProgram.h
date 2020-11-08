@@ -2,7 +2,7 @@
 #define CNOID_MANIPULATOR_PLUGIN_MPR_PROGRAM_H
 
 #include "MprStatement.h"
-#include <cnoid/CloneableReferenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/Signal>
 #include <string>
 #include <deque>
@@ -19,7 +19,7 @@ class MprStructuredStatement;
 class ArchiveSession;
 
 
-class CNOID_EXPORT MprProgram : public CloneableReferenced
+class CNOID_EXPORT MprProgram : public ClonableReferenced
 {
 public:
     typedef std::deque<MprStatementPtr> StatementContainer;

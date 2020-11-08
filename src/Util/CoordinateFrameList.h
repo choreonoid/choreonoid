@@ -1,7 +1,7 @@
 #ifndef CNOID_UTIL_COORDINATE_FRAME_LIST_H
 #define CNOID_UTIL_COORDINATE_FRAME_LIST_H
 
-#include "CloneableReferenced.h"
+#include "ClonableReferenced.h"
 #include "CoordinateFrame.h"
 #include "Signal.h"
 #include <string>
@@ -9,7 +9,7 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT CoordinateFrameList : public CloneableReferenced
+class CNOID_EXPORT CoordinateFrameList : public ClonableReferenced
 {
 public:
     CoordinateFrameList();

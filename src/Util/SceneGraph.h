@@ -6,7 +6,7 @@
 #ifndef CNOID_UTIL_SCENE_GRAPH_H
 #define CNOID_UTIL_SCENE_GRAPH_H
 
-#include <cnoid/CloneableReferenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/BoundingBox>
 #include <cnoid/Signal>
 #include <string>
@@ -57,7 +57,7 @@ private:
 };
 
 
-class CNOID_EXPORT SgObject : public CloneableReferenced
+class CNOID_EXPORT SgObject : public ClonableReferenced
 {
 public:
     typedef std::set<SgObject*> ParentContainer;
