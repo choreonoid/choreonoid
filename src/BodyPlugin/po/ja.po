@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-15 19:54+0900\n"
+"POT-Creation-Date: 2020-11-09 16:13+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -179,23 +179,27 @@ msgstr "ボディモーションエンジン"
 msgid "Update Joint Velocities"
 msgstr "関節角速度の更新"
 
-#: LinkDeviceListView.cpp:47
+#: LinkDeviceListView.cpp:48
 msgid "Links / Devices"
 msgstr "リンク／デバイス"
 
-#: LinkDeviceListView.cpp:69
+#: LinkDeviceListView.cpp:70
 msgid "All"
 msgstr "全要素"
 
-#: LinkDeviceListView.cpp:72
+#: LinkDeviceListView.cpp:73
 msgid "Links"
 msgstr "リンク"
 
-#: LinkDeviceListView.cpp:76
+#: LinkDeviceListView.cpp:77
+msgid "Joints"
+msgstr "関節"
+
+#: LinkDeviceListView.cpp:81
 msgid "Devices"
 msgstr "デバイス"
 
-#: LinkDeviceListView.cpp:86
+#: LinkDeviceListView.cpp:91
 msgid "Tree"
 msgstr "ツリー"
 
@@ -1305,7 +1309,7 @@ msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:534 BodyItem.cpp:1777
+#: WorldItem.cpp:534 BodyItem.cpp:1782
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -1337,67 +1341,67 @@ msgstr "ボディアイテム"
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1691
+#: BodyItem.cpp:1696
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1768
+#: BodyItem.cpp:1773
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1769
+#: BodyItem.cpp:1774
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1770
+#: BodyItem.cpp:1775
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1771
+#: BodyItem.cpp:1776
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1772
+#: BodyItem.cpp:1777
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1773
+#: BodyItem.cpp:1778
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1774 LinkPropertyView.cpp:120
+#: BodyItem.cpp:1779 LinkPropertyView.cpp:120
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1775
+#: BodyItem.cpp:1780
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1779
+#: BodyItem.cpp:1784
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1781
+#: BodyItem.cpp:1786
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1783
+#: BodyItem.cpp:1788
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1786
+#: BodyItem.cpp:1791
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1790
+#: BodyItem.cpp:1795
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1959
+#: BodyItem.cpp:1964
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1976
+#: BodyItem.cpp:1981
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1460,31 +1464,35 @@ msgstr "HRPSYSシーケンスファイル一式"
 msgid "HRPSYS Log File"
 msgstr "HRPSYSログファイル"
 
-#: LinkDeviceTreeWidget.cpp:364
+#: LinkDeviceTreeWidget.cpp:367
 msgid "No"
 msgstr ""
 
-#: LinkDeviceTreeWidget.cpp:366
+#: LinkDeviceTreeWidget.cpp:369
 msgid "ID"
 msgstr ""
 
-#: LinkDeviceTreeWidget.cpp:625
+#: LinkDeviceTreeWidget.cpp:642
 msgid " Part / Link "
 msgstr " 部位／リンク "
 
-#: LinkDeviceTreeWidget.cpp:631
+#: LinkDeviceTreeWidget.cpp:648
 msgid " Link / Device "
 msgstr " リンク／デバイス "
 
-#: LinkDeviceTreeWidget.cpp:633
+#: LinkDeviceTreeWidget.cpp:650
 msgid " Link "
 msgstr " リンク "
 
-#: LinkDeviceTreeWidget.cpp:639
+#: LinkDeviceTreeWidget.cpp:656
+msgid " Joint "
+msgstr "関節"
+
+#: LinkDeviceTreeWidget.cpp:662
 msgid " Device "
 msgstr "デバイス"
 
-#: LinkDeviceTreeWidget.cpp:848
+#: LinkDeviceTreeWidget.cpp:878
 msgid "Device"
 msgstr "デバイス"
 

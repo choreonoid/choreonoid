@@ -65,6 +65,7 @@ public:
     int listingMode;
     int numberColumnMode;
     bool isLinkItemVisible;
+    bool isJointItemVisible;
     bool isDeviceItemVisible;
     bool isCacheEnabled;
     std::function<bool(Link* link)> visibleLinkPredicate;
@@ -199,7 +200,8 @@ LinkDeviceTreeItem::LinkDeviceTreeItem
 
 
 LinkDeviceTreeItem::LinkDeviceTreeItem(Link* link, LinkDeviceTreeWidget::Impl* treeImpl)
-    : LinkDeviceTreeItem(link->name(), treeImpl)
+    : LinkDeviceTreeItem(
+        treeImpl->isJointItemVisible ? link->jointName() : link->name(), treeImpl)
 {
     link_ = link;
     treeImpl->linkIndexToItemMap[link->index()] = this;
@@ -321,6 +323,7 @@ void LinkDeviceTreeWidget::Impl::initialize()
     listingMode = List;
     self->setNumberColumnMode(Index);
     isLinkItemVisible = true;
+    isJointItemVisible = false;
     isDeviceItemVisible = false;
     isCacheEnabled = false;
     
@@ -377,6 +380,7 @@ int LinkDeviceTreeWidget::numberColumnMode() const
 void LinkDeviceTreeWidget::setLinkItemVisible(bool on)
 {
     impl->isLinkItemVisible = on;
+    setNumberColumnMode(Index);
 }
 
 
@@ -389,6 +393,19 @@ bool LinkDeviceTreeWidget::isLinkItemVisible() const
 void LinkDeviceTreeWidget::setVisibleLinkPredicate(std::function<bool(Link* link)> pred)
 {
     impl->visibleLinkPredicate = pred;
+}
+
+
+void LinkDeviceTreeWidget::setJointItemVisible(bool on)
+{
+    impl->isJointItemVisible = on;
+    setNumberColumnMode(Identifier);
+}
+
+
+bool LinkDeviceTreeWidget::isJointItemVisible() const
+{
+    return impl->isJointItemVisible;
 }
 
 
@@ -635,6 +652,12 @@ void LinkDeviceTreeWidget::Impl::updateTreeItems()
                 if(listingMode == List){
                     createLinkDeviceList(body);
                 }
+            } else if(isJointItemVisible){
+                headerItem->setText(nameColumn, _(" Joint "));
+                if(listingMode == List){
+                    createLinkDeviceList(body);
+                }
+
             } else if(isDeviceItemVisible){
                 headerItem->setText(nameColumn, _(" Device "));
                 if(listingMode == List){
@@ -642,7 +665,7 @@ void LinkDeviceTreeWidget::Impl::updateTreeItems()
                 }
             }
             if(listingMode == Tree){
-                if(isLinkItemVisible){
+                if(isLinkItemVisible || isJointItemVisible){
                     createLinkDeviceTree(body);
                 }
             }
@@ -773,7 +796,7 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceList(Body* body)
         }
     }
     auto links = body->links();
-    if(numberColumnMode == Identifier){
+    if(numberColumnMode == Identifier || isJointItemVisible){
         std::stable_sort(links.begin(), links.end(),
                   [&](Link* l0, Link* l1){
                       if(l0->jointId() < 0 || l1->jointId() < 0){
@@ -785,6 +808,9 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceList(Body* body)
         
     for(auto& link : links){
         if(visibleLinkPredicate && !visibleLinkPredicate(link)){
+            continue;
+        }
+        if(isJointItemVisible && link->jointId() < 0){
             continue;
         }
         auto linkItem = new LinkDeviceTreeItem(link, this);
@@ -837,25 +863,33 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceTreeSub
     if(visibleLinkPredicate && !visibleLinkPredicate(link)){
         return;
     }
-    
-    auto item = new LinkDeviceTreeItem(link, this);
-    addLinkDeviceTreeItem(item, parentItem);
-    item->setExpanded(true);
 
-    if(isDeviceItemVisible){
-        auto it = devices.find(link);
-        if(it != devices.end()){
-            auto deviceGroup = new QTreeWidgetItem({ _("Device") });
-            addTreeItem(deviceGroup, item);
-            deviceGroup->setExpanded(true);
-            for(auto& device : it->second){
-                auto deviceItem = new LinkDeviceTreeItem(device, this);
-                addLinkDeviceTreeItem(deviceItem, deviceGroup);
+    LinkDeviceTreeItem* item = nullptr;
+    
+    if(!isJointItemVisible || link->jointId() >= 0){
+
+        item = new LinkDeviceTreeItem(link, this);
+        addLinkDeviceTreeItem(item, parentItem);
+        item->setExpanded(true);
+
+        if(isDeviceItemVisible){
+            auto it = devices.find(link);
+            if(it != devices.end()){
+                auto deviceGroup = new QTreeWidgetItem({ _("Device") });
+                addTreeItem(deviceGroup, item);
+                deviceGroup->setExpanded(true);
+                for(auto& device : it->second){
+                    auto deviceItem = new LinkDeviceTreeItem(device, this);
+                    addLinkDeviceTreeItem(deviceItem, deviceGroup);
+                }
             }
         }
     }
     
     if(link->child()){
+        if(!item){
+            item = parentItem;
+        }
         for(Link* child = link->child(); child; child = child->sibling()){
             createLinkDeviceTreeSub(child, item, devices);
         }

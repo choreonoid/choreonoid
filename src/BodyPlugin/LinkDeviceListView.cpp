@@ -24,6 +24,7 @@ public:
     ButtonGroup elementRadioGroup;
     RadioButton allRadio;
     RadioButton linkRadio;
+    RadioButton jointRadio;
     RadioButton deviceRadio;
     BodySelectionManager* bodySelectionManager;
     ScopedConnection bodySelectionManagerConnection;
@@ -73,8 +74,11 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     linkRadio.setChecked(true);
     elementRadioGroup.addButton(&linkRadio, 1);
     hbox->addWidget(&linkRadio);
+    jointRadio.setText(_("Joints"));
+    elementRadioGroup.addButton(&jointRadio, 2);
+    hbox->addWidget(&jointRadio);
     deviceRadio.setText(_("Devices"));
-    elementRadioGroup.addButton(&deviceRadio, 2);
+    elementRadioGroup.addButton(&deviceRadio, 3);
     hbox->addWidget(&deviceRadio);
 
     elementRadioGroup.sigButtonToggled().connect(
@@ -137,8 +141,9 @@ void LinkDeviceListView::onDeactivated()
 
 void LinkDeviceListView::Impl::onTargetElementTypeChanged(int id)
 {
-    treeWidget.setLinkItemVisible(id != 2);
-    treeWidget.setDeviceItemVisible(id != 1);
+    treeWidget.setLinkItemVisible(id == 0 || id == 1);
+    treeWidget.setJointItemVisible(id == 2);
+    treeWidget.setDeviceItemVisible(id == 0 || id == 3);
     if(isTreeWidgetUpdateEnabled){
         treeWidget.updateTreeItems();
     }

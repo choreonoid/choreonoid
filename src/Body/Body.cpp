@@ -44,6 +44,7 @@ class BodyImpl
 {
 public:
     NameToLinkMap nameToLinkMap;
+    NameToLinkMap jointSpecificNameToLinkMap;
     DeviceNameMap deviceNameMap;
     CacheMap cacheMap;
     MappingPtr info;
@@ -223,6 +224,7 @@ void Body::updateLinkTree()
     isStaticModel_ = true;
     
     impl->nameToLinkMap.clear();
+    impl->jointSpecificNameToLinkMap.clear();
     linkTraverse_.find(rootLink());
 
     const int numLinks = linkTraverse_.numLinks();
@@ -236,8 +238,12 @@ void Body::updateLinkTree()
     for(int i=0; i < numLinks; ++i){
         Link* link = linkTraverse_[i];
         link->setIndex(i);
-        impl->nameToLinkMap[link->name()] = link;
-
+        if(!link->name().empty()){
+            impl->nameToLinkMap[link->name()] = link;
+        }
+        if(!link->jointSpecificName().empty()){
+            impl->jointSpecificNameToLinkMap[link->jointSpecificName()] = link;
+        }
         const int id = link->jointId();
         if(id >= 0){
             if(id >= static_cast<int>(jointIdToLinkArray.size())){
@@ -483,6 +489,16 @@ Link* Body::link(const std::string& name) const
 }
 
 
+Link* Body::joint(const std::string& name) const
+{
+    auto p = impl->jointSpecificNameToLinkMap.find(name);
+    if(p != impl->jointSpecificNameToLinkMap.end()){
+        return p->second;
+    }
+    return link(name);
+}
+
+
 void Body::resetLinkName(Link* link, const std::string& name)
 {
     auto p = impl->nameToLinkMap.find(link->name());
@@ -492,6 +508,29 @@ void Body::resetLinkName(Link* link, const std::string& name)
         }
     }
     impl->nameToLinkMap[name] = link;
+}
+
+
+void Body::resetJointSpecificName(Link* link)
+{
+    const auto& currentName = link->jointSpecificName();
+    if(!currentName.empty()){
+        auto p = impl->jointSpecificNameToLinkMap.find(currentName);
+        if(p != impl->jointSpecificNameToLinkMap.end()){
+            if(p->second == link){
+                impl->jointSpecificNameToLinkMap.erase(p);
+            }
+        }
+    }
+}
+    
+
+void Body::resetJointSpecificName(Link* link, const std::string& name)
+{
+    resetJointSpecificName(link);
+    if(!name.empty()){
+        impl->jointSpecificNameToLinkMap[name] = link;
+    }
 }
 
 

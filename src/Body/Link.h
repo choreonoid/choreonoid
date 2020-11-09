@@ -147,6 +147,8 @@ public:
     };
 
     int jointId() const { return jointId_; }
+    const std::string& jointName() const;
+    const std::string& jointSpecificName() const { return jointSpecificName_; }
         
     JointType jointType() const { return jointType_; }
     bool isFixedJoint() const { return (jointType_ >= FIXED_JOINT); }
@@ -294,6 +296,8 @@ public:
         
     void setJointType(JointType type) { jointType_ = type; }
     void setJointId(int id) { jointId_ = id; }
+    void setJointName(const std::string& name);
+    void resetJointSpecificName();
     void setJointAxis(const Vector3& axis) { a_ = axis; }
 
     void setInitialJointDisplacement(double q) { q_initial_ = q; }
@@ -390,6 +394,7 @@ private:
     double dq_lower_;
     int materialId_;
     std::string name_;
+    std::string jointSpecificName_;
 
     // SgPosTransform is used as the type of the following variables so that Rs can
     // be reflected. When Rs is invalidated, the types should be modified to SgGroup.

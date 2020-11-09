@@ -454,7 +454,7 @@ void JointIndicator::initialize(Link* joint)
     idLabel.setText(QString("%1:").arg(joint->jointId()));
     idLabel.setVisible(baseImpl->isJointIdVisible);
     
-    nameLabel.setText(joint->name().c_str());
+    nameLabel.setText(joint->jointName().c_str());
     nameLabel.setVisible(baseImpl->isJointNameVisible);
     
     spin.show();

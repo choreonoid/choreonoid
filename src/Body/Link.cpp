@@ -54,7 +54,8 @@ Link::Link()
 
 
 Link::Link(const Link& org)
-    : name_(org.name_)
+    : name_(org.name_),
+      jointSpecificName_(org.jointSpecificName_)
 {
     index_ = -1; // should be set by a Body object
     jointId_ = org.jointId_;
@@ -252,6 +253,33 @@ void Link::setName(const std::string& name)
         body_->resetLinkName(this, name);
     }
     name_ = name;
+}
+
+
+void Link::setJointName(const std::string& name)
+{
+    if(body_){
+        body_->resetJointSpecificName(this, name);
+    }
+    jointSpecificName_ = name;
+}
+
+
+void Link::resetJointSpecificName()
+{
+    if(body_){
+        body_->resetJointSpecificName(this);
+    }
+    jointSpecificName_.clear();
+}
+
+
+const std::string& Link::jointName() const
+{
+    if(!jointSpecificName_.empty()){
+        return jointSpecificName_;
+    }
+    return name_;
 }
 
 

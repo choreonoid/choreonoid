@@ -76,13 +76,19 @@ public:
     }
 
     /**
-       This function returns the link of a given index in the whole link sequence.
+       This function returns the link object of a given index in the whole link sequence.
        The order of the sequence corresponds to a link-tree traverse from the root link.
        The size of the sequence can be obtained by numLinks().
     */
     Link* link(int index) const {
         return linkTraverse_.link(index);
     }
+
+    /**
+       This function returns the link object whose name matches a given name.
+       A nullptr is returned when the corresponding link is not found.
+    */
+    Link* link(const std::string& name) const;
 
     /**
        LinkTraverse object that traverses all the links from the root link
@@ -95,12 +101,6 @@ public:
         return linkTraverse_.links();
     }
     
-    /**
-       This function returns a link object whose name of Joint node matches a given name.
-       Null is returned when the body has no joint of the given name.
-    */
-    Link* link(const std::string& name) const;
-
     /**
        The root link of the body
     */
@@ -141,15 +141,19 @@ public:
     }
 
     /**
-       This function returns a link that has a given joint ID.
-       If there is no link that has a given joint ID,
-       the function returns a dummy link object whose ID is minus one.
-       If the body has virtual joints, this function returns them by giving the ids
-       over the last one.
+       This function returns the link object that has a given joint ID.
+       If there is no corresponding link, the function returns a dummy link object whose ID is minus one.
+       If the body has virtual joints, this function returns them by giving the ids over the last one.
     */
     Link* joint(int id) const {
         return jointIdToLinkArray[id];
     }
+
+    /**
+       This function returns a link object whose joint name matches a given name.
+       A nullptr is returned when the corresponding link is not found.
+    */
+    Link* joint(const std::string& name) const;
 
     template<class Container> class ContainerWrapper {
     public:
@@ -315,6 +319,8 @@ private:
 
     void initialize();
     void resetLinkName(Link* link, const std::string& name);
+    void resetJointSpecificName(Link* link);
+    void resetJointSpecificName(Link* link, const std::string& name);
     Link* cloneLinkTree(const Link* orgLink, CloneMap* cloneMap);
     Link* createEmptyJoint(int jointId);
     Device* findDeviceSub(const std::string& name) const;

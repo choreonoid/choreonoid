@@ -30,6 +30,8 @@ public:
     void setLinkItemVisible(bool on);
     bool isLinkItemVisible() const;
     void setVisibleLinkPredicate(std::function<bool(Link* link)> pred);
+    void setJointItemVisible(bool on);
+    bool isJointItemVisible() const;
     void setDeviceItemVisible(bool on);
     bool isDeviceItemVisible() const;
     enum NumberColumnMode { Index, Identifier };

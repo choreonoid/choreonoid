@@ -157,6 +157,8 @@ public:
     typedef map<string, LinkPtr> LinkMap;
     LinkMap linkMap;
 
+    set<string> jointNameSet;
+
     LinkPtr currentLink;
     vector<string> nameStack;
     typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Vector;
@@ -292,6 +294,7 @@ public:
     void readNodeInLinks(Mapping* linkNode, const string& nodeType);
     void readLinkNode(Mapping* linkNode);
     void setLinkName(Link* link, const string& name, ValueNode* node);
+    void setJointName(Link* link, const string& jointName, ValueNode* node);
     LinkPtr readLinkContents(Mapping* linkNode, LinkPtr link = nullptr);
     void setJointId(Link* link, int id);
     void readJointContents(Link* link, Mapping* node);
@@ -620,6 +623,7 @@ bool YAMLBodyLoaderImpl::clear()
     rootLink = nullptr;
     linkInfos.clear();
     linkMap.clear();
+    jointNameSet.clear();
     nameStack.clear();
     transformStack.clear();
     rigidBodies.clear();
@@ -953,8 +957,18 @@ void YAMLBodyLoaderImpl::setLinkName(Link* link, const string& name, ValueNode* 
 {
     link->setName(name);
     
-    if(!linkMap.insert(make_pair(link->name(), link)).second){
-        node->throwException(format(_("Duplicated link name \"{}\""), link->name()));
+    if(!linkMap.insert(make_pair(name, link)).second){
+        node->throwException(format(_("Duplicated link name \"{}\""), name));
+    }
+}
+
+
+void YAMLBodyLoaderImpl::setJointName(Link* link, const string& jointName, ValueNode* node)
+{
+    link->setJointName(jointName);
+    
+    if(!jointNameSet.insert(jointName).second){
+        node->throwException(format(_("Duplicated joint name \"{}\""), jointName));
     }
 }
 
@@ -968,6 +982,10 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
         auto nameNode = node->extract("name");
         if(nameNode){
             setLinkName(link, nameNode->toString(), nameNode);
+        }
+        auto jointNameNode = node->extract("joint_name");
+        if(jointNameNode){
+            setJointName(link, jointNameNode->toString(), jointNameNode);
         }
     }
 
@@ -1905,6 +1923,9 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
         setLinkName(link, prefix + link->name(), node);
         if(link->jointId() >= 0){
             setJointId(link, link->jointId() + jointIdOffset);
+        }
+        if(!link->jointSpecificName().empty()){
+            setJointName(link, prefix + link->jointSpecificName(), node);
         }
     }
 
