@@ -114,7 +114,7 @@ bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
         } else {
             T_tags.translation().setZero();
         }
-        if(cnoid::read(archive, "rotation", v)){
+        if(cnoid::read(archive, "rpy", v)){
             T_tags.linear() = rotFromRpy(radian(v));
         } else {
             T_tags.linear().setIdentity();
