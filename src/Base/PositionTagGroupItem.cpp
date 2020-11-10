@@ -523,12 +523,14 @@ SgNode* ScenePositionTagGroup::getOrCreateTagMarker()
     if(!marker){
         auto lines = new SgLineSet;
 
+
         auto& vertices = *lines->getOrCreateVertices(4);
         constexpr float r = 3.0f;
-        vertices[0] << 0.0f,     0.0f,     0.0f; // Origin
-        vertices[1] << 0.0f,     0.0f,     1.0f; // Z direction
-        vertices[2] << 1.0f / r, 0.0f,     0.0f; // X direction
-        vertices[3] << 0.0f,     1.0f / r, 0.0f; // Y direction
+        constexpr float offset = -1.0f; // 0.0f or -1.0f
+        vertices[0] << 0.0f,     0.0f,     offset;        // Origin
+        vertices[1] << 0.0f,     0.0f,     1.0f + offset; // Z direction
+        vertices[2] << 1.0f / r, 0.0f,     offset;        // X direction
+        vertices[3] << 0.0f,     1.0f / r, offset;        // Y direction
         
         auto& colors = *lines->getOrCreateColors(3);
         colors[0] << 1.0f, 0.0f, 0.0f; // Red
