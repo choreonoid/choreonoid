@@ -72,11 +72,11 @@ void MprTagTraceStatement::updateFramesWithCurrentFrames(LinkKinematicsKit* kine
 }
 
 
-void MprTagTraceStatement::setGlobalTagGroupPosition(LinkKinematicsKit* kinematicsKit, const Position& T_parent)
+void MprTagTraceStatement::updateTagGroupPositionWithGlobalParentCoordinateSystem
+(LinkKinematicsKit* kinematicsKit, const Position& T_parent)
 {
     auto T_base = kinematicsKit->globalBasePosition(baseFrameId_);
-    Position T_tags = T_base.inverse(Eigen::Isometry) * T_parent;
-    setTagGroupPosition(T_tags);
+    T_tags = T_base.inverse(Eigen::Isometry) * T_parent;
 }
 
 

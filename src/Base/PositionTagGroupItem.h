@@ -30,7 +30,7 @@ public:
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;
 
-    const Position& parentPosition() const;
+    const Position& parentCoordinateSystem() const;
     Position globalOriginOffset() const;
 
     double tagMarkerSize() const;

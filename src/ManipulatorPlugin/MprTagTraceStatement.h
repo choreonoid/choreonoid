@@ -35,7 +35,8 @@ public:
     void setOffsetFrameId(const GeneralId& id){ offsetFrameId_ = id; }
 
     void updateFramesWithCurrentFrames(LinkKinematicsKit* kinematicsKit);
-    void setGlobalTagGroupPosition(LinkKinematicsKit* kinematicsKit, const Position& T_parent);
+    void updateTagGroupPositionWithGlobalParentCoordinateSystem(
+        LinkKinematicsKit* kinematicsKit, const Position& T_parent);
 
     MprProgram::iterator expandTraceStatements();
     

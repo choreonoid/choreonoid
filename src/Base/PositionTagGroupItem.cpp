@@ -94,7 +94,7 @@ public:
     PositionTagGroupLocationPtr location;
     LocationProxyPtr parentLocation;
     ScopedConnection parentLocationConnection;
-    Position parentPosition;
+    Position T_parent;
     ScenePositionTagGroupPtr scene;
     SgNodePtr tagMarker;
     SgFixedPixelSizeGroupPtr tagMarkerSizeGroup;
@@ -172,12 +172,12 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
         tagMarkerSizeGroup->setPixelSizeRatio(24.0f);
         originMarkerVisibility = false;
         edgeVisibility = false;
-        parentPosition.setIdentity();
+        T_parent.setIdentity();
     } else {
         tagMarkerSizeGroup->setPixelSizeRatio(org->tagMarkerSizeGroup->pixelSizeRatio());
         originMarkerVisibility = org->originMarkerVisibility;
         edgeVisibility = org->edgeVisibility;
-        parentPosition = org->parentPosition;
+        T_parent = org->T_parent;
     }
 }
 
@@ -323,12 +323,12 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
 void PositionTagGroupItem::Impl::onParentLocationChanged()
 {
     if(parentLocation){
-        parentPosition = parentLocation->getLocation();
+        T_parent = parentLocation->getLocation();
     } else {
-        parentPosition.setIdentity();
+        T_parent.setIdentity();
     }
     if(scene){
-        scene->setParentPosition(parentPosition);
+        scene->setParentPosition(T_parent);
     }
     sigLocationChanged();
 }
@@ -341,15 +341,15 @@ void PositionTagGroupItem::Impl::onOffsetPositionChanged()
 }
 
 
-const Position& PositionTagGroupItem::parentPosition() const
+const Position& PositionTagGroupItem::parentCoordinateSystem() const
 {
-    return impl->parentPosition;
+    return impl->T_parent;
 }
 
 
 Position PositionTagGroupItem::globalOriginOffset() const
 {
-    return impl->parentPosition * impl->tags->originOffset();
+    return impl->T_parent * impl->tags->originOffset();
 }
 
 
@@ -450,7 +450,7 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
 {
     auto tags = itemImpl->tags;
 
-    setPosition(itemImpl->parentPosition);
+    setPosition(itemImpl->T_parent);
 
     offsetTransform = new SgPosTransform;
     offsetTransform->setPosition(tags->originOffset());

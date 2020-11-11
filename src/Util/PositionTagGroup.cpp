@@ -1,6 +1,7 @@
 #include "PositionTagGroup.h"
 #include "ValueTree.h"
 #include "ArchiveSession.h"
+#include "EigenArchive.h"
 #include "Uuid.h"
 #include <fmt/format.h>
 #include "gettext.h"
@@ -180,9 +181,19 @@ bool PositionTagGroup::read(const Mapping* archive, ArchiveSession* session)
         versionNode->throwException(format(_("Format version {0} is not supported."), version));
     }
 
+    archive->read("name", impl->name);
+
     impl->uuid.read(archive);
     if(!session->addReference(impl->uuid, this)){
         impl->uuid = Uuid(); // assign a new UUID to resolve the duplication
+    }
+
+    Vector3 v;
+    if(cnoid::read(archive, "translation", v)){
+        T_offset_.translation() = v;
+    }
+    if(cnoid::read(archive, "rpy", v)){
+        T_offset_.linear() = rotFromRpy(radian(v));
     }
 
     clearTags();
@@ -206,6 +217,11 @@ bool PositionTagGroup::write(Mapping* archive, ArchiveSession* session) const
     archive->write("type", "PositionTagGroup");
     archive->write("format_version", 1.0);
     archive->write("uuid", impl->uuid.toString());
+    archive->write("name", impl->name);
+
+    archive->setDoubleFormat("%.9g");
+    cnoid::write(archive, "translation", T_offset_.translation());
+    cnoid::write(archive, "rpy", degree(rpyFromRot(T_offset_.linear())));
 
     if(!tags_.empty()){
         auto listing = archive->createListing("tags");
@@ -217,5 +233,6 @@ bool PositionTagGroup::write(Mapping* archive, ArchiveSession* session) const
             listing->append(node);
         }
     }
+    
     return true;
 }
