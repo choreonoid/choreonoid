@@ -3,6 +3,7 @@
 
 #include "SceneWidgetEditable.h"
 #include <cnoid/EigenTypes>
+#include <cnoid/Signal>
 #include <vector>
 #include <memory>
 #include "exportdecl.h"
@@ -59,6 +60,8 @@ public:
 
     const std::vector<PointInfoPtr>& selectedPoints() const;
     void clearSelection();
+
+    SignalProxy<void(const std::vector<PointInfoPtr>& points)> sigPointSelectionAdded();
 
 protected:
     virtual std::vector<SgNode*> getTargetSceneNodes(const SceneWidgetEvent& event);

@@ -87,6 +87,8 @@ public:
     
     PointInfoPtr highlightedPoint;
     std::vector<PointInfoPtr> selectedPoints;
+
+    Signal<void(const std::vector<PointInfoPtr>& points)> sigPointSelectionAdded;
     
     Impl(ScenePointSelectionMode* self);
     void setupScenePointSelectionMode(const SceneWidgetEvent& event);
@@ -295,6 +297,12 @@ void ScenePointSelectionMode::clearSelection()
 {
     impl->selectedPoints.clear();
     impl->selectedPointPlot->clearPoints(true);
+}
+
+
+SignalProxy<void(const std::vector<PointInfoPtr>& points)> ScenePointSelectionMode::sigPointSelectionAdded()
+{
+    return impl->sigPointSelectionAdded;
 }
 
 
@@ -613,6 +621,7 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& e
 
     if(event.button() == Qt::LeftButton){
         bool isPointSelectionUpdated = false;
+        vector<PointInfoPtr> additionalSelectedPoints;
         if(isTargetNode && highlightedPoint){
             bool removed = false;
             shared_ptr<SgNodePath> sharedPath;
@@ -636,6 +645,7 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& e
                     highlightedPoint->path_ = sharedPath;
                 }
                 selectedPoints.push_back(highlightedPoint);
+                additionalSelectedPoints.push_back(highlightedPoint);
             }
             isPointSelectionUpdated = true;
 
@@ -649,6 +659,9 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& e
         }
         if(isPointSelectionUpdated){
             selectedPointPlot->updatePoints(selectedPoints);
+            if(!additionalSelectedPoints.empty()){
+                sigPointSelectionAdded(additionalSelectedPoints);
+            }
         }
     } else if(isTargetNode && event.button() == Qt::RightButton){
         event.sceneWidget()->showContextMenuAtPointerPosition();
