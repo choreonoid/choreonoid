@@ -72,6 +72,12 @@ MprStatementPanel::Impl::Impl(MprStatementPanel* self)
 }
 
 
+void MprStatementPanel::setEditingEnabled(bool on)
+{
+    setEnabled(on);
+}
+
+
 void MprStatementPanel::Impl::activate
 (MprProgramItemBase* programItem_, MprStatement* statement_)
 {
@@ -242,6 +248,7 @@ void MprStatementViewBase::Impl::setStatement(MprProgramItemBase* programItem, M
         statementLabel.setText(statement->label(0).c_str());
         panel = getOrCreateStatementPanel(statement);
         if(panel){
+            panel->setEditingEnabled(statement->holderProgram()->isEditingEnabled());
             panel->impl->activate(programItem, statement);
         }
     } else {

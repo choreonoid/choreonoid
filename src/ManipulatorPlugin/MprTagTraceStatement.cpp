@@ -20,7 +20,9 @@ MprTagTraceStatement::MprTagTraceStatement()
       baseFrameId_(0),
       offsetFrameId_(0)
 {
-    lowerLevelProgram()->setLocalPositionListEnabled(true);
+    auto program = lowerLevelProgram();
+    program->setLocalPositionListEnabled(true);
+    program->setEditingEnabled(false);
 }
 
 
@@ -30,6 +32,10 @@ MprTagTraceStatement::MprTagTraceStatement(const MprTagTraceStatement& org, Clon
       baseFrameId_(org.baseFrameId_),
       offsetFrameId_(org.offsetFrameId_)
 {
+    auto program = lowerLevelProgram();
+    program->setLocalPositionListEnabled(true);
+    program->setEditingEnabled(false);
+    
     if(org.tagGroup_){
         if(cloneMap){
             tagGroup_ = cloneMap->getClone(org.tagGroup_);

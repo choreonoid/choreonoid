@@ -73,6 +73,9 @@ public:
 
     void renumberPositionIds();
 
+    bool isEditingEnabled() const { return isEditingEnabled_; }
+    void setEditingEnabled(bool on) { isEditingEnabled_ = on; }
+
     bool load(const std::string& filename, std::ostream& os);
     bool save(const std::string& filename);
 
@@ -90,6 +93,7 @@ protected:
 private:
     StatementContainer statements_;
     bool hasLocalPositionList_;
+    bool isEditingEnabled_;
 
     class Impl;
     Impl* impl;

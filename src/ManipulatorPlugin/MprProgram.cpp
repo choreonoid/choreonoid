@@ -49,6 +49,7 @@ MprProgram::MprProgram()
 {
     impl = new Impl(this);
     hasLocalPositionList_ = false;
+    isEditingEnabled_ = true;
 }
 
 
@@ -74,6 +75,7 @@ MprProgram::MprProgram(const MprProgram& org, CloneMap* cloneMap)
     }
 
     hasLocalPositionList_ = org.hasLocalPositionList_;
+    isEditingEnabled_ = org.isEditingEnabled_;
 }
 
 

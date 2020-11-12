@@ -18,6 +18,7 @@ public:
     MprStatementPanel();
     ~MprStatementPanel();
     
+    virtual void setEditingEnabled(bool on);
     virtual void onActivated() = 0;
     virtual void onDeactivated();
     virtual void onStatementUpdated();

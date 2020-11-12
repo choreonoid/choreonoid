@@ -45,7 +45,7 @@ public:
     MprProgramViewBase::Impl* viewImpl;
     MprProgramViewBase::StatementDelegate* delegate;
 
-    StatementItem(MprStatement* statement, MprProgramViewBase::Impl* viewImpl);
+    StatementItem(MprStatement* statement, MprProgram* program, MprProgramViewBase::Impl* viewImpl);
     ~StatementItem();
     virtual QVariant data(int column, int role) const override;
     virtual void setData(int column, int role, const QVariant& value) override;
@@ -222,7 +222,7 @@ public:
 }
 
 
-StatementItem::StatementItem(MprStatement* statement_, MprProgramViewBase::Impl* viewImpl)
+StatementItem::StatementItem(MprStatement* statement_, MprProgram* program, MprProgramViewBase::Impl* viewImpl)
     : statement_(statement_),
       viewImpl(viewImpl)
 {
@@ -231,7 +231,11 @@ StatementItem::StatementItem(MprStatement* statement_, MprProgramViewBase::Impl*
     }
     delegate = viewImpl->findStatementDelegate(statement_);
     
-    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsEditable;
+    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+
+    if(program && program->isEditingEnabled()){
+        flags |= Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
+    }
     if(statement<MprStructuredStatement>()){
         flags |= Qt::ItemIsDropEnabled;
     }
@@ -918,11 +922,11 @@ void MprProgramViewBase::Impl::addStatementsToTree
     if(program->empty()){
         if(program->isSubProgram()){
             // Keep at least one dummy statement item in a sub program
-            parentItem->addChild(new StatementItem(dummyStatement, this));
+            parentItem->addChild(new StatementItem(dummyStatement, nullptr, this));
         }
     } else {
         for(auto& statement : *program){
-            auto statementItem = new StatementItem(statement, this);
+            auto statementItem = new StatementItem(statement, program, this);
             parentItem->addChild(statementItem);
             if(auto structured = dynamic_cast<MprStructuredStatement*>(statement.get())){
                 if(auto lowerLevelProgram = structured->lowerLevelProgram()){
@@ -1284,7 +1288,7 @@ void MprProgramViewBase::Impl::onStatementInserted(MprProgram::iterator iter)
         }
     }
 
-    auto statementItem = new StatementItem(statement, this);
+    auto statementItem = new StatementItem(statement, program, this);
     bool added = false;
     auto nextIter = ++iter;
 
@@ -1329,7 +1333,7 @@ void MprProgramViewBase::Impl::onStatementRemoved
 
         if(holderStatement && holderStatement->lowerLevelProgram()->empty()){
             // Keep at least one dummy statement item in a sub program
-            parentItem->addChild(new StatementItem(dummyStatement, this));
+            parentItem->addChild(new StatementItem(dummyStatement, nullptr, this));
         }
 
         invalidLogSeq = findLogSeq();
@@ -1412,7 +1416,7 @@ void MprProgramViewBase::Impl::onRowsRemoved(const QModelIndex& parent, int star
             auto program = structured->lowerLevelProgram();
             if(program->empty()){
                 auto counter = scopedCounterOfStatementItemOperationCall();
-                parentItem->addChild(new StatementItem(dummyStatement, this));
+                parentItem->addChild(new StatementItem(dummyStatement, nullptr, this));
             }
         }
     }
