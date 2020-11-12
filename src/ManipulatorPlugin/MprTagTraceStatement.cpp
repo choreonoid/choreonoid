@@ -86,6 +86,12 @@ MprProgram::iterator MprTagTraceStatement::expandTraceStatements()
 }
 
 
+bool MprTagTraceStatement::isExpandedByDefault() const
+{
+    return false;
+}
+
+
 bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
 {
     auto session = program->archiveSession();

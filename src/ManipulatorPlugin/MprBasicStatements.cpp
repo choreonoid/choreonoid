@@ -154,6 +154,12 @@ MprProgram* MprStructuredStatement::getLowerLevelProgram()
 }
 
 
+bool MprStructuredStatement::isExpandedByDefault() const
+{
+    return true;
+}
+
+
 bool MprStructuredStatement::read(MprProgram* program, const Mapping& archive)
 {
     if(hasStructuredStatementAttribute(ArchiveLowerLevelProgram)){

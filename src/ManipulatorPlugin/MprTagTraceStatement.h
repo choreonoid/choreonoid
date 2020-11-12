@@ -41,7 +41,7 @@ public:
     MprProgram::iterator expandTraceStatements();
     
     virtual bool updateTagTraceProgram() = 0;
-
+    virtual bool isExpandedByDefault() const override;
     virtual bool read(MprProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
 

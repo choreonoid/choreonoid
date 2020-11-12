@@ -69,7 +69,7 @@ public:
     MprProgram* lowerLevelProgram() { return program_; }
     const MprProgram* lowerLevelProgram() const { return program_; }
     virtual MprProgram* getLowerLevelProgram() override;
-
+    virtual bool isExpandedByDefault() const;
     virtual bool read(MprProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const;
 
