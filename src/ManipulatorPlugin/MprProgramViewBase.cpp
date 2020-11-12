@@ -972,6 +972,7 @@ void MprProgramViewBase::Impl::setCurrentStatement
         if(auto item = findStatementItem(statement)){
             currentItemChangeConnection.block();
             setCurrentItem(item);
+            scrollToItem(item);
             currentItemChangeConnection.unblock();
         }
         prevCurrentStatement = statement;
