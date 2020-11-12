@@ -1,11 +1,13 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MPR_STATEMENT_REGISTRATION_H
 #define CNOID_MANIPULATOR_PLUGIN_MPR_STATEMENT_REGISTRATION_H
 
-#include "MprStatement.h"
+#include <string>
 #include <typeinfo>
 #include "exportdecl.h"
 
 namespace cnoid {
+
+class MprStatement;
 
 class CNOID_EXPORT MprStatementRegistration
 {

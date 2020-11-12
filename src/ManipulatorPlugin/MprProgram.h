@@ -1,7 +1,6 @@
 #ifndef CNOID_MANIPULATOR_PLUGIN_MPR_PROGRAM_H
 #define CNOID_MANIPULATOR_PLUGIN_MPR_PROGRAM_H
 
-#include "MprStatement.h"
 #include <cnoid/ClonableReferenced>
 #include <cnoid/Signal>
 #include <string>
@@ -14,7 +13,7 @@ namespace cnoid {
 class Mapping;
 class MprPosition;
 class MprPositionList;
-class MprProgram;
+class MprStatement;
 class MprStructuredStatement;
 class ArchiveSession;
 
@@ -22,7 +21,7 @@ class ArchiveSession;
 class CNOID_EXPORT MprProgram : public ClonableReferenced
 {
 public:
-    typedef std::deque<MprStatementPtr> StatementContainer;
+    typedef std::deque<ref_ptr<MprStatement>> StatementContainer;
     typedef StatementContainer::iterator iterator;
     typedef StatementContainer::const_iterator const_iterator;
 
@@ -54,7 +53,7 @@ public:
     const_iterator end() const { return statements_.end(); }
 
     void setLocalPositionListEnabled(bool on);
-    bool hasLocalPositionList() const;
+    bool hasLocalPositionList() const { return hasLocalPositionList_; }
     MprPositionList* positionList();
     const MprPositionList* positionList() const;
     void removeUnreferencedPositions();
@@ -90,6 +89,7 @@ protected:
 
 private:
     StatementContainer statements_;
+    bool hasLocalPositionList_;
 
     class Impl;
     Impl* impl;

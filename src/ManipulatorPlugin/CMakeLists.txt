@@ -12,6 +12,7 @@ set(sources
   MprProgram.cpp
   MprStatementRegistration.cpp
   MprStatement.cpp
+  MprStructuredStatement.cpp
   MprBasicStatements.cpp
   MprPositionStatement.cpp
   MprTagTraceStatement.cpp
@@ -32,6 +33,7 @@ set(headers
   MprPositionList.h
   MprStatementRegistration.h
   MprStatement.h
+  MprStructuredStatement.h
   MprBasicStatements.h
   MprPositionStatement.h
   MprTagTraceStatement.h

@@ -1,6 +1,5 @@
 #include "MprBasicStatements.h"
 #include "MprStatementRegistration.h"
-#include "MprProgram.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
@@ -122,58 +121,6 @@ bool MprCommentStatement::read(MprProgram* program, const Mapping& archive)
 bool MprCommentStatement::write(Mapping& archive) const
 {
     archive.write("comment", comment_);
-    return true;
-}
-
-
-MprStructuredStatement::MprStructuredStatement()
-    : attributes_(0)
-{
-    program_ = new MprProgram;
-    program_->setHolderStatement(this);
-}
-
-
-MprStructuredStatement::MprStructuredStatement(const MprStructuredStatement& org, CloneMap* cloneMap)
-    : MprStatement(org),
-      attributes_(org.attributes_)
-{
-    if(cloneMap){
-        program_ = cloneMap->getClone(org.program_);
-    } else {
-        program_ = org.program_->clone();
-    }
-
-    program_->setHolderStatement(this);
-}
-
-
-MprProgram* MprStructuredStatement::getLowerLevelProgram()
-{
-    return lowerLevelProgram();
-}
-
-
-bool MprStructuredStatement::isExpandedByDefault() const
-{
-    return true;
-}
-
-
-bool MprStructuredStatement::read(MprProgram* program, const Mapping& archive)
-{
-    if(hasStructuredStatementAttribute(ArchiveLowerLevelProgram)){
-        return program_->read(archive);
-    }
-    return true;
-}
-
-
-bool MprStructuredStatement::write(Mapping& archive) const
-{
-    if(hasStructuredStatementAttribute(ArchiveLowerLevelProgram)){
-        return program_->write(archive);
-    }
     return true;
 }
 
@@ -629,7 +576,6 @@ struct StatementTypeRegistration {
             .registerType<MprEmptyStatement, MprStatement>("Empty")
             .registerType<MprDummyStatement, MprEmptyStatement>("Dummy")
             .registerType<MprCommentStatement, MprStatement>("Comment")
-            .registerAbstractType<MprStructuredStatement, MprStatement>()
             .registerAbstractType<MprConditionStatement, MprStructuredStatement>()
             .registerType<MprIfStatement, MprConditionStatement>("If")
             .registerType<MprElseStatement, MprStructuredStatement>("Else")

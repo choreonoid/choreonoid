@@ -10,8 +10,7 @@
 namespace cnoid {
 
 class MprProgram;
-typedef ref_ptr<MprProgram> MprProgramPtr;
-
+class MprStructuredStatement;
 class Mapping;
 
 class CNOID_EXPORT MprStatement : public ClonableReferenced
@@ -30,6 +29,7 @@ public:
     }
 
     MprProgram* holderProgram() const;
+    MprStructuredStatement* holderStatement() const;
     MprProgram* topLevelProgram() const;
 
     virtual MprProgram* getLowerLevelProgram();
@@ -43,6 +43,7 @@ public:
 protected:
     MprStatement();
     MprStatement(const MprStatement& org);
+    ~MprStatement();
     
 private:
     mutable int classId_;

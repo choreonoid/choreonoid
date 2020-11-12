@@ -1,4 +1,5 @@
 #include "MprProgram.h"
+#include "MprStructuredStatement.h"
 #include "MprBasicStatements.h"
 #include "MprPositionStatement.h"
 #include "MprStatementRegistration.h"
@@ -27,7 +28,6 @@ public:
     MprProgram* self;
     weak_ref_ptr<MprStructuredStatement> holderStatement;
     MprPositionListPtr positionList;
-    bool hasLocalPositionList;
     Signal<void(MprStatement* statement)> sigStatementUpdated;
     Signal<void(iterator iter)> sigStatementInserted;
     Signal<void(MprProgram* program, MprStatement* statement)> sigStatementRemoved;
@@ -48,13 +48,13 @@ public:
 MprProgram::MprProgram()
 {
     impl = new Impl(this);
+    hasLocalPositionList_ = false;
 }
 
 
 MprProgram::Impl::Impl(MprProgram* self)
     : self(self)
 {
-    hasLocalPositionList = false;
     archiveSession = nullptr;
 }
     
@@ -72,6 +72,8 @@ MprProgram::MprProgram(const MprProgram& org, CloneMap* cloneMap)
             append(statement->clone(), false);
         }
     }
+
+    hasLocalPositionList_ = org.hasLocalPositionList_;
 }
 
 
@@ -86,7 +88,6 @@ MprProgram::Impl::Impl(MprProgram* self, const Impl& org, CloneMap* cloneMap)
             positionList = org.positionList->clone();
         }
     }
-    hasLocalPositionList = org.hasLocalPositionList;
     archiveSession = nullptr;
 }
 
@@ -238,7 +239,7 @@ bool MprProgram::isTopLevelProgram() const
 {
     return impl->holderStatement ? false : true;
 }
-
+    
 
 bool MprProgram::isSubProgram() const
 {
@@ -292,25 +293,19 @@ bool MprProgram::traverseAllStatements(std::function<bool(MprStatement* statemen
 
 void MprProgram::setLocalPositionListEnabled(bool on)
 {
-    if(on != impl->hasLocalPositionList){
+    if(on != hasLocalPositionList_){
         if((on && impl->holderStatement) || !on){
             impl->positionList.reset();
-            impl->hasLocalPositionList = on;
+            hasLocalPositionList_ = on;
         }
     }
-}
-
-
-bool MprProgram::hasLocalPositionList() const
-{
-    return impl->hasLocalPositionList;
 }
 
 
 MprPositionList* MprProgram::positionList()
 {
     if(!impl->positionList){
-        if(impl->holderStatement && !impl->hasLocalPositionList){
+        if(impl->holderStatement && !hasLocalPositionList_){
             if(auto topLevel = topLevelProgram()){
                 impl->positionList = topLevel->positionList();
             }

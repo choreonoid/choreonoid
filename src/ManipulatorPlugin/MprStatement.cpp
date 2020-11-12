@@ -38,6 +38,12 @@ MprStatement::MprStatement(const MprStatement& org)
 }
 
 
+MprStatement::~MprStatement()
+{
+
+}
+
+
 void MprStatement::validateClassId() const
 {
     classId_ = MprStatementClassRegistry::instance().classId(this);
@@ -47,6 +53,15 @@ void MprStatement::validateClassId() const
 MprProgram* MprStatement::holderProgram() const
 {
     return holderProgram_.lock();
+}
+
+
+MprStructuredStatement* MprStatement::holderStatement() const
+{
+    if(auto program = holderProgram_.lock()){
+        return program->holderStatement();
+    }
+    return nullptr;
 }
 
 

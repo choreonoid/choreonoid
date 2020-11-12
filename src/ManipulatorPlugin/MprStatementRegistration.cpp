@@ -1,4 +1,5 @@
 #include "MprStatementRegistration.h"
+#include "MprStatement.h"
 #include <unordered_map>
 #include <mutex>
 #include <typeindex>
