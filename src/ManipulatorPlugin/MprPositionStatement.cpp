@@ -1,7 +1,7 @@
 #include "MprPositionStatement.h"
+#include "MprProgram.h"
 #include "MprStatementRegistration.h"
 #include "MprPositionList.h"
-#include "MprProgram.h"
 #include <cnoid/ValueTree>
 #include <fmt/format.h>
 
@@ -45,7 +45,13 @@ std::string MprPositionStatement::label(int index) const
 std::string MprPositionStatement::positionLabel() const
 {
     if(positionId_.isInt()){
+        if(auto holder = holderProgram()){
+            if(holder->hasLocalPositionList()){
+                return format("({0})", positionId_.toInt());
+            }
+        }
         return format("P{0}", positionId_.toInt());
+
     } else {
         return positionId_.toString();
     }
