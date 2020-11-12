@@ -1,4 +1,5 @@
 #include "MprStatementViewBase.h"
+#include "MprStatementPanel.h"
 #include "MprProgramViewBase.h"
 #include "MprProgramItemBase.h"
 #include "MprStatement.h"
@@ -13,19 +14,6 @@ using namespace std;
 using namespace cnoid;
 
 namespace cnoid {
-
-class MprStatementPanel::Impl
-{
-public:
-    MprStatementPanel* self;
-    MprProgramItemBasePtr programItem;
-    MprStatementPtr statement;
-    ScopedConnection statementUpdateConnection;
-
-    Impl(MprStatementPanel* self);
-    void activate(MprProgramItemBase* programItem, MprStatement* statement);
-    void deactivate();
-};
 
 class MprStatementViewBase::Impl
 {
@@ -49,84 +37,6 @@ public:
     void setStatement(MprProgramItemBase* programItem, MprStatement* statement);
 };
 
-}
-
-
-MprStatementPanel::MprStatementPanel()
-{
-    impl = new Impl(this);
-    setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-}
-
-
-MprStatementPanel::~MprStatementPanel()
-{
-    delete impl;
-}
-
-
-MprStatementPanel::Impl::Impl(MprStatementPanel* self)
-    : self(self)
-{
-
-}
-
-
-void MprStatementPanel::setEditingEnabled(bool on)
-{
-    setEnabled(on);
-}
-
-
-void MprStatementPanel::Impl::activate
-(MprProgramItemBase* programItem_, MprStatement* statement_)
-{
-    programItem = programItem_;
-    statement = statement_;
-
-    statementUpdateConnection =
-        programItem->program()->sigStatementUpdated().connect(
-            [this](MprStatement* updated){
-                if(updated == statement){
-                    self->onStatementUpdated();
-                }
-            });
-
-    self->onActivated();
-}
-
-
-void MprStatementPanel::Impl::deactivate()
-{
-    self->onDeactivated();
-    
-    programItem.reset();
-    statement.reset();
-    statementUpdateConnection.disconnect();
-}
-
-
-void MprStatementPanel::onDeactivated()
-{
-
-}
-
-
-void MprStatementPanel::onStatementUpdated()
-{
-
-}
-
-
-MprProgramItemBase* MprStatementPanel::currentProgramItem()
-{
-    return impl->programItem;
-}
-
-
-MprStatement* MprStatementPanel::getCurrentStatement()
-{
-    return impl->statement;
 }
 
 
@@ -239,7 +149,7 @@ void MprStatementViewBase::Impl::setStatement(MprProgramItemBase* programItem, M
 
     auto prevPanel = dynamic_cast<MprStatementPanel*>(scrollArea.widget());
     if(prevPanel){
-        prevPanel->impl->deactivate();
+        prevPanel->deactivate();
     }
 
     MprStatementPanel* panel = nullptr;
@@ -249,7 +159,7 @@ void MprStatementViewBase::Impl::setStatement(MprProgramItemBase* programItem, M
         panel = getOrCreateStatementPanel(statement);
         if(panel){
             panel->setEditingEnabled(statement->holderProgram()->isEditingEnabled());
-            panel->impl->activate(programItem, statement);
+            panel->activate(programItem, statement);
         }
     } else {
         statementLabel.setText("---");

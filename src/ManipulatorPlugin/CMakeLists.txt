@@ -23,6 +23,7 @@ set(sources
   MprMultiVariableListItem.cpp
   MprProgramViewBase.cpp
   MprProgramViewDelegates.cpp
+  MprStatementPanel.cpp
   MprStatementViewBase.cpp
   MprPositionListView.cpp
   MprVariableListView.cpp
@@ -42,6 +43,7 @@ set(headers
   MprProgramItemBase.h
   MprControllerItemBase.h
   MprMultiVariableListItem.h
+  MprStatementPanel.h
   MprProgramViewBase.h
   MprStatementViewBase.h
   MprPositionListView.h
