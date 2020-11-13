@@ -2,11 +2,10 @@
 #define CNOID_MANIPULATOR_PLUGIN_MPR_STRUCTURED_STATEMENT_H
 
 #include "MprStatement.h"
+#include "MprProgram.h"
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class MprProgram;
 
 class CNOID_EXPORT MprStructuredStatement : public MprStatement
 {
