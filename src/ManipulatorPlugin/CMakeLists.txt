@@ -26,6 +26,7 @@ set(sources
   MprStatementViewBase.cpp
   MprStatementPanel.cpp
   MprPositionStatementPanel.cpp
+  MprTagTraceStatementPanel.cpp
   MprPositionListView.cpp
   MprVariableListView.cpp
   )
@@ -48,6 +49,7 @@ set(headers
   MprStatementViewBase.h
   MprStatementPanel.h
   MprPositionStatementPanel.h
+  MprTagTraceStatementPanel.h
   MprPositionListView.h
   MprVariableListView.h
   exportdecl.h
