@@ -230,6 +230,7 @@ StatementItem::StatementItem(MprStatement* statement_, MprProgram* program, MprP
         viewImpl->statementItemMap[statement_] = this;
     }
     delegate = viewImpl->findStatementDelegate(statement_);
+    delegate->activateStatement(statement_);
     
     Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 
@@ -479,6 +480,12 @@ int MprProgramViewBase::StatementDelegate::Impl::actualLabelSpan
         span = (NumColumns - column);
     }
     return span;
+}
+
+
+void MprProgramViewBase::StatementDelegate::activateStatement(MprStatement* /* statement */) const
+{
+
 }
 
 

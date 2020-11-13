@@ -18,8 +18,10 @@ using fmt::format;
 MprTagTraceStatement::MprTagTraceStatement()
     : T_tags(Position::Identity()),
       baseFrameId_(0),
-      offsetFrameId_(0)
+      offsetFrameId_(0),
+      isAutoUpdateByTagGroupUpdateEnabled_(false)
 {
+    
     auto program = lowerLevelProgram();
     program->setLocalPositionListEnabled(true);
     program->setEditingEnabled(false);
@@ -30,7 +32,8 @@ MprTagTraceStatement::MprTagTraceStatement(const MprTagTraceStatement& org, Clon
     : MprStructuredStatement(org, cloneMap),
       T_tags(org.T_tags),
       baseFrameId_(org.baseFrameId_),
-      offsetFrameId_(org.offsetFrameId_)
+      offsetFrameId_(org.offsetFrameId_),
+      isAutoUpdateByTagGroupUpdateEnabled_(false)
 {
     auto program = lowerLevelProgram();
     program->setLocalPositionListEnabled(true);
@@ -65,9 +68,44 @@ std::string MprTagTraceStatement::label(int index) const
 
 void MprTagTraceStatement::setTagGroup(PositionTagGroup* tags)
 {
-    tagGroup_ = tags;
-    originalTagGroupName_.clear();
-    updateTagTraceProgram();
+    if(tags != tagGroup_){
+        tagGroupConnections.disconnect();
+        tagGroup_ = tags;
+        originalTagGroupName_.clear();
+        updateTagTraceProgram();
+
+        if(tagGroup_ && isAutoUpdateByTagGroupUpdateEnabled_){
+            connectTagGroupUpdateSignals();
+        }
+    }
+}
+
+
+void MprTagTraceStatement::setAutoUpdateByTagGroupUpdateEnabled(bool on)
+{
+    if(on != isAutoUpdateByTagGroupUpdateEnabled_){
+        isAutoUpdateByTagGroupUpdateEnabled_ = on;
+        if(on){
+            connectTagGroupUpdateSignals();
+        } else {
+            tagGroupConnections.disconnect();
+        }
+    }
+}
+
+
+void MprTagTraceStatement::connectTagGroupUpdateSignals()
+{
+    if(tagGroup_){
+        tagGroup_->sigTagAdded().connect(
+            [&](int index){ onTagAdded(index); });
+        tagGroup_->sigTagRemoved().connect(
+            [&](int index, PositionTag*){ onTagRemoved(index); });
+        tagGroup_->sigTagUpdated().connect(
+            [&](int index){ onTagUpdated(index); });
+        tagGroup_->sigOriginOffsetChanged().connect(
+            [&](const Position&){ onTagGroupOriginOffsetChanged(); });
+    }
 }
 
 
@@ -95,6 +133,30 @@ MprProgram::iterator MprTagTraceStatement::expandTraceStatements()
 bool MprTagTraceStatement::isExpandedByDefault() const
 {
     return false;
+}
+
+
+void MprTagTraceStatement::onTagAdded(int /* index */)
+{
+    updateTagTraceProgram();
+}
+
+
+void MprTagTraceStatement::onTagRemoved(int /* index */)
+{
+    updateTagTraceProgram();
+}
+
+
+void MprTagTraceStatement::onTagUpdated(int /* index */)
+{
+    updateTagTraceProgram();
+}
+
+
+void MprTagTraceStatement::onTagGroupOriginOffsetChanged()
+{
+    updateTagTraceProgram();
 }
 
 

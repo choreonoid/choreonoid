@@ -5,6 +5,7 @@
 #include "MprProgram.h"
 #include <cnoid/GeneralId>
 #include <cnoid/PositionTagGroup>
+#include <cnoid/ConnectionSet>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -22,6 +23,12 @@ public:
 
     void setTagGroup(PositionTagGroup* tags);
     PositionTagGroup* tagGroup() { return tagGroup_; }
+
+    //! \note The copy constructor does not copy this property and its is always initialized as false.
+    bool isAutoUpdateByTagGroupUpdateEnabled() const {
+        return isAutoUpdateByTagGroupUpdateEnabled_;
+    }
+    void setAutoUpdateByTagGroupUpdateEnabled(bool on);
 
     const std::string& originalTagGroupName() const { return originalTagGroupName_; }
 
@@ -48,12 +55,21 @@ public:
 protected:
     MprTagTraceStatement(const MprTagTraceStatement& org, CloneMap* cloneMap);
 
+    virtual void onTagAdded(int index);
+    virtual void onTagRemoved(int index);
+    virtual void onTagUpdated(int index);
+    virtual void onTagGroupOriginOffsetChanged();
+
 private:
     PositionTagGroupPtr tagGroup_;
     Position T_tags;
     GeneralId baseFrameId_;
     GeneralId offsetFrameId_;
     std::string originalTagGroupName_;
+    ScopedConnectionSet tagGroupConnections;
+    bool isAutoUpdateByTagGroupUpdateEnabled_;
+
+    void connectTagGroupUpdateSignals();
 };
 
 typedef ref_ptr<MprTagTraceStatement> MprtTagTraceStatementPtr;

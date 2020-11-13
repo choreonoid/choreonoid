@@ -20,7 +20,7 @@ public:
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
     Signal<void(int index)> sigTagUpdated;
-    Signal<void(const Position& T)> sigOffsetPositionChanged;
+    Signal<void(const Position& T)> sigOriginOffsetChanged;
     
     Impl();
     Impl(const Impl& org);
@@ -147,9 +147,9 @@ SignalProxy<void(int index)> PositionTagGroup::sigTagUpdated()
 }
 
 
-SignalProxy<void(const Position& T)> PositionTagGroup::sigOffsetPositionChanged()
+SignalProxy<void(const Position& T)> PositionTagGroup::sigOriginOffsetChanged()
 {
-    return impl->sigOffsetPositionChanged;
+    return impl->sigOriginOffsetChanged;
 }
 
 
@@ -161,9 +161,9 @@ void PositionTagGroup::notifyTagUpdate(int index)
 }
 
 
-void PositionTagGroup::notifyOffsetPositionUpdate()
+void PositionTagGroup::notifyOriginOffsetChange()
 {
-    impl->sigOffsetPositionChanged(T_offset_);
+    impl->sigOriginOffsetChanged(T_offset_);
 }
 
 

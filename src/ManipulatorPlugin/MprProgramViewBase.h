@@ -39,6 +39,7 @@ public:
         StatementDelegate();
         ~StatementDelegate();
         static constexpr int SpanToLast = -1;
+        virtual void activateStatement(MprStatement* statement) const;
         virtual int labelSpan(MprStatement* statement, int column) const;
         virtual QVariant dataOfEditRole(MprStatement* statement, int column) const;
         virtual void setDataOfEditRole(MprStatement* statement, int column, const QVariant& value) const;

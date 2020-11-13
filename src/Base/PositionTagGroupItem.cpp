@@ -108,7 +108,7 @@ public:
     void convertLocalCoordinates(
         LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset);
     void onParentLocationChanged();
-    void onOffsetPositionChanged();
+    void onOriginOffsetChanged();
 };
 
 }
@@ -159,8 +159,8 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
         tags->sigTagUpdated().connect(
             [&](int){ notifyUpdateLater(); }));
     tagGroupConnections.add(
-        tags->sigOffsetPositionChanged().connect(
-            [&](const Position&){ onOffsetPositionChanged(); }));
+        tags->sigOriginOffsetChanged().connect(
+            [&](const Position&){ onOriginOffsetChanged(); }));
 
     tagMarkerSizeGroup = new SgFixedPixelSizeGroup;
     originMarkerVisibility = false;
@@ -334,7 +334,7 @@ void PositionTagGroupItem::Impl::onParentLocationChanged()
 }
 
 
-void PositionTagGroupItem::Impl::onOffsetPositionChanged()
+void PositionTagGroupItem::Impl::onOriginOffsetChanged()
 {
     sigLocationChanged();
     notifyUpdateLater();
@@ -486,7 +486,7 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
         tags->sigTagUpdated().connect(
             [&](int index){ updateTagNodePosition(index); }));
     tagGroupConnections.add(
-        tags->sigOffsetPositionChanged().connect(
+        tags->sigOriginOffsetChanged().connect(
             [&](const Position& T){ setOriginOffset(T); }));
 }
 

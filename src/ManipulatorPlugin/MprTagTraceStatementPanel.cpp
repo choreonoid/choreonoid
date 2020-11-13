@@ -180,6 +180,7 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
     auto programItem = self->currentProgramItem();
     auto kinematicsKit = programItem->kinematicsKit();
     auto statement = self->currentStatement<MprTagTraceStatement>();
+    statement->setAutoUpdateByTagGroupUpdateEnabled(true);
 
     auto& T = statement->tagGroupPosition();
     auto xyz = T.translation();
