@@ -91,9 +91,9 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
 
     touchupButton.setText(_("Touch-up"));
     touchupButton.sigClicked().connect(
-        [&](){
-            self->currentProgramItem()->touchupPosition(
-                self->currentStatement<MprPositionStatement>());
+        [this](){
+            this->self->currentProgramItem()->touchupPosition(
+                this->self->currentStatement<MprPositionStatement>());
         });
     hbox->addWidget(&touchupButton);
     

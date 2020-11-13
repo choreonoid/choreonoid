@@ -110,7 +110,7 @@ void MprTagTraceStatementPanel::Impl::createBaseInterfaces
 
     touchupButton.setText(_("Touch-up"));
     touchupButton.sigClicked().connect(
-        [&](){ touchupPositionAndFrames(); });
+        [this](){ touchupPositionAndFrames(); });
     grid->addWidget(&touchupButton, row, 2, Qt::AlignRight);
 
     ++row;
@@ -295,5 +295,6 @@ void MprTagTraceStatementPanel::Impl::touchupPositionAndFrames()
         statement->updateTagGroupPositionWithGlobalParentCoordinateSystem(
             kinematicsKit, tagGroupItem->parentCoordinateSystem());
     }
+    statement->updateTagTraceProgram();
     statement->notifyUpdate();
 }
