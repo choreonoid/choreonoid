@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-12 23:56+0900\n"
+"POT-Creation-Date: 2020-11-13 16:12+0900\n"
 "PO-Revision-Date: 2019-10-01 23:57+0900\n"
 "Last-Translator: nakaoka <nakaoka@choreonoid.co.jp>\n"
 "Language-Team: Japanese\n"
@@ -65,7 +65,7 @@ msgstr "注釈"
 msgid "J"
 msgstr ""
 
-#: MprPositionListView.cpp:212
+#: MprPositionListView.cpp:212 MprTagTraceStatementPanel.cpp:108
 msgid "Position"
 msgstr "ポジション"
 
@@ -79,6 +79,7 @@ msgid "Add"
 msgstr "追加"
 
 #: MprPositionListView.cpp:546 MprPositionStatementPanel.cpp:92
+#: MprTagTraceStatementPanel.cpp:111
 msgid "Touch-up"
 msgstr "タッチアップ"
 
@@ -140,7 +141,7 @@ msgstr "{}用のプログラムアイテムがみつかりません．"
 
 #: MprControllerItemBase.cpp:293
 msgid "Program \"{0}\" is incomplete due to unresolved references."
-msgstr ""
+msgstr "プログラム \"{0}\" は未解決の参照があり不完全です．"
 
 #: MprControllerItemBase.cpp:302
 msgid "The startup program for {0} is not specified."
@@ -220,40 +221,42 @@ msgstr "{0}は{1}がシグナルI/Oデバイスを有していないため実行
 msgid "Speed ratio"
 msgstr "速度比率"
 
-#: MprTagTraceStatement.cpp:117
+#: MprTagTraceStatement.cpp:179
 msgid ""
 "Tag group \"{0}\" used in a tag trace statement of \"{1}\" is not found.\n"
 msgstr ""
+"\"{1}\" のタグトレースステートメントで使用されているタググループ \"{0}\" がみ"
+"つかりません．\n"
 
 #: MprVariable.cpp:309
 msgid "Invalid value type"
 msgstr "無効な値型"
 
-#: MprProgramViewBase.cpp:739 MprVariableListView.cpp:678
+#: MprProgramViewBase.cpp:746 MprVariableListView.cpp:678
 msgid "Refresh"
 msgstr "リフレッシュ"
 
-#: MprProgramViewBase.cpp:742
+#: MprProgramViewBase.cpp:749
 msgid "Renumbering"
 msgstr "リナンバリング"
 
-#: MprProgramViewBase.cpp:769
+#: MprProgramViewBase.cpp:776
 msgid "Program item is not specified."
 msgstr "プログラムアイテムが指定されていません．"
 
-#: MprProgramViewBase.cpp:1534
+#: MprProgramViewBase.cpp:1541
 msgid "Cut"
 msgstr "カット"
 
-#: MprProgramViewBase.cpp:1537
+#: MprProgramViewBase.cpp:1544
 msgid "Copy"
 msgstr "コピー"
 
-#: MprProgramViewBase.cpp:1540
+#: MprProgramViewBase.cpp:1547
 msgid "Paste"
 msgstr "ペースト"
 
-#: MprProgramViewBase.cpp:1549
+#: MprProgramViewBase.cpp:1556
 msgid "Insert empty line"
 msgstr "空行の挿入"
 
@@ -265,11 +268,11 @@ msgstr "ポジション："
 msgid "Move to"
 msgstr "移動"
 
-#: MprPositionStatementPanel.cpp:155
+#: MprPositionStatementPanel.cpp:155 MprTagTraceStatementPanel.cpp:132
 msgid "Base"
 msgstr "基準座標"
 
-#: MprPositionStatementPanel.cpp:160
+#: MprPositionStatementPanel.cpp:160 MprTagTraceStatementPanel.cpp:137
 msgid "Tool"
 msgstr "ツール"
 
@@ -288,6 +291,14 @@ msgstr "無効な条件型"
 #: MprPosition.cpp:87
 msgid "The \"id\" key is not found in a manipulator position node"
 msgstr "マニピュレータ位置ノードの\"id\"キーが見つかりません"
+
+#: MprTagTraceStatementPanel.cpp:93
+msgid "Tag Group"
+msgstr "タググループ"
+
+#: MprTagTraceStatementPanel.cpp:266
+msgid "The program to trace {0} cannot be generated."
+msgstr "{0}をトレースするプログラムを生成できません．"
 
 #: MprVariableListView.cpp:241
 msgid "No."

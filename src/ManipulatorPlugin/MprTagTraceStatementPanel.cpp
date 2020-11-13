@@ -105,7 +105,7 @@ void MprTagTraceStatementPanel::Impl::createBaseInterfaces
 
     int row = grid->rowCount();
 
-    grid->addWidget(new QLabel(_("Position ")), row, 0, Qt::AlignLeft);
+    grid->addWidget(new QLabel(_("Position")), row, 0, Qt::AlignLeft);
     grid->addWidget(new QLabel(" : "), row, 1);
 
     touchupButton.setText(_("Touch-up"));
