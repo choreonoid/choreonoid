@@ -318,6 +318,14 @@ int PositionTagListWidget::currentTagIndex() const
 }
 
 
+void PositionTagListWidget::setCurrentTagIndex(int tagIndex)
+{
+    selectionModel()->setCurrentIndex(
+        impl->tagGroupModel->index(tagIndex, 0, QModelIndex()),
+        QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows | QItemSelectionModel::Clear);
+}
+
+
 void PositionTagListWidget::removeSelectedTags()
 {
     if(impl->tagGroupItem){
@@ -396,6 +404,7 @@ void PositionTagListWidget::selectionChanged(const QItemSelection& selected, con
     for(auto& index : selected.indexes()){
         impl->selectedTagIndices.push_back(index.row());
     }
+
     impl->sigTagSelectionChanged(impl->selectedTagIndices);
 }
 

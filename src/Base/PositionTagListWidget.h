@@ -16,6 +16,7 @@ public:
     PositionTagListWidget(QWidget* parent = nullptr);
     void setTagGroupItem(PositionTagGroupItem* item);
     int currentTagIndex() const;
+    void setCurrentTagIndex(int tagIndex);
     void removeSelectedTags();
 
     SignalProxy<void(const std::vector<int>& selected)> sigTagSelectionChanged();
