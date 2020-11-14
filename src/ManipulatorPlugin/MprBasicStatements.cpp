@@ -125,6 +125,58 @@ bool MprCommentStatement::write(Mapping& archive) const
 }
 
 
+MprGroupStatement::MprGroupStatement()
+{
+    setStructuredStatementAttribute(ArchiveLowerLevelProgram);
+}
+
+
+MprGroupStatement::MprGroupStatement(const MprGroupStatement& org, CloneMap* cloneMap)
+    : MprStructuredStatement(org, cloneMap),
+      groupName_(org.groupName_)
+{
+
+}
+
+
+Referenced* MprGroupStatement::doClone(CloneMap* cloneMap) const
+{
+    return new MprGroupStatement(*this);
+}
+
+
+std::string MprGroupStatement::label(int index) const
+{
+    if(index == 0){
+        return "Group";
+    } else if(index == 1){
+        if(groupName_.empty()){
+            return "---";
+        } else {
+            return groupName_;
+        }
+    }
+    return string();
+}
+
+
+bool MprGroupStatement::read(MprProgram* program, const Mapping& archive)
+{
+    if(MprStructuredStatement::read(program, archive)){
+        archive.read("group_name", groupName_);
+        return true;
+    }
+    return false;
+}
+
+
+bool MprGroupStatement::write(Mapping& archive) const
+{
+    archive.write("group_name", groupName_, DOUBLE_QUOTED);
+    return MprStructuredStatement::write(archive);    
+}
+
+
 MprConditionStatement::MprConditionStatement()
 {
     setStructuredStatementAttribute(ArchiveLowerLevelProgram);
@@ -576,6 +628,7 @@ struct StatementTypeRegistration {
             .registerType<MprEmptyStatement, MprStatement>("Empty")
             .registerType<MprDummyStatement, MprEmptyStatement>("Dummy")
             .registerType<MprCommentStatement, MprStatement>("Comment")
+            .registerType<MprGroupStatement, MprStructuredStatement>("Group")
             .registerAbstractType<MprConditionStatement, MprStructuredStatement>()
             .registerType<MprIfStatement, MprConditionStatement>("If")
             .registerType<MprElseStatement, MprStructuredStatement>("Else")

@@ -45,9 +45,9 @@ public:
     void updateTagGroupPositionWithGlobalParentCoordinateSystem(
         LinkKinematicsKit* kinematicsKit, const Position& T_parent);
 
-    MprProgram::iterator expandTraceStatements();
-    
     virtual bool updateTagTraceProgram() = 0;
+    bool decomposeIntoTagTraceStatements();
+    
     virtual bool isExpandedByDefault() const override;
     virtual bool read(MprProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;

@@ -171,12 +171,24 @@ MprProgram::iterator MprProgram::remove(iterator pos, bool doNotify)
 
 bool MprProgram::remove(MprStatement* statement, bool doNotify)
 {
-    auto pos = std::find(begin(), end(), statement);
+    auto pos = find(statement);
     if(pos != statements_.end()){
         remove(pos, doNotify);
         return true;
     }
     return false;
+}
+
+
+MprProgram::iterator MprProgram::find(MprStatement* statement)
+{
+    return std::find(begin(), end(), statement);
+}
+
+
+MprProgram::const_iterator MprProgram::find(MprStatement* statement) const
+{
+    return std::find(begin(), end(), statement);
 }
 
 

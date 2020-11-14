@@ -143,6 +143,7 @@ public:
     void setCurrentProgramPositionToLog(MprControllerLog* log);
     void clear();
     bool interpretCommentStatement(MprCommentStatement* statement);
+    bool interpretGroupStatement(MprGroupStatement* statement);
     bool interpretIfStatement(MprIfStatement* statement);
     bool interpretWhileStatement(MprWhileStatement* statement);
     bool interpretCallStatement(MprCallStatement* statement);
@@ -208,6 +209,10 @@ void MprControllerItemBase::registerBaseStatementInterpreters()
     registerStatementInterpreter<MprCommentStatement>(
         [impl_](MprCommentStatement* statement){
             return impl_->interpretCommentStatement(statement); });
+
+    registerStatementInterpreter<MprGroupStatement>(
+        [impl_](MprGroupStatement* statement){
+            return impl_->interpretGroupStatement(statement); });
 
     registerStatementInterpreter<MprIfStatement>(
         [impl_](MprIfStatement* statement){
@@ -803,6 +808,14 @@ void MprControllerItemBase::setSpeedRatio(double r)
 bool MprControllerItemBase::Impl::interpretCommentStatement(MprCommentStatement*)
 {
     ++iterator;
+    return true;
+}
+
+
+bool MprControllerItemBase::Impl::interpretGroupStatement(MprGroupStatement* statement)
+{
+    auto program = statement->lowerLevelProgram();
+    self->setCurrent(program, program->begin(), ++self->getCurrentIterator());
     return true;
 }
 

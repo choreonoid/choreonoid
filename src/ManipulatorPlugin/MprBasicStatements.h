@@ -64,6 +64,29 @@ private:
 typedef ref_ptr<MprCommentStatement> MprCommentStatementPtr;
 
 
+class CNOID_EXPORT MprGroupStatement : public MprStructuredStatement
+{
+public:
+    MprGroupStatement();
+    virtual std::string label(int index) const override;
+
+    const std::string& groupName() const { return groupName_; }
+    void setGroupName(const std::string& name) { groupName_ = name; }
+    
+    virtual bool read(MprProgram* program, const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const;
+
+protected:
+    MprGroupStatement(const MprGroupStatement& org, CloneMap* cloneMap);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    std::string groupName_;
+};
+
+typedef ref_ptr<MprGroupStatement> MprGroupStatementPtr;
+
+
 class CNOID_EXPORT MprConditionStatement : public MprStructuredStatement
 {
 public:

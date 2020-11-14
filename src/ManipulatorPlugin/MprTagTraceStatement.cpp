@@ -1,4 +1,7 @@
 #include "MprTagTraceStatement.h"
+#include "MprPositionStatement.h"
+#include "MprPosition.h"
+#include "MprPositionList.h"
 #include "MprStatementRegistration.h"
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/ValueTree>
@@ -124,12 +127,6 @@ void MprTagTraceStatement::updateTagGroupPositionWithGlobalParentCoordinateSyste
 }
 
 
-MprProgram::iterator MprTagTraceStatement::expandTraceStatements()
-{
-    return holderProgram()->end();
-}
-
-
 bool MprTagTraceStatement::isExpandedByDefault() const
 {
     return false;
@@ -158,6 +155,53 @@ void MprTagTraceStatement::onTagGroupOriginOffsetChanged()
 {
     updateTagTraceProgram();
 }
+
+
+bool MprTagTraceStatement::decomposeIntoTagTraceStatements()
+{
+    if(!tagGroup_){
+        return false;
+    }
+    auto program = holderProgram();
+    if(!program){
+        return false;
+    }
+    auto positions = program->positionList();
+    
+    if(!updateTagTraceProgram()){
+        return false;
+    }
+
+    CloneMap cloneMap;
+    MprGroupStatementPtr group = new MprGroupStatement;
+    group->setGroupName(tagGroup_->name());
+    auto decomposed = group->lowerLevelProgram();
+
+    for(auto srcStatement : *lowerLevelProgram()){
+        MprStatementPtr statement = srcStatement->clone(cloneMap);
+        MprPositionStatementPtr positionStatement = dynamic_pointer_cast<MprPositionStatement>(statement);
+        if(positionStatement){
+            auto srcPosition = dynamic_pointer_cast<MprPositionStatement>(srcStatement)->position();
+            if(!srcPosition){
+                return false;
+            }
+            auto position = srcPosition->clone();
+            auto id = positions->createNextId();
+            position->setId(id);
+            positions->append(position);
+            positionStatement->setPositionId(id);
+        }
+        decomposed->append(statement);
+    }
+
+    // Replace the original statement with the group statement that has the decomposed statements.
+    auto iter = program->find(this);
+    iter = program->remove(iter);
+    program->insert(iter, group);
+
+    return true;
+}
+
 
 
 bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
