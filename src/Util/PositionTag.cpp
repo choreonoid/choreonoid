@@ -35,7 +35,7 @@ PositionTag::PositionTag(const PositionTag& org)
 }
 
 
-bool PositionTag::read(const Mapping* archive, ArchiveSession*)
+bool PositionTag::read(const Mapping* archive, ArchiveSession&)
 {
     bool isValid = false;
     Vector3 v;
@@ -53,7 +53,7 @@ bool PositionTag::read(const Mapping* archive, ArchiveSession*)
 }
 
 
-bool PositionTag::write(Mapping* archive, ArchiveSession*) const
+bool PositionTag::write(Mapping* archive, ArchiveSession&) const
 {
     archive->setDoubleFormat("%.9g");
     cnoid::write(archive, "translation", position_.translation());

@@ -57,6 +57,7 @@ public:
     }
 
     virtual void putWarning(const std::string& message);
+    virtual void putError(const std::string& message);
 
     void resolvePendingReferences();
     bool finalize();

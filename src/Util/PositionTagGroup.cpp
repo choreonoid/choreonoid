@@ -3,7 +3,10 @@
 #include "ArchiveSession.h"
 #include "EigenArchive.h"
 #include "Uuid.h"
+#include "UTF8.h"
+#include "Tokenizer.h"
 #include <fmt/format.h>
+#include <fstream>
 #include "gettext.h"
 
 using namespace std;
@@ -111,6 +114,21 @@ void PositionTagGroup::insert(int index, PositionTag* tag)
 }
 
 
+void PositionTagGroup::insert(int index, PositionTagGroup* group)
+{
+    int size = tags_.size();
+    if(index > size){
+        index = size;
+    }
+    auto it = tags_.begin() + index;
+    for(auto& tag : *group){
+        it = tags_.insert(it, tag);
+        impl->sigTagAdded(index++);
+        it++;
+    }
+}
+
+
 void PositionTagGroup::append(PositionTag* tag)
 {
     insert(tags_.size(), tag);
@@ -167,7 +185,7 @@ void PositionTagGroup::notifyOriginOffsetChange()
 }
 
 
-bool PositionTagGroup::read(const Mapping* archive, ArchiveSession* session)
+bool PositionTagGroup::read(const Mapping* archive, ArchiveSession& session)
 {
     auto& typeNode = archive->get("type");
     if(typeNode.toString() != "PositionTagGroup"){
@@ -184,7 +202,7 @@ bool PositionTagGroup::read(const Mapping* archive, ArchiveSession* session)
     archive->read("name", impl->name);
 
     impl->uuid.read(archive);
-    if(!session->addReference(impl->uuid, this)){
+    if(!session.addReference(impl->uuid, this)){
         impl->uuid = Uuid(); // assign a new UUID to resolve the duplication
     }
 
@@ -212,7 +230,7 @@ bool PositionTagGroup::read(const Mapping* archive, ArchiveSession* session)
 }
 
 
-bool PositionTagGroup::write(Mapping* archive, ArchiveSession* session) const
+bool PositionTagGroup::write(Mapping* archive, ArchiveSession& session) const
 {
     archive->write("type", "PositionTagGroup");
     archive->write("format_version", 1.0);
@@ -234,5 +252,66 @@ bool PositionTagGroup::write(Mapping* archive, ArchiveSession* session) const
         }
     }
     
+    return true;
+}
+
+
+bool PositionTagGroup::loadCsvFile
+(const std::string& filename, CsvFormat csvFormat, ArchiveSession& session)
+{
+    ifstream is(fromUTF8(filename).c_str());
+    if(!is){
+        session.putError(format(_("\"{}\" cannot be opened.\n"), filename));
+        return false;
+    }
+  
+    int lineNumber = 0;
+    string line;
+    Tokenizer<CharSeparator<char>> tokens(CharSeparator<char>(","));
+    vector<Vector6> data;
+
+    try {
+        while(getline(is, line)){
+            lineNumber++;
+            tokens.assign(line);
+            Vector6 xyzrpy;
+            int i = 0;
+            for(auto& token : tokens){
+                if(i > 5){
+                    session.putError(
+                        format(_("Too many elements at line {0} of \"{1}\".\n"), lineNumber, filename));
+                    return false;
+                }
+                xyzrpy[i++] = std::stod(token);
+            }
+            while(i < 6){
+                xyzrpy[i++] = 0.0;
+            }
+            data.push_back(xyzrpy);
+        }
+    }
+    catch(std::logic_error& ex){
+        session.putError(format(_("{0} at line {1} of \"{2}\".\n"), ex.what(), lineNumber, filename));
+        return false;
+    }
+
+    if(csvFormat == XYZMMRPYDEG){
+        for(auto& xyzrpy : data){
+            auto tag = new PositionTag;
+            tag->setTranslation(xyzrpy.head<3>() / 1000.0);
+            tag->setRotation(rotFromRpy(radian(xyzrpy.tail<3>())));
+            append(tag);
+        }
+    } else if(csvFormat == XYZMM){
+        for(auto& xyzrpy : data){
+            auto tag = new PositionTag;
+            tag->setTranslation(xyzrpy.head<3>() / 1000.0);
+            append(tag);
+        }
+    } else {
+        session.putError(_("Unsupported CSV format is specified.\n"));
+        return false;
+    }
+        
     return true;
 }

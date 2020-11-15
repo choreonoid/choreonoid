@@ -65,6 +65,7 @@ public:
     Container::const_iterator end() const { return tags_.end(); }
     
     void insert(int index, PositionTag* point);
+    void insert(int index, PositionTagGroup* group);
     void append(PositionTag* point);
     bool removeAt(int index);
     SignalProxy<void(int index)> sigTagAdded();
@@ -75,8 +76,11 @@ public:
     void notifyTagUpdate(int index);
     void notifyOriginOffsetChange();
     
-    bool read(const Mapping* archive, ArchiveSession* session);
-    bool write(Mapping* archive, ArchiveSession* session) const;
+    bool read(const Mapping* archive, ArchiveSession& session);
+    bool write(Mapping* archive, ArchiveSession& session) const;
+
+    enum CsvFormat { XYZMMRPYDEG = 0, XYZMM = 1 };
+    bool loadCsvFile(const std::string& filename, CsvFormat csvFormat, ArchiveSession& session);
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

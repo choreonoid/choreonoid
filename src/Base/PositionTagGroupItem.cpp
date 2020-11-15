@@ -417,7 +417,7 @@ void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool PositionTagGroupItem::store(Archive& archive)
 {
-    impl->tags->write(&archive, archive.session());
+    impl->tags->write(&archive, *archive.session());
     archive.write("origin_marker", impl->originMarkerVisibility);
     archive.write("tag_marker_size", tagMarkerSize());
     archive.write("show_edges", impl->edgeVisibility);
@@ -427,7 +427,7 @@ bool PositionTagGroupItem::store(Archive& archive)
 
 bool PositionTagGroupItem::restore(const Archive& archive)
 {
-    if(impl->tags->read(&archive, archive.session())){
+    if(impl->tags->read(&archive, *archive.session())){
         if(archive.get("origin_marker", false)){
             setOriginMarkerVisibility(true);
         }

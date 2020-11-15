@@ -51,8 +51,8 @@ public:
         hasAttitude_ = true;
     }
     
-    bool read(const Mapping* archive, ArchiveSession* session);
-    bool write(Mapping* archive, ArchiveSession* session) const;
+    bool read(const Mapping* archive, ArchiveSession& session);
+    bool write(Mapping* archive, ArchiveSession& session) const;
 
 private:
     Position position_;

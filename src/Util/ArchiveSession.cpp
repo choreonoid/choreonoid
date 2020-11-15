@@ -139,6 +139,12 @@ void ArchiveSession::putWarning(const std::string& message)
 }
 
 
+void ArchiveSession::putError(const std::string& message)
+{
+    std::cerr << message << std::flush;
+}
+
+
 void ArchiveSession::resolvePendingReferences()
 {
     impl->resolvePendingReferences(false);
