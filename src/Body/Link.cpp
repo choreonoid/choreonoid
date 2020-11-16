@@ -217,12 +217,12 @@ bool Link::removeChild(Link* childToRemove)
     while(link){
         if(link == childToRemove){
             childToRemove->parent_ = 0;
-            childToRemove->sibling_ = 0;
             if(prevSibling){
                 prevSibling->sibling_ = link->sibling_;
             } else {
                 child_ = link->sibling_;
             }
+            childToRemove->sibling_ = 0;
             childToRemove->setBody(0);
             return true;
         }
