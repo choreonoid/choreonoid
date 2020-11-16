@@ -43,6 +43,7 @@ public:
     ToolButton* fkToggle;
     ToolButton* presetToggle;
     ToolButton* ikToggle;
+    Signal<void()> sigKinematicsModeChanged;
 
     ToolButton* draggerToggle;
     ToolButton* footSnapToggle;
@@ -87,10 +88,13 @@ KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
     
     fkToggle = self->addToggleButton(QIcon(":/Body/icon/fk.svg"), _("Enable forward kinematics"));
     fkToggle->setChecked(true);
+    fkToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
     presetToggle = self->addToggleButton(QIcon(":/Body/icon/fkik.svg"), _("Use preset Kinematics"));
     presetToggle->setChecked(true);
+    presetToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
     ikToggle = self->addToggleButton(QIcon(":/Body/icon/ik.svg"), _("Enable inverse kinematics"));
     ikToggle->setChecked(true);
+    ikToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
     self->addSpacing();
 
     draggerToggle = self->addToggleButton(QIcon(":/Body/icon/rotation.svg"), _("Enable link orientation editing"));
@@ -159,7 +163,13 @@ bool KinematicsBar::isInverseKinematicsEnabled() const
     return impl->ikToggle->isChecked();
 }
 
-        
+
+SignalProxy<void()> KinematicsBar::sigKinematicsModeChanged()
+{
+    return impl->sigKinematicsModeChanged;
+}
+    
+
 bool KinematicsBar::isPositionDraggerEnabled() const
 {
     return impl->draggerToggle->isChecked();
@@ -259,26 +269,34 @@ bool KinematicsBar::restoreState(const Archive& archive)
 
 bool KinematicsBarImpl::restoreState(const Archive& archive)
 {
-    presetToggle->setChecked(archive.get("preset_kinematics", presetToggle->isChecked()));
-    fkToggle->setChecked(archive.get("forward_kinematics", fkToggle->isChecked()));
-    ikToggle->setChecked(archive.get("inverse_kinematics", ikToggle->isChecked()));
-    
-    // old format
-    string mode;
-    if(archive.read("mode", mode)){
-        if(mode == "FK"){
-            fkToggle->setChecked(true);
-            ikToggle->setChecked(false);
-            presetToggle->setChecked(false);
-        } else if(mode == "IK"){
-            fkToggle->setChecked(false);
-            ikToggle->setChecked(true);
-            presetToggle->setChecked(false);
-        } else if(mode == "AUTO"){
-            fkToggle->setChecked(true);
-            ikToggle->setChecked(true);
-            presetToggle->setChecked(true);
+    bool modeChanged = false;
+    bool on;
+    if(archive.read("preset_kinematics", on)){
+        if(on != presetToggle->isChecked()){
+            presetToggle->blockSignals(true);
+            presetToggle->setChecked(on);
+            presetToggle->blockSignals(false);
+            modeChanged = true;
         }
+    }
+    if(archive.read("forward_kinematics", on)){
+        if(on != fkToggle->isChecked()){
+            fkToggle->blockSignals(true);
+            fkToggle->setChecked(on);
+            fkToggle->blockSignals(false);
+            modeChanged = true;
+        }
+    }
+    if(archive.read("inverse_kinematics", on)){
+        if(on != ikToggle->isChecked()){
+            ikToggle->blockSignals(true);
+            ikToggle->setChecked(on);
+            ikToggle->blockSignals(false);
+            modeChanged = true;
+        }
+    }
+    if(modeChanged){
+        sigKinematicsModeChanged();
     }
     
     draggerToggle->setChecked(archive.get("enablePositionDragger", draggerToggle->isChecked()));

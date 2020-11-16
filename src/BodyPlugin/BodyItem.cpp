@@ -653,8 +653,9 @@ void BodyItem::Impl::setCurrentBaseLink(Link* link, bool forceUpdate)
         } else {
             fkTraverse.find(body->rootLink());
         }
+        currentBaseLink = link;
+        self->notifyUpdate();
     }
-    currentBaseLink = link;
 }
 
 
@@ -870,14 +871,11 @@ LinkKinematicsKit* BodyItem::findPresetLinkKinematicsKit(Link* targetLink)
 std::shared_ptr<InverseKinematics> BodyItem::findPresetIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;    
-    
     if(isAttachedToParentBody_ && targetLink->isBodyRoot()){
         ik = make_shared<MyCompositeBodyIK>(impl);
-
     } else if(auto kinematicsKit = findPresetLinkKinematicsKit(targetLink)){
         ik = kinematicsKit->inverseKinematics();
     }
-    
     return ik;
 }
 
@@ -891,15 +889,11 @@ LinkKinematicsKit* BodyItem::getCurrentLinkKinematicsKit(Link* targetLink)
 std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;
-    
-    auto rootLink = impl->body->rootLink();
-    
     if(isAttachedToParentBody_ && targetLink->isBodyRoot()){
         ik = make_shared<MyCompositeBodyIK>(impl);
     } else if(auto kinematicsKit = getCurrentLinkKinematicsKit(targetLink)){
         ik = kinematicsKit->inverseKinematics();
     }
-
     return ik;
 }
 

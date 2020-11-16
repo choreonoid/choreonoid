@@ -29,10 +29,11 @@ public:
         FK_MODE = ForwardKinematics,
         IK_MODE = InverseKinematics
     };
-    int mode() const;
     
+    int mode() const;
     bool isForwardKinematicsEnabled() const;
     bool isInverseKinematicsEnabled() const;
+    SignalProxy<void()> sigKinematicsModeChanged();
 
     bool isPositionDraggerEnabled() const;
     bool isFootSnapMode() const;

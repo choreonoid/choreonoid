@@ -1,4 +1,5 @@
 #include "LinkPositionWidget.h"
+#include "KinematicsBar.h"
 #include <cnoid/PositionWidget>
 #include <cnoid/BodyItem>
 #include <cnoid/Body>
@@ -100,6 +101,8 @@ public:
     CoordinateFramePtr baseFrame;
     CoordinateFramePtr offsetFrame;
     FrameLabelFunction frameLabelFunction[2];
+
+    ScopedConnection kinematicsBarConnection;
     
     QLabel resultLabel;
 
@@ -138,6 +141,7 @@ public:
     void onCoordinateModeRadioToggled(int mode);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
+    void onKinematicsModeChanged();
     void setCoordinateFrameInterfaceEnabled(bool isBaseEnabled, bool isOffsetEnabled);
     void updateCoordinateFrameCandidates();
     void updateCoordinateFrameCandidates(int frameComboIndex);
@@ -185,6 +189,10 @@ LinkPositionWidget::Impl::Impl(LinkPositionWidget* self)
     identityFrame = new CoordinateFrame;
     baseFrame = identityFrame;
     offsetFrame = identityFrame;
+
+    kinematicsBarConnection =
+        KinematicsBar::instance()->sigKinematicsModeChanged().connect(
+            [&](){ onKinematicsModeChanged(); });
 }
 
 
@@ -502,6 +510,10 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
             targetConnections.add(
                 bodyItem->sigKinematicStateChanged().connect(
                     [&](){ updateDisplayWithCurrentLinkPosition(); }));
+
+            targetConnections.add(
+                bodyItem->sigUpdated().connect(
+                    [&](){ updateTargetLink(targetLink); }));
         }
     }
 
@@ -565,6 +577,14 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
     setBodyCoordinateModeEnabled(isBodyCoordinateModeEnabled);
 
     initializeConfigurationInterface();
+}
+
+
+void LinkPositionWidget::Impl::onKinematicsModeChanged()
+{
+    if(targetLink){
+        updateTargetLink(targetLink);
+    }
 }
 
 
