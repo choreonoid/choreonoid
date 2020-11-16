@@ -58,7 +58,7 @@ public:
     JointIndicator(JointDisplacementWidget::Impl* baseImpl, int index);
     int attachTo(QGridLayout& grid, int row, int col, bool overlapJointName);
     void setNextTabOrderIndicator(JointIndicator* next);
-    bool setRangeLabelValues(double lower, double upper, int precision);
+    bool setRangeLabelValue(QLabel& label, double value, bool isInfinite, int precision);
     void initialize(Link* joint);
     void updateDisplacement(bool forceUpdate);
     int getCurrentPhase();
@@ -426,24 +426,16 @@ void JointIndicator::setNextTabOrderIndicator(JointIndicator* next)
 }
 
 
-bool JointIndicator::setRangeLabelValues(double lower, double upper, int precision)
+bool JointIndicator::setRangeLabelValue(QLabel& label, double value, bool isInfinite, int precision)
 {
-    bool isValid = true;
-    int lowerDigits = static_cast<int>(log10(fabs(lower))) + 1;
-    if(lowerDigits > 5){
-        lowerLimitLabel.setText("*");
-        isValid = false;
+    int digits = static_cast<int>(log10(fabs(value))) + 1;
+    if(digits > 5){
+        label.setText("*");
+        return false;
     } else {
-        lowerLimitLabel.setText(QString::number(lower, 'f', precision));
+        label.setText(QString::number(value, 'f', precision));
     }
-    int upperDigits = static_cast<int>(log10(fabs(upper))) + 1;
-    if(upperDigits > 5){
-        upperLimitLabel.setText("*");
-        isValid = false;
-    } else {
-        upperLimitLabel.setText(QString::number(upper, 'f', precision));
-    }
-    return isValid;
+    return !isInfinite;
 }
 
 
@@ -467,7 +459,9 @@ void JointIndicator::initialize(Link* joint)
     
     unitConversionRatio = 1.0;
     double lower = joint->q_lower();
+    bool isLowerInfinite = (joint->q_lower() == -std::numeric_limits<double>::max());
     double upper = joint->q_upper();
+    bool isUpperInfinite = (joint->q_upper() == std::numeric_limits<double>::max());
     
     slider.blockSignals(true);
     spin.blockSignals(true);
@@ -480,15 +474,21 @@ void JointIndicator::initialize(Link* joint)
             unitConversionRatio = 180.0 / PI;
             lower *= unitConversionRatio;
             upper *= unitConversionRatio;
-            if(!setRangeLabelValues(lower, upper, 0)){
-                lower = -180.0;
-                upper = 180.0;
+            if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, 0)){
+                lower = -360.0;
+                isValidRange = false;
+            }
+            if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, 0)){
+                upper = 360.0;
                 isValidRange = false;
             }
         } else {
-            if(!setRangeLabelValues(lower, upper, baseImpl->angleDecimals)){
-                lower = -M_PI;
-                upper = M_PI;
+            if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, baseImpl->angleDecimals)){
+                lower = -2.0 * M_PI;
+                isValidRange = false;
+            }
+            if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, baseImpl->angleDecimals)){
+                upper = 2.0 * M_PI;
                 isValidRange = false;
             }
         }
@@ -515,13 +515,17 @@ void JointIndicator::initialize(Link* joint)
             unitConversionRatio = 1000.0;
             lower *= unitConversionRatio;
             upper *= unitConversionRatio;
-            if(!setRangeLabelValues(lower, upper, baseImpl->lengthDecimals)){
+            if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, baseImpl->lengthDecimals)){
                 lower = -1000.0;
+            }
+            if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, baseImpl->lengthDecimals)){
                 upper = 1000.0;
             }
         } else {
-            if(!setRangeLabelValues(lower, upper, baseImpl->lengthDecimals)){
+            if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, baseImpl->lengthDecimals)){
                 lower = -1.0;
+            }
+            if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, baseImpl->lengthDecimals)){
                 upper = 1.0;
             }
         }
@@ -535,7 +539,8 @@ void JointIndicator::initialize(Link* joint)
         
     } else {
         slider.setRange(0, 0);
-        setRangeLabelValues(0.0, 0.0, 0);
+        setRangeLabelValue(lowerLimitLabel, 0.0, false, 0);
+        setRangeLabelValue(upperLimitLabel, 0.0, false, 0);
         slider.setEnabled(false);
         spin.setDecimals(0);
         spin.setRange(0.0, 0.0);
@@ -547,11 +552,11 @@ void JointIndicator::initialize(Link* joint)
         minPhase = 0;
         maxPhase = 0;
         double q0 = joint->q_initial();
-        if((joint->q_upper() - q0) > M_PI){
+        if((!isUpperInfinite && joint->q_upper() - q0) > M_PI){
             maxPhase = 1 + trunc((joint->q_upper() - q0 - M_PI) / (2.0 * M_PI));
             hasPhases = true;
         }
-        if((joint->q_lower() - q0) < -M_PI){
+        if(!isLowerInfinite && (joint->q_lower() - q0) < -M_PI){
             minPhase = -1 + trunc((joint->q_lower() - q0 + M_PI) / (2.0 * M_PI));
             hasPhases = true;
         }
