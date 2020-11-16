@@ -121,6 +121,7 @@ void FountainProgram::updateParticleBuffers(SceneFountain* fountain)
     Vector3f v;
     float speed, theta, phi;
     vector<GLfloat> data(numParticles * 3);
+    setRandomSeed();
     for(GLuint i = 0; i < numParticles; ++i) {
         
         theta = emissionRange / 2.0f * frandom();

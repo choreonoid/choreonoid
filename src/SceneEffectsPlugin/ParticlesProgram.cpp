@@ -94,11 +94,8 @@ void ParticlesProgramBase::requestRendering
 
 float ParticlesProgramBase::frandom(float max)
 {
-    using dist_type = std::uniform_real_distribution<float>;
-    static dist_type dist(0.f,1.f);
-    dist_type::param_type dist_param(0.f,max);
-    dist.param(dist_param);
-    return dist(randomNumberGenerator_);
+    floatDistribution.param(FloatDistribution::param_type(0.0f, max));
+    return floatDistribution(randomNumberGenerator);
 }
 
 void ParticlesProgramBase::render
