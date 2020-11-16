@@ -831,9 +831,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
             }
         }
     } else if(mode == KinematicsBar::InverseKinematics){
-        if(!link->isBodyRoot() || bodyItem->isAttachedToParentBody()){
-            type = LinkOperationType::IK;
-        }
+        type = LinkOperationType::IK;
     }
     
     return type;

@@ -132,9 +132,8 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
     Link* baseLink = nullptr;
     int baseLinkIndex;
     shared_ptr<InverseKinematics> presetIK;
-    bool hasNoPresetIK = false;
     
-    if(isPresetOnly){
+    if(isPresetOnly || isPresetMode){
         baseLinkIndex = PresetBaseLink;
     } else {
         baseLink = bodyItem->currentBaseLink();
@@ -142,14 +141,6 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
             baseLinkIndex = baseLink->index();
         } else {
             baseLinkIndex = FreeBaseLink;
-            if(isPresetMode){
-                presetIK = findPresetIK(targetLink);
-                if(presetIK){
-                    baseLinkIndex = PresetBaseLink;
-                } else {
-                    hasNoPresetIK = true;
-                }
-            }
         }
     }
     auto key = make_pair(targetLink->index(), baseLinkIndex);
@@ -164,7 +155,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
 
     if(!kit){
         if(isPresetOnly || isPresetMode){
-            if(!presetIK && !hasNoPresetIK){
+            if(!presetIK){
                 presetIK = findPresetIK(targetLink);
             }
             if(presetIK){
@@ -197,7 +188,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
         }
     }
 
-    return kit;        
+    return kit;
 }
 
 
