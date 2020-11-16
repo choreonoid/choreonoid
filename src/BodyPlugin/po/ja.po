@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-09 16:13+0900\n"
+"POT-Creation-Date: 2020-11-16 20:11+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -179,29 +179,37 @@ msgstr "ボディモーションエンジン"
 msgid "Update Joint Velocities"
 msgstr "関節角速度の更新"
 
-#: LinkDeviceListView.cpp:48
+#: LinkDeviceListView.cpp:59
 msgid "Links / Devices"
 msgstr "リンク／デバイス"
 
-#: LinkDeviceListView.cpp:70
+#: LinkDeviceListView.cpp:126
 msgid "All"
 msgstr "全要素"
 
-#: LinkDeviceListView.cpp:73
+#: LinkDeviceListView.cpp:127
 msgid "Links"
 msgstr "リンク"
 
-#: LinkDeviceListView.cpp:77
+#: LinkDeviceListView.cpp:128
 msgid "Joints"
 msgstr "関節"
 
-#: LinkDeviceListView.cpp:81
+#: LinkDeviceListView.cpp:129
 msgid "Devices"
 msgstr "デバイス"
 
-#: LinkDeviceListView.cpp:91
+#: LinkDeviceListView.cpp:132
+msgid "List"
+msgstr ""
+
+#: LinkDeviceListView.cpp:133
 msgid "Tree"
 msgstr "ツリー"
+
+#: LinkDeviceListView.cpp:134
+msgid "Grouped Tree"
+msgstr "グループ化ツリー"
 
 #: EditableSceneBody.cpp:1286
 msgid "Lock location"
