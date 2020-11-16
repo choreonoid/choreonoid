@@ -230,12 +230,12 @@ bool Link::removeChild(Link* childToRemove)
     while(link){
         if(link == childToRemove){
             childToRemove->parent_ = nullptr;
-            childToRemove->sibling_ = nullptr;
             if(prevSibling){
                 prevSibling->sibling_ = link->sibling_;
             } else {
                 child_ = link->sibling_;
             }
+            childToRemove->sibling_ = nullptr;
             childToRemove->setBody(0);
             return true;
         }
