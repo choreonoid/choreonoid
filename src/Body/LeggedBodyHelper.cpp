@@ -73,7 +73,7 @@ bool LeggedBodyHelper::resetBody(Body* body)
                 
                 string kneePitchJointLabel;
                 if(footLinkNode.read("kneePitchJoint", kneePitchJointLabel)){
-                    footInfo.kneePitchJoint = body_->link(kneePitchJointLabel);
+                    footInfo.kneePitchJoint = body_->joint(kneePitchJointLabel);
                 }
                 
                 footInfos.push_back(footInfo);
