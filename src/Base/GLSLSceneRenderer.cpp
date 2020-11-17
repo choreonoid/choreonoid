@@ -1279,17 +1279,25 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
 
     if(width != pickingImageWidth || height != pickingImageHeight){
         // color buffer
-        if(!colorBufferForPicking){
-            glGenRenderbuffers(1, &colorBufferForPicking);
+        if(colorBufferForPicking){
+            // The buffer seems to have to be regenerated when the buffer size is changed
+            // using glRenderBufferStorage at least for Intel GPUs on Linux
+            glDeleteRenderbuffers(1, &colorBufferForPicking);
+            colorBufferForPicking = 0;
         }
+        glGenRenderbuffers(1, &colorBufferForPicking);
         glBindRenderbuffer(GL_RENDERBUFFER, colorBufferForPicking);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBufferForPicking);
             
         // depth buffer
-        if(!depthBufferForPicking){
-            glGenRenderbuffers(1, &depthBufferForPicking);
+        if(depthBufferForPicking){
+            // The buffer seems to have to be regenerated when the buffer size is changed
+            // using glRenderBufferStorage at least for Intel GPUs on Linux
+            glDeleteRenderbuffers(1, &depthBufferForPicking);
+            depthBufferForPicking = 0;
         }
+        glGenRenderbuffers(1, &depthBufferForPicking);
         glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
@@ -1647,15 +1655,21 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects()
 
 void GLSLSceneRenderer::Impl::renderOverlayObjects()
 {
+    if(needToUpdateOverlayDepthBufferSize){
+        if(depthBufferForOverlay){
+            // The buffer seems to have to be regenerated when the buffer size is changed
+            // using glRenderBufferStorage at least for Intel GPUs on Linux
+            glDeleteRenderbuffers(1, &depthBufferForOverlay);
+            depthBufferForOverlay = 0;
+        }
+        needToUpdateOverlayDepthBufferSize = false; 
+    }
     if(!depthBufferForOverlay){
         glGenRenderbuffers(1, &depthBufferForOverlay);
-    }
-    if(needToUpdateOverlayDepthBufferSize){
         Array4i vp = self->viewport();
         glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlay);
         // NVIDIA GPUs support only the following format for the depth texture used with the default frame buffer
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp[2], vp[3]);
-        needToUpdateOverlayDepthBufferSize = false; 
     }
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForOverlay);
