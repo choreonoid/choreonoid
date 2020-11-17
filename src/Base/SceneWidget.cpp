@@ -819,8 +819,6 @@ void SceneWidget::Impl::paintGL()
 
     auto newFramebuffer = defaultFramebufferObject();
     if(newFramebuffer != prevDefaultFramebufferObject){
-        renderer->setDefaultFramebufferObject(newFramebuffer);
-
         /**
            For NVIDIA GPUs, GLSLSceneRenderer may not be able to render properly
            when the placement or some other configurations of QOpenGLWidget used
@@ -839,6 +837,9 @@ void SceneWidget::Impl::paintGL()
             os << fmt::format(_("The OpenGL resources of {0} has been cleared."),
                               self->objectName().toStdString()) << endl;
         }
+
+        // This default FBO must be updated after the clearGL function
+        renderer->setDefaultFramebufferObject(newFramebuffer);
         
         prevDefaultFramebufferObject = newFramebuffer;
     }
