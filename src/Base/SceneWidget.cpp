@@ -838,7 +838,7 @@ void SceneWidget::Impl::paintGL()
                               self->objectName().toStdString()) << endl;
         }
 
-        // This default FBO must be updated after the clearGL function
+        // The default FBO must be updated after the clearGL function
         renderer->setDefaultFramebufferObject(newFramebuffer);
         
         prevDefaultFramebufferObject = newFramebuffer;

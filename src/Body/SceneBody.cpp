@@ -440,8 +440,7 @@ void SceneBody::updateLinkPositions()
     const int n = sceneLinks_.size();
     for(int i=0; i < n; ++i){
         SceneLinkPtr& sLink = sceneLinks_[i];
-        sLink->setRotation(sLink->link()->R());
-        sLink->setTranslation(sLink->link()->translation());
+        sLink->setPosition(sLink->link()->position());
     }
 }
 
@@ -451,8 +450,7 @@ void SceneBody::updateLinkPositions(SgUpdate& update)
     const int n = sceneLinks_.size();
     for(int i=0; i < n; ++i){
         SceneLinkPtr& sLink = sceneLinks_[i];
-        sLink->setRotation(sLink->link()->R());
-        sLink->setTranslation(sLink->link()->translation());
+        sLink->setPosition(sLink->link()->position());
         sLink->notifyUpdate(update);
     }
 }
