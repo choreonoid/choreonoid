@@ -3,7 +3,6 @@
 #include "EditableSceneBody.h"
 #include <cnoid/ItemManager>
 #include <cnoid/SceneBody>
-#include <cnoid/BodyState>
 #include <cnoid/CloneMap>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
@@ -35,6 +34,8 @@ public:
     BodyItem* bodyItem;
     ScopedConnectionSet bodyItemConnections;
     vector<BodyInfoPtr> bodyInfos;
+    typedef vector<Position, Eigen::aligned_allocator<Position>> PositionArray;
+    PositionArray tmpLinkPositions;
     bool needToCheckSuperimposedBodies;
     SgGroupPtr topGroup;
     float transparency;
@@ -304,16 +305,26 @@ bool BodySuperimposerAddon::Impl::updateSuperimposition
     bool updated = false;
     
     auto orgBody = bodyItem->body();
-    BodyState orgBodyState(*orgBody);
+    const int n = orgBody->numLinks();
+
+    // store the original body position
+    tmpLinkPositions.resize(n);
+    for(int i=0; i < n; ++i){
+        tmpLinkPositions[i] = orgBody->link(i)->T();
+    }
     
     if(setReferenceConfigurationToOrgBodiesTransiently()){
-        // Copy the body state to the supoerimpose body
-        BodyState bodyState(*orgBody);
+
         auto superBody = self->superimposedBody(0);
-        bodyState.restorePositions(*superBody);
-        superBody->calcForwardKinematics();
-        orgBodyState.restorePositions(*orgBody);
-            
+
+        // Copy the body position to the supoerimpose body
+        for(int i=0; i < n; ++i){
+            superBody->link(i)->setPosition(orgBody->link(i)->position());
+        }
+        // Restore the original body position
+        for(int i=0; i < n; ++i){
+            orgBody->link(i)->setPosition(tmpLinkPositions[i]);
+        }
         // Update the kinematics states of superimpose child bodies
         const int n = self->numSuperimposedBodies();
         for(int i=1; i < n; ++i){
