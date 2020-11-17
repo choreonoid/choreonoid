@@ -17,6 +17,7 @@ public:
     void setTagGroupItem(PositionTagGroupItem* item);
     int currentTagIndex() const;
     void setCurrentTagIndex(int tagIndex);
+    std::vector<int> selectedTagIndices() const;
     void removeSelectedTags();
 
     SignalProxy<void(const std::vector<int>& selected)> sigTagSelectionChanged();

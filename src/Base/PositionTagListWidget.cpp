@@ -326,6 +326,16 @@ void PositionTagListWidget::setCurrentTagIndex(int tagIndex)
 }
 
 
+std::vector<int> PositionTagListWidget::selectedTagIndices() const
+{
+    std::vector<int> indices;
+    for(auto& index : selectionModel()->selectedRows()){
+        indices.push_back(index.row());
+    }
+    return indices;
+}
+
+
 void PositionTagListWidget::removeSelectedTags()
 {
     if(impl->tagGroupItem){
