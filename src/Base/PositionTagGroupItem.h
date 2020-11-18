@@ -4,6 +4,7 @@
 #include "Item.h"
 #include "RenderableItem.h"
 #include "LocatableItem.h"
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -23,6 +24,13 @@ public:
 
     const PositionTagGroup* tagGroup() const;
     PositionTagGroup* tagGroup();
+
+    void clearTagSelection();
+    void setTagSelected(int tagIndex, bool on = true);
+    bool checkTagSelected(int tagIndex) const;
+    const std::vector<int>& selectedTagIndices() const;
+    void setSelectedTagIndices(const std::vector<int>& indices);
+    SignalProxy<void()> sigTagSelectionChanged();
 
     // RenderableItem function
     virtual SgNode* getScene() override;

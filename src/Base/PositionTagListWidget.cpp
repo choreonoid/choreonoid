@@ -416,6 +416,10 @@ void PositionTagListWidget::selectionChanged(const QItemSelection& selected, con
     }
 
     impl->sigTagSelectionChanged(impl->selectedTagIndices);
+
+    if(impl->tagGroupItem){
+        impl->tagGroupItem->setSelectedTagIndices(impl->selectedTagIndices);
+    }
 }
 
 

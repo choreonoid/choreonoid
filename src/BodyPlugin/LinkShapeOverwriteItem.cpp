@@ -30,11 +30,10 @@ public:
     LinkShapeOverwriteItem::Impl* impl;
 
     LinkShapeLocation(LinkShapeOverwriteItem::Impl* impl);
-    virtual int getType() const override;
     virtual Position getLocation() const override;
-    virtual void setLocation(const Position& T) override;
+    virtual bool setLocation(const Position& T) override;
     virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() override;
+    virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -321,17 +320,12 @@ LocationProxyPtr LinkShapeOverwriteItem::getLocationProxy()
 
 
 LinkShapeLocation::LinkShapeLocation(LinkShapeOverwriteItem::Impl* impl)
-    : impl(impl)
+    : LocationProxy(OffsetLocation),
+      impl(impl)
 {
     setEditable(false);
 }
     
-
-int LinkShapeLocation::getType() const
-{
-    return OffsetLocation;
-}
-
 
 Position LinkShapeLocation::getLocation() const
 {
@@ -339,11 +333,12 @@ Position LinkShapeLocation::getLocation() const
 }
 
 
-void LinkShapeLocation::setLocation(const Position& T)
+bool LinkShapeLocation::setLocation(const Position& T)
 {
     impl->offsetTransform->setPosition(T);
     impl->offsetTransform->notifyUpdate();
     impl->self->notifyUpdate();
+    return true;
 }
 
 
@@ -353,7 +348,7 @@ Item* LinkShapeLocation::getCorrespondingItem()
 }
 
 
-LocationProxyPtr LinkShapeLocation::getParentLocationProxy()
+LocationProxyPtr LinkShapeLocation::getParentLocationProxy() const
 {
     return impl->self->bodyItem()->getLocationProxy();
 }

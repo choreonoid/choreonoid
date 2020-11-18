@@ -63,13 +63,13 @@ public:
     BodyItem::Impl* impl;
 
     BodyLocation(BodyItem::Impl* impl);
-    virtual int getType() const override;
+    void updateLocationType();
     virtual Position getLocation() const override;
     virtual bool isEditable() const override;
     virtual void setEditable(bool on) override;
-    virtual void setLocation(const Position& T) override;
+    virtual bool setLocation(const Position& T) override;
     virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() override;
+    virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
     
@@ -82,12 +82,11 @@ public:
     LinkLocation();
     LinkLocation(BodyItem* bodyItem, Link* link);
     void setTarget(BodyItem* bodyItem, Link* link);
-    virtual int getType() const override;
     virtual std::string getName() const override;
     virtual Position getLocation() const override;
     virtual bool isEditable() const override;
     virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy();
+    virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -1339,18 +1338,19 @@ void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhen
 
 
 BodyLocation::BodyLocation(BodyItem::Impl* impl)
-    : impl(impl)
+    : LocationProxy(impl->attachmentToParent ? OffsetLocation : GlobalLocation),
+      impl(impl)
 {
 
 }
 
 
-int BodyLocation::getType() const
+void BodyLocation::updateLocationType()
 {
     if(impl->attachmentToParent){
-        return OffsetLocation;
+        setLocationType(OffsetLocation);
     } else {
-        return GlobalLocation;
+        setLocationType(GlobalLocation);
     }
 }
 
@@ -1380,7 +1380,7 @@ void BodyLocation::setEditable(bool on)
 }
 
 
-void BodyLocation::setLocation(const Position& T)
+bool BodyLocation::setLocation(const Position& T)
 {
     auto rootLink = impl->body->rootLink();
     if(impl->attachmentToParent){
@@ -1390,6 +1390,7 @@ void BodyLocation::setLocation(const Position& T)
         rootLink->setPosition(T);
         impl->self->notifyKinematicStateChange(true);
     }
+    return true;
 }
 
 
@@ -1399,7 +1400,7 @@ Item* BodyLocation::getCorrespondingItem()
 }
 
 
-LocationProxyPtr BodyLocation::getParentLocationProxy()
+LocationProxyPtr BodyLocation::getParentLocationProxy() const
 {
     if(impl->parentBodyItem){
         if(impl->attachmentToParent){
@@ -1430,13 +1431,15 @@ LocationProxyPtr BodyItem::createLinkLocationProxy(Link* link)
 
 
 LinkLocation::LinkLocation()
+    : LocationProxy(GlobalLocation)
 {
 
 }
 
 
 LinkLocation::LinkLocation(BodyItem* bodyItem, Link* link)
-    : refBodyItem(bodyItem),
+    : LocationProxy(GlobalLocation),
+      refBodyItem(bodyItem),
       refLink(link)
 {
 
@@ -1447,12 +1450,6 @@ void LinkLocation::setTarget(BodyItem* bodyItem, Link* link)
 {
     refBodyItem = bodyItem;
     refLink = link;
-}
-
-
-int LinkLocation::getType() const
-{
-    return GlobalLocation;
 }
 
 
@@ -1486,7 +1483,7 @@ Item* LinkLocation::getCorrespondingItem()
 }
 
 
-LocationProxyPtr LinkLocation::getParentLocationProxy()
+LocationProxyPtr LinkLocation::getParentLocationProxy() const
 {
     return nullptr;
 }
@@ -1664,6 +1661,7 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
     }
 
     if(bodyLocation){
+        bodyLocation->updateLocationType();
         // Notify the change of the parent location proxy
         bodyLocation->notifyAttributeChange();
     }

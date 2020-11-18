@@ -27,11 +27,10 @@ public:
     DeviceOverwriteItem::Impl* impl;
 
     DeviceLocation(DeviceOverwriteItem::Impl* impl);
-    virtual int getType() const override;
     virtual Position getLocation() const override;
-    virtual void setLocation(const Position& T) override;
+    virtual bool setLocation(const Position& T) override;
     virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() override;
+    virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -411,18 +410,13 @@ LocationProxyPtr DeviceOverwriteItem::getLocationProxy()
 
 
 DeviceLocation::DeviceLocation(DeviceOverwriteItem::Impl* impl)
-    : impl(impl)
+    : LocationProxy(OffsetLocation),
+      impl(impl)
 {
     setEditable(false);
     sigAttributeChanged().connect([impl](){ impl->updateDeviceOffsetMarker(); });
 }
     
-
-int DeviceLocation::getType() const
-{
-    return OffsetLocation;
-}
-
 
 Position DeviceLocation::getLocation() const
 {
@@ -433,13 +427,14 @@ Position DeviceLocation::getLocation() const
 }
 
 
-void DeviceLocation::setLocation(const Position& T)
+bool DeviceLocation::setLocation(const Position& T)
 {
     if(impl->device){
         impl->device->setLocalPosition(T);
     }
     //! \todo Define the signal on the change of the device specification and use it here
     impl->device->notifyStateChange();
+    return true;
 }
 
 
@@ -449,7 +444,7 @@ Item* DeviceLocation::getCorrespondingItem()
 }
 
 
-LocationProxyPtr DeviceLocation::getParentLocationProxy()
+LocationProxyPtr DeviceLocation::getParentLocationProxy() const
 {
     if(!impl->linkLocation){
         if(impl->device){

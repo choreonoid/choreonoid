@@ -206,7 +206,7 @@ bool LocationView::Impl::setLocationProxy(LocationProxyPtr newLocation)
         
     } else {
         parentLocation = location->getParentLocationProxy();
-        locationType = location->getType();
+        locationType = location->locationType();
 
         isRelativeLocation = false;
         if(locationType == LocationProxy::ParentRelativeLocation && parentLocation){
@@ -484,10 +484,10 @@ bool LocationView::Impl::setInputPositionToTargetLocation(const Position& T_inpu
     }    
 
     locationConnections.block();
-    location->setLocation(T_location);
+    bool updated = location->setLocation(T_location);
     locationConnections.unblock();
     
-    return true;
+    return updated;
 }
 
 

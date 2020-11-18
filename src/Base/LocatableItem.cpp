@@ -11,7 +11,8 @@ Signal<bool(LocationProxyPtr location), LogicalSum> sigEditRequest;
 }
 
 
-LocationProxy::LocationProxy()
+LocationProxy::LocationProxy(LocationType type)
+    : locationType_(type)
 {
     isEditable_ = true;
 }
@@ -37,6 +38,24 @@ std::string LocationProxy::getName() const
 }
 
 
+Position LocationProxy::getGlobalLocation() const
+{
+    switch(locationType_){
+    case GlobalLocation:
+        return getLocation();
+    case ParentRelativeLocation:
+    case OffsetLocation:
+        if(auto parent = getParentLocationProxy()){
+            return parent->getGlobalLocation() * getLocation();
+        } else {
+            return getLocation();
+        }
+    default:
+        return Position::Identity();
+    }
+}
+
+
 bool LocationProxy::isEditable() const
 {
     return isEditable_;
@@ -52,9 +71,9 @@ void LocationProxy::setEditable(bool on)
 }
 
 
-void LocationProxy::setLocation(const Position& /* T */)
+bool LocationProxy::setLocation(const Position& /* T */)
 {
-
+    return false;
 }
 
 
@@ -64,9 +83,9 @@ Item* LocationProxy::getCorrespondingItem()
 }
 
 
-LocationProxyPtr LocationProxy::getParentLocationProxy()
+LocationProxyPtr LocationProxy::getParentLocationProxy() const
 {
-    if(auto item = getCorrespondingItem()){
+    if(auto item = const_cast<LocationProxy*>(this)->getCorrespondingItem()){
         if(auto parentLocatableItem = item->findOwnerItem<LocatableItem>()){
             return parentLocatableItem->getLocationProxy();
         }

@@ -20,13 +20,13 @@ public:
     CoordinateFrameItem::Impl* impl;
 
     FrameLocation(CoordinateFrameItem::Impl* impl);
-    virtual int getType() const override;
+    void updateLocationType();
     virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() override;
+    virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual std::string getName() const override;
     virtual Position getLocation() const override;
     virtual bool isEditable() const override;
-    virtual void setLocation(const Position& T) override;
+    virtual bool setLocation(const Position& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -331,28 +331,31 @@ LocationProxyPtr CoordinateFrameItem::getLocationProxy()
     if(!impl->frameLocation){
         impl->frameLocation = new FrameLocation(impl);
     }
+    impl->frameLocation->updateLocationType();
     return impl->frameLocation;
 }
 
 
 FrameLocation::FrameLocation(CoordinateFrameItem::Impl* impl)
-    : impl(impl)
+    : LocationProxy(InvalidLocation),
+      impl(impl)
 {
     impl->self->sigNameChanged().connect(
         [&](const std::string& /* oldName */){ notifyAttributeChange(); });
 }
 
 
-int FrameLocation::getType() const
+void FrameLocation::updateLocationType()
 {
     if(impl->frameList){
         if(impl->frameList->isForBaseFrames()){
-            return ParentRelativeLocation;
+            setLocationType(ParentRelativeLocation);
         } else if(impl->frameList->isForOffsetFrames()){
-            return OffsetLocation;
+            setLocationType(OffsetLocation);
         }
+    } else {
+        setLocationType(InvalidLocation);
     }
-    return InvalidLocation;
 }
 
 
@@ -362,7 +365,7 @@ Item* FrameLocation::getCorrespondingItem()
 }
 
 
-LocationProxyPtr FrameLocation::getParentLocationProxy()
+LocationProxyPtr FrameLocation::getParentLocationProxy() const
 {
     if(impl->frameListItem){
         return impl->frameListItem->getFrameParentLocationProxy();
@@ -413,10 +416,11 @@ bool FrameLocation::isEditable() const
 }
 
 
-void FrameLocation::setLocation(const Position& T)
+bool FrameLocation::setLocation(const Position& T)
 {
     impl->frame->setPosition(T);
     impl->frame->notifyUpdate(CoordinateFrame::PositionUpdate);
+    return true;
 }
 
 

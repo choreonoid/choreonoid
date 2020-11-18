@@ -11,6 +11,7 @@
 #include <cnoid/PositionTagGroup>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
+#include <fmt/format.h>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
@@ -18,13 +19,16 @@
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
+
+enum LocationMode { TagGroupLocation, TagLocation };
 
 class ScenePositionTagGroup : public SgPosTransform, public SceneWidgetEditable
 {
 public:
-    PositionTagGroupItem::Impl* itemImpl;
+    PositionTagGroupItem::Impl* impl;
     SgPosTransformPtr offsetTransform;
     SgGroupPtr tagMarkerGroup;
     CoordinateFrameMarkerPtr originMarker;
@@ -48,21 +52,37 @@ public:
 typedef ref_ptr<ScenePositionTagGroup> ScenePositionTagGroupPtr;
 
 
-class PositionTagGroupLocation : public LocationProxy
+class TargetLocationProxy : public LocationProxy
 {
 public:
-    PositionTagGroupItem::Impl* itemImpl;
+    PositionTagGroupItem::Impl* impl;
 
-    PositionTagGroupLocation(PositionTagGroupItem::Impl* itemImpl);
-    virtual int getType() const override;
+    TargetLocationProxy(PositionTagGroupItem::Impl* impl);
+    const PositionTag* getTargetTag() const;
+    virtual std::string getName() const override;
     virtual Item* getCorrespondingItem() override;
     virtual Position getLocation() const override;
-    virtual void setLocation(const Position& T) override;
+    virtual bool setLocation(const Position& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
-    virtual LocationProxyPtr getParentLocationProxy() override;
+    virtual LocationProxyPtr getParentLocationProxy() const override;
 };
 
-typedef ref_ptr<PositionTagGroupLocation> PositionTagGroupLocationPtr;
+typedef ref_ptr<TargetLocationProxy> TargetLocationProxyPtr;
+
+
+class TagParentLocationProxy : public LocationProxy
+{
+public:
+    PositionTagGroupItem::Impl* impl;
+
+    TagParentLocationProxy(PositionTagGroupItem::Impl* impl);
+    virtual std::string getName() const override;
+    virtual Position getLocation() const override;
+    virtual SignalProxy<void()> sigLocationChanged() override;
+    virtual LocationProxyPtr getParentLocationProxy() const override;
+};
+
+typedef ref_ptr<TagParentLocationProxy> TagParentLocationProxyPtr;
 
 
 class ConversionDialog : public Dialog
@@ -91,23 +111,36 @@ public:
     PositionTagGroupPtr tags;
     ScopedConnectionSet tagGroupConnections;
     LazyCaller notifyUpdateLater;
-    PositionTagGroupLocationPtr location;
-    LocationProxyPtr parentLocation;
-    ScopedConnection parentLocationConnection;
+    std::vector<bool> tagSelection;
+    int numSelectedTags;
+    std::vector<int> selectedTagIndices;
+    bool needToUpdateSelectedTagIndices;
+    Signal<void()> sigTagSelectionChanged;
+    LocationMode locationMode;
+    int locationTargetTagIndex;
+    TargetLocationProxyPtr targetLocation;
+    Signal<void()> sigTargetLocationChanged;
+    LocationProxyPtr groupParentLocation;
+    ScopedConnection groupParentLocationConnection;
     Position T_parent;
+    TagParentLocationProxyPtr tagParentLocation;
+    Signal<void()> sigTagParentLocationChanged;
     ScenePositionTagGroupPtr scene;
     SgNodePtr tagMarker;
     SgFixedPixelSizeGroupPtr tagMarkerSizeGroup;
     bool originMarkerVisibility;
     bool edgeVisibility;
-    Signal<void()> sigLocationChanged;
     
     Impl(PositionTagGroupItem* self, const Impl* org);
-    void setParentLocationProxy(
+    void onTagUpdated(int tagIndex);
+    void clearTagSelection(bool doNotify);
+    void setTagSelected(int tagIndex, bool on, bool doNotify);
+    void onTagSelectionChanged();
+    void setParentItemLocationProxy(
         LocationProxyPtr newParentLocation, bool doCoordinateConversion, bool doClearOriginOffset);
     void convertLocalCoordinates(
-        LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset);
-    void onParentLocationChanged();
+        LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset); 
+    void onParentItemLocationChanged();
     void onOriginOffsetChanged();
 };
 
@@ -157,17 +190,23 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
             [&](int, PositionTag*){ notifyUpdateLater(); }));
     tagGroupConnections.add(
         tags->sigTagUpdated().connect(
-            [&](int){ notifyUpdateLater(); }));
+            [&](int index){ onTagUpdated(index); }));
     tagGroupConnections.add(
         tags->sigOriginOffsetChanged().connect(
             [&](const Position&){ onOriginOffsetChanged(); }));
 
+    numSelectedTags = 0;
+    needToUpdateSelectedTagIndices = false;
+
+    locationMode = TagGroupLocation;
+    locationTargetTagIndex = -1;
+    targetLocation = new TargetLocationProxy(this);
+    tagParentLocation = new TagParentLocationProxy(this);
+
     tagMarkerSizeGroup = new SgFixedPixelSizeGroup;
     originMarkerVisibility = false;
     edgeVisibility = false;
-
-    location = new PositionTagGroupLocation(this);
-
+    
     if(!org){
         tagMarkerSizeGroup->setPixelSizeRatio(24.0f);
         originMarkerVisibility = false;
@@ -216,6 +255,125 @@ PositionTagGroup* PositionTagGroupItem::tagGroup()
 }
 
 
+void PositionTagGroupItem::Impl::onTagUpdated(int tagIndex)
+{
+    if(locationMode == TagLocation && locationTargetTagIndex == tagIndex){
+        sigTargetLocationChanged();
+    }
+    notifyUpdateLater();
+}
+
+
+void PositionTagGroupItem::clearTagSelection()
+{
+    impl->clearTagSelection(true);
+}
+
+
+void PositionTagGroupItem::Impl::clearTagSelection(bool doNotify)
+{
+    if(!tagSelection.empty()){
+        tagSelection.clear();
+        numSelectedTags = 0;
+        needToUpdateSelectedTagIndices = true;
+        if(doNotify){
+            onTagSelectionChanged();
+        }
+    }
+}
+
+
+void PositionTagGroupItem::setTagSelected(int tagIndex, bool on)
+{
+    impl->setTagSelected(tagIndex, on, true);
+}
+
+
+void PositionTagGroupItem::Impl::setTagSelected(int tagIndex, bool on, bool doNotify)
+{
+    if(tagIndex >= tagSelection.size()){
+        tagSelection.resize(tagIndex + 1);
+    }
+    if(on != tagSelection[tagIndex]){
+        tagSelection[tagIndex]= on;
+        if(on){
+            ++numSelectedTags;
+        } else {
+            --numSelectedTags;
+        }
+        needToUpdateSelectedTagIndices = true;
+        if(doNotify){
+            onTagSelectionChanged();
+        }
+    }
+}
+
+
+bool PositionTagGroupItem::checkTagSelected(int tagIndex) const
+{
+    if(tagIndex < impl->tagSelection.size()){
+        return impl->tagSelection[tagIndex];
+    }
+    return false;
+}
+
+
+const std::vector<int>& PositionTagGroupItem::selectedTagIndices() const
+{
+    if(impl->needToUpdateSelectedTagIndices){
+        impl->selectedTagIndices.clear();
+        for(size_t i=0; i < impl->tagSelection.size(); ++i){
+            if(impl->tagSelection[i]){
+                impl->selectedTagIndices.push_back(i);
+            }
+        }
+        impl->needToUpdateSelectedTagIndices = false;
+    }
+    return impl->selectedTagIndices;
+}
+
+
+void PositionTagGroupItem::setSelectedTagIndices(const std::vector<int>& indices)
+{
+    auto prevIndices = selectedTagIndices();
+    if(indices != prevIndices){
+        impl->clearTagSelection(false);
+        for(auto& index : indices){
+            impl->setTagSelected(index, true, false);
+        }
+        impl->onTagSelectionChanged();
+    }
+}
+
+
+void PositionTagGroupItem::Impl::onTagSelectionChanged()
+{
+    sigTagSelectionChanged();
+
+    if(numSelectedTags == 0){
+        locationMode = TagGroupLocation;
+        locationTargetTagIndex = -1;
+    } else {
+        locationMode = TagLocation;
+        locationTargetTagIndex = 0;
+        for(size_t i=0; i < tagSelection.size(); ++i){
+            if(tagSelection[i]){
+                locationTargetTagIndex = i;
+                break;
+            }
+        }
+    }        
+    targetLocation->notifyAttributeChange();
+    sigTargetLocationChanged();
+}
+
+
+SignalProxy<void()> PositionTagGroupItem::sigTagSelectionChanged()
+{
+    return impl->sigTagSelectionChanged;
+}
+
+
 SgNode* PositionTagGroupItem::getScene()
 {
     if(!impl->scene){
@@ -227,7 +385,7 @@ SgNode* PositionTagGroupItem::getScene()
 
 LocationProxyPtr PositionTagGroupItem::getLocationProxy()
 {
-    return impl->location;
+    return impl->targetLocation;
 }
 
 
@@ -239,7 +397,7 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
     if(auto parentLocatableItem = findOwnerItem<LocatableItem>()){
         newParentLocation = parentLocatableItem->getLocationProxy();
     }
-    bool isParentLocationChanged = (newParentLocation != impl->parentLocation);
+    bool isParentLocationChanged = (newParentLocation != impl->groupParentLocation);
     bool doCoordinateConversion = false;
     bool doClearOriginOffset = false;
     
@@ -260,7 +418,7 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
     if(accepted && isParentLocationChanged){
         out_callbackWhenAdded =
             [this, newParentLocation, doCoordinateConversion, doClearOriginOffset](){
-                impl->setParentLocationProxy(
+                impl->setParentItemLocationProxy(
                     newParentLocation, doCoordinateConversion, doClearOriginOffset);
         };
     }
@@ -269,27 +427,27 @@ bool PositionTagGroupItem::onNewPositionCheck(bool isManualOperation, std::funct
 }
 
 
-void PositionTagGroupItem::Impl::setParentLocationProxy
+void PositionTagGroupItem::Impl::setParentItemLocationProxy
 (LocationProxyPtr newParentLocation, bool doCoordinateConversion, bool doClearOriginOffset)
 {
-    parentLocationConnection.disconnect();
+    groupParentLocationConnection.disconnect();
 
     if(doCoordinateConversion){
-        convertLocalCoordinates(parentLocation, newParentLocation, doClearOriginOffset);
+        convertLocalCoordinates(groupParentLocation, newParentLocation, doClearOriginOffset);
     }
         
-    parentLocation = newParentLocation;
+    groupParentLocation = newParentLocation;
 
-    if(parentLocation){
-        parentLocationConnection =
-            parentLocation->sigLocationChanged().connect(
-                [&](){ onParentLocationChanged(); });
+    if(groupParentLocation){
+        groupParentLocationConnection =
+            groupParentLocation->sigLocationChanged().connect(
+                [&](){ onParentItemLocationChanged(); });
     }
 
-    onParentLocationChanged();
+    onParentItemLocationChanged();
 
     // Notify the change of the parent location proxy
-    location->notifyAttributeChange();
+    targetLocation->notifyAttributeChange();
 }
 
 
@@ -320,23 +478,23 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
 }
 
 
-void PositionTagGroupItem::Impl::onParentLocationChanged()
+void PositionTagGroupItem::Impl::onParentItemLocationChanged()
 {
-    if(parentLocation){
-        T_parent = parentLocation->getLocation();
+    if(groupParentLocation){
+        T_parent = groupParentLocation->getLocation();
     } else {
         T_parent.setIdentity();
     }
     if(scene){
         scene->setParentPosition(T_parent);
     }
-    sigLocationChanged();
+    sigTargetLocationChanged();
 }
 
 
 void PositionTagGroupItem::Impl::onOriginOffsetChanged()
 {
-    sigLocationChanged();
+    sigTargetLocationChanged();
     notifyUpdateLater();
 }
 
@@ -445,12 +603,12 @@ bool PositionTagGroupItem::restore(const Archive& archive)
 }
 
 
-ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImpl)
-    : itemImpl(itemImpl)
+ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* impl)
+    : impl(impl)
 {
-    auto tags = itemImpl->tags;
+    auto tags = impl->tags;
 
-    setPosition(itemImpl->T_parent);
+    setPosition(impl->T_parent);
 
     offsetTransform = new SgPosTransform;
     offsetTransform->setPosition(tags->originOffset());
@@ -468,11 +626,11 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
     edgeLineSet->setLineWidth(2.0f);
     auto material = edgeLineSet->getOrCreateMaterial();
     material->setDiffuseColor(Vector3f(0.9f, 0.9f, 0.9f));
-    if(itemImpl->edgeVisibility){
+    if(impl->edgeVisibility){
         setEdgeVisiblility(true);
     }
 
-    if(itemImpl->originMarkerVisibility){
+    if(impl->originMarkerVisibility){
         setOriginMarkerVisibility(true);
     }
 
@@ -494,13 +652,13 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* itemImp
 void ScenePositionTagGroup::finalize()
 {
     tagGroupConnections.disconnect();
-    itemImpl = nullptr;
+    impl = nullptr;
 }
 
 
 void ScenePositionTagGroup::addTagNode(int index, bool doUpdateEdges, bool doNotify)
 {
-    auto tag = itemImpl->tags->tagAt(index);
+    auto tag = impl->tags->tagAt(index);
     auto node = new SgPosTransform;
     node->addChild(getOrCreateTagMarker());
     node->setPosition(tag->position());
@@ -518,7 +676,7 @@ void ScenePositionTagGroup::addTagNode(int index, bool doUpdateEdges, bool doNot
 
 SgNode* ScenePositionTagGroup::getOrCreateTagMarker()
 {
-    auto& marker = itemImpl->tagMarker;
+    auto& marker = impl->tagMarker;
 
     if(!marker){
         auto lines = new SgLineSet;
@@ -556,8 +714,8 @@ SgNode* ScenePositionTagGroup::getOrCreateTagMarker()
         lines->setLine(4, 1, 3);
         lines->setLineColor(4, 1);
 
-        itemImpl->tagMarkerSizeGroup->addChild(lines);
-        marker = itemImpl->tagMarkerSizeGroup;
+        impl->tagMarkerSizeGroup->addChild(lines);
+        marker = impl->tagMarkerSizeGroup;
     }
 
     return marker;
@@ -576,7 +734,7 @@ void ScenePositionTagGroup::removeTagNode(int index)
 
 void ScenePositionTagGroup::updateTagNodePosition(int index)
 {
-    auto tag = itemImpl->tags->tagAt(index);
+    auto tag = impl->tags->tagAt(index);
     auto node = static_cast<SgPosTransform*>(tagMarkerGroup->child(index));
     node->setTranslation(tag->translation());
     update.resetAction(SgUpdate::MODIFIED);
@@ -588,13 +746,13 @@ void ScenePositionTagGroup::updateTagNodePosition(int index)
 
 void ScenePositionTagGroup::updateEdges(bool doNotify)
 {
-    if(!itemImpl->edgeVisibility){
+    if(!impl->edgeVisibility){
         return;
     }
     
     auto& vertices = *edgeLineSet->getOrCreateVertices();
     vertices.clear();
-    for(auto& tag : *itemImpl->tags){
+    for(auto& tag : *impl->tags){
         vertices.push_back(tag->translation().cast<SgVertexArray::Scalar>());
     }
     int numLines = vertices.size() - 1;
@@ -657,46 +815,116 @@ void ScenePositionTagGroup::setEdgeVisiblility(bool on)
 }
 
 
-PositionTagGroupLocation::PositionTagGroupLocation(PositionTagGroupItem::Impl* itemImpl)
-    : itemImpl(itemImpl)
+TargetLocationProxy::TargetLocationProxy(PositionTagGroupItem::Impl* impl)
+    : LocationProxy(ParentRelativeLocation),
+      impl(impl)
 {
 
 }
 
 
-int PositionTagGroupLocation::getType() const
+const PositionTag* TargetLocationProxy::getTargetTag() const
 {
-    return ParentRelativeLocation;
+    return impl->tags->tagAt(impl->locationTargetTagIndex);
 }
 
 
-Item* PositionTagGroupLocation::getCorrespondingItem()
+std::string TargetLocationProxy::getName() const
 {
-    return itemImpl->self;
+    if(impl->locationMode == TagGroupLocation){
+        return format(_("{0}: Origin"), impl->self->displayName());
+    } else {
+        auto tag = getTargetTag();
+        return format(_("{0}: Tag {1}"), impl->self->displayName(), impl->locationTargetTagIndex);
+    }
 }
 
 
-Position PositionTagGroupLocation::getLocation() const
+Item* TargetLocationProxy::getCorrespondingItem()
 {
-    return itemImpl->tags->originOffset();
+    if(impl->locationMode == TagGroupLocation){
+        return impl->self;
+    } else {
+        return nullptr;
+    }
 }
 
 
-void PositionTagGroupLocation::setLocation(const Position& T)
+Position TargetLocationProxy::getLocation() const
 {
-    itemImpl->tags->setOriginOffset(T, true);
+    if(impl->locationMode == TagGroupLocation){
+        return impl->tags->originOffset();
+    } else {
+        return getTargetTag()->position();
+    }
 }
 
 
-SignalProxy<void()> PositionTagGroupLocation::sigLocationChanged()
+bool TargetLocationProxy::setLocation(const Position& T)
 {
-    return itemImpl->sigLocationChanged;
+    auto tags = impl->tags;
+    if(impl->locationMode == TagGroupLocation){
+        tags->setOriginOffset(T, true);
+    } else {
+        int index = impl->locationTargetTagIndex;
+        auto tag = tags->tagAt(index);
+        tag->setPosition(T);
+        // impl->tagGroupConnections.block();
+        tags->notifyTagUpdate(index);
+        // impl->tagGroupConnections.unblock();
+    }
+    return true;
 }
 
 
-LocationProxyPtr PositionTagGroupLocation::getParentLocationProxy()
+SignalProxy<void()> TargetLocationProxy::sigLocationChanged()
 {
-    return itemImpl->parentLocation;
+    return impl->sigTargetLocationChanged;
+}
+
+
+LocationProxyPtr TargetLocationProxy::getParentLocationProxy() const
+{
+    if(impl->locationMode == TagGroupLocation){
+        return impl->groupParentLocation;
+    } else {
+        return impl->tagParentLocation;
+    }
+}
+
+
+TagParentLocationProxy::TagParentLocationProxy(PositionTagGroupItem::Impl* impl)
+    : LocationProxy(ParentRelativeLocation),
+      impl(impl)
+{
+
+}
+
+
+std::string TagParentLocationProxy::getName() const
+{
+    return format(_("{0}: Origin"), impl->self->name());
+}
+
+
+Position TagParentLocationProxy::getLocation() const
+{
+    return impl->tags->originOffset();
+}
+
+
+SignalProxy<void()> TagParentLocationProxy::sigLocationChanged()
+{
+    return impl->sigTagParentLocationChanged;
+}
+
+
+LocationProxyPtr TagParentLocationProxy::getParentLocationProxy() const
+{
+    if(impl->groupParentLocation){
+        return impl->groupParentLocation;
+    }
+    return nullptr;
 }
 
 
