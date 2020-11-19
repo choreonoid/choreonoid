@@ -20,11 +20,13 @@ public:
     BodySelectionManager* bodySelectionManager;
 
     Impl(BodyBar* self);
+    void applyBodyItemOperation(std::function<void(BodyItem* bodyItem)> func);
     void onCopyButtonClicked();
     void onPasteButtonClicked();
     void onOriginButtonClicked();
     void onPoseButtonClicked(BodyItem::PresetPoseID id);
     void onSymmetricCopyButtonClicked(int direction, bool doMirrorCopy);
+    void doSymmetricCopy(BodyItem* bodyItem, int direction, bool doMirrorCopy);
 };
 
 }
@@ -82,75 +84,86 @@ BodyBar::~BodyBar()
 }
 
 
+void BodyBar::Impl::applyBodyItemOperation(std::function<void(BodyItem* bodyItem)> func)
+{
+    auto& selected = bodySelectionManager->selectedBodyItems();
+    if(!selected.empty()){
+        for(auto& bodyItem: selected){
+            func(bodyItem);
+        }
+    } else if(auto current = bodySelectionManager->currentBodyItem()){
+        func(current);
+    }
+}
+
+
 void BodyBar::Impl::onCopyButtonClicked()
 {
-    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
-        bodyItem->copyKinematicState();
-    }
+    applyBodyItemOperation([](BodyItem* bodyItem){ bodyItem->copyKinematicState(); });
 }
 
 
 void BodyBar::Impl::onPasteButtonClicked()
 {
-    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
-        bodyItem->pasteKinematicState();
-    }
+    applyBodyItemOperation([](BodyItem* bodyItem){ bodyItem->pasteKinematicState(); });
 }
 
 
 void BodyBar::Impl::onOriginButtonClicked()
 {
-    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
-        bodyItem->moveToOrigin();
-    }
+    applyBodyItemOperation([](BodyItem* bodyItem){ bodyItem->moveToOrigin(); });
 }
 
 
 void BodyBar::Impl::onPoseButtonClicked(BodyItem::PresetPoseID id)
 {
-    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
-        bodyItem->setPresetPose(id);
-    }
+    applyBodyItemOperation([id](BodyItem* bodyItem){ bodyItem->setPresetPose(id); });
 }
 
 
 void BodyBar::Impl::onSymmetricCopyButtonClicked(int direction, bool doMirrorCopy)
 {
-    for(auto& bodyItem: bodySelectionManager->selectedBodyItems()){
-        const Listing& slinks = *bodyItem->body()->info()->findListing("symmetricJoints");
-        if(slinks.isValid() && !slinks.empty()){
-            bodyItem->beginKinematicStateEdit();
-            int from = direction;
-            int to = 1 - direction;
-            BodyPtr body = bodyItem->body();
-            for(int j=0; j < slinks.size(); ++j){
-                const Listing& linkPair = *slinks[j].toListing();
-                if(linkPair.size() == 1 && doMirrorCopy){
-                    Link* link = body->link(linkPair[0].toString());
-                    if(link){
-                        link->q() = -link->q();
+    applyBodyItemOperation(
+        [this, direction, doMirrorCopy](BodyItem* bodyItem){
+            doSymmetricCopy(bodyItem, direction, doMirrorCopy);
+        });
+}
+
+
+void BodyBar::Impl::doSymmetricCopy(BodyItem* bodyItem, int direction, bool doMirrorCopy)
+{
+    const Listing& slinks = *bodyItem->body()->info()->findListing("symmetricJoints");
+    if(slinks.isValid() && !slinks.empty()){
+        bodyItem->beginKinematicStateEdit();
+        int from = direction;
+        int to = 1 - direction;
+        BodyPtr body = bodyItem->body();
+        for(int j=0; j < slinks.size(); ++j){
+            const Listing& linkPair = *slinks[j].toListing();
+            if(linkPair.size() == 1 && doMirrorCopy){
+                Link* link = body->link(linkPair[0].toString());
+                if(link){
+                    link->q() = -link->q();
+                }
+            } else if(linkPair.size() >= 2){
+                Link* link1 = body->link(linkPair[from].toString());
+                Link* link2 = body->link(linkPair[to].toString());
+                if(link1 && link2){
+                    double sign = 1.0;
+                    if(linkPair.size() >= 3){
+                        sign = linkPair[2].toDouble();
                     }
-                } else if(linkPair.size() >= 2){
-                    Link* link1 = body->link(linkPair[from].toString());
-                    Link* link2 = body->link(linkPair[to].toString());
-                    if(link1 && link2){
-                        double sign = 1.0;
-                        
-                        if(linkPair.size() >= 3){
-                            sign = linkPair[2].toDouble();
-                        }
-                        if(doMirrorCopy){
-                            double q1 = link1->q();
-                            link1->q() = sign * link2->q();
-                            link2->q() = sign * q1;
-                        } else {
-                            link2->q() = sign * link1->q();
-                        }
+                    if(doMirrorCopy){
+                        double q1 = link1->q();
+                        link1->q() = sign * link2->q();
+                        link2->q() = sign * q1;
+                    } else {
+                        link2->q() = sign * link1->q();
                     }
                 }
             }
-            bodyItem->notifyKinematicStateChange(true);
-            bodyItem->acceptKinematicStateEdit();
         }
+        bodyItem->notifyKinematicStateChange(true);
+        bodyItem->acceptKinematicStateEdit();
     }
 }

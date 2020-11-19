@@ -10,8 +10,6 @@
 
 namespace cnoid {
 
-class LeggedBodyBarImpl;
-    
 class LeggedBodyBar : public ToolBar
 {
 public:
@@ -24,7 +22,9 @@ protected:
 
 private:
     LeggedBodyBar();
-    LeggedBodyBarImpl* impl;
+
+    class Impl;
+    Impl* impl;
 };
 
 }
