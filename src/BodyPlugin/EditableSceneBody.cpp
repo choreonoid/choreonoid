@@ -267,8 +267,8 @@ public:
     void makeLinkAttitudeLevel();
         
     PointedType findPointedObject(const SgNodePath& path);
-    int checkLinkOperationType(SceneLink* sceneLink);
-    int checkLinkKinematicsType(Link* link);
+    int checkLinkOperationType(SceneLink* sceneLink, bool doUpdateIK);
+    int checkLinkKinematicsType(Link* link, bool doUpdateIK);
     void updateMarkersAndManipulators(bool on);
     void attachPositionDragger(Link* link);
 
@@ -660,7 +660,9 @@ void EditableSceneBody::Impl::makeLinkFree(EditableSceneLink* sceneLink)
     if(bodyItem->currentBaseLink() == sceneLink->link()){
         bodyItem->setCurrentBaseLink(nullptr);
     }
-    bodyItem->pinDragIK()->setPin(sceneLink->link(), PinDragIK::NO_AXES);
+    if(auto pin = bodyItem->checkPinDragIK()){
+        pin->setPin(sceneLink->link(), PinDragIK::NO_AXES);
+    }
     bodyItem->notifyUpdate();
 }
 
@@ -686,8 +688,7 @@ void EditableSceneBody::Impl::toggleBaseLink(EditableSceneLink* sceneLink)
 
 void EditableSceneBody::Impl::togglePin(EditableSceneLink* sceneLink, bool toggleTranslation, bool toggleRotation)
 {
-    auto pin = bodyItem->pinDragIK();
-
+    auto pin = bodyItem->getOrCreatePinDragIK();
     PinDragIK::AxisSet axes = pin->pinAxes(sceneLink->link());
 
     if(toggleTranslation && toggleRotation){
@@ -756,9 +757,11 @@ EditableSceneBody::Impl::PointedType EditableSceneBody::Impl::findPointedObject(
 }
 
 
-int EditableSceneBody::Impl::checkLinkOperationType(SceneLink* sceneLink)
+int EditableSceneBody::Impl::checkLinkOperationType(SceneLink* sceneLink, bool doUpdateIK)
 {
-    currentIK.reset();
+    if(doUpdateIK){
+        currentIK.reset();
+    }
     
     if(!sceneLink){
         return LinkOperationType::None;
@@ -774,19 +777,19 @@ int EditableSceneBody::Impl::checkLinkOperationType(SceneLink* sceneLink)
         if(link->body()->isStaticModel() || (link->isRoot() && link->isFixedJoint())){
             type = LinkOperationType::None;
         } else {
-            if(checkLinkKinematicsType(link) != LinkOperationType::None){
+            if(checkLinkKinematicsType(link, doUpdateIK) != LinkOperationType::None){
                 type = LinkOperationType::SimInterference;
             }
         }
     } else {
-        type = checkLinkKinematicsType(link);
+        type = checkLinkKinematicsType(link, doUpdateIK);
     }
 
     return type;
 }
 
 
-int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
+int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK)
 {
     // Check if the link is editable considering the ancestor bodies
     BodyItem* bodyItemChain = bodyItem;
@@ -809,13 +812,16 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
     int type = LinkOperationType::None;
 
     if(mode == KinematicsBar::PresetKinematics){
-        currentIK = bodyItem->findPresetIK(link);
-        if(currentIK && kinematicsBar->isInverseKinematicsEnabled()){
+        auto ik = bodyItem->findPresetIK(link);
+        if(ik && kinematicsBar->isInverseKinematicsEnabled()){
             type = LinkOperationType::IK;
         } else if(link->isBodyRoot()){
             type = LinkOperationType::IK;
         } else if(kinematicsBar->isForwardKinematicsEnabled()){
             type = LinkOperationType::FK;
+        }
+        if(doUpdateIK){
+            currentIK = ik;
         }
     } else if(mode == KinematicsBar::ForwardKinematics){
         auto baseLink = bodyItem->currentBaseLink();
@@ -841,7 +847,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link)
 void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 {
     Link* baseLink = bodyItem->currentBaseLink();
-    auto pin = bodyItem->pinDragIK();
+    auto pin = bodyItem->checkPinDragIK();
 
     const int n = self->numSceneLinks();
     for(int i=0; i < n; ++i){
@@ -853,7 +859,7 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
             Link* link = sceneLink->link();
             if(link == baseLink){
                 sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
-            } else {
+            } else if(pin){
                 int pinAxes = pin->pinAxes(link);
                 if(pinAxes & (PinDragIK::TRANSFORM_6D)){
                     sceneLink->showMarker(Vector3f(1.0f, 1.0f, 0.1f), 0.4);
@@ -1014,7 +1020,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         bsm->setCurrent(bodyItem, targetLink, true);
         showOutline = true;
     } else {
-        operationType = checkLinkOperationType(pointedSceneLink);
+        operationType = checkLinkOperationType(pointedSceneLink, true);
         if(operationType != LinkOperationType::None){
             showOutline = true;
         }
@@ -1088,7 +1094,7 @@ bool EditableSceneBody::Impl::onButtonReleaseEvent(const SceneWidgetEvent& event
 bool EditableSceneBody::onDoubleClickEvent(const SceneWidgetEvent& event)
 {
     if(impl->targetLink){
-        if(impl->checkLinkKinematicsType(impl->targetLink) != LinkOperationType::None){
+        if(impl->checkLinkKinematicsType(impl->targetLink, false) != LinkOperationType::None){
             // prevent returning from the edit mode to the view mode
             return true;
         }
@@ -1126,7 +1132,7 @@ bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
         if(!pointedSceneLink){
             event.updateIndicator("");
         } else {
-            if(checkLinkOperationType(pointedSceneLink) != LinkOperationType::None){
+            if(checkLinkOperationType(pointedSceneLink, false) != LinkOperationType::None){
                 if(pointedSceneLink != outlinedLink){
                     if(outlinedLink){
                         outlinedLink->showOutline(false);
@@ -1422,12 +1428,16 @@ void EditableSceneBody::Impl::onDraggerDragFinished()
 
 bool EditableSceneBody::Impl::initializeIK()
 {
-    if(!currentIK && bodyItem->pinDragIK()->numPinnedLinks() > 0){
-        pinDragIK = bodyItem->pinDragIK();
-        pinDragIK->setBaseLink(bodyItem->currentBaseLink());
-        pinDragIK->setTargetLink(targetLink, kinematicsBar->isPositionDraggerEnabled());
-        if(pinDragIK->initialize()){
-            currentIK = pinDragIK;
+    if(!currentIK){
+        if(auto pin = bodyItem->checkPinDragIK()){
+            if(pin->numPinnedLinks() > 0){
+                pinDragIK = pin;
+                pinDragIK->setBaseLink(bodyItem->currentBaseLink());
+                pinDragIK->setTargetLink(targetLink, kinematicsBar->isPositionDraggerEnabled());
+                if(pinDragIK->initialize()){
+                    currentIK = pinDragIK;
+                }
+            }
         }
     }
     if(!currentIK){

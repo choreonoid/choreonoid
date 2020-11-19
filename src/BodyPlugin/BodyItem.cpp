@@ -897,11 +897,17 @@ std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 }
 
 
-std::shared_ptr<PinDragIK> BodyItem::pinDragIK()
+std::shared_ptr<PinDragIK> BodyItem::getOrCreatePinDragIK()
 {
     if(!impl->pinDragIK){
         impl->pinDragIK = std::make_shared<PinDragIK>(impl->body);
     }
+    return impl->pinDragIK;
+}
+
+
+std::shared_ptr<PinDragIK> BodyItem::checkPinDragIK()
+{
     return impl->pinDragIK;
 }
 

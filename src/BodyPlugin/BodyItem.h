@@ -94,7 +94,8 @@ public:
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
     LinkKinematicsKit* getCurrentLinkKinematicsKit(Link* targetLink);
     std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);
-    std::shared_ptr<PinDragIK> pinDragIK();
+    std::shared_ptr<PinDragIK> getOrCreatePinDragIK();
+    std::shared_ptr<PinDragIK> checkPinDragIK();
     std::shared_ptr<PenetrationBlocker> createPenetrationBlocker(Link* link, bool excludeSelfCollisions = false);
 
     SignalProxy<void()> sigModelUpdated();

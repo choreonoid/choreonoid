@@ -22,7 +22,7 @@ namespace {
 
 enum BaseLinkId {
     PresetBaseLink = -1,
-    FreeBaseLink = -2
+    UnspecifiedBaseLinkForPinDragIK = -2
 };
 
 }
@@ -120,29 +120,33 @@ LinkKinematicsKit* LinkKinematicsKitManager::findPresetKinematicsKit(Link* targe
 LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targetLink, bool isPresetOnly)
 {
     LinkKinematicsKit* kit = nullptr;
-
     if(isPresetOnly && !targetLink){
         targetLink = bodyItem->body()->findUniqueEndLink();
     }
     if(!targetLink){
         return nullptr;
     }
-
     bool isPresetMode = KinematicsBar::instance()->mode() == KinematicsBar::PresetKinematics;
     Link* baseLink = nullptr;
     int baseLinkIndex;
     shared_ptr<InverseKinematics> presetIK;
+    shared_ptr<PinDragIK> pinDragIK;
     
     if(isPresetOnly || isPresetMode){
         baseLinkIndex = PresetBaseLink;
     } else {
-        baseLink = bodyItem->currentBaseLink();
-        if(baseLink){
-            baseLinkIndex = baseLink->index();
+        pinDragIK = bodyItem->checkPinDragIK();
+        if(pinDragIK && pinDragIK->numPinnedLinks() > 0){
+            baseLinkIndex = UnspecifiedBaseLinkForPinDragIK;
         } else {
-            baseLinkIndex = FreeBaseLink;
+            baseLink = bodyItem->currentBaseLink();
+            if(!baseLink){
+                baseLink = bodyItem->body()->rootLink();
+            }
+            baseLinkIndex = baseLink->index();
         }
     }
+
     auto key = make_pair(targetLink->index(), baseLinkIndex);
     
     auto iter = linkPairToKinematicsKitMap.find(key);
@@ -162,32 +166,25 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
                 kit = new LinkKinematicsKit(targetLink);
                 kit->setInversetKinematics(presetIK);
             }
-        }
-        if(!kit && !isPresetOnly){
+        } else {
             kit = new LinkKinematicsKit(targetLink);
-
-            auto pinDragIK = bodyItem->pinDragIK(); // create if not created
-            if(pinDragIK->numPinnedLinks() > 0){
-                pinDragIK->setTargetLink(targetLink, true);
-                if(pinDragIK->initialize()){
-                    kit->setInversetKinematics(pinDragIK);
-                }
-            }
-            if(!kit->inverseKinematics()){
-                auto body = bodyItem->body();
-                if(!baseLink){
-                    baseLink = body->rootLink();
-                }
-                kit->setInversetKinematics(JointPath::getCustomPath(body, baseLink, targetLink));
+            if(baseLinkIndex != UnspecifiedBaseLinkForPinDragIK){
+                kit->setInversetKinematics(JointPath::getCustomPath(bodyItem->body(), baseLink, targetLink));
             }
         }
-
         if(kit){
             linkPairToKinematicsKitMap[key] = kit;
             updateCoordinateFramesOf(kit, true);
         }
     }
 
+    if(baseLinkIndex == UnspecifiedBaseLinkForPinDragIK){
+        pinDragIK->setTargetLink(targetLink, true);
+        if(pinDragIK->initialize()){
+            kit->setInversetKinematics(pinDragIK);
+        }
+    }
+    
     return kit;
 }
 
