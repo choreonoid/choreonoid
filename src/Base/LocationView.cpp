@@ -305,7 +305,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             label = format(_("Parent ( {} )"), parentLocation->getName());
         }
         parentCoord = new CoordinateInfo(label, ParentCoord, ParentCoordIndex);
-        parentCoord->parentPositionFunc = [&](){ return parentLocation->getLocation(); };
+        parentCoord->parentPositionFunc = [&](){ return parentLocation->getGlobalLocation(); };
 
     } else if(isRelativeLocation){
         if(locationType == LocationProxy::OffsetLocation){
@@ -343,7 +343,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             }
             basename = frameParentLocation->getName();
             basename += " ";
-            parentPositionFunc = [frameParentLocation](){ return frameParentLocation->getLocation(); };
+            parentPositionFunc = [frameParentLocation](){ return frameParentLocation->getGlobalLocation(); };
             basename += frameListItem->displayName();
             basename += " ";
             auto frames = frameListItem->frameList();
@@ -415,8 +415,8 @@ void LocationView::Impl::updatePositionWidgetWithTargetLocation()
                 T_display = location->getLocation();
 
             } else if(parentLocation){
-                Position T_relative = parentLocation->getLocation();
-                T_location_global = T_relative * location->getLocation();
+                Position T_parent = parentLocation->getGlobalLocation();
+                T_location_global = T_parent * location->getLocation();
                 isGlobalBase = true;
             } else {
                 return; // invalid case
@@ -472,7 +472,7 @@ bool LocationView::Impl::setInputPositionToTargetLocation(const Position& T_inpu
             if(isRelativeLocation){
                 if(parentLocation){
                     Position T_global = T_base * T_input;
-                    Position T_parent = parentLocation->getLocation();
+                    Position T_parent = parentLocation->getGlobalLocation();
                     T_location = T_parent.inverse(Eigen::Isometry) * T_global;
                 } else {
                     return false; // invalid case
