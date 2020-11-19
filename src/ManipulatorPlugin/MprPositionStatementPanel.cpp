@@ -83,7 +83,7 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
 
     moveToButton.setText(_("Move to"));
     moveToButton.sigClicked().connect(
-        [&](){
+        [self](){
             self->currentProgramItem()->moveTo(
                 self->currentStatement<MprPositionStatement>());
         });
@@ -91,9 +91,9 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
 
     touchupButton.setText(_("Touch-up"));
     touchupButton.sigClicked().connect(
-        [this](){
-            this->self->currentProgramItem()->touchupPosition(
-                this->self->currentStatement<MprPositionStatement>());
+        [self](){
+            self->currentProgramItem()->touchupPosition(
+                self->currentStatement<MprPositionStatement>());
         });
     hbox->addWidget(&touchupButton);
     
