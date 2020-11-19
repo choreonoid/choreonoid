@@ -143,8 +143,9 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
                         if(waistToFoot->hasAnalyticalIK()){
                             ikDone = waistToFoot->calcInverseKinematics(foot->T());
                         } else {
+                            Position T_foot = foot->T();
                             waistToFoot->calcForwardKinematics();
-                            ikDone = waistToFoot->calcInverseKinematics(foot->T());
+                            ikDone = waistToFoot->calcInverseKinematics(T_foot);
                         }
                         if(ikDone){
                             numDone++;
