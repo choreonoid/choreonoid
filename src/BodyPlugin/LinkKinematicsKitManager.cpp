@@ -33,6 +33,7 @@ class LinkKinematicsKitManager::Impl
 {
 public:
     BodyItem* bodyItem;
+    Body* body;
 
     // Key is pair(target link index, base link index);
     // Use an integer index value as a key to keep the number of instances growing
@@ -66,7 +67,8 @@ LinkKinematicsKitManager::LinkKinematicsKitManager(BodyItem* bodyItem)
 
 
 LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
-    : bodyItem(bodyItem)
+    : bodyItem(bodyItem),
+      body(bodyItem->body())
 {
     bodySelectionManager = BodySelectionManager::instance();
 
@@ -121,7 +123,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
 {
     LinkKinematicsKit* kit = nullptr;
     if(isPresetOnly && !targetLink){
-        targetLink = bodyItem->body()->findUniqueEndLink();
+        targetLink = body->findUniqueEndLink();
     }
     if(!targetLink){
         return nullptr;
@@ -141,20 +143,18 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
         } else {
             baseLink = bodyItem->currentBaseLink();
             if(!baseLink){
-                baseLink = bodyItem->body()->rootLink();
+                baseLink = body->rootLink();
             }
             baseLinkIndex = baseLink->index();
         }
     }
 
     auto key = make_pair(targetLink->index(), baseLinkIndex);
-    
+
+    bool needToRegistration = false;
     auto iter = linkPairToKinematicsKitMap.find(key);
     if(iter != linkPairToKinematicsKitMap.end()){
-        auto foundKit = iter->second;
-        if(foundKit->link() == targetLink){
-            kit = foundKit;
-        }
+        kit = iter->second;
     }
 
     if(!kit){
@@ -165,14 +165,29 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
             if(presetIK){
                 kit = new LinkKinematicsKit(targetLink);
                 kit->setInverseKinematics(presetIK);
-            }
-        } else {
-            kit = new LinkKinematicsKit(targetLink);
-            if(baseLinkIndex != UnspecifiedBaseLinkForPinDragIK){
-                kit->setInverseKinematics(JointPath::getCustomPath(bodyItem->body(), baseLink, targetLink));
+                needToRegistration = true;
             }
         }
-        if(kit){
+        if(!kit){
+            // Special case
+            if(baseLinkIndex == PresetBaseLink && targetLink->isBodyRoot()){
+                baseLink = body->rootLink();
+                baseLinkIndex = 0; // root link index
+                key.second = baseLinkIndex;
+                auto iter = linkPairToKinematicsKitMap.find(key);
+                if(iter != linkPairToKinematicsKitMap.end()){
+                    kit = iter->second;
+                }
+            }
+        }
+        if(!kit && (baseLinkIndex != PresetBaseLink)){
+            kit = new LinkKinematicsKit(targetLink);
+            if(baseLinkIndex != UnspecifiedBaseLinkForPinDragIK){
+                kit->setInverseKinematics(JointPath::getCustomPath(body, baseLink, targetLink));
+            }
+            needToRegistration = true;
+        }
+        if(needToRegistration && kit){
             linkPairToKinematicsKitMap[key] = kit;
             updateCoordinateFramesOf(kit, true);
         }
@@ -192,7 +207,6 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
 std::shared_ptr<InverseKinematics> LinkKinematicsKitManager::Impl::findPresetIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;
-    auto body = bodyItem->body();
     const Mapping& setupMap = *body->info()->findMapping("defaultIKsetup");
     if(setupMap.isValid()){
         const Listing& setup = *setupMap.findListing(targetLink->name());
@@ -339,7 +353,6 @@ void LinkKinematicsKitManager::Impl::onFrameListItemAddedOrUpdated
 
 bool LinkKinematicsKitManager::storeState(Mapping& archive) const
 {
-    auto body = impl->bodyItem->body();
     archive.setKeyQuoteStyle(DOUBLE_QUOTED);
     for(auto& kv : impl->linkPairToKinematicsKitMap){
         auto& linkIndexPair = kv.first;
@@ -348,7 +361,7 @@ bool LinkKinematicsKitManager::storeState(Mapping& archive) const
         // This function only stores the states of preset link kinematics objects
         if(baseLinkIndex == PresetBaseLink){
             int linkIndex = linkIndexPair.first;
-            if(auto link = body->link(linkIndex)){
+            if(auto link = impl->body->link(linkIndex)){
                 auto& kit = kv.second;
                 MappingPtr state = new Mapping;
                 if(!kit->storeState(*state)){
@@ -366,10 +379,9 @@ bool LinkKinematicsKitManager::storeState(Mapping& archive) const
 
 bool LinkKinematicsKitManager::restoreState(const Mapping& archive)
 {
-    auto body = impl->bodyItem->body();
     for(auto& kv : archive){
         auto& linkName = kv.first;
-        if(auto link = body->link(linkName)){
+        if(auto link = impl->body->link(linkName)){
             if(auto kit = findPresetKinematicsKit(link)){
                 kit->restoreState(*kv.second->toMapping());
             }

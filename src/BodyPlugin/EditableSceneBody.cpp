@@ -1446,7 +1446,7 @@ bool EditableSceneBody::Impl::initializeIK()
         }
     }
 
-    return currentIK? true: false;
+    return currentIK ? true: false;
 }
 
 
