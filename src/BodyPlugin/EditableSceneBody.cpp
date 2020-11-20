@@ -420,7 +420,9 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
     if(on){
         connections.add(
             bodyItem->sigUpdated().connect(
-                [&](){ updateMarkersAndManipulators(); }));
+                [&](){
+                    if(isFocused){ updateMarkersAndManipulators(true); }
+                }));
 
         connections.add(
             bodyItem->sigKinematicStateChanged().connect(
