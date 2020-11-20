@@ -247,7 +247,6 @@ public:
     double calcLinkMarkerRadius(SceneLink* sceneLink) const;
     void onSceneGraphConnection(bool on);
     void updateModel();
-    void onBodyItemUpdated();
     void onKinematicStateChanged();
 
     void onCollisionsUpdated();
@@ -421,9 +420,7 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
     if(on){
         connections.add(
             bodyItem->sigUpdated().connect(
-                [&](){ onBodyItemUpdated(); }));
-
-        onBodyItemUpdated();
+                [&](){ updateMarkersAndManipulators(); }));
 
         connections.add(
             bodyItem->sigKinematicStateChanged().connect(
@@ -481,12 +478,6 @@ void EditableSceneBody::Impl::updateModel()
     dragMode = DRAG_NONE;
     
     self->SceneBody::updateModel();
-}
-
-
-void EditableSceneBody::Impl::onBodyItemUpdated()
-{
-    updateMarkersAndManipulators(isFocused);
 }
 
 
@@ -871,6 +862,7 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
         }
     }
 
+    // The following connection is only necessary when the position dragger is shown
     kinematicsKitConnection.disconnect();
 
     self->notifyUpdate(modified);
@@ -946,19 +938,22 @@ void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
 
 void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
+    bool wasEditMode = isEditMode;
     isEditMode = event.sceneWidget()->isEditMode();
 
-    if(isEditMode){
-        if(outlinedLink){
-            outlinedLink->showOutline(true);
+    if(isEditMode != wasEditMode){
+        if(isEditMode){
+            if(outlinedLink){
+                outlinedLink->showOutline(true);
+            }
+        } else {
+            finishEditing();
+            if(outlinedLink){
+                outlinedLink->showOutline(false);
+                outlinedLink = nullptr;
+            }
+            updateMarkersAndManipulators(false);
         }
-    } else {
-        finishEditing();
-        if(outlinedLink){
-            outlinedLink->showOutline(false);
-            outlinedLink = nullptr;
-        }
-        updateMarkersAndManipulators(false);
     }
 }
 
