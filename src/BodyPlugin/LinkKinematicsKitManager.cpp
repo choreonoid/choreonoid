@@ -168,7 +168,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
                 needToRegistration = true;
             }
         }
-        if(!kit){
+        if(!kit && !isPresetOnly){
             // Special case
             if(baseLinkIndex == PresetBaseLink && targetLink->isBodyRoot()){
                 baseLink = body->rootLink();
