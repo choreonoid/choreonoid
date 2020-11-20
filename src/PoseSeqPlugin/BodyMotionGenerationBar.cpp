@@ -334,7 +334,7 @@ BodyMotionGenerationBar* BodyMotionGenerationBar::instance()
 
 
 BodyMotionGenerationBar::BodyMotionGenerationBar()
-    : ToolBar("BodyMotionGenerationBar")
+    : ToolBar(N_("BodyMotionGenerationBar"))
 {
     setVisibleByDefault(true);
 
