@@ -164,12 +164,12 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
             }
             if(presetIK){
                 kit = new LinkKinematicsKit(targetLink);
-                kit->setInversetKinematics(presetIK);
+                kit->setInverseKinematics(presetIK);
             }
         } else {
             kit = new LinkKinematicsKit(targetLink);
             if(baseLinkIndex != UnspecifiedBaseLinkForPinDragIK){
-                kit->setInversetKinematics(JointPath::getCustomPath(bodyItem->body(), baseLink, targetLink));
+                kit->setInverseKinematics(JointPath::getCustomPath(bodyItem->body(), baseLink, targetLink));
             }
         }
         if(kit){
@@ -181,7 +181,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
     if(baseLinkIndex == UnspecifiedBaseLinkForPinDragIK){
         pinDragIK->setTargetLink(targetLink, true);
         if(pinDragIK->initialize()){
-            kit->setInversetKinematics(pinDragIK);
+            kit->setInverseKinematics(pinDragIK);
         }
     }
     

@@ -27,7 +27,7 @@ public:
     ~LinkKinematicsKit();
 
     void setBaseLink(Link* baseLink);
-    void setInversetKinematics(std::shared_ptr<InverseKinematics> ik);
+    void setInverseKinematics(std::shared_ptr<InverseKinematics> ik);
     void setBaseFrames(CoordinateFrameList* frames);
     void setOffsetFrames(CoordinateFrameList* frames);
 

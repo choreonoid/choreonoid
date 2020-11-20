@@ -39,7 +39,7 @@ public:
     Impl(Link* link);
     Impl(const Impl& org, CloneMap* cloneMap);
     void setBaseLink(Link* link);
-    void setInversetKinematics(std::shared_ptr<InverseKinematics> ik);
+    void setInverseKinematics(std::shared_ptr<InverseKinematics> ik);
     Link* baseLink();
 };
 
@@ -137,13 +137,13 @@ void LinkKinematicsKit::Impl::setBaseLink(Link* baseLink)
 }
 
 
-void LinkKinematicsKit::setInversetKinematics(std::shared_ptr<InverseKinematics> ik)
+void LinkKinematicsKit::setInverseKinematics(std::shared_ptr<InverseKinematics> ik)
 {
-    impl->setInversetKinematics(ik);
+    impl->setInverseKinematics(ik);
 }
 
 
-void LinkKinematicsKit::Impl::setInversetKinematics(std::shared_ptr<InverseKinematics> ik)
+void LinkKinematicsKit::Impl::setInverseKinematics(std::shared_ptr<InverseKinematics> ik)
 {
     jointPath.reset();
     inverseKinematics.reset();
