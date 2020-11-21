@@ -121,23 +121,28 @@ LinkKinematicsKit* LinkKinematicsKitManager::findPresetKinematicsKit(Link* targe
 
 LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targetLink, bool isPresetOnly)
 {
-    LinkKinematicsKit* kit = nullptr;
-    if(isPresetOnly && !targetLink){
-        targetLink = body->findUniqueEndLink();
-    }
     if(!targetLink){
-        return nullptr;
+        if(!isPresetOnly){
+            return nullptr;
+        } else {
+            targetLink = body->findUniqueEndLink();
+            if(!targetLink){
+                return nullptr;
+            }
+        }
     }
-    bool isPresetMode = KinematicsBar::instance()->mode() == KinematicsBar::PresetKinematics;
+    bool isPresetMode = false;
+    if(!isPresetOnly && KinematicsBar::instance()->mode() == KinematicsBar::PresetKinematics){
+        isPresetMode = true;
+    }
+
     Link* baseLink = nullptr;
     int baseLinkIndex;
-    shared_ptr<InverseKinematics> presetIK;
-    shared_ptr<PinDragIK> pinDragIK;
-    
+
     if(isPresetOnly || isPresetMode){
         baseLinkIndex = PresetBaseLink;
     } else {
-        pinDragIK = bodyItem->checkPinDragIK();
+        auto pinDragIK = bodyItem->checkPinDragIK();
         if(pinDragIK && pinDragIK->numPinnedLinks() > 0){
             baseLinkIndex = UnspecifiedBaseLinkForPinDragIK;
         } else {
@@ -151,17 +156,17 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
 
     auto key = make_pair(targetLink->index(), baseLinkIndex);
 
-    bool needToRegistration = false;
+    LinkKinematicsKit* kit = nullptr;
     auto iter = linkPairToKinematicsKitMap.find(key);
     if(iter != linkPairToKinematicsKitMap.end()){
         kit = iter->second;
     }
 
     if(!kit){
+        bool needToRegistration = false;
+        
         if(isPresetOnly || isPresetMode){
-            if(!presetIK){
-                presetIK = findPresetIK(targetLink);
-            }
+            auto presetIK = findPresetIK(targetLink);
             if(presetIK){
                 kit = new LinkKinematicsKit(targetLink);
                 kit->setInverseKinematics(presetIK);
@@ -194,6 +199,7 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
     }
 
     if(baseLinkIndex == UnspecifiedBaseLinkForPinDragIK){
+        auto pinDragIK = bodyItem->checkPinDragIK();
         pinDragIK->setTargetLink(targetLink, true);
         if(pinDragIK->initialize()){
             kit->setInverseKinematics(pinDragIK);
