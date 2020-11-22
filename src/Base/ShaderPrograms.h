@@ -55,12 +55,14 @@ public:
     bool hasCapability(int capability) const { return capabilities_ & capability; }
 
 protected:
+    ShaderProgram() = default;
+
     struct ShaderSource {
         const char* filename;
         int shaderType;
     };
-    
     ShaderProgram(std::initializer_list<ShaderSource> sources);
+    
     void setCapability(int capability) { capabilities_ |= capability; }
 
 private:
@@ -149,7 +151,7 @@ public:
     ~ThickLineProgram();
     
     virtual void initialize() override;
-    virtual void activate();
+    virtual void activate() override;
 
     void setViewportSize(int width, int height);
     void setLineWidth(float width);

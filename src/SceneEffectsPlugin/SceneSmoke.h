@@ -16,7 +16,7 @@ public:
     SceneSmoke();
     SceneSmoke(const SceneSmoke& org);
 
-    virtual ParticleSystem* getParticleSystem();
+    virtual ParticleSystem* getParticleSystem() override;
 
     ParticleSystem& particleSystem() { return particleSystem_; }
 

@@ -476,7 +476,7 @@ static bool checkRayTraiangleIntersection
         out_v = v * inv_det;
 
     } else {
-        if(fabsf(det) < GU_CULLING_EPSILON_RAY_TRIANGLE){
+        if(std::abs(det) < GU_CULLING_EPSILON_RAY_TRIANGLE){
             return false;
         }
         const double inv_det = 1.0f / det;

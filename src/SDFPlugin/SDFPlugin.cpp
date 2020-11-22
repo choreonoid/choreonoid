@@ -119,7 +119,7 @@ public:
         char *p;
 
         if (envname != NULL && (p = getenv(envname)) != NULL) {
-            if (envname != "HOME") {
+            if (strcmp(envname, "HOME") != 0){
                 boost::split(paths, p, boost::is_any_of(":"));
                 for(auto& path : paths){
                     if (path != "") {

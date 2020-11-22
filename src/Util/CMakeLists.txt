@@ -206,13 +206,13 @@ if(UNIX)
     fmt::fmt
     ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${LIBUUID_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m dl
     )
 
-  if(CMAKE_COMPILER_IS_GNUCC AND (NOT CMAKE_CXX_STANDARD LESS 17))
-    set(libraries ${libraries} stdc++fs)
+  if(FILESYSTEM_LIBRARY)
+    set(libraries ${libraries} ${FILESYSTEM_LIBRARY})
   endif()
 
   if(APPLE)

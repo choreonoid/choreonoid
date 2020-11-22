@@ -73,7 +73,7 @@ public:
         setActivationPriority(0);
     }
 
-    virtual bool initialize()
+    virtual bool initialize() override
     {
 
 #ifdef CNOID_ENABLE_GETTEXT

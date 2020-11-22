@@ -109,6 +109,18 @@ double* RainSnowDevice::writeState(double* out_buf) const
 }
 
 
+bool RainSnowDevice::on() const
+{
+    return on_;
+}
+
+
+void RainSnowDevice::on(bool on)
+{
+    on_ = on;
+}
+
+
 RainDevice::RainDevice()
 {
     particleSystem().setParticleSize(0.02f);

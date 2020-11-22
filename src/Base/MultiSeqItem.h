@@ -24,7 +24,7 @@ public:
         
     MultiSeqItem(std::shared_ptr<MultiSeqType> seq) : seq_(seq) { }
 
-    virtual std::shared_ptr<AbstractMultiSeq> abstractMultiSeq() { return seq_; }
+    virtual std::shared_ptr<AbstractMultiSeq> abstractMultiSeq() override { return seq_; }
 
     typename std::shared_ptr<MultiSeqType> seq() { return seq_; }
 

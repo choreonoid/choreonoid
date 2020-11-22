@@ -17,7 +17,7 @@ class CNOID_EXPORT STLSceneLoader : public AbstractSceneLoader
 public:
     STLSceneLoader();
     ~STLSceneLoader();
-    virtual void setMessageSink(std::ostream& os);
+    virtual void setMessageSink(std::ostream& os) override;
     virtual SgNode* load(const std::string& filename) override;
 
 private:

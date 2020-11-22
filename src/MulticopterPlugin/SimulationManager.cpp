@@ -497,7 +497,7 @@ SimulationManager::calcCuttoffCoef (
 void
 SimulationManager::preDynamicFunction(SimulatorItem* simItem, MulticopterSimulatorItem* multicopterSimItem)
 {
-    if(multicopterSimItem = nullptr){
+    if(!multicopterSimItem){
         return;
     }
 
@@ -509,7 +509,7 @@ SimulationManager::preDynamicFunction(SimulatorItem* simItem, MulticopterSimulat
 void
 SimulationManager::midDynamicFunction(SimulatorItem* simItem, MulticopterSimulatorItem* multicopterSimItem)
 {
-    if(multicopterSimItem = nullptr){
+    if(!multicopterSimItem){
         return;
     }
 
@@ -747,16 +747,15 @@ std::unique_ptr<FFCalc::LinkForce> SimulationManager::midDynamicFunctionLink (
 void
 SimulationManager::postDynamicFunction(SimulatorItem* simItem, MulticopterSimulatorItem* multicopterSimItem)
 {
-    if(multicopterSimItem = nullptr){
+    if(!multicopterSimItem){
         return;
     }
 
-    if( isInitialized() == false ){
+    if(!isInitialized()){
         return;
     }
 
     logProc(simItem, multicopterSimItem);
-
 }
 
 

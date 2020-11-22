@@ -783,7 +783,8 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
     string instanceName;
                     
     if(!archive->read("name", instanceName)){
-        if(info = findViewInfo(moduleName, className)){
+        info = findViewInfo(moduleName, className);
+        if(info){
             view = info->getOrCreateView();
         }
     } else {

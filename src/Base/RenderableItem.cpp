@@ -9,6 +9,12 @@ RenderableItem::RenderableItem()
 }
 
 
+RenderableItem::~RenderableItem()
+{
+
+}
+
+
 bool RenderableItem::isSceneSensitive()
 {
     return isSceneSensitive_;

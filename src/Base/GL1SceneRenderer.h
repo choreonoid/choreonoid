@@ -22,8 +22,8 @@ public:
     virtual void renderCustomGroup(SgGroup* transform, std::function<void()> traverseFunction) override;
     virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) override;
     virtual void renderNode(SgNode* node) override;
-    virtual void addNodeDecoration(SgNode* targetNode, NodeDecorationFunction func, int id);
-    virtual void clearNodeDecorations(int id);
+    virtual void addNodeDecoration(SgNode* targetNode, NodeDecorationFunction func, int id) override;
+    virtual void clearNodeDecorations(int id) override;
     virtual const Affine3& currentModelTransform() const override;
     virtual const Matrix4& projectionMatrix() const override;
     virtual double projectedPixelSizeRatio(const Vector3& position) const override;
@@ -55,7 +55,7 @@ public:
        are checked if they are still used or not, and the unused resources are released
        when finalizeRendering() is called. The default value is true.
     */
-    void enableUnusedResourceCheck(bool on);
+    virtual void enableUnusedResourceCheck(bool on) override;
 
     virtual void setColor(const Vector3f& color) override;
     virtual void setBackFaceCullingMode(int mode) override;

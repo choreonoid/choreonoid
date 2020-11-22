@@ -304,7 +304,7 @@ public:
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
     void clearSimulation();
     bool startSimulation(bool doReset);
-    virtual void run();
+    virtual void run() override;
     void onSimulationLoopStarted();
     void updateSimBodyLists();
     bool stepSimulationMain();

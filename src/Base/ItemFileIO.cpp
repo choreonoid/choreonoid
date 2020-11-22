@@ -266,8 +266,8 @@ Item* ItemFileIO::loadItem
 (const std::string& filename,
  Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options)
 {
-    ItemPtr item;
-    if(item = createItem()){
+    ItemPtr item = createItem();
+    if(item){
         if(!loadItem(item, filename, parentItem, doAddition, nextItem, options)){
             item.reset();
         }

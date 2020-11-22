@@ -508,7 +508,7 @@ void SgGroup::removeChildAt(int index, bool doNotify)
 {
     if(doNotify){
         SgUpdate update;
-        removeChildAt(index, &update);
+        removeChildAt(index, update);
     } else {
         removeChild(children.begin() + index, nullptr);
     }

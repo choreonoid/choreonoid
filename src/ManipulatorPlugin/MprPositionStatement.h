@@ -25,7 +25,7 @@ public:
     const MprPosition* position() const;
     
     virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const;
+    virtual bool write(Mapping& archive) const override;
 
 protected:
     MprPositionStatement(const MprPositionStatement& org);

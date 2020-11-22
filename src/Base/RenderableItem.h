@@ -12,6 +12,7 @@ class CNOID_EXPORT RenderableItem
 {
 public:
     RenderableItem();
+    virtual ~RenderableItem();
     virtual SgNode* getScene() = 0;
     virtual bool isSceneSensitive();
     virtual void setSceneSensitive(bool on);

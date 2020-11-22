@@ -377,7 +377,7 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
             } else if(type == "Vector3Seq") {
                 if((version >= 3.0 && content == "ZMPSeq") ||
                    (version < 3.0 && content == "ZMP") ||
-                   (version < 2.0) && (content == "RelativeZMP" || content == "RelativeZmp")){
+                   ((version < 2.0) && (content == "RelativeZMP" || content == "RelativeZmp"))){
                     auto zmpSeq = getOrCreateZMPSeq(*this);
                     loaded = zmpSeq->readSeq(component, os);
                     if(!loaded){

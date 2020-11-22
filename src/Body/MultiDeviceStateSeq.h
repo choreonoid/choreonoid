@@ -27,7 +27,7 @@ public:
 
     using BaseSeqType::operator=;
     MultiDeviceStateSeq& operator=(const MultiDeviceStateSeq& rhs);
-    virtual std::shared_ptr<AbstractSeq> cloneSeq() const;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
 
     void initialize(const DeviceList<>& devices);
 

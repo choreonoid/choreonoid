@@ -836,12 +836,14 @@ ItwItem* ItemTreeWidget::Impl::findNextItwItemInSubTree(Item* item, bool doTrave
     ItwItem* found = nullptr;
 
     for(auto nextItem = item->nextItem(); nextItem; nextItem = nextItem->nextItem()){
-        if(found = findItwItem(nextItem)){
+        found = findItwItem(nextItem);
+        if(found){
             break;
         }
         if(doTraverse){
             if(auto childItem = nextItem->childItem()){
-                if(found = findNextItwItemInSubTree(childItem, true)){
+                found = findNextItwItemInSubTree(childItem, true);
+                if(found){
                     break;
                 }
             }

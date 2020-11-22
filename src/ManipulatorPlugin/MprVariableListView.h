@@ -17,7 +17,7 @@ public:
     class Impl;
 
 protected:
-    virtual void onAttachedMenuRequest(MenuManager& menuManager);    
+    virtual void onAttachedMenuRequest(MenuManager& menuManager) override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 

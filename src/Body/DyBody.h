@@ -75,8 +75,8 @@ public:
     ConstraintForceArray& constraintForces() { return constraintForces_; }
     const ConstraintForceArray& constraintForces() const { return constraintForces_; }
 
-    virtual void prependChild(Link* link);
-    virtual void appendChild(Link* link);
+    virtual void prependChild(Link* link) override;
+    virtual void appendChild(Link* link) override;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -130,7 +130,7 @@ public:
     */
     DyBody(const Body& org) = delete;
 
-    virtual Link* createLink(const Link* org = 0) const;
+    virtual Link* createLink(const Link* org = 0) const override;
 
     DyLink* joint(int id) const {
         return static_cast<DyLink*>(Body::joint(id));

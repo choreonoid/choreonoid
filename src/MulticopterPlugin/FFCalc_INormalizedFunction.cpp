@@ -32,6 +32,13 @@ namespace
 	}
 }
 
+
+INormalizedFunction::~INormalizedFunction()
+{
+
+}
+
+
 double DefaultNormCutoffFunc::eval(const double rbar) const
 {
 	assert(0.0<=rbar && rbar<=1.0);

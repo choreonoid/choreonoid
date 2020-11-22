@@ -25,8 +25,8 @@ public:
 
     using AbstractSeq::operator=;
     BodyMotion& operator=(const BodyMotion& rhs);
-    virtual std::shared_ptr<AbstractSeq> cloneSeq() const;        
-
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
+    
     void setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea = false);
     void setNumJoints(int numJoints, bool clearNewElements = false);
 

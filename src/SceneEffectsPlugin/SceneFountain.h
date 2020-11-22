@@ -16,7 +16,7 @@ public:
     SceneFountain();
     SceneFountain(const SceneFountain& org);
 
-    virtual ParticleSystem* getParticleSystem();
+    virtual ParticleSystem* getParticleSystem() override;
 
     ParticleSystem& particleSystem() { return particleSystem_; }
 

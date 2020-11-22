@@ -12,8 +12,6 @@
 #include <type_traits>
 #include <ostream>
 
-extern void* enabler;
-
 namespace cnoid {
 
 class GeneralSeqReader
@@ -137,11 +135,11 @@ public:
     }
 
     template<
-      class SeqType,
-      typename std::enable_if<
-          std::is_base_of<AbstractSeq, SeqType>::value &&
-          !std::is_base_of<AbstractMultiSeq, SeqType>::value>::type *& = enabler
-    >
+        class SeqType,
+        typename std::enable_if<
+            std::is_base_of<AbstractSeq, SeqType>::value &&
+            !std::is_base_of<AbstractMultiSeq, SeqType>::value, std::nullptr_t>::type = nullptr
+        >
     bool read(
         const Mapping* archive, SeqType* seq,
         std::function<void(const Listing& srcNode, int topIndex, typename SeqType::value_type& seqValue)> readValue)
@@ -150,11 +148,11 @@ public:
     }
 
     template<
-      class SeqType,
-      typename std::enable_if<
-          std::is_base_of<AbstractSeq, SeqType>::value &&
-          !std::is_base_of<AbstractMultiSeq, SeqType>::value>::type *& = enabler
-    >
+        class SeqType,
+        typename std::enable_if<
+            std::is_base_of<AbstractSeq, SeqType>::value &&
+            !std::is_base_of<AbstractMultiSeq, SeqType>::value, std::nullptr_t>::type = nullptr
+        >
     bool readFrames(
         const Mapping* archive, SeqType* seq,
         std::function<void(const Listing& srcNode, int topIndex, typename SeqType::value_type& seqValue)> readValue)
@@ -183,9 +181,9 @@ public:
     }
 
     template<
-      class SeqType,
-      typename std::enable_if<std::is_base_of<AbstractMultiSeq, SeqType>::value>::type *& = enabler
-    >
+        class SeqType,
+        typename std::enable_if<std::is_base_of<AbstractMultiSeq, SeqType>::value, std::nullptr_t>::type = nullptr
+        >
     bool read(
         const Mapping* archive, SeqType* seq,
         std::function<void(const ValueNode& srcNode, typename SeqType::value_type& seqValue)> readValue)
@@ -194,9 +192,9 @@ public:
     }
 
     template<
-      class SeqType,
-      typename std::enable_if<std::is_base_of<AbstractMultiSeq, SeqType>::value>::type *& = enabler
-    >
+        class SeqType,
+        typename std::enable_if<std::is_base_of<AbstractMultiSeq, SeqType>::value, std::nullptr_t>::type = nullptr
+        >
     bool readFrames(
         const Mapping* archive, SeqType* seq,
         std::function<void(const ValueNode& srcNode, typename SeqType::value_type& seqValue)> readValue)

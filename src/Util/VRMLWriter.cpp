@@ -256,8 +256,9 @@ void VRMLWriterImpl::registerNodeMethod(const std::type_info& t, VRMLWriterNodeM
 
 
 VRMLWriterNodeMethod VRMLWriterImpl::getNodeMethod(VRMLNodePtr node) {
-    TNodeMethodMap::iterator p = nodeMethodMap.find(typeid(*node).name());
-    return (p != nodeMethodMap.end()) ? p->second : 0;
+    auto pnode = node.get();
+    TNodeMethodMap::iterator p = nodeMethodMap.find(typeid(*pnode).name());
+    return (p != nodeMethodMap.end()) ? p->second : nullptr;
 }
 
 

@@ -55,7 +55,7 @@ class ConditionStatementDelegate : public Delegate
 public:
     virtual QVariant dataOfEditRole(MprStatement* statement, int column) const override
     {
-        if(column = 1){
+        if(column == 1){
             return static_cast<MprConditionStatement*>(statement)->condition().c_str();
         }
         return QVariant();
@@ -94,7 +94,7 @@ public:
     
     virtual QVariant dataOfEditRole(MprStatement* statement, int column) const override
     {
-        if(column = 1){
+        if(column == 1){
             return static_cast<MprCallStatement*>(statement)->programName().c_str();
         }
         return QVariant();
@@ -245,7 +245,7 @@ class DelayStatementDelegate : public Delegate
 public:
     virtual QVariant dataOfEditRole(MprStatement* statement, int column) const override
     {
-        if(column = 1){
+        if(column == 1){
             return static_cast<MprDelayStatement*>(statement)->time();
         }
         return QVariant();

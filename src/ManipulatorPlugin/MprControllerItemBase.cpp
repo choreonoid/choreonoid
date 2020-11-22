@@ -833,7 +833,8 @@ bool MprControllerItemBase::Impl::interpretIfStatement(MprIfStatement* statement
                            
     MprElseStatement* nextElseStatement = nullptr;
     if(next != currentProgram->end()){
-        if(nextElseStatement = dynamic_cast<MprElseStatement*>(next->get())){
+        nextElseStatement = dynamic_cast<MprElseStatement*>(next->get());
+        if(nextElseStatement){
             ++next;
         }
     }
@@ -927,15 +928,15 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
     auto end = expression.cend();
 
     bool isExpressionValid = false;
-    stdx::optional<MprVariable::Value> pLhs;
     stdx::optional<string> pCmpOp;
     stdx::optional<MprVariable::Value> pRhs;
-    if(pLhs = getTermValue(pos, end)){
+    stdx::optional<MprVariable::Value> pLhs = getTermValue(pos, end);
+    if(pLhs){
         if(pos == end){
             isExpressionValid = true;
-        } else if(pCmpOp = getComparisonOperator(pos, end)){
+        } else if((pCmpOp = getComparisonOperator(pos, end))){
             if(pos != end){
-                if(pRhs = getTermValue(pos, end)){
+                if((pRhs = getTermValue(pos, end))){
                     if(pos == end){
                         isExpressionValid = true;
                     }

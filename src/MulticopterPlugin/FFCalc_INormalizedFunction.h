@@ -11,7 +11,7 @@ namespace FFCalc {
 class INormalizedFunction
 {
 public:
-
+        virtual ~INormalizedFunction();
 	virtual double eval(const double rbar) const = 0;
 };
 

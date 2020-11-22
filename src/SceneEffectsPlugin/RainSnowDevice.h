@@ -20,8 +20,8 @@ public:
     virtual const double* readState(const double* buf) override;
     virtual double* writeState(double* out_buf) const override;
 
-    bool on() const { return on_; }
-    void on(bool on) { on_ = on; }
+    virtual bool on() const override;
+    virtual void on(bool on) override;
         
     ParticleSystem& particleSystem() { return particleSystem_; }
     const ParticleSystem& particleSystem() const { return particleSystem_; }

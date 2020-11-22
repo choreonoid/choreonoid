@@ -1,5 +1,6 @@
 #include "ArchiveSession.h"
 #include "Uuid.h"
+#include <vector>
 #include <unordered_map>
 #include <iostream>
 #include <fmt/format.h>

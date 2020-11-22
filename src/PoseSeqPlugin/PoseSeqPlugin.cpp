@@ -26,7 +26,7 @@ public:
         addOldName("Choreography");
     }
 
-    virtual bool initialize(){
+    virtual bool initialize() override {
 
         PoseSeqItem::initializeClass(this);
         initializePoseSeqEngine(this);

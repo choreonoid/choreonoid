@@ -1320,8 +1320,8 @@ bool SDFBodyLoaderImpl::convertAngle(double* angle, double min, double max, cons
             );
         return false;
     } else if (min != max) {
-        dmin = (min < 0.0) ? (min * -1.0d) : min;
-        dmax = (max < 0.0) ? (max * -1.0d) : max;
+        dmin = (min < 0.0) ? (min * -1.0) : min;
+        dmax = (max < 0.0) ? (max * -1.0) : max;
 
         if (dmin == dmax) {
             /*

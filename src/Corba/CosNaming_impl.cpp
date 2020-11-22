@@ -3,6 +3,7 @@
 #include "CosNaming_impl.h"
 #include <omniORB4/omniURI.h>
 #include <iostream>
+#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;
@@ -152,7 +153,7 @@ CosNaming::NamingContext_ptr NamingContext_impl::new_context()
     if(TRACE_FUNCTIONS){
         cout << "NamingContext_impl::new_context()" << endl;
     }
-    PortableServer::ObjectId_var an_oid = PortableServer::string_to_ObjectId("id" + count++);
+    PortableServer::ObjectId_var an_oid = PortableServer::string_to_ObjectId((string("id") + std::to_string(count++)).c_str());
     CORBA::Object_var ref = nspoa->create_reference_with_id(an_oid, CosNaming::NamingContext::_PD_repoId);
 
     PortableServer::ObjectId_var id = nspoa->reference_to_id(ref);

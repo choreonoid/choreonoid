@@ -24,7 +24,7 @@ public:
     virtual ~LightingItem();
 
 protected:
-    virtual Item* doDuplicate() const;
+    virtual Item* doDuplicate() const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

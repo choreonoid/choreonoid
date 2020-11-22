@@ -66,7 +66,7 @@ public:
         return handle;
     }
 
-    virtual void setCustomObject(GeometryHandle geometry, Referenced* object) { }
+    virtual void setCustomObject(GeometryHandle geometry, Referenced* object) override { }
 
     virtual void setGeometryStatic(GeometryHandle, bool isStatic = true) override { }
 
