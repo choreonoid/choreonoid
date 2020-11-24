@@ -1,3 +1,7 @@
+if(MSVC)
+  return()
+endif()
+
 option(BUILD_TRAFFIC_CONTROL_PLUGIN "Building a Traffic Contorol plugin" OFF)
 
 if(NOT BUILD_TRAFFIC_CONTROL_PLUGIN)
