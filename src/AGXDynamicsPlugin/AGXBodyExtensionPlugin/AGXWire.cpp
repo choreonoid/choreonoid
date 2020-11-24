@@ -467,7 +467,10 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
                     agxWire::ILinkNode::ConnectionProperties* cp = iLinkNode->getConnectionProperties();
                     cp->setTwistStiffness(getILinkNodeValue("twistStiffness", cp->getTwistStiffness()));
                     cp->setBendStiffness(getILinkNodeValue("bendStiffness", cp->getBendStiffness()));
-                    iLinkNode->setSuperBendReplacedWithBend(getILinkNodeValue("superBendReplacedWithBend", iLinkNode->getSuperBendReplacedWithBend()));
+                    bool superBendReplacedWithBend;
+                    if(wireNodeInfo.read("superBendReplacedWithBend", superBendReplacedWithBend)){
+                        iLinkNode->setSuperBendReplacedWithBend(superBendReplacedWithBend);
+                    }
                     m_wire->setEnableCollisions(wireLinkBody, false);
                 }
             }
