@@ -771,10 +771,12 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
                 btVector3 pivotA(b(0), b(1), b(2));
                 btVector3 parentComToCurrentPivot = parent->invShift * pivotA;
                 btVector3 currentPivotToCurrentCom = invShift.getBasis() * shift.getOrigin();
-                multiBody->setupFixed(link->index()-1, mass, localInertia, link->parent()->index()-1,
-                        qua,   // rotate points in parent frame to this frame, when q = 0
-                        parentComToCurrentPivot, // vector from parent COM to joint axis, in PARENT frame
-                        currentPivotToCurrentCom); // vector from joint axis to my COM, in MY frame
+                multiBody->setupFixed(
+                    link->index()-1, mass, localInertia, link->parent()->index()-1,
+                    qua,   // rotate points in parent frame to this frame, when q = 0
+                    parentComToCurrentPivot, // vector from parent COM to joint axis, in PARENT frame
+                    currentPivotToCurrentCom, // vector from joint axis to my COM, in MY frame
+                    true);
             }else{
                 btTransform frameA,frameB;
                 frameA.setIdentity();
