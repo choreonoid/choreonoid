@@ -24,6 +24,8 @@ libassimp-dev \
 libsdformat4-dev \
 libogre-1.9-dev \
 libode-dev \
+libbullet-dev \
+libbullet-extras-dev \
 libomniorb4-dev \
 libcos4-dev \
 omniidl \
