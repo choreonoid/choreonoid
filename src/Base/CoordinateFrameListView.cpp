@@ -578,9 +578,7 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     hheader->setSectionResizeMode(PositionColumn, QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(GlobalCheckColumn, QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(VisibleCheckColumn, QHeaderView::ResizeToContents);
-    auto vheader = verticalHeader();
-    vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
-    vheader->hide();
+    verticalHeader()->hide();
 
     connect(this, &QTableView::pressed,
             [this](const QModelIndex& index){

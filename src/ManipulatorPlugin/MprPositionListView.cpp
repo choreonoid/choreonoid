@@ -524,7 +524,8 @@ MprPositionListView::MprPositionListView()
 
 
 MprPositionListView::Impl::Impl(MprPositionListView* self)
-    : self(self),
+    : QTableView(self),
+      self(self),
       targetItemPicker(self)
 {
     self->setDefaultLayoutArea(View::RIGHT);
@@ -557,7 +558,7 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
-    setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setItemDelegateForColumn(JointSpaceCheckColumn, new CheckItemDelegate(this));
     setEditTriggers(
         QAbstractItemView::DoubleClicked |
@@ -573,9 +574,7 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     hheader->setSectionResizeMode(NoteColumn, QHeaderView::Stretch);
     hheader->setSectionResizeMode(PositionColumn, QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(JointSpaceCheckColumn, QHeaderView::ResizeToContents);
-    auto vheader = verticalHeader();
-    vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
-    vheader->hide();
+    verticalHeader()->hide();
 
     connect(this, &QTableView::pressed,
             [this](const QModelIndex& index){

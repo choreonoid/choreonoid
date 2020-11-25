@@ -282,9 +282,7 @@ PositionTagListWidget::PositionTagListWidget(QWidget* parent)
     hheader->setMinimumSectionSize(24);
     hheader->setSectionResizeMode(IndexColumn, QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(PositionColumn, QHeaderView::Stretch);
-    auto vheader = verticalHeader();
-    vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
-    vheader->hide();
+    verticalHeader()->hide();
 
     connect(this, &QTableView::pressed,
             [this](const QModelIndex& index){
