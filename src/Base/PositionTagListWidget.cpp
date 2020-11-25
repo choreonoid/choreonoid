@@ -31,16 +31,22 @@ public:
     PositionTagGroupItemPtr tagGroupItem;
     ScopedConnectionSet tagGroupConnections;
     QFont monoFont;
+    bool isProcessingInternalMove;
     
     TagGroupModel(PositionTagListWidget* widget);
     void setTagGroupItem(PositionTagGroupItem* tagGroupItem);
     int numTags() const;
     PositionTag* tagAt(const QModelIndex& index) const;
+    
     virtual int rowCount(const QModelIndex& parent) const override;
     virtual int columnCount(const QModelIndex& parent) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
     virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex& index, int role) const override;
+    virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
+    virtual Qt::DropActions supportedDropActions() const override;
+    virtual bool dropMimeData(
+        const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) override;
     QVariant getPositionData(const PositionTag* tag) const;
     void onTagAdded(int tagIndex);
     void onTagRemoved(int tagIndex);
@@ -74,6 +80,7 @@ TagGroupModel::TagGroupModel(PositionTagListWidget* widget)
       monoFont("Monospace")
 {
     monoFont.setStyleHint(QFont::TypeWriter);
+    isProcessingInternalMove = false;
 }
 
 
@@ -172,7 +179,7 @@ QModelIndex TagGroupModel::index(int row, int column, const QModelIndex& parent)
     }
     return QModelIndex();
 }
-    
+
 
 QVariant TagGroupModel::data(const QModelIndex& index, int role) const
 {
@@ -219,6 +226,72 @@ QVariant TagGroupModel::getPositionData(const PositionTag* tag) const
     }
 }
 
+
+Qt::ItemFlags TagGroupModel::flags(const QModelIndex &index) const
+{
+    Qt::ItemFlags defaultFlags = QAbstractTableModel::flags(index);
+    if(index.isValid()){
+        return  defaultFlags | Qt::ItemIsDragEnabled;
+    } else {
+        return Qt::ItemIsDropEnabled | defaultFlags;
+    }
+}
+
+
+Qt::DropActions TagGroupModel::supportedDropActions() const
+{
+    return Qt::MoveAction;
+}
+
+
+bool TagGroupModel::dropMimeData
+(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
+{
+    if(isProcessingInternalMove){
+        if(row < 0){
+            return false;
+        }
+        if(!tagGroupItem){
+            return false;
+        }
+        auto selectedRows = widget->selectionModel()->selectedRows();
+        if(selectedRows.isEmpty()){
+            return false;
+        }
+        qSort(selectedRows);
+
+        int destIndex = row;
+        int prevDestIndex = -1;
+        int srcIndexOffset = 0;
+
+        tagGroupConnections.block();
+
+        for(auto& selectedRow : selectedRows){
+            int srcIndex = selectedRow.row() + srcIndexOffset;
+            if(srcIndex < prevDestIndex){
+                --srcIndex;
+                --srcIndexOffset;
+            }
+            if(srcIndex != destIndex){
+                beginMoveRows(parent, srcIndex, srcIndex, parent, destIndex);
+                auto tags = tagGroupItem->tagGroup();
+                PositionTagPtr tag = tags->tagAt(srcIndex);
+                tags->removeAt(srcIndex);
+                int insertionIndex = (srcIndex < destIndex) ? (destIndex - 1) : destIndex;
+                tags->insert(insertionIndex, tag);
+                endMoveRows();
+            }
+            prevDestIndex = destIndex;
+            if(destIndex < srcIndex){
+                ++destIndex;
+            }
+        }
+        tagGroupConnections.unblock();
+        return true;
+    }
+    
+    return false;
+}
 
 
 void TagGroupModel::onTagAdded(int tagIndex)
@@ -267,6 +340,14 @@ PositionTagListWidget::PositionTagListWidget(QWidget* parent)
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    setWordWrap(false);
+    
+    setDragEnabled(true);
+    viewport()->setAcceptDrops(true);
+    setDefaultDropAction(Qt::MoveAction);
+    setDragDropOverwriteMode(false);
+    setDropIndicatorShown(true);
+    setDragDropMode(QAbstractItemView::InternalMove);
 
     /*
     setEditTriggers(
@@ -445,3 +526,13 @@ SignalProxy<void(MenuManager& menu)> PositionTagListWidget::sigContextMenuReques
     return impl->sigContextMenuRequest;
 }
 
+
+void PositionTagListWidget::dropEvent(QDropEvent *event)
+{
+    if(event->source() == this &&
+       (event->dropAction() == Qt::MoveAction || dragDropMode() == QAbstractItemView::InternalMove)){
+        impl->tagGroupModel->isProcessingInternalMove = true;
+        QTableView::dropEvent(event);
+        impl->tagGroupModel->isProcessingInternalMove = false;
+    }
+}

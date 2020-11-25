@@ -64,9 +64,9 @@ public:
     Container::const_iterator begin() const { return tags_.begin(); }
     Container::const_iterator end() const { return tags_.end(); }
     
-    void insert(int index, PositionTag* point);
+    void insert(int index, PositionTag* tag);
     void insert(int index, PositionTagGroup* group);
-    void append(PositionTag* point);
+    void append(PositionTag* tag);
     bool removeAt(int index);
     SignalProxy<void(int index)> sigTagAdded();
     SignalProxy<void(int index, PositionTag* tag)> sigTagRemoved();

@@ -29,6 +29,7 @@ protected:
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
+    virtual void dropEvent(QDropEvent *event) override;
 
 private:
     class Impl;
