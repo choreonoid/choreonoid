@@ -1,10 +1,10 @@
 #include "PositionTagGroup.h"
 #include "ValueTree.h"
 #include "ArchiveSession.h"
-#include "EigenArchive.h"
 #include "Uuid.h"
 #include "UTF8.h"
 #include "Tokenizer.h"
+#include "EigenUtil.h"
 #include <fmt/format.h>
 #include <fstream>
 #include "gettext.h"
@@ -23,7 +23,6 @@ public:
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
     Signal<void(int index)> sigTagUpdated;
-    Signal<void(const Position& T)> sigOriginOffsetChanged;
     
     Impl();
     Impl(const Impl& org);
@@ -33,7 +32,6 @@ public:
 
 
 PositionTagGroup::PositionTagGroup()
-    : T_offset_(Position::Identity())
 {
     impl = new Impl;
 }
@@ -46,7 +44,6 @@ PositionTagGroup::Impl::Impl()
 
 
 PositionTagGroup::PositionTagGroup(const PositionTagGroup& org)
-    : T_offset_(org.T_offset_)
 {
     impl = new Impl(*org.impl);
 
@@ -165,23 +162,11 @@ SignalProxy<void(int index)> PositionTagGroup::sigTagUpdated()
 }
 
 
-SignalProxy<void(const Position& T)> PositionTagGroup::sigOriginOffsetChanged()
-{
-    return impl->sigOriginOffsetChanged;
-}
-
-
 void PositionTagGroup::notifyTagUpdate(int index)
 {
     if(static_cast<size_t>(index) < tags_.size()){
         impl->sigTagUpdated(index);
     }
-}
-
-
-void PositionTagGroup::notifyOriginOffsetChange()
-{
-    impl->sigOriginOffsetChanged(T_offset_);
 }
 
 
@@ -206,14 +191,6 @@ bool PositionTagGroup::read(const Mapping* archive, ArchiveSession& session)
         impl->uuid = Uuid(); // assign a new UUID to resolve the duplication
     }
 
-    Vector3 v;
-    if(cnoid::read(archive, "translation", v)){
-        T_offset_.translation() = v;
-    }
-    if(cnoid::read(archive, "rpy", v)){
-        T_offset_.linear() = rotFromRpy(radian(v));
-    }
-
     clearTags();
 
     auto listing = archive->findListing("tags");
@@ -236,10 +213,6 @@ bool PositionTagGroup::write(Mapping* archive, ArchiveSession& session) const
     archive->write("format_version", 1.0);
     archive->write("uuid", impl->uuid.toString());
     archive->write("name", impl->name);
-
-    archive->setDoubleFormat("%.9g");
-    cnoid::write(archive, "translation", T_offset_.translation());
-    cnoid::write(archive, "rpy", degree(rpyFromRot(T_offset_.linear())));
 
     if(!tags_.empty()){
         auto listing = archive->createListing("tags");

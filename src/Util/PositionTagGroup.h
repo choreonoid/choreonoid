@@ -48,18 +48,6 @@ public:
         return tags_[index];
     }
 
-    const Position& originOffset() const {
-        return T_offset_;
-    }
-    
-    template<class Scalar, int Mode, int Options>
-    void setOriginOffset(const Eigen::Transform<Scalar, 3, Mode, Options>& T, bool doNotify){
-        T_offset_ = T.template cast<Position::Scalar>();
-        if(doNotify){
-            notifyOriginOffsetChange();
-        }
-    }
-    
     typedef std::vector<PositionTagPtr> Container;
     Container::const_iterator begin() const { return tags_.begin(); }
     Container::const_iterator end() const { return tags_.end(); }
@@ -71,11 +59,8 @@ public:
     SignalProxy<void(int index)> sigTagAdded();
     SignalProxy<void(int index, PositionTag* tag)> sigTagRemoved();
     SignalProxy<void(int index)> sigTagUpdated();
-    SignalProxy<void(const Position& T)> sigOriginOffsetChanged();
-
     void notifyTagUpdate(int index);
-    void notifyOriginOffsetChange();
-    
+
     bool read(const Mapping* archive, ArchiveSession& session);
     bool write(Mapping* archive, ArchiveSession& session) const;
 
@@ -87,7 +72,6 @@ protected:
     
 private:
     Container tags_;
-    Position T_offset_;
     
     class Impl;
     Impl* impl;

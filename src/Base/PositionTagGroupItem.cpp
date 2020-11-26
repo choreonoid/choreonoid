@@ -11,6 +11,7 @@
 #include <cnoid/PositionTagGroup>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
+#include <cnoid/EigenArchive>
 #include <fmt/format.h>
 #include <QBoxLayout>
 #include <QLabel>
@@ -109,6 +110,8 @@ public:
     
     PositionTagGroupItem* self;
     PositionTagGroupPtr tags;
+    Position T_parent;
+    Position T_offset;
     ScopedConnectionSet tagGroupConnections;
     LazyCaller notifyUpdateLater;
     std::vector<bool> tagSelection;
@@ -122,7 +125,6 @@ public:
     Signal<void()> sigTargetLocationChanged;
     LocationProxyPtr groupParentLocation;
     ScopedConnection groupParentLocationConnection;
-    Position T_parent;
     TagParentLocationProxyPtr tagParentLocation;
     Signal<void()> sigTagParentLocationChanged;
     ScenePositionTagGroupPtr scene;
@@ -141,7 +143,6 @@ public:
     void convertLocalCoordinates(
         LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset); 
     void onParentItemLocationChanged();
-    void onOriginOffsetChanged();
 };
 
 }
@@ -191,9 +192,6 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
     tagGroupConnections.add(
         tags->sigTagUpdated().connect(
             [&](int index){ onTagUpdated(index); }));
-    tagGroupConnections.add(
-        tags->sigOriginOffsetChanged().connect(
-            [&](const Position&){ onOriginOffsetChanged(); }));
 
     numSelectedTags = 0;
     needToUpdateSelectedTagIndices = false;
@@ -212,11 +210,13 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
         originMarkerVisibility = false;
         edgeVisibility = false;
         T_parent.setIdentity();
+        T_offset.setIdentity();
     } else {
         tagMarkerSizeGroup->setPixelSizeRatio(org->tagMarkerSizeGroup->pixelSizeRatio());
         originMarkerVisibility = org->originMarkerVisibility;
         edgeVisibility = org->edgeVisibility;
         T_parent = org->T_parent;
+        T_offset = org->T_offset;
     }
 }
 
@@ -252,6 +252,37 @@ const PositionTagGroup* PositionTagGroupItem::tagGroup() const
 PositionTagGroup* PositionTagGroupItem::tagGroup()
 {
     return impl->tags;
+}
+
+
+const Position& PositionTagGroupItem::parentFramePosition() const
+{
+    return impl->T_parent;
+}
+
+
+const Position& PositionTagGroupItem::originOffset() const
+{
+    return impl->T_offset;
+}
+
+
+void PositionTagGroupItem::setOriginOffset(const Position& T_offset)
+{
+    impl->T_offset = T_offset;
+
+    impl->sigTargetLocationChanged();
+    impl->notifyUpdateLater();
+
+    if(impl->scene){
+        impl->scene->setOriginOffset(T_offset);
+    }
+}
+
+
+Position PositionTagGroupItem::originPosition() const
+{
+    return impl->T_parent * impl->T_offset;
 }
 
 
@@ -454,12 +485,13 @@ void PositionTagGroupItem::Impl::setParentItemLocationProxy
 void PositionTagGroupItem::Impl::convertLocalCoordinates
 (LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset)
 {
-    Position T0 = self->globalOriginOffset();
+    Position T0 = self->originPosition();
 
     if(doClearOriginOffset){
-        tags->setOriginOffset(Position::Identity(), true);
+        self->setOriginOffset(Position::Identity());
     }
-    Position T1 = tags->originOffset();
+
+    Position T1 = T_offset;
     if(newParentLocation){
         T1 = newParentLocation->getLocation() * T1;
     }
@@ -475,6 +507,8 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
         }
         tags->notifyTagUpdate(i);
     }
+
+    self->notifyUpdate();
 }
 
 
@@ -489,25 +523,6 @@ void PositionTagGroupItem::Impl::onParentItemLocationChanged()
         scene->setParentPosition(T_parent);
     }
     sigTargetLocationChanged();
-}
-
-
-void PositionTagGroupItem::Impl::onOriginOffsetChanged()
-{
-    sigTargetLocationChanged();
-    notifyUpdateLater();
-}
-
-
-const Position& PositionTagGroupItem::parentCoordinateSystem() const
-{
-    return impl->T_parent;
-}
-
-
-Position PositionTagGroupItem::globalOriginOffset() const
-{
-    return impl->T_parent * impl->tags->originOffset();
 }
 
 
@@ -564,6 +579,9 @@ void PositionTagGroupItem::setEdgeVisiblility(bool on)
 void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Number of tags"), impl->tags->numTags());
+    putProperty(_("Offset translation"), str(Vector3(impl->T_offset.translation())));
+    Vector3 rpy(degree(rpyFromRot(impl->T_offset.linear())));
+    putProperty(_("Offset rotation (RPY)"), str(rpy));
     putProperty(_("Origin marker"), impl->originMarkerVisibility,
                 [&](bool on){ setOriginMarkerVisibility(on); return true; });
     putProperty(_("Tag marker size"), tagMarkerSize(),
@@ -576,30 +594,41 @@ void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
 bool PositionTagGroupItem::store(Archive& archive)
 {
     impl->tags->write(&archive, *archive.session());
+
+    archive.setDoubleFormat("%.9g");
+    cnoid::write(archive, "offset_translation", impl->T_offset.translation());
+    cnoid::write(archive, "offset_rpy", degree(rpyFromRot(impl->T_offset.linear())));
+
     archive.write("origin_marker", impl->originMarkerVisibility);
     archive.write("tag_marker_size", tagMarkerSize());
     archive.write("show_edges", impl->edgeVisibility);
+    
     return true;
 }
 
 
 bool PositionTagGroupItem::restore(const Archive& archive)
 {
-    if(impl->tags->read(&archive, *archive.session())){
-        if(archive.get("origin_marker", false)){
-            setOriginMarkerVisibility(true);
-        }
-        double s;
-        if(archive.read("tag_marker_size", s)){
-            setTagMarkerSize(s);
-        }
-        bool on;
-        if(archive.read("show_edges", on)){
-            setEdgeVisiblility(on);
-        }
-        return true;
+    Vector3 v;
+    if(cnoid::read(archive, "offset_translation", v)){
+        impl->T_offset.translation() = v;
     }
-    return false;
+    if(cnoid::read(archive, "offset_rpy", v)){
+        impl->T_offset.linear() = rotFromRpy(radian(v));
+    }
+    if(archive.get("origin_marker", false)){
+        setOriginMarkerVisibility(true);
+    }
+    double s;
+    if(archive.read("tag_marker_size", s)){
+        setTagMarkerSize(s);
+    }
+    bool on;
+    if(archive.read("show_edges", on)){
+        setEdgeVisiblility(on);
+    }
+    
+    return impl->tags->read(&archive, *archive.session());
 }
 
 
@@ -611,7 +640,7 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* impl)
     setPosition(impl->T_parent);
 
     offsetTransform = new SgPosTransform;
-    offsetTransform->setPosition(tags->originOffset());
+    offsetTransform->setPosition(impl->T_offset);
     addChild(offsetTransform);
 
     tagMarkerGroup = new SgGroup;
@@ -643,9 +672,6 @@ ScenePositionTagGroup::ScenePositionTagGroup(PositionTagGroupItem::Impl* impl)
     tagGroupConnections.add(
         tags->sigTagUpdated().connect(
             [&](int index){ updateTagNodePosition(index); }));
-    tagGroupConnections.add(
-        tags->sigOriginOffsetChanged().connect(
-            [&](const Position& T){ setOriginOffset(T); }));
 }
 
 
@@ -853,7 +879,7 @@ Item* TargetLocationProxy::getCorrespondingItem()
 Position TargetLocationProxy::getLocation() const
 {
     if(impl->locationMode == TagGroupLocation){
-        return impl->tags->originOffset();
+        return impl->T_offset;
     } else {
         return getTargetTag()->position();
     }
@@ -864,7 +890,8 @@ bool TargetLocationProxy::setLocation(const Position& T)
 {
     auto tags = impl->tags;
     if(impl->locationMode == TagGroupLocation){
-        tags->setOriginOffset(T, true);
+        impl->self->setOriginOffset(T);
+        impl->self->notifyUpdate();
     } else {
         int index = impl->locationTargetTagIndex;
         auto tag = tags->tagAt(index);
@@ -909,7 +936,7 @@ std::string TagParentLocationProxy::getName() const
 
 Position TagParentLocationProxy::getLocation() const
 {
-    return impl->tags->originOffset();
+    return impl->T_offset;
 }
 
 

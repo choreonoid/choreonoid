@@ -36,8 +36,8 @@ public:
     void setOffsetFrameId(const GeneralId& id){ offsetFrameId_ = id; }
 
     void updateFramesWithCurrentFrames(LinkKinematicsKit* kinematicsKit);
-    void updateTagGroupPositionWithGlobalParentCoordinateSystem(
-        LinkKinematicsKit* kinematicsKit, const Position& T_parent);
+    void updateTagGroupPositionWithGlobalCoordinate(
+        LinkKinematicsKit* kinematicsKit, const Position& T_global);
 
     virtual bool updateTagTraceProgram() = 0;
     bool decomposeIntoTagTraceStatements();

@@ -25,6 +25,11 @@ public:
     const PositionTagGroup* tagGroup() const;
     PositionTagGroup* tagGroup();
 
+    const Position& parentFramePosition() const;
+    const Position& originOffset() const;
+    void setOriginOffset(const Position& T_offset);
+    Position originPosition() const;
+    
     void clearTagSelection();
     void setTagSelected(int tagIndex, bool on = true);
     bool checkTagSelected(int tagIndex) const;
@@ -37,9 +42,6 @@ public:
 
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;
-
-    const Position& parentCoordinateSystem() const;
-    Position globalOriginOffset() const;
 
     double tagMarkerSize() const;
     void setTagMarkerSize(double s);

@@ -254,8 +254,8 @@ void MprTagTraceStatementPanel::Impl::onTagGroupComboActivated(int comboIndex)
         if(statement->tagGroup() != tagGroupItem->tagGroup()){
             statement->setTagGroup(tagGroupItem->tagGroup());
             auto kinematicsKit = self->currentProgramItem()->kinematicsKit();
-            statement->updateTagGroupPositionWithGlobalParentCoordinateSystem(
-                kinematicsKit, tagGroupItem->parentCoordinateSystem());
+            statement->updateTagGroupPositionWithGlobalCoordinate(
+                kinematicsKit, tagGroupItem->originPosition());
             isValid = statement->updateTagTraceProgram();
             updated = true;
         }
@@ -291,8 +291,8 @@ void MprTagTraceStatementPanel::Impl::touchupPositionAndFrames()
     auto kinematicsKit = self->currentProgramItem()->kinematicsKit();
     statement->updateFramesWithCurrentFrames(kinematicsKit);
     if(auto tagGroupItem = getTagGroupItemOf(statement->tagGroup())){
-        statement->updateTagGroupPositionWithGlobalParentCoordinateSystem(
-            kinematicsKit, tagGroupItem->parentCoordinateSystem());
+        statement->updateTagGroupPositionWithGlobalCoordinate(
+            kinematicsKit, tagGroupItem->originPosition());
     }
     statement->updateTagTraceProgram();
     statement->notifyUpdate();

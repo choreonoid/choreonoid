@@ -91,8 +91,6 @@ void MprTagTraceStatement::connectTagGroupUpdateSignals()
             [&](int index, PositionTag*){ onTagRemoved(index); });
         tagGroup_->sigTagUpdated().connect(
             [&](int index){ onTagUpdated(index); });
-        tagGroup_->sigOriginOffsetChanged().connect(
-            [&](const Position&){ onTagGroupOriginOffsetChanged(); });
     }
 }
 
@@ -104,11 +102,11 @@ void MprTagTraceStatement::updateFramesWithCurrentFrames(LinkKinematicsKit* kine
 }
 
 
-void MprTagTraceStatement::updateTagGroupPositionWithGlobalParentCoordinateSystem
-(LinkKinematicsKit* kinematicsKit, const Position& T_parent)
+void MprTagTraceStatement::updateTagGroupPositionWithGlobalCoordinate
+(LinkKinematicsKit* kinematicsKit, const Position& T_global)
 {
     auto T_base = kinematicsKit->globalBasePosition(baseFrameId_);
-    T_tags = T_base.inverse(Eigen::Isometry) * T_parent;
+    T_tags = T_base.inverse(Eigen::Isometry) * T_global;
 }
 
 
