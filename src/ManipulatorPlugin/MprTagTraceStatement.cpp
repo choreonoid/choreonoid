@@ -21,8 +21,7 @@ using fmt::format;
 MprTagTraceStatement::MprTagTraceStatement()
     : T_tags(Position::Identity()),
       baseFrameId_(0),
-      offsetFrameId_(0),
-      isAutoUpdateByTagGroupUpdateEnabled_(false)
+      offsetFrameId_(0)
 {
     
     auto program = lowerLevelProgram();
@@ -35,8 +34,7 @@ MprTagTraceStatement::MprTagTraceStatement(const MprTagTraceStatement& org, Clon
     : MprStructuredStatement(org, cloneMap),
       T_tags(org.T_tags),
       baseFrameId_(org.baseFrameId_),
-      offsetFrameId_(org.offsetFrameId_),
-      isAutoUpdateByTagGroupUpdateEnabled_(false)
+      offsetFrameId_(org.offsetFrameId_)
 {
     auto program = lowerLevelProgram();
     program->setLocalPositionListEnabled(true);
@@ -77,21 +75,8 @@ void MprTagTraceStatement::setTagGroup(PositionTagGroup* tags)
         originalTagGroupName_.clear();
         updateTagTraceProgram();
 
-        if(tagGroup_ && isAutoUpdateByTagGroupUpdateEnabled_){
+        if(tagGroup_){
             connectTagGroupUpdateSignals();
-        }
-    }
-}
-
-
-void MprTagTraceStatement::setAutoUpdateByTagGroupUpdateEnabled(bool on)
-{
-    if(on != isAutoUpdateByTagGroupUpdateEnabled_){
-        isAutoUpdateByTagGroupUpdateEnabled_ = on;
-        if(on){
-            connectTagGroupUpdateSignals();
-        } else {
-            tagGroupConnections.disconnect();
         }
     }
 }

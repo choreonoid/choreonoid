@@ -24,12 +24,6 @@ public:
     void setTagGroup(PositionTagGroup* tags);
     PositionTagGroup* tagGroup() { return tagGroup_; }
 
-    //! \note The copy constructor does not copy this property and its is always initialized as false.
-    bool isAutoUpdateByTagGroupUpdateEnabled() const {
-        return isAutoUpdateByTagGroupUpdateEnabled_;
-    }
-    void setAutoUpdateByTagGroupUpdateEnabled(bool on);
-
     const std::string& originalTagGroupName() const { return originalTagGroupName_; }
 
     //! The position of the tag group on the base coordinate frame
@@ -67,7 +61,6 @@ private:
     GeneralId offsetFrameId_;
     std::string originalTagGroupName_;
     ScopedConnectionSet tagGroupConnections;
-    bool isAutoUpdateByTagGroupUpdateEnabled_;
 
     void connectTagGroupUpdateSignals();
 };
