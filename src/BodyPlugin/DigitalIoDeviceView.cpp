@@ -327,6 +327,7 @@ DigitalIoDeviceView::Impl::Impl(DigitalIoDeviceView* self)
     setSelectionMode(QAbstractItemView::SingleSelection);
     setTabKeyNavigation(true);
     setCornerButtonEnabled(false);
+    setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     setEditTriggers(
         QAbstractItemView::DoubleClicked |

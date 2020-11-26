@@ -557,6 +557,7 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
+    setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     globalCheckDelegate = new CheckItemDelegate(this);
     setItemDelegateForColumn(GlobalCheckColumn, globalCheckDelegate);

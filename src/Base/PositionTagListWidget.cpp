@@ -339,7 +339,7 @@ PositionTagListWidget::PositionTagListWidget(QWidget* parent)
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
-    setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setWordWrap(false);
     
     setDragEnabled(true);

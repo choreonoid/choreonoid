@@ -636,6 +636,7 @@ MprVariableListView::Impl::Impl(MprVariableListView* self)
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
+    setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     setItemDelegate(new CustomizedItemDelegate(this));
     setEditTriggers(

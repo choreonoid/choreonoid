@@ -558,6 +558,7 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
+    setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setItemDelegateForColumn(JointSpaceCheckColumn, new CheckItemDelegate(this));
     setEditTriggers(
