@@ -88,16 +88,59 @@ private:
 
 class CNOID_EXPORT SimpleController
 {
-  public:
+public:
     typedef SimpleController* (*Factory)();
 
     virtual ~SimpleController();
 
+    /**
+       The configure function is called when the controller is associated with a target body item.
+       The function is used to implement the configuration process that should be done before
+       starting the simulation.
+
+       \return Return true if the configuration succeeds, or false if it fails.
+
+       \note If the "reloading" property of the SimpleControllerItem is true, the configure function
+       is executed just before calling the initialize function when the simulation is started
+       because the controller is always reloaded when the simulation is started in the "reloading" mode.
+    */
     virtual bool configure(SimpleControllerConfig* config);
+
+    /**
+       The initialize function is called when the simulation is initialized to start.
+
+       \return Return true if the initialization succeeds, or false if it fails.
+    */
     virtual bool initialize(SimpleControllerIO* io) = 0;
+
+    /**
+       The start function is called when the simulation is started.
+       The function is called after basic initialization process is finished and the simulation is
+       about to start.
+
+       \return Return true if the initialization succeeds, or false if it fails.
+    */
     virtual bool start();
+
+    /**
+       The control function is called at every frame of the control loop.
+       The control process is implemented in this function.
+
+       \return Return true if the control is still active. If the false is returned, the simulation
+       may be stopped depending on the simulation mode.
+    */
     virtual bool control() = 0;
+
+    /**
+       The stop function is called when the simulation is stopped.
+       The finalization of the control process is implemented in this function.
+    */
     virtual void stop();
+    
+    /**
+       The unconfigure function is called when the controller is unloaded.
+       The process to finalize the controller itself is implemented in this function.
+    */
     virtual void unconfigure();
 
     enum StateType {
