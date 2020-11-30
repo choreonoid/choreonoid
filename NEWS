@@ -43,13 +43,14 @@ Changes since 1.7.0:
 * Arranged the cmake files for building programs outside the Choreonoid source
 * The transparency of a body shown in the scene view can be modified as a property of the corresponding BodyItem
 * Improved file dialogs
-* Removed RobotAccessPlugin and Hrpsys31Plugin
+* Removed RobotAccessPlugin and Hrpsys31Plugin. The plugins are now availabe at https://github.com/choreonoid/robot-access-plugin
 * Fix the default layout of the main window
 * Replaced LinkSelectionView with LinkDeviceListView, which can list the devices of a target body
 * Improved loading a new project when there is an existing project
 * Made the internal link attitudes same as the original model descriptions
 * Fixed the GLSL renderer to render casting shadows correctly using Radeon GPUs
 * Introduced new tool bar icons
+* Implemented the vertex rendering mode and the solid-wireframe rendering mode
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
