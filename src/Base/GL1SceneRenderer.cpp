@@ -275,9 +275,10 @@ public:
     void endRendering();
     void doRender();
     bool doPick(int x, int y);
-    inline void setPickColor(unsigned int id);
-    inline unsigned int pushPickName(SgNode* node, bool doSetColor = true);
-    void popPickName();
+    void setPickColor(unsigned int id);
+    void pushPickNode(SgNode* node);
+    unsigned int pushPickEndNode(SgNode* node, bool doSetColor);
+    void popPickNode();
 
     void renderGroup(SgGroup* group);
     void renderSwitchableGroup(SgSwitchableGroup* group);
@@ -806,7 +807,7 @@ void GL1SceneRenderer::Impl::doRender()
     
     beginRendering();
 
-    renderingFunctions.dispatch(self->sceneRoot());
+    renderChildNodes(self->sceneRoot());
 
     if(!transparentShapeInfos.empty()){
         renderTransparentShapes();
@@ -915,27 +916,34 @@ inline void GL1SceneRenderer::Impl::setPickColor(unsigned int id)
 }
         
 
-/**
-   @return id of the current object
-*/
-inline unsigned int GL1SceneRenderer::Impl::pushPickName(SgNode* node, bool doSetColor)
+void GL1SceneRenderer::Impl::pushPickNode(SgNode* node)
 {
-    unsigned int id = 0;
-    
     if(isRenderingPickingImage && !isCompiling){
-        id = pickingNodePathList.size() + 1;
+        currentNodePath.push_back(node);
+    }
+}
+
+
+/**
+   @return the index of the current object in picking
+*/
+unsigned int GL1SceneRenderer::Impl::pushPickEndNode(SgNode* node, bool doSetColor)
+{
+    if(!isRenderingPickingImage || isCompiling){
+        return 0;
+    } else {
+        unsigned int id = pickingNodePathList.size() + 1;
         currentNodePath.push_back(node);
         pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
         if(doSetColor){
             setPickColor(id);
         }
+        return id;
     }
-
-    return id;
 }
 
 
-inline void GL1SceneRenderer::Impl::popPickName()
+void GL1SceneRenderer::Impl::popPickNode()
 {
     if(isRenderingPickingImage && !isCompiling){
         currentNodePath.pop_back();
@@ -951,17 +959,17 @@ void GL1SceneRenderer::renderNode(SgNode* node)
 
 void GL1SceneRenderer::Impl::renderGroup(SgGroup* group)
 {
-    pushPickName(group);
+    pushPickNode(group);
     renderChildNodes(group);
-    popPickName();
+    popPickNode();
 }
 
 
 void GL1SceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction)
 {
-    impl->pushPickName(group);
+    impl->pushPickNode(group);
     traverseFunction();
-    impl->popPickName();
+    impl->popPickNode();
 }
 
 
@@ -993,9 +1001,9 @@ void GL1SceneRenderer::Impl::renderTransform(SgTransform* transform)
         */
 
         // renderGroup(transform);
-        pushPickName(transform);
+        pushPickNode(transform);
         renderChildNodes(transform);
-        popPickName();
+        popPickNode();
     
         /*
         if(isNotRotationMatrix){
@@ -1016,11 +1024,11 @@ void GL1SceneRenderer::renderCustomTransform(SgTransform* transform, std::functi
     impl->Vstack.push_back(impl->Vstack.back() * T);
     glPushMatrix();
     glMultMatrixd(T.data());
-    impl->pushPickName(transform);
+    impl->pushPickNode(transform);
 
     traverseFunction();
 
-    impl->popPickName();
+    impl->popPickNode();
     glPopMatrix();
     impl->Vstack.pop_back();
 }    
@@ -1032,9 +1040,9 @@ void GL1SceneRenderer::Impl::renderShape(SgShape* shape)
     if(mesh){
         if(mesh->hasVertices()){
             if(!defaultLighting){
-                pushPickName(shape);
+                auto id = pushPickEndNode(shape, true);
                 renderMesh(mesh, false);
-                popPickName();
+                popPickNode();
             } else {
                 SgMaterial* material = shape->material();
                 SgTexture* texture = isTextureEnabled ? shape->texture() : nullptr;
@@ -1045,11 +1053,11 @@ void GL1SceneRenderer::Impl::renderShape(SgShape* shape)
                     TransparentShapeInfoPtr info = make_shared_aligned<TransparentShapeInfo>();
                     info->shape = shape;
                     info->V = Vstack.back();
-                    info->pickId = pushPickName(shape, false);
-                    popPickName();
+                    info->pickId = pushPickEndNode(shape, false);
+                    popPickNode();
                     transparentShapeInfos.push_back(info);
                 } else {
-                    pushPickName(shape);
+                    auto id = pushPickEndNode(shape, true);
                     bool hasTexture = false;
                     if(!isRenderingPickingImage){
                         renderMaterial(material);
@@ -1058,7 +1066,7 @@ void GL1SceneRenderer::Impl::renderShape(SgShape* shape)
                         }
                     }
                     renderMesh(mesh, hasTexture);
-                    popPickName();
+                    popPickNode();
                 }
             }
         }
@@ -1787,9 +1795,9 @@ void GL1SceneRenderer::Impl::renderPlot
         }
     }
 
-    pushPickName(plot);
+    auto id = pushPickEndNode(plot, true);
     glDrawArrays(primitiveMode, 0, resource->numVertices);
-    popPickName();
+    popPickNode();
 
     if(!doLighting){
         enableLighting(true);

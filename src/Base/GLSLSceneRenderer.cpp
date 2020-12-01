@@ -425,7 +425,8 @@ public:
     void pushProgram(ShaderProgram& program);
     void popProgram();
     void setPickColor(int pickIndex);
-    int pushPickNode(SgNode* node, bool doSetColor = true);
+    void pushPickNode(SgNode* node);
+    int pushPickEndNode(SgNode* node, bool doSetPickColor);
     void popPickNode();
     void renderChildNodes(SgGroup* group);
     void renderChildNodesWithNodeDecorationCheck(SgGroup* group);
@@ -1185,7 +1186,7 @@ void GLSLSceneRenderer::Impl::doRender()
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        renderingFunctions->dispatch(self->sceneRoot());
+        renderChildNodes(self->sceneRoot());
         
         /*
           \todo Render transparent objects directly
@@ -1330,7 +1331,7 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         
         transparentRenderingQueue.clear();
         overlayRenderingQueue.clear();
-        renderingFunctions->dispatch(self->sceneRoot());
+        renderChildNodes(self->sceneRoot());
 
         if(!transparentRenderingQueue.empty()){
             renderTransparentObjects();
@@ -1774,23 +1775,30 @@ void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
 }
         
 
+void GLSLSceneRenderer::Impl::pushPickNode(SgNode* node)
+{
+    if(isRenderingPickingImage){
+        currentNodePath.push_back(node);
+    }
+}
+
+
 /**
    @return the index of the current object in picking
 */
-int GLSLSceneRenderer::Impl::pushPickNode(SgNode* node, bool doSetColor)
+int GLSLSceneRenderer::Impl::pushPickEndNode(SgNode* node, bool doSetPickColor)
 {
-    int pickIndex = 0;
-    
-    if(isRenderingPickingImage){
-        pickIndex = pickingNodePathList.size();
+    if(!isRenderingPickingImage){
+        return 0;
+    } else {
         currentNodePath.push_back(node);
+        int pickIndex = pickingNodePathList.size();
         pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
-        if(doSetColor){
+        if(doSetPickColor){
             setPickColor(pickIndex);
         }
+        return pickIndex;
     }
-
-    return pickIndex;
 }
 
 
@@ -1995,7 +2003,7 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
             }
         }
         if(!isTransparent){
-            auto pickIndex = pushPickNode(shape, false);
+            auto pickIndex = pushPickEndNode(shape, false);
             renderShapeMain(shape, modelMatrixStack.back(), pickIndex);
             popPickNode();
         } else {
@@ -2003,7 +2011,7 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
                 SgShapePtr shapePtr = shape;
                 int matrixIndex = modelMatrixBuffer.size();
                 modelMatrixBuffer.push_back(modelMatrixStack.back());
-                auto pickIndex = pushPickNode(shape, false);
+                auto pickIndex = pushPickEndNode(shape, false);
                 transparentRenderingQueue.emplace_back(
                     [this, shapePtr, matrixIndex, pickIndex](){
                         renderShapeMain(shapePtr, modelMatrixBuffer[matrixIndex], pickIndex); });
@@ -2685,8 +2693,6 @@ void GLSLSceneRenderer::Impl::renderShapeVertices(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
-        //auto pickIndex = pushPickNode(shape, false);
-
         auto vertices = mesh->vertices();
         VertexResource* resource = getOrCreateVertexResource(vertices);
         if(!resource->isValid()){
@@ -2701,8 +2707,6 @@ void GLSLSceneRenderer::Impl::renderShapeVertices(SgShape* shape)
             resource->numVertices = vertices->size();
         }
         drawVertexResource(resource, GL_POINTS, modelMatrixStack.back());
-        
-        //popPickNode();
     }
 }
 
@@ -2730,7 +2734,7 @@ void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
 void GLSLSceneRenderer::Impl::renderPlot
 (SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices)
 {
-    pushPickNode(plot);
+    auto pickIndex = pushPickEndNode(plot, true);
 
     bool hasColors = plot->hasColors();
     
