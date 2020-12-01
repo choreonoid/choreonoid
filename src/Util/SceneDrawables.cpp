@@ -742,6 +742,7 @@ SgPlot::SgPlot(const SgPlot& org, CloneMap* cloneMap)
     bbox = org.bbox;
 }
 
+
 SgPlot::~SgPlot()
 {
     if(vertices_){
@@ -949,7 +950,8 @@ SgLineSet::SgLineSet()
 
 
 SgLineSet::SgLineSet(const SgLineSet& org, CloneMap* cloneMap)
-    : SgPlot(org, cloneMap)
+    : SgPlot(org, cloneMap),
+      lineVertices_(org.lineVertices_)
 {
     lineWidth_ = org.lineWidth_;
 }
