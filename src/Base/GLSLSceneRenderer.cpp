@@ -27,7 +27,7 @@ using fmt::format;
 
 namespace {
 
-const float MinLineWidthForPicking = 5.0f;
+const float MinLineWidthForPicking = 4.0f;
 const bool USE_GL_FLOAT_FOR_NORMALS = false;
 
 // This does not seem to be necessary
@@ -2835,7 +2835,11 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
     }
 
     float width = lineSet->lineWidth();
-    if(width <= 0.0f){
+    if(isRenderingPickingImage){
+        if(width < MinLineWidthForPicking){
+            width = MinLineWidthForPicking;
+        }
+    } else if(width <= 0.0f){
         width = defaultLineWidth;
     }
     SolidColorProgram* lineShader;
