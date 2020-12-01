@@ -490,7 +490,7 @@ void PositionTagListWidget::selectionChanged(const QItemSelection& selected, con
     QTableView::selectionChanged(selected, deselected);
 
     impl->selectedTagIndices.clear();
-    for(auto& index : selected.indexes()){
+    for(auto& index : selectionModel()->selectedRows()){
         impl->selectedTagIndices.push_back(index.row());
     }
 
