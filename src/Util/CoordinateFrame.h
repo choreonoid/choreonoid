@@ -37,9 +37,9 @@ public:
     bool isLocal() const { return mode_ == Local; }
     bool isGlobal() const { return mode_ == Global; }
 
-    const Position& T() const { return T_; }
-    const Position& position() const { return T_; }
-    void setPosition(const Position& T) { T_ = T; }
+    const Isometry3& T() const { return T_; }
+    const Isometry3& position() const { return T_; }
+    void setPosition(const Isometry3& T) { T_ = T; }
 
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
@@ -59,7 +59,7 @@ public:
     void notifyUpdate(int flags);
         
 private:
-    Position T_;
+    Isometry3 T_;
     GeneralId id_;
     int mode_;
     std::string note_;

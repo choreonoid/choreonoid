@@ -189,7 +189,7 @@ public:
         BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
     virtual void clearVirtualElasticStrings();
 
-    virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
+    virtual void setForcedPosition(BodyItem* bodyItem, const Isometry3& T);
     virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
     virtual void clearForcedPositions();
 

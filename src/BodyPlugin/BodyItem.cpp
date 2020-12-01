@@ -64,10 +64,10 @@ public:
 
     BodyLocation(BodyItem::Impl* impl);
     void updateLocationType();
-    virtual Position getLocation() const override;
+    virtual Isometry3 getLocation() const override;
     virtual bool isEditable() const override;
     virtual void setEditable(bool on) override;
-    virtual bool setLocation(const Position& T) override;
+    virtual bool setLocation(const Isometry3& T) override;
     virtual Item* getCorrespondingItem() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
@@ -83,7 +83,7 @@ public:
     LinkLocation(BodyItem* bodyItem, Link* link);
     void setTarget(BodyItem* bodyItem, Link* link);
     virtual std::string getName() const override;
-    virtual Position getLocation() const override;
+    virtual Isometry3 getLocation() const override;
     virtual bool isEditable() const override;
     virtual Item* getCorrespondingItem() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
@@ -94,7 +94,7 @@ class MyCompositeBodyIK : public CompositeBodyIK
 {
 public:
     MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl);
-    virtual bool calcInverseKinematics(const Position& T) override;
+    virtual bool calcInverseKinematics(const Isometry3& T) override;
     virtual std::shared_ptr<InverseKinematics> getParentBodyIK() override;
 
     BodyItem::Impl* bodyItemImpl;
@@ -1360,7 +1360,7 @@ void BodyLocation::updateLocationType()
 }
 
 
-Position BodyLocation::getLocation() const
+Isometry3 BodyLocation::getLocation() const
 {
     auto rootLink = impl->body->rootLink();
     if(impl->attachmentToParent){
@@ -1385,7 +1385,7 @@ void BodyLocation::setEditable(bool on)
 }
 
 
-bool BodyLocation::setLocation(const Position& T)
+bool BodyLocation::setLocation(const Isometry3& T)
 {
     auto rootLink = impl->body->rootLink();
     if(impl->attachmentToParent){
@@ -1467,12 +1467,12 @@ std::string LinkLocation::getName() const
 }
 
 
-Position LinkLocation::getLocation() const
+Isometry3 LinkLocation::getLocation() const
 {
     if(auto link = refLink.lock()){
         return link->T();
     }
-    return Position::Identity();
+    return Isometry3::Identity();
 }
 
 
@@ -1686,7 +1686,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     attachmentToParent = attachment;
                     self->isAttachedToParentBody_ = true;
                     linkToAttach = holder->link();
-                    Position T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
+                    Isometry3 T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
                     body->rootLink()->setOffsetPosition(T_offset);
                     body->setParent(linkToAttach);
                     setLocationEditable(false, false);
@@ -1737,12 +1737,12 @@ MyCompositeBodyIK::MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl)
 }
 
 
-bool MyCompositeBodyIK::calcInverseKinematics(const Position& T)
+bool MyCompositeBodyIK::calcInverseKinematics(const Isometry3& T)
 {
     bool result = false;
     if(holderIK){
         if(auto holder = attachment->holder()){
-            Position Ta = T * attachment->T_local() * holder->T_local().inverse(Eigen::Isometry);
+            Isometry3 Ta = T * attachment->T_local() * holder->T_local().inverse(Eigen::Isometry);
             result = holderIK->calcInverseKinematics(Ta);
             if(result){
                 bodyItemImpl->isProcessingInverseKinematicsIncludingParentBody = true;

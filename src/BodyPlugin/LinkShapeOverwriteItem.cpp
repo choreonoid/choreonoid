@@ -30,8 +30,8 @@ public:
     LinkShapeOverwriteItem::Impl* impl;
 
     LinkShapeLocation(LinkShapeOverwriteItem::Impl* impl);
-    virtual Position getLocation() const override;
-    virtual bool setLocation(const Position& T) override;
+    virtual Isometry3 getLocation() const override;
+    virtual bool setLocation(const Isometry3& T) override;
     virtual Item* getCorrespondingItem() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
@@ -186,7 +186,7 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
 
     if(existingNodePath.empty()){
         if(newNodePath.empty()){
-            offsetTransform->setPosition(Affine3::Identity());
+            offsetTransform->setPosition(Isometry3::Identity());
             shapeNode.reset();
         } else {
             extractShapeNodes(newNodePath);
@@ -271,13 +271,13 @@ void LinkShapeOverwriteItem::setShapeNode(SgShape* shapeNode)
 }
 
 
-Position LinkShapeOverwriteItem::shapeOffset() const
+Isometry3 LinkShapeOverwriteItem::shapeOffset() const
 {
     return impl->offsetTransform->T();
 }
 
 
-void LinkShapeOverwriteItem::setShapeOffset(const Position& T)
+void LinkShapeOverwriteItem::setShapeOffset(const Isometry3& T)
 {
     impl->offsetTransform->setPosition(T);
     impl->offsetTransform->notifyUpdate();
@@ -327,13 +327,13 @@ LinkShapeLocation::LinkShapeLocation(LinkShapeOverwriteItem::Impl* impl)
 }
     
 
-Position LinkShapeLocation::getLocation() const
+Isometry3 LinkShapeLocation::getLocation() const
 {
     return impl->offsetTransform->T();
 }
 
 
-bool LinkShapeLocation::setLocation(const Position& T)
+bool LinkShapeLocation::setLocation(const Isometry3& T)
 {
     impl->offsetTransform->setPosition(T);
     impl->offsetTransform->notifyUpdate();

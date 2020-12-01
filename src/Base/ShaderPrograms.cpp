@@ -312,7 +312,7 @@ bool ShaderProgram::isActive() const
 }
 
 
-void ShaderProgram::setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
+void ShaderProgram::setTransform(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L)
 {
 
 }
@@ -359,7 +359,7 @@ void NolightingProgram::initialize()
 }
 
 
-void NolightingProgram::setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
+void NolightingProgram::setTransform(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L)
 {
     Matrix4f PVM;
     if(L){
@@ -652,7 +652,7 @@ void SolidPointProgram::setProjectionMatrix(const Matrix4& P)
 
 
 void SolidPointProgram::setTransform
-(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
+(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L)
 {
     const Affine3f VM = (V * M).cast<float>();
     glUniformMatrix4fv(impl->modelViewMatrixLocation, 1, GL_FALSE, VM.data());
@@ -733,7 +733,7 @@ void MinimumLightingProgram::activate()
     
 
 void MinimumLightingProgram::setTransform
-(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
+(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L)
 {
     Matrix4f PVM;
     if(L){
@@ -755,7 +755,7 @@ int MinimumLightingProgram::maxNumLights() const
 
 
 bool MinimumLightingProgram::setLight
-(int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting)
+(int index, const SgLight* light, const Isometry3& T, const Isometry3& view, bool shadowCasting)
 {
     if(index >= impl->maxNumLights){
         return false;
@@ -860,7 +860,7 @@ int BasicLightingProgram::maxNumLights() const
 
 
 bool BasicLightingProgram::setLight
-(int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting)
+(int index, const SgLight* light, const Isometry3& T, const Isometry3& view, bool shadowCasting)
 {
     if(index >= impl->maxNumLights){
         return false;
@@ -1264,7 +1264,7 @@ void FullLightingProgram::Impl::activate(GLSLProgram& glsl)
 
 
 bool FullLightingProgram::setLight
-(int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting)
+(int index, const SgLight* light, const Isometry3& T, const Isometry3& view, bool shadowCasting)
 {
     bool result = MaterialLightingProgram::setLight(index, light, T, view, shadowCasting);
 
@@ -1281,7 +1281,7 @@ bool FullLightingProgram::setLight
 
 
 void FullLightingProgram::setTransform
-(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
+(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L)
 {
     const Affine3f VM = (V * M).cast<float>();
     const Matrix3f N = VM.linear();
@@ -1402,7 +1402,7 @@ void FullLightingProgram::getShadowMapSize(int& width, int& height) const
 }
 
 
-SgCamera* FullLightingProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
+SgCamera* FullLightingProgram::getShadowMapCamera(SgLight* light, Isometry3& io_T)
 {
     SgCamera* camera = 0;
     bool hasDirection = false;

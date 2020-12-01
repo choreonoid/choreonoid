@@ -72,7 +72,7 @@ public:
     }
 
     void updateTrackPosition() {
-        const Position &linkPos_inv = m_trackDevice->link()->T().inverse();
+        const Isometry3 &linkPos_inv = m_trackDevice->link()->T().inverse();
         const TrackStates& states = m_trackDevice->getTrackStates();
         for(size_t i = 0; i < states.size(); ++i){
             const auto& state = states[i];
@@ -235,7 +235,7 @@ const double* AGXVehicleContinuousTrackDevice::readState(const double* buf)
         i += 3;
         state.position.translation() << buf[i], buf[i+1], buf[i+2];
         i += 3;
-        state.position.linear() = Quat(buf[i], buf[i+1], buf[i+2], buf[i+3]).toRotationMatrix();
+        state.position.linear() = Quaternion(buf[i], buf[i+1], buf[i+2], buf[i+3]).toRotationMatrix();
         i += 4;
     }
     return buf + i;
@@ -259,7 +259,7 @@ double* AGXVehicleContinuousTrackDevice::writeState(double* out_buf) const
         out_buf[i++] = p.x();
         out_buf[i++] = p.y();
         out_buf[i++] = p.z();
-        Quat q(T.linear());
+        Quaternion q(T.linear());
         out_buf[i++] = q.w();
         out_buf[i++] = q.x();
         out_buf[i++] = q.y();
@@ -320,7 +320,7 @@ void AGXVehicleContinuousTrackDevice::reserveTrackStateSize(const unsigned int& 
     m_trackStates.reserve(num);
 }
 
-void AGXVehicleContinuousTrackDevice::addTrackState(const Vector3& boxSize, const Position& pos) {
+void AGXVehicleContinuousTrackDevice::addTrackState(const Vector3& boxSize, const Isometry3& pos) {
     TrackState s;
     s.boxSize = boxSize;
     s.position = pos;

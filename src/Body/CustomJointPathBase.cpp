@@ -32,20 +32,20 @@ void CustomJointPathBase::setCustomInverseKinematics(InverseKinematicsFunc func,
 }
 
 
-bool CustomJointPathBase::calcInverseKinematics(const Position& T)
+bool CustomJointPathBase::calcInverseKinematics(const Isometry3& T)
 {
     if(isNumericalIkEnabled() || !calcCustomInverseKinematics){
         return JointPath::calcInverseKinematics(T);
     }
 
     bool solved = false;
-    Position T_base = baseLink()->T();
+    Isometry3 T_base = baseLink()->T();
     
     if(!isReversed_){
-        Position T_relative = T_base.inverse(Eigen::Isometry) * T;
+        Isometry3 T_relative = T_base.inverse(Eigen::Isometry) * T;
         solved = calcCustomInverseKinematics(T, T_relative);
     } else {
-        Position T_relative = T.inverse(Eigen::Isometry) * T_base;
+        Isometry3 T_relative = T.inverse(Eigen::Isometry) * T_base;
         solved = calcCustomInverseKinematics(T, T_relative);
     }
 

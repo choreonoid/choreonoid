@@ -30,13 +30,13 @@ BodyState::BodyState(const BodyState& state)
 }
     
 
-void BodyState::setRootLinkPosition(const Position& T)
+void BodyState::setRootLinkPosition(const Isometry3& T)
 {
     Data& p = data(LINK_POSITIONS);
     p.resize(7);
     Eigen::Map<Vector3> pmap(&p[0]);
     pmap = T.translation();
-    Eigen::Map<Quat> qmap(&p[3]);
+    Eigen::Map<Quaternion> qmap(&p[3]);
     qmap = T.linear();
 }
 
@@ -47,7 +47,7 @@ void BodyState::setRootLinkPosition(const SE3& position)
     p.resize(7);
     Eigen::Map<Vector3> pmap(&p[0]);
     pmap = position.translation();
-    Eigen::Map<Quat> qmap(&p[3]);
+    Eigen::Map<Quaternion> qmap(&p[3]);
     qmap = position.rotation();
 }
 
@@ -84,19 +84,19 @@ bool BodyState::getRootLinkPosition(SE3& out_position) const
     const Data& p = data(LINK_POSITIONS);
     if(p.size() >= 7){
         out_position.translation() = Eigen::Map<const Vector3>(&p[0]);
-        out_position.rotation() = Eigen::Map<const Quat>(&p[3]);
+        out_position.rotation() = Eigen::Map<const Quaternion>(&p[3]);
         return true;
     }
     return false;
 }
 
 
-bool BodyState::getRootLinkPosition(Position& T) const
+bool BodyState::getRootLinkPosition(Isometry3& T) const
 {
     const Data& p = data(LINK_POSITIONS);
     if(p.size() >= 7){
         T.translation() = Eigen::Map<const Vector3>(&p[0]);
-        T.linear() = Eigen::Map<const Quat>(&p[3]).toRotationMatrix();
+        T.linear() = Eigen::Map<const Quaternion>(&p[3]).toRotationMatrix();
         return true;
     }
     return false;
@@ -122,15 +122,15 @@ bool BodyState::restorePositions(Body& io_body) const
     if(p.size() < 7){
         isComplete = false;
     } else {
-        Position T0;
+        Isometry3 T0;
         if(auto parentLink = io_body.parentBodyLink()){
             T0 = parentLink->T();
         } else {
             T0.setIdentity();
         }
-        Position T;
+        Isometry3 T;
         T.translation() = Eigen::Map<const Vector3>(&p[0]);
-        T.linear() = Eigen::Map<const Quat>(&p[3]).toRotationMatrix();
+        T.linear() = Eigen::Map<const Quaternion>(&p[3]).toRotationMatrix();
         io_body.rootLink()->setPosition(T0 * T);
 
         io_body.calcForwardKinematics();
@@ -140,7 +140,7 @@ bool BodyState::restorePositions(Body& io_body) const
             for(int i = 1; i < numRemainingLinks + 1; ++i){
                 Link* link = io_body.link(i);
                 T.translation() = Eigen::Map<const Vector3>(&p[i*7]);
-                T.linear() = Eigen::Map<const Quat>(&p[i*7 + 3]).toRotationMatrix();
+                T.linear() = Eigen::Map<const Quaternion>(&p[i*7 + 3]).toRotationMatrix();
                 link->setPosition(T0 * T);
             }
         }

@@ -16,8 +16,8 @@ typedef std::map<std::string, AGXBodyExtensionFunc> AGXBodyExtensionFuncMap;
 
 namespace cnoid {
 
-inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
-    Position pos;
+inline const Isometry3 convertToIsometry3(const agx::AffineMatrix4x4& a){
+    Isometry3 pos;
     pos.translation() = Vector3(a(3,0), a(3,1), a(3,2));
     pos.linear() << a(0,0), a(1,0), a(2,0),
                     a(0,1), a(1,1), a(2,1),
@@ -32,8 +32,8 @@ class CNOID_EXPORT AGXLink : public Referenced
 {
 public:
     AGXLink(Link* const link);
-    AGXLink(Link* const link, AGXLink* const parent, const Position& T_parent, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic);
-    void constructAGXLink(const Position& T, const bool& makeStatic);
+    AGXLink(Link* const link, AGXLink* const parent, const Isometry3& T_parent, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic);
+    void constructAGXLink(const Isometry3& T, const bool& makeStatic);
     void setAGXMaterial();
     bool setAGXMaterialFromName(const std::string& materialName);
     void setAGXMaterialFromLinkInfo();
@@ -64,11 +64,11 @@ private:
     agx::ConstraintRef      _constraint;
     agx::Name               _collisionGroupName;
     AGXBody*                getAGXBody();
-    agx::RigidBodyRef       createAGXRigidBody(const Position& T);
+    agx::RigidBodyRef       createAGXRigidBody(const Isometry3& T);
     agxCollide::GeometryRef createAGXGeometry();
     void createAGXShape();
     void detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td);
-    agx::ConstraintRef createAGXConstraint(const Position& T);
+    agx::ConstraintRef createAGXConstraint(const Isometry3& T);
     void setTorqueToAGX();
     void setVelocityToAGX();
     void setPositionToAGX();

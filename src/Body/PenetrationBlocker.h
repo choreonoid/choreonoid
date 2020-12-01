@@ -27,7 +27,7 @@ public:
     void addOpponentLink(Link* link);
     void setDepth(double depth);
     void start();
-    bool adjust(Position& io_T, const Vector3& pushDirection);
+    bool adjust(Isometry3& io_T, const Vector3& pushDirection);
         
 private:
     PenetrationBlockerImpl* impl;

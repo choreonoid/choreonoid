@@ -137,8 +137,8 @@ public:
     bool isContentsDragEnabled;
     bool isUndoEnabled;
     bool hasOffset;
-    Affine3 T_parent;
-    Position T_offset;
+    Isometry3 T_parent;
+    Isometry3 T_offset;
     SgSwitchableGroupPtr topSwitch;
     SgOverlayPtr overlay;
     SgFixedPixelSizeGroupPtr fixedPixelSizeGroup;
@@ -151,7 +151,7 @@ public:
     Signal<void()> sigDragStarted;
     Signal<void()> sigPositionDragged;
     Signal<void()> sigDragFinished;
-    std::deque<Affine3> history;
+    std::deque<Isometry3> history;
 
     Impl(PositionDragger* self, int mode, int axes);
     SgNode* createHandle(double widthRatio);
@@ -168,9 +168,9 @@ public:
     AxisBitSet detectTargetAxes(const SceneWidgetEvent& event);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
     bool onTranslationDraggerPressed(
-        const SceneWidgetEvent& event, const Affine3& T_global, AxisBitSet axisBitSet);
+        const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet);
     bool onRotationDraggerPressed(
-        const SceneWidgetEvent& event, const Affine3& T_global, AxisBitSet axisBitSet);
+        const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet);
     void storeCurrentPositionToHistory();
 };
 
@@ -227,7 +227,7 @@ void SgViewpointDependentSelector::setSwitchAngle(double rad)
 
 void SgViewpointDependentSelector::render(SceneRenderer* renderer)
 {
-    const Affine3& C = renderer->currentCameraPosition();
+    const Isometry3& C = renderer->currentCameraPosition();
     const Affine3& M = renderer->currentModelTransform();
     double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
     if(d > thresh){
@@ -492,10 +492,10 @@ void PositionDragger::Impl::clearHandleVariants()
 }
 
 
-void PositionDragger::setOffset(const Affine3& T)
+void PositionDragger::setOffset(const Isometry3& T)
 {
     impl->T_offset = T;
-    impl->hasOffset = (T.matrix() != Affine3::Identity().matrix());
+    impl->hasOffset = (T.matrix() != Isometry3::Identity().matrix());
 }
 
 
@@ -823,9 +823,9 @@ bool PositionDragger::isDragging() const
 }
 
 
-Affine3 PositionDragger::draggingPosition() const
+Isometry3 PositionDragger::draggingPosition() const
 {
-    Affine3 T1;
+    Isometry3 T1;
     if(impl->dragProjector.isDragging()){
         T1 = impl->T_parent.inverse(Eigen::Isometry) * impl->dragProjector.position();
     } else {
@@ -838,9 +838,9 @@ Affine3 PositionDragger::draggingPosition() const
 }
 
 
-Affine3 PositionDragger::globalDraggingPosition() const
+Isometry3 PositionDragger::globalDraggingPosition() const
 {
-    Affine3 T1;
+    Isometry3 T1;
     if(impl->dragProjector.isDragging()){
         T1 = impl->dragProjector.position();
     } else {
@@ -894,7 +894,7 @@ AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event
     }
 
     if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
-        const Affine3 T_global = calcTotalTransform(event.nodePath(), self);
+        const Isometry3 T_global = calcRelativePosition(event.nodePath(), self);
         const Vector3 p_local = T_global.inverse() * event.point();
         if(!isFixedPixelSizeMode){
             double width = handleSize * unitHandleWidth * calcWidthRatio(event.pixelSizeRatio());
@@ -930,8 +930,8 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     auto& path = event.nodePath();
     auto iter = std::find(path.begin(), path.end(), self);
     if(iter != path.end()){
-        T_parent = calcTotalTransform(path.begin(), iter);
-        const Affine3 T_global = T_parent * self->T();
+        T_parent = calcRelativePosition(path.begin(), iter);
+        const Isometry3 T_global = T_parent * self->T();
 
         auto axisBitSet = detectTargetAxes(event);
         if(axisBitSet.none()){
@@ -966,7 +966,7 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 
 
 bool PositionDragger::Impl::onTranslationDraggerPressed
-(const SceneWidgetEvent& event, const Affine3& T_global, AxisBitSet axisBitSet)
+(const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet)
 {
     bool processed = false;
 
@@ -990,7 +990,7 @@ bool PositionDragger::Impl::onTranslationDraggerPressed
 
 
 bool PositionDragger::Impl::onRotationDraggerPressed
-(const SceneWidgetEvent& event, const Affine3& T_global, AxisBitSet axisBitSet)
+(const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet)
 {
     bool processed = false;
 
@@ -1111,7 +1111,7 @@ bool PositionDragger::isUndoEnabled() const
 bool PositionDragger::onUndoRequest()
 {
     if(!impl->history.empty()){
-        const Affine3& T = impl->history.back();
+        const Isometry3& T = impl->history.back();
         setPosition(T);
         impl->history.pop_back();
         notifyUpdate();

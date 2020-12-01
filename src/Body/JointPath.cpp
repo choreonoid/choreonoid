@@ -278,7 +278,7 @@ void JointPath::customizeTarget
 }
 
 
-JointPath& JointPath::setBaseLinkGoal(const Position& T)
+JointPath& JointPath::setBaseLinkGoal(const Isometry3& T)
 {
     linkPath_.baseLink()->setPosition(T);
     needForwardKinematicsBeforeIK = true;
@@ -289,14 +289,14 @@ JointPath& JointPath::setBaseLinkGoal(const Position& T)
 bool JointPath::calcInverseKinematics()
 {
     if(numericalIK->errorFunc){
-        Position T; // dummy
+        Isometry3 T; // dummy
         return calcInverseKinematics(T);
     }
     return false;
 }
 
 
-bool JointPath::calcInverseKinematics(const Position& T)
+bool JointPath::calcInverseKinematics(const Isometry3& T)
 {
     const bool USE_USUAL_INVERSE_SOLUTION_FOR_6x6_NON_BEST_EFFORT_PROBLEM = false;
     const bool USE_SVD_FOR_BEST_EFFORT_IK = false;
@@ -464,11 +464,11 @@ void JointPath::setNumericalIKenabled(bool on)
 bool JointPath::calcInverseKinematics
 (const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R)
 {
-    Position T_base;
+    Isometry3 T_base;
     T_base.linear() = base_R;
     T_base.translation() = base_p;
 
-    Position T_end;
+    Isometry3 T_end;
     T_end.linear() = end_R;
     T_end.translation() = end_p;
     
@@ -524,7 +524,7 @@ public:
         return (ikTypeId != 0);
     }
     
-    virtual bool calcInverseKinematics(const Position& T) override
+    virtual bool calcInverseKinematics(const Isometry3& T) override
     {
         if(isNumericalIkEnabled() || ikTypeId == 0){
             return JointPath::calcInverseKinematics(T);

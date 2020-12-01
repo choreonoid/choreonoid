@@ -35,7 +35,7 @@ public:
     virtual bool seek(double time);
     virtual bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation);
     virtual int baseLinkIndex() const;
-    virtual bool getBaseLinkPosition(Position& out_T) const;
+    virtual bool getBaseLinkPosition(Isometry3& out_T) const;
     virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const;
     virtual stdx::optional<Vector3> ZMP() const;
 

@@ -146,7 +146,7 @@ public:
     void enableJointRangeConstraints(bool on);
     bool initialize();
             
-    bool calcInverseKinematics(const Position& T);
+    bool calcInverseKinematics(const Isometry3& T);
             
     IKStepResult calcOneStep(const Vector3& v, const Vector3& omega);
     void solveConstraints();
@@ -460,13 +460,13 @@ bool PinDragIKImpl::initialize()
 }
 
 
-bool PinDragIK::calcInverseKinematics(const Position& T)
+bool PinDragIK::calcInverseKinematics(const Isometry3& T)
 {
     return impl->calcInverseKinematics(T);
 }
 
 
-bool PinDragIKImpl::calcInverseKinematics(const Position& T)
+bool PinDragIKImpl::calcInverseKinematics(const Isometry3& T)
 {
     for(int i=0; i < NJ; i++){
         q_org[i] = body_->joint(i)->q();

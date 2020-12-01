@@ -71,7 +71,7 @@ public:
        @return -1 if base link is not set for the time segment
     */
     int baseLinkIndex() const;
-    virtual bool getBaseLinkPosition(Position& out_T) const;
+    virtual bool getBaseLinkPosition(Isometry3& out_T) const;
 
     stdx::optional<double> jointPosition(int jointId) const;
     stdx::optional<Vector3> ZMP() const;

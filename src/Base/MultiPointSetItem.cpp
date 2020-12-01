@@ -36,7 +36,7 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     bool isEditable;
     SgGroupPtr pointSetGroup;
     SgGroupPtr attentionPointMarkerGroup;
-    Signal<void(const Affine3& T)> sigOffsetTransformChanged;
+    Signal<void(const Isometry3& T)> sigOffsetPositionChanged;
     Signal<void()> sigAttentionPointsChanged;
     
     RectRegionMarkerPtr regionMarker;
@@ -443,49 +443,49 @@ SignalProxy<void(int index)> MultiPointSetItem::sigPointSetUpdated()
 }
 
 
-const Affine3& MultiPointSetItem::topOffsetTransform() const
+const Isometry3& MultiPointSetItem::offsetPosition() const
 {
     return impl->scene->T();
 }
 
 
-void MultiPointSetItem::setTopOffsetTransform(const Affine3& T)
+void MultiPointSetItem::setOffsetPosition(const Isometry3& T)
 {
     impl->scene->setPosition(T);
 }
 
 
-SignalProxy<void(const Affine3& T)> MultiPointSetItem::sigTopOffsetTransformChanged()
+SignalProxy<void(const Isometry3& T)> MultiPointSetItem::sigOffsetPositionChanged()
 {
-    return impl->scene->sigOffsetTransformChanged;
+    return impl->scene->sigOffsetPositionChanged;
 }
 
 
-void MultiPointSetItem::notifyTopOffsetTransformChange()
+void MultiPointSetItem::notifyOffsetPositionChange()
 {
-    impl->scene->sigOffsetTransformChanged(impl->scene->T());
+    impl->scene->sigOffsetPositionChanged(impl->scene->T());
     impl->scene->notifyUpdate();
     Item::notifyUpdate();
 }
 
 
-Affine3 MultiPointSetItem::offsetTransform(int index) const
+Isometry3 MultiPointSetItem::totalOffsetPositionOf(int index) const
 {
-    return topOffsetTransform() * pointSetItem(index)->offsetTransform();
+    return offsetPosition() * pointSetItem(index)->offsetPosition();
 }
 
 
 SgPointSetPtr MultiPointSetItem::getTransformedPointSet(int index) const
 {
-    SgPointSetPtr transformed = new SgPointSet();
+    SgPointSetPtr transformed = new SgPointSet;
     SgVertexArray& points = *transformed->getOrCreateVertices();
     const SgVertexArray* orgPoints = pointSetItem(index)->pointSet()->vertices();
     if(orgPoints){
         const int n = orgPoints->size();
         points.resize(n);
-        const Affine3f T = offsetTransform(index).cast<Affine3f::Scalar>();
+        const Isometry3 T = totalOffsetPositionOf(index);//.cast<Isometry3::Scalar>();
         for(int i=0; i < n; ++i){
-            points[i] = T * (*orgPoints)[i];
+            points[i] = (T * (*orgPoints)[i].cast<Isometry3::Scalar>()).cast<SgVertexArray::Scalar>();
         }
     }
     return transformed;
@@ -548,9 +548,9 @@ void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
                                      [&](double size){ setPointSize(size); return true; });
     putProperty.decimals(4)(_("Voxel size"), voxelSize(),
                             [&](double size){ setVoxelSize(size); return true; });
-    putProperty(_("Translation"), str(Vector3(topOffsetTransform().translation())),
+    putProperty(_("Translation"), str(Vector3(offsetPosition().translation())),
                 [&](const string& value){ return impl->onTopTranslationPropertyChanged(value); });
-    Vector3 rpy(TO_DEGREE * rpyFromRot(topOffsetTransform().linear()));
+    Vector3 rpy(TO_DEGREE * rpyFromRot(offsetPosition().linear()));
     putProperty(_("Rotation"), str(rpy), [&](const string& value){ return impl->onTopRotationPropertyChanged(value); });
 }
 
@@ -572,7 +572,7 @@ bool MultiPointSetItem::Impl::onTopTranslationPropertyChanged(const std::string&
     Vector3 p;
     if(toVector3(value, p)){
         scene->setTranslation(p);
-        self->notifyTopOffsetTransformChange();
+        self->notifyOffsetPositionChange();
         return true;
     }
     return false;
@@ -584,7 +584,7 @@ bool MultiPointSetItem::Impl::onTopRotationPropertyChanged(const std::string& va
     Vector3 rpy;
     if(toVector3(value, rpy)){
         scene->setRotation(rotFromRpy(TO_RADIAN * rpy));
-        self->notifyTopOffsetTransformChange();
+        self->notifyOffsetPositionChange();
         return true;
     }
     return false;
@@ -837,9 +837,9 @@ bool MultiPointSetItem::Impl::load(const std::string& filename)
                     PointSetItemPtr childItem = new PointSetItem();
                     if(childItem->load(toUTF8((directory / path).string()), "PCD-FILE")){
                         childItem->setName(toUTF8(path.stem().string()));
-                        Affine3 T;
+                        Isometry3 T;
                         if(read(info, "offsetTransform", T)){
-                            childItem->setOffsetTransform(T);
+                            childItem->setOffsetPosition(T);
                         }
                         self->addSubItem(childItem);
                     }
@@ -887,12 +887,12 @@ bool MultiPointSetItem::Impl::outputPointSetItem(int index)
         string fullPathString = toUTF8((autoSaveFilePath.parent_path() / path).string());
 
         try {
-            cnoid::savePCD(item->pointSet(), fullPathString, item->offsetTransform());
+            cnoid::savePCD(item->pointSet(), fullPathString, item->offsetPosition());
 
             MappingPtr info = new Mapping();
             info->write("file", filename);
             info->setDoubleFormat("%.9g");
-            write(*info, "offsetTransform", item->offsetTransform());
+            write(*info, "offsetTransform", item->offsetPosition());
             outputFileListing->insert(index, info);
             result = true;
 

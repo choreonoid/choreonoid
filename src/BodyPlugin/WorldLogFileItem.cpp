@@ -162,7 +162,7 @@ public:
         p.x() = readFloat();
         p.y() = readFloat();
         p.z() = readFloat();
-        Quat& q = position.rotation();
+        Quaternion& q = position.rotation();
         q.w() = readFloat();
         q.x() = readFloat();
         q.y() = readFloat();
@@ -279,7 +279,7 @@ public:
         writeFloat(p.x());
         writeFloat(p.y());
         writeFloat(p.z());
-        const Quat& q = position.rotation();
+        const Quaternion& q = position.rotation();
         writeFloat(q.w());
         writeFloat(q.x());
         writeFloat(q.y());

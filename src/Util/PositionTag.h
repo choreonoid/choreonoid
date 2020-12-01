@@ -16,16 +16,16 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     PositionTag();
-    PositionTag(const Position& T);
+    PositionTag(const Isometry3& T);
     PositionTag(const Vector3& location);
     PositionTag(const PositionTag& org);
 
-    Position::ConstTranslationPart translation() const {
+    Isometry3::ConstTranslationPart translation() const {
         return position_.translation();
     }
     template<typename Derived>
     void setTranslation(const Eigen::MatrixBase<Derived>& p) {
-        position_.translation() = p.template cast<Position::Scalar>();
+        position_.translation() = p.template cast<Isometry3::Scalar>();
     }
 
     bool hasAttitude() const { return hasAttitude_; }
@@ -35,19 +35,19 @@ public:
         hasAttitude_ = false;
     }
 
-    const Position& position() const { return position_; }
+    const Isometry3& position() const { return position_; }
 
     template<class Scalar, int Mode, int Options>
         void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& p) {
-        position_ = p.template cast<Position::Scalar>();
+        position_ = p.template cast<Isometry3::Scalar>();
         hasAttitude_ = true;
     }
 
-    Position::ConstLinearPart rotation() const { return position_.linear(); }
+    Isometry3::ConstLinearPart rotation() const { return position_.linear(); }
 
     template<typename Derived>
         void setRotation(const Eigen::MatrixBase<Derived>& R) {
-        position_.linear() = R.template cast<Position::Scalar>();
+        position_.linear() = R.template cast<Isometry3::Scalar>();
         hasAttitude_ = true;
     }
     
@@ -55,7 +55,7 @@ public:
     bool write(Mapping* archive, ArchiveSession& session) const;
 
 private:
-    Position position_;
+    Isometry3 position_;
     bool hasAttitude_;
 };
 

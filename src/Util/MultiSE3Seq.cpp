@@ -54,7 +54,7 @@ MultiSE3Seq::~MultiSE3Seq()
 
 SE3 MultiSE3Seq::defaultValue() const
 {
-    return SE3(Vector3::Zero(), Quat::Identity());
+    return SE3(Vector3::Zero(), Quaternion::Identity());
 }
 
 
@@ -95,7 +95,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
                     v.throwException(illegal_number_of_SE3_elements_message);
                 }
                 value.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
-                value.rotation() = Quat(v[3].toDouble(), v[4].toDouble(), v[5].toDouble(), v[6].toDouble());
+                value.rotation() = Quaternion(v[3].toDouble(), v[4].toDouble(), v[5].toDouble(), v[6].toDouble());
             });
 
     } else if(se3format == "XYZQXQYQZQW" && reader.formatVersion() < 2.0){
@@ -107,7 +107,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
                     v.throwException(illegal_number_of_SE3_elements_message);
                 }
                 value.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
-                value.rotation() = Quat(v[6].toDouble(), v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
+                value.rotation() = Quaternion(v[6].toDouble(), v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
             });
 
     } else if(se3format == "XYZRPY"){
@@ -139,7 +139,7 @@ static void writeSE3(YAMLWriter& writer, const SE3& value)
     writer.putScalar(p.y());
     writer.putScalar(p.z());
 
-    const Quat& q = value.rotation();
+    const Quaternion& q = value.rotation();
     writer.putScalar(q.w());
     writer.putScalar(q.x());
     writer.putScalar(q.y());

@@ -294,14 +294,14 @@ void BodyCollisionDetector::updatePositions()
 {
     if(!impl->hasCustomObjectsAssociatedWithLinks){
         impl->collisionDetector->updatePositions(
-            [](Referenced* object, Position*& out_position){
+            [](Referenced* object, Isometry3*& out_position){
                 out_position = &(static_cast<Link*>(object)->position()); });
     }
 }
 
 
 void BodyCollisionDetector::updatePositions
-(std::function<void(Referenced* object, Position*& out_position)> positionQuery)
+(std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery)
 {
     impl->collisionDetector->updatePositions(positionQuery);
 }

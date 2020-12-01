@@ -34,7 +34,7 @@ public:
     CoordinateFramePtr defaultOffsetFrame;
 
     Signal<void()> sigFrameUpdate;
-    Signal<void(const Position& T_frameCoordinate)> sigPositionError;
+    Signal<void(const Isometry3& T_frameCoordinate)> sigPositionError;
     
     Impl(Link* link);
     Impl(const Impl& org, CloneMap* cloneMap);
@@ -428,10 +428,10 @@ void LinkKinematicsKit::setCurrentOffsetFrame(const GeneralId& id)
 }
 
 
-Position LinkKinematicsKit::endPosition
+Isometry3 LinkKinematicsKit::endPosition
 (const GeneralId& baseFrameId, const GeneralId& offsetFrameId) const
 {
-    Position T_base;
+    Isometry3 T_base;
     const CoordinateFrame* baseFrame_;
     if(baseFrameId.isValid()){
         baseFrame_ = baseFrame(baseFrameId);
@@ -451,12 +451,12 @@ Position LinkKinematicsKit::endPosition
         offsetFrame_ = currentOffsetFrame();
     }
 
-    Position T_end = impl->link->T() * offsetFrame_->T();
+    Isometry3 T_end = impl->link->T() * offsetFrame_->T();
     return T_base.inverse(Eigen::Isometry) * T_end;
 }
 
 
-Position LinkKinematicsKit::globalEndPosition(const GeneralId& offsetFrameId) const
+Isometry3 LinkKinematicsKit::globalEndPosition(const GeneralId& offsetFrameId) const
 {
     const CoordinateFrame* offsetFrame_;
     if(offsetFrameId.isValid()){
@@ -468,7 +468,7 @@ Position LinkKinematicsKit::globalEndPosition(const GeneralId& offsetFrameId) co
 }
 
 
-Position LinkKinematicsKit::globalBasePosition(const GeneralId& baseFrameId) const
+Isometry3 LinkKinematicsKit::globalBasePosition(const GeneralId& baseFrameId) const
 {
     const CoordinateFrame* baseFrame_;
     if(baseFrameId.isValid()){
@@ -485,13 +485,13 @@ Position LinkKinematicsKit::globalBasePosition(const GeneralId& baseFrameId) con
 
 
 bool LinkKinematicsKit::setEndPosition
-(const Position& T, const GeneralId& baseFrameId, const GeneralId& offsetFrameId, int configuration)
+(const Isometry3& T, const GeneralId& baseFrameId, const GeneralId& offsetFrameId, int configuration)
 {
     if(!impl->jointPath){
         return false;
     }
 
-    Position T_base;
+    Isometry3 T_base;
     CoordinateFrame* baseFrame_;
     if(baseFrameId.isValid()){
         baseFrame_ = baseFrame(baseFrameId);
@@ -510,8 +510,8 @@ bool LinkKinematicsKit::setEndPosition
     } else {
         offsetFrame_ = currentOffsetFrame();
     }
-    Position T_offset = offsetFrame_->T();
-    Position T_link = T_base * T * T_offset.inverse(Eigen::Isometry);
+    Isometry3 T_offset = offsetFrame_->T();
+    Isometry3 T_link = T_base * T * T_offset.inverse(Eigen::Isometry);
 
     if(impl->configurationHandler){
         impl->configurationHandler->setPreferredConfigurationType(configuration);
@@ -528,7 +528,7 @@ bool LinkKinematicsKit::setEndPosition
 
 
 bool LinkKinematicsKit::setGlobalEndPosition
-(const Position& T_global, const GeneralId& offsetFrameId, int configuration)
+(const Isometry3& T_global, const GeneralId& offsetFrameId, int configuration)
 {
     if(!impl->jointPath){
         return false;
@@ -540,8 +540,8 @@ bool LinkKinematicsKit::setGlobalEndPosition
     } else {
         offsetFrame_ = currentOffsetFrame();
     }
-    Position T_offset = offsetFrame_->T();
-    Position T_link = T_global * T_offset.inverse(Eigen::Isometry);
+    Isometry3 T_offset = offsetFrame_->T();
+    Isometry3 T_link = T_global * T_offset.inverse(Eigen::Isometry);
 
     if(impl->configurationHandler){
         impl->configurationHandler->setPreferredConfigurationType(configuration);
@@ -569,13 +569,13 @@ void LinkKinematicsKit::notifyFrameUpdate()
 }
 
 
-SignalProxy<void(const Position& T_frameCoordinate)> LinkKinematicsKit::sigPositionError()
+SignalProxy<void(const Isometry3& T_frameCoordinate)> LinkKinematicsKit::sigPositionError()
 {
     return impl->sigPositionError;
 }
 
 
-void LinkKinematicsKit::notifyPositionError(const Position& T_frameCoordinate)
+void LinkKinematicsKit::notifyPositionError(const Isometry3& T_frameCoordinate)
 {
     impl->sigPositionError(T_frameCoordinate);
 }

@@ -42,7 +42,7 @@ class ColdetModelEx : public ColdetModel
 public:
     ReferencedPtr object;
     bool isStatic;
-    stdx::optional<Position> localPosition;
+    stdx::optional<Isometry3> localPosition;
     ColdetModelExPtr sibling;
     
     ColdetModelEx() : isStatic(false) { }
@@ -352,12 +352,12 @@ void AISTCollisionDetectorImpl::makeReady()
 }
 
 
-void AISTCollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
+void AISTCollisionDetector::updatePosition(GeometryHandle geometry, const Isometry3& position)
 {
     auto model = getColdetModel(geometry);
     do {
         if(model->localPosition){
-            Position T = position * (*model->localPosition);
+            Isometry3 T = position * (*model->localPosition);
             model->setPosition(T);
         } else {
             model->setPosition(position);
@@ -368,14 +368,14 @@ void AISTCollisionDetector::updatePosition(GeometryHandle geometry, const Positi
 
 
 void AISTCollisionDetector::updatePositions
-(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
+(std::function<void(Referenced* object, Isometry3*& out_Position)> positionQuery)
 {
     for(ColdetModelEx* model : impl->models){ // Do not use auto&
         do {
-            Position* T;
+            Isometry3* T;
             positionQuery(model->object, T);
             if(model->localPosition){
-                Position T2 = (*T) * (*model->localPosition);
+                Isometry3 T2 = (*T) * (*model->localPosition);
                 model->setPosition(T2);
             } else {
                 model->setPosition(*T);

@@ -620,8 +620,8 @@ void PointCloudVisualizerItem::doUpdateVisualization()
 
 void PointCloudVisualizerItem::updateSensorPosition()
 {
-    const Affine3 T =  (rangeCamera->link()->T() * rangeCamera->T_local());
-    setOffsetTransform(T);
+    const Isometry3 T =  (rangeCamera->link()->T() * rangeCamera->T_local());
+    setOffsetPosition(T);
 }
 
 
@@ -703,8 +703,8 @@ void RangeSensorVisualizerItem::doUpdateVisualization()
 
 void RangeSensorVisualizerItem::updateSensorPosition()
 {
-    const Affine3 T = (rangeSensor->link()->T() * rangeSensor->T_local());
-    setOffsetTransform(T);
+    const Isometry3 T = (rangeSensor->link()->T() * rangeSensor->T_local());
+    setOffsetPosition(T);
 }
 
 

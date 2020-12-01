@@ -651,7 +651,7 @@ void GL1SceneRenderer::Impl::renderLights(const Affine3& cameraPosition)
 
     for(int i=0; i < numLights; ++i){
         SgLight* light;
-        Affine3 T;
+        Isometry3 T;
         self->getLightInfo(i, light, T);
         const GLint id = GL_LIGHT0 + numSystemLights + i;
         renderLight(light, id, T);

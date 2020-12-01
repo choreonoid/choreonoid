@@ -83,7 +83,7 @@ void CoordinateAxesOverlay::calcViewVolume(double viewportWidth, double viewport
 
 void CoordinateAxesOverlay::render(SceneRenderer* renderer)
 {
-    const Affine3& T = renderer->currentCameraPosition();
+    const Isometry3& T = renderer->currentCameraPosition();
     axesTransform->setRotation(T.linear().transpose());
     renderer->renderingFunctions()->dispatch(this, superClassId);
 }

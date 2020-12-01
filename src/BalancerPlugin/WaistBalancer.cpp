@@ -543,7 +543,7 @@ bool WaistBalancer::updateBodyKinematics1(int frame)
                 fkTraverse.find(baseLink);
             }
         
-            Position T_next;
+            Isometry3 T_next;
             if(!provider->getBaseLinkPosition(T_next)){
                 T_next = baseLink->T();
             }

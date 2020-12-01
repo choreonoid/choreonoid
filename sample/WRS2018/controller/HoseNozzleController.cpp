@@ -151,7 +151,7 @@ public:
 
     void notifyWaterFlowTarget()
     {
-        Position T_water = nozzle->T() * water->T_local();
+        Isometry3 T_water = nozzle->T() * water->T_local();
         Vector3 p = T_water.translation();
         Vector3 v_local(0.0, 0.0, water->particleSystem().initialSpeedAverage());
         Vector3 v = T_water.linear() * v_local;
@@ -161,7 +161,7 @@ public:
         double t = (t1 >= t2) ? t1 : t2;
         Vector3 position(v.x() * t + p.x(), v.y() * t + p.y(), 0.0);
         
-        Position T_nozzle;
+        Isometry3 T_nozzle;
         T_nozzle.linear() = nozzle->R();
         T_nozzle.translation() = nozzle->translation();
 

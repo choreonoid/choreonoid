@@ -33,13 +33,22 @@ public:
     virtual void notifyUpdate() override;
 
     virtual SgNode* getScene() override;
-        
-    const Affine3& offsetTransform() const;
-    void setOffsetTransform(const Affine3& T);
-    SignalProxy<void(const Affine3& T)> sigOffsetTransformChanged();
-    void notifyOffsetTransformChange();
+
+    const Isometry3& offsetPosition() const;
+    void setOffsetPosition(const Isometry3& T);
+    SignalProxy<void(const Isometry3& T)> sigOffsetPositionChanged();
+    void notifyOffsetPositionChange();
 
     SgPointSet* getTransformedPointSet() const;
+
+    [[deprecated("Use offsetPosition.")]]
+    const Isometry3& offsetTransform() const { return offsetPosition(); }
+    [[deprecated("Use setOffsetPosition.")]]
+    void setOffsetTransform(const Isometry3& T) { setOffsetPosition(T); }
+    [[deprecated("Use sigOffsetPositionChanged.")]]
+     SignalProxy<void(const Isometry3& T)> sigOffsetTransformChanged() { return sigOffsetPositionChanged(); }
+    [[deprecated("Use notifyOffsetPositionChange.")]]
+    void notifyOffsetTransformChange() { notifyOffsetPositionChange(); }
 
     enum RenderingMode {
         POINT, VOXEL, N_RENDERING_MODES

@@ -275,10 +275,10 @@ void normalizeRotation(Matrix3& R)
 }
 
 
-void normalizeRotation(Position& T)
+void normalizeRotation(Affine3& T)
 {
-    typedef Position::LinearPart::ColXpr ColXpr;
-    Position::LinearPart R = T.linear();
+    typedef Affine3::LinearPart::ColXpr ColXpr;
+    Affine3::LinearPart R = T.linear();
     ColXpr x = R.col(0);
     ColXpr y = R.col(1);
     ColXpr z = R.col(2);
@@ -288,10 +288,10 @@ void normalizeRotation(Position& T)
 }
 
 
-void normalizeRotation(Affine3& T)
+void normalizeRotation(Isometry3& T)
 {
-    typedef Affine3::LinearPart::ColXpr ColXpr;
-    Affine3::LinearPart R = T.linear();
+    typedef Isometry3::LinearPart::ColXpr ColXpr;
+    Isometry3::LinearPart R = T.linear();
     ColXpr x = R.col(0);
     ColXpr y = R.col(1);
     ColXpr z = R.col(2);

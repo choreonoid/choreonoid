@@ -213,7 +213,7 @@ void ForwardDynamicsCBM::calcMotionWithEulerMethod()
     DyLink* root = body->rootLink();
 
     if(unknown_rootDof){
-        Position T;
+        Isometry3 T;
         SE3exp(T, root->T(), root->w(), root->vo(), timeStep);
         root->T() = T;
         root->vo() += root->dvo() * timeStep;

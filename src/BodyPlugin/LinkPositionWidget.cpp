@@ -62,7 +62,7 @@ public:
     BodyPtr body;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointSpaceConfigurationHandler> configuration;
-    Position T0;
+    Isometry3 T0;
     BodyState bodyState0;
     ConfTreeWidget treeWidget;
     LineEdit searchBox;
@@ -155,14 +155,14 @@ public:
     void initializeConfigurationInterface();
     void showConfigurationDialog();
     void applyConfiguration(int id);
-    void onKinematicsKitPositionError(const Position& T_frameCoordinate);
+    void onKinematicsKitPositionError(const Isometry3& T_frameCoordinate);
     void updateDisplay();
-    void updateDisplayWithPosition(const Position& position);
-    void updateDisplayWithGlobalLinkPosition(const Position& Ta_global);
+    void updateDisplayWithPosition(const Isometry3& position);
+    void updateDisplayWithGlobalLinkPosition(const Isometry3& Ta_global);
     void updateDisplayWithCurrentLinkPosition();
     void updateConfigurationDisplay();
-    bool applyPositionInput(const Position& T);
-    bool findBodyIkSolution(const Position& T_input, bool isRawT);
+    bool applyPositionInput(const Isometry3& T);
+    bool findBodyIkSolution(const Isometry3& T_input, bool isRawT);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -263,7 +263,7 @@ void LinkPositionWidget::Impl::createPanel()
     positionWidget = new PositionWidget(self);
     positionWidget->setUserInputValuePriorityMode(true);
     positionWidget->setPositionCallback(
-        [&](const Position& T){ return applyPositionInput(T); });
+        [&](const Isometry3& T){ return applyPositionInput(T); });
     vbox->addWidget(positionWidget);
 
     auto grid = new QGridLayout;
@@ -553,7 +553,7 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
                     [&](){ onFrameUpdate(); }));
             kinematicsKitConnections.add(
                 kinematicsKit->sigPositionError().connect(
-                    [&](const Position& T_frameCoordinate){
+                    [&](const Isometry3& T_frameCoordinate){
                         onKinematicsKitPositionError(T_frameCoordinate); }));
 
             hasBaseFrames = kinematicsKit->baseFrames();
@@ -1042,16 +1042,16 @@ QSize ConfTreeWidget::sizeHint() const
 }
 
 
-void LinkPositionWidget::Impl::onKinematicsKitPositionError(const Position& T_frameCoordinate)
+void LinkPositionWidget::Impl::onKinematicsKitPositionError(const Isometry3& T_frameCoordinate)
 {
-    Position T_base;
+    Isometry3 T_base;
     if(coordinateMode == WorldCoordinateMode){
         T_base.setIdentity();
     } else {
         T_base = kinematicsKit->globalBasePosition();
     }
     const auto& T_end = kinematicsKit->currentOffsetFrame()->T();
-    Position Ta_global = T_base * T_frameCoordinate * T_end.inverse(Eigen::Isometry);
+    Isometry3 Ta_global = T_base * T_frameCoordinate * T_end.inverse(Eigen::Isometry);
     updateDisplayWithGlobalLinkPosition(Ta_global);
     positionWidget->setErrorHighlight(true);
     resultLabel.setText(_("Not Solved"));
@@ -1072,9 +1072,9 @@ void LinkPositionWidget::Impl::updateDisplay()
 }
 
 
-void LinkPositionWidget::Impl::updateDisplayWithGlobalLinkPosition(const Position& Ta_global)
+void LinkPositionWidget::Impl::updateDisplayWithGlobalLinkPosition(const Isometry3& Ta_global)
 {
-    Position T;
+    Isometry3 T;
     if(coordinateMode == WorldCoordinateMode){
         T = Ta_global * offsetFrame->T();
     } else if(coordinateMode == BodyCoordinateMode){
@@ -1145,13 +1145,13 @@ void LinkPositionWidget::Impl::updateConfigurationDisplay()
 }
 
 
-bool LinkPositionWidget::Impl::applyPositionInput(const Position& T)
+bool LinkPositionWidget::Impl::applyPositionInput(const Isometry3& T)
 {
     return findBodyIkSolution(T, false);
 }
 
 
-bool LinkPositionWidget::Impl::findBodyIkSolution(const Position& T_input, bool isRawT)
+bool LinkPositionWidget::Impl::findBodyIkSolution(const Isometry3& T_input, bool isRawT)
 {
     shared_ptr<InverseKinematics> ik;
     if(kinematicsKit){
@@ -1170,7 +1170,7 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Position& T_input, bool 
     if(isRawT){
         solved = ik->calcInverseKinematics(T_input);
     } else {
-        Position T;
+        Isometry3 T;
         if(coordinateMode == WorldCoordinateMode){
             T = T_input * offsetFrame->T().inverse(Eigen::Isometry);
         } else if(coordinateMode == BodyCoordinateMode){

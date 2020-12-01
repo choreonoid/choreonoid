@@ -50,9 +50,9 @@ public:
     virtual void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) = 0;
     virtual bool makeReady() = 0;
     
-    virtual void updatePosition(GeometryHandle geometry, const Position& position) = 0;
+    virtual void updatePosition(GeometryHandle geometry, const Isometry3& position) = 0;
     virtual void updatePositions(
-        std::function<void(Referenced* object, Position*& out_position)> positionQuery) = 0;
+        std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery) = 0;
 
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) = 0;
 };

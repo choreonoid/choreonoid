@@ -6,6 +6,7 @@
 
 namespace pybind11 { namespace detail {
 
+/*
 template<> struct type_caster<cnoid::Position>
 {
     PYBIND11_TYPE_CASTER(cnoid::Position, _("Position"));
@@ -23,6 +24,7 @@ template<> struct type_caster<cnoid::Position>
         return pybind11::cast(src.matrix()).release();
     }
 };
+*/
 
 template<> struct type_caster<cnoid::Affine3>
 {

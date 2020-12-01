@@ -22,7 +22,7 @@ public:
     SgMesh* currentMesh;
     SgShape* currentShape;
     Affine3 currentTransform;
-    Affine3 currentTransformWithoutScaling;
+    Isometry3 currentTransformWithoutScaling;
     bool isCurrentScaled;
     bool meshFound;
     
@@ -93,7 +93,7 @@ void MeshExtractorImpl::visitTransform(SgTransform* transform)
 void MeshExtractorImpl::visitPosTransform(SgPosTransform* transform)
 {
     const Affine3 T0(currentTransform);
-    const Affine3 P0(currentTransformWithoutScaling);
+    const Isometry3 P0(currentTransformWithoutScaling);
     currentTransform = T0 * transform->T();
     currentTransformWithoutScaling = P0 * transform->T();
     visitGroup(transform);
@@ -138,7 +138,7 @@ const Affine3& MeshExtractor::currentTransform() const
 }
 
 
-const Affine3& MeshExtractor::currentTransformWithoutScaling() const
+const Isometry3& MeshExtractor::currentTransformWithoutScaling() const
 {
     return impl->currentTransformWithoutScaling;
 }
@@ -209,7 +209,7 @@ static void integrateMesh(MeshExtractor* extractor, SgMesh* mesh)
             SgNormalArray& srcNormals = *srcMesh->normals();
             const int numSrcNormals = srcNormals.size();
             normals.reserve(numNormals + numSrcNormals);
-            const Affine3f U = extractor->currentTransformWithoutScaling().cast<Affine3f::Scalar>();
+            const Isometry3f U = extractor->currentTransformWithoutScaling().cast<Isometry3f::Scalar>();
             for(int i=0; i < numSrcNormals; ++i){
                 normals.push_back(U * srcNormals[i]);
             }

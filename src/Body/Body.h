@@ -224,8 +224,8 @@ public:
         return rootLink_->isFixedJoint();
     }
 
-    void resetDefaultPosition(const Position& T);
-    const Position& defaultPosition() const { return rootLink_->Tb(); }
+    void resetDefaultPosition(const Isometry3& T);
+    const Isometry3& defaultPosition() const { return rootLink_->Tb(); }
 
     double mass() const;
 

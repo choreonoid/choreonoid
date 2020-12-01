@@ -18,19 +18,19 @@ protected:
     SgCamera(const SgCamera& org);
         
 public:
-    static Affine3 positionLookingFor(const Vector3& eye, const Vector3& direction, const Vector3& up);
-    static Affine3 positionLookingAt(const Vector3& eye, const Vector3& center, const Vector3& up);
+    static Isometry3 positionLookingFor(const Vector3& eye, const Vector3& direction, const Vector3& up);
+    static Isometry3 positionLookingAt(const Vector3& eye, const Vector3& center, const Vector3& up);
 
     template<class Scalar, int Mode, int Options>
-        static Eigen::Matrix<Scalar, 3, 1> right(const Eigen::Transform<Scalar, 3, Mode, Options>& T){
+    static Eigen::Matrix<Scalar, 3, 1> right(const Eigen::Transform<Scalar, 3, Mode, Options>& T){
         return T.linear().col(0);
     }
     template<class Scalar, int Mode, int Options>
-        static Eigen::Matrix<Scalar, 3, 1> direction(const Eigen::Transform<Scalar, 3, Mode, Options>& T){
+    static Eigen::Matrix<Scalar, 3, 1> direction(const Eigen::Transform<Scalar, 3, Mode, Options>& T){
         return -T.linear().col(2);
     }
     template<class Scalar, int Mode, int Options>
-        static Eigen::Matrix<Scalar, 3, 1> up(const Eigen::Transform<Scalar, 3, Mode, Options>& T){
+    static Eigen::Matrix<Scalar, 3, 1> up(const Eigen::Transform<Scalar, 3, Mode, Options>& T){
         return T.linear().col(1);
     }
 

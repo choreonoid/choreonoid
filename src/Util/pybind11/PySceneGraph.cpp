@@ -73,25 +73,25 @@ void exportPySceneGraph(py::module& m)
         .def(py::init<>())
         .def(py::init<const SgPosTransform&>())
         .def_property("position",
-                      (Affine3& (SgPosTransform::*)()) &SgPosTransform::position,
-                      [](SgPosTransform& self, const Affine3& T) { self.setPosition(T); })
-        .def("setPosition", [](SgPosTransform& self, const Affine3& T) { self.setPosition(T); })
+                      (Isometry3& (SgPosTransform::*)()) &SgPosTransform::position,
+                      [](SgPosTransform& self, const Isometry3& T) { self.setPosition(T); })
+        .def("setPosition", [](SgPosTransform& self, const Isometry3& T) { self.setPosition(T); })
         .def_property("translation",
-                      (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation,
+                      (Isometry3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation,
                       [](SgPosTransform& self, const Vector3& p){ self.setTranslation(p); })
         .def("setTranslation", [](SgPosTransform& self, const Vector3& p){ self.setTranslation(p); })
         .def_property("rotation",
-                      (Affine3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation,
+                      (Isometry3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation,
                       [](SgPosTransform& self, const Matrix3& R) { self.setRotation(R); })
         .def("setRotation", [](SgPosTransform& self, const Matrix3& R) { self.setRotation(R); })
         .def_property("T",
-                      (const Affine3& (SgPosTransform::*)() const ) &SgPosTransform::T,
-                      [](SgPosTransform& self, const Affine3& T) { self.setPosition(T); })
+                      (const Isometry3& (SgPosTransform::*)() const ) &SgPosTransform::T,
+                      [](SgPosTransform& self, const Isometry3& T) { self.setPosition(T); })
 
         // deprecated
-        .def("getPosition", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position)
-        .def("getTranslation", (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
-        .def("getRotation", (Affine3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
+        .def("getPosition", (Isometry3& (SgPosTransform::*)()) &SgPosTransform::position)
+        .def("getTranslation", (Isometry3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
+        .def("getRotation", (Isometry3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
         ;
 }
 

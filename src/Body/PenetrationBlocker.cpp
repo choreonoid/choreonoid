@@ -48,7 +48,7 @@ public:
     PenetrationBlockerImpl(CollisionDetectorPtr& collisionDetector, Link* targetLink);
     void addOpponentLink(Link* link);
     void start();
-    bool adjust(Position& io_T, const Vector3& pushDirection);
+    bool adjust(Isometry3& io_T, const Vector3& pushDirection);
     void onCollisionDetected(const CollisionPair& collisionPair);
 };
 }
@@ -120,13 +120,13 @@ void PenetrationBlockerImpl::start()
 }
 
 
-bool PenetrationBlocker::adjust(Position& io_T, const Vector3& pushDirection)
+bool PenetrationBlocker::adjust(Isometry3& io_T, const Vector3& pushDirection)
 {
     return impl->adjust(io_T, pushDirection);
 }
 
 
-bool PenetrationBlockerImpl::adjust(Position& io_T, const Vector3& pushDirection)
+bool PenetrationBlockerImpl::adjust(Isometry3& io_T, const Vector3& pushDirection)
 {
     if(!isCollisionDetectorReady){
         return false;

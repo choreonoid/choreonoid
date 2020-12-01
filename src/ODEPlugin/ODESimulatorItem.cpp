@@ -80,8 +80,8 @@ public:
     dTriMeshDataID triMeshDataID;
     vector<Vertex> vertices;
     vector<Triangle> triangles;
-    typedef map< dGeomID, Position, std::less<dGeomID>, 
-                 Eigen::aligned_allocator< pair<const dGeomID, Position> > > OffsetMap;
+    typedef map<dGeomID, Isometry3, std::less<dGeomID>, 
+                Eigen::aligned_allocator< pair<const dGeomID, Isometry3>>> OffsetMap;
     OffsetMap offsetMap;
     dJointID motorID;
 
@@ -431,7 +431,7 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
             if(created){
                 geomID.push_back(geomId);
                 dGeomSetBody(geomId, bodyID);
-                Affine3 T_ = extractor->currentTransformWithoutScaling();
+                Isometry3 T_ = extractor->currentTransformWithoutScaling();
                 if(translation){
                     T_ *= Translation3(*translation);
                 }
@@ -459,7 +459,7 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
         const SgVertexArray& vertices_ = *mesh->vertices();
         const int numVertices = vertices_.size();
         for(int i=0; i < numVertices; ++i){
-            const Vector3 v = T * vertices_[i].cast<Position::Scalar>() - link->c();
+            const Vector3 v = T * vertices_[i].cast<Vector3::Scalar>() - link->c();
             vertices.push_back(Vertex(v.x(), v.y(), v.z()));
         }
 
@@ -488,7 +488,7 @@ ODELink::~ODELink()
 
 void ODELink::setKinematicStateToODE()
 {
-    const Position& T = link->T();
+    const Isometry3& T = link->T();
     if(bodyID){
         dMatrix3 R2 = { T(0,0), T(0,1), T(0,2), 0.0,
                         T(1,0), T(1,1), T(1,2), 0.0,
@@ -506,10 +506,10 @@ void ODELink::setKinematicStateToODE()
     }else{
         for(vector<dGeomID>::iterator it = geomID.begin(); it!=geomID.end(); it++){
             OffsetMap::iterator it0 = offsetMap.find(*it);
-            Position offset(Position::Identity());
+            Isometry3 offset(Isometry3::Identity());
             if(it0!=offsetMap.end())
                 offset = it0->second;
-            Position T_ = T*offset;
+            Isometry3 T_ = T*offset;
             Vector3 p = T_.translation() + link->c();
             dMatrix3 R2 = { T_(0,0), T_(0,1), T_(0,2), 0.0,
                             T_(1,0), T_(1,1), T_(1,2), 0.0,
@@ -524,7 +524,7 @@ void ODELink::setKinematicStateToODE()
 
 void ODELink::setKinematicStateToODEflip()
 {
-    const Position& T = link->T();
+    const Isometry3& T = link->T();
     dMatrix3 R2 = {  T(0,0),  T(0,1),  T(0,2), 0.0,
                      T(2,0),  T(2,1),  T(2,2), 0.0,
                      -T(1,0), -T(1,1), -T(1,2), 0.0 };
@@ -825,17 +825,17 @@ void ODEBody::updateForceSensors(bool flipYZ)
 
 void ODEBody::alignToZAxisIn2Dmode()
 {
-    static const Quat r(AngleAxis(PI / 2.0, Vector3(1.0, 0.0, 0.0)));
+    static const Quaternion r(AngleAxis(PI / 2.0, Vector3(1.0, 0.0, 0.0)));
 
     dBodyID& bodyID = odeLinks.front()->bodyID;
 
     const dReal* q0 = dBodyGetQuaternion(bodyID);
-    Quat q(q0[0], q0[1], q0[2], q0[3]);
-    Quat q2 = r * q;
+    Quaternion q(q0[0], q0[1], q0[2], q0[3]);
+    Quaternion q2 = r * q;
     q2.x() = 0.0;
     q2.z() = 0.0;
     q2.normalize();
-    Quat q3 = r.inverse() * q2;
+    Quaternion q3 = r.inverse() * q2;
     dReal q4[4];
     q4[0] = q3.w();
     q4[1] = q3.x();    
@@ -1250,7 +1250,7 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 
     if(useWorldCollisionDetector){
         bodyCollisionDetector.updatePositions(
-            [&](Referenced* object, Position*& out_Position){
+            [&](Referenced* object, Isometry3*& out_Position){
                 out_Position = &(static_cast<ODELink*>(object)->link->position()); });
         
         bodyCollisionDetector.detectCollisions(

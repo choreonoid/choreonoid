@@ -64,11 +64,11 @@ void CompositeIK::setMaxIKerror(double e)
 }
 
 
-bool CompositeIK::calcInverseKinematics(const Position& T)
+bool CompositeIK::calcInverseKinematics(const Isometry3& T)
 {
     const int n = body_->numJoints();
 
-    Position T0 = targetLink_->T();
+    Isometry3 T0 = targetLink_->T();
     q0.resize(n);
     for(int i=0; i < n; ++i){
         q0[i] = body_->joint(i)->q();

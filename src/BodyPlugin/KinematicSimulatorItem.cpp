@@ -28,8 +28,8 @@ class AttachmentInfo : public Referenced
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     BodyPtr body;
-    Position T_offset;
-    AttachmentInfo(Body* body, const Position& T_offset)
+    Isometry3 T_offset;
+    AttachmentInfo(Body* body, const Isometry3& T_offset)
         : body(body), T_offset(T_offset) { }
 };
 typedef ref_ptr<AttachmentInfo> AttachmentInfoPtr;
@@ -62,10 +62,10 @@ public:
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void onHolderStateChanged(HolderInfo* info);
     void activateHolder(HolderInfo* info);
-    vector<Body*> findAttachableBodies(HolderDevice* holder, const Position& T_holder);
-    void findAttachableBodiesByDistance(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies);
-    void findAttachableBodiesByCollision(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies);
-    void findAttachableBodiesByName(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies);
+    vector<Body*> findAttachableBodies(HolderDevice* holder, const Isometry3& T_holder);
+    void findAttachableBodiesByDistance(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies);
+    void findAttachableBodiesByCollision(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies);
+    void findAttachableBodiesByName(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies);
     void deactivateHolder(HolderInfo* info);
 };
 
@@ -185,7 +185,7 @@ bool KinematicSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& 
 
     for(auto& info : impl->activeHolders){
         auto& holder = info->holder;
-        Position T_base = holder->link()->T() * holder->T_local();
+        Isometry3 T_base = holder->link()->T() * holder->T_local();
         int n = holder->numAttachments();
         for(int i=0; i < n; ++i){
             auto attachment = holder->attachment(i);
@@ -219,7 +219,7 @@ void KinematicSimulatorItem::Impl::activateHolder(HolderInfo* info)
 {
     auto holder = info->holder;
     info->extraAttachments.clear();
-    Position T_holder = holder->link()->T() * holder->T_local();
+    Isometry3 T_holder = holder->link()->T() * holder->T_local();
     for(auto& body : findAttachableBodies(holder, T_holder)){
         auto rootLink = body->rootLink();
         AttachmentDevice* attachment = nullptr;
@@ -232,8 +232,8 @@ void KinematicSimulatorItem::Impl::activateHolder(HolderInfo* info)
         if(attachment){
             holder->addAttachment(attachment);
         } else {
-            Position T_attached = rootLink->T();
-            Position T_offset = T_holder.inverse(Eigen::Isometry) * T_attached;
+            Isometry3 T_attached = rootLink->T();
+            Isometry3 T_offset = T_holder.inverse(Eigen::Isometry) * T_attached;
             info->extraAttachments.push_back(new AttachmentInfo(body, T_offset));
         }
     }
@@ -243,7 +243,7 @@ void KinematicSimulatorItem::Impl::activateHolder(HolderInfo* info)
 }
 
 
-vector<Body*> KinematicSimulatorItem::Impl::findAttachableBodies(HolderDevice* holder, const Position& T_holder)
+vector<Body*> KinematicSimulatorItem::Impl::findAttachableBodies(HolderDevice* holder, const Isometry3& T_holder)
 {
     vector<Body*> bodies;
     switch(holder->holdCondition()){
@@ -264,7 +264,7 @@ vector<Body*> KinematicSimulatorItem::Impl::findAttachableBodies(HolderDevice* h
 
 
 void KinematicSimulatorItem::Impl::findAttachableBodiesByDistance
-(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies)
+(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies)
 {
     const double maxDistance = holder->maxHoldDistance();
     for(auto& simBody : self->simulationBodies()){
@@ -283,14 +283,14 @@ void KinematicSimulatorItem::Impl::findAttachableBodiesByDistance
 
 
 void KinematicSimulatorItem::Impl::findAttachableBodiesByCollision
-(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies)
+(HolderDevice* /* holder */, const Isometry3& /* T_holder */, vector<Body*>& /* out_bodies */)
 {
 
 }
 
 
 void KinematicSimulatorItem::Impl::findAttachableBodiesByName
-(HolderDevice* holder, const Position& T_holder, vector<Body*>& out_bodies)
+(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies)
 {
     const double maxDistance = holder->maxHoldDistance();
     for(auto& simBody : self->simulationBodies()){

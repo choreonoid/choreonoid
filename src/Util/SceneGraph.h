@@ -357,47 +357,49 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     SgPosTransform();
+    SgPosTransform(const Isometry3& T);
+    //! \note T must be the isometry transformation
     SgPosTransform(const Affine3& T);
     SgPosTransform(const SgPosTransform& org, CloneMap* cloneMap = nullptr);
 
     virtual const BoundingBox& boundingBox() const override;
     virtual void getTransform(Affine3& out_T) const override;
 
-    Affine3& T() { return T_; }
-    const Affine3& T() const { return T_; }
+    Isometry3& T() { return T_; }
+    const Isometry3& T() const { return T_; }
 
-    Affine3& position() { return T_; }
-    const Affine3& position() const { return T_; }
+    Isometry3& position() { return T_; }
+    const Isometry3& position() const { return T_; }
 
-    Affine3::TranslationPart translation() { return T_.translation(); }
-    Affine3::ConstTranslationPart translation() const { return T_.translation(); }
+    Isometry3::TranslationPart translation() { return T_.translation(); }
+    Isometry3::ConstTranslationPart translation() const { return T_.translation(); }
 
-    Affine3::LinearPart rotation() { return T_.linear(); }
-    Affine3::ConstLinearPart rotation() const { return T_.linear(); }
+    Isometry3::LinearPart rotation() { return T_.linear(); }
+    Isometry3::ConstLinearPart rotation() const { return T_.linear(); }
 
     template<class Scalar, int Mode, int Options>
-        void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
-        T_ = T.template cast<Affine3::Scalar>();
+    void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        T_ = T.template cast<Isometry3::Scalar>();
     }
     template<class Scalar, int Mode, int Options>
-        void setTransform(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
-        T_ = T.template cast<Affine3::Scalar>();
+    void setTransform(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        T_ = T.template cast<Isometry3::Scalar>();
     }
     template<typename Derived>
-        void setRotation(const Eigen::MatrixBase<Derived>& R) {
-        T_.linear() = R.template cast<Affine3::Scalar>();
+    void setRotation(const Eigen::MatrixBase<Derived>& R) {
+        T_.linear() = R.template cast<Isometry3::Scalar>();
     }
     template<typename T>
-        void setRotation(const Eigen::AngleAxis<T>& a) {
-        T_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+    void setRotation(const Eigen::AngleAxis<T>& a) {
+        T_.linear() = a.template cast<Isometry3::Scalar>().toRotationMatrix();
     }
     template<typename T>
-        void setRotation(const Eigen::Quaternion<T>& q) {
-        T_.linear() = q.template cast<Affine3::Scalar>().toRotationMatrix();
+    void setRotation(const Eigen::Quaternion<T>& q) {
+        T_.linear() = q.template cast<Isometry3::Scalar>().toRotationMatrix();
     }
     template<typename Derived>
-        void setTranslation(const Eigen::MatrixBase<Derived>& p) {
-        T_.translation() = p.template cast<Affine3::Scalar>();
+    void setTranslation(const Eigen::MatrixBase<Derived>& p) {
+        T_.translation() = p.template cast<Isometry3::Scalar>();
     }
 
 protected:
@@ -405,7 +407,7 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    Affine3 T_;
+    Isometry3 T_;
 };
 
 typedef ref_ptr<SgPosTransform> SgPosTransformPtr;
@@ -423,7 +425,8 @@ public:
 
     const Vector3& scale() const { return scale_; }
     Vector3& scale() { return scale_; }
-    template<typename Derived> void setScale(const Eigen::MatrixBase<Derived>& s) {
+    template<typename Derived>
+    void setScale(const Eigen::MatrixBase<Derived>& s) {
         scale_ = s.template cast<Vector3::Scalar>();
     }
     void setScale(double s){
@@ -462,7 +465,7 @@ public:
     const Affine3& transform() const { return T_; }
 
     template<class Scalar, int Mode, int Options>
-        void setTransform(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+    void setTransform(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
         T_ = T.template cast<Affine3::Scalar>();
     }
 

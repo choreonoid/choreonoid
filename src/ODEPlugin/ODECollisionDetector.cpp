@@ -37,7 +37,7 @@ struct PrimitiveInfo
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     dGeomID geomId;
-    Position localPosition;
+    Isometry3 localPosition;
 };
 
 class GeometryInfo : public Referenced
@@ -107,7 +107,7 @@ public:
     void addMesh(GeometryInfo* model);
     void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore);
     bool makeReady();
-    void setGeometryPosition(GeometryInfo* ginfo, const Position& position);
+    void setGeometryPosition(GeometryInfo* ginfo, const Isometry3& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
 };
 
@@ -274,7 +274,7 @@ void ODECollisionDetectorImpl::addMesh(GeometryInfo* ginfo)
             if(created){
                 PrimitiveInfo pinfo;
                 pinfo.geomId = geomId;
-                Position& T = pinfo.localPosition;
+                Isometry3& T = pinfo.localPosition;
                 T = meshExtractor.currentTransformWithoutScaling();
                 if(hasTranslationByScaling){
                     T.translation() += translationByScaling;
@@ -294,7 +294,7 @@ void ODECollisionDetectorImpl::addMesh(GeometryInfo* ginfo)
         const SgVertexArray& srcVertices = *mesh->vertices();
         const int numVertices = srcVertices.size();
         for(int i=0; i < numVertices; ++i){
-            const Vector3 v = T * srcVertices[i].cast<Position::Scalar>();
+            const Vector3 v = T * srcVertices[i].cast<Isometry3::Scalar>();
             vertices.push_back(Vertex(v.x(), v.y(), v.z()));
         }
 
@@ -374,11 +374,11 @@ bool ODECollisionDetectorImpl::makeReady()
 }
 
 
-void ODECollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Position& position)
+void ODECollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Isometry3& position)
 {
     if(ginfo->meshGeomID){
         Vector3 p = position.translation();
-        const Position& T = position;
+        const Isometry3& T = position;
         dMatrix3 R = { T(0,0), T(0,1), T(0,2), 0.0,
                        T(1,0), T(1,1), T(1,2), 0.0,
                        T(2,0), T(2,1), T(2,2), 0.0 };
@@ -386,7 +386,7 @@ void ODECollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Po
         dGeomSetRotation(ginfo->meshGeomID, R);
     }
     for(auto& pinfo : ginfo->primitives){
-        Position T = position * pinfo.localPosition;
+        Isometry3 T = position * pinfo.localPosition;
         auto p = T.translation();
         dMatrix3 R = { T(0,0), T(0,1), T(0,2), 0.0,
                        T(1,0), T(1,1), T(1,2), 0.0,
@@ -397,7 +397,7 @@ void ODECollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Po
 }
 
 
-void ODECollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
+void ODECollisionDetector::updatePosition(GeometryHandle geometry, const Isometry3& position)
 {
     GeometryInfo* ginfo = impl->geometryInfos[geometry];
     if(ginfo){
@@ -407,11 +407,11 @@ void ODECollisionDetector::updatePosition(GeometryHandle geometry, const Positio
 
 
 void ODECollisionDetector::updatePositions
-(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
+(std::function<void(Referenced* object, Isometry3*& out_Position)> positionQuery)
 {
     for(auto& info : impl->geometryInfos){
         if(info){
-            Position* T;
+            Isometry3* T;
             positionQuery(info->object, T);
             impl->setGeometryPosition(info, *T);
         }

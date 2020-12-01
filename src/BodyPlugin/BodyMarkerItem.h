@@ -31,7 +31,7 @@ public:
 
     bool setTargetLink(const std::string& name);
     bool setTargetNode(const std::string& name);
-    void setOffsetPosition(const Position& T);
+    void setOffsetPosition(const Isometry3& T);
     
     enum MarkerType {
         CROSS_MARKER,

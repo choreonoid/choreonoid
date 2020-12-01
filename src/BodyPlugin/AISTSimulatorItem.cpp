@@ -104,7 +104,7 @@ public:
     stdx::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
-    Position forcedBodyPosition;
+    Isometry3 forcedBodyPosition;
 
     MessageView* mv;
 
@@ -114,7 +114,7 @@ public:
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
     void stepKinematicsSimulation(const std::vector<SimulationBody*>& activeSimBodies);
-    void setForcedPosition(BodyItem* bodyItem, const Position& T);
+    void setForcedPosition(BodyItem* bodyItem, const Isometry3& T);
     void doSetForcedPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
     void addExtraJoint(ExtraJoint& extrajoint);
@@ -586,13 +586,13 @@ Vector3 AISTSimulatorItem::getGravity() const
 }
 
 
-void AISTSimulatorItem::setForcedPosition(BodyItem* bodyItem, const Position& T)
+void AISTSimulatorItem::setForcedPosition(BodyItem* bodyItem, const Isometry3& T)
 {
     impl->setForcedPosition(bodyItem, T);
 }
 
 
-void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Position& T)
+void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Isometry3& T)
 {
     if(SimulationBody* simBody = self->findSimulationBody(bodyItem)){
         {

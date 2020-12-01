@@ -27,8 +27,8 @@ void exportPyDeviceTypes(py::module& m)
         .def("clone", (Device*(Device::*)()const) &Device::clone)
         .def("clearState", &Device::clearState)
         .def("hasStateOnly", &Device::hasStateOnly)
-        .def_property("T_local", [](Device& self) ->Position { return self.T_local(); },
-                      [](Device& self, const Position& T) { self.T_local() = T.matrix(); })
+        .def_property("T_local", [](Device& self) -> Isometry3 { return self.T_local(); },
+                      [](Device& self, const Isometry3& T) { self.T_local() = T.matrix(); })
 
         // deprecated
         .def("getIndex", &Device::index)

@@ -54,7 +54,7 @@ GeometryHandle getHandle(CollisionModel* model)
     return reinterpret_cast<GeometryHandle>(model);
 }
 
-inline fcl::Transform3f convertToFclTransform(const Position& T)
+inline fcl::Transform3f convertToFclTransform(const Isometry3& T)
 {
     fcl::Transform3f T_fcl;
     
@@ -89,7 +89,7 @@ public:
     void addMesh(CollisionModel* geometry, SgMesh* mesh);
     bool addPrimitive(CollisionModel* model, SgMesh* mesh);
     void makeReady();
-    void updatePosition(CollisionModel* model, const Position& position);
+    void updatePosition(CollisionModel* model, const Isometry3& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
     void detectObjectCollisions(
         fcl::CollisionObject* object1, fcl::CollisionObject* object2, CollisionPair& collisionPair);
@@ -207,7 +207,7 @@ void FCLCollisionDetector::Impl::addMesh(CollisionModel* model, SgMesh* mesh)
         auto& points = model->points;
         points.resize(numVertices);
         for(int i=0; i < numVertices; ++i){
-            const Vector3 v = T * vertices[i].cast<Position::Scalar>();;
+            const Vector3 v = T * vertices[i].cast<Isometry3::Scalar>();;
             points[i].setValue(v.x(), v.y(), v.z());
         }
 
@@ -297,7 +297,7 @@ bool FCLCollisionDetector::Impl::addPrimitive(CollisionModel* model, SgMesh* mes
             break;
         }
         if(created){
-            Position T;
+            Isometry3 T;
             if(translation){
                 T = meshExtractor.currentTransformWithoutScaling() * Translation3(*translation);
             } else {
@@ -373,7 +373,7 @@ void FCLCollisionDetector::Impl::makeReady()
 }
 
 
-void FCLCollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
+void FCLCollisionDetector::updatePosition(GeometryHandle geometry, const Isometry3& position)
 {
     if(auto model = getCollisionModel(geometry)){
         impl->updatePosition(model, position);
@@ -381,7 +381,7 @@ void FCLCollisionDetector::updatePosition(GeometryHandle geometry, const Positio
 }
 
 
-void FCLCollisionDetector::Impl::updatePosition(CollisionModel* model, const Position& position)
+void FCLCollisionDetector::Impl::updatePosition(CollisionModel* model, const Isometry3& position)
 {
     auto T = convertToFclTransform(position);
     if(model->meshObject){
@@ -399,11 +399,11 @@ void FCLCollisionDetector::Impl::updatePosition(CollisionModel* model, const Pos
 
 
 void FCLCollisionDetector::updatePositions
-(std::function<void(Referenced* object, Position*& out_position)> positionQuery)
+(std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery)
 {
     for(auto& model : impl->models){
         if(model && model->object){
-            Position* pPosition;
+            Isometry3* pPosition;
             positionQuery(model->object, pPosition);
             impl->updatePosition(model, *pPosition);
         }

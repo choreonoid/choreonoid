@@ -39,9 +39,9 @@ public:
     void storePositions(const Body& body);
     bool restorePositions(Body& io_body) const;
 
-    void setRootLinkPosition(const Position& T);
+    void setRootLinkPosition(const Isometry3& T);
     void setRootLinkPosition(const SE3& position);
-    bool getRootLinkPosition(Position& out_T) const;
+    bool getRootLinkPosition(Isometry3& out_T) const;
     bool getRootLinkPosition(SE3& out_position) const;
 
     void setZMP(const Vector3& zmp);

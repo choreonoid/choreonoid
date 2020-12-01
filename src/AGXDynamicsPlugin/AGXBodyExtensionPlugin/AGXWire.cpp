@@ -277,7 +277,7 @@ void SceneWireDevice::update()
     if(m_wireDevice->getWireNodeStates().size() <= 0) return;
     MeshGenerator meshGenerator;
     const double& radius = m_wireDevice->getWireRadius();
-    const Position::TranslationPart& link_p = m_wireDevice->link()->p();
+    const Isometry3::TranslationPart& link_p = m_wireDevice->link()->p();
     const Matrix3& link_attitude_inv = m_wireDevice->link()->R().inverse();
     const int& numNodes = (int)m_wireDevice->getWireNodeStates().size();
     for(size_t i = 0; i < numNodes - 1; ++i){
@@ -304,7 +304,7 @@ void SceneWireDevice::update()
         nx.normalize();
         const Vector3 nz = nx.cross(ny);
 
-        Position p;
+        Isometry3 p;
         p.setIdentity();
         p.translation() = pos - link_p;
         p.linear().col(0) = nx;

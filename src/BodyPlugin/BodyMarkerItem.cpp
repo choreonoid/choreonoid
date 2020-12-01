@@ -48,8 +48,8 @@ public:
     BodyMarkerItem* self;
     BodyItem* bodyItem;
     Link* targetLink;
-    Position T_node;
-    Position localPosition;
+    Isometry3 T_node;
+    Isometry3 localPosition;
     SceneMarkerPtr marker;
     SgSwitchableGroupPtr switchableMarker;
     SgUpdate markerUpdate;
@@ -308,7 +308,7 @@ bool BodyMarkerItemImpl::findNode()
 bool BodyMarkerItemImpl::findNode(SgNode* node, Affine3 T)
 {
     if(node->name() == targetNodeName){
-        T_node = T;
+        T_node = convertToIsometryWithOrthonormalization(T);
         return true;
     }
     if(auto group = dynamic_cast<SgGroup*>(node)){
@@ -327,7 +327,7 @@ bool BodyMarkerItemImpl::findNode(SgNode* node, Affine3 T)
 }
 
 
-void BodyMarkerItem::setOffsetPosition(const Position& T)
+void BodyMarkerItem::setOffsetPosition(const Isometry3& T)
 {
     impl->localPosition = T;
     impl->updateMarkerPosition();

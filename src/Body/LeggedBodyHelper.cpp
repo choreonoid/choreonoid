@@ -131,7 +131,7 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
         size_t numDone = 0;
         auto baseToWaist = JointPath::getCustomPath(body_, baseFoot, waist);
         if(baseToWaist){
-            Position T = waist->T();
+            Isometry3 T = waist->T();
             T.translation() += e;
             if(baseToWaist->calcInverseKinematics(T)){
                 numDone++;
@@ -143,7 +143,7 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
                         if(waistToFoot->hasAnalyticalIK()){
                             ikDone = waistToFoot->calcInverseKinematics(foot->T());
                         } else {
-                            Position T_foot = foot->T();
+                            Isometry3 T_foot = foot->T();
                             waistToFoot->calcForwardKinematics();
                             ikDone = waistToFoot->calcInverseKinematics(T_foot);
                         }
@@ -197,7 +197,7 @@ bool LeggedBodyHelper::setStance(double width, Link* baseLink)
     auto ikPath = JointPath::getCustomPath(body_, foot[0], waist);
 
     if(ikPath){
-        Position T = waist->T();
+        Isometry3 T = waist->T();
         const Matrix3& R0 = foot[0]->R();
         const Vector3 baseY(R0(0,1), sign * R0(1,1), 0.0);
         foot[1]->p() = foot[0]->p() + baseY * width;

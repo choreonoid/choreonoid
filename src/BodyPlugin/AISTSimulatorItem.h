@@ -52,7 +52,7 @@ public:
     void clearExtraJoint();
 
     virtual Vector3 getGravity() const override;
-    virtual void setForcedPosition(BodyItem* bodyItem, const Position& T) override;
+    virtual void setForcedPosition(BodyItem* bodyItem, const Isometry3& T) override;
     virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const override;
     virtual void clearForcedPositions() override;
 

@@ -12,10 +12,10 @@
 
 namespace cnoid {
 
-class SceneRendererImpl;
-
 class CNOID_EXPORT SceneRenderer
 {
+    class Impl;
+
 public:
     SceneRenderer();
     virtual ~SceneRenderer();
@@ -46,7 +46,7 @@ public:
     int numCameras() const;
     SgCamera* camera(int index);
     const SgNodePath& cameraPath(int index) const;
-    virtual const Affine3& currentCameraPosition() const;
+    virtual const Isometry3& currentCameraPosition() const;
     SignalProxy<void()> sigCamerasChanged() const;
     SgCamera* currentCamera() const;
     int currentCameraIndex() const;
@@ -58,7 +58,7 @@ public:
     bool setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings);
 
     int numLights() const;
-    void getLightInfo(int index, SgLight*& out_light, Affine3& out_position) const;
+    void getLightInfo(int index, SgLight*& out_light, Isometry3& out_position) const;
     void setAsDefaultLight(SgLight* light);
     void unsetDefaultLight(SgLight* light);
     SgLight* headLight();
@@ -91,7 +91,7 @@ public:
         int id;
     public:
         PropertyKey(const std::string& key);
-        friend class SceneRendererImpl;
+        friend class SceneRenderer::Impl;
     };
     
     void setProperty(PropertyKey key, bool value);
@@ -107,7 +107,7 @@ protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update);
 
 private:
-    SceneRendererImpl* impl;
+    Impl* impl;
 };
 
 }

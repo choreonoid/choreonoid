@@ -276,7 +276,7 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
             return frame->note().c_str();
 
         case PositionColumn: {
-            Position T;
+            Isometry3 T;
             if(frameListItem->getRelativeFramePosition(frame, T)){
                 auto p = T.translation();
                 auto rpy = degree(rpyFromRot(T.linear()));

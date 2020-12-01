@@ -47,8 +47,8 @@ public:
     bool isForOffsetFrames() const;
 
     virtual LocationProxyPtr getFrameParentLocationProxy();
-    bool getRelativeFramePosition(const CoordinateFrame* frame, Position& out_T) const;
-    bool getGlobalFramePosition(const CoordinateFrame* frame, Position& out_T) const;
+    bool getRelativeFramePosition(const CoordinateFrame* frame, Isometry3& out_T) const;
+    bool getGlobalFramePosition(const CoordinateFrame* frame, Isometry3& out_T) const;
     bool switchFrameMode(CoordinateFrame* frame, int mode);
 
     // RenderableItem function

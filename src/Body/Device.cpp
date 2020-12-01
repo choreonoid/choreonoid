@@ -73,7 +73,7 @@ Body* Device::body()
 }
 
 
-void Device::setLocalAttitude(const Position& Ta)
+void Device::setLocalAttitude(const Isometry3& Ta)
 {
     T_local() = Ta;
 }

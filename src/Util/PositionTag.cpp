@@ -12,7 +12,7 @@ PositionTag::PositionTag()
 }
 
 
-PositionTag::PositionTag(const Position& T)
+PositionTag::PositionTag(const Isometry3& T)
 {
     position_ = T;
     hasAttitude_ = true;

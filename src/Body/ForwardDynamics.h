@@ -52,7 +52,7 @@ protected:
        @param v0 spatial velocity
        @param dt time step[s]
     */
-    static void SE3exp(Position& out_T, const Position& T0, const Vector3& w, const Vector3& vo, double dt);
+    static void SE3exp(Isometry3& out_T, const Isometry3& T0, const Vector3& w, const Vector3& vo, double dt);
 		
     DyBodyPtr body;
     Vector3 g;

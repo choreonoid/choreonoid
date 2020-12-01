@@ -79,7 +79,7 @@ public:
     void onFrameRemoved(int index);
     bool onFrameItemAdded(CoordinateFrameItem* frameItem);
     void setFrameMarkerVisible(CoordinateFrame* frame, bool on, bool isTransient);
-    void updateParentFrameForFrameMarkers(const Position& T);
+    void updateParentFrameForFrameMarkers(const Isometry3& T);
 };
 
 }
@@ -463,7 +463,7 @@ LocationProxyPtr CoordinateFrameListItem::getFrameParentLocationProxy()
 }
 
 
-bool CoordinateFrameListItem::getRelativeFramePosition(const CoordinateFrame* frame, Position& out_T) const
+bool CoordinateFrameListItem::getRelativeFramePosition(const CoordinateFrame* frame, Isometry3& out_T) const
 {
     if(frame->isGlobal()){
         if(auto parentLocation = const_cast<CoordinateFrameListItem*>(this)->getFrameParentLocationProxy()){
@@ -478,7 +478,7 @@ bool CoordinateFrameListItem::getRelativeFramePosition(const CoordinateFrame* fr
 }
 
 
-bool CoordinateFrameListItem::getGlobalFramePosition(const CoordinateFrame* frame, Position& out_T) const
+bool CoordinateFrameListItem::getGlobalFramePosition(const CoordinateFrame* frame, Isometry3& out_T) const
 {
     if(!frame->isGlobal()){
         if(auto parentLocation = const_cast<CoordinateFrameListItem*>(this)->getFrameParentLocationProxy()){
@@ -648,7 +648,7 @@ SignalProxy<void(int index, bool on)> CoordinateFrameListItem::sigFrameMarkerVis
 }
 
 
-void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Position& T)
+void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Isometry3& T)
 {
     relativeFrameMarkerGroup->setPosition(T);
     relativeFrameMarkerGroup->notifyUpdate(sgUpdate);

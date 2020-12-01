@@ -270,7 +270,7 @@ public:
     double orgMouseX;
     double orgMouseY;
     Vector3 orgPointedPos;
-    Affine3 orgCameraPosition;
+    Isometry3 orgCameraPosition;
     double orgOrthoCameraHeight;
     Vector3 cameraViewChangeCenter;
         
@@ -395,7 +395,7 @@ public:
     virtual void focusInEvent(QFocusEvent* event) override;
     virtual void focusOutEvent(QFocusEvent* event) override;
 
-    Affine3 getNormalizedCameraTransform(const Affine3& T);
+    Isometry3 getNormalizedCameraTransform(const Isometry3& T);
     void startViewChange();
     void startViewRotation();
     void dragViewRotation();
@@ -949,7 +949,7 @@ void SceneWidget::Impl::doFPSTest()
     isFPSTestCanceled = false;
     
     const Vector3 p = lastClickedPoint;
-    const Affine3 C = builtinCameraTransform->T();
+    const Isometry3 C = builtinCameraTransform->T();
 
     QElapsedTimer timer;
     timer.start();
@@ -1154,7 +1154,7 @@ void SceneWidget::Impl::viewAll()
     const double a = renderer->aspectRatio();
     double length = (a >= 1.0) ? (top - bottom) : (right - left);
     
-    Affine3& T = interactiveCameraTransform->T();
+    Isometry3& T = interactiveCameraTransform->T();
     T.translation() +=
         (bbox.center() - T.translation())
         + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearClipDistance() / length);
@@ -1793,7 +1793,7 @@ SignalProxy<void()> SceneWidget::sigAboutToBeDestroyed()
 /**
    \note Z axis should always be the upper vertical direciton.
 */
-Affine3 SceneWidget::Impl::getNormalizedCameraTransform(const Affine3& T)
+Isometry3 SceneWidget::Impl::getNormalizedCameraTransform(const Isometry3& T)
 {
     if(!config->restrictCameraRollCheck.isChecked()){
         return T;
@@ -1820,7 +1820,7 @@ Affine3 SceneWidget::Impl::getNormalizedCameraTransform(const Affine3& T)
     }
     y = z.cross(x);
         
-    Affine3 N;
+    Isometry3 N;
     N.linear() << x, y, z;
     N.translation() = T.translation();
     return N;
@@ -1893,7 +1893,7 @@ void SceneWidget::Impl::dragViewRotation()
     const double dx = latestEvent.x() - orgMouseX;
     const double dy = latestEvent.y() - orgMouseY;
 
-    Affine3 R;
+    Isometry3 R;
     if(config->restrictCameraRollCheck.isChecked()){
         Vector3 up;
         if(config->verticalAxisZRadio.isChecked()){
@@ -1920,7 +1920,7 @@ void SceneWidget::Impl::dragViewRotation()
             orgCameraPosition));
 
     if(latestEvent.modifiers() & Qt::ShiftModifier){
-        Affine3& T = interactiveCameraTransform->T();
+        Isometry3& T = interactiveCameraTransform->T();
         Vector3 rpy = rpyFromRot(T.linear());
         for(int i=0; i < 3; ++i){
             double& a = rpy[i];
@@ -1952,7 +1952,7 @@ void SceneWidget::Impl::startViewTranslation()
         return;
     }
 
-    const Affine3& C = interactiveCameraTransform->T();
+    const Isometry3& C = interactiveCameraTransform->T();
 
     if(isFirstPersonMode()){
         viewTranslationRatioX = -0.005;
@@ -2043,7 +2043,7 @@ void SceneWidget::Impl::dragViewZoom()
     const double ratio = expf(dy * 0.01);
 
     if(dynamic_cast<SgPerspectiveCamera*>(camera)){
-        const Affine3& C = orgCameraPosition;
+        const Isometry3& C = orgCameraPosition;
         const Vector3 v = SgCamera::direction(C);
 
         if(isFirstPersonMode()){
@@ -2073,7 +2073,7 @@ void SceneWidget::Impl::zoomView(double ratio)
 
     SgCamera* camera = renderer->currentCamera();
     if(dynamic_cast<SgPerspectiveCamera*>(camera)){
-        const Affine3& C = interactiveCameraTransform->T();
+        const Isometry3& C = interactiveCameraTransform->T();
         const Vector3 v = SgCamera::direction(C);
         
         if(isFirstPersonMode()){
@@ -2121,7 +2121,7 @@ void SceneWidget::rotateBuiltinCameraView(double dPitch, double dYaw)
 
 void SceneWidget::Impl::rotateBuiltinCameraView(double dPitch, double dYaw)
 {
-    const Affine3 T = builtinCameraTransform->T();
+    const Isometry3 T = builtinCameraTransform->T();
     builtinCameraTransform->setTransform(
         getNormalizedCameraTransform(
             Translation3(cameraViewChangeCenter) *
@@ -2142,7 +2142,7 @@ void SceneWidget::translateBuiltinCameraView(const Vector3& dp_local)
 
 void SceneWidget::Impl::translateBuiltinCameraView(const Vector3& dp_local)
 {
-    const Affine3 T = builtinCameraTransform->T();
+    const Isometry3 T = builtinCameraTransform->T();
     builtinCameraTransform->setTransform(
         getNormalizedCameraTransform(
             Translation3(T.linear() * dp_local) * T));
@@ -2788,7 +2788,7 @@ Mapping* SceneWidget::Impl::storeCameraState(int cameraIndex, bool isInteractive
             state->write("far", camera->farClipDistance());
         }
         if(cameraTransform){
-            const Affine3& T = cameraTransform->T();
+            const Isometry3& T = cameraTransform->T();
             write(*state, "eye", T.translation());
             write(*state, "direction", SgCamera::direction(T));
             write(*state, "up", SgCamera::up(T));

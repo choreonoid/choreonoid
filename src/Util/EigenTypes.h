@@ -55,7 +55,6 @@ typedef Eigen::Matrix2d Matrix2;
 typedef Eigen::Vector2d Vector2;
 typedef Eigen::Matrix3d Matrix3;
 typedef Eigen::Vector3d Vector3;
-//typedef Eigen::AlignedVector3<double> Vector3;
 typedef Eigen::Matrix4d Matrix4;
 typedef Eigen::Vector4d Vector4;
 typedef Eigen::VectorXd VectorX;
@@ -64,31 +63,34 @@ typedef Eigen::Affine3d Affine3;
 typedef Eigen::Translation3d Translation3;
 typedef Eigen::AngleAxisd AngleAxis;
 
-//! \deprecated
-typedef Eigen::Quaterniond Quat;
-
 typedef Eigen::Quaterniond Quaternion;
-    
-typedef Eigen::Transform<double, 3, Eigen::AffineCompact> Position;
 
-// The followings should be removed later
+[[deprecated("Use Quaternion.")]]
+typedef Eigen::Quaterniond Quat;
+    
 using Eigen::Isometry3f;
 using Eigen::Isometry3d;
 typedef Eigen::Isometry3d Isometry3;
+
+//[[deprecated("Use Isometry3.")]]
+// Backward compatibility
+typedef Isometry3 Position;
     
 class SE3 {
     Vector3 p;
-    Quat q;
+    Quaternion q;
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     SE3() { }
-    SE3(const Vector3& translation, const Quat& rotation)
+    SE3(const Vector3& translation, const Quaternion& rotation)
         : p(translation), q(rotation) { }
     SE3(const Vector3& translation, const Matrix3& rotation)
         : p(translation), q(rotation) { }
-    SE3(const Position& T)
+    SE3(const Isometry3& T)
         : p(T.translation()), q(T.linear()) { }
 
-    void set(const Vector3& translation, const Quat& rotation) {
+    void set(const Vector3& translation, const Quaternion& rotation) {
         this->p = translation;
         this->q = rotation;
     }
@@ -96,17 +98,15 @@ public:
         this->p = translation;
         this->q = R;
     }
-    void set(const Position& T){
+    void set(const Isometry3& T){
         p = T.translation();
         q = T.linear();
     }
 
     Vector3& translation() { return p; }
     const Vector3& translation() const { return p; }
-    Quat& rotation() { return q; }
-    const Quat& rotation() const { return q; }
-
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW        
+    Quaternion& rotation() { return q; }
+    const Quaternion& rotation() const { return q; }
 };
 
 }

@@ -54,7 +54,7 @@ private:
     void updateForceSensors();
 
     // Buffers for the Runge Kutta Method
-    Position T0;
+    Isometry3 T0;
     Vector3 vo0;
     Vector3 w0;
     std::vector<double> q0;

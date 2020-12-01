@@ -32,8 +32,8 @@ public:
     SgShape* shapeNode();
     void setShapeNode(SgShape* shape);
 
-    Position shapeOffset() const;
-    void setShapeOffset(const Position& T);
+    Isometry3 shapeOffset() const;
+    void setShapeOffset(const Isometry3& T);
 
     void cancelOverwriting();
 

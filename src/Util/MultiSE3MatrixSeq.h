@@ -16,9 +16,9 @@ namespace cnoid {
 class Mapping;
 class YAMLWriter;
 
-class CNOID_EXPORT MultiSE3MatrixSeq : public MultiSeq<Affine3, Eigen::aligned_allocator<Affine3>>
+class CNOID_EXPORT MultiSE3MatrixSeq : public MultiSeq<Isometry3, Eigen::aligned_allocator<Isometry3>>
 {
-    typedef MultiSeq<Affine3, Eigen::aligned_allocator<Affine3>> BaseSeqType;
+    typedef MultiSeq<Isometry3, Eigen::aligned_allocator<Isometry3>> BaseSeqType;
 
 public:
     MultiSE3MatrixSeq();
@@ -31,7 +31,7 @@ public:
     virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
         
 protected:
-    virtual Affine3 defaultValue() const override;
+    virtual Isometry3 defaultValue() const override;
 };
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY

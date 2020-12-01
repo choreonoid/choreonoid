@@ -80,7 +80,7 @@ SceneCylinderProjector::SceneCylinderProjector()
 
 
 SceneCylinderProjector::SceneCylinderProjector
-(const Vector3& center, double radius, double height, const Quat& rotation)
+(const Vector3& center, double radius, double height, const Quaternion& rotation)
 {
     setCylinder(center, radius, height, rotation);
     rotation_ = rotation;
@@ -88,7 +88,7 @@ SceneCylinderProjector::SceneCylinderProjector
 
 
 void SceneCylinderProjector::setCylinder
-(const Vector3& center, double radius, double height, const Quat& rotation)
+(const Vector3& center, double radius, double height, const Quaternion& rotation)
 {
     center_ = center;
     radius_ = radius;

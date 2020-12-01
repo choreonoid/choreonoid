@@ -59,15 +59,15 @@ public:
 
     bool hasParentBody() const { return parent_ && (body_ != parent_->body_); }
 
-    Position& T() { return T_; }
-    const Position& T() const { return T_; }
+    Isometry3& T() { return T_; }
+    const Isometry3& T() const { return T_; }
 
-    Position& position() { return T_; }
-    const Position& position() const { return T_; }
+    Isometry3& position() { return T_; }
+    const Isometry3& position() const { return T_; }
 
     template<class Scalar, int Mode, int Options>
         void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
-        T_ = T.template cast<Position::Scalar>();
+        T_ = T.template cast<Isometry3::Scalar>();
     }
 
     template<typename Derived1, typename Derived2>
@@ -76,20 +76,20 @@ public:
         T_.translation() = translation;
     }
 
-    Position::TranslationPart p() { return T_.translation(); }
-    Position::ConstTranslationPart p() const { return T_.translation(); }
-    Position::TranslationPart translation() { return T_.translation(); }
-    Position::ConstTranslationPart translation() const { return T_.translation(); }
+    Isometry3::TranslationPart p() { return T_.translation(); }
+    Isometry3::ConstTranslationPart p() const { return T_.translation(); }
+    Isometry3::TranslationPart translation() { return T_.translation(); }
+    Isometry3::ConstTranslationPart translation() const { return T_.translation(); }
 
     template<typename Derived>
     void setTranslation(const Eigen::MatrixBase<Derived>& p) {
         T_.translation() = p.template cast<Affine3::Scalar>();
     }
 
-    Position::LinearPart R() { return T_.linear(); }
-    Position::ConstLinearPart R() const { return T_.linear(); }
-    Position::LinearPart rotation() { return T_.linear(); }
-    Position::ConstLinearPart rotation() const { return T_.linear(); }
+    Isometry3::LinearPart R() { return T_.linear(); }
+    Isometry3::ConstLinearPart R() const { return T_.linear(); }
+    Isometry3::LinearPart rotation() { return T_.linear(); }
+    Isometry3::ConstLinearPart rotation() const { return T_.linear(); }
 
     template<typename Derived>
     void setRotation(const Eigen::MatrixBase<Derived>& R) {
@@ -102,14 +102,14 @@ public:
     }
     
     // To, Ro?
-    const Position& Tb() const { return Tb_; }
-    const Position& offsetPosition() const { return Tb_; }
+    const Isometry3& Tb() const { return Tb_; }
+    const Isometry3& offsetPosition() const { return Tb_; }
         
-    Position::ConstTranslationPart b() const { return Tb_.translation(); }
-    Position::ConstTranslationPart offsetTranslation() const { return Tb_.translation(); }
+    Isometry3::ConstTranslationPart b() const { return Tb_.translation(); }
+    Isometry3::ConstTranslationPart offsetTranslation() const { return Tb_.translation(); }
 
-    Position::ConstLinearPart Rb() const { return Tb_.linear(); }
-    Position::ConstLinearPart offsetRotation() const { return Tb_.linear(); }
+    Isometry3::ConstLinearPart Rb() const { return Tb_.linear(); }
+    Isometry3::ConstLinearPart offsetRotation() const { return Tb_.linear(); }
 
     [[deprecated("This func. always returns the identity matrix")]]
     Matrix3& Rs() { return Rs_; }
@@ -272,7 +272,7 @@ public:
     bool isOwnerOf(const Link* link) const;
     bool removeChild(Link* link);
 
-    void setOffsetPosition(const Position& T){
+    void setOffsetPosition(const Isometry3& T){
         Tb_ = T;
     }
         
@@ -324,7 +324,7 @@ public:
 
     // The following two methods should be deprecated after introducing Tb
     [[deprecated("Please use T() instead")]]
-    Position Ta() const { return T(); }
+    Isometry3 Ta() const { return T(); }
     [[deprecated("Please use R() instead")]]
     Matrix3 attitude() const { return R(); }
     [[deprecated("Please use setRotation(.) instead")]]
@@ -332,7 +332,7 @@ public:
     [[deprecated]]
     Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra; }
     [[deprecated("Please use T() instead")]]
-    void getAttitudeAndTranslation(Position& out_T) {
+    void getAttitudeAndTranslation(Isometry3& out_T) {
         out_T = T();
     };
 
@@ -365,8 +365,8 @@ private:
     LinkPtr sibling_;
     LinkPtr child_;
     Body* body_;
-    Position T_;
-    Position Tb_;
+    Isometry3 T_;
+    Isometry3 Tb_;
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.    
     Vector3 a_;
     JointType jointType_;

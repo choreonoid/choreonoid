@@ -52,13 +52,24 @@ public:
     SignalProxy<void(int index)> sigPointSetItemAdded();
     SignalProxy<void(int index)> sigPointSetUpdated();
 
-    const Affine3& topOffsetTransform() const;
-    void setTopOffsetTransform(const Affine3& T);
-    SignalProxy<void(const Affine3& T)> sigTopOffsetTransformChanged();
-    void notifyTopOffsetTransformChange();
+    const Isometry3& offsetPosition() const;
+    void setOffsetPosition(const Isometry3& T);
+    SignalProxy<void(const Isometry3& T)> sigOffsetPositionChanged();
+    void notifyOffsetPositionChange();
 
-    Affine3 offsetTransform(int index) const;
+    Isometry3 totalOffsetPositionOf(int index) const;
     SgPointSetPtr getTransformedPointSet(int index) const;
+
+    [[deprecated("Use offsetPosition.")]]
+    const Isometry3& topOffsetTransform() const { return offsetPosition(); }
+    [[deprecated("Use setOffsetPosition.")]]
+    void setTopOffsetTransform(const Isometry3& T) { return setOffsetPosition(T); }
+    [[deprecated("Use sigOffsetPositionChanged.")]]
+    SignalProxy<void(const Isometry3& T)> sigTopOffsetTransformChanged() { return sigOffsetPositionChanged(); }
+    [[deprecated("Use notifyOffsetPositionChange.")]]
+    void notifyTopOffsetTransformChange() { notifyOffsetPositionChange(); }
+    [[deprecated("Use totalOffsetPositionOf.")]]
+    Isometry3 offsetTransform(int index) const { return totalOffsetPositionOf(index); }
     
     int numAttentionPoints() const;
     Vector3 attentionPoint(int index) const;

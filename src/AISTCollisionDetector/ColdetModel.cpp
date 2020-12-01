@@ -286,7 +286,7 @@ bool ColdetModelInternalModel::build()
 }
 
 
-void ColdetModel::setPosition(const Position& T)
+void ColdetModel::setPosition(const Isometry3& T)
 {
     transform->Set((float)T(0,0), (float)T(1,0), (float)T(2,0), 0.0f,
                    (float)T(0,1), (float)T(1,1), (float)T(2,1), 0.0f,

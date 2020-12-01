@@ -247,7 +247,7 @@ void MprTagTraceStatementPanel::Impl::onTagGroupComboActivated(int comboIndex)
     auto statement = self->currentStatement<MprTagTraceStatement>();
     if(!tagGroupItem){
         statement->setTagGroup(nullptr);
-        statement->setTagGroupPosition(Position::Identity());
+        statement->setTagGroupPosition(Isometry3::Identity());
         statement->updateTagTraceProgram();
         updated = true;
     } else {

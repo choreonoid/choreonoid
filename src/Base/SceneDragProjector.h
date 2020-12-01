@@ -25,10 +25,10 @@ public:
 
     void resetDragMode();
         
-    void setInitialPosition(const Affine3& T);
+    void setInitialPosition(const Isometry3& T);
     void setInitialTranslation(const Vector3& p);
     void setInitialRotation(const Matrix3& R);
-    const Affine3& initialPosition() const;
+    const Isometry3& initialPosition() const;
 
     // for 1-D rotation
     void setRotationAxis(const Vector3& axis);
@@ -50,7 +50,7 @@ public:
     bool dragTranslation(const SceneWidgetEvent& event);
 
     const Vector3& projectedPoint() const;
-    const Affine3& position() const;
+    const Isometry3& position() const;
     const Matrix3& rotationMatrix() const;
     double rotationAngle() const;
     const AngleAxis& rotationAngleAxis() const;

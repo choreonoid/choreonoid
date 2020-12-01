@@ -851,7 +851,7 @@ void BodyLinkView::Impl::onXyzChanged()
             doInverseKinematics(translation, currentLink->R());
         } else {
             if(currentLink->isRoot() && activeSimulator->isForcedPositionActiveFor(currentBodyItem)){
-                Position position = currentLink->position();
+                Isometry3 position = currentLink->position();
                 position.translation() = translation;
                 activeSimulator->setForcedPosition(currentBodyItem, position);
             }
@@ -895,7 +895,7 @@ void BodyLinkView::Impl::setPosture(Matrix3 R)
         doInverseKinematics(currentLink->p(), R);
     } else {
         if(currentLink->isRoot() && activeSimulator->isForcedPositionActiveFor(currentBodyItem)){
-            Position position = currentLink->position();
+            Isometry3 position = currentLink->position();
             position.linear() = R;
             activeSimulator->setForcedPosition(currentBodyItem, position);
         }
@@ -905,7 +905,7 @@ void BodyLinkView::Impl::setPosture(Matrix3 R)
 
 void BodyLinkView::Impl::doInverseKinematics(Vector3 p, Matrix3 R)
 {
-    Position T;
+    Isometry3 T;
     T.translation() = p;
     T.linear() = R;
     
@@ -914,7 +914,7 @@ void BodyLinkView::Impl::doInverseKinematics(Vector3 p, Matrix3 R)
     if(ik){
         currentBodyItem->beginKinematicStateEdit();
 
-        Position T0 = currentLink->T();
+        Isometry3 T0 = currentLink->T();
 
         if(KinematicsBar::instance()->isPenetrationBlockMode()){
             auto blocker = currentBodyItem->createPenetrationBlocker(currentLink, true);
@@ -929,14 +929,14 @@ void BodyLinkView::Impl::doInverseKinematics(Vector3 p, Matrix3 R)
             doNotifyKinematicStateChange = true;
 
             if(currentLink->isRoot()){
-                Position Tinv = currentLink->T().inverse();
-                Position Trel = T0.inverse() * currentLink->T();
+                Isometry3 Tinv = currentLink->T().inverse();
+                Isometry3 Trel = T0.inverse() * currentLink->T();
                 auto& bodyItems = BodySelectionManager::instance()->selectedBodyItems();
                 for(size_t i=0; i < bodyItems.size(); ++i){
                     BodyItem* bodyItem = bodyItems[i];
                     if(bodyItem != currentBodyItem){
                         Link* rootLink = bodyItem->body()->rootLink();
-                        Position T = currentLink->T() * Trel * Tinv * rootLink->T();
+                        Isometry3 T = currentLink->T() * Trel * Tinv * rootLink->T();
                         normalizeRotation(T);
                         rootLink->T() = T;
                         doNotifyKinematicStateChange = true;

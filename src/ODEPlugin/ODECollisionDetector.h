@@ -30,8 +30,8 @@ public:
     virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) override;
     virtual void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) override;
     virtual bool makeReady() override;
-    virtual void updatePosition(GeometryHandle geometry, const Position& position) override;
-    virtual void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery) override;
+    virtual void updatePosition(GeometryHandle geometry, const Isometry3& position) override;
+    virtual void updatePositions(std::function<void(Referenced* object, Isometry3*& out_Position)> positionQuery) override;
     virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) override;
 
 private:

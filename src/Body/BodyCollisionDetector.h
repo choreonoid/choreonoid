@@ -35,7 +35,7 @@ public:
     bool makeReady();
 
     void updatePositions();
-    void updatePositions(std::function<void(Referenced* object, Position*& out_position)> positionQuery);
+    void updatePositions(std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery);
 
     void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback);
 

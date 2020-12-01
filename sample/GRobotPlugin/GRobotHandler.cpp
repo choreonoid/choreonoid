@@ -63,7 +63,7 @@ public:
     Vector6 dq;
 
     GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* endLink);
-    bool calcLegInverseKinematics(const Position& T, double sign);
+    bool calcLegInverseKinematics(const Isometry3& T, double sign);
     bool calcEndPositionDifference(double sign);
 };
 
@@ -133,18 +133,18 @@ GRobotJointPath::GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* e
     if(numJoints() == 6){
         if(checkLinkPath("WAIST", "L_ANKLE_R", isReversed)){
             setCustomInverseKinematics(
-                [&](const Position& T_global, const Position& T_relative){
+                [&](const Isometry3& T_global, const Isometry3& T_relative){
                     return calcLegInverseKinematics(T_relative,  1.0); }, isReversed);
         } else if(checkLinkPath("WAIST", "R_ANKLE_R", isReversed)){
             setCustomInverseKinematics(
-                [&](const Position& T_global, const Position& T_relative){
+                [&](const Isometry3& T_global, const Isometry3& T_relative){
                     return calcLegInverseKinematics(T_relative, -1.0); }, isReversed);
         }
     }
 }
     
 
-bool GRobotJointPath::calcLegInverseKinematics(const Position& T, double sign)
+bool GRobotJointPath::calcLegInverseKinematics(const Isometry3& T, double sign)
 {
     rpy = rpyFromRot(T.linear());
     p = T.translation();

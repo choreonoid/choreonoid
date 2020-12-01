@@ -27,8 +27,8 @@ public:
     const std::string& originalTagGroupName() const { return originalTagGroupName_; }
 
     //! The position of the tag group on the base coordinate frame
-    const Position& tagGroupPosition() const { return T_tags; }
-    void setTagGroupPosition(const Position& T) { T_tags = T; }
+    const Isometry3& tagGroupPosition() const { return T_tags; }
+    void setTagGroupPosition(const Isometry3& T) { T_tags = T; }
 
     const GeneralId& baseFrameId() const { return baseFrameId_; }
     const GeneralId& offsetFrameId() const { return offsetFrameId_; }
@@ -37,7 +37,7 @@ public:
 
     void updateFramesWithCurrentFrames(LinkKinematicsKit* kinematicsKit);
     void updateTagGroupPositionWithGlobalCoordinate(
-        LinkKinematicsKit* kinematicsKit, const Position& T_global);
+        LinkKinematicsKit* kinematicsKit, const Isometry3& T_global);
 
     virtual bool updateTagTraceProgram() = 0;
     bool decomposeIntoTagTraceStatements();
@@ -56,7 +56,7 @@ protected:
 
 private:
     PositionTagGroupPtr tagGroup_;
-    Position T_tags;
+    Isometry3 T_tags;
     GeneralId baseFrameId_;
     GeneralId offsetFrameId_;
     std::string originalTagGroupName_;

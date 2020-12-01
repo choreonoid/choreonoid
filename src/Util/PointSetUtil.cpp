@@ -171,7 +171,7 @@ void cnoid::loadPCD(SgPointSet* out_pointSet, const std::string& filename)
 }
 
 
-void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Affine3& viewpoint)
+void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Isometry3& viewpoint)
 {
     if(!pointSet->hasVertices()){
         throw empty_data_error() << error_info_message("Empty pointset");
@@ -203,7 +203,7 @@ void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Aff
     ofs << "HEIGHT 1\n";
 
     ofs << "VIEWPOINT ";
-    Affine3::ConstTranslationPart t = viewpoint.translation();
+    Isometry3::ConstTranslationPart t = viewpoint.translation();
     ofs << t.x() << " " << t.y() << " " << t.z() << " ";
     const Quaternion q(viewpoint.rotation());
     ofs << q.w() << " " << q.x() << " " << q.y() << " " << q.z() << "\n";

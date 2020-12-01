@@ -51,10 +51,21 @@ CNOID_EXPORT bool toVector3(const std::string& s, Vector3& out_v);
 CNOID_EXPORT bool toVector3(const std::string& s, Vector3f& out_v);
 CNOID_EXPORT bool toVector6(const std::string& s, Vector6& out_v);
 
-
 CNOID_EXPORT void normalizeRotation(Matrix3& R);
-CNOID_EXPORT void normalizeRotation(Position& T);
 CNOID_EXPORT void normalizeRotation(Affine3& T);
+CNOID_EXPORT void normalizeRotation(Isometry3& T);
+
+inline Isometry3 convertToIsometryWithOrthonormalization(const Affine3& A)
+{
+    Isometry3 M;
+    auto S = A.linear();
+    auto R = M.linear();
+    R.col(2) = S.col(2).normalized(); // Z
+    R.col(1) = R.col(2).cross(S.col(0).normalized()).normalized(); // Y
+    R.col(0) = R.col(1).cross(R.col(2)); // X
+    M.translation() = A.translation();
+    return M;
+}
 
 template<class T, typename... Args>
 std::shared_ptr<T> make_shared_aligned(Args&&... args)

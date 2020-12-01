@@ -441,7 +441,7 @@ void BulletLink::addMesh(MeshExtractor* extractor, bool meshOnly)
             const SgVertexArray& vertices_ = *mesh->vertices();
             const int numVertices = vertices_.size();
             for(int i=0; i < numVertices; ++i){
-                const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
+                const Vector3 v = T * vertices_[i].cast<Isometry3::Scalar>();
                 btVector3 v0 = invShift * btVector3(v.x(), v.y(), v.z());
                 vertices.push_back(v0.x());
                 vertices.push_back(v0.y());
@@ -473,7 +473,7 @@ void BulletLink::addMesh(MeshExtractor* extractor, bool meshOnly)
             const SgVertexArray& vertices_ = *mesh->vertices();
             const int numVertices = vertices_.size();
             for(int i=0; i < numVertices; ++i){
-                const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
+                const Vector3 v = T * vertices_[i].cast<Isometry3::Scalar>();
                 btVector3 v0 = invShift * btVector3(v.x(), v.y(), v.z());
                 HACD::Vec3<HACD::Real> vertex(v0.x(), v0.y(), v0.z());
                 points.push_back(vertex);

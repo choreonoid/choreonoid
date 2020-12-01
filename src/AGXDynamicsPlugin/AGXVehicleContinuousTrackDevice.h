@@ -70,7 +70,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
 
 struct TrackState{
         Vector3 boxSize;
-        Position position;
+        Isometry3 position;
 };
 typedef std::vector<TrackState> TrackStates;
 
@@ -97,7 +97,7 @@ public:
     void setDesc(const AGXVehicleContinuousTrackDeviceDesc& desc);
     void getDesc(AGXVehicleContinuousTrackDeviceDesc& desc);
     void reserveTrackStateSize(const unsigned int& num );
-    void addTrackState(const Vector3& boxSize, const Position& pos);
+    void addTrackState(const Vector3& boxSize, const Isometry3& pos);
     TrackStates& getTrackStates();
     SgShape* getNodeShape();
 

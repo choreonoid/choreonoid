@@ -102,7 +102,7 @@ void ForwardDynamicsABM::calcMotionWithEulerMethod()
         root->dv() =
             root->dvo() - root->p().cross(root->dw())
             + root->w().cross(root->vo() + root->w().cross(root->p()));
-        Position T;
+        Isometry3 T;
         SE3exp(T, root->T(), root->w(), root->vo(), timeStep);
         root->T() = T;
         root->vo() += root->dvo() * timeStep;

@@ -37,7 +37,7 @@ public:
     void setMaxIKerror(double e);
     bool hasAnalyticalIK() const { return hasAnalyticalIK_; }
 
-    virtual bool calcInverseKinematics(const Position& T) override;
+    virtual bool calcInverseKinematics(const Isometry3& T) override;
     virtual bool calcRemainingPartForwardKinematicsForInverseKinematics() override;
 
     //! deprecated

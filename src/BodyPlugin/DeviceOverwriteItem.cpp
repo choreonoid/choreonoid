@@ -27,8 +27,8 @@ public:
     DeviceOverwriteItem::Impl* impl;
 
     DeviceLocation(DeviceOverwriteItem::Impl* impl);
-    virtual Position getLocation() const override;
-    virtual bool setLocation(const Position& T) override;
+    virtual Isometry3 getLocation() const override;
+    virtual bool setLocation(const Isometry3& T) override;
     virtual Item* getCorrespondingItem() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
@@ -418,16 +418,16 @@ DeviceLocation::DeviceLocation(DeviceOverwriteItem::Impl* impl)
 }
     
 
-Position DeviceLocation::getLocation() const
+Isometry3 DeviceLocation::getLocation() const
 {
     if(impl->device){
         return impl->device->localPosition();
     }
-    return Position::Identity();
+    return Isometry3::Identity();
 }
 
 
-bool DeviceLocation::setLocation(const Position& T)
+bool DeviceLocation::setLocation(const Isometry3& T)
 {
     if(impl->device){
         impl->device->setLocalPosition(T);

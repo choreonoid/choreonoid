@@ -25,10 +25,10 @@ public:
     const PositionTagGroup* tagGroup() const;
     PositionTagGroup* tagGroup();
 
-    const Position& parentFramePosition() const;
-    const Position& originOffset() const;
-    void setOriginOffset(const Position& T_offset);
-    Position originPosition() const;
+    const Isometry3& parentFramePosition() const;
+    const Isometry3& originOffset() const;
+    void setOriginOffset(const Isometry3& T_offset);
+    Isometry3 originPosition() const;
     
     void clearTagSelection();
     void setTagSelected(int tagIndex, bool on = true);

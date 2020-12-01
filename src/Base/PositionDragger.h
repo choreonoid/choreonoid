@@ -36,7 +36,7 @@ public:
     PositionDragger(const PositionDragger& org) = delete;
 
     //! \param T Local position from the virtual origin to the dragger central position
-    void setOffset(const Affine3& T);
+    void setOffset(const Isometry3& T);
 
     void setDraggableAxes(int axisBitSet);
     int draggableAxes() const;
@@ -87,10 +87,10 @@ public:
 
     [[deprecated("Use globalDraggingPosition to get the global coordinate, or "
                  "draggingPosition to get the local position in the parent node coordinate.")]]
-    Affine3 draggedPosition() const { return globalDraggingPosition(); }
+    Isometry3 draggedPosition() const { return globalDraggingPosition(); }
 
-    Affine3 draggingPosition() const;
-    Affine3 globalDraggingPosition() const;
+    Isometry3 draggingPosition() const;
+    Isometry3 globalDraggingPosition() const;
     
     SignalProxy<void()> sigDragStarted();
     SignalProxy<void()> sigPositionDragged();

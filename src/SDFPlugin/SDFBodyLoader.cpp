@@ -83,7 +83,7 @@ typedef ref_ptr<MaterialInfo> MaterialInfoPtr;
 class VisualInfo : public Referenced
 {
 public:
-    Affine3 pose;
+    Isometry3 pose;
     float transparency;
     MaterialInfoPtr material;
     GeometryInfoPtr geometry;
@@ -94,7 +94,7 @@ typedef ref_ptr<VisualInfo> VisualInfoPtr;
 class CollisionInfo : public Referenced
 {
 public:
-    Affine3 pose;
+    Isometry3 pose;
     GeometryInfoPtr geometry;
 };
 typedef ref_ptr<CollisionInfo> CollisionInfoPtr;
@@ -110,7 +110,7 @@ public:
     typedef boost::variant<bool, int, double, string> ParamVariant;
 
     string name;
-    Affine3 pose;
+    Isometry3 pose;
     SensorType type;
     double update_rate;
     bool always_on;
@@ -120,7 +120,7 @@ public:
     DevicePtr device;
 
     SensorInfo(){
-        pose = cnoid::Affine3::Identity();
+        pose = cnoid::Isometry3::Identity();
         type = UNDEFINED;
         update_rate = 0;
         always_on = true;
@@ -148,9 +148,9 @@ class LinkInfo : public Referenced
 public:
     std::string linkName;
     double m;
-    cnoid::Affine3 c;
+    cnoid::Isometry3 c;
     cnoid::Matrix3 I;
-    cnoid::Affine3 pose;
+    cnoid::Isometry3 pose;
     bool isRoot;
     vector<VisualInfoPtr> visuals;
     vector<CollisionInfoPtr> collisions;
@@ -160,16 +160,16 @@ public:
     LinkInfo* child;
     LinkInfo* sibling;
     JointInfo* jointInfo;
-    Affine3 origin;
+    Isometry3 origin;
 
     SDFBodyLoaderImpl* impl;
     Body* body;
 
     LinkInfo(SDFBodyLoaderImpl* impl) : impl(impl){
         m = 0.0;
-        c = Affine3::Identity();
+        c = Isometry3::Identity();
         I.setZero();
-        pose = cnoid::Affine3::Identity();
+        pose = cnoid::Isometry3::Identity();
         parent = child = sibling  = 0;
         jointInfo = 0;
         isRoot = false;
@@ -195,7 +195,7 @@ public:
     void setMaterialAndTextureForSubTree(
         SgNode* node, SgMaterial* material, SgTexture* texture);
     void setCollisionShape(Link* link);
-    void ConvertForceSensorFrame(SensorInfo* sensorInfo, Affine3& pose);
+    void ConvertForceSensorFrame(SensorInfo* sensorInfo, Isometry3& pose);
 
 };
 typedef ref_ptr<LinkInfo> LinkInfoPtr;
@@ -214,7 +214,7 @@ public:
     double upper;
     double lower;
     double velocity;
-    cnoid::Affine3 pose;
+    cnoid::Isometry3 pose;
     vector<SensorInfoPtr> sensors;
 
     JointInfo() {
@@ -222,7 +222,7 @@ public:
         upper = std::numeric_limits<double>::max();
         lower = -std::numeric_limits<double>::max();
         velocity = 0.0;
-        pose = cnoid::Affine3::Identity();
+        pose = cnoid::Isometry3::Identity();
         useparent = false;
         parent = child = 0;
     }
@@ -242,7 +242,7 @@ public:
     std::string name;
     bool isStatic;
     bool selfCollide;
-    cnoid::Affine3 pose;
+    cnoid::Isometry3 pose;
     vector<ModelInfoPtr> nestedModels;
     std::map<std::string, LinkInfoPtr> linkInfos;
     vector<JointInfoPtr> jointInfos;
@@ -251,7 +251,7 @@ public:
     ModelInfo(){
         isStatic = false;
         selfCollide = false;
-        pose = cnoid::Affine3::Identity();
+        pose = cnoid::Isometry3::Identity();
         nestedModels.clear();
         root = 0;
     }
@@ -274,7 +274,7 @@ public:
 
     SDFBodyLoaderImpl();
     ~SDFBodyLoaderImpl();
-    void pose2affine(const ignition::math::Pose3d& pose, cnoid::Affine3& out );
+    void pos3dToIsometry3(const ignition::math::Pose3d& pose, cnoid::Isometry3& out);
 
     void readSDF(const std::string& filename, vector<ModelInfoPtr>& modelInfos);
 
@@ -366,7 +366,7 @@ Link* LinkInfo::createLink(Body* body_)
     }
 
     link->setMass(m);
-    Affine3 c_ = jointInfo->pose.inverse() * c;
+    Isometry3 c_ = jointInfo->pose.inverse() * c;
     link->setCenterOfMass(c_.translation());
     link->setInertia(c_.linear() * I * c_.linear().transpose());
 
@@ -397,7 +397,7 @@ Link* LinkInfo::createLink(Body* body_)
             ConvertForceSensorFrame(*it, (*it)->pose);
         }
 
-        Affine3 pose0 = jointInfo->pose.inverse() * (*it)->pose;
+        Isometry3 pose0 = jointInfo->pose.inverse() * (*it)->pose;
         device->setLocalTranslation(pose0.translation());
         device->setLocalRotation(pose0.linear());
         body->addDevice(device);
@@ -411,7 +411,7 @@ Link* LinkInfo::createLink(Body* body_)
 }
 
 
-void LinkInfo::ConvertForceSensorFrame(SensorInfo* sensorInfo, Affine3& pose)
+void LinkInfo::ConvertForceSensorFrame(SensorInfo* sensorInfo, Isometry3& pose)
 {
     SensorInfo::SensorParam& param = sensorInfo->param;
 
@@ -457,11 +457,11 @@ void LinkInfo::setVisualShape(Link* link)
             setMaterialAndTextureForSubTree(node, material, texture);
             
             SgShape* shape = dynamic_cast<SgShape*>(node);
-            Affine3& pose = (*it)->pose;
+            Isometry3& pose = (*it)->pose;
             if(shape && shape->getOrCreateMesh()->primitiveType() == SgMesh::CYLINDER){
                 pose *= AngleAxis(radian(90), Vector3::UnitX());
             }
-            Affine3 pose_ = jointInfo->pose.inverse() * pose;
+            Isometry3 pose_ = jointInfo->pose.inverse() * pose;
 
             SgPosTransformPtr transform = new SgPosTransform(pose_);
             if(geometry->haveScale){
@@ -509,11 +509,11 @@ void LinkInfo::setCollisionShape(Link* link)
                 continue;
 
             SgShape* shape = dynamic_cast<SgShape*>(node);
-            Affine3& pose = (*it)->pose;
+            Isometry3& pose = (*it)->pose;
             if(shape && shape->getOrCreateMesh()->primitiveType() == SgMesh::CYLINDER){
                 pose *= AngleAxis(radian(90), Vector3::UnitX());
             }
-            Affine3 pose_ = jointInfo->pose.inverse() * pose;
+            Isometry3 pose_ = jointInfo->pose.inverse() * pose;
 
             SgPosTransformPtr transform = new SgPosTransform(pose_);
             if(geometry->haveScale){
@@ -665,7 +665,7 @@ bool SDFBodyLoader::load(BodyItem* item, const std::string& filename)
 }
 
 
-void SDFBodyLoaderImpl::pose2affine(const Pose3d& pose, Affine3& out)
+void SDFBodyLoaderImpl::pos3dToIsometry3(const Pose3d& pose, Isometry3& out)
 {
     Vector3 trans(pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
     out.translation() = trans;
@@ -803,7 +803,7 @@ void SDFBodyLoaderImpl::readInclude(sdf::ElementPtr include, vector<ModelInfoPtr
         }else if(element->GetName()=="static"){
             modelInfos.back()->isStatic = element->Get<bool>("static");
         }else if(element->GetName()=="pose"){
-            pose2affine(element->Get<Pose3d>("pose"), modelInfos.back()->pose);
+            pos3dToIsometry3(element->Get<Pose3d>("pose"), modelInfos.back()->pose);
         }
     }
 }
@@ -871,7 +871,7 @@ void SDFBodyLoaderImpl::readLink(sdf::ElementPtr link, std::map<std::string, Lin
     }
 
     if(link->HasElement("pose")){
-        pose2affine(link->Get<Pose3d>("pose"), linkdata->pose);
+        pos3dToIsometry3(link->Get<Pose3d>("pose"), linkdata->pose);
     }
 
     if(link->HasElement("inertial")){
@@ -891,7 +891,7 @@ void SDFBodyLoaderImpl::readLink(sdf::ElementPtr link, std::map<std::string, Lin
         }
 
         if(inertial->HasElement("pose")){
-            pose2affine(inertial->Get<Pose3d>("pose"), linkdata->c);
+            pos3dToIsometry3(inertial->Get<Pose3d>("pose"), linkdata->c);
         }
     }
 
@@ -934,9 +934,9 @@ void SDFBodyLoaderImpl::readJoint(sdf::ElementPtr joint, vector<JointInfoPtr>& j
     }
 
     if(joint->HasElement("pose")){
-        pose2affine(joint->Get<Pose3d>("pose"), jointdata->pose);
+        pos3dToIsometry3(joint->Get<Pose3d>("pose"), jointdata->pose);
     } else {
-        jointdata->pose = cnoid::Affine3::Identity();
+        jointdata->pose = cnoid::Isometry3::Identity();
     }
     if(isVerbose){
         os() << jointdata->pose.matrix() << std::endl;
@@ -982,9 +982,9 @@ void SDFBodyLoaderImpl::readVisual(sdf::ElementPtr visual, vector<VisualInfoPtr>
     VisualInfoPtr visualInfo(new VisualInfo());
 
     if (visual->HasElement("pose")) {
-        pose2affine(visual->Get<Pose3d>("pose"), visualInfo->pose);
+        pos3dToIsometry3(visual->Get<Pose3d>("pose"), visualInfo->pose);
     } else {
-        visualInfo->pose = cnoid::Affine3::Identity();
+        visualInfo->pose = cnoid::Isometry3::Identity();
     }
 
     visualInfo->transparency = -1.0;
@@ -1013,9 +1013,9 @@ void SDFBodyLoaderImpl::readCollision(sdf::ElementPtr collision, vector<Collisio
     CollisionInfoPtr collisionInfo(new CollisionInfo());
 
     if (collision->HasElement("pose")) {
-        pose2affine(collision->Get<Pose3d>("pose"), collisionInfo->pose);
+        pos3dToIsometry3(collision->Get<Pose3d>("pose"), collisionInfo->pose);
     } else {
-        collisionInfo->pose = cnoid::Affine3::Identity();
+        collisionInfo->pose = cnoid::Isometry3::Identity();
     }
 
     if (collision->HasElement("geometry")) {
@@ -1177,7 +1177,7 @@ void SDFBodyLoaderImpl::readSensor(sdf::ElementPtr sensor, vector<SensorInfoPtr>
     string type = sensor->Get<std::string>("type");
 
     if(sensor->HasElement("pose"))
-        pose2affine(sensor->Get<Pose3d>("pose"), sensorInfo->pose);
+        pos3dToIsometry3(sensor->Get<Pose3d>("pose"), sensorInfo->pose);
 
     if(sensor->HasElement("update_rate"))
         sensorInfo->update_rate = sensor->Get<double>("update_rate");

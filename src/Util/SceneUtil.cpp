@@ -6,6 +6,7 @@
 #include "SceneDrawables.h"
 #include "PolymorphicSceneNodeFunctionSet.h"
 #include "CloneMap.h"
+#include "EigenUtil.h"
 
 using namespace std;
 using namespace cnoid;
@@ -29,6 +30,7 @@ void calcTotalTransform
         }
     }
 }
+
 }
     
 
@@ -53,6 +55,23 @@ Affine3 cnoid::calcTotalTransform(SgNodePath::const_iterator begin, SgNodePath::
     Affine3 T;
     ::calcTotalTransform(begin, end, nullptr, T);
     return T;
+}
+
+
+Isometry3 cnoid::calcRelativePosition(const SgNodePath& path, const SgNode* targetNode)
+{
+    Affine3 T;
+    ::calcTotalTransform(path.begin(), path.end(), targetNode, T);
+    return convertToIsometryWithOrthonormalization(T);
+}
+    
+
+
+Isometry3 cnoid::calcRelativePosition(SgNodePath::const_iterator begin, SgNodePath::const_iterator end)
+{
+    Affine3 T;
+    ::calcTotalTransform(begin, end, nullptr, T);
+    return convertToIsometryWithOrthonormalization(T);
 }
 
 

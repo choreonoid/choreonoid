@@ -196,7 +196,7 @@ const double* MarkerDevice::readState(const double* buf)
     transparency_ = buf[i++];
     offsetPosition_.translation() << buf[i], buf[i+1], buf[i+2];
     i += 3;
-    offsetPosition_.linear() = Quat(buf[i], buf[i+1], buf[i+2], buf[i+3]).toRotationMatrix();
+    offsetPosition_.linear() = Quaternion(buf[i], buf[i+1], buf[i+2], buf[i+3]).toRotationMatrix();
     i += 4;
     return buf + i;
 }
@@ -220,7 +220,7 @@ double* MarkerDevice::writeState(double* out_buf) const
     out_buf[i++] = p.y();
     out_buf[i++] = p.z();
 
-    Quat q(offsetPosition_.linear());
+    Quaternion q(offsetPosition_.linear());
     out_buf[i++] = q.w();
     out_buf[i++] = q.x();
     out_buf[i++] = q.y();
@@ -253,7 +253,7 @@ bool MarkerDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
     Vector3f c;
     if(read(node, "color", c)) setColor(c);
 
-    Position T = Affine3::Identity();
+    Isometry3 T = Isometry3::Identity();
     Vector3 p;
     if(read(node, "offsetTranslation", p)){
         T.translation() = p;

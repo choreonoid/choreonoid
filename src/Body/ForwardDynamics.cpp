@@ -64,7 +64,7 @@ void ForwardDynamics::setOldAccelSensorCalcMode(bool on)
 
 /// function from Murray, Li and Sastry p.42
 void ForwardDynamics::SE3exp
-(Position& out_T, const Position& T0, const Vector3& w, const Vector3& vo, double dt)
+(Isometry3& out_T, const Isometry3& T0, const Vector3& w, const Vector3& vo, double dt)
 {
     double norm_w = w.norm();
 	

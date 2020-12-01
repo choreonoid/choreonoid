@@ -58,8 +58,8 @@ class CNOID_EXPORT Device : public DeviceState
         int id; // pre-defined id
         std::string name;
         Link* link;
-        Position T_local;
-        const Position& const_T_local() const { return T_local; }
+        Isometry3 T_local;
+        const Isometry3& const_T_local() const { return T_local; }
         Signal<void()> sigStateChanged;
         Signal<void(double time)> sigTimeChanged;
     };
@@ -102,23 +102,23 @@ public:
     const Body* body() const;
     Body* body();
     
-    Position& T_local() { return ns->T_local; }
-    const Position& T_local() const { return ns->T_local; }
-    const Position& localPosition() const { return ns->T_local; }
+    Isometry3& T_local() { return ns->T_local; }
+    const Isometry3& T_local() const { return ns->T_local; }
+    const Isometry3& localPosition() const { return ns->T_local; }
     template<class Scalar, int Mode, int Options>
     void setLocalPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
-        ns->T_local = T.template cast<Position::Scalar>();
+        ns->T_local = T.template cast<Isometry3::Scalar>();
     }
 
-    Position::ConstLinearPart R_local() const { return ns->const_T_local().linear(); }
-    Position::LinearPart R_local() { return ns->T_local.linear(); }
-    Position::ConstLinearPart localRotation() const { return ns->const_T_local().linear(); }
+    Isometry3::ConstLinearPart R_local() const { return ns->const_T_local().linear(); }
+    Isometry3::LinearPart R_local() { return ns->T_local.linear(); }
+    Isometry3::ConstLinearPart localRotation() const { return ns->const_T_local().linear(); }
     template<typename Derived>
     void setLocalRotation(const Eigen::MatrixBase<Derived>& R) { ns->T_local.linear() = R; }
 
-    Position::ConstTranslationPart p_local() const { return ns->const_T_local().translation(); }
-    Position::TranslationPart p_local() { return ns->T_local.translation(); }
-    Position::ConstTranslationPart localTranslation() const { return ns->const_T_local().translation(); }
+    Isometry3::ConstTranslationPart p_local() const { return ns->const_T_local().translation(); }
+    Isometry3::TranslationPart p_local() { return ns->T_local.translation(); }
+    Isometry3::ConstTranslationPart localTranslation() const { return ns->const_T_local().translation(); }
     template<typename Derived>
     void setLocalTranslation(const Eigen::MatrixBase<Derived>& p) { ns->T_local.translation() = p; }
 
@@ -144,9 +144,9 @@ public:
     }
 
     [[deprecated("Please use T_local() instead")]]
-    const Position& T_local_org() const { return ns->T_local; };
+    const Isometry3& T_local_org() const { return ns->T_local; };
     [[deprecated]]
-    void setLocalAttitude(const Position& Ta);
+    void setLocalAttitude(const Isometry3& Ta);
     [[deprecated]]
     double cycle() const { return 20.0; }
     [[deprecated]]

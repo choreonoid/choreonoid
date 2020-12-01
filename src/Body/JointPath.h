@@ -110,9 +110,9 @@ public:
 
     JointPath& storeCurrentPosition();
 
-    JointPath& setBaseLinkGoal(const Position& T);
+    JointPath& setBaseLinkGoal(const Isometry3& T);
 
-    virtual bool calcInverseKinematics(const Position& T) override;
+    virtual bool calcInverseKinematics(const Isometry3& T) override;
     virtual bool calcRemainingPartForwardKinematicsForInverseKinematics() override;
 
     int numIterations() const;

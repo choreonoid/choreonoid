@@ -28,7 +28,7 @@ public:
     SgMesh* currentMesh() const;
     SgShape* currentShape() const;
     const Affine3& currentTransform() const;
-    const Affine3& currentTransformWithoutScaling() const;
+    const Isometry3& currentTransformWithoutScaling() const;
     bool isCurrentScaled() const;
 
 private:

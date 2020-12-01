@@ -107,7 +107,7 @@ public:
     stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(GeometryInfo* model);
     bool makeReady();
-    void setGeometryPosition(GeometryInfo* ginfo, const Position& position);
+    void setGeometryPosition(GeometryInfo* ginfo, const Isometry3& position);
     void detectCollisions();
     void detectObjectCollisions(btCollisionObject* object1, btCollisionObject* object2, CollisionPair& collisionPair);
 };
@@ -345,7 +345,7 @@ void BulletCollisionDetectorImpl::addMesh(GeometryInfo* ginfo)
             const SgVertexArray& vertices_ = *mesh->vertices();
             const int numVertices = vertices_.size();
             for(int i=0; i < numVertices; ++i){
-                const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
+                const Vector3 v = T * vertices_[i].cast<Isometry3::Scalar>();
                 ginfo->vertices.push_back((btScalar)v.x());
                 ginfo->vertices.push_back((btScalar)v.y());
                 ginfo->vertices.push_back((btScalar)v.z());
@@ -376,7 +376,7 @@ void BulletCollisionDetectorImpl::addMesh(GeometryInfo* ginfo)
             const SgVertexArray& vertices_ = *mesh->vertices();
             const int numVertices = vertices_.size();
             for(int i=0; i < numVertices; ++i){
-                const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
+                const Vector3 v = T * vertices_[i].cast<Isometry3::Scalar>();
                 HACD::Vec3<HACD::Real> vertex(v.x(), v.y(), v.z());
                 points.push_back(vertex);
             }
@@ -532,7 +532,7 @@ bool BulletCollisionDetectorImpl::makeReady()
 }
 
 
-void BulletCollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
+void BulletCollisionDetector::updatePosition(GeometryHandle geometry, const Isometry3& position)
 {
     GeometryInfo* ginfo = impl->geometryInfos[geometry];
     if(ginfo){
@@ -542,11 +542,11 @@ void BulletCollisionDetector::updatePosition(GeometryHandle geometry, const Posi
 
 
 void BulletCollisionDetector::updatePositions
-(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
+(std::function<void(Referenced* object, Isometry3*& out_Position)> positionQuery)
 {
     for(auto& info : impl->geometryInfos){
         if(info){
-            Position* T;
+            Isometry3* T;
             positionQuery(info->object, T);
             impl->setGeometryPosition(info, *T);
         }
@@ -554,7 +554,7 @@ void BulletCollisionDetector::updatePositions
 }
 
 
-void BulletCollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Position& position)
+void BulletCollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Isometry3& position)
 {
     if(ginfo){
         btVector3 p(position(0,3), position(1,3), position(2,3));

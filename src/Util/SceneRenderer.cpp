@@ -8,6 +8,7 @@
 #include "SceneCameras.h"
 #include "SceneLights.h"
 #include "SceneEffects.h"
+#include "EigenUtil.h"
 #include <cnoid/stdx/variant>
 #include <set>
 #include <unordered_map>
@@ -51,7 +52,6 @@ struct PreproNode
     }
 };
 
-
 class PreproTreeExtractor
 {
     PolymorphicSceneNodeFunctionSet functions;
@@ -82,9 +82,11 @@ SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
     }
 }
 
-class SceneRendererImpl
+class SceneRenderer::Impl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     SceneRenderer* self;
     string name;
     bool isRendering;
@@ -96,9 +98,11 @@ public:
     {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        CameraInfo() : camera(0), M(Affine3::Identity()), node(0) { }
-        CameraInfo(SgCamera* camera, const Affine3& M, PreproNode* node)
-            : camera(camera), M(M), node(node) { }
+        CameraInfo() : camera(0), M(Isometry3::Identity()), node(0) { }
+        CameraInfo(SgCamera* camera, const Isometry3& M, PreproNode* node)
+            : camera(camera), M(M), node(node)
+        { }
+        
         SgCamera* camera;
 
         // I want to use 'T' here, but that causes a compile error (c2327) for VC++2010.
@@ -106,7 +110,7 @@ public:
         // and it seems that the name of a template parameter and this member conflicts.
         // So I changed the name to 'M'.
         // This behavior of VC++ seems stupid!!!
-        Affine3 M;
+        Isometry3 M;
         PreproNode* node;
     };
 
@@ -115,6 +119,8 @@ public:
     CameraInfoArray cameras2;
     CameraInfoArray* cameras;
     CameraInfoArray* prevCameras;
+
+    Isometry3 I;
 
     bool camerasChanged;
     bool currentCameraRemoved;
@@ -129,9 +135,9 @@ public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         LightInfo() : light(0) { }
-        LightInfo(SgLight* light, const Affine3& M) : light(light), M(M) { } 
+        LightInfo(SgLight* light, const Isometry3& M) : light(light), M(M) { }
         SgLight* light;
-        Affine3 M;
+        Isometry3 M;
     };
     vector<LightInfo, Eigen::aligned_allocator<LightInfo>> lights;
 
@@ -148,7 +154,7 @@ public:
     typedef stdx::variant<bool, int, double> PropertyValue;
     vector<PropertyValue> properties;
     
-    SceneRendererImpl(SceneRenderer* self);
+    Impl(SceneRenderer* self);
 
     void extractPreproNodes();
     void extractPreproNodeIter(PreproNode* node, const Affine3& T);
@@ -157,7 +163,8 @@ public:
     bool setCurrentCamera(SgCamera* camera);
     void onExtensionAdded(std::function<void(SceneRenderer* renderer)> func);
 
-    template<class ValueType> void setProperty(SceneRenderer::PropertyKey key, ValueType value){
+    template<class ValueType>
+    void setProperty(SceneRenderer::PropertyKey key, ValueType value){
         const int id = key.id;
         if(id >= static_cast<int>(properties.size())){
             properties.resize(id + 1);
@@ -165,7 +172,8 @@ public:
         properties[id] = value;
     }
 
-    template<class ValueType> ValueType property(SceneRenderer::PropertyKey key, int which, ValueType defaultValue){
+    template<class ValueType>
+    ValueType property(SceneRenderer::PropertyKey key, int which, ValueType defaultValue){
         const int id = key.id;
         if(id >= static_cast<int>(properties.size())){
             properties.resize(id + 1);
@@ -184,13 +192,13 @@ public:
 
 SceneRenderer::SceneRenderer()
 {
-    impl = new SceneRendererImpl(this);
+    impl = new Impl(this);
     std::lock_guard<std::mutex> guard(extensionMutex);
     renderers.insert(this);
 }
 
 
-SceneRendererImpl::SceneRendererImpl(SceneRenderer* self)
+SceneRenderer::Impl::Impl(SceneRenderer* self)
     : self(self)
 {
     isRendering = false;
@@ -200,6 +208,7 @@ SceneRendererImpl::SceneRendererImpl(SceneRenderer* self)
     prevCameras = &cameras2;
     currentCameraIndex = -1;
     currentCamera = 0;
+    I.setIdentity();
 
     headLight = new SgDirectionalLight();
     headLight->setAmbientIntensity(0.0f);
@@ -323,7 +332,7 @@ void SceneRenderer::extractPreprocessedNodes()
 }
 
 
-void SceneRendererImpl::extractPreproNodes()
+void SceneRenderer::Impl::extractPreproNodes()
 {
     if(doPreprocessedNodeTreeExtraction){
         PreproTreeExtractor extractor;
@@ -360,7 +369,7 @@ void SceneRendererImpl::extractPreproNodes()
 }
 
 
-void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T)
+void SceneRenderer::Impl::extractPreproNodeIter(PreproNode* node, const Affine3& T)
 {
     switch(stdx::get_variant_index(node->node)){
 
@@ -390,7 +399,7 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
     {
         SgLight* light = stdx::get<SgLight*>(node->node);
         if(additionalLightsEnabled || defaultLights.find(light) != defaultLights.end()){
-            lights.push_back(LightInfo(light, T));
+            lights.push_back(LightInfo(light, convertToIsometryWithOrthonormalization(T)));
         }
         break;
     }
@@ -415,7 +424,7 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
             currentCameraRemoved = false;
             currentCameraIndex = cameras->size();
         }
-        cameras->push_back(CameraInfo(camera, T, node));
+        cameras->push_back(CameraInfo(camera, convertToIsometryWithOrthonormalization(T), node));
     }
     break;
 
@@ -539,7 +548,7 @@ const SgNodePath& SceneRenderer::cameraPath(int index) const
 }
 
 
-void SceneRendererImpl::updateCameraPaths()
+void SceneRenderer::Impl::updateCameraPaths()
 {
     SgNodePath tmpPath;
     const int n = cameras->size();
@@ -575,7 +584,7 @@ void SceneRenderer::setCurrentCamera(int index)
 }
 
 
-void SceneRendererImpl::setCurrentCamera(int index, bool doRenderingRequest)
+void SceneRenderer::Impl::setCurrentCamera(int index, bool doRenderingRequest)
 {
     SgCamera* newCamera = 0;
     if(index >= 0 && index < static_cast<int>(cameras->size())){
@@ -598,7 +607,7 @@ bool SceneRenderer::setCurrentCamera(SgCamera* camera)
 }
 
 
-bool SceneRendererImpl::setCurrentCamera(SgCamera* camera)
+bool SceneRenderer::Impl::setCurrentCamera(SgCamera* camera)
 {
     if(camera != currentCamera){
         for(size_t i=0; i < cameras->size(); ++i){
@@ -624,13 +633,12 @@ int SceneRenderer::currentCameraIndex() const
 }
 
 
-const Affine3& SceneRenderer::currentCameraPosition() const
+const Isometry3& SceneRenderer::currentCameraPosition() const
 {
     if(impl->currentCameraIndex >= 0){
         return (*(impl->cameras))[impl->currentCameraIndex].M;
     } else {
-        static Affine3 I = Affine3::Identity();
-        return I;
+        return impl->I;
     }
 }
 
@@ -722,10 +730,10 @@ int SceneRenderer::numLights() const
 }
 
 
-void SceneRenderer::getLightInfo(int index, SgLight*& out_light, Affine3& out_position) const
+void SceneRenderer::getLightInfo(int index, SgLight*& out_light, Isometry3& out_position) const
 {
     if(index < static_cast<int>(impl->lights.size())){
-        const SceneRendererImpl::LightInfo& info = impl->lights[index];
+        const Impl::LightInfo& info = impl->lights[index];
         out_light = info.light;
         out_position = info.M;
     } else {
@@ -808,7 +816,7 @@ void SceneRenderer::applyExtensions()
 }
 
 
-void SceneRendererImpl::onExtensionAdded(std::function<void(SceneRenderer* renderer)> func)
+void SceneRenderer::Impl::onExtensionAdded(std::function<void(SceneRenderer* renderer)> func)
 {
     std::lock_guard<std::mutex> guard(newExtensionMutex);
     newExtendFunctions.push_back(func);

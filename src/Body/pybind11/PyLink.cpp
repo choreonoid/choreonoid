@@ -14,7 +14,7 @@ namespace py = pybind11;
 
 namespace {
 
-void Link_setPosition(Link& self, const Position& T) { self.setPosition(T); }
+void Link_setPosition(Link& self, const Isometry3& T) { self.setPosition(T); }
 Vector3 Link_getTranslation(Link& self) { return self.translation(); }
 void Link_setTranslation(Link& self, const Vector3& p) { self.setTranslation(p); }
 Matrix3 Link_getRotation(Link& self) { return self.rotation(); }
@@ -47,8 +47,9 @@ void exportPyLink(py::module& m)
         .def_property_readonly("sibling", &Link::sibling)
         .def_property_readonly("child", &Link::child)
         .def("isRoot", &Link::isRoot)
-        .def_property("T", (Position&(Link::*)())&Link::T, Link_setPosition)
-        .def_property("position", (Position&(Link::*)())&Link::position, Link_setPosition)
+        //.def_property("T", (Isometry3&(Link::*)())&Link::T, Link_setPosition)
+        .def_property("T", [](Link& self) { return self.T().matrix(); }, Link_setPosition)
+        .def_property("position", (Isometry3&(Link::*)())&Link::position, Link_setPosition)
         .def("setPosition", Link_setPosition)
         .def_property("p", Link_getTranslation, Link_setTranslation)
         .def_property("translation", Link_getTranslation, Link_setTranslation)
@@ -56,7 +57,7 @@ void exportPyLink(py::module& m)
         .def_property("R", Link_getRotation, Link_setRotation)
         .def_property("rotation", Link_getRotation, Link_setRotation)
         .def("setRotation", Link_setRotation)
-        .def_property_readonly("Tb", (Position&(Link::*)())&Link::Tb)
+        .def_property_readonly("Tb", (Isometry3&(Link::*)())&Link::Tb)
         .def_property_readonly("b", Link_getOffsetTranslation)
         .def_property_readonly("offsetTranslation", Link_getOffsetTranslation)
         .def_property_readonly("Rb", Link_getOffsetRotation)
@@ -131,7 +132,7 @@ void exportPyLink(py::module& m)
         .def("getParent", &Link::parent)
         .def("getSibling", &Link::sibling)
         .def("getChild", &Link::child)
-        .def("getPosition", (Position&(Link::*)())&Link::position)
+        .def("getPosition", (Isometry3&(Link::*)())&Link::position)
         .def("getTranslation", Link_getTranslation)
         .def("getRotation", Link_getRotation)
         .def("getOffsetTranslation", Link_getOffsetTranslation)

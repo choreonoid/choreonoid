@@ -282,7 +282,7 @@ void Body::updateLinkTree()
 }
 
 
-void Body::resetDefaultPosition(const Position& T)
+void Body::resetDefaultPosition(const Isometry3& T)
 {
     rootLink_->setOffsetPosition(T);
 }

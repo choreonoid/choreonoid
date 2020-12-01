@@ -298,7 +298,7 @@ public:
     
     Affine3Array modelMatrixStack; // stack of the model matrices
     Affine3Array modelMatrixBuffer; // Model matrices used later are stored in this buffer
-    Affine3 viewTransform;
+    Isometry3 viewTransform;
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
@@ -415,7 +415,7 @@ public:
     bool doPick(int x, int y);
     bool renderShadowMap(int lightIndex);
     void beginRendering();
-    void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
+    void renderCamera(SgCamera* camera, const Isometry3& cameraPosition);
     void renderLights(LightingProgram* program);
     void renderFog(LightingProgram* program);
     void doPureWireframeRendering();
@@ -439,17 +439,17 @@ public:
     void renderSwitchableGroup(SgSwitchableGroup* group);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     VertexResource* getOrCreateVertexResource(SgObject* obj);
-    void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position);
+    void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& modelTransform);
     void drawBoundingBox(VertexResource* resource, const BoundingBox& bbox);
     void renderShape(SgShape* shape);
-    void renderShapeMain(SgShape* shape, const Affine3& position, int pickIndex);
+    void renderShapeMain(SgShape* shape, const Affine3& modelTransform, int pickIndex);
     void applyCullingMode(SgMesh* mesh);
     void renderShapeVertices(SgShape* shape);
     void renderPlot(
         SgPlot* plot, GLenum primitiveMode,
         const std::function<SgVertexArrayPtr()>& getVertices, std::function<bool()> setupShaderProgram);
     void renderPlotMain(
-        SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& position, int pickIndex,
+        SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& modelTransform, int pickIndex,
         const std::function<bool()>& setupShaderProgram);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);
@@ -488,7 +488,6 @@ public:
     void clearGLState();
     void setPointSize(float size);
     void setGlLineWidth(float width);
-    void getCurrentCameraTransform(Affine3& T);
 };
 
 }
@@ -1432,7 +1431,7 @@ bool GLSLSceneRenderer::getPickingImage(Image& out_image)
 bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
 {
     SgLight* light;
-    Affine3 T;
+    Isometry3 T;
     self->getLightInfo(lightIndex, light, T);
 
     if(light && light->on()){
@@ -1455,7 +1454,7 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
 }
     
 
-void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
+void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Isometry3& cameraPosition)
 {
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
@@ -1477,7 +1476,7 @@ void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Affine3& came
     }
 
     if(isUpsideDownEnabled){
-        Affine3 T = cameraPosition * AngleAxis(PI, Vector3(0.0, 0.0, 1.0));
+        Isometry3 T = cameraPosition * AngleAxis(PI, Vector3(0.0, 0.0, 1.0));
         viewTransform = T.inverse(Eigen::Isometry);
     } else {
         viewTransform = cameraPosition.inverse(Eigen::Isometry);
@@ -1546,7 +1545,7 @@ void GLSLSceneRenderer::Impl::renderLights(LightingProgram* program)
             break;
         }
         SgLight* light;
-        Affine3 T;
+        Isometry3 T;
         self->getLightInfo(i, light, T);
         if(light->on()){
             bool isCastingShadow =
@@ -1639,7 +1638,7 @@ void GLSLSceneRenderer::Impl::doVertexRendering()
 
 void GLSLSceneRenderer::dispatchToTransparentPhase
 (ReferencedPtr object, int id,
- const std::function<void(Referenced* object, const Affine3& position, int id)>& renderingFunction)
+ const std::function<void(Referenced* object, const Affine3& modelTransform, int id)>& renderingFunction)
 {
     if(!impl->isRenderingShadowMap){
         int matrixIndex = impl->modelMatrixBuffer.size();
@@ -1723,7 +1722,7 @@ const Matrix4& GLSLSceneRenderer::projectionMatrix() const
 }
 
 
-const Affine3& GLSLSceneRenderer::viewTransform() const
+const Isometry3& GLSLSceneRenderer::viewTransform() const
 {
     return impl->viewTransform;
 }
@@ -1966,9 +1965,10 @@ VertexResource* GLSLSceneRenderer::Impl::getOrCreateVertexResource(SgObject* obj
 }
 
 
-void GLSLSceneRenderer::Impl::drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position)
+void GLSLSceneRenderer::Impl::drawVertexResource
+(VertexResource* resource, GLenum primitiveMode, const Affine3& modelTransform)
 {
-    currentProgram->setTransform(PV, viewTransform, position, resource->pLocalTransform);
+    currentProgram->setTransform(PV, viewTransform, modelTransform, resource->pLocalTransform);
     glBindVertexArray(resource->vao);
     glDrawArrays(primitiveMode, 0, resource->numVertices);
 }
@@ -2040,7 +2040,7 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
 }
 
 
-void GLSLSceneRenderer::Impl::renderShapeMain(SgShape* shape, const Affine3& position, int pickIndex)
+void GLSLSceneRenderer::Impl::renderShapeMain(SgShape* shape, const Affine3& modelTransform, int pickIndex)
 {
     auto mesh = shape->mesh();
     
@@ -2073,7 +2073,7 @@ void GLSLSceneRenderer::Impl::renderShapeMain(SgShape* shape, const Affine3& pos
         if(!isRenderingShadowMap){
             applyCullingMode(mesh);
         }
-        drawVertexResource(resource, GL_TRIANGLES, position);
+        drawVertexResource(resource, GL_TRIANGLES, modelTransform);
 
         if(isNormalVisualizationEnabled && isRenderingVisibleImage && resource->normalVisualization){
             renderLineSet(resource->normalVisualization);
@@ -2816,7 +2816,7 @@ void GLSLSceneRenderer::Impl::renderPlot
 
 
 void GLSLSceneRenderer::Impl::renderPlotMain
-(SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& position, int pickIndex,
+(SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& modelTransform, int pickIndex,
  const std::function<bool()>& setupShaderProgram)
 {
     bool pushed = setupShaderProgram();
@@ -2835,7 +2835,7 @@ void GLSLSceneRenderer::Impl::renderPlotMain
         }
     }
 
-    drawVertexResource(resource, primitiveMode, position);
+    drawVertexResource(resource, primitiveMode, modelTransform);
 
     if(pushed){
         popProgram();

@@ -94,7 +94,7 @@ bool BodyMotionPoseProvider::updateMotion()
         
         for(size_t i=0; i < footLinks.size(); ++i){
             Link* footLink = footLinks[i];
-            Affine3& p = footLinkPositions->at(frame, i);
+            Isometry3& p = footLinkPositions->at(frame, i);
             p.translation() = footLink->p();
             p.linear() = footLink->R();
         }
@@ -184,7 +184,7 @@ int BodyMotionPoseProvider::baseLinkIndex() const
 }
 
 
-bool BodyMotionPoseProvider::getBaseLinkPosition(Position& out_T) const
+bool BodyMotionPoseProvider::getBaseLinkPosition(Isometry3& out_T) const
 {
     out_T.linear() = R_waist;
     out_T.translation() = p_waist;

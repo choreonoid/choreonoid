@@ -2554,13 +2554,13 @@ void SimulatorItem::Impl::setVirtualElasticStringForce()
 }
 
 
-void SimulatorItem::setForcedPosition(BodyItem* bodyItem, const Position& T)
+void SimulatorItem::setForcedPosition(BodyItem* /* bodyItem */, const Isometry3& /* T */)
 {
 
 }
 
 
-bool SimulatorItem::isForcedPositionActiveFor(BodyItem* bodyItem) const
+bool SimulatorItem::isForcedPositionActiveFor(BodyItem* /* bodyItem */) const
 {
     return false;
 }

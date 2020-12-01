@@ -687,7 +687,7 @@ const BoundingBox& SgTransform::untransformedBoundingBox() const
 
 SgPosTransform::SgPosTransform(int classId)
     : SgTransform(classId),
-      T_(Affine3::Identity())
+      T_(Isometry3::Identity())
 {
 
 }
@@ -700,9 +700,17 @@ SgPosTransform::SgPosTransform()
 }
 
 
-SgPosTransform::SgPosTransform(const Affine3& T)
+SgPosTransform::SgPosTransform(const Isometry3& T)
     : SgTransform(findClassId<SgPosTransform>()),
       T_(T)
+{
+
+}
+
+
+SgPosTransform::SgPosTransform(const Affine3& T)
+    : SgTransform(findClassId<SgPosTransform>()),
+      T_(T.matrix())
 {
 
 }

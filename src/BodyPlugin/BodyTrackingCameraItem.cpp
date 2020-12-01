@@ -32,7 +32,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     Link* targetLink;
     ScopedConnection connection;
     Vector3 relativeTranslationFromBody;
-    Affine3 relativePositionFromBody;
+    Isometry3 relativePositionFromBody;
     bool isSigUpdatedEmittedBySelf;
     bool isConstantRelativeAttitudeMode_;
 

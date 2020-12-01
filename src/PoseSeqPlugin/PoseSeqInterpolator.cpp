@@ -1463,7 +1463,7 @@ int PoseSeqInterpolator::baseLinkIndex() const
 }
 
 
-bool PoseSeqInterpolator::getBaseLinkPosition(Position& out_T) const
+bool PoseSeqInterpolator::getBaseLinkPosition(Isometry3& out_T) const
 {
     if(impl->currentBaseLinkInfoIter != impl->ikLinkInfos.end()){
         const LinkInfo& info = impl->currentBaseLinkInfoIter->second;

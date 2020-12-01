@@ -44,7 +44,7 @@ public:
     ScopedConnection eraserModeMenuItemConnection;
     bool isEditable_;
 
-    Signal<void(const Affine3& T)> sigOffsetTransformChanged;
+    Signal<void(const Isometry3& T)> sigOffsetPositionChanged;
     
     Signal<void()> sigAttentionPointsChanged;
     SgGroupPtr attentionPointMarkerGroup;
@@ -122,7 +122,7 @@ static bool loadPCD(PointSetItem* item, const std::string& filename, std::ostrea
 static bool saveAsPCD(PointSetItem* item, const std::string& filename, std::ostream& os)
 {
     try {
-        cnoid::savePCD(item->pointSet(), filename, item->offsetTransform());
+        cnoid::savePCD(item->pointSet(), filename, item->offsetPosition());
         return true;
     } catch (boost::exception& ex) {
         if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
@@ -235,27 +235,27 @@ SgPointSet* PointSetItem::pointSet()
 }
 
 
-const Affine3& PointSetItem::offsetTransform() const
+const Isometry3& PointSetItem::offsetPosition() const
 {
     return impl->scene->T();
 }
 
 
-void PointSetItem::setOffsetTransform(const Affine3& T)
+void PointSetItem::setOffsetPosition(const Isometry3& T)
 {
     impl->scene->setPosition(T);
 }
 
 
-SignalProxy<void(const Affine3& T)> PointSetItem::sigOffsetTransformChanged()
+SignalProxy<void(const Isometry3& T)> PointSetItem::sigOffsetPositionChanged()
 {
-    return impl->scene->sigOffsetTransformChanged;
+    return impl->scene->sigOffsetPositionChanged;
 }
 
 
-void PointSetItem::notifyOffsetTransformChange()
+void PointSetItem::notifyOffsetPositionChange()
 {
-    impl->scene->sigOffsetTransformChanged(impl->scene->T());
+    impl->scene->sigOffsetPositionChanged(impl->scene->T());
     impl->scene->notifyUpdate();
     Item::notifyUpdate();
 }
@@ -263,15 +263,15 @@ void PointSetItem::notifyOffsetTransformChange()
 
 SgPointSet* PointSetItem::getTransformedPointSet() const
 {
-    SgPointSet* transformed = new SgPointSet();
+    SgPointSet* transformed = new SgPointSet;
     SgVertexArray& points = *transformed->getOrCreateVertices();
     SgVertexArray* orgPoints = impl->pointSet->vertices();
     if(orgPoints){
         const int n = orgPoints->size();
         points.resize(n);
-        const Affine3f T = offsetTransform().cast<Affine3f::Scalar>();
+        const Isometry3& T = offsetPosition();
         for(int i=0; i < n; ++i){
-            points[i] = T * (*orgPoints)[i];
+            points[i] = (T * (*orgPoints)[i].cast<Isometry3::Scalar>()).cast<SgVertexArray::Scalar>();
         }
     }
     return transformed;
@@ -424,7 +424,7 @@ void PointSetItem::removePoints(const PolyhedralRegion& region)
 void PointSetItemImpl::removePoints(const PolyhedralRegion& region)
 {
     vector<int> indicesToRemove;
-    const Affine3 T = scene->T();
+    const Isometry3 T = scene->T();
     SgVertexArray orgPoints(*pointSet->vertices());
     const int numOrgPoints = orgPoints.size();
 
@@ -529,9 +529,9 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Editable"), isEditable(), [&](bool on){ return impl->onEditableChanged(on); });
     const SgVertexArray* points = impl->pointSet->vertices();
     putProperty(_("Num points"), static_cast<int>(points ? points->size() : 0));
-    putProperty(_("Translation"), str(Vector3(offsetTransform().translation())),
+    putProperty(_("Translation"), str(Vector3(offsetPosition().translation())),
                 [&](const string& value){ return impl->onTranslationPropertyChanged(value); });
-    Vector3 rpy(TO_DEGREE * rpyFromRot(offsetTransform().linear()));
+    Vector3 rpy(TO_DEGREE * rpyFromRot(offsetPosition().linear()));
     putProperty(_("Rotation"), str(rpy), [&](const string& value){ return impl->onRotationPropertyChanged(value);});
 }
 
@@ -553,7 +553,7 @@ bool PointSetItemImpl::onTranslationPropertyChanged(const std::string& value)
     Vector3 p;
     if(toVector3(value, p)){
         scene->setTranslation(p);
-        self->notifyOffsetTransformChange();
+        self->notifyOffsetPositionChange();
         return true;
     }
     return false;
@@ -565,7 +565,7 @@ bool PointSetItemImpl::onRotationPropertyChanged(const std::string& value)
     Vector3 rpy;
     if(toVector3(value, rpy)){
         scene->setRotation(rotFromRpy(TO_RADIAN * rpy));
-        self->notifyOffsetTransformChange();
+        self->notifyOffsetPositionChange();
         return true;
     }
     return false;

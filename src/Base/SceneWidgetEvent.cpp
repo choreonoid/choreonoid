@@ -36,7 +36,7 @@ SceneWidgetEvent::SceneWidgetEvent(const SceneWidgetEvent& org)
 }
 
 
-const Affine3& SceneWidgetEvent::currentCameraPosition() const
+const Isometry3& SceneWidgetEvent::currentCameraPosition() const
 {
     return sceneWidget_->renderer()->currentCameraPosition();
 }

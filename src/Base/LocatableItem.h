@@ -29,11 +29,11 @@ public:
     LocationType locationType() const { return locationType_; }
     void setLocationType(LocationType type) { locationType_ = type; }
     virtual std::string getName() const;
-    virtual Position getLocation() const = 0;
-    Position getGlobalLocation() const;
+    virtual Isometry3 getLocation() const = 0;
+    Isometry3 getGlobalLocation() const;
     virtual bool isEditable() const;
     virtual void setEditable(bool on);
-    virtual bool setLocation(const Position& T);
+    virtual bool setLocation(const Isometry3& T);
     virtual Item* getCorrespondingItem();
     virtual LocationProxyPtr getParentLocationProxy() const;
     virtual void expire();

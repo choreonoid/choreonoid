@@ -47,7 +47,7 @@ std::shared_ptr<AbstractSeq> MultiSE3MatrixSeq::cloneSeq() const
 }
 
 
-Affine3 MultiSE3MatrixSeq::defaultValue() const
+Isometry3 MultiSE3MatrixSeq::defaultValue() const
 {
-    return Affine3::Identity();
+    return Isometry3::Identity();
 }

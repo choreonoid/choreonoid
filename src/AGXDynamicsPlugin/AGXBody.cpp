@@ -43,7 +43,7 @@ bool createAGXVehicleContinousTrack(AGXBody* agxBody)
 ////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(Link* const link) : _orgLink(link){}
-AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Position& T_parent, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic) :
+AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Isometry3& T_parent, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic) :
     _agxBody(agxBody),
     _orgLink(link),
     _agxParentLink(parent)
@@ -65,14 +65,14 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Position& T_pare
         makeStatic = false;
     }
 
-    Position T = T_parent * link->Tb();
+    Isometry3 T = T_parent * link->Tb();
     constructAGXLink(T, makeStatic);
     for(Link* child = link->child(); child; child = child->sibling()){
         new AGXLink(child, this, T, agxBody, forceSensorLinks, makeStatic);
     }
 }
 
-void AGXLink::constructAGXLink(const Position& T, const bool& makeStatic)
+void AGXLink::constructAGXLink(const Isometry3& T, const bool& makeStatic)
 {
     _rigid = createAGXRigidBody(T);
     _geometry = createAGXGeometry();
@@ -353,7 +353,7 @@ AGXBody* AGXLink::getAGXBody()
     return _agxBody;
 }
 
-agx::RigidBodyRef AGXLink::createAGXRigidBody(const Position& T)
+agx::RigidBodyRef AGXLink::createAGXRigidBody(const Isometry3& T)
 {
     LinkPtr orgLink = getOrgLink();
     const Vector3& v = orgLink->v(); 
@@ -527,7 +527,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
         const size_t vertexIndexTop = td.vertices.size();
         const SgVertexArray& vertices_ = *mesh->vertices();
         for(unsigned int i=0; i < vertices_.size(); ++i){
-            const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
+            const Vector3 v = T * vertices_[i].cast<Isometry3::Scalar>();
             td.vertices.push_back(agx::Vec3(v.x(), v.y(), v.z()));
         }
 
@@ -542,7 +542,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
     }
 }
 
-agx::ConstraintRef AGXLink::createAGXConstraint(const Position& T)
+agx::ConstraintRef AGXLink::createAGXConstraint(const Isometry3& T)
 {
     AGXLink* const agxParentLink = getAGXParentLink();
     if(!agxParentLink) return nullptr;
@@ -817,7 +817,7 @@ void AGXBody::createBody(AGXScene* agxScene)
     for(auto& sensor : body()->devices<ForceSensor>()){
         forceSensorLinks.insert(sensor->link());
     }
-    new AGXLink(body()->rootLink(), nullptr, Position::Identity(), this, forceSensorLinks, makeStatic);
+    new AGXLink(body()->rootLink(), nullptr, Isometry3::Identity(), this, forceSensorLinks, makeStatic);
     setLinkStateToAGX();
     createExtraJoint();
     callExtensionFuncs();

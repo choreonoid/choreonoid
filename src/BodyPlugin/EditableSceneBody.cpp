@@ -290,7 +290,7 @@ public:
     bool initializeIK();
     void startIK(const SceneWidgetEvent& event);
     void dragIK(const SceneWidgetEvent& event);
-    void doIK(const Position& position);
+    void doIK(const Isometry3& position);
     void startFK(const SceneWidgetEvent& event);
     void dragFKRotation(const SceneWidgetEvent& event);
     void dragFKTranslation(const SceneWidgetEvent& event);
@@ -300,7 +300,7 @@ public:
     void dragVirtualElasticString(const SceneWidgetEvent& event);
     void finishVirtualElasticString();
     void startForcedPosition(const SceneWidgetEvent& event);
-    void setForcedPosition(const Position& position);
+    void setForcedPosition(const Isometry3& position);
     void dragForcedPosition(const SceneWidgetEvent& event);
     void finishForcedPosition();
     void startZmpTranslation(const SceneWidgetEvent& event);
@@ -697,12 +697,12 @@ void EditableSceneBody::Impl::makeLinkAttitudeLevel()
         Link* link = outlinedLink->link();
         auto ik = bodyItem->getCurrentIK(link);
         if(ik){
-            const Position& T = link->T();
+            const Isometry3& T = link->T();
             const double theta = acos(T(2, 2));
             const Vector3 z(T(0,2), T(1, 2), T(2, 2));
             const Vector3 axis = z.cross(Vector3::UnitZ()).normalized();
             const Matrix3 R2 = AngleAxisd(theta, axis) * T.linear();
-            Position T2;
+            Isometry3 T2;
             T2.linear() = R2;
             T2.translation() = link->p();
 
@@ -899,7 +899,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
         if(kinematicsKit){
             positionDragger->setPosition(kinematicsKit->currentOffsetFrame()->T());
         } else {
-            positionDragger->setPosition(Affine3::Identity());
+            positionDragger->setPosition(Isometry3::Identity());
         }
     }
 
@@ -1414,8 +1414,7 @@ void EditableSceneBody::Impl::onDraggerDragged()
     if(activeSimulatorItem){
         setForcedPosition(positionDragger->globalDraggingPosition());
     } else {
-        Affine3 T = positionDragger->globalDraggingPosition();
-        doIK(T);
+        doIK(positionDragger->globalDraggingPosition());
     }
 }
 
@@ -1426,8 +1425,7 @@ void EditableSceneBody::Impl::onDraggerDragFinished()
     if(activeSimulatorItem){
         finishForcedPosition();
     } else {
-        Affine3 T = positionDragger->globalDraggingPosition();
-        doIK(T);
+        doIK(positionDragger->globalDraggingPosition());
     }
 }
 
@@ -1487,7 +1485,7 @@ void EditableSceneBody::Impl::dragIK(const SceneWidgetEvent& event)
 {
     if(dragProjector.dragTranslation(event)){
         //Position T = dragProjector.initialPosition();
-        Position T;
+        Isometry3 T;
         T.translation() = dragProjector.position().translation();
         T.linear() = targetLink->R();
         if(penetrationBlocker){
@@ -1498,7 +1496,7 @@ void EditableSceneBody::Impl::dragIK(const SceneWidgetEvent& event)
 }
 
 
-void EditableSceneBody::Impl::doIK(const Position& position)
+void EditableSceneBody::Impl::doIK(const Isometry3& position)
 {
     if(currentIK){
         if(currentIK->calcInverseKinematics(position) || true /* Best effort */){
@@ -1638,7 +1636,7 @@ void EditableSceneBody::Impl::startForcedPosition(const SceneWidgetEvent& event)
 }
 
 
-void EditableSceneBody::Impl::setForcedPosition(const Position& position)
+void EditableSceneBody::Impl::setForcedPosition(const Isometry3& position)
 {
     if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
         simulatorItem->setForcedPosition(bodyItem, position);
@@ -1649,7 +1647,7 @@ void EditableSceneBody::Impl::setForcedPosition(const Position& position)
 void EditableSceneBody::Impl::dragForcedPosition(const SceneWidgetEvent& event)
 {
     if(dragProjector.dragTranslation(event)){
-        Position T;
+        Isometry3 T;
         T.translation() = dragProjector.position().translation();
         T.linear() = targetLink->R();
         setForcedPosition(T);

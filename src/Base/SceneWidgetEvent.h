@@ -45,7 +45,7 @@ public:
     double wheelSteps() const { return wheelSteps_; }
 
     const SgNodePath& cameraPath() const { return cameraPath_; }
-    const Affine3& currentCameraPosition() const;
+    const Isometry3& currentCameraPosition() const;
 
     bool getRay(Vector3& out_origin, Vector3& out_direction) const;
 

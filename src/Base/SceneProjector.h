@@ -47,9 +47,9 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
     SceneCylinderProjector();
-    SceneCylinderProjector(const Vector3& center, double radius, double height, const Quat& rotation);
+    SceneCylinderProjector(const Vector3& center, double radius, double height, const Quaternion& rotation);
 
-    void setCylinder(const Vector3& center, double radius, double height, const Quat& rotation);
+    void setCylinder(const Vector3& center, double radius, double height, const Quaternion& rotation);
         
     virtual bool project(const SceneWidgetEvent& event, Vector3& out_projected) const;
 
@@ -57,7 +57,7 @@ protected:
     Vector3 center_;
     double radius_;
     double height_;
-    Quat rotation_;
+    Quaternion rotation_;
 
     bool calcUnitCylinderLineIntersection(
         const Vector3& lineStart, const Vector3& lineEnd, Vector3& out_isectFront, Vector3& out_isectBack) const;

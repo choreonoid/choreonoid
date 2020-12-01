@@ -56,8 +56,8 @@ public:
     float transparency() const { return transparency_; }
     void setTransparency(float t) { transparency_ = t; }
 
-    const Position& offsetPosition() const { return offsetPosition_; }
-    void setOffsetPosition(const Position& T) { offsetPosition_ = T; }
+    const Isometry3& offsetPosition() const { return offsetPosition_; }
+    void setOffsetPosition(const Isometry3& T) { offsetPosition_ = T; }
     void setOffsetTranslation(const Vector3& p) { offsetPosition_.translation() = p; }
 
 protected:
@@ -66,7 +66,7 @@ protected:
 private:
     bool on_;
     int markerType_;
-    Position offsetPosition_;
+    Isometry3 offsetPosition_;
     Vector3f color_;
     float markerSize_;
     float emission_;

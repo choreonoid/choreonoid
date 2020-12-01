@@ -38,7 +38,7 @@ std::string LocationProxy::getName() const
 }
 
 
-Position LocationProxy::getGlobalLocation() const
+Isometry3 LocationProxy::getGlobalLocation() const
 {
     switch(locationType_){
     case GlobalLocation:
@@ -51,7 +51,7 @@ Position LocationProxy::getGlobalLocation() const
             return getLocation();
         }
     default:
-        return Position::Identity();
+        return Isometry3::Identity();
     }
 }
 
@@ -71,7 +71,7 @@ void LocationProxy::setEditable(bool on)
 }
 
 
-bool LocationProxy::setLocation(const Position& /* T */)
+bool LocationProxy::setLocation(const Isometry3& /* T */)
 {
     return false;
 }

@@ -137,7 +137,7 @@ public:
      */
     void setPosition(const Matrix3& R, const Vector3& p);
 #endif
-    void setPosition(const Position& T);
+    void setPosition(const Isometry3& T);
         
     /**
      * @brief set position and orientation of this model

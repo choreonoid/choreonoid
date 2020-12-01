@@ -36,17 +36,17 @@ struct CoordinateInfo : public Referenced
     string name;
     int type;
     int index;
-    Position T;
-    std::function<Position()> parentPositionFunc;
+    Isometry3 T;
+    std::function<Isometry3()> parentPositionFunc;
     Matrix3 R0; // the initial rotation of the local coordinate system
     bool isLocal;
     CoordinateInfo(
-        const std::string& name, int type, int index, const Position& T, const std::function<Position()>& func)
+        const std::string& name, int type, int index, const Isometry3& T, const std::function<Isometry3()>& func)
         : name(name), type(type), index(index), T(T), parentPositionFunc(func), isLocal(false) { }
-    CoordinateInfo(const std::string& name, int type, int index, const Position& T)
+    CoordinateInfo(const std::string& name, int type, int index, const Isometry3& T)
         : CoordinateInfo(name, type, index, T, nullptr) { }
     CoordinateInfo(const std::string& name, int type, int index)
-        : CoordinateInfo(name, type, index, Position::Identity(), nullptr) { }
+        : CoordinateInfo(name, type, index, Isometry3::Identity(), nullptr) { }
 };
 
 typedef ref_ptr<CoordinateInfo> CoordinateInfoPtr;
@@ -89,7 +89,7 @@ public:
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
     void updatePositionWidgetWithTargetLocation();
-    bool setInputPositionToTargetLocation(const Position& T_input);
+    bool setInputPositionToTargetLocation(const Isometry3& T_input);
     void onLocationExpired();
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
@@ -141,7 +141,7 @@ LocationView::Impl::Impl(LocationView* self)
     positionWidget = new PositionWidget(self);
 
     positionWidget->setPositionCallback(
-        [&](const Position& T){ return setInputPositionToTargetLocation(T); });
+        [&](const Isometry3& T){ return setInputPositionToTargetLocation(T); });
     
     vbox->addWidget(positionWidget);
 
@@ -319,7 +319,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         coordinates.push_back(parentCoord);
     }
 
-    Position T = location->getLocation();
+    Isometry3 T = location->getLocation();
     auto localCoord = new CoordinateInfo(_("Local"), LocalCoord, LocalCoordIndex, T);
     localCoord->isLocal = true;
     localCoord->R0 = T.linear();
@@ -335,7 +335,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
                 continue;
             }
             basename.clear();
-            function<Position()> parentPositionFunc;
+            function<Isometry3()> parentPositionFunc;
             auto frameParentLocation = frameListItem->getFrameParentLocationProxy();
             auto targetItem = location->getCorrespondingItem();
             if(!frameParentLocation || frameParentLocation->getCorrespondingItem() == targetItem){
@@ -394,10 +394,10 @@ void LocationView::Impl::updatePositionWidgetWithTargetLocation()
 
     auto& coord = coordinates[coordinateCombo.currentIndex()];
     lastCoordIndex = coord->index;
-    Position T_display;
+    Isometry3 T_display;
 
     if(coord->type == LocalCoord){
-        Position T_location = location->getLocation();
+        Isometry3 T_location = location->getLocation();
         Matrix3 R_prev = coord->T.linear();
         Matrix3 R_current = T_location.linear();
         if(!R_current.isApprox(R_prev)){
@@ -407,7 +407,7 @@ void LocationView::Impl::updatePositionWidgetWithTargetLocation()
         T_display.linear() = coord->R0.transpose() * T_location.linear();
 
     } else {
-        Position T_location_global;
+        Isometry3 T_location_global;
         bool isGlobalBase = false;
 
         if(isRelativeLocation){
@@ -415,7 +415,7 @@ void LocationView::Impl::updatePositionWidgetWithTargetLocation()
                 T_display = location->getLocation();
 
             } else if(parentLocation){
-                Position T_parent = parentLocation->getGlobalLocation();
+                Isometry3 T_parent = parentLocation->getGlobalLocation();
                 T_location_global = T_parent * location->getLocation();
                 isGlobalBase = true;
             } else {
@@ -427,7 +427,7 @@ void LocationView::Impl::updatePositionWidgetWithTargetLocation()
         }
         if(isGlobalBase){
             if(coord->parentPositionFunc){
-                Position T_base = coord->parentPositionFunc() * coord->T;
+                Isometry3 T_base = coord->parentPositionFunc() * coord->T;
                 T_display = T_base.inverse(Eigen::Isometry) * T_location_global;
             } else {
                 T_display = coord->T.inverse(Eigen::Isometry) * T_location_global;
@@ -440,21 +440,21 @@ void LocationView::Impl::updatePositionWidgetWithTargetLocation()
 }
 
 
-bool LocationView::Impl::setInputPositionToTargetLocation(const Position& T_input)
+bool LocationView::Impl::setInputPositionToTargetLocation(const Isometry3& T_input)
 {
     if(!location){
         return false;
     }
 
     auto& coord = coordinates[coordinateCombo.currentIndex()];
-    Position T_location;
+    Isometry3 T_location;
 
     if(coord->type == LocalCoord){
         T_location.linear() = coord->R0 * T_input.linear();
         T_location.translation() = coord->T * T_input.translation();
         if(!T_location.linear().isApprox(coord->T.linear())){
             coord->T = T_location;
-            Position T_display;
+            Isometry3 T_display;
             T_display.linear() = T_input.linear();
             T_display.translation().setZero();
             positionWidget->setPosition(T_display);
@@ -463,7 +463,7 @@ bool LocationView::Impl::setInputPositionToTargetLocation(const Position& T_inpu
         if(isRelativeLocation && (coord->type == ParentCoord)){
             T_location = T_input;
         } else {
-            Position T_base;
+            Isometry3 T_base;
             if(coord->parentPositionFunc){
                 T_base = coord->parentPositionFunc() * coord->T;
             } else {
@@ -471,8 +471,8 @@ bool LocationView::Impl::setInputPositionToTargetLocation(const Position& T_inpu
             }
             if(isRelativeLocation){
                 if(parentLocation){
-                    Position T_global = T_base * T_input;
-                    Position T_parent = parentLocation->getGlobalLocation();
+                    Isometry3 T_global = T_base * T_input;
+                    Isometry3 T_parent = parentLocation->getGlobalLocation();
                     T_location = T_parent.inverse(Eigen::Isometry) * T_global;
                 } else {
                     return false; // invalid case

@@ -43,8 +43,8 @@ public:
     
     PositionWidget* self;
 
-    Position T_last;
-    std::function<bool(const Position& T)> positionCallback;
+    Isometry3 T_last;
+    std::function<bool(const Isometry3& T)> positionCallback;
     //vector<QWidget*> inputPanelWidgets;
     vector<DoubleSpinBox*> inputSpins;
     vector<bool> inputSpinErrorStates;
@@ -81,13 +81,13 @@ public:
     void resetInputWidgetStyles();
     void clearPosition();
     void refreshPosition();
-    void setPosition(const Position& T);
+    void setPosition(const Isometry3& T);
     void updateRotationMatrix(const Matrix3& R);
     Vector3 getRpyInput();
     void onPositionInput(InputElementSet inputElements);
     void onPositionInputRpy(InputElementSet inputElements);
     void onPositionInputQuaternion(InputElementSet inputElements);
-    void notifyPositionInput(const Position& T, InputElementSet inputElements);
+    void notifyPositionInput(const Isometry3& T, InputElementSet inputElements);
     void storeState(Archive& archive);
     void restoreState(const Archive& archive);
 };
@@ -345,7 +345,7 @@ void PositionWidget::setUserInputValuePriorityMode(bool on)
 }
     
 
-void PositionWidget::setPositionCallback(std::function<bool(const Position& T)> callback)
+void PositionWidget::setPositionCallback(std::function<bool(const Isometry3& T)> callback)
 {
     impl->positionCallback = callback;
 }
@@ -430,13 +430,13 @@ void PositionWidget::setReferenceRpy(const Vector3& rpy)
 }
 
 
-void PositionWidget::setPosition(const Position& T)
+void PositionWidget::setPosition(const Isometry3& T)
 {
     impl->setPosition(T);
 }
 
 
-void PositionWidget::Impl::setPosition(const Position& T)
+void PositionWidget::Impl::setPosition(const Isometry3& T)
 {
     userInputConnections.block();
 
@@ -546,7 +546,7 @@ void PositionWidget::Impl::onPositionInput(InputElementSet inputElements)
 
 void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
 {
-    Position T;
+    Isometry3 T;
     Vector3 rpy;
 
     for(int i=0; i < 3; ++i){
@@ -563,7 +563,7 @@ void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
 
 void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElements)
 {
-    Position T;
+    Isometry3 T;
 
     for(int i=0; i < 3; ++i){
         T.translation()[i] = xyzSpin[i].value() / lengthRatio;
@@ -583,7 +583,7 @@ void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElemen
 }
 
 
-void PositionWidget::Impl::notifyPositionInput(const Position& T, InputElementSet inputElements)
+void PositionWidget::Impl::notifyPositionInput(const Isometry3& T, InputElementSet inputElements)
 {
     bool accepted = positionCallback(T);
 

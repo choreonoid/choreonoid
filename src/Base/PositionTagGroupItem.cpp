@@ -59,14 +59,14 @@ public:
 
     PositionDraggerPtr positionDragger;
     int draggingTagIndex;
-    Affine3 initialDraggerPosition;
+    Isometry3 initialDraggerPosition;
 
     struct TagPosition
     {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         int index;
-        Affine3 T;
-        TagPosition(int index, const Affine3& T) : index(index), T(T) { }
+        Isometry3 T;
+        TagPosition(int index, const Isometry3& T) : index(index), T(T) { }
     };
     vector<TagPosition, Eigen::aligned_allocator<TagPosition>> initialTagDragPositions;
     
@@ -81,8 +81,8 @@ public:
     void updateTagDisplayTypes();
     bool updateTagDisplayType(int index, bool doNotify);
     void updateEdges(bool doNotify);
-    void setOriginOffset(const Position& T);
-    void setParentPosition(const Position& T);
+    void setOriginOffset(const Isometry3& T);
+    void setParentPosition(const Isometry3& T);
     void setOriginMarkerVisibility(bool on);
     void setEdgeVisiblility(bool on);
     void setHighlightedTagIndex(int index);
@@ -109,8 +109,8 @@ public:
     const PositionTag* getTargetTag() const;
     virtual std::string getName() const override;
     virtual Item* getCorrespondingItem() override;
-    virtual Position getLocation() const override;
-    virtual bool setLocation(const Position& T) override;
+    virtual Isometry3 getLocation() const override;
+    virtual bool setLocation(const Isometry3& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
 };
@@ -125,7 +125,7 @@ public:
 
     TagParentLocationProxy(PositionTagGroupItem::Impl* impl);
     virtual std::string getName() const override;
-    virtual Position getLocation() const override;
+    virtual Isometry3 getLocation() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
 };
@@ -157,8 +157,8 @@ public:
     
     PositionTagGroupItem* self;
     PositionTagGroupPtr tags;
-    Position T_parent;
-    Position T_offset;
+    Isometry3 T_parent;
+    Isometry3 T_offset;
     ScopedConnectionSet tagGroupConnections;
     LazyCaller notifyUpdateLater;
     std::vector<bool> tagSelection;
@@ -316,19 +316,19 @@ PositionTagGroup* PositionTagGroupItem::tagGroup()
 }
 
 
-const Position& PositionTagGroupItem::parentFramePosition() const
+const Isometry3& PositionTagGroupItem::parentFramePosition() const
 {
     return impl->T_parent;
 }
 
 
-const Position& PositionTagGroupItem::originOffset() const
+const Isometry3& PositionTagGroupItem::originOffset() const
 {
     return impl->T_offset;
 }
 
 
-void PositionTagGroupItem::setOriginOffset(const Position& T_offset)
+void PositionTagGroupItem::setOriginOffset(const Isometry3& T_offset)
 {
     impl->T_offset = T_offset;
 
@@ -341,7 +341,7 @@ void PositionTagGroupItem::setOriginOffset(const Position& T_offset)
 }
 
 
-Position PositionTagGroupItem::originPosition() const
+Isometry3 PositionTagGroupItem::originPosition() const
 {
     return impl->T_parent * impl->T_offset;
 }
@@ -604,18 +604,18 @@ void PositionTagGroupItem::Impl::setParentItemLocationProxy
 void PositionTagGroupItem::Impl::convertLocalCoordinates
 (LocationProxy* currentParentLocation, LocationProxy* newParentLocation, bool doClearOriginOffset)
 {
-    Position T0 = self->originPosition();
+    Isometry3 T0 = self->originPosition();
 
     if(doClearOriginOffset){
-        self->setOriginOffset(Position::Identity());
+        self->setOriginOffset(Isometry3::Identity());
     }
 
-    Position T1 = T_offset;
+    Isometry3 T1 = T_offset;
     if(newParentLocation){
         T1 = newParentLocation->getLocation() * T1;
     }
 
-    Position Tc = T1.inverse(Eigen::Isometry) * T0;
+    Isometry3 Tc = T1.inverse(Eigen::Isometry) * T0;
     int n = tags->numTags();
     for(int i=0; i < n; ++i){
         auto tag = tags->tagAt(i);
@@ -1050,7 +1050,7 @@ void SceneTagGroup::updateEdges(bool doNotify)
 }
 
 
-void SceneTagGroup::setOriginOffset(const Position& T)
+void SceneTagGroup::setOriginOffset(const Isometry3& T)
 {
     offsetTransform->setPosition(T);
     update.resetAction(SgUpdate::MODIFIED);
@@ -1058,7 +1058,7 @@ void SceneTagGroup::setOriginOffset(const Position& T)
 }
 
 
-void SceneTagGroup::setParentPosition(const Position& T)
+void SceneTagGroup::setParentPosition(const Isometry3& T)
 {
     setPosition(T);
     update.resetAction(SgUpdate::MODIFIED);
@@ -1154,8 +1154,8 @@ void SceneTagGroup::onDraggerDragStarted()
 
 void SceneTagGroup::onDraggerDragged()
 {
-    Affine3 T = positionDragger->draggingPosition();
-    Affine3 T_base = T * initialDraggerPosition.inverse(Eigen::Isometry);
+    Isometry3 T = positionDragger->draggingPosition();
+    Isometry3 T_base = T * initialDraggerPosition.inverse(Eigen::Isometry);
 
     for(auto& tagpos0 : initialTagDragPositions){
         auto tag = impl->tags->tagAt(tagpos0.index);
@@ -1304,7 +1304,7 @@ Item* TargetLocationProxy::getCorrespondingItem()
 }
 
 
-Position TargetLocationProxy::getLocation() const
+Isometry3 TargetLocationProxy::getLocation() const
 {
     if(impl->locationMode == TagGroupLocation){
         return impl->T_offset;
@@ -1314,7 +1314,7 @@ Position TargetLocationProxy::getLocation() const
 }
 
 
-bool TargetLocationProxy::setLocation(const Position& T)
+bool TargetLocationProxy::setLocation(const Isometry3& T)
 {
     auto tags = impl->tags;
     if(impl->locationMode == TagGroupLocation){
@@ -1322,7 +1322,7 @@ bool TargetLocationProxy::setLocation(const Position& T)
         impl->self->notifyUpdate();
     } else {
         auto primaryTag = tags->tagAt(impl->locationTargetTagIndex);
-        Position T_base = T * primaryTag->position().inverse(Eigen::Isometry);
+        Isometry3 T_base = T * primaryTag->position().inverse(Eigen::Isometry);
         primaryTag->setPosition(T);
         for(size_t i=0; i < impl->tagSelection.size(); ++i){
             if(impl->tagSelection[i]){
@@ -1368,7 +1368,7 @@ std::string TagParentLocationProxy::getName() const
 }
 
 
-Position TagParentLocationProxy::getLocation() const
+Isometry3 TagParentLocationProxy::getLocation() const
 {
     return impl->T_offset;
 }

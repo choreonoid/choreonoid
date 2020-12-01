@@ -19,7 +19,7 @@ using fmt::format;
 
 
 MprTagTraceStatement::MprTagTraceStatement()
-    : T_tags(Position::Identity()),
+    : T_tags(Isometry3::Identity()),
       baseFrameId_(0),
       offsetFrameId_(0)
 {
@@ -103,7 +103,7 @@ void MprTagTraceStatement::updateFramesWithCurrentFrames(LinkKinematicsKit* kine
 
 
 void MprTagTraceStatement::updateTagGroupPositionWithGlobalCoordinate
-(LinkKinematicsKit* kinematicsKit, const Position& T_global)
+(LinkKinematicsKit* kinematicsKit, const Isometry3& T_global)
 {
     auto T_base = kinematicsKit->globalBasePosition(baseFrameId_);
     T_tags = T_base.inverse(Eigen::Isometry) * T_global;

@@ -24,9 +24,9 @@ public:
     virtual Item* getCorrespondingItem() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual std::string getName() const override;
-    virtual Position getLocation() const override;
+    virtual Isometry3 getLocation() const override;
     virtual bool isEditable() const override;
-    virtual bool setLocation(const Position& T) override;
+    virtual bool setLocation(const Isometry3& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -401,7 +401,7 @@ std::string FrameLocation::getName() const
 }
 
 
-Position FrameLocation::getLocation() const
+Isometry3 FrameLocation::getLocation() const
 {
     return impl->frame->position();
 }
@@ -416,7 +416,7 @@ bool FrameLocation::isEditable() const
 }
 
 
-bool FrameLocation::setLocation(const Position& T)
+bool FrameLocation::setLocation(const Isometry3& T)
 {
     impl->frame->setPosition(T);
     impl->frame->notifyUpdate(CoordinateFrame::PositionUpdate);
