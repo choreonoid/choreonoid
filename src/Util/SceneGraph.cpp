@@ -330,6 +330,17 @@ bool SgGroup::contains(SgNode* node) const
 }
 
 
+int SgGroup::findChildIndex(SgNode* child) const
+{
+    for(size_t i=0; i < children.size(); ++i){
+        if(children[i] == child){
+            return i;
+        }
+    }
+    return -1;
+}
+
+
 void SgGroup::addChild(SgNode* node, SgUpdate* update)
 {
     if(node){

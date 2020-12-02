@@ -238,12 +238,12 @@ public:
 
     iterator erase(iterator pos) { return children.erase(pos); }
 
-    bool contains(SgNode* node) const;
-
     bool empty() const { return children.empty(); }
     int numChildren() const { return static_cast<int>(children.size()); }
     SgNode* child(int index) { return children[index]; }
     const SgNode* child(int index) const { return children[index]; }
+    bool contains(SgNode* node) const;
+    int findChildIndex(SgNode* child) const;
 
     //! This throws an exeption when the index is invalid or the type is not matched.
     template<class NodeType> NodeType* getChild(int index) {

@@ -25,14 +25,15 @@ using fmt::format;
 namespace {
 
 enum LocationMode { TagGroupLocation, TagLocation };
+enum TagDisplayType { Normal, Selected, Highlighted };
 
 constexpr float HighlightSizeRatio = 1.1f;
 
 class SceneTag : public SgPosTransform
 {
 public:
-    SceneTag(bool isHighlighted) : isHighlighted(isHighlighted) { }
-    bool isHighlighted;
+    SceneTag() : displayType(Normal) { }
+    TagDisplayType displayType;
 };
 
 class SceneTagGroup : public SgPosTransform, public SceneWidgetEditable
@@ -42,7 +43,9 @@ public:
     SgPosTransformPtr offsetTransform;
     SgGroupPtr tagMarkerGroup;
     SgNodePtr tagMarker;
+    SgNodePtr selectedTagMarker;
     SgNodePtr highlightedTagMarker;
+    int highlightedTagIndex;
     SgLineSetPtr markerLineSet;
     CoordinateFrameMarkerPtr originMarker;
     SgLineSetPtr edgeLineSet;
@@ -53,16 +56,22 @@ public:
     void finalize();
     void addTagNode(int index, bool doUpdateEdges, bool doNotify);
     SgNode* getOrCreateTagMarker();
+    SgNode* getOrCreateSelectedTagMarker();
     SgNode* getOrCreateHighlightedTagMarker();
     void removeTagNode(int index);
     void updateTagNodePosition(int index);
-    void updateTagHighlights();
-    bool updateTagHighlight(int index, bool doNotify);
+    void updateTagDisplayTypes();
+    bool updateTagDisplayType(int index, bool doNotify);
     void updateEdges(bool doNotify);
     void setOriginOffset(const Position& T);
     void setParentPosition(const Position& T);
     void setOriginMarkerVisibility(bool on);
     void setEdgeVisiblility(bool on);
+    void setHighlightedTagIndex(int index);
+    int findPointingTagIndex(const SceneWidgetEvent& event);
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
+    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
 };
 
 typedef ref_ptr<SceneTagGroup> SceneTagGroupPtr;
@@ -144,13 +153,14 @@ public:
     Signal<void()> sigTagParentLocationChanged;
     SceneTagGroupPtr sceneTagGroup;
     SgFixedPixelSizeGroupPtr fixedSizeTagMarker;
+    SgFixedPixelSizeGroupPtr fixedSizeSelectedTagMarker;
     SgFixedPixelSizeGroupPtr fixedSizeHighlightedTagMarker;
     bool originMarkerVisibility;
     bool edgeVisibility;
     
     Impl(PositionTagGroupItem* self, const Impl* org);
     void onTagUpdated(int tagIndex);
-    void clearTagSelection(bool doNotify);
+    bool clearTagSelection(bool doNotify);
     void setTagSelected(int tagIndex, bool on, bool doNotify);
     bool checkTagSelected(int tagIndex) const;
     void onTagSelectionChanged(bool doUpdateTagHighlights);
@@ -218,6 +228,7 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
     tagParentLocation = new TagParentLocationProxy(this);
 
     fixedSizeTagMarker = new SgFixedPixelSizeGroup;
+    fixedSizeSelectedTagMarker = new SgFixedPixelSizeGroup;
     fixedSizeHighlightedTagMarker = new SgFixedPixelSizeGroup;
     originMarkerVisibility = false;
     edgeVisibility = false;
@@ -237,6 +248,7 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
         T_offset = org->T_offset;
     }
     fixedSizeTagMarker->setPixelSizeRatio(s);
+    fixedSizeSelectedTagMarker->setPixelSizeRatio(s * HighlightSizeRatio);
     fixedSizeHighlightedTagMarker->setPixelSizeRatio(s * HighlightSizeRatio);
 }
 
@@ -321,16 +333,18 @@ void PositionTagGroupItem::clearTagSelection()
 }
 
 
-void PositionTagGroupItem::Impl::clearTagSelection(bool doNotify)
+bool PositionTagGroupItem::Impl::clearTagSelection(bool doNotify)
 {
-    if(!tagSelection.empty()){
-        tagSelection.clear();
+    bool doClear = (numSelectedTags > 0);
+    tagSelection.clear();
+    if(doClear){
         numSelectedTags = 0;
         needToUpdateSelectedTagIndices = true;
         if(doNotify){
             onTagSelectionChanged(true);
         }
     }
+    return doClear;
 }
 
 
@@ -355,7 +369,7 @@ void PositionTagGroupItem::Impl::setTagSelected(int tagIndex, bool on, bool doNo
         needToUpdateSelectedTagIndices = true;
         if(doNotify){
             if(sceneTagGroup){
-                sceneTagGroup->updateTagHighlight(tagIndex, true);
+                sceneTagGroup->updateTagDisplayType(tagIndex, true);
             }
             onTagSelectionChanged(false);
         }
@@ -409,7 +423,7 @@ void PositionTagGroupItem::setSelectedTagIndices(const std::vector<int>& indices
 void PositionTagGroupItem::Impl::onTagSelectionChanged(bool doUpdateTagHighlights)
 {
     if(sceneTagGroup && doUpdateTagHighlights){
-        sceneTagGroup->updateTagHighlights();
+        sceneTagGroup->updateTagDisplayTypes();
     }
     
     sigTagSelectionChanged();
@@ -570,6 +584,7 @@ void PositionTagGroupItem::setTagMarkerSize(double s)
     auto& marker = impl->fixedSizeTagMarker;
     if(s != marker->pixelSizeRatio()){
         marker->setPixelSizeRatio(s);
+        impl->fixedSizeSelectedTagMarker->setPixelSizeRatio(s * HighlightSizeRatio);
         impl->fixedSizeHighlightedTagMarker->setPixelSizeRatio(s * HighlightSizeRatio);
         if(impl->sceneTagGroup){
             impl->sceneTagGroup->notifyUpdate();
@@ -682,6 +697,8 @@ SceneTagGroup::SceneTagGroup(PositionTagGroupItem::Impl* impl)
     tagMarkerGroup = new SgGroup;
     offsetTransform->addChild(tagMarkerGroup);
 
+    highlightedTagIndex = -1;
+
     int n = tags->numTags();
     for(int i=0; i < n; ++i){
         addTagNode(i, false, false);
@@ -721,12 +738,13 @@ void SceneTagGroup::finalize()
 void SceneTagGroup::addTagNode(int index, bool doUpdateEdges, bool doNotify)
 {
     auto tag = impl->tags->tagAt(index);
-    auto tagNode = new SceneTag(impl->checkTagSelected(index));
-    if(tagNode->isHighlighted){
-        tagNode->addChild(getOrCreateHighlightedTagMarker());
+    auto tagNode = new SceneTag;
+    if(impl->checkTagSelected(index)){
+        tagNode->addChild(getOrCreateSelectedTagMarker());
+        tagNode->displayType = Selected;
     } else {
         tagNode->addChild(getOrCreateTagMarker());
-    }
+    }        
     tagNode->setPosition(tag->position());
     tagMarkerGroup->insertChild(index, tagNode);
     if(doNotify){
@@ -786,6 +804,29 @@ SgNode* SceneTagGroup::getOrCreateTagMarker()
 }
 
 
+SgNode* SceneTagGroup::getOrCreateSelectedTagMarker()
+{
+    if(!selectedTagMarker){
+        if(!tagMarker){
+            getOrCreateTagMarker();
+        }
+        auto lines = new SgLineSet(*markerLineSet);
+        lines->setLineWidth(3.0f);
+        auto colors = new SgColorArray;
+        colors->reserve(3);
+        colors->emplace_back(1.0f, 0.3f, 0.3f); // Red
+        colors->emplace_back(0.2f, 1.0f, 0.2f); // Green
+        colors->emplace_back(0.3f, 0.3f, 1.0f); // Blue
+        lines->setColors(colors);
+        
+        impl->fixedSizeSelectedTagMarker->addChild(lines);
+        selectedTagMarker = impl->fixedSizeSelectedTagMarker;
+    }
+
+    return selectedTagMarker;
+}
+
+
 SgNode* SceneTagGroup::getOrCreateHighlightedTagMarker()
 {
     if(!highlightedTagMarker){
@@ -794,11 +835,13 @@ SgNode* SceneTagGroup::getOrCreateHighlightedTagMarker()
         }
         auto lines = new SgLineSet(*markerLineSet);
         lines->setLineWidth(3.0f);
-        auto& colors = *lines->getOrCreateColors(3);
-        colors[0] << 1.0f, 0.3f, 0.3f; // Red
-        colors[1] << 0.2f, 1.0f, 0.2f; // Green
-        colors[2] << 0.3f, 0.3f, 1.0f; // Blue
-        
+        auto colors = new SgColorArray;
+        colors->reserve(3);
+        colors->emplace_back(1.0f, 1.0f, 0.0f); // Yellow
+        colors->emplace_back(1.0f, 1.0f, 0.0f); // Yellow
+        colors->emplace_back(1.0f, 1.0f, 0.0f); // Yellow
+        lines->setColors(colors);
+
         impl->fixedSizeHighlightedTagMarker->addChild(lines);
         highlightedTagMarker = impl->fixedSizeHighlightedTagMarker;
     }
@@ -829,14 +872,12 @@ void SceneTagGroup::updateTagNodePosition(int index)
 }
 
 
-
-
-void SceneTagGroup::updateTagHighlights()
+void SceneTagGroup::updateTagDisplayTypes()
 {
     bool updated = false;
     int n = tagMarkerGroup->numChildren();
     for(int i=0; i < n; ++i){
-        if(updateTagHighlight(i, false)){
+        if(updateTagDisplayType(i, false)){
             updated = true;
         }
     }
@@ -847,20 +888,34 @@ void SceneTagGroup::updateTagHighlights()
 }
 
 
-bool SceneTagGroup::updateTagHighlight(int index, bool doNotify)
+bool SceneTagGroup::updateTagDisplayType(int index, bool doNotify)
 {
     bool updated = false;
     auto tagNode = static_cast<SceneTag*>(tagMarkerGroup->child(index));
-    bool isSelected = impl->checkTagSelected(index);
-    if(tagNode->isHighlighted != isSelected){
+    TagDisplayType displayType;
+    if(index == highlightedTagIndex){
+        displayType = Highlighted;
+    } else if(impl->checkTagSelected(index)){
+        displayType = Selected;
+    } else {
+        displayType = Normal;
+    }
+    if(displayType != tagNode->displayType){
         tagNode->clearChildren();
         update.resetAction(SgUpdate::ADDED|SgUpdate::REMOVED);
-        if(isSelected){
-            tagNode->addChild(getOrCreateHighlightedTagMarker(), update);
-        } else {
+        switch(displayType){
+        case Normal:
+        default:
             tagNode->addChild(getOrCreateTagMarker(), update);
+            break;
+        case Selected:
+            tagNode->addChild(getOrCreateSelectedTagMarker(), update);
+            break;
+        case Highlighted:
+            tagNode->addChild(getOrCreateHighlightedTagMarker(), update);
+            break;
         }
-        tagNode->isHighlighted = isSelected;
+        tagNode->displayType = displayType;
     }
     return updated;
 }
@@ -934,6 +989,78 @@ void SceneTagGroup::setEdgeVisiblility(bool on)
     } else {
         offsetTransform->removeChild(edgeLineSet, update);
     }
+}
+
+
+void SceneTagGroup::setHighlightedTagIndex(int index)
+{
+    if(index != highlightedTagIndex){
+        int prevHighlightedTagIndex = highlightedTagIndex;
+        highlightedTagIndex = index;
+        if(prevHighlightedTagIndex >= 0){
+            updateTagDisplayType(prevHighlightedTagIndex, true);
+        }
+        if(highlightedTagIndex >= 0){
+            updateTagDisplayType(highlightedTagIndex, true);
+        }
+    }
+}
+
+
+int SceneTagGroup::findPointingTagIndex(const SceneWidgetEvent& event)
+{
+    auto path = event.nodePath();
+    size_t tagNodeIndex = 0;
+    for(size_t i=0; i < path.size(); ++i){
+        auto node = path[i];
+        if(node == tagMarkerGroup){
+            tagNodeIndex = i + 1;
+            break;
+        }
+    }
+    int tagIndex = -1;
+    if(tagNodeIndex > 0 && tagNodeIndex < path.size()){
+        auto tagNode = dynamic_cast<SceneTag*>(path[tagNodeIndex]);
+        if(tagNode){
+            tagIndex = tagMarkerGroup->findChildIndex(tagNode);
+        }
+    }
+    return tagIndex;
+}
+
+
+bool SceneTagGroup::onPointerMoveEvent(const SceneWidgetEvent& event)
+{
+    int tagIndex = findPointingTagIndex(event);
+    setHighlightedTagIndex(tagIndex);
+    return (tagIndex >= 0);
+}
+
+
+void SceneTagGroup::onPointerLeaveEvent(const SceneWidgetEvent& event)
+{
+    setHighlightedTagIndex(-1);
+}
+
+
+bool SceneTagGroup::onButtonPressEvent(const SceneWidgetEvent& event)
+{
+    bool processed = false;
+    if(event.button() == Qt::LeftButton){
+        int tagIndex = findPointingTagIndex(event);
+        if(tagIndex >= 0){
+            bool selected = impl->checkTagSelected(tagIndex);
+            if(!(event.modifiers() & Qt::ControlModifier)){
+                if(impl->numSelectedTags >= 2 || !selected){
+                    impl->clearTagSelection(true);
+                    selected = false;
+                }
+            }
+            impl->setTagSelected(tagIndex, !selected, true);
+            processed = true;
+        }
+    }
+    return processed;
 }
 
 

@@ -23,6 +23,7 @@ namespace {
 constexpr int NumColumns = 2;
 constexpr int IndexColumn = 0;
 constexpr int PositionColumn = 1;
+constexpr int LastColumn = 1;
 
 class TagGroupModel : public QAbstractTableModel
 {
@@ -60,15 +61,21 @@ namespace cnoid {
 class PositionTagListWidget::Impl
 {
 public:
+    PositionTagListWidget* self;
     PositionTagGroupItemPtr tagGroupItem;
+    ScopedConnection tagGroupItemConnection;
     TagGroupModel* tagGroupModel;
     bool isSelectionChangedAlreadyCalled;
+    bool isSelectionBeingUpdatedByTagSelectionChange;
     MenuManager contextMenuManager;
     Signal<void(const std::vector<int>& selected)> sigTagSelectionChanged;
     vector<int> selectedTagIndices;
     Signal<void(int tagIndex)> sigTagPressed;
     Signal<void(int tagIndex)> sigTagDoubleClicked;
     Signal<void(MenuManager& menu)> sigContextMenuRequest;
+
+    Impl(PositionTagListWidget* self);
+    void onTagSelectionChanged();    
 };
 
 }
@@ -331,7 +338,7 @@ void TagGroupModel::onTagUpdated(int tagIndex)
 PositionTagListWidget::PositionTagListWidget(QWidget* parent)
     : QTableView(parent)
 {
-    impl = new Impl;
+    impl = new Impl(this);
     
     //setFrameShape(QFrame::NoFrame);
     
@@ -383,10 +390,25 @@ PositionTagListWidget::PositionTagListWidget(QWidget* parent)
 }
 
 
+PositionTagListWidget::Impl::Impl(PositionTagListWidget* self)
+    : self(self)
+{
+    isSelectionChangedAlreadyCalled = false;
+    isSelectionBeingUpdatedByTagSelectionChange = false;
+}
+
+
 void PositionTagListWidget::setTagGroupItem(PositionTagGroupItem* item)
 {
     impl->tagGroupItem = item;
     impl->tagGroupModel->setTagGroupItem(item);
+
+    impl->tagGroupItemConnection.disconnect();
+    if(item){
+        impl->tagGroupItemConnection =
+            impl->tagGroupItem->sigTagSelectionChanged().connect(
+                [&](){ impl->onTagSelectionChanged(); });
+    }
 }
 
 
@@ -483,22 +505,43 @@ void PositionTagListWidget::mousePressEvent(QMouseEvent* event)
 }
 
 
+// Selection is changed by the table view
 void PositionTagListWidget::selectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
 {
     impl->isSelectionChangedAlreadyCalled = true;
     
     QTableView::selectionChanged(selected, deselected);
 
-    impl->selectedTagIndices.clear();
-    for(auto& index : selectionModel()->selectedRows()){
-        impl->selectedTagIndices.push_back(index.row());
-    }
+    if(!impl->isSelectionBeingUpdatedByTagSelectionChange){
 
-    impl->sigTagSelectionChanged(impl->selectedTagIndices);
-
-    if(impl->tagGroupItem){
-        impl->tagGroupItem->setSelectedTagIndices(impl->selectedTagIndices);
+        impl->selectedTagIndices.clear();
+        for(auto& index : selectionModel()->selectedRows()){
+            impl->selectedTagIndices.push_back(index.row());
+        }
+        
+        impl->sigTagSelectionChanged(impl->selectedTagIndices);
+        
+        if(impl->tagGroupItem){
+            impl->tagGroupItemConnection.block();
+            impl->tagGroupItem->setSelectedTagIndices(impl->selectedTagIndices);
+            impl->tagGroupItemConnection.unblock();
+        }
     }
+}
+
+
+void PositionTagListWidget::Impl::onTagSelectionChanged()
+{
+    isSelectionBeingUpdatedByTagSelectionChange = true;
+
+    QItemSelection selection;
+    for(auto& index : tagGroupItem->selectedTagIndices()){
+        QItemSelection row(tagGroupModel->index(index, 0), tagGroupModel->index(index, LastColumn));
+        selection.merge(row, QItemSelectionModel::Select);
+    }
+    self->selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
+
+    isSelectionBeingUpdatedByTagSelectionChange = false;
 }
 
 
