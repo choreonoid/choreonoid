@@ -19,6 +19,7 @@
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <map>
 #include "gettext.h"
 
 using namespace std;
@@ -42,6 +43,8 @@ public:
 class SceneTagGroup : public SgPosTransform, public SceneWidgetEditable
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     PositionTagGroupItem::Impl* impl;
     SgPosTransformPtr offsetTransform;
     SgGroupPtr tagMarkerGroup;
@@ -56,6 +59,10 @@ public:
     ScopedConnectionSet tagGroupConnections;
     PositionDraggerPtr positionDragger;
     int draggingTagIndex;
+    Affine3 initialDraggerPosition;
+    typedef std::map<int, Affine3, std::less<int>,
+                     Eigen::aligned_allocator<std::pair<const int, Affine3>>> PositionMap;
+    PositionMap initialTagDragPositions;
     
     SceneTagGroup(PositionTagGroupItem::Impl* itemImpl);
     void finalize();
@@ -74,6 +81,7 @@ public:
     void setEdgeVisiblility(bool on);
     void setHighlightedTagIndex(int index);
     void attachPositionDragger(int tagIndex);
+    void onDraggerDragStarted();
     void onDraggerDragged();
     int findPointingTagIndex(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
@@ -922,9 +930,18 @@ void SceneTagGroup::updateTagNodePosition(int index)
 {
     auto tag = impl->tags->tagAt(index);
     auto node = static_cast<SgPosTransform*>(tagMarkerGroup->child(index));
-    node->setTranslation(tag->translation());
+    if(tag->hasAttitude()){
+        node->setPosition(tag->position());
+    } else {
+        node->setTranslation(tag->translation());
+    }
     update.resetAction(SgUpdate::MODIFIED);
     node->notifyUpdate(update);
+
+    if(index == draggingTagIndex){
+        positionDragger->setPosition(tag->position());
+        positionDragger->notifyUpdate(update);
+    }
 
     updateEdges(true);
 }
@@ -1083,6 +1100,7 @@ void SceneTagGroup::attachPositionDragger(int tagIndex)
             positionDragger->setHandleWidthRatio(0.05);
             positionDragger->setFixedPixelSizeMode(true, 96);
             positionDragger->setDisplayMode(PositionDragger::DisplayInEditMode);
+            positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
             positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
         }
 
@@ -1093,15 +1111,39 @@ void SceneTagGroup::attachPositionDragger(int tagIndex)
 }
 
 
+void SceneTagGroup::onDraggerDragStarted()
+{
+    initialDraggerPosition = positionDragger->position();
+
+    initialTagDragPositions.clear();
+    for(auto& tagIndex : impl->self->selectedTagIndices()){
+        auto tag = impl->tags->tagAt(tagIndex);
+        initialTagDragPositions[tagIndex] = tag->position();
+    }
+}
+    
+
 void SceneTagGroup::onDraggerDragged()
 {
-    auto T = positionDragger->draggingPosition();
-    auto tag = impl->tags->tagAt(draggingTagIndex);
-    tag->setPosition(T);
-    positionDragger->setPosition(T);
-    impl->tags->notifyTagUpdate(draggingTagIndex);
-    update.resetAction(SgUpdate::MODIFIED);
-    positionDragger->notifyUpdate(update);
+    Affine3 T = positionDragger->draggingPosition();
+    const Affine3& T0 = initialDraggerPosition;
+    Affine3 T0_inv = T0.inverse(Eigen::Isometry);
+    Affine3 T_offset = T0_inv * T;
+
+    for(auto& kv : initialTagDragPositions){
+        int tagIndex = kv.first;
+        auto tag = impl->tags->tagAt(tagIndex);
+        if(tagIndex == draggingTagIndex){
+            tag->setPosition(T);
+            positionDragger->setPosition(T);
+            update.resetAction(SgUpdate::MODIFIED);
+            positionDragger->notifyUpdate(update);
+        } else {
+            auto& S0 = kv.second;
+            tag->setPosition(T0 * T_offset * T0_inv * S0);
+        }
+        impl->tags->notifyTagUpdate(tagIndex);
+    }
 }
 
 
