@@ -1,5 +1,6 @@
 #include "PositionTagGroupItem.h"
 #include "ItemManager.h"
+#include "SceneWidget.h"
 #include "SceneWidgetEditable.h"
 #include "CoordinateFrameMarker.h"
 #include "Dialog.h"
@@ -8,6 +9,7 @@
 #include "LazyCaller.h"
 #include "Archive.h"
 #include "PutPropertyFunction.h"
+#include "MenuManager.h"
 #include <cnoid/PositionTagGroup>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
@@ -72,6 +74,7 @@ public:
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
+    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu) override;
 };
 
 typedef ref_ptr<SceneTagGroup> SceneTagGroupPtr;
@@ -159,11 +162,15 @@ public:
     bool edgeVisibility;
     
     Impl(PositionTagGroupItem* self, const Impl* org);
+    void onTagAdded(int index);
+    void onTagRemoved(int index);
     void onTagUpdated(int tagIndex);
     bool clearTagSelection(bool doNotify);
+    void selectAllTags();
     void setTagSelected(int tagIndex, bool on, bool doNotify);
     bool checkTagSelected(int tagIndex) const;
-    void onTagSelectionChanged(bool doUpdateTagHighlights);
+    void onTagSelectionChanged(bool doUpdateTagDisplayTypes);
+    void removeSelectedTags();
     void setParentItemLocationProxy(
         LocationProxyPtr newParentLocation, bool doCoordinateConversion, bool doClearOriginOffset);
     void convertLocalCoordinates(
@@ -211,10 +218,10 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
 
     tagGroupConnections.add(
         tags->sigTagAdded().connect(
-            [&](int){ notifyUpdateLater(); }));
+            [&](int index){ onTagAdded(index); }));
     tagGroupConnections.add(
         tags->sigTagRemoved().connect(
-            [&](int, PositionTag*){ notifyUpdateLater(); }));
+            [&](int index, PositionTag*){ onTagRemoved(index); }));
     tagGroupConnections.add(
         tags->sigTagUpdated().connect(
             [&](int index){ onTagUpdated(index); }));
@@ -318,6 +325,26 @@ Position PositionTagGroupItem::originPosition() const
 }
 
 
+void PositionTagGroupItem::Impl::onTagAdded(int index)
+{
+    if(index < static_cast<int>(tagSelection.size())){
+        tagSelection.insert(tagSelection.begin() + index, false);
+        needToUpdateSelectedTagIndices = true;
+    }
+    notifyUpdateLater();
+}
+
+
+void PositionTagGroupItem::Impl::onTagRemoved(int index)
+{
+    if(index < static_cast<int>(tagSelection.size())){
+        tagSelection.erase(tagSelection.begin() + index);
+        needToUpdateSelectedTagIndices = true;
+    }
+    notifyUpdateLater();
+}
+
+
 void PositionTagGroupItem::Impl::onTagUpdated(int tagIndex)
 {
     if(locationMode == TagLocation && locationTargetTagIndex == tagIndex){
@@ -345,6 +372,16 @@ bool PositionTagGroupItem::Impl::clearTagSelection(bool doNotify)
         }
     }
     return doClear;
+}
+
+
+void PositionTagGroupItem::Impl::selectAllTags()
+{
+    tagSelection.clear();
+    numSelectedTags = tags->numTags();
+    tagSelection.resize(numSelectedTags, true);
+    needToUpdateSelectedTagIndices = true;
+    onTagSelectionChanged(true);
 }
 
 
@@ -420,9 +457,9 @@ void PositionTagGroupItem::setSelectedTagIndices(const std::vector<int>& indices
 }
 
 
-void PositionTagGroupItem::Impl::onTagSelectionChanged(bool doUpdateTagHighlights)
+void PositionTagGroupItem::Impl::onTagSelectionChanged(bool doUpdateTagDisplayTypes)
 {
-    if(sceneTagGroup && doUpdateTagHighlights){
+    if(sceneTagGroup && doUpdateTagDisplayTypes){
         sceneTagGroup->updateTagDisplayTypes();
     }
     
@@ -449,6 +486,19 @@ void PositionTagGroupItem::Impl::onTagSelectionChanged(bool doUpdateTagHighlight
 SignalProxy<void()> PositionTagGroupItem::sigTagSelectionChanged()
 {
     return impl->sigTagSelectionChanged;
+}
+
+
+void PositionTagGroupItem::Impl::removeSelectedTags()
+{
+    auto selection = tagSelection;
+    size_t n = selection.size();
+    int numRemoved = 0;
+    for(int i=0; i < n; ++i){
+        if(selection[i]){
+            tags->removeAt(i - numRemoved++);
+        }
+    }
 }
 
 
@@ -1046,8 +1096,10 @@ void SceneTagGroup::onPointerLeaveEvent(const SceneWidgetEvent& event)
 bool SceneTagGroup::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     bool processed = false;
+
+    int tagIndex = findPointingTagIndex(event);
+    
     if(event.button() == Qt::LeftButton){
-        int tagIndex = findPointingTagIndex(event);
         if(tagIndex >= 0){
             bool selected = impl->checkTagSelected(tagIndex);
             if(!(event.modifiers() & Qt::ControlModifier)){
@@ -1059,8 +1111,26 @@ bool SceneTagGroup::onButtonPressEvent(const SceneWidgetEvent& event)
             impl->setTagSelected(tagIndex, !selected, true);
             processed = true;
         }
+        
+    } else if(event.button() == Qt::RightButton){
+        if(tagIndex >= 0 && !impl->checkTagSelected(tagIndex)){
+            impl->setTagSelected(tagIndex, true, true);
+        }
+        event.sceneWidget()->showContextMenuAtPointerPosition();
     }
+    
     return processed;
+}
+
+
+bool SceneTagGroup::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu)
+{
+    menu.addItem(_("Move"));
+    menu.addItem(_("Remove"))->sigTriggered().connect([&](){ impl->removeSelectedTags(); });
+    menu.addSeparator();
+    menu.addItem(_("Select all"))->sigTriggered().connect([&](){ impl->selectAllTags(); });
+    menu.addItem(_("Clear selection"))->sigTriggered().connect([&](){ impl->clearTagSelection(true); });
+    return true;
 }
 
 
