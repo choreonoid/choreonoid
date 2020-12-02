@@ -2,6 +2,7 @@
 #include "ItemManager.h"
 #include "SceneWidget.h"
 #include "SceneWidgetEditable.h"
+#include "PositionDragger.h"
 #include "CoordinateFrameMarker.h"
 #include "Dialog.h"
 #include "Buttons.h"
@@ -53,6 +54,8 @@ public:
     SgLineSetPtr edgeLineSet;
     SgUpdate update;
     ScopedConnectionSet tagGroupConnections;
+    PositionDraggerPtr positionDragger;
+    int draggingTagIndex;
     
     SceneTagGroup(PositionTagGroupItem::Impl* itemImpl);
     void finalize();
@@ -70,10 +73,13 @@ public:
     void setOriginMarkerVisibility(bool on);
     void setEdgeVisiblility(bool on);
     void setHighlightedTagIndex(int index);
+    void attachPositionDragger(int tagIndex);
+    void onDraggerDragged();
     int findPointingTagIndex(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
+    virtual void onFocusChanged(const SceneWidgetEvent& event, bool on) override;
     virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu) override;
 };
 
@@ -766,6 +772,8 @@ SceneTagGroup::SceneTagGroup(PositionTagGroupItem::Impl* impl)
         setOriginMarkerVisibility(true);
     }
 
+    draggingTagIndex = -1;    
+    
     tagGroupConnections.add(
         tags->sigTagAdded().connect(
             [&](int index){ addTagNode(index, true, true); }));
@@ -1057,6 +1065,46 @@ void SceneTagGroup::setHighlightedTagIndex(int index)
 }
 
 
+void SceneTagGroup::attachPositionDragger(int tagIndex)
+{
+    PositionTag* tag = nullptr;
+    if(tagIndex >= 0){
+        tag = impl->tags->tagAt(tagIndex);
+    }
+
+    if(!tag){
+        draggingTagIndex = -1;
+        offsetTransform->removeChild(positionDragger, update);
+
+    } else {
+        if(!positionDragger){
+            positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
+            positionDragger->setOverlayMode(true);
+            positionDragger->setHandleWidthRatio(0.05);
+            positionDragger->setFixedPixelSizeMode(true, 96);
+            positionDragger->setDisplayMode(PositionDragger::DisplayInEditMode);
+            positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
+        }
+
+        positionDragger->setPosition(tag->position());
+        offsetTransform->addChildOnce(positionDragger, update);
+        draggingTagIndex = tagIndex;
+    }
+}
+
+
+void SceneTagGroup::onDraggerDragged()
+{
+    auto T = positionDragger->draggingPosition();
+    auto tag = impl->tags->tagAt(draggingTagIndex);
+    tag->setPosition(T);
+    positionDragger->setPosition(T);
+    impl->tags->notifyTagUpdate(draggingTagIndex);
+    update.resetAction(SgUpdate::MODIFIED);
+    positionDragger->notifyUpdate(update);
+}
+
+
 int SceneTagGroup::findPointingTagIndex(const SceneWidgetEvent& event)
 {
     auto path = event.nodePath();
@@ -1118,18 +1166,38 @@ bool SceneTagGroup::onButtonPressEvent(const SceneWidgetEvent& event)
         }
         event.sceneWidget()->showContextMenuAtPointerPosition();
     }
+
+    attachPositionDragger(-1);
     
     return processed;
 }
 
 
+void SceneTagGroup::onFocusChanged(const SceneWidgetEvent& event, bool on)
+{
+    if(!on){
+        attachPositionDragger(-1);
+    }
+}
+
+
 bool SceneTagGroup::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu)
 {
-    menu.addItem(_("Move"));
+    int tagIndex = findPointingTagIndex(event);
+    
+    auto moveAction = menu.addItem(_("Move"));
+    if(tagIndex < 0){
+        moveAction->setEnabled(false);
+    }
+    moveAction->sigTriggered().connect([this, tagIndex](){ attachPositionDragger(tagIndex); });
+                
     menu.addItem(_("Remove"))->sigTriggered().connect([&](){ impl->removeSelectedTags(); });
     menu.addSeparator();
     menu.addItem(_("Select all"))->sigTriggered().connect([&](){ impl->selectAllTags(); });
     menu.addItem(_("Clear selection"))->sigTriggered().connect([&](){ impl->clearTagSelection(true); });
+
+    attachPositionDragger(-1);
+    
     return true;
 }
 
