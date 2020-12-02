@@ -16,8 +16,6 @@
 #include <array>
 #include <unordered_map>
 
-#include <iostream>
-
 using namespace std;
 using namespace cnoid;
 
@@ -898,9 +896,16 @@ AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event
     if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
         const Affine3 T_global = calcTotalTransform(event.nodePath(), self);
         const Vector3 p_local = T_global.inverse() * event.point();
-        double width = handleSize * unitHandleWidth * calcWidthRatio(event.pixelSizeRatio());
-        if(p_local.norm() < 1.5 * width){
-            axisBitSet |= AxisBitSet(TRANSLATION_AXES);
+        if(!isFixedPixelSizeMode){
+            double width = handleSize * unitHandleWidth * calcWidthRatio(event.pixelSizeRatio());
+            if(p_local.norm() < 1.5 * width){
+                axisBitSet |= AxisBitSet(TRANSLATION_AXES);
+            }
+        } else {
+            double pixelWidth = handleSize * unitHandleWidth * fixedPixelSizeGroup->pixelSizeRatio();
+            if(p_local.norm() * event.pixelSizeRatio() < 1.5 * pixelWidth){
+                axisBitSet |= AxisBitSet(TRANSLATION_AXES);
+            }
         }
     }
 
