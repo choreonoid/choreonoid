@@ -269,6 +269,7 @@ public:
     int checkLinkOperationType(SceneLink* sceneLink, bool doUpdateIK);
     int checkLinkKinematicsType(Link* link, bool doUpdateIK);
     void updateMarkersAndManipulators(bool on);
+    void createPositionDragger();
     void attachPositionDragger(Link* link);
 
     bool onKeyPressEvent(const SceneWidgetEvent& event);
@@ -338,20 +339,6 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItem* bodyItem)
     outlinedLink = nullptr;
     targetLink = nullptr;
 
-    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GL1_RENDERER){
-        /** GL1SceneRenderer does not support the overlay rendering with SgOverlay and use the
-            old type dragger to render it correctly. */
-        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::WideHandle);
-        positionDragger->setOverlayMode(false);
-    } else {
-        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
-        positionDragger->setOverlayMode(true);
-    }
-    positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
-    positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
-    positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
-    positionDragger->sigDragFinished().connect([&](){ onDraggerDragFinished(); });
-    
     dragMode = DRAG_NONE;
     isDragging = false;
     isEditMode = false;
@@ -871,8 +858,30 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 }
 
 
+void EditableSceneBody::Impl::createPositionDragger()
+{
+    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GL1_RENDERER){
+        /** GL1SceneRenderer does not support the overlay rendering with SgOverlay and use the
+            old type dragger to render it correctly. */
+        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::WideHandle);
+        positionDragger->setOverlayMode(false);
+    } else {
+        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
+        positionDragger->setOverlayMode(true);
+    }
+    positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
+    positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
+    positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
+    positionDragger->sigDragFinished().connect([&](){ onDraggerDragFinished(); });
+}
+
+    
 void EditableSceneBody::Impl::attachPositionDragger(Link* link)
 {
+    if(!positionDragger){
+        createPositionDragger();
+    }
+    
     LinkKinematicsKit* kinematicsKit = nullptr;
     if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
         auto parentBodyLink = bodyItem->body()->parentBodyLink();
