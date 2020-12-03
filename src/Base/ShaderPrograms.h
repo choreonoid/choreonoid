@@ -103,16 +103,58 @@ public:
 
     virtual void initialize() override;
     virtual void activate() override;
+    virtual void setColor(const Vector3f& color);
     virtual void setMaterial(const SgMaterial* material) override;
-    virtual void setVertexColorEnabled(bool on) override;
+    virtual void setPointSize(float s);
     
-    void setColor(const Vector3f& color);
     void setColorChangable(bool on);
     bool isColorChangable() const;
-    void setPointSize(float s);
 
 protected:
     SolidColorProgram(std::initializer_list<ShaderSource> sources);
+
+private:
+    class Impl;
+    Impl* impl;
+};
+
+
+class CNOID_EXPORT SolidColorExProgram : public SolidColorProgram
+{
+    SolidColorExProgram(const SolidColorExProgram&) = delete;
+
+public:
+    SolidColorExProgram();
+    ~SolidColorExProgram();
+        
+    virtual void initialize() override;
+    virtual void activate() override;
+    virtual void setColor(const Vector3f& color) override;
+    virtual void setMaterial(const SgMaterial* material) override;
+    virtual void setVertexColorEnabled(bool on) override;
+
+protected:
+    SolidColorExProgram(std::initializer_list<ShaderSource> sources);
+
+private:
+    class Impl;
+    Impl* impl;
+};
+
+
+class CNOID_EXPORT ThickLineProgram : public SolidColorExProgram
+{
+    ThickLineProgram(const ThickLineProgram&) = delete;
+
+public:
+    ThickLineProgram();
+    ~ThickLineProgram();
+    
+    virtual void initialize() override;
+    virtual void activate() override;
+
+    void setViewportSize(int width, int height);
+    void setLineWidth(float width);
 
 private:
     class Impl;
@@ -135,26 +177,6 @@ public:
 
     void setProjectionMatrix(const Matrix4& P);    
     void setViewportSize(int width, int height);
-
-private:
-    class Impl;
-    Impl* impl;
-};
-
-
-class CNOID_EXPORT  ThickLineProgram : public SolidColorProgram
-{
-    ThickLineProgram(const ThickLineProgram&) = delete;
-
-public:
-    ThickLineProgram();
-    ~ThickLineProgram();
-    
-    virtual void initialize() override;
-    virtual void activate() override;
-
-    void setViewportSize(int width, int height);
-    void setLineWidth(float width);
 
 private:
     class Impl;
@@ -279,7 +301,7 @@ public:
     void setShadowMapTextureTopIndex(int textureIndex);
     int maxNumShadows() const;
     void setNumShadows(int n);
-    ShadowMapProgram& shadowMapProgram();
+    ShadowMapProgram* shadowMapProgram();
     void getShadowMapSize(int& width, int& height) const;
     SgCamera* getShadowMapCamera(SgLight* light, Affine3& io_T);
     void setShadowMapViewProjection(const Matrix4& PV);

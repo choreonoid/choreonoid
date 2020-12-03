@@ -42,7 +42,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     Matrix4 modelViewProjectionMatrix() const;
     virtual double projectedPixelSizeRatio(const Vector3& position) const override;
 
-    void pushShaderProgram(ShaderProgram& program);
+    void pushShaderProgram(ShaderProgram* program);
     void popShaderProgram();
 
     void renderLights(LightingProgram* program);

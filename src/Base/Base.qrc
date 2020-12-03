@@ -46,6 +46,7 @@
     <file>shader/NoLighting.frag</file>
     <file>shader/SolidColor.vert</file>
     <file>shader/SolidColor.frag</file>
+    <file>shader/SolidColorEx.frag</file>
     <file>shader/SolidPoint.vert</file>
     <file>shader/SolidPoint.geom</file>
     <file>shader/SolidPoint.frag</file>

@@ -39,11 +39,22 @@ class SolidColorProgram::Impl
 {
 public:
     Vector3f color;
-    GLint pointSizeLocation;
     GLint colorLocation;
-    GLint colorPerVertexLocation;
+    GLint pointSizeLocation;
     bool isColorChangable;
+
+    Impl();    
+};
+
+
+class SolidColorExProgram::Impl
+{
+public:
+    GLint colorPerVertexLocation;
+    GLint alphaLocation;
+    float alpha;
     bool isVertexColorEnabled;
+    bool alphaFlag;
 
     Impl();    
 };
@@ -361,11 +372,11 @@ void NolightingProgram::setTransform(const Matrix4& PV, const Affine3& V, const 
 
 
 SolidColorProgram::SolidColorProgram()
-    : NolightingProgram(
+    : SolidColorProgram(
         { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
           { ":/Base/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
 {
-    impl = new Impl;
+
 }
 
 
@@ -380,7 +391,6 @@ SolidColorProgram::Impl::Impl()
 {
     color.setZero();
     isColorChangable = true;
-    isVertexColorEnabled = false;
 }
 
 
@@ -395,9 +405,8 @@ void SolidColorProgram::initialize()
     NolightingProgram::initialize();
 
     auto& glsl = glslProgram();
-    impl->pointSizeLocation = glsl.getUniformLocation("pointSize");
     impl->colorLocation = glsl.getUniformLocation("color");
-    impl->colorPerVertexLocation = glsl.getUniformLocation("colorPerVertex");
+    impl->pointSizeLocation = glsl.getUniformLocation("pointSize");
 }
 
 
@@ -406,16 +415,18 @@ void SolidColorProgram::activate()
     ShaderProgram::activate();
     
     glUniform3fv(impl->colorLocation, 1, impl->color.data());
-
-    if(impl->colorPerVertexLocation >= 0){
-        glUniform1i(impl->colorPerVertexLocation, impl->isVertexColorEnabled);
-    }
 }
 
 
 void SolidColorProgram::setMaterial(const SgMaterial* material)
 {
-    setColor(material->diffuseColor() + material->emissiveColor());
+    SolidColorProgram::setColor(material->diffuseColor() + material->emissiveColor());
+}
+
+
+void SolidColorProgram::setPointSize(float s)
+{
+    glUniform1f(impl->pointSizeLocation, s);
 }
 
 
@@ -427,7 +438,6 @@ void SolidColorProgram::setColor(const Vector3f& color)
             impl->color = color;
         }
     }
-    setVertexColorEnabled(false);
 }
 
 
@@ -443,7 +453,79 @@ bool SolidColorProgram::isColorChangable() const
 }
 
 
-void SolidColorProgram::setVertexColorEnabled(bool on)
+SolidColorExProgram::SolidColorExProgram()
+    : SolidColorExProgram(
+        { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
+          { ":/Base/shader/SolidColorEx.frag", GL_FRAGMENT_SHADER } })
+{
+
+}
+
+
+SolidColorExProgram::SolidColorExProgram(std::initializer_list<ShaderSource> sources)
+    : SolidColorProgram(sources)
+{
+    setCapability(Transparency);
+    impl = new Impl;
+}
+
+
+SolidColorExProgram::Impl::Impl()
+{
+    isVertexColorEnabled = false;
+}
+    
+
+SolidColorExProgram::~SolidColorExProgram()
+{
+    delete impl;
+}
+
+
+void SolidColorExProgram::initialize()
+{
+    SolidColorProgram::initialize();
+
+    auto& glsl = glslProgram();
+    impl->colorPerVertexLocation = glsl.getUniformLocation("colorPerVertex");
+    impl->alphaLocation = glsl.getUniformLocation("alpha");
+    impl->alphaFlag = false;
+}
+
+
+void SolidColorExProgram::activate()
+{
+    SolidColorProgram::activate();
+
+    if(impl->colorPerVertexLocation >= 0){
+        glUniform1i(impl->colorPerVertexLocation, impl->isVertexColorEnabled);
+    }
+    glUniform1f(impl->alphaLocation, impl->alpha);
+    impl->alphaFlag = false;
+}
+
+
+void SolidColorExProgram::setMaterial(const SgMaterial* material)
+{
+    SolidColorExProgram::setColor(material->diffuseColor() + material->emissiveColor());
+
+    float a = 1.0f - material->transparency();
+    if(!impl->alphaFlag || impl->alpha != a){
+        glUniform1f(impl->alphaLocation, a);
+        impl->alpha = a;
+        impl->alphaFlag = true;
+    }
+}
+
+
+void SolidColorExProgram::setColor(const Vector3f& color)
+{
+    SolidColorProgram::setColor(color);
+    SolidColorExProgram::setVertexColorEnabled(false);
+}
+
+
+void SolidColorExProgram::setVertexColorEnabled(bool on)
 {
     if(on != impl->isVertexColorEnabled){
         if(impl->colorPerVertexLocation >= 0){
@@ -454,11 +536,59 @@ void SolidColorProgram::setVertexColorEnabled(bool on)
 }
 
 
-void SolidColorProgram::setPointSize(float s)
+ThickLineProgram::ThickLineProgram()
+    : SolidColorExProgram(
+        { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
+          { ":/Base/shader/ThickLine.geom", GL_GEOMETRY_SHADER },
+          { ":/Base/shader/SolidColorEx.frag", GL_FRAGMENT_SHADER } })
 {
-    glUniform1f(impl->pointSizeLocation, s);
+    impl = new Impl;
 }
 
+
+ThickLineProgram::~ThickLineProgram()
+{
+    delete impl;
+}
+
+    
+void ThickLineProgram::initialize()
+{
+    SolidColorExProgram::initialize();
+
+    impl->lineWidth = 1.0f;
+
+    auto& glsl = glslProgram();
+    impl->lineWidthLocation = glsl.getUniformLocation("lineWidth");
+    impl->viewportSizeLocation = glsl.getUniformLocation("viewportSize");
+    glsl.use();
+}
+
+
+void ThickLineProgram::activate()
+{
+    SolidColorExProgram::activate();
+
+    glUniform1f(impl->lineWidthLocation, impl->lineWidth);
+
+    if(impl->isViewportSizeInvalidated){
+        glUniform2f(impl->viewportSizeLocation, impl->viewportWidth, impl->viewportHeight);
+    }
+}
+
+
+void ThickLineProgram::setViewportSize(int width, int height)
+{
+    impl->viewportWidth = width;
+    impl->viewportHeight = height;
+    impl->isViewportSizeInvalidated = true;
+}
+
+
+void ThickLineProgram::setLineWidth(float width)
+{
+    impl->lineWidth = width;
+}
 
 
 SolidPointProgram::SolidPointProgram()
@@ -534,61 +664,6 @@ void SolidPointProgram::setViewportSize(int width, int height)
     impl->viewportWidth = width;
     impl->viewportHeight = height;
     impl->isViewportSizeInvalidated = true;
-}
-
-
-ThickLineProgram::ThickLineProgram()
-    : SolidColorProgram(
-        { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/ThickLine.geom", GL_GEOMETRY_SHADER },
-          { ":/Base/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
-{
-    impl = new Impl;
-}
-
-
-ThickLineProgram::~ThickLineProgram()
-{
-    delete impl;
-}
-
-    
-void ThickLineProgram::initialize()
-{
-    SolidColorProgram::initialize();
-
-    impl->lineWidth = 1.0f;
-
-    auto& glsl = glslProgram();
-    impl->lineWidthLocation = glsl.getUniformLocation("lineWidth");
-    impl->viewportSizeLocation = glsl.getUniformLocation("viewportSize");
-    glsl.use();
-}
-
-
-void ThickLineProgram::activate()
-{
-    SolidColorProgram::activate();
-
-    glUniform1f(impl->lineWidthLocation, impl->lineWidth);
-
-    if(impl->isViewportSizeInvalidated){
-        glUniform2f(impl->viewportSizeLocation, impl->viewportWidth, impl->viewportHeight);
-    }
-}
-
-
-void ThickLineProgram::setViewportSize(int width, int height)
-{
-    impl->viewportWidth = width;
-    impl->viewportHeight = height;
-    impl->isViewportSizeInvalidated = true;
-}
-
-
-void ThickLineProgram::setLineWidth(float width)
-{
-    impl->lineWidth = width;
 }
 
 
@@ -1314,9 +1389,9 @@ void FullLightingProgram::setNumShadows(int n)
 }
 
 
-ShadowMapProgram& FullLightingProgram::shadowMapProgram()
+ShadowMapProgram* FullLightingProgram::shadowMapProgram()
 {
-    return impl->shadowMapProgram;
+    return &impl->shadowMapProgram;
 }
 
 

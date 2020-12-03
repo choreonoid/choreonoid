@@ -219,7 +219,7 @@ class ScopedShaderProgramActivator
     bool changed;
     
 public:
-    ScopedShaderProgramActivator(ShaderProgram& program, GLSLSceneRenderer::Impl* renderer);
+    ScopedShaderProgramActivator(ShaderProgram* program, GLSLSceneRenderer::Impl* renderer);
     ScopedShaderProgramActivator(ScopedShaderProgramActivator&&) noexcept;
     ScopedShaderProgramActivator(const ScopedShaderProgramActivator&) = delete;
     ScopedShaderProgramActivator& operator=(const ScopedShaderProgramActivator&) = delete;
@@ -269,6 +269,7 @@ public:
 
     unique_ptr<NolightingProgram> nolightingProgram;
     unique_ptr<SolidColorProgram> solidColorProgram;
+    unique_ptr<SolidColorExProgram> solidColorExProgram;
     unique_ptr<SolidPointProgram> solidPointProgram;
     unique_ptr<ThickLineProgram> thickLineProgram;
     unique_ptr<MinimumLightingProgram> minimumLightingProgram;
@@ -422,7 +423,9 @@ public:
     void renderTransparentObjects();
     void renderOverlayObjects();    
     void endRendering();
-    void pushProgram(ShaderProgram& program);
+    void pushProgram(ShaderProgram* program);
+    template<class ShaderProgramType>
+    void pushProgram(unique_ptr<ShaderProgramType>& program);
     void popProgram();
     void setPickColor(int pickIndex);
     void pushPickNode(SgNode* node);
@@ -442,6 +445,12 @@ public:
     void renderShapeMain(SgShape* shape, const Affine3& position, int pickIndex);
     void applyCullingMode(SgMesh* mesh);
     void renderShapeVertices(SgShape* shape);
+    void renderPlot(
+        SgPlot* plot, GLenum primitiveMode,
+        const std::function<SgVertexArrayPtr()>& getVertices, std::function<bool()> setupShaderProgram);
+    void renderPlotMain(
+        SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& position, int pickIndex,
+        const std::function<bool()>& setupShaderProgram);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);
     void renderPolygonDrawStyle(SgPolygonDrawStyle* style);
@@ -476,7 +485,6 @@ public:
     void writeMeshTexCoordsHalfFloat(SgMesh* mesh, SgTexture* texture, VertexResource* resource);
     void writeMeshTexCoordsUnsignedShort(SgMesh* mesh, SgTexture* texture, VertexResource* resource);
     void writeMeshColors(SgMesh* mesh, VertexResource* resource);
-    void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
     void setPointSize(float size);
     void setGlLineWidth(float width);
@@ -767,6 +775,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
     if(isGLContextActive && !isCalledFromConstructor){
         nolightingProgram->release();
         solidColorProgram->release();
+        solidColorExProgram->release();
         solidPointProgram->release();
         thickLineProgram->release();
         minimumLightingProgram->release();
@@ -794,6 +803,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
 
         nolightingProgram.reset(new NolightingProgram);
         solidColorProgram.reset(new SolidColorProgram);
+        solidColorExProgram.reset(new SolidColorExProgram);
         solidPointProgram.reset(new SolidPointProgram);
         thickLineProgram.reset(new ThickLineProgram);
         minimumLightingProgram.reset(new MinimumLightingProgram);
@@ -930,6 +940,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
     try {
         nolightingProgram->initialize();
         solidColorProgram->initialize();
+        solidColorExProgram->initialize();
         solidPointProgram->initialize();
         thickLineProgram->initialize();
         minimumLightingProgram->initialize();
@@ -939,7 +950,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
     }
     catch(std::runtime_error& error){
         os() << error.what() << endl;
-        cout << error.what() << endl;
+        cerr << error.what() << endl;
         return false;
     }
 
@@ -1044,10 +1055,10 @@ void GLSLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 
 
 ScopedShaderProgramActivator::ScopedShaderProgramActivator
-(ShaderProgram& program, GLSLSceneRenderer::Impl* renderer)
+(ShaderProgram* program, GLSLSceneRenderer::Impl* renderer)
     : renderer(renderer)
 {
-    if(&program == renderer->currentProgram){
+    if(program == renderer->currentProgram){
         changed = false;
     } else {
         if(renderer->currentProgram){
@@ -1059,12 +1070,12 @@ ScopedShaderProgramActivator::ScopedShaderProgramActivator
         prevLightingProgram = renderer->currentLightingProgram;
         prevMaterialLightingProgram = renderer->currentMaterialLightingProgram;
     
-        renderer->currentProgram = &program;
-        renderer->currentSolidColorProgram = dynamic_cast<SolidColorProgram*>(&program);
-        renderer->currentLightingProgram = dynamic_cast<LightingProgram*>(&program);
-        renderer->currentMaterialLightingProgram = dynamic_cast<MaterialLightingProgram*>(&program);
+        renderer->currentProgram = program;
+        renderer->currentSolidColorProgram = dynamic_cast<SolidColorProgram*>(program);
+        renderer->currentLightingProgram = dynamic_cast<LightingProgram*>(program);
+        renderer->currentMaterialLightingProgram = dynamic_cast<MaterialLightingProgram*>(program);
 
-        program.activate();
+        program->activate();
         renderer->clearGLState();
         changed = true;
     }
@@ -1099,13 +1110,20 @@ ScopedShaderProgramActivator::~ScopedShaderProgramActivator()
 }
 
 
-void GLSLSceneRenderer::Impl::pushProgram(ShaderProgram& program)
+void GLSLSceneRenderer::Impl::pushProgram(ShaderProgram* program)
 {
     programStack.emplace_back(program, this);
 }
 
 
-void GLSLSceneRenderer::pushShaderProgram(ShaderProgram& program)
+template<class ShaderProgramType>
+void GLSLSceneRenderer::Impl::pushProgram(unique_ptr<ShaderProgramType>& program)
+{
+    programStack.emplace_back(program.get(), this);
+}
+
+
+void GLSLSceneRenderer::pushShaderProgram(ShaderProgram* program)
 {
     impl->programStack.emplace_back(program, impl);
 }
@@ -1151,15 +1169,15 @@ void GLSLSceneRenderer::Impl::doRender()
     switch(lightingMode){
 
     case NoLighting:
-        pushProgram(*nolightingProgram);
+        pushProgram(nolightingProgram);
         break;
 
     case SolidColorLighting:
-        pushProgram(*solidColorProgram);
+        pushProgram(solidColorExProgram);
         break;
 
     case MinimumLighting:
-        pushProgram(*minimumLightingProgram);
+        pushProgram(minimumLightingProgram);
         isLightweightRenderingBeingProcessed = true;
         isLowMemoryConsumptionRenderingBeingProcessed = true;
         break;
@@ -1217,7 +1235,7 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
 {
     isTextureBeingRendered = isTextureEnabled;
 
-    auto& program = *fullLightingProgram;
+    auto& program = fullLightingProgram;
 
     int shadowMapIndex = 0;
     
@@ -1227,17 +1245,17 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
         isRenderingShadowMap = true;
 
         int w, h;
-        program.getShadowMapSize(w, h);
+        program->getShadowMapSize(w, h);
         Array4i vp = self->viewport();
         glViewport(0, 0, w, h);
         self->GLSceneRenderer::updateViewportInformation(0, 0, w, h);
-        
-        pushProgram(program.shadowMapProgram());
+
+        pushProgram(program->shadowMapProgram());
         
         set<int>::iterator iter = shadowLightIndices.begin();
-        const int maxNumShadows = program.maxNumShadows();
+        const int maxNumShadows = program->maxNumShadows();
         while(iter != shadowLightIndices.end() && shadowMapIndex < maxNumShadows){
-            program.activateShadowMapGenerationPass(shadowMapIndex);
+            program->activateShadowMapGenerationPass(shadowMapIndex);
             int shadowLightIndex = *iter;
             if(renderShadowMap(shadowLightIndex)){
                 ++shadowMapIndex;
@@ -1253,8 +1271,8 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
     }
         
     pushProgram(program);
-    program.setNumShadows(shadowMapIndex);
-    program.activateMainRenderingPass();
+    program->setNumShadows(shadowMapIndex);
+    program->activateMainRenderingPass();
 }
 
 
@@ -1316,7 +1334,7 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
     isRenderingVisibleImage = false;
     beginRendering();
     
-    pushProgram(*solidColorProgram);
+    pushProgram(solidColorProgram);
     currentNodePath.clear();
     pickingNodePathList.clear();
     overlayPickIndex0 = std::numeric_limits<int>::max();
@@ -1423,7 +1441,7 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
             fullLightingProgram->setShadowMapViewProjection(PV);
-            fullLightingProgram->shadowMapProgram().initializeShadowMapBuffer();
+            fullLightingProgram->shadowMapProgram()->initializeShadowMapBuffer();
             renderingFunctions->dispatch(self->sceneRoot());
 
             if(USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING){
@@ -1599,7 +1617,7 @@ void GLSLSceneRenderer::Impl::doPureWireframeRendering()
 
 void GLSLSceneRenderer::Impl::doVertexRendering()
 {
-    ScopedShaderProgramActivator programActivator(*solidPointProgram, this);
+    ScopedShaderProgramActivator programActivator(solidPointProgram.get(), this);
     solidPointProgram->setProjectionMatrix(projectionMatrix);
 
     activateVertexRenderingFunctions();
@@ -2711,43 +2729,10 @@ void GLSLSceneRenderer::Impl::renderShapeVertices(SgShape* shape)
 }
 
 
-void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
-{
-    if(!pointSet->hasVertices()){
-        return;
-    }
-
-    ScopedShaderProgramActivator programActivator(*solidColorProgram, this);
-
-    const double s = pointSet->pointSize();
-    if(s > 0.0){
-        setPointSize(s);
-    } else {
-        setPointSize(defaultPointSize);
-    }
-    
-    renderPlot(pointSet, GL_POINTS,
-               [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); });
-}
-
-
 void GLSLSceneRenderer::Impl::renderPlot
-(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices)
+(SgPlot* plot, GLenum primitiveMode,
+ const std::function<SgVertexArrayPtr()>& getVertices, std::function<bool()> setupShaderProgram)
 {
-    auto pickIndex = pushPickEndNode(plot, true);
-
-    bool hasColors = plot->hasColors();
-    
-    if(isRenderingPickingImage){
-        currentSolidColorProgram->setVertexColorEnabled(false);
-    } else {
-        if(!hasColors){
-            renderMaterial(plot->material());
-        } else {
-            currentSolidColorProgram->setVertexColorEnabled(true);
-        }
-    }
-    
     VertexResource* resource = getOrCreateVertexResource(plot);
     if(!resource->isValid()){
         glBindVertexArray(resource->vao);
@@ -2763,7 +2748,7 @@ void GLSLSceneRenderer::Impl::renderPlot
         glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
 
-        if(hasColors){
+        if(plot->hasColors()){
             typedef Eigen::Array<GLubyte,3,1> Color;
             vector<Color> colors;
             colors.reserve(n);
@@ -2802,10 +2787,81 @@ void GLSLSceneRenderer::Impl::renderPlot
             glEnableVertexAttribArray(3);
         }
     }        
-
-    drawVertexResource(resource, primitiveMode, modelMatrixStack.back());
     
+    auto pickIndex = pushPickEndNode(plot, false);
+
+    bool isTransparent = false;
+    if(!isRenderingPickingImage){
+        auto material = plot->material();
+        if(minTransparency > 0.0 || (material && material->transparency() > 0.0)){
+            isTransparent = true;
+        }
+    }
+
+    if(!isTransparent){
+        renderPlotMain(
+            plot, primitiveMode, resource, modelMatrixStack.back(), pickIndex, setupShaderProgram);
+    } else {
+        SgPlotPtr plotPtr = plot;
+        int matrixIndex = modelMatrixBuffer.size();
+        modelMatrixBuffer.push_back(modelMatrixStack.back());
+        transparentRenderingQueue.emplace_back(
+            [this, plotPtr, primitiveMode, resource, matrixIndex, pickIndex, setupShaderProgram](){
+                renderPlotMain(
+                    plotPtr, primitiveMode, resource, modelMatrixBuffer[matrixIndex], pickIndex, setupShaderProgram);
+            });
+    }
     popPickNode();
+}
+
+
+void GLSLSceneRenderer::Impl::renderPlotMain
+(SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& position, int pickIndex,
+ const std::function<bool()>& setupShaderProgram)
+{
+    bool pushed = setupShaderProgram();
+    
+    if(isRenderingPickingImage){
+        setPickColor(pickIndex);
+    } else {
+        auto material = plot->material();
+        if(!plot->hasColors()){
+            renderMaterial(material);
+        } else {
+            if(material){
+                renderMaterial(material);
+            }
+            currentProgram->setVertexColorEnabled(true);
+        }
+    }
+
+    drawVertexResource(resource, primitiveMode, position);
+
+    if(pushed){
+        popProgram();
+    }
+}
+
+
+void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
+{
+    if(!isRenderingShadowMap && pointSet->hasVertices()){
+        renderPlot(
+            pointSet, GL_POINTS,
+            [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); },
+            [this, pointSet](){
+                if(!isRenderingPickingImage){
+                    pushProgram(solidColorExProgram);
+                }
+                const double s = pointSet->pointSize();
+                if(s > 0.0){
+                    setPointSize(s);
+                } else {
+                    setPointSize(defaultPointSize);
+                }
+                return !isRenderingPickingImage;
+            });
+    }
 }
 
 
@@ -2826,33 +2882,28 @@ static SgVertexArrayPtr getLineSetVertices(SgLineSet* lineSet)
 
 void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 {
-    if(isRenderingShadowMap){
-        return;
+    if(!isRenderingShadowMap && lineSet->hasVertices() && lineSet->numLines() > 0){
+        renderPlot(
+            lineSet, GL_LINES,
+            [lineSet](){ return getLineSetVertices(lineSet); },
+            [this, lineSet](){
+                float width = lineSet->lineWidth();
+                if(isRenderingPickingImage){
+                    if(width < MinLineWidthForPicking){
+                        width = MinLineWidthForPicking;
+                    }
+                } else if(width <= 0.0f){
+                    width = defaultLineWidth;
+                }
+                if(width == 1.0f){
+                    pushProgram(solidColorExProgram);
+                } else {
+                    thickLineProgram->setLineWidth(width);
+                    pushProgram(thickLineProgram);
+                }
+                return true;
+            });
     }
-    
-    if(!lineSet->hasVertices() || lineSet->numLines() <= 0){
-        return;
-    }
-
-    float width = lineSet->lineWidth();
-    if(isRenderingPickingImage){
-        if(width < MinLineWidthForPicking){
-            width = MinLineWidthForPicking;
-        }
-    } else if(width <= 0.0f){
-        width = defaultLineWidth;
-    }
-    SolidColorProgram* lineShader;
-    if(width == 1.0f){
-        lineShader = solidColorProgram.get();
-    } else {
-        thickLineProgram->setLineWidth(width);
-        lineShader = thickLineProgram.get();
-    }
-
-    ScopedShaderProgramActivator programActivator(*lineShader, this);
-    
-    renderPlot(lineSet, GL_LINES, [lineSet](){ return getLineSetVertices(lineSet); });
 }
 
 
@@ -2961,7 +3012,7 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
 
     pickedNodePath.clear();
 
-    ScopedShaderProgramActivator programActivator(*solidColorProgram, this);
+    ScopedShaderProgramActivator programActivator(solidColorExProgram.get(), this);
     
     renderOverlayMain(overlay, Affine3::Identity(), emptyNodePath);
 
@@ -2992,41 +3043,39 @@ void GLSLSceneRenderer::Impl::renderOutlineEdge(SgOutline* outline, const Affine
     glEnable(GL_STENCIL_TEST);
     glDisable(GL_DEPTH_TEST);
     
-    {
-        ScopedShaderProgramActivator programActivator(*nolightingProgram, this);
+    pushProgram(nolightingProgram);
+    glStencilFunc(GL_ALWAYS, 1, -1);
+    glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    renderChildNodes(outline);
+    popProgram();
 
-        glStencilFunc(GL_ALWAYS, 1, -1);
-        glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        
-        renderChildNodes(outline);
-    }
+    pushProgram(solidColorProgram);
 
-    {
-        ScopedShaderProgramActivator programActivator(*solidColorProgram, this);
-        solidColorProgram->setColor(outline->color());
-        solidColorProgram->setColorChangable(false);
+    solidColorProgram->setColor(outline->color());
+    solidColorProgram->setColorChangable(false);
 
-        glStencilFunc(GL_NOTEQUAL, 1, -1);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glStencilFunc(GL_NOTEQUAL, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-        float orgLineWidth = lineWidth;
-        setGlLineWidth(outline->lineWidth()*2+1);
+    float orgLineWidth = lineWidth;
+    setGlLineWidth(outline->lineWidth()*2+1);
 
-        GLint polygonMode[2]; // front and back
-        glGetIntegerv(GL_POLYGON_MODE, polygonMode);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    GLint polygonMode[2]; // front and back
+    glGetIntegerv(GL_POLYGON_MODE, polygonMode);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+    
+    renderChildNodes(outline);
+    
+    setGlLineWidth(orgLineWidth);
+    glPolygonMode(GL_FRONT_AND_BACK, polygonMode[0]);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    
+    solidColorProgram->setColorChangable(true);
 
-        renderChildNodes(outline);
-
-        setGlLineWidth(orgLineWidth);
-        glPolygonMode(GL_FRONT_AND_BACK, polygonMode[0]);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-        solidColorProgram->setColorChangable(true);
-    }
+    popProgram();
 
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
@@ -3048,7 +3097,7 @@ void GLSLSceneRenderer::Impl::renderLightweightRenderingGroup(SgLightweightRende
 
     bool pushed = false;
     if(currentLightingProgram){
-        pushProgram(*minimumLightingProgram);
+        pushProgram(minimumLightingProgram);
         if(!isLightweightRenderingBeingProcessed){
             renderLights(minimumLightingProgram.get());
         }
