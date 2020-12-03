@@ -65,16 +65,18 @@ public:
     PositionTagGroupItemPtr tagGroupItem;
     ScopedConnection tagGroupItemConnection;
     TagGroupModel* tagGroupModel;
+    mutable bool needToUpdateSelectedTagIndices;
+    mutable vector<int> selectedTagIndices;
     bool isSelectionChangedAlreadyCalled;
     bool isSelectionBeingUpdatedByTagSelectionChange;
     MenuManager contextMenuManager;
     Signal<void(const std::vector<int>& selected)> sigTagSelectionChanged;
-    vector<int> selectedTagIndices;
     Signal<void(int tagIndex)> sigTagPressed;
     Signal<void(int tagIndex)> sigTagDoubleClicked;
     Signal<void(MenuManager& menu)> sigContextMenuRequest;
 
     Impl(PositionTagListWidget* self);
+    void updateSelectedTagIndices();
     void onTagSelectionChanged();    
 };
 
@@ -393,6 +395,7 @@ PositionTagListWidget::PositionTagListWidget(QWidget* parent)
 PositionTagListWidget::Impl::Impl(PositionTagListWidget* self)
     : self(self)
 {
+    needToUpdateSelectedTagIndices = true;
     isSelectionChangedAlreadyCalled = false;
     isSelectionBeingUpdatedByTagSelectionChange = false;
 }
@@ -427,13 +430,22 @@ void PositionTagListWidget::setCurrentTagIndex(int tagIndex)
 }
 
 
-std::vector<int> PositionTagListWidget::selectedTagIndices() const
+const std::vector<int>& PositionTagListWidget::selectedTagIndices() const
 {
-    std::vector<int> indices;
-    for(auto& index : selectionModel()->selectedRows()){
-        indices.push_back(index.row());
+    if(impl->needToUpdateSelectedTagIndices){
+        impl->updateSelectedTagIndices();
     }
-    return indices;
+    return impl->selectedTagIndices;
+}
+
+
+void PositionTagListWidget::Impl::updateSelectedTagIndices()
+{
+    selectedTagIndices.clear();
+    for(auto& index : self->selectionModel()->selectedRows()){
+        selectedTagIndices.push_back(index.row());
+    }
+    needToUpdateSelectedTagIndices = false;
 }
 
 
@@ -508,19 +520,16 @@ void PositionTagListWidget::mousePressEvent(QMouseEvent* event)
 // Selection is changed by the table view
 void PositionTagListWidget::selectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
 {
+    impl->needToUpdateSelectedTagIndices = true;
     impl->isSelectionChangedAlreadyCalled = true;
     
     QTableView::selectionChanged(selected, deselected);
 
     if(!impl->isSelectionBeingUpdatedByTagSelectionChange){
 
-        impl->selectedTagIndices.clear();
-        for(auto& index : selectionModel()->selectedRows()){
-            impl->selectedTagIndices.push_back(index.row());
-        }
-        
+        impl->updateSelectedTagIndices();
         impl->sigTagSelectionChanged(impl->selectedTagIndices);
-        
+
         if(impl->tagGroupItem){
             impl->tagGroupItemConnection.block();
             impl->tagGroupItem->setSelectedTagIndices(impl->selectedTagIndices);
