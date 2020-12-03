@@ -19,7 +19,6 @@
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
-#include <map>
 #include "gettext.h"
 
 using namespace std;
@@ -57,12 +56,19 @@ public:
     SgLineSetPtr edgeLineSet;
     SgUpdate update;
     ScopedConnectionSet tagGroupConnections;
+
     PositionDraggerPtr positionDragger;
     int draggingTagIndex;
     Affine3 initialDraggerPosition;
-    typedef std::map<int, Affine3, std::less<int>,
-                     Eigen::aligned_allocator<std::pair<const int, Affine3>>> PositionMap;
-    PositionMap initialTagDragPositions;
+
+    struct TagPosition
+    {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        int index;
+        Affine3 T;
+        TagPosition(int index, const Affine3& T) : index(index), T(T) { }
+    };
+    vector<TagPosition, Eigen::aligned_allocator<TagPosition>> initialTagDragPositions;
     
     SceneTagGroup(PositionTagGroupItem::Impl* itemImpl);
     void finalize();
@@ -1115,10 +1121,14 @@ void SceneTagGroup::onDraggerDragStarted()
 {
     initialDraggerPosition = positionDragger->position();
 
+    auto& selection = impl->tagSelection;
     initialTagDragPositions.clear();
-    for(auto& tagIndex : impl->self->selectedTagIndices()){
-        auto tag = impl->tags->tagAt(tagIndex);
-        initialTagDragPositions[tagIndex] = tag->position();
+    initialTagDragPositions.reserve(impl->numSelectedTags);
+    int arrayIndex = 0;
+    for(size_t i=0; i < selection.size(); ++i){
+        if(selection[i]){
+            initialTagDragPositions.emplace_back(i, impl->tags->tagAt(i)->position());
+        }
     }
 }
     
@@ -1126,23 +1136,19 @@ void SceneTagGroup::onDraggerDragStarted()
 void SceneTagGroup::onDraggerDragged()
 {
     Affine3 T = positionDragger->draggingPosition();
-    const Affine3& T0 = initialDraggerPosition;
-    Affine3 T0_inv = T0.inverse(Eigen::Isometry);
-    Affine3 T_offset = T0_inv * T;
+    Affine3 T_base = T * initialDraggerPosition.inverse(Eigen::Isometry);
 
-    for(auto& kv : initialTagDragPositions){
-        int tagIndex = kv.first;
-        auto tag = impl->tags->tagAt(tagIndex);
-        if(tagIndex == draggingTagIndex){
+    for(auto& tagpos0 : initialTagDragPositions){
+        auto tag = impl->tags->tagAt(tagpos0.index);
+        if(tagpos0.index == draggingTagIndex){
             tag->setPosition(T);
             positionDragger->setPosition(T);
             update.resetAction(SgUpdate::MODIFIED);
             positionDragger->notifyUpdate(update);
         } else {
-            auto& S0 = kv.second;
-            tag->setPosition(T0 * T_offset * T0_inv * S0);
+            tag->setPosition(T_base * tagpos0.T);
         }
-        impl->tags->notifyTagUpdate(tagIndex);
+        impl->tags->notifyTagUpdate(tagpos0.index);
     }
 }
 
@@ -1296,12 +1302,18 @@ bool TargetLocationProxy::setLocation(const Position& T)
         impl->self->setOriginOffset(T);
         impl->self->notifyUpdate();
     } else {
-        int index = impl->locationTargetTagIndex;
-        auto tag = tags->tagAt(index);
-        tag->setPosition(T);
-        // impl->tagGroupConnections.block();
-        tags->notifyTagUpdate(index);
-        // impl->tagGroupConnections.unblock();
+        auto primaryTag = tags->tagAt(impl->locationTargetTagIndex);
+        Position T_base = T * primaryTag->position().inverse(Eigen::Isometry);
+        primaryTag->setPosition(T);
+        for(size_t i=0; i < impl->tagSelection.size(); ++i){
+            if(impl->tagSelection[i]){
+                if(i != impl->locationTargetTagIndex){
+                    auto tag = tags->tagAt(i);
+                    tag->setPosition(T_base * tag->position());
+                }
+                tags->notifyTagUpdate(i);
+            }
+        }
     }
     return true;
 }
