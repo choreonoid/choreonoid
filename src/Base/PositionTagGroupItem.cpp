@@ -178,6 +178,7 @@ public:
     SgFixedPixelSizeGroupPtr fixedSizeTagMarker;
     SgFixedPixelSizeGroupPtr fixedSizeSelectedTagMarker;
     SgFixedPixelSizeGroupPtr fixedSizeHighlightedTagMarker;
+    SgMaterialPtr material;
     bool originMarkerVisibility;
     bool edgeVisibility;
     
@@ -257,6 +258,7 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
     fixedSizeTagMarker = new SgFixedPixelSizeGroup;
     fixedSizeSelectedTagMarker = new SgFixedPixelSizeGroup;
     fixedSizeHighlightedTagMarker = new SgFixedPixelSizeGroup;
+    material = new SgMaterial;
     originMarkerVisibility = false;
     edgeVisibility = false;
     
@@ -697,6 +699,19 @@ void PositionTagGroupItem::setEdgeVisiblility(bool on)
 }
 
 
+float PositionTagGroupItem::transparency() const
+{
+    return impl->material->transparency();
+}
+
+
+void PositionTagGroupItem::setTransparency(float t)
+{
+    impl->material->setTransparency(t);
+    impl->material->notifyUpdate();
+}
+
+
 void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Number of tags"), impl->tags->numTags());
@@ -709,6 +724,8 @@ void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
                 [&](double s){ setTagMarkerSize(s); return true; });
     putProperty(_("Show edges"), impl->edgeVisibility,
                 [&](bool on){ setEdgeVisiblility(on); return true; });
+    putProperty(_("Transparency"), transparency(),
+                [&](float t){ setTransparency(t); return true; });
 }
 
 
@@ -866,6 +883,8 @@ SgNode* SceneTagGroup::getOrCreateTagMarker()
         // Z -> Y, Green
         lines->setLine(4, 1, 3);
         lines->setLineColor(4, 1);
+
+        lines->setMaterial(impl->material);
 
         impl->fixedSizeTagMarker->addChild(lines);
         markerLineSet = lines;

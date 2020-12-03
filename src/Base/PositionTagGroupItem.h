@@ -52,6 +52,9 @@ public:
     bool edgeVisibility() const;
     void setEdgeVisiblility(bool on);
 
+    float transparency() const;
+    void setTransparency(float t);
+
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
