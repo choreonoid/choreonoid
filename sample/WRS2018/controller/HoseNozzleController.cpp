@@ -14,7 +14,7 @@ using namespace cnoid;
 
 static float random(float max = 1.0f)
 {
-    return ((float)rand() / RAND_MAX) * max;
+    return ((float)rand() / (float)RAND_MAX) * max;
 }
 
 
