@@ -147,7 +147,7 @@ if(UNIX)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -finline-functions")
 
   option(ENABLE_NATIVE_CPU_ARCHITECTURE "Use the -march=native option to enable instruction set supported by the native processor architecture" OFF)
-  if(ENABLE_NATIVE_ARCHITECTURE)
+  if(ENABLE_NATIVE_CPU_ARCHITECTURE)
     set(compiler_general_options "${compiler_general_options} -march=native")
   endif()
 
