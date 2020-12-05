@@ -71,10 +71,10 @@ function(choreonoid_add_body_customizer)
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
-  if(CHOREONOID_BASE_LIBRARIES)
-    target_link_libraries(${target} ${CHOREONOID_BASE_LIBRARIES})
+  if(CHOREONOID_UTIL_LIBRARIES)
+    target_link_libraries(${target} ${CHOREONOID_UTIL_LIBRARIES})
   else()
-    target_link_libraries(${target} CnoidBase)
+    target_link_libraries(${target} CnoidUtil)
   endif()
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer
