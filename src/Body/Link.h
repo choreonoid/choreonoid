@@ -83,7 +83,7 @@ public:
 
     template<typename Derived>
     void setTranslation(const Eigen::MatrixBase<Derived>& p) {
-        T_.translation() = p.template cast<Affine3::Scalar>();
+        T_.translation() = p.template cast<Isometry3::Scalar>();
     }
 
     Isometry3::LinearPart R() { return T_.linear(); }
@@ -93,12 +93,15 @@ public:
 
     template<typename Derived>
     void setRotation(const Eigen::MatrixBase<Derived>& R) {
-        T_.linear() = R.template cast<Affine3::Scalar>();
+        T_.linear() = R.template cast<Isometry3::Scalar>();
     }
-
     template<typename T>
     void setRotation(const Eigen::AngleAxis<T>& a) {
-        T_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+        T_.linear() = a.template cast<Isometry3::Scalar>().toRotationMatrix();
+    }
+    template<typename Derived>
+    void setRotation(const Eigen::QuaternionBase<Derived>& q) {
+        T_.linear() = q.template cast<Isometry3::Scalar>().toRotationMatrix();
     }
     
     // To, Ro?
@@ -172,14 +175,15 @@ public:
 
     enum ActuationMode {
         NoActuation = 0,
-        JointTorque = 1,
-        JointForce = 1,
         JointEffort = 1,
-        JointAngle = 2,
+        JointForce = JointEffort,
+        JointTorque = JointEffort,
         JointDisplacement = 2,
+        JointAngle = JointDisplacement,
         JointVelocity = 3,
         JointSurfaceVelocity = 4,
         LinkPosition = 5,
+        LinkPositionAndVelocity = 6,
 
         // Deprecated
         NO_ACTUATION = NoActuation,
@@ -286,7 +290,7 @@ public:
     }
     template<typename T>
     void setOffsetRotation(const Eigen::AngleAxis<T>& a) {
-        Tb_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+        Tb_.linear() = a.template cast<Isometry3::Scalar>().toRotationMatrix();
     }
     
     template<typename Derived>
