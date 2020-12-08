@@ -242,7 +242,7 @@ void AizuSpiderController::controlTracks()
     switch(trackActuationMode){
 
     case Link::JOINT_VELOCITY:
-    case Link::JOINT_SURFACE_VELOCITY:
+    //case Link::JOINT_SURFACE_VELOCITY:
         for(int i=0; i < 3; ++i){
             tracks[i*2  ]->dq_target() = dq_L;
             tracks[i*2+1]->dq_target() = dq_R;

@@ -31,7 +31,7 @@ public:
             }
         }
         
-        link->setActuationMode(Link::ActuationMode::LINK_POSITION);
+        link->setActuationMode(Link::LinkPosition);
         io->enableOutput(link);
 
         k = 0.8 * io->timeStep();

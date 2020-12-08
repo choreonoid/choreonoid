@@ -135,17 +135,17 @@ public:
     DyLink* joint(int id) const {
         return static_cast<DyLink*>(Body::joint(id));
     }
-
     DyLink* link(int index) const {
         return static_cast<DyLink*>(Body::link(index));
     }
-
     DyLink* link(const std::string& name) const {
         return static_cast<DyLink*>(Body::link(name));
     }
-
     DyLink* rootLink() const {
         return static_cast<DyLink*>(Body::rootLink());
+    }
+    const std::vector<DyLink*>& links() const {
+        return reinterpret_cast<const std::vector<DyLink*>&>(Body::links());
     }
 
     void calcSpatialForwardKinematics();

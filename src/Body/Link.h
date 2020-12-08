@@ -53,6 +53,7 @@ public:
         
     bool isRoot() const { return !parent_; }
     bool isBodyRoot() const;
+    bool isStatic() const;
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }
@@ -153,7 +154,7 @@ public:
     const std::string& jointName() const;
     const std::string& jointSpecificName() const { return jointSpecificName_; }
         
-    JointType jointType() const { return jointType_; }
+    JointType jointType() const { return static_cast<JointType>(jointType_); }
     bool isFixedJoint() const { return (jointType_ >= FIXED_JOINT); }
     bool isFreeJoint() const { return jointType_ == FREE_JOINT; }
     bool isRevoluteJoint() const { return jointType_ == REVOLUTE_JOINT; }
@@ -173,20 +174,31 @@ public:
     /// Equivalent rotor inertia: n^2*Jm [kg.m^2]
     double Jm2() const { return Jm2_; }
 
-    enum ActuationMode {
-        NoActuation = 0,
-        JointEffort = 1,
+    enum StateFlag {
+
+        // States
+        StateNone = 0,
+        JointDisplacement = 1 << 0,
+        JointAngle = JointDisplacement,
+        JointVelocity = 1 << 1,
+        JointAcceleration = 1 << 2,
+        JointEffort = 1 << 3,
         JointForce = JointEffort,
         JointTorque = JointEffort,
-        JointDisplacement = 2,
-        JointAngle = JointDisplacement,
-        JointVelocity = 3,
-        JointSurfaceVelocity = 4,
-        LinkPosition = 5,
-        LinkPositionAndVelocity = 6,
+        LinkPosition = 1 << 4,
+        LinkTwist = 1 << 5,
+        LinkExtWrench = 1 << 6,
+        LinkContactState = 1 << 7,
+
+        // Options
+        JointSurfaceVelocity = JointVelocity | (1 << 8),
+        HighGainActuation = 1 << 9,
+
+        MaxStateTypeBit = 9,
+        NumStateTypes = 10,
 
         // Deprecated
-        NO_ACTUATION = NoActuation,
+        NO_ACTUATION = StateNone,
         JOINT_TORQUE = JointTorque,
         JOINT_FORCE = JointForce,
         JOINT_EFFORT = JointEffort,
@@ -194,12 +206,31 @@ public:
         JOINT_DISPLACEMENT = JointDisplacement,
         JOINT_VELOCITY = JointVelocity,
         JOINT_SURFACE_VELOCITY = JointSurfaceVelocity, // For pseudo continous tracks
-        LINK_POSITION = LinkPosition,
+        LINK_POSITION = LinkPosition
     };
 
-    ActuationMode actuationMode() const { return actuationMode_; }
-    void setActuationMode(ActuationMode mode) { actuationMode_ = mode; }
-    std::string actuationModeString() const;
+    // \ret Logical sum of the correpsonding StateType bits
+    short actuationMode() const { return actuationMode_; }
+    // \param mode Logical sum of the correpsonding StateType bits
+    void setActuationMode(short mode) { actuationMode_ = mode; }
+    
+    /**
+       The special mode which can be used to calculate contact forces only.
+       In order for this mode to work correctly, the mode should be specified for all the movable links.
+       The mode is currently supported by AISTSimulator.
+    */
+    static constexpr short AllStateHighGainActuationMode =
+        LinkPosition | LinkTwist | LinkExtWrench | JointDisplacement | JointVelocity | JointEffort | HighGainActuation;
+
+    // deprecated
+    typedef StateFlag ActuationMode;
+
+    // \ret Logical sum of the correpsonding StateType bits
+    short sensingMode() const { return sensingMode_; }
+    // \param mode Logical sum of the correpsonding StateType bits
+    void setSensingMode(short mode) { sensingMode_ = mode; }
+
+    static std::string getStateModeString(short mode);
     
     double q() const { return q_; }
     double& q() { return q_; }
@@ -245,6 +276,13 @@ public:
 
     ///< inertia tensor (self local, around c)
     const Matrix3& I() const { return I_; }    
+
+    const Vector6& externalWrench() const { return F_ext_; }
+    Vector6& externalWrench() { return F_ext_; }
+    Vector6::ConstFixedSegmentReturnType<3>::Type externalForce() const { return F_ext_.head<3>(); }
+    Vector6::FixedSegmentReturnType<3>::Type externalForce() { return F_ext_.head<3>(); }
+    Vector6::ConstFixedSegmentReturnType<3>::Type externalTorque() const { return F_ext_.tail<3>(); }
+    Vector6::FixedSegmentReturnType<3>::Type externalTorque() { return F_ext_.tail<3>(); }
 
     const Vector6& F_ext() const { return F_ext_; }
     Vector6& F_ext() { return F_ext_; }
@@ -294,7 +332,7 @@ public:
     }
     
     template<typename Derived>
-    [[deprecated]]
+    [[deprecated("You don't have to use this function.")]]
     void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
     }
         
@@ -323,19 +361,19 @@ public:
     void removeShapeNode(SgNode* shape, bool doNotify = false);
     void clearShapeNodes(bool doNotify = false);
 
-    [[deprecated]]
+    [[deprecated("You don't have to use this function.")]]
     void updateShapeRs() {}
 
     // The following two methods should be deprecated after introducing Tb
-    [[deprecated("Please use T() instead")]]
+    [[deprecated("Use T() instead.")]]
     Isometry3 Ta() const { return T(); }
-    [[deprecated("Please use R() instead")]]
+    [[deprecated("Uuse R() instead.")]]
     Matrix3 attitude() const { return R(); }
-    [[deprecated("Please use setRotation(.) instead")]]
+    [[deprecated("Use setRotation(.) instead.")]]
     void setAttitude(const Matrix3& Ra) { R() = Ra; }
     [[deprecated]]
     Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra; }
-    [[deprecated("Please use T() instead")]]
+    [[deprecated("Use T() instead.")]]
     void getAttitudeAndTranslation(Isometry3& out_T) {
         out_T = T();
     };
@@ -364,39 +402,48 @@ protected:
 
 private:
     int index_; 
-    int jointId_;
     Link* parent_;
     LinkPtr sibling_;
     LinkPtr child_;
     Body* body_;
+
     Isometry3 T_;
     Isometry3 Tb_;
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.    
+
+    short jointType_;
+    short jointId_;
+    short actuationMode_;
+    short sensingMode_;
+
     Vector3 a_;
-    JointType jointType_;
-    ActuationMode actuationMode_;
     double q_;
     double dq_;
     double ddq_;
-    double u_;
     double q_target_;
     double dq_target_;
+    double u_;
+    
     Vector3 v_;
     Vector3 w_;
     Vector3 dv_;
     Vector3 dw_;
+    Vector6 F_ext_; // should be Vector3 x 2?
+
     Vector3 c_;
     Vector3 wc_;
     double m_;
     Matrix3 I_;
+
     double Jm2_;
-    Vector6 F_ext_; // should be Vector3 x 2?
     double q_initial_;
     double q_upper_;
     double q_lower_;
     double dq_upper_;
     double dq_lower_;
+    
     int materialId_;
+    
     std::string name_;
     std::string jointSpecificName_;
 

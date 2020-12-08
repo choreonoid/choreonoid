@@ -79,8 +79,10 @@ public:
     AISTSimulatorItem* self;
 
     World<ConstraintForceSolver> world;
-
+    typedef std::map<Body*, int> BodyIndexMap;
+    BodyIndexMap bodyIndexMap;
     vector<shared_ptr<ForwardDynamicsCBM>> highGainDynamicsList;
+    vector<DyLink*> internalStateUpdateLinks;
         
     Selection dynamicsMode;
     Selection integrationMode;
@@ -97,9 +99,6 @@ public:
     bool is2Dmode;
     bool isKinematicWalkingEnabled;
     bool isOldAccelSensorMode;
-
-    typedef std::map<Body*, int> BodyIndexMap;
-    BodyIndexMap bodyIndexMap;
 
     stdx::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
@@ -436,6 +435,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     world.clearBodies();
     bodyIndexMap.clear();
     highGainDynamicsList.clear();
+    internalStateUpdateLinks.clear();
 
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<AISTSimBody*>(simBodies[i]));
@@ -466,12 +466,46 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
 {
     DyBody* body = static_cast<DyBody*>(simBody->body());
 
+    int numAllStateHighGainActuationModeLinks = 0;
     bool hasHighgainJoints = false;
+    
     for(auto& link : body->links()){
-        if(link->actuationMode() == Link::JOINT_DISPLACEMENT ||
-           link->actuationMode() == Link::JOINT_VELOCITY ||
-           link->actuationMode() == Link::LINK_POSITION){
-            hasHighgainJoints = true;
+        int actuationMode = link->actuationMode();
+        if(actuationMode && (actuationMode != Link::JointEffort)){
+
+            if(actuationMode == Link::JointDisplacement ||
+               actuationMode == Link::JointVelocity ||
+               actuationMode == Link::LinkPosition){
+                hasHighgainJoints = true;
+
+            } else if(actuationMode == Link::AllStateHighGainActuationMode){
+                internalStateUpdateLinks.push_back(link);
+                ++numAllStateHighGainActuationModeLinks;
+
+            } else {
+                mv->putln(
+                    format(_("{0}: Actuation mode \"{1}\" specified for the {2} link of {3} is not supported."),
+                           self->displayName(), Link::getStateModeString(actuationMode), link->name(), body->name()),
+                    MessageView::Warning);
+            }
+        }
+    }
+
+    if(numAllStateHighGainActuationModeLinks > 0){
+        int numMovableLinks = 0;
+        for(auto& link : body->links()){
+            if(!link->isStatic()){
+                ++numMovableLinks;
+            }
+        }
+        if(numAllStateHighGainActuationModeLinks < numMovableLinks){
+            mv->putln(format("numAllStateHighGainActuationModeLinks: {0}, numMovableLinks: {1}",
+                             numAllStateHighGainActuationModeLinks, numMovableLinks));
+            mv->putln(
+                format(_("{0}: The all state high-gain actuation mode is specified for some links of {1}, "
+                         "but the mode should be specified for all the movable links to make the mode work correctly."),
+                   self->displayName(), body->name()),
+            MessageView::Warning);
         }
     }
 
@@ -499,12 +533,22 @@ void AISTSimulatorItemImpl::clearExternalForces()
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     switch(impl->dynamicsMode.which()){
+
     case FORWARD_DYNAMICS:
         for(auto&& dynamics : impl->highGainDynamicsList){
             dynamics->complementHighGainModeCommandValues();
         }
+        // Update the internal states for a special actuation mode
+        for(auto& dyLink : impl->internalStateUpdateLinks){
+            if(dyLink->actuationMode() == Link::AllStateHighGainActuationMode){
+                dyLink->q() = dyLink->q_target();
+                dyLink->dq() = dyLink->dq_target();
+                dyLink->vo() = dyLink->v() - dyLink->w().cross(dyLink->p());
+            }
+        }
         impl->world.calcNextState();
         break;
+        
     case KINEMATICS:
         impl->stepKinematicsSimulation(activeSimBodies);
         break;

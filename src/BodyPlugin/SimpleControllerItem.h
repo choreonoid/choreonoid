@@ -10,7 +10,6 @@
 
 namespace cnoid {
 
-class SimpleControllerItemImpl;
 class SimpleController;
 
 class CNOID_EXPORT SimpleControllerItem : public ControllerItem
@@ -42,8 +41,8 @@ protected:
     virtual bool restore(const Archive& archive) override;
         
 private:
-    SimpleControllerItemImpl* impl;
-    friend class SimpleControllerItemImpl;
+    class Impl;
+    Impl* impl;
 };
         
 typedef ref_ptr<SimpleControllerItem> SimpleControllerItemPtr;

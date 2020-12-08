@@ -24,8 +24,9 @@ public:
                 return false;
             }
         }
-        
-        io->enableOutput(link, LINK_FORCE);
+
+        link->setActuationMode(LinkExtWrench);
+        io->enableIO(link);
 
         if(!joystick.isReady()){
             os << "Joystick is not ready: " << joystick.errorMessage() << endl;

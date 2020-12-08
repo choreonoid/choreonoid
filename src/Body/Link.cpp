@@ -16,31 +16,32 @@ using namespace cnoid;
 Link::Link()
 {
     index_ = -1;
-    jointId_ = -1;
     parent_ = nullptr;
     body_ = nullptr;
     T_.setIdentity();
     Tb_.setIdentity();
     Rs_.setIdentity();
+    jointType_ = FixedJoint;
+    jointId_ = -1;
+    actuationMode_ = StateNone;
+    sensingMode_ = LINK_POSITION | JOINT_DISPLACEMENT;
     a_ = Vector3::UnitZ();
-    jointType_ = FIXED_JOINT;
-    actuationMode_ = NO_ACTUATION;
     q_ = 0.0;
     dq_ = 0.0;
     ddq_ = 0.0;
-    u_ = 0.0;
     q_target_ = 0.0;
     dq_target_ = 0.0;
+    u_ = 0.0;
     v_.setZero();
     w_.setZero();
     dv_.setZero();
     dw_.setZero();
+    F_ext_.setZero();
     c_.setZero();
     wc_.setZero();
     m_ = 1.0;
     I_.setIdentity();
     Jm2_ = 0.0;
-    F_ext_.setZero();
     q_initial_ = 0.0;
     q_upper_ = std::numeric_limits<double>::max();
     q_lower_ = -std::numeric_limits<double>::max();
@@ -58,7 +59,6 @@ Link::Link(const Link& org)
       jointSpecificName_(org.jointSpecificName_)
 {
     index_ = -1; // should be set by a Body object
-    jointId_ = org.jointId_;
 
     parent_ = nullptr;
     body_ = nullptr;
@@ -66,10 +66,12 @@ Link::Link(const Link& org)
     T_ = org.T_;
     Tb_ = org.Tb_;
     
-    a_ = org.a_;
     jointType_ = org.jointType_;
+    jointId_ = org.jointId_;
     actuationMode_ = org.actuationMode_;
-
+    sensingMode_ = org.sensingMode_;
+    
+    a_ = org.a_;
     q_ = org.q_;
     dq_ = org.dq_;
     ddq_ = org.ddq_;
@@ -82,15 +84,14 @@ Link::Link(const Link& org)
     w_ = org.w_;
     dv_ = org.dv_;
     dw_ = org.dw_;
+    F_ext_ = org.F_ext_;
     
     c_ = org.c_;
     wc_ = org.wc_;
     m_ = org.m_;
     I_ = org.I_;
+
     Jm2_ = org.Jm2_;
-
-    F_ext_ = org.F_ext_;
-
     q_initial_ = org.q_initial_;
     q_upper_ = org.q_upper_;
     q_lower_ = org.q_lower_;
@@ -131,11 +132,11 @@ Link::~Link()
 
 void Link::initializeState()
 {
-    u_ = 0.0;
     dq_ = 0.0;
     ddq_ = 0.0;
     q_target_ = q_;
     dq_target_ = dq_;
+    u_ = 0.0;
     v_.setZero();
     w_.setZero();
     dv_.setZero();
@@ -164,6 +165,18 @@ void Link::setBodySub(Body* newBody)
 bool Link::isBodyRoot() const
 {
     return !parent_ || this == body_->rootLink();
+}
+
+
+bool Link::isStatic() const
+{
+    if(!isFixedJoint()){
+        return false;
+    }
+    if(!isRoot()){
+        return parent_->isStatic();
+    }
+    return true;
 }
 
 
@@ -286,11 +299,11 @@ const std::string& Link::jointName() const
 std::string Link::jointTypeString(bool useUnderscore) const
 {
     switch(jointType_){
-    case REVOLUTE_JOINT:    return "revolute";
-    case PRISMATIC_JOINT:   return "prismatic";
-    case FREE_JOINT:        return "free";
-    case FIXED_JOINT:       return "fixed";
-    case PSEUDO_CONTINUOUS_TRACK:{
+    case RevoluteJoint:    return "revolute";
+    case PrismaticJoint:   return "prismatic";
+    case FreeJoint:        return "free";
+    case FixedJoint:       return "fixed";
+    case PseudoContinousTrack: {
         if(useUnderscore){
             return "pseudo_continuous_track";
         } else {
@@ -302,40 +315,52 @@ std::string Link::jointTypeString(bool useUnderscore) const
 }
 
 
-std::string Link::actuationModeString() const
+std::string Link::getStateModeString(short mode)
 {
-    switch(actuationMode_){
-
-    case NO_ACTUATION:
-        return "no actuation";
-
-    case JOINT_EFFORT:
-        if(isRevoluteJoint()){
-            return "joint torque";
-        } else if(isPrismaticJoint()){
-            return "joint force";
-        } else {
-            return "joint effort";
+    if(mode == StateNone){
+        return "None";
+    } else {
+        string s;
+        for(int i=0; i < NumStateTypes; ++i){
+            int modeBit = 1 << i;
+            if(mode & modeBit){
+                if(!s.empty()){
+                    s += " + ";
+                }
+                switch(modeBit){
+                case JointDisplacement:
+                    s += "Joint Displacement";
+                    break;
+                case JointVelocity:
+                    s += "Joint Velocity";
+                    break;
+                case JointAcceleration:
+                    s += "Joint Acceleration";
+                    break;
+                case JointEffort:
+                    s += "Joint Effort";
+                    break;
+                case LinkPosition:
+                    s += "Link Position";
+                    break;
+                case LinkTwist:
+                    s += "Link Twist";
+                    break;
+                case LinkExtWrench:
+                    s += "Link External Wrench";
+                    break;
+                case LinkContactState:
+                    s += "Link Contact State";
+                    break;
+                case JointSurfaceVelocity:
+                    s += "Joint Surface Velocity";
+                    break;
+                default:
+                    break;
+                }
+            }
         }
-
-    case JOINT_DISPLACEMENT:
-        if(isRevoluteJoint()){
-            return "joint angle";
-        } else {
-            return "joint displacement";
-        }
-
-    case JOINT_VELOCITY:
-        return "joint velocity";
-
-    case JOINT_SURFACE_VELOCITY:
-        return "joint surface velocity";
-
-    case LINK_POSITION:
-        return "link position";
-
-    default:
-        return "unknown";
+        return s;
     }
 }
 

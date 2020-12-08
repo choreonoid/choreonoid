@@ -13,18 +13,6 @@ namespace cnoid {
 class CNOID_EXPORT SimpleControllerIO : public ControllerIO
 {
   public:
-    enum StateType {
-        JOINT_ANGLE = 1 << 0,
-        JOINT_DISPLACEMENT = 1 << 0,
-        JOINT_VELOCITY = 1 << 1,
-        JOINT_ACCELERATION = 1 << 2,
-        JOINT_TORQUE = 1 << 3,
-        JOINT_FORCE = 1 << 3,
-        JOINT_EFFORT = 1 << 3,
-        LINK_POSITION = 1 << 4,
-        LINK_FORCE = 1 << 5
-    };
-
     virtual std::string controllerName() const = 0;
 
     virtual void enableIO(Link* link) = 0;
@@ -42,28 +30,25 @@ class CNOID_EXPORT SimpleControllerIO : public ControllerIO
         return body()->findCache<T>(name);
     }
 
-    //! \deprecated Use the controllerName function
+    [[deprecated("Use the controllerName function.")]]
     std::string name() const;
-    
-    //! \deprecated Use enableInput for all links
+    [[deprecated("Use enableInput for all links.")]]
     virtual void setJointInput(int stateTypes);
-    //! \deprecated Use enableOutput and Link::setActuationMode for all links
+    [[deprecated("Use enableOutput and Link::setActuationMode for all links.")]]
     virtual void setJointOutput(int stateTypes);
-    //! \deprecated Use enableInput for the link
+    [[deprecated("Use enableInput for the link.")]]
     virtual void setLinkInput(Link* link, int stateTypes);
-    //! \deprecated Use enableOutput and Link::setActuationMode for the link
+    [[deprecated("Use enableOutput and Link::setActuationMode for the link.")]]
     virtual void setLinkOutput(Link* link, int stateTypes);
 };
 
 
-/**
-   \deprecated.
-   Use ControllerIO::isNoDelayMode() and ControllerIO::setNoDelayMode()
-*/
 class CNOID_EXPORT SimulationSimpleControllerIO : public SimpleControllerIO
 {
 public:
+    [[deprecated("Use ControllerIO::isNoDelayMode().")]]
     virtual bool isImmediateMode() const = 0;
+    [[deprecated("Use ControllerIO::setNoDelayMode().")]]
     virtual void setImmediateMode(bool on) = 0;
 };
 
@@ -144,15 +129,31 @@ public:
     virtual void unconfigure();
 
     enum StateType {
-        JOINT_ANGLE        = SimpleControllerIO::JOINT_ANGLE,
-        JOINT_DISPLACEMENT = SimpleControllerIO::JOINT_DISPLACEMENT,
-        JOINT_VELOCITY     = SimpleControllerIO::JOINT_VELOCITY,
-        JOINT_ACCELERATION = SimpleControllerIO::JOINT_ACCELERATION,
-        JOINT_TORQUE       = SimpleControllerIO::JOINT_TORQUE,
-        JOINT_FORCE        = SimpleControllerIO::JOINT_FORCE,
-        JOINT_EFFORT       = SimpleControllerIO::JOINT_EFFORT,
-        LINK_POSITION      = SimpleControllerIO::LINK_POSITION,
-        LINK_FORCE         = SimpleControllerIO::LINK_FORCE
+        StateNone            = Link::StateNone,
+        JointDisplacement    = Link::JointDisplacement,
+        JointAngle           = Link::JointAngle,
+        JointVelocity        = Link::JointVelocity,
+        JointAcceleration    = Link::JointAcceleration,
+        JointEffort          = Link::JointEffort,
+        JointForce           = Link::JointForce,
+        JointTorque          = Link::JointTorque,
+        LinkPosition         = Link::LinkPosition,
+        LinkTwist            = Link::LinkTwist,
+        LinkExtWrench        = Link::LinkExtWrench,
+        LinkContactState     = Link::LinkContactState,
+
+        JointSurfaceVelocity = Link::JointSurfaceVelocity,
+
+        // deprecated
+        JOINT_DISPLACEMENT   = JointDisplacement,
+        JOINT_ANGLE          = JointAngle,
+        JOINT_VELOCITY       = JointVelocity,
+        JOINT_ACCELERATION   = JointAcceleration,
+        JOINT_EFFORT         = JointEffort,
+        JOINT_TORQUE         = JointTorque,
+        JOINT_FORCE          = JointForce,
+        LINK_POSITION        = LinkPosition,
+        LINK_FORCE           = LinkExtWrench
     };
 
   protected:

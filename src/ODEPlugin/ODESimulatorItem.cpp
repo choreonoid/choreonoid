@@ -1234,7 +1234,7 @@ bool ODESimulatorItem::stepSimulation(const std::vector<SimulationBody*>& active
 
 bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-	for(size_t i=0; i < activeSimBodies.size(); ++i){
+    for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
         if(odeBody->worldID){
@@ -1242,9 +1242,9 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         }
     }
 
-	if(MEASURE_PHYSICS_CALCULATION_TIME){
-	    physicsTimer.start();
-	}
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        physicsTimer.start();
+    }
 
     dJointGroupEmpty(contactJointGroupID);
 
