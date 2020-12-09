@@ -10,8 +10,6 @@
 
 namespace cnoid {
 
-class GeneralSliderViewImpl;
-        
 class CNOID_EXPORT GeneralSliderView : public View
 {
 public:
@@ -21,25 +19,29 @@ public:
     GeneralSliderView();
     virtual ~GeneralSliderView();
 
-    class Slider {
+    class Slider : public Referenced
+    {
     public:
         virtual double value() const = 0;
         virtual void setValue(double value, bool doSync = false) = 0;
         virtual void setCallback(std::function<void(double value)> callback) = 0;
     };
+    typedef ref_ptr<Slider> SliderPtr;
 
-    Slider* getOrCreateSlider(
+    SliderPtr getOrCreateSlider(
         const std::string& owner, const std::string& name,
         double lower = 0.0, double upper = 999.0, int precision = 0);
     void removeSlider(Slider* slider);
     void removeSliders(const std::string& owner);
+
+    class Impl;
 
 protected:
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);
             
 private:
-    GeneralSliderViewImpl* impl;
+    Impl* impl;
 };
 
 }

@@ -23,15 +23,16 @@ namespace {
 // slider resolution
 const double resolution = 1000000.0;
 
-class SliderUnit : public Referenced, public GeneralSliderView::Slider
+class SliderUnit : public GeneralSliderView::Slider
 {
 public:
-    GeneralSliderViewImpl* viewImpl;
+    GeneralSliderView::Impl* viewImpl;
     mutable std::mutex valueMutex;
     mutable std::mutex callbackMutex;
     double value_;
     function<void(double value)> callback;
     string owner;
+    string name;
     QLabel nameLabel;
     DoubleSpinBox spin;
     QLabel lowerLimitLabel;
@@ -39,7 +40,7 @@ public:
     QLabel upperLimitLabel;
 
     SliderUnit(
-        GeneralSliderViewImpl* viewImpl, const string& owner, const string& name,
+        GeneralSliderView::Impl* viewImpl, const string& owner, const string& name,
         double lower, double upper, int precision);
     ~SliderUnit();
     virtual double value() const override;
@@ -56,7 +57,7 @@ typedef ref_ptr<SliderUnit> SliderUnitPtr;
 
 namespace cnoid {
 
-class GeneralSliderViewImpl
+class GeneralSliderView::Impl
 {
 public:
     GeneralSliderView* self;
@@ -64,10 +65,12 @@ public:
     QWidget sliderGridBase;
     QGridLayout sliderGrid;
     vector<SliderUnitPtr> sliders;
+    typedef unordered_map<string, SliderUnitPtr> SliderMap;
+    unordered_map<string, SliderMap> allSliderMap;
     std::mutex slidersMutex;
 
-    GeneralSliderViewImpl(GeneralSliderView* self);
-    ~GeneralSliderViewImpl();
+    Impl(GeneralSliderView* self);
+    ~Impl();
     void getOrCreateSlider(
         const std::string& owner, const std::string& name,
         double lower, double upper, int precision, GeneralSliderView::Slider*& out_slider);
@@ -81,10 +84,11 @@ public:
 
 
 SliderUnit::SliderUnit
-(GeneralSliderViewImpl* viewImpl, const string& owner, const string& name,
+(GeneralSliderView::Impl* viewImpl, const string& owner, const string& name,
  double lower, double upper, int precision)
     : viewImpl(viewImpl),
       owner(owner),
+      name(name),
       nameLabel(&viewImpl->sliderGridBase),
       spin(&viewImpl->sliderGridBase),
       lowerLimitLabel(&viewImpl->sliderGridBase),
@@ -224,12 +228,12 @@ GeneralSliderView* GeneralSliderView::instance()
 
 GeneralSliderView::GeneralSliderView()
 {
-    impl = new GeneralSliderViewImpl(this);
+    impl = new Impl(this);
 }
 
 
-GeneralSliderViewImpl::GeneralSliderViewImpl(GeneralSliderView* self) :
-    self(self)
+GeneralSliderView::Impl::Impl(GeneralSliderView* self)
+    : self(self)
 {
     self->setDefaultLayoutArea(View::CENTER);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
@@ -261,13 +265,13 @@ GeneralSliderView::~GeneralSliderView()
 }
 
 
-GeneralSliderViewImpl::~GeneralSliderViewImpl()
+GeneralSliderView::Impl::~Impl()
 {
-    sliders.clear();
+
 }
 
 
-GeneralSliderView::Slider* GeneralSliderView::getOrCreateSlider
+GeneralSliderView::SliderPtr GeneralSliderView::getOrCreateSlider
 (const std::string& owner, const std::string& name, double lower, double upper, int precision)
 {
     Slider* slider;
@@ -280,23 +284,38 @@ GeneralSliderView::Slider* GeneralSliderView::getOrCreateSlider
 }
 
 
-void GeneralSliderViewImpl::getOrCreateSlider
+void GeneralSliderView::Impl::getOrCreateSlider
 (const std::string& owner, const std::string& name,
  double lower, double upper, int precision, GeneralSliderView::Slider*& out_slider)
 {
-    auto sliderUnit = new SliderUnit(this, owner, name, lower, upper, precision);
-
     std::lock_guard<std::mutex> lock(slidersMutex);
-    int row = sliders.size();
-    sliders.push_back(sliderUnit);
-
-    attachSlider(sliderUnit, row);
     
-    out_slider = sliderUnit;
+    SliderUnit* slider = nullptr;
+    SliderMap* pSliderMap = nullptr;
+    auto p = allSliderMap.find(owner);
+    if(p != allSliderMap.end()){
+        pSliderMap = &p->second;
+        auto q = pSliderMap->find(name);
+        if(q != pSliderMap->end()){
+            slider = q->second;
+        }
+    }
+    if(!slider){
+        slider = new SliderUnit(this, owner, name, lower, upper, precision);
+        int row = sliders.size();
+        sliders.push_back(slider);
+        attachSlider(slider, row);
+
+        if(!pSliderMap){
+            pSliderMap = &allSliderMap[owner];
+        }
+        (*pSliderMap)[name] = slider;
+    }
+    out_slider = slider;
 }
     
 
-void GeneralSliderViewImpl::attachSlider(SliderUnit* unit, int row)
+void GeneralSliderView::Impl::attachSlider(SliderUnit* unit, int row)
 {
     sliderGrid.addWidget(&unit->nameLabel, row, 0);
     sliderGrid.addWidget(&unit->spin, row, 1);
@@ -312,13 +331,21 @@ void GeneralSliderView::removeSlider(GeneralSliderView::Slider* slider)
 }
 
 
-void GeneralSliderViewImpl::removeSlider(GeneralSliderView::Slider* slider)
+void GeneralSliderView::Impl::removeSlider(GeneralSliderView::Slider* slider)
 {
     std::lock_guard<std::mutex> lock(slidersMutex);
+
+    auto sliderUnit = static_cast<SliderUnit*>(slider);
+    auto p = allSliderMap.find(sliderUnit->owner);
+    if(p != allSliderMap.end()){
+        auto& sliderMap = p->second;
+        sliderMap.erase(sliderUnit->name);
+    }
     auto iter = std::find(sliders.begin(), sliders.end(), slider);
     if(iter != sliders.end()){
         sliders.erase(iter);
     }
+            
     updateSliderGrid();
 }
 
@@ -330,9 +357,11 @@ void GeneralSliderView::removeSliders(const std::string& owner)
 }
     
 
-void GeneralSliderViewImpl::removeSliders(const std::string& owner)
+void GeneralSliderView::Impl::removeSliders(const std::string& owner)
 {
     std::lock_guard<std::mutex> lock(slidersMutex);
+
+    allSliderMap.erase(owner);
 
     auto pred = [owner](SliderUnit* slider){ return slider->owner == owner; };
     sliders.erase(std::remove_if(sliders.begin(), sliders.end(), pred), sliders.end());
@@ -341,7 +370,7 @@ void GeneralSliderViewImpl::removeSliders(const std::string& owner)
 }
 
 
-void GeneralSliderViewImpl::updateSliderGrid()
+void GeneralSliderView::Impl::updateSliderGrid()
 {
     for(size_t i=0; i < sliders.size(); ++i){
         attachSlider(sliders[i], i);
