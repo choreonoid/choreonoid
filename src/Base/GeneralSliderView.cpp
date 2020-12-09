@@ -20,8 +20,6 @@ using namespace cnoid;
 
 namespace {
 
-GeneralSliderView* instance = nullptr;
-
 // slider resolution
 const double resolution = 1000000.0;
 
@@ -187,10 +185,10 @@ void SliderUnit::onSliderValueChanged(double v)
         spin.blockSignals(true);
         spin.setValue(value_);
         spin.blockSignals(false);
-    }
-    {
-        std::lock_guard<std::mutex> lock(callbackMutex);
-        callback(v);
+        {
+            std::lock_guard<std::mutex> lock(callbackMutex);
+            callback(value_);
+        }
     }
 }
 
@@ -213,15 +211,14 @@ void SliderUnit::onSpinValueChanged(double v)
 
 void GeneralSliderView::initializeClass(ExtensionManager* ext)
 {
-    ::instance =
-        ext->viewManager().registerClass<GeneralSliderView>(
-            "GeneralSliderView", N_("General Sliders"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<GeneralSliderView>(
+        "GeneralSliderView", N_("General Sliders"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
 GeneralSliderView* GeneralSliderView::instance()
 {
-    return ::instance;
+    return ViewManager::getOrCreateView<GeneralSliderView>();
 }
 
 
