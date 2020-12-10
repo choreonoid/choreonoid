@@ -10,6 +10,7 @@
 #include <QLabel>
 #include <QGridLayout>
 #include <QScrollArea>
+#include <unordered_map>
 #include <mutex>
 #include <algorithm>
 #include <cmath>

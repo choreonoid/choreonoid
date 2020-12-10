@@ -53,7 +53,7 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Isometry3& T_par
     ss << agx::UuidGenerator().generate().str() << link->name() << std::flush;
     _collisionGroupName = ss.str();
 
-    const Link::ActuationMode& actuationMode = link->actuationMode();
+    auto actuationMode = link->actuationMode();
     if(actuationMode == Link::ActuationMode::NO_ACTUATION){
     }else if(actuationMode == Link::ActuationMode::LINK_POSITION){
         agxBody->addControllableLink(this);
