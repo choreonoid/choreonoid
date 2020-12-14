@@ -278,6 +278,34 @@ void BoundingBoxf::expandBy(const BoundingBoxf& bbox)
 }
 
 
+void BoundingBoxf::expandBy(const BoundingBox& bbox)
+{
+    if(!bbox.empty()){
+        if(bbox.min().x() < min_.x()){
+            min_.x() = bbox.min().x();
+        }
+        if(bbox.max().x() > max_.x()){
+            max_.x() = bbox.max().x();
+        }
+        if(bbox.min().y() < min_.y()){
+            min_.y() = bbox.min().y();
+        }
+        if(bbox.max().y() > max_.y()){
+            max_.y() = bbox.max().y();
+        }
+        if(bbox.min().z() < min_.z()){
+            min_.z() = bbox.min().z();
+        }
+        if(bbox.max().z() > max_.z()){
+            max_.z() = bbox.max().z();
+        }
+        if(empty_){
+            empty_ = (min_.x() >= max_.x()) && (min_.y() >= max_.y()) && (min_.z() >= max_.z());
+        }
+    }
+}
+
+
 void BoundingBoxf::transform(const Affine3f& T)
 {
     if(!empty()){

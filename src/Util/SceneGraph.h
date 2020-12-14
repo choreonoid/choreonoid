@@ -221,8 +221,9 @@ public:
     virtual SgObject* childObject(int index) override;
     virtual void onUpdated(SgUpdate& update) override;
     virtual const BoundingBox& boundingBox() const override;
-    
-    void invalidateBoundingBox() { isBboxCacheValid = false; }
+
+    bool hasValidBoundingBoxCache() const { return hasValidBoundingBoxCache_; }
+    void invalidateBoundingBox() { hasValidBoundingBoxCache_ = false; }
 
     iterator begin() { return children.begin(); }
     iterator end() { return children.end(); }
@@ -299,7 +300,7 @@ protected:
     SgGroup(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     mutable BoundingBox bboxCache;
-    mutable bool isBboxCacheValid;
+    mutable bool hasValidBoundingBoxCache_;
 
 private:
     Container children;

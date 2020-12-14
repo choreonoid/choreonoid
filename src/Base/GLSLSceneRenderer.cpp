@@ -459,6 +459,7 @@ public:
     void renderOverlayMain(SgOverlay* overlay, const Affine3& T, const SgNodePath& nodePath);
     void renderViewportOverlay(SgViewportOverlay* overlay);
     void renderViewportOverlayMain(SgViewportOverlay* overlay);
+    void renderBoundingBox(SgBoundingBox* bboxNode);
     void renderOutline(SgOutline* outline);
     void renderOutlineEdge(SgOutline* outline, const Affine3& T);
     void renderLightweightRenderingGroup(SgLightweightRenderingGroup* group);
@@ -605,6 +606,8 @@ void GLSLSceneRenderer::Impl::initialize()
         [&](SgOverlay* node){ renderOverlay(node); });
     normalRenderingFunctions.setFunction<SgViewportOverlay>(
         [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
+    normalRenderingFunctions.setFunction<SgBoundingBox>(
+        [&](SgBoundingBox* node){ renderBoundingBox(node); });
     normalRenderingFunctions.setFunction<SgOutline>(
         [&](SgOutline* node){ renderOutline(node); });
     normalRenderingFunctions.setFunction<SgLightweightRenderingGroup>(
@@ -3017,6 +3020,17 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
     renderOverlayMain(overlay, Affine3::Identity(), emptyNodePath);
 
     PV = PV0;
+}
+
+
+void GLSLSceneRenderer::Impl::renderBoundingBox(SgBoundingBox* bboxNode)
+{
+    renderGroup(bboxNode);
+
+    if(isRenderingVisibleImage){
+        bboxNode->updateLineSet();
+        renderLineSet(const_cast<SgLineSet*>(bboxNode->lineSet()));
+    }
 }
 
 

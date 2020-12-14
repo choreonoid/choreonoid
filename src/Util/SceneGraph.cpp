@@ -230,7 +230,7 @@ SgGroup::SgGroup()
     : SgNode(findClassId<SgGroup>())
 {
     setAttribute(GroupAttribute);
-    isBboxCacheValid = false;
+    hasValidBoundingBoxCache_ = false;
 }
 
 
@@ -238,7 +238,7 @@ SgGroup::SgGroup(int classId)
     : SgNode(classId)
 {
     setAttribute(GroupAttribute);
-    isBboxCacheValid = false;
+    hasValidBoundingBoxCache_ = false;
 }
 
 
@@ -264,8 +264,12 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
     }
 
     setAttribute(GroupAttribute);
-    isBboxCacheValid = true;
-    bboxCache = org.bboxCache;
+    if(org.hasValidBoundingBoxCache_){
+        bboxCache = org.bboxCache;
+        hasValidBoundingBoxCache_ = true;
+    } else {
+        hasValidBoundingBoxCache_ = false;
+    }
 }
 
 
@@ -306,14 +310,14 @@ void SgGroup::onUpdated(SgUpdate& update)
 
 const BoundingBox& SgGroup::boundingBox() const
 {
-    if(isBboxCacheValid){
+    if(hasValidBoundingBoxCache_){
         return bboxCache;
     }
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
         bboxCache.expandBy((*p)->boundingBox());
     }
-    isBboxCacheValid = true;
+    hasValidBoundingBoxCache_ = true;
 
     return bboxCache;
 }
@@ -678,7 +682,7 @@ SgTransform::SgTransform(const SgTransform& org, CloneMap* cloneMap)
 
 const BoundingBox& SgTransform::untransformedBoundingBox() const
 {
-    if(!isBboxCacheValid){
+    if(!hasValidBoundingBoxCache_){
         boundingBox();
     }
     return untransformedBboxCache;
@@ -732,7 +736,7 @@ Referenced* SgPosTransform::doClone(CloneMap* cloneMap) const
 
 const BoundingBox& SgPosTransform::boundingBox() const
 {
-    if(isBboxCacheValid){
+    if(hasValidBoundingBoxCache_){
         return bboxCache;
     }
     bboxCache.clear();
@@ -741,7 +745,7 @@ const BoundingBox& SgPosTransform::boundingBox() const
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(T_);
-    isBboxCacheValid = true;
+    hasValidBoundingBoxCache_ = true;
     return bboxCache;
 }
 
@@ -798,7 +802,7 @@ Referenced* SgScaleTransform::doClone(CloneMap* cloneMap) const
 
 const BoundingBox& SgScaleTransform::boundingBox() const
 {
-    if(isBboxCacheValid){
+    if(hasValidBoundingBoxCache_){
         return bboxCache;
     }
     bboxCache.clear();
@@ -807,7 +811,7 @@ const BoundingBox& SgScaleTransform::boundingBox() const
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(Affine3(scale_.asDiagonal()));
-    isBboxCacheValid = true;
+    hasValidBoundingBoxCache_ = true;
     return bboxCache;
 }
 
@@ -857,7 +861,7 @@ Referenced* SgAffineTransform::doClone(CloneMap* cloneMap) const
 
 const BoundingBox& SgAffineTransform::boundingBox() const
 {
-    if(isBboxCacheValid){
+    if(hasValidBoundingBoxCache_){
         return bboxCache;
     }
     bboxCache.clear();
@@ -866,7 +870,7 @@ const BoundingBox& SgAffineTransform::boundingBox() const
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(T_);
-    isBboxCacheValid = true;
+    hasValidBoundingBoxCache_ = true;
     return bboxCache;
 }
 

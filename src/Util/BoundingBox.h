@@ -70,6 +70,7 @@ public:
     float boundingSphereRadius() const;
         
     void expandBy(const BoundingBoxf& bbox);
+    void expandBy(const BoundingBox& bbox);
     void expandBy(float x, float y, float z);
     void expandBy(const Vector3f& v){ expandBy(v.x(), v.y(), v.z()); }
 

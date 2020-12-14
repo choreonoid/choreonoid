@@ -93,20 +93,71 @@ private:
 typedef ref_ptr<SgFog> SgFogPtr;
 
 
-class CNOID_EXPORT SgOutline : public SgGroup
+class CNOID_EXPORT SgHighlight : public SgGroup
 {
 protected:
-    SgOutline(int polymorhicId);
+    SgHighlight(int polymorhicId);
+    SgHighlight(const SgHighlight& org);
     
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    SgOutline();
+    SgHighlight() = delete;
 
-    const Vector3f& color() const { return color_; }
-    void setColor(const Vector3f& color) { color_ = color; }
-    void setLineWidth(float width) { lineWidth_ = width; }
-    float lineWidth() const { return lineWidth_; }
+    virtual const Vector3f& color() const = 0;
+    virtual void setColor(const Vector3f& color) = 0;
+    virtual float lineWidth() const = 0;
+    virtual void setLineWidth(float width) = 0;
+};
+
+typedef ref_ptr<SgHighlight> SgHighlightPtr;;
+
+
+class CNOID_EXPORT SgBoundingBox : public SgHighlight
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    SgBoundingBox();
+    SgBoundingBox(const SgBoundingBox& org);
+    ~SgBoundingBox();
+
+    virtual const Vector3f& color() const override;
+    virtual void setColor(const Vector3f& color) override;
+    virtual float lineWidth() const override;
+    virtual void setLineWidth(float width) override;
+
+    const SgLineSet* lineSet() const { return lineSet_; }
+    void updateLineSet();
+
+    virtual int numChildObjects() const override;
+    virtual SgObject* childObject(int index) override;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    ref_ptr<SgLineSet> lineSet_;
+    SgUpdate update_;
+
+    void initializeLineSet();
+};
+
+typedef ref_ptr<SgBoundingBox> SgBoundingBoxPtr;
+
+
+class CNOID_EXPORT SgOutline : public SgHighlight
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    SgOutline();
+    SgOutline(const SgOutline& org);
+
+    virtual const Vector3f& color() const override;
+    virtual void setColor(const Vector3f& color) override;
+    virtual float lineWidth() const override;
+    virtual void setLineWidth(float width) override;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
