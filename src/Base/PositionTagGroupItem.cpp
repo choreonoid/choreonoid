@@ -837,8 +837,7 @@ void SceneTagGroup::addTagNode(int index, bool doUpdateEdges, bool doNotify)
     tagNode->setPosition(tag->position());
     tagMarkerGroup->insertChild(index, tagNode);
     if(doNotify){
-        update.resetAction(SgUpdate::ADDED);
-        tagMarkerGroup->notifyUpdate(update);
+        tagMarkerGroup->notifyUpdate(update.withAction(SgUpdate::ADDED));
     }
 
     if(doUpdateEdges){
@@ -944,8 +943,7 @@ SgNode* SceneTagGroup::getOrCreateHighlightedTagMarker()
 void SceneTagGroup::removeTagNode(int index)
 {
     tagMarkerGroup->removeChildAt(index);
-    update.resetAction(SgUpdate::REMOVED);
-    tagMarkerGroup->notifyUpdate(update);
+    tagMarkerGroup->notifyUpdate(update.withAction(SgUpdate::REMOVED));
 
     updateEdges(true);
 }
@@ -960,8 +958,7 @@ void SceneTagGroup::updateTagNodePosition(int index)
     } else {
         node->setTranslation(tag->translation());
     }
-    update.resetAction(SgUpdate::MODIFIED);
-    node->notifyUpdate(update);
+    node->notifyUpdate(update.withAction(SgUpdate::MODIFIED));
 
     if(index == draggingTagIndex){
         positionDragger->setPosition(tag->position());
@@ -982,8 +979,7 @@ void SceneTagGroup::updateTagDisplayTypes()
         }
     }
     if(updated){
-        update.resetAction(SgUpdate::MODIFIED);
-        tagMarkerGroup->notifyUpdate(update);
+        tagMarkerGroup->notifyUpdate(update.withAction(SgUpdate::MODIFIED));
     }
 }
 
@@ -1002,7 +998,7 @@ bool SceneTagGroup::updateTagDisplayType(int index, bool doNotify)
     }
     if(displayType != tagNode->displayType){
         tagNode->clearChildren();
-        update.resetAction(SgUpdate::ADDED|SgUpdate::REMOVED);
+        update.setAction(SgUpdate::ADDED|SgUpdate::REMOVED);
         switch(displayType){
         case Normal:
         default:
@@ -1044,8 +1040,7 @@ void SceneTagGroup::updateEdges(bool doNotify)
         }
     }
     if(doNotify){
-        update.resetAction(SgUpdate::MODIFIED);
-        vertices.notifyUpdate(update);
+        vertices.notifyUpdate(update.withAction(SgUpdate::MODIFIED));
     }
 }
 
@@ -1053,16 +1048,14 @@ void SceneTagGroup::updateEdges(bool doNotify)
 void SceneTagGroup::setOriginOffset(const Isometry3& T)
 {
     offsetTransform->setPosition(T);
-    update.resetAction(SgUpdate::MODIFIED);
-    offsetTransform->notifyUpdate(update);
+    offsetTransform->notifyUpdate(update.withAction(SgUpdate::MODIFIED));
 }
 
 
 void SceneTagGroup::setParentPosition(const Isometry3& T)
 {
     setPosition(T);
-    update.resetAction(SgUpdate::MODIFIED);
-    notifyUpdate(update);
+    notifyUpdate(update.withAction(SgUpdate::MODIFIED));
 }
 
 
@@ -1162,8 +1155,7 @@ void SceneTagGroup::onDraggerDragged()
         if(tagpos0.index == draggingTagIndex){
             tag->setPosition(T);
             positionDragger->setPosition(T);
-            update.resetAction(SgUpdate::MODIFIED);
-            positionDragger->notifyUpdate(update);
+            positionDragger->notifyUpdate(update.withAction(SgUpdate::MODIFIED));
         } else {
             tag->setPosition(T_base * tagpos0.T);
         }

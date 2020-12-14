@@ -20,10 +20,10 @@ void exportPySceneGraph(py::module& m)
         .def(py::init<>())
         .def(py::init<int>())
         .def_property("action", &SgUpdate::action, &SgUpdate::setAction)
-        .def("setAction", &SgUpdate::setAction)
+        .def("setAction", &SgUpdate::resetAction)
 
         // deprecated
-        .def("getAction", &SgUpdate::action)
+        .def("getAction", [](SgUpdate& self){ return self.action(); })
         ;
 
     py::enum_<SgUpdate::Action>(sgUpdate, "Action")

@@ -26,11 +26,18 @@ class CNOID_EXPORT SgUpdate
 {
 public:
     enum Action {
-        NONE = 0,
-        ADDED = 1 << 0,
-        REMOVED = 1 << 1,
-        BBOX_UPDATED = 1 << 2,
-        MODIFIED = 1 << 3
+        None = 0,
+        Added = 1 << 0,
+        Removed = 1 << 1,
+        BBoxUpdated = 1 << 2,
+        Modified = 1 << 3,
+
+        // deprecated
+        NONE = None,
+        ADDED = Added,
+        REMOVED = Removed,
+        BBOX_UPDATED = BBoxUpdated,
+        MODIFIED = Modified
     };
 
     typedef std::vector<SgObject*> Path;
@@ -40,20 +47,35 @@ public:
     SgUpdate(const SgUpdate& org) : path_(org.path_), action_(org.action_) { }
     virtual ~SgUpdate();
     int action() const { return action_; }
-    bool isModified() const { return (action_ & MODIFIED); }
-    void setAction(int act) { action_ |= act; }
-    void resetAction(int act = NONE) { action_ = act; }
+    SgUpdate& withAction(int act) { action_ = act; return *this; }
+    void setAction(int act) { action_ = act; }
+    void addAction(int act) { action_ |= act; }
     const Path& path() const { return path_; }
     void pushNode(SgObject* node) { path_.push_back(node); }
     void popNode() { path_.pop_back(); }
     void clearPath() { path_.clear(); }
 
+    [[deprecated("Use setAction.")]]
+    void resetAction(int act = NONE) { action_ = act; }
     [[deprecated("Use clearPath()")]]
     void clear() { path_.clear(); }
 
 private:
     Path path_;
     int action_;
+};
+
+class SgUpdateRef
+{
+    SgUpdate* update;
+public:
+    SgUpdateRef() : update(nullptr) { }
+    SgUpdateRef(SgUpdate& update) : update(&update) { }
+    SgUpdateRef(const SgUpdateRef& ref) : update(ref.update) { }
+    operator bool() const { return update != nullptr; }
+    operator SgUpdate*() { return update; }
+    SgUpdate& operator*() { return *update; }
+    SgUpdate* operator->() { return update; }
 };
 
 

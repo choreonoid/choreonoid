@@ -88,10 +88,9 @@ void SgObject::addParent(SgObject* parent, SgUpdate* update)
     parents.insert(parent);
 
     if(update){
-        update->resetAction(SgUpdate::ADDED);
         update->clearPath();
         update->pushNode(this);
-        parent->onUpdated(*update);
+        parent->onUpdated(update->withAction(SgUpdate::ADDED));
     }
 
     if(parents.size() == 1){
@@ -469,10 +468,9 @@ SgGroup::iterator SgGroup::removeChild(iterator childIter, SgUpdate* update)
     } else {
         SgNodePtr childHolder = child;
         next = children.erase(childIter);
-        update->resetAction(SgUpdate::REMOVED);
         update->clearPath();
         update->pushNode(child);
-        onUpdated(*update);
+        onUpdated(update->withAction(SgUpdate::REMOVED));
     }
     return next;
 }
@@ -582,7 +580,7 @@ void SgGroup::moveChildrenTo(SgGroup* group, SgUpdate* update)
     clearChildren(update);
     
     if(update){
-        update->resetAction(SgUpdate::ADDED);
+        update->setAction(SgUpdate::ADDED);
         update->clearPath();
         for(int i=destTop; i < group->numChildren(); ++i){
             group->child(i)->notifyUpdate(*update);
@@ -608,6 +606,13 @@ void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
 }
 
 
+void SgGroup::insertChainedGroup(SgGroup* group)
+{
+    moveChildrenTo(group);
+    addChild(group);
+}
+
+
 SgGroup* SgGroup::nextChainedGroup()
 {
     SgGroup* nextGroup = nullptr;
@@ -615,13 +620,6 @@ SgGroup* SgGroup::nextChainedGroup()
         nextGroup = dynamic_cast<SgGroup*>(children.front().get());
     }
     return nextGroup;
-}
-
-
-void SgGroup::insertChainedGroup(SgGroup* group)
-{
-    moveChildrenTo(group);
-    addChild(group);
 }
 
 

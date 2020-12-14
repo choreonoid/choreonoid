@@ -255,22 +255,19 @@ void BodySuperimposerAddon::Impl::updateSuperimposition()
         for(auto& info : bodyInfos){
             auto bodyItem = info->bodyItem.lock();
             if(bodyItem && !checkPositionIdentity(bodyItem->body(), info->superimposedBody)){
-                sgUpdate.resetAction(SgUpdate::MODIFIED);
-                info->sceneBody->updateLinkPositions(sgUpdate);
+                info->sceneBody->updateLinkPositions(sgUpdate.withAction(SgUpdate::MODIFIED));
                 isDifferent = true;
             }
         }
         auto sceneBody = bodyItem->sceneBody();
         if(isDifferent){
             if(sceneBody->addChildOnce(topGroup)){
-                sgUpdate.resetAction(SgUpdate::ADDED);
-                sceneBody->notifyUpdate(sgUpdate);
+                sceneBody->notifyUpdate(sgUpdate.withAction(SgUpdate::ADDED));
             }
         } else {
             // Superimposition is disabled when the position is same as the original body
             if(sceneBody->removeChild(topGroup)){
-                sgUpdate.resetAction(SgUpdate::REMOVED);
-                sceneBody->notifyUpdate(sgUpdate);
+                sceneBody->notifyUpdate(sgUpdate.withAction(SgUpdate::REMOVED));
             }
         }
     }
@@ -345,8 +342,7 @@ void BodySuperimposerAddon::clearSuperimposition()
     if(impl->topGroup->hasParents()){
         auto sceneBody = impl->bodyItem->sceneBody();
         sceneBody->removeChild(impl->topGroup);
-        impl->sgUpdate.resetAction(SgUpdate::REMOVED);
-        sceneBody->notifyUpdate(impl->sgUpdate);
+        sceneBody->notifyUpdate(impl->sgUpdate.withAction(SgUpdate::REMOVED));
     }
 }
 
