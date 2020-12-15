@@ -75,7 +75,10 @@ uniform vec3 fogColor;
 uniform float maxFogDist;
 uniform float minFogDist;
 uniform bool isFogEnabled = false;
+
 uniform bool isWireframeEnabled;
+uniform vec4 wireframeColor;
+uniform float wireframeWidth;
 
 uniform int numShadows;
 
@@ -272,8 +275,6 @@ void renderWireframe()
 #endif
     }
 
-    float lineWidth = 0.75;
-    vec4 lineColor = vec4(0.4, 0.4, 0.4, 1.0);
-    float mixVal = smoothstep(lineWidth - 1, lineWidth + 1, edgeDistance);
-    color4 = mix(lineColor, color4, mixVal);
+    float mixVal = smoothstep(wireframeWidth + 1, wireframeWidth - 1, edgeDistance) * wireframeColor.a;
+    color4.rgb = mix(color4.rgb, wireframeColor.rgb, mixVal);
 }

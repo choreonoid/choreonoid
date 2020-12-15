@@ -20,7 +20,7 @@ void exportPySceneGraph(py::module& m)
         .def(py::init<>())
         .def(py::init<int>())
         .def_property("action", &SgUpdate::action, &SgUpdate::setAction)
-        .def("setAction", &SgUpdate::resetAction)
+        .def("setAction", &SgUpdate::setAction)
 
         // deprecated
         .def("getAction", [](SgUpdate& self){ return self.action(); })

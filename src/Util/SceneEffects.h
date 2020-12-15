@@ -24,12 +24,12 @@ public:
     };
     void setPolygonElements(int elementFlags) { polygonElements_ = elementFlags; };
     int polygonElements() const { return polygonElements_; }
-    const Vector3f& edgeColor() const { return edgeColor_; }
-    void setEdgeColor(const Vector3f& c) { edgeColor_ = c; }
+    const Vector4f& edgeColor() const { return edgeColor_; }
+    void setEdgeColor(const Vector4f& c) { edgeColor_ = c; }
     float edgeWidth() const { return edgeWidth_; }
     void setEdgeWidth(float w) { edgeWidth_ = w; }
-    const Vector3f& vertexColor() const { return vertexColor_; }
-    void setVertexColor(const Vector3f& c) { vertexColor_ = c; }
+    const Vector4f& vertexColor() const { return vertexColor_; }
+    void setVertexColor(const Vector4f& c) { vertexColor_ = c; }
     float vertexSize() const { return vertexSize_; }
     void setVertexSize(float s) { vertexSize_ = s; }
 
@@ -38,9 +38,9 @@ protected:
 
 private:
     int polygonElements_;
-    Vector3f edgeColor_;
+    Vector4f edgeColor_;
     float edgeWidth_;
-    Vector3f vertexColor_;
+    Vector4f vertexColor_;
     float vertexSize_;
 };
 

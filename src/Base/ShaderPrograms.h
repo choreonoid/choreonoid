@@ -292,7 +292,8 @@ public:
         int index, const SgLight* light, const Isometry3& T, const Isometry3& view, bool shadowCasting) override;
     virtual void setTransform(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L) override;
 
-    void setWireframeEnabled(bool on);
+    void enableWireframe(const Vector4f& color, float width);
+    void disableWireframe();
     bool isWireframeEnabled() const;
     
     void activateShadowMapGenerationPass(int shadowIndex);

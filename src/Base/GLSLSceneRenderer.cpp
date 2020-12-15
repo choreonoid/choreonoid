@@ -302,6 +302,8 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
+    vector<SgPolygonDrawStyle*> solidWireframeStyleStack;
+
     struct DispatchedNodeInfo
     {
         SgNodePtr node;
@@ -1629,7 +1631,7 @@ void GLSLSceneRenderer::Impl::doVertexRendering()
         auto T = modelMatrixBuffer[info.modelMatrixIndex];
         modelMatrixStack.push_back(T);
         solidPointProgram->setPointSize(style->vertexSize());
-        solidPointProgram->setColor(style->vertexColor());
+        solidPointProgram->setColor(style->vertexColor().head<3>());
         renderGroup(style);
         modelMatrixStack.pop_back();
     }
@@ -2931,10 +2933,20 @@ void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
         
     if(isFaceEnabled){
         if(lightingMode == NormalLighting){
-            bool isWireframeEnabledPreviously = fullLightingProgram->isWireframeEnabled();
-            fullLightingProgram->setWireframeEnabled(isEdgeEnabled | isWireframeEnabledPreviously);
+            if(isEdgeEnabled){
+                fullLightingProgram->enableWireframe(style->edgeColor(), style->edgeWidth());
+                solidWireframeStyleStack.push_back(style);
+            }
             renderGroup(style);
-            fullLightingProgram->setWireframeEnabled(isWireframeEnabledPreviously);
+            if(isEdgeEnabled){
+                solidWireframeStyleStack.pop_back();
+                if(solidWireframeStyleStack.empty()){
+                    fullLightingProgram->disableWireframe();
+                } else {
+                    auto prevStyle = solidWireframeStyleStack.back();
+                    fullLightingProgram->enableWireframe(prevStyle->edgeColor(), prevStyle->edgeWidth());
+                }
+            }
         }
     } else if(isEdgeEnabled){
         pureWireframeRenderingNodes.emplace_back(style, matrixIndex);

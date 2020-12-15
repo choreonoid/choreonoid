@@ -15,9 +15,9 @@ SgPolygonDrawStyle::SgPolygonDrawStyle()
     : SgGroup(findClassId<SgPolygonDrawStyle>())
 {
     polygonElements_ = Face;
-    edgeColor_ << 0.4f, 0.4f, 0.4f;
-    edgeWidth_ = 0.75;
-    vertexColor_ << 1.0f, 1.0f, 0.9f;
+    edgeColor_ << 0.4f, 0.4f, 0.4f, 0.8f;
+    edgeWidth_ = 0.5f;
+    vertexColor_ << 1.0f, 1.0f, 0.9f, 1.0f;
     vertexSize_ = 5.0f;
 }
 
@@ -227,7 +227,7 @@ SgOutline::SgOutline()
     : SgHighlight(findClassId<SgOutline>())
 {
     lineWidth_ = 2.0f;
-    color_ << 1.0f, 0.0f, 0.0f;
+    color_ << 1.0f, 1.0f, 0.0f;
 }
 
 
