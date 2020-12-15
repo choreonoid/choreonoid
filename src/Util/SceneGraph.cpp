@@ -314,7 +314,10 @@ const BoundingBox& SgGroup::boundingBox() const
     }
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
-        bboxCache.expandBy((*p)->boundingBox());
+        auto& node = *p;
+        if(!node->hasAttribute(MarkerAttribute)){
+            bboxCache.expandBy(node->boundingBox());
+        }
     }
     hasValidBoundingBoxCache_ = true;
 
@@ -739,7 +742,10 @@ const BoundingBox& SgPosTransform::boundingBox() const
     }
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
-        bboxCache.expandBy((*p)->boundingBox());
+        auto& node = *p;
+        if(!node->hasAttribute(MarkerAttribute)){
+            bboxCache.expandBy(node->boundingBox());
+        }
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(T_);
@@ -805,7 +811,10 @@ const BoundingBox& SgScaleTransform::boundingBox() const
     }
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
-        bboxCache.expandBy((*p)->boundingBox());
+        auto& node = *p;
+        if(!node->hasAttribute(MarkerAttribute)){
+            bboxCache.expandBy(node->boundingBox());
+        }
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(Affine3(scale_.asDiagonal()));
@@ -864,7 +873,10 @@ const BoundingBox& SgAffineTransform::boundingBox() const
     }
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
-        bboxCache.expandBy((*p)->boundingBox());
+        auto& node = *p;
+        if(!node->hasAttribute(MarkerAttribute)){
+            bboxCache.expandBy((*p)->boundingBox());
+        }
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(T_);

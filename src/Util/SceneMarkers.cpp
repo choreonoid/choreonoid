@@ -12,6 +12,8 @@ using namespace cnoid;
 
 SceneMarker::SceneMarker()
 {
+    setAttribute(MarkerAttribute);
+    
     markerType_ = NO_MARKER;
     markerSize_ = 0.01;
     emission_ = 0.5;
@@ -163,6 +165,8 @@ void SceneMarker::setTransparency(float t)
 
 CrossMarker::CrossMarker(double size, const Vector3f& color, double lineWidth)
 {
+    setAttribute(MarkerAttribute);
+
     size_ = 0.0;
     vertices = new SgVertexArray;
     setSize(size);
@@ -207,6 +211,7 @@ void CrossMarker::setSize(double size)
 
 SphereMarker::SphereMarker()
 {
+    setAttribute(MarkerAttribute);
     initialize(1.0, Vector3f(0.8f, 0.8f, 0.8f), 0.0f);
 }
 
@@ -249,12 +254,16 @@ void SphereMarker::setColor(const Vector3f& c)
 
 BoundingBoxMarker::BoundingBoxMarker(const BoundingBox& bbox, const Vector3f& color, float transparency, double width)
 {
+    setAttribute(MarkerAttribute);
+
     create(bbox, color, transparency, width);
 }
 
 
 BoundingBoxMarker::BoundingBoxMarker(const BoundingBox& bbox, const Vector3f& color, float transparency)
 {
+    setAttribute(MarkerAttribute);
+
     double h = bbox.max().x() - bbox.min().x();
     double w = bbox.max().y() - bbox.min().y();
     double d = bbox.max().z() - bbox.min().z();

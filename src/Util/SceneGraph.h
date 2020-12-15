@@ -193,9 +193,10 @@ public:
     }
 
     enum NodeAttribute {
-        GroupAttribute = 1,
-        NodeDecorationGroup = 2,
-        NumAttributes = 2
+        GroupAttribute = 1 << 0,
+        NodeDecorationGroup = 1 << 1,
+        MarkerAttribute = 1 << 2,
+        NumAttributes = 3
     };
 
     void setAttribute(int attr){ attributes_ |= attr; }
