@@ -13,19 +13,21 @@
 namespace cnoid {
 
 class ExtensionManager;
-
 class BodyItem;
+class EditableSceneBody;
 
 class CNOID_EXPORT EditableSceneLink : public SceneLink
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-    EditableSceneLink(Link* link);
+    EditableSceneLink(EditableSceneBody* sceneBody, Link* link);
     ~EditableSceneLink();
 
     void showOrigin(bool on);
     bool isOriginShown() const;
+    void enableHighlight(bool on);
+    [[deprecated("Use enableHighlight")]]
     void showOutline(bool on);
     void showMarker(const Vector3f& color, float transparency);
     void hideMarker();
@@ -77,7 +79,7 @@ private:
     class Impl;
     Impl* impl;
     
-    friend class EditableSceneBodyImpl;
+    friend class EditableSceneLink::Impl;
 };
             
 typedef ref_ptr<EditableSceneBody> EditableSceneBodyPtr;

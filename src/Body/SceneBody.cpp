@@ -129,6 +129,7 @@ class SceneLinkImpl
 {
 public:
     SceneLink* self;
+    SceneBodyImpl* sceneBodyImpl;
     LinkShapeGroupPtr mainShapeGroup;
     SgGroupPtr topShapeGroup;
     bool isVisible;
@@ -137,10 +138,10 @@ public:
     SgTransparentGroupPtr transparentGroup;
 
     SceneLinkImpl(SceneLink* self, Link* link);
-    void insertEffectGroup(SgGroup* group, bool doNotify);
-    bool removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup, bool doNotify);
+    void insertEffectGroup(SgGroup* effect, SgUpdateRef update);
+    bool removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUpdateRef update);
     void cloneShape(CloneMap& cloneMap);
-    void setTransparency(float transparency, bool doNotify);
+    void setTransparency(float transparency, SgUpdateRef update = SgUpdateRef());
 };
 
 class SceneBodyImpl
@@ -151,18 +152,20 @@ public:
     std::vector<SceneDevicePtr> sceneDevices;
     std::function<SceneLink*(Link*)> sceneLinkFactory;
 
-    SceneBodyImpl(SceneBody* self, std::function<SceneLink*(Link*)> sceneLinkFactory);
+    SceneBodyImpl(SceneBody* self);
     void cloneShape(CloneMap& cloneMap);
 };
 
 }
 
 
-SceneLink::SceneLink(Link* link)
+SceneLink::SceneLink(SceneBody* sceneBody, Link* link)
 {
     link_ = link;
+    sceneBody_ = sceneBody;
     setName(link->name());
     impl = new SceneLinkImpl(this, link);
+    impl->sceneBodyImpl = sceneBody_->impl;
 }
 
 
@@ -172,13 +175,6 @@ SceneLinkImpl::SceneLinkImpl(SceneLink* self, Link* link)
     mainShapeGroup = new LinkShapeGroup(link);
     topShapeGroup = mainShapeGroup;
     self->addChild(topShapeGroup);
-}
-
-
-SceneLink::SceneLink(const SceneLink& org)
-    : SgPosTransform(org)
-{
-
 }
 
 
@@ -212,60 +208,61 @@ SgNode* SceneLink::collisionShape()
 }
 
 
-void SceneLink::insertEffectGroup(SgGroup* group, bool doNotify)
+void SceneLink::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
 {
-    impl->insertEffectGroup(group, doNotify);
+    
+    impl->insertEffectGroup(effect, update);
 }
 
 
-void SceneLinkImpl::insertEffectGroup(SgGroup* group, bool doNotify)
+void SceneLinkImpl::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
 {
     self->removeChild(topShapeGroup);
-    group->addChild(topShapeGroup);
-    self->addChild(group);
-    topShapeGroup = group;
-    if(doNotify){
-        self->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+    effect->addChild(topShapeGroup);
+    self->addChild(effect);
+    topShapeGroup = effect;
+    if(update){
+        self->notifyUpdate(update->withAction(SgUpdate::ADDED | SgUpdate::REMOVED));
     }
 }
 
 
-void SceneLink::removeEffectGroup(SgGroup* group, bool doNotify)
+void SceneLink::removeEffectGroup(SgGroup* effect, SgUpdateRef update)
 {
-    impl->removeEffectGroup(this, group, doNotify);
+    impl->removeEffectGroup(this, effect, update);
 }
 
 
-bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup, bool doNotify)
+bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUpdateRef update)
 {
     if(parent == mainShapeGroup){
         return false;
     }
-    if(parent->removeChild(effectGroup)){
+    if(parent->removeChild(effect)){
         SgGroup* childGroup = 0;
-        for(auto child : *effectGroup){
+        for(auto child : *effect){
             childGroup = dynamic_cast<SgGroup*>(child.get());
             if(childGroup){
                 parent->addChild(childGroup);
                 break;
             }
         }
-        if(topShapeGroup == effectGroup){
+        if(topShapeGroup == effect){
             if(childGroup){
                 topShapeGroup = childGroup;
             } else {
                 topShapeGroup = mainShapeGroup;
             }
         }
-        effectGroup->clearChildren();
-        if(doNotify){
-            parent->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+        effect->clearChildren();
+        if(update){
+            parent->notifyUpdate(update->withAction(SgUpdate::ADDED | SgUpdate::REMOVED));
         }
         return true;
     } else {
         for(auto child : *parent){
             if(auto childGroup = dynamic_cast<SgGroup*>(child.get())){
-                if(removeEffectGroup(childGroup, effectGroup, doNotify)){
+                if(removeEffectGroup(childGroup, effect, update)){
                     return true;
                 }
             }
@@ -296,31 +293,31 @@ float SceneLink::transparency() const
 }
 
 
-void SceneLink::setTransparency(float transparency, bool doNotify)
+void SceneLink::setTransparency(float transparency, SgUpdateRef update)
 {
-    impl->setTransparency(transparency, doNotify);
+    impl->setTransparency(transparency, update);
 }
 
 
-void SceneLinkImpl::setTransparency(float transparency, bool doNotify)
+void SceneLinkImpl::setTransparency(float transparency, SgUpdateRef update)
 {
     if(!transparentGroup){
         transparentGroup = new SgTransparentGroup;
         transparentGroup->setTransparency(transparency);
     } else if(transparency != transparentGroup->transparency()){
         transparentGroup->setTransparency(transparency);
-        if(doNotify){
-            transparentGroup->notifyUpdate();
+        if(update){
+            transparentGroup->notifyUpdate(update->withAction(SgUpdate::Modified));
         }
     }
 
     if(transparency > 0.0f){
         if(!transparentGroup->hasParents()){
-            insertEffectGroup(transparentGroup, doNotify);
+            insertEffectGroup(transparentGroup, update);
         }
     } else {
         if(transparentGroup->hasParents()){
-            self->removeEffectGroup(transparentGroup, doNotify);
+            self->removeEffectGroup(transparentGroup, update);
         }
     }
 }
@@ -328,14 +325,15 @@ void SceneLinkImpl::setTransparency(float transparency, bool doNotify)
 
 void SceneLink::makeTransparent(float transparency)
 {
-    setTransparency(transparency, true);
+    SgUpdate update;
+    setTransparency(transparency, update);
 }
 
 
 void SceneLink::addSceneDevice(SceneDevice* sdev)
 {
     if(!impl->deviceGroup){
-        impl->deviceGroup = new SgGroup();
+        impl->deviceGroup = new SgGroup;
         addChild(impl->deviceGroup);
     }
     impl->sceneDevices.push_back(sdev);
@@ -356,40 +354,38 @@ SceneDevice* SceneLink::getSceneDevice(Device* device)
 }
 
 
+SceneBody::SceneBody()
+{
+    impl = new SceneBodyImpl(this);
+}
+
+
 SceneBody::SceneBody(Body* body)
-    : SceneBody(body, [](Link* link){ return new SceneLink(link); })
 {
-
+    impl = new SceneBodyImpl(this);
+    setBody(body, [this](Link* link){ return new SceneLink(this, link); });
 }
 
 
-SceneBody::SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory)
-    : body_(body)
-{
-    impl = new SceneBodyImpl(this, sceneLinkFactory);
-    addChild(impl->sceneLinkGroup);
-    updateModel();
-}
-
-
-SceneBodyImpl::SceneBodyImpl(SceneBody* self, std::function<SceneLink*(Link*)> sceneLinkFactory)
-    : self(self),
-      sceneLinkFactory(sceneLinkFactory)
+SceneBodyImpl::SceneBodyImpl(SceneBody* self)
+    : self(self)
 {
     sceneLinkGroup = new SgGroup;
-}
-
-
-SceneBody::SceneBody(const SceneBody& org)
-    : SgPosTransform(org)
-{
-
 }
 
 
 SceneBody::~SceneBody()
 {
     delete impl;
+}
+
+
+void SceneBody::setBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory)
+{
+    body_ = body;
+    impl->sceneLinkFactory = sceneLinkFactory;
+    addChild(impl->sceneLinkGroup);
+    updateModel();
 }
 
 
@@ -487,7 +483,7 @@ void SceneBody::updateSceneDevices(double time)
 void SceneBody::setTransparency(float transparency)
 {
     for(size_t i=0; i < sceneLinks_.size(); ++i){
-        sceneLinks_[i]->impl->setTransparency(transparency, false);
+        sceneLinks_[i]->impl->setTransparency(transparency);
     }
     notifyUpdate();
 }
@@ -502,4 +498,22 @@ void SceneBody::makeTransparent(float transparency, CloneMap&)
 void SceneBody::makeTransparent(float transparency)
 {
     setTransparency(transparency);
+}
+
+
+void SceneBody::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
+{
+    impl->sceneLinkGroup->insertChainedGroup(effect);
+    if(update){
+        impl->sceneLinkGroup->notifyUpdate(update->withAction(SgUpdate::ADDED | SgUpdate::REMOVED));
+    }
+}
+
+
+void SceneBody::removeEffectGroup(SgGroup* effect, SgUpdateRef update)
+{
+    impl->sceneLinkGroup->removeChainedGroup(effect);
+    if(update){
+        impl->sceneLinkGroup->notifyUpdate(update->withAction(SgUpdate::REMOVED));
+    }
 }

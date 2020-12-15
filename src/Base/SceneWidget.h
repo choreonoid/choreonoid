@@ -87,6 +87,9 @@ public:
     void setPolygonDisplayElements(int elementFlags);
     int polygonDisplayElements() const;
 
+    void setHighlightingEnabled(bool on);
+    bool isHighlightingEnabled() const;
+
     void setCollisionLinesVisible(bool on);
     bool collisionLinesVisible() const;
 

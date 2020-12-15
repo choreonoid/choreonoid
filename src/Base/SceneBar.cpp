@@ -51,6 +51,7 @@ public:
     ToolButton* vertexToggle;
     ButtonGroup polygonModeGroup;
     ToolButton* visualModelToggle;
+    ToolButton* highlightToggle;
     ToolButton* modelTypeFlipButton;
     ToolButton* collisionModelToggle;
     ToolButton* collisionLineToggle;
@@ -77,6 +78,7 @@ public:
     void onEditModeButtonToggled(bool on);
     void onFirstPersonModeButtonToggled(bool on);
     void onPolygonModeButtonToggled();
+    void onHighlightingToggled(bool on);
     void flipVisibleModels();
     void updateCollisionModelVisibility();
     void onCollisionLineButtonToggled(bool on);
@@ -163,8 +165,6 @@ void SceneBar::Impl::initialize()
     vertexToggle->sigToggled().connect(
         [&](bool){ onPolygonModeButtonToggled(); });
 
-    self->addSpacing();
-
     auto wireframeToggle = self->addToggleButton(
         QIcon(":/Base/icon/wireframe.svg"), _("Wireframe rendering"));
     polygonModeGroup.addButton(wireframeToggle, 0);
@@ -183,7 +183,10 @@ void SceneBar::Impl::initialize()
             if(on){ onPolygonModeButtonToggled(); }
         });
 
-    self->addSpacing();
+    highlightToggle = self->addToggleButton(
+        QIcon(":/Base/icon/highlight.svg"), _("Highlight selected objects"));
+    highlightToggle->sigToggled().connect(
+        [&](bool on){ onHighlightingToggled(on); });
 
     visualModelToggle = self->addToggleButton(
         QIcon(":/Base/icon/visualshape.svg"), _("Show visual models"));
@@ -368,6 +371,10 @@ void SceneBar::Impl::onSceneWidgetStateChanged()
         }
     }
     polygonModeGroup.blockSignals(false);
+
+    highlightToggle->blockSignals(true);
+    highlightToggle->setChecked(currentSceneWidget->isHighlightingEnabled());
+    highlightToggle->blockSignals(false);
     
     collisionLineToggle->blockSignals(true);
     collisionLineToggle->setChecked(currentSceneWidget->collisionLinesVisible());
@@ -456,6 +463,14 @@ void SceneBar::Impl::onPolygonModeButtonToggled()
     }
     currentSceneWidget->setPolygonDisplayElements(flags);
     
+    sceneViewConnections.unblock();
+}
+
+
+void SceneBar::Impl::onHighlightingToggled(bool on)
+{
+    sceneViewConnections.block();
+    currentSceneWidget->setHighlightingEnabled(on);
     sceneViewConnections.unblock();
 }
 

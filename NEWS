@@ -17,9 +17,11 @@ Changes since 1.7.0:
 * Added the Universal Robots UR robot models
 * Fixed the WRS2018 tunnel models
 * The Eigen library contained in the thirdparty directory is used by default on Windows
+* Supported Ubuntu 20.04
 * Supported Visual C++ 2019
-* Supported Ubuntu 19.04
-* Add LinkPositionView and LocationView
+* Supported Clang
+* Add LocationView and LinkPositionView
+* The location of an object in the scene can be locked if necessary
 * Coordinate system for editing model positions can be selected on the location view and the link position view
 * Modified the default material colors
 * Fixed a bug in picking objects on SceneView when a high DPI display is used
@@ -49,8 +51,9 @@ Changes since 1.7.0:
 * Improved loading a new project when there is an existing project
 * Made the internal link attitudes same as the original model descriptions
 * Fixed the GLSL renderer to render casting shadows correctly using Radeon GPUs
-* Introduced new tool bar icons
+* Updated the tool bar icons
 * Implemented the vertex rendering mode and the solid-wireframe rendering mode
+* Improved the highlight style of selected / focused objects in the scene
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

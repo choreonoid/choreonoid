@@ -47,146 +47,27 @@ class EditableSceneLink::Impl
 {
 public:
     EditableSceneLink* self;
+    SgUpdate& update;
     PositionDraggerPtr originMarker;
-    SgOutlinePtr outline;
+    SgPolygonDrawStylePtr highlightStyle;
     BoundingBoxMarkerPtr bbMarker;
     bool isPointed;
     bool isColliding;
 
-    Impl(EditableSceneLink* self);
+    Impl(EditableSceneBody* sceneBody, EditableSceneLink* self);
     void showOrigin(bool on);
 };
-
-}
-
-
-EditableSceneLink::EditableSceneLink(Link* link)
-    : SceneLink(link)
-{
-    impl = new Impl(this);
-}
-
-
-EditableSceneLink::Impl::Impl(EditableSceneLink* self)
-    : self(self)
-{
-    isPointed = false;
-    isColliding = false;
-}
-
-
-EditableSceneLink::~EditableSceneLink()
-{
-    delete impl;
-}
-
-
-void EditableSceneLink::showOrigin(bool on)
-{
-    impl->showOrigin(on);
-}
-
-
-void EditableSceneLink::Impl::showOrigin(bool on)
-{
-    if(on){
-        if(!originMarker){
-            originMarker = new PositionDragger(
-                PositionDragger::TranslationAxes, PositionDragger::PositiveOnlyHandle);
-            originMarker->setOverlayMode(true);
-            originMarker->setHandleWidthRatio(0.05);
-            originMarker->setFixedPixelSizeMode(true, 48);
-            originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
-            originMarker->setTransparency(0.0f);
-            originMarker->setDragEnabled(false);
-        }
-        self->addChildOnce(originMarker, true);
-    } else {
-        if(originMarker && originMarker->hasParents()){
-            self->removeChild(originMarker, true);
-        }
-    }
-}
-
-
-bool EditableSceneLink::isOriginShown() const
-{
-    return (impl->originMarker && impl->originMarker->hasParents());
-}
-
-
-void EditableSceneLink::showOutline(bool on)
-{
-    if(!visualShape()){
-        return;
-    }
-    SgOutlinePtr& outline = impl->outline;
-    if(on){
-        if(!outline){
-            outline = new SgOutline;
-            outline->setColor(Vector3f(1.0f, 1.0f, 0.0f));
-        }
-        if(!outline->hasParents()){
-            insertEffectGroup(outline, true);
-        }
-    } else {
-        if(outline && outline->hasParents()){
-            removeEffectGroup(outline, true);
-        }
-    }
-}
-
-
-void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
-{
-    if(impl->bbMarker){
-        removeChild(impl->bbMarker);
-    }
-    if(visualShape()){
-        impl->bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
-        addChildOnce(impl->bbMarker, true);
-    }
-}
-
-
-void EditableSceneLink::hideMarker()
-{
-    if(impl->bbMarker){
-        removeChild(impl->bbMarker, true);
-        impl->bbMarker = nullptr;
-    }
-}
-
-
-void EditableSceneLink::setColliding(bool on)
-{
-    if(!impl->isColliding && on){
-        if(!impl->isPointed){
-            
-        }
-        impl->isColliding = true;
-    } else if(impl->isColliding && !on){
-        if(!impl->isPointed){
-            
-        }
-        impl->isColliding = false;
-    }
-}
-
-
-namespace cnoid {
 
 class EditableSceneBody::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    Impl(EditableSceneBody* self, BodyItem* bodyItem);
-        
     EditableSceneBody* self;
     BodyItemPtr bodyItem;
 
-    SgUpdate modified;
+    //! \todo Share this object in GUI
+    SgUpdate update;
 
     ScopedConnectionSet connections;
     ScopedConnection connectionToSigCollisionsUpdated;
@@ -195,8 +76,9 @@ public:
 
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };
     EditableSceneLink* pointedSceneLink;
-    EditableSceneLink* outlinedLink;
+    EditableSceneLink* highlightedLink;
 
+    SgHighlightPtr highlight;
     SgGroupPtr markerGroup;
     CrossMarkerPtr cmMarker;
     CrossMarkerPtr ppcomMarker;
@@ -219,6 +101,8 @@ public:
 
     bool isEditMode;
     bool isFocused;
+    bool isSelected;
+    bool isHighlightingEnabled;
 
     KinematicsBar* kinematicsBar;
 
@@ -240,6 +124,9 @@ public:
     enum { NO_FORCED_POSITION, MOVE_FORCED_POSITION, KEEP_FORCED_POSITION };
     int forcedPositionMode;
 
+    Impl(EditableSceneBody* self, BodyItem* bodyItem);
+    void initialize();
+        
     EditableSceneLink* editableSceneLink(int index){
         return static_cast<EditableSceneLink*>(self->sceneLink(index));
     }
@@ -247,8 +134,8 @@ public:
     double calcLinkMarkerRadius(SceneLink* sceneLink) const;
     void onSceneGraphConnection(bool on);
     void updateModel();
+    void onSelectionChanged(bool on);
     void onKinematicStateChanged();
-
     void onCollisionsUpdated();
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
@@ -256,6 +143,7 @@ public:
     void onLinkSelectionChanged(const std::vector<bool>& selection);
     void onLinkOriginsCheckChanged(bool on);
 
+    void enableHighlight(bool on);
     void showCenterOfMass(bool on);
     void showPpcom(bool on);
     void showZmp(bool on);
@@ -315,34 +203,153 @@ public:
 }
 
 
-static SceneLink* createEditableSceneLink(Link* link)
+EditableSceneLink::EditableSceneLink(EditableSceneBody* sceneBody, Link* link)
+    : SceneLink(sceneBody, link)
 {
-    return new EditableSceneLink(link);
+    impl = new Impl(sceneBody, this);
 }
-    
-    
-EditableSceneBody::EditableSceneBody(BodyItem* bodyItem)
-    : SceneBody(bodyItem->body(), createEditableSceneLink)
+
+
+EditableSceneLink::Impl::Impl(EditableSceneBody* sceneBody, EditableSceneLink* self)
+    : self(self),
+      update(sceneBody->impl->update)
 {
-    setName(body()->name());
+    isPointed = false;
+    isColliding = false;
+}
+
+
+EditableSceneLink::~EditableSceneLink()
+{
+    delete impl;
+}
+
+
+void EditableSceneLink::showOrigin(bool on)
+{
+    impl->showOrigin(on);
+}
+
+
+void EditableSceneLink::Impl::showOrigin(bool on)
+{
+    if(on){
+        if(!originMarker){
+            originMarker = new PositionDragger(
+                PositionDragger::TranslationAxes, PositionDragger::PositiveOnlyHandle);
+            originMarker->setOverlayMode(true);
+            originMarker->setHandleWidthRatio(0.05);
+            originMarker->setFixedPixelSizeMode(true, 48);
+            originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
+            originMarker->setTransparency(0.0f);
+            originMarker->setDragEnabled(false);
+        }
+        self->addChildOnce(originMarker, true);
+    } else {
+        if(originMarker && originMarker->hasParents()){
+            self->removeChild(originMarker, true);
+        }
+    }
+}
+
+
+bool EditableSceneLink::isOriginShown() const
+{
+    return (impl->originMarker && impl->originMarker->hasParents());
+}
+
+
+void EditableSceneLink::enableHighlight(bool on)
+{
+    if(!visualShape()){
+        return;
+    }
+    auto& highlightStyle = impl->highlightStyle;
+    if(on){
+        if(!highlightStyle){
+            highlightStyle = new SgPolygonDrawStyle;
+            highlightStyle->setPolygonElements(SgPolygonDrawStyle::Face | SgPolygonDrawStyle::Edge);
+            highlightStyle->setEdgeColor(Vector4f(1.0f, 1.0f, 0.0f, 0.75f));
+            highlightStyle->setEdgeWidth(0.7f);
+        }
+        if(!highlightStyle->hasParents()){
+            insertEffectGroup(highlightStyle, impl->update);
+        }
+    } else {
+        if(highlightStyle && highlightStyle->hasParents()){
+            removeEffectGroup(highlightStyle, impl->update);
+        }
+    }
+}
+
+
+void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
+{
+    if(impl->bbMarker){
+        removeChild(impl->bbMarker);
+    }
+    if(visualShape()){
+        impl->bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
+        addChildOnce(impl->bbMarker, true);
+    }
+}
+
+
+void EditableSceneLink::hideMarker()
+{
+    if(impl->bbMarker){
+        removeChild(impl->bbMarker, true);
+        impl->bbMarker = nullptr;
+    }
+}
+
+
+void EditableSceneLink::setColliding(bool on)
+{
+    if(!impl->isColliding && on){
+        if(!impl->isPointed){
+            
+        }
+        impl->isColliding = true;
+    } else if(impl->isColliding && !on){
+        if(!impl->isPointed){
+            
+        }
+        impl->isColliding = false;
+    }
+}
+
+
+EditableSceneBody::EditableSceneBody(BodyItem* bodyItem)
+{
     impl = new Impl(this, bodyItem);
+    impl->initialize();
 }
 
 
 EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItem* bodyItem)
     : self(self),
       bodyItem(bodyItem),
-      modified(SgUpdate::MODIFIED),
       kinematicsBar(KinematicsBar::instance())
 {
+
+}
+
+
+void EditableSceneBody::Impl::initialize()
+{
     pointedSceneLink = nullptr;
-    outlinedLink = nullptr;
+    highlightedLink = nullptr;
     targetLink = nullptr;
 
     dragMode = DRAG_NONE;
     isDragging = false;
     isEditMode = false;
     isFocused = false;
+    isSelected = false;
+    isHighlightingEnabled = false;
+
+    self->setBody(bodyItem->body(), [this](Link* link){ return new EditableSceneLink(self, link); });
 
     markerGroup = new SgGroup;
     markerGroup->setName("Marker");
@@ -405,6 +412,13 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
     connectionToSigLinkSelectionChanged.disconnect();
 
     if(on){
+
+        connections.add(
+            bodyItem->sigSelectionChanged().connect(
+                [&](bool on){ onSelectionChanged(on); }));
+
+        onSelectionChanged(bodyItem->isSelected()); 
+
         connections.add(
             bodyItem->sigUpdated().connect(
                 [&](){
@@ -422,9 +436,9 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
                 [&](){
                     bool on = bodyItem->isLocationEditable();
                     if(!on){
-                        if(outlinedLink){
-                            outlinedLink->showOutline(false);
-                            outlinedLink = nullptr;
+                        if(highlightedLink){
+                            highlightedLink->enableHighlight(false);
+                            highlightedLink = nullptr;
                         }
                         updateMarkersAndManipulators(false);
                     }
@@ -459,14 +473,27 @@ void EditableSceneBody::Impl::updateModel()
 {
     pointedSceneLink = nullptr;
     targetLink = nullptr;
-    if(outlinedLink){
-        outlinedLink->showOutline(false);
-        outlinedLink = nullptr;
+    if(highlightedLink){
+        highlightedLink->enableHighlight(false);
+        highlightedLink = nullptr;
     }
     isDragging = false;
     dragMode = DRAG_NONE;
     
     self->SceneBody::updateModel();
+}
+
+
+EditableSceneLink* EditableSceneBody::editableSceneLink(int index)
+{
+    return static_cast<EditableSceneLink*>(sceneLink(index));
+}
+
+
+void EditableSceneBody::Impl::onSelectionChanged(bool on)
+{
+    isSelected = on;
+    enableHighlight(isHighlightingEnabled && isEditMode && isSelected);
 }
 
 
@@ -493,13 +520,7 @@ void EditableSceneBody::Impl::onKinematicStateChanged()
         }
     }
 
-    self->updateLinkPositions(modified);
-}
-
-
-EditableSceneLink* EditableSceneBody::editableSceneLink(int index)
-{
-    return static_cast<EditableSceneLink*>(sceneLink(index));
+    self->updateLinkPositions(update.withAction(SgUpdate::Modified));
 }
 
 
@@ -511,7 +532,7 @@ void EditableSceneBody::Impl::onCollisionsUpdated()
         for(int i=0; i < n; ++i){
             editableSceneLink(i)->setColliding(collisionLinkBitSet[i]);
         }
-        self->notifyUpdate(modified);
+        self->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
 }
 
@@ -536,7 +557,7 @@ void EditableSceneBody::Impl::changeCollisionLinkHighlightMode(bool on)
         for(int i=0; i < n; ++i){
             editableSceneLink(i)->setColliding(false);
         }
-        self->notifyUpdate(modified);
+        self->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
 }
 
@@ -559,7 +580,7 @@ void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilitie
         sceneLink(i)->setVisible(false);
         ++i;
     }
-    notifyUpdate(impl->modified);
+    notifyUpdate(impl->update.withAction(SgUpdate::Modified));
 }
 
 
@@ -593,6 +614,29 @@ void EditableSceneBody::Impl::onLinkOriginsCheckChanged(bool on)
 {
     for(int i=0; i < self->numSceneLinks(); ++i){
         self->editableSceneLink(i)->showOrigin(on);
+    }
+}
+
+
+void EditableSceneBody::Impl::enableHighlight(bool on)
+{
+    if(on){
+        bool doUpdate = false;
+        if(!highlight){
+            highlight = new SgBoundingBox;
+            highlight->setColor(Vector3f(1.0f, 1.0f, 0.0f));
+            highlight->setLineWidth(2.0f);
+            doUpdate = true;
+        } else {
+            doUpdate = !highlight->hasParents();
+        }
+        if(doUpdate){
+            self->insertEffectGroup(highlight, update);
+        }
+    } else {
+        if(highlight && highlight->hasParents()){
+            self->removeEffectGroup(highlight, update);
+        }
     }
 }
 
@@ -694,7 +738,7 @@ void EditableSceneBody::Impl::togglePin(EditableSceneLink* sceneLink, bool toggl
 void EditableSceneBody::Impl::makeLinkAttitudeLevel()
 {
     if(pointedSceneLink){
-        Link* link = outlinedLink->link();
+        Link* link = highlightedLink->link();
         auto ik = bodyItem->getCurrentIK(link);
         if(ik){
             const Isometry3& T = link->T();
@@ -854,7 +898,8 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
     // The following connection is only necessary when the position dragger is shown
     kinematicsKitConnection.disconnect();
 
-    self->notifyUpdate(modified);
+    //! \todo check if the node is actually updated
+    self->notifyUpdate(update.withAction(SgUpdate::Added | SgUpdate::Modified | SgUpdate::Removed));
 }
 
 
@@ -932,7 +977,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
         }
     }
 
-    positionDragger->notifyUpdate();
+    positionDragger->notifyUpdate(update.withAction(SgUpdate::Modified));
     sceneLink->addChildOnce(positionDragger);
 
     if(sceneLink->impl->originMarker){
@@ -954,18 +999,21 @@ void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
 
     if(isEditMode != wasEditMode){
         if(isEditMode){
-            if(outlinedLink){
-                outlinedLink->showOutline(true);
+            if(highlightedLink){
+                highlightedLink->enableHighlight(true);
             }
         } else {
             finishEditing();
-            if(outlinedLink){
-                outlinedLink->showOutline(false);
-                outlinedLink = nullptr;
+            if(highlightedLink){
+                highlightedLink->enableHighlight(false);
+                highlightedLink = nullptr;
             }
             updateMarkersAndManipulators(false);
         }
     }
+
+    isHighlightingEnabled = event.sceneWidget()->isHighlightingEnabled();
+    enableHighlight(isHighlightingEnabled && isEditMode && isSelected);
 }
 
 
@@ -1000,9 +1048,9 @@ bool EditableSceneBody::onButtonPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(outlinedLink){
-        outlinedLink->showOutline(false);
-        outlinedLink = nullptr;
+    if(highlightedLink){
+        highlightedLink->enableHighlight(false);
+        highlightedLink = nullptr;
     }
     
     PointedType pointedType = findPointedObject(event.nodePath());
@@ -1018,23 +1066,23 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     targetLink = pointedSceneLink->link();
 
     int operationType = LinkOperationType::None;
-    bool showOutline = false;
+    bool doEnableHighlight = false;
     auto bsm = BodySelectionManager::instance();
         
     if(event.button() == Qt::RightButton){
         // The context menu is about to be shown
         bsm->setCurrent(bodyItem, targetLink, true);
-        showOutline = true;
+        doEnableHighlight = true;
     } else {
         operationType = checkLinkOperationType(pointedSceneLink, true);
         if(operationType != LinkOperationType::None){
-            showOutline = true;
+            doEnableHighlight = true;
         }
     }
     
-    if(showOutline){
-        pointedSceneLink->showOutline(true);
-        outlinedLink = pointedSceneLink;
+    if(doEnableHighlight){
+        pointedSceneLink->enableHighlight(true);
+        highlightedLink = pointedSceneLink;
     }
     if(operationType == LinkOperationType::None){
         return false;
@@ -1069,9 +1117,9 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         }
     }
 
-    if(dragMode != DRAG_NONE && outlinedLink){
-        outlinedLink->showOutline(false);
-        self->notifyUpdate(modified);
+    if(dragMode != DRAG_NONE && highlightedLink){
+        highlightedLink->enableHighlight(false);
+        self->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
 
     return handled;
@@ -1088,9 +1136,9 @@ bool EditableSceneBody::Impl::onButtonReleaseEvent(const SceneWidgetEvent& event
 {
     bool handled = finishEditing();
 
-    if(outlinedLink){
-        outlinedLink->showOutline(true);
-        self->notifyUpdate(modified);
+    if(highlightedLink){
+        highlightedLink->enableHighlight(true);
+        self->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
 
     return handled;
@@ -1139,12 +1187,12 @@ bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
             event.updateIndicator("");
         } else {
             if(checkLinkOperationType(pointedSceneLink, false) != LinkOperationType::None){
-                if(pointedSceneLink != outlinedLink){
-                    if(outlinedLink){
-                        outlinedLink->showOutline(false);
+                if(pointedSceneLink != highlightedLink){
+                    if(highlightedLink){
+                        highlightedLink->enableHighlight(false);
                     }
-                    pointedSceneLink->showOutline(true);
-                    outlinedLink = pointedSceneLink;
+                    pointedSceneLink->enableHighlight(true);
+                    highlightedLink = pointedSceneLink;
                 }
             }
             const Vector3 p = pointedSceneLink->T().inverse() * event.point();
@@ -1202,9 +1250,9 @@ void EditableSceneBody::onPointerLeaveEvent(const SceneWidgetEvent& event)
 
 void EditableSceneBody::Impl::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    if(outlinedLink){
-        outlinedLink->showOutline(false);
-        outlinedLink = nullptr;
+    if(highlightedLink){
+        highlightedLink->enableHighlight(false);
+        highlightedLink = nullptr;
     }
 }
 
@@ -1229,7 +1277,7 @@ bool EditableSceneBody::onKeyPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBody::Impl::onKeyPressEvent(const SceneWidgetEvent& event)
 {
-    if(!outlinedLink){
+    if(!highlightedLink){
         return false;
     }
 
@@ -1237,15 +1285,15 @@ bool EditableSceneBody::Impl::onKeyPressEvent(const SceneWidgetEvent& event)
 
     switch(event.key()){
     case Qt::Key_B:
-        toggleBaseLink(outlinedLink);
+        toggleBaseLink(highlightedLink);
         break;
         
     case Qt::Key_R:
-        togglePin(outlinedLink, false, true);
+        togglePin(highlightedLink, false, true);
         break;
 
     case Qt::Key_T:
-        togglePin(outlinedLink, true, false);
+        togglePin(highlightedLink, true, false);
         break;
 
     default:
@@ -1605,7 +1653,7 @@ void EditableSceneBody::Impl::dragVirtualElasticString(const SceneWidgetEvent& e
             SgVertexArray& points = *virtualElasticStringLine->vertices();
             points[0] = p.cast<Vector3f::Scalar>();
             points[1] = (p + d).cast<Vector3f::Scalar>();
-            virtualElasticStringLine->notifyUpdate();
+            virtualElasticStringLine->notifyUpdate(update.withAction(SgUpdate::Modified));
             simulatorItem->setVirtualElasticString(bodyItem, targetLink, pointedLinkLocalPoint, end);
         }
     }

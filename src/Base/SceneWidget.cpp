@@ -244,6 +244,7 @@ public:
 
     bool needToUpdateViewportInformation;
     bool isEditMode;
+    bool isHighlightingEnabled;
 
     Selection viewpointControlMode;
     bool isFirstPersonMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
@@ -575,6 +576,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     
     needToUpdateViewportInformation = true;
     isEditMode = false;
+    isHighlightingEnabled = false;
     viewpointControlMode.resize(2);
     viewpointControlMode.setSymbol(SceneWidget::THIRD_PERSON_MODE, "thirdPerson");
     viewpointControlMode.setSymbol(SceneWidget::FIRST_PERSON_MODE, "firstPerson");
@@ -2414,6 +2416,21 @@ int SceneWidget::polygonDisplayElements() const
 }
 
 
+void SceneWidget::setHighlightingEnabled(bool on)
+{
+    if(on != impl->isHighlightingEnabled){
+        impl->isHighlightingEnabled = on;
+        impl->advertiseSceneModeChange();
+    }
+}
+
+
+bool SceneWidget::isHighlightingEnabled() const
+{
+    return impl->isHighlightingEnabled;
+}
+
+
 void SceneWidget::setCollisionLinesVisible(bool on)
 {
     impl->setCollisionLinesVisible(on);
@@ -2714,6 +2731,7 @@ bool SceneWidget::Impl::storeState(Archive& archive)
 {
     archive.write("editMode", isEditMode);
     archive.write("viewpointControlMode", viewpointControlMode.selectedSymbol());
+    archive.write("highlighting", isHighlightingEnabled);
     archive.write("collisionLines", collisionLinesVisible);
 
     config->storeState(archive);
@@ -2839,6 +2857,7 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
         self->setViewpointControlMode((SceneWidget::ViewpointControlMode(viewpointControlMode.index(symbol))));
     }
 
+    archive.read("highlighting", isHighlightingEnabled);
     setCollisionLinesVisible(archive.get("collisionLines", collisionLinesVisible));
     
     config->restoreState(archive);

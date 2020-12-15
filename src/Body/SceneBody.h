@@ -12,6 +12,7 @@
 
 namespace cnoid {
 
+class SceneBody;
 class SceneLinkImpl;
 
 class CNOID_EXPORT SceneLink : public SgPosTransform
@@ -19,8 +20,11 @@ class CNOID_EXPORT SceneLink : public SgPosTransform
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
-    SceneLink(Link* link);
+    SceneLink(SceneBody* sceneBody, Link* link);
+    SceneLink(const SceneLink& org) = delete;
     ~SceneLink();
+
+    SceneBody* sceneBody(){ return sceneBody_; }
 
     Link* link() { return link_; }
     const Link* link() const { return link_; }
@@ -30,12 +34,12 @@ public:
     const SgNode* collisionShape() const;
     SgNode* collisionShape();
 
-    void insertEffectGroup(SgGroup* group, bool doNotify);
-    void removeEffectGroup(SgGroup* group, bool doNotify);
+    void insertEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
+    void removeEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
     
     void setVisible(bool on);
     float transparency() const;
-    void setTransparency(float transparency, bool doNotify);
+    void setTransparency(float transparency, SgUpdateRef update = SgUpdateRef());
     //! \deprecated. Use setTransparency.
     void makeTransparent(float transparency);
     
@@ -43,10 +47,9 @@ public:
     SceneDevice* getSceneDevice(Device* device);
 
 private:
-    SceneLink(const SceneLink& org);
-
     Link* link_;
     SceneLinkImpl* impl;
+    SceneBody* sceneBody_;
     friend class SceneBody;
 };
 
@@ -58,9 +61,10 @@ class CNOID_EXPORT SceneBody : public SgPosTransform
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        
+
+    SceneBody();
     SceneBody(Body* body);
-    SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory);
+    SceneBody(const SceneBody& org) = delete;
     virtual ~SceneBody();
 
     Body* body() { return body_; }
@@ -86,14 +90,20 @@ public:
     //! \deprecated. Use setTransparency.
     void makeTransparent(float transparency, CloneMap& cloneMap);
 
+    void insertEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
+    void removeEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
+
     virtual void updateModel();
 
-private:
-    SceneBody(const SceneBody& org);
+protected:
+    void setBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory);
 
+private:
     BodyPtr body_;
     std::vector<SceneLinkPtr> sceneLinks_;
     SceneBodyImpl* impl;
+
+    friend class SceneLink;
 };
             
 typedef ref_ptr<SceneBody> SceneBodyPtr;
