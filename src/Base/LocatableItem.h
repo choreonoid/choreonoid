@@ -30,7 +30,6 @@ public:
     void setLocationType(LocationType type) { locationType_ = type; }
     virtual std::string getName() const;
     virtual Isometry3 getLocation() const = 0;
-    Isometry3 getGlobalLocation() const;
     virtual bool isEditable() const;
     virtual void setEditable(bool on);
     virtual bool setLocation(const Isometry3& T);
@@ -40,6 +39,9 @@ public:
     virtual SignalProxy<void()> sigLocationChanged() = 0;
     virtual SignalProxy<void()> sigAttributeChanged();
     virtual SignalProxy<void()> sigExpired();
+    Isometry3 getGlobalLocation() const;
+    Isometry3 getGlobalLocationOf(const Isometry3 T) const;
+    bool setGlobalLocation(const Isometry3& T);
     void notifyAttributeChange();
     bool requestEdit();
 

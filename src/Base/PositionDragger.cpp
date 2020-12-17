@@ -827,13 +827,19 @@ bool PositionDragger::isDragging() const
 Isometry3 PositionDragger::draggingPosition() const
 {
     Isometry3 T1;
+    bool doNormalization = false;
     if(impl->dragProjector.isDragging()){
         T1 = impl->T_parent.inverse(Eigen::Isometry) * impl->dragProjector.position();
+        doNormalization = true;
     } else {
         T1 = T();
     }
     if(impl->hasOffset){
-        return T1 * impl->T_offset.inverse(Eigen::Isometry);
+        doNormalization = true;
+        T1 = T1 * impl->T_offset.inverse(Eigen::Isometry);
+    }
+    if(doNormalization){
+        normalizeRotation(T1);
     }
     return T1;
 }
@@ -848,8 +854,9 @@ Isometry3 PositionDragger::globalDraggingPosition() const
         T1 = impl->T_parent * T();
     }
     if(impl->hasOffset){
-        return T1 * impl->T_offset.inverse(Eigen::Isometry);
+        T1 = T1 * impl->T_offset.inverse(Eigen::Isometry);
     }
+    normalizeRotation(T1);
     return T1;
 }
 

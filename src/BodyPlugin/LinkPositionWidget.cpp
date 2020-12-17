@@ -1179,6 +1179,7 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Isometry3& T_input, bool
                 T = kinematicsKit->baseLink()->T() * T;
             }
         }
+        normalizeRotation(T);
         solved = ik->calcInverseKinematics(T);
     }
 

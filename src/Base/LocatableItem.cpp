@@ -38,24 +38,6 @@ std::string LocationProxy::getName() const
 }
 
 
-Isometry3 LocationProxy::getGlobalLocation() const
-{
-    switch(locationType_){
-    case GlobalLocation:
-        return getLocation();
-    case ParentRelativeLocation:
-    case OffsetLocation:
-        if(auto parent = getParentLocationProxy()){
-            return parent->getGlobalLocation() * getLocation();
-        } else {
-            return getLocation();
-        }
-    default:
-        return Isometry3::Identity();
-    }
-}
-
-
 bool LocationProxy::isEditable() const
 {
     return isEditable_;
@@ -91,6 +73,48 @@ LocationProxyPtr LocationProxy::getParentLocationProxy() const
         }
     }
     return nullptr;
+}
+
+
+Isometry3 LocationProxy::getGlobalLocation() const
+{
+    return getGlobalLocationOf(getLocation());
+}
+
+
+Isometry3 LocationProxy::getGlobalLocationOf(const Isometry3 T) const
+{
+    switch(locationType_){
+    case GlobalLocation:
+        return T;
+    case ParentRelativeLocation:
+    case OffsetLocation:
+        if(auto parent = getParentLocationProxy()){
+            return parent->getGlobalLocation() * T;
+        } else {
+            return T;
+        }
+    default:
+        return Isometry3::Identity();
+    }
+}
+
+
+bool LocationProxy::setGlobalLocation(const Isometry3& T)
+{
+    switch(locationType_){
+    case GlobalLocation:
+        return setLocation(T);
+    case ParentRelativeLocation:
+    case OffsetLocation:
+        if(auto parent = getParentLocationProxy()){
+            return setLocation(
+                parent->getGlobalLocation().inverse(Eigen::Isometry) * T);
+        }
+    default:
+        break;
+    }
+    return false;
 }
 
 

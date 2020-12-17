@@ -46,6 +46,9 @@ public:
     ScopedConnectionSet(ScopedConnectionSet&& org)
         : ConnectionSet(std::move(org)) { }
     ~ScopedConnectionSet() { ConnectionSet::disconnect(); }
+
+    ScopedConnectionSet& operator=(const ScopedConnection&) = delete;
+    
     bool empty() const { return ConnectionSet::empty(); }
     size_t numConnections() const { return ConnectionSet::numConnections(); }
     void add(const Connection& connection) { ConnectionSet::add(connection); }
@@ -57,8 +60,7 @@ public:
     void disconnect() { ConnectionSet::disconnect(); }
 
 private:
-    ScopedConnectionSet(const ScopedConnection&) { }
-    ScopedConnectionSet& operator=(const ScopedConnection&) { return *this; }
+    ScopedConnectionSet(const ScopedConnection&);
 };
 
 }

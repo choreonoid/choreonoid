@@ -1490,6 +1490,9 @@ Item* LinkLocation::getCorrespondingItem()
 
 LocationProxyPtr LinkLocation::getParentLocationProxy() const
 {
+    if(auto body = refBodyItem.lock()){
+        body->getLocationProxy();
+    }
     return nullptr;
 }
 
