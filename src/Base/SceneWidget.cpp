@@ -786,8 +786,10 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& update)
         if(update.action() & SgUpdate::ADDED){
             for(int i=0; i < numEditables; ++i){
                 SceneWidgetEditable* editable = extractor.editable(i);
-                editableEntities.insert(editable);
-                editable->onSceneModeChanged(latestEvent);
+                auto inserted = editableEntities.insert(editable);
+                if(inserted.second){
+                    editable->onSceneModeChanged(latestEvent);
+                }
             }
         } else if(update.action() & SgUpdate::REMOVED){
             for(int i=0; i < numEditables; ++i){
