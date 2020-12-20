@@ -104,8 +104,8 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
     writeFunctions.dispatch(node);
     currentArchive.reset();
 
-    if(node->isGroup()){
-        auto group = node->toGroup();
+    if(node->isGroupNode()){
+        auto group = node->toGroupNode();
         ListingPtr elements = new Listing;
         for(auto& child : *group){
             if(auto childArchive = writeSceneNode(child)){

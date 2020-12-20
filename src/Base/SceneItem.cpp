@@ -31,7 +31,9 @@ bool loadScene(SceneItem* item, const std::string& filename, std::ostream& os)
         auto topNode = item->topNode();
         topNode->clearChildren();
         topNode->addChild(group);
-        item->setLightweightRenderingEnabled(item->isLightweightRenderingEnabled());
+        if(item->isLightweightRenderingEnabled()){
+            item->setLightweightRenderingEnabled(true);
+        }
         return true;
     }
     return false;
@@ -213,7 +215,9 @@ bool SceneItem::restore(const Archive& archive)
         if(hasRot){
             topNode_->setRotation(rot);
         }
-        archive.read("lightweight_rendering", isLightweightRenderingEnabled_);
+        if(archive.get("lightweight_rendering", false)){
+            setLightweightRenderingEnabled(true);
+        }
         return true;
     }
     return false;

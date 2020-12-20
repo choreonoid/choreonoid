@@ -322,6 +322,7 @@ void EditableSceneLink::setColliding(bool on)
 
 EditableSceneBody::EditableSceneBody(BodyItem* bodyItem)
 {
+    setAttribute(Operable);
     impl = new Impl(this, bodyItem);
     impl->initialize();
 }

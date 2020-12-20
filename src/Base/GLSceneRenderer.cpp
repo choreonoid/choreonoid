@@ -39,7 +39,6 @@ public:
 
     Impl(GLSceneRenderer* self, SgGroup* sceneRoot);
     ~Impl();
-    void onSceneGraphUpdated(const SgUpdate& update);
 };
 
 }
@@ -84,8 +83,6 @@ GLSceneRenderer::Impl::Impl(GLSceneRenderer* self, SgGroup* sceneRoot)
     : self(self),
       sceneRoot(sceneRoot)
 {
-    sceneRoot->sigUpdated().connect([self](const SgUpdate& update){ self->onSceneGraphUpdated(update); });
-
     scene = new SgGroup();
     sceneRoot->addChild(scene);
 
@@ -136,21 +133,6 @@ void GLSceneRenderer::clearGL()
 
 
 void GLSceneRenderer::setDefaultFramebufferObject(unsigned int /* id */)
-{
-
-}
-
-
-void GLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
-{
-    if(SgImage* image = dynamic_cast<SgImage*>(update.path().front())){
-        onImageUpdated(image);
-    }
-    SceneRenderer::onSceneGraphUpdated(update);
-}
-
-
-void GLSceneRenderer::onImageUpdated(SgImage*)
 {
 
 }

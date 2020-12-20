@@ -48,7 +48,7 @@ void exportPySceneGraph(py::module& m)
     py::class_<SgNode, SgNodePtr, SgObject>(m, "SgNode")
         .def(py::init<>())
         .def(py::init<const SgNode&>())
-        .def("isGroup", &SgNode::isGroup);
+        .def("isGroupNode", &SgNode::isGroupNode);
     
     py::class_<SgGroup, SgGroupPtr, SgNode>(m, "SgGroup")
         .def(py::init<>())

@@ -496,7 +496,7 @@ void SceneBar::Impl::updateCollisionModelVisibility()
     }
     auto renderer = currentSceneWidget->renderer();
     renderer->setProperty(SceneRenderer::PropertyKey("collisionDetectionModelVisibility"), mode);
-    renderer->sigRenderingRequest()();
+    currentSceneWidget->renderScene();
 }
 
 

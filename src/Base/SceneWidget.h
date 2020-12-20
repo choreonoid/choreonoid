@@ -39,7 +39,10 @@ public:
 
     SceneRenderer* renderer();
 
-    void draw();
+    void renderScene(bool doImmediately = false);
+
+    [[deprecated("Use renderScene(true).")]]
+    void draw() { renderScene(true); }
 
     SignalProxy<void()> sigStateChanged() const;
 

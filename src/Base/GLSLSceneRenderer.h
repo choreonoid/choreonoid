@@ -94,12 +94,10 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     class Impl;
 
 protected:
-    virtual void onSceneGraphUpdated(const SgUpdate& update) override;
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;
-    virtual void onImageUpdated(SgImage* image) override;
     
-  private:
+private:
     Impl* impl;
 };
 

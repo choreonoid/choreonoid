@@ -481,7 +481,7 @@ void LinkInfo::setVisualShape(Link* link)
 
 void LinkInfo::setMaterialAndTextureForSubTree(SgNode* node, SgMaterial* material, SgTexture* texture)
 {
-    if(auto group = node->toGroup()){
+    if(auto group = node->toGroupNode()){
         for(auto& child : *group){
             setMaterialAndTextureForSubTree(child, material, texture);
         }

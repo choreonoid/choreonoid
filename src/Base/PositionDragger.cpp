@@ -244,7 +244,7 @@ void SgViewpointDependentSelector::render(SceneRenderer* renderer)
 
 PositionDragger::PositionDragger(int mode, int axes)
 {
-    setAttribute(MarkerAttribute);
+    setAttribute(MarkerAttribute | Operable);
     impl = new Impl(this, mode, axes);
 }
 

@@ -228,7 +228,7 @@ void LinkShapeOverwriteItem::Impl::extractShapeNodes(SgNodePath& nodePath)
     int directPathTopIndex = nodePath.size() - 1;
     offsetTransform.reset();
     for(int i = nodePath.size() - 2; i >= 0; --i){
-        auto group = nodePath[i]->toGroup();
+        auto group = nodePath[i]->toGroupNode();
         if(group->numChildren() >= 2){
             break;
         }
@@ -239,7 +239,7 @@ void LinkShapeOverwriteItem::Impl::extractShapeNodes(SgNodePath& nodePath)
         offsetTransform = new SgPosTransform;
         SgNode* child = nodePath[directPathTopIndex];
         if(directPathTopIndex > 0){
-            auto parent = nodePath[directPathTopIndex - 1]->toGroup();
+            auto parent = nodePath[directPathTopIndex - 1]->toGroupNode();
             parent->moveChildrenTo(offsetTransform);
             parent->addChild(offsetTransform);
         } else {

@@ -96,6 +96,26 @@ public:
 
     static bool checkNonNodeCloning(const CloneMap& cloneMap);
     static void setNonNodeCloning(CloneMap& cloneMap, bool on);
+
+    enum Attribute {
+        Node = 1 << 0,
+        GroupNode = 1 << 1,
+        Composite = 1 << 2, // the object has some SgObject members except for group children
+        NodeDecoration = 1 << 3,
+        Marker = 1 << 4,
+        Operable = 1 << 5,
+        NumAttributes = 6,
+
+        // deprecated
+        GroupAttribute = GroupNode,
+        NodeDecorationGroup = NodeDecoration,
+        MarkerAttribute = Marker
+    };
+
+    void setAttribute(int attr){ attributes_ |= attr; }
+    int attributes() const { return attributes_; }
+    bool hasAttribute(int attr) const { return attributes_ & attr; }
+    bool hasAttributes(int attrs) const { return (attributes_ & attrs) == attrs; }
     
     const std::string& name() const { return name_; }
     void setName(const std::string& name) { name_ = name; }
@@ -138,6 +158,11 @@ public:
     const std::string& uri() const { return uri_; }
     void setUri(const std::string& uri) { uri_ = uri; }
 
+    bool isNode() const { return hasAttribute(Node); }
+    SgNode* toNode();
+    bool isGroupNode() const { return hasAttribute(GroupNode); }
+    SgGroup* toGroupNode();
+
 protected:
     SgObject();
     SgObject(const SgObject& org);
@@ -145,10 +170,11 @@ protected:
     virtual void onUpdated(SgUpdate& update);
             
 private:
-    std::string name_;
+    unsigned char attributes_;
     ParentContainer parents;
     Signal<void(const SgUpdate& update)> sigUpdated_;
     Signal<void(bool on)> sigGraphConnection_;
+    std::string name_;
     std::string uri_;
 };
 
@@ -192,20 +218,6 @@ public:
         return findClassId(typeid(NodeType));
     }
 
-    enum NodeAttribute {
-        GroupAttribute = 1 << 0,
-        NodeDecorationGroup = 1 << 1,
-        MarkerAttribute = 1 << 2,
-        NumAttributes = 3
-    };
-
-    void setAttribute(int attr){ attributes_ |= attr; }
-    int attributes() const { return attributes_; }
-    bool hasAttribute(int attr) const { return attributes_ & attr; }
-    
-    bool isGroup() const { return hasAttribute(GroupAttribute); }
-    SgGroup* toGroup();
-
     void addDecorationReference() { ++decorationRefCounter; }
     void releaseDecorationReference() { --decorationRefCounter; }
     bool isDecoratedSomewhere() const { return decorationRefCounter > 0; }
@@ -216,7 +228,6 @@ protected:
 
 private:
     int classId_;
-    unsigned char attributes_;
     int decorationRefCounter;
 
     //! \deprecated
@@ -224,6 +235,12 @@ private:
 };
 
 typedef ref_ptr<SgNode> SgNodePtr;
+
+
+inline SgNode* SgObject::toNode()
+{
+    return isNode() ? static_cast<SgNode*>(this) : nullptr;
+}
 
 
 class CNOID_EXPORT SgGroup : public SgNode
@@ -309,7 +326,7 @@ public:
         if(depth < 0 || --depth > 0){
             for(int i=0; i < numChildren(); ++i){
                 auto child_ = child(i);
-                if(child_->isGroup()){
+                if(child_->isGroupNode()){
                     if(NodeType* node = static_cast<SgGroup*>(child_)->findNodeOfType<NodeType>(depth)){
                         return node;
                     }
@@ -340,9 +357,9 @@ private:
 typedef ref_ptr<SgGroup> SgGroupPtr;
 
 
-inline SgGroup* SgNode::toGroup()
+inline SgGroup* SgObject::toGroupNode()
 {
-    return isGroup() ? static_cast<SgGroup*>(this) : nullptr;
+    return isGroupNode() ? static_cast<SgGroup*>(this) : nullptr;
 }
 
 

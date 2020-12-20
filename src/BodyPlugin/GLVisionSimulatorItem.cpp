@@ -162,6 +162,7 @@ public:
     std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
     int screenId;
     bool isDense;
+    bool flagToUpdatePreprocessedNodeTree;
 
     SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering);
     ~SensorScreenRenderer();
@@ -940,12 +941,14 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
 
     if(!renderer){
         renderer = GLSceneRenderer::create();
+        renderer->setFlagVariableToUpdatePreprocessedNodeTree(flagToUpdatePreprocessedNodeTree);
     }
 
     renderer->setDefaultFramebufferObject(frameBuffer->handle());
     renderer->initializeGL();
     renderer->setViewport(0, 0, pixelWidth, pixelHeight);
     renderer->sceneRoot()->addChild(scene->root);
+    flagToUpdatePreprocessedNodeTree = true;
     renderer->extractPreprocessedNodes();
     renderer->setCurrentCamera(sceneCamera);
 

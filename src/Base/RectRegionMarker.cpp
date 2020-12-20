@@ -47,6 +47,7 @@ public:
 
 RectRegionMarker::RectRegionMarker()
 {
+    setAttribute(Operable);
     impl = new RectRegionMarkerImpl(this);
 }
 

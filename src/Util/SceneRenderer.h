@@ -78,15 +78,21 @@ public:
        This function updates the information on preprocessed nodes such as
        cameras, lights, and fogs.
     */
-    virtual void extractPreprocessedNodes();
+    void extractPreprocessedNodes();
+
+    /*
+       This flag variable is used to check if the tree of preprocessed nodes
+       must be updated when the extractPreprocessedNodes function is executed.
+       You can skip the redundant update process by setting false to the flag
+       when the tree is not changed.
+    */
+    void setFlagVariableToUpdatePreprocessedNodeTree(bool& flag);
     
     void render();
     bool pick(int x, int y);
 
     virtual bool isRenderingPickingImage() const;
     
-    Signal<void()>& sigRenderingRequest();
-
     class CNOID_EXPORT PropertyKey {
         int id;
     public:
@@ -104,7 +110,6 @@ public:
 protected:
     virtual void doRender() = 0;
     virtual bool doPick(int x, int y);
-    virtual void onSceneGraphUpdated(const SgUpdate& update);
 
 private:
     Impl* impl;

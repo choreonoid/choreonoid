@@ -85,7 +85,7 @@ bool BodyOverwriteAddon::Impl::checkIfSingleShapeBody()
         auto nodePath = nodePaths.front();
         bool isDirectPath = true;
         for(int i=0; i < nodePath.size() - 1; ++i){
-            auto group = nodePath[i]->toGroup();
+            auto group = nodePath[i]->toGroupNode();
             if(group->numChildren() != 1){
                 isDirectPath = false;
                 break;

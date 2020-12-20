@@ -70,35 +70,6 @@ Signal<void()> sigVSyncModeChanged;
 bool isLowMemoryConsumptionMode;
 Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
-class EditableExtractor : public PolymorphicSceneNodeFunctionSet
-{
-public:
-    vector<SgNode*> editables;
-
-    int numEditables() const { return editables.size(); }
-    SgNode* editableNode(int index) { return editables[index]; }
-    SceneWidgetEditable* editable(int index) { return dynamic_cast<SceneWidgetEditable*>(editables[index]); }
-
-    EditableExtractor(){
-        setFunction<SgGroup>(
-            [&](SgNode* node){
-                auto group = static_cast<SgGroup*>(node);
-                if(dynamic_cast<SceneWidgetEditable*>(group)){
-                    editables.push_back(group);
-                }
-                for(auto child : *group){
-                    dispatch(child);
-                }
-            });
-        updateDispatchTable();
-    }
-
-    void apply(SgNode* node) {
-        editables.clear();
-        dispatch(node);
-    }
-};
-
 class ConfigDialog : public Dialog
 {
 public:
@@ -221,8 +192,9 @@ public:
     GLSceneRenderer* renderer;
     GLSLSceneRenderer* glslRenderer;
     GLuint prevDefaultFramebufferObject;
+    bool isRendering;
+    bool needToUpdatePreprocessedNodeTree;
     bool needToClearGLOnFrameBufferChange;
-    LazyCaller extractPreprocessedNodesLater;
     SgUpdate modified;
     SgUpdate added;
     SgUpdate removed;
@@ -328,6 +300,9 @@ public:
     SgLineSet* createGrid(int index);
 
     void onSceneGraphUpdated(const SgUpdate& update);
+    void checkNewEditableNodes(SgNode* node);
+    void checkRemovedEditableNodes(SgNode* node, bool doCheckFocus);
+    
     virtual void initializeGL() override;
     virtual void resizeGL(int width, int height) override;
     virtual void paintGL() override;
@@ -551,7 +526,6 @@ SceneWidget::Impl::Impl(SceneWidget* self)
         
     renderer->setOutputStream(os);
     renderer->enableUnusedResourceCheck(true);
-    renderer->sigRenderingRequest().connect([&](){ update(); });
     renderer->sigCamerasChanged().connect([&](){ onCamerasChanged(); });
     renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
     self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
@@ -559,9 +533,12 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     scene = renderer->scene();
     prevDefaultFramebufferObject = 0;
-    needToClearGLOnFrameBufferChange = false;
+    isRendering = false;
 
-    extractPreprocessedNodesLater.setFunction([&](){ renderer->extractPreprocessedNodes(); });
+    needToUpdatePreprocessedNodeTree = true;
+    renderer->setFlagVariableToUpdatePreprocessedNodeTree(needToUpdatePreprocessedNodeTree);
+
+    needToClearGLOnFrameBufferChange = false;
 
     modified.setAction(SgUpdate::MODIFIED);
     added.setAction(SgUpdate::ADDED);
@@ -726,14 +703,14 @@ SceneRenderer* SceneWidget::renderer()
 }
 
 
-/**
-   Draw the scene immediately.
-   \note This function is only used to force rendering when testing rendering performance, etc.
-*/
-void SceneWidget::draw()
+void SceneWidget::renderScene(bool doImmediately)
 {
-    impl->repaint();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers);
+    if(doImmediately){
+        impl->repaint();
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers);
+    } else {
+        impl->update();
+    }
 }
 
 
@@ -774,44 +751,71 @@ void SceneWidget::Impl::resizeGL(int width, int height)
 }
 
 
-void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& update)
+void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
 {
-    SgNode* node = dynamic_cast<SgNode*>(update.path().front());
-
-    if(node && (update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED))){
-        EditableExtractor extractor;
-        extractor.apply(node);
-        const int numEditables = extractor.numEditables();
-
-        if(update.action() & SgUpdate::ADDED){
-            for(int i=0; i < numEditables; ++i){
-                SceneWidgetEditable* editable = extractor.editable(i);
-                auto inserted = editableEntities.insert(editable);
-                if(inserted.second){
-                    editable->onSceneModeChanged(latestEvent);
-                }
+    if(sgUpdate.action() & (SgUpdate::Added | SgUpdate::Removed)){
+        if(sgUpdate.action() & SgUpdate::Added){
+            if(auto node = sgUpdate.path().front()->toNode()){
+                checkNewEditableNodes(node);
             }
-        } else if(update.action() & SgUpdate::REMOVED){
-            for(int i=0; i < numEditables; ++i){
-                SceneWidgetEditable* editable = extractor.editable(i);
-                if(editable == lastMouseMovedEditable){
-                    lastMouseMovedEditable->onPointerLeaveEvent(latestEvent);
-                    lastMouseMovedEditable = nullptr;
-                }
-                bool isEntityFocused = false;
-                for(size_t i=0; i < focusedEditablePath.size(); ++i){
-                    if(editable == focusedEditablePath[i]){
-                        isEntityFocused = true;
-                    }
-                }
-                if(isEntityFocused){
-                    clearFocusToEditables();
-                }
-                editableEntities.erase(editable);
+        } else if(sgUpdate.action() & SgUpdate::Removed){
+            if(auto node = sgUpdate.path().front()->toNode()){
+                checkRemovedEditableNodes(node, true);
+            }
+        }
+        needToUpdatePreprocessedNodeTree = true;        
+    }
+
+    if(!isRendering){
+        QOpenGLWidget::update();
+    }
+}
+
+
+void SceneWidget::Impl::checkNewEditableNodes(SgNode* node)
+{
+    if(node->hasAttribute(SgObject::Operable)){
+        if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+            auto inserted = editableEntities.insert(editable);
+            if(inserted.second){
+                editable->onSceneModeChanged(latestEvent);
             }
         }
     }
+    if(auto group = node->toGroupNode()){
+        for(auto& child : *group){
+            checkNewEditableNodes(child);
+        }
+    }
 }
+
+
+void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node, bool doCheckFocus)
+{
+    if(node->hasAttribute(SgObject::Operable)){
+        if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+            if(editable == lastMouseMovedEditable){
+                lastMouseMovedEditable->onPointerLeaveEvent(latestEvent);
+                lastMouseMovedEditable = nullptr;
+            }
+            if(doCheckFocus){
+                for(size_t i=0; i < focusedEditablePath.size(); ++i){
+                    if(editable == focusedEditablePath[i]){
+                        clearFocusToEditables();
+                        doCheckFocus = false;
+                        break;
+                    }
+                }
+            }
+            editableEntities.erase(editable);
+        }
+    }
+    if(auto group = node->toGroupNode()){
+        for(auto& child : *group){
+            checkRemovedEditableNodes(child, doCheckFocus);
+        }
+    }
+}    
 
 
 void SceneWidget::Impl::paintGL()
@@ -871,7 +875,9 @@ void SceneWidget::Impl::paintGL()
         timerToRenderNormallyAfterInteractiveCameraPositionChange.stop();
     }
 
+    isRendering = true;
     renderer->render();
+    isRendering = false;
 
     if(fpsTimer.isActive()){
         renderFPS();
@@ -1235,7 +1241,10 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
     const int r = devicePixelRatio();
     int px = r * latestEvent.x();
     int py = r * latestEvent.y();
+
+    isRendering = true;
     bool picked = renderer->pick(px, py);
+    isRendering = false;
 
     if(isPickingVisualizationEnabled){
         Image image;
@@ -2357,6 +2366,10 @@ void SceneWidget::Impl::onCurrentCameraChanged()
                 break;
             }
         }
+    }
+
+    if(!isRendering){
+        update();
     }
 }
 

@@ -69,6 +69,15 @@ public:
 
 typedef ref_ptr<GLResource> GLResourcePtr;
 
+struct SgObjectPtrHash {
+    std::hash<SgObject*> hash;
+    std::size_t operator()(const SgObjectPtr& p) const {
+        return hash(p.get());
+    }
+};
+
+typedef std::unordered_map<SgObjectPtr, GLResourcePtr, SgObjectPtrHash> GLResourceMap;
+
 class VertexResource : public GLResource
 {
 public:
@@ -79,26 +88,24 @@ public:
     GLuint vbos[MAX_NUM_BUFFERS];
     GLsizei numVertices;
     int numBuffers;
-    SgObjectPtr sceneObject;
-    ScopedConnection connection;
     Matrix4* pLocalTransform;
     Matrix4 localTransform;
     SgLineSetPtr boundingBoxLines;
     SgLineSetPtr normalVisualization;
-    
+    ScopedConnection connection;
+
     VertexResource(const VertexResource&) = delete;
     VertexResource& operator=(const VertexResource&) = delete;
 
-    VertexResource(GLSLSceneRenderer::Impl* renderer, SgObject* obj)
-        : sceneObject(obj)
+    VertexResource(SgObject* obj)
     {
-        connection.reset(
-            obj->sigUpdated().connect(
-                [&](const SgUpdate&){ numVertices = 0; }));
-
         clearHandles();
         glGenVertexArrays(1, &vao);
         pLocalTransform = nullptr;
+
+        connection.reset(
+            obj->sigUpdated().connect(
+                [&](const SgUpdate&){ numVertices = 0; }));
     }
 
     void clearHandles(){
@@ -162,8 +169,10 @@ public:
     int width;
     int height;
     int numComponents;
+    ScopedConnection connection;
         
-    TextureResource(){
+    TextureResource(SgImage* image)
+    {
         isLoaded = false;
         isImageUpdateNeeded = false;
         textureId = 0;
@@ -171,6 +180,10 @@ public:
         width = 0;
         height = 0;
         numComponents = 0;
+
+        connection.reset(
+            image->sigUpdated().connect(
+                [&](const SgUpdate&){ isImageUpdateNeeded = true; }));
     }
 
     ~TextureResource(){
@@ -200,14 +213,17 @@ public:
 
 typedef ref_ptr<TextureResource> TextureResourcePtr;
 
-struct SgObjectPtrHash {
-    std::hash<SgObject*> hash;
-    std::size_t operator()(const SgObjectPtr& p) const {
-        return hash(p.get());
-    }
+class ResourceRefreshGroupResource : public GLResource
+{
+public:
+    GLSLSceneRenderer::Impl* impl;
+    SgGroupPtr subTreePreservationGroup;
+    ResourceRefreshGroupResource(GLSLSceneRenderer::Impl* impl, SgGroup* group);
+    ~ResourceRefreshGroupResource();
+    void clearSubTreeResources(GLResourceMap* resourceMap, SgObject* object);
+    virtual void discard() override { subTreePreservationGroup.reset(); }
 };
 
-typedef std::unordered_map<SgObjectPtr, GLResourcePtr, SgObjectPtrHash> GLResourceMap;
 
 class ScopedShaderProgramActivator
 {
@@ -620,6 +636,7 @@ void GLSLSceneRenderer::Impl::initialize()
 
     renderingFrameId = 1;
     isGLCleared = false;
+
     needToUpdateOverlayDepthBufferSize = true;
     isRenderingVisibleImage = false;
     isRenderingPickingImage = false;
@@ -1045,16 +1062,6 @@ void GLSLSceneRenderer::updateViewportInformation(int x, int y, int width, int h
 void GLSLSceneRenderer::requestToClearResources()
 {
     impl->isResourceClearRequested = true;
-}
-
-
-void GLSLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
-{
-    if(SgLightweightRenderingGroup* group = dynamic_cast<SgLightweightRenderingGroup*>(update.path().front())){
-        requestToClearResources();
-    }
-    
-    GLSceneRenderer::onSceneGraphUpdated(update);
 }
 
 
@@ -1958,7 +1965,7 @@ VertexResource* GLSLSceneRenderer::Impl::getOrCreateVertexResource(SgObject* obj
     VertexResource* resource;
     auto p = currentResourceMap->find(obj);
     if(p == currentResourceMap->end()){
-        resource = new VertexResource(this, obj);
+        resource = new VertexResource(obj);
         p = currentResourceMap->insert(GLResourceMap::value_type(obj, resource)).first;
     } else {
         resource = static_cast<VertexResource*>(p->second.get());
@@ -2153,7 +2160,7 @@ bool GLSLSceneRenderer::Impl::renderTexture(SgTexture* texture)
             }
         }
     } else {
-        resource = new TextureResource;
+        resource = new TextureResource(sgImage);
         currentResourceMap->insert(GLResourceMap::value_type(sgImage, resource));
 
         GLuint samplerId;
@@ -2230,17 +2237,6 @@ bool GLSLSceneRenderer::Impl::loadTextureImage(TextureResource* resource, const 
     resource->isImageUpdateNeeded = false;
 
     return true;
-}
-
-
-void GLSLSceneRenderer::onImageUpdated(SgImage* image)
-{
-    GLResourceMap* resourceMap = impl->hasValidNextResourceMap ? impl->nextResourceMap : impl->currentResourceMap;
-    auto p = resourceMap->find(image);
-    if(p != resourceMap->end()){
-        TextureResource* resource = static_cast<TextureResource*>(p->second.get());
-        resource->isImageUpdateNeeded = true;
-    }
 }
 
 
@@ -3137,6 +3133,16 @@ void GLSLSceneRenderer::Impl::renderLightweightRenderingGroup(SgLightweightRende
         isBoundingBoxRenderingMode = true;
     }
 
+    ResourceRefreshGroupResource* resouce;
+    auto p = currentResourceMap->find(group);
+    if(p == currentResourceMap->end()){
+        resouce = new ResourceRefreshGroupResource(this, group);
+        p = currentResourceMap->insert(GLResourceMap::value_type(group, resouce)).first;
+    }
+    if(isCheckingUnusedResources){
+        nextResourceMap->insert(*p);
+    }
+
     renderChildNodes(group);
 
     if(pushed){
@@ -3147,6 +3153,36 @@ void GLSLSceneRenderer::Impl::renderLightweightRenderingGroup(SgLightweightRende
     isLowMemoryConsumptionRenderingBeingProcessed = wasLowMemoryConsumptionRenderingBeingProcessed;
     isTextureBeingRendered = wasTextureBeingRendered;
     isBoundingBoxRenderingMode = wasBoundingBoxRenderingMode;
+}
+
+
+ResourceRefreshGroupResource::ResourceRefreshGroupResource(GLSLSceneRenderer::Impl* impl, SgGroup* group)
+    : impl(impl)
+{
+    subTreePreservationGroup = new SgGroup;
+    group->copyChildrenTo(subTreePreservationGroup);
+    clearSubTreeResources(impl->currentResourceMap, group);
+}
+
+
+ResourceRefreshGroupResource::~ResourceRefreshGroupResource()
+{
+    if(subTreePreservationGroup){
+        clearSubTreeResources(impl->nextResourceMap, subTreePreservationGroup);
+    }
+}
+
+
+void ResourceRefreshGroupResource::clearSubTreeResources(GLResourceMap* resourceMap, SgObject* object)
+{
+    int n = object->numChildObjects();
+    for(int i=0; i < n; ++i){
+        auto child = object->childObject(i);
+        resourceMap->erase(child);
+        if(child->hasAttribute(SgObject::Composite) || child->isGroupNode()){
+            clearSubTreeResources(resourceMap, child);
+        }
+    }
 }
 
 

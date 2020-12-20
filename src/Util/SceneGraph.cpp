@@ -30,12 +30,13 @@ SgUpdate::~SgUpdate()
 
 SgObject::SgObject()
 {
-
+    attributes_ = 0;
 }
 
 
 SgObject::SgObject(const SgObject& org)
-    : name_(org.name_),
+    : attributes_(org.attributes_),
+      name_(org.name_),
       uri_(org.uri_)
 {
 
@@ -139,8 +140,8 @@ int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_inf
 
 SgNode::SgNode()
 {
+    setAttribute(Node);
     classId_ = findClassId<SgNode>();
-    attributes_ = 0;
     decorationRefCounter = 0;
 }
 
@@ -148,15 +149,14 @@ SgNode::SgNode()
 SgNode::SgNode(int classId)
     : classId_(classId)
 {
-    attributes_ = 0;
+    setAttribute(Node);
     decorationRefCounter = 0;
 }
 
 
 SgNode::SgNode(const SgNode& org)
     : SgObject(org),
-      classId_(org.classId_),
-      attributes_(org.attributes_)
+      classId_(org.classId_)
 {
     decorationRefCounter = 0;
 }

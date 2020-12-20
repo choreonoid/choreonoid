@@ -114,10 +114,6 @@ public:
 
     virtual bool isShadowCastingAvailable() const;
 
-protected:
-    virtual void onSceneGraphUpdated(const SgUpdate& update) override;
-    virtual void onImageUpdated(SgImage* image);
-
 private:
     class Impl;
     Impl* impl;

@@ -149,6 +149,7 @@ Referenced* SgTextureTransform::doClone(CloneMap*) const
 
 SgTexture::SgTexture()
 {
+    setAttribute(Composite);
     repeatS_ = true; 
     repeatT_ = true; 
 }
@@ -247,6 +248,7 @@ SgTextureTransform* SgTexture::setTextureTransform(SgTextureTransform* textureTr
 
 SgMeshBase::SgMeshBase()
 {
+    setAttribute(Composite);
     creaseAngle_ = 0.0f;
     isSolid_ = false;
 }
@@ -564,7 +566,7 @@ void SgPolygonMesh::updateBoundingBox()
 SgShape::SgShape(int classId)
     : SgNode(classId)
 {
-
+    setAttribute(Composite);
 }
 
 
@@ -715,7 +717,7 @@ SgTexture* SgShape::getOrCreateTexture()
 SgPlot::SgPlot(int classId)
     : SgNode(classId)
 {
-
+    setAttribute(Composite);
 }
         
 

@@ -89,9 +89,8 @@ public:
     
     SceneRenderer* self;
     string name;
-    bool isRendering;
-    bool doPreprocessedNodeTreeExtraction;
-    Signal<void()> sigRenderingRequest;
+    bool builtinFlagToUpdatePreprocessedNodeTree;
+    bool* pFlagToUpdatePreprocessedNodeTree;
     std::unique_ptr<PreproNode> preproTree;
 
     struct CameraInfo
@@ -159,7 +158,7 @@ public:
     void extractPreproNodes();
     void extractPreproNodeIter(PreproNode* node, const Affine3& T);
     void updateCameraPaths();
-    void setCurrentCamera(int index, bool doRenderingRequest);
+    void setCurrentCamera(int index);
     bool setCurrentCamera(SgCamera* camera);
     void onExtensionAdded(std::function<void(SceneRenderer* renderer)> func);
 
@@ -201,8 +200,8 @@ SceneRenderer::SceneRenderer()
 SceneRenderer::Impl::Impl(SceneRenderer* self)
     : self(self)
 {
-    isRendering = false;
-    doPreprocessedNodeTreeExtraction = true;
+    builtinFlagToUpdatePreprocessedNodeTree = true;
+    pFlagToUpdatePreprocessedNodeTree = &builtinFlagToUpdatePreprocessedNodeTree;
 
     cameras = &cameras1;
     prevCameras = &cameras2;
@@ -244,36 +243,15 @@ void SceneRenderer::clearScene()
 }
 
 
-Signal<void()>& SceneRenderer::sigRenderingRequest()
-{
-    return impl->sigRenderingRequest;
-}
-
-
-void SceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
-{
-    if(update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED)){
-        impl->doPreprocessedNodeTreeExtraction = true;
-    }
-    if(!impl->isRendering){
-        impl->sigRenderingRequest();
-    }
-}
-
-
 void SceneRenderer::render()
 {
-    impl->isRendering = true;
     doRender();
-    impl->isRendering = false;
 }
 
 
 bool SceneRenderer::pick(int x, int y)
 {
-    impl->isRendering = true;
     bool result = doPick(x, y);
-    impl->isRendering = false;
     return result;
 }
 
@@ -326,6 +304,12 @@ double SceneRenderer::property(PropertyKey key, double defaultValue) const
 }
 
 
+void SceneRenderer::setFlagVariableToUpdatePreprocessedNodeTree(bool& flag)
+{
+    impl->pFlagToUpdatePreprocessedNodeTree = &flag;
+}
+
+
 void SceneRenderer::extractPreprocessedNodes()
 {
     impl->extractPreproNodes();
@@ -334,10 +318,11 @@ void SceneRenderer::extractPreprocessedNodes()
 
 void SceneRenderer::Impl::extractPreproNodes()
 {
-    if(doPreprocessedNodeTreeExtraction){
+    if(*pFlagToUpdatePreprocessedNodeTree){
         PreproTreeExtractor extractor;
         preproTree.reset(extractor.apply(self->sceneRoot()));
-        doPreprocessedNodeTreeExtraction = false;
+        *pFlagToUpdatePreprocessedNodeTree = false;
+        builtinFlagToUpdatePreprocessedNodeTree = true;
     }
 
     std::swap(cameras, prevCameras);
@@ -365,7 +350,7 @@ void SceneRenderer::Impl::extractPreproNodes()
         sigCamerasChanged();
     }
 
-    setCurrentCamera(currentCameraIndex, false);
+    setCurrentCamera(currentCameraIndex);
 }
 
 
@@ -580,11 +565,11 @@ SignalProxy<void()> SceneRenderer::sigCamerasChanged() const
 
 void SceneRenderer::setCurrentCamera(int index)
 {
-    impl->setCurrentCamera(index, true);
+    impl->setCurrentCamera(index);
 }
 
 
-void SceneRenderer::Impl::setCurrentCamera(int index, bool doRenderingRequest)
+void SceneRenderer::Impl::setCurrentCamera(int index)
 {
     SgCamera* newCamera = 0;
     if(index >= 0 && index < static_cast<int>(cameras->size())){
@@ -594,9 +579,6 @@ void SceneRenderer::Impl::setCurrentCamera(int index, bool doRenderingRequest)
         currentCameraIndex = index;
         currentCamera = newCamera;
         sigCurrentCameraChanged();
-        if(doRenderingRequest){
-            sigRenderingRequest();
-        }
     }
 }
 
@@ -612,7 +594,7 @@ bool SceneRenderer::Impl::setCurrentCamera(SgCamera* camera)
     if(camera != currentCamera){
         for(size_t i=0; i < cameras->size(); ++i){
             if((*cameras)[i].camera == camera){
-                setCurrentCamera(i, true);
+                setCurrentCamera(i);
                 return true;
             }
         }
