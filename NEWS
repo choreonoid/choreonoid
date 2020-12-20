@@ -54,6 +54,7 @@ Changes since 1.7.0:
 * Updated the tool bar icons
 * Implemented the vertex rendering mode and the solid-wireframe rendering mode
 * Improved the highlight style of selected / focused objects in the scene
+* Improved the API on the joint type and the joint actuation mode.
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

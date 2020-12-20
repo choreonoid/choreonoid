@@ -650,7 +650,9 @@ void SimpleControllerItem::Impl::enableInput(Link* link)
     int defaultInputStateTypes = Link::StateNone;
     int actuationMode = link->actuationMode();
     if(actuationMode & (Link::JointEffort | Link::JointDisplacement | Link::JointVelocity)){
-        defaultInputStateTypes = Link::JointDisplacement;
+        if(link->jointType() != Link::PseudoContinuousTrackJoint){
+            defaultInputStateTypes = Link::JointDisplacement;
+        }
     }
     if(actuationMode & Link::LinkExtWrench){
         // Global link position is needed to calculate the correct external force value
@@ -898,6 +900,7 @@ void SimpleControllerItem::Impl::output()
                 break;
 
             case Link::JointVelocity:
+            case Link::DeprecatedJointSurfaceVelocity:
                 if(isOldTargetVariableMode){
                     simLink->dq_target() = ioLink->dq();
                 } else {

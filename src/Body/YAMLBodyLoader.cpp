@@ -1036,17 +1036,24 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
 
     if(!isSubBodyNode){
         RigidBody rbody;
-        if(!extractEigen(node, "centerOfMass", rbody.c)){
-            rbody.c.setZero();
+        bool hasCoM = extractEigen(node, "centerOfMass", rbody.c);
+        bool hasMass = extract(node, "mass", rbody.m);
+        bool hasInertia = extractInertia(node, "inertia", rbody.I);
+        if(hasCoM || hasMass || hasInertia){
+            if(rigidBodies.empty()){
+                if(!hasCoM) rbody.c = link->c();
+                if(!hasMass) rbody.m = link->m();
+                if(!hasInertia) rbody.I = link->I();
+            } else {
+                if(!hasCoM) rbody.c.setZero();
+                if(!hasMass) rbody.m = 0.0;
+                if(!hasInertia) rbody.I.setZero();
+            }
+            rigidBodies.push_back(rbody);
         }
-        if(!extract(node, "mass", rbody.m)){
-            rbody.m = 0.0;
+        if(!rigidBodies.empty()){
+            setMassParameters(link);
         }
-        if(!extractInertia(node, "inertia", rbody.I)){
-            rbody.I.setZero();
-        }
-        rigidBodies.push_back(rbody);
-        setMassParameters(link);
 
         ValueNode* import = node->find("import");
         if(import->isValid()){
@@ -1097,25 +1104,26 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
         setJointId(link, id);
     }
 
+    string jointType;
     auto jointTypeNode = node->extract("jointType");
     if(jointTypeNode){
-        string jointType = jointTypeNode->toString();
+        jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
-            link->setJointType(Link::REVOLUTE_JOINT);
+            link->setJointType(Link::RevoluteJoint);
         } else if(jointType == "prismatic"){
-            link->setJointType(Link::PRISMATIC_JOINT);
+            link->setJointType(Link::PrismaticJoint);
         } else if(jointType == "slide"){
-            link->setJointType(Link::PRISMATIC_JOINT);
+            link->setJointType(Link::PrismaticJoint);
         } else if(jointType == "free"){
-            link->setJointType(Link::FREE_JOINT);
+            link->setJointType(Link::FreeJoint);
         } else if(jointType == "fixed"){
-            link->setJointType(Link::FIXED_JOINT);
-        } else if(jointType == "pseudoContinuousTrack" ||
-                  jointType == "pseudo_continuous_track"){  // deprecated
-            link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
-            link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+            link->setJointType(Link::FixedJoint);
+        } else if(jointType == "pseudoContinuousTrack" || jointType == "pseudo_continuous_track"){
+            link->setJointType(Link::PseudoContinuousTrackJoint);
+            link->setActuationMode(Link::JointVelocity);
         } else {
-            jointTypeNode->throwException("Illegal jointType value");
+            jointTypeNode->throwException(
+                format(_("Illegal jointType value \"{0}\""), jointType));
         }
     }
 
@@ -1127,15 +1135,27 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
     if(actuationModeNode){
         string mode = actuationModeNode->toString();
         if(mode == "jointEffort" || mode == "jointTorque" || mode == "jointForce"){
-            link->setActuationMode(Link::JOINT_EFFORT);
+            link->setActuationMode(Link::JointEffort);
+
         } else if(mode == "jointDisplacement" || mode == "jointAngle"){
-            link->setActuationMode(Link::JOINT_DISPLACEMENT);
+            link->setActuationMode(Link::JointDisplacement);
+
         } else if(mode == "jointVelocity"){
-            link->setActuationMode(Link::JOINT_VELOCITY);
-        } else if(mode == "jointSurfaceVelocity"){
-            link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+            link->setActuationMode(Link::JointVelocity);
+
+        } else if(mode == "jointSurfaceVelocity"){ // deprecated
+            if(!jointType.empty() &&
+               (link->jointType() != Link::PseudoContinuousTrackJoint || link->jointType() != Link::FixedJoint)){
+                os() << format(_("Warning: Actuation mode \"jointSurfaceVelocity\" is specified in {0}. "
+                                 "The mode is deprecated and the joint type should be the pseudo continuous track in this case."),
+                               link->name()) << endl;
+            }
+            link->setJointType(Link::PseudoContinuousTrackJoint);
+            link->setActuationMode(Link::JointVelocity);
+            
         } else if(mode == "linkPosition"){
-            link->setActuationMode(Link::LINK_POSITION);
+            link->setActuationMode(Link::LinkPosition);
+
         } else {
             actuationModeNode->throwException("Illegal actuationMode value");
         }
@@ -1173,7 +1193,7 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
             jointRangeNode->throwException(_("Invalid type value is specefied as a jointRange"));
         }
     }
-    if(link->jointType() == Link::REVOLUTE_JOINT && isDegreeMode()){
+    if(link->isRevoluteJoint() && isDegreeMode()){
         link->setJointRange(
             lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
             upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
@@ -1184,7 +1204,7 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
     auto maxVelocityNode = node->extract("maxJointVelocity");
     if(maxVelocityNode){
         double maxVelocity = maxVelocityNode->toDouble();
-        if(link->jointType() == Link::REVOLUTE_JOINT){
+        if(link->isRevoluteJoint()){
             link->setJointVelocityRange(toRadian(-maxVelocity), toRadian(maxVelocity));
         } else {
             link->setJointVelocityRange(-maxVelocity, maxVelocity);
@@ -1197,7 +1217,7 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
         if(velocityRange.size() != 2){
             velocityRangeNode->throwException(_("jointVelocityRange must have two elements"));
         }
-        if(link->jointType() == Link::REVOLUTE_JOINT){
+        if(link->isRevoluteJoint()){
             link->setJointVelocityRange(toRadian(velocityRange[0].toDouble()), toRadian(velocityRange[1].toDouble()));
         } else {
             link->setJointVelocityRange(velocityRange[0].toDouble(), velocityRange[1].toDouble());
@@ -1831,11 +1851,11 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
     LinkPtr subsequentLink = firstLink->clone();
     subsequentLink->resetInfo(subsequentLink->info()->cloneMapping());
     
-    firstLink->setJointType(Link::FREE_JOINT);
+    firstLink->setJointType(Link::FreeJoint);
     firstLink->setInfo("isContinuousTrack", true);
     addTrackLink(0, firstLink, node, parent, 0.0);
 
-    subsequentLink->setJointType(Link::REVOLUTE_JOINT);
+    subsequentLink->setJointType(Link::RevoluteJoint);
     subsequentLink->setOffsetTranslation(jointOffset);
     for(int i=0; i < numOpenJoints; ++i){
         addTrackLink(i + 1, subsequentLink->clone(), node, parent, initialAngles[i]);

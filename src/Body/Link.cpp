@@ -299,11 +299,13 @@ const std::string& Link::jointName() const
 std::string Link::jointTypeString(bool useUnderscore) const
 {
     switch(jointType_){
-    case RevoluteJoint:    return "revolute";
-    case PrismaticJoint:   return "prismatic";
-    case FreeJoint:        return "free";
-    case FixedJoint:       return "fixed";
-    case PseudoContinousTrack: {
+
+    case RevoluteJoint:  return "revolute";
+    case PrismaticJoint: return "prismatic";
+    case FreeJoint:      return "free";
+    case FixedJoint:     return "fixed";
+        
+    case PseudoContinuousTrackJoint: {
         if(useUnderscore){
             return "pseudo_continuous_track";
         } else {
@@ -352,7 +354,7 @@ std::string Link::getStateModeString(short mode)
                 case LinkContactState:
                     s += "Link Contact State";
                     break;
-                case JointSurfaceVelocity:
+                case DeprecatedJointSurfaceVelocity:
                     s += "Joint Surface Velocity";
                     break;
                 default:

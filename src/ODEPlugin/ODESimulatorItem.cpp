@@ -253,9 +253,14 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
 
     dBodyID parentBodyID = parent ? parent->bodyID : 0;
 
+    if(link->actuationMode() == Link::DeprecatedJointSurfaceVelocity){
+        link->setJointType(Link::PseudoContinuousTrackJoint);
+        link->setActuationMode(Link::JointVelocity);
+    }
+
     switch(link->jointType()){
         
-    case Link::ROTATIONAL_JOINT:
+    case Link::RevoluteJoint:
         jointID = dJointCreateHinge(worldID, 0);
         dJointAttach(jointID, bodyID, parentBodyID);
         dJointSetHingeAnchor(jointID, o.x(), o.y(), o.z());
@@ -268,32 +273,32 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
                 dJointSetHingeParam(jointID, dParamLoStop, link->q_lower());
             }
         }
-        if(link->actuationMode() == Link::JOINT_VELOCITY){
-        	if(!USE_AMOTOR){
+        if(link->actuationMode() == Link::JointVelocity){
+            if(!USE_AMOTOR){
 #ifdef GAZEBO_ODE
-				dJointSetHingeParam(jointID, dParamFMax, 100);   //???
-				dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
+                dJointSetHingeParam(jointID, dParamFMax, 100);   //???
+                dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
 #else
-				dJointSetHingeParam(jointID, dParamFMax, numeric_limits<dReal>::max());
-				dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
+                dJointSetHingeParam(jointID, dParamFMax, numeric_limits<dReal>::max());
+                dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
 #endif
-        	}else{
-				motorID = dJointCreateAMotor(worldID, 0);
-				dJointAttach(motorID, bodyID, parentBodyID);
-				dJointSetAMotorMode(motorID, dAMotorUser);
-				dJointSetAMotorNumAxes(motorID, 1);
-				dJointSetAMotorAxis(motorID, 0, 2, a.x(), a.y(), a.z());
+            }else{
+                motorID = dJointCreateAMotor(worldID, 0);
+                dJointAttach(motorID, bodyID, parentBodyID);
+                dJointSetAMotorMode(motorID, dAMotorUser);
+                dJointSetAMotorNumAxes(motorID, 1);
+                dJointSetAMotorAxis(motorID, 0, 2, a.x(), a.y(), a.z());
 #ifdef GAZEBO_ODE
-				dJointSetAMotorParam(motorID, dParamFMax, 100);
+                dJointSetAMotorParam(motorID, dParamFMax, 100);
 #else
-				dJointSetAMotorParam(motorID, dParamFMax, numeric_limits<dReal>::max() );
+                dJointSetAMotorParam(motorID, dParamFMax, numeric_limits<dReal>::max() );
 #endif
-				dJointSetAMotorParam(motorID, dParamFudgeFactor, 1);
-        	}
+                dJointSetAMotorParam(motorID, dParamFudgeFactor, 1);
+            }
         }
         break;
         
-    case Link::SLIDE_JOINT:
+    case Link::PrismaticJoint:
         jointID = dJointCreateSlider(worldID, 0);
         dJointAttach(jointID, bodyID, parentBodyID);
         dJointSetSliderAxis(jointID, d.x(), d.y(), d.z());
@@ -305,32 +310,34 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
                 dJointSetSliderParam(jointID, dParamLoStop, link->q_lower());
             }
         }
-        if(link->actuationMode() == Link::JOINT_VELOCITY){
+        if(link->actuationMode() == Link::JointVelocity){
         	dJointSetSliderParam(jointID, dParamFMax, numeric_limits<dReal>::max() );
   			dJointSetSliderParam(jointID, dParamFudgeFactor, 1 );
         }
         break;
 
-    case Link::FREE_JOINT:
+    case Link::FreeJoint:
         break;
 
-    case Link::FIXED_JOINT:
+    case Link::PseudoContinuousTrackJoint:
+        if(parentBodyID){
+            if(link->actuationMode() == Link::JointVelocity ||
+               link->actuationMode() == Link::DeprecatedJointSurfaceVelocity){
+                simImpl->crawlerLinks.insert(make_pair(bodyID, link));
+            }
+    	}
+
+    case Link::FixedJoint:
     default:
 #ifdef GAZEBO_ODE
     	jointID = dJointCreateFixed(worldID, 0);
         dJointAttach(jointID, bodyID, parentBodyID);
     	dJointSetFixed(jointID);
-        if(link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
-    	    simImpl->crawlerLinks.insert(make_pair(bodyID, link));
-    	}
 #else
         if(parentBodyID){
             jointID = dJointCreateFixed(worldID, 0);
             dJointAttach(jointID, bodyID, parentBodyID);
             dJointSetFixed(jointID);
-            if(link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
-                simImpl->crawlerLinks.insert(make_pair(bodyID, link));
-            }
         } else {
             dBodySetKinematic(bodyID);
         }

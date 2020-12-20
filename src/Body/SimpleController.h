@@ -142,18 +142,17 @@ public:
         LinkExtWrench        = Link::LinkExtWrench,
         LinkContactState     = Link::LinkContactState,
 
-        JointSurfaceVelocity = Link::JointSurfaceVelocity,
-
         // deprecated
-        JOINT_DISPLACEMENT   = JointDisplacement,
-        JOINT_ANGLE          = JointAngle,
-        JOINT_VELOCITY       = JointVelocity,
-        JOINT_ACCELERATION   = JointAcceleration,
-        JOINT_EFFORT         = JointEffort,
-        JOINT_TORQUE         = JointTorque,
-        JOINT_FORCE          = JointForce,
-        LINK_POSITION        = LinkPosition,
-        LINK_FORCE           = LinkExtWrench
+        JOINT_DISPLACEMENT     = JointDisplacement,
+        JOINT_ANGLE            = JointAngle,
+        JOINT_VELOCITY         = JointVelocity,
+        JOINT_SURFACE_VELOCITY = Link::DeprecatedJointSurfaceVelocity,
+        JOINT_ACCELERATION     = JointAcceleration,
+        JOINT_EFFORT           = JointEffort,
+        JOINT_TORQUE           = JointTorque,
+        JOINT_FORCE            = JointForce,
+        LINK_POSITION          = LinkPosition,
+        LINK_FORCE             = LinkExtWrench
     };
 
   protected:

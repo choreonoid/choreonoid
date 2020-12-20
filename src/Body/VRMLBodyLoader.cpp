@@ -768,24 +768,21 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode)
     readVRMLfield(jf["jointType"], jointType);
     
     if(jointType == "fixed" ){
-        link->setJointType(Link::FIXED_JOINT);
+        link->setJointType(Link::FixedJoint);
     } else if(jointType == "free" ){
-        link->setJointType(Link::FREE_JOINT);
+        link->setJointType(Link::FreeJoint);
     } else if(jointType == "rotate" ){
-        link->setJointType(Link::ROTATIONAL_JOINT);
+        link->setJointType(Link::RevoluteJoint);
     } else if(jointType == "slide" ){
-        link->setJointType(Link::SLIDE_JOINT);
+        link->setJointType(Link::PrismaticJoint);
     } else if(jointType == "pseudoContinuousTrack"){
-        link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
-        link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        os() << format(
-            _("Warning: A deprecated joint type 'pseudoContinousTrack'is specified for {}."), link->name())
-             << endl;
+        link->setJointType(Link::PseudoContinuousTrackJoint);
+        link->setActuationMode(Link::JointVelocity);
     } else {
         throw invalid_argument(format(_("JointType \"{}\" is not supported."), jointType));
     }
 
-    if(link->jointType() == Link::FREE_JOINT || link->jointType() == Link::FIXED_JOINT){
+    if(link->isFreeJoint() || link->isFixedJoint()){
         link->setJointAxis(Vector3::Zero());
 
     } else {

@@ -192,10 +192,14 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     Link* crawlerlink;
     double sign = 1;
     double friction;
-    if(link0 && link0->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+    if(link0 &&
+       (link0->jointType() == Link::PseudoContinuousTrackJoint ||
+        link0->actuationMode() == Link::DeprecatedJointSurfaceVelocity)){
         crawlerlink = link0;
         friction = bulletLink0->simImpl->friction;
-    } else if(link1 && link1->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+    } else if(link1 &&
+              (link1->jointType() == Link::PseudoContinuousTrackJoint ||
+               link1->actuationMode() == Link::DeprecatedJointSurfaceVelocity)){
         crawlerlink = link1;
         sign = -1;
         friction = bulletLink1->simImpl->friction;
@@ -789,7 +793,8 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
                 ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, 0.0));
                 ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
                 ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
-                if(link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+                if(link->jointType() == Link::PseudoContinuousTrackJoint ||
+                   link->actuationMode() == Link::DeprecatedJointSurfaceVelocity){
                     body->setCollisionFlags(body->getCollisionFlags()  | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
                     body->setUserPointer(this);
                     if(!gContactAddedCallback)
@@ -1089,7 +1094,9 @@ void BulletBody::createBody(BulletSimulatorItemImpl* simImpl_, short group)
 bool BulletBody::haveCrawlerJoint()
 {
     for(int i=0; i < body->numLinks(); i++){
-        if(body->link(i)->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+        auto link = body->link(i);
+        if(link->jointType() == Link::PseudoContinuousTrackJoint ||
+           link->actuationMode() == Link::DeprecatedJointSurfaceVelocity){
             return true;
         }
     }

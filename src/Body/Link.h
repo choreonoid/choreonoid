@@ -121,9 +121,7 @@ public:
     const Matrix3& Rs() const { return Rs_; }
 
     enum JointType {
-        /// rotational joint (1 dof)
         RevoluteJoint = 0,
-        /// translational joint (1 dof)
         PrismaticJoint = 1,
         /// 6-DOF root link
         FreeJoint = 2,
@@ -131,14 +129,12 @@ public:
           Joint types below here are treated as a fixed joint
           when a code for processing a joint type is not given
         */
-        /// fixed joint(0 dof)
         FixedJoint = 3,
 
         /**
-           special joint for simplified simulation of a continuous track
-           \deprecated
+           Special joint for simplified simulation of a continuous track
         */
-        PseudoContinousTrack = 4,
+        PseudoContinuousTrackJoint = 4,
 
         // Deprecated
         REVOLUTE_JOINT = RevoluteJoint,
@@ -147,8 +143,11 @@ public:
         SLIDE_JOINT = PrismaticJoint,
         FREE_JOINT = FreeJoint,
         FIXED_JOINT = FixedJoint,
-        PSEUDO_CONTINUOUS_TRACK = PseudoContinousTrack
+        PSEUDO_CONTINUOUS_TRACK = PseudoContinuousTrackJoint
     };
+
+    [[deprecated("Use Link::PseudoContinuousTrack.")]]
+    static constexpr int PseudoContinousTrack = PseudoContinuousTrackJoint;
 
     int jointId() const { return jointId_; }
     const std::string& jointName() const;
@@ -191,8 +190,10 @@ public:
         LinkContactState = 1 << 7,
 
         // Options
-        JointSurfaceVelocity = JointVelocity | (1 << 8),
-        HighGainActuation = 1 << 9,
+        HighGainActuation = 1 << 8,
+
+        // Don't use this
+        DeprecatedJointSurfaceVelocity = 1 << 9,
 
         MaxStateTypeBit = 9,
         NumStateTypes = 10,
@@ -205,14 +206,19 @@ public:
         JOINT_ANGLE = JointAngle,
         JOINT_DISPLACEMENT = JointDisplacement,
         JOINT_VELOCITY = JointVelocity,
-        JOINT_SURFACE_VELOCITY = JointSurfaceVelocity, // For pseudo continous tracks
         LINK_POSITION = LinkPosition
     };
+
+    [[deprecated("Use Link::JointVelocity as the actuation mode and Link::PseudoContinuousTrackJoint as the joint type.")]]
+    static constexpr int JOINT_SURFACE_VELOCITY = DeprecatedJointSurfaceVelocity;
 
     // \ret Logical sum of the correpsonding StateType bits
     short actuationMode() const { return actuationMode_; }
     // \param mode Logical sum of the correpsonding StateType bits
     void setActuationMode(short mode) { actuationMode_ = mode; }
+
+    [[deprecated("Just use the link name as a prefix or use the int type as a variable.")]]
+    typedef StateFlag ActuationMode;
     
     /**
        The special mode which can be used to calculate contact forces only.
@@ -221,9 +227,6 @@ public:
     */
     static constexpr short AllStateHighGainActuationMode =
         LinkPosition | LinkTwist | LinkExtWrench | JointDisplacement | JointVelocity | JointEffort | HighGainActuation;
-
-    // deprecated
-    typedef StateFlag ActuationMode;
 
     // \ret Logical sum of the correpsonding StateType bits
     short sensingMode() const { return sensingMode_; }

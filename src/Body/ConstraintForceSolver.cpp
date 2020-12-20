@@ -938,7 +938,7 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
         } else {
             v[k] = link->vo() + link->w().cross(contact.point);
 
-            if(link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+            if(link->jointType() == Link::PseudoContinuousTrackJoint){
                 // tentative
                 // invalid depths should be fixed
                 if (contact.depth > contactCorrectionDepth * 2.0){

@@ -471,8 +471,21 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     
     for(auto& link : body->links()){
         int actuationMode = link->actuationMode();
-        if(actuationMode && (actuationMode != Link::JointEffort)){
+        if(actuationMode){
 
+            if(actuationMode == Link::JointEffort){
+                continue;
+            }
+            if(link->jointType() == Link::PseudoContinuousTrackJoint){
+                if(actuationMode == Link::JointVelocity || actuationMode == Link::DeprecatedJointSurfaceVelocity){
+                    continue;
+                } else {
+                    mv->putln(
+                        format(_("{0}: Actuation mode \"{1}\" cannot be used for the pseudo continuous track link {2} of {3}"),
+                               self->displayName(), Link::getStateModeString(actuationMode), link->name(), body->name()),
+                        MessageView::Warning);
+                }
+            }
             if(actuationMode == Link::JointDisplacement ||
                actuationMode == Link::JointVelocity ||
                actuationMode == Link::LinkPosition){
@@ -482,6 +495,10 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
                 internalStateUpdateLinks.push_back(link);
                 ++numAllStateHighGainActuationModeLinks;
 
+            } else if(actuationMode == Link::DeprecatedJointSurfaceVelocity){
+                if(link->isFixedJoint()){
+                    link->setJointType(Link::PseudoContinuousTrackJoint);
+                }
             } else {
                 mv->putln(
                     format(_("{0}: Actuation mode \"{1}\" specified for the {2} link of {3} is not supported."),

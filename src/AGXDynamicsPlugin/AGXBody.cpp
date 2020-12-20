@@ -54,14 +54,14 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Isometry3& T_par
     _collisionGroupName = ss.str();
 
     auto actuationMode = link->actuationMode();
-    if(actuationMode == Link::ActuationMode::NO_ACTUATION){
-    }else if(actuationMode == Link::ActuationMode::LINK_POSITION){
+    if(actuationMode == Link::StateNone){
+    }else if(actuationMode == Link::LinkPosition){
         agxBody->addControllableLink(this);
     }else if(parent){
         agxBody->addControllableLink(this);
     }
 
-    if(link->jointType() != Link::FIXED_JOINT || forceSensorLinks.find(link) != forceSensorLinks.end()){
+    if(link->jointType() != Link::FixedJoint || forceSensorLinks.find(link) != forceSensorLinks.end()){
         makeStatic = false;
     }
 
@@ -208,24 +208,24 @@ void AGXLink::enableExternalCollision(const bool & bOn)
 void AGXLink::setControlInputToAGX()
 {
     switch(getOrgLink()->actuationMode()){
-        case Link::ActuationMode::JOINT_TORQUE :{
+        case Link::JointTorque :{
             setTorqueToAGX();
             break;
         }
-        case Link::ActuationMode::JOINT_VELOCITY :
-        case Link::ActuationMode::JOINT_SURFACE_VELOCITY :{
+        case Link::JointVelocity :
+        case Link::DeprecatedJointSurfaceVelocity :{
             setVelocityToAGX();
             break;
         }
-        case Link::ActuationMode::JOINT_ANGLE :{
+        case Link::JointDisplacement :{
             setPositionToAGX();
             break;
         }
-        case Link::ActuationMode::LINK_POSITION :{
+        case Link::LinkPosition :{
             setLinkPositionToAGX();
             break;
         }
-        case Link::ActuationMode::NO_ACTUATION :
+        case Link::StateNone :
         default :
             break;
     }
@@ -258,8 +258,8 @@ void AGXLink::setLinkStateToCnoid()
     // constraint
     LinkPtr const orgLink = getOrgLink();
     switch(orgLink->jointType()){
-        case Link::ROTATIONAL_JOINT:
-        case Link::SLIDE_JOINT:{
+        case Link::RevoluteJoint:
+        case Link::PrismaticJoint:{
             agx::Constraint1DOF* const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(joint1DOF){
                 orgLink->q() = joint1DOF->getAngle();
@@ -369,11 +369,11 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody(const Isometry3& T)
     desc.R.set(agx::Quat(q.x(), q.y(), q.z(), q.w()));
 
     Link::JointType jt = orgLink->jointType();
-    if(orgLink->isRoot() && jt == Link::FIXED_JOINT){
+    if(orgLink->isRoot() && jt == Link::FixedJoint){
         desc.control = agx::RigidBody::MotionControl::STATIC;
     }
 
-    if(orgLink->actuationMode() == Link::LINK_POSITION){
+    if(orgLink->actuationMode() == Link::LinkPosition){
         desc.control = agx::RigidBody::MotionControl::KINEMATICS;
     }
 
@@ -387,7 +387,8 @@ agxCollide::GeometryRef AGXLink::createAGXGeometry()
     LinkPtr const orgLink = getOrgLink();
     AGXGeometryDesc gdesc;
     gdesc.selfCollisionGroupName = getAGXBody()->getCollisionGroupName();
-    if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+    if(orgLink->jointType() == Link::PseudoContinuousTrackJoint ||
+       orgLink->actuationMode() == Link::DeprecatedJointSurfaceVelocity){
         gdesc.isPseudoContinuousTrack = true;
         const Vector3& a = orgLink->a();
         gdesc.axis = agx::Vec3(a(0), a(1), a(2));
@@ -582,7 +583,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint(const Isometry3& T)
 
     agx::ConstraintRef constraint = nullptr;
     switch(orgLink->jointType()){
-        case Link::REVOLUTE_JOINT :{
+        case Link::RevoluteJoint :{
             AGXHingeDesc desc;
             const Vector3& a = T.linear() * orgLink->a();
             auto p = T.translation();
@@ -604,11 +605,11 @@ agx::ConstraintRef AGXLink::createAGXConstraint(const Isometry3& T)
 
             // Set from Link::ActuationMode
             // motor
-            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION){
+            if(orgLink->actuationMode() != Link::StateNone){
                 desc.motor.enable = true;
             }
             // lock
-            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE){
+            if(orgLink->actuationMode() == Link::JointDisplacement){
                 desc.motor.enable = false;
                 desc.lock.enable = true;
             }
@@ -621,7 +622,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint(const Isometry3& T)
             );
             break;
         }
-        case Link::PRISMATIC_JOINT :{
+        case Link::PrismaticJoint :{
             AGXPrismaticDesc desc;
             const Vector3& a = orgLink->a();
             auto p = T.translation();
@@ -643,11 +644,11 @@ agx::ConstraintRef AGXLink::createAGXConstraint(const Isometry3& T)
 
             // Set from Link::ActuationMode
             // motor
-            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION){
+            if(orgLink->actuationMode() != Link::StateNone){
                 desc.motor.enable = true;
             }
             // lock
-            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE){
+            if(orgLink->actuationMode() == Link::JointDisplacement){
                 desc.motor.enable = false;
                 desc.lock.enable = true;
             }
@@ -661,8 +662,8 @@ agx::ConstraintRef AGXLink::createAGXConstraint(const Isometry3& T)
             );
             break;
         }
-        case Link::FIXED_JOINT :
-        case Link::PSEUDO_CONTINUOUS_TRACK :    // deprecated
+        case Link::FixedJoint :
+        case Link::PseudoContinuousTrackJoint :
         {
             AGXLockJointDesc desc;
             desc.set(base);
@@ -671,7 +672,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint(const Isometry3& T)
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
-        case Link::FREE_JOINT :
+        case Link::FreeJoint :
         default:
             break;
     }
@@ -682,8 +683,8 @@ void AGXLink::setTorqueToAGX()
 {
     LinkPtr orgLink = getOrgLink();
     switch(orgLink->jointType()){
-        case Link::ROTATIONAL_JOINT :
-        case Link::SLIDE_JOINT :{
+        case Link::RevoluteJoint :
+        case Link::PrismaticJoint :{
             agx::Constraint1DOF* const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
 #if 0
@@ -706,8 +707,8 @@ void AGXLink::setVelocityToAGX()
 {
     LinkPtr orgLink = getOrgLink();
     switch(orgLink->jointType()){
-        case Link::ROTATIONAL_JOINT:
-        case Link::SLIDE_JOINT:{
+        case Link::RevoluteJoint:
+        case Link::PrismaticJoint:{
             agx::Constraint1DOF* const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
             joint1DOF->getMotor1D()->setSpeed(orgLink->dq_target());
@@ -718,7 +719,8 @@ void AGXLink::setVelocityToAGX()
             break;
     }
 
-    if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+    if(orgLink->jointType() == Link::PseudoContinuousTrackJoint ||
+       orgLink->actuationMode() == Link::DeprecatedJointSurfaceVelocity){
         // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
         agx::Vec3f vel((float)orgLink->dq_target(), 0.0, 0.0);
         getAGXGeometry()->setSurfaceVelocity(vel);
@@ -729,8 +731,8 @@ void AGXLink::setPositionToAGX()
 {
     LinkPtr orgLink = getOrgLink();
     switch(orgLink->jointType()){
-        case Link::ROTATIONAL_JOINT:
-        case Link::SLIDE_JOINT:{
+        case Link::RevoluteJoint:
+        case Link::PrismaticJoint:{
             agx::Constraint1DOFRef const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
             joint1DOF->getLock1D()->setPosition(orgLink->q_target());
@@ -810,7 +812,7 @@ void AGXBody::createBody(AGXScene* agxScene)
     _agxScene = agxScene;
     // Create AGXLink following child link.
     bool makeStatic = true;
-    if(body()->rootLink()->jointType() != Link::FIXED_JOINT){
+    if(body()->rootLink()->jointType() != Link::FixedJoint){
         makeStatic = false;
     }
     std::set<Link*> forceSensorLinks;

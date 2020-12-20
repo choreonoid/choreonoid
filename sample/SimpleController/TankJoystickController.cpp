@@ -79,7 +79,6 @@ public:
             return false;
         }
 
-        /*
         if(usePseudoContinousTrackMode){
             trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
             trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
@@ -87,9 +86,6 @@ public:
             trackL->setActuationMode(Link::JOINT_VELOCITY);
             trackR->setActuationMode(Link::JOINT_VELOCITY);
         }
-        */
-        trackL->setActuationMode(Link::JOINT_VELOCITY);
-        trackR->setActuationMode(Link::JOINT_VELOCITY);
         
         io->enableOutput(trackL);
         io->enableOutput(trackR);
