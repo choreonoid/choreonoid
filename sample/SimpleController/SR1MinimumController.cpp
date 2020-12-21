@@ -37,7 +37,7 @@ public:
 
         for(int i=0; i < ioBody->numJoints(); ++i){
             Link* joint = ioBody->joint(i);
-            joint->setActuationMode(Link::JOINT_TORQUE);
+            joint->setActuationMode(Link::JointTorque);
             io->enableIO(joint);
             qref.push_back(joint->q());
         }
