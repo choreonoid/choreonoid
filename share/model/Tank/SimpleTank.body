@@ -140,9 +140,8 @@ links:
     name: TRACK_L
     parent: CHASSIS
     translation: [ 0, 0.2, 0 ]
-    jointType: fixed
+    jointType: pseudo_continuous_track
     jointAxis: Y
-    actuationMode: jointSurfaceVelocity
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
@@ -168,9 +167,8 @@ links:
     name: TRACK_R
     parent: CHASSIS
     translation: [ 0, -0.2, 0 ]
-    jointType: fixed
+    jointType: pseudo_continuous_track
     jointAxis: Y
-    actuationMode: jointSurfaceVelocity
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [

@@ -30,7 +30,7 @@ const double dgain[] = {
 
 class SR1LiftupController : public SimpleController
 {
-    Link::ActuationMode actuationMode;
+    int actuationMode;
     bool isTorqueSensorEnabled;
     Body* ioBody;
     double timeStep;
@@ -59,25 +59,25 @@ public:
         ioBody = io->body();
         ostream& os = io->os();
 
-        actuationMode = Link::JOINT_TORQUE;
+        actuationMode = Link::JointTorque;
         isTorqueSensorEnabled = false;
         vector<string> options = io->options();
         for(vector<string>::iterator p = options.begin(); p != options.end(); ++p){
             if(*p == "velocity"){
-                actuationMode = Link::JOINT_VELOCITY;
+                actuationMode = Link::JointVelocity;
             } else if(*p == "torque_sensor"){
                 isTorqueSensorEnabled = true;
             }
         }
 
-        int inputStateTypes = JOINT_ANGLE;
-        if(actuationMode == Link::JOINT_TORQUE){
+        int inputStateTypes = JointAngle;
+        if(actuationMode == Link::JointTorque){
             os << "SR1LiftupController: torque control mode." << endl;
 
-        } else if(actuationMode == Link::JOINT_VELOCITY){
+        } else if(actuationMode == Link::JointVelocity){
             os << "SR1LiftupController: velocity control mode";
             if(isTorqueSensorEnabled){
-                inputStateTypes |= JOINT_TORQUE;
+                inputStateTypes |= JointTorque;
                 os << ", torque sensors";
             }
             os << "." << endl;
@@ -242,7 +242,7 @@ public:
 
         }
 
-        if(actuationMode == Link::JOINT_TORQUE || !isTorqueSensorEnabled){
+        if(actuationMode == Link::JointTorque || !isTorqueSensorEnabled){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 Link* joint = ioBody->joint(i);
                 double q = joint->q();
@@ -252,7 +252,7 @@ public:
                 qold[i] = q;
             }
         }
-        if(actuationMode == Link::JOINT_VELOCITY){
+        if(actuationMode == Link::JointVelocity){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 Link* joint = ioBody->joint(i);
                 joint->dq_target() = (qref[i] - joint->q()) / timeStep;
@@ -261,7 +261,7 @@ public:
 
         if(phase == 3){
             if(time > throwTime){
-                if(actuationMode == Link::JOINT_TORQUE){
+                if(actuationMode == Link::JointTorque){
                     wrist[0]->u() = 0.0;
                     wrist[1]->u() = 0.0;
                 }

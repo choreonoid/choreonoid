@@ -38,7 +38,7 @@ class SR1WalkPatternController : public cnoid::SimpleController
     MultiValueSeq::Frame qref1;
     vector<double> q0;
     double dt;
-    Link::ActuationMode actuationMode;
+    int actuationMode;
     
 public:
 
@@ -49,15 +49,15 @@ public:
         string opt = io->optionString();
         
         if(opt == "position"){
-            actuationMode = Link::JOINT_ANGLE;
+            actuationMode = Link::JointAngle;
             patternFile = "SR1WalkPattern2.seq";
             io->os() << "SR1WalkPatternController: position control mode." << endl;
         } else if(opt == "velocity"){
-            actuationMode = Link::JOINT_VELOCITY;
+            actuationMode = Link::JointVelocity;
             patternFile = "SR1WalkPattern2.seq";
             io->os() << "SR1WalkPatternController: velocity control mode." << endl;
         } else {
-            actuationMode = Link::JOINT_TORQUE;
+            actuationMode = Link::JointTorque;
             patternFile = "SR1WalkPattern1.seq";
             io->os() << "SR1WalkPatternController: torque control mode." << endl;
         }
@@ -107,7 +107,7 @@ public:
     {
         switch(actuationMode){
 
-        case Link::JOINT_TORQUE:
+        case Link::JointTorque:
             qref0 = qref1;
             qref1 = qseq->frame(currentFrameIndex);
             for(int i=0; i < ioBody->numJoints(); ++i){
@@ -121,14 +121,14 @@ public:
             }
             break;
 
-        case Link::JOINT_ANGLE:
+        case Link::JointAngle:
             qref0 = qseq->frame(currentFrameIndex);
             for(int i=0; i < ioBody->numJoints(); ++i){
                 ioBody->joint(i)->q_target() = qref0[i];
             }
             break;
 
-        case Link::JOINT_VELOCITY:
+        case Link::JointVelocity:
             qref0 = qref1;
             qref1 = qseq->frame(std::min(currentFrameIndex + 1, lastFrameIndex));
             for(int i=0; i < ioBody->numJoints(); ++i){

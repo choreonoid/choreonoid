@@ -25,10 +25,8 @@ public:
             return false;
         }
 
-        crawlerL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        crawlerR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        io->enableOutput(crawlerL);
-        io->enableOutput(crawlerR);
+        io->enableOutput(crawlerL, JointVelocity);
+        io->enableOutput(crawlerR, JointVelocity);
 
         time = 0.0;
         dt = io->timeStep();

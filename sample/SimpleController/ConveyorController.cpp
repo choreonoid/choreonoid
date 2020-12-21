@@ -14,8 +14,7 @@ public:
     virtual bool initialize(SimpleControllerIO* io) override
     {
         conveyorJoint = io->body()->joint(0);
-        conveyorJoint->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        io->enableOutput(conveyorJoint);
+        io->enableOutput(conveyorJoint, Link::JointVelocity);
         return true;
     }
 

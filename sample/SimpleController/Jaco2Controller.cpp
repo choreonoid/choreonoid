@@ -11,7 +11,7 @@ class Jaco2Controller : public SimpleController
     Body* body;
     double dt;
 
-    Link::ActuationMode mainActuationMode;
+    int mainActuationMode;
 
     struct JointInfo {
         Link* joint;
@@ -72,18 +72,18 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
     body = io->body();
     dt = io->timeStep();
 
-    mainActuationMode = Link::JOINT_TORQUE;
+    mainActuationMode = Link::JointTorque;
     string prefix;
     
     for(auto& option : io->options()){
         if(option == "velocity"){
-            mainActuationMode = Link::JOINT_VELOCITY;
+            mainActuationMode = Link::JointVelocity;
             io->os() << "velocity mode" << endl;
         } else if(option == "position"){
-            mainActuationMode = Link::JOINT_ANGLE;
+            mainActuationMode = Link::JointAngle;
             io->os() << "position mode" << endl;
         } else if(option == "torque"){
-            mainActuationMode = Link::JOINT_TORQUE;
+            mainActuationMode = Link::JointTorque;
             io->os() << "torque mode" << endl;
         } else {
             prefix = option;
@@ -154,9 +154,9 @@ bool Jaco2Controller::initializeJoints(SimpleControllerIO* io, vector<JointSpec>
             info.joint = joint;
             info.q_ref = info.q_old = joint->q();
 
-            if(mainActuationMode == Link::JOINT_VELOCITY){
+            if(mainActuationMode == Link::JointVelocity){
                 info.kp = spec.kp_velocity;
-            } else if(mainActuationMode == Link::JOINT_TORQUE){
+            } else if(mainActuationMode == Link::JointTorque){
                 info.kp = spec.kp_torque;
                 info.kd = spec.kd_torque;
             }
@@ -177,13 +177,13 @@ bool Jaco2Controller::control()
     updateTargetJointAngles();
 
     switch(mainActuationMode){
-    case Link::JOINT_TORQUE:
+    case Link::JointTorque:
         controlJointsWithTorque();
         break;
-    case Link::JOINT_VELOCITY:
+    case Link::JointVelocity:
         controlJointsWithVelocity();
         break;
-    case Link::JOINT_ANGLE:
+    case Link::JointAngle:
         controlJointsWithPosition();
         break;
     default:

@@ -11,7 +11,7 @@ public:
     Body* body;
     double dt;
 
-    Link::ActuationMode mainActuationMode;
+    int mainActuationMode;
 
     enum TrackType { NO_TRACKS = 0, CONTINOUS_TRACKS, PSEUDO_TRACKS };
     int trackType;

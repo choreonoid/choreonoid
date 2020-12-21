@@ -16,7 +16,7 @@ class AizuWheelController : public SimpleController
 {
     Body* body;
     double dt;
-    Link::ActuationMode actuationMode;
+    int actuationMode;
     enum { L_WHEEL, R_WHEEL, NUM_WHEELS };
     vector<Link*> wheels;
     vector<double> qprev;
@@ -35,14 +35,14 @@ bool AizuWheelController::initialize(SimpleControllerIO* io)
 {
     body = io->body();
     dt = io->timeStep();
-    actuationMode = Link::JOINT_TORQUE;
+    actuationMode = Link::JointTorque;
 
     string option = io->optionString();
     if(!option.empty()){
         if(option == "velocity" || option == "position"){
-            actuationMode = Link::JOINT_VELOCITY;
+            actuationMode = Link::JointVelocity;
         } else if(option == "torque"){
-            actuationMode = Link::JOINT_TORQUE;
+            actuationMode = Link::JointTorque;
         } else {
             io->os() << format("Warning: Unknown option \"{}\".", option) << endl;
         }
@@ -98,12 +98,12 @@ bool AizuWheelController::control()
 
     switch(actuationMode){
 
-    case Link::JOINT_VELOCITY:
+    case Link::JointVelocity:
         wheels[0]->dq_target() = dq_L;
         wheels[1]->dq_target() = dq_R;
         break;
 
-    case Link::JOINT_TORQUE:
+    case Link::JointTorque:
         setWheelTorque(0, dq_L);
         setWheelTorque(1, dq_R);
         break;

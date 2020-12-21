@@ -29,10 +29,8 @@ public:
             return false;
         }
 
-        crawlerL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        crawlerR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        io->enableOutput(crawlerL);
-        io->enableOutput(crawlerR);
+        io->enableOutput(crawlerL, JointVelocity);
+        io->enableOutput(crawlerR, JointVelocity);
 
         for(int i=0; i < 2; i++){
             qRef[i] = 0;

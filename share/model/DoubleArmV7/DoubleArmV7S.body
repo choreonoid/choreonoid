@@ -13,8 +13,8 @@ links:
     name: TRACK_L
     parent: TFRAME
     translation: [ -0.7, 0.6, -0.295 ]
+    jointType: pseudo_continuous_track
     jointAxis: Y
-    actuationMode: jointSurfaceVelocity
     maxJointVelocity: 573
     elements:
       Transform:
@@ -36,7 +36,7 @@ links:
     parent: TFRAME
     translation: [ -0.7, -0.6, -0.295 ]
     jointAxis: Y
-    actuationMode: jointSurfaceVelocity
+    jointType: pseudo_continuous_track
     maxJointVelocity: 573
     elements:
       Transform:

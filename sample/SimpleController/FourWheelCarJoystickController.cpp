@@ -29,7 +29,7 @@ public:
             os << " The steering_right link is not found." << endl;
             return false;
         }
-        steering->setActuationMode(Link::JOINT_TORQUE);
+        steering->setActuationMode(Link::JointTorque);
         io->enableIO(steering);
 
         drive = body->link("REAR_WHEEL");
@@ -37,8 +37,8 @@ public:
             os << "The rear_wheel link is not found." << endl;
             return false;
         }
-        drive->setActuationMode(Link::JOINT_TORQUE);
-        io->enableInput(drive, JOINT_VELOCITY);
+        drive->setActuationMode(Link::JointTorque);
+        io->enableInput(drive, JointVelocity);
         io->enableOutput(drive);
         
         if(!joystick.isReady()){

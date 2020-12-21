@@ -77,18 +77,16 @@ links:
     name: R_TRACK
     parent: CHASSIS
     translation: [ 0, -0.146, 0.062 ]
-    jointType: fixed
+    jointType: pseudo_continuous_track
     jointAxis: [ 0, 1, 0 ]
-    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ 0, 0, 1, 180 ] }
 
   - # Left Main Belt
     name: L_TRACK
     parent: CHASSIS
     translation: [ 0, 0.146, 0.062 ]
-    jointType: fixed
+    jointType: pseudo_continuous_track
     jointAxis: [ 0, 1, 0 ]
-    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT }
 
   - # Front Right Flipper
@@ -117,9 +115,8 @@ links:
   - # Front Right Sub Belt
     name: FR_SUB_TRACK
     parent: FR_FLIPPER
-    jointType: fixed
+    jointType: pseudo_continuous_track
     jointAxis: [ 0, 1, 0 ]
-    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
   - # Front Left Flipper
@@ -135,9 +132,8 @@ links:
   - # Front Left Sub Belt
     name: FL_SUB_TRACK
     parent: FL_FLIPPER
-    jointType: fixed
+    jointType: pseudo_continuous_track
     jointAxis: [ 0, 1, 0 ]
-    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
   - # Back Right Flipper
@@ -156,9 +152,8 @@ links:
   - # Back Right Sub Belt
     name: BR_SUB_TRACK
     parent: BR_FLIPPER
-    jointType: fixed
+    jointType: pseudo_continuous_track
     jointAxis: [ 0, 1, 0 ]
-    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180.0 ] }
 
   - # Back Left Flipper
@@ -177,9 +172,8 @@ links:
   - # Back Left Sub Belt
     name: BL_SUB_TRACK
     parent: BL_FLIPPER
-    jointType: fixed
+    jointType: pseudo_continuous_track
     jointAxis: [ 0, 1, 0 ]
-    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180.0 ] }
 
 # TODO: Share the following information with other AizuSpider models

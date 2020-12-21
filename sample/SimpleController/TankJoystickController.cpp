@@ -16,7 +16,7 @@ class TankJoystickController : public SimpleController
 {
     SimpleControllerIO* io;
     bool usePseudoContinousTrackMode;
-    Link::ActuationMode turretActuationMode;
+    int turretActuationMode;
     Link* trackL;
     Link* trackR;
     Link* turretJoint[2];
@@ -79,16 +79,8 @@ public:
             return false;
         }
 
-        if(usePseudoContinousTrackMode){
-            trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-            trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        } else {
-            trackL->setActuationMode(Link::JOINT_VELOCITY);
-            trackR->setActuationMode(Link::JOINT_VELOCITY);
-        }
-        
-        io->enableOutput(trackL);
-        io->enableOutput(trackR);
+        io->enableOutput(trackL, JointVelocity);
+        io->enableOutput(trackR, JointVelocity);
         
         turretJoint[0] = body->link("TURRET_Y");
         turretJoint[1] = body->link("TURRET_P");
