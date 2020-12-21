@@ -17,9 +17,9 @@ class CNOID_EXPORT SimpleControllerIO : public ControllerIO
 
     virtual void enableIO(Link* link) = 0;
     virtual void enableInput(Link* link) = 0;
-    virtual void enableInput(Link* link, int stateTypes) = 0;
+    virtual void enableInput(Link* link, int stateFlags) = 0;
     virtual void enableOutput(Link* link) = 0;
-    virtual void enableOutput(Link* link, int stateTypes) = 0;
+    virtual void enableOutput(Link* link, int stateFlags) = 0;
     virtual void enableInput(Device* device) = 0;
 
     template<class T> T* getOrCreateSharedObject(const std::string& name) {
@@ -33,13 +33,13 @@ class CNOID_EXPORT SimpleControllerIO : public ControllerIO
     [[deprecated("Use the controllerName function.")]]
     std::string name() const;
     [[deprecated("Use enableInput for all links.")]]
-    virtual void setJointInput(int stateTypes);
+    virtual void setJointInput(int stateFlags);
     [[deprecated("Use enableOutput and Link::setActuationMode for all links.")]]
-    virtual void setJointOutput(int stateTypes);
+    virtual void setJointOutput(int stateFlags);
     [[deprecated("Use enableInput for the link.")]]
-    virtual void setLinkInput(Link* link, int stateTypes);
+    virtual void setLinkInput(Link* link, int stateFlags);
     [[deprecated("Use enableOutput and Link::setActuationMode for the link.")]]
-    virtual void setLinkOutput(Link* link, int stateTypes);
+    virtual void setLinkOutput(Link* link, int stateFlags);
 };
 
 

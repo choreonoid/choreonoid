@@ -13,25 +13,25 @@ std::string SimpleControllerIO::name() const
     return controllerName();
 }
 
-void SimpleControllerIO::setJointInput(int /* stateTypes */)
+void SimpleControllerIO::setJointInput(int /* stateFlags */)
 {
     throw std::logic_error(
         "SimpleControllerIO::setJointInput is deprecated and is not supported in the control system.");
 }
     
-void SimpleControllerIO::setJointOutput(int /* stateTypes */)
+void SimpleControllerIO::setJointOutput(int /* stateFlags */)
 {
     throw std::logic_error(
         "SimpleControllerIO::setJointOutput is deprecated and is not supported in the control system.");
 }
     
-void SimpleControllerIO::setLinkInput(Link*, int /* stateTypes */)
+void SimpleControllerIO::setLinkInput(Link*, int /* stateFlags */)
 {
     throw std::logic_error(
         "SimpleControllerIO::setLinkInput is deprecated and is not supported in the control system.");
 }
 
-void SimpleControllerIO::setLinkOutput(Link*, int /* stateTypes */)
+void SimpleControllerIO::setLinkOutput(Link*, int /* stateFlags */)
 {
     throw std::logic_error(
         "SimpleControllerIO::setLinkOutput is deprecated and is not supported in the control system.");

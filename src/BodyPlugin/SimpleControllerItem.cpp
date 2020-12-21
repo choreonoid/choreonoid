@@ -136,16 +136,16 @@ public:
     virtual std::string controllerName() const override;
     virtual void enableIO(Link* link) override;
     virtual void enableInput(Link* link) override;
-    virtual void enableInput(Link* link, int stateTypes) override;
+    virtual void enableInput(Link* link, int stateFlags) override;
     virtual void enableInput(Device* device) override;
     virtual void enableOutput(Link* link) override;
-    virtual void enableOutput(Link* link, int stateTypes) override;
+    virtual void enableOutput(Link* link, int stateFlags) override;
 
     // deprecated virtual functions
-    virtual void setLinkInput(Link* link, int stateTypes) override;
-    virtual void setJointInput(int stateTypes) override;
-    virtual void setLinkOutput(Link* link, int stateTypes) override;
-    virtual void setJointOutput(int stateTypes) override;
+    virtual void setLinkInput(Link* link, int stateFlags) override;
+    virtual void setJointInput(int stateFlags) override;
+    virtual void setLinkOutput(Link* link, int stateFlags) override;
+    virtual void setJointOutput(int stateFlags) override;
     virtual bool isImmediateMode() const override;
     virtual void setImmediateMode(bool on) override;
 };
@@ -662,25 +662,25 @@ void SimpleControllerItem::Impl::enableInput(Link* link)
 }        
 
 
-void SimpleControllerItem::Impl::enableInput(Link* link, int stateTypes)
+void SimpleControllerItem::Impl::enableInput(Link* link, int stateFlags)
 {
     if(link->index() >= static_cast<int>(linkIndexToInputStateTypeMap.size())){
         linkIndexToInputStateTypeMap.resize(link->index() + 1, 0);
     }
-    linkIndexToInputStateTypeMap[link->index()] |= stateTypes;
+    linkIndexToInputStateTypeMap[link->index()] |= stateFlags;
 }        
 
 
-void SimpleControllerItem::Impl::setLinkInput(Link* link, int stateTypes)
+void SimpleControllerItem::Impl::setLinkInput(Link* link, int stateFlags)
 {
-    enableInput(link, stateTypes);
+    enableInput(link, stateFlags);
 }
 
 
-void SimpleControllerItem::Impl::setJointInput(int stateTypes)
+void SimpleControllerItem::Impl::setJointInput(int stateFlags)
 {
     for(Link* joint : ioBody->joints()){
-        setLinkInput(joint, stateTypes);
+        setLinkInput(joint, stateFlags);
     }
 }
 
@@ -695,26 +695,26 @@ void SimpleControllerItem::Impl::enableOutput(Link* link)
 }
 
 
-void SimpleControllerItem::Impl::enableOutput(Link* link, int stateTypes)
+void SimpleControllerItem::Impl::enableOutput(Link* link, int stateFlags)
 {
-    link->setActuationMode(stateTypes);
-    if(stateTypes){
+    link->setActuationMode(stateFlags);
+    if(stateFlags){
         enableOutput(link);
     }
 }
 
 
-void SimpleControllerItem::Impl::setLinkOutput(Link* link, int stateTypes)
+void SimpleControllerItem::Impl::setLinkOutput(Link* link, int stateFlags)
 {
-    enableOutput(link, stateTypes);
+    enableOutput(link, stateFlags);
 }
 
 
-void SimpleControllerItem::Impl::setJointOutput(int stateTypes)
+void SimpleControllerItem::Impl::setJointOutput(int stateFlags)
 {
     const int nj = ioBody->numJoints();
     for(int i=0; i < nj; ++i){
-        setLinkOutput(ioBody->joint(i), stateTypes);
+        setLinkOutput(ioBody->joint(i), stateFlags);
     }
 }
     
