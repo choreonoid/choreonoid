@@ -56,24 +56,15 @@ public:
     bool isScalar() const { return typeBits & SCALAR; }
     bool isString() const { return typeBits & SCALAR; }
 
-#ifdef _WIN32
-    const std::string toString() const;
-
-    operator const std::string () const {
-        return toString();
-    }
-#else
     const std::string& toString() const;
 
     operator const std::string& () const {
         return toString();
     }
-#endif
 
     bool isDegreeMode() const { return typeBits & ANGLE_DEGREE; }
     void setDegreeMode() { typeBits |= ANGLE_DEGREE; }
 
-    //template<typename T> T to() const { return ""; }
     template<typename T> T to() const;
 
     bool isMapping() const { return typeBits & MAPPING; }

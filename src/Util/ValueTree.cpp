@@ -279,28 +279,6 @@ bool ValueNode::toBool() const
 }
 
 
-#ifdef _WIN32
-
-bool ValueNode::read(std::string& out_value) const
-{
-    if(isScalar()){
-        out_value = static_cast<const ScalarNode* const>(this)->stringValue_;
-        return !out_value.empty();
-    }
-    return false;
-}
-
-
-const std::string ValueNode::toString() const
-{
-    if(!isScalar()){
-        throwNotScalrException();
-    }
-    return static_cast<const ScalarNode* const>(this)->stringValue_;
-}
-
-#else
-
 bool ValueNode::read(std::string& out_value) const
 {
     if(isScalar()){
@@ -318,8 +296,6 @@ const std::string& ValueNode::toString() const
     }
     return static_cast<const ScalarNode* const>(this)->stringValue_;
 }
-
-#endif
 
 
 ScalarNode::ScalarNode(const std::string& value, StringStyle stringStyle)
