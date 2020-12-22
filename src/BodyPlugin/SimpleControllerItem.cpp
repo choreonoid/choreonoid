@@ -555,6 +555,7 @@ void SimpleControllerItem::Impl::updateIOStateTypes()
     for(size_t i=0; i < linkIndexToInputStateTypeMap.size(); ++i){
         bitset<Link::NumStateTypes> types(linkIndexToInputStateTypeMap[i]);
         if(types.any()){
+            simulationBody->link(i)->mergeSensingMode(ioBody->link(i)->sensingMode());
             const int n = types.count();
             inputLinkIndices.push_back(i);
             inputStateTypes.push_back(n);
@@ -668,6 +669,7 @@ void SimpleControllerItem::Impl::enableInput(Link* link, int stateFlags)
         linkIndexToInputStateTypeMap.resize(link->index() + 1, 0);
     }
     linkIndexToInputStateTypeMap[link->index()] |= stateFlags;
+    link->mergeSensingMode(stateFlags);
 }        
 
 
@@ -816,9 +818,11 @@ void SimpleControllerItem::Impl::input()
                 ioLink->v() = simLink->v();
                 ioLink->w() = simLink->w();
                 break;
-                break;
             case Link::LinkExtWrench:
                 ioLink->F_ext() = simLink->F_ext();
+                break;
+            case Link::LinkContactState:
+                ioLink->contactPoints() = simLink->contactPoints();
                 break;
             default:
                 break;

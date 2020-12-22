@@ -8,6 +8,7 @@
 
 #include <cnoid/ClonableReferenced>
 #include <cnoid/EigenTypes>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -212,9 +213,9 @@ public:
     [[deprecated("Use Link::JointVelocity as the actuation mode and Link::PseudoContinuousTrackJoint as the joint type.")]]
     static constexpr int JOINT_SURFACE_VELOCITY = DeprecatedJointSurfaceVelocity;
 
-    // \ret Logical sum of the correpsonding StateType bits
+    // \ret Logical sum of the correpsonding StateFlag bits
     short actuationMode() const { return actuationMode_; }
-    // \param mode Logical sum of the correpsonding StateType bits
+    // \param mode Logical sum of the correpsonding StateFlag bits
     void setActuationMode(short mode) { actuationMode_ = mode; }
 
     [[deprecated("Just use the link name as a prefix or use the int type as a variable.")]]
@@ -228,10 +229,11 @@ public:
     static constexpr short AllStateHighGainActuationMode =
         LinkPosition | LinkTwist | LinkExtWrench | JointDisplacement | JointVelocity | JointEffort | HighGainActuation;
 
-    // \ret Logical sum of the correpsonding StateType bits
+    // \ret Logical sum of the correpsonding StateFlag bits
     short sensingMode() const { return sensingMode_; }
-    // \param mode Logical sum of the correpsonding StateType bits
+    // \param mode Logical sum of the correpsonding StateFlag bits
     void setSensingMode(short mode) { sensingMode_ = mode; }
+    void mergeSensingMode(short mode) { sensingMode_ |= mode; }
 
     static std::string getStateModeString(short mode);
     
@@ -301,6 +303,48 @@ public:
     
     int materialId() const { return materialId_; }
     std::string materialName() const;
+
+    //! All the members are described in the global coordinate system
+    class ContactPoint
+    {
+    public:
+        ContactPoint(const Vector3& position, const Vector3& normal, const Vector3& force, const Vector3& velocity, double depth)
+            : position_(position), normal_(normal), force_(force), velocity_(velocity), depth_(depth) { }
+
+        const Vector3& position() const { return position_; }
+        //! The contact normal vector. The direction is from another object to this link.
+        const Vector3& normal() const { return normal_; }
+        //! The contact force vector. The direction is from another object to this link.
+        const Vector3& force() const { return force_; }
+        //! The relative velocity of the contact point on this link based on the other link.
+        const Vector3& velocity() const { return velocity_; }
+        double depth() { return depth_; }
+
+    private:
+        Vector3 position_;
+        Vector3 normal_;
+        Vector3 force_;
+        Vector3 velocity_; // Relative velocity at the contact point
+        double depth_;
+
+        /**
+           The following value is not yet supported, but is better to include in this data structue
+           in the future. The id is used to identify the counterpart object (link). It is not
+           reasonable to directly store the object pointer because the information could be used in
+           another context such as controller implementations and remote communication codes.
+           It is easier to handle just an integer value rather than handle the pointer.
+           To identy the actual object (link), a simulator item should provide the API to obtain
+           the information on the object corresponding to a given ID number.
+        */
+        //int objectId_;
+    };
+
+    /**
+       The following contact date is avaiable if LinkContactState is included in the sensingMode.
+       \note A dynamics engine should update the data when the above flag is specified in the sensingMode.
+    */
+    std::vector<ContactPoint>& contactPoints() { return contactPoints_; }
+    const std::vector<ContactPoint>& contactPoints() const { return contactPoints_; }
     
     SgGroup* shape() const;
     SgGroup* visualShape() const;
@@ -446,6 +490,8 @@ private:
     double dq_lower_;
     
     int materialId_;
+
+    std::vector<ContactPoint> contactPoints_;
     
     std::string name_;
     std::string jointSpecificName_;

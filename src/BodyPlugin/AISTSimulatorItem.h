@@ -12,7 +12,6 @@
 
 namespace cnoid {
 
-class AISTSimulatorItemImpl;
 class ContactMaterial;
 class ExtraJoint;
         
@@ -46,6 +45,8 @@ public:
     void setEpsilon(double epsilon);
     void set2Dmode(bool on);
     void setKinematicWalkingEnabled(bool on);
+
+    [[deprecated("This function does nothing. Set Link::LinkContactState to Link::sensingMode from a controller.")]]
     void setConstraintForceOutputEnabled(bool on);
 
     void addExtraJoint(ExtraJoint& extrajoint);
@@ -69,6 +70,7 @@ public:
 protected:
     virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
+    virtual bool completeInitializationOfSimulation() override;
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies) override;
     virtual void finalizeSimulation() override;
     virtual std::shared_ptr<CollisionLinkPairList> getCollisions() override;
@@ -79,8 +81,8 @@ protected:
     virtual bool restore(const Archive& archive) override;
 
 private:
-    AISTSimulatorItemImpl* impl;
-    friend class AISTSimulatorItemImpl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<AISTSimulatorItem> AISTSimulatorItemPtr;

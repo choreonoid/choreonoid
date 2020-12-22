@@ -71,7 +71,7 @@ public:
 
 namespace cnoid {
   
-class AISTSimulatorItemImpl
+class AISTSimulatorItem::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -107,8 +107,8 @@ public:
 
     MessageView* mv;
 
-    AISTSimulatorItemImpl(AISTSimulatorItem* self);
-    AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
+    Impl(AISTSimulatorItem* self);
+    Impl(AISTSimulatorItem* self, const Impl& org);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
@@ -137,13 +137,13 @@ void AISTSimulatorItem::initializeClass(ExtensionManager* ext)
 
 AISTSimulatorItem::AISTSimulatorItem()
 {
-    impl = new AISTSimulatorItemImpl(this);
+    impl = new Impl(this);
     setName("AISTSimulator");
     setAllLinkPositionOutputMode(false);
 }
 
 
-AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
+AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     : self(self),
       dynamicsMode(AISTSimulatorItem::N_DYNAMICS_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       integrationMode(AISTSimulatorItem::N_INTEGRATION_MODES, CNOID_GETTEXT_DOMAIN_NAME)
@@ -179,13 +179,13 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
 
 AISTSimulatorItem::AISTSimulatorItem(const AISTSimulatorItem& org)
     : SimulatorItem(org),
-      impl(new AISTSimulatorItemImpl(this, *org.impl))
+      impl(new Impl(this, *org.impl))
 {
 
 }
 
 
-AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org)
+AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self, const Impl& org)
     : self(self),
       dynamicsMode(org.dynamicsMode),
       integrationMode(org.integrationMode)
@@ -333,9 +333,9 @@ void AISTSimulatorItem::setKinematicWalkingEnabled(bool on)
 }
 
 
-void AISTSimulatorItem::setConstraintForceOutputEnabled(bool on)
+void AISTSimulatorItem::setConstraintForceOutputEnabled(bool /* on */)
 {
-    impl->world.constraintForceSolver.enableConstraintForceOutput(on);
+
 }
 
 
@@ -405,7 +405,7 @@ bool AISTSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>&
 }
 
 
-bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
+bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     if(ENABLE_DEBUG_OUTPUT){
         static int ntest = 0;
@@ -456,17 +456,14 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
         cfs.set2Dmode(true);
     }
 
-    world.initialize();
-
     return true;
 }
 
 
-void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
+void AISTSimulatorItem::Impl::addBody(AISTSimBody* simBody)
 {
     DyBody* body = static_cast<DyBody*>(simBody->body());
 
-    int numAllStateHighGainActuationModeLinks = 0;
     bool hasHighgainJoints = false;
     
     for(auto& link : body->links()){
@@ -493,7 +490,6 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
 
             } else if(actuationMode == Link::AllStateHighGainActuationMode){
                 internalStateUpdateLinks.push_back(link);
-                ++numAllStateHighGainActuationModeLinks;
 
             } else if(actuationMode == Link::DeprecatedJointSurfaceVelocity){
                 if(link->isFixedJoint()){
@@ -505,24 +501,6 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
                            self->displayName(), Link::getStateModeString(actuationMode), link->name(), body->name()),
                     MessageView::Warning);
             }
-        }
-    }
-
-    if(numAllStateHighGainActuationModeLinks > 0){
-        int numMovableLinks = 0;
-        for(auto& link : body->links()){
-            if(!link->isStatic()){
-                ++numMovableLinks;
-            }
-        }
-        if(numAllStateHighGainActuationModeLinks < numMovableLinks){
-            mv->putln(format("numAllStateHighGainActuationModeLinks: {0}, numMovableLinks: {1}",
-                             numAllStateHighGainActuationModeLinks, numMovableLinks));
-            mv->putln(
-                format(_("{0}: The all state high-gain actuation mode is specified for some links of {1}, "
-                         "but the mode should be specified for all the movable links to make the mode work correctly."),
-                   self->displayName(), body->name()),
-            MessageView::Warning);
         }
     }
 
@@ -541,7 +519,14 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
 }
 
 
-void AISTSimulatorItemImpl::clearExternalForces()
+bool AISTSimulatorItem::completeInitializationOfSimulation()
+{
+    impl->world.initialize();
+    return true;
+}
+
+
+void AISTSimulatorItem::Impl::clearExternalForces()
 {
     world.constraintForceSolver.clearExternalForces();
 }
@@ -574,7 +559,7 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
 }
 
 
-void AISTSimulatorItemImpl::stepKinematicsSimulation(const std::vector<SimulationBody*>& activeSimBodies)
+void AISTSimulatorItem::Impl::stepKinematicsSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         SimulationBody* simBody = activeSimBodies[i];
@@ -653,7 +638,7 @@ void AISTSimulatorItem::setForcedPosition(BodyItem* bodyItem, const Isometry3& T
 }
 
 
-void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Isometry3& T)
+void AISTSimulatorItem::Impl::setForcedPosition(BodyItem* bodyItem, const Isometry3& T)
 {
     if(SimulationBody* simBody = self->findSimulationBody(bodyItem)){
         {
@@ -694,7 +679,7 @@ void AISTSimulatorItem::clearForcedPositions()
 }
     
 
-void AISTSimulatorItemImpl::doSetForcedPosition()
+void AISTSimulatorItem::Impl::doSetForcedPosition()
 {
     std::lock_guard<std::mutex> lock(forcedBodyPositionMutex);
     DyLink* rootLink = forcedPositionBody->rootLink();
@@ -725,19 +710,19 @@ void AISTSimulatorItem::addExtraJoint(ExtraJoint& extrajoint)
 }
 
 
-void AISTSimulatorItemImpl::clearExtraJoint()
+void AISTSimulatorItem::Impl::clearExtraJoint()
 {
     world.extrajoints.clear();
 }
 
 
-void AISTSimulatorItemImpl::addExtraJoint(ExtraJoint& extrajoint)
+void AISTSimulatorItem::Impl::addExtraJoint(ExtraJoint& extrajoint)
 {
     world.extrajoints.push_back(extrajoint);
 }
 
 
-void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
                 [&](int index){ return dynamicsMode.selectIndex(index); });
@@ -772,7 +757,7 @@ bool AISTSimulatorItem::store(Archive& archive)
 }
 
 
-bool AISTSimulatorItemImpl::store(Archive& archive)
+bool AISTSimulatorItem::Impl::store(Archive& archive)
 {
     archive.write("dynamicsMode", dynamicsMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("integrationMode", integrationMode.selectedSymbol(), DOUBLE_QUOTED);
@@ -799,7 +784,7 @@ bool AISTSimulatorItem::restore(const Archive& archive)
 }
 
 
-bool AISTSimulatorItemImpl::restore(const Archive& archive)
+bool AISTSimulatorItem::Impl::restore(const Archive& archive)
 {
     string symbol;
     if(archive.read("dynamicsMode", symbol)){

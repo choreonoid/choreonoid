@@ -60,20 +60,15 @@ public:
     double dd() const { return dd_; }
     double& dd() { return dd_; }
 
-    /**
-       This is used for checking or visualizing the actual constraint forces.
-       This is updated if ConstraintForceSolver::enableConstraintForceOutput(true) is called.
-    */
-    struct ConstraintForce {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        ConstraintForce(const Vector3& point, const Vector3& force) : point(point), force(force) { }
-        Vector3 point;
-        Vector3 force;
-    };
-    typedef std::vector<ConstraintForce> ConstraintForceArray;
-    
-    ConstraintForceArray& constraintForces() { return constraintForces_; }
-    const ConstraintForceArray& constraintForces() const { return constraintForces_; }
+    // For the backward compatibility
+    [[deprecated("Use Link::ContactState.")]]
+    typedef Link::ContactPoint ConstraintForce;
+    [[deprecated("Use vector<Link::ContactState>.")]]
+    typedef std::vector<ContactPoint> ConstraintForceArray;
+    [[deprecated("Use Link::contactStates.")]]
+    ConstraintForceArray& constraintForces() { return Link::contactPoints(); }
+    [[deprecated("Use Link::contactStates.")]]
+    const ConstraintForceArray& constraintForces() const { return Link::contactPoints(); }
 
     virtual void prependChild(Link* link) override;
     virtual void appendChild(Link* link) override;
@@ -109,8 +104,6 @@ private:
     Vector3 hhw_;  ///< bottom bock of Ia * s 
     double uu_;
     double dd_;    ///< Ia * s*s^T
-
-    std::vector<ConstraintForce> constraintForces_;
 };
 
 

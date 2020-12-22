@@ -57,6 +57,8 @@ public:
     double contactCorrectionVelocityRatio();
 
     void set2Dmode(bool on);
+
+    [[deprecated("This function does nothing. Set Link::LinkContactState to Link::sensingMode from a controller.")]]
     void enableConstraintForceOutput(bool on);
 
     void initialize(void);

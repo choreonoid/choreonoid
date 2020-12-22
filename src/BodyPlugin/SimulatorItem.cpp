@@ -1780,6 +1780,10 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     }
 
     if(result){
+        result = self->completeInitializationOfSimulation();
+    }
+
+    if(result){
         frameAtLastBufferWriting = 0;
         isDoingSimulationLoop = true;
         isWaitingForSimulationToStop = false;
@@ -1862,6 +1866,8 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     }
 
     if(!result){
+        mv->notify(format(_("{0} failed to initialize the simulation."), self->displayName()),
+                   MessageView::Error);
         clearSimulation();
     }
 
@@ -1872,6 +1878,12 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 CloneMap& SimulatorItem::cloneMap()
 {
     return impl->cloneMap;
+}
+
+
+bool SimulatorItem::completeInitializationOfSimulation()
+{
+    return true;
 }
 
 

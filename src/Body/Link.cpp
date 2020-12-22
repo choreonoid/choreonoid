@@ -24,7 +24,7 @@ Link::Link()
     jointType_ = FixedJoint;
     jointId_ = -1;
     actuationMode_ = StateNone;
-    sensingMode_ = LINK_POSITION | JOINT_DISPLACEMENT;
+    sensingMode_ = StateNone;
     a_ = Vector3::UnitZ();
     q_ = 0.0;
     dq_ = 0.0;

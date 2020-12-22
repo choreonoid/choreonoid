@@ -5,9 +5,9 @@
 
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
+#include <cnoid/SimulatorItem>
 #include <cnoid/SubSimulatorItem>
-#include <cnoid/AISTSimulatorItem>
-#include <cnoid/DyBody>
+#include <cnoid/Body>
 #include <sstream>
 
 using namespace std;
@@ -30,7 +30,7 @@ protected:
 
 private:
     void extractContactPoints(SimulatorItem* simulator);
-    void extractBodyContactPoints(DyBody* body, ostream& os);
+    void extractBodyContactPoints(Body* body, ostream& os);
 };
 
 
@@ -76,15 +76,14 @@ Item* ContactForceExtractorItem::doDuplicate() const
 
 bool ContactForceExtractorItem::initializeSimulation(SimulatorItem* simulator)
 {
-    AISTSimulatorItem* aistSimulator = dynamic_cast<AISTSimulatorItem*>(simulator);
-    if(!aistSimulator){
-        return false;
+    for(auto& simBody : simulator->simulationBodies()){
+        for(auto& link : simBody->body()->links()){
+            link->mergeSensingMode(Link::LinkContactState);
+        }
     }
 
-    aistSimulator->setConstraintForceOutputEnabled(true);
-
     simulator->addPostDynamicsFunction(
-        std::bind(&ContactForceExtractorItem::extractContactPoints, this, simulator));
+        [this, simulator](){ extractContactPoints(simulator); });
 
     return true;
 }
@@ -93,13 +92,8 @@ bool ContactForceExtractorItem::initializeSimulation(SimulatorItem* simulator)
 void ContactForceExtractorItem::extractContactPoints(SimulatorItem* simulator)
 {
     ostringstream oss;
-
-    const vector<SimulationBody*>& simBodies = simulator->simulationBodies();
-    for(size_t i=0; i < simBodies.size(); ++i){
-        DyBody* body = dynamic_cast<DyBody*>(simBodies[i]->body());
-        if(body){
-            extractBodyContactPoints(body, oss);
-        }
+    for(auto& simBody : simulator->simulationBodies()){
+        extractBodyContactPoints(simBody->body(), oss);
     }
     string log = oss.str();
     if(!log.empty()){
@@ -108,22 +102,20 @@ void ContactForceExtractorItem::extractContactPoints(SimulatorItem* simulator)
 }
 
 
-void ContactForceExtractorItem::extractBodyContactPoints(DyBody* body, ostream& os)
+void ContactForceExtractorItem::extractBodyContactPoints(Body* body, ostream& os)
 {
     bool put = false;
-    for(int i=0; i < body->numLinks(); ++i){
-        DyLink* link = body->link(i);
-        DyLink::ConstraintForceArray& forces = link->constraintForces();
-        if(!forces.empty()){
+    for(auto& link : body->links()){
+        auto& contacts = link->contactPoints();
+        if(!contacts.empty()){
             if(!put){
                 os << body->name() << ":\n";
                 put = true;
             }
             os << " " << link->name() << ":\n";
-            for(size_t i=0; i < forces.size(); ++i){
-                const DyLink::ConstraintForce& force = forces[i];
-                const Vector3& p = force.point;
-                const Vector3& f = force.force;
+            for(auto& contact : contacts){
+                const Vector3& p = contact.position();
+                const Vector3& f = contact.force();
                 os << "  point(" << p.x() << ", " << p.y() << ", " << p.z()
                    << "), force(" << f.x() << ", " << f.y() << ", " << f.z() << ")\n";
             }

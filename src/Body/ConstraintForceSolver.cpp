@@ -121,7 +121,6 @@ class ConstraintForceSolverImpl
 public:
     WorldBase& world;
 
-    bool isConstraintForceOutputMode;
     vector<bool> isSelfCollisionDetectionEnabled;
         
     struct ConstraintPoint {
@@ -161,6 +160,7 @@ public:
         bool isStatic;
         bool hasConstrainedLinks;
         bool isTestForceBeingApplied;
+        bool hasContactStateSensingLinks;
         LinkDataArray linksData;
 
         Vector3 dpf;
@@ -433,7 +433,6 @@ CFSImpl::ConstraintForceSolverImpl(WorldBase& world) :
     contactCorrectionDepth = DEFAULT_CONTACT_CORRECTION_DEPTH;
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
-    isConstraintForceOutputMode = false;
     isSelfCollisionDetectionEnabled.clear();
     is2Dmode = false;
 }
@@ -454,6 +453,7 @@ void CFSImpl::initBody(const DyBodyPtr& body, BodyData& bodyData)
     bodyData.linksData.resize(body->numLinks());
     bodyData.hasConstrainedLinks = false;
     bodyData.isTestForceBeingApplied = false;
+    bodyData.hasConstrainedLinks = false;
     bodyData.isStatic = body->isStaticModel();
 
     LinkDataArray& linksData = bodyData.linksData;
@@ -462,6 +462,9 @@ void CFSImpl::initBody(const DyBodyPtr& body, BodyData& bodyData)
         DyLink* link = body->link(i);
         linksData[link->index()].link = link;
         linksData[link->index()].parentIndex = link->parent() ? link->parent()->index() : -1;
+        if(link->sensingMode() & Link::LinkContactState){
+            bodyData.hasContactStateSensingLinks = true;
+        }
     }
 }
 
@@ -733,10 +736,10 @@ void CFSImpl::solve()
     for(size_t i=0; i < bodiesData.size(); ++i){
         BodyData& data = bodiesData[i];
         data.hasConstrainedLinks = false;
-        DyBody* body = data.body;
-        const int n = body->numLinks();
-        for(int j=0; j < n; ++j){
-            body->link(j)->constraintForces().clear();
+        if(data.hasContactStateSensingLinks){
+            for(auto& link : data.body->links()){
+                link->contactPoints().clear();
+            }
         }
     }
 
@@ -1803,41 +1806,44 @@ void CFSImpl::addConstraintForceToLinks()
 
 void CFSImpl::addConstraintForceToLink(LinkPair* linkPair, int ipair)
 {
-    Vector3 f_total   = Vector3::Zero();
-    Vector3 tau_total = Vector3::Zero();
-
     ConstraintPointArray& constraintPoints = linkPair->constraintPoints;
     int numConstraintPoints = constraintPoints.size();
-    DyLink* link = linkPair->link[ipair];
 
-    for(int i=0; i < numConstraintPoints; ++i){
+    if(numConstraintPoints > 0){
+        DyLink* link = linkPair->link[ipair];
+        Vector3 f_total   = Vector3::Zero();
+        Vector3 tau_total = Vector3::Zero();
+        bool doUpdateContactStates = (link->sensingMode() & Link::LinkContactState);
 
-        ConstraintPoint& constraint = constraintPoints[i];
-        int globalIndex = constraint.globalIndex;
+        for(int i=0; i < numConstraintPoints; ++i){
 
-        Vector3 f = solution(globalIndex) * constraint.normalTowardInside[ipair];
+            ConstraintPoint& constraint = constraintPoints[i];
+            int globalIndex = constraint.globalIndex;
 
-        for(int j=0; j < constraint.numFrictionVectors; ++j){
-            f += solution(globalNumConstraintVectors + constraint.globalFrictionIndex + j) * constraint.frictionVector[j][ipair];
+            Vector3 f = solution(globalIndex) * constraint.normalTowardInside[ipair];
+            for(int j=0; j < constraint.numFrictionVectors; ++j){
+                f += solution(globalNumConstraintVectors + constraint.globalFrictionIndex + j) * constraint.frictionVector[j][ipair];
+            }
+            f_total   += f;
+            tau_total += constraint.point.cross(f);
+
+            if(doUpdateContactStates){
+                link->contactPoints().emplace_back(
+                    Link::ContactPoint(
+                        constraint.point, constraint.normalTowardInside[ipair], f,
+                        (ipair == 0) ? -constraint.relVelocityOn0 : constraint.relVelocityOn0,
+                        constraint.depth));
+            }
         }
-
-        f_total   += f;
-        tau_total += constraint.point.cross(f);
-
-        if(isConstraintForceOutputMode){
-            link->constraintForces().push_back(DyLink::ConstraintForce(constraint.point, f));
-        }
-    }
     
-    link->f_ext()   += f_total;
-    link->tau_ext() += tau_total;
+        link->f_ext()   += f_total;
+        link->tau_ext() += tau_total;
 
-
-    if(CFS_DEBUG){
-        os << "Constraint force to " << link->name() << ": f = " << f_total << ", tau = " << tau_total << std::endl;
+        if(CFS_DEBUG){
+            os << "Constraint force to " << link->name() << ": f = " << f_total << ", tau = " << tau_total << std::endl;
+        }
     }
 }
-
 
 
 void CFSImpl::solveMCPByProjectedGaussSeidel(const MatrixX& M, const VectorX& b, VectorX& x)
@@ -2436,9 +2442,9 @@ double ConstraintForceSolver::contactCorrectionVelocityRatio()
 }
 
 
-void ConstraintForceSolver::enableConstraintForceOutput(bool on)
+void ConstraintForceSolver::enableConstraintForceOutput(bool /* on */)
 {
-    impl->isConstraintForceOutputMode = on;
+
 }
 
 

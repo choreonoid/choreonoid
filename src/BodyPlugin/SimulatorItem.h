@@ -224,6 +224,13 @@ protected:
     */
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) = 0;
 
+    /**
+       This function is called after all the initializetion processes including those of
+       controllers and sub simulators to complete the initialization of simulation.
+       @note This function is called from the main thread.
+    */
+    virtual bool completeInitializationOfSimulation();
+
     virtual void initializeSimulationThread();
 
     virtual void finalizeSimulationThread();

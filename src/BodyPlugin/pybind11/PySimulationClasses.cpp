@@ -105,7 +105,6 @@ void exportSimulationClasses(py::module m)
         .def("setEpsilon", &AISTSimulatorItem::setEpsilon)
         .def("set2Dmode", &AISTSimulatorItem::set2Dmode)
         .def("setKinematicWalkingEnabled", &AISTSimulatorItem::setKinematicWalkingEnabled)
-        .def("setConstraintForceOutputEnabled", &AISTSimulatorItem::setConstraintForceOutputEnabled)
         .def("clearExtraJoint", &AISTSimulatorItem::clearExtraJoint)
         .def("addExtraJoint", &AISTSimulatorItem::addExtraJoint)
 
