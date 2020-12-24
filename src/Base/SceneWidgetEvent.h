@@ -64,7 +64,6 @@ private:
     double wheelSteps_;
     SgNodePath nodePath_;
     SgNodePath cameraPath_;
-        
     mutable SceneWidget* sceneWidget_;
 
     SceneWidgetEvent();

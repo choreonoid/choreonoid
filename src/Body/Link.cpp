@@ -407,36 +407,36 @@ bool Link::hasDedicatedCollisionShape() const
 }
 
 
-void Link::addShapeNode(SgNode* shape, bool doNotify)
+void Link::addShapeNode(SgNode* shape, SgUpdateRef update)
 {
-    visualShape_->addChild(shape, doNotify);
-    collisionShape_->addChild(shape, doNotify);
+    visualShape_->addChild(shape, update);
+    collisionShape_->addChild(shape, update);
 }
 
 
-void Link::addVisualShapeNode(SgNode* shape, bool doNotify)
+void Link::addVisualShapeNode(SgNode* shape, SgUpdateRef update)
 {
-    visualShape_->addChild(shape, doNotify);
+    visualShape_->addChild(shape, update);
 }
 
 
-void Link::addCollisionShapeNode(SgNode* shape, bool doNotify)
+void Link::addCollisionShapeNode(SgNode* shape, SgUpdateRef update)
 {
-    collisionShape_->addChild(shape, doNotify);
+    collisionShape_->addChild(shape, update);
 }
 
 
-void Link::removeShapeNode(SgNode* shape, bool doNotify)
+void Link::removeShapeNode(SgNode* shape, SgUpdateRef update)
 {
-    visualShape_->removeChild(shape, doNotify);
-    collisionShape_->removeChild(shape, doNotify);
+    visualShape_->removeChild(shape, update);
+    collisionShape_->removeChild(shape, update);
 }
 
 
-void Link::clearShapeNodes(bool doNotify)
+void Link::clearShapeNodes(SgUpdateRef update)
 {
-    visualShape_->clearChildren(doNotify);
-    collisionShape_->clearChildren(doNotify);
+    visualShape_->clearChildren(update);
+    collisionShape_->clearChildren(update);
 }
 
 

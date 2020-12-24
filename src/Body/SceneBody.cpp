@@ -503,17 +503,11 @@ void SceneBody::makeTransparent(float transparency)
 
 void SceneBody::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
 {
-    impl->sceneLinkGroup->insertChainedGroup(effect);
-    if(update){
-        impl->sceneLinkGroup->notifyUpdate(update->withAction(SgUpdate::ADDED | SgUpdate::REMOVED));
-    }
+    impl->sceneLinkGroup->insertChainedGroup(effect, update);
 }
 
 
 void SceneBody::removeEffectGroup(SgGroup* effect, SgUpdateRef update)
 {
-    impl->sceneLinkGroup->removeChainedGroup(effect);
-    if(update){
-        impl->sceneLinkGroup->notifyUpdate(update->withAction(SgUpdate::REMOVED));
-    }
+    impl->sceneLinkGroup->removeChainedGroup(effect, update);
 }

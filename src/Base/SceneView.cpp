@@ -51,6 +51,7 @@ public:
     SgGroup* scene;
     SgUnpickableGroup* unpickableScene;
     list<SceneInfo> sceneInfos;
+    SgUpdate sgUpdate;
     RootItem* rootItem;
     CheckBox dedicatedCheckCheck;
     int dedicatedCheckId;
@@ -302,11 +303,11 @@ void SceneView::Impl::onSensitiveChanged(list<SceneInfo>::iterator infoIter, boo
     if(infoIter->isShown){
         if(auto node = infoIter->node){
             if(on){
-                unpickableScene->removeChild(node, true);
-                scene->addChild(node, true);
+                unpickableScene->removeChild(node, sgUpdate);
+                scene->addChild(node, sgUpdate);
             } else {
-                scene->removeChild(node, true);
-                unpickableScene->addChild(node, true);
+                scene->removeChild(node, sgUpdate);
+                unpickableScene->addChild(node, sgUpdate);
             }
         }
     }
@@ -318,9 +319,9 @@ void SceneView::Impl::showScene(list<SceneInfo>::iterator infoIter, bool show)
     if(infoIter->isShown && !show){
         if(auto node = infoIter->node){
             if(infoIter->renderable->isSceneSensitive()){
-                scene->removeChild(node, true);
+                scene->removeChild(node, sgUpdate);
             } else {
-                unpickableScene->removeChild(node, true);
+                unpickableScene->removeChild(node, sgUpdate);
             }
         }
         infoIter->isShown = false;
@@ -331,9 +332,9 @@ void SceneView::Impl::showScene(list<SceneInfo>::iterator infoIter, bool show)
         }
         if(auto node = infoIter->node){
             if(infoIter->renderable->isSceneSensitive()){
-                scene->addChild(node, true);
+                scene->addChild(node, sgUpdate);
             } else {
-                unpickableScene->addChild(node, true);
+                unpickableScene->addChild(node, sgUpdate);
             }
             infoIter->isShown = true;
         }

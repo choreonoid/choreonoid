@@ -260,7 +260,7 @@ LightingItemImpl::LightingItemImpl(LightingItem* self, const LightingItemImpl& o
 bool LightingItemImpl::updateLightType(LightType type)
 {
     lightType.select(type);
-    scene->clearChildren(false);
+    scene->clearChildren();
     switch(lightType.which()){
     case DIRECTIONAL :
         light = new SgDirectionalLight;
@@ -292,9 +292,10 @@ bool LightingItemImpl::updateLightType(LightType type)
     light->setAmbientIntensity(ambientIntensity);
     light->on(on);
     if(showMarker){
-        scene->addChild(lightShape, false);
+        scene->addChild(lightShape);
     }
-    scene->addChild(light, true);
+    SgTmpUpdate update;
+    scene->addChild(light, update);
 
     return true;
 }
@@ -469,10 +470,11 @@ bool LightingItemImpl::onCutOffExponentPropertyChanged(float value)
 bool LightingItemImpl::onShowMarkerPropertyChanged(bool on)
 {
     showMarker = on;
+    SgTmpUpdate update;
     if(showMarker){
-        scene->addChildOnce(lightShape, true);
+        scene->addChildOnce(lightShape, update);
     }else{
-        scene->removeChild(lightShape, true);
+        scene->removeChild(lightShape, update);
     }
     return true;
 }

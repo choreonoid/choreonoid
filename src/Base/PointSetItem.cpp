@@ -253,10 +253,12 @@ SignalProxy<void(const Isometry3& T)> PointSetItem::sigOffsetPositionChanged()
 }
 
 
-void PointSetItem::notifyOffsetPositionChange()
+void PointSetItem::notifyOffsetPositionChange(bool doNotifyScene)
 {
     impl->scene->sigOffsetPositionChanged(impl->scene->T());
-    impl->scene->notifyUpdate();
+    if(doNotifyScene){
+        impl->scene->notifyUpdate(impl->scene->update.withAction(SgUpdate::Modified));
+    }
     Item::notifyUpdate();
 }
 
@@ -456,7 +458,7 @@ void PointSetItemImpl::removePoints(const PolyhedralRegion& region)
             removeSubElements(*pointSet->colors(), pointSet->colorIndices(), indicesToRemove);
         }
 
-        pointSet->notifyUpdate();
+        pointSet->notifyUpdate(scene->update.withAction(SgUpdate::Modified));
     }
 
     sigPointsInRegionRemoved(region);
@@ -786,7 +788,7 @@ void ScenePointSet::updateVisualization(bool updateContents)
         }
         invariant->addChild(voxels);
     }
-    addChild(invariant, true);
+    addChild(invariant, update);
 
     clearAttentionPoints(true);
 }

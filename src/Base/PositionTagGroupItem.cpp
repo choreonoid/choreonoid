@@ -835,10 +835,7 @@ void SceneTagGroup::addTagNode(int index, bool doUpdateEdges, bool doNotify)
         tagNode->addChild(getOrCreateTagMarker());
     }        
     tagNode->setPosition(tag->position());
-    tagMarkerGroup->insertChild(index, tagNode);
-    if(doNotify){
-        tagMarkerGroup->notifyUpdate(update.withAction(SgUpdate::ADDED));
-    }
+    tagMarkerGroup->insertChild(index, tagNode, doNotify ? &update : nullptr);
 
     if(doUpdateEdges){
         updateEdges(doNotify);
@@ -942,9 +939,7 @@ SgNode* SceneTagGroup::getOrCreateHighlightedTagMarker()
 
 void SceneTagGroup::removeTagNode(int index)
 {
-    tagMarkerGroup->removeChildAt(index);
-    tagMarkerGroup->notifyUpdate(update.withAction(SgUpdate::REMOVED));
-
+    tagMarkerGroup->removeChildAt(index, update);
     updateEdges(true);
 }
 
@@ -958,7 +953,8 @@ void SceneTagGroup::updateTagNodePosition(int index)
     } else {
         node->setTranslation(tag->translation());
     }
-    node->notifyUpdate(update.withAction(SgUpdate::MODIFIED));
+    update.setAction(SgUpdate::MODIFIED);
+    node->notifyUpdate(update);
 
     if(index == draggingTagIndex){
         positionDragger->setPosition(tag->position());
@@ -997,18 +993,18 @@ bool SceneTagGroup::updateTagDisplayType(int index, bool doNotify)
         displayType = Normal;
     }
     if(displayType != tagNode->displayType){
-        tagNode->clearChildren();
-        update.setAction(SgUpdate::ADDED|SgUpdate::REMOVED);
+        SgUpdate* pUpdate = doNotify ? &update : nullptr;
+        tagNode->clearChildren(pUpdate);
         switch(displayType){
         case Normal:
         default:
-            tagNode->addChild(getOrCreateTagMarker(), update);
+            tagNode->addChild(getOrCreateTagMarker(), pUpdate);
             break;
         case Selected:
-            tagNode->addChild(getOrCreateSelectedTagMarker(), update);
+            tagNode->addChild(getOrCreateSelectedTagMarker(), pUpdate);
             break;
         case Highlighted:
-            tagNode->addChild(getOrCreateHighlightedTagMarker(), update);
+            tagNode->addChild(getOrCreateHighlightedTagMarker(), pUpdate);
             break;
         }
         tagNode->displayType = displayType;

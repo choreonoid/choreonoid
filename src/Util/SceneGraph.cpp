@@ -22,20 +22,16 @@ CloneMap::FlagId DisableNonNodeCloning("SgObjectDisableNonNodeCloning");
 }
 
 
-SgUpdate::~SgUpdate()
-{
-
-}
-
-
 SgObject::SgObject()
 {
     attributes_ = 0;
+    hasValidBoundingBoxCache_ = false;
 }
 
 
 SgObject::SgObject(const SgObject& org)
     : attributes_(org.attributes_),
+      hasValidBoundingBoxCache_(false),
       name_(org.name_),
       uri_(org.uri_)
 {
@@ -76,6 +72,7 @@ SgObject* SgObject::childObject(int /* index */)
 void SgObject::onUpdated(SgUpdate& update)
 {
     update.pushNode(this);
+    invalidateBoundingBox();
     sigUpdated_(update);
     for(const_parentIter p = parents.begin(); p != parents.end(); ++p){
         (*p)->onUpdated(update);
@@ -84,35 +81,18 @@ void SgObject::onUpdated(SgUpdate& update)
 }
 
 
-void SgObject::addParent(SgObject* parent, SgUpdate* update)
+void SgObject::addParent(SgObject* parent, SgUpdateRef update)
 {
     parents.insert(parent);
 
     if(update){
         update->clearPath();
         update->pushNode(this);
-        parent->onUpdated(update->withAction(SgUpdate::ADDED));
+        parent->onUpdated(update->withAction(SgUpdate::Added));
     }
 
     if(parents.size() == 1){
         sigGraphConnection_(true);
-    }
-}
-
-
-void SgObject::addParent(SgObject* parent, SgUpdate& update)
-{
-    addParent(parent, &update);
-}
-
-
-void SgObject::addParent(SgObject* parent, bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update;
-        addParent(parent, &update);
-    } else {
-        addParent(parent, nullptr);
     }
 }
 
@@ -229,7 +209,6 @@ SgGroup::SgGroup()
     : SgNode(findClassId<SgGroup>())
 {
     setAttribute(GroupAttribute);
-    hasValidBoundingBoxCache_ = false;
 }
 
 
@@ -237,7 +216,6 @@ SgGroup::SgGroup(int classId)
     : SgNode(classId)
 {
     setAttribute(GroupAttribute);
-    hasValidBoundingBoxCache_ = false;
 }
 
 
@@ -249,7 +227,7 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
     if(cloneMap){
         // deep copy
         for(auto& child : org){
-            addChild(cloneMap->getClone<SgNode>(child), false);
+            addChild(cloneMap->getClone<SgNode>(child));
         }
     } else {
         // shallow copy
@@ -258,16 +236,14 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
            Only the attributes of this node should be copied when the clone map is not used.
         */
         for(auto& child : org){
-            addChild(child, false);
+            addChild(child);
         }
     }
 
     setAttribute(GroupAttribute);
-    if(org.hasValidBoundingBoxCache_){
+    if(org.hasValidBoundingBoxCache()){
         bboxCache = org.bboxCache;
-        hasValidBoundingBoxCache_ = true;
-    } else {
-        hasValidBoundingBoxCache_ = false;
+        setBoundingBoxCacheReady();
     }
 }
 
@@ -298,18 +274,9 @@ SgObject* SgGroup::childObject(int index)
 }
 
 
-void SgGroup::onUpdated(SgUpdate& update)
-{
-    //if(update.action() & SgUpdate::BBOX_UPDATED){
-    invalidateBoundingBox();
-    SgNode::onUpdated(update);
-    //}
-}
-
-
 const BoundingBox& SgGroup::boundingBox() const
 {
-    if(hasValidBoundingBoxCache_){
+    if(hasValidBoundingBoxCache()){
         return bboxCache;
     }
     bboxCache.clear();
@@ -319,7 +286,7 @@ const BoundingBox& SgGroup::boundingBox() const
             bboxCache.expandBy(node->boundingBox());
         }
     }
-    hasValidBoundingBoxCache_ = true;
+    setBoundingBoxCacheReady();
 
     return bboxCache;
 }
@@ -347,7 +314,7 @@ int SgGroup::findChildIndex(SgNode* child) const
 }
 
 
-void SgGroup::addChild(SgNode* node, SgUpdate* update)
+void SgGroup::addChild(SgNode* node, SgUpdateRef update)
 {
     if(node){
         children.push_back(node);
@@ -356,34 +323,7 @@ void SgGroup::addChild(SgNode* node, SgUpdate* update)
 }
 
 
-void SgGroup::addChild(SgNode* node, SgUpdate& update)
-{
-    addChild(node, &update);
-}
-
-
-void SgGroup::addChild(SgNode* node, bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update;
-        addChild(node, &update);
-    } else {
-        addChild(node, nullptr);
-    }
-}
-
-
-bool SgGroup::addChildOnce(SgNode* node, bool doNotify)
-{
-    if(!contains(node)){
-        addChild(node, doNotify);
-        return true;
-    }
-    return false;
-}
-
-
-bool SgGroup::addChildOnce(SgNode* node, SgUpdate& update)
+bool SgGroup::addChildOnce(SgNode* node, SgUpdateRef update)
 {
     if(!contains(node)){
         addChild(node, update);
@@ -393,7 +333,7 @@ bool SgGroup::addChildOnce(SgNode* node, SgUpdate& update)
 }
 
 
-void SgGroup::insertChild(int index, SgNode* node, SgUpdate* update)
+void SgGroup::insertChild(int index, SgNode* node, SgUpdateRef update)
 {
     if(node){
         if(index > static_cast<int>(children.size())){
@@ -406,24 +346,7 @@ void SgGroup::insertChild(int index, SgNode* node, SgUpdate* update)
 }
 
 
-void SgGroup::insertChild(int index, SgNode* node, bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update;
-        insertChild(index, node, &update);
-    } else {
-        insertChild(index, node, nullptr);
-    }
-}
-
-
-void SgGroup::insertChild(int index, SgNode* node, SgUpdate& update)
-{
-    insertChild(index, node, &update);
-}
-
-
-void SgGroup::setSingleChild(SgNode* node, SgUpdate* update)
+void SgGroup::setSingleChild(SgNode* node, SgUpdateRef update)
 {
     int n = numChildren();
     if(n > 0){
@@ -443,24 +366,7 @@ void SgGroup::setSingleChild(SgNode* node, SgUpdate* update)
 }
 
 
-void SgGroup::setSingleChild(SgNode* node, SgUpdate& update)
-{
-    setSingleChild(node, &update);
-}
-
-
-void SgGroup::setSingleChild(SgNode* node, bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update;
-        setSingleChild(node, &update);
-    } else {
-        setSingleChild(node, nullptr);
-    }
-}
-
-
-SgGroup::iterator SgGroup::removeChild(iterator childIter, SgUpdate* update)
+SgGroup::iterator SgGroup::removeChild(iterator childIter, SgUpdateRef update)
 {
     iterator next;
     SgNode* child = *childIter;
@@ -473,13 +379,13 @@ SgGroup::iterator SgGroup::removeChild(iterator childIter, SgUpdate* update)
         next = children.erase(childIter);
         update->clearPath();
         update->pushNode(child);
-        onUpdated(update->withAction(SgUpdate::REMOVED));
+        onUpdated(update->withAction(SgUpdate::Removed));
     }
     return next;
 }
 
 
-bool SgGroup::removeChild(SgNode* node, SgUpdate* update)
+bool SgGroup::removeChild(SgNode* node, SgUpdateRef update)
 {
     bool removed = false;
     if(node){
@@ -497,41 +403,13 @@ bool SgGroup::removeChild(SgNode* node, SgUpdate* update)
 }
 
 
-bool SgGroup::removeChild(SgNode* node, SgUpdate& update)
+void SgGroup::removeChildAt(int index, SgUpdateRef update)
 {
-    return removeChild(node, &update);
+    removeChild(children.begin() + index, update);
 }
 
 
-bool SgGroup::removeChild(SgNode* node, bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update;
-        return removeChild(node, update);
-    } else {
-        return removeChild(node, nullptr);
-    }
-}
-
-
-void SgGroup::removeChildAt(int index, SgUpdate& update)
-{
-    removeChild(children.begin() + index, &update);
-}
-
-
-void SgGroup::removeChildAt(int index, bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update;
-        removeChildAt(index, update);
-    } else {
-        removeChild(children.begin() + index, nullptr);
-    }
-}
-
-
-void SgGroup::clearChildren(SgUpdate* update)
+void SgGroup::clearChildren(SgUpdateRef update)
 {
     iterator p = children.begin();
     while(p != children.end()){
@@ -540,24 +418,7 @@ void SgGroup::clearChildren(SgUpdate* update)
 }
 
 
-void SgGroup::clearChildren(SgUpdate& update)
-{
-    clearChildren(&update);
-}
-
-
-void SgGroup::clearChildren(bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update;
-        clearChildren(&update);
-    } else {
-        clearChildren(nullptr);
-    }
-}
-
-
-void SgGroup::copyChildrenTo(SgGroup* group, SgUpdate& update)
+void SgGroup::copyChildrenTo(SgGroup* group, SgUpdateRef update)
 {
     for(size_t i=0; i < children.size(); ++i){
         group->addChild(child(i), update);
@@ -565,15 +426,7 @@ void SgGroup::copyChildrenTo(SgGroup* group, SgUpdate& update)
 }
 
 
-void SgGroup::copyChildrenTo(SgGroup* group, bool doNotify)
-{
-    for(size_t i=0; i < children.size(); ++i){
-        group->addChild(child(i), doNotify);
-    }
-}
-
-
-void SgGroup::moveChildrenTo(SgGroup* group, SgUpdate* update)
+void SgGroup::moveChildrenTo(SgGroup* group, SgUpdateRef update)
 {
     const int destTop = group->children.size();
     
@@ -583,36 +436,19 @@ void SgGroup::moveChildrenTo(SgGroup* group, SgUpdate* update)
     clearChildren(update);
     
     if(update){
-        update->setAction(SgUpdate::ADDED);
-        update->clearPath();
+        update->setAction(SgUpdate::Added);
         for(int i=destTop; i < group->numChildren(); ++i){
+            update->clearPath();
             group->child(i)->notifyUpdate(*update);
         }
     }
 }
 
 
-void SgGroup::moveChildrenTo(SgGroup* group, SgUpdate& update)
-{
-    moveChildrenTo(group, &update);
-}
-
-
-void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update;
-        moveChildrenTo(group, &update);
-    } else {
-        moveChildrenTo(group, nullptr);
-    }
-}
-
-
-void SgGroup::insertChainedGroup(SgGroup* group)
+void SgGroup::insertChainedGroup(SgGroup* group, SgUpdateRef update)
 {
     moveChildrenTo(group);
-    addChild(group);
+    addChild(group, update);
 }
 
 
@@ -626,14 +462,19 @@ SgGroup* SgGroup::nextChainedGroup()
 }
 
 
-void SgGroup::removeChainedGroup(SgGroup* group)
+void SgGroup::removeChainedGroup(SgGroup* group, SgUpdateRef update)
 {
     SgGroup* parent = this;
     auto next = nextChainedGroup();
     while(next){
         if(next == group){
-            parent->removeChild(next);
-            next->moveChildrenTo(parent);
+            parent->removeChild(group);
+            group->moveChildrenTo(parent);
+            if(update){
+                update->clearPath();
+                update->pushNode(group);
+                onUpdated(update->withAction(SgUpdate::Removed));
+            }
             break;
         }
         next = next->nextChainedGroup();
@@ -683,7 +524,7 @@ SgTransform::SgTransform(const SgTransform& org, CloneMap* cloneMap)
 
 const BoundingBox& SgTransform::untransformedBoundingBox() const
 {
-    if(!hasValidBoundingBoxCache_){
+    if(!hasValidBoundingBoxCache()){
         boundingBox();
     }
     return untransformedBboxCache;
@@ -737,7 +578,7 @@ Referenced* SgPosTransform::doClone(CloneMap* cloneMap) const
 
 const BoundingBox& SgPosTransform::boundingBox() const
 {
-    if(hasValidBoundingBoxCache_){
+    if(hasValidBoundingBoxCache()){
         return bboxCache;
     }
     bboxCache.clear();
@@ -749,7 +590,7 @@ const BoundingBox& SgPosTransform::boundingBox() const
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(T_);
-    hasValidBoundingBoxCache_ = true;
+    setBoundingBoxCacheReady();
     return bboxCache;
 }
 
@@ -806,7 +647,7 @@ Referenced* SgScaleTransform::doClone(CloneMap* cloneMap) const
 
 const BoundingBox& SgScaleTransform::boundingBox() const
 {
-    if(hasValidBoundingBoxCache_){
+    if(hasValidBoundingBoxCache()){
         return bboxCache;
     }
     bboxCache.clear();
@@ -818,7 +659,7 @@ const BoundingBox& SgScaleTransform::boundingBox() const
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(Affine3(scale_.asDiagonal()));
-    hasValidBoundingBoxCache_ = true;
+    setBoundingBoxCacheReady();
     return bboxCache;
 }
 
@@ -868,7 +709,7 @@ Referenced* SgAffineTransform::doClone(CloneMap* cloneMap) const
 
 const BoundingBox& SgAffineTransform::boundingBox() const
 {
-    if(hasValidBoundingBoxCache_){
+    if(hasValidBoundingBoxCache()){
         return bboxCache;
     }
     bboxCache.clear();
@@ -880,7 +721,7 @@ const BoundingBox& SgAffineTransform::boundingBox() const
     }
     untransformedBboxCache = bboxCache;
     bboxCache.transform(T_);
-    hasValidBoundingBoxCache_ = true;
+    setBoundingBoxCacheReady();
     return bboxCache;
 }
 
@@ -944,15 +785,15 @@ Referenced* SgSwitch::doClone(CloneMap* cloneMap) const
 }
 
 
-void SgSwitch::setTurnedOn(bool on, bool doNotify)
+void SgSwitch::setTurnedOn(bool on, SgUpdateRef update)
 {
     if(on != isTurnedOn_){
         isTurnedOn_ = on;
-        if(doNotify){
-            notifyUpdate();
+        if(update){
+            notifyUpdate(update->withAction(SgUpdate::Modified));
         }
     }
-}    
+}
 
 
 SgSwitchableGroup::SgSwitchableGroup()
@@ -1009,15 +850,15 @@ Referenced* SgSwitchableGroup::doClone(CloneMap* cloneMap) const
 }
 
 
-void SgSwitchableGroup::setTurnedOn(bool on, bool doNotify)
+void SgSwitchableGroup::setTurnedOn(bool on, SgUpdateRef update)
 {
     if(switchObject){
-        switchObject->setTurnedOn(on, doNotify);
+        switchObject->setTurnedOn(on, update);
 
     } else if(on != isTurnedOn_){
         isTurnedOn_ = on;
-        if(doNotify){
-            notifyUpdate();
+        if(update){
+            notifyUpdate(update->withAction(SgUpdate::Modified));
         }
     }
 }

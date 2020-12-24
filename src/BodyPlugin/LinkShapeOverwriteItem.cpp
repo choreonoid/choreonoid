@@ -207,7 +207,8 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
     }
 
     link->clearShapeNodes();
-    link->addShapeNode(offsetTransform, true);
+    SgTmpUpdate update;
+    link->addShapeNode(offsetTransform, update);
 
     bodyItemConnection =
         bodyItem->sigKinematicStateChanged().connect(

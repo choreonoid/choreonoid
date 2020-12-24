@@ -17,6 +17,7 @@ class SceneTrackDevice : public SceneDevice
     AGXVehicleContinuousTrackDevice* m_trackDevice;
     std::vector<SgPosTransformPtr> m_sgTracks;
     SgSwitchableGroupPtr trackSwitch;
+    SgUpdate sgUpdate;
 
 public:
     SceneTrackDevice(AGXVehicleContinuousTrackDevice* device)
@@ -24,7 +25,7 @@ public:
     {
         m_trackDevice = device;
         trackSwitch = new SgSwitchableGroup;
-        trackSwitch->turnOff();
+        trackSwitch->setTurnedOn(false);
         addChild(trackSwitch);
         setFunctionOnStateChanged([&](){ update(); });
         initialize();
@@ -42,11 +43,11 @@ public:
 
     void update(){
         if(m_trackDevice->getTrackStates().size() <= 0){
-            trackSwitch->setTurnedOn(false, true);
+            trackSwitch->setTurnedOn(false, sgUpdate);
         } else {
             if(!trackSwitch->isTurnedOn()){
                 createTrackShapes();
-                trackSwitch->setTurnedOn(true, true);
+                trackSwitch->setTurnedOn(true, sgUpdate);
             }
             updateTrackPosition();
         }
@@ -66,7 +67,7 @@ public:
                     shape = new SgShape;
                 }
                 shape->setMesh(meshGenerator.generateBox(size));
-                m_sgTracks[i]->addChild(shape, true);
+                m_sgTracks[i]->addChild(shape, sgUpdate);
             }
         }
     }
@@ -77,12 +78,13 @@ public:
         for(size_t i = 0; i < states.size(); ++i){
             const auto& state = states[i];
             if(state.boxSize.x() == 0.0){
-                trackSwitch->turnOff(true);
+                trackSwitch->setTurnedOn(false, sgUpdate);
                 break;
             } else {
                 m_sgTracks[i]->setTransform(linkPos_inv * state.position);
             }
         }
+        notifyUpdate(sgUpdate);
     }
 };
 

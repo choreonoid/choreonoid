@@ -37,7 +37,7 @@ public:
     const Isometry3& offsetPosition() const;
     void setOffsetPosition(const Isometry3& T);
     SignalProxy<void(const Isometry3& T)> sigOffsetPositionChanged();
-    void notifyOffsetPositionChange();
+    void notifyOffsetPositionChange(bool doNotifyScene = true);
 
     SgPointSet* getTransformedPointSet() const;
 

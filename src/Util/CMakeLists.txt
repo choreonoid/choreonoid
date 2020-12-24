@@ -151,6 +151,7 @@ set(headers
   BoundingBox.h
   SceneNodeClassRegistry.h
   PolymorphicSceneNodeFunctionSet.h
+  SceneUpdate.h
   SceneGraph.h
   SceneDrawables.h
   SceneCameras.h

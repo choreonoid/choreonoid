@@ -28,7 +28,6 @@ namespace {
 class Arrow : public SgPosTransform
 {
 public:
-    SgUpdate update;
     SgPosTransformPtr cylinderPosition;
     SgScaleTransformPtr cylinderScale;
     SgShapePtr cylinder;
@@ -49,10 +48,10 @@ public:
         conePosition->addChild(cone);
         addChild(conePosition);
 
-        setVector(Vector3(0.0, 0.0, 0.0));
+        setVector(Vector3(0.0, 0.0, 0.0), nullptr);
     }
 
-    void setVector(const Vector3& v) {
+    void setVector(const Vector3& v, SgUpdateRef update) {
         double len = v.norm();
         cylinderScale->setScale(Vector3(1.0, len, 1.0));
         cylinderPosition->setTranslation(Vector3(0.0, len / 2.0, 0.0));
@@ -63,8 +62,10 @@ public:
             double angle = acos(Vector3::UnitY().dot(v) / len);
             setRotation(AngleAxis(angle, axis));
         }
-            
-        notifyUpdate(update);
+
+        if(update){
+            notifyUpdate(*update);
+        }
     }
 };
 
@@ -73,10 +74,11 @@ typedef ref_ptr<Arrow> ArrowPtr;
 class SensorVisualizerItemBase
 {
 public:
-    Item* visualizerItem;
+    Item* item;
     BodyItem* bodyItem;
     ScopedConnection sigCheckToggledConnection;
-    SensorVisualizerItemBase(Item* visualizerItem);
+    SgUpdate update;
+    SensorVisualizerItemBase(Item* item);
     void setBodyItem(BodyItem* bodyItem);
     void updateVisualization();
 
@@ -92,7 +94,7 @@ public:
     virtual SgNode* getScene() override;
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
-    void updateSensorPositions();
+    void updateSensorPositions(bool doNotify);
     void updateForceSensorState(int index);
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
@@ -107,7 +109,7 @@ public:
     ScopedConnectionSet connections;
 };
 
-class CameraImageVisualizerItem : public Item, public ImageableItem, public SensorVisualizerItemBase
+class CameraImageVisualizerItem : public Item, public SensorVisualizerItemBase, public ImageableItem
 {
 public:
     CameraImageVisualizerItem();
@@ -130,7 +132,7 @@ public:
     void setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera);
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
-    void updateSensorPosition();
+    void updateSensorPosition(bool doNitfy);
     void updateRangeCameraState();
 
     RangeCameraPtr rangeCamera;
@@ -144,7 +146,7 @@ public:
     void setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor);
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
-    void updateSensorPosition();
+    void updateSensorPosition(bool doNitfy);
     void updateRangeSensorState();
 
     RangeSensorPtr rangeSensor;
@@ -162,6 +164,7 @@ public:
     BodyItem* bodyItem;
     vector<Item*> subItems;
     vector<ItemPtr> restoredSubItems;
+    SgUpdate update;
 
     SensorVisualizerItemImpl(SensorVisualizerItem* self);
     void onPositionChanged();
@@ -371,12 +374,12 @@ bool SensorVisualizerItem::restore(const Archive& archive)
 }
 
 
-SensorVisualizerItemBase::SensorVisualizerItemBase(Item* visualizerItem)
-    : visualizerItem(visualizerItem),
+SensorVisualizerItemBase::SensorVisualizerItemBase(Item* item)
+    : item(item),
       bodyItem(nullptr)
 {
     sigCheckToggledConnection.reset(
-        visualizerItem->sigCheckToggled(Item::LogicalSumOfAllChecks).connect(
+        item->sigCheckToggled(Item::LogicalSumOfAllChecks).connect(
             [&](bool on){ enableVisualization(on); }));
 }
 
@@ -384,13 +387,13 @@ SensorVisualizerItemBase::SensorVisualizerItemBase(Item* visualizerItem)
 void SensorVisualizerItemBase::setBodyItem(BodyItem* bodyItem)
 {
     this->bodyItem = bodyItem;
-    enableVisualization(visualizerItem->isChecked(Item::LogicalSumOfAllChecks));
+    enableVisualization(item->isChecked(Item::LogicalSumOfAllChecks));
 }
 
 
 void SensorVisualizerItemBase::updateVisualization()
 {
-    if(visualizerItem->isChecked(Item::LogicalSumOfAllChecks)){
+    if(item->isChecked(Item::LogicalSumOfAllChecks)){
         doUpdateVisualization();
     }
 }
@@ -438,7 +441,7 @@ void ForceSensorVisualizerItem::enableVisualization(bool on)
     if(bodyItem && on){
         connections.add(
             bodyItem->sigKinematicStateChanged().connect(
-                [&](){ updateSensorPositions(); }));
+                [&](){ updateSensorPositions(true); }));
 
         Body* body = bodyItem->body();
         forceSensors = body->devices<ForceSensor>();
@@ -459,19 +462,22 @@ void ForceSensorVisualizerItem::enableVisualization(bool on)
 
 void ForceSensorVisualizerItem::doUpdateVisualization()
 {
-    updateSensorPositions();
+    updateSensorPositions(false);
     for(size_t i=0; i < forceSensors.size(); ++i){
         updateForceSensorState(i);
     }
 }
 
     
-void ForceSensorVisualizerItem::updateSensorPositions()
+void ForceSensorVisualizerItem::updateSensorPositions(bool doNotify)
 {
     for(size_t i=0; i < forceSensors.size(); ++i){
         ForceSensor* sensor = forceSensors[i];
         Vector3 p = sensor->link()->T() * sensor->localTranslation();
         forceSensorArrows[i]->setTranslation(p);
+        if(doNotify){
+            forceSensorArrows[i]->notifyUpdate(update.withAction(SgUpdate::Modified));
+        }
     }
 }
 
@@ -481,7 +487,7 @@ void ForceSensorVisualizerItem::updateForceSensorState(int index)
     if(index < static_cast<int>(forceSensors.size())){
         ForceSensor* sensor = forceSensors[index];
         Vector3 v = sensor->link()->T() * sensor->T_local() * sensor->f();
-        forceSensorArrows[index]->setVector(v * visualRatio);
+        forceSensorArrows[index]->setVector(v * visualRatio, update);
     }
 }
 
@@ -599,7 +605,7 @@ void PointCloudVisualizerItem::enableVisualization(bool on)
     if(bodyItem && rangeCamera && on){
         connections.add(
             bodyItem->sigKinematicStateChanged().connect(
-                [&](){ updateSensorPosition(); }));
+                [&](){ updateSensorPosition(true); }));
         connections.add(
             rangeCamera->sigStateChanged().connect(
                 [&](){ updateRangeCameraState(); }));
@@ -612,16 +618,17 @@ void PointCloudVisualizerItem::enableVisualization(bool on)
 void PointCloudVisualizerItem::doUpdateVisualization()
 {
     if(rangeCamera){
-        updateSensorPosition();
+        updateSensorPosition(false);
         updateRangeCameraState();
     }
 }
 
 
-void PointCloudVisualizerItem::updateSensorPosition()
+void PointCloudVisualizerItem::updateSensorPosition(bool doNotify)
 {
     const Isometry3 T =  (rangeCamera->link()->T() * rangeCamera->T_local());
     setOffsetPosition(T);
+    notifyOffsetPositionChange(doNotify);
 }
 
 
@@ -653,7 +660,7 @@ void PointCloudVisualizerItem::updateRangeCameraState()
             c[2] = *pixels++ / 255.0f;
         }
     }
-    pointSet_->notifyUpdate();
+    pointSet_->notifyUpdate(update.withAction(SgUpdate::Modified));
 }
 
 
@@ -682,7 +689,7 @@ void RangeSensorVisualizerItem::enableVisualization(bool on)
     if(bodyItem && rangeSensor && on){
         connections.add(
             bodyItem->sigKinematicStateChanged().connect(
-                [&](){ updateSensorPosition(); }));
+                [&](){ updateSensorPosition(true); }));
         connections.add(
             rangeSensor->sigStateChanged().connect(
                 [&](){ updateRangeSensorState(); }));
@@ -695,16 +702,17 @@ void RangeSensorVisualizerItem::enableVisualization(bool on)
 void RangeSensorVisualizerItem::doUpdateVisualization()
 {
     if(rangeSensor){
-        updateSensorPosition();
+        updateSensorPosition(false);
         updateRangeSensorState();
     }
 }
 
 
-void RangeSensorVisualizerItem::updateSensorPosition()
+void RangeSensorVisualizerItem::updateSensorPosition(bool doNotify)
 {
     const Isometry3 T = (rangeSensor->link()->T() * rangeSensor->T_local());
     setOffsetPosition(T);
+    notifyOffsetPositionChange(doNotify);
 }
 
 
@@ -741,5 +749,5 @@ void RangeSensorVisualizerItem::updateRangeSensorState()
             }
         }
     }
-    pointSet_->notifyUpdate();
+    pointSet_->notifyUpdate(update.withAction(SgUpdate::Modified));
 }

@@ -161,10 +161,10 @@ public:
     double calcWidthRatio(double pixelSizeRatio);
     SgNode* getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking);
     void clearHandleVariants();
-    void setDraggableAxes(AxisBitSet axisBitSet);
+    void setDraggableAxes(AxisBitSet axisBitSet, SgUpdateRef update);
     void setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted);
     void highlightAxes(AxisBitSet axisBitSet);
-    void showDragMarkers(bool on);
+    void showDragMarkers(bool on, SgUpdateRef update);
     AxisBitSet detectTargetAxes(const SceneWidgetEvent& event);
     bool onButtonPressEvent(const SceneWidgetEvent& event);
     bool onTranslationDraggerPressed(
@@ -500,17 +500,17 @@ void PositionDragger::setOffset(const Isometry3& T)
 }
 
 
-void PositionDragger::setDraggableAxes(int axisBitSet)
+void PositionDragger::setDraggableAxes(int axisBitSet, SgUpdateRef update)
 {
-    impl->setDraggableAxes(axisBitSet);
+    impl->setDraggableAxes(axisBitSet, update);
 }
 
 
-void PositionDragger::Impl::setDraggableAxes(AxisBitSet axisBitSet)
+void PositionDragger::Impl::setDraggableAxes(AxisBitSet axisBitSet, SgUpdateRef update)
 {
     if(axisBitSet != draggableAxisBitSet){
         for(int i=0; i < 6; ++i){
-            axisSwitch[i]->setTurnedOn(axisBitSet[i], true);
+            axisSwitch[i]->setTurnedOn(axisBitSet[i], update);
         }
         draggableAxisBitSet = axisBitSet;
     }
@@ -749,24 +749,24 @@ PositionDragger::DisplayMode PositionDragger::displayMode() const
 }
 
 
-void PositionDragger::setDisplayMode(DisplayMode mode)
+void PositionDragger::setDisplayMode(DisplayMode mode, SgUpdateRef update)
 {
     if(mode != impl->displayMode){
         impl->displayMode = mode;
         if(mode == DisplayAlways){
-            impl->showDragMarkers(true);
+            impl->showDragMarkers(true, update);
         } else if(mode == DisplayInEditMode){
             if(impl->isEditMode){
-                impl->showDragMarkers(true);
+                impl->showDragMarkers(true, update);
             }
         } else if(mode == DisplayNever){
-            impl->showDragMarkers(false);
+            impl->showDragMarkers(false, update);
         }
     }
 }
 
 
-void PositionDragger::Impl::showDragMarkers(bool on)
+void PositionDragger::Impl::showDragMarkers(bool on, SgUpdateRef update)
 {
     if(displayMode == DisplayNever){
         on = false;
@@ -774,14 +774,14 @@ void PositionDragger::Impl::showDragMarkers(bool on)
         on = true;
     }
     
-    topSwitch->setTurnedOn(on, true);
+    topSwitch->setTurnedOn(on, update);
 }    
 
 
-void PositionDragger::setDraggerAlwaysShown(bool on)
+void PositionDragger::setDraggerAlwaysShown(bool on, SgUpdateRef update)
 {
     if(on){
-        setDisplayMode(DisplayAlways);
+        setDisplayMode(DisplayAlways, update);
     }
 }
 
@@ -792,10 +792,10 @@ bool PositionDragger::isDraggerAlwaysShown() const
 }
 
 
-void PositionDragger::setDraggerAlwaysHidden(bool on)
+void PositionDragger::setDraggerAlwaysHidden(bool on, SgUpdateRef update)
 {
     if(on){
-        setDisplayMode(DisplayNever);
+        setDisplayMode(DisplayNever, update);
     }
 }
 
@@ -945,7 +945,8 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         if(axisBitSet.none()){
             if(self->isContainerMode() && isContentsDragEnabled){
                 if(displayMode == DisplayInFocus){
-                    showDragMarkers(true);
+                    SgTmpUpdate update;
+                    showDragMarkers(true, update);
                 }
                 dragProjector.setInitialPosition(T_global);
                 dragProjector.setTranslationAlongViewPlane();
@@ -1061,11 +1062,12 @@ void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
 }
 
 
-void PositionDragger::onFocusChanged(const SceneWidgetEvent&, bool on)
+void PositionDragger::onFocusChanged(const SceneWidgetEvent& event, bool on)
 {
     if(isContainerMode()){
         if(impl->displayMode == DisplayInFocus){
-            impl->showDragMarkers(on);
+            SgTmpUpdate update;
+            impl->showDragMarkers(on, update);
         }
     }
 }
@@ -1073,15 +1075,16 @@ void PositionDragger::onFocusChanged(const SceneWidgetEvent&, bool on)
 
 void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
 {
+    SgTmpUpdate update;
     if(event.sceneWidget()->isEditMode()){
         impl->isEditMode = true;
         if(impl->displayMode == DisplayInEditMode){
-            impl->showDragMarkers(true);
+            impl->showDragMarkers(true, update);
         }
     } else {
         impl->isEditMode = false;
         if(impl->displayMode == DisplayInEditMode || impl->displayMode == DisplayInFocus){
-            impl->showDragMarkers(false);
+            impl->showDragMarkers(false, update);
         }
     }
 }

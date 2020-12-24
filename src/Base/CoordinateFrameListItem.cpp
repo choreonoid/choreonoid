@@ -50,7 +50,6 @@ public:
     SgGroupPtr frameMarkerGroup;
     SgPosTransformPtr relativeFrameMarkerGroup;
     unordered_map<CoordinateFramePtr, FrameMarkerPtr> visibleFrameMarkerMap;
-    SgUpdate sgUpdate;
     ScopedConnection parentLocationConnection;
     Signal<void(int index, bool on)> sigFrameMarkerVisibilityChanged;
 
@@ -530,6 +529,8 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
     bool changed = false;
     bool relativeMarkerChanged = false;
     FrameMarker* marker = nullptr;
+    SgTmpUpdate update;
+    
     auto p = visibleFrameMarkerMap.find(frame);
     if(p != visibleFrameMarkerMap.end()){
         marker = p->second;
@@ -542,9 +543,9 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
         marker->transientHolderCounter = 0;
         visibleFrameMarkerMap[frame] = marker;
         if(marker->isGlobal){
-            frameMarkerGroup->addChild(marker, true);
+            frameMarkerGroup->addChild(marker, update);
         } else {
-            relativeFrameMarkerGroup->addChild(marker, true);
+            relativeFrameMarkerGroup->addChild(marker, update);
             relativeMarkerChanged = true;
         }
         changed = true;
@@ -566,9 +567,9 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
         }
         if(!marker->isOn && marker->transientHolderCounter <= 0){
             if(marker->isGlobal){
-                frameMarkerGroup->removeChild(marker, true);
+                frameMarkerGroup->removeChild(marker, update);
             } else {
-                relativeFrameMarkerGroup->removeChild(marker, true);
+                relativeFrameMarkerGroup->removeChild(marker, update);
                 relativeMarkerChanged = true;
             }
             visibleFrameMarkerMap.erase(p);
@@ -651,7 +652,7 @@ SignalProxy<void(int index, bool on)> CoordinateFrameListItem::sigFrameMarkerVis
 void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Isometry3& T)
 {
     relativeFrameMarkerGroup->setPosition(T);
-    relativeFrameMarkerGroup->notifyUpdate(sgUpdate);
+    relativeFrameMarkerGroup->notifyUpdate();
 }
 
 
@@ -669,12 +670,13 @@ void FrameMarker::onFrameUpdated(int flags)
         bool isCurrentGlobal = frame()->isGlobal();
         if(isCurrentGlobal != isGlobal){
             FrameMarkerPtr holder = this;
+            SgTmpUpdate update;
             if(isCurrentGlobal){
-                impl->relativeFrameMarkerGroup->removeChild(this, true);
-                impl->frameMarkerGroup->addChild(this, true);
+                impl->relativeFrameMarkerGroup->removeChild(this, update);
+                impl->frameMarkerGroup->addChild(this, update);
             } else {
-                impl->frameMarkerGroup->removeChild(this, true);
-                impl->relativeFrameMarkerGroup->addChild(this, true);
+                impl->frameMarkerGroup->removeChild(this, update);
+                impl->relativeFrameMarkerGroup->addChild(this, update);
             }
             isGlobal = isCurrentGlobal;
         }

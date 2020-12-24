@@ -311,12 +311,13 @@ public:
     bool isLowMemoryConsumptionRenderingBeingProcessed;
     bool isBoundingBoxRenderingMode;
     bool isBoundingBoxRenderingForLightweightRenderingGroupEnabled;
-    
+
     Affine3Array modelMatrixStack; // stack of the model matrices
     Affine3Array modelMatrixBuffer; // Model matrices used later are stored in this buffer
     Isometry3 viewTransform;
     Matrix4 projectionMatrix;
     Matrix4 PV;
+    SgUpdate boundingBoxUpdate;
 
     vector<SgPolygonDrawStyle*> solidWireframeStyleStack;
 
@@ -3036,7 +3037,7 @@ void GLSLSceneRenderer::Impl::renderBoundingBox(SgBoundingBox* bboxNode)
     renderGroup(bboxNode);
 
     if(isRenderingVisibleImage){
-        bboxNode->updateLineSet();
+        bboxNode->updateLineSet(boundingBoxUpdate);
         renderLineSet(const_cast<SgLineSet*>(bboxNode->lineSet()));
     }
 }

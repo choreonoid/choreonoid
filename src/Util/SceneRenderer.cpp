@@ -239,7 +239,8 @@ const std::string& SceneRenderer::name() const
 
 void SceneRenderer::clearScene()
 {
-    scene()->clearChildren(true);
+    SgTmpUpdate update;
+    scene()->clearChildren(update);
 }
 
 

@@ -8,6 +8,7 @@
 
 #include <cnoid/ClonableReferenced>
 #include <cnoid/EigenTypes>
+#include <cnoid/SceneUpdate>
 #include <vector>
 #include "exportdecl.h"
 
@@ -402,11 +403,11 @@ public:
     void setMaterial(int id) { materialId_ = id; }
     void setMaterial(const std::string& name);
     
-    void addShapeNode(SgNode* shape, bool doNotify = false);
-    void addVisualShapeNode(SgNode* shape, bool doNotify = false);
-    void addCollisionShapeNode(SgNode* shape, bool doNotify = false);
-    void removeShapeNode(SgNode* shape, bool doNotify = false);
-    void clearShapeNodes(bool doNotify = false);
+    void addShapeNode(SgNode* shape, SgUpdateRef update = nullptr);
+    void addVisualShapeNode(SgNode* shape, SgUpdateRef update = nullptr);
+    void addCollisionShapeNode(SgNode* shape, SgUpdateRef update = nullptr);
+    void removeShapeNode(SgNode* shape, SgUpdateRef update = nullptr);
+    void clearShapeNodes(SgUpdateRef update = nullptr);
 
     [[deprecated("You don't have to use this function.")]]
     void updateShapeRs() {}

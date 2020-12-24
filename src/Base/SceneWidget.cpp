@@ -195,9 +195,8 @@ public:
     bool isRendering;
     bool needToUpdatePreprocessedNodeTree;
     bool needToClearGLOnFrameBufferChange;
-    SgUpdate modified;
-    SgUpdate added;
-    SgUpdate removed;
+    SgUpdate sgUpdate;
+    int sceneGraphRecursiveUpdateCounter;
 
     InteractiveCameraTransformPtr interactiveCameraTransform;
     InteractiveCameraTransformPtr builtinCameraTransform;
@@ -233,18 +232,25 @@ public:
     {
         SgNodePtr node;
         SceneWidgetEditable* editable;
+        EditableNodeInfo() : editable(nullptr) { }
         EditableNodeInfo(SgNode* node, SceneWidgetEditable* editable)
             : node(node), editable(editable) { }
         bool operator<(const EditableNodeInfo& rhs) const { return editable < rhs.editable; };
+        bool operator==(const EditableNodeInfo& rhs) const { return editable == rhs.editable; }
+        bool operator!=(const EditableNodeInfo& rhs) const { return editable != rhs.editable; }
+        explicit operator bool() const { return editable != nullptr; }
+        void clear(){ node.reset(); editable = nullptr; }
     };
     set<EditableNodeInfo> editables;
     vector<EditableNodeInfo> editableDifferences;
     
-    typedef vector<SceneWidgetEditable*> EditablePath;
+    typedef vector<EditableNodeInfo> EditablePath;
     EditablePath pointedEditablePath;
-    SceneWidgetEditable* lastMouseMovedEditable;
+    EditableNodeInfo lastMouseMovedEditable;
+    EditableNodeInfo focusedEditable;
     EditablePath focusedEditablePath;
-    SceneWidgetEditable* focusedEditable;
+    // Used to restore the previous focus when the mode is changed from the view mdoe to the edit mode
+    EditablePath prevFocusedEditablePath;
 
     QCursor defaultCursor;
     QCursor editModeCursor;
@@ -311,7 +317,7 @@ public:
     void onSceneGraphUpdated(const SgUpdate& update);
     void checkNewEditableNodes(SgNode* node);
     void checkNewEditableNodeIter(SgNode* node);
-    void checkRemovedEditableNodes(SgNode* node, bool doCheckFocus);
+    void checkRemovedEditableNodes(SgNode* node);
     void checkRemovedEditableNodeIter(SgNode* node);
     
     virtual void initializeGL() override;
@@ -351,9 +357,6 @@ public:
     void advertiseSceneModeChange();
     void viewAll();
 
-    void onEntityAdded(SgNode* node);
-    void onEntityRemoved(SgNode* node);
-
     void showPickingImageWindow();
     void onUpsideDownToggled(bool on);
         
@@ -363,11 +366,11 @@ public:
     void updateLatestEventPath(bool forceFullPicking = false);
     void updateLastClickedPoint();
         
-    SceneWidgetEditable* applyFunction(
+    EditableNodeInfo applyEditableFunction(
         EditablePath& editablePath, std::function<bool(SceneWidgetEditable* editable)> function);
     bool setFocusToEditablePath(EditablePath& editablePath);
-    bool setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable);
-    void clearFocusToEditables();
+    bool setFocusToPointedEditablePath(const EditableNodeInfo& targetEditable);
+    void clearFocusToEditables(bool doStoreFocus);
 
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void keyReleaseEvent(QKeyEvent* event) override;
@@ -550,10 +553,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     renderer->setFlagVariableToUpdatePreprocessedNodeTree(needToUpdatePreprocessedNodeTree);
 
     needToClearGLOnFrameBufferChange = false;
-
-    modified.setAction(SgUpdate::MODIFIED);
-    added.setAction(SgUpdate::ADDED);
-    removed.setAction(SgUpdate::REMOVED);
+    sceneGraphRecursiveUpdateCounter = 0;
 
     for(auto& color : gridColor){
     	color << 0.9f, 0.9f, 0.9f, 1.0f;
@@ -572,9 +572,6 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     dragMode = NO_DRAGGING;
     defaultCursor = self->cursor();
     editModeCursor = QCursor(Qt::PointingHandCursor);
-
-    lastMouseMovedEditable = nullptr;
-    focusedEditable = nullptr;
 
     latestEvent.sceneWidget_ = self;
     lastClickedPoint.setZero();
@@ -764,6 +761,13 @@ void SceneWidget::Impl::resizeGL(int width, int height)
 
 void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
 {
+    if(sceneGraphRecursiveUpdateCounter > 0){
+        MessageView::instance()->putln(
+            fmt::format("Recursive scene graph update on {0}.", self->objectName().toStdString()),
+            MessageView::Warning);
+    }
+    ++sceneGraphRecursiveUpdateCounter;
+    
     if(sgUpdate.action() & (SgUpdate::Added | SgUpdate::Removed)){
         if(sgUpdate.action() & SgUpdate::Added){
             if(auto node = sgUpdate.path().front()->toNode()){
@@ -771,7 +775,7 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
             }
         } else if(sgUpdate.action() & SgUpdate::Removed){
             if(auto node = sgUpdate.path().front()->toNode()){
-                checkRemovedEditableNodes(node, true);
+                checkRemovedEditableNodes(node);
             }
         }
         needToUpdatePreprocessedNodeTree = true;        
@@ -780,14 +784,16 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
     if(!isRendering){
         QOpenGLWidget::update();
     }
+
+    --sceneGraphRecursiveUpdateCounter;
 }
 
 
 void SceneWidget::Impl::checkNewEditableNodes(SgNode* node)
 {
     checkNewEditableNodeIter(node);
-    for(auto& info : editableDifferences){
-        info.editable->onSceneModeChanged(latestEvent);
+    for(auto& editableNode : editableDifferences){
+        editableNode.editable->onSceneModeChanged(&latestEvent);
     }
     editableDifferences.clear();
 }
@@ -811,27 +817,25 @@ void SceneWidget::Impl::checkNewEditableNodeIter(SgNode* node)
 }
 
 
-void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node, bool doCheckFocus)
+void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
 {
     checkRemovedEditableNodeIter(node);
     
-    for(auto& info : editableDifferences){
-        auto editable = info.editable;
-        if(editable == lastMouseMovedEditable){
-            lastMouseMovedEditable->onPointerLeaveEvent(latestEvent);
-            lastMouseMovedEditable = nullptr;
+    for(auto& editableNode : editableDifferences){
+        if(editableNode == lastMouseMovedEditable){
+            lastMouseMovedEditable.editable->onPointerLeaveEvent(latestEvent);
+            lastMouseMovedEditable.clear();
         }
-        if(doCheckFocus){
-            for(size_t i=0; i < focusedEditablePath.size(); ++i){
-                if(editable == focusedEditablePath[i]){
-                    clearFocusToEditables();
-                    doCheckFocus = false;
+        if(!focusedEditablePath.empty()){
+            for(auto& focused : focusedEditablePath){
+                if(focused == editableNode){
+                    clearFocusToEditables(false);
+                    break;
                 }
             }
-        } else {
-            if(!lastMouseMovedEditable){
-                break;
-            }
+        }
+        if(focusedEditablePath.empty() && !lastMouseMovedEditable){
+            break;
         }
     }
     editableDifferences.clear();
@@ -1071,10 +1075,23 @@ void SceneWidget::Impl::setEditMode(bool on)
         indicatorLabel->clear();
 
         if(!isEditMode){
-            for(size_t i=0; i < focusedEditablePath.size(); ++i){
-                focusedEditablePath[i]->onFocusChanged(latestEvent, false);
+            clearFocusToEditables(true);
+
+        } else {
+            std::swap(focusedEditablePath, prevFocusedEditablePath);
+            // Check if the path elements are still belonging to the scene
+            if(!focusedEditablePath.empty()){
+                int existingPathSize = 0;
+                for(auto& element : focusedEditablePath){
+                    if(editables.find(element) == editables.end()){
+                        break;
+                    }
+                    ++existingPathSize;
+                }
+                focusedEditablePath.resize(existingPathSize);
             }
         }
+        
         advertiseSceneModeChange();
     }
 }
@@ -1102,10 +1119,10 @@ void SceneWidget::activateCustomMode(SceneWidgetEditable* modeHandler, int modeI
     if(modeHandler != prevHandler){
         impl->resetCursor();
         if(prevHandler){
-            prevHandler->onSceneModeChanged(impl->latestEvent);
+            prevHandler->onSceneModeChanged(&impl->latestEvent);
         }
         if(modeHandler){
-            modeHandler->onSceneModeChanged(impl->latestEvent);
+            modeHandler->onSceneModeChanged(&impl->latestEvent);
         }
         impl->sigStateChanged();
     }
@@ -1135,14 +1152,14 @@ void SceneWidget::deactivateCustomMode(SceneWidgetEditable* modeHandler)
 void SceneWidget::Impl::advertiseSceneModeChange()
 {
    if(activeCustomModeHandler){
-       activeCustomModeHandler->onSceneModeChanged(latestEvent);
+       activeCustomModeHandler->onSceneModeChanged(&latestEvent);
    }
    for(auto& editable : editables){
-       editable.editable->onSceneModeChanged(latestEvent);
+       editable.editable->onSceneModeChanged(&latestEvent);
    }
    if(isEditMode){
-       for(size_t i=0; i < focusedEditablePath.size(); ++i){
-           focusedEditablePath[i]->onFocusChanged(latestEvent, true);
+       for(auto& element : focusedEditablePath){
+           element.editable->onFocusChanged(&latestEvent, true);
        }
    }
    emitSigStateChangedLater();
@@ -1204,16 +1221,17 @@ void SceneWidget::Impl::viewAll()
         + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearClipDistance() / length);
 
 
-    if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(renderer->currentCamera())){
+    if(auto ortho = dynamic_cast<SgOrthographicCamera*>(renderer->currentCamera())){
         if(a >= 1.0){
             ortho->setHeight(radius * 2.0);
         } else {
             ortho->setHeight(radius * 2.0 / a);
         }
-        ortho->notifyUpdate(modified);
-    }
+        ortho->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
 
-    interactiveCameraTransform->notifyUpdate(modified);
+    } else {
+        interactiveCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
+    }
 }
 
 
@@ -1298,11 +1316,9 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
         latestEvent.pixelSizeRatio_ = renderer->projectedPixelSizeRatio(latestEvent.point_);
         latestEvent.nodePath_ = renderer->pickedNodePath();
 
-        SgNodePath& path = latestEvent.nodePath_;
-        for(size_t i=0; i < path.size(); ++i){
-            SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(path[i]);
-            if(editable){
-                pointedEditablePath.push_back(editable);
+        for(auto& node : latestEvent.nodePath_){
+            if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+                pointedEditablePath.emplace_back(node, editable);
             }
         }
     }
@@ -1324,18 +1340,16 @@ void SceneWidget::Impl::updateLastClickedPoint()
    \return The editable object with which the given function is actually applied (the function returns true.)
    If there are no functions which returns true, null object is returned.
 */
-SceneWidgetEditable* SceneWidget::Impl::applyFunction
+SceneWidget::Impl::EditableNodeInfo SceneWidget::Impl::applyEditableFunction
 (EditablePath& editablePath, std::function<bool(SceneWidgetEditable* editable)> function)
 {
-    SceneWidgetEditable* targetEditable = nullptr;
     for(EditablePath::reverse_iterator p = editablePath.rbegin(); p != editablePath.rend(); ++p){
-        SceneWidgetEditable* editable = *p;
-        if(function(editable)){
-            targetEditable = editable;
-            break;
+        auto& editableNode = *p;
+        if(function(editableNode.editable)){
+            return editableNode;
         }
     }
-    return targetEditable;
+    return EditableNodeInfo(); // null
 }
     
 
@@ -1353,12 +1367,14 @@ bool SceneWidget::Impl::setFocusToEditablePath(EditablePath& editablePath)
             break;
         }
     }
-
-    for(size_t i=indexOfFirstEditableToChangeFocus; i < focusedEditablePath.size(); ++i){
-        focusedEditablePath[i]->onFocusChanged(latestEvent, false);
+    focusedEditable.clear();
+    prevFocusedEditablePath.clear();
+    std::swap(focusedEditablePath, prevFocusedEditablePath);
+    for(size_t i=indexOfFirstEditableToChangeFocus; i < prevFocusedEditablePath.size(); ++i){
+        prevFocusedEditablePath[i].editable->onFocusChanged(&latestEvent, false);
     }
     for(size_t i=indexOfFirstEditableToChangeFocus; i < editablePath.size(); ++i){
-        editablePath[i]->onFocusChanged(latestEvent, true);
+        editablePath[i].editable->onFocusChanged(&latestEvent, true);
     }
     focusedEditablePath = editablePath;
     focusedEditable = editablePath.back();
@@ -1367,14 +1383,13 @@ bool SceneWidget::Impl::setFocusToEditablePath(EditablePath& editablePath)
 }
 
 
-bool SceneWidget::Impl::setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable)
+bool SceneWidget::Impl::setFocusToPointedEditablePath(const EditableNodeInfo& targetEditable)
 {
     if(targetEditable){
         EditablePath path;
-        for(size_t i=0; i < pointedEditablePath.size(); ++i){
-            SceneWidgetEditable* editable = pointedEditablePath[i];
-            path.push_back(editable);
-            if(editable == targetEditable){
+        for(auto& element : pointedEditablePath){
+            path.push_back(element);
+            if(element == targetEditable){
                 return setFocusToEditablePath(path);
             }
         }
@@ -1382,29 +1397,32 @@ bool SceneWidget::Impl::setFocusToPointedEditablePath(SceneWidgetEditable* targe
 
     // No editable is pointed
     // The following command is disabled because keeping the focus seems better.
-    // clearFocusToEditables();
+    // clearFocusToEditables(false);
     
     return false;
 }
 
 
-void SceneWidget::Impl::clearFocusToEditables()
+void SceneWidget::Impl::clearFocusToEditables(bool doStoreFocus)
 {
-    for(size_t i=0; i < focusedEditablePath.size(); ++i){
-        focusedEditablePath[i]->onFocusChanged(latestEvent, false);
+    prevFocusedEditablePath.clear();
+    std::swap(focusedEditablePath, prevFocusedEditablePath);
+    focusedEditable.clear();
+    for(auto& node : prevFocusedEditablePath){
+        node.editable->onFocusChanged(&latestEvent, false);
     }
-    focusedEditablePath.clear();
-    focusedEditable = nullptr;
+    if(!doStoreFocus){
+        prevFocusedEditablePath.clear();
+    }
 }
 
 
 bool SceneWidget::setSceneFocus(const SgNodePath& path)
 {
-    SceneWidget::Impl::EditablePath editablePath;
-    for(size_t i=0; i < path.size(); ++i){
-        SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(path[i]);
-        if(editable){
-            editablePath.push_back(editable);
+    Impl::EditablePath editablePath;
+    for(auto& node : path){
+        if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+            editablePath.emplace_back(node, editable);
         }
     }
     return impl->setFocusToEditablePath(editablePath);
@@ -1430,9 +1448,11 @@ void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
     bool handled = false;
 
     if(isEditMode){
-        handled = applyFunction(
-            focusedEditablePath,
-            [&](SceneWidgetEditable* editable){ return editable->onKeyPressEvent(latestEvent); });
+        if(applyEditableFunction(
+               focusedEditablePath,
+               [&](SceneWidgetEditable* editable){ return editable->onKeyPressEvent(&latestEvent); })){
+            handled = true;
+        }
     }
 
     if(!handled){
@@ -1446,13 +1466,17 @@ void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Z:
             if(event->modifiers() & Qt::ControlModifier){
                 if(event->modifiers() & Qt::ShiftModifier){
-                    handled = applyFunction(
-                        focusedEditablePath,
-                        [&](SceneWidgetEditable* editable){ return editable->onRedoRequest(); });
+                    if(applyEditableFunction(
+                           focusedEditablePath,
+                           [&](SceneWidgetEditable* editable){ return editable->onRedoRequest(); })){
+                        handled = true;
+                    }
                 } else {
-                    handled = applyFunction(
-                        focusedEditablePath,
-                        [&](SceneWidgetEditable* editable){ return editable->onUndoRequest(); });
+                    if(applyEditableFunction(
+                           focusedEditablePath,
+                           [&](SceneWidgetEditable* editable){ return editable->onUndoRequest(); })){
+                        handled = true;
+                    }
                 }
             }
             break;
@@ -1513,7 +1537,7 @@ void SceneWidget::Impl::keyReleaseEvent(QKeyEvent* event)
         
     } else if(isEditMode){
         if(focusedEditable){
-            handled = focusedEditable->onKeyReleaseEvent(latestEvent);
+            handled = focusedEditable.editable->onKeyReleaseEvent(&latestEvent);
         }
     }
 
@@ -1540,13 +1564,13 @@ void SceneWidget::Impl::mousePressEvent(QMouseEvent* event)
 
     if(isEditMode && !forceViewMode){
         if(activeCustomModeHandler){
-            handled = activeCustomModeHandler->onButtonPressEvent(latestEvent);
+            handled = activeCustomModeHandler->onButtonPressEvent(&latestEvent);
         }
         if(!handled){
             handled = setFocusToPointedEditablePath(
-                applyFunction(
+                applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){ return editable->onButtonPressEvent(latestEvent); }));
+                    [&](SceneWidgetEditable* editable){ return editable->onButtonPressEvent(&latestEvent); }));
             if(handled){
                 dragMode = ABOUT_TO_EDIT;
             }
@@ -1578,13 +1602,13 @@ void SceneWidget::Impl::mouseDoubleClickEvent(QMouseEvent* event)
     bool handled = false;
     if(isEditMode){
         if(activeCustomModeHandler){
-            handled = activeCustomModeHandler->onDoubleClickEvent(latestEvent);
+            handled = activeCustomModeHandler->onDoubleClickEvent(&latestEvent);
         }
         if(!handled){
             handled = setFocusToPointedEditablePath(
-                applyFunction(
+                applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){ return editable->onDoubleClickEvent(latestEvent); }));
+                    [&](SceneWidgetEditable* editable){ return editable->onDoubleClickEvent(&latestEvent); }));
         }
     }
     if(!handled){
@@ -1592,11 +1616,11 @@ void SceneWidget::Impl::mouseDoubleClickEvent(QMouseEvent* event)
 
         if(isEditMode){
             setFocusToPointedEditablePath(
-                applyFunction(
+                applyEditableFunction(
                     pointedEditablePath,
                     [&](SceneWidgetEditable* editable){
-                        if(editable->onButtonPressEvent(latestEvent)){
-                            return editable->onButtonReleaseEvent(latestEvent);
+                        if(editable->onButtonPressEvent(&latestEvent)){
+                            return editable->onButtonReleaseEvent(&latestEvent);
                         }
                         return false;
                     }));
@@ -1613,14 +1637,14 @@ void SceneWidget::Impl::mouseReleaseEvent(QMouseEvent* event)
 
     if(isEditMode){
         if(activeCustomModeHandler){
-            handled = activeCustomModeHandler->onButtonReleaseEvent(latestEvent);
+            handled = activeCustomModeHandler->onButtonReleaseEvent(&latestEvent);
         }
     }
     if(!handled){
         if(isEditMode && (dragMode == ABOUT_TO_EDIT || dragMode == EDITING)){
             if(focusedEditable){
                 updateLatestEventPath();
-                focusedEditable->onButtonReleaseEvent(latestEvent);
+                focusedEditable.editable->onButtonReleaseEvent(&latestEvent);
             }
         }
         dragMode = NO_DRAGGING;
@@ -1646,7 +1670,7 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
                 }
             }
             if(dragMode == EDITING){
-                focusedEditable->onPointerMoveEvent(latestEvent);
+                focusedEditable.editable->onPointerMoveEvent(&latestEvent);
             }
             handled = true;
         }
@@ -1675,13 +1699,13 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
         updateLatestEventPath();
         
         if(activeCustomModeHandler){
-            handled = activeCustomModeHandler->onPointerMoveEvent(latestEvent);
+            handled = activeCustomModeHandler->onPointerMoveEvent(&latestEvent);
         }
         if(!handled && isEditMode){
-            SceneWidgetEditable* mouseMovedEditable =
-                applyFunction(
+            auto mouseMovedEditable =
+                applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){ return editable->onPointerMoveEvent(latestEvent); });
+                    [&](SceneWidgetEditable* editable){ return editable->onPointerMoveEvent(&latestEvent); });
 
             if(mouseMovedEditable){
                 if(!QWidget::hasFocus()){
@@ -1694,7 +1718,7 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
                     resetCursor();
                 }
                 if(lastMouseMovedEditable){
-                    lastMouseMovedEditable->onPointerLeaveEvent(latestEvent);
+                    lastMouseMovedEditable.editable->onPointerLeaveEvent(latestEvent);
                 }
                 lastMouseMovedEditable = mouseMovedEditable;
             }
@@ -1759,8 +1783,8 @@ void SceneWidget::Impl::findObjectNameFromChildren(SgObject* object, string& nam
 void SceneWidget::Impl::leaveEvent(QEvent* event)
 {
     if(lastMouseMovedEditable){
-        lastMouseMovedEditable->onPointerLeaveEvent(latestEvent);
-        lastMouseMovedEditable = nullptr;
+        lastMouseMovedEditable.editable->onPointerLeaveEvent(latestEvent);
+        lastMouseMovedEditable.clear();
     }
 }
 
@@ -1782,13 +1806,13 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
     bool handled = false;
     if(isEditMode && !(event->modifiers() & Qt::AltModifier)){
         if(activeCustomModeHandler){
-            handled = activeCustomModeHandler->onScrollEvent(latestEvent);
+            handled = activeCustomModeHandler->onScrollEvent(&latestEvent);
         }
         if(!handled){
             handled = setFocusToPointedEditablePath(
-                applyFunction(
+                applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){ return editable->onScrollEvent(latestEvent); }));
+                    [&](SceneWidgetEditable* editable){ return editable->onScrollEvent(&latestEvent); }));
         }
     }    
 
@@ -2102,12 +2126,12 @@ void SceneWidget::Impl::dragViewZoom()
             interactiveCameraTransform->setTranslation(C.translation() + v * (l0 * (-ratio + 1.0)));
         }
 
+        notifyCameraPositionInteractivelyChanged();
+
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         ortho->setHeight(orgOrthoCameraHeight * ratio);
-        ortho->notifyUpdate(modified);
+        ortho->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
     }
-
-    notifyCameraPositionInteractivelyChanged();
 }
 
 
@@ -2137,19 +2161,19 @@ void SceneWidget::Impl::zoomView(double ratio)
             interactiveCameraTransform->translation() -= dz * v;
         }
 
-    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
-        ortho->setHeight(ortho->height() * expf(ratio));
-        ortho->notifyUpdate(modified);
-    }
+        notifyCameraPositionInteractivelyChanged();
 
-    notifyCameraPositionInteractivelyChanged();
+    } else if(auto ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+        ortho->setHeight(ortho->height() * expf(ratio));
+        ortho->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
+    }
 }
 
 
 void SceneWidget::Impl::notifyCameraPositionInteractivelyChanged()
 {
     isCameraPositionInteractivelyChanged = true;
-    interactiveCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
 }
     
 
@@ -2177,7 +2201,7 @@ void SceneWidget::Impl::rotateBuiltinCameraView(double dPitch, double dYaw)
             Translation3(-cameraViewChangeCenter) *
             T));
 
-    builtinCameraTransform->notifyUpdate(modified);
+    builtinCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
 }
 
 
@@ -2193,7 +2217,7 @@ void SceneWidget::Impl::translateBuiltinCameraView(const Vector3& dp_local)
     builtinCameraTransform->setTransform(
         getNormalizedCameraTransform(
             Translation3(T.linear() * dp_local) * T));
-    builtinCameraTransform->notifyUpdate(modified);
+    builtinCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
 }
 
 
@@ -2219,20 +2243,20 @@ void SceneWidget::Impl::showEditModePopupMenu(const QPoint& globalPos)
     bool handled = false;
     
     if(activeCustomModeHandler){
-        handled = activeCustomModeHandler->onContextMenuRequest(latestEvent, menuManager);
+        handled = activeCustomModeHandler->onContextMenuRequest(&latestEvent, &menuManager);
     }
 
     if(!handled && !pointedEditablePath.empty()){
-        SceneWidgetEditable* editableToFocus = pointedEditablePath.front();
+        auto editableToFocus = pointedEditablePath.front();
         for(EditablePath::reverse_iterator p = pointedEditablePath.rbegin(); p != pointedEditablePath.rend(); ++p){
-            SceneWidgetEditable* editable = *p;
-            handled = editable->onContextMenuRequest(latestEvent, menuManager);
+            auto& editableNode = *p;
+            handled = editableNode.editable->onContextMenuRequest(&latestEvent, &menuManager);
             if(handled){
                 int numItems = menuManager.numItems();
                 if(numItems > prevNumItems){
                     menuManager.addSeparator();
                     prevNumItems = numItems;
-                    editableToFocus = editable;
+                    editableToFocus = editableNode;
                 }
             }
         }
@@ -2447,12 +2471,13 @@ void SceneWidget::Impl::setPolygonDisplayElements(int elementFlags)
             if(!polygonDrawStyle->hasParents()){
                 sceneRoot->removeChild(scene);
                 polygonDrawStyle->addChild(scene);
-                sceneRoot->insertChild(0, polygonDrawStyle, true);
+                SgUpdate tmpUpdate;
+                sceneRoot->insertChild(0, polygonDrawStyle, tmpUpdate);
                 notified = true;
             }
         }
         if(!notified){
-            polygonDrawStyle->notifyUpdate();
+            polygonDrawStyle->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
         }
         emitSigStateChangedLater();
     }
@@ -2507,7 +2532,7 @@ void SceneWidget::Impl::onFieldOfViewChanged(double fov)
 {
     config->builtinCameraConnections.block();
     builtinPersCamera->setFieldOfView(fov);
-    builtinPersCamera->notifyUpdate(modified);
+    builtinPersCamera->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
     config->builtinCameraConnections.unblock();
 }
 
@@ -2521,8 +2546,9 @@ void SceneWidget::Impl::onClippingDepthChanged()
     builtinPersCamera->setFarClipDistance(zFar);
     builtinOrthoCamera->setNearClipDistance(zNear);
     builtinOrthoCamera->setFarClipDistance(zFar);
-    builtinPersCamera->notifyUpdate(modified);
-    builtinOrthoCamera->notifyUpdate(modified);
+    sgUpdate.setAction(SgUpdate::Modified);
+    builtinPersCamera->notifyUpdate(sgUpdate);
+    builtinOrthoCamera->notifyUpdate(sgUpdate);
     config->builtinCameraConnections.unblock();
 }
 
@@ -2562,7 +2588,7 @@ void SceneWidget::Impl::updateDefaultLights()
 
     renderer->enableFog(config->fogCheck.isChecked());
 
-    worldLight->notifyUpdate(modified);
+    worldLight->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
 }
 
 
@@ -2960,9 +2986,7 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
                 builtinOrthoCamera->setFarClipDistance(zFar);
             }
 
-            builtinPersCamera->notifyUpdate();
-            builtinOrthoCamera->notifyUpdate();
-            builtinCameraTransform->notifyUpdate();
+            builtinCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
             doUpdate = true;
             
             archive.addPostProcess([&](){ restoreCurrentCamera(cameraData); }, 1);
@@ -3005,7 +3029,7 @@ bool SceneWidget::Impl::restoreCameraStates(const Listing& cameraListing, bool i
                     SgPosTransform* transform = dynamic_cast<SgPosTransform*>(cameraPath[j]);
                     if(transform){
                         transform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
-                        transform->notifyUpdate();
+                        transform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
                     }
                 }
                 updated = true;
@@ -3036,7 +3060,7 @@ bool SceneWidget::Impl::restoreCameraStates(const Listing& cameraListing, bool i
                 updated = true;
             }
             if(updated){
-                camera->notifyUpdate();
+                camera->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
             }
 
             if(state.get("isCurrent", false)){
@@ -3170,9 +3194,9 @@ SgLineSet* SceneWidget::Impl::createGrid(int index)
 void SceneWidget::Impl::activateSystemNode(SgNode* node, bool on)
 {
     if(on){
-        systemGroup->addChild(node, true);
+        systemGroup->addChild(node, sgUpdate);
     } else {
-        systemGroup->removeChild(node, true);
+        systemGroup->removeChild(node, sgUpdate);
     }
 }
 

@@ -26,7 +26,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
 {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-    
+
     BodyItem* bodyItem;
     string targetLinkName;
     Link* targetLink;
@@ -42,6 +42,8 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
         isConstantRelativeAttitudeMode_ = false;
+
+        initialize();
     }
     
     BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org, CloneMap* cloneMap)
@@ -51,6 +53,20 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
         isConstantRelativeAttitudeMode_ = org.isConstantRelativeAttitudeMode_;
+
+        initialize();
+    }
+
+    void initialize()
+    {
+        sigUpdated().connect(
+            [this](const SgUpdate& update){
+                if(isSigUpdatedEmittedBySelf){
+                    isSigUpdatedEmittedBySelf = false;
+                } else {
+                    updateRelativePosition();
+                }
+            });
     }
 
     virtual Referenced* doClone(CloneMap* cloneMap) const override {
@@ -95,15 +111,6 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
         }
     }
 
-    virtual void onUpdated(SgUpdate& update) override {
-        if(isSigUpdatedEmittedBySelf){
-            isSigUpdatedEmittedBySelf = false;
-        } else {
-            updateRelativePosition();
-        }
-        InteractiveCameraTransform::onUpdated(update);
-    }
-    
     void updateRelativePosition(){
         if(bodyItem){
             relativeTranslationFromBody = translation() - targetLink->translation();
@@ -119,6 +126,8 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
                 setTranslation(targetLink->translation() + relativeTranslationFromBody);
             }
             isSigUpdatedEmittedBySelf = true;
+
+            // TODO: Use SgUpdate of BodyTrackingCameraItemImpl
             notifyUpdate();
         }
     }
@@ -317,14 +326,14 @@ bool BodyTrackingCameraItemImpl::setCameraType(int index)
         renderers.push_back(sceneView->sceneWidget()->renderer());
     }
 
-    cameraTransform->addChild(newCamera, true);
+    cameraTransform->addChild(newCamera, update);
     for(auto renderer : renderers){
         if(renderer->currentCamera() == removeCamera){
             renderer->extractPreprocessedNodes();
             renderer->setCurrentCamera(newCamera);
         }
     }
-    cameraTransform->removeChild(removeCamera, true);
+    cameraTransform->removeChild(removeCamera, update);
     for(auto renderer : renderers){
         renderer->extractPreprocessedNodes();
     }

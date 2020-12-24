@@ -197,7 +197,7 @@ void SgBoundingBox::setLineWidth(float width)
 }
 
 
-void SgBoundingBox::updateLineSet()
+void SgBoundingBox::updateLineSet(SgUpdateRef update)
 {
     auto vertices = lineSet_->vertices();
     
@@ -218,7 +218,9 @@ void SgBoundingBox::updateLineSet()
             vertices->at(6) << v1.x(), v1.y(), v0.z();
             vertices->at(7) << v0.x(), v1.y(), v0.z();
         }
-        vertices->notifyUpdate(update_);
+        if(update){
+            vertices->notifyUpdate(update->withAction(SgUpdate::Modified));
+        }
     }
 }
 

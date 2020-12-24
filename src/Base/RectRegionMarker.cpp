@@ -139,7 +139,8 @@ void RectRegionMarker::startEditing(SceneWidget* sceneWidget)
 {
     impl->sceneWidget = sceneWidget;
     onSceneModeChanged(sceneWidget->latestEvent());
-    sceneWidget->sceneRoot()->addChildOnce(this, true);
+    SgTmpUpdate update;
+    sceneWidget->sceneRoot()->addChildOnce(this, update);
     sceneWidget->activateCustomMode(this);
 
     impl->sceneWidgetConnection =
@@ -180,10 +181,11 @@ SignalProxy<void(const PolyhedralRegion& region)> RectRegionMarker::sigRegionFix
 
 void RectRegionMarkerImpl::showRectangle(bool on)
 {
+    SgTmpUpdate update;
     if(on){
-        self->addChildOnce(lineSet, true);
+        self->addChildOnce(lineSet, update);
     } else {
-        self->removeChild(lineSet, true);
+        self->removeChild(lineSet, update);
     }
 }
 

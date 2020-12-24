@@ -51,7 +51,6 @@ class ScenePointPlot : public SgGroup
     SgVertexArrayPtr normalVertices;
     SgGroupPtr fpsNormalGroup;
     SgMaterialPtr material_;
-    SgUpdate update;
 
 public:
     ScenePointPlot();
@@ -175,6 +174,8 @@ ScenePointPlot::ScenePointPlot()
 
 void ScenePointPlot::clearPoints(bool doNotify)
 {
+    SgTmpUpdate update;
+    
     if(!points->empty()){
         points->clear();
         if(doNotify){
@@ -206,6 +207,7 @@ void ScenePointPlot::updatePoints(const std::vector<PointInfoPtr>& infos)
         addPoint(info, false);
     }
 
+    SgTmpUpdate update;
     points->notifyUpdate(update);
 
     if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
@@ -227,6 +229,8 @@ void ScenePointPlot::addPoint(PointInfo* info, bool doNotify)
 {
     points->push_back(info->position());
 
+    SgTmpUpdate update;
+    
     if(doNotify){
         points->notifyUpdate(update);
     }
@@ -359,8 +363,9 @@ void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(const SceneWidg
                 sceneWidget, &QWidget::destroyed,
                 [this, sceneWidget](){ sceneWidgetInfos.erase(sceneWidget); });
     }
-    
-    sceneWidget->systemNodeGroup()->addChildOnce(pointOverlay, true);
+
+    SgTmpUpdate update;
+    sceneWidget->systemNodeGroup()->addChildOnce(pointOverlay, update);
 
     int id = info->nodeDecorationId;
     auto renderer = sceneWidget->renderer();
@@ -387,7 +392,8 @@ void ScenePointSelectionMode::Impl::clearScenePointSelectionMode(SceneWidget* sc
     auto p = sceneWidgetInfos.find(sceneWidget);
     if(p != sceneWidgetInfos.end()){
         SceneWidgetInfo& info = p->second;;
-        sceneWidget->systemNodeGroup()->removeChild(pointOverlay, true);
+        SgTmpUpdate update;
+        sceneWidget->systemNodeGroup()->removeChild(pointOverlay, update);
         sceneWidget->renderer()->clearNodeDecorations(info.nodeDecorationId);
     }
     targetNodes.clear();

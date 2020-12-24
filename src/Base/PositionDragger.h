@@ -38,7 +38,7 @@ public:
     //! \param T Local position from the virtual origin to the dragger central position
     void setOffset(const Isometry3& T);
 
-    void setDraggableAxes(int axisBitSet);
+    void setDraggableAxes(int axisBitSet, SgUpdateRef update);
     int draggableAxes() const;
     SignalProxy<void(int axisBitSet)> sigDraggableAxesChanged();
 
@@ -75,7 +75,7 @@ public:
 
     enum DisplayMode { DisplayAlways, DisplayInEditMode, DisplayInFocus, DisplayNever };
     DisplayMode displayMode() const;
-    void setDisplayMode(DisplayMode mode);
+    void setDisplayMode(DisplayMode mode, SgUpdateRef update = nullptr);
 
     void setUndoEnabled(bool on);
     bool isUndoEnabled() const;
@@ -106,9 +106,13 @@ public:
     virtual bool onRedoRequest() override;
 
     // Thw following functions are deprecated. Use displayMode and setDisplayMode instead.
-    void setDraggerAlwaysShown(bool on);
+    [[deprecated("Use setDisplayMode.")]]
+    void setDraggerAlwaysShown(bool on, SgUpdateRef update);
+    [[deprecated("Use displayMode.")]]
     bool isDraggerAlwaysShown() const;
-    void setDraggerAlwaysHidden(bool on);
+    [[deprecated("Use setDisplayMode.")]]
+    void setDraggerAlwaysHidden(bool on, SgUpdateRef update);
+    [[deprecated("Use displayMode.")]]
     bool isDraggerAlwaysHidden() const;
 
     class Impl;

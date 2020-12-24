@@ -128,7 +128,7 @@ public:
     virtual void setLineWidth(float width) override;
 
     const SgLineSet* lineSet() const { return lineSet_; }
-    void updateLineSet();
+    void updateLineSet(SgUpdateRef update);
 
     virtual int numChildObjects() const override;
     virtual SgObject* childObject(int index) override;
@@ -138,7 +138,6 @@ protected:
 
 private:
     ref_ptr<SgLineSet> lineSet_;
-    SgUpdate update_;
 
     void initializeLineSet();
 };

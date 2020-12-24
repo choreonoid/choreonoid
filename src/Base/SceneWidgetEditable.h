@@ -16,6 +16,21 @@ class MenuManager;
 class CNOID_EXPORT SceneWidgetEditable
 {
 public:
+    virtual void onSceneModeChanged(SceneWidgetEvent* event);
+    virtual bool onButtonPressEvent(SceneWidgetEvent* event);
+    virtual bool onButtonReleaseEvent(SceneWidgetEvent* event);
+    virtual bool onDoubleClickEvent(SceneWidgetEvent* event);
+    virtual bool onPointerMoveEvent(SceneWidgetEvent* event);
+    virtual void onPointerLeaveEvent(SceneWidgetEvent* event);
+    virtual bool onScrollEvent(SceneWidgetEvent* event);
+    virtual bool onKeyPressEvent(SceneWidgetEvent* event);
+    virtual bool onKeyReleaseEvent(SceneWidgetEvent* event);
+    virtual void onFocusChanged(SceneWidgetEvent* event, bool on);
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu);
+    virtual bool onUndoRequest();
+    virtual bool onRedoRequest();
+
+    // deprecated
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
     virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
@@ -27,8 +42,6 @@ public:
     virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event);
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on);
     virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu);
-    virtual bool onUndoRequest();
-    virtual bool onRedoRequest();
 };
 
 }

@@ -66,7 +66,6 @@ public:
     EditableSceneBody* self;
     BodyItemPtr bodyItem;
 
-    //! \todo Share this object in GUI
     SgUpdate update;
 
     ScopedConnectionSet connections;
@@ -244,10 +243,10 @@ void EditableSceneLink::Impl::showOrigin(bool on)
             originMarker->setTransparency(0.0f);
             originMarker->setDragEnabled(false);
         }
-        self->addChildOnce(originMarker, true);
+        self->addChildOnce(originMarker, update);
     } else {
         if(originMarker && originMarker->hasParents()){
-            self->removeChild(originMarker, true);
+            self->removeChild(originMarker, update);
         }
     }
 }
@@ -286,11 +285,11 @@ void EditableSceneLink::enableHighlight(bool on)
 void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
 {
     if(impl->bbMarker){
-        removeChild(impl->bbMarker);
+        removeChild(impl->bbMarker, impl->update);
     }
     if(visualShape()){
         impl->bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
-        addChildOnce(impl->bbMarker, true);
+        addChildOnce(impl->bbMarker, impl->update);
     }
 }
 
@@ -298,7 +297,7 @@ void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
 void EditableSceneLink::hideMarker()
 {
     if(impl->bbMarker){
-        removeChild(impl->bbMarker, true);
+        removeChild(impl->bbMarker, impl->update);
         impl->bbMarker = nullptr;
     }
 }
@@ -647,9 +646,9 @@ void EditableSceneBody::Impl::showCenterOfMass(bool on)
     isCmVisible = on;
     if(on){
         cmMarker->setTranslation(bodyItem->centerOfMass());
-        markerGroup->addChildOnce(cmMarker, true);
+        markerGroup->addChildOnce(cmMarker, update);
     } else {
-        markerGroup->removeChild(cmMarker, true);
+        markerGroup->removeChild(cmMarker, update);
     }
 }
 
@@ -661,9 +660,9 @@ void EditableSceneBody::Impl::showPpcom(bool on)
         Vector3 com = bodyItem->centerOfMass();
         com(2) = 0.0;
         ppcomMarker->setTranslation(com);
-        markerGroup->addChildOnce(ppcomMarker, true);
+        markerGroup->addChildOnce(ppcomMarker, update);
     } else {
-        markerGroup->removeChild(ppcomMarker, true);
+        markerGroup->removeChild(ppcomMarker, update);
     }
 }
 
@@ -673,9 +672,9 @@ void EditableSceneBody::Impl::showZmp(bool on)
     isZmpVisible = on;
     if(on){
         zmpMarker->setTranslation(bodyItem->zmp());
-        markerGroup->addChildOnce(zmpMarker, true);
+        markerGroup->addChildOnce(zmpMarker, update);
     } else {
-        markerGroup->removeChild(zmpMarker, true);
+        markerGroup->removeChild(zmpMarker, update);
     }
 }
 
@@ -878,7 +877,7 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
     for(int i=0; i < n; ++i){
         EditableSceneLink* sceneLink = editableSceneLink(i);
         sceneLink->hideMarker();
-        sceneLink->removeChild(positionDragger);
+        sceneLink->removeChild(positionDragger, update);
 
         if(on && isEditMode && !activeSimulatorItem){
             Link* link = sceneLink->link();
@@ -892,15 +891,12 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
             }
         }
         if(sceneLink->impl->originMarker){
-            sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
+            sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayInEditMode, update);
         }
     }
 
     // The following connection is only necessary when the position dragger is shown
     kinematicsKitConnection.disconnect();
-
-    //! \todo check if the node is actually updated
-    self->notifyUpdate(update.withAction(SgUpdate::Added | SgUpdate::Modified | SgUpdate::Removed));
 }
 
 
@@ -982,7 +978,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     sceneLink->addChildOnce(positionDragger);
 
     if(sceneLink->impl->originMarker){
-        sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayNever);
+        sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayNever, update);
     }
 }
 
@@ -1631,7 +1627,7 @@ void EditableSceneBody::Impl::startVirtualElasticString(const SceneWidgetEvent& 
         pointedLinkLocalPoint = targetLink->T().inverse() * point;
         dragMode = LINK_VIRTUAL_ELASTIC_STRING;
         dragVirtualElasticString(event);
-        markerGroup->addChildOnce(virtualElasticStringLine, true);
+        markerGroup->addChildOnce(virtualElasticStringLine, update);
     }
 }
 
@@ -1666,7 +1662,7 @@ void EditableSceneBody::Impl::finishVirtualElasticString()
     if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
         simulatorItem->clearVirtualElasticStrings();
     }
-    markerGroup->removeChild(virtualElasticStringLine, true);
+    markerGroup->removeChild(virtualElasticStringLine, update);
 }
 
 

@@ -110,7 +110,7 @@ BodyMarkerItemImpl::BodyMarkerItemImpl(BodyMarkerItem* self)
 
     marker = new SceneMarker;
     switchableMarker = new SgSwitchableGroup;
-    switchableMarker->turnOff();
+    switchableMarker->setTurnedOn(false);
     switchableMarker->addChild(marker);
 }
 
@@ -271,13 +271,14 @@ bool BodyMarkerItemImpl::updateTarget()
             connection.reset(
                 bodyItem->sigKinematicStateChanged().connect(
                     [&](){ updateMarkerPosition(); } ));
-            switchableMarker->turnOn();
+            SgUpdate update;
+            switchableMarker->setTurnedOn(true, update);
             updateMarkerPosition();
         }
     }
 
     if(!isValid){
-        switchableMarker->turnOff(true);
+        switchableMarker->setTurnedOn(false);
     }
 
     return isValid;

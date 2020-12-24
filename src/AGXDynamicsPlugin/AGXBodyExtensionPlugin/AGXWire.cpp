@@ -257,6 +257,7 @@ public:
     void update();
 private:
     AGXWireDevice* m_wireDevice;
+    SgUpdate sgUpdate;
 };
 
 SceneDevice* SceneWireDevice::createSceneWireDevice(Device* device)
@@ -284,14 +285,13 @@ void SceneWireDevice::update()
         const WireNodeState& node1 = m_wireDevice->getWireNodeStates()[i];
         const WireNodeState& node2 = m_wireDevice->getWireNodeStates()[i + 1];
         SgPosTransformPtr sgWireNode = new SgPosTransform;
-        addChild(sgWireNode, true);
 
         // Add shape
         Vector3 dir = node2.position.operator-(node1.position);
         double length = dir.norm();
         auto shape = new SgShape;
         shape->setMesh(meshGenerator.generateCapsule(radius, length));
-        sgWireNode->addChild(shape, true);
+        sgWireNode->addChild(shape);
 
         // Set transform
         Vector3 pos = node2.position.operator+(node1.position) * 0.5;
@@ -311,6 +311,8 @@ void SceneWireDevice::update()
         p.linear().col(1) = ny;
         p.linear().col(2) = nz;
         sgWireNode->setTransform(link_attitude_inv * p);
+
+        addChild(sgWireNode, sgUpdate);
     }
 }
 

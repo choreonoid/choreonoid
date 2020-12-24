@@ -7,6 +7,7 @@
 #define CNOID_UTIL_SCENE_GRAPH_H
 
 #include <cnoid/ClonableReferenced>
+#include <cnoid/SceneUpdate>
 #include <cnoid/BoundingBox>
 #include <cnoid/Signal>
 #include <string>
@@ -17,66 +18,9 @@
 namespace cnoid {
 
 class CloneMap;
-class SgObject;
 class SgNode;
 class SgGroup;
 typedef std::vector<SgNode*> SgNodePath;
-
-class CNOID_EXPORT SgUpdate
-{
-public:
-    enum Action {
-        None = 0,
-        Added = 1 << 0,
-        Removed = 1 << 1,
-        BBoxUpdated = 1 << 2,
-        Modified = 1 << 3,
-
-        // deprecated
-        NONE = None,
-        ADDED = Added,
-        REMOVED = Removed,
-        BBOX_UPDATED = BBoxUpdated,
-        MODIFIED = Modified
-    };
-
-    typedef std::vector<SgObject*> Path;
-        
-    SgUpdate() : action_(MODIFIED) { path_.reserve(16); }
-    SgUpdate(int action) : action_(action) { path_.reserve(16); }
-    SgUpdate(const SgUpdate& org) : path_(org.path_), action_(org.action_) { }
-    virtual ~SgUpdate();
-    int action() const { return action_; }
-    SgUpdate& withAction(int act) { action_ = act; return *this; }
-    void setAction(int act) { action_ = act; }
-    void addAction(int act) { action_ |= act; }
-    const Path& path() const { return path_; }
-    void pushNode(SgObject* node) { path_.push_back(node); }
-    void popNode() { path_.pop_back(); }
-    void clearPath() { path_.clear(); }
-
-    [[deprecated("Use setAction.")]]
-    void resetAction(int act = NONE) { action_ = act; }
-    [[deprecated("Use clearPath()")]]
-    void clear() { path_.clear(); }
-
-private:
-    Path path_;
-    int action_;
-};
-
-class SgUpdateRef
-{
-    SgUpdate* update;
-public:
-    SgUpdateRef() : update(nullptr) { }
-    SgUpdateRef(SgUpdate& update) : update(&update) { }
-    SgUpdateRef(const SgUpdateRef& ref) : update(ref.update) { }
-    operator bool() const { return update != nullptr; }
-    operator SgUpdate*() { return update; }
-    SgUpdate& operator*() { return *update; }
-    SgUpdate* operator->() { return update; }
-};
 
 
 class CNOID_EXPORT SgObject : public ClonableReferenced
@@ -134,12 +78,11 @@ public:
 
     void notifyUpdate(int action = SgUpdate::MODIFIED) {
         SgUpdate update(action);
+        update.reservePathCapacity(16);
         onUpdated(update);
     }
 
-    void addParent(SgObject* parent, bool doNotify = false);
-    void addParent(SgObject* parent, SgUpdate& update);
-    void addParent(SgObject* parent, SgUpdate* update);
+    void addParent(SgObject* parent, SgUpdateRef update = nullptr);
     void removeParent(SgObject* parent);
     int numParents() const { return static_cast<int>(parents.size()); }
     bool hasParents() const { return !parents.empty(); }
@@ -155,6 +98,10 @@ public:
         return sigGraphConnection_;
     }
 
+    bool hasValidBoundingBoxCache() const { return hasValidBoundingBoxCache_; }
+    void invalidateBoundingBox() { hasValidBoundingBoxCache_ = false; }
+    void setBoundingBoxCacheReady() const { hasValidBoundingBoxCache_ = true; }
+
     const std::string& uri() const { return uri_; }
     void setUri(const std::string& uri) { uri_ = uri; }
 
@@ -167,10 +114,11 @@ protected:
     SgObject();
     SgObject(const SgObject& org);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-    virtual void onUpdated(SgUpdate& update);
+    void onUpdated(SgUpdate& update);
             
 private:
     unsigned char attributes_;
+    mutable bool hasValidBoundingBoxCache_;
     ParentContainer parents;
     Signal<void(const SgUpdate& update)> sigUpdated_;
     Signal<void(bool on)> sigGraphConnection_;
@@ -259,11 +207,7 @@ public:
         
     virtual int numChildObjects() const override;
     virtual SgObject* childObject(int index) override;
-    virtual void onUpdated(SgUpdate& update) override;
     virtual const BoundingBox& boundingBox() const override;
-
-    bool hasValidBoundingBoxCache() const { return hasValidBoundingBoxCache_; }
-    void invalidateBoundingBox() { hasValidBoundingBoxCache_ = false; }
 
     iterator begin() { return children.begin(); }
     iterator end() { return children.end(); }
@@ -293,31 +237,25 @@ public:
         return node;
     }
 
-    void clearChildren(bool doNotify = false);
-    void clearChildren(SgUpdate& update);
-    void addChild(SgNode* node, bool doNotify = false);
-    void addChild(SgNode* node, SgUpdate& update);
-    bool addChildOnce(SgNode* node, bool doNotify = false);
-    bool addChildOnce(SgNode* node, SgUpdate& update);
-    void insertChild(int index, SgNode* node, bool doNotify = false);
-    void insertChild(int index, SgNode* node, SgUpdate& update);
-    void setSingleChild(SgNode* node, bool doNotify = false);
-    void setSingleChild(SgNode* node, SgUpdate& update);
-    bool removeChild(SgNode* node, bool doNotify = false);
-    bool removeChild(SgNode* node, SgUpdate& update);
-    void removeChildAt(int index, bool doNotify = false);
-    void removeChildAt(int index, SgUpdate& update);
-    void copyChildrenTo(SgGroup* group, bool doNotify = false);
-    void copyChildrenTo(SgGroup* group, SgUpdate& update);
-    void moveChildrenTo(SgGroup* group, bool doNotify = false);
-    void moveChildrenTo(SgGroup* group, SgUpdate& update);
+    void addChild(SgNode* node, SgUpdateRef update = nullptr);
+    bool addChildOnce(SgNode* node, SgUpdateRef update = nullptr);
+    void insertChild(int index, SgNode* node, SgUpdateRef update = nullptr);
+    void setSingleChild(SgNode* node, SgUpdateRef update = nullptr);
+    iterator removeChild(iterator childIter, SgUpdateRef update = nullptr);
+    bool removeChild(SgNode* node, SgUpdateRef update = nullptr);
+    void removeChildAt(int index, SgUpdateRef update = nullptr);
+    void clearChildren(SgUpdateRef update = nullptr);
+    void copyChildrenTo(SgGroup* group, SgUpdateRef update = nullptr);
+    void moveChildrenTo(SgGroup* group, SgUpdateRef update = nullptr);
 
-    [[deprecated("Use insertChild(int index, SgNode* node, bool doNotify = false)")]]
-    void insertChild(SgNode* node, int index = 0, bool doNotify = false);
+    [[deprecated("Use insertChild(int index, SgNode* node, SgUpdateRef update)")]]
+    void insertChild(SgNode* node, int index, SgUpdateRef update = nullptr){
+        insertChild(index, node, update);
+    }
     
     SgGroup* nextChainedGroup();
-    void insertChainedGroup(SgGroup* group);
-    void removeChainedGroup(SgGroup* group);
+    void insertChainedGroup(SgGroup* group, SgUpdateRef update = nullptr);
+    void removeChainedGroup(SgGroup* group, SgUpdateRef update = nullptr);
 
     template<class NodeType> NodeType* findNodeOfType(int depth = -1) {
         for(int i=0; i < numChildren(); ++i){
@@ -340,18 +278,10 @@ protected:
     SgGroup(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     mutable BoundingBox bboxCache;
-    mutable bool hasValidBoundingBoxCache_;
 
 private:
     Container children;
     static void throwTypeMismatchError();
-    void addChild(SgNode* node, SgUpdate* update);
-    void insertChild(int index, SgNode* node, SgUpdate* update);
-    void setSingleChild(SgNode* node, SgUpdate* update);
-    iterator removeChild(iterator childIter, SgUpdate* update);
-    bool removeChild(SgNode* node, SgUpdate* update);
-    void clearChildren(SgUpdate* update);
-    void moveChildrenTo(SgGroup* group, SgUpdate* update);
 };
 
 typedef ref_ptr<SgGroup> SgGroupPtr;
@@ -567,7 +497,7 @@ public:
     SgSwitch(bool on = true);
     SgSwitch(const SgSwitch& org);
     
-    void setTurnedOn(bool on, bool doNotify = false);
+    void setTurnedOn(bool on, SgUpdateRef update = nullptr);
     bool isTurnedOn() const { return isTurnedOn_; }
 
 protected:
@@ -590,15 +520,15 @@ public:
 
     void setSwitch(SgSwitch* newSwitchObject);
 
-    void setTurnedOn(bool on, bool doNotify = false);
+    void setTurnedOn(bool on, SgUpdateRef update = nullptr);
 
     bool isTurnedOn() const {
         return switchObject ? switchObject->isTurnedOn() : isTurnedOn_;
     }
 
-    //! \deprecated
+    [[deprecated("Use the setTurnedOn function.")]]
     void turnOn(bool doNotify = false) { setTurnedOn(true, doNotify); }
-    //! \deprecated
+    [[deprecated("Use the setTurnedOn function.")]]
     void turnOff(bool doNotify = false) { setTurnedOn(false, doNotify); }
 
 protected:
