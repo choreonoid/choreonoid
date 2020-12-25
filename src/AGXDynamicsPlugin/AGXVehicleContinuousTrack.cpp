@@ -180,7 +180,8 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
             if(agxCollide::Box* const box = static_cast<agxCollide::Box*>(shape)){
                 const agx::Vec3& e = box->getHalfExtents() * 2.0;
                 Vector3 size(e[0], e[1], e[2]);
-                const Isometry3& pos = convertToIsometry3(node->getRigidBody()->getTransform());
+                Isometry3 pos;
+                convertToIsometry3(node->getRigidBody()->getTransform(), pos);
                 m_device->addTrackState(size, pos);
             }
         }
@@ -191,8 +192,9 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
 
 void AGXVehicleContinuousTrack::updateTrackState() {
     for(size_t i = 0; i < m_track->nodes().size(); ++i){
-        m_device->getTrackStates()[i].position =
-            convertToIsometry3(m_track->nodes()[i]->getRigidBody()->getGeometries().front()->getTransform());
+        convertToIsometry3(
+            m_track->nodes()[i]->getRigidBody()->getGeometries().front()->getTransform(),
+            m_device->getTrackStates()[i].position);        
     }
     m_device->notifyStateChange();
 }

@@ -68,11 +68,13 @@ struct AGXVehicleContinuousTrackDeviceDesc
     SgShapePtr nodeShape;
 };
 
-struct TrackState{
-        Vector3 boxSize;
-        Isometry3 position;
+struct TrackState
+{
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    Vector3 boxSize;
+    Isometry3 position;
 };
-typedef std::vector<TrackState> TrackStates;
+typedef std::vector<TrackState, Eigen::aligned_allocator<TrackState>> TrackStates;
 
 class AGXVehicleContinuousTrackDevice : private AGXVehicleContinuousTrackDeviceDesc, public Device
 {

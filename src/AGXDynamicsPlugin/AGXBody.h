@@ -16,13 +16,12 @@ typedef std::map<std::string, AGXBodyExtensionFunc> AGXBodyExtensionFuncMap;
 
 namespace cnoid {
 
-inline const Isometry3 convertToIsometry3(const agx::AffineMatrix4x4& a){
-    Isometry3 pos;
-    pos.translation() = Vector3(a(3,0), a(3,1), a(3,2));
-    pos.linear() << a(0,0), a(1,0), a(2,0),
-                    a(0,1), a(1,1), a(2,1),
-                    a(0,2), a(1,2), a(2,2);
-    return pos;
+inline const void convertToIsometry3(const agx::AffineMatrix4x4& A, Isometry3& I)
+{
+    I.translation() = Vector3(A(3,0), A(3,1), A(3,2));
+    I.linear() << A(0,0), A(1,0), A(2,0),
+                  A(0,1), A(1,1), A(2,1),
+                  A(0,2), A(1,2), A(2,2);
 }
 
 class MeshExtractor;
