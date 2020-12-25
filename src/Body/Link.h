@@ -56,6 +56,7 @@ public:
     bool isRoot() const { return !parent_; }
     bool isBodyRoot() const;
     bool isStatic() const;
+    bool isFixedToRoot() const;
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }

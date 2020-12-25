@@ -820,7 +820,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
     Link* linkChain = link;
     while(true){
         if(!bodyItemChain->isAttachedToParentBody()){
-            if(!bodyItemChain->isLocationEditable() && linkChain->isBodyRoot()){
+            if(!bodyItemChain->isLocationEditable() && linkChain->isFixedToRoot()){
                 return LinkOperationType::None;
             }
             break;
@@ -839,7 +839,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
         auto ik = bodyItem->findPresetIK(link);
         if(ik && kinematicsBar->isInverseKinematicsEnabled()){
             type = LinkOperationType::IK;
-        } else if(link->isBodyRoot()){
+        } else if(link->isFixedToRoot()){
             type = LinkOperationType::IK;
         } else if(kinematicsBar->isForwardKinematicsEnabled()){
             type = LinkOperationType::FK;

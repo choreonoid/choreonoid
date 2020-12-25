@@ -180,6 +180,17 @@ bool Link::isStatic() const
 }
 
 
+bool Link::isFixedToRoot() const
+{
+    if(isBodyRoot()){
+        return true;
+    } else if(isFixedJoint()){
+        return parent_->isFixedToRoot();
+    }
+    return false;
+}
+
+
 void Link::prependChild(Link* link)
 {
     LinkPtr holder;

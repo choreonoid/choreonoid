@@ -175,9 +175,9 @@ LinkKinematicsKit* LinkKinematicsKitManager::Impl::findKinematicsKit(Link* targe
         }
         if(!kit && !isPresetOnly){
             // Special case
-            if(baseLinkIndex == PresetBaseLink && targetLink->isBodyRoot()){
-                baseLink = body->rootLink();
-                baseLinkIndex = 0; // root link index
+            if(baseLinkIndex == PresetBaseLink && targetLink->isFixedToRoot()){
+                baseLink = targetLink;
+                baseLinkIndex = targetLink->index();
                 key.second = baseLinkIndex;
                 auto iter = linkPairToKinematicsKitMap.find(key);
                 if(iter != linkPairToKinematicsKitMap.end()){
