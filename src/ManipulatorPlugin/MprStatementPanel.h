@@ -2,12 +2,11 @@
 #define CNOID_MANIPULATOR_PLUGIN_MPR_STATEMENT_PANEL_H
 
 #include <QWidget>
+#include <cnoid/MprStatement>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class MprStatement;
-class MprProgramViewBase;
 class MprProgramItemBase;
 
 class CNOID_EXPORT MprStatementPanel : public QWidget
@@ -15,12 +14,19 @@ class CNOID_EXPORT MprStatementPanel : public QWidget
 public:
     MprStatementPanel();
     ~MprStatementPanel();
-    
+
+    void activate(
+        MprProgramItemBase* programItem, MprStatement* statement,
+        std::function<void(const std::string& caption)> setCaption);
+    void deactivate();
+
     virtual void setEditingEnabled(bool on);
     virtual void onActivated() = 0;
-    virtual void onDeactivated();
     virtual void onStatementUpdated();
-
+    virtual void onAdditionalStatementsUpdated(const std::vector<MprStatementPtr>& additionalStatements);
+    virtual void onDeactivated();
+    
+protected:
     MprProgramItemBase* currentProgramItem();
 
     template<class StatementType> StatementType* currentStatement(){
@@ -30,15 +36,13 @@ public:
         return getCurrentStatement();
     }
 
+    void setCaption(const std::string& caption);
+
 private:
     class Impl;
     Impl* impl;
 
-    void activate(MprProgramItemBase* programItem, MprStatement* statement);
-    void deactivate();
     MprStatement* getCurrentStatement();
-    
-    friend class MprStatementViewBase;
 };
 
 }

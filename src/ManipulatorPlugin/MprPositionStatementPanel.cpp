@@ -32,7 +32,8 @@ class MprPositionStatementPanel::Impl
 {
 public:
     MprPositionStatementPanel* self;
-    QWidget topAreaWidget;
+    QWidget topPanel;
+    QWidget positionPanel;
     QLabel positionNameLabel;
     PushButton moveToButton;
     PushButton touchupButton;
@@ -48,7 +49,7 @@ public:
     Impl(MprPositionStatementPanel* self);
     void initializeIkPositionPanel();
     void initializeFkPositionPanel();
-    void updatePanel();    
+    void updatePositionPanel();    
     void updateIkPositionPanel(MprIkPosition* position, LinkKinematicsKit* kinematicsKit);
     void updateFkPositionPanel(MprFkPosition* position);
 };
@@ -68,13 +69,16 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
     auto topHBox = new QHBoxLayout;
     self->setLayout(topHBox);
 
-    auto vbox = new QVBoxLayout;
-    vbox->setContentsMargins(0, 0, 0, 0);
-    topHBox->addLayout(vbox);
+    auto topVBox = new QVBoxLayout;
+    topVBox->setContentsMargins(0, 0, 0, 0);
+    topHBox->addLayout(topVBox);
     topHBox->addStretch();
 
-    vbox->addWidget(&topAreaWidget);
+    topVBox->addWidget(&topPanel);
 
+    auto vbox = new QVBoxLayout;
+    positionPanel.setLayout(vbox);
+    
     auto hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Position :")));
     hbox->addWidget(&positionNameLabel);
@@ -106,7 +110,8 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
     initializeFkPositionPanel();
     vbox->addWidget(&fkPositionPanel);
 
-    vbox->addStretch();
+    topVBox->addWidget(&positionPanel);
+    topVBox->addStretch();
 }
 
 
@@ -116,9 +121,15 @@ MprPositionStatementPanel::~MprPositionStatementPanel()
 }
 
 
-QWidget* MprPositionStatementPanel::topAreaWidget()
+QWidget* MprPositionStatementPanel::topPanel()
 {
-    return &impl->topAreaWidget;
+    return &impl->topPanel;
+}
+
+
+QWidget* MprPositionStatementPanel::positionPanel()
+{
+    return &impl->positionPanel;
 }
 
 
@@ -193,19 +204,19 @@ void MprPositionStatementPanel::setEditingEnabled(bool on)
 }
 
 
-void MprPositionStatementPanel::onActivated()
-{
-    impl->updatePanel();
-}
-
-
 void MprPositionStatementPanel::onStatementUpdated()
 {
-    impl->updatePanel();
+    impl->updatePositionPanel();
 }
 
 
-void MprPositionStatementPanel::Impl::updatePanel()
+void MprPositionStatementPanel::updatePositionPanel()
+{
+    impl->updatePositionPanel();
+}
+
+
+void MprPositionStatementPanel::Impl::updatePositionPanel()
 {
     auto statement = self->currentStatement<MprPositionStatement>();
 

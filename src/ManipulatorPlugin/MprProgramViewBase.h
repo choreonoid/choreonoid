@@ -31,6 +31,9 @@ public:
     MprStatement* currentStatement();
     SignalProxy<void(MprStatement* statement)> sigCurrentStatementChanged();
 
+    const std::vector<MprStatementPtr>& selectedStatements();
+    SignalProxy<void(std::vector<MprStatementPtr>& statements)> sigSelectedStatementsChanged();
+
     void updateStatementTree();
 
     class CNOID_EXPORT StatementDelegate : public Referenced

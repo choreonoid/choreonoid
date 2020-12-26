@@ -1,6 +1,5 @@
 #include "MprStatementPanel.h"
 #include "MprProgramItemBase.h"
-#include "MprStatement.h"
 
 using namespace std;
 using namespace cnoid;
@@ -13,6 +12,7 @@ public:
     MprStatementPanel* self;
     MprProgramItemBasePtr programItem;
     MprStatementPtr statement;
+    function<void(const std::string& caption)> setCaption;
     ScopedConnection statementUpdateConnection;
 
     Impl(MprStatementPanel* self);
@@ -48,10 +48,12 @@ void MprStatementPanel::setEditingEnabled(bool on)
 
 
 void MprStatementPanel::activate
-(MprProgramItemBase* programItem, MprStatement* statement)
+(MprProgramItemBase* programItem, MprStatement* statement,
+ std::function<void(const std::string& caption)> setCaption)
 {
     impl->programItem = programItem;
     impl->statement = statement;
+    impl->setCaption = setCaption;
 
     impl->statementUpdateConnection =
         programItem->program()->sigStatementUpdated().connect(
@@ -61,6 +63,8 @@ void MprStatementPanel::activate
                 }
             });
 
+    setEditingEnabled(statement->holderProgram()->isEditingEnabled());
+
     onActivated();
 }
 
@@ -68,20 +72,28 @@ void MprStatementPanel::activate
 void MprStatementPanel::deactivate()
 {
     onDeactivated();
-    
+
     impl->programItem.reset();
     impl->statement.reset();
+    impl->setCaption = nullptr;
     impl->statementUpdateConnection.disconnect();
 }
 
 
-void MprStatementPanel::onDeactivated()
+void MprStatementPanel::onStatementUpdated()
 {
 
 }
 
 
-void MprStatementPanel::onStatementUpdated()
+void MprStatementPanel::onAdditionalStatementsUpdated
+(const std::vector<MprStatementPtr>& /* additionalStatements */)
+{
+
+}
+
+
+void MprStatementPanel::onDeactivated()
 {
 
 }
@@ -97,3 +109,12 @@ MprStatement* MprStatementPanel::getCurrentStatement()
 {
     return impl->statement;
 }
+
+
+void MprStatementPanel::setCaption(const std::string& caption)
+{
+    if(impl->setCaption){
+        impl->setCaption(caption);
+    }
+}
+

@@ -50,6 +50,22 @@ void MprStatement::validateClassId() const
 }
 
 
+std::string MprStatement::label() const
+{
+    string text;
+    for(int i=0; i < 3; ++i){
+        auto element = label(i);
+        if(!element.empty()){
+            if(i >= 1){
+                text += " ";
+            }
+            text += element;
+        }
+    }
+    return text;
+}
+
+
 MprProgram* MprStatement::holderProgram() const
 {
     return holderProgram_.lock();

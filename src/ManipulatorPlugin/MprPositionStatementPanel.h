@@ -18,14 +18,15 @@ public:
     ~MprPositionStatementPanel();
 
     virtual void setEditingEnabled(bool on) override;
-    virtual void onActivated() override;
     virtual void onStatementUpdated() override;
 
     static void updateCoordinateFrameLabel(
         QLabel& label, const GeneralId& id, CoordinateFrame* frame, CoordinateFrameList* frames);
 
 protected:
-    QWidget* topAreaWidget();
+    QWidget* topPanel();
+    QWidget* positionPanel();
+    void updatePositionPanel();
     
 private:
     class Impl;

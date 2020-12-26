@@ -28,6 +28,9 @@ public:
         return static_cast<MprStatement*>(doClone(&cloneMap));
     }
 
+    std::string label() const;
+    virtual std::string label(int index) const = 0;
+
     MprProgram* holderProgram() const;
     MprStructuredStatement* holderStatement() const;
     MprProgram* topLevelProgram() const;
@@ -36,7 +39,6 @@ public:
 
     void notifyUpdate();
 
-    virtual std::string label(int index) const = 0;
     virtual bool read(MprProgram* program, const Mapping& archive) = 0;
     virtual bool write(Mapping& archive) const = 0;
 

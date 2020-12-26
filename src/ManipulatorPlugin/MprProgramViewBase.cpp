@@ -131,14 +131,28 @@ public:
     unordered_map<MprStatementPtr, StatementItem*> statementItemMap;
     MprDummyStatementPtr dummyStatement;
     int statementItemOperationCallCounter;
-    Connection currentItemChangeConnection;
     ScopedConnectionSet programConnections;
+
+    std::vector<MprStatementPtr> selectedStatements;
+    Signal<void(std::vector<MprStatementPtr>& statements)> sigSelectedStatementsChanged;
+
+    // The following "current statement" is not necessarily same as the current item of the tree widget.
+    // For example, when multiple statements are selected and one of them is unselected with ctrl + left click,
+    // the unselected item will be the current item of the tree widget, which is not an intuitive behavior.
+    // The following current statement corresponds to the last and still selected item in this case.
+    // It is always one of the selected items.
     MprStatementPtr currentStatement;
     Signal<void(MprStatement* statement)> sigCurrentStatementChanged;
-    MprStatementPtr prevCurrentStatement;
+
+    // The following "active statement" corresponds to the current item of the tree widget.
+    // The last clicked item becomes the active statement.
+    MprStatementPtr prevActiveStatement;
+    
     vector<MprStatementPtr> statementsToPaste;
     weak_ref_ptr<MprStatement> weak_errorStatement;
     BodySyncMode bodySyncMode;
+
+    bool isJustAfterDoubleClicked;
 
     /*
     struct ExpansionState {
@@ -176,9 +190,10 @@ public:
     void addStatementsToTree(
         MprProgram* program, QTreeWidgetItem* parentItem, MprStructuredStatement* parentStatement,
         ExpansionStateMap* expansionStateMap);
-    void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
-    void setCurrentStatement(MprStatement* statement, bool doSetCurrentItem, bool doActivate);
+    void setCurrentStatement(MprStatement* statement);
     void setErrorStatement(MprStatement* statement);
+    void onItemSelectionChanged();
+    void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
     void onTreeWidgetItemDoubleClicked(QTreeWidgetItem* item, int /* column */);
     MprStatement* findStatementAtHierachicalPosition(const vector<int>& position);
@@ -566,6 +581,7 @@ MprProgramViewBase::Impl::Impl(MprProgramViewBase* self)
     dummyStatement = new MprDummyStatement;
     statementItemOperationCallCounter = 0;
     bodySyncMode = DirectBodySync;
+    isJustAfterDoubleClicked = false;
     defaultStatementDelegate = new StatementDelegate;
 
     TimeBar::instance()->sigTimeChanged().connect(
@@ -651,10 +667,11 @@ void MprProgramViewBase::Impl::setupWidgets()
     rheader.setSectionResizeMode(3, QHeaderView::Stretch);
     sigSectionResized().connect([&](int, int, int){ updateGeometry(); });
 
-    currentItemChangeConnection =
-        sigCurrentItemChanged().connect(
-            [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
-                onCurrentTreeWidgetItemChanged(current, previous); });
+    sigItemSelectionChanged().connect([&](){ onItemSelectionChanged(); });
+
+    sigCurrentItemChanged().connect(
+        [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
+            onCurrentTreeWidgetItemChanged(current, previous); });
 
     sigItemClicked().connect(
         [&](QTreeWidgetItem* item, int column){
@@ -736,8 +753,8 @@ void MprProgramViewBase::addEditButton(ToolButton* button, int row)
 
 void MprProgramViewBase::onDeactivated()
 {
-    impl->currentStatement = nullptr;
-    impl->prevCurrentStatement = nullptr;
+    impl->currentStatement.reset();
+    impl->prevActiveStatement.reset();
 }
 
 
@@ -798,6 +815,7 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
     currentProgramItem = item;
     logTopLevelProgramName.reset();
     currentStatement.reset();
+    prevActiveStatement.reset();
     weak_errorStatement.reset();
 
     bool accepted = self->onCurrentProgramItemChanged(item);
@@ -952,6 +970,55 @@ MprProgramItemBase* MprProgramViewBase::currentProgramItem()
 }
 
 
+void MprProgramViewBase::Impl::onItemSelectionChanged()
+{
+    auto prevCurrentStatement = currentStatement;
+    currentStatement.reset();
+    auto errorStatement = weak_errorStatement.lock();
+    bool isErrorStatementSelected = false;
+    
+    selectedStatements.clear();
+    for(auto& item : selectedItems()){
+        auto statementItem = static_cast<StatementItem*>(item);
+        auto statement = statementItem->statement();
+        if(statement == errorStatement){
+            isErrorStatementSelected = true;
+        }
+        selectedStatements.push_back(statement);
+    }
+
+    if(isErrorStatementSelected){
+        setStyleSheet("QTreeView::item:selected { background-color: red; } "
+                      "QTreeView::branch:selected { background-color: red; }");
+    } else {
+        setStyleSheet("");
+    }
+
+    if(!selectedStatements.empty()){
+        currentStatement = selectedStatements.front();
+    }
+
+    sigSelectedStatementsChanged(selectedStatements);
+
+    if(currentStatement != prevCurrentStatement){
+        self->onCurrentStatementChanged(currentStatement);
+        sigCurrentStatementChanged(currentStatement);
+    }
+}
+
+
+const std::vector<MprStatementPtr>& MprProgramViewBase::selectedStatements()
+{
+    return impl->selectedStatements;
+}
+
+
+SignalProxy<void(std::vector<MprStatementPtr>& statements)> MprProgramViewBase::sigSelectedStatementsChanged()
+{
+    return impl->sigSelectedStatementsChanged;
+}
+
+
 MprStatement* MprProgramViewBase::currentStatement()
 {
     return impl->currentStatement;
@@ -964,46 +1031,11 @@ SignalProxy<void(MprStatement* statement)> MprProgramViewBase::sigCurrentStateme
 }
 
 
-void MprProgramViewBase::Impl::onCurrentTreeWidgetItemChanged
-(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+void MprProgramViewBase::Impl::setCurrentStatement(MprStatement* statement)
 {
-    if(auto statementItem = dynamic_cast<StatementItem*>(previous)){
-        prevCurrentStatement = statementItem->statement();
-    }
-    if(auto statementItem = dynamic_cast<StatementItem*>(current)){
-        setCurrentStatement(statementItem->statement(), false, true);
-    }
-}
-
-
-void MprProgramViewBase::Impl::setCurrentStatement
-(MprStatement* statement, bool doSetCurrentItem, bool doActivate)
-{
-    if(doSetCurrentItem){
-        if(auto item = findStatementItem(statement)){
-            currentItemChangeConnection.block();
-            setCurrentItem(item);
-            scrollToItem(item);
-            currentItemChangeConnection.unblock();
-        }
-        prevCurrentStatement = statement;
-    }
-
-    if(statement == weak_errorStatement.lock()){
-        setStyleSheet("QTreeView::item:selected { background-color: red; } "
-                      "QTreeView::branch:selected { background-color: red; }");
-    } else {
-        setStyleSheet("");
-    }
-
-    if(statement != currentStatement){
-        currentStatement = statement;
-        self->onCurrentStatementChanged(statement);
-        sigCurrentStatementChanged(statement);
-    }
-
-    if(doActivate){
-        self->onStatementActivated(statement);
+    if(auto item = findStatementItem(statement)){
+        setCurrentItem(item);
+        scrollToItem(item);
     }
 }
 
@@ -1021,7 +1053,7 @@ void MprProgramViewBase::Impl::setErrorStatement(MprStatement* statement)
                 }
             }
             if(errorStatement == currentStatement && !statement){
-                setCurrentStatement(currentStatement, false, false);
+                setStyleSheet(""); // cancel highlight
             }
         }
         if(statement){
@@ -1036,22 +1068,37 @@ void MprProgramViewBase::Impl::setErrorStatement(MprStatement* statement)
 }
 
 
-void MprProgramViewBase::onCurrentStatementChanged(MprStatement*)
+void MprProgramViewBase::onCurrentStatementChanged(MprStatement* s)
 {
 
 }
 
 
+// Detect the active (last-clicked) statement
+void MprProgramViewBase::Impl::onCurrentTreeWidgetItemChanged
+(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+{
+    if(auto statementItem = dynamic_cast<StatementItem*>(previous)){
+        prevActiveStatement = statementItem->statement();
+    }
+    if(auto statementItem = dynamic_cast<StatementItem*>(current)){
+        self->onStatementActivated(statementItem->statement());
+    }
+}
+
+
 void MprProgramViewBase::Impl::onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */)
 {
-    if(auto statementItem = dynamic_cast<StatementItem*>(item)){
-        auto statement = statementItem->statement();
-        // If the clicked statement is different from the current one,
-        // onCurrentTreeWidgetItemChanged is processed
-        if(statement == prevCurrentStatement){
-            self->onStatementActivated(statement);
+    if(!isJustAfterDoubleClicked){
+        if(auto statementItem = dynamic_cast<StatementItem*>(item)){
+            auto statement = statementItem->statement();
+            if(statement == prevActiveStatement){
+                self->onStatementActivated(statementItem->statement());
+            }
+            prevActiveStatement = statement;
         }
-        prevCurrentStatement = statement;
+    } else {
+        isJustAfterDoubleClicked = false;
     }
 }
 
@@ -1071,10 +1118,9 @@ void MprProgramViewBase::onStatementActivated(MprStatement* statement)
 void MprProgramViewBase::Impl::onTreeWidgetItemDoubleClicked(QTreeWidgetItem* item, int /* column */)
 {
     if(auto statementItem = dynamic_cast<StatementItem*>(item)){
-        auto statement = statementItem->statement();
-        self->onStatementDoubleClicked(statement);
-        prevCurrentStatement = nullptr;
+        self->onStatementDoubleClicked(statementItem->statement());
     }
+    isJustAfterDoubleClicked = true;
 }
 
 
@@ -1205,8 +1251,8 @@ bool MprProgramViewBase::Impl::seekToLogPosition
             }
             break;
         }
-        setCurrentStatement(statement, true, false);
-        result = true;
+
+        setCurrentStatement(statement);
     }
 
     return result;
