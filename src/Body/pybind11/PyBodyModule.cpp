@@ -7,12 +7,19 @@
 #include "../BodyMotion.h"
 #include "../InverseKinematics.h"
 #include "../JointPath.h"
+#include "../LeggedBodyHelper.h"
 #include <cnoid/PyEigenTypes>
 #include <pybind11/operators.h>
 
 using namespace std;
 using namespace cnoid;
 namespace py = pybind11;
+
+namespace {
+
+using Matrix4RM = Eigen::Matrix<double, 4, 4, Eigen::RowMajor>;
+
+}
 
 namespace cnoid {
 
@@ -56,9 +63,12 @@ PYBIND11_MODULE(Body, m)
         .def("indexOf", &JointPath::indexOf)
         .def("customizeTarget", &JointPath::customizeTarget)
         .def_property_readonly("numIterations", &JointPath::numIterations)
-        .def("calcJacobian", [](JointPath& self, Eigen::Ref< Eigen::Matrix<double, -1, -1, Eigen::RowMajor> > out_J){ MatrixXd J; self.calcJacobian(J); out_J = J; })
+        .def("calcJacobian",
+             [](JointPath& self, Eigen::Ref<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>> out_J){
+                 MatrixXd J; self.calcJacobian(J); out_J = J; })
         .def("calcInverseKinematics", (bool(JointPath::*)())&JointPath::calcInverseKinematics)
-        .def("calcInverseKinematics", (bool(JointPath::*)(const Isometry3&))&JointPath::calcInverseKinematics)
+        .def("calcInverseKinematics",
+             [](JointPath& self, Eigen::Ref<const Matrix4RM> T){ return self.calcInverseKinematics(Isometry3(T)); })
 
         // deprecated
         .def("getNumJoints", &JointPath::numJoints)
@@ -104,5 +114,12 @@ PYBIND11_MODULE(Body, m)
 
         // deprecated
         .def("getFrame", &BodyMotion::Frame::frame)
+        ;
+
+    py::class_<LeggedBodyHelper>(m, "LeggedBodyHelper")
+        .def(py::init<>())
+        .def(py::init<Body*>())
+        .def_property_readonly("numFeet", &LeggedBodyHelper::numFeet)
+        .def("footLink", &LeggedBodyHelper::footLink)
         ;
 }

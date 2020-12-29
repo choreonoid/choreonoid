@@ -45,23 +45,20 @@ public:
     virtual void initializeState();
 
     const std::string& name() const { return name_; }
-
     int index() const { return index_; }
     bool isValid() const { return (index_ >= 0); }
-
-    Link* parent() const { return parent_; }
-    Link* sibling() const { return sibling_; }
-    Link* child() const { return child_; }
-        
     bool isRoot() const { return !parent_; }
     bool isBodyRoot() const;
     bool isStatic() const;
     bool isFixedToRoot() const;
+    bool isOwnerOf(const Link* link) const;
+    bool hasParentBody() const { return parent_ && (body_ != parent_->body_); }
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }
-
-    bool hasParentBody() const { return parent_ && (body_ != parent_->body_); }
+    Link* parent() const { return parent_; }
+    Link* sibling() const { return sibling_; }
+    Link* child() const { return child_; }
 
     Isometry3& T() { return T_; }
     const Isometry3& T() const { return T_; }
@@ -70,12 +67,15 @@ public:
     const Isometry3& position() const { return T_; }
 
     template<class Scalar, int Mode, int Options>
-        void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+    void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T){
         T_ = T.template cast<Isometry3::Scalar>();
     }
-
+    template<class Derived>
+    void setPosition(const Eigen::MatrixBase<Derived>& T){
+        T_ = T.template cast<Isometry3::Scalar>();
+    }
     template<typename Derived1, typename Derived2>
-        void setPosition(const Eigen::MatrixBase<Derived1>& rotation, const Eigen::MatrixBase<Derived2>& translation) {
+    void setPosition(const Eigen::MatrixBase<Derived1>& rotation, const Eigen::MatrixBase<Derived2>& translation){
         T_.linear() = rotation;
         T_.translation() = translation;
     }
@@ -157,6 +157,7 @@ public:
     const std::string& jointSpecificName() const { return jointSpecificName_; }
         
     JointType jointType() const { return static_cast<JointType>(jointType_); }
+    std::string jointTypeString(bool useUnderscore = false) const;
     bool isFixedJoint() const { return (jointType_ >= FIXED_JOINT); }
     bool isFreeJoint() const { return jointType_ == FREE_JOINT; }
     bool isRevoluteJoint() const { return jointType_ == REVOLUTE_JOINT; }
@@ -166,8 +167,6 @@ public:
     bool isRotationalJoint() const { return jointType_ == ROTATIONAL_JOINT; }
     /// deprecated
     bool isSlideJoint() const { return jointType_ == SLIDE_JOINT; }
-
-    std::string jointTypeString(bool useUnderscore = false) const;
         
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }
@@ -353,14 +352,11 @@ public:
     SgGroup* collisionShape() const;
     bool hasDedicatedCollisionShape() const;
 
-    void setName(const std::string& name);
-
     // functions for constructing a link
     void setIndex(int index) { index_ = index; }
-
+    void setName(const std::string& name);
     virtual void prependChild(Link* link);
     virtual void appendChild(Link* link);
-    bool isOwnerOf(const Link* link) const;
     bool removeChild(Link* link);
 
     void setOffsetPosition(const Isometry3& T){
@@ -368,11 +364,11 @@ public:
     }
         
     template<typename Derived>
-        void setOffsetTranslation(const Eigen::MatrixBase<Derived>& offset) {
+    void setOffsetTranslation(const Eigen::MatrixBase<Derived>& offset) {
         Tb_.translation() = offset;
     }
     template<typename Derived>
-        void setOffsetRotation(const Eigen::MatrixBase<Derived>& offset) {
+    void setOffsetRotation(const Eigen::MatrixBase<Derived>& offset) {
         Tb_.linear() = offset;
     }
     template<typename T>

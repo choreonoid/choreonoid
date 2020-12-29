@@ -11,6 +11,12 @@ using namespace std;
 using namespace cnoid;
 namespace py = pybind11;
 
+namespace {
+
+using Matrix4RM = Eigen::Matrix<double, 4, 4, Eigen::RowMajor>;
+
+}
+
 namespace cnoid {
 
 void exportPyDeviceTypes(py::module& m)
@@ -27,8 +33,10 @@ void exportPyDeviceTypes(py::module& m)
         .def("clone", (Device*(Device::*)()const) &Device::clone)
         .def("clearState", &Device::clearState)
         .def("hasStateOnly", &Device::hasStateOnly)
-        .def_property("T_local", [](Device& self) -> Isometry3 { return self.T_local(); },
-                      [](Device& self, const Isometry3& T) { self.T_local() = T.matrix(); })
+        .def_property(
+            "T_local",
+            [](Device& self) -> Isometry3::MatrixType& { return self.T_local().matrix(); },
+            [](Device& self, Eigen::Ref<const Matrix4RM> T) { self.T_local() = T; })
 
         // deprecated
         .def("getIndex", &Device::index)
