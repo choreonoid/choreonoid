@@ -5,13 +5,10 @@
 #ifndef CNOID_BASE_TEXT_EDIT_VIEW_H
 #define CNOID_BASE_TEXT_EDIT_VIEW_H
 
-#include <cnoid/Signal>
 #include <cnoid/View>
 
 namespace cnoid {
 
-class TextEditViewImpl;
-    
 class TextEditView : public View
 {
 public:
@@ -20,8 +17,12 @@ public:
     TextEditView();
     virtual ~TextEditView();
 
+protected:
+    virtual void onFocusChanged(bool on) override;
+
 private:
-    TextEditViewImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }
