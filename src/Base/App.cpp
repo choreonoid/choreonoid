@@ -87,9 +87,6 @@ using namespace cnoid;
 
 namespace {
 
-View* lastFocusView_ = 0;
-Signal<void(View*)> sigFocusViewChanged;
-
 Signal<void()> sigAboutToQuit_;
 
 void onCtrl_C_Input(int)
@@ -114,6 +111,7 @@ namespace cnoid {
 
 class App::Impl : public QObject
 {
+public:
     App* self;
     QApplication* qapplication;
     int& argc;
@@ -133,11 +131,7 @@ class App::Impl : public QObject
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
     void showInformationDialog();
-    void onFocusChanged(QWidget* /* old */, QWidget* now);
     virtual bool eventFilter(QObject* watched, QEvent* event);
-
-    friend class App;
-    friend class View;
 };
 
 }
@@ -183,9 +177,6 @@ App::Impl::Impl(App* self, int& argc, char** argv)
     // See https://doc.qt.io/qt-5/qcoreapplication.html#locale-settings
     setlocale(LC_NUMERIC, "C");
 #endif
-
-    connect(qapplication, &QApplication::focusChanged,
-            [&](QWidget* old, QWidget* now){ onFocusChanged(old, now); });
 }
 
 
@@ -332,38 +323,24 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     om.sigOptionsParsed().connect(
         [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
 
-    // Some plugins such as OpenRTM plugin are driven by a library which tries to catch SIGINT.
-    // This may block the normal termination by inputting Ctrl+C.
-    // To avoid it, the following signal handliers are set.
+    /*
+      Some plugins such as OpenRTM plugin are driven by a library which tries to catch SIGINT.
+      This may block the normal termination by inputting Ctrl+C.
+      To avoid it, the following signal handliers are set.
+    */
     std::signal(SIGINT, onCtrl_C_Input);
     std::signal(SIGTERM, onCtrl_C_Input);
 
 #ifdef Q_OS_WIN32
-    // The above SIGINT handler seems to work even on Windows
-    // when Choreonoid is compiled as a console-program,
-    // and the following handler only works for a console-program, too.
-    // Hence the folloing handler for Windows is currently disabled.
+    /*
+      The above SIGINT handler seems to work even on Windows
+      when Choreonoid is compiled as a console-program,
+      and the following handler only works for a console-program, too.
+      Hence the folloing handler for Windows is currently disabled.
+    */
     // SetConsoleCtrlHandler(consoleCtrlHandler, TRUE);
 #endif
 
-#ifdef Q_OS_LINUX
-    /**
-       The following code is neccessary to avoid a crash when a view which has a widget such as
-       QPlainTextEdit and has not been focused yet is first focused (clikced) during the camera
-       image simulation processed by GLVisionSimulatorItem. The crash only occurs in Linux with
-       the nVidia proprietary X driver. If the user clicks such a view to give the focus before
-       the simulation started, the crash doesn't occur, so here the focus is forced to be given
-       by the following code.
-    */
-    /**
-       This is now executed in GLVisionSimulatorItem::initializeSimulation
-       
-       if(QWidget* textEdit = messageView->findChild<QWidget*>("TextEdit")){
-       textEdit->setFocus();
-       textEdit->clearFocus();
-       }
-    */
-#endif
 }
 
 
@@ -484,43 +461,4 @@ void App::Impl::showInformationDialog()
     }
 
     descriptionDialog->show();
-}
-
-
-void App::Impl::onFocusChanged(QWidget* /* old */, QWidget* now)
-{
-    while(now){
-        View* view = dynamic_cast<View*>(now);
-        if(view){
-            lastFocusView_ = view;
-            sigFocusViewChanged(lastFocusView_);
-            break;
-        }
-        now = now->parentWidget();
-    }
-}
-
-
-View* View::lastFocusView()
-{
-    return lastFocusView_;
-}
-
-
-SignalProxy<void(View*)> View::sigFocusChanged()
-{
-    return sigFocusViewChanged;
-}
-
-
-/**
-   This function is called by a View oject when the object to delete
-   is the current focus view.
-*/
-void App::clearFocusView()
-{
-    if(lastFocusView_){
-        lastFocusView_ = 0;
-        sigFocusViewChanged(nullptr);
-    }
 }

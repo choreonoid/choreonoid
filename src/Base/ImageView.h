@@ -11,8 +11,6 @@ namespace cnoid {
 
 class Image;
 class ImageableItem;
-class ImageViewImpl;
-class ImageViewBarImpl;
     
 class CNOID_EXPORT ImageView : public View
 {
@@ -33,11 +31,16 @@ public:
     ImageableItem* getImageableItem();
     void setImageableItem(ImageableItem* imageable);
 
-    virtual bool storeState(Archive& archive);
-    virtual bool restoreState(const Archive& archive);
-        
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
+
+protected:
+    virtual void onDeactivated() override;
+    virtual void onFocusChanged(bool on) override;
+
 private:
-    ImageViewImpl* impl;
+    class Impl;
+    Impl* impl;
 
 };
 
@@ -50,11 +53,13 @@ public:
     ImageableItem* getSelectedImageableItem();
 
 private:
-    ImageViewBarImpl* impl;
+    class Impl;
+    Impl* impl;
+
+    friend class ImageView;
 
     ImageViewBar();
     ~ImageViewBar();
-
 };
 
 }

@@ -14,9 +14,9 @@ namespace cnoid {
 class ExtensionManager;
 class Archive;
 class MenuManager;
+class ViewManager;
 class ViewArea;
 class ViewAreaImpl;
-class ViewManagerImpl;
 
 class CNOID_EXPORT ViewClass
 {
@@ -41,6 +41,7 @@ public:
     ViewArea* viewArea() const;
         
     bool isActive() const;
+    bool hasFocus() const;
 
     void bringToFront();
 
@@ -73,11 +74,10 @@ public:
 
     void enableFontSizeZoomKeys(bool on);
 
-    static View* lastFocusView();
-    static SignalProxy<void(View*)> sigFocusChanged();
-
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);
+
+    static View* lastFocusView();
 
 protected:
     void setLayoutContentsMarginRatio(
@@ -87,23 +87,29 @@ protected:
 
     virtual void onActivated();
     virtual void onDeactivated();
+    virtual void onFocusChanged(bool on);
     virtual void onAttachedMenuRequest(MenuManager& menuManager);
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void resizeEvent(QResizeEvent* event);
         
 private:
+    class Impl;
+    Impl* impl;
+
+    friend class ViewManager;
+    friend class ViewAreaImpl;
+
+    // Called from the view manager initialization
+    static void initializeClass();
+
+    static void onApplicationFocusChanged(QWidget* widget);
+
     // Qt events (make hidden)
     virtual void showEvent(QShowEvent* event);
     virtual void hideEvent(QHideEvent* event);
 
     void setViewArea(ViewArea* area);
     void notifySigRemoved();
-
-    class Impl;
-    Impl* impl;
-
-    friend class ViewAreaImpl;
-    friend class ViewManagerImpl;
 };
 
 }

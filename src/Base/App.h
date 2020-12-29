@@ -29,8 +29,6 @@ public:
 
     int exec();
 
-    static void clearFocusView();
-
 private:
     class Impl;
     Impl* impl;

@@ -5,8 +5,8 @@
 #include "View.h"
 #include "ViewArea.h"
 #include "ViewManager.h"
-#include "App.h"
 #include "AppConfig.h"
+#include <QApplication>
 #include <QLayout>
 #include <QKeyEvent>
 #include <QTabWidget>
@@ -17,6 +17,12 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace {
+
+View* lastFocusView_ = nullptr;
+
+}
+
 namespace cnoid {
 
 class View::Impl
@@ -24,6 +30,7 @@ class View::Impl
 public:
     View* self;
     bool isActive;
+    bool hasFocus;
     string name;
     string titleFormat;
     mutable ViewArea* viewArea;
@@ -45,6 +52,46 @@ public:
 }
 
 
+void View::initializeClass()
+{
+    connect(qApp, &QApplication::focusChanged,
+            [&](QWidget* old, QWidget* now){ onApplicationFocusChanged(now); });
+}
+
+
+void View::onApplicationFocusChanged(QWidget* widget)
+{
+    View* focusView = nullptr;
+    while(widget){
+        if(auto view = dynamic_cast<View*>(widget)){
+            focusView = view;
+            break;
+        }
+        widget = widget->parentWidget();
+    }
+
+    if(focusView != lastFocusView_){
+        if(lastFocusView_){
+            lastFocusView_->impl->hasFocus = false;
+            lastFocusView_->onFocusChanged(false);
+        }
+    }
+    if(focusView){
+        lastFocusView_ = focusView;
+        if(!focusView->impl->hasFocus){
+            focusView->impl->hasFocus = true;
+            focusView->onFocusChanged(true);
+        }
+    }
+}
+
+
+View* View::lastFocusView()
+{
+    return lastFocusView_;
+}
+
+
 View::View()
 {
     impl = new Impl(this);
@@ -55,6 +102,7 @@ View::Impl::Impl(View* self)
     : self(self)
 {
     isActive = false;
+    hasFocus = false;
     titleFormat = "{}";
     viewArea = 0;
     defaultLayoutArea = View::CENTER;
@@ -65,17 +113,20 @@ View::Impl::Impl(View* self)
 
 View::~View()
 {
+    if(impl->hasFocus){
+        impl->hasFocus = false;
+        onFocusChanged(false);
+    }
+    if(this == lastFocusView_){
+        lastFocusView_ = nullptr;
+    }
+
     if(impl->isActive){
         onDeactivated();
     }
 
     if(impl->viewArea){
         impl->viewArea->removeView(this);
-    }
-
-    View* focusView = lastFocusView();
-    if(this == focusView){
-        App::clearFocusView();
     }
 
     delete impl;
@@ -146,6 +197,12 @@ bool View::isActive() const
 }
 
 
+bool View::hasFocus() const
+{
+    return impl->hasFocus;
+}
+
+
 void View::showEvent(QShowEvent*)
 {
     if(!impl->isActive){
@@ -198,6 +255,12 @@ SignalProxy<void()> View::sigActivated()
 SignalProxy<void()> View::sigDeactivated()
 {
     return impl->sigDeactivated;
+}
+
+
+void View::onFocusChanged(bool /* on */)
+{
+
 }
 
 

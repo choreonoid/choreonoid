@@ -43,6 +43,8 @@ public:
     static void unregisterCustomMode(int mode);
     
     static int customModeId(const std::string& modeName);
+
+    static SignalProxy<void(SceneView* view)> sigLastFocusViewChanged();
         
     SceneView();
     ~SceneView();
@@ -54,6 +56,7 @@ public:
     int customMode() const;
         
 protected:
+    virtual void onFocusChanged(bool on) override;
     virtual QWidget* indicatorOnInfoBar() override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;

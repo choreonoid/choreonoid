@@ -40,9 +40,9 @@ class SceneBar::Impl
 public:
     SceneBar* self;
 
-    ScopedConnection viewFocusConnection;
     SceneView* currentSceneView;
     SceneWidget* currentSceneWidget;
+    ScopedConnection sceneViewFocusConnection;
     ScopedConnectionSet sceneViewConnections;
     
     ToolButton* editModeToggle;
@@ -68,7 +68,6 @@ public:
     Impl(SceneBar* self);
     void initialize();
     void onCustomModeButtonToggled(int mode, bool on);
-    void onSceneViewFocusChanged(SceneView* sceneView);
     void onCurrentSceneViewDeactivated();
     void setCurrentSceneView(SceneView* sceneView);
     void onSceneWidgetStateChanged();
@@ -212,13 +211,9 @@ void SceneBar::Impl::initialize()
     self->addButton(QIcon(":/Base/icon/setup.svg"), _("Show the config dialog"))
         ->sigClicked().connect([&](){ currentSceneWidget->showConfigDialog(); });
 
-    viewFocusConnection =
-        View::sigFocusChanged().connect(
-            [&](View* view){
-                if(auto sceneView = dynamic_cast<SceneView*>(view)){
-                    onSceneViewFocusChanged(sceneView);
-                }
-            });
+    sceneViewFocusConnection =
+        SceneView::sigLastFocusViewChanged().connect(
+            [&](SceneView* view){ setCurrentSceneView(view); });
 
     setCurrentSceneView(SceneView::instance());
 }
@@ -268,14 +263,6 @@ void SceneBar::Impl::onCustomModeButtonToggled(int mode, bool on)
         mode = 0;
     }
     currentSceneView->setCustomMode(mode);
-}
-
-
-void SceneBar::Impl::onSceneViewFocusChanged(SceneView* sceneView)
-{
-    if(sceneView != currentSceneView){
-        setCurrentSceneView(sceneView);
-    }
 }
 
 

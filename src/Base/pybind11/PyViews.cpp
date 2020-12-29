@@ -34,7 +34,6 @@ void exportPyViews(py::module m)
         .def_property_readonly("indicatorOnInfoBar", &View::indicatorOnInfoBar, py::return_value_policy::reference)
         .def("enableFontSizeZoomKeys", &View::enableFontSizeZoomKeys)
         .def_property_readonly_static("lastFocusView", &View::lastFocusView, py::return_value_policy::reference)
-        .def_property_readonly("sigFocusChanged", &View::sigFocusChanged)
 
         // deprecated
         .def("getName", &View::name)
@@ -43,7 +42,6 @@ void exportPyViews(py::module m)
         .def("getDefaultLayoutArea", &View::defaultLayoutArea)
         .def("getIndicatorOnInfoBar", &View::indicatorOnInfoBar, py::return_value_policy::reference)
         .def_static("getLastFocusView", &View::lastFocusView, py::return_value_policy::reference)
-        .def("getSigFocusChanged", &View::sigFocusChanged)
         ;
 
     py::enum_<View::LayoutArea>(view, "LayoutArea")

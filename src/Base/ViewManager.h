@@ -15,8 +15,6 @@
 namespace cnoid {
 
 class ExtensionManager;
-class ViewManagerImpl;
-
 
 class CNOID_EXPORT ViewManager
 {
@@ -111,6 +109,8 @@ public:
     static SignalProxy<void(View* view)> sigViewDeactivated();
     static SignalProxy<void(View* view)> sigViewRemoved();
 
+    class Impl;
+
 private:
     ViewManager(const ViewManager&) { }
     
@@ -120,8 +120,8 @@ private:
     static View* getOrCreateSpecificTypeView(
         const std::type_info& view_type_info, const std::string& instanceName, bool doMountCreatedView);
     static View* findSpecificTypeView(const std::type_info& view_type_info, const std::string& instanceName);
-        
-    ViewManagerImpl* impl;
+
+    Impl* impl;
 };
 
 }

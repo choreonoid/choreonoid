@@ -22,6 +22,8 @@ namespace {
 
 vector<SceneView*> instances_;
 Connection sigItemAddedConnection;
+Signal<void(SceneView* view)> sigLastFocusViewChanged_;
+SceneView* lastFocusView_ = nullptr;
 
 struct SceneInfo {
     Item* item;
@@ -125,6 +127,12 @@ void SceneView::unregisterCustomMode(int id)
 }
 
 
+SignalProxy<void(SceneView* view)> SceneView::sigLastFocusViewChanged()
+{
+    return sigLastFocusViewChanged_;
+}
+
+
 static void finalizeClass()
 {
     sigItemAddedConnection.disconnect();
@@ -196,6 +204,15 @@ SceneView::Impl::~Impl()
 
     instances_.erase(std::find(instances_.begin(), instances_.end(), self));
 
+    if(lastFocusView_ == self){
+        if(instances_.empty()){
+            lastFocusView_ = nullptr;
+        } else {
+            lastFocusView_ = instances_.front();
+        }
+        sigLastFocusViewChanged_(lastFocusView_);
+    }
+    
     if(instances_.empty()){
         finalizeClass();
     }
@@ -205,6 +222,15 @@ SceneView::Impl::~Impl()
 SceneWidget* SceneView::sceneWidget()
 {
     return impl->sceneWidget;
+}
+
+
+void SceneView::onFocusChanged(bool on)
+{
+    if(on){
+        lastFocusView_ = this;
+        sigLastFocusViewChanged_(this);
+    }
 }
     
 

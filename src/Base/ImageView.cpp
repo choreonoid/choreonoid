@@ -21,7 +21,7 @@ vector<ImageView*> instances;
 
 namespace cnoid {
 
-class ImageViewImpl
+class ImageView::Impl
 {
 public:
     ImageView* self;
@@ -29,8 +29,8 @@ public:
     Connection sigUpdatedConnection;
     ImageableItem* imageable;
 
-    ImageViewImpl(ImageView* self);
-    ~ImageViewImpl();
+    Impl(ImageView* self);
+    ~Impl();
 
     void updateImage();
     void setImageableItem(ImageableItem* imageable);
@@ -39,28 +39,24 @@ public:
     void restoreState(const Archive& archive);
 };
 
-class ImageViewBarImpl
+class ImageViewBar::Impl
 {
 public:
     ImageViewBar* self;
     ComboBox* imageCombo;
     Connection sigItemAddedConnection;
-    Connection sigViewActivatedConnection;
     typedef map<ImageableItem*, ConnectionSet> ImageableItemConnectionsMap;
     ImageableItemConnectionsMap imageableItemConnections;
-    typedef map<ImageView*, ConnectionSet> ViewConnectionsMap;
-    ViewConnectionsMap viewConnections;
     ImageView* targetView;
 
-    ImageViewBarImpl(ImageViewBar* self);
-    ~ImageViewBarImpl();
+    Impl(ImageViewBar* self);
+    ~Impl();
     ToolButton* adjustSizeToggle;
     void onItemAdded(Item* item);
     void onImageComboCurrentIndexChanged(int index);
     void onItemDisconnectedFromRoot(Item* item);
     void onItemNameChange(Item* item);
-    void onViewActivated(View* view);
-    void onForcusViewChanged(View* view);
+    void onFocusViewChanged(ImageView* imageView);
     void onViewDeactivated(ImageView* imageView);
     void onAdjustSizeClicked(bool on);
     ImageableItem* getSelectedImageableItem();
@@ -70,7 +66,7 @@ public:
 }
 
 
-ImageViewImpl::ImageViewImpl(ImageView* self)
+ImageView::Impl::Impl(ImageView* self)
     : self(self)
 {
     self->setDefaultLayoutArea(View::CENTER);
@@ -92,7 +88,7 @@ ImageViewImpl::ImageViewImpl(ImageView* self)
 }
 
 
-ImageViewImpl::~ImageViewImpl()
+ImageView::Impl::~Impl()
 {
     instances.erase(std::find(instances.begin(), instances.end(), self));
 
@@ -100,7 +96,7 @@ ImageViewImpl::~ImageViewImpl()
 }
 
 
-void ImageViewImpl::updateImage()
+void ImageView::Impl::updateImage()
 {
     bool updated = false;
     if(imageable){
@@ -133,7 +129,7 @@ ImageView* ImageView::instance()
 
 ImageView::ImageView()
 {
-    impl = new ImageViewImpl(this);
+    impl = new Impl(this);
     instances.push_back(this);
     impl->updateImage();
 }
@@ -142,6 +138,20 @@ ImageView::ImageView()
 ImageView::~ImageView()
 {
     delete impl;
+}
+
+
+void ImageView::onDeactivated()
+{
+    ImageViewBar::instance()->impl->onViewDeactivated(this);
+}
+
+
+void ImageView::onFocusChanged(bool on)
+{
+    if(on){
+        ImageViewBar::instance()->impl->onFocusViewChanged(this);
+    }
 }
 
 
@@ -187,7 +197,7 @@ void ImageView::setImageableItem(ImageableItem* imageable)
 }
 
 
-void ImageViewImpl::setImageableItem(ImageableItem* imageable)
+void ImageView::Impl::setImageableItem(ImageableItem* imageable)
 {
     if(imageable != this->imageable){
         this->imageable = imageable;
@@ -207,7 +217,7 @@ bool ImageView::storeState(Archive& archive)
 }
 
 
-bool ImageViewImpl::storeState(Archive& archive)
+bool ImageView::Impl::storeState(Archive& archive)
 {
     if(auto item = dynamic_cast<Item*>(imageable)){
         archive.writeItemId("ImageableItem", item);
@@ -223,7 +233,7 @@ bool ImageView::restoreState(const Archive& archive)
 }
 
 
-void ImageViewImpl::restoreState(const Archive& archive)
+void ImageView::Impl::restoreState(const Archive& archive)
 {
     setImageableItem(
         dynamic_cast<ImageableItem*>(archive.findItem<Item>("ImageableItem")));
@@ -246,7 +256,7 @@ ImageViewBar* ImageViewBar::instance()
 ImageViewBar::ImageViewBar()
     : ToolBar(N_("ImageViewBar"))
 {
-    impl = new ImageViewBarImpl(this);
+    impl = new Impl(this);
 }
 
 
@@ -256,7 +266,7 @@ ImageViewBar::~ImageViewBar()
 }
 
 
-ImageViewBarImpl::ImageViewBarImpl(ImageViewBar* self)
+ImageViewBar::Impl::Impl(ImageViewBar* self)
     : self(self)
 {
     targetView = nullptr;
@@ -278,19 +288,16 @@ ImageViewBarImpl::ImageViewBarImpl(ImageViewBar* self)
     RootItem* rootItem = RootItem::instance();
     sigItemAddedConnection =
         rootItem->sigItemAdded().connect( [&](Item* item){ onItemAdded(item); } );
-
-    sigViewActivatedConnection =
-            ViewManager::sigViewActivated().connect( [&](View* view){ onViewActivated(view); } );
 }
 
 
-ImageViewBarImpl::~ImageViewBarImpl()
+ImageViewBar::Impl::~Impl()
 {
     sigItemAddedConnection.disconnect();
-    sigViewActivatedConnection.disconnect();
 }
 
-void ImageViewBarImpl::onItemAdded(Item* item)
+
+void ImageViewBar::Impl::onItemAdded(Item* item)
 {
     auto imageable = dynamic_cast<ImageableItem*>(item);
 
@@ -309,7 +316,7 @@ void ImageViewBarImpl::onItemAdded(Item* item)
 }
 
 
-void ImageViewBarImpl::onItemDisconnectedFromRoot(Item* item)
+void ImageViewBar::Impl::onItemDisconnectedFromRoot(Item* item)
 {
     if(auto imageable = dynamic_cast<ImageableItem*>(item)){
         int removeIndex = imageCombo->findData(QVariant::fromValue(imageable));
@@ -321,14 +328,14 @@ void ImageViewBarImpl::onItemDisconnectedFromRoot(Item* item)
 }
 
 
-void ImageViewBarImpl::onItemNameChange(Item* item)
+void ImageViewBar::Impl::onItemNameChange(Item* item)
 {
     int index = imageCombo->findData(QVariant::fromValue(dynamic_cast<ImageableItem*>(item)));
     imageCombo->setItemText(index, QString(item->displayName().c_str()));
 }
 
 
-void ImageViewBarImpl::onImageComboCurrentIndexChanged(int index)
+void ImageViewBar::Impl::onImageComboCurrentIndexChanged(int index)
 {
     if(index == -1){
         return;
@@ -346,14 +353,14 @@ ImageableItem* ImageViewBar::getSelectedImageableItem()
 }
 
 
-ImageableItem* ImageViewBarImpl::getSelectedImageableItem()
+ImageableItem* ImageViewBar::Impl::getSelectedImageableItem()
 {
     int index = imageCombo->currentIndex();
     return getImageableItem(index);
 }
 
 
-ImageableItem* ImageViewBarImpl::getImageableItem(int index)
+ImageableItem* ImageViewBar::Impl::getImageableItem(int index)
 {
     const QVariant qv = imageCombo->itemData(index);
     if(qv.isValid()){
@@ -364,31 +371,17 @@ ImageableItem* ImageViewBarImpl::getImageableItem(int index)
 }
 
 
-void ImageViewBarImpl::onViewActivated(View* view)
+void ImageViewBar::Impl::onFocusViewChanged(ImageView* imageView)
 {
-    ImageView* imageView = dynamic_cast<ImageView*>(view);
-    if(imageView){
-        ConnectionSet& connections = viewConnections[imageView];
-        connections.add( imageView->sigFocusChanged().connect(
-            [&](View* view){ onForcusViewChanged(view); } ) );
-        connections.add( imageView->sigDeactivated().connect(
-            [&, imageView](){ onViewDeactivated(imageView); } ) );
-    }
-}
-
-
-void ImageViewBarImpl::onForcusViewChanged(View* view)
-{
-    auto imageView = dynamic_cast<ImageView*>(view);
-    if(imageView){
-        targetView = imageView;
+    targetView = imageView;
+    
+    if(targetView){
         if(auto imageable = targetView->getImageableItem()){
             int index = imageCombo->findData(QVariant::fromValue(imageable));
             imageCombo->setCurrentIndex(index);
         }else{
             imageCombo->setCurrentIndex(0);
         }
-
         if(targetView->isScalingEnabled()){
             adjustSizeToggle->setChecked(true);
         }else{
@@ -398,20 +391,15 @@ void ImageViewBarImpl::onForcusViewChanged(View* view)
 }
 
 
-void ImageViewBarImpl::onViewDeactivated(ImageView* imageView)
+void ImageViewBar::Impl::onViewDeactivated(ImageView* imageView)
 {
     if(targetView == imageView){
         targetView = nullptr;
     }
-
-    ConnectionSet& connections = viewConnections[imageView];
-    connections.disconnect();
-
-    viewConnections.erase(imageView);
 }
 
 
-void ImageViewBarImpl::onAdjustSizeClicked(bool on)
+void ImageViewBar::Impl::onAdjustSizeClicked(bool on)
 {
     if(targetView){
         targetView->setScalingEnabled(on);
