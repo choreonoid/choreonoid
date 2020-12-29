@@ -72,9 +72,6 @@ public:
     bool doFlush;
 };
 
-int flushingRef = 0;
-Signal<void()> sigFlushFinished_;
-
 class TextEditEx : public TextEdit
 {
 public:
@@ -535,13 +532,9 @@ void MessageView::flush()
 
 void MessageViewImpl::flush()
 {
-    if(QThread::currentThreadId() == mainThreadId){
-        ++flushingRef;
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers, 1.0);
-        --flushingRef;
-        if(flushingRef == 0){
-            sigFlushFinished_();
-        }
+    if(true /* Is this check necessary? QThread::currentThreadId() == mainThreadId */){
+        QCoreApplication::processEvents(
+            QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
     }
 }
 
@@ -549,18 +542,6 @@ void MessageViewImpl::flush()
 SignalProxy<void(const std::string& text)> MessageView::sigMessage()
 {
     return impl->sigMessage;
-}
-
-
-bool MessageView::isFlushing()
-{
-    return (flushingRef > 0);
-}
-
-
-SignalProxy<void()> MessageView::sigFlushFinished()
-{
-    return sigFlushFinished_;
 }
 
 

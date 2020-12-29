@@ -12,6 +12,8 @@ namespace cnoid {
 
 CNOID_EXPORT SignalProxy<void()> sigAboutToQuit();
 
+CNOID_EXPORT void updateGui();
+
 }
 
 #endif

@@ -18,6 +18,7 @@ target_link_libraries(PyQtGui ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
 choreonoid_add_python_module(PyBase
   PyBaseModule.cpp
+  PyAppUtil.cpp
   PyQtEx.cpp
   PyItems.cpp
   PyMainWindow.cpp

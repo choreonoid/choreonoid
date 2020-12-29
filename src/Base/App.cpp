@@ -71,6 +71,7 @@
 #include <QTextStream>
 #include <QFile>
 #include <QStyleFactory>
+#include <QThread>
 #include <iostream>
 #include <csignal>
 #include <cstdlib>
@@ -426,12 +427,6 @@ void App::Impl::onMainWindowCloseEvent()
 }    
 
 
-SignalProxy<void()> cnoid::sigAboutToQuit()
-{
-    return sigAboutToQuit_;
-}
-
-
 void App::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("quit")){
@@ -462,3 +457,18 @@ void App::Impl::showInformationDialog()
 
     descriptionDialog->show();
 }
+
+
+SignalProxy<void()> cnoid::sigAboutToQuit()
+{
+    return sigAboutToQuit_;
+}
+
+
+void cnoid::updateGui()
+{
+    QCoreApplication::processEvents(
+        QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
+}
+
+    

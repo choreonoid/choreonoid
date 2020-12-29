@@ -9,6 +9,7 @@ namespace py = pybind11;
 namespace cnoid {
 
 void exportPyQtExTypes(py::module m);
+void exportPyAppUtil(py::module m);
 void exportPyItems(py::module m);
 void exportPyMainWindow(py::module m);
 void exportPyToolBars(py::module m);
@@ -31,6 +32,7 @@ PYBIND11_MODULE(Base, m)
     py::module::import("cnoid.QtGui");
     
     exportPyQtExTypes(m);
+    exportPyAppUtil(m);
     exportPyItems(m);
     exportPyMainWindow(m);
     exportPyToolBars(m);

@@ -75,9 +75,6 @@ public:
 
     SignalProxy<void(const std::string& text)> sigMessage();
 
-    static bool isFlushing();
-    static SignalProxy<void()> sigFlushFinished();
-
 protected:
     virtual bool event(QEvent* e);
 

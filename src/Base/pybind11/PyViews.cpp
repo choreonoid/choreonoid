@@ -64,16 +64,12 @@ void exportPyViews(py::module m)
         .def("clear", &MessageView::clear)
         .def("beginStdioRedirect", &MessageView::beginStdioRedirect)
         .def("endStdioRedirect", &MessageView::endStdioRedirect)
-        .def_static("isFlushing", &MessageView::isFlushing)
-        .def_property_readonly_static("sigFlushFinished", &MessageView::sigFlushFinished)
 
         // deprecated
         .def_static("getInstance", &MessageView::instance, py::return_value_policy::reference)
-        .def_static("getSigFlushFinished", &MessageView::sigFlushFinished)
         ;
 
     py::class_<SceneWidget, QWidget>(m, "SceneWidget")
-        .def("draw", &SceneWidget::draw)
         .def_property_readonly("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
         .def_property_readonly("lastClickedPoint", &SceneWidget::lastClickedPoint)
