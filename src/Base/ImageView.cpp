@@ -26,8 +26,9 @@ class ImageView::Impl
 public:
     ImageView* self;
     ImageWidget* imageWidget;
-    Connection sigUpdatedConnection;
-    ImageableItem* imageable;
+    ScopedConnectionSet itemConnections;
+    ItemPtr currentItem;
+    ImageableItem* currentImageable;
 
     Impl(ImageView* self);
     ~Impl();
@@ -82,7 +83,7 @@ ImageView::Impl::Impl(ImageView* self)
 
     ImageViewBar* imageViewBar = ImageViewBar::instance();
 
-    imageable = nullptr;
+    currentImageable = nullptr;
 
     setImageableItem(imageViewBar->getSelectedImageableItem());
 }
@@ -91,16 +92,14 @@ ImageView::Impl::Impl(ImageView* self)
 ImageView::Impl::~Impl()
 {
     instances.erase(std::find(instances.begin(), instances.end(), self));
-
-    sigUpdatedConnection.disconnect();
 }
 
 
 void ImageView::Impl::updateImage()
 {
     bool updated = false;
-    if(imageable){
-        if(auto image = imageable->getImage()){
+    if(currentImageable){
+        if(auto image = currentImageable->getImage()){
             imageWidget->setImage(*image);
             updated = true;
         }
@@ -187,7 +186,7 @@ bool ImageView::isScalingEnabled() const
 
 ImageableItem* ImageView::getImageableItem()
 {
-    return impl->imageable;
+    return impl->currentImageable;
 }
 
 
@@ -199,13 +198,23 @@ void ImageView::setImageableItem(ImageableItem* imageable)
 
 void ImageView::Impl::setImageableItem(ImageableItem* imageable)
 {
-    if(imageable != this->imageable){
-        this->imageable = imageable;
+    if(imageable != currentImageable){
+        itemConnections.disconnect();
         imageWidget->clear();
-        sigUpdatedConnection.disconnect();
+        currentItem.reset();
+        currentImageable = nullptr;
         if(imageable){
-            sigUpdatedConnection = imageable->sigImageUpdated().connect([&](){ updateImage(); });
-            updateImage();
+            currentItem = dynamic_cast<Item*>(imageable);
+            if(currentItem){
+                currentImageable = imageable;
+                itemConnections.add(
+                    currentItem->sigDisconnectedFromRoot().connect(
+                        [&](){ setImageableItem(nullptr); }));
+                itemConnections.add(
+                    imageable->sigImageUpdated().connect(
+                        [&](){ updateImage(); }));
+                updateImage();
+            }
         }
     }
 }
@@ -219,8 +228,8 @@ bool ImageView::storeState(Archive& archive)
 
 bool ImageView::Impl::storeState(Archive& archive)
 {
-    if(auto item = dynamic_cast<Item*>(imageable)){
-        archive.writeItemId("ImageableItem", item);
+    if(currentItem){
+        archive.writeItemId("imageable_item", currentItem);
     }
     return true;
 }
@@ -235,8 +244,13 @@ bool ImageView::restoreState(const Archive& archive)
 
 void ImageView::Impl::restoreState(const Archive& archive)
 {
-    setImageableItem(
-        dynamic_cast<ImageableItem*>(archive.findItem<Item>("ImageableItem")));
+    auto item = dynamic_cast<ImageableItem*>(archive.findItem<Item>("imageable_item"));
+    if(!item){
+        item = dynamic_cast<ImageableItem*>(archive.findItem<Item>("ImageableItem"));
+    }
+    if(item){
+        setImageableItem(item);
+    }
 }
 
 
