@@ -75,7 +75,7 @@ public:
 void TextEditView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<TextEditView>(
-        "TextEditView", N_("Text Editor"), ViewManager::SINGLE_OPTIONAL);    
+        "TextEditView", N_("Text"), ViewManager::SINGLE_OPTIONAL);    
 }
 
 
@@ -113,8 +113,10 @@ TextEditView::Impl::Impl(TextEditView* self)
     QObject::connect(actionPaste, SIGNAL(triggered()), &textEdit, SLOT(paste()));
 
     QVBoxLayout* vbox = new QVBoxLayout();
+    vbox->setSpacing(0);
     QHBoxLayout* hbox = new QHBoxLayout();
     setCurrentFileName();
+    fileNameLabel.setFrameStyle(QFrame::Box | QFrame::Sunken);
     fileNameLabel.setSizePolicy(QSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred));
     hbox->addWidget(&fileNameLabel, 10);
     PushButton* saveButton = new PushButton(_("Save"));
@@ -126,6 +128,10 @@ TextEditView::Impl::Impl(TextEditView* self)
     vbox->addWidget(&lineLabel);
     self->setLayout(vbox);
 
+    QFont font("monospace");
+    font.setStyleHint(QFont::TypeWriter);
+    textEdit.setFont(font);
+    
     textEdit.sigCursorPositionChanged().connect(
         [&](){ cursorPositionChanged(); });
 
