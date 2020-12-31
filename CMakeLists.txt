@@ -363,9 +363,14 @@ endif()
 # Python
 if(WIN32)
   option(ENABLE_PYTHON "Enable Python" OFF)
+  set(USE_BUNDLED_PYBIND11_DEFAULT ON)
 else()
   option(ENABLE_PYTHON "Enable Python" ON)
+  option(ENABLE_PYTHON_OLD_WRAPPERS "Enable the old version of the Python wrappers" ON)
+  set(USE_BUNDLED_PYBIND11_DEFAULT OFF)
 endif()
+
+option(USE_BUNDLED_PYBIND11 "Use the Pybind11 library bundled with Choreonoid" ${USE_BUNDLED_PYBIND11_DEFAULT})
 
 option(USE_PYTHON3 "Use Python version 3 instead of version 2" ON)
 # for Config.h
@@ -376,14 +381,6 @@ else()
 endif()
 
 set(CHOREONOID_PYTHON_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/python)
-set(CNOID_PYTHON_SUBDIR ${CHOREONOID_PYTHON_SUBDIR})
-
-if(MSVC)
-  set(USE_BUNDLED_PYBIND11_DEFAULT ON)
-else()
-  set(USE_BUNDLED_PYBIND11_DEFAULT OFF)
-endif()
-option(USE_BUNDLED_PYBIND11 "Use the Pybind11 library bundled with Choreonoid" ${USE_BUNDLED_PYBIND11_DEFAULT})
 
 if(ENABLE_PYTHON)
   # The following cache variables must be cleared to update the python version
