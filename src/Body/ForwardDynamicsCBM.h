@@ -26,7 +26,7 @@ class CNOID_EXPORT ForwardDynamicsCBM : public ForwardDynamics
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-    ForwardDynamicsCBM(DyBody* body);
+    ForwardDynamicsCBM(DySubBody* subBody);
     ~ForwardDynamicsCBM();
 
     virtual void initialize();
@@ -40,11 +40,6 @@ public:
     void solveUnknownAccels(const Vector3& fext, const Vector3& tauext);
     bool solveUnknownAccels(DyLink* link, const Vector3& fext, const Vector3& tauext, const Vector3& rootfext, const Vector3& roottauext);
 
-    //! \deprecated Use Link::setActuationMode() instead.
-    void setHighGainModeForAllJoints();
-    //! \deprecated Use Link::setActuationMode() instead.
-    void setHighGainMode(int linkIndex, bool on = true);
-        
 private:
         
     /*
@@ -105,22 +100,6 @@ private:
     VectorXd uorg;
     Vector3 dvoorg;
     Vector3 dworg;
-		
-    struct ForceSensorInfo
-    {
-        bool hasSensor;
-        bool hasSensorsAbove;
-        Vector3 f;
-        Vector3 tau;
-        ForceSensorInfo()
-            : hasSensor(false),
-              hasSensorsAbove(false),
-              f(Vector3::Zero()),
-              tau(Vector3::Zero())
-            { }
-    };
-
-    std::vector<ForceSensorInfo> forceSensorInfo;
 
     // Buffers for the Runge Kutta Method
     Isometry3 T0;
@@ -145,11 +124,10 @@ private:
     void calcPositionAndVelocityFK();
     void calcMassMatrix();
     void setColumnOfMassMatrix(MatrixXd& M, int column);
-    void calcInverseDynamics(DyLink* link, Vector3& out_f, Vector3& out_tau);
-    void calcd1(DyLink* link, Vector3& out_f, Vector3& out_tau);
+    void calcInverseDynamics(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot);
+    void calcd1(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot);
     inline void calcAccelFKandForceSensorValues();
-    void calcAccelFKandForceSensorValues(DyLink* link, Vector3& out_f, Vector3& out_tau);
-    void updateForceSensorInfo(DyLink* link, bool hasSensorsAbove);
+    void calcAccelFKandForceSensorValues(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot);
     void updateForceSensors();
 };
 

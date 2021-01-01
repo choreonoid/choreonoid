@@ -9,8 +9,8 @@
 using namespace cnoid;
 
 
-ForwardDynamics::ForwardDynamics(DyBody* body)
-    : body(body)
+ForwardDynamics::ForwardDynamics(DySubBody* subBody)
+    : subBody(subBody)
 {
     g.setZero();
     timeStep = 0.005;
@@ -85,9 +85,12 @@ void ForwardDynamics::SE3exp
 
 void ForwardDynamics::initializeSensors()
 {
-    body->initializeDeviceStates();
-
-    if(sensorsEnabled){
-        sensorHelper.initialize(body, timeStep, g);
+    auto rootLink = subBody->rootLink();
+    if(rootLink->isBodyRoot()){
+        auto body = rootLink->body();
+        body->initializeDeviceStates();
+        if(sensorsEnabled){
+            sensorHelper.initialize(body, timeStep, g);
+        }
     }
 }

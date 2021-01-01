@@ -55,6 +55,7 @@ Changes since 1.7.0:
 * Implemented the vertex rendering mode and the solid-wireframe rendering mode
 * Improved the highlight style of selected / focused objects in the scene
 * Improved the API on the joint type and the joint actuation mode.
+* Made it possible to use free joints for links other than root links in the simulation by AISTSimulatorItem
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

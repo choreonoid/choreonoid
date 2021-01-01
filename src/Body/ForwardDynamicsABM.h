@@ -19,7 +19,7 @@ class CNOID_EXPORT ForwardDynamicsABM : public ForwardDynamics
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
-    ForwardDynamicsABM(DyBody* body);
+    ForwardDynamicsABM(DySubBody* subBody);
     ~ForwardDynamicsABM();
         
     virtual void initialize();

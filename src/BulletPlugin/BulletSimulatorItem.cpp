@@ -1121,7 +1121,7 @@ void BulletBody::setExtraJoints()
         BulletLinkPtr bulletLinkPair[2];
         for(int i=0; i < 2; ++i){
             BulletLinkPtr bulletLink;
-            Link* link = extraJoint.link[i];
+            Link* link = extraJoint.link(i);
             if(link->index() < bulletLinks.size()){
                 bulletLink = bulletLinks[link->index()];
                 if(bulletLink->link == link){
@@ -1136,11 +1136,11 @@ void BulletBody::setExtraJoints()
         if(bulletLinkPair[1]){
             Link* link0 = bulletLinkPair[0]->link;
             Link* link1 = bulletLinkPair[1]->link;
-            Vector3 p0 = extraJoint.point[0];  // link0 local position
-            Vector3 a = extraJoint.axis;        // link0 local axis
-            Vector3 p1 = extraJoint.point[1];  // link1 local position
+            Vector3 p0 = extraJoint.point(0);  // link0 local position
+            Vector3 a = extraJoint.axis();        // link0 local axis
+            Vector3 p1 = extraJoint.point(1);  // link1 local position
 
-            if(extraJoint.type == ExtraJoint::EJ_PISTON){
+            if(extraJoint.type() == ExtraJoint::EJ_PISTON){
                 Vector3 u(0,0,1);
                 Vector3 ty = a.cross(u);
                 btMatrix3x3 btR;
@@ -1173,7 +1173,7 @@ void BulletBody::setExtraJoints()
                 joint->calculateTransforms();
                 dynamicsWorld->addConstraint(joint, true);
                 extraJoints.push_back(joint);
-            }else if(extraJoint.type == ExtraJoint::EJ_BALL){
+            }else if(extraJoint.type() == ExtraJoint::EJ_BALL){
                 btVector3 pivotInA(p0(0), p0(1), p0(2));
                 btVector3 pivotInB(p1(0), p1(1), p1(2));
                 btPoint2PointConstraint* joint = new btPoint2PointConstraint(*(bulletLinkPair[0]->body), *(bulletLinkPair[1]->body),

@@ -1199,12 +1199,11 @@ void VRMLBodyLoaderImpl::setExtraJoints()
         string link1Name, link2Name;
         readVRMLfield(f["link1Name"], link1Name);
         readVRMLfield(f["link2Name"], link2Name);
-        joint.link[0] = body->link(link1Name);
-        joint.link[1] = body->link(link2Name);
-        joint.body[0] = joint.body[1] = body;
+        joint.setLink(0, body->link(link1Name));
+        joint.setLink(1, body->link(link2Name));
 
         for(int j=0; j < 2; ++j){
-            if(!joint.link[j]){
+            if(!joint.link(j)){
                 throw invalid_argument(
                     format(_("Field \"link{}Name\" of a ExtraJoint node does not specify a valid link name"), (j+1)));
             }
@@ -1212,16 +1211,19 @@ void VRMLBodyLoaderImpl::setExtraJoints()
 
         SFString& jointType = stdx::get<SFString>(f["jointType"]);
         if(jointType == "piston"){
-            joint.type = ExtraJoint::EJ_PISTON;
-            joint.axis = stdx::get<SFVec3f>(f["jointAxis"]);
+            joint.setType(ExtraJoint::EJ_PISTON);
+            joint.setAxis(stdx::get<SFVec3f>(f["jointAxis"]));
         } else if(jointType == "ball"){
-            joint.type = ExtraJoint::EJ_BALL;
+            joint.setType(ExtraJoint::EJ_BALL);
         } else {
             throw invalid_argument(format(_("JointType \"{}\" is not supported."), jointType));
         }
-            
-        readVRMLfield(f["link1LocalPos"], joint.point[0]);
-        readVRMLfield(f["link2LocalPos"], joint.point[1]);
+
+        Vector3 p;
+        readVRMLfield(f["link1LocalPos"], p);
+        joint.setPoint(0, p);
+        readVRMLfield(f["link2LocalPos"], p);
+        joint.setPoint(1, p);
 
         body->addExtraJoint(joint);
     }

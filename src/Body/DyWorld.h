@@ -6,216 +6,143 @@
 #ifndef CNOID_BODY_DYWORLD_H
 #define CNOID_BODY_DYWORLD_H
 
-#include "ForwardDynamics.h"
+#include "DyBody.h"
 #include "ExtraJoint.h"
-#include <cnoid/TimeMeasure>
+#include <string>
 #include <map>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class DyLink;
-class DyBody;
-typedef ref_ptr<DyBody> DyBodyPtr;
-
-class CNOID_EXPORT WorldBase
+class CNOID_EXPORT DyWorldBase
 {
 public:
-    WorldBase();
-    virtual ~WorldBase();
+    DyWorldBase();
+    virtual ~DyWorldBase();
 
-    /**
-       @brief get the number of bodies in this world
-       @return the number of bodies
-    */ 
-    int numBodies() const { return bodyInfoArray.size(); }
-
-    /**
-       @brief get body by index
-       @param index of the body
-       @return body
-    */
-    DyBody* body(int index) const;
-
-    /**
-       @brief get body by name
-       @param name of the body
-       @return body
-    */
+    int numBodies() const { return bodies_.size(); }
+    DyBody* body(int index) { return bodies_[index]; }
     DyBody* body(const std::string& name) const;
+    const std::vector<DyBodyPtr>& bodies() { return bodies_; }
 
     /**
-       @brief get forward dynamics computation method for body
-       @param index index of the body
-       @return forward dynamics computation method
-    */
-    std::shared_ptr<ForwardDynamics> forwardDynamics(int index) {
-        return bodyInfoArray[index].forwardDynamics;
-    }
+       \brief This function returns the number of bodies used in the internal calculation in this world
+       \note The body that has non-root free-joints are decomposed into internal sub bodies
+    */ 
+    int numSubBodies() const { return subBodies_.size(); }
+    DySubBody* subBody(int index) { return subBodies_[index]; }
+    const std::vector<DySubBodyPtr>& subBodies() { return subBodies_; }
 
     /**
-       @brief get index of body by name
-       @param name of the body
-       @return index of the body
-    */
-    int bodyIndex(const std::string& name) const;
-
-    /**
-       @brief add body to this world
-       @param body
-       @return index of the body
-       @note This must be called before initialize() is called.
+       \brief This function adds a body to the world
+       \return Index of the body in the world
+       \note This must be called before initialize() is called.
     */
     int addBody(DyBody* body);
 
-    /**
-       Use this method instead of addBody(const DyBodyPtr& body) when you want to specify
-       a forward dynamics calculater.
-    */
-    int addBody(DyBody* body, std::shared_ptr<ForwardDynamics> forwardDynamics);
-        
-    /**
-       @brief clear bodies in this world
-    */
+    bool hasHighGainDynamics() const { return hasHighGainDynamics_; }
     void clearBodies();
-
-    /**
-       @brief clear collision pairs
-    */
     void clearCollisionPairs();
-
-    /**
-       @brief set time step
-       @param dt time step[s]
-    */
     void setTimeStep(double dt);
-
-    /**
-       @brief get time step
-       @return time step[s]
-    */
     double timeStep(void) const { return timeStep_; }
-	
-    /**
-       @brief set current time
-       @param tm current time[s]
-    */
     void setCurrentTime(double tm);
-
-    /**
-       @brief get current time
-       @return current time[s]
-    */
     double currentTime(void) const { return currentTime_; }
 	
     /**
-       @brief set gravity acceleration
-       @param g gravity acceleration[m/s^2]
+       \param g gravity acceleration[m/s^2]
     */
     void setGravityAcceleration(const Vector3& g);
 
-    /**
-       @brief get gravity acceleration
-       @return gravity accleration
-    */
     inline const Vector3& gravityAcceleration() const { return g; }
 
-        
     /**
-       @brief enable/disable sensor simulation
-       @param on true to enable, false to disable
-       @note This must be called before initialize() is called.
+       \brief enable/disable sensor simulation
+       \param on true to enable, false to disable
+       \note This must be called before initialize() is called.
     */
     void enableSensors(bool on);
 
     void setOldAccelSensorCalcMode(bool on);
 
     /**
-       @brief choose euler method for integration
+       \brief Use the euler method for integration
     */
     void setEulerMethod();
 
     /**
-       @brief choose runge-kutta method for integration
+       \brief Use the runge-kutta method for integration
     */
     void setRungeKuttaMethod();
 
     /**
-       @brief initialize this world. This must be called after all bodies are registered.
+       \brief initialize this world. This must be called after all bodies are registered.
     */
     virtual void initialize();
 
     void setVirtualJointForces();
         
     /**
-       @brief compute forward dynamics and update current state
+       \brief compute forward dynamics and update current state
     */
     virtual void calcNextState();
 
     /**
-       @brief get index of link pairs
-       @param link1 link1
-       @param link2 link2
-       @return pair of index and flag. The flag is true if the pair was already registered, false othewise.
+       \brief get index of link pairs
+       \param link1 link1
+       \param link2 link2
+       \return pair of index and flag. The flag is true if the pair was already registered, false othewise.
     */
     std::pair<int,bool> getIndexOfLinkPairs(DyLink* link1, DyLink* link2);
 
-    std::vector<ExtraJoint> extrajoints;
+    std::vector<ExtraJoint>& extraJoints() { return extraJoints_; }
+    void clearExtraJoints() { extraJoints_.clear(); }
+    void addExtraJoint(ExtraJoint& extraJoint){ extraJoints_.push_back(extraJoint); }
 
-protected:
-
+private:
     double currentTime_;
     double timeStep_;
 
-    struct BodyInfo {
-        DyBodyPtr body;
-        std::shared_ptr<ForwardDynamics> forwardDynamics;
-        bool hasVirtualJointForces;
-    };
-    std::vector<BodyInfo> bodyInfoArray;
-
-    bool sensorsAreEnabled;
-    bool isOldAccelSensorCalcMode;
-
-private:
-    typedef std::map<std::string, int> NameToIndexMap;
-    NameToIndexMap nameToBodyIndexMap;
-
-    typedef std::map<DyBodyPtr, int> BodyToIndexMap;
-    BodyToIndexMap bodyToIndexMap;
+    std::vector<DyBodyPtr> bodies_;
+    std::vector<DySubBodyPtr> subBodies_;
+    std::vector<DyBodyPtr> bodiesWithVirtualJointForces_;
+    std::map<std::string, DyBodyPtr> nameToBodyMap;
 
     Vector3 g;
-
+    bool sensorsAreEnabled;
+    bool isOldAccelSensorCalcMode;
     bool isEulerMethod; // Euler or Runge Kutta ?
+    bool hasHighGainDynamics_;
 
     struct LinkPairKey {
         DyLink* link1;
         DyLink* link2;
         bool operator<(const LinkPairKey& pair2) const;
     };
-    typedef std::map<LinkPairKey, int> LinkPairKeyToIndexMap;
-    LinkPairKeyToIndexMap linkPairKeyToIndexMap;
+    std::map<LinkPairKey, int> linkPairKeyToIndexMap;
 
     int numRegisteredLinkPairs;
-		
+
+    std::vector<ExtraJoint> extraJoints_;
+
+    void extractInternalBodies(Link* link);    
 };
 
-template <class TConstraintForceSolver> class World : public WorldBase
+template <class TConstraintForceSolver> class DyWorld : public DyWorldBase
 {
 public:
     TConstraintForceSolver constraintForceSolver;
 
-    World() : constraintForceSolver(*this) { }
+    DyWorld() : constraintForceSolver(*this) { }
 
     virtual void initialize() {
-        WorldBase::initialize();
+        DyWorldBase::initialize();
         constraintForceSolver.initialize();
     }
 
     virtual void calcNextState(){
-        WorldBase::setVirtualJointForces();
+        DyWorldBase::setVirtualJointForces();
         constraintForceSolver.solve();
-        WorldBase::calcNextState();
+        DyWorldBase::calcNextState();
     }
 };
 

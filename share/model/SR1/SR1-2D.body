@@ -442,7 +442,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 14
-    centerOfMass: 0 0 -0.15
+    centerOfMass: [ 0, 0, -0.15 ]
     mass: 2.0
     inertia: [
       1, 0, 0,
@@ -573,7 +573,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 1
-    centerOfMass: 0 0 -0.15
+    centerOfMass: [ 0, 0, -0.15 ]
     mass: 2.0
     inertia: [
       1, 0, 0,

@@ -1990,13 +1990,11 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
 {
     ExtraJoint joint;
 
-    joint.body[0] = joint.body[1] = body;
-    
-    joint.link[0] = body->link(node->get("link1Name").toString());
-    joint.link[1] = body->link(node->get("link2Name").toString());
+    joint.setLink(0, body->link(node->get("link1Name").toString()));
+    joint.setLink(1, body->link(node->get("link2Name").toString()));
 
     for(int i=0; i < 2; ++i){
-        if(!joint.link[i]){
+        if(!joint.link(i)){
             node->throwException(
                 format(_("The link specified in \"link{}Name\" is not found"), (i + 1)));
         }
@@ -2004,18 +2002,22 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
 
     string jointType = node->get("jointType").toString();
     if(jointType == "piston"){
-        joint.type = ExtraJoint::EJ_PISTON;
-        if(!readAxis(node, "jointAxis", joint.axis)){
+        joint.setType(ExtraJoint::EJ_PISTON);
+        if(readAxis(node, "jointAxis", v)){
+            joint.setAxis(v);
+        } else {
             node->throwException(_("The jointAxis value must be specified for the pistion type"));
         }
     } else if(jointType == "ball"){
-        joint.type = ExtraJoint::EJ_BALL;
+        joint.setType(ExtraJoint::EJ_BALL);
     } else {
         node->throwException(format(_("Joint type \"{}\" is not available"), jointType));
     }
 
-    readEx(node, "link1LocalPos", joint.point[0]);
-    readEx(node, "link2LocalPos", joint.point[1]);
+    readEx(node, "link1LocalPos", v);
+    joint.setPoint(0, v);
+    readEx(node, "link2LocalPos", v);
+    joint.setPoint(1, v);
 
     body->addExtraJoint(joint);
 }

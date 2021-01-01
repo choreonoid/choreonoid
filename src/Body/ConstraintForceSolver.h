@@ -11,18 +11,15 @@
 namespace cnoid {
 
 class Link;
-class ConstraintForceSolverImpl;
-class WorldBase;
+class DyWorldBase;
 class CollisionDetector;
 class ContactMaterial;
 class MaterialTable;
 	
 class CNOID_EXPORT ConstraintForceSolver
 {
-    ConstraintForceSolverImpl* impl;
-		
 public:
-    ConstraintForceSolver(WorldBase& world);
+    ConstraintForceSolver(DyWorldBase& world);
     ~ConstraintForceSolver();
 		
     void setCollisionDetector(CollisionDetector* detector);
@@ -74,6 +71,10 @@ public:
     
     void registerCollisionHandler(const std::string& name, CollisionHandler handler);
     bool unregisterCollisionHandler(const std::string& name);
+
+private:
+    class Impl;
+    Impl* impl;
 };
 
 };

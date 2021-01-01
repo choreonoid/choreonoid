@@ -717,7 +717,7 @@ void ODEBody::setExtraJoints(bool flipYZ)
         ODELinkPtr odeLinkPair[2];
         for(int i=0; i < 2; ++i){
             ODELinkPtr odeLink;
-            Link* link = extraJoint.link[i];
+            Link* link = extraJoint.link(i);
             if(link->index() < odeLinks.size()){
                 odeLink = odeLinks[link->index()];
                 if(odeLink->link == link){
@@ -733,21 +733,21 @@ void ODEBody::setExtraJoints(bool flipYZ)
 
             dJointID jointID = 0;
             Link* link = odeLinkPair[0]->link;
-            Vector3 p = link->R() * extraJoint.point[0] + link->p();
-            Vector3 a = link->R() * extraJoint.axis;
+            Vector3 p = link->R() * extraJoint.point(0) + link->p();
+            Vector3 a = link->R() * extraJoint.axis();
             if(flipYZ){
                 makeInternal(p);
                 makeInternal(a);
             }
 
             // \todo do the destroy management for these joints
-            if(extraJoint.type == ExtraJoint::EJ_PISTON){
+            if(extraJoint.type() == ExtraJoint::EJ_PISTON){
                 jointID = dJointCreatePiston(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetPistonAnchor(jointID, p.x(), p.y(), p.z());
                 dJointSetPistonAxis(jointID, a.x(), a.y(), a.z());
 
-            } else if(extraJoint.type == ExtraJoint::EJ_BALL){
+            } else if(extraJoint.type() == ExtraJoint::EJ_BALL){
                 jointID = dJointCreateBall(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetBallAnchor(jointID, p.x(), p.y(), p.z());

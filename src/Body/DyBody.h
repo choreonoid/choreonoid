@@ -8,9 +8,70 @@
 
 #include "Body.h"
 #include "Link.h"
+#include "ForwardDynamics.h"
+#include <map>
 #include "exportdecl.h"
 
 namespace cnoid {
+
+class DyBody;
+typedef ref_ptr<DyBody> DyBodyPtr;
+class DyLink;
+typedef ref_ptr<DyLink> DyLinkPtr;
+class ForwardDynamicsCBM;
+
+class CNOID_EXPORT DySubBody : public Referenced
+{
+public:
+    DySubBody(DyLink* rootLink);
+    DySubBody(DyLink* rootLink, std::multimap<Link*, ForceSensor*>& forceSensorMap);
+
+    DyLink* rootLink(){ return rootLink_; }
+    std::vector<DyLink*>& links(){ return links_; }
+    int numLinks() const { return links_.size(); }
+    DyLink* link(int localIndex){ return links_[localIndex]; }
+    bool isStatic() const { return isStatic_; }
+
+    ForwardDynamics* forwardDynamics(){ return forwardDynamics_.get(); }
+    ForwardDynamicsCBM* forwardDynamicsCBM(){ return forwardDynamicsCBM_; }
+    const std::vector<ForceSensor*>& forceSensors() { return forceSensors_; }
+
+    void clearExternalForces();
+    void calcSpatialForwardKinematics();    
+
+private:
+    DyLinkPtr rootLink_;
+    DyBodyPtr body_;
+    std::vector<DyLink*> links_;
+    std::unique_ptr<ForwardDynamics> forwardDynamics_;
+
+    /**
+       If the body includes high-gain mode joints,
+       the ForwardDynamisCBM object of the body is set to this pointer.
+       The pointer is null when all the joints are torque mode and
+       the forward dynamics is calculated by ABM.
+    */
+    ForwardDynamicsCBM* forwardDynamicsCBM_;
+    
+    std::vector<ForceSensor*> forceSensors_;
+
+    bool isStatic_;
+    
+    // Used in ConstraintForceSolver
+    bool hasConstrainedLinks;
+    bool hasContactStateSensingLinks;
+    bool isTestForceBeingApplied;
+    Vector3 dpf;
+    Vector3 dptau;
+
+    void initialize(DyLink* rootLink, std::multimap<Link*, ForceSensor*>& forceSensorMap);
+    void extractLinksInSubBody(
+        DyLink* link, std::multimap<Link*, ForceSensor*>& forceSensorMap, bool& hasHighgainJoints);
+
+    friend class ConstraintForceSolver;
+};
+
+typedef ref_ptr<DySubBody> DySubBodyPtr;
 
 /**
    A Link class used for forward dynamics based on the articulated body method (ABM)
@@ -21,10 +82,14 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     DyLink();
+    DyLink(const DyLink& org);
     DyLink(const Link& link);
 
     virtual void initializeState() override;
 
+    DySubBody* subBody() { return subBody_; }
+    bool isSubBodyRoot() const { return (this == subBody_->rootLink()); }
+    DyBody* body();
     DyLink* parent() const { return static_cast<DyLink*>(Link::parent()); }
     DyLink* sibling() const { return static_cast<DyLink*>(Link::sibling()); }
     DyLink* child() const { return static_cast<DyLink*>(Link::child()); }
@@ -77,6 +142,8 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
         
 private:
+    DySubBody* subBody_;
+
     Vector3 vo_;  ///< translation elements of spacial velocity
     Vector3 dvo_; ///< derivative of vo
     
@@ -104,8 +171,38 @@ private:
     Vector3 hhw_;  ///< bottom bock of Ia * s 
     double uu_;
     double dd_;    ///< Ia * s*s^T
-};
 
+    struct ConstraintForceSolverData
+    {
+        Vector3 dvo;
+        Vector3 dw;
+        Vector3 pf0;
+        Vector3 ptau0;
+        double uu;
+        double uu0;
+        double ddq;
+        int numberToCheckAccelCalcSkip;
+    };
+    ConstraintForceSolverData cfs;
+
+    struct ForwardDynamicsCbmData
+    {
+        bool hasForceSensor;
+        bool hasForceSensorsAbove;
+        Vector3 f;
+        Vector3 tau;
+        ForwardDynamicsCbmData()
+            : hasForceSensor(false),
+              hasForceSensorsAbove(false),
+              f(Vector3::Zero()),
+              tau(Vector3::Zero()) { }
+    };
+    std::unique_ptr<ForwardDynamicsCbmData> cbm;
+
+    friend class DySubBody;
+    friend class ForwardDynamicsCBM;
+    friend class ConstraintForceSolver;
+};
 
 /**
    A Body class used for forward dynamics based on the articulated body method (ABM)
@@ -123,7 +220,7 @@ public:
     */
     DyBody(const Body& org) = delete;
 
-    virtual Link* createLink(const Link* org = 0) const override;
+    virtual Link* createLink(const Link* org = nullptr) const override;
 
     DyLink* joint(int id) const {
         return static_cast<DyLink*>(Body::joint(id));
@@ -141,13 +238,26 @@ public:
         return reinterpret_cast<const std::vector<DyLink*>&>(Body::links());
     }
 
+    void initializeSubBodies();
+
+    std::vector<DySubBodyPtr>& subBodies(){ return subBodies_; }
+
     void calcSpatialForwardKinematics();
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    std::vector<DySubBodyPtr> subBodies_;
 };
 
 typedef ref_ptr<DyBody> DyBodyPtr;
+
+
+inline DyBody* DyLink::body()
+{
+    return static_cast<DyBody*>(Link::body());
+}
 
 }
 

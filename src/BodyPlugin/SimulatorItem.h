@@ -45,6 +45,10 @@ public:
 
     virtual bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem);
 
+    const std::string& recordItemPrefix() const;
+    virtual void initializeRecordBuffers();
+    virtual void initializeRecordItems();
+
     /**
        Called from the simulation loop thread
     */
@@ -56,17 +60,12 @@ public:
        is not recoreded is changed
     */
     void notifyUnrecordedDeviceStateChange(Device* device);
-
-    const std::string& resultItemPrefix() const;
     
-    virtual void initializeResultBuffers();
-    virtual void initializeResultItems();
-
     /**
        Called from the simulation loop thread.
     */
-    virtual void bufferResults();
-    virtual void flushResults();
+    virtual void bufferRecords();
+    virtual void flushRecords();
 
     class Impl;
 

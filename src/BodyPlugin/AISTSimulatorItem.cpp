@@ -78,10 +78,7 @@ public:
 
     AISTSimulatorItem* self;
 
-    World<ConstraintForceSolver> world;
-    typedef std::map<Body*, int> BodyIndexMap;
-    BodyIndexMap bodyIndexMap;
-    vector<shared_ptr<ForwardDynamicsCBM>> highGainDynamicsList;
+    DyWorld<ConstraintForceSolver> world;
     vector<DyLink*> internalStateUpdateLinks;
         
     Selection dynamicsMode;
@@ -99,6 +96,7 @@ public:
     bool is2Dmode;
     bool isKinematicWalkingEnabled;
     bool isOldAccelSensorMode;
+    bool hasNonRootFreeJoints;
 
     stdx::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
@@ -116,8 +114,6 @@ public:
     void setForcedPosition(BodyItem* bodyItem, const Isometry3& T);
     void doSetForcedPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
-    void addExtraJoint(ExtraJoint& extrajoint);
-    void clearExtraJoint();
     bool store(Archive& archive);
     bool restore(const Archive& archive);
 
@@ -172,6 +168,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     isKinematicWalkingEnabled = false;
     is2Dmode = false;
     isOldAccelSensorMode = false;
+    hasNonRootFreeJoints = false;
 
     mv = MessageView::instance();
 }
@@ -374,17 +371,6 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap&
     cloneMap.setClone(orgBody, body);
     body->copyFrom(orgBody, &cloneMap);
 
-    const int n = orgBody->numLinks();
-    for(int i=0; i < n; ++i){
-        auto link = body->link(i);
-        if(link->isFreeJoint() && !link->isBodyRoot()){
-            static const char* message =
-                _("The joint {0} of {1} is a free joint. AISTSimulator does not allow for a free joint except for the root link.");
-            impl->mv->putln(format(message, link->name(), body->name()), MessageView::Warning);
-            link->setJointType(Link::FIXED_JOINT);
-        }
-    }
-    
     if(impl->dynamicsMode.is(KINEMATICS) && impl->isKinematicWalkingEnabled){
         LeggedBodyHelper* legged = getLeggedBodyHelper(body);
         if(legged->isValid()){
@@ -433,15 +419,25 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     self->addPostDynamicsFunction([&](){ clearExternalForces(); });
 
     world.clearBodies();
-    bodyIndexMap.clear();
-    highGainDynamicsList.clear();
     internalStateUpdateLinks.clear();
 
+    hasNonRootFreeJoints = false;
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<AISTSimBody*>(simBodies[i]));
     }
+    if(hasNonRootFreeJoints && !self->isAllLinkPositionOutputMode()){
+        bool confirmed = showConfirmDialog(
+            _("Confirmation of all link position recording mode"),
+            format(_("{0}: There is a model that has free-type joints other than the root link "
+                     "and all the link positions should be recorded in this case. "
+                     "Do you enable the mode to do it?"), self->displayName()));
+        if(confirmed){
+            self->setAllLinkPositionOutputMode(true);
+            self->notifyUpdate();
+        }
+    }
 
-    if(!highGainDynamicsList.empty()){
+    if(world.hasHighGainDynamics()){
         mvout() << format(_("{} uses the ForwardDynamicsCBM module to perform the high-gain control."),
                           self->displayName()) << endl;
     }
@@ -464,56 +460,47 @@ void AISTSimulatorItem::Impl::addBody(AISTSimBody* simBody)
 {
     DyBody* body = static_cast<DyBody*>(simBody->body());
 
-    bool hasHighgainJoints = false;
-    
+    //! \todo Move the following process to DySubBody's constructor
     for(auto& link : body->links()){
-        int actuationMode = link->actuationMode();
-        if(actuationMode){
-
-            if(actuationMode == Link::JointEffort){
+        if(link->isFreeJoint() && !link->isBodyRoot()){
+            hasNonRootFreeJoints = true;
+        }
+        int mode = link->actuationMode();
+        if(mode){
+            if(mode == Link::JointEffort){
                 continue;
             }
             if(link->jointType() == Link::PseudoContinuousTrackJoint){
-                if(actuationMode == Link::JointVelocity || actuationMode == Link::DeprecatedJointSurfaceVelocity){
+                if(mode == Link::JointVelocity || mode == Link::DeprecatedJointSurfaceVelocity){
                     continue;
                 } else {
                     mv->putln(
                         format(_("{0}: Actuation mode \"{1}\" cannot be used for the pseudo continuous track link {2} of {3}"),
-                               self->displayName(), Link::getStateModeString(actuationMode), link->name(), body->name()),
+                               self->displayName(), Link::getStateModeString(mode), link->name(), body->name()),
                         MessageView::Warning);
                 }
             }
-            if(actuationMode == Link::JointDisplacement ||
-               actuationMode == Link::JointVelocity ||
-               actuationMode == Link::LinkPosition){
-                hasHighgainJoints = true;
+            if(mode == Link::JointDisplacement || mode == Link::JointVelocity || mode == Link::LinkPosition){
+                continue;
 
-            } else if(actuationMode == Link::AllStateHighGainActuationMode){
+            } else if(mode == Link::AllStateHighGainActuationMode){
                 internalStateUpdateLinks.push_back(link);
 
-            } else if(actuationMode == Link::DeprecatedJointSurfaceVelocity){
+            } else if(mode == Link::DeprecatedJointSurfaceVelocity){
                 if(link->isFixedJoint()){
                     link->setJointType(Link::PseudoContinuousTrackJoint);
                 }
             } else {
                 mv->putln(
                     format(_("{0}: Actuation mode \"{1}\" specified for the {2} link of {3} is not supported."),
-                           self->displayName(), Link::getStateModeString(actuationMode), link->name(), body->name()),
+                           self->displayName(), Link::getStateModeString(mode), link->name(), body->name()),
                     MessageView::Warning);
             }
         }
     }
 
-    int bodyIndex;
-    if(hasHighgainJoints){
-        auto dynamics = make_shared_aligned<ForwardDynamicsCBM>(body);
-        highGainDynamicsList.push_back(dynamics);
-        bodyIndex = world.addBody(body, dynamics);
-    } else {
-        bodyIndex = world.addBody(body);
-    }
-    bodyIndexMap[body] = bodyIndex;
-
+    int bodyIndex = world.addBody(body);
+    
     world.constraintForceSolver.setSelfCollisionDetectionEnabled(
         bodyIndex, simBody->bodyItem()->isSelfCollisionDetectionEnabled());
 }
@@ -537,9 +524,6 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
     switch(impl->dynamicsMode.which()){
 
     case FORWARD_DYNAMICS:
-        for(auto&& dynamics : impl->highGainDynamicsList){
-            dynamics->complementHighGainModeCommandValues();
-        }
         // Update the internal states for a special actuation mode
         for(auto& dyLink : impl->internalStateUpdateLinks){
             if(dyLink->actuationMode() == Link::AllStateHighGainActuationMode){
@@ -698,27 +682,15 @@ void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-void AISTSimulatorItem::clearExtraJoint()
+void AISTSimulatorItem::clearExtraJoints()
 {
-    impl->clearExtraJoint();
+    impl->world.clearExtraJoints();
 }
 
 
-void AISTSimulatorItem::addExtraJoint(ExtraJoint& extrajoint)
+void AISTSimulatorItem::addExtraJoint(ExtraJoint& extraJoint)
 {
-    impl->addExtraJoint(extrajoint);
-}
-
-
-void AISTSimulatorItem::Impl::clearExtraJoint()
-{
-    world.extrajoints.clear();
-}
-
-
-void AISTSimulatorItem::Impl::addExtraJoint(ExtraJoint& extrajoint)
-{
-    world.extrajoints.push_back(extrajoint);
+    impl->world.addExtraJoint(extraJoint);
 }
 
 

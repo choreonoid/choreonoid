@@ -30,15 +30,15 @@ void AGXExtraJoint::createJoints()
         ExtraJoint& extraJoint = body->extraJoint(j);
 
         AGXLink* agxLinkPair[2];
-        agxLinkPair[0] = agxBody->getAGXLink(extraJoint.link[0]->index());
-        agxLinkPair[1] = agxBody->getAGXLink(extraJoint.link[1]->index());
+        agxLinkPair[0] = agxBody->getAGXLink(extraJoint.link(0)->index());
+        agxLinkPair[1] = agxBody->getAGXLink(extraJoint.link(1)->index());
         if (!agxLinkPair[0] || !agxLinkPair[1]) continue;
 
-        Link* const link = extraJoint.link[0];
-        const Vector3 p = link->R() * extraJoint.point[0] + link->p();
-        const Vector3 a = link->R() * extraJoint.axis;
+        Link* const link = extraJoint.link(0);
+        const Vector3 p = link->R() * extraJoint.point(0) + link->p();
+        const Vector3 a = link->R() * extraJoint.axis();
         agx::ConstraintRef constraint = nullptr;
-        switch (extraJoint.type) {
+        switch (extraJoint.type()) {
         case ExtraJoint::EJ_PISTON: {
             AGXHingeDesc hd;
             hd.frameAxis = agx::Vec3(a(0), a(1), a(2));

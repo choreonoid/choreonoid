@@ -49,8 +49,8 @@ public:
     [[deprecated("This function does nothing. Set Link::LinkContactState to Link::sensingMode from a controller.")]]
     void setConstraintForceOutputEnabled(bool on);
 
-    void addExtraJoint(ExtraJoint& extrajoint);
-    void clearExtraJoint();
+    void addExtraJoint(ExtraJoint& extraJoint);
+    void clearExtraJoints();
 
     virtual Vector3 getGravity() const override;
     virtual void setForcedPosition(BodyItem* bodyItem, const Isometry3& T) override;

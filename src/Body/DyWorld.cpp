@@ -3,22 +3,14 @@
 */
 
 #include "DyWorld.h"
-#include "DyBody.h"
-#include "ForwardDynamicsABM.h"
-#include "ForwardDynamicsCBM.h"
-#include <cnoid/EigenUtil>
-#include <string>
-#include <iostream>
 
 using namespace std;
 using namespace cnoid;
 
 static const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
-static const bool debugMode = false;
 
-
-WorldBase::WorldBase()
+DyWorldBase::DyWorldBase()
 {
     currentTime_ = 0.0;
     timeStep_ = 0.005;
@@ -26,175 +18,150 @@ WorldBase::WorldBase()
     g << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
 
     isEulerMethod =false;
+    hasHighGainDynamics_ = false;
     sensorsAreEnabled = false;
     isOldAccelSensorCalcMode = false;
     numRegisteredLinkPairs = 0;
 }
 
 
-WorldBase::~WorldBase()
+DyWorldBase::~DyWorldBase()
 {
 
 }
 
 
-int WorldBase::bodyIndex(const std::string& name) const
+DyBody* DyWorldBase::body(const std::string& name) const
 {
-    NameToIndexMap::const_iterator p = nameToBodyIndexMap.find(name);
-    return (p != nameToBodyIndexMap.end()) ? p->second : -1;
-}
-
-
-DyBody* WorldBase::body(int index) const
-{
-    if(index < 0 || (int)bodyInfoArray.size() <= index){
-        return 0;
+    auto p = nameToBodyMap.find(name);
+    if(p != nameToBodyMap.end()){
+        return p->second;
     }
-    return bodyInfoArray[index].body; 
+    return nullptr;
 }
 
 
-DyBody* WorldBase::body(const std::string& name) const
-{
-    int idx = bodyIndex(name);
-    if(idx < 0 || (int)bodyInfoArray.size() <= idx){
-        return 0;
-    }
-    return bodyInfoArray[idx].body;
-}
-
-
-void WorldBase::setTimeStep(double ts)
+void DyWorldBase::setTimeStep(double ts)
 {
     timeStep_ = ts;
 }
 
 
-void WorldBase::setCurrentTime(double time)
+void DyWorldBase::setCurrentTime(double time)
 {
     currentTime_ = time;
 }
 
 
-void WorldBase::setGravityAcceleration(const Vector3& g)
+void DyWorldBase::setGravityAcceleration(const Vector3& g)
 {
     this->g = g;
 }
 
 
-void WorldBase::enableSensors(bool on)
+void DyWorldBase::enableSensors(bool on)
 {
     sensorsAreEnabled = on;
 }
 
 
-void WorldBase::setOldAccelSensorCalcMode(bool on)
+void DyWorldBase::setOldAccelSensorCalcMode(bool on)
 {
     isOldAccelSensorCalcMode = on;
 }
 
 
-void WorldBase::initialize()
+void DyWorldBase::initialize()
 {
-    const int n = bodyInfoArray.size();
-
-    for(int i=0; i < n; ++i){
-
-        BodyInfo& info = bodyInfoArray[i];
-
-        if(!info.forwardDynamics){
-            info.forwardDynamics = make_shared_aligned<ForwardDynamicsABM>(info.body);
-        }
-        
+    for(auto& subBody : subBodies_){
+        auto forwardDynamics = subBody->forwardDynamics();
         if(isEulerMethod){
-            info.forwardDynamics->setEulerMethod();
+            forwardDynamics->setEulerMethod();
         } else {
-            info.forwardDynamics->setRungeKuttaMethod();
+            forwardDynamics->setRungeKuttaMethod();
         }
-        info.forwardDynamics->setGravityAcceleration(g);
-        info.forwardDynamics->setTimeStep(timeStep_);
-        info.forwardDynamics->enableSensors(sensorsAreEnabled);
-        info.forwardDynamics->setOldAccelSensorCalcMode(isOldAccelSensorCalcMode);
-        info.forwardDynamics->initialize();
+        forwardDynamics->setGravityAcceleration(g);
+        forwardDynamics->setTimeStep(timeStep_);
+        forwardDynamics->enableSensors(sensorsAreEnabled);
+        forwardDynamics->setOldAccelSensorCalcMode(isOldAccelSensorCalcMode);
+        forwardDynamics->initialize();
     }
 }
 
 
-void WorldBase::setVirtualJointForces()
+void DyWorldBase::setVirtualJointForces()
 {
-    for(size_t i=0; i < bodyInfoArray.size(); ++i){
-        BodyInfo& info = bodyInfoArray[i];
-        if(info.hasVirtualJointForces){
-            info.body->setVirtualJointForces(timeStep_);
-        }
+    for(auto& body : bodiesWithVirtualJointForces_){
+        body->setVirtualJointForces(timeStep_);
     }
 }
 
 
-void WorldBase::calcNextState()
+void DyWorldBase::calcNextState()
 {
-    if(debugMode){
-        cout << "World current time = " << currentTime_ << endl;
-    }
-    const int n = bodyInfoArray.size();
-
-    for(int i=0; i < n; ++i){
-        BodyInfo& info = bodyInfoArray[i];
-        info.forwardDynamics->calcNextState();
+    for(auto& subBody : subBodies_){
+        subBody->forwardDynamics()->calcNextState();
     }
     currentTime_ += timeStep_;
 }
 
 
-int WorldBase::addBody(DyBody* body)
+int DyWorldBase::addBody(DyBody* body)
 {
-    if(!body->name().empty()){
-        nameToBodyIndexMap[body->name()] = bodyInfoArray.size();
+    int index = bodies_.size();
+    
+    bodies_.push_back(body);
+    if(body->hasVirtualJointForces()){
+        bodiesWithVirtualJointForces_.push_back(body);
     }
-    BodyInfo info;
-    info.body = body;
-    info.hasVirtualJointForces = body->hasVirtualJointForces();
-    bodyInfoArray.push_back(info);
 
-    return bodyInfoArray.size() - 1;
-}
+    body->initializeSubBodies();
 
+    for(auto& subBody : body->subBodies()){
+        subBodies_.push_back(subBody);
+        if(subBody->forwardDynamicsCBM()){
+            hasHighGainDynamics_ = true;
+        }
+    }
 
-int WorldBase::addBody(DyBody* body, std::shared_ptr<ForwardDynamics> forwardDynamics)
-{
-    int index = addBody(body);
-    bodyInfoArray[index].forwardDynamics = forwardDynamics;
+    if(!body->name().empty()){
+        nameToBodyMap[body->name()] = body;
+    }
+
     return index;
 }
 
 
-void WorldBase::clearBodies()
+void DyWorldBase::clearBodies()
 {
-    nameToBodyIndexMap.clear();
-    bodyInfoArray.clear();
+    bodies_.clear();
+    bodiesWithVirtualJointForces_.clear();
+    subBodies_.clear();
+    nameToBodyMap.clear();
+    hasHighGainDynamics_ = false;
 }
 
 
-void WorldBase::clearCollisionPairs()
+void DyWorldBase::clearCollisionPairs()
 {
     linkPairKeyToIndexMap.clear();
     numRegisteredLinkPairs = 0;
 }
 
 
-void WorldBase::setEulerMethod()
+void DyWorldBase::setEulerMethod()
 {
     isEulerMethod = true;
 }
 
 
-void WorldBase::setRungeKuttaMethod()
+void DyWorldBase::setRungeKuttaMethod()
 {
     isEulerMethod = false;
 }
 
 
-std::pair<int,bool> WorldBase::getIndexOfLinkPairs(DyLink* link1, DyLink* link2)
+std::pair<int,bool> DyWorldBase::getIndexOfLinkPairs(DyLink* link1, DyLink* link2)
 {
     int index = -1;
     bool isRegistered = false;
@@ -210,8 +177,7 @@ std::pair<int,bool> WorldBase::getIndexOfLinkPairs(DyLink* link1, DyLink* link2)
             linkPair.link2 = link1;
         }
 
-        LinkPairKeyToIndexMap::iterator p = linkPairKeyToIndexMap.find(linkPair);
-
+        auto p = linkPairKeyToIndexMap.find(linkPair);
         if(p != linkPairKeyToIndexMap.end()){
             index = p->second;
             isRegistered = true;
@@ -225,7 +191,7 @@ std::pair<int,bool> WorldBase::getIndexOfLinkPairs(DyLink* link1, DyLink* link2)
 }
 
 
-bool WorldBase::LinkPairKey::operator<(const LinkPairKey& pair2) const
+bool DyWorldBase::LinkPairKey::operator<(const LinkPairKey& pair2) const
 {
     if(link1 < pair2.link1){
         return true;

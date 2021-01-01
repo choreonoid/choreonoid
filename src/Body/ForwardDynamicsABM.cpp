@@ -5,7 +5,6 @@
 
 #include "ForwardDynamicsABM.h"
 #include "DyBody.h"
-#include "LinkTraverse.h"
 #include <cnoid/EigenUtil>
 
 using namespace std;
@@ -15,12 +14,12 @@ static const bool debugMode = false;
 static const bool rootAttitudeNormalizationEnabled = false;
 
 
-ForwardDynamicsABM::ForwardDynamicsABM(DyBody* body) :
-    ForwardDynamics(body),
-    q0(body->numLinks()),
-    dq0(body->numLinks()),
-    dq(body->numLinks()),
-    ddq(body->numLinks())
+ForwardDynamicsABM::ForwardDynamicsABM(DySubBody* subBody) :
+    ForwardDynamics(subBody),
+    q0(subBody->numLinks()),
+    dq0(subBody->numLinks()),
+    dq(subBody->numLinks()),
+    ddq(subBody->numLinks())
 {
 
 }
@@ -34,15 +33,16 @@ ForwardDynamicsABM::~ForwardDynamicsABM()
 
 void ForwardDynamicsABM::initialize()
 {
-    DyLink* rootLink = body->rootLink();
-    rootLink->sw().setZero();
-    rootLink->sv().setZero();
-    rootLink->cv().setZero();
-    rootLink->cw().setZero();
-    rootLink->hhv().setZero();
-    rootLink->hhw().setZero();
-    rootLink->uu() = 0.0;
-    rootLink->dd() = 0.0;
+    auto root = subBody->rootLink();
+    
+    root->sw().setZero();
+    root->sv().setZero();
+    root->cv().setZero();
+    root->cw().setZero();
+    root->hhv().setZero();
+    root->hhw().setZero();
+    root->uu() = 0.0;
+    root->dd() = 0.0;
 
     initializeSensors();
     calcABMFirstHalf();
@@ -77,7 +77,7 @@ void ForwardDynamicsABM::calcNextState()
     }
 
     if(rootAttitudeNormalizationEnabled){
-        normalizeRotation(body->rootLink()->T());
+        normalizeRotation(subBody->rootLink()->T());
     }
 
     calcABMFirstHalf();
@@ -92,12 +92,12 @@ void ForwardDynamicsABM::calcMotionWithEulerMethod()
 {
     calcABMLastHalf();
 
-    if(!sensorHelper.forceSensors().empty()){
+    if(!subBody->forceSensors().empty()){
         updateForceSensors();
     }
 
-    DyLink* root = body->rootLink();
-
+    auto root = subBody->rootLink();
+    
     if(!root->isFixedJoint()){
         root->dv() =
             root->dvo() - root->p().cross(root->dw())
@@ -109,9 +109,9 @@ void ForwardDynamicsABM::calcMotionWithEulerMethod()
         root->w()  += root->dw()  * timeStep;
     }
 
-    int n = body->numLinks();
+    int n = subBody->numLinks();
     for(int i=1; i < n; ++i){
-        DyLink* link = body->link(i);
+        DyLink* link = subBody->link(i);
         link->q()  += link->dq()  * timeStep;
         link->dq() += link->ddq() * timeStep;
     }
@@ -120,7 +120,7 @@ void ForwardDynamicsABM::calcMotionWithEulerMethod()
 
 void ForwardDynamicsABM::integrateRungeKuttaOneStep(double r, double dt)
 {
-    DyLink* root = body->rootLink();
+    auto root = subBody->rootLink();
 
     if(!root->isFixedJoint()){
 
@@ -134,10 +134,10 @@ void ForwardDynamicsABM::integrateRungeKuttaOneStep(double r, double dt)
         dw  += r * root->dw();
     }
 
-    int n = body->numLinks();
+    int n = subBody->numLinks();
     for(int i=1; i < n; ++i){
 
-        DyLink* link = body->link(i);
+        DyLink* link = subBody->link(i);
 
         link->q()  =  q0[i] + dt * link->dq();
         link->dq() = dq0[i] + dt * link->ddq();
@@ -150,7 +150,7 @@ void ForwardDynamicsABM::integrateRungeKuttaOneStep(double r, double dt)
 
 void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
 {
-    DyLink* root = body->rootLink();
+    auto root = subBody->rootLink();
 
     if(!root->isFixedJoint()){
         T0 = root->T();
@@ -163,9 +163,9 @@ void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
     dvo.setZero();
     dw.setZero();
 
-    int n = body->numLinks();
+    int n = subBody->numLinks();
     for(int i=1; i < n; ++i){
-        DyLink* link = body->link(i);
+        auto link = subBody->link(i);
         q0[i]  = link->q();
         dq0[i] = link->dq();
         dq[i]  = 0.0;
@@ -174,7 +174,7 @@ void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
 
     calcABMLastHalf();
 
-    if(!sensorHelper.forceSensors().empty()){
+    if(!subBody->forceSensors().empty()){
         updateForceSensors();
     }
 
@@ -204,7 +204,7 @@ void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
     }
 
     for(int i=1; i < n; ++i){
-        DyLink* link = body->link(i);
+        auto link = subBody->link(i);
         link->q()  =  q0[i] + ( dq[i] + link->dq()  / 6.0) * timeStep;
         link->dq() = dq0[i] + (ddq[i] + link->ddq() / 6.0) * timeStep;
     }
@@ -217,12 +217,16 @@ void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
 */
 void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
 {
-    const LinkTraverse& traverse = body->linkTraverse();
-    const int n = traverse.numLinks();
+    const int n = subBody->numLinks();
 
     for(int i=0; i < n; ++i){
-        DyLink* link = static_cast<DyLink*>(traverse[i]);
-        const DyLink* parent = link->parent();
+        auto link = subBody->link(i);
+        DyLink* parent;
+        if(i == 0 && link->isFreeJoint()){
+            parent = nullptr;
+        } else {
+            parent = link->parent();
+        }
 
         if(parent){
             
@@ -327,30 +331,29 @@ COMMON_CALCS_FOR_ALL_JOINT_TYPES:
 
 void ForwardDynamicsABM::calcABMPhase2()
 {
-    const LinkTraverse& traverse = body->linkTraverse();
-    const int n = traverse.numLinks();
+    const int n = subBody->numLinks();
 
     for(int i = n-1; i >= 0; --i){
-        DyLink* link = static_cast<DyLink*>(traverse[i]);
+        auto link = subBody->link(i);
 
         link->pf()   -= link->f_ext();
         link->ptau() -= link->tau_ext();
 
         // compute articulated inertia (Eq.(6.48) of Kajita's textbook)
         for(DyLink* child = link->child(); child; child = child->sibling()){
-
-            if(child->isFixedJoint()){
+            if(child->isFreeJoint()){
+                continue;
+            } else if(child->isFixedJoint()){
                 link->Ivv() += child->Ivv();
                 link->Iwv() += child->Iwv();
                 link->Iww() += child->Iww();
 
-            }else{
+            } else {
                 const Vector3 hhv_dd = child->hhv() / child->dd();
                 link->Ivv().noalias() += child->Ivv() - child->hhv() * hhv_dd.transpose();
                 link->Iwv().noalias() += child->Iwv() - child->hhw() * hhv_dd.transpose();
                 link->Iww().noalias() += child->Iww() - child->hhw() * (child->hhw() / child->dd()).transpose();
             }
-
             link->pf()  .noalias() += child->Ivv() * child->cv() + child->Iwv().transpose() * child->cw() + child->pf();
             link->ptau().noalias() += child->Iwv() * child->cv() + child->Iww() * child->cw() + child->ptau();
 
@@ -381,26 +384,23 @@ void ForwardDynamicsABM::calcABMPhase2()
 // A part of phase 2 (inbound loop) that can be calculated before external forces are given
 void ForwardDynamicsABM::calcABMPhase2Part1()
 {
-    const LinkTraverse& traverse = body->linkTraverse();
-    const int n = traverse.numLinks();
+    const int n = subBody->numLinks();
 
     for(int i = n-1; i >= 0; --i){
-        DyLink* link = static_cast<DyLink*>(traverse[i]);
-
+        auto link = subBody->link(i);
         for(DyLink* child = link->child(); child; child = child->sibling()){
-
-            if(child->isFixedJoint()){
+            if(child->isFreeJoint()){
+                continue;
+            } else if(child->isFixedJoint()){
                 link->Ivv() += child->Ivv();
                 link->Iwv() += child->Iwv();
                 link->Iww() += child->Iww();
-
-            }else{
+            } else {
                 const Vector3 hhv_dd = child->hhv() / child->dd();
                 link->Ivv().noalias() += child->Ivv() - child->hhv() * hhv_dd.transpose();
                 link->Iwv().noalias() += child->Iwv() - child->hhw() * hhv_dd.transpose();
                 link->Iww().noalias() += child->Iww() - child->hhw() * (child->hhw() / child->dd()).transpose();
             }
-
             link->pf()  .noalias() += child->Ivv() * child->cv() + child->Iwv().transpose() * child->cw();
             link->ptau().noalias() += child->Iwv() * child->cv() + child->Iww() * child->cw();
         }
@@ -420,16 +420,18 @@ void ForwardDynamicsABM::calcABMPhase2Part1()
 // A remaining part of phase 2 that requires external forces
 void ForwardDynamicsABM::calcABMPhase2Part2()
 {
-    const LinkTraverse& traverse = body->linkTraverse();
-    const int n = traverse.numLinks();
+    const int n = subBody->numLinks();
 
     for(int i = n-1; i >= 0; --i){
-        DyLink* link = static_cast<DyLink*>(traverse[i]);
+        auto link = subBody->link(i);
 
         link->pf()   -= link->f_ext();
         link->ptau() -= link->tau_ext();
 
         for(DyLink* child = link->child(); child; child = child->sibling()){
+            if(child->isFreeJoint()){
+                continue;
+            }
             link->pf()   += child->pf();
             link->ptau() += child->ptau();
 
@@ -451,12 +453,11 @@ void ForwardDynamicsABM::calcABMPhase2Part2()
 
 void ForwardDynamicsABM::calcABMPhase3()
 {
-    const LinkTraverse& traverse = body->linkTraverse();
-
-    DyLink* root = static_cast<DyLink*>(traverse[0]);
-
-    if(root->isFreeJoint()){
-
+    auto root = subBody->rootLink();
+    if(!root->isFreeJoint()){
+        root->dvo().setZero();
+        root->dw().setZero();
+    } else {
         // - | Ivv  trans(Iwv) | * | dvo | = | pf   |
         //   | Iwv     Iww     |   | dw  |   | ptau |
 
@@ -473,24 +474,20 @@ void ForwardDynamicsABM::calcABMPhase3()
 
         root->dvo() = a.head<3>();
         root->dw() = a.tail<3>();
-
-    } else {
-        root->dvo().setZero();
-        root->dw().setZero();
     }
 
-    const int n = traverse.numLinks();
+    const int n = subBody->numLinks();
     for(int i=1; i < n; ++i){
-        DyLink* link = static_cast<DyLink*>(traverse[i]);
-        const DyLink* parent = link->parent();
-        if(!link->isFixedJoint()){
-            link->ddq() = (link->uu() - (link->hhv().dot(parent->dvo()) + link->hhw().dot(parent->dw()))) / link->dd();
-            link->dvo().noalias() = parent->dvo() + link->cv() + link->sv() * link->ddq();
-            link->dw().noalias()  = parent->dw()  + link->cw() + link->sw() * link->ddq();
-        }else{
+        auto link = subBody->link(i);
+        auto parent = link->parent();
+        if(link->isFixedJoint()){
             link->ddq() = 0.0;
             link->dvo() = parent->dvo();
             link->dw()  = parent->dw(); 
+        } else {
+            link->ddq() = (link->uu() - (link->hhv().dot(parent->dvo()) + link->hhw().dot(parent->dw()))) / link->dd();
+            link->dvo().noalias() = parent->dvo() + link->cv() + link->sv() * link->ddq();
+            link->dw().noalias()  = parent->dw()  + link->cw() + link->sw() * link->ddq();
         }
     }
 }
@@ -498,9 +495,7 @@ void ForwardDynamicsABM::calcABMPhase3()
 
 void ForwardDynamicsABM::updateForceSensors()
 {
-    const DeviceList<ForceSensor>& sensors = sensorHelper.forceSensors();
-    for(size_t i=0; i < sensors.size(); ++i){
-        ForceSensor* sensor = sensors[i];
+    for(auto& sensor : subBody->forceSensors()){
         const DyLink* link = static_cast<DyLink*>(sensor->link());
 
         //    | f   | = | Ivv  trans(Iwv) | * | dvo | + | pf   |

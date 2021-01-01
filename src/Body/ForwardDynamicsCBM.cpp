@@ -5,7 +5,6 @@
 
 #include "ForwardDynamicsCBM.h"
 #include "DyBody.h"
-#include "LinkTraverse.h"
 #include <cnoid/EigenUtil>
 #include <iostream>
 
@@ -42,8 +41,8 @@ static void putVector(TVector& M, char* name)
 }
 
 
-ForwardDynamicsCBM::ForwardDynamicsCBM(DyBody* body) :
-    ForwardDynamics(body)
+ForwardDynamicsCBM::ForwardDynamicsCBM(DySubBody* subBody) :
+    ForwardDynamics(subBody)
 {
 
 }
@@ -55,38 +54,22 @@ ForwardDynamicsCBM::~ForwardDynamicsCBM()
 }
 
 
-void ForwardDynamicsCBM::setHighGainModeForAllJoints()
-{
-    for(auto link : body->joints()) link->setActuationMode(Link::JOINT_DISPLACEMENT);
-}
-
-
-void ForwardDynamicsCBM::setHighGainMode(int linkIndex, bool on)
-{
-    if(linkIndex == 0){
-        body->rootLink()->setActuationMode(on ? Link::LINK_POSITION : Link::NO_ACTUATION);
-    } else {
-        body->link(linkIndex)->setActuationMode(on ? Link::JOINT_DISPLACEMENT : Link::JOINT_EFFORT);
-    }
-}
-
-
 void ForwardDynamicsCBM::initialize()
 {
-    DyLink* root = body->rootLink();
-    bool isRootActuated = root->actuationMode() == Link::LINK_POSITION;
+    auto root = subBody->rootLink();
+    bool isRootActuated = root->actuationMode() == Link::LinkPosition;
     unknown_rootDof = (root->isFreeJoint() && !isRootActuated) ? 6 : 0;
     given_rootDof = (root->isFreeJoint() && isRootActuated) ? 6 : 0;
 
-    const int numLinks = body->numLinks();
+    const int numLinks = subBody->numLinks();
     torqueModeJoints.clear();
     highGainModeJoints.clear();
 
     for(int i=1; i < numLinks; ++i){
-        DyLink* link = body->link(i);
+        DyLink* link = subBody->link(i);
         if(link->isRevoluteJoint() || link->isPrismaticJoint()){
-            if(link->actuationMode() == Link::JOINT_DISPLACEMENT ||
-               link->actuationMode() == Link::JOINT_VELOCITY){
+            if(link->actuationMode() == Link::JointDisplacement ||
+               link->actuationMode() == Link::JointVelocity){
                 highGainModeJoints.push_back(link);
             } else {
                 torqueModeJoints.push_back(link);
@@ -140,11 +123,11 @@ void ForwardDynamicsCBM::complementHighGainModeCommandValues()
 {
     for(size_t i=0; i < highGainModeJoints.size(); ++i){
         Link* joint = highGainModeJoints[i];
-        if(joint->actuationMode() == Link::JOINT_DISPLACEMENT){
+        if(joint->actuationMode() == Link::JointDisplacement){
             joint->q() = joint->q_target();
             joint->dq() = (joint->q() - qGivenPrev[i]) / timeStep;
             joint->ddq() = (joint->dq() - dqGivenPrev[i]) / timeStep;
-        } else {
+        } else if(joint->actuationMode() == Link::JointVelocity){
             joint->dq() = joint->dq_target();
             joint->q() = joint->q() + joint->dq() * timeStep;
             joint->ddq() = (joint->dq() - dqGivenPrev[i]) / timeStep;
@@ -165,12 +148,14 @@ void ForwardDynamicsCBM::solveUnknownAccels()
 inline void ForwardDynamicsCBM::calcAccelFKandForceSensorValues()
 {
     Vector3 f, tau;
-    calcAccelFKandForceSensorValues(body->rootLink(), f, tau);
+    calcAccelFKandForceSensorValues(subBody->rootLink(), f, tau, true);
 }
 
 
 void ForwardDynamicsCBM::calcNextState()
 {
+    complementHighGainModeCommandValues();
+    
     if(isNoUnknownAccelMode && !sensorHelper.isActive()){
 
         calcPositionAndVelocityFK();
@@ -189,7 +174,7 @@ void ForwardDynamicsCBM::calcNextState()
         }
 		
         if(ROOT_ATT_NORMALIZATION_ENABLED && unknown_rootDof){
-            normalizeRotation(body->rootLink()->T());
+            normalizeRotation(subBody->rootLink()->T());
         }
 
         preserveHighGainModeJointState();
@@ -210,7 +195,7 @@ void ForwardDynamicsCBM::calcMotionWithEulerMethod()
     solveUnknownAccels();
     calcAccelFKandForceSensorValues();
 
-    DyLink* root = body->rootLink();
+    DyLink* root = subBody->rootLink();
 
     if(unknown_rootDof){
         Isometry3 T;
@@ -235,7 +220,7 @@ void ForwardDynamicsCBM::calcMotionWithEulerMethod()
 void ForwardDynamicsCBM::calcMotionWithRungeKuttaMethod()
 {
     const int numHighGainJoints = highGainModeJoints.size();
-    DyLink* root = body->rootLink();
+    DyLink* root = subBody->rootLink();
 
     if(given_rootDof){
         pGiven = root->p();
@@ -267,9 +252,9 @@ void ForwardDynamicsCBM::calcMotionWithRungeKuttaMethod()
     dvo.setZero();
     dw.setZero();
 
-    const int numLinks = body->numLinks();
+    const int numLinks = subBody->numLinks();
     for(int i=1; i < numLinks; ++i){
-        const DyLink* link = body->link(i);
+        const DyLink* link = subBody->link(i);
         q0 [i] = link->q();
         dq0[i] = link->dq();
         dq [i] = 0.0;
@@ -330,7 +315,7 @@ void ForwardDynamicsCBM::calcMotionWithRungeKuttaMethod()
 
 void ForwardDynamicsCBM::integrateRungeKuttaOneStep(double r, double dt)
 {
-    DyLink* root = body->rootLink();
+    auto root = subBody->rootLink();
 
     if(unknown_rootDof || given_rootDof){
         SE3exp(root->T(), T0, root->w(), root->vo(), dt);
@@ -343,9 +328,9 @@ void ForwardDynamicsCBM::integrateRungeKuttaOneStep(double r, double dt)
         dw  += r * root->dw();
     }
 
-    const int n = body->numLinks();
+    const int n = subBody->numLinks();
     for(int i=1; i < n; ++i){
-        DyLink* link = body->link(i);
+        auto link = subBody->link(i);
         link->q()  = q0 [i] + dt * link->dq();
         link->dq() = dq0[i] + dt * link->ddq();
         dq [i] += r * link->dq();
@@ -357,7 +342,7 @@ void ForwardDynamicsCBM::integrateRungeKuttaOneStep(double r, double dt)
 void ForwardDynamicsCBM::preserveHighGainModeJointState()
 {
     if(given_rootDof){
-        const DyLink* root = body->rootLink();
+        auto root = subBody->rootLink();
         pGivenPrev = root->p();
         RGivenPrev = root->R();
         voGivenPrev = root->vo();
@@ -373,18 +358,22 @@ void ForwardDynamicsCBM::preserveHighGainModeJointState()
 
 void ForwardDynamicsCBM::calcPositionAndVelocityFK()
 {
-    DyLink* root = body->rootLink();
+    auto root = subBody->rootLink();
     root_w_x_v.noalias() = root->w().cross(root->vo() + root->w().cross(root->p()));
     if(given_rootDof){
         root->vo().noalias() = root->v() - root->w().cross(root->p());
     }
 
-    const LinkTraverse& traverse = body->linkTraverse();
-    const int n = traverse.numLinks();
+    const int n = subBody->numLinks();
 
     for(int i=0; i < n; ++i){
-        DyLink* link = static_cast<DyLink*>(traverse[i]);
-        const DyLink* parent = link->parent();
+        auto link = subBody->link(i);
+        DyLink* parent;
+        if(i == 0 && link->isFreeJoint()){
+            parent = nullptr;
+        } else {
+            parent = link->parent();
+        }
 
         if(parent){
 
@@ -454,12 +443,12 @@ COMMON_CALCS_FOR_ALL_JOINT_TYPES:
 */
 void ForwardDynamicsCBM::calcMassMatrix()
 {
-    DyLink* root = body->rootLink();
-    const int numLinks = body->numLinks();
+    auto root = subBody->rootLink();
+    const int numLinks = subBody->numLinks();
 
     // preserve and clear the joint accelerations
     for(int i=1; i < numLinks; ++i){
-        DyLink* link = body->link(i);
+        auto link = subBody->link(i);
         ddqorg[i] = link->ddq();
         uorg  [i] = link->u();
         link->ddq() = 0.0;
@@ -529,7 +518,7 @@ void ForwardDynamicsCBM::calcMassMatrix()
     }
 
     for(int i=1; i < numLinks; ++i){
-        DyLink* link = body->link(i);
+        DyLink* link = subBody->link(i);
         link->ddq() = ddqorg[i];
         link->u()   = uorg  [i];
     }
@@ -544,8 +533,8 @@ void ForwardDynamicsCBM::setColumnOfMassMatrix(MatrixXd& M, int column)
 {
     Vector3 f;
     Vector3 tau;
-    DyLink* root = body->rootLink();
-    calcInverseDynamics(root, f, tau);
+    auto root = subBody->rootLink();
+    calcInverseDynamics(root, f, tau, true);
 
     MatrixXd::ColXpr col = M.col(column);
 
@@ -564,10 +553,10 @@ void ForwardDynamicsCBM::setColumnOfMassMatrix(MatrixXd& M, int column)
 }
 
 
-void ForwardDynamicsCBM::calcInverseDynamics(DyLink* link, Vector3& out_f, Vector3& out_tau)
+void ForwardDynamicsCBM::calcInverseDynamics(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot)
 {
-    const DyLink* parent = link->parent();
-    if(parent){
+    if(!isSubBodyRoot){
+        auto parent = link->parent();
         link->dvo() = parent->dvo() + link->cv() + link->sv() * link->ddq();
         link->dw()  = parent->dw()  + link->cw() + link->sw() * link->ddq();
     }
@@ -575,10 +564,11 @@ void ForwardDynamicsCBM::calcInverseDynamics(DyLink* link, Vector3& out_f, Vecto
     out_f = link->pf();
     out_tau = link->ptau();
 
-    if(link->child()){
+    auto child = link->child();
+    if(child && !child->isFreeJoint()){
         Vector3 f_c;
         Vector3 tau_c;
-        calcInverseDynamics(link->child(), f_c, tau_c);
+        calcInverseDynamics(child, f_c, tau_c, false);
         out_f += f_c;
         out_tau += tau_c;
     }
@@ -588,12 +578,15 @@ void ForwardDynamicsCBM::calcInverseDynamics(DyLink* link, Vector3& out_f, Vecto
 
     link->u() = link->sv().dot(out_f) + link->sw().dot(out_tau);
 
-    if(link->sibling()){
-        Vector3 f_s;
-        Vector3 tau_s;
-        calcInverseDynamics(link->sibling(), f_s, tau_s);
-        out_f += f_s;
-        out_tau += tau_s;
+    if(!isSubBodyRoot){
+        auto sibling = link->sibling();
+        if(sibling && !sibling->isFreeJoint()){
+            Vector3 f_s;
+            Vector3 tau_s;
+            calcInverseDynamics(link->sibling(), f_s, tau_s, false);
+            out_f += f_s;
+            out_tau += tau_s;
+        }
     }
 }
 
@@ -603,37 +596,41 @@ void ForwardDynamicsCBM::sumExternalForces()
     fextTotal.setZero();
     tauextTotal.setZero();
 
-    const int n = body->numLinks();
+    const int n = subBody->numLinks();
     for(int i=0; i < n; ++i){
-        const DyLink* link = body->link(i);
+        auto link = subBody->link(i);
         fextTotal   += link->f_ext();
         tauextTotal += link->tau_ext();
     }
 
-    tauextTotal -= body->rootLink()->p().cross(fextTotal);
+    tauextTotal -= subBody->rootLink()->p().cross(fextTotal);
 }
 
-void ForwardDynamicsCBM::calcd1(DyLink* link, Vector3& out_f, Vector3& out_tau)
+void ForwardDynamicsCBM::calcd1(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot)
 {
     out_f = -link->f_ext();
     out_tau = -link->tau_ext();
 
-    if(link->child()){
+    auto child = link->child();
+    if(child && !child->isFreeJoint()){
         Vector3 f_c;
         Vector3 tau_c;
-        calcd1(link->child(), f_c, tau_c);
+        calcd1(child, f_c, tau_c, false);
         out_f += f_c;
         out_tau += tau_c;
     }
 
     link->u() = link->sv().dot(out_f) + link->sw().dot(out_tau);
 
-    if(link->sibling()){
-        Vector3 f_s;
-        Vector3 tau_s;
-        calcd1(link->sibling(), f_s, tau_s);
-        out_f += f_s;
-        out_tau += tau_s;
+    if(!isSubBodyRoot){
+        auto sibling = link->sibling();
+        if(sibling && !sibling->isFreeJoint()){
+            Vector3 f_s;
+            Vector3 tau_s;
+            calcd1(sibling, f_s, tau_s, false);
+            out_f += f_s;
+            out_tau += tau_s;
+        }
     }
 }
 
@@ -643,7 +640,7 @@ void ForwardDynamicsCBM::initializeAccelSolver()
 
         if(!ddqGivenCopied){
             if(given_rootDof){
-                DyLink* root = body->rootLink();
+                auto root = subBody->rootLink();
                 root->dvo() = root->dv() - root->dw().cross(root->p()) - root->w().cross(root->v());
                 ddqGiven.head(3) = root->dvo();
                 ddqGiven.segment(3, 3) = root->dw();
@@ -656,22 +653,19 @@ void ForwardDynamicsCBM::initializeAccelSolver()
 
         b1.noalias() += M12 * ddqGiven;
         
-        for(int i=1; i < body->numLinks(); ++i){
-            const DyLink* link = body->link(i);
-            uorg  [i] = link->u();
+        for(int i=1; i < subBody->numLinks(); ++i){
+            uorg[i] = subBody->link(i)->u();
         }
         Vector3 f, tau;
-        DyLink* root = body->rootLink();
-        calcd1(root, f, tau);
+        calcd1(subBody->rootLink(), f, tau, true);
         for(int i=0; i < unknown_rootDof; i++){
             d1(i, 0) = 0;
         }
         for(size_t i=0; i < torqueModeJoints.size(); ++i){
             d1(i + unknown_rootDof, 0) = torqueModeJoints[i]->u();
         }
-        for(int i=1; i < body->numLinks(); ++i){
-            DyLink* link = body->link(i);
-            link->u() = uorg[i];
+        for(int i=1; i < subBody->numLinks(); ++i){
+            subBody->link(i)->u() = uorg[i];
         }
 
         accelSolverInitialized = true;
@@ -694,22 +688,19 @@ bool ForwardDynamicsCBM::solveUnknownAccels
     const Vector3 tauextorg = link->tau_ext();
     link->f_ext() = fext;
     link->tau_ext() = tauext;
-    for(int i=1; i < body->numLinks(); ++i){
-        const DyLink* link = body->link(i);
-        uorg[i] = link->u();
+    for(int i=1; i < subBody->numLinks(); ++i){
+        uorg[i] = subBody->link(i)->u();
     }
     Vector3 f, tau;
-    DyLink* root = body->rootLink();
-    calcd1(root, f, tau);
+    calcd1(subBody->rootLink(), f, tau, true);
     for(int i=0; i < unknown_rootDof; i++){
         d1(i, 0) = 0;
     }
     for(size_t i=0; i < torqueModeJoints.size(); ++i){
         d1(i + unknown_rootDof, 0) = torqueModeJoints[i]->u();
     }
-    for(int i=1; i < body->numLinks(); ++i){
-        DyLink* link = body->link(i);
-        link->u() = uorg[i];
+    for(int i=1; i < subBody->numLinks(); ++i){
+        subBody->link(i)->u() = uorg[i];
     }
     link->f_ext() = fextorg;
     link->tau_ext() = tauextorg;
@@ -736,23 +727,22 @@ void ForwardDynamicsCBM::solveUnknownAccels(const Vector3& fext, const Vector3& 
     const VectorXd a(M11.colPivHouseholderQr().solve(c1));
     
     if(unknown_rootDof){
-        DyLink* root = body->rootLink();
+        auto root = subBody->rootLink();
         root->dw() = a.segment(3, 3);
         const Vector3 dv = a.head(3);
         root->dvo() = dv - root->dw().cross(root->p()) - root_w_x_v;
     }
 
     for(size_t i=0; i < torqueModeJoints.size(); ++i){
-        DyLink* link = torqueModeJoints[i];
-        link->ddq() = a(i + unknown_rootDof);
+        torqueModeJoints[i]->ddq() = a(i + unknown_rootDof);
     }
 }
 
 
-void ForwardDynamicsCBM::calcAccelFKandForceSensorValues(DyLink* link, Vector3& out_f, Vector3& out_tau)
+void ForwardDynamicsCBM::calcAccelFKandForceSensorValues(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot)
 {
-    const DyLink* parent = link->parent();
-    if(parent){
+    if(!isSubBodyRoot){
+        auto parent = link->parent();
         link->dvo() = parent->dvo() + link->cv() + link->sv() * link->ddq();
         link->dw()  = parent->dw()  + link->cw() + link->sw() * link->ddq();
     }
@@ -761,15 +751,17 @@ void ForwardDynamicsCBM::calcAccelFKandForceSensorValues(DyLink* link, Vector3& 
     out_tau = link->ptau();
 
     for(DyLink* child = link->child(); child; child = child->sibling()){
-        Vector3 f, tau;
-        calcAccelFKandForceSensorValues(child, f, tau);
-        out_f   += f;
-        out_tau += tau;
+        if(!child->isFreeJoint()){
+            Vector3 f, tau;
+            calcAccelFKandForceSensorValues(child, f, tau, false);
+            out_f   += f;
+            out_tau += tau;
+        }
     }
 
-    ForceSensorInfo& info = forceSensorInfo[link->index()];
+    auto& cbm = link->cbm;
 
-    if(CALC_ALL_JOINT_TORQUES || info.hasSensorsAbove){
+    if(CALC_ALL_JOINT_TORQUES || cbm->hasForceSensorsAbove){
 
         Vector3 fg(link->m() * g);
         Vector3 tg(link->wc().cross(fg));
@@ -787,9 +779,9 @@ void ForwardDynamicsCBM::calcAccelFKandForceSensorValues(DyLink* link, Vector3& 
             link->u() = link->sv().dot(out_f) + link->sw().dot(out_tau);
         }
 
-        if(info.hasSensor){
-            info.f = -out_f;
-            info.tau = -out_tau;
+        if(cbm->hasForceSensor){
+            cbm->f = -out_f;
+            cbm->tau = -out_tau;
         }
     }
 }
@@ -799,48 +791,32 @@ void ForwardDynamicsCBM::initializeSensors()
 {
     ForwardDynamics::initializeSensors();
 
-    const int n = body->numLinks();
-
-    forceSensorInfo.resize(n);
+    for(auto& link : subBody->links()){
+        link->cbm.reset(new DyLink::ForwardDynamicsCbmData);
+    }
 
     if(sensorsEnabled){
-        const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
-        for(size_t i=0; i < forceSensors.size(); ++i){
-            const ForceSensor* sensor = forceSensors[i];
-            forceSensorInfo[sensor->link()->index()].hasSensor = true;
+        for(auto& sensor : subBody->forceSensors()){
+            static_cast<DyLink*>(sensor->link())->cbm->hasForceSensor = true;
         }
-        updateForceSensorInfo(body->rootLink(), false);
-    }
-}
-
-
-void ForwardDynamicsCBM::updateForceSensorInfo(DyLink* link, bool hasSensorsAbove)
-{
-    ForceSensorInfo& info = forceSensorInfo[link->index()];
-    hasSensorsAbove |= info.hasSensor;
-    info.hasSensorsAbove = hasSensorsAbove;
-
-    for(DyLink* child = link->child(); child; child = child->sibling()){
-        updateForceSensorInfo(child, hasSensorsAbove);
+        auto rootLink = subBody->rootLink();
+        rootLink->cbm->hasForceSensorsAbove = rootLink->cbm->hasForceSensor;
+        for(int i=1; i < subBody->numLinks(); ++i){
+            auto link = subBody->link(i);
+            link->cbm->hasForceSensorsAbove = link->parent()->cbm->hasForceSensorsAbove;
+        }
     }
 }
 
 
 void ForwardDynamicsCBM::updateForceSensors()
 {
-    const DeviceList<ForceSensor>& sensors = sensorHelper.forceSensors();
-
-    for(size_t i=0; i < sensors.size(); ++i){
-        
-        ForceSensor* sensor = sensors[i];
-        const Link* link = sensor->link();
-
-        const ForceSensorInfo& info = forceSensorInfo[sensor->link()->index()];
+    for(auto& sensor : subBody->forceSensors()){
+        auto link = static_cast<DyLink*>(sensor->link());
         const Matrix3 R = link->R() * sensor->R_local();
         const Vector3 p = link->p() + link->R() * sensor->p_local();
-        
-        sensor->f()   = R.transpose() * info.f;
-        sensor->tau() = R.transpose() * (info.tau - p.cross(info.f));
+        sensor->f()   = R.transpose() * link->cbm->f;
+        sensor->tau() = R.transpose() * (link->cbm->tau - p.cross(link->cbm->f));
         sensor->notifyStateChange();
     }
 }
