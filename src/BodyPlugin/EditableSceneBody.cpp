@@ -1493,8 +1493,8 @@ bool EditableSceneBody::Impl::initializeIK()
         currentIK = bodyItem->getCurrentIK(targetLink);
     }
     if(auto jointPath = dynamic_pointer_cast<JointPath>(currentIK)){
-        if(!jointPath->hasAnalyticalIK()){
-            jointPath->setBestEffortIKmode(true);
+        if(!jointPath->hasCustomIK()){
+            jointPath->setBestEffortIkMode(true);
         }
     }
 

@@ -145,12 +145,11 @@ namespace cnoid {
         bool doStoreOriginalWaistFeetPositionsForWaistHeightRelaxation;
         bool doWaistHeightRelaxation;
         struct WaistFeetPos {
-            Vector3 p_Waist;
-            Matrix3 R_Waist;
-            Vector3 p_Foot[2];
-            Matrix3 R_Foot[2];
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            Isometry3 T_waist;
+            Isometry3 T_foot[2];
         };
-        std::vector<WaistFeetPos> waistFeetPosSeq;
+        std::vector<WaistFeetPos, Eigen::aligned_allocator<WaistFeetPos>> waistFeetPosSeq;
         std::vector<double> waistDeltaZseq;
         CompositeIK waistFeetIK;
         Link* rightKneePitchJoint;

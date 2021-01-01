@@ -130,7 +130,7 @@ void LinkKinematicsKit::Impl::setBaseLink(Link* baseLink)
             if(jointPath->hasCustomIK()){
                 configurationHandler =
                     dynamic_pointer_cast<JointSpaceConfigurationHandler>(jointPath);
-                jointPath->setNumericalIKenabled(isCustomIkDisabled);
+                jointPath->setNumericalIkEnabled(isCustomIkDisabled);
             }
         }
     }
@@ -161,7 +161,7 @@ void LinkKinematicsKit::Impl::setInverseKinematics(std::shared_ptr<InverseKinema
 
     jointPath = dynamic_pointer_cast<JointPath>(ik);
     if(jointPath){
-        jointPath->setNumericalIKenabled(isCustomIkDisabled);
+        jointPath->setNumericalIkEnabled(isCustomIkDisabled);
     }
 }
 
@@ -288,7 +288,7 @@ void LinkKinematicsKit::setCustomIkDisabled(bool on)
 {
     if(on != impl->isCustomIkDisabled){
         if(impl->jointPath){
-            impl->jointPath->setNumericalIKenabled(on);
+            impl->jointPath->setNumericalIkEnabled(on);
         }
         impl->isCustomIkDisabled = on;
     }

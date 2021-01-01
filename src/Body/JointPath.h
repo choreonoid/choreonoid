@@ -85,21 +85,18 @@ public:
     int indexOf(const Link* link) const;
 
     bool isNumericalIkEnabled() const { return numericalIK != nullptr; }
-    void setNumericalIKenabled(bool on);
-
-    bool isBestEffortIKmode() const;
-    void setBestEffortIKmode(bool on);
-
-    void setNumericalIKmaxIKerror(double e);
-    void setNumericalIKdeltaScale(double s);
-    void setNumericalIKmaxIterations(int n);
-    void setNumericalIKdampingConstant(double lambda);
-        
-    static double numericalIKdefaultDeltaScale();
-    static int numericalIKdefaultMaxIterations();
-    static double numericalIKdefaultMaxIKerror();
-    static double numericalIKdefaultDampingConstant();
-        
+    void setNumericalIkEnabled(bool on);
+    bool isBestEffortIkMode() const;
+    void setBestEffortIkMode(bool on);
+    void setNumericalIkMaxIkError(double e);
+    void setNumericalIkDeltaScale(double s);
+    void setNumericalIkMaxIterations(int n);
+    void setNumericalIkDampingConstant(double lambda);
+    static double numericalIkDefaultDeltaScale();
+    static int numericalIkDefaultMaxIterations();
+    static double numericalIkDefaultMaxIkError();
+    static double numericalIkDefaultDampingConstant();
+    
     void customizeTarget(
         int numTargetElements,
         std::function<double(VectorXd& out_error)> errorFunc,
@@ -122,22 +119,43 @@ public:
     std::string name() const { return name_; }
     void setName(const std::string& name){ name_ = name; }
 
-    //! deprecated
+    // deprecated
+    void setNumericalIKtruncateRatio(double r);
+    static double numericalIKdefaultTruncateRatio();
+
+    [[deprecated("Use calcInverseKinematics(const Isometry3& T)")]]
     bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
         return InverseKinematics::calcInverseKinematics(p, R);
     }
-    //! deprecated
+    [[deprecated("Use calcInverseKinematics(const Isometry3& T)")]]
     bool calcInverseKinematics(
         const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R);
-    //! deprecated
+    [[deprecated]]
     void calcJacobian(Eigen::MatrixXd& out_J) const;
-    //! deprecated
-    void setNumericalIKtruncateRatio(double r);
-    //! deprecated
-    static double numericalIKdefaultTruncateRatio();
-
-    //! deprecated. Use hasCustomIK() insted of this.
+    [[deprecated("Use hasCustomIK")]]
     bool hasAnalyticalIK() const;
+    [[deprecated("Use setNumericalIkEnabled.")]]
+    void setNumericalIKenabled(bool on) { setNumericalIkEnabled(on); }
+    [[deprecated("Use isBestEffortIkMode.")]]
+    bool isBestEffortIKmode() const { return isBestEffortIkMode(); }
+    [[deprecated("Use setBestEffortIkMode.")]]
+    void setBestEffortIKmode(bool on) { setBestEffortIkMode(on); }
+    [[deprecated("Use setNumericalIkMaxIkError.")]]
+    void setNumericalIKmaxIKerror(double e){ setNumericalIkMaxIkError(e); }
+    [[deprecated("Use setNumericalIkDeltaScale.")]]
+    void setNumericalIKdeltaScale(double s) { setNumericalIkDeltaScale(s); }
+    [[deprecated("Use setNumericalIkMaxIterations.")]]
+    void setNumericalIKmaxIterations(int n) { setNumericalIkMaxIterations(n); }
+    [[deprecated("Use setNumericalIkDampingConstant.")]]
+    void setNumericalIKdampingConstant(double lambda) { setNumericalIkDampingConstant(lambda); }
+    [[deprecated("Use numericalIkDefaultDeltaScale.")]]
+    static double numericalIKdefaultDeltaScale(){ return numericalIkDefaultDeltaScale(); }
+    [[deprecated("Use numericalIkDefaultMaxIterations.")]]
+    static int numericalIKdefaultMaxIterations(){ return numericalIkDefaultMaxIterations(); }
+    [[deprecated("Use numericalIkDefaultMaxIkError.")]]
+    static double numericalIKdefaultMaxIKerror(){ return numericalIkDefaultMaxIkError(); }
+    [[deprecated("Use numericalIkDefaultDampingConstant.")]]
+    static double numericalIKdefaultDampingConstant(){ return numericalIkDefaultDampingConstant(); }
 
 private:
     JointPath(const JointPath& org);

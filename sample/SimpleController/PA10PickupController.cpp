@@ -101,9 +101,10 @@ public:
 
         if(phase <= 3){
             p = wristInterpolator.interpolate(time);
-
-            if(baseToWrist->calcInverseKinematics(
-                   Vector3(p.head<3>()), rotFromRpy(Vector3(p.tail<3>())))){
+            Isometry3 T;
+            T.linear() = rotFromRpy(Vector3(p.tail<3>()));
+            T.translation() = p.head<3>();
+            if(baseToWrist->calcInverseKinematics(T)){
                 for(int i=0; i < baseToWrist->numJoints(); ++i){
                     Link* joint = baseToWrist->joint(i);
                     qref[joint->jointId()] = joint->q();

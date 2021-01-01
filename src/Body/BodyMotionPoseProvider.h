@@ -22,6 +22,8 @@ class JointPath;
 class CNOID_EXPORT BodyMotionPoseProvider : public PoseProvider
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     BodyMotionPoseProvider();
     BodyMotionPoseProvider(Body* body, std::shared_ptr<BodyMotion> motion);
 
@@ -48,8 +50,7 @@ private:
     std::vector<std::shared_ptr<JointPath>> ikPaths;
     std::shared_ptr<MultiSE3MatrixSeq> footLinkPositions;
     std::vector<double> qTranslated;
-    Vector3 p_waist;
-    Matrix3 R_waist;
+    Isometry3 T_waist;
     Vector3 ZMP_;
 
     bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation, bool applyWaistTranslation);

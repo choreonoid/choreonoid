@@ -140,7 +140,7 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
                     auto waistToFoot = JointPath::getCustomPath(body_, waist, foot);
                     if(waistToFoot){
                         bool ikDone;
-                        if(waistToFoot->hasAnalyticalIK()){
+                        if(waistToFoot->hasCustomIK()){
                             ikDone = waistToFoot->calcInverseKinematics(foot->T());
                         } else {
                             Isometry3 T_foot = foot->T();

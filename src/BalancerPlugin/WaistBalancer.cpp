@@ -597,12 +597,10 @@ bool WaistBalancer::calcCmTranslations()
         if(doStoreOriginalWaistFeetPositionsForWaistHeightRelaxation){
             // store waist and feet positions
             WaistFeetPos& p = waistFeetPosSeq[i];
-            p.p_Waist = waistLink->p();
-            p.R_Waist = waistLink->R();
+            p.T_waist = waistLink->T();
             for(int j=0; j < 2; ++j){
                 Link* footLink = waistFeetIK.baseLink(j);
-                p.p_Foot[j] = footLink->p();
-                p.R_Foot[j] = footLink->R();
+                p.T_foot[j] = footLink->T();
             }
         }
 
@@ -726,8 +724,7 @@ void WaistBalancer::relaxWaistHeightTrajectory()
         WaistFeetPos& p = waistFeetPosSeq[i];
         for(int j=0; j < 2; ++j){
             Link* footLink = waistFeetIK.baseLink(j);
-            footLink->p() = p.p_Foot[j];
-            footLink->R() = p.R_Foot[j];
+            footLink->T() = p.T_foot[j];
         }
 
         Vector3 dp = totalCmTranslations[i + frameToStartBalancer];
@@ -740,8 +737,10 @@ void WaistBalancer::relaxWaistHeightTrajectory()
                 dz = low;
                 break;
             }
+            Isometry3 T_waist(p.T_waist);
+            T_waist.translation() += dp;
             bool solved =
-                waistFeetIK.calcInverseKinematics(p.p_Waist + dp, p.R_Waist) &&
+                waistFeetIK.calcInverseKinematics(T_waist) &&
                 (rightKneePitchJoint->q() > 0.3 && leftKneePitchJoint->q() > 0.3);
 
             if(solved){

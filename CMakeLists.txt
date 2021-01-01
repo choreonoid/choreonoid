@@ -366,7 +366,6 @@ if(WIN32)
   set(USE_BUNDLED_PYBIND11_DEFAULT ON)
 else()
   option(ENABLE_PYTHON "Enable Python" ON)
-  option(ENABLE_PYTHON_OLD_WRAPPERS "Enable the old version of the Python wrappers" ON)
   set(USE_BUNDLED_PYBIND11_DEFAULT OFF)
 endif()
 

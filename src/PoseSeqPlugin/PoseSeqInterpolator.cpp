@@ -112,6 +112,8 @@ struct LinkZSample
     
 struct LinkInfo
 {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     LinkInfo(const BodyPtr& body, int linkIndex) {
         iter = samples.end();
         zIter = zSamples.end();
@@ -132,8 +134,7 @@ struct LinkInfo
     LinkZSample::Seq::iterator zIter;
         
     // interpolation state
-    Vector3 p;
-    Matrix3 R;
+    Isometry3 T;
     bool isValid;
     double jointSpaceBlendingRatio; // 1.0 = joint space, 0.0 = Cartesian space
 };
@@ -266,7 +267,8 @@ public:
 
     vector<JointInfo> jointInfos;
 
-    typedef map<int, LinkInfo> LinkInfoMap;
+    typedef unordered_map<int, LinkInfo, std::hash<int>, std::equal_to<int>,
+                          Eigen::aligned_allocator<pair<const int, LinkInfo>>> LinkInfoMap;
     LinkInfoMap ikLinkInfos;
 
     vector<int> footLinkIndices;
@@ -1215,14 +1217,13 @@ bool PSIImpl::interpolate(double time, int waistLinkIndex, const Vector3& waistT
             const int linkIndex = it->first;
             validIkLinkFlag[linkIndex] = true;
             if(linkIndex == waistLinkIndex){
-                info.p = p + waistTranslation;
+                info.T.translation() = p + waistTranslation;
                 waistTranslationDone = true;
             } else {
-                info.p = p + info.jointSpaceBlendingRatio * waistTranslation;
+                info.T.translation() = p + info.jointSpaceBlendingRatio * waistTranslation;
             }
             
-                
-            info.R = rotFromRpy(xyzrpy[3], xyzrpy[4], xyzrpy[5]);
+            info.T.linear() = rotFromRpy(xyzrpy[3], xyzrpy[4], xyzrpy[5]);
             if(info.iter->isBaseLink){
                 if(info.iter->x > baseLinkTime){
                     currentBaseLinkInfoIter = it;
@@ -1379,7 +1380,7 @@ void PSIImpl::calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* base
 
             bool doIK = true; // tmp
             
-            if(!jointPath->hasAnalyticalIK()){
+            if(!jointPath->hasCustomIK()){
 
                 // tmp
                 if(jointPath->numJoints() != 6){
@@ -1399,7 +1400,9 @@ void PSIImpl::calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* base
 
             if(doIK){ // tmp
 
-                bool ikSolved = jointPath->calcInverseKinematics(baseLinkInfo->p, baseLinkInfo->R, endLinkInfo->p, endLinkInfo->R);
+                jointPath->setBaseLinkGoal(baseLinkInfo->T);
+                bool ikSolved = jointPath->setBaseLinkGoal(baseLinkInfo->T)
+                    .calcInverseKinematics(endLinkInfo->T);
                 
                 if(!ikSolved){
                     double len = waistTranslation.norm();
@@ -1407,8 +1410,9 @@ void PSIImpl::calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* base
                     double hi = len * (1.0 - endLinkInfo->jointSpaceBlendingRatio);
                     while(true){
                         double current = (low + hi) / 2.0;
-                        Vector3 p(endLinkInfo->p + waistTranslation * (current / len));
-                        if(jointPath->calcInverseKinematics(baseLinkInfo->p, baseLinkInfo->R, p, endLinkInfo->R)){
+                        Isometry3 T_end(endLinkInfo->T);
+                        T_end.translation() += waistTranslation * (current / len);
+                        if(jointPath->setBaseLinkGoal(baseLinkInfo->T).calcInverseKinematics(T_end)){
                             ikSolved = true;
                             hi = current;
                         } else {
@@ -1467,8 +1471,7 @@ bool PoseSeqInterpolator::getBaseLinkPosition(Isometry3& out_T) const
 {
     if(impl->currentBaseLinkInfoIter != impl->ikLinkInfos.end()){
         const LinkInfo& info = impl->currentBaseLinkInfoIter->second;
-        out_T.translation() = info.p;
-        out_T.linear() = info.R;
+        out_T = info.T;
         return true;
     }
     return false;

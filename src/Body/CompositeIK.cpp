@@ -15,7 +15,7 @@ using namespace cnoid;
 CompositeIK::CompositeIK()
 {
     targetLink_ = nullptr;
-    hasAnalyticalIK_ = false;
+    hasCustomIK_ = false;
 }
 
 
@@ -29,7 +29,7 @@ void CompositeIK::reset(Body* body, Link* targetLink)
 {
     body_ = body;
     targetLink_ = targetLink;
-    hasAnalyticalIK_ = false;
+    hasCustomIK_ = false;
     paths.clear();
     remainingLinkTraverse.reset();
 }
@@ -40,7 +40,7 @@ bool CompositeIK::addBaseLink(Link* baseLink)
     if(baseLink && targetLink_){
         auto path = JointPath::getCustomPath(body_, baseLink, targetLink_);
         if(path){
-            hasAnalyticalIK_ = paths.empty() ? path->hasAnalyticalIK() : (hasAnalyticalIK_ && path->hasAnalyticalIK());
+            hasCustomIK_ = paths.empty() ? path->hasCustomIK() : (hasCustomIK_ && path->hasCustomIK());
             paths.push_back(path);
             remainingLinkTraverse.reset();
             return true;
@@ -56,10 +56,10 @@ Link* CompositeIK::baseLink(int index) const
 }
 
 
-void CompositeIK::setMaxIKerror(double e)
+void CompositeIK::setMaxIkError(double e)
 {
     for(size_t i=0; i < paths.size(); ++i){
-        paths[i]->setNumericalIKmaxIKerror(e);
+        paths[i]->setNumericalIkMaxIkError(e);
     }
 }
 

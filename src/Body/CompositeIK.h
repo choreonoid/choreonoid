@@ -34,16 +34,20 @@ public:
     std::shared_ptr<JointPath> jointPath(int index) const { return paths[index]; }
     Link* baseLink(int index) const;
 
-    void setMaxIKerror(double e);
-    bool hasAnalyticalIK() const { return hasAnalyticalIK_; }
+    void setMaxIkError(double e);
+    bool hasCustomIK() const { return hasCustomIK_; }
 
     virtual bool calcInverseKinematics(const Isometry3& T) override;
     virtual bool calcRemainingPartForwardKinematicsForInverseKinematics() override;
 
-    //! deprecated
+    [[deprecated("Use calcInverseKinematics(const Isometry3& T).")]]
     bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
         return InverseKinematics::calcInverseKinematics(p, R);
     }
+    [[deprecated("Use setMaxIkError.")]]
+    void setMaxIKerror(double e) { setMaxIkError(e); }
+    [[deprecated("Use hasCustomIK.")]]
+    bool hasAnalyticalIK() const { return hasCustomIK(); }
 
 private:
     ref_ptr<Body> body_;
@@ -51,7 +55,7 @@ private:
     std::vector<std::shared_ptr<JointPath>> paths;
     std::vector<double> q0;
     std::shared_ptr<LinkTraverse> remainingLinkTraverse;
-    bool hasAnalyticalIK_;
+    bool hasCustomIK_;
 };
 
 }
