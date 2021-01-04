@@ -20,7 +20,6 @@ Link::Link()
     body_ = nullptr;
     T_.setIdentity();
     Tb_.setIdentity();
-    Rs_.setIdentity();
     jointType_ = FixedJoint;
     jointId_ = -1;
     actuationMode_ = StateNone;

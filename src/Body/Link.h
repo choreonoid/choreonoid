@@ -119,9 +119,7 @@ public:
     Isometry3::ConstLinearPart offsetRotation() const { return Tb_.linear(); }
 
     [[deprecated("This func. always returns the identity matrix")]]
-    Matrix3& Rs() { return Rs_; }
-    [[deprecated("This func. always returns the identity matrix")]]
-    const Matrix3& Rs() const { return Rs_; }
+    Matrix3 Rs() const { return Matrix3::Identity(); }
 
     enum JointType {
         RevoluteJoint = 0,
@@ -377,8 +375,8 @@ public:
     }
     
     template<typename Derived>
-    [[deprecated("You don't have to use this function.")]]
-    void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
+    [[deprecated("No need to use this function.")]]
+    void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& /* Rs */) {
     }
         
     void setJointType(JointType type) { jointType_ = type; }
@@ -454,7 +452,6 @@ private:
 
     Isometry3 T_;
     Isometry3 Tb_;
-    Matrix3 Rs_; // temporary variable for porting. This should be removed later.    
 
     short jointType_;
     short jointId_;
