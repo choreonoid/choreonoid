@@ -1,0 +1,37 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: boxes-on-floor
+rootLink: Floor
+
+links:
+  -
+    type: SubBody
+    uri: floor2.body
+  -
+    type: SubBody
+    uri: box1.body
+    suffix: 1
+    parent: Floor
+    translation: [ 0.0375, 0.15, 1.4159 ]
+  -
+    type: SubBody
+    uri: box1.body
+    suffix: 2
+    parent: Floor
+    translation: [ 0.0108, 0.2371, 1.0699 ]
+  -
+    type: SubBody
+    uri: box1.body
+    suffix: 3
+    parent: Floor
+    translation: [ -0.0123, 0.15, 0.6871 ]
+  -
+    type: SubBody
+    uri: box1.body
+    suffix: 4
+    parent: Floor
+    translation: [ 0.0631, 0.159, 2.1828 ]
+
+collision_detection_rules:
+  - disabled_link_chain_distance: 0

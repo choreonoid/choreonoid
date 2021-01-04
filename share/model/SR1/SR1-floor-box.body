@@ -1,0 +1,61 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: SR1-Floor-Box
+rootLink: Floor
+
+links:
+  -
+    name: Floor
+    jointType: fixed
+    material: Ground
+    elements:
+      Shape:
+        translation: [ 0, 0, -0.1 ]
+        geometry: { type: Box, size: [ 10.0, 10.0, 0.2 ] }
+        appearance: { material: { diffuseColor: [ 0, 0, 1 ] }}
+  -
+    type: SubBody
+    uri: SR1.body
+    parent: Floor
+    jointType: free
+  -
+    name: Box
+    parent: Floor
+    translation: [ 0.55, 0, 0.151 ]
+    jointType: free
+    elements:
+      RigidBody:
+        mass: 0.2
+        inertia: [
+          0.01, 0, 0,
+          0, 0.001, 0,
+          0, 0, 0.01 ]
+        elements:
+          Shape:
+            geometry:
+              type: Box
+              size: [ 0.3, 0.3, 0.3 ]
+            appearance:
+              material:
+                diffuseColor: [ 1.0, 1.0, 0.0 ]
+
+preset_poses:
+  -
+    name: standard
+    joint_displacements: [
+       0, -30, 0,  60, -30, 0,
+      20, -10, 0, -40,   0, 0, 0,
+       0, -30, 0,  60, -30, 0,
+      20,  10, 0, -40,   0, 0, 0,
+       0,   0, 0 ]
+    link_offsets:
+      -
+        name: WAIST
+        translation: [ 0, 0, 0.7135 ]
+        rotation: [ 1, 0, 0, 0 ]
+
+
+collision_detection_rules:
+  - disabled_links: all
+  - enabled_links: [ Floor, Box, LLEG_ANKLE_R, RLEG_ANKLE_R, LARM_WRIST_R, RARM_WRIST_R ]

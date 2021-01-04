@@ -2,10 +2,10 @@ format: ChoreonoidBody
 formatVersion: 1.0
 
 name: box1
-rootLink: body
+rootLink: box
 links:
   -
-    name: body
+    name: box
     jointType: free
     mass: 12.8  
     inertia: [
