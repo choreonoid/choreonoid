@@ -207,7 +207,6 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
             link->p().noalias() = child->p() - arm;
 
             if(calcVelocity){
-                
                 link->w() = child->w();
                 link->v().noalias() = child->v() - link->w().cross(arm);
 				

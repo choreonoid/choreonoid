@@ -48,7 +48,7 @@ public:
     int index() const { return index_; }
     bool isValid() const { return (index_ >= 0); }
     bool isRoot() const { return !parent_; }
-    bool isBodyRoot() const;
+    bool isBodyRoot() const { return !parent_ || body_ != parent_->body_; }
     bool isStatic() const;
     bool isFixedToRoot() const;
     bool isOwnerOf(const Link* link) const;

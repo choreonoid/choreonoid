@@ -1931,6 +1931,8 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 {
     string prefix;
     node->read("prefix", prefix);
+    string suffix;
+    node->read("suffix", suffix);
     string devicePrefix;
     if(!node->read("devicePrefix", devicePrefix)){
         devicePrefix = prefix;
@@ -1940,12 +1942,12 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 
     for(int i=0; i < subBody->numLinks(); ++i){
         Link* link = subBody->link(i);
-        setLinkName(link, prefix + link->name(), node);
+        setLinkName(link, prefix + link->name() + suffix, node);
         if(link->jointId() >= 0){
             setJointId(link, link->jointId() + jointIdOffset);
         }
         if(!link->jointSpecificName().empty()){
-            setJointName(link, prefix + link->jointSpecificName(), node);
+            setJointName(link, prefix + link->jointSpecificName() + suffix, node);
         }
     }
 

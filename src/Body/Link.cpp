@@ -161,12 +161,6 @@ void Link::setBodySub(Body* newBody)
 }
 
 
-bool Link::isBodyRoot() const
-{
-    return !parent_ || this == body_->rootLink();
-}
-
-
 bool Link::isStatic() const
 {
     if(!isFixedJoint()){

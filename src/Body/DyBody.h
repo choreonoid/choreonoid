@@ -131,9 +131,9 @@ public:
     [[deprecated("Use vector<Link::ContactState>.")]]
     typedef std::vector<ContactPoint> ConstraintForceArray;
     [[deprecated("Use Link::contactStates.")]]
-    ConstraintForceArray& constraintForces() { return Link::contactPoints(); }
+    std::vector<ContactPoint>& constraintForces() { return Link::contactPoints(); }
     [[deprecated("Use Link::contactStates.")]]
-    const ConstraintForceArray& constraintForces() const { return Link::contactPoints(); }
+    const std::vector<ContactPoint>& constraintForces() const { return Link::contactPoints(); }
 
     virtual void prependChild(Link* link) override;
     virtual void appendChild(Link* link) override;

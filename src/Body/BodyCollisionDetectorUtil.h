@@ -12,6 +12,7 @@
 
 namespace cnoid {
 
+[[deprecated("Use the BodyCollisionDetector class")]]
 CNOID_EXPORT int addBodyToCollisionDetector(Body& body, CollisionDetector& detector, bool enableSelfCollisions = true);
 
 }
