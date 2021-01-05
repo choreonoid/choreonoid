@@ -16,12 +16,22 @@ using namespace cnoid;
 namespace {
 
 inline int toQtPriority(int priority) {
-    if(priority <= LazyCaller::PRIORITY_HIGH){
+    switch(priority){
+    case LazyCaller::HighPriority:
         return Qt::HighEventPriority;
-    } else if(priority >= LazyCaller::PRIORITY_LOW){
-        return Qt::LowEventPriority;
-    } else {
+    case LazyCaller::NormalPriority:
         return Qt::NormalEventPriority;
+    case LazyCaller::LowPriority:
+        return Qt::LowEventPriority;
+    case LazyCaller::MinimumPriority:
+        return INT_MIN;
+    default:
+        break;
+    }
+    if(priority < LazyCaller::HighPriority){
+        return Qt::HighEventPriority;
+    } else {
+        return INT_MIN;
     }
 }
 
