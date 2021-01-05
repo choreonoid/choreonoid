@@ -142,24 +142,11 @@ void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
 
 bool JointDisplacementView::storeState(Archive& archive)
 {
-    impl->jointDisplacementWidget.storeState(archive);
-    if(auto bodyItem = impl->jointDisplacementWidget.bodyItem()){
-        archive.writeItemId("current_body_item", bodyItem);
-    }
-    return true;
+    return impl->jointDisplacementWidget.storeState(archive);
 }
 
 
 bool JointDisplacementView::restoreState(const Archive& archive)
 {
-    if(impl->jointDisplacementWidget.restoreState(archive)){
-        archive.addPostProcess(
-            [this, &archive](){
-                if(auto item = archive.findItem<BodyItem>("current_body_item")){
-                    impl->jointDisplacementWidget.setBodyItem(item);
-                }
-            });
-        return true;
-    }
-    return false;
+    return impl->jointDisplacementWidget.restoreState(archive);
 }

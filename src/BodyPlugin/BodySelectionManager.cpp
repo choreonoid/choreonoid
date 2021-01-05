@@ -32,6 +32,7 @@ public:
     ConnectionSet pickerConnections;
     ItemList<BodyItem> selectedBodyItems;
     BodyItemPtr currentBodyItem;
+    string preferredLinkName;
     BodyItemInfoPtr currentInfo;
     unordered_map<BodyItemPtr, BodyItemInfoPtr> bodyItemInfoMap;
 
@@ -162,6 +163,14 @@ void BodySelectionManager::setCurrent(BodyItem* bodyItem, Link* link, bool doSel
 void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* link, bool doSelectBodyItem)
 {
     bool bodyChanged = bodyItem != currentBodyItem;
+
+    if(!preferredLinkName.empty()){
+        if(bodyItem && !link){
+            link = bodyItem->body()->link(preferredLinkName);
+        }
+        preferredLinkName.clear();
+    }
+    
     bool linkChanged = link && (link != getCurrentLink());
 
     if(bodyChanged || linkChanged){
@@ -315,8 +324,8 @@ void BodySelectionManager::setLinkSelection(BodyItem* bodyItem, const std::vecto
 bool BodySelectionManager::Impl::storeState(Archive& archive)
 {
     if(currentBodyItem){
-        archive.writeItemId("currentBodyItem", currentBodyItem);
-        archive.write("currentLink", getCurrentLink()->name(), DOUBLE_QUOTED);
+        archive.writeItemId("current_body_item", currentBodyItem);
+        archive.write("current_link", getCurrentLink()->name(), DOUBLE_QUOTED);
         return true;
     }
     return false;
@@ -325,16 +334,6 @@ bool BodySelectionManager::Impl::storeState(Archive& archive)
 
 void BodySelectionManager::Impl::restoreState(const Archive& archive)
 {
-    archive.addPostProcess(
-        [&](){
-            auto bodyItem = archive.findItem<BodyItem>("currentBodyItem");
-            if(bodyItem){
-                Link* link = nullptr;
-                string linkName;
-                if(archive.read("currentLink", linkName)){
-                    link = bodyItem->body()->link(linkName);
-                }
-                setCurrentBodyItem(bodyItem, link, false);
-            }
-        });
+    archive.read("current_link", preferredLinkName);
+    targetBodyItemPicker.restoreTargetItemLater(archive, "current_body_item");
 }
