@@ -242,7 +242,7 @@ RotorDevice::RotorDevice()
 
 }
 
-const char* RotorDevice::typeName()
+const char* RotorDevice::typeName() const
 {
     return "RotorDevice";
 }

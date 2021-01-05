@@ -27,7 +27,7 @@ public:
     static bool createAGXBreakableJointDevice(YAMLBodyLoader& loader, Mapping& node);
     AGXBreakableJointDevice(const AGXBreakableJointDeviceDesc& desc, Mapping* info);
     AGXBreakableJointDevice(const AGXBreakableJointDevice& org, bool copyStateOnly = false);
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyStateFrom(const AGXBreakableJointDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
@@ -76,7 +76,7 @@ AGXBreakableJointDevice::AGXBreakableJointDevice(const AGXBreakableJointDevice& 
     on_ = org.on_;
 }
 
-const char*AGXBreakableJointDevice::typeName()
+const char*AGXBreakableJointDevice::typeName() const
 {
     return "AGXBreakableJointDevice";
 }

@@ -134,7 +134,7 @@ RainDevice::RainDevice(const RainDevice& org, bool copyStateOnly)
 }
 
 
-const char* RainDevice::typeName()
+const char* RainDevice::typeName() const
 {
     return "RainDevice";
 }
@@ -182,7 +182,7 @@ SnowDevice::SnowDevice(const SnowDevice& org, bool copyStateOnly)
 }
 
 
-const char* SnowDevice::typeName()
+const char* SnowDevice::typeName() const
 {
     return "SnowDevice";
 }

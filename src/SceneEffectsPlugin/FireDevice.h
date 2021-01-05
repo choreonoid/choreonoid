@@ -20,7 +20,7 @@ class CNOID_EXPORT FireDevice : public Device
 public:
     FireDevice();
     FireDevice(const FireDevice& org, bool copyStateOnly = false);
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyStateFrom(const FireDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;

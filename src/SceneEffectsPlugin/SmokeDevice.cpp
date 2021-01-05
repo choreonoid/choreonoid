@@ -68,7 +68,7 @@ SmokeDevice::SmokeDevice(const SmokeDevice& org, bool copyStateOnly)
 }
 
 
-const char* SmokeDevice::typeName()
+const char* SmokeDevice::typeName() const
 {
     return "SmokeDevice";
 }

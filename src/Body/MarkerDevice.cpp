@@ -121,7 +121,7 @@ MarkerDevice::MarkerDevice(const MarkerDevice& org, bool copyStateOnly)
 }
 
 
-const char* MarkerDevice::typeName()
+const char* MarkerDevice::typeName() const
 {
     return "MarkerDevice";
 }

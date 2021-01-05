@@ -88,7 +88,7 @@ DigitalIoDevice::~DigitalIoDevice()
 }
 
 
-const char* DigitalIoDevice::typeName()
+const char* DigitalIoDevice::typeName() const 
 {
     return "DigitalIoDevice";
 }

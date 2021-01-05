@@ -17,7 +17,7 @@ public:
     AttachmentDevice();
     virtual ~AttachmentDevice();
 
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyAttachmentDeviceStateFrom(const AttachmentDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;

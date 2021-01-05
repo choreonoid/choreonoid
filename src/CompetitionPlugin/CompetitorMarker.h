@@ -16,7 +16,7 @@ public:
     CompetitorMarker();
     CompetitorMarker(const CompetitorMarker& org, bool copyStateOnly = false);
     
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;

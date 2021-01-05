@@ -26,7 +26,7 @@ RangeCamera::RangeCamera(const RangeCamera& org, bool copyStateOnly)
 }
 
 
-const char* RangeCamera::typeName()
+const char* RangeCamera::typeName() const
 {
     return "RangeCamera";
 }

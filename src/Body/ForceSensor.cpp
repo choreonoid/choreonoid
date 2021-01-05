@@ -16,7 +16,7 @@ ForceSensor::ForceSensor()
 }
 
 
-const char* ForceSensor::typeName()
+const char* ForceSensor::typeName() const
 {
     return "ForceSensor";
 }

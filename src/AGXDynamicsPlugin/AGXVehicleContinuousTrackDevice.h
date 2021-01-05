@@ -81,7 +81,7 @@ class AGXVehicleContinuousTrackDevice : private AGXVehicleContinuousTrackDeviceD
 public:
     AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDeviceDesc& desc);
     AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDevice& org, bool copyStateOnly = false);
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyStateFrom(const AGXVehicleContinuousTrackDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;

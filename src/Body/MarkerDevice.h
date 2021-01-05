@@ -22,7 +22,7 @@ public:
     MarkerDevice();
     MarkerDevice(const MarkerDevice& org, bool copyStateOnly = false);
     
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyMarkerDeviceStateFrom(const MarkerDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;

@@ -67,7 +67,7 @@ FountainDevice::FountainDevice(const FountainDevice& org, bool copyStateOnly)
 }
 
 
-const char* FountainDevice::typeName()
+const char* FountainDevice::typeName() const
 {
     return "FountainDevice";
 }

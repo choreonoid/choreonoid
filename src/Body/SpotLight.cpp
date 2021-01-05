@@ -23,7 +23,7 @@ SpotLight::SpotLight()
 }
 
 
-const char* SpotLight::typeName()
+const char* SpotLight::typeName() const
 {
     return "SpotLight";
 }

@@ -16,7 +16,7 @@ RateGyroSensor::RateGyroSensor()
 }
 
 
-const char* RateGyroSensor::typeName()
+const char* RateGyroSensor::typeName() const
 {
     return "RateGyroSensor";
 }

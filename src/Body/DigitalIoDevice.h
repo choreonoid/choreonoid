@@ -16,7 +16,7 @@ public:
     DigitalIoDevice();
     virtual ~DigitalIoDevice();
 
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyDigitalIoDeviceStateFrom(const DigitalIoDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;

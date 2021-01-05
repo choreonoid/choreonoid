@@ -10,7 +10,7 @@ using namespace std;
 using namespace cnoid;
 
 
-const char* RangeSensor::typeName()
+const char* RangeSensor::typeName() const
 {
     return "RangeSensor";
 }

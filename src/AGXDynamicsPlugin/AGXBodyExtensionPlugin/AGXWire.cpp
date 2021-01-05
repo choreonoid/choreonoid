@@ -44,7 +44,7 @@ public:
     static bool createAGXWireDevice(YAMLBodyLoader& loader, Mapping& node);
     AGXWireDevice(const AGXWireDeviceDesc& desc, Mapping* info);
     AGXWireDevice(const AGXWireDevice& org, bool copyStateOnly = false);
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyStateFrom(const AGXWireDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
@@ -110,7 +110,7 @@ AGXWireDevice::AGXWireDevice(const AGXWireDevice& org, bool copyStateOnly) :
     copyStateFrom(org);
 }
 
-const char*AGXWireDevice::typeName()
+const char*AGXWireDevice::typeName() const
 {
     return "AGXWireDevice";
 }

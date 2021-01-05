@@ -93,7 +93,7 @@ HolderDevice::~HolderDevice()
 }
 
 
-const char* HolderDevice::typeName()
+const char* HolderDevice::typeName() const
 {
     return "HolderDevice";
 }

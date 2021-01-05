@@ -17,7 +17,7 @@ public:
     HolderDevice();
     virtual ~HolderDevice();
 
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyHolderDeviceStateFrom(const HolderDevice* other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;

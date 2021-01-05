@@ -18,7 +18,7 @@ public:
     RateGyroSensor();
     RateGyroSensor(const RateGyroSensor& org, bool copyStateOnly = false);
         
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyStateFrom(const RateGyroSensor& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;

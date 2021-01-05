@@ -54,7 +54,7 @@ AttachmentDevice::~AttachmentDevice()
 }
 
 
-const char* AttachmentDevice::typeName()
+const char* AttachmentDevice::typeName() const
 {
     return "AttachmentDevice";
 }

@@ -69,7 +69,7 @@ FireDevice::FireDevice(const FireDevice& org, bool copyStateOnly)
 }
 
 
-const char* FireDevice::typeName()
+const char* FireDevice::typeName() const
 {
     return "FireDevice";
 }

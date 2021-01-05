@@ -9,7 +9,7 @@ using namespace std;
 using namespace cnoid;
 
 
-const char* Camera::typeName()
+const char* Camera::typeName() const
 {
     return "Camera";
 }

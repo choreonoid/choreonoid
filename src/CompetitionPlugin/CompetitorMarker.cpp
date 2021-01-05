@@ -31,7 +31,7 @@ CompetitorMarker::CompetitorMarker()
 }
 
 
-const char* CompetitorMarker::typeName()
+const char* CompetitorMarker::typeName() const
 {
     return "CompetitorMarker";
 }

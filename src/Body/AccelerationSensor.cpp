@@ -16,7 +16,7 @@ AccelerationSensor::AccelerationSensor()
 }
 
 
-const char* AccelerationSensor::typeName()
+const char* AccelerationSensor::typeName() const
 {
     return "AccelerationSensor";
 }

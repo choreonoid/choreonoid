@@ -27,7 +27,7 @@ public:
     static bool createAGXMagneticJointDevice(YAMLBodyLoader& loader, Mapping& node);
     AGXMagneticJointDevice(const AGXMagneticJointDeviceDesc& desc, Mapping* info);
     AGXMagneticJointDevice(const AGXMagneticJointDevice& org, bool copyStateOnly = false);
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyStateFrom(const AGXMagneticJointDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
@@ -71,7 +71,7 @@ AGXMagneticJointDevice::AGXMagneticJointDevice(const AGXMagneticJointDevice& org
     copyStateFrom(org);
 }
 
-const char*AGXMagneticJointDevice::typeName()
+const char*AGXMagneticJointDevice::typeName() const
 {
     return "AGXMagneticJointDevice";
 }

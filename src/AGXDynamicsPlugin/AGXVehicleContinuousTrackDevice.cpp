@@ -174,7 +174,7 @@ AGXVehicleContinuousTrackDevice::AGXVehicleContinuousTrackDevice(const AGXVehicl
     copyStateFrom(org);
 }
 
-const char* AGXVehicleContinuousTrackDevice::typeName()
+const char* AGXVehicleContinuousTrackDevice::typeName() const
 {
     return "AGXVehicleContinuousTrackDevice";
 }

@@ -21,7 +21,7 @@ PointLight::PointLight()
 }
 
 
-const char* PointLight::typeName()
+const char* PointLight::typeName() const
 {
     return "PointLight";
 }

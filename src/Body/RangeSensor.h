@@ -19,7 +19,7 @@ public:
     RangeSensor();
     RangeSensor(const RangeSensor& org, bool copyStateOnly = false);
 
-    virtual const char* typeName() override;
+    virtual const char* typeName() const override;
     void copyStateFrom(const RangeSensor& other); 
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
