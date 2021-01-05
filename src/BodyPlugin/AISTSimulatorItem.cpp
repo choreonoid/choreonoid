@@ -465,7 +465,7 @@ void AISTSimulatorItem::Impl::addBody(AISTSimBody* simBody)
         if(link->isFreeJoint() && !link->isBodyRoot()){
             hasNonRootFreeJoints = true;
         }
-        int mode = link->actuationMode();
+        int mode = link->actuationMode() & ~Link::LinkExtWrench;
         if(mode){
             if(mode == Link::JointEffort){
                 continue;
@@ -483,7 +483,7 @@ void AISTSimulatorItem::Impl::addBody(AISTSimBody* simBody)
             if(mode == Link::JointDisplacement || mode == Link::JointVelocity || mode == Link::LinkPosition){
                 continue;
 
-            } else if(mode == Link::AllStateHighGainActuationMode){
+            } else if(link->actuationMode() == Link::AllStateHighGainActuationMode){
                 internalStateUpdateLinks.push_back(link);
 
             } else if(mode == Link::DeprecatedJointSurfaceVelocity){
