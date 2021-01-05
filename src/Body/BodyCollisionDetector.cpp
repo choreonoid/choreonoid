@@ -42,8 +42,8 @@ public:
     void ignoreLinkPair(int linkIndex1, int linkIndex2);
     void checkCollisionDetectionTargets(Body* body, Listing* rules);
     void checkCollisionDetectionTargets_OldFormat(Body* body, Mapping* info);
-    void setIgnoredLinkPairsWithinLinkChainDistance(Body* body, int distance);
-    void setIgnoredLinkPairsWithinLinkChainDistanceIter(Link* link, Link* currentLink, Link* prevLink, int distance);
+    void setIgnoredLinkPairsWithinLinkChainLevel(Body* body, int distance);
+    void setIgnoredLinkPairsWithinLinkChainLevelIter(Link* link, Link* currentLink, Link* prevLink, int distance);
     bool addLinkRecursively(Link* link, bool isParentStatic);
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);    
 };
@@ -139,7 +139,7 @@ bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetect
                 checkCollisionDetectionTargets_OldFormat(body, info);
             } else {
                 // Self-collision detection does not apply to pairs of adjacent links by default
-                setIgnoredLinkPairsWithinLinkChainDistance(body, 1);
+                setIgnoredLinkPairsWithinLinkChainLevel(body, 1);
             }
         }
     }
@@ -186,8 +186,8 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets(Body* body, Lis
         for(auto& kv : *node->toMapping()){
             auto& rule = kv.first;
             auto& value = kv.second;
-            if(rule == "disabled_link_chain_distance"){
-                setIgnoredLinkPairsWithinLinkChainDistance(body, value->toInt());
+            if(rule == "disabled_link_chain_level"){
+                setIgnoredLinkPairsWithinLinkChainLevel(body, value->toInt());
                 
             } else if(rule == "enabled_links"){
                 for(auto& node : *value->toListing()){
@@ -233,7 +233,7 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets_OldFormat(Body*
 {
     int excludeTreeDepth = 1;
     info->read("excludeTreeDepth", excludeTreeDepth);
-    setIgnoredLinkPairsWithinLinkChainDistance(body, excludeTreeDepth);
+    setIgnoredLinkPairsWithinLinkChainLevel(body, excludeTreeDepth);
 
     const Listing& excludeLinks = *info->findListing("excludeLinks");
     for(int i=0; i < excludeLinks.size(); ++i){
@@ -261,26 +261,26 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets_OldFormat(Body*
 }
 
 
-void BodyCollisionDetector::Impl::setIgnoredLinkPairsWithinLinkChainDistance
+void BodyCollisionDetector::Impl::setIgnoredLinkPairsWithinLinkChainLevel
 (Body* body, int distance)
 {
     if(distance > 0){
         for(auto& link : body->links()){
-            setIgnoredLinkPairsWithinLinkChainDistanceIter(
+            setIgnoredLinkPairsWithinLinkChainLevelIter(
                 link, link, nullptr, distance);
         }
     }
 }
 
 
-void BodyCollisionDetector::Impl::setIgnoredLinkPairsWithinLinkChainDistanceIter
+void BodyCollisionDetector::Impl::setIgnoredLinkPairsWithinLinkChainLevelIter
 (Link* link, Link* currentLink, Link* prevLink, int distance)
 {
     auto parent = currentLink->parent();
     if(parent && parent != prevLink){
         ignoredLinkPairs.emplace(link->index(), parent->index());
         if(distance >= 2){
-            setIgnoredLinkPairsWithinLinkChainDistanceIter(
+            setIgnoredLinkPairsWithinLinkChainLevelIter(
                 link, parent, currentLink, distance - 1);
         }
     }
@@ -288,7 +288,7 @@ void BodyCollisionDetector::Impl::setIgnoredLinkPairsWithinLinkChainDistanceIter
         if(child != prevLink){
             ignoredLinkPairs.emplace(link->index(), child->index());
             if(distance >= 2){
-                setIgnoredLinkPairsWithinLinkChainDistanceIter(
+                setIgnoredLinkPairsWithinLinkChainLevelIter(
                     link, child, currentLink, distance - 1);
             }
         }

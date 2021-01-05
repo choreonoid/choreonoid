@@ -34,4 +34,4 @@ links:
     translation: [ 0.0631, 0.159, 2.1828 ]
 
 collision_detection_rules:
-  - disabled_link_chain_distance: 0
+  - disabled_link_chain_level: 0
