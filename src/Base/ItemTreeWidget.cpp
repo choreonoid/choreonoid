@@ -1519,7 +1519,9 @@ void ItemTreeWidget::Impl::keyPressEvent(QKeyEvent* event)
             break;
             
         case Qt::Key_R:
-            ItemManager::reloadItems(getSelectedItems());
+            for(auto& item : getSelectedItems()){
+                item->reload();
+            }
             break;
             
         case Qt::Key_Plus:

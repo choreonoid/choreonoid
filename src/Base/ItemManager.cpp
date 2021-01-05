@@ -79,8 +79,6 @@ CaptionToFileIoListMap captionToConversionLoadersMap;
     
 QWidget* importMenu;
 
-std::map<ItemPtr, ItemPtr> reloadedItemToOriginalItemMap;
-
 class AddonClassInfo : public Referenced
 {
 public:
@@ -1092,59 +1090,23 @@ void ItemManager::Impl::onLoadOrImportItemsActivated(const vector<ItemFileIO*>& 
 
 void ItemManager::reloadItems(const ItemList<>& items)
 {
-    reloadedItemToOriginalItemMap.clear();
-    
-    for(size_t i=0; i < items.size(); ++i){
-
-        Item* item = items.get(i);
-
-        if(item->parentItem() && !item->isSubItem() &&
-           !item->filePath().empty() && !item->fileFormat().empty()){
-
-            ItemPtr reloadedItem = item->duplicate();
-            if(reloadedItem){
-                bool reloaded = reloadedItem->load(
-                    item->filePath(), item->parentItem(), item->fileFormat(), item->fileOptions());
-                if(reloaded){
-                    reloadedItemToOriginalItemMap[reloadedItem] = item;
-
-                    item->parentItem()->insertChild(item, reloadedItem);
-                    
-                    // move children to the reload item
-                    ItemPtr child = item->childItem();
-                    while(child){
-                        ItemPtr nextChild = child->nextItem();
-                        if(!child->isSubItem()){
-                            child->removeFromParentItem();
-                            reloadedItem->addChildItem(child);
-                        }
-                        child = nextChild;
-                    }
-                    reloadedItem->assign(item);
-
-                    item->removeFromParentItem();
-                }
-            }
-        }
+    for(auto& item : items){
+        item->reload();
     }
-
-    reloadedItemToOriginalItemMap.clear();
 }
 
 
 Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
 {
-    auto iter = reloadedItemToOriginalItemMap.find(item);
-    if(iter != reloadedItemToOriginalItemMap.end()){
-        return iter->second;
-    }
-    return nullptr;
+    return item->findOriginalItem();
 }
 
 
 void ItemManager::Impl::onReloadSelectedItemsActivated()
 {
-    reloadItems(RootItem::instance()->selectedItems());
+    for(auto& item : RootItem::instance()->selectedItems()){
+        item->reload();
+    }
 }
 
 

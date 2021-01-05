@@ -122,8 +122,14 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
             [&](){ itemTreeWidget->setSelectedItemsChecked(false); });
         toggleCheck->sigTriggered().connect(
             [&](){ itemTreeWidget->toggleSelectedItemChecks(); });
+
         reload->sigTriggered().connect(
-            [&](){ ItemManager::reloadItems(itemTreeWidget->getSelectedItems()); });
+            [&](){
+                for(auto& item : itemTreeWidget->getSelectedItems()){
+                    item->reload();
+                }
+            });
+
         clearSelection->sigTriggered().connect(
             [=](){ itemTreeWidget->clearSelection(); });
     } else {

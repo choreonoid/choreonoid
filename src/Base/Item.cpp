@@ -10,6 +10,7 @@
 #include "ItemManager.h"
 #include "ItemClassRegistry.h"
 #include "PutPropertyFunction.h"
+#include "LazyCaller.h"
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -41,6 +42,17 @@ unordered_set<Item*> itemsToEmitSigSubTreeChanged;
 
 int recursiveTreeChangeCounter = 0;
 bool isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
+
+std::map<ItemPtr, ItemPtr> replacementToOriginalItemMap;
+std::map<ItemPtr, ItemPtr> originalToReplacementItemMap;
+
+LazyCaller clearItemReplacementMapsLater(
+    [](){
+        replacementToOriginalItemMap.clear();
+        originalToReplacementItemMap.clear();
+    },
+    LazyCaller::MinimumPriority);
+        
 
 bool checkIfAnyItemInSubTreeSelected(Item* item)
 {
@@ -1406,6 +1418,75 @@ void Item::clearFileInformation()
     impl->filePath.clear();
     impl->fileFormat.clear();
     impl->isConsistentWithFile = true;
+}
+
+
+bool Item::reload()
+{
+    bool reloaded = false;
+    
+    if(parentItem() && !isSubItem() && !filePath().empty() && !fileFormat().empty()){
+        ItemPtr reloadedItem = duplicate();
+        if(reloadedItem){
+            if(reloadedItem->load(filePath(), parentItem(), fileFormat(), fileOptions())){
+                reloaded = reloadedItem->replace(this);
+            }
+        }
+    }
+
+    return reloaded;
+}
+
+
+bool Item::replace(Item* originalItem)
+{
+    bool replaced = false;
+    
+    if(originalItem->parentItem() && !originalItem->isSubItem()){
+
+        replacementToOriginalItemMap[this] = originalItem;
+        originalToReplacementItemMap[originalItem] = this;
+
+        originalItem->parentItem()->insertChild(originalItem, this);
+        // move children to the reload item
+        ItemPtr child = originalItem->childItem();
+        while(child){
+            ItemPtr nextChild = child->nextItem();
+            if(!child->isSubItem()){
+                child->removeFromParentItem();
+                addChildItem(child);
+            }
+            child = nextChild;
+        }
+        assign(originalItem);
+        originalItem->removeFromParentItem();
+
+        clearItemReplacementMapsLater();
+
+        replaced = true;
+    }
+
+    return replaced;
+}
+
+
+Item* Item::findOriginalItem() const
+{
+    auto p = replacementToOriginalItemMap.find(const_cast<Item*>(this));
+    if(p != replacementToOriginalItemMap.end()){
+        return p->second;
+    }
+    return nullptr;
+}
+
+
+Item* Item::findReplacementItem() const
+{
+    auto p = originalToReplacementItemMap.find(const_cast<Item*>(this));
+    if(p != originalToReplacementItemMap.end()){
+        return p->second;
+    }
+    return nullptr;
 }
 
 

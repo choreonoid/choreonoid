@@ -450,9 +450,11 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
         
         onCollisionLinkHighlightModeChanged();
 
+        /*
         connections.add(
             bodyItem->sigModelUpdated().connect(
                 [&](){ updateModel(); }));
+        */
 
         connections.add(
             linkVisibilityCheck->sigToggled().connect(

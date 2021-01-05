@@ -202,7 +202,8 @@ void TargetItemPickerBase::Impl::onItemAddedWhenNoTargetItemSpecified(Item* item
 void TargetItemPickerBase::Impl::onTargetItemDisconnectedFromRoot(Item* item)
 {
     if(item == targetItem){
-        setTargetItem(nullptr, true, true);
+        auto replacement = item->findReplacementItem();
+        setTargetItem(replacement, true, true);
     }
 }
 

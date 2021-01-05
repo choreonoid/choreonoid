@@ -272,7 +272,10 @@ public:
         return saveItemWithDialog_(typeid(ItemType), item);
     }
 
+    [[deprecated("Use Item::reload().")]]
     static void reloadItems(const ItemList<>& items);
+
+    [[deprecated("Use Item::findOriginalItem().")]]
     static Item* findOriginalItemForReloadedItem(Item* item);
 
     template<class AddonType>

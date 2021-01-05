@@ -367,6 +367,11 @@ public:
     //! Use this function to disable the implicit overwrite next time
     void clearFileInformation();
 
+    bool reload();
+    bool replace(Item* originalItem);
+    Item* findOriginalItem() const;
+    Item* findReplacementItem() const;
+
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     const std::string& lastAccessedFilePath() const;
     const std::string& lastAccessedFileFormatId() const;

@@ -706,12 +706,13 @@ BodyItemInfoPtr LinkDeviceTreeWidget::Impl::getOrCreateBodyItemInfo(BodyItem* bo
             if(p != bodyItemInfoMap.end()){
                 info = p->second;
             } else {
-                auto originalItem = ItemManager::findOriginalItemForReloadedItem(bodyItem);
-                auto q = bodyItemInfoMap.find(dynamic_cast<BodyItem*>(originalItem));
-                if(q != bodyItemInfoMap.end()){
-                    info = q->second;
-                    isNewBodyInfo = true;
-                    bodyItemInfoMap.erase(q);
+                if(auto originalItem = bodyItem->findOriginalItem()){
+                    auto q = bodyItemInfoMap.find(dynamic_cast<BodyItem*>(originalItem));
+                    if(q != bodyItemInfoMap.end()){
+                        info = q->second;
+                        isNewBodyInfo = true;
+                        bodyItemInfoMap.erase(q);
+                    }
                 }
             }
         }
