@@ -36,6 +36,7 @@ void exportPyLink(py::module& m)
 {
     py::class_<Link, LinkPtr, Referenced> link(m, "Link");
     link
+        .def("__repr__", [](const Link &self) {return "<cnoid.Body.Link named '" + self.name() + "'>"; })
         .def_property_readonly("name", &Link::name)
         .def_property_readonly("index", &Link::index)
         .def("isValid", &Link::isValid)
@@ -87,7 +88,8 @@ void exportPyLink(py::module& m)
         .def_property_readonly("offsetRotation", [](const Link& self){ return self.offsetRotation(); })
         .def_property_readonly("jointId", &Link::jointId)
         .def_property_readonly("jointType", &Link::jointType)
-        .def_property_readonly("jointTypeString", &Link::jointTypeString)
+        .def_property_readonly("jointTypeString", [](const Link& self){ return self.jointTypeString(); })
+        .def("getJointTypeString", &Link::jointTypeString, py::arg("useUnderscore") = false)
         .def("isFixedJoint", &Link::isFixedJoint)
         .def("isFreeJoint", &Link::isFreeJoint)
         .def("isRevoluteJoint", &Link::isRevoluteJoint)

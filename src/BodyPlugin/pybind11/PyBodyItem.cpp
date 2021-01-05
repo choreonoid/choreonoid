@@ -43,6 +43,8 @@ void exportBodyItem(py::module m)
         .def("acceptKinematicStateEdit", &BodyItem::acceptKinematicStateEdit)
         .def("undoKinematicState", &BodyItem::undoKinematicState)
         .def("redoKinematicState", &BodyItem::redoKinematicState)
+        .def_property_readonly("sigModelUpdated", &BodyItem::sigModelUpdated)
+        .def("notifyModelUpdate", &BodyItem::notifyModelUpdate)
         .def_property_readonly("sigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)
         .def("notifyKinematicStateChange", (void (BodyItem::*)(bool, bool, bool)) &BodyItem::notifyKinematicStateChange)
         .def("notifyKinematicStateChange", [](BodyItem& self, bool requestFK, bool requestVelFK){

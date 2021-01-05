@@ -2,8 +2,10 @@
   @author Shin'ichiro Nakaoka
  */
 
+#include "PyDeviceList.h"
 #include "../Device.h"
 #include "../Link.h"
+#include "../ForceSensor.h"
 #include <cnoid/PyReferenced>
 #include <cnoid/PyEigenTypes>
 
@@ -22,6 +24,9 @@ namespace cnoid {
 void exportPyDeviceTypes(py::module& m)
 {
     py::class_<Device, DevicePtr, Referenced>(m, "Device")
+        .def("__repr__",
+             [](const Device &self) {
+                 return string("<cnoid.Body.") + self.typeName() + " named '" + self.name() + "'>"; })
         .def_property("index", &Device::index, &Device::setIndex)
         .def("setIndex", &Device::setIndex)
         .def_property("id", &Device::id, &Device::setId)
@@ -44,6 +49,9 @@ void exportPyDeviceTypes(py::module& m)
         .def("getName", &Device::name)
         .def("getLink", (Link*(Device::*)())&Device::link)
         ;
+
+    PyDeviceList<Device>(m, "DeviceList");
+    PyDeviceList<ForceSensor>(m, "ForceSensorList");
 }
 
 }

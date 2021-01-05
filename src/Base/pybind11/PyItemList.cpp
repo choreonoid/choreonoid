@@ -13,7 +13,7 @@ void checkIfItemSubclass(PyObject* typeObject)
 {
     auto &types = py::detail::get_internals().registered_types_cpp;
     auto it = types.find(std::type_index(typeid(Item)));
-    pybind11::detail::type_info* itemClass = 0;
+    pybind11::detail::type_info* itemClass = nullptr;
     if (it != types.end())
         itemClass = (pybind11::detail::type_info *) it->second;
 

@@ -4,6 +4,7 @@
 
 #include "../Body.h"
 #include "../BodyMotion.h"
+#include "PyDeviceList.h"
 #include <cnoid/ValueTree>
 #include <cnoid/PyReferenced>
 #include <cnoid/PyEigenTypes>
@@ -20,6 +21,7 @@ void exportPyBody(py::module& m)
 {
     py::class_<Body, BodyPtr, Referenced> body(m, "Body");
     body
+        .def("__repr__", [](const Link &self) { return "<cnoid.Body.Body named '" + self.name() + "'>"; })
         .def("clone", (Body*(Body::*)()const) &Body::clone)
         .def("createLink", &Body::createLink)
         .def("createLink", [](Body& self){ return self.createLink(); })
@@ -57,6 +59,7 @@ void exportPyBody(py::module& m)
              return joints; })
         .def_property_readonly("allJoints", &Body::allJoints)
         .def_property_readonly("numDevices", &Body::numDevices)
+        .def_property_readonly("devices", [](Body& self) { return getPyDeviceList(self.devices()); })
         .def("device", &Body::device)
         .def("findDevice", [](Body& self, const string& name){ return self.findDevice(name); })
         .def("addDevice", (void(Body::*)(Device*, Link*)) &Body::addDevice)
