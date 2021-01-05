@@ -56,6 +56,7 @@ public:
     bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& out_pathStrings);
     int findCameraPath(const std::vector<std::string>& simplifiedPathStrings);
     bool setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings);
+    void setCurrentCameraAutoRestorationMode(bool on);
 
     int numLights() const;
     void getLightInfo(int index, SgLight*& out_light, Isometry3& out_position) const;

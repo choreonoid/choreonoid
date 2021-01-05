@@ -542,6 +542,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     renderer->enableUnusedResourceCheck(true);
     renderer->sigCamerasChanged().connect([&](){ onCamerasChanged(); });
     renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
+    renderer->setCurrentCameraAutoRestorationMode(true);
     self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
     sceneRoot->sigUpdated().connect([this](const SgUpdate& update){ onSceneGraphUpdated(update); });
 

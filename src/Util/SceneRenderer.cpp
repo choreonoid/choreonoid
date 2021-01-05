@@ -123,9 +123,12 @@ public:
 
     bool camerasChanged;
     bool currentCameraRemoved;
+    bool isCurrentCameraAutoRestorationMode;
+    bool isPreferredCameraCurrent;
     int currentCameraIndex;
     SgCamera* currentCamera;
     vector<SgNodePath> cameraPaths;
+    vector<string> preferredCurrentCameraPathStrings;
     Signal<void()> sigCamerasChanged;
     Signal<void()> sigCurrentCameraChanged;
         
@@ -205,6 +208,8 @@ SceneRenderer::Impl::Impl(SceneRenderer* self)
 
     cameras = &cameras1;
     prevCameras = &cameras2;
+    isCurrentCameraAutoRestorationMode = false;
+    isPreferredCameraCurrent = false;
     currentCameraIndex = -1;
     currentCamera = 0;
     I.setIdentity();
@@ -346,12 +351,27 @@ void SceneRenderer::Impl::extractPreproNodes()
     if(camerasChanged){
         if(currentCameraRemoved){
             currentCameraIndex = 0;
+            if(isPreferredCameraCurrent){
+                isPreferredCameraCurrent = false;
+            }
         }
         cameraPaths.clear();
         sigCamerasChanged();
     }
 
-    setCurrentCamera(currentCameraIndex);
+    bool isCurrentCameraUpdated = false;
+    if(isCurrentCameraAutoRestorationMode){
+        if(!isPreferredCameraCurrent && !preferredCurrentCameraPathStrings.empty()){
+            if(self->setCurrentCameraPath(preferredCurrentCameraPathStrings)){
+                isPreferredCameraCurrent = true;
+                isCurrentCameraUpdated = true;
+            }
+        }
+    }
+
+    if(!isCurrentCameraUpdated){
+        setCurrentCamera(currentCameraIndex);
+    }
 }
 
 
@@ -579,6 +599,10 @@ void SceneRenderer::Impl::setCurrentCamera(int index)
     if(newCamera && newCamera != currentCamera){
         currentCameraIndex = index;
         currentCamera = newCamera;
+        if(isCurrentCameraAutoRestorationMode){
+            self->getSimplifiedCameraPathStrings(index, preferredCurrentCameraPathStrings);
+            isPreferredCameraCurrent = true;
+        }
         sigCurrentCameraChanged();
     }
 }
@@ -701,9 +725,21 @@ bool SceneRenderer::setCurrentCameraPath(const std::vector<std::string>& simplif
     int index = findCameraPath(simplifiedPathStrings);
     if(index >= 0){
         setCurrentCamera(index);
+        if(impl->isCurrentCameraAutoRestorationMode){
+            impl->preferredCurrentCameraPathStrings = simplifiedPathStrings;
+            impl->isPreferredCameraCurrent = true;
+        }
         return true;
     }
     return false;
+}
+
+
+void SceneRenderer::setCurrentCameraAutoRestorationMode(bool on)
+{
+    impl->isCurrentCameraAutoRestorationMode = on;
+    impl->preferredCurrentCameraPathStrings.clear();
+    impl->isPreferredCameraCurrent = false;
 }
 
 
