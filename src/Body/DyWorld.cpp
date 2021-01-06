@@ -106,6 +106,14 @@ void DyWorldBase::calcNextState()
 }
 
 
+void DyWorldBase::refreshState()
+{
+    for(auto& subBody : subBodies_){
+        subBody->forwardDynamics()->refreshState();
+    }
+}
+
+
 int DyWorldBase::addBody(DyBody* body)
 {
     int index = bodies_.size();

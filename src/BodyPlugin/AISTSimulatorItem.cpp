@@ -523,17 +523,25 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
 {
     switch(impl->dynamicsMode.which()){
 
-    case FORWARD_DYNAMICS:
+    case FORWARD_DYNAMICS: {
         // Update the internal states for a special actuation mode
+        bool doRefresh = false;
         for(auto& dyLink : impl->internalStateUpdateLinks){
             if(dyLink->actuationMode() == Link::AllStateHighGainActuationMode){
-                dyLink->q() = dyLink->q_target();
-                dyLink->dq() = dyLink->dq_target();
+                if(dyLink->hasJoint()){
+                    dyLink->q() = dyLink->q_target();
+                    dyLink->dq() = dyLink->dq_target();
+                }
                 dyLink->vo() = dyLink->v() - dyLink->w().cross(dyLink->p());
+                doRefresh = true;
             }
+        }
+        if(doRefresh){
+            impl->world.refreshState();
         }
         impl->world.calcNextState();
         break;
+    }
         
     case KINEMATICS:
         impl->stepKinematicsSimulation(activeSimBodies);

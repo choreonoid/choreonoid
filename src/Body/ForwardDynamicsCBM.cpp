@@ -152,6 +152,12 @@ inline void ForwardDynamicsCBM::calcAccelFKandForceSensorValues()
 }
 
 
+void ForwardDynamicsCBM::refreshState()
+{
+
+}
+
+
 void ForwardDynamicsCBM::calcNextState()
 {
     complementHighGainModeCommandValues();
@@ -418,7 +424,6 @@ void ForwardDynamicsCBM::calcPositionAndVelocityFK()
 
 COMMON_CALCS_FOR_ALL_JOINT_TYPES:
 
-        /// \todo remove this  equation
         link->v().noalias() = link->vo() + link->w().cross(link->p());
 
         link->wc().noalias() = link->R() * link->c() + link->p();

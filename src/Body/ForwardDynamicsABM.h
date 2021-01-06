@@ -24,7 +24,8 @@ public:
         
     virtual void initialize();
     virtual void calcNextState();
-
+    virtual void refreshState();
+    
 private:
         
     void calcMotionWithEulerMethod();

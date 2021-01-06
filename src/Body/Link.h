@@ -156,15 +156,16 @@ public:
         
     JointType jointType() const { return static_cast<JointType>(jointType_); }
     std::string jointTypeString(bool useUnderscore = false) const;
-    bool isFixedJoint() const { return (jointType_ >= FIXED_JOINT); }
-    bool isFreeJoint() const { return jointType_ == FREE_JOINT; }
-    bool isRevoluteJoint() const { return jointType_ == REVOLUTE_JOINT; }
-    bool isPrismaticJoint() const { return jointType_ == PRISMATIC_JOINT; }
+    bool isFixedJoint() const { return (jointType_ >= FixedJoint); }
+    bool isFreeJoint() const { return jointType_ == FreeJoint; }
+    bool isRevoluteJoint() const { return jointType_ == RevoluteJoint; }
+    bool isPrismaticJoint() const { return jointType_ == PrismaticJoint; }
+    bool hasJoint() const { return jointType_ <= 1; }
 
     /// deprecated
-    bool isRotationalJoint() const { return jointType_ == ROTATIONAL_JOINT; }
+    bool isRotationalJoint() const { return jointType_ == RevoluteJoint; }
     /// deprecated
-    bool isSlideJoint() const { return jointType_ == SLIDE_JOINT; }
+    bool isSlideJoint() const { return jointType_ == PrismaticJoint; }
         
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }

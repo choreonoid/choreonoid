@@ -36,6 +36,7 @@ public:
 
     virtual void initialize() = 0;
     virtual void calcNextState() = 0;
+    virtual void refreshState() = 0;
 
 protected:
     virtual void initializeSensors();

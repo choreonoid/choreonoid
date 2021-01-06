@@ -31,6 +31,7 @@ public:
 
     virtual void initialize();
     virtual void calcNextState();
+    virtual void refreshState();
 
     void complementHighGainModeCommandValues();
 

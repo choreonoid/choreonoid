@@ -86,6 +86,8 @@ public:
     */
     virtual void calcNextState();
 
+    void refreshState();
+        
     /**
        \brief get index of link pairs
        \param link1 link1

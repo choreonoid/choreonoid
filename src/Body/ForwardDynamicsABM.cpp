@@ -63,6 +63,12 @@ inline void ForwardDynamicsABM::calcABMLastHalf()
 }
 
 
+void ForwardDynamicsABM::refreshState()
+{
+    calcABMFirstHalf();
+}
+
+
 void ForwardDynamicsABM::calcNextState()
 {
     switch(integrationMode){
