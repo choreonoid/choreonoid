@@ -1,42 +1,12 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: TrackedVehicle
-rootLink: ROOT
-
-agxJointParameters: &wheelHingeParam
-  hingeCompliance:
-    - dof: TRANSLATIONAL_3
-      compliance: 2E-6
-      damping: 0.1
-  hingeMotor:
-    compliance: 3E-5
-
-agxJointParameters: &trackJointParam   
-  hingeCompliance:
-    - dof: TRANSLATIONAL_1
-      compliance: 2E-8
-      damping: 0.1
-    - dof: TRANSLATIONAL_2
-      compliance: 2E-8
-      damping: 0.1
-    - dof: TRANSLATIONAL_3
-      compliance: 2E-8
-      damping: 0.1
-    - dof: ROTATIONAL_1
-      compliance: 8E-8
-      damping: 0.1
-    - dof: ROTATIONAL_2
-      compliance: 8E-8
-      damping: 0.1
-  hingeMotor:
-    compliance: 0.0005
-  planeCompliance: 3E-9
-  planeDamping: 0.003
+name: ContinuousTrackVehicle
+rootLink: BASE
 
 links:
   -
-    name: ROOT
+    name: BASE
     type: Link
     jointType: free
     translation: [ 0, 0, 0 ]
@@ -78,7 +48,7 @@ links:
             height: 480
   -
     name: WHEEL_L0
-    parent: ROOT
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 0
@@ -89,14 +59,13 @@ links:
       1.3125, 0, 0,
       0, 1.125, 0,
       0, 0, 1.3125 ]
-    import: *wheelHingeParam 
     elements: &WeelShape
       Shape:
         appearance: *green
         geometry: { type: Cylinder, radius: 0.3, height: 0.3 }
   -
     name: WHEEL_L1
-    parent: ROOT
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 1
@@ -107,11 +76,10 @@ links:
       1.3125, 0, 0,
       0, 1.125, 0,
       0, 0, 1.3125 ]
-    import: *wheelHingeParam 
     elements: *WeelShape
   -
     name: WHEEL_L2
-    parent: ROOT
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 2
@@ -122,11 +90,10 @@ links:
       1.3125, 0, 0,
       0, 1.125, 0,
       0, 0, 1.3125 ] 
-    import: *wheelHingeParam
     elements: *WeelShape  
   -
     name: WHEEL_L3
-    parent: ROOT
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 3
@@ -137,11 +104,10 @@ links:
       1.3125, 0, 0,
       0, 1.125, 0,
       0, 0, 1.3125 ] 
-    import: *wheelHingeParam
     elements: *WeelShape
   -
     name: WHEEL_R0
-    parent: ROOT
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 4
@@ -152,11 +118,10 @@ links:
       1.3125, 0, 0,
       0, 1.125, 0,
       0, 0, 1.3125 ] 
-    import: *wheelHingeParam
     elements: *WeelShape  
   -
     name: WHEEL_R1
-    parent: ROOT
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 5
@@ -167,11 +132,10 @@ links:
       1.3125, 0, 0,
       0, 1.125, 0,
       0, 0, 1.3125 ] 
-    import: *wheelHingeParam
     elements: *WeelShape
   -
     name: WHEEL_R2
-    parent: ROOT
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 6
@@ -182,11 +146,10 @@ links:
       1.3125, 0, 0,
       0, 1.125, 0,
       0, 0, 1.3125 ] 
-    import: *wheelHingeParam
     elements: *WeelShape
   -
     name: WHEEL_R3
-    parent: ROOT
+    parent: BASE
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 7
@@ -197,11 +160,10 @@ links:
       1.3125, 0, 0,
       0, 1.125, 0,
       0, 0, 1.3125 ] 
-    import: *wheelHingeParam
     elements: *WeelShape
   -
     type: ContinuousTrack
-    parent: ROOT
+    parent: BASE
     name: FOOT_L
     translation: [ 1.1184, 1.1, 0.15 ]
     numJoints: 40
@@ -210,7 +172,6 @@ links:
     initialJointAngles: [ 
       30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  ]
-    import: *trackJointParam
     elements: &TrackFoot
       RigidBody:
         translation: [ 0.0854, 0, 0.025 ]
@@ -232,7 +193,7 @@ links:
                 transparency: 0
   -
     type: ContinuousTrack
-    parent: ROOT
+    parent: BASE
     name: FOOT_R
     translation: [ 1.1184, -1.1, 0.15 ]
     numJoints: 40
@@ -241,11 +202,10 @@ links:
     initialJointAngles: [ 
       30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  ]
-    import: *trackJointParam
     elements: *TrackFoot
 
 linkGroup:
-  - ROOT
+  - BASE
   - name: VEHICLE
     links:
       - name: WHEEL_L
@@ -262,20 +222,3 @@ linkGroup:
                  FOOT_R10, FOOT_R11, FOOT_R12, FOOT_R13, FOOT_R14, FOOT_R15, FOOT_R16, FOOT_R17, FOOT_R18, FOOT_R19,
                  FOOT_R20, FOOT_R21, FOOT_R22, FOOT_R23, FOOT_R24, FOOT_R25, FOOT_R26, FOOT_R27, FOOT_R28, FOOT_R29,
                  FOOT_R30, FOOT_R31, FOOT_R32, FOOT_R33, FOOT_R34, FOOT_R35, FOOT_R36, FOOT_R37, FOOT_R38, FOOT_R39 ]    
-    
-agxContactMaterialParameters:
-  - linkGroupPairs: [ [ WHEEL_L, TRACK_L ], [WHEEL_R, TRACK_R ] ]
-    frictionModel: BOX
-    solveType: DIRECT
-    frictionCoefficient: 1.0e100
-    surfaceViscosityParameters:
-      - direction: PRIMARY_DIRECTION
-        viscosity: 8E-5
-      - direction: SECONDARY_DIRECTION
-        viscosity: 8E-5
-    restitution: 0
-    adhesion: [ 0, 0.001 ]
-    damping: 0.01
-
-agxSelfCollisionDetection:
-    linkGroupPairs: [ [ WHEEL_L, TRACK_L ], [WHEEL_R, TRACK_R ] ]
