@@ -30,12 +30,12 @@ class CNOID_GENERAL_EXPORT FireController : public SimpleController
     bool isTestMode;
     int testMode;
     bool doUpdateFire;
-    GeneralSliderView::Slider* slider_strength;
-    GeneralSliderView::Slider* slider_numParticles;
-    GeneralSliderView::Slider* slider_lifeTime;
-    GeneralSliderView::Slider* slider_speed;
-    GeneralSliderView::Slider* slider_accel;
-    GeneralSliderView::Slider* slider_size;
+    GeneralSliderView::SliderPtr slider_strength;
+    GeneralSliderView::SliderPtr slider_numParticles;
+    GeneralSliderView::SliderPtr slider_lifeTime;
+    GeneralSliderView::SliderPtr slider_speed;
+    GeneralSliderView::SliderPtr slider_accel;
+    GeneralSliderView::SliderPtr slider_size;
     
 public:
     static FireController* instance();

@@ -161,28 +161,28 @@ void FireController::initializeTestMode()
     sliderView = GeneralSliderView::instance();
 
     if(testMode == 1){
-        slider_numParticles = sliderView->getOrCreateSlider("FireController", "numParticles");
+        slider_numParticles = sliderView->getOrCreateSlider("numParticles");
         slider_numParticles->setValue(600);
         slider_numParticles->setCallback([&](double value){ doUpdateFire = true; });
 
-        slider_lifeTime = sliderView->getOrCreateSlider("FireController", "lifeTime", 1.0, 9.9, 1);
+        slider_lifeTime = sliderView->getOrCreateSlider("lifeTime", 1.0, 9.9, 1);
         slider_lifeTime->setValue(5.0);
         slider_lifeTime->setCallback([&](double value){ doUpdateFire = true; });
     
-        slider_speed = sliderView->getOrCreateSlider("FireController", "speed", 0.00, 0.3, 3);
+        slider_speed = sliderView->getOrCreateSlider("speed", 0.00, 0.3, 3);
         slider_speed->setValue(0.15);
         slider_speed->setCallback([&](double value){ doUpdateFire = true; });
 
-        slider_accel = sliderView->getOrCreateSlider("FireController", "accel", 0.000, 0.5, 3);
+        slider_accel = sliderView->getOrCreateSlider("accel", 0.000, 0.5, 3);
         slider_accel->setValue(0.15);
         slider_accel->setCallback([&](double value){ doUpdateFire = true; });
 
-        slider_size = sliderView->getOrCreateSlider("FireController", "size", 0.1, 1.0, 1);
+        slider_size = sliderView->getOrCreateSlider("size", 0.1, 1.0, 1);
         slider_size->setValue(0.5);
         slider_size->setCallback([&](double value){ doUpdateFire = true; });
 
     } else { // mode 2
-        slider_strength = sliderView->getOrCreateSlider("FireController", "strength", 0, 600);
+        slider_strength = sliderView->getOrCreateSlider("strength", 0, 600);
         slider_strength->setValue(400);
         slider_strength->setCallback([&](double value){ doUpdateFire = true; });
     }
