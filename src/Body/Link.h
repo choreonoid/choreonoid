@@ -323,7 +323,7 @@ public:
         Vector3 position_;
         Vector3 normal_;
         Vector3 force_;
-        Vector3 velocity_; // Relative velocity at the contact point
+        Vector3 velocity_;
         double depth_;
 
         /**
