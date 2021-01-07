@@ -106,6 +106,7 @@ public:
     QLabel coordinateLabel;
     ComboBox coordinateCombo;
     int lastCoordIndex;
+    CheckBox individualRotationCheck;
         
     Impl(LocationView* self);
     void onSelectedItemsChanged(const ItemList<>& items);
@@ -120,7 +121,7 @@ public:
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
     void updatePositionWidgetWithPrimaryLocation();
-    bool setInputPositionToTargetLocation(const Isometry3& T_input);
+    bool updateTargetLocationWithInputPosition(const Isometry3& T_input);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -170,11 +171,16 @@ LocationView::Impl::Impl(LocationView* self)
     vbox->addLayout(hbox);
 
     positionWidget = new PositionWidget(self);
-
     positionWidget->setPositionCallback(
-        [&](const Isometry3& T){ return setInputPositionToTargetLocation(T); });
-    
+        [&](const Isometry3& T){ return updateTargetLocationWithInputPosition(T); });
     vbox->addWidget(positionWidget);
+
+    hbox = new QHBoxLayout;
+    hbox->addStretch();
+    individualRotationCheck.setText(_("Individual Rotation"));
+    individualRotationCheck.setEnabled(false);
+    hbox->addWidget(&individualRotationCheck);
+    vbox->addLayout(hbox);
 
     vbox->addStretch();
 
@@ -374,6 +380,7 @@ void LocationView::Impl::setupInterfaceForNewLocations()
                 format(_("<b>{0}</b> + {1} objects"),
                        proxy->getName(), n - 1).c_str());
         }
+        individualRotationCheck.setEnabled(n >= 2);
 
         // Update the dependency information
         for(auto& location : locations){
@@ -654,7 +661,7 @@ void LocationView::Impl::updatePositionWidgetWithPrimaryLocation()
 }
 
 
-bool LocationView::Impl::setInputPositionToTargetLocation(const Isometry3& T_input)
+bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& T_input)
 {
     if(locations.empty()){
         return false;
@@ -715,7 +722,13 @@ bool LocationView::Impl::setInputPositionToTargetLocation(const Isometry3& T_inp
         for(size_t i=1; i < locations.size(); ++i){
             auto& subLocation = locations[i];
             if(!subLocation->isDependingOnAnotherTargetLocation){
-                Isometry3 T = T_global * subLocation->T_primary_relative;
+                Isometry3 T;
+                if(!individualRotationCheck.isChecked()){
+                    T = T_global * subLocation->T_primary_relative;
+                } else {
+                    T.linear() = T_global.linear() * subLocation->T_primary_relative.linear();
+                    T.translation() = T_global.translation() + subLocation->T_primary_relative.translation();
+                }
                 normalizeRotation(T);
                 subLocation->proxy->setGlobalLocation(T);
             }

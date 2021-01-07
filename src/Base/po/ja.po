@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-30 09:32+0900\n"
+"POT-Creation-Date: 2021-01-07 19:16+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -29,7 +29,7 @@ msgstr "シーンアイテム"
 msgid "Scene"
 msgstr "シーン"
 
-#: SceneItem.cpp:153 MainWindow.cpp:232 Item.cpp:1435 PointSetItem.cpp:524
+#: SceneItem.cpp:153 MainWindow.cpp:232 Item.cpp:1516 PointSetItem.cpp:524
 msgid "File"
 msgstr "ファイル"
 
@@ -59,7 +59,7 @@ msgid "OK"
 msgstr "OK"
 
 #: ItemPropertyWidget.cpp:559 ProjectManager.cpp:754 ProjectManager.cpp:780
-#: ItemFileDialog.cpp:77 PluginManager.cpp:690 SceneWidget.cpp:987
+#: ItemFileDialog.cpp:77 PluginManager.cpp:690 SceneWidget.cpp:988
 #: CaptureBar.cpp:97 TaskView.cpp:286
 msgid "Cancel"
 msgstr "キャンセル"
@@ -550,31 +550,31 @@ msgstr "設定ダイアログの表示"
 msgid "Stop animation"
 msgstr "アニメーションの停止"
 
-#: Item.cpp:1414 MultiSeqItemCreationPanel.cpp:23
+#: Item.cpp:1495 MultiSeqItemCreationPanel.cpp:23
 msgid "Name"
 msgstr "名前"
 
-#: Item.cpp:1425
+#: Item.cpp:1506
 msgid "Display name"
 msgstr "表示名"
 
-#: Item.cpp:1430
+#: Item.cpp:1511
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:1438
+#: Item.cpp:1519
 msgid "Num children"
 msgstr "小アイテムの数"
 
-#: Item.cpp:1439
+#: Item.cpp:1520
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:1440
+#: Item.cpp:1521
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:1441
+#: Item.cpp:1522
 msgid "Refs"
 msgstr "参照数"
 
@@ -642,77 +642,77 @@ msgstr "スクリプトバー"
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
-#: ItemManager.cpp:201
+#: ItemManager.cpp:199
 msgid "New ..."
 msgstr "新規"
 
-#: ItemManager.cpp:204
+#: ItemManager.cpp:202
 msgid "Load ..."
 msgstr "読み込み"
 
-#: ItemManager.cpp:206
+#: ItemManager.cpp:204
 msgid "Reload Selected Items"
 msgstr "選択アイテムの再読み込み"
 
-#: ItemManager.cpp:211
+#: ItemManager.cpp:209
 msgid "Save Selected Items"
 msgstr "選択アイテムの保存"
 
-#: ItemManager.cpp:213
+#: ItemManager.cpp:211
 msgid "Save Selected Items As"
 msgstr "名前を付けて選択アイテムを保存"
 
-#: ItemManager.cpp:218
+#: ItemManager.cpp:216
 msgid "Import ..."
 msgstr "インポート"
 
-#: ItemManager.cpp:222
+#: ItemManager.cpp:220
 msgid "Export Selected Items"
 msgstr "選択アイテムのエクスポート"
 
-#: ItemManager.cpp:487
+#: ItemManager.cpp:485
 msgid "Class {} is not registered as an item class."
 msgstr "クラス{}はアイテムクラスとして登録されていません．"
 
-#: ItemManager.cpp:493
+#: ItemManager.cpp:491
 msgid "The panel to create {} is not registered."
 msgstr "{}を生成するパネルは登録されていません．"
 
-#: ItemManager.cpp:576
+#: ItemManager.cpp:574
 msgid "Item$"
 msgstr "アイテム$"
 
-#: ItemManager.cpp:578
+#: ItemManager.cpp:576
 msgid "Create New %1"
 msgstr "%1の新規生成"
 
-#: ItemManager.cpp:621 ViewManager.cpp:283
+#: ItemManager.cpp:619 ViewManager.cpp:283
 msgid "&Create"
 msgstr "作成(&C)"
 
-#: ItemManager.cpp:624 ViewManager.cpp:288 PathVariableEditor.cpp:99
+#: ItemManager.cpp:622 ViewManager.cpp:288 PathVariableEditor.cpp:99
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
-#: ItemManager.cpp:791 ViewManager.cpp:277
+#: ItemManager.cpp:789 ViewManager.cpp:277
 msgid "Name:"
 msgstr "名前"
 
-#: ItemManager.cpp:933
+#: ItemManager.cpp:931
 msgid ""
 "\"{0}\" cannot be accessed because the specified item type \"{1}\" is not "
 "registered."
 msgstr "\"{0}\"へのアクセスにおいて指定されたアイテム型\"{1}\"は未登録です．"
 
-#: ItemManager.cpp:975
+#: ItemManager.cpp:973
 msgid "The file format for accessing \"{0}\" cannot be determined."
 msgstr "\"{0}\"のファイル形式を確定できません．"
 
-#: ItemManager.cpp:979
+#: ItemManager.cpp:977
 msgid "Unknown file format \"{0}\" is specified in accessing \"{1}\"."
 msgstr "\"{1}\"に対して不明なファイル形式\"{0}\"が指定されています．"
 
-#: ItemManager.cpp:1330
+#: ItemManager.cpp:1292
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
@@ -1081,7 +1081,7 @@ msgstr "画像サイスをビューに合わせる"
 msgid "CoordinateFrameItem"
 msgstr "座標フレームアイテム"
 
-#: CoordinateFrameItem.cpp:266 LocationView.cpp:525
+#: CoordinateFrameItem.cpp:266 LocationView.cpp:532
 msgid "Local"
 msgstr "ローカル"
 
@@ -1192,7 +1192,7 @@ msgstr "制御点の表示"
 msgid "Step"
 msgstr "ステップ"
 
-#: GraphBar.cpp:256 LocationView.cpp:513
+#: GraphBar.cpp:256 LocationView.cpp:520
 msgid "Offset"
 msgstr "オフセット"
 
@@ -1298,231 +1298,231 @@ msgstr "垂直同期"
 msgid "Low GPU memory consumption mode"
 msgstr "GPUメモリ消費低減モード"
 
-#: SceneWidget.cpp:885
+#: SceneWidget.cpp:886
 msgid "The OpenGL resources of {0} has been cleared."
 msgstr "{0}のOpenGLリソースがクリアされました．"
 
-#: SceneWidget.cpp:1033
+#: SceneWidget.cpp:1034
 msgid "FPS Test Result"
 msgstr "フレームレートテスト結果"
 
-#: SceneWidget.cpp:1034
+#: SceneWidget.cpp:1035
 msgid "FPS: %1 frames / %2 [s] = %3"
 msgstr "フレームレート: %1 フレーム / %2 [秒] = %3 [fps]"
 
-#: SceneWidget.cpp:1729
+#: SceneWidget.cpp:1730
 msgid "Global Position: ({0:.3f} {1:.3f} {2:.3f})"
 msgstr "グローバル座標位置 = ({0:.3f} {1:.3f} {2:.3f})"
 
-#: SceneWidget.cpp:1730
+#: SceneWidget.cpp:1731
 msgid "Object: {0}, Global Position: ({1:.3f} {2:.3f} {3:.3f})"
 msgstr "オブジェクト: {0}, グローバル座標位置 = ({1:.3f} {2:.3f} {3:.3f})"
 
-#: SceneWidget.cpp:2231
+#: SceneWidget.cpp:2232
 msgid "Edit Mode"
 msgstr "編集モード"
 
-#: SceneWidget.cpp:2272
+#: SceneWidget.cpp:2273
 msgid "View Mode"
 msgstr "閲覧モード"
 
-#: SceneWidget.cpp:2307
+#: SceneWidget.cpp:2308
 msgid "Background Color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:2321
+#: SceneWidget.cpp:2322
 msgid "Floor Grid Color"
 msgstr "床グリッド色"
 
-#: SceneWidget.cpp:2335
+#: SceneWidget.cpp:2336
 msgid "Default Color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:3209
+#: SceneWidget.cpp:3210
 msgid "Scene Config"
 msgstr "シーン設定"
 
-#: SceneWidget.cpp:3221
+#: SceneWidget.cpp:3222
 msgid "Camera"
 msgstr "カメラ"
 
-#: SceneWidget.cpp:3223
+#: SceneWidget.cpp:3224
 msgid "Field of view"
 msgstr "視野角"
 
-#: SceneWidget.cpp:3230
+#: SceneWidget.cpp:3231
 msgid "Clipping depth"
 msgstr "クリッピング深度"
 
-#: SceneWidget.cpp:3232
+#: SceneWidget.cpp:3233
 msgid "Near"
 msgstr "近隣"
 
-#: SceneWidget.cpp:3238
+#: SceneWidget.cpp:3239
 msgid "Far"
 msgstr "遠方"
 
-#: SceneWidget.cpp:3248
+#: SceneWidget.cpp:3249
 msgid "Restrict camera roll"
 msgstr "カメラロールを制限"
 
-#: SceneWidget.cpp:3252
+#: SceneWidget.cpp:3253
 msgid "Vertical axis"
 msgstr "垂直軸"
 
-#: SceneWidget.cpp:3262
+#: SceneWidget.cpp:3263
 msgid "Upside down"
 msgstr "上下反転"
 
-#: SceneWidget.cpp:3272
+#: SceneWidget.cpp:3273
 msgid "Lighting"
 msgstr "ライティング"
 
-#: SceneWidget.cpp:3274
+#: SceneWidget.cpp:3275
 msgid "Lighting mode"
 msgstr "ライティングモード"
 
-#: SceneWidget.cpp:3276
+#: SceneWidget.cpp:3277
 msgid "Normal"
 msgstr " 標準"
 
-#: SceneWidget.cpp:3282
+#: SceneWidget.cpp:3283
 msgid "Minimum"
 msgstr "最小限"
 
-#: SceneWidget.cpp:3287
+#: SceneWidget.cpp:3288
 msgid "Solid color"
 msgstr "ソリッドカラー"
 
-#: SceneWidget.cpp:3305
+#: SceneWidget.cpp:3306
 msgid "Smooth shading"
 msgstr "スムーズシェーディング"
 
-#: SceneWidget.cpp:3311
+#: SceneWidget.cpp:3312
 msgid "Back face culling: "
 msgstr "隠面消去"
 
-#: SceneWidget.cpp:3316
+#: SceneWidget.cpp:3317
 msgid "Enabled"
 msgstr "有効"
 
-#: SceneWidget.cpp:3317
+#: SceneWidget.cpp:3318
 msgid "Disabled"
 msgstr "無効"
 
-#: SceneWidget.cpp:3318
+#: SceneWidget.cpp:3319
 msgid "Forced"
 msgstr "強制"
 
-#: SceneWidget.cpp:3338
+#: SceneWidget.cpp:3339
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: SceneWidget.cpp:3343 SceneWidget.cpp:3360 LightingItem.cpp:500
+#: SceneWidget.cpp:3344 SceneWidget.cpp:3361 LightingItem.cpp:500
 msgid "Intensity"
 msgstr "照度"
 
-#: SceneWidget.cpp:3351
+#: SceneWidget.cpp:3352
 msgid "Back lighting"
 msgstr "裏面照射"
 
-#: SceneWidget.cpp:3355
+#: SceneWidget.cpp:3356
 msgid "World light"
 msgstr "ワールドライト"
 
-#: SceneWidget.cpp:3368
+#: SceneWidget.cpp:3369
 msgid "Ambient"
 msgstr "環境光"
 
-#: SceneWidget.cpp:3377
+#: SceneWidget.cpp:3378
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: SceneWidget.cpp:3386
+#: SceneWidget.cpp:3387
 msgid "Texture"
 msgstr "テクスチャ"
 
-#: SceneWidget.cpp:3391
+#: SceneWidget.cpp:3392
 msgid "Fog"
 msgstr "フォグ"
 
-#: SceneWidget.cpp:3401
+#: SceneWidget.cpp:3402
 msgid "Shadow %1"
 msgstr "影 %1"
 
-#: SceneWidget.cpp:3405
+#: SceneWidget.cpp:3406
 msgid "Light"
 msgstr "ライト"
 
-#: SceneWidget.cpp:3413
+#: SceneWidget.cpp:3414
 msgid "Anti-aliasing of shadows"
 msgstr "影のアンチエイリアシング"
 
-#: SceneWidget.cpp:3420
+#: SceneWidget.cpp:3421
 msgid "Background"
 msgstr "背景"
 
-#: SceneWidget.cpp:3423
+#: SceneWidget.cpp:3424
 msgid "Background color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:3427
+#: SceneWidget.cpp:3428
 msgid "Coordinate axes"
 msgstr "座標軸"
 
-#: SceneWidget.cpp:3437
+#: SceneWidget.cpp:3438
 msgid "XY Grid"
 msgstr "XYグリッド"
 
-#: SceneWidget.cpp:3439
+#: SceneWidget.cpp:3440
 msgid "XZ Grid"
 msgstr "XZグリッド"
 
-#: SceneWidget.cpp:3440
+#: SceneWidget.cpp:3441
 msgid "YZ Grid"
 msgstr "YZグリッド"
 
-#: SceneWidget.cpp:3447
+#: SceneWidget.cpp:3448
 msgid "Span"
 msgstr "長さ"
 
-#: SceneWidget.cpp:3457
+#: SceneWidget.cpp:3458
 msgid "Interval"
 msgstr "間隔"
 
-#: SceneWidget.cpp:3468 LightingItem.cpp:498
+#: SceneWidget.cpp:3469 LightingItem.cpp:498
 msgid "Color"
 msgstr "色"
 
-#: SceneWidget.cpp:3479
+#: SceneWidget.cpp:3480
 msgid "Default color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:3483
+#: SceneWidget.cpp:3484
 msgid "Default line width"
 msgstr "デフォルトの線幅"
 
-#: SceneWidget.cpp:3491
+#: SceneWidget.cpp:3492
 msgid "Default point size"
 msgstr "デフォルト点サイズ"
 
-#: SceneWidget.cpp:3502
+#: SceneWidget.cpp:3503
 msgid "Normal Visualization"
 msgstr "法線の表示"
 
-#: SceneWidget.cpp:3512
+#: SceneWidget.cpp:3513
 msgid "Lightweight view change"
 msgstr "軽量視点変更"
 
-#: SceneWidget.cpp:3530
+#: SceneWidget.cpp:3531
 msgid "FPS Test"
 msgstr "FPSテスト"
 
-#: SceneWidget.cpp:3537
+#: SceneWidget.cpp:3538
 msgid "Show the image for picking (for debug)"
 msgstr "ピッキング用バッファの表示（デバッグ用）"
 
-#: SceneWidget.cpp:3547 DescriptionDialog.cpp:28
+#: SceneWidget.cpp:3548 DescriptionDialog.cpp:28
 msgid "&Ok"
 msgstr "了解(&O)"
 
@@ -1800,43 +1800,47 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-#: LocationView.cpp:134
+#: LocationView.cpp:135
 msgid "Location"
 msgstr "配置"
 
-#: LocationView.cpp:158
+#: LocationView.cpp:159
 msgid "Lock"
 msgstr "ロック"
 
-#: LocationView.cpp:163
+#: LocationView.cpp:164
 msgid "Coord :"
 msgstr "座標系："
 
-#: LocationView.cpp:367
+#: LocationView.cpp:180
+msgid "Individual Rotation"
+msgstr "個別回転"
+
+#: LocationView.cpp:373
 msgid "<b>{0}</b>"
 msgstr ""
 
-#: LocationView.cpp:370
+#: LocationView.cpp:376
 msgid "<b>{0}</b> + {1}"
 msgstr ""
 
-#: LocationView.cpp:374
+#: LocationView.cpp:380
 msgid "<b>{0}</b> + {1} objects"
-msgstr ""
+msgstr "<b>{0}</b> + {1} オブジェクト"
 
-#: LocationView.cpp:493
+#: LocationView.cpp:500
 msgid "World"
 msgstr "ワールド"
 
-#: LocationView.cpp:503
+#: LocationView.cpp:510
 msgid "Offset ( {} )"
 msgstr "オフセット（ {} ）"
 
-#: LocationView.cpp:505
+#: LocationView.cpp:512
 msgid "Parent ( {} )"
 msgstr "親（ {} ）"
 
-#: LocationView.cpp:515
+#: LocationView.cpp:522
 msgid "Parent"
 msgstr "親"
 
@@ -2229,6 +2233,3 @@ msgstr ""
 #: CoordinateFrameListItem.cpp:691
 msgid "Num coordinate frames"
 msgstr "座標フレーム数"
-
-#~ msgid "Text Edit"
-#~ msgstr "テキスト編集"
