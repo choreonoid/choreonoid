@@ -173,6 +173,8 @@ void DyLink::initializeState()
 
     vo_.setZero();
     dvo_.setZero();
+    uu_ = 0.0;
+    dd_ = 0.0;
 }
 
 

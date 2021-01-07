@@ -296,9 +296,19 @@ public:
     Vector6::ConstFixedSegmentReturnType<3>::Type tau_ext() const { return F_ext_.tail<3>(); }
     Vector6::FixedSegmentReturnType<3>::Type tau_ext() { return F_ext_.tail<3>(); }
 
-    void addExternalForce(const Vector3& f_global, const Vector3& p_local){
+    void addExternalForceAtLocalPosition(const Vector3& f_global, const Vector3& p_local){
         f_ext() += f_global;
         tau_ext() += (T_ * p_local).cross(f_global);
+    }
+
+    void addExternalForceAtGlobalPosition(const Vector3& f_global, const Vector3& p_global){
+        f_ext() += f_global;
+        tau_ext() += p_global.cross(f_global);
+    }
+
+    [[deprecated("Use addExternalForceAtLocalPosition.")]]
+    void addExternalForce(const Vector3& f_global, const Vector3& p_local){
+        addExternalForceAtLocalPosition(f_global, p_local);
     }
     
     int materialId() const { return materialId_; }
