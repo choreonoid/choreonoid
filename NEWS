@@ -56,6 +56,8 @@ Changes since 1.7.0:
 * Improved the highlight style of selected / focused objects in the scene
 * Improved the API on the joint type and the joint actuation mode.
 * Made it possible to use free joints for links other than root links in the simulation by AISTSimulatorItem
+* Added the API on getting the contact states from a dynamics engine
+* Made AISTSimulator to be able to simulate models with non-root free joints
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
