@@ -29,7 +29,7 @@ public:
     virtual ~ControllerItem();
 
     bool isActive() const;
-    bool isNoDelayMode() const;
+    bool isNoDelayMode() const { return isNoDelayMode_; }
     bool setNoDelayMode(bool on);
     
     const std::string& optionString() const;

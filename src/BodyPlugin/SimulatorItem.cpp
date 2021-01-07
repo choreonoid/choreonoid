@@ -106,6 +106,14 @@ public:
     SimulatorItem::Impl* simImpl;
     Body* body_;
 
+    std::thread controlThread;
+    std::condition_variable controlCondition;
+    std::mutex controlMutex;
+    bool isExitingControlLoopRequested;
+    bool isControlRequested;
+    bool isControlFinished;
+    bool isControlToBeContinued;
+
     std::mutex logMutex;
     ReferencedPtr lastLogData;
     unique_ptr<ReferencedObjectSeq> logBuf;
@@ -114,14 +122,22 @@ public:
     shared_ptr<ReferencedObjectSeq> log;
 
     ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl);
+
     virtual Body* body() override;
     std::ostream& os() const override;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
     virtual std::string optionString() const override;
+
     virtual bool enableLog() override;
     virtual void outputLog(Referenced* frameLog) override;
     void flushLog();
+
+    virtual bool isNoDelayMode() const override;
+    virtual bool setNoDelayMode(bool on) override;
+
+    bool waitForControlInThreadToFinish();
+    void concurrentControlLoop();    
 };
 
 typedef ref_ptr<ControllerInfo> ControllerInfoPtr;
@@ -216,14 +232,7 @@ public:
     vector<SimulationBody::Impl*> simBodyImplsToNotifyRecords;
     ItemList<SubSimulatorItem> subSimulatorItems;
 
-    vector<ControllerItem*> activeControllers;
-    std::thread controlThread;
-    std::condition_variable controlCondition;
-    std::mutex controlMutex;
-    bool isExitingControlLoopRequested;
-    bool isControlRequested;
-    bool isControlFinished;
-    bool isControlToBeContinued;
+    vector<ControllerInfoPtr> activeControllerInfos;
     bool doStopSimulationWhenNoActiveControllers;
     bool hasControllers; // Includes non-active controllers
 
@@ -308,7 +317,6 @@ public:
     void onSimulationLoopStarted();
     void updateSimBodyLists();
     bool stepSimulationMain();
-    void concurrentControlLoop();
     void flushRecords();
     int flushMainRecords();
     void stopSimulation(bool doSync);
@@ -612,6 +620,18 @@ void ControllerInfo::flushLog()
         logBuf->clear();
         logBufFrameOffset += numBufFrames;
     }
+}
+
+
+bool ControllerInfo::isNoDelayMode() const
+{
+    return controller->isNoDelayMode();
+}
+
+
+bool ControllerInfo::setNoDelayMode(bool on)
+{
+    return controller->setNoDelayMode(on);
 }
 
 
@@ -1746,7 +1766,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         doStopSimulationWhenNoActiveControllers =
             timeRangeMode.is(SimulatorItem::TR_ACTIVE_CONTROL) && hasControllers;
 
-        if(doStopSimulationWhenNoActiveControllers && activeControllers.empty()){
+        if(doStopSimulationWhenNoActiveControllers && activeControllerInfos.empty()){
             mv->putln(_("The simulation cannot be started because all the controllers are inactive."),
                       MessageView::Error);
             result = false;
@@ -1807,10 +1827,13 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
         useControllerThreads = useControllerThreadsProperty;
         if(useControllerThreads){
-            isExitingControlLoopRequested = false;
-            isControlRequested = false;
-            isControlFinished = false;
-            controlThread = std::thread([&](){ concurrentControlLoop(); });
+            for(auto& info : activeControllerInfos){
+                info->isExitingControlLoopRequested = false;
+                info->isControlRequested = false;
+                info->isControlFinished = false;
+                info->isControlToBeContinued = false;
+                info->controlThread = std::thread([info](){ info->concurrentControlLoop(); });
+            }
         }
 
         aboutToQuitConnection.disconnect();
@@ -1880,7 +1903,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 void SimulatorItem::Impl::updateSimBodyLists()
 {
     activeSimBodies.clear();
-    activeControllers.clear();
+    activeControllerInfos.clear();
     hasActiveFreeBodies = false;
     
     for(size_t i=0; i < allSimBodies.size(); ++i){
@@ -1894,7 +1917,7 @@ void SimulatorItem::Impl::updateSimBodyLists()
             }
         }
         for(auto& info : controllerInfos){
-            activeControllers.push_back(info->controller);
+            activeControllerInfos.push_back(info);
        }
     }
 
@@ -2050,12 +2073,14 @@ void SimulatorItem::Impl::run()
     isDoingSimulationLoop = false;
 
     if(useControllerThreads){
-        {
-            std::lock_guard<std::mutex> lock(controlMutex);
-            isExitingControlLoopRequested = true;
+        for(auto& info : activeControllerInfos){
+            {
+                std::lock_guard<std::mutex> lock(info->controlMutex);
+                info->isExitingControlLoopRequested = true;
+            }
+            info->controlCondition.notify_all();
+            info->controlThread.join();
         }
-        controlCondition.notify_all();
-        controlThread.join();
     }
 
     if(!isWaitingForSimulationToStop){
@@ -2078,26 +2103,39 @@ bool SimulatorItem::Impl::stepSimulationMain()
 
     preDynamicsFunctions.call();
 
-    if(useControllerThreads){
-        if(activeControllers.empty()){
-            isControlFinished = true;
-        } else {
-            for(size_t i=0; i < activeControllers.size(); ++i){
-                activeControllers[i]->input();
-            }
-            {
-                std::lock_guard<std::mutex> lock(controlMutex);                
-                isControlRequested = true;
-            }
-            controlCondition.notify_all();
-        }
-    } else {
-        for(size_t i=0; i < activeControllers.size(); ++i){
-            ControllerItem* controller = activeControllers[i];
+    if(!useControllerThreads){
+        for(auto& info : activeControllerInfos){
+            auto& controller = info->controller;
             controller->input();
             doContinue |= controller->control();
             if(controller->isNoDelayMode()){
                 controller->output();
+            }
+        }
+    } else {
+        bool hasNoDelayModeControllers = false;
+        for(auto& info : activeControllerInfos){
+            auto& controller = info->controller;
+            if(controller->isNoDelayMode()){
+                hasNoDelayModeControllers = true;
+            }
+            info->controller->input();
+            {
+                std::lock_guard<std::mutex> lock(info->controlMutex);                
+                info->isControlRequested = true;
+            }
+            info->controlCondition.notify_all();
+        }
+        if(hasNoDelayModeControllers){
+            // Todo: Process the controller that finishes control earlier first to
+            // reduce the total elapsed time before finishing all the output functions.
+            for(auto& info : activeControllerInfos){
+                if(info->controller->isNoDelayMode()){
+                    if(info->waitForControlInThreadToFinish()){
+                        doContinue = true;
+                    }
+                    info->controller->output();
+                }
             }
         }
     }
@@ -2112,14 +2150,13 @@ bool SimulatorItem::Impl::stepSimulationMain()
     }
 
     if(useControllerThreads){
-        {
-            std::unique_lock<std::mutex> lock(controlMutex);
-            while(!isControlFinished){
-                controlCondition.wait(lock);
+        for(auto& info : activeControllerInfos){
+            if(!info->controller->isNoDelayMode()){
+                if(info->waitForControlInThreadToFinish()){
+                    doContinue = true;
+                }
             }
         }
-        isControlFinished = false;
-        doContinue |= isControlToBeContinued;
     }
 
     postDynamicsFunctions.call();
@@ -2137,16 +2174,9 @@ bool SimulatorItem::Impl::stepSimulationMain()
         recordBufMutex.unlock();
     }
 
-    if(useControllerThreads){
-        for(size_t i=0; i < activeControllers.size(); ++i){
-            activeControllers[i]->output();
-        }
-    } else {
-        for(size_t i=0; i < activeControllers.size(); ++i){
-            ControllerItem* controller = activeControllers[i];
-            if(!controller->isNoDelayMode()){
-                controller->output(); 
-            }
+    for(auto& info : activeControllerInfos){
+        if(!info->controller->isNoDelayMode()){
+            info->controller->output();
         }
     }
 
@@ -2154,7 +2184,18 @@ bool SimulatorItem::Impl::stepSimulationMain()
 }
 
 
-void SimulatorItem::Impl::concurrentControlLoop()
+bool ControllerInfo::waitForControlInThreadToFinish()
+{
+    std::unique_lock<std::mutex> lock(controlMutex);
+    while(!isControlFinished){
+        controlCondition.wait(lock);
+    }
+    isControlFinished = false;
+    return isControlToBeContinued;
+}
+
+
+void ControllerInfo::concurrentControlLoop()
 {
     while(true){
         {
@@ -2172,10 +2213,7 @@ void SimulatorItem::Impl::concurrentControlLoop()
             }
         }
 
-        bool doContinue = false;
-        for(size_t i=0; i < activeControllers.size(); ++i){
-            doContinue |= activeControllers[i]->control();
-        }
+        bool doContinue = controller->control();
         
         {
             std::lock_guard<std::mutex> lock(controlMutex);
@@ -2497,7 +2535,7 @@ void SimulatorItem::clearExternalForces()
 void SimulatorItem::Impl::doSetExternalForce()
 {
     std::lock_guard<std::mutex> lock(extForceMutex);
-    extForceInfo.link->addExternalForce(extForceInfo.f, extForceInfo.point);
+    extForceInfo.link->addExternalForceAtLocalPosition(extForceInfo.f, extForceInfo.point);
     if(extForceInfo.time > 0.0){
         extForceInfo.time -= worldTimeStep_;
         if(extForceInfo.time <= 0.0){

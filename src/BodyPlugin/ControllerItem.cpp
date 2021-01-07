@@ -45,12 +45,6 @@ bool ControllerItem::isActive() const
 }
 
 
-bool ControllerItem::isNoDelayMode() const
-{
-    return isNoDelayMode_;
-}
-
-
 bool ControllerItem::setNoDelayMode(bool on)
 {
     isNoDelayMode_ = on;
