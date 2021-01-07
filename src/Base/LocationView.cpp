@@ -491,7 +491,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
     if(locations.empty()){
         return;
     }
-    auto& location = locations.front();
+    LocationInfoPtr location = locations.front();
     
     clearBaseCoordinateSystems();
     int defaultComboIndex = 0;
@@ -513,7 +513,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             }
             parentCoord = new CoordinateInfo(label, ParentCoord, ParentCoordIndex);
             parentCoord->parentPositionFunc =
-                [&](){ return location->parentProxy->getGlobalLocation(); };
+                [location](){ return location->parentProxy->getGlobalLocation(); };
             
         } else if(location->isRelativeLocation){
             if(location->type == LocationProxy::OffsetLocation){
