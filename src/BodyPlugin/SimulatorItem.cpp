@@ -688,21 +688,23 @@ ControllerItem* SimulationBody::controller(int index) const
 void SimulationBody::Impl::findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems)
 {
     while(item){
-        Item* srcItem = nullptr;
-        if(dynamic_cast<ControllerItem*>(item)){
-            srcItem = item;
-        }
-        if(srcItem){
-            bool isChecked = srcItem->isChecked();
-            if(!doPickCheckedItems || isChecked){
-                if(!doPickCheckedItems && isChecked){
-                    io_items.clear();
-                    doPickCheckedItems = true;
-                }
-                io_items.push_back(srcItem);
+        if(!dynamic_cast<BodyItem*>(item)){
+            Item* srcItem = nullptr;
+            if(dynamic_cast<ControllerItem*>(item)){
+                srcItem = item;
             }
-        } else if(item->childItem()){
-            findControlSrcItems(item->childItem(), io_items, doPickCheckedItems);
+            if(srcItem){
+                bool isChecked = srcItem->isChecked();
+                if(!doPickCheckedItems || isChecked){
+                    if(!doPickCheckedItems && isChecked){
+                        io_items.clear();
+                        doPickCheckedItems = true;
+                    }
+                    io_items.push_back(srcItem);
+                }
+            } else if(item->childItem()){
+                findControlSrcItems(item->childItem(), io_items, doPickCheckedItems);
+            }
         }
         item = item->nextItem();
     }
