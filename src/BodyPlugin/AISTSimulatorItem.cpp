@@ -462,7 +462,7 @@ void AISTSimulatorItem::Impl::addBody(AISTSimBody* simBody)
 
     //! \todo Move the following process to DySubBody's constructor
     for(auto& link : body->links()){
-        if(link->isFreeJoint() && !link->isBodyRoot()){
+        if(link->isFreeJoint() && !link->isRoot()){
             hasNonRootFreeJoints = true;
         }
         int mode = link->actuationMode() & ~Link::LinkExtWrench;

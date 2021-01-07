@@ -109,8 +109,12 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
     impl->info = org->impl->info;
 
     setRootLink(cloneLinkTree(org->rootLink(), cloneMap));
+
     if(cloneMap){
-        rootLink_->parent_ = cloneMap->findClone<Link>(org->rootLink()->parent());
+        // reference to the parent body
+        if(auto orgParentBodyLink = org->parentBodyLink()){
+            parentBodyLink_ = cloneMap->findClone<Link>(orgParentBodyLink);
+        }
     }
 
     for(auto& device : org->devices()){
@@ -200,11 +204,11 @@ Body::~Body()
 void Body::setRootLink(Link* link)
 {
     if(rootLink_){
-        rootLink_->setBody(0);
+        rootLink_->setBodyToSubTree(nullptr);
     }
     rootLink_ = link;
     if(rootLink_){
-        rootLink_->setBody(this);
+        rootLink_->setBodyToSubTree(this);
         updateLinkTree();
     }
 }
@@ -313,20 +317,20 @@ void Body::setModelName(const std::string& name)
 
 void Body::setParent(Link* parentBodyLink)
 {
-    rootLink_->parent_ = parentBodyLink;
+    parentBodyLink_ = parentBodyLink;
 }
 
 
 void Body::resetParent()
 {
-    rootLink_->parent_ = nullptr;
+    parentBodyLink_.reset();
 }
 
 
 void Body::syncPositionWithParentBody(bool doForwardKinematics)
 {
-    if(auto parentBodyLink = rootLink_->parent_){
-        rootLink_->setPosition(parentBodyLink->T() * rootLink_->Tb());
+    if(auto parentLink = parentBodyLink()){
+        rootLink_->setPosition(parentLink->T() * rootLink_->Tb());
         if(doForwardKinematics){
             calcForwardKinematics();
         }
@@ -339,16 +343,16 @@ Link* Body::findUniqueEndLink() const
     Link* endLink = nullptr;
     Link* link = rootLink_;
     while(true){
-        if(!link->child_){
+        if(!link->child()){
             if(link != rootLink_){
                 endLink = link;
             }
             break;
         }
-        if(link->child_->sibling_){
+        if(link->child()->sibling()){
             break;
         }
-        link = link->child_;
+        link = link->child();
     }
     return endLink;
 }
@@ -358,10 +362,10 @@ Link* Body::lastSerialLink() const
 {
     Link* link = rootLink_;
     while(true){
-        if(!link->child_ || link->child_->sibling_){
+        if(!link->child() || link->child()->sibling()){
             break;
         }
-        link = link->child_;
+        link = link->child();
     }
     return link;
 }

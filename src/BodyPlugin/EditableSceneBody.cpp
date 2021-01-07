@@ -827,7 +827,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
             }
             break;
         }
-        if(!linkChain->isBodyRoot()){
+        if(!linkChain->isRoot()){
             break;
         }
         bodyItemChain = bodyItemChain->parentBodyItem();
@@ -851,7 +851,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
         }
     } else if(mode == KinematicsBar::ForwardKinematics){
         auto baseLink = bodyItem->currentBaseLink();
-        if(link->isBodyRoot()){
+        if(link->isRoot()){
             if(!baseLink || link == baseLink){
                 type = LinkOperationType::IK;
             }
@@ -927,9 +927,9 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     }
     
     LinkKinematicsKit* kinematicsKit = nullptr;
-    if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
+    if(link->isRoot() && bodyItem->isAttachedToParentBody()){
         auto parentBodyLink = bodyItem->body()->parentBodyLink();
-        if(!parentBodyLink->isBodyRoot()){
+        if(!parentBodyLink->isRoot()){
             auto parentBodyItem = bodyItem->parentBodyItem();
             kinematicsKit = parentBodyItem->getCurrentLinkKinematicsKit(parentBodyLink);
             if(kinematicsKit){
@@ -1347,7 +1347,7 @@ bool EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
                     
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
-        if(pointedSceneLink->link()->isBodyRoot() && bodyItem->isLocationEditable()){
+        if(pointedSceneLink->link()->isRoot() && bodyItem->isLocationEditable()){
             Action* item1 = mm.addCheckItem(_("Move Forcibly"));
             item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
             item1->sigToggled().connect(
@@ -1599,7 +1599,7 @@ void EditableSceneBody::Impl::dragFKTranslation(const SceneWidgetEvent& event)
 void EditableSceneBody::Impl::startLinkOperationDuringSimulation(const SceneWidgetEvent& event)
 {
     if(event.button() == Qt::LeftButton){
-        if(targetLink->isBodyRoot() && (forcedPositionMode != NO_FORCED_POSITION)){
+        if(targetLink->isRoot() && (forcedPositionMode != NO_FORCED_POSITION)){
             startForcedPosition(event);
         } else {
             startVirtualElasticString(event);

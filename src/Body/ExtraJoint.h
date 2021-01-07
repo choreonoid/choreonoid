@@ -5,6 +5,8 @@
 
 #ifndef CNOID_BODY_EXTRA_JOINT_H
 #define CNOID_BODY_EXTRA_JOINT_H
+
+#include "Link.h"
         
 namespace cnoid {
 

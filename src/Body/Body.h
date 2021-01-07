@@ -7,7 +7,6 @@
 #define CNOID_BODY_BODY_H
 
 #include "LinkTraverse.h"
-#include "Link.h"
 #include "ExtraJoint.h"
 #include "DeviceList.h"
 #include "exportdecl.h"
@@ -17,6 +16,7 @@ namespace cnoid {
 class Body;
 class BodyImpl;
 class BodyHandler;
+class Link;
 class Mapping;
 class CloneMap;
 
@@ -57,12 +57,8 @@ public:
     void initializePosition();
     virtual void initializeState();
 
-    Body* parentBody() const {
-        return rootLink_->parent() ? rootLink_->parent()->body() : nullptr;
-    }
-    Link* parentBodyLink() const {
-        return rootLink_->parent() ? rootLink_->parent() : nullptr;
-    }
+    Body* parentBody() const { return parentBodyLink_ ? parentBodyLink_->body() : nullptr; }
+    Link* parentBodyLink() const { return parentBodyLink_; }
     void setParent(Link* parentBodyLink);
     void resetParent();
     void syncPositionWithParentBody(bool doForwardKinematics = true);
@@ -302,6 +298,10 @@ public:
     static void addCustomizerDirectory(const std::string& path);
     static BodyInterface* bodyInterface();
 
+    void resetLinkName(Link* link, const std::string& name);
+    void resetJointSpecificName(Link* link);
+    void resetJointSpecificName(Link* link, const std::string& name);
+
 protected:
     Body(Link* rootLink);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -309,6 +309,7 @@ protected:
 private:
     LinkTraverse linkTraverse_;
     LinkPtr rootLink_;
+    LinkPtr parentBodyLink_;
     bool isStaticModel_;
     std::vector<LinkPtr> jointIdToLinkArray;
     int numActualJoints;
@@ -318,9 +319,6 @@ private:
     BodyImpl* impl;
 
     void initialize();
-    void resetLinkName(Link* link, const std::string& name);
-    void resetJointSpecificName(Link* link);
-    void resetJointSpecificName(Link* link, const std::string& name);
     Link* cloneLinkTree(const Link* orgLink, CloneMap* cloneMap);
     Link* createEmptyJoint(int jointId);
     Device* findDeviceSub(const std::string& name) const;
@@ -329,8 +327,6 @@ private:
     void insertCache(const std::string& name, Referenced* cache);
     BodyHandler* findHandler(std::function<bool(BodyHandler*)> isTargetHandlerType);
     void setVirtualJointForcesSub(); // deprecated
-
-    friend class Link;
 };
 
 template<> CNOID_EXPORT double Body::info(const std::string& key) const;

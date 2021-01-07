@@ -144,19 +144,19 @@ void Link::initializeState()
 }
 
 
-void Link::setBody(Body* newBody)
+void Link::setBodyToSubTree(Body* newBody)
 {
     if(body_ != newBody){
-        setBodySub(newBody);
+        setBodyToSubTreeIter(newBody);
     }
 }
 
 
-void Link::setBodySub(Body* newBody)
+void Link::setBodyToSubTreeIter(Body* newBody)
 {
     body_ = newBody;
     for(Link* link = child_; link; link = link->sibling_){
-        link->setBodySub(newBody);
+        link->setBodyToSubTreeIter(newBody);
     }
 }
 
@@ -175,7 +175,7 @@ bool Link::isStatic() const
 
 bool Link::isFixedToRoot() const
 {
-    if(isBodyRoot()){
+    if(isRoot()){
         return true;
     } else if(isFixedJoint()){
         return parent_->isFixedToRoot();
@@ -195,7 +195,7 @@ void Link::prependChild(Link* link)
     child_ = link;
     link->parent_ = this;
 
-    link->setBody(body_);
+    link->setBodyToSubTree(body_);
 }
 
 
@@ -219,7 +219,7 @@ void Link::appendChild(Link* link)
     }
     link->parent_ = this;
 
-    link->setBody(body_);
+    link->setBodyToSubTree(body_);
 }
 
 
@@ -254,7 +254,7 @@ bool Link::removeChild(Link* childToRemove)
                 child_ = link->sibling_;
             }
             childToRemove->sibling_ = nullptr;
-            childToRemove->setBody(0);
+            childToRemove->setBodyToSubTree(nullptr);
             return true;
         }
         prevSibling = link;

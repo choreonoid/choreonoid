@@ -458,7 +458,7 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
 {
     if(bodyItem && link){
         // Sub body's root link is recognized as the parent body's end link
-        if(link->isBodyRoot() && bodyItem->isAttachedToParentBody()){
+        if(link->isRoot() && bodyItem->isAttachedToParentBody()){
             if(auto parentBodyItem = bodyItem->parentBodyItem()){
                 link = bodyItem->body()->parentBodyLink();
                 bodyItem = parentBodyItem;
@@ -466,7 +466,7 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
         }
         bool isIkLinkRequired = (targetLinkType != AnyLink);
         if(targetLinkType == RootOrIkLink){
-            isIkLinkRequired = !link->isBodyRoot();
+            isIkLinkRequired = !link->isRoot();
         }
         if(isIkLinkRequired){
             if(!bodyItem->findPresetIK(link)){

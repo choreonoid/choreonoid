@@ -86,7 +86,7 @@ void ForwardDynamics::SE3exp
 void ForwardDynamics::initializeSensors()
 {
     auto rootLink = subBody->rootLink();
-    if(rootLink->isBodyRoot()){
+    if(rootLink->isRoot()){
         auto body = rootLink->body();
         body->initializeDeviceStates();
         if(sensorsEnabled){

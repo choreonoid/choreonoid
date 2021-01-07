@@ -396,7 +396,7 @@ void LinkShapeOverwriteItem::doPutProperties(PutPropertyFunction& putProperty)
 bool LinkShapeOverwriteItem::store(Archive& archive)
 {
     if(impl->link){
-        if(!impl->link->isBodyRoot()){
+        if(!impl->link->isRoot()){
             archive.write("link", impl->link->name());
         }
         StdSceneWriter sceneWriter;

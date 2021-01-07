@@ -869,7 +869,7 @@ LinkKinematicsKit* BodyItem::findPresetLinkKinematicsKit(Link* targetLink)
 
 std::shared_ptr<InverseKinematics> BodyItem::findPresetIK(Link* targetLink)
 {
-    if(isAttachedToParentBody_ && targetLink->isBodyRoot()){
+    if(isAttachedToParentBody_ && targetLink->isRoot()){
         return make_shared<MyCompositeBodyIK>(impl);
     } else if(auto kinematicsKit = findPresetLinkKinematicsKit(targetLink)){
         return kinematicsKit->inverseKinematics();
@@ -887,7 +887,7 @@ LinkKinematicsKit* BodyItem::getCurrentLinkKinematicsKit(Link* targetLink)
 std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;
-    if(isAttachedToParentBody_ && targetLink->isBodyRoot()){
+    if(isAttachedToParentBody_ && targetLink->isRoot()){
         ik = make_shared<MyCompositeBodyIK>(impl);
     } else if(auto kinematicsKit = getCurrentLinkKinematicsKit(targetLink)){
         ik = kinematicsKit->inverseKinematics();
@@ -1602,7 +1602,7 @@ bool BodyItem::isAttachmentEnabled() const
 bool BodyItem::Impl::isAttachable() const
 {
     for(auto& attachment : body->devices<AttachmentDevice>()){
-        if(attachment->link()->isBodyRoot()){
+        if(attachment->link()->isRoot()){
             return true;
         }
     }
@@ -1680,7 +1680,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
 {
     Link* linkToAttach = nullptr;
     for(auto& attachment : body->devices<AttachmentDevice>()){
-        if(attachment->link()->isBodyRoot()){
+        if(attachment->link()->isRoot()){
             for(auto& holder : bodyItem->body()->devices<HolderDevice>()){
                 if(attachment->category() == holder->category()){
                     holder->addAttachment(attachment);

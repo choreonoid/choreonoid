@@ -48,11 +48,9 @@ public:
     int index() const { return index_; }
     bool isValid() const { return (index_ >= 0); }
     bool isRoot() const { return !parent_; }
-    bool isBodyRoot() const { return !parent_ || body_ != parent_->body_; }
     bool isStatic() const;
     bool isFixedToRoot() const;
     bool isOwnerOf(const Link* link) const;
-    bool hasParentBody() const { return parent_ && (body_ != parent_->body_); }
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }
@@ -362,6 +360,8 @@ public:
     bool hasDedicatedCollisionShape() const;
 
     // functions for constructing a link
+    void setBodyToSubTree(Body* newBody);
+    void setParent(Link* parent){ parent_ = parent; }
     void setIndex(int index) { index_ = index; }
     void setName(const std::string& name);
     virtual void prependChild(Link* link);
@@ -509,10 +509,7 @@ private:
     
     ref_ptr<Mapping> info_;
 
-    friend class Body;
-    
-    void setBody(Body* newBody);
-    void setBodySub(Body* newBody);
+    void setBodyToSubTreeIter(Body* newBody);
 };
 
 template<> CNOID_EXPORT double Link::info(const std::string& key) const;

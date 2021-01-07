@@ -307,7 +307,7 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
         }
         if(baseLink() == endLink()){
             endLink()->setPosition(T);
-            if(endLink()->isFreeJoint() && !endLink()->isBodyRoot()){
+            if(endLink()->isFreeJoint() && !endLink()->isRoot()){
                 endLink()->setOffsetPosition(endLink()->parent()->T().inverse() * T);
             }
             return true;
