@@ -66,10 +66,13 @@ Vector3 omegaFromRot(const Matrix3& R)
 {
     double alpha = (R(0,0) + R(1,1) + R(2,2) - 1.0) / 2.0;
 
-    if(fabs(alpha - 1.0) < 1.0e-6) {   //th=0,2PI;
+    if(alpha > 1.0 - 1.0e-6) {   //th=0,2PI;
         return Vector3::Zero();
 
     } else {
+        if (alpha < -1.0) {
+            alpha = -1.0;
+        }
         double th = acos(alpha);
         double s = sin(th);
 
