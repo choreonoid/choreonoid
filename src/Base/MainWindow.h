@@ -14,7 +14,6 @@ namespace cnoid {
 class ToolBarArea;
 class ViewArea;
 class ToolBar;
-class MainWindowImpl;
 class ExtensionManager;
 
 class CNOID_EXPORT MainWindow : public QMainWindow
@@ -44,7 +43,8 @@ protected:
     virtual void keyPressEvent(QKeyEvent* event);
  
 private:
-    MainWindowImpl* impl;
+    class Impl;
+    Impl* impl;
 
     MainWindow(const char* appName, ExtensionManager* ext);
 
