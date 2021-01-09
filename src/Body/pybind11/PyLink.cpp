@@ -6,6 +6,7 @@
 #include "../Body.h"
 #include <cnoid/ValueTree>
 #include <cnoid/SceneGraph>
+#include <cnoid/SceneDrawables>
 #include <cnoid/PyReferenced>
 #include <cnoid/PyEigenTypes>
 
@@ -189,10 +190,10 @@ void exportPyLink(py::module& m)
         .def("setEquivalentRotorInertia", &Link::setEquivalentRotorInertia)
         .def("setMaterial", (void(Link::*)(int)) &Link::setMaterial)
         .def("setMaterial", (void(Link::*)(const std::string&)) &Link::setMaterial)
-        .def("addShapeNode", [](Link& self, SgNodePtr shape){ self.addShapeNode(shape, true); })
-        .def("addVisualShapeNode", [](Link& self, SgNodePtr shape){ self.addVisualShapeNode(shape, true); })
-        .def("addCollisionShapeNode", [](Link& self, SgNodePtr shape){ self.addCollisionShapeNode(shape, true); })
-        .def("removeShapeNode", [](Link& self, SgNodePtr shape){ self.removeShapeNode(shape, true); })
+        .def("addShapeNode", [](Link& self, SgNode* shape){ self.addShapeNode(shape, true); })
+        .def("addVisualShapeNode", [](Link& self, SgNode* shape){ self.addVisualShapeNode(shape, true); })
+        .def("addCollisionShapeNode", [](Link& self, SgNode* shape){ self.addCollisionShapeNode(shape, true); })
+        .def("removeShapeNode", [](Link& self, SgNode* shape){ self.removeShapeNode(shape, true); })
         .def("clearShapeNodes", [](Link& self){ self.clearShapeNodes(true); })
         .def("info", (Mapping*(Link::*)())&Link::info)
         .def("info", Link_info2)

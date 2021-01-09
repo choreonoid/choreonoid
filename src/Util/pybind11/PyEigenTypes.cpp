@@ -40,6 +40,22 @@ void exportPyEigenTypes(py::module& m)
         .def("inverse", &AngleAxis::inverse)
         ;
 
+    py::class_<AngleAxisf>(m, "AngleAxisf")
+        .def(py::init<>())
+        .def(py::init<Eigen::Ref<const Matrix3f>>())
+        .def(py::init<const AngleAxisf::Scalar&, Eigen::Ref<const Vector3f>>())
+        .def_property(
+            "axis",
+            [](AngleAxisf& self){ return self.axis(); },
+            [](AngleAxisf& self, Eigen::Ref<const Vector3f> a){ self.axis() = a; })
+        .def_property(
+            "angle",
+            [](AngleAxisf& self){ return self.angle(); },
+            [](AngleAxisf& self, float a){ self.angle() = a; })
+        .def("toRotationMatrix", &AngleAxisf::toRotationMatrix)
+        .def("inverse", &AngleAxisf::inverse)
+        ;
+    
     // deprecated
     m.def("getUnitX", Vector3::UnitX);
     m.def("getUnitY", Vector3::UnitY);

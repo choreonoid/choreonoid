@@ -3,6 +3,7 @@
 */
 
 #include "PyEigenTypes.h"
+#include "PyReferenced.h"
 #include "../EigenArchive.h"
 #include "../ValueTree.h"
 

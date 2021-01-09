@@ -24,8 +24,7 @@ bool pyPlayAudioFile(const string& filename, double volumeRatio)
 PYBIND11_MODULE(MediaPlugin, m)
 {
     m.doc() = "Choreonoid MediaPlugin module";
-    m.def("playAudioFile", pyPlayAudioFile);
-    m.def("playAudioFile", [](const string& filename){ pyPlayAudioFile(filename, -1.0); });
+    m.def("playAudioFile", pyPlayAudioFile, py::arg("filename"), py::arg("volumeRatio") = -1.0);
 }
 
 }

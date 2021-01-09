@@ -21,10 +21,11 @@ void exportPyBody(py::module& m)
 {
     py::class_<Body, BodyPtr, Referenced> body(m, "Body");
     body
+        .def(py::init<>())
+        .def(py::init<const std::string&>())
         .def("__repr__", [](const Link &self) { return "<cnoid.Body.Body named '" + self.name() + "'>"; })
         .def("clone", (Body*(Body::*)()const) &Body::clone)
-        .def("createLink", &Body::createLink)
-        .def("createLink", [](Body& self){ return self.createLink(); })
+        .def("createLink", &Body::createLink, py::arg("org") = nullptr)
         .def_property("name", &Body::name, &Body::setName)
         .def("setName", &Body::setName)
         .def_property("modelName", &Body::modelName, &Body::setModelName)
@@ -37,9 +38,8 @@ void exportPyBody(py::module& m)
         .def_property_readonly("parentBodyLink", &Body::parentBodyLink)
         .def("setParent", &Body::setParent)
         .def("resetParent", &Body::resetParent)
-        .def("syncPositionWithParentBody", [](Body& self){ self.syncPositionWithParentBody(); })
-        .def("syncPositionWithParentBody", [](Body& self, bool doForwardKinematics)
-             { self.syncPositionWithParentBody(doForwardKinematics); })
+        .def("syncPositionWithParentBody",
+             &Body::syncPositionWithParentBody, py::arg("doForwardKinematics") = true)
         .def_property_readonly("numLinks", &Body::numLinks)
         .def("link", (Link*(Body::*)(int)const)&Body::link)
         .def("link", (Link*(Body::*)(const string&)const)&Body::link)
@@ -78,10 +78,8 @@ void exportPyBody(py::module& m)
             self.calcTotalMomentum(P, L);
             return py::make_tuple(P, L);
             })
-        .def("calcForwardKinematics", [](Body& self){ self.calcForwardKinematics(); })
-        .def("calcForwardKinematics", [](Body& self, bool calcVelocity){ self.calcForwardKinematics(calcVelocity); })
-        .def("calcForwardKinematics", [](Body& self, bool calcVelocity, bool calcAcceleration)
-             { self.calcForwardKinematics(calcVelocity, calcAcceleration); })
+        .def("calcForwardKinematics",
+             &Body::calcForwardKinematics, py::arg("calcVelocity") = false, py::arg("calcAcceleration") = false)
         .def("clearExternalForces", &Body::clearExternalForces)
         .def_property_readonly("numExtraJoints", &Body::numExtraJoints)
         .def("clearExtraJoints", &Body::clearExtraJoints)

@@ -48,10 +48,8 @@ void exportSimulationClasses(py::module m)
         .def("setSpecifiedRecordingTimeLength", &SimulatorItem::setSpecifiedRecordingTimeLength)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
-        .def("setExternalForce", &SimulatorItem::setExternalForce)
-        .def("setExternalForce", [](SimulatorItem& self, BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f){
-                self.setExternalForce(bodyItem, link, point, f);
-            })
+        .def("setExternalForce", &SimulatorItem::setExternalForce,
+             py::arg("bodyItem"), py::arg("link"), py::arg("point"), py::arg("f"), py::arg("time") = 0.0)
         .def("clearExternalForces", &SimulatorItem::clearExternalForces)
         .def("setForcedPosition", &SimulatorItem::setForcedPosition)
         .def("clearForcedPositions", &SimulatorItem::clearForcedPositions)

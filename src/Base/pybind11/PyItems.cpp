@@ -21,6 +21,7 @@
 #include "../MultiPointSetItem.h"
 #include <cnoid/PyReferenced>
 #include <cnoid/PyEigenTypes>
+#include <cnoid/ValueTree>
 
 using namespace std;
 using namespace cnoid;
@@ -41,27 +42,17 @@ void exportPyItems(py::module m)
         .def_property_readonly("prevItem", &Item::prevItem)
         .def_property_readonly("nextItem", &Item::nextItem)
         .def_property_readonly("parentItem", &Item::parentItem)
-        .def("addChildItem", [](Item& self, Item* item){ return self.addChildItem(item); })
-        .def("addChildItem", [](Item& self, Item* item, bool isManualOperation){ return self.addChildItem(item, isManualOperation); })
+        .def("addChildItem", &Item::addChildItem, py::arg("item"), py::arg("isManualOperation") = false)
         .def("addSubItem", &Item::addSubItem)
         .def("isSubItem", &Item::isSubItem)
         .def("setSubItemAttributes", &Item::setSubItemAttributes)
         .def("removeFromParentItem", &Item::removeFromParentItem)
-        .def("detachFromParentItem", &Item::removeFromParentItem) // deprecated
-        .def("insertChildItem", [](Item& self, Item* item, Item* nextItem){
-                return self.insertChild(nextItem, item); })
-        .def("insertChildItem", [](Item& self, Item* item, Item* nextItem, bool isManualOperation){
-                return self.insertChild(nextItem, item, isManualOperation); })
-        .def("insertChild", [](Item& self, Item* position, Item* item){ return self.insertChild(position, item); })
-        .def("insertChild", [](Item& self, Item* position, Item* item, bool isManualOperation){
-                return self.insertChild(position, item, isManualOperation); })
-        //.def("insertSubItem", &Item::insertSubItem) // deprecated
+        .def("insertChild",
+             &Item::insertChild, py::arg("position"), py::arg("item"), py::arg("isManualOperation") = false)
         .def("isTemporal", &Item::isTemporal)
-        .def("setTemporal", [](Item& self){ self.setTemporal(); })
-        .def("setTemporal", [](Item& self, bool on){ self.setTemporal(on); })
+        .def("setTemporal", &Item::setTemporal, py::arg("on") = true)
         .def("isSelected", &Item::isSelected)
-        .def("setSelected", [](Item& self, bool on){ self.setSelected(on); })
-        .def("setSelected", [](Item& self, bool on, bool isCurrent){ self.setSelected(on, isCurrent); })
+        .def("setSelected", &Item::setSelected, py::arg("on"), py::arg("isCurrent") = false)
         .def("isChecked", [](Item& self){ return self.isChecked(); })
         .def("setChecked", [](Item& self, bool on){ return self.setChecked(on); })
         .def("findRootItem", &Item::findRootItem)
@@ -74,15 +65,19 @@ void exportPyItems(py::module m)
         .def("duplicate", [](Item& self){ return self.duplicate(); })
         .def("duplicateSubTree", &Item::duplicateSubTree)
         .def("assign", &Item::assign)
-        .def("load", [](Item& self, const string& filename){ return self.load(filename); })
-        .def("load", [](Item& self, const string& filename, const string& format){ return self.load(filename, format); })
-        .def("load", [](Item& self, Item* parent, const string& filename){ return self.load(filename, parent); })
-        .def("load", [](Item& self, Item* parent, const string& filename, const string& format){ return self.load(filename, parent, format); })
-        .def("save", [](Item& self, const string& filename){ return self.save(filename); })
-        .def("save", [](Item& self, const string& filename, const string& format){ return self.save(filename, format); })
-        .def("overwrite",[](Item& self){ return self.overwrite(); })
-        .def("overwrite",[](Item& self, bool forceOverwrite){ return self.overwrite(forceOverwrite); })
-        .def("overwrite",[](Item& self, bool forceOverwrite, const string& format){ return self.overwrite(forceOverwrite, format); })
+        .def("load",
+             [](Item& self, const string& filename, const string& format, const Mapping* options){
+                 return self.load(filename, format, options); },
+             py::arg("filename"), py::arg("format") = std::string(), py::arg("options") = nullptr)
+        .def("load",
+             [](Item& self, const string& filename, Item* parent, const string& format, const Mapping* options){
+                 return self.load(filename, parent, format, options); },
+             py::arg("filename"), py::arg("parent"), py::arg("format") = std::string(), py::arg("options") = nullptr)
+        .def("save",
+             [](Item& self, const string& filename, const string& format, const Mapping* options){
+                 return self.save(filename, format, options); },
+             py::arg("filename"), py::arg("format") = string(), py::arg("options") = nullptr)
+        .def("overwrite", &Item::overwrite, py::arg("forceOverwrite") = false, py::arg("format") = string())
         .def_property_readonly("filePath", &Item::filePath)
         .def_property_readonly("fileFormat", &Item::fileFormat)
         .def("clearFileInformation", &Item::clearFileInformation)
@@ -98,6 +93,11 @@ void exportPyItems(py::module m)
         .def_property_readonly("sigSubTreeChanged", &Item::sigSubTreeChanged)
 
         // deprecated
+        .def("detachFromParentItem", &Item::removeFromParentItem)
+        .def("insertChildItem",
+             [](Item& self, Item* item, Item* nextItem, bool isManualOperation = false){
+                 return self.insertChild(nextItem, item, isManualOperation); },
+             py::arg("item"), py::arg("nextItem"), py::arg("isManualOperation") = false)
         .def("findSubItem", [](Item& self, const string& path){
                 return self.findChildItem(path, [](Item* item){ return item->isSubItem(); }); })
         .def("getName", &Item::name)
@@ -116,6 +116,11 @@ void exportPyItems(py::module m)
         .def("getSigPositionChanged", &Item::sigPositionChanged)
         .def("getSigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
         .def("getSigSubTreeChanged", &Item::sigSubTreeChanged)
+        ;
+
+    py::enum_<Item::CheckId>(itemClass, "CheckId")
+        .value("LogicalSumOfAllChecks", Item::LogicalSumOfAllChecks)
+        .value("PrimaryCheck", Item::PrimaryCheck)
         ;
 
     PyItemList<Item>(m, "ItemList");
@@ -164,8 +169,7 @@ void exportPyItems(py::module m)
         .def("isBackgroundMode", &ScriptItem::isBackgroundMode)
         .def("isRunning", &ScriptItem::isRunning)
         .def("execute", &ScriptItem::execute)
-        .def("waitToFinish", [](ScriptItem& self){ return self.waitToFinish(); })
-        .def("waitToFinish", [](ScriptItem& self, double timeout){ return self.waitToFinish(timeout); })
+        .def("waitToFinish", &ScriptItem::waitToFinish, py::arg("timeout") = 0.0)
         .def_property_readonly("resultString", &ScriptItem::resultString)
         .def_property_readonly("sigScriptFinished", &ScriptItem::sigScriptFinished)
         .def("terminate", &ScriptItem::terminate)
@@ -260,8 +264,8 @@ void exportPyItems(py::module m)
     py::class_<SceneItem, SceneItemPtr, Item>(m, "SceneItem", py::multiple_inheritance())
         .def(py::init<>())
         .def_property_readonly("topNode", (SgPosTransform*(SceneItem::*)()) &SceneItem::topNode)
-        .def("setTranslation", &SceneItem::setTranslation)
-        .def("setRotation", &SceneItem::setRotation)
+        .def("setTranslation", (void(SceneItem::*)(const Vector3&)) &SceneItem::setTranslation)
+        .def("setRotation", (void(SceneItem::*)(const AngleAxis&)) &SceneItem::setRotation)
         .def("setLightweightRenderingEnabled", &SceneItem::setLightweightRenderingEnabled)
         .def("isLightweightRenderingEnabled", &SceneItem::isLightweightRenderingEnabled)
 

@@ -10,6 +10,13 @@
 using namespace cnoid;
 namespace py = pybind11;
 
+namespace {
+
+using Matrix4RM = Eigen::Matrix<double, 4, 4, Eigen::RowMajor>;
+using Matrix3RM = Eigen::Matrix<double, 3, 3, Eigen::RowMajor>;
+
+}
+
 namespace cnoid {
 
 void exportPySceneGraph(py::module& m)
@@ -26,7 +33,22 @@ void exportPySceneGraph(py::module& m)
         .def("getAction", [](SgUpdate& self){ return self.action(); })
         ;
 
+    py::class_<SgUpdateRef>(m, "SgUpdateRef")
+        .def(py::init<>())
+        .def(py::init<SgUpdate&>())
+        .def(py::init<const SgUpdateRef&>())
+        .def(py::init<bool>())
+        ;
+
+    py::implicitly_convertible<SgUpdate, SgUpdateRef>();
+    py::implicitly_convertible<bool, SgUpdateRef>();
+    
     py::enum_<SgUpdate::Action>(sgUpdate, "Action")
+        .value("None", SgUpdate::None)
+        .value("Added", SgUpdate::Added)
+        .value("Removed", SgUpdate::Removed)
+        .value("Modified", SgUpdate::Modified)
+        // deprecated
         .value("NONE", SgUpdate::Action::NONE)
         .value("ADDED", SgUpdate::Action::ADDED)
         .value("REMOVED", SgUpdate::Action::REMOVED)
@@ -38,8 +60,7 @@ void exportPySceneGraph(py::module& m)
         .def_property("name", &SgObject::name, &SgObject::setName)
         .def("setName", &SgObject::setName)
         .def("notifyUpdate",(void(SgObject::*)(SgUpdate&)) &SgObject::notifyUpdate)
-        .def("notifyUpdate",(void(SgObject::*)(int)) &SgObject::notifyUpdate)
-        .def("notifyUpdate",[](SgObject& self){ self.notifyUpdate(); })
+        .def("notifyUpdate",(void(SgObject::*)(int)) &SgObject::notifyUpdate, py::arg("action") = SgUpdate::Modified)
 
         // deprecated
         .def("getName", &SgObject::name)
@@ -55,11 +76,11 @@ void exportPySceneGraph(py::module& m)
         .def(py::init<const SgGroup&>())
         .def_property_readonly("empty", &SgGroup::empty)
         .def_property_readonly("numChildren", &SgGroup::numChildren)
-        .def("clearChildren", (void(SgGroup::*)(bool)) &SgGroup::clearChildren)
-        .def("clearChildren", [](SgGroup& self){ self.clearChildren(); })
+        .def("clearChildren", &SgGroup::clearChildren, py::arg("update") = false)
         .def_property_readonly("child", (SgNode*(SgGroup::*)(int)) &SgGroup::child)
-        .def("addChild", (void(SgGroup::*)(SgNode*, bool)) &SgGroup::addChild)
-        .def("addChild", [](SgGroup& self, SgNode* node){ self.addChild(node); })
+        .def("addChild",
+             (void(SgGroup::*)(SgNode*, SgUpdateRef)) &SgGroup::addChild,
+             py::arg("node"), py::arg("update") = false)
 
         // deprecated
         .def("isEmpty", &SgGroup::empty)
@@ -72,24 +93,31 @@ void exportPySceneGraph(py::module& m)
     py::class_<SgPosTransform, SgPosTransformPtr, SgTransform>(m, "SgPosTransform")
         .def(py::init<>())
         .def(py::init<const SgPosTransform&>())
-        .def_property("position",
-                      (Isometry3& (SgPosTransform::*)()) &SgPosTransform::position,
-                      [](SgPosTransform& self, const Isometry3& T) { self.setPosition(T); })
-        .def("setPosition", [](SgPosTransform& self, const Isometry3& T) { self.setPosition(T); })
-        .def_property("translation",
-                      (Isometry3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation,
-                      [](SgPosTransform& self, const Vector3& p){ self.setTranslation(p); })
-        .def("setTranslation", [](SgPosTransform& self, const Vector3& p){ self.setTranslation(p); })
-        .def_property("rotation",
-                      (Isometry3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation,
-                      [](SgPosTransform& self, const Matrix3& R) { self.setRotation(R); })
-        .def("setRotation", [](SgPosTransform& self, const Matrix3& R) { self.setRotation(R); })
-        .def_property("T",
-                      (const Isometry3& (SgPosTransform::*)() const ) &SgPosTransform::T,
-                      [](SgPosTransform& self, const Isometry3& T) { self.setPosition(T); })
+        .def_property(
+            "T",
+            [](SgPosTransform& self) -> Isometry3::MatrixType& { return self.T().matrix(); },
+            [](SgPosTransform& self, Eigen::Ref<const Matrix4RM> T){ self.setPosition(T); })
+        .def_property(
+            "position",
+            [](SgPosTransform& self) -> Isometry3::MatrixType& { return self.T().matrix(); },
+            [](SgPosTransform& self, Eigen::Ref<const Matrix4RM> T){ self.setPosition(T); })
+        .def("setPosition",
+             [](SgPosTransform& self, Eigen::Ref<const Matrix4RM> T){ self.setPosition(T); })
+        .def_property(
+            "translation",
+            (Isometry3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation,
+            [](SgPosTransform& self, Eigen::Ref<const Vector3> p){ self.setTranslation(p); })
+        .def("setTranslation",
+             [](SgPosTransform& self, Eigen::Ref<const Vector3> p){ self.setTranslation(p); })
+        .def_property(
+            "rotation",
+            (Isometry3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation,
+            [](SgPosTransform& self, Eigen::Ref<const Matrix3RM> R){ self.rotation() = R; })
+        .def("setRotation",
+             [](SgPosTransform& self, Eigen::Ref<const Matrix3RM> R){ self.rotation() = R; })
 
         // deprecated
-        .def("getPosition", (Isometry3& (SgPosTransform::*)()) &SgPosTransform::position)
+        .def("getPosition", [](SgPosTransform& self) -> Isometry3::MatrixType& { return self.T().matrix(); })
         .def("getTranslation", (Isometry3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
         .def("getRotation", (Isometry3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
         ;
