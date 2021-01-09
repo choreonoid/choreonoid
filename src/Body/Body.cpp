@@ -74,6 +74,13 @@ Body::Body()
 }
 
 
+Body::Body(const std::string& name)
+    : Body()
+{
+    impl->name = name;
+}
+
+
 Body::Body(Link* rootLink)
 {
     initialize();

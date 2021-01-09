@@ -30,6 +30,7 @@ class CNOID_EXPORT Body : public ClonableReferenced
 {
 public:
     Body();
+    Body(const std::string& name);
     Body(const Body& org) = delete;
     virtual ~Body();
 

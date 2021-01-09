@@ -339,6 +339,13 @@ BodyItem::BodyItem()
 }
     
 
+BodyItem::BodyItem(const std::string& name)
+    : BodyItem()
+{
+    BodyItem::setName(name);
+}
+
+
 BodyItem::Impl::Impl(BodyItem* self)
     : Impl(self, new Body, false)
 {
@@ -526,6 +533,10 @@ void BodyItem::Impl::setBody(Body* body_)
     body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
 
     initBody(false);
+
+    if(self->name().empty() && !body_->name().empty()){
+        self->setName(body_->name());
+    }
 }
 
 

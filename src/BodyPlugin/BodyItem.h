@@ -32,6 +32,7 @@ public:
     static ItemFileIO* meshFileIO();
         
     BodyItem();
+    BodyItem(const std::string& name);
     BodyItem(const BodyItem& org);
     virtual ~BodyItem();
 
