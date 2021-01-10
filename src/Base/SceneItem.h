@@ -29,7 +29,12 @@ public:
     SgPosTransform* topNode() { return topNode_; }
     const SgPosTransform* topNode() const { return topNode_; }
 
+    void setTranslation(const Vector3& translation);
+    void setRotation(const AngleAxis& rotation);
+
+    [[deprecated("Use setTranslation(const Vector3& translation)")]]
     void setTranslation(const Vector3f& translation);
+    [[deprecated("Use void setRotation(const AngleAxis& rotation)")]]
     void setRotation(const AngleAxisf& rotation);
 
     void setLightweightRenderingEnabled(bool on);

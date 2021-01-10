@@ -26,7 +26,7 @@ class CNOID_EXPORT LazyCaller
     LazyCallerImpl* impl;
         
 public:
-    enum {
+    enum Priority {
         HighPriority = 0,
         NormalPriority,
         LowPriority,

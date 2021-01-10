@@ -115,9 +115,23 @@ SgNode* SceneItem::getScene()
 }
 
 
+void SceneItem::setTranslation(const Vector3& translation)
+{
+    topNode_->setTranslation(translation);
+    topNode_->notifyUpdate();
+}
+
+
 void SceneItem::setTranslation(const Vector3f& translation)
 {
     topNode_->setTranslation(translation);
+    topNode_->notifyUpdate();
+}
+
+
+void SceneItem::setRotation(const AngleAxis& rotation)
+{
+    topNode_->setRotation(rotation);
     topNode_->notifyUpdate();
 }
 

@@ -606,7 +606,7 @@ public:
         resize(rowSize_ - 1, colSize_);
     }
 
-    void pop_front(int numRows) {
+    void pop_front(int numRows = 1) {
         if(numRows <= 0){
             return;
         }
@@ -634,11 +634,6 @@ public:
         rowSize_ -= numRows;
         size_ -= popSize;
     }
-
-    void pop_front() {
-        pop_front(1);
-    }
-
 
 private:
     Allocator allocator;

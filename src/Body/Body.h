@@ -38,7 +38,7 @@ public:
     Body* clone() const { return static_cast<Body*>(doClone(nullptr)); }
     Body* clone(CloneMap& cloneMap) const { return static_cast<Body*>(doClone(&cloneMap)); }
 
-    virtual Link* createLink(const Link* org = 0) const;
+    virtual Link* createLink(const Link* org = nullptr) const;
 
     const std::string& name() const;
     void setName(const std::string& name);

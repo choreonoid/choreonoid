@@ -55,8 +55,8 @@ public:
     bool isItemSelected(const Item* item) const {
         return item->isSelected();
     }
-    bool selectItem(Item* item, bool select = true) {
-        item->setSelected(select);
+    bool selectItem(Item* item, bool on = true) {
+        item->setSelected(on);
         return true;
     }
     void selectAllItems() {
