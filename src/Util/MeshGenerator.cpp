@@ -148,10 +148,37 @@ SgMesh* MeshGenerator::generateBox(Vector3 size, bool enableTextureCoordinate)
 }
 
 
+void MeshGenerator::generateTextureCoordinateForBox(SgMesh* mesh)
+{
+    mesh->setTexCoords(
+        new SgTexCoordArray({
+                { 0.0, 0.0 },
+                { 1.0, 0.0 },
+                { 0.0, 1.0 },
+                { 1.0, 1.0 }
+            }));
+
+    mesh->texCoordIndices() = {
+        3, 2, 0,
+        0, 1, 3,
+        1, 2, 0,
+        1, 3, 2,
+        3, 2, 0,
+        3, 0, 1,
+        2, 0, 1,
+        2, 1, 3,
+        0, 1, 3,
+        0, 3, 2,
+        2, 1, 3,
+        2, 0, 1
+    };
+}
+
+
 SgMesh* MeshGenerator::generateSphere(double radius, bool enableTextureCoordinate)
 {
     if(radius < 0.0 || divisionNumber_ < 4){
-        return 0;
+        return nullptr;
     }
 
     auto mesh = new SgMesh;
@@ -217,11 +244,73 @@ SgMesh* MeshGenerator::generateSphere(double radius, bool enableTextureCoordinat
 }
 
 
-SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool bottom, bool top, bool side,
-        bool enableTextureCoordinate)
+/**
+   \todo Check if the use of this inefficient function is rellay necessary.
+*/
+static int findTexCoordPoint(const SgTexCoordArray& texCoords, const Vector2f& point)
+{
+    for(size_t i=0; i < texCoords.size(); ++i){
+        if(texCoords[i].isApprox(point)){
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+void MeshGenerator::generateTextureCoordinateForSphere(SgMesh* mesh)
+{
+    const auto& sphere = mesh->primitive<SgMesh::Sphere>();
+    const auto& vertices = *mesh->vertices();
+
+    mesh->setTexCoords(new SgTexCoordArray());
+    SgTexCoordArray& texCoords = *mesh->texCoords();
+    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
+    texCoordIndices.clear();
+
+    Vector2f texPoint;
+    int texIndex = 0;
+    const int numTriangles = mesh->numTriangles();
+    for(int i=0; i < numTriangles; ++i){
+        const Vector3f* point[3];
+        bool over = false;
+        double s[3] = { 0.0, 0.0, 0.0 };
+        const auto triangle = mesh->triangle(i);
+        for(int j=0; j < 3; ++j){
+            point[j] = &vertices[triangle[j]];
+            s[j] = ( atan2(point[j]->x(), point[j]->z()) + PI ) / 2.0 / PI;
+            if(s[j] > 0.5){
+                over = true;
+            }
+        }
+        for(int j=0; j < 3; ++j){
+            if(s[j] < 1.0e-6) s[j] = 0.0;
+            if(s[j] > 1.0) s[j] = 1.0;
+            if(over && s[j]==0.0){
+                s[j] = 1.0;
+            }
+            double w = point[j]->y() / sphere.radius;
+            if(w>1.0) w=1;
+            if(w<-1.0) w=-1;
+            texPoint << s[j], 1.0 - acos(w) / PI;
+
+            int k = findTexCoordPoint(texCoords, texPoint);
+            if(k >= 0){
+                texCoordIndices.push_back(k);
+            } else {
+                texCoords.push_back(texPoint);
+                texCoordIndices.push_back(texIndex++);
+            }
+        }
+    }
+}
+
+
+SgMesh* MeshGenerator::generateCylinder
+(double radius, double height, bool bottom, bool top, bool side, bool enableTextureCoordinate)
 {
     if(height < 0.0 || radius < 0.0){
-        return 0;
+        return nullptr;
     }
 
     auto mesh = new SgMesh;
@@ -280,11 +369,95 @@ SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool botto
 }
 
 
-SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, bool side,
-        bool enableTextureCoordinate)
+void MeshGenerator::generateTextureCoordinateForCylinder(SgMesh* mesh)
+{
+    const auto& vertices = *mesh->vertices();
+    mesh->setTexCoords(new SgTexCoordArray());
+    SgTexCoordArray& texCoords = *mesh->texCoords();
+    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
+    texCoordIndices.clear();
+
+    Vector2f texPoint(0.5f, 0.5f); // center of top(bottom) index=0
+
+    texCoords.push_back(texPoint);
+    int texIndex = 1;
+    const int numTriangles = mesh->numTriangles();
+    for(int i=0; i < numTriangles; ++i){
+        Vector3f point[3];
+        bool notside = true;
+        int center = -1;
+        SgMesh::TriangleRef triangle = mesh->triangle(i);
+        for(int j=0; j < 3; ++j){
+            point[j] = vertices[triangle[j]];
+            if(j > 0){
+                if(point[0][1] != point[j][1]){
+                    notside = false;
+                }
+            }
+            if(point[j][0] == 0.0 && point[j][2] == 0.0){
+                center = j;
+            }
+        }
+        if(!notside){         //side
+            bool over=false;
+            Vector3f s(0.0, 0.0, 0.0);
+            for(int j=0; j < 3; ++j){
+                s[j] = ( atan2(point[j][0], point[j][2]) + PI ) / 2.0 / PI;
+                if(s[j] > 0.5){
+                    over = true;
+                }
+            }
+            for(int j=0; j < 3; ++j){
+                if(s[j] < 1.0e-6) s[j] = 0.0;
+                if(s[j] > 1.0) s[j] = 1.0;
+                if(over && s[j]==0.0){
+                    s[j] = 1.0;
+                }
+                texPoint[0] = s[j];
+                if(point[j][1] > 0.0){
+                    texPoint[1] = 1.0;
+                } else {
+                    texPoint[1] = 0.0;
+                }
+                const int k = findTexCoordPoint(texCoords, texPoint);
+                if(k >= 0){
+                    texCoordIndices.push_back(k);
+                }else{
+                    texCoords.push_back(texPoint);
+                    texCoordIndices.push_back(texIndex++);
+                }
+            }
+        } else {              // top / bottom
+            for(int j=0; j < 3; ++j){
+                if(j!=center){
+                    const double angle = atan2(point[j][2], point[j][0]);
+                    texPoint[0] = 0.5 + 0.5 * cos(angle);
+                    if(point[0][1] > 0.0){  //top
+                        texPoint[1] = 0.5 - 0.5 * sin(angle);
+                    } else {               //bottom
+                        texPoint[1] = 0.5 + 0.5 * sin(angle);
+                    }
+                    const int k = findTexCoordPoint(texCoords, texPoint);
+                    if(k != -1){
+                        texCoordIndices.push_back(k);
+                    }else{
+                        texCoords.push_back(texPoint);
+                        texCoordIndices.push_back(texIndex++);
+                    }
+                }else{
+                    texCoordIndices.push_back(0);
+                }
+            }
+        }
+    }
+}
+
+
+SgMesh* MeshGenerator::generateCone
+(double radius, double height, bool bottom, bool side, bool enableTextureCoordinate)
 {
     if(radius < 0.0 || height < 0.0){
-        return 0;
+        return nullptr;
     }
 
     auto mesh = new SgMesh;
@@ -328,6 +501,83 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
     }
 
     return mesh;
+}
+
+
+void MeshGenerator::generateTextureCoordinateForCone(SgMesh* mesh)
+{
+    mesh->setTexCoords(new SgTexCoordArray());
+    SgTexCoordArray& texCoords = *mesh->texCoords();
+    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
+    texCoordIndices.clear();
+
+    Vector2f texPoint(0.5, 0.5); //center of bottom index=0
+    texCoords.push_back(texPoint);
+
+    const auto& vertices = *mesh->vertices();
+
+    int texIndex = 1;
+    const int numTriangles = mesh->numTriangles();
+    for(int i=0; i < numTriangles; ++i){
+        Vector3f point[3];
+        int top = -1;
+        int center = -1;
+        SgMesh::TriangleRef triangle = mesh->triangle(i);
+        for(int j=0; j < 3; ++j){
+            point[j] = vertices[triangle[j]];
+            if(point[j][1] > 0.0){
+                top = j;
+            }
+            if(point[j][0] == 0.0 && point[j][2] == 0.0){
+                center = j;
+            }
+        }
+        if(top >= 0){ //side
+            Vector3f s(0.0f, 0.0f, 0.0f);
+            int pre = -1;
+            for(int j=0; j < 3; ++j){
+                if(j != top){
+                    s[j] = ( atan2(point[j][0], point[j][2]) + PI ) / 2.0 / PI;
+                    if(pre != -1){
+                        if(s[pre] > 0.5 && s[j] < 1.0e-6){
+                            s[j] = 1.0;
+                        }
+                    }
+                    pre = j;
+                }
+            }
+            for(int j=0; j < 3; ++j){
+                if(j != top){
+                    texPoint << s[j], 0.0;
+                } else {
+                    texPoint << (s[0] + s[1] + s[2]) / 2.0, 1.0;
+                }
+                const int k = findTexCoordPoint(texCoords, texPoint);
+                if(k != -1){
+                    texCoordIndices.push_back(k);
+                } else {
+                    texCoords.push_back(texPoint);
+                    texCoordIndices.push_back(texIndex++);
+                }
+            }
+        } else { // bottom
+            for(int j=0; j < 3; ++j){
+                if(j != center){
+                    const double angle = atan2(point[j][2], point[j][0]);
+                    texPoint << 0.5 + 0.5 * cos(angle), 0.5 + 0.5 * sin(angle);
+                    const int k = findTexCoordPoint(texCoords, texPoint);
+                    if(k != -1){
+                        texCoordIndices.push_back(k);
+                    } else {
+                        texCoords.push_back(texPoint);
+                        texCoordIndices.push_back(texIndex++);
+                    }
+                } else {
+                    texCoordIndices.push_back(0);
+                }
+            }
+        }
+    }
 }
 
 
@@ -534,41 +784,42 @@ SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius, d
     return mesh;
 }
 
+
 SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enableTextureCoordinate)
 {
-    int numSpines = extrusion.spine.size();
-    int numCrosses = extrusion.crossSection.size();
+    int spineSize = extrusion.spine.size();
+    int crossSectionSize = extrusion.crossSection.size();
 
-    if(numSpines < 2 || numCrosses < 2){
+    if(spineSize < 2 || crossSectionSize < 2){
         return nullptr;
     }
     
-    bool isClosed = (extrusion.spine[0] == extrusion.spine[numSpines - 1]);
+    bool isClosed = (extrusion.spine[0] == extrusion.spine[spineSize - 1]);
     if(isClosed)
-        numSpines--;
+        spineSize--;
 
-    bool isCrossSectionClosed = (extrusion.crossSection[0] == extrusion.crossSection[numCrosses - 1]);
+    bool isCrossSectionClosed = (extrusion.crossSection[0] == extrusion.crossSection[crossSectionSize - 1]);
     if(isCrossSectionClosed)
-        numCrosses --;
+        crossSectionSize --;
 
-    if(numSpines < 2 || numCrosses < 2){
+    if(spineSize < 2 || crossSectionSize < 2){
         return 0;
     }
 
     auto mesh = new SgMesh;
     auto& vertices = *mesh->setVertices(new SgVertexArray());
-    vertices.reserve(numSpines * numCrosses);
+    vertices.reserve(spineSize * crossSectionSize);
 
     Vector3 preZaxis(Vector3::Zero());
     int definedZaxis = -1;
     vector<Vector3> Yaxisarray;
     vector<Vector3> Zaxisarray;
-    if(numSpines > 2){
-        for(int i=0; i < numSpines; ++i){
+    if(spineSize > 2){
+        for(int i=0; i < spineSize; ++i){
             Vector3 Yaxis, Zaxis;
             if(i == 0){
                 if(isClosed){
-                    const Vector3& spine1 = extrusion.spine[numSpines - 1];
+                    const Vector3& spine1 = extrusion.spine[spineSize - 1];
                     const Vector3& spine2 = extrusion.spine[0];
                     const Vector3& spine3 = extrusion.spine[1];
                     Yaxis = spine3 - spine1;
@@ -580,17 +831,17 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
                     Yaxis = spine2 - spine1;
                     Zaxis = (spine3 - spine2).cross(spine1 - spine2);
                 }
-            } else if(i == numSpines - 1){
+            } else if(i == spineSize - 1){
                 if(isClosed){
-                    const Vector3& spine1 = extrusion.spine[numSpines - 2];
-                    const Vector3& spine2 = extrusion.spine[numSpines - 1];
+                    const Vector3& spine1 = extrusion.spine[spineSize - 2];
+                    const Vector3& spine2 = extrusion.spine[spineSize - 1];
                     const Vector3& spine3 = extrusion.spine[0];
                     Yaxis = spine3 - spine1;
                     Zaxis = (spine3 - spine2).cross(spine1 - spine2);
                 } else {
-                    const Vector3& spine1 = extrusion.spine[numSpines - 3];
-                    const Vector3& spine2 = extrusion.spine[numSpines - 2];
-                    const Vector3& spine3 = extrusion.spine[numSpines - 1];
+                    const Vector3& spine1 = extrusion.spine[spineSize - 3];
+                    const Vector3& spine2 = extrusion.spine[spineSize - 2];
+                    const Vector3& spine3 = extrusion.spine[spineSize - 1];
                     Yaxis = spine3 - spine2;
                     Zaxis = (spine3 - spine2).cross(spine1 - spine2);
                 }
@@ -624,7 +875,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
     Vector3 scale(1.0, 0.0, 1.0);
     AngleAxis orientation(0.0, Vector3::UnitZ());
 
-    for(int i=0; i < numSpines; ++i){
+    for(int i=0; i < spineSize; ++i){
         Matrix3 Scp;
         Vector3 y = Yaxisarray[i].normalized();
         if(definedZaxis == -1){
@@ -655,7 +906,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
             orientation = extrusion.orientation[i];
         }
 
-        for(int j=0; j < numCrosses; ++j){
+        for(int j=0; j < crossSectionSize; ++j){
             const Vector3 crossSection(extrusion.crossSection[j][0], 0.0, extrusion.crossSection[j][1]);
             const Vector3 v1(crossSection[0] * scale[0], 0.0, crossSection[2] * scale[2]);
             const Vector3 v = Scp * orientation.toRotationMatrix() * v1 + spine;
@@ -663,8 +914,8 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
         }
     }
 
-    int numSpinePoints = numSpines;
-    int numCrossPoints = numCrosses;
+    int numSpinePoints = spineSize;
+    int numCrossPoints = crossSectionSize;
 
     if(isClosed)
         numSpinePoints++;
@@ -672,12 +923,12 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
         numCrossPoints++;
 
     for(int i=0; i < numSpinePoints - 1 ; ++i){
-        int ii = (i + 1) % numSpines;
-        int upper = i * numCrosses;
-        int lower = ii * numCrosses;
+        int ii = (i + 1) % spineSize;
+        int upper = i * crossSectionSize;
+        int lower = ii * crossSectionSize;
 
         for(int j=0; j < numCrossPoints - 1; ++j) {
-            int jj = (j + 1) % numCrosses;
+            int jj = (j + 1) % crossSectionSize;
             mesh->addTriangle(j + upper, j + lower, jj + lower);
             mesh->addTriangle(j + upper, jj + lower, jj + upper);
         }
@@ -691,7 +942,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
     if(extrusion.beginCap && !isClosed){
         triangulator.setVertices(vertices);
         polygon.clear();
-        for(int i=0; i < numCrosses; ++i){
+        for(int i=0; i < crossSectionSize; ++i){
             polygon.push_back(i);
         }
         triangulator.apply(polygon);
@@ -705,8 +956,8 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
     if(extrusion.endCap && !isClosed){
         triangulator.setVertices(vertices);
         polygon.clear();
-        for(int i=0; i < numCrosses; ++i){
-            polygon.push_back(numCrosses * (numSpines - 1) + i);
+        for(int i=0; i < crossSectionSize; ++i){
+            polygon.push_back(crossSectionSize * (spineSize - 1) + i);
         }
         triangulator.apply(polygon);
         const vector<int>& triangles = triangulator.triangles();
@@ -723,11 +974,119 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
     generateNormals(mesh, extrusion.creaseAngle);
 
     if(enableTextureCoordinate){
-        generateTextureCoordinateForExtrusion(mesh, extrusion,
-                numTriOfbeginCap, numTriOfendCap, numCrosses*(numSpines-1));
+        generateTextureCoordinateForExtrusion(
+            mesh, extrusion.crossSection, extrusion.spine,
+            numTriOfbeginCap, numTriOfendCap, crossSectionSize*(spineSize-1));
     }
 
     return mesh;
+}
+
+
+void MeshGenerator::generateTextureCoordinateForExtrusion
+(SgMesh* mesh, const Vector2Array& crossSection, const Vector3Array& spine,
+ int numTriOfbeginCap, int numTriOfendCap, int indexOfendCap)
+{
+    const int spineSize = spine.size();
+    const int crossSectionSize = crossSection.size();
+
+    mesh->setTexCoords(new SgTexCoordArray());
+    SgTexCoordArray& texCoords = *mesh->texCoords();
+
+    vector<double> s;
+    vector<double> t;
+    double slen = 0.0;
+    s.push_back(0.0);
+    for(int i=1; i < crossSectionSize; ++i){
+        double x = crossSection[i][0] - crossSection[i-1][0];
+        double z = crossSection[i][1] - crossSection[i-1][1];
+        slen += sqrt(x*x + z*z);
+        s.push_back(slen);
+    }
+    double tlen = 0.0;
+    t.push_back(0.0);
+    for(int i=1; i < spineSize; ++i){
+        double x = spine[i][0] - spine[i-1][0];
+        double y = spine[i][1] - spine[i-1][1];
+        double z = spine[i][2] - spine[i-1][2];
+        tlen += sqrt(x*x + y*y + z*z);
+        t.push_back(tlen);
+    }
+    for(int i=0; i < spineSize; ++i){
+        Vector2f point;
+        point[1] = t[i] / tlen;
+        for(int j=0; j < crossSectionSize; ++j){
+            point[0] = s[j] / slen;
+            texCoords.push_back(point);
+        }
+    }
+
+    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
+    texCoordIndices.clear();
+    for(int i=0; i < spineSize - 1 ; ++i){
+        int ii = i + 1;
+        int upper = i * crossSectionSize;
+        int lower = ii * crossSectionSize;
+
+        for(int j=0; j < crossSectionSize - 1; ++j) {
+            int jj = j + 1;
+            texCoordIndices.push_back(j + upper);
+            texCoordIndices.push_back(j + lower);
+            texCoordIndices.push_back(jj + lower);
+
+            texCoordIndices.push_back(j + upper);
+            texCoordIndices.push_back(jj + lower);
+            texCoordIndices.push_back(jj + upper);
+        }
+    }
+
+    if(!(numTriOfbeginCap+numTriOfendCap)){
+        return;
+    }
+    const SgIndexArray& triangleVertices = mesh->triangleVertices();
+    int endCapE = triangleVertices.size();
+    int endCapS = endCapE - numTriOfendCap*3;
+    int beginCapE = endCapS;
+    int beginCapS = beginCapE - numTriOfbeginCap*3;
+
+    double xmin, xmax;
+    double zmin, zmax;
+    xmin = xmax = crossSection[0][0];
+    zmin = zmax = crossSection[0][1];
+    for(size_t i=1; i < crossSection.size(); ++i){
+        xmax = std::max(xmax, crossSection[i][0]);
+        xmin = std::min(xmin, crossSection[i][0]);
+        zmax = std::max(zmax, crossSection[i][1]);
+        zmin = std::min(xmin, crossSection[i][1]);
+    }
+    float xsize = xmax - xmin;
+    float zsize = zmax - zmin;
+
+    if(numTriOfbeginCap){
+        int endOfTexCoord = texCoords.size();
+        for(int i=0; i < crossSectionSize; ++i){
+            Vector2f point;
+            point[0] = (crossSection[i][0] - xmin) / xsize;
+            point[1] = (crossSection[i][1] - zmin) / zsize;
+            texCoords.push_back(point);
+        }
+        for(int i = beginCapS; i <beginCapE ; ++i){
+            texCoordIndices.push_back(triangleVertices[i] + endOfTexCoord);
+        }
+    }
+
+    if(numTriOfendCap){
+        int endOfTexCoord = texCoords.size();
+        for(int i=0; i < crossSectionSize; ++i){
+            Vector2f point;
+            point[0] = (xmax - crossSection[i][0]) / xsize;
+            point[1] = (crossSection[i][1] - zmin) / zsize;
+            texCoords.push_back(point);
+        }
+        for(int i = endCapS; i < endCapE; ++i){
+            texCoordIndices.push_back(triangleVertices[i]-indexOfendCap + endOfTexCoord);
+        }
+    }
 }
 
 
@@ -811,363 +1170,6 @@ SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid, bool ena
     }
 
     return mesh;
-}
-
-
-void MeshGenerator::generateTextureCoordinateForBox(SgMesh* mesh)
-{
-    mesh->setTexCoords(
-        new SgTexCoordArray({
-                { 0.0, 0.0 },
-                { 1.0, 0.0 },
-                { 0.0, 1.0 },
-                { 1.0, 1.0 }
-            }));
-
-    mesh->texCoordIndices() = {
-        3, 2, 0,
-        0, 1, 3,
-        1, 2, 0,
-        1, 3, 2,
-        3, 2, 0,
-        3, 0, 1,
-        2, 0, 1,
-        2, 1, 3,
-        0, 1, 3,
-        0, 3, 2,
-        2, 1, 3,
-        2, 0, 1
-    };
-}
-
-
-/**
-   \todo Check if the use of this inefficient function is rellay necessary.
-*/
-int MeshGenerator::findTexCoordPoint(const SgTexCoordArray& texCoords, const Vector2f& point)
-{
-    for(size_t i=0; i < texCoords.size(); ++i){
-        if(texCoords[i].isApprox(point)){
-            return i;
-        }
-    }
-    return -1;
-}
-
-
-void MeshGenerator::generateTextureCoordinateForSphere(SgMesh* mesh)
-{
-    const auto& sphere = mesh->primitive<SgMesh::Sphere>();
-    const auto& vertices = *mesh->vertices();
-
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-
-    Vector2f texPoint;
-    int texIndex = 0;
-    const int numTriangles = mesh->numTriangles();
-    for(int i=0; i < numTriangles; ++i){
-        const Vector3f* point[3];
-        bool over = false;
-        double s[3] = { 0.0, 0.0, 0.0 };
-        const auto triangle = mesh->triangle(i);
-        for(int j=0; j < 3; ++j){
-            point[j] = &vertices[triangle[j]];
-            s[j] = ( atan2(point[j]->x(), point[j]->z()) + PI ) / 2.0 / PI;
-            if(s[j] > 0.5){
-                over = true;
-            }
-        }
-        for(int j=0; j < 3; ++j){
-            if(s[j] < 1.0e-6) s[j] = 0.0;
-            if(s[j] > 1.0) s[j] = 1.0;
-            if(over && s[j]==0.0){
-                s[j] = 1.0;
-            }
-            double w = point[j]->y() / sphere.radius;
-            if(w>1.0) w=1;
-            if(w<-1.0) w=-1;
-            texPoint << s[j], 1.0 - acos(w) / PI;
-
-            int k = findTexCoordPoint(texCoords, texPoint);
-            if(k >= 0){
-                texCoordIndices.push_back(k);
-            } else {
-                texCoords.push_back(texPoint);
-                texCoordIndices.push_back(texIndex++);
-            }
-        }
-    }
-}
-
-
-void MeshGenerator::generateTextureCoordinateForCylinder(SgMesh* mesh)
-{
-    const auto& vertices = *mesh->vertices();
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-
-    Vector2f texPoint(0.5f, 0.5f); // center of top(bottom) index=0
-
-    texCoords.push_back(texPoint);
-    int texIndex = 1;
-    const int numTriangles = mesh->numTriangles();
-    for(int i=0; i < numTriangles; ++i){
-        Vector3f point[3];
-        bool notside = true;
-        int center = -1;
-        SgMesh::TriangleRef triangle = mesh->triangle(i);
-        for(int j=0; j < 3; ++j){
-            point[j] = vertices[triangle[j]];
-            if(j > 0){
-                if(point[0][1] != point[j][1]){
-                    notside = false;
-                }
-            }
-            if(point[j][0] == 0.0 && point[j][2] == 0.0){
-                center = j;
-            }
-        }
-        if(!notside){         //side
-            bool over=false;
-            Vector3f s(0.0, 0.0, 0.0);
-            for(int j=0; j < 3; ++j){
-                s[j] = ( atan2(point[j][0], point[j][2]) + PI ) / 2.0 / PI;
-                if(s[j] > 0.5){
-                    over = true;
-                }
-            }
-            for(int j=0; j < 3; ++j){
-                if(s[j] < 1.0e-6) s[j] = 0.0;
-                if(s[j] > 1.0) s[j] = 1.0;
-                if(over && s[j]==0.0){
-                    s[j] = 1.0;
-                }
-                texPoint[0] = s[j];
-                if(point[j][1] > 0.0){
-                    texPoint[1] = 1.0;
-                } else {
-                    texPoint[1] = 0.0;
-                }
-                const int k = findTexCoordPoint(texCoords, texPoint);
-                if(k >= 0){
-                    texCoordIndices.push_back(k);
-                }else{
-                    texCoords.push_back(texPoint);
-                    texCoordIndices.push_back(texIndex++);
-                }
-            }
-        } else {              // top / bottom
-            for(int j=0; j < 3; ++j){
-                if(j!=center){
-                    const double angle = atan2(point[j][2], point[j][0]);
-                    texPoint[0] = 0.5 + 0.5 * cos(angle);
-                    if(point[0][1] > 0.0){  //top
-                        texPoint[1] = 0.5 - 0.5 * sin(angle);
-                    } else {               //bottom
-                        texPoint[1] = 0.5 + 0.5 * sin(angle);
-                    }
-                    const int k = findTexCoordPoint(texCoords, texPoint);
-                    if(k != -1){
-                        texCoordIndices.push_back(k);
-                    }else{
-                        texCoords.push_back(texPoint);
-                        texCoordIndices.push_back(texIndex++);
-                    }
-                }else{
-                    texCoordIndices.push_back(0);
-                }
-            }
-        }
-    }
-}
-
-
-void MeshGenerator::generateTextureCoordinateForCone(SgMesh* mesh)
-{
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-
-    Vector2f texPoint(0.5, 0.5); //center of bottom index=0
-    texCoords.push_back(texPoint);
-
-    const auto& vertices = *mesh->vertices();
-
-    int texIndex = 1;
-    const int numTriangles = mesh->numTriangles();
-    for(int i=0; i < numTriangles; ++i){
-        Vector3f point[3];
-        int top = -1;
-        int center = -1;
-        SgMesh::TriangleRef triangle = mesh->triangle(i);
-        for(int j=0; j < 3; ++j){
-            point[j] = vertices[triangle[j]];
-            if(point[j][1] > 0.0){
-                top = j;
-            }
-            if(point[j][0] == 0.0 && point[j][2] == 0.0){
-                center = j;
-            }
-        }
-        if(top >= 0){ //side
-            Vector3f s(0.0f, 0.0f, 0.0f);
-            int pre = -1;
-            for(int j=0; j < 3; ++j){
-                if(j != top){
-                    s[j] = ( atan2(point[j][0], point[j][2]) + PI ) / 2.0 / PI;
-                    if(pre != -1){
-                        if(s[pre] > 0.5 && s[j] < 1.0e-6){
-                            s[j] = 1.0;
-                        }
-                    }
-                    pre = j;
-                }
-            }
-            for(int j=0; j < 3; ++j){
-                if(j != top){
-                    texPoint << s[j], 0.0;
-                } else {
-                    texPoint << (s[0] + s[1] + s[2]) / 2.0, 1.0;
-                }
-                const int k = findTexCoordPoint(texCoords, texPoint);
-                if(k != -1){
-                    texCoordIndices.push_back(k);
-                } else {
-                    texCoords.push_back(texPoint);
-                    texCoordIndices.push_back(texIndex++);
-                }
-            }
-        } else { // bottom
-            for(int j=0; j < 3; ++j){
-                if(j != center){
-                    const double angle = atan2(point[j][2], point[j][0]);
-                    texPoint << 0.5 + 0.5 * cos(angle), 0.5 + 0.5 * sin(angle);
-                    const int k = findTexCoordPoint(texCoords, texPoint);
-                    if(k != -1){
-                        texCoordIndices.push_back(k);
-                    } else {
-                        texCoords.push_back(texPoint);
-                        texCoordIndices.push_back(texIndex++);
-                    }
-                } else {
-                    texCoordIndices.push_back(0);
-                }
-            }
-        }
-    }
-}
-
-
-void MeshGenerator::generateTextureCoordinateForExtrusion
-(SgMesh* mesh, const Extrusion& extrusion, int numTriOfbeginCap, int numTriOfendCap, int indexOfendCap)
-{
-    const int numSpine = extrusion.spine.size();
-    const int numcross = extrusion.crossSection.size();
-
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-
-    vector<double> s;
-    vector<double> t;
-    double slen = 0.0;
-    s.push_back(0.0);
-    for(int i=1; i < numcross; ++i){
-        double x = extrusion.crossSection[i][0] - extrusion.crossSection[i-1][0];
-        double z = extrusion.crossSection[i][1] - extrusion.crossSection[i-1][1];
-        slen += sqrt(x*x + z*z);
-        s.push_back(slen);
-    }
-    double tlen = 0.0;
-    t.push_back(0.0);
-    for(int i=1; i < numSpine; ++i){
-        double x = extrusion.spine[i][0] - extrusion.spine[i-1][0];
-        double y = extrusion.spine[i][1] - extrusion.spine[i-1][1];
-        double z = extrusion.spine[i][2] - extrusion.spine[i-1][2];
-        tlen += sqrt(x*x + y*y + z*z);
-        t.push_back(tlen);
-    }
-    for(int i=0; i < numSpine; ++i){
-        Vector2f point;
-        point[1] = t[i] / tlen;
-        for(int j=0; j < numcross; ++j){
-            point[0] = s[j] / slen;
-            texCoords.push_back(point);
-        }
-    }
-
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-    for(int i=0; i < numSpine - 1 ; ++i){
-        int ii = i + 1;
-        int upper = i * numcross;
-        int lower = ii * numcross;
-
-        for(int j=0; j < numcross - 1; ++j) {
-            int jj = j + 1;
-            texCoordIndices.push_back(j + upper);
-            texCoordIndices.push_back(j + lower);
-            texCoordIndices.push_back(jj + lower);
-
-            texCoordIndices.push_back(j + upper);
-            texCoordIndices.push_back(jj + lower);
-            texCoordIndices.push_back(jj + upper);
-        }
-    }
-
-    if(!(numTriOfbeginCap+numTriOfendCap)){
-        return;
-    }
-    const SgIndexArray& triangleVertices = mesh->triangleVertices();
-    int endCapE = triangleVertices.size();
-    int endCapS = endCapE - numTriOfendCap*3;
-    int beginCapE = endCapS;
-    int beginCapS = beginCapE - numTriOfbeginCap*3;
-
-    double xmin, xmax;
-    double zmin, zmax;
-    xmin = xmax = extrusion.crossSection[0][0];
-    zmin = zmax = extrusion.crossSection[0][1];
-    for(size_t i=1; i < extrusion.crossSection.size(); ++i){
-        xmax = std::max(xmax, extrusion.crossSection[i][0]);
-        xmin = std::min(xmin, extrusion.crossSection[i][0]);
-        zmax = std::max(zmax, extrusion.crossSection[i][1]);
-        zmin = std::min(xmin, extrusion.crossSection[i][1]);
-    }
-    float xsize = xmax - xmin;
-    float zsize = zmax - zmin;
-
-    if(numTriOfbeginCap){
-        int endOfTexCoord = texCoords.size();
-        for(int i=0; i < numcross; ++i){
-            Vector2f point;
-            point[0] = (extrusion.crossSection[i][0] - xmin) / xsize;
-            point[1] = (extrusion.crossSection[i][1] - zmin) / zsize;
-            texCoords.push_back(point);
-        }
-        for(int i = beginCapS; i <beginCapE ; ++i){
-            texCoordIndices.push_back(triangleVertices[i] + endOfTexCoord);
-        }
-    }
-
-    if(numTriOfendCap){
-        int endOfTexCoord = texCoords.size();
-        for(int i=0; i < numcross; ++i){
-            Vector2f point;
-            point[0] = (xmax - extrusion.crossSection[i][0]) / xsize;
-            point[1] = (extrusion.crossSection[i][1] - zmin) / zsize;
-            texCoords.push_back(point);
-        }
-        for(int i = endCapS; i < endCapE; ++i){
-            texCoordIndices.push_back(triangleVertices[i]-indexOfendCap + endOfTexCoord);
-        }
-    }
-
 }
 
 
