@@ -92,7 +92,9 @@ void exportPySceneGraph(py::module& m)
 
     py::class_<SgPosTransform, SgPosTransformPtr, SgTransform>(m, "SgPosTransform")
         .def(py::init<>())
+        .def(py::init([](Eigen::Ref<const Matrix4RM> T){ return new SgPosTransform(Isometry3(T.matrix())); }))
         .def(py::init<const SgPosTransform&>())
+        
         .def_property(
             "T",
             [](SgPosTransform& self) -> Isometry3::MatrixType& { return self.T().matrix(); },
