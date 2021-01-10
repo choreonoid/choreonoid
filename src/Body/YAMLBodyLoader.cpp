@@ -1498,7 +1498,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
 
     sceneGroupSetStack.push_back(SceneGroupSet());
     if(hasPosTransform){
-        currentSceneGroupSet().newGroup<SgPosTransform>(T);
+        currentSceneGroupSet().newGroup<SgPosTransform>(Isometry3(T.matrix()));
     } else if(hasScale){
         currentSceneGroupSet().newGroup<SgScaleTransform>(scale);
     } else {

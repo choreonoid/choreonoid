@@ -76,7 +76,7 @@ public:
         onUpdated(update);
     }
 
-    void notifyUpdate(int action = SgUpdate::MODIFIED) {
+    void notifyUpdate(int action = SgUpdate::Modified) {
         SgUpdate update(action);
         update.reservePathCapacity(16);
         onUpdated(update);
@@ -329,7 +329,7 @@ public:
 
     SgPosTransform();
     SgPosTransform(const Isometry3& T);
-    //! \note T must be the isometry transformation
+    [[deprecated("Use SgPosTransform(const Isometry3& T)")]]
     SgPosTransform(const Affine3& T);
     SgPosTransform(const SgPosTransform& org, CloneMap* cloneMap = nullptr);
 
@@ -350,6 +350,10 @@ public:
 
     template<class Scalar, int Mode, int Options>
     void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        T_ = T.template cast<Isometry3::Scalar>();
+    }
+    template<class Derived>
+    void setPosition(const Eigen::MatrixBase<Derived>& T){
         T_ = T.template cast<Isometry3::Scalar>();
     }
     template<class Scalar, int Mode, int Options>

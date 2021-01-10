@@ -211,7 +211,7 @@ SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
         group = new SgGroup;
 
     } else if(T.linear().isUnitary(1.0e-6)){
-        group = new SgPosTransform(T);
+        group = new SgPosTransform(Isometry3(T.matrix()));
 
     } else {
         if(USE_AFFINE_TRANSFORM){
@@ -228,7 +228,7 @@ SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
             if(T.isApprox(Affine3::Identity())){
                 group = scaleTransform;
             } else {
-                group = new SgPosTransform(T);
+                group = new SgPosTransform(Isometry3(T.matrix()));
                 group->addChild(scaleTransform);
                 groupToAddChildren = scaleTransform;
             }

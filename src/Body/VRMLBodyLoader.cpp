@@ -285,7 +285,7 @@ VRMLBodyLoaderImpl::VRMLBodyLoaderImpl()
 {
     divisionNumber = sgConverter.divisionNumber();
     isVerbose = false;
-    body = 0;
+    body = nullptr;
     os_ = &nullout();
     
     if(protoInfoMap.empty()){
@@ -390,7 +390,7 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     bool result = false;
 
     this->body = body;
-    rootJointNode = 0;
+    rootJointNode.reset();
     extraJointNodes.clear();
     validJointIdSet.clear();
     numValidJointIds = 0;
@@ -956,7 +956,12 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
             node->setName(segmentNode->defName);
             iLink.visualShape->addChild(node);
         } else {
-            SgPosTransform* transform = new SgPosTransform(T);
+            SgTransform* transform;
+            if(T.linear().isUnitary(1.0e-6)){
+                transform = new SgPosTransform(Isometry3(T.matrix()));
+            } else {
+                transform = new SgAffineTransform(T);
+            }
             transform->addChild(node);
             transform->setName(segmentNode->defName);
             iLink.visualShape->addChild(transform);
@@ -983,11 +988,15 @@ void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* seg
     readJointSubNodes(iLink, collisionNodes, acceptableProtoIds, T);
 
     SgGroup* group;
-    SgPosTransform* transform = 0;
+    SgTransform* transform = nullptr;
     if(T.isApprox(Affine3::Identity())){
         group = iLink.collisionShape;
     } else {
-        transform = new SgPosTransform(T);
+        if(T.linear().isUnitary(1.0e-6)){
+            transform = new SgPosTransform(Isometry3(T.matrix()));
+        } else {
+            transform = new SgAffineTransform(T);
+        }
         group = transform;
     }
     for(size_t i=0; i < collisionNodes.size(); ++i){
@@ -1092,7 +1101,7 @@ AccelerationSensorPtr VRMLBodyLoaderImpl::createAccelerationSensor(VRMLProtoInst
 CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
 {
     CameraPtr camera;
-    RangeCamera* range = 0;
+    RangeCamera* range = nullptr;
     
     const SFString& type = stdx::get<SFString>(node->fields["type"]);
     if(type == "COLOR"){
