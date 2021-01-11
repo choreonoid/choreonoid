@@ -10,14 +10,19 @@
 
 namespace cnoid {
 
+class Mapping;
+typedef ref_ptr<Mapping> MappingPtr;
+
 class CNOID_EXPORT ControllerIO
 {
-  public:
+public:
     virtual ~ControllerIO();
 
+    virtual std::string controllerName() const = 0;
     virtual Body* body() = 0;
     virtual std::string optionString() const;
     std::vector<std::string> options() const;
+    MappingPtr parameters() const;
     virtual std::ostream& os() const;
     virtual double timeStep() const;
     virtual double currentTime() const;
@@ -38,7 +43,7 @@ class CNOID_EXPORT ControllerIO
     //! \deprecated Use timeStep().
     double worldTimeStep() const { return timeStep(); };
 
-  protected:
+protected:
     std::string getIntegratedOptionString(const std::string& opt1, const std::string& opt2) const;
 };
 

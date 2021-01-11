@@ -13,8 +13,6 @@ namespace cnoid {
 class CNOID_EXPORT SimpleControllerIO : public ControllerIO
 {
   public:
-    virtual std::string controllerName() const = 0;
-
     virtual void enableIO(Link* link) = 0;
     virtual void enableInput(Link* link) = 0;
     virtual void enableInput(Link* link, int stateFlags) = 0;

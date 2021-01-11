@@ -4,6 +4,7 @@
 
 #include "ControllerIO.h"
 #include <cnoid/Tokenizer>
+#include <cnoid/YAMLReader>
 #include <iostream>
 
 using namespace std;
@@ -45,6 +46,27 @@ std::vector<std::string> ControllerIO::options() const
         }
     }
     return options;
+}
+
+
+MappingPtr ControllerIO::parameters() const
+{
+    YAMLReader reader;
+    MappingPtr node;
+    bool isError = false;
+    auto option = optionString();
+    if(!option.empty()){
+        if(reader.parse(optionString())){
+            node = reader.document()->toMapping();
+        } else {
+            os() << (controllerName() + ": " + reader.errorMessage()) << endl;
+            isError = true;
+        }
+    }
+    if(!node && !isError){
+        node = new Mapping;
+    }
+    return node;
 }
 
 

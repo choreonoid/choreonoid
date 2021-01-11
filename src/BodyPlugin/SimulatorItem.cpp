@@ -123,6 +123,7 @@ public:
 
     ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl);
 
+    virtual std::string controllerName() const override;
     virtual Body* body() override;
     std::ostream& os() const override;
     virtual double timeStep() const override;
@@ -340,6 +341,7 @@ public:
     void addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem);
 
     // Functions defined in the ControllerIO class
+    virtual std::string controllerName() const override;
     virtual Body* body() override;
     virtual std::string optionString() const override;
     virtual std::ostream& os() const override;
@@ -523,6 +525,12 @@ ControllerInfo::ControllerInfo(ControllerItem* controller, SimulationBody::Impl*
       simImpl(simBodyImpl->simImpl)
 {
 
+}
+
+
+std::string ControllerInfo::controllerName() const
+{
+    return controller ? controller->name() : string();
 }
 
 
@@ -2446,6 +2454,12 @@ double SimulatorItem::simulationTime() const
 double SimulatorItem::Impl::timeStep() const
 {
     return worldTimeStep_;
+}
+
+
+std::string SimulatorItem::Impl::controllerName() const
+{
+    return string();
 }
 
 
