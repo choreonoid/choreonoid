@@ -11,6 +11,7 @@ namespace cnoid {
 void exportPyQtExTypes(py::module m);
 void exportPyAppUtil(py::module m);
 void exportPyItems(py::module m);
+void exportPySeqItems(py::module m);
 void exportPyMainWindow(py::module m);
 void exportPyToolBars(py::module m);
 void exportPyViews(py::module m);
@@ -34,6 +35,7 @@ PYBIND11_MODULE(Base, m)
     exportPyQtExTypes(m);
     exportPyAppUtil(m);
     exportPyItems(m);
+    exportPySeqItems(m);
     exportPyMainWindow(m);
     exportPyToolBars(m);
     exportPyViews(m);

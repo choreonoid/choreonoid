@@ -21,6 +21,7 @@ choreonoid_add_python_module(PyBase
   PyAppUtil.cpp
   PyQtEx.cpp
   PyItems.cpp
+  PySeqItems.cpp
   PyMainWindow.cpp
   PyToolBars.cpp
   PyViews.cpp

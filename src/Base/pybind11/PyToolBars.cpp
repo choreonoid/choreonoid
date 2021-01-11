@@ -27,22 +27,22 @@ void exportPyToolBars(py::module m)
         .def("addToggleButton",
              [](ToolBar& self, const char* text, const char* tooltip){ return self.addToggleButton(text, tooltip); },
              py::arg("text"), py::arg("tooltip") = QString(),
-             py::return_value_policy::reference_internal)
+             py::return_value_policy::reference)
         .def("addToggleButton",
             [](ToolBar& self, const QIcon& icon, const char* tooltip){ return self.addToggleButton(icon, tooltip); },
              py::arg("icon"), py::arg("tooltip") = QString(),
-             py::return_value_policy::reference_internal)
+             py::return_value_policy::reference)
         .def("requestNewRadioGroup", &ToolBar::requestNewRadioGroup)
         .def("addRadioButton",
              [](ToolBar& self, const char* text, const char* tooltip){ return self.addRadioButton(text, tooltip); },
              py::arg("text"), py::arg("tooltip") = QString(),
-             py::return_value_policy::reference_internal)
+             py::return_value_policy::reference)
         .def("addRadioButton",
              [](ToolBar& self, const QIcon& icon, const char* tooltip){ return self.addRadioButton(icon, tooltip); },
              py::arg("icon"), py::arg("tooltip") = QString(),
-             py::return_value_policy::reference_internal)
+             py::return_value_policy::reference)
         .def("addWidget", &ToolBar::addWidget)
-        .def("addSeparator", &ToolBar::addSeparator, py::return_value_policy::reference_internal)
+        .def("addSeparator", &ToolBar::addSeparator, py::return_value_policy::reference)
         .def("addSpacing", &ToolBar::addSpacing)
         .def("setVisibleByDefault", &ToolBar::setVisibleByDefault)
         .def("isVisibleByDefault", &ToolBar::isVisibleByDefault)
