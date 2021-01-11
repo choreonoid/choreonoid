@@ -156,6 +156,14 @@ public:
         return container[frameIndex];
     }
 
+    ElementType& front() {
+        return container.front();
+    }
+
+    const ElementType& front() const {
+        return container.front();
+    }
+
     ElementType& back() {
         return container.back();
     }
