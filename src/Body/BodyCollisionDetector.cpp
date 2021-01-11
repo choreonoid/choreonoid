@@ -182,6 +182,8 @@ void BodyCollisionDetector::Impl::ignoreLinkPair(int linkIndex1, int linkIndex2)
 //! \todo Implement all the rules
 void BodyCollisionDetector::Impl::checkCollisionDetectionTargets(Body* body, Listing* rules)
 {
+    const int numLinks = body->numLinks();
+    
     for(auto& node : *rules){
         for(auto& kv : *node->toMapping()){
             auto& rule = kv.first;
@@ -209,15 +211,24 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets(Body* body, Lis
                 
             } else if(rule == "disabled_links"){
                 if(value->isString() && value->toString() == "all"){
-                    int numLinks = body->numLinks();
                     for(int i = 0; i < numLinks; ++i){
                         linkExclusionFlags[i] = true;
                         for(int j = i + 1; j < numLinks; ++j){
                             ignoredLinkPairs.emplace(i, j);
                         }
                     }
-                } else {
-                    
+                } else if(value->isListing()){
+                    for(auto& node : *value->toListing()){
+                        if(auto link = body->link(node->toString())){
+                            int index = link->index();
+                            linkExclusionFlags[index] = true;
+                            for(int i = 0; i < numLinks; ++i){
+                                if(i != index){
+                                    ignoredLinkPairs.emplace(index, i);
+                                }
+                            }
+                        }
+                    }
                 }
             } else if(rule == "disabled_link_group"){
                 
