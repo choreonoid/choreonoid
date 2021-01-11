@@ -124,16 +124,18 @@ public:
     bool restore(const Archive& archive);
 
     // virtual functions of ControllerIO
-    virtual std::string optionString() const override;
+    virtual std::string controllerName() const override;
     virtual Body* body() override;
+    virtual std::string optionString() const override;
     virtual std::ostream& os() const override;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
+    virtual bool enableLog() override;
+    virtual void outputLog(Referenced* logData) override;
     virtual bool isNoDelayMode() const override;
     virtual bool setNoDelayMode(bool on) override;
 
     // virtual functions of SimpleControllerIO
-    virtual std::string controllerName() const override;
     virtual void enableIO(Link* link) override;
     virtual void enableInput(Link* link) override;
     virtual void enableInput(Link* link, int stateFlags) override;
@@ -587,14 +589,11 @@ void SimpleControllerItem::Impl::updateIOStateTypes()
 }
 
 
-std::string SimpleControllerItem::Impl::optionString() const
+std::string SimpleControllerItem::Impl::controllerName() const
 {
-    if(io){
-        return getIntegratedOptionString(io->optionString(), self->optionString());
-    }
-    return self->optionString();
+    return self->name();
 }
-
+        
 
 Body* SimpleControllerItem::Impl::body()
 {
@@ -606,6 +605,21 @@ Body* SimpleControllerItem::Impl::body()
         }
     }
     return nullptr;
+}
+
+
+std::string SimpleControllerItem::Impl::optionString() const
+{
+    if(io){
+        return getIntegratedOptionString(io->optionString(), self->optionString());
+    }
+    return self->optionString();
+}
+
+
+std::ostream& SimpleControllerItem::Impl::os() const
+{
+    return mv->cout();
 }
 
 
@@ -627,17 +641,17 @@ double SimpleControllerItem::Impl::currentTime() const
 }
 
 
-std::ostream& SimpleControllerItem::Impl::os() const
+bool SimpleControllerItem::Impl::enableLog()
 {
-    return mv->cout();
+    return io ? io->enableLog() : false;
 }
 
 
-std::string SimpleControllerItem::Impl::controllerName() const
+void SimpleControllerItem::Impl::outputLog(Referenced* logData)
 {
-    return self->name();
+    if(io) io->outputLog(logData);
 }
-        
+
 
 void SimpleControllerItem::Impl::enableIO(Link* link)
 {
