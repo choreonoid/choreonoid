@@ -62,7 +62,7 @@ struct ColdetBodyInfo
 
 namespace cnoid {
 
-class WorldItemImpl
+class WorldItem::Impl
 {
 public:
     WorldItem* self;
@@ -86,9 +86,9 @@ public:
     MaterialTablePtr materialTable;
     std::time_t materialTableTimestamp;
 
-    WorldItemImpl(WorldItem* self);
-    WorldItemImpl(WorldItem* self, const WorldItemImpl& org);
-    ~WorldItemImpl();
+    Impl(WorldItem* self);
+    Impl(WorldItem* self, const Impl& org);
+    ~Impl();
     void init();
     bool selectCollisionDetector(int index);
     void enableCollisionDetection(bool on);
@@ -113,12 +113,12 @@ void WorldItem::initializeClass(ExtensionManager* ext)
 
 WorldItem::WorldItem()
 {
-    impl = new WorldItemImpl(this);
+    impl = new Impl(this);
     setName("World");
 }
 
 
-WorldItemImpl::WorldItemImpl(WorldItem* self)
+WorldItem::Impl::Impl(WorldItem* self)
     : self(self),
       os(mvout()),
       updateCollisionsLater([&](){ updateCollisions(false); }),
@@ -141,11 +141,11 @@ WorldItemImpl::WorldItemImpl(WorldItem* self)
 WorldItem::WorldItem(const WorldItem& org)
     : Item(org)
 {
-    impl = new WorldItemImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
-WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
+WorldItem::Impl::Impl(WorldItem* self, const Impl& org)
     : self(self),
       os(org.os),
       updateCollisionsLater([&](){ updateCollisions(false); }),
@@ -159,7 +159,7 @@ WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
 }
 
 
-void WorldItemImpl::init()
+void WorldItem::Impl::init()
 {
     kinematicsBar = KinematicsBar::instance();
     bodyCollisionDetector.setCollisionDetector(CollisionDetector::create(collisionDetectorType.selectedIndex()));
@@ -177,10 +177,26 @@ WorldItem::~WorldItem()
 }
 
 
-WorldItemImpl::~WorldItemImpl()
+WorldItem::Impl::~Impl()
 {
     sigKinematicStateChangedConnections.disconnect();
     sigSubTreeChangedConnection.disconnect();
+}
+
+
+void WorldItem::storeCurrentBodyPositionsAsInitialPositions()
+{
+    for(auto& bodyItem : descendantItems<BodyItem>()){
+        bodyItem->storeInitialState();
+    }
+}
+
+
+void WorldItem::restoreInitialBodyPositions(bool doNotify)
+{
+    for(auto& bodyItem : descendantItems<BodyItem>()){
+        bodyItem->restoreInitialState(doNotify);
+    }
 }
 
 
@@ -206,7 +222,7 @@ bool WorldItem::selectCollisionDetector(const std::string& name)
 }
 
 
-bool WorldItemImpl::selectCollisionDetector(int index)
+bool WorldItem::Impl::selectCollisionDetector(int index)
 {
     if(index >= 0 && index < collisionDetectorType.size()){
         CollisionDetector* newCollisionDetector = CollisionDetector::create(index);
@@ -235,10 +251,10 @@ void WorldItem::enableCollisionDetection(bool on)
 }
 
 
-void WorldItemImpl::enableCollisionDetection(bool on)
+void WorldItem::Impl::enableCollisionDetection(bool on)
 {
     if(TRACE_FUNCTIONS){
-        os << "WorldItemImpl::enableCollisionDetection(" << on << ")" << endl;
+        os << "WorldItem::Impl::enableCollisionDetection(" << on << ")" << endl;
     }
 
     bool changed = false;
@@ -272,10 +288,10 @@ bool WorldItem::isCollisionDetectionEnabled()
 }
 
 
-void WorldItemImpl::clearCollisionDetector()
+void WorldItem::Impl::clearCollisionDetector()
 {
     if(TRACE_FUNCTIONS){
-        os << "WorldItemImpl::clearCollisionDetector()" << endl;
+        os << "WorldItem::Impl::clearCollisionDetector()" << endl;
     }
 
     bodyCollisionDetector.clearBodies();
@@ -299,10 +315,10 @@ void WorldItem::updateCollisionDetector()
 }
 
 
-void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
+void WorldItem::Impl::updateCollisionDetector(bool forceUpdate)
 {
     if(TRACE_FUNCTIONS){
-        os << "WorldItemImpl::updateCollisionDetector()" << endl;
+        os << "WorldItem::Impl::updateCollisionDetector()" << endl;
     }
 
     if(!isCollisionDetectionEnabled){
@@ -353,7 +369,7 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
 }
 
 
-void WorldItemImpl::updateColdetBodyInfos(vector<ColdetBodyInfo>& infos)
+void WorldItem::Impl::updateColdetBodyInfos(vector<ColdetBodyInfo>& infos)
 {
     infos.clear();
     for(auto bodyItem : self->descendantItems<BodyItem>()){
@@ -370,7 +386,7 @@ void WorldItem::updateCollisions()
 }
 
 
-void WorldItemImpl::updateCollisions(bool forceUpdate)
+void WorldItem::Impl::updateCollisions(bool forceUpdate)
 {
     auto collisionDetector = bodyCollisionDetector.collisionDetector();
 
@@ -417,7 +433,7 @@ void WorldItemImpl::updateCollisions(bool forceUpdate)
 }
 
 
-void WorldItemImpl::ignoreLinkPair
+void WorldItem::Impl::ignoreLinkPair
 (CollisionDetector* detector, GeometryHandle linkGeometry, Link* parentBodyLink, bool ignore)
 {
     while(parentBodyLink){
@@ -433,7 +449,7 @@ void WorldItemImpl::ignoreLinkPair
 }
 
 
-void WorldItemImpl::extractCollisions(const CollisionPair& collisionPair)
+void WorldItem::Impl::extractCollisions(const CollisionPair& collisionPair)
 {
     CollisionLinkPairPtr collisionLinkPair = std::make_shared<CollisionLinkPair>();
     collisionLinkPair->collisions = collisionPair.collisions();
@@ -481,7 +497,7 @@ MaterialTable* WorldItem::materialTable(bool checkFileUpdate)
 }
 
 
-MaterialTable* WorldItemImpl::getOrLoadMaterialTable(bool checkFileUpdate)
+MaterialTable* WorldItem::Impl::getOrLoadMaterialTable(bool checkFileUpdate)
 {
     bool failedToLoad = false;
     

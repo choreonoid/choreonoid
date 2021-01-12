@@ -132,9 +132,9 @@ void AISTSimulatorItem::initializeClass(ExtensionManager* ext)
 
 
 AISTSimulatorItem::AISTSimulatorItem()
+    : SimulatorItem("AISTSimulator")
 {
     impl = new Impl(this);
-    setName("AISTSimulator");
     setAllLinkPositionOutputMode(false);
 }
 

@@ -15,6 +15,8 @@ void exportItems(py::module m)
 {
     py::class_<WorldItem, WorldItemPtr, Item>(m, "WorldItem", py::multiple_inheritance())
         .def(py::init<>())
+        .def("storeCurrentBodyPositionsAsInitialPositions", &WorldItem::storeCurrentBodyPositionsAsInitialPositions)
+        .def("restoreInitialBodyPositions", &WorldItem::restoreInitialBodyPositions, py::arg("doNotify") = true)
         .def("selectCollisionDetector", &WorldItem::selectCollisionDetector)
         .def("enableCollisionDetection", &WorldItem::enableCollisionDetection)
         .def("isCollisionDetectionEnabled", &WorldItem::isCollisionDetectionEnabled)

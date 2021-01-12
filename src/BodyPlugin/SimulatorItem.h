@@ -85,7 +85,6 @@ public:
 
     static SimulatorItem* findActiveSimulatorItemFor(Item* item);
 
-    SimulatorItem();
     virtual ~SimulatorItem();
 
     WorldItem* worldItem();
@@ -117,7 +116,19 @@ public:
     SignalProxy<void()> sigSimulationResumed();
     SignalProxy<void()> sigSimulationFinished();
 
-    enum RecordingMode { REC_FULL, REC_TAIL, REC_NONE, N_RECORDING_MODES };
+    enum RecordingMode {
+        FullRecording,
+        TailRecording,
+        NoRecording,
+        NumRecordingModes,
+
+        // deprecated
+        REC_FULL = FullRecording,
+        REC_TAIL = TailRecording,
+        REC_NONE = NoRecording,
+        N_RECORDING_MODES = NumRecordingModes
+    };
+    
     enum TimeRangeMode { TR_UNLIMITED, TR_ACTIVE_CONTROL, TR_SPECIFIED, TR_TIMEBAR, N_TIME_RANGE_MODES };
     
     void setRecordingMode(int selection);
@@ -133,9 +144,6 @@ public:
 
     bool isAllLinkPositionOutputMode();
     virtual void setAllLinkPositionOutputMode(bool on);
-
-    void setSelfCollisionEnabled(bool on);
-    bool isSelfCollisionEnabled() const ;
 
     const std::string& controllerOptionString() const;
     
@@ -195,6 +203,8 @@ public:
     class Impl;
 
 protected:
+    SimulatorItem();
+    SimulatorItem(const std::string& name);
     SimulatorItem(const SimulatorItem& org);
 
     virtual void onPositionChanged() override;

@@ -639,7 +639,8 @@ bool ControllerInfo::isNoDelayMode() const
 
 bool ControllerInfo::setNoDelayMode(bool on)
 {
-    return controller->setNoDelayMode(on);
+    controller->setNoDelayMode(on);
+    return on;
 }
 
 
@@ -1228,6 +1229,13 @@ SimulatorItem::SimulatorItem()
 }
 
 
+SimulatorItem::SimulatorItem(const std::string& name)
+    : Item(name)
+{
+    impl = new Impl(this);
+}
+
+
 SimulatorItem::Impl::Impl(SimulatorItem* self)
     : self(self),
       temporalResolutionType(N_TEMPORARL_RESOLUTION_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
@@ -1435,18 +1443,6 @@ CollisionDetector* SimulatorItem::getOrCreateCollisionDetector()
 CollisionDetector* SimulatorItem::collisionDetector()
 {
     return getOrCreateCollisionDetector();
-}
-
-
-void SimulatorItem::setSelfCollisionEnabled(bool on)
-{
-
-}
-
-
-bool SimulatorItem::isSelfCollisionEnabled() const
-{
-    return false;
 }
 
 

@@ -14,7 +14,6 @@
 
 namespace cnoid {
 
-class WorldItemImpl;
 class CollisionDetector;
 class MaterialTable;
 
@@ -26,6 +25,9 @@ public:
     WorldItem();
     WorldItem(const WorldItem& org);
     virtual ~WorldItem();
+
+    void storeCurrentBodyPositionsAsInitialPositions();
+    void restoreInitialBodyPositions(bool doNotify = true);
 
     ItemList<BodyItem> coldetBodyItems() const;
 
@@ -55,7 +57,8 @@ protected:
     virtual bool restore(const Archive& archive) override;
 
 private:
-    WorldItemImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<WorldItem> WorldItemPtr;

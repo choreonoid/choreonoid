@@ -30,9 +30,10 @@ public:
 
     bool isActive() const;
     bool isNoDelayMode() const { return isNoDelayMode_; }
-    bool setNoDelayMode(bool on);
+    void setNoDelayMode(bool on) { isNoDelayMode_ = on; }
     
-    const std::string& optionString() const;
+    const std::string& optionString() const { return optionString_; }
+    void setOptions(const std::string& options) { optionString_ = options; }
 
     virtual double timeStep() const = 0;
 

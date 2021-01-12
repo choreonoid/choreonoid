@@ -307,6 +307,10 @@ void SimpleControllerItem::Impl::setController(const std::string& name)
             }
         }
         controllerModuleName = toUTF8(modulePath.string());
+
+        if(self->name().empty()){
+            self->setName(toUTF8(modulePath.stem().string()));
+        }
     }
 
     controllerModuleFilename.clear();

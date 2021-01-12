@@ -22,7 +22,7 @@ public:
     virtual Body* body() = 0;
     virtual std::string optionString() const;
     std::vector<std::string> options() const;
-    MappingPtr parameters() const;
+    MappingPtr structuredOptions() const;
     virtual std::ostream& os() const;
     virtual double timeStep() const;
     virtual double currentTime() const;

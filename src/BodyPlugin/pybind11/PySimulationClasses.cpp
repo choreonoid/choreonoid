@@ -67,10 +67,14 @@ void exportSimulationClasses(py::module m)
         ;
 
     py::enum_<SimulatorItem::RecordingMode>(simulatorItemClass, "RecordingMode")
-        .value("REC_FULL", SimulatorItem::RecordingMode::REC_FULL)
-        .value("REC_TAIL", SimulatorItem::RecordingMode::REC_TAIL)
-        .value("REC_NONE", SimulatorItem::RecordingMode::REC_NONE)
-        .value("N_RECORDING_MODES", SimulatorItem::RecordingMode::N_RECORDING_MODES)
+        .value("FullRecording", SimulatorItem::FullRecording)
+        .value("TailRecording", SimulatorItem::TailRecording)
+        .value("NoRecording", SimulatorItem::NoRecording)
+        .value("NumRecordingModes", SimulatorItem::NumRecordingModes)
+        .value("REC_FULL", SimulatorItem::FullRecording)
+        .value("REC_TAIL", SimulatorItem::TailRecording)
+        .value("REC_NONE", SimulatorItem::NoRecording)
+        .value("N_RECORDING_MODES", SimulatorItem::NumRecordingModes)
         .export_values();
         
     py::enum_<SimulatorItem::TimeRangeMode>(simulatorItemClass, "TimeRangeMode")
@@ -185,8 +189,12 @@ void exportSimulationClasses(py::module m)
         ;
 
     py::class_<ControllerItem, ControllerItemPtr, Item>(m, "ControllerItem")
+        .def("isActive", &ControllerItem::isActive)
         .def("isNoDelayMode", &ControllerItem::isNoDelayMode)
         .def("setNoDelayMode", &ControllerItem::setNoDelayMode)
+        .def("optionString", &ControllerItem::optionString)
+        .def("setOptions", &ControllerItem::setOptions)
+        .def("timeStep", &ControllerItem::timeStep)
         ;
     
     py::class_<SimpleControllerItem, SimpleControllerItemPtr, ControllerItem>(m, "SimpleControllerItem")

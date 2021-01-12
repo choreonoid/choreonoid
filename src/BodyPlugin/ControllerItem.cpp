@@ -45,19 +45,6 @@ bool ControllerItem::isActive() const
 }
 
 
-bool ControllerItem::setNoDelayMode(bool on)
-{
-    isNoDelayMode_ = on;
-    return on;
-}
-
-
-const std::string& ControllerItem::optionString() const
-{
-    return optionString_;
-}
-
-
 void ControllerItem::setSimulatorItem(SimulatorItem* item)
 {
     simulatorItem_ = item;

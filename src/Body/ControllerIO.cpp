@@ -49,7 +49,7 @@ std::vector<std::string> ControllerIO::options() const
 }
 
 
-MappingPtr ControllerIO::parameters() const
+MappingPtr ControllerIO::structuredOptions() const
 {
     YAMLReader reader;
     MappingPtr node;
