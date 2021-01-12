@@ -140,6 +140,13 @@ Item::Item()
 }
 
 
+Item::Item(const std::string& name)
+    : name_(name)
+{
+    impl = new Impl(this);
+}
+
+
 Item::Impl::Impl(Item* self)
     : self(self)
 {

@@ -30,6 +30,7 @@ class CNOID_EXPORT Item : public Referenced
 {
 protected:
     Item();
+    Item(const std::string& name);
     Item(const Item& item);
     
 public:
