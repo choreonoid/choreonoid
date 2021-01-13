@@ -13,10 +13,30 @@ namespace cnoid {
 
 namespace signal_private {
 
-template<typename T> struct python_function_caller0 {
+struct python_function_caller
+{
     pybind11::object func;
-    python_function_caller0(pybind11::object func) : func(func) { }
-    T operator()() {
+
+    python_function_caller(pybind11::object func) : func(func) { }
+
+    ~python_function_caller()
+    {
+        pybind11::gil_scoped_acquire lock;
+        try {
+            func = pybind11::none();
+        } catch(const pybind11::error_already_set& ex) {
+            pybind11::print(ex.what());
+        }
+    }
+};
+
+template<typename T>
+struct python_function_caller0 : public python_function_caller
+{
+    python_function_caller0(pybind11::object func) : python_function_caller(func) { }
+    
+    T operator()()
+    {
         pybind11::gil_scoped_acquire lock;
         T result;
         try {
@@ -29,9 +49,10 @@ template<typename T> struct python_function_caller0 {
     }
 };
 
-template<> struct python_function_caller0<void> {
-    pybind11::object func;
-    python_function_caller0(pybind11::object func) : func(func) { }
+template<>
+struct python_function_caller0<void> : public python_function_caller
+{
+    python_function_caller0(pybind11::object func) : python_function_caller(func) { }
     void operator()() {
         pybind11::gil_scoped_acquire lock;
         try {
@@ -42,10 +63,13 @@ template<> struct python_function_caller0<void> {
     }
 };
 
-template<typename T, typename ARG1> struct python_function_caller1 {
-    pybind11::object func;
-    python_function_caller1(pybind11::object func) : func(func) { }
-    T operator()(ARG1 arg1) {
+template<typename T, typename ARG1>
+struct python_function_caller1 : public python_function_caller
+{
+    python_function_caller1(pybind11::object func) : python_function_caller(func) { }
+    
+    T operator()(ARG1 arg1)
+    {
         pybind11::gil_scoped_acquire lock;
         T result;
         try {
@@ -58,10 +82,13 @@ template<typename T, typename ARG1> struct python_function_caller1 {
     }
 };
 
-template<typename ARG1> struct python_function_caller1<void, ARG1> {
-    pybind11::object func;
-    python_function_caller1(pybind11::object func) : func(func) { }
-    void operator()(ARG1 arg1) {
+template<typename ARG1>
+struct python_function_caller1<void, ARG1> : public python_function_caller
+{
+    python_function_caller1(pybind11::object func) : python_function_caller(func) { }
+
+    void operator()(ARG1 arg1)
+    {
         pybind11::gil_scoped_acquire lock;
         try {
             func(pybind11::cast(arg1));
@@ -71,10 +98,13 @@ template<typename ARG1> struct python_function_caller1<void, ARG1> {
     }
 };
 
-template<typename T, typename ARG1, typename ARG2> struct python_function_caller2 {
-    pybind11::object func;
-    python_function_caller2(pybind11::object func) : func(func) { }
-    T operator()(ARG1 arg1, ARG2 arg2) {
+template<typename T, typename ARG1, typename ARG2>
+struct python_function_caller2 : public python_function_caller
+{
+    python_function_caller2(pybind11::object func) : python_function_caller(func) { }
+
+    T operator()(ARG1 arg1, ARG2 arg2)
+    {
         pybind11::gil_scoped_acquire lock;
         T result;
         try {
@@ -87,10 +117,13 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
     }
 };
 
-template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1, ARG2> {
-    pybind11::object func;
-    python_function_caller2(pybind11::object func) : func(func) { }
-    void operator()(ARG1 arg1, ARG2 arg2) {
+template<typename ARG1, typename ARG2>
+struct python_function_caller2<void, ARG1, ARG2> : public python_function_caller
+{
+    python_function_caller2(pybind11::object func) : python_function_caller(func) { }
+    
+    void operator()(ARG1 arg1, ARG2 arg2)
+    {
         pybind11::gil_scoped_acquire lock;
         try {
             func(pybind11::cast(arg1), pybind11::cast(arg2));
