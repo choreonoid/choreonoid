@@ -272,10 +272,11 @@ public:
 
     bool doReset;
     bool isWaitingForSimulationToStop;
+    bool isForcedToStopSimulation;
     Signal<void()> sigSimulationStarted;
     Signal<void()> sigSimulationPaused;
     Signal<void()> sigSimulationResumed;
-    Signal<void()> sigSimulationFinished;
+    Signal<void(bool isForced)> sigSimulationFinished;
 
     WorldLogFileItemPtr worldLogFileItem;
     int nextLogFrame;
@@ -320,10 +321,10 @@ public:
     bool stepSimulationMain();
     void flushRecords();
     int flushMainRecords();
-    void stopSimulation(bool doSync);
+    void stopSimulation(bool isForced, bool doSync);
     void pauseSimulation();
     void restartSimulation();
-    void onSimulationLoopStopped();
+    void onSimulationLoopStopped(bool isForced);
     void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time);
     void doSetExternalForce();
     void setVirtualElasticString(
@@ -492,7 +493,7 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
             menuManager.addItem(_("Resume"))->sigTriggered().connect(
                 [item](){ item->restartSimulation(); });
             menuManager.addItem(_("Finish"))->sigTriggered().connect(
-                [item](){ item->stopSimulation(); });
+                [item](){ item->stopSimulation(true); });
             menuManager.setPath("/");
             menuManager.addSeparator();
             menuFunction.dispatchAs<Item>(item);
@@ -1312,7 +1313,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self, const Impl& org)
 
 SimulatorItem::~SimulatorItem()
 {
-    impl->stopSimulation(true);
+    impl->stopSimulation(true, true);
     delete impl;
 }
 
@@ -1331,7 +1332,7 @@ void SimulatorItem::onPositionChanged()
 
 void SimulatorItem::onDisconnectedFromRoot()
 {
-    impl->stopSimulation(true);
+    impl->stopSimulation(true, true);
     impl->worldItem = nullptr;
 }
 
@@ -1626,7 +1627,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 {
     this->doReset = doReset;
     
-    stopSimulation(true);
+    stopSimulation(true, true);
 
     if(!worldItem){
         mv->putln(format(_("{} must be in a WorldItem to do simulation."), self->displayName()),
@@ -1815,6 +1816,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         frameAtLastBufferWriting = 0;
         isDoingSimulationLoop = true;
         isWaitingForSimulationToStop = false;
+        isForcedToStopSimulation = false;
         stopRequested = false;
         pauseRequested = false;
 
@@ -1844,7 +1846,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
         aboutToQuitConnection.disconnect();
         aboutToQuitConnection = cnoid::sigAboutToQuit().connect(
-            [&](){ stopSimulation(true); });
+            [&](){ stopSimulation(true, true); });
 
         worldLogFileItem = nullptr;
          // Check child items first
@@ -2090,7 +2092,7 @@ void SimulatorItem::Impl::run()
     }
 
     if(!isWaitingForSimulationToStop){
-        callLater([&](){ onSimulationLoopStopped(); });
+        callLater([&](){ onSimulationLoopStopped(isForcedToStopSimulation); });
     }
 
     self->finalizeSimulationThread();
@@ -2331,24 +2333,25 @@ void SimulatorItem::Impl::restartSimulation()
 }
 
 
-void SimulatorItem::stopSimulation()
+void SimulatorItem::stopSimulation(bool isForced)
 {
-    impl->stopSimulation(false);
+    impl->stopSimulation(isForced, false);
 }
 
 
-void SimulatorItem::Impl::stopSimulation(bool doSync)
+void SimulatorItem::Impl::stopSimulation(bool isForced, bool doSync)
 {
     if(isDoingSimulationLoop){
         if(doSync){
             isWaitingForSimulationToStop = true;
         }
+        isForcedToStopSimulation = isForced;
         stopRequested = true;
         
         if(doSync){
             wait();
             isWaitingForSimulationToStop = false;
-            onSimulationLoopStopped();
+            onSimulationLoopStopped(isForced);
         }
     }
     aboutToQuitConnection.disconnect();
@@ -2361,7 +2364,7 @@ void SimulatorItem::finalizeSimulation()
 }
 
 
-void SimulatorItem::Impl::onSimulationLoopStopped()
+void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
 {
     flushTimer.stop();
     
@@ -2393,7 +2396,7 @@ void SimulatorItem::Impl::onSimulationLoopStopped()
 
     clearSimulation();
 
-    sigSimulationFinished();
+    sigSimulationFinished(isForced);
 }
 
 
@@ -2495,7 +2498,7 @@ SignalProxy<void()> SimulatorItem::sigSimulationResumed()
 }
 
 
-SignalProxy<void()> SimulatorItem::sigSimulationFinished()
+SignalProxy<void(bool isForced)> SimulatorItem::sigSimulationFinished()
 {
     return impl->sigSimulationFinished;
 }

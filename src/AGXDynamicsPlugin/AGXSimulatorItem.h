@@ -33,14 +33,10 @@ protected:
     virtual bool restore(const Archive& archive) override;
     virtual SimulationBody* createSimulationBody(Body* orgBody) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
-//    virtual void initializeSimulationThread();
-//    virtual void finalizeSimulationThread();
+    //virtual void initializeSimulationThread();
+    //virtual void finalizeSimulationThread();
     //virtual bool startSimulation(bool doReset = true);
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies) override;
-    virtual void stopSimulation() override;
-    virtual void pauseSimulation() override;
-    virtual void restartSimulation() override;
-
 
 private:
     AGXSimulatorItemImplPtr impl;

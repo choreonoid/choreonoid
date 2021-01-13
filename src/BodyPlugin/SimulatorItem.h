@@ -91,10 +91,10 @@ public:
     virtual double worldTimeStep();
     void setTimeStep(double step);
 
-    virtual bool startSimulation(bool doReset = true);
-    virtual void stopSimulation();
-    virtual void pauseSimulation();
-    virtual void restartSimulation();
+    bool startSimulation(bool doReset = true);
+    void stopSimulation(bool isForced = false);
+    void pauseSimulation();
+    void restartSimulation();
     bool isRunning() const;
     bool isPausing() const;
     bool isActive() const; ///< isRunning() && !isPausing()
@@ -114,7 +114,7 @@ public:
     SignalProxy<void()> sigSimulationStarted();
     SignalProxy<void()> sigSimulationPaused();
     SignalProxy<void()> sigSimulationResumed();
-    SignalProxy<void()> sigSimulationFinished();
+    SignalProxy<void(bool isForced)> sigSimulationFinished();
 
     enum RecordingMode {
         FullRecording,
@@ -129,7 +129,20 @@ public:
         N_RECORDING_MODES = NumRecordingModes
     };
     
-    enum TimeRangeMode { TR_UNLIMITED, TR_ACTIVE_CONTROL, TR_SPECIFIED, TR_TIMEBAR, N_TIME_RANGE_MODES };
+    enum TimeRangeMode {
+        UnlimitedTime,
+        ActiveControlTime,
+        SpecifiedTime,
+        TimeBarTime,
+        NumTimeRangeModes,
+
+        // deprecated
+        TR_UNLIMITED = UnlimitedTime,
+        TR_ACTIVE_CONTROL = ActiveControlTime,
+        TR_SPECIFIED = SpecifiedTime,
+        TR_TIMEBAR = TimeBarTime,
+        N_TIME_RANGE_MODES = NumTimeRangeModes
+    };
     
     void setRecordingMode(int selection);
     int recordingMode() const;

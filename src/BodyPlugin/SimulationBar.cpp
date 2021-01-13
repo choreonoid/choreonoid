@@ -203,19 +203,13 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
 void SimulationBar::onStopSimulationClicked()
 {
     forEachSimulator(
-        [&](SimulatorItem* simulator){ stopSimulation(simulator); });
+        [&](SimulatorItem* simulator){ simulator->stopSimulation(true); });
 
     TimeBar* timeBar = TimeBar::instance();
     if(timeBar->isDoingPlayback()){
         timeBar->stopPlayback();
     }
     pauseToggle->setChecked(false);
-}
-
-
-void SimulationBar::stopSimulation(SimulatorItem* simulator)
-{
-    simulator->stopSimulation();
 }
 
 

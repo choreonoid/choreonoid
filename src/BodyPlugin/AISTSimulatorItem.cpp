@@ -342,12 +342,6 @@ Item* AISTSimulatorItem::doDuplicate() const
 }
 
 
-bool AISTSimulatorItem::startSimulation(bool doReset)
-{
-    return SimulatorItem::startSimulation(doReset);
-}
-
-
 SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
 {
     if(!orgBody->isStaticModel() && orgBody->mass() <= 0.0){

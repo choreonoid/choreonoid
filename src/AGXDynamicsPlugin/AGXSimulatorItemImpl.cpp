@@ -368,21 +368,6 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
     return true;
 }
 
-void AGXSimulatorItemImpl::stopSimulation()
-{
-    //cout << "stopSimulation" << endl;
-}
-
-void AGXSimulatorItemImpl::pauseSimulation()
-{
-    //cout << "pauseSimulation" << endl;
-}
-
-void AGXSimulatorItemImpl::restartSimulation()
-{
-    //cout << "restartSimulation" << endl;
-}
-
 void AGXSimulatorItemImpl::setGravity(const Vector3& g)
 {
     agxScene->setGravity(agx::Vec3(g(0), g(1), g(2)));

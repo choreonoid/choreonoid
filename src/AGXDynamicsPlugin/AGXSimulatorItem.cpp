@@ -105,25 +105,4 @@ bool AGXSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& active
     return impl->stepSimulation(activeSimBodies);
 }
 
-void AGXSimulatorItem::stopSimulation()
-{
-    impl->stopSimulation();
-    SimulatorItem::stopSimulation();
-}
-
-void AGXSimulatorItem::pauseSimulation()
-{
-    impl->pauseSimulation();
-    SimulatorItem::pauseSimulation();
-}
-
-void AGXSimulatorItem::restartSimulation()
-{
-    impl->restartSimulation();
-    SimulatorItem::restartSimulation();
-}
-
-
-
-
 }

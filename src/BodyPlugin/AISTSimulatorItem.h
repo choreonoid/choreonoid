@@ -24,8 +24,6 @@ public:
     AISTSimulatorItem(const AISTSimulatorItem& org);
     virtual ~AISTSimulatorItem();
 
-    virtual bool startSimulation(bool doReset = true) override;
-
     enum DynamicsMode { FORWARD_DYNAMICS = 0, KINEMATICS, N_DYNAMICS_MODES };
     enum IntegrationMode { EULER_INTEGRATION = 0, RUNGE_KUTTA_INTEGRATION, N_INTEGRATION_MODES };
 

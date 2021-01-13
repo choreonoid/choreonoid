@@ -71,6 +71,8 @@ void exportSimulationClasses(py::module m)
         .value("TailRecording", SimulatorItem::TailRecording)
         .value("NoRecording", SimulatorItem::NoRecording)
         .value("NumRecordingModes", SimulatorItem::NumRecordingModes)
+
+        // deprecated
         .value("REC_FULL", SimulatorItem::FullRecording)
         .value("REC_TAIL", SimulatorItem::TailRecording)
         .value("REC_NONE", SimulatorItem::NoRecording)
@@ -78,15 +80,18 @@ void exportSimulationClasses(py::module m)
         .export_values();
         
     py::enum_<SimulatorItem::TimeRangeMode>(simulatorItemClass, "TimeRangeMode")
-        .value("UNLIMITED", SimulatorItem::TimeRangeMode::TR_UNLIMITED)
-        .value("ACTIVE_CONTROL", SimulatorItem::TimeRangeMode::TR_ACTIVE_CONTROL)
-        .value("SPECIFIED", SimulatorItem::TimeRangeMode::TR_SPECIFIED)
-        .value("TIMEBAR", SimulatorItem::TimeRangeMode::TR_TIMEBAR)
-        .value("N_TIME_RANGE_MODES", SimulatorItem::TimeRangeMode::N_TIME_RANGE_MODES)
-        .value("TR_UNLIMITED", SimulatorItem::TR_UNLIMITED) // deprecated
-        .value("TR_ACTIVE_CONTROL", SimulatorItem::TR_ACTIVE_CONTROL) // deprecated
-        .value("TR_SPECIFIED", SimulatorItem::TR_SPECIFIED) // deprecated
-        .value("TR_TIMEBAR", SimulatorItem::TR_TIMEBAR)  // deprecated
+        .value("UnlimitedTime", SimulatorItem::UnlimitedTime)
+        .value("ActiveControlTime", SimulatorItem::ActiveControlTime)
+        .value("SpecifiedTime", SimulatorItem::SpecifiedTime)
+        .value("TimeBarTime", SimulatorItem::TimeBarTime)
+        .value("NumTimeRangeModes", SimulatorItem::NumTimeRangeModes)
+
+        // deprecated
+        .value("UNLIMITED", SimulatorItem::UnlimitedTime)
+        .value("ACTIVE_CONTROL", SimulatorItem::ActiveControlTime)
+        .value("SPECIFIED", SimulatorItem::SpecifiedTime)
+        .value("TIMEBAR", SimulatorItem::TimeBarTime)
+        .value("N_TIME_RANGE_MODES", SimulatorItem::NumTimeRangeModes)
         .export_values();
 
     PyItemList<SimulatorItem>(m, "SimulatorItemList", simulatorItemClass);
@@ -179,10 +184,7 @@ void exportSimulationClasses(py::module m)
     py::class_<SimulationBar, ToolBar>(m, "SimulationBar")
         .def_property_readonly_static(
             "instance", [](py::object){ return SimulationBar::instance(); }, py::return_value_policy::reference)
-        .def("startSimulation", (void (SimulationBar::*)(SimulatorItem*, bool)) &SimulationBar::startSimulation)
         .def("startSimulation", (void (SimulationBar::*)(bool)) &SimulationBar::startSimulation)
-        .def("stopSimulation", &SimulationBar::stopSimulation)
-        .def("pauseSimulation", &SimulationBar::pauseSimulation)
 
         // deprecated
         .def_static("getInstance", &SimulationBar::instance, py::return_value_policy::reference)
