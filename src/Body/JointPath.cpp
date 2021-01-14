@@ -111,6 +111,7 @@ void JointPath::initialize()
 {
     needForwardKinematicsBeforeIK = false;
     numericalIK = nullptr;
+    isCustomIkDisabled_ = false;
 }    
 
 
@@ -288,7 +289,7 @@ JointPath& JointPath::setBaseLinkGoal(const Isometry3& T)
 
 bool JointPath::calcInverseKinematics()
 {
-    if(numericalIK->errorFunc){
+    if(numericalIK && numericalIK->errorFunc){
         Isometry3 T; // dummy
         return calcInverseKinematics(T);
     }
@@ -451,19 +452,6 @@ bool JointPath::hasAnalyticalIK() const
 }
 
 
-void JointPath::setNumericalIkEnabled(bool on)
-{
-    if(on){
-        getOrCreateNumericalIK();
-    } else {
-        if(numericalIK){
-            delete numericalIK;
-            numericalIK = nullptr;
-        }
-    }
-}
-
-
 bool JointPath::calcInverseKinematics
 (const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R)
 {
@@ -529,7 +517,7 @@ public:
     
     virtual bool calcInverseKinematics(const Isometry3& T) override
     {
-        if(isNumericalIkEnabled() || ikTypeId == 0){
+        if(isCustomIkDisabled() || ikTypeId == 0){
             return JointPath::calcInverseKinematics(T);
         }
         

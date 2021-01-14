@@ -32,6 +32,7 @@ public:
     JointPath();
     JointPath(Link* base, Link* end);
     JointPath(Link* end);
+    JointPath(const JointPath& org) = delete;
 
     bool empty() const {
         return joints_.empty();
@@ -84,8 +85,10 @@ public:
 
     int indexOf(const Link* link) const;
 
-    bool isNumericalIkEnabled() const { return numericalIK != nullptr; }
-    void setNumericalIkEnabled(bool on);
+    virtual bool hasCustomIK() const;
+    bool isCustomIkDisabled() const { return isCustomIkDisabled_; }
+    void setCustomIkDisabled(bool on) { isCustomIkDisabled_ = on; }
+    
     bool isBestEffortIkMode() const;
     void setBestEffortIkMode(bool on);
     void setNumericalIkMaxIkError(double e);
@@ -114,8 +117,6 @@ public:
 
     int numIterations() const;
 
-    virtual bool hasCustomIK() const;
-
     std::string name() const { return name_; }
     void setName(const std::string& name){ name_ = name; }
 
@@ -134,8 +135,10 @@ public:
     void calcJacobian(Eigen::MatrixXd& out_J) const;
     [[deprecated("Use hasCustomIK")]]
     bool hasAnalyticalIK() const;
-    [[deprecated("Use setNumericalIkEnabled.")]]
-    void setNumericalIKenabled(bool on) { setNumericalIkEnabled(on); }
+    [[deprecated("Use setCustomIkDisabled.")]]
+    void setNumericalIKenabled(bool on) { setCustomIkDisabled(on); }
+    [[deprecated("Use isCustomIkDisabled.")]]
+    bool isNumericalIkEnabled() const { return isCustomIkDisabled(); }
     [[deprecated("Use isBestEffortIkMode.")]]
     bool isBestEffortIKmode() const { return isBestEffortIkMode(); }
     [[deprecated("Use setBestEffortIkMode.")]]
@@ -158,7 +161,6 @@ public:
     static double numericalIKdefaultDampingConstant(){ return numericalIkDefaultDampingConstant(); }
 
 private:
-    JointPath(const JointPath& org);
     void initialize();
     void extractJoints();
     void doResetWhenJointPathUpdated();
@@ -166,10 +168,11 @@ private:
 
     LinkPath linkPath_;
     std::vector<Link*> joints_;
+    std::shared_ptr<LinkTraverse> remainingLinkTraverse;
+    NumericalIK* numericalIK;
     int numUpwardJointConnections;
     bool needForwardKinematicsBeforeIK;
-    NumericalIK* numericalIK;
-    std::shared_ptr<LinkTraverse> remainingLinkTraverse;
+    bool isCustomIkDisabled_;
     std::string name_;
 };
 

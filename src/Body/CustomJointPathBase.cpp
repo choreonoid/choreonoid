@@ -34,7 +34,7 @@ void CustomJointPathBase::setCustomInverseKinematics(InverseKinematicsFunc func,
 
 bool CustomJointPathBase::calcInverseKinematics(const Isometry3& T)
 {
-    if(isNumericalIkEnabled() || !calcCustomInverseKinematics){
+    if(isCustomIkDisabled() || !calcCustomInverseKinematics){
         return JointPath::calcInverseKinematics(T);
     }
 
