@@ -53,7 +53,8 @@ public:
     void setCurrentCamera(int index);
     bool setCurrentCamera(SgCamera* camera);
     SignalProxy<void()> sigCurrentCameraChanged();
-    bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& out_pathStrings);
+    std::vector<std::string> simplifiedCameraPathStrings(int cameraIndex);
+    bool getSimplifiedCameraPathStrings(int cameraIndex, std::vector<std::string>& out_pathStrings);
     int findCameraPath(const std::vector<std::string>& simplifiedPathStrings);
     bool setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings);
     void setCurrentCameraAutoRestorationMode(bool on);

@@ -567,6 +567,8 @@ protected:
     SgPreprocessed(const SgPreprocessed& org);
 };
 
+typedef ref_ptr<SgPreprocessed> SgPreprocessedPtr;
+
 
 class SgMaterial;
 class SgImage;

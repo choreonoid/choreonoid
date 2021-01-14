@@ -2846,16 +2846,14 @@ bool SceneWidget::Impl::storeState(Archive& archive)
 
 void SceneWidget::Impl::writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex)
 {
-   vector<string> cameraStrings;
-    if(renderer->getSimplifiedCameraPathStrings(cameraIndex, cameraStrings)){
-        if(cameraStrings.size() == 1){
-            archive.write(key, cameraStrings.front());
-        } else {
-            Listing& pathNode = *archive.createListing(key);
-            pathNode.setFlowStyle(true);
-            for(size_t i=0; i < cameraStrings.size(); ++i){
-                pathNode.append(cameraStrings[i]);
-            }
+    vector<string> cameraStrings = renderer->simplifiedCameraPathStrings(cameraIndex);
+    if(cameraStrings.size() == 1){
+        archive.write(key, cameraStrings.front());
+    } else if(cameraStrings.size() >= 2){
+        Listing& pathNode = *archive.createListing(key);
+        pathNode.setFlowStyle(true);
+        for(size_t i=0; i < cameraStrings.size(); ++i){
+            pathNode.append(cameraStrings[i]);
         }
     }
 }

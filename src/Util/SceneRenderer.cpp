@@ -163,6 +163,7 @@ public:
     void updateCameraPaths();
     void setCurrentCamera(int index);
     bool setCurrentCamera(SgCamera* camera);
+    bool getSimplifiedCameraPathStrings(int cameraIndex, std::vector<std::string>& out_pathStrings);
     void onExtensionAdded(std::function<void(SceneRenderer* renderer)> func);
 
     template<class ValueType>
@@ -600,7 +601,7 @@ void SceneRenderer::Impl::setCurrentCamera(int index)
         currentCameraIndex = index;
         currentCamera = newCamera;
         if(isCurrentCameraAutoRestorationMode){
-            self->getSimplifiedCameraPathStrings(index, preferredCurrentCameraPathStrings);
+            getSimplifiedCameraPathStrings(index, preferredCurrentCameraPathStrings);
             isPreferredCameraCurrent = true;
         }
         sigCurrentCameraChanged();
@@ -656,12 +657,27 @@ SignalProxy<void()> SceneRenderer::sigCurrentCameraChanged()
 }
 
 
-bool SceneRenderer::getSimplifiedCameraPathStrings(int index, std::vector<std::string>& out_pathStrings)
+std::vector<std::string> SceneRenderer::simplifiedCameraPathStrings(int cameraIndex)
+{
+    std::vector<std::string> pathStrings;
+    impl->getSimplifiedCameraPathStrings(cameraIndex, pathStrings);
+    return pathStrings;
+}
+
+
+bool SceneRenderer::getSimplifiedCameraPathStrings(int cameraIndex, std::vector<std::string>& out_pathStrings)
+{
+    return impl->getSimplifiedCameraPathStrings(cameraIndex, out_pathStrings);
+}
+
+
+bool SceneRenderer::Impl::getSimplifiedCameraPathStrings(int cameraIndex, std::vector<std::string>& out_pathStrings)
 {
     out_pathStrings.clear();
-    
-    if(index < numCameras()){
-        const SgNodePath& path = cameraPath(index);
+
+    int n = cameras->size();
+    if(cameraIndex < n){
+        const SgNodePath& path = self->cameraPath(cameraIndex);
         const string& name = path.back()->name();
         if(!name.empty()){
             size_t n = path.size() - 1;
