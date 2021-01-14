@@ -63,7 +63,8 @@ public:
     Vector6 dq;
 
     GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* endLink);
-    bool calcLegInverseKinematics(const Isometry3& T, double sign);
+    bool calcLegInverseKinematics(const Isometry3& T_global, const Isometry3& T, double sign);
+    bool refineSolutionWithCustomNumericalIK(double sign);
     bool calcEndPositionDifference(double sign);
 };
 
@@ -134,17 +135,17 @@ GRobotJointPath::GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* e
         if(checkLinkPath("WAIST", "L_ANKLE_R", isReversed)){
             setCustomInverseKinematics(
                 [&](const Isometry3& T_global, const Isometry3& T_relative){
-                    return calcLegInverseKinematics(T_relative,  1.0); }, isReversed);
+                    return calcLegInverseKinematics(T_global, T_relative, 1.0); }, isReversed);
         } else if(checkLinkPath("WAIST", "R_ANKLE_R", isReversed)){
             setCustomInverseKinematics(
                 [&](const Isometry3& T_global, const Isometry3& T_relative){
-                    return calcLegInverseKinematics(T_relative, -1.0); }, isReversed);
+                    return calcLegInverseKinematics(T_global, T_relative, -1.0); }, isReversed);
         }
     }
 }
     
 
-bool GRobotJointPath::calcLegInverseKinematics(const Isometry3& T, double sign)
+bool GRobotJointPath::calcLegInverseKinematics(const Isometry3& T_global, const Isometry3& T, double sign)
 {
     rpy = rpyFromRot(T.linear());
     p = T.translation();
@@ -229,7 +230,21 @@ bool GRobotJointPath::calcLegInverseKinematics(const Isometry3& T, double sign)
     q[5] = atan2( sign * T4F(2,2), -sign * T4F(2,1));
 
     // Numerical refining
-        
+    bool solved;
+    constexpr bool USE_CUSTOM_NUMERICAL_IK = true;
+    if(USE_CUSTOM_NUMERICAL_IK){
+        solved = refineSolutionWithCustomNumericalIK(sign);
+    } else {
+        copyJointDisplacements(q.data());
+        calcForwardKinematics();
+        solved = JointPath::calcInverseKinematics(T_global);
+    }
+    return solved;
+}
+
+
+bool GRobotJointPath::refineSolutionWithCustomNumericalIK(double sign)
+{
     TB0 <<
         0.0, -1.0, 0.0, 0.0,
         1.0,  0.0, 0.0, sign * geom.l0,
@@ -278,7 +293,7 @@ bool GRobotJointPath::calcLegInverseKinematics(const Isometry3& T, double sign)
             
         // Levenberg-Marquardt Method
             
-        const double lambda = 0.001;
+        constexpr double lambda = 0.001;
             
         Matrix6 C;
         C.noalias() = J.transpose() * (J * J.transpose() + Matrix6::Identity() * lambda * lambda).inverse();
