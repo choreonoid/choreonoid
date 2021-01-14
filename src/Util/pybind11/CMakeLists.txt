@@ -18,6 +18,7 @@ choreonoid_add_python_module(PyUtil
   PySeqTypes.cpp
   PySceneGraph.cpp
   PySceneDrawables.cpp
+  PySceneRenderer.cpp
   PyMeshUtils.cpp
   PyGeometryTypes.cpp
   PyTask.cpp

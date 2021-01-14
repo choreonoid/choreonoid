@@ -2,9 +2,11 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "../BodyMotionItem.h"
 #include "../WorldItem.h"
+#include "../BodyMotionItem.h"
+#include "../BodyTrackingCameraItem.h"
 #include <cnoid/PyBase>
+#include <cnoid/SceneCameras>
 
 using namespace cnoid;
 namespace py = pybind11;
@@ -53,6 +55,24 @@ void exportItems(py::module m)
         ;
 
     PyItemList<BodyMotionItem>(m, "BodyMotionItemList");
+
+    py::class_<BodyTrackingCameraItem, BodyTrackingCameraItemPtr, Item>(m, "BodyTrackingCameraItem", py::multiple_inheritance())
+        .def(py::init<>())
+        .def("setTargetLink", &BodyTrackingCameraItem::setTargetLink)
+        .def_property("targetLinkName", &BodyTrackingCameraItem::targetLinkName, &BodyTrackingCameraItem::setTargetLink)
+        .def("setRotationSyncEnabled", &BodyTrackingCameraItem::setRotationSyncEnabled)
+        .def_property(
+            "isRotationSyncEnabled",
+            &BodyTrackingCameraItem::isRotationSyncEnabled, &BodyTrackingCameraItem::setRotationSyncEnabled)
+        .def("setCameraType", &BodyTrackingCameraItem::setCameraType)
+        .def_property(
+            "CameraType",
+            &BodyTrackingCameraItem::cameraType, &BodyTrackingCameraItem::setCameraType)
+        .def_property_readonly("currentCamera", &BodyTrackingCameraItem::currentCamera)
+        .def_property_readonly("cameraTransform", &BodyTrackingCameraItem::cameraTransform)
+        ;
+
+    PyItemList<BodyTrackingCameraItem>(m, "BodyTrackingCameraItemList");
 }
 
 }

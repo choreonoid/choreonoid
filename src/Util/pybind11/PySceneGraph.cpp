@@ -5,6 +5,7 @@
 #include "PyReferenced.h"
 #include "PyEigenTypes.h"
 #include "../SceneGraph.h"
+#include "../SceneCameras.h"
 #include "../CloneMap.h"
 
 using namespace cnoid;
@@ -122,6 +123,42 @@ void exportPySceneGraph(py::module& m)
         .def("getPosition", [](SgPosTransform& self) -> Isometry3::MatrixType& { return self.T().matrix(); })
         .def("getTranslation", (Isometry3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
         .def("getRotation", (Isometry3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
+        ;
+
+    py::class_<SgPreprocessed, SgPreprocessedPtr, SgNode>(m, "SgPreprocessed")
+        ;
+    
+    py::class_<SgCamera, SgCameraPtr, SgPreprocessed>(m, "SgCamera")
+        .def_static(
+            "positionLookingFor",
+            [](const Vector3& eye, const Vector3& direction, const Vector3& up) -> Isometry3::MatrixType {
+                return SgCamera::positionLookingFor(eye, direction, up).matrix();
+            })
+        .def_static(
+            "positionLookingAt",
+            [](const Vector3& eye, const Vector3& center, const Vector3& up) -> Isometry3::MatrixType {
+                return SgCamera::positionLookingAt(eye, center, up).matrix();
+            })
+        .def_static("getRight", [](Eigen::Ref<const Matrix4RM> T){ return SgCamera::right(Isometry3(T)); })
+        .def_static("getDirection", [](Eigen::Ref<const Matrix4RM> T){ return SgCamera::direction(Isometry3(T)); })
+        .def_static("getUp", [](Eigen::Ref<const Matrix4RM> T){ return SgCamera::up(Isometry3(T)); })
+        .def_property("nearClipDistance", &SgCamera::nearClipDistance, &SgCamera::setNearClipDistance)
+        .def("setNearClipDistance", &SgCamera::setNearClipDistance)
+        .def_property("farClipDistance", &SgCamera::farClipDistance, &SgCamera::setFarClipDistance)
+        .def("setFarClipDistance", &SgCamera::setFarClipDistance)
+        ;
+
+    py::class_<SgPerspectiveCamera, SgPerspectiveCameraPtr, SgCamera>(m, "SgPerspectiveCamera")
+        .def(py::init<>())
+        .def_property("fieldOfView", &SgPerspectiveCamera::fieldOfView, &SgPerspectiveCamera::setFieldOfView)
+        .def("setFieldOfView", &SgPerspectiveCamera::setFieldOfView)
+        .def("getFovy", [](SgPerspectiveCamera& self, double aspectRatio){ return self.fovy(aspectRatio); })
+        ;
+
+    py::class_<SgOrthographicCamera, SgOrthographicCameraPtr, SgCamera>(m, "SgOrthographicCamera")
+        .def(py::init<>())
+        .def_property("height", &SgOrthographicCamera::height, &SgOrthographicCamera::setHeight)
+        .def("setHeight", &SgOrthographicCamera::setHeight)
         ;
 }
 

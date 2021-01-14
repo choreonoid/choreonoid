@@ -10,6 +10,7 @@
 #include "PyQString.h"
 #include <cnoid/PySignal>
 #include <cnoid/PyEigenTypes>
+#include <cnoid/SceneRenderer>
 #include <QWidget>
 
 using namespace cnoid;
@@ -70,6 +71,7 @@ void exportPyViews(py::module m)
         ;
 
     py::class_<SceneWidget, QWidget>(m, "SceneWidget")
+        .def_property_readonly("renderer", &SceneWidget::renderer)
         .def_property_readonly("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
         .def_property_readonly("lastClickedPoint", &SceneWidget::lastClickedPoint)
