@@ -52,6 +52,14 @@ void exportPyItems(py::module m)
         .def("setChecked", [](Item& self, bool on){ return self.setChecked(on); })
         .def("findRootItem", &Item::findRootItem)
         .def("findItem", [](Item& self, const string& path){ return self.findItem(path); })
+        .def("findItem",
+             [](Item& self, py::object itemClass){
+                 return self.findItem<Item>(
+                     [&](Item* item) -> bool {
+                         py::object pyItem(py::cast(item));
+                         return (PyObject_IsInstance(pyItem.ptr(), itemClass.ptr()) > 0);
+                     });
+             })
         .def("findChildItem", [](Item& self, const string& path){ return self.findChildItem(path); })
         .def_property_readonly("headItem", &Item::headItem)
         .def("getDescendantItems", [](Item& self){ return self.descendantItems(); })
