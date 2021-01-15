@@ -11,6 +11,7 @@
 #include "ControllerItem.h"
 #include "SimpleControllerItem.h"
 #include "BodyMotionControllerItem.h"
+#include "ControllerLogItem.h"
 #include "SubSimulatorItem.h"
 #include "GLVisionSimulatorItem.h"
 #include "SimulationScriptItem.h"
@@ -94,6 +95,7 @@ public:
         ControllerItem::initializeClass(this);
         SimpleControllerItem::initializeClass(this);
         BodyMotionControllerItem::initializeClass(this);
+        ControllerLogItem::initializeClass(this);
         SubSimulatorItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
         SimulationScriptItem::initializeClass(this);

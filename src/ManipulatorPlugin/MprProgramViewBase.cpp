@@ -11,7 +11,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>
 #include <cnoid/BodyItem>
-#include <cnoid/ReferencedObjectSeqItem>
+#include <cnoid/ControllerLogItem>
 #include <cnoid/StringListComboBox>
 #include <cnoid/Buttons>
 #include <cnoid/ConnectionSet>
@@ -200,7 +200,7 @@ public:
     MprStatement* findStatementAtHierachicalPositionIter(
         const vector<int>& position, MprProgram* program, int level);
     bool findControllerItemAndLogItem(
-        MprControllerItemBase*& controllerItem, ReferencedObjectSeqItem*& logItem);
+        MprControllerItemBase*& controllerItem, ControllerLogItem*& logItem);
     shared_ptr<ReferencedObjectSeq> findLogSeq();
     bool onTimeChanged(double time);
     bool seekToLogPosition(MprControllerItemBase* controllerItem, MprControllerLog* log);
@@ -1163,12 +1163,12 @@ MprStatement* MprProgramViewBase::Impl::findStatementAtHierachicalPositionIter
 
 
 bool MprProgramViewBase::Impl::findControllerItemAndLogItem
-(MprControllerItemBase*& controllerItem, ReferencedObjectSeqItem*& logItem)
+(MprControllerItemBase*& controllerItem, ControllerLogItem*& logItem)
 {
     if(currentProgramItem){
         controllerItem = currentProgramItem->findOwnerItem<MprControllerItemBase>();
         if(controllerItem){
-            logItem = controllerItem->findItem<ReferencedObjectSeqItem>();
+            logItem = controllerItem->findItem<ControllerLogItem>();
             if(logItem){
                 return true;
             }
@@ -1181,7 +1181,7 @@ bool MprProgramViewBase::Impl::findControllerItemAndLogItem
 shared_ptr<ReferencedObjectSeq> MprProgramViewBase::Impl::findLogSeq()
 {
     MprControllerItemBase* controllerItem;
-    ReferencedObjectSeqItem* logItem;
+    ControllerLogItem* logItem;
     if(findControllerItemAndLogItem(controllerItem, logItem)){
         return logItem->seq();
     }
@@ -1195,7 +1195,7 @@ bool MprProgramViewBase::Impl::onTimeChanged(double time)
     bool hit = false;
 
     MprControllerItemBase* controllerItem;
-    ReferencedObjectSeqItem* logItem;
+    ControllerLogItem* logItem;
 
     if(findControllerItemAndLogItem(controllerItem, logItem)){
         auto seq = logItem->seq();

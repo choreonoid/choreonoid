@@ -17,6 +17,7 @@ set(sources
   ControllerItem.cpp
   SimpleControllerItem.cpp
   BodyMotionControllerItem.cpp
+  ControllerLogItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   KinematicSimulatorItem.cpp
@@ -73,6 +74,7 @@ set(headers
   SubSimulatorItem.h
   ControllerItem.h
   SimpleControllerItem.h
+  ControllerLogItem.h
   SimulationScriptItem.h
   AISTSimulatorItem.h
   KinematicSimulatorItem.h

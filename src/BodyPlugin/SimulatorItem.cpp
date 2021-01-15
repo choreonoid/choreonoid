@@ -27,7 +27,7 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MultiDeviceStateSeq>
-#include <cnoid/ReferencedObjectSeqItem>
+#include <cnoid/ControllerLogItem>
 #include <cnoid/Timer>
 #include <cnoid/Deque2D>
 #include <cnoid/ConnectionSet>
@@ -118,7 +118,7 @@ public:
     ReferencedPtr lastLogData;
     unique_ptr<ReferencedObjectSeq> logBuf;
     int logBufFrameOffset;
-    ReferencedObjectSeqItemPtr logItem;
+    ControllerLogItemPtr logItem;
     shared_ptr<ReferencedObjectSeq> log;
 
     ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl);
@@ -572,11 +572,11 @@ bool ControllerInfo::enableLog()
     logBufFrameOffset = 0;
 
     string logName = simImpl->self->name() + "-" + controller->name();
-    logItem = controller->findChildItem<ReferencedObjectSeqItem>(logName);
+    logItem = controller->findChildItem<ControllerLogItem>(logName);
     if(logItem){
         logItem->resetSeq();
     } else {
-        logItem = new ReferencedObjectSeqItem;
+        logItem = new ControllerLogItem;
         logItem->setTemporal();
         logItem->setName(logName);
         controller->addChildItem(logItem);
