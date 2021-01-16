@@ -70,6 +70,10 @@ void exportPyViews(py::module m)
         .def_static("getInstance", &MessageView::instance, py::return_value_policy::reference)
         ;
 
+    m.def("showMessageBox", (void(*)(const std::string&)) &showMessageBox);
+    m.def("showWarningDialog", (void(*)(const std::string&)) &showWarningDialog);
+    m.def("showConfirmDialog", (bool(*)(const std::string&, const std::string&)) &showConfirmDialog);
+
     py::class_<SceneWidget, QWidget>(m, "SceneWidget")
         .def_property_readonly("renderer", &SceneWidget::renderer)
         .def_property_readonly("sigStateChanged", &SceneWidget::sigStateChanged)
