@@ -46,6 +46,9 @@ static const bool usePivotingLCP = false;
 
 static const double VEL_THRESH_OF_DYNAMIC_FRICTION = 1.0e-4;
 
+static const double DEFAULT_MIN_FRICTION_COEFFICIENT = 0.0;
+static const double DEFAULT_MAX_FRICTION_COEFFICIENT = 100.0;
+
 static const bool ENABLE_STATIC_FRICTION = true;
 static const bool ONLY_STATIC_FRICTION_FORMULATION = (true && ENABLE_STATIC_FRICTION);
 static const bool STATIC_FRICTION_BY_TWO_CONSTRAINTS = true;
@@ -186,14 +189,14 @@ public:
         bool isBelongingToSameSubBody;
         DyLink* link[2];
         vector<ConstraintPoint> constraintPoints;
-        bool isNonContactConstraint;
         ContactMaterialExPtr contactMaterial;
+        bool isNonContactConstraint;
     };
 
     unordered_map<IdPair<GeometryHandle>, LinkPair> geometryPairToLinkPairMap;
 
-    double defaultStaticFriction;
-    double defaultSlipFriction;
+    double minFrictionCoefficient;
+    double maxFrictionCoefficient;
     double defaultContactCullingDistance;
     double defaultContactCullingDepth;
     double defaultCoefficientOfRestitution;
@@ -372,8 +375,8 @@ ConstraintForceSolver::Impl::Impl(DyWorldBase& world)
     : world(world),
       randomAngle(0.0, 2.0 * PI)
 {
-    defaultStaticFriction = 1.0;
-    defaultSlipFriction = 1.0;
+    minFrictionCoefficient = DEFAULT_MIN_FRICTION_COEFFICIENT;
+    maxFrictionCoefficient = DEFAULT_MAX_FRICTION_COEFFICIENT;
     defaultContactCullingDistance = DEFAULT_CONTACT_CULLING_DISTANCE;
     defaultContactCullingDepth = DEFAULT_CONTACT_CULLING_DEPTH;
     defaultCoefficientOfRestitution = 0.0;
@@ -605,6 +608,11 @@ void ConstraintForceSolver::Impl::initializeContactMaterials()
                         }
                     }
 
+                    cm->setStaticFriction(
+                        std::min(std::max(cm->staticFriction(), minFrictionCoefficient), maxFrictionCoefficient));
+                    cm->setDynamicFriction(
+                        std::min(std::max(cm->dynamicFriction(), minFrictionCoefficient), maxFrictionCoefficient));
+
                     return cm;
                 });
     }
@@ -618,8 +626,10 @@ ConstraintForceSolver::Impl::createContactMaterialFromMaterialPair(int material1
     Material* m2 = materialTable->material(material2);
 
     auto cm = new ContactMaterialEx;
-    cm->setFriction(std::min(m1->roughness(), m2->roughness()));
-    cm->setRestitution(std::max(m1->viscosity(), m2->viscosity()));
+    double friction = std::min(m1->roughness(), m2->roughness());
+    friction = std::min(std::max(friction, minFrictionCoefficient), maxFrictionCoefficient);
+    cm->setFriction(friction);
+    cm->setRestitution(sqrt((1.0 - m1->viscosity()) * (1.0 - m2->viscosity())));
     cm->cullingDistance = defaultContactCullingDistance;
     cm->cullingDepth = defaultContactCullingDepth;
     materialTable->setContactMaterial(material1, material2, cm);
@@ -2173,22 +2183,22 @@ void ConstraintForceSolver::setMaterialTable(MaterialTable* table)
 }
 
 
-void ConstraintForceSolver::setFriction(double staticFriction, double slipFliction)
+void ConstraintForceSolver::setFrictionCoefficientRange(double minFriction, double maxFriction)
 {
-    impl->defaultStaticFriction = staticFriction;
-    impl->defaultSlipFriction = slipFliction;
+    impl->minFrictionCoefficient = minFriction;
+    impl->maxFrictionCoefficient = maxFriction;
 }
 
 
-double ConstraintForceSolver::staticFriction() const
+double ConstraintForceSolver::minFrictionCoefficient() const
 {
-    return impl->defaultStaticFriction;
+    return impl->minFrictionCoefficient;
 }
 
 
-double ConstraintForceSolver::slipFriction() const
+double ConstraintForceSolver::maxFrictionCoefficient() const
 {
-    return impl->defaultSlipFriction;
+    return impl->maxFrictionCoefficient;
 }
 
 

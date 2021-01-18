@@ -31,9 +31,9 @@ public:
     void setIntegrationMode(int mode);
     void setGravity(const Vector3& gravity);
     const Vector3& gravity() const;
-    void setFriction(double staticFriction, double dynamicFriction);
-    double staticFriction() const;
-    double dynamicFriction() const;
+    void setFrictionCoefficientRange(double minFriction, double maxFriction);
+    double minFrictionCoefficient() const;
+    double maxFrictionCoefficient() const;
     void setContactCullingDistance(double value);        
     void setContactCullingDepth(double value);        
     void setErrorCriterion(double value);        

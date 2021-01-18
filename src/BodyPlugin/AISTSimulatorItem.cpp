@@ -84,8 +84,8 @@ public:
     Selection dynamicsMode;
     Selection integrationMode;
     Vector3 gravity;
-    double staticFriction;
-    double dynamicFriction;
+    double minFrictionCoefficient;
+    double maxFrictionCoefficient;
     FloatingNumberString contactCullingDistance;
     FloatingNumberString contactCullingDepth;
     FloatingNumberString errorCriterion;
@@ -154,8 +154,8 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
 
     ConstraintForceSolver& cfs = world.constraintForceSolver;
-    staticFriction = cfs.staticFriction();
-    dynamicFriction = cfs.slipFriction();
+    minFrictionCoefficient = cfs.minFrictionCoefficient();
+    maxFrictionCoefficient = cfs.maxFrictionCoefficient();
     contactCullingDistance = cfs.contactCullingDistance();
     contactCullingDepth = cfs.contactCullingDepth();
     epsilon = cfs.coefficientOfRestitution();
@@ -188,8 +188,8 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self, const Impl& org)
       integrationMode(org.integrationMode)
 {
     gravity = org.gravity;
-    staticFriction = org.staticFriction;
-    dynamicFriction = org.dynamicFriction;
+    minFrictionCoefficient = org.minFrictionCoefficient;
+    maxFrictionCoefficient = org.maxFrictionCoefficient;
     contactCullingDistance = org.contactCullingDistance;
     contactCullingDepth = org.contactCullingDepth;
     errorCriterion = org.errorCriterion;
@@ -235,22 +235,22 @@ const Vector3& AISTSimulatorItem::gravity() const
 }
 
 
-void AISTSimulatorItem::setFriction(double staticFriction, double dynamicFriction)
+void AISTSimulatorItem::setFrictionCoefficientRange(double minFriction, double maxFriction)
 {
-    impl->staticFriction = staticFriction;
-    impl->dynamicFriction = dynamicFriction;
+    impl->minFrictionCoefficient = minFriction;
+    impl->maxFrictionCoefficient = maxFriction;
 }
 
 
-double AISTSimulatorItem::staticFriction() const
+double AISTSimulatorItem::minFrictionCoefficient() const
 {
-    return impl->staticFriction;
+    return impl->minFrictionCoefficient;
 }
 
 
-double AISTSimulatorItem::dynamicFriction() const
+double AISTSimulatorItem::maxFrictionCoefficient() const
 {
-    return impl->dynamicFriction;
+    return impl->maxFrictionCoefficient;
 }
 
 
@@ -436,7 +436,7 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
                           self->displayName()) << endl;
     }
 
-    cfs.setFriction(staticFriction, dynamicFriction);
+    cfs.setFrictionCoefficientRange(minFrictionCoefficient, maxFrictionCoefficient);
     cfs.setContactCullingDistance(contactCullingDistance.value());
     cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
@@ -704,9 +704,9 @@ void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Integration mode"), integrationMode,
                 [&](int index){ return integrationMode.selectIndex(index); });
     putProperty(_("Gravity"), str(gravity), [&](const string& v){ return toVector3(v, gravity); });
-    putProperty.decimals(3).min(0.0);
-    putProperty(_("Static friction"), staticFriction, changeProperty(staticFriction));
-    putProperty(_("Slip friction"), dynamicFriction, changeProperty(dynamicFriction));
+    putProperty.decimals(1).min(0.0);
+    putProperty(_("Min friction coefficient"), minFrictionCoefficient, changeProperty(minFrictionCoefficient));
+    putProperty(_("Max friction coefficient"), maxFrictionCoefficient, changeProperty(maxFrictionCoefficient));
     putProperty(_("Contact culling distance"), contactCullingDistance,
                 [&](const string& v){ return contactCullingDistance.setNonNegativeValue(v); });
     putProperty(_("Contact culling depth"), contactCullingDepth,
@@ -737,8 +737,8 @@ bool AISTSimulatorItem::Impl::store(Archive& archive)
     archive.write("dynamicsMode", dynamicsMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("integrationMode", integrationMode.selectedSymbol(), DOUBLE_QUOTED);
     write(archive, "gravity", gravity);
-    archive.write("staticFriction", staticFriction);
-    archive.write("dynamicFriction", dynamicFriction);
+    archive.write("min_friction_coefficient", minFrictionCoefficient);
+    archive.write("max_friction_coefficient", maxFrictionCoefficient);
     archive.write("cullingThresh", contactCullingDistance);
     archive.write("contactCullingDepth", contactCullingDepth);
     archive.write("errorCriterion", errorCriterion);
@@ -769,10 +769,8 @@ bool AISTSimulatorItem::Impl::restore(const Archive& archive)
         integrationMode.select(symbol);
     }
     read(archive, "gravity", gravity);
-    archive.read("staticFriction", staticFriction);
-    if(!archive.read("dynamicFriction", dynamicFriction)){
-        archive.read("slipFriction", dynamicFriction);
-    }
+    archive.read("min_friction_coefficient", minFrictionCoefficient);
+    archive.read("max_friction_coefficient", maxFrictionCoefficient);
     contactCullingDistance = archive.get("cullingThresh", contactCullingDistance.string());
     contactCullingDepth = archive.get("contactCullingDepth", contactCullingDepth.string());
     errorCriterion = archive.get("errorCriterion", errorCriterion.string());

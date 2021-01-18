@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-18 12:44+0900\n"
+"POT-Creation-Date: 2021-01-19 01:50+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -113,12 +113,12 @@ msgid "Gravity"
 msgstr "重力加速度"
 
 #: AISTSimulatorItem.cpp:708
-msgid "Static friction"
-msgstr "静止摩擦係数"
+msgid "Min friction coefficient"
+msgstr "最小摩擦係数"
 
 #: AISTSimulatorItem.cpp:709
-msgid "Slip friction"
-msgstr "動摩擦係数"
+msgid "Max friction coefficient"
+msgstr "最大摩擦係数"
 
 #: AISTSimulatorItem.cpp:710
 msgid "Contact culling distance"
@@ -1821,3 +1821,9 @@ msgstr "関節速度下限"
 #: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
+
+#~ msgid "Static friction"
+#~ msgstr "静止摩擦係数"
+
+#~ msgid "Slip friction"
+#~ msgstr "動摩擦係数"

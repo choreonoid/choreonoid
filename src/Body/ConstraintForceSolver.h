@@ -25,14 +25,14 @@ public:
     void setCollisionDetector(CollisionDetector* detector);
     CollisionDetector* collisionDetector();
 
-    void setMaterialTable(MaterialTable* table);
-
-    void setFriction(double staticFriction, double slipFliction);
-    double staticFriction() const;
-    double slipFriction() const;
-
     void setBodyCollisionDetectionMode(
         int bodyIndex, bool isBodyToBodyCollisionEnabled, bool isSelfCollisionDetectionEnabled);
+
+    void setMaterialTable(MaterialTable* table);
+
+    void setFrictionCoefficientRange(double minFriction, double maxFriction);
+    double minFrictionCoefficient() const;
+    double maxFrictionCoefficient() const;
 
     void setContactCullingDistance(double thresh);
     double contactCullingDistance() const;
