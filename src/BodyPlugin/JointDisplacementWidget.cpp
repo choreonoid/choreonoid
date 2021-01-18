@@ -78,7 +78,7 @@ public:
     BodySelectionManager* bodySelectionManager;
 
     BodyItemPtr currentBodyItem;
-    vector<int> activeJointIds;
+    vector<int> activeJointLinkIndices;
     vector<JointIndicator*> jointIndicators;
     LazyCaller updateJointDisplacementsLater;
             
@@ -97,6 +97,7 @@ public:
     double angleStep;
 
     bool isSelectedJointsOnlyMode;
+    bool isPrivateJointEnabled;
     bool isJointIdVisible;
     bool isJointNameVisible;
     bool isOverlapJointNameMode;
@@ -152,6 +153,7 @@ JointDisplacementWidget::Impl::Impl(JointDisplacementWidget* self)
     vbox->addStretch();
 
     isSelectedJointsOnlyMode = false;
+    isPrivateJointEnabled = false;
     isJointIdVisible = false;
     isJointNameVisible = true;
     isOverlapJointNameMode = false;
@@ -199,6 +201,11 @@ void JointDisplacementWidget::Impl::setOptionMenuTo(MenuManager& menu)
     selectedJointsOnlyCheck->setChecked(isSelectedJointsOnlyMode);
     selectedJointsOnlyCheck->sigToggled().connect(
         [&](bool on){ isSelectedJointsOnlyMode = on; updateIndicatorGrid(); });
+
+    auto privateJointCheck = menu.addCheckItem(_("Show private joints"));
+    privateJointCheck->setChecked(isPrivateJointEnabled);
+    privateJointCheck->sigToggled().connect(
+        [&](bool on){ isPrivateJointEnabled = on; updateIndicatorGrid(); });
 
     auto jointIdCheck = menu.addCheckItem(_("Joint ID"));
     jointIdCheck->setChecked(isJointIdVisible);
@@ -273,25 +280,21 @@ void JointDisplacementWidget::Impl::updateIndicatorGrid()
     }
 
     BodyPtr body = currentBodyItem->body();
-    int numJoints = body->numJoints();
-        
-    if(isSelectedJointsOnlyMode){
-        auto& linkSelection = bodySelectionManager->linkSelection(currentBodyItem);
-        activeJointIds.clear();
-        for(int i=0; i < numJoints; ++i){
-            Link* joint = body->joint(i);
-            if(joint->isValid() && linkSelection[joint->index()]){
-                activeJointIds.push_back(i);
+    auto& linkSelection = bodySelectionManager->linkSelection(currentBodyItem);
+    activeJointLinkIndices.clear();
+    auto& allJoints = body->allJoints();
+    int numJoints = isPrivateJointEnabled ? allJoints.size() : body->numJoints();
+    for(size_t i=0; i < numJoints; ++i){
+        auto joint = allJoints[i];
+        if(joint->isValid()){
+            int linkIndex = joint->index();
+            if(!isSelectedJointsOnlyMode || linkSelection[linkIndex]){
+                activeJointLinkIndices.push_back(linkIndex);
             }
-        }
-    } else {
-        activeJointIds.resize(numJoints);
-        for(int i=0; i < numJoints; ++i){
-            activeJointIds[i] = i;
         }
     }
     
-    int n = activeJointIds.size();
+    int n = activeJointLinkIndices.size();
     initializeIndicators(n);
 
     lengthUnit = valueFormatManager->lengthUnit();
@@ -317,7 +320,7 @@ void JointDisplacementWidget::Impl::updateIndicatorGrid()
     int row = 0;
     for(int i=0; i < n; ++i){
         auto indicator = jointIndicators[i];
-        indicator->initialize(body->joint(activeJointIds[i]));
+        indicator->initialize(body->link(activeJointLinkIndices[i]));
         row = indicator->attachTo(grid, row, 0, isOverlapJointNameMode);
     }
     for(int i=0; i < n - 1; ++i){
@@ -442,8 +445,13 @@ bool JointIndicator::setRangeLabelValue(QLabel& label, double value, bool isInfi
 void JointIndicator::initialize(Link* joint)
 {
     this->joint = joint;
-    
-    idLabel.setText(QString("%1:").arg(joint->jointId()));
+
+    int id = joint->jointId();
+    if(id >= 0){
+        idLabel.setText(QString("%1:").arg(joint->jointId()));
+    } else {
+        idLabel.setText("");
+    }
     idLabel.setVisible(baseImpl->isJointIdVisible);
     
     nameLabel.setText(joint->jointName().c_str());
@@ -774,7 +782,7 @@ void JointDisplacementWidget::Impl::notifyJointDisplacementInput()
 
 void JointDisplacementWidget::Impl::updateJointDisplacements()
 {
-    for(size_t i=0; i < activeJointIds.size(); ++i){
+    for(size_t i=0; i < activeJointLinkIndices.size(); ++i){
         jointIndicators[i]->updateDisplacement(false);
     }
 }
