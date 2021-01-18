@@ -40,8 +40,10 @@ public:
     Impl();
     bool addBody(Body* body, bool isSelfCollisionEnabled);
     void ignoreLinkPair(int linkIndex1, int linkIndex2);
-    void checkCollisionDetectionTargets(Body* body, Listing* rules);
-    void checkCollisionDetectionTargets_OldFormat(Body* body, Mapping* info);
+    void checkCollisionDetectionTargets(
+        Body* body, Listing* rules, bool isSelfCollisionDetectionEnabled);
+    void checkCollisionDetectionTargets_OldFormat(
+        Body* body, Mapping* info, bool isSelfCollisionDetectionEnabled);
     void setIgnoredLinkPairsWithinLinkChainLevel(Body* body, int distance);
     void setIgnoredLinkPairsWithinLinkChainLevelIter(Link* link, Link* currentLink, Link* prevLink, int distance);
     bool addLinkRecursively(Link* link, bool isParentStatic);
@@ -129,15 +131,15 @@ bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetect
     linkExclusionFlags.resize(numLinks, false);
     ignoredLinkPairs.clear();
 
-    if(isSelfCollisionDetectionEnabled){
-        ListingPtr rules = body->info()->findListing("collision_detection_rules");
-        if(rules->isValid()){
-            checkCollisionDetectionTargets(body, rules);
+    ListingPtr rules = body->info()->findListing("collision_detection_rules");
+    if(rules->isValid()){
+        checkCollisionDetectionTargets(body, rules, isSelfCollisionDetectionEnabled);
+    } else {
+        MappingPtr info = body->info()->findMapping("collisionDetection");
+        if(info->isValid()){
+            checkCollisionDetectionTargets_OldFormat(body, info, isSelfCollisionDetectionEnabled);
         } else {
-            MappingPtr info = body->info()->findMapping("collisionDetection");
-            if(info->isValid()){
-                checkCollisionDetectionTargets_OldFormat(body, info);
-            } else {
+            if(isSelfCollisionDetectionEnabled){
                 // Self-collision detection does not apply to pairs of adjacent links by default
                 setIgnoredLinkPairsWithinLinkChainLevel(body, 1);
             }
@@ -180,7 +182,8 @@ void BodyCollisionDetector::Impl::ignoreLinkPair(int linkIndex1, int linkIndex2)
 
 
 //! \todo Implement all the rules
-void BodyCollisionDetector::Impl::checkCollisionDetectionTargets(Body* body, Listing* rules)
+void BodyCollisionDetector::Impl::checkCollisionDetectionTargets
+(Body* body, Listing* rules, bool isSelfCollisionDetectionEnabled)
 {
     const int numLinks = body->numLinks();
     
@@ -189,8 +192,9 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets(Body* body, Lis
             auto& rule = kv.first;
             auto& value = kv.second;
             if(rule == "disabled_link_chain_level"){
-                setIgnoredLinkPairsWithinLinkChainLevel(body, value->toInt());
-                
+                if(isSelfCollisionDetectionEnabled){
+                    setIgnoredLinkPairsWithinLinkChainLevel(body, value->toInt());
+                }
             } else if(rule == "enabled_links"){
                 for(auto& node : *value->toListing()){
                     if(auto link = body->link(node->toString())){
@@ -208,7 +212,9 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets(Body* body, Lis
                     }
                 }
             } else if(rule == "enabled_link_group"){
-                
+                if(isSelfCollisionDetectionEnabled){
+
+                }
             } else if(rule == "disabled_links"){
                 if(value->isString() && value->toString() == "all"){
                     for(int i = 0; i < numLinks; ++i){
@@ -231,7 +237,9 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets(Body* body, Lis
                     }
                 }
             } else if(rule == "disabled_link_group"){
-                
+                if(isSelfCollisionDetectionEnabled){
+
+                }
             } else {
                 // put warning
             }
@@ -240,11 +248,14 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets(Body* body, Lis
 }
 
 
-void BodyCollisionDetector::Impl::checkCollisionDetectionTargets_OldFormat(Body* body, Mapping* info)
+void BodyCollisionDetector::Impl::checkCollisionDetectionTargets_OldFormat
+(Body* body, Mapping* info, bool isSelfCollisionDetectionEnabled)
 {
-    int excludeTreeDepth = 1;
-    info->read("excludeTreeDepth", excludeTreeDepth);
-    setIgnoredLinkPairsWithinLinkChainLevel(body, excludeTreeDepth);
+    if(isSelfCollisionDetectionEnabled){
+        int excludeTreeDepth = 1;
+        info->read("excludeTreeDepth", excludeTreeDepth);
+        setIgnoredLinkPairsWithinLinkChainLevel(body, excludeTreeDepth);
+    }
 
     const Listing& excludeLinks = *info->findListing("excludeLinks");
     for(int i=0; i < excludeLinks.size(); ++i){
@@ -253,17 +264,19 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets_OldFormat(Body*
         }
     }
 
-    auto& excludeLinkGroupList = *info->findListing("excludeLinkGroups");
-    for(int i=0; i < excludeLinkGroupList.size(); ++i){
-        auto groupInfo = excludeLinkGroupList[i].toMapping();
-        if(groupInfo->isValid()){
-            auto& excludeLinks = *groupInfo->findListing("links");
-            for(int j=0; j < excludeLinks.size(); ++j){
-                for(int k = j + 1; k < excludeLinks.size(); ++k){
-                    auto link0 = body->link(excludeLinks[j].toString());
-                    auto link1 = body->link(excludeLinks[k].toString());
-                    if(link0 && link1){
-                        ignoredLinkPairs.emplace(link0->index(), link1->index());
+    if(isSelfCollisionDetectionEnabled){
+        auto& excludeLinkGroupList = *info->findListing("excludeLinkGroups");
+        for(int i=0; i < excludeLinkGroupList.size(); ++i){
+            auto groupInfo = excludeLinkGroupList[i].toMapping();
+            if(groupInfo->isValid()){
+                auto& excludeLinks = *groupInfo->findListing("links");
+                for(int j=0; j < excludeLinks.size(); ++j){
+                    for(int k = j + 1; k < excludeLinks.size(); ++k){
+                        auto link0 = body->link(excludeLinks[j].toString());
+                        auto link1 = body->link(excludeLinks[k].toString());
+                        if(link0 && link1){
+                            ignoredLinkPairs.emplace(link0->index(), link1->index());
+                        }
                     }
                 }
             }
