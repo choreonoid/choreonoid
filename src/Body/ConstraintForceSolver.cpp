@@ -57,7 +57,7 @@ static const bool ENABLE_TRUE_FRICTION_CONE =
 static const bool SKIP_REDUNDANT_ACCEL_CALC = true;
 static const bool ASSUME_SYMMETRIC_MATRIX = false;
 
-static const int DEFAULT_MAX_NUM_GAUSS_SEIDEL_ITERATION = 1000;
+static const int DEFAULT_MAX_NUM_GAUSS_SEIDEL_ITERATION = 20;
 
 //static const int DEFAULT_NUM_GAUSS_SEIDEL_ITERATION_BLOCK = 10;
 static const int DEFAULT_NUM_GAUSS_SEIDEL_ITERATION_BLOCK = 1;
@@ -73,10 +73,10 @@ static const bool USE_PREVIOUS_LCP_SOLUTION = true;
 static const bool ENABLE_CONTACT_DEPTH_CORRECTION = true;
 
 // normal setting
-static const double DEFAULT_CONTACT_CORRECTION_DEPTH = 0.0001;
+static const double DEFAULT_CONTACT_CORRECTION_DEPTH = 0.00025;
 //static const double PENETRATION_A = 500.0;
 //static const double PENETRATION_B = 80.0;
-static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 1.0;
+static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 5.0;
 
 static const double DEFAULT_CONTACT_CULLING_DISTANCE = 0.005;
 static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.05;
