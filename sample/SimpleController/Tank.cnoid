@@ -101,14 +101,6 @@ items:
             dynamicsMode: Forward dynamics
             integrationMode: Runge Kutta
             gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 0.5
-            slipFriction: 0.5
-            cullingThresh: 0.01
-            contactCullingDepth: 0.05
-            errorCriterion: 0.001
-            maxNumIterations: 1000
-            contactCorrectionDepth: 0.0001
-            contactCorrectionVelocityRatio: 30
             kinematicWalking: false
             2Dmode: false
         - 
@@ -131,14 +123,6 @@ items:
             dynamicsMode: Forward dynamics
             integrationMode: Runge Kutta
             gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 0.5
-            slipFriction: 0.5
-            cullingThresh: 0.01
-            contactCullingDepth: 0.05
-            errorCriterion: 0.001
-            maxNumIterations: 1000
-            contactCorrectionDepth: 0.0001
-            contactCorrectionVelocityRatio: 30
             kinematicWalking: false
             2Dmode: false
         - 

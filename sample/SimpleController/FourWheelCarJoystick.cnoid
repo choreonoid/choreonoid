@@ -102,14 +102,6 @@ items:
             dynamicsMode: "Forward dynamics"
             integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 1
-            dynamicFriction: 1
-            cullingThresh: 0
-            contactCullingDepth: 0.01
-            errorCriterion: 0.001
-            maxNumIterations: 30
-            contactCorrectionDepth: 0.001
-            contactCorrectionVelocityRatio: 2
             kinematicWalking: false
             2Dmode: false
             oldAccelSensorMode: false
