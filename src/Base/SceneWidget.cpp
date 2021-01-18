@@ -343,7 +343,8 @@ public:
     void onTextureToggled(bool on);
     void onLineWidthChanged(double width);
     void onPointSizeChanged(double width);
-    void setPolygonDisplayElements(int elementFlags);
+    void setVisiblePolygonElements(int elementFlags);
+    int visiblePolygonElements() const;
     void setCollisionLinesVisible(bool on);
     void onFieldOfViewChanged(double fov);
     void onClippingDepthChanged();
@@ -2454,29 +2455,30 @@ void SceneWidget::Impl::onPointSizeChanged(double size)
 }
 
 
-void SceneWidget::setPolygonDisplayElements(int elementFlags)
+void SceneWidget::setVisiblePolygonElements(int elementFlags)
 {
-    impl->setPolygonDisplayElements(elementFlags);
+    impl->setVisiblePolygonElements(elementFlags);
 }
 
 
-void SceneWidget::Impl::setPolygonDisplayElements(int elementFlags)
+void SceneWidget::Impl::setVisiblePolygonElements(int elementFlags)
 {
-    if(!polygonDrawStyle){
-        polygonDrawStyle = new SgPolygonDrawStyle;
-    }
-    if(elementFlags != polygonDrawStyle->polygonElements()){
+    int currentFlags = visiblePolygonElements();
+    if(elementFlags != currentFlags){
+        if(!polygonDrawStyle){
+            polygonDrawStyle = new SgPolygonDrawStyle;
+        }
         bool notified = false;
         polygonDrawStyle->setPolygonElements(elementFlags);
-        if(elementFlags != SgPolygonDrawStyle::Face){
-            if(!polygonDrawStyle->hasParents()){
-                sceneRoot->removeChild(scene);
-                polygonDrawStyle->addChild(scene);
-                SgUpdate tmpUpdate;
-                sceneRoot->insertChild(0, polygonDrawStyle, tmpUpdate);
-                notified = true;
-            }
+
+        if(!polygonDrawStyle->hasParents() && elementFlags != SgPolygonDrawStyle::Face){
+            sceneRoot->removeChild(scene);
+            polygonDrawStyle->addChild(scene);
+            SgUpdate tmpUpdate;
+            sceneRoot->insertChild(0, polygonDrawStyle, tmpUpdate);
+            notified = true;
         }
+        
         if(!notified){
             polygonDrawStyle->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
         }
@@ -2485,9 +2487,15 @@ void SceneWidget::Impl::setPolygonDisplayElements(int elementFlags)
 }
     
 
-int SceneWidget::polygonDisplayElements() const
+int SceneWidget::visiblePolygonElements() const
 {
-    return impl->polygonDrawStyle ? impl->polygonDrawStyle->polygonElements() : SgPolygonDrawStyle::Face;
+    return impl->visiblePolygonElements();
+}
+
+
+int SceneWidget::Impl::visiblePolygonElements() const
+{
+    return polygonDrawStyle ? polygonDrawStyle->polygonElements() : SgPolygonDrawStyle::Face;
 }
 
 
@@ -2807,6 +2815,19 @@ bool SceneWidget::Impl::storeState(Archive& archive)
 {
     archive.write("editMode", isEditMode);
     archive.write("viewpointControlMode", viewpointControlMode.selectedSymbol());
+
+    auto vpeList = archive.createFlowStyleListing("visible_polygon_elements");
+    int vpe = self->visiblePolygonElements();
+    if(vpe & PolygonFace){
+        vpeList->append("face");
+    }
+    if(vpe & PolygonEdge){
+        vpeList->append("edge");
+    }
+    if(vpe & PolygonVertex){
+        vpeList->append("vertex");
+    }
+
     archive.write("highlighting", isHighlightingEnabled);
     archive.write("collisionLines", collisionLinesVisible);
 
@@ -2929,6 +2950,24 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
     string symbol;
     if(archive.read("viewpointControlMode", symbol)){
         self->setViewpointControlMode((SceneWidget::ViewpointControlMode(viewpointControlMode.index(symbol))));
+    }
+
+    auto& vpeList = *archive.findListing("visible_polygon_elements");
+    if(vpeList.isValid()){
+        int vpe = 0;
+        for(auto& node : vpeList){
+            const auto& symbol = node->toString();
+            if(symbol == "face"){
+                vpe |= PolygonFace;
+            } else if(symbol == "edge"){
+                vpe |= PolygonEdge;
+            } else if(symbol == "vertex"){
+                vpe |= PolygonVertex;
+            }
+        }
+        if(vpe){
+            setVisiblePolygonElements(vpe);
+        }
     }
 
     archive.read("highlighting", isHighlightingEnabled);

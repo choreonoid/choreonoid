@@ -82,13 +82,14 @@ public:
         
     void viewAll();
 
+    // This is same as SgPolygonDrawStyle::PolygonElement
     enum PolygonElement {
         PolygonFace = 1,
         PolygonEdge = 2,
         PolygonVertex = 4
     };
-    void setPolygonDisplayElements(int elementFlags);
-    int polygonDisplayElements() const;
+    void setVisiblePolygonElements(int elementFlags);
+    int visiblePolygonElements() const;
 
     void setHighlightingEnabled(bool on);
     bool isHighlightingEnabled() const;

@@ -339,7 +339,7 @@ void SceneBar::Impl::onSceneWidgetStateChanged()
     firstPersonModeToggle->setChecked(currentSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
     firstPersonModeToggle->blockSignals(false);
 
-    int polygonFlags = currentSceneWidget->polygonDisplayElements();
+    int polygonFlags = currentSceneWidget->visiblePolygonElements();
     
     vertexToggle->blockSignals(true);
     vertexToggle->setChecked(polygonFlags & SceneWidget::PolygonVertex);
@@ -448,7 +448,7 @@ void SceneBar::Impl::onPolygonModeButtonToggled()
         flags |= SceneWidget::PolygonFace;
         break;
     }
-    currentSceneWidget->setPolygonDisplayElements(flags);
+    currentSceneWidget->setVisiblePolygonElements(flags);
     
     sceneViewConnections.unblock();
 }
