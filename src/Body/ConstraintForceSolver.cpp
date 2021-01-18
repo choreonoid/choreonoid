@@ -110,6 +110,11 @@ static const Vector3 local2dConstraintPoints[3] = {
     Vector3( 0.0, 0.0, ( sqrt(3.0) / 2.0))
 };
 
+enum CollisionDetectionModeBit {
+    BodyToBodyCollision = 1,
+    SelfCollision = 2
+};
+
 }
 
 namespace cnoid
@@ -120,7 +125,7 @@ class ConstraintForceSolver::Impl
 public:
     DyWorldBase& world;
 
-    vector<bool> bodyIndexToSelfCollisionDetectionFlagMap;
+    vector<unsigned char> bodyIndexToCollisionDetectionModeMap;
         
     MaterialTablePtr orgMaterialTable;
     MaterialTablePtr materialTable;
@@ -379,7 +384,7 @@ ConstraintForceSolver::Impl::Impl(DyWorldBase& world)
     contactCorrectionDepth = DEFAULT_CONTACT_CORRECTION_DEPTH;
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
-    bodyIndexToSelfCollisionDetectionFlagMap.clear();
+    bodyIndexToCollisionDetectionModeMap.clear();
     is2Dmode = false;
 }
 
@@ -554,7 +559,11 @@ void ConstraintForceSolver::Impl::initialize(void)
     for(int bodyIndex = 0; bodyIndex < numBodies; ++bodyIndex){
         auto body = world.body(bodyIndex);
         initBody(body);
-        bodyCollisionDetector.addBody(body, bodyIndexToSelfCollisionDetectionFlagMap[bodyIndex]);
+
+        auto collisionDetectionMode =  bodyIndexToCollisionDetectionModeMap[bodyIndex];
+        if(collisionDetectionMode & BodyToBodyCollision){
+            bodyCollisionDetector.addBody(body, collisionDetectionMode & SelfCollision);
+        }
     }
 
     initWorldExtraJoints();
@@ -2197,23 +2206,22 @@ bool ConstraintForceSolver::unregisterCollisionHandler(const std::string& name)
 }
 
 
-void ConstraintForceSolver::setSelfCollisionDetectionEnabled(int bodyIndex, bool on)
+void ConstraintForceSolver::setBodyCollisionDetectionMode
+(int bodyIndex, bool isBodyToBodyCollisionEnabled, bool isSelfCollisionEnabled)
 {
-    if(bodyIndex >= impl->bodyIndexToSelfCollisionDetectionFlagMap.size()){
-        impl->bodyIndexToSelfCollisionDetectionFlagMap.resize(bodyIndex + 1);
+    if(bodyIndex >= impl->bodyIndexToCollisionDetectionModeMap.size()){
+        impl->bodyIndexToCollisionDetectionModeMap.resize(bodyIndex + 1, BodyToBodyCollision);
     }
-    impl->bodyIndexToSelfCollisionDetectionFlagMap[bodyIndex] = on;
+    int mode = 0;
+    if(isBodyToBodyCollisionEnabled){
+        mode = BodyToBodyCollision;
+    }
+    if(isSelfCollisionEnabled){
+        mode |= SelfCollision;
+    }
+    impl->bodyIndexToCollisionDetectionModeMap[bodyIndex] = mode;
 }
 
-
-bool ConstraintForceSolver::isSelfCollisionDetectionEnabled(int bodyIndex) const
-{
-    if(bodyIndex < impl->bodyIndexToSelfCollisionDetectionFlagMap.size()){
-        return impl->bodyIndexToSelfCollisionDetectionFlagMap[bodyIndex];
-    }
-    return false;
-}
-    
 
 void ConstraintForceSolver::setContactCullingDistance(double distance)
 {

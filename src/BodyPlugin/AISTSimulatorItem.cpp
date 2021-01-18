@@ -494,9 +494,10 @@ void AISTSimulatorItem::Impl::addBody(AISTSimBody* simBody)
     }
 
     int bodyIndex = world.addBody(body);
-    
-    world.constraintForceSolver.setSelfCollisionDetectionEnabled(
-        bodyIndex, simBody->bodyItem()->isSelfCollisionDetectionEnabled());
+
+    auto bodyItem = simBody->bodyItem();
+    world.constraintForceSolver.setBodyCollisionDetectionMode(
+        bodyIndex, bodyItem->isCollisionDetectionEnabled(), bodyItem->isSelfCollisionDetectionEnabled());
 }
 
 
