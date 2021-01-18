@@ -48,24 +48,29 @@ struct Triangle {
     int indices[3];
 };
 
-dMatrix3 identity = {
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0 };
-
-dMatrix3 flippedIdentity = {
-    1.0,  0.0, 0.0, 0.0,
-    0.0,  0.0, 1.0, 0.0,
-    0.0, -1.0, 0.0, 0.0 };
-    
-
-inline void makeInternal(Vector3& v) {
-    double a = v.z();
+void flipYZ(Vector3& v)
+{
+    double z = v.z();
     v.z() = -v.y();
-    v.y() = a;
+    v.y() = z;
 }
-inline void toInternal(const Vector3& v, Vector3& out_v) {
-    out_v << v.x(), v.z(), -v.y();
+
+Vector3 getFlipYZ(const Vector3& v)
+{
+    return Vector3(v.x(), v.z(), -v.y());
+}
+
+void flipYZ(dMatrix3& R)
+{
+    Vector3 y(R[4], R[5], R[6]);
+    // Y <- Z
+    R[4] = R[8];
+    R[5] = R[9];
+    R[6] = R[10];
+    // Z = -Y
+    R[8] = y.x();
+    R[9] = y.y();
+    R[10] = y.z();
 }
 
 class ODEBody;
@@ -85,18 +90,20 @@ public:
     OffsetMap offsetMap;
     dJointID motorID;
 
-    ODELink(ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent,
-            const Vector3& parentOrigin, Link* link);
+    ODELink(
+        ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent, const Isometry3& T_parent,
+        Link* link);
     ~ODELink();
-    void createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, ODELink* parent, const Vector3& origin);
-    void createGeometry(ODEBody* odeBody);
+    void createLinkBody(
+        ODESimulatorItemImpl* simImpl, dWorldID worldID, ODELink* parent, const Isometry3& T_origin);
+    void createGeometry(ODEBody* odeBody, bool doFlipYZ);
     void setKinematicStateToODE();
     void setKinematicStateToODEflip();
     void setTorqueToODE();
     void setVelocityToODE();
     void getKinematicStateFromODE();
     void getKinematicStateFromODEflip();
-    void addMesh(MeshExtractor* extractor, ODEBody* odeBody);
+    void addMesh(MeshExtractor* extractor, ODEBody* odeBody, bool doFlipYZ);
 };
 typedef ref_ptr<ODELink> ODELinkPtr;
 
@@ -113,11 +120,11 @@ public:
     ODEBody(Body* body);
     ~ODEBody();
     void createBody(ODESimulatorItemImpl* simImpl);
-    void setExtraJoints(bool flipYZ);
-    void setKinematicStateToODE(bool flipYZ);
+    void setExtraJoints(bool doFlipYZ);
+    void setKinematicStateToODE(bool doFlipYZ);
     void setControlValToODE();
-    void getKinematicStateFromODE(bool flipYZ);
-    void updateForceSensors(bool flipYZ);
+    void getKinematicStateFromODE(bool doFlipYZ);
+    void updateForceSensors(bool doFlipYZ);
     void alignToZAxisIn2Dmode();
 };
 
@@ -132,7 +139,7 @@ class ODESimulatorItemImpl
 public:
     ODESimulatorItem* self;
 
-    bool flipYZ;
+    bool doFlipYZ;
         
     dWorldID worldID;
     dSpaceID spaceID;
@@ -177,7 +184,7 @@ public:
 
 
 ODELink::ODELink
-(ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent, const Vector3& parentOrigin, Link* link)
+(ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent, const Isometry3& T_parent, Link* link)
 {
     odeBody->odeLinks.push_back(this);
 
@@ -188,23 +195,23 @@ ODELink::ODELink
     geomID.clear();
     motorID = 0;
     
-    Vector3 o = parentOrigin + link->b();
+    Isometry3 T_origin = T_parent * link->Tb();
     
     if(odeBody->worldID){
-        createLinkBody(simImpl, odeBody->worldID, parent, o);
+        createLinkBody(simImpl, odeBody->worldID, parent, T_origin);
     }
     if(!simImpl->useWorldCollisionDetector){
-        createGeometry(odeBody);
+        createGeometry(odeBody, simImpl->doFlipYZ);
     }
 
     for(Link* child = link->child(); child; child = child->sibling()){
-        new ODELink(simImpl, odeBody, this, o, child);
+        new ODELink(simImpl, odeBody, this, T_origin, child);
     }
 
 }
 
 
-void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, ODELink* parent, const Vector3& origin)
+void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, ODELink* parent, const Isometry3& T_origin)
 {
     bodyID = dBodyCreate(worldID);
     dBodySetData(bodyID, link);
@@ -228,28 +235,27 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
 
     dBodySetMass(bodyID, &mass);
 
-    Vector3 c;
-    Vector3 o;
-    Vector3 a;
-    Vector3 d;
+    Vector3 p = T_origin * link->c();
+    Vector3 o = T_origin.translation();
+    Vector3 a = T_origin.linear() * link->a();
+    Vector3 d = T_origin.linear() * link->d();
+    auto& T = T_origin;
+    dMatrix3 R = {
+        T(0,0), T(0,1), T(0,2), 0.0,
+        T(1,0), T(1,1), T(1,2), 0.0,
+        T(2,0), T(2,1), T(2,2), 0.0 };
 
-    if(!simImpl->flipYZ){
-        c = link->c();
-        o = origin;
-        a = link->a();
-        d = link->d();
-        dBodySetRotation(bodyID, identity);
-    } else {
-        toInternal(link->c(), c);
-        toInternal(origin, o);
-        toInternal(link->a(), a);
-        toInternal(link->d(), d);
-        dBodySetRotation(bodyID, flippedIdentity);
+    if(simImpl->doFlipYZ){
+        flipYZ(p);
+        flipYZ(o);
+        flipYZ(a);
+        flipYZ(d);
+        flipYZ(R);
     }
         
     // set the default global position to set a joint
-    Vector3 p = o + c;
     dBodySetPosition(bodyID, p.x(), p.y(), p.z());
+    dBodySetRotation(bodyID, R);
 
     dBodyID parentBodyID = parent ? parent->bodyID : 0;
 
@@ -347,12 +353,12 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
 }
 
 
-void ODELink::createGeometry(ODEBody* odeBody)
+void ODELink::createGeometry(ODEBody* odeBody, bool doFlipYZ)
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
         if(extractor->extract(
-               link->collisionShape(), [&](){ addMesh(extractor, odeBody); })){
+               link->collisionShape(), [=](){ addMesh(extractor, odeBody, doFlipYZ); })){
             if(!vertices.empty()){
                 triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(triMeshDataID,
@@ -369,7 +375,7 @@ void ODELink::createGeometry(ODEBody* odeBody)
 }
 
 
-void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
+void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody, bool doFlipYZ)
 {
     SgMesh* mesh = extractor->currentMesh();
     const Affine3& T = extractor->currentTransform();
@@ -445,14 +451,18 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                 if(mesh->primitiveType()==SgMesh::CYLINDER ||
                         mesh->primitiveType()==SgMesh::CAPSULE )
                     T_ *= AngleAxis(radian(90), Vector3::UnitX());
-                Vector3 p = T_.translation()-link->c();
+                Vector3 p = T_.translation() - link->c();
                 dMatrix3 R = { T_(0,0), T_(0,1), T_(0,2), 0.0,
                                T_(1,0), T_(1,1), T_(1,2), 0.0,
                                T_(2,0), T_(2,1), T_(2,2), 0.0 };
                 if(bodyID){
+                    if(doFlipYZ){
+                        flipYZ(p);
+                        flipYZ(R);
+                    }
                     dGeomSetOffsetPosition(geomId, p.x(), p.y(), p.z());
                     dGeomSetOffsetRotation(geomId, R);
-                }else{
+                } else {
                     offsetMap.insert(OffsetMap::value_type(geomId,T_));
                 }
                 meshAdded = true;
@@ -465,9 +475,16 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
 
         const SgVertexArray& vertices_ = *mesh->vertices();
         const int numVertices = vertices_.size();
-        for(int i=0; i < numVertices; ++i){
-            const Vector3 v = T * vertices_[i].cast<Vector3::Scalar>() - link->c();
-            vertices.push_back(Vertex(v.x(), v.y(), v.z()));
+        if(!doFlipYZ){
+            for(int i=0; i < numVertices; ++i){
+                const Vector3 v = T * vertices_[i].cast<Vector3::Scalar>() - link->c();
+                vertices.push_back(Vertex(v.x(), v.y(), v.z()));
+            }
+        } else {
+            for(int i=0; i < numVertices; ++i){
+                const Vector3 v = T * vertices_[i].cast<Vector3::Scalar>() - link->c();
+                vertices.push_back(Vertex(v.x(), v.z(), -v.y()));
+            }
         }
 
         const int numTriangles = mesh->numTriangles();
@@ -485,8 +502,9 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
 
 ODELink::~ODELink()
 {
-    for(vector<dGeomID>::iterator it=geomID.begin(); it!=geomID.end(); it++)
+    for(vector<dGeomID>::iterator it=geomID.begin(); it!=geomID.end(); it++){
         dGeomDestroy(*it);
+    }
     if(triMeshDataID){
         dGeomTriMeshDataDestroy(triMeshDataID);
     }
@@ -497,9 +515,10 @@ void ODELink::setKinematicStateToODE()
 {
     const Isometry3& T = link->T();
     if(bodyID){
-        dMatrix3 R2 = { T(0,0), T(0,1), T(0,2), 0.0,
-                        T(1,0), T(1,1), T(1,2), 0.0,
-                        T(2,0), T(2,1), T(2,2), 0.0 };
+        dMatrix3 R2 = {
+            T(0,0), T(0,1), T(0,2), 0.0,
+            T(1,0), T(1,1), T(1,2), 0.0,
+            T(2,0), T(2,1), T(2,2), 0.0 };
     
         dBodySetRotation(bodyID, R2);
         const Vector3 lc = link->R() * link->c();
@@ -510,17 +529,19 @@ void ODELink::setKinematicStateToODE()
         dBodySetLinearVel(bodyID, v.x(), v.y(), v.z());
         dBodySetAngularVel(bodyID, w.x(), w.y(), w.z());
 
-    }else{
+    } else {
         for(vector<dGeomID>::iterator it = geomID.begin(); it!=geomID.end(); it++){
             OffsetMap::iterator it0 = offsetMap.find(*it);
             Isometry3 offset(Isometry3::Identity());
-            if(it0!=offsetMap.end())
+            if(it0!=offsetMap.end()){
                 offset = it0->second;
-            Isometry3 T_ = T*offset;
+            }
+            Isometry3 T_ = T * offset;
             Vector3 p = T_.translation() + link->c();
-            dMatrix3 R2 = { T_(0,0), T_(0,1), T_(0,2), 0.0,
-                            T_(1,0), T_(1,1), T_(1,2), 0.0,
-                            T_(2,0), T_(2,1), T_(2,2), 0.0 };
+            dMatrix3 R2 = {
+                T_(0,0), T_(0,1), T_(0,2), 0.0,
+                T_(1,0), T_(1,1), T_(1,2), 0.0,
+                T_(2,0), T_(2,1), T_(2,2), 0.0 };
 
             dGeomSetPosition(*it, p.x(), p.y(), p.z());
             dGeomSetRotation(*it, R2);
@@ -532,9 +553,11 @@ void ODELink::setKinematicStateToODE()
 void ODELink::setKinematicStateToODEflip()
 {
     const Isometry3& T = link->T();
-    dMatrix3 R2 = {  T(0,0),  T(0,1),  T(0,2), 0.0,
-                     T(2,0),  T(2,1),  T(2,2), 0.0,
-                     -T(1,0), -T(1,1), -T(1,2), 0.0 };
+    dMatrix3 R2 = {
+         T(0,0),  T(0,1),  T(0,2), 0.0,
+         T(2,0),  T(2,1),  T(2,2), 0.0,
+        -T(1,0), -T(1,1), -T(1,2), 0.0 };
+    
     if(bodyID){
         dBodySetRotation(bodyID, R2);
         const Vector3 lc = link->R() * link->c();
@@ -545,8 +568,8 @@ void ODELink::setKinematicStateToODEflip()
         dBodySetLinearVel(bodyID, v.x(), v.z(), -v.y());
         dBodySetAngularVel(bodyID, w.x(), w.z(), -w.y());
 
-    }else{
-        const Vector3 c = link->p() + link->R() * link->c();
+    } else {
+        const Vector3 c = link->T() * link->c();
         for(vector<dGeomID>::iterator it = geomID.begin(); it!=geomID.end(); it++){
             dGeomSetPosition(*it, c.x(), c.y(), -c.z());
             dGeomSetRotation(*it, R2);
@@ -601,11 +624,11 @@ void ODELink::getKinematicStateFromODEflip()
 
     const dReal* R = dBodyGetRotation(bodyID);
     link->R() <<
-        R[0],  R[1],  R[2],
+         R[0],  R[1],  R[2],
         -R[8], -R[9], -R[10],
-        R[4],  R[5],  R[6];
-    Vector3 c;
-    toInternal(link->R() * link->c(), c);
+         R[4],  R[5],  R[6];
+
+    Vector3 c = getFlipYZ(link->R() * link->c());
     
     typedef Eigen::Map<const Eigen::Matrix<dReal, 3, 1> > toVector3;
     const Vector3 p = toVector3(dBodyGetPosition(bodyID)) - c;
@@ -674,9 +697,9 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
         dSpaceSetCleanup(spaceID, 0);
     }
 
-    ODELink* rootLink = new ODELink(simImpl, this, 0, Vector3::Zero(), body->rootLink());
+    ODELink* rootLink = new ODELink(simImpl, this, nullptr, Isometry3::Identity(), body->rootLink());
 
-    setKinematicStateToODE(simImpl->flipYZ);
+    setKinematicStateToODE(simImpl->doFlipYZ);
 
     if(simImpl->useWorldCollisionDetector){
         simImpl->bodyCollisionDetector.addBody(
@@ -685,7 +708,7 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
                 return odeLinks[link->index()]; });
     }
 
-    setExtraJoints(simImpl->flipYZ);
+    setExtraJoints(simImpl->doFlipYZ);
 
     if(simImpl->is2Dmode && worldID){
         dJointID planeJointID = dJointCreatePlane2D(worldID, 0);
@@ -705,7 +728,7 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
 }
 
 
-void ODEBody::setExtraJoints(bool flipYZ)
+void ODEBody::setExtraJoints(bool doFlipYZ)
 {
     Body* body = this->body();
     const int n = body->numExtraJoints();
@@ -730,14 +753,13 @@ void ODEBody::setExtraJoints(bool flipYZ)
         }
 
         if(odeLinkPair[1]){
-
             dJointID jointID = 0;
             Link* link = odeLinkPair[0]->link;
-            Vector3 p = link->R() * extraJoint.point(0) + link->p();
+            Vector3 p = link->T() * extraJoint.point(0);
             Vector3 a = link->R() * extraJoint.axis();
-            if(flipYZ){
-                makeInternal(p);
-                makeInternal(a);
+            if(doFlipYZ){
+                flipYZ(p);
+                flipYZ(a);
             }
 
             // \todo do the destroy management for these joints
@@ -757,9 +779,9 @@ void ODEBody::setExtraJoints(bool flipYZ)
 }
 
 
-void ODEBody::setKinematicStateToODE(bool flipYZ)
+void ODEBody::setKinematicStateToODE(bool doFlipYZ)
 {
-    if(!flipYZ){
+    if(!doFlipYZ){
         for(size_t i=0; i < odeLinks.size(); ++i){
             odeLinks[i]->setKinematicStateToODE();
         }
@@ -791,9 +813,9 @@ void ODEBody::setControlValToODE()
 }
 
 
-void ODEBody::getKinematicStateFromODE(bool flipYZ)
+void ODEBody::getKinematicStateFromODE(bool doFlipYZ)
 {
-    if(!flipYZ){
+    if(!doFlipYZ){
         for(size_t i=0; i < odeLinks.size(); ++i){
             odeLinks[i]->getKinematicStateFromODE();
         }
@@ -805,7 +827,7 @@ void ODEBody::getKinematicStateFromODE(bool flipYZ)
 }
 
 
-void ODEBody::updateForceSensors(bool flipYZ)
+void ODEBody::updateForceSensors(bool doFlipYZ)
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(int i=0; i < forceSensors.size(); ++i){
@@ -813,7 +835,7 @@ void ODEBody::updateForceSensors(bool flipYZ)
         const Link* link = sensor->link();
         const dJointFeedback& fb = forceSensorFeedbacks[i];
         Vector3 f, tau;
-        if(!flipYZ){
+        if(!doFlipYZ){
             f   << fb.f2[0], fb.f2[1], fb.f2[2];
             tau << fb.t2[0], fb.t2[1], fb.t2[2];
         } else {
@@ -890,7 +912,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     friction = 1.0;
     isJointLimitMode = false;
     is2Dmode = false;
-    flipYZ = false;
+    doFlipYZ = false;
     useWorldCollisionDetector = false;
 }
 
@@ -919,7 +941,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     friction = org.friction;
     isJointLimitMode = org.isJointLimitMode;
     is2Dmode = org.is2Dmode;
-    flipYZ = org.flipYZ;
+    doFlipYZ = org.doFlipYZ;
     useWorldCollisionDetector = org.useWorldCollisionDetector;
 }
 
@@ -1080,12 +1102,12 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 {
     clear();
 
-    flipYZ = is2Dmode;
+    doFlipYZ = is2Dmode;
 
     Vector3 g = gravity;
     
-    if(flipYZ){
-        toInternal(gravity, g);
+    if(doFlipYZ){
+        flipYZ(g);
     }
 
     worldID = dWorldCreate();
@@ -1288,17 +1310,17 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
 
         if(odeBody->worldID){
-			// Move the following code to the ODEBody class
-			if(is2Dmode){
-				odeBody->alignToZAxisIn2Dmode();
-			}
-			if(!odeBody->sensorHelper.forceSensors().empty()){
-				odeBody->updateForceSensors(flipYZ);
-			}
-			odeBody->getKinematicStateFromODE(flipYZ);
-			if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
-				odeBody->sensorHelper.updateGyroAndAccelerationSensors();
-			}
+            // Move the following code to the ODEBody class
+            if(is2Dmode){
+                odeBody->alignToZAxisIn2Dmode();
+            }
+            if(!odeBody->sensorHelper.forceSensors().empty()){
+                odeBody->updateForceSensors(doFlipYZ);
+            }
+            odeBody->getKinematicStateFromODE(doFlipYZ);
+            if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
+                odeBody->sensorHelper.updateGyroAndAccelerationSensors();
+            }
         }
     }
 
