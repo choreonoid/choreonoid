@@ -602,20 +602,40 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& info)
 
 SgNode* YAMLSceneReaderImpl::readTransformParameters(Mapping& info, SgNode* scene)
 {
+    SgGroupPtr group;
+    
     Matrix3 R;
     bool isRotated = self->readRotation(info, R);
-    Vector3 p;
-    bool isTranslated = self->readTranslation(info, p);
+    Vector3 v;
+    bool isTranslated = self->readTranslation(info, v);
     if(isRotated || isTranslated){
-        SgPosTransform* transform = new SgPosTransform;
+        SgPosTransformPtr transform = new SgPosTransform;
         if(isRotated){
             transform->setRotation(R);
         }
         if(isTranslated){
-            transform->setTranslation(p);
+            transform->setTranslation(v);
         }
-        transform->addChild(scene);
-        return transform;
+        group = transform;
+    }
+    
+    if(read(info, "scale", v)){
+        SgScaleTransformPtr scale = new SgScaleTransform;
+        scale->setScale(v);
+        if(group){
+            group->addChild(scale);
+            scale->addChild(scene);
+            scene = nullptr;
+        } else {
+            group = scale;
+        }
+    }
+
+    if(group){
+        if(scene){
+            group->addChild(scene);
+        }
+        return group.retn();
     }
     return scene;
 }
@@ -685,12 +705,19 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& info)
 
 void YAMLSceneReaderImpl::readDivisionNumber(Mapping& info)
 {
-    meshGenerator.setDivisionNumber(info.get("divisionNumber", defaultDivisionNumber));
+    int n;
+    if(info.read("division_number", n) || info.read("divisionNumber", n)){
+        meshGenerator.setDivisionNumber(n);
+    } else {
+        meshGenerator.setDivisionNumber(defaultDivisionNumber);
+    }
 }
     
 
 SgMesh* YAMLSceneReaderImpl::readBox(Mapping& info)
 {
+    meshGenerator.setExtraDivisionNumber(info.get("extra_division_number", 1));
+
     Vector3 size;
     if(!read(info, "size", size)){
         size.setOnes(1.0);
@@ -709,6 +736,7 @@ SgMesh* YAMLSceneReaderImpl::readSphere(Mapping& info)
 SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& info)
 {
     readDivisionNumber(info);
+    meshGenerator.setExtraDivisionNumber(info.get("extra_division_number", 1));
     
     double radius = info.get("radius", 1.0);
     double height = info.get("height", 1.0);
