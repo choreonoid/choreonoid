@@ -221,17 +221,22 @@ BodyItemInfo* BodySelectionManager::Impl::getOrCreateBodyItemInfo(BodyItem* body
     BodyItemInfo* info = nullptr;
     auto body = bodyItem->body();
     auto iter = bodyItemInfoMap.find(bodyItem);
+    bool needToInitializeLinkSelection = false;
     
     if(iter != bodyItemInfoMap.end()){
         info = iter->second;
+
     } else {
         info = new BodyItemInfo;
-        auto& selection = info->linkSelection;
-        selection.resize(body->numLinks());
+
+        needToInitializeLinkSelection = true;
         if(!link){
-            link = body->findUniqueEndLink();
-            if(!link){
-                link = body->rootLink();
+            if(auto originalItem = bodyItem->findOriginalItem()){
+                auto iter2 = bodyItemInfoMap.find(static_cast<BodyItem*>(originalItem));
+                if(iter2 != bodyItemInfoMap.end()){
+                    info->linkSelection = iter2->second->linkSelection;
+                    needToInitializeLinkSelection = false;
+                }
             }
         }
 
@@ -240,11 +245,20 @@ BodyItemInfo* BodySelectionManager::Impl::getOrCreateBodyItemInfo(BodyItem* body
                 [this, bodyItem](){ onBodyItemDisconnectedFromRoot(bodyItem); });
         
         bodyItemInfoMap[bodyItem] = info;
+
+        if(!link){
+            link = body->findUniqueEndLink();
+            if(!link){
+                link = body->rootLink();
+            }
+        }
+
     }
 
     auto& selection = info->linkSelection;
     selection.resize(body->numLinks());
-    if(link){
+    
+    if(link && needToInitializeLinkSelection){
         selection.assign(selection.size(), false);
         int linkIndex = link->index();
         if(linkIndex < body->numLinks()){
