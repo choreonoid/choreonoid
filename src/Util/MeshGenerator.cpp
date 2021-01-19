@@ -20,10 +20,11 @@ constexpr int defaultDivisionNumber = 20;
 
 MeshGenerator::MeshGenerator()
 {
+    divisionNumber_ = ::defaultDivisionNumber;
+    extraDivisionNumber_ = 1;
     isNormalGenerationEnabled_ = true;
     isBoundingBoxUpdateEnabled_ = true;
     meshFilter = nullptr;
-    divisionNumber_ = ::defaultDivisionNumber;
 }
 
 
@@ -42,12 +43,6 @@ void MeshGenerator::setDivisionNumber(int n)
     } else {
         divisionNumber_ = n;
     }
-}
-
-
-int MeshGenerator::divisionNumber() const
-{
-    return divisionNumber_;
 }
 
 
@@ -75,13 +70,19 @@ bool MeshGenerator::isNormalGenerationEnabled() const
 }
 
 
+MeshFilter* MeshGenerator::getOrCreateMeshFilter()
+{
+    if(!meshFilter){
+        meshFilter = new MeshFilter;
+    }
+    return meshFilter;
+}
+
+
 void MeshGenerator::generateNormals(SgMesh* mesh, double creaseAngle)
 {
     if(isNormalGenerationEnabled_){
-        if(!meshFilter){
-            meshFilter = new MeshFilter;
-        }
-        meshFilter->generateNormals(mesh, creaseAngle);
+        getOrCreateMeshFilter()->generateNormals(mesh, creaseAngle);
     }
 }
 
@@ -102,6 +103,10 @@ SgMesh* MeshGenerator::generateBox(Vector3 size, bool enableTextureCoordinate)
 {
     if(size.x() < 0.0 || size.y() < 0.0 || size.z() < 0.0){
         return nullptr;
+    }
+
+    if(extraDivisionNumber_ >= 2){
+        return generateBoxWithExtraTriangles(size);
     }
 
     const float x = size.x() * 0.5;
@@ -172,6 +177,108 @@ void MeshGenerator::generateTextureCoordinateForBox(SgMesh* mesh)
         2, 1, 3,
         2, 0, 1
     };
+}
+
+
+SgMesh* MeshGenerator::generateBoxWithExtraTriangles(Vector3 size)
+{
+    double maxPatchSize = 0.0;
+    for(int i=0; i < 3; ++i){
+        double patchSize = size[i] / extraDivisionNumber_;
+        if(patchSize > maxPatchSize){
+            maxPatchSize = patchSize;
+        }
+    }
+    int divisions[3];
+    for(int i=0; i < 3; ++i){
+        divisions[i] = std::ceil(size[i] / maxPatchSize);
+    }
+
+    auto mesh = new SgMesh;
+    auto vertices = mesh->getOrCreateVertices();
+
+    vertices->reserve(
+        2 * ((divisions[0] + 1) * (divisions[1] + 1) +
+             (divisions[1] + 1) * (divisions[2] + 1) +
+             (divisions[2] + 1) * (divisions[0] + 1)));
+    
+    mesh->reserveNumTriangles(
+        4 * (divisions[0] * divisions[1] +
+             divisions[1] * divisions[2] +
+             divisions[2] * divisions[0]));
+
+    // X-Y plane
+    generateBoxPlaneMesh(size, mesh, vertices, 0, 1, 2, divisions);
+    // Y-Z plane
+    generateBoxPlaneMesh(size, mesh, vertices, 1, 2, 0, divisions);
+    // X-Z plane
+    generateBoxPlaneMesh(size, mesh, vertices, 2, 0, 1, divisions);
+
+    /**!
+       \note If the overlap vertices can be shared by the planes in the above process,
+       the following function call can be removed to improve the performacne.
+    */
+    getOrCreateMeshFilter()->removeRedundantVertices(mesh);
+
+    mesh->setPrimitive(SgMesh::Box(size));
+    
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
+
+    generateNormals(mesh, 0.0);
+    
+    return mesh;
+}
+
+
+void MeshGenerator::generateBoxPlaneMesh
+(const Vector3& size, SgMesh* mesh, SgVertexArray* vertices, int axis1, int axis2, int axis3, int* divisions)
+{
+    int n1 = divisions[axis1];
+    int n2 = divisions[axis2];
+    int m1 = n1 + 1;
+    int m2 = n2 + 1;
+    float size1 = size[axis1];
+    float size2 = size[axis2];
+
+    int topOffset = vertices->size();
+
+    // generate vertices
+    Vector3f v;
+    for(int i=0; i < 2; ++i){
+        v[axis3] = size[axis3] / 2.0;
+        if(i == 1){
+            v[axis3] = -v[axis3];
+        }
+        for(int j=0; j <= n2; ++j){
+            v[axis2] = -(size2 / 2.0) + j * (size2 / n2);
+            for(int k=0; k <= n1; ++k){
+                v[axis1] = -(size1 / 2.0) + k * (size1 / n1);
+                vertices->push_back(v);
+            }
+        }
+    }
+
+    // generate triangles
+    for(int i=0; i < 2; ++i){
+        int offset1 = topOffset;
+        if(i == 1){
+            offset1 += m1 * m2;
+        }
+        for(int j=0; j < n2; ++j){
+            int offset = offset1 + j * m1;
+            for(int k=0; k < n1; ++k){
+                if(i == 0){
+                    mesh->addTriangle(offset + k, offset + k + 1, offset + k + m1);
+                    mesh->addTriangle(offset + k + 1, offset + k + 1 + m1, offset + k + m1);
+                } else {
+                    mesh->addTriangle(offset + k, offset + k + m1, offset + k + 1);
+                    mesh->addTriangle(offset + k + 1, offset + k + m1, offset + k + 1 + m1);
+                }
+            }
+        }
+    }
 }
 
 
@@ -314,45 +421,71 @@ SgMesh* MeshGenerator::generateCylinder
     }
 
     auto mesh = new SgMesh;
-    
-    auto& vertices = *mesh->setVertices(new SgVertexArray());
-    vertices.resize(divisionNumber_ * 2);
+    auto& vertices = *mesh->getOrCreateVertices();
+    const int n = divisionNumber_;
+    const int m = side ? extraDivisionNumber_ : 1;
+    int size = n * (m + 1);
+    int topCenterIndex;
+    int bottomCenterIndex;
+    if(top){
+        topCenterIndex = size;
+        size += 1;
+    }
+    if(bottom){
+        bottomCenterIndex = size;
+        size += 1;
+    }
+    vertices.resize(size);
 
-    const double y = height / 2.0;
-    for(int i=0 ; i < divisionNumber_ ; i++ ){
-        const double angle = i * 2.0 * PI / divisionNumber_;
-        Vector3f& vtop = vertices[i];
-        Vector3f& vbottom = vertices[i + divisionNumber_];
-        vtop[0] = vbottom[0] = radius * cos(angle);
-        vtop[2] = vbottom[2] = radius * sin(angle);
-        vtop[1]    =  y;
-        vbottom[1] = -y;
+    for(int i=0 ; i < n ; ++i){
+        const double theta = i * 2.0 * PI / n;
+        const double x = radius * cos(theta);
+        const double z = radius * sin(theta);
+        for(int j=0; j <= m; ++j){
+            vertices[i + j * n] << x, (height / 2.0 - j * (height / m)), z;
+        }
     }
 
-    const int topCenterIndex = vertices.size();
-    vertices.push_back(Vector3f(0.0f,  y, 0.0f));
-    const int bottomCenterIndex = vertices.size();
-    vertices.push_back(Vector3f(0.0f, -y, 0.0f));
+    if(top){
+        vertices[topCenterIndex] << 0.0f, height / 2.0, 0.0f;
+    }
+    if(bottom){
+        vertices[bottomCenterIndex] << 0.0f, -height / 2.0, 0.0f;
+    }
 
-    mesh->reserveNumTriangles(divisionNumber_ * 4);
-
-    for(int i=0; i < divisionNumber_; ++i){
+    int nt = 0;
+    if(top){
+        nt += n;
+    }
+    if(bottom){
+        nt += n;
+    }
+    if(side){
+        nt += 2 * n * m;
+    }
+    mesh->reserveNumTriangles(nt);
+    
+    for(int i=0; i < n; ++i){
         // top face
         if(top){
-            mesh->addTriangle(topCenterIndex, (i+1) % divisionNumber_, i);
+            mesh->addTriangle(topCenterIndex, (i + 1) % n, i);
         }
-        // side face (upward convex triangle)
-        if(side){        
-            mesh->addTriangle(i, ((i+1) % divisionNumber_) + divisionNumber_, i + divisionNumber_);
-            // side face (downward convex triangle)
-            mesh->addTriangle(i, (i+1) % divisionNumber_, ((i + 1) % divisionNumber_) + divisionNumber_);
+        // side face
+        if(side){
+            for(int j=0; j < m; ++j){
+                int offset = n * j;
+                // upward convex triangle
+                mesh->addTriangle(offset + i, offset + n + (i + 1) % n, offset + n + i);
+                // side face (downward convex triangle)
+                mesh->addTriangle(offset + i, offset + (i + 1) % n, offset + n + (i + 1) % n);
+            }
         }
         // bottom face
         if(bottom){
-            mesh->addTriangle(bottomCenterIndex, i + divisionNumber_, ((i+1) % divisionNumber_) + divisionNumber_);
+            mesh->addTriangle(bottomCenterIndex, m * n + i, m * n + (i + 1) % n);
         }
     }
-
+    
     mesh->setPrimitive(SgMesh::Cylinder(radius, height));
 
     if(isBoundingBoxUpdateEnabled_){
@@ -361,7 +494,7 @@ SgMesh* MeshGenerator::generateCylinder
 
     generateNormals(mesh, PI / 2.0);
     
-    if(enableTextureCoordinate){
+    if(enableTextureCoordinate && m == 1){
         generateTextureCoordinateForCylinder(mesh);
     }
 

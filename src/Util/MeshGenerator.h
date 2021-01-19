@@ -22,8 +22,11 @@ public:
     ~MeshGenerator();
 
     void setDivisionNumber(int n);
-    int divisionNumber() const;
+    int divisionNumber() const { return divisionNumber_; }
     static int defaultDivisionNumber();
+
+    void setExtraDivisionNumber(int n) { extraDivisionNumber_ = n; }
+    int extraDivisionNumber(int n) { return extraDivisionNumber_; }
 
     void setNormalGenerationEnabled(bool on);
     // \deprecated
@@ -93,10 +96,15 @@ public:
 
 private:
     int divisionNumber_;
+    int extraDivisionNumber_;
     bool isNormalGenerationEnabled_;
     bool isBoundingBoxUpdateEnabled_;
     MeshFilter* meshFilter;
 
+    MeshFilter* getOrCreateMeshFilter();
+    SgMesh* generateBoxWithExtraTriangles(Vector3 size);
+    void generateBoxPlaneMesh(
+        const Vector3& size, SgMesh* mesh, SgVertexArray* vertices, int axis1, int axis2, int axis3, int* divisions);
     void generateNormals(SgMesh* mesh, double creaseAngle);
     void generateTextureCoordinateForBox(SgMesh* mesh);
     void generateTextureCoordinateForSphere(SgMesh* mesh);
