@@ -2,7 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PyEigenTypes.h"
+#include "PyUtil.h"
 #include "../PolyhedralRegion.h"
 
 namespace py = pybind11;

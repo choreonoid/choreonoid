@@ -3,12 +3,10 @@
   @author Shin'ichiro Nakaoka
  */
 
-#include "PyReferenced.h"
-#include "PySignal.h"
+#include "PyUtil.h"
 #include "../Task.h"
 #include "../AbstractTaskSequencer.h"
 #include "../ValueTree.h"
-#include <pybind11/stl.h>
 #include <set>
 #include <map>
 

@@ -2,7 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PySignal.h"
+#include "PyUtil.h"
 #include "../Signal.h"
 #include "../ConnectionSet.h"
 

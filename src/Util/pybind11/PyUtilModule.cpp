@@ -2,9 +2,9 @@
   @author Shizuko Hattori
 */
 
+#include "PyUtil.h"
 #include "../ExecutablePath.h"
 #include "../FloatingNumberString.h"
-#include <pybind11/pybind11.h>
 
 using namespace cnoid;
 namespace py = pybind11;

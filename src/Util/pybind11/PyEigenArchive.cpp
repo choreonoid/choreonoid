@@ -2,8 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PyEigenTypes.h"
-#include "PyReferenced.h"
+#include "PyUtil.h"
 #include "../EigenArchive.h"
 #include "../ValueTree.h"
 

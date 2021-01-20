@@ -6,8 +6,7 @@
 #include "../ReferencedObjectSeq.h"
 #include "../ValueTree.h"
 #include "../YAMLWriter.h"
-#include "PyReferenced.h"
-#include <pybind11/pybind11.h>
+#include "PyUtil.h"
 
 using namespace std;
 using namespace cnoid;

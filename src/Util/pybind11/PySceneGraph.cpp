@@ -2,8 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PyReferenced.h"
-#include "PyEigenTypes.h"
+#include "PyUtil.h"
 #include "../SceneGraph.h"
 #include "../SceneCameras.h"
 #include "../CloneMap.h"

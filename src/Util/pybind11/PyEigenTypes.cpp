@@ -2,8 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PyEigenTypes.h"
-#include "PySignal.h"
+#include "PyUtil.h"
 #include "../EigenTypes.h"
 #include "../EigenUtil.h"
 
