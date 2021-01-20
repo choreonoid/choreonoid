@@ -93,7 +93,7 @@ contactMaterials:
     frictionModel: [ cone, direct ]
   -
     materials: [ Ground, Tire2 ]
-    friction: 10
+    friction: 5
     restitution: 0.0
     frictionModel: [ cone, direct ]
   -
