@@ -212,8 +212,15 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets
                     }
                 }
             } else if(rule == "enabled_link_group"){
+                auto& enabledLinks = *value->toListing();
                 if(isSelfCollisionDetectionEnabled){
-
+                    for(int i=0; i < enabledLinks.size(); ++i){
+                        for(int j = i + 1; j < enabledLinks.size(); ++j){
+                            auto link1 = body->link(enabledLinks[i].toString());
+                            auto link2 = body->link(enabledLinks[j].toString());
+                            ignoredLinkPairs.erase(IdPair<int>(link1->index(), link2->index()));
+                        }
+                    }
                 }
             } else if(rule == "disabled_links"){
                 if(value->isString() && value->toString() == "all"){
@@ -237,9 +244,19 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets
                     }
                 }
             } else if(rule == "disabled_link_group"){
+                auto& disabledLinks = *value->toListing();
                 if(isSelfCollisionDetectionEnabled){
-
+                    for(int i=0; i < disabledLinks.size(); ++i){
+                        for(int j = i + 1; j < disabledLinks.size(); ++j){
+                            auto link1 = body->link(disabledLinks[i].toString());
+                            auto link2 = body->link(disabledLinks[j].toString());
+                            if(link1 && link2){
+                                ignoredLinkPairs.emplace(link1->index(), link2->index());
+                            }
+                        }
+                    }
                 }
+
             } else {
                 // put warning
             }
