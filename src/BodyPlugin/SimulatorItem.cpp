@@ -201,10 +201,6 @@ public:
 class SimulatorItem::Impl : public QThread, public ControllerIO
 {
 public:
-    Impl(SimulatorItem* self);
-    Impl(SimulatorItem* self, const Impl& org);
-    ~Impl();
-            
     SimulatorItem* self;
     WorldItem* worldItem;
 
@@ -312,6 +308,10 @@ public:
 
     CloneMap cloneMap;
         
+    Impl(SimulatorItem* self);
+    Impl(SimulatorItem* self, const Impl& org);
+    ~Impl();
+    void onSelectionChanged(bool on);
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
     void clearSimulation();
     bool startSimulation(bool doReset);
@@ -358,14 +358,15 @@ public:
     ScopedConnection selectionConnection;
     ScopedConnection timeChangeConnection;
 
-    SimulatedMotionEngineManager(){
+    SimulatedMotionEngineManager()
+    {
         selectionConnection.reset(
             RootItem::instance()->sigSelectedItemsChanged().connect(
                 [&](const ItemList<>& selected){ onSelectedItemsChanged(selected); }));
     }
 
-    void onSelectedItemsChanged(ItemList<SimulatorItem> selected){
-
+    void onSelectedItemsChanged(ItemList<SimulatorItem> selected)
+    {
         bool changed = false;
         
         if(selected.empty()){
@@ -399,7 +400,7 @@ public:
 
     bool setTime(double time);
 };
-    
+        
 }
 
 namespace {
@@ -1281,6 +1282,9 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     recordCollisionData = false;
 
     timeBar = TimeBar::instance();
+    fillLevelId = -1;
+
+    self->sigSelectionChanged().connect([&](bool on){ onSelectionChanged(on); });
 }
 
 
@@ -1334,6 +1338,21 @@ void SimulatorItem::onDisconnectedFromRoot()
 {
     impl->stopSimulation(true, true);
     impl->worldItem = nullptr;
+}
+
+
+void SimulatorItem::Impl::onSelectionChanged(bool on)
+{
+    if(on){
+        if(self->isActive() && isRecordingEnabled && fillLevelId < 0){
+            fillLevelId = timeBar->startFillLevelUpdate();
+        }
+    } else {
+        if(fillLevelId >= 0){
+            timeBar->stopFillLevelUpdate(fillLevelId);
+            fillLevelId = -1;
+        }
+    }
 }
 
 
@@ -1882,7 +1901,9 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         }
 
         if(isRecordingEnabled){
-            fillLevelId = timeBar->startFillLevelUpdate();
+            if(fillLevelId < 0){
+                fillLevelId = timeBar->startFillLevelUpdate();
+            }
         }
         if(!timeBar->isDoingPlayback()){
             timeBar->setTime(0.0);
@@ -2244,7 +2265,7 @@ void SimulatorItem::Impl::flushRecords()
         info->flushLog();
     }
 
-    if(isRecordingEnabled){
+    if(isRecordingEnabled && fillLevelId >= 0){
         double fillLevel = frame / worldFrameRate;
         timeBar->updateFillLevel(fillLevelId, fillLevel);
     } else {
@@ -2317,7 +2338,11 @@ void SimulatorItem::pauseSimulation()
 
 void SimulatorItem::Impl::pauseSimulation()
 {
+    if(fillLevelId >= 0){
+        timeBar->stopFillLevelUpdate(fillLevelId);
+    }
     pauseRequested = true;
+    
 }
 
 
@@ -2329,6 +2354,9 @@ void SimulatorItem::restartSimulation()
 
 void SimulatorItem::Impl::restartSimulation()
 {
+    if(fillLevelId < 0){
+        fillLevelId = timeBar->startFillLevelUpdate();
+    }
     pauseRequested = false;
 }
 
@@ -2383,8 +2411,9 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
 
     flushRecords();
 
-    if(isRecordingEnabled){
+    if(isRecordingEnabled && fillLevelId >= 0){
         timeBar->stopFillLevelUpdate(fillLevelId);
+        fillLevelId = -1;
     }
 
     mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
