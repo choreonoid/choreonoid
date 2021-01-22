@@ -1454,6 +1454,7 @@ bool Item::replace(Item* originalItem)
         replacementToOriginalItemMap[this] = originalItem;
         originalToReplacementItemMap[originalItem] = this;
 
+        assign(originalItem);
         originalItem->parentItem()->insertChild(originalItem, this);
         // move children to the reload item
         ItemPtr child = originalItem->childItem();
@@ -1465,7 +1466,6 @@ bool Item::replace(Item* originalItem)
             }
             child = nextChild;
         }
-        assign(originalItem);
         originalItem->removeFromParentItem();
 
         clearItemReplacementMapsLater();
