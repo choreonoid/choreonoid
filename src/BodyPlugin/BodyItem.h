@@ -124,12 +124,16 @@ public:
     
     SignalProxy<void()> sigKinematicStateEdited();
 
-    void enableCollisionDetection(bool on);
     bool isCollisionDetectionEnabled() const;
+    void setCollisionDetectionEnabled(bool on);
+    [[deprecated("Use setCollisionDetectionEnabled")]]
+    void enableCollisionDetection(bool on) { setCollisionDetectionEnabled(on); }
     
-    void enableSelfCollisionDetection(bool on);
     bool isSelfCollisionDetectionEnabled() const;        
-
+    void setSelfCollisionDetectionEnabled(bool on);
+    [[deprecated("Use setSelfCollisionDetectionEnabled")]]
+    void enableSelfCollisionDetection(bool on) { setSelfCollisionDetectionEnabled(on); }
+    
     void clearCollisions();
 
     std::vector<CollisionLinkPairPtr>& collisions() { return collisions_; }

@@ -52,10 +52,10 @@ void exportBodyItem(py::module m)
              (void (BodyItem::*)(Connection&, bool, bool, bool)) &BodyItem::notifyKinematicStateChange,
              py::arg("connectionToBlock"),
              py::arg("requestFK") = false, py::arg("requestVelFK") = false, py::arg("requestAccFK") = false)
-        .def("enableCollisionDetection", &BodyItem::enableCollisionDetection)
         .def("isCollisionDetectionEnabled", &BodyItem::isCollisionDetectionEnabled)
-        .def("enableSelfCollisionDetection", &BodyItem::enableSelfCollisionDetection)
+        .def("setCollisionDetectionEnabled", &BodyItem::setCollisionDetectionEnabled)
         .def("isSelfCollisionDetectionEnabled", &BodyItem::isSelfCollisionDetectionEnabled)
+        .def("setSelfCollisionDetectionEnabled", &BodyItem::setSelfCollisionDetectionEnabled)
         .def("clearCollisions", &BodyItem::clearCollisions)
         .def_property_readonly("centerOfMass", &BodyItem::centerOfMass)
         .def("doLegIkToMoveCm", &BodyItem::doLegIkToMoveCm)
@@ -64,6 +64,8 @@ void exportBodyItem(py::module m)
         .def("setStance", &BodyItem::setStance)
 
         // deprecated
+        .def("enableCollisionDetection", &BodyItem::setCollisionDetectionEnabled)
+        .def("enableSelfCollisionDetection", &BodyItem::setSelfCollisionDetectionEnabled)
         .def("getBody", &BodyItem::body)
         .def("getCurrentBaseLink", &BodyItem::currentBaseLink)
         .def("getSigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)

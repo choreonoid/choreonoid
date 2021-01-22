@@ -180,8 +180,8 @@ public:
     void notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect);
     void emitSigKinematicStateChanged();
     void emitSigKinematicStateEdited();
-    bool enableCollisionDetection(bool on);
-    bool enableSelfCollisionDetection(bool on);
+    bool setCollisionDetectionEnabled(bool on);
+    bool setSelfCollisionDetectionEnabled(bool on);
     void updateCollisionDetectorLater();
     void doAssign(Item* srcItem);
     void setLocationEditable(bool on, bool updateInitialPositionWhenLocked);
@@ -1225,13 +1225,13 @@ void BodyItem::Impl::emitSigKinematicStateEdited()
 }
 
 
-void BodyItem::enableCollisionDetection(bool on)
+void BodyItem::setCollisionDetectionEnabled(bool on)
 {
-    impl->enableCollisionDetection(on);
+    impl->setCollisionDetectionEnabled(on);
 }
 
 
-bool BodyItem::Impl::enableCollisionDetection(bool on)
+bool BodyItem::Impl::setCollisionDetectionEnabled(bool on)
 {
     if(on != isCollisionDetectionEnabled){
         isCollisionDetectionEnabled = on;
@@ -1242,13 +1242,13 @@ bool BodyItem::Impl::enableCollisionDetection(bool on)
 }
 
 
-void BodyItem::enableSelfCollisionDetection(bool on)
+void BodyItem::setSelfCollisionDetectionEnabled(bool on)
 {
-    impl->enableSelfCollisionDetection(on);
+    impl->setSelfCollisionDetectionEnabled(on);
 }
 
 
-bool BodyItem::Impl::enableSelfCollisionDetection(bool on)
+bool BodyItem::Impl::setSelfCollisionDetectionEnabled(bool on)
 {
     if(on != isSelfCollisionDetectionEnabled){
         isSelfCollisionDetectionEnabled = on;
@@ -1791,9 +1791,9 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Static"), body->isStaticModel(),
                 [&](bool on){ return on ? makeBodyStatic() : makeBodyDynamic(); });
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
-                [&](bool on){ return enableCollisionDetection(on); });
+                [&](bool on){ return setCollisionDetectionEnabled(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
-                [&](bool on){ return enableSelfCollisionDetection(on); });
+                [&](bool on){ return setSelfCollisionDetectionEnabled(on); });
     putProperty(_("Location editable"), self->isLocationEditable(),
                 [&](bool on){ setLocationEditable(on, true); return true; });
     putProperty(_("Scene sensitive"), self->isSceneSensitive(),
@@ -2020,10 +2020,10 @@ bool BodyItem::Impl::restore(const Archive& archive)
     }
 
     if(archive.read("collisionDetection", on)){
-        enableCollisionDetection(on);
+        setCollisionDetectionEnabled(on);
     }
     if(archive.read("selfCollisionDetection", on)){
-        enableSelfCollisionDetection(on);
+        setSelfCollisionDetectionEnabled(on);
     }
 
     if(archive.read("location_editable", on) ||
