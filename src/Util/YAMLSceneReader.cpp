@@ -765,6 +765,7 @@ SgMesh* YAMLSceneReaderImpl::readCone(Mapping& info)
 SgMesh* YAMLSceneReaderImpl::readCapsule(Mapping& info)
 {
     readDivisionNumber(info);
+    meshGenerator.setExtraDivisionNumber(info.get("extra_division_number", 1));
     
     double radius = info.get("radius", 1.0);
     double height = info.get("height", 1.0);

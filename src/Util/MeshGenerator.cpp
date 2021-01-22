@@ -722,46 +722,65 @@ SgMesh* MeshGenerator::generateCapsule(double radius, double height)
 
     auto mesh = new SgMesh;
 
-    int vdn = divisionNumber_ / 2;  // latitudinal division number
-    if(vdn%2)
+    int vdn = divisionNumber_ / 2; // latitudinal division number
+    if(vdn % 2){
         vdn +=1;
-
-    const int hdn = divisionNumber_;      // longitudinal division number
-
+    }
+    const int n = vdn + extraDivisionNumber_ - 1;
+    const int hdn = divisionNumber_; // longitudinal division number
+    int size = n * hdn + 2;
+                
     auto& vertices = *mesh->setVertices(new SgVertexArray());
-    vertices.reserve( vdn * hdn + 2);
+    vertices.reserve(size);
 
-    for(int i=1; i < vdn+1; i++){ // latitudinal direction
-        double y;
-        double tv;
-        if(i <= vdn / 2){
-            y = height / 2.0;
-            tv = i * PI / vdn;
-        }else{
-            y = - height / 2.0;
-            tv = (i-1) * PI / vdn;
+    // top half-sphere
+    double y0 = height / 2.0;
+    for(int i = 1; i <= vdn / 2; ++i){
+        double theta  = i * PI / vdn;
+        for(int j = 0; j < hdn; ++j){
+            const double phi = j * 2.0 * PI / hdn;
+            vertices.emplace_back(
+                radius * sin(theta) * cos(phi),
+                radius * cos(theta) + y0,
+                radius * sin(theta) * sin(phi));
         }
-
-        for(int j=0; j < hdn; j++){ // longitudinal direction
-            const double th = j * 2.0 * PI / hdn;
-            vertices.push_back(Vector3f(radius * sin(tv) * cos(th), radius * cos(tv) + y, radius * sin(tv) * sin(th)));
+    }
+    // Cylinder pat divisions
+    for(int i = 1; i < extraDivisionNumber_; ++i){
+        for(int j = 0; j < hdn; ++j){
+            const double phi = j * 2.0 * PI / hdn;
+            vertices.emplace_back(
+                radius * cos(phi),
+                y0 - i * height / extraDivisionNumber_,
+                radius * sin(phi));
+        }
+    }
+    // bottom half-sphere
+    y0 = -height / 2.0;
+    for(int i = vdn / 2 + 1; i <= vdn; ++i){
+        double theta  = (i - 1) * PI / vdn;
+        for(int j = 0; j < hdn; ++j){
+            const double phi = j * 2.0 * PI / hdn;
+            vertices.emplace_back(
+                radius * sin(theta) * cos(phi),
+                radius * cos(theta) + y0,
+                radius * sin(theta) * sin(phi));
         }
     }
 
     const int topIndex  = vertices.size();
-    vertices.push_back(Vector3f(0.0f,  radius + height /2.0, 0.0f));
+    vertices.emplace_back(0.0f,  radius + height / 2.0, 0.0f);
     const int bottomIndex = vertices.size();
-    vertices.push_back(Vector3f(0.0f, -radius - height / 2.0, 0.0f));
+    vertices.emplace_back(0.0f, -radius - height / 2.0, 0.0f);
 
-    mesh->reserveNumTriangles(vdn * hdn * 2);
+    mesh->reserveNumTriangles(n * hdn * 2);
 
     // top faces
-    for(int i=0; i < hdn; ++i){
-        mesh->addTriangle(topIndex, (i+1) % hdn, i);
+    for(int i = 0; i < hdn; ++i){
+        mesh->addTriangle(topIndex, (i + 1) % hdn, i);
     }
-
     // side faces
-    for(int i=0; i < vdn - 1; ++i){
+    for(int i = 0; i < n - 1; ++i){
         const int upper = i * hdn;
         const int lower = (i + 1) * hdn;
         for(int j=0; j < hdn; ++j) {
@@ -771,11 +790,10 @@ SgMesh* MeshGenerator::generateCapsule(double radius, double height)
             mesh->addTriangle(j + upper, ((j + 1) % hdn) + upper, ((j + 1) % hdn) + lower);
         }
     }
-
     // bottom faces
-    const int offset = (vdn - 1) * hdn;
-    for(int i=0; i < hdn; ++i){
-        mesh->addTriangle(bottomIndex, (i % hdn) + offset, ((i+1) % hdn) + offset);
+    const int offset = (n - 1) * hdn;
+    for(int i = 0; i < hdn; ++i){
+        mesh->addTriangle(bottomIndex, (i % hdn) + offset, ((i + 1) % hdn) + offset);
     }
 
     mesh->setPrimitive(SgMesh::Capsule(radius, height));
