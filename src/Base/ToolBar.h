@@ -51,7 +51,7 @@ public:
 
     ToolBar& setInsertionPosition(int index);
 
-    void setVisibleByDefault(bool on);
+    void setVisibleByDefault(bool on = true);
     bool isVisibleByDefault() const { return isVisibleByDefault_; }
 
     void setStretchable(bool on);

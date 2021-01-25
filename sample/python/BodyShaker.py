@@ -6,18 +6,18 @@ from numpy import *
 
 rootItem = RootItem.instance
 
-class ShakeBodies:
+class BodyShaker:
     def __init__(self):
+        self.connections = ScopedConnectionSet()
+
         toolBar = ToolBar("ShakeBar")
-        toolBar.setVisibleByDefault(True)
         self.button = toolBar.addToggleButton("Shake")
         self.button.setChecked(True)
-        self.button.toggled.connect(self.onButtonToggled)
-        PythonPlugin.instance.addToolBar(toolBar)
+        self.connections.add(self.button.toggled.connect(self.onButtonToggled))
+        PythonPlugin.instance.mountToolBar(toolBar)
 
         self.bodyItems = []
         self.dp = array([0.0, 0.0, 0.01])
-        self.connections = ScopedConnectionSet()
         self.connections.add(
             rootItem.sigSelectedItemsChanged.connect(self.onSelectionChanged))
         self.timer = Timer()
@@ -42,4 +42,10 @@ class ShakeBodies:
             bodyItem.notifyKinematicStateChange()
         self.dp = -self.dp
 
-shakeBodies = ShakeBodies()
+try:
+    # This is necessary to release the existing instance
+    bodyShaker.connections.disconnect()
+except NameError:
+    pass
+
+bodyShaker = BodyShaker()
