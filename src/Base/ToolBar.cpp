@@ -81,10 +81,10 @@ public:
 }
 
 
-ToolBar::ToolBar(const QString& title)
+ToolBar::ToolBar(const QString& name)
 {
-    setWindowTitle(title);
-    setObjectName(title);
+    setWindowTitle(name);
+    setObjectName(name);
 
     mainWindow = MainWindow::instance();
 

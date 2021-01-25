@@ -462,9 +462,7 @@ ItemList<> ProjectManager::Impl::loadProject
 
             Archive* barStates = archive->findSubArchive("toolbars");
             if(barStates->isValid()){
-                vector<ToolBar*> toolBars;
-                mainWindow->getAllToolBars(toolBars);
-                if(restoreObjectStates(archive, barStates, toolBars, "bar")){
+                if(restoreObjectStates(archive, barStates, mainWindow->toolBars(), "bar")){
                     loaded = true;
                 }
             }
@@ -620,9 +618,7 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
 
     bool stored = ViewManager::storeViewStates(archive, "views");
 
-    vector<ToolBar*> toolBars;
-    mainWindow->getAllToolBars(toolBars);
-    stored |= storeObjects(*archive, "toolbars", toolBars);
+    stored |= storeObjects(*archive, "toolbars", mainWindow->toolBars());
 
     ArchiverMapMap::iterator p;
     for(p = archivers.begin(); p != archivers.end(); ++p){

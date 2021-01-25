@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-using namespace std::placeholders;
 
 namespace {
 
@@ -50,7 +49,6 @@ public:
     QWidget* centralWidget;
     QVBoxLayout* centralVBox;
 
-    std::vector<ToolBar*> toolBars;
     ToolBarArea* toolBarArea;
 
     ViewArea* viewArea;
@@ -299,15 +297,15 @@ void MainWindow::removeToolBar(ToolBar* toolbar)
 }
 
 
-void MainWindow::getAllToolBars(std::vector<ToolBar*>& out_toolBars)
+std::vector<ToolBar*> MainWindow::toolBars() const
 {
-    impl->toolBarArea->getAllToolBars(out_toolBars);
+    return impl->toolBarArea->toolBars();
 }
 
 
-void MainWindow::getVisibleToolBars(std::vector<ToolBar*>& out_toolBars)
+std::vector<ToolBar*> MainWindow::visibleToolBars() const
 {
-    impl->toolBarArea->getVisibleToolBars(out_toolBars);
+    return impl->toolBarArea->visibleToolBars();
 }
 
 

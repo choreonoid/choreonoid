@@ -24,7 +24,7 @@ class CNOID_EXPORT ToolBar : public QWidget
     Q_OBJECT
 public:
 
-    ToolBar(const QString& title);
+    ToolBar(const QString& name);
     virtual ~ToolBar();
 
     ToolButton* addButton(const QString& text, const QString& tooltip = QString());

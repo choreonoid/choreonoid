@@ -22,6 +22,8 @@ void exportPyMainWindow(py::module m)
         .def("setProjectTitle", &MainWindow::setProjectTitle)
         .def_property_readonly("toolBarArea", &MainWindow::toolBarArea)
         .def_property_readonly("viewArea", &MainWindow::viewArea, py::return_value_policy::reference)
+        .def_property_readonly("toolBars", &MainWindow::toolBars, py::return_value_policy::reference)
+        .def_property_readonly("visibleToolBars", &MainWindow::visibleToolBars, py::return_value_policy::reference)
         .def("addToolBar", &MainWindow::addToolBar)
 
         // deprecated

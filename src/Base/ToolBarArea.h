@@ -23,9 +23,9 @@ public:
     ToolBarArea(QWidget* parent);
     ~ToolBarArea();
 
-    void getAllToolBars(std::vector<ToolBar*>& out_toolBars);
-    void getVisibleToolBars(std::vector<ToolBar*>& out_toolBars);
-
+    std::vector<ToolBar*> toolBars() const;
+    std::vector<ToolBar*> visibleToolBars() const;
+    
     void setInitialLayout(MappingPtr archive);
     void doInitialLayout();
     void restoreLayout(MappingPtr archive);

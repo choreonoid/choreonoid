@@ -21,14 +21,10 @@
 
 using namespace std;
 using namespace cnoid;
-using namespace std::placeholders;
 
 namespace {
 
 const bool DEBUG_MODE = false;
-
-typedef std::vector<ToolBar*> ToolBarArray;
-
 
 class ToolBarRow
 {
@@ -41,7 +37,7 @@ public:
     }
 
     ToolBarArea* toolBarArea;
-    ToolBarArray toolBars;
+    vector<ToolBar*> toolBars;
     HSeparator separator;
     int height;
 };
@@ -88,9 +84,9 @@ public:
     void setNewToolBar(ToolBar* toolBar, vector<int>& numStrechablesOfRow);
     void layoutToolBars();
     void layoutToolBarRow(ToolBarRowPtr toolBarRow, int& io_rowTop, bool isNewBottomRow);
-    void layoutToolBarRowWithDraggedToolBar(ToolBarArray& toolBars, int rowTop, int rowHeight);
-    int normalizeLayoutPriorities(ToolBarArray& toolBars);
-    void layoutToolBarRowPart(ToolBarArray& toolBars, int rowTop, int rowHeight, int partLeft, int partRight);
+    void layoutToolBarRowWithDraggedToolBar(vector<ToolBar*>& toolBars, int rowTop, int rowHeight);
+    int normalizeLayoutPriorities(vector<ToolBar*>& toolBars);
+    void layoutToolBarRowPart(vector<ToolBar*>& toolBars, int rowTop, int rowHeight, int partLeft, int partRight);
 
     void resizeEvent(QResizeEvent* event);
 
@@ -107,7 +103,7 @@ public:
     };
         
     set<ToolBar*> toolBars;
-    ToolBarArray newToolBarsToShow;
+    vector<ToolBar*> newToolBarsToShow;
     deque<ToolBarRowPtr> toolBarRows;
     ToolBarRowPtr spilledToolBarRow;
     MappingPtr initialLayout;
@@ -135,7 +131,7 @@ ToolBarArea::ToolBarArea(QWidget* parent)
 ToolBarAreaImpl::ToolBarAreaImpl(ToolBarArea* self)
     : self(self),
       spilledToolBarRow(new ToolBarRow(self)),
-      layoutToolBarsLater(std::bind(&ToolBarAreaImpl::layoutToolBars, this))
+      layoutToolBarsLater([this](){ layoutToolBars(); })
 {
     isBeforeDoingInitialLayout = true;
     defaultOrderIndex = 0;
@@ -160,26 +156,30 @@ ToolBarAreaImpl::~ToolBarAreaImpl()
 }
 
 
-void ToolBarArea::getAllToolBars(std::vector<ToolBar*>& out_toolBars)
+std::vector<ToolBar*> ToolBarArea::toolBars() const
 {
-    out_toolBars.clear();
-    for(set<ToolBar*>::iterator p = impl->toolBars.begin(); p != impl->toolBars.end(); ++p){
-        out_toolBars.push_back(*p);
+    vector<ToolBar*> bars;
+    bars.reserve(impl->toolBars.size());
+    for(auto& bar : impl->toolBars){
+        bars.push_back(bar);
     }
+    return bars;
 }
 
-
-void ToolBarArea::getVisibleToolBars(std::vector<ToolBar*>& out_toolBars)
+    
+std::vector<ToolBar*> ToolBarArea::visibleToolBars() const
 {
-    out_toolBars.clear();
+    vector<ToolBar*> bars;
+    bars.reserve(impl->toolBars.size());
     
     for(size_t i=0; i < impl->toolBarRows.size(); ++i){
         ToolBarRowPtr& row = impl->toolBarRows[i];
-        vector<ToolBar*>& toolBars = row->toolBars;
-        for(size_t j=0; j < toolBars.size(); ++j){
-            out_toolBars.push_back(toolBars[j]);
+        for(auto& bar : row->toolBars){
+            bars.push_back(bar);
         }
     }
+
+    return bars;
 }
 
 
@@ -243,7 +243,7 @@ void ToolBarAreaImpl::hideToolBar(ToolBar* toolBar)
     if(toolBar->isVisible()){
         for(size_t i=0; i < toolBarRows.size(); ++i){
             ToolBarRowPtr row = toolBarRows[i];
-            vector<ToolBar*>& toolBars = row->toolBars;
+            auto& toolBars = row->toolBars;
             for(size_t j=0; j < toolBars.size(); ++j){
                 if(toolBars[j] == toolBar){
                     toolBar->hide();
@@ -281,7 +281,7 @@ void ToolBarAreaImpl::setVisibilityMenuItems(Menu* menu)
         if(toolBar->isVisible()){
             action->setChecked(true);
         }
-        action->sigToggled().connect(std::bind(&ToolBarAreaImpl::onVisiblityCheckToggled, this, toolBar, _1));
+        action->sigToggled().connect([=](bool on){ onVisiblityCheckToggled(toolBar, on); });
         menu->addAction(action);
     }
 }
@@ -489,11 +489,10 @@ void ToolBarAreaImpl::storeLayout(MappingPtr& archive)
     Listing* rows = layoutOfToolBars->createListing("rows");
     
     for(size_t i=0; i < toolBarRows.size(); ++i){
-        ToolBarArray& toolBars = toolBarRows[i]->toolBars;
+        auto& toolBars = toolBarRows[i]->toolBars;
         if(!toolBars.empty()){
             Listing* bars = new Listing();
-            for(ToolBarArray::iterator p = toolBars.begin(); p != toolBars.end(); ++p){
-                ToolBar* toolBar = *p;
+            for(auto& toolBar : toolBars){
                 Mapping* state = new Mapping();
                 state->setFlowStyle(true);
                 state->write("name", toolBar->objectName().toStdString(), DOUBLE_QUOTED);
@@ -679,10 +678,10 @@ void ToolBarAreaImpl::layoutToolBarRow(ToolBarRowPtr toolBarRow, int& io_rowTop,
     int rowHeight = 0;
 
     bool draggedToolBarExists = false;
-    ToolBarArray& toolBars = toolBarRow->toolBars;
+    auto& toolBars = toolBarRow->toolBars;
 
     // calculate the row height and remove the dragged tool bar if it is originally in this row
-    ToolBarArray::iterator p = toolBars.begin();
+    auto p = toolBars.begin();
     while(p != toolBars.end()){
         ToolBar* toolBar = *p;
         if(toolBar == draggedToolBar){
@@ -730,7 +729,7 @@ void ToolBarAreaImpl::layoutToolBarRow(ToolBarRowPtr toolBarRow, int& io_rowTop,
 }
 
 
-void ToolBarAreaImpl::layoutToolBarRowWithDraggedToolBar(ToolBarArray& toolBars, int rowTop, int rowHeight)
+void ToolBarAreaImpl::layoutToolBarRowWithDraggedToolBar(vector<ToolBar*>& toolBars, int rowTop, int rowHeight)
 {
     int maxPriorty = normalizeLayoutPriorities(toolBars);
     draggedToolBar->layoutPriority = maxPriorty + 1;
@@ -756,13 +755,13 @@ void ToolBarAreaImpl::layoutToolBarRowWithDraggedToolBar(ToolBarArray& toolBars,
 /**
    @return The maximum priority in the normalized priorities
 */
-int ToolBarAreaImpl::normalizeLayoutPriorities(ToolBarArray& toolBars)
+int ToolBarAreaImpl::normalizeLayoutPriorities(vector<ToolBar*>& toolBars)
 {
     int maxPriority = 0;
 
     if(!toolBars.empty()){
 
-        ToolBarArray sortedToolBars(toolBars);
+        vector<ToolBar*> sortedToolBars(toolBars);
         std::sort(sortedToolBars.begin(), sortedToolBars.end(), ToolBar::LayoutPriorityCmp());
 
         int prevOldPriority = -1;
@@ -785,7 +784,7 @@ int ToolBarAreaImpl::normalizeLayoutPriorities(ToolBarArray& toolBars)
 
 
 void ToolBarAreaImpl::layoutToolBarRowPart
-(ToolBarArray& toolBars, int rowTop, int rowHeight, int partLeft, int partRight)
+(vector<ToolBar*>& toolBars, int rowTop, int rowHeight, int partLeft, int partRight)
 {
     // find the index of the tool bar with the maximum priority
     int pivotIndex = 0;
@@ -797,14 +796,14 @@ void ToolBarAreaImpl::layoutToolBarRowPart
         }
     }
 
-    ToolBarArray leftPartToolBars;
+    vector<ToolBar*> leftPartToolBars;
     int pivotAreaLeft = partLeft;
     for(int i=0; i < pivotIndex; ++i){
         leftPartToolBars.push_back(toolBars[i]);
         pivotAreaLeft += toolBars[i]->minimumSizeHint().width();
     }
 
-    ToolBarArray rightPartToolBars;
+    vector<ToolBar*> rightPartToolBars;
     int pivotAreaRight = partRight;
     for(size_t i = pivotIndex + 1; i < toolBars.size(); ++i){
         rightPartToolBars.push_back(toolBars[i]);

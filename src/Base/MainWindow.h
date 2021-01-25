@@ -30,8 +30,9 @@ public:
     ViewArea* viewArea();
     void addToolBar(ToolBar* toolbar);
     void removeToolBar(ToolBar* toolbar);
-    void getAllToolBars(std::vector<ToolBar*>& out_toolBars);
-    void getVisibleToolBars(std::vector<ToolBar*>& out_toolBars);
+    std::vector<ToolBar*> toolBars() const;
+    std::vector<ToolBar*> visibleToolBars() const;
+    
     void restoreLayout(ArchivePtr archive);
     void storeLayout(ArchivePtr archive);
     void setInitialLayout(ArchivePtr archive);
