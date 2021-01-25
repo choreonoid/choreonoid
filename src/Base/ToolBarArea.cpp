@@ -585,21 +585,23 @@ void ToolBarAreaImpl::setNewToolBar(ToolBar* toolBar, vector<int>& numStrechable
         int rowIndex = -1;
         int width = toolBar->minimumSizeHint().width();
 
-        for(size_t i=0; i < toolBarRows.size(); ++i){
-            ToolBarRowPtr existingRow = toolBarRows[i];
-            ToolBar* lastToolBar = existingRow->toolBars.back();
-            if(lastToolBar){
-                QRect r = lastToolBar->geometry();
-                int lastX = r.x() + r.width();
-                int lastSpace = self->width() - lastX;
-                if(width <= lastSpace){
-                    toolBar->desiredX = lastX + 1;
-                    if(toolBar->isStretchable()){
-                        width = std::min(toolBar->stretchableDefaultWidth(), lastSpace);
+        if(!toolBar->isPlacedOnNewRowByDefault()){
+            for(size_t i=0; i < toolBarRows.size(); ++i){
+                ToolBarRowPtr existingRow = toolBarRows[i];
+                ToolBar* lastToolBar = existingRow->toolBars.back();
+                if(lastToolBar){
+                    QRect r = lastToolBar->geometry();
+                    int lastX = r.x() + r.width();
+                    int lastSpace = self->width() - lastX;
+                    if(width <= lastSpace){
+                        toolBar->desiredX = lastX + 1;
+                        if(toolBar->isStretchable()){
+                            width = std::min(toolBar->stretchableDefaultWidth(), lastSpace);
+                        }
+                        toolBarRow = existingRow;
+                        rowIndex = i;
+                        break;
                     }
-                    toolBarRow = existingRow;
-                    rowIndex = i;
-                    break;
                 }
             }
         }
