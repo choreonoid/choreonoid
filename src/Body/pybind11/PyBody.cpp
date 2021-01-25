@@ -6,10 +6,8 @@
 #include "../BodyMotion.h"
 #include "PyDeviceList.h"
 #include <cnoid/ValueTree>
-#include <cnoid/PyReferenced>
-#include <cnoid/PyEigenTypes>
+#include <cnoid/PyUtil>
 #include <pybind11/operators.h>
-#include <pybind11/stl.h>
 
 using namespace std;
 using namespace cnoid;

@@ -12,7 +12,6 @@
 #include "../SimpleControllerItem.h"
 #include "../ControllerLogItem.h"
 #include <cnoid/PyBase>
-#include <cnoid/PyEigenTypes>
 
 using namespace cnoid;
 namespace py = pybind11;

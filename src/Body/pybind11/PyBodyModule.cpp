@@ -8,7 +8,7 @@
 #include "../InverseKinematics.h"
 #include "../JointPath.h"
 #include "../LeggedBodyHelper.h"
-#include <cnoid/PyEigenTypes>
+#include <cnoid/PyUtil>
 #include <pybind11/operators.h>
 
 using namespace std;

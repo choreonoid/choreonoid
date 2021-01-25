@@ -2,7 +2,7 @@
 #define CNOID_BODY_PYDEVICELIST_H
 
 #include "../DeviceList.h"
-#include <cnoid/PyReferenced>
+#include <cnoid/PyUtil>
 //#include "exportdecl.h"
 
 namespace pybind11 { namespace detail {

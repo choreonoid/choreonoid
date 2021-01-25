@@ -7,8 +7,7 @@
 #include <cnoid/ValueTree>
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneDrawables>
-#include <cnoid/PyReferenced>
-#include <cnoid/PyEigenTypes>
+#include <cnoid/PyUtil>
 
 using namespace std;
 using namespace cnoid;

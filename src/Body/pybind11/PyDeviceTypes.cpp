@@ -6,8 +6,7 @@
 #include "../Device.h"
 #include "../Link.h"
 #include "../ForceSensor.h"
-#include <cnoid/PyReferenced>
-#include <cnoid/PyEigenTypes>
+#include <cnoid/PyUtil>
 
 using namespace std;
 using namespace cnoid;
