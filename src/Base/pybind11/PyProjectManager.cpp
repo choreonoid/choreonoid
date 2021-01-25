@@ -5,7 +5,7 @@
 #include "../ProjectManager.h"
 #include "../Item.h"
 #include "PyItemList.h"
-#include <pybind11/pybind11.h>
+#include <cnoid/PyUtil>
 
 using namespace std;
 using namespace cnoid;

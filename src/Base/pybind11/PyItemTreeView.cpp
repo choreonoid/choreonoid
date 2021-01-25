@@ -6,8 +6,7 @@
 #include "PyQString.h"
 #include "../ItemTreeView.h"
 #include "../RootItem.h"
-#include <cnoid/PySignal>
-#include <cnoid/PyReferenced>
+#include <cnoid/PyUtil>
 
 using namespace cnoid;
 namespace py = pybind11;

@@ -1,5 +1,5 @@
 #include "../AppUtil.h"
-#include <pybind11/pybind11.h>
+#include <cnoid/PyUtil>
 
 using namespace cnoid;
 namespace py = pybind11;

@@ -6,7 +6,7 @@
 #define CNOID_BASE_PYITEMLIST_H
 
 #include "../ItemList.h"
-#include <cnoid/PyReferenced>
+#include <cnoid/PyUtil>
 #include "exportdecl.h"
 
 namespace pybind11 { namespace detail {

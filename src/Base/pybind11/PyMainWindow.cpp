@@ -8,6 +8,7 @@
 #include "../ViewArea.h"
 #include "../View.h"
 #include "PyQString.h"
+#include <cnoid/PyUtil>
 
 using namespace cnoid;
 namespace py = pybind11;

@@ -3,8 +3,7 @@
 */
 
 #include "../PositionDragger.h"
-#include <cnoid/PyReferenced>
-#include <cnoid/PyEigenTypes>
+#include <cnoid/PyUtil>
 
 using namespace cnoid;
 namespace py = pybind11;
