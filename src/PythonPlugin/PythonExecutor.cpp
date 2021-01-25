@@ -3,6 +3,7 @@
 */
 
 #include "PythonExecutor.h"
+#include "PythonPlugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/LazyCaller>
 #include <cnoid/UTF8>
@@ -12,7 +13,6 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <pybind11/eval.h>
-#include <pybind11/stl.h>
 #include <map>
 
 using namespace std;
@@ -30,16 +30,10 @@ PathRefMap additionalPythonPathRefMap;
 
 namespace cnoid {
 
-// defined in PythonPlugin.cpp
-python::object getGlobalNamespace();
-python::module getSysModule();
-python::object getExitException();
-python::module getRollbackImporterModule();
-
-
-class PythonExecutorImpl : public QThread
+class PythonExecutor::Impl : public QThread
 {
 public:
+    PythonPlugin* pythonPlugin;
     bool isBackgroundMode;
     bool isRunningForeground;
     bool isModuleRefreshEnabled;
@@ -66,10 +60,10 @@ public:
     string lastExceptionText;
     bool isTerminated;
 
-    PythonExecutorImpl();
-    PythonExecutorImpl(const PythonExecutorImpl& org);
+    Impl();
+    Impl(const Impl& org);
     void resetLastResultObjects();
-    ~PythonExecutorImpl();
+    ~Impl();
     PythonExecutor::State state() const;
     bool exec(std::function<python::object()> execScript, const string& filename);
     bool execMain(std::function<python::object()> execScript);
@@ -91,11 +85,12 @@ void PythonExecutor::setModuleRefreshEnabled(bool on)
 
 PythonExecutor::PythonExecutor()
 {
-    impl = new PythonExecutorImpl();
+    impl = new Impl();
 }
 
 
-PythonExecutorImpl::PythonExecutorImpl()
+PythonExecutor::Impl::Impl()
+    : pythonPlugin(PythonPlugin::instance())
 {
     isBackgroundMode = false;
     isRunningForeground = false;
@@ -109,11 +104,12 @@ PythonExecutorImpl::PythonExecutorImpl()
 
 PythonExecutor::PythonExecutor(const PythonExecutor& org)
 {
-    impl = new PythonExecutorImpl(*org.impl);
+    impl = new Impl(*org.impl);
 }
 
 
-PythonExecutorImpl::PythonExecutorImpl(const PythonExecutorImpl& org)
+PythonExecutor::Impl::Impl(const Impl& org)
+    : pythonPlugin(PythonPlugin::instance())
 {
     isBackgroundMode = org.isBackgroundMode;
     isRunningForeground = false;
@@ -125,7 +121,7 @@ PythonExecutorImpl::PythonExecutorImpl(const PythonExecutorImpl& org)
 }
 
 
-void PythonExecutorImpl::resetLastResultObjects()
+void PythonExecutor::Impl::resetLastResultObjects()
 {
     lastReturnValue = python::object(); // null
     lastExceptionType = python::object(); // null
@@ -139,7 +135,7 @@ PythonExecutor::~PythonExecutor()
 }
 
 
-PythonExecutorImpl::~PythonExecutorImpl()
+PythonExecutor::Impl::~Impl()
 {
     if(state() == PythonExecutor::RUNNING_BACKGROUND){
         if(!terminateScript()){
@@ -162,7 +158,7 @@ bool PythonExecutor::isBackgroundMode() const
 }
 
 
-PythonExecutor::State PythonExecutorImpl::state() const
+PythonExecutor::State PythonExecutor::Impl::state() const
 {
     PythonExecutor::State state;
     if(QThread::isRunning()){
@@ -186,16 +182,10 @@ PythonExecutor::State PythonExecutor::state() const
 }
 
 
-python::object PythonExecutor::globalNamespace()
-{
-    return getGlobalNamespace();
-}
-
-
 bool PythonExecutor::eval(const std::string& code)
 {
     return impl->exec(
-        [=](){ return pybind11::eval(code.c_str(), getGlobalNamespace()); },
+        [=](){ return pybind11::eval(code.c_str(), impl->pythonPlugin->globalNamespace()); },
         "");
 }
 
@@ -203,7 +193,9 @@ bool PythonExecutor::eval(const std::string& code)
 bool PythonExecutor::execCode(const std::string& code)
 {
     return impl->exec(
-        [=](){ return pybind11::eval<pybind11::eval_statements>(code.c_str(), getGlobalNamespace()); },
+        [=](){
+            return pybind11::eval<pybind11::eval_statements>(
+                code.c_str(), impl->pythonPlugin->globalNamespace()); },
         "");
 }
 
@@ -211,12 +203,12 @@ bool PythonExecutor::execCode(const std::string& code)
 bool PythonExecutor::execFile(const std::string& filename)
 {
     return impl->exec(
-        [=](){ return pybind11::eval_file(filename.c_str(), getGlobalNamespace()); },
+        [=](){ return pybind11::eval_file(filename.c_str(), impl->pythonPlugin->globalNamespace()); },
         filename);
 }
 
 
-bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const string& filename)
+bool PythonExecutor::Impl::exec(std::function<python::object()> execScript, const string& filename)
 {
     if(state() != PythonExecutor::NOT_RUNNING){
         return false;
@@ -259,17 +251,17 @@ bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const 
         functionToExecScript = execScript;
 
         if(doAddPythonPath){
-            getSysModule().attr("path").attr("insert")(0, scriptDirectory);
+            pythonPlugin->sysModule().attr("path").attr("insert")(0, scriptDirectory);
         }
 
         if(isModuleRefreshEnabled){
-            getRollbackImporterModule().attr("refresh")(scriptDirectory);
+            pythonPlugin->rollbackImporterModule().attr("refresh")(scriptDirectory);
         }
 
         if(!filename.empty()){
             filesystem::path relative;
             if(findRelativePath(filesystem::current_path(), filepath, relative)){
-                getGlobalNamespace()["__file__"] = toUTF8(relative.string());
+                pythonPlugin->globalNamespace()["__file__"] = toUTF8(relative.string());
             }
         }
 
@@ -295,7 +287,7 @@ bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const 
 }
 
 
-bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
+bool PythonExecutor::Impl::execMain(std::function<python::object()> execScript)
 {
     bool completed = false;
     returnValue = python::object();
@@ -307,7 +299,7 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
     catch(const python::error_already_set& ex) {
         exceptionText = ex.what();
         hasException = true;
-        if(ex.matches(getExitException())){
+        if(ex.matches(pythonPlugin->exitException())){
             isTerminated = true;
         }
     }
@@ -334,7 +326,7 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
 }
 
 
-void PythonExecutorImpl::run()
+void PythonExecutor::Impl::run()
 {
     stateMutex.lock();
     threadId = currentThreadId();
@@ -351,7 +343,7 @@ bool PythonExecutor::waitToFinish(double timeout)
 }
 
 
-bool PythonExecutorImpl::waitToFinish(double timeout)
+bool PythonExecutor::Impl::waitToFinish(double timeout)
 {
     unsigned long time = (timeout == 0.0) ? ULONG_MAX : timeout * 1000.0;
     
@@ -398,13 +390,13 @@ python::object PythonExecutor::returnValue()
 }
 
 
-void PythonExecutorImpl::onBackgroundExecutionFinished()
+void PythonExecutor::Impl::onBackgroundExecutionFinished()
 {
     sigFinished();
 }
 
 
-void PythonExecutorImpl::releasePythonPathRef()
+void PythonExecutor::Impl::releasePythonPathRef()
 {
     /**
        When a number of Python scripts is proccessed, releasing the path corresponding to a certain
@@ -419,7 +411,7 @@ void PythonExecutorImpl::releasePythonPathRef()
     if(pathRefIter != additionalPythonPathRefMap.end()){
         if(--pathRefIter->second == 0){
             python::gil_scoped_acquire lock;
-            getSysModule().attr("path").attr("remove")(scriptDirectory);
+            pythonPlugin->sysModule().attr("path").attr("remove")(scriptDirectory);
             additionalPythonPathRefMap.erase(pathRefIter);
         }
         pathRefIter = additionalPythonPathRefMap.end();
@@ -439,7 +431,7 @@ bool PythonExecutor::terminate()
 }
 
 
-bool PythonExecutorImpl::terminateScript()
+bool PythonExecutor::Impl::terminateScript()
 {
     bool terminated = true;
 
@@ -459,7 +451,7 @@ bool PythonExecutorImpl::terminateScript()
                    for the handler to check if the termination is requested. By giving the class object,
                    the handler can detect the exception type even in this case.
                 */
-                PyThreadState_SetAsyncExc((long)threadId, getExitException().ptr());
+                PyThreadState_SetAsyncExc((long)threadId, pythonPlugin->exitException().ptr());
             }
             if(wait(20)){
                 terminated = true;
@@ -470,7 +462,7 @@ bool PythonExecutorImpl::terminateScript()
         
     } else if(isRunningForeground){
         python::gil_scoped_acquire lock;
-        PyErr_SetObject(getExitException().ptr(), 0);
+        PyErr_SetObject(pythonPlugin->exitException().ptr(), 0);
         releasePythonPathRef();
         
         if(PyErr_Occurred()) throw pybind11::error_already_set();

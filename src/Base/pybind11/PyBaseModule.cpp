@@ -20,6 +20,7 @@ void exportPySceneTypes(py::module m);
 void exportPyLazyCaller(py::module m);
 void exportPyPluginManager(py::module m);
 void exportPyProjectManager(py::module m);
+void exportPyExtensionManagers(py::module m);
 
 }
 
@@ -44,4 +45,5 @@ PYBIND11_MODULE(Base, m)
     exportPyLazyCaller(m);
     exportPyPluginManager(m);
     exportPyProjectManager(m);
+    exportPyExtensionManagers(m);
 }

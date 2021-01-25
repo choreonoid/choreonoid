@@ -14,7 +14,7 @@ namespace cnoid {
 
 void exportPyQtExTypes(py::module m)
 {
-    py::class_<ToolButton, QToolButton>(m, "ToolButton")
+    py::class_<ToolButton, std::unique_ptr<ToolButton, py::nodelete>, QToolButton>(m, "ToolButton")
         .def(py::init<>())
         .def(py::init<QWidget*>())
         .def(py::init<const QString&>())
@@ -25,7 +25,7 @@ void exportPyQtExTypes(py::module m)
         ;
 
     py::class_<Timer, QTimer>(m, "Timer")
-        .def(py::init<QObject*>(), py::arg("parent")=(QObject*)(0) )
+        .def(py::init<QObject*>(), py::arg("parent") = (QObject*)(nullptr))
         .def_property_readonly("timeout", &Timer::sigTimeout)
         ;
 }

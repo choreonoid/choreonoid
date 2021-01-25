@@ -1,6 +1,7 @@
 from cnoid.Util import *
 from cnoid.Base import *
 from cnoid.BodyPlugin import *
+from cnoid.PythonPlugin import *
 from numpy import *
 
 rootItem = RootItem.instance
@@ -12,7 +13,7 @@ class ShakeBodies:
         self.button = toolBar.addToggleButton("Shake")
         self.button.setChecked(True)
         self.button.toggled.connect(self.onButtonToggled)
-        MainWindow.instance.addToolBar(toolBar)
+        PythonPlugin.instance.addToolBar(toolBar)
 
         self.bodyItems = []
         self.dp = array([0.0, 0.0, 0.01])

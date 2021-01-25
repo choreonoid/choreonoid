@@ -2,6 +2,7 @@
    @author Shin'ichiro Nakaoka
 */
 
+#include "PythonPlugin.h"
 #include "PythonConsoleView.h"
 #include "PythonScriptItem.h"
 #include "PythonExecutor.h"
@@ -36,10 +37,10 @@ namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
+PythonPlugin* pythonPlugin = nullptr;
 MappingPtr pythonConfig;
 Action* redirectionCheck;
 Action* refreshModulesCheck;
-
 list<string> additionalSearchPathList;
 
 class MessageViewOut
@@ -73,11 +74,16 @@ public:
         return python::str("\n");
     }
 };
-            
 
-class PythonPlugin : public Plugin
+}
+
+namespace cnoid {
+
+
+class PythonPlugin::Impl
 {
 public:
+    PythonPlugin* self;
     unique_ptr<pybind11::scoped_interpreter> interpreter;
     unique_ptr<pybind11::gil_scoped_release> gil_scoped_release;
     std::unique_ptr<PythonExecutor> executor_;
@@ -90,15 +96,16 @@ public:
     python::object messageViewIn;
     python::module rollbackImporterModule;
 
-    PythonPlugin();
-    virtual bool initialize();
+    Impl(PythonPlugin* self);
+    
+    bool initialize();
     bool initializeInterpreter();
 
 #ifdef Q_OS_LINUX
     void exportLibPythonSymbols();
 #endif
     
-    virtual bool finalize();
+    bool finalize();
 
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     void onSigOptionsParsed(boost::program_options::variables_map& v);
@@ -114,35 +121,41 @@ public:
     }
 };
 
-
-PythonPlugin* pythonPlugin = 0;
-
-python::object pythonExit()
-{
-    PyErr_SetObject(pythonPlugin->exitExceptionType.ptr(), 0);
-    
-    if(PyErr_Occurred()){
-        throw pybind11::error_already_set();
-    }
-    
-    return python::object();
 }
 
+
+PythonPlugin* PythonPlugin::instance()
+{
+    return pythonPlugin;
 }
 
 
 PythonPlugin::PythonPlugin()
     : Plugin("Python")
 {
+    impl = new Impl(this);
     pythonPlugin = this;
+}
+
+
+PythonPlugin::Impl::Impl(PythonPlugin* self)
+    : self(self)
+{
+
 }
 
 
 bool PythonPlugin::initialize()
 {
+    return impl->initialize();
+}
+
+
+bool PythonPlugin::Impl::initialize()
+{
     pythonConfig = AppConfig::archive()->openMapping("Python");
 
-    MenuManager& mm = menuManager();
+    MenuManager& mm = self->menuManager();
     mm.setPath("/Options").setPath("Python");
     redirectionCheck = mm.addCheckItem(_("Redirectiton to MessageView"));
     redirectionCheck->setChecked(pythonConfig->get("redirectionToMessageView", true));
@@ -161,10 +174,10 @@ bool PythonPlugin::initialize()
     exportLibPythonSymbols();
 #endif
 
-    PythonScriptItem::initializeClass(this);
-    PythonConsoleView::initializeClass(this);
+    PythonScriptItem::initializeClass(self);
+    PythonConsoleView::initializeClass(self);
     
-    OptionManager& opm = optionManager();
+    OptionManager& opm = self->optionManager();
     opm.addOption("python,p", boost::program_options::value< vector<string> >(), _("execute a python script file"));
     opm.addOption("python-item", boost::program_options::value< vector<string> >(), _("load a python script as an item"));
     opm.sigInputFileOptionsParsed(1).connect(
@@ -172,7 +185,7 @@ bool PythonPlugin::initialize()
     opm.sigOptionsParsed(1).connect(
         [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
 
-    setProjectArchiver(
+    self->setProjectArchiver(
         [&](Archive& archive){ return storeProperties(archive); },
         [&](const Archive& archive){ restoreProperties(archive); });
 
@@ -180,7 +193,7 @@ bool PythonPlugin::initialize()
 }
 
 
-void PythonPlugin::onInputFileOptionsParsed(std::vector<std::string>& inputFiles)
+void PythonPlugin::Impl::onInputFileOptionsParsed(std::vector<std::string>& inputFiles)
 {
     auto iter = inputFiles.begin();
     while(iter != inputFiles.end()){
@@ -194,7 +207,7 @@ void PythonPlugin::onInputFileOptionsParsed(std::vector<std::string>& inputFiles
 }
 
 
-void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
+void PythonPlugin::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("python")){
         for(auto& script : v["python"].as<vector<string>>()){
@@ -212,7 +225,7 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 }
 
 
-void PythonPlugin::executeScriptFileOnStartup(const string& scriptFile)
+void PythonPlugin::Impl::executeScriptFileOnStartup(const string& scriptFile)
 {
     MessageView::instance()->putln(format(_("Executing python script \"{}\" ..."), scriptFile));
     executor().execFile(scriptFile);
@@ -226,9 +239,10 @@ void PythonPlugin::executeScriptFileOnStartup(const string& scriptFile)
 }
 
 
-bool PythonPlugin::initializeInterpreter()
+bool PythonPlugin::Impl::initializeInterpreter()
 {
     interpreter.reset(new pybind11::scoped_interpreter(false));
+    //interpreter = new pybind11::scoped_interpreter(false);
 
     /*
       Some python modules require argv and missing argv may cause AttributeError.a
@@ -237,11 +251,11 @@ bool PythonPlugin::initializeInterpreter()
     */
 #ifdef CNOID_USE_PYTHON2
     char dummy_str[] = "choreonoid"; // avoid deprecated conversion from string constant
-    char* dummy_argv[] = {dummy_str};
+    char* dummy_argv[] = { dummy_str };
 #else
 
     wchar_t dummy_str[] = L"choreonoid"; // avoid deprecated conversion from string constant
-    wchar_t* dummy_argv[] = {dummy_str};
+    wchar_t* dummy_argv[] = { dummy_str };
 #endif
     PySys_SetArgvEx(1, dummy_argv, 0);
 
@@ -291,7 +305,16 @@ bool PythonPlugin::initializeInterpreter()
     pybind11::eval<pybind11::eval_single_statement>("class ExitException (Exception): pass\n");
     exitExceptionType = mainModule.attr("ExitException");
     pybind11::eval<pybind11::eval_single_statement>("del ExitException\n");
-    pybind11::function exitFunc = pybind11::cpp_function(pythonExit);
+
+    pybind11::function exitFunc =
+        pybind11::cpp_function(
+            [this]() -> python::object {
+                PyErr_SetObject(pythonPlugin->impl->exitExceptionType.ptr(), 0);
+                if(PyErr_Occurred()){
+                    throw pybind11::error_already_set();
+                }
+                return python::object();
+            });
 
     // Override exit and quit
     python::object builtins = globalNamespace["__builtins__"];
@@ -300,6 +323,7 @@ bool PythonPlugin::initializeInterpreter()
     sysModule.attr("exit") = exitFunc;
 
     gil_scoped_release.reset(new pybind11::gil_scoped_release());
+    //gil_scoped_release = new pybind11::gil_scoped_release();
 
     return true;
 }
@@ -371,9 +395,9 @@ static char* findLibPython(const std::string& pluginFilePath)
   libpython file. This is probably because the modules should not depend on a particular minor version of
   Python. Symbols can be exported to use the dlopen function with the RTLD_GLOBAL option in Linux.
  */
-void PythonPlugin::exportLibPythonSymbols()
+void PythonPlugin::Impl::exportLibPythonSymbols()
 {
-    if(auto libPython = findLibPython(filePath())){
+    if(auto libPython = findLibPython(self->filePath())){
         dlopen(libPython, RTLD_LAZY | RTLD_GLOBAL);
     } else {
         MessageView::instance()->putln(
@@ -385,13 +409,28 @@ void PythonPlugin::exportLibPythonSymbols()
 #endif
 
 
-bool PythonPlugin::storeProperties(Archive& archive)
+bool PythonPlugin::finalize()
+{
+    pythonPlugin = nullptr;
+    
+    pythonConfig->write("redirectionToMessageView", redirectionCheck->isChecked());
+    pythonConfig->write("refreshModules", refreshModulesCheck->isChecked());
+
+    // Views and items defined in this plugin must be deleted before finalizing the Python interpreter
+    // because the views and items have their own python objects
+    viewManager().deleteView(PythonConsoleView::instance());
+    itemManager().detachAllManagedTypeItemsFromRoot();
+    
+    return true;
+}
+
+
+bool PythonPlugin::Impl::storeProperties(Archive& archive)
 {
     if(!additionalSearchPathList.empty()){
         Listing& pathListing = *archive.openListing("moduleSearchPath");
-        list<string>::iterator p;
-        for(p = additionalSearchPathList.begin(); p != additionalSearchPathList.end(); ++p){
-            pathListing.append(archive.getRelocatablePath(*p));
+        for(auto& path : additionalSearchPathList){
+            pathListing.append(archive.getRelocatablePath(path));
         }
         return true;
     }
@@ -399,20 +438,19 @@ bool PythonPlugin::storeProperties(Archive& archive)
 }
 
 
-void PythonPlugin::restoreProperties(const Archive& archive)
+void PythonPlugin::Impl::restoreProperties(const Archive& archive)
 {
     Listing& pathListing = *archive.findListing("moduleSearchPath");
     if(pathListing.isValid()){
         MessageView* mv = MessageView::instance();
         python::gil_scoped_acquire lock;
         string newPath;
-        for(int i=0; i < pathListing.size(); ++i){
-            newPath = archive.resolveRelocatablePath(pathListing[i].toString());
+        for(auto& path : pathListing){
+            newPath = archive.resolveRelocatablePath(path->toString());
             if(!newPath.empty()){
                 bool isExisting = false;
-                list<string>::iterator p;
-                for(p = additionalSearchPathList.begin(); p != additionalSearchPathList.end(); ++p){
-                    if(newPath == (*p)){
+                for(auto& existingPath : additionalSearchPathList){
+                    if(newPath == existingPath){
                         isExisting = true;
                         break;
                     }
@@ -429,52 +467,35 @@ void PythonPlugin::restoreProperties(const Archive& archive)
         }
     }
 }
-    
 
-bool PythonPlugin::finalize()
+
+python::module PythonPlugin::mainModule()
 {
-    pythonConfig->write("redirectionToMessageView", redirectionCheck->isChecked());
-    pythonConfig->write("refreshModules", refreshModulesCheck->isChecked());
+    return impl->mainModule;
+}
 
-    // Views and items defined in this plugin must be deleted before finalizing the Python interpreter
-    // because the views and items have their own python objects
-    viewManager().deleteView(PythonConsoleView::instance());
-    itemManager().detachAllManagedTypeItemsFromRoot();
-    
-    return true;
+python::object PythonPlugin::globalNamespace()
+{
+    return impl->globalNamespace;
+}
+
+python::module PythonPlugin::sysModule()
+{
+    return impl->sysModule;
+}
+
+python::object PythonPlugin::exitException()
+{
+    return impl->exitExceptionType;
+}
+
+python::module PythonPlugin::rollbackImporterModule()
+{
+    if(!impl->rollbackImporterModule){
+        impl->rollbackImporterModule = python::module::import("cnoid.rbimporter");
+    }
+    return impl->rollbackImporterModule;
 }
 
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(PythonPlugin);
-
-namespace cnoid {
-
-python::module getMainModule()
-{
-    return pythonPlugin->mainModule;
-}
-
-python::object getGlobalNamespace()
-{
-    return pythonPlugin->globalNamespace;
-}
-
-python::module getSysModule()
-{
-    return pythonPlugin->sysModule;
-}
-
-python::object getExitException()
-{
-    return pythonPlugin->exitExceptionType;
-}
-
-python::module getRollbackImporterModule()
-{
-    if(!pythonPlugin->rollbackImporterModule){
-        pythonPlugin->rollbackImporterModule = python::module::import("cnoid.rbimporter");
-    }
-    return pythonPlugin->rollbackImporterModule;
-}
-
-} // namespace cnoid

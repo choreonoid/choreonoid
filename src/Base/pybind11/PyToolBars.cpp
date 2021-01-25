@@ -14,7 +14,7 @@ namespace cnoid {
 
 void exportPyToolBars(py::module m)
 {
-    py::class_<ToolBar, QWidget>(m, "ToolBar")
+    py::class_<ToolBar, std::unique_ptr<ToolBar, py::nodelete>, QWidget>(m, "ToolBar")
         .def(py::init<const QString&>())
         .def("addButton",
              [](ToolBar& self, const char* text, const char* tooltip){ return self.addButton(text, tooltip); },
@@ -50,7 +50,7 @@ void exportPyToolBars(py::module m)
         .def("isStretchable", &ToolBar::isStretchable)
         ;
 
-    py::class_<TimeBar>(m, "TimeBar")
+    py::class_<TimeBar, ToolBar>(m, "TimeBar")
         .def_property_readonly_static(
             "instance", [](py::object){ return TimeBar::instance(); }, py::return_value_policy::reference)
         .def_property_readonly("sigPlaybackInitialized", &TimeBar::sigPlaybackInitialized)

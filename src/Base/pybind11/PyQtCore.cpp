@@ -30,7 +30,7 @@ PYBIND11_MODULE(QtCore, m)
         .def("getParent", &QObject::parent, py::return_value_policy::reference)
         ;
 
-    py::class_<QTimer>(m, "QTimer")
+    py::class_<QTimer, QObject>(m, "QTimer")
         .def_property("interval", &QTimer::interval, (void (QTimer::*)(int)) &QTimer::setInterval)
         .def("setInterval", (void (QTimer::*)(int)) &QTimer::setInterval)
         .def("isActive", &QTimer::isActive)

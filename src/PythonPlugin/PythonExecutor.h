@@ -11,8 +11,6 @@
 
 namespace cnoid {
 
-class PythonExecutorImpl;
-
 /**
    \note GIL must be locked to access to the objects of this class.
    Even the destructor requires GIL to be locked when it is executed.
@@ -33,8 +31,6 @@ public:
 
     State state() const;
 
-    python::object globalNamespace();
-        
     bool eval(const std::string& code);
 
     //! \note This is only valid when the "eval' function is executed.
@@ -63,7 +59,8 @@ public:
     bool terminate();
 
 private:
-    PythonExecutorImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

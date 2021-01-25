@@ -30,6 +30,7 @@ choreonoid_add_python_module(PyBase
   PyLazyCaller.cpp
   PyPluginManager.cpp
   PyProjectManager.cpp
+  PyExtensionManagers.cpp
 )
 
 target_link_libraries(PyBase CnoidPyBase)

@@ -10,8 +10,6 @@
 
 namespace cnoid {
 
-class PythonConsoleViewImpl;
-
 class CNOID_EXPORT PythonConsoleView : public View
 {
 public:
@@ -24,11 +22,13 @@ public:
     void inputCommand(const std::string& command);
     SignalProxy<void(const std::string& output)> sigOutput();
 
+    class Impl;
+    
 protected:
     virtual void onActivated() override;
     
 private:
-    PythonConsoleViewImpl* impl;
+    Impl* impl;
 };
 
 }

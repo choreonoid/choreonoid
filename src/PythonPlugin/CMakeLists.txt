@@ -32,3 +32,5 @@ target_link_libraries(${target} CnoidBase CnoidPyUtil)
 
 configure_file(rbimporter.py ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid/ COPYONLY)
 install(FILES rbimporter.py DESTINATION ${CHOREONOID_PYTHON_SUBDIR}/cnoid)
+
+add_subdirectory(pybind11)

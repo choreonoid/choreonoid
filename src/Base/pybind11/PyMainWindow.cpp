@@ -25,7 +25,10 @@ void exportPyMainWindow(py::module m)
         .def_property_readonly("viewArea", &MainWindow::viewArea, py::return_value_policy::reference)
         .def_property_readonly("toolBars", &MainWindow::toolBars, py::return_value_policy::reference)
         .def_property_readonly("visibleToolBars", &MainWindow::visibleToolBars, py::return_value_policy::reference)
-        .def("addToolBar", &MainWindow::addToolBar)
+
+        // The following functions should not be used in Python scripts.
+        // Use PythonPlugin.PythonPlugin.instance to add a tool bar
+        //.def("addToolBar", &MainWindow::addToolBar)
 
         // deprecated
         .def_static("getInstance", &MainWindow::instance, py::return_value_policy::reference)
