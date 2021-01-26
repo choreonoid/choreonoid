@@ -13,8 +13,6 @@
 
 namespace cnoid {
 
-class MessageViewImpl;
-
 class CNOID_EXPORT MessageView : public View
 {
 public:
@@ -75,11 +73,13 @@ public:
 
     SignalProxy<void(const std::string& text)> sigMessage();
 
+    class Impl;
+
 protected:
     virtual bool event(QEvent* e);
 
 private:
-    MessageViewImpl* impl;
+    Impl* impl;
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED
