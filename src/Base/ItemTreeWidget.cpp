@@ -790,6 +790,7 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         if(isTopLevelItemCandidate){
             registerTopLevelItem(item);
         }
+        bool isNewChildItem = parentTwItem->childCount() == 0;
         auto nextItwItem = findNextItwItem(item, isTopLevelItemCandidate);
         if(nextItwItem){
             int index = parentTwItem->indexOfChild(nextItwItem);
@@ -799,7 +800,7 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         }
         if(projectLoadingWithItemExpansionInfoStack.empty() ||
            !projectLoadingWithItemExpansionInfoStack.top()){
-            if(!parentTwItem->isExpanded() && !item->hasAttribute(Item::Attached)){
+            if(!parentTwItem->isExpanded() && isNewChildItem && !item->hasAttribute(Item::Attached)){
                 parentTwItem->setExpanded(true);
             }
         }
