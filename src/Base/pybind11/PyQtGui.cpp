@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <QMainWindow>
 #include <QToolButton>
+#include <QLabel>
 
 namespace py = pybind11;
 
@@ -120,5 +121,11 @@ PYBIND11_MODULE(QtGui, m)
 
         // deprecated
         .def("getAutoRaise", &QToolButton::autoRaise)
+        ;
+
+    py::class_<QLabel, std::unique_ptr<QLabel, py::nodelete>, QWidget>(m, "QLabel")
+        .def(py::init<>())
+        .def(py::init<const QString&>())
+        .def("setText", &QLabel::setText)
         ;
 }

@@ -75,6 +75,7 @@ void exportPyViews(py::module m)
 
     py::class_<SceneWidget, QWidget>(m, "SceneWidget")
         .def_property_readonly("renderer", &SceneWidget::renderer)
+        .def("renderScene", &SceneWidget::renderScene, py::arg("doImmediately") = false)
         .def_property_readonly("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
         .def_property_readonly("lastClickedPoint", &SceneWidget::lastClickedPoint)

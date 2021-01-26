@@ -52,6 +52,30 @@ void exportPySceneRenderer(py::module& m)
         .def_property_readonly("numFogs", &SceneRenderer::numFogs)
         .def("getFog", &SceneRenderer::fog)
         .def("extractPreprocessedNodes", &SceneRenderer::extractPreprocessedNodes)
+        .def("setProperty",
+             [](SceneRenderer& self, const std::string& key, bool value){
+                 self.setProperty(key, value);
+             })
+        .def("setProperty",
+             [](SceneRenderer& self, const std::string& key, int value){
+                 self.setProperty(key, value);
+             })
+        .def("setProperty",
+             [](SceneRenderer& self, const std::string& key, double value){
+                 self.setProperty(key, value);
+             })
+        .def("getProperty",
+             [](SceneRenderer& self, const std::string& key, bool defaultValue){
+                 return self.property(key, defaultValue);
+             })
+        .def("getProperty",
+             [](SceneRenderer& self, const std::string& key, int defaultValue){
+                 return self.property(key, defaultValue);
+             })
+        .def("getProperty",
+             [](SceneRenderer& self, const std::string& key, double defaultValue){
+                 return self.property(key, defaultValue);
+             })
         ;
 }
 
