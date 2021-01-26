@@ -6,6 +6,7 @@
 #include "PyQtSignal.h"
 #include <QObject>
 #include <QTimer>
+#include <QTime>
 
 using namespace cnoid;
 namespace py = pybind11;
@@ -63,5 +64,14 @@ PYBIND11_MODULE(QtCore, m)
         // deprecated
         .def("getInterval", &QTimer::interval)
         .def("getTimerId", &QTimer::timerId)
+        ;
+
+    py::class_<QTime>(m, "QTime")
+        .def(py::init<>())
+        .def_property_readonly("elapsed", &QTime::elapsed)
+        .def_property_readonly("hour", &QTime::hour)
+        .def_property_readonly("minute", &QTime::minute)
+        .def_property_readonly("second", &QTime::second)
+        .def("start", &QTime::start)
         ;
 }
