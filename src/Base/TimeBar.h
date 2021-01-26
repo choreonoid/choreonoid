@@ -11,7 +11,6 @@
 namespace cnoid {
 
 class ExtensionManager;
-class TimeBarImpl;
 
 class CNOID_EXPORT TimeBar : public ToolBar
 {
@@ -70,7 +69,7 @@ public:
     void stopPlayback(bool isStoppedManually = false);
     bool isDoingPlayback();
 
-    int startFillLevelUpdate();
+    int startFillLevelUpdate(double time = 0.0);
     void updateFillLevel(int id, double time);
     void stopFillLevelUpdate(int id);
     void setFillLevelSync(bool on);
@@ -84,8 +83,9 @@ protected:
         
 private:
     TimeBar();
-        
-    TimeBarImpl* impl;
+
+    class Impl;
+    Impl* impl;
     double time_;
     double frameRate_;
     bool isBeatMode_;
@@ -93,8 +93,6 @@ private:
     double tempo_;
     int beatNumerator_;
     int beatDenominator_;
-
-    friend class TimeBarImpl;
 };
 
 }

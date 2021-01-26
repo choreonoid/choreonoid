@@ -155,13 +155,13 @@ public:
 
 namespace cnoid {
 
-class TimeBarImpl : public QObject
+class TimeBar::Impl : public QObject
 {
 public:
-    TimeBarImpl(TimeBar* self);
-    ~TimeBarImpl();
+    Impl(TimeBar* self);
+    ~Impl();
 
-    bool setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget = 0);
+    bool setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget = nullptr);
     void onTimeSpinChanged(double value);
     bool onTimeSliderValueChanged(int value);
 
@@ -174,7 +174,7 @@ public:
     void onResumeActivated();
     void startPlayback();
     void stopPlayback(bool isStoppedManually);
-    int startFillLevelUpdate();
+    int startFillLevelUpdate(double time);
     void updateFillLevel(int id, double time);
     void updateMinFillLevel();
     void stopFillLevelUpdate(int id);
@@ -257,11 +257,11 @@ TimeBar* TimeBar::instance()
 TimeBar::TimeBar()
     : ToolBar(N_("TimeBar"))
 {
-    impl = new TimeBarImpl(this);
+    impl = new Impl(this);
 }
 
 
-TimeBarImpl::TimeBarImpl(TimeBar* self)
+TimeBar::Impl::Impl(TimeBar* self)
     : self(self),
       os(MessageView::mainInstance()->cout()),
       resumeIcon(QIcon(":/Base/icon/resume.svg")),
@@ -335,7 +335,7 @@ TimeBar::~TimeBar()
 }
 
 
-TimeBarImpl::~TimeBarImpl()
+TimeBar::Impl::~Impl()
 {
 
 }
@@ -382,10 +382,10 @@ bool TimeBar::setTime(double time)
    @todo check whether block() and unblock() of sigc::connection
    decrease the performance or not.
 */
-bool TimeBarImpl::setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget)
+bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget)
 {
     if(TRACE_FUNCTIONS){
-        cout << "TimeBarImpl::setTime(" << time << ", " << calledFromPlaybackLoop << ")" << endl;
+        cout << "TimeBar::Impl::setTime(" << time << ", " << calledFromPlaybackLoop << ")" << endl;
     }
     
     if(!calledFromPlaybackLoop && isDoingPlayback){
@@ -445,10 +445,10 @@ bool TimeBarImpl::setTime(double time, bool calledFromPlaybackLoop, QWidget* cal
 }
 
 
-void TimeBarImpl::onTimeSpinChanged(double value)
+void TimeBar::Impl::onTimeSpinChanged(double value)
 {
     if(TRACE_FUNCTIONS){
-        cout << "TimeBarImpl::onTimeSpinChanged()" << endl;
+        cout << "TimeBar::Impl::onTimeSpinChanged()" << endl;
     }
     if(isDoingPlayback){
         stopPlayback(true);
@@ -457,10 +457,10 @@ void TimeBarImpl::onTimeSpinChanged(double value)
 }
 
 
-bool TimeBarImpl::onTimeSliderValueChanged(int value)
+bool TimeBar::Impl::onTimeSliderValueChanged(int value)
 {
     if(TRACE_FUNCTIONS){
-        cout << "TimeBarImpl::onTimeSliderChanged(): value = " << value << endl;
+        cout << "TimeBar::Impl::onTimeSliderChanged(): value = " << value << endl;
     }
     if(isDoingPlayback){
         stopPlayback(true);
@@ -476,7 +476,7 @@ void TimeBar::setFrameRate(double rate)
 }
 
 
-void TimeBarImpl::setFrameRate(double rate)
+void TimeBar::Impl::setFrameRate(double rate)
 {
     if(rate > 0.0){
         if(self->frameRate_ != rate){
@@ -505,7 +505,7 @@ void TimeBar::setTimeRange(double min, double max)
 }
 
 
-void TimeBarImpl::setTimeRange(double minTime, double maxTime)
+void TimeBar::Impl::setTimeRange(double minTime, double maxTime)
 {
     this->minTime = minTime;
     this->maxTime = maxTime;
@@ -513,7 +513,7 @@ void TimeBarImpl::setTimeRange(double minTime, double maxTime)
 }
 
 
-void TimeBarImpl::updateTimeProperties(bool forceUpdate)
+void TimeBar::Impl::updateTimeProperties(bool forceUpdate)
 {
     timeSpin->blockSignals(true);
     timeSlider->blockSignals(true);
@@ -548,7 +548,7 @@ void TimeBarImpl::updateTimeProperties(bool forceUpdate)
 }
 
     
-void TimeBarImpl::onPlaybackSpeedScaleChanged(double value)
+void TimeBar::Impl::onPlaybackSpeedScaleChanged(double value)
 {
     playbackSpeedScale = value;
     
@@ -570,7 +570,7 @@ void TimeBar::setPlaybackSpeedScale(double scale)
 }
 
 
-void TimeBarImpl::onPlaybackFrameRateChanged(int value)
+void TimeBar::Impl::onPlaybackFrameRateChanged(int value)
 {
     playbackFrameRate = value;
 
@@ -598,7 +598,7 @@ void TimeBar::setRepeatMode(bool on)
 }
 
 
-void TimeBarImpl::onPlayActivated()
+void TimeBar::Impl::onPlayActivated()
 {
     stopPlayback(true);
     setTime(minTime, false);
@@ -606,7 +606,7 @@ void TimeBarImpl::onPlayActivated()
 }
 
 
-void TimeBarImpl::onResumeActivated()
+void TimeBar::Impl::onResumeActivated()
 {
     if(isDoingPlayback){
         stopPlayback(true);
@@ -623,7 +623,7 @@ void TimeBar::startPlayback()
 }
 
 
-void TimeBarImpl::startPlayback()
+void TimeBar::Impl::startPlayback()
 {
     stopPlayback(false);
     
@@ -661,7 +661,7 @@ void TimeBar::stopPlayback(bool isStoppedManually)
 }
 
 
-void TimeBarImpl::stopPlayback(bool isStoppedManually)
+void TimeBar::Impl::stopPlayback(bool isStoppedManually)
 {
     if(isDoingPlayback){
         killTimer(timerId);
@@ -685,15 +685,15 @@ bool TimeBar::isDoingPlayback()
 }
 
 
-int TimeBar::startFillLevelUpdate()
+int TimeBar::startFillLevelUpdate(double time)
 {
-    return impl->startFillLevelUpdate();    
+    return impl->startFillLevelUpdate(time);
 }
 
 
-int TimeBarImpl::startFillLevelUpdate()
+int TimeBar::Impl::startFillLevelUpdate(double time)
 {
-    int id=0;
+    int id = 0;
     if(fillLevelMap.empty()){
         isFillLevelActive = true;
     } else {
@@ -701,7 +701,7 @@ int TimeBarImpl::startFillLevelUpdate()
             ++id;
         }
     }
-    updateFillLevel(id, 0.0);
+    updateFillLevel(id, time);
     return id;
 }
 
@@ -713,14 +713,14 @@ void TimeBar::updateFillLevel(int id, double time)
 }
 
 
-void TimeBarImpl::updateFillLevel(int id, double time)
+void TimeBar::Impl::updateFillLevel(int id, double time)
 {
     fillLevelMap[id] = time;
     updateMinFillLevel();
 }
 
 
-void TimeBarImpl::updateMinFillLevel()
+void TimeBar::Impl::updateMinFillLevel()
 {
     double minFillLevel = std::numeric_limits<double>::max();
     map<int,double>::iterator p;
@@ -737,7 +737,7 @@ void TimeBar::stopFillLevelUpdate(int id)
 }
 
 
-void TimeBarImpl::stopFillLevelUpdate(int id)
+void TimeBar::Impl::stopFillLevelUpdate(int id)
 {
     fillLevelMap.erase(id);
 
@@ -777,7 +777,7 @@ double TimeBar::realPlaybackTime() const
 }
 
 
-void TimeBarImpl::timerEvent(QTimerEvent*)
+void TimeBar::Impl::timerEvent(QTimerEvent*)
 {
     double time = animationTimeOffset + playbackSpeedScale * (elapsedTimer.elapsed() / 1000.0);
 
@@ -803,19 +803,19 @@ void TimeBarImpl::timerEvent(QTimerEvent*)
 }
 
 
-void TimeBarImpl::onTimeRangeSpinsChanged()
+void TimeBar::Impl::onTimeRangeSpinsChanged()
 {
     setTimeRange(minTimeSpin->value(), maxTimeSpin->value());
 }
 
 
-void TimeBarImpl::onFrameRateSpinChanged(int value)
+void TimeBar::Impl::onFrameRateSpinChanged(int value)
 {
     setFrameRate(config.frameRateSpin.value());
 }
 
 
-void TimeBarImpl::onRefreshButtonClicked()
+void TimeBar::Impl::onRefreshButtonClicked()
 {
     if(!isDoingPlayback){
         sigTimeChanged(self->time_);
@@ -835,7 +835,7 @@ bool TimeBar::storeState(Archive& archive)
 }
 
 
-bool TimeBarImpl::storeState(Archive& archive)
+bool TimeBar::Impl::storeState(Archive& archive)
 {
     archive.write("minTime", minTime);
     archive.write("maxTime", maxTime);
@@ -856,7 +856,7 @@ bool TimeBar::restoreState(const Archive& archive)
 }
 
 
-bool TimeBarImpl::restoreState(const Archive& archive)
+bool TimeBar::Impl::restoreState(const Archive& archive)
 {
     archive.read("minTime", minTime);
     archive.read("maxTime", maxTime);
