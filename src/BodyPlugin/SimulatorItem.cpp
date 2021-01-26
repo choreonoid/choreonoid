@@ -1345,7 +1345,7 @@ void SimulatorItem::Impl::onSelectionChanged(bool on)
 {
     if(on){
         if(self->isActive() && isRecordingEnabled && fillLevelId < 0){
-            fillLevelId = timeBar->startFillLevelUpdate();
+            fillLevelId = timeBar->startFillLevelUpdate(currentTime());
         }
     } else {
         if(fillLevelId >= 0){
@@ -1644,6 +1644,21 @@ bool SimulatorItem::startSimulation(bool doReset)
 
 bool SimulatorItem::Impl::startSimulation(bool doReset)
 {
+    // Check if there is another active simulation in the same world
+    for(auto& simulatorItem : worldItem->descendantItems<SimulatorItem>()){
+        if(simulatorItem->isRunning()){
+            if(simulatorItem == self){
+                mv->putln(format(_("{0} is doing its simulation."), self->displayName(), MessageView::Warning));
+            } else {
+                mv->putln(
+                    format(_("{0} cannot start the simulation because {1} in the same world is doing its simulation."),
+                           self->displayName(), simulatorItem->displayName()),
+                    MessageView::Error);
+            }
+            return false;
+        }
+    }
+    
     this->doReset = doReset;
     
     stopSimulation(true, true);
@@ -1900,14 +1915,16 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             }
         }
 
-        if(isRecordingEnabled){
-            if(fillLevelId < 0){
-                fillLevelId = timeBar->startFillLevelUpdate();
+        if(self->isSelected()){
+            if(isRecordingEnabled){
+                if(fillLevelId < 0){
+                    fillLevelId = timeBar->startFillLevelUpdate();
+                }
             }
-        }
-        if(!timeBar->isDoingPlayback()){
-            timeBar->setTime(0.0);
-            timeBar->startPlayback();
+            if(!timeBar->isDoingPlayback()){
+                timeBar->setTime(0.0);
+                timeBar->startPlayback();
+            }
         }
 
         flushRecords();
@@ -2273,7 +2290,9 @@ void SimulatorItem::Impl::flushRecords()
         for(size_t i=0; i < activeSimBodies.size(); ++i){
             activeSimBodies[i]->impl->notifyRecords(time);
         }
-        timeBar->setTime(time);
+        if(self->isSelected()){
+            timeBar->setTime(time);
+        }
     }
 }
 
