@@ -3,10 +3,11 @@
 */
 
 #include "PyQString.h"
+#include "PyQtSignal.h"
 #include <QObject>
 #include <QTimer>
-#include <pybind11/pybind11.h>
 
+using namespace cnoid;
 namespace py = pybind11;
 
 PYBIND11_MODULE(QtCore, m)
@@ -24,13 +25,29 @@ PYBIND11_MODULE(QtCore, m)
         .def("setParent", &QObject::setParent)
         .def("deleteLater", &QObject::deleteLater)
         .def("startTimer", (int (QObject::*)(int, Qt::TimerType)) &QObject::startTimer)
+        .def_static(
+            "disconnect",
+            [](const QMetaObject::Connection& connection){ return QObject::disconnect(connection); })
 
         // deprecated
         .def("getObjectName", &QObject::objectName)
         .def("getParent", &QObject::parent, py::return_value_policy::reference)
         ;
 
-    py::class_<QTimer, QObject>(m, "QTimer")
+    auto qMetaObject = m.def_submodule("QMetaObject");
+    
+    py::class_<QMetaObject::Connection>(qMetaObject, "Connection")
+        .def(py::init<>())
+        .def(py::init<const QMetaObject::Connection&>())
+        ;
+
+    py::class_<QTimer, QObject> qTimer(m, "QTimer");
+
+    typedef cnoid::QtSignal<decltype(&QTimer::timeout), void()> TimerSignal;
+    cnoid::PyQtSignal<TimerSignal>(qTimer, "Signal");
+
+    qTimer
+        .def(py::init<>())
         .def_property("interval", &QTimer::interval, (void (QTimer::*)(int)) &QTimer::setInterval)
         .def("setInterval", (void (QTimer::*)(int)) &QTimer::setInterval)
         .def("isActive", &QTimer::isActive)
@@ -41,6 +58,7 @@ PYBIND11_MODULE(QtCore, m)
         .def("start", (void (QTimer::*)(int)) &QTimer::start)
         .def("stop", &QTimer::stop)
         .def_static("singleShot", (void(*)(int, const QObject*, const char*)) &QTimer::singleShot)
+        .def_property_readonly("timeout", [](QTimer* self){ return TimerSignal(self, &QTimer::timeout); })
 
         // deprecated
         .def("getInterval", &QTimer::interval)

@@ -2,27 +2,30 @@ from cnoid.Util import *
 from cnoid.Base import *
 from cnoid.BodyPlugin import *
 from cnoid.PythonPlugin import *
+from cnoid.QtCore import *
 from numpy import *
 
 rootItem = RootItem.instance
 
 class BodyShaker:
     def __init__(self):
-        self.connections = ScopedConnectionSet()
-
         toolBar = ToolBar("ShakeBar")
         self.button = toolBar.addToggleButton("Shake")
         self.button.setChecked(True)
-        self.connections.add(self.button.toggled.connect(self.onButtonToggled))
+        self.buttonConnection = self.button.toggled.connect(self.onButtonToggled)
         PythonPlugin.instance.mountToolBar(toolBar)
 
         self.bodyItems = []
         self.dp = array([0.0, 0.0, 0.01])
-        self.connections.add(
-            rootItem.sigSelectedItemsChanged.connect(self.onSelectionChanged))
-        self.timer = Timer()
-        self.connections.add(
-            self.timer.timeout.connect(self.onTimeout))
+        self.selectionConnection = rootItem.sigSelectedItemsChanged.connect(self.onSelectionChanged)
+        self.timer = QTimer()
+        self.timerConnection = self.timer.timeout.connect(self.onTimeout)
+
+    def disconnect(self):
+        # This is necessary to release the existing instance
+        self.selectionConnection.disconnect()
+        QObject.disconnect(self.buttonConnection)
+        QObject.disconnect(self.timerConnection)
 
     def onButtonToggled(self, on):
         self.onSelectionChanged(rootItem.selectedItems)
@@ -43,8 +46,7 @@ class BodyShaker:
         self.dp = -self.dp
 
 try:
-    # This is necessary to release the existing instance
-    bodyShaker.connections.disconnect()
+    bodyShaker.disconnect()
 except NameError:
     pass
 

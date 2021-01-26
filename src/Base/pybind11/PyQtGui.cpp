@@ -3,10 +3,12 @@
 */
 
 #include "PyQString.h"
+#include "PyQtSignal.h"
 #include <QWidget>
 #include <QMainWindow>
 #include <QToolButton>
 #include <QLabel>
+#include <QSpinBox>
 
 namespace py = pybind11;
 
@@ -79,7 +81,14 @@ PYBIND11_MODULE(QtGui, m)
 
     py::class_<QMainWindow, QWidget>(m, "QMainWindow");
 
-    py::class_<QAbstractButton, QWidget>(m, "QAbstractButton")
+    py::class_<QAbstractButton, QWidget> qAbstractButton(m, "QAbstractButton");
+
+    typedef cnoid::QtSignal<void(QAbstractButton::*)(bool), void()> ButtonClickSignal;
+    cnoid::PyQtSignal<ButtonClickSignal>(qAbstractButton, "ClickSignal");
+    typedef cnoid::QtSignal<void(QAbstractButton::*)(bool), void(bool)> ButtonBoolSignal;
+    cnoid::PyQtSignal<ButtonBoolSignal>(qAbstractButton, "BoolSignal");
+
+    qAbstractButton
         .def_property_readonly("autoExclusive", &QAbstractButton::autoExclusive)
         .def("setAutoExclusive", &QAbstractButton::setAutoExclusive)
         .def_property("autoRepeat", &QAbstractButton::autoRepeat, &QAbstractButton::setAutoRepeat)
@@ -108,6 +117,12 @@ PYBIND11_MODULE(QtGui, m)
         .def("setChecked", &QAbstractButton::setChecked)
         //.def("setIconSize", QAbstractButton::setIconSize)
         .def("toggle", &QAbstractButton::toggle)
+        .def_property_readonly(
+            "clicked",
+            [](QAbstractButton* self){ return ButtonClickSignal(self, &QAbstractButton::clicked); })
+        .def_property_readonly(
+            "toggled",
+            [](QAbstractButton* self){ return ButtonBoolSignal(self, &QAbstractButton::toggled); })
         
         // deprecated
         .def("getAutoExclusive", &QAbstractButton::autoExclusive)
@@ -127,5 +142,27 @@ PYBIND11_MODULE(QtGui, m)
         .def(py::init<>())
         .def(py::init<const QString&>())
         .def("setText", &QLabel::setText)
+        ;
+
+    py::class_<QAbstractSpinBox, std::unique_ptr<QAbstractSpinBox, py::nodelete>, QWidget>(m, "QAbstractSpinBox");
+
+    py::class_<QSpinBox, std::unique_ptr<QSpinBox, py::nodelete>, QAbstractSpinBox> qSpinBox(m, "QSpinBox");
+
+    typedef cnoid::QtSignal<void(QSpinBox::*)(int), void(int)> SpinBoxIntSignal;
+    cnoid::PyQtSignal<SpinBoxIntSignal>(qSpinBox, "IntSignal");
+
+    qSpinBox
+        .def(py::init<>())
+        .def("setMaximum", &QSpinBox::setMaximum)
+        .def("setMinimum", &QSpinBox::setMinimum)
+        .def("setRange", &QSpinBox::setRange)
+        .def_property("maximum", &QSpinBox::maximum, &QSpinBox::setMaximum)
+        .def_property("minimum", &QSpinBox::minimum, &QSpinBox::setMinimum)
+        .def("setSingleStep", &QSpinBox::setSingleStep)
+        .def_property("value", &QSpinBox::value, &QSpinBox::setValue)
+        .def("setValue", &QSpinBox::setValue)
+        .def_property_readonly(
+            "valueChanged",
+            [](QSpinBox* self){ return SpinBoxIntSignal(self, &QSpinBox::valueChanged); })
         ;
 }

@@ -1,8 +1,8 @@
-from cnoid.Base import *
+from cnoid.QtCore import *
 
 class TimerSample:
     def __init__(self):
-        self.timer = Timer()
+        self.timer = QTimer()
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.doSomething)
         self.timer.start()
