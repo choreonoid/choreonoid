@@ -7,6 +7,7 @@
 #include <QWidget>
 #include <QMainWindow>
 #include <QToolButton>
+#include <QCheckBox>
 #include <QLabel>
 #include <QSpinBox>
 
@@ -138,13 +139,41 @@ PYBIND11_MODULE(QtGui, m)
         .def("getAutoRaise", &QToolButton::autoRaise)
         ;
 
+    py::class_<QCheckBox, std::unique_ptr<QCheckBox, py::nodelete>, QAbstractButton>(m, "QCheckBox")
+        .def(py::init<>())
+        .def(py::init<const QString&>())
+        ;
+
+    py::enum_<Qt::AlignmentFlag>(m, "AlignmentFlag")
+        .value("AlignLeft", Qt::AlignLeft)
+        .value("AlignRight", Qt::AlignRight)
+        .value("AlignHCenter", Qt::AlignHCenter)
+        .value("AlignJustify", Qt::AlignJustify)
+        .value("AlignTop", Qt::AlignTop)
+        .value("AlignBottom", Qt::AlignBottom)
+        .value("AlignVCenter", Qt::AlignVCenter)
+        .value("AlignBaseline", Qt::AlignBaseline)
+        .value("AlignCenter", Qt::AlignCenter)
+        .export_values();
+
+    py::class_<QFlags<Qt::AlignmentFlag>>(m, "Alignment")
+        .def(py::init<>())
+        .def(py::init<Qt::AlignmentFlag>())
+        ;
+
+    py::implicitly_convertible<Qt::AlignmentFlag, QFlags<Qt::AlignmentFlag>>();
+    py::implicitly_convertible<QFlags<Qt::AlignmentFlag>, Qt::AlignmentFlag>();
+
     py::class_<QLabel, std::unique_ptr<QLabel, py::nodelete>, QWidget>(m, "QLabel")
         .def(py::init<>())
         .def(py::init<const QString&>())
         .def("setText", &QLabel::setText)
         ;
 
-    py::class_<QAbstractSpinBox, std::unique_ptr<QAbstractSpinBox, py::nodelete>, QWidget>(m, "QAbstractSpinBox");
+    py::class_<QAbstractSpinBox, std::unique_ptr<QAbstractSpinBox, py::nodelete>, QWidget>(m, "QAbstractSpinBox")
+        .def_property("alignment", &QAbstractSpinBox::alignment, &QAbstractSpinBox::setAlignment)
+        .def("setAlignment", &QAbstractSpinBox::setAlignment)
+        ;
 
     py::class_<QSpinBox, std::unique_ptr<QSpinBox, py::nodelete>, QAbstractSpinBox> qSpinBox(m, "QSpinBox");
 
