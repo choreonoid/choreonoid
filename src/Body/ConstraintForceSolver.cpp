@@ -60,7 +60,7 @@ static const bool ENABLE_TRUE_FRICTION_CONE =
 static const bool SKIP_REDUNDANT_ACCEL_CALC = true;
 static const bool ASSUME_SYMMETRIC_MATRIX = false;
 
-static const int DEFAULT_MAX_NUM_GAUSS_SEIDEL_ITERATION = 20;
+static const int DEFAULT_MAX_NUM_GAUSS_SEIDEL_ITERATION = 25;
 
 //static const int DEFAULT_NUM_GAUSS_SEIDEL_ITERATION_BLOCK = 10;
 static const int DEFAULT_NUM_GAUSS_SEIDEL_ITERATION_BLOCK = 1;
