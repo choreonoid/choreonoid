@@ -43,7 +43,7 @@ items:
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: TimeBar range
+            recordingMode: "Time bar range"
             timeLength: 60
             allLinkPositionOutputMode: false
             dynamicsMode: Forward dynamics
@@ -56,7 +56,7 @@ items:
           class: ODESimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: TimeBar range
+            recordingMode: "Time bar range"
             timeLength: 60
             allLinkPositionOutputMode: true
             stepMode: Iterative (quick step)
@@ -77,7 +77,7 @@ items:
           class: BulletSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: TimeBar range
+            recordingMode: "Time bar range"
             onlyActiveControlPeriod: true
             timeLength: 60
             allLinkPositionOutputMode: true

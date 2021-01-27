@@ -122,21 +122,26 @@ public:
         NoRecording,
         NumRecordingModes,
 
-        // deprecated
+        // Deprecated
         REC_FULL = FullRecording,
         REC_TAIL = TailRecording,
         REC_NONE = NoRecording,
         N_RECORDING_MODES = NumRecordingModes
     };
     
+    void setRecordingMode(int selection);
+    int recordingMode() const;
+
     enum TimeRangeMode {
         UnlimitedTime,
-        ActiveControlTime,
         SpecifiedTime,
         TimeBarTime,
         NumTimeRangeModes,
 
-        // deprecated
+        // Deprecated. Use setActiveControlTimeRangeMode.
+        ActiveControlTime, 
+
+        // Deprecated
         TR_UNLIMITED = UnlimitedTime,
         TR_ACTIVE_CONTROL = ActiveControlTime,
         TR_SPECIFIED = SpecifiedTime,
@@ -144,16 +149,24 @@ public:
         N_TIME_RANGE_MODES = NumTimeRangeModes
     };
     
-    void setRecordingMode(int selection);
-    int recordingMode() const;
     void setTimeRangeMode(int selection);
+
+    void setTimeLength(double length);
+
+    [[deprecated("Use setTimeLength")]]
+    void setSpecifiedRecordingTimeLength(double length){
+        setTimeLength(length);
+    }
+
+    void setActiveControlTimeRangeMode(bool on);
+    bool isActiveControlTimeRangeMode() const;
+
     void setRealtimeSyncMode(bool on);
+    
     void setDeviceStateOutputEnabled(bool on);
 
     bool isRecordingEnabled() const;
     bool isDeviceStateOutputEnabled() const;
-
-    void setSpecifiedRecordingTimeLength(double length);
 
     bool isAllLinkPositionOutputMode();
     virtual void setAllLinkPositionOutputMode(bool on);

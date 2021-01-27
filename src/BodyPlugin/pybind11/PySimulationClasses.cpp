@@ -41,11 +41,13 @@ void exportSimulationClasses(py::module m)
         .def("setRecordingMode", &SimulatorItem::setRecordingMode)
         .def_property_readonly("recordingMode", &SimulatorItem::recordingMode)
         .def("setTimeRangeMode", &SimulatorItem::setTimeRangeMode)
-        .def("setRealtimeSyncMode", &SimulatorItem::setRealtimeSyncMode)
-        .def("setDeviceStateOutputEnabled", &SimulatorItem::setDeviceStateOutputEnabled)
+        .def("setTimeLength", &SimulatorItem::setTimeLength)
+        .def("setActiveControlTimeRangeMode", &SimulatorItem::setActiveControlTimeRangeMode)
+        .def("isActiveControlTimeRangeMode", &SimulatorItem::isActiveControlTimeRangeMode)
         .def("isRecordingEnabled", &SimulatorItem::isRecordingEnabled)
         .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
-        .def("setSpecifiedRecordingTimeLength", &SimulatorItem::setSpecifiedRecordingTimeLength)
+        .def("setRealtimeSyncMode", &SimulatorItem::setRealtimeSyncMode)
+        .def("setDeviceStateOutputEnabled", &SimulatorItem::setDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
         .def("setExternalForce", &SimulatorItem::setExternalForce,
@@ -55,6 +57,7 @@ void exportSimulationClasses(py::module m)
         .def("clearForcedPositions", &SimulatorItem::clearForcedPositions)
 
         // deprecated
+        .def("setSpecifiedRecordingTimeLength", &SimulatorItem::setTimeLength)
         .def("getWorldTimeStep", &SimulatorItem::worldTimeStep)
         .def("getCurrentFrame", &SimulatorItem::currentFrame)
         .def("getCurrentTime", &SimulatorItem::currentTime)
@@ -72,7 +75,7 @@ void exportSimulationClasses(py::module m)
         .value("NoRecording", SimulatorItem::NoRecording)
         .value("NumRecordingModes", SimulatorItem::NumRecordingModes)
 
-        // deprecated
+// deprecated
         .value("REC_FULL", SimulatorItem::FullRecording)
         .value("REC_TAIL", SimulatorItem::TailRecording)
         .value("REC_NONE", SimulatorItem::NoRecording)
@@ -81,12 +84,12 @@ void exportSimulationClasses(py::module m)
         
     py::enum_<SimulatorItem::TimeRangeMode>(simulatorItemClass, "TimeRangeMode")
         .value("UnlimitedTime", SimulatorItem::UnlimitedTime)
-        .value("ActiveControlTime", SimulatorItem::ActiveControlTime)
         .value("SpecifiedTime", SimulatorItem::SpecifiedTime)
         .value("TimeBarTime", SimulatorItem::TimeBarTime)
         .value("NumTimeRangeModes", SimulatorItem::NumTimeRangeModes)
 
         // deprecated
+        .value("ActiveControlTime", SimulatorItem::ActiveControlTime)
         .value("UNLIMITED", SimulatorItem::UnlimitedTime)
         .value("ACTIVE_CONTROL", SimulatorItem::ActiveControlTime)
         .value("SPECIFIED", SimulatorItem::SpecifiedTime)

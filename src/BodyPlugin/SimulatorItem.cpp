@@ -240,11 +240,12 @@ public:
 
     Selection recordingMode;
     Selection timeRangeMode;
-    double specifiedTimeLength;
+    double timeLength;
     int maxFrame;
     int ringBufferSize;
     bool isRecordingEnabled;
     bool isRingBufferMode;
+    bool isActiveControlTimeRangeMode;
     bool useControllerThreads;
     bool useControllerThreadsProperty;
     bool isAllLinkPositionOutputMode;
@@ -332,7 +333,6 @@ public:
     void setVirtualElasticStringForce();
     void onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
-    void setSpecifiedRecordingTimeLength(double length);
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -1244,8 +1244,8 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
       preDynamicsFunctions(this),
       midDynamicsFunctions(this),
       postDynamicsFunctions(this),
-      recordingMode(SimulatorItem::N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
-      timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
+      recordingMode(NumRecordingModes, CNOID_GETTEXT_DOMAIN_NAME),
+      timeRangeMode(NumTimeRangeModes, CNOID_GETTEXT_DOMAIN_NAME),
       mv(MessageView::instance())
 {
     worldItem = nullptr;
@@ -1262,19 +1262,19 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     frameAtLastBufferWriting = 0;
     flushTimer.sigTimeout().connect([&](){ flushRecords(); });
 
-    recordingMode.setSymbol(SimulatorItem::REC_FULL, N_("full"));
-    recordingMode.setSymbol(SimulatorItem::REC_TAIL, N_("tail"));
-    recordingMode.setSymbol(SimulatorItem::REC_NONE, N_("off"));
-    recordingMode.select(SimulatorItem::REC_FULL);
+    recordingMode.setSymbol(FullRecording, N_("full"));
+    recordingMode.setSymbol(TailRecording, N_("tail"));
+    recordingMode.setSymbol(NoRecording, N_("off"));
+    recordingMode.select(FullRecording);
 
-    timeRangeMode.setSymbol(SimulatorItem::TR_UNLIMITED, N_("Unlimited"));
-    timeRangeMode.setSymbol(SimulatorItem::TR_ACTIVE_CONTROL, N_("Active control period"));
-    timeRangeMode.setSymbol(SimulatorItem::TR_SPECIFIED, N_("Specified time"));
-    timeRangeMode.setSymbol(SimulatorItem::TR_TIMEBAR, N_("Time bar range"));
-    timeRangeMode.select(SimulatorItem::TR_UNLIMITED);
+    timeRangeMode.setSymbol(UnlimitedTime, N_("Unlimited"));
+    timeRangeMode.setSymbol(SpecifiedTime, N_("Specified time"));
+    timeRangeMode.setSymbol(TimeBarTime, N_("Time bar range"));
+    timeRangeMode.select(UnlimitedTime);
 
-    specifiedTimeLength = 180.0; // 3 min.
+    timeLength = 180.0; // 3 min.
     useControllerThreadsProperty = true;
+    isActiveControlTimeRangeMode = false;
     isAllLinkPositionOutputMode = true;
     isDeviceStateOutputEnabled = true;
     isDoingSimulationLoop = false;
@@ -1305,8 +1305,9 @@ SimulatorItem::Impl::Impl(SimulatorItem* self, const Impl& org)
     recordingMode = org.recordingMode;
     timeRangeMode = org.timeRangeMode;
 
-    specifiedTimeLength = org.specifiedTimeLength;
+    timeLength = org.timeLength;
     useControllerThreadsProperty = org.useControllerThreadsProperty;
+    isActiveControlTimeRangeMode = org.isActiveControlTimeRangeMode;
     isAllLinkPositionOutputMode = org.isAllLinkPositionOutputMode;
     isDeviceStateOutputEnabled = org.isDeviceStateOutputEnabled;
     isRealtimeSyncMode = org.isRealtimeSyncMode;
@@ -1403,9 +1404,32 @@ bool SimulatorItem::isRecordingEnabled() const
 }
 
 
-void SimulatorItem::setTimeRangeMode(int selection)
+void SimulatorItem::setTimeRangeMode(int mode)
 {
-    impl->timeRangeMode.select(selection);
+    if(mode == ActiveControlTime){
+        impl->timeRangeMode.select(UnlimitedTime);
+        setActiveControlTimeRangeMode(true);
+    } else {
+        impl->timeRangeMode.select(mode);
+    }
+}
+
+
+void SimulatorItem::setTimeLength(double length)
+{
+    impl->timeLength = length;
+}
+
+
+void SimulatorItem::setActiveControlTimeRangeMode(bool on)
+{
+    impl->isActiveControlTimeRangeMode = on;
+}
+
+
+bool SimulatorItem::isActiveControlTimeRangeMode() const
+{
+    return impl->isActiveControlTimeRangeMode;
 }
 
 
@@ -1436,16 +1460,6 @@ bool SimulatorItem::isAllLinkPositionOutputMode()
 bool SimulatorItem::isDeviceStateOutputEnabled() const
 {
     return impl->isDeviceStateOutputEnabled;
-}
-
-void SimulatorItem::setSpecifiedRecordingTimeLength(double length)
-{
-    impl->setSpecifiedRecordingTimeLength(length);
-}
-
-void SimulatorItem::Impl::setSpecifiedRecordingTimeLength(double length)
-{
-    specifiedTimeLength = length;
 }
 
 CollisionDetector* SimulatorItem::getOrCreateCollisionDetector()
@@ -1804,8 +1818,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
         updateSimBodyLists();
 
-        doStopSimulationWhenNoActiveControllers =
-            timeRangeMode.is(SimulatorItem::TR_ACTIVE_CONTROL) && hasControllers;
+        doStopSimulationWhenNoActiveControllers = isActiveControlTimeRangeMode && hasControllers;
 
         if(doStopSimulationWhenNoActiveControllers && activeControllerInfos.empty()){
             mv->putln(_("The simulation cannot be started because all the controllers are inactive."),
@@ -1857,12 +1870,12 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         ringBufferSize = std::numeric_limits<int>::max();
         
         if(timeRangeMode.is(SimulatorItem::TR_SPECIFIED)){
-            maxFrame = specifiedTimeLength / worldTimeStep_;
+            maxFrame = timeLength / worldTimeStep_;
         } else if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
             maxFrame = TimeBar::instance()->maxTime() / worldTimeStep_;
         } else if(isRingBufferMode){
             maxFrame = std::numeric_limits<int>::max();
-            ringBufferSize = specifiedTimeLength / worldTimeStep_;
+            ringBufferSize = timeLength / worldTimeStep_;
         } else {
             maxFrame = std::numeric_limits<int>::max();
         }
@@ -2732,8 +2745,10 @@ void SimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ onRealtimeSyncChanged(on); return true; });
     putProperty(_("Time range"), timeRangeMode,
                 [&](int index){ return timeRangeMode.select(index); });
-    putProperty(_("Time length"), specifiedTimeLength,
-                [&](double length){ setSpecifiedRecordingTimeLength(length); return true; });
+    putProperty(_("Time length"), timeLength,
+                [&](double length){ self->setTimeLength(length); return true; });
+    putProperty(_("Active control period only"), isActiveControlTimeRangeMode,
+                [&](bool on){ self->setActiveControlTimeRangeMode(on); return true; });
     putProperty(_("Recording"), recordingMode,
                 [&](int index){ return recordingMode.select(index); });
     putProperty(_("All link position recording"), isAllLinkPositionOutputMode,
@@ -2765,7 +2780,8 @@ bool SimulatorItem::Impl::store(Archive& archive)
     archive.write("realtimeSync", isRealtimeSyncMode);
     archive.write("recording", recordingMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("timeRangeMode", timeRangeMode.selectedSymbol(), DOUBLE_QUOTED);
-    archive.write("timeLength", specifiedTimeLength);
+    archive.write("timeLength", timeLength);
+    archive.write("active_control_time_range_mode", isActiveControlTimeRangeMode);
     archive.write("allLinkPositionOutputMode", isAllLinkPositionOutputMode);
     archive.write("deviceStateOutput", isDeviceStateOutputEnabled);
     archive.write("controllerThreads", useControllerThreadsProperty);
@@ -2815,18 +2831,15 @@ bool SimulatorItem::Impl::restore(const Archive& archive)
     } else {
         temporalResolutionType.select(RESOLUTION_TIMEBAR);
     }
-    
-    if(archive.read("onlyActiveControlPeriod", boolValue) && boolValue){
-        timeRangeMode.select(SimulatorItem::TR_ACTIVE_CONTROL);
-    } else if(archive.read("timeRangeMode", symbol)){
-        if(!timeRangeMode.select(symbol)){
-            if(symbol == "Specified period"){
-                timeRangeMode.select(SimulatorItem::TR_SPECIFIED);
-            } else if(symbol == "TimeBar range"){
-                timeRangeMode.select(SimulatorItem::TR_TIMEBAR);
-            }
+
+    if(archive.read("timeRangeMode", symbol)){
+        if(timeRangeMode.select(symbol)){
+            self->setTimeRangeMode(timeRangeMode.which());
+        } else if(symbol == "Active control period"){ // Old
+            self->setTimeRangeMode(ActiveControlTime);
         }
     }
+    isActiveControlTimeRangeMode = archive.get("active_control_time_range_mode", isActiveControlTimeRangeMode);
 
     if(archive.read("recording", symbol)){
         recordingMode.select(symbol);
@@ -2841,7 +2854,7 @@ bool SimulatorItem::Impl::restore(const Archive& archive)
         }
     }
     archive.read("realtimeSync", isRealtimeSyncMode);
-    archive.read("timeLength", specifiedTimeLength);
+    archive.read("timeLength", timeLength);
     self->setAllLinkPositionOutputMode(archive.get("allLinkPositionOutputMode", isAllLinkPositionOutputMode));
     archive.read("deviceStateOutput", isDeviceStateOutputEnabled);
     archive.read("recordCollisionData", recordCollisionData);

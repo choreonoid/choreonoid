@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-19 01:50+0900\n"
+"POT-Creation-Date: 2021-01-27 13:52+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -563,9 +563,8 @@ msgid "The target body item of \"{0}\" is not found."
 msgstr "\"{0}\" の対象アイテムがみつかりません．"
 
 #: ControllerLogItem.cpp:9
-#, fuzzy
 msgid "ControllerLogItem"
-msgstr "シンプルコントローラアイテム"
+msgstr "コントローラログアイテム"
 
 #: BodyLinkView.cpp:151
 msgid "Body / Link"
@@ -1073,100 +1072,108 @@ msgstr "{}はこのワールドの他のシミュレータも選択されてい�
 msgid "Body State"
 msgstr "ボディ状態"
 
-#: SimulatorItem.cpp:488
+#: SimulatorItem.cpp:490
 msgid "Simulation"
 msgstr "シミュレーション"
 
-#: SimulatorItem.cpp:489
+#: SimulatorItem.cpp:491
 msgid "Start"
 msgstr "開始"
 
-#: SimulatorItem.cpp:491
+#: SimulatorItem.cpp:493
 msgid "Pause"
 msgstr "停止"
 
-#: SimulatorItem.cpp:493
+#: SimulatorItem.cpp:495
 msgid "Resume"
 msgstr "再開"
 
-#: SimulatorItem.cpp:495
+#: SimulatorItem.cpp:497
 msgid "Finish"
 msgstr "終了"
 
-#: SimulatorItem.cpp:1252
+#: SimulatorItem.cpp:1254
 msgid "Timestep"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:1253
+#: SimulatorItem.cpp:1255
 msgid "Framerate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:1254
+#: SimulatorItem.cpp:1256
 msgid "Time bar"
 msgstr "タイムバー"
 
-#: SimulatorItem.cpp:1264
+#: SimulatorItem.cpp:1266
 msgid "full"
 msgstr "全て"
 
-#: SimulatorItem.cpp:1265
+#: SimulatorItem.cpp:1267
 msgid "tail"
 msgstr "末尾"
 
-#: SimulatorItem.cpp:1266
+#: SimulatorItem.cpp:1268
 msgid "off"
 msgstr "オフ"
 
-#: SimulatorItem.cpp:1269
+#: SimulatorItem.cpp:1271
 msgid "Unlimited"
 msgstr "無制限"
 
-#: SimulatorItem.cpp:1270
-msgid "Active control period"
-msgstr "能動制御期間"
-
-#: SimulatorItem.cpp:1271
+#: SimulatorItem.cpp:1272
 msgid "Specified time"
 msgstr "指定時間"
 
-#: SimulatorItem.cpp:1272
+#: SimulatorItem.cpp:1273
 msgid "Time bar range"
 msgstr "タイムバー範囲"
 
-#: SimulatorItem.cpp:1633
+#: SimulatorItem.cpp:1671
+msgid "{0} is doing its simulation."
+msgstr ""
+
+#: SimulatorItem.cpp:1674
+msgid ""
+"{0} cannot start the simulation because {1} in the same world is doing its "
+"simulation."
+msgstr ""
+"{0}と同じワールドの{1}がシミュレーション中であるため、{0}のシミュレーションを"
+"開始できません．"
+
+#: SimulatorItem.cpp:1687
 msgid "{} must be in a WorldItem to do simulation."
 msgstr "{}はシミュレーション対象のワールド内に配置されている必要があります．"
 
-#: SimulatorItem.cpp:1675
+#: SimulatorItem.cpp:1729
 msgid "The clone of {0} for the simulation cannot be created."
 msgstr "シミュレーション用の{0}のクローンを生成できません．"
 
-#: SimulatorItem.cpp:1721
+#: SimulatorItem.cpp:1775
 msgid "SubSimulatorItem \"{}\" has been detected."
 msgstr "サブシミュレータアイテム \"{}\" が検出されました．"
 
-#: SimulatorItem.cpp:1725
+#: SimulatorItem.cpp:1779
 msgid "The initialization of \"{}\" failed."
 msgstr "\"{}\" の初期化に失敗しました．"
 
-#: SimulatorItem.cpp:1729
+#: SimulatorItem.cpp:1783
 msgid "SubSimulatorItem \"{}\" is disabled."
 msgstr "サブシミュレータアイテム \"{}\" は無効化されています．"
 
-#: SimulatorItem.cpp:1751
+#: SimulatorItem.cpp:1805
 msgid "{0} for {1} failed to start."
 msgstr "{1}用の{0}を稼働できませんでした．"
 
-#: SimulatorItem.cpp:1758
+#: SimulatorItem.cpp:1812
 msgid "{} failed to start."
 msgstr "{}を稼働できませんでした．"
 
-#: SimulatorItem.cpp:1777
+#: SimulatorItem.cpp:1830
 msgid ""
 "The simulation cannot be started because all the controllers are inactive."
 msgstr "稼働可能なコントローラが無いためシミュレーションを開始できません．"
 
-#: SimulatorItem.cpp:1863
+#: SimulatorItem.cpp:1916
 msgid ""
 "WorldLogFileItem \"{0}\" has been detected. A simulation result is recoreded "
 "to \"{1}\"."
@@ -1174,67 +1181,71 @@ msgstr ""
 "ワールドログファイルアイテム \"{0}\" が検出されました．シミュレーション結果は"
 "\"{1}\" に記録されます．"
 
-#: SimulatorItem.cpp:1896
+#: SimulatorItem.cpp:1953
 msgid "Simulation by {} has started."
 msgstr "{}によるシミュレーションを開始しました．"
 
-#: SimulatorItem.cpp:1902
+#: SimulatorItem.cpp:1959
 msgid "{0} failed to initialize the simulation."
 msgstr ""
 
-#: SimulatorItem.cpp:2390
+#: SimulatorItem.cpp:2457
 msgid "Simulation by {0} has finished at {1} [s]."
 msgstr "{0}によるシミュレーションが{1}秒時点で終了しました．"
 
-#: SimulatorItem.cpp:2393
+#: SimulatorItem.cpp:2460
 msgid "Computation time is {0} [s], computation time / simulation time = {1}."
 msgstr "計算時間: {0} [s], 計算時間 / シミュレーション時間 = {1}"
 
-#: SimulatorItem.cpp:2672
+#: SimulatorItem.cpp:2739
 msgid "Temporal resolution type"
 msgstr "時間分解能タイプ"
 
-#: SimulatorItem.cpp:2676
+#: SimulatorItem.cpp:2743
 msgid "Time step"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:2679
+#: SimulatorItem.cpp:2746
 msgid "Frame rate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:2683
+#: SimulatorItem.cpp:2750
 msgid "Sync with realtime"
 msgstr "実時間同期"
 
-#: SimulatorItem.cpp:2685
+#: SimulatorItem.cpp:2752
 msgid "Time range"
 msgstr "時間範囲"
 
-#: SimulatorItem.cpp:2687
+#: SimulatorItem.cpp:2754
 msgid "Time length"
 msgstr "時間長"
 
-#: SimulatorItem.cpp:2689
+#: SimulatorItem.cpp:2756
+msgid "Active control period only"
+msgstr "能動制御期間のみ"
+
+#: SimulatorItem.cpp:2758
 msgid "Recording"
 msgstr "記録モード"
 
-#: SimulatorItem.cpp:2691
+#: SimulatorItem.cpp:2760
 msgid "All link position recording"
 msgstr "全リンク位置の記録"
 
-#: SimulatorItem.cpp:2693
+#: SimulatorItem.cpp:2762
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
-#: SimulatorItem.cpp:2695
+#: SimulatorItem.cpp:2764
 msgid "Record collision data"
 msgstr "干渉データの記録"
 
-#: SimulatorItem.cpp:2697
+#: SimulatorItem.cpp:2766
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
-#: SimulatorItem.cpp:2699 ControllerItem.cpp:82
+#: SimulatorItem.cpp:2768 ControllerItem.cpp:82
 msgid "Controller options"
 msgstr "コントローラオプション"
 
@@ -1332,8 +1343,8 @@ msgid ""
 "{0:7.3f} [s]: Velocity limit over of {1} ({2} is {3:.0f}% of the range "
 "({4} , {5}).)"
 msgstr ""
-"{0:7.3f} [秒]: {1}の関節速度オーバー ({2}は範囲({4} , {5})の{3:.0f}%を超えて"
-"います．"
+"{0:7.3f} [秒]: {1}の速度リミットオーバー ({2}は範囲({4} , {5})の{3:.0f}%を超"
+"えています．"
 
 #: KinematicFaultChecker.cpp:550
 msgid "{0:7.3f} [s]: Collision between {1} and {2}"
@@ -1821,9 +1832,3 @@ msgstr "関節速度下限"
 #: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
-
-#~ msgid "Static friction"
-#~ msgstr "静止摩擦係数"
-
-#~ msgid "Slip friction"
-#~ msgstr "動摩擦係数"
