@@ -10,10 +10,17 @@ set(headers
 choreonoid_add_library(CnoidPyBase SHARED PyItemList.cpp HEADERS ${headers})
 target_link_libraries(CnoidPyBase CnoidBase CnoidPyUtil)
 
-choreonoid_add_python_module(PyQtCore PyQtCore.cpp)
+choreonoid_add_python_module(PyQtCore
+  PyQtCore.cpp
+  PyQtCoreQtNamespace.cpp
+  )
 target_link_libraries(PyQtCore ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
-choreonoid_add_python_module(PyQtGui PyQtGui.cpp)
+choreonoid_add_python_module(PyQtGui
+  PyQtGui.cpp
+  PyQtGuiLayoutClasses.cpp
+  PyQtGuiModelViewClasses.cpp
+  )
 target_link_libraries(PyQtGui ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
 choreonoid_add_python_module(PyBase

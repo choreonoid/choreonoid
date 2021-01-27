@@ -5,13 +5,28 @@
 #include "PyQString.h"
 #include "PyQtSignal.h"
 #include <QWidget>
+#include <QLayout>
 #include <QMainWindow>
+#include <QPushButton>
 #include <QToolButton>
 #include <QCheckBox>
 #include <QLabel>
 #include <QSpinBox>
+#include <QDialog>
+#include <QFrame>
+#include <QAbstractScrollArea>
+#include <QMenu>
 
 namespace py = pybind11;
+
+namespace cnoid {
+
+void exportPyQtGuiLayoutClasses(py::module m);
+void exportPyQtGuiModelViewClasses(py::module m);
+
+}
+
+using namespace cnoid;
 
 PYBIND11_MODULE(QtGui, m)
 {
@@ -38,6 +53,7 @@ PYBIND11_MODULE(QtGui, m)
                       &QWidget::parentWidget,
                       (void (QWidget::*)(QWidget* parent)) &QWidget::setParent,
                       py::return_value_policy::reference)
+        .def("setLayout", &QWidget::setLayout)
         .def("setParent",  (void (QWidget::*)(QWidget* parent)) &QWidget::setParent)
         .def_property("toolTip", &QWidget::toolTip, &QWidget::setToolTip)
         .def("setToolTip", &QWidget::setToolTip)
@@ -50,6 +66,7 @@ PYBIND11_MODULE(QtGui, m)
         .def_property_readonly("windowRole", &QWidget::windowRole)
         .def_property_readonly("windowTitle", &QWidget::windowTitle)
 
+        // Public slots
         .def("close", &QWidget::close)
         .def("hide", &QWidget::hide)
         .def("lower", &QWidget::lower)
@@ -131,8 +148,22 @@ PYBIND11_MODULE(QtGui, m)
         .def("getAutoRepeatDelay", &QAbstractButton::autoRepeatDelay)
         .def("getAutoRepeatInterval", &QAbstractButton::autoRepeatInterval)
         ;
+
+    py::class_<QPushButton, std::unique_ptr<QPushButton, py::nodelete>, QAbstractButton>(m, "QPushButton")
+        .def(py::init<QWidget*>(), py::arg("parent") = nullptr)
+        .def(py::init<const QString&, QWidget*>(), py::arg("text"), py::arg("parent") = nullptr)
+        .def_property_readonly("autoDefault", &QPushButton::autoDefault)
+        .def("isDefault", &QPushButton::isDefault)
+        .def("isFlat", &QPushButton::isFlat)
+        .def_property_readonly("menu", &QPushButton::menu)
+        .def("setAutoDefault", &QPushButton::setAutoDefault)
+        .def("setDefault", &QPushButton::setDefault)
+        .def("setFlat", &QPushButton::setFlat)
+        .def("setMenu", &QPushButton::setMenu)
+        .def("showMenu", &QPushButton::showMenu)
+        ;
     
-    py::class_<QToolButton, QAbstractButton>(m, "QToolButton")
+    py::class_<QToolButton, std::unique_ptr<QToolButton, py::nodelete>, QAbstractButton>(m, "QToolButton")
         .def_property_readonly("autoRaise", &QToolButton::autoRaise)
 
         // deprecated
@@ -143,26 +174,6 @@ PYBIND11_MODULE(QtGui, m)
         .def(py::init<>())
         .def(py::init<const QString&>())
         ;
-
-    py::enum_<Qt::AlignmentFlag>(m, "AlignmentFlag")
-        .value("AlignLeft", Qt::AlignLeft)
-        .value("AlignRight", Qt::AlignRight)
-        .value("AlignHCenter", Qt::AlignHCenter)
-        .value("AlignJustify", Qt::AlignJustify)
-        .value("AlignTop", Qt::AlignTop)
-        .value("AlignBottom", Qt::AlignBottom)
-        .value("AlignVCenter", Qt::AlignVCenter)
-        .value("AlignBaseline", Qt::AlignBaseline)
-        .value("AlignCenter", Qt::AlignCenter)
-        .export_values();
-
-    py::class_<QFlags<Qt::AlignmentFlag>>(m, "Alignment")
-        .def(py::init<>())
-        .def(py::init<Qt::AlignmentFlag>())
-        ;
-
-    py::implicitly_convertible<Qt::AlignmentFlag, QFlags<Qt::AlignmentFlag>>();
-    py::implicitly_convertible<QFlags<Qt::AlignmentFlag>, Qt::AlignmentFlag>();
 
     py::class_<QLabel, std::unique_ptr<QLabel, py::nodelete>, QWidget>(m, "QLabel")
         .def(py::init<>())
@@ -194,4 +205,50 @@ PYBIND11_MODULE(QtGui, m)
             "valueChanged",
             [](QSpinBox* self){ return SpinBoxIntSignal(self, &QSpinBox::valueChanged); })
         ;
+
+    py::class_<QDialog, QWidget> qDialog(m, "QDialog");
+
+    typedef cnoid::QtSignal<void(QDialog::*)(), void()> DialogSignal;
+    cnoid::PyQtSignal<DialogSignal>(qDialog, "Signal");
+    typedef cnoid::QtSignal<void(QDialog::*)(int), void(int)> DialogIntSignal;
+    cnoid::PyQtSignal<DialogIntSignal>(qDialog, "IntSignal");
+
+    qDialog
+        .def(py::init<>())
+        .def_property_readonly("result", &QDialog::result)
+        .def("setResult", &QDialog::setResult)
+        .def("setModal", &QDialog::setModal)
+        .def("accept", &QDialog::accept)
+        .def("done", &QDialog::done)
+        .def("exec", &QDialog::exec)
+        .def("open", &QDialog::open)
+        .def("reject", &QDialog::reject)
+        .def_property_readonly(
+            "accepted",
+            [](QDialog* self){ return DialogSignal(self, &QDialog::accepted); })
+        .def_property_readonly(
+            "finished",
+            [](QDialog* self){ return DialogIntSignal(self, &QDialog::finished); })
+        .def_property_readonly(
+            "rejected",
+            [](QDialog* self){ return DialogSignal(self, &QDialog::rejected); })
+        ;
+
+    py::class_<QFrame, QWidget>(m, "QFrame");
+
+    py::enum_<Qt::ScrollBarPolicy>(m, "ScrollBarPolicy")
+        .value("ScrollBarAsNeeded", Qt::ScrollBarAsNeeded)
+        .value("ScrollBarAlwaysOff", Qt::ScrollBarAlwaysOff)
+        .value("ScrollBarAlwaysOn", Qt::ScrollBarAlwaysOn)
+        .export_values();
+
+    py::class_<QAbstractScrollArea, QFrame>(m, "QAbstractScrollArea")
+        .def("horizontalScrollBarPolicy", &QAbstractScrollArea::horizontalScrollBarPolicy)
+        .def("setHorizontalScrollBarPolicy", &QAbstractScrollArea::setHorizontalScrollBarPolicy)
+        .def("verticalScrollBarPolicy", &QAbstractScrollArea::verticalScrollBarPolicy)
+        .def("setVerticalScrollBarPolicy", &QAbstractScrollArea::setVerticalScrollBarPolicy)
+        ;
+
+    exportPyQtGuiLayoutClasses(m);
+    exportPyQtGuiModelViewClasses(m);
 }
