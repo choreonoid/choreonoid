@@ -412,7 +412,7 @@ ItemList<> ProjectManager::Impl::loadProject
                        items are loaded. This can be achieved by decreasing the time difference from
                        the window display delay by the following sleep.
                     */
-                    msleep(2);
+                    msleep(10);
 #endif
                     // The following functions are probably useless for this problem.
                     // mv->flush();
