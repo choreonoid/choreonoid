@@ -2,12 +2,13 @@
  * @author Shin'ichiro Nakaoka
 */
 
+#include "PyQObjectHolder.h"
+#include "PyQString.h"
 #include "../MessageView.h"
 #include "../SceneWidget.h"
 #include "../SceneView.h"
 #include "../TaskView.h"
 #include "../ViewManager.h"
-#include "PyQString.h"
 #include <cnoid/PyUtil>
 #include <cnoid/SceneRenderer>
 #include <QWidget>
@@ -21,7 +22,7 @@ void exportPyViews(py::module m)
 {
     PySignal<void(View*)>(m, "ViewSignal");
 
-    py::class_<View, QWidget> view(m, "View");
+    py::class_<View, PyQObjectHolder<View>, QWidget> view(m, "View");
     view
         .def_property("name", &View::name, &View::setName)
         .def("setName", &View::setName)
@@ -31,17 +32,17 @@ void exportPyViews(py::module m)
         .def_property_readonly("sigDeactivated", &View::sigDeactivated)
         .def_property("defaultLayoutArea", &View::defaultLayoutArea, &View::setDefaultLayoutArea)
         .def("setDefaultLayoutArea", &View::setDefaultLayoutArea)
-        .def_property_readonly("indicatorOnInfoBar", &View::indicatorOnInfoBar, py::return_value_policy::reference)
+        .def_property_readonly("indicatorOnInfoBar", &View::indicatorOnInfoBar)
         .def("enableFontSizeZoomKeys", &View::enableFontSizeZoomKeys)
-        .def_property_readonly_static("lastFocusView", &View::lastFocusView, py::return_value_policy::reference)
+        .def_property_readonly_static("lastFocusView", &View::lastFocusView)
 
         // deprecated
         .def("getName", &View::name)
         .def("getSigActivated", &View::sigActivated)
         .def("getSigDeactivated", &View::sigDeactivated)
         .def("getDefaultLayoutArea", &View::defaultLayoutArea)
-        .def("getIndicatorOnInfoBar", &View::indicatorOnInfoBar, py::return_value_policy::reference)
-        .def_static("getLastFocusView", &View::lastFocusView, py::return_value_policy::reference)
+        .def("getIndicatorOnInfoBar", &View::indicatorOnInfoBar)
+        .def_static("getLastFocusView", &View::lastFocusView)
         ;
 
     py::enum_<View::LayoutArea>(view, "LayoutArea")
@@ -54,9 +55,8 @@ void exportPyViews(py::module m)
         .value("NUM_AREAS", View::LayoutArea::NUM_AREAS)
         .export_values();
 
-    py::class_<MessageView, View>(m, "MessageView")
-        .def_property_readonly_static(
-            "instance", [](py::object){ return MessageView::instance(); }, py::return_value_policy::reference)
+    py::class_<MessageView, PyQObjectHolder<MessageView>, View>(m, "MessageView")
+        .def_property_readonly_static("instance", [](py::object){ return MessageView::instance(); })
         .def("put", (void (MessageView::*)(const std::string&, int)) &MessageView::put)
         .def("putln", (void (MessageView::*)(const std::string&, int)) &MessageView::putln)
         .def("notify", (void (MessageView::*)(const std::string&, int)) &MessageView::notify)
@@ -64,16 +64,13 @@ void exportPyViews(py::module m)
         .def("clear", &MessageView::clear)
         .def("beginStdioRedirect", &MessageView::beginStdioRedirect)
         .def("endStdioRedirect", &MessageView::endStdioRedirect)
-
-        // deprecated
-        .def_static("getInstance", &MessageView::instance, py::return_value_policy::reference)
         ;
 
     m.def("showMessageBox", (void(*)(const std::string&)) &showMessageBox);
     m.def("showWarningDialog", (void(*)(const std::string&)) &showWarningDialog);
     m.def("showConfirmDialog", (bool(*)(const std::string&, const std::string&)) &showConfirmDialog);
 
-    py::class_<SceneWidget, QWidget>(m, "SceneWidget")
+    py::class_<SceneWidget, PyQObjectHolder<SceneWidget>, QWidget>(m, "SceneWidget")
         .def_property_readonly("renderer", &SceneWidget::renderer)
         .def("renderScene", &SceneWidget::renderScene, py::arg("doImmediately") = false)
         .def_property_readonly("sigStateChanged", &SceneWidget::sigStateChanged)
@@ -111,29 +108,29 @@ void exportPyViews(py::module m)
         .def("getCollisionLinesVisible", &SceneWidget::collisionLinesVisible)
         ;
 
-    py::class_<SceneView, View>(m, "SceneView")
+    py::class_<SceneView, PyQObjectHolder<SceneView>, View>(m, "SceneView")
         .def_property_readonly_static(
-            "instance", [](py::object){ return SceneView::instance(); }, py::return_value_policy::reference)
-        .def_property_readonly("sceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
-
-        // deprecated
-        .def_static("getInstance", &SceneView::instance, py::return_value_policy::reference)
-        .def("getSceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
+            "instance", [](py::object){ return releaseFromPythonSideManagement(SceneView::instance()); })
+        .def_property_readonly("sceneWidget", &SceneView::sceneWidget)
         ;
-
-    py::class_<TaskView, View, AbstractTaskSequencer>(m, "TaskView")
+    
+    /*
+      Although TaskView inherits AbstractTaskSequencer, AbstractTaskSequencer is not specified as a base class
+      because its holder type is different and pybind11 cannot mix the different holder types.
+      The functions defined in AbstractTaskSequencer must be independently defined in the following binding
+      if a function included in it is used in a Python script.
+    */
+    py::class_<TaskView, PyQObjectHolder<TaskView>, View>(m, "TaskView", py::multiple_inheritance())
         .def_property_readonly_static(
-            "instance", [](py::object){ return TaskView::instance(); }, py::return_value_policy::reference)
-
-        // deprecated
-        .def_static("getInstance", &TaskView::instance, py::return_value_policy::reference)
+            "instance", [](py::object){ return releaseFromPythonSideManagement(TaskView::instance()); })
         ;
 
     py::class_<ViewManager>(m, "ViewManager")
-        .def_static("getOrCreateView",
-                    [](const std::string& moduleName, const std::string& className){
-                        return ViewManager::getOrCreateView(moduleName, className);
-                    }, py::return_value_policy::reference)
+        .def_static(
+            "getOrCreateView",
+            [](const std::string& moduleName, const std::string& className){
+                return releaseFromPythonSideManagement(ViewManager::getOrCreateView(moduleName, className));
+            })
         .def_property_readonly_static("sigViewCreated", &ViewManager::sigViewCreated)
         .def_property_readonly_static("sigViewActivated", &ViewManager::sigViewActivated)
         .def_property_readonly_static("sigViewDeactivated", &ViewManager::sigViewDeactivated)

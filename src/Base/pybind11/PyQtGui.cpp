@@ -2,6 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "PyQObjectHolder.h"
 #include "PyQString.h"
 #include "PyQtSignal.h"
 #include <QWidget>
@@ -34,7 +35,7 @@ PYBIND11_MODULE(QtGui, m)
 
     py::module::import("cnoid.QtCore");
 
-    py::class_<QWidget, QObject>(m, "QWidget")
+    py::class_<QWidget, PyQObjectHolder<QWidget>, QObject>(m, "QWidget")
         .def("hasFocus", &QWidget::hasFocus)
         .def("isActiveWindow", &QWidget::isActiveWindow)
         .def("isAncestorOf", &QWidget::isAncestorOf)
@@ -51,8 +52,7 @@ PYBIND11_MODULE(QtGui, m)
         .def("isWindowModified", &QWidget::isWindowModified)
         .def_property("parentWidget",
                       &QWidget::parentWidget,
-                      (void (QWidget::*)(QWidget* parent)) &QWidget::setParent,
-                      py::return_value_policy::reference)
+                      (void (QWidget::*)(QWidget* parent)) &QWidget::setParent)
         .def("setLayout", &QWidget::setLayout)
         .def("setParent",  (void (QWidget::*)(QWidget* parent)) &QWidget::setParent)
         .def_property("toolTip", &QWidget::toolTip, &QWidget::setToolTip)
@@ -61,7 +61,7 @@ PYBIND11_MODULE(QtGui, m)
         .def("setWhatsThis", &QWidget::setWhatsThis)
         .def_property("windowIconText", &QWidget::windowIconText, &QWidget::setWindowIconText)
         .def("setWindowIconText", &QWidget::setWindowIconText)
-        .def_property_readonly("window", &QWidget::window, py::return_value_policy::reference)
+        .def_property_readonly("window", &QWidget::window)
         .def_property_readonly("windowFilePath", &QWidget::windowFilePath)
         .def_property_readonly("windowRole", &QWidget::windowRole)
         .def_property_readonly("windowTitle", &QWidget::windowTitle)
@@ -87,19 +87,19 @@ PYBIND11_MODULE(QtGui, m)
         .def("update",  (void (QWidget::*)()) &QWidget::update)
 
         // deprecated
-        .def("getParentWidget", &QWidget::parentWidget, py::return_value_policy::reference)
+        .def("getParentWidget", &QWidget::parentWidget)
         .def("getToolTip", &QWidget::toolTip)
         .def("getWhatsThis", &QWidget::whatsThis)
         .def("getWindowIconText", &QWidget::windowIconText)
-        .def("getWindow", &QWidget::window, py::return_value_policy::reference)
+        .def("getWindow", &QWidget::window)
         .def("getWindowFilePath", &QWidget::windowFilePath)
         .def("getWindowRole", &QWidget::windowRole)
         .def("getWindowTitle", &QWidget::windowTitle)
         ;
 
-    py::class_<QMainWindow, QWidget>(m, "QMainWindow");
+    py::class_<QMainWindow, PyQObjectHolder<QMainWindow>, QWidget>(m, "QMainWindow");
 
-    py::class_<QAbstractButton, QWidget> qAbstractButton(m, "QAbstractButton");
+    py::class_<QAbstractButton, PyQObjectHolder<QAbstractButton>, QWidget> qAbstractButton(m, "QAbstractButton");
 
     typedef cnoid::QtSignal<void(QAbstractButton::*)(bool), void()> ButtonClickSignal;
     cnoid::PyQtSignal<ButtonClickSignal>(qAbstractButton, "ClickSignal");
@@ -149,7 +149,7 @@ PYBIND11_MODULE(QtGui, m)
         .def("getAutoRepeatInterval", &QAbstractButton::autoRepeatInterval)
         ;
 
-    py::class_<QPushButton, std::unique_ptr<QPushButton, py::nodelete>, QAbstractButton>(m, "QPushButton")
+    py::class_<QPushButton, PyQObjectHolder<QPushButton>, QAbstractButton>(m, "QPushButton")
         .def(py::init<QWidget*>(), py::arg("parent") = nullptr)
         .def(py::init<const QString&, QWidget*>(), py::arg("text"), py::arg("parent") = nullptr)
         .def_property_readonly("autoDefault", &QPushButton::autoDefault)
@@ -163,30 +163,30 @@ PYBIND11_MODULE(QtGui, m)
         .def("showMenu", &QPushButton::showMenu)
         ;
     
-    py::class_<QToolButton, std::unique_ptr<QToolButton, py::nodelete>, QAbstractButton>(m, "QToolButton")
+    py::class_<QToolButton, PyQObjectHolder<QToolButton>, QAbstractButton>(m, "QToolButton")
         .def_property_readonly("autoRaise", &QToolButton::autoRaise)
 
         // deprecated
         .def("getAutoRaise", &QToolButton::autoRaise)
         ;
 
-    py::class_<QCheckBox, std::unique_ptr<QCheckBox, py::nodelete>, QAbstractButton>(m, "QCheckBox")
+    py::class_<QCheckBox, PyQObjectHolder<QCheckBox>, QAbstractButton>(m, "QCheckBox")
         .def(py::init<>())
         .def(py::init<const QString&>())
         ;
 
-    py::class_<QLabel, std::unique_ptr<QLabel, py::nodelete>, QWidget>(m, "QLabel")
+    py::class_<QLabel, PyQObjectHolder<QLabel>, QWidget>(m, "QLabel")
         .def(py::init<>())
         .def(py::init<const QString&>())
         .def("setText", &QLabel::setText)
         ;
 
-    py::class_<QAbstractSpinBox, std::unique_ptr<QAbstractSpinBox, py::nodelete>, QWidget>(m, "QAbstractSpinBox")
+    py::class_<QAbstractSpinBox, PyQObjectHolder<QAbstractSpinBox>, QWidget>(m, "QAbstractSpinBox")
         .def_property("alignment", &QAbstractSpinBox::alignment, &QAbstractSpinBox::setAlignment)
         .def("setAlignment", &QAbstractSpinBox::setAlignment)
         ;
 
-    py::class_<QSpinBox, std::unique_ptr<QSpinBox, py::nodelete>, QAbstractSpinBox> qSpinBox(m, "QSpinBox");
+    py::class_<QSpinBox, PyQObjectHolder<QSpinBox>, QAbstractSpinBox> qSpinBox(m, "QSpinBox");
 
     typedef cnoid::QtSignal<void(QSpinBox::*)(int), void(int)> SpinBoxIntSignal;
     cnoid::PyQtSignal<SpinBoxIntSignal>(qSpinBox, "IntSignal");
@@ -206,7 +206,7 @@ PYBIND11_MODULE(QtGui, m)
             [](QSpinBox* self){ return SpinBoxIntSignal(self, &QSpinBox::valueChanged); })
         ;
 
-    py::class_<QDialog, QWidget> qDialog(m, "QDialog");
+    py::class_<QDialog, PyQObjectHolder<QDialog>, QWidget> qDialog(m, "QDialog");
 
     typedef cnoid::QtSignal<void(QDialog::*)(), void()> DialogSignal;
     cnoid::PyQtSignal<DialogSignal>(qDialog, "Signal");
@@ -234,7 +234,7 @@ PYBIND11_MODULE(QtGui, m)
             [](QDialog* self){ return DialogSignal(self, &QDialog::rejected); })
         ;
 
-    py::class_<QFrame, QWidget>(m, "QFrame");
+    py::class_<QFrame, PyQObjectHolder<QFrame>, QWidget>(m, "QFrame");
 
     py::enum_<Qt::ScrollBarPolicy>(m, "ScrollBarPolicy")
         .value("ScrollBarAsNeeded", Qt::ScrollBarAsNeeded)
@@ -242,7 +242,7 @@ PYBIND11_MODULE(QtGui, m)
         .value("ScrollBarAlwaysOn", Qt::ScrollBarAlwaysOn)
         .export_values();
 
-    py::class_<QAbstractScrollArea, QFrame>(m, "QAbstractScrollArea")
+    py::class_<QAbstractScrollArea, PyQObjectHolder<QAbstractScrollArea>, QFrame>(m, "QAbstractScrollArea")
         .def("horizontalScrollBarPolicy", &QAbstractScrollArea::horizontalScrollBarPolicy)
         .def("setHorizontalScrollBarPolicy", &QAbstractScrollArea::setHorizontalScrollBarPolicy)
         .def("verticalScrollBarPolicy", &QAbstractScrollArea::verticalScrollBarPolicy)

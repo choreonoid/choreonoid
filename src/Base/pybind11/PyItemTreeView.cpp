@@ -2,6 +2,7 @@
  * @author Shin'ichiro Nakaoka
 */
 
+#include "PyQObjectHolder.h"
 #include "PyItemList.h"
 #include "PyQString.h"
 #include "../ItemTreeView.h"
@@ -18,9 +19,8 @@ void exportPyItemTreeView(py::module m)
     PySignal<void(const ItemList<>&)>(m, "ItemListSignal");
     PySignal<void(Item* item, bool isChecked)>(m, "ItemBoolSignal");
     
-    py::class_<ItemTreeView, View>(m, "ItemTreeView")
-        .def_property_readonly_static(
-            "instance", [](py::object){ return ItemTreeView::instance(); }, py::return_value_policy::reference)
+    py::class_<ItemTreeView, PyQObjectHolder<ItemTreeView>, View>(m, "ItemTreeView")
+        .def_property_readonly_static("instance", [](py::object){ return ItemTreeView::instance(); })
         .def("setExpanded", &ItemTreeView::setExpanded, py::arg("item"), py::arg("on") = true)
 
         // deprecated
@@ -52,7 +52,6 @@ void exportPyItemTreeView(py::module m)
             "getSigCheckToggled",
             [](ItemTreeView& self, Item* item, int checkId){ return self.sigCheckToggled(item, checkId); },
             py::arg("item"), py::arg("checkId") = Item::PrimaryCheck)
-        .def_static("getInstance", &ItemTreeView::instance, py::return_value_policy::reference)
         .def("getSelectedItems", &ItemTreeView::selectedItems<Item>)
         .def("getSigSelectionChanged", &ItemTreeView::sigSelectionChanged)
         .def("expandItem",

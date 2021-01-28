@@ -12,5 +12,3 @@ void exportPyAppUtil(py::module m)
 }
 
 }
-
-

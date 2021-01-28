@@ -21,9 +21,6 @@ void exportPyProjectManager(py::module m)
         .def("loadProject",
              &ProjectManager::loadProject, py::arg("filename"), py::arg("parentItem") = nullptr)
         .def("setCurrentProjectName", &ProjectManager::setCurrentProjectName)
-
-        // deprecated
-        .def_static("getInstance", &ProjectManager::instance, py::return_value_policy::reference)
         ;
 }
 

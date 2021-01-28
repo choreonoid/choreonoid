@@ -184,13 +184,9 @@ void exportSimulationClasses(py::module m)
 
     //PyItemList<SimulationScriptItem>("SimulationScriptItemList");
 
-    py::class_<SimulationBar, ToolBar>(m, "SimulationBar")
-        .def_property_readonly_static(
-            "instance", [](py::object){ return SimulationBar::instance(); }, py::return_value_policy::reference)
+    py::class_<SimulationBar, PyQObjectHolder<SimulationBar>, ToolBar>(m, "SimulationBar")
+        .def_property_readonly_static("instance", [](py::object){ return SimulationBar::instance(); })
         .def("startSimulation", (void (SimulationBar::*)(bool)) &SimulationBar::startSimulation)
-
-        // deprecated
-        .def_static("getInstance", &SimulationBar::instance, py::return_value_policy::reference)
         ;
 
     py::class_<ControllerItem, ControllerItemPtr, Item>(m, "ControllerItem")

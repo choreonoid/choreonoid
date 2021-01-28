@@ -2,6 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "PyQObjectHolder.h"
 #include "PyQString.h"
 #include "PyQtSignal.h"
 #include <QObject>
@@ -13,6 +14,7 @@
 #include <QSize>
 #include <QRect>
 
+using namespace cnoid;
 namespace py = pybind11;
 
 namespace cnoid {
@@ -25,14 +27,14 @@ PYBIND11_MODULE(QtCore, m)
 {
     m.doc() = "Choreonoid QtCore module";
 
-    py::class_<QObject>(m,"QObject")
+    py::class_<QObject, PyQObjectHolder<QObject>>(m,"QObject")
         .def("blockSignals", &QObject::blockSignals)
         .def("inherits", &QObject::inherits)
         .def("isWidgetType", &QObject::isWidgetType)
         .def("killTimer", &QObject::killTimer)
         .def_property("objectName", &QObject::objectName, &QObject::setObjectName)
         .def_property_readonly("setObjectName", &QObject::setObjectName)
-        .def_property("parent", &QObject::parent, &QObject::setParent, py::return_value_policy::reference)
+        .def_property("parent", &QObject::parent, &QObject::setParent)
         .def("setParent", &QObject::setParent)
         .def("deleteLater", &QObject::deleteLater)
         .def("startTimer", (int (QObject::*)(int, Qt::TimerType)) &QObject::startTimer)
@@ -40,9 +42,12 @@ PYBIND11_MODULE(QtCore, m)
             "disconnect",
             [](const QMetaObject::Connection& connection){ return QObject::disconnect(connection); })
 
+        // This is used to delete the object when the object cannot be deleted from the Python side
+        .def("delete", [](QObject* self){ delete self; })
+
         // deprecated
         .def("getObjectName", &QObject::objectName)
-        .def("getParent", &QObject::parent, py::return_value_policy::reference)
+        .def("getParent", &QObject::parent)
         ;
 
     auto qMetaObject = m.def_submodule("QMetaObject");
@@ -52,7 +57,7 @@ PYBIND11_MODULE(QtCore, m)
         .def(py::init<const QMetaObject::Connection&>())
         ;
 
-    py::class_<QTimer, QObject> qTimer(m, "QTimer");
+    py::class_<QTimer, PyQObjectHolder<QTimer>, QObject> qTimer(m, "QTimer");
 
     typedef cnoid::QtSignal<decltype(&QTimer::timeout), void()> TimerSignal;
     cnoid::PyQtSignal<TimerSignal>(qTimer, "Signal");

@@ -135,9 +135,6 @@ void exportPyItems(py::module m)
         .def_property_readonly("sigSelectedItemsChanged", &RootItem::sigSelectedItemsChanged)
         .def_property_readonly("selectedItems", [](RootItem& self){ return self.selectedItems(); })
         .def_property_readonly("checkedItems", [](RootItem& self){ return self.checkedItems(); })
-
-        // deprecated
-        .def_static("getInstance", &RootItem::instance)
         ;
 
     py::class_<RenderableItem>(m, "RenderableItem")

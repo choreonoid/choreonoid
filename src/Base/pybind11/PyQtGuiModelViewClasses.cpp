@@ -1,3 +1,4 @@
+#include "PyQObjectHolder.h"
 #include "PyQString.h"
 #include "PyQtSignal.h"
 #include <QAbstractItemView>
@@ -13,7 +14,7 @@ namespace cnoid {
 
 void exportPyQtGuiModelViewClasses(py::module m)
 {
-    py::class_<QAbstractItemView, std::unique_ptr<QAbstractItemView, py::nodelete>, QAbstractScrollArea>
+    py::class_<QAbstractItemView, PyQObjectHolder<QAbstractItemView>, QAbstractScrollArea>
         qAbstractItemView(m, "QAbstractItemView");
 
     py::enum_<QAbstractItemView::ScrollMode>(qAbstractItemView, "ScrollMode")
@@ -60,7 +61,7 @@ void exportPyQtGuiModelViewClasses(py::module m)
         .def("setAlternatingRowColors", &QAbstractItemView::setAlternatingRowColors)
         ;
 
-    py::class_<QItemSelectionModel, std::unique_ptr<QItemSelectionModel, py::nodelete>, QObject>
+    py::class_<QItemSelectionModel, PyQObjectHolder<QItemSelectionModel>, QObject>
         qItemSelectionModel(m, "QItemSelectionModel");
 
     py::enum_<QItemSelectionModel::SelectionFlag>(qItemSelectionModel, "SelectionFlag")
@@ -77,7 +78,7 @@ void exportPyQtGuiModelViewClasses(py::module m)
         .value("ClearAndSelect", QItemSelectionModel::ClearAndSelect)
         .export_values();
 
-    py::class_<QHeaderView, std::unique_ptr<QHeaderView, py::nodelete>, QAbstractItemView>
+    py::class_<QHeaderView, PyQObjectHolder<QHeaderView>, QAbstractItemView>
                qHeaderView(m, "QHeaderView");
 
     py::enum_<QHeaderView::ResizeMode>(qHeaderView, "ResizeMode")
@@ -145,7 +146,7 @@ void exportPyQtGuiModelViewClasses(py::module m)
         .def("getVisualIndexAt", &QHeaderView::visualIndexAt)
         ;
 
-    py::class_<QTableView, std::unique_ptr<QTableView, py::nodelete>, QAbstractItemView>(m, "QTableView")
+    py::class_<QTableView, PyQObjectHolder<QTableView>, QAbstractItemView>(m, "QTableView")
         .def(py::init<>())
         .def_property_readonly("horizontalHeader", &QTableView::horizontalHeader)
         .def_property_readonly("verticalHeader", &QTableView::verticalHeader)
@@ -155,7 +156,7 @@ void exportPyQtGuiModelViewClasses(py::module m)
         .def_property_readonly("wordWrap", &QTableView::wordWrap)
         ;
 
-    py::class_<QTableWidget, std::unique_ptr<QTableWidget, py::nodelete>, QTableView>(m, "QTableWidget")
+    py::class_<QTableWidget, PyQObjectHolder<QTableWidget>, QTableView>(m, "QTableWidget")
         .def(py::init<>())
         .def("getCellWidget", &QTableWidget::cellWidget)
         .def("closePersistentEditor", &QTableWidget::closePersistentEditor)

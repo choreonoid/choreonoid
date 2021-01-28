@@ -1,3 +1,4 @@
+#include "PyQObjectHolder.h"
 #include "PyQString.h"
 #include "PyQtSignal.h"
 #include <QBoxLayout>
@@ -28,8 +29,14 @@ void exportPyQtGuiLayoutClasses(py::module m)
         .def_property_readonly("sizeHint", &QLayoutItem::sizeHint)
         .def_property_readonly("widget", &QLayoutItem::widget)
         ;
-    
-    py::class_<QLayout, std::unique_ptr<QLayout, py::nodelete>, QObject, QLayoutItem>(m, "QLayout")
+
+    /*
+      Although QLayout inherits QLayoutItem, QLayoutItem is not specified as a base class
+      because its holder type is different and pybind11 cannot mix the different holder types.
+      The functions defined in QLayoutItem must be independently defined in the following binding
+      if a function included in it is used in a Python script.
+    */
+    py::class_<QLayout, PyQObjectHolder<QLayout>, QObject>(m, "QLayout", py::multiple_inheritance())
         .def("activate", &QLayout::activate)
         .def("addItem", &QLayout::addItem)
         .def("addWidget", &QLayout::addWidget)
@@ -59,7 +66,7 @@ void exportPyQtGuiLayoutClasses(py::module m)
         .def("update", &QLayout::update)
         ;
 
-    py::class_<QBoxLayout, std::unique_ptr<QBoxLayout, py::nodelete>, QLayout>(m, "QBoxLayout")
+    py::class_<QBoxLayout, PyQObjectHolder<QBoxLayout>, QLayout>(m, "QBoxLayout")
         .def("addLayout", &QBoxLayout::addLayout, py::arg("layout"), py::arg("stretch") = 0)
         .def("addSpacerItem", &QBoxLayout::addSpacerItem)
         .def("addSpacing", &QBoxLayout::addSpacing)
@@ -85,12 +92,12 @@ void exportPyQtGuiLayoutClasses(py::module m)
         .def("getStretch", &QBoxLayout::stretch)
         ;
     
-    py::class_<QHBoxLayout, std::unique_ptr<QHBoxLayout, py::nodelete>, QBoxLayout>(m, "QHBoxLayout")
+    py::class_<QHBoxLayout, PyQObjectHolder<QHBoxLayout>, QBoxLayout>(m, "QHBoxLayout")
         .def(py::init<>())
         .def(py::init<QWidget*>())
         ;
     
-    py::class_<QVBoxLayout, std::unique_ptr<QVBoxLayout, py::nodelete>, QBoxLayout>(m, "QVBoxLayout")
+    py::class_<QVBoxLayout, PyQObjectHolder<QVBoxLayout>, QBoxLayout>(m, "QVBoxLayout")
         .def(py::init<>())
         .def(py::init<QWidget*>())
         ;
