@@ -216,10 +216,10 @@ void ExtensionManager::mountToolBar(ToolBar* toolBar)
             if(existingToolBar->objectName() == toolBar->objectName()){
                 MainWindow::instance()->removeToolBar(existingToolBar);
                 p = impl->deleteManagedObject(p);
-            } else {
-                ++p;
+                continue;
             }
         }
+        ++p;
     }
 
     addToolBar(toolBar);
