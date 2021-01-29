@@ -145,7 +145,9 @@ public:
         PSEUDO_CONTINUOUS_TRACK = PseudoContinuousTrackJoint
     };
 
+#if !defined(__GNUC__) || __GNUC__ > 5
     [[deprecated("Use Link::PseudoContinuousTrack.")]]
+#endif
     static constexpr int PseudoContinousTrack = PseudoContinuousTrackJoint;
 
     int jointId() const { return jointId_; }
@@ -208,7 +210,9 @@ public:
         LINK_POSITION = LinkPosition
     };
 
+#if !defined(__GNUC__) || __GNUC__ > 5
     [[deprecated("Use Link::JointVelocity as the actuation mode and Link::PseudoContinuousTrackJoint as the joint type.")]]
+#endif
     static constexpr int JOINT_SURFACE_VELOCITY = DeprecatedJointSurfaceVelocity;
 
     // \ret Logical sum of the correpsonding StateFlag bits
