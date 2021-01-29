@@ -67,6 +67,12 @@ void exportPyQtCoreQtNamespace(py::module m)
         .value("AscendingOrder", Qt::AscendingOrder)
         .value("DescendingOrder", Qt::DescendingOrder)
         .export_values();
+
+    py::enum_<Qt::ScrollBarPolicy>(qt, "ScrollBarPolicy")
+        .value("ScrollBarAsNeeded", Qt::ScrollBarAsNeeded)
+        .value("ScrollBarAlwaysOff", Qt::ScrollBarAlwaysOff)
+        .value("ScrollBarAlwaysOn", Qt::ScrollBarAlwaysOn)
+        .export_values();
 }
 
 }

@@ -18,10 +18,15 @@ target_link_libraries(PyQtCore ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
 choreonoid_add_python_module(PyQtGui
   PyQtGui.cpp
+  )
+target_link_libraries(PyQtGui ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
+
+choreonoid_add_python_module(PyQtWidgets
+  PyQtWidgets.cpp
   PyQtGuiLayoutClasses.cpp
   PyQtGuiModelViewClasses.cpp
   )
-target_link_libraries(PyQtGui ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
+target_link_libraries(PyQtWidgets ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
 choreonoid_add_python_module(PyBase
   PyBaseModule.cpp

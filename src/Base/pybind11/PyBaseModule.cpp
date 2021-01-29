@@ -32,6 +32,7 @@ PYBIND11_MODULE(Base, m)
 
     py::module::import("cnoid.Util");
     py::module::import("cnoid.QtGui");
+    py::module::import("cnoid.QtWidgets");
     
     exportPyQtExTypes(m);
     exportPyAppUtil(m);
