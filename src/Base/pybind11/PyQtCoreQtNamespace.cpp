@@ -1,5 +1,6 @@
 #include "PyQString.h"
 #include "PyQtSignal.h"
+#include <pybind11/stl.h>
 #include <Qt>
 
 namespace py = pybind11;
@@ -10,7 +11,7 @@ void exportPyQtCoreQtNamespace(py::module m)
 {
     auto qt = m.def_submodule("Qt");
     
-    py::enum_<Qt::AlignmentFlag>(qt, "AlignmentFlag")
+    py::enum_<Qt::AlignmentFlag>(qt, "AlignmentFlag", py::arithmetic())
         .value("AlignLeft", Qt::AlignLeft)
         .value("AlignRight", Qt::AlignRight)
         .value("AlignHCenter", Qt::AlignHCenter)
@@ -41,7 +42,7 @@ void exportPyQtCoreQtNamespace(py::module m)
         .value("Checked", Qt::Checked)
         .export_values();
 
-    py::enum_<Qt::ItemFlag>(qt, "ItemFlag")
+    py::enum_<Qt::ItemFlag>(qt, "ItemFlag", py::arithmetic())
         .value("NoItemFlags", Qt::NoItemFlags)
         .value("ItemIsSelectable", Qt::ItemIsSelectable)
         .value("ItemIsEditable", Qt::ItemIsEditable)
@@ -58,7 +59,36 @@ void exportPyQtCoreQtNamespace(py::module m)
     py::class_<QFlags<Qt::ItemFlag>>(qt, "ItemFlags")
         .def(py::init<>())
         .def(py::init<Qt::ItemFlag>())
+        .def(py::init(
+                 [](const std::vector<Qt::ItemFlag>& flags){
+                     int vflags = 0;
+                     for(auto& flag : flags){
+                         vflags |= flag;
+                     }
+                     return std::unique_ptr<QFlags<Qt::ItemFlag>>(new QFlags<Qt::ItemFlag>(vflags));
+                 }))
         ;
+
+    py::enum_<Qt::ItemDataRole>(qt, "ItemDataRole")
+        .value("DisplayRole", Qt::DisplayRole)
+        .value("DecorationRole", Qt::DecorationRole)
+        .value("EditRole", Qt::EditRole)
+        .value("ToolTipRole", Qt::ToolTipRole)
+        .value("StatusTipRole", Qt::StatusTipRole)
+        .value("WhatsThisRole", Qt::WhatsThisRole)
+        .value("SizeHintRole", Qt::SizeHintRole)
+        .value("FontRole", Qt::FontRole)
+        .value("TextAlignmentRole", Qt::TextAlignmentRole)
+        .value("BackgroundRole", Qt::BackgroundRole)
+        .value("BackgroundColorRole", Qt::BackgroundColorRole)
+        .value("ForegroundRole", Qt::ForegroundRole)
+        .value("TextColorRole", Qt::TextColorRole)
+        .value("CheckStateRole", Qt::CheckStateRole)
+        .value("InitialSortOrderRole", Qt::InitialSortOrderRole)
+        .value("AccessibleTextRole", Qt::AccessibleTextRole)
+        .value("AccessibleDescriptionRole", Qt::AccessibleDescriptionRole)
+        .value("UserRole", Qt::UserRole)
+        .export_values();
     
     py::implicitly_convertible<Qt::ItemFlag, QFlags<Qt::ItemFlag>>();
     py::implicitly_convertible<QFlags<Qt::ItemFlag>, Qt::ItemFlag>();

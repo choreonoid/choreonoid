@@ -70,7 +70,7 @@ PYBIND11_MODULE(QtCore, m)
         .def("start", (void (QTimer::*)(int)) &QTimer::start)
         .def("stop", &QTimer::stop)
         .def_static("singleShot", (void(*)(int, const QObject*, const char*)) &QTimer::singleShot)
-        .def("timeout", [](QTimer* self){ return TimerSignal(self, &QTimer::timeout); })
+        .def_property_readonly("timeout", [](QTimer* self){ return TimerSignal(self, &QTimer::timeout); })
         ;
 
     py::class_<QTime>(m, "QTime")
@@ -84,6 +84,12 @@ PYBIND11_MODULE(QtCore, m)
 
     py::class_<QVariant>(m, "QVariant")
         .def(py::init<>())
+        .def(py::init<int>())
+        .def(py::init<bool>())
+        .def(py::init<double>())
+        .def(py::init<const char*>())
+        //.def(py::init([](std::nullptr_t){ return std::unique_ptr<QVariant>(new QVariant()); }))
+        .def(py::init([](py::none){ return std::unique_ptr<QVariant>(new QVariant()); }))
         .def("clear", &QVariant::clear)
         .def("isNull", &QVariant::isNull)
         .def("isValid", &QVariant::isValid)
@@ -93,9 +99,17 @@ PYBIND11_MODULE(QtCore, m)
         .def("toBool", &QVariant::toBool)
         .def("toDouble", [](QVariant& self){ return self.toDouble(); })
         .def("toFloat",  [](QVariant& self){ return self.toFloat(); })
+        .def("toInt",  [](QVariant& self){ return self.toInt(); })
         .def("toString", &QVariant::toString)
         .def("typeName", &QVariant::typeName)
         ;
+
+    py::implicitly_convertible<int, QVariant>();
+    py::implicitly_convertible<bool, QVariant>();
+    py::implicitly_convertible<double, QVariant>();
+    py::implicitly_convertible<const char*, QVariant>();
+    py::implicitly_convertible<py::none, QVariant>();
+    
 
     py::class_<QMargins>(m, "QMargins")
         .def(py::init<>())
