@@ -716,7 +716,23 @@ void YAMLSceneReaderImpl::readDivisionNumber(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readBox(Mapping& info)
 {
-    meshGenerator.setExtraDivisionNumber(info.get("extra_division_number", 1));
+    int edv = info.get("extra_division_number", 1);
+    int mode = MeshGenerator::DivisionMax;
+    if(edv >= 2){
+        string symbol;
+        if(info.read("extra_division_mode", mode)){
+            if(symbol == "max"){
+                mode = MeshGenerator::DivisionMax;
+            } else if(symbol == "x"){
+                mode = MeshGenerator::DivisionX;
+            } else if(symbol == "y"){
+                mode = MeshGenerator::DivisionY;
+            } else if(symbol == "z"){
+                mode = MeshGenerator::DivisionZ;
+            }
+        }
+    }
+    meshGenerator.setExtraDivisionNumber(edv, mode);
 
     Vector3 size;
     if(!read(info, "size", size)){

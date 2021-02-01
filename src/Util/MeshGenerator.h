@@ -25,8 +25,20 @@ public:
     int divisionNumber() const { return divisionNumber_; }
     static int defaultDivisionNumber();
 
-    void setExtraDivisionNumber(int n) { extraDivisionNumber_ = n; }
-    int extraDivisionNumber(int n) { return extraDivisionNumber_; }
+    enum ExtraDivisionNumberFlag {
+        DivisionMax = 0,
+        DivisionX = 1,
+        DivisionY = 2,
+        DivisionZ = 4,
+        DivisionAll = DivisionX | DivisionY | DivisionZ
+    };
+
+    void setExtraDivisionNumber(int n, int flags = DivisionMax){
+        extraDivisionNumber_ = n;
+        extraDivisionNumberFlags_ = flags;
+    }
+    int extraDivisionNumber() const { return extraDivisionNumber_; }
+    int extraDivisionNumberFlags() const { return extraDivisionNumberFlags_; }
 
     void setNormalGenerationEnabled(bool on);
     // \deprecated
@@ -97,6 +109,7 @@ public:
 private:
     int divisionNumber_;
     int extraDivisionNumber_;
+    int extraDivisionNumberFlags_;
     bool isNormalGenerationEnabled_;
     bool isBoundingBoxUpdateEnabled_;
     MeshFilter* meshFilter;

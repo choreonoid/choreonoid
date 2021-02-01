@@ -22,6 +22,7 @@ MeshGenerator::MeshGenerator()
 {
     divisionNumber_ = ::defaultDivisionNumber;
     extraDivisionNumber_ = 1;
+    extraDivisionNumberFlags_ = DivisionMax;
     isNormalGenerationEnabled_ = true;
     isBoundingBoxUpdateEnabled_ = true;
     meshFilter = nullptr;
@@ -182,16 +183,27 @@ void MeshGenerator::generateTextureCoordinateForBox(SgMesh* mesh)
 
 SgMesh* MeshGenerator::generateBoxWithExtraTriangles(Vector3 size)
 {
-    double maxPatchSize = 0.0;
-    for(int i=0; i < 3; ++i){
-        double patchSize = size[i] / extraDivisionNumber_;
-        if(patchSize > maxPatchSize){
-            maxPatchSize = patchSize;
-        }
-    }
     int divisions[3];
-    for(int i=0; i < 3; ++i){
-        divisions[i] = std::ceil(size[i] / maxPatchSize);
+
+    if(extraDivisionNumberFlags_ == DivisionMax){
+        double maxPatchSize = 0.0;
+        for(int i=0; i < 3; ++i){
+            double patchSize = size[i] / extraDivisionNumber_;
+            if(patchSize > maxPatchSize){
+                maxPatchSize = patchSize;
+            }
+        }
+        for(int i=0; i < 3; ++i){
+            divisions[i] = std::ceil(size[i] / maxPatchSize);
+        }
+    } else {
+        for(int i=0; i < 3; ++i){
+            if(extraDivisionNumberFlags_ & (1 << i)){
+                divisions[i] = extraDivisionNumber_;
+            } else {
+                divisions[i] = 1;
+            }
+        }
     }
 
     auto mesh = new SgMesh;

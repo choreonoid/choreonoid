@@ -10,13 +10,23 @@ void exportPyMeshUtils(py::module& m)
 {
     py::class_<MeshGenerator> meshGenerator(m, "MeshGenerator");
 
+    py::enum_<MeshGenerator::ExtraDivisionNumberFlag>(meshGenerator, "ExtraDivisionNumberFlag", py::arithmetic())
+        .value("DivisionMax", MeshGenerator::DivisionMax)
+        .value("DivisionX", MeshGenerator::DivisionX)
+        .value("DivisionY", MeshGenerator::DivisionY)
+        .value("DivisionZ", MeshGenerator::DivisionZ)
+        .value("DivisionAll", MeshGenerator::DivisionAll)
+        .export_values();
+
     meshGenerator
         .def(py::init<>())
         .def_property("divisionNumber", &MeshGenerator::divisionNumber, &MeshGenerator::setDivisionNumber)
         .def("setDivisionNumber", &MeshGenerator::setDivisionNumber)
         .def_property_readonly_static("defaultDivisionNumber", &MeshGenerator::defaultDivisionNumber)
-        .def_property("extraDivisionNumber", &MeshGenerator::extraDivisionNumber, &MeshGenerator::setExtraDivisionNumber)
-        .def("setExtraDivisionNumber", &MeshGenerator::setExtraDivisionNumber)
+        .def("setExtraDivisionNumber", &MeshGenerator::setExtraDivisionNumber,
+             py::arg("n"), py::arg("flags") = MeshGenerator::DivisionMax)
+        .def_property_readonly("extraDivisionNumber", &MeshGenerator::extraDivisionNumber)
+        .def_property_readonly("extraDivisionNumberFlags", &MeshGenerator::extraDivisionNumberFlags)
         .def("setNormalGenerationEnabled", &MeshGenerator::setNormalGenerationEnabled)
         .def("isNormalGenerationEnabled", &MeshGenerator::isNormalGenerationEnabled)
         .def("setBoundingBoxUpdateEnabled", &MeshGenerator::setBoundingBoxUpdateEnabled)
