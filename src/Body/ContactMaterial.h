@@ -19,9 +19,6 @@ class CNOID_EXPORT ContactMaterial : public Referenced
     ContactMaterial(const ContactMaterial& org);
     ~ContactMaterial();
 
-    void init();
-    int materialId(int which) const;
-
     double friction() const { return staticFriction_; }
     void setFriction(double mu){ staticFriction_ = dynamicFriction_ = mu; }
         
@@ -30,7 +27,6 @@ class CNOID_EXPORT ContactMaterial : public Referenced
     
     double dynamicFriction() const { return dynamicFriction_; }
     void setDynamicFriction(double mu) { dynamicFriction_ = mu; }
-
     
     double restitution() const { return restitution_; }
     void setRestitution(double r) { restitution_ = r; }
@@ -44,10 +40,13 @@ class CNOID_EXPORT ContactMaterial : public Referenced
     double dynamicFriction_;
     double restitution_;
     MappingPtr info_;
+
+    void init();
 };
 
-template<> CNOID_EXPORT double ContactMaterial::info(const std::string& key, const double& defaultValue) const;
 template<> CNOID_EXPORT bool ContactMaterial::info(const std::string& key, const bool& defaultValue) const;
+template<> CNOID_EXPORT int ContactMaterial::info(const std::string& key, const int& defaultValue) const;
+template<> CNOID_EXPORT double ContactMaterial::info(const std::string& key, const double& defaultValue) const;
 
 typedef ref_ptr<ContactMaterial> ContactMaterialPtr;
 

@@ -373,13 +373,13 @@ std::string Link::getStateModeString(short mode)
 
 std::string Link::materialName() const
 {
-    return Material::name(materialId_);
+    return Material::nameOfId(materialId_);
 }
 
 
 void Link::setMaterial(const std::string& name)
 {
-    setMaterial(Material::id(name));
+    setMaterial(Material::idOfName(name));
 }
 
 

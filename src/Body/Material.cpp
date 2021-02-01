@@ -29,7 +29,7 @@ struct DefaultIdIntialization {
 }
 
 
-int Material::id(const std::string name)
+int Material::idOfName(const std::string& name)
 {
     std::lock_guard<std::mutex> guard(idMutex);
 
@@ -52,7 +52,7 @@ int Material::id(const std::string name)
 }
 
 
-std::string Material::name(int id)
+std::string Material::nameOfId(int id)
 {
     std::lock_guard<std::mutex> guard(idMutex);
     if(id < static_cast<int>(idToNameMap.size())){
@@ -97,9 +97,9 @@ Material::~Material()
 }
 
 
-template<> double Material::info(const std::string& key, const double& defaultValue) const
+template<> bool Material::info(const std::string& key, const bool& defaultValue) const
 {
-    double value;
+    bool value;
     if(info_->read(key, value)){
         return value;
     }
@@ -107,9 +107,19 @@ template<> double Material::info(const std::string& key, const double& defaultVa
 }
 
 
-template<> bool Material::info(const std::string& key, const bool& defaultValue) const
+template<> int Material::info(const std::string& key, const int& defaultValue) const
 {
-    bool value;
+    int value;
+    if(info_->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> double Material::info(const std::string& key, const double& defaultValue) const
+{
+    double value;
     if(info_->read(key, value)){
         return value;
     }

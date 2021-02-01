@@ -134,7 +134,13 @@ ContactMaterial* MaterialTable::contactMaterial(int id1, int id2) const
     if(iter != impl->contactMaterialMap.end()){
         return iter->second;
     }
-    return 0;
+    return nullptr;
+}
+
+
+ContactMaterial* MaterialTable::contactMaterial(const std::string& name1, const std::string& name2) const
+{
+    return contactMaterial(Material::idOfName(name1), Material::idOfName(name2));
 }
 
 
@@ -176,7 +182,7 @@ int MaterialTableImpl::addMaterial(Material* material)
     int id = -1;
     
     if(material){
-        id = Material::id(material->name());
+        id = Material::idOfName(material->name());
         if(static_cast<int>(materials.size()) <= id){
             materials.resize(id + 1);
         }
@@ -258,7 +264,7 @@ void MaterialTableImpl::loadContactMaterials(Mapping* topNode, std::ostream& os)
                 }
                 materialIndices.clear();
                 for(int i=0; i < materialList.size(); ++i){
-                    int id = Material::id(materialList[i].toString());
+                    int id = Material::idOfName(materialList[i].toString());
                     materialIndices.push_back(id);
                 }
                 ContactMaterialPtr contactMaterial = new ContactMaterial(info);

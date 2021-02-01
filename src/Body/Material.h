@@ -20,8 +20,13 @@ public:
     Material(const Material& org);
     ~Material();
 
-    static int id(const std::string name);
-    static std::string name(int id);
+    static int idOfName(const std::string& name);
+    [[deprecated("Use idOfName")]]
+    static int id(const std::string& name) { return idOfName(name); }
+    
+    static std::string nameOfId(int id);
+    [[deprecated("Use nameOfId")]]
+    static std::string name(int id) { return nameOfId(id); }
     
     const std::string& name() const { return name_; }
     void setName(const std::string& name) { name_ = name; }
@@ -43,8 +48,9 @@ private:
     MappingPtr info_;
 };
 
-template<> CNOID_EXPORT double Material::info(const std::string& key, const double& defaultValue) const;
 template<> CNOID_EXPORT bool Material::info(const std::string& key, const bool& defaultValue) const;
+template<> CNOID_EXPORT int Material::info(const std::string& key, const int& defaultValue) const;
+template<> CNOID_EXPORT double Material::info(const std::string& key, const double& defaultValue) const;
 
 typedef ref_ptr<Material> MaterialPtr;
 

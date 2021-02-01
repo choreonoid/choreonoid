@@ -54,9 +54,9 @@ void ContactMaterial::init()
 }
 
 
-template<> double ContactMaterial::info(const std::string& key, const double& defaultValue) const
+template<> bool ContactMaterial::info(const std::string& key, const bool& defaultValue) const
 {
-    double value;
+    bool value;
     if(info_->read(key, value)){
         return value;
     }
@@ -64,9 +64,19 @@ template<> double ContactMaterial::info(const std::string& key, const double& de
 }
 
 
-template<> bool ContactMaterial::info(const std::string& key, const bool& defaultValue) const
+template<> int ContactMaterial::info(const std::string& key, const int& defaultValue) const
 {
-    bool value;
+    int value;
+    if(info_->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> double ContactMaterial::info(const std::string& key, const double& defaultValue) const
+{
+    double value;
     if(info_->read(key, value)){
         return value;
     }

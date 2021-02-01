@@ -30,6 +30,7 @@ class CNOID_EXPORT MaterialTable : public Referenced
     int maxMaterialId() const;
     Material* material(int id) const;
     ContactMaterial* contactMaterial(int id1, int id2) const;
+    ContactMaterial* contactMaterial(const std::string& name1, const std::string& name2) const;
 
     void forEachMaterial(std::function<void(int id, Material* material)> func);
     void forEachMaterialPair(std::function<void(int id1, int id2, ContactMaterial* cm)> func);
