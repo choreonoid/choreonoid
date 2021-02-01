@@ -7,6 +7,7 @@
 #include "../BodyTrackingCameraItem.h"
 #include <cnoid/PyBase>
 #include <cnoid/SceneCameras>
+#include <cnoid/MaterialTable>
 
 using namespace cnoid;
 namespace py = pybind11;
@@ -26,6 +27,14 @@ void exportItems(py::module m)
         .def("updateCollisionDetector", &WorldItem::updateCollisionDetector)
         .def("updateCollisions", &WorldItem::updateCollisions)
         .def_property_readonly("sigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
+        .def("setMaterialTableFile", &WorldItem::setMaterialTableFile)
+        .def_property_readonly(
+            "materialTable", [](WorldItem& self){ return self.materialTable(); })
+        .def_property_readonly(
+            "getMaterialTable",
+            [](WorldItem& self, bool checkFileUpdate){
+                return self.materialTable(checkFileUpdate);
+            })
 
         // deprecated
         .def("getSigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)

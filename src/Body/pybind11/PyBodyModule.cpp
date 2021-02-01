@@ -26,6 +26,7 @@ namespace cnoid {
 void exportPyBody(py::module& m);
 void exportPyLink(py::module& m);
 void exportPyDeviceTypes(py::module& m);
+void exportPyMaterial(py::module& m);
 
 }
 
@@ -38,6 +39,7 @@ PYBIND11_MODULE(Body, m)
     exportPyBody(m);
     exportPyLink(m);
     exportPyDeviceTypes(m);
+    exportPyMaterial(m);
 
     py::class_<AbstractBodyLoader>(m, "AbstractBodyLoader")
         .def("setVerbose", &AbstractBodyLoader::setVerbose)
