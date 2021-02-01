@@ -643,8 +643,10 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
     }
     
-    if(!item->impl->attributes[SubItem]){
-        attributes.reset(Temporal);
+    if(self->isTemporal()){
+        if(isManualOperation && !item->impl->attributes[SubItem]){
+            self->setTemporal(false);
+        }
     }
 
     justInsertChildItem(newNextItem, item);
