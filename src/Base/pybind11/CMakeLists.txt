@@ -1,5 +1,7 @@
 # @author Shin'ichiro Nakaoka
 
+set(CMAKE_BUILD_TYPE Debug)
+
 set(headers
   PyBase.h
   PyItemList.h
@@ -23,8 +25,9 @@ target_link_libraries(PyQtGui ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
 choreonoid_add_python_module(PyQtWidgets
   PyQtWidgets.cpp
-  PyQtGuiLayoutClasses.cpp
-  PyQtGuiModelViewClasses.cpp
+  PyQWidget.cpp
+  PyQtLayoutClasses.cpp
+  PyQtModelViewClasses.cpp
   )
 target_link_libraries(PyQtWidgets ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES})
 

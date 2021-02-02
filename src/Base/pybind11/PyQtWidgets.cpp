@@ -5,8 +5,6 @@
 #include "PyQObjectHolder.h"
 #include "PyQString.h"
 #include "PyQtSignal.h"
-#include <QWidget>
-#include <QLayout>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QToolButton>
@@ -18,12 +16,14 @@
 #include <QAbstractScrollArea>
 #include <QMenu>
 
+using namespace std;
 namespace py = pybind11;
 
 namespace cnoid {
 
-void exportPyQtGuiLayoutClasses(py::module m);
-void exportPyQtGuiModelViewClasses(py::module m);
+void exportPyQWidget(py::module m);
+void exportPyQtLayoutClasses(py::module m);
+void exportPyQtModelViewClasses(py::module m);
 
 }
 
@@ -36,55 +36,7 @@ PYBIND11_MODULE(QtWidgets, m)
     py::module::import("cnoid.QtCore");
     py::module::import("cnoid.QtGui");
 
-    py::class_<QWidget, PyQObjectHolder<QWidget>, QObject>(m, "QWidget")
-        .def("hasFocus", &QWidget::hasFocus)
-        .def("isActiveWindow", &QWidget::isActiveWindow)
-        .def("isAncestorOf", &QWidget::isAncestorOf)
-        .def("isEnabled", &QWidget::isEnabled)
-        .def("isEnabledTo", &QWidget::isEnabledTo)
-        .def("isFullScreen", &QWidget::isFullScreen)
-        .def("isHidden", &QWidget::isHidden)
-        .def("isMaximized", &QWidget::isMaximized)
-        .def("isMinimized", &QWidget::isMinimized)
-        .def("isModal", &QWidget::isModal)
-        .def("isVisible", &QWidget::isVisible)
-        .def("isVisibleTo", &QWidget::isVisibleTo)
-        .def("isWindow", &QWidget::isWindow)
-        .def("isWindowModified", &QWidget::isWindowModified)
-        .def("parentWidget", &QWidget::parentWidget)
-        .def("setLayout", &QWidget::setLayout)
-        .def("setParent",  (void (QWidget::*)(QWidget* parent)) &QWidget::setParent)
-        .def("toolTip", &QWidget::toolTip)
-        .def("setToolTip", &QWidget::setToolTip)
-        .def("whatsThis", &QWidget::whatsThis)
-        .def("setWhatsThis", &QWidget::setWhatsThis)
-        .def("windowIconText", &QWidget::windowIconText)
-        .def("setWindowIconText", &QWidget::setWindowIconText)
-        .def("window", &QWidget::window)
-        .def("windowFilePath", &QWidget::windowFilePath)
-        .def("windowRole", &QWidget::windowRole)
-        .def("windowTitle", &QWidget::windowTitle)
-
-        // Public slots
-        .def("close", &QWidget::close)
-        .def("hide", &QWidget::hide)
-        .def("lower", &QWidget::lower)
-        .def("raise", &QWidget::raise)
-        .def("repaint", (void (QWidget::*)()) &QWidget::repaint)
-        .def("setDisabled", &QWidget::setDisabled)
-        .def("setEnabled", &QWidget::setEnabled)
-        .def("setFocus", (void (QWidget::*)()) &QWidget::setFocus)
-        .def("setHidden", &QWidget::setHidden)
-        .def("setVisible", &QWidget::setVisible)
-        .def("setWindowModified", &QWidget::setWindowModified)
-        .def("setWindowTitle", &QWidget::setWindowTitle)
-        .def("show", &QWidget::show)
-        .def("showFullScreen", &QWidget::showFullScreen)
-        .def("showMaximized", &QWidget::showMaximized)
-        .def("showMinimized", &QWidget::showMinimized)
-        .def("showNormal", &QWidget::showNormal)
-        .def("update",  (void (QWidget::*)()) &QWidget::update)
-        ;
+    exportPyQWidget(m);
 
     py::class_<QMainWindow, PyQObjectHolder<QMainWindow>, QWidget>(m, "QMainWindow");
 
@@ -222,6 +174,6 @@ PYBIND11_MODULE(QtWidgets, m)
         .def("setVerticalScrollBarPolicy", &QAbstractScrollArea::setVerticalScrollBarPolicy)
         ;
 
-    exportPyQtGuiLayoutClasses(m);
-    exportPyQtGuiModelViewClasses(m);
+    exportPyQtLayoutClasses(m);
+    exportPyQtModelViewClasses(m);
 }

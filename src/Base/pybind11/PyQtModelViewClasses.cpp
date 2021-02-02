@@ -7,12 +7,14 @@
 #include <QTableView>
 #include <QTableWidget>
 #include <QTableWidgetItem>
+#include <vector>
 
+using namespace std;
 namespace py = pybind11;
 
 namespace cnoid {
 
-void exportPyQtGuiModelViewClasses(py::module m)
+void exportPyQtModelViewClasses(py::module m)
 {
     py::class_<QAbstractItemView, PyQObjectHolder<QAbstractItemView>, QAbstractScrollArea>
         qAbstractItemView(m, "QAbstractItemView");
@@ -44,21 +46,69 @@ void exportPyQtGuiModelViewClasses(py::module m)
         .export_values();
     
     qAbstractItemView
+        .def("alternatingRowColors", &QAbstractItemView::alternatingRowColors)
+        .def("autoScrollMargin", &QAbstractItemView::autoScrollMargin)
+        .def("closePersistentEditor", &QAbstractItemView::closePersistentEditor)
+        .def("currentIndex", &QAbstractItemView::currentIndex)
+        .def("defaultDropAction", &QAbstractItemView::defaultDropAction)
+        .def("dragDropMode", &QAbstractItemView::dragDropMode)
+        .def("dragDropOverwriteMode", &QAbstractItemView::dragDropOverwriteMode)
+        .def("dragEnabled", &QAbstractItemView::dragEnabled)
+        .def("editTriggers", &QAbstractItemView::editTriggers)
         .def("hasAutoScroll", &QAbstractItemView::hasAutoScroll)
-        .def("setAutoScroll", &QAbstractItemView::setAutoScroll)
         .def("horizontalScrollMode", &QAbstractItemView::horizontalScrollMode)
-        .def("setHorizontalScrollMode", &QAbstractItemView::setHorizontalScrollMode)
-	.def("verticalScrollMode", &QAbstractItemView::verticalScrollMode)
-        .def("setVerticalScrollMode", &QAbstractItemView::setVerticalScrollMode)
-        .def("scrollToBottom", &QAbstractItemView::scrollToBottom)
-        .def("scrollToTop", &QAbstractItemView::scrollToTop)
+        .def("iconSize", &QAbstractItemView::iconSize)
+        .def("indexAt", &QAbstractItemView::indexAt)
+        .def("indexWidget", &QAbstractItemView::indexWidget)
+        .def("isPersistentEditorOpen", &QAbstractItemView::isPersistentEditorOpen)
+        .def("itemDelegate", (QAbstractItemDelegate*(QAbstractItemView::*)()const) &QAbstractItemView::itemDelegate)
+        .def("itemDelegate", (QAbstractItemDelegate*(QAbstractItemView::*)(const QModelIndex&)const) &QAbstractItemView::itemDelegate)
+        .def("itemDelegateForColumn", &QAbstractItemView::itemDelegateForColumn)
+        .def("itemDelegateForRow", &QAbstractItemView::itemDelegateForRow)
+        .def("keyboardSearch", &QAbstractItemView::keyboardSearch)
+        .def("model", &QAbstractItemView::model)
+        .def("openPersistentEditor", &QAbstractItemView::openPersistentEditor)
+        .def("resetHorizontalScrollMode", &QAbstractItemView::resetHorizontalScrollMode)
+        .def("resetVerticalScrollMode", &QAbstractItemView::resetVerticalScrollMode)
+        .def("rootIndex", &QAbstractItemView::rootIndex)
+        .def("scrollTo", &QAbstractItemView::scrollTo, py::arg("index"), py::arg("hint") = QAbstractItemView::EnsureVisible)
+        .def("selectionBehavior", &QAbstractItemView::selectionBehavior)
         .def("selectionMode", &QAbstractItemView::selectionMode)
         .def("selectionModel", &QAbstractItemView::selectionModel)
+        .def("setAlternatingRowColors", &QAbstractItemView::setAlternatingRowColors)
+        .def("setAutoScroll", &QAbstractItemView::setAutoScroll)
+        .def("setAutoScrollMargin", &QAbstractItemView::setAutoScrollMargin)
+        .def("setDefaultDropAction", &QAbstractItemView::setDefaultDropAction)
+        .def("setDragDropMode", &QAbstractItemView::setDragDropMode)
+        .def("setDragDropOverwriteMode", &QAbstractItemView::setDragDropOverwriteMode)
+        .def("setDragEnabled", &QAbstractItemView::setDragEnabled)
+        .def("setDropIndicatorShown", &QAbstractItemView::setDropIndicatorShown)
+        .def("setEditTriggers", &QAbstractItemView::setEditTriggers)
+        .def("setHorizontalScrollMode", &QAbstractItemView::setHorizontalScrollMode)
+        .def("setIconSize", &QAbstractItemView::setIconSize)
+        .def("setIndexWidget", &QAbstractItemView::setIndexWidget)
+        .def("setItemDelegate", &QAbstractItemView::setItemDelegate)
+        .def("setItemDelegateForColumn", &QAbstractItemView::setItemDelegateForColumn)
+        .def("setItemDelegateForRow", &QAbstractItemView::setItemDelegateForRow)
+        .def("setModel", &QAbstractItemView::setModel)
         .def("setSelectionBehavior", &QAbstractItemView::setSelectionBehavior)
         .def("setSelectionMode", &QAbstractItemView::setSelectionMode)
+        .def("setSelectionModel", &QAbstractItemView::setSelectionModel)
+        .def("setTabKeyNavigation", &QAbstractItemView::setTabKeyNavigation)
+        .def("setTextElideMode", &QAbstractItemView::setTextElideMode)
+        .def("setVerticalScrollMode", &QAbstractItemView::setVerticalScrollMode)
+        .def("showDropIndicator", &QAbstractItemView::showDropIndicator)
+        .def("sizeHintForColumn", &QAbstractItemView::sizeHintForColumn)
+        .def("sizeHintForIndex", &QAbstractItemView::sizeHintForIndex)
+        .def("sizeHintForRow", &QAbstractItemView::sizeHintForRow)
+        .def("tabKeyNavigation", &QAbstractItemView::tabKeyNavigation)
+        .def("textElideMode", &QAbstractItemView::textElideMode)
+	.def("verticalScrollMode", &QAbstractItemView::verticalScrollMode)
+        .def("visualRect", &QAbstractItemView::visualRect)
         .def("clearSelection", &QAbstractItemView::clearSelection)
+        .def("scrollToBottom", &QAbstractItemView::scrollToBottom)
+        .def("scrollToTop", &QAbstractItemView::scrollToTop)
         .def("selectAll", &QAbstractItemView::selectAll)
-        .def("setAlternatingRowColors", &QAbstractItemView::setAlternatingRowColors)
         ;
 
     py::class_<QItemSelectionModel, PyQObjectHolder<QItemSelectionModel>, QObject>
@@ -148,14 +198,36 @@ void exportPyQtGuiModelViewClasses(py::module m)
 
     py::class_<QTableView, PyQObjectHolder<QTableView>, QAbstractItemView>(m, "QTableView")
         .def(py::init<>())
-        .def("horizontalHeader", &QTableView::horizontalHeader)
-        .def("verticalHeader", &QTableView::verticalHeader)
-        .def("isSortingEnabled", &QTableView::isSortingEnabled)
+        .def("clearSpans", &QTableView::clearSpans)
+        .def("columnAt", &QTableView::columnAt)
+        .def("columnSpan", &QTableView::columnSpan)
+        .def("columnViewportPosition", &QTableView::columnViewportPosition)
         .def("columnWidth", &QTableView::columnWidth)
+        .def("gridStyle", &QTableView::gridStyle)
+        .def("horizontalHeader", &QTableView::horizontalHeader)
+        .def("isColumnHidden", &QTableView::isColumnHidden)
+        .def("isCornerButtonEnabled", &QTableView::isCornerButtonEnabled)
+        .def("isRowHidden", &QTableView::isRowHidden)
+        .def("isSortingEnabled", &QTableView::isSortingEnabled)
+        .def("rowAt", &QTableView::rowAt)
+        .def("rowHeight", &QTableView::rowHeight)
+        .def("rowSpan", &QTableView::rowSpan)
+        .def("rowViewportPosition", &QTableView::rowViewportPosition)
+        .def("setColumnHidden", &QTableView::setColumnHidden)
+        .def("setColumnWidth", &QTableView::setColumnWidth)
+        .def("setCornerButtonEnabled", &QTableView::setCornerButtonEnabled)
+        .def("setGridStyle", &QTableView::setGridStyle)
+        .def("setHorizontalHeader", &QTableView::setHorizontalHeader)
+        .def("setRowHeight", &QTableView::setRowHeight)
+        .def("setRowHidden", &QTableView::setRowHidden)
         .def("setSortingEnabled", &QTableView::setSortingEnabled)
+        .def("setSpan", &QTableView::setSpan)
+        .def("setVerticalHeader", &QTableView::setVerticalHeader)
         .def("setWordWrap", &QTableView::setWordWrap)
+        .def("showGrid", &QTableView::showGrid)
+        .def("sortByColumn", (void(QTableView::*)(int,Qt::SortOrder)) &QTableView::sortByColumn)
+        .def("verticalHeader", &QTableView::verticalHeader)
         .def("wordWrap", &QTableView::wordWrap)
-        
         .def("hideColumn", &QTableView::hideColumn)
         .def("hideRow", &QTableView::hideRow)
         .def("resizeColumnToContents", &QTableView::resizeColumnToContents)
@@ -169,20 +241,45 @@ void exportPyQtGuiModelViewClasses(py::module m)
         .def("showRow", &QTableView::showRow)
         ;
 
-    py::class_<QTableWidget, PyQObjectHolder<QTableWidget>, QTableView>(m, "QTableWidget")
+    py::class_<QTableWidget, PyQObjectHolder<QTableWidget>, QTableView> qTableWidget(m, "QTableWidget");
+
+    typedef cnoid::QtSignal<void(QTableWidget::*)(), void()> QTableWidgetSignal;
+    cnoid::PyQtSignal<QTableWidgetSignal>(qTableWidget, "Signal");
+
+    typedef cnoid::QtSignal<void(QTableWidget::*)(int,int), void(int,int)> QTableWidgetInt2Signal;
+    cnoid::PyQtSignal<QTableWidgetInt2Signal>(qTableWidget, "Int2Signal");
+
+    typedef cnoid::QtSignal<void(QTableWidget::*)(int,int,int,int), void(int,int,int,int)> QTableWidgetInt4Signal;
+    cnoid::PyQtSignal<QTableWidgetInt4Signal>(qTableWidget, "Int4Signal");
+
+    typedef cnoid::QtSignal<void(QTableWidget::*)(QTableWidgetItem*), void(QTableWidgetItem*)> QTableWidgetItemSignal;
+    cnoid::PyQtSignal<QTableWidgetItemSignal>(qTableWidget, "ItemSignal");
+
+    typedef cnoid::QtSignal<void(QTableWidget::*)(QTableWidgetItem*,QTableWidgetItem*), void(QTableWidgetItem*,QTableWidgetItem*)> QTableWidgetItem2Signal;
+    cnoid::PyQtSignal<QTableWidgetItem2Signal>(qTableWidget, "Item2Signal");
+    
+    qTableWidget
         .def(py::init<>())
-        .def("getCellWidget", &QTableWidget::cellWidget)
+        .def("cellWidget", &QTableWidget::cellWidget)
         .def("closePersistentEditor", &QTableWidget::closePersistentEditor)
-        .def("getColumn", &QTableWidget::column)
+        .def("column", &QTableWidget::column)
         .def("columnCount", &QTableWidget::columnCount)
         .def("currentColumn", &QTableWidget::currentColumn)
         .def("currentItem", &QTableWidget::currentItem)
         .def("currentRow", &QTableWidget::currentRow)
         .def("editItem", &QTableWidget::editItem)
+        .def("findItems",
+             [](const QTableWidget& self, const std::string& text, Qt::MatchFlags flags){
+                 auto qitems = self.findItems(text.c_str(), flags);
+                 vector<QTableWidgetItem*> items;
+                 items.reserve(qitems.count());
+                 for(auto& item : qitems){
+                     items.push_back(item);
+                 }
+                 return items;
+             })
         .def("horizontalHeaderItem", &QTableWidget::horizontalHeaderItem)
-
-        //.def("isPersistentEditorOpen", &QTableWidget::isPersistentEditorOpen)
-        
+        .def("isPersistentEditorOpen", (bool(QTableWidget::*)(QTableWidgetItem*)const) &QTableWidget::isPersistentEditorOpen)
         .def("item", &QTableWidget::item)
         .def("itemAt", (QTableWidgetItem*(QTableWidget::*)(const QPoint&)const) &QTableWidget::itemAt)
         .def("itemAt", (QTableWidgetItem*(QTableWidget::*)(int, int)const) &QTableWidget::itemAt)
@@ -200,6 +297,9 @@ void exportPyQtGuiModelViewClasses(py::module m)
                 std::copy(src.begin(), src.end(), std::back_inserter(items));
                 return items;
             })
+
+        //.def("selectedRanges", [](const QTableWidget& self){ })
+        
         .def("setCellWidget", &QTableWidget::setCellWidget)
         .def("setColumnCount", &QTableWidget::setColumnCount)
         .def("setCurrentCell", (void(QTableWidget::*)(int, int)) &QTableWidget::setCurrentCell)
@@ -222,6 +322,7 @@ void exportPyQtGuiModelViewClasses(py::module m)
              })
         .def("setItem", &QTableWidget::setItem)
         .def("setItemPrototype", &QTableWidget::setItemPrototype)
+        .def("setRangeSelected", &QTableWidget::setRangeSelected)
         .def("setRowCount", &QTableWidget::setRowCount)
         .def("setVerticalHeaderItem", &QTableWidget::setVerticalHeaderItem)
         .def("setVerticalHeaderLabels",
@@ -242,6 +343,7 @@ void exportPyQtGuiModelViewClasses(py::module m)
         .def("visualColumn",	&QTableWidget::visualColumn)
         .def("visualItemRect", &QTableWidget::visualItemRect)
         .def("visualRow", &QTableWidget::visualRow)
+        
         .def("clear", &QTableWidget::clear)
         .def("clearContents", &QTableWidget::clearContents)
         .def("insertColumn", &QTableWidget::insertColumn)
@@ -249,6 +351,22 @@ void exportPyQtGuiModelViewClasses(py::module m)
         .def("removeColumn", &QTableWidget::removeColumn)
         .def("removeRow", &QTableWidget::removeRow)
         .def("scrollToItem", &QTableWidget::scrollToItem, py::arg("item"), py::arg("hint") = QAbstractItemView::EnsureVisible)
+
+        .def("cellActivated", [](QTableWidget* self){ return QTableWidgetInt2Signal(self, &QTableWidget::cellActivated); })
+        .def("cellChanged", [](QTableWidget* self){ return QTableWidgetInt2Signal(self, &QTableWidget::cellChanged); })
+        .def("cellClicked", [](QTableWidget* self){ return QTableWidgetInt2Signal(self, &QTableWidget::cellClicked); })
+        .def("cellDoubleClicked", [](QTableWidget* self){ return QTableWidgetInt2Signal(self, &QTableWidget::cellDoubleClicked); })
+        .def("cellEntered", [](QTableWidget* self){ return QTableWidgetInt2Signal(self, &QTableWidget::cellEntered); })
+        .def("cellPressed", [](QTableWidget* self){ return QTableWidgetInt2Signal(self, &QTableWidget::cellPressed); })
+        .def("currentCellChanged", [](QTableWidget* self){ return QTableWidgetInt4Signal(self, &QTableWidget::currentCellChanged); })
+        .def("currentItemChanged", [](QTableWidget* self){ return QTableWidgetItem2Signal(self, &QTableWidget::currentItemChanged); })
+        .def("itemActivated", [](QTableWidget* self){ return QTableWidgetItemSignal(self, &QTableWidget::itemActivated); })
+        .def("itemChanged", [](QTableWidget* self){ return QTableWidgetItemSignal(self, &QTableWidget::itemChanged); })
+        .def("itemClicked", [](QTableWidget* self){ return QTableWidgetItemSignal(self, &QTableWidget::itemClicked); })
+        .def("itemDoubleClicked", [](QTableWidget* self){ return QTableWidgetItemSignal(self, &QTableWidget::itemDoubleClicked); })
+        .def("itemEntered", [](QTableWidget* self){ return QTableWidgetItemSignal(self, &QTableWidget::itemEntered); })
+        .def("itemPressed", [](QTableWidget* self){ return QTableWidgetItemSignal(self, &QTableWidget::itemPressed); })
+        .def("itemSelectionChanged", [](QTableWidget* self){ return QTableWidgetSignal(self, &QTableWidget::itemSelectionChanged); })
         ;
 
     py::class_<QTableWidgetItem, std::unique_ptr<QTableWidgetItem, py::nodelete>>

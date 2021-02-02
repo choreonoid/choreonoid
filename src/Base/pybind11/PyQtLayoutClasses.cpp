@@ -9,7 +9,7 @@ namespace py = pybind11;
 
 namespace cnoid {
 
-void exportPyQtGuiLayoutClasses(py::module m)
+void exportPyQtLayoutClasses(py::module m)
 {
     py::class_<QLayoutItem, std::unique_ptr<QLayoutItem, py::nodelete>>(m, "QLayoutItem")
         .def_property_readonly("alignment", &QLayoutItem::alignment)

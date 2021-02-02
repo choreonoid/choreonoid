@@ -103,6 +103,44 @@ void exportPyQtCoreQtNamespace(py::module m)
         .value("ScrollBarAlwaysOff", Qt::ScrollBarAlwaysOff)
         .value("ScrollBarAlwaysOn", Qt::ScrollBarAlwaysOn)
         .export_values();
+
+    py::enum_<Qt::GestureType>(qt, "GestureType")
+        .value("TapGesture", Qt::TapGesture)
+        .value("TapAndHoldGesture", Qt::TapAndHoldGesture)
+        .value("PanGesture", Qt::PanGesture)
+        .value("PinchGesture", Qt::PinchGesture)
+        .value("SwipeGesture", Qt::SwipeGesture)
+        .value("CustomGesture", Qt::CustomGesture)
+        .export_values();
+    
+    py::enum_<Qt::GestureFlag>(qt, "GestureFlag")
+        .value("DontStartGestureOnChildren", Qt::DontStartGestureOnChildren)
+        .value("ReceivePartialGestures", Qt::ReceivePartialGestures)
+        .value("IgnoredGesturesPropagateToParent", Qt::IgnoredGesturesPropagateToParent)
+        .export_values();
+
+    py::class_<QFlags<Qt::GestureFlag>>(qt, "GestureFlags")
+        .def(py::init<>())
+        .def(py::init<Qt::ItemFlag>())
+        .def(py::init(
+                 [](const std::vector<Qt::GestureFlag>& flags){
+                     int vflags = 0;
+                     for(auto& flag : flags){
+                         vflags |= flag;
+                     }
+                     return std::unique_ptr<QFlags<Qt::GestureFlag>>(new QFlags<Qt::GestureFlag>(vflags));
+                 }))
+        ;
+
+    py::implicitly_convertible<Qt::GestureFlag, QFlags<Qt::GestureFlag>>();
+    py::implicitly_convertible<QFlags<Qt::GestureFlag>, Qt::GestureFlag>();
+
+    py::enum_<Qt::ShortcutContext>(qt, "ShortcutContext")
+        .value("WidgetShortcut", Qt::WidgetShortcut)
+        .value("WidgetWithChildrenShortcut", Qt::WidgetWithChildrenShortcut)
+        .value("WindowShortcut", Qt::WindowShortcut)
+        .value("ApplicationShortcut", Qt::ApplicationShortcut)
+        .export_values();
 }
 
 }
