@@ -601,7 +601,9 @@ void TimeBar::setRepeatMode(bool on)
 void TimeBar::Impl::onPlayActivated()
 {
     stopPlayback(true);
-    setTime(minTime, false);
+    if(!isFillLevelActive || !config.fillLevelSyncCheck.isChecked()){
+        setTime(minTime, false);
+    }
     startPlayback();
 }
 

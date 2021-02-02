@@ -312,8 +312,10 @@ public:
     Impl(SimulatorItem* self);
     Impl(SimulatorItem* self, const Impl& org);
     ~Impl();
-    void onSelectionChanged(bool on);
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
+    void onSelectionChanged(bool on);
+    void startFillLevelUpdate();
+    void stopFillLevelUpdate();
     void clearSimulation();
     bool startSimulation(bool doReset);
     virtual void run() override;
@@ -1342,21 +1344,6 @@ void SimulatorItem::onDisconnectedFromRoot()
 }
 
 
-void SimulatorItem::Impl::onSelectionChanged(bool on)
-{
-    if(on){
-        if(self->isActive() && isRecordingEnabled && fillLevelId < 0){
-            fillLevelId = timeBar->startFillLevelUpdate(currentTime());
-        }
-    } else {
-        if(fillLevelId >= 0){
-            timeBar->stopFillLevelUpdate(fillLevelId);
-            fillLevelId = -1;
-        }
-    }
-}
-
-
 WorldItem* SimulatorItem::worldItem()
 {
     return impl->worldItem;
@@ -1612,6 +1599,35 @@ void FunctionSet::updateFunctions()
     needToUpdate = false;
 }        
     
+    
+void SimulatorItem::Impl::onSelectionChanged(bool on)
+{
+    if(on){
+        if(self->isActive() && isRecordingEnabled){
+            startFillLevelUpdate();
+        }
+    } else {
+        stopFillLevelUpdate();
+    }
+}
+
+
+void SimulatorItem::Impl::startFillLevelUpdate()
+{
+    if(fillLevelId < 0){
+        fillLevelId = timeBar->startFillLevelUpdate(currentTime());
+    }
+}
+
+
+void SimulatorItem::Impl::stopFillLevelUpdate()
+{
+    if(fillLevelId >= 0){
+        timeBar->stopFillLevelUpdate(fillLevelId);
+        fillLevelId = -1;
+    }
+}
+
     
 void SimulatorItem::Impl::clearSimulation()
 {
@@ -1930,9 +1946,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
         if(self->isSelected()){
             if(isRecordingEnabled){
-                if(fillLevelId < 0){
-                    fillLevelId = timeBar->startFillLevelUpdate();
-                }
+                startFillLevelUpdate();
             }
             if(!timeBar->isDoingPlayback()){
                 timeBar->setTime(0.0);
@@ -2370,11 +2384,10 @@ void SimulatorItem::pauseSimulation()
 
 void SimulatorItem::Impl::pauseSimulation()
 {
-    if(fillLevelId >= 0){
-        timeBar->stopFillLevelUpdate(fillLevelId);
-    }
+    flushTimer.stop();
+    stopFillLevelUpdate();
     pauseRequested = true;
-    
+    flushRecords();
 }
 
 
@@ -2386,10 +2399,11 @@ void SimulatorItem::restartSimulation()
 
 void SimulatorItem::Impl::restartSimulation()
 {
-    if(fillLevelId < 0){
-        fillLevelId = timeBar->startFillLevelUpdate();
+    if(pauseRequested){
+        startFillLevelUpdate();
+        pauseRequested = false;
+        flushTimer.start(1000.0 / timeBar->playbackFrameRate());
     }
-    pauseRequested = false;
 }
 
 
@@ -2443,10 +2457,7 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
 
     flushRecords();
 
-    if(isRecordingEnabled && fillLevelId >= 0){
-        timeBar->stopFillLevelUpdate(fillLevelId);
-        fillLevelId = -1;
-    }
+    stopFillLevelUpdate();
 
     mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
 
