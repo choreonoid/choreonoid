@@ -51,6 +51,7 @@ public:
     bool isStatic() const;
     bool isFixedToRoot() const;
     bool isOwnerOf(const Link* link) const;
+    bool isEndLink() const { return !child_; }
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }
