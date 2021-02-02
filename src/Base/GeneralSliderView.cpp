@@ -23,7 +23,7 @@ using namespace cnoid;
 namespace {
 
 // slider resolution
-const double resolution = 1000000.0;
+const double resolution = 100000.0;
 
 class SliderUnit : public Referenced
 {
