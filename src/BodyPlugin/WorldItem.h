@@ -33,7 +33,9 @@ public:
 
     bool selectCollisionDetector(const std::string& name);
     CollisionDetector* collisionDetector();
-    void enableCollisionDetection(bool on);
+    void setCollisionDetectionEnabled(bool on);
+    [[deprecated("Use setCollisionDetectionEnabled()")]]
+    void enableCollisionDetection(bool on){ setCollisionDetectionEnabled(on); }
     bool isCollisionDetectionEnabled();
     void updateCollisionDetectorLater();
     void updateCollisionDetector();

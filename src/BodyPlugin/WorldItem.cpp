@@ -245,7 +245,7 @@ CollisionDetector* WorldItem::collisionDetector()
 }
 
 
-void WorldItem::enableCollisionDetection(bool on)
+void WorldItem::setCollisionDetectionEnabled(bool on)
 {
     impl->enableCollisionDetection(on);
 }
@@ -548,7 +548,7 @@ Item* WorldItem::doDuplicate() const
 void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Collision detection"), isCollisionDetectionEnabled(),
-                [&](bool on){ enableCollisionDetection(on); return true; });
+                [&](bool on){ setCollisionDetectionEnabled(on); return true; });
     putProperty(_("Collision detector"), impl->collisionDetectorType,
                 [&](int index){ return impl->selectCollisionDetector(index); });
 

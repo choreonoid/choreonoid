@@ -21,8 +21,8 @@ void exportItems(py::module m)
         .def("storeCurrentBodyPositionsAsInitialPositions", &WorldItem::storeCurrentBodyPositionsAsInitialPositions)
         .def("restoreInitialBodyPositions", &WorldItem::restoreInitialBodyPositions, py::arg("doNotify") = true)
         .def("selectCollisionDetector", &WorldItem::selectCollisionDetector)
-        .def("enableCollisionDetection", &WorldItem::enableCollisionDetection)
         .def("isCollisionDetectionEnabled", &WorldItem::isCollisionDetectionEnabled)
+        .def("setCollisionDetectionEnabled", &WorldItem::setCollisionDetectionEnabled)
         .def("updateCollisionDetectorLater", &WorldItem::updateCollisionDetectorLater)
         .def("updateCollisionDetector", &WorldItem::updateCollisionDetector)
         .def("updateCollisions", &WorldItem::updateCollisions)
@@ -35,9 +35,6 @@ void exportItems(py::module m)
             [](WorldItem& self, bool checkFileUpdate){
                 return self.materialTable(checkFileUpdate);
             })
-
-        // deprecated
-        .def("getSigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
         ;
 
     PyItemList<WorldItem>(m, "WorldItemList");
