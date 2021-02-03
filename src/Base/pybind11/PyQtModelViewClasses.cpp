@@ -60,7 +60,7 @@ void exportPyQtModelViewClasses(py::module m)
         .def("iconSize", &QAbstractItemView::iconSize)
         .def("indexAt", &QAbstractItemView::indexAt)
         .def("indexWidget", &QAbstractItemView::indexWidget)
-        .def("isPersistentEditorOpen", &QAbstractItemView::isPersistentEditorOpen)
+        //.def("isPersistentEditorOpen", &QAbstractItemView::isPersistentEditorOpen) // require Qt 5.10 or later
         .def("itemDelegate", (QAbstractItemDelegate*(QAbstractItemView::*)()const) &QAbstractItemView::itemDelegate)
         .def("itemDelegate", (QAbstractItemDelegate*(QAbstractItemView::*)(const QModelIndex&)const) &QAbstractItemView::itemDelegate)
         .def("itemDelegateForColumn", &QAbstractItemView::itemDelegateForColumn)
@@ -279,7 +279,8 @@ void exportPyQtModelViewClasses(py::module m)
                  return items;
              })
         .def("horizontalHeaderItem", &QTableWidget::horizontalHeaderItem)
-        .def("isPersistentEditorOpen", (bool(QTableWidget::*)(QTableWidgetItem*)const) &QTableWidget::isPersistentEditorOpen)
+        // require Qt 5.10 or later
+        //.def("isPersistentEditorOpen", (bool(QTableWidget::*)(QTableWidgetItem*)const) &QTableWidget::isPersistentEditorOpen)
         .def("item", &QTableWidget::item)
         .def("itemAt", (QTableWidgetItem*(QTableWidget::*)(const QPoint&)const) &QTableWidget::itemAt)
         .def("itemAt", (QTableWidgetItem*(QTableWidget::*)(int, int)const) &QTableWidget::itemAt)
