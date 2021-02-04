@@ -69,8 +69,8 @@ public:
     ostream& os;
     KinematicsBar* kinematicsBar;
 
-    Connection sigSubTreeChangedConnection;
-    ConnectionSet sigKinematicStateChangedConnections;
+    ScopedConnection sigSubTreeChangedConnection;
+    ScopedConnectionSet sigKinematicStateChangedConnections;
 
     Selection collisionDetectorType;
     BodyCollisionDetector bodyCollisionDetector;
@@ -80,6 +80,7 @@ public:
     LazyCaller updateCollisionDetectorLater;
     LazyCaller updateCollisionsLater;
     bool isCollisionDetectionEnabled;
+    bool needToUpdateCollisionsLater;
     SceneCollisionPtr sceneCollision;
 
     string materialTableFile;
@@ -168,6 +169,7 @@ void WorldItem::Impl::init()
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setName("Collisions");
     materialTableTimestamp = 0;
+    needToUpdateCollisionsLater = false;
 }
 
     
@@ -179,8 +181,7 @@ WorldItem::~WorldItem()
 
 WorldItem::Impl::~Impl()
 {
-    sigKinematicStateChangedConnections.disconnect();
-    sigSubTreeChangedConnection.disconnect();
+
 }
 
 
@@ -260,14 +261,13 @@ void WorldItem::Impl::enableCollisionDetection(bool on)
     bool changed = false;
     
     if(isCollisionDetectionEnabled && !on){
-        clearCollisionDetector();
         sigSubTreeChangedConnection.disconnect();
+        clearCollisionDetector();
         isCollisionDetectionEnabled = false;
         changed = true;
         
     } else if(!isCollisionDetectionEnabled && on){
         isCollisionDetectionEnabled = true;
-
         updateCollisionDetector(true);
         sigSubTreeChangedConnection =
             self->sigSubTreeChanged().connect(
@@ -296,6 +296,8 @@ void WorldItem::Impl::clearCollisionDetector()
 
     bodyCollisionDetector.clearBodies();
     sigKinematicStateChangedConnections.disconnect();
+    updateCollisionsLater.cancel();
+    needToUpdateCollisionsLater = false;
 
     for(auto& info : coldetBodyInfos){
         info.bodyItem->clearCollisions();
@@ -335,7 +337,12 @@ void WorldItem::Impl::updateCollisionDetector(bool forceUpdate)
                           [](ColdetBodyInfo& info1, ColdetBodyInfo& info2){
                               return (info1.bodyItem == info2.bodyItem &&
                                       info1.isSelfCollisionDetectionEnabled == info2.isSelfCollisionDetectionEnabled); })){
-                return; // not changed
+                // A set of body items are not changed
+                if(needToUpdateCollisionsLater){
+                    needToUpdateCollisionsLater = false;
+                    updateCollisions(false);
+                    return;
+                }
             }
         }
         coldetBodyInfos = infos;
@@ -388,6 +395,11 @@ void WorldItem::updateCollisions()
 
 void WorldItem::Impl::updateCollisions(bool forceUpdate)
 {
+    if(updateCollisionDetectorLater.isPending()){
+        needToUpdateCollisionsLater = true;
+        return;
+    }
+    
     auto collisionDetector = bodyCollisionDetector.collisionDetector();
 
     for(auto& bodyInfo : coldetBodyInfos){
