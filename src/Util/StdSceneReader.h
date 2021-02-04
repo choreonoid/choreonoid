@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_YAML_SCENE_READER_H
-#define CNOID_UTIL_YAML_SCENE_READER_H
+#ifndef CNOID_UTIL_STD_SCENE_READER_H
+#define CNOID_UTIL_STD_SCENE_READER_H
 
 #include "EigenUtil.h"
 #include "SceneGraph.h"
@@ -16,13 +16,12 @@ namespace cnoid {
 
 class YAMLReader;
 class FilePathVariableProcessor;
-class YAMLSceneReaderImpl;
   
-class CNOID_EXPORT YAMLSceneReader
+class CNOID_EXPORT StdSceneReader
 {
 public:
-    YAMLSceneReader();
-    ~YAMLSceneReader();
+    StdSceneReader();
+    ~StdSceneReader();
 
     void setMessageSink(std::ostream& os);
     void setDefaultDivisionNumber(int n);
@@ -75,8 +74,9 @@ public:
     static void registerUriSchemeHandler(const std::string& scheme, UriSchemeHandler handler);
 
 private:
-    YAMLSceneReaderImpl* impl;
-    friend class YAMLSceneReaderImpl;
+    class Impl;
+    Impl* impl;
+
     bool isDegreeMode_;
     AngleAxis readAngleAxis(const Listing& rotation) const;
     bool readRotation(const ValueNode* info, Matrix3& out_R) const;

@@ -15,7 +15,7 @@ namespace cnoid {
 
 class Mapping;
 class Device;
-class YAMLSceneReader;
+class StdSceneReader;
 class YAMLBodyLoaderImpl;
   
 class CNOID_EXPORT YAMLBodyLoader : public AbstractBodyLoader
@@ -40,8 +40,8 @@ public:
     
     bool readDevice(Device* device, Mapping& node);
 
-    YAMLSceneReader& sceneReader();
-    const YAMLSceneReader& sceneReader() const;
+    StdSceneReader& sceneReader();
+    const StdSceneReader& sceneReader() const;
     
     bool isDegreeMode() const;
     double toRadian(double angle) const;

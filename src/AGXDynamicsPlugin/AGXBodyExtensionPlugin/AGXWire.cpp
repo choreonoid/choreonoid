@@ -373,7 +373,7 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
             mat = sim->getMaterialManager()->getMaterial(matName);	
 		}
         if(mat == nullptr){
-            mat = sim->getMaterialManager()->getMaterial(Material::name(0));
+            mat = sim->getMaterialManager()->getMaterial(Material::nameOfId(0));
         }
         double tmpMatValue;
         if(wireDeviceInfo.read("wireYoungsModulusStretch", tmpMatValue)){

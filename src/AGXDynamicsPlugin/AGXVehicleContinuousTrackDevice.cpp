@@ -1,7 +1,7 @@
 #include "AGXVehicleContinuousTrackDevice.h"
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/YAMLReader>
-#include <cnoid/YAMLSceneReader>
+#include <cnoid/StdSceneReader>
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>

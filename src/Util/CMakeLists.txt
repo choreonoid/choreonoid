@@ -66,8 +66,8 @@ set(sources
   ImageConverter.cpp
   PointSetUtil.cpp
   CollisionDetector.cpp
-  YAMLSceneReader.cpp
-  YAMLSceneLoader.cpp
+  StdSceneReader.cpp
+  StdSceneLoader.cpp
   StdSceneWriter.cpp
   STLSceneLoader.cpp
   VRML.cpp
@@ -176,8 +176,8 @@ set(headers
   PointSetUtil.h
   Collision.h
   CollisionDetector.h
-  YAMLSceneReader.h
-  YAMLSceneLoader.h
+  StdSceneReader.h
+  StdSceneLoader.h
   StdSceneWriter.h
   STLSceneLoader.h
   VRML.h

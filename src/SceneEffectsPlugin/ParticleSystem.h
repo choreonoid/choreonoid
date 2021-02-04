@@ -9,7 +9,7 @@
 
 namespace cnoid {
 
-class YAMLSceneReader;
+class StdSceneReader;
 class Mapping;
 
 class ParticleSystem
@@ -46,7 +46,7 @@ public:
     const Vector3f& acceleration() const { return acceleration_; }
     void setAcceleration(const Vector3f& a){ acceleration_ = a; }
 
-    void readParameters(const YAMLSceneReader& reader, const Mapping& node);
+    void readParameters(const StdSceneReader& reader, const Mapping& node);
 
 private:
     bool on_;

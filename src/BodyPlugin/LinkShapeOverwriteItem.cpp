@@ -6,7 +6,7 @@
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneNodeExtractor>
-#include <cnoid/YAMLSceneReader>
+#include <cnoid/StdSceneReader>
 #include <cnoid/StdSceneWriter>
 #include <cnoid/PositionDragger>
 #include <cnoid/SceneUtil>
@@ -451,9 +451,9 @@ bool LinkShapeOverwriteItem::restore(const Archive& archive)
     SgNodePtr restoredShape;
     auto node = archive.find("overwrite_shape");
     if(node->isValid()){
-        YAMLSceneReader sceneReader;
+        StdSceneReader sceneReader;
         sceneReader.setFilePathVariableProcessor(archive.filePathVariableProcessor());
-        sceneReader.setAngleUnit(YAMLSceneReader::DEGREE);
+        sceneReader.setAngleUnit(StdSceneReader::DEGREE);
         restoredShape = sceneReader.readNode(*node->toMapping());
     }
 

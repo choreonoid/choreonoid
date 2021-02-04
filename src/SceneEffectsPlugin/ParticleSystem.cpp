@@ -4,7 +4,7 @@
 */
 
 #include "ParticleSystem.h"
-#include <cnoid/YAMLSceneReader>
+#include <cnoid/StdSceneReader>
 #include <cnoid/EigenArchive>
 
 using namespace std;
@@ -45,7 +45,7 @@ ParticleSystem::~ParticleSystem()
 }
 
 
-void ParticleSystem::readParameters(const YAMLSceneReader& reader, const Mapping& node)
+void ParticleSystem::readParameters(const StdSceneReader& reader, const Mapping& node)
 {
     node.read("offsetTime", offsetTime_);
     node.read("lifeTime", lifeTime_);

@@ -15,7 +15,7 @@
 #include "RangeSensor.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include <cnoid/YAMLSceneReader>
+#include <cnoid/StdSceneReader>
 #include <cnoid/EigenArchive>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
@@ -100,7 +100,7 @@ public:
 
 struct ROSPackageSchemeHandlerRegistration {
     ROSPackageSchemeHandlerRegistration(){
-        YAMLSceneReader::registerUriSchemeHandler("package", ROSPackageSchemeHandler());
+        StdSceneReader::registerUriSchemeHandler("package", ROSPackageSchemeHandler());
     }
 } rosPackageSchemeHandlerRegistration;
 
@@ -123,7 +123,7 @@ public:
     unique_ptr<BodyLoader> bodyLoader;
     
     YAMLReader reader;
-    YAMLSceneReader sceneReader;
+    StdSceneReader sceneReader;
     filesystem::path mainFilePath;
 
     typedef function<bool(Mapping& node)> NodeFunction;
@@ -576,13 +576,13 @@ void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
 }
 
 
-YAMLSceneReader& YAMLBodyLoader::sceneReader()
+StdSceneReader& YAMLBodyLoader::sceneReader()
 {
     return impl->sceneReader;
 }
 
 
-const YAMLSceneReader& YAMLBodyLoader::sceneReader() const
+const StdSceneReader& YAMLBodyLoader::sceneReader() const
 {
     return impl->sceneReader;
 }

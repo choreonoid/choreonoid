@@ -2,8 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "YAMLSceneLoader.h"
-#include "YAMLSceneReader.h"
+#include "StdSceneLoader.h"
+#include "StdSceneReader.h"
 #include "SceneLoader.h"
 #include "YAMLReader.h"
 #include "ValueTree.h"
@@ -23,7 +23,7 @@ struct Registration {
     Registration(){
         SceneLoader::registerLoader(
             "scen",
-            []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<YAMLSceneLoader>(); });
+            []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<StdSceneLoader>(); });
     }
 } registration;
 
@@ -31,13 +31,13 @@ struct Registration {
 
 namespace cnoid {
 
-class YAMLSceneLoaderImpl
+class StdSceneLoader::Impl
 {
 public:
-    YAMLSceneReader sceneReader;
+    StdSceneReader sceneReader;
     ostream* os_;
 
-    YAMLSceneLoaderImpl();
+    Impl();
     ostream& os() { return *os_; }
     SgNode* load(const std::string& filename);
 };
@@ -45,50 +45,50 @@ public:
 }
     
 
-YAMLSceneLoader::YAMLSceneLoader()
+StdSceneLoader::StdSceneLoader()
 {
-    impl = new YAMLSceneLoaderImpl;
+    impl = new Impl;
 }
 
 
-YAMLSceneLoaderImpl::YAMLSceneLoaderImpl()
+StdSceneLoader::Impl::Impl()
 {
     os_ = &nullout();
 }
 
 
-YAMLSceneLoader::~YAMLSceneLoader()
+StdSceneLoader::~StdSceneLoader()
 {
     delete impl;
 }
 
 
-void YAMLSceneLoader::setMessageSink(std::ostream& os)
+void StdSceneLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
     impl->sceneReader.setMessageSink(os);
 }
     
 
-void YAMLSceneLoader::setDefaultDivisionNumber(int n)
+void StdSceneLoader::setDefaultDivisionNumber(int n)
 {
     impl->sceneReader.setDefaultDivisionNumber(n);
 }
 
 
-int YAMLSceneLoader::defaultDivisionNumber() const
+int StdSceneLoader::defaultDivisionNumber() const
 {
     return impl->sceneReader.defaultDivisionNumber();
 }
 
 
-SgNode* YAMLSceneLoader::load(const std::string& filename)
+SgNode* StdSceneLoader::load(const std::string& filename)
 {
     return impl->load(filename);
 }
 
 
-SgNode* YAMLSceneLoaderImpl::load(const std::string& filename)
+SgNode* StdSceneLoader::Impl::load(const std::string& filename)
 {
     SgNodePtr scene;
     MappingPtr topNode;
