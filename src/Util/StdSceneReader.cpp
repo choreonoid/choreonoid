@@ -299,7 +299,10 @@ void StdSceneReader::clear()
 
 void StdSceneReader::readHeader(Mapping& info)
 {
-    auto angleUnitNode = info.extract("angleUnit");
+    auto angleUnitNode = info.extract("angle_unit");
+    if(!angleUnitNode){
+        angleUnitNode = info.extract("angleUnit");
+    }
     if(angleUnitNode){
         string unit = angleUnitNode->toString();
         if(unit == "radian"){

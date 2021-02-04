@@ -1,4 +1,5 @@
 #include "StdSceneWriter.h"
+#include <cnoid/YAMLWriter>
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneDrawables>
 #include <cnoid/PolymorphicSceneNodeFunctionSet>
@@ -23,8 +24,11 @@ public:
     MappingPtr currentArchive;
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
+    unique_ptr<YAMLWriter> yamlWriter;
 
     Impl(StdSceneWriter* self);
+    void setBaseDirectory(const std::string& directory);
+    bool writeScene(SgNode* node, const std::string& filename);
     MappingPtr writeSceneNode(SgNode* node);
     void writeType(Mapping& archive, const char* typeName);
     void writeObjectHeader(Mapping& archive, SgObject* object);
@@ -73,8 +77,14 @@ StdSceneWriter::~StdSceneWriter()
 
 void StdSceneWriter::setBaseDirectory(const std::string& directory)
 {
-    impl->pathVariableProcessor = new FilePathVariableProcessor;
-    impl->pathVariableProcessor->setBaseDirectory(directory);
+    impl->setBaseDirectory(directory);
+}
+
+
+void StdSceneWriter::Impl::setBaseDirectory(const std::string& directory)
+{
+    pathVariableProcessor = new FilePathVariableProcessor;
+    pathVariableProcessor->setBaseDirectory(directory);
 }
 
 
@@ -87,6 +97,40 @@ void StdSceneWriter::setFilePathVariableProcessor(FilePathVariableProcessor* pro
 MappingPtr StdSceneWriter::writeScene(SgNode* node)
 {
     return impl->writeSceneNode(node);
+}
+
+
+bool StdSceneWriter::writeScene(SgNode* node, const std::string& filename)
+{
+    return impl->writeScene(node, filename);
+}
+
+
+bool StdSceneWriter::Impl::writeScene(SgNode* node, const std::string& filename)
+{
+    if(!yamlWriter){
+        yamlWriter.reset(new YAMLWriter);
+        yamlWriter->setKeyOrderPreservationMode(true);
+    }
+
+    if(!yamlWriter->openFile(filename)){
+        return false;
+    }
+        
+    MappingPtr header = new Mapping;
+    header->write("format", "choreonoid_scene");
+    header->write("format_version", "1.0");
+    header->write("angle_unit", "degree");
+    
+    auto directory = filesystem::path(filename).parent_path().generic_string();
+    setBaseDirectory(directory);
+    auto scene = writeSceneNode(node);
+    header->insert("scene", scene);
+    
+    yamlWriter->putNode(header);
+    yamlWriter->closeFile();
+    
+    return true;
 }
 
 

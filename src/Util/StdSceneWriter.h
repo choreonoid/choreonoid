@@ -23,6 +23,7 @@ public:
     //void setAngleUnit(AngleUnit unit);
 
     MappingPtr writeScene(SgNode* node);
+    bool writeScene(SgNode* node, const std::string& filename);
 
 private:
     class Impl;
