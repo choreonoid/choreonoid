@@ -28,6 +28,7 @@
 #include <cnoid/JointPath>
 #include <cnoid/BodyLoader>
 #include <cnoid/StdBodyWriter>
+#include <cnoid/StdSceneWriter>
 #include <cnoid/BodyState>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/InverseKinematics>
@@ -54,6 +55,7 @@ const bool TRACE_FUNCTIONS = false;
 
 ItemFileIO* bodyFileIO;
 ItemFileIO* meshFileIO;
+ItemFileIO* stdSceneFileOutput;
 
 BodyState kinematicStateCopy;
 
@@ -286,6 +288,29 @@ public:
     }
 };
 
+class StdSceneFileOutput : public ItemFileIOBase<BodyItem>
+{
+    unique_ptr<StdSceneWriter> sceneWriter;
+
+public:
+    StdSceneFileOutput()
+        : ItemFileIOBase<BodyItem>("STD-SCENE-FILE", Save)
+    {
+        setCaption(_("Standard scene file"));
+        setExtensions({ "scen" });
+        setInterfaceLevel(Conversion);
+    }
+
+    virtual bool save(BodyItem* item, const std::string& filename) override
+    {
+        if(!sceneWriter){
+            sceneWriter.reset(new StdSceneWriter);
+            
+        }
+        return sceneWriter->writeScene(item->body()->rootLink()->shape(), filename);
+    }
+};
+
 }
 
 
@@ -308,10 +333,15 @@ void BodyItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
     im.registerClass<BodyItem>(N_("BodyItem"));
+
     ::bodyFileIO = new BodyFileIO;
     im.registerFileIO<BodyItem>(::bodyFileIO);
+
     ::meshFileIO = new SceneFileIO;
     im.registerFileIO<BodyItem>(::meshFileIO);
+
+    ::stdSceneFileOutput = new StdSceneFileOutput;
+    im.registerFileIO<BodyItem>(::stdSceneFileOutput);
 
     OptionManager& om = ext->optionManager();
     om.addOption("body", boost::program_options::value< vector<string> >(), "load a body file");
