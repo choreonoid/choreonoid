@@ -63,9 +63,12 @@ public:
     const SceneWidgetEvent& latestEvent() const;
     Vector3 lastClickedPoint() const;
 
-    enum ViewpointControlMode { THIRD_PERSON_MODE, FIRST_PERSON_MODE  };
-    void setViewpointControlMode(ViewpointControlMode mode);
-    ViewpointControlMode viewpointControlMode() const;
+    enum ViewpointOperationMode {
+        ThirdPersonMode,
+        FirstPersonMode
+    };
+    void setViewpointOperationMode(ViewpointOperationMode mode);
+    ViewpointOperationMode viewpointOperationMode() const;
 
     SgPosTransform* builtinCameraTransform(void);
     SgPerspectiveCamera* builtinPerspectiveCamera() const;
@@ -94,8 +97,8 @@ public:
     void setHighlightingEnabled(bool on);
     bool isHighlightingEnabled() const;
 
-    void setCollisionLinesVisible(bool on);
-    bool collisionLinesVisible() const;
+    void setCollisionLineVisibility(bool on);
+    bool collisionLineVisibility() const;
 
     void setHeadLightIntensity(double value);
     void setWorldLightIntensity(double value);

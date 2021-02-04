@@ -154,7 +154,7 @@ void SceneBar::Impl::initialize()
     self->addButton(QIcon(":/Base/icon/viewfitting.svg"), _("Move the camera to look at the objects"))
         ->sigClicked().connect([&](){
                 currentSceneWidget->viewAll();
-                currentSceneWidget->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
+                currentSceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
             });
 
     self->addSpacing();
@@ -336,7 +336,8 @@ void SceneBar::Impl::onSceneWidgetStateChanged()
     customModeButtonGroup.blockSignals(false);
 
     firstPersonModeToggle->blockSignals(true);
-    firstPersonModeToggle->setChecked(currentSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
+    firstPersonModeToggle->setChecked(
+        currentSceneWidget->viewpointOperationMode() != SceneWidget::ThirdPersonMode);
     firstPersonModeToggle->blockSignals(false);
 
     int polygonFlags = currentSceneWidget->visiblePolygonElements();
@@ -364,7 +365,7 @@ void SceneBar::Impl::onSceneWidgetStateChanged()
     highlightToggle->blockSignals(false);
     
     collisionLineToggle->blockSignals(true);
-    collisionLineToggle->setChecked(currentSceneWidget->collisionLinesVisible());
+    collisionLineToggle->setChecked(currentSceneWidget->collisionLineVisibility());
     collisionLineToggle->blockSignals(false);
 }
 
@@ -423,7 +424,8 @@ void SceneBar::Impl::onEditModeButtonToggled(bool on)
 void SceneBar::Impl::onFirstPersonModeButtonToggled(bool on)
 {
     sceneViewConnections.block();
-    currentSceneWidget->setViewpointControlMode(on ? SceneWidget::FIRST_PERSON_MODE : SceneWidget::THIRD_PERSON_MODE);
+    currentSceneWidget->setViewpointOperationMode(
+        on ? SceneWidget::FirstPersonMode : SceneWidget::ThirdPersonMode);
     sceneViewConnections.unblock();
 }
 
@@ -490,7 +492,7 @@ void SceneBar::Impl::updateCollisionModelVisibility()
 void SceneBar::Impl::onCollisionLineButtonToggled(bool on)
 {
     sceneViewConnections.block();
-    currentSceneWidget->setCollisionLinesVisible(on);
+    currentSceneWidget->setCollisionLineVisibility(on);
     sceneViewConnections.unblock();
 }
 

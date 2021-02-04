@@ -217,8 +217,9 @@ public:
     bool isEditMode;
     bool isHighlightingEnabled;
 
-    Selection viewpointControlMode;
-    bool isFirstPersonMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
+    Selection viewpointOperationMode;
+    bool isFirstPersonMode() const {
+        return (viewpointOperationMode.which() != ThirdPersonMode); }
         
     enum DragMode { NO_DRAGGING, ABOUT_TO_EDIT, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
 
@@ -275,7 +276,7 @@ public:
     SceneWidgetEditable* activeCustomModeHandler;
     int activeCustomModeId;
 
-    bool collisionLinesVisible;
+    bool collisionLineVisibility;
 
     ref_ptr<CoordinateAxesOverlay> coordinateAxesOverlay;
 
@@ -345,7 +346,7 @@ public:
     void onPointSizeChanged(double width);
     void setVisiblePolygonElements(int elementFlags);
     int visiblePolygonElements() const;
-    void setCollisionLinesVisible(bool on);
+    void setCollisionLineVisibility(bool on);
     void onFieldOfViewChanged(double fov);
     void onClippingDepthChanged();
     void onSmoothShadingToggled(bool on);
@@ -567,10 +568,10 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     needToUpdateViewportInformation = true;
     isEditMode = false;
     isHighlightingEnabled = false;
-    viewpointControlMode.resize(2);
-    viewpointControlMode.setSymbol(SceneWidget::THIRD_PERSON_MODE, "thirdPerson");
-    viewpointControlMode.setSymbol(SceneWidget::FIRST_PERSON_MODE, "firstPerson");
-    viewpointControlMode.select(SceneWidget::THIRD_PERSON_MODE);
+    viewpointOperationMode.resize(2);
+    viewpointOperationMode.setSymbol(ThirdPersonMode, "thirdPerson");
+    viewpointOperationMode.setSymbol(FirstPersonMode, "firstPerson");
+    viewpointOperationMode.select(ThirdPersonMode);
     dragMode = NO_DRAGGING;
     defaultCursor = self->cursor();
     editModeCursor = QCursor(Qt::PointingHandCursor);
@@ -626,7 +627,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     updateDefaultLights();
 
-    collisionLinesVisible = false;
+    collisionLineVisibility = false;
 
     coordinateAxesOverlay = new CoordinateAxesOverlay;
     activateSystemNode(coordinateAxesOverlay, config->coordinateAxesCheck.isChecked());
@@ -1180,16 +1181,16 @@ Vector3 SceneWidget::lastClickedPoint() const
 }
 
 
-void SceneWidget::setViewpointControlMode(ViewpointControlMode mode)
+void SceneWidget::setViewpointOperationMode(ViewpointOperationMode mode)
 {
-    impl->viewpointControlMode.select(mode);
+    impl->viewpointOperationMode.select(mode);
     impl->emitSigStateChangedLater();
 }
 
 
-SceneWidget::ViewpointControlMode SceneWidget::viewpointControlMode() const
+SceneWidget::ViewpointOperationMode SceneWidget::viewpointOperationMode() const
 {
-    return static_cast<SceneWidget::ViewpointControlMode>(impl->viewpointControlMode.which());
+    return static_cast<ViewpointOperationMode>(impl->viewpointOperationMode.which());
 }
 
 
@@ -1484,12 +1485,12 @@ void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
             break;
             
         case Qt::Key_1:
-            self->setViewpointControlMode(SceneWidget::FIRST_PERSON_MODE);
+            self->setViewpointOperationMode(FirstPersonMode);
             handled = true;
             break;
             
         case Qt::Key_3:
-            self->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
+            self->setViewpointOperationMode(ThirdPersonMode);
             handled = true;
             break;
             
@@ -2514,16 +2515,16 @@ bool SceneWidget::isHighlightingEnabled() const
 }
 
 
-void SceneWidget::setCollisionLinesVisible(bool on)
+void SceneWidget::setCollisionLineVisibility(bool on)
 {
-    impl->setCollisionLinesVisible(on);
+    impl->setCollisionLineVisibility(on);
 }
 
 
-void SceneWidget::Impl::setCollisionLinesVisible(bool on)
+void SceneWidget::Impl::setCollisionLineVisibility(bool on)
 {
-    if(on != collisionLinesVisible){
-        collisionLinesVisible = on;
+    if(on != collisionLineVisibility){
+        collisionLineVisibility = on;
         renderer->setProperty(SceneRenderer::PropertyKey("collisionLineRatio"), on ? 50.0 : 0.0);
         update();
         emitSigStateChangedLater();
@@ -2531,9 +2532,9 @@ void SceneWidget::Impl::setCollisionLinesVisible(bool on)
 }
 
 
-bool SceneWidget::collisionLinesVisible() const
+bool SceneWidget::collisionLineVisibility() const
 {
-    return impl->collisionLinesVisible;
+    return impl->collisionLineVisibility;
 }
 
 
@@ -2814,7 +2815,7 @@ bool SceneWidget::storeState(Archive& archive)
 bool SceneWidget::Impl::storeState(Archive& archive)
 {
     archive.write("editMode", isEditMode);
-    archive.write("viewpointControlMode", viewpointControlMode.selectedSymbol());
+    archive.write("viewpointOperationMode", viewpointOperationMode.selectedSymbol());
 
     auto vpeList = archive.createFlowStyleListing("visible_polygon_elements");
     int vpe = self->visiblePolygonElements();
@@ -2829,7 +2830,7 @@ bool SceneWidget::Impl::storeState(Archive& archive)
     }
 
     archive.write("highlighting", isHighlightingEnabled);
-    archive.write("collisionLines", collisionLinesVisible);
+    archive.write("collisionLines", collisionLineVisibility);
 
     config->storeState(archive);
 
@@ -2948,8 +2949,9 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
     setEditMode(archive.get("editMode", isEditMode));
     
     string symbol;
-    if(archive.read("viewpointControlMode", symbol)){
-        self->setViewpointControlMode((SceneWidget::ViewpointControlMode(viewpointControlMode.index(symbol))));
+    if(archive.read("viewpointOperationMode", symbol)){
+        self->setViewpointOperationMode(
+            ViewpointOperationMode(viewpointOperationMode.index(symbol)));
     }
 
     auto& vpeList = *archive.findListing("visible_polygon_elements");
@@ -2971,7 +2973,7 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
     }
 
     archive.read("highlighting", isHighlightingEnabled);
-    setCollisionLinesVisible(archive.get("collisionLines", collisionLinesVisible));
+    setCollisionLineVisibility(archive.get("collisionLines", collisionLineVisibility));
     
     config->restoreState(archive);
 
