@@ -359,9 +359,9 @@ public:
     std::vector<ContactPoint>& contactPoints() { return contactPoints_; }
     const std::vector<ContactPoint>& contactPoints() const { return contactPoints_; }
     
-    SgGroup* shape() const;
-    SgGroup* visualShape() const;
-    SgGroup* collisionShape() const;
+    SgGroup* shape() const { return visualShape_; }
+    SgGroup* visualShape() const { return visualShape_; }
+    SgGroup* collisionShape() const { return collisionShape_; }
     bool hasDedicatedCollisionShape() const;
 
     // functions for constructing a link
@@ -433,9 +433,7 @@ public:
     [[deprecated]]
     Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra; }
     [[deprecated("Use T() instead.")]]
-    void getAttitudeAndTranslation(Isometry3& out_T) {
-        out_T = T();
-    };
+    void getAttitudeAndTranslation(Isometry3& out_T) { out_T = T(); };
 
     const Mapping* info() const { return info_; }
     Mapping* info() { return info_; }
@@ -507,10 +505,8 @@ private:
     std::string name_;
     std::string jointSpecificName_;
 
-    // SgPosTransform is used as the type of the following variables so that Rs can
-    // be reflected. When Rs is invalidated, the types should be modified to SgGroup.
-    ref_ptr<SgPosTransform> visualShape_;
-    ref_ptr<SgPosTransform> collisionShape_;
+    ref_ptr<SgGroup> visualShape_;
+    ref_ptr<SgGroup> collisionShape_;
     
     ref_ptr<Mapping> info_;
 

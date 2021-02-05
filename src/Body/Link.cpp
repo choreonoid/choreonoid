@@ -47,8 +47,8 @@ Link::Link()
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
     materialId_ = 0;
-    visualShape_ = new SgPosTransform;
-    collisionShape_ = new SgPosTransform;
+    visualShape_ = new SgGroup;
+    collisionShape_ = new SgGroup;
     info_ = new Mapping;
 }
 
@@ -100,10 +100,10 @@ Link::Link(const Link& org)
     materialId_ = org.materialId_;
 
     //! \todo add the mode for doing deep copy of the following objects
-    visualShape_ = new SgPosTransform;
+    visualShape_ = new SgGroup;
     org.visualShape_->copyChildrenTo(visualShape_);
     visualShape_->invalidateBoundingBox();
-    collisionShape_ = new SgPosTransform;
+    collisionShape_ = new SgGroup;
     org.collisionShape_->copyChildrenTo(collisionShape_);
     collisionShape_->invalidateBoundingBox();
     
@@ -380,24 +380,6 @@ std::string Link::materialName() const
 void Link::setMaterial(const std::string& name)
 {
     setMaterial(Material::idOfName(name));
-}
-
-
-SgGroup* Link::shape() const
-{
-    return visualShape_;
-}
-
-
-SgGroup* Link::visualShape() const
-{
-    return visualShape_;
-}
-
-
-SgGroup* Link::collisionShape() const
-{
-    return collisionShape_;
 }
 
 
