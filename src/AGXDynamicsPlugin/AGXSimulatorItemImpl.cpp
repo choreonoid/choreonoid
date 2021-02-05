@@ -195,7 +195,7 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
     matTable->forEachMaterial(
         [&](int id, Material* mat){
             AGXMaterialDesc desc;
-            desc.name = Material::name(id);
+            desc.name = Material::nameOfId(id);
             SET_AGXMATERIAL_FIELD(density);
             SET_AGXMATERIAL_FIELD(youngsModulus);
             SET_AGXMATERIAL_FIELD(poissonRatio);
@@ -225,8 +225,8 @@ void AGXSimulatorItemImpl::createAGXContactMaterial(int id1, int id2, ContactMat
 {
     Mapping* info = mat->info();
     AGXContactMaterialDesc desc;
-    desc.nameA = Material::name(id1);
-    desc.nameB = Material::name(id2);
+    desc.nameA = Material::nameOfId(id1);
+    desc.nameB = Material::nameOfId(id2);
     SET_AGXMATERIAL_FIELD(youngsModulus);
     desc.restitution = mat->restitution();
     desc.spookDamping = mat->info<double>("spookDamping", desc.spookDamping);
@@ -322,8 +322,8 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
     // Extract oriented-type friction models
     matTable->forEachMaterialPair(
         [&](int id1, int id2, ContactMaterial* materialPair){
-            agx::Material* mat1 = mgr->getMaterial(Material::name(id1));
-            agx::Material* mat2 = mgr->getMaterial(Material::name(id2));
+            agx::Material* mat1 = mgr->getMaterial(Material::nameOfId(id1));
+            agx::Material* mat2 = mgr->getMaterial(Material::nameOfId(id2));
             if(mat1 && mat2){
                 if(auto agxMaterialPair = mgr->getOrCreateContactMaterial(mat1, mat2)){
                     string pairName = "[" + mat1->getName() + " " + mat2->getName() + "]";
