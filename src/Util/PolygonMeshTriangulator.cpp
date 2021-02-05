@@ -94,7 +94,7 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
     const SgIndexArray& polygonVertices = orgMesh->polygonVertices();
 
     if(!orgMesh->vertices() || polygonVertices.empty()){
-        return SgMeshPtr();
+        return nullptr;
     }
         
     SgMesh* mesh = new SgMesh();
@@ -192,6 +192,7 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
         }
     }
 
+    mesh->setCreaseAngle(orgMesh->creaseAngle());
     mesh->setSolid(orgMesh->isSolid());
     mesh->updateBoundingBox();
 

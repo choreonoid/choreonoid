@@ -58,7 +58,7 @@ public:
     bool extractTranslation(Mapping& info, Vector3& out_p) const;
     SgNode* readNode(Mapping& info);
     SgNode* readNode(Mapping& info, const std::string& type);
-    SgNode* readNodeList(ValueNode& info);
+    SgNode* readScene(ValueNode* scene);
 
     struct Resource {
         SgNodePtr scene;

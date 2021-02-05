@@ -100,11 +100,11 @@ SgNode* StdSceneLoader::Impl::load(const std::string& filename)
             stdx::filesystem::path filepath(fromUTF8(filename));
             sceneReader.setBaseDirectory(toUTF8(filepath.parent_path().string()));
             sceneReader.readHeader(*topNode);
-            ValueNodePtr sceneElements = topNode->findMapping("scene");
-            if(!sceneElements->isValid()){
+            auto sceneSrc = topNode->find("scene");
+            if(!sceneSrc->isValid()){
                 os() << format(_("Scene file \"{}\" does not have the \"scene\" node."), filename) << endl;
             } else {
-                scene = sceneReader.readNodeList(*sceneElements);
+                scene = sceneReader.readScene(sceneSrc);
                 if(!scene){
                     os() << format(_("Scene file \"{}\" is an empty scene."), filename) << endl;
                     scene = new SgNode;

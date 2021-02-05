@@ -111,7 +111,7 @@ public:
     SgNode* readNodeNode(Mapping& info);
     SgNode* readGroup(Mapping& info);
     void readElements(Mapping& info, SgGroup* group);
-    void readNodeList(ValueNode& elements, SgGroup* group);
+    void readNodeList(ValueNode* elements, SgGroup* group);
     SgNode* readTransform(Mapping& info);
     SgNode* readTransformParameters(Mapping& info, SgNode* scene);
     SgNode* readShape(Mapping& info);
@@ -464,10 +464,10 @@ static SgNodePtr removeRedundantGroup(SgGroupPtr& group)
 }
 
 
-SgNode* StdSceneReader::readNodeList(ValueNode& info)
+SgNode* StdSceneReader::readScene(ValueNode* scene)
 {
     SgGroupPtr group = new SgGroup;
-    impl->readNodeList(info, group);
+    impl->readNodeList(scene, group);
     return removeRedundantGroup(group).retn();
 }    
 
@@ -523,17 +523,17 @@ SgNode* StdSceneReader::Impl::readGroup(Mapping& info)
 
 void StdSceneReader::Impl::readElements(Mapping& info, SgGroup* group)
 {
-    ValueNode& elements = *info.find("elements");
-    if(elements.isValid()){
+    auto elements = info.find("elements");
+    if(elements->isValid()){
         readNodeList(elements, group);
     }
 }
 
 
-void StdSceneReader::Impl::readNodeList(ValueNode& elements, SgGroup* group)
+void StdSceneReader::Impl::readNodeList(ValueNode* elements, SgGroup* group)
 {
-    if(elements.isListing()){
-        Listing& listing = *elements.toListing();
+    if(elements->isListing()){
+        Listing& listing = *elements->toListing();
         for(int i=0; i < listing.size(); ++i){
             Mapping& element = *listing[i].toMapping();
             const string type = element["type"].toString();
@@ -542,8 +542,8 @@ void StdSceneReader::Impl::readNodeList(ValueNode& elements, SgGroup* group)
                 group->addChild(scene);
             }
         }
-    } else if(elements.isMapping()){
-        Mapping& mapping = *elements.toMapping();
+    } else if(elements->isMapping()){
+        Mapping& mapping = *elements->toMapping();
         Mapping::iterator p = mapping.begin();
         while(p != mapping.end()){
             const string& type = p->first;
@@ -563,6 +563,9 @@ void StdSceneReader::Impl::readNodeList(ValueNode& elements, SgGroup* group)
             }
             ++p;
         }
+    } else {
+        elements->throwException(
+            format(_("A scalar value is not accepted")));
     }
 }
 
@@ -934,7 +937,7 @@ SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
         SgIndexArray& polygonVertices = polygonMesh->polygonVertices();
         const int size = coordIndexNode.size();
         polygonVertices.reserve(size);
-        for(int i=0; i<size; i++){
+        for(int i=0; i < size; ++i){
             polygonVertices.push_back(coordIndexNode[i].toInt());
         }
     }

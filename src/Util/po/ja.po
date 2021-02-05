@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-07-07 23:53+0900\n"
+"POT-Creation-Date: 2021-02-05 10:16+0900\n"
 "PO-Revision-Date: 2012-07-16 14:30+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,30 +17,75 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: CoordinateFrameList.cpp:301
-msgid "{0} cannot be loaded as a coordinate frame list"
-msgstr ""
+#: StdSceneLoader.cpp:105
+msgid "Scene file \"{}\" does not have the \"scene\" node."
+msgstr "シーンファイル \"{}\" は \"scene\" ノードを有していません．"
 
-#: CoordinateFrameList.cpp:310
-msgid "Format version {0} is not supported."
-msgstr "フォーマットバージョン{0}はサポートされていません．"
+#: StdSceneLoader.cpp:109
+msgid "Scene file \"{}\" is an empty scene."
+msgstr "シーンファイル\"{}\"は空のシーンです．"
 
-#: SceneLoader.cpp:165
+#: StdSceneReader.cpp:313
+msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""
+msgstr "\"angleUnit\"の値はラジアンか度のいずれかである必要があります"
+
+#: StdSceneReader.cpp:487
 msgid ""
-"The file format of \"{}\" is unknown because it lacks a file name extension."
-msgstr "\"{}\"は拡張子が無いためファイル形式が不明です．"
+"Warning: the node type \"{}\" is not defined. Reading this node has been "
+"skipped."
+msgstr ""
+"警告：ノードタイプ\"{}\"は定義されていません．このノードの読み込みはスキップ"
+"されます． "
 
-#: SceneLoader.cpp:174
-msgid "The file format of \"{}\" is not supported by the scene loader."
-msgstr "\"{}\"のファイル形式はシーンローダでサポートされていません．"
+#: StdSceneReader.cpp:490
+msgid "The node type \"{}\" is not defined."
+msgstr "ノードタイプ\"{}\"は定義されていません．"
 
-#: EasyScanner.cpp:217
-msgid "\"{}\" is not found."
-msgstr "\"{}\" が見つかりません．"
+#: StdSceneReader.cpp:556
+msgid ""
+"The node type \"{0}\" is different from the type \"{1}\" specified in the "
+"parent node"
+msgstr "ノードタイプ\"{0}\"は親ノードで指定されているタイプ\"{1}\"と異なります"
 
-#: EasyScanner.cpp:220
-msgid "I/O error in accessing \"{}\"."
-msgstr "\"{}\" へのアクセスにおけるI/Oエラー．"
+#: StdSceneReader.cpp:708
+msgid "Unknown geometry \"{}\""
+msgstr "不明なジオメトリ\"{}\""
+
+#: StdSceneReader.cpp:995
+msgid "A resouce specified as a geometry must be a single mesh"
+msgstr "ジオメトリと指定するリソースは単一のメッシュでなければなりません"
+
+#: StdSceneReader.cpp:1081
+msgid "Warning: texture url \"{0}\" is not valid: {1}"
+msgstr "警告: テクスチャのURL \"{0}\" は有効ではありません: {1}"
+
+#: StdSceneReader.cpp:1186
+msgid "The value of \"exclude\" must be string or sequence."
+msgstr "\"exclude\" の値は文字列かシーケンスでなければなりません．"
+
+#: StdSceneReader.cpp:1251 StdSceneReader.cpp:1280
+msgid "Node \"{0}\" is not found in \"{1}\"."
+msgstr "\"{1}\" のノード \"{0}\" がみつかりません．"
+
+#: StdSceneReader.cpp:1349
+msgid "The \"{0}\" scheme of \"{1}\" is not available"
+msgstr "\"{1}\" の \"{0}\" スキームは利用できません"
+
+#: StdSceneReader.cpp:1369
+msgid "The resource URI \"{0}\" is not valid: {1}"
+msgstr "リソースURI \"{0}\" は有効ではありません: {1}"
+
+#: StdSceneReader.cpp:1375
+msgid "The resource URI \"{}\" is not valid"
+msgstr "リソースURI \"{}\" は有効ではありません"
+
+#: StdSceneReader.cpp:1390
+msgid "YAML resource \"{0}\" cannot be loaded ({1})"
+msgstr "YAMLリソース \"{0}\" は読み込みできません ({1})"
+
+#: StdSceneReader.cpp:1399
+msgid "The resource is not found at URI \"{}\""
+msgstr "URI \"{}\" のリソースがみつかりません"
 
 #: AbstractSeq.cpp:138
 msgid "The function to read {} is not implemented."
@@ -61,68 +106,6 @@ msgstr "{1}のフレームレート{0}は無効です．\n"
 #: VRMLSceneLoader.cpp:102
 msgid "VRML file \"{}\" does not have any valid entity."
 msgstr "VRMLファイル \"{}\" には有効なエントリが有りません．"
-
-#: GeneralSeqReader.cpp:15
-msgid "Seq type \"{0}\" cannot be load into {1}."
-msgstr "Seqタイプ\"{0}\"は{1}にロードできません．"
-
-#: GeneralSeqReader.cpp:20
-msgid "The \"hasFrameTime\" parameter is not availabe in format version {}."
-msgstr ""
-"\"hasFrameTime\"パラメータは、フォーマットバージョン{}では使用できません．"
-
-#: GeneralSeqReader.cpp:25
-msgid "The frame rate for importing a timed-frame seq is not specified."
-msgstr "timed-frame seqをインポートするフレームレートが指定されていません．"
-
-#: GeneralSeqReader.cpp:30
-msgid "The \"frames\" key is not found."
-msgstr "\"フレーム\"キーが見つかりません．"
-
-#: GeneralSeqReader.cpp:35
-msgid "The \"frames\" key does not contain any frame data."
-msgstr "\"フレーム\"キーにはフレームデータは含まれていません．"
-
-#: GeneralSeqReader.cpp:40
-msgid "Invaid number of parts is specified"
-msgstr "無効な数が指定されています"
-
-#: GeneralSeqReader.cpp:45
-msgid "Invalid frame size."
-msgstr "無効なフレームサイズ．"
-
-#: MultiValueSeq.cpp:113 Vector3Seq.cpp:124 PlainSeqFileLoader.cpp:22
-#: MultiSE3Seq.cpp:273
-msgid "\"{}\" cannot be opened."
-msgstr "\"{}\" は開けません．"
-
-#: MultiVector3Seq.cpp:70 Vector3Seq.cpp:61
-msgid "The number of elements specified as a 3D vector is invalid."
-msgstr "3Dベクトルとして指定された要素の数が無効です．"
-
-#: STLSceneLoader.cpp:232
-msgid "{0} at line {1} of \"{2}\"."
-msgstr "\"{2}\"の{1}行にて{0}．"
-
-#: STLSceneLoader.cpp:670
-msgid "Unable to open file \"{}\"."
-msgstr "ファイル\"{}\"を開けません．"
-
-#: STLSceneLoader.cpp:712
-msgid "No triangles in \"{1}\"."
-msgstr "\"{1}\"にトライアングルが含まれていません．"
-
-#: STLSceneLoader.cpp:716
-msgid "Unable to load \"{1}\". Its file size is too large."
-msgstr "\"{1}\"を読み込むことができません．ファイルサイズが大きすぎます．"
-
-#: YAMLSceneLoader.cpp:105
-msgid "Scene file \"{}\" does not have the \"scene\" node."
-msgstr "シーンファイル\"{}\"はSceneノードを有していません．"
-
-#: YAMLSceneLoader.cpp:109
-msgid "Scene file \"{}\" is an empty scene."
-msgstr "シーンファイル\"{}\"は空のシーンです．"
 
 #: YAMLReader.cpp:180 YAMLReader.cpp:222
 msgid "{0} at line {1}, column {2}"
@@ -161,9 +144,115 @@ msgstr "YAMLファイルにドキュメントが含まれていません．"
 msgid "The yaml file does not contains {}-th document."
 msgstr "YAMLファイルに{}番目のドキュメントが含まれていません．"
 
+#: MultiSE3Seq.cpp:87
+msgid "The number of elements specified as a SE3 value is invalid."
+msgstr "SE3値として指定された要素の数が無効です．"
+
+#: MultiSE3Seq.cpp:126
+msgid "SE3 format \"{}\" is not supported."
+msgstr "SE3形式の\"{}\"はサポートされていません．"
+
+#: MultiSE3Seq.cpp:197
+msgid ""
+"\"{}\" does not have elements in multiple of twelve (each 3 for position "
+"vectors, 9 for attitde matrices)"
+msgstr ""
+"\"{}\"には12の倍数の要素がありません．（３要素が位置ベクトル、９要素が姿勢行"
+"列）"
+
+#: MultiSE3Seq.cpp:239
+msgid "\"{}\" does not have a multiple of 3 elements (R,P,Y)"
+msgstr "\"{}\"には3つの要素（R、P、Y）の倍数がありません"
+
+#: MultiSE3Seq.cpp:273 MultiValueSeq.cpp:113 Vector3Seq.cpp:124
+#: PlainSeqFileLoader.cpp:22
+msgid "\"{}\" cannot be opened."
+msgstr "\"{}\" は開けません．"
+
+#: MultiSE3Seq.cpp:315
+msgid "{0} cannot be opened."
+msgstr "{0} を開けません．"
+
+#: CoordinateFrameList.cpp:301
+msgid "{0} cannot be loaded as a coordinate frame list"
+msgstr ""
+
+#: CoordinateFrameList.cpp:310 PositionTagGroup.cpp:184
+msgid "Format version {0} is not supported."
+msgstr "フォーマットバージョン{0}はサポートされていません．"
+
+#: FilePathVariableProcessor.cpp:344
+msgid "${{PROJECT_DIR}} of \"{0}\" cannot be expanded."
+msgstr "\"{0}\" の ${{PROJECT_DIR}} は展開できません．"
+
+#: FilePathVariableProcessor.cpp:385
+msgid "The \"{0}\" variable in \"{1}\" is not defined."
+msgstr "\"{1}\" における変数 \"{0}\" は定義されていません．"
+
+#: PositionTagGroup.cpp:178
+msgid "{0} cannot be loaded as a position tag group"
+msgstr ""
+
+#: PositionTagGroup.cpp:237
+msgid "\"{}\" cannot be opened.\n"
+msgstr "\"{}\" を開くことができません．\n"
+
+#: PositionTagGroup.cpp:255
+msgid "Too many elements at line {0} of \"{1}\".\n"
+msgstr "\"{1}\" の{0}行の要素が多すぎます．\n"
+
+#: PositionTagGroup.cpp:267
+msgid "{0} at line {1} of \"{2}\".\n"
+msgstr "\"{2}\" の{1}行にて{0}．\n"
+
+#: PositionTagGroup.cpp:285
+msgid "Unsupported CSV format is specified.\n"
+msgstr "サポートされていないCSV形式が指定されています．\n"
+
+#: Vector3Seq.cpp:61 MultiVector3Seq.cpp:70
+msgid "The number of elements specified as a 3D vector is invalid."
+msgstr "3Dベクトルとして指定された要素の数が無効です．"
+
 #: Vector3Seq.cpp:100
 msgid "\"{}\" does not have 3 columns for 3d vector elements."
 msgstr "\"{}\" は三次元ベクトルの3要素に対応する列を有していません．"
+
+#: EasyScanner.cpp:217
+msgid "\"{}\" is not found."
+msgstr "\"{}\" が見つかりません．"
+
+#: EasyScanner.cpp:220
+msgid "I/O error in accessing \"{}\"."
+msgstr "\"{}\" へのアクセスにおけるI/Oエラー．"
+
+#: GeneralSeqReader.cpp:15
+msgid "Seq type \"{0}\" cannot be load into {1}."
+msgstr "Seqタイプ\"{0}\"は{1}にロードできません．"
+
+#: GeneralSeqReader.cpp:20
+msgid "The \"hasFrameTime\" parameter is not availabe in format version {}."
+msgstr ""
+"\"hasFrameTime\"パラメータは、フォーマットバージョン{}では使用できません．"
+
+#: GeneralSeqReader.cpp:25
+msgid "The frame rate for importing a timed-frame seq is not specified."
+msgstr "timed-frame seqをインポートするフレームレートが指定されていません．"
+
+#: GeneralSeqReader.cpp:30
+msgid "The \"frames\" key is not found."
+msgstr "\"フレーム\"キーが見つかりません．"
+
+#: GeneralSeqReader.cpp:35
+msgid "The \"frames\" key does not contain any frame data."
+msgstr "\"フレーム\"キーにはフレームデータは含まれていません．"
+
+#: GeneralSeqReader.cpp:40
+msgid "Invaid number of parts is specified"
+msgstr "無効な数が指定されています"
+
+#: GeneralSeqReader.cpp:45
+msgid "Invalid frame size."
+msgstr "無効なフレームサイズ．"
 
 #: PlainSeqFileLoader.cpp:46
 msgid "\"{}\" contains different size columns."
@@ -177,75 +266,9 @@ msgstr "\"{}\"：空のシーケンスです．"
 msgid "\"{}\": Time values are not arranged."
 msgstr "\"{}\": 時刻値が整列されていません．"
 
-#: FilePathVariableProcessor.cpp:344
-msgid "${{PROJECT_DIR}} of \"{0}\" cannot be expanded."
-msgstr "\"{0}\" の ${{PROJECT_DIR}} は展開できません．"
-
-#: FilePathVariableProcessor.cpp:385
-msgid "The \"{0}\" variable in \"{1}\" is not defined."
-msgstr "\"{1}\" における変数 \"{0}\" は定義されていません．"
-
-#: YAMLSceneReader.cpp:305
-msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""
-msgstr "\"angleUnit\"の値はラジアンか度のいずれかである必要があります"
-
-#: YAMLSceneReader.cpp:479
-msgid ""
-"Warning: the node type \"{}\" is not defined. Reading this node has been "
-"skipped."
+#: ArchiveSession.cpp:100
+msgid "UUID \"{0}\" is a duplicate of the existing ID.\n"
 msgstr ""
-"警告：ノードタイプ\"{}\"は定義されていません．このノードの読み込みはスキップ"
-"されます． "
-
-#: YAMLSceneReader.cpp:482
-msgid "The node type \"{}\" is not defined."
-msgstr "ノードタイプ\"{}\"は定義されていません．"
-
-#: YAMLSceneReader.cpp:548
-msgid ""
-"The node type \"{0}\" is different from the type \"{1}\" specified in the "
-"parent node"
-msgstr "ノードタイプ\"{0}\"は親ノードで指定されているタイプ\"{1}\"と異なります"
-
-#: YAMLSceneReader.cpp:680
-msgid "Unknown geometry \"{}\""
-msgstr "不明なジオメトリ\"{}\""
-
-#: YAMLSceneReader.cpp:942
-msgid "A resouce specified as a geometry must be a single mesh"
-msgstr "ジオメトリと指定するリソースは単一のメッシュでなければなりません"
-
-#: YAMLSceneReader.cpp:1028
-msgid "Warning: texture url \"{0}\" is not valid: {1}"
-msgstr "警告: テクスチャのURL \"{0}\" は有効ではありません: {1}"
-
-#: YAMLSceneReader.cpp:1133
-msgid "The value of \"exclude\" must be string or sequence."
-msgstr "\"exclude\" の値は文字列かシーケンスでなければなりません．"
-
-#: YAMLSceneReader.cpp:1198 YAMLSceneReader.cpp:1227
-msgid "Node \"{0}\" is not found in \"{1}\"."
-msgstr "\"{1}\" のノード \"{0}\" がみつかりません．"
-
-#: YAMLSceneReader.cpp:1295
-msgid "The \"{0}\" scheme of \"{1}\" is not available"
-msgstr "\"{1}\" の \"{0}\" スキームは利用できません"
-
-#: YAMLSceneReader.cpp:1315
-msgid "The resource URI \"{0}\" is not valid: {1}"
-msgstr "リソースURI \"{0}\" は有効ではありません: {1}"
-
-#: YAMLSceneReader.cpp:1321
-msgid "The resource URI \"{}\" is not valid"
-msgstr "リソースURI \"{}\" は有効ではありません"
-
-#: YAMLSceneReader.cpp:1336
-msgid "YAML resource \"{0}\" cannot be loaded ({1})"
-msgstr "YAMLリソース \"{0}\" は読み込みできません ({1})"
-
-#: YAMLSceneReader.cpp:1345
-msgid "The resource is not found at URI \"{}\""
-msgstr "URI \"{}\" のリソースがみつかりません"
 
 #: ValueTree.cpp:86
 msgid "{0} at line {1}, column {2}."
@@ -267,46 +290,47 @@ msgstr "値\"{}\"はdouble型の値でなければなりません"
 msgid "The value \"{}\" must be a boolean value"
 msgstr "値\"{}\"はboolean値でなければなりません"
 
-#: ValueTree.cpp:427
+#: ValueTree.cpp:403
 msgid "A {} value must be a scalar value"
 msgstr "値{}はスカラ値でなければなりません"
 
-#: ValueTree.cpp:436
+#: ValueTree.cpp:412
 msgid "The value is not a mapping"
 msgstr "値がマッピング型でありません"
 
-#: ValueTree.cpp:445
+#: ValueTree.cpp:421
 msgid "The value is not a listing"
 msgstr "値がリスティング型でありません"
 
-#: ValueTree.cpp:625
+#: ValueTree.cpp:601
 msgid "Key \"{}\" is not found in the mapping"
 msgstr "マッピング内でキー\"{}\"がみつかりません"
 
-#: ValueTree.cpp:648
+#: ValueTree.cpp:624
 msgid "A node to insert into a Mapping is a null node"
 msgstr "マッピングに挿入しようとしているノードが空ノードです"
 
-#: MultiSE3Seq.cpp:87
-msgid "The number of elements specified as a SE3 value is invalid."
-msgstr "SE3値として指定された要素の数が無効です．"
-
-#: MultiSE3Seq.cpp:126
-msgid "SE3 format \"{}\" is not supported."
-msgstr "SE3形式の\"{}\"はサポートされていません．"
-
-#: MultiSE3Seq.cpp:197
+#: SceneLoader.cpp:165
 msgid ""
-"\"{}\" does not have elements in multiple of twelve (each 3 for position "
-"vectors, 9 for attitde matrices)"
-msgstr ""
-"\"{}\"には12の倍数の要素がありません．（３要素が位置ベクトル、９要素が姿勢行"
-"列）"
+"The file format of \"{}\" is unknown because it lacks a file name extension."
+msgstr "\"{}\"は拡張子が無いためファイル形式が不明です．"
 
-#: MultiSE3Seq.cpp:239
-msgid "\"{}\" does not have a multiple of 3 elements (R,P,Y)"
-msgstr "\"{}\"には3つの要素（R、P、Y）の倍数がありません"
+#: SceneLoader.cpp:175
+msgid "The file format of \"{}\" is not supported by the scene loader."
+msgstr "\"{}\"のファイル形式はシーンローダでサポートされていません．"
 
-#: MultiSE3Seq.cpp:315
-msgid "{0} cannot be opened."
-msgstr "{0} を開けません．"
+#: STLSceneLoader.cpp:232
+msgid "{0} at line {1} of \"{2}\"."
+msgstr "\"{2}\"の{1}行にて{0}．"
+
+#: STLSceneLoader.cpp:670
+msgid "Unable to open file \"{}\"."
+msgstr "ファイル\"{}\"を開けません．"
+
+#: STLSceneLoader.cpp:712
+msgid "No triangles in \"{1}\"."
+msgstr "\"{1}\"にトライアングルが含まれていません．"
+
+#: STLSceneLoader.cpp:716
+msgid "Unable to load \"{1}\". Its file size is too large."
+msgstr "\"{1}\"を読み込むことができません．ファイルサイズが大きすぎます．"

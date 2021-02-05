@@ -457,6 +457,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromIndexedFaceSet(VRMLIndexedFaceSet
     }
     
     SgMeshPtr mesh = new SgMesh;
+    mesh->setCreaseAngle(vface->creaseAngle);
     mesh->setSolid(vface->solid);
     mesh->setVertices(new SgVertexArray(vface->coord->point));
 
@@ -659,6 +660,7 @@ SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRML
     }
     
     SgPolygonMeshPtr mesh = new SgPolygonMesh;
+    mesh->setCreaseAngle(vface->creaseAngle);
     mesh->setSolid(vface->solid);
     mesh->setVertices(new SgVertexArray(vface->coord->point));
 
@@ -818,6 +820,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromElevationGrid(VRMLElevationGrid* 
         }
     }
 
+    mesh->setCreaseAngle(grid->creaseAngle);
     mesh->setSolid(grid->solid);
 
     if(isNormalGenerationEnabled){
@@ -1050,6 +1053,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromExtrusion(VRMLExtrusion* extrusio
         }
     }
 
+    mesh->setCreaseAngle(extrusion->creaseAngle);
     mesh->setSolid(extrusion->solid);
 
     if(isNormalGenerationEnabled){
