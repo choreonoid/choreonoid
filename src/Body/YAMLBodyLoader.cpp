@@ -207,6 +207,14 @@ public:
     bool hasVisualOrCollisionNodes;
 
     SceneGroupSet& currentSceneGroupSet(){ return sceneGroupSetStack.back(); }
+
+    void addNodeContents(SgGroup* parent, SgGroup* child){
+        if(child->isTransformNode()){
+            parent->addChild(child);
+        } else {
+            child->copyChildrenTo(parent);
+        }
+    }
     
     void addScene(SgNode* node){
         auto& current = sceneGroupSetStack.back();
@@ -233,23 +241,23 @@ public:
         switch(currentModelType){
         case VISUAL_AND_COLLISION:
             if(current.hasVisualChild){
-                parent.visual->addChild(current.visual);
+                addNodeContents(parent.visual, current.visual);
                 parent.hasVisualChild = true;
             }
             if(current.hasCollisionChild){
-                parent.collision->addChild(current.collision);
+                addNodeContents(parent.collision, current.collision);
                 parent.hasCollisionChild = true;
             }
             break;
         case VISUAL:
             if(current.hasVisualChild){
-                parent.visual->addChild(current.visual);
+                addNodeContents(parent.visual, current.visual);
                 parent.hasVisualChild = true;
             }
             break;
         case COLLISION:
             if(current.hasCollisionChild){
-                parent.collision->addChild(current.collision);
+                addNodeContents(parent.collision, current.collision);
                 parent.hasCollisionChild = true;
             }
             break;
