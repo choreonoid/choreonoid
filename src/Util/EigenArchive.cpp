@@ -40,34 +40,53 @@ bool cnoid::read(const Mapping& mapping, const std::string& key, Eigen::AngleAxi
 template<typename Scalar, int mode>
 static Listing& writeAngleAxis_(Mapping& mapping, const std::string& key, const Eigen::AngleAxis<Scalar>& r)
 {
-    Listing& s = *mapping.createFlowStyleListing(key);
-    s.append(r.axis()[0]);
-    s.append(r.axis()[1]);
-    s.append(r.axis()[2]);
+    return *writeAngleAxis_(&mapping, key, r);
+}
+
+
+template<typename Scalar, int mode>
+static Listing* writeAngleAxis_(Mapping* mapping, const std::string& key, const Eigen::AngleAxis<Scalar>& r)
+{
+    Listing* s = mapping->createFlowStyleListing(key);
+    s->append(r.axis()[0]);
+    s->append(r.axis()[1]);
+    s->append(r.axis()[2]);
     if(mode == 0){
-        s.append(r.angle());
+        s->append(r.angle());
     } else if(mode == 1){
-        s.append(degree(r.angle()));
+        s->append(degree(r.angle()));
     }
     return s;
 }
 
 
-Listing& cnoid::writeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r)
+Listing* cnoid::writeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& r)
 {
     return writeAngleAxis_<double, 0>(mapping, key, r);
 }
 
 
-Listing& cnoid::writeDegreeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r)
+Listing& cnoid::writeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r)
+{
+    return *writeAngleAxis_<double, 0>(&mapping, key, r);
+}
+
+
+Listing* cnoid::writeDegreeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& r)
 {
     return writeAngleAxis_<double, 1>(mapping, key, r);
 }
 
 
+Listing& cnoid::writeDegreeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r)
+{
+    return *writeAngleAxis_<double, 1>(&mapping, key, r);
+}
+
+
 Listing& cnoid::write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r)
 {
-    return writeAngleAxis_<double, 0>(mapping, key, r);
+    return *writeAngleAxis_<double, 0>(&mapping, key, r);
 }
 
 

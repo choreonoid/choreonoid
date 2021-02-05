@@ -303,11 +303,46 @@ public:
 
     virtual bool save(BodyItem* item, const std::string& filename) override
     {
+        bool saved = false;
         if(!sceneWriter){
             sceneWriter.reset(new StdSceneWriter);
-            
+            sceneWriter->setIndentWidth(1);
         }
-        return sceneWriter->writeScene(item->body()->rootLink()->shape(), filename);
+        auto body = item->body();
+        if(body->numLinks() == 1){
+            if(auto shape = strip(body->rootLink()->shape())){
+                saved = sceneWriter->writeScene(filename, shape);
+            }
+        } else {
+            Isometry3 T0 = body->rootLink()->T();
+            vector<SgNode*> shapes;
+            shapes.reserve(body->numLinks());
+            for(auto& link : body->links()){
+                if(SgNode* shape = strip(link->shape())){
+                    if(!link->T().isApprox(T0)){
+                        auto transform = new SgPosTransform(T0.inverse() * link->T());
+                        transform->addChild(shape);
+                        shape = transform;
+                    }
+                    shapes.push_back(shape);
+                }
+            }
+            if(!shapes.empty()){
+                saved = sceneWriter->writeScene(filename, shapes);
+            }
+        }
+        return saved;
+    }
+
+    SgNode* strip(SgGroup* group)
+    {
+        int n = group->numChildren();
+        if(n >= 2){
+            return group;
+        } else if(n == 1){
+            return group->child(0);
+        }
+        return nullptr;
     }
 };
 

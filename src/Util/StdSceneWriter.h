@@ -18,12 +18,14 @@ public:
     // One of the settings is valid for the following two functions
     void setBaseDirectory(const std::string& directory);
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
+    void setIndentWidth(int n);
 
     //enum AngleUnit { Degree, Radian };
     //void setAngleUnit(AngleUnit unit);
 
     MappingPtr writeScene(SgNode* node);
-    bool writeScene(SgNode* node, const std::string& filename);
+    bool writeScene(const std::string& filename, SgNode* node);
+    bool writeScene(const std::string& filename, const std::vector<SgNode*>& nodes);
 
 private:
     class Impl;

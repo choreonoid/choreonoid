@@ -21,26 +21,30 @@ public:
     StdSceneWriter* self;
     PolymorphicSceneNodeFunctionSet writeFunctions;
     bool isDegreeMode;
+    bool doEmbedAllMeshes;
     MappingPtr currentArchive;
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
 
     Impl(StdSceneWriter* self);
+    YAMLWriter* getOrCreateYamlWriter();
     void setBaseDirectory(const std::string& directory);
-    bool writeScene(SgNode* node, const std::string& filename);
+    bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     MappingPtr writeSceneNode(SgNode* node);
-    void writeType(Mapping& archive, const char* typeName);
-    void writeObjectHeader(Mapping& archive, SgObject* object);
-    void writePosTransform(Mapping& archive, SgPosTransform* transform);
-    void writeScaleTransform(Mapping& archive, SgScaleTransform* transform);
-    void writeShape(Mapping& archive, SgShape* shape);
+    void writeType(Mapping* archive, const char* typeName);
+    void writeObjectHeader(Mapping* archive, SgObject* object);
+    void writeGroup(Mapping* archive, SgGroup* group);
+    void writePosTransform(Mapping* archive, SgPosTransform* transform);
+    void writeScaleTransform(Mapping* archive, SgScaleTransform* transform);
+    void writeShape(Mapping* archive, SgShape* shape);
     MappingPtr writeGeometry(SgMesh* mesh);
-    void writeBox(Mapping& archive, const SgMesh::Box& box);
-    void writeSphere(Mapping& archive, const SgMesh::Sphere& sphere);
-    void writeCylinder(Mapping& archive, const SgMesh::Cylinder& cylinder);
-    void writeCone(Mapping& archive, const SgMesh::Cone& cone);
-    void writeCapsule(Mapping& archive, const SgMesh::Capsule& capsule);
+    bool writeMesh(Mapping* archive, SgMesh* mesh);
+    void writeBox(Mapping* archive, const SgMesh::Box& box);
+    void writeSphere(Mapping* archive, const SgMesh::Sphere& sphere);
+    void writeCylinder(Mapping* archive, const SgMesh::Cylinder& cylinder);
+    void writeCone(Mapping* archive, const SgMesh::Cone& cone);
+    void writeCapsule(Mapping* archive, const SgMesh::Capsule& capsule);
     MappingPtr writeAppearance(SgShape* shape);
     MappingPtr writeMaterial(SgMaterial* material);
 };
@@ -56,12 +60,14 @@ StdSceneWriter::StdSceneWriter()
 StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     : self(self)
 {
+    writeFunctions.setFunction<SgGroup>(
+        [&](SgGroup* group){ writeGroup(currentArchive, group); });
     writeFunctions.setFunction<SgPosTransform>(
-        [&](SgPosTransform* transform){ writePosTransform(*currentArchive, transform); });
+        [&](SgPosTransform* transform){ writePosTransform(currentArchive, transform); });
     writeFunctions.setFunction<SgScaleTransform>(
-        [&](SgScaleTransform* transform){ writeScaleTransform(*currentArchive, transform); });
+        [&](SgScaleTransform* transform){ writeScaleTransform(currentArchive, transform); });
     writeFunctions.setFunction<SgShape>(
-        [&](SgShape* shape){ writeShape(*currentArchive, shape); });
+        [&](SgShape* shape){ writeShape(currentArchive, shape); });
 
     writeFunctions.updateDispatchTable();
 
@@ -72,6 +78,16 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
 StdSceneWriter::~StdSceneWriter()
 {
     delete impl;
+}
+
+
+YAMLWriter* StdSceneWriter::Impl::getOrCreateYamlWriter()
+{
+    if(!yamlWriter){
+        yamlWriter.reset(new YAMLWriter);
+        yamlWriter->setKeyOrderPreservationMode(true);
+    }
+    return yamlWriter.get();
 }
 
 
@@ -94,28 +110,41 @@ void StdSceneWriter::setFilePathVariableProcessor(FilePathVariableProcessor* pro
 }
 
 
+void StdSceneWriter::setIndentWidth(int n)
+{
+    impl->getOrCreateYamlWriter()->setIndentWidth(n);
+}
+
+
 MappingPtr StdSceneWriter::writeScene(SgNode* node)
 {
+    impl->doEmbedAllMeshes = false;
     return impl->writeSceneNode(node);
 }
 
 
-bool StdSceneWriter::writeScene(SgNode* node, const std::string& filename)
+bool StdSceneWriter::writeScene(const std::string& filename, SgNode* node)
 {
-    return impl->writeScene(node, filename);
+    return impl->writeScene(filename, node, nullptr);
 }
 
 
-bool StdSceneWriter::Impl::writeScene(SgNode* node, const std::string& filename)
+bool StdSceneWriter::writeScene(const std::string& filename, const std::vector<SgNode*>& nodes)
 {
-    if(!yamlWriter){
-        yamlWriter.reset(new YAMLWriter);
-        yamlWriter->setKeyOrderPreservationMode(true);
-    }
+    return impl->writeScene(filename, nullptr, &nodes);
+}
+
+
+bool StdSceneWriter::Impl::writeScene
+(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes)
+{
+    getOrCreateYamlWriter();
 
     if(!yamlWriter->openFile(filename)){
         return false;
     }
+
+    doEmbedAllMeshes = true;
         
     MappingPtr header = new Mapping;
     header->write("format", "choreonoid_scene");
@@ -124,8 +153,16 @@ bool StdSceneWriter::Impl::writeScene(SgNode* node, const std::string& filename)
     
     auto directory = filesystem::path(filename).parent_path().generic_string();
     setBaseDirectory(directory);
-    auto scene = writeSceneNode(node);
-    header->insert("scene", scene);
+
+    ListingPtr nodeList = new Listing;
+    if(node){
+        nodeList->append(writeSceneNode(node));
+    } else if(pnodes){
+        for(auto& node : *pnodes){
+            nodeList->append(writeSceneNode(node));
+        }
+    }
+    header->insert("scene", nodeList);
     
     yamlWriter->putNode(header);
     yamlWriter->closeFile();
@@ -142,7 +179,7 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
     
     MappingPtr archive = new Mapping;
 
-    writeObjectHeader(*archive, node);
+    writeObjectHeader(archive, node);
 
     currentArchive = archive;
     writeFunctions.dispatch(node);
@@ -165,23 +202,29 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 }
 
 
-void StdSceneWriter::Impl::writeType(Mapping& archive, const char* typeName)
+void StdSceneWriter::Impl::writeType(Mapping* archive, const char* typeName)
 {
     auto typeNode = new ScalarNode(typeName);
     typeNode->setAsHeaderInMapping();
-    archive.insert("type", typeNode);
+    archive->insert("type", typeNode);
 }
 
 
-void StdSceneWriter::Impl::writeObjectHeader(Mapping& archive, SgObject* object)
+void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, SgObject* object)
 {
     if(!object->name().empty()){
-        archive.write("name", object->name());
+        archive->write("name", object->name());
     }
 }
     
     
-void StdSceneWriter::Impl::writePosTransform(Mapping& archive, SgPosTransform* transform)
+void StdSceneWriter::Impl::writeGroup(Mapping* archive, SgGroup* group)
+{
+    writeType(archive, "Group");
+}
+
+
+void StdSceneWriter::Impl::writePosTransform(Mapping* archive, SgPosTransform* transform)
 {
     writeType(archive, "Transform");
     AngleAxis aa(transform->rotation());
@@ -195,22 +238,22 @@ void StdSceneWriter::Impl::writePosTransform(Mapping& archive, SgPosTransform* t
 }
 
 
-void StdSceneWriter::Impl::writeScaleTransform(Mapping& archive, SgScaleTransform* transform)
+void StdSceneWriter::Impl::writeScaleTransform(Mapping* archive, SgScaleTransform* transform)
 {
     writeType(archive, "Transform");
     write(archive, "scale", transform->scale());
 }
 
 
-void StdSceneWriter::Impl::writeShape(Mapping& archive, SgShape* shape)
+void StdSceneWriter::Impl::writeShape(Mapping* archive, SgShape* shape)
 {
     writeType(archive, "Shape");
 
     if(auto geometry = writeGeometry(shape->mesh())){
-        archive.insert("geometry", geometry);
+        archive->insert("geometry", geometry);
     }
     if(auto appearance = writeAppearance(shape)){
-        archive.insert("appearance", appearance);
+        archive->insert("appearance", appearance);
     }
 }
 
@@ -223,26 +266,31 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
 
     MappingPtr archive = new Mapping;
 
-    if(!mesh->uri().empty()){
+    if(!mesh->uri().empty() && !doEmbedAllMeshes){
         archive->write("type", "Resource");
         archive->write("uri", pathVariableProcessor->parameterize(mesh->uri()), DOUBLE_QUOTED);
 
     } else {
         switch(mesh->primitiveType()){
+        case SgMesh::MeshType:
+            if(!writeMesh(archive, mesh)){
+                archive.reset();
+            }
+            break;
         case SgMesh::BoxType:
-            writeBox(*archive, mesh->primitive<SgMesh::Box>());
+            writeBox(archive, mesh->primitive<SgMesh::Box>());
             break;
         case SgMesh::SphereType:
-            writeSphere(*archive, mesh->primitive<SgMesh::Sphere>());
+            writeSphere(archive, mesh->primitive<SgMesh::Sphere>());
             break;
         case SgMesh::CylinderType:
-            writeCylinder(*archive, mesh->primitive<SgMesh::Cylinder>());
+            writeCylinder(archive, mesh->primitive<SgMesh::Cylinder>());
             break;
         case SgMesh::ConeType:
-            writeCone(*archive, mesh->primitive<SgMesh::Cone>());
+            writeCone(archive, mesh->primitive<SgMesh::Cone>());
             break;
         case SgMesh::CapsuleType:
-            writeCapsule(*archive, mesh->primitive<SgMesh::Capsule>());
+            writeCapsule(archive, mesh->primitive<SgMesh::Capsule>());
             break;
         default:
             archive = nullptr;
@@ -251,48 +299,88 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
     }
 
     if(mesh->creaseAngle() > 0.0f){
-        archive->write("creaseAngle", mesh->creaseAngle());
+        archive->write("creaseAngle", degree(mesh->creaseAngle()));
+    }
+    if(mesh->isSolid()){
+        archive->write("solid", true);
     }
 
     return archive;
 }
 
 
-void StdSceneWriter::Impl::writeBox(Mapping& archive, const SgMesh::Box& box)
+bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
 {
-    archive.write("type", "Box");
+    bool isValid = false;
+    int numTriangles = mesh->numTriangles();
+
+    if(mesh->hasVertices() && numTriangles > 0){
+
+        archive->write("type", "IndexedFaceSet");
+
+        Listing& coord = *archive->createFlowStyleListing("coordinate");
+        auto& vertices = *mesh->vertices();
+        const int numCoordScalars = vertices.size() * 3;
+        coord.reserve(numCoordScalars);
+        for(auto& v : vertices){
+            coord.append(v.x(), 12, numCoordScalars);
+            coord.append(v.y(), 12, numCoordScalars);
+            coord.append(v.z(), 12, numCoordScalars);
+        }
+        
+        Listing& indexList = *archive->createFlowStyleListing("coordIndex");
+        const int numTriScalars = numTriangles * 4;
+        indexList.reserve(numTriScalars);
+        for(int i=0; i < numTriangles; ++i){
+            auto triangle = mesh->triangle(i);
+            indexList.append(triangle[0], 16, numTriScalars);
+            indexList.append(triangle[1], 16, numTriScalars);
+            indexList.append(triangle[2], 16, numTriScalars);
+            indexList.append(-1, 16, numTriScalars);
+        }
+        
+        isValid = true;
+    }
+    
+    return isValid;
+}
+
+
+void StdSceneWriter::Impl::writeBox(Mapping* archive, const SgMesh::Box& box)
+{
+    archive->write("type", "Box");
     write(archive, "size", box.size);
 }
 
 
-void StdSceneWriter::Impl::writeSphere(Mapping& archive, const SgMesh::Sphere& sphere)
+void StdSceneWriter::Impl::writeSphere(Mapping* archive, const SgMesh::Sphere& sphere)
 {
-    archive.write("type", "Sphere");
-    archive.write("radius", sphere.radius);
+    archive->write("type", "Sphere");
+    archive->write("radius", sphere.radius);
 }
 
 
-void StdSceneWriter::Impl::writeCylinder(Mapping& archive, const SgMesh::Cylinder& cylinder)
+void StdSceneWriter::Impl::writeCylinder(Mapping* archive, const SgMesh::Cylinder& cylinder)
 {
-    archive.write("type", "Cylinder");
-    archive.write("radius", cylinder.radius);
-    archive.write("height", cylinder.height);
+    archive->write("type", "Cylinder");
+    archive->write("radius", cylinder.radius);
+    archive->write("height", cylinder.height);
 }
 
 
-void StdSceneWriter::Impl::writeCone(Mapping& archive, const SgMesh::Cone& cone)
+void StdSceneWriter::Impl::writeCone(Mapping* archive, const SgMesh::Cone& cone)
 {
-    archive.write("type", "Cone");
-    archive.write("radius", cone.radius);
-    archive.write("height", cone.height);
+    archive->write("type", "Cone");
+    archive->write("radius", cone.radius);
+    archive->write("height", cone.height);
 }
 
 
-void StdSceneWriter::Impl::writeCapsule(Mapping& archive, const SgMesh::Capsule& capsule)
+void StdSceneWriter::Impl::writeCapsule(Mapping* archive, const SgMesh::Capsule& capsule)
 {
-    archive.write("type", "Cone");
-    archive.write("radius", capsule.radius);
-    archive.write("height", capsule.height);
+    archive->write("type", "Cone");
+    archive->write("radius", capsule.radius);
+    archive->write("height", capsule.height);
 }
 
 
@@ -344,10 +432,3 @@ MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
     
     return archive;
 }
-
-        
-    
-    
-
-    
-    

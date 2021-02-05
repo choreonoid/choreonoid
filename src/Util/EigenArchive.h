@@ -135,8 +135,11 @@ CNOID_EXPORT bool readDegreeAngleAxis(const Mapping& mapping, const std::string&
 //! \deprecated
 CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
 
+CNOID_EXPORT Listing* writeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& r);
 CNOID_EXPORT Listing& writeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
+CNOID_EXPORT Listing* writeDegreeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& r);
 CNOID_EXPORT Listing& writeDegreeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
+
 //! \deprecated
 CNOID_EXPORT Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
 

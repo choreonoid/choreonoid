@@ -55,6 +55,7 @@ public:
 
     bool isScalar() const { return typeBits & SCALAR; }
     bool isString() const { return typeBits & SCALAR; }
+    bool isCollection() const { return typeBits & (MAPPING | LISTING); }
 
     const std::string& toString() const;
 
