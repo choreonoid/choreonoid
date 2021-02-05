@@ -208,14 +208,14 @@ SgNodePath SgNode::findNode(const std::string& name, Affine3& out_T)
 SgGroup::SgGroup()
     : SgNode(findClassId<SgGroup>())
 {
-    setAttribute(GroupAttribute);
+    setAttribute(GroupNode);
 }
 
 
 SgGroup::SgGroup(int classId)
     : SgNode(classId)
 {
-    setAttribute(GroupAttribute);
+    setAttribute(GroupNode);
 }
 
 
@@ -240,7 +240,7 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
         }
     }
 
-    setAttribute(GroupAttribute);
+    setAttribute(GroupNode);
     if(org.hasValidBoundingBoxCache()){
         bboxCache = org.bboxCache;
         setBoundingBoxCacheReady();
@@ -282,7 +282,7 @@ const BoundingBox& SgGroup::boundingBox() const
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
         auto& node = *p;
-        if(!node->hasAttribute(MarkerAttribute)){
+        if(!node->hasAttribute(Marker)){
             bboxCache.expandBy(node->boundingBox());
         }
     }
@@ -511,7 +511,7 @@ Referenced* SgInvariantGroup::doClone(CloneMap* cloneMap) const
 SgTransform::SgTransform(int classId)
     : SgGroup(classId)
 {
-
+    setAttribute(TransformNode);
 }
 
 
@@ -584,7 +584,7 @@ const BoundingBox& SgPosTransform::boundingBox() const
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
         auto& node = *p;
-        if(!node->hasAttribute(MarkerAttribute)){
+        if(!node->hasAttribute(Marker)){
             bboxCache.expandBy(node->boundingBox());
         }
     }
@@ -653,7 +653,7 @@ const BoundingBox& SgScaleTransform::boundingBox() const
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
         auto& node = *p;
-        if(!node->hasAttribute(MarkerAttribute)){
+        if(!node->hasAttribute(Marker)){
             bboxCache.expandBy(node->boundingBox());
         }
     }
@@ -715,7 +715,7 @@ const BoundingBox& SgAffineTransform::boundingBox() const
     bboxCache.clear();
     for(const_iterator p = begin(); p != end(); ++p){
         auto& node = *p;
-        if(!node->hasAttribute(MarkerAttribute)){
+        if(!node->hasAttribute(Marker)){
             bboxCache.expandBy((*p)->boundingBox());
         }
     }

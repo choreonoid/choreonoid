@@ -381,7 +381,7 @@ public:
         
     enum PrimitiveType {
         MESH = 0, BOX, SPHERE, CYLINDER, CONE, CAPSULE,
-        MesyType = MESH, BoxType = BOX, SphereType = SPHERE,
+        MeshType = MESH, BoxType = BOX, SphereType = SPHERE,
         CylinderType = CYLINDER, ConeType = CONE, CapsuleType = CAPSULE
     };
 

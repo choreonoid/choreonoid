@@ -20,6 +20,7 @@ namespace cnoid {
 class CloneMap;
 class SgNode;
 class SgGroup;
+class SgTransform;
 typedef std::vector<SgNode*> SgNodePath;
 
 
@@ -44,11 +45,12 @@ public:
     enum Attribute {
         Node = 1 << 0,
         GroupNode = 1 << 1,
-        Composite = 1 << 2, // the object has some SgObject members except for group children
-        NodeDecoration = 1 << 3,
-        Marker = 1 << 4,
-        Operable = 1 << 5,
-        NumAttributes = 6,
+        TransformNode = 1 << 2,
+        Composite = 1 << 3, // the object has some SgObject members except for group children
+        NodeDecoration = 1 << 4,
+        Marker = 1 << 5,
+        Operable = 1 << 6,
+        NumAttributes = 7,
 
         // deprecated
         GroupAttribute = GroupNode,
@@ -109,6 +111,8 @@ public:
     SgNode* toNode();
     bool isGroupNode() const { return hasAttribute(GroupNode); }
     SgGroup* toGroupNode();
+    bool isTransformNode() const { return hasAttribute(TransformNode); }
+    SgTransform* toTransformNode();
 
 protected:
     SgObject();
@@ -320,6 +324,12 @@ protected:
 };
 
 typedef ref_ptr<SgTransform> SgTransformPtr;
+
+
+inline SgTransform* SgObject::toTransformNode()
+{
+    return isTransformNode() ? static_cast<SgTransform*>(this) : nullptr;
+}
 
 
 class CNOID_EXPORT SgPosTransform : public SgTransform
