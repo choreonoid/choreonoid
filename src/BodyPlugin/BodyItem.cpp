@@ -309,37 +309,50 @@ public:
             sceneWriter->setIndentWidth(1);
         }
         auto body = item->body();
-        if(body->numLinks() == 1){
-            if(auto shape = strip(body->rootLink()->shape())){
-                saved = sceneWriter->writeScene(filename, shape);
-            }
-        } else {
-            Isometry3 T0 = body->rootLink()->T();
-            vector<SgNode*> shapes;
-            shapes.reserve(body->numLinks());
-            for(auto& link : body->links()){
-                if(SgNode* shape = strip(link->shape())){
-                    if(!link->T().isApprox(T0)){
-                        auto transform = new SgPosTransform(T0.inverse() * link->T());
+        int numLinks = body->numLinks();
+        vector<SgNode*> shapes;
+        shapes.reserve(numLinks);
+        vector<int> shapeIndicesToClearName;
+        shapeIndicesToClearName.reserve(numLinks);
+        const Isometry3 T0 = body->rootLink()->T();
+        for(auto& link : body->links()){
+            bool stripped;
+            if(SgNode* shape = strip(link->shape(), stripped)){
+                if(!link->T().isApprox(T0)){
+                    auto transform = new SgPosTransform(T0.inverse() * link->T());
+                    if(stripped){
                         transform->addChild(shape);
-                        shape = transform;
+                    } else {
+                        link->shape()->copyChildrenTo(transform);
                     }
-                    shapes.push_back(shape);
+                    transform->setName(link->name());
+                    shape = transform;
+                } else if(shape->name().empty()){
+                    shape->setName(link->name());
+                    shapeIndicesToClearName.push_back(shapes.size());
                 }
-            }
-            if(!shapes.empty()){
-                saved = sceneWriter->writeScene(filename, shapes);
+                shapes.push_back(shape);
             }
         }
+        if(!shapes.empty()){
+            saved = sceneWriter->writeScene(filename, shapes);
+        }
+        // Clear temporary names
+        for(auto& index : shapeIndicesToClearName){
+            shapes[index]->setName("");
+        }
+            
         return saved;
     }
 
-    SgNode* strip(SgGroup* group)
+    SgNode* strip(SgGroup* group, bool& out_stripped)
     {
         int n = group->numChildren();
         if(n >= 2){
+            out_stripped = false;
             return group;
         } else if(n == 1){
+            out_stripped = true;
             return group->child(0);
         }
         return nullptr;
