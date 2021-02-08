@@ -9,6 +9,7 @@ set(sources
   WorldItem.cpp
   BodySelectionManager.cpp
   BodyItem.cpp
+  BodyItemFileIO.cpp
   EditableSceneBody.cpp
   LinkKinematicsKitManager.cpp
   LinkOffsetFrameListItem.cpp

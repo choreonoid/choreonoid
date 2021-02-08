@@ -28,6 +28,8 @@ class CNOID_EXPORT BodyItem : public Item, public LocatableItem, public Renderab
 {
 public:
     static void initializeClass(ExtensionManager* ext);
+
+    // Implemented in BodyItemFileIO.cpp
     static ItemFileIO* bodyFileIO();
     static ItemFileIO* meshFileIO();
         
