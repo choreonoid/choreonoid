@@ -15,10 +15,17 @@ public:
     StdSceneWriter();
     ~StdSceneWriter();
 
+    StdSceneWriter(const StdSceneWriter&) = delete;
+    StdSceneWriter(StdSceneWriter&&) = delete;
+    StdSceneWriter& operator=(const StdSceneWriter&) = delete;
+    StdSceneWriter& operator=(StdSceneWriter&&) = delete;
+
     // One of the settings is valid for the following two functions
     void setBaseDirectory(const std::string& directory);
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
     void setIndentWidth(int n);
+    void setVertexPrecision(int precision);
+    int vertexPrecision() const;
 
     //enum AngleUnit { Degree, Radian };
     //void setAngleUnit(AngleUnit unit);

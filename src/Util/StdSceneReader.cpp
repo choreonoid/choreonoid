@@ -101,8 +101,19 @@ public:
     Impl(StdSceneReader* self);
     ~Impl();
 
-    bool readAngle(const Mapping& info, const char* key, double& angle) const{
+    bool readAngle(const Mapping& info, const char* key, double& angle) const {
         return self->readAngle(info, key, angle);
+    }
+
+    bool readAngle(const Mapping& info, std::initializer_list<const char*> keys, double& angle) const {
+        bool found = false;
+        for(auto& key : keys){
+            found = self->readAngle(info, key, angle);
+            if(found){
+                break;
+            }
+        }
+        return found;
     }
 
     FilePathVariableProcessor* getOrCreatePathVariableProcessor();
@@ -124,6 +135,7 @@ public:
     SgMesh* readCapsule(Mapping& info);
     SgMesh* readExtrusion(Mapping& info);
     SgMesh* readElevationGrid(Mapping& info);
+    SgMesh* readTriangleMesh(Mapping& info);
     SgMesh* readIndexedFaceSet(Mapping& info);
     SgMesh* readResourceAsGeometry(Mapping& info);
     void readAppearance(SgShape* shape, Mapping& info);
@@ -483,7 +495,7 @@ SgNode* StdSceneReader::Impl::readNode(Mapping& info, const string& type)
 {
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
-        if(info.get("isOptional", false)){
+        if(info.get({ "is_optional", "isOptional" }, false)){
             os() << format(_("Warning: the node type \"{}\" is not defined. Reading this node has been skipped."), type) << endl;
             return nullptr;
         }
@@ -702,6 +714,8 @@ SgMesh* StdSceneReader::Impl::readGeometry(Mapping& info)
         mesh = readExtrusion(info);
     } else if(type == "ElevationGrid"){
         mesh = readElevationGrid(info);
+    } else if(type == "TriangleMesh"){
+        mesh = readTriangleMesh(info);
     } else if(type == "IndexedFaceSet"){
         mesh = readIndexedFaceSet(info);
     } else if(type == "Resource"){
@@ -779,10 +793,7 @@ SgMesh* StdSceneReader::Impl::readCone(Mapping& info)
 {
     readDivisionNumber(info);
 
-    double radius = 1.0;
-    if(!info.read("radius", radius)){
-        info.read("bottomRadius", radius); // for the compatibility with VRML97
-    }
+    double radius = info.get("radius", 1.0);
     double height = info.get("height", 1.0);
     bool bottom = info.get("bottom", true);
     return meshGenerator.generateCone(radius, height, bottom, true, generateTexCoord);
@@ -804,7 +815,7 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info)
 {
     MeshGenerator::Extrusion extrusion;
 
-    Listing& crossSectionNode = *info.findListing("crossSection");
+    Listing& crossSectionNode = *info.findListing({ "cross_section", "crossSection" });
     if(crossSectionNode.isValid()){
         const int n = crossSectionNode.size() / 2;
         MeshGenerator::Vector2Array& crossSection = extrusion.crossSection;
@@ -858,9 +869,9 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info)
         }
     }
 
-    self->readAngle(info, "creaseAngle", extrusion.creaseAngle);
-    info.read("beginCap", extrusion.beginCap);
-    info.read("endCap", extrusion.endCap);
+    readAngle(info, { "crease_angle", "creaseAngle" }, extrusion.creaseAngle);
+    info.read({" begin_cap", "beginCap" }, extrusion.beginCap);
+    info.read({ "end_cap", "endCap"}, extrusion.endCap);
 
     SgMesh* mesh = meshGenerator.generateExtrusion(extrusion, generateTexCoord);
 
@@ -874,12 +885,12 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info)
 {
     MeshGenerator::ElevationGrid grid;
 
-    info.read("xDimension", grid.xDimension);
-    info.read("zDimension", grid.zDimension);
-    info.read("xSpacing", grid.xSpacing);
-    info.read("zSpacing", grid.zSpacing);
+    info.read({ "x_dimension", "xDimension" }, grid.xDimension);
+    info.read({ "z_dimension", "zDimension" }, grid.zDimension);
+    info.read({ "x_spacing", "xSpacing" }, grid.xSpacing);
+    info.read({ "z_spacing", "zSpacing" }, grid.zSpacing);
     info.read("ccw", grid.ccw);
-    self->readAngle(info, "creaseAngle", grid.creaseAngle);
+    readAngle(info, { "crease_angle", "creaseAngle" }, grid.creaseAngle);
 
     Listing& heightNode = *info.findListing("height");
     if(heightNode.isValid()){
@@ -889,7 +900,7 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info)
     }
 
     SgTexCoordArray* texCoord = nullptr;
-    Listing& texCoordNode = *info.findListing("texCoord");
+    Listing& texCoordNode = *info.findListing({ "tex_coord", "texCoord" });
     if(texCoordNode.isValid()){
         const int size = texCoordNode.size() / 2;
         texCoord = new SgTexCoordArray();
@@ -915,11 +926,48 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info)
 }
 
 
+SgMesh* StdSceneReader::Impl::readTriangleMesh(Mapping& info)
+{
+    SgMesh* mesh = new SgMesh;
+
+    Listing& srcVertices = *info.findListing("vertices");
+    if(srcVertices.isValid()){
+        const int size = srcVertices.size() / 3;
+        SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
+        vertices.resize(size);
+        for(int i=0; i < size; ++i){
+            Vector3f& s = vertices[i];
+            for(int j=0; j < 3; ++j){
+                s[j] = srcVertices[i*3+j].toDouble();
+            }
+        }
+    }
+
+    Listing& srcTriangles = *info.findListing("triangles");
+    if(srcTriangles.isValid()){
+        SgIndexArray& triangles = mesh->triangleVertices();
+        const int size = srcTriangles.size();
+        triangles.reserve(size);
+        for(int i=0; i < size; ++i){
+            triangles.push_back(srcTriangles[i].toInt());
+        }
+    }
+
+    double creaseAngle = 0.0;
+    self->readAngle(info, "crease_angle", creaseAngle);
+    meshFilter.generateNormals(mesh, creaseAngle);
+
+    mesh->setSolid(info.get("solid", mesh->isSolid()));
+
+    return mesh;
+}
+
+
 SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
 {
     SgPolygonMeshPtr polygonMesh = new SgPolygonMesh;
 
-    Listing& coordinateNode = *info.findListing("coordinate");
+    Listing& coordinateNode = *info.findListing({ "vertices", "coordinate" });
     if(coordinateNode.isValid()){
         const int size = coordinateNode.size() / 3;
         SgVertexArray& vertices = *polygonMesh->setVertices(new SgVertexArray());
@@ -932,7 +980,7 @@ SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
         }
     }
 
-    Listing& coordIndexNode = *info.findListing("coordIndex");
+    Listing& coordIndexNode = *info.findListing({ "faces", "coordIndex" });
     if(coordIndexNode.isValid()){
         SgIndexArray& polygonVertices = polygonMesh->polygonVertices();
         const int size = coordIndexNode.size();
@@ -942,7 +990,7 @@ SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
         }
     }
 
-    Listing& texCoordNode = *info.findListing("texCoord");
+    Listing& texCoordNode = *info.findListing({ "tex_coords", "texCoord" });
     if(texCoordNode.isValid()){
         const int size = texCoordNode.size() / 2;
         SgTexCoordArray& texCoord = *polygonMesh->setTexCoords(new SgTexCoordArray());
@@ -955,7 +1003,7 @@ SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
         }
     }
 
-    Listing& texCoordIndexNode = *info.findListing("texCoordIndex");
+    Listing& texCoordIndexNode = *info.findListing({ "tex_coord_indices", "texCoordIndex" });
     if(texCoordIndexNode.isValid()){
         SgIndexArray& texCoordIndices = polygonMesh->texCoordIndices();
         const int size = texCoordIndexNode.size();
@@ -979,7 +1027,7 @@ SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
     }
 
     double creaseAngle = 0.0;
-    self->readAngle(info, "creaseAngle", creaseAngle);
+    readAngle(info, { "crease_angle", "creaseAngle" }, creaseAngle);
     meshFilter.generateNormals(mesh, creaseAngle);
 
     mesh->setSolid(info.get("solid", mesh->isSolid()));
@@ -1027,7 +1075,7 @@ void StdSceneReader::Impl::readAppearance(SgShape* shape, Mapping& info)
     if(texture.isValid()){
         readTexture(shape, texture);
 
-        Mapping& textureTransform = *info.findMapping("textureTransform");
+        Mapping& textureTransform = *info.findMapping({ "texture_transform", "textureTransform" });
         if(textureTransform.isValid() && shape->texture()){
             readTextureTransform(shape->texture(), textureTransform);
         }
@@ -1040,19 +1088,19 @@ void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping& info)
     SgMaterialPtr material = new SgMaterial;
 
     double value;
-    if(info.read("ambientIntensity", value)){
+    if(info.read({ "ambient", "ambientIntensity" }, value)){
         material->setAmbientIntensity(value);
     }
-    if(read(info, "diffuseColor", color)){
+    if(read(info, { "diffuse", "diffuseColor" }, color)){
         material->setDiffuseColor(color);
     }
-    if(read(info, "emissiveColor", color)){
+    if(read(info, { "emissive", "emissiveColor" }, color)){
         material->setEmissiveColor(color);
     }
     if(info.read("shininess", value)){
         material->setShininess(value);
     }
-    if(read(info, "specularColor", color)){
+    if(read(info, { "specular", "specularColor" }, color)){
         material->setSpecularColor(color);
     }
     if(info.read("transparency", value)){
@@ -1095,8 +1143,15 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
                 texture->setImage(image);
                 bool repeatS = true;
                 bool repeatT = true;
-                info.read("repeatS", repeatS);
-                info.read("repeatT", repeatT);
+
+                auto repeatList = info.findListing("repeat");
+                if(repeatList->isValid() && repeatList->size() == 2){
+                    repeatS = repeatList->at(0)->toBool();
+                    repeatT = repeatList->at(1)->toBool();
+                } else {
+                    info.read("repeatS", repeatS);
+                    info.read("repeatT", repeatT);
+                }
                 texture->setRepeat(repeatS, repeatT);
                 texture->setTextureTransform(new SgTextureTransform);
                 shape->setTexture(texture);
@@ -1141,9 +1196,9 @@ SgNode* StdSceneReader::Impl::readSpotLight(Mapping& info)
     readLightCommon(info, light);
 
     if(read(info, "direction", v)) light->setDirection(v);
-    if(readAngle(info, "beamWidth", value)) light->setBeamWidth(value);
-    if(readAngle(info, "cutOffAngle", value)) light->setCutOffAngle(value);
-    if(info.read("cutOffExponent", value)) light->setCutOffExponent(value);
+    if(readAngle(info, { "beam_width", "beamWidth" }, value)) light->setBeamWidth(value);
+    if(readAngle(info, { "cut_off_angle", "cutOffAngle" }, value)) light->setCutOffAngle(value);
+    if(info.read({ "cut_off_exponent", "cutOffExponent" }, value)) light->setCutOffExponent(value);
     if(read(info, "attenuation", color)){
         light->setConstantAttenuation(color[0]);
         light->setLinearAttenuation(color[1]);

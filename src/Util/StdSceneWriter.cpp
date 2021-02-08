@@ -7,10 +7,12 @@
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/FileUtil>
 #include <cnoid/stdx/filesystem>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
@@ -20,9 +22,11 @@ class StdSceneWriter::Impl
 public:
     StdSceneWriter* self;
     PolymorphicSceneNodeFunctionSet writeFunctions;
+    MappingPtr currentArchive;
     bool isDegreeMode;
     bool doEmbedAllMeshes;
-    MappingPtr currentArchive;
+    int vertexPrecision;
+    string vertexFormat;
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
@@ -54,6 +58,7 @@ public:
 StdSceneWriter::StdSceneWriter()
 {
     impl = new Impl(this);
+    setVertexPrecision(7);
 }
 
 
@@ -113,6 +118,19 @@ void StdSceneWriter::setFilePathVariableProcessor(FilePathVariableProcessor* pro
 void StdSceneWriter::setIndentWidth(int n)
 {
     impl->getOrCreateYamlWriter()->setIndentWidth(n);
+}
+
+
+void StdSceneWriter::setVertexPrecision(int precision)
+{
+    impl->vertexPrecision = precision;
+    impl->vertexFormat = format("%.{}g", precision);
+}
+
+
+int StdSceneWriter::vertexPrecision() const
+{
+    return impl->vertexPrecision;
 }
 
 
@@ -226,6 +244,7 @@ void StdSceneWriter::Impl::writeGroup(Mapping* archive, SgGroup* group)
 
 void StdSceneWriter::Impl::writePosTransform(Mapping* archive, SgPosTransform* transform)
 {
+    archive->setFloatingNumberFormat("%.7g");
     writeType(archive, "Transform");
     AngleAxis aa(transform->rotation());
     if(aa.angle() != 0.0){
@@ -249,11 +268,11 @@ void StdSceneWriter::Impl::writeShape(Mapping* archive, SgShape* shape)
 {
     writeType(archive, "Shape");
 
-    if(auto geometry = writeGeometry(shape->mesh())){
-        archive->insert("geometry", geometry);
-    }
     if(auto appearance = writeAppearance(shape)){
         archive->insert("appearance", appearance);
+    }
+    if(auto geometry = writeGeometry(shape->mesh())){
+        archive->insert("geometry", geometry);
     }
 }
 
@@ -299,7 +318,7 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
     }
 
     if(mesh->creaseAngle() > 0.0f){
-        archive->write("creaseAngle", degree(mesh->creaseAngle()));
+        archive->write("crease_angle", degree(mesh->creaseAngle()));
     }
     if(mesh->isSolid()){
         archive->write("solid", true);
@@ -316,27 +335,27 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
 
     if(mesh->hasVertices() && numTriangles > 0){
 
-        archive->write("type", "IndexedFaceSet");
+        archive->write("type", "TriangleMesh");
 
-        Listing& coord = *archive->createFlowStyleListing("coordinate");
-        auto& vertices = *mesh->vertices();
-        const int numCoordScalars = vertices.size() * 3;
-        coord.reserve(numCoordScalars);
-        for(auto& v : vertices){
-            coord.append(v.x(), 12, numCoordScalars);
-            coord.append(v.y(), 12, numCoordScalars);
-            coord.append(v.z(), 12, numCoordScalars);
+        auto vertices = archive->createFlowStyleListing("vertices");
+        vertices->setFloatingNumberFormat(vertexFormat.c_str());
+        auto srcVertices = mesh->vertices();
+        const int scalarElementSize = srcVertices->size() * 3;
+        vertices->reserve(scalarElementSize);
+        for(auto& v : *srcVertices){
+            vertices->append(v.x(), 12, scalarElementSize);
+            vertices->append(v.y(), 12, scalarElementSize);
+            vertices->append(v.z(), 12, scalarElementSize);
         }
         
-        Listing& indexList = *archive->createFlowStyleListing("coordIndex");
-        const int numTriScalars = numTriangles * 4;
+        Listing& indexList = *archive->createFlowStyleListing("triangles");
+        const int numTriScalars = numTriangles * 3;
         indexList.reserve(numTriScalars);
         for(int i=0; i < numTriangles; ++i){
             auto triangle = mesh->triangle(i);
-            indexList.append(triangle[0], 16, numTriScalars);
-            indexList.append(triangle[1], 16, numTriScalars);
-            indexList.append(triangle[2], 16, numTriScalars);
-            indexList.append(-1, 16, numTriScalars);
+            indexList.append(triangle[0], 15, numTriScalars);
+            indexList.append(triangle[1], 15, numTriScalars);
+            indexList.append(triangle[2], 15, numTriScalars);
         }
         
         isValid = true;
@@ -410,13 +429,13 @@ MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
     MappingPtr archive = new Mapping;
 
     if(material->diffuseColor() != defaultMaterial->diffuseColor()){
-        write(*archive, "diffuseColor", material->diffuseColor());
+        write(*archive, "diffuse", material->diffuseColor());
     }
     if(material->emissiveColor() != defaultMaterial->emissiveColor()){
-        write(*archive, "emissiveColor", material->emissiveColor());
+        write(*archive, "emissive", material->emissiveColor());
     }
     if(material->specularColor() != defaultMaterial->specularColor()){
-        write(*archive, "specularColor", material->specularColor());
+        write(*archive, "specular", material->specularColor());
     }
     if(material->shininess() != defaultMaterial->shininess()){
         archive->write("shininess", material->shininess());
