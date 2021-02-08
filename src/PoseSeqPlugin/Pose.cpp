@@ -248,7 +248,7 @@ void Pose::store(Mapping& archive, const BodyPtr body) const
 
     ListingPtr jointIndices = new Listing();
     ListingPtr qs = new Listing();
-    qs->setDoubleFormat(archive.doubleFormat());
+    qs->setFloatingNumberFormat(archive.floatingNumberFormat());
     ListingPtr spJoints = new Listing();
 
     int n = numJoints();
@@ -289,7 +289,7 @@ void Pose::store(Mapping& archive, const BodyPtr body) const
             if(info.isStationaryPoint()){
                 ikLinkNode.write("isStationaryPoint", info.isStationaryPoint());
             }
-            ikLinkNode.setDoubleFormat("%.9g");
+            ikLinkNode.setFloatingNumberFormat("%.9g");
             write(ikLinkNode, "translation", info.p);
             write(ikLinkNode, "rotation", info.R);
 

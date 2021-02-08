@@ -547,7 +547,7 @@ bool DeviceOverwriteItem::Impl::store(Archive& archive)
                         archive.write("original_device_name", originalDeviceName, DOUBLE_QUOTED);
                     }
                 }
-                archive.setDoubleFormat("%.9g");
+                archive.setFloatingNumberFormat("%.9g");
                 auto T = device->T_local();
                 AngleAxis aa(T.linear());
                 if(aa.angle() != 0.0){

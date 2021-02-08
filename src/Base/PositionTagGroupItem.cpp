@@ -733,7 +733,7 @@ bool PositionTagGroupItem::store(Archive& archive)
 {
     impl->tags->write(&archive, *archive.session());
 
-    archive.setDoubleFormat("%.9g");
+    archive.setFloatingNumberFormat("%.9g");
     cnoid::write(archive, "offset_translation", impl->T_offset.translation());
     cnoid::write(archive, "offset_rpy", degree(rpyFromRot(impl->T_offset.linear())));
 

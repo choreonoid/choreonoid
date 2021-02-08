@@ -1884,7 +1884,7 @@ bool BodyItem::Impl::store(Archive& archive)
 {
     archive.writeFileInformation(self);
 
-    archive.setDoubleFormat("%.9g");
+    archive.setFloatingNumberFormat("%.9g");
 
     if(currentBaseLink){
         archive.write("currentBaseLink", currentBaseLink->name(), DOUBLE_QUOTED);
@@ -1902,7 +1902,7 @@ bool BodyItem::Impl::store(Archive& archive)
         bool doWriteInitialJointDisplacements = false;
         BodyState::Data& initialJointDisplacements = initialState.data(BodyState::JOINT_POSITIONS);
         qs = archive.createFlowStyleListing("jointDisplacements");
-        qs->setDoubleFormat("%g");
+        qs->setFloatingNumberFormat("%g");
         for(int i=0; i < n; ++i){
             double q = body->joint(i)->q();
             qs->append(degree(q), 10, n);
@@ -1914,7 +1914,7 @@ bool BodyItem::Impl::store(Archive& archive)
         }
         if(doWriteInitialJointDisplacements){
             qs = archive.createFlowStyleListing("initialJointDisplacements");
-            qs->setDoubleFormat("%g");
+            qs->setFloatingNumberFormat("%g");
             for(size_t i=0; i < initialJointDisplacements.size(); ++i){
                 qs->append(degree(initialJointDisplacements[i]), 10, n);
             }
@@ -1923,7 +1923,7 @@ bool BodyItem::Impl::store(Archive& archive)
 
     // Old format. Remove this after version 1.8 is released.
     qs = archive.createFlowStyleListing("jointPositions");
-    qs->setDoubleFormat("%g");
+    qs->setFloatingNumberFormat("%g");
     n = body->numAllJoints();
     for(int i=0; i < n; ++i){
         qs->append(body->joint(i)->q(), 10, n);
@@ -1940,7 +1940,7 @@ bool BodyItem::Impl::store(Archive& archive)
     BodyState::Data& initialJointPositions = initialState.data(BodyState::JOINT_POSITIONS);
     if(!initialJointPositions.empty()){
         qs = archive.createFlowStyleListing("initialJointPositions");
-        qs->setDoubleFormat("%g");
+        qs->setFloatingNumberFormat("%g");
         for(size_t i=0; i < initialJointPositions.size(); ++i){
             qs->append(initialJointPositions[i], 10, n);
         }

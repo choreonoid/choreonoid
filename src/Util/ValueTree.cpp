@@ -36,7 +36,7 @@ const char* getTypeName(int typeBits){
 
 map<string, bool> booleanSymbols;
 
-const char* defaultDoubleFormat = "%g";
+const char* defaultFloatingNumberFormat = "%g";
 
 ValueNodePtr invalidNode;
 MappingPtr invalidMapping;
@@ -432,7 +432,7 @@ Mapping::Mapping()
     indexCounter = 0;
     keyStringStyle_ = PLAIN_STRING;
     isFlowStyle_ = false;
-    doubleFormat_ = defaultDoubleFormat;
+    floatingNumberFormat_ = defaultFloatingNumberFormat;
 }
 
 
@@ -444,7 +444,7 @@ Mapping::Mapping(int line, int column)
     mode = READ_MODE;
     indexCounter = 0;
     isFlowStyle_ = false;
-    doubleFormat_ = defaultDoubleFormat;
+    floatingNumberFormat_ = defaultFloatingNumberFormat;
 }
 
 
@@ -452,7 +452,7 @@ Mapping::Mapping(const Mapping& org)
     : ValueNode(org),
       values(org.values),
       mode(org.mode),
-      doubleFormat_(org.doubleFormat_),
+      floatingNumberFormat_(org.floatingNumberFormat_),
       isFlowStyle_(org.isFlowStyle_),
       keyStringStyle_(org.keyStringStyle_)
 {
@@ -485,9 +485,9 @@ void Mapping::clear()
 }
 
 
-void Mapping::setDoubleFormat(const char* format)
+void Mapping::setFloatingNumberFormat(const char* format)
 {
-    doubleFormat_ = format;
+    floatingNumberFormat_ = format;
 }
 
 
@@ -661,7 +661,7 @@ Mapping* Mapping::openMapping_(const std::string& key, bool doOverwrite)
 
     if(!mapping){
         mapping = new Mapping;
-        mapping->doubleFormat_ = doubleFormat_;
+        mapping->floatingNumberFormat_ = floatingNumberFormat_;
         insertSub(uKey, mapping);
     }
 
@@ -701,7 +701,7 @@ Listing* Mapping::openListing_(const std::string& key, bool doOverwrite)
 
     if(!sequence){
         sequence = new Listing;
-        sequence->doubleFormat_ = doubleFormat_;
+        sequence->floatingNumberFormat_ = floatingNumberFormat_;
         insertSub(uKey, sequence);
     }
 
@@ -833,7 +833,7 @@ void Mapping::write(const std::string &key, int value)
 void Mapping::write(const std::string &key, double value)
 {
     char buf[32];
-    int n = snprintf(buf, 32, doubleFormat_, value);
+    int n = snprintf(buf, 32, floatingNumberFormat_, value);
     writeSub(key, buf, n, PLAIN_STRING);
 }
 
@@ -850,7 +850,7 @@ Listing::Listing()
     typeBits = LISTING;
     line_ = -1;
     column_ = -1;
-    doubleFormat_ = defaultDoubleFormat;
+    floatingNumberFormat_ = defaultFloatingNumberFormat;
     isFlowStyle_ = false;
     doInsertLFBeforeNextElement = false;
 }
@@ -862,7 +862,7 @@ Listing::Listing(int size)
     typeBits = LISTING;
     line_ = -1;
     column_ = -1;
-    doubleFormat_ = defaultDoubleFormat;
+    floatingNumberFormat_ = defaultFloatingNumberFormat;
     isFlowStyle_ = false;
     doInsertLFBeforeNextElement = false;
 }
@@ -873,7 +873,7 @@ Listing::Listing(int line, int column)
     typeBits = LISTING;
     line_ = line;
     column_ = column;
-    doubleFormat_ = defaultDoubleFormat;
+    floatingNumberFormat_ = defaultFloatingNumberFormat;
     isFlowStyle_ = false;
     doInsertLFBeforeNextElement = false;
 }
@@ -886,7 +886,7 @@ Listing::Listing(int line, int column, int reservedSize)
     line_ = line;
     column_ = column;
     values.resize(0);
-    doubleFormat_ = defaultDoubleFormat;
+    floatingNumberFormat_ = defaultFloatingNumberFormat;
     isFlowStyle_ = false;
     doInsertLFBeforeNextElement = false;
 }
@@ -895,7 +895,7 @@ Listing::Listing(int line, int column, int reservedSize)
 Listing::Listing(const Listing& org)
     : ValueNode(org),
       values(org.values),
-      doubleFormat_(org.doubleFormat_),
+      floatingNumberFormat_(org.floatingNumberFormat_),
       isFlowStyle_(org.isFlowStyle_),
       doInsertLFBeforeNextElement(org.doInsertLFBeforeNextElement)
 {
@@ -927,9 +927,9 @@ void Listing::reserve(int size)
 }
 
 
-void Listing::setDoubleFormat(const char* format)
+void Listing::setFloatingNumberFormat(const char* format)
 {
-    doubleFormat_ = format;
+    floatingNumberFormat_ = format;
 }
 
 
@@ -958,7 +958,7 @@ void Listing::appendLF()
 Mapping* Listing::newMapping()
 {
     Mapping* mapping = new Mapping;
-    mapping->doubleFormat_ = doubleFormat_;
+    mapping->floatingNumberFormat_ = floatingNumberFormat_;
     append(mapping);
     return mapping;
 }
@@ -998,7 +998,7 @@ void Listing::write(int i, int value)
 void Listing::append(double value)
 {
     char buf[32];
-    int n = snprintf(buf, 32, doubleFormat_, value);
+    int n = snprintf(buf, 32, floatingNumberFormat_, value);
     ScalarNode* node = new ScalarNode(buf, n, PLAIN_STRING);
     if(doInsertLFBeforeNextElement){
         node->typeBits |= INSERT_LF;

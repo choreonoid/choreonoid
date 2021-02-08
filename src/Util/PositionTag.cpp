@@ -55,7 +55,7 @@ bool PositionTag::read(const Mapping* archive, ArchiveSession&)
 
 bool PositionTag::write(Mapping* archive, ArchiveSession&) const
 {
-    archive->setDoubleFormat("%.9g");
+    archive->setFloatingNumberFormat("%.9g");
     cnoid::write(archive, "translation", position_.translation());
     if(hasAttitude_){
         cnoid::write(archive, "rpy", degree(rpyFromRot(position_.linear())));

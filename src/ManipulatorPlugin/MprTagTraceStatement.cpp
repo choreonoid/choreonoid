@@ -238,7 +238,7 @@ bool MprTagTraceStatement::write(Mapping& archive) const
             }
             archive.write("tag_group_uuid", tagGroup_->uuid().toString());
         }
-        archive.setDoubleFormat("%.10g");
+        archive.setFloatingNumberFormat("%.10g");
         cnoid::write(archive, "translation", Vector3(T_tags.translation()));
         cnoid::write(archive, "rpy", degree(rpyFromRot(T_tags.linear())));
         baseFrameId_.write(archive, "base_frame");

@@ -861,7 +861,7 @@ bool MultiPointSetItem::Impl::saveItem(MultiPointSetItem* item, const std::strin
 bool MultiPointSetItem::Impl::save(const std::string& filename)
 {
     outputArchive = new Mapping();
-    outputArchive->setDoubleFormat("%.9g");
+    outputArchive->setFloatingNumberFormat("%.9g");
 
     outputArchive->write("type", "MultiPointSet");
     outputArchive->write("fileFormat", "PCD");
@@ -891,7 +891,7 @@ bool MultiPointSetItem::Impl::outputPointSetItem(int index)
 
             MappingPtr info = new Mapping();
             info->write("file", filename);
-            info->setDoubleFormat("%.9g");
+            info->setFloatingNumberFormat("%.9g");
             write(*info, "offsetTransform", item->offsetPosition());
             outputFileListing->insert(index, info);
             result = true;

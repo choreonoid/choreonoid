@@ -408,7 +408,6 @@ MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
         defaultMaterial = new SgMaterial;
     }
     MappingPtr archive = new Mapping;
-    archive->setDoubleFormat("%.2f");
 
     if(material->diffuseColor() != defaultMaterial->diffuseColor()){
         write(*archive, "diffuseColor", material->diffuseColor());

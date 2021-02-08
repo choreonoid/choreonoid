@@ -94,7 +94,7 @@ bool CoordinateFrame::read(const Mapping& archive)
 bool CoordinateFrame::write(Mapping& archive) const
 {
     if(id_.write(archive, "id")){
-        archive.setDoubleFormat("%.9g");
+        archive.setFloatingNumberFormat("%.9g");
         cnoid::write(archive, "translation", Vector3(T_.translation()));
         cnoid::write(archive, "rpy", degree(rpyFromRot(T_.linear())));
         if(isGlobal()){

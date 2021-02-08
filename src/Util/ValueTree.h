@@ -242,8 +242,13 @@ public:
     void setFlowStyle(bool isFlowStyle = true) { isFlowStyle_ = isFlowStyle; }
     bool isFlowStyle() const { return isFlowStyle_; }
 
-    void setDoubleFormat(const char* format);
-    const char* doubleFormat() { return doubleFormat_; }
+    void setFloatingNumberFormat(const char* format);
+    const char* floatingNumberFormat() { return floatingNumberFormat_; }
+
+    [[deprecated("Use Mapping::setFloatingNumberFormat")]]
+    void setDoubleFormat(const char* format) { setFloatingNumberFormat(format); }
+    [[deprecated("Use Mapping::floatingNumberFormat")]]
+    const char* doubleFormat() { return floatingNumberFormat(); }
         
     void setKeyQuoteStyle(StringStyle style);
 
@@ -400,7 +405,7 @@ private:
     Container values;
     AssignMode mode;
     int indexCounter;
-    const char* doubleFormat_;
+    const char* floatingNumberFormat_;
     bool isFlowStyle_;
     StringStyle keyStringStyle_;
 
@@ -439,8 +444,13 @@ public:
     void setFlowStyle(bool isFlowStyle = true) { isFlowStyle_ = isFlowStyle; }
     bool isFlowStyle() const { return isFlowStyle_; }
 
-    void setDoubleFormat(const char* format);
-    const char* doubleFormat() { return doubleFormat_; }
+    void setFloatingNumberFormat(const char* format);
+    const char* floatingNumberFormat() { return floatingNumberFormat_; }
+
+    [[deprecated("Use Mapping::setFloatingNumberFormat")]]
+    void setDoubleFormat(const char* format) { setFloatingNumberFormat(format); }
+    [[deprecated("Use Mapping::floatingNumberFormat")]]
+    const char* doubleFormat() { return floatingNumberFormat(); }
 
     ValueNode* front() const {
         return values.front();
@@ -550,7 +560,7 @@ private:
     void insertLF(int maxColumns, int numValues);
         
     Container values;
-    const char* doubleFormat_;
+    const char* floatingNumberFormat_;
     bool isFlowStyle_;
     bool doInsertLFBeforeNextElement;
 

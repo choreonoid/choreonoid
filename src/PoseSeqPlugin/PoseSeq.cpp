@@ -167,7 +167,7 @@ bool PoseSeq::save(const std::string& filename, const BodyPtr body)
     writer.setKeyOrderPreservationMode(true);
     storedNames.clear();
     MappingPtr archive = new Mapping();
-    archive->setDoubleFormat("%.9g");
+    archive->setFloatingNumberFormat("%.9g");
     store(*archive, body);
     writer.putComment("Body pose sequence format version 1.0 defined by cnoid-Robotics\n");
     writer.putNode(archive);
