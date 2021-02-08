@@ -156,7 +156,6 @@ SgNode* SceneItemFileIO::Impl::loadScene(SceneItemFileIO* self, const std::strin
         topNode = transform;
     }
     
-    
     return topNode.retn();
 }
  
@@ -176,7 +175,6 @@ void SceneItemFileIO::storeOptions(Mapping* archive)
     if(!impl->upperAxisHint.is(Z_Upper)){
         archive->write("meshUpperAxisHint", impl->upperAxisHint.selectedSymbol());
     }
-
 }
 
 

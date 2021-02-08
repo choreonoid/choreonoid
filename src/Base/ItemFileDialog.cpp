@@ -189,10 +189,9 @@ ItemList<Item> ItemFileDialog::Impl::loadItems(Item* parentItem, bool doAddition
     }
 
 exit:
-    for(auto& fileIO : validFileIOs){
-        if(auto panel = fileIO->getOptionPanelForLoading()){
-            panel->setParent(nullptr);
-        }
+    if(optionPanel){
+        optionPanel->setParent(nullptr);
+        optionPanel = nullptr;
     }
 
     return loadedItems;
@@ -234,9 +233,9 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
     if(self->windowTitle().isEmpty()){
         string title;
         if(!isExportMode){
-            title = _("Save {} as");
+            title = _("Save {}");
         } else {
-            title = _("Export {} as");
+            title = _("Export {}");
         }
         self->setWindowTitle(format(title, itemLabel).c_str());
     }
@@ -268,10 +267,9 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
         }
     }
 
-    for(auto& fileIO : validFileIOs){
-        if(auto panel = fileIO->getOptionPanelForLoading()){
-            panel->setParent(nullptr);
-        }
+    if(optionPanel){
+        optionPanel->setParent(nullptr);
+        optionPanel = nullptr;
     }
 
     currentItemToSave.reset();
@@ -363,11 +361,7 @@ bool ItemFileDialog::Impl::initializeFileIoFilters()
     if(validFileIOs.empty()){
         return false;
     }
-    if(validFileIOs.size() == 1){
-        filters << _("Any files (*)");
-    } else {
-        // add "any file" filters for the file ios that supports it
-    }
+
     self->setNameFilters(filters);
 
     setTargetFileIO(validFileIOs.front());
