@@ -326,6 +326,7 @@ public:
     bool readTransform(Mapping& node);
     bool readRigidBody(Mapping& node);
     bool readVisualOrCollision(Mapping& node, bool isVisual);
+    bool readVisualOrCollisionContents(Mapping& node);
     bool readResource(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
@@ -504,8 +505,8 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     nodeFunctions["Group"].set([&](Mapping& node){ return readGroup(node); });
     nodeFunctions["Transform"].set([&](Mapping& node){ return readTransform(node); });
     nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
-    nodeFunctions["Visual"].setT([&](Mapping& node){ return readVisualOrCollision(node, true); });
-    nodeFunctions["Collision"].setT([&](Mapping& node){ return readVisualOrCollision(node, false); });
+    nodeFunctions["Visual"].set([&](Mapping& node){ return readVisualOrCollision(node, true); });
+    nodeFunctions["Collision"].set([&](Mapping& node){ return readVisualOrCollision(node, false); });
     nodeFunctions["Resource"].set([&](Mapping& node){ return readResource(node); });
     nodeFunctions["ForceSensor"].setTE([&](Mapping& node){ return readForceSensor(node); });
     nodeFunctions["RateGyroSensor"].setTE([&](Mapping& node){ return readRateGyroSensor(node); });
@@ -1609,8 +1610,23 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
         currentModelType = COLLISION;
     }
 
-    bool isSceneNodeAdded = readElements(node);
+    bool isSceneNodeAdded = readTransformContents(
+        node, [this](Mapping& node){ return readVisualOrCollisionContents(node); }, true);
 
+    if(isSceneNodeAdded){
+        hasVisualOrCollisionNodes = true;
+    }
+
+    currentModelType = prevModelType;
+
+    return isSceneNodeAdded;
+}
+
+
+bool YAMLBodyLoaderImpl::readVisualOrCollisionContents(Mapping& node)
+{
+    bool isSceneNodeAdded = false;
+    
     if(isShapeLoadingEnabled){
         auto resourceNode = node.findMapping("resource");
         if(resourceNode->isValid()){
@@ -1624,17 +1640,11 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
             }
         }
     }
- 
-    if(isSceneNodeAdded){
-        hasVisualOrCollisionNodes = true;
-    }
-
-    currentModelType = prevModelType;
 
     return isSceneNodeAdded;
 }
-
-
+ 
+    
 bool YAMLBodyLoaderImpl::readResource(Mapping& node)
 {
     bool isSceneNodeAdded = false;
