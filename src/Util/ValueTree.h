@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <initializer_list>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -253,8 +254,11 @@ public:
     void setKeyQuoteStyle(StringStyle style);
 
     ValueNode* find(const std::string& key) const;
+    ValueNode* find(std::initializer_list<const char*> keys) const;
     Mapping* findMapping(const std::string& key) const;
+    Mapping* findMapping(std::initializer_list<const char*> keys) const;
     Listing* findListing(const std::string& key) const;
+    Listing* findListing(std::initializer_list<const char*> keys) const;
 
     ValueNodePtr extract(const std::string& key);
 
@@ -311,6 +315,16 @@ public:
     bool read(const std::string& key, double& out_value) const;
     bool read(const std::string& key, float& out_value) const;
 
+    template<class T>
+    bool read(std::initializer_list<const char*> keys, T& out_value) const {
+        for(auto& key : keys){
+            if(this->read( key, out_value)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     template <class T> T get(const std::string& key) const {
         T value;
         if(read(key, value)){
@@ -322,7 +336,7 @@ public:
     }
     
     template <class T>
-        T get(const std::string& key, const T& defaultValue) const {
+    T get(const std::string& key, const T& defaultValue) const {
         T value;
         if(read(key, value)){
             return value;
@@ -334,6 +348,16 @@ public:
     std::string get(const std::string& key, const char* defaultValue) const {
         std::string value;
         if(read(key, value)){
+            return value;
+        } else {
+            return defaultValue;
+        }
+    }
+
+    template<class T>
+        T get(std::initializer_list<const char*> keys, const T& defaultValue) const {
+        T value;
+        if(read(keys, value)){
             return value;
         } else {
             return defaultValue;

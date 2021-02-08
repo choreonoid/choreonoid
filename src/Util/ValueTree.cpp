@@ -502,7 +502,7 @@ ValueNode* Mapping::find(const std::string& key) const
     if(!isValid()){
         throwNotMappingException();
     }
-    const_iterator p = values.find(key);
+    auto p = values.find(key);
     if(p != values.end()){
         return p->second.get();
     } else {
@@ -511,16 +511,49 @@ ValueNode* Mapping::find(const std::string& key) const
 }
 
 
+ValueNode* Mapping::find(std::initializer_list<const char*> keys) const
+{
+    if(!isValid()){
+        throwNotMappingException();
+    }
+    for(auto& key : keys){
+        auto p = values.find(key);
+        if(p != values.end()){
+            return p->second.get();
+        }
+    }
+    return invalidNode.get();
+}
+
+
 Mapping* Mapping::findMapping(const std::string& key) const
 {
     if(!isValid()){
         throwNotMappingException();
     }
-    const_iterator p = values.find(key);
+    auto p = values.find(key);
     if(p != values.end()){
         ValueNode* node = p->second.get();
         if(node->isMapping()){
             return static_cast<Mapping*>(node);
+        }
+    }
+    return invalidMapping.get();
+}
+
+
+Mapping* Mapping::findMapping(std::initializer_list<const char*> keys) const
+{
+    if(!isValid()){
+        throwNotMappingException();
+    }
+    for(auto& key : keys){
+        auto p = values.find(key);
+        if(p != values.end()){
+            ValueNode* node = p->second.get();
+            if(node->isMapping()){
+                return static_cast<Mapping*>(node);
+            }
         }
     }
     return invalidMapping.get();
@@ -532,11 +565,29 @@ Listing* Mapping::findListing(const std::string& key) const
     if(!isValid()){
         throwNotMappingException();
     }
-    const_iterator p = values.find(key);
+    auto  p = values.find(key);
     if(p != values.end()){
         ValueNode* node = p->second.get();
         if(node->isListing()){
             return static_cast<Listing*>(node);
+        }
+    }
+    return invalidListing.get();
+}
+
+
+Listing* Mapping::findListing(std::initializer_list<const char*> keys) const
+{
+    if(!isValid()){
+        throwNotMappingException();
+    }
+    for(auto& key : keys){
+        auto  p = values.find(key);
+        if(p != values.end()){
+            ValueNode* node = p->second.get();
+            if(node->isListing()){
+                return static_cast<Listing*>(node);
+            }
         }
     }
     return invalidListing.get();
@@ -548,7 +599,7 @@ ValueNodePtr Mapping::extract(const std::string& key)
     if(!isValid()){
         throwNotMappingException();
     }
-    iterator p = values.find(key);
+    auto p = values.find(key);
     if(p != values.end()){
         ValueNodePtr value = p->second;
         values.erase(p);
