@@ -9,6 +9,7 @@
 #include <cnoid/SceneGraph>
 #include <QBoxLayout>
 #include <QLabel>
+#include <QComboBox>
 #include <QCheckBox>
 #include <QSpinBox>
 #include "gettext.h"
@@ -111,6 +112,8 @@ class StdSceneFileOutput : public ItemFileIOBase<BodyItem>
 {
     unique_ptr<StdSceneWriter> sceneWriter;
     QWidget* optionPanel;
+    QComboBox* shapeTypeCombo;
+    QComboBox* meshOutputModeCombo;
     QCheckBox* transformIntegrationCheck;
     QSpinBox* vertexPrecisionSpin;
 
@@ -156,13 +159,21 @@ public:
         const Isometry3 T0 = body->rootLink()->T();
         for(auto& link : body->links()){
             bool stripped;
-            if(SgNode* shape = strip(link->shape(), stripped)){
+
+            SgGroup* shapeGroup;
+            if(shapeTypeCombo->currentIndex() == 0){
+                shapeGroup = link->visualShape();
+            } else {
+                shapeGroup = link->collisionShape();
+            }
+            
+            if(SgNode* shape = strip(shapeGroup, stripped)){
                 if(!link->T().isApprox(T0)){
                     auto transform = new SgPosTransform(T0.inverse() * link->T());
                     if(stripped){
                         transform->addChild(shape);
                     } else {
-                        link->shape()->copyChildrenTo(transform);
+                        shapeGroup->copyChildrenTo(transform);
                     }
                     transform->setName(link->name());
                     shape = transform;
@@ -208,23 +219,48 @@ public:
     void createOptionPanel()
     {
         optionPanel = new QWidget;
-        auto hbox = new QHBoxLayout;
-        hbox->setContentsMargins(0, 0, 0, 0);
-        optionPanel->setLayout(hbox);
 
+        auto vbox = new QVBoxLayout;
+        vbox->setContentsMargins(0, 0, 0, 0);
+        optionPanel->setLayout(vbox);
+
+        QHBoxLayout* hbox;
+        hbox = new QHBoxLayout;
+
+        hbox->addWidget(new QLabel(_("Shape type:")));
+        shapeTypeCombo = new QComboBox;
+        shapeTypeCombo->addItem(_("Visual"));
+        shapeTypeCombo->addItem(_("Collision"));
+        hbox->addWidget(shapeTypeCombo);
+        
+        hbox->addWidget(new QLabel(_("Mesh output mode:")));
+        meshOutputModeCombo = new QComboBox;
+        meshOutputModeCombo->addItem(_("Embedded"));
+        meshOutputModeCombo->addItem(_("Original"));
+        meshOutputModeCombo->addItem(_("Converted (STL)"));
+        hbox->addWidget(meshOutputModeCombo);
+        hbox->addStretch();
+       
+        vbox->addLayout(hbox);
+        
+        hbox = new QHBoxLayout;
         transformIntegrationCheck = new QCheckBox;
         transformIntegrationCheck->setText(_("Integrate transforms"));
         hbox->addWidget(transformIntegrationCheck);
-        
+
         hbox->addWidget(new QLabel(_("Vertex precision:")));
         vertexPrecisionSpin = new QSpinBox;
         vertexPrecisionSpin->setRange(6, 16);
         vertexPrecisionSpin->setValue(ensureSceneWriter()->vertexPrecision());
         hbox->addWidget(vertexPrecisionSpin);
+        hbox->addStretch();
+
+        vbox->addLayout(hbox);
     }
 
     virtual void fetchOptionPanelForSaving() override
     {
+        sceneWriter->setMeshOutputMode(meshOutputModeCombo->currentIndex());
         sceneWriter->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
         sceneWriter->setVertexPrecision(vertexPrecisionSpin->value());
     }
