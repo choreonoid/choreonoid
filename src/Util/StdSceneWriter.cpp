@@ -26,7 +26,7 @@ public:
     MappingPtr currentArchive;
     bool isDegreeMode;
     bool isTransformIntegrationEnabled;
-    bool doEmbedAllMeshes;
+    int meshOutputMode;
     int vertexPrecision;
     string vertexFormat;
     SgMaterialPtr defaultMaterial;
@@ -81,6 +81,7 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
 
     isDegreeMode = true;
     isTransformIntegrationEnabled = false;
+    meshOutputMode = EmbeddedMeshes;
 }
 
 
@@ -133,6 +134,18 @@ void StdSceneWriter::setIndentWidth(int n)
 }
 
 
+void StdSceneWriter::setMeshOutputMode(int mode)
+{
+    impl->meshOutputMode = mode;
+}
+
+
+int StdSceneWriter::meshOutputMode() const
+{
+    return impl->meshOutputMode;
+}
+
+
 void StdSceneWriter::setTransformIntegrationEnabled(bool on)
 {
     impl->isTransformIntegrationEnabled = on;
@@ -160,7 +173,6 @@ int StdSceneWriter::vertexPrecision() const
 
 MappingPtr StdSceneWriter::writeScene(SgNode* node)
 {
-    impl->doEmbedAllMeshes = false;
     return impl->writeSceneNode(node);
 }
 
@@ -195,7 +207,7 @@ bool StdSceneWriter::Impl::writeScene
         }
     }
 
-    if(isTransformIntegrationEnabled){
+    if(isTransformIntegrationEnabled && meshOutputMode != OriginalMeshFiles){
         SceneGraphOptimizer optimizer;
         CloneMap cloneMap;
         SgObject::setNonNodeCloning(cloneMap, false);
@@ -204,8 +216,6 @@ bool StdSceneWriter::Impl::writeScene
         optimizer.simplifyTransformPathsWithTransformedMeshes(group, cloneMap);
     }
        
-    doEmbedAllMeshes = true;
-        
     MappingPtr header = new Mapping;
     header->write("format", "choreonoid_scene");
     header->write("format_version", "1.0");
@@ -230,6 +240,14 @@ bool StdSceneWriter::Impl::writeScene
 MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 {
     MappingPtr archive = new Mapping;
+
+    if(!node->uri().empty() && meshOutputMode == OriginalMeshFiles){
+        writeObjectHeader(archive, "Resource", node);
+        archive->write(
+            "uri",
+            getOrCreatePathVariableProcessor()->parameterize(node->uri()), DOUBLE_QUOTED);
+        return archive;
+    }
 
     currentArchive = archive;
     writeFunctions.dispatch(node);
@@ -316,7 +334,7 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
 
     bool doWriteMesh = true;
 
-    if(!mesh->uri().empty() && !doEmbedAllMeshes){
+    if(!mesh->uri().empty() && meshOutputMode == OriginalMeshFiles){
         archive->write("type", "Resource");
         archive->write(
             "uri",
@@ -437,7 +455,7 @@ void StdSceneWriter::Impl::writeCone(Mapping* archive, const SgMesh::Cone& cone)
 
 void StdSceneWriter::Impl::writeCapsule(Mapping* archive, const SgMesh::Capsule& capsule)
 {
-    archive->write("type", "Cone");
+    archive->write("type", "Capsule");
     archive->write("radius", capsule.radius);
     archive->write("height", capsule.height);
 }
