@@ -1,11 +1,12 @@
 #include "StdSceneWriter.h"
-#include <cnoid/YAMLWriter>
-#include <cnoid/SceneGraph>
-#include <cnoid/SceneDrawables>
-#include <cnoid/PolymorphicSceneNodeFunctionSet>
-#include <cnoid/EigenArchive>
-#include <cnoid/FilePathVariableProcessor>
-#include <cnoid/FileUtil>
+#include "YAMLWriter.h"
+#include "SceneGraph.h"
+#include "SceneDrawables.h"
+#include "SceneGraphOptimizer.h"
+#include "PolymorphicSceneNodeFunctionSet.h"
+#include "EigenArchive.h"
+#include "FilePathVariableProcessor.h"
+#include "CloneMap.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -24,6 +25,7 @@ public:
     PolymorphicSceneNodeFunctionSet writeFunctions;
     MappingPtr currentArchive;
     bool isDegreeMode;
+    bool isTransformIntegrationEnabled;
     bool doEmbedAllMeshes;
     int vertexPrecision;
     string vertexFormat;
@@ -33,16 +35,17 @@ public:
 
     Impl(StdSceneWriter* self);
     YAMLWriter* getOrCreateYamlWriter();
+    FilePathVariableProcessor* getOrCreatePathVariableProcessor();
     void setBaseDirectory(const std::string& directory);
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     MappingPtr writeSceneNode(SgNode* node);
-    void writeType(Mapping* archive, const char* typeName);
-    void writeObjectHeader(Mapping* archive, SgObject* object);
+    void writeObjectHeader(Mapping* archive, const char* typeName, SgObject* object);
     void writeGroup(Mapping* archive, SgGroup* group);
     void writePosTransform(Mapping* archive, SgPosTransform* transform);
     void writeScaleTransform(Mapping* archive, SgScaleTransform* transform);
     void writeShape(Mapping* archive, SgShape* shape);
     MappingPtr writeGeometry(SgMesh* mesh);
+    void writeMeshAttributes(Mapping* archive, SgMesh* mesh);
     bool writeMesh(Mapping* archive, SgMesh* mesh);
     void writeBox(Mapping* archive, const SgMesh::Box& box);
     void writeSphere(Mapping* archive, const SgMesh::Sphere& sphere);
@@ -77,6 +80,7 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     writeFunctions.updateDispatchTable();
 
     isDegreeMode = true;
+    isTransformIntegrationEnabled = false;
 }
 
 
@@ -96,6 +100,15 @@ YAMLWriter* StdSceneWriter::Impl::getOrCreateYamlWriter()
 }
 
 
+FilePathVariableProcessor* StdSceneWriter::Impl::getOrCreatePathVariableProcessor()
+{
+    if(!pathVariableProcessor){
+        pathVariableProcessor = new FilePathVariableProcessor;
+    }
+    return pathVariableProcessor;
+}
+
+
 void StdSceneWriter::setBaseDirectory(const std::string& directory)
 {
     impl->setBaseDirectory(directory);
@@ -104,8 +117,7 @@ void StdSceneWriter::setBaseDirectory(const std::string& directory)
 
 void StdSceneWriter::Impl::setBaseDirectory(const std::string& directory)
 {
-    pathVariableProcessor = new FilePathVariableProcessor;
-    pathVariableProcessor->setBaseDirectory(directory);
+    getOrCreatePathVariableProcessor()->setBaseDirectory(directory);
 }
 
 
@@ -118,6 +130,18 @@ void StdSceneWriter::setFilePathVariableProcessor(FilePathVariableProcessor* pro
 void StdSceneWriter::setIndentWidth(int n)
 {
     impl->getOrCreateYamlWriter()->setIndentWidth(n);
+}
+
+
+void StdSceneWriter::setTransformIntegrationEnabled(bool on)
+{
+    impl->isTransformIntegrationEnabled = on;
+}
+
+
+bool StdSceneWriter::isTransformIntegrationEnabled() const
+{
+    return impl->isTransformIntegrationEnabled;
 }
 
 
@@ -162,6 +186,24 @@ bool StdSceneWriter::Impl::writeScene
         return false;
     }
 
+    SgGroupPtr group = new SgGroup;
+    if(node){
+        group->addChild(node);
+    } else if(pnodes){
+        for(auto& node : *pnodes){
+            group->addChild(node);
+        }
+    }
+
+    if(isTransformIntegrationEnabled){
+        SceneGraphOptimizer optimizer;
+        CloneMap cloneMap;
+        SgObject::setNonNodeCloning(cloneMap, false);
+        group = cloneMap.getClone(group);
+        SgObject::setNonNodeCloning(cloneMap, true);
+        optimizer.simplifyTransformPathsWithTransformedMeshes(group, cloneMap);
+    }
+       
     doEmbedAllMeshes = true;
         
     MappingPtr header = new Mapping;
@@ -173,12 +215,8 @@ bool StdSceneWriter::Impl::writeScene
     setBaseDirectory(directory);
 
     ListingPtr nodeList = new Listing;
-    if(node){
+    for(auto& node : *group){
         nodeList->append(writeSceneNode(node));
-    } else if(pnodes){
-        for(auto& node : *pnodes){
-            nodeList->append(writeSceneNode(node));
-        }
     }
     header->insert("scene", nodeList);
     
@@ -191,13 +229,7 @@ bool StdSceneWriter::Impl::writeScene
 
 MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 {
-    if(!pathVariableProcessor){
-        pathVariableProcessor = new FilePathVariableProcessor;
-    }
-    
     MappingPtr archive = new Mapping;
-
-    writeObjectHeader(archive, node);
 
     currentArchive = archive;
     writeFunctions.dispatch(node);
@@ -220,16 +252,13 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 }
 
 
-void StdSceneWriter::Impl::writeType(Mapping* archive, const char* typeName)
+void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, const char* typeName, SgObject* object)
 {
-    auto typeNode = new ScalarNode(typeName);
-    typeNode->setAsHeaderInMapping();
-    archive->insert("type", typeNode);
-}
-
-
-void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, SgObject* object)
-{
+    if(typeName){
+        auto typeNode = new ScalarNode(typeName);
+        typeNode->setAsHeaderInMapping();
+        archive->insert("type", typeNode);
+    }
     if(!object->name().empty()){
         archive->write("name", object->name());
     }
@@ -238,14 +267,14 @@ void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, SgObject* object)
     
 void StdSceneWriter::Impl::writeGroup(Mapping* archive, SgGroup* group)
 {
-    writeType(archive, "Group");
+    writeObjectHeader(archive, "Group", group);
 }
 
 
 void StdSceneWriter::Impl::writePosTransform(Mapping* archive, SgPosTransform* transform)
 {
-    archive->setFloatingNumberFormat("%.7g");
-    writeType(archive, "Transform");
+    archive->setFloatingNumberFormat("%.12g");
+    writeObjectHeader(archive, "Transform", transform);
     AngleAxis aa(transform->rotation());
     if(aa.angle() != 0.0){
         writeDegreeAngleAxis(archive, "rotation", aa);
@@ -259,14 +288,14 @@ void StdSceneWriter::Impl::writePosTransform(Mapping* archive, SgPosTransform* t
 
 void StdSceneWriter::Impl::writeScaleTransform(Mapping* archive, SgScaleTransform* transform)
 {
-    writeType(archive, "Transform");
+    writeObjectHeader(archive, "Transform", transform);
     write(archive, "scale", transform->scale());
 }
 
 
 void StdSceneWriter::Impl::writeShape(Mapping* archive, SgShape* shape)
 {
-    writeType(archive, "Shape");
+    writeObjectHeader(archive, "Shape", shape);
 
     if(auto appearance = writeAppearance(shape)){
         archive->insert("appearance", appearance);
@@ -285,9 +314,14 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
 
     MappingPtr archive = new Mapping;
 
+    bool doWriteMesh = true;
+
     if(!mesh->uri().empty() && !doEmbedAllMeshes){
         archive->write("type", "Resource");
-        archive->write("uri", pathVariableProcessor->parameterize(mesh->uri()), DOUBLE_QUOTED);
+        archive->write(
+            "uri",
+            getOrCreatePathVariableProcessor()->parameterize(mesh->uri()), DOUBLE_QUOTED);
+        writeMeshAttributes(archive, mesh);
 
     } else {
         switch(mesh->primitiveType()){
@@ -317,14 +351,18 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
         }
     }
 
+    return archive;
+}
+
+
+void StdSceneWriter::Impl::writeMeshAttributes(Mapping* archive, SgMesh* mesh)
+{
     if(mesh->creaseAngle() > 0.0f){
         archive->write("crease_angle", degree(mesh->creaseAngle()));
     }
     if(mesh->isSolid()){
         archive->write("solid", true);
     }
-
-    return archive;
 }
 
 
@@ -336,6 +374,8 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
     if(mesh->hasVertices() && numTriangles > 0){
 
         archive->write("type", "TriangleMesh");
+
+        writeMeshAttributes(archive, mesh);
 
         auto vertices = archive->createFlowStyleListing("vertices");
         vertices->setFloatingNumberFormat(vertexFormat.c_str());

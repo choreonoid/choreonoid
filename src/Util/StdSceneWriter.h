@@ -24,6 +24,8 @@ public:
     void setBaseDirectory(const std::string& directory);
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
     void setIndentWidth(int n);
+    void setTransformIntegrationEnabled(bool on);
+    bool isTransformIntegrationEnabled() const;
     void setVertexPrecision(int precision);
     int vertexPrecision() const;
 
