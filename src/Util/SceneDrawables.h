@@ -380,9 +380,20 @@ public:
     }
         
     enum PrimitiveType {
-        MESH = 0, BOX, SPHERE, CYLINDER, CONE, CAPSULE,
-        MeshType = MESH, BoxType = BOX, SphereType = SPHERE,
-        CylinderType = CYLINDER, ConeType = CONE, CapsuleType = CAPSULE
+        MeshType,
+        BoxType,
+        SphereType,
+        CylinderType,
+        ConeType,
+        CapsuleType,
+
+        // deprecated
+        MESH = MeshType,
+        BOX = BoxType,
+        SPHERE = SphereType,
+        CYLINDER = CylinderType,
+        CONE = ConeType,
+        CAPSULE = CapsuleType
     };
 
     class Mesh { }; // defined for no primitive information
@@ -421,20 +432,21 @@ public:
         bool side;
     };
     class Capsule {
-        public:
-            Capsule() { }
-            Capsule(double radius, double height) :
-                radius(radius), height(height) { }
-            double radius;
-            double height;
-        };
+    public:
+        Capsule() { }
+        Capsule(double radius, double height) :
+            radius(radius), height(height) { }
+        double radius;
+        double height;
+    };
 
     typedef stdx::variant<Mesh, Box, Sphere, Cylinder, Cone, Capsule> Primitive;
 
     const int primitiveType() const { return stdx::get_variant_index(primitive_); }
     template<class TPrimitive> const TPrimitive& primitive() const { return stdx::get<TPrimitive>(primitive_); }
-    template<class TPrimitive> void setPrimitive(const TPrimitive& prim) { primitive_ = prim; }
+    void setPrimitive(Primitive prim) { primitive_ = prim; }
 
+    void transform(const Affine3& T);
     void transform(const Affine3f& T);
     void translate(const Vector3f& translation);
     void rotate(const Matrix3f& R);

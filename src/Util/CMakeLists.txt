@@ -53,6 +53,7 @@ set(sources
   SceneMarkers.cpp
   SceneRenderer.cpp
   CoordinateAxesOverlay.cpp # This must be after SceneRenderer.cpp
+  SceneGraphOptimizer.cpp
   SceneUtil.cpp
   AbstractSceneLoader.cpp
   SceneLoader.cpp
@@ -160,6 +161,7 @@ set(headers
   SceneMarkers.h
   SceneRenderer.h
   CoordinateAxesOverlay.h
+  SceneGraphOptimizer.h
   SceneUtil.h
   AbstractSceneLoader.h
   SceneLoader.h

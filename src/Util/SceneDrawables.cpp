@@ -471,6 +471,25 @@ void SgMesh::updateBoundingBox()
 }
 
 
+void SgMesh::transform(const Affine3& T)
+{
+    if(hasVertices()){
+        auto& v = *vertices();
+        for(size_t i=0; i < v.size(); ++i){
+            v[i] = (T * v[i].cast<Affine3::Scalar>()).cast<Vector3f::Scalar>();
+        }
+        if(hasNormals()){
+            Matrix3 R = T.linear();
+            auto& n = *normals();
+            for(size_t i=0; i < n.size(); ++i){
+                n[i] = (R * n[i].cast<Affine3::Scalar>()).cast<Vector3f::Scalar>();
+            }
+        }
+    }
+    setPrimitive(SgMesh::Mesh()); // clear the primitive information
+}
+
+
 void SgMesh::transform(const Affine3f& T)
 {
     if(hasVertices()){
@@ -485,7 +504,7 @@ void SgMesh::transform(const Affine3f& T)
             }
         }
     }
-    setPrimitive(MESH); // clear the primitive information
+    setPrimitive(SgMesh::Mesh()); // clear the primitive information
 }
 
 
@@ -497,7 +516,7 @@ void SgMesh::translate(const Vector3f& translation)
             v[i] += translation;
         }
     }
-    setPrimitive(MESH); // clear the primitive information
+    setPrimitive(SgMesh::Mesh()); // clear the primitive information
 }
     
 
@@ -515,7 +534,7 @@ void SgMesh::rotate(const Matrix3f& R)
             }
         }
     }
-    setPrimitive(MESH); // clear the primitive information
+    setPrimitive(SgMesh::Mesh()); // clear the primitive information
 }    
     
 

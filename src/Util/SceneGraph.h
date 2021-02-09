@@ -244,6 +244,7 @@ public:
     void addChild(SgNode* node, SgUpdateRef update = nullptr);
     bool addChildOnce(SgNode* node, SgUpdateRef update = nullptr);
     void insertChild(int index, SgNode* node, SgUpdateRef update = nullptr);
+    void insertChild(SgNode* nextNode, SgNode* node, SgUpdateRef update = nullptr);
     void setSingleChild(SgNode* node, SgUpdateRef update = nullptr);
     iterator removeChild(iterator childIter, SgUpdateRef update = nullptr);
     bool removeChild(SgNode* node, SgUpdateRef update = nullptr);

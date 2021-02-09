@@ -206,7 +206,7 @@ void MeshFilter::integrateMeshes(SgMesh* mesh1, SgMesh* mesh2)
 
     //! \todo Integrate colors and texCoords, too
 
-    mesh1->setPrimitive(SgMesh::MESH);
+    mesh1->setPrimitive(SgMesh::Mesh());
 }
 
 

@@ -346,6 +346,17 @@ void SgGroup::insertChild(int index, SgNode* node, SgUpdateRef update)
 }
 
 
+void SgGroup::insertChild(SgNode* nextNode, SgNode* node, SgUpdateRef update)
+{
+    int index = findChildIndex(nextNode);
+    if(index >= 0){
+        insertChild(index, node, update);
+    } else {
+        insertChild(0, node, update);
+    }
+}
+
+
 void SgGroup::setSingleChild(SgNode* node, SgUpdateRef update)
 {
     int n = numChildren();
