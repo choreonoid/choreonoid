@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-27 13:52+0900\n"
+"POT-Creation-Date: 2021-02-09 14:57+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -1072,67 +1072,67 @@ msgstr "{}はこのワールドの他のシミュレータも選択されてい�
 msgid "Body State"
 msgstr "ボディ状態"
 
-#: SimulatorItem.cpp:490
+#: SimulatorItem.cpp:491
 msgid "Simulation"
 msgstr "シミュレーション"
 
-#: SimulatorItem.cpp:491
+#: SimulatorItem.cpp:492
 msgid "Start"
 msgstr "開始"
 
-#: SimulatorItem.cpp:493
+#: SimulatorItem.cpp:494
 msgid "Pause"
 msgstr "停止"
 
-#: SimulatorItem.cpp:495
+#: SimulatorItem.cpp:496
 msgid "Resume"
 msgstr "再開"
 
-#: SimulatorItem.cpp:497
+#: SimulatorItem.cpp:498
 msgid "Finish"
 msgstr "終了"
 
-#: SimulatorItem.cpp:1254
+#: SimulatorItem.cpp:1255
 msgid "Timestep"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:1255
+#: SimulatorItem.cpp:1256
 msgid "Framerate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:1256
+#: SimulatorItem.cpp:1257
 msgid "Time bar"
 msgstr "タイムバー"
 
-#: SimulatorItem.cpp:1266
+#: SimulatorItem.cpp:1267
 msgid "full"
 msgstr "全て"
 
-#: SimulatorItem.cpp:1267
+#: SimulatorItem.cpp:1268
 msgid "tail"
 msgstr "末尾"
 
-#: SimulatorItem.cpp:1268
+#: SimulatorItem.cpp:1269
 msgid "off"
 msgstr "オフ"
 
-#: SimulatorItem.cpp:1271
+#: SimulatorItem.cpp:1272
 msgid "Unlimited"
 msgstr "無制限"
 
-#: SimulatorItem.cpp:1272
+#: SimulatorItem.cpp:1273
 msgid "Specified time"
 msgstr "指定時間"
 
-#: SimulatorItem.cpp:1273
+#: SimulatorItem.cpp:1274
 msgid "Time bar range"
 msgstr "タイムバー範囲"
 
-#: SimulatorItem.cpp:1671
+#: SimulatorItem.cpp:1681
 msgid "{0} is doing its simulation."
 msgstr ""
 
-#: SimulatorItem.cpp:1674
+#: SimulatorItem.cpp:1684
 msgid ""
 "{0} cannot start the simulation because {1} in the same world is doing its "
 "simulation."
@@ -1140,40 +1140,40 @@ msgstr ""
 "{0}と同じワールドの{1}がシミュレーション中であるため、{0}のシミュレーションを"
 "開始できません．"
 
-#: SimulatorItem.cpp:1687
+#: SimulatorItem.cpp:1697
 msgid "{} must be in a WorldItem to do simulation."
 msgstr "{}はシミュレーション対象のワールド内に配置されている必要があります．"
 
-#: SimulatorItem.cpp:1729
+#: SimulatorItem.cpp:1739
 msgid "The clone of {0} for the simulation cannot be created."
 msgstr "シミュレーション用の{0}のクローンを生成できません．"
 
-#: SimulatorItem.cpp:1775
+#: SimulatorItem.cpp:1785
 msgid "SubSimulatorItem \"{}\" has been detected."
 msgstr "サブシミュレータアイテム \"{}\" が検出されました．"
 
-#: SimulatorItem.cpp:1779
+#: SimulatorItem.cpp:1789
 msgid "The initialization of \"{}\" failed."
 msgstr "\"{}\" の初期化に失敗しました．"
 
-#: SimulatorItem.cpp:1783
+#: SimulatorItem.cpp:1793
 msgid "SubSimulatorItem \"{}\" is disabled."
 msgstr "サブシミュレータアイテム \"{}\" は無効化されています．"
 
-#: SimulatorItem.cpp:1805
+#: SimulatorItem.cpp:1815
 msgid "{0} for {1} failed to start."
 msgstr "{1}用の{0}を稼働できませんでした．"
 
-#: SimulatorItem.cpp:1812
+#: SimulatorItem.cpp:1822
 msgid "{} failed to start."
 msgstr "{}を稼働できませんでした．"
 
-#: SimulatorItem.cpp:1830
+#: SimulatorItem.cpp:1840
 msgid ""
 "The simulation cannot be started because all the controllers are inactive."
 msgstr "稼働可能なコントローラが無いためシミュレーションを開始できません．"
 
-#: SimulatorItem.cpp:1916
+#: SimulatorItem.cpp:1926
 msgid ""
 "WorldLogFileItem \"{0}\" has been detected. A simulation result is recoreded "
 "to \"{1}\"."
@@ -1181,71 +1181,71 @@ msgstr ""
 "ワールドログファイルアイテム \"{0}\" が検出されました．シミュレーション結果は"
 "\"{1}\" に記録されます．"
 
-#: SimulatorItem.cpp:1953
+#: SimulatorItem.cpp:1961
 msgid "Simulation by {} has started."
 msgstr "{}によるシミュレーションを開始しました．"
 
-#: SimulatorItem.cpp:1959
+#: SimulatorItem.cpp:1967
 msgid "{0} failed to initialize the simulation."
 msgstr ""
 
-#: SimulatorItem.cpp:2457
+#: SimulatorItem.cpp:2462
 msgid "Simulation by {0} has finished at {1} [s]."
 msgstr "{0}によるシミュレーションが{1}秒時点で終了しました．"
 
-#: SimulatorItem.cpp:2460
+#: SimulatorItem.cpp:2465
 msgid "Computation time is {0} [s], computation time / simulation time = {1}."
 msgstr "計算時間: {0} [s], 計算時間 / シミュレーション時間 = {1}"
 
-#: SimulatorItem.cpp:2739
+#: SimulatorItem.cpp:2744
 msgid "Temporal resolution type"
 msgstr "時間分解能タイプ"
 
-#: SimulatorItem.cpp:2743
+#: SimulatorItem.cpp:2748
 msgid "Time step"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:2746
+#: SimulatorItem.cpp:2751
 msgid "Frame rate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:2750
+#: SimulatorItem.cpp:2755
 msgid "Sync with realtime"
 msgstr "実時間同期"
 
-#: SimulatorItem.cpp:2752
+#: SimulatorItem.cpp:2757
 msgid "Time range"
 msgstr "時間範囲"
 
-#: SimulatorItem.cpp:2754
+#: SimulatorItem.cpp:2759
 msgid "Time length"
 msgstr "時間長"
 
-#: SimulatorItem.cpp:2756
+#: SimulatorItem.cpp:2761
 msgid "Active control period only"
 msgstr "能動制御期間のみ"
 
-#: SimulatorItem.cpp:2758
+#: SimulatorItem.cpp:2763
 msgid "Recording"
 msgstr "記録モード"
 
-#: SimulatorItem.cpp:2760
+#: SimulatorItem.cpp:2765
 msgid "All link position recording"
 msgstr "全リンク位置の記録"
 
-#: SimulatorItem.cpp:2762
+#: SimulatorItem.cpp:2767
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
-#: SimulatorItem.cpp:2764
+#: SimulatorItem.cpp:2769
 msgid "Record collision data"
 msgstr "干渉データの記録"
 
-#: SimulatorItem.cpp:2766
+#: SimulatorItem.cpp:2771
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
-#: SimulatorItem.cpp:2768 ControllerItem.cpp:82
+#: SimulatorItem.cpp:2773 ControllerItem.cpp:82
 msgid "Controller options"
 msgstr "コントローラオプション"
 
@@ -1350,111 +1350,103 @@ msgstr ""
 msgid "{0:7.3f} [s]: Collision between {1} and {2}"
 msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
 
-#: WorldItem.cpp:109
+#: WorldItem.cpp:110
 msgid "WorldItem"
 msgstr "ワールドアイテム"
 
-#: WorldItem.cpp:524
+#: WorldItem.cpp:536
 msgid "Material table \"{}\" has been reloaded."
 msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 
-#: WorldItem.cpp:535
+#: WorldItem.cpp:547
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:550 BodyItem.cpp:1793
+#: WorldItem.cpp:562 BodyItem.cpp:1684
 msgid "Collision detection"
 msgstr "干渉検出"
 
-#: WorldItem.cpp:552
+#: WorldItem.cpp:564
 msgid "Collision detector"
 msgstr "干渉検出器"
 
-#: WorldItem.cpp:555
+#: WorldItem.cpp:567
 msgid "Contact material definition file (*.yaml)"
 msgstr "接触マテリアル定義ファイル (*.yaml)"
 
-#: WorldItem.cpp:556
+#: WorldItem.cpp:568
 msgid "Material table"
 msgstr "マテリアルテーブル"
 
-#: BodyItem.cpp:214 BodyItem.cpp:261
-msgid "Body"
-msgstr "ボディ"
-
-#: BodyItem.cpp:262
-msgid "Scene / Mesh"
-msgstr "シーン／メッシュ"
-
-#: BodyItem.cpp:310
+#: BodyItem.cpp:215
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1648
+#: BodyItem.cpp:1539
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1707
+#: BodyItem.cpp:1598
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1784
+#: BodyItem.cpp:1675
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1785
+#: BodyItem.cpp:1676
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1786
+#: BodyItem.cpp:1677
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1787
+#: BodyItem.cpp:1678
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1788
+#: BodyItem.cpp:1679
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1789
+#: BodyItem.cpp:1680
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1790 LinkPropertyView.cpp:120
+#: BodyItem.cpp:1681 LinkPropertyView.cpp:120
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1791
+#: BodyItem.cpp:1682
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1795
+#: BodyItem.cpp:1686
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1797
+#: BodyItem.cpp:1688
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1799
+#: BodyItem.cpp:1690
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1802
+#: BodyItem.cpp:1693
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1806
+#: BodyItem.cpp:1697
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1975
+#: BodyItem.cpp:1866
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1992
+#: BodyItem.cpp:1883
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1773,6 +1765,26 @@ msgstr "カメラ画像可視化アイテム"
 msgid "Visual ratio"
 msgstr "表示比率"
 
+#: BodyItemFileIO.cpp:35 BodyItemFileIO.cpp:82
+msgid "Body"
+msgstr "ボディ"
+
+#: BodyItemFileIO.cpp:83
+msgid "Scene / Mesh"
+msgstr "シーン／メッシュ"
+
+#: BodyItemFileIO.cpp:123
+msgid "Standard scene file"
+msgstr "標準シーンファイル"
+
+#: BodyItemFileIO.cpp:216
+msgid "Integrate transforms"
+msgstr "座標変換を統合"
+
+#: BodyItemFileIO.cpp:219
+msgid "Vertex precision:"
+msgstr "頂点精度："
+
 #: LinkPropertyView.cpp:48
 msgid "Link Properties"
 msgstr "リンクプロパティ"
@@ -1832,3 +1844,6 @@ msgstr "関節速度下限"
 #: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
+
+#~ msgid "Optimize scene graph"
+#~ msgstr "シーングラフの最適化"

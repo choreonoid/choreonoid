@@ -7,6 +7,10 @@
 #include <cnoid/SceneItemFileIO>
 #include <cnoid/ItemManager>
 #include <cnoid/SceneGraph>
+#include <QBoxLayout>
+#include <QLabel>
+#include <QCheckBox>
+#include <QSpinBox>
 #include "gettext.h"
 
 using namespace std;
@@ -106,23 +110,43 @@ public:
 class StdSceneFileOutput : public ItemFileIOBase<BodyItem>
 {
     unique_ptr<StdSceneWriter> sceneWriter;
+    QWidget* optionPanel;
+    QCheckBox* transformIntegrationCheck;
+    QSpinBox* vertexPrecisionSpin;
 
 public:
     StdSceneFileOutput()
-        : ItemFileIOBase<BodyItem>("STD-SCENE-FILE", Save)
+        : ItemFileIOBase<BodyItem>(
+            "STD-SCENE-FILE",
+            Save | Options | OptionPanelForSaving)
     {
         setCaption(_("Standard scene file"));
         setExtensions({ "scen" });
         setInterfaceLevel(Conversion);
+
+        optionPanel = nullptr;        
+    }
+
+    ~StdSceneFileOutput()
+    {
+        if(optionPanel){
+            delete optionPanel;
+        }
+    }
+
+    StdSceneWriter* ensureSceneWriter()
+    {
+        if(!sceneWriter){
+            sceneWriter.reset(new StdSceneWriter);
+            sceneWriter->setIndentWidth(1);
+        }
+        return sceneWriter.get();
     }
 
     virtual bool save(BodyItem* item, const std::string& filename) override
     {
         bool saved = false;
-        if(!sceneWriter){
-            sceneWriter.reset(new StdSceneWriter);
-            sceneWriter->setIndentWidth(1);
-        }
+
         auto body = item->body();
         int numLinks = body->numLinks();
         vector<SgNode*> shapes;
@@ -150,7 +174,7 @@ public:
             }
         }
         if(!shapes.empty()){
-            saved = sceneWriter->writeScene(filename, shapes);
+            saved = ensureSceneWriter()->writeScene(filename, shapes);
         }
         // Clear temporary names
         for(auto& index : shapeIndicesToClearName){
@@ -171,6 +195,38 @@ public:
             return group->child(0);
         }
         return nullptr;
+    }
+
+    virtual QWidget* getOptionPanelForSaving(BodyItem* /* item */) override
+    {
+        if(!optionPanel){
+            createOptionPanel();
+        }
+        return optionPanel;
+    }
+
+    void createOptionPanel()
+    {
+        optionPanel = new QWidget;
+        auto hbox = new QHBoxLayout;
+        hbox->setContentsMargins(0, 0, 0, 0);
+        optionPanel->setLayout(hbox);
+
+        transformIntegrationCheck = new QCheckBox;
+        transformIntegrationCheck->setText(_("Integrate transforms"));
+        hbox->addWidget(transformIntegrationCheck);
+        
+        hbox->addWidget(new QLabel(_("Vertex precision:")));
+        vertexPrecisionSpin = new QSpinBox;
+        vertexPrecisionSpin->setRange(6, 16);
+        vertexPrecisionSpin->setValue(ensureSceneWriter()->vertexPrecision());
+        hbox->addWidget(vertexPrecisionSpin);
+    }
+
+    virtual void fetchOptionPanelForSaving() override
+    {
+        sceneWriter->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
+        sceneWriter->setVertexPrecision(vertexPrecisionSpin->value());
     }
 };
 
