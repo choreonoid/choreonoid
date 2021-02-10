@@ -2,6 +2,7 @@
 #set_source_files_properties(SceneGraph.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 set(CNOID_ENABLE_GETTEXT ${CHOREONOID_ENABLE_GETTEXT})
+set(CNOID_ENABLE_GPERFTOOLS_PROFILER ${ENABLE_GPERFTOOLS_PROFILER})
 configure_file(Config.h.in Config.h)
 
 set(sources
@@ -200,6 +201,12 @@ include_directories(
   ${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
 link_directories(${LIBYAML_LIBRARY_DIRS})
 
+if(ENABLE_GPERFTOOLS_PROFILER)
+  include_directories(${GPREFTOOLS_PROFILER_INCLUDE_DIRS})
+  link_directories(${GPREFTOOLS_PROFILER_LIBRARY_DIRS})
+  set(sources ${sources} ProfilerUtil.cpp)
+endif()
+
 set(target CnoidUtil)
 make_gettext_mofiles(${target} mofiles)
 choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
@@ -216,6 +223,10 @@ if(UNIX)
 
   if(FILESYSTEM_LIBRARY)
     set(libraries ${libraries} ${FILESYSTEM_LIBRARY})
+  endif()
+
+  if(ENABLE_GPERFTOOLS_PROFILER)
+    target_link_libraries(${target} ${GPREFTOOLS_PROFILER_LIBRARIES})
   endif()
 
   if(APPLE)
