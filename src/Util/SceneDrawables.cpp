@@ -431,14 +431,26 @@ SgTexCoordArray* SgMeshBase::getOrCreateTexCoords()
 
 SgMesh::SgMesh()
 {
-
+    divisionNumber_ = -1;
+    extraDivisionNumber_ = -1;
+    extraDivisionMode_ = ExtraDivisionPreferred;
 }
 
+
+SgMesh::SgMesh(Primitive primitive)
+    : SgMesh()
+{
+    primitive_ = primitive;
+}
+    
 
 SgMesh::SgMesh(const SgMesh& org, CloneMap* cloneMap)
     : SgMeshBase(org, cloneMap),
       triangleVertices_(org.triangleVertices_),
-      primitive_(org.primitive_)
+      primitive_(org.primitive_),
+      divisionNumber_(org.divisionNumber_),
+      extraDivisionNumber_(org.extraDivisionNumber_),
+      extraDivisionMode_(org.extraDivisionMode_)
 {
 
 }

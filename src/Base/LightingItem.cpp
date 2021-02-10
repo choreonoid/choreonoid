@@ -198,10 +198,10 @@ void LightingItemImpl::genarateLightShape()
 
     slightShape = new SgGroup;
     SgShape* box = new SgShape;
-    box->setMesh(meshGenerator.generateBox(Vector3(0.07, 0.07, 0.07), false));
+    box->setMesh(meshGenerator.generateBox(Vector3(0.07, 0.07, 0.07)));
     box->setMaterial(material);
     SgShape* cone = new SgShape;
-    cone->setMesh(meshGenerator.generateCone(0.07, 0.07, true, true, false));
+    cone->setMesh(meshGenerator.generateCone(0.07, 0.07));
     cone->setMaterial(material);
     SgPosTransform* coneT = new SgPosTransform;
     coneT->setRotation(AngleAxis(radian(90), Vector3(1, 0, 0)));

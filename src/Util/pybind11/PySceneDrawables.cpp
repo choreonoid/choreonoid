@@ -33,8 +33,29 @@ void exportPySceneDrawables(py::module& m)
 
     py::class_<SgMeshBase, SgMeshBasePtr, SgObject>(m, "SgMeshBase");
 
-    py::class_<SgMesh, SgMeshPtr, SgMeshBase>(m, "SgMesh");
+    py::class_<SgMesh, SgMeshPtr, SgMeshBase> sgMesh(m, "SgMesh");
 
+    py::enum_<SgMesh::PrimitiveType>(sgMesh, "PrimitiveType")
+        .value("MeshType", SgMesh::MeshType)
+        .value("BoxType", SgMesh::BoxType)
+        .value("SphereType", SgMesh::SphereType)
+        .value("CylinderType", SgMesh::CylinderType)
+        .value("ConeType", SgMesh::ConeType)
+        .value("CapsuleType", SgMesh::CapsuleType)
+        .export_values();
+
+    py::enum_<SgMesh::ExtraDivisionMode>(sgMesh, "ExtraDivisionMode")
+        .value("ExtraDivisionPreferred", SgMesh::ExtraDivisionPreferred)
+        .value("ExtraDivisionX", SgMesh::ExtraDivisionX)
+        .value("ExtraDivisionY", SgMesh::ExtraDivisionY)
+        .value("ExtraDivisionZ", SgMesh::ExtraDivisionZ)
+        .value("ExtraDivisionAll", SgMesh::ExtraDivisionAll)
+        .export_values();
+
+    sgMesh
+        .def(py::init<>())
+        ;
+    
     py::class_<SgShape, SgShapePtr, SgNode>(m, "SgShape")
         .def(py::init<>())
         .def_property("mesh", (SgMesh* (SgShape::*)()) &SgShape::mesh, &SgShape::setMesh)

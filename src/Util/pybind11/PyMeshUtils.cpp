@@ -10,12 +10,25 @@ void exportPyMeshUtils(py::module& m)
 {
     py::class_<MeshGenerator> meshGenerator(m, "MeshGenerator");
 
-    py::enum_<MeshGenerator::ExtraDivisionNumberFlag>(meshGenerator, "ExtraDivisionNumberFlag", py::arithmetic())
-        .value("DivisionMax", MeshGenerator::DivisionMax)
-        .value("DivisionX", MeshGenerator::DivisionX)
-        .value("DivisionY", MeshGenerator::DivisionY)
-        .value("DivisionZ", MeshGenerator::DivisionZ)
-        .value("DivisionAll", MeshGenerator::DivisionAll)
+    py::enum_<MeshGenerator::MeshOption>(meshGenerator, "MeshOption", py::arithmetic())
+        .value("NoOption", MeshGenerator::NoOption)
+        .value("TextureCoordinate", MeshGenerator::TextureCoordinate)
+        .export_values();
+
+    // Deprecated. This should be replaced with SgMesh::ExtraDivisionMode
+    enum ExtraDivisionNumberFlag {
+        DivisionMax = SgMesh::ExtraDivisionPreferred,
+        DivisionX = SgMesh::ExtraDivisionX,
+        DivisionY = SgMesh::ExtraDivisionY,
+        DivisionZ = SgMesh::ExtraDivisionZ,
+        DivisionAll = SgMesh::ExtraDivisionAll
+    };
+    py::enum_<ExtraDivisionNumberFlag>(meshGenerator, "ExtraDivisionNumberFlag", py::arithmetic())
+        .value("DivisionMax", DivisionMax)
+        .value("DivisionX", DivisionX)
+        .value("DivisionY", DivisionY)
+        .value("DivisionZ", DivisionZ)
+        .value("DivisionAll", DivisionAll)
         .export_values();
 
     meshGenerator
@@ -24,24 +37,22 @@ void exportPyMeshUtils(py::module& m)
         .def("setDivisionNumber", &MeshGenerator::setDivisionNumber)
         .def_property_readonly_static("defaultDivisionNumber", &MeshGenerator::defaultDivisionNumber)
         .def("setExtraDivisionNumber", &MeshGenerator::setExtraDivisionNumber,
-             py::arg("n"), py::arg("flags") = MeshGenerator::DivisionMax)
+             py::arg("n"), py::arg("flags") = SgMesh::ExtraDivisionPreferred)
         .def_property_readonly("extraDivisionNumber", &MeshGenerator::extraDivisionNumber)
-        .def_property_readonly("extraDivisionNumberFlags", &MeshGenerator::extraDivisionNumberFlags)
+        .def_property_readonly("extraDivisionMode", &MeshGenerator::extraDivisionMode)
         .def("setNormalGenerationEnabled", &MeshGenerator::setNormalGenerationEnabled)
         .def("isNormalGenerationEnabled", &MeshGenerator::isNormalGenerationEnabled)
         .def("setBoundingBoxUpdateEnabled", &MeshGenerator::setBoundingBoxUpdateEnabled)
         .def("isBoundingBoxUpdateEnabled", &MeshGenerator::isBoundingBoxUpdateEnabled)
-        .def("generateBox", &MeshGenerator::generateBox,
-             py::arg("size"), py::arg("enableTextureCoordinate") = false)
-        .def("generateSphere", &MeshGenerator::generateSphere,
-             py::arg("radius"), py::arg("enableTextureCoordinate") = false)
-        .def("generateCylinder", &MeshGenerator::generateCylinder,
-             py::arg("radius"), py::arg("height"), py::arg("bottom") = true, py::arg("top"),
-             py::arg("side") = true, py::arg("enableTextureCoordinate") = false)
-        .def("generateCone", &MeshGenerator::generateCone,
-             py::arg("radius"), py::arg("height"),
-             py::arg("bottom") = true, py::arg("side") = true, py::arg("enableTextureCoordinate") = false)
-        .def("generateCapsule", &MeshGenerator::generateCapsule)
+        .def("generateBox", (SgMesh*(MeshGenerator::*)(const Vector3&, int)) &MeshGenerator::generateBox,
+                             py::arg("size"), py::arg("options") = MeshGenerator::NoOption)
+        .def("generateSphere", (SgMesh*(MeshGenerator::*)(double, int)) &MeshGenerator::generateSphere,
+             py::arg("radius"), py::arg("options") = MeshGenerator::NoOption)
+        .def("generateCylinder", (SgMesh*(MeshGenerator::*)(double, double, int)) &MeshGenerator::generateCylinder,
+             py::arg("radius"), py::arg("height"), py::arg("options") = MeshGenerator::NoOption)
+        .def("generateCone", (SgMesh*(MeshGenerator::*)(double, double, int)) &MeshGenerator::generateCone,
+             py::arg("radius"), py::arg("height"), py::arg("options") = MeshGenerator::NoOption)
+        .def("generateCapsule", (SgMesh*(MeshGenerator::*)(double, double)) &MeshGenerator::generateCapsule)
         .def("generateDisc", &MeshGenerator::generateDisc)
         .def("generateArrow", &MeshGenerator::generateArrow)
         .def("generateTorus", (SgMesh* (MeshGenerator::*)(double, double)) &MeshGenerator::generateTorus)

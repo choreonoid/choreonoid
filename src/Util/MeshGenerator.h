@@ -25,35 +25,34 @@ public:
     int divisionNumber() const { return divisionNumber_; }
     static int defaultDivisionNumber();
 
-    enum ExtraDivisionNumberFlag {
-        DivisionMax = 0,
-        DivisionX = 1,
-        DivisionY = 2,
-        DivisionZ = 4,
-        DivisionAll = DivisionX | DivisionY | DivisionZ
-    };
-
-    void setExtraDivisionNumber(int n, int flags = DivisionMax){
+    // Deprecated. Use SgMesh::setExtraDivisionNumber and SgMesh::setExtraDivisionMode
+    //! \param mode A combination of SgMesh::ExtraDivisionMode symbols
+    void setExtraDivisionNumber(int n, int mode = SgMesh::ExtraDivisionPreferred){
         extraDivisionNumber_ = n;
-        extraDivisionNumberFlags_ = flags;
+        extraDivisionMode_ = mode;
     }
     int extraDivisionNumber() const { return extraDivisionNumber_; }
-    int extraDivisionNumberFlags() const { return extraDivisionNumberFlags_; }
+    int extraDivisionMode() const { return extraDivisionMode_; }
 
     void setNormalGenerationEnabled(bool on);
-    // \deprecated
+    [[deprecated("Use setNormalGenerationEnabled")]]
     void enableNormalGeneration(bool on);
     bool isNormalGenerationEnabled() const;
 
     void setBoundingBoxUpdateEnabled(bool on);
     bool isBoundingBoxUpdateEnabled() const;
 
-    SgMesh* generateBox(Vector3 size, bool enableTextureCoordinate = false);
-    SgMesh* generateSphere(double radius, bool enableTextureCoordinate = false);
-    SgMesh* generateCylinder(double radius, double height, bool bottom = true,
-            bool top = true, bool side = true, bool enableTextureCoordinate = false);
-    SgMesh* generateCone(double radius, double height,
-            bool bottom = true, bool side = true, bool enableTextureCoordinate = false);
+    enum MeshOption {
+        NoOption = 0,
+        TextureCoordinate = 1
+    };
+
+    bool updateMeshWithPrimitiveInformation(SgMesh* mesh, int options = NoOption);
+
+    SgMesh* generateBox(const Vector3& size, int options = NoOption);
+    SgMesh* generateSphere(double radius, int options = NoOption);
+    SgMesh* generateCylinder(double radius, double height, int options = NoOption);
+    SgMesh* generateCone(double radius, double height, int options = NoOption);
     SgMesh* generateCapsule(double radius, double height);
     SgMesh* generateDisc(double radius, double innerRadius);
     SgMesh* generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight);
@@ -109,17 +108,22 @@ public:
 private:
     int divisionNumber_;
     int extraDivisionNumber_;
-    int extraDivisionNumberFlags_;
+    int extraDivisionMode_;
     bool isNormalGenerationEnabled_;
     bool isBoundingBoxUpdateEnabled_;
     MeshFilter* meshFilter;
 
     MeshFilter* getOrCreateMeshFilter();
-    SgMesh* generateBoxWithExtraTriangles(Vector3 size);
+    void generateNormals(SgMesh* mesh, double creaseAngle);
+    bool generateBox(SgMesh* mesh, int options);
+    bool generateBoxWithExtraTriangles(SgMesh* mesh);
+    void generateTextureCoordinateForBox(SgMesh* mesh);
     void generateBoxPlaneMesh(
         const Vector3& size, SgMesh* mesh, SgVertexArray* vertices, int axis1, int axis2, int axis3, int* divisions);
-    void generateNormals(SgMesh* mesh, double creaseAngle);
-    void generateTextureCoordinateForBox(SgMesh* mesh);
+    bool generateSphere(SgMesh* mesh, int options);
+    bool generateCylinder(SgMesh* mesh, int options);
+    bool generateCone(SgMesh* mesh, int options);
+    bool generateCapsule(SgMesh* mesh);
     void generateTextureCoordinateForSphere(SgMesh* mesh);
     void generateTextureCoordinateForCylinder(SgMesh* mesh);
     void generateTextureCoordinateForCone(SgMesh* mesh);

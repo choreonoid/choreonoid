@@ -400,30 +400,30 @@ public:
 
     class Box {
     public:
-        Box() { }
+        Box() : Box(Vector3(1.0, 1.0, 1.0)) { }
         Box(Vector3 size) : size(size) { }
         Vector3 size;
     };
     class Sphere {
     public:
-        Sphere() { }
+        Sphere() : Sphere(1.0) { }
         Sphere(double radius) : radius(radius) { }
         double radius;
     };
     class Cylinder {
     public:
-        Cylinder() { }
+        Cylinder() : Cylinder(1.0, 1.0) { }
         Cylinder(double radius, double height) :
-            radius(radius), height(height), bottom(true), side(true), top(true) { }
+            radius(radius), height(height), top(true), bottom(true), side(true) { }
         double radius;
         double height;
+        bool top;
         bool bottom;
         bool side;
-        bool top;
     };
     class Cone {
     public:
-        Cone() { }
+        Cone() : Cone(1.0, 1.0) { }
         Cone(double radius, double height) :
             radius(radius), height(height), bottom(true), side(true) { }
         double radius;
@@ -433,7 +433,7 @@ public:
     };
     class Capsule {
     public:
-        Capsule() { }
+        Capsule() : Capsule(1.0, 1.0) { }
         Capsule(double radius, double height) :
             radius(radius), height(height) { }
         double radius;
@@ -442,9 +442,30 @@ public:
 
     typedef stdx::variant<Mesh, Box, Sphere, Cylinder, Cone, Capsule> Primitive;
 
+    SgMesh(Primitive primitive);
+
     const int primitiveType() const { return stdx::get_variant_index(primitive_); }
     template<class TPrimitive> const TPrimitive& primitive() const { return stdx::get<TPrimitive>(primitive_); }
     void setPrimitive(Primitive prim) { primitive_ = prim; }
+
+    //! The value is -1 when the division number is not explicitly specified.
+    int divisionNumber() const { return divisionNumber_; }
+    void setDivisionNumber(int n) { divisionNumber_ = n; }
+
+    //! The value is -1 when the extra division number is not explicitly specified.
+    int extraDivisionNumber() const { return extraDivisionNumber_; }
+    void setExtraDivisionNumber(int n) { extraDivisionNumber_ = n; }
+
+    //! This mode is only valid for the box primitive
+    enum ExtraDivisionMode {
+        ExtraDivisionPreferred = 0,
+        ExtraDivisionX = 1,
+        ExtraDivisionY = 2,
+        ExtraDivisionZ = 4,
+        ExtraDivisionAll = ExtraDivisionX | ExtraDivisionY | ExtraDivisionZ
+    };
+    int extraDivisionMode() const { return extraDivisionMode_; }
+    void setExtraDivisionMode(int mode) { extraDivisionMode_ = mode; }
 
     void transform(const Affine3& T);
     void transform(const Affine3f& T);
@@ -457,6 +478,9 @@ protected:
 private:
     SgIndexArray triangleVertices_;
     Primitive primitive_;
+    short divisionNumber_;
+    short extraDivisionNumber_;
+    short extraDivisionMode_;
 };
 
 typedef ref_ptr<SgMesh> SgMeshPtr;

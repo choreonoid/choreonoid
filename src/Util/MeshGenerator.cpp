@@ -22,7 +22,7 @@ MeshGenerator::MeshGenerator()
 {
     divisionNumber_ = ::defaultDivisionNumber;
     extraDivisionNumber_ = 1;
-    extraDivisionNumberFlags_ = DivisionMax;
+    extraDivisionMode_ = SgMesh::ExtraDivisionPreferred;
     isNormalGenerationEnabled_ = true;
     isBoundingBoxUpdateEnabled_ = true;
     meshFilter = nullptr;
@@ -100,22 +100,60 @@ bool MeshGenerator::isBoundingBoxUpdateEnabled() const
 }
 
 
-SgMesh* MeshGenerator::generateBox(Vector3 size, bool enableTextureCoordinate)
+bool MeshGenerator::updateMeshWithPrimitiveInformation(SgMesh* mesh, int options)
 {
+    bool generated = false;
+    switch(mesh->primitiveType()){
+    case SgMesh::BoxType:
+        generated = generateBox(mesh, options);
+        break;
+    case SgMesh::SphereType:
+        generated = generateSphere(mesh, options);
+        break;
+    case SgMesh::CylinderType:
+        generated = generateCylinder(mesh, options);
+        break;
+    case SgMesh::ConeType:
+        generated = generateCone(mesh, options);
+        break;
+    case SgMesh::CapsuleType:
+        generated = generateCapsule(mesh);
+        break;
+    default:
+        break;
+    }
+    return generated;
+}
+
+
+SgMesh* MeshGenerator::generateBox(const Vector3& size, int options)
+{
+    SgMeshPtr mesh = new SgMesh;
+    mesh->setPrimitive(SgMesh::Box(size));
+    if(!generateBox(mesh, options)){
+        mesh.reset();
+    }
+    return mesh.retn();
+}
+
+
+bool MeshGenerator::generateBox(SgMesh* mesh, int options)
+{
+    auto& box = mesh->primitive<SgMesh::Box>();
+    auto& size = box.size;
+
     if(size.x() < 0.0 || size.y() < 0.0 || size.z() < 0.0){
-        return nullptr;
+        return false;
     }
 
-    if(extraDivisionNumber_ >= 2){
-        return generateBoxWithExtraTriangles(size);
+    if(mesh->extraDivisionNumber() >= 2 || extraDivisionNumber_ >= 2){
+        return generateBoxWithExtraTriangles(mesh);
     }
 
     const float x = size.x() * 0.5;
     const float y = size.y() * 0.5;
     const float z = size.z() * 0.5;
 
-    auto mesh = new SgMesh;
-    
     mesh->setVertices(
         new SgVertexArray{
             {  x, y, z },
@@ -137,20 +175,17 @@ SgMesh* MeshGenerator::generateBox(Vector3 size, bool enableTextureCoordinate)
             {4,6,5},{4,7,6}
         });
     
-
-    mesh->setPrimitive(SgMesh::Box(size));
-
     if(isBoundingBoxUpdateEnabled_){
         mesh->updateBoundingBox();
     }
 
     generateNormals(mesh, 0.0);
 
-    if(enableTextureCoordinate){
+    if(options & TextureCoordinate){
         generateTextureCoordinateForBox(mesh);
     }
 
-    return mesh;
+    return true;
 }
 
 
@@ -181,14 +216,27 @@ void MeshGenerator::generateTextureCoordinateForBox(SgMesh* mesh)
 }
 
 
-SgMesh* MeshGenerator::generateBoxWithExtraTriangles(Vector3 size)
+bool MeshGenerator::generateBoxWithExtraTriangles(SgMesh* mesh)
 {
+    const auto& box = mesh->primitive<SgMesh::Box>();
+    const auto& size = box.size;
+
     int divisions[3];
 
-    if(extraDivisionNumberFlags_ == DivisionMax){
+    int edv;
+    int mode;
+    if(mesh->extraDivisionNumber() >= 2){
+        edv = mesh->extraDivisionNumber();
+        mode = mesh->extraDivisionMode();
+    } else {
+        edv = extraDivisionNumber_;
+        mode = extraDivisionMode_;
+    }
+        
+    if(mode == SgMesh::ExtraDivisionPreferred){
         double maxPatchSize = 0.0;
         for(int i=0; i < 3; ++i){
-            double patchSize = size[i] / extraDivisionNumber_;
+            double patchSize = size[i] / edv;
             if(patchSize > maxPatchSize){
                 maxPatchSize = patchSize;
             }
@@ -198,15 +246,14 @@ SgMesh* MeshGenerator::generateBoxWithExtraTriangles(Vector3 size)
         }
     } else {
         for(int i=0; i < 3; ++i){
-            if(extraDivisionNumberFlags_ & (1 << i)){
-                divisions[i] = extraDivisionNumber_;
+            if(mode & (1 << i)){
+                divisions[i] = edv;
             } else {
                 divisions[i] = 1;
             }
         }
     }
 
-    auto mesh = new SgMesh;
     auto vertices = mesh->getOrCreateVertices();
 
     vertices->reserve(
@@ -232,15 +279,13 @@ SgMesh* MeshGenerator::generateBoxWithExtraTriangles(Vector3 size)
     */
     getOrCreateMeshFilter()->removeRedundantVertices(mesh);
 
-    mesh->setPrimitive(SgMesh::Box(size));
-    
     if(isBoundingBoxUpdateEnabled_){
         mesh->updateBoundingBox();
     }
 
     generateNormals(mesh, 0.0);
     
-    return mesh;
+    return true;
 }
 
 
@@ -294,16 +339,37 @@ void MeshGenerator::generateBoxPlaneMesh
 }
 
 
-SgMesh* MeshGenerator::generateSphere(double radius, bool enableTextureCoordinate)
+SgMesh* MeshGenerator::generateSphere(double radius, int options)
 {
-    if(radius < 0.0 || divisionNumber_ < 4){
-        return nullptr;
+    SgMeshPtr mesh = new SgMesh;
+    mesh->setPrimitive(SgMesh::Sphere(radius));
+    if(!generateSphere(mesh, options)){
+        mesh.reset();
+    }
+    return mesh.retn();
+}
+
+
+bool MeshGenerator::generateSphere(SgMesh* mesh, int options)
+{
+    const auto& sphere = mesh->primitive<SgMesh::Sphere>();
+    const auto radius = sphere.radius;
+    
+    if(radius <= 0.0){
+        return false;
     }
 
-    auto mesh = new SgMesh;
-    
-    const int vdn = divisionNumber_ / 2;  // latitudinal division number
-    const int hdn = divisionNumber_;      // longitudinal division number
+    int dv;
+    if(mesh->divisionNumber() >= 4){
+        dv = mesh->divisionNumber();
+    } else if(divisionNumber_ >= 4){
+        dv = divisionNumber_;
+    } else {
+        dv = 4;
+    }
+
+    const int vdn = dv / 2;  // latitudinal division number
+    const int hdn = dv;      // longitudinal division number
 
     auto& vertices = *mesh->setVertices(new SgVertexArray());
     vertices.reserve((vdn - 1) * hdn + 2);
@@ -346,8 +412,6 @@ SgMesh* MeshGenerator::generateSphere(double radius, bool enableTextureCoordinat
         mesh->addTriangle(bottomIndex, (i % hdn) + offset, ((i+1) % hdn) + offset);
     }
 
-    mesh->setPrimitive(SgMesh::Sphere(radius));
-
     if(isBoundingBoxUpdateEnabled_){
         mesh->updateBoundingBox();
     }
@@ -355,11 +419,11 @@ SgMesh* MeshGenerator::generateSphere(double radius, bool enableTextureCoordinat
     //! \todo set normals directly without using the following function
     generateNormals(mesh, PI);
 
-    if(enableTextureCoordinate){
+    if(options & TextureCoordinate){
         generateTextureCoordinateForSphere(mesh);
     }
 
-    return mesh;
+    return true;
 }
 
 
@@ -425,25 +489,50 @@ void MeshGenerator::generateTextureCoordinateForSphere(SgMesh* mesh)
 }
 
 
-SgMesh* MeshGenerator::generateCylinder
-(double radius, double height, bool bottom, bool top, bool side, bool enableTextureCoordinate)
+SgMesh* MeshGenerator::generateCylinder(double radius, double height, int options)
 {
-    if(height < 0.0 || radius < 0.0){
-        return nullptr;
+    SgMeshPtr mesh = new SgMesh;
+    mesh->setPrimitive(SgMesh::Cylinder(radius, height));
+    if(!generateCylinder(mesh, options)){
+        mesh.reset();
+    }
+    return mesh.retn();
+}
+    
+
+bool MeshGenerator::generateCylinder(SgMesh* mesh, int options)
+{
+    const auto& cylinder = mesh->primitive<SgMesh::Cylinder>();
+    
+    if(cylinder.height <= 0.0 || cylinder.radius <= 0.0){
+        return false;
     }
 
-    auto mesh = new SgMesh;
     auto& vertices = *mesh->getOrCreateVertices();
-    const int n = divisionNumber_;
-    const int m = side ? extraDivisionNumber_ : 1;
+    int n;
+    if(mesh->divisionNumber() >= 4){
+        n = mesh->divisionNumber();
+    } else if(divisionNumber_ >= 4){
+        n = divisionNumber_;
+    } else {
+        n = 4;
+    }
+    int m = 1;
+    if(cylinder.side){
+        if(mesh->extraDivisionNumber() > 1){
+            m = mesh->extraDivisionNumber();
+        } else if(extraDivisionNumber_ > 1){
+            m = extraDivisionNumber_;
+        }
+    }
     int size = n * (m + 1);
     int topCenterIndex;
     int bottomCenterIndex;
-    if(top){
+    if(cylinder.top){
         topCenterIndex = size;
         size += 1;
     }
-    if(bottom){
+    if(cylinder.bottom){
         bottomCenterIndex = size;
         size += 1;
     }
@@ -451,39 +540,39 @@ SgMesh* MeshGenerator::generateCylinder
 
     for(int i=0 ; i < n ; ++i){
         const double theta = i * 2.0 * PI / n;
-        const double x = radius * cos(theta);
-        const double z = radius * sin(theta);
+        const double x = cylinder.radius * cos(theta);
+        const double z = cylinder.radius * sin(theta);
         for(int j=0; j <= m; ++j){
-            vertices[i + j * n] << x, (height / 2.0 - j * (height / m)), z;
+            vertices[i + j * n] << x, (cylinder.height / 2.0 - j * (cylinder.height / m)), z;
         }
     }
 
-    if(top){
-        vertices[topCenterIndex] << 0.0f, height / 2.0, 0.0f;
+    if(cylinder.top){
+        vertices[topCenterIndex] << 0.0f, cylinder.height / 2.0, 0.0f;
     }
-    if(bottom){
-        vertices[bottomCenterIndex] << 0.0f, -height / 2.0, 0.0f;
+    if(cylinder.bottom){
+        vertices[bottomCenterIndex] << 0.0f, -cylinder.height / 2.0, 0.0f;
     }
 
     int nt = 0;
-    if(top){
+    if(cylinder.top){
         nt += n;
     }
-    if(bottom){
+    if(cylinder.bottom){
         nt += n;
     }
-    if(side){
+    if(cylinder.side){
         nt += 2 * n * m;
     }
     mesh->reserveNumTriangles(nt);
     
     for(int i=0; i < n; ++i){
         // top face
-        if(top){
+        if(cylinder.top){
             mesh->addTriangle(topCenterIndex, (i + 1) % n, i);
         }
         // side face
-        if(side){
+        if(cylinder.side){
             for(int j=0; j < m; ++j){
                 int offset = n * j;
                 // upward convex triangle
@@ -493,24 +582,22 @@ SgMesh* MeshGenerator::generateCylinder
             }
         }
         // bottom face
-        if(bottom){
+        if(cylinder.bottom){
             mesh->addTriangle(bottomCenterIndex, m * n + i, m * n + (i + 1) % n);
         }
     }
     
-    mesh->setPrimitive(SgMesh::Cylinder(radius, height));
-
     if(isBoundingBoxUpdateEnabled_){
         mesh->updateBoundingBox();
     }
 
     generateNormals(mesh, PI / 2.0);
     
-    if(enableTextureCoordinate && m == 1){
+    if((options & TextureCoordinate) && m == 1){
         generateTextureCoordinateForCylinder(mesh);
     }
 
-    return mesh;
+    return true;
 }
 
 
@@ -598,42 +685,59 @@ void MeshGenerator::generateTextureCoordinateForCylinder(SgMesh* mesh)
 }
 
 
-SgMesh* MeshGenerator::generateCone
-(double radius, double height, bool bottom, bool side, bool enableTextureCoordinate)
+SgMesh* MeshGenerator::generateCone(double radius, double height, int options)
 {
-    if(radius < 0.0 || height < 0.0){
-        return nullptr;
+    SgMeshPtr mesh = new SgMesh;
+    mesh->setPrimitive(SgMesh::Cylinder(radius, height));
+    if(!generateCone(mesh, options)){
+        mesh.reset();
+    }
+    return mesh.retn();
+}
+
+
+bool MeshGenerator::generateCone(SgMesh* mesh, int options)
+{
+    const auto& cone = mesh->primitive<SgMesh::Cone>();
+    
+    if(cone.radius <= 0.0 || cone.height <= 0.0){
+        return false;
     }
 
-    auto mesh = new SgMesh;
-    
-    auto& vertices = *mesh->setVertices(new SgVertexArray());
-    vertices.reserve(divisionNumber_ + 2);
+    int dv;
+    if(mesh->divisionNumber() >= 4){
+        dv = mesh->divisionNumber();
+    } else if(divisionNumber_ >= 4){
+        dv = divisionNumber_;
+    } else {
+        dv = 4;
+    }
 
-    for(int i=0;  i < divisionNumber_; ++i){
-        const double angle = i * 2.0 * PI / divisionNumber_;
-        vertices.push_back(Vector3f(radius * cos(angle), -height / 2.0, radius * sin(angle)));
+    auto& vertices = *mesh->setVertices(new SgVertexArray());
+    vertices.reserve(dv + 2);
+
+    for(int i=0;  i < dv; ++i){
+        const double angle = i * 2.0 * PI / dv;
+        vertices.push_back(Vector3f(cone.radius * cos(angle), -cone.height / 2.0, cone.radius * sin(angle)));
     }
 
     const int topIndex = vertices.size();
-    vertices.push_back(Vector3f(0.0f, height / 2.0, 0.0f));
+    vertices.push_back(Vector3f(0.0f, cone.height / 2.0, 0.0f));
     const int bottomCenterIndex = vertices.size();
-    vertices.push_back(Vector3f(0.0f, -height / 2.0, 0.0f));
+    vertices.push_back(Vector3f(0.0f, -cone.height / 2.0, 0.0f));
 
-    mesh->reserveNumTriangles(divisionNumber_ * 2);
+    mesh->reserveNumTriangles(dv * 2);
 
-    for(int i=0; i < divisionNumber_; ++i){
+    for(int i=0; i < dv; ++i){
         // side faces
-        if(side){
-            mesh->addTriangle(topIndex, (i + 1) % divisionNumber_, i);
+        if(cone.side){
+            mesh->addTriangle(topIndex, (i + 1) % dv, i);
         }
         // bottom faces
-        if(bottom){
-            mesh->addTriangle(bottomCenterIndex, i, (i + 1) % divisionNumber_);
+        if(cone.bottom){
+            mesh->addTriangle(bottomCenterIndex, i, (i + 1) % dv);
         }
     }
-
-    mesh->setPrimitive(SgMesh::Cone(radius, height));
 
     if(isBoundingBoxUpdateEnabled_){
         mesh->updateBoundingBox();
@@ -641,11 +745,11 @@ SgMesh* MeshGenerator::generateCone
 
     generateNormals(mesh, PI / 2.0);
 
-    if(enableTextureCoordinate){
+    if(options & TextureCoordinate){
         generateTextureCoordinateForCone(mesh);
     }
 
-    return mesh;
+    return true;
 }
 
 
@@ -728,18 +832,46 @@ void MeshGenerator::generateTextureCoordinateForCone(SgMesh* mesh)
 
 SgMesh* MeshGenerator::generateCapsule(double radius, double height)
 {
-    if(height < 0.0 || radius < 0.0){
-        return nullptr;
+    SgMeshPtr mesh = new SgMesh;
+    mesh->setPrimitive(SgMesh::Capsule(radius, height));
+    if(!generateCapsule(mesh)){
+        mesh.reset();
+    }
+    return mesh.retn();
+}
+    
+
+bool MeshGenerator::generateCapsule(SgMesh* mesh)
+{
+    const auto& capsule = mesh->primitive<SgMesh::Capsule>();
+    const double height = capsule.height;
+    const double radius = capsule.radius;
+    
+    if(height < 0.0 || radius <= 0.0){
+        return false;
     }
 
-    auto mesh = new SgMesh;
+    int dv;
+    if(mesh->divisionNumber() >= 4){
+        dv = mesh->divisionNumber();
+    } else if(divisionNumber_ >= 4){
+        dv = divisionNumber_;
+    } else {
+        dv = 4;
+    }
+    int edv = 1;
+    if(mesh->extraDivisionNumber() > 1){
+        edv = mesh->extraDivisionNumber();
+    } else if(extraDivisionNumber_ > 1){
+        edv = extraDivisionNumber_;
+    }
 
-    int vdn = divisionNumber_ / 2; // latitudinal division number
+    int vdn = dv / 2; // latitudinal division number
     if(vdn % 2){
         vdn +=1;
     }
-    const int n = vdn + extraDivisionNumber_ - 1;
-    const int hdn = divisionNumber_; // longitudinal division number
+    const int n = vdn + edv - 1;
+    const int hdn = dv; // longitudinal division number
     int size = n * hdn + 2;
                 
     auto& vertices = *mesh->setVertices(new SgVertexArray());
@@ -758,12 +890,12 @@ SgMesh* MeshGenerator::generateCapsule(double radius, double height)
         }
     }
     // Cylinder pat divisions
-    for(int i = 1; i < extraDivisionNumber_; ++i){
+    for(int i = 1; i < edv; ++i){
         for(int j = 0; j < hdn; ++j){
             const double phi = j * 2.0 * PI / hdn;
             vertices.emplace_back(
                 radius * cos(phi),
-                y0 - i * height / extraDivisionNumber_,
+                y0 - i * height / edv,
                 radius * sin(phi));
         }
     }
@@ -807,8 +939,6 @@ SgMesh* MeshGenerator::generateCapsule(double radius, double height)
     for(int i = 0; i < hdn; ++i){
         mesh->addTriangle(bottomIndex, (i % hdn) + offset, ((i + 1) % hdn) + offset);
     }
-
-    mesh->setPrimitive(SgMesh::Capsule(radius, height));
 
     if(isBoundingBoxUpdateEnabled_){
         mesh->updateBoundingBox();
@@ -867,14 +997,16 @@ SgMesh* MeshGenerator::generateArrow(double cylinderRadius, double cylinderHeigh
 {
     auto cone = new SgShape;
     //setDivisionNumber(20);
-    cone->setMesh(generateCone(coneRadius, coneHeight));
+    generateCone(cone->setMesh(new SgMesh(SgMesh::Cone(coneRadius, coneHeight))), false);
     auto conePos = new SgPosTransform;
     conePos->setTranslation(Vector3(0.0, cylinderHeight / 2.0 + coneHeight / 2.0, 0.0));
     conePos->addChild(cone);
 
     auto cylinder = new SgShape;
     //setDivisionNumber(12);
-    cylinder->setMesh(generateCylinder(cylinderRadius, cylinderHeight, true, false));
+    SgMesh::Cylinder cylinderParams(cylinderRadius, cylinderHeight);
+    cylinderParams.top = false;
+    generateCylinder(cylinder->setMesh(new SgMesh(cylinderParams)), false);
         
     MeshExtractor meshExtractor;
     SgGroupPtr group = new SgGroup;

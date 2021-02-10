@@ -55,7 +55,6 @@ public:
     bool on;
     
     MeshGenerator meshGenerator;
-    int defaultDivisionNumber;
     PolygonMeshTriangulator polygonMeshTriangulator;
     MeshFilter meshFilter;
     SgMaterialPtr defaultMaterial;
@@ -127,7 +126,7 @@ public:
     SgNode* readTransformParameters(Mapping& info, SgNode* scene);
     SgNode* readShape(Mapping& info);
     SgMesh* readGeometry(Mapping& info);
-    void readDivisionNumber(Mapping& info);
+    void readDivisionNumbers(Mapping& info, SgMesh* mesh);
     SgMesh* readBox(Mapping& info);
     SgMesh* readSphere(Mapping& info);
     SgMesh* readCylinder(Mapping& info);
@@ -217,7 +216,6 @@ StdSceneReader::Impl::Impl(StdSceneReader* self)
     }
     
     os_ = &nullout();
-    defaultDivisionNumber = meshGenerator.defaultDivisionNumber();
     isUriSchemeRegexReady = false;
     imageIO.setUpsideDown(true);
 }
@@ -244,14 +242,14 @@ void StdSceneReader::setMessageSink(std::ostream& os)
 
 void StdSceneReader::setDefaultDivisionNumber(int n)
 {
-    impl->defaultDivisionNumber = n;
+    impl->meshGenerator.setDivisionNumber(n);
     impl->sceneLoader.setDefaultDivisionNumber(n);
 }
 
 
 int StdSceneReader::defaultDivisionNumber() const
 {
-    return impl->defaultDivisionNumber;
+    return impl->meshGenerator.divisionNumber();
 }
 
 
@@ -728,86 +726,125 @@ SgMesh* StdSceneReader::Impl::readGeometry(Mapping& info)
 }
 
 
-void StdSceneReader::Impl::readDivisionNumber(Mapping& info)
+void StdSceneReader::Impl::readDivisionNumbers(Mapping& info, SgMesh* mesh)
 {
     int n;
-    if(info.read("division_number", n) || info.read("divisionNumber", n)){
-        meshGenerator.setDivisionNumber(n);
-    } else {
-        meshGenerator.setDivisionNumber(defaultDivisionNumber);
+    if(info.read({ "division_number", "divisionNumber" }, n)){
+        mesh->setDivisionNumber(n);
+    }
+    if(info.read("extra_division_number", n)){
+        mesh->setExtraDivisionNumber(n);
     }
 }
     
 
 SgMesh* StdSceneReader::Impl::readBox(Mapping& info)
 {
-    int edv = info.get("extra_division_number", 1);
-    int mode = MeshGenerator::DivisionMax;
-    if(edv >= 2){
-        string symbol;
-        if(info.read("extra_division_mode", mode)){
-            if(symbol == "max"){
-                mode = MeshGenerator::DivisionMax;
-            } else if(symbol == "x"){
-                mode = MeshGenerator::DivisionX;
-            } else if(symbol == "y"){
-                mode = MeshGenerator::DivisionY;
-            } else if(symbol == "z"){
-                mode = MeshGenerator::DivisionZ;
-            }
-        }
-    }
-    meshGenerator.setExtraDivisionNumber(edv, mode);
+    SgMeshPtr mesh = new SgMesh;
 
-    Vector3 size;
-    if(!read(info, "size", size)){
-        size.setOnes(1.0);
+    readDivisionNumbers(info, mesh);
+
+    SgMesh::Box box;
+    read(info, "size", box.size);
+    mesh->setPrimitive(box);
+
+    int edv = info.get("extra_division_number", 1);
+    string symbol;
+    if(info.read("extra_division_mode", symbol)){
+        int mode;
+        if(symbol == "preferred"){
+            mode = SgMesh::ExtraDivisionPreferred;
+        } else if(symbol == "x"){
+            mode = SgMesh::ExtraDivisionX;
+        } else if(symbol == "y"){
+            mode = SgMesh::ExtraDivisionY;
+        } else if(symbol == "z"){
+            mode = SgMesh::ExtraDivisionZ;
+        } else {
+            mode = SgMesh::ExtraDivisionPreferred;
+        }
+        mesh->setExtraDivisionMode(mode);
     }
-    return meshGenerator.generateBox(size, generateTexCoord);
+
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+        info.throwException(_("A box cannot be generated with the given parameters."));
+    }
+
+    return mesh.retn();
 }
 
 
 SgMesh* StdSceneReader::Impl::readSphere(Mapping& info)
 {
-    readDivisionNumber(info);
-    return meshGenerator.generateSphere(info.get("radius", 1.0), generateTexCoord);
+    SgMeshPtr mesh = new SgMesh;
+
+    readDivisionNumbers(info, mesh);
+
+    SgMesh::Sphere sphere;
+    info.read("radius", sphere.radius);
+    mesh->setPrimitive(sphere);
+
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+        info.throwException(_("A sphere cannot be generated with the given parameters."));
+    }
+    return mesh.retn();
 }
 
 
 SgMesh* StdSceneReader::Impl::readCylinder(Mapping& info)
 {
-    readDivisionNumber(info);
-    meshGenerator.setExtraDivisionNumber(info.get("extra_division_number", 1));
+    SgMeshPtr mesh = new SgMesh;
     
-    double radius = info.get("radius", 1.0);
-    double height = info.get("height", 1.0);
-    bool bottom = info.get("bottom", true);
-    bool top = info.get("top", true);
-    
-    return meshGenerator.generateCylinder(radius, height, bottom, top, true, generateTexCoord);
+    readDivisionNumbers(info, mesh);
 
+    SgMesh::Cylinder cylinder;
+    info.read("radius", cylinder.radius);
+    info.read("height", cylinder.height);
+    info.read("top", cylinder.top);
+    info.read("bottom", cylinder.bottom);
+    mesh->setPrimitive(cylinder);
+
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+        info.throwException(_("A cylinder cannot be generated with the given parameters."));
+    }
+    return mesh.retn();
 }
 
 
 SgMesh* StdSceneReader::Impl::readCone(Mapping& info)
 {
-    readDivisionNumber(info);
+    SgMeshPtr mesh = new SgMesh;
 
-    double radius = info.get("radius", 1.0);
-    double height = info.get("height", 1.0);
-    bool bottom = info.get("bottom", true);
-    return meshGenerator.generateCone(radius, height, bottom, true, generateTexCoord);
+    readDivisionNumbers(info, mesh);
+
+    SgMesh::Cone cone;
+    info.read("radius", cone.radius);
+    info.read("height", cone.height);
+    info.read("bottom", cone.bottom);
+    mesh->setPrimitive(cone);
+
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+        info.throwException(_("A cone cannot be generated with the given parameters."));
+    }
+    return mesh.retn();
 }
 
 
 SgMesh* StdSceneReader::Impl::readCapsule(Mapping& info)
 {
-    readDivisionNumber(info);
-    meshGenerator.setExtraDivisionNumber(info.get("extra_division_number", 1));
+    SgMeshPtr mesh = new SgMesh;
+
+    readDivisionNumbers(info, mesh);
+
+    SgMesh::Capsule capsule;
+    info.read("radius", capsule.radius);
+    info.read("height", capsule.height);
+    mesh->setPrimitive(capsule);
     
-    double radius = info.get("radius", 1.0);
-    double height = info.get("height", 1.0);
-    return meshGenerator.generateCapsule(radius, height);
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+        info.throwException(_("A capsule cannot be generated with the given parameters."));
+    }
+    return mesh.retn();
 }
 
 

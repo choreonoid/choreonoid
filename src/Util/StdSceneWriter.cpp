@@ -47,11 +47,12 @@ public:
     MappingPtr writeGeometry(SgMesh* mesh);
     void writeMeshAttributes(Mapping* archive, SgMesh* mesh);
     bool writeMesh(Mapping* archive, SgMesh* mesh);
-    void writeBox(Mapping* archive, const SgMesh::Box& box);
-    void writeSphere(Mapping* archive, const SgMesh::Sphere& sphere);
-    void writeCylinder(Mapping* archive, const SgMesh::Cylinder& cylinder);
-    void writeCone(Mapping* archive, const SgMesh::Cone& cone);
-    void writeCapsule(Mapping* archive, const SgMesh::Capsule& capsule);
+    void writePrimitiveAttributes(Mapping* archive, SgMesh* mesh);
+    void writeBox(Mapping* archive, SgMesh* mesh);
+    void writeSphere(Mapping* archive, SgMesh* mesh);
+    void writeCylinder(Mapping* archive, SgMesh* mesh);
+    void writeCone(Mapping* archive, SgMesh* mesh);
+    void writeCapsule(Mapping* archive, SgMesh* mesh);
     MappingPtr writeAppearance(SgShape* shape);
     MappingPtr writeMaterial(SgMaterial* material);
 };
@@ -349,19 +350,19 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
             }
             break;
         case SgMesh::BoxType:
-            writeBox(archive, mesh->primitive<SgMesh::Box>());
+            writeBox(archive, mesh);
             break;
         case SgMesh::SphereType:
-            writeSphere(archive, mesh->primitive<SgMesh::Sphere>());
+            writeSphere(archive, mesh);
             break;
         case SgMesh::CylinderType:
-            writeCylinder(archive, mesh->primitive<SgMesh::Cylinder>());
+            writeCylinder(archive, mesh);
             break;
         case SgMesh::ConeType:
-            writeCone(archive, mesh->primitive<SgMesh::Cone>());
+            writeCone(archive, mesh);
             break;
         case SgMesh::CapsuleType:
-            writeCapsule(archive, mesh->primitive<SgMesh::Capsule>());
+            writeCapsule(archive, mesh);
             break;
         default:
             archive = nullptr;
@@ -423,41 +424,86 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
 }
 
 
-void StdSceneWriter::Impl::writeBox(Mapping* archive, const SgMesh::Box& box)
+void StdSceneWriter::Impl::writePrimitiveAttributes(Mapping* archive, SgMesh* mesh)
 {
+    if(mesh->isSolid()){
+        archive->write("solid", true);
+    }
+    if(mesh->divisionNumber() >= 1){
+        archive->write("division_number", mesh->divisionNumber());
+    }
+    if(mesh->extraDivisionNumber() >= 1){
+        archive->write("extra_division_number", mesh->extraDivisionNumber());
+        int mode = mesh->extraDivisionMode();
+        if(mode != SgMesh::ExtraDivisionPreferred){
+            string symbol;
+            if(mode == SgMesh::ExtraDivisionX){
+                symbol = "x";
+            } else if(mode == SgMesh::ExtraDivisionY){
+                symbol = "y";
+            } else if(mode == SgMesh::ExtraDivisionZ){
+                symbol = "z";
+            }
+            archive->write("extra_division_mode", symbol);
+        }
+    }
+}
+
+
+void StdSceneWriter::Impl::writeBox(Mapping* archive, SgMesh* mesh)
+{
+    const auto& box = mesh->primitive<SgMesh::Box>();
     archive->write("type", "Box");
     write(archive, "size", box.size);
+    writePrimitiveAttributes(archive, mesh);
 }
 
 
-void StdSceneWriter::Impl::writeSphere(Mapping* archive, const SgMesh::Sphere& sphere)
+void StdSceneWriter::Impl::writeSphere(Mapping* archive, SgMesh* mesh)
 {
+    const auto& sphere = mesh->primitive<SgMesh::Sphere>();
     archive->write("type", "Sphere");
     archive->write("radius", sphere.radius);
+    writePrimitiveAttributes(archive, mesh);
 }
 
 
-void StdSceneWriter::Impl::writeCylinder(Mapping* archive, const SgMesh::Cylinder& cylinder)
+void StdSceneWriter::Impl::writeCylinder(Mapping* archive, SgMesh* mesh)
 {
+    const auto& cylinder = mesh->primitive<SgMesh::Cylinder>();
     archive->write("type", "Cylinder");
     archive->write("radius", cylinder.radius);
     archive->write("height", cylinder.height);
+    if(!cylinder.top){
+        archive->write("top", false);
+    }
+    if(!cylinder.bottom){
+        archive->write("bottom", false);
+    }
+    writePrimitiveAttributes(archive, mesh);
 }
 
 
-void StdSceneWriter::Impl::writeCone(Mapping* archive, const SgMesh::Cone& cone)
+void StdSceneWriter::Impl::writeCone(Mapping* archive, SgMesh* mesh)
 {
+    const auto& cone = mesh->primitive<SgMesh::Cone>();
     archive->write("type", "Cone");
     archive->write("radius", cone.radius);
     archive->write("height", cone.height);
+    if(!cone.bottom){
+        archive->write("bottom", false);
+    }
+    writePrimitiveAttributes(archive, mesh);
 }
 
 
-void StdSceneWriter::Impl::writeCapsule(Mapping* archive, const SgMesh::Capsule& capsule)
+void StdSceneWriter::Impl::writeCapsule(Mapping* archive, SgMesh* mesh)
 {
+    const auto& capsule = mesh->primitive<SgMesh::Capsule>();
     archive->write("type", "Capsule");
     archive->write("radius", capsule.radius);
     archive->write("height", capsule.height);
+    writePrimitiveAttributes(archive, mesh);
 }
 
 

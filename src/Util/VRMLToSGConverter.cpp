@@ -323,9 +323,9 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
         if(p != vrmlGeometryToSgMeshMap.end()){
             mesh = p->second;
         } else {
-            bool generateTexCoord = false;
+            int meshOptions = MeshGenerator::NoOption;
             if(vshape->appearance && vshape->appearance->texture){
-                generateTexCoord = true;
+                meshOptions = MeshGenerator::TextureCoordinate;
             }
             if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
                 if(!isTriangulationEnabled){
@@ -352,18 +352,25 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                     
             } else if(VRMLBox* box = dynamic_cast<VRMLBox*>(vrmlGeometry)){
                 mesh = meshGenerator.generateBox(
-                    Vector3(box->size[0], box->size[1], box->size[2]), generateTexCoord);
+                    Vector3(box->size[0], box->size[1], box->size[2]), meshOptions);
                 
             } else if(VRMLSphere* sphere = dynamic_cast<VRMLSphere*>(vrmlGeometry)){
-                mesh = meshGenerator.generateSphere(sphere->radius, generateTexCoord);
+                mesh = meshGenerator.generateSphere(sphere->radius, meshOptions);
                 
             } else if(VRMLCylinder* cylinder = dynamic_cast<VRMLCylinder*>(vrmlGeometry)){
-                mesh = meshGenerator.generateCylinder(
-                    cylinder->radius, cylinder->height, cylinder->bottom, cylinder->top, cylinder->side, generateTexCoord);
+                SgMesh::Cylinder param(cylinder->radius, cylinder->height);
+                param.top = cylinder->top;
+                param.bottom = cylinder->bottom;
+                param.side = cylinder->side;
+                mesh = new SgMesh(param);
+                meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions);
                 
             } else if(VRMLCone* cone = dynamic_cast<VRMLCone*>(vrmlGeometry)){
-                mesh = meshGenerator.generateCone(
-                    cone->bottomRadius, cone->height, cone->bottom, cone->side, generateTexCoord);
+                SgMesh::Cone param(cone->bottomRadius, cone->height);
+                param.bottom = cone->bottom;
+                param.side = cone->side;
+                mesh = new SgMesh(param);
+                meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions);
                 
             } else if(VRMLElevationGrid* elevationGrid = dynamic_cast<VRMLElevationGrid*>(vrmlGeometry)){
                 mesh = createMeshFromElevationGrid(elevationGrid);

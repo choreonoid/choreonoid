@@ -421,7 +421,10 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
     double width = unitHandleWidth / rotationHandleSizeRatio * widthRatio;
     meshGenerator.setDivisionNumber(36);
     mesh[0] = meshGenerator.generateDisc(1.0, 1.0 - width);
-    mesh[1] = meshGenerator.generateCylinder(1.0, width, false, false);
+    SgMesh::Cylinder cylinder(1.0, width);
+    cylinder.top = cylinder.bottom = false;
+    mesh[1] = new SgMesh(cylinder);
+    meshGenerator.updateMeshWithPrimitiveInformation(mesh[1]);
 
     for(int i=0; i < 3; ++i){
         auto selector = new SgViewpointDependentSelector;
