@@ -54,7 +54,7 @@ int SceneItemFileIO::Impl::sharedImplCounter = 0;
 SceneItemFileIO::SceneItemFileIO(int api)
     : ItemFileIO("GENERAL-3D-MODEL", api)
 {
-    setExtensions({ "scen", "wrl", "dae", "stl" });
+    setExtensions({ "scen", "wrl", "dae", "stl", "obj" });
 
     if(!Impl::sharedImpl){
         Impl::sharedImpl = new Impl;
