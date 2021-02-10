@@ -72,6 +72,7 @@ set(sources
   StdSceneLoader.cpp
   StdSceneWriter.cpp
   STLSceneLoader.cpp
+  ObjSceneWriter.cpp
   VRML.cpp
   VRMLParser.cpp
   VRMLWriter.cpp
@@ -183,6 +184,7 @@ set(headers
   StdSceneLoader.h
   StdSceneWriter.h
   STLSceneLoader.h
+  ObjSceneWriter.h
   VRML.h
   VRMLParser.h
   VRMLWriter.h
