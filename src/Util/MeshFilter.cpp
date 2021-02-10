@@ -256,7 +256,7 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
         }
         indexMap[i] = index;
         if(!found){
-            vertices.push_back(vertex);
+            vertices.emplace_back(vertex);
         }
     }
     vertices.shrink_to_fit();
@@ -438,7 +438,7 @@ void MeshFilterImpl::removeRedundantNormals(SgMesh* mesh)
         }
         indexMap[i] = index;
         if(!found){
-            normals.push_back(normal);
+            normals.emplace_back(normal);
         }
     }
     normals.shrink_to_fit();
@@ -519,7 +519,7 @@ void MeshFilterImpl::calculateFaceNormals(SgMesh* mesh, bool ignoreZeroNormals)
                 normal = Vector3f::UnitZ();
             }
         }
-        faceNormals.push_back(normal);
+        faceNormals.emplace_back(normal);
     }
 }
 
@@ -636,7 +636,7 @@ void MeshFilterImpl::setVertexNormals(SgMesh* mesh, float givenCreaseAngle)
             }
             if(normalIndex < 0){
                 normalIndex = normals.size();
-                normals.push_back(normal);
+                normals.emplace_back(normal);
                 normalsOfVertexMap[vertexIndex].push_back(normalIndex);
             }
             

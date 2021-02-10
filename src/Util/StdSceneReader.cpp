@@ -1084,10 +1084,11 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info)
         }
         mesh = shape->mesh();
         double creaseAngle;
-        if(readAngle(info, "creaseAngle", creaseAngle)){
+        if(readAngle(info, { "crease_angle", "creaseAngle" }, creaseAngle)){
             mesh->setCreaseAngle(creaseAngle);
             meshFilter.setNormalOverwritingEnabled(true);
-            bool removeRedundantVertices = info.get("removeRedundantVertices", false);
+            bool removeRedundantVertices =
+                info.get({ "remove_redundant_vertices", "removeRedundantVertices" }, false);
             meshFilter.generateNormals(mesh, creaseAngle, removeRedundantVertices);
             meshFilter.setNormalOverwritingEnabled(false);
         }
