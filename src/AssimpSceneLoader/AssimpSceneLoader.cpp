@@ -406,10 +406,17 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
             shape->setTexture(texture);
         }
 
+        // The following operation takes much time to execute for a large mesh.
+        // Texture coordinates must be modified in the following operation.
+        /*
         meshFilter.removeRedundantVertices(mesh);
         if(normals){
             meshFilter.removeRedundantNormals(mesh);
         } else {
+            meshFilter.generateNormals(mesh);
+        }
+        */
+        if(!normals){
             meshFilter.generateNormals(mesh);
         }
 
