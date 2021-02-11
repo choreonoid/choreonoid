@@ -185,6 +185,7 @@ set(headers
   StdSceneWriter.h
   STLSceneLoader.h
   ObjSceneWriter.h
+  SimpleScanner.h
   VRML.h
   VRMLParser.h
   VRMLWriter.h
