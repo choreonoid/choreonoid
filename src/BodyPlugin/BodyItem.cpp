@@ -272,18 +272,18 @@ BodyItem::BodyItem(const BodyItem& org)
 BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
     : Impl(self, org.body->clone(), true)
 {
-    if(org.currentBaseLink){
-        setCurrentBaseLink(body->link(org.currentBaseLink->index()), true);
-    } else {
-        setCurrentBaseLink(nullptr, true);
-    }
-
     isAttachmentEnabled = org.isAttachmentEnabled;
     isLocationEditable = true;
     transparency = org.transparency;
     zmp = org.zmp;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
+
+    if(org.currentBaseLink){
+        setCurrentBaseLink(body->link(org.currentBaseLink->index()), true);
+    } else {
+        setCurrentBaseLink(nullptr, true);
+    }
 
     initialState = org.initialState;
 }
@@ -356,7 +356,16 @@ void BodyItem::doAssign(Item* srcItem)
 void BodyItem::Impl::doAssign(Item* srcItem)
 {
     BodyItem* srcBodyItem = dynamic_cast<BodyItem*>(srcItem);
+
     if(srcBodyItem){
+        auto srcImpl = srcBodyItem->impl;
+        isAttachmentEnabled = srcImpl->isAttachmentEnabled;
+        isLocationEditable = srcImpl->isLocationEditable;
+        transparency = srcImpl->transparency;
+        zmp = srcImpl->zmp;
+        isCollisionDetectionEnabled = srcImpl->isCollisionDetectionEnabled;
+        isSelfCollisionDetectionEnabled = srcImpl->isSelfCollisionDetectionEnabled;
+        
         // copy the base link property
         Link* baseLink = nullptr;
         Link* srcBaseLink = srcBodyItem->currentBaseLink();
@@ -375,7 +384,6 @@ void BodyItem::Impl::doAssign(Item* srcItem)
                 link->q() = srcLink->q();
             }
         }
-
         if(baseLink){
             baseLink->p() = srcBaseLink->p();
             baseLink->R() = srcBaseLink->R();
@@ -383,9 +391,8 @@ void BodyItem::Impl::doAssign(Item* srcItem)
             body->rootLink()->p() = srcBody->rootLink()->p();
             body->rootLink()->R() = srcBody->rootLink()->R();
         }
-        zmp = srcBodyItem->impl->zmp;
 
-        initialState = srcBodyItem->impl->initialState;
+        initialState = srcImpl->initialState;
         
         self->notifyKinematicStateChange(true);
     }

@@ -98,7 +98,9 @@ public:
         }
 
         auto bodyItem = static_cast<BodyItem*>(item);
-        bodyItem->body()->rootLink()->addShapeNode(shape);
+        BodyPtr newBody = new Body;
+        newBody->rootLink()->addShapeNode(shape);
+        bodyItem->setBody(newBody);
 
         auto itype = invocationType();
         if(itype == Dialog || itype == DragAndDrop){
