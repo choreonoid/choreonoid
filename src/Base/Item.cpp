@@ -228,9 +228,16 @@ void Item::validateClassId() const
 }
 
 
+Item* Item::createNewInstance() const
+{
+    return ItemManager::createItem(classId());
+}
+
+
 void Item::assign(Item* srcItem)
 {
     doAssign(srcItem);
+    
     RootItem* rootItem = findRootItem();
     if(rootItem){
         rootItem->emitSigItemAssinged(this, srcItem);
@@ -1435,8 +1442,9 @@ bool Item::reload()
     bool reloaded = false;
     
     if(parentItem() && !isSubItem() && !filePath().empty() && !fileFormat().empty()){
-        ItemPtr reloadedItem = duplicate();
+        ItemPtr reloadedItem = createNewInstance();
         if(reloadedItem){
+            reloadedItem->setName(name());
             if(reloadedItem->load(filePath(), parentItem(), fileFormat(), fileOptions())){
                 reloaded = reloadedItem->replace(this);
             }
@@ -1457,7 +1465,9 @@ bool Item::replace(Item* originalItem)
         originalToReplacementItemMap[originalItem] = this;
 
         assign(originalItem);
+        setChecked(originalItem->isChecked());
         originalItem->parentItem()->insertChild(originalItem, this);
+        
         // move children to the reload item
         ItemPtr child = originalItem->childItem();
         while(child){
@@ -1468,7 +1478,9 @@ bool Item::replace(Item* originalItem)
             }
             child = nextChild;
         }
+        bool isSelected = originalItem->isSelected();
         originalItem->removeFromParentItem();
+        setSelected(isSelected);
 
         clearItemReplacementMapsLater();
 

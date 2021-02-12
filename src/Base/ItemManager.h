@@ -242,6 +242,7 @@ public:
     void addMenuItemToImport(const std::string& caption, std::function<void()> slot);
 
     static Item* createItem(const std::string& moduleName, const std::string& itemClassName);
+    static Item* createItem(int itemClassId);
 
     /**
        Create a new item interactively using the corresponding dialog

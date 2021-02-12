@@ -54,6 +54,8 @@ public:
         return classId_;
     }
 
+    Item* createNewInstance() const;
+
     //! Copy item properties as much as possible like the assignment operator
     void assign(Item* srcItem);
 

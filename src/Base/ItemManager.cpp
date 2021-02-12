@@ -475,6 +475,19 @@ Item* ItemManager::createItem(const std::string& moduleName, const std::string& 
 }
 
 
+Item* ItemManager::createItem(int itemClassId)
+{
+    auto p = itemClassIdToInfoMap.find(itemClassId);
+    if(p != itemClassIdToInfoMap.end()){
+        auto classInfo = p->second;
+        if(classInfo->factory){
+            return classInfo->factory();
+        }
+    }
+    return nullptr;
+}
+
+
 Item* ItemManager::createItemWithDialog_
 (const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem, Item* protoItem, const std::string& title)
 {
