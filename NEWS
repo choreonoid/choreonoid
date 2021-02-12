@@ -3,7 +3,8 @@ Changes since 1.7.0:
 * Removed the typedefs with suffix 'Ptr' for the smart pointer types using std::shared_ptr
 * Introduced BodyHandler. BodyCustomizer is deprecated.
 * Introduced JointPathConfigurationHandler
-* Removed the python plugins and wrappers implemented with boost.python
+* Removed the Python plugins and bindings implemented with boost.python
+* Improve the Python bindings implemented with pybind11
 * Separated the OpenRTM modules from the main source tree
 * Separated the OpenHRP modules and GrxUI plugin from the main source tree
 * Removed ScenarioPlugin
@@ -58,6 +59,8 @@ Changes since 1.7.0:
 * Made it possible to use free joints for links other than root links in the simulation by AISTSimulatorItem
 * Added the API on getting the contact states from a dynamics engine
 * Made AISTSimulator to be able to simulate models with non-root free joints
+* Support the standard scene file format in loading and exporting body shapes
+* Support the OBJ mesh file format in loading and exporting body shapes
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
