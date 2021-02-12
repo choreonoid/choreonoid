@@ -126,6 +126,15 @@ public:
         return *pos;
     }
 
+    int readChar()
+    {
+        int c = *pos;
+        if(c != '\0'){
+            ++pos;
+        }
+        return c;
+    }
+
     bool checkCharAtCurrentPosition(int chara)
     {
         if(*pos == chara){
@@ -238,15 +247,20 @@ public:
         return false;
     }
             
-    bool readString(std::string& out_string)
+    bool readStringAtCurrentPosition(std::string& out_string)
     {
-        skipSpaces();
         const char* pos0 = pos;
         while(*pos != '\r' && *pos != '\0'){
             ++pos;
         }
         out_string.assign(pos0, pos - pos0);
         return !out_string.empty();
+    }
+
+    bool readString(std::string& out_string)
+    {
+        skipSpaces();
+        return readStringAtCurrentPosition(out_string);
     }
     
     float readFloatEx()
