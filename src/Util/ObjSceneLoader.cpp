@@ -31,16 +31,14 @@ class ObjSceneLoader::Impl
 public:
     SimpleScanner scanner;
     SgGroupPtr group;
+    SgVertexArrayPtr vertices;
+    SgNormalArrayPtr normals;
+    SgTexCoordArrayPtr texCoords;
     SgShapePtr currentShape;
     SgMeshPtr currentMesh;
-    SgVertexArrayPtr currentVertices;
-    int vertexIndexOffset;
-    SgNormalArrayPtr currentNormals;
-    int normalIndexOffset;
-    SgTexCoordArrayPtr currentTexCoords;
-    int texCoordsIndexOffset;
     SgIndexArray* currentVertexIndices;
     SgIndexArray* currentNormalIndices;
+    SgIndexArray* currentTexCoordIndices;
     Triangulator<SgVertexArray> triangulator;
     vector<int> polygon;
     
@@ -94,10 +92,10 @@ void ObjSceneLoader::setMessageSink(std::ostream& os)
 void ObjSceneLoader::Impl::clearBufObjects()
 {
     group.reset();
+    vertices.reset();
+    normals.reset();
     currentShape.reset();
     currentMesh.reset();
-    currentVertices.reset();
-    currentNormals.reset();
     currentVertexIndices = nullptr;
     currentNormalIndices = nullptr;
 }
@@ -119,9 +117,10 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
 
     SgNodePtr scene;
 
-    vertexIndexOffset = 1;
-    normalIndexOffset = 1;
-    texCoordsIndexOffset = 1;
+    vertices = new SgVertexArray;
+    triangulator.setVertices(*vertices);
+    normals = new SgNormalArray;
+    texCoords = new SgTexCoordArray;
     
     try {
         scene = loadScene();
@@ -161,10 +160,11 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
                 scanner.moveForward();
                 readNormal();
             } else if(scanner.peekChar() == 't'){
-                scanner.moveForward();
-                readTextureCoordinate();
+                // Textures are not yet supported
+                //scanner.moveForward();
+                //readTextureCoordinate();
             } else {
-                scanner.throwEx("Unknown directive");
+                scanner.throwEx("Unsupported directive");
             }
             break;
             
@@ -182,7 +182,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
                 readMaterialTemplateLibrary(token);
             } else {
                 scanner.readString(token);
-                scanner.throwEx(format("Unknown directive '{0}'", token));
+                scanner.throwEx(format("Unsupported directive '{0}'", token));
             }
             break;
 
@@ -192,7 +192,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
                 readMaterial(token);
             } else {
                 scanner.readString(token);
-                scanner.throwEx(format("Unknown directive '{0}'", token));
+                scanner.throwEx(format("Unsupported directive '{0}'", token));
             }
             break;
 
@@ -217,7 +217,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
         default:
             scanner.skipSpaces();
             if(!scanner.checkLF()){
-                scanner.throwEx("Unknown directive");
+                scanner.throwEx("Unsupported directive");
             }
             break;
         }
@@ -245,20 +245,18 @@ void ObjSceneLoader::Impl::createNewNode(const std::string& name)
 
         if(currentShape){
             checkAndAddCurrentNode();
-            vertexIndexOffset += currentVertices->size();
-            normalIndexOffset += currentNormals->size();
-            texCoordsIndexOffset += currentTexCoords->size();
         }
         
         currentShape = new SgShape;
         currentMesh = currentShape->getOrCreateMesh();
-        currentVertices = currentMesh->getOrCreateVertices();
-        currentNormals = currentMesh->getOrCreateNormals();
-        currentTexCoords = currentMesh->getOrCreateTexCoords();
+        currentMesh->setVertices(vertices);
+        currentMesh->setNormals(normals);
+        currentMesh->setTexCoords(texCoords);
         currentVertexIndices = &currentMesh->triangleVertices();
         currentNormalIndices = &currentMesh->normalIndices();
-        triangulator.setVertices(*currentVertices);
+        currentTexCoordIndices = &currentMesh->texCoordIndices();
     }
+
     currentShape->setName(name);
 }
 
@@ -271,34 +269,25 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
 
     bool isValid = true;
 
-    if(currentVertices->empty() || currentVertexIndices->empty()){
+    if(currentVertexIndices->empty()){
         isValid = false;
 
-    } else {
-        if(currentNormals->empty()){
-            if(!currentNormalIndices->empty()){
-                throw std::runtime_error(
-                    format("{0} has normal index data but it does not include normal vectors.",
-                           currentShape->name()));
-            }
-        } else {
-            if(currentNormalIndices->empty()){
-                throw std::runtime_error(
-                    format("Normal indices for faces are not specified in {0}.", currentShape->name()));
-                
-            } else if(currentVertexIndices->size() != currentNormalIndices->size()){
-                throw std::runtime_error(
-                    format("The number of the face normal indices is different from that of vertices in {0}.",
-                           currentShape->name()));
-            }
-        }
+    } else if(!currentNormalIndices->empty() && (currentNormalIndices->size() != currentVertexIndices->size())){
+        throw std::runtime_error(
+            format("The number of the face normal indices is different from that of vertices in {0}.",
+                   currentShape->name()));
+
+    } else if(!currentTexCoordIndices->empty() && (currentTexCoordIndices->size() != currentVertexIndices->size())){
+        throw std::runtime_error(
+            format("The number of the tex coord indices is different from that of vertices in {0}.",
+                   currentShape->name()));
     }
 
     if(isValid){
-        if(currentNormals->empty()){
+        if(currentNormalIndices->empty()){
             currentMesh->setNormals(nullptr);
         }
-        if(true /* currentTexCoords->empty() */){
+        if(currentTexCoordIndices->empty()){
             currentMesh->setTexCoords(nullptr);
         }
         group->addChild(currentShape);
@@ -310,8 +299,8 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
 
 void ObjSceneLoader::Impl::readVertex()
 {
-    currentVertices->emplace_back();
-    auto& v = currentVertices->back();
+    vertices->emplace_back();
+    auto& v = vertices->back();
     v.x() = scanner.readFloatEx();
     v.y() = scanner.readFloatEx();
     v.z() = scanner.readFloatEx();
@@ -320,8 +309,8 @@ void ObjSceneLoader::Impl::readVertex()
 
 void ObjSceneLoader::Impl::readNormal()
 {
-    currentNormals->emplace_back();
-    auto& n = currentNormals->back();
+    normals->emplace_back();
+    auto& n = normals->back();
     n.x() = scanner.readFloatEx();
     n.y() = scanner.readFloatEx();
     n.z() = scanner.readFloatEx();
@@ -330,8 +319,8 @@ void ObjSceneLoader::Impl::readNormal()
 
 void ObjSceneLoader::Impl::readTextureCoordinate()
 {
-    currentTexCoords->emplace_back();
-    auto& c = currentTexCoords->back();
+    texCoords->emplace_back();
+    auto& c = texCoords->back();
     c.x() = scanner.readFloatEx();
     c.y() = scanner.readFloatEx();
 }
@@ -389,7 +378,7 @@ bool ObjSceneLoader::Impl::readFaceElement(int axis)
         return false;
     }
         
-    currentVertexIndices->push_back(vertexIndex - vertexIndexOffset);
+    currentVertexIndices->push_back(vertexIndex - 1);
 
     if(scanner.checkCharAtCurrentPosition('/')){
         int texCoordIndex;
@@ -397,7 +386,7 @@ bool ObjSceneLoader::Impl::readFaceElement(int axis)
             // add texture coordinate here
         }
         if(scanner.checkCharAtCurrentPosition('/')){
-            currentNormalIndices->push_back(scanner.readIntEx() - normalIndexOffset);
+            currentNormalIndices->push_back(scanner.readIntEx() - 1);
         }
     }
 
