@@ -251,8 +251,6 @@ public:
     
     float readFloatEx()
     {
-        skipSpaces();
-
         float value;
         auto result = fast_float::from_chars(pos, bufEndPos, value);
         if(result.ec == std::errc()){
@@ -265,7 +263,6 @@ public:
 
     bool readInt(int& out_value)
     {
-        skipSpaces();
         char* tail;
         out_value = std::strtol(pos, &tail, 0);
         if(tail != pos){
@@ -277,7 +274,6 @@ public:
 
     int readIntEx()
     {
-        skipSpaces();
         char* tail;
         int value = std::strtol(pos, &tail, 0);
         if(tail != pos){
