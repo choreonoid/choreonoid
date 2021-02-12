@@ -11,24 +11,28 @@
 
 namespace cnoid {
 
-
 class SimpleScanner
 {
 public:
     typedef std::ifstream::pos_type pos_type;
     std::ifstream ifs;
-    static const size_t bufsize = 256;
+    static constexpr size_t bufsize = 256;
     char buf[bufsize];
     char* pos;
     size_t lineNumber;
+    std::string tmpString;
     std::string filename;
-    
-    void open(const std::string& filename)
+
+    bool open(const std::string& filename)
     {
+        clear();
         // The binary mode is faster on Windows
         ifs.open(fromUTF8(filename), std::ios::in | std::ios::binary);
-        this->filename = filename;
-        clear();
+        if(ifs.is_open()){
+            this->filename = filename;
+            return true;
+        }
+        return false;
     }
 
     void clear()
@@ -37,6 +41,13 @@ public:
         buf[0] = '\0';
         pos = buf;
     }        
+
+    void close()
+    {
+        if(ifs.is_open()){
+            ifs.close();
+        }
+    }
 
     bool getLine()
     {
@@ -76,11 +87,49 @@ public:
         return !ifs.eof();
     }
 
+    const std::string& currentLine()
+    {
+        char* end = buf;
+        while(true){
+            if(*end == '\n' || *end == '\0'){
+                break;
+            }
+            ++end;
+        }
+        tmpString.assign(buf, end - buf);
+        return tmpString;
+    }
+
+    void moveForward()
+    {
+        ++pos;
+    }
+
     void skipSpaces()
     {
         while(*pos == ' '){
             ++pos;
         }
+    }
+
+    int peekChar()
+    {
+        return *pos;
+    }
+
+    bool checkCharAtCurrentPosition(int chara)
+    {
+        if(*pos == chara){
+            ++pos;
+            return true;
+        }
+        return false;
+    }
+
+    bool checkChar(int chara)
+    {
+        skipSpaces();
+        return checkCharAtCurrentPosition(chara);
     }
 
     bool checkLF()
@@ -110,9 +159,8 @@ public:
         return false;
     }
 
-    bool checkString(const char* str)
+    bool checkStringAtCurrentPosition(const char* str)
     {
-        skipSpaces();
         char* pos0 = pos;
         while(*str != '\0'){
             if(*str++ != *pos++){
@@ -121,6 +169,12 @@ public:
             }
         }
         return true;
+    }
+
+    bool checkString(const char* str)
+    {
+        skipSpaces();
+        return checkStringAtCurrentPosition(str);
     }
 
     void checkStringEx(const char* str)
@@ -198,6 +252,44 @@ public:
         }
     }
 
+    float readFloatEx()
+    {
+        skipSpaces();
+        char* tail;
+        float value = cnoid::strtof(pos, &tail);
+        if(tail != pos){
+            pos = tail;
+        } else {
+            throwEx("Invalid value");
+        }
+        return value;
+    }
+
+    bool readInt(int& out_value)
+    {
+        skipSpaces();
+        char* tail;
+        out_value = std::strtol(pos, &tail, 0);
+        if(tail != pos){
+            pos = tail;
+            return true;
+        }
+        return false;
+    }
+
+    int readIntEx()
+    {
+        skipSpaces();
+        char* tail;
+        int value = std::strtol(pos, &tail, 0);
+        if(tail != pos){
+            pos = tail;
+        } else {
+            throwEx("Invald value");
+        }
+        return value;
+    }
+    
     void throwEx(const std::string& error)
     {
         stdx::filesystem::path path(fromUTF8(filename));

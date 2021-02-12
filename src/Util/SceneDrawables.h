@@ -334,6 +334,7 @@ public:
     const SgIndexArray& triangleVertices() const { return triangleVertices_; }
     SgIndexArray& triangleVertices() { return triangleVertices_; }
 
+    bool hasTriangles() const { return !triangleVertices_.empty(); }
     int numTriangles() const { return static_cast<int>(triangleVertices_.size()) / 3; }
     void setNumTriangles(int n) { triangleVertices_.resize(n * 3); }
     void reserveNumTriangles(int n) { triangleVertices_.reserve(n * 3); }

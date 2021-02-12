@@ -82,7 +82,7 @@ public:
 void AssimpSceneLoader::initializeClass()
 {
     SceneLoader::registerLoader(
-        "dae;blend;x;obj;dxf",
+        "dae;blend;x;dxf",
         []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<AssimpSceneLoader>(); });
 }
     
