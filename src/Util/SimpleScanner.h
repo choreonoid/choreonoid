@@ -1,9 +1,9 @@
 #ifndef CNOID_UTIL_SIMPLE_SCANNER_H
 #define CNOID_UTIL_SIMPLE_SCANNER_H
 
-#include "strtofloat.h"
 #include "UTF8.h"
 #include <cnoid/stdx/filesystem>
+#include <fast_float/fast_float.h>
 #include <fmt/format.h>
 #include <fstream>
 #include <stdexcept>
@@ -15,14 +15,23 @@ class SimpleScanner
 {
 public:
     typedef std::ifstream::pos_type pos_type;
+
     std::ifstream ifs;
+    const char* pos;
+    const char* dummy; // This makes the parse 10% faster in some architectures
+    const char* bufEndPos;
+    size_t lineNumber;
+    std::string filename;
+    std::string tmpString;
+
     static constexpr size_t bufsize = 256;
     char buf[bufsize];
-    char* pos;
-    size_t lineNumber;
-    std::string tmpString;
-    std::string filename;
 
+    SimpleScanner()
+    {
+        bufEndPos = buf + bufsize;
+    }
+    
     bool open(const std::string& filename)
     {
         clear();
@@ -161,7 +170,7 @@ public:
 
     bool checkStringAtCurrentPosition(const char* str)
     {
-        char* pos0 = pos;
+        const char* pos0 = pos;
         while(*str != '\0'){
             if(*str++ != *pos++){
                 pos = pos0;
@@ -232,7 +241,7 @@ public:
     bool readString(std::string& out_string)
     {
         skipSpaces();
-        char* pos0 = pos;
+        const char* pos0 = pos;
         while(*pos != '\r' && *pos != '\0'){
             ++pos;
         }
@@ -240,25 +249,14 @@ public:
         return !out_string.empty();
     }
     
-    void readFloatEx(float& out_value)
-    {
-        skipSpaces();
-        char* tail;
-        out_value = cnoid::strtof(pos, &tail);
-        if(tail != pos){
-            pos = tail;
-        } else {
-            throwEx("Invalid value");
-        }
-    }
-
     float readFloatEx()
     {
         skipSpaces();
-        char* tail;
-        float value = cnoid::strtof(pos, &tail);
-        if(tail != pos){
-            pos = tail;
+
+        float value;
+        auto result = fast_float::from_chars(pos, bufEndPos, value);
+        if(result.ec == std::errc()){
+            pos = result.ptr;
         } else {
             throwEx("Invalid value");
         }

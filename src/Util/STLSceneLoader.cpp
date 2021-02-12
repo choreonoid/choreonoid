@@ -811,9 +811,9 @@ void AsciiMeshLoader::loadTriangles()
     while(true) {
         scanner.checkStringEx("facet normal");
         Vector3f v;
-        scanner.readFloatEx(v.x());
-        scanner.readFloatEx(v.y());
-        scanner.readFloatEx(v.z());
+        v.x() = scanner.readFloatEx();
+        v.y() = scanner.readFloatEx();
+        v.z() = scanner.readFloatEx();
         addNormal(v);
         scanner.checkLFEx();
         scanner.getLine();
@@ -823,9 +823,9 @@ void AsciiMeshLoader::loadTriangles()
         scanner.getLine();
         for(int i=0; i < 3; ++i){
             scanner.checkStringEx("vertex");
-            scanner.readFloatEx(v.x());
-            scanner.readFloatEx(v.y());
-            scanner.readFloatEx(v.z());
+            v.x() = scanner.readFloatEx();
+            v.y() = scanner.readFloatEx();
+            v.z() = scanner.readFloatEx();
             addVertex(v);
             scanner.checkLFEx();
             scanner.getLine();
