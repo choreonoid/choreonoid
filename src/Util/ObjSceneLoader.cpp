@@ -32,6 +32,7 @@ public:
     SgGroupPtr group;
     SgShapePtr currentShape;
     SgMeshPtr currentMesh;
+    SgPolygonMeshPtr currentPolygonMesh;
     SgVertexArrayPtr currentVertices;
     int vertexIndexOffset;
     SgNormalArrayPtr currentNormals;
@@ -162,7 +163,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
             break;
             
         case 'm':
-            if(scanner.checkStringAtCurrentPosition("mtlib ")){
+            if(scanner.checkStringAtCurrentPosition("mtllib ")){
                 scanner.readString(token);
                 readMaterialTemplateLibrary(token);
             } else {
