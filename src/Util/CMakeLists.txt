@@ -206,6 +206,8 @@ include_directories(
   ${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
 link_directories(${LIBYAML_LIBRARY_DIRS})
 
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/fast_float-0.8.0/include)
+
 if(ENABLE_GPERFTOOLS_PROFILER)
   include_directories(${GPREFTOOLS_PROFILER_INCLUDE_DIRS})
   link_directories(${GPREFTOOLS_PROFILER_LIBRARY_DIRS})
