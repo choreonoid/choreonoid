@@ -4,6 +4,7 @@
 #include "SceneLoader.h"
 #include "Triangulator.h"
 #include "NullOut.h"
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
@@ -22,6 +23,20 @@ struct Registration {
     }
 } registration;
 
+
+void readVector2Ex(SimpleScanner& scanner, Vector2f& v)
+{
+    v.x() = scanner.readFloatEx();
+    v.y() = scanner.readFloatEx();
+}
+
+void readVector3Ex(SimpleScanner& scanner, Vector3f& v)
+{
+    v.x() = scanner.readFloatEx();
+    v.y() = scanner.readFloatEx();
+    v.z() = scanner.readFloatEx();
+}
+
 };
 
 namespace cnoid {
@@ -30,6 +45,8 @@ class ObjSceneLoader::Impl
 {
 public:
     SimpleScanner scanner;
+    SimpleScanner subScanner;
+    string token;
     SgGroupPtr group;
     SgVertexArrayPtr vertices;
     SgNormalArrayPtr normals;
@@ -41,11 +58,28 @@ public:
     SgIndexArray* currentTexCoordIndices;
     Triangulator<SgVertexArray> triangulator;
     vector<int> polygon;
+
+    struct MaterialInfo
+    {
+        SgMaterialPtr material;
+        SgTexturePtr texture;
+        MaterialInfo(){
+            material = new SgMaterial;
+        }
+    };
+    
+    unordered_map<string, MaterialInfo> materialMap;
+    MaterialInfo* currentMaterialInfo;
+    MaterialInfo* currentMaterialDefInfo;
+    SgMaterial* currentMaterialDef;
+
+    MaterialInfo dummyMaterialInfo;
     
     ostream* os_;
     ostream& os() { return *os_; }
 
     string fileBaseName;
+    filesystem::path directoryPath;
 
     Impl();
     void clearBufObjects();
@@ -58,8 +92,19 @@ public:
     void readTextureCoordinate();
     void readFace();
     bool readFaceElement(int axis);
-    void readMaterialTemplateLibrary(const std::string& name);
+    bool loadMaterialTemplateLibrary(const std::string& name);
     void readMaterial(const std::string& name);
+    void createNewMaterial(const string& name);
+    void readAmbientColor();
+    void readDiffuseColor();
+    void readSpecularColor();
+    void readEmissiveColor();
+    void readSpecularExponent();
+    void readOpticalDensity();
+    void readDissolve();
+    void readTransparency();
+    void readIlluminationModel();
+    void readTexture();
 };
 
 }
@@ -98,6 +143,10 @@ void ObjSceneLoader::Impl::clearBufObjects()
     currentMesh.reset();
     currentVertexIndices = nullptr;
     currentNormalIndices = nullptr;
+    materialMap.clear();
+    currentMaterialInfo = nullptr;
+    currentMaterialDefInfo = &dummyMaterialInfo;
+    currentMaterialDef = dummyMaterialInfo.material;
 }
 
 
@@ -113,7 +162,9 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
         os() << format(_("Unable to open file \"{}\"."), filename) << endl;
         return nullptr;
     }
-    fileBaseName = filesystem::path(filename).stem().string();
+    filesystem::path filePath(filename);
+    fileBaseName = filePath.stem().string();
+    directoryPath = filePath.parent_path();
 
     SgNodePtr scene;
 
@@ -146,8 +197,6 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
 
     createNewNode(fileBaseName);
 
-    string token;
-        
     while(scanner.getLine()){
 
         switch(scanner.peekChar()){
@@ -179,7 +228,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
         case 'm':
             if(scanner.checkStringAtCurrentPosition("mtllib ")){
                 scanner.readString(token);
-                readMaterialTemplateLibrary(token);
+                loadMaterialTemplateLibrary(token);
             } else {
                 scanner.readString(token);
                 scanner.throwEx(format("Unsupported directive '{0}'", token));
@@ -209,10 +258,10 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
             break;
 
         case 's':
-            continue;
+            break;
             
         case '#':
-            continue;
+            break;
 
         default:
             scanner.skipSpaces();
@@ -241,13 +290,21 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
 
 void ObjSceneLoader::Impl::createNewNode(const std::string& name)
 {
-    if(!currentShape || currentMesh->hasTriangles()){
-
+    if(currentShape && !currentMesh->hasTriangles()){
+        currentShape->setName(name);
+    } else {
         if(currentShape){
             checkAndAddCurrentNode();
         }
-        
-        currentShape = new SgShape;
+
+        if(name.empty() && currentShape){
+            auto newShape = new SgShape;
+            newShape->setName(currentShape->name());
+            currentShape = newShape;
+        } else {
+            currentShape = new SgShape;
+            currentShape->setName(name);
+        }
         currentMesh = currentShape->getOrCreateMesh();
         currentMesh->setVertices(vertices);
         currentMesh->setNormals(normals);
@@ -256,8 +313,6 @@ void ObjSceneLoader::Impl::createNewNode(const std::string& name)
         currentNormalIndices = &currentMesh->normalIndices();
         currentTexCoordIndices = &currentMesh->texCoordIndices();
     }
-
-    currentShape->setName(name);
 }
 
 
@@ -290,6 +345,14 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
         if(currentTexCoordIndices->empty()){
             currentMesh->setTexCoords(nullptr);
         }
+
+        if(currentMaterialInfo){
+            currentShape->setMaterial(currentMaterialInfo->material);
+            if(currentMaterialInfo->texture){
+                currentShape->setTexture(currentMaterialInfo->texture);
+            }
+        }
+
         group->addChild(currentShape);
     }
 
@@ -300,29 +363,21 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
 void ObjSceneLoader::Impl::readVertex()
 {
     vertices->emplace_back();
-    auto& v = vertices->back();
-    v.x() = scanner.readFloatEx();
-    v.y() = scanner.readFloatEx();
-    v.z() = scanner.readFloatEx();
+    readVector3Ex(scanner, vertices->back());
 }
 
 
 void ObjSceneLoader::Impl::readNormal()
 {
     normals->emplace_back();
-    auto& n = normals->back();
-    n.x() = scanner.readFloatEx();
-    n.y() = scanner.readFloatEx();
-    n.z() = scanner.readFloatEx();
+    readVector3Ex(scanner, normals->back());
 }
 
 
 void ObjSceneLoader::Impl::readTextureCoordinate()
 {
     texCoords->emplace_back();
-    auto& c = texCoords->back();
-    c.x() = scanner.readFloatEx();
-    c.y() = scanner.readFloatEx();
+    readVector2Ex(scanner, texCoords->back());
 }
 
 
@@ -394,13 +449,195 @@ bool ObjSceneLoader::Impl::readFaceElement(int axis)
 }
 
 
-void ObjSceneLoader::Impl::readMaterialTemplateLibrary(const std::string& name)
+void ObjSceneLoader::Impl::readMaterial(const std::string& name)
+{
+    createNewNode("");
+    
+    auto p = materialMap.find(name);
+    if(p != materialMap.end()){
+        currentMaterialInfo = &p->second;
+    } else {
+        currentMaterialInfo = nullptr;
+    }
+}
+
+
+bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(const std::string& filename)
+{
+    if(!subScanner.open((directoryPath / filename).string())){
+        os() << format("Material template library file \"{0}\" cannot be open.", filename) << endl;
+        return false;
+    }
+
+    while(subScanner.getLine()){
+
+        bool isUnknownDirective = false;
+        
+        if(subScanner.checkStringAtCurrentPosition("newmtl")){
+            subScanner.readString(token);
+            createNewMaterial(token);
+        } else {
+            subScanner.skipSpaces();
+            switch(subScanner.peekChar()){
+
+            case 'K':
+                subScanner.moveForward();
+                switch(subScanner.readChar()){
+                case 'a': // Ka
+                    readAmbientColor();
+                    break;
+                case 'd': // Kd
+                    readDiffuseColor();
+                    break;
+                case 's': // Ks
+                    readSpecularColor();
+                    break;
+                case 'e': // Ke
+                    readEmissiveColor();
+                    break;
+                default:
+                    isUnknownDirective = true;
+                    break;
+                }
+                break;
+                
+            case 'N':
+                subScanner.moveForward();
+                switch(subScanner.readChar()){
+                case 's': // Ns
+                    readSpecularExponent();
+                    break;
+                case 'i': // Ni
+                    readOpticalDensity();
+                    break;
+                default:
+                    isUnknownDirective = true;
+                    break;
+                }
+                break;
+                
+            case 'd':
+                subScanner.moveForward();
+                readDissolve();
+                break;
+                
+            case 'T':
+                subScanner.moveForward();
+                switch(subScanner.readChar()){
+                case 'r': // Tr
+                    readTransparency();
+                    break;
+                default:
+                    isUnknownDirective = true;
+                    break;
+                }
+                break;
+
+            case 'i':
+                if(subScanner.checkStringAtCurrentPosition("illum")){
+                   readIlluminationModel();
+                } else {
+                    isUnknownDirective = true;
+                }
+                break;
+
+            case 'm':
+                if(subScanner.readStringAtCurrentPosition(token)){
+                    if(token == "map_"){
+                        readTexture();
+                    } else {
+                        isUnknownDirective = true;
+                    }
+                } else {
+                    isUnknownDirective = true;
+                }
+                break;
+
+            case '#':
+                break;
+            }
+        }
+        if(isUnknownDirective){
+            // subScanner.throwEx("Unsupported directive");
+        }
+    }
+
+    subScanner.close();
+    return true;
+}
+
+
+void ObjSceneLoader::Impl::createNewMaterial(const string& name)
+{
+    currentMaterialDefInfo = &materialMap[name];
+    currentMaterialDefInfo->material->setName(name);
+    currentMaterialDef = currentMaterialDefInfo->material;
+}
+
+
+void ObjSceneLoader::Impl::readAmbientColor()
+{
+    Vector3f a;
+    readVector3Ex(subScanner, a);
+    currentMaterialDef->setAmbientIntensity(a.norm());
+}
+
+
+void ObjSceneLoader::Impl::readDiffuseColor()
+{
+    Vector3f c;
+    readVector3Ex(subScanner, c);
+    currentMaterialDef->setDiffuseColor(c);
+}
+
+
+void ObjSceneLoader::Impl::readSpecularColor()
+{
+    Vector3f c;
+    readVector3Ex(subScanner, c);
+    currentMaterialDef->setSpecularColor(c);
+}
+
+
+void ObjSceneLoader::Impl::readEmissiveColor()
+{
+    Vector3f c;
+    readVector3Ex(subScanner, c);
+    currentMaterialDef->setEmissiveColor(c);
+}
+
+
+void ObjSceneLoader::Impl::readSpecularExponent()
+{
+    currentMaterialDef->setShininess(subScanner.readFloatEx());
+}
+
+
+void ObjSceneLoader::Impl::readOpticalDensity()
 {
 
 }
 
 
-void ObjSceneLoader::Impl::readMaterial(const std::string& name)
+void ObjSceneLoader::Impl::readDissolve()
+{
+    currentMaterialDef->setTransparency(1.0f - subScanner.readFloatEx());
+}
+
+
+void ObjSceneLoader::Impl::readTransparency()
+{
+    currentMaterialDef->setTransparency(subScanner.readFloatEx());
+}
+
+
+void ObjSceneLoader::Impl::readIlluminationModel()
+{
+
+}
+
+
+void ObjSceneLoader::Impl::readTexture()
 {
 
 }
