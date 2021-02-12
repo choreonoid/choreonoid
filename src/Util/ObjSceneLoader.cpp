@@ -2,6 +2,7 @@
 #include "SimpleScanner.h"
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
+#include "Triangulator.h"
 #include "NullOut.h"
 #include "gettext.h"
 
@@ -32,13 +33,16 @@ public:
     SgGroupPtr group;
     SgShapePtr currentShape;
     SgMeshPtr currentMesh;
-    SgPolygonMeshPtr currentPolygonMesh;
     SgVertexArrayPtr currentVertices;
     int vertexIndexOffset;
     SgNormalArrayPtr currentNormals;
     int normalIndexOffset;
+    SgTexCoordArrayPtr currentTexCoords;
+    int texCoordsIndexOffset;
     SgIndexArray* currentVertexIndices;
     SgIndexArray* currentNormalIndices;
+    Triangulator<SgVertexArray> triangulator;
+    vector<int> polygon;
     
     ostream* os_;
     ostream& os() { return *os_; }
@@ -53,6 +57,7 @@ public:
     bool checkAndAddCurrentNode();
     void readVertex();
     void readNormal();
+    void readTextureCoordinate();
     void readFace();
     bool readFaceElement(int axis);
     void readMaterialTemplateLibrary(const std::string& name);
@@ -116,6 +121,7 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
 
     vertexIndexOffset = 1;
     normalIndexOffset = 1;
+    texCoordsIndexOffset = 1;
     
     try {
         scene = loadScene();
@@ -149,17 +155,25 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
             
         case 'v':
             scanner.moveForward();
-            if(scanner.peekChar() == 'n'){
+            if(scanner.peekChar() == ' '){
+                readVertex();
+            } else if(scanner.peekChar() == 'n'){
                 scanner.moveForward();
                 readNormal();
+            } else if(scanner.peekChar() == 't'){
+                scanner.moveForward();
+                readTextureCoordinate();
             } else {
-                readVertex();
+                scanner.throwEx("Unknown directive");
             }
             break;
             
         case 'f':
             scanner.moveForward();
             readFace();
+            break;
+
+        case 'l':
             break;
             
         case 'm':
@@ -201,7 +215,10 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
             continue;
 
         default:
-            scanner.checkLFEx();
+            scanner.skipSpaces();
+            if(!scanner.checkLF()){
+                scanner.throwEx("Unknown directive");
+            }
             break;
         }
     }
@@ -224,21 +241,23 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
 
 void ObjSceneLoader::Impl::createNewNode(const std::string& name)
 {
-    if(!currentShape ||
-       (currentMesh->hasVertices() || currentMesh->hasNormals() || currentMesh->hasTriangles())){
+    if(!currentShape || currentMesh->hasTriangles()){
 
         if(currentShape){
             checkAndAddCurrentNode();
             vertexIndexOffset += currentVertices->size();
             normalIndexOffset += currentNormals->size();
+            texCoordsIndexOffset += currentTexCoords->size();
         }
         
         currentShape = new SgShape;
         currentMesh = currentShape->getOrCreateMesh();
         currentVertices = currentMesh->getOrCreateVertices();
         currentNormals = currentMesh->getOrCreateNormals();
+        currentTexCoords = currentMesh->getOrCreateTexCoords();
         currentVertexIndices = &currentMesh->triangleVertices();
         currentNormalIndices = &currentMesh->normalIndices();
+        triangulator.setVertices(*currentVertices);
     }
     currentShape->setName(name);
 }
@@ -276,6 +295,12 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
     }
 
     if(isValid){
+        if(currentNormals->empty()){
+            currentMesh->setNormals(nullptr);
+        }
+        if(true /* currentTexCoords->empty() */){
+            currentMesh->setTexCoords(nullptr);
+        }
         group->addChild(currentShape);
     }
 
@@ -303,6 +328,15 @@ void ObjSceneLoader::Impl::readNormal()
 }
 
 
+void ObjSceneLoader::Impl::readTextureCoordinate()
+{
+    currentTexCoords->emplace_back();
+    auto& c = currentTexCoords->back();
+    c.x() = scanner.readFloatEx();
+    c.y() = scanner.readFloatEx();
+}
+
+
 void ObjSceneLoader::Impl::readFace()
 {
     int axis = 0;
@@ -312,12 +346,38 @@ void ObjSceneLoader::Impl::readFace()
         }
         ++axis;
     }
-    if(axis < 3){
+    if(axis <= 2){
         scanner.throwEx("The number of face elements is less than thrree");
-    } else if(axis == 3){
 
-    } else {
-        scanner.throwEx("The number of face element is more than three");
+    } else if(axis >= 4){
+        int index0 = currentVertexIndices->size() - axis;
+        polygon.resize(axis);
+        auto vpos = currentVertexIndices->begin() + index0;
+        std::copy(vpos, vpos + axis, polygon.begin());
+        int numTriangles = triangulator.apply(polygon);
+        const auto& triangles = triangulator.triangles();
+
+        bool needTofixNormalIndices =
+            currentVertexIndices->size() == currentNormalIndices->size();
+        
+        currentVertexIndices->resize(index0);
+        int localIndex = 0;
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
+                currentVertexIndices->push_back(polygon[triangles[localIndex++]]);
+            }
+        }
+        if(needTofixNormalIndices){
+            auto npos = currentNormalIndices->begin() + index0;
+            std::copy(npos, npos + axis, polygon.begin());
+            currentNormalIndices->resize(index0);
+            int localIndex = 0;
+            for(int i=0; i < numTriangles; ++i){
+                for(int j=0; j < 3; ++j){
+                    currentNormalIndices->push_back(polygon[triangles[localIndex++]]);
+                }
+            }
+        }
     }
 }
 
@@ -355,8 +415,3 @@ void ObjSceneLoader::Impl::readMaterial(const std::string& name)
 {
 
 }
-
-
-
-                
-
