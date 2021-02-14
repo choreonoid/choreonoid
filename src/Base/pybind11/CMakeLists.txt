@@ -5,6 +5,7 @@
 set(headers
   PyBase.h
   PyItemList.h
+  PyQObjectHolder.h
   PyQString.h
   exportdecl.h
   )
