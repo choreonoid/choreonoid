@@ -3,8 +3,10 @@
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
 #include "Triangulator.h"
+#include "ImageIO.h"
 #include "NullOut.h"
 #include <unordered_map>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -72,8 +74,8 @@ public:
     MaterialInfo* currentMaterialInfo;
     MaterialInfo* currentMaterialDefInfo;
     SgMaterial* currentMaterialDef;
-
     MaterialInfo dummyMaterialInfo;
+    ImageIO imageIO;
     
     ostream* os_;
     ostream& os() { return *os_; }
@@ -104,7 +106,7 @@ public:
     void readDissolve();
     void readTransparency();
     void readIlluminationModel();
-    void readTexture();
+    void readTexture(const std::string& mapType);
 };
 
 }
@@ -118,6 +120,7 @@ ObjSceneLoader::ObjSceneLoader()
 
 ObjSceneLoader::Impl::Impl()
 {
+    imageIO.setUpsideDown(true);
     os_ = &nullout();
 }
 
@@ -139,10 +142,12 @@ void ObjSceneLoader::Impl::clearBufObjects()
     group.reset();
     vertices.reset();
     normals.reset();
+    texCoords.reset();
     currentShape.reset();
     currentMesh.reset();
     currentVertexIndices = nullptr;
     currentNormalIndices = nullptr;
+    currentTexCoordIndices = nullptr;
     materialMap.clear();
     currentMaterialInfo = nullptr;
     currentMaterialDefInfo = &dummyMaterialInfo;
@@ -209,9 +214,8 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
                 scanner.moveForward();
                 readNormal();
             } else if(scanner.peekChar() == 't'){
-                // Textures are not yet supported
-                //scanner.moveForward();
-                //readTextureCoordinate();
+                scanner.moveForward();
+                readTextureCoordinate();
             } else {
                 scanner.throwEx("Unsupported directive");
             }
@@ -227,7 +231,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
             
         case 'm':
             if(scanner.checkStringAtCurrentPosition("mtllib ")){
-                scanner.readString(token);
+                scanner.readStringToEOL(token);
                 loadMaterialTemplateLibrary(token);
             } else {
                 scanner.readString(token);
@@ -237,7 +241,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
 
         case 'u':
             if(scanner.checkStringAtCurrentPosition("usemtl")){
-                scanner.readString(token);
+                scanner.readStringToEOL(token);
                 readMaterial(token);
             } else {
                 scanner.readString(token);
@@ -264,7 +268,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
             break;
 
         default:
-            scanner.skipSpaces();
+            scanner.skipSpacesAndTabs();
             if(!scanner.checkLF()){
                 scanner.throwEx("Unsupported directive");
             }
@@ -291,7 +295,9 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
 void ObjSceneLoader::Impl::createNewNode(const std::string& name)
 {
     if(currentShape && !currentMesh->hasTriangles()){
-        currentShape->setName(name);
+        if(!name.empty()){
+            currentShape->setName(name);
+        }
     } else {
         if(currentShape){
             checkAndAddCurrentNode();
@@ -348,11 +354,15 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
 
         if(currentMaterialInfo){
             currentShape->setMaterial(currentMaterialInfo->material);
-            if(currentMaterialInfo->texture){
-                currentShape->setTexture(currentMaterialInfo->texture);
+            if(auto texture = currentMaterialInfo->texture){
+                if(currentMesh->hasTexCoords() and currentMesh->hasTexCoordIndices()){
+                    //texutre->setRepeat();
+                    currentShape->setTexture(texture);
+                }
             }
         }
 
+        currentMesh->updateBoundingBox();
         group->addChild(currentShape);
     }
 
@@ -403,6 +413,8 @@ void ObjSceneLoader::Impl::readFace()
 
         bool needTofixNormalIndices =
             currentVertexIndices->size() == currentNormalIndices->size();
+        bool needTofixTexCoordIndices =
+            currentVertexIndices->size() == currentTexCoordIndices->size();
         
         currentVertexIndices->resize(index0);
         int localIndex = 0;
@@ -422,23 +434,33 @@ void ObjSceneLoader::Impl::readFace()
                 }
             }
         }
+        if(needTofixTexCoordIndices){
+            auto npos = currentTexCoordIndices->begin() + index0;
+            std::copy(npos, npos + axis, polygon.begin());
+            currentTexCoordIndices->resize(index0);
+            int localIndex = 0;
+            for(int i=0; i < numTriangles; ++i){
+                for(int j=0; j < 3; ++j){
+                    currentTexCoordIndices->push_back(polygon[triangles[localIndex++]]);
+                }
+            }
+        }
     }
 }
 
 
 bool ObjSceneLoader::Impl::readFaceElement(int axis)
 {
-    int vertexIndex;
-    if(!scanner.readInt(vertexIndex)){
+    int index;
+    if(!scanner.readInt(index)){
         return false;
     }
         
-    currentVertexIndices->push_back(vertexIndex - 1);
+    currentVertexIndices->push_back(index - 1);
 
     if(scanner.checkCharAtCurrentPosition('/')){
-        int texCoordIndex;
-        if(scanner.readInt(texCoordIndex)){
-            // add texture coordinate here
+        if(scanner.readInt(index)){
+            currentTexCoordIndices->push_back(index - 1);
         }
         if(scanner.checkCharAtCurrentPosition('/')){
             currentNormalIndices->push_back(scanner.readIntEx() - 1);
@@ -474,10 +496,10 @@ bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(const std::string& filena
         bool isUnknownDirective = false;
         
         if(subScanner.checkStringAtCurrentPosition("newmtl")){
-            subScanner.readString(token);
+            subScanner.readStringToEOL(token);
             createNewMaterial(token);
         } else {
-            subScanner.skipSpaces();
+            subScanner.skipSpacesAndTabs();
             switch(subScanner.peekChar()){
 
             case 'K':
@@ -543,8 +565,8 @@ bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(const std::string& filena
 
             case 'm':
                 if(subScanner.readStringAtCurrentPosition(token)){
-                    if(token == "map_"){
-                        readTexture();
+                    if(token.find_first_of("map_") == 0){
+                        readTexture(token.substr(4));
                     } else {
                         isUnknownDirective = true;
                     }
@@ -579,7 +601,8 @@ void ObjSceneLoader::Impl::readAmbientColor()
 {
     Vector3f a;
     readVector3Ex(subScanner, a);
-    currentMaterialDef->setAmbientIntensity(a.norm());
+    float intensity = std::max(a[0], std::max(a[1], a[2]));
+    currentMaterialDef->setAmbientIntensity(intensity);
 }
 
 
@@ -637,7 +660,15 @@ void ObjSceneLoader::Impl::readIlluminationModel()
 }
 
 
-void ObjSceneLoader::Impl::readTexture()
+void ObjSceneLoader::Impl::readTexture(const std::string& mapType)
 {
-
+    if(mapType == "Kd"){
+        if(subScanner.readStringToEOL(token)){
+            auto filename = (directoryPath / token).string();
+            SgTexturePtr texture = new SgTexture;
+            if(imageIO.load(texture->getOrCreateImage()->image(), filename, os())){
+                currentMaterialDefInfo->texture = texture;
+            }
+        }
+    }
 }
