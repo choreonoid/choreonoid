@@ -3,6 +3,7 @@
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <png.h>
+#include <algorithm>
 
 extern "C" {
 #define XMD_H
