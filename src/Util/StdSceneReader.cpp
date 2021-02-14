@@ -29,10 +29,6 @@ using namespace cnoid;
 using fmt::format;
 namespace filesystem = stdx::filesystem;
 
-namespace {
-
-}
-
 namespace cnoid {
 
 class StdSceneReader::Impl
@@ -86,7 +82,6 @@ public:
     bool isUriSchemeRegexReady;
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
-    bool generateTexCoord;
 
     typedef SgNode* (Impl::*NodeFunction)(Mapping& info);
     typedef unordered_map<string, NodeFunction> NodeFunctionMap;
@@ -124,18 +119,18 @@ public:
     SgNode* readTransform(Mapping& info);
     SgNode* readTransformParameters(Mapping& info, SgNode* scene);
     SgNode* readShape(Mapping& info);
-    SgMesh* readGeometry(Mapping& info);
+    SgMesh* readGeometry(Mapping& info, int meshOptions);
     void readDivisionNumbers(Mapping& info, SgMesh* mesh);
-    SgMesh* readBox(Mapping& info);
-    SgMesh* readSphere(Mapping& info);
-    SgMesh* readCylinder(Mapping& info);
-    SgMesh* readCone(Mapping& info);
-    SgMesh* readCapsule(Mapping& info);
-    SgMesh* readExtrusion(Mapping& info);
-    SgMesh* readElevationGrid(Mapping& info);
+    SgMesh* readBox(Mapping& info, int meshOptions);
+    SgMesh* readSphere(Mapping& info, int meshOptions);
+    SgMesh* readCylinder(Mapping& info, int meshOptions);
+    SgMesh* readCone(Mapping& info, int meshOptions);
+    SgMesh* readCapsule(Mapping& info, int meshOptions);
+    SgMesh* readExtrusion(Mapping& info, int meshOptions);
+    SgMesh* readElevationGrid(Mapping& info, int meshOptions);
     SgMesh* readTriangleMesh(Mapping& info);
-    SgMesh* readIndexedFaceSet(Mapping& info);
-    SgMesh* readResourceAsGeometry(Mapping& info);
+    SgMesh* readIndexedFaceSet(Mapping& info, int meshOptions);
+    SgMesh* readResourceAsGeometry(Mapping& info, int meshOptions);
     void readAppearance(SgShape* shape, Mapping& info);
     void readMaterial(SgShape* shape, Mapping& info);
     void readTexture(SgShape* shape, Mapping& info);
@@ -666,20 +661,19 @@ SgNode* StdSceneReader::Impl::readShape(Mapping& info)
     SgNode* scene = nullptr;
 
     SgShapePtr shape = new SgShape;
-    
+
+    int meshOptions = MeshGenerator::NoOption;
     Mapping& appearance = *info.findMapping("appearance");
     if(appearance.isValid()){
         readAppearance(shape, appearance);
         if(shape->texture()){
-            generateTexCoord = true;
-        }else{
-            generateTexCoord = false;
+            meshOptions |= MeshGenerator::TextureCoordinate;
         }
     }
 
     Mapping& geometry = *info.findMapping("geometry");
     if(geometry.isValid()){
-        shape->setMesh(readGeometry(geometry));
+        shape->setMesh(readGeometry(geometry, meshOptions));
     }
 
     scene = readTransformParameters(info, shape);
@@ -692,31 +686,31 @@ SgNode* StdSceneReader::Impl::readShape(Mapping& info)
 }
 
 
-SgMesh* StdSceneReader::Impl::readGeometry(Mapping& info)
+SgMesh* StdSceneReader::Impl::readGeometry(Mapping& info, int meshOptions)
 {
     SgMesh* mesh = nullptr;
     ValueNode& typeNode = info["type"];
     string type = typeNode.toString();
     if(type == "Box"){
-        mesh = readBox(info);
+        mesh = readBox(info, meshOptions);
     } else if(type == "Sphere"){
-        mesh = readSphere(info);
+        mesh = readSphere(info, meshOptions);
     } else if(type == "Cylinder"){
-        mesh = readCylinder(info);
+        mesh = readCylinder(info, meshOptions);
     } else if(type == "Cone"){
-        mesh = readCone(info);
+        mesh = readCone(info, meshOptions);
     } else if(type == "Capsule"){
-        mesh = readCapsule(info);
+        mesh = readCapsule(info, meshOptions);
     } else if(type == "Extrusion"){
-        mesh = readExtrusion(info);
+        mesh = readExtrusion(info, meshOptions);
     } else if(type == "ElevationGrid"){
-        mesh = readElevationGrid(info);
+        mesh = readElevationGrid(info, meshOptions);
     } else if(type == "TriangleMesh"){
         mesh = readTriangleMesh(info);
     } else if(type == "IndexedFaceSet"){
-        mesh = readIndexedFaceSet(info);
+        mesh = readIndexedFaceSet(info, meshOptions);
     } else if(type == "Resource"){
-        mesh = readResourceAsGeometry(info);
+        mesh = readResourceAsGeometry(info, meshOptions);
     } else {
         typeNode.throwException(
             format(_("Unknown geometry \"{}\""), type));
@@ -737,7 +731,7 @@ void StdSceneReader::Impl::readDivisionNumbers(Mapping& info, SgMesh* mesh)
 }
     
 
-SgMesh* StdSceneReader::Impl::readBox(Mapping& info)
+SgMesh* StdSceneReader::Impl::readBox(Mapping& info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
 
@@ -765,7 +759,7 @@ SgMesh* StdSceneReader::Impl::readBox(Mapping& info)
         mesh->setExtraDivisionMode(mode);
     }
 
-    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
         info.throwException(_("A box cannot be generated with the given parameters."));
     }
 
@@ -773,7 +767,7 @@ SgMesh* StdSceneReader::Impl::readBox(Mapping& info)
 }
 
 
-SgMesh* StdSceneReader::Impl::readSphere(Mapping& info)
+SgMesh* StdSceneReader::Impl::readSphere(Mapping& info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
 
@@ -783,14 +777,14 @@ SgMesh* StdSceneReader::Impl::readSphere(Mapping& info)
     info.read("radius", sphere.radius);
     mesh->setPrimitive(sphere);
 
-    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
         info.throwException(_("A sphere cannot be generated with the given parameters."));
     }
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readCylinder(Mapping& info)
+SgMesh* StdSceneReader::Impl::readCylinder(Mapping& info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
     
@@ -803,14 +797,14 @@ SgMesh* StdSceneReader::Impl::readCylinder(Mapping& info)
     info.read("bottom", cylinder.bottom);
     mesh->setPrimitive(cylinder);
 
-    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
         info.throwException(_("A cylinder cannot be generated with the given parameters."));
     }
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readCone(Mapping& info)
+SgMesh* StdSceneReader::Impl::readCone(Mapping& info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
 
@@ -822,14 +816,14 @@ SgMesh* StdSceneReader::Impl::readCone(Mapping& info)
     info.read("bottom", cone.bottom);
     mesh->setPrimitive(cone);
 
-    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
         info.throwException(_("A cone cannot be generated with the given parameters."));
     }
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readCapsule(Mapping& info)
+SgMesh* StdSceneReader::Impl::readCapsule(Mapping& info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
 
@@ -840,14 +834,14 @@ SgMesh* StdSceneReader::Impl::readCapsule(Mapping& info)
     info.read("height", capsule.height);
     mesh->setPrimitive(capsule);
     
-    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh)){
+    if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
         info.throwException(_("A capsule cannot be generated with the given parameters."));
     }
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info)
+SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info, int meshOptions)
 {
     MeshGenerator::Extrusion extrusion;
 
@@ -909,7 +903,7 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info)
     info.read({" begin_cap", "beginCap" }, extrusion.beginCap);
     info.read({ "end_cap", "endCap"}, extrusion.endCap);
 
-    SgMesh* mesh = meshGenerator.generateExtrusion(extrusion, generateTexCoord);
+    SgMesh* mesh = meshGenerator.generateExtrusion(extrusion, meshOptions);
 
     mesh->setSolid(info.get("solid", mesh->isSolid()));
     
@@ -917,7 +911,7 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info)
 }
 
 
-SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info)
+SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info, int meshOptions)
 {
     MeshGenerator::ElevationGrid grid;
 
@@ -947,10 +941,10 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info)
                 s[j] = texCoordNode[i*2+j].toDouble();
             }
         }
-        generateTexCoord = false;
+        meshOptions &= ~MeshGenerator::TextureCoordinate;
     }
 
-    SgMesh* mesh = meshGenerator.generateElevationGrid(grid, generateTexCoord);
+    SgMesh* mesh = meshGenerator.generateElevationGrid(grid, meshOptions);
     if(texCoord){
         mesh->setTexCoords(texCoord);
         mesh->texCoordIndices() = mesh->triangleVertices();
@@ -999,7 +993,7 @@ SgMesh* StdSceneReader::Impl::readTriangleMesh(Mapping& info)
 }
 
 
-SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
+SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info, int meshOptions)
 {
     SgPolygonMeshPtr polygonMesh = new SgPolygonMesh;
 
@@ -1056,7 +1050,7 @@ SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
         info.throwException("Error of an IndexedFaceSet node: \n" + errorMessage);
     }
 
-    if(generateTexCoord){
+    if(meshOptions & MeshGenerator::TextureCoordinate){
         if(mesh && !mesh->hasTexCoords()){
             meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
         }
@@ -1072,7 +1066,7 @@ SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info)
 }
 
 
-SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info)
+SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOptions)
 {
     SgMesh* mesh = nullptr;
     SgNode* resource = readResource(info);
@@ -1091,7 +1085,7 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info)
             meshFilter.generateNormals(mesh, creaseAngle, removeRedundantVertices);
             meshFilter.setNormalOverwritingEnabled(false);
         }
-        if(generateTexCoord){
+        if(meshOptions & MeshGenerator::TextureCoordinate){
             if(mesh && !mesh->hasTexCoords()){
                 meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
             }

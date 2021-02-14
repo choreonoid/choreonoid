@@ -1080,7 +1080,7 @@ SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius, d
 }
 
 
-SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enableTextureCoordinate)
+SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, int meshOptions)
 {
     int spineSize = extrusion.spine.size();
     int crossSectionSize = extrusion.crossSection.size();
@@ -1268,7 +1268,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
 
     generateNormals(mesh, extrusion.creaseAngle);
 
-    if(enableTextureCoordinate){
+    if(meshOptions & TextureCoordinate){
         generateTextureCoordinateForExtrusion(
             mesh, extrusion.crossSection, extrusion.spine,
             numTriOfbeginCap, numTriOfendCap, crossSectionSize*(spineSize-1));
@@ -1421,7 +1421,7 @@ SgLineSet* MeshGenerator::generateExtrusionLineSet(const Extrusion& extrusion, S
 }
 
 
-SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid, bool enableTextureCoordinate)
+SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid, int meshOptions)
 {
     if(grid.xDimension * grid.zDimension != static_cast<int>(grid.height.size())){
         return nullptr;
@@ -1456,7 +1456,7 @@ SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid, bool ena
 
     generateNormals(mesh, grid.creaseAngle);
 
-    if(enableTextureCoordinate){
+    if(meshOptions & TextureCoordinate){
         generateTextureCoordinateForElevationGrid(mesh, grid);
     }
 

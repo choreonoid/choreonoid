@@ -79,7 +79,7 @@ public:
         }
     };
 
-    SgMesh* generateExtrusion(const Extrusion& extrusion, bool enableTextureCoordinate = false);
+    SgMesh* generateExtrusion(const Extrusion& extrusion, int meshOptions = NoOption);
     SgLineSet* generateExtrusionLineSet(const Extrusion& extrusion, SgMesh* mesh);
 
     struct ElevationGrid
@@ -101,7 +101,7 @@ public:
         }
     };
 
-    SgMesh* generateElevationGrid(const ElevationGrid& elevationGrid, bool enableTextureCoordinate = false);
+    SgMesh* generateElevationGrid(const ElevationGrid& elevationGrid, int meshOptions = NoOption);
 
     void generateTextureCoordinateForIndexedFaceSet(SgMesh* mesh);
 
