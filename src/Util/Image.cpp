@@ -5,7 +5,6 @@
 
 #include "Image.h"
 #include "ImageIO.h"
-#include "Exception.h"
 #include <fmt/format.h>
 
 using namespace std;
@@ -57,11 +56,6 @@ void Image::setSize(int width, int height, int nComponents)
 {
     if(nComponents > 0 && nComponents <= 4){
         numComponents_ = nComponents;
-    } else {
-        exception_base exception;
-        exception << error_info_message(
-            fmt::format("Invalid number ({}) of image components", nComponents));
-        BOOST_THROW_EXCEPTION(exception);
     }
     setSize(width, height);
 }
@@ -97,16 +91,15 @@ void Image::applyVerticalFlip()
 }
 
 
-    
-void Image::load(const std::string& filename)
+bool Image::load(const std::string& filename, std::ostream& os)
 {
     ImageIO iio;
-    iio.load(*this, filename);
+    return iio.load(*this, filename, os);
 }
 
 
-void Image::save(const std::string& filename) const
+bool Image::save(const std::string& filename, std::ostream& os) const
 {
     ImageIO iio;
-    iio.save(*this, filename);
+    return iio.save(*this, filename, os);
 }

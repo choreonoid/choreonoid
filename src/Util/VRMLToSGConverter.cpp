@@ -1203,7 +1203,7 @@ SgTextureTransform* VRMLToSGConverterImpl::createTextureTransform(VRMLTextureTra
 
 SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
 {
-    SgTexture* texture = 0;
+    SgTexture* texture = nullptr;
 
     VRMLImageTexturePtr imageTextureNode = dynamic_node_cast<VRMLImageTexture>(vt);
     if(imageTextureNode){
@@ -1213,21 +1213,18 @@ SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
         for(size_t i=0; i < urls.size(); ++i){
             const string& url = urls[i];
             if(!url.empty()){
-                ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(url);
+                auto p = imagePathToSgImageMap.find(url);
                 if(p != imagePathToSgImageMap.end()){
                     image = p->second;
                     break;
                 } else {
-                    try {
-                        if(!imageForLoading){
-                            imageForLoading = new SgImage;
-                        }
-                        imageIO.load(imageForLoading->image(), url);
+                    if(!imageForLoading){
+                        imageForLoading = new SgImage;
+                    }
+                    if(imageIO.load(imageForLoading->image(), url, os())){
                         image = imageForLoading;
                         imagePathToSgImageMap[url] = image;
                         break;
-                    } catch(const exception_base& ex){
-                        putMessage(*boost::get_error_info<error_info_message>(ex));
                     }
                 }
             }

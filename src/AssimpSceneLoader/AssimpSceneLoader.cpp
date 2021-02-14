@@ -516,13 +516,11 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
             if(p != imagePathToSgImageMap.end()){
                 image = p->second;
             } else {
-                try {
-                    image = new SgImage;
-                    imageIO.load(image->image(), textureFile);
+                image = new SgImage;
+                if(imageIO.load(image->image(), textureFile, os())){
                     imagePathToSgImageMap[textureFile] = image;
-                } catch(const exception_base& ex){
-                    os() << *boost::get_error_info<error_info_message>(ex) << endl;
-                    image = nullptr;
+                } else {
+                    image.reset();
                 }
             }
             if(image){

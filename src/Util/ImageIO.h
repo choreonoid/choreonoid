@@ -1,12 +1,8 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_IMAGE_IO_H
 #define CNOID_UTIL_IMAGE_IO_H
 
 #include "Image.h"
+#include "NullOut.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -21,8 +17,8 @@ public:
     //! \todo implement this mode.
     void allocateAlphaComponent(bool on);
         
-    void load(Image& image, const std::string& filename);
-    void save(const Image& image, const std::string& filename);
+    bool load(Image& image, const std::string& filename, std::ostream& os = nullout());
+    bool save(const Image& image, const std::string& filename, std::ostream& os = nullout());
 
 private:
     bool isUpsideDown_;

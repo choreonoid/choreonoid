@@ -6,6 +6,7 @@
 #ifndef CNOID_UTIL_IMAGE_H
 #define CNOID_UTIL_IMAGE_H
 
+#include "NullOut.h"
 #include <string>
 #include <vector>
 #include "exportdecl.h"
@@ -38,8 +39,8 @@ public:
     void clear();
     void applyVerticalFlip();
 
-    void load(const std::string& filename);
-    void save(const std::string& filename) const;
+    bool load(const std::string& filename, std::ostream& os = nullout());
+    bool save(const std::string& filename, std::ostream& os = nullout()) const;
 
 private:
     std::vector<unsigned char> pixels_;

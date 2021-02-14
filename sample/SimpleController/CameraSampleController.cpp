@@ -42,9 +42,10 @@ public:
             for(size_t i=0; i < cameras.size(); ++i){
                 Camera* camera = cameras[i];
                 std::string filename = camera->name() + ".png";
-                camera->constImage().save(filename);
-                *os << "The image of " << camera->name()
-                    << " has been saved to \"" << filename << "\"." << std::endl;
+                if(camera->constImage().save(filename)){
+                    *os << "The image of " << camera->name()
+                        << " has been saved to \"" << filename << "\"." << std::endl;
+                }
             }
             timeCounter = 0.0;
         }

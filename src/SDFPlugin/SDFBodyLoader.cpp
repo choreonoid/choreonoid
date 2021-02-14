@@ -1594,8 +1594,9 @@ SgTexture* SDFBodyLoaderImpl::convertTexture(MaterialInfo* material, const strin
         }
     }
 
-    if(textureName.empty() || texturePath.empty())
-        return 0;
+    if(textureName.empty() || texturePath.empty()){
+        return nullptr;
+    }
 
     string textureFile = texturePath + "/" + textureName;
     ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(textureFile);
@@ -1604,27 +1605,23 @@ SgTexture* SDFBodyLoaderImpl::convertTexture(MaterialInfo* material, const strin
     if(p != imagePathToSgImageMap.end()){
         image = p->second;
     } else {
-        try {
-            image = new SgImage;
-            ImageIO imageIO;
-            imageIO.setUpsideDown(true);
-            imageIO.load(image->image(), textureFile);
+        image = new SgImage;
+        ImageIO imageIO;
+        imageIO.setUpsideDown(true);
+        if(imageIO.load(image->image(), textureFile)){
             imagePathToSgImageMap[textureFile] = image;
-        } catch(const exception_base& ex){
-            cout << boost::get_error_info<error_info_message>(ex) << endl;
-            image = 0;
+        } else {
+            image = nullptr;
         }
     }
 
     if(image){
         SgTexture* texture = new SgTexture;
         texture->setImage(image);
-
         return texture;
     }
 
-    return 0;
-
+    return nullptr;
 }
 
 

@@ -14,7 +14,6 @@
 #include "EigenArchive.h"
 #include "FilePathVariableProcessor.h"
 #include "NullOut.h"
-#include "Exception.h"
 #include "ImageIO.h"
 #include "UTF8.h"
 #include <cnoid/stdx/filesystem>
@@ -1154,49 +1153,44 @@ void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping& info)
 
 void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
 {
-    string& url = symbol;
-    if(info.read("url", url)){
-        if(!url.empty()){
-            SgImagePtr image;
-            ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(url);
-            if(p != imagePathToSgImageMap.end()){
-                image = p->second;
-            }else{
-                try{
-                    image = new SgImage;
-                    auto fpvp = getOrCreatePathVariableProcessor();
-                    auto filename = fpvp->expand(url, true);
-                    if(!filename.empty()){
-                        imageIO.load(image->image(), filename);
-                        imagePathToSgImageMap[url] = image;
-                    } else {
-                        os() << format(_("Warning: texture url \"{0}\" is not valid: {1}"),
-                                       url, fpvp->errorMessage()) << endl; 
-                        image.reset();
-                    }
-                }
-                catch(const exception_base& ex){
-                    info.throwException(*boost::get_error_info<error_info_message>(ex));
-                }
-            }
-            if(image){
-                SgTexturePtr texture = new SgTexture;
-                texture->setImage(image);
-                bool repeatS = true;
-                bool repeatT = true;
-
-                auto repeatList = info.findListing("repeat");
-                if(repeatList->isValid() && repeatList->size() == 2){
-                    repeatS = repeatList->at(0)->toBool();
-                    repeatT = repeatList->at(1)->toBool();
+    string& uri = symbol;
+    if(info.read({ "uri", "url" }, uri) && !uri.empty()){
+        SgImagePtr image;
+        ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(uri);
+        if(p != imagePathToSgImageMap.end()){
+            image = p->second;
+        }else{
+            auto fpvp = getOrCreatePathVariableProcessor();
+            auto filename = fpvp->expand(uri, true);
+            if(filename.empty()){
+                os() << format(_("Warning: texture uri \"{0}\" is not valid: {1}"),
+                               uri, fpvp->errorMessage()) << endl;
+            } else {
+                image = new SgImage;
+                if(imageIO.load(image->image(), filename, os())){
+                    imagePathToSgImageMap[uri] = image;
                 } else {
-                    info.read("repeatS", repeatS);
-                    info.read("repeatT", repeatT);
+                    image.reset();
                 }
-                texture->setRepeat(repeatS, repeatT);
-                texture->setTextureTransform(new SgTextureTransform);
-                shape->setTexture(texture);
             }
+        }
+        if(image){
+            SgTexturePtr texture = new SgTexture;
+            texture->setImage(image);
+            bool repeatS = true;
+            bool repeatT = true;
+            
+            auto repeatList = info.findListing("repeat");
+            if(repeatList->isValid() && repeatList->size() == 2){
+                repeatS = repeatList->at(0)->toBool();
+                repeatT = repeatList->at(1)->toBool();
+            } else {
+                info.read("repeatS", repeatS);
+                info.read("repeatT", repeatT);
+            }
+            texture->setRepeat(repeatS, repeatT);
+            texture->setTextureTransform(new SgTextureTransform);
+            shape->setTexture(texture);
         }
     }
 }
