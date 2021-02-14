@@ -177,6 +177,9 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
     triangulator.setVertices(*vertices);
     normals = new SgNormalArray;
     texCoords = new SgTexCoordArray;
+    currentMaterialInfo = nullptr;
+    currentMaterialDefInfo = &dummyMaterialInfo;
+    currentMaterialDef = dummyMaterialInfo.material;
     
     try {
         scene = loadScene();
