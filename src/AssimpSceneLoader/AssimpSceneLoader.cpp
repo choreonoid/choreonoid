@@ -466,8 +466,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
     }
     float s;
     if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_SHININESS, s)){
-        s = std::min(128.0f, s);
-        material->setShininess(s / 128.0f);
+        material->setSpecularExponent(s);
     }
     if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
         float c = (diffuse == 0.0f ? 0.0f : (color.r + color.g + color.b) / diffuse);

@@ -1183,7 +1183,7 @@ SgMaterial* VRMLToSGConverterImpl::createMaterial(VRMLMaterial* vm)
     material->setAmbientIntensity(vm->ambientIntensity);
     material->setEmissiveColor(vm->emissiveColor);
     material->setSpecularColor(vm->specularColor);
-    material->setShininess(vm->shininess);
+    material->setSpecularExponent(vm->shininess * 128.0f);
     material->setTransparency(vm->transparency);
     return material;
 }

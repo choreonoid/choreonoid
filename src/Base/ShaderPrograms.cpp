@@ -152,7 +152,7 @@ public:
         AMBIENT_COLOR,
         EMISSION_COLOR,
         SPECULAR_COLOR,
-        SHININESS,
+        SPECULAR_EXPONENT,
         ALPHA,
         NUM_STATE_FLAGS
     };
@@ -162,7 +162,7 @@ public:
     Vector3f ambientColor;
     Vector3f specularColor;
     Vector3f emissionColor;
-    float shininess;
+    float specularExponent;
     float alpha;
     float minTransparency;
 
@@ -170,7 +170,7 @@ public:
     GLint ambientColorLocation;
     GLint specularColorLocation;
     GLint emissionColorLocation;
-    GLint shininessLocation;
+    GLint specularExponentLocation;
     GLint alphaLocation;
 
     int colorTextureIndex;
@@ -963,7 +963,7 @@ void MaterialLightingProgram::Impl::initialize(GLSLProgram& glsl)
     ambientColorLocation = glsl.getUniformLocation("ambientColor");
     specularColorLocation = glsl.getUniformLocation("specularColor");
     emissionColorLocation = glsl.getUniformLocation("emissionColor");
-    shininessLocation = glsl.getUniformLocation("shininess");
+    specularExponentLocation = glsl.getUniformLocation("specularExponent");
     alphaLocation = glsl.getUniformLocation("alpha");
 
     isTextureEnabledLocation = glsl.getUniformLocation("isTextureEnabled");
@@ -1029,11 +1029,11 @@ void MaterialLightingProgram::Impl::setMaterial(const SgMaterial* material)
         stateFlag[SPECULAR_COLOR] = true;
     }
 
-    float s = 127.0f * material->shininess() + 1.0f;
-    if(!stateFlag[SHININESS] || shininess != s){
-        glUniform1f(shininessLocation, s);
-        shininess = s;
-        stateFlag[SHININESS] = true;
+    float e = material->specularExponent();
+    if(!stateFlag[SPECULAR_EXPONENT] || specularExponent != e){
+        glUniform1f(specularExponentLocation, e);
+        specularExponent = e;
+        stateFlag[SPECULAR_EXPONENT] = true;
     }
 
     float transparency = std::max(material->transparency(), minTransparency);

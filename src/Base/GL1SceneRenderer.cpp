@@ -1110,8 +1110,7 @@ void GL1SceneRenderer::Impl::renderMaterial(const SgMaterial* material)
     color << material->specularColor(), alpha;
     setSpecularColor(color);
     
-    float shininess = (127.0f * material->shininess()) + 1.0f;
-    setShininess(shininess);
+    setShininess(std::min(std::max(material->specularExponent(), 0.0f), 128.0f));
 
     lastAlpha = alpha;
 }

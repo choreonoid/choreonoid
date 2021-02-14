@@ -28,7 +28,7 @@ SDFLoaderPseudoGazeboColorInfo::SDFLoaderPseudoGazeboColorInfo()
     v << 0.0, 0.0, 0.0;
     material->setSpecularColor(v);
     material->setAmbientIntensity(1.0); // R + G + B / 3.0 (1.0 + 1.0 + 1.0 / 3.0)
-    material->setShininess(0.0);
+    material->setSpecularExponent(0.0);
 }
 
 SDFLoaderPseudoGazeboColorInfo::~SDFLoaderPseudoGazeboColorInfo()
@@ -38,7 +38,7 @@ SDFLoaderPseudoGazeboColorInfo::~SDFLoaderPseudoGazeboColorInfo()
 SDFLoaderPseudoGazeboColor::SDFLoaderPseudoGazeboColor()
 {
     #define SDFLOADER_SET_COLOR_MATERIAL(                                                         \
-        name, dcr, dcg, dcb, ecr, ecg, ecb, scr, scg, scb, ai, sh, tr, isamb, isdfu, isspe, isemi \
+        name, dcr, dcg, dcb, ecr, ecg, ecb, scr, scg, scb, ai, se, tr, isamb, isdfu, isspe, isemi \
         )                                                                                         \
         info = new SDFLoaderPseudoGazeboColorInfo;                                                \
         info->isSettingAmbient = isamb;                                                           \
@@ -53,7 +53,7 @@ SDFLoaderPseudoGazeboColor::SDFLoaderPseudoGazeboColor()
         v << scr, scg, scb;                                                                       \
         p->setSpecularColor(v);                                                                   \
         p->setAmbientIntensity(ai);                                                               \
-        p->setShininess(sh);                                                                      \
+        p->setSpecularExponent(se);                                                                      \
         p->setTransparency(tr);                                                                   \
         colorInfoMap_[name] = info
 
@@ -89,8 +89,8 @@ SDFLoaderPseudoGazeboColorInfo* SDFLoaderPseudoGazeboColor::get(std::string name
         ret->material->setAmbientIntensity(p->material->ambientIntensity());
         ret->material->setDiffuseColor(p->material->diffuseColor());
         ret->material->setEmissiveColor(p->material->emissiveColor());
-        ret->material->setShininess(p->material->shininess());
         ret->material->setSpecularColor(p->material->specularColor());
+        ret->material->setSpecularExponent(p->material->specularExponent());
         ret->material->setTransparency(p->material->transparency());
     }
 

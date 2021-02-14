@@ -21,8 +21,8 @@ void exportPySceneDrawables(py::module& m)
                       &SgMaterial::emissiveColor,
                       [](SgMaterial& self, const Vector3f c){ self.setEmissiveColor(c); })
         .def("setEmissiveColor", [](SgMaterial& self, const Vector3f c){ self.setEmissiveColor(c); })
-        .def_property("shininess", &SgMaterial::shininess, &SgMaterial::setShininess)
-        .def("setShininess", &SgMaterial::setShininess)
+        .def_property("specularExponent", &SgMaterial::specularExponent, &SgMaterial::specularExponent)
+        .def("setSpecularExponent", &SgMaterial::setSpecularExponent)
         .def_property("specularColor",
                       &SgMaterial::specularColor,
                       [](SgMaterial& self, const Vector3f c){ self.setSpecularColor(c); })

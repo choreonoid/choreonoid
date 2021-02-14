@@ -36,7 +36,7 @@ uniform MaterialBlock {
     vec3 diffuseColor;
     vec3 ambientColor;
     vec3 specularColor;
-    float shininess;
+    float specularExponent;
 };
 */
 
@@ -44,7 +44,7 @@ uniform vec3 diffuseColor;
 uniform vec3 ambientColor;
 uniform vec3 specularColor;
 uniform vec3 emissionColor;
-uniform float shininess;
+uniform float specularExponent;
 uniform float alpha = 1.0;
 
 uniform int numLights;
@@ -182,7 +182,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         vec3 r = reflect(-s, n);
         return light.intensity * (
             diffuseColor * max(dot(s, n), 0.0) +
-            specularColor * pow(max(dot(r, v), 0.0), shininess));
+            specularColor * pow(max(dot(r, v), 0.0), specularExponent));
     } else {
         // point light
         vec3 l = vec3(light.position) - inData.position;
@@ -220,7 +220,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         
         return ki * light.intensity * (
             diffuseColor * max(dot(s, n), 0.0) +
-            specularColor * pow(max(dot(r, v), 0.0), shininess));
+            specularColor * pow(max(dot(r, v), 0.0), specularExponent));
     }
 }
 

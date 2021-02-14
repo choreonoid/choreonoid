@@ -382,8 +382,8 @@ void SceneGraphPropertyViewImpl::setProperty(SgMaterial* material)
     addProperty(_("ambientIntensity"), new PropertyItem(this, Double(material->ambientIntensity(), 1, 0.0, 1.0)));
     addProperty(_("diffuseColor"), new PropertyItem(this,str(material->diffuseColor())));
     addProperty(_("emissiveColor"), new PropertyItem(this,str(material->emissiveColor())));
-    addProperty(_("shininess"), new PropertyItem(this, Double(material->shininess(), 1, 0.0, 1.0)));
     addProperty(_("specularColor"), new PropertyItem(this,str(material->specularColor())));
+    addProperty(_("specularExponent"), new PropertyItem(this, Double(material->specularExponent(), 1, 0.0, 1.0)));
     addProperty(_("transparency"), new PropertyItem(this, Double(material->transparency(), 1, 0.0, 1.0)));
 }
 

@@ -29,11 +29,19 @@ public:
     const Vector3f& emissiveColor() const { return emissiveColor_; }
     template<typename Derived> void setEmissiveColor(const Eigen::MatrixBase<Derived>& c) {
         emissiveColor_ = c.template cast<Vector3f::Scalar>(); }
-    float shininess() const { return shininess_; }
-    void setShininess(float s) { shininess_ = s; }
+
     const Vector3f& specularColor() const { return specularColor_; }
     template<typename Derived> void setSpecularColor(const Eigen::MatrixBase<Derived>& c) {
         specularColor_ = c.template cast<Vector3f::Scalar>(); }
+
+    float specularExponent() const { return specularExponent_; }
+    void setSpecularExponent(float e) { specularExponent_ = e; }
+    
+    [[deprecated("Use specularExponent")]]
+    float shininess() const { return specularExponent_ / 128.0f; }
+    [[deprecated("Use setSpecularExponent")]]
+    void setShininess(float s) { specularExponent_ = s * 128.0f; }
+    
     float transparency() const { return transparency_; }
     void setTransparency(float t) { transparency_ = t; }
 
@@ -46,7 +54,7 @@ private:
     Vector3f specularColor_;
     float ambientIntensity_;
     float transparency_;
-    float shininess_;
+    float specularExponent_;
 };
 
 typedef ref_ptr<SgMaterial> SgMaterialPtr;

@@ -34,7 +34,7 @@ SgMaterial::SgMaterial()
     diffuseColor_ << 1.0f, 1.0f, 1.0f;
     emissiveColor_.setZero();
     specularColor_.setZero();
-    shininess_ = 0.2f;
+    specularExponent_ = 25.0f;
     transparency_ = 0.0f;
 }
 
@@ -46,7 +46,7 @@ SgMaterial::SgMaterial(const SgMaterial& org)
     diffuseColor_ = org.diffuseColor_;
     emissiveColor_ = org.emissiveColor_;
     specularColor_ = org.specularColor_;
-    shininess_ = org.shininess_;
+    specularExponent_ = org.specularExponent_;
     transparency_ = org.transparency_;
 }
 

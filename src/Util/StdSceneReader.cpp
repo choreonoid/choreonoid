@@ -1135,12 +1135,15 @@ void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping& info)
     if(read(info, { "emissive", "emissiveColor" }, color)){
         material->setEmissiveColor(color);
     }
-    if(info.read("shininess", value)){
-        material->setShininess(value);
-    }
     if(read(info, { "specular", "specularColor" }, color)){
         material->setSpecularColor(color);
     }
+    if(info.read("specular_exponent", value)){
+        material->setSpecularExponent(value);
+    } else if(info.read("shininess", value)){ // deprecated
+        material->setSpecularExponent(value * 128.0f);
+    }
+    
     if(info.read("transparency", value)){
         material->setTransparency(value);
     }

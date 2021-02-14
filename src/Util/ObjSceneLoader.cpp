@@ -609,7 +609,7 @@ void ObjSceneLoader::Impl::readEmissiveColor()
 
 void ObjSceneLoader::Impl::readSpecularExponent()
 {
-    currentMaterialDef->setShininess(subScanner.readFloatEx());
+    currentMaterialDef->setSpecularExponent(subScanner.readFloatEx());
 }
 
 

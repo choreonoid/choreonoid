@@ -153,7 +153,6 @@ void LightingItemImpl::genarateLightShape()
     SgMaterial* material = new SgMaterial;
     material->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
     material->setAmbientIntensity(0.2f);
-    material->setShininess(0.2f);
     dlightShape = new SgGroup;
     MeshGenerator meshGenerator;
     SgShape* sphere = new SgShape;

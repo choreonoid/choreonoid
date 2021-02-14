@@ -541,8 +541,8 @@ MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
     if(material->specularColor() != defaultMaterial->specularColor()){
         write(*archive, "specular", material->specularColor());
     }
-    if(material->shininess() != defaultMaterial->shininess()){
-        archive->write("shininess", material->shininess());
+    if(material->specularExponent() != defaultMaterial->specularExponent()){
+        archive->write("specular_exponent", material->specularExponent());
     }
     if(material->transparency() != defaultMaterial->transparency()){
         archive->write("transparency", material->transparency());
