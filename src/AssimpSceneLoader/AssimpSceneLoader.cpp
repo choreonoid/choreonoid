@@ -518,6 +518,7 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
             } else {
                 image = new SgImage;
                 if(imageIO.load(image->image(), textureFile, os())){
+                    image->setUri(textureFile);
                     imagePathToSgImageMap[textureFile] = image;
                 } else {
                     image.reset();
