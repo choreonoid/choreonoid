@@ -29,6 +29,7 @@ public:
     vector<ItemFileIO*> givenFileIOs;
     vector<ItemFileIO*> validFileIOs;
     ItemFileIO* targetFileIO;
+    Connection filterConnection;
     ItemPtr currentItemToSave;
     bool isCurrentItemOptionsApplied;
     QWidget* optionPanel;
@@ -38,11 +39,10 @@ public:
     Impl(ItemFileDialog* self);
     ItemList<Item>  loadItems(Item* parentItem, bool doAddition, Item* nextItem);
     bool saveItem(Item* item);
-    bool selectFilePath(const std::string& filePath);
+    bool selectFilePath(filesystem::path& path);
     std::string getSaveFilename();
     bool initializeFileIoFilters();
-    void setTargetFileIO(ItemFileIO* fileIO);
-    void onFilterSelected(const QString& filter);
+    void setTargetFileIO(int index, bool doSelectNameFilter);
     bool onFileDialogFinished(int result);
 };
 
@@ -78,9 +78,10 @@ ItemFileDialog::Impl::Impl(ItemFileDialog* self)
     self->setOption(QFileDialog::DontConfirmOverwrite);
 
     optionPanel = nullptr;
-    
-    QObject::connect(self->fileDialog(), &QFileDialog::filterSelected,
-                     [this](const QString& filter){ onFilterSelected(filter); });
+
+    filterConnection =
+        self->sigFilterSelected().connect(
+            [this](int index){ setTargetFileIO(index, false); });
 
     self->sigAboutToFinished().connect(
         [this](int result){ return onFileDialogFinished(result); });
@@ -246,16 +247,20 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
     self->updatePresetDirectories();
 
     bool selected = false;
-    auto path = filesystem::path(fromUTF8(item->filePath()));
-    if(path.stem().string() == item->name()){
-        selected = selectFilePath(item->filePath());
+    filesystem::path filePath(fromUTF8(item->filePath()));
+    filesystem::path directory(filePath.parent_path());
+    if(filesystem::exists(directory)){
+        self->setDirectory(toUTF8(directory.string()));
+        if(filePath.stem().string() == item->name() && !isExportMode){
+            selected = selectFilePath(filePath);
+        }
     }
     if(!selected){
         self->selectFile(item->name());
     }
 
     bool saved = false;
-    
+
     if(self->exec() == QDialog::Accepted){
         auto filename = getSaveFilename();
         if(!filename.empty()){
@@ -278,47 +283,41 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
 }
 
 
-bool ItemFileDialog::Impl::selectFilePath(const std::string& filePath)
+bool ItemFileDialog::Impl::selectFilePath(filesystem::path& path)
 {
     bool selected = false;
 
-    if(!filePath.empty()){
-        
-        filesystem::path path(fromUTF8(filePath));
-        filesystem::path dir(path.parent_path());
-
-        if(filesystem::exists(dir)){
-            self->setDirectory(toUTF8(dir.string()));
-            
-            bool doTrySelectFile = false;
-            auto dotext = path.extension().string();
-            if(!dotext.empty()){
-                string ext = dotext.substr(1);
-                ItemFileIO* matchedFileIO = nullptr;
-                for(auto& fileIO : validFileIOs){
-                    auto exts = fileIO->extensions();
-                    if(std::find(exts.begin(), exts.end(), ext) != exts.end()){
-                        matchedFileIO = fileIO;
-                        break;
-                    }
-                }
-                if(matchedFileIO){
-                    setTargetFileIO(matchedFileIO);
-                    doTrySelectFile = true;
-                }
-            }
-            if(doTrySelectFile && filesystem::exists(path)){
-                self->selectFile(toUTF8(path.filename().string()));
-                selected = true;
+    bool doTrySelectFile = false;
+    auto dotext = path.extension().string();
+    if(!dotext.empty()){
+        string ext = dotext.substr(1);
+        ItemFileIO* matchedFileIO = nullptr;
+        int matchedFileIoIndex = -1;
+                
+        for(int i=0; i < validFileIOs.size(); ++i){
+            auto fileIO = validFileIOs[i];
+            auto exts = fileIO->extensions();
+            if(std::find(exts.begin(), exts.end(), ext) != exts.end()){
+                matchedFileIoIndex = i;
+                break;
             }
         }
+        if(matchedFileIoIndex >= 0){
+            setTargetFileIO(matchedFileIoIndex, true);
+            doTrySelectFile = true;
+        }
     }
+    if(doTrySelectFile && filesystem::exists(path)){
+        self->selectFile(toUTF8(path.filename().string()));
+        selected = true;
+    }
+
     return selected;
 }
 
 
 std::string ItemFileDialog::Impl::getSaveFilename()
-{
+{ 
     std::string filename;
     
     auto filenames = self->selectedFiles();
@@ -364,14 +363,18 @@ bool ItemFileDialog::Impl::initializeFileIoFilters()
 
     self->setNameFilters(filters);
 
-    setTargetFileIO(validFileIOs.front());
+    setTargetFileIO(0, true);
 
     return true;
 }
 
 
-void ItemFileDialog::Impl::setTargetFileIO(ItemFileIO* fileIO)
+void ItemFileDialog::Impl::setTargetFileIO(int index, bool doSelectNameFilter)
 {
+    if(index >= validFileIOs.size()){
+        return;
+    }
+    ItemFileIO* fileIO = validFileIOs[index];
     targetFileIO = fileIO;
 
     if(optionPanel){
@@ -408,17 +411,12 @@ void ItemFileDialog::Impl::setTargetFileIO(ItemFileIO* fileIO)
             self->setFileMode(QFileDialog::ExistingFiles);
         }
     }
-}
 
-
-void ItemFileDialog::Impl::onFilterSelected(const QString& filter)
-{
-    auto filters = self->nameFilters();
-    int index = filters.indexOf(QRegExp(filter, Qt::CaseSensitive, QRegExp::FixedString));
-    if(index >= validFileIOs.size()){
-        index = 0;
+    if(doSelectNameFilter){
+        filterConnection.block();
+        self->selectNameFilter(index);
+        filterConnection.unblock();
     }
-    setTargetFileIO(validFileIOs[index]);
 }
 
 

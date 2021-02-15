@@ -4,6 +4,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
+#include <cnoid/stdx/optional>
 #include <QBoxLayout>
 #include <QStyle>
 
@@ -37,10 +38,12 @@ class FileDialog::Impl : public QFileDialog
 public:
     FileDialog* self;
     QBoxLayout* optionPanelBox;
-    Signal<bool(int result), LogicalProduct> sigAboutToFinished;
+    stdx::optional<Signal<void(int index)>> sigFilterSelected;
+    stdx::optional<Signal<bool(int result), LogicalProduct>> sigAboutToFinished;
     
     Impl(FileDialog* self);
     void updatePresetDirectories();    
+    void onFilterSelected(const QString& selected);
     void onFinished(int result);
     void storeRecentDirectories();
 };
@@ -77,9 +80,6 @@ FileDialog::Impl::Impl(FileDialog* self)
     optionPanelBox->setContentsMargins(left, 0, right, bottom);
     optionPanelBox->addStretch();
     vbox->addLayout(optionPanelBox);
-
-    QObject::connect(this, &QFileDialog::finished,
-                     [this](int result){ onFinished(result); });
 
     //QObject::connect(this, &QFileDialog::accepted, [&](){ storeRecentDirectories(); });
 }
@@ -174,9 +174,46 @@ void FileDialog::insertOptionPanel(QWidget* panel)
 }
 
 
+SignalProxy<void(int index)> FileDialog::sigFilterSelected()
+{
+    if(!impl->sigFilterSelected){
+        stdx::emplace(impl->sigFilterSelected);
+        QObject::connect(impl, &QFileDialog::filterSelected,
+                [this](const QString& filter){ impl->onFilterSelected(filter); });
+    }
+    return *impl->sigFilterSelected;
+}
+
+
+void FileDialog::Impl::onFilterSelected(const QString& selected)
+{
+    auto filters = nameFilters();
+    for(int index = 0; index < filters.size(); ++index){
+        if(filters[index] == selected){
+            (*sigFilterSelected)(index);
+            break;
+        }
+    }
+}
+
+
+void FileDialog::selectNameFilter(int index)
+{
+    auto filters = impl->nameFilters();
+    if(index < filters.size()){
+        impl->selectNameFilter(filters[index]);
+    }
+}
+
+
 SignalProxy<bool(int result), LogicalProduct> FileDialog::sigAboutToFinished()
 {
-    return impl->sigAboutToFinished;
+    if(!impl->sigAboutToFinished){
+        stdx::emplace(impl->sigAboutToFinished);
+        QObject::connect(impl, &QFileDialog::finished,
+                         [this](int result){ impl->onFinished(result); });
+    }
+    return *impl->sigAboutToFinished;
 }
 
 
@@ -189,7 +226,7 @@ int FileDialog::exec()
 
 void FileDialog::Impl::onFinished(int result)
 {
-    if(sigAboutToFinished(result)){
+    if((*sigAboutToFinished)(result)){
         if(result == QFileDialog::Accepted){
             storeRecentDirectories();
         }
