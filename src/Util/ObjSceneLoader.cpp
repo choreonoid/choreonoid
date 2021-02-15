@@ -358,7 +358,7 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
         if(currentMaterialInfo){
             currentShape->setMaterial(currentMaterialInfo->material);
             if(auto texture = currentMaterialInfo->texture){
-                if(currentMesh->hasTexCoords() and currentMesh->hasTexCoordIndices()){
+                if(currentMesh->hasTexCoords() && currentMesh->hasTexCoordIndices()){
                     //texutre->setRepeat();
                     currentShape->setTexture(texture);
                 }
