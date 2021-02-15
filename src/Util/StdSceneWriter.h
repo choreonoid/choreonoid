@@ -20,9 +20,12 @@ public:
     StdSceneWriter& operator=(const StdSceneWriter&) = delete;
     StdSceneWriter& operator=(StdSceneWriter&&) = delete;
 
+    void setMessageSink(std::ostream& os);
+
     // One of the settings is valid for the following two functions
     void setBaseDirectory(const std::string& directory);
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
+
     void setIndentWidth(int n);
 
     enum MeshOutputMode { EmbeddedMeshes, OriginalMeshFiles, ConvertedStlMeshFiles };

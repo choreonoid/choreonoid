@@ -128,8 +128,7 @@ public:
     SgMesh* readCapsule(Mapping& info, int meshOptions);
     SgMesh* readExtrusion(Mapping& info, int meshOptions);
     SgMesh* readElevationGrid(Mapping& info, int meshOptions);
-    SgMesh* readTriangleMesh(Mapping& info);
-    SgMesh* readIndexedFaceSet(Mapping& info, int meshOptions);
+    SgMesh* readMesh(Mapping& info, bool isTriangleMesh, int meshOptions);
     SgMesh* readResourceAsGeometry(Mapping& info, int meshOptions);
     void readAppearance(SgShape* shape, Mapping& info);
     void readMaterial(SgShape* shape, Mapping& info);
@@ -701,16 +700,16 @@ SgMesh* StdSceneReader::Impl::readGeometry(Mapping& info, int meshOptions)
         mesh = readCone(info, meshOptions);
     } else if(type == "Capsule"){
         mesh = readCapsule(info, meshOptions);
+    } else if(type == "Resource"){
+        mesh = readResourceAsGeometry(info, meshOptions);
+    } else if(type == "TriangleMesh"){
+        mesh = readMesh(info, true, meshOptions);
+    } else if(type == "IndexedFaceSet"){
+        mesh = readMesh(info, false, meshOptions);
     } else if(type == "Extrusion"){
         mesh = readExtrusion(info, meshOptions);
     } else if(type == "ElevationGrid"){
         mesh = readElevationGrid(info, meshOptions);
-    } else if(type == "TriangleMesh"){
-        mesh = readTriangleMesh(info);
-    } else if(type == "IndexedFaceSet"){
-        mesh = readIndexedFaceSet(info, meshOptions);
-    } else if(type == "Resource"){
-        mesh = readResourceAsGeometry(info, meshOptions);
     } else {
         typeNode.throwException(
             format(_("Unknown geometry \"{}\""), type));
@@ -956,113 +955,113 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info, int meshOptions)
 }
 
 
-SgMesh* StdSceneReader::Impl::readTriangleMesh(Mapping& info)
+SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int meshOptions)
 {
-    SgMesh* mesh = new SgMesh;
+    SgMeshBase* meshBase;
+    SgMeshPtr triangleMesh;
+    SgPolygonMeshPtr polygonMesh;
 
-    Listing& srcVertices = *info.findListing("vertices");
+    if(isTriangleMesh){
+        triangleMesh = new SgMesh;
+        meshBase = triangleMesh;
+    } else {
+        polygonMesh = new SgPolygonMesh;
+        meshBase = polygonMesh;
+    }
+        
+    Listing& srcVertices = *info.findListing({ "vertices", "coordinate" });
     if(srcVertices.isValid()){
-        const int size = srcVertices.size() / 3;
-        SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
-        vertices.resize(size);
-        for(int i=0; i < size; ++i){
-            Vector3f& s = vertices[i];
+        const int numVertices = srcVertices.size() / 3;
+        SgVertexArray& vertices = *meshBase->getOrCreateVertices();
+        vertices.resize(numVertices);
+        for(int i=0; i < numVertices; ++i){
+            Vector3f& v = vertices[i];
             for(int j=0; j < 3; ++j){
-                s[j] = srcVertices[i*3+j].toDouble();
+                v[j] = srcVertices[i*3 + j].toFloat();
             }
         }
     }
 
-    Listing& srcTriangles = *info.findListing("triangles");
-    if(srcTriangles.isValid()){
-        SgIndexArray& triangles = mesh->triangleVertices();
-        const int size = srcTriangles.size();
-        triangles.reserve(size);
-        for(int i=0; i < size; ++i){
-            triangles.push_back(srcTriangles[i].toInt());
+    Listing& srcFaces = *info.findListing({ "faces", "coordIndex" });
+    if(srcFaces.isValid()){
+        const int numIndices = srcFaces.size();
+        SgIndexArray& face = meshBase->faceVertexIndices();
+        face.resize(numIndices);
+        for(int i=0; i < numIndices; ++i){
+            face[i] = srcFaces[i].toInt();
         }
     }
 
-    double creaseAngle = 0.0;
-    self->readAngle(info, "crease_angle", creaseAngle);
-    meshFilter.generateNormals(mesh, creaseAngle);
-
-    mesh->setSolid(info.get("solid", mesh->isSolid()));
-
-    return mesh;
-}
-
-
-SgMesh* StdSceneReader::Impl::readIndexedFaceSet(Mapping& info, int meshOptions)
-{
-    SgPolygonMeshPtr polygonMesh = new SgPolygonMesh;
-
-    Listing& coordinateNode = *info.findListing({ "vertices", "coordinate" });
-    if(coordinateNode.isValid()){
-        const int size = coordinateNode.size() / 3;
-        SgVertexArray& vertices = *polygonMesh->setVertices(new SgVertexArray());
-        vertices.resize(size);
-        for(int i=0; i < size; ++i){
-            Vector3f& s = vertices[i];
+    Listing& srcNormals = *info.findListing("normals");
+    if(srcNormals.isValid()){
+        const int numNormals = srcNormals.size() / 3;
+        SgNormalArray& normals = *meshBase->getOrCreateNormals();
+        normals.resize(numNormals);
+        for(int i=0; i < numNormals; ++i){
+            Vector3f& n = normals[i];
             for(int j=0; j < 3; ++j){
-                s[j] = coordinateNode[i*3+j].toDouble();
+                n[j] = srcNormals[i*3 + j].toFloat();
             }
         }
     }
 
-    Listing& coordIndexNode = *info.findListing({ "faces", "coordIndex" });
-    if(coordIndexNode.isValid()){
-        SgIndexArray& polygonVertices = polygonMesh->polygonVertices();
-        const int size = coordIndexNode.size();
-        polygonVertices.reserve(size);
-        for(int i=0; i < size; ++i){
-            polygonVertices.push_back(coordIndexNode[i].toInt());
+    Listing& srcNormalIndices = *info.findListing("normal_indices");
+    if(srcNormalIndices.isValid()){
+        const int numIndices = srcNormalIndices.size();
+        SgIndexArray& normalIndices = meshBase->normalIndices();
+        normalIndices.resize(numIndices);
+        for(int i=0; i < numIndices; ++i){
+            normalIndices[i] = srcNormalIndices[i].toInt();
         }
     }
 
-    Listing& texCoordNode = *info.findListing({ "tex_coords", "texCoord" });
-    if(texCoordNode.isValid()){
-        const int size = texCoordNode.size() / 2;
-        SgTexCoordArray& texCoord = *polygonMesh->setTexCoords(new SgTexCoordArray());
-        texCoord.resize(size);
-        for(int i=0; i < size; ++i){
-            Vector2f& s = texCoord[i];
+    Listing& srcTexCoords = *info.findListing({ "tex_coords", "texCoord" });
+    if(srcTexCoords.isValid()){
+        const int numCoords = srcTexCoords.size() / 2;
+        SgTexCoordArray& texCoord = *meshBase->getOrCreateTexCoords();
+        texCoord.resize(numCoords);
+        for(int i=0; i < numCoords; ++i){
+            Vector2f& p = texCoord[i];
             for(int j=0; j < 2; ++j){
-                s[j] = texCoordNode[i*2+j].toDouble();
+                p[j] = srcTexCoords[i*2 + j].toFloat();
             }
         }
     }
 
-    Listing& texCoordIndexNode = *info.findListing({ "tex_coord_indices", "texCoordIndex" });
-    if(texCoordIndexNode.isValid()){
-        SgIndexArray& texCoordIndices = polygonMesh->texCoordIndices();
-        const int size = texCoordIndexNode.size();
-        texCoordIndices.reserve(size);
-        for(int i=0; i<size; i++){
-            texCoordIndices.push_back(texCoordIndexNode[i].toInt());
+    Listing& srcTexCoordIndices = *info.findListing({ "tex_coord_indices", "texCoordIndex" });
+    if(srcTexCoordIndices.isValid()){
+        const int numIndices = srcTexCoordIndices.size();
+        SgIndexArray& texCoordIndices = meshBase->texCoordIndices();
+        texCoordIndices.resize(numIndices);
+        for(int i=0; i < numIndices; ++i){
+            texCoordIndices[i] = srcTexCoordIndices[i].toInt();
         }
     }
 
     //polygonMeshTriangulator.setDeepCopyEnabled(true);
-    SgMesh* mesh = polygonMeshTriangulator.triangulate(polygonMesh);
-    const string& errorMessage = polygonMeshTriangulator.errorMessage();
-    if(!errorMessage.empty()){
-        info.throwException("Error of an IndexedFaceSet node: \n" + errorMessage);
-    }
-
-    if(meshOptions & MeshGenerator::TextureCoordinate){
-        if(mesh && !mesh->hasTexCoords()){
-            meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
+    if(!isTriangleMesh){
+        triangleMesh = polygonMeshTriangulator.triangulate(polygonMesh);
+        const string& errorMessage = polygonMeshTriangulator.errorMessage();
+        if(!errorMessage.empty()){
+            info.throwException("Error of an IndexedFaceSet node: \n" + errorMessage);
         }
     }
 
     double creaseAngle = 0.0;
     readAngle(info, { "crease_angle", "creaseAngle" }, creaseAngle);
-    meshFilter.generateNormals(mesh, creaseAngle);
+    if(!triangleMesh->hasNormals()){
+        meshFilter.generateNormals(triangleMesh, creaseAngle);
+    }
 
-    mesh->setSolid(info.get("solid", mesh->isSolid()));
+    if(meshOptions & MeshGenerator::TextureCoordinate){
+        if(!triangleMesh->hasTexCoords()){
+            meshGenerator.generateTextureCoordinateForIndexedFaceSet(triangleMesh);
+        }
+    }
 
-    return mesh;
+    triangleMesh->setSolid(info.get("solid", triangleMesh->isSolid()));
+
+    return triangleMesh.retn();
 }
 
 
@@ -1162,6 +1161,7 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
             } else {
                 image = new SgImage;
                 if(imageIO.load(image->image(), filename, os())){
+                    image->setUri(uri);
                     imagePathToSgImageMap[uri] = image;
                 } else {
                     image.reset();
@@ -1174,10 +1174,18 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
             bool repeatS = true;
             bool repeatT = true;
             
-            auto repeatList = info.findListing("repeat");
-            if(repeatList->isValid() && repeatList->size() == 2){
-                repeatS = repeatList->at(0)->toBool();
-                repeatT = repeatList->at(1)->toBool();
+            auto repeatNode = info.find("repeat");
+            if(repeatNode->isValid()){
+                if(repeatNode->isListing()){
+                    auto repeatList = repeatNode->toListing();
+                    if(repeatList->size() != 2){
+                        repeatList->throwException(_("The number of the repeat elements must be two"));
+                    }
+                    repeatS = repeatList->at(0)->toBool();
+                    repeatT = repeatList->at(1)->toBool();
+                } else {
+                    repeatS = repeatT = repeatNode->toBool();
+                }
             } else {
                 info.read("repeatS", repeatS);
                 info.read("repeatT", repeatT);

@@ -2,11 +2,13 @@
 #include "YAMLWriter.h"
 #include "SceneGraph.h"
 #include "SceneDrawables.h"
+#include "SceneLights.h"
 #include "SceneGraphOptimizer.h"
 #include "PolymorphicSceneNodeFunctionSet.h"
 #include "EigenArchive.h"
 #include "FilePathVariableProcessor.h"
 #include "CloneMap.h"
+#include "NullOut.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -32,6 +34,10 @@ public:
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
+    int numSkippedNode;
+
+    ostream* os_;
+    ostream& os() { return *os_; }
 
     Impl(StdSceneWriter* self);
     YAMLWriter* getOrCreateYamlWriter();
@@ -39,6 +45,7 @@ public:
     void setBaseDirectory(const std::string& directory);
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     MappingPtr writeSceneNode(SgNode* node);
+    void processUnknownNode(Mapping* archive, SgNode* node);
     void writeObjectHeader(Mapping* archive, const char* typeName, SgObject* object);
     void writeGroup(Mapping* archive, SgGroup* group);
     void writePosTransform(Mapping* archive, SgPosTransform* transform);
@@ -55,6 +62,7 @@ public:
     void writeCapsule(Mapping* archive, SgMesh* mesh);
     MappingPtr writeAppearance(SgShape* shape);
     MappingPtr writeMaterial(SgMaterial* material);
+    MappingPtr writeTexture(SgTexture* texture);
 };
 
 }
@@ -69,6 +77,8 @@ StdSceneWriter::StdSceneWriter()
 StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     : self(self)
 {
+    writeFunctions.setFunction<SgNode>(
+        [&](SgNode* node){ processUnknownNode(currentArchive, node); });
     writeFunctions.setFunction<SgGroup>(
         [&](SgGroup* group){ writeGroup(currentArchive, group); });
     writeFunctions.setFunction<SgPosTransform>(
@@ -83,12 +93,20 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     isDegreeMode = true;
     isTransformIntegrationEnabled = false;
     meshOutputMode = EmbeddedMeshes;
+
+    os_ = &nullout();    
 }
 
 
 StdSceneWriter::~StdSceneWriter()
 {
     delete impl;
+}
+
+
+void StdSceneWriter::setMessageSink(std::ostream& os)
+{
+    impl->os_ = &os;
 }
 
 
@@ -225,11 +243,19 @@ bool StdSceneWriter::Impl::writeScene
     auto directory = filesystem::path(filename).parent_path().generic_string();
     setBaseDirectory(directory);
 
+    numSkippedNode = 0;
+
     ListingPtr nodeList = new Listing;
     for(auto& node : *group){
         nodeList->append(writeSceneNode(node));
     }
     header->insert("scene", nodeList);
+
+    if(numSkippedNode == 1){
+        os() << _("Warning: There is an unsupported node.") << endl;
+    } else if(numSkippedNode >= 2){
+        os() << format(_("Warning: {0} unsupported nodes were skipped to output."), numSkippedNode) << endl;
+    }
     
     yamlWriter->putNode(header);
     yamlWriter->closeFile();
@@ -266,11 +292,24 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
             archive->insert("elements", elements);
         }
     }
+
+    if(archive->empty()){
+        archive.reset();
+    }
     
     return archive;
 }
 
 
+void StdSceneWriter::Impl::processUnknownNode(Mapping* archive, SgNode* node)
+{
+    if(dynamic_cast<SgLight*>(node)){
+        os() << _("Warning: The light node type is not supported.") << endl;
+    };
+    ++numSkippedNode;
+}
+    
+    
 void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, const char* typeName, SgObject* object)
 {
     if(typeName){
@@ -282,8 +321,8 @@ void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, const char* typeN
         archive->write("name", object->name());
     }
 }
-    
-    
+
+
 void StdSceneWriter::Impl::writeGroup(Mapping* archive, SgGroup* group)
 {
     writeObjectHeader(archive, "Group", group);
@@ -398,7 +437,7 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
 
         auto vertices = archive->createFlowStyleListing("vertices");
         vertices->setFloatingNumberFormat(vertexFormat.c_str());
-        auto srcVertices = mesh->vertices();
+        const auto srcVertices = mesh->vertices();
         const int scalarElementSize = srcVertices->size() * 3;
         vertices->reserve(scalarElementSize);
         for(auto& v : *srcVertices){
@@ -407,7 +446,7 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
             vertices->append(v.z(), 12, scalarElementSize);
         }
         
-        Listing& indexList = *archive->createFlowStyleListing("triangles");
+        Listing& indexList = *archive->createFlowStyleListing("faces");
         const int numTriScalars = numTriangles * 3;
         indexList.reserve(numTriScalars);
         for(int i=0; i < numTriangles; ++i){
@@ -415,6 +454,48 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
             indexList.append(triangle[0], 15, numTriScalars);
             indexList.append(triangle[1], 15, numTriScalars);
             indexList.append(triangle[2], 15, numTriScalars);
+        }
+
+        if(mesh->hasNormals() && mesh->creaseAngle() == 0.0f){
+            auto normals = archive->createFlowStyleListing("normals");
+            normals->setFloatingNumberFormat(vertexFormat.c_str());
+            const auto srcNormals = mesh->normals();
+            const int scalarElementSize = srcNormals->size() * 3;
+            normals->reserve(scalarElementSize);
+            for(auto& n : *srcNormals){
+                normals->append(n.x(), 12, scalarElementSize);
+                normals->append(n.y(), 12, scalarElementSize);
+                normals->append(n.z(), 12, scalarElementSize);
+            }
+            if(mesh->hasNormalIndices()){
+                const auto& srcNormalIndices = mesh->normalIndices();
+                const int n = srcNormalIndices.size();
+                Listing& indexList = *archive->createFlowStyleListing("normal_indices");
+                indexList.reserve(n);
+                for(auto& index : srcNormalIndices){
+                    indexList.append(index, 15, n);
+                }
+            }
+        }
+
+        if(mesh->hasTexCoords()){
+            auto texCoords = archive->createFlowStyleListing("tex_coords");
+            const auto srcTexCoords = mesh->texCoords();
+            const int scalarElementSize = srcTexCoords->size() * 2;
+            texCoords->reserve(scalarElementSize);
+            for(auto& t : *srcTexCoords){
+                texCoords->append(t.x(), 12, scalarElementSize);
+                texCoords->append(t.y(), 12, scalarElementSize);
+            }
+            if(mesh->hasTexCoordIndices()){
+                const auto& srcTexCoordIndices = mesh->texCoordIndices();
+                const int n = srcTexCoordIndices.size();
+                Listing& indexList = *archive->createFlowStyleListing("tex_coord_indices");
+                indexList.reserve(n);
+                for(auto& index : srcTexCoordIndices){
+                    indexList.append(index, 15, n);
+                }
+            }
         }
         
         isValid = true;
@@ -514,6 +595,9 @@ MappingPtr StdSceneWriter::Impl::writeAppearance(SgShape* shape)
     if(auto material = writeMaterial(shape->material())){
         archive->insert("material", material);
     }
+    if(auto texture = writeTexture(shape->texture())){
+        archive->insert("texture", texture);
+    }
     if(archive->empty()){
         archive = nullptr;
     }
@@ -552,5 +636,34 @@ MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
         archive = nullptr;
     }
     
+    return archive;
+}
+
+
+MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
+{
+    if(!texture){
+        return nullptr;
+    }
+
+    MappingPtr archive = new Mapping;
+    bool isValid = false;
+
+    if(auto image = texture->image()){
+        if(!image->uri().empty()){
+            archive->write("uri", image->uri(), DOUBLE_QUOTED);
+            isValid = true;
+            if(texture->repeatS() == texture->repeatT()){
+                archive->write("repeat", texture->repeatS());
+            } else {
+                auto& repeat = *archive->createFlowStyleListing("repeat");
+                repeat.append(texture->repeatS());
+                repeat.append(texture->repeatT());
+            }
+        }
+    }
+    if(!isValid){
+        archive.reset();
+    }
     return archive;
 }
