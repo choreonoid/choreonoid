@@ -51,6 +51,7 @@ public:
 
     int toInt() const;
     double toDouble() const;
+    float toFloat() const;
     double toAngle() const;
     bool toBool() const;
 
@@ -187,7 +188,7 @@ private:
 };
 
 template<> inline double ValueNode::to<double>() const { return toDouble(); }
-template<> inline float ValueNode::to<float>() const { return static_cast<float>(toDouble()); }
+template<> inline float ValueNode::to<float>() const { return toFloat(); }
 template<> inline int ValueNode::to<int>() const { return toInt(); }
 template<> inline std::string ValueNode::to<std::string>() const { return toString(); }
     

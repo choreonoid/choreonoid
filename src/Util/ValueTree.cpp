@@ -228,7 +228,30 @@ double ValueNode::toDouble() const
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
-        ex.setMessage(fmt::format(_("The value \"{}\" must be a double value"), scalar->stringValue_));
+        ex.setMessage(fmt::format(_("The value \"{}\" must be a floating point number"), scalar->stringValue_));
+        throw ex;
+    }
+
+    return value;
+}
+
+
+float ValueNode::toFloat() const
+{
+    if(!isScalar()){
+        throwNotScalrException();
+    }
+
+    const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
+
+    const char* nptr = &(scalar->stringValue_[0]);
+    char* endptr;
+    const float value = strtof(nptr, &endptr);
+
+    if(endptr == nptr){
+        ScalarTypeMismatchException ex;
+        ex.setPosition(line(), column());
+        ex.setMessage(fmt::format(_("The value \"{}\" must be a floating point number"), scalar->stringValue_));
         throw ex;
     }
 
