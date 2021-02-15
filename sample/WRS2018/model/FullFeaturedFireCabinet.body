@@ -54,7 +54,7 @@ links:
           -
             type: link
             linkName: HOSE_CONNECTOR
-            position: [ 0, 0, 0.095 ]
+            position: [ -0.095, 0, 0 ]
             twistStiffness: 1e8
             bendStiffness: 1e8
             superBendReplacedWithBend: true
@@ -62,7 +62,7 @@ links:
     type: SubBody
     uri: "HoseConnector.body"
     parent: HOSE_ROOT
-    rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
+    rotation: [ [ 0, 1, 0, 90 ] ]
     translation: [ 0, -0.23, -0.125 ]
     jointType: free
 

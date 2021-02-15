@@ -7,7 +7,11 @@ links:
   -
     name: HOSE_CONNECTOR
     jointType: free
-    density: 5.0
+    mass: 1.0
+    inertia: [
+      0.000136, 0.0,    0.0,
+                0.0022, 0.0,
+                        0.0022 ]
     elements:
       -
         type: Shape
@@ -23,15 +27,3 @@ links:
         type: Node
         name: END
         translation: [ 0.08, 0, 0 ]
-
-      # This does not work well. Probably the center of mass calculated by the density mass type is wrong.
-      # -
-      #   type: Shape
-      #    translation: [ 0.08, 0, 0 ]
-      #    rotation: [ 0, 0, 1, 90 ]
-      #    geometry: { type: Cylinder, radius: 0.0165, height: 0.16 }
-      #    appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
-      # -
-      #    type: Shape
-      #    geometry: { type: Sphere, radius: 0.024 }
-      #    appearance: *red
