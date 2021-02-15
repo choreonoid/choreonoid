@@ -68,8 +68,8 @@ void exportPyQtModelViewClasses(py::module m)
         .def("keyboardSearch", &QAbstractItemView::keyboardSearch)
         .def("model", &QAbstractItemView::model)
         .def("openPersistentEditor", &QAbstractItemView::openPersistentEditor)
-        .def("resetHorizontalScrollMode", &QAbstractItemView::resetHorizontalScrollMode)
-        .def("resetVerticalScrollMode", &QAbstractItemView::resetVerticalScrollMode)
+        //.def("resetHorizontalScrollMode", &QAbstractItemView::resetHorizontalScrollMode) // Not supported by Qt 5.5
+        //.def("resetVerticalScrollMode", &QAbstractItemView::resetVerticalScrollMode) // Not supported by Qt 5.5
         .def("rootIndex", &QAbstractItemView::rootIndex)
         .def("scrollTo", &QAbstractItemView::scrollTo, py::arg("index"), py::arg("hint") = QAbstractItemView::EnsureVisible)
         .def("selectionBehavior", &QAbstractItemView::selectionBehavior)
