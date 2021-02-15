@@ -324,6 +324,7 @@ links:
       0,           0,           0.000582
     ]
     rotorInertia: 0.05
+    material: Hand
     # AGX parameters
     #jointMotorForceRange: [ -6.8, 6.8 ]
     #jointLockForceRange: [ -6.8, 6.8 ]
