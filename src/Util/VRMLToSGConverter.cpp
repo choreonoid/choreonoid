@@ -1223,6 +1223,7 @@ SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
                     }
                     if(imageIO.load(imageForLoading->image(), url, os())){
                         image = imageForLoading;
+                        image->setUri(url);
                         imagePathToSgImageMap[url] = image;
                         break;
                     }
