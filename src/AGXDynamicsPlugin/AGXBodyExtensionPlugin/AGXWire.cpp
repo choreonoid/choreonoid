@@ -304,13 +304,13 @@ void SceneWireDevice::update()
         nx.normalize();
         const Vector3 nz = nx.cross(ny);
 
-        Isometry3 p;
-        p.setIdentity();
-        p.translation() = pos - link_p;
-        p.linear().col(0) = nx;
-        p.linear().col(1) = ny;
-        p.linear().col(2) = nz;
-        sgWireNode->setTransform(link_attitude_inv * p);
+        Isometry3 T;
+        T.setIdentity();
+        T.translation() = pos - link_p;
+        T.linear().col(0) = nx;
+        T.linear().col(1) = ny;
+        T.linear().col(2) = nz;
+        sgWireNode->setTransform(link_attitude_inv * T);
 
         addChild(sgWireNode, sgUpdate);
     }
