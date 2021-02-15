@@ -103,7 +103,7 @@ public:
 
     SgMesh* generateElevationGrid(const ElevationGrid& elevationGrid, int meshOptions = NoOption);
 
-    void generateTextureCoordinateForIndexedFaceSet(SgMesh* mesh);
+    void generateTextureCoordinateForIndexedFaceSet(SgMeshBase* mesh);
 
 private:
     int divisionNumber_;

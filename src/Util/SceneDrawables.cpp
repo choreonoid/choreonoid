@@ -256,6 +256,7 @@ SgMeshBase::SgMeshBase()
 
 SgMeshBase::SgMeshBase(const SgMeshBase& org, CloneMap* cloneMap)
     : SgObject(org),
+      faceVertexIndices_(org.faceVertexIndices_),
       normalIndices_(org.normalIndices_),
       colorIndices_(org.colorIndices_),
       texCoordIndices_(org.texCoordIndices_)
@@ -446,7 +447,6 @@ SgMesh::SgMesh(Primitive primitive)
 
 SgMesh::SgMesh(const SgMesh& org, CloneMap* cloneMap)
     : SgMeshBase(org, cloneMap),
-      triangleVertices_(org.triangleVertices_),
       primitive_(org.primitive_),
       divisionNumber_(org.divisionNumber_),
       extraDivisionNumber_(org.extraDivisionNumber_),
@@ -473,9 +473,8 @@ void SgMesh::updateBoundingBox()
         } else {
             BoundingBoxf bboxf;
             const SgVertexArray& v = *vertices();
-            for(SgIndexArray::const_iterator iter = triangleVertices_.begin(); iter != triangleVertices_.end(); ++iter){
-                const Vector3f& p = v[*iter];
-                bboxf.expandBy(p);
+            for(auto& index : faceVertexIndices_){
+                bboxf.expandBy(v[index]);
             }
             bbox = bboxf;
         }
@@ -557,8 +556,7 @@ SgPolygonMesh::SgPolygonMesh()
 
 
 SgPolygonMesh::SgPolygonMesh(const SgPolygonMesh& org, CloneMap* cloneMap)
-    : SgMeshBase(org, cloneMap),
-      polygonVertices_(org.polygonVertices_)
+    : SgMeshBase(org, cloneMap)
 {
 
 }
@@ -581,11 +579,9 @@ void SgPolygonMesh::updateBoundingBox()
         } else {
             BoundingBoxf bboxf;
             const SgVertexArray& v = *vertices();
-            for(SgIndexArray::const_iterator iter = polygonVertices_.begin(); iter != polygonVertices_.end(); ++iter){
-                const int index = *iter;
+            for(auto& index : faceVertexIndices_){
                 if(index >= 0){
-                    const Vector3f& p = v[index];
-                    bboxf.expandBy(p);
+                    bboxf.expandBy(v[index]);
                 }
             }
             bbox = bboxf;

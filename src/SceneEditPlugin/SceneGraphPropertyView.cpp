@@ -471,7 +471,7 @@ void SceneGraphPropertyViewImpl::setProperty(SgMesh* mesh)
 
 void SceneGraphPropertyViewImpl::setProperty(SgPolygonMesh* pMesh)
 {
-    addProperty(_("num of polygonVertices"), new PropertyItem(this, Int(pMesh->polygonVertices().size())));
+    addProperty(_("num of face vertex indices"), new PropertyItem(this, Int(pMesh->faceVertexIndices().size())));
 }
 
 

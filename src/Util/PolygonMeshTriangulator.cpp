@@ -40,7 +40,7 @@ public:
     SgMesh* triangulate(SgPolygonMesh* polygonMesh);
     bool setIndices(
         SgIndexArray& indices, int numElements,
-        const SgIndexArray& orgIndices, const SgIndexArray& orgPolygonVertices, int elementTypeId);
+        const SgIndexArray& orgIndices, const SgIndexArray& orgVertexIndices, int elementTypeId);
 };
 }
 
@@ -91,9 +91,9 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
 {
     errorMessage.clear();
     
-    const SgIndexArray& polygonVertices = orgMesh->polygonVertices();
+    const SgIndexArray& vertexIndices = orgMesh->faceVertexIndices();
 
-    if(!orgMesh->vertices() || polygonVertices.empty()){
+    if(!orgMesh->vertices() || vertexIndices.empty()){
         return nullptr;
     }
         
@@ -115,8 +115,8 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
     int polygonTopIndexPositionWithoutDelimiters = 0;
     int numInvalidIndices = 0;
     
-    for(size_t i=0; i < polygonVertices.size(); ++i){
-        const int index = polygonVertices[i];
+    for(size_t i=0; i < vertexIndices.size(); ++i){
+        const int index = vertexIndices[i];
         if(index >= numVertices){
             if(numInvalidIndices == 0){
                 addErrorMessage(fmt::format("Vertex index {0} is over the number of vertices ({1}).", index, numVertices));
@@ -161,7 +161,7 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
 
     SgNormalArray* normals = orgMesh->normals();
     if(normals && !normals->empty()){
-        if(setIndices(mesh->normalIndices(), normals->size(), orgMesh->normalIndices(), polygonVertices, 0)){
+        if(setIndices(mesh->normalIndices(), normals->size(), orgMesh->normalIndices(), vertexIndices, 0)){
             if(isDeepCopyEnabled){
                 mesh->setNormals(new SgNormalArray(*normals));
             } else {
@@ -172,7 +172,7 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
 
     SgColorArray* colors = orgMesh->colors();
     if(colors && !colors->empty()){
-        if(setIndices(mesh->colorIndices(), colors->size(), orgMesh->colorIndices(), polygonVertices, 1)){
+        if(setIndices(mesh->colorIndices(), colors->size(), orgMesh->colorIndices(), vertexIndices, 1)){
             if(isDeepCopyEnabled){
                 mesh->setColors(new SgColorArray(*colors));
             } else {
@@ -183,7 +183,7 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
 
     SgTexCoordArray* texCoords = orgMesh->texCoords();
     if(texCoords && !texCoords->empty()){
-        if(setIndices(mesh->texCoordIndices(), texCoords->size(), orgMesh->texCoordIndices(), polygonVertices, 2)){
+        if(setIndices(mesh->texCoordIndices(), texCoords->size(), orgMesh->texCoordIndices(), vertexIndices, 2)){
             if(isDeepCopyEnabled){
                 mesh->setTexCoords(new SgTexCoordArray(*texCoords));
             } else {
@@ -231,7 +231,7 @@ const char* message3(int elementTypeId){
           
 
 bool PolygonMeshTriangulatorImpl::setIndices
-(SgIndexArray& indices, int numElements, const SgIndexArray& orgIndices, const SgIndexArray& orgPolygonVertices, int elementTypeId)
+(SgIndexArray& indices, int numElements, const SgIndexArray& orgIndices, const SgIndexArray& orgVertexIndices, int elementTypeId)
 {
     bool result = true;
     const int numNewIndices = newIndexPositionToOrgPositionMap.size();
@@ -239,7 +239,7 @@ bool PolygonMeshTriangulatorImpl::setIndices
 
     if(orgIndices.empty()){
         for(int i=0; i < numNewIndices; ++i){
-            const int index = orgPolygonVertices[newIndexPositionToOrgPositionWithDelimitersMap[i]];
+            const int index = orgVertexIndices[newIndexPositionToOrgPositionWithDelimitersMap[i]];
             if(index >= numElements){
                 addErrorMessage(message1(elementTypeId));
                 result = false;

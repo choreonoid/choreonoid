@@ -675,11 +675,11 @@ SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRML
     const bool ccw = vface->ccw;
 
     {
-        SgIndexArray& polygonVertices = mesh->polygonVertices();
+        SgIndexArray& vertexIndices = mesh->faceVertexIndices();
         if(ccw){
-            polygonVertices = orgCoordIndices;
+            vertexIndices = orgCoordIndices;
         } else {
-            polygonVertices.reserve(orgCoordIndices.size());
+            vertexIndices.reserve(orgCoordIndices.size());
             int firstVertexIndex = 0;
             int numFaceVertices = 0;
             for(size_t i=0; i < orgCoordIndices.size(); ++i){
@@ -688,9 +688,9 @@ SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRML
                     ++numFaceVertices;
                 } else {
                     while(--numFaceVertices >= 0){
-                        polygonVertices.push_back(orgCoordIndices[firstVertexIndex + numFaceVertices]);
+                        vertexIndices.push_back(orgCoordIndices[firstVertexIndex + numFaceVertices]);
                     }
-                    polygonVertices.push_back(-1);
+                    vertexIndices.push_back(-1);
                     firstVertexIndex = i + 1;
                     numFaceVertices = 0;
                 }

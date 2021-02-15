@@ -1485,7 +1485,7 @@ void MeshGenerator::generateTextureCoordinateForElevationGrid(SgMesh* mesh, cons
 }
 
 
-void MeshGenerator::generateTextureCoordinateForIndexedFaceSet(SgMesh* mesh)
+void MeshGenerator::generateTextureCoordinateForIndexedFaceSet(SgMeshBase* mesh)
 {
     const SgVertexArray& vertices = *mesh->vertices();
 
@@ -1537,5 +1537,5 @@ void MeshGenerator::generateTextureCoordinateForIndexedFaceSet(SgMesh* mesh)
     }
 
     // Is this really necessary for rendering?
-    mesh->texCoordIndices() = mesh->triangleVertices();
+    mesh->texCoordIndices() = mesh->faceVertexIndices();
 }

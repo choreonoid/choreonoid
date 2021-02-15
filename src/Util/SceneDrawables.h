@@ -289,6 +289,9 @@ public:
     SgTexCoordArray* setTexCoords(SgTexCoordArray* texCoords);
     SgTexCoordArray* getOrCreateTexCoords();
 
+    bool hasFaceVertexIndices() const { return !faceVertexIndices_.empty(); }
+    const SgIndexArray& faceVertexIndices() const { return faceVertexIndices_; }
+    SgIndexArray& faceVertexIndices() { return faceVertexIndices_; }
     /**
        Normals are assinged for vertices in triangles.
     */
@@ -312,9 +315,8 @@ public:
 
 protected:
     BoundingBox bbox;
-    
-private:
     SgVertexArrayPtr vertices_;
+    SgIndexArray faceVertexIndices_;
     SgNormalArrayPtr normals_;
     SgIndexArray normalIndices_;
     SgColorArrayPtr colors_;
@@ -339,53 +341,53 @@ public:
     /**
        Triangle indices (triangles variable) should be CCW.
     */
-    const SgIndexArray& triangleVertices() const { return triangleVertices_; }
-    SgIndexArray& triangleVertices() { return triangleVertices_; }
+    const SgIndexArray& triangleVertices() const { return faceVertexIndices_; }
+    SgIndexArray& triangleVertices() { return faceVertexIndices_; }
 
-    bool hasTriangles() const { return !triangleVertices_.empty(); }
-    int numTriangles() const { return static_cast<int>(triangleVertices_.size()) / 3; }
-    void setNumTriangles(int n) { triangleVertices_.resize(n * 3); }
-    void reserveNumTriangles(int n) { triangleVertices_.reserve(n * 3); }
+    bool hasTriangles() const { return !faceVertexIndices_.empty(); }
+    int numTriangles() const { return static_cast<int>(faceVertexIndices_.size()) / 3; }
+    void setNumTriangles(int n) { faceVertexIndices_.resize(n * 3); }
+    void reserveNumTriangles(int n) { faceVertexIndices_.reserve(n * 3); }
 
     typedef Eigen::Map<Array3i> TriangleRef;
     TriangleRef triangle(int index){
-        return TriangleRef(&triangleVertices_[index * 3]);
+        return TriangleRef(&faceVertexIndices_[index * 3]);
     }
 
     typedef Eigen::Map<const Array3i> ConstTriangleRef;
     ConstTriangleRef triangle(int index) const {
-        return ConstTriangleRef(&triangleVertices_[index * 3]);
+        return ConstTriangleRef(&faceVertexIndices_[index * 3]);
     }
 
     void setTriangle(int index, int v0, int v1, int v2){
         const int i = index * 3;
-        triangleVertices_[i+0] = v0;
-        triangleVertices_[i+1] = v1;
-        triangleVertices_[i+2] = v2;
+        faceVertexIndices_[i+0] = v0;
+        faceVertexIndices_[i+1] = v1;
+        faceVertexIndices_[i+2] = v2;
     }
 
     TriangleRef newTriangle(){
-        const size_t s = triangleVertices_.size();
-        triangleVertices_.resize(s + 3);
-        return TriangleRef(&triangleVertices_[s]);
+        const size_t s = faceVertexIndices_.size();
+        faceVertexIndices_.resize(s + 3);
+        return TriangleRef(&faceVertexIndices_[s]);
     }
 
     // deprecated
     TriangleRef addTriangle(){ return newTriangle(); }
 
     void addTriangles(std::initializer_list<Array3i> il){
-        triangleVertices_.reserve(triangleVertices_.size() + il.size() * 3);
+        faceVertexIndices_.reserve(faceVertexIndices_.size() + il.size() * 3);
         for(auto& v : il){
             for(int i=0; i < 3; ++i){
-                triangleVertices_.push_back(v[i]);
+                faceVertexIndices_.push_back(v[i]);
             }
         }
     }
 
     void addTriangle(int v0, int v1, int v2){
-        triangleVertices_.push_back(v0);
-        triangleVertices_.push_back(v1);
-        triangleVertices_.push_back(v2);
+        faceVertexIndices_.push_back(v0);
+        faceVertexIndices_.push_back(v1);
+        faceVertexIndices_.push_back(v2);
     }
         
     enum PrimitiveType {
@@ -485,7 +487,6 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    SgIndexArray triangleVertices_;
     Primitive primitive_;
     short divisionNumber_;
     short extraDivisionNumber_;
@@ -510,14 +511,13 @@ public:
        the other index arrays defined in the SgMesh class also have to contain
        indices in the same way.
     */
-    SgIndexArray& polygonVertices() { return polygonVertices_; }
-    const SgIndexArray& polygonVertices() const { return polygonVertices_; }
+    [[deprecated("Use faceVertexIndices")]]
+    SgIndexArray& polygonVertices() { return faceVertexIndices_; }
+    [[deprecated("Use faceVertexIndices")]]
+    const SgIndexArray& polygonVertices() const { return faceVertexIndices_; }
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-
-private:
-    SgIndexArray polygonVertices_;
 };
 
 typedef ref_ptr<SgPolygonMesh> SgPolygonMeshPtr;
