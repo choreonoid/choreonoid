@@ -225,7 +225,7 @@ public:
 class StdSceneFileExport : public SceneFileExportBase
 {
     unique_ptr<StdSceneWriter> sceneWriter;
-    QComboBox* meshOutputModeCombo;
+    QComboBox* modelFileModeCombo;
     QCheckBox* transformIntegrationCheck;
 
 public:
@@ -265,12 +265,12 @@ public:
 
         addShapeTypeCombo(hbox);
         
-        hbox->addWidget(new QLabel(_("Mesh output mode:")));
-        meshOutputModeCombo = new QComboBox;
-        meshOutputModeCombo->addItem(_("Embedded"));
-        meshOutputModeCombo->addItem(_("Original"));
-        meshOutputModeCombo->addItem(_("Converted (OBJ)"));
-        hbox->addWidget(meshOutputModeCombo);
+        hbox->addWidget(new QLabel(_("Model file mode:")));
+        modelFileModeCombo = new QComboBox;
+        modelFileModeCombo->addItem(_("Embed models"));
+        modelFileModeCombo->addItem(_("Link to original model files"));
+        modelFileModeCombo->addItem(_("Replace with OBJ model files"));
+        hbox->addWidget(modelFileModeCombo);
 
         transformIntegrationCheck = new QCheckBox;
         transformIntegrationCheck->setText(_("Integrate transforms"));
@@ -283,7 +283,7 @@ public:
     virtual void fetchOptionPanelForSaving() override
     {
         ensureSceneWriter();
-        sceneWriter->setMeshOutputMode(meshOutputModeCombo->currentIndex());
+        sceneWriter->setModelFileMode(modelFileModeCombo->currentIndex());
         sceneWriter->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
     }
 };

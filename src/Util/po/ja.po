@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-16 17:28+0900\n"
+"POT-Creation-Date: 2021-02-16 20:24+0900\n"
 "PO-Revision-Date: 2012-07-16 14:30+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -25,29 +25,29 @@ msgstr "シーンファイル \"{}\" は \"scene\" ノードを有していま�
 msgid "Scene file \"{}\" is an empty scene."
 msgstr "シーンファイル\"{}\"は空のシーンです．"
 
-#: StdSceneWriter.cpp:272
+#: StdSceneWriter.cpp:258
 msgid "Warning: There is an unsupported node."
 msgstr "警告：サポートされていないノードがあります．"
 
-#: StdSceneWriter.cpp:274
+#: StdSceneWriter.cpp:260
 msgid "Warning: {0} unsupported nodes were skipped to output."
 msgstr "警告：サポートされていない{0}のノードの出力をスキップしました．"
 
-#: StdSceneWriter.cpp:324
-msgid "Warning: The light node type is not supported."
-msgstr "警告：光源ノード型はサポートされていません．"
-
-#: StdSceneWriter.cpp:465
-msgid "Warning: Failed to replace mesh file \"{0}\" with \"{1}\". {2}"
+#: StdSceneWriter.cpp:358
+msgid "Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"
 msgstr ""
-"警告：メッシュファイル  \"{0}\" を \"{1}\" で置き換えることができませんでし"
+"警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでし"
 "た. {2}"
 
-#: StdSceneWriter.cpp:468
-msgid "Warning: Failed to replace mesh file \"{0}\" with \"{1}\"."
+#: StdSceneWriter.cpp:361
+msgid "Warning: Failed to replace model file \"{0}\" with \"{1}\"."
 msgstr ""
-"警告：メッシュファイル  \"{0}\" を \"{1}\" で置き換えることができませんでし"
+"警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでし"
 "た."
+
+#: StdSceneWriter.cpp:372
+msgid "Warning: The light node type is not supported."
+msgstr "警告：光源ノード型はサポートされていません．"
 
 #: StdSceneReader.cpp:315
 msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""

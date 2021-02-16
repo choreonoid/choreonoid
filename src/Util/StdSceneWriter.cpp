@@ -29,7 +29,7 @@ public:
     MappingPtr currentArchive;
     bool isDegreeMode;
     bool isTransformIntegrationEnabled;
-    int meshOutputMode;
+    int modelFileMode;
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
@@ -46,6 +46,8 @@ public:
     void setBaseDirectory(const std::string& directory);
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     MappingPtr writeSceneNode(SgNode* node);
+    void makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject);
+    bool replaceOriginalModelFileWithObjModelFile(Mapping* archive, SgNode* node, const std::string& uri);
     void processUnknownNode(Mapping* archive, SgNode* node);
     void writeObjectHeader(Mapping* archive, const char* typeName, SgObject* object);
     void writeGroup(Mapping* archive, SgGroup* group);
@@ -53,7 +55,6 @@ public:
     void writeScaleTransform(Mapping* archive, SgScaleTransform* transform);
     void writeShape(Mapping* archive, SgShape* shape);
     MappingPtr writeGeometry(SgShape* shape);
-    bool replaceOriginalMeshFileWithObjMeshFile(Mapping* archive, SgShape* shape, const std::string& uri);
     void writeMeshAttributes(Mapping* archive, SgMesh* mesh);
     bool writeMesh(Mapping* archive, SgMesh* mesh);
     void writePrimitiveAttributes(Mapping* archive, SgMesh* mesh);
@@ -93,7 +94,7 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
 
     isDegreeMode = true;
     isTransformIntegrationEnabled = false;
-    meshOutputMode = EmbeddedMeshes;
+    modelFileMode = EmbedModels;
 
     os_ = &nullout();    
 }
@@ -167,15 +168,15 @@ void StdSceneWriter::setIndentWidth(int n)
 }
 
 
-void StdSceneWriter::setMeshOutputMode(int mode)
+void StdSceneWriter::setModelFileMode(int mode)
 {
-    impl->meshOutputMode = mode;
+    impl->modelFileMode = mode;
 }
 
 
-int StdSceneWriter::meshOutputMode() const
+int StdSceneWriter::modelFileMode() const
 {
-    return impl->meshOutputMode;
+    return impl->modelFileMode;
 }
 
 
@@ -227,7 +228,7 @@ bool StdSceneWriter::Impl::writeScene
         }
     }
 
-    if(isTransformIntegrationEnabled && meshOutputMode != OriginalMeshFiles){
+    if(isTransformIntegrationEnabled && (modelFileMode != LinkToOriginalModelFiles)){
         SceneGraphOptimizer optimizer;
         CloneMap cloneMap;
         SgObject::setNonNodeCloning(cloneMap, false);
@@ -269,12 +270,20 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 {
     MappingPtr archive = new Mapping;
 
-    if(!node->uri().empty() && meshOutputMode == OriginalMeshFiles){
-        writeObjectHeader(archive, "Resource", node);
-        archive->write(
-            "uri",
-            getOrCreatePathVariableProcessor()->parameterize(node->uri()), DOUBLE_QUOTED);
-        return archive;
+    if(node->hasUri()){
+        if(modelFileMode != EmbedModels){
+            writeObjectHeader(archive, "Resource", node);
+
+            if(modelFileMode == LinkToOriginalModelFiles){
+                makeLinkToOriginalModelFile(archive, node);
+                
+            } else if(modelFileMode == ReplaceWithObjModelFiles){
+                if(!replaceOriginalModelFileWithObjModelFile(archive, node, node->uri())){
+                    archive.reset();
+                }
+            }
+            return archive;
+        }
     }
 
     currentArchive = archive;
@@ -299,6 +308,61 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
     }
     
     return archive;
+}
+
+
+void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject)
+{
+    // TODO: Consider the protocol header of the URI
+
+    // Try to copy the original model file if the base directory is different
+    if(sceneObject->hasAbsoluteUri()){
+
+    }
+
+    auto uri = sceneObject->uri();
+    filesystem::path path(uri);
+    if(path.is_absolute()){
+        uri = getOrCreatePathVariableProcessor()->parameterize(uri);
+    }
+    archive->write("uri", uri, DOUBLE_QUOTED);
+}
+
+
+bool StdSceneWriter::Impl::replaceOriginalModelFileWithObjModelFile
+(Mapping* archive, SgNode* node, const std::string& uri)
+{
+    bool replaced = false;
+    
+    // TODO: Consider the protocol header of the URI
+    filesystem::path path(uri);
+    if(path.is_absolute()){
+        path = filesystem::path("resource") / path.filename();
+    }
+    path.replace_extension(".obj");
+    auto basePath = getOrCreatePathVariableProcessor()->baseDirPath();
+    auto filename = (basePath / path).string();
+
+    stdx::error_code ec;
+    filesystem::create_directories(basePath / path.parent_path(), ec);
+    
+    if(!ec){
+        // TODO: Check if there is an existing file with the same name
+        replaced = getOrCreateObjSceneWriter()->writeScene(filename, node);
+    }
+    if(replaced){
+        archive->write("uri", path.string(), DOUBLE_QUOTED);
+        
+    } else {
+        if(ec){
+            os() << format(_("Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"),
+                           uri, filename, ec.message()) << endl;
+        } else {
+            os() << format(_("Warning: Failed to replace model file \"{0}\" with \"{1}\"."), uri, filename) << endl;
+        }
+    }
+    
+    return replaced;
 }
 
 
@@ -373,18 +437,16 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
     }
 
     MappingPtr archive = new Mapping;
-    const auto& uri = mesh->uri();
 
-    if(!uri.empty() && (meshOutputMode != EmbeddedMeshes)){
+    if(mesh->hasUri() && (modelFileMode != EmbedModels)){
 
         archive->write("type", "Resource");
 
-        if(meshOutputMode == OriginalMeshFiles){
-            auto uri2 = getOrCreatePathVariableProcessor()->parameterize(uri);
-            archive->write("uri", uri2, DOUBLE_QUOTED);
+        if(modelFileMode == LinkToOriginalModelFiles){
+            makeLinkToOriginalModelFile(archive, mesh);
 
-        } else if(meshOutputMode == ReplacedObjMeshFiles){
-            if(!replaceOriginalMeshFileWithObjMeshFile(archive, shape, uri)){
+        } else if(modelFileMode == ReplaceWithObjModelFiles){
+            if(!replaceOriginalModelFileWithObjModelFile(archive, shape, mesh->uri())){
                 archive.reset();
             }
         }
@@ -421,45 +483,6 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
     }
 
     return archive;
-}
-
-
-bool StdSceneWriter::Impl::replaceOriginalMeshFileWithObjMeshFile
-(Mapping* archive, SgShape* shape, const std::string& uri)
-{
-    bool replaced = false;
-    
-    auto pvp = getOrCreatePathVariableProcessor();
-
-    // TODO: Consider the protocol header of the URI
-    filesystem::path path(uri);
-    if(path.is_absolute()){
-        path = filesystem::path("resource") / path.filename();
-    }
-    path.replace_extension(".obj");
-    auto basePath = pvp->baseDirPath();
-    auto filename = (basePath / path).string();
-
-    stdx::error_code ec;
-    filesystem::create_directories(basePath / path.parent_path(), ec);
-    
-    if(!ec){
-        // TODO: Check if there is an existing file with the same name
-        replaced = getOrCreateObjSceneWriter()->writeScene(filename, shape);
-    }
-    if(replaced){
-        archive->write("uri", path.string(), DOUBLE_QUOTED);
-        
-    } else {
-        if(ec){
-            os() << format(_("Warning: Failed to replace mesh file \"{0}\" with \"{1}\". {2}"),
-                           uri, filename, ec.message()) << endl;
-        } else {
-            os() << format(_("Warning: Failed to replace mesh file \"{0}\" with \"{1}\"."), uri, filename) << endl;
-        }
-    }
-    
-    return replaced;
 }
 
 
@@ -698,7 +721,7 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
     bool isValid = false;
 
     if(auto image = texture->image()){
-        if(!image->uri().empty()){
+        if(image->hasUri()){
             archive->write("uri", image->uri(), DOUBLE_QUOTED);
             isValid = true;
             if(texture->repeatS() == texture->repeatT()){

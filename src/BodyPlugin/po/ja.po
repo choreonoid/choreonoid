@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-16 17:01+0900\n"
+"POT-Creation-Date: 2021-02-16 20:17+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -1773,47 +1773,43 @@ msgstr "ボディ"
 msgid "Scene / Mesh"
 msgstr "シーン／メッシュ"
 
-#: BodyItemFileIO.cpp:217
+#: BodyItemFileIO.cpp:216
 msgid "Shape type:"
 msgstr "形状タイプ："
 
-#: BodyItemFileIO.cpp:219
+#: BodyItemFileIO.cpp:218
 msgid "Visual"
 msgstr "表示用"
 
-#: BodyItemFileIO.cpp:220
+#: BodyItemFileIO.cpp:219
 msgid "Collision"
 msgstr "干渉検出用"
 
-#: BodyItemFileIO.cpp:226
-msgid "Vertex precision:"
-msgstr "頂点精度："
-
-#: BodyItemFileIO.cpp:243
+#: BodyItemFileIO.cpp:233
 msgid "Standard scene file"
 msgstr "標準シーンファイル"
 
-#: BodyItemFileIO.cpp:277
-msgid "Mesh output mode:"
-msgstr "メッシュ出力モード："
+#: BodyItemFileIO.cpp:268
+msgid "Model file mode:"
+msgstr "モデルファイルモード："
 
-#: BodyItemFileIO.cpp:279
-msgid "Embedded"
-msgstr "埋め込み"
+#: BodyItemFileIO.cpp:270
+msgid "Embed models"
+msgstr "モデルを埋め込む"
 
-#: BodyItemFileIO.cpp:280
-msgid "Original"
-msgstr "オリジナル"
+#: BodyItemFileIO.cpp:271
+msgid "Link to original model files"
+msgstr "元のモデルファイルにリンク"
 
-#: BodyItemFileIO.cpp:281
-msgid "Converted (OBJ)"
-msgstr "変換（OBJ）"
+#: BodyItemFileIO.cpp:272
+msgid "Replace with OBJ model files"
+msgstr "OBJモデルファイルに置き換え"
 
-#: BodyItemFileIO.cpp:289
+#: BodyItemFileIO.cpp:276
 msgid "Integrate transforms"
 msgstr "座標変換を統合"
 
-#: BodyItemFileIO.cpp:314
+#: BodyItemFileIO.cpp:298
 msgid "OBJ file"
 msgstr "OBJファイル"
 
@@ -1876,3 +1872,15 @@ msgstr "関節速度下限"
 #: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
+
+#~ msgid "Mesh output mode:"
+#~ msgstr "メッシュ出力モード："
+
+#~ msgid "Vertex precision:"
+#~ msgstr "頂点精度："
+
+#~ msgid "Original"
+#~ msgstr "オリジナル"
+
+#~ msgid "Converted (OBJ)"
+#~ msgstr "変換（OBJ）"

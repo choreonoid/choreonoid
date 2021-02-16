@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -104,8 +105,14 @@ public:
     void invalidateBoundingBox() { hasValidBoundingBoxCache_ = false; }
     void setBoundingBoxCacheReady() const { hasValidBoundingBoxCache_ = true; }
 
-    const std::string& uri() const { return uri_; }
-    void setUri(const std::string& uri) { uri_ = uri; }
+    bool hasUri() const { return (uriInfo != nullptr) && !uriInfo->uri.empty(); }
+    std::string uri() const;
+    bool hasAbsoluteUri() const { return (uriInfo != nullptr) && !uriInfo->absoluteUri.empty(); }
+    std::string absoluteUri() const;
+    void setUri(const std::string& uri, const std::string& baseDirectory);
+    void setUri(const std::string& uri);
+    void setAbsoluteUri(const std::string& uri);
+    void clearUri() { uriInfo.reset(); }
 
     bool isNode() const { return hasAttribute(Node); }
     SgNode* toNode();
@@ -127,7 +134,13 @@ private:
     Signal<void(const SgUpdate& update)> sigUpdated_;
     Signal<void(bool on)> sigGraphConnection_;
     std::string name_;
-    std::string uri_;
+
+    struct UriInfo {
+        std::string uri;
+        std::string absoluteUri;
+    };
+    
+    std::unique_ptr<UriInfo> uriInfo;
 };
 
 typedef ref_ptr<SgObject> SgObjectPtr;

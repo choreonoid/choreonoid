@@ -28,9 +28,9 @@ public:
 
     void setIndentWidth(int n);
 
-    enum MeshOutputMode { EmbeddedMeshes, OriginalMeshFiles, ReplacedObjMeshFiles };
-    void setMeshOutputMode(int mode);
-    int meshOutputMode() const;
+    enum ModelFileMode { EmbedModels, LinkToOriginalModelFiles, ReplaceWithObjModelFiles };
+    void setModelFileMode(int mode);
+    int modelFileMode() const;
 
     void setTransformIntegrationEnabled(bool on);
     bool isTransformIntegrationEnabled() const;

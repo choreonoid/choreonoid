@@ -7,12 +7,16 @@
 #include "SceneNodeClassRegistry.h"
 #include "CloneMap.h"
 #include "Exception.h"
+#include <cnoid/stdx/filesystem>
+#include <fmt/format.h>
 #include <unordered_map>
 #include <typeindex>
 #include <mutex>
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
+namespace filesystem = stdx::filesystem;
 
 namespace {
 
@@ -32,10 +36,11 @@ SgObject::SgObject()
 SgObject::SgObject(const SgObject& org)
     : attributes_(org.attributes_),
       hasValidBoundingBoxCache_(false),
-      name_(org.name_),
-      uri_(org.uri_)
+      name_(org.name_)
 {
-
+    if(org.uriInfo){
+        uriInfo.reset(new UriInfo(*org.uriInfo));
+    }
 }
 
 
@@ -103,6 +108,46 @@ void SgObject::removeParent(SgObject* parent)
     if(parents.empty()){
         sigGraphConnection_(false);
     }
+}
+
+
+std::string SgObject::uri() const
+{
+    return uriInfo ? uriInfo->uri : string();
+}
+
+std::string SgObject::absoluteUri() const
+{
+    return uriInfo ? uriInfo->absoluteUri : string();
+}
+
+
+void SgObject::setUri(const std::string& uri, const std::string& baseDirectory)
+{
+    setUri(uri);
+    filesystem::path path(uri);
+    if(path.is_relative()){
+        path = baseDirectory / path;
+    }
+    uriInfo->absoluteUri = format("file://{0}", path.string());
+}    
+
+
+void SgObject::setUri(const std::string& uri)
+{
+    if(!uriInfo){
+        uriInfo.reset(new UriInfo);
+    }
+    uriInfo->uri = uri;
+}
+
+
+void SgObject::setAbsoluteUri(const std::string& uri)
+{
+    if(!uriInfo){
+        uriInfo.reset(new UriInfo);
+    }
+    uriInfo->absoluteUri = uri;
 }
 
 

@@ -137,8 +137,8 @@ public:
     void readLightCommon(Mapping& info, SgLight* light);
     SgNode* readDirectionalLight(Mapping& info);
     SgNode* readSpotLight(Mapping& info);
-    SgNode* readResource(Mapping& info);
-    Resource readResourceNode(Mapping& info);
+    SgNode* readResourceAsScene(Mapping& info);
+    Resource readResourceNode(Mapping& info, bool doSetUri);
     void extractNamedYamlNodes(
         Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource);
     void extractNamedSceneNodes(
@@ -202,7 +202,7 @@ StdSceneReader::Impl::Impl(StdSceneReader* self)
                 { "Shape",            &Impl::readShape },
                 { "DirectionalLight", &Impl::readDirectionalLight },
                 { "SpotLight",        &Impl::readSpotLight },
-                { "Resource",         &Impl::readResource }
+                { "Resource",         &Impl::readResourceAsScene }
             };
         }
     }
@@ -1066,7 +1066,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
 
 SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOptions)
 {
-    auto resource = readResourceNode(info);
+    auto resource = readResourceNode(info, false);
 
     SgNode* scene = nullptr;
     bool isDirectResource = false;
@@ -1086,7 +1086,7 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOpti
         info.throwException(_("A resouce specified as a geometry does not have a mesh"));
     }
     if(isDirectResource){
-        mesh->setUri(resource.uri);
+        mesh->setUri(resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
     }
         
     double creaseAngle;
@@ -1174,7 +1174,7 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
             } else {
                 image = new SgImage;
                 if(imageIO.load(image->image(), filename, os())){
-                    image->setUri(uri);
+                    image->setUri(uri, getOrCreatePathVariableProcessor()->baseDirectory());
                     imagePathToSgImageMap[uri] = image;
                 } else {
                     image.reset();
@@ -1259,11 +1259,10 @@ SgNode* StdSceneReader::Impl::readSpotLight(Mapping& info)
 }
 
 
-SgNode* StdSceneReader::Impl::readResource(Mapping& info)
+SgNode* StdSceneReader::Impl::readResourceAsScene(Mapping& info)
 {
-    auto resource = readResourceNode(info);
+    auto resource = readResourceNode(info, true);
     if(resource.scene){
-        resource.scene->setUri(resource.uri);
         return resource.scene;
     } else if(resource.info){
         return readNode(*resource.info->toMapping());
@@ -1274,11 +1273,11 @@ SgNode* StdSceneReader::Impl::readResource(Mapping& info)
 
 StdSceneReader::Resource StdSceneReader::readResourceNode(Mapping& info)
 {
-    return impl->readResourceNode(info);
+    return impl->readResourceNode(info, true);
 }
 
 
-StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping& info)
+StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping& info, bool doSetUri)
 {
     Resource resource;
 
@@ -1332,6 +1331,9 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping& info)
 
     if(resource.scene){
         resource.scene = readTransformParameters(info, resource.scene);
+        if(doSetUri){
+            resource.scene->setUri(resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
+        }
     }
 
     return resource;
