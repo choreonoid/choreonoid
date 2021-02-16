@@ -667,11 +667,15 @@ void ObjSceneLoader::Impl::readTexture(const std::string& mapType)
 {
     if(mapType == "Kd"){
         if(subScanner.readStringToEOL(token)){
-            auto filename = (directoryPath / token).string();
+            filesystem::path path(token);
+            if(path.is_relative()){
+                path = directoryPath / path;
+            }
+            auto filename = path.string();
             SgTexturePtr texture = new SgTexture;
             auto image = texture->getOrCreateImage();
             if(imageIO.load(image->image(), filename, os())){
-                image->setUri(filename);
+                image->setUri(token);
                 currentMaterialDefInfo->texture = texture;
             }
         }

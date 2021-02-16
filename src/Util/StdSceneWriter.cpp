@@ -47,7 +47,8 @@ public:
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     MappingPtr writeSceneNode(SgNode* node);
     void makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject);
-    bool replaceOriginalModelFileWithObjModelFile(Mapping* archive, SgNode* node, const std::string& uri);
+    bool replaceOriginalModelFileWithObjModelFile(
+        Mapping* archive, SgNode* node, bool isMaterialEnabled, const std::string& uri);
     void processUnknownNode(Mapping* archive, SgNode* node);
     void writeObjectHeader(Mapping* archive, const char* typeName, SgObject* object);
     void writeGroup(Mapping* archive, SgGroup* group);
@@ -278,7 +279,7 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
                 makeLinkToOriginalModelFile(archive, node);
                 
             } else if(modelFileMode == ReplaceWithObjModelFiles){
-                if(!replaceOriginalModelFileWithObjModelFile(archive, node, node->uri())){
+                if(!replaceOriginalModelFileWithObjModelFile(archive, node, true, node->uri())){
                     archive.reset();
                 }
             }
@@ -330,7 +331,7 @@ void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObjec
 
 
 bool StdSceneWriter::Impl::replaceOriginalModelFileWithObjModelFile
-(Mapping* archive, SgNode* node, const std::string& uri)
+(Mapping* archive, SgNode* node, bool isMaterialEnabled, const std::string& uri)
 {
     bool replaced = false;
     
@@ -348,7 +349,9 @@ bool StdSceneWriter::Impl::replaceOriginalModelFileWithObjModelFile
     
     if(!ec){
         // TODO: Check if there is an existing file with the same name
-        replaced = getOrCreateObjSceneWriter()->writeScene(filename, node);
+        auto objWriter = getOrCreateObjSceneWriter();
+        objWriter->setMaterialEnabled(isMaterialEnabled);
+        replaced = objWriter->writeScene(filename, node);
     }
     if(replaced){
         archive->write("uri", path.string(), DOUBLE_QUOTED);
@@ -446,7 +449,7 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
             makeLinkToOriginalModelFile(archive, mesh);
 
         } else if(modelFileMode == ReplaceWithObjModelFiles){
-            if(!replaceOriginalModelFileWithObjModelFile(archive, shape, mesh->uri())){
+            if(!replaceOriginalModelFileWithObjModelFile(archive, shape, false, mesh->uri())){
                 archive.reset();
             }
         }

@@ -20,6 +20,8 @@ public:
     ObjSceneWriter& operator=(ObjSceneWriter&&) = delete;
 
     void setMessageSink(std::ostream& os);
+    void setMaterialEnabled(bool on);
+    bool isMaterialEnabled() const;
 
     bool writeScene(const std::string& filename, SgNode* node);
 
