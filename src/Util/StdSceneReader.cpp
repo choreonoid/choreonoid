@@ -139,7 +139,6 @@ public:
     SgNode* readSpotLight(Mapping& info);
     SgNode* readResource(Mapping& info);
     Resource readResourceNode(Mapping& info);
-    Resource loadResource(Mapping& resourceNode, const string& uri);
     void extractNamedYamlNodes(
         Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource);
     void extractNamedSceneNodes(
@@ -1067,27 +1066,41 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
 
 SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOptions)
 {
-    SgMesh* mesh = nullptr;
-    SgNode* resource = readResource(info);
-    if(resource){
-        SgShape* shape = dynamic_cast<SgShape*>(resource);
-        if(!shape){
-            info.throwException(_("A resouce specified as a geometry must be a single mesh"));
-        }
-        mesh = shape->mesh();
-        double creaseAngle;
-        if(readAngle(info, { "crease_angle", "creaseAngle" }, creaseAngle)){
-            mesh->setCreaseAngle(creaseAngle);
-            meshFilter.setNormalOverwritingEnabled(true);
-            bool removeRedundantVertices =
-                info.get({ "remove_redundant_vertices", "removeRedundantVertices" }, false);
-            meshFilter.generateNormals(mesh, creaseAngle, removeRedundantVertices);
-            meshFilter.setNormalOverwritingEnabled(false);
-        }
-        if(meshOptions & MeshGenerator::TextureCoordinate){
-            if(mesh && !mesh->hasTexCoords()){
-                meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
-            }
+    auto resource = readResourceNode(info);
+
+    SgNode* scene = nullptr;
+    bool isDirectResource = false;
+    if(resource.scene){
+        scene = resource.scene;
+        isDirectResource = true;
+    } else if(resource.info){
+        scene = readNode(*resource.info->toMapping());
+    }
+    auto shape = dynamic_cast<SgShape*>(scene);
+
+    if(!shape){
+        info.throwException(_("A resouce specified as a geometry must be a single mesh"));
+    }
+    auto mesh = shape->mesh();
+    if(!mesh){
+        info.throwException(_("A resouce specified as a geometry does not have a mesh"));
+    }
+    if(isDirectResource){
+        mesh->setUri(resource.uri);
+    }
+        
+    double creaseAngle;
+    if(readAngle(info, { "crease_angle", "creaseAngle" }, creaseAngle)){
+        mesh->setCreaseAngle(creaseAngle);
+        meshFilter.setNormalOverwritingEnabled(true);
+        bool removeRedundantVertices =
+            info.get({ "remove_redundant_vertices", "removeRedundantVertices" }, false);
+        meshFilter.generateNormals(mesh, creaseAngle, removeRedundantVertices);
+        meshFilter.setNormalOverwritingEnabled(false);
+    }
+    if(meshOptions & MeshGenerator::TextureCoordinate){
+        if(mesh && !mesh->hasTexCoords()){
+            meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
         }
     }
     return mesh;
@@ -1250,6 +1263,7 @@ SgNode* StdSceneReader::Impl::readResource(Mapping& info)
 {
     auto resource = readResourceNode(info);
     if(resource.scene){
+        resource.scene->setUri(resource.uri);
         return resource.scene;
     } else if(resource.info){
         return readNode(*resource.info->toMapping());
@@ -1266,36 +1280,26 @@ StdSceneReader::Resource StdSceneReader::readResourceNode(Mapping& info)
 
 StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping& info)
 {
-    string uri = info["uri"].toString();
+    Resource resource;
+
+    resource.uri = info["uri"].toString();
 
     ValueNode& exclude = *info.find("exclude");
     if(exclude.isValid()){
         if(exclude.isString()){
-            decoupleResourceNode(info, uri, exclude.toString());
+            decoupleResourceNode(info, resource.uri, exclude.toString());
         } else if(exclude.isListing()){
             Listing& excludes = *exclude.toListing();
             for(auto& nodeToExclude : excludes){
-                decoupleResourceNode(info, uri, nodeToExclude->toString());
+                decoupleResourceNode(info, resource.uri, nodeToExclude->toString());
             }
         } else {
             exclude.throwException(_("The value of \"exclude\" must be string or sequence."));
         }
     }
-        
-    auto resource = loadResource(info, uri);
 
-    if(resource.scene){
-        resource.scene = readTransformParameters(info, resource.scene);
-    }
-
-    return resource;
-}
-
-
-StdSceneReader::Resource StdSceneReader::Impl::loadResource(Mapping& resourceNode, const string& uri)
-{
     vector<string> names;
-    auto node = resourceNode.find("node");
+    auto node = info.find("node");
     if(node->isValid()){
         if(node->isString()){
             names.push_back(node->toString());
@@ -1307,8 +1311,7 @@ StdSceneReader::Resource StdSceneReader::Impl::loadResource(Mapping& resourceNod
         }
     }
     
-    Resource resource;
-    ResourceInfo* resourceInfo = getOrCreateResourceInfo(resourceNode, uri);
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(info, resource.uri);
     if(resourceInfo){
         resource.directory = resourceInfo->directory;
         bool isYamlResouce = (resourceInfo->yamlReader != nullptr);
@@ -1320,13 +1323,17 @@ StdSceneReader::Resource StdSceneReader::Impl::loadResource(Mapping& resourceNod
             }
         } else {
             if(isYamlResouce){
-                extractNamedYamlNodes(resourceNode, resourceInfo, names, uri, resource);
+                extractNamedYamlNodes(info, resourceInfo, names, resource.uri, resource);
             } else {
-                extractNamedSceneNodes(resourceNode, resourceInfo, names, uri, resource);
+                extractNamedSceneNodes(info, resourceInfo, names, resource.uri, resource);
             }
         }
     }
-    
+
+    if(resource.scene){
+        resource.scene = readTransformParameters(info, resource.scene);
+    }
+
     return resource;
 }
 

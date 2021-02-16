@@ -35,6 +35,7 @@ namespace filesystem = std::experimental::filesystem;
 #else
 namespace filesystem = std::filesystem;
 #endif
+typedef std::error_code error_code;
 }
 
 #else // __cplusplus > 201402L
@@ -59,6 +60,7 @@ inline path lexically_normal(const path& p){
 
 namespace cnoid { namespace stdx {
 namespace filesystem = boost::filesystem;
+typedef boost::system::error_code error_code;
 } }
 #endif
 

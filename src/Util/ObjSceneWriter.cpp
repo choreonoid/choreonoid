@@ -3,9 +3,11 @@
 #include "SceneDrawables.h"
 #include "PolymorphicSceneNodeFunctionSet.h"
 #include "UTF8.h"
+#include "NullOut.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <fstream>
+#include <exception>
 #include "gettext.h"
 
 using namespace std;
@@ -20,12 +22,13 @@ class ObjSceneWriter::Impl
 public:
     ObjSceneWriter* self;
     std::ofstream ofs;
-    int vertexPrecision;
-    string vertexFormat;
     filesystem::path directory;
     int objectIdCounter;
     int vertexIndexOffset;
     int normalIndexOffset;
+
+    ostream* os_;
+    ostream& os() { return *os_; }
 
     Impl(ObjSceneWriter* self);
     bool writeScene(const std::string& filename, SgNode* node);
@@ -39,14 +42,13 @@ public:
 ObjSceneWriter::ObjSceneWriter()
 {
     impl = new Impl(this);
-    setVertexPrecision(7);
 }
 
 
 ObjSceneWriter::Impl::Impl(ObjSceneWriter* self)
     : self(self)
 {
-
+    os_ = &nullout();    
 }
 
 
@@ -56,16 +58,9 @@ ObjSceneWriter::~ObjSceneWriter()
 }
 
 
-void ObjSceneWriter::setVertexPrecision(int precision)
+void ObjSceneWriter::setMessageSink(std::ostream& os)
 {
-    impl->vertexPrecision = precision;
-    impl->vertexFormat = format("%.{}g", precision);
-}
-
-
-int ObjSceneWriter::vertexPrecision() const
-{
-    return impl->vertexPrecision;
+    impl->os_ = &os;
 }
 
 
@@ -77,11 +72,15 @@ bool ObjSceneWriter::writeScene(const std::string& filename, SgNode* node)
 
 bool ObjSceneWriter::Impl::writeScene(const std::string& filename, SgNode* node)
 {
-    ofs.open(fromUTF8(filename).c_str(), ios_base::out | ios_base::binary);
-    if(!ofs.is_open()){
+    try {
+        ofs.open(fromUTF8(filename).c_str(), ios_base::out | ios_base::binary);
+        ofs.exceptions(std::ios_base::failbit);
+    }
+    catch(const std::exception& ex){
+        os() << format(_("\"{0}\" cannot be open. {1}."), filename, ex.what()) << endl;
         return false;
     }
-        
+
     directory = filesystem::path(filename).parent_path();
     objectIdCounter = 0;
     vertexIndexOffset = 1;

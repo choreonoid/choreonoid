@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-05 10:16+0900\n"
+"POT-Creation-Date: 2021-02-16 17:28+0900\n"
 "PO-Revision-Date: 2012-07-16 14:30+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -25,11 +25,35 @@ msgstr "シーンファイル \"{}\" は \"scene\" ノードを有していま�
 msgid "Scene file \"{}\" is an empty scene."
 msgstr "シーンファイル\"{}\"は空のシーンです．"
 
-#: StdSceneReader.cpp:313
+#: StdSceneWriter.cpp:272
+msgid "Warning: There is an unsupported node."
+msgstr "警告：サポートされていないノードがあります．"
+
+#: StdSceneWriter.cpp:274
+msgid "Warning: {0} unsupported nodes were skipped to output."
+msgstr "警告：サポートされていない{0}のノードの出力をスキップしました．"
+
+#: StdSceneWriter.cpp:324
+msgid "Warning: The light node type is not supported."
+msgstr "警告：光源ノード型はサポートされていません．"
+
+#: StdSceneWriter.cpp:465
+msgid "Warning: Failed to replace mesh file \"{0}\" with \"{1}\". {2}"
+msgstr ""
+"警告：メッシュファイル  \"{0}\" を \"{1}\" で置き換えることができませんでし"
+"た. {2}"
+
+#: StdSceneWriter.cpp:468
+msgid "Warning: Failed to replace mesh file \"{0}\" with \"{1}\"."
+msgstr ""
+"警告：メッシュファイル  \"{0}\" を \"{1}\" で置き換えることができませんでし"
+"た."
+
+#: StdSceneReader.cpp:315
 msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""
 msgstr "\"angleUnit\"の値はラジアンか度のいずれかである必要があります"
 
-#: StdSceneReader.cpp:487
+#: StdSceneReader.cpp:489
 msgid ""
 "Warning: the node type \"{}\" is not defined. Reading this node has been "
 "skipped."
@@ -37,53 +61,85 @@ msgstr ""
 "警告：ノードタイプ\"{}\"は定義されていません．このノードの読み込みはスキップ"
 "されます． "
 
-#: StdSceneReader.cpp:490
+#: StdSceneReader.cpp:492
 msgid "The node type \"{}\" is not defined."
 msgstr "ノードタイプ\"{}\"は定義されていません．"
 
-#: StdSceneReader.cpp:556
+#: StdSceneReader.cpp:558
 msgid ""
 "The node type \"{0}\" is different from the type \"{1}\" specified in the "
 "parent node"
 msgstr "ノードタイプ\"{0}\"は親ノードで指定されているタイプ\"{1}\"と異なります"
 
-#: StdSceneReader.cpp:708
-msgid "Unknown geometry \"{}\""
-msgstr "不明なジオメトリ\"{}\""
+#: StdSceneReader.cpp:570
+msgid "A scalar value is not accepted"
+msgstr "スカラ値を使用することはできません"
 
-#: StdSceneReader.cpp:995
+#: StdSceneReader.cpp:714
+msgid "Unknown geometry \"{}\""
+msgstr "不明なジオメトリ \"{}\""
+
+#: StdSceneReader.cpp:761
+msgid "A box cannot be generated with the given parameters."
+msgstr "与えられたパラメータでボックスを生成することはできません．"
+
+#: StdSceneReader.cpp:779
+msgid "A sphere cannot be generated with the given parameters."
+msgstr "与えられたパラメータで球を生成することはできません．"
+
+#: StdSceneReader.cpp:799
+msgid "A cylinder cannot be generated with the given parameters."
+msgstr "与えられたパラメータでシリンダを生成することはできません．"
+
+#: StdSceneReader.cpp:818
+msgid "A cone cannot be generated with the given parameters."
+msgstr "与えられたパラメータで円錐を生成することはできません．"
+
+#: StdSceneReader.cpp:836
+msgid "A capsule cannot be generated with the given parameters."
+msgstr "与えられたパラメータでカプセルを生成することはできません．"
+
+#: StdSceneReader.cpp:1082
 msgid "A resouce specified as a geometry must be a single mesh"
 msgstr "ジオメトリと指定するリソースは単一のメッシュでなければなりません"
 
-#: StdSceneReader.cpp:1081
-msgid "Warning: texture url \"{0}\" is not valid: {1}"
+#: StdSceneReader.cpp:1086
+msgid "A resouce specified as a geometry does not have a mesh"
+msgstr "ジオメトリとして指定されているリソースがメッシュを有していません"
+
+#: StdSceneReader.cpp:1172
+msgid "Warning: texture uri \"{0}\" is not valid: {1}"
 msgstr "警告: テクスチャのURL \"{0}\" は有効ではありません: {1}"
 
-#: StdSceneReader.cpp:1186
+#: StdSceneReader.cpp:1195
+msgid "The number of the repeat elements must be two"
+msgstr "repeatの要素は2つでなければなりません"
+
+#: StdSceneReader.cpp:1297
 msgid "The value of \"exclude\" must be string or sequence."
 msgstr "\"exclude\" の値は文字列かシーケンスでなければなりません．"
 
-#: StdSceneReader.cpp:1251 StdSceneReader.cpp:1280
+#: StdSceneReader.cpp:1353 StdSceneReader.cpp:1382
 msgid "Node \"{0}\" is not found in \"{1}\"."
 msgstr "\"{1}\" のノード \"{0}\" がみつかりません．"
 
-#: StdSceneReader.cpp:1349
+#: StdSceneReader.cpp:1451
 msgid "The \"{0}\" scheme of \"{1}\" is not available"
 msgstr "\"{1}\" の \"{0}\" スキームは利用できません"
 
-#: StdSceneReader.cpp:1369
+#: StdSceneReader.cpp:1471
 msgid "The resource URI \"{0}\" is not valid: {1}"
 msgstr "リソースURI \"{0}\" は有効ではありません: {1}"
 
-#: StdSceneReader.cpp:1375
+#: StdSceneReader.cpp:1477
 msgid "The resource URI \"{}\" is not valid"
 msgstr "リソースURI \"{}\" は有効ではありません"
 
-#: StdSceneReader.cpp:1390
+#: StdSceneReader.cpp:1492
 msgid "YAML resource \"{0}\" cannot be loaded ({1})"
 msgstr "YAMLリソース \"{0}\" は読み込みできません ({1})"
 
-#: StdSceneReader.cpp:1399
+#: StdSceneReader.cpp:1501
 msgid "The resource is not found at URI \"{}\""
 msgstr "URI \"{}\" のリソースがみつかりません"
 
@@ -106,6 +162,10 @@ msgstr "{1}のフレームレート{0}は無効です．\n"
 #: VRMLSceneLoader.cpp:102
 msgid "VRML file \"{}\" does not have any valid entity."
 msgstr "VRMLファイル \"{}\" には有効なエントリが有りません．"
+
+#: ObjSceneLoader.cpp:167 STLSceneLoader.cpp:477
+msgid "Unable to open file \"{}\"."
+msgstr "ファイル\"{}\"を開けません．"
 
 #: YAMLReader.cpp:180 YAMLReader.cpp:222
 msgid "{0} at line {1}, column {2}"
@@ -173,9 +233,56 @@ msgstr "\"{}\" は開けません．"
 msgid "{0} cannot be opened."
 msgstr "{0} を開けません．"
 
+#: ImageIO.cpp:27 ImageIO.cpp:211 ImageIO.cpp:258
+msgid "Image file \"{0}\" cannot be loaded. {1}"
+msgstr "画像ファイル \"{0}\" をロードできません．{1}"
+
+#: ImageIO.cpp:38
+msgid "Image file \"{0}\" is not the PNG format."
+msgstr "画像ファイル \"{0}\" はPNG形式ではありません."
+
+#: ImageIO.cpp:45
+msgid "Failed to create png_struct in loading \"{0}\""
+msgstr "\"{0}\" の読み込みにおいて png_struct の生成ができませんでした"
+
+#: ImageIO.cpp:53
+msgid "Failed to create png_info in loading \"{0}\""
+msgstr "\"{0}\" の読み込みにおいて png_info の生成ができませんでした"
+
+#: ImageIO.cpp:109
+msgid ""
+"Image file \"{0}\" cannot be loaded because its color type is not supported."
+msgstr ""
+"画像ファイル \"{0}\" のカラータイプはサポートされていないため読み込むことがで"
+"きません．"
+
+#: ImageIO.cpp:141 ImageIO.cpp:148 ImageIO.cpp:162
+msgid "Internal error in saving \"{0}\"."
+msgstr "\"{0}\" の保存における内部エラー．"
+
+#: ImageIO.cpp:155
+msgid "Image file \"{0}\" cannot be saved. {1}"
+msgstr "画像ファイル \"{0}\" をセーブすることができません．{1}"
+
+#: ImageIO.cpp:270
+msgid "Image file \"{0}\" is not the uncompressed TGA format."
+msgstr "画像ファイル \"{0}\" は無圧縮TGA形式ではありません．"
+
+#: ImageIO.cpp:283
+msgid "Image file \"{0}\" is empty."
+msgstr "画像ファイル \"{0}\" は空です．"
+
+#: ImageIO.cpp:303
+msgid "Internal error in loading \"{0}\"."
+msgstr "\"{0}\" の読み込みにおける内部エラー．"
+
+#: ImageIO.cpp:344 ImageIO.cpp:362
+msgid "The image file format of \"{0}\" is not supported."
+msgstr "\"{0}\" の画像ファイル形式はサポートされていません．"
+
 #: CoordinateFrameList.cpp:301
 msgid "{0} cannot be loaded as a coordinate frame list"
-msgstr ""
+msgstr "{0} を座標フレームリストとして読み込むことができません"
 
 #: CoordinateFrameList.cpp:310 PositionTagGroup.cpp:184
 msgid "Format version {0} is not supported."
@@ -191,7 +298,7 @@ msgstr "\"{1}\" における変数 \"{0}\" は定義されていません．"
 
 #: PositionTagGroup.cpp:178
 msgid "{0} cannot be loaded as a position tag group"
-msgstr ""
+msgstr "{0} をポジションタググループとして読み込むことができません"
 
 #: PositionTagGroup.cpp:237
 msgid "\"{}\" cannot be opened.\n"
@@ -268,7 +375,11 @@ msgstr "\"{}\": 時刻値が整列されていません．"
 
 #: ArchiveSession.cpp:100
 msgid "UUID \"{0}\" is a duplicate of the existing ID.\n"
-msgstr ""
+msgstr "UUID \"{0}\" は既存のIDと重複しています．\n"
+
+#: ObjSceneWriter.cpp:80
+msgid "\"{0}\" cannot be open. {1}."
+msgstr "\"{0}\" を開くことができません．{1}."
 
 #: ValueTree.cpp:86
 msgid "{0} at line {1}, column {2}."
@@ -282,31 +393,31 @@ msgstr "{0}行{1}列にてエラー．"
 msgid "The value \"{}\" must be an integer value"
 msgstr "値\"{}\"は整数値でなければなりません"
 
-#: ValueTree.cpp:231
-msgid "The value \"{}\" must be a double value"
-msgstr "値\"{}\"はdouble型の値でなければなりません"
+#: ValueTree.cpp:231 ValueTree.cpp:254
+msgid "The value \"{}\" must be a floating point number"
+msgstr "値 \"{}\" は浮動小数点値でなければなりません"
 
-#: ValueTree.cpp:277
+#: ValueTree.cpp:300
 msgid "The value \"{}\" must be a boolean value"
 msgstr "値\"{}\"はboolean値でなければなりません"
 
-#: ValueTree.cpp:403
+#: ValueTree.cpp:426
 msgid "A {} value must be a scalar value"
 msgstr "値{}はスカラ値でなければなりません"
 
-#: ValueTree.cpp:412
+#: ValueTree.cpp:435
 msgid "The value is not a mapping"
 msgstr "値がマッピング型でありません"
 
-#: ValueTree.cpp:421
+#: ValueTree.cpp:444
 msgid "The value is not a listing"
 msgstr "値がリスティング型でありません"
 
-#: ValueTree.cpp:601
+#: ValueTree.cpp:675
 msgid "Key \"{}\" is not found in the mapping"
 msgstr "マッピング内でキー\"{}\"がみつかりません"
 
-#: ValueTree.cpp:624
+#: ValueTree.cpp:698
 msgid "A node to insert into a Mapping is a null node"
 msgstr "マッピングに挿入しようとしているノードが空ノードです"
 
@@ -319,18 +430,10 @@ msgstr "\"{}\"は拡張子が無いためファイル形式が不明です．"
 msgid "The file format of \"{}\" is not supported by the scene loader."
 msgstr "\"{}\"のファイル形式はシーンローダでサポートされていません．"
 
-#: STLSceneLoader.cpp:232
-msgid "{0} at line {1} of \"{2}\"."
-msgstr "\"{2}\"の{1}行にて{0}．"
-
-#: STLSceneLoader.cpp:670
-msgid "Unable to open file \"{}\"."
-msgstr "ファイル\"{}\"を開けません．"
-
-#: STLSceneLoader.cpp:712
+#: STLSceneLoader.cpp:519
 msgid "No triangles in \"{1}\"."
 msgstr "\"{1}\"にトライアングルが含まれていません．"
 
-#: STLSceneLoader.cpp:716
+#: STLSceneLoader.cpp:523
 msgid "Unable to load \"{1}\". Its file size is too large."
 msgstr "\"{1}\"を読み込むことができません．ファイルサイズが大きすぎます．"

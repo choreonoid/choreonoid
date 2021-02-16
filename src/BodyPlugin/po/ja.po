@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-09 17:56+0900\n"
+"POT-Creation-Date: 2021-02-16 17:01+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -1362,7 +1362,7 @@ msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:562 BodyItem.cpp:1684
+#: WorldItem.cpp:562 BodyItem.cpp:1691
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -1382,71 +1382,71 @@ msgstr "マテリアルテーブル"
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1539
+#: BodyItem.cpp:1546
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1598
+#: BodyItem.cpp:1605
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1675
+#: BodyItem.cpp:1682
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1676
+#: BodyItem.cpp:1683
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1677
+#: BodyItem.cpp:1684
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1678
+#: BodyItem.cpp:1685
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1679
+#: BodyItem.cpp:1686
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1680
+#: BodyItem.cpp:1687
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1681 LinkPropertyView.cpp:120
+#: BodyItem.cpp:1688 LinkPropertyView.cpp:120
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1682
+#: BodyItem.cpp:1689
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1686
+#: BodyItem.cpp:1693
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1688
+#: BodyItem.cpp:1695
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1690
+#: BodyItem.cpp:1697
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1693
+#: BodyItem.cpp:1700
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1697
+#: BodyItem.cpp:1704
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1866
+#: BodyItem.cpp:1873
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1883
+#: BodyItem.cpp:1890
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1765,53 +1765,57 @@ msgstr "カメラ画像可視化アイテム"
 msgid "Visual ratio"
 msgstr "表示比率"
 
-#: BodyItemFileIO.cpp:36 BodyItemFileIO.cpp:83
+#: BodyItemFileIO.cpp:37 BodyItemFileIO.cpp:84
 msgid "Body"
 msgstr "ボディ"
 
-#: BodyItemFileIO.cpp:84
+#: BodyItemFileIO.cpp:85
 msgid "Scene / Mesh"
 msgstr "シーン／メッシュ"
 
-#: BodyItemFileIO.cpp:126
-msgid "Standard scene file"
-msgstr "標準シーンファイル"
-
-#: BodyItemFileIO.cpp:231
+#: BodyItemFileIO.cpp:217
 msgid "Shape type:"
 msgstr "形状タイプ："
 
-#: BodyItemFileIO.cpp:233
+#: BodyItemFileIO.cpp:219
 msgid "Visual"
 msgstr "表示用"
 
-#: BodyItemFileIO.cpp:234
+#: BodyItemFileIO.cpp:220
 msgid "Collision"
 msgstr "干渉検出用"
 
-#: BodyItemFileIO.cpp:237
+#: BodyItemFileIO.cpp:226
+msgid "Vertex precision:"
+msgstr "頂点精度："
+
+#: BodyItemFileIO.cpp:243
+msgid "Standard scene file"
+msgstr "標準シーンファイル"
+
+#: BodyItemFileIO.cpp:277
 msgid "Mesh output mode:"
 msgstr "メッシュ出力モード："
 
-#: BodyItemFileIO.cpp:239
+#: BodyItemFileIO.cpp:279
 msgid "Embedded"
 msgstr "埋め込み"
 
-#: BodyItemFileIO.cpp:240
+#: BodyItemFileIO.cpp:280
 msgid "Original"
 msgstr "オリジナル"
 
-#: BodyItemFileIO.cpp:241
-msgid "Converted (STL)"
-msgstr "変換（STL）"
+#: BodyItemFileIO.cpp:281
+msgid "Converted (OBJ)"
+msgstr "変換（OBJ）"
 
-#: BodyItemFileIO.cpp:245
+#: BodyItemFileIO.cpp:289
 msgid "Integrate transforms"
 msgstr "座標変換を統合"
 
-#: BodyItemFileIO.cpp:252
-msgid "Vertex precision:"
-msgstr "頂点精度："
+#: BodyItemFileIO.cpp:314
+msgid "OBJ file"
+msgstr "OBJファイル"
 
 #: LinkPropertyView.cpp:48
 msgid "Link Properties"
@@ -1872,9 +1876,3 @@ msgstr "関節速度下限"
 #: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
-
-#~ msgid "Keep the link to the original mesh files"
-#~ msgstr "元のメッシュファイルへのリンクを保持"
-
-#~ msgid "Optimize scene graph"
-#~ msgstr "シーングラフの最適化"

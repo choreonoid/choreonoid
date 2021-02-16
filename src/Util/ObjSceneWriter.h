@@ -19,8 +19,7 @@ public:
     ObjSceneWriter& operator=(const ObjSceneWriter&) = delete;
     ObjSceneWriter& operator=(ObjSceneWriter&&) = delete;
 
-    void setVertexPrecision(int precision);
-    int vertexPrecision() const;
+    void setMessageSink(std::ostream& os);
 
     bool writeScene(const std::string& filename, SgNode* node);
 

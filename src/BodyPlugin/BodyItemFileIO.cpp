@@ -117,7 +117,6 @@ public:
     QWidget* optionPanel;
     QVBoxLayout* optionVBox;
     QComboBox* shapeTypeCombo;
-    QSpinBox* vertexPrecisionSpin;
 
     SceneFileExportBase(const char* caption, const char* format, const char* extension)
         : ItemFileIOBase<BodyItem>(format, Save | Options | OptionPanelForSaving)
@@ -220,15 +219,6 @@ public:
         shapeTypeCombo->addItem(_("Collision"));
         box->addWidget(shapeTypeCombo);
     }
-
-    void addVertexPrecisionSpin(QBoxLayout* box)
-    {
-        box->addWidget(new QLabel(_("Vertex precision:")));
-        vertexPrecisionSpin = new QSpinBox;
-        vertexPrecisionSpin->setRange(6, 16);
-        vertexPrecisionSpin->setValue(7);
-        box->addWidget(vertexPrecisionSpin);
-    }
 };
 
 
@@ -249,6 +239,7 @@ public:
     {
         if(!sceneWriter){
             sceneWriter.reset(new StdSceneWriter);
+            sceneWriter->setMessageSink(os());
             sceneWriter->setIndentWidth(1);
         }
         return sceneWriter.get();
@@ -278,19 +269,12 @@ public:
         meshOutputModeCombo = new QComboBox;
         meshOutputModeCombo->addItem(_("Embedded"));
         meshOutputModeCombo->addItem(_("Original"));
-        meshOutputModeCombo->addItem(_("Converted (STL)"));
+        meshOutputModeCombo->addItem(_("Converted (OBJ)"));
         hbox->addWidget(meshOutputModeCombo);
-        hbox->addStretch();
-       
-        optionVBox->addLayout(hbox);
-        
-        hbox = new QHBoxLayout;
+
         transformIntegrationCheck = new QCheckBox;
         transformIntegrationCheck->setText(_("Integrate transforms"));
         hbox->addWidget(transformIntegrationCheck);
-
-        addVertexPrecisionSpin(hbox);
-        vertexPrecisionSpin->setValue(ensureSceneWriter()->vertexPrecision());
         hbox->addStretch();
 
         optionVBox->addLayout(hbox);
@@ -298,9 +282,9 @@ public:
 
     virtual void fetchOptionPanelForSaving() override
     {
+        ensureSceneWriter();
         sceneWriter->setMeshOutputMode(meshOutputModeCombo->currentIndex());
         sceneWriter->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
-        sceneWriter->setVertexPrecision(vertexPrecisionSpin->value());
     }
 };
 
@@ -333,14 +317,8 @@ public:
     {
         auto hbox = new QHBoxLayout;
         addShapeTypeCombo(hbox);
-        addVertexPrecisionSpin(hbox);
         hbox->addStretch();
         optionVBox->addLayout(hbox);
-    }
-
-    virtual void fetchOptionPanelForSaving() override
-    {
-        ensureSceneWriter()->setVertexPrecision(vertexPrecisionSpin->value());
     }
 };
 

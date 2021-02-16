@@ -28,14 +28,12 @@ public:
 
     void setIndentWidth(int n);
 
-    enum MeshOutputMode { EmbeddedMeshes, OriginalMeshFiles, ConvertedStlMeshFiles };
+    enum MeshOutputMode { EmbeddedMeshes, OriginalMeshFiles, ReplacedObjMeshFiles };
     void setMeshOutputMode(int mode);
     int meshOutputMode() const;
 
     void setTransformIntegrationEnabled(bool on);
     bool isTransformIntegrationEnabled() const;
-    void setVertexPrecision(int precision);
-    int vertexPrecision() const;
 
     //enum AngleUnit { Degree, Radian };
     //void setAngleUnit(AngleUnit unit);

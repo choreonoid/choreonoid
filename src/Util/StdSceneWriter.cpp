@@ -1,5 +1,6 @@
 #include "StdSceneWriter.h"
 #include "YAMLWriter.h"
+#include "ObjSceneWriter.h"
 #include "SceneGraph.h"
 #include "SceneDrawables.h"
 #include "SceneLights.h"
@@ -29,11 +30,10 @@ public:
     bool isDegreeMode;
     bool isTransformIntegrationEnabled;
     int meshOutputMode;
-    int vertexPrecision;
-    string vertexFormat;
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
+    unique_ptr<ObjSceneWriter> objSceneWriter;
     int numSkippedNode;
 
     ostream* os_;
@@ -42,6 +42,7 @@ public:
     Impl(StdSceneWriter* self);
     YAMLWriter* getOrCreateYamlWriter();
     FilePathVariableProcessor* getOrCreatePathVariableProcessor();
+    ObjSceneWriter* getOrCreateObjSceneWriter();
     void setBaseDirectory(const std::string& directory);
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     MappingPtr writeSceneNode(SgNode* node);
@@ -51,7 +52,8 @@ public:
     void writePosTransform(Mapping* archive, SgPosTransform* transform);
     void writeScaleTransform(Mapping* archive, SgScaleTransform* transform);
     void writeShape(Mapping* archive, SgShape* shape);
-    MappingPtr writeGeometry(SgMesh* mesh);
+    MappingPtr writeGeometry(SgShape* shape);
+    bool replaceOriginalMeshFileWithObjMeshFile(Mapping* archive, SgShape* shape, const std::string& uri);
     void writeMeshAttributes(Mapping* archive, SgMesh* mesh);
     bool writeMesh(Mapping* archive, SgMesh* mesh);
     void writePrimitiveAttributes(Mapping* archive, SgMesh* mesh);
@@ -70,7 +72,6 @@ public:
 StdSceneWriter::StdSceneWriter()
 {
     impl = new Impl(this);
-    setVertexPrecision(7);
 }
 
 
@@ -107,6 +108,9 @@ StdSceneWriter::~StdSceneWriter()
 void StdSceneWriter::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    if(impl->objSceneWriter){
+        impl->objSceneWriter->setMessageSink(os);
+    }
 }
 
 
@@ -126,6 +130,16 @@ FilePathVariableProcessor* StdSceneWriter::Impl::getOrCreatePathVariableProcesso
         pathVariableProcessor = new FilePathVariableProcessor;
     }
     return pathVariableProcessor;
+}
+
+
+ObjSceneWriter* StdSceneWriter::Impl::getOrCreateObjSceneWriter()
+{
+    if(!objSceneWriter){
+        objSceneWriter.reset(new ObjSceneWriter);
+        objSceneWriter->setMessageSink(os());
+    }
+    return objSceneWriter.get();
 }
 
 
@@ -174,19 +188,6 @@ void StdSceneWriter::setTransformIntegrationEnabled(bool on)
 bool StdSceneWriter::isTransformIntegrationEnabled() const
 {
     return impl->isTransformIntegrationEnabled;
-}
-
-
-void StdSceneWriter::setVertexPrecision(int precision)
-{
-    impl->vertexPrecision = precision;
-    impl->vertexFormat = format("%.{}g", precision);
-}
-
-
-int StdSceneWriter::vertexPrecision() const
-{
-    return impl->vertexPrecision;
 }
 
 
@@ -358,28 +359,38 @@ void StdSceneWriter::Impl::writeShape(Mapping* archive, SgShape* shape)
     if(auto appearance = writeAppearance(shape)){
         archive->insert("appearance", appearance);
     }
-    if(auto geometry = writeGeometry(shape->mesh())){
+    if(auto geometry = writeGeometry(shape)){
         archive->insert("geometry", geometry);
     }
 }
 
 
-MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
+MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
 {
+    auto mesh = shape->mesh();
     if(!mesh){
         return nullptr;
     }
 
     MappingPtr archive = new Mapping;
+    const auto& uri = mesh->uri();
 
-    bool doWriteMesh = true;
+    if(!uri.empty() && (meshOutputMode != EmbeddedMeshes)){
 
-    if(!mesh->uri().empty() && meshOutputMode == OriginalMeshFiles){
         archive->write("type", "Resource");
-        archive->write(
-            "uri",
-            getOrCreatePathVariableProcessor()->parameterize(mesh->uri()), DOUBLE_QUOTED);
-        writeMeshAttributes(archive, mesh);
+
+        if(meshOutputMode == OriginalMeshFiles){
+            auto uri2 = getOrCreatePathVariableProcessor()->parameterize(uri);
+            archive->write("uri", uri2, DOUBLE_QUOTED);
+
+        } else if(meshOutputMode == ReplacedObjMeshFiles){
+            if(!replaceOriginalMeshFileWithObjMeshFile(archive, shape, uri)){
+                archive.reset();
+            }
+        }
+        if(archive){
+            writeMeshAttributes(archive, mesh);
+        }
 
     } else {
         switch(mesh->primitiveType()){
@@ -404,12 +415,51 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgMesh* mesh)
             writeCapsule(archive, mesh);
             break;
         default:
-            archive = nullptr;
+            archive.reset();
             break;
         }
     }
 
     return archive;
+}
+
+
+bool StdSceneWriter::Impl::replaceOriginalMeshFileWithObjMeshFile
+(Mapping* archive, SgShape* shape, const std::string& uri)
+{
+    bool replaced = false;
+    
+    auto pvp = getOrCreatePathVariableProcessor();
+
+    // TODO: Consider the protocol header of the URI
+    filesystem::path path(uri);
+    if(path.is_absolute()){
+        path = filesystem::path("resource") / path.filename();
+    }
+    path.replace_extension(".obj");
+    auto basePath = pvp->baseDirPath();
+    auto filename = (basePath / path).string();
+
+    stdx::error_code ec;
+    filesystem::create_directories(basePath / path.parent_path(), ec);
+    
+    if(!ec){
+        // TODO: Check if there is an existing file with the same name
+        replaced = getOrCreateObjSceneWriter()->writeScene(filename, shape);
+    }
+    if(replaced){
+        archive->write("uri", path.string(), DOUBLE_QUOTED);
+        
+    } else {
+        if(ec){
+            os() << format(_("Warning: Failed to replace mesh file \"{0}\" with \"{1}\". {2}"),
+                           uri, filename, ec.message()) << endl;
+        } else {
+            os() << format(_("Warning: Failed to replace mesh file \"{0}\" with \"{1}\"."), uri, filename) << endl;
+        }
+    }
+    
+    return replaced;
 }
 
 
@@ -436,7 +486,6 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
         writeMeshAttributes(archive, mesh);
 
         auto vertices = archive->createFlowStyleListing("vertices");
-        vertices->setFloatingNumberFormat(vertexFormat.c_str());
         const auto srcVertices = mesh->vertices();
         const int scalarElementSize = srcVertices->size() * 3;
         vertices->reserve(scalarElementSize);
@@ -458,7 +507,6 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
 
         if(mesh->hasNormals() && mesh->creaseAngle() == 0.0f){
             auto normals = archive->createFlowStyleListing("normals");
-            normals->setFloatingNumberFormat(vertexFormat.c_str());
             const auto srcNormals = mesh->normals();
             const int scalarElementSize = srcNormals->size() * 3;
             normals->reserve(scalarElementSize);

@@ -63,6 +63,7 @@ public:
     struct Resource {
         SgNodePtr scene;
         ValueNodePtr info;
+        std::string uri;
         std::string directory;
     };
     Resource readResourceNode(Mapping& info);
