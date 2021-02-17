@@ -9,7 +9,6 @@
 #include "NullOut.h"
 #include "strtofloat.h"
 #include "UTF8.h"
-#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <fstream>
 #include <thread>
@@ -501,11 +500,13 @@ SgNode* STLSceneLoader::Impl::load(const string& filename)
         mesh = loadAsciiFormat(filename, fileSize);
     }
 
+    ifs.close();
+
     if(!mesh){
         return nullptr;
     }
 
-    mesh->setUri(filename);
+    mesh->setUriByFilePathAndCurrentDirectory(filename);
 
     auto shape = new SgShape;
     shape->setMesh(mesh);

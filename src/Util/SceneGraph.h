@@ -109,9 +109,9 @@ public:
     std::string uri() const;
     bool hasAbsoluteUri() const { return (uriInfo != nullptr) && !uriInfo->absoluteUri.empty(); }
     std::string absoluteUri() const;
-    void setUri(const std::string& uri, const std::string& baseDirectory);
-    void setUri(const std::string& uri);
-    void setAbsoluteUri(const std::string& uri);
+    void setUriByFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
+    void setUriByFilePathAndCurrentDirectory(const std::string& filePath);
+    void setUri(const std::string& uri, const std::string& absoluteUri);
     void clearUri() { uriInfo.reset(); }
 
     bool isNode() const { return hasAttribute(Node); }

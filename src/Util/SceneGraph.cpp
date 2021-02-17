@@ -122,32 +122,42 @@ std::string SgObject::absoluteUri() const
 }
 
 
-void SgObject::setUri(const std::string& uri, const std::string& baseDirectory)
+void SgObject::setUriByFilePathAndBaseDirectory
+(const std::string& filePath, const std::string& baseDirectory)
 {
-    setUri(uri);
-    filesystem::path path(uri);
+    filesystem::path path(filePath);
     if(path.is_relative()){
-        path = baseDirectory / path;
+        filesystem::path baseDirPath(baseDirectory);
+        if(baseDirPath.is_relative()){
+            baseDirPath = filesystem::current_path() / baseDirPath;
+        }
+        path = baseDirPath / path;
     }
-    uriInfo->absoluteUri = format("file://{0}", path.string());
-}    
+    setUri(filePath, format("file://{0}", path.string()));
+}
 
 
-void SgObject::setUri(const std::string& uri)
+void SgObject::setUriByFilePathAndCurrentDirectory(const std::string& filePath)
+{
+    filesystem::path path(filePath);
+    if(path.is_relative()){
+        path = filesystem::current_path() / path;
+    }
+    setUri(filePath, format("file://{0}", path.string()));
+}
+
+
+void SgObject::setUri(const std::string& uri, const std::string& absoluteUri)
 {
     if(!uriInfo){
         uriInfo.reset(new UriInfo);
     }
     uriInfo->uri = uri;
-}
-
-
-void SgObject::setAbsoluteUri(const std::string& uri)
-{
-    if(!uriInfo){
-        uriInfo.reset(new UriInfo);
+    if(absoluteUri.compare(0, 7, "file://") == 0){
+        uriInfo->absoluteUri = absoluteUri;
+    } else {
+        uriInfo->absoluteUri = format("file://{0}", absoluteUri);
     }
-    uriInfo->absoluteUri = uri;
 }
 
 

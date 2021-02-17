@@ -402,14 +402,15 @@ bool LinkShapeOverwriteItem::store(Archive& archive)
         StdSceneWriter sceneWriter;
         sceneWriter.setFilePathVariableProcessor(archive.filePathVariableProcessor());
 
-        string uri;
+        string uri, absoluteUri;
         auto mesh = impl->shapeNode->mesh();
         if(mesh){
             if(mesh->uri() == bodyItem()->filePath()){
                 uri = mesh->uri();
+                absoluteUri = mesh->absoluteUri();
                 // The uri of the mesh is temporarily cleared to omit the description of the mesh node
                 // so that the redundant mesh loading can be avoided in restoring the overwriting.
-                mesh->setUri("");
+                mesh->clearUri();
             }
         }
         
@@ -418,7 +419,7 @@ bool LinkShapeOverwriteItem::store(Archive& archive)
         }
         
         if(!uri.empty()){
-            mesh->setUri(uri);
+            mesh->setUri(uri, absoluteUri);
         }
     }
     

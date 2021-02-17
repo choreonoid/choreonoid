@@ -1090,7 +1090,8 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOpti
         info.throwException(_("A resouce specified as a geometry does not have a mesh"));
     }
     if(isDirectResource){
-        mesh->setUri(resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
+        mesh->setUriByFilePathAndBaseDirectory(
+            resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
     }
         
     double creaseAngle;
@@ -1179,7 +1180,8 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
             } else {
                 image = new SgImage;
                 if(imageIO.load(image->image(), filename, os())){
-                    image->setUri(uri, getOrCreatePathVariableProcessor()->baseDirectory());
+                    image->setUriByFilePathAndBaseDirectory(
+                        uri, getOrCreatePathVariableProcessor()->baseDirectory());
                     imagePathToSgImageMap[uri] = image;
                 } else {
                     image.reset();
@@ -1337,7 +1339,8 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping& info, b
     if(resource.scene){
         resource.scene = readTransformParameters(info, resource.scene);
         if(doSetUri){
-            resource.scene->setUri(resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
+            resource.scene->setUriByFilePathAndBaseDirectory(
+                resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
         }
     }
 
