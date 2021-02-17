@@ -826,7 +826,7 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
             if(!uriDirectoryStack.empty()){
                 path = uriDirectoryStack.back() / path;
             }
-            archive->write("uri", path.string(), DOUBLE_QUOTED);
+            archive->write("uri", path.generic_string(), DOUBLE_QUOTED);
             isValid = true;
             if(texture->repeatS() == texture->repeatT()){
                 archive->write("repeat", texture->repeatS());
