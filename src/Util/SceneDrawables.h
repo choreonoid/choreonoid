@@ -37,10 +37,13 @@ public:
     float specularExponent() const { return specularExponent_; }
     void setSpecularExponent(float e) { specularExponent_ = e; }
     
+    // The specification of this value comforms to the shininess of VRML97
     [[deprecated("Use specularExponent")]]
-    float shininess() const { return specularExponent_ / 128.0f; }
+    float shininess() const;
+
+    // The specification of this value comforms to the shininess of VRML97
     [[deprecated("Use setSpecularExponent")]]
-    void setShininess(float s) { specularExponent_ = s * 128.0f; }
+    void setShininess(float s);
     
     float transparency() const { return transparency_; }
     void setTransparency(float t) { transparency_ = t; }

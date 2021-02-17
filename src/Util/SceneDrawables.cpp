@@ -57,6 +57,18 @@ Referenced* SgMaterial::doClone(CloneMap*) const
 }
 
 
+float SgMaterial::shininess() const
+{
+    return std::max(0.0f, std::min(specularExponent_ - 1.0f, 127.0f)) / 127.0f;
+}
+
+
+void SgMaterial::setShininess(float s)
+{
+    specularExponent_ = 127.0f * std::max(0.0f, std::min(s, 1.0f)) + 1.0f;
+}
+
+
 SgImage::SgImage()
     : image_(std::make_shared<Image>())
 {

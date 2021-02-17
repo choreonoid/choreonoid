@@ -1150,7 +1150,8 @@ void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping& info)
     if(info.read("specular_exponent", value)){
         material->setSpecularExponent(value);
     } else if(info.read("shininess", value)){ // deprecated
-        material->setSpecularExponent(value * 128.0f);
+        material->setSpecularExponent(
+            127.0f * std::max(0.0f, std::min((float)value, 1.0f)) + 1.0f);
     }
     
     if(info.read("transparency", value)){
