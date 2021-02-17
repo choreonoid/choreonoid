@@ -30,6 +30,7 @@ public:
     bool isDegreeMode;
     bool isTransformIntegrationEnabled;
     bool isAppearanceEnabled;
+    bool isReplacingExistingModelFile;
     int extModelFileMode;
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
@@ -37,6 +38,7 @@ public:
     unique_ptr<StdSceneWriter> subSceneWriter;
     unique_ptr<ObjSceneWriter> objSceneWriter;
     int numSkippedNode;
+    vector<filesystem::path> uriDirectoryStack;
 
     ostream* os_;
     ostream& os() { return *os_; }
@@ -48,6 +50,8 @@ public:
     StdSceneWriter* getOrCreateSubSceneWriter();
     ObjSceneWriter* getOrCreateObjSceneWriter();
     void setBaseDirectory(const std::string& directory);
+    void pushToUriDirectoryStack(const std::string& uri);
+    void popFromUriDirectoryStack();
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     MappingPtr writeSceneNode(SgNode* node);
     void makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject);
@@ -99,6 +103,7 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     isDegreeMode = true;
     isTransformIntegrationEnabled = false;
     isAppearanceEnabled = true;
+    isReplacingExistingModelFile = false;
     extModelFileMode = EmbedModels;
 
     os_ = &nullout();    
@@ -168,6 +173,7 @@ StdSceneWriter* StdSceneWriter::Impl::getOrCreateSubSceneWriter()
     if(!subSceneWriter){
         subSceneWriter.reset(new StdSceneWriter(*self));
         subSceneWriter->setExtModelFileMode(EmbedModels);
+        subSceneWriter->impl->isReplacingExistingModelFile = true;
     }
     return subSceneWriter.get();
 }
@@ -243,6 +249,30 @@ bool StdSceneWriter::isAppearanceEnabled() const
 }
 
 
+void StdSceneWriter::Impl::pushToUriDirectoryStack(const std::string& uri)
+{
+    if(!isReplacingExistingModelFile){
+        filesystem::path dirPath = filesystem::path(uri).parent_path();
+        if(!uriDirectoryStack.empty()){
+            if(dirPath.is_relative()){
+                dirPath = uriDirectoryStack.back() / dirPath;
+            }
+        }
+        uriDirectoryStack.push_back(dirPath);
+    }
+}
+
+
+void StdSceneWriter::Impl::popFromUriDirectoryStack()
+{
+    if(!isReplacingExistingModelFile){
+        if(!uriDirectoryStack.empty()){
+            uriDirectoryStack.pop_back();
+        }
+    }
+}
+
+
 MappingPtr StdSceneWriter::writeScene(SgNode* node)
 {
     return impl->writeSceneNode(node);
@@ -295,6 +325,7 @@ bool StdSceneWriter::Impl::writeScene
     
     auto directory = filesystem::path(filename).parent_path().generic_string();
     setBaseDirectory(directory);
+    uriDirectoryStack.clear();
 
     numSkippedNode = 0;
 
@@ -332,6 +363,8 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
                 }
             }
             return archive;
+        } else {
+            pushToUriDirectoryStack(node->uri());
         }
     }
 
@@ -354,6 +387,10 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 
     if(archive->empty()){
         archive.reset();
+    }
+
+    if(node->hasUri()){
+        popFromUriDirectoryStack();
     }
     
     return archive;
@@ -785,7 +822,11 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
 
     if(auto image = texture->image()){
         if(image->hasUri()){
-            archive->write("uri", image->uri(), DOUBLE_QUOTED);
+            filesystem::path path(image->uri());
+            if(!uriDirectoryStack.empty()){
+                path = uriDirectoryStack.back() / path;
+            }
+            archive->write("uri", path.string(), DOUBLE_QUOTED);
             isValid = true;
             if(texture->repeatS() == texture->repeatT()){
                 archive->write("repeat", texture->repeatS());

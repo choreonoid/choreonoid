@@ -401,6 +401,7 @@ public:
     VRMLAppearancePtr readAppearanceNode();
     VRMLMaterialPtr readMaterialNode();
     VRMLImageTexturePtr readImageTextureNode();
+    void setAbsoluteFilepathInformation(const MFString& urls, MFString& filepaths);
     VRMLTextureTransformPtr readTextureTransformNode();
     VRMLNormalPtr readNormalNode();
   
@@ -437,7 +438,6 @@ private:
     const list<string>* getAncestorPathsList() const {return &ancestorPathsList;}
     void setSymbols();
     void init();
-    void convertUrl(MFString& url);
     list<string> ancestorPathsList;
     string getRealPath(string url);
 };
@@ -1285,8 +1285,6 @@ VRMLMovieTexturePtr VRMLParserImpl::readMovieTextureNode()
         }
     }
     
-    convertUrl(node->url);
-
     return node;
 }
 
@@ -1956,9 +1954,31 @@ VRMLImageTexturePtr VRMLParserImpl::readImageTextureNode()
         }
     }
 
-    convertUrl(node->url);
+    setAbsoluteFilepathInformation(node->url, node->filepath);
 
     return node;
+}
+
+
+void VRMLParserImpl::setAbsoluteFilepathInformation(const MFString& urls, MFString& filepaths)
+{
+    filepaths.clear();
+    stdx::filesystem::path path;
+    
+    for(auto& url : urls){
+        if(isFileProtocol(url)){
+            path = stdx::filesystem::lexically_normal(fromUTF8(removeURLScheme(url)));
+            // Relative path check & translate to absolute path 
+            if(!exists(path)){
+                stdx::filesystem::path parentPath(fromUTF8(scanner->filename));
+                path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
+            }
+            filepaths.push_back(toUTF8(stdx::filesystem::absolute(path).string()));
+        } else {
+            // Not file protocol implements   
+            scanner->throwException("Not file protocol is unsupported");
+        }
+    }
 }
 
 
@@ -2712,27 +2732,4 @@ void VRMLParserImpl::setSymbols()
     });
 
     scanner->setSymbols(symbols);
-}
-
-
-void VRMLParserImpl::convertUrl(MFString& urls)
-{
-    for(MFString::iterator it=urls.begin(); it!=urls.end(); it++){
-        stdx::filesystem::path path;
-        string chkFile("");
-        if(isFileProtocol(*it)){
-            path = stdx::filesystem::lexically_normal(fromUTF8(removeURLScheme(*it)));
-
-            // Relative path check & translate to absolute path 
-            if(!exists(path)){
-                stdx::filesystem::path parentPath(fromUTF8(scanner->filename));
-                path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
-            }
-            chkFile = toUTF8(stdx::filesystem::absolute(path).string());
-        } else {
-            // Not file protocol implements   
-            scanner->throwException("Not file protocol is unsupported");
-        }
-        *it = chkFile;
-    }
 }

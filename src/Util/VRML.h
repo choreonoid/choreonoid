@@ -328,7 +328,8 @@ public:
     VRMLImageTexture();
     virtual const char* typeName() const override;
 
-    MFString url;
+    MFString url; // original url information
+    MFString filepath; // Absolute file path in the file system
     SFBool repeatS;
     SFBool repeatT;
 };

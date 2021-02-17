@@ -1209,11 +1209,11 @@ SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
     if(imageTextureNode){
         SgImagePtr image;
         SgImagePtr imageForLoading;
-        const MFString& urls = imageTextureNode->url;
-        for(size_t i=0; i < urls.size(); ++i){
-            const string& url = urls[i];
-            if(!url.empty()){
-                auto p = imagePathToSgImageMap.find(url);
+        const MFString& filepaths = imageTextureNode->filepath;
+        for(size_t i=0; i < filepaths.size(); ++i){
+            auto& filepath = filepaths[i];
+            if(!filepath.empty()){
+                auto p = imagePathToSgImageMap.find(filepath);
                 if(p != imagePathToSgImageMap.end()){
                     image = p->second;
                     break;
@@ -1221,10 +1221,12 @@ SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
                     if(!imageForLoading){
                         imageForLoading = new SgImage;
                     }
-                    if(imageIO.load(imageForLoading->image(), url, os())){
+                    if(imageIO.load(imageForLoading->image(), filepath, os())){
                         image = imageForLoading;
-                        image->setUri(url);
-                        imagePathToSgImageMap[url] = image;
+                        image->setUri(imageTextureNode->url[i]);
+                        // TODO: Add the URI scheme prefix
+                        image->setAbsoluteUri(filepath);
+                        imagePathToSgImageMap[filepath] = image;
                         break;
                     }
                 }
