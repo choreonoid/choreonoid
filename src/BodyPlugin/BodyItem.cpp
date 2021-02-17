@@ -427,6 +427,12 @@ void BodyItem::setBody(Body* body)
 void BodyItem::Impl::setBody(Body* body_)
 {
     body = body_;
+
+    auto rootLink = body->rootLink();
+    if(rootLink->name().empty()){
+        rootLink->setName("Root");
+    }
+        
     body->initializePosition();
     body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
 
