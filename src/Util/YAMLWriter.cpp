@@ -199,6 +199,12 @@ void YAMLWriter::setIndentWidth(int n)
 }
 
 
+int YAMLWriter::indentWidth() const
+{
+    return impl->indentWidth;
+}
+
+
 void YAMLWriter::setKeyOrderPreservationMode(bool on)
 {
     impl->isKeyOrderPreservationMode = on;

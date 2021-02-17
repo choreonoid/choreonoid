@@ -34,6 +34,7 @@ public:
     void putNode(const ValueNode* node);
 
     void setIndentWidth(int n);
+    int indentWidth() const;
     void setKeyOrderPreservationMode(bool on);
 
     void startDocument();

@@ -29,10 +29,12 @@ public:
     MappingPtr currentArchive;
     bool isDegreeMode;
     bool isTransformIntegrationEnabled;
-    int modelFileMode;
+    bool isAppearanceEnabled;
+    int extModelFileMode;
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
+    unique_ptr<StdSceneWriter> subSceneWriter;
     unique_ptr<ObjSceneWriter> objSceneWriter;
     int numSkippedNode;
 
@@ -40,15 +42,16 @@ public:
     ostream& os() { return *os_; }
 
     Impl(StdSceneWriter* self);
+    void copyConfigurations(const Impl* org);
     YAMLWriter* getOrCreateYamlWriter();
     FilePathVariableProcessor* getOrCreatePathVariableProcessor();
+    StdSceneWriter* getOrCreateSubSceneWriter();
     ObjSceneWriter* getOrCreateObjSceneWriter();
     void setBaseDirectory(const std::string& directory);
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     MappingPtr writeSceneNode(SgNode* node);
     void makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject);
-    bool replaceOriginalModelFileWithObjModelFile(
-        Mapping* archive, SgNode* node, bool isMaterialEnabled, const std::string& uri);
+    bool replaceOriginalModelFile(Mapping* archive, SgNode* node, bool isAppearanceEnabled, const std::string& uri);
     void processUnknownNode(Mapping* archive, SgNode* node);
     void writeObjectHeader(Mapping* archive, const char* typeName, SgObject* object);
     void writeGroup(Mapping* archive, SgGroup* group);
@@ -95,9 +98,34 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
 
     isDegreeMode = true;
     isTransformIntegrationEnabled = false;
-    modelFileMode = EmbedModels;
+    isAppearanceEnabled = true;
+    extModelFileMode = EmbedModels;
 
     os_ = &nullout();    
+}
+
+
+StdSceneWriter::StdSceneWriter(const StdSceneWriter& org)
+    : StdSceneWriter()
+{
+    impl->copyConfigurations(org.impl);
+}
+
+
+void StdSceneWriter::Impl::copyConfigurations(const Impl* org)
+{
+    isDegreeMode = org->isDegreeMode;
+    isTransformIntegrationEnabled = org->isTransformIntegrationEnabled;
+    isAppearanceEnabled = org->isAppearanceEnabled;
+    extModelFileMode = org->extModelFileMode;
+    os_ = org->os_;
+    if(org->yamlWriter){
+        getOrCreateYamlWriter()->setIndentWidth(org->yamlWriter->indentWidth());
+    }
+    if(org->pathVariableProcessor){
+        getOrCreatePathVariableProcessor()->setBaseDirectory(
+            org->pathVariableProcessor->baseDirectory());
+    }
 }
 
 
@@ -135,6 +163,16 @@ FilePathVariableProcessor* StdSceneWriter::Impl::getOrCreatePathVariableProcesso
 }
 
 
+StdSceneWriter* StdSceneWriter::Impl::getOrCreateSubSceneWriter()
+{
+    if(!subSceneWriter){
+        subSceneWriter.reset(new StdSceneWriter(*self));
+        subSceneWriter->setExtModelFileMode(EmbedModels);
+    }
+    return subSceneWriter.get();
+}
+
+
 ObjSceneWriter* StdSceneWriter::Impl::getOrCreateObjSceneWriter()
 {
     if(!objSceneWriter){
@@ -169,15 +207,15 @@ void StdSceneWriter::setIndentWidth(int n)
 }
 
 
-void StdSceneWriter::setModelFileMode(int mode)
+void StdSceneWriter::setExtModelFileMode(int mode)
 {
-    impl->modelFileMode = mode;
+    impl->extModelFileMode = mode;
 }
 
 
-int StdSceneWriter::modelFileMode() const
+int StdSceneWriter::extModelFileMode() const
 {
-    return impl->modelFileMode;
+    return impl->extModelFileMode;
 }
 
 
@@ -190,6 +228,18 @@ void StdSceneWriter::setTransformIntegrationEnabled(bool on)
 bool StdSceneWriter::isTransformIntegrationEnabled() const
 {
     return impl->isTransformIntegrationEnabled;
+}
+
+
+void StdSceneWriter::setAppearanceEnabled(bool on)
+{
+    impl->isAppearanceEnabled = on;
+}
+
+
+bool StdSceneWriter::isAppearanceEnabled() const
+{
+    return impl->isAppearanceEnabled;
 }
 
 
@@ -229,7 +279,7 @@ bool StdSceneWriter::Impl::writeScene
         }
     }
 
-    if(isTransformIntegrationEnabled && (modelFileMode != LinkToOriginalModelFiles)){
+    if(isTransformIntegrationEnabled && (extModelFileMode != LinkToOriginalModelFiles)){
         SceneGraphOptimizer optimizer;
         CloneMap cloneMap;
         SgObject::setNonNodeCloning(cloneMap, false);
@@ -272,14 +322,12 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
     MappingPtr archive = new Mapping;
 
     if(node->hasUri()){
-        if(modelFileMode != EmbedModels){
+        if(extModelFileMode != EmbedModels){
             writeObjectHeader(archive, "Resource", node);
-
-            if(modelFileMode == LinkToOriginalModelFiles){
+            if(extModelFileMode == LinkToOriginalModelFiles){
                 makeLinkToOriginalModelFile(archive, node);
-                
-            } else if(modelFileMode == ReplaceWithObjModelFiles){
-                if(!replaceOriginalModelFileWithObjModelFile(archive, node, true, node->uri())){
+            } else {
+                if(!replaceOriginalModelFile(archive, node, true, node->uri())){
                     archive.reset();
                 }
             }
@@ -330,8 +378,8 @@ void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObjec
 }
 
 
-bool StdSceneWriter::Impl::replaceOriginalModelFileWithObjModelFile
-(Mapping* archive, SgNode* node, bool isMaterialEnabled, const std::string& uri)
+bool StdSceneWriter::Impl::replaceOriginalModelFile
+(Mapping* archive, SgNode* node, bool isAppearanceEnabled, const std::string& uri)
 {
     bool replaced = false;
     
@@ -340,7 +388,15 @@ bool StdSceneWriter::Impl::replaceOriginalModelFileWithObjModelFile
     if(path.is_absolute()){
         path = filesystem::path("resource") / path.filename();
     }
-    path.replace_extension(".obj");
+
+    string extension;
+    if(extModelFileMode == ReplaceWithObjModelFiles){
+        extension = ".obj";
+    } else {
+        extension = ".scen";
+    }
+    
+    path.replace_extension(extension);
     auto basePath = getOrCreatePathVariableProcessor()->baseDirPath();
     auto filename = (basePath / path).string();
 
@@ -349,9 +405,15 @@ bool StdSceneWriter::Impl::replaceOriginalModelFileWithObjModelFile
     
     if(!ec){
         // TODO: Check if there is an existing file with the same name
-        auto objWriter = getOrCreateObjSceneWriter();
-        objWriter->setMaterialEnabled(isMaterialEnabled);
-        replaced = objWriter->writeScene(filename, node);
+        if(extModelFileMode == ReplaceWithObjModelFiles){
+            auto writer = getOrCreateObjSceneWriter();
+            writer->setMaterialEnabled(isAppearanceEnabled);
+            replaced = writer->writeScene(filename, node);
+        } else {
+            auto writer = getOrCreateSubSceneWriter();
+            writer->setAppearanceEnabled(isAppearanceEnabled);
+            replaced = writer->writeScene(filename, node);
+        }
     }
     if(replaced){
         archive->write("uri", path.string(), DOUBLE_QUOTED);
@@ -423,8 +485,10 @@ void StdSceneWriter::Impl::writeShape(Mapping* archive, SgShape* shape)
 {
     writeObjectHeader(archive, "Shape", shape);
 
-    if(auto appearance = writeAppearance(shape)){
-        archive->insert("appearance", appearance);
+    if(isAppearanceEnabled){
+        if(auto appearance = writeAppearance(shape)){
+            archive->insert("appearance", appearance);
+        }
     }
     if(auto geometry = writeGeometry(shape)){
         archive->insert("geometry", geometry);
@@ -441,22 +505,18 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
 
     MappingPtr archive = new Mapping;
 
-    if(mesh->hasUri() && (modelFileMode != EmbedModels)){
-
+    if(mesh->hasUri() && (extModelFileMode != EmbedModels)){
         archive->write("type", "Resource");
-
-        if(modelFileMode == LinkToOriginalModelFiles){
+        if(extModelFileMode == LinkToOriginalModelFiles){
             makeLinkToOriginalModelFile(archive, mesh);
-
-        } else if(modelFileMode == ReplaceWithObjModelFiles){
-            if(!replaceOriginalModelFileWithObjModelFile(archive, shape, false, mesh->uri())){
+        } else {
+            if(!replaceOriginalModelFile(archive, shape, false, mesh->uri())){
                 archive.reset();
             }
         }
         if(archive){
             writeMeshAttributes(archive, mesh);
         }
-
     } else {
         switch(mesh->primitiveType()){
         case SgMesh::MeshType:
@@ -552,7 +612,7 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
             }
         }
 
-        if(mesh->hasTexCoords()){
+        if(isAppearanceEnabled && mesh->hasTexCoords()){
             auto texCoords = archive->createFlowStyleListing("tex_coords");
             const auto srcTexCoords = mesh->texCoords();
             const int scalarElementSize = srcTexCoords->size() * 2;

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-16 20:17+0900\n"
+"POT-Creation-Date: 2021-02-17 13:15+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -1362,7 +1362,7 @@ msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:562 BodyItem.cpp:1691
+#: WorldItem.cpp:562 BodyItem.cpp:1697
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -1382,71 +1382,71 @@ msgstr "マテリアルテーブル"
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1546
+#: BodyItem.cpp:1552
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1605
+#: BodyItem.cpp:1611
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1682
+#: BodyItem.cpp:1688
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1683
+#: BodyItem.cpp:1689
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1684
+#: BodyItem.cpp:1690
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1685
+#: BodyItem.cpp:1691
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1686
+#: BodyItem.cpp:1692
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1687
+#: BodyItem.cpp:1693
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1688 LinkPropertyView.cpp:120
+#: BodyItem.cpp:1694 LinkPropertyView.cpp:120
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1689
+#: BodyItem.cpp:1695
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1693
+#: BodyItem.cpp:1699
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1695
+#: BodyItem.cpp:1701
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1697
+#: BodyItem.cpp:1703
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1700
+#: BodyItem.cpp:1706
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1704
+#: BodyItem.cpp:1710
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1873
+#: BodyItem.cpp:1879
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1890
+#: BodyItem.cpp:1896
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1790,26 +1790,30 @@ msgid "Standard scene file"
 msgstr "標準シーンファイル"
 
 #: BodyItemFileIO.cpp:268
-msgid "Model file mode:"
-msgstr "モデルファイルモード："
+msgid "Ext model file mode:"
+msgstr "外部モデルファイルモード："
 
 #: BodyItemFileIO.cpp:270
 msgid "Embed models"
 msgstr "モデルを埋め込む"
 
 #: BodyItemFileIO.cpp:271
-msgid "Link to original model files"
+msgid "Link to the original model files"
 msgstr "元のモデルファイルにリンク"
 
 #: BodyItemFileIO.cpp:272
+msgid "Replace with standard scene files"
+msgstr "標準シーンファイルに置き換え"
+
+#: BodyItemFileIO.cpp:273
 msgid "Replace with OBJ model files"
 msgstr "OBJモデルファイルに置き換え"
 
-#: BodyItemFileIO.cpp:276
+#: BodyItemFileIO.cpp:277
 msgid "Integrate transforms"
 msgstr "座標変換を統合"
 
-#: BodyItemFileIO.cpp:298
+#: BodyItemFileIO.cpp:299
 msgid "OBJ file"
 msgstr "OBJファイル"
 

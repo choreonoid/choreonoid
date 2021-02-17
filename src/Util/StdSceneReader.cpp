@@ -455,9 +455,13 @@ static SgNodePtr removeRedundantGroup(SgGroupPtr& group)
 {
     SgNodePtr node;
     if(!group->empty()){
-        if(group->numChildren() == 1 && typeid(group) == typeid(SgGroup)){
-            node = group->child(0);
-        } else {
+        if(group->numChildren() == 1){
+            auto& g = *group.get();
+            if(typeid(g) == typeid(SgGroup)){
+                node = group->child(0);
+            }
+        }
+        if(!node){
             node = group;
         }
     }

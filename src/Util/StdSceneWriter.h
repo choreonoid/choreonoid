@@ -13,9 +13,9 @@ class CNOID_EXPORT StdSceneWriter
 {
 public:
     StdSceneWriter();
+    StdSceneWriter(const StdSceneWriter& org);
     ~StdSceneWriter();
 
-    StdSceneWriter(const StdSceneWriter&) = delete;
     StdSceneWriter(StdSceneWriter&&) = delete;
     StdSceneWriter& operator=(const StdSceneWriter&) = delete;
     StdSceneWriter& operator=(StdSceneWriter&&) = delete;
@@ -28,12 +28,20 @@ public:
 
     void setIndentWidth(int n);
 
-    enum ModelFileMode { EmbedModels, LinkToOriginalModelFiles, ReplaceWithObjModelFiles };
-    void setModelFileMode(int mode);
-    int modelFileMode() const;
+    enum ExtModelFileMode {
+        EmbedModels,
+        LinkToOriginalModelFiles,
+        ReplaceWithStdSceneFiles,
+        ReplaceWithObjModelFiles
+    };
+    void setExtModelFileMode(int mode);
+    int extModelFileMode() const;
 
     void setTransformIntegrationEnabled(bool on);
     bool isTransformIntegrationEnabled() const;
+
+    void setAppearanceEnabled(bool on);
+    bool isAppearanceEnabled() const;
 
     //enum AngleUnit { Degree, Radian };
     //void setAngleUnit(AngleUnit unit);
