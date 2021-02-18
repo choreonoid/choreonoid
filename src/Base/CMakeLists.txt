@@ -36,6 +36,10 @@ set(sources
   ItemPropertyWidget.cpp
   ItemPropertyView.cpp
   TargetItemPicker.cpp
+  UnifiedEditHistory.cpp
+  EditRecord.cpp
+  ItemEditRecordManager.cpp
+  UnifiedEditHistoryView.cpp
   StringListComboBox.cpp
   DisplayedValueFormatManager.cpp
   PositionWidget.cpp
@@ -198,6 +202,9 @@ set(headers
   RenderableItem.h
   ImageableItem.h
   TargetItemPicker.h
+  UnifiedEditHistory.h
+  EditRecord.h
+  ItemEditRecordManager.h
   DisplayedValueFormatManager.h
   PositionWidget.h
   PutPropertyFunction.h

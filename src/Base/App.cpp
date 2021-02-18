@@ -9,11 +9,15 @@
 #include "OptionManager.h"
 #include "PluginManager.h"
 #include "ItemManager.h"
+#include "MessageView.h"
+#include "RootItem.h"
 #include "ProjectManager.h"
+#include "UnifiedEditHistory.h"
+#include "UnifiedEditHistoryView.h"
+#include "ItemEditRecordManager.h"
 #include "MenuManager.h"
 #include "TimeSyncItemEngine.h"
 #include "MainWindow.h"
-#include "RootItem.h"
 #include "FolderItem.h"
 #include "SubProjectItem.h"
 #include "ExtCommandItem.h"
@@ -34,7 +38,6 @@
 #include "CoordinateFrameItem.h"
 #include "PositionTagGroupItem.h"
 #include "ViewManager.h"
-#include "MessageView.h"
 #include "ItemTreeView.h"
 #include "ItemPropertyView.h"
 #include "SceneView.h"
@@ -251,6 +254,9 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     messageView = MessageView::instance();
     RootItem::initializeClass(ext);
     ProjectManager::initializeClass(ext);
+    UnifiedEditHistory::initializeClass(ext);
+    UnifiedEditHistoryView::initializeClass(ext);
+    ItemEditRecordManager::initializeClass(ext);
 
     FileBar::initialize(ext);
     ScriptBar::initialize(ext);
