@@ -787,14 +787,17 @@ MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
     }
     MappingPtr archive = new Mapping;
 
+    if(material->ambientIntensity() != defaultMaterial->ambientIntensity()){
+        archive->write("ambient", material->ambientIntensity());
+    }
     if(material->diffuseColor() != defaultMaterial->diffuseColor()){
-        write(*archive, "diffuse", material->diffuseColor());
+        write(archive, "diffuse", material->diffuseColor());
     }
     if(material->emissiveColor() != defaultMaterial->emissiveColor()){
-        write(*archive, "emissive", material->emissiveColor());
+        write(archive, "emissive", material->emissiveColor());
     }
     if(material->specularColor() != defaultMaterial->specularColor()){
-        write(*archive, "specular", material->specularColor());
+        write(archive, "specular", material->specularColor());
     }
     if(material->specularExponent() != defaultMaterial->specularExponent()){
         archive->write("specular_exponent", material->specularExponent());
