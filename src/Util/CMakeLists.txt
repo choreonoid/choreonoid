@@ -10,7 +10,6 @@ set(sources
   Referenced.cpp
   CloneMap.cpp # This must be before any class using CloneMap::getFlagId.
   HierarchicalClassRegistry.cpp
-  ConnectionSet.cpp
   FileUtil.cpp
   ExecutablePath.cpp
   FilePathVariableProcessor.cpp

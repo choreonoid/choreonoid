@@ -36,40 +36,26 @@ void exportPySignalTypes(py::module& m)
         .def("connected", &ScopedConnection::connected)
         .def("block", &ScopedConnection::block)
         .def("unblock", &ScopedConnection::unblock);
+
+    py::class_<ConnectionSetBase>(m, "ConnectionSetBase")
+        .def_property_readonly("empty", &ConnectionSetBase::empty)
+        .def_property_readonly("numConnections", &ConnectionSetBase::numConnections)
+        .def("add", (int (ConnectionSetBase::*)(const Connection&)) &ConnectionSetBase::add)
+        .def("add", (void (ConnectionSetBase::*)(const ConnectionSetBase&)) &ConnectionSetBase::add)
+        .def("block", (void (ConnectionSetBase::*)()) &ConnectionSetBase::block)
+        .def("block", (void (ConnectionSetBase::*)(int)) &ConnectionSetBase::block)
+        .def("unblock", (void (ConnectionSetBase::*)()) &ConnectionSetBase::unblock)
+        .def("unblock", (void (ConnectionSetBase::*)(int)) &ConnectionSetBase::unblock)
+        .def("disconnect", &ConnectionSetBase::disconnect)
+        ;
     
-    py::class_<ConnectionSet>(m, "ConnectionSet")
+    py::class_<ConnectionSet, ConnectionSetBase>(m, "ConnectionSet")
         .def(py::init<>())
         .def(py::init<const ConnectionSet&>())
-        .def_property_readonly("empty", &ConnectionSet::empty)
-        .def_property_readonly("numConnections", &ConnectionSet::numConnections)
-        .def("add", (void (ConnectionSet::*)(const Connection&)) &ConnectionSet::add)
-        .def("add", (void (ConnectionSet::*)(const ConnectionSet&)) &ConnectionSet::add)
-        .def("block", (void (ConnectionSet::*)()) &ConnectionSet::block)
-        .def("block", (void (ConnectionSet::*)(int)) &ConnectionSet::block)
-        .def("unblock", (void (ConnectionSet::*)()) &ConnectionSet::unblock)
-        .def("unblock", (void (ConnectionSet::*)(int)) &ConnectionSet::unblock)
-        .def("disconnect", &ConnectionSet::disconnect)
-
-        // deprecated
-        .def("isEmpty", &ConnectionSet::empty)
-        .def("getNumConnections", &ConnectionSet::numConnections)
         ;
 
-    py::class_<ScopedConnectionSet>(m, "ScopedConnectionSet")
+    py::class_<ScopedConnectionSet, ConnectionSetBase>(m, "ScopedConnectionSet")
         .def(py::init<>())
-        .def_property_readonly("empty", &ScopedConnectionSet::empty)
-        .def_property_readonly("numConnections", &ScopedConnectionSet::numConnections)
-        .def("add", (void (ScopedConnectionSet::*)(const Connection&)) &ScopedConnectionSet::add)
-        .def("add", (void (ScopedConnectionSet::*)(const ConnectionSet&)) &ScopedConnectionSet::add)
-        .def("block", (void (ScopedConnectionSet::*)()) &ScopedConnectionSet::block)
-        .def("block", (void (ScopedConnectionSet::*)(int)) &ScopedConnectionSet::block)
-        .def("unblock", (void (ScopedConnectionSet::*)()) &ScopedConnectionSet::unblock)
-        .def("unblock", (void (ScopedConnectionSet::*)(int)) &ScopedConnectionSet::unblock)
-        .def("disconnect", &ScopedConnectionSet::disconnect)
-
-        // deprecated
-        .def("isEmpty", &ScopedConnectionSet::empty)
-        .def("getNumConnections", &ScopedConnectionSet::numConnections)
         ;
 }
 
