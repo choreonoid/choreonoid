@@ -68,11 +68,12 @@ public:
     Item* duplicateAll() const { return duplicateSubTree(); }
 
     const std::string& name() const { return name_; }
-    // Return true if the name is actually changed
+    // Return true if the name is successfully updated or the item originally has the same name
     virtual bool setName(const std::string& name);
     virtual std::string displayName() const;
     void setDisplayNameModifier(std::function<std::string(const Item* item)> modifier);
     SignalProxy<void(const std::string& oldName)> sigNameChanged();
+    // This is used to notify the system of a displayName change
     void notifyNameChange();
 
     void setAttribute(Attribute attribute);

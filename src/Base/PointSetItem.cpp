@@ -206,7 +206,8 @@ bool PointSetItem::setName(const std::string& name)
 {
     impl->scene->setName(name);
     impl->pointSet->setName(name);
-    return Item::setName(name);
+    Item::setName(name);
+    return true;
 }
 
 

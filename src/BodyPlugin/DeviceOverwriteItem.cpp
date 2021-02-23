@@ -245,7 +245,8 @@ bool DeviceOverwriteItem::setName(const std::string& name)
     if(impl->device){
         impl->device->setName(name);
     }
-    return BodyElementOverwriteItem::setName(name);
+    Item::setName(name);
+    return true;
 }
 
 

@@ -316,9 +316,8 @@ bool Item::setName(const std::string& name)
         string oldName(name_);
         name_ = name;
         impl->sigNameChanged(oldName);
-        return true;
     }
-    return false;
+    return true;
 }
 
 
@@ -1516,8 +1515,7 @@ void Item::putProperties(PutPropertyFunction& putProperty)
     putProperty(_("Name"), name_,
                 [&](const string& name){
                     if(!name.empty()){
-                        setName(name);
-                        return true;
+                        return setName(name);
                     }
                     return false;
                 });

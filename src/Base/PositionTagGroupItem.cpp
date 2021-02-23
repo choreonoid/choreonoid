@@ -296,11 +296,9 @@ Item* PositionTagGroupItem::doDuplicate() const
 
 bool PositionTagGroupItem::setName(const std::string& name)
 {
-    if(Item::setName(name)){
-        impl->tags->setName(name);
-        return true;
-    }
-    return false;
+    impl->tags->setName(name);
+    Item::setName(name);
+    return true;
 }
 
 
