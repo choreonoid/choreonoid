@@ -1465,25 +1465,7 @@ void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
             toggleEditMode();
             handled = true;
             break;
-            
-        case Qt::Key_Z:
-            if(event->modifiers() & Qt::ControlModifier){
-                if(event->modifiers() & Qt::ShiftModifier){
-                    if(applyEditableFunction(
-                           focusedEditablePath,
-                           [&](SceneWidgetEditable* editable){ return editable->onRedoRequest(); })){
-                        handled = true;
-                    }
-                } else {
-                    if(applyEditableFunction(
-                           focusedEditablePath,
-                           [&](SceneWidgetEditable* editable){ return editable->onUndoRequest(); })){
-                        handled = true;
-                    }
-                }
-            }
-            break;
-            
+
         case Qt::Key_1:
             self->setViewpointOperationMode(FirstPersonMode);
             handled = true;

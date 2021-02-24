@@ -705,15 +705,3 @@ bool ScenePointSelectionMode::onContextMenuRequest(const SceneWidgetEvent& event
 {
     return impl->checkIfPointingTargetNode(event);
 }
-
-
-bool ScenePointSelectionMode::onUndoRequest()
-{
-    return false;
-}
-
-
-bool ScenePointSelectionMode::onRedoRequest()
-{
-    return false;
-}

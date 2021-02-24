@@ -168,8 +168,6 @@ public:
     bool onScrollEvent(const SceneWidgetEvent& event);
     bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
     void onSceneModeChanged(const SceneWidgetEvent& event);
-    bool onUndoRequest();
-    bool onRedoRequest();
     void onDraggerDragStarted();
     void onDraggerDragged();
     void onDraggerDragFinished();
@@ -1419,30 +1417,6 @@ bool EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
     mm.addSeparator();
 
     return true;
-}
-
-
-bool EditableSceneBody::onUndoRequest()
-{
-    return impl->onUndoRequest();
-}
-
-
-bool EditableSceneBody::Impl::onUndoRequest()
-{
-    return bodyItem->undoKinematicState();
-}
-
-
-bool EditableSceneBody::onRedoRequest()
-{
-    return impl->onRedoRequest();
-}
-
-
-bool EditableSceneBody::Impl::onRedoRequest()
-{
-    return bodyItem->redoKinematicState();
 }
 
 

@@ -73,18 +73,6 @@ bool SceneWidgetEditable::onContextMenuRequest(SceneWidgetEvent* event, MenuMana
 }
 
 
-bool SceneWidgetEditable::onUndoRequest()
-{
-    return false;
-}
-
-
-bool SceneWidgetEditable::onRedoRequest()
-{
-    return false;
-}
-
-
 void SceneWidgetEditable::onSceneModeChanged(const SceneWidgetEvent&)
 {
 
@@ -146,6 +134,18 @@ void SceneWidgetEditable::onFocusChanged(const SceneWidgetEvent&, bool)
 
 
 bool SceneWidgetEditable::onContextMenuRequest(const SceneWidgetEvent&, MenuManager&)
+{
+    return false;
+}
+
+
+bool SceneWidgetEditable::onUndoRequest()
+{
+    return false;
+}
+
+
+bool SceneWidgetEditable::onRedoRequest()
 {
     return false;
 }
