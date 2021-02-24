@@ -279,10 +279,8 @@ set(qtheaders
   Action.h
   ActionGroup.h
   Widget.h
-  SpinBox.h
   FloatingNumberBox.h
   ScrollBar.h
-  Slider.h
   Dial.h
   Splitter.h
   Buttons.h

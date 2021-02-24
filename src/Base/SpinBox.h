@@ -1,61 +1,53 @@
-/**
-   @author Shin'ichiro NAKAOKA
-*/
-
 #ifndef CNOID_BASE_SPINBOX_H
 #define CNOID_BASE_SPINBOX_H
 
 #include <cnoid/Signal>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
+#include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class CNOID_EXPORT SpinBox : public QSpinBox
 {
-    Q_OBJECT
-
 public:
-    SpinBox(QWidget* parent = 0);
+    SpinBox(QWidget* parent = nullptr);
                                
-    SignalProxy<void(int)> sigValueChanged() {
-        return sigValueChanged_;
-    }
-    SignalProxy<void()> sigEditingFinished() {
-        return sigEditingFinished_;
-    }
-
-private Q_SLOTS:
-    void onValueChanged(int value);
-    void onEditingFinishded();
+    SignalProxy<void(int)> sigValueChanged();
+    SignalProxy<void()> sigEditingFinished();
 
 private:
-    Signal<void(int)> sigValueChanged_;
-    Signal<void()> sigEditingFinished_;
+    stdx::optional<Signal<void(int)>> sigValueChanged_;
+    stdx::optional<Signal<void()>> sigEditingFinished_;
 };
 
 class CNOID_EXPORT DoubleSpinBox : public QDoubleSpinBox
 {
-    Q_OBJECT
-
 public:
-    DoubleSpinBox(QWidget* parent = 0);
-                               
-    SignalProxy<void(double)> sigValueChanged() {
-        return sigValueChanged_;
-    }
-    SignalProxy<void()> sigEditingFinished() {
-        return sigEditingFinished_;
-    }
+    DoubleSpinBox(QWidget* parent = nullptr);
 
-private Q_SLOTS:
+    void setUndoRedoKeyInputEnabled(bool on);
+    bool isUndoRedoKeyInputEnabled() const { return isUndoRedoKeyInputEnabled_; }
+
+    void setValue(double val);
+        
+    SignalProxy<void(double)> sigValueChanged();
+    SignalProxy<void()> sigEditingFinished();
+    SignalProxy<void()> sigEditingFinishedWithValueChange();
+
+protected:
     void onValueChanged(double value);
-    void onEditingFinishded();
+    void onEditingFinished();
+    virtual void keyPressEvent(QKeyEvent* event) override;
 
 private:
-    Signal<void(double)> sigValueChanged_;
-    Signal<void()> sigEditingFinished_;
+    stdx::optional<Signal<void(double)>> sigValueChanged_;
+    stdx::optional<Signal<void()>> sigEditingFinished_;
+    stdx::optional<Signal<void()>> sigEditingFinishedWithValueChange_;
+    bool isSettingValueInternally;
+    bool isUndoRedoKeyInputEnabled_;
+    bool valueChangedByLastUserInput;
 };
 
 }

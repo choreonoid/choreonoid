@@ -1,35 +1,27 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_SLIDER_H
 #define CNOID_BASE_SLIDER_H
 
 #include <cnoid/Signal>
 #include <QSlider>
+#include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class CNOID_EXPORT Slider : public QSlider
 {
-    Q_OBJECT
-
 public:
-    Slider(QWidget* parent = 0);
-    Slider(Qt::Orientation orientation, QWidget* parent = 0);
+    Slider(QWidget* parent = nullptr);
+    Slider(Qt::Orientation orientation, QWidget* parent = nullptr);
         
-    SignalProxy<void(int)> sigValueChanged() {
-        return sigValueChanged_;
-    }
-
-private Q_SLOTS:
-    void onValueChanged(int value);
+    SignalProxy<void(int)> sigValueChanged();
+    SignalProxy<void()> sigSliderPressed();
+    SignalProxy<void()> sigSliderReleased();
 
 private:
-    Signal<void(int)> sigValueChanged_;
-
-    void initialize();        
+    stdx::optional<Signal<void(int)>> sigValueChanged_;
+    stdx::optional<Signal<void()>> sigSliderPressed_;
+    stdx::optional<Signal<void()>> sigSliderReleased_;
 };
 
 }
