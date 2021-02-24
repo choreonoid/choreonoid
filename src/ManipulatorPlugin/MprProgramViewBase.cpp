@@ -1544,6 +1544,9 @@ void MprProgramViewBase::Impl::keyPressEvent(QKeyEvent* event)
         case Qt::Key_V:
             pasteStatements();
             break;
+        default:
+            processed = false;
+            break;
         }
     }
 

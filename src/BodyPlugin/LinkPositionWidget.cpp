@@ -163,6 +163,7 @@ public:
     void updateConfigurationDisplay();
     bool applyPositionInput(const Isometry3& T);
     bool findBodyIkSolution(const Isometry3& T_input, bool isRawT);
+    void finishPositionEditing();
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -262,8 +263,9 @@ void LinkPositionWidget::Impl::createPanel()
 
     positionWidget = new PositionWidget(self);
     positionWidget->setUserInputValuePriorityMode(true);
-    positionWidget->setPositionCallback(
-        [&](const Isometry3& T){ return applyPositionInput(T); });
+    positionWidget->setCallbacks(
+        [&](const Isometry3& T){ return applyPositionInput(T); },
+        [&](){ finishPositionEditing(); });
     vbox->addWidget(positionWidget);
 
     auto grid = new QGridLayout;
@@ -1165,8 +1167,6 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Isometry3& T_input, bool
     
     kinematicsKit->setReferenceRpy(positionWidget->getRpyInput());
 
-    targetBodyItem->beginKinematicStateEdit();
-
     if(isRawT){
         solved = ik->calcInverseKinematics(T_input);
     } else {
@@ -1185,17 +1185,27 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Isometry3& T_input, bool
 
     if(solved){
         ik->calcRemainingPartForwardKinematicsForInverseKinematics();
+
+        targetConnections.block();
         targetBodyItem->notifyKinematicStateChange();
-        targetBodyItem->acceptKinematicStateEdit();
+        targetConnections.unblock();
+        
         resultLabel.setText(_("Solved"));
         resultLabel.setStyleSheet(normalStyle);
     } else {
-        targetBodyItem->cancelKinematicStateEdit();
         resultLabel.setText(_("Not Solved"));
         resultLabel.setStyleSheet(errorStyle);
     }
 
     return solved;
+}
+
+
+void LinkPositionWidget::Impl::finishPositionEditing()
+{
+    if(targetBodyItem){
+        targetBodyItem->notifyKinematicStateEdited();
+    }
 }
 
 

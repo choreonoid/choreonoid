@@ -40,10 +40,6 @@ void exportBodyItem(py::module m)
         .def("storeInitialState", &BodyItem::storeInitialState)
         .def("restoreInitialState", &BodyItem::restoreInitialState)
         .def("getInitialState", &BodyItem::getInitialState)
-        .def("beginKinematicStateEdit", &BodyItem::beginKinematicStateEdit)
-        .def("acceptKinematicStateEdit", &BodyItem::acceptKinematicStateEdit)
-        .def("undoKinematicState", &BodyItem::undoKinematicState)
-        .def("redoKinematicState", &BodyItem::redoKinematicState)
         .def_property_readonly("sigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)
         .def("notifyKinematicStateChange",
              (void (BodyItem::*)(bool, bool, bool)) &BodyItem::notifyKinematicStateChange,
@@ -52,6 +48,7 @@ void exportBodyItem(py::module m)
              (void (BodyItem::*)(Connection&, bool, bool, bool)) &BodyItem::notifyKinematicStateChange,
              py::arg("connectionToBlock"),
              py::arg("requestFK") = false, py::arg("requestVelFK") = false, py::arg("requestAccFK") = false)
+        .def("notifyKinematicStateEdited", &BodyItem::notifyKinematicStateEdited)
         .def("isCollisionDetectionEnabled", &BodyItem::isCollisionDetectionEnabled)
         .def("setCollisionDetectionEnabled", &BodyItem::setCollisionDetectionEnabled)
         .def("isSelfCollisionDetectionEnabled", &BodyItem::isSelfCollisionDetectionEnabled)

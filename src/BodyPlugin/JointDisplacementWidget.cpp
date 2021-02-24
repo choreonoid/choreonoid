@@ -118,6 +118,7 @@ public:
     void focusSlider(int index);
     bool onDialKeyPressEvent(Dial* dial, QKeyEvent* event);
     void focusDial(int index);
+    void onOperationFinished();
     void notifyJointDisplacementInput();
     void updateJointDisplacements();
     bool storeState(Archive& archive);
@@ -373,14 +374,19 @@ JointIndicator::JointIndicator(JointDisplacementWidget::Impl* baseImpl, int inde
     upperLimitLabel.setAlignment(Qt::AlignCenter);
     
     spin.setAlignment(Qt::AlignCenter);
+    spin.setUndoRedoKeyInputEnabled(true);
     spin.sigValueChanged().connect(
         [=](double v){ onDisplacementInput(v); });
+    spin.sigEditingFinishedWithValueChange().connect(
+        [=](){ baseImpl->onOperationFinished(); });
     
     slider.setSingleStep(0.1 * resolution);
     slider.setProperty("JointSliderIndex", index);
     slider.installEventFilter(baseWidget);
     slider.sigValueChanged().connect(
         [=](int v){ onDisplacementInput(v / resolution); });
+    slider.sigSliderReleased().connect(
+        [=](){ baseImpl->onOperationFinished(); });
     
     dial.setSingleStep(0.1 * resolution);
     dial.setProperty("JointDialIndex", index);
@@ -771,7 +777,13 @@ void JointDisplacementWidget::Impl::focusDial(int index)
     }
 }
 
-        
+
+void JointDisplacementWidget::Impl::onOperationFinished()
+{
+    currentBodyItem->notifyKinematicStateEdited();
+}
+
+
 void JointDisplacementWidget::Impl::notifyJointDisplacementInput()
 {
     kinematicStateChangeConnection.block();

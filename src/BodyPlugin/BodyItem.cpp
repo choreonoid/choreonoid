@@ -8,7 +8,6 @@
 #include "EditableSceneBody.h"
 #include "LinkKinematicsKitManager.h"
 #include "KinematicsBar.h"
-#include <cnoid/LeggedBodyHelper>
 #include <cnoid/Archive>
 #include <cnoid/RootItem>
 #include <cnoid/ConnectionSet>
@@ -25,14 +24,14 @@
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/InverseKinematics>
 #include <cnoid/CompositeBodyIK>
-#include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
+#include <cnoid/PinDragIK>
+#include <cnoid/LeggedBodyHelper>
 #include <cnoid/AttachmentDevice>
 #include <cnoid/HolderDevice>
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>
 #include <bitset>
-#include <deque>
 #include <algorithm>
 #include <iostream>
 #include "gettext.h"
@@ -58,6 +57,7 @@ public:
     virtual bool isEditable() const override;
     virtual void setEditable(bool on) override;
     virtual bool setLocation(const Isometry3& T) override;
+    virtual void finishLocationEditing() override;
     virtual Item* getCorrespondingItem() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
@@ -110,7 +110,6 @@ public:
     bool isKinematicStateChangeNotifiedByParentBodyItem;
     bool isProcessingInverseKinematicsIncludingParentBody;
     bool isAttachmentEnabled;
-    bool isCallingSlotsOnKinematicStateEdited;
     bool isFkRequested;
     bool isVelFkRequested;
     bool isAccFkRequested;
@@ -123,11 +122,11 @@ public:
     AttachmentDevicePtr attachmentToParent;
     ScopedConnection parentBodyItemConnection;
 
-    enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_FLAGS };
-    std::bitset<NUM_UPUDATE_FLAGS> updateFlags;
+    enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_ELEMENTS };
+    std::bitset<NUM_UPUDATE_ELEMENTS> updateElements;
 
     LazySignal<Signal<void()>> sigKinematicStateChanged;
-    LazySignal<Signal<void()>> sigKinematicStateEdited;
+    Signal<void()> sigKinematicStateEdited;
 
     LinkPtr currentBaseLink;
     LinkTraverse fkTraverse;
@@ -136,12 +135,6 @@ public:
 
     BodyState initialState;
             
-    typedef std::shared_ptr<BodyState> BodyStatePtr;
-    std::deque<BodyStatePtr> kinematicStateHistory;
-    size_t currentHistoryIndex;
-    bool isCurrentKinematicStateInHistory;
-    bool needToAppendKinematicStateToHistory;
-
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
     float transparency;
@@ -161,9 +154,6 @@ public:
     bool makeBodyStatic(bool makeAllJointsFixed = false);
     bool makeBodyDynamic();
     void setCurrentBaseLink(Link* link, bool forceUpdate = false);
-    void appendKinematicStateToHistory();
-    bool undoKinematicState();
-    bool redoKinematicState();
     LinkKinematicsKitManager* getOrCreateLinkKinematicsKitManager();
     void createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker);
     void setPresetPose(BodyItem::PresetPoseID id);
@@ -172,7 +162,6 @@ public:
     void getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos);
     void notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect);
     void emitSigKinematicStateChanged();
-    void emitSigKinematicStateEdited();
     bool setCollisionDetectionEnabled(bool on);
     bool setSelfCollisionDetectionEnabled(bool on);
     void updateCollisionDetectorLater();
@@ -251,8 +240,7 @@ BodyItem::Impl::Impl(BodyItem* self, Body* body, bool isSharingShapes)
     : self(self),
       body(body),
       isSharingShapes(isSharingShapes),
-      sigKinematicStateChanged([&](){ emitSigKinematicStateChanged(); }),
-      sigKinematicStateEdited([&](){ emitSigKinematicStateEdited(); })
+      sigKinematicStateChanged([this](){ emitSigKinematicStateChanged(); })
 {
 
 }
@@ -308,10 +296,6 @@ void BodyItem::Impl::init(bool calledFromCopyConstructor)
     kinematicsBar = KinematicsBar::instance();
     transparency = 0.0f;
     isFkRequested = isVelFkRequested = isAccFkRequested = false;
-    currentHistoryIndex = 0;
-    isCurrentKinematicStateInHistory = false;
-    needToAppendKinematicStateToHistory = false;
-    isCallingSlotsOnKinematicStateEdited = false;
 
     initBody(calledFromCopyConstructor);
 }
@@ -531,7 +515,7 @@ SignalProxy<void()> BodyItem::sigKinematicStateChanged()
 
 SignalProxy<void()> BodyItem::sigKinematicStateEdited()
 {
-    return impl->sigKinematicStateEdited.signal();
+    return impl->sigKinematicStateEdited;
 }
 
 
@@ -639,37 +623,6 @@ void BodyItem::beginKinematicStateEdit()
     if(TRACE_FUNCTIONS){
         cout << "BodyItem::beginKinematicStateEdit()" << endl;
     }
-
-    if(!impl->isCurrentKinematicStateInHistory){
-        impl->appendKinematicStateToHistory();
-    }
-}
-
-
-void BodyItem::Impl::appendKinematicStateToHistory()
-{
-    if(TRACE_FUNCTIONS){
-        cout << "BodyItem::appendKinematicStateToHistory()" << endl;
-    }
-
-    BodyStatePtr state = std::make_shared<BodyState>();
-    self->storeKinematicState(*state);
-
-    if(kinematicStateHistory.empty() || (currentHistoryIndex == kinematicStateHistory.size() - 1)){
-        kinematicStateHistory.push_back(state);
-        currentHistoryIndex = kinematicStateHistory.size() - 1;
-    } else {
-        ++currentHistoryIndex;
-        kinematicStateHistory.resize(currentHistoryIndex + 1);
-        kinematicStateHistory[currentHistoryIndex] = state;
-    }
-        
-    if(kinematicStateHistory.size() > 20){
-        kinematicStateHistory.pop_front();
-        currentHistoryIndex--;
-    }
-
-    isCurrentKinematicStateInHistory = true;
 }
 
 
@@ -677,15 +630,6 @@ void BodyItem::cancelKinematicStateEdit()
 {
     if(TRACE_FUNCTIONS){
         cout << "BodyItem::cancelKinematicStateEdit()" << endl;
-    }
-
-    if(impl->isCurrentKinematicStateInHistory){
-        restoreKinematicState(*impl->kinematicStateHistory[impl->currentHistoryIndex]);
-        impl->kinematicStateHistory.pop_back();
-        if(impl->currentHistoryIndex > 0){
-            --impl->currentHistoryIndex;
-        }
-        impl->isCurrentKinematicStateInHistory = false;
     }
 }
         
@@ -696,74 +640,7 @@ void BodyItem::acceptKinematicStateEdit()
         cout << "BodyItem::acceptKinematicStateEdit()" << endl;
     }
 
-    //appendKinematicStateToHistory();
-    impl->needToAppendKinematicStateToHistory = true;
-    impl->sigKinematicStateEdited.request();
-}
-
-
-bool BodyItem::undoKinematicState()
-{
-    if(TRACE_FUNCTIONS){
-        cout << "BodyItem::undoKinematicState()" << endl;
-    }
-
-    return impl->undoKinematicState();
-}
-
-
-bool BodyItem::Impl::undoKinematicState()
-{
-    bool done = false;
-    bool modified = false;
-
-    if(!isCurrentKinematicStateInHistory){
-        if(currentHistoryIndex < kinematicStateHistory.size()){
-            done = true;
-            modified = self->restoreKinematicState(*kinematicStateHistory[currentHistoryIndex]);
-        }
-    } else {
-        if(currentHistoryIndex > 0){
-            done = true;
-            modified = self->restoreKinematicState(*kinematicStateHistory[--currentHistoryIndex]);
-        }
-    }
-
-    if(done){
-        if(modified){
-            self->notifyKinematicStateChange(false);
-            isCurrentKinematicStateInHistory = true;
-            sigKinematicStateEdited.request();
-        } else {
-            isCurrentKinematicStateInHistory = true;
-            done = undoKinematicState();
-        }
-    }
-
-    return done;
-}
-
-
-bool BodyItem::redoKinematicState()
-{
-    if(TRACE_FUNCTIONS){
-        cout << "BodyItem::redoKinematicState()" << endl;
-    }
-
-    return impl->redoKinematicState();
-}
-
-
-bool BodyItem::Impl::redoKinematicState()
-{
-    if(currentHistoryIndex + 1 < kinematicStateHistory.size()){
-        self->restoreKinematicState(*kinematicStateHistory[++currentHistoryIndex]);
-        self->notifyKinematicStateChange(false);
-        isCurrentKinematicStateInHistory = true;
-        sigKinematicStateEdited.request();
-        return true;
-    }
-    return false;
+    impl->sigKinematicStateEdited();
 }
 
 
@@ -854,13 +731,10 @@ void BodyItem::Impl::createPenetrationBlocker(Link* link, bool excludeSelfCollis
 
 void BodyItem::moveToOrigin()
 {
-    beginKinematicStateEdit();
-    
     impl->body->rootLink()->T() = impl->body->defaultPosition();
     impl->body->calcForwardKinematics();
-    
-    notifyKinematicStateChange(false);
-    acceptKinematicStateEdit();
+
+    notifyKinematicStateUpdate();
 }
 
 
@@ -874,8 +748,6 @@ void BodyItem::Impl::setPresetPose(BodyItem::PresetPoseID id)
 {
     int jointIndex = 0;
 
-    self->beginKinematicStateEdit();
-    
     if(id == BodyItem::STANDARD_POSE){
         const Listing& pose = *body->info()->findListing("standardPose");
         if(pose.isValid()){
@@ -894,16 +766,15 @@ void BodyItem::Impl::setPresetPose(BodyItem::PresetPoseID id)
     }
 
     fkTraverse.calcForwardKinematics();
-    self->notifyKinematicStateChange(false);
-    self->acceptKinematicStateEdit();
+    self->notifyKinematicStateUpdate();
 }
 
 
 const Vector3& BodyItem::centerOfMass()
 {
-    if(!impl->updateFlags.test(BodyItem::Impl::UF_CM)){
+    if(!impl->updateElements.test(BodyItem::Impl::UF_CM)){
         impl->body->calcCenterOfMass();
-        impl->updateFlags.set(BodyItem::Impl::UF_CM);
+        impl->updateElements.set(BodyItem::Impl::UF_CM);
     }
 
     return impl->body->centerOfMass();
@@ -935,14 +806,12 @@ bool BodyItem::Impl::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloo
         
         BodyState orgKinematicState;
         self->storeKinematicState(orgKinematicState);
-        self->beginKinematicStateEdit();
         
         result = legged->doLegIkToMoveCm(c, onlyProjectionToFloor);
 
         if(result){
-            self->notifyKinematicStateChange();
-            self->acceptKinematicStateEdit();
-            updateFlags.set(UF_CM);
+            self->notifyKinematicStateUpdate();
+            updateElements.set(UF_CM);
         } else {
             self->restoreKinematicState(orgKinematicState);
         }
@@ -966,13 +835,11 @@ bool BodyItem::Impl::setStance(double width)
         
         BodyState orgKinematicState;
         self->storeKinematicState(orgKinematicState);
-        self->beginKinematicStateEdit();
         
         result = legged->setStance(width, currentBaseLink);
 
         if(result){
-            self->notifyKinematicStateChange();
-            self->acceptKinematicStateEdit();
+            self->notifyKinematicStateUpdate();
         } else {
             self->restoreKinematicState(orgKinematicState);
         }
@@ -1029,20 +896,14 @@ void BodyItem::setZmp(const Vector3& zmp)
 
 void BodyItem::editZmp(const Vector3& zmp)
 {
-    beginKinematicStateEdit();
     setZmp(zmp);
-    notifyKinematicStateChange(false);
-    acceptKinematicStateEdit();
+    notifyKinematicStateUpdate();
 }
 
 
 void BodyItem::Impl::notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect)
 {
-    if(!isCallingSlotsOnKinematicStateEdited){
-        isCurrentKinematicStateInHistory = false;
-    }
-
-    updateFlags.reset();
+    updateElements.reset();
 
     if(isProcessingInverseKinematicsIncludingParentBody){
         isProcessingInverseKinematicsIncludingParentBody = false;
@@ -1080,11 +941,6 @@ void BodyItem::Impl::emitSigKinematicStateChanged()
     }
 
     sigKinematicStateChanged.signal()();
-
-    if(needToAppendKinematicStateToHistory){
-        appendKinematicStateToHistory();
-        needToAppendKinematicStateToHistory = false;
-    }
 }
 
 
@@ -1116,16 +972,16 @@ void BodyItem::notifyKinematicStateChangeLater
 }
 
 
-void BodyItem::Impl::emitSigKinematicStateEdited()
+void BodyItem::notifyKinematicStateEdited()
 {
-    isCallingSlotsOnKinematicStateEdited = true;
-    sigKinematicStateEdited.signal()();
-    isCallingSlotsOnKinematicStateEdited = false;
-    
-    if(!sigKinematicStateEdited.isPending() && needToAppendKinematicStateToHistory){
-        appendKinematicStateToHistory();
-        needToAppendKinematicStateToHistory = false;
-    }
+    impl->sigKinematicStateEdited();
+}
+
+
+void BodyItem::notifyKinematicStateUpdate(int updateFlags)
+{
+    impl->notifyKinematicStateChange(updateFlags & RequestFK, false, false, true);
+    impl->sigKinematicStateEdited();
 }
 
 
@@ -1311,6 +1167,12 @@ bool BodyLocation::setLocation(const Isometry3& T)
         impl->self->notifyKinematicStateChange(true);
     }
     return true;
+}
+
+
+void BodyLocation::finishLocationEditing()
+{
+    impl->self->notifyKinematicStateEdited();
 }
 
 
@@ -1953,7 +1815,5 @@ bool BodyItem::Impl::restore(const Archive& archive)
 
     read(archive, "zmp", zmp);
         
-    self->notifyKinematicStateChange();
-
     return true;
 }

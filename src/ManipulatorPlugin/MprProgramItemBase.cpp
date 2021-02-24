@@ -266,7 +266,7 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll)
     updated = position->apply(kinematicsKit);
     if(updated){
         if(doUpdateAll){
-            targetBodyItem->notifyKinematicStateChange();
+            targetBodyItem->notifyKinematicStateUpdate();
         }
     } else {
         if(doUpdateAll && ikPosition){
