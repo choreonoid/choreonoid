@@ -975,6 +975,9 @@ void BodyItem::notifyKinematicStateChangeLater
 void BodyItem::notifyKinematicStateEdited()
 {
     impl->sigKinematicStateEdited();
+    if(isAttachedToParentBody_){
+        impl->parentBodyItem->notifyKinematicStateEdited();
+    }
 }
 
 
