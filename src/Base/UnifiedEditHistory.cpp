@@ -180,20 +180,21 @@ void UnifiedEditHistory::Impl::expandHistoryFromLatestToCurrentUndoPosition()
 }
 
 
-void UnifiedEditHistory::beginRecordGroup(const std::string& label, bool isManualOperation)
+void UnifiedEditHistory::beginEditGroup(const std::string& label, bool isManualOperation)
 {
     impl->currentGroup = new EditRecordGroup(label, isManualOperation);
 }
 
 
-void UnifiedEditHistory::endRecordCroup()
+void UnifiedEditHistory::endEditGroup()
 {
     if(impl->currentGroup){
-        EditRecordPtr record = impl->currentGroup;
+        EditRecordGroupPtr group = impl->currentGroup;
         impl->currentGroup.reset();
-        addRecord(record);
+        if(!group->empty()){
+            addRecord(group);
+        }
     }
-    
 }
 
 

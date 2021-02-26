@@ -63,9 +63,10 @@ bool EditRecordGroup::undo()
     bool done = false;
     if(!group_.empty()){
         done = true;
-        for(size_t i = group_.size() - 1; i >= 0; --i){
+        const int n = static_cast<int>(group_.size());
+        for(int i = n - 1; i >= 0; --i){
             if(!group_[i]->applyUndo()){
-                for(size_t j = i + 1; j < group_.size(); ++j){
+                for(int j = i + 1; j < n; ++j){
                     group_[j]->applyRedo();
                 }
                 done = false;
@@ -82,9 +83,10 @@ bool EditRecordGroup::redo()
     bool done = false;
     if(!group_.empty()){
         done = true;
-        for(size_t i = 0; i < group_.size(); ++i){
+        const int n = static_cast<int>(group_.size());
+        for(int i = 0; i < n; ++i){
             if(!group_[i]->applyRedo()){
-                for(size_t j = i - 1; j >= 0; --j){
+                for(int j = i - 1; j >= 0; --j){
                     group_[j]->applyUndo();
                 }
                 done = false;

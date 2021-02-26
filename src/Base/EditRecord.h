@@ -24,7 +24,7 @@ public:
     EditRecord* getFlipped() const;
 
 protected:
-    EditRecord(bool isManualOperation);
+    EditRecord(bool isManualOperation = true);
     EditRecord(const EditRecord& org);
 
     virtual bool undo() = 0;
@@ -41,7 +41,7 @@ typedef ref_ptr<EditRecord> EditRecordPtr;
 class CNOID_EXPORT EditRecordGroup : public EditRecord
 {
 public:
-    EditRecordGroup(const std::string& label, bool isManualOperation);
+    EditRecordGroup(const std::string& label, bool isManualOperation = true);
 
     virtual EditRecord* clone() const override;
     virtual std::string label() const override;
@@ -49,6 +49,9 @@ public:
     void addRecord(EditRecord* record){
         group_.push_back(record);
     }
+    bool empty() const { return group_.empty(); }
+    int numRecords() const { return group_.size(); }
+    EditRecord* record(int index){ return group_[index]; }
 
     virtual bool undo() override;
     virtual bool redo() override;

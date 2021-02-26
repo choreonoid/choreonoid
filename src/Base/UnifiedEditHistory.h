@@ -22,8 +22,8 @@ public:
     EditRecord* record(int index);
 
     void addRecord(EditRecord* record);
-    void beginRecordGroup(const std::string& label, bool isManualOperation);
-    void endRecordCroup();
+    void beginEditGroup(const std::string& label, bool isManualOperation = true);
+    void endEditGroup();
 
     int currentPosition() const;
     bool undo();
