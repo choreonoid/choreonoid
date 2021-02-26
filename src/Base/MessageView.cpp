@@ -26,6 +26,8 @@ namespace {
 
 MessageView* messageView = 0;
 
+int flushingRef = 0;
+
 const bool PUT_COUT_TOO = false;
 
 class TextSink : public iostreams::sink
@@ -582,9 +584,19 @@ void MessageView::flush()
 void MessageView::Impl::flush()
 {
     if(true /* Is this check necessary? QThread::currentThreadId() == mainThreadId */){
+        ++flushingRef;
+        
         QCoreApplication::processEvents(
             QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
+
+        --flushingRef;
     }
+}
+
+
+bool MessageView::isFlushing()
+{
+    return (flushingRef > 0);
 }
 
 

@@ -64,6 +64,8 @@ public:
     int currentColumn();
         
     void flush();
+    static bool isFlushing();
+    
     void clear();
       
     std::ostream& cout(bool doFlush = false);
