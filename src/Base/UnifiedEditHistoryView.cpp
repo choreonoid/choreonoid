@@ -110,10 +110,21 @@ void UnifiedEditHistoryView::Impl::onDeactivated()
 void UnifiedEditHistoryView::Impl::updateHistory()
 {
     clear();
-    int n = history->numRecords();
+
+    const int n = history->numRecords();
     for(int i=0; i < n; ++i){
-        addTopLevelItem(new QTreeWidgetItem(this, QStringList(history->record(i)->label().c_str())));
+        auto record = history->record(i);
+        auto treeItem = new QTreeWidgetItem(this, QStringList(record->label().c_str()));
+        addTopLevelItem(treeItem);
+        if(auto group = dynamic_cast<EditRecordGroup*>(record)){
+            const int m = group->numRecords();
+            for(int j=0; j < m; ++j){
+                auto record = group->record(j);
+                new QTreeWidgetItem(treeItem, QStringList(record->label().c_str()));
+            }
+        }
     }
+
     setCurrentPosition(history->currentPosition());
 }
 
