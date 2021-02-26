@@ -3,6 +3,7 @@
 #include "MenuManager.h"
 #include "Action.h"
 #include "MessageView.h"
+#include "LazyCaller.h"
 #include <fmt/format.h>
 #include <deque>
 #include "gettext.h"
@@ -26,6 +27,8 @@ public:
     int currentPosition;
     size_t maxHistorySize;
     EditRecordGroupPtr currentGroup;
+    vector<EditRecordPtr> newRecordBuffer;
+    LazyCaller flushNewRecordBufferLater;
     Action* undoAction;
     Action* redoAction;
     Signal<void()> sigHistoryUpdated;
@@ -37,6 +40,7 @@ public:
     void clear();
     void removeRecordsAfter(int index);
     void addRecord(EditRecord* record);
+    void flushNewRecordBuffer();
     void expandHistoryFromLatestToCurrentUndoPosition();
     bool undo();
     void cancelUndo(int position);
@@ -67,6 +71,7 @@ UnifiedEditHistory::UnifiedEditHistory(ExtensionManager* ext)
 
 
 UnifiedEditHistory::Impl::Impl(ExtensionManager* ext)
+    : flushNewRecordBufferLater([this](){ flushNewRecordBuffer(); }, LazyCaller::LowPriority)
 {
     currentPosition = 0;
     maxHistorySize = 100;
@@ -151,32 +156,9 @@ void UnifiedEditHistory::Impl::addRecord(EditRecord* record)
     if(currentGroup){
         currentGroup->addRecord(record);
     } else {
-        if(currentPosition >= 1){
-            expandHistoryFromLatestToCurrentUndoPosition();
-        }
-        records.push_front(record);
-
-        while(records.size() > maxHistorySize &&
-              currentPosition < static_cast<int>(records.size())){
-            records.pop_back();
-        }
-        
-        updateActionState();
-        sigHistoryUpdated();
+        newRecordBuffer.push_back(record);
+        flushNewRecordBufferLater();
     }
-}
-
-
-void UnifiedEditHistory::Impl::expandHistoryFromLatestToCurrentUndoPosition()
-{
-    vector<EditRecordPtr> undoRecords;
-    for(size_t i=0; i < currentPosition; ++i){
-        undoRecords.push_back(records[i]->getFlipped());
-    }
-    for(auto& record : undoRecords){
-        records.push_front(record);
-    }
-    currentPosition = 0;
 }
 
 
@@ -195,6 +177,55 @@ void UnifiedEditHistory::endEditGroup()
             addRecord(group);
         }
     }
+}
+
+
+void UnifiedEditHistory::Impl::flushNewRecordBuffer()
+{
+    if(newRecordBuffer.empty()){
+        return;
+    }
+
+    if(MessageView::isFlushing()){
+        flushNewRecordBufferLater();
+        return;
+    }
+
+    EditRecordPtr newRecord;
+    if(newRecordBuffer.size() == 1){
+        newRecord = newRecordBuffer.front();
+    } else {
+        auto group = new EditRecordGroup(newRecordBuffer.front()->label());
+        for(auto& record : newRecordBuffer){
+            group->addRecord(record);
+        }
+        newRecord = group;
+    }
+    if(currentPosition >= 1){
+        expandHistoryFromLatestToCurrentUndoPosition();
+    }
+    records.push_front(newRecord);
+    
+    while(records.size() > maxHistorySize &&
+          currentPosition < static_cast<int>(records.size())){
+        records.pop_back();
+    }
+    newRecordBuffer.clear();
+    updateActionState();
+    sigHistoryUpdated();
+}
+
+
+void UnifiedEditHistory::Impl::expandHistoryFromLatestToCurrentUndoPosition()
+{
+    vector<EditRecordPtr> undoRecords;
+    for(size_t i=0; i < currentPosition; ++i){
+        undoRecords.push_back(records[i]->getFlipped());
+    }
+    for(auto& record : undoRecords){
+        records.push_front(record);
+    }
+    currentPosition = 0;
 }
 
 
