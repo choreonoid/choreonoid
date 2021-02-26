@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-24 23:19+0900\n"
+"POT-Creation-Date: 2021-02-26 00:15+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -634,19 +634,19 @@ msgstr "ビューの分離"
 msgid "Input file \"{}\" was not processed."
 msgstr "入力ファイル \"{}\" は処理されませんでした．"
 
-#: PositionWidget.cpp:307
+#: PositionWidget.cpp:321
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: PositionWidget.cpp:312
+#: PositionWidget.cpp:326
 msgid "Fetch as a unique RPY value"
 msgstr "一意なRPY値として取り込み"
 
-#: PositionWidget.cpp:317
+#: PositionWidget.cpp:331
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: PositionWidget.cpp:322
+#: PositionWidget.cpp:336
 msgid "Rotation matrix"
 msgstr "回転行列"
 
@@ -1101,7 +1101,7 @@ msgstr "画像サイスをビューに合わせる"
 msgid "CoordinateFrameItem"
 msgstr "座標フレームアイテム"
 
-#: CoordinateFrameItem.cpp:273 LocationView.cpp:532
+#: CoordinateFrameItem.cpp:273 LocationView.cpp:535
 msgid "Local"
 msgstr "ローカル"
 
@@ -1132,26 +1132,26 @@ msgstr "元に戻す"
 msgid "Redo"
 msgstr "やり直し"
 
-#: UnifiedEditHistory.cpp:228
+#: UnifiedEditHistory.cpp:229
 msgid "Undo: {0}."
 msgstr "「{0}」を元に戻しました．"
 
-#: UnifiedEditHistory.cpp:257
+#: UnifiedEditHistory.cpp:258
 msgid ""
 "Undo failed. The edit history has been clered because it may be inconsistent."
 msgstr ""
 "元に戻すことができませんでした．編集履歴の一貫性が失われている可能性があるた"
 "め編集履歴をクリアしました．"
 
-#: UnifiedEditHistory.cpp:261
+#: UnifiedEditHistory.cpp:262
 msgid "Undo failed."
 msgstr "元に戻すことができませんでした．"
 
-#: UnifiedEditHistory.cpp:292
+#: UnifiedEditHistory.cpp:293
 msgid "Redo: {0}."
 msgstr "「{0}」をやり直しました．"
 
-#: UnifiedEditHistory.cpp:316
+#: UnifiedEditHistory.cpp:317
 msgid ""
 "Redo failed. The edit history has been clered because it may be inconsistent."
 msgstr ""
@@ -1246,7 +1246,7 @@ msgstr "制御点の表示"
 msgid "Step"
 msgstr "ステップ"
 
-#: GraphBar.cpp:256 LocationView.cpp:520
+#: GraphBar.cpp:256 LocationView.cpp:523
 msgid "Offset"
 msgstr "オフセット"
 
@@ -1858,49 +1858,53 @@ msgstr "パート数"
 msgid "Edit History"
 msgstr "編集履歴"
 
-#: LocationView.cpp:135
+#: LocationView.cpp:137
 msgid "Location"
 msgstr "配置"
 
-#: LocationView.cpp:159
+#: LocationView.cpp:161
 msgid "Lock"
 msgstr "ロック"
 
-#: LocationView.cpp:164
+#: LocationView.cpp:166
 msgid "Coord :"
 msgstr "座標系："
 
-#: LocationView.cpp:180
+#: LocationView.cpp:183
 msgid "Individual Rotation"
 msgstr "個別回転"
 
-#: LocationView.cpp:373
+#: LocationView.cpp:376
 msgid "<b>{0}</b>"
 msgstr ""
 
-#: LocationView.cpp:376
+#: LocationView.cpp:379
 msgid "<b>{0}</b> + {1}"
 msgstr ""
 
-#: LocationView.cpp:380
+#: LocationView.cpp:383
 msgid "<b>{0}</b> + {1} objects"
 msgstr "<b>{0}</b> + {1} オブジェクト"
 
-#: LocationView.cpp:500
+#: LocationView.cpp:503
 msgid "World"
 msgstr "ワールド"
 
-#: LocationView.cpp:510
+#: LocationView.cpp:513
 msgid "Offset ( {} )"
 msgstr "オフセット（ {} ）"
 
-#: LocationView.cpp:512
+#: LocationView.cpp:515
 msgid "Parent ( {} )"
 msgstr "親（ {} ）"
 
-#: LocationView.cpp:522
+#: LocationView.cpp:525
 msgid "Parent"
 msgstr "親"
+
+#: LocationView.cpp:757
+msgid "Change multiple object locations"
+msgstr "複数オブジェクトの配置を変更"
 
 #: SceneBar.cpp:101
 msgid "Put scene statistics"

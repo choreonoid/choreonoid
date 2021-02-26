@@ -59,6 +59,12 @@ bool LocationProxy::setLocation(const Isometry3& /* T */)
 }
 
 
+void LocationProxy::finishLocationEditing()
+{
+
+}
+
+
 Item* LocationProxy::getCorrespondingItem()
 {
     return nullptr;
