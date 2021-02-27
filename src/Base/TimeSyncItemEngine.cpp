@@ -3,70 +3,193 @@
 */
 
 #include "TimeSyncItemEngine.h"
+#include "ItemClassRegistry.h"
 #include "RootItem.h"
 #include "ItemList.h"
 #include "TimeBar.h"
-#include "LazyCaller.h"
+#include "ExtensionManager.h"
+#include <cnoid/ConnectionSet>
 #include <vector>
-#include <map>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-double currentTime;
+TimeSyncItemEngineManager* manager = nullptr;
+TimeSyncItemEngineManager::Impl* managerImpl = nullptr;
 
-typedef std::function<TimeSyncItemEnginePtr(Item* sourceItem)> TimeSyncItemEngineFactory;
+}
 
-typedef vector<TimeSyncItemEngineFactory> FactoryArray;
-typedef map<string, FactoryArray> FactoryArrayMap;
-FactoryArrayMap allFactories;
+namespace cnoid {
 
-vector<TimeSyncItemEnginePtr> engines;
-Connection selectionConnection;
-Connection connectionOfTimeChanged;
-
-LazyCaller updateLater;
-
-bool setTime(double time)
+class TimeSyncItemEngineManager::Impl
 {
-    bool isActive = false;
+public:
+    TimeBar* timeBar;
+    double currentTime;
+    bool isDoingPlayback;
+    ItemClassRegistry& itemClassRegistry;
+    vector<vector<std::function<TimeSyncItemEngine*(Item* item)>>> classIdToFactoryListMap;
+    vector<TimeSyncItemEnginePtr> activeEngines;
+    ScopedConnectionSet connections;
 
-    currentTime = time;
+    Impl();
+    void onSelectedItemsChanged(const ItemList<>& selectedItems);
+    bool onPlaybackInitialized(double time);
+    void onPlaybackStarted(double time);
+    bool onTimeChanged(double time);
+    void onPlaybackStopped(double time, bool isStoppedManually);
+    void refresh(TimeSyncItemEngine* engine);
+};
 
-    for(size_t i=0; i < engines.size(); ++i){
-        isActive |= engines[i]->onTimeChanged(time);
+}
+
+
+void TimeSyncItemEngineManager::initializeClass(ExtensionManager* ext)
+{
+    if(!manager){
+        manager = new TimeSyncItemEngineManager;
+        managerImpl = manager->impl;
+        ext->manage(manager);
     }
-
-    return isActive;
 }
 
-void update() {
-    setTime(currentTime);
-}
 
-void onSelectedItemsChanged(const ItemList<>& selectedItems)
+TimeSyncItemEngineManager* TimeSyncItemEngineManager::instance()
 {
-    engines.clear();
+    return manager;
+}
 
-    for(size_t i=0; i < selectedItems.size(); ++i){ 
-        Item* sourceItem = selectedItems.get(i);
-        for(FactoryArrayMap::iterator p = allFactories.begin(); p != allFactories.end(); ++p){
-            FactoryArray& factories = p->second;
-            for(FactoryArray::iterator q = factories.begin(); q != factories.end(); ++q){
-                TimeSyncItemEngineFactory& factoryFunc = *q;
-                TimeSyncItemEnginePtr engine = factoryFunc(sourceItem);
-                if(engine){
-                    engines.push_back(engine);
+
+TimeSyncItemEngineManager::TimeSyncItemEngineManager()
+{
+    impl = new Impl;
+}
+
+
+TimeSyncItemEngineManager::Impl::Impl()
+    : itemClassRegistry(ItemClassRegistry::instance())
+{
+    currentTime = 0.0;
+    isDoingPlayback = false;
+
+    connections.add(
+        RootItem::instance()->sigSelectedItemsChanged().connect(
+            [&](const ItemList<>& selectedItems){
+                onSelectedItemsChanged(selectedItems);
+            }));
+
+    timeBar = TimeBar::instance();
+    connections.add(
+        timeBar->sigPlaybackInitialized().connect(
+            [&](double time){ return onPlaybackInitialized(time);  }));
+    connections.add(
+        timeBar->sigPlaybackStarted().connect(
+            [&](double time){ onPlaybackStarted(time);  }));
+    connections.add(
+        timeBar->sigTimeChanged().connect(
+            [&](double time){ return onTimeChanged(time); }));
+    connections.add(
+        timeBar->sigPlaybackStopped().connect(
+            [&](double time, bool isStoppedManually){
+                onPlaybackStopped(time, isStoppedManually);
+            }));
+}
+
+
+TimeSyncItemEngineManager::~TimeSyncItemEngineManager()
+{
+    delete impl;
+}
+
+
+void TimeSyncItemEngineManager::registerFactory_
+(const std::type_info& type, std::function<TimeSyncItemEngine*(Item* item)> factory)
+{
+    int id = impl->itemClassRegistry.classId(type);
+    if(id >= static_cast<int>(impl->classIdToFactoryListMap.size())){
+        impl->classIdToFactoryListMap.resize(id + 1);
+    }
+    impl->classIdToFactoryListMap[id].push_back(factory);
+}
+
+
+void TimeSyncItemEngineManager::Impl::onSelectedItemsChanged(const ItemList<>& selectedItems)
+{
+    activeEngines.clear();
+
+    for(auto& item : selectedItems){
+        int id = item->classId();
+        if(id < static_cast<int>(classIdToFactoryListMap.size())){
+            while(id > 0){
+                for(auto& factory : classIdToFactoryListMap[id]){
+                    if(auto engine = factory(item)){
+                        activeEngines.push_back(engine);
+                    }
                 }
+                id = itemClassRegistry.superClassId(id);
             }
         }
     }
 
-    setTime(currentTime);
+    onTimeChanged(currentTime);
 }
 
+
+bool TimeSyncItemEngineManager::Impl::onPlaybackInitialized(double time)
+{
+    bool initialized = true;
+    for(auto& engine : activeEngines){
+        if(!engine->onPlaybackInitialized(time)){
+            initialized = false;
+            break;
+        }
+    }
+    return initialized;
+}
+
+
+void TimeSyncItemEngineManager::Impl::onPlaybackStarted(double time)
+{
+    isDoingPlayback = true;
+    for(auto& engine : activeEngines){
+        engine->onPlaybackStarted(time);
+    }
+}
+
+
+bool TimeSyncItemEngineManager::Impl::onTimeChanged(double time)
+{
+    bool isActive = false;
+    currentTime = time;
+    for(auto& engine : activeEngines){
+        isActive |= engine->onTimeChanged(time);
+    }
+    return isActive;
+}
+
+
+void TimeSyncItemEngineManager::Impl::onPlaybackStopped(double time, bool isStoppedManually)
+{
+    isDoingPlayback = false;
+    for(auto& engine : activeEngines){
+        engine->onPlaybackStopped(time, isStoppedManually);
+    }
+}
+
+
+void TimeSyncItemEngineManager::Impl::refresh(TimeSyncItemEngine* engine)
+{
+    if(!isDoingPlayback){
+        engine->onTimeChanged(currentTime);
+    }
+}
+
+
+TimeSyncItemEngine::TimeSyncItemEngine()
+{
+    fillLevelId = -1;
 }
 
 
@@ -76,54 +199,57 @@ TimeSyncItemEngine::~TimeSyncItemEngine()
 }
 
 
-bool TimeSyncItemEngine::onTimeChanged(double time)
+bool TimeSyncItemEngine::onPlaybackInitialized(double /* time */)
+{
+    return true;
+}
+
+
+void TimeSyncItemEngine::onPlaybackStarted(double /* time */)
+{
+
+}
+
+
+void TimeSyncItemEngine::onPlaybackStopped(double /* time */, bool /* isStoppedManually */)
+{
+
+}
+
+
+bool TimeSyncItemEngine::isPlaybackAlwaysMaintained() const
 {
     return false;
 }
 
 
-void TimeSyncItemEngine::notifyUpdate()
+bool TimeSyncItemEngine::startUpdatingTime()
 {
-    updateLater();
+    if(fillLevelId < 0){
+        fillLevelId = managerImpl->timeBar->startFillLevelUpdate(managerImpl->currentTime);
+    }
+    return fillLevelId >= 0;
 }
 
 
-void TimeSyncItemEngineManager::initialize()
+void TimeSyncItemEngine::updateTime(double time)
 {
-    static bool initialized = false;
-    
-    if(!initialized){
-        
-        currentTime = 0.0;
-        
-        selectionConnection =
-            RootItem::instance()->sigSelectedItemsChanged().connect(onSelectedItemsChanged);
-        
-        connectionOfTimeChanged = TimeBar::instance()->sigTimeChanged().connect(setTime);
-        
-        updateLater.setFunction(update);
-        updateLater.setPriority(LazyCaller::PRIORITY_LOW);
-
-        initialized = true;
+    if(fillLevelId >= 0){
+        managerImpl->timeBar->updateFillLevel(fillLevelId, time);
     }
 }
 
 
-TimeSyncItemEngineManager::TimeSyncItemEngineManager(const std::string& moduleName)
-    : moduleName(moduleName)
+void TimeSyncItemEngine::stopUpdatingTime()
 {
-
+    if(fillLevelId >= 0){
+        managerImpl->timeBar->stopFillLevelUpdate(fillLevelId);
+        fillLevelId = -1;
+    }
 }
 
 
-TimeSyncItemEngineManager::~TimeSyncItemEngineManager()
+void TimeSyncItemEngine::refresh()
 {
-    allFactories.erase(moduleName);
-    engines.clear();
-}
-
-
-void TimeSyncItemEngineManager::addEngineFactory(std::function<TimeSyncItemEngine*(Item* sourceItem)> factory)
-{
-    allFactories[moduleName].push_back(factory);
+    managerImpl->refresh(this);
 }

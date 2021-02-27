@@ -278,7 +278,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     TaskView::initializeClass(ext);
     VirtualJoystickView::initializeClass(ext);
 
-    TimeSyncItemEngineManager::initialize();
+    TimeSyncItemEngineManager::initializeClass(ext);
     
     FolderItem::initializeClass(ext);
     SubProjectItem::initializeClass(ext);

@@ -29,7 +29,7 @@ public:
     virtual bool initialize() override {
 
         PoseSeqItem::initializeClass(this);
-        initializePoseSeqEngine(this);
+        initializePoseSeqEngine();
         BodyMotionGenerationBar::initializeInstance(this);
         PoseRollView::initializeClass(this);
         initializeFcpFileLoader(*this);

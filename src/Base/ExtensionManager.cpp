@@ -13,7 +13,6 @@
 #include "View.h"
 #include "ToolBar.h"
 #include "MainWindow.h"
-#include "TimeSyncItemEngine.h"
 #include "LazyCaller.h"
 #include <cnoid/GettextUtil>
 #include <cnoid/ExecutablePath>
@@ -39,7 +38,6 @@ public:
     Signal<void()> sigReleaseRequest;
     std::unique_ptr<MenuManager> menuManager;
     std::unique_ptr<ItemManager> itemManager;
-    std::unique_ptr<TimeSyncItemEngineManager> timeSyncItemEngineManger;
     std::unique_ptr<ViewManager> viewManager;
 
     static set<Impl*> instances;
@@ -120,15 +118,6 @@ ItemManager& ExtensionManager::itemManager()
         impl->itemManager->bindTextDomain(impl->textDomain);
     }
     return *impl->itemManager;
-}
-
-
-TimeSyncItemEngineManager& ExtensionManager::timeSyncItemEngineManger()
-{
-    if(!impl->timeSyncItemEngineManger){
-        impl->timeSyncItemEngineManger.reset(new TimeSyncItemEngineManager(impl->moduleName));
-    }
-    return *impl->timeSyncItemEngineManger;
 }
 
 

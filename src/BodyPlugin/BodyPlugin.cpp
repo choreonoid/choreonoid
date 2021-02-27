@@ -112,9 +112,10 @@ public:
         BodyElementOverwriteItem::initializeClass(this);
         LinkShapeOverwriteItem::initializeClass(this);
         DeviceOverwriteItem::initializeClass(this);
+        CollisionSeqItem::initislizeClass(this);
 
         BodyMotionEngine::initializeClass(this);
-        CollisionSeqEngine::initializeClass(this);
+        CollisionSeqEngine::initializeClass();
         KinematicFaultChecker::initializeClass(this);
         initializeSplineFilterDialog(this);
 
@@ -140,8 +141,6 @@ public:
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
         BodyLinkView::initializeClass(this);
-
-        CollisionSeqItem::initislizeClass(this);
 
         initializeHrpsysFileIO(this);
 

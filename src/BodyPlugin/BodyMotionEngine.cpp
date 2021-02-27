@@ -67,11 +67,11 @@ public:
         
         connections.add(
             motionItem->sigUpdated().connect(
-                std::bind(&BodyMotionEngine::notifyUpdate, self)));
+                [self](){ self->refresh(); }));
         
         connections.add(
             motionItem->sigExtraSeqItemsChanged().connect(
-                std::bind(&BodyMotionEngineImpl::updateExtraSeqEngines, this)));
+                [this](){ updateExtraSeqEngines(); }));
     }
     
     void updateExtraSeqEngines(){
@@ -93,8 +93,9 @@ public:
     ~BodyMotionEngineImpl(){
         connections.disconnect();
     }
-        
-    bool onTimeChanged(double time){
+
+    bool onTimeChanged(double time)
+    {
 
         bool isActive = false;
         bool fkDone = false;
@@ -156,16 +157,12 @@ public:
 };
 
 
-TimeSyncItemEngine* createBodyMotionEngine(Item* sourceItem)
+TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* item)
 {
-    BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(sourceItem);
-    if(motionItem){
-        BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
-        if(bodyItem){
-            return new BodyMotionEngine(bodyItem, motionItem);
-        }
+    if(auto bodyItem = item->findOwnerItem<BodyItem>()){
+        return new BodyMotionEngine(bodyItem, item);
     }
-    return 0;
+    return nullptr;
 }
 
 }
@@ -195,15 +192,27 @@ BodyMotionItem* BodyMotionEngine::motionItem()
 }
 
 
+void BodyMotionEngine::onPlaybackStarted(double time)
+{
+    impl->bodyItem->notifyKinematicStateEdited();
+}
+
+
 bool BodyMotionEngine::onTimeChanged(double time)
 {
     return impl->onTimeChanged(time);
 }
 
 
+void BodyMotionEngine::onPlaybackStopped(double time, bool isStoppedManually)
+{
+    impl->bodyItem->notifyKinematicStateEdited();
+}
+
+
 void BodyMotionEngine::initializeClass(ExtensionManager* ext)
 {
-    ext->timeSyncItemEngineManger().addEngineFactory(createBodyMotionEngine);
+    TimeSyncItemEngineManager::instance()->registerFactory<BodyMotionItem>(createBodyMotionEngine);
 
     MenuManager& mm = ext->menuManager();
     mm.setPath("/Options").setPath(N_("Body Motion Engine"));

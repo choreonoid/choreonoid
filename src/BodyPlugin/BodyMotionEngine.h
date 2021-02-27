@@ -7,6 +7,7 @@
 #define CNOID_BODYPLUGIN_BODY_MOTION_ENGINE_H
 
 #include <cnoid/TimeSyncItemEngine>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -32,8 +33,10 @@ public:
     BodyItem* bodyItem();
     BodyMotionItem* motionItem();
         
-    virtual bool onTimeChanged(double time);
-
+    virtual void onPlaybackStarted(double time) override;
+    virtual bool onTimeChanged(double time) override;
+    virtual void onPlaybackStopped(double time, bool isStoppedManually) override;
+    
 private:
     BodyMotionEngineImpl* impl;
 };

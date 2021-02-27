@@ -7,7 +7,6 @@
 #include "CollisionSeqEngine.h"
 #include "WorldItem.h"
 #include "CollisionSeqItem.h"
-#include <cnoid/ExtensionManager>
 #include <cnoid/SceneCollision>
 
 using namespace std;
@@ -53,23 +52,19 @@ public:
 
 }
 
-TimeSyncItemEngine* createCollisionSeqEngine(Item* sourceItem)
+
+TimeSyncItemEngine* createCollisionSeqEngine(CollisionSeqItem* item)
 {
-    CollisionSeqItem* collisionSeqItem = dynamic_cast<CollisionSeqItem*>(sourceItem);
-    if(collisionSeqItem){
-        Item* ownerItem = collisionSeqItem->findOwnerItem<Item>();
-        WorldItem* worldItem = dynamic_cast<WorldItem*>(ownerItem);
-        if(worldItem){
-            return new CollisionSeqEngine(worldItem, collisionSeqItem);
-        }
+    if(auto worldItem = item->findOwnerItem<WorldItem>()){
+        return new CollisionSeqEngine(worldItem, item);
     }
-    return 0;
+    return nullptr;
 }
 
 
-void CollisionSeqEngine::initializeClass(ExtensionManager* ext)
+void CollisionSeqEngine::initializeClass()
 {
-    ext->timeSyncItemEngineManger().addEngineFactory(createCollisionSeqEngine);
+    TimeSyncItemEngineManager::instance()->registerFactory<CollisionSeqItem>(createCollisionSeqEngine);
 }
 
 

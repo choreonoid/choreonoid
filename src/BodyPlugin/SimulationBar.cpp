@@ -126,11 +126,13 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
 {
     auto mv = MessageView::instance();
 
-    auto simulators =  RootItem::instance()->selectedItems<SimulatorItem>();
+    auto rootItem = RootItem::instance();
+    auto simulators =  rootItem->selectedItems<SimulatorItem>();
     if(simulators.empty()){
-        if(auto simulator = RootItem::instance()->findItem<SimulatorItem>()){
+        if(auto simulator = rootItem->findItem<SimulatorItem>()){
             simulator->setSelected(doSelect);
             simulators.push_back(simulator);
+            rootItem->flushSigSelectedItemsChanged();
         } else {
             mv->notify(_("There is no simulator item."));
         }

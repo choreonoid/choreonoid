@@ -40,10 +40,10 @@ public:
     ZMPSeqEngine(ZMPSeqItem* seqItem, BodyItem* bodyItem)
         : seq(seqItem->zmpseq()), bodyItem(bodyItem)
     {
-        seqItem->sigUpdated().connect(std::bind(&TimeSyncItemEngine::notifyUpdate, this));
+        seqItem->sigUpdated().connect([this](){ refresh(); });
     }
 
-    virtual bool onTimeChanged(double time)
+    virtual bool onTimeChanged(double time) override
     {
         bool isValidTime = false;
         if(!seq->empty()){
@@ -65,7 +65,7 @@ TimeSyncItemEngine* createZMPSeqEngine(BodyItem* bodyItem, AbstractSeqItem* seqI
     if(item){
         return new ZMPSeqEngine(item, bodyItem);
     }
-    return 0;
+    return nullptr;
 }
 
 }
@@ -137,5 +137,5 @@ void ZMPSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqItem::doPutProperties(putProperty);
     putProperty(_("Root relative"), zmpseq_->isRootRelative(),
-                std::bind(&ZMPSeqItem::makeRootRelative, this, _1));
+                [this](bool on){ return makeRootRelative(on); });
 }

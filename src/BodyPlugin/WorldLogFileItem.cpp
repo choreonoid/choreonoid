@@ -360,12 +360,9 @@ public:
 };
 
 
-TimeSyncItemEngine* createWorldLogFileEngine(Item* sourceItem)
+TimeSyncItemEngine* createWorldLogFileEngine(WorldLogFileItem* item)
 {
-    if(WorldLogFileItem* logItem = dynamic_cast<WorldLogFileItem*>(sourceItem)){
-        return new WorldLogFileEngine(logItem);
-    }
-    return 0;
+    return new WorldLogFileEngine(item);
 }
 
 }
@@ -457,7 +454,7 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
             return item->impl->setLogFile(filename, true);
         });
 
-    ext->timeSyncItemEngineManger().addEngineFactory(createWorldLogFileEngine);    
+    TimeSyncItemEngineManager::instance()->registerFactory<WorldLogFileItem>(createWorldLogFileEngine);    
 }
 
 

@@ -8,36 +8,62 @@
 
 #include <cnoid/Referenced>
 #include <functional>
-#include <string>
+#include <typeinfo>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class Item;
-
 class CNOID_EXPORT TimeSyncItemEngine : public Referenced
 {
 public:
+    TimeSyncItemEngine();
     virtual ~TimeSyncItemEngine();
-    virtual bool onTimeChanged(double time);
-    void notifyUpdate();
+
+    virtual bool onPlaybackInitialized(double time);
+    virtual void onPlaybackStarted(double time);
+    virtual bool onTimeChanged(double time) = 0;
+    virtual void onPlaybackStopped(double time, bool isStoppedManually);
+    virtual bool isPlaybackAlwaysMaintained() const;
+    
+    bool startUpdatingTime();
+    void updateTime(double time);
+    void stopUpdatingTime();
+    
+    void refresh();
+
+private:
+    int fillLevelId;
 };
 
 typedef ref_ptr<TimeSyncItemEngine> TimeSyncItemEnginePtr;
 
+class ExtensionManager;
+class Item;
 
 class CNOID_EXPORT TimeSyncItemEngineManager
 {
 public:
-    static void initialize();
-        
-    TimeSyncItemEngineManager(const std::string& moduleName);
+    static void initializeClass(ExtensionManager* ext);
+    static TimeSyncItemEngineManager* instance();
+
     ~TimeSyncItemEngineManager();
-        
-    void addEngineFactory(std::function<TimeSyncItemEngine*(Item* sourceItem)> factory);
-        
+
+    template<class ItemType>
+    void registerFactory(std::function<TimeSyncItemEngine*(ItemType* item)> factory){
+        registerFactory_(
+            typeid(ItemType),
+            [factory](Item* item){ return factory(static_cast<ItemType*>(item)); });
+    }
+
+    class Impl;
+
 private:
-    std::string moduleName;
+    TimeSyncItemEngineManager();
+
+    void registerFactory_(
+        const std::type_info& type, std::function<TimeSyncItemEngine*(Item* item)> factory);
+
+    Impl* impl;
 };
 
 }
