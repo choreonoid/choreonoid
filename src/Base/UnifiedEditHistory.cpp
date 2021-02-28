@@ -1,6 +1,7 @@
 #include "UnifiedEditHistory.h"
 #include "EditRecord.h"
 #include "MenuManager.h"
+#include "ProjectManager.h"
 #include "Action.h"
 #include "MessageView.h"
 #include "LazyCaller.h"
@@ -27,6 +28,7 @@ public:
     int currentPosition;
     size_t maxHistorySize;
     EditRecordGroupPtr currentGroup;
+    bool isProjectBeingLoaded;
     vector<EditRecordPtr> newRecordBuffer;
     LazyCaller flushNewRecordBufferLater;
     Action* undoAction;
@@ -86,6 +88,22 @@ UnifiedEditHistory::Impl::Impl(ExtensionManager* ext)
     redoAction->setEnabled(false);
 
     mv = MessageView::instance();
+
+    auto pm = ProjectManager::instance();
+    pm->sigProjectAboutToBeLoaded().connect(
+        [&](int recursiveLevel){
+            if(recursiveLevel == 0){
+                clear();
+                isProjectBeingLoaded = true;
+            }
+        });
+    pm->sigProjectLoaded().connect(
+        [&](int recursiveLevel){
+            if(recursiveLevel == 0){
+                isProjectBeingLoaded = false;
+            }
+        });
+    isProjectBeingLoaded = false;
 }
 
 
@@ -147,7 +165,9 @@ void UnifiedEditHistory::Impl::removeRecordsAfter(int index)
 
 void UnifiedEditHistory::addRecord(EditRecord* record)
 {
-    impl->addRecord(record);
+    if(!impl->isProjectBeingLoaded){
+        impl->addRecord(record);
+    }
 }
 
 
@@ -164,13 +184,15 @@ void UnifiedEditHistory::Impl::addRecord(EditRecord* record)
 
 void UnifiedEditHistory::beginEditGroup(const std::string& label, bool isManualOperation)
 {
-    impl->currentGroup = new EditRecordGroup(label, isManualOperation);
+    if(!impl->isProjectBeingLoaded){
+        impl->currentGroup = new EditRecordGroup(label, isManualOperation);
+    }
 }
 
 
 void UnifiedEditHistory::endEditGroup()
 {
-    if(impl->currentGroup){
+    if(!impl->isProjectBeingLoaded && impl->currentGroup){
         EditRecordGroupPtr group = impl->currentGroup;
         impl->currentGroup.reset();
         if(!group->empty()){
