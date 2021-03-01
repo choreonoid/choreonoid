@@ -39,7 +39,7 @@ public:
     FileDialog* self;
     QBoxLayout* optionPanelBox;
     stdx::optional<Signal<void(int index)>> sigFilterSelected;
-    stdx::optional<Signal<bool(int result), LogicalProduct>> sigAboutToFinished;
+    Signal<bool(int result), LogicalProduct> sigAboutToFinished;
     
     Impl(FileDialog* self);
     void updatePresetDirectories();    
@@ -80,6 +80,9 @@ FileDialog::Impl::Impl(FileDialog* self)
     optionPanelBox->setContentsMargins(left, 0, right, bottom);
     optionPanelBox->addStretch();
     vbox->addLayout(optionPanelBox);
+
+    QObject::connect(this, &QFileDialog::finished,
+                     [this](int result){ onFinished(result); });
 
     //QObject::connect(this, &QFileDialog::accepted, [&](){ storeRecentDirectories(); });
 }
@@ -208,12 +211,7 @@ void FileDialog::selectNameFilter(int index)
 
 SignalProxy<bool(int result), LogicalProduct> FileDialog::sigAboutToFinished()
 {
-    if(!impl->sigAboutToFinished){
-        stdx::emplace(impl->sigAboutToFinished);
-        QObject::connect(impl, &QFileDialog::finished,
-                         [this](int result){ impl->onFinished(result); });
-    }
-    return *impl->sigAboutToFinished;
+    return impl->sigAboutToFinished;
 }
 
 
@@ -226,7 +224,7 @@ int FileDialog::exec()
 
 void FileDialog::Impl::onFinished(int result)
 {
-    if((*sigAboutToFinished)(result)){
+    if(sigAboutToFinished(result)){
         if(result == QFileDialog::Accepted){
             storeRecentDirectories();
         }
