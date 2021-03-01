@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-16 20:24+0900\n"
+"POT-Creation-Date: 2021-02-24 23:13+0900\n"
 "PO-Revision-Date: 2012-07-16 14:30+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -25,27 +25,26 @@ msgstr "シーンファイル \"{}\" は \"scene\" ノードを有していま�
 msgid "Scene file \"{}\" is an empty scene."
 msgstr "シーンファイル\"{}\"は空のシーンです．"
 
-#: StdSceneWriter.cpp:258
+#: StdSceneWriter.cpp:339
 msgid "Warning: There is an unsupported node."
 msgstr "警告：サポートされていないノードがあります．"
 
-#: StdSceneWriter.cpp:260
+#: StdSceneWriter.cpp:341
 msgid "Warning: {0} unsupported nodes were skipped to output."
 msgstr "警告：サポートされていない{0}のノードの出力をスキップしました．"
 
-#: StdSceneWriter.cpp:358
+#: StdSceneWriter.cpp:460
 msgid "Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"
 msgstr ""
-"警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでし"
-"た. {2}"
+"警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでした. "
+"{2}"
 
-#: StdSceneWriter.cpp:361
+#: StdSceneWriter.cpp:463
 msgid "Warning: Failed to replace model file \"{0}\" with \"{1}\"."
 msgstr ""
-"警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでし"
-"た."
+"警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでした."
 
-#: StdSceneWriter.cpp:372
+#: StdSceneWriter.cpp:474
 msgid "Warning: The light node type is not supported."
 msgstr "警告：光源ノード型はサポートされていません．"
 
@@ -53,7 +52,7 @@ msgstr "警告：光源ノード型はサポートされていません．"
 msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""
 msgstr "\"angleUnit\"の値はラジアンか度のいずれかである必要があります"
 
-#: StdSceneReader.cpp:489
+#: StdSceneReader.cpp:493
 msgid ""
 "Warning: the node type \"{}\" is not defined. Reading this node has been "
 "skipped."
@@ -61,85 +60,85 @@ msgstr ""
 "警告：ノードタイプ\"{}\"は定義されていません．このノードの読み込みはスキップ"
 "されます． "
 
-#: StdSceneReader.cpp:492
+#: StdSceneReader.cpp:496
 msgid "The node type \"{}\" is not defined."
 msgstr "ノードタイプ\"{}\"は定義されていません．"
 
-#: StdSceneReader.cpp:558
+#: StdSceneReader.cpp:562
 msgid ""
 "The node type \"{0}\" is different from the type \"{1}\" specified in the "
 "parent node"
 msgstr "ノードタイプ\"{0}\"は親ノードで指定されているタイプ\"{1}\"と異なります"
 
-#: StdSceneReader.cpp:570
+#: StdSceneReader.cpp:574
 msgid "A scalar value is not accepted"
 msgstr "スカラ値を使用することはできません"
 
-#: StdSceneReader.cpp:714
+#: StdSceneReader.cpp:718
 msgid "Unknown geometry \"{}\""
 msgstr "不明なジオメトリ \"{}\""
 
-#: StdSceneReader.cpp:761
+#: StdSceneReader.cpp:765
 msgid "A box cannot be generated with the given parameters."
 msgstr "与えられたパラメータでボックスを生成することはできません．"
 
-#: StdSceneReader.cpp:779
+#: StdSceneReader.cpp:783
 msgid "A sphere cannot be generated with the given parameters."
 msgstr "与えられたパラメータで球を生成することはできません．"
 
-#: StdSceneReader.cpp:799
+#: StdSceneReader.cpp:803
 msgid "A cylinder cannot be generated with the given parameters."
 msgstr "与えられたパラメータでシリンダを生成することはできません．"
 
-#: StdSceneReader.cpp:818
+#: StdSceneReader.cpp:822
 msgid "A cone cannot be generated with the given parameters."
 msgstr "与えられたパラメータで円錐を生成することはできません．"
 
-#: StdSceneReader.cpp:836
+#: StdSceneReader.cpp:840
 msgid "A capsule cannot be generated with the given parameters."
 msgstr "与えられたパラメータでカプセルを生成することはできません．"
 
-#: StdSceneReader.cpp:1082
+#: StdSceneReader.cpp:1086
 msgid "A resouce specified as a geometry must be a single mesh"
 msgstr "ジオメトリと指定するリソースは単一のメッシュでなければなりません"
 
-#: StdSceneReader.cpp:1086
+#: StdSceneReader.cpp:1090
 msgid "A resouce specified as a geometry does not have a mesh"
 msgstr "ジオメトリとして指定されているリソースがメッシュを有していません"
 
-#: StdSceneReader.cpp:1172
+#: StdSceneReader.cpp:1178
 msgid "Warning: texture uri \"{0}\" is not valid: {1}"
 msgstr "警告: テクスチャのURL \"{0}\" は有効ではありません: {1}"
 
-#: StdSceneReader.cpp:1195
+#: StdSceneReader.cpp:1202
 msgid "The number of the repeat elements must be two"
 msgstr "repeatの要素は2つでなければなりません"
 
-#: StdSceneReader.cpp:1297
+#: StdSceneReader.cpp:1303
 msgid "The value of \"exclude\" must be string or sequence."
 msgstr "\"exclude\" の値は文字列かシーケンスでなければなりません．"
 
-#: StdSceneReader.cpp:1353 StdSceneReader.cpp:1382
+#: StdSceneReader.cpp:1363 StdSceneReader.cpp:1392
 msgid "Node \"{0}\" is not found in \"{1}\"."
 msgstr "\"{1}\" のノード \"{0}\" がみつかりません．"
 
-#: StdSceneReader.cpp:1451
+#: StdSceneReader.cpp:1461
 msgid "The \"{0}\" scheme of \"{1}\" is not available"
 msgstr "\"{1}\" の \"{0}\" スキームは利用できません"
 
-#: StdSceneReader.cpp:1471
+#: StdSceneReader.cpp:1481
 msgid "The resource URI \"{0}\" is not valid: {1}"
 msgstr "リソースURI \"{0}\" は有効ではありません: {1}"
 
-#: StdSceneReader.cpp:1477
+#: StdSceneReader.cpp:1487
 msgid "The resource URI \"{}\" is not valid"
 msgstr "リソースURI \"{}\" は有効ではありません"
 
-#: StdSceneReader.cpp:1492
+#: StdSceneReader.cpp:1502
 msgid "YAML resource \"{0}\" cannot be loaded ({1})"
 msgstr "YAMLリソース \"{0}\" は読み込みできません ({1})"
 
-#: StdSceneReader.cpp:1501
+#: StdSceneReader.cpp:1511
 msgid "The resource is not found at URI \"{}\""
 msgstr "URI \"{}\" のリソースがみつかりません"
 
@@ -163,7 +162,7 @@ msgstr "{1}のフレームレート{0}は無効です．\n"
 msgid "VRML file \"{}\" does not have any valid entity."
 msgstr "VRMLファイル \"{}\" には有効なエントリが有りません．"
 
-#: ObjSceneLoader.cpp:167 STLSceneLoader.cpp:477
+#: ObjSceneLoader.cpp:167 STLSceneLoader.cpp:476
 msgid "Unable to open file \"{}\"."
 msgstr "ファイル\"{}\"を開けません．"
 
@@ -377,9 +376,13 @@ msgstr "\"{}\": 時刻値が整列されていません．"
 msgid "UUID \"{0}\" is a duplicate of the existing ID.\n"
 msgstr "UUID \"{0}\" は既存のIDと重複しています．\n"
 
-#: ObjSceneWriter.cpp:80
+#: ObjSceneWriter.cpp:130 ObjSceneWriter.cpp:212
 msgid "\"{0}\" cannot be open. {1}."
 msgstr "\"{0}\" を開くことができません．{1}."
+
+#: ObjSceneWriter.cpp:139
+msgid "Failed to write a scene into \"{0}\"."
+msgstr "シーンを \"{0}\" に書き出すことができませんでした．"
 
 #: ValueTree.cpp:86
 msgid "{0} at line {1}, column {2}."
@@ -430,10 +433,10 @@ msgstr "\"{}\"は拡張子が無いためファイル形式が不明です．"
 msgid "The file format of \"{}\" is not supported by the scene loader."
 msgstr "\"{}\"のファイル形式はシーンローダでサポートされていません．"
 
-#: STLSceneLoader.cpp:519
+#: STLSceneLoader.cpp:520
 msgid "No triangles in \"{1}\"."
 msgstr "\"{1}\"にトライアングルが含まれていません．"
 
-#: STLSceneLoader.cpp:523
+#: STLSceneLoader.cpp:524
 msgid "Unable to load \"{1}\". Its file size is too large."
 msgstr "\"{1}\"を読み込むことができません．ファイルサイズが大きすぎます．"

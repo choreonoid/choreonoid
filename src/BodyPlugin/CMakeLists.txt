@@ -8,6 +8,7 @@ set(sources
   BodyPlugin.cpp
   WorldItem.cpp
   BodySelectionManager.cpp
+  BodyEditRecordManager.cpp
   BodyItem.cpp
   BodyItemFileIO.cpp
   EditableSceneBody.cpp

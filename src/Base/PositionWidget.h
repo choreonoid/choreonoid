@@ -20,6 +20,10 @@ public:
     void setOptionMenuTo(MenuManager& menuManager);
     void setEditable(bool on);
     void setUserInputValuePriorityMode(bool on);
+    void setCallbacks(
+        std::function<bool(const Isometry3& T)> callbackOnPositionInput,
+        std::function<void()> callbackOnPositionInputFinished);
+    [[deprecated("Use setCallbacks")]]
     void setPositionCallback(std::function<bool(const Isometry3& T)> callback);
     void clearPosition();
     void refreshPosition();

@@ -9,25 +9,45 @@ using namespace cnoid;
 Slider::Slider(QWidget* parent)
     : QSlider(parent)
 {
-    initialize();
+
 }
 
 
 Slider::Slider(Qt::Orientation orientation, QWidget* parent)
     : QSlider(orientation, parent)
 {
-    initialize();
+
 }
 
 
-void Slider::initialize()
+SignalProxy<void(int)> Slider::sigValueChanged()
 {
-    connect(this, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+    if(!sigValueChanged_){
+        stdx::emplace(sigValueChanged_);
+        connect(this, &QSlider::valueChanged,
+                [this](int value){ (*sigValueChanged_)(value); });
+    }
+    return *sigValueChanged_;
 }
-    
 
-void Slider::onValueChanged(int value)
+
+SignalProxy<void()> Slider::sigSliderPressed()
 {
-    sigValueChanged_(value);
+    if(!sigSliderPressed_){
+        stdx::emplace(sigSliderPressed_);
+        connect(this, &QSlider::sliderPressed,
+                [this](){ (*sigSliderPressed_)(); });
+    }
+    return *sigSliderPressed_;
 }
 
+
+SignalProxy<void()> Slider::sigSliderReleased()
+{
+    if(!sigSliderReleased_){
+        stdx::emplace(sigSliderReleased_);
+        connect(this, &QSlider::sliderReleased,
+                [this](){ (*sigSliderReleased_)(); });
+    }
+    return *sigSliderReleased_;
+}

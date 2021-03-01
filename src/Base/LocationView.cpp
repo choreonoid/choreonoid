@@ -6,6 +6,7 @@
 #include "CoordinateFrameListItem.h"
 #include "CoordinateFrameItem.h"
 #include "RootItem.h"
+#include "UnifiedEditHistory.h"
 #include "LazyCaller.h"
 #include "CheckBox.h"
 #include "ComboBox.h"
@@ -122,6 +123,7 @@ public:
     void updateBaseCoordinateSystems();
     void updatePositionWidgetWithPrimaryLocation();
     bool updateTargetLocationWithInputPosition(const Isometry3& T_input);
+    void finishLocationEditing();
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -171,8 +173,9 @@ LocationView::Impl::Impl(LocationView* self)
     vbox->addLayout(hbox);
 
     positionWidget = new PositionWidget(self);
-    positionWidget->setPositionCallback(
-        [&](const Isometry3& T){ return updateTargetLocationWithInputPosition(T); });
+    positionWidget->setCallbacks(
+        [&](const Isometry3& T){ return updateTargetLocationWithInputPosition(T); },
+        [&](){ finishLocationEditing(); });
     vbox->addWidget(positionWidget);
 
     hbox = new QHBoxLayout;
@@ -741,6 +744,22 @@ bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& 
     }
     
     return updated;
+}
+
+
+void LocationView::Impl::finishLocationEditing()
+{
+    if(locations.size() == 1){
+        locations.front()->proxy->finishLocationEditing();
+
+    } else if(locations.size() >= 2){
+        auto history = UnifiedEditHistory::instance();
+        history->beginEditGroup(_("Change multiple object locations"));
+        for(auto& location : locations){
+            location->proxy->finishLocationEditing();
+        }
+        history->endEditGroup();
+    }
 }
 
 

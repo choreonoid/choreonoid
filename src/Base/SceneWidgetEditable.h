@@ -27,8 +27,6 @@ public:
     virtual bool onKeyReleaseEvent(SceneWidgetEvent* event);
     virtual void onFocusChanged(SceneWidgetEvent* event, bool on);
     virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu);
-    virtual bool onUndoRequest();
-    virtual bool onRedoRequest();
 
     // deprecated
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
@@ -42,6 +40,11 @@ public:
     virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event);
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on);
     virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu);
+
+    [[deprecated("Undo is not handled with SceneWidgetEditable")]]
+    virtual bool onUndoRequest();
+    [[deprecated("Redo is not handled with SceneWidgetEditable")]]
+    virtual bool onRedoRequest();
 };
 
 }

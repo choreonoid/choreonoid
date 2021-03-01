@@ -117,6 +117,7 @@ public:
     DragMode dragMode;
     SceneDragProjector dragProjector;
     bool isDragging;
+    bool dragged;
 
     weak_ref_ptr<SimulatorItem> activeSimulatorItem;
     Vector3 pointedLinkLocalPoint;
@@ -168,8 +169,6 @@ public:
     bool onScrollEvent(const SceneWidgetEvent& event);
     bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
     void onSceneModeChanged(const SceneWidgetEvent& event);
-    bool onUndoRequest();
-    bool onRedoRequest();
     void onDraggerDragStarted();
     void onDraggerDragged();
     void onDraggerDragFinished();
@@ -344,6 +343,7 @@ void EditableSceneBody::Impl::initialize()
 
     dragMode = DRAG_NONE;
     isDragging = false;
+    dragged = false;
     isEditMode = false;
     isFocused = false;
     isSelected = false;
@@ -479,8 +479,9 @@ void EditableSceneBody::Impl::updateModel()
         highlightedLink->enableHighlight(false);
         highlightedLink = nullptr;
     }
-    isDragging = false;
     dragMode = DRAG_NONE;
+    isDragging = false;
+    dragged = false;
     
     self->SceneBody::updateModel();
 }
@@ -752,11 +753,9 @@ void EditableSceneBody::Impl::makeLinkAttitudeLevel()
             T2.linear() = R2;
             T2.translation() = link->p();
 
-            bodyItem->beginKinematicStateEdit();
             if(ik->calcInverseKinematics(T2)){
                 bool fkDone = ik->calcRemainingPartForwardKinematicsForInverseKinematics();
-                bodyItem->notifyKinematicStateChange(!fkDone);
-                bodyItem->acceptKinematicStateEdit();
+                bodyItem->notifyKinematicStateUpdate(fkDone ? 0 : BodyItem::RequestFK);
             }
         }
     }
@@ -1020,20 +1019,24 @@ bool EditableSceneBody::Impl::finishEditing()
 {
     bool finished = false;
     
-    isDragging = false;
-    finished = true;
-
     if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
         finishVirtualElasticString();
+        finished = true;
+
     } else if(dragMode == LINK_FORCED_POSITION){
         finishForcedPosition();
+        finished = true;
+        
     } else if(dragMode != DRAG_NONE){
-        bodyItem->acceptKinematicStateEdit();
-    } else {
-        finished = false;
+        if(dragged){
+            bodyItem->notifyKinematicStateEdited();
+        }
+        finished = true;
     }
     
     dragMode = DRAG_NONE;
+    isDragging = false;
+    dragged = false;
 
     return finished;
 }
@@ -1089,6 +1092,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 
     bool handled = false;
     isDragging = false;
+    dragged = false;
 
     if(operationType == LinkOperationType::SimInterference){
         startLinkOperationDuringSimulation(event);
@@ -1202,7 +1206,6 @@ bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
         }
     } else {
         if(!isDragging){
-            bodyItem->beginKinematicStateEdit();
             isDragging = true;
         }
 
@@ -1422,36 +1425,13 @@ bool EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
 }
 
 
-bool EditableSceneBody::onUndoRequest()
-{
-    return impl->onUndoRequest();
-}
-
-
-bool EditableSceneBody::Impl::onUndoRequest()
-{
-    return bodyItem->undoKinematicState();
-}
-
-
-bool EditableSceneBody::onRedoRequest()
-{
-    return impl->onRedoRequest();
-}
-
-
-bool EditableSceneBody::Impl::onRedoRequest()
-{
-    return bodyItem->redoKinematicState();
-}
-
-
 void EditableSceneBody::Impl::onDraggerDragStarted()
 {
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(!activeSimulatorItem){
         initializeIK();
     }
+    dragged = false;
 }
 
 
@@ -1462,6 +1442,7 @@ void EditableSceneBody::Impl::onDraggerDragged()
         setForcedPosition(positionDragger->globalDraggingPosition());
     } else {
         doIK(positionDragger->globalDraggingPosition());
+        dragged = true;
     }
 }
 
@@ -1473,7 +1454,11 @@ void EditableSceneBody::Impl::onDraggerDragFinished()
         finishForcedPosition();
     } else {
         doIK(positionDragger->globalDraggingPosition());
+        if(dragged){
+            bodyItem->notifyKinematicStateEdited();
+        }
     }
+    dragged = false;
 }
 
 
@@ -1539,6 +1524,7 @@ void EditableSceneBody::Impl::dragIK(const SceneWidgetEvent& event)
             penetrationBlocker->adjust(T, T.translation() - targetLink->p());
         }
         doIK(T);
+        dragged = true;
     }
 }
 
@@ -1583,6 +1569,7 @@ void EditableSceneBody::Impl::dragFKRotation(const SceneWidgetEvent& event)
     if(dragProjector.dragRotation(event)){
         targetLink->q() = orgJointPosition + dragProjector.rotationAngle();
         bodyItem->notifyKinematicStateChange(true);
+        dragged = true;
     }
 }
 
@@ -1592,6 +1579,7 @@ void EditableSceneBody::Impl::dragFKTranslation(const SceneWidgetEvent& event)
     if(dragProjector.dragTranslation(event)){
         targetLink->q() = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
         bodyItem->notifyKinematicStateChange(true);
+        dragged = true;
     }
 }
 
@@ -1630,6 +1618,7 @@ void EditableSceneBody::Impl::startVirtualElasticString(const SceneWidgetEvent& 
         dragMode = LINK_VIRTUAL_ELASTIC_STRING;
         dragVirtualElasticString(event);
         markerGroup->addChildOnce(virtualElasticStringLine, update);
+        dragged = true;
     }
 }
 
@@ -1698,6 +1687,7 @@ void EditableSceneBody::Impl::dragForcedPosition(const SceneWidgetEvent& event)
         T.translation() = dragProjector.position().translation();
         T.linear() = targetLink->R();
         setForcedPosition(T);
+        dragged = true;
     }
 }
 
@@ -1729,6 +1719,7 @@ void EditableSceneBody::Impl::dragZmpTranslation(const SceneWidgetEvent& event)
         p.z() = dragProjector.initialPosition().translation().z();
         bodyItem->setZmp(p);
         bodyItem->notifyKinematicStateChange(true);
+        dragged = true;
     }
 }
 

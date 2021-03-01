@@ -27,8 +27,8 @@ public:
         interpolator = poseSeqItem->interpolator();
         bodyMotionGenerationBar = BodyMotionGenerationBar::instance();
 
-        poseSeqItem->sigUpdated().connect(std::bind(&PoseSeqEngine::notifyUpdate, this));
-        interpolator->sigUpdated().connect(std::bind(&PoseSeqEngine::notifyUpdate, this));
+        poseSeqItem->sigUpdated().connect([this](){ refresh(); });
+        interpolator->sigUpdated().connect([this](){ refresh(); });
     }
         
     virtual bool onTimeChanged(double time){
@@ -71,23 +71,18 @@ public:
 typedef ref_ptr<PoseSeqEngine> PoseSeqEnginePtr;
     
 
-TimeSyncItemEngine* createPoseSeqEngine(Item* sourceItem)
+TimeSyncItemEngine* createPoseSeqEngine(PoseSeqItem* item)
 {
-    PoseSeqEngine* engine = 0;
-    PoseSeqItem* poseSeqItem = dynamic_cast<PoseSeqItem*>(sourceItem);
-    if(poseSeqItem){
-        BodyItem* bodyItem = poseSeqItem->findOwnerItem<BodyItem>();
-        if(bodyItem){
-            engine = new PoseSeqEngine(poseSeqItem, bodyItem);
-        }
+    if(auto bodyItem = item->findOwnerItem<BodyItem>()){
+        return new PoseSeqEngine(item, bodyItem);
     }
-    return engine;
+    return nullptr;
 }
 
 }
 
 
-void cnoid::initializePoseSeqEngine(ExtensionManager* em)
+void cnoid::initializePoseSeqEngine()
 {
-    em->timeSyncItemEngineManger().addEngineFactory(createPoseSeqEngine);
+    TimeSyncItemEngineManager::instance()->registerFactory<PoseSeqItem>(createPoseSeqEngine);
 }

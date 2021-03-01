@@ -79,8 +79,6 @@ protected:
     virtual bool onKeyPressEvent(const SceneWidgetEvent& event) override;
     virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event) override;
     virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu) override;
-    virtual bool onUndoRequest() override;
-    virtual bool onRedoRequest() override;
 
 private:
     Impl* impl;

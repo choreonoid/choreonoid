@@ -127,10 +127,17 @@ void CoordinateFrameItem::Impl::onFrameUpdated(int flags)
 {
     bool nameChanged = false;
     if(flags & CoordinateFrame::IdUpdate){
-        nameChanged = self->setName(frame->id().label());
+        const auto& oldName = self->name();
+        const auto label = frame->id().label();
+        if(label != oldName){
+            self->setName(label);
+            nameChanged = true;
+        }
     }
     if(!nameChanged && (flags & CoordinateFrame::NoteUpdate)){
-        self->notifyNameChange();
+        if(frameLocation){
+            frameLocation->notifyAttributeChange();
+        }
     }
     if(flags & CoordinateFrame::PositionUpdate){
         sigLocationChanged();

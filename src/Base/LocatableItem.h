@@ -33,6 +33,7 @@ public:
     virtual bool isEditable() const;
     virtual void setEditable(bool on);
     virtual bool setLocation(const Isometry3& T);
+    virtual void finishLocationEditing();
     virtual Item* getCorrespondingItem();
     virtual LocationProxyPtr getParentLocationProxy() const;
     virtual void expire();

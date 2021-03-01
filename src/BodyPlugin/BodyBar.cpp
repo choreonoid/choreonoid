@@ -134,7 +134,6 @@ void BodyBar::Impl::doSymmetricCopy(BodyItem* bodyItem, int direction, bool doMi
 {
     const Listing& slinks = *bodyItem->body()->info()->findListing("symmetricJoints");
     if(slinks.isValid() && !slinks.empty()){
-        bodyItem->beginKinematicStateEdit();
         int from = direction;
         int to = 1 - direction;
         BodyPtr body = bodyItem->body();
@@ -163,7 +162,6 @@ void BodyBar::Impl::doSymmetricCopy(BodyItem* bodyItem, int direction, bool doMi
                 }
             }
         }
-        bodyItem->notifyKinematicStateChange(true);
-        bodyItem->acceptKinematicStateEdit();
+        bodyItem->notifyKinematicStateUpdate(BodyItem::RequestFK);
     }
 }

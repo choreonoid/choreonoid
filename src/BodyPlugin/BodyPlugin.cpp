@@ -2,6 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "BodySelectionManager.h"
+#include "BodyEditRecordManager.h"
 #include "WorldItem.h"
 #include "BodyItem.h"
 #include "LinkOffsetFrameListItem.h"
@@ -28,7 +30,6 @@
 #include "BodyElementOverwriteItem.h"
 #include "LinkShapeOverwriteItem.h"
 #include "DeviceOverwriteItem.h"
-#include "BodySelectionManager.h"
 #include "KinematicFaultChecker.h"
 #include "SplineFilterDialog.h"
 #include "LinkDeviceListView.h"
@@ -85,6 +86,7 @@ public:
         Body::addCustomizerDirectory(toUTF8(customizerPath.string()));
 
         BodySelectionManager::initializeClass(this);
+        BodyEditRecordManager::initializeClass(this);
 
         WorldItem::initializeClass(this);
         BodyItem::initializeClass(this);
@@ -110,9 +112,10 @@ public:
         BodyElementOverwriteItem::initializeClass(this);
         LinkShapeOverwriteItem::initializeClass(this);
         DeviceOverwriteItem::initializeClass(this);
+        CollisionSeqItem::initislizeClass(this);
 
         BodyMotionEngine::initializeClass(this);
-        CollisionSeqEngine::initializeClass(this);
+        CollisionSeqEngine::initializeClass();
         KinematicFaultChecker::initializeClass(this);
         initializeSplineFilterDialog(this);
 
@@ -138,8 +141,6 @@ public:
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
         BodyLinkView::initializeClass(this);
-
-        CollisionSeqItem::initislizeClass(this);
 
         initializeHrpsysFileIO(this);
 

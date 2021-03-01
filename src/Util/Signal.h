@@ -254,6 +254,26 @@ public:
         }
         return *this;
     }
+
+    class ScopedBlock {
+        Connection* pConnection;
+    public:
+        ScopedBlock(Connection& connection)
+            : pConnection(&connection) {
+            connection.block();
+        }
+        ScopedBlock(ScopedBlock&& org) : pConnection(org.pConnection){
+            org.pConnection = nullptr;
+        }
+        ScopedBlock(const ScopedBlock&) = delete;
+        ScopedBlock& operator=(const ScopedBlock&) = delete;
+        ~ScopedBlock(){
+            if(pConnection){
+                pConnection->unblock();
+            }
+        }
+    };
+    ScopedBlock scopedBlock(){ return ScopedBlock(*this); }
 };
 
 

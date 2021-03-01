@@ -126,6 +126,7 @@ public:
     void onXyzChanged();
     void onRpyChanged();
     void onQuatChanged();
+    void onOperationFinished();
     void setPosture(Matrix3 R);
     void doInverseKinematics(Vector3 p, Matrix3 R);
     void onZmpXyzChanged();
@@ -269,17 +270,21 @@ void BodyLinkView::Impl::setupWidgets()
 
     for(int i=0; i < 3; ++i){
         grid->addWidget(new QLabel(xyzLabels[i], frame), 0, i, Qt::AlignCenter);
-        grid->addWidget(&xyzSpin[i], 1, i);
 
-        //xyzSpin[i].set_width_chars(7);
-        xyzSpin[i].setAlignment(Qt::AlignCenter);
-        xyzSpin[i].setDecimals(4);
-        xyzSpin[i].setRange(-99.9999, 99.9999);
-        xyzSpin[i].setSingleStep(0.0001);
-        
+        auto& spin = xyzSpin[i];
+        spin.setUndoRedoKeyInputEnabled(true);
+        spin.setAlignment(Qt::AlignCenter);
+        spin.setDecimals(4);
+        spin.setRange(-99.9999, 99.9999);
+        spin.setSingleStep(0.0001);
+        grid->addWidget(&spin, 1, i);
+
         stateWidgetConnections.add(
-            xyzSpin[i].sigValueChanged().connect(
+            spin.sigValueChanged().connect(
                 [&](double){ onXyzChanged(); }));
+        stateWidgetConnections.add(
+            spin.sigEditingFinishedWithValueChange().connect(
+                [&](){ onOperationFinished(); }));
     }
 
     grid = new QGridLayout();
@@ -289,16 +294,21 @@ void BodyLinkView::Impl::setupWidgets()
     for(int i=0; i < 3; ++i){
         rpyLabels[i] = new QLabel(rpyLabelChar[i], frame);
         grid->addWidget(rpyLabels[i], 2, i, Qt::AlignCenter);
-        grid->addWidget(&rpySpin[i], 3, i);
 
-        rpySpin[i].setAlignment(Qt::AlignCenter);
-        rpySpin[i].setDecimals(1);
-        rpySpin[i].setRange(-360.0, 360.0);
-        rpySpin[i].setSingleStep(0.1);
+        auto& spin = rpySpin[i];
+        spin.setUndoRedoKeyInputEnabled(true);
+        spin.setAlignment(Qt::AlignCenter);
+        spin.setDecimals(1);
+        spin.setRange(-360.0, 360.0);
+        spin.setSingleStep(0.1);
+        grid->addWidget(&spin, 3, i);
 
         stateWidgetConnections.add(
-            rpySpin[i].sigValueChanged().connect(
+            spin.sigValueChanged().connect(
                 [&](double){ onRpyChanged(); }));
+        stateWidgetConnections.add(
+            spin.sigEditingFinishedWithValueChange().connect(
+                [&](){ onOperationFinished(); }));
     }
 
     grid = new QGridLayout();
@@ -308,16 +318,22 @@ void BodyLinkView::Impl::setupWidgets()
     for(int i=0; i< 4; ++i){
         quatLabels[i] = new QLabel(quatLabelChar[i], frame);
         grid->addWidget(quatLabels[i], 2, i, Qt::AlignCenter);
-        grid->addWidget(&quatSpin[i], 3, i);
 
-        quatSpin[i].setAlignment(Qt::AlignCenter);
-        quatSpin[i].setDecimals(4);
-        quatSpin[i].setRange(-1.0000, 1.0000);
-        quatSpin[i].setSingleStep(0.0001);
+        auto& spin = quatSpin[i];
+        spin.setUndoRedoKeyInputEnabled(true);
+        spin.setAlignment(Qt::AlignCenter);
+        spin.setDecimals(4);
+        spin.setRange(-1.0000, 1.0000);
+        spin.setSingleStep(0.0001);
+        grid->addWidget(&spin, 3, i);
 
         stateWidgetConnections.add(
-            quatSpin[i].sigValueChanged().connect(
+            spin.sigValueChanged().connect(
                 [&](double){ onQuatChanged(); }));
+        stateWidgetConnections.add(
+            spin.sigEditingFinishedWithValueChange().connect(
+                [&](){ onOperationFinished(); }));
+        
         quatLabels[i]->hide();
         quatSpin[i].hide();
     }
@@ -364,8 +380,11 @@ void BodyLinkView::Impl::setupWidgets()
     vbox->addLayout(hbox);
     hbox->addStretch();
     hbox->addWidget(&qMinLabel);
+
+    qSpin.setUndoRedoKeyInputEnabled(true);
     qSpin.setAlignment(Qt::AlignCenter);
     hbox->addWidget(&qSpin);
+    
     hbox->addWidget(&qMaxLabel);
     hbox->addStretch();
 
@@ -375,10 +394,16 @@ void BodyLinkView::Impl::setupWidgets()
     stateWidgetConnections.add(
         qSpin.sigValueChanged().connect(
             [&](double value){ on_qSpinChanged(value); }));
+    stateWidgetConnections.add(
+        qSpin.sigEditingFinishedWithValueChange().connect(
+            [&](){ onOperationFinished(); }));
     
     stateWidgetConnections.add(
         qSlider.sigValueChanged().connect(
             [&](double value){ on_qSliderChanged(value);}));
+    stateWidgetConnections.add(
+        qSlider.sigSliderReleased().connect(
+            [&](){ onOperationFinished(); }));
 
     topVBox->addSpacing(4);
     
@@ -888,6 +913,14 @@ void BodyLinkView::Impl::onQuatChanged()
 }
 
 
+void BodyLinkView::Impl::onOperationFinished()
+{
+    if(currentBodyItem){
+        currentBodyItem->notifyKinematicStateEdited();
+    }
+}
+
+
 void BodyLinkView::Impl::setPosture(Matrix3 R)
 {
     SimulatorItem* activeSimulator = SimulatorItem::findActiveSimulatorItemFor(currentBodyItem);
@@ -912,8 +945,6 @@ void BodyLinkView::Impl::doInverseKinematics(Vector3 p, Matrix3 R)
     auto ik = currentBodyItem->getCurrentIK(currentLink);
 
     if(ik){
-        currentBodyItem->beginKinematicStateEdit();
-
         Isometry3 T0 = currentLink->T();
 
         if(KinematicsBar::instance()->isPenetrationBlockMode()){
@@ -947,7 +978,6 @@ void BodyLinkView::Impl::doInverseKinematics(Vector3 p, Matrix3 R)
         if(doNotifyKinematicStateChange){
             bool fkDone = ik->calcRemainingPartForwardKinematicsForInverseKinematics();
             currentBodyItem->notifyKinematicStateChange(!fkDone);
-            currentBodyItem->acceptKinematicStateEdit();
         }
     }
 }

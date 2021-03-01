@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-17 13:15+0900\n"
+"POT-Creation-Date: 2021-02-24 23:21+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -232,63 +232,63 @@ msgstr "ツリー"
 msgid "Grouped Tree"
 msgstr "グループ化ツリー"
 
-#: EditableSceneBody.cpp:1343
+#: EditableSceneBody.cpp:1347
 msgid "Lock location"
 msgstr "配置ロック"
 
-#: EditableSceneBody.cpp:1351
+#: EditableSceneBody.cpp:1355
 msgid "Move Forcibly"
 msgstr "強制移動"
 
-#: EditableSceneBody.cpp:1356
+#: EditableSceneBody.cpp:1360
 msgid "Hold Forcibly"
 msgstr "強制保持"
 
-#: EditableSceneBody.cpp:1364
+#: EditableSceneBody.cpp:1368
 msgid "Set Free"
 msgstr "フリーに"
 
-#: EditableSceneBody.cpp:1366
+#: EditableSceneBody.cpp:1370
 msgid "Set Base"
 msgstr "ベースに"
 
-#: EditableSceneBody.cpp:1368
+#: EditableSceneBody.cpp:1372
 msgid "Set Translation Pin"
 msgstr "並進ピンをセット"
 
-#: EditableSceneBody.cpp:1370
+#: EditableSceneBody.cpp:1374
 msgid "Set Rotation Pin"
 msgstr "回転ピンをセット"
 
-#: EditableSceneBody.cpp:1372
+#: EditableSceneBody.cpp:1376
 msgid "Set Both Pins"
 msgstr "両方のピンをセット"
 
-#: EditableSceneBody.cpp:1377
+#: EditableSceneBody.cpp:1381
 msgid "Level Attitude"
 msgstr "水平姿勢に"
 
-#: EditableSceneBody.cpp:1383
+#: EditableSceneBody.cpp:1387
 msgid "Markers"
 msgstr "マーカー"
 
-#: EditableSceneBody.cpp:1385
+#: EditableSceneBody.cpp:1389
 msgid "Link Origins"
 msgstr "リンク原点"
 
-#: EditableSceneBody.cpp:1406
+#: EditableSceneBody.cpp:1410
 msgid "Center of Mass"
 msgstr "重心"
 
-#: EditableSceneBody.cpp:1410
+#: EditableSceneBody.cpp:1414
 msgid "Projection Point of CoM"
 msgstr "重心投影点"
 
-#: EditableSceneBody.cpp:1414
+#: EditableSceneBody.cpp:1418
 msgid "ZMP"
 msgstr "ZMP"
 
-#: EditableSceneBody.cpp:1792
+#: EditableSceneBody.cpp:1778
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
@@ -530,35 +530,43 @@ msgstr "透視投影"
 msgid "Orthographic"
 msgstr "並行投影"
 
-#: BodyTrackingCameraItem.cpp:355
+#: BodyTrackingCameraItem.cpp:353
 msgid "Target link"
 msgstr "対象リンク"
 
-#: BodyTrackingCameraItem.cpp:357
+#: BodyTrackingCameraItem.cpp:355
 msgid "Keep relative attitude"
 msgstr "姿勢保持"
 
-#: BodyTrackingCameraItem.cpp:359
+#: BodyTrackingCameraItem.cpp:357
 msgid "Camera type"
 msgstr "カメラ タイプ"
 
-#: BodyTrackingCameraItem.cpp:361
+#: BodyTrackingCameraItem.cpp:359
 msgid "Near clip distance"
 msgstr "近クリッピング距離"
 
-#: BodyTrackingCameraItem.cpp:363
+#: BodyTrackingCameraItem.cpp:361
 msgid "Far clip distance"
 msgstr "遠クリッピング距離"
 
-#: BodyTrackingCameraItem.cpp:365
+#: BodyTrackingCameraItem.cpp:363
 msgid "field Of View"
 msgstr "視野角"
+
+#: BodyEditRecordManager.cpp:190
+msgid "Change the position of \"{0}\""
+msgstr "\"{0}\" のポジションを変更"
+
+#: BodyEditRecordManager.cpp:192
+msgid "Restore the position of \"{0}\""
+msgstr "\"{0}\" のポジションの取り戻し"
 
 #: DeviceOverwriteItem.cpp:204
 msgid "DeviceOverwriteItem"
 msgstr "デバイスオーバーライトアイテム"
 
-#: DeviceOverwriteItem.cpp:579 LinkShapeOverwriteItem.cpp:434
+#: DeviceOverwriteItem.cpp:580 LinkShapeOverwriteItem.cpp:435
 msgid "The target body item of \"{0}\" is not found."
 msgstr "\"{0}\" の対象アイテムがみつかりません．"
 
@@ -820,7 +828,7 @@ msgstr ""
 msgid "OFF"
 msgstr ""
 
-#: BodyPlugin.cpp:160
+#: BodyPlugin.cpp:162
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -842,35 +850,35 @@ msgstr "球"
 msgid "Axes"
 msgstr "座標軸"
 
-#: BodyMarkerItem.cpp:257
+#: BodyMarkerItem.cpp:255
 msgid "Target link \"{0}\" of \"{1}\" is not found."
 msgstr "\"{1}\"の対象リンク\"{0}\"がみつかりません．"
 
-#: BodyMarkerItem.cpp:266
+#: BodyMarkerItem.cpp:264
 msgid "Target node \"{0}\" of \"{1}\" is not found."
 msgstr "\"{1}\"の対象ノード\"{0}\"がみつかりません．"
 
-#: BodyMarkerItem.cpp:355
+#: BodyMarkerItem.cpp:353
 msgid "Marker type"
 msgstr "マーカタイプ"
 
-#: BodyMarkerItem.cpp:358
+#: BodyMarkerItem.cpp:356
 msgid "Link"
 msgstr "リンク"
 
-#: BodyMarkerItem.cpp:361
+#: BodyMarkerItem.cpp:359
 msgid "Node"
 msgstr "ノード"
 
-#: BodyMarkerItem.cpp:364
+#: BodyMarkerItem.cpp:362
 msgid "Translation"
 msgstr "位置"
 
-#: BodyMarkerItem.cpp:386
+#: BodyMarkerItem.cpp:384
 msgid "Size"
 msgstr "サイズ"
 
-#: BodyMarkerItem.cpp:389
+#: BodyMarkerItem.cpp:387
 msgid "Color"
 msgstr "色"
 
@@ -958,7 +966,7 @@ msgstr "関節空間形態"
 msgid "{} configuration"
 msgstr "{}の形態"
 
-#: LinkPositionWidget.cpp:1057 LinkPositionWidget.cpp:1194
+#: LinkPositionWidget.cpp:1057 LinkPositionWidget.cpp:1191
 msgid "Not Solved"
 msgstr "解無し"
 
@@ -966,7 +974,7 @@ msgstr "解無し"
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionWidget.cpp:1190
+#: LinkPositionWidget.cpp:1188
 msgid "Solved"
 msgstr "解有り"
 
@@ -978,7 +986,7 @@ msgstr "リンク形状オーバーライトアイテム"
 msgid "Shape ({0})"
 msgstr "形状 ({0})"
 
-#: LinkShapeOverwriteItem.cpp:446
+#: LinkShapeOverwriteItem.cpp:447
 msgid "The target link \"{0}\" of \"{1}\" is not found."
 msgstr "\"{1}\" の対象リンク \"{0}\" がみつかりません．"
 
@@ -1362,7 +1370,7 @@ msgstr "マテリアルテーブル \"{}\" を読み込み直しました．"
 msgid "Reloading material table \"{}\" failed."
 msgstr "マテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:562 BodyItem.cpp:1697
+#: WorldItem.cpp:562 BodyItem.cpp:1552
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -1378,75 +1386,75 @@ msgstr "接触マテリアル定義ファイル (*.yaml)"
 msgid "Material table"
 msgstr "マテリアルテーブル"
 
-#: BodyItem.cpp:215
+#: BodyItem.cpp:204
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1552
+#: BodyItem.cpp:1407
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1611
+#: BodyItem.cpp:1466
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1688
+#: BodyItem.cpp:1543
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1689
+#: BodyItem.cpp:1544
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1690
+#: BodyItem.cpp:1545
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1691
+#: BodyItem.cpp:1546
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1692
+#: BodyItem.cpp:1547
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1693
+#: BodyItem.cpp:1548
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1694 LinkPropertyView.cpp:120
+#: BodyItem.cpp:1549 LinkPropertyView.cpp:120
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1695
+#: BodyItem.cpp:1550
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1699
+#: BodyItem.cpp:1554
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1701
+#: BodyItem.cpp:1556
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1703
+#: BodyItem.cpp:1558
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1706
+#: BodyItem.cpp:1561
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1710
+#: BodyItem.cpp:1565
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1879
+#: BodyItem.cpp:1734
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1896
+#: BodyItem.cpp:1751
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1876,15 +1884,3 @@ msgstr "関節速度下限"
 #: LinkPropertyView.cpp:130
 msgid "Joint inertia"
 msgstr "関節慣性"
-
-#~ msgid "Mesh output mode:"
-#~ msgstr "メッシュ出力モード："
-
-#~ msgid "Vertex precision:"
-#~ msgstr "頂点精度："
-
-#~ msgid "Original"
-#~ msgstr "オリジナル"
-
-#~ msgid "Converted (OBJ)"
-#~ msgstr "変換（OBJ）"

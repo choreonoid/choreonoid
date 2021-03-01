@@ -15,9 +15,10 @@
 #include "CollisionSeqEngine.h"
 #include <cnoid/ExtensionManager>
 #include <cnoid/ItemManager>
+#include <cnoid/MenuManager>
+#include <cnoid/TimeSyncItemEngine>
 #include <cnoid/RootItem>
 #include <cnoid/ItemTreeView>
-#include <cnoid/MenuManager>
 #include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
 #include <cnoid/AppUtil>
@@ -340,7 +341,6 @@ public:
     bool restore(const Archive& archive);
     void restoreBodyMotionEngines(const Archive& archive);
     void addBodyMotionEngine(BodyMotionItem* motionItem);
-    bool setPlaybackTime(double time);
     void addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem);
 
     // Functions defined in the ControllerIO class
@@ -353,55 +353,19 @@ public:
 };
 
 
-class SimulatedMotionEngineManager
+class SimulatedMotionEngine : public TimeSyncItemEngine
 {
 public:
-    ItemList<SimulatorItem> simulatorItems;
-    ScopedConnection selectionConnection;
-    ScopedConnection timeChangeConnection;
+    SimulatorItem::Impl* simulatorItemImpl;
 
-    SimulatedMotionEngineManager()
-    {
-        selectionConnection.reset(
-            RootItem::instance()->sigSelectedItemsChanged().connect(
-                [&](const ItemList<>& selected){ onSelectedItemsChanged(selected); }));
-    }
+    SimulatedMotionEngine(SimulatorItem::Impl* simulatorItemImpl)
+        : simulatorItemImpl(simulatorItemImpl) { }
+    virtual void onPlaybackStarted(double /* time */) override;
+    virtual bool onTimeChanged(double time) override;
+    virtual void onPlaybackStopped(double time, bool isStoppedManually) override;
+    void notifyKinematicStateEdited();
+};    
 
-    void onSelectedItemsChanged(ItemList<SimulatorItem> selected)
-    {
-        bool changed = false;
-        
-        if(selected.empty()){
-            auto p = simulatorItems.begin();
-            while(p != simulatorItems.end()){
-                if((*p)->isRunning() && (*p)->findRootItem()){
-                    ++p;
-                } else {
-                    p = simulatorItems.erase(p);
-                    changed = true;
-                }
-            }
-        } else {
-            if(simulatorItems != selected){
-                simulatorItems = selected;
-                changed = true;
-            }
-        }
-        if(changed){
-            if(simulatorItems.empty()){
-                timeChangeConnection.disconnect();
-            } else {
-                auto timeBar = TimeBar::instance();
-                timeChangeConnection.reset(
-                    timeBar->sigTimeChanged().connect(
-                        [&](double time){ return setTime(time); }));
-                setTime(timeBar->time());
-            }
-        }
-    }
-
-    bool setTime(double time);
-};
         
 }
 
@@ -484,7 +448,10 @@ public:
 void SimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerAbstractClass<SimulatorItem>();
-    ext->manage(new SimulatedMotionEngineManager());
+
+    TimeSyncItemEngineManager::instance()->registerFactory<SimulatorItem>(
+        [](SimulatorItem* item){ return new SimulatedMotionEngine(item->impl); });
+
 
     ItemTreeView::instance()->customizeContextMenu<SimulatorItem>(
         [](SimulatorItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
@@ -2923,29 +2890,44 @@ void SimulatorItem::Impl::addCollisionSeqEngine(CollisionSeqItem* collisionSeqIt
 }
 
 
-bool SimulatorItem::Impl::setPlaybackTime(double time)
+void SimulatedMotionEngine::onPlaybackStarted(double /* time */)
+{
+    notifyKinematicStateEdited();
+}
+
+
+bool SimulatedMotionEngine::onTimeChanged(double time)
 {
     bool processed = false;
-    if(!bodyMotionEngines.empty()){
-        for(auto& engine : bodyMotionEngines){
+    auto& si = simulatorItemImpl;
+    if(!si->bodyMotionEngines.empty()){
+        for(auto& engine : si->bodyMotionEngines){
             processed |= engine->onTimeChanged(time);
         }
-    } else if(worldLogFileItem){
-        processed |= worldLogFileItem->recallStateAtTime(time);
+    } else if(si->worldLogFileItem){
+        processed |= si->worldLogFileItem->recallStateAtTime(time);
     }
-    if(collisionSeqEngine){
-        processed |= collisionSeqEngine->onTimeChanged(time);
+    if(si->collisionSeqEngine){
+        processed |= si->collisionSeqEngine->onTimeChanged(time);
     }
-
     return processed;
 }
 
 
-bool SimulatedMotionEngineManager::setTime(double time)
+void SimulatedMotionEngine::onPlaybackStopped(double /* time */, bool /* isStoppedManually */)
 {
-    bool isActive = false;
-    for(size_t i=0; i < simulatorItems.size(); ++i){
-        isActive |= simulatorItems[i]->impl->setPlaybackTime(time);
+    notifyKinematicStateEdited();
+}
+
+
+void SimulatedMotionEngine::notifyKinematicStateEdited()
+{
+    auto& si = simulatorItemImpl;
+    if(si->worldItem){
+        for(auto& bodyItem : si->worldItem->descendantItems<BodyItem>()){
+            if(!bodyItem->body()->isStaticModel()){
+                bodyItem->notifyKinematicStateEdited();
+            }
+        }
     }
-    return isActive;
 }

@@ -115,15 +115,14 @@ Item* MprProgramItemBase::doDuplicate() const
 }
 
 
-bool MprProgramItemBase::setName(const std::string& name)
+bool MprProgramItemBase::setName(const std::string& name_)
 {
-    bool updated = Item::setName(name);
-    if(name != impl->topLevelProgram->name()){
-        impl->topLevelProgram->setName(name);
+    if(name_ != impl->topLevelProgram->name()){
+        impl->topLevelProgram->setName(name_);
+        Item::setName(name_);
         suggestFileUpdate();
-        updated = true;
     }
-    return updated;
+    return true;
 }
 
 
@@ -267,7 +266,7 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll)
     updated = position->apply(kinematicsKit);
     if(updated){
         if(doUpdateAll){
-            targetBodyItem->notifyKinematicStateChange();
+            targetBodyItem->notifyKinematicStateUpdate();
         }
     } else {
         if(doUpdateAll && ikPosition){

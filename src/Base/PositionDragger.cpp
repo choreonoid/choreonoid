@@ -12,7 +12,6 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
 #include <bitset>
-#include <deque>
 #include <array>
 #include <unordered_map>
 
@@ -135,7 +134,6 @@ public:
     bool isContainerMode;
     bool isDragEnabled;
     bool isContentsDragEnabled;
-    bool isUndoEnabled;
     bool hasOffset;
     Isometry3 T_parent;
     Isometry3 T_offset;
@@ -151,7 +149,6 @@ public:
     Signal<void()> sigDragStarted;
     Signal<void()> sigPositionDragged;
     Signal<void()> sigDragFinished;
-    std::deque<Isometry3> history;
 
     Impl(PositionDragger* self, int mode, int axes);
     SgNode* createHandle(double widthRatio);
@@ -171,7 +168,6 @@ public:
         const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet);
     bool onRotationDraggerPressed(
         const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet);
-    void storeCurrentPositionToHistory();
 };
 
 }
@@ -285,7 +281,6 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     isContainerMode = false;
     isDragEnabled = true;
     isContentsDragEnabled = true;
-    isUndoEnabled = false;
 
     hasOffset = false;
     T_offset.setIdentity();
@@ -967,7 +962,6 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     }
 
     if(processed){
-        storeCurrentPositionToHistory();
         sigDragStarted();
     } else {
         dragProjector.resetDragMode();
@@ -1093,48 +1087,20 @@ void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
 }
 
 
-void PositionDragger::storeCurrentPositionToHistory()
+void PositionDragger::setUndoEnabled(bool /* on */)
 {
-    impl->storeCurrentPositionToHistory();
-}
 
-
-void PositionDragger::Impl::storeCurrentPositionToHistory()
-{
-    if(isUndoEnabled){
-        history.push_back(self->position());
-        if(history.size() > 10){
-            history.pop_front();
-        }
-    }
-}
-
-
-void PositionDragger::setUndoEnabled(bool on)
-{
-    impl->isUndoEnabled = on;
 }
 
 
 bool PositionDragger::isUndoEnabled() const
 {
-    return impl->isUndoEnabled;
+    return false;
 }
 
 
-bool PositionDragger::onUndoRequest()
+void PositionDragger::storeCurrentPositionToHistory()
 {
-    if(!impl->history.empty()){
-        const Isometry3& T = impl->history.back();
-        setPosition(T);
-        impl->history.pop_back();
-        notifyUpdate();
-    }
-    return true;
+
 }
 
-
-bool PositionDragger::onRedoRequest()
-{
-    return true;
-}

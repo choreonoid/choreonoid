@@ -37,7 +37,7 @@ public:
         
     MultiDeviceStateSeqEngine(MultiDeviceStateSeqItem* seqItem, BodyItem* bodyItem)
         : seq(seqItem->seq()), body(bodyItem->body()) {
-        seqItem->sigUpdated().connect(std::bind(&TimeSyncItemEngine::notifyUpdate, this));
+        seqItem->sigUpdated().connect([this](){ refresh(); });
     }
 
     virtual bool onTimeChanged(double time){

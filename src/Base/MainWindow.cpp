@@ -9,6 +9,7 @@
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "TimeBar.h"
+#include "UnifiedEditHistory.h"
 #include <QResizeEvent>
 #include <QWindowStateChangeEvent>
 #include <QApplication>
@@ -580,6 +581,16 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 void MainWindow::Impl::keyPressEvent(QKeyEvent* event)
 {
     switch(event->key()){
+
+    case Qt::Key_Z:
+        if(event->modifiers() & Qt::ControlModifier){
+            if(event->modifiers() & Qt::ShiftModifier){
+                UnifiedEditHistory::instance()->redo();
+            } else {
+                UnifiedEditHistory::instance()->undo();
+            }
+        }
+        break;
         
     case Qt::Key_F11:
         fullScreenCheck->toggle();

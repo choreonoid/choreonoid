@@ -67,8 +67,6 @@ public:
     virtual bool onScrollEvent(const SceneWidgetEvent& event) override;
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on) override;
     virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
-    virtual bool onUndoRequest() override;
-    virtual bool onRedoRequest() override;
 
 protected:
     virtual ~EditableSceneBody();

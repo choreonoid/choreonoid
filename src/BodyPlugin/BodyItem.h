@@ -86,12 +86,12 @@ public:
     void getInitialState(BodyState& out_state);
     void setInitialState(const BodyState& in_state);
 
-    // for undo, redo operations
+    [[deprecated("This function does nothing.")]]
     void beginKinematicStateEdit();
+    [[deprecated("This function does nothing.")]]
     void cancelKinematicStateEdit();
+    [[deprecated("Use notifyKinematicStateEdited")]]
     void acceptKinematicStateEdit();
-    bool undoKinematicState();
-    bool redoKinematicState();
 
     LinkKinematicsKit* findPresetLinkKinematicsKit(Link* targetLink = nullptr);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
@@ -125,6 +125,12 @@ public:
         bool requestFK = false, bool requestVelFK = false, bool requestAccFK = false);
     
     SignalProxy<void()> sigKinematicStateEdited();
+    void notifyKinematicStateEdited();
+
+    enum KinematicStateUpdateFlag { RequestFK = 1 };
+
+    // Emit bodth sigKinematicStateChanged and sigKinematicStateEdited
+    void notifyKinematicStateUpdate(int updateFlags = 0);
 
     bool isCollisionDetectionEnabled() const;
     void setCollisionDetectionEnabled(bool on);

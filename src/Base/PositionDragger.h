@@ -77,8 +77,11 @@ public:
     DisplayMode displayMode() const;
     void setDisplayMode(DisplayMode mode, SgUpdateRef update = nullptr);
 
+    [[deprecated("This function does nothing.")]]
     void setUndoEnabled(bool on);
+    [[deprecated("This function always returns false.")]]
     bool isUndoEnabled() const;
+    [[deprecated("This function does nothing.")]]
     void storeCurrentPositionToHistory();
 
     bool isDragEnabled() const;
@@ -102,8 +105,6 @@ public:
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on) override;
-    virtual bool onUndoRequest() override;
-    virtual bool onRedoRequest() override;
 
     // Thw following functions are deprecated. Use displayMode and setDisplayMode instead.
     [[deprecated("Use setDisplayMode.")]]

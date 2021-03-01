@@ -12,14 +12,13 @@
 namespace cnoid {
 
 class WorldItem;
-class ExtensionManager;
 class CollisionSeqEngineImpl;
 class CollisionSeqItem;
 
 class CNOID_EXPORT CollisionSeqEngine : public TimeSyncItemEngine
 {
 public:
-    static void initializeClass(ExtensionManager* ext);
+    static void initializeClass();
 
     CollisionSeqEngine(WorldItem* worldItem, CollisionSeqItem* collisionSeqItem);
     ~CollisionSeqEngine();

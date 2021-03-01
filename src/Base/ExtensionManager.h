@@ -17,7 +17,6 @@ class ToolBar;
 class Archive;
 class ItemManager;
 class ViewManager;
-class TimeSyncItemEngineManager;
 class MenuManager;
 class OptionManager;
 
@@ -33,7 +32,6 @@ public:
     const std::string& textDomain() const;
 
     ItemManager& itemManager();
-    TimeSyncItemEngineManager& timeSyncItemEngineManger();
     ViewManager& viewManager();
     MenuManager& menuManager();
     OptionManager& optionManager();

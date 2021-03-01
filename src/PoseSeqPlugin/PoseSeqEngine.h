@@ -2,14 +2,13 @@
     \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_CHOREOGRAPY_PLUGIN_POSE_SEQ_ENGINE_H_INCLUDED
-#define CNOID_CHOREOGRAPY_PLUGIN_POSE_SEQ_ENGINE_H_INCLUDED
-
-#include <cnoid/ExtensionManager>
+#ifndef CNOID_POSESEQ_PLUGIN_POSE_SEQ_ENGINE_H
+#define CNOID_POSESEQ_PLUGIN_POSE_SEQ_ENGINE_H
 
 namespace cnoid {
-void initializePoseSeqEngine(ExtensionManager* em);
+
+void initializePoseSeqEngine();
+
 }
 
 #endif
-

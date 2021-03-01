@@ -16,7 +16,6 @@
 #include "NullOut.h"
 #include "EigenUtil.h"
 #include <fmt/format.h>
-#include <boost/algorithm/string.hpp>
 #include <tuple>
 
 using namespace std;
