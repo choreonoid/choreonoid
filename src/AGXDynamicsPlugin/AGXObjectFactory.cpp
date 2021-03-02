@@ -1,4 +1,5 @@
 #include "AGXObjectFactory.h"
+#include "AGXBody.h"
 #include <agx/version.h>
 
 namespace cnoid{
@@ -59,7 +60,9 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
     auto bulk = m->getBulkMaterial();
     bulk->setDensity(desc.density);
     bulk->setYoungsModulus(desc.youngsModulus);
-    bulk->setPoissonsRatio(desc.poissonRatio);
+
+    // The setPoissonsRatio function is deprecated and it does nothing
+    //bulk->setPoissonsRatio(desc.poissonRatio);
 
     // Below are overried when ContactMaterials are used.
     bulk->setViscosity(desc.viscosity);
@@ -98,9 +101,9 @@ agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContact
     return cm;
 }
 
-agx::RigidBodyRef AGXObjectFactory::createRigidBody(const AGXRigidBodyDesc& desc)
+LinkRigidBodyRef AGXObjectFactory::createLinkRigidBody(const AGXRigidBodyDesc& desc, Link* link)
 {
-    agx::RigidBodyRef rigid = new agx::RigidBody();
+    LinkRigidBodyRef rigid = new LinkRigidBody(link);
     rigid->setMotionControl(desc.control);
     rigid->setVelocity(desc.v);
     rigid->setAngularVelocity(desc.w);

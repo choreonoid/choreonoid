@@ -171,11 +171,22 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 
     createAGXMaterialTable();
 
+    doUpdateLinkContactPoints = false;
+    
     for(auto simBody : simBodies){
-        AGXBody* body = static_cast<AGXBody*>(simBody);
+        AGXBody* agxBody = static_cast<AGXBody*>(simBody);
         // Create rigidbody, geometry, constraints
-        body->createBody(agxScene);
-        body->setSensor(self->worldTimeStep(), g);
+        agxBody->createBody(agxScene);
+        agxBody->setSensor(self->worldTimeStep(), g);
+
+        if(!doUpdateLinkContactPoints){
+            for(auto& link : agxBody->body()->links()){
+                if(link->sensingMode() & Link::LinkContactState){
+                    doUpdateLinkContactPoints = true;
+                    break;
+                }
+            }
+        }
     }
 
     setAdditionalAGXMaterialParam();
@@ -350,7 +361,7 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
     agx::Notify::instance()->setNotifyLevel(agxNotifyLevel.at(m_p_debugMessageOnConsoleType.selectedSymbol()));
 
     for(auto simBody : activeSimBodies){
-        auto const agxBody = dynamic_cast<AGXBody*>(simBody);
+        auto const agxBody = static_cast<AGXBody*>(simBody);
         agxBody->setControlInputToAGX();
         agxBody->addForceTorqueToAGX();
     }
@@ -358,14 +369,60 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
     agxScene->stepSimulation();
 
     for(auto simBody : activeSimBodies){
-        auto const agxBody = dynamic_cast<AGXBody*>(simBody);
+        auto const agxBody = static_cast<AGXBody*>(simBody);
         agxBody->setLinkStateToCnoid();
 
         // Update sensors
         if(agxBody->hasForceSensors())              agxBody->updateForceSensors();
         if(agxBody->hasGyroOrAccelerationSensors()) agxBody->updateGyroAndAccelerationSensors();
     }
+
+    if(doUpdateLinkContactPoints){
+        updateLinkContactPoints();
+    }
+    
     return true;
+}
+
+void AGXSimulatorItemImpl::updateLinkContactPoints()
+{
+    for(auto& contact : agxScene->getSimulation()->getSpace()->getGeometryContacts()){
+        if(contact->isEnabled()){
+            for(int i=0; i < 2; ++i){
+                if(auto linkRigidBody = dynamic_cast<LinkRigidBody*>(contact->rigidBody(i))){
+                    auto link = linkRigidBody->getLink();
+                    if(link->sensingMode() & Link::LinkContactState){
+                        updateLinkContactPoints(contact, link, (i == 0) ? 1.0 : -1.0);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+void AGXSimulatorItemImpl::updateLinkContactPoints
+(agxCollide::GeometryContact* contact, Link* link, double direction)
+{
+    auto& srcPoints = contact->points();
+    auto& points = link->contactPoints();
+    points.clear();
+    points.reserve(srcPoints.size());
+    for(auto& point : srcPoints){
+        if(point.enabled()){
+            Eigen::Map<Vector3> position(point.point().ptr());
+            Eigen::Map<Vector3f> normal(point.normal().ptr());
+            auto agxForce = point.getForce();
+            Eigen::Map<Vector3> force(agxForce.ptr());
+            Eigen::Map<Vector3f> velocity(point.velocity().ptr());
+            points.emplace_back(
+                position,
+                direction * normal.cast<double>(),
+                direction * force,
+                direction * velocity.cast<double>(),
+                point.depth());
+        }
+    }
 }
 
 void AGXSimulatorItemImpl::setGravity(const Vector3& g)

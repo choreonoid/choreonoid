@@ -149,9 +149,13 @@ void AGXLink::setAGXMaterialFromLinkInfo()
     double youngsModulus;
     if(mapping->read("youngsModulus", youngsModulus))
         mat->getBulkMaterial()->setYoungsModulus(youngsModulus);
+
+    /* This function is deprecated and it does nothing.
     double poissonRatio;
     if(mapping->read("poissonRatio", poissonRatio))
         mat->getBulkMaterial()->setPoissonsRatio(poissonRatio);
+    */
+    
     double viscosity;
     if(mapping->read("viscosity", viscosity))
         mat->getBulkMaterial()->setViscosity(viscosity);
@@ -239,7 +243,7 @@ void AGXLink::addForceTorqueToAGX()
 
 void AGXLink::setLinkStateToAGX()
 {
-    agx::RigidBodyRef const agxRigidBody = getAGXRigidBody();
+    auto agxRigidBody = getAGXRigidBody();
     if(!agxRigidBody) return;
     setLinkPositionToAGX();
     LinkPtr const orgLink = getOrgLink();
@@ -252,7 +256,7 @@ void AGXLink::setLinkStateToAGX()
 
 void AGXLink::setLinkStateToCnoid()
 {
-    agx::RigidBodyRef const agxRigidBody = getAGXRigidBody();
+    auto agxRigidBody = getAGXRigidBody();
     if(!agxRigidBody) return;
 
     // constraint
@@ -323,7 +327,7 @@ AGXLink* AGXLink::getAGXParentLink() const
     return _agxParentLink;
 }
 
-agx::RigidBody* AGXLink::getAGXRigidBody() const
+LinkRigidBody* AGXLink::getAGXRigidBody() const
 {
     return _rigid;
 }
@@ -353,7 +357,7 @@ AGXBody* AGXLink::getAGXBody()
     return _agxBody;
 }
 
-agx::RigidBodyRef AGXLink::createAGXRigidBody(const Isometry3& T)
+LinkRigidBodyRef AGXLink::createAGXRigidBody(const Isometry3& T)
 {
     LinkPtr orgLink = getOrgLink();
     const Vector3& v = orgLink->v(); 
@@ -379,7 +383,7 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody(const Isometry3& T)
 
     desc.enableAutoSleep = orgLink->info("autoSleep", desc.enableAutoSleep);
 
-    return AGXObjectFactory::createRigidBody(desc);
+    return AGXObjectFactory::createLinkRigidBody(desc, orgLink);
 }
 
 agxCollide::GeometryRef AGXLink::createAGXGeometry()
@@ -1144,13 +1148,13 @@ const AGXLinkPtrs& AGXBody::getControllableLinks() const
     return _controllableLinks;
 }
 
-agx::RigidBodyRef AGXBody::getAGXRigidBody(const int& index) const
+LinkRigidBodyRef AGXBody::getAGXRigidBody(const int& index) const
 {
     if(AGXLink* agxLink = getAGXLink(index)) return agxLink->getAGXRigidBody();
     return nullptr;
 }
 
-agx::RigidBody* AGXBody::getAGXRigidBody(const std::string& linkName) const
+LinkRigidBody* AGXBody::getAGXRigidBody(const std::string& linkName) const
 {
     if(AGXLink* agxLink = getAGXLink(linkName)) return agxLink->getAGXRigidBody();
     return nullptr;

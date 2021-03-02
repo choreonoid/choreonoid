@@ -8,6 +8,10 @@ namespace cnoid{
 
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
+class Link;
+class LinkRigidBody;
+typedef agx::ref_ptr<LinkRigidBody> LinkRigidBodyRef;
+
 struct AGXSimulationDesc
 {
     AGXSimulationDesc(){
@@ -415,7 +419,7 @@ public:
     static agx::MaterialRef createMaterial(const AGXMaterialDesc& desc);
     static agx::ContactMaterialRef createContactMaterial(agx::Material* const matA, agx::Material* const matB, const AGXContactMaterialDesc& desc);
     static agx::ContactMaterialRef createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManager* const mgr);
-    static agx::RigidBodyRef createRigidBody(const AGXRigidBodyDesc& desc);
+    static LinkRigidBodyRef createLinkRigidBody(const AGXRigidBodyDesc& desc, Link* link);
     static agxCollide::GeometryRef createGeometry(const AGXGeometryDesc& desc);
     static agxCollide::ShapeRef createShape(const AGXShapeDesc& desc);
     static agx::ConstraintRef createConstraint(const AGXConstraintDesc& desc);

@@ -1,8 +1,8 @@
 #ifndef CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 
-#include "exportdecl.h"
 #include "AGXObjectFactory.h"
+#include "exportdecl.h"
 
 namespace cnoid{
 

@@ -5,7 +5,7 @@
 #include <cnoid/Selection>
 #include "AGXScene.h"
 #include "AGXBody.h"
-#include <iostream>
+#include <agxCollide/Contacts.h>
 
 namespace cnoid {
 
@@ -31,6 +31,8 @@ public:
     void createAGXContactMaterial(int id1, int id2, ContactMaterial* mat);
     void setAdditionalAGXMaterialParam();
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
+    void updateLinkContactPoints();
+    void updateLinkContactPoints(agxCollide::GeometryContact* contact, Link* link, double direction);
     void stopSimulation();
     void pauseSimulation();
     void restartSimulation();
@@ -47,7 +49,8 @@ public:
 
 private:
     ref_ptr<AGXSimulatorItem> self;
-    AGXSceneRef agxScene = nullptr;
+    AGXSceneRef agxScene;
+    bool doUpdateLinkContactPoints;
     Vector3 m_p_gravity;
     int     m_p_numThreads;
     bool    m_p_enableContactReduction;
