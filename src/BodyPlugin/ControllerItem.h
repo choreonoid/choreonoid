@@ -13,6 +13,7 @@
 namespace cnoid {
 
 class ControllerIO;
+class ControllerLogItem;
 
 class Body;
 
@@ -30,12 +31,12 @@ public:
 
     bool isActive() const;
     bool isNoDelayMode() const { return isNoDelayMode_; }
-    void setNoDelayMode(bool on) { isNoDelayMode_ = on; }
+    virtual void setNoDelayMode(bool on);
     
     const std::string& optionString() const { return optionString_; }
     void setOptions(const std::string& options) { optionString_ = options; }
 
-    virtual double timeStep() const = 0;
+    virtual double timeStep() const;
 
     /**
        This function is called before the simulation world is initialized.
@@ -46,6 +47,8 @@ public:
        @note This function is called from the main thread.
     */
     virtual bool initialize(ControllerIO* io);
+
+    virtual ControllerLogItem* createLogItem();
     
     /**
        This function is called after the simulation world is initialized.
@@ -55,7 +58,7 @@ public:
     /**
        \note This function is called from the simulation thread.
     */
-    virtual void input() = 0;
+    virtual void input();
 
     /*
       @return false to request stopping
@@ -63,12 +66,14 @@ public:
       in this function. The access should be done in input() and output().
       @note This function is called from the simulation thread.
     */
-    virtual bool control() = 0;
+    virtual bool control();
+
+    virtual void log();
         
     /**
        @note This function is called from the simulation thread.
     */
-    virtual void output() = 0;
+    virtual void output();
         
     /**
        @note This function is called from the main thread.

@@ -121,6 +121,7 @@ public:
     int logBufFrameOffset;
     ControllerLogItemPtr logItem;
     shared_ptr<ReferencedObjectSeq> log;
+    bool isLogEnabled_;
 
     ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl);
 
@@ -132,6 +133,7 @@ public:
     virtual std::string optionString() const override;
 
     virtual bool enableLog() override;
+    bool isLogEnabled() const;
     virtual void outputLog(Referenced* frameLog) override;
     void flushLog();
 
@@ -179,7 +181,7 @@ public:
     shared_ptr<MultiDeviceStateSeq> deviceStateRecord;
 
     Impl(SimulationBody* self, Body* body);
-    void findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems = false);
+    void findControlSrcItems(Item* item, vector<Item*>& io_items);
     bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem);
     bool initialize(SimulatorItem::Impl* simImpl, ControllerItem* controllerItem);
     void extractAssociatedItems(bool doReset);
@@ -231,6 +233,7 @@ public:
     ItemList<SubSimulatorItem> subSimulatorItems;
 
     vector<ControllerInfoPtr> activeControllerInfos;
+    vector<ControllerItemPtr> loggingControllers;
     bool doStopSimulationWhenNoActiveControllers;
     bool hasControllers; // Includes non-active controllers
 
@@ -493,7 +496,8 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 ControllerInfo::ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl)
     : controller(controller),
       body_(simBodyImpl->body_),
-      simImpl(simBodyImpl->simImpl)
+      simImpl(simBodyImpl->simImpl),
+      isLogEnabled_(false)
 {
 
 }
@@ -546,7 +550,7 @@ bool ControllerInfo::enableLog()
     if(logItem){
         logItem->resetSeq();
     } else {
-        logItem = new ControllerLogItem;
+        logItem = controller->createLogItem();
         logItem->setTemporal();
         logItem->setName(logName);
         controller->addChildItem(logItem);
@@ -558,7 +562,15 @@ bool ControllerInfo::enableLog()
     
     simImpl->loggedControllerInfos.push_back(this);
 
+    isLogEnabled_ = true;
+
     return true;
+}
+
+
+bool ControllerInfo::isLogEnabled() const
+{
+    return isLogEnabled_;
 }
 
 
@@ -665,25 +677,14 @@ ControllerItem* SimulationBody::controller(int index) const
 }
 
 
-void SimulationBody::Impl::findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems)
+void SimulationBody::Impl::findControlSrcItems(Item* item, vector<Item*>& io_items)
 {
     while(item){
         if(!dynamic_cast<BodyItem*>(item)){
-            Item* srcItem = nullptr;
-            if(dynamic_cast<ControllerItem*>(item)){
-                srcItem = item;
-            }
-            if(srcItem){
-                bool isChecked = srcItem->isChecked();
-                if(!doPickCheckedItems || isChecked){
-                    if(!doPickCheckedItems && isChecked){
-                        io_items.clear();
-                        doPickCheckedItems = true;
-                    }
-                    io_items.push_back(srcItem);
-                }
+            if(auto controllerItem = dynamic_cast<ControllerItem*>(item)){
+                io_items.push_back(controllerItem);
             } else if(item->childItem()){
-                findControlSrcItems(item->childItem(), io_items, doPickCheckedItems);
+                findControlSrcItems(item->childItem(), io_items);
             }
         }
         item = item->nextItem();
@@ -1944,6 +1945,7 @@ void SimulatorItem::Impl::updateSimBodyLists()
 {
     activeSimBodies.clear();
     activeControllerInfos.clear();
+    loggingControllers.clear();
     hasActiveFreeBodies = false;
     
     for(size_t i=0; i < allSimBodies.size(); ++i){
@@ -1958,6 +1960,9 @@ void SimulatorItem::Impl::updateSimBodyLists()
         }
         for(auto& info : controllerInfos){
             activeControllerInfos.push_back(info);
+            if(info->isLogEnabled()){
+                loggingControllers.push_back(info->controller);
+            }
        }
     }
 
@@ -2200,6 +2205,10 @@ bool SimulatorItem::Impl::stepSimulationMain()
     }
 
     postDynamicsFunctions.call();
+
+    for(auto& controller : loggingControllers){
+        controller->log();
+    }
 
     {
         recordBufMutex.lock();
