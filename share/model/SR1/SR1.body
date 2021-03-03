@@ -507,7 +507,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 16
-    jointRange: [ 0, 90 ]
+    jointRange: [ 0, 150 ]
     centerOfMass: [ 0, 0, -0.3 ]
     mass: 7.0
     inertia: [
@@ -534,7 +534,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 17
-    jointRange: [ -45, 45 ]
+    jointRange: [ -80, 45 ]
     translation: [ 0, 0, -0.3 ]
     centerOfMass: [ -0.15, 0, 0 ]
     mass: 2.5
@@ -636,7 +636,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 3
-    jointRange: [ 0, 90 ]
+    jointRange: [ 0, 150 ]
     centerOfMass: [ 0, 0, -0.3 ]
     mass: 7.0
     inertia: [
@@ -650,7 +650,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 4
-    jointRange: [ -45, 45 ]
+    jointRange: [ -80, 45 ]
     translation: [ 0, 0, -0.3 ]
     centerOfMass: [ -0.15, 0, 0 ]
     mass: 2.5
