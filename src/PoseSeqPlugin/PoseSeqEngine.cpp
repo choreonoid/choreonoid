@@ -21,9 +21,10 @@ public:
     BodyMotionGenerationBar* bodyMotionGenerationBar;
     LinkTraverse fkTraverse;
 
-    PoseSeqEngine(PoseSeqItem* poseSeqItem, BodyItem* bodyItem) :
-        bodyItem(bodyItem) {
-
+    PoseSeqEngine(PoseSeqItem* poseSeqItem, BodyItem* bodyItem)
+        : TimeSyncItemEngine(poseSeqItem),
+          bodyItem(bodyItem)
+    {
         interpolator = poseSeqItem->interpolator();
         bodyMotionGenerationBar = BodyMotionGenerationBar::instance();
 
@@ -31,8 +32,8 @@ public:
         interpolator->sigUpdated().connect([this](){ refresh(); });
     }
         
-    virtual bool onTimeChanged(double time){
-
+    virtual bool onTimeChanged(double time)
+    {
         BodyPtr body = bodyItem->body();
 
         interpolator->enableLipSyncMix(bodyMotionGenerationBar->isLipSyncMixMode());

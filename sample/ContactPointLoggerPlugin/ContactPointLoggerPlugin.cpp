@@ -186,7 +186,8 @@ Item* ContactPointLogItem::doDuplicate() const
 
 
 ContactPointLogEngine::ContactPointLogEngine(ContactPointLoggerItem* loggerItem, ContactPointLogItem* logItem)
-    : loggerItem(loggerItem),
+    : TimeSyncItemEngine(logItem),
+      loggerItem(loggerItem),
       logItem(logItem)
 {
 

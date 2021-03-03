@@ -351,7 +351,9 @@ class WorldLogFileEngine : public TimeSyncItemEngine
 {
 public:
     WorldLogFileItemPtr logItem;
-    WorldLogFileEngine(WorldLogFileItem* item){
+    WorldLogFileEngine(WorldLogFileItem* item)
+        : TimeSyncItemEngine(item)
+    {
         logItem = item;
     }
     virtual bool onTimeChanged(double time) {

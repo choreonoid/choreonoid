@@ -35,6 +35,7 @@ public:
     ScopedConnectionSet connections;
 
     Impl();
+    int createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines) const;
     void onSelectedItemsChanged(const ItemList<>& selectedItems);
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
@@ -115,24 +116,39 @@ void TimeSyncItemEngineManager::registerFactory_
 }
 
 
+int TimeSyncItemEngineManager::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines) const
+{
+    return impl->createEngines(item, io_engines);
+}
+
+
+int TimeSyncItemEngineManager::Impl::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines) const
+{
+    int numCreatedEngines = 0;
+    
+    int id = item->classId();
+    while(id > 0){
+        if(id < static_cast<int>(classIdToFactoryListMap.size())){
+            for(auto& factory : classIdToFactoryListMap[id]){
+                if(auto engine = factory(item)){
+                    io_engines.push_back(engine);
+                    ++numCreatedEngines;
+                }
+            }
+        }
+        id = itemClassRegistry.superClassId(id);
+    }
+    
+    return numCreatedEngines;
+}
+
+
 void TimeSyncItemEngineManager::Impl::onSelectedItemsChanged(const ItemList<>& selectedItems)
 {
     activeEngines.clear();
-
     for(auto& item : selectedItems){
-        int id = item->classId();
-        while(id > 0){
-            if(id < static_cast<int>(classIdToFactoryListMap.size())){
-                for(auto& factory : classIdToFactoryListMap[id]){
-                    if(auto engine = factory(item)){
-                        activeEngines.push_back(engine);
-                    }
-                }
-            }
-            id = itemClassRegistry.superClassId(id);
-        }
+        createEngines(item, activeEngines);
     }
-
     onTimeChanged(currentTime);
 }
 
@@ -187,7 +203,8 @@ void TimeSyncItemEngineManager::Impl::refresh(TimeSyncItemEngine* engine)
 }
 
 
-TimeSyncItemEngine::TimeSyncItemEngine()
+TimeSyncItemEngine::TimeSyncItemEngine(Item* item)
+    : item_(item)
 {
     fillLevelId = -1;
 }

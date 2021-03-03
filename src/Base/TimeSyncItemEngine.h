@@ -6,9 +6,10 @@
 #ifndef CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
 #define CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
 
-#include <cnoid/Referenced>
+#include "Item.h"
 #include <functional>
 #include <typeinfo>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -16,8 +17,13 @@ namespace cnoid {
 class CNOID_EXPORT TimeSyncItemEngine : public Referenced
 {
 public:
-    TimeSyncItemEngine();
+    TimeSyncItemEngine(Item* item);
     virtual ~TimeSyncItemEngine();
+
+    TimeSyncItemEngine(const TimeSyncItemEngine& org) = delete;
+    TimeSyncItemEngine& operator=(const TimeSyncItemEngine& rhs) = delete;
+
+    Item* item(){ return item_; }
 
     virtual bool onPlaybackInitialized(double time);
     virtual void onPlaybackStarted(double time);
@@ -32,6 +38,7 @@ public:
     void refresh();
 
 private:
+    ItemPtr item_;
     int fillLevelId;
 };
 
@@ -54,6 +61,12 @@ public:
             typeid(ItemType),
             [factory](Item* item){ return factory(static_cast<ItemType*>(item)); });
     }
+
+    /**
+       This function create engines for the item and add engines to io_engines.
+       \return The number of created engines
+    */
+    int createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines) const;
 
     class Impl;
 

@@ -38,7 +38,9 @@ class ZMPSeqEngine : public TimeSyncItemEngine
 public:
         
     ZMPSeqEngine(ZMPSeqItem* seqItem, BodyItem* bodyItem)
-        : seq(seqItem->zmpseq()), bodyItem(bodyItem)
+        : TimeSyncItemEngine(seqItem),
+          seq(seqItem->zmpseq()),
+          bodyItem(bodyItem)
     {
         seqItem->sigUpdated().connect([this](){ refresh(); });
     }

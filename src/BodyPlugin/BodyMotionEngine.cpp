@@ -169,6 +169,7 @@ TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* item)
 
 
 BodyMotionEngine::BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionItem)
+    : TimeSyncItemEngine(motionItem)
 {
     impl = new BodyMotionEngineImpl(this, bodyItem, motionItem);
 }

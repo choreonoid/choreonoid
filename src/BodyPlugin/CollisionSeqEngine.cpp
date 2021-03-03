@@ -69,6 +69,7 @@ void CollisionSeqEngine::initializeClass()
 
 
 CollisionSeqEngine::CollisionSeqEngine(WorldItem* worldItem, CollisionSeqItem* collisionSeqItem)
+    : TimeSyncItemEngine(collisionSeqItem)
 {
     impl = new CollisionSeqEngineImpl(this, worldItem, collisionSeqItem);
 }
