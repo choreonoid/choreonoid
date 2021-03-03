@@ -121,15 +121,15 @@ void TimeSyncItemEngineManager::Impl::onSelectedItemsChanged(const ItemList<>& s
 
     for(auto& item : selectedItems){
         int id = item->classId();
-        if(id < static_cast<int>(classIdToFactoryListMap.size())){
-            while(id > 0){
+        while(id > 0){
+            if(id < static_cast<int>(classIdToFactoryListMap.size())){
                 for(auto& factory : classIdToFactoryListMap[id]){
                     if(auto engine = factory(item)){
                         activeEngines.push_back(engine);
                     }
                 }
-                id = itemClassRegistry.superClassId(id);
             }
+            id = itemClassRegistry.superClassId(id);
         }
     }
 
