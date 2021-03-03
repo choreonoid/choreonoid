@@ -9,7 +9,7 @@ namespace cnoid {
 
 void AGXSimulatorItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<AGXSimulatorItem>("AGXSimulatorItem");
+    ext->itemManager().registerClass<AGXSimulatorItem, SimulatorItem>("AGXSimulatorItem");
     ext->itemManager().addCreationPanel<AGXSimulatorItem>();
 }
 

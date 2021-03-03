@@ -889,7 +889,7 @@ void PhysXBody::updateForceSensors()
 
 void PhysXSimulatorItem::initialize(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<PhysXSimulatorItem>(N_("PhysXSimulatorItem"));
+    ext->itemManager().registerClass<PhysXSimulatorItem, SimulatorItem>(N_("PhysXSimulatorItem"));
     ext->itemManager().addCreationPanel<PhysXSimulatorItem>();
 }
 

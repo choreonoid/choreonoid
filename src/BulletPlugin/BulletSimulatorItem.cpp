@@ -1288,7 +1288,7 @@ void BulletBody::updateForceSensors()
 ////////////////////////////////////SimItem imple////////////////////////////////////////
 void BulletSimulatorItem::initialize(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<BulletSimulatorItem>(N_("BulletSimulatorItem"));
+    ext->itemManager().registerClass<BulletSimulatorItem, SimulatorItem>(N_("BulletSimulatorItem"));
     ext->itemManager().addCreationPanel<BulletSimulatorItem>();
 }
 

@@ -924,7 +924,7 @@ void RokiBody::updateForceSensors()
 
 void RokiSimulatorItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<RokiSimulatorItem>(N_("RokiSimulatorItem"));
+    ext->itemManager().registerClass<RokiSimulatorItem, SimulatorItem>(N_("RokiSimulatorItem"));
     ext->itemManager().addCreationPanel<RokiSimulatorItem>();
 }
 

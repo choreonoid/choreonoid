@@ -1042,7 +1042,7 @@ void SpringheadSimulatorItemImpl::restore(const Archive& archive)
 
 void SpringheadSimulatorItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<SpringheadSimulatorItem>(ITEM_NAME);
+    ext->itemManager().registerClass<SpringheadSimulatorItem, SimulatorItem>(ITEM_NAME);
     ext->itemManager().addCreationPanel<SpringheadSimulatorItem>();
 }
 
