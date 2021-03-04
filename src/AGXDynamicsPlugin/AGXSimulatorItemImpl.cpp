@@ -286,8 +286,8 @@ static void setFrameOfOrientedFrictionModel
     auto simBody = simulator->findSimulationBody(referenceBodyName);
     auto agxBody = static_cast<AGXBody*>(simBody);
     if(!agxBody){
-        LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "reference body " << referenceBodyName
-                         << " is not found at the material table " << pairName << LOGGER_ENDL();
+        //LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "reference body " << referenceBodyName
+        //                 << " is not found at the material table " << pairName << LOGGER_ENDL();
         return;
     }
     if(!info->read("referenceLinkName", referenceLinkName)){
