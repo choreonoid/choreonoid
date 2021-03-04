@@ -114,7 +114,6 @@ if(NOT compile_flags)
 endif()
 set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -msse3")
 
-#add_subdirectory(AGXSubSimulator)
 add_subdirectory(AGXBodyExtensionPlugin)
 
 if(ENABLE_PYTHON AND USE_PYBIND11)
