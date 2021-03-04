@@ -59,8 +59,9 @@ Changes since 1.7.0:
 * Made it possible to use free joints for links other than root links in the simulation by AISTSimulatorItem
 * Added the API on getting the contact states from a dynamics engine
 * Made AISTSimulator to be able to simulate models with non-root free joints
-* Support the standard scene file format in loading and exporting body shapes
-* Support the OBJ mesh file format in loading and exporting body shapes
+* Supported the standard scene file format in loading and exporting body shapes
+* Supported the OBJ mesh file format in loading and exporting body shapes
+* Added BodyContactPointLoggerItem to visualize the information on the contacts against a target body during simulation
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

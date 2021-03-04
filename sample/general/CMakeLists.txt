@@ -1,5 +1,6 @@
 install(FILES
   FallingBoxes.cnoid
+  FallingBoxesContactPoints.cnoid
   Blocks.cnoid
   ClosedLinkSample.cnoid
   ExtraJointSample.cnoid

@@ -1,0 +1,401 @@
+optionalPlugins: [ ODE, Bullet, PhysX, AGXDynamics ]
+
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data: 
+        collisionDetection: false
+        collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
+      children: 
+        - 
+          id: 2
+          name: "Floor"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data: 
+            file: "${SHARE}/model/misc/floor.body"
+            format: CHOREONOID-BODY
+            rootPosition: [ 0, 0, -0.1 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, -0.1 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            staticModel: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            location_editable: true
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
+          children: 
+            - 
+              id: 3
+              name: "BodyContactPointLogger"
+              plugin: Body
+              class: BodyContactPointLoggerItem
+              is_checked: true
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+        - 
+          id: 4
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data: 
+            file: "${SHARE}/model/misc/box1.body"
+            format: CHOREONOID-BODY
+            rootPosition: [ 0.0375, 0.15, 1.4159 ]
+            rootAttitude: [ 
+              0.820303, 0.536269, 0.198792, 
+              -0.547074, 0.837084, -0.000678, 
+              -0.166769, -0.108198, 0.980041 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0.0375, 0.15, 1.4159 ]
+            initialRootAttitude: [ 
+              0.82030343, 0.536268629, 0.198791953, 
+              -0.547074371, 0.837083731, -0.000677900086, 
+              -0.166769047, -0.108197899, 0.980041479 ]
+            staticModel: false
+            collisionDetection: true
+            selfCollisionDetection: false
+            location_editable: true
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
+          children: 
+            - 
+              id: 5
+              name: "BodyContactPointLogger"
+              plugin: Body
+              class: BodyContactPointLoggerItem
+              is_checked: true
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+        - 
+          id: 6
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data: 
+            file: "${SHARE}/model/misc/box1.body"
+            format: CHOREONOID-BODY
+            rootPosition: [ 0.0108, 0.2371, 1.0699 ]
+            rootAttitude: [ 
+              0.790431, -0.579651, 0.198048, 
+              0.591318, 0.806439, 0.000289, 
+              -0.159881, 0.116881, 0.980192 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0.0108, 0.2371, 1.0699 ]
+            initialRootAttitude: [ 
+              0.790431149, -0.579651269, 0.198047985, 
+              0.591317731, 0.806438626, 0.000288916724, 
+              -0.159881015, 0.116880916, 0.980192283 ]
+            staticModel: false
+            collisionDetection: true
+            selfCollisionDetection: false
+            location_editable: true
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
+          children: 
+            - 
+              id: 7
+              name: "BodyContactPointLogger"
+              plugin: Body
+              class: BodyContactPointLoggerItem
+              is_checked: true
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+        - 
+          id: 8
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data: 
+            file: "${SHARE}/model/misc/box1.body"
+            format: CHOREONOID-BODY
+            rootPosition: [ -0.0123, 0.15, 0.6871 ]
+            rootAttitude: [ 
+              0.979672, 0.030711, 0.198239, 
+              0.022232, 0.965503, -0.259442, 
+              -0.199368, 0.258576, 0.945194 ]
+            jointPositions: [  ]
+            initialRootPosition: [ -0.0123, 0.15, 0.6871 ]
+            initialRootAttitude: [ 
+              0.979672464, 0.0307109728, 0.198238994, 
+              0.0222319728, 0.965502687, -0.259442289, 
+              -0.199368006, 0.258575711, 0.945193631 ]
+            staticModel: false
+            collisionDetection: true
+            selfCollisionDetection: false
+            location_editable: true
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
+          children: 
+            - 
+              id: 9
+              name: "BodyContactPointLogger"
+              plugin: Body
+              class: BodyContactPointLoggerItem
+              is_checked: true
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+        - 
+          id: 10
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data: 
+            file: "${SHARE}/model/misc/box1.body"
+            format: CHOREONOID-BODY
+            rootPosition: [ 0.0631, 0.159, 2.1828 ]
+            rootAttitude: [ 
+              0.980271, 0.197647, 0.00207, 
+              -0, 0.010473, -0.999945, 
+              -0.197657, 0.980217, 0.010266 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0.0631, 0.159, 2.1828 ]
+            initialRootAttitude: [ 
+              0.980271172, 0.197646488, 0.00206967614, 
+              -5.11779586e-07, 0.0104738443, -0.999944873, 
+              -0.197657325, 0.980217127, 0.0102673142 ]
+            staticModel: false
+            collisionDetection: true
+            selfCollisionDetection: false
+            location_editable: true
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
+          children: 
+            - 
+              id: 11
+              name: "BodyContactPointLogger"
+              plugin: Body
+              class: BodyContactPointLoggerItem
+              is_checked: true
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+        - 
+          id: 12
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children: 
+            - 
+              id: 13
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+              is_selected: true
+              data: 
+                timeStep: 0.001
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Time bar range"
+                timeLength: 60
+                active_control_time_range_mode: false
+                allLinkPositionOutputMode: false
+                deviceStateOutput: false
+                controllerThreads: false
+                recordCollisionData: false
+                controllerOptions: ""
+                dynamicsMode: "Forward dynamics"
+                integrationMode: "Runge Kutta"
+                gravity: [ 0, 0, -9.80665 ]
+                min_friction_coefficient: 0
+                max_friction_coefficient: 100
+                cullingThresh: 0.005
+                contactCullingDepth: 0.05
+                errorCriterion: 0.001
+                maxNumIterations: 25
+                contactCorrectionDepth: 0.00025
+                contactCorrectionVelocityRatio: 5
+                kinematicWalking: false
+                2Dmode: false
+                oldAccelSensorMode: false
+            - 
+              id: 14
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+              data: 
+                timestep: 0.001
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Time bar range"
+                timeLength: 60
+                allLinkPositionOutputMode: false
+                deviceStateOutput: false
+                controllerThreads: false
+                recordCollisionData: false
+                stepMode: Iterative (quick step)
+                gravity: [ 0, 0, -9.80665 ]
+                friction: 1
+                jointLimitMode: false
+                globalERP: 0.4
+                globalCFM: 1e-10
+                numIterations: 50
+                overRelaxation: 1.3
+                limitCorrectingVel: true
+                maxCorrectingVel: 1.0e-3
+                2Dmode: false
+            - 
+              id: 15
+              name: "BulletSimulator"
+              plugin: Bullet
+              class: BulletSimulatorItem
+              data: 
+                timestep: 0.001
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Time bar range"
+                timeLength: 60
+                allLinkPositionOutputMode: false
+                deviceStateOutput: false
+                controllerThreads: false
+                recordCollisionData: false
+                ErrorReductionParameter: 0.2
+                NumIterations: 10
+                Restitution: 0
+                Friction: 0.7
+                ERP2: 0
+                SplitImpulsePenetrationThreshold: -0.0001
+            - 
+              id: 16
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+              data: 
+                timestep: 0.001
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Time bar range"
+                timeLength: 60
+                allLinkPositionOutputMode: false
+                deviceStateOutput: false
+                controllerThreads: false
+                recordCollisionData: false
+                staticFriction: 0.5
+                dynamicFriction: 0.5
+                Restitution: 0.1
+                jointLimitMode: false
+            - 
+              id: 17
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data: 
+                timeStep: 0.001
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Time bar range"
+                timeLength: 60
+                active_control_time_range_mode: false
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: ""
+                Gravity: [ 0, 0, -9.80665 ]
+                NumThreads: 1
+                ContactReduction: true
+                ContactReductionBinResolution: 3
+                ContactReductionThreshhold: 12
+                ContactWarmstarting: false
+                AutoSleep: false
+                SaveToAGXFileOnStart: false
+                DebugMessageOnConsole: 2
+views: 
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      expanded: [ 1, 2, 4, 6, 8, 10, 12 ]
+  - 
+    id: 4
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointOperationMode: thirdPerson
+      visible_polygon_elements: [ edge ]
+      highlighting: false
+      collisionLines: false
+      restrictCameraRoll: true
+      verticalAxis: Z
+      lightingMode: normal
+      cullingMode: enabled
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      lightweightViewChange: false
+      coordinateAxes: true
+      fpsTestIteration: 1
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 10000
+          eye: [ 4.14723, 1.86573, 1.83318 ]
+          direction: [ -0.916706, -0.370027, -0.150764 ]
+          up: [ -0.139804, -0.0564319, 0.98857 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 10000
+      backgroundColor: [ 0.1, 0.1, 0.3 ]
+      gridColor: [ 0.9, 0.9, 0.9, 1 ]
+      xzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      yzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      isDedicatedItemCheckEnabled: false
+
+toolbars: 
+  "TimeBar": 
+    minTime: 0
+    maxTime: 5

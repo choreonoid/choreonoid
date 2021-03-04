@@ -20,6 +20,7 @@ set(sources
   SimpleControllerItem.cpp
   BodyMotionControllerItem.cpp
   ControllerLogItem.cpp
+  BodyContactPointLoggerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   KinematicSimulatorItem.cpp
@@ -77,6 +78,7 @@ set(headers
   ControllerItem.h
   SimpleControllerItem.h
   ControllerLogItem.h
+  BodyContactPointLoggerItem.h
   SimulationScriptItem.h
   AISTSimulatorItem.h
   KinematicSimulatorItem.h
