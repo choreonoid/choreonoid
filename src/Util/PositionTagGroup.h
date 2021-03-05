@@ -58,8 +58,10 @@ public:
     bool removeAt(int index);
     SignalProxy<void(int index)> sigTagAdded();
     SignalProxy<void(int index, PositionTag* tag)> sigTagRemoved();
+    SignalProxy<void(int index)> sigTagPreviewRequested();
     SignalProxy<void(int index)> sigTagUpdated();
-    void notifyTagUpdate(int index);
+    void requestTagPreview(int index);
+    void notifyTagUpdate(int index, bool requestPreview = true);
 
     bool read(const Mapping* archive, ArchiveSession& session);
     bool write(Mapping* archive, ArchiveSession& session) const;

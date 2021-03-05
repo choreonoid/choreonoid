@@ -20,6 +20,8 @@ public:
     PositionTag(const Vector3& location);
     PositionTag(const PositionTag& org);
 
+    PositionTag& operator=(const PositionTag& rhs);
+
     Isometry3::ConstTranslationPart translation() const {
         return position_.translation();
     }

@@ -27,9 +27,12 @@ public:
 
     const Isometry3& parentFramePosition() const;
     const Isometry3& originOffset() const;
-    void setOriginOffset(const Isometry3& T_offset);
+    void setOriginOffset(const Isometry3& T_offset, bool requestPreview = true);
     Isometry3 originPosition() const;
-    
+    SignalProxy<void()> sigOriginOffsetPreviewRequested();
+    SignalProxy<void()> sigOriginOffsetUpdated();
+    void notifyOriginOffsetUpdate(bool requestPreview = true);
+
     void clearTagSelection();
     void setTagSelected(int tagIndex, bool on = true);
     bool checkTagSelected(int tagIndex) const;
@@ -62,6 +65,8 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
+    virtual void onConnectedToRoot() override;
+    virtual void onDisconnectedFromRoot() override;
     virtual bool onNewPositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded) override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 

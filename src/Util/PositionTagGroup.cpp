@@ -22,6 +22,7 @@ public:
     Uuid uuid;
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
+    Signal<void(int index)> sigTagPreviewRequested;
     Signal<void(int index)> sigTagUpdated;
     
     Impl();
@@ -156,15 +157,32 @@ SignalProxy<void(int index, PositionTag* tag)> PositionTagGroup::sigTagRemoved()
 }
 
 
+SignalProxy<void(int index)> PositionTagGroup::sigTagPreviewRequested()
+{
+    return impl->sigTagPreviewRequested;
+}
+
+
+void PositionTagGroup::requestTagPreview(int index)
+{
+    if(static_cast<size_t>(index) < tags_.size()){
+        impl->sigTagPreviewRequested(index);
+    }
+}
+
+
 SignalProxy<void(int index)> PositionTagGroup::sigTagUpdated()
 {
     return impl->sigTagUpdated;
 }
 
 
-void PositionTagGroup::notifyTagUpdate(int index)
+void PositionTagGroup::notifyTagUpdate(int index, bool requestPreview)
 {
     if(static_cast<size_t>(index) < tags_.size()){
+        if(requestPreview){
+            impl->sigTagPreviewRequested(index);
+        }
         impl->sigTagUpdated(index);
     }
 }

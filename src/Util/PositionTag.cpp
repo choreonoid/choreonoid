@@ -35,6 +35,14 @@ PositionTag::PositionTag(const PositionTag& org)
 }
 
 
+PositionTag& PositionTag::operator=(const PositionTag& rhs)
+{
+    position_ = rhs.position_;
+    hasAttitude_ = rhs.hasAttitude_;
+    return *this;
+}
+
+
 bool PositionTag::read(const Mapping* archive, ArchiveSession&)
 {
     bool isValid = false;

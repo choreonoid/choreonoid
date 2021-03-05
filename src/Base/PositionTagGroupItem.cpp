@@ -11,6 +11,8 @@
 #include "Archive.h"
 #include "PutPropertyFunction.h"
 #include "MenuManager.h"
+#include "UnifiedEditHistory.h"
+#include "EditRecord.h"
 #include <cnoid/PositionTagGroup>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
@@ -32,12 +34,14 @@ enum TagDisplayType { Normal, Selected, Highlighted };
 
 constexpr float HighlightSizeRatio = 1.1f;
 
+
 class SceneTag : public SgPosTransform
 {
 public:
     SceneTag() : displayType(Normal) { }
     TagDisplayType displayType;
 };
+
 
 class SceneTagGroup : public SgPosTransform, public SceneWidgetEditable
 {
@@ -89,6 +93,7 @@ public:
     void attachPositionDragger(int tagIndex);
     void onDraggerDragStarted();
     void onDraggerDragged();
+    void onDraggerDragFinished();
     int findPointingTagIndex(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
@@ -111,6 +116,7 @@ public:
     virtual Item* getCorrespondingItem() override;
     virtual Isometry3 getLocation() const override;
     virtual bool setLocation(const Isometry3& T) override;
+    virtual void finishLocationEditing() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
 };
@@ -133,6 +139,47 @@ public:
 typedef ref_ptr<TagParentLocationProxy> TagParentLocationProxyPtr;
 
 
+class OffsetEditRecord : public EditRecord
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    PositionTagGroupItemPtr tagGroupItem;
+    Isometry3 T_new;
+    Isometry3 T_old;
+
+    OffsetEditRecord(
+        PositionTagGroupItem* tagGroupItem, const Isometry3& T_new, const Isometry3& T_old);
+    OffsetEditRecord(const OffsetEditRecord& org);
+    virtual EditRecord* clone() const override;
+    virtual std::string label() const override;
+    virtual bool undo() override;
+    virtual bool redo() override;
+};
+    
+
+enum TagAction { AddAction = 1, UpdateAction, RemoveAction };
+
+class TagEditRecord : public EditRecord
+{
+public:
+    PositionTagGroupItemPtr tagGroupItem;
+    PositionTagGroupItem::Impl* tagGroupItemImpl;
+    TagAction action;
+    int tagIndex;
+    PositionTagPtr newTag;
+    PositionTagPtr oldTag;
+    
+    TagEditRecord(PositionTagGroupItem::Impl* tagGroupItemImpl, TagAction action, int tagIndex,
+                  PositionTag* newTag, PositionTag* oldTag);
+    TagEditRecord(const TagEditRecord& org);
+    void setTags(PositionTag* newTag0, PositionTag* oldTag0);
+    virtual EditRecord* clone() const override;
+    virtual std::string label() const override;
+    virtual bool undo() override;
+    virtual bool redo() override;
+};
+    
+
 class ConversionDialog : public Dialog
 {
 public:
@@ -144,7 +191,6 @@ public:
     ConversionDialog();
     void setTargets(PositionTagGroupItem* tagGroupItem, LocationProxyPtr newParentLocation);
 };
-    
 
 }
 
@@ -160,7 +206,12 @@ public:
     Isometry3 T_parent;
     Isometry3 T_offset;
     ScopedConnectionSet tagGroupConnections;
+    Signal<void()> sigOriginOffsetPreviewRequested;
+    Signal<void()> sigOriginOffsetUpdated;
     LazyCaller notifyUpdateLater;
+    UnifiedEditHistory* history;
+    Isometry3 lastEdit_T_offset;
+    PositionTagGroupPtr lastEditTags;
     std::vector<bool> tagSelection;
     int numSelectedTags;
     std::vector<int> selectedTagIndices;
@@ -183,9 +234,10 @@ public:
     bool edgeVisibility;
     
     Impl(PositionTagGroupItem* self, const Impl* org);
+    void setupHandlersForUnifiedEditHistory();
     void onTagAdded(int index);
-    void onTagRemoved(int index);
-    void onTagUpdated(int tagIndex);
+    void onTagRemoved(int index, PositionTag* tag);
+    void onTagUpdated(int index);
     bool clearTagSelection(bool doNotify);
     void selectAllTags();
     void setTagSelected(int tagIndex, bool on, bool doNotify);
@@ -229,7 +281,7 @@ PositionTagGroupItem::PositionTagGroupItem(const PositionTagGroupItem& org)
 
 PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
     : self(self),
-      notifyUpdateLater([=](){ self->notifyUpdate(); })
+      notifyUpdateLater([this](){ this->self->notifyUpdate(); })
 {
     if(!org){
         tags = new PositionTagGroup;
@@ -237,15 +289,7 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
         tags = new PositionTagGroup(*org->tags);
     }
 
-    tagGroupConnections.add(
-        tags->sigTagAdded().connect(
-            [&](int index){ onTagAdded(index); }));
-    tagGroupConnections.add(
-        tags->sigTagRemoved().connect(
-            [&](int index, PositionTag*){ onTagRemoved(index); }));
-    tagGroupConnections.add(
-        tags->sigTagUpdated().connect(
-            [&](int index){ onTagUpdated(index); }));
+    history = UnifiedEditHistory::instance();
 
     numSelectedTags = 0;
     needToUpdateSelectedTagIndices = false;
@@ -294,6 +338,35 @@ Item* PositionTagGroupItem::doDuplicate() const
 }
 
 
+void PositionTagGroupItem::onConnectedToRoot()
+{
+    impl->setupHandlersForUnifiedEditHistory();
+}
+
+
+void PositionTagGroupItem::Impl::setupHandlersForUnifiedEditHistory()
+{
+    lastEdit_T_offset = T_offset;
+    lastEditTags = tags->clone();
+    
+    tagGroupConnections.add(
+        tags->sigTagAdded().connect(
+            [&](int index){ onTagAdded(index); }));
+    tagGroupConnections.add(
+        tags->sigTagRemoved().connect(
+            [&](int index, PositionTag* tag){ onTagRemoved(index, tag); }));
+    tagGroupConnections.add(
+        tags->sigTagUpdated().connect(
+            [&](int index){ onTagUpdated(index); }));
+}
+
+
+void PositionTagGroupItem::onDisconnectedFromRoot()
+{
+    impl->tagGroupConnections.disconnect();
+}
+
+
 bool PositionTagGroupItem::setName(const std::string& name)
 {
     impl->tags->setName(name);
@@ -326,15 +399,16 @@ const Isometry3& PositionTagGroupItem::originOffset() const
 }
 
 
-void PositionTagGroupItem::setOriginOffset(const Isometry3& T_offset)
+void PositionTagGroupItem::setOriginOffset(const Isometry3& T_offset, bool requestPreview)
 {
     impl->T_offset = T_offset;
 
-    impl->sigTargetLocationChanged();
-    impl->notifyUpdateLater();
-
-    if(impl->sceneTagGroup){
-        impl->sceneTagGroup->setOriginOffset(T_offset);
+    if(requestPreview){
+        impl->sigOriginOffsetPreviewRequested();
+        impl->sigTargetLocationChanged();
+        if(impl->sceneTagGroup){
+            impl->sceneTagGroup->setOriginOffset(T_offset);
+        }
     }
 }
 
@@ -345,31 +419,69 @@ Isometry3 PositionTagGroupItem::originPosition() const
 }
 
 
+SignalProxy<void()> PositionTagGroupItem::sigOriginOffsetPreviewRequested()
+{
+    return impl->sigOriginOffsetPreviewRequested;
+}
+
+
+SignalProxy<void()> PositionTagGroupItem::sigOriginOffsetUpdated()
+{
+    return impl->sigOriginOffsetUpdated;
+}
+
+
+void PositionTagGroupItem::notifyOriginOffsetUpdate(bool requestPreview)
+{
+    if(requestPreview){
+        impl->sigOriginOffsetPreviewRequested();
+    }
+    impl->sigOriginOffsetUpdated();
+
+    impl->history->addRecord(new OffsetEditRecord(this, impl->T_offset, impl->lastEdit_T_offset));
+    impl->lastEdit_T_offset = impl->T_offset;
+}
+
+
 void PositionTagGroupItem::Impl::onTagAdded(int index)
 {
     if(index < static_cast<int>(tagSelection.size())){
         tagSelection.insert(tagSelection.begin() + index, false);
         needToUpdateSelectedTagIndices = true;
     }
+
+    auto tag = tags->tagAt(index);
+    lastEditTags->insert(index, new PositionTag(*tag));
+    history->addRecord(new TagEditRecord(this, AddAction, index, tag, nullptr));
+
     notifyUpdateLater();
 }
 
 
-void PositionTagGroupItem::Impl::onTagRemoved(int index)
+void PositionTagGroupItem::Impl::onTagRemoved(int index, PositionTag* tag)
 {
     if(index < static_cast<int>(tagSelection.size())){
         tagSelection.erase(tagSelection.begin() + index);
         needToUpdateSelectedTagIndices = true;
     }
+
+    lastEditTags->removeAt(index);
+    history->addRecord(new TagEditRecord(this, RemoveAction, index, nullptr, tag));
+    
     notifyUpdateLater();
 }
 
 
-void PositionTagGroupItem::Impl::onTagUpdated(int tagIndex)
+void PositionTagGroupItem::Impl::onTagUpdated(int index)
 {
-    if(locationMode == TagLocation && locationTargetTagIndex == tagIndex){
+    auto newTag = tags->tagAt(index);
+    auto oldTag = lastEditTags->tagAt(index);
+    history->addRecord(new TagEditRecord(this, UpdateAction, index, newTag, oldTag));
+
+    if(locationMode == TagLocation && locationTargetTagIndex == index){
         sigTargetLocationChanged();
     }
+    
     notifyUpdateLater();
 }
 
@@ -605,7 +717,8 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
     Isometry3 T0 = self->originPosition();
 
     if(doClearOriginOffset){
-        self->setOriginOffset(Isometry3::Identity());
+        self->setOriginOffset(Isometry3::Identity(), false);
+        self->notifyOriginOffsetUpdate();
     }
 
     Isometry3 T1 = T_offset;
@@ -810,7 +923,7 @@ SceneTagGroup::SceneTagGroup(PositionTagGroupItem::Impl* impl)
         tags->sigTagRemoved().connect(
             [&](int index, PositionTag*){ removeTagNode(index); }));
     tagGroupConnections.add(
-        tags->sigTagUpdated().connect(
+        tags->sigTagPreviewRequested().connect(
             [&](int index){ updateTagNodePosition(index); }));
 }
 
@@ -1114,6 +1227,7 @@ void SceneTagGroup::attachPositionDragger(int tagIndex)
             positionDragger->setDisplayMode(PositionDragger::DisplayInEditMode);
             positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
             positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });
+            positionDragger->sigDragFinished().connect([&](){ onDraggerDragFinished(); });
         }
 
         positionDragger->setPosition(tag->position());
@@ -1153,7 +1267,15 @@ void SceneTagGroup::onDraggerDragged()
         } else {
             tag->setPosition(T_base * tagpos0.T);
         }
-        impl->tags->notifyTagUpdate(tagpos0.index);
+        impl->tags->requestTagPreview(tagpos0.index);
+    }
+}
+
+
+void SceneTagGroup::onDraggerDragFinished()
+{
+    for(auto& tagpos0 : initialTagDragPositions){
+        impl->tags->notifyTagUpdate(tagpos0.index, false);
     }
 }
 
@@ -1304,8 +1426,7 @@ bool TargetLocationProxy::setLocation(const Isometry3& T)
 {
     auto tags = impl->tags;
     if(impl->locationMode == TagGroupLocation){
-        impl->self->setOriginOffset(T);
-        impl->self->notifyUpdate();
+        impl->self->setOriginOffset(T, true);
     } else {
         auto primaryTag = tags->tagAt(impl->locationTargetTagIndex);
         Isometry3 T_base = T * primaryTag->position().inverse(Eigen::Isometry);
@@ -1316,11 +1437,27 @@ bool TargetLocationProxy::setLocation(const Isometry3& T)
                     auto tag = tags->tagAt(i);
                     tag->setPosition(T_base * tag->position());
                 }
-                tags->notifyTagUpdate(i);
+                tags->requestTagPreview(i);
             }
         }
     }
     return true;
+}
+
+
+void TargetLocationProxy::finishLocationEditing()
+{
+    auto tags = impl->tags;
+    if(impl->locationMode == TagGroupLocation){
+        impl->self->notifyOriginOffsetUpdate(false);
+    } else {
+        auto primaryTag = tags->tagAt(impl->locationTargetTagIndex);
+        for(size_t i=0; i < impl->tagSelection.size(); ++i){
+            if(impl->tagSelection[i]){
+                tags->notifyTagUpdate(i, false);
+            }
+        }
+    }
 }
 
 
@@ -1372,6 +1509,170 @@ LocationProxyPtr TagParentLocationProxy::getParentLocationProxy() const
         return impl->groupParentLocation;
     }
     return nullptr;
+}
+
+
+OffsetEditRecord::OffsetEditRecord
+(PositionTagGroupItem* tagGroupItem, const Isometry3& T_new, const Isometry3& T_old)
+    : tagGroupItem(tagGroupItem),
+      T_new(T_new),
+      T_old(T_old)
+{
+
+}
+
+
+OffsetEditRecord::OffsetEditRecord(const OffsetEditRecord& org)
+    : EditRecord(org),
+      tagGroupItem(org.tagGroupItem),
+      T_new(org.T_new),
+      T_old(org.T_old)
+{
+
+}
+
+
+EditRecord* OffsetEditRecord::clone() const
+{
+    return new OffsetEditRecord(*this);
+}
+
+
+std::string OffsetEditRecord::label() const
+{
+    return _("Change the origin offset of a position tag group");
+}
+
+
+bool OffsetEditRecord::undo()
+{
+    tagGroupItem->setOriginOffset(T_old, true);
+    return true;
+}
+
+
+bool OffsetEditRecord::redo()
+{
+    tagGroupItem->setOriginOffset(T_new, true);
+    return true;
+}
+
+
+TagEditRecord::TagEditRecord
+(PositionTagGroupItem::Impl* tagGroupItemImpl, TagAction action, int tagIndex,
+ PositionTag* newTag, PositionTag* oldTag)
+    : tagGroupItem(tagGroupItemImpl->self),
+      tagGroupItemImpl(tagGroupItemImpl),
+      action(action),
+      tagIndex(tagIndex)
+{
+    setTags(newTag, oldTag);
+}
+
+
+TagEditRecord::TagEditRecord(const TagEditRecord& org)
+    : EditRecord(org),
+      tagGroupItem(org.tagGroupItem),
+      tagGroupItemImpl(org.tagGroupItemImpl),
+      action(org.action),
+      tagIndex(org.tagIndex)
+{
+    setTags(org.newTag, org.oldTag);
+}
+
+
+void TagEditRecord::setTags(PositionTag* newTag0, PositionTag* oldTag0)
+{
+    if(newTag0){
+        newTag = new PositionTag(*newTag0);
+    }
+    if(oldTag0){
+        oldTag = new PositionTag(*oldTag0);
+    }
+}    
+
+    
+EditRecord* TagEditRecord::clone() const
+{
+    return new TagEditRecord(*this);
+}
+
+
+std::string TagEditRecord::label() const
+{
+    int actualAction = action;
+    if(isReverse()){
+        if(action == AddAction){
+            actualAction = RemoveAction;
+        } else if(action == RemoveAction){
+            actualAction = AddAction;
+        }
+    }
+    switch(action){
+    case AddAction:
+        return _("Add a position tag");
+    case UpdateAction:
+        return _("Update a position tag");
+    case RemoveAction:
+        return _("Remove a position tag");
+    default:
+        break;
+    }
+    return string();
+}
+
+
+bool TagEditRecord::undo()
+{
+    bool done = false;
+    auto block = tagGroupItemImpl->tagGroupConnections.scopedBlock();
+    auto tags = tagGroupItemImpl->tags;
+
+    switch(action){
+    case AddAction:
+        done = tags->removeAt(tagIndex);
+        break;
+    case UpdateAction:
+        (*tags->tagAt(tagIndex)) = *oldTag;
+        tags->notifyTagUpdate(tagIndex);
+        done = true;
+        break;
+    case RemoveAction:
+        tags->insert(tagIndex, new PositionTag(*oldTag));
+        done = true;
+        break;
+    default:
+        break;
+    }
+
+    return done;
+}
+
+
+bool TagEditRecord::redo()
+{
+    bool done = false;
+    auto block = tagGroupItemImpl->tagGroupConnections.scopedBlock();
+    auto tags = tagGroupItemImpl->tags;
+
+    switch(action){
+    case AddAction:
+        tags->insert(tagIndex, new PositionTag(*newTag));
+        done = true;
+        break;
+    case UpdateAction:
+        (*tags->tagAt(tagIndex)) = *newTag;
+        tags->notifyTagUpdate(tagIndex);
+        done = true;
+        break;
+    case RemoveAction:
+        done = tags->removeAt(tagIndex);
+        break;
+    default:
+        break;
+    }
+
+    return done;
 }
 
 
