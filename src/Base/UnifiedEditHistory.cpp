@@ -163,7 +163,7 @@ void UnifiedEditHistory::Impl::removeRecordsAfter(int index)
 }
 
 
-void UnifiedEditHistory::addRecord(EditRecord* record)
+void UnifiedEditHistory::addRecord(EditRecordPtr record)
 {
     if(!impl->isProjectBeingLoaded){
         impl->addRecord(record);

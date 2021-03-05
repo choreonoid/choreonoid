@@ -1,6 +1,7 @@
 #ifndef CNOID_BASE_UNIFIED_EDIT_HISTORY_H
 #define CNOID_BASE_UNIFIED_EDIT_HISTORY_H
 
+#include <cnoid/Referenced>
 #include <cnoid/Signal>
 #include <string>
 #include "exportdecl.h"
@@ -8,7 +9,9 @@
 namespace cnoid {
 
 class ExtensionManager;
+
 class EditRecord;
+typedef ref_ptr<EditRecord> EditRecordPtr;
 
 class CNOID_EXPORT UnifiedEditHistory
 {
@@ -21,7 +24,7 @@ public:
     //! \note Index 0 is the latest record
     EditRecord* record(int index);
 
-    void addRecord(EditRecord* record);
+    void addRecord(EditRecordPtr record);
     void beginEditGroup(const std::string& label, bool isManualOperation = true);
     void endEditGroup();
 
