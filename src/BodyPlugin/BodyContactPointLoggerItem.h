@@ -23,7 +23,7 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const;
+    virtual Item* doDuplicate() const override;
 
 private:
     Impl* impl;

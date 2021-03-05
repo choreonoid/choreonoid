@@ -8,6 +8,7 @@
 #include <cnoid/TimeBar>
 #include <cnoid/RootItem>
 #include <cnoid/MessageView>
+#include <cnoid/UnifiedEditHistory>
 #include <cnoid/OptionManager>
 #include <cnoid/LazyCaller>
 #include <fmt/format.h>
@@ -117,8 +118,13 @@ void SimulationBar::onStoreInitialClicked()
 
 void SimulationBar::onRestoreInitialClicked()
 {
+    auto history = UnifiedEditHistory::instance();
+    history->beginEditGroup(_("Restore body initial positions"));
+    
     forEachTargetBodyItem(
         [](BodyItem* bodyItem){ bodyItem->restoreInitialState(true); });
+    
+    history->endEditGroup();
 }
 
 

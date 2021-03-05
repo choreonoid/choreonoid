@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-04 13:34+0900\n"
+"POT-Creation-Date: 2021-03-05 19:08+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -1038,47 +1038,51 @@ msgstr "干渉列アイテム"
 msgid "Collision Data"
 msgstr "干渉データ"
 
-#: SimulationBar.cpp:52
+#: SimulationBar.cpp:53
 msgid "SimulationBar"
 msgstr "シミュレーションバー"
 
-#: SimulationBar.cpp:57
+#: SimulationBar.cpp:58
 msgid "Store body positions to the initial world state"
-msgstr "現在の状態をワールド初期状態に設定"
+msgstr "現在の状態をワールド初期状態として設定"
 
-#: SimulationBar.cpp:61
+#: SimulationBar.cpp:62
 msgid "Restore body positions from the initial world state"
-msgstr "ワールド初期状態の呼び出し"
+msgstr "ワールド初期状態のボディ位置に戻す"
 
-#: SimulationBar.cpp:64
+#: SimulationBar.cpp:65
 msgid "Start simulation from the beginning"
 msgstr "初期位置からのシミュレーションを開始"
 
-#: SimulationBar.cpp:68
+#: SimulationBar.cpp:69
 msgid "Start simulation from the current state"
 msgstr "現在位置からのシミュレーションを開始"
 
-#: SimulationBar.cpp:71
+#: SimulationBar.cpp:72
 msgid "Pause simulation"
 msgstr "シミュレーションの一時停止"
 
-#: SimulationBar.cpp:75
+#: SimulationBar.cpp:76
 msgid "Stop simulation"
 msgstr "シミュレーションの停止"
 
-#: SimulationBar.cpp:108
+#: SimulationBar.cpp:109
 msgid "Current state of {} has been set to the initial state."
 msgstr "{}の現在の状態を初期状態にセットしました．"
 
-#: SimulationBar.cpp:137
+#: SimulationBar.cpp:122
+msgid "Restore body initial positions"
+msgstr "ボディ初期位置の取り戻し"
+
+#: SimulationBar.cpp:143
 msgid "There is no simulator item."
 msgstr "シミュレータアイテムが存在しません．"
 
-#: SimulationBar.cpp:161
+#: SimulationBar.cpp:167
 msgid "{} cannot be processed because it is not related with a world."
 msgstr "{}はワールドと関連付けられていないため処理出来ません．"
 
-#: SimulationBar.cpp:167
+#: SimulationBar.cpp:173
 msgid ""
 "{} cannot be processed because another simulatorin the same world is also "
 "selected."
