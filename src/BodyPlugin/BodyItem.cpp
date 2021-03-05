@@ -18,6 +18,8 @@
 #include <cnoid/ItemManager>
 #include <cnoid/OptionManager>
 #include <cnoid/MenuManager>
+#include <cnoid/UnifiedEditHistory>
+#include <cnoid/EditRecord>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/JointPath>
 #include <cnoid/BodyState>
@@ -92,6 +94,24 @@ public:
     shared_ptr<InverseKinematics> holderIK;
 };
 
+class KinematicStateRecord : public EditRecord
+{
+public:
+    BodyItemPtr bodyItem;
+    BodyItem::Impl* bodyItemImpl;
+    BodyState newState;
+    BodyState oldState;
+    
+    KinematicStateRecord(BodyItem::Impl* bodyItemImpl);
+    KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyState& oldState);
+    KinematicStateRecord(const KinematicStateRecord& org);
+
+    virtual EditRecord* clone() const override;
+    virtual std::string label() const override;
+    virtual bool undo() override;
+    virtual bool redo() override;
+};
+
 }
 
 namespace cnoid {
@@ -134,6 +154,7 @@ public:
     shared_ptr<PinDragIK> pinDragIK;
 
     BodyState initialState;
+    BodyState lastEditState;
             
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
@@ -381,6 +402,25 @@ void BodyItem::Impl::doAssign(Item* srcItem)
         self->notifyKinematicStateChange(true);
     }
 }
+
+
+void BodyItem::onPositionChanged()
+{
+    auto worldItem = findOwnerItem<WorldItem>();
+    if(!worldItem){
+        clearCollisions();
+    }
+
+    if(impl->updateAttachment(true)){
+        notifyUpdate();
+    }
+}
+
+
+void BodyItem::onConnectedToRoot()
+{
+    storeKinematicState(impl->lastEditState);
+}    
 
 
 bool BodyItem::setName(const std::string& name)
@@ -640,7 +680,7 @@ void BodyItem::acceptKinematicStateEdit()
         cout << "BodyItem::acceptKinematicStateEdit()" << endl;
     }
 
-    impl->sigKinematicStateEdited();
+    notifyKinematicStateEdited();
 }
 
 
@@ -975,9 +1015,14 @@ void BodyItem::notifyKinematicStateChangeLater
 void BodyItem::notifyKinematicStateEdited()
 {
     impl->sigKinematicStateEdited();
+
     if(isAttachedToParentBody_){
         impl->parentBodyItem->notifyKinematicStateEdited();
     }
+
+    auto record = new KinematicStateRecord(impl, impl->lastEditState);
+    UnifiedEditHistory::instance()->addRecord(record);
+    storeKinematicState(impl->lastEditState);
 }
 
 
@@ -1056,19 +1101,6 @@ void BodyItem::clearCollisions()
             collisionsOfLink_[i].clear();
             collisionLinkBitSet_[i] = false;
         }
-    }
-}
-
-
-void BodyItem::onPositionChanged()
-{
-    auto worldItem = findOwnerItem<WorldItem>();
-    if(!worldItem){
-        clearCollisions();
-    }
-
-    if(impl->updateAttachment(true)){
-        notifyUpdate();
     }
 }
 
@@ -1818,5 +1850,68 @@ bool BodyItem::Impl::restore(const Archive& archive)
 
     read(archive, "zmp", zmp);
         
+    return true;
+}
+
+
+KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl)
+    : bodyItem(bodyItemImpl->self),
+      bodyItemImpl(bodyItemImpl)
+{
+    bodyItem->storeKinematicState(newState);
+    oldState = newState;
+}
+
+
+KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyState& oldState)
+    : bodyItem(bodyItemImpl->self),
+      bodyItemImpl(bodyItemImpl),
+      oldState(oldState)
+{
+    bodyItem->storeKinematicState(newState);
+}
+
+
+KinematicStateRecord::KinematicStateRecord(const KinematicStateRecord& org)
+    : EditRecord(org),
+      bodyItem(org.bodyItem),
+      bodyItemImpl(org.bodyItemImpl),
+      newState(org.newState),
+      oldState(org.oldState)
+{
+
+}
+
+
+EditRecord* KinematicStateRecord::clone() const
+{
+    return new KinematicStateRecord(*this);
+}
+
+
+std::string KinematicStateRecord::label() const
+{
+    if(!isReverse()){
+        return format(_("Change the position of \"{0}\""), bodyItem->displayName());
+    } else {
+        return format(_("Restore the position of \"{0}\""), bodyItem->displayName());
+    }
+}
+
+
+bool KinematicStateRecord::undo()
+{
+    bodyItem->restoreKinematicState(oldState);
+    bodyItem->storeKinematicState(bodyItemImpl->lastEditState);
+    bodyItemImpl->notifyKinematicStateChange(false, false, false, true);
+    return true;
+}
+
+
+bool KinematicStateRecord::redo()
+{
+    bodyItem->restoreKinematicState(newState);
+    bodyItem->storeKinematicState(bodyItemImpl->lastEditState);
+    bodyItemImpl->notifyKinematicStateChange(false, false, false, true);
     return true;
 }

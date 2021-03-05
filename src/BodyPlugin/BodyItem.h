@@ -189,6 +189,7 @@ protected:
     virtual Item* doDuplicate() const override;
     virtual void doAssign(Item* item) override;
     virtual void onPositionChanged() override;
+    virtual void onConnectedToRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

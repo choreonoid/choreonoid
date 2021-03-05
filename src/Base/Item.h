@@ -406,12 +406,6 @@ protected:
     virtual void onAddedToParent();
 
     /**
-       This function is called when the item has been connected to the tree including the root item.
-       The onPositionChanged function and sigSubTreeChanged are processed before calling this function.
-    */
-    virtual void onConnectedToRoot();
-
-    /**
        This function is called when the item position in the whole item tree is changed.
        Note that this function is not called when the item is not connected to the root
        even if the item is newly attached to another item that is not connected to the root.
@@ -419,6 +413,12 @@ protected:
        to the root.
     */
     virtual void onPositionChanged();
+
+    /**
+       This function is called when the item has been connected to the tree including the root item.
+       The onPositionChanged function and sigSubTreeChanged are processed before calling this function.
+    */
+    virtual void onConnectedToRoot();
 
     virtual void onRemovedFromParent(Item* parentItem);
     virtual void onDisconnectedFromRoot();

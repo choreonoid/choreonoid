@@ -836,12 +836,6 @@ void Item::Impl::callFuncOnConnectedToRoot()
 }
 
 
-void Item::onConnectedToRoot()
-{
-
-}
-
-
 void Item::Impl::justRemoveSelfFromParent()
 {
     if(self->prevItem_){
@@ -999,6 +993,12 @@ void Item::Impl::callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopPare
 
 
 void Item::onPositionChanged()
+{
+
+}
+
+
+void Item::onConnectedToRoot()
 {
 
 }

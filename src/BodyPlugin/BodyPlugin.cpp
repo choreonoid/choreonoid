@@ -3,7 +3,6 @@
 */
 
 #include "BodySelectionManager.h"
-#include "BodyEditRecordManager.h"
 #include "WorldItem.h"
 #include "BodyItem.h"
 #include "LinkOffsetFrameListItem.h"
@@ -87,7 +86,6 @@ public:
         Body::addCustomizerDirectory(toUTF8(customizerPath.string()));
 
         BodySelectionManager::initializeClass(this);
-        BodyEditRecordManager::initializeClass(this);
 
         WorldItem::initializeClass(this);
         BodyItem::initializeClass(this);
