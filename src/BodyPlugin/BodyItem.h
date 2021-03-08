@@ -107,9 +107,9 @@ public:
     void notifyModelUpdate();
         
     /**
-       Signal emitted when there is a change in "kinematic" state such as joint angle of robot,
+       This signal is emitted when there is a change in "kinematic" state such as joint angle of robot,
        joint angular velocity, root position / posture. Item :: sigUpdated () is assumed to be
-       a case where the model itself is changed, and it is used distinguished from it.
+       a case where the model itself is changed, and you have to distinguish them.
     */
     SignalProxy<void()> sigKinematicStateChanged();
 
@@ -123,15 +123,16 @@ public:
     void notifyKinematicStateChangeLater(
         Connection& connectionToBlock,
         bool requestFK = false, bool requestVelFK = false, bool requestAccFK = false);
+
+    /**
+       This signal is emitted when a kinematic state has been updated.
+       In constrast to sigKinematicStateChange, this signal is emitted when a series of changes
+       are finalized.
+    */
+    SignalProxy<void()> sigKinematicStateUpdated();
+
+    void notifyKinematicStateUpdate(bool doNotifyStateChange = true);
     
-    SignalProxy<void()> sigKinematicStateEdited();
-    void notifyKinematicStateEdited();
-
-    enum KinematicStateUpdateFlag { RequestFK = 1 };
-
-    // Emit bodth sigKinematicStateChanged and sigKinematicStateEdited
-    void notifyKinematicStateUpdate(int updateFlags = 0);
-
     bool isCollisionDetectionEnabled() const;
     void setCollisionDetectionEnabled(bool on);
     [[deprecated("Use setCollisionDetectionEnabled")]]

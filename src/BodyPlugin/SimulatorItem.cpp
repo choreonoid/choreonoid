@@ -365,7 +365,7 @@ public:
     virtual void onPlaybackStarted(double /* time */) override;
     virtual bool onTimeChanged(double time) override;
     virtual void onPlaybackStopped(double time, bool isStoppedManually) override;
-    void notifyKinematicStateEdited();
+    void notifyKinematicStateUpdate();
 };    
 
         
@@ -2909,7 +2909,7 @@ SimulatedMotionEngine::SimulatedMotionEngine(SimulatorItem::Impl* simulatorItemI
 
 void SimulatedMotionEngine::onPlaybackStarted(double /* time */)
 {
-    notifyKinematicStateEdited();
+    notifyKinematicStateUpdate();
 }
 
 
@@ -2933,17 +2933,17 @@ bool SimulatedMotionEngine::onTimeChanged(double time)
 
 void SimulatedMotionEngine::onPlaybackStopped(double /* time */, bool /* isStoppedManually */)
 {
-    notifyKinematicStateEdited();
+    notifyKinematicStateUpdate();
 }
 
 
-void SimulatedMotionEngine::notifyKinematicStateEdited()
+void SimulatedMotionEngine::notifyKinematicStateUpdate()
 {
     auto& si = simulatorItemImpl;
     if(si->worldItem){
         for(auto& bodyItem : si->worldItem->descendantItems<BodyItem>()){
             if(!bodyItem->body()->isStaticModel()){
-                bodyItem->notifyKinematicStateEdited();
+                bodyItem->notifyKinematicStateUpdate(false);
             }
         }
     }

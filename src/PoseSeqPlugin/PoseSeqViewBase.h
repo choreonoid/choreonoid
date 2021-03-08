@@ -64,7 +64,7 @@ public:
     
     ConnectionSet staticConnections;
     ConnectionSet poseSeqConnections;
-    Connection connectionOfBodyKinematicStateEdited;
+    Connection connectionOfBodyKinematicStateUpdated;
 
     ConnectionSet linkTreeAttributeChangeConnections;
 
@@ -185,7 +185,7 @@ public:
     void onSelectedItemsChanged(ItemList<PoseSeqItem> selectedItems);
 
     void setCurrentItemName(ItemPtr item);
-    void onBodyKinematicStateEdited();
+    void onBodyKinematicStateUpdated();
     void onUpdateButtonClicked();
     void setCurrentBodyStateToSelectedPoses(bool onlySelected);
     bool setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected);

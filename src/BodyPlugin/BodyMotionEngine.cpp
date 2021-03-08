@@ -195,7 +195,7 @@ BodyMotionItem* BodyMotionEngine::motionItem()
 
 void BodyMotionEngine::onPlaybackStarted(double time)
 {
-    impl->bodyItem->notifyKinematicStateEdited();
+    impl->bodyItem->notifyKinematicStateUpdate(false);
 }
 
 
@@ -207,7 +207,7 @@ bool BodyMotionEngine::onTimeChanged(double time)
 
 void BodyMotionEngine::onPlaybackStopped(double time, bool isStoppedManually)
 {
-    impl->bodyItem->notifyKinematicStateEdited();
+    impl->bodyItem->notifyKinematicStateUpdate(false);
 }
 
 

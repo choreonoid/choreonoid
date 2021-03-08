@@ -162,6 +162,7 @@ void BodyBar::Impl::doSymmetricCopy(BodyItem* bodyItem, int direction, bool doMi
                 }
             }
         }
-        bodyItem->notifyKinematicStateUpdate(BodyItem::RequestFK);
+        bodyItem->body()->calcForwardKinematics();
+        bodyItem->notifyKinematicStateUpdate();
     }
 }

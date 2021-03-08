@@ -754,8 +754,10 @@ void EditableSceneBody::Impl::makeLinkAttitudeLevel()
             T2.translation() = link->p();
 
             if(ik->calcInverseKinematics(T2)){
-                bool fkDone = ik->calcRemainingPartForwardKinematicsForInverseKinematics();
-                bodyItem->notifyKinematicStateUpdate(fkDone ? 0 : BodyItem::RequestFK);
+                if(!ik->calcRemainingPartForwardKinematicsForInverseKinematics()){
+                    bodyItem->body()->calcForwardKinematics();
+                }
+                bodyItem->notifyKinematicStateUpdate();
             }
         }
     }
@@ -1029,7 +1031,7 @@ bool EditableSceneBody::Impl::finishEditing()
         
     } else if(dragMode != DRAG_NONE){
         if(dragged){
-            bodyItem->notifyKinematicStateEdited();
+            bodyItem->notifyKinematicStateUpdate(false);
         }
         finished = true;
     }
@@ -1455,7 +1457,7 @@ void EditableSceneBody::Impl::onDraggerDragFinished()
     } else {
         doIK(positionDragger->globalDraggingPosition());
         if(dragged){
-            bodyItem->notifyKinematicStateEdited();
+            bodyItem->notifyKinematicStateUpdate(false);
         }
     }
     dragged = false;

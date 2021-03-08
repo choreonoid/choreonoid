@@ -293,7 +293,7 @@ PoseSeqViewBase::~PoseSeqViewBase()
 {
     staticConnections.disconnect();
     poseSeqConnections.disconnect();
-    connectionOfBodyKinematicStateEdited.disconnect();
+    connectionOfBodyKinematicStateUpdated.disconnect();
 }
 
 
@@ -844,7 +844,7 @@ void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItemPtr poseSeqItem)
 
     setCurrentItemName(poseSeqItem);
 
-    connectionOfBodyKinematicStateEdited.disconnect();
+    connectionOfBodyKinematicStateUpdated.disconnect();
 
     seq.reset();
     currentBodyItem.reset();
@@ -870,8 +870,9 @@ void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItemPtr poseSeqItem)
         }
         linkTreeWidget->setBodyItem(currentBodyItem);
         if(currentBodyItem){
-            connectionOfBodyKinematicStateEdited = currentBodyItem->sigKinematicStateEdited().connect(
-                std::bind(&PoseSeqViewBase::onBodyKinematicStateEdited, this));
+            connectionOfBodyKinematicStateUpdated =
+                currentBodyItem->sigKinematicStateUpdated().connect(
+                    std::bind(&PoseSeqViewBase::onBodyKinematicStateUpdated, this));
         }
             
         poseSeqConnections.add(
@@ -1431,10 +1432,10 @@ void PoseSeqViewBase::setCurrentItemName(ItemPtr item)
 /**
    \todo Show visual effect to emphasize the key poses beging updated
 */
-void PoseSeqViewBase::onBodyKinematicStateEdited()
+void PoseSeqViewBase::onBodyKinematicStateUpdated()
 {
     if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::onBodyKinematicStateEdited()" << endl;
+        cout << "PoseSeqViewBase::onBodyKinematicStateUpdated()" << endl;
     }
     
     if(autoUpdateModeCheck.isChecked()){

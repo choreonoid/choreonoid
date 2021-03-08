@@ -146,7 +146,7 @@ public:
     std::bitset<NUM_UPUDATE_ELEMENTS> updateElements;
 
     LazySignal<Signal<void()>> sigKinematicStateChanged;
-    Signal<void()> sigKinematicStateEdited;
+    Signal<void()> sigKinematicStateUpdated;
 
     LinkPtr currentBaseLink;
     LinkTraverse fkTraverse;
@@ -553,9 +553,9 @@ SignalProxy<void()> BodyItem::sigKinematicStateChanged()
 }
 
 
-SignalProxy<void()> BodyItem::sigKinematicStateEdited()
+SignalProxy<void()> BodyItem::sigKinematicStateUpdated()
 {
-    return impl->sigKinematicStateEdited;
+    return impl->sigKinematicStateUpdated;
 }
 
 
@@ -680,7 +680,7 @@ void BodyItem::acceptKinematicStateEdit()
         cout << "BodyItem::acceptKinematicStateEdit()" << endl;
     }
 
-    notifyKinematicStateEdited();
+    notifyKinematicStateUpdate(false);
 }
 
 
@@ -773,7 +773,6 @@ void BodyItem::moveToOrigin()
 {
     impl->body->rootLink()->T() = impl->body->defaultPosition();
     impl->body->calcForwardKinematics();
-
     notifyKinematicStateUpdate();
 }
 
@@ -1012,24 +1011,21 @@ void BodyItem::notifyKinematicStateChangeLater
 }
 
 
-void BodyItem::notifyKinematicStateEdited()
+void BodyItem::notifyKinematicStateUpdate(bool doNotifyStateChange)
 {
-    impl->sigKinematicStateEdited();
+    if(doNotifyStateChange){
+        impl->notifyKinematicStateChange(false, false, false, true);
+    }
+    
+    impl->sigKinematicStateUpdated();
 
     if(isAttachedToParentBody_){
-        impl->parentBodyItem->notifyKinematicStateEdited();
+        impl->parentBodyItem->notifyKinematicStateUpdate(false);
     }
 
     auto record = new KinematicStateRecord(impl, impl->lastEditState);
     UnifiedEditHistory::instance()->addRecord(record);
     storeKinematicState(impl->lastEditState);
-}
-
-
-void BodyItem::notifyKinematicStateUpdate(int updateFlags)
-{
-    impl->notifyKinematicStateChange(updateFlags & RequestFK, false, false, true);
-    impl->sigKinematicStateEdited();
 }
 
 
@@ -1207,7 +1203,7 @@ bool BodyLocation::setLocation(const Isometry3& T)
 
 void BodyLocation::finishLocationEditing()
 {
-    impl->self->notifyKinematicStateEdited();
+    impl->self->notifyKinematicStateUpdate(false);
 }
 
 

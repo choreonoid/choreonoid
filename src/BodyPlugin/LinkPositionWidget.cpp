@@ -1204,7 +1204,7 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Isometry3& T_input, bool
 void LinkPositionWidget::Impl::finishPositionEditing()
 {
     if(targetBodyItem){
-        targetBodyItem->notifyKinematicStateEdited();
+        targetBodyItem->notifyKinematicStateUpdate(false);
     }
 }
 

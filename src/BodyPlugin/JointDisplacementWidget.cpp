@@ -780,7 +780,7 @@ void JointDisplacementWidget::Impl::focusDial(int index)
 
 void JointDisplacementWidget::Impl::onOperationFinished()
 {
-    currentBodyItem->notifyKinematicStateEdited();
+    currentBodyItem->notifyKinematicStateUpdate(false);
 }
 
 

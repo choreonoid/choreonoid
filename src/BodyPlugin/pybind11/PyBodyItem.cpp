@@ -48,7 +48,8 @@ void exportBodyItem(py::module m)
              (void (BodyItem::*)(Connection&, bool, bool, bool)) &BodyItem::notifyKinematicStateChange,
              py::arg("connectionToBlock"),
              py::arg("requestFK") = false, py::arg("requestVelFK") = false, py::arg("requestAccFK") = false)
-        .def("notifyKinematicStateEdited", &BodyItem::notifyKinematicStateEdited)
+        .def("notifyKinematicStateUpdate",
+             &BodyItem::notifyKinematicStateUpdate, py::arg("doNotifyStateChange") = true)
         .def("isCollisionDetectionEnabled", &BodyItem::isCollisionDetectionEnabled)
         .def("setCollisionDetectionEnabled", &BodyItem::setCollisionDetectionEnabled)
         .def("isSelfCollisionDetectionEnabled", &BodyItem::isSelfCollisionDetectionEnabled)

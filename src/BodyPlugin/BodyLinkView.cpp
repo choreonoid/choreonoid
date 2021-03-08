@@ -916,7 +916,7 @@ void BodyLinkView::Impl::onQuatChanged()
 void BodyLinkView::Impl::onOperationFinished()
 {
     if(currentBodyItem){
-        currentBodyItem->notifyKinematicStateEdited();
+        currentBodyItem->notifyKinematicStateUpdate(false);
     }
 }
 
