@@ -463,19 +463,19 @@ UtilityImpl::toVector3d(const string& str, Eigen::Vector3d& vec)
 void
 UtilityImpl::printMessageImpl(const string& msg)
 {
-    MessageView::instance()->putln(MessageView::Normal, msg);
+    MessageView::instance()->putln(msg);
 }
 
 void
 UtilityImpl::printErrorMessageImpl(const string& msg)
 {
-    MessageView::instance()->putln(MessageView::Error, msg);    
+    MessageView::instance()->putln(msg, MessageView::Error);
 }
 
 void
 UtilityImpl::printWarningMessageImpl(const string& msg)
 {
-    MessageView::instance()->putln(MessageView::Warning, msg);    
+    MessageView::instance()->putln(msg, MessageView::Warning);
 }
 
 void

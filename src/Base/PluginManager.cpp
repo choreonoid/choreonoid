@@ -510,8 +510,8 @@ bool PluginManager::Impl::loadPlugin(int index)
             QFunctionPointer symbol = info->dll.resolve("getChoreonoidPlugin");
             if(!symbol){
                 info->status = PluginManager::INVALID;
-                mv->putln(MessageView::Error, _("The plugin entry function \"getChoreonoidPlugin\" is not found."));
-                mv->putln(MessageView::Error, info->dll.errorString());
+                mv->putln(_("The plugin entry function \"getChoreonoidPlugin\" is not found."), MessageView::Error);
+                mv->putln(info->dll.errorString(), MessageView::Error);
 
             } else {
                 Plugin::PluginEntry getCnoidPluginFunc = (Plugin::PluginEntry)(symbol);
@@ -520,7 +520,7 @@ bool PluginManager::Impl::loadPlugin(int index)
 
                 if(!plugin){
                     info->status = PluginManager::INVALID;
-                    mv->putln(MessageView::Error, _("The plugin object cannot be created."));
+                    mv->putln(_("The plugin object cannot be created."), MessageView::Error);
 
                 } else {
 
@@ -561,9 +561,10 @@ bool PluginManager::Impl::loadPlugin(int index)
                         info->status = PluginManager::CONFLICT;
                         PluginInfoPtr& another = p->second;
                         another->status = PluginManager::CONFLICT;
-                        mv->putln(MessageView::Error,
-                                  fmt::format(_("Plugin file \"{0}\" conflicts with \"{1}\"."),
-                                  info->pathString, another->pathString));
+                        mv->putln(
+                            fmt::format(_("Plugin file \"{0}\" conflicts with \"{1}\"."),
+                                        info->pathString, another->pathString),
+                            MessageView::Error);
                     }
                 }
             }
@@ -571,7 +572,7 @@ bool PluginManager::Impl::loadPlugin(int index)
     }
 
     if(info->status != PluginManager::LOADED){
-        mv->putln(MessageView::Error, _("Loading the plugin failed."));
+        mv->putln(_("Loading the plugin failed."), MessageView::Error);
         mv->flush();
     }
 
@@ -581,7 +582,7 @@ bool PluginManager::Impl::loadPlugin(int index)
 
 bool PluginManager::Impl::activatePlugin(int index)
 {
-    QString errorMessage;
+    string errorMessage;
 
     PluginInfoPtr info = allPluginInfos[index];
     
@@ -669,7 +670,7 @@ bool PluginManager::Impl::activatePlugin(int index)
         }
     }
 
-    if(!errorMessage.isEmpty()){
+    if(!errorMessage.empty()){
         mv->putln(_("Loading the plugin failed."));
         mv->putln(errorMessage);
         mv->flush();

@@ -95,16 +95,24 @@ TCSimulatorItem::TCSimulatorItem()
                     _pair[n1] = n2;
                 } else {
                     if(rc1==false) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::TCSimulatorItem "+n1+" does not exist in this computer. Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::TCSimulatorItem "+n1+" does not exist in this computer. Please check configure file="+_config,
+                            MessageView::Error);
                     }
                     if(rc2==false) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::TCSimulatorItem "+n2+" does not exist in this computer. Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::TCSimulatorItem "+n2+" does not exist in this computer. Please check configure file="+_config,
+                            MessageView::Error);
                     }
                     if(rc3==false) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::TCSimulatorItem "+n1+" is already defined(duplicated). Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::TCSimulatorItem "+n1+" is already defined(duplicated). Please check configure file="+_config,
+                            MessageView::Error);
                     }
                     if(rc4==false) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::TCSimulatorItem "+n2+" is already defined(duplicated). Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::TCSimulatorItem "+n2+" is already defined(duplicated). Please check configure file="+_config,
+                            MessageView::Error);
                     }
                 }
             }
@@ -113,7 +121,9 @@ TCSimulatorItem::TCSimulatorItem()
         fclose(fp);
     }
     else {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::TCSimulatorItem Configure file="+_config+" does not exist.");
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::TCSimulatorItem Configure file="+_config+" does not exist.",
+            MessageView::Error);
     }
 
     cnt = 0;
@@ -125,7 +135,9 @@ TCSimulatorItem::TCSimulatorItem()
             cnt++;
         }
         else {
-            MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::TCSimulatorItem NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
+            MessageView::mainInstance()->putln(
+                "TCSimulatorItem::TCSimulatorItem NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.",
+                MessageView::Error);
         }
     }
 
@@ -133,7 +145,9 @@ TCSimulatorItem::TCSimulatorItem()
         _communicationPort.resize(cnt);
     }
     else {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::TCSimulatorItem Configure file="+_config+" is invalid. Effective Port is nothing.");
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::TCSimulatorItem Configure file="+_config+" is invalid. Effective Port is nothing.",
+            MessageView::Error);
         string eth="No valid port exists.";
         _ethName[cnt]=eth;
         _communicationPort.setSymbol(0,eth);
@@ -422,8 +436,12 @@ TCSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
             bool rc = chkIPMask(_ipAddressC[_idxCur]);
 
             if(rc==false) {
-                MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::doPutProperties IP Address/Mask = \""+_ipAddressC[_idxCur]+"\" is an invalid string.");
-                MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::doPutProperties Please specify empty string or 192.168.0.1/24 format string.");
+                MessageView::mainInstance()->putln(
+                    "TCSimulatorItem::doPutProperties IP Address/Mask = \""+_ipAddressC[_idxCur]+"\" is an invalid string.",
+                    MessageView::Error);
+                MessageView::mainInstance()->putln(
+                    "TCSimulatorItem::doPutProperties Please specify empty string or 192.168.0.1/24 format string.",
+                    MessageView::Error);
 
                 _ipAddressC[_idxCur] = _ipAddressP[_idxCur];
                 putProperty(_("IP Address"), _ipAddressC[_idxCur], changeProperty(_ipAddressC[_idxCur]));
@@ -507,10 +525,14 @@ TCSimulatorItem::restore(const Archive& archive)
                 bool rc1=findNIC(tmp);
                 bool rc2=_pair.count(tmp)==1;
                 if(rc1==false) {
-                    MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+" does not exist in this computer.");
+                    MessageView::mainInstance()->putln(
+                        "TCSimulatorItem::restore "+tmp+" does not exist in this computer.",
+                        MessageView::Error);
                 }
                 else if(rc2==false) {
-                    MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+" does not defined in configure file="+_config);
+                    MessageView::mainInstance()->putln(
+                        "TCSimulatorItem::restore "+tmp+" does not defined in configure file="+_config,
+                        MessageView::Error);
                 }
 
                 if(rc1&&rc2) {
@@ -524,47 +546,67 @@ TCSimulatorItem::restore(const Archive& archive)
                     archive.read(portName+"InboundLoss", _InboundLoss[cnt]);
                     archive.read(portName+"IPAddress", _ipAddressC[cnt]);
                     if(_OutboundDelay[cnt]<ZERO||_OutboundDelay[cnt]>DELAY_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+":OutboundDelay value="+std::to_string(_OutboundDelay[cnt])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::restore "+tmp+":OutboundDelay value="+std::to_string(_OutboundDelay[cnt])+" is out of range."+rangeStr(ZERO,DELAY_MAX),
+                            MessageView::Error);
                         _OutboundDelay[cnt] = 0;
                     }
                     if(_OutboundBandWidth[cnt]<ZERO||_OutboundBandWidth[cnt]>BAND_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+":OutboundBandWidth value="+std::to_string(_OutboundBandWidth[cnt])+" is out of range."+rangeStr(ZERO,BAND_MAX));
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::restore "+tmp+":OutboundBandWidth value="+std::to_string(_OutboundBandWidth[cnt])+" is out of range."+rangeStr(ZERO,BAND_MAX),
+                            MessageView::Error);
                         _OutboundBandWidth[cnt] = 0;
                     }
                     if(_OutboundLoss[cnt]<ZERO||_OutboundLoss[cnt]>LOSS_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+":OutboundLoss value="+std::to_string(_OutboundLoss[cnt])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::restore "+tmp+":OutboundLoss value="+std::to_string(_OutboundLoss[cnt])+" is out of range."+rangeStr(ZERO,LOSS_MAX),
+                            MessageView::Error);
                         _OutboundLoss[cnt] = 0;
                     }
                     if(_InboundDelay[cnt]<ZERO||_InboundDelay[cnt]>DELAY_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+":InboundDelay value="+std::to_string(_InboundDelay[cnt])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::restore "+tmp+":InboundDelay value="+std::to_string(_InboundDelay[cnt])+" is out of range."+rangeStr(ZERO,DELAY_MAX),
+                            MessageView::Error);
                         _InboundDelay[cnt] = 0;
                     }
                     if(_InboundBandWidth[cnt]<ZERO||_InboundBandWidth[cnt]>BAND_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+":InboundBandWidth value="+std::to_string(_InboundBandWidth[cnt])+" is out of range."+rangeStr(ZERO,BAND_MAX));
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::restore "+tmp+":InboundBandWidth value="+std::to_string(_InboundBandWidth[cnt])+" is out of range."+rangeStr(ZERO,BAND_MAX),
+                            MessageView::Error);
                         _InboundBandWidth[cnt] = 0;
                     }
                     if(_InboundLoss[cnt]<ZERO||_InboundLoss[cnt]>LOSS_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+":InboundLoss value="+std::to_string(_InboundLoss[cnt])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::restore "+tmp+":InboundLoss value="+std::to_string(_InboundLoss[cnt])+" is out of range."+rangeStr(ZERO,LOSS_MAX),
+                            MessageView::Error);
                         _InboundLoss[cnt] = 0;
                     }
 
                     bool rc = chkIPMask(_ipAddressC[cnt]);
                     if(rc==false) {
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+":IP Address/Mask = \""+_ipAddressC[cnt]+"\" is an invalid string.");
-                        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore "+tmp+":Please specify empty string or 192.168.0.1/24 format string.");
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::restore "+tmp+":IP Address/Mask = \""+_ipAddressC[cnt]+"\" is an invalid string.",
+                            MessageView::Error);
+                        MessageView::mainInstance()->putln(
+                            "TCSimulatorItem::restore "+tmp+":Please specify empty string or 192.168.0.1/24 format string.",
+                            MessageView::Error);
                         _ipAddressC[cnt] = "";
                     }
                     cnt++;
                 }
             } else {
-                MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", Properties of "+tmp+" can not be restored. Please redefine NIC_MAX value more larger.");
+                MessageView::mainInstance()->putln(
+                    "TCSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", Properties of "+tmp+" can not be restored. Please redefine NIC_MAX value more larger.",
+                    MessageView::Error);
             }
         }
         if(cnt>0) {
             _communicationPort.resize(cnt);
         }
         else {
-            MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore This Project file is invalid. Effective Port is nothing.");
+            MessageView::mainInstance()->putln(
+                "TCSimulatorItem::restore This Project file is invalid. Effective Port is nothing.",
+                MessageView::Error);
             cnt=0;
             for(auto itr = _pair.begin(); itr!=_pair.end();++itr) {
                 string eth=itr->first;
@@ -574,14 +616,18 @@ TCSimulatorItem::restore(const Archive& archive)
                     cnt++;
                 }
                 else {
-                    MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
+                    MessageView::mainInstance()->putln(
+                        "TCSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.",
+                        MessageView::Error);
                 }
             }
             if(cnt>0) {
                 _communicationPort.resize(cnt);
             }
             else {
-                MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::restore This Project file is invalid and Configure file="+_config+" is invalid too.");
+                MessageView::mainInstance()->putln(
+                    "TCSimulatorItem::restore This Project file is invalid and Configure file="+_config+" is invalid too.",
+                    MessageView::Error);
                 string eth="No valid port exists.";
                 _ethName[cnt]=eth;
                 _communicationPort.setSymbol(0,eth);
@@ -602,7 +648,9 @@ TCSimulatorItem::sysCall(const std::string& cmdStr) {
 
     int ret=system(cmd);
     if(ret!=0) {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::sysCall SystemCall error occurred, cmd=\""+cmdStr+"\" rc="+std::to_string(ret));
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::sysCall SystemCall error occurred, cmd=\""+cmdStr+"\" rc="+std::to_string(ret),
+            MessageView::Error);
     }
 }
 
@@ -895,15 +943,21 @@ TCSimulatorItem::doTC2com(const int& ethIdxNo,const int *p1,const int *p2,const 
     bool rc1=true;
 
     if(p1[ethIdxNo]<ZERO||p1[ethIdxNo]>DELAY_MAX) {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::doTC2com OutboundDelay value="+std::to_string(p1[ethIdxNo])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::doTC2com OutboundDelay value="+std::to_string(p1[ethIdxNo])+" is out of range."+rangeStr(ZERO,DELAY_MAX),
+            MessageView::Error);
         rc1=false;
     }
     if(p2[ethIdxNo]<ZERO||p2[ethIdxNo]>BAND_MAX) {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::doTC2com OutboundBandWidth value="+std::to_string(p2[ethIdxNo])+" is out of range."+rangeStr(ZERO,BAND_MAX));
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::doTC2com OutboundBandWidth value="+std::to_string(p2[ethIdxNo])+" is out of range."+rangeStr(ZERO,BAND_MAX),
+            MessageView::Error);
         rc1=false;
     }
     if(p3[ethIdxNo]<ZERO||p3[ethIdxNo]>LOSS_MAX) {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::doTC2com OutboundLoss value="+std::to_string(p3[ethIdxNo])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::doTC2com OutboundLoss value="+std::to_string(p3[ethIdxNo])+" is out of range."+rangeStr(ZERO,LOSS_MAX),
+            MessageView::Error);
         rc1=false;
     }
     if(rc1) {
@@ -914,15 +968,21 @@ TCSimulatorItem::doTC2com(const int& ethIdxNo,const int *p1,const int *p2,const 
     bool rc2=true;
 
     if(p4[ethIdxNo]<ZERO||p4[ethIdxNo]>DELAY_MAX) {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::doTC2com InboundDelay value="+std::to_string(p4[ethIdxNo])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::doTC2com InboundDelay value="+std::to_string(p4[ethIdxNo])+" is out of range."+rangeStr(ZERO,DELAY_MAX),
+            MessageView::Error);
         rc2=false;
     }
     if(p5[ethIdxNo]<ZERO||p5[ethIdxNo]>BAND_MAX) {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::doTC2com InboundBandWidth value="+std::to_string(p5[ethIdxNo])+" is out of range."+rangeStr(ZERO,BAND_MAX));
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::doTC2com InboundBandWidth value="+std::to_string(p5[ethIdxNo])+" is out of range."+rangeStr(ZERO,BAND_MAX),
+            MessageView::Error);
         rc2=false;
     }
     if(p6[ethIdxNo]<ZERO||p6[ethIdxNo]>LOSS_MAX) {
-        MessageView::mainInstance()->putln(MessageView::Error,"TCSimulatorItem::doTC2com InboundLoss value="+std::to_string(p6[ethIdxNo])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
+        MessageView::mainInstance()->putln(
+            "TCSimulatorItem::doTC2com InboundLoss value="+std::to_string(p6[ethIdxNo])+" is out of range."+rangeStr(ZERO,LOSS_MAX),
+            MessageView::Error);
         rc2=false;
     }
     if(rc2) {
