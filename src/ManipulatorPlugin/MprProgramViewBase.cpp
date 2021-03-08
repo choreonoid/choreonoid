@@ -131,6 +131,8 @@ public:
     unordered_map<MprStatementPtr, StatementItem*> statementItemMap;
     MprDummyStatementPtr dummyStatement;
     int statementItemOperationCallCounter;
+    bool isOnTimeChanged;
+    ScopedConnection timeBarConnection;
     ScopedConnectionSet programConnections;
 
     std::vector<MprStatementPtr> selectedStatements;
@@ -580,12 +582,10 @@ MprProgramViewBase::Impl::Impl(MprProgramViewBase* self)
 
     dummyStatement = new MprDummyStatement;
     statementItemOperationCallCounter = 0;
+    isOnTimeChanged = false;
     bodySyncMode = DirectBodySync;
     isJustAfterDoubleClicked = false;
     defaultStatementDelegate = new StatementDelegate;
-
-    TimeBar::instance()->sigTimeChanged().connect(
-        [&](double time){ return onTimeChanged(time); });
 }
 
 
@@ -704,7 +704,25 @@ void MprProgramViewBase::Impl::setupWidgets()
             buttonIconSize = QSize(24, 24);
         }
     }
+}
 
+
+void MprProgramViewBase::onActivated()
+{
+    // TODO: Use TimeSyncItemEngine instead of using the time bar directly
+    auto timeBar = TimeBar::instance();
+    impl->timeBarConnection =
+        timeBar->sigTimeChanged().connect(
+            [this](double time){ return impl->onTimeChanged(time); });
+    impl->onTimeChanged(timeBar->time());
+}
+
+
+void MprProgramViewBase::onDeactivated()
+{
+    impl->timeBarConnection.disconnect();
+    impl->currentStatement.reset();
+    impl->prevActiveStatement.reset();
 }
 
 
@@ -748,13 +766,6 @@ void MprProgramViewBase::addEditButton(ToolButton* button, int row)
 {
     button->setIconSize(impl->buttonIconSize);
     impl->buttonBox[row].addWidget(button);
-}
-
-
-void MprProgramViewBase::onDeactivated()
-{
-    impl->currentStatement.reset();
-    impl->prevActiveStatement.reset();
 }
 
 
@@ -1105,11 +1116,13 @@ void MprProgramViewBase::Impl::onTreeWidgetItemClicked(QTreeWidgetItem* item, in
 
 void MprProgramViewBase::onStatementActivated(MprStatement* statement)
 {
-    if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
-        if(impl->bodySyncMode == DirectBodySync){
-            impl->currentProgramItem->moveTo(ps);
-        } else if(impl->bodySyncMode == TwoStageBodySync){
-            impl->currentProgramItem->superimposePosition(ps);
+    if(!impl->isOnTimeChanged){
+        if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
+            if(impl->bodySyncMode == DirectBodySync){
+                impl->currentProgramItem->moveTo(ps);
+            } else if(impl->bodySyncMode == TwoStageBodySync){
+                impl->currentProgramItem->superimposePosition(ps);
+            }
         }
     }
 }
@@ -1202,11 +1215,13 @@ bool MprProgramViewBase::Impl::onTimeChanged(double time)
         if(!seq->empty() && seq != invalidLogSeq.lock()){
             auto data = seq->at(seq->lastFrameOfTime(time)).get();
             if(auto log = dynamic_cast<MprControllerLog*>(data)){
+                isOnTimeChanged = true;
                 if(seekToLogPosition(controllerItem, log)){
                     if(time < seq->timeLength()){
                         hit = true;
                     }
                 }
+                isOnTimeChanged = false;
             }
         }
     }

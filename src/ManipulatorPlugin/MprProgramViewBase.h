@@ -23,6 +23,7 @@ public:
     MprProgramViewBase();
     virtual ~MprProgramViewBase();
 
+    virtual void onActivated() override;
     virtual void onDeactivated() override;
 
     MprProgramItemBase* currentProgramItem();
