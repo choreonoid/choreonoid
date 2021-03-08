@@ -295,7 +295,6 @@ set(qtheaders
   ItemSelectionModel.h
   Timer.h
   SocketNotifier.h
-  InfoBar.h
   StringListComboBox.h
   TextEdit.h
   )

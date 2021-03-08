@@ -34,31 +34,34 @@ public:
         NORMAL = Normal, ERROR = Error, WARNING = Warning, HIGHLIGHT = Highlight
     };
 
-    void put(const char* message, int type = Normal);
     void put(const std::string& message, int type = Normal);
+    void put(std::string&& message, int type = Normal);
+    void put(const char* message, int type = Normal);
     void put(const QString& message, int type = Normal);
 
-    void putln();
-    void putln(const char* message, int type = Normal);
     void putln(const std::string& message, int type = Normal);
+    void putln(std::string&& message, int type = Normal);
+    void putln(const char* message, int type = Normal);
     void putln(const QString& message, int type = Normal);
+    void putln();
 
-    void notify(const char* message, int type = Normal);
     void notify(const std::string& message, int type = Normal);
+    void notify(std::string&& message, int type = Normal);
+    void notify(const char* message, int type = Normal);
     void notify(const QString& message, int type = Normal);
 
-    //! \deprecated
-    void put(int type, const char* message);
-    //! \deprecated
+    [[deprecated("Use put(const std::string& message, int type = Normal)")]]
     void put(int type, const std::string& message);
-    //! \deprecated
+    [[deprecated("Use put(const char* message, int type = Normal)")]]
+    void put(int type, const char* message);
+    [[deprecated("Use put(const QString& message, int type = Normal)")]]
     void put(int type, const QString& message);
     
-    //! \deprecated
-    void putln(int type, const char* message);
-    //! \deprecated
+    [[deprecated("Use putln(const std::string& message, int type = Normal)")]]
     void putln(int type, const std::string& message);
-    //! \deprecated
+    [[deprecated("Use putln(const char* message, int type = Normal)")]]
+    void putln(int type, const char* message);
+    [[deprecated("Use putln(const QString& message, int type = Normal)")]]
     void putln(int type, const QString& message);
 
     int currentColumn();
