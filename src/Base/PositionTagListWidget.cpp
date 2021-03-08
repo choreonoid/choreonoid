@@ -51,7 +51,7 @@ public:
     QVariant getPositionData(const PositionTag* tag) const;
     void onTagAdded(int tagIndex);
     void onTagRemoved(int tagIndex);
-    void onTagPreviewRequested(int tagIndex);
+    void onTagPositionChanged(int tagIndex);
 };
 
 }
@@ -109,8 +109,8 @@ void TagGroupModel::setTagGroupItem(PositionTagGroupItem* tagGroupItem)
             tags->sigTagRemoved().connect(
                 [&](int index, PositionTag*){ onTagRemoved(index); }));
         tagGroupConnections.add(
-            tags->sigTagPreviewRequested().connect(
-                [&](int index){ onTagPreviewRequested(index); }));
+            tags->sigTagPositionChanged().connect(
+                [&](int index){ onTagPositionChanged(index); }));
     }
             
     endResetModel();
@@ -330,7 +330,7 @@ void TagGroupModel::onTagRemoved(int tagIndex)
 }
 
 
-void TagGroupModel::onTagPreviewRequested(int tagIndex)
+void TagGroupModel::onTagPositionChanged(int tagIndex)
 {
     auto modelIndex = index(tagIndex, PositionColumn, QModelIndex());
     Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });

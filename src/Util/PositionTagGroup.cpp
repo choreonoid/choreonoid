@@ -22,8 +22,8 @@ public:
     Uuid uuid;
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
-    Signal<void(int index)> sigTagPreviewRequested;
-    Signal<void(int index)> sigTagUpdated;
+    Signal<void(int index)> sigTagPositionChanged;
+    Signal<void(int index)> sigTagPositionUpdated;
     
     Impl();
     Impl(const Impl& org);
@@ -157,33 +157,33 @@ SignalProxy<void(int index, PositionTag* tag)> PositionTagGroup::sigTagRemoved()
 }
 
 
-SignalProxy<void(int index)> PositionTagGroup::sigTagPreviewRequested()
+SignalProxy<void(int index)> PositionTagGroup::sigTagPositionChanged()
 {
-    return impl->sigTagPreviewRequested;
+    return impl->sigTagPositionChanged;
 }
 
 
-void PositionTagGroup::requestTagPreview(int index)
+SignalProxy<void(int index)> PositionTagGroup::sigTagPositionUpdated()
+{
+    return impl->sigTagPositionUpdated;
+}
+
+
+void PositionTagGroup::notifyTagPositionChange(int index)
 {
     if(static_cast<size_t>(index) < tags_.size()){
-        impl->sigTagPreviewRequested(index);
+        impl->sigTagPositionChanged(index);
     }
 }
 
 
-SignalProxy<void(int index)> PositionTagGroup::sigTagUpdated()
-{
-    return impl->sigTagUpdated;
-}
-
-
-void PositionTagGroup::notifyTagUpdate(int index, bool requestPreview)
+void PositionTagGroup::notifyTagPositionUpdate(int index, bool doNotifyPositionChange)
 {
     if(static_cast<size_t>(index) < tags_.size()){
-        if(requestPreview){
-            impl->sigTagPreviewRequested(index);
+        if(doNotifyPositionChange){
+            impl->sigTagPositionChanged(index);
         }
-        impl->sigTagUpdated(index);
+        impl->sigTagPositionUpdated(index);
     }
 }
 

@@ -237,7 +237,7 @@ public:
     void setupHandlersForUnifiedEditHistory();
     void onTagAdded(int index);
     void onTagRemoved(int index, PositionTag* tag);
-    void onTagUpdated(int index);
+    void onTagPositionUpdated(int index);
     bool clearTagSelection(bool doNotify);
     void selectAllTags();
     void setTagSelected(int tagIndex, bool on, bool doNotify);
@@ -356,8 +356,8 @@ void PositionTagGroupItem::Impl::setupHandlersForUnifiedEditHistory()
         tags->sigTagRemoved().connect(
             [&](int index, PositionTag* tag){ onTagRemoved(index, tag); }));
     tagGroupConnections.add(
-        tags->sigTagUpdated().connect(
-            [&](int index){ onTagUpdated(index); }));
+        tags->sigTagPositionUpdated().connect(
+            [&](int index){ onTagPositionUpdated(index); }));
 }
 
 
@@ -472,7 +472,7 @@ void PositionTagGroupItem::Impl::onTagRemoved(int index, PositionTag* tag)
 }
 
 
-void PositionTagGroupItem::Impl::onTagUpdated(int index)
+void PositionTagGroupItem::Impl::onTagPositionUpdated(int index)
 {
     auto newTag = tags->tagAt(index);
     auto oldTag = lastEditTags->tagAt(index);
@@ -735,7 +735,7 @@ void PositionTagGroupItem::Impl::convertLocalCoordinates
         } else {
             tag->setTranslation(Tc * tag->translation());
         }
-        tags->notifyTagUpdate(i);
+        tags->notifyTagPositionUpdate(i);
     }
 
     self->notifyUpdate();
@@ -923,7 +923,7 @@ SceneTagGroup::SceneTagGroup(PositionTagGroupItem::Impl* impl)
         tags->sigTagRemoved().connect(
             [&](int index, PositionTag*){ removeTagNode(index); }));
     tagGroupConnections.add(
-        tags->sigTagPreviewRequested().connect(
+        tags->sigTagPositionChanged().connect(
             [&](int index){ updateTagNodePosition(index); }));
 }
 
@@ -1267,7 +1267,7 @@ void SceneTagGroup::onDraggerDragged()
         } else {
             tag->setPosition(T_base * tagpos0.T);
         }
-        impl->tags->requestTagPreview(tagpos0.index);
+        impl->tags->notifyTagPositionChange(tagpos0.index);
     }
 }
 
@@ -1275,7 +1275,7 @@ void SceneTagGroup::onDraggerDragged()
 void SceneTagGroup::onDraggerDragFinished()
 {
     for(auto& tagpos0 : initialTagDragPositions){
-        impl->tags->notifyTagUpdate(tagpos0.index, false);
+        impl->tags->notifyTagPositionUpdate(tagpos0.index, false);
     }
 }
 
@@ -1437,7 +1437,7 @@ bool TargetLocationProxy::setLocation(const Isometry3& T)
                     auto tag = tags->tagAt(i);
                     tag->setPosition(T_base * tag->position());
                 }
-                tags->requestTagPreview(i);
+                tags->notifyTagPositionChange(i);
             }
         }
     }
@@ -1454,7 +1454,7 @@ void TargetLocationProxy::finishLocationEditing()
         auto primaryTag = tags->tagAt(impl->locationTargetTagIndex);
         for(size_t i=0; i < impl->tagSelection.size(); ++i){
             if(impl->tagSelection[i]){
-                tags->notifyTagUpdate(i, false);
+                tags->notifyTagPositionUpdate(i, false);
             }
         }
     }
@@ -1634,7 +1634,7 @@ bool TagEditRecord::undo()
         break;
     case UpdateAction:
         (*tags->tagAt(tagIndex)) = *oldTag;
-        tags->notifyTagUpdate(tagIndex);
+        tags->notifyTagPositionUpdate(tagIndex);
         done = true;
         break;
     case RemoveAction:
@@ -1662,7 +1662,7 @@ bool TagEditRecord::redo()
         break;
     case UpdateAction:
         (*tags->tagAt(tagIndex)) = *newTag;
-        tags->notifyTagUpdate(tagIndex);
+        tags->notifyTagPositionUpdate(tagIndex);
         done = true;
         break;
     case RemoveAction:

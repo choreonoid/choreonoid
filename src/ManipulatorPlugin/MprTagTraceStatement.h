@@ -51,7 +51,7 @@ protected:
 
     virtual void onTagAdded(int index);
     virtual void onTagRemoved(int index);
-    virtual void onTagUpdated(int index);
+    virtual void onTagPositionUpdated(int index);
     virtual void onTagGroupOriginOffsetChanged();
 
 private:

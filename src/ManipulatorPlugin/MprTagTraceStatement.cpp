@@ -89,8 +89,8 @@ void MprTagTraceStatement::connectTagGroupUpdateSignals()
             [&](int index){ onTagAdded(index); });
         tagGroup_->sigTagRemoved().connect(
             [&](int index, PositionTag*){ onTagRemoved(index); });
-        tagGroup_->sigTagUpdated().connect(
-            [&](int index){ onTagUpdated(index); });
+        tagGroup_->sigTagPositionUpdated().connect(
+            [&](int index){ onTagPositionUpdated(index); });
     }
 }
 
@@ -128,7 +128,7 @@ void MprTagTraceStatement::onTagRemoved(int /* index */)
 }
 
 
-void MprTagTraceStatement::onTagUpdated(int /* index */)
+void MprTagTraceStatement::onTagPositionUpdated(int /* index */)
 {
     updateTagTraceProgram();
 }
