@@ -451,9 +451,15 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerAbstractClass<SimulatorItem>();
 
-    TimeSyncItemEngineManager::instance()->registerFactory<SimulatorItem>(
-        [](SimulatorItem* item){ return new SimulatedMotionEngine(item->impl); });
-
+    TimeSyncItemEngineManager::instance()
+        ->registerFactory<SimulatorItem, SimulatedMotionEngine>(
+            [](SimulatorItem* item, SimulatedMotionEngine* engine0){
+                if(engine0 && engine0->simulatorItemImpl == item->impl){
+                    return engine0;
+                } else {
+                    return new SimulatedMotionEngine(item->impl);
+                }
+            });
 
     ItemTreeView::instance()->customizeContextMenu<SimulatorItem>(
         [](SimulatorItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){

@@ -31,7 +31,8 @@ public:
 class BodyContactPointLogEngine : public TimeSyncItemEngine
 {
 public:
-    static BodyContactPointLogEngine* create(BodyContactPointLogItem* logItem);
+    static BodyContactPointLogEngine* create(
+        BodyContactPointLogItem* logItem, BodyContactPointLogEngine* engine0);
     
     BodyContactPointLoggerItemPtr loggerItem;
     BodyContactPointLogItemPtr logItem;
@@ -71,7 +72,8 @@ void BodyContactPointLoggerItem::initializeClass(ExtensionManager* ext)
         .registerClass<BodyContactPointLogItem, ControllerLogItem>(N_("BodyContactPointLogItem"));
 
     TimeSyncItemEngineManager::instance()
-        ->registerFactory<BodyContactPointLogItem>(BodyContactPointLogEngine::create);
+        ->registerFactory<BodyContactPointLogItem, BodyContactPointLogEngine>(
+            BodyContactPointLogEngine::create);
 }
 
 
@@ -186,10 +188,15 @@ Item* BodyContactPointLogItem::doDuplicate() const
 }
 
 
-BodyContactPointLogEngine* BodyContactPointLogEngine::create(BodyContactPointLogItem* logItem)
+BodyContactPointLogEngine* BodyContactPointLogEngine::create
+(BodyContactPointLogItem* logItem, BodyContactPointLogEngine* engine0)
 {
     if(auto loggerItem = logItem->findOwnerItem<BodyContactPointLoggerItem>()){
-        return new BodyContactPointLogEngine(logItem, loggerItem);
+        if(engine0 && engine0->loggerItem == loggerItem){
+            return engine0;
+        } else {
+            return new BodyContactPointLogEngine(logItem, loggerItem);
+        }
     }
     return nullptr;
 }

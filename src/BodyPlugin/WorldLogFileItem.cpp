@@ -361,12 +361,6 @@ public:
     }
 };
 
-
-TimeSyncItemEngine* createWorldLogFileEngine(WorldLogFileItem* item)
-{
-    return new WorldLogFileEngine(item);
-}
-
 }
 
 namespace cnoid {
@@ -456,7 +450,11 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
             return item->impl->setLogFile(filename, true);
         });
 
-    TimeSyncItemEngineManager::instance()->registerFactory<WorldLogFileItem>(createWorldLogFileEngine);    
+    TimeSyncItemEngineManager::instance()
+        ->registerFactory<WorldLogFileItem, WorldLogFileEngine>(
+            [](WorldLogFileItem* item, WorldLogFileEngine* engine0){
+                return engine0 ? engine0 : new WorldLogFileEngine(item);
+            });
 }
 
 

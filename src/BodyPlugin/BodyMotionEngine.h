@@ -16,7 +16,6 @@ class ExtensionManager;
 class BodyItem;
 class BodyMotionItem;
 class AbstractSeqItem;
-class BodyMotionEngineImpl;
 
 
 class CNOID_EXPORT BodyMotionEngine : public TimeSyncItemEngine
@@ -38,7 +37,8 @@ public:
     virtual void onPlaybackStopped(double time, bool isStoppedManually) override;
     
 private:
-    BodyMotionEngineImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<BodyMotionEngine> BodyMotionEnginePtr;

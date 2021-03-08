@@ -40,7 +40,7 @@ static void restoreProperties(const Archive& archive)
 
 namespace cnoid {
 
-class BodyMotionEngineImpl
+class BodyMotionEngine::Impl
 {
 public:
     BodyItemPtr bodyItem;
@@ -52,11 +52,11 @@ public:
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
     ConnectionSet connections;
         
-    BodyMotionEngineImpl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem){
-
-        this->bodyItem = bodyItem;
+    Impl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem)
+        : bodyItem(bodyItem),
+          motionItem(motionItem)
+    {
         body = bodyItem->body();
-        this->motionItem = motionItem;
         
         auto motion = motionItem->motion();
         qSeq = motion->jointPosSeq();
@@ -74,8 +74,8 @@ public:
                 [this](){ updateExtraSeqEngines(); }));
     }
     
-    void updateExtraSeqEngines(){
-
+    void updateExtraSeqEngines()
+    {
         extraSeqEngines.clear();
 
         const int n = motionItem->numExtraSeqItems();
@@ -90,13 +90,13 @@ public:
         }
     }
 
-    ~BodyMotionEngineImpl(){
+    ~Impl()
+    {
         connections.disconnect();
     }
 
     bool onTimeChanged(double time)
     {
-
         bool isActive = false;
         bool fkDone = false;
             
@@ -157,10 +157,14 @@ public:
 };
 
 
-TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* item)
+TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* motionItem, BodyMotionEngine* engine0)
 {
-    if(auto bodyItem = item->findOwnerItem<BodyItem>()){
-        return new BodyMotionEngine(bodyItem, item);
+    if(auto bodyItem = motionItem->findOwnerItem<BodyItem>()){
+        if(engine0 && engine0->bodyItem() == bodyItem){
+            return engine0;
+        } else {
+            return new BodyMotionEngine(bodyItem, motionItem);
+        }
     }
     return nullptr;
 }
@@ -171,7 +175,7 @@ TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* item)
 BodyMotionEngine::BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionItem)
     : TimeSyncItemEngine(motionItem)
 {
-    impl = new BodyMotionEngineImpl(this, bodyItem, motionItem);
+    impl = new Impl(this, bodyItem, motionItem);
 }
 
 
@@ -213,7 +217,8 @@ void BodyMotionEngine::onPlaybackStopped(double time, bool isStoppedManually)
 
 void BodyMotionEngine::initializeClass(ExtensionManager* ext)
 {
-    TimeSyncItemEngineManager::instance()->registerFactory<BodyMotionItem>(createBodyMotionEngine);
+    TimeSyncItemEngineManager::instance()
+        ->registerFactory<BodyMotionItem, BodyMotionEngine>(createBodyMotionEngine);
 
     MenuManager& mm = ext->menuManager();
     mm.setPath("/Options").setPath(N_("Body Motion Engine"));

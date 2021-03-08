@@ -72,10 +72,14 @@ public:
 typedef ref_ptr<PoseSeqEngine> PoseSeqEnginePtr;
     
 
-TimeSyncItemEngine* createPoseSeqEngine(PoseSeqItem* item)
+TimeSyncItemEngine* createPoseSeqEngine(PoseSeqItem* item, PoseSeqEngine* engine0)
 {
     if(auto bodyItem = item->findOwnerItem<BodyItem>()){
-        return new PoseSeqEngine(item, bodyItem);
+        if(engine0 && engine0->bodyItem == bodyItem){
+            return engine0;
+        } else {
+            return new PoseSeqEngine(item, bodyItem);
+        }
     }
     return nullptr;
 }
@@ -85,5 +89,6 @@ TimeSyncItemEngine* createPoseSeqEngine(PoseSeqItem* item)
 
 void cnoid::initializePoseSeqEngine()
 {
-    TimeSyncItemEngineManager::instance()->registerFactory<PoseSeqItem>(createPoseSeqEngine);
+    TimeSyncItemEngineManager::instance()
+        ->registerFactory<PoseSeqItem, PoseSeqEngine>(createPoseSeqEngine);
 }

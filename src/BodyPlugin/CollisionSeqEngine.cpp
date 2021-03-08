@@ -14,19 +14,22 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class CollisionSeqEngineImpl
+class CollisionSeqEngine::Impl
 {
 public:
     WorldItemPtr worldItem;
     CollisionSeqItemPtr collisionSeqItem;
     shared_ptr<CollisionSeq> colSeq;
-    CollisionSeqEngineImpl(CollisionSeqEngine* self, WorldItem* worldItem, CollisionSeqItem* collisionSeqItem){
-        this->worldItem = worldItem;
-        this->collisionSeqItem = collisionSeqItem;
+
+    Impl(CollisionSeqEngine* self, WorldItem* worldItem, CollisionSeqItem* collisionSeqItem)
+        : worldItem(worldItem),
+          collisionSeqItem(collisionSeqItem)
+    {
         colSeq = collisionSeqItem->collisionSeq();
     }
 
-    bool onTimeChanged(double time){
+    bool onTimeChanged(double time)
+    {
         bool isValid = false;
 
         if(colSeq){
@@ -53,10 +56,14 @@ public:
 }
 
 
-TimeSyncItemEngine* createCollisionSeqEngine(CollisionSeqItem* item)
+TimeSyncItemEngine* CollisionSeqEngine::create(CollisionSeqItem* item, CollisionSeqEngine* engine0)
 {
     if(auto worldItem = item->findOwnerItem<WorldItem>()){
-        return new CollisionSeqEngine(worldItem, item);
+        if(engine0 && engine0->impl->worldItem == worldItem){
+            return engine0;
+        } else {
+            return new CollisionSeqEngine(worldItem, item);
+        }
     }
     return nullptr;
 }
@@ -64,14 +71,15 @@ TimeSyncItemEngine* createCollisionSeqEngine(CollisionSeqItem* item)
 
 void CollisionSeqEngine::initializeClass()
 {
-    TimeSyncItemEngineManager::instance()->registerFactory<CollisionSeqItem>(createCollisionSeqEngine);
+    TimeSyncItemEngineManager::instance()
+        ->registerFactory<CollisionSeqItem, CollisionSeqEngine>(CollisionSeqEngine::create);
 }
 
 
 CollisionSeqEngine::CollisionSeqEngine(WorldItem* worldItem, CollisionSeqItem* collisionSeqItem)
     : TimeSyncItemEngine(collisionSeqItem)
 {
-    impl = new CollisionSeqEngineImpl(this, worldItem, collisionSeqItem);
+    impl = new Impl(this, worldItem, collisionSeqItem);
 }
 
 

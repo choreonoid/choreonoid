@@ -55,18 +55,20 @@ public:
 
     ~TimeSyncItemEngineManager();
 
-    template<class ItemType>
-    void registerFactory(std::function<TimeSyncItemEngine*(ItemType* item)> factory){
+    template<class ItemType, class EngineType = TimeSyncItemEngine>
+    void registerFactory(std::function<TimeSyncItemEngine*(ItemType* item, EngineType* prevEngine)> factory){
         registerFactory_(
             typeid(ItemType),
-            [factory](Item* item){ return factory(static_cast<ItemType*>(item)); });
+            [factory](Item* item, TimeSyncItemEngine* prevEngine){
+                return factory(static_cast<ItemType*>(item), dynamic_cast<EngineType*>(prevEngine));
+            });
     }
 
     /**
        This function create engines for the item and add engines to io_engines.
        \return The number of created engines
     */
-    int createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines) const;
+    int createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines);
 
     class Impl;
 
@@ -74,7 +76,8 @@ private:
     TimeSyncItemEngineManager();
 
     void registerFactory_(
-        const std::type_info& type, std::function<TimeSyncItemEngine*(Item* item)> factory);
+        const std::type_info& type,
+        const std::function<TimeSyncItemEngine*(Item* item, TimeSyncItemEngine* prevEngine)>& factory);
 
     Impl* impl;
 };

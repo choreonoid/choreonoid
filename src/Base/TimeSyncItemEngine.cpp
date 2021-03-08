@@ -10,6 +10,7 @@
 #include "ExtensionManager.h"
 #include <cnoid/ConnectionSet>
 #include <vector>
+#include <unordered_map>
 
 using namespace std;
 using namespace cnoid;
@@ -18,6 +19,9 @@ namespace {
 
 TimeSyncItemEngineManager* manager = nullptr;
 TimeSyncItemEngineManager::Impl* managerImpl = nullptr;
+
+typedef std::function<TimeSyncItemEngine*(Item* item, TimeSyncItemEngine* prevEngine)> Factory;
+typedef shared_ptr<Factory> FactoryPtr;
 
 }
 
@@ -30,13 +34,22 @@ public:
     double currentTime;
     bool isDoingPlayback;
     ItemClassRegistry& itemClassRegistry;
-    vector<vector<std::function<TimeSyncItemEngine*(Item* item)>>> classIdToFactoryListMap;
+
+    vector<vector<FactoryPtr>> classIdToFactoryListMap;
+
+    typedef unordered_map<FactoryPtr, TimeSyncItemEnginePtr> FactoryToEngineMap;
+    typedef unordered_map<ItemPtr, FactoryToEngineMap> ItemToFactoryToEngineMap;
+    ItemToFactoryToEngineMap itemToFactoryToEngineMap;
+    ItemToFactoryToEngineMap itemToFactoryToEngineMap0;
+
     vector<TimeSyncItemEnginePtr> activeEngines;
     ScopedConnectionSet connections;
 
     Impl();
-    int createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines) const;
-    void onSelectedItemsChanged(const ItemList<>& selectedItems);
+    int createEngines(
+        Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines,
+        bool doCheckExistingEngines, bool itemTreeMayBeChanged);
+    void updateEnginesForSelectedItems(const ItemList<>& selectedItems, bool itemTreeMayBeChanged);
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
     bool onTimeChanged(double time);
@@ -75,10 +88,18 @@ TimeSyncItemEngineManager::Impl::Impl()
     currentTime = 0.0;
     isDoingPlayback = false;
 
+    auto rootItem = RootItem::instance();
+
     connections.add(
-        RootItem::instance()->sigSelectedItemsChanged().connect(
-            [&](const ItemList<>& selectedItems){
-                onSelectedItemsChanged(selectedItems);
+        rootItem->sigTreeChanged().connect(
+            [this, rootItem](){
+                updateEnginesForSelectedItems(rootItem->selectedItems(), true);
+            }));
+
+    connections.add(
+        rootItem->sigSelectedItemsChanged().connect(
+            [this](const ItemList<>& selectedItems){
+                updateEnginesForSelectedItems(selectedItems, false);
             }));
 
     timeBar = TimeBar::instance();
@@ -106,32 +127,63 @@ TimeSyncItemEngineManager::~TimeSyncItemEngineManager()
 
 
 void TimeSyncItemEngineManager::registerFactory_
-(const std::type_info& type, std::function<TimeSyncItemEngine*(Item* item)> factory)
+(const std::type_info& type,
+ const std::function<TimeSyncItemEngine*(Item* item, TimeSyncItemEngine* prevEngine)>& factory)
 {
     int id = impl->itemClassRegistry.classId(type);
     if(id >= static_cast<int>(impl->classIdToFactoryListMap.size())){
         impl->classIdToFactoryListMap.resize(id + 1);
     }
-    impl->classIdToFactoryListMap[id].push_back(factory);
+    impl->classIdToFactoryListMap[id].push_back(make_shared<Factory>(factory));
 }
 
 
-int TimeSyncItemEngineManager::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines) const
+int TimeSyncItemEngineManager::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines)
 {
-    return impl->createEngines(item, io_engines);
+    return impl->createEngines(item, io_engines, false, true);
 }
 
 
-int TimeSyncItemEngineManager::Impl::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines) const
+int TimeSyncItemEngineManager::Impl::createEngines
+(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines, bool doCheckExistingEngines, bool itemTreeMayBeChanged)
 {
     int numCreatedEngines = 0;
     
     int id = item->classId();
     while(id > 0){
         if(id < static_cast<int>(classIdToFactoryListMap.size())){
+
+            FactoryToEngineMap* pFactoryToEngineMap0 = nullptr;
+            if(doCheckExistingEngines){
+                auto p = itemToFactoryToEngineMap0.find(item);
+                if(p != itemToFactoryToEngineMap0.end()){
+                    pFactoryToEngineMap0 = &p->second;
+                }
+            }
+            
             for(auto& factory : classIdToFactoryListMap[id]){
-                if(auto engine = factory(item)){
+                TimeSyncItemEnginePtr existingEngine;
+                if(pFactoryToEngineMap0){
+                    auto q = pFactoryToEngineMap0->find(factory);
+                    if(q != pFactoryToEngineMap0->end()){
+                        existingEngine = q->second;
+                    }
+                }
+                TimeSyncItemEnginePtr engine;
+                if(existingEngine && !itemTreeMayBeChanged){
+                    engine = existingEngine;
+                } else {
+                    engine = (*factory)(item, existingEngine);
+                }
+                if(engine){
                     io_engines.push_back(engine);
+                
+                    if(doCheckExistingEngines){
+                        itemToFactoryToEngineMap[item][factory] = engine;
+                        if(engine != existingEngine){
+                            engine->onTimeChanged(currentTime);
+                        }
+                    }
                     ++numCreatedEngines;
                 }
             }
@@ -143,13 +195,16 @@ int TimeSyncItemEngineManager::Impl::createEngines(Item* item, std::vector<TimeS
 }
 
 
-void TimeSyncItemEngineManager::Impl::onSelectedItemsChanged(const ItemList<>& selectedItems)
+void TimeSyncItemEngineManager::Impl::updateEnginesForSelectedItems
+(const ItemList<>& selectedItems, bool itemTreeMayBeChanged)
 {
+    itemToFactoryToEngineMap0.clear();
+    itemToFactoryToEngineMap.swap(itemToFactoryToEngineMap0);
     activeEngines.clear();
+    
     for(auto& item : selectedItems){
-        createEngines(item, activeEngines);
+        createEngines(item, activeEngines, true, itemTreeMayBeChanged);
     }
-    onTimeChanged(currentTime);
 }
 
 
