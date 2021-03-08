@@ -3,17 +3,15 @@
 using namespace cnoid;
 
 
-EditRecord::EditRecord(bool isManualOperation)
-    : isManualOperation_(isManualOperation),
-      isReverse_(false)
+EditRecord::EditRecord()
+    : isReverse_(false)
 {
 
 }
 
 
 EditRecord::EditRecord(const EditRecord& org)
-    : isManualOperation_(org.isManualOperation_),
-      isReverse_(org.isReverse_)
+    : isReverse_(org.isReverse_)
 {
 
 }
@@ -27,9 +25,8 @@ EditRecord* EditRecord::getFlipped() const
 }
 
 
-EditRecordGroup::EditRecordGroup(const std::string& label, bool isManualOperation)
-    : EditRecord(isManualOperation),
-      label_(label)
+EditRecordGroup::EditRecordGroup(const std::string& label)
+    : label_(label)
 {
 
 }

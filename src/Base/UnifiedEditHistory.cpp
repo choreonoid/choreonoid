@@ -45,7 +45,6 @@ public:
     void flushNewRecordBuffer();
     void expandHistoryFromLatestToCurrentUndoPosition();
     bool undo();
-    void cancelUndo(int position);
     bool redo();    
     void cancelRedo(int position);
 };
@@ -182,10 +181,10 @@ void UnifiedEditHistory::Impl::addRecord(EditRecord* record)
 }
 
 
-void UnifiedEditHistory::beginEditGroup(const std::string& label, bool isManualOperation)
+void UnifiedEditHistory::beginEditGroup(const std::string& label)
 {
     if(!impl->isProjectBeingLoaded){
-        impl->currentGroup = new EditRecordGroup(label, isManualOperation);
+        impl->currentGroup = new EditRecordGroup(label);
     }
 }
 
@@ -268,52 +267,21 @@ bool UnifiedEditHistory::Impl::undo()
     bool done = false;
 
     if(currentPosition < static_cast<int>(records.size())){
-        done = true;
-        int position = currentPosition;
-        while(position < static_cast<int>(records.size())){
-            auto record = records[position];
-            if(!record->applyUndo()){
-                cancelUndo(position);
-                done = false;
-                break;
-            }
-            ++position;
-            if(record->isManualOperation()){
-                mv->notify(format(_("Undo: {0}."), record->label()));
-                break;
-            }
+        auto record = records[currentPosition];
+        if(record->applyUndo()){
+            mv->notify(format(_("Undo: {0}."), record->label()));
+            ++currentPosition;
+            sigCurrentPositionChanged(currentPosition);
+            done = true;
+        } else {
+            record->applyRedo();
+            clear();
+            mv->notify(_("Undo failed and the edit history has been clered."), MessageView::Error);
         }
-        if(done){
-            if(position != currentPosition){
-                currentPosition = position;
-                sigCurrentPositionChanged(position);
-            }
-        }
+        updateActionState();
     }
-
-    updateActionState();
 
     return done;
-}
-
-
-void UnifiedEditHistory::Impl::cancelUndo(int position)
-{
-    bool cancelFailed = false;
-    for(int i = position - 1; i >= currentPosition; --i){
-        if(!records[i]->applyRedo()){
-            cancelFailed = true;
-        }
-    }
-    if(cancelFailed){
-        clear();
-        mv->notify(
-            _("Undo failed. The edit history has been clered because it may be inconsistent."),
-            MessageView::Error);
-    } else {
-        removeRecordsAfter(currentPosition);
-        mv->notify(_("Undo failed."), MessageView::Error);
-    }
 }
 
 
@@ -328,49 +296,23 @@ bool UnifiedEditHistory::Impl::redo()
     bool done = false;
 
     if(currentPosition >= 1){
-        done = true;
-        int position = currentPosition - 1;
-        while(position >= 0){
-            auto record = records[position];
-            if(!record->applyRedo()){
-                cancelRedo(position);
-                done = false;
-                break;
-            }
-            if(position - 1 >= 0){
-                if(!records[position - 1]->isManualOperation()){
-                    --position;
-                    continue;
-                }
-            }
+        auto record = records[currentPosition - 1];
+        if(record->applyRedo()){
             mv->notify(format(_("Redo: {0}."), record->label()));
-            break;
+            --currentPosition;
+            sigCurrentPositionChanged(currentPosition);
+            done = true;
+        } else {
+            record->applyUndo();
+            clear();
+            mv->notify(_("Redo failed and the edit history has been clered."), MessageView::Error);
         }
-        if(done){
-            if(position != currentPosition){
-                currentPosition = position;
-                sigCurrentPositionChanged(position);
-            }
-        }
+        updateActionState();
     }
-
-    updateActionState();
 
     return done;
 }
-
-
-void UnifiedEditHistory::Impl::cancelRedo(int position)
-{
-    for(int i = position + 1; i < currentPosition; ++i){
-        records[i]->applyUndo();
-    }
-    clear();
-    mv->notify(
-        _("Redo failed. The edit history has been clered because it may be inconsistent."),
-        MessageView::Error);
-}
- 
+            
 
 SignalProxy<void()> UnifiedEditHistory::sigHistoryUpdated()
 {

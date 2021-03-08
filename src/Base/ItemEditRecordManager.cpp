@@ -32,7 +32,7 @@ public:
     ItemPtr oldParentItem;
     ItemPtr oldNextItem;
 
-    ItemTreeEditRecord(Item* item, bool isManualOpeartion);
+    ItemTreeEditRecord(Item* item);
     ItemTreeEditRecord(const ItemTreeEditRecord& org);
 
     virtual EditRecord* clone() const override;
@@ -81,10 +81,9 @@ public:
     unordered_map<ItemPtr, ScopedConnectionSet> itemConnectionSetMap;
 
     Impl();
-    void onSubTreeAdded(Item* item, bool isManual);
-    void onSubTreeRemoving(
-        Item* item, Item* oldParentItem, Item* oldNextItem, bool isMoving, bool isManual);
-    void onSubTreeMoved(Item* item, bool isManual);
+    void onSubTreeAdded(Item* item);
+    void onSubTreeRemoving(Item* item, Item* oldParentItem, Item* oldNextItem, bool isMoving);
+    void onSubTreeMoved(Item* item);
     void manageSubTree(Item* item);
     void releaseSubTree(Item* item);
     void onItemNameChanged(Item* item, const string& oldName);
@@ -121,37 +120,36 @@ ItemEditRecordManager::Impl::Impl()
 
     rootItemConnections.add(
         rootItem->sigSubTreeAdded().connect(
-            [&](Item* item){ onSubTreeAdded(item, true); }));
+            [&](Item* item){ onSubTreeAdded(item); }));
     
     rootItemConnections.add(
         rootItem->sigSubTreeRemoving().connect(
             [&](Item* item, bool isMoving){
-                onSubTreeRemoving(item, item->parentItem(), item->nextItem(), isMoving, true); }));
+                onSubTreeRemoving(item, item->parentItem(), item->nextItem(), isMoving); }));
 
     rootItemConnections.add(
         rootItem->sigSubTreeMoved().connect(
-            [&](Item* item){ onSubTreeMoved(item, true); }));
+            [&](Item* item){ onSubTreeMoved(item); }));
 }
 
 
-void ItemEditRecordManager::Impl::onSubTreeAdded(Item* item, bool isManual)
+void ItemEditRecordManager::Impl::onSubTreeAdded(Item* item)
 {
-    auto record = new ItemTreeEditRecord(item, isManual);
+    auto record = new ItemTreeEditRecord(item);
     record->setItemAddition();
     history->addRecord(record);
     manageSubTree(item);
 }
 
 
-void ItemEditRecordManager::Impl::onSubTreeRemoving
-(Item* item, Item* oldParentItem, Item* oldNextItem, bool isMoving, bool isManual)
+void ItemEditRecordManager::Impl::onSubTreeRemoving(Item* item, Item* oldParentItem, Item* oldNextItem, bool isMoving)
 {
     if(isMoving){
         movingItem = item;
         this->oldParentItem = oldParentItem;
         this->oldNextItem = oldNextItem;
     } else {
-        auto record = new ItemTreeEditRecord(item, isManual);
+        auto record = new ItemTreeEditRecord(item);
         record->setItemRemoval(oldParentItem, oldNextItem);
         history->addRecord(record);
         releaseSubTree(item);
@@ -159,10 +157,10 @@ void ItemEditRecordManager::Impl::onSubTreeRemoving
 }
 
 
-void ItemEditRecordManager::Impl::onSubTreeMoved(Item* item, bool isManual)
+void ItemEditRecordManager::Impl::onSubTreeMoved(Item* item)
 {
     if(item == movingItem){
-        auto record = new ItemTreeEditRecord(item, isManual);
+        auto record = new ItemTreeEditRecord(item);
         record->setItemMove(oldParentItem, oldNextItem);
         history->addRecord(record);
     } else {
@@ -211,9 +209,8 @@ void ItemEditRecordManager::Impl::onItemNameChanged(Item* item, const string& ol
 }
 
 
-ItemTreeEditRecord::ItemTreeEditRecord(Item* item, bool isManualOpeartion)
-    : EditRecord(isManualOpeartion),
-      item(item)
+ItemTreeEditRecord::ItemTreeEditRecord(Item* item)
+    : item(item)
 {
 
 }
@@ -398,8 +395,7 @@ bool ItemTreeEditRecord::redo()
 
 
 ItemNameEditRecord::ItemNameEditRecord(Item* item, const string& oldName)
-    : EditRecord(true),
-      item(item),
+    : item(item),
       oldName(oldName),
       newName(item->name())
 {

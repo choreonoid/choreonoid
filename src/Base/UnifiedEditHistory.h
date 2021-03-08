@@ -25,7 +25,7 @@ public:
     EditRecord* record(int index);
 
     void addRecord(EditRecordPtr record);
-    void beginEditGroup(const std::string& label, bool isManualOperation = true);
+    void beginEditGroup(const std::string& label);
     void endEditGroup();
 
     int currentPosition() const;
