@@ -290,8 +290,15 @@ bool TimeSyncItemEngineManager::Impl::onTimeChanged(double time)
 void TimeSyncItemEngineManager::Impl::onPlaybackStopped(double time, bool isStoppedManually)
 {
     isDoingPlayback = false;
-    for(auto& engine : activeEngines){
+    auto iter = activeEngines.begin();
+    while(iter != activeEngines.end()){
+        auto& engine = *iter;
+        if(engine->isTimeSyncForcedToBeMaintained()){
+            iter = activeEngines.erase(iter);
+            continue;
+        }
         engine->onPlaybackStopped(time, isStoppedManually);
+        ++iter;
     }
 }
 

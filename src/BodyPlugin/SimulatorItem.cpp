@@ -308,6 +308,7 @@ public:
     TimeSyncItemEngineManager* timeSyncItemEngineManager;
     vector<TimeSyncItemEnginePtr> timeSyncItemEngines;
     CollisionSeqEnginePtr collisionSeqEngine;
+    bool doKeepPlayback;
 
     Connection aboutToQuitConnection;
 
@@ -1262,6 +1263,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     fillLevelId = -1;
 
     timeSyncItemEngineManager = TimeSyncItemEngineManager::instance();
+    doKeepPlayback = false;
 
     self->sigSelectionChanged().connect([&](bool on){ onSelectionChanged(on); });
 }
@@ -1292,6 +1294,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self, const Impl& org)
     isRealtimeSyncMode = org.isRealtimeSyncMode;
     recordCollisionData = org.recordCollisionData;
     controllerOptionString_ = org.controllerOptionString_;
+    doKeepPlayback = org.doKeepPlayback;
 }
     
 
@@ -1584,7 +1587,7 @@ void SimulatorItem::Impl::onSelectionChanged(bool on)
             startFillLevelUpdate();
         }
     } else {
-        if(!self->isActive()){
+        if(!doKeepPlayback || self->isPausing()){
             stopFillLevelUpdate();
         }
     }
@@ -2918,13 +2921,14 @@ SimulatedMotionEngine::SimulatedMotionEngine(SimulatorItem::Impl* simulatorItemI
 
 void SimulatedMotionEngine::onPlaybackStarted(double /* time */)
 {
+    simulatorItemImpl->doKeepPlayback = true;
     notifyKinematicStateUpdate();
 }
 
 
 bool SimulatedMotionEngine::isTimeSyncAlwaysMaintained() const
 {
-    return simulatorItemImpl->isDoingSimulationLoop;
+    return simulatorItemImpl->doKeepPlayback;
 }
 
 
@@ -2948,6 +2952,7 @@ bool SimulatedMotionEngine::onTimeChanged(double time)
 
 void SimulatedMotionEngine::onPlaybackStopped(double /* time */, bool /* isStoppedManually */)
 {
+    simulatorItemImpl->doKeepPlayback = false;
     notifyKinematicStateUpdate();
 }
 
