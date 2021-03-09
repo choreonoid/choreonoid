@@ -31,21 +31,28 @@ public:
     virtual void onPlaybackStopped(double time, bool isStoppedManually);
     virtual bool isTimeSyncAlwaysMaintained() const;
 
-    bool startOngoingTimeUpdate();
+    void startOngoingTimeUpdate();
+    void startOngoingTimeUpdate(double time);
+    bool isUpdatingOngoingTime() const { return isUpdatingOngoingTime_; }
+    bool isOngoingTimeUpdateAccepted() const { return ongoingTimeId >= 0; }
     void updateOngoingTime(double time);
     void stopOngoingTimeUpdate();
-    
     void refresh();
-
-    // Accessed by the manager
-    bool isTimeSyncForcedToBeMaintained() const { return isTimeSyncForcedToBeMaintained_; }
 
 private:
     ItemPtr item_;
     int ongoingTimeId;
+    double ongoingTime;
+    bool isActive_;
     bool isTimeSyncForcedToBeMaintained_;
+    bool isUpdatingOngoingTime_;
 
     friend class TimeSyncItemEngineManager;
+
+    void activate();
+    void deactivate();
+    void setupOngoingTimeUpdate();
+    bool isTimeSyncForcedToBeMaintained() const { return isTimeSyncForcedToBeMaintained_; }
 };
 
 typedef ref_ptr<TimeSyncItemEngine> TimeSyncItemEnginePtr;

@@ -65,7 +65,7 @@ public:
     void setRepeatMode(bool on);
 	
     void startPlayback();
-    void startPlaybackFromOngoingTime();
+    void startPlayback(double time);
     void stopPlayback(bool isStoppedManually = false);
     bool isDoingPlayback();
 
@@ -75,7 +75,7 @@ public:
     void setOngoingTimeSyncEnabled(bool on);
 
     [[deprecated]]
-    void startPlaybackFromFillLevel() { startPlaybackFromOngoingTime(); }
+    void startPlaybackFromFillLevel() { startPlayback(); }
     [[deprecated]]
     int startFillLevelUpdate(double time = 0.0) { return startOngoingTimeUpdate(time); }
     [[deprecated]]

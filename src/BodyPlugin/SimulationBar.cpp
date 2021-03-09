@@ -198,7 +198,7 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
             pauseToggle->setChecked(false);
     	}
         //simulator->selectMotionItems();
-        TimeBar::instance()->startPlaybackFromFillLevel();
+        TimeBar::instance()->startPlayback();
         
     } else {
         sigSimulationAboutToStart_(simulator);
@@ -230,16 +230,19 @@ void SimulationBar::onPauseSimulationClicked()
 
 void SimulationBar::pauseSimulation(SimulatorItem* simulator)
 {
+    auto timeBar = TimeBar::instance();
+    
     if(pauseToggle->isChecked()){
-        if(simulator->isRunning())
+        if(simulator->isRunning()){
             simulator->pauseSimulation();
-        TimeBar* timeBar = TimeBar::instance();
+        }
         if(timeBar->isDoingPlayback()){
             timeBar->stopPlayback();
         }
     } else {
-        if(simulator->isRunning())
+        if(simulator->isRunning()){
             simulator->restartSimulation();
-        TimeBar::instance()->startPlaybackFromFillLevel();
+        }
+        timeBar->startPlayback();
     }
 }

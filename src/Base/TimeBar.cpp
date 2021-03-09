@@ -173,8 +173,8 @@ public:
     void onPlaybackFrameRateChanged(int value);
     void onPlayActivated();
     void onResumeActivated();
-    void startPlaybackFromCurrentTime();
-    void startPlaybackFrom(double time);
+    void startPlayback();
+    void startPlayback(double time);
     void stopPlayback(bool isStoppedManually);
     int startOngoingTimeUpdate(double time);
     void updateOngoingTime(int id, double time);
@@ -482,7 +482,7 @@ void TimeBar::Impl::onPlaybackSpeedScaleChanged(double value)
     playbackSpeedScale = value;
     
     if(isDoingPlayback){
-        startPlaybackFromCurrentTime();
+        startPlayback();
     }
 }
 
@@ -504,7 +504,7 @@ void TimeBar::Impl::onPlaybackFrameRateChanged(int value)
     playbackFrameRate = value;
 
     if(isDoingPlayback){
-        startPlaybackFromCurrentTime();
+        startPlayback();
     }
 }
 
@@ -530,7 +530,7 @@ void TimeBar::setRepeatMode(bool on)
 void TimeBar::Impl::onPlayActivated()
 {
     stopPlayback(true);
-    startPlaybackFrom(minTime);
+    startPlayback(minTime);
 }
 
 
@@ -540,24 +540,30 @@ void TimeBar::Impl::onResumeActivated()
         stopPlayback(true);
     } else {
         stopPlayback(true);
-        startPlaybackFromCurrentTime();
+        startPlayback();
     }
 }
 
 
 void TimeBar::startPlayback()
 {
-    impl->startPlaybackFromCurrentTime();
+    impl->startPlayback(time_);
 }
 
 
-void TimeBar::Impl::startPlaybackFromCurrentTime()
+void TimeBar::startPlayback(double time)
 {
-    startPlaybackFrom(self->time_);
+    impl->startPlayback(time);
 }
 
 
-void TimeBar::Impl::startPlaybackFrom(double time)
+void TimeBar::Impl::startPlayback()
+{
+    startPlayback(self->time_);
+}
+
+
+void TimeBar::Impl::startPlayback(double time)
 {
     stopPlayback(false);
 
@@ -644,7 +650,7 @@ void TimeBar::Impl::timerEvent(QTimerEvent*)
         stopPlayback(false);
         
         if(!doStopAtLastOngoingTime && repeatMode){
-            startPlaybackFrom(minTime);
+            startPlayback(minTime);
         }
     }
 }
@@ -736,6 +742,7 @@ int TimeBar::Impl::startOngoingTimeUpdate(double time)
         }
     }
     updateOngoingTime(id, time);
+
     return id;
 }
 
@@ -786,12 +793,6 @@ void TimeBar::Impl::stopOngoingTimeUpdate(int id)
 void TimeBar::setOngoingTimeSyncEnabled(bool on)
 {
     impl->config.ongoingTimeSyncCheck.setChecked(on);
-}
-
-
-void TimeBar::startPlaybackFromOngoingTime()
-{
-    impl->startPlaybackFrom(impl->ongoingTime);
 }
 
 

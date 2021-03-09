@@ -32,8 +32,8 @@ class TimeSyncItemEngineManager::Impl
 public:
     TimeBar* timeBar;
     double currentTime;
+    bool isDoingPlayback;
     ItemClassRegistry& itemClassRegistry;
-
     vector<vector<FactoryPtr>> classIdToFactoryListMap;
 
     typedef unordered_map<FactoryPtr, TimeSyncItemEnginePtr> FactoryToEngineMap;
@@ -44,14 +44,11 @@ public:
     vector<TimeSyncItemEnginePtr> activeEngines;
     int numPreExistingActiveEngines;
 
-    bool isDoingPlayback;
-
     ScopedConnectionSet connections;
 
     Impl();
-    int createEngines(
-        Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines,
-        bool doCheckExistingEngines, bool itemTreeMayBeChanged);
+    void createManagedEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines, bool itemTreeMayBeChanged);
+    int createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines);
     void updateEnginesForSelectedItems(const ItemList<>& selectedItems, bool itemTreeMayBeChanged);
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
@@ -141,79 +138,9 @@ void TimeSyncItemEngineManager::registerFactory_
 }
 
 
-int TimeSyncItemEngineManager::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines)
-{
-    return impl->createEngines(item, io_engines, false, true);
-}
-
-
-int TimeSyncItemEngineManager::Impl::createEngines
-(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines, bool doCheckExistingEngines, bool itemTreeMayBeChanged)
-{
-    int numCreatedEngines = 0;
-    
-    int id = item->classId();
-    while(id > 0){
-        if(id < static_cast<int>(classIdToFactoryListMap.size())){
-
-            FactoryToEngineMap* pFactoryToEngineMap0 = nullptr;
-            if(doCheckExistingEngines){
-                auto p = itemToFactoryToEngineMap0.find(item);
-                if(p != itemToFactoryToEngineMap0.end()){
-                    pFactoryToEngineMap0 = &p->second;
-                }
-            }
-            
-            for(auto& factory : classIdToFactoryListMap[id]){
-                TimeSyncItemEnginePtr existingEngine;
-                if(pFactoryToEngineMap0){
-                    auto q = pFactoryToEngineMap0->find(factory);
-                    if(q != pFactoryToEngineMap0->end()){
-                        existingEngine = q->second;
-                    }
-                }
-                TimeSyncItemEnginePtr engine;
-                if(existingEngine && !itemTreeMayBeChanged){
-                    engine = existingEngine;
-                } else {
-                    engine = (*factory)(item, existingEngine);
-                }
-                if(engine){
-                    engine->isTimeSyncForcedToBeMaintained_ = false;
-                    bool isPreExistingActiveEngine = false;
-                    if(doCheckExistingEngines){
-                        itemToFactoryToEngineMap[item][factory] = engine;
-                        if(engine != existingEngine){
-                            engine->onTimeChanged(currentTime);
-                        } else {
-                            if(engine->isTimeSyncAlwaysMaintained()){
-                                for(int i=0; i < numPreExistingActiveEngines; ++i){
-                                    if(io_engines[i] == engine){
-                                        isPreExistingActiveEngine = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if(!isPreExistingActiveEngine){
-                        io_engines.push_back(engine);
-                    }
-                    ++numCreatedEngines;
-                }
-            }
-        }
-        id = itemClassRegistry.superClassId(id);
-    }
-    
-    return numCreatedEngines;
-}
-
-
 void TimeSyncItemEngineManager::Impl::updateEnginesForSelectedItems
 (const ItemList<>& selectedItems, bool itemTreeMayBeChanged)
 {
-    itemToFactoryToEngineMap0.clear();
     itemToFactoryToEngineMap.swap(itemToFactoryToEngineMap0);
 
     // Clear the active engine list except for the engines with the 'isTimeSyncAlwaysMaintained' flag.
@@ -240,8 +167,99 @@ void TimeSyncItemEngineManager::Impl::updateEnginesForSelectedItems
     numPreExistingActiveEngines = activeEngines.size();
         
     for(auto& item : selectedItems){
-        createEngines(item, activeEngines, true, itemTreeMayBeChanged);
+        createManagedEngines(item, activeEngines, itemTreeMayBeChanged);
     }
+
+    for(auto& kv1 : itemToFactoryToEngineMap0){
+        for(auto& kv2 : kv1.second){
+            kv2.second->deactivate();
+        }
+    }
+    itemToFactoryToEngineMap0.clear();
+}
+
+
+void TimeSyncItemEngineManager::Impl::createManagedEngines
+(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines, bool itemTreeMayBeChanged)
+{
+    int id = item->classId();
+
+    while(id > 0){
+        if(id < static_cast<int>(classIdToFactoryListMap.size())){
+
+            FactoryToEngineMap* pFactoryToEngineMap0 = nullptr;
+            auto p = itemToFactoryToEngineMap0.find(item);
+            if(p != itemToFactoryToEngineMap0.end()){
+                pFactoryToEngineMap0 = &p->second;
+            }
+            for(auto& factory : classIdToFactoryListMap[id]){
+                TimeSyncItemEnginePtr existingEngine;
+                if(pFactoryToEngineMap0){
+                    auto q = pFactoryToEngineMap0->find(factory);
+                    if(q != pFactoryToEngineMap0->end()){
+                        existingEngine = q->second;
+                        pFactoryToEngineMap0->erase(q);
+                    }
+                }
+                TimeSyncItemEnginePtr engine;
+                if(existingEngine && !itemTreeMayBeChanged){
+                    engine = existingEngine;
+                } else {
+                    engine = (*factory)(item, existingEngine);
+                }
+                if(engine){
+                    engine->isTimeSyncForcedToBeMaintained_ = false;
+                    bool isPreExistingActiveEngine = false;
+                    itemToFactoryToEngineMap[item][factory] = engine;
+                    if(engine != existingEngine){
+                        if(existingEngine){
+                            existingEngine->deactivate();
+                        }
+                        engine->activate();
+                    } else {
+                        if(engine->isTimeSyncAlwaysMaintained()){
+                            for(int i=0; i < numPreExistingActiveEngines; ++i){
+                                if(io_engines[i] == engine){
+                                    isPreExistingActiveEngine = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if(!isPreExistingActiveEngine){
+                        io_engines.push_back(engine);
+                    }
+                }
+            }
+        }
+        id = itemClassRegistry.superClassId(id);
+    }
+}
+
+
+int TimeSyncItemEngineManager::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines)
+{
+    return impl->createEngines(item, io_engines);
+}
+
+
+int TimeSyncItemEngineManager::Impl::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines)
+{
+    int numCreatedEngines = 0;
+    int id = item->classId();
+    while(id > 0){
+        if(id < static_cast<int>(classIdToFactoryListMap.size())){
+            for(auto& factory : classIdToFactoryListMap[id]){
+                if(auto engine = (*factory)(item, nullptr)){
+                    engine->isTimeSyncForcedToBeMaintained_ = false;
+                    io_engines.push_back(engine);
+                    ++numCreatedEngines;
+                }
+            }
+        }
+        id = itemClassRegistry.superClassId(id);
+    }
+    return numCreatedEngines;
 }
 
 
@@ -276,6 +294,10 @@ bool TimeSyncItemEngineManager::Impl::onTimeChanged(double time)
         auto& engine = *iter;
         if(engine->isTimeSyncForcedToBeMaintained()){
             if(!engine->isTimeSyncAlwaysMaintained()){
+                if(isDoingPlayback){
+                    engine->onPlaybackStopped(time, false);
+                }
+                engine->deactivate();
                 iter = activeEngines.erase(iter);
                 continue;
             }
@@ -293,11 +315,12 @@ void TimeSyncItemEngineManager::Impl::onPlaybackStopped(double time, bool isStop
     auto iter = activeEngines.begin();
     while(iter != activeEngines.end()){
         auto& engine = *iter;
+        engine->onPlaybackStopped(time, isStoppedManually);
         if(engine->isTimeSyncForcedToBeMaintained()){
+            engine->deactivate();
             iter = activeEngines.erase(iter);
             continue;
         }
-        engine->onPlaybackStopped(time, isStoppedManually);
         ++iter;
     }
 }
@@ -315,7 +338,10 @@ TimeSyncItemEngine::TimeSyncItemEngine(Item* item)
     : item_(item)
 {
     ongoingTimeId = -1;
+    ongoingTime = 0.0;
+    isActive_ = false;
     isTimeSyncForcedToBeMaintained_ = false;
+    isUpdatingOngoingTime_ = false;
 }
 
 
@@ -349,18 +375,60 @@ bool TimeSyncItemEngine::isTimeSyncAlwaysMaintained() const
 }
 
 
-bool TimeSyncItemEngine::startOngoingTimeUpdate()
+void TimeSyncItemEngine::activate()
+{
+    isActive_ = true;
+    if(isUpdatingOngoingTime()){
+        setupOngoingTimeUpdate();
+    }
+    if(!managerImpl->isDoingPlayback){
+        onTimeChanged(managerImpl->currentTime);
+    }
+}
+
+
+void TimeSyncItemEngine::deactivate()
+{
+    isActive_ = false;
+    if(ongoingTimeId >= 0){
+        managerImpl->timeBar->stopOngoingTimeUpdate(ongoingTimeId);
+        ongoingTimeId = -1;
+    }
+}
+
+
+void TimeSyncItemEngine::setupOngoingTimeUpdate()
 {
     if(ongoingTimeId < 0){
-        ongoingTimeId = managerImpl->timeBar->startOngoingTimeUpdate(managerImpl->currentTime);
+        ongoingTimeId = managerImpl->timeBar->startOngoingTimeUpdate(ongoingTime);
     }
-    return ongoingTimeId >= 0;
+}
+
+
+void TimeSyncItemEngine::startOngoingTimeUpdate()
+{
+    startOngoingTimeUpdate(ongoingTime);
+}
+
+
+void TimeSyncItemEngine::startOngoingTimeUpdate(double time)
+{
+    ongoingTime = time;
+    isUpdatingOngoingTime_ = true;
+
+    if(isActive_){
+        setupOngoingTimeUpdate();
+        if(!managerImpl->isDoingPlayback){
+            managerImpl->timeBar->startPlayback(ongoingTime);
+        }
+    }
 }
 
 
 void TimeSyncItemEngine::updateOngoingTime(double time)
 {
-    if(ongoingTimeId >= 0){
+    ongoingTime = time;
+    if(ongoingTimeId >= 0 && isActive_){
         managerImpl->timeBar->updateOngoingTime(ongoingTimeId, time);
     }
 }
@@ -372,6 +440,7 @@ void TimeSyncItemEngine::stopOngoingTimeUpdate()
         managerImpl->timeBar->stopOngoingTimeUpdate(ongoingTimeId);
         ongoingTimeId = -1;
     }
+    isUpdatingOngoingTime_ = false;
 }
 
 
