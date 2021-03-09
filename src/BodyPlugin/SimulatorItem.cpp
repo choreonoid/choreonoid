@@ -365,6 +365,7 @@ public:
     virtual void onPlaybackStarted(double /* time */) override;
     virtual bool onTimeChanged(double time) override;
     virtual void onPlaybackStopped(double time, bool isStoppedManually) override;
+    virtual bool isTimeSyncAlwaysMaintained() const override;
     void notifyKinematicStateUpdate();
 };    
 
@@ -1583,7 +1584,9 @@ void SimulatorItem::Impl::onSelectionChanged(bool on)
             startFillLevelUpdate();
         }
     } else {
-        stopFillLevelUpdate();
+        if(!self->isActive()){
+            stopFillLevelUpdate();
+        }
     }
 }
 
@@ -2783,7 +2786,7 @@ bool SimulatorItem::Impl::store(Archive& archive)
     archive.write("controllerThreads", useControllerThreadsProperty);
     archive.write("recordCollisionData", recordCollisionData);
     archive.write("controllerOptions", controllerOptionString_, DOUBLE_QUOTED);
-
+    
     ListingPtr idseq = new Listing();
     idseq->setFlowStyle(true);
     for(auto& engine : timeSyncItemEngines){
@@ -2916,6 +2919,12 @@ SimulatedMotionEngine::SimulatedMotionEngine(SimulatorItem::Impl* simulatorItemI
 void SimulatedMotionEngine::onPlaybackStarted(double /* time */)
 {
     notifyKinematicStateUpdate();
+}
+
+
+bool SimulatedMotionEngine::isTimeSyncAlwaysMaintained() const
+{
+    return simulatorItemImpl->isDoingSimulationLoop;
 }
 
 

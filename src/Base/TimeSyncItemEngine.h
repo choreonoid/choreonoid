@@ -29,7 +29,7 @@ public:
     virtual void onPlaybackStarted(double time);
     virtual bool onTimeChanged(double time) = 0;
     virtual void onPlaybackStopped(double time, bool isStoppedManually);
-    virtual bool isPlaybackAlwaysMaintained() const;
+    virtual bool isTimeSyncAlwaysMaintained() const;
     
     bool startUpdatingTime();
     void updateTime(double time);
@@ -37,9 +37,15 @@ public:
     
     void refresh();
 
+    // Accessed by the manager
+    bool isTimeSyncForcedToBeMaintained() const { return isTimeSyncForcedToBeMaintained_; }
+
 private:
     ItemPtr item_;
     int fillLevelId;
+    bool isTimeSyncForcedToBeMaintained_;
+
+    friend class TimeSyncItemEngineManager;
 };
 
 typedef ref_ptr<TimeSyncItemEngine> TimeSyncItemEnginePtr;

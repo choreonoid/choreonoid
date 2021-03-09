@@ -32,7 +32,6 @@ class TimeSyncItemEngineManager::Impl
 public:
     TimeBar* timeBar;
     double currentTime;
-    bool isDoingPlayback;
     ItemClassRegistry& itemClassRegistry;
 
     vector<vector<FactoryPtr>> classIdToFactoryListMap;
@@ -43,6 +42,10 @@ public:
     ItemToFactoryToEngineMap itemToFactoryToEngineMap0;
 
     vector<TimeSyncItemEnginePtr> activeEngines;
+    int numPreExistingActiveEngines;
+
+    bool isDoingPlayback;
+
     ScopedConnectionSet connections;
 
     Impl();
@@ -176,13 +179,25 @@ int TimeSyncItemEngineManager::Impl::createEngines
                     engine = (*factory)(item, existingEngine);
                 }
                 if(engine){
-                    io_engines.push_back(engine);
-                
+                    engine->isTimeSyncForcedToBeMaintained_ = false;
+                    bool isPreExistingActiveEngine = false;
                     if(doCheckExistingEngines){
                         itemToFactoryToEngineMap[item][factory] = engine;
                         if(engine != existingEngine){
                             engine->onTimeChanged(currentTime);
+                        } else {
+                            if(engine->isTimeSyncAlwaysMaintained()){
+                                for(int i=0; i < numPreExistingActiveEngines; ++i){
+                                    if(io_engines[i] == engine){
+                                        isPreExistingActiveEngine = true;
+                                        break;
+                                    }
+                                }
+                            }
                         }
+                    }
+                    if(!isPreExistingActiveEngine){
+                        io_engines.push_back(engine);
                     }
                     ++numCreatedEngines;
                 }
@@ -200,8 +215,30 @@ void TimeSyncItemEngineManager::Impl::updateEnginesForSelectedItems
 {
     itemToFactoryToEngineMap0.clear();
     itemToFactoryToEngineMap.swap(itemToFactoryToEngineMap0);
-    activeEngines.clear();
+
+    // Clear the active engine list except for the engines with the 'isTimeSyncAlwaysMaintained' flag.
+    auto iter = activeEngines.begin();
+    while(iter != activeEngines.end()){
+        auto& engine = *iter;
+        if(engine->isTimeSyncAlwaysMaintained()){
+            auto item = engine->item();
+            if(!item->isSelected() && item->isConnectedToRoot()){
+                // Force to keep the engine
+                engine->isTimeSyncForcedToBeMaintained_ = true;
+                auto p = itemToFactoryToEngineMap0.find(item);
+                if(p != itemToFactoryToEngineMap0.end()){
+                    itemToFactoryToEngineMap[item] = std::move(p->second);
+                    itemToFactoryToEngineMap0.erase(p);
+                }
+                ++iter;
+                continue;
+            }
+        }
+        iter = activeEngines.erase(iter);
+    }
     
+    numPreExistingActiveEngines = activeEngines.size();
+        
     for(auto& item : selectedItems){
         createEngines(item, activeEngines, true, itemTreeMayBeChanged);
     }
@@ -234,8 +271,17 @@ bool TimeSyncItemEngineManager::Impl::onTimeChanged(double time)
 {
     bool isActive = false;
     currentTime = time;
-    for(auto& engine : activeEngines){
+    auto iter = activeEngines.begin();
+    while(iter != activeEngines.end()){
+        auto& engine = *iter;
+        if(engine->isTimeSyncForcedToBeMaintained()){
+            if(!engine->isTimeSyncAlwaysMaintained()){
+                iter = activeEngines.erase(iter);
+                continue;
+            }
+        }
         isActive |= engine->onTimeChanged(time);
+        ++iter;
     }
     return isActive;
 }
@@ -262,6 +308,7 @@ TimeSyncItemEngine::TimeSyncItemEngine(Item* item)
     : item_(item)
 {
     fillLevelId = -1;
+    isTimeSyncForcedToBeMaintained_ = false;
 }
 
 
@@ -289,7 +336,7 @@ void TimeSyncItemEngine::onPlaybackStopped(double /* time */, bool /* isStoppedM
 }
 
 
-bool TimeSyncItemEngine::isPlaybackAlwaysMaintained() const
+bool TimeSyncItemEngine::isTimeSyncAlwaysMaintained() const
 {
     return false;
 }
