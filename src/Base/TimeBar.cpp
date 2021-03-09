@@ -40,7 +40,7 @@ public:
     SpinBox playbackFrameRateSpin;
     CheckBox idleLoopDrivenCheck;
     DoubleSpinBox playbackSpeedScaleSpin;
-    CheckBox fillLevelSyncCheck;
+    CheckBox ongoingTimeSyncCheck;
     CheckBox autoExpandCheck;
     QCheckBox beatModeCheck;
     DoubleSpinBox tempoSpin;
@@ -89,9 +89,9 @@ public:
         vbox->addLayout(hbox);
 
         hbox = new QHBoxLayout();
-        fillLevelSyncCheck.setText(_("Sync with ongoing updates"));
-        fillLevelSyncCheck.setChecked(true);
-        hbox->addWidget(&fillLevelSyncCheck);
+        ongoingTimeSyncCheck.setText(_("Sync with ongoing updates"));
+        ongoingTimeSyncCheck.setChecked(true);
+        hbox->addWidget(&ongoingTimeSyncCheck);
         hbox->addStretch();
         vbox->addLayout(hbox);
 
@@ -176,10 +176,10 @@ public:
     void startPlaybackFromCurrentTime();
     void startPlaybackFrom(double time);
     void stopPlayback(bool isStoppedManually);
-    int startFillLevelUpdate(double time);
-    void updateFillLevel(int id, double time);
-    void updateMinFillLevel();
-    void stopFillLevelUpdate(int id);
+    int startOngoingTimeUpdate(double time);
+    void updateOngoingTime(int id, double time);
+    void updateMinOngoingTime();
+    void stopOngoingTimeUpdate(int id);
 
     void onTimeRangeSpinsChanged();
     void onFrameRateSpinChanged(int value);
@@ -214,9 +214,9 @@ public:
     QElapsedTimer elapsedTimer;
     bool repeatMode;
     bool isDoingPlayback;
-    map<int, double> fillLevelMap;
-    double fillLevel;
-    bool isFillLevelActive;
+    map<int, double> ongoingTimeMap;
+    double ongoingTime;
+    bool hasOngoingTime;
 
     Signal<bool(double time), LogicalProduct> sigPlaybackInitialized;
     Signal<void(double time)> sigPlaybackStarted;
@@ -280,8 +280,8 @@ TimeBar::Impl::Impl(TimeBar* self)
     repeatMode = false;
     timerId = 0;
     isDoingPlayback = false;
-    fillLevel = 0;
-    isFillLevelActive = false;
+    ongoingTime = 0.0;
+    hasOngoingTime = false;
 
     self->addButton(QIcon(":/Base/icon/play.svg"), _("Start animation"))
         ->sigClicked().connect([&](){ onPlayActivated(); });
@@ -561,9 +561,9 @@ void TimeBar::Impl::startPlaybackFrom(double time)
 {
     stopPlayback(false);
 
-    bool isFillLevelMode = isFillLevelActive && config.fillLevelSyncCheck.isChecked();
-    if(isFillLevelActive){
-        time = fillLevel;
+    bool isOngoingTimeValid = hasOngoingTime && config.ongoingTimeSyncCheck.isChecked();
+    if(isOngoingTimeValid){
+        time = ongoingTime;
     }
 
     self->time_ = quantizedTime(time);
@@ -573,7 +573,7 @@ void TimeBar::Impl::startPlaybackFrom(double time)
 
         sigPlaybackStarted(self->time_);
         
-        if(!setTime(self->time_, false) && !isFillLevelMode){
+        if(!setTime(self->time_, false) && !isOngoingTimeValid){
             sigPlaybackStopped(self->time_, false);
 
         } else {
@@ -612,8 +612,8 @@ void TimeBar::Impl::stopPlayback(bool isStoppedManually)
         stopResumeButton->setIcon(resumeIcon);
         stopResumeButton->setToolTip(tip);
 
-        if(fillLevelMap.empty()){
-            isFillLevelActive = false;
+        if(ongoingTimeMap.empty()){
+            hasOngoingTime = false;
         }
     }
 }
@@ -629,21 +629,21 @@ void TimeBar::Impl::timerEvent(QTimerEvent*)
 {
     double time = animationTimeOffset + playbackSpeedScale * (elapsedTimer.elapsed() / 1000.0);
 
-    bool doStopAtLastFillLevel = false;
-    if(isFillLevelActive){
-        if(config.fillLevelSyncCheck.isChecked() || (time > fillLevel)){
-            animationTimeOffset += (fillLevel - time);
-            time = fillLevel;
-            if(fillLevelMap.empty()){
-                doStopAtLastFillLevel = true;
+    bool doStopAtLastOngoingTime = false;
+    if(hasOngoingTime){
+        if(config.ongoingTimeSyncCheck.isChecked() || (time > ongoingTime)){
+            animationTimeOffset += (ongoingTime - time);
+            time = ongoingTime;
+            if(ongoingTimeMap.empty()){
+                doStopAtLastOngoingTime = true;
             }
         }
     }
 
-    if(!setTime(time, true) || doStopAtLastFillLevel){
+    if(!setTime(time, true) || doStopAtLastOngoingTime){
         stopPlayback(false);
         
-        if(!doStopAtLastFillLevel && repeatMode){
+        if(!doStopAtLastOngoingTime && repeatMode){
             startPlaybackFrom(minTime);
         }
     }
@@ -719,80 +719,79 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
 }
 
 
-int TimeBar::startFillLevelUpdate(double time)
+int TimeBar::startOngoingTimeUpdate(double time)
 {
-    return impl->startFillLevelUpdate(time);
+    return impl->startOngoingTimeUpdate(time);
 }
 
 
-int TimeBar::Impl::startFillLevelUpdate(double time)
+int TimeBar::Impl::startOngoingTimeUpdate(double time)
 {
     int id = 0;
-    if(fillLevelMap.empty()){
-        isFillLevelActive = true;
+    if(ongoingTimeMap.empty()){
+        hasOngoingTime = true;
     } else {
-        while(fillLevelMap.find(id) == fillLevelMap.end()){
+        while(ongoingTimeMap.find(id) == ongoingTimeMap.end()){
             ++id;
         }
     }
-    updateFillLevel(id, time);
+    updateOngoingTime(id, time);
     return id;
 }
 
 
-void TimeBar::updateFillLevel(int id, double time)
+void TimeBar::updateOngoingTime(int id, double time)
 {
-    impl->updateFillLevel(id, time);
+    impl->updateOngoingTime(id, time);
 }
 
 
-void TimeBar::Impl::updateFillLevel(int id, double time)
+void TimeBar::Impl::updateOngoingTime(int id, double time)
 {
-    fillLevelMap[id] = time;
-    updateMinFillLevel();
+    ongoingTimeMap[id] = time;
+    updateMinOngoingTime();
 }
 
 
-void TimeBar::Impl::updateMinFillLevel()
+void TimeBar::Impl::updateMinOngoingTime()
 {
-    double minFillLevel = std::numeric_limits<double>::max();
-    map<int,double>::iterator p;
-    for(p = fillLevelMap.begin(); p != fillLevelMap.end(); ++p){
-        minFillLevel = std::min(p->second, minFillLevel);
+    double minOngoingTime = std::numeric_limits<double>::max();
+    for(auto& kv : ongoingTimeMap){
+        minOngoingTime = std::min(kv.second, minOngoingTime);
     }
-    fillLevel = minFillLevel;
+    ongoingTime = minOngoingTime;
 }    
 
 
-void TimeBar::stopFillLevelUpdate(int id)
+void TimeBar::stopOngoingTimeUpdate(int id)
 {
-    impl->stopFillLevelUpdate(id);
+    impl->stopOngoingTimeUpdate(id);
 }
 
 
-void TimeBar::Impl::stopFillLevelUpdate(int id)
+void TimeBar::Impl::stopOngoingTimeUpdate(int id)
 {
-    fillLevelMap.erase(id);
+    ongoingTimeMap.erase(id);
 
-    if(!fillLevelMap.empty()){
-        updateMinFillLevel();
+    if(!ongoingTimeMap.empty()){
+        updateMinOngoingTime();
     } else {
         if(!isDoingPlayback){
-            isFillLevelActive = false;
+            hasOngoingTime = false;
         }
     }
 }
 
 
-void TimeBar::setFillLevelSync(bool on)
+void TimeBar::setOngoingTimeSyncEnabled(bool on)
 {
-    impl->config.fillLevelSyncCheck.setChecked(on);
+    impl->config.ongoingTimeSyncCheck.setChecked(on);
 }
 
 
-void TimeBar::startPlaybackFromFillLevel()
+void TimeBar::startPlaybackFromOngoingTime()
 {
-    impl->startPlaybackFrom(impl->fillLevel);
+    impl->startPlaybackFrom(impl->ongoingTime);
 }
 
 
@@ -847,7 +846,7 @@ bool TimeBar::Impl::storeState(Archive& archive)
     archive.write("idleLoopDrivenMode", config.idleLoopDrivenCheck.isChecked());
     archive.write("currentTime", self->time_);
     archive.write("speedScale", playbackSpeedScale);
-    archive.write("syncToOngoingUpdates", config.fillLevelSyncCheck.isChecked());
+    archive.write("syncToOngoingUpdates", config.ongoingTimeSyncCheck.isChecked());
     archive.write("autoExpansion", config.autoExpandCheck.isChecked());
     return true;
 }
@@ -868,7 +867,7 @@ bool TimeBar::Impl::restoreState(const Archive& archive)
     config.playbackFrameRateSpin.setValue(archive.get("playbackFrameRate", playbackFrameRate));
     config.idleLoopDrivenCheck.setChecked(archive.get("idleLoopDrivenMode", config.idleLoopDrivenCheck.isChecked()));
     config.playbackSpeedScaleSpin.setValue(archive.get("speedScale", playbackSpeedScale));
-    config.fillLevelSyncCheck.setChecked(archive.get("syncToOngoingUpdates", config.fillLevelSyncCheck.isChecked()));
+    config.ongoingTimeSyncCheck.setChecked(archive.get("syncToOngoingUpdates", config.ongoingTimeSyncCheck.isChecked()));
     config.autoExpandCheck.setChecked(archive.get("autoExpansion", config.autoExpandCheck.isChecked()));
 
     double prevFrameRate = self->frameRate_;

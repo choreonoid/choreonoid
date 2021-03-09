@@ -264,7 +264,7 @@ public:
     string controllerOptionString_;
 
     TimeBar* timeBar;
-    int fillLevelId;
+    int ongoingTimeId;
     QMutex recordBufMutex;
     double actualSimulationTime;
     double finishTime;
@@ -319,8 +319,8 @@ public:
     ~Impl();
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
     void onSelectionChanged(bool on);
-    void startFillLevelUpdate();
-    void stopFillLevelUpdate();
+    void startOngoingTimeUpdate();
+    void stopOngoingTimeUpdate();
     void clearSimulation();
     bool startSimulation(bool doReset);
     virtual void run() override;
@@ -1260,7 +1260,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     recordCollisionData = false;
 
     timeBar = TimeBar::instance();
-    fillLevelId = -1;
+    ongoingTimeId = -1;
 
     timeSyncItemEngineManager = TimeSyncItemEngineManager::instance();
     doKeepPlayback = false;
@@ -1584,29 +1584,29 @@ void SimulatorItem::Impl::onSelectionChanged(bool on)
 {
     if(on){
         if(self->isActive() && isRecordingEnabled){
-            startFillLevelUpdate();
+            startOngoingTimeUpdate();
         }
     } else {
         if(!doKeepPlayback || self->isPausing()){
-            stopFillLevelUpdate();
+            stopOngoingTimeUpdate();
         }
     }
 }
 
 
-void SimulatorItem::Impl::startFillLevelUpdate()
+void SimulatorItem::Impl::startOngoingTimeUpdate()
 {
-    if(fillLevelId < 0){
-        fillLevelId = timeBar->startFillLevelUpdate(currentTime());
+    if(ongoingTimeId < 0){
+        ongoingTimeId = timeBar->startOngoingTimeUpdate(currentTime());
     }
 }
 
 
-void SimulatorItem::Impl::stopFillLevelUpdate()
+void SimulatorItem::Impl::stopOngoingTimeUpdate()
 {
-    if(fillLevelId >= 0){
-        timeBar->stopFillLevelUpdate(fillLevelId);
-        fillLevelId = -1;
+    if(ongoingTimeId >= 0){
+        timeBar->stopOngoingTimeUpdate(ongoingTimeId);
+        ongoingTimeId = -1;
     }
 }
 
@@ -1928,7 +1928,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
         if(self->isSelected()){
             if(isRecordingEnabled){
-                startFillLevelUpdate();
+                startOngoingTimeUpdate();
             }
             if(!timeBar->isDoingPlayback()){
                 timeBar->setTime(0.0);
@@ -2299,9 +2299,9 @@ void SimulatorItem::Impl::flushRecords()
         info->flushLog();
     }
 
-    if(isRecordingEnabled && fillLevelId >= 0){
-        double fillLevel = frame / worldFrameRate;
-        timeBar->updateFillLevel(fillLevelId, fillLevel);
+    if(isRecordingEnabled && ongoingTimeId >= 0){
+        double ongoingTime = frame / worldFrameRate;
+        timeBar->updateOngoingTime(ongoingTimeId, ongoingTime);
     } else {
         const double time = frame / worldFrameRate;
         for(size_t i=0; i < activeSimBodies.size(); ++i){
@@ -2375,7 +2375,7 @@ void SimulatorItem::pauseSimulation()
 void SimulatorItem::Impl::pauseSimulation()
 {
     flushTimer.stop();
-    stopFillLevelUpdate();
+    stopOngoingTimeUpdate();
     pauseRequested = true;
     flushRecords();
 }
@@ -2390,7 +2390,7 @@ void SimulatorItem::restartSimulation()
 void SimulatorItem::Impl::restartSimulation()
 {
     if(pauseRequested){
-        startFillLevelUpdate();
+        startOngoingTimeUpdate();
         pauseRequested = false;
         flushTimer.start(1000.0 / timeBar->playbackFrameRate());
     }
@@ -2447,7 +2447,7 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
 
     flushRecords();
 
-    stopFillLevelUpdate();
+    stopOngoingTimeUpdate();
 
     mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
 

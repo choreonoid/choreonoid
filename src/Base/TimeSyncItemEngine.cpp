@@ -314,7 +314,7 @@ void TimeSyncItemEngineManager::Impl::refresh(TimeSyncItemEngine* engine)
 TimeSyncItemEngine::TimeSyncItemEngine(Item* item)
     : item_(item)
 {
-    fillLevelId = -1;
+    ongoingTimeId = -1;
     isTimeSyncForcedToBeMaintained_ = false;
 }
 
@@ -349,28 +349,28 @@ bool TimeSyncItemEngine::isTimeSyncAlwaysMaintained() const
 }
 
 
-bool TimeSyncItemEngine::startUpdatingTime()
+bool TimeSyncItemEngine::startOngoingTimeUpdate()
 {
-    if(fillLevelId < 0){
-        fillLevelId = managerImpl->timeBar->startFillLevelUpdate(managerImpl->currentTime);
+    if(ongoingTimeId < 0){
+        ongoingTimeId = managerImpl->timeBar->startOngoingTimeUpdate(managerImpl->currentTime);
     }
-    return fillLevelId >= 0;
+    return ongoingTimeId >= 0;
 }
 
 
-void TimeSyncItemEngine::updateTime(double time)
+void TimeSyncItemEngine::updateOngoingTime(double time)
 {
-    if(fillLevelId >= 0){
-        managerImpl->timeBar->updateFillLevel(fillLevelId, time);
+    if(ongoingTimeId >= 0){
+        managerImpl->timeBar->updateOngoingTime(ongoingTimeId, time);
     }
 }
 
 
-void TimeSyncItemEngine::stopUpdatingTime()
+void TimeSyncItemEngine::stopOngoingTimeUpdate()
 {
-    if(fillLevelId >= 0){
-        managerImpl->timeBar->stopFillLevelUpdate(fillLevelId);
-        fillLevelId = -1;
+    if(ongoingTimeId >= 0){
+        managerImpl->timeBar->stopOngoingTimeUpdate(ongoingTimeId);
+        ongoingTimeId = -1;
     }
 }
 

@@ -65,14 +65,25 @@ public:
     void setRepeatMode(bool on);
 	
     void startPlayback();
-    void startPlaybackFromFillLevel();
+    void startPlaybackFromOngoingTime();
     void stopPlayback(bool isStoppedManually = false);
     bool isDoingPlayback();
 
-    int startFillLevelUpdate(double time = 0.0);
-    void updateFillLevel(int id, double time);
-    void stopFillLevelUpdate(int id);
-    void setFillLevelSync(bool on);
+    int startOngoingTimeUpdate(double time = 0.0);
+    void updateOngoingTime(int id, double time);
+    void stopOngoingTimeUpdate(int id);
+    void setOngoingTimeSyncEnabled(bool on);
+
+    [[deprecated]]
+    void startPlaybackFromFillLevel() { startPlaybackFromOngoingTime(); }
+    [[deprecated]]
+    int startFillLevelUpdate(double time = 0.0) { return startOngoingTimeUpdate(time); }
+    [[deprecated]]
+    void updateFillLevel(int id, double time) { updateOngoingTime(id, time); }
+    [[deprecated]]
+    void stopFillLevelUpdate(int id) { stopOngoingTimeUpdate(id); }
+    [[deprecated]]
+    void setFillLevelSync(bool on) { setOngoingTimeSyncEnabled(on); }
 
     virtual int stretchableDefaultWidth() const;
 

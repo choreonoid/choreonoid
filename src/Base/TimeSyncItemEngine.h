@@ -30,10 +30,10 @@ public:
     virtual bool onTimeChanged(double time) = 0;
     virtual void onPlaybackStopped(double time, bool isStoppedManually);
     virtual bool isTimeSyncAlwaysMaintained() const;
-    
-    bool startUpdatingTime();
-    void updateTime(double time);
-    void stopUpdatingTime();
+
+    bool startOngoingTimeUpdate();
+    void updateOngoingTime(double time);
+    void stopOngoingTimeUpdate();
     
     void refresh();
 
@@ -42,7 +42,7 @@ public:
 
 private:
     ItemPtr item_;
-    int fillLevelId;
+    int ongoingTimeId;
     bool isTimeSyncForcedToBeMaintained_;
 
     friend class TimeSyncItemEngineManager;
