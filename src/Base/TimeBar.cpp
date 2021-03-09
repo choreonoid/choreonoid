@@ -161,6 +161,7 @@ public:
     Impl(TimeBar* self);
     ~Impl();
 
+    double quantizedTime(double time) const;
     bool setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget = nullptr);
     void onTimeSpinChanged(double value);
     bool onTimeSliderValueChanged(int value);
@@ -172,7 +173,8 @@ public:
     void onPlaybackFrameRateChanged(int value);
     void onPlayActivated();
     void onResumeActivated();
-    void startPlayback();
+    void startPlaybackFromCurrentTime();
+    void startPlaybackFrom(double time);
     void stopPlayback(bool isStoppedManually);
     int startFillLevelUpdate(double time);
     void updateFillLevel(int id, double time);
@@ -372,79 +374,6 @@ SignalProxy<void(double time, bool isStoppedManually)> TimeBar::sigPlaybackStopp
 }
 
 
-bool TimeBar::setTime(double time)
-{
-    return impl->setTime(time, false);
-}
-
-
-/**
-   @todo check whether block() and unblock() of sigc::connection
-   decrease the performance or not.
-*/
-bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget)
-{
-    if(TRACE_FUNCTIONS){
-        cout << "TimeBar::Impl::setTime(" << time << ", " << calledFromPlaybackLoop << ")" << endl;
-    }
-    
-    if(!calledFromPlaybackLoop && isDoingPlayback){
-        return false;
-    }
-
-    /*
-    double newTime; 
-    if(isFillLevelActive && calledFromPlaybackLoop){
-        newTime = floor(time * self->frameRate_) / self->frameRate_;
-    } else {
-        newTime = nearbyint(time * self->frameRate_) / self->frameRate_;
-    }
-    */
-    const double newTime = floor(time * self->frameRate_) / self->frameRate_;
-
-    // When the optimization is enabled,
-    // the result of (newTime == self->time_) sometimes becomes false,
-    // so here the following judgement is used.
-    if(fabs(newTime - self->time_) < 1.0e-14){
-        if(calledFromPlaybackLoop){
-            return true;
-        }
-        if(callerWidget){
-            return false;
-        }
-    }
-
-    if(newTime > maxTime && config.autoExpandCheck.isChecked()){
-        maxTime = newTime;
-        timeSpin->blockSignals(true);
-        timeSlider->blockSignals(true);
-        maxTimeSpin->blockSignals(true);
-        timeSpin->setRange(minTime, maxTime);
-        const double r = pow(10.0, decimals);
-        timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
-        maxTimeSpin->setValue(maxTime);
-        maxTimeSpin->blockSignals(false);
-        timeSlider->blockSignals(false);
-        timeSpin->blockSignals(false);
-    }
-        
-    self->time_ = newTime;
-
-    if(callerWidget != timeSpin){
-        timeSpin->blockSignals(true);
-        timeSpin->setValue(self->time_);
-        timeSpin->blockSignals(false);
-    }
-    if(callerWidget != timeSlider){
-        timeSlider->blockSignals(true);
-        timeSlider->setValue((int)nearbyint(self->time_ * pow(10.0, decimals)));
-        timeSlider->blockSignals(false);
-    }
-
-    return sigTimeChanged(self->time_);
-}
-
-
 void TimeBar::Impl::onTimeSpinChanged(double value)
 {
     if(TRACE_FUNCTIONS){
@@ -553,7 +482,7 @@ void TimeBar::Impl::onPlaybackSpeedScaleChanged(double value)
     playbackSpeedScale = value;
     
     if(isDoingPlayback){
-        startPlayback();
+        startPlaybackFromCurrentTime();
     }
 }
 
@@ -575,7 +504,7 @@ void TimeBar::Impl::onPlaybackFrameRateChanged(int value)
     playbackFrameRate = value;
 
     if(isDoingPlayback){
-        startPlayback();
+        startPlaybackFromCurrentTime();
     }
 }
 
@@ -601,10 +530,7 @@ void TimeBar::setRepeatMode(bool on)
 void TimeBar::Impl::onPlayActivated()
 {
     stopPlayback(true);
-    if(!isFillLevelActive || !config.fillLevelSyncCheck.isChecked()){
-        setTime(minTime, false);
-    }
-    startPlayback();
+    startPlaybackFrom(minTime);
 }
 
 
@@ -614,28 +540,40 @@ void TimeBar::Impl::onResumeActivated()
         stopPlayback(true);
     } else {
         stopPlayback(true);
-        startPlayback();
+        startPlaybackFromCurrentTime();
     }
 }
 
 
 void TimeBar::startPlayback()
 {
-    impl->startPlayback();
+    impl->startPlaybackFromCurrentTime();
 }
 
 
-void TimeBar::Impl::startPlayback()
+void TimeBar::Impl::startPlaybackFromCurrentTime()
+{
+    startPlaybackFrom(self->time_);
+}
+
+
+void TimeBar::Impl::startPlaybackFrom(double time)
 {
     stopPlayback(false);
-    
+
+    bool isFillLevelMode = isFillLevelActive && config.fillLevelSyncCheck.isChecked();
+    if(isFillLevelActive){
+        time = fillLevel;
+    }
+
+    self->time_ = quantizedTime(time);
     animationTimeOffset = self->time_;
 
     if(sigPlaybackInitialized(self->time_)){
 
         sigPlaybackStarted(self->time_);
-
-        if(!setTime(self->time_, true)){
+        
+        if(!setTime(self->time_, false) && !isFillLevelMode){
             sigPlaybackStopped(self->time_, false);
 
         } else {
@@ -687,6 +625,100 @@ bool TimeBar::isDoingPlayback()
 }
 
 
+void TimeBar::Impl::timerEvent(QTimerEvent*)
+{
+    double time = animationTimeOffset + playbackSpeedScale * (elapsedTimer.elapsed() / 1000.0);
+
+    bool doStopAtLastFillLevel = false;
+    if(isFillLevelActive){
+        if(config.fillLevelSyncCheck.isChecked() || (time > fillLevel)){
+            animationTimeOffset += (fillLevel - time);
+            time = fillLevel;
+            if(fillLevelMap.empty()){
+                doStopAtLastFillLevel = true;
+            }
+        }
+    }
+
+    if(!setTime(time, true) || doStopAtLastFillLevel){
+        stopPlayback(false);
+        
+        if(!doStopAtLastFillLevel && repeatMode){
+            startPlaybackFrom(minTime);
+        }
+    }
+}
+
+
+double TimeBar::Impl::quantizedTime(double time) const
+{
+    return floor(time * self->frameRate_) / self->frameRate_;
+}
+
+
+bool TimeBar::setTime(double time)
+{
+    return impl->setTime(time, false);
+}
+
+
+/**
+   @todo check whether block() and unblock() of sigc::connection
+   decrease the performance or not.
+*/
+bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget)
+{
+    if(TRACE_FUNCTIONS){
+        cout << "TimeBar::Impl::setTime(" << time << ", " << calledFromPlaybackLoop << ")" << endl;
+    }
+    
+    if(!calledFromPlaybackLoop && isDoingPlayback){
+        return false;
+    }
+
+    const double newTime = quantizedTime(time);
+
+    // Avoid redundant update
+    if(calledFromPlaybackLoop || callerWidget){
+        // When the optimization is enabled,
+        // the result of (newTime == self->time_) sometimes becomes false,
+        // so here the following judgement is used.
+        if(fabs(newTime - self->time_) < 1.0e-14){
+            return calledFromPlaybackLoop;
+        }
+    }
+
+    if(newTime > maxTime && config.autoExpandCheck.isChecked()){
+        maxTime = newTime;
+        timeSpin->blockSignals(true);
+        timeSlider->blockSignals(true);
+        maxTimeSpin->blockSignals(true);
+        timeSpin->setRange(minTime, maxTime);
+        const double r = pow(10.0, decimals);
+        timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
+        maxTimeSpin->setValue(maxTime);
+        maxTimeSpin->blockSignals(false);
+        timeSlider->blockSignals(false);
+        timeSpin->blockSignals(false);
+    }
+        
+    self->time_ = newTime;
+
+    if(callerWidget != timeSpin){
+        timeSpin->blockSignals(true);
+        timeSpin->setValue(self->time_);
+        timeSpin->blockSignals(false);
+    }
+    if(callerWidget != timeSlider){
+        timeSlider->blockSignals(true);
+        timeSlider->setValue((int)nearbyint(self->time_ * pow(10.0, decimals)));
+        timeSlider->blockSignals(false);
+    }
+
+    return sigTimeChanged(self->time_);
+}
+
+
 int TimeBar::startFillLevelUpdate(double time)
 {
     return impl->startFillLevelUpdate(time);
@@ -706,7 +738,6 @@ int TimeBar::Impl::startFillLevelUpdate(double time)
     updateFillLevel(id, time);
     return id;
 }
-
 
 
 void TimeBar::updateFillLevel(int id, double time)
@@ -761,11 +792,7 @@ void TimeBar::setFillLevelSync(bool on)
 
 void TimeBar::startPlaybackFromFillLevel()
 {
-    if(isDoingPlayback()){
-        stopPlayback();
-    }
-    setTime(impl->fillLevel);
-    startPlayback();
+    impl->startPlaybackFrom(impl->fillLevel);
 }
 
 
@@ -775,32 +802,6 @@ double TimeBar::realPlaybackTime() const
         return impl->animationTimeOffset + impl->playbackSpeedScale * (impl->elapsedTimer.elapsed() / 1000.0);
     } else {
         return time_;
-    }
-}
-
-
-void TimeBar::Impl::timerEvent(QTimerEvent*)
-{
-    double time = animationTimeOffset + playbackSpeedScale * (elapsedTimer.elapsed() / 1000.0);
-
-    bool doStopAtLastFillLevel = false;
-    if(isFillLevelActive){
-        if(config.fillLevelSyncCheck.isChecked() || (time > fillLevel)){
-            animationTimeOffset += (fillLevel - time);
-            time = fillLevel;
-            if(fillLevelMap.empty()){
-                doStopAtLastFillLevel = true;
-            }
-        }
-    }
-
-    if(!setTime(time, true) || doStopAtLastFillLevel){
-        stopPlayback(false);
-        
-        if(!doStopAtLastFillLevel && repeatMode){
-            setTime(minTime, true);
-            startPlayback();
-        }
     }
 }
 
@@ -820,7 +821,7 @@ void TimeBar::Impl::onFrameRateSpinChanged(int value)
 void TimeBar::Impl::onRefreshButtonClicked()
 {
     if(!isDoingPlayback){
-        sigTimeChanged(self->time_);
+        setTime(self->time_, false);
     }
 }
 
