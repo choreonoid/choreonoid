@@ -406,7 +406,7 @@ void Item::Impl::setSelected(bool on, bool isCurrent, bool doEmitSigSelectedItem
         if(auto rootItem = self->findRootItem()){
             rootItem->emitSigSelectionChanged(self, on, isCurrent);
             if(doEmitSigSelectedItemsChangedLater){
-                rootItem->emitSigSelectedItemsChangedLater();
+                rootItem->requestToEmitSigSelectedItemsChanged();
             }
         }
     }
@@ -418,7 +418,7 @@ void Item::setSubTreeItemsSelected(bool on)
     bool changed = impl->setSubTreeItemsSelectedIter(this, on);
     if(changed){
         if(auto rootItem = findRootItem()){
-            rootItem->emitSigSelectedItemsChangedLater();
+            rootItem->requestToEmitSigSelectedItemsChanged();
         }
     }
 }
@@ -719,7 +719,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     if(recursiveTreeChangeCounter == 0){
         emitSigSubTreeChanged();
         if(rootItem && isAnyItemInSubTreesBeingAddedOrRemovedSelected){
-            rootItem->emitSigSelectedItemsChangedLater();
+            rootItem->requestToEmitSigSelectedItemsChanged();
         }
         isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
     }
@@ -910,7 +910,7 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
             emitSigSubTreeChanged();
         }
         if(rootItem && isAnyItemInSubTreesBeingAddedOrRemovedSelected){
-            rootItem->emitSigSelectedItemsChangedLater();
+            rootItem->requestToEmitSigSelectedItemsChanged();
         }
         isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
     }

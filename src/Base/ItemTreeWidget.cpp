@@ -70,7 +70,8 @@ public:
     
     bool isCheckColumnShown;
 
-    Signal<void(const ItemList<>&)> sigSelectionChanged;    
+    Signal<void(const ItemList<>&)> sigSelectionChanged;
+    bool upOrDownKeyPressed;
 
     PolymorphicItemFunctionSet  visibilityFunctions;
     bool visibilityFunction_isTopLevelItemCandidate;
@@ -353,6 +354,7 @@ void ItemTreeWidget::Impl::initialize()
 {
     isChangingTreeWidgetTreeStructure = 0;
     isCheckColumnShown = true;
+    upOrDownKeyPressed = false;
     isDropping = false;
     
     setColumnCount(1);
@@ -988,15 +990,21 @@ void ItemTreeWidget::selectAllItems()
 
 void ItemTreeWidget::Impl::selectAllItems()
 {
+    projectRootItem->beginItemSelectionChanges();
+    
     for(auto& kv : itemToItwItemMap){
         auto& item = kv.first;
         item->setSelected(true);
     }
+
+    projectRootItem->endItemSelectionChanges();
 }
 
 
 bool ItemTreeWidget::selectOnly(Item* item)
 {
+    impl->projectRootItem->beginItemSelectionChanges();
+    
     bool isSelected = false;
     for(auto& selected : impl->getSelectedItems()){
         if(selected == item){
@@ -1011,6 +1019,9 @@ bool ItemTreeWidget::selectOnly(Item* item)
             isSelected = true;
         }
     }
+
+    impl->projectRootItem->endItemSelectionChanges();
+    
     return isSelected;
 }
 
@@ -1023,9 +1034,11 @@ void ItemTreeWidget::clearSelection()
 
 void ItemTreeWidget::Impl::clearSelection()
 {
+    projectRootItem->beginItemSelectionChanges();
     for(auto& item : getSelectedItems()){
         item->setSelected(false);
     }
+    projectRootItem->endItemSelectionChanges();
 }
 
 
@@ -1364,7 +1377,13 @@ void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
             }
         }
     }
+
+    projectRootItem->beginItemSelectionChanges();
     updateItemSelectionIter(invisibleRootItem(), selectedItemSet);
+
+    if(!upOrDownKeyPressed){
+        projectRootItem->endItemSelectionChanges();
+    }
 
     if(doEmitSignal){
         sigSelectionChanged(items);
@@ -1411,6 +1430,11 @@ void ItemTreeWidget::Impl::onTreeWidgetCurrentItemChanged(QTreeWidgetItem* curre
             itwItem->itemSelectionConnection.unblock();
         }
     }
+    if(upOrDownKeyPressed){
+        // End the changes begun in the onTreeWidgetSelectionChanged function
+        projectRootItem->endItemSelectionChanges();
+    }
+    upOrDownKeyPressed = false;
 }
 
 
@@ -1494,21 +1518,26 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
 
 void ItemTreeWidget::Impl::keyPressEvent(QKeyEvent* event)
 {
-    bool processed = true;
+    bool processed = false;
 
-    switch(event->key()){
-
-    case Qt::Key_Escape:
-        clearSelection();
-        break;
-        
-    case Qt::Key_Delete:
-        cutSelectedItems();
-        break;
-        
-    default:
-        processed = false;
-        break;
+    if(event->modifiers() == Qt::NoModifier){
+        switch(event->key()){
+        case Qt::Key_Up:
+        case Qt::Key_Down:
+            upOrDownKeyPressed = true;
+            break;
+            
+        case Qt::Key_Escape:
+            clearSelection();
+            processed = true;
+            break;
+        case Qt::Key_Delete:
+            cutSelectedItems();
+            processed = true;
+            break;
+        default:
+            break;
+        }
     }
         
     if(!processed && (event->modifiers() & Qt::ControlModifier)){

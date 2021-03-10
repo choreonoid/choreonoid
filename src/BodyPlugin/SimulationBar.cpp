@@ -138,44 +138,37 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
         if(auto simulator = rootItem->findItem<SimulatorItem>()){
             simulator->setSelected(doSelect);
             simulators.push_back(simulator);
-            rootItem->flushSigSelectedItemsChanged();
         } else {
             mv->notify(_("There is no simulator item."));
         }
     }
 
-    typedef map<WorldItem*, SimulatorItem*> WorldToSimulatorMap;
-    WorldToSimulatorMap worldToSimulator;
+    map<WorldItem*, SimulatorItem*> worldToSimulatorMap;
 
-    for(size_t i=0; i < simulators.size(); ++i){
-        SimulatorItem* simulator = simulators.get(i);
-        WorldItem* world = simulator->findOwnerItem<WorldItem>();
-        if(world){
-            WorldToSimulatorMap::iterator p = worldToSimulator.find(world);
-            if(p == worldToSimulator.end()){
-                worldToSimulator[world] = simulator;
+    for(auto& simulator : simulators){
+        if(auto world = simulator->findOwnerItem<WorldItem>()){
+            auto p = worldToSimulatorMap.find(world);
+            if(p == worldToSimulatorMap.end()){
+                worldToSimulatorMap[world] = simulator;
             } else {
                 p->second = nullptr; // skip if multiple simulators are selected
             }
         }
     }
 
-    for(size_t i=0; i < simulators.size(); ++i){
-        SimulatorItem* simulator = simulators.get(i);
-        WorldItem* world = simulator->findOwnerItem<WorldItem>();
+    for(auto& simulator : simulators){
+        auto world = simulator->findOwnerItem<WorldItem>();
         if(!world){
             mv->notify(format(_("{} cannot be processed because it is not related with a world."),
                               simulator->displayName()));
         } else {
-            WorldToSimulatorMap::iterator p = worldToSimulator.find(world);
-            if(p != worldToSimulator.end()){
-                if(!p->second){
-                    mv->notify(format(_("{} cannot be processed because another simulator"
-                                        "in the same world is also selected."),
-                                      simulator->displayName()));
-                } else {
-                    callback(simulator);
-                }
+            if(auto simulator2 = worldToSimulatorMap[world]){
+                callback(simulator);
+            } else {
+                mv->notify(
+                    format(_("{} cannot be processed because another simulator in the same world is also selected."),
+                           simulator->displayName()),
+                    MessageView::Warning);
             }
         }
     }

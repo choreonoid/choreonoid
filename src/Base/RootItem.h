@@ -49,8 +49,10 @@ public:
     void selectItem(Item* item);
 
     SignalProxy<void(Item* item, bool on)> sigSelectionChanged();
+
     SignalProxy<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged();
-    void flushSigSelectedItemsChanged();
+    void beginItemSelectionChanges();
+    void endItemSelectionChanges();
 
     //! \return The state id of the new check state.
     int addCheckEntry(const std::string& description);
@@ -92,7 +94,7 @@ private:
     void notifyEventOnSubTreeRemoved(Item* item, bool isMoving);
     void emitSigItemAssinged(Item* assigned, Item* srcItem);
     void emitSigSelectionChanged(Item* item, bool on, bool isCurrent);
-    void emitSigSelectedItemsChangedLater();
+    void requestToEmitSigSelectedItemsChanged();
     void emitSigCheckToggled(Item* item, int checkId, bool on);
 
     const ItemList<>& getSelectedItems();

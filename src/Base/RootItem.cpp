@@ -47,8 +47,8 @@ public:
 	
     ItemList<> selectedItems;
     ItemPtr currentItem;
+    int itemSelectionChangeBlockLevel;
     bool needToUpdateSelectedItems;
-    LazyCaller emitSigSelectedItemsChangedLater;
     Signal<void(Item* item, bool on)> sigSelectionChanged;
     Signal<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged;
 
@@ -164,13 +164,11 @@ RootItem::Impl::Impl(RootItem* self, const Impl& org)
     doCommonInitialization();
 }
 
-
+#include <iostream>
 void RootItem::Impl::doCommonInitialization()
 {
     needToUpdateSelectedItems = false;
-    
-    emitSigSelectedItemsChangedLater.setFunction(
-        [&](){ sigSelectedItemsChanged(self->getSelectedItems()); });
+    itemSelectionChangeBlockLevel = 0;
 }
 
 
@@ -411,17 +409,30 @@ void RootItem::emitSigSelectionChanged(Item* item, bool on, bool isCurrent)
 }
 
 
-void RootItem::emitSigSelectedItemsChangedLater()
+void RootItem::requestToEmitSigSelectedItemsChanged()
 {
     impl->needToUpdateSelectedItems = true;
-    impl->emitSigSelectedItemsChangedLater();
+
+    if(impl->itemSelectionChangeBlockLevel == 0){
+        impl->sigSelectedItemsChanged(getSelectedItems());
+    }
 }
 
 
-void RootItem::flushSigSelectedItemsChanged()
+void RootItem::beginItemSelectionChanges()
 {
-    if(impl->emitSigSelectedItemsChangedLater.isPending()){
-        impl->emitSigSelectedItemsChangedLater.flush();
+    impl->itemSelectionChangeBlockLevel++;
+}
+
+
+void RootItem::endItemSelectionChanges()
+{
+    impl->itemSelectionChangeBlockLevel--;
+    if(impl->itemSelectionChangeBlockLevel < 0){
+        impl->itemSelectionChangeBlockLevel = 0;
+    }
+    if(impl->itemSelectionChangeBlockLevel == 0){
+        impl->sigSelectedItemsChanged(getSelectedItems());
     }
 }
 
