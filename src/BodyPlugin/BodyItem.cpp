@@ -1393,7 +1393,7 @@ bool BodyItem::Impl::updateAttachment(bool on)
     if(on && isAttachmentEnabled){
         newParentBodyItem = self->findOwnerItem<BodyItem>();
     }
-    if(newParentBodyItem != parentBodyItem || on != self->isAttachedToParentBody_){
+    if(newParentBodyItem != parentBodyItem || (newParentBodyItem && !self->isAttachedToParentBody_)){
         setParentBodyItem(newParentBodyItem);
         updated = true;
     }
