@@ -7,7 +7,6 @@
 #include "CoordinateFrameItem.h"
 #include "RootItem.h"
 #include "UnifiedEditHistory.h"
-#include "LazyCaller.h"
 #include "CheckBox.h"
 #include "ComboBox.h"
 #include <cnoid/CoordinateFrameList>
@@ -78,7 +77,7 @@ public:
     struct LocationInfo : public Referenced
     {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        
+
         LocationProxyPtr proxy;
         LocationProxyPtr parentProxy;
         int type;
@@ -95,8 +94,6 @@ public:
     unordered_set<LocationProxy*> locationProxySet;
     Isometry3 T_primary; // The latest primary object global location
 
-    LazyCaller setupInterfaceForNewLocationsLater;
-    
     Connection itemSelectionConnection;
     Connection editRequestConnection;
     
@@ -146,8 +143,6 @@ LocationView::LocationView()
 
 LocationView::Impl::Impl(LocationView* self)
     : self(self),
-      setupInterfaceForNewLocationsLater(
-          [this](){ setupInterfaceForNewLocations(); }, LazyCaller::PRIORITY_LOW),
       lockCheck(this)
 {
     self->setDefaultLayoutArea(View::CENTER);
@@ -261,8 +256,8 @@ void LocationView::Impl::onSelectedItemsChanged(const ItemList<>& items)
             }
         }
     }
-    
-    setupInterfaceForNewLocationsLater();
+
+    setupInterfaceForNewLocations();
 }
 
 
@@ -271,7 +266,7 @@ bool LocationView::Impl::onEditRequest(LocationProxyPtr locationProxy)
     locations.clear();
     locationProxySet.clear();
     addLocation(locationProxy, nullptr);
-    setupInterfaceForNewLocationsLater();
+    setupInterfaceForNewLocations();
     return true;
 }
 
@@ -282,8 +277,10 @@ void LocationView::Impl::addLocation(LocationProxyPtr locationProxy, Item* owner
     if(type == LocationProxy::InvalidLocation){
         return;
     }
-    
-    LocationInfoPtr location = new LocationInfo;
+
+    // The variable must not be a smart pointer to avoid a circular reference
+    // caused by a captured variable in the following lambda expressions
+    auto location = new LocationInfo;
     location->proxy = locationProxy;
     location->parentProxy = locationProxy->getParentLocationProxy();
     location->type = type;
@@ -306,7 +303,7 @@ void LocationView::Impl::addLocation(LocationProxyPtr locationProxy, Item* owner
         locationProxy->sigAttributeChanged().connect(
             [this, location](){
                 if(location == locations.front() || location == locations[1]){
-                    setupInterfaceForNewLocationsLater();
+                    setupInterfaceForNewLocations();
                 }
             }));
 
@@ -352,7 +349,7 @@ void LocationView::Impl::onLocationExpired(LocationInfoPtr location)
         locations.erase(it);
     }
     locationProxySet.erase(location->proxy);
-    setupInterfaceForNewLocationsLater();
+    setupInterfaceForNewLocations();
 }
         
 
@@ -473,7 +470,7 @@ void LockCheckBox::nextCheckState()
             location->proxy->setEditable(isLocked);
             location->miscConnections.unblock();
         }
-        impl->setupInterfaceForNewLocationsLater();
+        impl->setupInterfaceForNewLocations();
     }
 }
 
