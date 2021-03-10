@@ -33,8 +33,10 @@ public:
     SignalProxy<void(Item* item)> sigItemMoved();
     SignalProxy<void(Item* item, bool isMoving)> sigSubTreeRemoving();
     SignalProxy<void(Item* item, bool isMoving)> sigSubTreeRemoved();
-    SignalProxy<void()> sigTreeChanged();
     SignalProxy<void(Item* assigned, Item* srcItem)> sigItemAssigned();
+
+    [[deprecated("Use Item::sigSubTreeChanged()")]]
+    SignalProxy<void()> sigTreeChanged();
 
     Item* currentItem();
     

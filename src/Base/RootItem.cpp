@@ -7,8 +7,6 @@
 #include "ItemManager.h"
 #include "ItemClassRegistry.h"
 #include "MenuManager.h"
-#include "LazyCaller.h"
-#include "LazySignal.h"
 #include "Archive.h"
 #include <fmt/format.h>
 #include <iostream>
@@ -68,7 +66,6 @@ public:
     Signal<void(Item* item)> sigItemMoved;
     Signal<void(Item* item, bool isMoving)> sigSubTreeRemoving;
     Signal<void(Item* item, bool isMoving)> sigSubTreeRemoved;
-    LazySignal<Signal<void()>> sigTreeChanged;
     Signal<void(Item* assigned, Item* srcItem)> sigItemAssigned;
 
     Impl(RootItem* self);
@@ -255,21 +252,9 @@ SignalProxy<void(Item* item, bool isMoving)> RootItem::sigSubTreeRemoved()
 }
 
 
-/**
-   @if jp
-   The signal that is emitted when the structure of the item tree changes,
-   such as adding and deleting items.
-
-   Unlike sigItemAdded or sigItemRemoving, it is emitted only once for a series of
-   operations performed at once. To be precise, it is emitted after the events in
-   the queue are processed in the event loop of the framework.   
-   
-   @todo "Once all at once" is probably not being protected at the time of project
-   loading etc, so improve this point.
-*/
 SignalProxy<void()> RootItem::sigTreeChanged()
 {
-    return impl->sigTreeChanged.signal();
+    return sigSubTreeChanged();
 }
 
 
@@ -293,8 +278,6 @@ void RootItem::notifyEventOnSubTreeAdded(Item* item, std::vector<Item*>& orgSubT
     for(auto& item : orgSubTreeItems){
         impl->sigItemAdded(item);
     }
-    
-    impl->sigTreeChanged.request();
 }
 
 
@@ -309,22 +292,18 @@ void RootItem::notifyEventOnSubTreeMoved(Item* item, std::vector<Item*>& orgSubT
     for(auto& item : orgSubTreeItems){
         impl->sigItemMoved(item);
     }
-    
-    impl->sigTreeChanged.request();
 }
 
 
 void RootItem::notifyEventOnSubTreeRemoving(Item* item, bool isMoving)
 {
     impl->sigSubTreeRemoving(item, isMoving);
-    impl->sigTreeChanged.request();
 }
 
 
 void RootItem::notifyEventOnSubTreeRemoved(Item* item, bool isMoving)
 {
     impl->sigSubTreeRemoved(item, isMoving);
-    impl->sigTreeChanged.request();
 }
 
 

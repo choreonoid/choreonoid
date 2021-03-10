@@ -91,10 +91,9 @@ TimeSyncItemEngineManager::Impl::Impl()
     auto rootItem = RootItem::instance();
 
     connections.add(
-        rootItem->sigTreeChanged().connect(
+        rootItem->sigSubTreeChanged().connect(
             [this, rootItem](){
-                updateEnginesForSelectedItems(rootItem->selectedItems(), true);
-            }));
+                updateEnginesForSelectedItems(rootItem->selectedItems(), true); }));
 
     connections.add(
         rootItem->sigSelectedItemsChanged().connect(

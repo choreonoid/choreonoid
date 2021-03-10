@@ -40,6 +40,8 @@ const bool TRACE_FUNCTIONS = false;
 */
 unordered_set<Item*> itemsToEmitSigSubTreeChanged;
 
+vector<Item*> tmpItemArray;
+
 int recursiveTreeChangeCounter = 0;
 bool isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
 
@@ -1016,15 +1018,16 @@ void Item::Impl::addToItemsToEmitSigSubTreeChanged()
 
 void Item::Impl::emitSigSubTreeChanged()
 {
-    vector<Item*> items(itemsToEmitSigSubTreeChanged.size());
-    std::copy(itemsToEmitSigSubTreeChanged.begin(), itemsToEmitSigSubTreeChanged.end(), items.begin());
-    std::sort(items.begin(), items.end(), [](Item* lhs, Item* rhs){ return !rhs->isOwnedBy(lhs); });
+    tmpItemArray.resize(itemsToEmitSigSubTreeChanged.size());
+    std::copy(itemsToEmitSigSubTreeChanged.begin(), itemsToEmitSigSubTreeChanged.end(), tmpItemArray.begin());
+    std::sort(tmpItemArray.begin(), tmpItemArray.end(), [](Item* lhs, Item* rhs){ return !rhs->isOwnedBy(lhs); });
     
-    for(auto item : items){
+    for(auto item : tmpItemArray){
         item->impl->sigSubTreeChanged();
     }
     
     itemsToEmitSigSubTreeChanged.clear();
+    tmpItemArray.clear();
 }
 
 

@@ -293,7 +293,8 @@ public:
        will be removed.
     */
     SignalProxy<void(Item* topItem, Item* prevTopParentItem)> sigPositionChanged2();
-    
+
+    // This signal that is emitted when the structure of the sub tree changes.
     SignalProxy<void()> sigSubTreeChanged();
 
     SignalProxy<void()> sigDisconnectedFromRoot();
