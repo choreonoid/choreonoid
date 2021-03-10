@@ -688,7 +688,7 @@ void MeshGenerator::generateTextureCoordinateForCylinder(SgMesh* mesh)
 SgMesh* MeshGenerator::generateCone(double radius, double height, int options)
 {
     SgMeshPtr mesh = new SgMesh;
-    mesh->setPrimitive(SgMesh::Cylinder(radius, height));
+    mesh->setPrimitive(SgMesh::Cone(radius, height));
     if(!generateCone(mesh, options)){
         mesh.reset();
     }
