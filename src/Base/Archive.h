@@ -72,7 +72,7 @@ public:
     std::string readItemFilePath() const;
     bool loadFileTo(Item* item) const;
     bool loadFileTo(const std::string& filepath, Item* item) const;
-    //! \deprecated
+    [[deprecated]]
     bool loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey = std::string()) const;
     
     std::string getRelocatablePath(const std::string& path) const;
