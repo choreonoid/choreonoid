@@ -16,6 +16,7 @@ namespace cnoid {
 
 class CollisionDetector;
 class MaterialTable;
+class MaterialTableItem;
 
 class CNOID_EXPORT WorldItem : public Item, public RenderableItem
 {
@@ -43,11 +44,12 @@ public:
     std::vector<CollisionLinkPairPtr>& collisions() const;
     SignalProxy<void()> sigCollisionsUpdated();
 
+    void setDefaultMaterialTableFile(const std::string& filename);
+    MaterialTable* defaultMaterialTable(bool checkFileUpdate = true);
+    MaterialTable* materialTable();
+
     // RenderableItem
     virtual SgNode* getScene() override;
-
-    void setMaterialTableFile(const std::string& filename);
-    MaterialTable* materialTable(bool checkFileUpdate = true);
 
     //! \deprecated
     ItemList<BodyItem> collisionBodyItems() const { return coldetBodyItems(); }

@@ -27,14 +27,8 @@ void exportItems(py::module m)
         .def("updateCollisionDetector", &WorldItem::updateCollisionDetector)
         .def("updateCollisions", &WorldItem::updateCollisions)
         .def_property_readonly("sigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
-        .def("setMaterialTableFile", &WorldItem::setMaterialTableFile)
-        .def_property_readonly(
-            "materialTable", [](WorldItem& self){ return self.materialTable(); })
-        .def_property_readonly(
-            "getMaterialTable",
-            [](WorldItem& self, bool checkFileUpdate){
-                return self.materialTable(checkFileUpdate);
-            })
+        .def("setDefaultMaterialTableFile", &WorldItem::setDefaultMaterialTableFile)
+        .def_property_readonly("defaultMaterialTable", [](WorldItem& self){ return self.defaultMaterialTable(); })
         ;
 
     PyItemList<WorldItem>(m, "WorldItemList");
