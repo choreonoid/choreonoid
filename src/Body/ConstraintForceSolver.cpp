@@ -14,9 +14,10 @@
 #include "ConstraintForceSolver.h"
 #include "BodyCollisionDetector.h"
 #include "MaterialTable.h"
+#include <cnoid/AISTCollisionDetector>
 #include <cnoid/IdPair>
 #include <cnoid/EigenUtil>
-#include <cnoid/AISTCollisionDetector>
+#include <cnoid/CloneMap>
 #include <cnoid/TimeMeasure>
 #include <fmt/format.h>
 #include <random>
@@ -129,7 +130,8 @@ public:
     DyWorldBase& world;
 
     vector<unsigned char> bodyIndexToCollisionDetectionModeMap;
-        
+
+    CloneMap cloneMap;
     MaterialTablePtr orgMaterialTable;
     MaterialTablePtr materialTable;
 
@@ -540,6 +542,8 @@ void ConstraintForceSolver::Impl::initialize(void)
         //os << setprecision(50);
     }
 
+    cloneMap.clear();
+
     if(CFS_MCP_DEBUG){
         numGaussSeidelTotalCalls = 0;
         numGaussSeidelTotalLoops = 0;
@@ -592,6 +596,7 @@ void ConstraintForceSolver::Impl::initializeContactMaterials()
         materialTable =
             new MaterialTable(
                 *orgMaterialTable,
+                cloneMap,
                 [&](const ContactMaterial* org){
                     auto cm = new ContactMaterialEx(*org);
                     cm->cullingDistance = cm->info("cullingDistance", defaultContactCullingDistance);

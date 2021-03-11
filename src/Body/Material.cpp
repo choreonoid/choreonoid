@@ -65,7 +65,7 @@ std::string Material::nameOfId(int id)
 Material::Material()
 {
     roughness_ = 0.5;
-    viscosity_ = 0.0;
+    viscosity_ = 1.0;
     info_ = new Mapping;
 }
 
@@ -82,7 +82,7 @@ Material::Material(const Material& org)
 Material::Material(const Mapping* info)
 {
     roughness_ = 0.5;
-    viscosity_ = 0.0;
+    viscosity_ = 1.0;
 
     info_ = info->cloneMapping();
     info_->extract("name", name_);

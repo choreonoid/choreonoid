@@ -6,6 +6,7 @@
 #include "MaterialTable.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/IdPair>
+#include <cnoid/CloneMap>
 #include <fmt/format.h>
 #include <vector>
 #include <unordered_set>
@@ -19,21 +20,26 @@ using fmt::format;
 
 namespace cnoid {
 
-class MaterialTableImpl
+class MaterialTable::Impl
 {
 public:
+    /**
+       It may be better to use a map type as a containder of materials to improve the efficiency when
+       a large number of materials are defined in the system but only a few of them are stored in a table.
+    */
     vector<MaterialPtr> materials;
 
     typedef unordered_map<IdPair<>, ContactMaterialPtr> ContactMaterialMap;
     ContactMaterialMap contactMaterialMap;
     
-    MaterialTableImpl();
-    MaterialTableImpl(const MaterialTableImpl& org);
-    MaterialTableImpl(const MaterialTableImpl& org, MaterialTable::ContactMaterialCopyFactory factory);
+    Impl();
+    Impl(const Impl& org);
+    Impl(const Impl& org, CloneMap* cloneMap, MaterialTable::ContactMaterialCopyFactory factory);
+    void setDefaultMaterial();
     int addMaterial(Material* material);
+    void merge(MaterialTable* table);
     void loadMaterials(Mapping* topNode, std::ostream& os);
     void loadContactMaterials(Mapping* topNode, std::ostream& os);
-    void setContactMaterialPairs(ContactMaterial* contactMaterial, const vector<int>& materialIndices, int index1);
 };
 
 }
@@ -41,64 +47,64 @@ public:
 
 MaterialTable::MaterialTable()
 {
-    impl = new MaterialTableImpl;
+    impl = new Impl;
 }
 
 
-MaterialTableImpl::MaterialTableImpl()
+MaterialTable::Impl::Impl()
 {
-    Material* defaultMaterial = new Material;
-    defaultMaterial->setName("default");
-    defaultMaterial->setRoughness(0.5);
-    defaultMaterial->setViscosity(0.0);
-    materials.push_back(defaultMaterial);
+
 }
 
 
 MaterialTable::MaterialTable(const MaterialTable& org)
 {
-    impl = new MaterialTableImpl(*org.impl);
+    impl = new Impl(*org.impl);
 }
 
 
-MaterialTableImpl::MaterialTableImpl(const MaterialTableImpl& org)
-    : MaterialTableImpl(org, [](const ContactMaterial* org){ return new ContactMaterial(*org); })
+MaterialTable::Impl::Impl(const Impl& org)
+    : Impl(org, nullptr, nullptr)
 {
 
 }
 
     
-MaterialTable::MaterialTable(const MaterialTable& org, ContactMaterialCopyFactory factory)
+MaterialTable::MaterialTable(const MaterialTable& org, CloneMap& cloneMap, ContactMaterialCopyFactory factory)
 {
-    impl = new MaterialTableImpl(*org.impl, factory);
+    impl = new Impl(*org.impl, &cloneMap, factory);
 }
 
 
-MaterialTableImpl::MaterialTableImpl(const MaterialTableImpl& org, MaterialTable::ContactMaterialCopyFactory factory)
+MaterialTable::Impl::Impl(const Impl& org, CloneMap* cloneMap, MaterialTable::ContactMaterialCopyFactory factory)
 {
     materials.reserve(org.materials.size());
-    for(auto& m : org.materials){
-        if(m){
-            materials.push_back(new Material(*m));
-        } else {
-            materials.push_back(nullptr);
+
+    for(auto material : org.materials){
+        if(cloneMap){
+            material = cloneMap->getClone<Material>(
+                material, [](const Material* org){ return new Material(*org); });
         }
+        materials.push_back(material);
     }
-
-    unordered_map<ContactMaterial*, ContactMaterial*> copyMap;
-
-    for(auto& kv : org.contactMaterialMap){
-        auto idPair = kv.first;
-        ContactMaterial* src = kv.second;
-        ContactMaterial* copy = nullptr;
-        auto iter = copyMap.find(src);
-        if(iter != copyMap.end()){
-            copy = iter->second;
-        } else {
-            copy = factory(src);
-            copyMap.insert(make_pair(src, copy));
+    
+    if(!org.contactMaterialMap.empty()){
+        for(auto& kv : org.contactMaterialMap){
+            auto idPair = kv.first;
+            ContactMaterial* src = kv.second;
+            ContactMaterial* copy = nullptr;
+            if(!cloneMap){
+                copy = src;
+            } else {
+                if(!factory){
+                    copy = cloneMap->getClone<ContactMaterial>(
+                        src, [](const ContactMaterial* org){ return new ContactMaterial(*org); });
+                } else {
+                    copy = cloneMap->getClone(src, factory);
+                }
+            }
+            contactMaterialMap.insert(ContactMaterialMap::value_type(idPair, copy));
         }
-        contactMaterialMap.insert(ContactMaterialMap::value_type(idPair, copy));
     }
 }
 
@@ -109,22 +115,64 @@ MaterialTable::~MaterialTable()
 }
 
 
+void MaterialTable::clear()
+{
+    impl->materials.clear();
+    impl->contactMaterialMap.clear();
+}
+
+
 int MaterialTable::maxMaterialId() const
 {
     return impl->materials.size() - 1;
 }
 
 
+int MaterialTable::numMaterials() const
+{
+    int n = 0;
+    for(auto& material : impl->materials){
+        if(material){
+            ++n;
+        }
+    }
+    return n;
+}
+
+
 Material* MaterialTable::material(int id) const
 {
-    if(static_cast<int>(impl->materials.size()) <= id){
+    if(id >= static_cast<int>(impl->materials.size())){
         id = 0; // default material
     }
     Material* material = impl->materials[id];
     if(!material){
-        material = impl->materials[0]; // default material
+        // Return the default material for an empty material
+        material = impl->materials[0];
+        if(!material){
+            impl->setDefaultMaterial();
+            material = impl->materials[0];
+        }
     }
     return material;
+}
+
+
+void MaterialTable::Impl::setDefaultMaterial()
+{
+    auto defaultMaterial = new Material;
+    defaultMaterial->setName("default");
+    if(materials.empty()){
+        materials.push_back(defaultMaterial);
+    } else {
+        materials[0] = defaultMaterial;
+    }
+}
+
+
+int MaterialTable::numContactMaterials() const
+{
+    return impl->contactMaterialMap.size();
 }
 
         
@@ -177,7 +225,7 @@ int MaterialTable::addMaterial(Material* material)
 }
 
 
-int MaterialTableImpl::addMaterial(Material* material)
+int MaterialTable::Impl::addMaterial(Material* material)
 {
     int id = -1;
     
@@ -199,6 +247,25 @@ void MaterialTable::setContactMaterial(int id1, int id2, ContactMaterial* cm)
 }
 
 
+void MaterialTable::merge(MaterialTable* table)
+{
+    impl->merge(table);
+}
+
+
+void MaterialTable::Impl::merge(MaterialTable* table)
+{
+    for(auto& material : table->impl->materials){
+        if(material){
+            addMaterial(material);
+        }
+    }
+    for(auto& kv : table->impl->contactMaterialMap){
+        contactMaterialMap[kv.first] = kv.second;
+    }
+}
+
+
 bool MaterialTable::load(const std::string& filename, std::ostream& os)
 {
     bool result = false;
@@ -207,6 +274,7 @@ bool MaterialTable::load(const std::string& filename, std::ostream& os)
         YAMLReader reader;
         MappingPtr node = reader.loadDocument(filename)->toMapping();
         if(node){
+            clear();
             impl->loadMaterials(node, os);
             impl->loadContactMaterials(node, os);
             result = true;
@@ -221,13 +289,14 @@ bool MaterialTable::load(const std::string& filename, std::ostream& os)
 }
 
 
-void MaterialTableImpl::loadMaterials(Mapping* topNode, std::ostream& os)
+void MaterialTable::Impl::loadMaterials(Mapping* topNode, std::ostream& os)
 {
     std::unordered_set<string> names;
 
     auto& materialList = *topNode->findListing("materials");
     if(materialList.isValid()){
-        for(int i=0; i < materialList.size(); ++i){
+        materials.reserve(materialList.size());
+        for(size_t i=0; i < materialList.size(); ++i){
             Mapping* info = materialList[i].toMapping();
             MaterialPtr material = new Material(info);
             if(material->name().empty()){
@@ -245,7 +314,7 @@ void MaterialTableImpl::loadMaterials(Mapping* topNode, std::ostream& os)
 }
 
 
-void MaterialTableImpl::loadContactMaterials(Mapping* topNode, std::ostream& os)
+void MaterialTable::Impl::loadContactMaterials(Mapping* topNode, std::ostream& os)
 {
     vector<int> materialIndices;
     
@@ -263,27 +332,20 @@ void MaterialTableImpl::loadContactMaterials(Mapping* topNode, std::ostream& os)
                     materialList.throwException(_("The counterpart of the material pair is lacking"));
                 }
                 materialIndices.clear();
-                for(int i=0; i < materialList.size(); ++i){
-                    int id = Material::idOfName(materialList[i].toString());
+                for(auto& material : materialList){
+                    int id = Material::idOfName(material->toString());
                     materialIndices.push_back(id);
                 }
                 ContactMaterialPtr contactMaterial = new ContactMaterial(info);
-                setContactMaterialPairs(contactMaterial, materialIndices, 0);
+
+                for(size_t j = 0; j < materialIndices.size() - 1; ++j){
+                    for(size_t k = j + 1; k < materialIndices.size(); ++k){
+                        int id1 = materialIndices[j];
+                        int id2 = materialIndices[k];
+                        contactMaterialMap[IdPair<>(id1, id2)] = contactMaterial;
+                    }
+                }
             }
         }
-    }
-}
-
-
-void MaterialTableImpl::setContactMaterialPairs(ContactMaterial* contactMaterial, const vector<int>& materialIndices, int index1)
-{
-    const int id1 = materialIndices[index1];
-    for(size_t index2 = index1 + 1; index2 < materialIndices.size(); ++index2){
-        const int id2 = materialIndices[index2];
-        IdPair<> idPair(id1, id2);
-        contactMaterialMap[idPair] = contactMaterial;
-    }
-    if(materialIndices.size() - index1 > 2){
-        setContactMaterialPairs(contactMaterial, materialIndices, index1 + 1);
     }
 }

@@ -13,22 +13,26 @@
 
 namespace cnoid {
 
-class MaterialTableImpl;
+class CloneMap;
 
 class CNOID_EXPORT MaterialTable : public Referenced
 {
-  public:
+public:
     typedef std::function<ContactMaterial*(const ContactMaterial* org)> ContactMaterialCopyFactory;
 
     MaterialTable();
-    MaterialTable(const MaterialTable& org);
-    MaterialTable(const MaterialTable& org, ContactMaterialCopyFactory factory);
     virtual ~MaterialTable();
+    //! The constructor to do shallow copy
+    MaterialTable(const MaterialTable& org);
+    //! The constructor to do deep copy with a custom ContactMaterial type
+    MaterialTable(const MaterialTable& org, CloneMap& cloneMap, ContactMaterialCopyFactory factory = nullptr);
 
-    bool load(const std::string& filename, std::ostream& os = nullout());
+    void clear();
 
     int maxMaterialId() const;
+    int numMaterials() const;
     Material* material(int id) const;
+    int numContactMaterials() const;
     ContactMaterial* contactMaterial(int id1, int id2) const;
     ContactMaterial* contactMaterial(const std::string& name1, const std::string& name2) const;
 
@@ -38,8 +42,13 @@ class CNOID_EXPORT MaterialTable : public Referenced
     int addMaterial(Material* material);
     void setContactMaterial(int id1, int id2, ContactMaterial* cm);
 
-  private:
-    MaterialTableImpl* impl;
+    void merge(MaterialTable* table);
+    
+    bool load(const std::string& filename, std::ostream& os = nullout());
+
+private:
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<MaterialTable> MaterialTablePtr;
