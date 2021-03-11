@@ -129,6 +129,10 @@ public:
     iterator erase(iterator pos){
         return elements.erase(pos);
     }
+
+    void swap(PolymorphicPointerArray& x){
+        elements.swap(x.elements);
+    }
 };
 
 }
