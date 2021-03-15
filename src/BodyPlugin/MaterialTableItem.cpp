@@ -1,6 +1,5 @@
 #include "MaterialTableItem.h"
 #include <cnoid/ItemManager>
-#include <cnoid/MaterialTable>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/UTF8>

@@ -2,12 +2,10 @@
 #define CNOID_BODY_PLUGIN_MATERIAL_TABLE_ITEM_H
 
 #include <cnoid/Item>
+#include <cnoid/MaterialTable>
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class MaterialTable;
-typedef ref_ptr<MaterialTable> MaterialTablePtr;
 
 class CNOID_EXPORT MaterialTableItem : public Item
 {
