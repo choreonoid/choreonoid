@@ -1,0 +1,16 @@
+materials:
+  -
+    name: Ground
+    roughness: 0.01
+    viscosity: 1.0
+  -
+    name: Sole
+    roughness: 0.01
+    viscosity: 1.0
+
+contact_materials:
+  -
+    materials: [ Ground, Sole ]
+    friction: 0.01
+    restitution: 0.0
+    friction_model: [ cone, direct ] # for AGX

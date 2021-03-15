@@ -18,7 +18,12 @@ set(sr1-pattern-files SR1WalkPattern1.seq SR1WalkPattern2.seq SR1WalkPattern3.se
 file(COPY ${sr1-pattern-files} DESTINATION ${CNOID_BINARY_SHARE_DIR}/motion/SR1)
 install(FILES ${sr1-pattern-files} DESTINATION ${CNOID_SHARE_SUBDIR}/motion/SR1)
 list(APPEND project_files
-  SR1Minimum.cnoid SR1Walk.cnoid SR1Walk2D.cnoid SR1Liftup.cnoid SR1WalkinHouse.cnoid)
+  SR1Minimum.cnoid
+  SR1Walk.cnoid
+  SR1WalkSlippy.cnoid SlippyMaterialSet.yaml
+  SR1Walk2D.cnoid
+  SR1Liftup.cnoid
+  SR1WalkinHouse.cnoid)
 
 # PA10
 choreonoid_add_simple_controller(PA10PickupController PA10PickupController.cpp)
