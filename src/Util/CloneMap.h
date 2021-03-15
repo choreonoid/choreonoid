@@ -52,12 +52,17 @@ public:
     */
 
     template<class ObjectType>
-    ObjectType* getClone(const ObjectType* org, const CloneFunction& cloneFunction){
-        return static_cast<ObjectType*>(findOrCreateClone_(org, cloneFunction));
+    ObjectType* getClone(const ObjectType* org, std::function<ObjectType*(const ObjectType* org)> cloneFunction){
+        return static_cast<ObjectType*>(
+            findOrCreateClone_(
+                org,
+                [cloneFunction](const Referenced* org) -> Referenced* {
+                    return cloneFunction(static_cast<const ObjectType*>(org));
+                }));
     }
 
     template<class ObjectType>
-    ObjectType* getClone(ref_ptr<ObjectType> org, const CloneFunction& cloneFunction){
+    ObjectType* getClone(ref_ptr<ObjectType> org, std::function<ObjectType*(const ObjectType* org)> cloneFunction){
         return getClone(org.get(), cloneFunction);
     }
 
