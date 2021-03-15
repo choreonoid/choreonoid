@@ -29,46 +29,46 @@ materials:
     viscosity: 1.0
   -
     name: TankTracks
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     roughness: 1.0
     viscosity: 1.0
   -
     name: TankWheel
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     roughness: 1.0
     viscosity: 1.0
   -
     name: AizuSpiderTracks
     density: 1e3
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     roughness: 1.0
     viscosity: 1.0
   -
     name: AizuSpiderWheel
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     roughness: 1.0
     viscosity: 1.0
   -
     name: DoubleArmV7ATracks
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     roughness: 1.0
     viscosity: 1.0
   -
     name: DoubleArmV7AWheel
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     roughness: 1.0
     viscosity: 1.0
   -
     name: Wire
-    wireYoungsModulusBend: 1e7
+    wire_youngs_modulus_bend: 1e7
     viscosity: 1.0
   -
     name: Steel
     roughness: 1.0
     viscosity: 1.0
-    youngsModulus: 200e9
+    youngs_modulus: 200e9
 
-contactMaterials:
+contact_materials:
   -
     materials: [ Default, Default ]
     friction: 0.5
@@ -81,67 +81,67 @@ contactMaterials:
     materials: [ Ground, Sole ]
     friction: 1.0
     restitution: 0.0
-    frictionModel: [ cone, direct ]
+    friction_model: [ cone, direct ]
   -
     materials: [ Ground, Tire ]
     friction: 2.0
     restitution: 0.0
-    frictionModel: [ cone, direct ]
+    friction_model: [ cone, direct ]
   -
     materials: [ Default, Hand ]
     friction: 1.0
     restitution: 0.0
     surfaceViscosity: 1e-8
-    frictionModel: [ cone, direct ]
+    friction_model: [ cone, direct ]
   -
     materials: [ Ground, TankTracks]
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     friction: 1.0
-    secondaryfriction: 0.5
+    secondary_friction: 0.5
     restitution: 0.0
-    surfaceViscosity: 1e-7
-    secondarySurfaceViscosity: 1e-5
-    primaryDirection: [ 1, 0, 0 ]
-    frictionModel: [ constant_normal_force_oriented_box, direct ]
+    surface_viscosity: 1e-7
+    secondary_surface_viscosity: 1e-5
+    primary_direction: [ 1, 0, 0 ]
+    friction_model: [ constant_normal_force_oriented_box, direct ]
     #frictionModel: [ oriented_iterative, direct ]
-    referenceBodyName: Tank
-    referenceLinkName: CHASSIS
+    reference_body: Tank
+    reference_link: CHASSIS
   -
     materials: [ TankWheel, TankTracks ]
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     friction: 1.0
     restitution: 0.0
   -
     materials: [ Ground, AizuSpiderTracks ]
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     friction: 1.0
-    secondaryFriction: 0.5
+    secondary_friction: 0.5
     restitution: 0.0
-    surfaceViscosity: 1e-3 # 1e-2
-    secondarySurfaceViscosity: 2e-2
-    primaryDirection: [ 1, 0, 0 ]
-    frictionModel: [ constant_normal_force_oriented_box, direct ]
-    #frictionModel: [ oriented_iterative, direct ]
+    surface_viscosity: 1e-3 # 1e-2
+    secondary_surface_viscosity: 2e-2
+    primary_direction: [ 1, 0, 0 ]
+    friction_model: [ constant_normal_force_oriented_box, direct ]
+    #friction_model: [ oriented_iterative, direct ]
     constant_normal_force: 500
-    referenceBodyName: AizuSpider
-    referenceLinkName: CHASSIS
+    reference_body: AizuSpider
+    reference_link: CHASSIS
   -
     materials: [ AizuSpiderWheel, AizuSpiderTracks ]
-    youngsModulus: 1e10
+    youngs_modulus: 1e10
     friction: 1.0
     restitution: 0.0
   -
     materials: [ Ground, DoubleArmV7ATracks ]
     friction: 1.0
-    secondaryFriction: 0.5
+    secondary_friction: 0.5
     restitution: 0.0
-    surfaceViscosity: 7.0e-7
-    secondarySurfaceViscosity: 8.0e-6
-    primaryDirection: [ 1, 0, 0 ]
-    frictionModel: [ constant_normal_force_oriented_box, direct ]
-    #frictionModel: [ oriented_iterative, direct ]
-    referenceBodyName: DoubleArmV7
-    referenceLinkName: TFRAME
+    surface_viscosity: 7.0e-7
+    secondary_surface_viscosity: 8.0e-6
+    primary_direction: [ 1, 0, 0 ]
+    friction_model: [ constant_normal_force_oriented_box, direct ]
+    #friction_model: [ oriented_iterative, direct ]
+    reference_body: DoubleArmV7
+    reference_link: TFRAME
   -
     materials: [ DoubleArmV7AWheel, DoubleArmV7ATracks ]
     friction: 1.0
@@ -158,10 +158,10 @@ contactMaterials:
     materials: [ Steel, Steel ]
     friction: 0.5
     restitution: 0.0
-    frictionModel: [ cone, direct ]
+    friction_model: [ cone, direct ]
   -
     materials: [ Steel, Hand ]
     friction: 1.0
     restitution: 0.0
-    surfaceViscosity: 1e-8
-    frictionModel: [ cone, direct ]
+    surface_viscosity: 1e-8
+    friction_model: [ cone, direct ]

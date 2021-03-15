@@ -61,9 +61,6 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
     bulk->setDensity(desc.density);
     bulk->setYoungsModulus(desc.youngsModulus);
 
-    // The setPoissonsRatio function is deprecated and it does nothing
-    //bulk->setPoissonsRatio(desc.poissonRatio);
-
     // Below are overried when ContactMaterials are used.
     bulk->setViscosity(desc.viscosity);
     bulk->setDamping(desc.spookDamping);

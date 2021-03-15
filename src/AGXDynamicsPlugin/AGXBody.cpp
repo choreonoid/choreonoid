@@ -147,15 +147,8 @@ void AGXLink::setAGXMaterialFromLinkInfo()
     if(mapping->read("density", density))
         mat->getBulkMaterial()->setDensity(density);
     double youngsModulus;
-    if(mapping->read("youngsModulus", youngsModulus))
+    if(mapping->read({"youngs_modulus", "youngsModulus" }, youngsModulus))
         mat->getBulkMaterial()->setYoungsModulus(youngsModulus);
-
-    /* This function is deprecated and it does nothing.
-    double poissonRatio;
-    if(mapping->read("poissonRatio", poissonRatio))
-        mat->getBulkMaterial()->setPoissonsRatio(poissonRatio);
-    */
-    
     double viscosity;
     if(mapping->read("viscosity", viscosity))
         mat->getBulkMaterial()->setViscosity(viscosity);
@@ -163,12 +156,12 @@ void AGXLink::setAGXMaterialFromLinkInfo()
     if(mapping->read("roughness", roughness))
         mat->getSurfaceMaterial()->setRoughness(roughness);
     double surfaceViscosity;
-    if(mapping->read("surfaceViscosity", surfaceViscosity))
+    if(mapping->read({ "surface_viscosity", "surfaceViscosity" }, surfaceViscosity))
         mat->getSurfaceMaterial()->setViscosity(surfaceViscosity);
     double adhesionForce;
-    if(mapping->read("adhesionForce", adhesionForce)){
+    if(mapping->read({ "adhesion_force", "adhesionForce" }, adhesionForce)){
         double adhesivOverlap = mat->getSurfaceMaterial()->getAdhesiveOverlap();
-        mapping->read("adhesivOverlap", adhesivOverlap);
+        mapping->read({ "adhesiv_overlap", "adhesivOverlap" }, adhesivOverlap);
         mat->getSurfaceMaterial()->setAdhesion(adhesionForce, adhesivOverlap);
     }
     sim->getMaterialManager()->add(mat);

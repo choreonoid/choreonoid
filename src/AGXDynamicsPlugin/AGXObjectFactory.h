@@ -42,7 +42,6 @@ struct AGXMaterialDesc
         name = default_name();
         density = 1000.0;
         youngsModulus = 4.0E8;
-        poissonRatio = 0.3;
         viscosity = 0.5;
         spookDamping = 0.075;
         roughness = 0.416667;
@@ -59,7 +58,6 @@ struct AGXMaterialDesc
     agx::String name;
     agx::Real density;              // [kg/m^3]
     agx::Real youngsModulus;        // stiffness[Pa]
-    agx::Real poissonRatio;
 
     // Below are override when ContactMaterials are used.
     agx::Real viscosity;            // relation to restitution. compliace.

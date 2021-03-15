@@ -34,9 +34,12 @@ ContactMaterial::ContactMaterial(const Mapping* info)
     if(info_->extract("friction", mu)){
         setFriction(mu);
     }
-    info_->extract("staticFriction", staticFriction_);
-    info_->extract("dynamicFriction", dynamicFriction_);
-
+    if(!info_->extract("static_friction", staticFriction_)){
+        info_->extract("staticFriction", staticFriction_);
+    }
+    if(!info_->extract("dynamic_friction", dynamicFriction_)){
+        info_->extract("dynamicFriction", dynamicFriction_);
+    }
     info_->extract("restitution", restitution_);
 }
 
