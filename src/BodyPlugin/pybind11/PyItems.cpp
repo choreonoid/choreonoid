@@ -29,6 +29,7 @@ void exportItems(py::module m)
         .def_property_readonly("sigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
         .def("setDefaultMaterialTableFile", &WorldItem::setDefaultMaterialTableFile)
         .def_property_readonly("defaultMaterialTable", [](WorldItem& self){ return self.defaultMaterialTable(); })
+        .def_property_readonly("materialTable", &WorldItem::materialTable)
         ;
 
     PyItemList<WorldItem>(m, "WorldItemList");
