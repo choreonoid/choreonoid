@@ -5,7 +5,7 @@
 
 #include "FountainDevice.h"
 #include "SceneFountain.h"
-#include <cnoid/YAMLBodyLoader>
+#include <cnoid/StdBodyLoader>
 #include <cnoid/SceneDevice>
 #include <cnoid/Body>
 #include <cnoid/EigenUtil>
@@ -15,9 +15,9 @@ using namespace cnoid;
 
 namespace {
 
-YAMLBodyLoader::NodeTypeRegistration registerFountainDevice(
+StdBodyLoader::NodeTypeRegistration registerFountainDevice(
     "FountainDevice",
-    [](YAMLBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader& loader, Mapping& node){
         FountainDevicePtr fountain = new FountainDevice;
         fountain->particleSystem().readParameters(loader.sceneReader(), node);
         return loader.readDevice(fountain, node);

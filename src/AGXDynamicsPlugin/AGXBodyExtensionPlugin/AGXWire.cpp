@@ -5,7 +5,7 @@
 
 #include <cnoid/Device>
 #include <cnoid/ValueTree>
-#include <cnoid/YAMLBodyLoader>
+#include <cnoid/StdBodyLoader>
 #include <cnoid/YAMLReader>
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneDrawables>
@@ -41,7 +41,7 @@ struct AGXWireDeviceDesc
 class AGXWireDevice : private AGXWireDeviceDesc, public Device
 {
 public:
-    static bool createAGXWireDevice(YAMLBodyLoader& loader, Mapping& node);
+    static bool createAGXWireDevice(StdBodyLoader& loader, Mapping& node);
     AGXWireDevice(const AGXWireDeviceDesc& desc, Mapping* info);
     AGXWireDevice(const AGXWireDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() const override;
@@ -87,7 +87,7 @@ private:
 };
 typedef ref_ptr<AGXWire> AGXWirePtr;
 
-bool AGXWireDevice::createAGXWireDevice(YAMLBodyLoader&loader, Mapping& node)
+bool AGXWireDevice::createAGXWireDevice(StdBodyLoader&loader, Mapping& node)
 {
     MappingPtr info = node.cloneMapping();
 
@@ -509,7 +509,7 @@ void AGXWire::updateWireNodeStates()
 struct AGXWireDeviceRegistration
 {
     AGXWireDeviceRegistration(){
-        cnoid::YAMLBodyLoader::addNodeType("AGXWireDevice", AGXWireDevice::createAGXWireDevice);
+        cnoid::StdBodyLoader::addNodeType("AGXWireDevice", AGXWireDevice::createAGXWireDevice);
         SceneDevice::registerSceneDeviceFactory<AGXWireDevice>(SceneWireDevice::createSceneWireDevice);
         if(AGXObjectFactory::checkModuleEnalbled("AgX-Wires")){
         }else {

@@ -7,7 +7,6 @@
 
 namespace cnoid {
 
-class YAMLBodyLoader;
 class Mapping;
 
 class CNOID_EXPORT DigitalIoDevice : public Device

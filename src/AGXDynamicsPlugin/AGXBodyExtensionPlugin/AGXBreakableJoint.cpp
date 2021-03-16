@@ -4,7 +4,7 @@
 */
 
 #include <cnoid/Device>
-#include <cnoid/YAMLBodyLoader>
+#include <cnoid/StdBodyLoader>
 #include <cnoid/YAMLReader>
 #include <cnoid/AGXBodyExtension>
 #include <cnoid/AGXBody>
@@ -24,7 +24,7 @@ struct AGXBreakableJointDeviceDesc
 class AGXBreakableJointDevice : private AGXBreakableJointDeviceDesc, public Device
 {
 public:
-    static bool createAGXBreakableJointDevice(YAMLBodyLoader& loader, Mapping& node);
+    static bool createAGXBreakableJointDevice(StdBodyLoader& loader, Mapping& node);
     AGXBreakableJointDevice(const AGXBreakableJointDeviceDesc& desc, Mapping* info);
     AGXBreakableJointDevice(const AGXBreakableJointDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() const override;
@@ -53,7 +53,7 @@ private:
 };
 typedef ref_ptr<AGXBreakableJointDevice> AGXBreakableJointDevicePtr;
 
-bool AGXBreakableJointDevice::createAGXBreakableJointDevice(YAMLBodyLoader&loader, Mapping&node)
+bool AGXBreakableJointDevice::createAGXBreakableJointDevice(StdBodyLoader&loader, Mapping&node)
 {
     MappingPtr info = node.cloneMapping();
     AGXBreakableJointDeviceDesc desc;
@@ -437,7 +437,7 @@ struct AGXBreakableJointDeviceRegistration
 {
     AGXBreakableJointDeviceRegistration()
     {
-        YAMLBodyLoader::addNodeType("AGXBreakableJointDevice", AGXBreakableJointDevice::createAGXBreakableJointDevice);
+        StdBodyLoader::addNodeType("AGXBreakableJointDevice", AGXBreakableJointDevice::createAGXBreakableJointDevice);
     }
 }registrationAGXBreakableJointDevice;
 

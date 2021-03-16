@@ -4,7 +4,7 @@
 */
 
 #include "BodyLoader.h"
-#include "YAMLBodyLoader.h"
+#include "StdBodyLoader.h"
 #include "VRMLBodyLoader.h"
 #include "Body.h"
 #include <cnoid/SceneLoader>
@@ -110,12 +110,12 @@ struct FactoryRegistration
     FactoryRegistration(){
         lock_guard<mutex> lock(loaderMapMutex);
 
-        unifiedExtensionMap["body"] = "yaml";
-        unifiedExtensionMap["yaml"] = "yaml";
-        unifiedExtensionMap["yml"] = "yaml";
+        unifiedExtensionMap["body"] = "body";
+        unifiedExtensionMap["yaml"] = "body";
+        unifiedExtensionMap["yml"] = "body";
         unifiedExtensionMap["wrl"] = "wrl";
 
-        loaderFactoryMap["yaml"] = [](){ return make_shared<YAMLBodyLoader>(); };
+        loaderFactoryMap["body"] = [](){ return make_shared<StdBodyLoader>(); };
         loaderFactoryMap["wrl"] = [](){ return make_shared<VRMLBodyLoader>(); };
     }
 } factoryRegistration;

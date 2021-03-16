@@ -1,5 +1,5 @@
 #include "AGXVehicleContinuousTrackDevice.h"
-#include <cnoid/YAMLBodyLoader>
+#include <cnoid/StdBodyLoader>
 #include <cnoid/YAMLReader>
 #include <cnoid/StdSceneReader>
 #include <cnoid/SceneDevice>
@@ -89,7 +89,7 @@ public:
 };
 
 #define NODE_READ(FIELD1) node.read(#FIELD1, desc.FIELD1)
-bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
+bool readAGXVehicleContinuousTrackDevice(StdBodyLoader& loader, Mapping& node)
 {
     AGXVehicleContinuousTrackDeviceDesc desc;
     if(!NODE_READ(numberOfNodes)) return false;
@@ -152,7 +152,7 @@ SceneDevice* createSceneAGXVehicleContinuousTrackDevice(Device* device)
 struct TypeRegistration
 {
     TypeRegistration() {
-        YAMLBodyLoader::addNodeType("AGXVehicleContinuousTrackDevice", readAGXVehicleContinuousTrackDevice);
+        StdBodyLoader::addNodeType("AGXVehicleContinuousTrackDevice", readAGXVehicleContinuousTrackDevice);
         SceneDevice::registerSceneDeviceFactory<AGXVehicleContinuousTrackDevice>(createSceneAGXVehicleContinuousTrackDevice);
         if(AGXObjectFactory::checkModuleEnalbled("AGX-Vehicle") || AGXObjectFactory::checkModuleEnalbled("AgX-Vehicle")){
         }else {

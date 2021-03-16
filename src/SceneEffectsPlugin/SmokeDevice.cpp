@@ -5,7 +5,7 @@
 
 #include "SmokeDevice.h"
 #include "SceneSmoke.h"
-#include <cnoid/YAMLBodyLoader>
+#include <cnoid/StdBodyLoader>
 #include <cnoid/Body>
 #include <cnoid/SceneDevice>
 #include <cnoid/EigenUtil>
@@ -15,10 +15,10 @@ using namespace cnoid;
 
 namespace {
 
-YAMLBodyLoader::NodeTypeRegistration
+StdBodyLoader::NodeTypeRegistration
 registerSmokeDevice(
     "SmokeDevice",
-    [](YAMLBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader& loader, Mapping& node){
         SmokeDevicePtr smoke = new SmokeDevice;
         smoke->particleSystem().readParameters(loader.sceneReader(), node);
         return loader.readDevice(smoke, node);

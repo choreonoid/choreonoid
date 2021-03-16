@@ -12,9 +12,6 @@
 
 namespace cnoid {
 
-class YAMLBodyLoader;
-class Mapping;
-
 class CNOID_EXPORT FireDevice : public Device
 {
 public:

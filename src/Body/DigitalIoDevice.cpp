@@ -1,5 +1,5 @@
 #include "DigitalIoDevice.h"
-#include "YAMLBodyLoader.h"
+#include "StdBodyLoader.h"
 #include <cnoid/Body>
 #include <cnoid/ValueTree>
 #include <unordered_map>
@@ -10,10 +10,10 @@ using namespace cnoid;
 
 namespace {
 
-YAMLBodyLoader::NodeTypeRegistration
+StdBodyLoader::NodeTypeRegistration
 registerHolderDevice(
     "DigitalIO",
-    [](YAMLBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader& loader, Mapping& node){
         DigitalIoDevicePtr device = new DigitalIoDevice;
         if(device->readDescription(&node)){
             return loader.readDevice(device, node);

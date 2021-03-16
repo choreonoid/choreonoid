@@ -3,13 +3,14 @@
 */
 
 #include "MulticopterPluginHeader.h"
+#include <cnoid/StdBodyLoader>
 
 
 using namespace std;
 using namespace cnoid;
 using namespace Multicopter;
 
-bool readRotorDevice(YAMLBodyLoader& loader, Mapping& node)
+bool readRotorDevice(StdBodyLoader& loader, Mapping& node)
 {
     RotorDevicePtr rotorDevice= new RotorDevice;
     Eigen::Vector3d a;
@@ -101,7 +102,7 @@ bool readRotorDevice(YAMLBodyLoader& loader, Mapping& node)
 struct TypeRegistration
 {
     TypeRegistration() {
-        YAMLBodyLoader::addNodeType(YAML_ROTOR_DEVICE_TAG, readRotorDevice);
+        StdBodyLoader::addNodeType(YAML_ROTOR_DEVICE_TAG, readRotorDevice);
     }
 } registration;
 

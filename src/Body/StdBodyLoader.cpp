@@ -3,7 +3,7 @@
    \author Shin'ichiro Nakaoka
 */
 
-#include "YAMLBodyLoader.h"
+#include "StdBodyLoader.h"
 #include "BodyLoader.h"
 #include "BodyHandlerManager.h"
 #include "Body.h"
@@ -37,7 +37,7 @@ using fmt::format;
 namespace {
 
 std::mutex customNodeFunctionMutex;
-typedef function<bool(YAMLBodyLoader& loader, Mapping& node)> CustomNodeFunction;
+typedef function<bool(StdBodyLoader& loader, Mapping& node)> CustomNodeFunction;
 typedef map<string, CustomNodeFunction> CustomNodeFunctionMap;
 CustomNodeFunctionMap customNodeFunctions;
 
@@ -108,17 +108,17 @@ struct ROSPackageSchemeHandlerRegistration {
 
 namespace cnoid {
 
-void YAMLBodyLoader::addNodeType
-(const std::string& typeName, std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
+void StdBodyLoader::addNodeType
+(const std::string& typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
 {
     std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
     customNodeFunctions[typeName] = readFunction;
 }
 
-class YAMLBodyLoaderImpl
+class StdBodyLoader::Impl
 {
 public:
-    YAMLBodyLoader* self;
+    StdBodyLoader* self;
 
     unique_ptr<BodyLoader> bodyLoader;
     
@@ -276,7 +276,7 @@ public:
     vector<bool> validJointIdSet;
     size_t numValidJointIds;
 
-    unique_ptr<YAMLBodyLoader> subLoader;
+    unique_ptr<StdBodyLoader> subLoader;
     map<string, BodyPtr> subBodyMap;
     vector<BodyPtr> subBodies;
     bool isSubLoader;
@@ -290,8 +290,8 @@ public:
 
     BodyHandlerManager bodyHandlerManager;
 
-    YAMLBodyLoaderImpl(YAMLBodyLoader* self);
-    ~YAMLBodyLoaderImpl();
+    Impl(StdBodyLoader* self);
+    ~Impl();
     void updateCustomNodeFunctions();
     bool clear();
     bool load(Body* body, const std::string& filename);
@@ -490,13 +490,13 @@ void putLinkInfoValues(Body* body, ostream& os)
 }
 
 
-YAMLBodyLoader::YAMLBodyLoader()
+StdBodyLoader::StdBodyLoader()
 {
-    impl = new YAMLBodyLoaderImpl(this);
+    impl = new Impl(this);
 }
 
 
-YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
+StdBodyLoader::Impl::Impl(StdBodyLoader* self)
     : self(self)
 {
     sceneReader.setYAMLReader(&reader);
@@ -528,19 +528,19 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
 }
 
 
-YAMLBodyLoader::~YAMLBodyLoader()
+StdBodyLoader::~StdBodyLoader()
 {
     delete impl;
 }
 
 
-YAMLBodyLoaderImpl::~YAMLBodyLoaderImpl()
+StdBodyLoader::Impl::~Impl()
 {
 
 }
 
 
-void YAMLBodyLoader::setMessageSink(std::ostream& os)
+void StdBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
     impl->sceneReader.setMessageSink(os);
@@ -548,31 +548,31 @@ void YAMLBodyLoader::setMessageSink(std::ostream& os)
 }
 
 
-void YAMLBodyLoader::setVerbose(bool on)
+void StdBodyLoader::setVerbose(bool on)
 {
     impl->isVerbose = on;
 }
 
 
-void YAMLBodyLoader::setShapeLoadingEnabled(bool on)
+void StdBodyLoader::setShapeLoadingEnabled(bool on)
 {
     impl->isShapeLoadingEnabled = on;
 }
 
 
-void YAMLBodyLoader::setDefaultDivisionNumber(int n)
+void StdBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->defaultDivisionNumber = n;
 }
 
 
-void YAMLBodyLoader::setDefaultCreaseAngle(double theta)
+void StdBodyLoader::setDefaultCreaseAngle(double theta)
 {
     impl->defaultCreaseAngle = theta;
 }
 
 
-void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
+void StdBodyLoader::Impl::updateCustomNodeFunctions()
 {
     std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
     if(customNodeFunctions.size() > numCustomNodeFunctions){
@@ -585,49 +585,49 @@ void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
 }
 
 
-StdSceneReader& YAMLBodyLoader::sceneReader()
+StdSceneReader& StdBodyLoader::sceneReader()
 {
     return impl->sceneReader;
 }
 
 
-const StdSceneReader& YAMLBodyLoader::sceneReader() const
+const StdSceneReader& StdBodyLoader::sceneReader() const
 {
     return impl->sceneReader;
 }
 
 
-bool YAMLBodyLoader::isDegreeMode() const
+bool StdBodyLoader::isDegreeMode() const
 {
     return impl->isDegreeMode();
 }
 
 
-double YAMLBodyLoader::toRadian(double angle) const
+double StdBodyLoader::toRadian(double angle) const
 {
     return impl->toRadian(angle);
 }
 
 
-bool YAMLBodyLoader::readAngle(const Mapping& node, const char* key, double& angle) const
+bool StdBodyLoader::readAngle(const Mapping& node, const char* key, double& angle) const
 {
     return impl->readAngle(node, key, angle);
 }
 
 
-bool YAMLBodyLoader::readRotation(const Mapping& node, Matrix3& out_R) const
+bool StdBodyLoader::readRotation(const Mapping& node, Matrix3& out_R) const
 {
     return impl->readRotation(node, out_R);
 }
 
 
-bool YAMLBodyLoader::readRotation(const Mapping& node, const char* key, Matrix3& out_R) const
+bool StdBodyLoader::readRotation(const Mapping& node, const char* key, Matrix3& out_R) const
 {
     return impl->readRotation(node, key, out_R);
 }
 
 
-bool YAMLBodyLoaderImpl::clear()
+bool StdBodyLoader::Impl::clear()
 {
     rootLink = nullptr;
     linkInfos.clear();
@@ -646,13 +646,13 @@ bool YAMLBodyLoaderImpl::clear()
 }    
 
 
-bool YAMLBodyLoader::load(Body* body, const std::string& filename)
+bool StdBodyLoader::load(Body* body, const std::string& filename)
 {
     return impl->load(body, filename);
 }
 
 
-bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
+bool StdBodyLoader::Impl::load(Body* body, const std::string& filename)
 {
     mainFilePath = filesystem::absolute(fromUTF8(filename));
     
@@ -680,13 +680,13 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 }
 
 
-bool YAMLBodyLoader::read(Body* body, Mapping* topNode)
+bool StdBodyLoader::read(Body* body, Mapping* topNode)
 {
     return impl->readTopNode(body, topNode);
 }
 
 
-bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
+bool StdBodyLoader::Impl::readTopNode(Body* body, Mapping* topNode)
 {
     clear();
 
@@ -743,7 +743,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 }
 
 
-bool YAMLBodyLoaderImpl::checkFormat(Mapping* topNode)
+bool StdBodyLoader::Impl::checkFormat(Mapping* topNode)
 {
     auto formatNode = topNode->extract("format");
     if(formatNode){
@@ -758,7 +758,7 @@ bool YAMLBodyLoaderImpl::checkFormat(Mapping* topNode)
 }
 
 
-bool YAMLBodyLoaderImpl::loadAnotherFormatBodyFile(Mapping* topNode)
+bool StdBodyLoader::Impl::loadAnotherFormatBodyFile(Mapping* topNode)
 {
     auto modelFileNode = topNode->extract("modelFile");
     if(!modelFileNode){
@@ -809,7 +809,7 @@ bool YAMLBodyLoaderImpl::loadAnotherFormatBodyFile(Mapping* topNode)
 }
             
 
-bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
+bool StdBodyLoader::Impl::readBody(Mapping* topNode)
 {
     double version = 1.0;
     
@@ -924,7 +924,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 }
 
 
-void YAMLBodyLoaderImpl::readNodeInLinks(Mapping* node, const string& nodeType)
+void StdBodyLoader::Impl::readNodeInLinks(Mapping* node, const string& nodeType)
 {
     string type;
     if(extract(node, "type", type)){
@@ -952,7 +952,7 @@ void YAMLBodyLoaderImpl::readNodeInLinks(Mapping* node, const string& nodeType)
 }
 
 
-void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
+void StdBodyLoader::Impl::readLinkNode(Mapping* linkNode)
 {
     LinkInfoPtr info = new LinkInfo;
     extract(linkNode, "parent", info->parent);
@@ -962,7 +962,7 @@ void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
 }
 
 
-void YAMLBodyLoaderImpl::setLinkName(Link* link, const string& name, ValueNode* node)
+void StdBodyLoader::Impl::setLinkName(Link* link, const string& name, ValueNode* node)
 {
     link->setName(name);
     
@@ -972,7 +972,7 @@ void YAMLBodyLoaderImpl::setLinkName(Link* link, const string& name, ValueNode* 
 }
 
 
-void YAMLBodyLoaderImpl::setJointName(Link* link, const string& jointName, ValueNode* node)
+void StdBodyLoader::Impl::setJointName(Link* link, const string& jointName, ValueNode* node)
 {
     link->setJointName(jointName);
     
@@ -982,7 +982,7 @@ void YAMLBodyLoaderImpl::setJointName(Link* link, const string& jointName, Value
 }
 
 
-LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
+LinkPtr StdBodyLoader::Impl::readLinkContents(Mapping* node, LinkPtr link)
 {
     bool isSubBodyNode = (link != nullptr);
     
@@ -1089,7 +1089,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
 }
 
 
-void YAMLBodyLoaderImpl::setJointId(Link* link, int id)
+void StdBodyLoader::Impl::setJointId(Link* link, int id)
 {
     link->setJointId(id);
     if(id >= 0){
@@ -1107,7 +1107,7 @@ void YAMLBodyLoaderImpl::setJointId(Link* link, int id)
 }
 
 
-void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
+void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
 {
     if(extract(node, "jointId", id)){
         setJointId(link, id);
@@ -1239,7 +1239,7 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
 }
 
 
-bool YAMLBodyLoaderImpl::extractAxis(Mapping* node, const char* key, Vector3& out_axis)
+bool StdBodyLoader::Impl::extractAxis(Mapping* node, const char* key, Vector3& out_axis)
 {
     auto axisNode = node->extract(key);
     if(axisNode){
@@ -1250,7 +1250,7 @@ bool YAMLBodyLoaderImpl::extractAxis(Mapping* node, const char* key, Vector3& ou
 }
 
 
-bool YAMLBodyLoaderImpl::readAxis(Mapping* node, const char* key, Vector3& out_axis)
+bool StdBodyLoader::Impl::readAxis(Mapping* node, const char* key, Vector3& out_axis)
 {
     auto axisNode = node->find(key);
     if(axisNode->isValid()){
@@ -1261,7 +1261,7 @@ bool YAMLBodyLoaderImpl::readAxis(Mapping* node, const char* key, Vector3& out_a
 }
 
 
-void YAMLBodyLoaderImpl::readAxis(ValueNode* node, Vector3& out_axis)
+void StdBodyLoader::Impl::readAxis(ValueNode* node, Vector3& out_axis)
 {
     if(node->isListing()){
         readEx(node->toListing(), out_axis);
@@ -1288,7 +1288,7 @@ void YAMLBodyLoaderImpl::readAxis(ValueNode* node, Vector3& out_axis)
 }
 
 
-void YAMLBodyLoaderImpl::setMassParameters(Link* link)
+void StdBodyLoader::Impl::setMassParameters(Link* link)
 {
     /*
       Mass = Sigma mass 
@@ -1337,7 +1337,7 @@ void YAMLBodyLoaderImpl::setMassParameters(Link* link)
 }
 
 
-bool YAMLBodyLoaderImpl::readElements(Mapping& node)
+bool StdBodyLoader::Impl::readElements(Mapping& node)
 {
     bool isSceneNodeAdded = false;
     ValueNode& elements = *node.find("elements");
@@ -1348,7 +1348,7 @@ bool YAMLBodyLoaderImpl::readElements(Mapping& node)
 }
 
 
-bool YAMLBodyLoaderImpl::readElementContents(ValueNode& elements)
+bool StdBodyLoader::Impl::readElementContents(ValueNode& elements)
 {
     bool isSceneNodeAdded = false;
 
@@ -1416,7 +1416,7 @@ bool YAMLBodyLoaderImpl::readElementContents(ValueNode& elements)
 }
 
 
-bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
+bool StdBodyLoader::Impl::readNode(Mapping& node, const string& type)
 {
     bool isSceneNodeAdded = false;
     
@@ -1451,13 +1451,13 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 }
 
 
-bool YAMLBodyLoaderImpl::readSkipNode(Mapping& node)
+bool StdBodyLoader::Impl::readSkipNode(Mapping& node)
 {
     return false;
 }
 
 
-bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, NodeFunction nodeFunction)
+bool StdBodyLoader::Impl::readContainerNode(Mapping& node, NodeFunction nodeFunction)
 {
     bool isSceneNodeAdded = false;
 
@@ -1478,7 +1478,7 @@ bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, NodeFunction nodeFunct
 }
 
 
-bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeFunction, bool hasElements)
+bool StdBodyLoader::Impl::readTransformContents(Mapping& node, NodeFunction nodeFunction, bool hasElements)
 {
     Affine3 T = Affine3::Identity();
     bool hasPosTransform = false;
@@ -1496,7 +1496,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
 
     Affine3 Ts(T);
     Vector3 scale;
-    if(read(node, "scale", scale)){
+    if(cnoid::read(node, "scale", scale)){
         Ts.linear() *= scale.asDiagonal();
         hasScale = true;
     }
@@ -1547,7 +1547,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
 }
 
 
-bool YAMLBodyLoaderImpl::readGroup(Mapping& node)
+bool StdBodyLoader::Impl::readGroup(Mapping& node)
 {
     sceneGroupSetStack.push_back(SceneGroupSet());
     currentSceneGroupSet().newGroup<SgGroup>();
@@ -1562,18 +1562,18 @@ bool YAMLBodyLoaderImpl::readGroup(Mapping& node)
 }
 
 
-bool YAMLBodyLoaderImpl::readTransform(Mapping& node)
+bool StdBodyLoader::Impl::readTransform(Mapping& node)
 {
     return readTransformContents(node, 0, true);
 }
 
 
-bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
+bool StdBodyLoader::Impl::readRigidBody(Mapping& node)
 {
     RigidBody rbody;
     const Affine3& T = transformStack.back();
 
-    if(!read(node, "centerOfMass", v)){
+    if(!cnoid::read(node, "centerOfMass", v)){
         v.setZero();
     }
     rbody.c = T.linear() * v + T.translation();
@@ -1592,7 +1592,7 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 }
 
 
-bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
+bool StdBodyLoader::Impl::readVisualOrCollision(Mapping& node, bool isVisual)
 {
     ModelType prevModelType = currentModelType;
 
@@ -1623,7 +1623,7 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
 }
 
 
-bool YAMLBodyLoaderImpl::readVisualOrCollisionContents(Mapping& node)
+bool StdBodyLoader::Impl::readVisualOrCollisionContents(Mapping& node)
 {
     bool isSceneNodeAdded = false;
     
@@ -1645,7 +1645,7 @@ bool YAMLBodyLoaderImpl::readVisualOrCollisionContents(Mapping& node)
 }
  
     
-bool YAMLBodyLoaderImpl::readResource(Mapping& node)
+bool StdBodyLoader::Impl::readResource(Mapping& node)
 {
     bool isSceneNodeAdded = false;
     
@@ -1674,13 +1674,13 @@ bool YAMLBodyLoaderImpl::readResource(Mapping& node)
 }
         
 
-bool YAMLBodyLoader::readDevice(Device* device, Mapping& node)
+bool StdBodyLoader::readDevice(Device* device, Mapping& node)
 {
     return impl->readDevice(device, node);
 }
 
 
-bool YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
+bool StdBodyLoader::Impl::readDevice(Device* device, Mapping& node)
 {
     device->setName(nameStack.back());
 
@@ -1697,19 +1697,19 @@ bool YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
 }
 
 
-bool YAMLBodyLoaderImpl::readForceSensor(Mapping& node)
+bool StdBodyLoader::Impl::readForceSensor(Mapping& node)
 {
     ForceSensorPtr sensor = new ForceSensor;
-    if(read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
-    if(read(node, "maxTorque", v)) sensor->F_max().tail<3>() = v;
+    if(cnoid::read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
+    if(cnoid::read(node, "maxTorque", v)) sensor->F_max().tail<3>() = v;
     return readDevice(sensor, node);
 }
 
 
-bool YAMLBodyLoaderImpl::readRateGyroSensor(Mapping& node)
+bool StdBodyLoader::Impl::readRateGyroSensor(Mapping& node)
 {
     RateGyroSensorPtr sensor = new RateGyroSensor;
-    if(read(node, "maxAngularVelocity", v)){
+    if(cnoid::read(node, "maxAngularVelocity", v)){
         if(isDegreeMode()){
             for(int i=0; i < 3; ++i){
                 v[i] = radian(v[i]);
@@ -1721,15 +1721,15 @@ bool YAMLBodyLoaderImpl::readRateGyroSensor(Mapping& node)
 }
 
 
-bool YAMLBodyLoaderImpl::readAccelerationSensor(Mapping& node)
+bool StdBodyLoader::Impl::readAccelerationSensor(Mapping& node)
 {
     AccelerationSensorPtr sensor = new AccelerationSensor();
-    if(read(node, "maxAcceleration", v)) sensor->dv_max() = v;
+    if(cnoid::read(node, "maxAcceleration", v)) sensor->dv_max() = v;
     return readDevice(sensor, node);
 }
 
 
-bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
+bool StdBodyLoader::Impl::readCamera(Mapping& node)
 {
     CameraPtr camera;
     RangeCamera* range = 0;
@@ -1789,7 +1789,7 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
 }
 
 
-bool YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
+bool StdBodyLoader::Impl::readRangeSensor(Mapping& node)
 {
     RangeSensorPtr rangeSensor = new RangeSensor;
     
@@ -1814,17 +1814,17 @@ bool YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
 }
 
 
-bool YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
+bool StdBodyLoader::Impl::readSpotLight(Mapping& node)
 {
     SpotLightPtr light = new SpotLight();
 
-    if(read(node, "color", color)) light->setColor(color);
+    if(cnoid::read(node, "color", color)) light->setColor(color);
     if(node.read("intensity", value)) light->setIntensity(value);
-    if(read(node, "direction", v)) light->setDirection(v);
+    if(cnoid::read(node, "direction", v)) light->setDirection(v);
     if(readAngle(node, "beamWidth", value)) light->setBeamWidth(value);
     if(readAngle(node, "cutOffAngle", value)) light->setCutOffAngle(value);
     if(node.read("cutOffExponent", value)) light->setCutOffExponent(value);
-    if(read(node, "attenuation", color)){
+    if(cnoid::read(node, "attenuation", color)){
         light->setConstantAttenuation(color[0]);
         light->setLinearAttenuation(color[1]);
         light->setQuadraticAttenuation(color[2]);
@@ -1834,7 +1834,7 @@ bool YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 }
 
 
-void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
+void StdBodyLoader::Impl::readContinuousTrackNode(Mapping* node)
 {
     string parent;
     if(!extract(node, "parent", parent)){
@@ -1881,7 +1881,7 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
 }
 
 
-void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle)
+void StdBodyLoader::Impl::addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle)
 {
     setLinkName(link, format("{0}{1}", link->name(), index), node);
 
@@ -1897,7 +1897,7 @@ void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, st
 }
 
 
-void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
+void StdBodyLoader::Impl::readSubBodyNode(Mapping* node)
 {
     string uri;
     if(!node->read("uri", uri)){
@@ -1920,7 +1920,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
     } else {
         try {
             if(!subLoader){
-                subLoader.reset(new YAMLBodyLoader);
+                subLoader.reset(new StdBodyLoader);
                 subLoader->setMessageSink(*os_);
                 subLoader->impl->isSubLoader = true;
             }
@@ -1945,7 +1945,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
 }
 
 
-void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
+void StdBodyLoader::Impl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 {
     string prefix;
     node->read("prefix", prefix);
@@ -1992,7 +1992,7 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 }
 
 
-void YAMLBodyLoaderImpl::readExtraJoints(Mapping* topNode)
+void StdBodyLoader::Impl::readExtraJoints(Mapping* topNode)
 {
     auto node = topNode->extract("extraJoints");
     if(node){
@@ -2006,7 +2006,7 @@ void YAMLBodyLoaderImpl::readExtraJoints(Mapping* topNode)
 }
 
 
-void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
+void StdBodyLoader::Impl::readExtraJoint(Mapping* node)
 {
     ExtraJoint joint;
 
@@ -2043,7 +2043,7 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
 }
 
 
-void YAMLBodyLoaderImpl::readBodyHandlers(ValueNode* node)
+void StdBodyLoader::Impl::readBodyHandlers(ValueNode* node)
 {
     if(node){
         if(node->isString()){
@@ -2057,7 +2057,7 @@ void YAMLBodyLoaderImpl::readBodyHandlers(ValueNode* node)
 }
 
 
-void YAMLBodyLoaderImpl::setDegreeModeAttributeToValueTreeNodes(ValueNode* node)
+void StdBodyLoader::Impl::setDegreeModeAttributeToValueTreeNodes(ValueNode* node)
 {
     if(node->isScalar()){
         node->setDegreeMode();

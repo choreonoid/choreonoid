@@ -1,7 +1,7 @@
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
 #include "Body.h"
-#include "YAMLBodyLoader.h"
+#include "StdBodyLoader.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 
@@ -10,10 +10,10 @@ using namespace cnoid;
 
 namespace {
 
-YAMLBodyLoader::NodeTypeRegistration
+StdBodyLoader::NodeTypeRegistration
 registerHolderDevice(
     "Holder",
-    [](YAMLBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader& loader, Mapping& node){
         HolderDevicePtr holder = new HolderDevice;
         if(holder->readDescription(&node)){
             return loader.readDevice(holder, node);

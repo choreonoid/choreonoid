@@ -23,7 +23,7 @@ set(sources
   SceneDevice.cpp
   AbstractBodyLoader.cpp
   BodyLoader.cpp
-  YAMLBodyLoader.cpp
+  StdBodyLoader.cpp
   StdBodyWriter.cpp
   Device.cpp
   HolderDevice.cpp
@@ -85,6 +85,7 @@ set(headers
   AbstractBodyLoader.h
   VRMLBodyLoader.h
   BodyLoader.h
+  StdBodyLoader.h
   StdBodyWriter.h
   ZMPSeq.h
   Link.h

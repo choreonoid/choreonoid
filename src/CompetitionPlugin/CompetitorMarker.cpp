@@ -4,17 +4,17 @@
 */
 
 #include "CompetitorMarker.h"
-#include <cnoid/YAMLBodyLoader>
+#include <cnoid/StdBodyLoader>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-YAMLBodyLoader::NodeTypeRegistration
+StdBodyLoader::NodeTypeRegistration
 registerCompetitorMarker(
     "CompetitorMarker",
-    [](YAMLBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader& loader, Mapping& node){
         CompetitorMarkerPtr device = new CompetitorMarker;
         return device->readDescription(loader, node);
     });

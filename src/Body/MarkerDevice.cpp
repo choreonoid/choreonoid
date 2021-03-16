@@ -6,7 +6,7 @@
 #include "MarkerDevice.h"
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneMarkers>
-#include <cnoid/YAMLBodyLoader>
+#include <cnoid/StdBodyLoader>
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -16,10 +16,10 @@ using namespace cnoid;
 
 namespace {
 
-YAMLBodyLoader::NodeTypeRegistration
+StdBodyLoader::NodeTypeRegistration
 registerMarkerDevice(
     "MarkerDevice",
-    [](YAMLBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader& loader, Mapping& node){
         MarkerDevicePtr device = new MarkerDevice;
         return device->readDescription(loader, node);
     });
@@ -230,7 +230,7 @@ double* MarkerDevice::writeState(double* out_buf) const
 }
 
 
-bool MarkerDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
+bool MarkerDevice::readDescription(StdBodyLoader& loader, Mapping& node)
 {
     string type;
     if(node.read("markerType", type)){

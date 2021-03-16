@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_YAML_BODY_LOADER_H
-#define CNOID_BODY_YAML_BODY_LOADER_H
+#ifndef CNOID_BODY_STD_BODY_LOADER_H
+#define CNOID_BODY_STD_BODY_LOADER_H
 
 #include "AbstractBodyLoader.h"
 #include <cnoid/EigenTypes>
@@ -16,13 +16,12 @@ namespace cnoid {
 class Mapping;
 class Device;
 class StdSceneReader;
-class YAMLBodyLoaderImpl;
   
-class CNOID_EXPORT YAMLBodyLoader : public AbstractBodyLoader
+class CNOID_EXPORT StdBodyLoader : public AbstractBodyLoader
 {
 public:
-    YAMLBodyLoader();
-    ~YAMLBodyLoader();
+    StdBodyLoader();
+    ~StdBodyLoader();
 
     virtual void setMessageSink(std::ostream& os) override;
     virtual void setVerbose(bool on) override;
@@ -36,7 +35,7 @@ public:
     // The following functions are used for defining new node types
     static void addNodeType(
         const std::string& typeName,
-        std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction);
+        std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction);
     
     bool readDevice(Device* device, Mapping& node);
 
@@ -52,15 +51,15 @@ public:
     struct NodeTypeRegistration {
         NodeTypeRegistration(
             const char* typeName,
-            std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
+            std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
         {
             addNodeType(typeName, readFunction);
         }
     };
 
 private:
-    YAMLBodyLoaderImpl* impl;
-    friend class YAMLBodyLoaderImpl;
+    class Impl;
+    Impl* impl;
 };
 
 

@@ -8,7 +8,6 @@ namespace cnoid {
 
 class AttachmentDevice;
 typedef ref_ptr<AttachmentDevice> AttachmentDevicePtr;
-class YAMLBodyLoader;
 class Mapping;
 
 class CNOID_EXPORT HolderDevice : public Device

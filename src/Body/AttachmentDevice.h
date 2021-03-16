@@ -8,7 +8,7 @@ namespace cnoid {
 
 class HolderDevice;
 typedef ref_ptr<HolderDevice> HolderDevicePtr;
-class YAMLBodyLoader;
+class StdBodyLoader;
 class Mapping;
 
 class CNOID_EXPORT AttachmentDevice : public Device
@@ -37,7 +37,7 @@ public:
     void setCategory(const std::string& category);
     void clearCategory();
 
-    bool readDescription(YAMLBodyLoader& loader, Mapping& node);
+    bool readDescription(StdBodyLoader& loader, Mapping& node);
 
 protected:
     AttachmentDevice(const AttachmentDevice& org, bool copyStateOnly, CloneMap* cloneMap);

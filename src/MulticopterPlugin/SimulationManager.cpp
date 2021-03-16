@@ -4,7 +4,6 @@
 
 #include "MulticopterPluginHeader.h"
 #include "MulticopterSimulatorItem.h"
-#include <cnoid/YAMLBodyLoader>
 #include <fmt/format.h>
 #include <cmath>
 #include <random>

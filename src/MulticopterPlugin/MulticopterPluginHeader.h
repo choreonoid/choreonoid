@@ -21,7 +21,6 @@
 #include <cnoid/MeshGenerator>
 #include <cnoid/SceneView>
 #include <cnoid/AISTCollisionDetector>
-#include <cnoid/YAMLBodyLoader>
 #include <cnoid/EigenArchive>
 #include <cnoid/Tokenizer>
 

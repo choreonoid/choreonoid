@@ -5,7 +5,7 @@
 
 #include "RainSnowDevice.h"
 #include "SceneRainSnow.h"
-#include <cnoid/YAMLBodyLoader>
+#include <cnoid/StdBodyLoader>
 #include <cnoid/SceneDevice>
 
 using namespace std;
@@ -14,7 +14,7 @@ using namespace cnoid;
 namespace {
 
 template <class DeviceType>
-bool readDevice(YAMLBodyLoader& loader, Mapping& node)
+bool readDevice(StdBodyLoader& loader, Mapping& node)
 {
     ref_ptr<DeviceType> device = new DeviceType;
     device->particleSystem().readParameters(loader.sceneReader(), node);
@@ -43,13 +43,13 @@ SceneDevice* createSceneDevice(Device* device)
     return sceneDevice;
 }
 
-YAMLBodyLoader::NodeTypeRegistration
+StdBodyLoader::NodeTypeRegistration
 registerSnowDevice("SnowDevice", readDevice<SnowDevice>);
 
 SceneDevice::FactoryRegistration<SnowDevice>
 registerSceneSmokeDeviceFactory(createSceneDevice<SnowDevice, SceneSnow>);
 
-YAMLBodyLoader::NodeTypeRegistration
+StdBodyLoader::NodeTypeRegistration
 registerRainDevice("RainDevice", readDevice<RainDevice>);
 
 SceneDevice::FactoryRegistration<RainDevice>

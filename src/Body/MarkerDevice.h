@@ -11,7 +11,7 @@
 
 namespace cnoid {
 
-class YAMLBodyLoader;
+class StdBodyLoader;
 class Mapping;
 
 class CNOID_EXPORT MarkerDevice : public Device
@@ -31,7 +31,7 @@ public:
     virtual const double* readState(const double* buf) override;
     virtual double* writeState(double* out_buf) const override;
 
-    bool readDescription(YAMLBodyLoader& loader, Mapping& node);
+    bool readDescription(StdBodyLoader& loader, Mapping& node);
 
     virtual bool on() const override;
     virtual void on(bool on) override;
