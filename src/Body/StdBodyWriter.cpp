@@ -5,10 +5,14 @@
 #include <cnoid/SceneGraph>
 #include <cnoid/YAMLWriter>
 #include <cnoid/EigenArchive>
+#include <cnoid/NullOut>
 #include <cnoid/stdx/filesystem>
+#include <fmt/format.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
@@ -19,7 +23,11 @@ public:
     StdSceneWriter sceneWriter;
     YAMLWriter yamlWriter;
 
+    ostream* os_;
+    ostream& os() { return *os_; }
+
     Impl();
+    bool writeBody(Body* body, const std::string& filename);
     MappingPtr writeBody(Body* body);
     MappingPtr writeLink(Link* link);
 };
@@ -35,20 +43,42 @@ StdBodyWriter::StdBodyWriter()
 
 StdBodyWriter::Impl::Impl()
 {
+    //sceneWriter.setExtModelFileMode(StdSceneWriger::ReplaceWithObjModelFiles);
     yamlWriter.setKeyOrderPreservationMode(true);
+    os_ = &nullout();
+}
+
+
+void StdBodyWriter::setMessageSink(std::ostream& os)
+{
+    impl->os_ = &os;
 }
 
 
 bool StdBodyWriter::writeBody(Body* body, const std::string& filename)
 {
-    if(impl->yamlWriter.openFile(filename)){
-        auto directory = filesystem::path(filename).parent_path().generic_string();
-        impl->sceneWriter.setBaseDirectory(directory);
-        impl->yamlWriter.putNode(impl->writeBody(body));
-        impl->yamlWriter.closeFile();
-        return true;
+    return impl->writeBody(body, filename);
+}
+
+
+bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
+{
+    bool result = false;
+    
+    auto directory = filesystem::path(filename).parent_path().generic_string();
+    sceneWriter.setBaseDirectory(directory);
+    
+    auto topNode = writeBody(body);
+
+    if(topNode){
+        if(yamlWriter.openFile(filename)){
+            yamlWriter.putNode(topNode);
+            result = true;
+            yamlWriter.closeFile();
+        }
     }
-    return false;
+    
+    return result;
 }
 
 
@@ -57,10 +87,11 @@ MappingPtr StdBodyWriter::Impl::writeBody(Body* body)
     MappingPtr node = new Mapping;
 
     node->write("format", "ChoreonoidBody");
-    node->write("formatVersion", "1.0");
+    node->write("format_version", "2.0");
+    node->write("angle_unit", "degree");
 
     node->write("name", body->name(), DOUBLE_QUOTED);
-    node->write("rootLink", body->rootLink()->name(), DOUBLE_QUOTED);
+    node->write("root_link", body->rootLink()->name(), DOUBLE_QUOTED);
 
     ListingPtr linksNode = new Listing;
     for(auto& link : body->links()){
@@ -78,11 +109,48 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
 {
     MappingPtr node = new Mapping;
 
+    if(link->name().empty()){
+        os() << format(_("The name of the link {0} is not specified.")) << endl;
+        return nullptr;
+    }
     node->write("name", link->name(), DOUBLE_QUOTED);
-    node->write("jointType", link->jointTypeString());
+
+    if(auto parent = link->parent()){
+        node->write("parent", link->parent()->name());
+    }
+
+    auto b = link->offsetTranslation();
+    if(!b.isZero()){
+        write(node, "translation", b);
+    }
+    auto aa = AngleAxis(link->offsetRotation());
+    if(aa.angle() != 0.0){
+        writeDegreeAngleAxis(node, "rotation", aa);
+    }
+
+    node->write("joint_type", link->jointTypeString());
+
+    if(!link->isFreeJoint() && !link->isFixedJoint()){
+        write(node, "joint_axis", link->jointAxis());
+    }
+
+    if(link->jointId() >= 0){
+        node->write("joint_id", link->jointId());
+    }
+    if(link->hasJoint()){
+        auto rangeNode = node->createFlowStyleListing("joint_range");
+        if(link->isRevoluteJoint()){
+            rangeNode->append(degree(link->q_lower()));
+            rangeNode->append(degree(link->q_lower()));
+        } else {
+            rangeNode->append(link->q_lower());
+            rangeNode->append(link->q_lower());
+        }
+    }
+    
     node->write("mass", link->mass());
-    write(*node, "centerOfMass", link->centerOfMass());
-    write(*node, "inertia", link->I());
+    write(node, "center_of_mass", link->centerOfMass());
+    write(node, "inertia", link->I());
 
     ListingPtr elementsNode = new Listing;
 

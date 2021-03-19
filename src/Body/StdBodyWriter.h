@@ -13,6 +13,8 @@ class CNOID_EXPORT StdBodyWriter
 public:
     StdBodyWriter();
 
+    void setMessageSink(std::ostream& os);
+
     bool writeBody(Body* body, const std::string& filename);
 
 private:
