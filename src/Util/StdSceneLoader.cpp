@@ -99,7 +99,7 @@ SgNode* StdSceneLoader::Impl::load(const std::string& filename)
         if(topNode){
             stdx::filesystem::path filepath(fromUTF8(filename));
             sceneReader.setBaseDirectory(toUTF8(filepath.parent_path().string()));
-            sceneReader.readHeader(*topNode);
+            sceneReader.readHeader(topNode);
             auto sceneSrc = topNode->find("scene");
             if(!sceneSrc->isValid()){
                 os() << format(_("Scene file \"{}\" does not have the \"scene\" node."), filename) << endl;

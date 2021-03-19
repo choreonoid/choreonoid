@@ -823,7 +823,7 @@ bool StdBodyLoader::Impl::readBody(Mapping* topNode)
 
     sceneReader.setBaseDirectory(toUTF8(mainFilePath.parent_path().string()));
     sceneReader.setDefaultDivisionNumber(defaultDivisionNumber);
-    sceneReader.readHeader(*topNode);
+    sceneReader.readHeader(topNode, version);
 
     if(extract(topNode, "name", symbol)){
         body->setModelName(symbol);

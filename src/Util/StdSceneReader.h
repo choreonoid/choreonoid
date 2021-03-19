@@ -35,7 +35,8 @@ public:
     stdx::filesystem::path baseDirPath() const;
     void setYAMLReader(YAMLReader* reader);
     void clear();
-    void readHeader(Mapping& info);
+    void readHeader(Mapping* info);
+    void readHeader(Mapping* info, double formatVersion);
 
     enum AngleUnit { DEGREE, RADIAN };
     void setAngleUnit(AngleUnit unit);
