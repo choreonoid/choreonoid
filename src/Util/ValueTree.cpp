@@ -312,15 +312,6 @@ bool ValueNode::read(std::string& out_value) const
 }
 
 
-const std::string& ValueNode::toString() const
-{
-    if(!isScalar()){
-        throwNotScalrException();
-    }
-    return static_cast<const ScalarNode* const>(this)->stringValue_;
-}
-
-
 ScalarNode::ScalarNode(const std::string& value, StringStyle stringStyle)
     : stringValue_(value),
       stringStyle_(stringStyle)
@@ -630,6 +621,23 @@ ValueNodePtr Mapping::extract(const std::string& key)
     }
     return nullptr;
 }
+
+
+ValueNodePtr Mapping::extract(std::initializer_list<const char*> keys)
+{
+    if(!isValid()){
+        throwNotMappingException();
+    }
+    for(auto& key : keys){
+        auto p = values.find(key);
+        if(p != values.end()){
+            ValueNodePtr node = p->second;
+            values.erase(p);
+            return node;
+        }
+    }
+    return nullptr;
+}    
 
 
 bool Mapping::extract(const std::string& key, double& out_value)

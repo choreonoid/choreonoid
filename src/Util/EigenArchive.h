@@ -121,6 +121,20 @@ void readEx(const Mapping* mapping, const std::string& key, Eigen::MatrixBase<De
 
 
 template<typename Derived>
+void readEx(const Mapping* mapping, std::initializer_list<const char*> keys, Eigen::MatrixBase<Derived>& x)
+{
+    for(auto& key : keys){
+        if(read(mapping, key, x)){
+            return;
+        }
+    }
+    if(keys.begin() != keys.end()){
+        mapping->throwKeyNotFoundException(*keys.begin());
+    }
+}
+
+
+template<typename Derived>
 void readEx(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
 {
     readEx(&mapping, key, x);

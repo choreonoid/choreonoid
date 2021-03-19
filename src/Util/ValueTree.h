@@ -60,7 +60,7 @@ public:
     bool isCollection() const { return typeBits & (MAPPING | LISTING); }
 
     const std::string& toString() const;
-
+    
     operator const std::string& () const {
         return toString();
     }
@@ -221,6 +221,15 @@ private:
 };
 
 
+inline const std::string& ValueNode::toString() const
+{
+    if(!isScalar()){
+        throwNotScalrException();
+    }
+    return static_cast<const ScalarNode* const>(this)->stringValue_;
+}
+
+
 class CNOID_EXPORT Mapping : public ValueNode
 {
     typedef std::map<std::string, ValueNodePtr> Container;
@@ -262,6 +271,7 @@ public:
     Listing* findListing(std::initializer_list<const char*> keys) const;
 
     ValueNodePtr extract(const std::string& key);
+    ValueNodePtr extract(std::initializer_list<const char*> keys);
 
     bool extract(const std::string& key, double& out_value);
     bool extract(const std::string& key, std::string& out_value);
