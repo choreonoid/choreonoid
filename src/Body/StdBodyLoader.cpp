@@ -306,8 +306,6 @@ public:
     LinkPtr readLinkContents(Mapping* linkNode, LinkPtr link = nullptr);
     void setJointId(Link* link, int id);
     void readJointContents(Link* link, Mapping* node);
-    bool extractAxis(Mapping* node, const char* key, Vector3& out_axis);
-    bool readAxis(Mapping* node, const char* key, Vector3& out_axis);
     void readAxis(ValueNode* node, Vector3& out_axis);
     void setJointParameters(Link* link, string jointType, ValueNode* node);
     void setMassParameters(Link* link);
@@ -413,9 +411,9 @@ bool extract(Mapping* mapping, const char* key, ValueType& out_value)
 
 
 template<typename Derived>
-bool extractEigen(Mapping* mapping, const char* key, Eigen::MatrixBase<Derived>& x)
+bool extractEigen(Mapping* mapping, std::initializer_list<const char*> keys, Eigen::MatrixBase<Derived>& x)
 {
-    if(auto node = mapping->extract(key)){
+    if(auto node = mapping->extract(keys)){
         readEx(node->toListing(), x);
         return true;
     }
@@ -811,14 +809,14 @@ bool StdBodyLoader::Impl::loadAnotherFormatBodyFile(Mapping* topNode)
 
 bool StdBodyLoader::Impl::readBody(Mapping* topNode)
 {
-    double version = 1.0;
-    
-    auto versionNode = topNode->extract("formatVersion");
-    if(versionNode){
-        version = versionNode->toDouble();
+    auto versionNode = topNode->extract({ "format_version", "formatVersion" });
+    if(!versionNode){
+        topNode->throwException(_("The version of the Choreonoid body file format is not specified"));
     }
-    if(version >= 2.0){
-        topNode->throwException(_("This version of the Choreonoid body format is not supported"));
+    double version = versionNode->toDouble();
+    if(version >= 2.1){
+        topNode->throwException(
+            format(_("Version {0} of the Choreonoid body format is not supported"), version));
     }
 
     sceneReader.setBaseDirectory(toUTF8(mainFilePath.parent_path().string()));
@@ -862,7 +860,7 @@ bool StdBodyLoader::Impl::readBody(Mapping* topNode)
         topNode->throwException(_("There is no link defined"));
     }
 
-    auto rootLinkNode = topNode->extract("rootLink");
+    auto rootLinkNode = topNode->extract({ "root_link", "rootLink" });
     if(rootLinkNode){
         string rootLinkName = rootLinkNode->toString();
         auto p = linkMap.find(rootLinkName);
@@ -926,17 +924,21 @@ bool StdBodyLoader::Impl::readBody(Mapping* topNode)
 
 void StdBodyLoader::Impl::readNodeInLinks(Mapping* node, const string& nodeType)
 {
-    string type;
-    if(extract(node, "type", type)){
-        if(!nodeType.empty() && type != nodeType){
+    const string* pNodeType = nullptr;
+    auto typeNode = node->extract("type");
+    if(!typeNode){
+        pNodeType = &nodeType;
+    } else {
+        auto& typeNodeValue = typeNode->toString();
+        if(!nodeType.empty() && typeNodeValue != nodeType){
             node->throwException(
                 format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
-                        type, nodeType));
+                        typeNodeValue, nodeType));
         }
-    } else if(!nodeType.empty()){
-        type = nodeType;
+        pNodeType = &typeNodeValue;
     }
 
+    const auto& type = *pNodeType;
     if(type.empty() || type == "Link"){
         readLinkNode(node);
     } else if(type == "ContinuousTrack"){
@@ -1045,7 +1047,7 @@ LinkPtr StdBodyLoader::Impl::readLinkContents(Mapping* node, LinkPtr link)
 
     if(!isSubBodyNode){
         RigidBody rbody;
-        bool hasCoM = extractEigen(node, "centerOfMass", rbody.c);
+        bool hasCoM = extractEigen(node, { "center_of_mass", "centerOfMass" }, rbody.c);
         bool hasMass = extract(node, "mass", rbody.m);
         bool hasInertia = extractInertia(node, "inertia", rbody.I);
         if(hasCoM || hasMass || hasInertia){
@@ -1109,14 +1111,13 @@ void StdBodyLoader::Impl::setJointId(Link* link, int id)
 
 void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
 {
-    if(extract(node, "jointId", id)){
-        setJointId(link, id);
+    if(auto jointIdNode = node->extract({ "joint_id", "jointId" })){
+        setJointId(link, jointIdNode->toInt());
     }
 
-    string jointType;
-    auto jointTypeNode = node->extract("jointType");
+    auto jointTypeNode = node->extract({ "joint_type", "jointType" });
     if(jointTypeNode){
-        jointType = jointTypeNode->toString();
+        auto& jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
             link->setJointType(Link::RevoluteJoint);
         } else if(jointType == "prismatic"){
@@ -1136,8 +1137,9 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         }
     }
 
-    if(extractAxis(node, "jointAxis", v)){
-       link->setJointAxis(v);
+    if(auto axisNode = node->extract({ "joint_axis", "jointAxis" })){
+        readAxis(axisNode, v);
+        link->setJointAxis(v);
     }
 
     auto actuationModeNode = node->extract("actuationMode");
@@ -1153,7 +1155,7 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
             link->setActuationMode(Link::JointVelocity);
 
         } else if(mode == "jointSurfaceVelocity"){ // deprecated
-            if(!jointType.empty() &&
+            if(jointTypeNode &&
                (link->jointType() != Link::PseudoContinuousTrackJoint || link->jointType() != Link::FixedJoint)){
                 os() << format(_("Warning: Actuation mode \"jointSurfaceVelocity\" is specified in {0}. "
                                  "The mode is deprecated and the joint type should be the pseudo continuous track in this case."),
@@ -1186,8 +1188,7 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
     double lower = -std::numeric_limits<double>::max();
     double upper =  std::numeric_limits<double>::max();
     
-    auto jointRangeNode = node->extract("jointRange");
-    if(jointRangeNode){
+    if(auto jointRangeNode = node->extract({ "joint_range", "jointRange" })){
         if(jointRangeNode->isScalar()){
             upper = readLimitValue(*jointRangeNode, true);
             lower = -upper;
@@ -1236,28 +1237,6 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
     double Ir = node->get("rotorInertia", 0.0);
     double r = node->get("gearRatio", 1.0);
     link->setEquivalentRotorInertia(r * r * Ir);
-}
-
-
-bool StdBodyLoader::Impl::extractAxis(Mapping* node, const char* key, Vector3& out_axis)
-{
-    auto axisNode = node->extract(key);
-    if(axisNode){
-        readAxis(axisNode, out_axis);
-        return true;
-    }
-    return false;
-}
-
-
-bool StdBodyLoader::Impl::readAxis(Mapping* node, const char* key, Vector3& out_axis)
-{
-    auto axisNode = node->find(key);
-    if(axisNode->isValid()){
-        readAxis(axisNode, out_axis);
-        return true;
-    }
-    return false;
 }
 
 
@@ -1573,7 +1552,7 @@ bool StdBodyLoader::Impl::readRigidBody(Mapping& node)
     RigidBody rbody;
     const Affine3& T = transformStack.back();
 
-    if(!cnoid::read(node, "centerOfMass", v)){
+    if(!cnoid::read(node, { "center_of_mass", "centerOfMass" }, v)){
         v.setZero();
     }
     rbody.c = T.linear() * v + T.translation();
@@ -1850,7 +1829,7 @@ void StdBodyLoader::Impl::readContinuousTrackNode(Mapping* node)
     }
 
     Vector3 jointOffset;
-    if(!extractEigen(node, "jointOffset", jointOffset)){
+    if(!extractEigen(node, { "joint_offset", "jointOffset", }, jointOffset)){
         node->throwException("jointOffset must be specified");
     }
 
@@ -2020,13 +1999,18 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* node)
         }
     }
 
-    string jointType = node->get("jointType").toString();
+    string jointType;
+    if(!node->read({ "joint_type", "jointType" }, jointType)){
+        node->throwException(_("The joint type must be specified with the \"joint_type\" key"));
+    }
     if(jointType == "piston"){
         joint.setType(ExtraJoint::EJ_PISTON);
-        if(readAxis(node, "jointAxis", v)){
+        auto axisNode = node->find({ "axis", "jointAxis" });
+        if(axisNode->isValid()){
+            readAxis(axisNode, v);
             joint.setAxis(v);
         } else {
-            node->throwException(_("The jointAxis value must be specified for the pistion type"));
+            node->throwException(_("The axis must be specified for the pistion type"));
         }
     } else if(jointType == "ball"){
         joint.setType(ExtraJoint::EJ_BALL);
@@ -2034,9 +2018,9 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* node)
         node->throwException(format(_("Joint type \"{}\" is not available"), jointType));
     }
 
-    readEx(node, "link1LocalPos", v);
+    readEx(node, { "link1_local_pos", "link1LocalPos" }, v);
     joint.setPoint(0, v);
-    readEx(node, "link2LocalPos", v);
+    readEx(node, { "link2_local_pos", "link2LocalPos" }, v);
     joint.setPoint(1, v);
 
     body->addExtraJoint(joint);

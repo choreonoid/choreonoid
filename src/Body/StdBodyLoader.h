@@ -62,7 +62,6 @@ private:
     Impl* impl;
 };
 
-
 }
 
 #endif
