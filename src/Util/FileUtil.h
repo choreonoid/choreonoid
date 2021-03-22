@@ -50,10 +50,10 @@ CNOID_EXPORT std::string getGenericPathString(const stdx::filesystem::path& path
 [[deprecated("Use path.isAbsolute().")]]
 CNOID_EXPORT bool checkAbsolute(const stdx::filesystem::path& path);
 
-[[deprecated("Use filesystemm::absolute(path).")]]
+[[deprecated("Use filesystem::absolute(path).")]]
 CNOID_EXPORT stdx::filesystem::path getAbsolutePath(const stdx::filesystem::path& path);
 
-[[deprecated("Use filesystemm::absolute(path).string().")]]
+[[deprecated("Use filesystem::absolute(path).string().")]]
 CNOID_EXPORT std::string getAbsolutePathString(const stdx::filesystem::path& path);
 
 [[deprecated("Use path.filename().string().")]]
