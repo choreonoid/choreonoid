@@ -2,6 +2,7 @@
 #include <cnoid/StdSceneWriter>
 #include <cnoid/Body>
 #include <cnoid/Link>
+#include <cnoid/BodyHandler>
 #include <cnoid/SceneGraph>
 #include <cnoid/YAMLWriter>
 #include <cnoid/EigenArchive>
@@ -43,7 +44,7 @@ StdBodyWriter::StdBodyWriter()
 
 StdBodyWriter::Impl::Impl()
 {
-    //sceneWriter.setExtModelFileMode(StdSceneWriger::ReplaceWithObjModelFiles);
+    sceneWriter.setExtModelFileMode(StdSceneWriter::EmbedModels);
     yamlWriter.setKeyOrderPreservationMode(true);
     os_ = &nullout();
 }
@@ -52,6 +53,40 @@ StdBodyWriter::Impl::Impl()
 void StdBodyWriter::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->sceneWriter.setMessageSink(os);
+}
+
+
+void StdBodyWriter::setExtModelFileMode(int mode)
+{
+    switch(mode){
+    case EmbedModels:
+        impl->sceneWriter.setExtModelFileMode(StdSceneWriter::EmbedModels);
+        break;
+    case LinkToOriginalModelFiles:
+        impl->sceneWriter.setExtModelFileMode(StdSceneWriter::LinkToOriginalModelFiles);
+        break;
+    case ReplaceWithStdSceneFiles:
+        impl->sceneWriter.setExtModelFileMode(StdSceneWriter::ReplaceWithStdSceneFiles);
+        break;
+    case ReplaceWithObjModelFiles:
+        impl->sceneWriter.setExtModelFileMode(StdSceneWriter::ReplaceWithObjModelFiles);
+        break;
+    default:
+        break;
+    }
+}
+
+
+int StdBodyWriter::extModelFileMode() const
+{
+    switch(impl->sceneWriter.extModelFileMode()){
+    case StdSceneWriter::EmbedModels: return EmbedModels;
+    case StdSceneWriter::LinkToOriginalModelFiles: return LinkToOriginalModelFiles;
+    case StdSceneWriter::ReplaceWithStdSceneFiles: return ReplaceWithStdSceneFiles;
+    case StdSceneWriter::ReplaceWithObjModelFiles: return ReplaceWithObjModelFiles;
+    default: return -1;
+    }
 }
 
 
@@ -100,6 +135,24 @@ MappingPtr StdBodyWriter::Impl::writeBody(Body* body)
     if(!linksNode->empty()){
         node->insert("links", linksNode);
     }
+
+    int numBodyHandlers = body->numHandlers();
+    if(numBodyHandlers > 0){
+        ListingPtr handlers = new Listing;
+        for(int i=0; i < numBodyHandlers; ++i){
+            auto& filename = body->handler(0)->filename();
+            if(!filename.empty()){
+                handlers->append(filename);
+            }
+        }
+        if(handlers->size() == 1){
+            node->write("body_handlers", handlers->front()->toString());
+        } else if(handlers->size() >= 2){
+            node->insert("body_handlers", handlers);
+        }
+    }
+
+    node->insert(body->info());
     
     return node;
 }
@@ -141,16 +194,18 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
         auto rangeNode = node->createFlowStyleListing("joint_range");
         if(link->isRevoluteJoint()){
             rangeNode->append(degree(link->q_lower()));
-            rangeNode->append(degree(link->q_lower()));
+            rangeNode->append(degree(link->q_upper()));
         } else {
             rangeNode->append(link->q_lower());
-            rangeNode->append(link->q_lower());
+            rangeNode->append(link->q_upper());
         }
     }
     
     node->write("mass", link->mass());
     write(node, "center_of_mass", link->centerOfMass());
     write(node, "inertia", link->I());
+
+    node->insert(link->info());
 
     ListingPtr elementsNode = new Listing;
 

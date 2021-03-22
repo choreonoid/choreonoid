@@ -15,6 +15,15 @@ public:
 
     void setMessageSink(std::ostream& os);
 
+    enum ExtModelFileMode {
+        EmbedModels,
+        LinkToOriginalModelFiles,
+        ReplaceWithStdSceneFiles,
+        ReplaceWithObjModelFiles
+    };
+    void setExtModelFileMode(int mode);
+    int extModelFileMode() const;
+
     bool writeBody(Body* body, const std::string& filename);
 
 private:
