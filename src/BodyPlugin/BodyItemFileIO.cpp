@@ -25,14 +25,72 @@ ItemFileIO* meshFileIO;
 ItemFileIO* stdSceneFileExport;
 
 
-class BodyFileIO : public ItemFileIOBase<BodyItem>
+class BodyItemFileIoBase : public ItemFileIOBase<BodyItem>
 {
+public:
+    QWidget* optionPanel;
+    QVBoxLayout* optionVBox;
+    QComboBox* extModelFileModeCombo;
+    QCheckBox* transformIntegrationCheck;
+    
+    BodyItemFileIoBase(const char* format, int api)
+        : ItemFileIOBase<BodyItem>(format, api)
+    {
+        optionPanel = nullptr;
+        extModelFileModeCombo = nullptr;
+        transformIntegrationCheck = nullptr;
+    }
+
+    ~BodyItemFileIoBase()
+    {
+        if(optionPanel){
+            delete optionPanel;
+        }
+    }
+        
+    virtual QWidget* getOptionPanelForSaving(BodyItem* /* item */) override
+    {
+        if(!optionPanel){
+            optionPanel = new QWidget;
+            optionVBox = new QVBoxLayout;
+            optionVBox->setContentsMargins(0, 0, 0, 0);
+            optionPanel->setLayout(optionVBox);
+            
+            createOptionPanelForSaving();
+        }
+        return optionPanel;
+    }
+
+    virtual void createOptionPanelForSaving() = 0;
+
+    void addExtModelFileModeCombo(QBoxLayout* box)
+    {
+        box->addWidget(new QLabel(_("Ext model file mode:")));
+        extModelFileModeCombo = new QComboBox;
+        extModelFileModeCombo->addItem(_("Embed models"));
+        extModelFileModeCombo->addItem(_("Link to the original model files"));
+        extModelFileModeCombo->addItem(_("Replace with standard scene files"));
+        extModelFileModeCombo->addItem(_("Replace with OBJ model files"));
+        box->addWidget(extModelFileModeCombo);
+    }
+
+    void addTransformIntegrationCheck(QBoxLayout* box)
+    {
+        transformIntegrationCheck = new QCheckBox;
+        transformIntegrationCheck->setText(_("Integrate transforms"));
+        box->addWidget(transformIntegrationCheck);
+    }
+};
+
+
+class BodyFileIO : public BodyItemFileIoBase
+{
+public:
     BodyLoader bodyLoader;
     unique_ptr<StdBodyWriter> bodyWriter;
     
-public:
     BodyFileIO()
-        : ItemFileIOBase<BodyItem>("CHOREONOID-BODY", Load | Save)
+        : BodyItemFileIoBase("CHOREONOID-BODY", Load | Save | Options | OptionPanelForSaving)
     {
         setCaption(_("Body"));
         setExtensions({ "body", "yaml", "yml", "wrl" });
@@ -63,23 +121,47 @@ public:
         return true;
     }
 
-    virtual bool save(BodyItem* item, const std::string& filename) override
+    StdBodyWriter* ensureBodyWriter()
     {
         if(!bodyWriter){
             bodyWriter.reset(new StdBodyWriter);
+            bodyWriter->setMessageSink(os());
         }
-        if(bodyWriter->writeBody(item->body(), filename)){
-            item->getAddon<BodyOverwriteAddon>()->clearOverwriteItems();
+        return bodyWriter.get();
+    }
+
+    virtual void createOptionPanelForSaving() override
+    {
+        auto hbox = new QHBoxLayout;
+        addExtModelFileModeCombo(hbox);
+        addTransformIntegrationCheck(hbox);
+        hbox->addStretch();
+        optionVBox->addLayout(hbox);
+    }
+
+    virtual void fetchOptionPanelForSaving() override
+    {
+        ensureBodyWriter();
+        bodyWriter->setExtModelFileMode(extModelFileModeCombo->currentIndex());
+        //bodyWriter->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
+    }
+
+    virtual bool save(BodyItem* item, const std::string& filename) override
+    {
+        if(ensureBodyWriter()->writeBody(item->body(), filename)){
+            if(auto overwriteAddon = item->findAddon<BodyOverwriteAddon>()){
+                overwriteAddon->clearOverwriteItems();
+            }
             return true;
         }
         return false;
     }
 };
 
-class SceneFileIO : public SceneItemFileIO
+class SceneFileImporter : public SceneItemFileIO
 {
 public:
-    SceneFileIO()
+    SceneFileImporter()
     {
         setCaption(_("Body"));
         setFileTypeCaption(_("Scene / Mesh"));
@@ -111,28 +193,18 @@ public:
     }
 };
 
-class SceneFileExportBase : public ItemFileIOBase<BodyItem>
+
+class SceneFileExporterBase : public BodyItemFileIoBase
 {
 public:
-    QWidget* optionPanel;
-    QVBoxLayout* optionVBox;
     QComboBox* shapeTypeCombo;
 
-    SceneFileExportBase(const char* caption, const char* format, const char* extension)
-        : ItemFileIOBase<BodyItem>(format, Save | Options | OptionPanelForSaving)
+    SceneFileExporterBase(const char* caption, const char* format, const char* extension)
+        : BodyItemFileIoBase(format, Save | Options | OptionPanelForSaving)
     {
         setCaption(caption);
         setExtensions({ extension });
         setInterfaceLevel(Conversion);
-
-        optionPanel = nullptr;        
-    }
-
-    ~SceneFileExportBase()
-    {
-        if(optionPanel){
-            delete optionPanel;
-        }
     }
 
     virtual bool save(BodyItem* item, const std::string& filename) override
@@ -196,21 +268,6 @@ public:
 
     virtual bool saveScene(const std::string& filename, SgGroup* scene) = 0;
 
-    virtual QWidget* getOptionPanelForSaving(BodyItem* /* item */) override
-    {
-        if(!optionPanel){
-            optionPanel = new QWidget;
-            optionVBox = new QVBoxLayout;
-            optionVBox->setContentsMargins(0, 0, 0, 0);
-            optionPanel->setLayout(optionVBox);
-            
-            createOptionPanel();
-        }
-        return optionPanel;
-    }
-
-    virtual void createOptionPanel() = 0;
-
     void addShapeTypeCombo(QBoxLayout* box)
     {
         box->addWidget(new QLabel(_("Shape type:")));
@@ -222,15 +279,13 @@ public:
 };
 
 
-class StdSceneFileExport : public SceneFileExportBase
+class StdSceneFileExporter : public SceneFileExporterBase
 {
     unique_ptr<StdSceneWriter> sceneWriter;
-    QComboBox* extModelFileModeCombo;
-    QCheckBox* transformIntegrationCheck;
 
 public:
-    StdSceneFileExport()
-        : SceneFileExportBase(_("Standard scene file"), "STD-SCENE-FILE", "scen")
+    StdSceneFileExporter()
+        : SceneFileExporterBase(_("Standard scene file"), "STD-SCENE-FILE", "scen")
     {
 
     }
@@ -258,26 +313,13 @@ public:
         return saved;
     }
 
-    virtual void createOptionPanel() override
+    virtual void createOptionPanelForSaving() override
     {
-        QHBoxLayout* hbox;
-        hbox = new QHBoxLayout;
-
+        auto hbox = new QHBoxLayout;
         addShapeTypeCombo(hbox);
-        
-        hbox->addWidget(new QLabel(_("Ext model file mode:")));
-        extModelFileModeCombo = new QComboBox;
-        extModelFileModeCombo->addItem(_("Embed models"));
-        extModelFileModeCombo->addItem(_("Link to the original model files"));
-        extModelFileModeCombo->addItem(_("Replace with standard scene files"));
-        extModelFileModeCombo->addItem(_("Replace with OBJ model files"));
-        hbox->addWidget(extModelFileModeCombo);
-
-        transformIntegrationCheck = new QCheckBox;
-        transformIntegrationCheck->setText(_("Integrate transforms"));
-        hbox->addWidget(transformIntegrationCheck);
+        addExtModelFileModeCombo(hbox);
+        addTransformIntegrationCheck(hbox);
         hbox->addStretch();
-
         optionVBox->addLayout(hbox);
     }
 
@@ -290,13 +332,13 @@ public:
 };
 
 
-class ObjFileExport : public SceneFileExportBase
+class ObjFileExporter : public SceneFileExporterBase
 {
     unique_ptr<ObjSceneWriter> sceneWriter;
 
 public:
-    ObjFileExport()
-        : SceneFileExportBase(_("OBJ file"), "OBJ-FILE", "obj")
+    ObjFileExporter()
+        : SceneFileExporterBase(_("OBJ file"), "OBJ-FILE", "obj")
     {
 
     }
@@ -314,7 +356,7 @@ public:
         return ensureSceneWriter()->writeScene(filename, scene);
     }
 
-    virtual void createOptionPanel() override
+    virtual void createOptionPanelForSaving() override
     {
         auto hbox = new QHBoxLayout;
         addShapeTypeCombo(hbox);
@@ -332,11 +374,11 @@ void registerBodyItemFileIoSet(ItemManager& im)
     ::bodyFileIO = new BodyFileIO;
     im.registerFileIO<BodyItem>(::bodyFileIO);
 
-    ::meshFileIO = new SceneFileIO;
+    ::meshFileIO = new SceneFileImporter;
     im.registerFileIO<BodyItem>(::meshFileIO);
 
-    im.registerFileIO<BodyItem>(new StdSceneFileExport);
-    im.registerFileIO<BodyItem>(new ObjFileExport);
+    im.registerFileIO<BodyItem>(new StdSceneFileExporter);
+    im.registerFileIO<BodyItem>(new ObjFileExporter);
 }
 
 }
