@@ -43,6 +43,7 @@ public:
     int materialLabelIdCounter;
 
     filesystem::path filepath;
+    filesystem::path baseDirPath;
 
     ostream* os_;
     ostream& os() { return *os_; }
@@ -121,6 +122,7 @@ bool ObjSceneWriter::writeScene(const std::string& filename, SgNode* node)
 bool ObjSceneWriter::Impl::writeScene(const std::string& filename, SgNode* node)
 {
     filepath = filesystem::path(filename);
+    baseDirPath = filesystem::absolute(filepath).parent_path();
     
     try {
         gfs.open(fromUTF8(filename).c_str(), ios_base::out | ios_base::binary);
@@ -277,7 +279,33 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
     if(texture){
         auto image = texture->image();
         if(image && image->hasUri()){
-            mfs << "map_Kd " << image->uri() << "\n";
+            auto& uri = image->uri();
+            mfs << "map_Kd " << uri << "\n";
+            bool orgImageFileFound = false;
+            if(image->hasAbsoluteUri()){
+                auto& absUri = image->absoluteUri();
+                if(absUri.find_first_of("file://") == 0){
+                    filesystem::path orgFilePath(absUri.substr(7));
+                    std::error_code ec;
+                    if(filesystem::exists(orgFilePath, ec)){
+                        orgImageFileFound = true;
+                        filesystem::path uriPath(uri);
+                        if(uriPath.is_relative()){
+                            uriPath = baseDirPath / uriPath;
+                        }
+                        if(!filesystem::equivalent(orgFilePath, uriPath, ec)){
+                            bool copied = filesystem::copy_file(
+                                orgFilePath, uriPath, filesystem::copy_options::update_existing, ec);
+                            if(!copied && ec){
+                                os() << format(_("Warning: Texture image file \"{0}\" cannot be copied: {1}"), uri, ec.message()) << endl;
+                            }
+                        }
+                    }
+                }
+            }
+            if(!orgImageFileFound){
+                os() << format(_("Warning: Texture image file \"{0}\" is not found."), uri) << endl;
+            }
         }
     }
     mfs << "\n";
