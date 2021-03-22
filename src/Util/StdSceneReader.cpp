@@ -1080,6 +1080,8 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
 
     triangleMesh->setSolid(info.get("solid", triangleMesh->isSolid()));
 
+    triangleMesh->updateBoundingBox();
+
     return triangleMesh.retn();
 }
 
