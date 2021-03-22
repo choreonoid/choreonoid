@@ -9,7 +9,6 @@ namespace cnoid {
 
 class Body;
 class BodyHandler;
-class BodyHandlerManagerImpl;
 
 class CNOID_EXPORT BodyHandlerManager
 {
@@ -19,7 +18,8 @@ public:
     bool loadBodyHandler(Body* body, const std::string& filename);
 
 private:
-    BodyHandlerManagerImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

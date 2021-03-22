@@ -288,6 +288,9 @@ public:
         return dynamic_cast<BodyHandlerType*>(
             findHandler([](BodyHandler* handler)->bool{ return dynamic_cast<BodyHandlerType*>(handler); }));
     }
+
+    int numHandlers() const;
+    BodyHandler* handler(int index);
     
     // The following functions for the body customizer are deprecated
     BodyCustomizerHandle customizerHandle() const;

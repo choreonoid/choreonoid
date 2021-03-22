@@ -10,7 +10,7 @@
 namespace cnoid {
 
 class Body;
-class BodyHandler;
+class BodyHandlerManager;
 
 /**
    This class is inherited by any body handler class.
@@ -22,6 +22,12 @@ public:
     static bool checkVersion(const char* name, int version, int internalVersion, std::ostream& os);
     virtual bool initialize(Body* body, std::ostream& os) = 0;
     virtual BodyHandler* clone() = 0;
+    const std::string& filename() const { return filename_; }
+
+private:
+    std::string filename_;
+
+    friend class BodyHandlerManager;
 };
 
 typedef ref_ptr<BodyHandler> BodyHandlerPtr;

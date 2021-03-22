@@ -677,7 +677,19 @@ BodyHandler* Body::findHandler(std::function<bool(BodyHandler*)> isTargetHandler
     return nullptr;
 }
 
-    
+
+int Body::numHandlers() const
+{
+    return impl->handlers.size();
+}
+
+
+BodyHandler* Body::handler(int index)
+{
+    return impl->handlers[index];
+}
+
+
 BodyCustomizerHandle Body::customizerHandle() const
 {
     return impl->customizerHandle;

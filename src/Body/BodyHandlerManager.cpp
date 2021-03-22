@@ -40,7 +40,7 @@ void unloadDll(DllHandle handle) { dlclose(handle); }
 
 namespace cnoid {
 
-class BodyHandlerManagerImpl
+class BodyHandlerManager::Impl
 {
 public:
     typedef unordered_map<string, CreateCnoidBodyHandlerFunc> FileToHandlerFactoryMap;
@@ -48,7 +48,7 @@ public:
     vector<filesystem::path> handlerPaths;
     ostream* os;
 
-    BodyHandlerManagerImpl();
+    Impl();
     bool loadBodyHandler(Body* body, const string& filename);
     CreateCnoidBodyHandlerFunc loadHandlerFactory(filesystem::path& path, const string& handlerName);
     CreateCnoidBodyHandlerFunc loadHandlerFactoryWithFullPath(filesystem::path& path, const string& handlerName);
@@ -59,11 +59,11 @@ public:
 
 BodyHandlerManager::BodyHandlerManager()
 {
-    impl = new BodyHandlerManagerImpl;
+    impl = new Impl;
 }
 
 
-BodyHandlerManagerImpl::BodyHandlerManagerImpl()
+BodyHandlerManager::Impl::Impl()
 {
     handlerPaths.push_back(pluginDirPath() / "bodyhandler");
     os = &cout;
@@ -82,7 +82,7 @@ bool BodyHandlerManager::loadBodyHandler(Body* body, const std::string& filename
 }
 
 
-bool BodyHandlerManagerImpl::loadBodyHandler(Body* body, const string& filename)
+bool BodyHandlerManager::Impl::loadBodyHandler(Body* body, const string& filename)
 {
     bool loaded = false;
 
@@ -101,6 +101,7 @@ bool BodyHandlerManagerImpl::loadBodyHandler(Body* body, const string& filename)
     if(createHandler){
         auto handler = createHandler(*os);
         if(handler){
+            handler->filename_ = filename;
             if(handler->initialize(body, *os)){
                 loaded = body->addHandler(handler);
             }
@@ -119,7 +120,7 @@ bool BodyHandlerManagerImpl::loadBodyHandler(Body* body, const string& filename)
 }
 
 
-CreateCnoidBodyHandlerFunc BodyHandlerManagerImpl::loadHandlerFactory
+CreateCnoidBodyHandlerFunc BodyHandlerManager::Impl::loadHandlerFactory
 (filesystem::path& path, const string& handlerName)
 {
     CreateCnoidBodyHandlerFunc factory = nullptr;
@@ -144,7 +145,7 @@ CreateCnoidBodyHandlerFunc BodyHandlerManagerImpl::loadHandlerFactory
 }
 
 
-CreateCnoidBodyHandlerFunc BodyHandlerManagerImpl::loadHandlerFactoryWithFullPath
+CreateCnoidBodyHandlerFunc BodyHandlerManager::Impl::loadHandlerFactoryWithFullPath
 (filesystem::path& path, const string& handlerName)
 {
     CreateCnoidBodyHandlerFunc factory = nullptr;
