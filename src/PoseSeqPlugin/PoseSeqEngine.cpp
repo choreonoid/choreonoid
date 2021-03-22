@@ -20,6 +20,7 @@ public:
     PoseSeqInterpolatorPtr interpolator;
     BodyMotionGenerationBar* bodyMotionGenerationBar;
     LinkTraverse fkTraverse;
+    ScopedConnectionSet connections;
 
     PoseSeqEngine(PoseSeqItem* poseSeqItem, BodyItem* bodyItem)
         : TimeSyncItemEngine(poseSeqItem),
@@ -28,8 +29,10 @@ public:
         interpolator = poseSeqItem->interpolator();
         bodyMotionGenerationBar = BodyMotionGenerationBar::instance();
 
-        poseSeqItem->sigUpdated().connect([this](){ refresh(); });
-        interpolator->sigUpdated().connect([this](){ refresh(); });
+        connections.add(
+            poseSeqItem->sigUpdated().connect([this](){ refresh(); }));
+        connections.add(
+            interpolator->sigUpdated().connect([this](){ refresh(); }));
     }
         
     virtual bool onTimeChanged(double time)

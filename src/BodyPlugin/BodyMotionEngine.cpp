@@ -50,7 +50,7 @@ public:
     shared_ptr<MultiSE3Seq> positions;
     bool calcForwardKinematics;
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
-    ConnectionSet connections;
+    ScopedConnectionSet connections;
         
     Impl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem)
         : bodyItem(bodyItem),
@@ -88,11 +88,6 @@ public:
                 extraSeqEngines.push_back(createEngine(bodyItem, seqItem));
             }
         }
-    }
-
-    ~Impl()
-    {
-        connections.disconnect();
     }
 
     bool onTimeChanged(double time)
