@@ -105,10 +105,10 @@ public:
     void invalidateBoundingBox() { hasValidBoundingBoxCache_ = false; }
     void setBoundingBoxCacheReady() const { hasValidBoundingBoxCache_ = true; }
 
-    bool hasUri() const { return (uriInfo != nullptr) && !uriInfo->uri.empty(); }
-    std::string uri() const;
-    bool hasAbsoluteUri() const { return (uriInfo != nullptr) && !uriInfo->absoluteUri.empty(); }
-    std::string absoluteUri() const;
+    bool hasUri() const { return uriInfo && !uriInfo->uri.empty(); }
+    const std::string& uri() const;
+    bool hasAbsoluteUri() const { return uriInfo && !uriInfo->absoluteUri.empty(); }
+    const std::string& absoluteUri() const;
     void setUriByFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
     void setUriByFilePathAndCurrentDirectory(const std::string& filePath);
     void setUri(const std::string& uri, const std::string& absoluteUri);
@@ -140,7 +140,7 @@ private:
         std::string absoluteUri;
     };
     
-    std::unique_ptr<UriInfo> uriInfo;
+    mutable std::unique_ptr<UriInfo> uriInfo;
 };
 
 typedef ref_ptr<SgObject> SgObjectPtr;

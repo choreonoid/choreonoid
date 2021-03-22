@@ -111,14 +111,21 @@ void SgObject::removeParent(SgObject* parent)
 }
 
 
-std::string SgObject::uri() const
+const std::string& SgObject::uri() const
 {
-    return uriInfo ? uriInfo->uri : string();
+    if(!uriInfo){
+        uriInfo.reset(new UriInfo);
+    }
+    return uriInfo->uri;
 }
 
-std::string SgObject::absoluteUri() const
+
+const std::string& SgObject::absoluteUri() const
 {
-    return uriInfo ? uriInfo->absoluteUri : string();
+    if(!uriInfo){
+        uriInfo.reset(new UriInfo);
+    }
+    return uriInfo->absoluteUri;
 }
 
 
