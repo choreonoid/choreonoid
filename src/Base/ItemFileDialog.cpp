@@ -391,15 +391,19 @@ void ItemFileDialog::Impl::setTargetFileIO(int index, bool doSelectNameFilter)
                 isCurrentItemOptionsApplied = true;
             }
         }
-        if(api & ItemFileIO::OptionPanelForLoading){
-            optionPanel = fileIO->getOptionPanelForLoading();
-            if(optionPanel){
-                self->insertOptionPanel(optionPanel);
+        if(mode == Load){
+            if(api & ItemFileIO::OptionPanelForLoading){
+                optionPanel = fileIO->getOptionPanelForLoading();
+                if(optionPanel){
+                    self->insertOptionPanel(optionPanel);
+                }
             }
-        } else if(api & ItemFileIO::OptionPanelForSaving){
-            optionPanel = fileIO->getOptionPanelForSaving(currentItemToSave);
-            if(optionPanel){
-                self->insertOptionPanel(optionPanel);
+        } else if(mode == Save){
+            if(api & ItemFileIO::OptionPanelForSaving){
+                optionPanel = fileIO->getOptionPanelForSaving(currentItemToSave);
+                if(optionPanel){
+                    self->insertOptionPanel(optionPanel);
+                }
             }
         }
     }
