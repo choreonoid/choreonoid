@@ -45,14 +45,14 @@ ParticleSystem::~ParticleSystem()
 }
 
 
-void ParticleSystem::readParameters(const StdSceneReader& reader, const Mapping& node)
+void ParticleSystem::readParameters(const StdSceneReader* reader, const Mapping* node)
 {
-    node.read("offsetTime", offsetTime_);
-    node.read("lifeTime", lifeTime_);
-    node.read("particleSize", particleSize_);
-    node.read("numParticles", numParticles_);
-    node.read("initialSpeedAverage", initialSpeedAverage_);
-    node.read("initialSpeedVariation", initialSpeedVariation_);
-    reader.readAngle(node, "emissionRange", emissionRange_);
+    node->read("offsetTime", offsetTime_);
+    node->read("lifeTime", lifeTime_);
+    node->read("particleSize", particleSize_);
+    node->read("numParticles", numParticles_);
+    node->read("initialSpeedAverage", initialSpeedAverage_);
+    node->read("initialSpeedVariation", initialSpeedVariation_);
+    reader->readAngle(node, "emissionRange", emissionRange_);
     read(node, "acceleration", acceleration_);
 }

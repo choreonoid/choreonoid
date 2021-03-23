@@ -19,7 +19,7 @@ namespace {
 StdBodyLoader::NodeTypeRegistration
 registerMarkerDevice(
     "MarkerDevice",
-    [](StdBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader* loader, Mapping* node){
         MarkerDevicePtr device = new MarkerDevice;
         return device->readDescription(loader, node);
     });
@@ -230,10 +230,10 @@ double* MarkerDevice::writeState(double* out_buf) const
 }
 
 
-bool MarkerDevice::readDescription(StdBodyLoader& loader, Mapping& node)
+bool MarkerDevice::readDescription(StdBodyLoader* loader, Mapping* node)
 {
     string type;
-    if(node.read("markerType", type)){
+    if(node->read("markerType", type)){
         if(type == "cross"){
             setMarkerType(MarkerDevice::CROSS_MARKER);
         } else if(type == "sphere"){
@@ -241,14 +241,14 @@ bool MarkerDevice::readDescription(StdBodyLoader& loader, Mapping& node)
         } else if(type == "axes"){
             setMarkerType(MarkerDevice::AXES_MARKER);
         } else {
-            node.throwException(
+            node->throwException(
                 fmt::format(_("Unknown marker type '{}'"), type));
         }
     }
 
-    setMarkerSize(node.get("size", markerSize()));
-    setEmission(node.get("emission", emission()));
-    setTransparency(node.get("transparency", transparency()));
+    setMarkerSize(node->get("size", markerSize()));
+    setEmission(node->get("emission", emission()));
+    setTransparency(node->get("transparency", transparency()));
 
     Vector3f c;
     if(read(node, "color", c)) setColor(c);
@@ -259,10 +259,10 @@ bool MarkerDevice::readDescription(StdBodyLoader& loader, Mapping& node)
         T.translation() = p;
     }
     Matrix3 R;
-    if(loader.readRotation(node, "offsetRotation", R)){
+    if(loader->readRotation(node, "offsetRotation", R)){
         T.linear() = R;
     }
     setOffsetPosition(T);
 
-    return loader.readDevice(this, node);
+    return loader->readDevice(this, node);
 }

@@ -455,7 +455,7 @@ bool LinkShapeOverwriteItem::restore(const Archive& archive)
         StdSceneReader sceneReader;
         sceneReader.setFilePathVariableProcessor(archive.filePathVariableProcessor());
         sceneReader.setAngleUnit(StdSceneReader::DEGREE);
-        restoredShape = sceneReader.readNode(*node->toMapping());
+        restoredShape = sceneReader.readNode(node->toMapping());
     }
 
     return impl->overwriteLinkShape(bodyItem, link, restoredShape, nullptr);

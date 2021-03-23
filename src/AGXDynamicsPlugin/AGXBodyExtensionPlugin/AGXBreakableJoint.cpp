@@ -24,7 +24,7 @@ struct AGXBreakableJointDeviceDesc
 class AGXBreakableJointDevice : private AGXBreakableJointDeviceDesc, public Device
 {
 public:
-    static bool createAGXBreakableJointDevice(StdBodyLoader& loader, Mapping& node);
+    static bool createAGXBreakableJointDevice(StdBodyLoader* loader, Mapping* node);
     AGXBreakableJointDevice(const AGXBreakableJointDeviceDesc& desc, Mapping* info);
     AGXBreakableJointDevice(const AGXBreakableJointDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() const override;
@@ -53,13 +53,13 @@ private:
 };
 typedef ref_ptr<AGXBreakableJointDevice> AGXBreakableJointDevicePtr;
 
-bool AGXBreakableJointDevice::createAGXBreakableJointDevice(StdBodyLoader&loader, Mapping&node)
+bool AGXBreakableJointDevice::createAGXBreakableJointDevice(StdBodyLoader* loader, Mapping* node)
 {
-    MappingPtr info = node.cloneMapping();
+    MappingPtr info = node->cloneMapping();
     AGXBreakableJointDeviceDesc desc;
     AGXBreakableJointDevicePtr jointDevice = new AGXBreakableJointDevice(desc, info);
     //node.clear();
-    return loader.readDevice(jointDevice, node);
+    return loader->readDevice(jointDevice, node);
 }
 
 AGXBreakableJointDevice::AGXBreakableJointDevice(const AGXBreakableJointDeviceDesc& desc, Mapping* info) :

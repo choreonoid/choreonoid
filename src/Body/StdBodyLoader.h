@@ -32,29 +32,48 @@ public:
 
     bool read(Body* body, Mapping* data);
 
+    bool readDevice(Device* device, Mapping* node);
+
+    StdSceneReader* sceneReader();
+    const StdSceneReader* sceneReader() const;
+    
+    bool isDegreeMode() const;
+    double toRadian(double angle) const;
+
+    bool readAngle(const Mapping* node, const char* key, double& angle) const;
+    bool readRotation(const Mapping* node, Matrix3& out_R) const;
+    bool readRotation(const Mapping* node, const char* key, Matrix3& out_R) const;
+
+    [[deprecated("Use readDevice(Device* device, Mapping* node)")]]
+    bool readDevice(Device* device, Mapping& node);
+    [[deprecated("Use readAngle(const Mapping* node, const char* key, double& angle) const")]]
+    bool readAngle(const Mapping& node, const char* key, double& angle) const;
+    [[deprecated("Use readRotation(const Mapping* node, Matrix3& out_R) const")]]
+    bool readRotation(const Mapping& node, Matrix3& out_R) const;
+    [[deprecated("Use readRotation(const Mapping* node, const char* key, Matrix3& out_R) const")]]
+    bool readRotation(const Mapping& node, const char* key, Matrix3& out_R) const;
+
     // The following functions are used for defining new node types
+    static void addNodeType(
+        const std::string& typeName,
+        std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction);
+
+    [[deprecated("Use std::function<bool(StdBodyLoader* loader, Mapping* node)> as a function object type.")]]
     static void addNodeType(
         const std::string& typeName,
         std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction);
     
-    bool readDevice(Device* device, Mapping& node);
-
-    StdSceneReader& sceneReader();
-    const StdSceneReader& sceneReader() const;
-    
-    bool isDegreeMode() const;
-    double toRadian(double angle) const;
-    bool readAngle(const Mapping& node, const char* key, double& angle) const;
-    bool readRotation(const Mapping& node, Matrix3& out_R) const;
-    bool readRotation(const Mapping& node, const char* key, Matrix3& out_R) const;
-
     struct NodeTypeRegistration {
         NodeTypeRegistration(
             const char* typeName,
-            std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
+            std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction)
         {
             addNodeType(typeName, readFunction);
         }
+
+        [[deprecated("Use std::function<bool(StdBodyLoader* loader, Mapping* node)> as a function object type.")]]
+        NodeTypeRegistration(
+            const char* typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction);
     };
 
 private:

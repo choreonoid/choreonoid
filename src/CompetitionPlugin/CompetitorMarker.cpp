@@ -14,7 +14,7 @@ namespace {
 StdBodyLoader::NodeTypeRegistration
 registerCompetitorMarker(
     "CompetitorMarker",
-    [](StdBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader* loader, Mapping* node){
         CompetitorMarkerPtr device = new CompetitorMarker;
         return device->readDescription(loader, node);
     });

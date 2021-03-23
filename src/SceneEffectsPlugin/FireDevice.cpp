@@ -18,10 +18,10 @@ namespace {
 StdBodyLoader::NodeTypeRegistration
 registerFireDevice(
     "FireDevice",
-    [](StdBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader* loader, Mapping* node){
         FireDevicePtr fire = new FireDevice;
-        fire->particleSystem().readParameters(loader.sceneReader(), node);
-        return loader.readDevice(fire, node);
+        fire->particleSystem().readParameters(loader->sceneReader(), node);
+        return loader->readDevice(fire, node);
     });
 
 SceneDevice::FactoryRegistration<FireDevice>

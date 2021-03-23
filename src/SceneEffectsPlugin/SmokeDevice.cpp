@@ -18,10 +18,10 @@ namespace {
 StdBodyLoader::NodeTypeRegistration
 registerSmokeDevice(
     "SmokeDevice",
-    [](StdBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader* loader, Mapping* node){
         SmokeDevicePtr smoke = new SmokeDevice;
-        smoke->particleSystem().readParameters(loader.sceneReader(), node);
-        return loader.readDevice(smoke, node);
+        smoke->particleSystem().readParameters(loader->sceneReader(), node);
+        return loader->readDevice(smoke, node);
     });
 
 SceneDevice::FactoryRegistration<SmokeDevice>

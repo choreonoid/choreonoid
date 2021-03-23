@@ -37,7 +37,7 @@ using fmt::format;
 namespace {
 
 std::mutex customNodeFunctionMutex;
-typedef function<bool(StdBodyLoader& loader, Mapping& node)> CustomNodeFunction;
+typedef function<bool(StdBodyLoader* loader, Mapping* node)> CustomNodeFunction;
 typedef map<string, CustomNodeFunction> CustomNodeFunctionMap;
 CustomNodeFunctionMap customNodeFunctions;
 
@@ -108,13 +108,6 @@ struct ROSPackageSchemeHandlerRegistration {
 
 namespace cnoid {
 
-void StdBodyLoader::addNodeType
-(const std::string& typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
-{
-    std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
-    customNodeFunctions[typeName] = readFunction;
-}
-
 class StdBodyLoader::Impl
 {
 public:
@@ -126,7 +119,7 @@ public:
     StdSceneReader sceneReader;
     filesystem::path mainFilePath;
 
-    typedef function<bool(Mapping& node)> NodeFunction;
+    typedef function<bool(Mapping* node)> NodeFunction;
 
     struct NodeFunctionInfo {
         NodeFunction function;
@@ -314,25 +307,25 @@ public:
       The following functions return true if any scene nodes other than Group and Transform
       are added in the sub tree.
     */
-    bool readElements(Mapping& node);
-    bool readElementContents(ValueNode& elements);
-    bool readNode(Mapping& node, const string& type);
-    bool readSkipNode(Mapping& node);
-    bool readContainerNode(Mapping& node, NodeFunction nodeFunction);
-    bool readTransformContents(Mapping& node, NodeFunction nodeFunction, bool hasElements);
-    bool readGroup(Mapping& node);
-    bool readTransform(Mapping& node);
-    bool readRigidBody(Mapping& node);
-    bool readVisualOrCollision(Mapping& node, bool isVisual);
-    bool readVisualOrCollisionContents(Mapping& node);
-    bool readResource(Mapping& node);
-    bool readDevice(Device* device, Mapping& node);
-    bool readForceSensor(Mapping& node);
-    bool readRateGyroSensor(Mapping& node);
-    bool readAccelerationSensor(Mapping& node);
-    bool readCamera(Mapping& node);
-    bool readRangeSensor(Mapping& node);
-    bool readSpotLight(Mapping& node);
+    bool readElements(Mapping* node);
+    bool readElementContents(ValueNode* elements);
+    bool readNode(Mapping* node, const string& type);
+    bool readSkipNode(Mapping* node);
+    bool readContainerNode(Mapping* node, NodeFunction nodeFunction);
+    bool readTransformContents(Mapping* node, NodeFunction nodeFunction, bool hasElements);
+    bool readGroup(Mapping* node);
+    bool readTransform(Mapping* node);
+    bool readRigidBody(Mapping* node);
+    bool readVisualOrCollision(Mapping* node, bool isVisual);
+    bool readVisualOrCollisionContents(Mapping* node);
+    bool readResource(Mapping* node);
+    bool readDevice(Device* device, Mapping* node);
+    bool readForceSensor(Mapping* node);
+    bool readRateGyroSensor(Mapping* node);
+    bool readAccelerationSensor(Mapping* node);
+    bool readCamera(Mapping* node);
+    bool readRangeSensor(Mapping* node);
+    bool readSpotLight(Mapping* node);
     void readContinuousTrackNode(Mapping* linkNode);
     void addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle);
     void readSubBodyNode(Mapping* linkNode);
@@ -371,25 +364,25 @@ public:
         return 0.0;
     }
 
-    bool readAngle(const Mapping& node, const char* key, double& angle) const {
+    bool readAngle(const Mapping* node, const char* key, double& angle) const {
         return sceneReader.readAngle(node, key, angle);
     }
-    bool readRotation(const Mapping& node, Matrix3& out_R) const {
+    bool readRotation(const Mapping* node, Matrix3& out_R) const {
         return sceneReader.readRotation(node, out_R);
     }
-    bool readRotation(const Mapping& node, const char* key, Matrix3& out_R) const {
+    bool readRotation(const Mapping* node, const char* key, Matrix3& out_R) const {
         return sceneReader.readRotation(node, key, out_R);
     }
-    bool extractRotation(Mapping& node, Matrix3& out_R) const {
+    bool extractRotation(Mapping* node, Matrix3& out_R) const {
         return sceneReader.extractRotation(node, out_R);
     }
-    bool readTranslation(const Mapping& node, Vector3& out_p) const {
+    bool readTranslation(const Mapping* node, Vector3& out_p) const {
         return sceneReader.readTranslation(node, out_p);
     }
-    bool readTranslation(const Mapping& node, const char* key, Vector3& out_p) const {
+    bool readTranslation(const Mapping* node, const char* key, Vector3& out_p) const {
         return sceneReader.readTranslation(node, key, out_p);
     }
-    bool extractTranslation(Mapping& node, Vector3& out_p) const {
+    bool extractTranslation(Mapping* node, Vector3& out_p) const {
         return sceneReader.extractTranslation(node, out_p);
     }
 };
@@ -456,9 +449,9 @@ bool extractInertia(Mapping* mapping, const char* key, Matrix3& I)
 }
 
 
-bool readInertia(Mapping& node, const char* key, Matrix3& I)
+bool readInertia(Mapping* node, const char* key, Matrix3& I)
 {
-    Listing* inertia = node.findListing(key);
+    Listing* inertia = node->findListing(key);
     if(inertia->isValid()){
         readInertia(*inertia, I);
         return true;
@@ -499,20 +492,20 @@ StdBodyLoader::Impl::Impl(StdBodyLoader* self)
 {
     sceneReader.setYAMLReader(&reader);
     
-    nodeFunctions["Skip"].set([&](Mapping& node){ return readSkipNode(node); });
-    nodeFunctions["Group"].set([&](Mapping& node){ return readGroup(node); });
-    nodeFunctions["Transform"].set([&](Mapping& node){ return readTransform(node); });
-    nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
-    nodeFunctions["Visual"].set([&](Mapping& node){ return readVisualOrCollision(node, true); });
-    nodeFunctions["Collision"].set([&](Mapping& node){ return readVisualOrCollision(node, false); });
-    nodeFunctions["Resource"].set([&](Mapping& node){ return readResource(node); });
-    nodeFunctions["ForceSensor"].setTE([&](Mapping& node){ return readForceSensor(node); });
-    nodeFunctions["RateGyroSensor"].setTE([&](Mapping& node){ return readRateGyroSensor(node); });
-    nodeFunctions["AccelerationSensor"].setTE([&](Mapping& node){ return readAccelerationSensor(node); });
-    nodeFunctions["Camera"].setTE([&](Mapping& node){ return readCamera(node); });
-    nodeFunctions["CameraDevice"].setTE([&](Mapping& node){ return readCamera(node); });
-    nodeFunctions["RangeSensor"].setTE([&](Mapping& node){ return readRangeSensor(node); });
-    nodeFunctions["SpotLight"].setTE([&](Mapping& node){ return readSpotLight(node); });
+    nodeFunctions["Skip"].set([&](Mapping* node){ return readSkipNode(node); });
+    nodeFunctions["Group"].set([&](Mapping* node){ return readGroup(node); });
+    nodeFunctions["Transform"].set([&](Mapping* node){ return readTransform(node); });
+    nodeFunctions["RigidBody"].setTE([&](Mapping* node){ return readRigidBody(node); });
+    nodeFunctions["Visual"].set([&](Mapping* node){ return readVisualOrCollision(node, true); });
+    nodeFunctions["Collision"].set([&](Mapping* node){ return readVisualOrCollision(node, false); });
+    nodeFunctions["Resource"].set([&](Mapping* node){ return readResource(node); });
+    nodeFunctions["ForceSensor"].setTE([&](Mapping* node){ return readForceSensor(node); });
+    nodeFunctions["RateGyroSensor"].setTE([&](Mapping* node){ return readRateGyroSensor(node); });
+    nodeFunctions["AccelerationSensor"].setTE([&](Mapping* node){ return readAccelerationSensor(node); });
+    nodeFunctions["Camera"].setTE([&](Mapping* node){ return readCamera(node); });
+    nodeFunctions["CameraDevice"].setTE([&](Mapping* node){ return readCamera(node); });
+    nodeFunctions["RangeSensor"].setTE([&](Mapping* node){ return readRangeSensor(node); });
+    nodeFunctions["SpotLight"].setTE([&](Mapping* node){ return readSpotLight(node); });
 
     numCustomNodeFunctions = 0;
 
@@ -576,22 +569,22 @@ void StdBodyLoader::Impl::updateCustomNodeFunctions()
     if(customNodeFunctions.size() > numCustomNodeFunctions){
         for(auto& p : customNodeFunctions){
             CustomNodeFunction& func = p.second;
-            nodeFunctions[p.first].setTE([&, func](Mapping& node){ return func(*self, node); });
+            nodeFunctions[p.first].setTE([&, func](Mapping* node){ return func(self, node); });
         }
         numCustomNodeFunctions = customNodeFunctions.size();
     }
 }
 
 
-StdSceneReader& StdBodyLoader::sceneReader()
+StdSceneReader* StdBodyLoader::sceneReader()
 {
-    return impl->sceneReader;
+    return &impl->sceneReader;
 }
 
 
-const StdSceneReader& StdBodyLoader::sceneReader() const
+const StdSceneReader* StdBodyLoader::sceneReader() const
 {
-    return impl->sceneReader;
+    return &impl->sceneReader;
 }
 
 
@@ -607,21 +600,39 @@ double StdBodyLoader::toRadian(double angle) const
 }
 
 
-bool StdBodyLoader::readAngle(const Mapping& node, const char* key, double& angle) const
+bool StdBodyLoader::readAngle(const Mapping* node, const char* key, double& angle) const
 {
     return impl->readAngle(node, key, angle);
 }
 
 
-bool StdBodyLoader::readRotation(const Mapping& node, Matrix3& out_R) const
+bool StdBodyLoader::readAngle(const Mapping& node, const char* key, double& angle) const
+{
+    return impl->readAngle(&node, key, angle);
+}
+
+
+bool StdBodyLoader::readRotation(const Mapping* node, Matrix3& out_R) const
 {
     return impl->readRotation(node, out_R);
 }
 
 
-bool StdBodyLoader::readRotation(const Mapping& node, const char* key, Matrix3& out_R) const
+bool StdBodyLoader::readRotation(const Mapping& node, Matrix3& out_R) const
+{
+    return impl->readRotation(&node, out_R);
+}
+
+
+bool StdBodyLoader::readRotation(const Mapping* node, const char* key, Matrix3& out_R) const
 {
     return impl->readRotation(node, key, out_R);
+}
+
+
+bool StdBodyLoader::readRotation(const Mapping& node, const char* key, Matrix3& out_R) const
+{
+    return impl->readRotation(&node, key, out_R);
 }
 
 
@@ -1000,11 +1011,11 @@ LinkPtr StdBodyLoader::Impl::readLinkContents(Mapping* node, LinkPtr link)
         }
     }
 
-    if(extractTranslation(*node, v)){
+    if(extractTranslation(node, v)){
         link->setOffsetTranslation(v);
     }
     Matrix3 R;
-    if(extractRotation(*node, R)){
+    if(extractRotation(node, R)){
         link->setOffsetRotation(R);
     }
 
@@ -1017,15 +1028,15 @@ LinkPtr StdBodyLoader::Impl::readLinkContents(Mapping* node, LinkPtr link)
     currentLink = link;
     rigidBodies.clear();
 
-    ValueNodePtr elements = node->extract("elements");
-    if(elements){
+    ValueNodePtr elementsNode = node->extract("elements");
+    if(elementsNode){
         currentModelType = VISUAL_AND_COLLISION;
         hasVisualOrCollisionNodes = false;
 
         sceneGroupSetStack.push_back(SceneGroupSet());
         currentSceneGroupSet().newGroup<SgGroup>();
         
-        if(readElementContents(*elements) && !isSubBodyNode){
+        if(readElementContents(elementsNode) && !isSubBodyNode){
             SceneGroupSet& sgs = currentSceneGroupSet();
             sgs.setName(link->name());
             if(hasVisualOrCollisionNodes){
@@ -1316,22 +1327,22 @@ void StdBodyLoader::Impl::setMassParameters(Link* link)
 }
 
 
-bool StdBodyLoader::Impl::readElements(Mapping& node)
+bool StdBodyLoader::Impl::readElements(Mapping* node)
 {
     bool isSceneNodeAdded = false;
-    ValueNode& elements = *node.find("elements");
-    if(elements.isValid()){
-        isSceneNodeAdded = readElementContents(elements);
+    auto elementsNode = node->find("elements");
+    if(elementsNode->isValid()){
+        isSceneNodeAdded = readElementContents(elementsNode);
     }
     return isSceneNodeAdded;
 }
 
 
-bool StdBodyLoader::Impl::readElementContents(ValueNode& elements)
+bool StdBodyLoader::Impl::readElementContents(ValueNode* elementsNode)
 {
     bool isSceneNodeAdded = false;
 
-    if(elements.isListing()){
+    if(elementsNode->isListing()){
         /*
           Process the case like
           elements:
@@ -1339,25 +1350,24 @@ bool StdBodyLoader::Impl::readElementContents(ValueNode& elements)
               type: Transform
               translation: [ 1, 0, 0 ]
         */
-        Listing& listing = *elements.toListing();
-        for(int i=0; i < listing.size(); ++i){
-            Mapping& element = *listing[i].toMapping();
-            const string type = element["type"].toString();
+        for(auto& node : *elementsNode->toListing()){
+            auto element = node->toMapping();
+            auto& type = (*element)["type"].toString();
             if(readNode(element, type)){
                 isSceneNodeAdded = true;
             }
         }
-    } else if(elements.isMapping()){
-        Mapping& mapping = *elements.toMapping();
+    } else if(elementsNode->isMapping()){
+        auto mapping = elementsNode->toMapping();
 
         /* Check the case like
            elements:
              type: Transform
              translation: [ 1, 0, 0 ]
         */
-        ValueNode* typeNode = mapping.find("type");
+        ValueNode* typeNode = mapping->find("type");
         if(typeNode->isValid()){
-            const string type = typeNode->toString();
+            auto& type = typeNode->toString();
             if(readNode(mapping, type)){
                 isSceneNodeAdded = true;
             }
@@ -1368,15 +1378,14 @@ bool StdBodyLoader::Impl::readElementContents(ValueNode& elements)
                  Transform:
                    translation: [ 1, 0, 0 ]
             */
-            Mapping::iterator p = mapping.begin();
-            while(p != mapping.end()){
-                const string& type = p->first;
-                Mapping& element = *p->second->toMapping();
-                ValueNode* typeNode = element.find("type");
+            for(auto& kv : *mapping){
+                const string& type =kv.first;
+                auto element = kv.second->toMapping();
+                ValueNode* typeNode = element->find("type");
                 if(typeNode->isValid()){
-                    string type2 = typeNode->toString();
+                    auto& type2 = typeNode->toString();
                     if(type2 != type){
-                        element.throwException(
+                        element->throwException(
                             format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
                                     type2, type));
                     }
@@ -1384,18 +1393,17 @@ bool StdBodyLoader::Impl::readElementContents(ValueNode& elements)
                 if(readNode(element, type)){
                     isSceneNodeAdded = true;
                 }
-                ++p;
             }
         }
     } else {
-        elements.throwException(_("A value of the \"elements\" key must be a sequence or a mapping"));
+        elementsNode->throwException(_("A value of the \"elements\" key must be a sequence or a mapping"));
     }
 
     return isSceneNodeAdded;
 }
 
 
-bool StdBodyLoader::Impl::readNode(Mapping& node, const string& type)
+bool StdBodyLoader::Impl::readNode(Mapping* node, const string& type)
 {
     bool isSceneNodeAdded = false;
     
@@ -1404,7 +1412,7 @@ bool StdBodyLoader::Impl::readNode(Mapping& node, const string& type)
         NodeFunctionInfo& info = p->second;
 
         nameStack.push_back(string());
-        node.read("name", nameStack.back());
+        node->read("name", nameStack.back());
         
         if(info.isTransformDerived){
             if(readTransformContents(node, info.function, info.hasElements)){
@@ -1419,8 +1427,7 @@ bool StdBodyLoader::Impl::readNode(Mapping& node, const string& type)
         nameStack.pop_back();
         
     } else if(isShapeLoadingEnabled){
-        SgNode* scene = sceneReader.readNode(node, type);
-        if(scene){
+        if(auto scene = sceneReader.readNode(node, type)){
             addScene(scene);
             isSceneNodeAdded = true;
         }
@@ -1430,13 +1437,13 @@ bool StdBodyLoader::Impl::readNode(Mapping& node, const string& type)
 }
 
 
-bool StdBodyLoader::Impl::readSkipNode(Mapping& node)
+bool StdBodyLoader::Impl::readSkipNode(Mapping* /* node */)
 {
     return false;
 }
 
 
-bool StdBodyLoader::Impl::readContainerNode(Mapping& node, NodeFunction nodeFunction)
+bool StdBodyLoader::Impl::readContainerNode(Mapping* node, NodeFunction nodeFunction)
 {
     bool isSceneNodeAdded = false;
 
@@ -1446,9 +1453,9 @@ bool StdBodyLoader::Impl::readContainerNode(Mapping& node, NodeFunction nodeFunc
         }
     }
 
-    ValueNode& elements = *node.find("elements");
-    if(elements.isValid()){
-        if(readElementContents(elements)){
+    auto elementsNode = node->find("elements");
+    if(elementsNode->isValid()){
+        if(readElementContents(elementsNode)){
             isSceneNodeAdded = true;
         }
     }
@@ -1457,7 +1464,7 @@ bool StdBodyLoader::Impl::readContainerNode(Mapping& node, NodeFunction nodeFunc
 }
 
 
-bool StdBodyLoader::Impl::readTransformContents(Mapping& node, NodeFunction nodeFunction, bool hasElements)
+bool StdBodyLoader::Impl::readTransformContents(Mapping* node, NodeFunction nodeFunction, bool hasElements)
 {
     Affine3 T = Affine3::Identity();
     bool hasPosTransform = false;
@@ -1526,7 +1533,7 @@ bool StdBodyLoader::Impl::readTransformContents(Mapping& node, NodeFunction node
 }
 
 
-bool StdBodyLoader::Impl::readGroup(Mapping& node)
+bool StdBodyLoader::Impl::readGroup(Mapping* node)
 {
     sceneGroupSetStack.push_back(SceneGroupSet());
     currentSceneGroupSet().newGroup<SgGroup>();
@@ -1541,13 +1548,13 @@ bool StdBodyLoader::Impl::readGroup(Mapping& node)
 }
 
 
-bool StdBodyLoader::Impl::readTransform(Mapping& node)
+bool StdBodyLoader::Impl::readTransform(Mapping* node)
 {
     return readTransformContents(node, 0, true);
 }
 
 
-bool StdBodyLoader::Impl::readRigidBody(Mapping& node)
+bool StdBodyLoader::Impl::readRigidBody(Mapping* node)
 {
     RigidBody rbody;
     const Affine3& T = transformStack.back();
@@ -1557,7 +1564,7 @@ bool StdBodyLoader::Impl::readRigidBody(Mapping& node)
     }
     rbody.c = T.linear() * v + T.translation();
 
-    if(!node.read("mass", rbody.m)){
+    if(!node->read("mass", rbody.m)){
         rbody.m = 0.0;
     }
     if(readInertia(node, "inertia", M)){
@@ -1571,26 +1578,26 @@ bool StdBodyLoader::Impl::readRigidBody(Mapping& node)
 }
 
 
-bool StdBodyLoader::Impl::readVisualOrCollision(Mapping& node, bool isVisual)
+bool StdBodyLoader::Impl::readVisualOrCollision(Mapping* node, bool isVisual)
 {
     ModelType prevModelType = currentModelType;
 
     if(isVisual){
         if(currentModelType == COLLISION){
-            node.throwException(
+            node->throwException(
                 _("The visual node is conflicting with the Collision node defined at the higher level"));
         }
         currentModelType = VISUAL;
     } else {
         if(currentModelType == VISUAL){
-            node.throwException(
+            node->throwException(
                 _("The collision node is conflicting with the Visual node defined at the higher level"));
         }
         currentModelType = COLLISION;
     }
 
     bool isSceneNodeAdded = readTransformContents(
-        node, [this](Mapping& node){ return readVisualOrCollisionContents(node); }, true);
+        node, [this](Mapping* node){ return readVisualOrCollisionContents(node); }, true);
 
     if(isSceneNodeAdded){
         hasVisualOrCollisionNodes = true;
@@ -1602,18 +1609,18 @@ bool StdBodyLoader::Impl::readVisualOrCollision(Mapping& node, bool isVisual)
 }
 
 
-bool StdBodyLoader::Impl::readVisualOrCollisionContents(Mapping& node)
+bool StdBodyLoader::Impl::readVisualOrCollisionContents(Mapping* node)
 {
     bool isSceneNodeAdded = false;
     
     if(isShapeLoadingEnabled){
-        auto resourceNode = node.findMapping("resource");
+        auto resourceNode = node->findMapping("resource");
         if(resourceNode->isValid()){
-            isSceneNodeAdded = readResource(*resourceNode);
+            isSceneNodeAdded = readResource(resourceNode);
         }
-        auto shape = node.findMapping("shape");
+        auto shape = node->findMapping("shape");
         if(shape->isValid()){
-            if(auto scene = sceneReader.readNode(*shape, "Shape")){
+            if(auto scene = sceneReader.readNode(shape, "Shape")){
                 addScene(scene);
                 isSceneNodeAdded = true;
             }
@@ -1624,7 +1631,7 @@ bool StdBodyLoader::Impl::readVisualOrCollisionContents(Mapping& node)
 }
  
     
-bool StdBodyLoader::Impl::readResource(Mapping& node)
+bool StdBodyLoader::Impl::readResource(Mapping* node)
 {
     bool isSceneNodeAdded = false;
     
@@ -1642,8 +1649,7 @@ bool StdBodyLoader::Impl::readResource(Mapping& node)
         ValueNodePtr resourceNode = resource.info;
         isSceneNodeAdded = readTransformContents(
             node,
-            [this, resourceNode](Mapping&){
-                return readElementContents(*resourceNode); },
+            [this, resourceNode](Mapping*){ return readElementContents(resourceNode); },
             false);
 
         sceneReader.setBaseDirectory(orgBaseDirectory);
@@ -1653,18 +1659,24 @@ bool StdBodyLoader::Impl::readResource(Mapping& node)
 }
         
 
-bool StdBodyLoader::readDevice(Device* device, Mapping& node)
+bool StdBodyLoader::readDevice(Device* device, Mapping* node)
 {
     return impl->readDevice(device, node);
 }
 
 
-bool StdBodyLoader::Impl::readDevice(Device* device, Mapping& node)
+bool StdBodyLoader::readDevice(Device* device, Mapping& node)
+{
+    return impl->readDevice(device, &node);
+}
+
+
+bool StdBodyLoader::Impl::readDevice(Device* device, Mapping* node)
 {
     device->setName(nameStack.back());
 
-    if(node.read("id", id)) device->setId(id);
-    if(node.read("on", on)) device->on(on);
+    if(node->read("id", id)) device->setId(id);
+    if(node->read("on", on)) device->on(on);
 
     const Affine3& T = transformStack.back();
     device->setLocalTranslation(T.translation());
@@ -1676,7 +1688,7 @@ bool StdBodyLoader::Impl::readDevice(Device* device, Mapping& node)
 }
 
 
-bool StdBodyLoader::Impl::readForceSensor(Mapping& node)
+bool StdBodyLoader::Impl::readForceSensor(Mapping* node)
 {
     ForceSensorPtr sensor = new ForceSensor;
     if(cnoid::read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
@@ -1685,7 +1697,7 @@ bool StdBodyLoader::Impl::readForceSensor(Mapping& node)
 }
 
 
-bool StdBodyLoader::Impl::readRateGyroSensor(Mapping& node)
+bool StdBodyLoader::Impl::readRateGyroSensor(Mapping* node)
 {
     RateGyroSensorPtr sensor = new RateGyroSensor;
     if(cnoid::read(node, "maxAngularVelocity", v)){
@@ -1700,7 +1712,7 @@ bool StdBodyLoader::Impl::readRateGyroSensor(Mapping& node)
 }
 
 
-bool StdBodyLoader::Impl::readAccelerationSensor(Mapping& node)
+bool StdBodyLoader::Impl::readAccelerationSensor(Mapping* node)
 {
     AccelerationSensorPtr sensor = new AccelerationSensor();
     if(cnoid::read(node, "maxAcceleration", v)) sensor->dv_max() = v;
@@ -1708,13 +1720,13 @@ bool StdBodyLoader::Impl::readAccelerationSensor(Mapping& node)
 }
 
 
-bool StdBodyLoader::Impl::readCamera(Mapping& node)
+bool StdBodyLoader::Impl::readCamera(Mapping* node)
 {
     CameraPtr camera;
     RangeCamera* range = 0;
 
     string format;
-    if(node.read("format", format)){
+    if(node->read("format", format)){
         if(format == "COLOR"){
             camera = new Camera;
             camera->setImageType(Camera::COLOR_IMAGE);
@@ -1745,7 +1757,7 @@ bool StdBodyLoader::Impl::readCamera(Mapping& node)
         }
     }
 
-    if(node.read("lensType", symbol)){
+    if(node->read("lensType", symbol)){
         if(symbol == "NORMAL"){
             camera->setLensType(Camera::NORMAL_LENS);
         } else if(symbol == "FISHEYE"){
@@ -1757,18 +1769,18 @@ bool StdBodyLoader::Impl::readCamera(Mapping& node)
         }
     }
 
-    if(node.read("width", value)) camera->setResolutionX(value);
-    if(node.read("height", value)) camera->setResolutionY(value);
+    if(node->read("width", value)) camera->setResolutionX(value);
+    if(node->read("height", value)) camera->setResolutionY(value);
     if(readAngle(node, "fieldOfView", value)) camera->setFieldOfView(value);
-    if(node.read("nearClipDistance", value)) camera->setNearClipDistance(value);
-    if(node.read("farClipDistance", value)) camera->setFarClipDistance(value);
-    if(node.read("frameRate", value)) camera->setFrameRate(value);
+    if(node->read("nearClipDistance", value)) camera->setNearClipDistance(value);
+    if(node->read("farClipDistance", value)) camera->setFarClipDistance(value);
+    if(node->read("frameRate", value)) camera->setFrameRate(value);
     
     return readDevice(camera, node);
 }
 
 
-bool StdBodyLoader::Impl::readRangeSensor(Mapping& node)
+bool StdBodyLoader::Impl::readRangeSensor(Mapping* node)
 {
     RangeSensorPtr rangeSensor = new RangeSensor;
     
@@ -1785,24 +1797,24 @@ bool StdBodyLoader::Impl::readRangeSensor(Mapping& node)
 
     if(readAngle(node, "pitchRange", value)) rangeSensor->setPitchRange(value);
     if(readAngle(node, "pitchStep", value)) rangeSensor->setPitchStep(value);
-    if(node.read("minDistance", value)) rangeSensor->setMinDistance(value);
-    if(node.read("maxDistance", value)) rangeSensor->setMaxDistance(value);
-    if(node.read("scanRate", value)) rangeSensor->setScanRate(value);
+    if(node->read("minDistance", value)) rangeSensor->setMinDistance(value);
+    if(node->read("maxDistance", value)) rangeSensor->setMaxDistance(value);
+    if(node->read("scanRate", value)) rangeSensor->setScanRate(value);
     
     return readDevice(rangeSensor, node);
 }
 
 
-bool StdBodyLoader::Impl::readSpotLight(Mapping& node)
+bool StdBodyLoader::Impl::readSpotLight(Mapping* node)
 {
     SpotLightPtr light = new SpotLight();
 
     if(cnoid::read(node, "color", color)) light->setColor(color);
-    if(node.read("intensity", value)) light->setIntensity(value);
+    if(node->read("intensity", value)) light->setIntensity(value);
     if(cnoid::read(node, "direction", v)) light->setDirection(v);
     if(readAngle(node, "beamWidth", value)) light->setBeamWidth(value);
     if(readAngle(node, "cutOffAngle", value)) light->setCutOffAngle(value);
-    if(node.read("cutOffExponent", value)) light->setCutOffExponent(value);
+    if(node->read("cutOffExponent", value)) light->setCutOffExponent(value);
     if(cnoid::read(node, "attenuation", color)){
         light->setConstantAttenuation(color[0]);
         light->setLinearAttenuation(color[1]);
@@ -2066,5 +2078,31 @@ void StdBodyLoader::Impl::setDegreeModeAttributeToValueTreeNodes(ValueNode* node
 }
 
 
-             
+void StdBodyLoader::addNodeType
+(const std::string& typeName, std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction)
+{
+    std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
+    customNodeFunctions[typeName] = readFunction;
+}
 
+
+void StdBodyLoader::addNodeType
+(const std::string& typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
+{
+    addNodeType(
+        typeName,
+        [readFunction](StdBodyLoader* loader, Mapping* node){
+            return readFunction(*loader, *node);
+        });
+}
+
+
+StdBodyLoader::NodeTypeRegistration::NodeTypeRegistration
+(const char* typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
+{
+    addNodeType(
+        typeName,
+        [readFunction](StdBodyLoader* loader, Mapping* node){
+            return readFunction(*loader, *node);
+        });
+}

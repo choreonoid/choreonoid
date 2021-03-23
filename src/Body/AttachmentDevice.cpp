@@ -13,7 +13,7 @@ namespace {
 StdBodyLoader::NodeTypeRegistration
 registerAttachmentDevice(
     "Attachment",
-    [](StdBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader* loader, Mapping* node){
         AttachmentDevicePtr holder = new AttachmentDevice;
         return holder->readDescription(loader, node);
     });
@@ -182,13 +182,13 @@ double* AttachmentDevice::writeState(double* out_buf) const
 }
 
 
-bool AttachmentDevice::readDescription(StdBodyLoader& loader, Mapping& node)
+bool AttachmentDevice::readDescription(StdBodyLoader* loader, Mapping* node)
 {
     string symbol;
-    if(node.read("category", symbol)){
+    if(node->read("category", symbol)){
         setCategory(symbol);
     } else {
         clearCategory();
     }
-    return loader.readDevice(this, node);
+    return loader->readDevice(this, node);
 }

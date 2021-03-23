@@ -13,10 +13,10 @@ namespace {
 StdBodyLoader::NodeTypeRegistration
 registerHolderDevice(
     "DigitalIO",
-    [](StdBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader* loader, Mapping* node){
         DigitalIoDevicePtr device = new DigitalIoDevice;
-        if(device->readDescription(&node)){
-            return loader.readDevice(device, node);
+        if(device->readDescription(node)){
+            return loader->readDevice(device, node);
         }
         return false;
     });

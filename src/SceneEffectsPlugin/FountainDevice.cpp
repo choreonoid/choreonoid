@@ -17,10 +17,10 @@ namespace {
 
 StdBodyLoader::NodeTypeRegistration registerFountainDevice(
     "FountainDevice",
-    [](StdBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader* loader, Mapping* node){
         FountainDevicePtr fountain = new FountainDevice;
-        fountain->particleSystem().readParameters(loader.sceneReader(), node);
-        return loader.readDevice(fountain, node);
+        fountain->particleSystem().readParameters(loader->sceneReader(), node);
+        return loader->readDevice(fountain, node);
     });
 
 SceneDevice::FactoryRegistration<FountainDevice>

@@ -49,16 +49,17 @@ public:
     float toRadian(float angle) const {
         return isDegreeMode_ ? radian(angle) : angle;
     }
-    bool readAngle(const Mapping& info, const char* key, double& angle) const;
-    bool readAngle(const Mapping& info, const char* key, float& angle) const;
-    bool readRotation(const Mapping& info, Matrix3& out_R) const;
-    bool readRotation(const Mapping& info, const char* key, Matrix3& out_R) const;
-    bool extractRotation(Mapping& info, Matrix3& out_R) const;
-    bool readTranslation(const Mapping& info, Vector3& out_p) const;
-    bool readTranslation(const Mapping& info, const char* key, Vector3& out_p) const;
-    bool extractTranslation(Mapping& info, Vector3& out_p) const;
-    SgNode* readNode(Mapping& info);
-    SgNode* readNode(Mapping& info, const std::string& type);
+
+    bool readAngle(const Mapping* info, const char* key, double& angle) const;
+    bool readAngle(const Mapping* info, const char* key, float& angle) const;
+    bool readRotation(const Mapping* info, Matrix3& out_R) const;
+    bool readRotation(const Mapping* info, const char* key, Matrix3& out_R) const;
+    bool extractRotation(Mapping* info, Matrix3& out_R) const;
+    bool readTranslation(const Mapping* info, Vector3& out_p) const;
+    bool readTranslation(const Mapping* info, const char* key, Vector3& out_p) const;
+    bool extractTranslation(Mapping* info, Vector3& out_p) const;
+    SgNode* readNode(Mapping* info);
+    SgNode* readNode(Mapping* info, const std::string& type);
     SgNode* readScene(ValueNode* scene);
 
     struct Resource {
@@ -67,22 +68,40 @@ public:
         std::string uri;
         std::string directory;
     };
-    Resource readResourceNode(Mapping& info);
+    Resource readResourceNode(Mapping* info);
     
-    SgObject* readObject(Mapping& info);
-
     typedef std::function<std::string(const std::string& path, std::ostream& os)> UriSchemeHandler;
     
     static void registerUriSchemeHandler(const std::string& scheme, UriSchemeHandler handler);
+
+    [[deprecated("Use readAngle(const Mapping* info, const char* key, double& angle) const")]]
+    bool readAngle(const Mapping& info, const char* key, double& angle) const;
+    [[deprecated("Use readAngle(const Mapping* info, const char* key, float& angle) const")]]
+    bool readAngle(const Mapping& info, const char* key, float& angle) const;
+    [[deprecated("Use readRotation(const Mapping* info, Matrix3& out_R) const")]]
+    bool readRotation(const Mapping& info, Matrix3& out_R) const;
+    [[deprecated("Use readRotation(const Mapping* info, const char* key, Matrix3& out_R) const")]]
+    bool readRotation(const Mapping& info, const char* key, Matrix3& out_R) const;
+    [[deprecated("Use extractRotation(Mapping* info, Matrix3& out_R) const")]]
+    bool extractRotation(Mapping& info, Matrix3& out_R) const;
+    [[deprecated("Use readTranslation(const Mapping* info, Vector3& out_p) const")]]
+    bool readTranslation(const Mapping& info, Vector3& out_p) const;
+    [[deprecated("Use readTranslation(const Mapping* info, const char* key, Vector3& out_p) const")]]
+    bool readTranslation(const Mapping& info, const char* key, Vector3& out_p) const;
+    [[deprecated("Use extractTranslation(Mapping* info, Vector3& out_p) const")]]
+    bool extractTranslation(Mapping& info, Vector3& out_p) const;
+    [[deprecated("Use readNode(Mapping* info)")]]
+    SgNode* readNode(Mapping& info);
+    [[deprecated("Use readNode(Mapping* info, const std::string& type)")]]
+    SgNode* readNode(Mapping& info, const std::string& type);
+    [[deprecated("Use readResourceNode(Mapping* info)")]]
+    Resource readResourceNode(Mapping& info);
 
 private:
     class Impl;
     Impl* impl;
 
     bool isDegreeMode_;
-    AngleAxis readAngleAxis(const Listing& rotation) const;
-    bool readRotation(const ValueNode* info, Matrix3& out_R) const;
-    bool readTranslation(const ValueNode* info, Vector3& out_p) const;
 };
 
 }

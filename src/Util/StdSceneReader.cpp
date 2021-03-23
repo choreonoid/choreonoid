@@ -83,7 +83,7 @@ public:
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
 
-    typedef SgNode* (Impl::*NodeFunction)(Mapping& info);
+    typedef SgNode* (Impl::*NodeFunction)(Mapping* info);
     typedef unordered_map<string, NodeFunction> NodeFunctionMap;
 
     static NodeFunctionMap nodeFunctionMap;
@@ -94,57 +94,48 @@ public:
     Impl(StdSceneReader* self);
     ~Impl();
 
-    bool readAngle(const Mapping& info, const char* key, double& angle) const {
-        return self->readAngle(info, key, angle);
-    }
-
-    bool readAngle(const Mapping& info, std::initializer_list<const char*> keys, double& angle) const {
-        bool found = false;
-        for(auto& key : keys){
-            found = self->readAngle(info, key, angle);
-            if(found){
-                break;
-            }
-        }
-        return found;
-    }
+    bool readAngle(const Mapping* info, const char* key, double& angle) const;
+    bool readAngle(const Mapping* info, std::initializer_list<const char*> keys, double& angle) const;
+    AngleAxis readAngleAxis(const Listing* rotation) const;
+    bool readRotation(const ValueNode* info, Matrix3& out_R) const;
+    bool readTranslation(const ValueNode* info, Vector3& out_p) const;
 
     FilePathVariableProcessor* getOrCreatePathVariableProcessor();
-    SgNode* readNode(Mapping& info);
-    SgNode* readNode(Mapping& info, const string& type);
-    SgNode* readNodeNode(Mapping& info);
-    SgNode* readGroup(Mapping& info);
-    void readElements(Mapping& info, SgGroup* group);
+    SgNode* readNode(Mapping* info);
+    SgNode* readNode(Mapping* info, const string& type);
+    SgNode* readNodeNode(Mapping* info);
+    SgNode* readGroup(Mapping* info);
+    void readElements(Mapping* info, SgGroup* group);
     void readNodeList(ValueNode* elements, SgGroup* group);
-    SgNode* readTransform(Mapping& info);
-    SgNode* readTransformParameters(Mapping& info, SgNode* scene);
-    SgNode* readShape(Mapping& info);
-    SgMesh* readGeometry(Mapping& info, int meshOptions);
-    void readDivisionNumbers(Mapping& info, SgMesh* mesh);
-    SgMesh* readBox(Mapping& info, int meshOptions);
-    SgMesh* readSphere(Mapping& info, int meshOptions);
-    SgMesh* readCylinder(Mapping& info, int meshOptions);
-    SgMesh* readCone(Mapping& info, int meshOptions);
-    SgMesh* readCapsule(Mapping& info, int meshOptions);
-    SgMesh* readExtrusion(Mapping& info, int meshOptions);
-    SgMesh* readElevationGrid(Mapping& info, int meshOptions);
-    SgMesh* readMesh(Mapping& info, bool isTriangleMesh, int meshOptions);
-    SgMesh* readResourceAsGeometry(Mapping& info, int meshOptions);
-    void readAppearance(SgShape* shape, Mapping& info);
-    void readMaterial(SgShape* shape, Mapping& info);
-    void readTexture(SgShape* shape, Mapping& info);
-    void readTextureTransform(SgTexture* texture, Mapping& info);
-    void readLightCommon(Mapping& info, SgLight* light);
-    SgNode* readDirectionalLight(Mapping& info);
-    SgNode* readSpotLight(Mapping& info);
-    SgNode* readResourceAsScene(Mapping& info);
-    Resource readResourceNode(Mapping& info, bool doSetUri);
+    SgNode* readTransform(Mapping* info);
+    SgNode* readTransformParameters(Mapping* info, SgNode* scene);
+    SgNode* readShape(Mapping* info);
+    SgMesh* readGeometry(Mapping* info, int meshOptions);
+    void readDivisionNumbers(Mapping* info, SgMesh* mesh);
+    SgMesh* readBox(Mapping* info, int meshOptions);
+    SgMesh* readSphere(Mapping* info, int meshOptions);
+    SgMesh* readCylinder(Mapping* info, int meshOptions);
+    SgMesh* readCone(Mapping* info, int meshOptions);
+    SgMesh* readCapsule(Mapping* info, int meshOptions);
+    SgMesh* readExtrusion(Mapping* info, int meshOptions);
+    SgMesh* readElevationGrid(Mapping* info, int meshOptions);
+    SgMesh* readMesh(Mapping* info, bool isTriangleMesh, int meshOptions);
+    SgMesh* readResourceAsGeometry(Mapping* info, int meshOptions);
+    void readAppearance(SgShape* shape, Mapping* info);
+    void readMaterial(SgShape* shape, Mapping* info);
+    void readTexture(SgShape* shape, Mapping* info);
+    void readTextureTransform(SgTexture* texture, Mapping* info);
+    void readLightCommon(Mapping* info, SgLight* light);
+    SgNode* readDirectionalLight(Mapping* info);
+    SgNode* readSpotLight(Mapping* info);
+    SgNode* readResourceAsScene(Mapping* info);
+    Resource readResourceNode(Mapping* info, bool doSetUri);
     void extractNamedYamlNodes(
-        Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource);
+        Mapping* resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource);
     void extractNamedSceneNodes(
-        Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource);
-    void decoupleResourceNode(Mapping& resourceNode, const string& uri, const string& nodeName);
-    ResourceInfo* getOrCreateResourceInfo(Mapping& resourceNode, const string& uri);
+        Mapping* resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource);
+    void decoupleResourceNode(Mapping* resourceNode, const string& uri, const string& nodeName);
+    ResourceInfo* getOrCreateResourceInfo(Mapping* resourceNode, const string& uri);
     stdx::filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(SceneNodeInfo& info);
     void makeSceneNodeMap(ResourceInfo* info);
@@ -340,9 +331,25 @@ void StdSceneReader::setAngleUnit(AngleUnit unit)
 }
 
 
+bool StdSceneReader::readAngle(const Mapping* info, const char* key, double& angle) const
+{
+    if(info->read(key, angle)){
+        angle = toRadian(angle);
+        return true;
+    }
+    return false;
+}
+
+
 bool StdSceneReader::readAngle(const Mapping& info, const char* key, double& angle) const
 {
-    if(info.read(key, angle)){
+    return readAngle(&info, key, angle);
+}
+
+
+bool StdSceneReader::readAngle(const Mapping* info, const char* key, float& angle) const
+{
+    if(info->read(key, angle)){
         angle = toRadian(angle);
         return true;
     }
@@ -352,41 +359,56 @@ bool StdSceneReader::readAngle(const Mapping& info, const char* key, double& ang
 
 bool StdSceneReader::readAngle(const Mapping& info, const char* key, float& angle) const
 {
-    if(info.read(key, angle)){
-        angle = toRadian(angle);
-        return true;
-    }
-    return false;
+    return readAngle(&info, key, angle);
 }
 
 
-AngleAxis StdSceneReader::readAngleAxis(const Listing& rotation) const
+bool StdSceneReader::Impl::readAngle(const Mapping* info, const char* key, double& angle) const
+{
+    return self->readAngle(info, key, angle);
+}
+
+
+bool StdSceneReader::Impl::readAngle(const Mapping* info, std::initializer_list<const char*> keys, double& angle) const
+{
+    bool found = false;
+    for(auto& key : keys){
+        found = self->readAngle(info, key, angle);
+        if(found){
+            break;
+        }
+    }
+    return found;
+}
+
+
+AngleAxis StdSceneReader::Impl::readAngleAxis(const Listing* elements) const
 {
     Vector4 r;
-    cnoid::readEx(rotation, r);
+    cnoid::readEx(elements, r);
     Vector3 axis(r[0], r[1], r[2]);
     double size = axis.norm();
     if(size < 1.0e-6){
-        rotation.throwException("Rotation axis is the zero vector");
+        elements->throwException("Rotation axis is the zero vector");
     }
     axis /= size; // normalize
-    return AngleAxis(toRadian(r[3]), axis);
+    return AngleAxis(self->toRadian(r[3]), axis);
 }
 
 
-bool StdSceneReader::readRotation(const ValueNode* info, Matrix3& out_R) const
+bool StdSceneReader::Impl::readRotation(const ValueNode* info, Matrix3& out_R) const
 {
     if(!info || !info->isValid()){
         return false;
     }
-    const Listing& rotations = *info->toListing();
-    if(!rotations.empty()){
-        if(!rotations[0].isListing()){
-            out_R = readAngleAxis(rotations);
+    auto elements = info->toListing();
+    if(!elements->empty()){
+        if(!elements->at(0)->isListing()){
+            out_R = readAngleAxis(elements);
         } else {
             out_R = Matrix3::Identity();
-            for(int i=0; i < rotations.size(); ++i){
-                out_R = out_R * readAngleAxis(*rotations[i].toListing());
+            for(auto& node : *elements){
+                out_R = out_R * readAngleAxis(node->toListing());
             }
         }
     }
@@ -394,39 +416,45 @@ bool StdSceneReader::readRotation(const ValueNode* info, Matrix3& out_R) const
 }
 
         
-bool StdSceneReader::readRotation(const Mapping& info, Matrix3& out_R) const
+bool StdSceneReader::readRotation(const Mapping* info, Matrix3& out_R) const
 {
-    return readRotation(info.find("rotation"), out_R);
+    return impl->readRotation(info->find("rotation"), out_R);
 }
 
 
-bool StdSceneReader::readRotation(const Mapping& info, const char* key, Matrix3& out_R) const
+bool StdSceneReader::readRotation(const Mapping* info, const char* key, Matrix3& out_R) const
 {
-    return readRotation(info.find(key), out_R);
+    return impl->readRotation(info->find(key), out_R);
+}
+
+
+bool StdSceneReader::extractRotation(Mapping* info, Matrix3& out_R) const
+{
+    ValueNodePtr value = info->extract("rotation");
+    return impl->readRotation(value, out_R);
 }
 
 
 bool StdSceneReader::extractRotation(Mapping& info, Matrix3& out_R) const
 {
-    ValueNodePtr value = info.extract("rotation");
-    return readRotation(value, out_R);
+    return extractRotation(&info, out_R);
 }
 
 
-bool StdSceneReader::readTranslation(const ValueNode* info, Vector3& out_p) const
+bool StdSceneReader::Impl::readTranslation(const ValueNode* info, Vector3& out_p) const
 {
     if(!info || !info->isValid()){
         return false;
     }
-    const Listing& translations = *info->toListing();
-    if(!translations.empty()){
-        if(!translations[0].isListing()){
+    auto translations = info->toListing();
+    if(!translations->empty()){
+        if(!translations->at(0)->isListing()){
             readEx(translations, out_p);
         } else {
             out_p.setZero();
             Vector3 v;
-            for(int i=0; i < translations.size(); ++i){
-                if(readTranslation(&translations[i], v)){
+            for(auto& node : *translations){
+                if(readTranslation(node, v)){
                     out_p += v;
                 }
             }
@@ -436,34 +464,64 @@ bool StdSceneReader::readTranslation(const ValueNode* info, Vector3& out_p) cons
 }
 
 
+bool StdSceneReader::readTranslation(const Mapping* info, Vector3& out_p) const
+{
+    return impl->readTranslation(info->find("translation"), out_p);
+}
+
+
 bool StdSceneReader::readTranslation(const Mapping& info, Vector3& out_p) const
 {
-    return readTranslation(info.find("translation"), out_p);
+    return readTranslation(&info, out_p);
+}
+
+
+bool StdSceneReader::readTranslation(const Mapping* info, const char* key, Vector3& out_p) const
+{
+    return impl->readTranslation(info->find(key), out_p);
 }
 
 
 bool StdSceneReader::readTranslation(const Mapping& info, const char* key, Vector3& out_p) const
 {
-    return readTranslation(info.find(key), out_p);
+    return readTranslation(&info, key, out_p);
+}
+
+
+bool StdSceneReader::extractTranslation(Mapping* info, Vector3& out_p) const
+{
+    ValueNodePtr value = info->extract("translation");
+    return impl->readTranslation(value, out_p);
 }
 
 
 bool StdSceneReader::extractTranslation(Mapping& info, Vector3& out_p) const
 {
-    ValueNodePtr value = info.extract("translation");
-    return readTranslation(value, out_p);
+    return extractTranslation(&info, out_p);
+}
+
+
+SgNode* StdSceneReader::readNode(Mapping* info)
+{
+    return info->isValid() ? impl->readNode(info) : nullptr;
 }
 
 
 SgNode* StdSceneReader::readNode(Mapping& info)
 {
-    return info.isValid() ? impl->readNode(info) : nullptr;
+    return readNode(&info);
+}
+
+
+SgNode* StdSceneReader::readNode(Mapping* info, const std::string& type)
+{
+    return info->isValid() ? impl->readNode(info, type) : nullptr;
 }
 
 
 SgNode* StdSceneReader::readNode(Mapping& info, const std::string& type)
 {
-    return info.isValid() ? impl->readNode(info, type) : nullptr;
+    return readNode(&info, type);
 }
 
 
@@ -494,28 +552,28 @@ SgNode* StdSceneReader::readScene(ValueNode* scene)
 }    
 
 
-SgNode* StdSceneReader::Impl::readNode(Mapping& info)
+SgNode* StdSceneReader::Impl::readNode(Mapping* info)
 {
-    const string type = info["type"].toString();
+    auto& type = (*info)["type"].toString();
     return readNode(info, type);
 }
     
 
-SgNode* StdSceneReader::Impl::readNode(Mapping& info, const string& type)
+SgNode* StdSceneReader::Impl::readNode(Mapping* info, const string& type)
 {
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
-        if(info.get({ "is_optional", "isOptional" }, false)){
+        if(info->get({ "is_optional", "isOptional" }, false)){
             os() << format(_("Warning: the node type \"{}\" is not defined. Reading this node has been skipped."), type) << endl;
             return nullptr;
         }
-        info.throwException(format(_("The node type \"{}\" is not defined."), type));
+        info->throwException(format(_("The node type \"{}\" is not defined."), type));
     }
 
     NodeFunction funcToReadNode = q->second;
     SgNodePtr scene = (this->*funcToReadNode)(info);
     if(scene){
-        if(info.read("name", symbol)){
+        if(info->read("name", symbol)){
             scene->setName(symbol);
         } else {
             // remove a nameless, redundant group node
@@ -528,14 +586,14 @@ SgNode* StdSceneReader::Impl::readNode(Mapping& info, const string& type)
 }
 
 
-SgNode* StdSceneReader::Impl::readNodeNode(Mapping& info)
+SgNode* StdSceneReader::Impl::readNodeNode(Mapping* info)
 {
     SgNodePtr node = new SgNode;
     return node.retn();
 }
 
 
-SgNode* StdSceneReader::Impl::readGroup(Mapping& info)
+SgNode* StdSceneReader::Impl::readGroup(Mapping* info)
 {
     SgGroupPtr group = new SgGroup;
     readElements(info, group);
@@ -543,9 +601,9 @@ SgNode* StdSceneReader::Impl::readGroup(Mapping& info)
 }
 
 
-void StdSceneReader::Impl::readElements(Mapping& info, SgGroup* group)
+void StdSceneReader::Impl::readElements(Mapping* info, SgGroup* group)
 {
-    auto elements = info.find("elements");
+    auto elements = info->find("elements");
     if(elements->isValid()){
         readNodeList(elements, group);
     }
@@ -557,33 +615,28 @@ void StdSceneReader::Impl::readNodeList(ValueNode* elements, SgGroup* group)
     if(elements->isListing()){
         Listing& listing = *elements->toListing();
         for(int i=0; i < listing.size(); ++i){
-            Mapping& element = *listing[i].toMapping();
-            const string type = element["type"].toString();
-            SgNodePtr scene = readNode(element, type);
-            if(scene){
+            auto element = listing[i].toMapping();
+            auto& type = (*element)["type"].toString();
+            if(SgNodePtr scene = readNode(element, type)){
                 group->addChild(scene);
             }
         }
     } else if(elements->isMapping()){
-        Mapping& mapping = *elements->toMapping();
-        Mapping::iterator p = mapping.begin();
-        while(p != mapping.end()){
-            const string& type = p->first;
-            Mapping& element = *p->second->toMapping();
-            ValueNode* typeNode = element.find("type");
+        for(auto& kv : *elements->toMapping()){
+            auto& type = kv.first;
+            auto element = kv.second->toMapping();
+            auto typeNode = element->find("type");
             if(typeNode->isValid()){
-                string type2 = typeNode->toString();
+                auto& type2 = typeNode->toString();
                 if(type2 != type){
-                    element.throwException(
+                    element->throwException(
                         format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
                                 type2, type));
                 }
             }
-            SgNodePtr scene = readNode(element, type);
-            if(scene){
+            if(SgNodePtr scene = readNode(element, type)){
                 group->addChild(scene);
             }
-            ++p;
         }
     } else {
         elements->throwException(
@@ -592,7 +645,7 @@ void StdSceneReader::Impl::readNodeList(ValueNode* elements, SgGroup* group)
 }
 
 
-SgNode* StdSceneReader::Impl::readTransform(Mapping& info)
+SgNode* StdSceneReader::Impl::readTransform(Mapping* info)
 {
     SgGroupPtr group;
 
@@ -633,7 +686,7 @@ SgNode* StdSceneReader::Impl::readTransform(Mapping& info)
 }
 
 
-SgNode* StdSceneReader::Impl::readTransformParameters(Mapping& info, SgNode* scene)
+SgNode* StdSceneReader::Impl::readTransformParameters(Mapping* info, SgNode* scene)
 {
     SgGroupPtr group;
     
@@ -674,23 +727,23 @@ SgNode* StdSceneReader::Impl::readTransformParameters(Mapping& info, SgNode* sce
 }
 
 
-SgNode* StdSceneReader::Impl::readShape(Mapping& info)
+SgNode* StdSceneReader::Impl::readShape(Mapping* info)
 {
     SgNode* scene = nullptr;
 
     SgShapePtr shape = new SgShape;
 
     int meshOptions = MeshGenerator::NoOption;
-    Mapping& appearance = *info.findMapping("appearance");
-    if(appearance.isValid()){
+    auto appearance = info->findMapping("appearance");
+    if(appearance->isValid()){
         readAppearance(shape, appearance);
         if(shape->texture()){
             meshOptions |= MeshGenerator::TextureCoordinate;
         }
     }
 
-    Mapping& geometry = *info.findMapping("geometry");
-    if(geometry.isValid()){
+    auto geometry = info->findMapping("geometry");
+    if(geometry->isValid()){
         shape->setMesh(readGeometry(geometry, meshOptions));
     }
 
@@ -704,11 +757,11 @@ SgNode* StdSceneReader::Impl::readShape(Mapping& info)
 }
 
 
-SgMesh* StdSceneReader::Impl::readGeometry(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readGeometry(Mapping* info, int meshOptions)
 {
     SgMesh* mesh = nullptr;
-    ValueNode& typeNode = info["type"];
-    string type = typeNode.toString();
+    ValueNode& typeNode = (*info)["type"];
+    auto& type = typeNode.toString();
     if(type == "Box"){
         mesh = readBox(info, meshOptions);
     } else if(type == "Sphere"){
@@ -737,19 +790,19 @@ SgMesh* StdSceneReader::Impl::readGeometry(Mapping& info, int meshOptions)
 }
 
 
-void StdSceneReader::Impl::readDivisionNumbers(Mapping& info, SgMesh* mesh)
+void StdSceneReader::Impl::readDivisionNumbers(Mapping* info, SgMesh* mesh)
 {
     int n;
-    if(info.read({ "division_number", "divisionNumber" }, n)){
+    if(info->read({ "division_number", "divisionNumber" }, n)){
         mesh->setDivisionNumber(n);
     }
-    if(info.read("extra_division_number", n)){
+    if(info->read("extra_division_number", n)){
         mesh->setExtraDivisionNumber(n);
     }
 }
     
 
-SgMesh* StdSceneReader::Impl::readBox(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readBox(Mapping* info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
 
@@ -759,9 +812,9 @@ SgMesh* StdSceneReader::Impl::readBox(Mapping& info, int meshOptions)
     read(info, "size", box.size);
     mesh->setPrimitive(box);
 
-    int edv = info.get("extra_division_number", 1);
+    int edv = info->get("extra_division_number", 1);
     string symbol;
-    if(info.read("extra_division_mode", symbol)){
+    if(info->read("extra_division_mode", symbol)){
         int mode;
         if(symbol == "preferred"){
             mode = SgMesh::ExtraDivisionPreferred;
@@ -778,92 +831,92 @@ SgMesh* StdSceneReader::Impl::readBox(Mapping& info, int meshOptions)
     }
 
     if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
-        info.throwException(_("A box cannot be generated with the given parameters."));
+        info->throwException(_("A box cannot be generated with the given parameters."));
     }
 
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readSphere(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readSphere(Mapping* info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
 
     readDivisionNumbers(info, mesh);
 
     SgMesh::Sphere sphere;
-    info.read("radius", sphere.radius);
+    info->read("radius", sphere.radius);
     mesh->setPrimitive(sphere);
 
     if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
-        info.throwException(_("A sphere cannot be generated with the given parameters."));
+        info->throwException(_("A sphere cannot be generated with the given parameters."));
     }
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readCylinder(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readCylinder(Mapping* info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
     
     readDivisionNumbers(info, mesh);
 
     SgMesh::Cylinder cylinder;
-    info.read("radius", cylinder.radius);
-    info.read("height", cylinder.height);
-    info.read("top", cylinder.top);
-    info.read("bottom", cylinder.bottom);
+    info->read("radius", cylinder.radius);
+    info->read("height", cylinder.height);
+    info->read("top", cylinder.top);
+    info->read("bottom", cylinder.bottom);
     mesh->setPrimitive(cylinder);
 
     if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
-        info.throwException(_("A cylinder cannot be generated with the given parameters."));
+        info->throwException(_("A cylinder cannot be generated with the given parameters."));
     }
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readCone(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readCone(Mapping* info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
 
     readDivisionNumbers(info, mesh);
 
     SgMesh::Cone cone;
-    info.read("radius", cone.radius);
-    info.read("height", cone.height);
-    info.read("bottom", cone.bottom);
+    info->read("radius", cone.radius);
+    info->read("height", cone.height);
+    info->read("bottom", cone.bottom);
     mesh->setPrimitive(cone);
 
     if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
-        info.throwException(_("A cone cannot be generated with the given parameters."));
+        info->throwException(_("A cone cannot be generated with the given parameters."));
     }
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readCapsule(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readCapsule(Mapping* info, int meshOptions)
 {
     SgMeshPtr mesh = new SgMesh;
 
     readDivisionNumbers(info, mesh);
 
     SgMesh::Capsule capsule;
-    info.read("radius", capsule.radius);
-    info.read("height", capsule.height);
+    info->read("radius", capsule.radius);
+    info->read("height", capsule.height);
     mesh->setPrimitive(capsule);
     
     if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
-        info.throwException(_("A capsule cannot be generated with the given parameters."));
+        info->throwException(_("A capsule cannot be generated with the given parameters."));
     }
     return mesh.retn();
 }
 
 
-SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readExtrusion(Mapping* info, int meshOptions)
 {
     MeshGenerator::Extrusion extrusion;
 
-    Listing& crossSectionNode = *info.findListing({ "cross_section", "crossSection" });
+    Listing& crossSectionNode = *info->findListing({ "cross_section", "crossSection" });
     if(crossSectionNode.isValid()){
         const int n = crossSectionNode.size() / 2;
         MeshGenerator::Vector2Array& crossSection = extrusion.crossSection;
@@ -876,7 +929,7 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info, int meshOptions)
         }
     }
 
-    Listing& spineNode = *info.findListing("spine");
+    Listing& spineNode = *info->findListing("spine");
     if(spineNode.isValid()){
         const int n = spineNode.size() / 3;
         MeshGenerator::Vector3Array& spine = extrusion.spine;
@@ -889,7 +942,7 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info, int meshOptions)
         }
     }
 
-    Listing& orientationNode = *info.findListing("orientation");
+    Listing& orientationNode = *info->findListing("orientation");
     if(orientationNode.isValid()){
         const int n = orientationNode.size() / 4;
         MeshGenerator::AngleAxisArray& orientation = extrusion.orientation;
@@ -904,7 +957,7 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info, int meshOptions)
         }
     }
     
-    Listing& scaleNode = *info.findListing("scale");
+    Listing& scaleNode = *info->findListing("scale");
     if(scaleNode.isValid()){
         const int n = scaleNode.size() / 2;
         MeshGenerator::Vector2Array& scale = extrusion.scale;
@@ -918,29 +971,29 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping& info, int meshOptions)
     }
 
     readAngle(info, { "crease_angle", "creaseAngle" }, extrusion.creaseAngle);
-    info.read({" begin_cap", "beginCap" }, extrusion.beginCap);
-    info.read({ "end_cap", "endCap"}, extrusion.endCap);
+    info->read({" begin_cap", "beginCap" }, extrusion.beginCap);
+    info->read({ "end_cap", "endCap"}, extrusion.endCap);
 
     SgMesh* mesh = meshGenerator.generateExtrusion(extrusion, meshOptions);
 
-    mesh->setSolid(info.get("solid", mesh->isSolid()));
+    mesh->setSolid(info->get("solid", mesh->isSolid()));
     
     return mesh;
 }
 
 
-SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping* info, int meshOptions)
 {
     MeshGenerator::ElevationGrid grid;
 
-    info.read({ "x_dimension", "xDimension" }, grid.xDimension);
-    info.read({ "z_dimension", "zDimension" }, grid.zDimension);
-    info.read({ "x_spacing", "xSpacing" }, grid.xSpacing);
-    info.read({ "z_spacing", "zSpacing" }, grid.zSpacing);
-    info.read("ccw", grid.ccw);
+    info->read({ "x_dimension", "xDimension" }, grid.xDimension);
+    info->read({ "z_dimension", "zDimension" }, grid.zDimension);
+    info->read({ "x_spacing", "xSpacing" }, grid.xSpacing);
+    info->read({ "z_spacing", "zSpacing" }, grid.zSpacing);
+    info->read("ccw", grid.ccw);
     readAngle(info, { "crease_angle", "creaseAngle" }, grid.creaseAngle);
 
-    Listing& heightNode = *info.findListing("height");
+    Listing& heightNode = *info->findListing("height");
     if(heightNode.isValid()){
         for(int i=0; i < heightNode.size(); i++){
             grid.height.push_back(heightNode[i].toDouble());
@@ -948,7 +1001,7 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info, int meshOptions)
     }
 
     SgTexCoordArray* texCoord = nullptr;
-    Listing& texCoordNode = *info.findListing({ "tex_coord", "texCoord" });
+    Listing& texCoordNode = *info->findListing({ "tex_coord", "texCoord" });
     if(texCoordNode.isValid()){
         const int size = texCoordNode.size() / 2;
         texCoord = new SgTexCoordArray();
@@ -968,13 +1021,13 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping& info, int meshOptions)
         mesh->texCoordIndices() = mesh->triangleVertices();
     }
 
-    mesh->setSolid(info.get("solid", mesh->isSolid()));
+    mesh->setSolid(info->get("solid", mesh->isSolid()));
 
     return mesh;
 }
 
 
-SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int meshOptions)
+SgMesh* StdSceneReader::Impl::readMesh(Mapping* info, bool isTriangleMesh, int meshOptions)
 {
     SgMeshBase* meshBase;
     SgMeshPtr triangleMesh;
@@ -988,7 +1041,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
         meshBase = polygonMesh;
     }
         
-    Listing& srcVertices = *info.findListing({ "vertices", "coordinate" });
+    Listing& srcVertices = *info->findListing({ "vertices", "coordinate" });
     if(srcVertices.isValid()){
         const int numVertices = srcVertices.size() / 3;
         SgVertexArray& vertices = *meshBase->getOrCreateVertices();
@@ -1001,7 +1054,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
         }
     }
 
-    Listing& srcFaces = *info.findListing({ "faces", "coordIndex" });
+    Listing& srcFaces = *info->findListing({ "faces", "coordIndex" });
     if(srcFaces.isValid()){
         const int numIndices = srcFaces.size();
         SgIndexArray& face = meshBase->faceVertexIndices();
@@ -1011,7 +1064,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
         }
     }
 
-    Listing& srcNormals = *info.findListing("normals");
+    Listing& srcNormals = *info->findListing("normals");
     if(srcNormals.isValid()){
         const int numNormals = srcNormals.size() / 3;
         SgNormalArray& normals = *meshBase->getOrCreateNormals();
@@ -1024,7 +1077,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
         }
     }
 
-    Listing& srcNormalIndices = *info.findListing("normal_indices");
+    Listing& srcNormalIndices = *info->findListing("normal_indices");
     if(srcNormalIndices.isValid()){
         const int numIndices = srcNormalIndices.size();
         SgIndexArray& normalIndices = meshBase->normalIndices();
@@ -1034,7 +1087,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
         }
     }
 
-    Listing& srcTexCoords = *info.findListing({ "tex_coords", "texCoord" });
+    Listing& srcTexCoords = *info->findListing({ "tex_coords", "texCoord" });
     if(srcTexCoords.isValid()){
         const int numCoords = srcTexCoords.size() / 2;
         SgTexCoordArray& texCoord = *meshBase->getOrCreateTexCoords();
@@ -1047,7 +1100,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
         }
     }
 
-    Listing& srcTexCoordIndices = *info.findListing({ "tex_coord_indices", "texCoordIndex" });
+    Listing& srcTexCoordIndices = *info->findListing({ "tex_coord_indices", "texCoordIndex" });
     if(srcTexCoordIndices.isValid()){
         const int numIndices = srcTexCoordIndices.size();
         SgIndexArray& texCoordIndices = meshBase->texCoordIndices();
@@ -1062,7 +1115,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
         triangleMesh = polygonMeshTriangulator.triangulate(polygonMesh);
         const string& errorMessage = polygonMeshTriangulator.errorMessage();
         if(!errorMessage.empty()){
-            info.throwException("Error of an IndexedFaceSet node: \n" + errorMessage);
+            info->throwException("Error of an IndexedFaceSet node: \n" + errorMessage);
         }
     }
 
@@ -1078,7 +1131,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
         }
     }
 
-    triangleMesh->setSolid(info.get("solid", triangleMesh->isSolid()));
+    triangleMesh->setSolid(info->get("solid", triangleMesh->isSolid()));
 
     triangleMesh->updateBoundingBox();
 
@@ -1086,7 +1139,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping& info, bool isTriangleMesh, int m
 }
 
 
-SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOptions)
+SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOptions)
 {
     auto resource = readResourceNode(info, false);
 
@@ -1096,16 +1149,16 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOpti
         scene = resource.scene;
         isDirectResource = true;
     } else if(resource.info){
-        scene = readNode(*resource.info->toMapping());
+        scene = readNode(resource.info->toMapping());
     }
     auto shape = dynamic_cast<SgShape*>(scene);
 
     if(!shape){
-        info.throwException(_("A resouce specified as a geometry must be a single mesh"));
+        info->throwException(_("A resouce specified as a geometry must be a single mesh"));
     }
     auto mesh = shape->mesh();
     if(!mesh){
-        info.throwException(_("A resouce specified as a geometry does not have a mesh"));
+        info->throwException(_("A resouce specified as a geometry does not have a mesh"));
     }
     if(isDirectResource){
         mesh->setUriByFilePathAndBaseDirectory(
@@ -1117,7 +1170,7 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOpti
         mesh->setCreaseAngle(creaseAngle);
         meshFilter.setNormalOverwritingEnabled(true);
         bool removeRedundantVertices =
-            info.get({ "remove_redundant_vertices", "removeRedundantVertices" }, false);
+            info->get({ "remove_redundant_vertices", "removeRedundantVertices" }, false);
         meshFilter.generateNormals(mesh, creaseAngle, removeRedundantVertices);
         meshFilter.setNormalOverwritingEnabled(false);
     }
@@ -1130,31 +1183,31 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping& info, int meshOpti
 }
 
 
-void StdSceneReader::Impl::readAppearance(SgShape* shape, Mapping& info)
+void StdSceneReader::Impl::readAppearance(SgShape* shape, Mapping* info)
 {
-    Mapping& material = *info.findMapping("material");
-    if(material.isValid()){
+    auto material = info->findMapping("material");
+    if(material->isValid()){
         readMaterial(shape, material);
     }
 
-    Mapping& texture = *info.findMapping("texture");
-    if(texture.isValid()){
+    auto texture = info->findMapping("texture");
+    if(texture->isValid()){
         readTexture(shape, texture);
 
-        Mapping& textureTransform = *info.findMapping({ "texture_transform", "textureTransform" });
-        if(textureTransform.isValid() && shape->texture()){
+        auto textureTransform = info->findMapping({ "texture_transform", "textureTransform" });
+        if(textureTransform->isValid() && shape->texture()){
             readTextureTransform(shape->texture(), textureTransform);
         }
     }
 }
 
 
-void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping& info)
+void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping* info)
 {
     SgMaterialPtr material = new SgMaterial;
 
     double value;
-    if(info.read({ "ambient", "ambientIntensity" }, value)){
+    if(info->read({ "ambient", "ambientIntensity" }, value)){
         material->setAmbientIntensity(value);
     }
     if(read(info, { "diffuse", "diffuseColor" }, color)){
@@ -1166,14 +1219,14 @@ void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping& info)
     if(read(info, { "specular", "specularColor" }, color)){
         material->setSpecularColor(color);
     }
-    if(info.read("specular_exponent", value)){
+    if(info->read("specular_exponent", value)){
         material->setSpecularExponent(value);
-    } else if(info.read("shininess", value)){ // deprecated
+    } else if(info->read("shininess", value)){ // deprecated
         material->setSpecularExponent(
             127.0f * std::max(0.0f, std::min((float)value, 1.0f)) + 1.0f);
     }
     
-    if(info.read("transparency", value)){
+    if(info->read("transparency", value)){
         material->setTransparency(value);
     }
 
@@ -1181,10 +1234,10 @@ void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping& info)
 }
 
 
-void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
+void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping* info)
 {
     string& uri = symbol;
-    if(info.read({ "uri", "url" }, uri) && !uri.empty()){
+    if(info->read({ "uri", "url" }, uri) && !uri.empty()){
         SgImagePtr image;
         ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(uri);
         if(p != imagePathToSgImageMap.end()){
@@ -1212,7 +1265,7 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
             bool repeatS = true;
             bool repeatT = true;
             
-            auto repeatNode = info.find("repeat");
+            auto repeatNode = info->find("repeat");
             if(repeatNode->isValid()){
                 if(repeatNode->isListing()){
                     auto repeatList = repeatNode->toListing();
@@ -1225,8 +1278,8 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
                     repeatS = repeatT = repeatNode->toBool();
                 }
             } else {
-                info.read("repeatS", repeatS);
-                info.read("repeatT", repeatT);
+                info->read("repeatS", repeatS);
+                info->read("repeatT", repeatT);
             }
             texture->setRepeat(repeatS, repeatT);
             texture->setTextureTransform(new SgTextureTransform);
@@ -1236,7 +1289,7 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping& info)
 }
 
 
-void StdSceneReader::Impl::readTextureTransform(SgTexture* texture, Mapping& info)
+void StdSceneReader::Impl::readTextureTransform(SgTexture* texture, Mapping* info)
 {
     SgTextureTransform* textureTransform = texture->textureTransform();
     if(read(info, "center", v2)) textureTransform->setCenter(v2);
@@ -1246,16 +1299,16 @@ void StdSceneReader::Impl::readTextureTransform(SgTexture* texture, Mapping& inf
 }
 
 
-void StdSceneReader::Impl::readLightCommon(Mapping& info, SgLight* light)
+void StdSceneReader::Impl::readLightCommon(Mapping* info, SgLight* light)
 {
-    if(info.read("on", on)) light->on(on);
+    if(info->read("on", on)) light->on(on);
     if(read(info, "color", color)) light->setColor(color);
-    if(info.read("intensity", value)) light->setIntensity(value);
-    if(info.read("ambientIntensity", value)) light->setAmbientIntensity(value);
+    if(info->read("intensity", value)) light->setIntensity(value);
+    if(info->read("ambientIntensity", value)) light->setAmbientIntensity(value);
 }
 
 
-SgNode* StdSceneReader::Impl::readDirectionalLight(Mapping& info)
+SgNode* StdSceneReader::Impl::readDirectionalLight(Mapping* info)
 {
     SgDirectionalLightPtr light = new SgDirectionalLight;
     readLightCommon(info, light);
@@ -1264,7 +1317,7 @@ SgNode* StdSceneReader::Impl::readDirectionalLight(Mapping& info)
 }
 
 
-SgNode* StdSceneReader::Impl::readSpotLight(Mapping& info)
+SgNode* StdSceneReader::Impl::readSpotLight(Mapping* info)
 {
     SgSpotLightPtr light = new SgSpotLight;
 
@@ -1273,7 +1326,7 @@ SgNode* StdSceneReader::Impl::readSpotLight(Mapping& info)
     if(read(info, "direction", v)) light->setDirection(v);
     if(readAngle(info, { "beam_width", "beamWidth" }, value)) light->setBeamWidth(value);
     if(readAngle(info, { "cut_off_angle", "cutOffAngle" }, value)) light->setCutOffAngle(value);
-    if(info.read({ "cut_off_exponent", "cutOffExponent" }, value)) light->setCutOffExponent(value);
+    if(info->read({ "cut_off_exponent", "cutOffExponent" }, value)) light->setCutOffExponent(value);
     if(read(info, "attenuation", color)){
         light->setConstantAttenuation(color[0]);
         light->setLinearAttenuation(color[1]);
@@ -1284,46 +1337,51 @@ SgNode* StdSceneReader::Impl::readSpotLight(Mapping& info)
 }
 
 
-SgNode* StdSceneReader::Impl::readResourceAsScene(Mapping& info)
+SgNode* StdSceneReader::Impl::readResourceAsScene(Mapping* info)
 {
     auto resource = readResourceNode(info, true);
     if(resource.scene){
         return resource.scene;
     } else if(resource.info){
-        return readNode(*resource.info->toMapping());
+        return readNode(resource.info->toMapping());
     }
     return nullptr;
 }
 
 
-StdSceneReader::Resource StdSceneReader::readResourceNode(Mapping& info)
+StdSceneReader::Resource StdSceneReader::readResourceNode(Mapping* info)
 {
     return impl->readResourceNode(info, true);
 }
 
 
-StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping& info, bool doSetUri)
+StdSceneReader::Resource StdSceneReader::readResourceNode(Mapping& info)
+{
+    return impl->readResourceNode(&info, true);
+}
+
+
+StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, bool doSetUri)
 {
     Resource resource;
 
-    resource.uri = info["uri"].toString();
+    resource.uri = (*info)["uri"].toString();
 
-    ValueNode& exclude = *info.find("exclude");
-    if(exclude.isValid()){
-        if(exclude.isString()){
-            decoupleResourceNode(info, resource.uri, exclude.toString());
-        } else if(exclude.isListing()){
-            Listing& excludes = *exclude.toListing();
-            for(auto& nodeToExclude : excludes){
+    auto exclude = info->find("exclude");
+    if(exclude->isValid()){
+        if(exclude->isString()){
+            decoupleResourceNode(info, resource.uri, exclude->toString());
+        } else if(exclude->isListing()){
+            for(auto& nodeToExclude : *exclude->toListing()){
                 decoupleResourceNode(info, resource.uri, nodeToExclude->toString());
             }
         } else {
-            exclude.throwException(_("The value of \"exclude\" must be string or sequence."));
+            exclude->throwException(_("The value of \"exclude\" must be string or sequence."));
         }
     }
 
     vector<string> names;
-    auto node = info.find("node");
+    auto node = info->find("node");
     if(node->isValid()){
         if(node->isString()){
             names.push_back(node->toString());
@@ -1367,7 +1425,7 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping& info, b
 
 
 void StdSceneReader::Impl::extractNamedYamlNodes
-(Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource)
+(Mapping* resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource)
 {
     Listing* group = nullptr;
     if(names.size() >= 2){
@@ -1377,7 +1435,7 @@ void StdSceneReader::Impl::extractNamedYamlNodes
     for(auto& name : names){
         auto node = info->yamlReader->findAnchoredNode(name);
         if(!node){
-            resourceNode.throwException(
+            resourceNode->throwException(
                 format(_("Node \"{0}\" is not found in \"{1}\"."), name, uri));
         }
         if(group){
@@ -1390,7 +1448,7 @@ void StdSceneReader::Impl::extractNamedYamlNodes
 
 
 void StdSceneReader::Impl::extractNamedSceneNodes
-(Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource)
+(Mapping* resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource)
 {
     unique_ptr<SceneNodeMap>& nodeMap = info->sceneNodeMap;
     if(!nodeMap){
@@ -1406,7 +1464,7 @@ void StdSceneReader::Impl::extractNamedSceneNodes
     for(auto& name : names){
         auto iter = nodeMap->find(name);
         if(iter == nodeMap->end()){
-            resourceNode.throwException(
+            resourceNode->throwException(
                 format(_("Node \"{0}\" is not found in \"{1}\"."), name, uri));
         } else {
             SceneNodeInfo& nodeInfo = iter->second;
@@ -1425,7 +1483,7 @@ void StdSceneReader::Impl::extractNamedSceneNodes
 }
 
 
-void StdSceneReader::Impl::decoupleResourceNode(Mapping& resourceNode, const string& uri, const string& nodeName)
+void StdSceneReader::Impl::decoupleResourceNode(Mapping* resourceNode, const string& uri, const string& nodeName)
 {
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(resourceNode, uri);
     if(resourceInfo){
@@ -1447,7 +1505,7 @@ void StdSceneReader::Impl::decoupleResourceNode(Mapping& resourceNode, const str
 
 
 StdSceneReader::Impl::ResourceInfo*
-StdSceneReader::Impl::getOrCreateResourceInfo(Mapping& resourceNode, const string& uri)
+StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const string& uri)
 {
     auto iter = resourceInfoMap.find(uri);
 
@@ -1475,7 +1533,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping& resourceNode, const strin
                 std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
                 auto iter = uriSchemeHandlerMap.find(scheme);
                 if(iter == uriSchemeHandlerMap.end()){
-                    resourceNode.throwException(
+                    resourceNode->throwException(
                         format(_("The \"{0}\" scheme of \"{1}\" is not available"), scheme, uri));
                 } else {
                     auto& handler = iter->second;
@@ -1495,13 +1553,13 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping& resourceNode, const strin
         auto pvp = getOrCreatePathVariableProcessor();
         filename = pvp->expand(filename, true);
         if(filename.empty()){
-            resourceNode.throwException(
+            resourceNode->throwException(
                 format(_("The resource URI \"{0}\" is not valid: {1}"),
                        uri, pvp->errorMessage()));
         }
     } else {
         if(filename.empty()){
-            resourceNode.throwException(
+            resourceNode->throwException(
                 format(_("The resource URI \"{}\" is not valid"), uri));
         }
     }
@@ -1516,7 +1574,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping& resourceNode, const strin
         unique_ptr<YAMLReader> reader(new YAMLReader);
         reader->importAnchors(*mainYamlReader);
         if(!reader->load(filename)){
-            resourceNode.throwException(
+            resourceNode->throwException(
                 format(_("YAML resource \"{0}\" cannot be loaded ({1})"),
                  uri, reader->errorMessage()));
         }
@@ -1525,7 +1583,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping& resourceNode, const strin
     } else {
         SgNodePtr scene = sceneLoader.load(filename);
         if(!scene){
-            resourceNode.throwException(
+            resourceNode->throwException(
                 format(_("The resource is not found at URI \"{}\""), uri));
         }
         info->scene = scene;

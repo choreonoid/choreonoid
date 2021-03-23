@@ -14,11 +14,11 @@ using namespace cnoid;
 namespace {
 
 template <class DeviceType>
-bool readDevice(StdBodyLoader& loader, Mapping& node)
+bool readDevice(StdBodyLoader* loader, Mapping* node)
 {
     ref_ptr<DeviceType> device = new DeviceType;
-    device->particleSystem().readParameters(loader.sceneReader(), node);
-    return loader.readDevice(device, node);
+    device->particleSystem().readParameters(loader->sceneReader(), node);
+    return loader->readDevice(device, node);
 }
 
 template <class DeviceType, class SceneNodeType>

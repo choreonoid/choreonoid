@@ -13,10 +13,10 @@ namespace {
 StdBodyLoader::NodeTypeRegistration
 registerHolderDevice(
     "Holder",
-    [](StdBodyLoader& loader, Mapping& node){
+    [](StdBodyLoader* loader, Mapping* node){
         HolderDevicePtr holder = new HolderDevice;
-        if(holder->readDescription(&node)){
-            return loader.readDevice(holder, node);
+        if(holder->readDescription(node)){
+            return loader->readDevice(holder, node);
         }
         return false;
     });

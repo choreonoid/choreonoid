@@ -88,8 +88,8 @@ public:
     }
 };
 
-#define NODE_READ(FIELD1) node.read(#FIELD1, desc.FIELD1)
-bool readAGXVehicleContinuousTrackDevice(StdBodyLoader& loader, Mapping& node)
+#define NODE_READ(FIELD1) node->read(#FIELD1, desc.FIELD1)
+bool readAGXVehicleContinuousTrackDevice(StdBodyLoader* loader, Mapping* node)
 {
     AGXVehicleContinuousTrackDeviceDesc desc;
     if(!NODE_READ(numberOfNodes)) return false;
@@ -99,7 +99,7 @@ bool readAGXVehicleContinuousTrackDevice(StdBodyLoader& loader, Mapping& node)
     NODE_READ(nodeThickerThickness);
     NODE_READ(useThickerNodeEvery);
     NODE_READ(hingeCompliance);
-    node.read("hingeSpookDamping", desc.hingeSpookDamping);
+    node->read("hingeSpookDamping", desc.hingeSpookDamping);
     NODE_READ(minStabilizingHingeNormalForce);
     NODE_READ(stabilizingHingeFrictionParameter);
     NODE_READ(nodesToWheelsMergeThreshold);
@@ -109,12 +109,12 @@ bool readAGXVehicleContinuousTrackDevice(StdBodyLoader& loader, Mapping& node)
     NODE_READ(contactReduction);
     NODE_READ(enableLockToReachMergeCondition);
     NODE_READ(lockToReachMergeConditionCompliance);
-    node.read("lockToReachMergeConditionSpookDamping", desc.lockToReachMergeConditionSpookDamping);
+    node->read("lockToReachMergeConditionSpookDamping", desc.lockToReachMergeConditionSpookDamping);
     NODE_READ(maxAngleMergeCondition);
-    node.read("material", desc.materialName);
+    node->read("material", desc.materialName);
 
     desc.nodeShape = dynamic_cast<SgShape*>(       
-        loader.sceneReader().readNode(*node.findMapping("nodeShape"), "Shape"));
+        loader->sceneReader()->readNode(node->findMapping("nodeShape"), "Shape"));
 
     // Get name of wheels from yaml
     const auto toVectorString = [](ValueNodePtr const vnptr, vector<string>& vs) ->bool
@@ -126,7 +126,7 @@ bool readAGXVehicleContinuousTrackDevice(StdBodyLoader& loader, Mapping& node)
         }
         return true;
     };
-    MappingPtr info = static_cast<Mapping*>(node.clone());
+    MappingPtr info = static_cast<Mapping*>(node->clone());
     toVectorString(info->extract("sprocketNames"), desc.sprocketNames);
     toVectorString(info->extract("idlerNames"), desc.idlerNames);
     toVectorString(info->extract("rollerNames"), desc.rollerNames);
@@ -140,7 +140,7 @@ bool readAGXVehicleContinuousTrackDevice(StdBodyLoader& loader, Mapping& node)
         return false;
     }
     AGXVehicleContinuousTrackDevicePtr trackDevice = new AGXVehicleContinuousTrackDevice(desc);
-    return loader.readDevice(trackDevice, node);
+    return loader->readDevice(trackDevice, node);
 }
 
 SceneDevice* createSceneAGXVehicleContinuousTrackDevice(Device* device)
