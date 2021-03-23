@@ -31,6 +31,7 @@ public:
     bool writeBody(Body* body, const std::string& filename);
     MappingPtr writeBody(Body* body);
     MappingPtr writeLink(Link* link);
+    void writeLinkShape(Listing* elementsNode, SgGroup* shapeGroup, const char* type);
 };
 
 }
@@ -210,11 +211,10 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
     ListingPtr elementsNode = new Listing;
 
     if(!link->hasDedicatedCollisionShape()){
-        for(auto& shape : *link->shape()){
-            if(auto shapeNode = sceneWriter.writeScene(shape)){
-                elementsNode->append(shapeNode);
-            }
-        }
+        writeLinkShape(elementsNode, link->shape(), nullptr);
+    } else {
+        writeLinkShape(elementsNode, link->visualShape(), "Visual");
+        writeLinkShape(elementsNode, link->collisionShape(), "Collision");
     }
 
     if(!elementsNode->empty()){
@@ -222,4 +222,31 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
     }
 
     return node;
+}
+
+
+void StdBodyWriter::Impl::writeLinkShape(Listing* elementsNode, SgGroup* shapeGroup, const char* type)
+{
+    if(shapeGroup->empty()){
+        return;
+    }
+    MappingPtr typeNode;
+    Listing* subElementsNode;
+    if(type){
+        typeNode = new Mapping;
+        typeNode->write("type", type);
+        subElementsNode = typeNode->createListing("elements");
+    } else {
+        subElementsNode = elementsNode;
+    }
+    for(auto& shape : *shapeGroup){
+        if(auto shapeNode = sceneWriter.writeScene(shape)){
+            subElementsNode->append(shapeNode);
+        }
+    }
+    if(type){
+        if(!subElementsNode->empty()){
+            elementsNode->append(typeNode);
+        }
+    }
 }
