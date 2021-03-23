@@ -5,7 +5,7 @@
 
 #include <chrono>
 
-#if ((defined(__GNUC__) && (__GNUC__ < 8)) || (defined(__clang__) && (__clang_major__ < 7)))
+#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 8)) || (defined(__clang__) && (__clang_major__ < 7)))
 #include <experimental/filesystem>
 namespace std::experimental::filesystem {
 inline path lexically_normal(const path& p){
@@ -30,12 +30,13 @@ inline std::time_t last_write_time_to_time_t(const path& p){
 } // namespace
 
 namespace cnoid::stdx {
-#if ((defined(__GNUC__) && (__GNUC__ < 8)) || (defined(__clang__) && (__clang_major__ < 7)))
+#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 8)) || (defined(__clang__) && (__clang_major__ < 7)))
 namespace filesystem = std::experimental::filesystem;
 #else
 namespace filesystem = std::filesystem;
 #endif
 typedef std::error_code error_code;
+typedef std::filesystem::copy_options copy_options;
 }
 
 #else // __cplusplus > 201402L
@@ -61,6 +62,7 @@ inline path lexically_normal(const path& p){
 namespace cnoid { namespace stdx {
 namespace filesystem = boost::filesystem;
 typedef boost::system::error_code error_code;
+typedef boost::filesystem::copy_option copy_options;
 } }
 #endif
 
