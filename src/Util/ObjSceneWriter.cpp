@@ -286,7 +286,7 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
                 auto& absUri = image->absoluteUri();
                 if(absUri.find_first_of("file://") == 0){
                     filesystem::path orgFilePath(absUri.substr(7));
-                    std::error_code ec;
+                    stdx::error_code ec;
                     if(filesystem::exists(orgFilePath, ec)){
                         orgImageFileFound = true;
                         filesystem::path uriPath(uri);
@@ -294,9 +294,22 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
                             uriPath = baseDirPath / uriPath;
                         }
                         if(!filesystem::equivalent(orgFilePath, uriPath, ec)){
-                            bool copied = filesystem::copy_file(
-                                orgFilePath, uriPath, filesystem::copy_options::update_existing, ec);
-                            if(!copied && ec){
+                            ec.clear();
+#if __cplusplus > 201402L
+                            filesystem::copy_file(orgFilePath, uriPath, filesystem::copy_options::update_existing, ec);
+#else
+                            bool doCopy = true;
+                            if(filesystem::exists(uriPath, ec)){
+                                if(filesystem::last_write_time(uriPath, ec) >= filesystem::last_write_time(orgFilePath, ec)){
+                                    doCopy = false;
+                                }
+                            }
+                            if(doCopy){
+                                filesystem::copy_file(
+                                    orgFilePath, uriPath, filesystem::copy_option::overwrite_if_exists, ec);
+                            }
+#endif
+                            if(ec){
                                 os() << format(_("Warning: Texture image file \"{0}\" cannot be copied: {1}"), uri, ec.message()) << endl;
                             }
                         }
