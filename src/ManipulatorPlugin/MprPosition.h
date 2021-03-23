@@ -86,6 +86,8 @@ typedef ref_ptr<MprPosition> MprPositionPtr;
 class CNOID_EXPORT MprIkPosition : public MprPosition
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     MprIkPosition();
     MprIkPosition(const GeneralId& id);
     MprIkPosition(const MprIkPosition& org);
