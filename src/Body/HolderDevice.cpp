@@ -1,7 +1,7 @@
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
 #include "Body.h"
-#include "StdBodyLoader.h"
+#include "StdBodyFileUtil.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 
@@ -10,7 +10,7 @@ using namespace cnoid;
 
 namespace {
 
-StdBodyLoader::NodeTypeRegistration
+StdBodyFileDeviceTypeRegistration<HolderDevice>
 registerHolderDevice(
     "Holder",
     [](StdBodyLoader* loader, Mapping* node){
@@ -19,8 +19,10 @@ registerHolderDevice(
             return loader->readDevice(holder, node);
         }
         return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* node, HolderDevice* device){
+        return device->writeDescription(node);
     });
-
 }
 
 namespace cnoid {
