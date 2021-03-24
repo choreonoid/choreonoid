@@ -54,13 +54,13 @@ public:
     bool readRotation(const Mapping& node, const char* key, Matrix3& out_R) const;
 
     // The following functions are used for defining new node types
-    static void addNodeType(
-        const std::string& typeName,
+    static void registerNodeType(
+        const char* typeName,
         std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction);
 
-    [[deprecated("Use std::function<bool(StdBodyLoader* loader, Mapping* node)> as a function object type.")]]
+    [[deprecated("Use StdBodyLoader::registerNodeType.")]]
     static void addNodeType(
-        const std::string& typeName,
+        const char* typeName,
         std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction);
     
     struct NodeTypeRegistration {
@@ -68,7 +68,7 @@ public:
             const char* typeName,
             std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction)
         {
-            addNodeType(typeName, readFunction);
+            registerNodeType(typeName, readFunction);
         }
 
         [[deprecated("Use std::function<bool(StdBodyLoader* loader, Mapping* node)> as a function object type.")]]

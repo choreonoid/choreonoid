@@ -326,7 +326,7 @@ struct AGXMagneticJointDeviceRegistration
 {
     AGXMagneticJointDeviceRegistration()
     {
-        StdBodyLoader::addNodeType("AGXMagneticJointDevice", AGXMagneticJointDevice::createAGXMagneticJointDevice);
+        StdBodyLoader::registerNodeType("AGXMagneticJointDevice", AGXMagneticJointDevice::createAGXMagneticJointDevice);
     }
 }registrationAGXMagneticJointDevice;
 

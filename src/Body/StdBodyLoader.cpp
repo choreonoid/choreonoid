@@ -2078,8 +2078,8 @@ void StdBodyLoader::Impl::setDegreeModeAttributeToValueTreeNodes(ValueNode* node
 }
 
 
-void StdBodyLoader::addNodeType
-(const std::string& typeName, std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction)
+void StdBodyLoader::registerNodeType
+(const char* typeName, std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction)
 {
     std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
     customNodeFunctions[typeName] = readFunction;
@@ -2087,9 +2087,9 @@ void StdBodyLoader::addNodeType
 
 
 void StdBodyLoader::addNodeType
-(const std::string& typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
+(const char* typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
 {
-    addNodeType(
+    registerNodeType(
         typeName,
         [readFunction](StdBodyLoader* loader, Mapping* node){
             return readFunction(*loader, *node);
@@ -2100,7 +2100,7 @@ void StdBodyLoader::addNodeType
 StdBodyLoader::NodeTypeRegistration::NodeTypeRegistration
 (const char* typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
 {
-    addNodeType(
+    registerNodeType(
         typeName,
         [readFunction](StdBodyLoader* loader, Mapping* node){
             return readFunction(*loader, *node);

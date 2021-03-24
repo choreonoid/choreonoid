@@ -509,7 +509,7 @@ void AGXWire::updateWireNodeStates()
 struct AGXWireDeviceRegistration
 {
     AGXWireDeviceRegistration(){
-        cnoid::StdBodyLoader::addNodeType("AGXWireDevice", AGXWireDevice::createAGXWireDevice);
+        cnoid::StdBodyLoader::registerNodeType("AGXWireDevice", AGXWireDevice::createAGXWireDevice);
         SceneDevice::registerSceneDeviceFactory<AGXWireDevice>(SceneWireDevice::createSceneWireDevice);
         if(AGXObjectFactory::checkModuleEnalbled("AgX-Wires")){
         }else {

@@ -437,7 +437,7 @@ struct AGXBreakableJointDeviceRegistration
 {
     AGXBreakableJointDeviceRegistration()
     {
-        StdBodyLoader::addNodeType("AGXBreakableJointDevice", AGXBreakableJointDevice::createAGXBreakableJointDevice);
+        StdBodyLoader::registerNodeType("AGXBreakableJointDevice", AGXBreakableJointDevice::createAGXBreakableJointDevice);
     }
 }registrationAGXBreakableJointDevice;
 

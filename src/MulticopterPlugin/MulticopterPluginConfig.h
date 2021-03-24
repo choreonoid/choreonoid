@@ -17,7 +17,7 @@ namespace Multicopter{
     const std::string YAML_LINK_ADDITIONAL_MASS_TAG = "additionalMassCoef";
     const std::string YAML_LINK_ADDITIONAL_INERTIA_TAG = "additionalInertiaMatrix";
 
-    const std::string YAML_ROTOR_DEVICE_TAG = "RotorDevice";
+    static const char* YAML_ROTOR_DEVICE_TAG = "RotorDevice";
     const std::string YAML_ROTOR_NAME = "name";
     const std::string YAML_ROTOR_POSITION = "position";
     const std::string YAML_ROTOR_DIRECTION = "direction";

@@ -102,7 +102,7 @@ bool readRotorDevice(StdBodyLoader* loader, Mapping* node)
 struct TypeRegistration
 {
     TypeRegistration() {
-        StdBodyLoader::addNodeType(YAML_ROTOR_DEVICE_TAG, readRotorDevice);
+        StdBodyLoader::registerNodeType(YAML_ROTOR_DEVICE_TAG, readRotorDevice);
     }
 } registration;
 
