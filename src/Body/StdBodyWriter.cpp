@@ -9,6 +9,8 @@
 #include <cnoid/NullOut>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
+#include <mutex>
+#include <typeindex>
 #include "gettext.h"
 
 using namespace std;
@@ -16,34 +18,58 @@ using namespace cnoid;
 using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
+namespace {
+
+std::mutex deviceWriterRegistrationMutex;
+
+struct WriterInfo
+{
+    std::string typeName;
+    std::function<bool(StdBodyWriter* writer, Mapping* node, Device* device)> func;
+    WriterInfo(
+        const char* typeName,
+        const std::function<bool(StdBodyWriter* writer, Mapping* node, Device* device)>& func)
+        : typeName(typeName), func(func) { }
+};
+        
+map<std::type_index, WriterInfo> registeredDeviceWriterMap;
+
+}
+
 namespace cnoid {
 
 class StdBodyWriter::Impl
 {
 public:
+    StdBodyWriter* self;
     StdSceneWriter sceneWriter;
     YAMLWriter yamlWriter;
+    map<std::type_index, WriterInfo> deviceWriterMap;
+    map<int, vector<Device*>> linkIndexToDeviceListMap;
 
     ostream* os_;
     ostream& os() { return *os_; }
 
-    Impl();
+    Impl(StdBodyWriter* self);
+    void updateDeviceWriteFunctions();
     bool writeBody(Body* body, const std::string& filename);
     MappingPtr writeBody(Body* body);
     MappingPtr writeLink(Link* link);
     void writeLinkShape(Listing* elementsNode, SgGroup* shapeGroup, const char* type);
+    void writeLinkDevices(Listing* elementsNode, Link* link);
+    MappingPtr writeDevice(const std::string& typeName, Device* device);
 };
 
 }
 
-
 StdBodyWriter::StdBodyWriter()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
-StdBodyWriter::Impl::Impl()
+StdBodyWriter::Impl::Impl(StdBodyWriter* self)
+    : self(self)
 {
     sceneWriter.setExtModelFileMode(StdSceneWriter::EmbedModels);
     yamlWriter.setKeyOrderPreservationMode(true);
@@ -103,7 +129,13 @@ bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
     
     auto directory = filesystem::path(filename).parent_path().generic_string();
     sceneWriter.setBaseDirectory(directory);
-    
+
+    updateDeviceWriteFunctions();
+
+    for(auto& device : body->devices()){
+        linkIndexToDeviceListMap[device->link()->index()].push_back(device);
+    }
+
     auto topNode = writeBody(body);
 
     if(topNode){
@@ -114,7 +146,19 @@ bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
         }
     }
     
+    linkIndexToDeviceListMap.clear();
+    
     return result;
+}
+
+
+void StdBodyWriter::Impl::updateDeviceWriteFunctions()
+{
+    std::lock_guard<std::mutex> guard(deviceWriterRegistrationMutex);
+    if(deviceWriterMap.size() < registeredDeviceWriterMap.size()){
+        deviceWriterMap.insert(
+            registeredDeviceWriterMap.begin(), registeredDeviceWriterMap.end());
+    }
 }
 
 
@@ -217,6 +261,8 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
         writeLinkShape(elementsNode, link->collisionShape(), "Collision");
     }
 
+    writeLinkDevices(elementsNode, link);
+
     if(!elementsNode->empty()){
         node->insert("elements", elementsNode);
     }
@@ -249,4 +295,90 @@ void StdBodyWriter::Impl::writeLinkShape(Listing* elementsNode, SgGroup* shapeGr
             elementsNode->append(typeNode);
         }
     }
+}
+
+
+void StdBodyWriter::Impl::writeLinkDevices(Listing* elementsNode, Link* link)
+{
+    auto p = linkIndexToDeviceListMap.find(link->index());
+    if(p == linkIndexToDeviceListMap.end()){
+        return;
+    }
+    auto& devices = p->second;
+    for(auto& device : devices){
+        auto q = deviceWriterMap.find(typeid(*device));
+        if(q == deviceWriterMap.end()){
+            if(device->name().empty()){
+                os() << format(_("Warning: {0} of {1} cannot be written "
+                                 "because its writing function is not provided."),
+                               device->typeName(), link->name()) << endl;
+            } else {
+                os() << format(_("Warning: Device \"{0}\" of the {1} type cannot be written "
+                                 "because its writing function is not provided."),
+                               device->name(), device->typeName()) << endl;
+            }
+        } else {
+            auto& writer = q->second;
+            MappingPtr node = writeDevice(writer.typeName, device);
+            if(writer.func(self, node, device)){
+                elementsNode->append(node);
+            } else {
+                if(device->name().empty()){
+                    os() << format(_("Warning: Writing {0} of {1} failed."),
+                                   device->typeName(), link->name()) << endl;
+                } else {
+                    os() << format(_("Warning: Writing device \"{0}\" of the {1} type failed."),
+                                   device->name(), device->typeName()) << endl;
+                }
+            }
+        }
+    }
+}
+
+
+MappingPtr StdBodyWriter::Impl::writeDevice(const std::string& typeName, Device* device)
+{
+    MappingPtr node = new Mapping;
+
+    node->write("type", typeName);
+    
+    if(!device->name().empty()){
+        node->write("name", device->name());
+    }
+    if(device->id() >= 0){
+        node->write("id", device->id());
+    }
+    auto& p = device->localTranslation();
+    if(!p.isZero()){
+        write(node, "translation", p);
+    }
+    auto aa = AngleAxis(device->localRotation());
+    if(aa.angle() != 0.0){
+        writeDegreeAngleAxis(node, "rotation", aa);
+    }
+    
+    return node;
+}
+
+
+void StdBodyWriter::registerDeviceWriter_
+(const std::type_info& type, const char* typeName,
+ std::function<bool(StdBodyWriter* writer, Mapping* node, Device* device)> writeFunction)
+{
+    std::lock_guard<std::mutex> guard(deviceWriterRegistrationMutex);
+    registeredDeviceWriterMap.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(type),
+        std::forward_as_tuple(typeName, writeFunction));
+}
+
+
+bool StdBodyWriter::writeDeviceAs_(const std::type_info& type, Mapping* node, Device* device)
+{
+    auto p = impl->deviceWriterMap.find(type);
+    if(p != impl->deviceWriterMap.end()){
+        auto& writer = p->second;
+        return writer.func(this, node, device);
+    }
+    return true;
 }
