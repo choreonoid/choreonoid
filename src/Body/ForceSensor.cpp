@@ -4,6 +4,8 @@
 */
 
 #include "ForceSensor.h"
+#include "StdBodyFileUtil.h"
+#include <cnoid/EigenArchive>
 
 using namespace cnoid;
 
@@ -96,4 +98,22 @@ double* ForceSensor::writeState(double* out_buf) const
 {
     Eigen::Map<Vector6>(out_buf) << F_;
     return out_buf + 6;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<ForceSensor>
+registerHolderDevice(
+    "ForceSensor",
+    nullptr,
+    [](StdBodyWriter* /* writer */, Mapping* node, ForceSensor* sensor){
+        if(!sensor->F_max().head<3>().isConstant(std::numeric_limits<double>::max())){
+            write(node, "max_force", sensor->F_max().head<3>());
+        }
+        if(!sensor->F_max().tail<3>().isConstant(std::numeric_limits<double>::max())){
+            write(node, "max_torque", sensor->F_max().tail<3>());
+        }
+        return true;
+    });
 }

@@ -20,8 +20,8 @@ registerHolderDevice(
         }
         return false;
     },
-    [](StdBodyWriter* /* writer */, Mapping* node, HolderDevice* device){
-        return device->writeDescription(node);
+    [](StdBodyWriter* /* writer */, Mapping* node, HolderDevice* holder){
+        return holder->writeDescription(node);
     });
 }
 

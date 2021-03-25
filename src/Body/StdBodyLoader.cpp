@@ -367,6 +367,9 @@ public:
     bool readAngle(const Mapping* node, const char* key, double& angle) const {
         return sceneReader.readAngle(node, key, angle);
     }
+    bool readAngle(const Mapping* node, std::initializer_list<const char*> keys, double& angle) const {
+        return sceneReader.readAngle(node, keys, angle);
+    }
     bool readRotation(const Mapping* node, Matrix3& out_R) const {
         return sceneReader.readRotation(node, out_R);
     }
@@ -1691,8 +1694,12 @@ bool StdBodyLoader::Impl::readDevice(Device* device, Mapping* node)
 bool StdBodyLoader::Impl::readForceSensor(Mapping* node)
 {
     ForceSensorPtr sensor = new ForceSensor;
-    if(cnoid::read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
-    if(cnoid::read(node, "maxTorque", v)) sensor->F_max().tail<3>() = v;
+    if(cnoid::read(node, { "max_force", "maxForce" },  v)){
+        sensor->F_max().head<3>() = v;
+    }
+    if(cnoid::read(node, { "max_torque", "maxTorque" }, v)){
+        sensor->F_max().tail<3>() = v;
+    }
     return readDevice(sensor, node);
 }
 
@@ -1700,7 +1707,7 @@ bool StdBodyLoader::Impl::readForceSensor(Mapping* node)
 bool StdBodyLoader::Impl::readRateGyroSensor(Mapping* node)
 {
     RateGyroSensorPtr sensor = new RateGyroSensor;
-    if(cnoid::read(node, "maxAngularVelocity", v)){
+    if(cnoid::read(node, { "max_angular_velocity", "maxAngularVelocity" }, v)){
         if(isDegreeMode()){
             for(int i=0; i < 3; ++i){
                 v[i] = radian(v[i]);
@@ -1714,8 +1721,10 @@ bool StdBodyLoader::Impl::readRateGyroSensor(Mapping* node)
 
 bool StdBodyLoader::Impl::readAccelerationSensor(Mapping* node)
 {
-    AccelerationSensorPtr sensor = new AccelerationSensor();
-    if(cnoid::read(node, "maxAcceleration", v)) sensor->dv_max() = v;
+    AccelerationSensorPtr sensor = new AccelerationSensor;
+    if(cnoid::read(node, { "max_acceleration", "maxAcceleration" }, v)){
+        sensor->dv_max() = v;
+    }
     return readDevice(sensor, node);
 }
 
@@ -1757,7 +1766,7 @@ bool StdBodyLoader::Impl::readCamera(Mapping* node)
         }
     }
 
-    if(node->read("lensType", symbol)){
+    if(node->read({ "lens_type", "lensType" }, symbol)){
         if(symbol == "NORMAL"){
             camera->setLensType(Camera::NORMAL_LENS);
         } else if(symbol == "FISHEYE"){
@@ -1769,12 +1778,24 @@ bool StdBodyLoader::Impl::readCamera(Mapping* node)
         }
     }
 
-    if(node->read("width", value)) camera->setResolutionX(value);
-    if(node->read("height", value)) camera->setResolutionY(value);
-    if(readAngle(node, "fieldOfView", value)) camera->setFieldOfView(value);
-    if(node->read("nearClipDistance", value)) camera->setNearClipDistance(value);
-    if(node->read("farClipDistance", value)) camera->setFarClipDistance(value);
-    if(node->read("frameRate", value)) camera->setFrameRate(value);
+    if(node->read("width", value)){
+        camera->setResolutionX(value);
+    }
+    if(node->read("height", value)){
+        camera->setResolutionY(value);
+    }
+    if(readAngle(node, { "field_of_view", "fieldOfView" }, value)){
+        camera->setFieldOfView(value);
+    }
+    if(node->read({ "near_clip_distance", "nearClipDistance" }, value)){
+        camera->setNearClipDistance(value);
+    }
+    if(node->read({ "far_clip_distance", "farClipDistance" }, value)){
+        camera->setFarClipDistance(value);
+    }
+    if(node->read({ "frame_rate", "frameRate" }, value)){
+        camera->setFrameRate(value);
+    }
     
     return readDevice(camera, node);
 }

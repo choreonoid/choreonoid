@@ -4,6 +4,8 @@
 */
 
 #include "AccelerationSensor.h"
+#include "StdBodyFileUtil.h"
+#include <cnoid/EigenArchive>
 
 using namespace cnoid;
 
@@ -96,4 +98,19 @@ double* AccelerationSensor::writeState(double* out_buf) const
 {
     Eigen::Map<Vector3>(out_buf) << dv_;
     return out_buf + 3;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<AccelerationSensor>
+registerHolderDevice(
+    "AccelerationSensor",
+    nullptr,
+    [](StdBodyWriter* /* writer */, Mapping* node, AccelerationSensor* sensor){
+        if(!sensor->dv_max().isConstant(std::numeric_limits<double>::max())){
+            write(node, "max_acceleration", sensor->dv_max());
+        }
+        return true;
+    });
 }

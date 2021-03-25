@@ -4,9 +4,14 @@
 */
 
 #include "Camera.h"
+#include "StdBodyFileUtil.h"
+#include <cnoid/ValueTree>
+#include <fmt/format.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 
 const char* Camera::typeName() const
@@ -189,4 +194,32 @@ double* Camera::writeState(double* out_buf) const
     out_buf[6] = frameRate_;
     out_buf[7] = delay_;
     return out_buf + 8;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<Camera>
+registerHolderDevice(
+    "Camera",
+    nullptr,
+    [](StdBodyWriter* writer, Mapping* node, Camera* camera)
+    {
+        if(camera->imageType() == Camera::COLOR_IMAGE){
+            node->write("format", "COLOR");
+        }
+        if(camera->lensType() == Camera::FISHEYE_LENS){
+            node->write("lens_type", "FISHEYE");
+        } else if(camera->lensType() == Camera::DUAL_FISHEYE_LENS){
+            node->write("lens_type", "DUAL_FISHEYE");
+        }
+        node->write("width", camera->resolutionX());
+        node->write("height", camera->resolutionY());
+        node->write("field_of_view", camera->fieldOfView());
+        node->write("near_clip_distance", camera->nearClipDistance());
+        node->write("far_clip_distance", camera->farClipDistance());
+        node->write("frame_rate", camera->frameRate());
+        
+        return true;
+    });
 }

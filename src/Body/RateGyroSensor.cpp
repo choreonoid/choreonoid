@@ -4,6 +4,8 @@
 */
 
 #include "RateGyroSensor.h"
+#include "StdBodyFileUtil.h"
+#include <cnoid/EigenArchive>
 
 using namespace cnoid;
 
@@ -96,4 +98,19 @@ double* RateGyroSensor::writeState(double* out_buf) const
 {
     Eigen::Map<Vector3>(out_buf) << w_;
     return out_buf + 3;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<RateGyroSensor>
+registerHolderDevice(
+    "RateGyroSensor",
+    nullptr,
+    [](StdBodyWriter* /* writer */, Mapping* node, RateGyroSensor* sensor){
+        if(!sensor->w_max().isConstant(std::numeric_limits<double>::max())){
+            write(node, "max_angular_velocity", sensor->w_max());
+        }
+        return true;
+    });
 }
