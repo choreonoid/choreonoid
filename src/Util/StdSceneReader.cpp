@@ -1404,9 +1404,9 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
             if(!isYamlResouce){
                 extractNamedSceneNodes(info, resourceInfo, resource);
             } else {                
-                resource.info = info->yamlReader->findAnchoredNode(resource.fragment);
+                resource.info = resourceInfo->yamlReader->findAnchoredNode(resource.fragment);
                 if(!resource.info){
-                    resourceNode->throwException(
+                    info->throwException(
                         format(_("Fragment \"{0}\" is not found in \"{1}\"."),
                                resource.fragment, resource.uri));
                 }
