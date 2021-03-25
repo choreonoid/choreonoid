@@ -36,7 +36,7 @@ namespace filesystem = std::experimental::filesystem;
 namespace filesystem = std::filesystem;
 #endif
 typedef std::error_code error_code;
-typedef std::filesystem::copy_options copy_options;
+typedef filesystem::copy_options copy_options;
 }
 
 #else // __cplusplus > 201402L
