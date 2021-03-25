@@ -109,9 +109,12 @@ public:
     const std::string& uri() const;
     bool hasAbsoluteUri() const { return uriInfo && !uriInfo->absoluteUri.empty(); }
     const std::string& absoluteUri() const;
+    bool hasUriFragment() const { return uriInfo && !uriInfo->fragment.empty(); }
+    const std::string& uriFragment() const;
     void setUriByFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
     void setUriByFilePathAndCurrentDirectory(const std::string& filePath);
     void setUri(const std::string& uri, const std::string& absoluteUri);
+    void setUriFragment(const std::string& fragment);
     void clearUri() { uriInfo.reset(); }
 
     bool isNode() const { return hasAttribute(Node); }
@@ -138,6 +141,7 @@ private:
     struct UriInfo {
         std::string uri;
         std::string absoluteUri;
+        std::string fragment;
     };
     
     mutable std::unique_ptr<UriInfo> uriInfo;

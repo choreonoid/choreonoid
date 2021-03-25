@@ -130,11 +130,7 @@ public:
     SgNode* readSpotLight(Mapping* info);
     SgNode* readResourceAsScene(Mapping* info);
     Resource readResourceNode(Mapping* info, bool doSetUri);
-    void extractNamedYamlNodes(
-        Mapping* resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource);
-    void extractNamedSceneNodes(
-        Mapping* resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource);
-    void decoupleResourceNode(Mapping* resourceNode, const string& uri, const string& nodeName);
+    void extractNamedSceneNodes(Mapping* resourceNode, ResourceInfo* info, Resource& resource);
     ResourceInfo* getOrCreateResourceInfo(Mapping* resourceNode, const string& uri);
     stdx::filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(SceneNodeInfo& info);
@@ -1182,6 +1178,9 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOpti
     if(isDirectResource){
         mesh->setUriByFilePathAndBaseDirectory(
             resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
+        if(!resource.fragment.empty()){
+            resource.scene->setUriFragment(resource.fragment);
+        }
     }
         
     double creaseAngle;
@@ -1386,47 +1385,31 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
 
     resource.uri = (*info)["uri"].toString();
 
-    auto exclude = info->find("exclude");
-    if(exclude->isValid()){
-        if(exclude->isString()){
-            decoupleResourceNode(info, resource.uri, exclude->toString());
-        } else if(exclude->isListing()){
-            for(auto& nodeToExclude : *exclude->toListing()){
-                decoupleResourceNode(info, resource.uri, nodeToExclude->toString());
-            }
-        } else {
-            exclude->throwException(_("The value of \"exclude\" must be string or sequence."));
-        }
-    }
-
-    vector<string> names;
-    auto node = info->find("node");
-    if(node->isValid()){
-        if(node->isString()){
-            names.push_back(node->toString());
-        } else if(node->isListing()){
-            auto nodes = node->toListing();
-            for(auto& nodei : *nodes){
-                names.push_back(nodei->toString());
-            }
-        }
+    auto fragmentNode = info->find({ "fragment", "node" });
+    if(fragmentNode->isValid()){
+        resource.fragment = fragmentNode->toString();
     }
     
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(info, resource.uri);
     if(resourceInfo){
         resource.directory = resourceInfo->directory;
         bool isYamlResouce = (resourceInfo->yamlReader != nullptr);
-        if(names.empty()){
+        if(resource.fragment.empty()){
             if(isYamlResouce){
                 resource.info = resourceInfo->yamlReader->document();
             } else {
                 resource.scene = resourceInfo->scene;
             }
         } else {
-            if(isYamlResouce){
-                extractNamedYamlNodes(info, resourceInfo, names, resource.uri, resource);
-            } else {
-                extractNamedSceneNodes(info, resourceInfo, names, resource.uri, resource);
+            if(!isYamlResouce){
+                extractNamedSceneNodes(info, resourceInfo, resource);
+            } else {                
+                resource.info = info->yamlReader->findAnchoredNode(resource.fragment);
+                if(!resource.info){
+                    resourceNode->throwException(
+                        format(_("Fragment \"{0}\" is not found in \"{1}\"."),
+                               resource.fragment, resource.uri));
+                }
             }
         }
     }
@@ -1436,6 +1419,9 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
         if(doSetUri){
             resource.scene->setUriByFilePathAndBaseDirectory(
                 resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
+            if(!resource.fragment.empty()){
+                resource.scene->setUriFragment(resource.fragment);
+            }
         }
     }
 
@@ -1443,82 +1429,25 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
 }
 
 
-void StdSceneReader::Impl::extractNamedYamlNodes
-(Mapping* resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource)
-{
-    Listing* group = nullptr;
-    if(names.size() >= 2){
-        group = new Listing;
-        resource.info = group;
-    }
-    for(auto& name : names){
-        auto node = info->yamlReader->findAnchoredNode(name);
-        if(!node){
-            resourceNode->throwException(
-                format(_("Node \"{0}\" is not found in \"{1}\"."), name, uri));
-        }
-        if(group){
-            group->append(node);
-        } else {
-            resource.info = node;
-        }
-    }
-}
-
-
 void StdSceneReader::Impl::extractNamedSceneNodes
-(Mapping* resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, Resource& resource)
+(Mapping* resourceNode, ResourceInfo* info, Resource& resource)
 {
     unique_ptr<SceneNodeMap>& nodeMap = info->sceneNodeMap;
     if(!nodeMap){
         makeSceneNodeMap(info);
     }
-
-    SgGroupPtr group;
-    if(names.size() >= 2){
-        group = new SgGroup;
-        resource.scene = group;
-    }
-
-    for(auto& name : names){
-        auto iter = nodeMap->find(name);
-        if(iter == nodeMap->end()){
-            resourceNode->throwException(
-                format(_("Node \"{0}\" is not found in \"{1}\"."), name, uri));
-        } else {
-            SceneNodeInfo& nodeInfo = iter->second;
-            if(nodeInfo.parent){
-                nodeInfo.parent->removeChild(nodeInfo.node);
-                nodeInfo.parent.reset();
-                adjustNodeCoordinate(nodeInfo);
-            }
-            if(group){
-                group->addChild(nodeInfo.node);
-            } else {
-                resource.scene = nodeInfo.node;
-            }
+    auto iter = nodeMap->find(resource.fragment);
+    if(iter == nodeMap->end()){
+        resourceNode->throwException(
+            format(_("Fragment \"{0}\" is not found in \"{1}\"."), resource.fragment, resource.uri));
+    } else {
+        SceneNodeInfo& nodeInfo = iter->second;
+        if(nodeInfo.parent){
+            nodeInfo.parent->removeChild(nodeInfo.node);
+            nodeInfo.parent.reset();
+            adjustNodeCoordinate(nodeInfo);
         }
-    }
-}
-
-
-void StdSceneReader::Impl::decoupleResourceNode(Mapping* resourceNode, const string& uri, const string& nodeName)
-{
-    ResourceInfo* resourceInfo = getOrCreateResourceInfo(resourceNode, uri);
-    if(resourceInfo){
-        unique_ptr<SceneNodeMap>& nodeMap = resourceInfo->sceneNodeMap;
-        if(!nodeMap){
-            makeSceneNodeMap(resourceInfo);
-        }
-        auto iter = nodeMap->find(nodeName);
-        if(iter != nodeMap->end()){
-            SceneNodeInfo& nodeInfo = iter->second;
-            if(nodeInfo.parent){
-                nodeInfo.parent->removeChild(nodeInfo.node);
-                nodeInfo.parent.reset();
-                adjustNodeCoordinate(nodeInfo);
-            }
-        }
+        resource.scene = nodeInfo.node;
     }
 }
 

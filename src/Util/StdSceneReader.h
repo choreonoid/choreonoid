@@ -69,6 +69,7 @@ public:
         ValueNodePtr info;
         std::string uri;
         std::string directory;
+        std::string fragment;
     };
     Resource readResourceNode(Mapping* info);
     
