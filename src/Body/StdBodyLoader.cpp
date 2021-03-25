@@ -633,6 +633,13 @@ bool StdBodyLoader::readRotation(const Mapping* node, const char* key, Matrix3& 
 }
 
 
+bool StdBodyLoader::readRotation
+(const Mapping* node, std::initializer_list<const char*> keys, Matrix3& out_R) const
+{
+    return impl->sceneReader.readRotation(node, keys, out_R);
+}
+
+
 bool StdBodyLoader::readRotation(const Mapping& node, const char* key, Matrix3& out_R) const
 {
     return impl->readRotation(&node, key, out_R);
@@ -1805,23 +1812,31 @@ bool StdBodyLoader::Impl::readRangeSensor(Mapping* node)
 {
     RangeSensorPtr rangeSensor = new RangeSensor;
     
-    if(readAngle(node, "yawRange", value)){
+    if(readAngle(node, { "yaw_range", "yawRange" }, value)){
         rangeSensor->setYawRange(value);
     } else if(readAngle(node, "scanAngle", value)){ // backward compatibility
         rangeSensor->setYawRange(value);
     }
-    if(readAngle(node, "yawStep", value)){
+    if(readAngle(node, { "yaw_step", "yawStep" }, value)){
         rangeSensor->setYawStep(value);
     } else if(readAngle(node, "scanStep", value)){ // backward compatibility
         rangeSensor->setYawStep(value);
     }
-
-    if(readAngle(node, "pitchRange", value)) rangeSensor->setPitchRange(value);
-    if(readAngle(node, "pitchStep", value)) rangeSensor->setPitchStep(value);
-    if(node->read("minDistance", value)) rangeSensor->setMinDistance(value);
-    if(node->read("maxDistance", value)) rangeSensor->setMaxDistance(value);
-    if(node->read("scanRate", value)) rangeSensor->setScanRate(value);
-    
+    if(readAngle(node, { "pitch_range", "pitchRange" }, value)){
+        rangeSensor->setPitchRange(value);
+    }
+    if(readAngle(node, { "pitch_step", "pitchStep" }, value)){
+        rangeSensor->setPitchStep(value);
+    }
+    if(node->read({ "min_distance", "minDistance" }, value)){
+        rangeSensor->setMinDistance(value);
+    }
+    if(node->read({ "max_distance", "maxDistance" }, value)){
+        rangeSensor->setMaxDistance(value);
+    }
+    if(node->read({ "scan_rate", "scanRate" }, value)){
+        rangeSensor->setScanRate(value);
+    }
     return readDevice(rangeSensor, node);
 }
 
@@ -1830,12 +1845,24 @@ bool StdBodyLoader::Impl::readSpotLight(Mapping* node)
 {
     SpotLightPtr light = new SpotLight();
 
-    if(cnoid::read(node, "color", color)) light->setColor(color);
-    if(node->read("intensity", value)) light->setIntensity(value);
-    if(cnoid::read(node, "direction", v)) light->setDirection(v);
-    if(readAngle(node, "beamWidth", value)) light->setBeamWidth(value);
-    if(readAngle(node, "cutOffAngle", value)) light->setCutOffAngle(value);
-    if(node->read("cutOffExponent", value)) light->setCutOffExponent(value);
+    if(cnoid::read(node, "color", color)){
+        light->setColor(color);
+    }
+    if(node->read("intensity", value)){
+        light->setIntensity(value);
+    }
+    if(cnoid::read(node, "direction", v)){
+        light->setDirection(v);
+    }
+    if(readAngle(node, { "beam_width", "beamWidth" }, value)){
+        light->setBeamWidth(value);
+    }
+    if(readAngle(node, { "cut_off_angle", "cutOffAngle" }, value)){
+        light->setCutOffAngle(value);
+    }
+    if(node->read({ "cut_off_exponent", "cutOffExponent" }, value)){
+        light->setCutOffExponent(value);
+    }
     if(cnoid::read(node, "attenuation", color)){
         light->setConstantAttenuation(color[0]);
         light->setLinearAttenuation(color[1]);

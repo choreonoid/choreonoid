@@ -4,6 +4,8 @@
 */
 
 #include "RangeCamera.h"
+#include "StdBodyFileUtil.h"
+#include <cnoid/ValueTree>
 
 using namespace cnoid;
 
@@ -135,4 +137,35 @@ void RangeCamera::setOrganized(bool on)
         clearState();
     }
     isOrganized_ = on;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<RangeCamera>
+registerHolderDevice(
+    "Camera",
+    nullptr,
+    [](StdBodyWriter* writer, Mapping* node, RangeCamera* camera)
+    {
+        writer->writeDeviceAs<Camera>(node, camera);
+
+        if(camera->imageType() == Camera::COLOR_IMAGE){
+            if(camera->isOrganized()){
+                node->write("format", "COLOR_DEPTH");
+            } else {
+                node->write("format", "COLOR_POINT_CLOUD");
+            }
+        } else {
+            if(camera->isOrganized()){
+                node->write("format", "DEPTH");
+            } else {
+                node->write("format", "POINT_CLOUD");
+            }
+        }
+        node->write("min_distance", camera->minDistance());
+        node->write("max_distance", camera->maxDistance());
+        
+        return true;
+    });
 }

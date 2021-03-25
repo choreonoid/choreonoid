@@ -4,6 +4,7 @@
 */
 
 #include "MarkerDevice.h"
+#include "StdBodyFileUtil.h"
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneMarkers>
 #include <cnoid/StdBodyLoader>
@@ -16,14 +17,16 @@ using namespace cnoid;
 
 namespace {
 
-StdBodyLoader::NodeTypeRegistration
+StdBodyFileDeviceTypeRegistration<MarkerDevice>
 registerMarkerDevice(
     "MarkerDevice",
     [](StdBodyLoader* loader, Mapping* node){
         MarkerDevicePtr device = new MarkerDevice;
         return device->readDescription(loader, node);
+    },
+    [](StdBodyWriter* /* writer */, Mapping* node, MarkerDevice* marker){
+        return marker->writeDescription(node);
     });
-        
 
 int getSceneMarkerType(int type)
 {
@@ -233,7 +236,7 @@ double* MarkerDevice::writeState(double* out_buf) const
 bool MarkerDevice::readDescription(StdBodyLoader* loader, Mapping* node)
 {
     string type;
-    if(node->read("markerType", type)){
+    if(node->read({ "marker_type", "markerType" }, type)){
         if(type == "cross"){
             setMarkerType(MarkerDevice::CROSS_MARKER);
         } else if(type == "sphere"){
@@ -255,14 +258,44 @@ bool MarkerDevice::readDescription(StdBodyLoader* loader, Mapping* node)
 
     Isometry3 T = Isometry3::Identity();
     Vector3 p;
-    if(read(node, "offsetTranslation", p)){
+    if(read(node, { "offset_translation", "offsetTranslation" }, p)){
         T.translation() = p;
     }
     Matrix3 R;
-    if(loader->readRotation(node, "offsetRotation", R)){
+    if(loader->readRotation(node, { "offset_rotation", "offsetRotation" }, R)){
         T.linear() = R;
     }
     setOffsetPosition(T);
 
     return loader->readDevice(this, node);
+}
+
+
+bool MarkerDevice::writeDescription(Mapping* node) const
+{
+    const char* type;
+    switch(markerType()){
+    case MarkerDevice::CROSS_MARKER:  type = "cross";  break;
+    case MarkerDevice::SPHERE_MARKER: type = "sphere"; break;
+    case MarkerDevice::AXES_MARKER:   type = "axes";   break;
+    default: return false;
+    }
+    node->write("marker_type", type);
+
+    node->write("size", markerSize());
+    node->write("emission", emission());
+    node->write("transparency", transparency());
+    write(node, "color", color());
+
+    auto& T = offsetPosition();
+    auto p = T.translation();
+    if(!p.isZero()){
+        write(node, "offset_translation", p);
+    }
+    auto aa = AngleAxis(T.linear());
+    if(aa.angle() != 0.0){
+        writeDegreeAngleAxis(node, "offset_rotation", aa);
+    }
+    
+    return true;
 }

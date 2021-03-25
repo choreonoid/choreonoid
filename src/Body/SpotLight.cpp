@@ -4,6 +4,8 @@
 */
 
 #include "SpotLight.h"
+#include "StdBodyFileUtil.h"
+#include <cnoid/EigenArchive>
 
 using namespace cnoid;
 
@@ -100,4 +102,28 @@ double* SpotLight::writeState(double* out_buf) const
     out_buf[4] = cutOffAngle_;
     out_buf[5] = cutOffExponent_;
     return out_buf + 6;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<SpotLight>
+registerHolderDevice(
+    "SpotLight",
+    nullptr,
+    [](StdBodyWriter* writer, Mapping* node, SpotLight* light)
+    {
+        write(node, "color", light->color());
+        node->write("intensity", light->intensity());
+        write(node, "direction", light->direction());
+        node->write("beam_width", degree(light->beamWidth()));
+        node->write("cut_off_angle", degree(light->cutOffAngle()));
+        node->write("cut_off_exponent", light->cutOffExponent());
+        Vector3 a(
+            light->constantAttenuation(),
+            light->linearAttenuation(),
+            light->quadraticAttenuation());
+        write(node, "attenuation", a);
+        return true;
+    });
 }

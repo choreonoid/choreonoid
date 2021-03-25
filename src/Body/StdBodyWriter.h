@@ -56,7 +56,7 @@ public:
     template<class DeviceType>
     bool writeDeviceAs(Mapping* node, DeviceType* device)
     {
-        return writeDeviceAs(typeid(DeviceType), node, device);
+        return writeDeviceAs_(typeid(DeviceType), node, device);
     }
 
 private:

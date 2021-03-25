@@ -4,6 +4,8 @@
 */
 
 #include "RangeSensor.h"
+#include "StdBodyFileUtil.h"
+#include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
 
 using namespace std;
@@ -209,4 +211,24 @@ double* RangeSensor::writeState(double* out_buf) const
     out_buf[7] = scanRate_;
     out_buf[8] = delay_;
     return out_buf + 9;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<RangeSensor>
+registerHolderDevice(
+    "RangeSensor",
+    nullptr,
+    [](StdBodyWriter* /* writer */, Mapping* node, RangeSensor* sensor)
+    {
+        node->write("yaw_range", degree(sensor->yawRange()));
+        node->write("yaw_step", degree(sensor->yawStep()));
+        node->write("pitch_range", degree(sensor->pitchRange()));
+        node->write("pitch_step", degree(sensor->pitchStep()));
+        node->write("min_distance", sensor->minDistance());
+        node->write("max_distance", sensor->maxDistance());
+        node->write("scan_rate", sensor->scanRate());
+        return true;
+    });
 }

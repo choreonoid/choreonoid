@@ -43,6 +43,7 @@ public:
     bool readAngle(const Mapping* node, const char* key, double& angle) const;
     bool readRotation(const Mapping* node, Matrix3& out_R) const;
     bool readRotation(const Mapping* node, const char* key, Matrix3& out_R) const;
+    bool readRotation(const Mapping* node, std::initializer_list<const char*> keys, Matrix3& out_R) const;
 
     [[deprecated("Use readDevice(Device* device, Mapping* node)")]]
     bool readDevice(Device* device, Mapping& node);
