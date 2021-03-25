@@ -39,6 +39,7 @@ public:
     unique_ptr<ObjSceneWriter> objSceneWriter;
     int numSkippedNode;
     vector<filesystem::path> uriDirectoryStack;
+    set<string> extModelFiles;
 
     ostream* os_;
     ostream& os() { return *os_; }
@@ -344,6 +345,8 @@ bool StdSceneWriter::Impl::writeScene
     
     yamlWriter->putNode(header);
     yamlWriter->closeFile();
+
+    extModelFiles.clear();
     
     return true;
 }
@@ -360,6 +363,7 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
                 makeLinkToOriginalModelFile(archive, node);
             } else {
                 if(!replaceOriginalModelFile(archive, node, true, node)){
+                    // TODO: write the models as embeded models when the replacement fails
                     archive.reset();
                 }
             }
@@ -416,56 +420,76 @@ void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObjec
 }
 
 
+/*
+  TODO: Check if the scene can be written as the target model file formatd.
+  If it cannot, give up the writing.
+*/
 bool StdSceneWriter::Impl::replaceOriginalModelFile
 (Mapping* archive, SgNode* node, bool isAppearanceEnabled, SgObject* objectOfUri)
 {
-    bool replaced = false;
-
-    auto& uri = objectOfUri->uri();
-    
     // TODO: Consider the protocol header of the URI
-    filesystem::path path(uri);
+    filesystem::path path(objectOfUri->uri());
     if(path.is_absolute()){
-        path = filesystem::path("resource") / path.filename();
-    }
-
-    string extension;
-    if(extModelFileMode == ReplaceWithObjModelFiles){
-        extension = ".obj";
+        path = filesystem::path("resource") / path.stem();
     } else {
-        extension = ".scen";
+        path.replace_extension("");
     }
-    
-    path.replace_extension(extension);
+    if(objectOfUri->hasUriFragment()){
+        path += "-";
+        path += objectOfUri->uriFragment();
+    }
+    if(extModelFileMode == ReplaceWithObjModelFiles){
+        path += ".obj";
+    } else {
+        path += ".scen";
+    }
     auto basePath = getOrCreatePathVariableProcessor()->baseDirPath();
-    auto filename = (basePath / path).string();
+    auto fullPath = filesystem::lexically_normal(basePath / path);
+    auto filename = fullPath.string();
 
+    bool replaced = false;
     stdx::error_code ec;
-    filesystem::create_directories(basePath / path.parent_path(), ec);
     
-    if(!ec){
-        // TODO: Check if there is an existing file with the same name
-        if(extModelFileMode == ReplaceWithObjModelFiles){
-            auto writer = getOrCreateObjSceneWriter();
-            writer->setMaterialEnabled(isAppearanceEnabled);
-            replaced = writer->writeScene(filename, node);
-        } else {
-            auto writer = getOrCreateSubSceneWriter();
-            writer->setAppearanceEnabled(isAppearanceEnabled);
-            replaced = writer->writeScene(filename, node);
+    auto emplaced = extModelFiles.emplace(filename);
+    if(!emplaced.second){ // Already replaced
+        replaced = true;
+
+    } else { // New reference
+        if(objectOfUri->hasAbsoluteUri()){
+            auto& absUri = objectOfUri->absoluteUri();
+            if(absUri.find_first_of("file://") == 0){
+                filesystem::path orgFilePath(absUri.substr(7));
+                if(filesystem::equivalent(fullPath, orgFilePath, ec)){
+                    os() << format(_("Model file \"{0}\" cannot be replaced with the same format file in the same directory"),
+                                   filename) << endl;
+                    return false;
+                }
+            }
+        }
+        filesystem::create_directories(fullPath.parent_path(), ec);
+        if(!ec){
+            if(extModelFileMode == ReplaceWithObjModelFiles){
+                auto writer = getOrCreateObjSceneWriter();
+                writer->setMaterialEnabled(isAppearanceEnabled);
+                replaced = writer->writeScene(filename, node);
+            } else {
+                auto writer = getOrCreateSubSceneWriter();
+                writer->setAppearanceEnabled(isAppearanceEnabled);
+                replaced = writer->writeScene(filename, node);
+            }
         }
     }
+
     if(replaced){
         archive->write("uri", path.string(), DOUBLE_QUOTED);
-        if(objectOfUri->hasUriFragment()){
-            archive->write("fragment", objectOfUri->uriFragment());
-        }
+        
     } else {
         if(ec){
             os() << format(_("Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"),
-                           uri, filename, ec.message()) << endl;
+                           objectOfUri->uri(), filename, ec.message()) << endl;
         } else {
-            os() << format(_("Warning: Failed to replace model file \"{0}\" with \"{1}\"."), uri, filename) << endl;
+            os() << format(_("Warning: Failed to replace model file \"{0}\" with \"{1}\"."),
+                           objectOfUri->uri(), filename) << endl;
         }
     }
     
@@ -553,6 +577,7 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
             makeLinkToOriginalModelFile(archive, mesh);
         } else {
             if(!replaceOriginalModelFile(archive, shape, false, mesh)){
+                // TODO: write the models as embeded models when the replacement fails
                 archive.reset();
             }
         }
