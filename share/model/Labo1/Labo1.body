@@ -104,7 +104,6 @@ links:
       Resource: 
         <<: *GLOBAL_OFFSET
         uri: "resource/pipes.wrl"
-        exclude: [ Valve1Handle, Valve1Shaft ]
   -
     name: Valve1Handle
     parent: Pipes
