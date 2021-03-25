@@ -363,6 +363,32 @@ bool StdSceneReader::readAngle(const Mapping& info, const char* key, float& angl
 }
 
 
+bool StdSceneReader::readAngle(const Mapping* info, std::initializer_list<const char*> keys, double& angle) const
+{
+    bool found = false;
+    for(auto& key : keys){
+        found = readAngle(info, key, angle);
+        if(found){
+            break;
+        }
+    }
+    return found;
+}
+
+
+bool StdSceneReader::readAngle(const Mapping* info, std::initializer_list<const char*> keys, float& angle) const
+{
+    bool found = false;
+    for(auto& key : keys){
+        found = readAngle(info, key, angle);
+        if(found){
+            break;
+        }
+    }
+    return found;
+}
+
+
 bool StdSceneReader::Impl::readAngle(const Mapping* info, const char* key, double& angle) const
 {
     return self->readAngle(info, key, angle);
@@ -371,14 +397,7 @@ bool StdSceneReader::Impl::readAngle(const Mapping* info, const char* key, doubl
 
 bool StdSceneReader::Impl::readAngle(const Mapping* info, std::initializer_list<const char*> keys, double& angle) const
 {
-    bool found = false;
-    for(auto& key : keys){
-        found = self->readAngle(info, key, angle);
-        if(found){
-            break;
-        }
-    }
-    return found;
+    return self->readAngle(info, keys, angle);
 }
 
 
