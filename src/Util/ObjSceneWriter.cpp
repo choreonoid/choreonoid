@@ -8,8 +8,8 @@
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <fstream>
-#include <unordered_map>
-#include <unordered_set>
+#include <map>
+#include <set>
 #include <exception>
 #include "gettext.h"
 
@@ -30,15 +30,18 @@ public:
     // File stream to output the material template library
     std::ofstream mfs;
 
+    vector<SgObject*> namedObjectStack;
+    map<string, int> objectNameCounterMap;
     int objectIdCounter;
+    
     int vertexIndexOffset;
     int normalIndexOffset;
     int texCoordIndexOffset;
 
     bool isAppearanceEnabled;
     typedef IdPair<SgObject*> MaterialPair;
-    unordered_map<MaterialPair, string> materialLabelMap;
-    unordered_set<string> materialLabelSet;
+    map<MaterialPair, string> materialLabelMap;
+    set<string> materialLabelSet;
     MaterialPair lastMaterialPair;
     int materialLabelIdCounter;
 
@@ -101,6 +104,8 @@ bool ObjSceneWriter::isMaterialEnabled() const
 
 void ObjSceneWriter::Impl::clear()
 {
+    namedObjectStack.clear();
+    objectNameCounterMap.clear();
     objectIdCounter = 0;
     vertexIndexOffset = 1;
     normalIndexOffset = 1;
@@ -155,7 +160,20 @@ bool ObjSceneWriter::Impl::writeScene(const std::string& filename, SgNode* node)
 
 bool ObjSceneWriter::Impl::writeNode(SgNode* node, const Affine3& T_parent)
 {
-    if(node->isGroupNode()){
+    if(!node->isGroupNode()){
+        if(auto shape = dynamic_cast<SgShape*>(node)){
+            if(!shape->name().empty()){
+                namedObjectStack.push_back(shape);
+            }
+            bool result = writeShape(shape, T_parent);
+            if(!shape->name().empty()){
+                namedObjectStack.pop_back();
+            }
+            if(!result){
+                return false;
+            }
+        }
+    } else {
         auto group = node->toGroupNode();
         Affine3 T = T_parent;
         if(auto transform = group->toTransformNode()){
@@ -163,12 +181,14 @@ bool ObjSceneWriter::Impl::writeNode(SgNode* node, const Affine3& T_parent)
             transform->getTransform(T0);
             T = T * T0;
         }
+        if(!group->name().empty()){
+            namedObjectStack.push_back(group);
+        }
         for(auto& child : *group){
             writeNode(child, T);
         }
-    } else if(auto shape = dynamic_cast<SgShape*>(node)){
-        if(!writeShape(shape, T_parent)){
-            return false;
+        if(!group->name().empty()){
+            namedObjectStack.pop_back();
         }
     }
     return true;
@@ -327,7 +347,29 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
 
 void ObjSceneWriter::Impl::writeMesh(SgMesh* mesh, const Affine3& T)
 {
-    gfs << "g " << objectIdCounter++ << "\n";
+    string name;
+    if(!mesh->name().empty()){
+        name = mesh->name();
+    } else if(!namedObjectStack.empty()){
+        name = namedObjectStack.back()->name();
+        auto inserted = objectNameCounterMap.emplace(name, 1);
+        if(!inserted.second){
+            auto& counter = inserted.first->second;
+            string nameWithId;
+            while(true){
+                nameWithId = format("{0}_{1}", name, counter++);
+                if(objectNameCounterMap.find(nameWithId) == objectNameCounterMap.end()){
+                    name = nameWithId;
+                    break;
+                }
+            }
+        }
+    }
+    if(!name.empty()){
+        gfs << "g " << name << "\n";
+    } else {
+        gfs << "g " << objectIdCounter++ << "\n";
+    }
 
     const auto vertices = mesh->vertices();
     for(auto& v : *vertices){
