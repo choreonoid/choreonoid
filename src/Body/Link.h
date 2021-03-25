@@ -156,7 +156,10 @@ public:
     const std::string& jointSpecificName() const { return jointSpecificName_; }
         
     JointType jointType() const { return static_cast<JointType>(jointType_); }
-    std::string jointTypeString(bool useUnderscore = false) const;
+    const char* jointTypeLabel() const;
+    const char* jointTypeSymbol() const;
+    [[deprecated("Use jointTypeLabel or jointTypeSymbol")]]
+    const char* jointTypeString(bool useUnderscore = false) const;
     bool isFixedJoint() const { return (jointType_ >= FixedJoint); }
     bool isFreeJoint() const { return jointType_ == FreeJoint; }
     bool isRevoluteJoint() const { return jointType_ == RevoluteJoint; }

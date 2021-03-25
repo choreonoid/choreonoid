@@ -86,8 +86,8 @@ void exportPyLink(py::module& m)
         .def_property_readonly("offsetRotation", [](const Link& self){ return self.offsetRotation(); })
         .def_property_readonly("jointId", &Link::jointId)
         .def_property_readonly("jointType", &Link::jointType)
-        .def_property_readonly("jointTypeString", [](const Link& self){ return self.jointTypeString(); })
-        .def("getJointTypeString", &Link::jointTypeString, py::arg("useUnderscore") = false)
+        .def_property_readonly("jointTypeLabel", [](const Link& self){ return self.jointTypeLabel(); })
+        .def_property_readonly("jointTypeSymbol", [](const Link& self){ return self.jointTypeSymbol(); })
         .def("isFixedJoint", &Link::isFixedJoint)
         .def("isFreeJoint", &Link::isFreeJoint)
         .def("isRevoluteJoint", &Link::isRevoluteJoint)
@@ -199,6 +199,7 @@ void exportPyLink(py::module& m)
         .def("floatInfo", [](Link& self, const std::string& key) { return self.info<double>(key); })
 
         // deprecated
+        .def_property_readonly("jointTypeString", [](const Link& self){ return self.jointTypeLabel(); })
         .def("isRotationalJoint", &Link::isRotationalJoint)
         .def("isSlideJoint", &Link::isSlideJoint)
         .def_property(

@@ -300,17 +300,16 @@ const std::string& Link::jointName() const
 }
 
 
-std::string Link::jointTypeString(bool useUnderscore) const
+static const char* jointTypeString(int jointType, bool isSymbol)
 {
-    switch(jointType_){
-
-    case RevoluteJoint:  return "revolute";
-    case PrismaticJoint: return "prismatic";
-    case FreeJoint:      return "free";
-    case FixedJoint:     return "fixed";
+    switch(jointType){
+    case Link::RevoluteJoint:  return "revolute";
+    case Link::PrismaticJoint: return "prismatic";
+    case Link::FreeJoint:      return "free";
+    case Link::FixedJoint:     return "fixed";
         
-    case PseudoContinuousTrackJoint: {
-        if(useUnderscore){
+    case Link::PseudoContinuousTrackJoint: {
+        if(isSymbol){
             return "pseudo_continuous_track";
         } else {
             return "pseudo continuous track";
@@ -318,6 +317,24 @@ std::string Link::jointTypeString(bool useUnderscore) const
     }
     default: return "unknown";
     }
+}
+
+
+const char* Link::jointTypeLabel() const
+{
+    return ::jointTypeString(jointType_, false);
+}
+
+
+const char* Link::jointTypeSymbol() const
+{
+    return ::jointTypeString(jointType_, true);
+}
+
+
+const char* Link::jointTypeString(bool useUnderscore) const
+{
+    return ::jointTypeString(jointType_, useUnderscore);
 }
 
 

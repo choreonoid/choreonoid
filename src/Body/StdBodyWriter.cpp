@@ -226,7 +226,7 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
         writeDegreeAngleAxis(node, "rotation", aa);
     }
 
-    node->write("joint_type", link->jointTypeString());
+    node->write("joint_type", link->jointTypeSymbol());
 
     if(!link->isFreeJoint() && !link->isFixedJoint()){
         write(node, "joint_axis", link->jointAxis());

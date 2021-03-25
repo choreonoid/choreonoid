@@ -32,6 +32,7 @@ public:
     void updateLinkProperties(Link* link);
     void addProperty(const string& name, const QString& value);
     void addProperty(const string& name, const string& value);
+    void addProperty(const string& name, const char* value);
     void addProperty(const string& name, int value);
     void addProperty(const string& name, double value);
     void addProperty(const string& name, const Vector3& value);
@@ -120,7 +121,7 @@ void LinkPropertyView::Impl::updateLinkProperties(Link* link)
     addProperty(_("Mass"), link->mass());
     addProperty(_("Inertia tensor"), link->I());
     addProperty(_("Material"), link->materialName());
-    addProperty(_("Joint type"), link->jointTypeString());
+    addProperty(_("Joint type"), link->jointTypeLabel());
     if(link->isRotationalJoint() || link->isSlideJoint()){
         addProperty(_("Joint axis"), link->jointAxis());
         addProperty(_("Upper joint limit"), link->q_upper());
@@ -160,6 +161,12 @@ void LinkPropertyView::Impl::addProperty(const string& name, const QString& valu
 void LinkPropertyView::Impl::addProperty(const string& name, const string& value)
 {
     addProperty(name, QString(value.c_str()));
+}
+
+
+void LinkPropertyView::Impl::addProperty(const string& name, const char* value)
+{
+    addProperty(name, QString(value));
 }
 
 

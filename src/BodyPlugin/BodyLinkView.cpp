@@ -601,7 +601,7 @@ void BodyLinkView::Impl::updateLink()
     } else {
         qBox.hide();
         dqBox.hide();
-        jointTypeLabel.setText(currentLink->jointTypeString().c_str());
+        jointTypeLabel.setText(currentLink->jointTypeLabel());
     }
 
     materialLabel.setText(currentLink->materialName().c_str());
