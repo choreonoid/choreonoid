@@ -398,15 +398,17 @@ public:
         }
     }
 
-    void write(const std::string &key, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
-    void write(const std::string &key, const char* value, StringStyle stringStyle = PLAIN_STRING){
+    void write(const std::string& key, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
+    void write(const std::string& key, const char* value, StringStyle stringStyle = PLAIN_STRING){
         write(key, std::string(value), stringStyle);
     }
 
-    void write(const std::string &key, bool value);
-    void write(const std::string &key, int value);
-    void write(const std::string &key, double value);
+    void write(const std::string& key, bool value);
+    void write(const std::string& key, int value);
+    void write(const std::string& key, double value);
     void writePath(const std::string &key, const std::string& value);
+
+    template<class ArrayType> void writeAsListing(const std::string& key, const ArrayType& container);
 
     typedef enum { READ_MODE, WRITE_MODE } AssignMode;
 
@@ -625,6 +627,17 @@ private:
     friend class Mapping;
     friend class YAMLReaderImpl;
 };
+
+
+template<class ArrayType>
+void Mapping::writeAsListing(const std::string& key, const ArrayType& container)
+{
+    auto listing = createFlowStyleListing(key);
+    for(auto& value : container){
+        listing->append(value);
+    }
+}
+
 
 typedef ref_ptr<Listing> ListingPtr;
 
