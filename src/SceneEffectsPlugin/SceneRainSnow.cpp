@@ -7,7 +7,7 @@
 #include "SceneRainSnow.h"
 #include "ParticlesProgram.h"
 #include <cnoid/SceneNodeClassRegistry>
-#include <cnoid/EigenUtil>
+#include <cnoid/MathUtil>
 #include <cnoid/GLSLProgram>
 
 using namespace std;

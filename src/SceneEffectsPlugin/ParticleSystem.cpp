@@ -4,7 +4,6 @@
 */
 
 #include "ParticleSystem.h"
-#include <cnoid/StdSceneReader>
 #include <cnoid/EigenArchive>
 
 using namespace std;
@@ -45,14 +44,28 @@ ParticleSystem::~ParticleSystem()
 }
 
 
-void ParticleSystem::readParameters(const StdSceneReader* reader, const Mapping* node)
+void ParticleSystem::readParameters(const Mapping* info)
 {
-    node->read("offsetTime", offsetTime_);
-    node->read("lifeTime", lifeTime_);
-    node->read("particleSize", particleSize_);
-    node->read("numParticles", numParticles_);
-    node->read("initialSpeedAverage", initialSpeedAverage_);
-    node->read("initialSpeedVariation", initialSpeedVariation_);
-    reader->readAngle(node, "emissionRange", emissionRange_);
-    read(node, "acceleration", acceleration_);
+    info->read({ "offset_time", "offsetTime" }, offsetTime_);
+    info->read({ "life_time", "lifeTime" }, lifeTime_);
+    info->read({ "particle_size", "particleSize" }, particleSize_);
+    info->read({ "num_particles", "numParticles" }, numParticles_);
+    info->read({ "initial_speed_average", "initialSpeedAverage" }, initialSpeedAverage_);
+    info->read({ "initial_speed_variation", "initialSpeedVariation" }, initialSpeedVariation_);
+    info->readAngle({ "emission_range", "emissionRange" }, emissionRange_);
+    read(info, "acceleration", acceleration_);
 }
+
+
+void ParticleSystem::writeParameters(Mapping* info) const
+{
+    info->write("offset_time", offsetTime_);
+    info->write("life_time", lifeTime_);
+    info->write("particle_size", particleSize_);
+    info->write("num_particles", numParticles_);
+    info->write("initial_speed_average", initialSpeedAverage_);
+    info->write("initial_speed_variation", initialSpeedVariation_);
+    info->write("emission_range", degree(emissionRange_));
+    write(info, "acceleration", acceleration_);
+}
+   

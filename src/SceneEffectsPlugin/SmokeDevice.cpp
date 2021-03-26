@@ -5,46 +5,17 @@
 
 #include "SmokeDevice.h"
 #include "SceneSmoke.h"
-#include <cnoid/StdBodyLoader>
+#include "SceneEffectDeviceTypeRegistration.h"
 #include <cnoid/Body>
 #include <cnoid/SceneDevice>
-#include <cnoid/EigenUtil>
+#include <cnoid/MathUtil>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-StdBodyLoader::NodeTypeRegistration
-registerSmokeDevice(
-    "SmokeDevice",
-    [](StdBodyLoader* loader, const Mapping* node){
-        SmokeDevicePtr smoke = new SmokeDevice;
-        smoke->particleSystem().readParameters(loader->sceneReader(), node);
-        return loader->readDevice(smoke, node);
-    });
-
-SceneDevice::FactoryRegistration<SmokeDevice>
-registerSceneSmokeDeviceFactory(
-    [](Device* device){
-        auto smokeDevice = static_cast<SmokeDevice*>(device);
-        auto sceneSmoke = new SceneSmoke;
-        auto sceneDevice = new SceneDevice(device, sceneSmoke);
-
-        sceneDevice->setFunctionOnStateChanged(
-            [sceneSmoke, smokeDevice](){
-                sceneSmoke->particleSystem() = smokeDevice->particleSystem();
-                sceneSmoke->notifyUpdate();
-            });
-    
-        sceneDevice->setFunctionOnTimeChanged(
-            [sceneSmoke](double time){
-                sceneSmoke->setTime(time);
-                sceneSmoke->notifyUpdate();
-            });
-            
-        return sceneDevice;
-    });
+SceneEffectDeviceTypeRegistration<SmokeDevice, SceneSmoke> snowDeviceRegistration("SmokeDevice");;
 
 }
 

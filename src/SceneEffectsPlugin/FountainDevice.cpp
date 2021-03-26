@@ -5,48 +5,18 @@
 
 #include "FountainDevice.h"
 #include "SceneFountain.h"
-#include <cnoid/StdBodyLoader>
-#include <cnoid/SceneDevice>
+#include "SceneEffectDeviceTypeRegistration.h"
 #include <cnoid/Body>
-#include <cnoid/EigenUtil>
+#include <cnoid/MathUtil>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-StdBodyLoader::NodeTypeRegistration registerFountainDevice(
-    "FountainDevice",
-    [](StdBodyLoader* loader, const Mapping* node){
-        FountainDevicePtr fountain = new FountainDevice;
-        fountain->particleSystem().readParameters(loader->sceneReader(), node);
-        return loader->readDevice(fountain, node);
-    });
-
-SceneDevice::FactoryRegistration<FountainDevice>
-registerSceneFountainDeviceFactory(
-    [](Device* device){
-        auto fountainDevice = static_cast<FountainDevice*>(device);
-        auto sceneFountain = new SceneFountain;
-        auto sceneDevice = new SceneDevice(device, sceneFountain);
-        
-        sceneDevice->setFunctionOnStateChanged(
-            [sceneFountain, fountainDevice](){
-                sceneFountain->particleSystem() = fountainDevice->particleSystem();
-                sceneFountain->notifyUpdate();
-            });
-        
-        sceneDevice->setFunctionOnTimeChanged(
-            [sceneFountain](double time){
-                sceneFountain->setTime(time);
-                sceneFountain->notifyUpdate();
-            });
-        
-        return sceneDevice;
-    });
+SceneEffectDeviceTypeRegistration<FountainDevice, SceneFountain> snowDeviceRegistration("FountainDevice");;
 
 }
-
 
 FountainDevice::FountainDevice()
 {
