@@ -41,7 +41,15 @@ class CNOID_EXPORT ValueNode : public Referenced
 public:
     virtual ValueNode* clone() const;
 
-    enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, INSERT_LF = 8, APPEND_LF = 16, ANGLE_DEGREE = 32 };
+    enum TypeBit {
+        INVALID_NODE = 0,
+        SCALAR = 1,
+        MAPPING = 2,
+        LISTING = 4,
+        INSERT_LF = 8,
+        APPEND_LF = 16,
+        FORCED_RADIAN_MODE = 32
+    };
 
     bool isValid() const { return typeBits; }
     explicit operator bool() const { return isValid(); }
@@ -52,8 +60,9 @@ public:
     int toInt() const;
     double toDouble() const;
     float toFloat() const;
-    double toAngle() const;
     bool toBool() const;
+    [[deprecated("Check isForcedRadianMode() of the top node.")]]
+    double toAngle() const;
 
     bool isScalar() const { return typeBits & SCALAR; }
     bool isString() const { return typeBits & SCALAR; }
@@ -65,8 +74,17 @@ public:
         return toString();
     }
 
-    bool isDegreeMode() const { return typeBits & ANGLE_DEGREE; }
-    void setDegreeMode() { typeBits |= ANGLE_DEGREE; }
+    /**
+       \note If this is true for a top node given to a particular process, all the angle elements
+       contained in the sub tree are foreced to radians. Note that the mode of the nodes except for
+       the top node given to the process do not affect the angle unit.
+    */
+    bool isForcedRadianMode() const { return typeBits & FORCED_RADIAN_MODE; }
+    void setForcedRadianMode(bool on = true) { typeBits |= FORCED_RADIAN_MODE; }
+    [[deprecated("Use 'isForcedRadianMode' to determine the angle unit.")]]
+    bool isDegreeMode() const { return !isForcedRadianMode(); }
+    [[deprecated("Use ''setForcedRadianMode' to specify the angle unit.")]]
+    void setDegreeMode() { setForcedRadianMode(false); }
 
     template<typename T> T to() const;
 
@@ -329,13 +347,18 @@ public:
     template<class T>
     bool read(std::initializer_list<const char*> keys, T& out_value) const {
         for(auto& key : keys){
-            if(this->read( key, out_value)){
+            if(this->read(key, out_value)){
                 return true;
             }
         }
         return false;
     }
 
+    bool readAngle(const std::string& key, double& out_angle, const ValueNode* unitAttrNode = nullptr) const;
+    bool readAngle(const std::string& key, float& out_angle, const ValueNode* unitAttrNode = nullptr) const;
+    bool readAngle(std::initializer_list<const char*> keys, double& out_angle, const ValueNode* unitAttrNode = nullptr) const;
+    bool readAngle(std::initializer_list<const char*> keys, float& out_angle, const ValueNode* unitAttrNode = nullptr) const;
+    
     template <class T> T get(const std::string& key) const {
         T value;
         if(read(key, value)){

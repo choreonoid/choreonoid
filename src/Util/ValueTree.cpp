@@ -4,6 +4,7 @@
 
 #include "ValueTree.h"
 #include "UTF8.h"
+#include "MathUtil.h"
 #include <stack>
 #include <iostream>
 #include <yaml.h>
@@ -261,7 +262,7 @@ float ValueNode::toFloat() const
 
 double ValueNode::toAngle() const
 {
-    if(isDegreeMode()){
+    if(!isForcedRadianMode()){
         return TO_RADIAN * toDouble();
     } else {
         return toDouble();
@@ -852,6 +853,63 @@ bool Mapping::read(const std::string &key, float &out_value) const
         return node->read(out_value);
     }
     return false;
+}
+
+template<class T>
+static bool readAngle_(const Mapping* mapping, const std::string& key, T& out_angle, const ValueNode* unitAttrNode)
+{
+    if(mapping->read(key, out_angle)){
+        bool isDegree = true;
+        if(unitAttrNode){
+            isDegree = !unitAttrNode->isForcedRadianMode();
+        } else {
+            isDegree = !mapping->isForcedRadianMode();
+        }
+        if(isDegree){
+            out_angle = radian(out_angle);
+        }
+        return true;
+    }
+    return false;
+}
+
+
+bool Mapping::readAngle(const std::string& key, double& out_angle, const ValueNode* unitAttrNode) const
+{
+    return readAngle_(this, key, out_angle, unitAttrNode);
+}
+
+
+bool Mapping::readAngle(const std::string& key, float& out_angle, const ValueNode* unitAttrNode) const
+{
+    return readAngle_(this, key, out_angle, unitAttrNode);
+}
+
+
+template<class T>
+static bool readAngle_
+(const Mapping* mapping, std::initializer_list<const char*> keys, T& out_angle, const ValueNode* unitAttrNode)
+{
+    for(auto& key : keys){
+        if(readAngle_(mapping, key, out_angle, unitAttrNode)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool Mapping::readAngle
+(std::initializer_list<const char*> keys, double& out_angle, const ValueNode* unitAttrNode) const
+{
+    return readAngle_(this, keys, out_angle, unitAttrNode);
+}
+
+
+bool Mapping::readAngle
+(std::initializer_list<const char*> keys, float& out_angle, const ValueNode* unitAttrNode) const
+{
+    return readAngle_(this, keys, out_angle, unitAttrNode);
 }
 
 

@@ -183,20 +183,32 @@ Listing& write(Mapping& mapping, const std::string& key, const Eigen::Transform<
     return *write(&mapping, key, T.matrix());
 }
 
-CNOID_EXPORT bool readAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
-CNOID_EXPORT bool readDegreeAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
+/*
+  The following reading functions read angle values written in degrees unless isForcedRadianMode of
+  the container list is true.
+*/
+CNOID_EXPORT bool readAngleAxis(const Mapping* mapping, const std::string& key, Eigen::AngleAxisd& aa);
+CNOID_EXPORT bool readAngleAxis(const Mapping* mapping, std::initializer_list<const char*> keys, Eigen::AngleAxisd& aa);
+CNOID_EXPORT bool readAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& aa);
+CNOID_EXPORT bool readDegreeAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& aa);
+CNOID_EXPORT bool readRadianAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& aa);
 
-CNOID_EXPORT Listing* writeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& r);
-CNOID_EXPORT Listing* writeDegreeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& r);
-CNOID_EXPORT Listing& writeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
-CNOID_EXPORT Listing& writeDegreeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
+CNOID_EXPORT Listing* writeDegreeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& aa);
+CNOID_EXPORT Listing& writeDegreeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& aa);
+CNOID_EXPORT Listing* writeRadianAngleAxis_(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& aa);
 
-//! \deprecated
-CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
-//! \deprecated
-CNOID_EXPORT Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
+CNOID_EXPORT bool read(
+    const Mapping& mapping, const std::string& key, std::function<void(const Eigen::Vector3d& value)> setterFunc);
 
-CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, std::function<void(const Eigen::Vector3d& value)> setterFunc);
+[[deprecated]]
+CNOID_EXPORT Listing* writeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& aa);
+[[deprecated]]
+CNOID_EXPORT Listing& writeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& aa);
+                                           
+[[deprecated("Use readAngleAxis")]]
+CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& aa);
+[[deprecated("Use writeDegreeAngleAxis")]]
+CNOID_EXPORT Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& aa);
 
 }
 
