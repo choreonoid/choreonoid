@@ -11,6 +11,7 @@ namespace cnoid {
 class Body;
 class Device;
 class Mapping;
+class StdSceneWriter;
 
 class CNOID_EXPORT StdBodyWriter
 {
@@ -29,6 +30,9 @@ public:
     int extModelFileMode() const;
 
     bool writeBody(Body* body, const std::string& filename);
+
+    StdSceneWriter* sceneWriter();
+    const StdSceneWriter* sceneWriter() const;
 
     template<class DeviceType>
     static void registerDeviceWriter(

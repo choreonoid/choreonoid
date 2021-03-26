@@ -361,6 +361,18 @@ MappingPtr StdBodyWriter::Impl::writeDevice(const std::string& typeName, Device*
 }
 
 
+StdSceneWriter* StdBodyWriter::sceneWriter()
+{
+    return &impl->sceneWriter;
+}
+
+
+const StdSceneWriter* StdBodyWriter::sceneWriter() const
+{
+    return &impl->sceneWriter;
+}
+
+
 void StdBodyWriter::registerDeviceWriter_
 (const std::type_info& type, const char* typeName,
  std::function<bool(StdBodyWriter* writer, Mapping* info, const Device* device)> writeFunction)
