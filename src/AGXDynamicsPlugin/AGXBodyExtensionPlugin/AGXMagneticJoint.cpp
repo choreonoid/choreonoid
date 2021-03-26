@@ -5,6 +5,7 @@
 
 #include <cnoid/Device>
 #include <cnoid/StdBodyLoader>
+#include <cnoid/StdBodyWriter>
 #include <cnoid/YAMLReader>
 #include <cnoid/AGXBodyExtension>
 #include <cnoid/AGXBody>
@@ -315,6 +316,12 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
         ->add(new JointMagnetizer(joint, jp.validDistance, jp.validAngle));
 }
 
+static bool writeAGXMagneticJointDevice
+(StdBodyWriter* writer, Mapping* info, const AGXMagneticJointDevice* device)
+{
+    return true;
+}
+
 } // cnoid
 
 namespace{
@@ -326,7 +333,10 @@ struct AGXMagneticJointDeviceRegistration
 {
     AGXMagneticJointDeviceRegistration()
     {
-        StdBodyLoader::registerNodeType("AGXMagneticJointDevice", AGXMagneticJointDevice::createAGXMagneticJointDevice);
+        StdBodyLoader::registerNodeType(
+            "AGXMagneticJointDevice", AGXMagneticJointDevice::createAGXMagneticJointDevice);
+        StdBodyWriter::registerDeviceWriter<AGXMagneticJointDevice>(
+            "AGXMagneticJointDevice", writeAGXMagneticJointDevice);
     }
 }registrationAGXMagneticJointDevice;
 

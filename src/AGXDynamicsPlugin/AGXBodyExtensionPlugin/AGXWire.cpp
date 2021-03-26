@@ -6,6 +6,7 @@
 #include <cnoid/Device>
 #include <cnoid/ValueTree>
 #include <cnoid/StdBodyLoader>
+#include <cnoid/StdBodyWriter>
 #include <cnoid/YAMLReader>
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneDrawables>
@@ -367,11 +368,11 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
     m_wire = AGXObjectFactory::createWire(wireDesc);
 
     {   // set Material
-		string matName = "";
-		agx::Material* mat = nullptr;
-		if(wireDeviceInfo.read("materialName", matName)){
+        string matName = "";
+        agx::Material* mat = nullptr;
+        if(wireDeviceInfo.read("materialName", matName)){
             mat = sim->getMaterialManager()->getMaterial(matName);	
-		}
+        }
         if(mat == nullptr){
             mat = sim->getMaterialManager()->getMaterial(Material::nameOfId(0));
         }
@@ -504,15 +505,26 @@ void AGXWire::updateWireNodeStates()
     m_device->notifyStateChange();
 }
 
+
+bool writeAGXWireDevice(StdBodyWriter* writer, Mapping* info, const AGXWireDevice* device)
+{
+    info->insert(device->info());
+    return true;
+}
+    
+
 /////////////////////////////////////////////////////////////////////////
 // Register Device
 struct AGXWireDeviceRegistration
 {
     AGXWireDeviceRegistration(){
-        cnoid::StdBodyLoader::registerNodeType("AGXWireDevice", AGXWireDevice::createAGXWireDevice);
-        SceneDevice::registerSceneDeviceFactory<AGXWireDevice>(SceneWireDevice::createSceneWireDevice);
-        if(AGXObjectFactory::checkModuleEnalbled("AgX-Wires")){
-        }else {
+        cnoid::StdBodyLoader::registerNodeType(
+            "AGXWireDevice", AGXWireDevice::createAGXWireDevice);
+        cnoid::StdBodyWriter::registerDeviceWriter<AGXWireDevice>(
+            "AGXWireDevice", writeAGXWireDevice);
+        SceneDevice::registerSceneDeviceFactory<AGXWireDevice>(
+            SceneWireDevice::createSceneWireDevice);
+        if(!AGXObjectFactory::checkModuleEnalbled("AgX-Wires")){
             std::cout << "Please check you have AgX-Wires module license."
             "AGXWireDevice should not work." << std::endl;
         }

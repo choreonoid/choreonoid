@@ -97,7 +97,7 @@ public:
     const vector<string> getIdlerNames() const;
     const vector<string> getRollerNames() const;
     void setDesc(const AGXVehicleContinuousTrackDeviceDesc& desc);
-    void getDesc(AGXVehicleContinuousTrackDeviceDesc& desc);
+    void getDesc(AGXVehicleContinuousTrackDeviceDesc& desc) const;
     void reserveTrackStateSize(const unsigned int& num );
     void addTrackState(const Vector3& boxSize, const Isometry3& pos);
     TrackStates& getTrackStates();

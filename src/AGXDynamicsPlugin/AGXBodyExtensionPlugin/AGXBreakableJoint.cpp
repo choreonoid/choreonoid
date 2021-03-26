@@ -5,6 +5,7 @@
 
 #include <cnoid/Device>
 #include <cnoid/StdBodyLoader>
+#include <cnoid/StdBodyWriter>
 #include <cnoid/YAMLReader>
 #include <cnoid/AGXBodyExtension>
 #include <cnoid/AGXBody>
@@ -426,6 +427,12 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     sim->add(new JointBreaker(jp.getJointBreakerDesc(), device));
 }
 
+static bool writeAGXBreakableJointDevice
+(StdBodyWriter* writer, Mapping* info, const AGXBreakableJointDevice* device)
+{
+    return true;
+}
+
 } // cnoid
 
 namespace{
@@ -437,7 +444,10 @@ struct AGXBreakableJointDeviceRegistration
 {
     AGXBreakableJointDeviceRegistration()
     {
-        StdBodyLoader::registerNodeType("AGXBreakableJointDevice", AGXBreakableJointDevice::createAGXBreakableJointDevice);
+        StdBodyLoader::registerNodeType(
+            "AGXBreakableJointDevice", AGXBreakableJointDevice::createAGXBreakableJointDevice);
+        StdBodyWriter::registerDeviceWriter<AGXBreakableJointDevice>(
+            "AGXBreakableJointDevice", writeAGXBreakableJointDevice);
     }
 }registrationAGXBreakableJointDevice;
 

@@ -18,19 +18,28 @@ namespace Multicopter{
     const std::string YAML_LINK_ADDITIONAL_INERTIA_TAG = "additionalInertiaMatrix";
 
     static const char* YAML_ROTOR_DEVICE_TAG = "RotorDevice";
-    const std::string YAML_ROTOR_NAME = "name";
-    const std::string YAML_ROTOR_POSITION = "position";
-    const std::string YAML_ROTOR_DIRECTION = "direction";
-    const std::string YAML_ROTOR_VALUE_RANGE = "valueRange";
-    const std::string YAML_ROTOR_TORQUE_RANGE = "torqueRange";
+    static const char* YAML_ROTOR_NAME = "name";
+    static const char* YAML_ROTOR_POSITION = "position";
+    static const char* YAML_ROTOR_DIRECTION = "direction";
+    static const char* YAML_ROTOR_VALUE_RANGE = "value_range";
+    static const char* YAML_ROTOR_VALUE_RANGE_OLD = "valueRange";
+    static const char* YAML_ROTOR_TORQUE_RANGE = "torque_range";
+    static const char* YAML_ROTOR_TORQUE_RANGE_OLD = "torqueRange";
 
-    const std::string YAML_EFFECT_TAG = "effectParameter";
-    const std::string YAML_WALL_DISTANCE = "wallDistance";
-    const std::string YAML_WALL_NORM_MIDDLE_VALUE = "wallNormMiddleValue";
-    const std::string YAML_WALL_MAX_RATE = "wallMaxRate";
-    const std::string YAML_GROUND_DISTANCE = "groundDistance";
-    const std::string YAML_GROUND_NORM_MIDDLE_VALUE = "groundNormMiddleValue";
-    const std::string YAML_GROUND_MAX_RATE = "groundMaxRate";
+    static const char* YAML_EFFECT_TAG = "effect";
+    static const char* YAML_EFFECT_TAG_OLD = "effectParameter";
+    static const char* YAML_WALL_DISTANCE = "wall_distance";
+    static const char* YAML_WALL_DISTANCE_OLD = "wallDistance";
+    static const char* YAML_WALL_NORM_MIDDLE_VALUE = "wall_norm_middle_value";
+    static const char* YAML_WALL_NORM_MIDDLE_VALUE_OLD = "wallNormMiddleValue";
+    static const char* YAML_WALL_MAX_RATE = "wall_max_rate";
+    static const char* YAML_WALL_MAX_RATE_OLD = "wallMaxRate";
+    static const char* YAML_GROUND_DISTANCE = "ground_distance";
+    static const char* YAML_GROUND_DISTANCE_OLD = "groundDistance";
+    static const char* YAML_GROUND_NORM_MIDDLE_VALUE = "ground_norm_middle_value";
+    static const char* YAML_GROUND_NORM_MIDDLE_VALUE_OLD = "groundNormMiddleValue";
+    static const char* YAML_GROUND_MAX_RATE = "ground_max_rate";
+    static const char* YAML_GROUND_MAX_RATE_OLD = "groundMaxRate";
 
     const std::string AIR_DEFINITION_FILE_TAG = "AirEnvironment";
     const std::string AIR_DEFINITION_FILE_VERSION ="1.0.0";
