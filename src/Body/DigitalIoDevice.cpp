@@ -1,5 +1,6 @@
 #include "DigitalIoDevice.h"
 #include "StdBodyLoader.h"
+#include "StdBodyFileUtil.h"
 #include <cnoid/Body>
 #include <cnoid/ValueTree>
 #include <unordered_map>
@@ -7,20 +8,6 @@
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-StdBodyLoader::NodeTypeRegistration
-registerHolderDevice(
-    "DigitalIO",
-    [](StdBodyLoader* loader, Mapping* node){
-        DigitalIoDevicePtr device = new DigitalIoDevice;
-        if(device->readDescription(node)){
-            return loader->readDevice(device, node);
-        }
-        return false;
-    });
-}
 
 namespace cnoid {
 
@@ -284,10 +271,22 @@ double* DigitalIoDevice::writeState(double* out_buf) const
 
 bool DigitalIoDevice::readDescription(const Mapping* info)
 {
+    return readSpecifications(info) && readConfiguration(info);
+}
+
+
+bool DigitalIoDevice::readSpecifications(const Mapping* info)
+{
     int n;
     if(info->read("num_signal_lines", n)){
         setNumSignalLines(n);
     }
+    return true;
+}
+
+
+bool DigitalIoDevice::readConfiguration(const Mapping* info)
+{
     if(auto& outLabelsNode = *info->findMapping("out_labels")){
         for(auto& kv : outLabelsNode){
             setOutLabel(std::stoi(kv.first), kv.second->toString());
@@ -347,10 +346,21 @@ void DigitalIoDevice::Impl::readActions(DigitalIoDevice* self, const Mapping* in
 }
 
 
-bool DigitalIoDevice::writeDescription(Mapping* info)
+bool DigitalIoDevice::writeDescription(Mapping* info) const
+{
+    return writeSpecifications(info) && writeConfiguration(info);
+}
+
+
+bool DigitalIoDevice::writeSpecifications(Mapping* info) const
 {
     info->write("num_signal_lines", numSignalLines());
+    return true;
+}
 
+
+bool DigitalIoDevice::writeConfiguration(Mapping* info) const
+{
     if(!impl->outLabelMap.empty()){
         auto outLabelsNode = info->openMapping("out_labels");
         for(auto& kv : impl->outLabelMap){
@@ -404,4 +414,23 @@ void DigitalIoDevice::removeInputToDeviceSwitchConnection(int inputIndex)
 void DigitalIoDevice::clearInputToDeviceSwitchConnections()
 {
     impl->inputToDeviceSwitchConnectionMap.clear();
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<DigitalIoDevice>
+registerDigitalIoDevice(
+    "DigitalIO",
+    [](StdBodyLoader* loader, const Mapping* info){
+        DigitalIoDevicePtr device = new DigitalIoDevice;
+        if(device->readDescription(info)){
+            return loader->readDevice(device, info);
+        }
+        return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* info, const DigitalIoDevice* device){
+        return device->writeSpecifications(info);
+    });
+    
 }

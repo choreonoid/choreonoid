@@ -105,25 +105,46 @@ double* SpotLight::writeState(double* out_buf) const
 }
 
 
+bool SpotLight::readSpecifications(const Mapping* info)
+{
+    if(!PointLight::readSpecifications(info)){
+        return false;
+    }
+    read(info, "direction", direction_);
+    info->readAngle({ "beam_width", "beamWidth" }, beamWidth_);
+    info->readAngle({ "cut_off_angle", "cutOffAngle" }, cutOffAngle_);
+    info->read({ "cut_off_exponent", "cutOffExponent" }, cutOffExponent_);
+    return true;
+}
+
+
+bool SpotLight::writeSpecifications(Mapping* info) const
+{
+    if(!PointLight::writeSpecifications(info)){
+        return false;
+    }
+    write(info, "direction", direction_);
+    info->write("beam_width", degree(beamWidth_));
+    info->write("cut_off_angle", degree(cutOffAngle_));
+    info->write("cut_off_exponent", cutOffExponent_);
+    return true;
+}
+
+
 namespace {
 
 StdBodyFileDeviceTypeRegistration<SpotLight>
 registerHolderDevice(
     "SpotLight",
-    nullptr,
-    [](StdBodyWriter* writer, Mapping* node, SpotLight* light)
+     [](StdBodyLoader* loader, const Mapping* info){
+         SpotLightPtr light = new SpotLight;
+         if(light->readSpecifications(info)){
+            return loader->readDevice(light, info);
+        }
+        return false;
+    },
+    [](StdBodyWriter* writer, Mapping* info, const SpotLight* light)
     {
-        write(node, "color", light->color());
-        node->write("intensity", light->intensity());
-        write(node, "direction", light->direction());
-        node->write("beam_width", degree(light->beamWidth()));
-        node->write("cut_off_angle", degree(light->cutOffAngle()));
-        node->write("cut_off_exponent", light->cutOffExponent());
-        Vector3 a(
-            light->constantAttenuation(),
-            light->linearAttenuation(),
-            light->quadraticAttenuation());
-        write(node, "attenuation", a);
-        return true;
+        return light->writeSpecifications(info);
     });
 }

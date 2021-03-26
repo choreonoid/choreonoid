@@ -11,8 +11,8 @@ struct StdBodyFileDeviceTypeRegistration
 {
     StdBodyFileDeviceTypeRegistration(
         const char* typeName,
-        std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction,
-        std::function<bool(StdBodyWriter* writer, Mapping* node, DeviceType* device)> writeFunction)
+        std::function<bool(StdBodyLoader* loader, const Mapping* info)> readFunction,
+        std::function<bool(StdBodyWriter* writer, Mapping* info, const DeviceType* device)> writeFunction)
     {
         if(readFunction){
             StdBodyLoader::registerNodeType(typeName, readFunction);

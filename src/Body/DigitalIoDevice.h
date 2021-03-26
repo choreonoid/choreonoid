@@ -46,7 +46,11 @@ public:
     SignalProxy<void(bool on)> sigInput(int index);
 
     bool readDescription(const Mapping* info);
-    bool writeDescription(Mapping* info);
+    bool readSpecifications(const Mapping* info);
+    bool readConfiguration(const Mapping* info);
+    bool writeDescription(Mapping* info) const;
+    bool writeSpecifications(Mapping* info) const;
+    bool writeConfiguration(Mapping* info) const;
 
     // Tentative api. The role of this API will be replaced with the StdActionController device.
     void setInputToDeviceSwitchConnection(int inputIndex, const std::string& deviceName);

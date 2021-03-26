@@ -7,14 +7,6 @@
 #include "BodyLoader.h"
 #include "BodyHandlerManager.h"
 #include "Body.h"
-#include "ForceSensor.h"
-#include "RateGyroSensor.h"
-#include "AccelerationSensor.h"
-#include "Camera.h"
-#include "RangeCamera.h"
-#include "RangeSensor.h"
-#include "PointLight.h"
-#include "SpotLight.h"
 #include <cnoid/StdSceneReader>
 #include <cnoid/EigenArchive>
 #include <cnoid/Exception>
@@ -125,9 +117,14 @@ public:
         NodeFunction function;
         bool isTransformDerived;
         bool hasElements;
-        void set(NodeFunction f) { function = f; isTransformDerived = false; hasElements = false; }
-        void setT(NodeFunction f) { function = f; isTransformDerived = true; hasElements = false; }
-        void setTE(NodeFunction f) { function = f; isTransformDerived = true; hasElements = true; }
+        void set(NodeFunction f, bool isTransformDerived, bool hasElements, bool isExternalFunction){
+            function = f;
+            this->isTransformDerived = isTransformDerived;
+            this->hasElements = hasElements;
+        }
+        void set(NodeFunction f) { set(f, false, false, false); }
+        void setT(NodeFunction f) { set(f, true, false, false); }
+        void setTE(NodeFunction f) { set(f, true, true, false); }
     };
     typedef unordered_map<string, NodeFunctionInfo> NodeFunctionMap;
     
@@ -319,13 +316,7 @@ public:
     bool readVisualOrCollision(Mapping* node, bool isVisual);
     bool readVisualOrCollisionContents(Mapping* node);
     bool readResource(Mapping* node);
-    bool readDevice(Device* device, Mapping* node);
-    bool readForceSensor(Mapping* node);
-    bool readRateGyroSensor(Mapping* node);
-    bool readAccelerationSensor(Mapping* node);
-    bool readCamera(Mapping* node);
-    bool readRangeSensor(Mapping* node);
-    bool readSpotLight(Mapping* node);
+    bool readDevice(Device* device, const Mapping* node);
     void readContinuousTrackNode(Mapping* linkNode);
     void addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle);
     void readSubBodyNode(Mapping* linkNode);
@@ -333,7 +324,6 @@ public:
     void readExtraJoints(Mapping* topNode);
     void readExtraJoint(Mapping* node);
     void readBodyHandlers(ValueNode* node);
-    void setDegreeModeAttributeToValueTreeNodes(ValueNode* node);
     
     bool isDegreeMode() const {
         return sceneReader.isDegreeMode();
@@ -502,13 +492,6 @@ StdBodyLoader::Impl::Impl(StdBodyLoader* self)
     nodeFunctions["Visual"].set([&](Mapping* node){ return readVisualOrCollision(node, true); });
     nodeFunctions["Collision"].set([&](Mapping* node){ return readVisualOrCollision(node, false); });
     nodeFunctions["Resource"].set([&](Mapping* node){ return readResource(node); });
-    nodeFunctions["ForceSensor"].setTE([&](Mapping* node){ return readForceSensor(node); });
-    nodeFunctions["RateGyroSensor"].setTE([&](Mapping* node){ return readRateGyroSensor(node); });
-    nodeFunctions["AccelerationSensor"].setTE([&](Mapping* node){ return readAccelerationSensor(node); });
-    nodeFunctions["Camera"].setTE([&](Mapping* node){ return readCamera(node); });
-    nodeFunctions["CameraDevice"].setTE([&](Mapping* node){ return readCamera(node); });
-    nodeFunctions["RangeSensor"].setTE([&](Mapping* node){ return readRangeSensor(node); });
-    nodeFunctions["SpotLight"].setTE([&](Mapping* node){ return readSpotLight(node); });
 
     numCustomNodeFunctions = 0;
 
@@ -729,8 +712,8 @@ bool StdBodyLoader::Impl::readTopNode(Body* body, Mapping* topNode)
 
             auto bodyHandlers = topNode->extract("body_handlers");
 
-            if(isDegreeMode()){
-                setDegreeModeAttributeToValueTreeNodes(topNode);
+            if(!isDegreeMode()){
+                topNode->setForcedRadianMode();
             }
             body->resetInfo(topNode);
 
@@ -1100,8 +1083,8 @@ LinkPtr StdBodyLoader::Impl::readLinkContents(Mapping* node, LinkPtr link)
 
         }
 
-        if(isDegreeMode()){
-            setDegreeModeAttributeToValueTreeNodes(node);
+        if(!isDegreeMode()){
+            node->setForcedRadianMode();
         }
         link->resetInfo(node);
     }
@@ -1424,6 +1407,10 @@ bool StdBodyLoader::Impl::readNode(Mapping* node, const string& type)
         nameStack.push_back(string());
         node->read("name", nameStack.back());
         
+        if(!isDegreeMode()){
+            node->setForcedRadianMode();
+        }
+
         if(info.isTransformDerived){
             if(readTransformContents(node, info.function, info.hasElements)){
                 isSceneNodeAdded = true;
@@ -1669,24 +1656,24 @@ bool StdBodyLoader::Impl::readResource(Mapping* node)
 }
         
 
-bool StdBodyLoader::readDevice(Device* device, Mapping* node)
+bool StdBodyLoader::readDevice(Device* device, const Mapping* info)
 {
-    return impl->readDevice(device, node);
+    return impl->readDevice(device, info);
 }
 
 
-bool StdBodyLoader::readDevice(Device* device, Mapping& node)
+bool StdBodyLoader::readDevice(Device* device, const Mapping& info)
 {
-    return impl->readDevice(device, &node);
+    return impl->readDevice(device, &info);
 }
 
 
-bool StdBodyLoader::Impl::readDevice(Device* device, Mapping* node)
+bool StdBodyLoader::Impl::readDevice(Device* device, const Mapping* info)
 {
     device->setName(nameStack.back());
 
-    if(node->read("id", id)) device->setId(id);
-    if(node->read("on", on)) device->on(on);
+    if(info->read("id", id)) device->setId(id);
+    if(info->read("on", on)) device->on(on);
 
     const Affine3& T = transformStack.back();
     device->setLocalTranslation(T.translation());
@@ -1695,181 +1682,6 @@ bool StdBodyLoader::Impl::readDevice(Device* device, Mapping* node)
     body->addDevice(device);
 
     return false;
-}
-
-
-bool StdBodyLoader::Impl::readForceSensor(Mapping* node)
-{
-    ForceSensorPtr sensor = new ForceSensor;
-    if(cnoid::read(node, { "max_force", "maxForce" },  v)){
-        sensor->F_max().head<3>() = v;
-    }
-    if(cnoid::read(node, { "max_torque", "maxTorque" }, v)){
-        sensor->F_max().tail<3>() = v;
-    }
-    return readDevice(sensor, node);
-}
-
-
-bool StdBodyLoader::Impl::readRateGyroSensor(Mapping* node)
-{
-    RateGyroSensorPtr sensor = new RateGyroSensor;
-    if(cnoid::read(node, { "max_angular_velocity", "maxAngularVelocity" }, v)){
-        if(isDegreeMode()){
-            for(int i=0; i < 3; ++i){
-                v[i] = radian(v[i]);
-            }
-        }
-        sensor->w_max() = v;
-    }
-    return readDevice(sensor, node);
-}
-
-
-bool StdBodyLoader::Impl::readAccelerationSensor(Mapping* node)
-{
-    AccelerationSensorPtr sensor = new AccelerationSensor;
-    if(cnoid::read(node, { "max_acceleration", "maxAcceleration" }, v)){
-        sensor->dv_max() = v;
-    }
-    return readDevice(sensor, node);
-}
-
-
-bool StdBodyLoader::Impl::readCamera(Mapping* node)
-{
-    CameraPtr camera;
-    RangeCamera* range = 0;
-
-    string format;
-    if(node->read("format", format)){
-        if(format == "COLOR"){
-            camera = new Camera;
-            camera->setImageType(Camera::COLOR_IMAGE);
-        } else if(format == "DEPTH"){
-            range = new RangeCamera;
-            range->setOrganized(true);
-            range->setImageType(Camera::NO_IMAGE);
-        } else if(format == "COLOR_DEPTH"){
-            range = new RangeCamera;
-            range->setOrganized(true);
-            range->setImageType(Camera::COLOR_IMAGE);
-        } else if(format == "POINT_CLOUD"){
-            range = new RangeCamera;
-            range->setOrganized(false);
-            range->setImageType(Camera::NO_IMAGE);
-        } else if(format == "COLOR_POINT_CLOUD"){
-            range = new RangeCamera;
-            range->setOrganized(false);
-            range->setImageType(Camera::COLOR_IMAGE);
-        }
-    }
-
-    if(!camera){
-        if(range){
-            camera = range;
-        } else {
-            camera = new Camera;
-        }
-    }
-
-    if(node->read({ "lens_type", "lensType" }, symbol)){
-        if(symbol == "NORMAL"){
-            camera->setLensType(Camera::NORMAL_LENS);
-        } else if(symbol == "FISHEYE"){
-            camera->setLensType(Camera::FISHEYE_LENS);
-            //  throwException    ImageType must be COLOR
-        } else if(symbol == "DUAL_FISHEYE"){
-            camera->setLensType(Camera::DUAL_FISHEYE_LENS);
-            //  throwException    ImageType must be COLOR
-        }
-    }
-
-    if(node->read("width", value)){
-        camera->setResolutionX(value);
-    }
-    if(node->read("height", value)){
-        camera->setResolutionY(value);
-    }
-    if(readAngle(node, { "field_of_view", "fieldOfView" }, value)){
-        camera->setFieldOfView(value);
-    }
-    if(node->read({ "near_clip_distance", "nearClipDistance" }, value)){
-        camera->setNearClipDistance(value);
-    }
-    if(node->read({ "far_clip_distance", "farClipDistance" }, value)){
-        camera->setFarClipDistance(value);
-    }
-    if(node->read({ "frame_rate", "frameRate" }, value)){
-        camera->setFrameRate(value);
-    }
-    
-    return readDevice(camera, node);
-}
-
-
-bool StdBodyLoader::Impl::readRangeSensor(Mapping* node)
-{
-    RangeSensorPtr rangeSensor = new RangeSensor;
-    
-    if(readAngle(node, { "yaw_range", "yawRange" }, value)){
-        rangeSensor->setYawRange(value);
-    } else if(readAngle(node, "scanAngle", value)){ // backward compatibility
-        rangeSensor->setYawRange(value);
-    }
-    if(readAngle(node, { "yaw_step", "yawStep" }, value)){
-        rangeSensor->setYawStep(value);
-    } else if(readAngle(node, "scanStep", value)){ // backward compatibility
-        rangeSensor->setYawStep(value);
-    }
-    if(readAngle(node, { "pitch_range", "pitchRange" }, value)){
-        rangeSensor->setPitchRange(value);
-    }
-    if(readAngle(node, { "pitch_step", "pitchStep" }, value)){
-        rangeSensor->setPitchStep(value);
-    }
-    if(node->read({ "min_distance", "minDistance" }, value)){
-        rangeSensor->setMinDistance(value);
-    }
-    if(node->read({ "max_distance", "maxDistance" }, value)){
-        rangeSensor->setMaxDistance(value);
-    }
-    if(node->read({ "scan_rate", "scanRate" }, value)){
-        rangeSensor->setScanRate(value);
-    }
-    return readDevice(rangeSensor, node);
-}
-
-
-bool StdBodyLoader::Impl::readSpotLight(Mapping* node)
-{
-    SpotLightPtr light = new SpotLight();
-
-    if(cnoid::read(node, "color", color)){
-        light->setColor(color);
-    }
-    if(node->read("intensity", value)){
-        light->setIntensity(value);
-    }
-    if(cnoid::read(node, "direction", v)){
-        light->setDirection(v);
-    }
-    if(readAngle(node, { "beam_width", "beamWidth" }, value)){
-        light->setBeamWidth(value);
-    }
-    if(readAngle(node, { "cut_off_angle", "cutOffAngle" }, value)){
-        light->setCutOffAngle(value);
-    }
-    if(node->read({ "cut_off_exponent", "cutOffExponent" }, value)){
-        light->setCutOffExponent(value);
-    }
-    if(cnoid::read(node, "attenuation", color)){
-        light->setConstantAttenuation(color[0]);
-        light->setLinearAttenuation(color[1]);
-        light->setQuadraticAttenuation(color[2]);
-    }
-
-    return readDevice(light, node);
 }
 
 
@@ -1926,11 +1738,11 @@ void StdBodyLoader::Impl::addTrackLink(int index, LinkPtr link, Mapping* node, s
 
     link->setInitialJointAngle(initialAngle);
 
-    LinkInfoPtr info = new LinkInfo;
-    info->link = link;
-    info->node = node;
-    info->parent = io_parent;
-    linkInfos.push_back(info);
+    LinkInfoPtr linkInfo = new LinkInfo;
+    linkInfo->link = link;
+    linkInfo->node = node;
+    linkInfo->parent = io_parent;
+    linkInfos.push_back(linkInfo);
     
     io_parent = link->name();
 }
@@ -2045,42 +1857,42 @@ void StdBodyLoader::Impl::readExtraJoints(Mapping* topNode)
 }
 
 
-void StdBodyLoader::Impl::readExtraJoint(Mapping* node)
+void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
 {
     ExtraJoint joint;
 
-    joint.setLink(0, body->link(node->get("link1Name").toString()));
-    joint.setLink(1, body->link(node->get("link2Name").toString()));
+    joint.setLink(0, body->link(info->get("link1Name").toString()));
+    joint.setLink(1, body->link(info->get("link2Name").toString()));
 
     for(int i=0; i < 2; ++i){
         if(!joint.link(i)){
-            node->throwException(
+            info->throwException(
                 format(_("The link specified in \"link{}Name\" is not found"), (i + 1)));
         }
     }
 
     string jointType;
-    if(!node->read({ "joint_type", "jointType" }, jointType)){
-        node->throwException(_("The joint type must be specified with the \"joint_type\" key"));
+    if(!info->read({ "joint_type", "jointType" }, jointType)){
+        info->throwException(_("The joint type must be specified with the \"joint_type\" key"));
     }
     if(jointType == "piston"){
         joint.setType(ExtraJoint::EJ_PISTON);
-        auto axisNode = node->find({ "axis", "jointAxis" });
+        auto axisNode = info->find({ "axis", "jointAxis" });
         if(axisNode->isValid()){
             readAxis(axisNode, v);
             joint.setAxis(v);
         } else {
-            node->throwException(_("The axis must be specified for the pistion type"));
+            info->throwException(_("The axis must be specified for the pistion type"));
         }
     } else if(jointType == "ball"){
         joint.setType(ExtraJoint::EJ_BALL);
     } else {
-        node->throwException(format(_("Joint type \"{}\" is not available"), jointType));
+        info->throwException(format(_("Joint type \"{}\" is not available"), jointType));
     }
 
-    readEx(node, { "link1_local_pos", "link1LocalPos" }, v);
+    readEx(info, { "link1_local_pos", "link1LocalPos" }, v);
     joint.setPoint(0, v);
-    readEx(node, { "link2_local_pos", "link2LocalPos" }, v);
+    readEx(info, { "link2_local_pos", "link2LocalPos" }, v);
     joint.setPoint(1, v);
 
     body->addExtraJoint(joint);
@@ -2101,33 +1913,8 @@ void StdBodyLoader::Impl::readBodyHandlers(ValueNode* node)
 }
 
 
-void StdBodyLoader::Impl::setDegreeModeAttributeToValueTreeNodes(ValueNode* node)
-{
-    if(node->isScalar()){
-        node->setDegreeMode();
-    } else if(node->isMapping()){
-        for(auto& kv : *node->toMapping()){
-            auto child = kv.second;
-            if(child->isScalar()){
-                child->setDegreeMode();
-            } else {
-                setDegreeModeAttributeToValueTreeNodes(child);
-            }
-        }
-    } else if(node->isListing()){
-        for(auto& child : *node->toListing()){
-            if(child->isScalar()){
-                child->setDegreeMode();
-            } else {
-                setDegreeModeAttributeToValueTreeNodes(child);
-            }
-        }
-    }
-}
-
-
 void StdBodyLoader::registerNodeType
-(const char* typeName, std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction)
+(const char* typeName, std::function<bool(StdBodyLoader* loader, const Mapping* info)> readFunction)
 {
     std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
     customNodeFunctions[typeName] = readFunction;
@@ -2135,22 +1922,22 @@ void StdBodyLoader::registerNodeType
 
 
 void StdBodyLoader::addNodeType
-(const char* typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
+(const char* typeName, std::function<bool(StdBodyLoader& loader, const Mapping& info)> readFunction)
 {
     registerNodeType(
         typeName,
-        [readFunction](StdBodyLoader* loader, Mapping* node){
-            return readFunction(*loader, *node);
+        [readFunction](StdBodyLoader* loader, const Mapping* info){
+            return readFunction(*loader, *info);
         });
 }
 
 
 StdBodyLoader::NodeTypeRegistration::NodeTypeRegistration
-(const char* typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction)
+(const char* typeName, std::function<bool(StdBodyLoader& loader, const Mapping& info)> readFunction)
 {
     registerNodeType(
         typeName,
-        [readFunction](StdBodyLoader* loader, Mapping* node){
-            return readFunction(*loader, *node);
+        [readFunction](StdBodyLoader* loader, const Mapping* info){
+            return readFunction(*loader, *info);
         });
 }

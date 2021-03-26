@@ -17,17 +17,6 @@ using namespace cnoid;
 
 namespace {
 
-StdBodyFileDeviceTypeRegistration<MarkerDevice>
-registerMarkerDevice(
-    "MarkerDevice",
-    [](StdBodyLoader* loader, Mapping* node){
-        MarkerDevicePtr device = new MarkerDevice;
-        return device->readDescription(loader, node);
-    },
-    [](StdBodyWriter* /* writer */, Mapping* node, MarkerDevice* marker){
-        return marker->writeDescription(node);
-    });
-
 int getSceneMarkerType(int type)
 {
     switch(type){
@@ -233,10 +222,10 @@ double* MarkerDevice::writeState(double* out_buf) const
 }
 
 
-bool MarkerDevice::readDescription(StdBodyLoader* loader, Mapping* node)
+bool MarkerDevice::readSpecifications(const Mapping* info)
 {
     string type;
-    if(node->read({ "marker_type", "markerType" }, type)){
+    if(info->read({ "marker_type", "markerType" }, type)){
         if(type == "cross"){
             setMarkerType(MarkerDevice::CROSS_MARKER);
         } else if(type == "sphere"){
@@ -244,34 +233,34 @@ bool MarkerDevice::readDescription(StdBodyLoader* loader, Mapping* node)
         } else if(type == "axes"){
             setMarkerType(MarkerDevice::AXES_MARKER);
         } else {
-            node->throwException(
+            info->throwException(
                 fmt::format(_("Unknown marker type '{}'"), type));
         }
     }
 
-    setMarkerSize(node->get("size", markerSize()));
-    setEmission(node->get("emission", emission()));
-    setTransparency(node->get("transparency", transparency()));
+    setMarkerSize(info->get("size", markerSize()));
+    setEmission(info->get("emission", emission()));
+    setTransparency(info->get("transparency", transparency()));
 
     Vector3f c;
-    if(read(node, "color", c)) setColor(c);
+    if(read(info, "color", c)) setColor(c);
 
     Isometry3 T = Isometry3::Identity();
     Vector3 p;
-    if(read(node, { "offset_translation", "offsetTranslation" }, p)){
+    if(read(info, { "offset_translation", "offsetTranslation" }, p)){
         T.translation() = p;
     }
-    Matrix3 R;
-    if(loader->readRotation(node, { "offset_rotation", "offsetRotation" }, R)){
-        T.linear() = R;
+    AngleAxis aa;
+    if(readAngleAxis(info, { "offset_rotation", "offsetRotation" }, aa)){
+        T.linear() = aa.toRotationMatrix();
     }
     setOffsetPosition(T);
 
-    return loader->readDevice(this, node);
+    return true;
 }
 
 
-bool MarkerDevice::writeDescription(Mapping* node) const
+bool MarkerDevice::writeSpecifications(Mapping* info) const
 {
     const char* type;
     switch(markerType()){
@@ -280,22 +269,42 @@ bool MarkerDevice::writeDescription(Mapping* node) const
     case MarkerDevice::AXES_MARKER:   type = "axes";   break;
     default: return false;
     }
-    node->write("marker_type", type);
+    info->write("marker_type", type);
 
-    node->write("size", markerSize());
-    node->write("emission", emission());
-    node->write("transparency", transparency());
-    write(node, "color", color());
+    info->write("size", markerSize());
+    info->write("emission", emission());
+    info->write("transparency", transparency());
+    write(info, "color", color());
 
     auto& T = offsetPosition();
     auto p = T.translation();
     if(!p.isZero()){
-        write(node, "offset_translation", p);
+        write(info, "offset_translation", p);
     }
     auto aa = AngleAxis(T.linear());
     if(aa.angle() != 0.0){
-        writeDegreeAngleAxis(node, "offset_rotation", aa);
+        writeDegreeAngleAxis(info, "offset_rotation", aa);
     }
     
     return true;
 }
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<MarkerDevice>
+registerMarkerDevice(
+    "MarkerDevice",
+    [](StdBodyLoader* loader, const Mapping* info){
+        MarkerDevicePtr device = new MarkerDevice;
+        if(device->readSpecifications(info)){
+            return loader->readDevice(device, info);
+        }
+        return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* info, const MarkerDevice* marker){
+        return marker->writeSpecifications(info);
+    });
+}
+
+

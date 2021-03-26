@@ -11,6 +11,8 @@
 
 namespace cnoid {
 
+class Mapping;
+
 class CNOID_EXPORT PointLight : public Light
 {
 public:
@@ -36,6 +38,9 @@ public:
 
     float quadraticAttenuation() const { return quadraticAttenuation_; }
     void setQuadraticAttenuation(float a) { quadraticAttenuation_ = a; }
+
+    bool readSpecifications(const Mapping* info);
+    bool writeSpecifications(Mapping* info) const;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

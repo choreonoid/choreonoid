@@ -32,7 +32,7 @@ public:
 
     bool read(Body* body, Mapping* data);
 
-    bool readDevice(Device* device, Mapping* node);
+    bool readDevice(Device* device, const Mapping* node);
 
     StdSceneReader* sceneReader();
     const StdSceneReader* sceneReader() const;
@@ -46,7 +46,7 @@ public:
     bool readRotation(const Mapping* node, std::initializer_list<const char*> keys, Matrix3& out_R) const;
 
     [[deprecated("Use readDevice(Device* device, Mapping* node)")]]
-    bool readDevice(Device* device, Mapping& node);
+    bool readDevice(Device* device, const Mapping& node);
     [[deprecated("Use readAngle(const Mapping* node, const char* key, double& angle) const")]]
     bool readAngle(const Mapping& node, const char* key, double& angle) const;
     [[deprecated("Use readRotation(const Mapping* node, Matrix3& out_R) const")]]
@@ -57,24 +57,24 @@ public:
     // The following functions are used for defining new node types
     static void registerNodeType(
         const char* typeName,
-        std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction);
+        std::function<bool(StdBodyLoader* loader, const Mapping* info)> readFunction);
 
     [[deprecated("Use StdBodyLoader::registerNodeType.")]]
     static void addNodeType(
         const char* typeName,
-        std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction);
+        std::function<bool(StdBodyLoader& loader, const Mapping& info)> readFunction);
     
     struct NodeTypeRegistration {
         NodeTypeRegistration(
             const char* typeName,
-            std::function<bool(StdBodyLoader* loader, Mapping* node)> readFunction)
+            std::function<bool(StdBodyLoader* loader, const Mapping* info)> readFunction)
         {
             registerNodeType(typeName, readFunction);
         }
 
         [[deprecated("Use std::function<bool(StdBodyLoader* loader, Mapping* node)> as a function object type.")]]
         NodeTypeRegistration(
-            const char* typeName, std::function<bool(StdBodyLoader& loader, Mapping& node)> readFunction);
+            const char* typeName, std::function<bool(StdBodyLoader& loader, const Mapping& info)> readFunction);
     };
 
 private:

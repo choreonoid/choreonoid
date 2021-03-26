@@ -13,6 +13,8 @@
 
 namespace cnoid {
 
+class Mapping;
+
 class CNOID_EXPORT RangeSensor : public Device
 {
 public:
@@ -84,6 +86,9 @@ public:
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf) override;
     virtual double* writeState(double* out_buf) const override;
+
+    bool readSpecifications(const Mapping* info);
+    bool writeSpecifications(Mapping* info) const;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

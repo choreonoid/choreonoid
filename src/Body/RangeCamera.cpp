@@ -7,6 +7,7 @@
 #include "StdBodyFileUtil.h"
 #include <cnoid/ValueTree>
 
+using namespace std;
 using namespace cnoid;
 
 
@@ -140,32 +141,73 @@ void RangeCamera::setOrganized(bool on)
 }
 
 
+bool RangeCamera::readSpecifications(const Mapping* info)
+{
+    if(!Camera::readSpecifications(info)){
+        return false;
+    }
+
+    string format;
+    if(!info->read("format", format)){
+        format = "DEPTH";
+    }
+    if(format == "DEPTH"){
+        setOrganized(true);
+        setImageType(Camera::NO_IMAGE);
+    } else if(format == "COLOR_DEPTH"){
+        setOrganized(true);
+        setImageType(Camera::COLOR_IMAGE);
+    } else if(format == "POINT_CLOUD"){
+        setOrganized(false);
+        setImageType(Camera::NO_IMAGE);
+    } else if(format == "COLOR_POINT_CLOUD"){
+        setOrganized(false);
+        setImageType(Camera::COLOR_IMAGE);
+    } else {
+        return false;
+    }
+
+    info->read("min_distance", minDistance_);
+    info->read("max_distance", maxDistance_);
+
+    return true;
+}
+        
+        
+bool RangeCamera::writeSpecifications(Mapping* info) const
+{
+    if(!Camera::writeSpecifications(info)){
+        return false;
+    }
+    
+    if(imageType() == Camera::COLOR_IMAGE){
+        if(isOrganized()){
+            info->write("format", "COLOR_DEPTH");
+        } else {
+            info->write("format", "COLOR_POINT_CLOUD");
+        }
+    } else {
+        if(isOrganized()){
+            info->write("format", "DEPTH");
+        } else {
+            info->write("format", "POINT_CLOUD");
+        }
+    }
+    info->write("min_distance", minDistance_);
+    info->write("max_distance", maxDistance_);
+
+    return true;
+}
+
+
 namespace {
 
 StdBodyFileDeviceTypeRegistration<RangeCamera>
 registerHolderDevice(
     "Camera",
     nullptr,
-    [](StdBodyWriter* writer, Mapping* node, RangeCamera* camera)
+    [](StdBodyWriter* writer, Mapping* info, const RangeCamera* camera)
     {
-        writer->writeDeviceAs<Camera>(node, camera);
-
-        if(camera->imageType() == Camera::COLOR_IMAGE){
-            if(camera->isOrganized()){
-                node->write("format", "COLOR_DEPTH");
-            } else {
-                node->write("format", "COLOR_POINT_CLOUD");
-            }
-        } else {
-            if(camera->isOrganized()){
-                node->write("format", "DEPTH");
-            } else {
-                node->write("format", "POINT_CLOUD");
-            }
-        }
-        node->write("min_distance", camera->minDistance());
-        node->write("max_distance", camera->maxDistance());
-        
-        return true;
+        return camera->writeSpecifications(info);
     });
 }

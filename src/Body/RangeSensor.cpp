@@ -214,21 +214,47 @@ double* RangeSensor::writeState(double* out_buf) const
 }
 
 
+bool RangeSensor::readSpecifications(const Mapping* info)
+{
+    info->readAngle({ "yaw_range", "yawRange", "scanAngle" }, yawRange_);
+    info->readAngle({ "yaw_step", "yawStep", "scanStep" }, yawStep_);
+    info->readAngle({ "pitch_range", "pitchRange" }, pitchRange_);
+    info->readAngle({ "pitch_step", "pitchStep" }, pitchStep_);
+    info->read({ "min_distance", "minDistance" }, minDistance_);
+    info->read({ "max_distance", "maxDistance" }, maxDistance_);
+    info->read({ "scan_rate", "scanRate" }, scanRate_);
+    info->read("delay", delay_);
+    return true;
+}
+
+
+bool RangeSensor::writeSpecifications(Mapping* info) const
+{
+    info->write("yaw_range", degree(yawRange_));
+    info->write("yaw_step", degree(yawStep_));
+    info->write("pitch_range", degree(pitchRange_));
+    info->write("pitch_step", degree(pitchStep_));
+    info->write("min_distance", minDistance_);
+    info->write("max_distance", maxDistance_);
+    info->write("scan_rate", scanRate_);
+    return true;
+}
+
+
 namespace {
 
 StdBodyFileDeviceTypeRegistration<RangeSensor>
 registerHolderDevice(
     "RangeSensor",
-    nullptr,
-    [](StdBodyWriter* /* writer */, Mapping* node, RangeSensor* sensor)
+     [](StdBodyLoader* loader, const Mapping* info){
+         RangeSensorPtr sensor = new RangeSensor;
+         if(sensor->readSpecifications(info)){
+            return loader->readDevice(sensor, info);
+        }
+        return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* info, const RangeSensor* sensor)
     {
-        node->write("yaw_range", degree(sensor->yawRange()));
-        node->write("yaw_step", degree(sensor->yawStep()));
-        node->write("pitch_range", degree(sensor->pitchRange()));
-        node->write("pitch_step", degree(sensor->pitchStep()));
-        node->write("min_distance", sensor->minDistance());
-        node->write("max_distance", sensor->maxDistance());
-        node->write("scan_rate", sensor->scanRate());
-        return true;
+        return sensor->writeSpecifications(info);
     });
 }

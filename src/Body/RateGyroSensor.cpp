@@ -101,16 +101,36 @@ double* RateGyroSensor::writeState(double* out_buf) const
 }
 
 
+bool RateGyroSensor::readSpecifications(const Mapping* info)
+{
+    read(info, { "max_angular_velocity", "maxAngularVelocity" }, spec->w_max);
+    return true;
+}
+
+
+bool RateGyroSensor::writeSpecifications(Mapping* info) const
+{
+    if(!spec->w_max.isConstant(std::numeric_limits<double>::max())){
+        write(info, "max_angular_velocity", degree(spec->w_max));
+    }
+    return true;
+}
+
+
 namespace {
 
 StdBodyFileDeviceTypeRegistration<RateGyroSensor>
 registerHolderDevice(
     "RateGyroSensor",
-    nullptr,
-    [](StdBodyWriter* /* writer */, Mapping* node, RateGyroSensor* sensor){
-        if(!sensor->w_max().isConstant(std::numeric_limits<double>::max())){
-            write(node, "max_angular_velocity", sensor->w_max());
+     [](StdBodyLoader* loader, const Mapping* info){
+         RateGyroSensorPtr sensor = new RateGyroSensor;
+         if(sensor->readSpecifications(info)){
+            return loader->readDevice(sensor, info);
         }
-        return true;
+        return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* info, const RateGyroSensor* sensor)
+    {
+        return sensor->writeSpecifications(info);
     });
 }

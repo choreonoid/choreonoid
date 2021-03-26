@@ -10,7 +10,7 @@ using namespace std;
 using namespace cnoid;
 using namespace Multicopter;
 
-bool readRotorDevice(StdBodyLoader* loader, Mapping* node)
+bool readRotorDevice(StdBodyLoader* loader, const Mapping* node)
 {
     RotorDevicePtr rotorDevice= new RotorDevice;
     Eigen::Vector3d a;
@@ -49,9 +49,9 @@ bool readRotorDevice(StdBodyLoader* loader, Mapping* node)
 #endif
 
 
-    Mapping* effectMap = UtilityImpl::mapping(node,YAML_EFFECT_TAG);
+    auto effectMap = node->findMapping(YAML_EFFECT_TAG);
 
-    if( effectMap != nullptr ){
+    if( effectMap->isValid() ){
         if(effectMap->read(YAML_WALL_DISTANCE,v)){
             rotorDevice->setWallEffectDistance(v);
         }else{

@@ -14,7 +14,7 @@ using namespace cnoid;
 namespace {
 
 template <class DeviceType>
-bool readDevice(StdBodyLoader* loader, Mapping* node)
+bool readDevice(StdBodyLoader* loader, const Mapping* node)
 {
     ref_ptr<DeviceType> device = new DeviceType;
     device->particleSystem().readParameters(loader->sceneReader(), node);

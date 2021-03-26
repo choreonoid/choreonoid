@@ -4,6 +4,7 @@
 */
 
 #include "Light.h"
+#include <cnoid/EigenArchive>
 
 using namespace cnoid;
 
@@ -74,4 +75,20 @@ double* Light::writeState(double* out_buf) const
     out_buf[3] = color_[2];
     out_buf[4] = intensity_;
     return out_buf + 5;
+}
+
+
+bool Light::readSpecifications(const Mapping* info)
+{
+    read(info, "color", color_);
+    info->read("intensity", intensity_);
+    return true;
+}
+
+
+bool Light::writeSpecifications(Mapping* info) const
+{
+    write(info, "color", color_);
+    info->write("intensity", intensity_);
+    return true;
 }

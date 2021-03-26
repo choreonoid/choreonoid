@@ -2,23 +2,12 @@
 #include "HolderDevice.h"
 #include "Body.h"
 #include "StdBodyLoader.h"
+#include "StdBodyFileUtil.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-StdBodyLoader::NodeTypeRegistration
-registerAttachmentDevice(
-    "Attachment",
-    [](StdBodyLoader* loader, Mapping* node){
-        AttachmentDevicePtr holder = new AttachmentDevice;
-        return holder->readDescription(loader, node);
-    });
-
-}
 
 
 AttachmentDevice::AttachmentDevice()
@@ -182,13 +171,39 @@ double* AttachmentDevice::writeState(double* out_buf) const
 }
 
 
-bool AttachmentDevice::readDescription(StdBodyLoader* loader, Mapping* node)
+bool AttachmentDevice::readSpecifications(const Mapping* info)
 {
     string symbol;
-    if(node->read("category", symbol)){
+    if(info->read("category", symbol)){
         setCategory(symbol);
     } else {
         clearCategory();
     }
-    return loader->readDevice(this, node);
+    return true;
+}
+
+
+bool AttachmentDevice::writeSpecifications(Mapping* info) const
+{
+    info->write("category", category_);
+    return true;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<AttachmentDevice>
+registerAttachmentDevice(
+    "Attachment",
+    [](StdBodyLoader* loader, const Mapping* info){
+        AttachmentDevicePtr attachment = new AttachmentDevice;
+        if(attachment->readSpecifications(info)){
+            return loader->readDevice(attachment, info);
+        }
+        return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* info, const AttachmentDevice* attachment){
+        return attachment->writeSpecifications(info);
+    });
+
 }

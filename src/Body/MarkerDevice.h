@@ -31,8 +31,8 @@ public:
     virtual const double* readState(const double* buf) override;
     virtual double* writeState(double* out_buf) const override;
 
-    bool readDescription(StdBodyLoader* loader, Mapping* node);
-    bool writeDescription(Mapping* node) const;
+    bool readSpecifications(const Mapping* node);
+    bool writeSpecifications(Mapping* node) const;
 
     virtual bool on() const override;
     virtual void on(bool on) override;

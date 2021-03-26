@@ -65,6 +65,9 @@ public:
 
     void clearPoints();
 
+    bool readSpecifications(const Mapping* info);
+    bool writeSpecifications(Mapping* info) const;
+
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 

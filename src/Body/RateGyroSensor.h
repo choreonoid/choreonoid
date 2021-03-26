@@ -12,6 +12,8 @@
 
 namespace cnoid {
 
+class Mapping;
+
 class CNOID_EXPORT RateGyroSensor : public Device
 {
 public:
@@ -33,6 +35,9 @@ public:
 
     const Vector3& w_max() const { return spec->w_max; }
     Vector3& w_max() { return spec->w_max; }
+
+    bool readSpecifications(const Mapping* info);
+    bool writeSpecifications(Mapping* info) const;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

@@ -41,7 +41,7 @@ struct AGXWireDeviceDesc
 class AGXWireDevice : private AGXWireDeviceDesc, public Device
 {
 public:
-    static bool createAGXWireDevice(StdBodyLoader* loader, Mapping* node);
+    static bool createAGXWireDevice(StdBodyLoader* loader, const Mapping* node);
     AGXWireDevice(const AGXWireDeviceDesc& desc, Mapping* info);
     AGXWireDevice(const AGXWireDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() const override;
@@ -87,7 +87,7 @@ private:
 };
 typedef ref_ptr<AGXWire> AGXWirePtr;
 
-bool AGXWireDevice::createAGXWireDevice(StdBodyLoader* loader, Mapping* node)
+bool AGXWireDevice::createAGXWireDevice(StdBodyLoader* loader, const Mapping* node)
 {
     MappingPtr info = node->cloneMapping();
 

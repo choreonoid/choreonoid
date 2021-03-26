@@ -12,6 +12,8 @@
 
 namespace cnoid {
 
+class Mapping;
+
 class CNOID_EXPORT ForceSensor : public Device
 {
 public:
@@ -48,6 +50,9 @@ public:
     Vector6::ConstFixedSegmentReturnType<3>::Type torque() const { return F_.tail<3>(); }
     Vector6::FixedSegmentReturnType<3>::Type tau() { return F_.tail<3>(); }
     Vector6::ConstFixedSegmentReturnType<3>::Type tau() const { return F_.tail<3>(); }
+
+    bool readSpecifications(const Mapping* info);
+    bool writeSpecifications(Mapping* info) const;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

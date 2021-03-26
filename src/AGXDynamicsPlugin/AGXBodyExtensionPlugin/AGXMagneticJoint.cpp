@@ -24,7 +24,7 @@ struct AGXMagneticJointDeviceDesc
 class AGXMagneticJointDevice : private AGXMagneticJointDeviceDesc, public Device
 {
 public:
-    static bool createAGXMagneticJointDevice(StdBodyLoader* loader, Mapping* node);
+    static bool createAGXMagneticJointDevice(StdBodyLoader* loader, const Mapping* node);
     AGXMagneticJointDevice(const AGXMagneticJointDeviceDesc& desc, Mapping* info);
     AGXMagneticJointDevice(const AGXMagneticJointDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() const override;
@@ -50,7 +50,7 @@ private:
 };
 typedef ref_ptr<AGXMagneticJointDevice> AGXMagneticJointDevicePtr;
 
-bool AGXMagneticJointDevice::createAGXMagneticJointDevice(StdBodyLoader* loader, Mapping* node)
+bool AGXMagneticJointDevice::createAGXMagneticJointDevice(StdBodyLoader* loader, const Mapping* node)
 {
     MappingPtr info = node->cloneMapping();
     AGXMagneticJointDeviceDesc desc;

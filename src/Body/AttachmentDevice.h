@@ -36,7 +36,8 @@ public:
     void setCategory(const std::string& category);
     void clearCategory();
 
-    bool readDescription(StdBodyLoader* loader, Mapping* node);
+    bool readSpecifications(const Mapping* info);
+    bool writeSpecifications(Mapping* info) const;
 
 protected:
     AttachmentDevice(const AttachmentDevice& org, bool copyStateOnly, CloneMap* cloneMap);

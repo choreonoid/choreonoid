@@ -101,19 +101,45 @@ double* ForceSensor::writeState(double* out_buf) const
 }
 
 
+bool ForceSensor::readSpecifications(const Mapping* info)
+{
+    Vector3 v;
+    if(read(info, { "max_force", "maxForce" }, v)){
+        F_max().head<3>() = v;
+    }
+    if(cnoid::read(info, { "max_torque", "maxTorque" }, v)){
+        F_max().tail<3>() = v;
+    }
+    return true;
+}
+
+
+bool ForceSensor::writeSpecifications(Mapping* info) const
+{
+    if(!F_max().head<3>().isConstant(std::numeric_limits<double>::max())){
+        write(info, "max_force", F_max().head<3>());
+    }
+    if(!F_max().tail<3>().isConstant(std::numeric_limits<double>::max())){
+        write(info, "max_torque", F_max().tail<3>());
+    }
+    return true;
+}
+
+
 namespace {
 
 StdBodyFileDeviceTypeRegistration<ForceSensor>
 registerHolderDevice(
     "ForceSensor",
-    nullptr,
-    [](StdBodyWriter* /* writer */, Mapping* node, ForceSensor* sensor){
-        if(!sensor->F_max().head<3>().isConstant(std::numeric_limits<double>::max())){
-            write(node, "max_force", sensor->F_max().head<3>());
+     [](StdBodyLoader* loader, const Mapping* info){
+         ForceSensorPtr sensor = new ForceSensor;
+         if(sensor->readSpecifications(info)){
+            return loader->readDevice(sensor, info);
         }
-        if(!sensor->F_max().tail<3>().isConstant(std::numeric_limits<double>::max())){
-            write(node, "max_torque", sensor->F_max().tail<3>());
-        }
-        return true;
+        return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* info, const ForceSensor* sensor)
+    {
+        return sensor->writeSpecifications(info);
     });
 }

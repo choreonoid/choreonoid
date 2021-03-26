@@ -38,6 +38,9 @@ public:
     float cutOffExponent() const { return cutOffExponent_; }
     void setCutOffExponent(float e) { cutOffExponent_ = e; }
 
+    bool readSpecifications(const Mapping* info);
+    bool writeSpecifications(Mapping* info) const;
+
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     

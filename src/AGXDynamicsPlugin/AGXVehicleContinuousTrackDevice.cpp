@@ -89,7 +89,7 @@ public:
 };
 
 #define NODE_READ(FIELD1) node->read(#FIELD1, desc.FIELD1)
-bool readAGXVehicleContinuousTrackDevice(StdBodyLoader* loader, Mapping* node)
+bool readAGXVehicleContinuousTrackDevice(StdBodyLoader* loader, const Mapping* node)
 {
     AGXVehicleContinuousTrackDeviceDesc desc;
     if(!NODE_READ(numberOfNodes)) return false;

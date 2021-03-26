@@ -8,23 +8,6 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-StdBodyFileDeviceTypeRegistration<HolderDevice>
-registerHolderDevice(
-    "Holder",
-    [](StdBodyLoader* loader, Mapping* node){
-        HolderDevicePtr holder = new HolderDevice;
-        if(holder->readDescription(node)){
-            return loader->readDevice(holder, node);
-        }
-        return false;
-    },
-    [](StdBodyWriter* /* writer */, Mapping* node, HolderDevice* holder){
-        return holder->writeDescription(node);
-    });
-}
-
 namespace cnoid {
 
 class HolderDevice::NonState
@@ -335,7 +318,7 @@ bool HolderDevice::readDescription(const Mapping* info)
 }
 
 
-bool HolderDevice::writeDescription(Mapping* info)
+bool HolderDevice::writeDescription(Mapping* info) const
 {
     if(!ns->category.empty()){
         info->write("category", ns->category);
@@ -349,6 +332,26 @@ bool HolderDevice::writeDescription(Mapping* info)
     info->write("hold_condition", condition);
 
     info->write("max_hold_distance", ns->maxHoldDistance);
-    info->write("hold_target_name", ns->holdTargetName);
+    if(!ns->holdTargetName.empty()){
+        info->write("hold_target_name", ns->holdTargetName);
+    }
     return true;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<HolderDevice>
+registerHolderDevice(
+    "Holder",
+    [](StdBodyLoader* loader, const Mapping* info){
+        HolderDevicePtr holder = new HolderDevice;
+        if(holder->readDescription(info)){
+            return loader->readDevice(holder, info);
+        }
+        return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* info, const HolderDevice* holder){
+        return holder->writeDescription(info);
+    });
 }

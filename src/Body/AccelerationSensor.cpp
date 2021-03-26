@@ -101,16 +101,36 @@ double* AccelerationSensor::writeState(double* out_buf) const
 }
 
 
+bool AccelerationSensor::readSpecifications(const Mapping* info)
+{
+    read(info, { "max_acceleration", "maxAcceleration" }, spec->dv_max);
+    return true;
+}
+
+
+bool AccelerationSensor::writeSpecifications(Mapping* info) const
+{
+    if(!dv_max().isConstant(std::numeric_limits<double>::max())){
+        write(info, "max_acceleration", dv_max());
+    }
+    return true;
+}
+
+
 namespace {
 
 StdBodyFileDeviceTypeRegistration<AccelerationSensor>
 registerHolderDevice(
     "AccelerationSensor",
-    nullptr,
-    [](StdBodyWriter* /* writer */, Mapping* node, AccelerationSensor* sensor){
-        if(!sensor->dv_max().isConstant(std::numeric_limits<double>::max())){
-            write(node, "max_acceleration", sensor->dv_max());
+     [](StdBodyLoader* loader, const Mapping* info){
+         AccelerationSensorPtr sensor = new AccelerationSensor;
+         if(sensor->readSpecifications(info)){
+            return loader->readDevice(sensor, info);
         }
-        return true;
+        return false;
+    },
+    [](StdBodyWriter* /* writer */, Mapping* info, const AccelerationSensor* sensor)
+    {
+        return sensor->writeSpecifications(info);
     });
 }

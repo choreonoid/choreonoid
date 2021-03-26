@@ -18,7 +18,7 @@ namespace {
 StdBodyLoader::NodeTypeRegistration
 registerFireDevice(
     "FireDevice",
-    [](StdBodyLoader* loader, Mapping* node){
+    [](StdBodyLoader* loader, const Mapping* node){
         FireDevicePtr fire = new FireDevice;
         fire->particleSystem().readParameters(loader->sceneReader(), node);
         return loader->readDevice(fire, node);

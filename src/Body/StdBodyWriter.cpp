@@ -25,10 +25,10 @@ std::mutex deviceWriterRegistrationMutex;
 struct WriterInfo
 {
     std::string typeName;
-    std::function<bool(StdBodyWriter* writer, Mapping* node, Device* device)> func;
+    std::function<bool(StdBodyWriter* writer, Mapping* info, const Device* device)> func;
     WriterInfo(
         const char* typeName,
-        const std::function<bool(StdBodyWriter* writer, Mapping* node, Device* device)>& func)
+        const std::function<bool(StdBodyWriter* writer, Mapping* info, const Device* device)>& func)
         : typeName(typeName), func(func) { }
 };
         
@@ -338,32 +338,32 @@ void StdBodyWriter::Impl::writeLinkDevices(Listing* elementsNode, Link* link)
 
 MappingPtr StdBodyWriter::Impl::writeDevice(const std::string& typeName, Device* device)
 {
-    MappingPtr node = new Mapping;
+    MappingPtr info = new Mapping;
 
-    node->write("type", typeName);
+    info->write("type", typeName);
     
     if(!device->name().empty()){
-        node->write("name", device->name());
+        info->write("name", device->name());
     }
     if(device->id() >= 0){
-        node->write("id", device->id());
+        info->write("id", device->id());
     }
     auto& p = device->localTranslation();
     if(!p.isZero()){
-        write(node, "translation", p);
+        write(info, "translation", p);
     }
     auto aa = AngleAxis(device->localRotation());
     if(aa.angle() != 0.0){
-        writeDegreeAngleAxis(node, "rotation", aa);
+        writeDegreeAngleAxis(info, "rotation", aa);
     }
     
-    return node;
+    return info;
 }
 
 
 void StdBodyWriter::registerDeviceWriter_
 (const std::type_info& type, const char* typeName,
- std::function<bool(StdBodyWriter* writer, Mapping* node, Device* device)> writeFunction)
+ std::function<bool(StdBodyWriter* writer, Mapping* info, const Device* device)> writeFunction)
 {
     std::lock_guard<std::mutex> guard(deviceWriterRegistrationMutex);
     registeredDeviceWriterMap.emplace(
@@ -373,12 +373,12 @@ void StdBodyWriter::registerDeviceWriter_
 }
 
 
-bool StdBodyWriter::writeDeviceAs_(const std::type_info& type, Mapping* node, Device* device)
+bool StdBodyWriter::writeDeviceAs_(const std::type_info& type, Mapping* info, const Device* device)
 {
     auto p = impl->deviceWriterMap.find(type);
     if(p != impl->deviceWriterMap.end()){
         auto& writer = p->second;
-        return writer.func(this, node, device);
+        return writer.func(this, info, device);
     }
     return true;
 }

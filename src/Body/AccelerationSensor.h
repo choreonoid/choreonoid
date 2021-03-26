@@ -12,6 +12,8 @@
 
 namespace cnoid {
 
+class Mapping;
+
 class CNOID_EXPORT AccelerationSensor : public Device
 {
 public:
@@ -33,6 +35,9 @@ public:
 
     const Vector3& dv_max() const { return spec->dv_max; }
     Vector3& dv_max() { return spec->dv_max; }
+
+    bool readSpecifications(const Mapping* info);
+    bool writeSpecifications(Mapping* info) const;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

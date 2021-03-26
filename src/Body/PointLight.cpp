@@ -4,6 +4,8 @@
 */
 
 #include "PointLight.h"
+#include "StdBodyFileUtil.h"
+#include <cnoid/EigenArchive>
 
 using namespace cnoid;
 
@@ -102,4 +104,49 @@ double* PointLight::writeState(double* out_buf) const
     out_buf[1] = linearAttenuation_;
     out_buf[2] = quadraticAttenuation_;
     return out_buf + 3;
+}
+
+
+bool PointLight::readSpecifications(const Mapping* info)
+{
+    if(!Light::readSpecifications(info)){
+        return false;
+    }
+    Vector3 a;
+    if(read(info, "attenuation", a)){
+        constantAttenuation_ = a[0];
+        linearAttenuation_ = a[1];
+        quadraticAttenuation_ = a[2];
+    }
+    return true;
+}
+
+
+bool PointLight::writeSpecifications(Mapping* info) const
+{
+    if(!Light::writeSpecifications(info)){
+        return false;
+    }
+    write(info, "attenuation",
+          Vector3(constantAttenuation_, linearAttenuation_, quadraticAttenuation_));
+    return true;
+}
+
+
+namespace {
+
+StdBodyFileDeviceTypeRegistration<PointLight>
+registerHolderDevice(
+    "PointLight",
+     [](StdBodyLoader* loader, const Mapping* info){
+         PointLightPtr light = new PointLight;
+         if(light->readSpecifications(info)){
+            return loader->readDevice(light, info);
+        }
+        return false;
+    },
+    [](StdBodyWriter* writer, Mapping* info, const PointLight* light)
+    {
+        return light->writeSpecifications(info);
+    });
 }
