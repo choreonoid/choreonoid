@@ -311,6 +311,9 @@ void StdSceneReader::readHeader(Mapping* info, double formatVersion)
     if(auto angleUnitNode = info->extract({ "angle_unit", "angleUnit" })){
         string unit = angleUnitNode->toString();
         if(unit == "radian"){
+            if(formatVersion >= 2.0){
+                angleUnitNode->throwException(_("Radian mode is not supported in format version 2.0"));
+            }
             setAngleUnit(RADIAN);
         } else if(unit == "degree"){
             setAngleUnit(DEGREE);

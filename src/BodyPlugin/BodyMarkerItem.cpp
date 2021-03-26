@@ -435,9 +435,9 @@ bool BodyMarkerItemImpl::restore(const Archive& archive)
     if(read(archive, "translation", translation)){
         localPosition.translation() = translation;
     }
-    AngleAxis a;
-    if(readDegreeAngleAxis(archive, "rotation", a)){
-        localPosition.linear() = a.toRotationMatrix();
+    AngleAxis aa;
+    if(readDegreeAngleAxis(archive, "rotation", aa)){
+        localPosition.linear() = aa.toRotationMatrix();
     }
 
     double size;

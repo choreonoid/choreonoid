@@ -788,11 +788,16 @@ void BodyItem::Impl::setPresetPose(BodyItem::PresetPoseID id)
     int jointIndex = 0;
 
     if(id == BodyItem::STANDARD_POSE){
-        const Listing& pose = *body->info()->findListing("standardPose");
+        auto info = body->info();
+        const Listing& pose = *info->findListing("standardPose");
         if(pose.isValid()){
             const int n = std::min(pose.size(), body->numJoints());
             while(jointIndex < n){
-                body->joint(jointIndex)->q() = pose[jointIndex].toAngle();
+                double q = pose[jointIndex].toDouble();
+                if(!info->isForcedRadianMode()){
+                    q = radian(q);
+                }
+                body->joint(jointIndex)->q() = q;
                 jointIndex++;
             }
         }

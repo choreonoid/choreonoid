@@ -224,7 +224,7 @@ bool SceneItem::restore(const Archive& archive)
         if(archive.read("angle_unit", unit) && unit == "degree"){
             hasRot = readDegreeAngleAxis(archive, "rotation", rot);
         } else { // for the backward compatibility
-            hasRot = readAngleAxis(archive, "rotation", rot);
+            hasRot = readRadianAngleAxis(archive, "rotation", rot);
         }
         if(hasRot){
             topNode_->setRotation(rot);
