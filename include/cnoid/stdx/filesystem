@@ -48,6 +48,13 @@ inline std::time_t last_write_time_to_time_t(const path& p){
     return last_write_time(p);
 }
 
+#if BOOST_VERSION < 107400
+inline path absolute(const path& p, system::error_code& ec)
+{
+    return absolute(p);
+}
+#endif
+
 inline path lexically_normal(const path& p){
 #if BOOST_VERSION < 106000
     path n(p);
