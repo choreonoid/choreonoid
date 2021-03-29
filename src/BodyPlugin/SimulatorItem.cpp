@@ -1851,7 +1851,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             [&](){ stopSimulation(true, true); });
 
         worldLogFileItem = nullptr;
-         // Check child items first
+        // Check child items first
         auto worldLogFileItems = self->descendantItems<WorldLogFileItem>();
         if(worldLogFileItems.empty()){
             // Check items in the world secondly

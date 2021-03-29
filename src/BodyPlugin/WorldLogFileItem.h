@@ -13,7 +13,6 @@ namespace cnoid {
 
 class SE3;
 class DeviceState;
-class WorldLogFileItemImpl;
 
 class CNOID_EXPORT WorldLogFileItem : public Item
 {
@@ -59,7 +58,8 @@ protected:
     virtual bool restore(const Archive& archive) override;
 
 private:
-    WorldLogFileItemImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<WorldLogFileItem> WorldLogFileItemPtr;

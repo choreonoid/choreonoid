@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-12 19:14+0900\n"
+"POT-Creation-Date: 2021-03-29 12:27+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -192,11 +192,11 @@ msgstr "削除"
 msgid "Joint Trajectories"
 msgstr "関節軌道"
 
-#: BodyMotionEngine.cpp:224
+#: BodyMotionEngine.cpp:219
 msgid "Body Motion Engine"
 msgstr "ボディモーションエンジン"
 
-#: BodyMotionEngine.cpp:225
+#: BodyMotionEngine.cpp:220
 msgid "Update Joint Velocities"
 msgstr "関節角速度の更新"
 
@@ -374,33 +374,77 @@ msgstr "両足中心間距離"
 msgid "The center of mass of {} cannt be moved to the target position\n"
 msgstr "{}の重心を指定の位置まで移動できません\n"
 
-#: WorldLogFileItem.cpp:445
+#: WorldLogFileItem.cpp:465
 msgid "WorldLogFileItem"
 msgstr "ワールドログファイルアイテム"
 
-#: WorldLogFileItem.cpp:448
+#: WorldLogFileItem.cpp:468
 msgid "World Log"
 msgstr "ワールドログ"
 
-#: WorldLogFileItem.cpp:1148
+#: WorldLogFileItem.cpp:476 WorldLogFileItem.cpp:1217
+msgid "Save project as log playback archive"
+msgstr "ログ再生用アーカイブとしてプロジェクトを保存"
+
+#: WorldLogFileItem.cpp:1178
 msgid "World Log File (*.log)"
 msgstr "ワールドログファイル (*.log)"
 
-#: WorldLogFileItem.cpp:1150
+#: WorldLogFileItem.cpp:1180
 msgid "Log file"
 msgstr "ログファイル"
 
-#: WorldLogFileItem.cpp:1152
+#: WorldLogFileItem.cpp:1182
 msgid "Actual log file"
 msgstr "実際のログファイル"
 
-#: WorldLogFileItem.cpp:1153
+#: WorldLogFileItem.cpp:1183
 msgid "Time-stamp suffix"
 msgstr "タイムスタンプ接尾辞"
 
-#: WorldLogFileItem.cpp:1155
+#: WorldLogFileItem.cpp:1185
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
+
+#: WorldLogFileItem.cpp:1220
+msgid "Save"
+msgstr "保存"
+
+#: WorldLogFileItem.cpp:1221
+msgid "Cancel"
+msgstr "キャンセル(&C)"
+
+#: WorldLogFileItem.cpp:1225
+msgid "Project files (*.cnoid)"
+msgstr "プロジェクトファイル (*.cnoid)"
+
+#: WorldLogFileItem.cpp:1226
+msgid "Any files (*)"
+msgstr "全てのファイル (*)"
+
+#: WorldLogFileItem.cpp:1241
+msgid "The world item of {0} is not found."
+msgstr "\"{0}\" のワールドアイテムがみつかりません．"
+
+#: WorldLogFileItem.cpp:1254
+msgid "Log file of {0} does not exist."
+msgstr "{0}のログファイルが存在しません．"
+
+#: WorldLogFileItem.cpp:1259
+msgid "Creating the project for the log playback ..."
+msgstr "ログ再生用プロジェクトを作成中…"
+
+#: WorldLogFileItem.cpp:1273
+msgid "Archive directory \"{0}\" cannot be created: {1}"
+msgstr "アーカイブディレクトリ \"{0}\" を作成できません： {1}"
+
+#: WorldLogFileItem.cpp:1294
+msgid "Log file \"{0}\" cannot be copied to \"{1}\": {2}"
+msgstr "ログファイル \"{0}\" を \"{1}\" にコピーできません： {2}"
+
+#: WorldLogFileItem.cpp:1360
+msgid "Directory \"{0}\" cannot be created: {1}."
+msgstr "ディレクトリ \"{}\" を作成できません： {1}."
 
 #: KinematicSimulatorItem.cpp:77
 msgid "KinematicSimulatorItem"
@@ -1080,19 +1124,19 @@ msgid ""
 "selected."
 msgstr "{}は同じワールドに他のシミュレータも選択されているため処理出来ません．"
 
-#: MaterialTableItem.cpp:17
+#: MaterialTableItem.cpp:16
 msgid "MaterialTableItem"
 msgstr "マテリアルテーブルアイテム"
 
-#: MaterialTableItem.cpp:19
+#: MaterialTableItem.cpp:18
 msgid "Material Table"
 msgstr "マテリアルテーブル"
 
-#: MaterialTableItem.cpp:48
+#: MaterialTableItem.cpp:47
 msgid "Num materials"
 msgstr "マテリアルの数"
 
-#: MaterialTableItem.cpp:49
+#: MaterialTableItem.cpp:48
 msgid "Num contact materials"
 msgstr "接触マテリアルの数"
 
@@ -1390,7 +1434,7 @@ msgstr "デフォルトマテリアルテーブル \"{}\" を読み込み直し�
 msgid "Reloading default material table \"{}\" failed."
 msgstr "デフォルトマテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:608 BodyItem.cpp:1590
+#: WorldItem.cpp:608 BodyItem.cpp:1593
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -1406,83 +1450,83 @@ msgstr "接触マテリアル定義ファイル (*.yaml)"
 msgid "Default material table"
 msgstr "デフォルトマテリアルテーブル"
 
-#: BodyItem.cpp:225
+#: BodyItem.cpp:222
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1445
+#: BodyItem.cpp:1448
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1504
+#: BodyItem.cpp:1507
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1581
+#: BodyItem.cpp:1584
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1582
+#: BodyItem.cpp:1585
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1583
+#: BodyItem.cpp:1586
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1584
+#: BodyItem.cpp:1587
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1585
+#: BodyItem.cpp:1588
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1586
+#: BodyItem.cpp:1589
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1587 LinkPropertyView.cpp:120
+#: BodyItem.cpp:1590 LinkPropertyView.cpp:121
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1588
+#: BodyItem.cpp:1591
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1592
+#: BodyItem.cpp:1595
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1594
+#: BodyItem.cpp:1597
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1596
+#: BodyItem.cpp:1599
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1599
+#: BodyItem.cpp:1602
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1603
+#: BodyItem.cpp:1606
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1772
+#: BodyItem.cpp:1775
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1789
+#: BodyItem.cpp:1792
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1891
+#: BodyItem.cpp:1894
 msgid "Change the position of \"{0}\""
 msgstr "\"{0}\" のポジションを変更"
 
-#: BodyItem.cpp:1893
+#: BodyItem.cpp:1896
 msgid "Restore the position of \"{0}\""
 msgstr "\"{0}\" のポジションの取り戻し"
 
@@ -1801,114 +1845,114 @@ msgstr "カメラ画像可視化アイテム"
 msgid "Visual ratio"
 msgstr "表示比率"
 
-#: BodyItemFileIO.cpp:37 BodyItemFileIO.cpp:84
-msgid "Body"
-msgstr "ボディ"
-
-#: BodyItemFileIO.cpp:85
-msgid "Scene / Mesh"
-msgstr "シーン／メッシュ"
-
-#: BodyItemFileIO.cpp:216
-msgid "Shape type:"
-msgstr "形状タイプ："
-
-#: BodyItemFileIO.cpp:218
-msgid "Visual"
-msgstr "表示用"
-
-#: BodyItemFileIO.cpp:219
-msgid "Collision"
-msgstr "干渉検出用"
-
-#: BodyItemFileIO.cpp:233
-msgid "Standard scene file"
-msgstr "標準シーンファイル"
-
-#: BodyItemFileIO.cpp:268
+#: BodyItemFileIO.cpp:126
 msgid "Ext model file mode:"
 msgstr "外部モデルファイルモード："
 
-#: BodyItemFileIO.cpp:270
+#: BodyItemFileIO.cpp:128
 msgid "Embed models"
 msgstr "モデルを埋め込む"
 
-#: BodyItemFileIO.cpp:271
+#: BodyItemFileIO.cpp:129
 msgid "Link to the original model files"
 msgstr "元のモデルファイルにリンク"
 
-#: BodyItemFileIO.cpp:272
+#: BodyItemFileIO.cpp:130
 msgid "Replace with standard scene files"
 msgstr "標準シーンファイルに置き換え"
 
-#: BodyItemFileIO.cpp:273
+#: BodyItemFileIO.cpp:131
 msgid "Replace with OBJ model files"
 msgstr "OBJモデルファイルに置き換え"
 
-#: BodyItemFileIO.cpp:277
+#: BodyItemFileIO.cpp:139
 msgid "Integrate transforms"
 msgstr "座標変換を統合"
 
-#: BodyItemFileIO.cpp:299
+#: BodyItemFileIO.cpp:147 BodyItemFileIO.cpp:220
+msgid "Body"
+msgstr "ボディ"
+
+#: BodyItemFileIO.cpp:221
+msgid "Scene / Mesh"
+msgstr "シーン／メッシュ"
+
+#: BodyItemFileIO.cpp:324
+msgid "Shape type:"
+msgstr "形状タイプ："
+
+#: BodyItemFileIO.cpp:326
+msgid "Visual"
+msgstr "表示用"
+
+#: BodyItemFileIO.cpp:327
+msgid "Collision"
+msgstr "干渉検出用"
+
+#: BodyItemFileIO.cpp:333
+msgid "Standard scene file"
+msgstr "標準シーンファイル"
+
+#: BodyItemFileIO.cpp:384
 msgid "OBJ file"
 msgstr "OBJファイル"
 
-#: LinkPropertyView.cpp:48
+#: LinkPropertyView.cpp:49
 msgid "Link Properties"
 msgstr "リンクプロパティ"
 
-#: LinkPropertyView.cpp:115
+#: LinkPropertyView.cpp:116
 msgid "Name"
 msgstr "名前"
 
-#: LinkPropertyView.cpp:116
+#: LinkPropertyView.cpp:117
 msgid "Index"
 msgstr "インデックス"
 
-#: LinkPropertyView.cpp:117
+#: LinkPropertyView.cpp:118
 msgid "Offset translation"
 msgstr "並進オフセット"
 
-#: LinkPropertyView.cpp:118
+#: LinkPropertyView.cpp:119
 msgid "Offset rotation"
 msgstr "回転オフセット"
 
-#: LinkPropertyView.cpp:119
+#: LinkPropertyView.cpp:120
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:121
+#: LinkPropertyView.cpp:122
 msgid "Inertia tensor"
 msgstr "慣性テンソル"
 
-#: LinkPropertyView.cpp:122
+#: LinkPropertyView.cpp:123
 msgid "Material"
 msgstr "マテリアル"
 
-#: LinkPropertyView.cpp:123
+#: LinkPropertyView.cpp:124
 msgid "Joint type"
 msgstr "関節タイプ"
 
-#: LinkPropertyView.cpp:125
+#: LinkPropertyView.cpp:126
 msgid "Joint axis"
 msgstr "関節軸"
 
-#: LinkPropertyView.cpp:126
+#: LinkPropertyView.cpp:127
 msgid "Upper joint limit"
 msgstr "関節変位上限"
 
-#: LinkPropertyView.cpp:127
+#: LinkPropertyView.cpp:128
 msgid "Lower joint limit"
 msgstr "関節変位下限"
 
-#: LinkPropertyView.cpp:128
+#: LinkPropertyView.cpp:129
 msgid "Upper joint velocity"
 msgstr "関節速度上限"
 
-#: LinkPropertyView.cpp:129
+#: LinkPropertyView.cpp:130
 msgid "Lower joint velocity"
 msgstr "関節速度下限"
 
-#: LinkPropertyView.cpp:130
+#: LinkPropertyView.cpp:131
 msgid "Joint inertia"
 msgstr "関節慣性"
