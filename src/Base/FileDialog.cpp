@@ -1,6 +1,7 @@
 #include "FileDialog.h"
 #include "AppConfig.h"
 #include "ProjectManager.h"
+#include "MainWindow.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -47,6 +48,13 @@ public:
     void onFinished(int result);
     void storeRecentDirectories();
 };
+
+}
+
+
+FileDialog::FileDialog()
+    : FileDialog(MainWindow::instance())
+{
 
 }
 

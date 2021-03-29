@@ -10,6 +10,7 @@ namespace cnoid {
 class CNOID_EXPORT FileDialog : public QDialog
 {
 public:
+    FileDialog();
     FileDialog(QWidget* parent, Qt::WindowFlags f = 0);
     ~FileDialog();
 

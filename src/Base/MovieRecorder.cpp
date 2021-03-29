@@ -22,6 +22,7 @@
 #include "CheckBox.h"
 #include "ComboBox.h"
 #include "Dialog.h"
+#include "FileDialog.h"
 #include "Separator.h"
 #include "Timer.h"
 #include "LazyCaller.h"
@@ -642,14 +643,15 @@ void ConfigDialog::onRecordingModeRadioClicked(int mode)
 
 void ConfigDialog::showDirectorySelectionDialog()
 {
-    QString directory =
-        QFileDialog::getExistingDirectory(
-            MainWindow::instance(),
-            _("Select Directory"),
-            directoryEntry.text(),
-            QFileDialog::DontUseNativeDialog | QFileDialog::ShowDirsOnly);
-    if(!directory.isNull()){
-        directoryEntry.setText(directory);
+    FileDialog dialog;
+    dialog.setWindowTitle(_("Select Directory"));
+    dialog.setViewMode(QFileDialog::List);
+    dialog.setFileMode(QFileDialog::Directory);
+    dialog.setOption(QFileDialog::ShowDirsOnly);
+    dialog.updatePresetDirectories();
+
+    if(dialog.exec()){
+        directoryEntry.setText(dialog.selectedFiles().at(0));
     }
 }
 
