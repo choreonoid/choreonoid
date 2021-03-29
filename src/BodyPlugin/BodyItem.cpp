@@ -116,9 +116,6 @@ public:
 
 namespace cnoid {
 
-// Defined in BodyItemFileIO.cpp
-void registerBodyItemFileIoSet(ItemManager& im);
-
 class BodyItem::Impl
 {
 public:
@@ -221,9 +218,10 @@ static void onSigOptionsParsed(boost::program_options::variables_map& variables)
 
 void BodyItem::initializeClass(ExtensionManager* ext)
 {
-    ItemManager& im = ext->itemManager();
-    im.registerClass<BodyItem>(N_("BodyItem"));
+    ItemManager* im = &ext->itemManager();
+    im->registerClass<BodyItem>(N_("BodyItem"));
 
+    // Implemented in BodyItemFileIO.cpp
     registerBodyItemFileIoSet(im);
 
     OptionManager& om = ext->optionManager();

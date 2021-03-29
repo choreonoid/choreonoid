@@ -70,6 +70,7 @@ set(headers
   WorldItem.h
   BodySelectionManager.h
   BodyItem.h
+  BodyItemFileIO.h
   EditableSceneBody.h
   LinkKinematicsKitManager.h
   LinkOffsetFrameListItem.h

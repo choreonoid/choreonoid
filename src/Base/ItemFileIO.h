@@ -31,12 +31,6 @@ public:
     enum InvocationType { Direct, Dialog, DragAndDrop };
     class Impl;
 
-protected:
-    ItemFileIO(const std::string& formatId, int api);
-    ItemFileIO(const ItemFileIO& org);
-    ItemFileIO();
-    void copyFrom(const ItemFileIO& org);
-    
 public:
     ~ItemFileIO();
 
@@ -80,11 +74,8 @@ public:
         Item* parentItem = nullptr, bool doAddition = true, Item* nextItem = nullptr,
         const Mapping* options = nullptr);
 
-    virtual bool load(Item* item, const std::string& filename);
-    
     // Save API
     bool saveItem(Item* item, const std::string& filename, const Mapping* options = nullptr);
-    virtual bool save(Item* item, const std::string& filename);
     
     // Options API
     virtual void resetOptions();
@@ -116,6 +107,17 @@ public:
     static std::vector<std::string> separateExtensions(const std::string& multiExtString);
 
 protected:
+    ItemFileIO(const std::string& formatId, int api);
+    ItemFileIO(const ItemFileIO& org);
+    ItemFileIO();
+    void copyFrom(const ItemFileIO& org);
+    
+    // Load API
+    virtual bool load(Item* item, const std::string& filename);
+
+    // Save API
+    virtual bool save(Item* item, const std::string& filename);
+    
     std::ostream& os();
     void putWarning(const std::string& message);
     void putError(const std::string& message);

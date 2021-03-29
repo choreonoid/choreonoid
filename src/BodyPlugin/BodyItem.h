@@ -16,6 +16,7 @@
 
 namespace cnoid {
 
+class ItemManager;
 class BodyState;
 class LinkKinematicsKit;
 class InverseKinematics;
@@ -29,7 +30,9 @@ class CNOID_EXPORT BodyItem : public Item, public LocatableItem, public Renderab
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    // Implemented in BodyItemFileIO.cpp
+    // The following functions are Implemented in BodyItemFileIO.cpp
+    static void registerBodyItemFileIoSet(ItemManager* im);
+    //! The actual type of the IO object returned by this function is BodyItemBodyFileIO.
     static ItemFileIO* bodyFileIO();
     static ItemFileIO* meshFileIO();
         
