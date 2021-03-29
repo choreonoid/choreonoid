@@ -4,6 +4,7 @@
 */
 
 #include "SceneItem.h"
+#include "SceneItemFileIO.h"
 #include "ItemManager.h"
 #include "Archive.h"
 #include "PutPropertyFunction.h"
@@ -17,27 +18,40 @@ using namespace cnoid;
 
 namespace {
 
-bool loadScene(SceneItem* item, const std::string& filename, std::ostream& os)
+class SceneFileLoader : public SceneItemFileIO
 {
-    static SceneLoader* loader = 0;
-    if(!loader){
-        loader = new SceneLoader;
-        loader->setMessageSink(mvout(true));
+public:
+    SceneFileLoader()
+    {
+        setCaption(_("Scene"));
+        setFileTypeCaption(_("Scene / Mesh"));
+
+        addFormatIdAlias("AVAILABLE-SCENE-FILE");
+        addFormatIdAlias("VRML-FILE");
+        addFormatIdAlias("STL-FILE");
     }
-    auto scene = loader->load(filename);
-    if(scene){
-        auto group = new SgInvariantGroup;
-        group->addChild(scene);
-        auto topNode = item->topNode();
+    
+    virtual Item* createItem() override
+    {
+        return new SceneItem;
+    }
+    
+    virtual bool load(Item* item, const std::string& filename) override
+    {
+        SgNode* scene = loadScene(filename);
+        if(!scene){
+            return false;
+        }
+        auto sceneItem = static_cast<SceneItem*>(item);
+        auto topNode = sceneItem->topNode();
         topNode->clearChildren();
-        topNode->addChild(group);
-        if(item->isLightweightRenderingEnabled()){
-            item->setLightweightRenderingEnabled(true);
+        topNode->addChild(scene);
+        if(sceneItem->isLightweightRenderingEnabled()){
+            sceneItem->setLightweightRenderingEnabled(true);
         }
         return true;
     }
-    return false;
-}
+};
 
 }
 
@@ -46,29 +60,9 @@ void SceneItem::initializeClass(ExtensionManager* ext)
 {
     static bool initialized = false;
     if(!initialized){
-        ext->itemManager().registerClass<SceneItem>(N_("SceneItem"));
-
-        ext->itemManager().addLoader<SceneItem>(
-            _("Scene"), "AVAILABLE-SCENE-FILE", SceneLoader::availableFileExtensions,
-            [&](SceneItem* item, const std::string& filename, std::ostream& os, Item* parentItem){
-                return ::loadScene(item, filename, os);
-            },
-            ItemManager::PRIORITY_CONVERSION);
-
-        ext->itemManager().addLoader<SceneItem>(
-            "VRML", "VRML-FILE", "wrl",
-            [&](SceneItem* item, const std::string& filename, std::ostream& os, Item* parentItem){
-                return ::loadScene(item, filename, os);
-            },
-            ItemManager::PRIORITY_COMPATIBILITY);
-
-        ext->itemManager().addLoader<SceneItem>(
-            "Stereolithography (STL)", "STL-FILE", "stl",
-            [&](SceneItem* item, const std::string& filename, std::ostream& os, Item* parentItem){
-                return ::loadScene(item, filename, os);
-            },
-            ItemManager::PRIORITY_COMPATIBILITY);
-
+        auto& im = ext->itemManager();
+        im.registerClass<SceneItem>(N_("SceneItem"));
+        im.registerFileIO<SceneItem>(new SceneFileLoader);
         initialized = true;
     }
 }
