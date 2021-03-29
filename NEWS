@@ -62,6 +62,12 @@ Changes since 1.7.0:
 * Supported the standard scene file format in loading and exporting body shapes
 * Supported the OBJ mesh file format in loading and exporting body shapes
 * Added BodyContactPointLoggerItem to visualize the information on the contacts against a target body during simulation
+* Added a function to write a body file
+* Added MaterialTableItem
+* Introduce snake case keys into data files
+* Improve Undo/Redo functions with the unified edit history
+
+* Improve WorldLogFileItem to provide a function to create a log playback project
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
