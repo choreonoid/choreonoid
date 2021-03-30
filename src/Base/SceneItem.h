@@ -12,10 +12,17 @@
 
 namespace cnoid {
 
+class ItemManager;
+class ItemFileIO;
+
 class CNOID_EXPORT SceneItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
+
+    // The following functions are implemented in SceneItemFileIO.cpp
+    static void registerSceneItemFileIoSet(ItemManager* im);
+    static ItemFileIO* stdSceneFileExporter();
 
     SceneItem();
     SceneItem(const SceneItem& org);

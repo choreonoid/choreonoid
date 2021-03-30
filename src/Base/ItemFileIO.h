@@ -132,17 +132,17 @@ protected:
 private:
     Impl* impl;
     friend class ItemManager;
-    friend class ItemFileIOExtenderBase;
+    friend class ItemFileIoExtenderBase;
     friend class ItemFileDialog;
 };
 
 typedef ref_ptr<ItemFileIO> ItemFileIOPtr;
 
 template<class ItemType>
-class ItemFileIOBase : public ItemFileIO
+class ItemFileIoBase : public ItemFileIO
 {
 public:
-    ItemFileIOBase(const std::string& formatId, int api)
+    ItemFileIoBase(const std::string& formatId, int api)
         : ItemFileIO(formatId, api) {
     }
     virtual Item* createItem() override {
@@ -175,12 +175,12 @@ public:
 };
 
 
-class CNOID_EXPORT ItemFileIOExtenderBase : public ItemFileIO
+class CNOID_EXPORT ItemFileIoExtenderBase : public ItemFileIO
 {
     ItemFileIOPtr baseFileIO;
 
 protected:
-    ItemFileIOExtenderBase(const std::type_info& type, const std::string& formatId);
+    ItemFileIoExtenderBase(const std::type_info& type, const std::string& formatId);
     
 public:
     bool isAvailable() const;
@@ -197,11 +197,11 @@ public:
 
 
 template<class ItemType, class BaseItemType = ItemType>
-class ItemFileIOExtender : public ItemFileIOExtenderBase
+class ItemFileIoExtender : public ItemFileIoExtenderBase
 {
 public:
-    ItemFileIOExtender(const std::string& formatId = "")
-        : ItemFileIOExtenderBase(typeid(BaseItemType), formatId)
+    ItemFileIoExtender(const std::string& formatId = "")
+        : ItemFileIoExtenderBase(typeid(BaseItemType), formatId)
     { }
 
     ItemType* loadItem(
@@ -217,13 +217,13 @@ protected:
         return new ItemType;
     }
     virtual bool load(ItemType* item, const std::string& filename) {
-        return ItemFileIOExtenderBase::load(item, filename);
+        return ItemFileIoExtenderBase::load(item, filename);
     }
     virtual bool save(ItemType* item, const std::string& filename) {
-        return ItemFileIOExtenderBase::save(item, filename);
+        return ItemFileIoExtenderBase::save(item, filename);
     }
     virtual QWidget* getOptionPanelForSaving(ItemType* item) {
-        return ItemFileIOExtenderBase::getOptionPanelForSaving(item);
+        return ItemFileIoExtenderBase::getOptionPanelForSaving(item);
     }
 };
 

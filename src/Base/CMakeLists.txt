@@ -122,6 +122,7 @@ set(sources
   SceneBar.cpp
   SceneItem.cpp
   SceneItemFileIO.cpp
+  GeneralSceneFileImporterBase.cpp
   PointSetItem.cpp
   MultiPointSetItem.cpp
   PositionTagGroupItem.cpp
@@ -255,6 +256,7 @@ set(headers
   SceneView.h
   SceneItem.h
   SceneItemFileIO.h
+  GeneralSceneFileImporterBase.h
   PointSetItem.h
   MultiPointSetItem.h
   PositionTagGroupItem.h

@@ -1,32 +1,25 @@
 #ifndef CNOID_BASE_SCENE_ITEM_FILE_IO_H
 #define CNOID_BASE_SCENE_ITEM_FILE_IO_H
 
-#include "ItemFileIO.h"
-#include "exportdecl.h"
+#include "SceneItem.h"
+#include <cnoid/ItemFileIO>
 
 namespace cnoid {
 
-class SgNode;
+class StdSceneWriter;
 
-class CNOID_EXPORT SceneItemFileIO : public ItemFileIO
+class CNOID_EXPORT SceneItemStdSceneFileExporter : public ItemFileIoBase<SceneItem>
 {
 public:
-    SceneItemFileIO();
-    SceneItemFileIO(int api);
-    ~SceneItemFileIO();
-
-protected:
-    SgNode* loadScene(const std::string& filename);
+    SceneItemStdSceneFileExporter();
     
-    virtual void resetOptions() override;
-    virtual void storeOptions(Mapping* archive) override;
-    virtual bool restoreOptions(const Mapping* archive) override;
-    virtual QWidget* getOptionPanelForLoading() override;
-    virtual void fetchOptionPanelForLoading() override;
-
+protected:
+    virtual bool save(SceneItem* item, const std::string& filename) override;
+    
 private:
-    class Impl;
-    Impl* impl;
+    StdSceneWriter* ensureSceneWriter();
+    
+    std::unique_ptr<StdSceneWriter> sceneWriter_;
 };
 
 }

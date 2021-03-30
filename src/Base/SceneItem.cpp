@@ -4,8 +4,8 @@
 */
 
 #include "SceneItem.h"
-#include "SceneItemFileIO.h"
 #include "ItemManager.h"
+#include "GeneralSceneFileImporterBase.h"
 #include "Archive.h"
 #include "PutPropertyFunction.h"
 #include <cnoid/SceneLoader>
@@ -18,10 +18,10 @@ using namespace cnoid;
 
 namespace {
 
-class SceneFileLoader : public SceneItemFileIO
+class GeneralSceneFileImporter : public GeneralSceneFileImporterBase
 {
 public:
-    SceneFileLoader()
+    GeneralSceneFileImporter()
     {
         setCaption(_("Scene"));
         setFileTypeCaption(_("Scene / Mesh"));
@@ -60,9 +60,9 @@ void SceneItem::initializeClass(ExtensionManager* ext)
 {
     static bool initialized = false;
     if(!initialized){
-        auto& im = ext->itemManager();
-        im.registerClass<SceneItem>(N_("SceneItem"));
-        im.registerFileIO<SceneItem>(new SceneFileLoader);
+        auto im = &ext->itemManager();
+        im->registerClass<SceneItem>(N_("SceneItem"));
+        registerSceneItemFileIoSet(im);
         initialized = true;
     }
 }

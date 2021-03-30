@@ -26,13 +26,13 @@ AbstractBodyLoaderPtr sdfBodyLoaderFactory()
     return make_shared<SDFBodyLoader>();
 }
 
-class UrdfFileIO : public ItemFileIOBase<BodyItem>
+class UrdfFileIO : public ItemFileIoBase<BodyItem>
 {
     unique_ptr<SDFBodyLoader> loader;
 
 public:
     UrdfFileIO()
-        : ItemFileIOBase<BodyItem>("URDF", Load)
+        : ItemFileIoBase<BodyItem>("URDF", Load)
     {
         setCaption(_("ROS / Gazebo model"));
         setFileTypeCaption(_("URDF"));
@@ -51,13 +51,13 @@ public:
     }
 };
 
-class SdfFileIO : public ItemFileIOBase<BodyItem>
+class SdfFileIO : public ItemFileIoBase<BodyItem>
 {
     unique_ptr<SDFBodyLoader> loader;
 
 public:
     SdfFileIO()
-        : ItemFileIOBase<BodyItem>("SDF", Load)
+        : ItemFileIoBase<BodyItem>("SDF", Load)
     {
         setCaption(_("ROS / Gazebo model"));
         setFileTypeCaption(_("SDF"));

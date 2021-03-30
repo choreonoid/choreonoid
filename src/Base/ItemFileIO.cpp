@@ -503,7 +503,7 @@ const Referenced* ItemFileIO::itemClassInfo() const
 }
 
 
-ItemFileIOExtenderBase::ItemFileIOExtenderBase(const std::type_info& type, const std::string& formatId)
+ItemFileIoExtenderBase::ItemFileIoExtenderBase(const std::type_info& type, const std::string& formatId)
 {
     baseFileIO = ItemManager::findFileIO(type, formatId);
     if(baseFileIO){
@@ -512,19 +512,19 @@ ItemFileIOExtenderBase::ItemFileIOExtenderBase(const std::type_info& type, const
 }
 
 
-bool ItemFileIOExtenderBase::isAvailable() const
+bool ItemFileIoExtenderBase::isAvailable() const
 {
     return baseFileIO != nullptr;
 }
 
 
-bool ItemFileIOExtenderBase::load(Item* item, const std::string& filename)
+bool ItemFileIoExtenderBase::load(Item* item, const std::string& filename)
 {
     return baseFileIO ? baseFileIO->load(item, filename) : false;
 }
 
 
-void ItemFileIOExtenderBase::resetOptions()
+void ItemFileIoExtenderBase::resetOptions()
 {
     if(baseFileIO){
         baseFileIO->resetOptions();
@@ -532,7 +532,7 @@ void ItemFileIOExtenderBase::resetOptions()
 }
 
 
-void ItemFileIOExtenderBase::storeOptions(Mapping* options)
+void ItemFileIoExtenderBase::storeOptions(Mapping* options)
 {
     if(baseFileIO){
         baseFileIO->storeOptions(options);
@@ -540,19 +540,19 @@ void ItemFileIOExtenderBase::storeOptions(Mapping* options)
 }
 
 
-bool ItemFileIOExtenderBase::restoreOptions(const Mapping* options)
+bool ItemFileIoExtenderBase::restoreOptions(const Mapping* options)
 {
     return baseFileIO ? baseFileIO->restoreOptions(options) : true;
 }
 
 
-QWidget* ItemFileIOExtenderBase::getOptionPanelForLoading()
+QWidget* ItemFileIoExtenderBase::getOptionPanelForLoading()
 {
     return baseFileIO ? baseFileIO->getOptionPanelForLoading() : nullptr;
 }
 
 
-void ItemFileIOExtenderBase::fetchOptionPanelForLoading()
+void ItemFileIoExtenderBase::fetchOptionPanelForLoading()
 {
     if(baseFileIO){
         baseFileIO->fetchOptionPanelForLoading();
@@ -560,13 +560,13 @@ void ItemFileIOExtenderBase::fetchOptionPanelForLoading()
 }
 
 
-QWidget* ItemFileIOExtenderBase::getOptionPanelForSaving(Item* item)
+QWidget* ItemFileIoExtenderBase::getOptionPanelForSaving(Item* item)
 {
     return baseFileIO ? baseFileIO->getOptionPanelForSaving(item) : nullptr;
 }
 
 
-void ItemFileIOExtenderBase::fetchOptionPanelForSaving()
+void ItemFileIoExtenderBase::fetchOptionPanelForSaving()
 {
     if(baseFileIO){
         baseFileIO->fetchOptionPanelForSaving();
@@ -574,7 +574,7 @@ void ItemFileIOExtenderBase::fetchOptionPanelForSaving()
 }
     
 
-bool ItemFileIOExtenderBase::save(Item* item, const std::string& filename)
+bool ItemFileIoExtenderBase::save(Item* item, const std::string& filename)
 {
     return baseFileIO ? baseFileIO->save(item, filename) : false;
 }

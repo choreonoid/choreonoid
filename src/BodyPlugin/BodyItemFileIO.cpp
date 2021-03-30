@@ -1,7 +1,7 @@
 #include "BodyItemFileIO.h"
 #include "BodyItem.h"
 #include "BodyOverwriteAddon.h"
-#include <cnoid/SceneItemFileIO>
+#include <cnoid/GeneralSceneFileImporterBase>
 #include <cnoid/StdSceneWriter>
 #include <cnoid/ObjSceneWriter>
 #include <cnoid/ItemManager>
@@ -21,7 +21,7 @@ ItemFileIO* meshFileIO;
 /**
    \todo This class should be integrated with StdSceneFileExporter
 */
-class SceneFileImporter : public SceneItemFileIO
+class SceneFileImporter : public GeneralSceneFileImporterBase
 {
 public:
     SceneFileImporter();
@@ -93,7 +93,7 @@ ItemFileIO* BodyItem::meshFileIO()
 
 
 BodyItemFileIoBase::BodyItemFileIoBase(const char* format, int api)
-    : ItemFileIOBase<BodyItem>(format, api)
+    : ItemFileIoBase<BodyItem>(format, api)
 {
     optionPanel = nullptr;
     extModelFileModeCombo = nullptr;
@@ -332,7 +332,7 @@ void SceneFileExporterBase::addShapeTypeCombo(QBoxLayout* box)
 
 
 StdSceneFileExporter::StdSceneFileExporter()
-    : SceneFileExporterBase(_("Standard scene file"), "STD-SCENE-FILE", "scen")
+    : SceneFileExporterBase(_("Standard scene file"), "CHOREONOID-SCENE", "scen")
 {
 
 }

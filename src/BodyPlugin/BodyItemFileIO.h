@@ -12,7 +12,7 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT BodyItemFileIoBase : public ItemFileIOBase<BodyItem>
+class CNOID_EXPORT BodyItemFileIoBase : public ItemFileIoBase<BodyItem>
 {
 protected:
     BodyItemFileIoBase(const char* format, int api);
