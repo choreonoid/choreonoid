@@ -6,6 +6,8 @@
 #include "StdSceneReader.h"
 #include "SceneDrawables.h"
 #include "SceneLights.h"
+#include "SceneCameras.h"
+#include "SceneEffects.h"
 #include "MeshGenerator.h"
 #include "PolygonMeshTriangulator.h"
 #include "MeshFilter.h"
@@ -127,7 +129,13 @@ public:
     void readTextureTransform(SgTexture* texture, Mapping* info);
     void readLightCommon(Mapping* info, SgLight* light);
     SgNode* readDirectionalLight(Mapping* info);
+    SgNode* readPointLight(Mapping* info);
+    void readPointLightParameters(Mapping* info, SgPointLight* light);
     SgNode* readSpotLight(Mapping* info);
+    void readCameraParameters(Mapping* info, SgCamera* camera);
+    SgNode* readPerspectiveCamera(Mapping* info);
+    SgNode* readOrthographicCamera(Mapping* info);
+    SgNode* readFog(Mapping* info);
     SgNode* readResourceAsScene(Mapping* info);
     Resource readResourceNode(Mapping* info, bool doSetUri);
     void extractNamedSceneNodes(Mapping* resourceNode, ResourceInfo* info, Resource& resource);
@@ -183,13 +191,17 @@ StdSceneReader::Impl::Impl(StdSceneReader* self)
         
         if(nodeFunctionMap.empty()){
             nodeFunctionMap = {
-                { "Node",             &Impl::readNodeNode },
-                { "Group",            &Impl::readGroup },
-                { "Transform",        &Impl::readTransform },
-                { "Shape",            &Impl::readShape },
-                { "DirectionalLight", &Impl::readDirectionalLight },
-                { "SpotLight",        &Impl::readSpotLight },
-                { "Resource",         &Impl::readResourceAsScene }
+                { "Node",               &Impl::readNodeNode },
+                { "Group",              &Impl::readGroup },
+                { "Transform",          &Impl::readTransform },
+                { "Shape",              &Impl::readShape },
+                { "DirectionalLight",   &Impl::readDirectionalLight },
+                { "PointLight",         &Impl::readPointLight },
+                { "SpotLight",          &Impl::readSpotLight },
+                { "PerspectiveCamera",  &Impl::readPerspectiveCamera },
+                { "OrthographicCamera", &Impl::readOrthographicCamera },
+                { "Fog",                &Impl::readFog },
+                { "Resource",           &Impl::readResourceAsScene }
             };
         }
     }
@@ -1346,23 +1358,89 @@ SgNode* StdSceneReader::Impl::readDirectionalLight(Mapping* info)
 }
 
 
-SgNode* StdSceneReader::Impl::readSpotLight(Mapping* info)
+SgNode* StdSceneReader::Impl::readPointLight(Mapping* info)
 {
-    SgSpotLightPtr light = new SgSpotLight;
+    SgPointLightPtr light = new SgPointLight;
+    readPointLightParameters(info, light);
+    return light.retn();
+}
 
+
+void StdSceneReader::Impl::readPointLightParameters(Mapping* info, SgPointLight* light)
+{
     readLightCommon(info, light);
 
-    if(read(info, "direction", v)) light->setDirection(v);
-    if(readAngle(info, { "beam_width", "beamWidth" }, value)) light->setBeamWidth(value);
-    if(readAngle(info, { "cut_off_angle", "cutOffAngle" }, value)) light->setCutOffAngle(value);
-    if(info->read({ "cut_off_exponent", "cutOffExponent" }, value)) light->setCutOffExponent(value);
     if(read(info, "attenuation", color)){
         light->setConstantAttenuation(color[0]);
         light->setLinearAttenuation(color[1]);
         light->setQuadraticAttenuation(color[2]);
     }
+}
+
+
+SgNode* StdSceneReader::Impl::readSpotLight(Mapping* info)
+{
+    SgSpotLightPtr light = new SgSpotLight;
+
+    readPointLightParameters(info, light);
+
+    if(read(info, "direction", v)){
+        light->setDirection(v);
+    }
+    if(readAngle(info, { "beam_width", "beamWidth" }, value)){
+        light->setBeamWidth(value);
+    }
+    if(readAngle(info, { "cut_off_angle", "cutOffAngle" }, value)){
+        light->setCutOffAngle(value);
+    }
+    if(info->read({ "cut_off_exponent", "cutOffExponent" }, value)){
+        light->setCutOffExponent(value);
+    }
     
     return light.retn();
+}
+
+
+void StdSceneReader::Impl::readCameraParameters(Mapping* info, SgCamera* camera)
+{
+    if(info->read("near_clip_distance", value)){
+        camera->setNearClipDistance(value);
+    }
+    if(info->read("far_clip_distance", value)){
+        camera->setFarClipDistance(value);
+    }
+}
+
+
+SgNode* StdSceneReader::Impl::readPerspectiveCamera(Mapping* info)
+{
+    SgPerspectiveCameraPtr camera = new SgPerspectiveCamera;
+    readCameraParameters(info, camera);
+    if(readAngle(info, "field_of_view", value)){
+        camera->setFieldOfView(value);
+    }
+    return camera.retn();
+}
+
+
+SgNode* StdSceneReader::Impl::readOrthographicCamera(Mapping* info)
+{
+    SgOrthographicCameraPtr camera = new SgOrthographicCamera;
+    readCameraParameters(info, camera);
+    if(info->read("height", value)){
+        camera->setHeight(value);
+    }
+    return camera.retn();
+}
+
+
+SgNode* StdSceneReader::Impl::readFog(Mapping* info)
+{
+    SgFogPtr fog = new SgFog;
+    if(info->read("visibility_range", value)){
+        fog->setVisibilityRange(value);
+    }
+    return fog.retn();
 }
 
 

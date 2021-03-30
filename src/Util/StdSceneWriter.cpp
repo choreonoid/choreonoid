@@ -4,6 +4,8 @@
 #include "SceneGraph.h"
 #include "SceneDrawables.h"
 #include "SceneLights.h"
+#include "SceneCameras.h"
+#include "SceneEffects.h"
 #include "SceneGraphOptimizer.h"
 #include "PolymorphicSceneNodeFunctionSet.h"
 #include "EigenArchive.h"
@@ -76,6 +78,14 @@ public:
     MappingPtr writeAppearance(SgShape* shape);
     MappingPtr writeMaterial(SgMaterial* material);
     MappingPtr writeTexture(SgTexture* texture);
+    void writeLight(Mapping* archive, SgLight* light);
+    void writeDirectionalLight(Mapping* archive, SgDirectionalLight* light);
+    void writePointLight(Mapping* archive, SgPointLight* light);
+    void writeSpotLight(Mapping* archive, SgSpotLight* light);
+    void writeCamera(Mapping* archive, SgCamera* camera);
+    void writePerspectiveCamera(Mapping* archive, SgPerspectiveCamera* camera);
+    void writeOrthographicCamera(Mapping* archive, SgOrthographicCamera* camera);
+    void writeFog(Mapping* archive, SgFog* fog);
 };
 
 }
@@ -99,6 +109,18 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
         [&](SgScaleTransform* transform){ writeScaleTransform(currentArchive, transform); });
     writeFunctions.setFunction<SgShape>(
         [&](SgShape* shape){ writeShape(currentArchive, shape); });
+    writeFunctions.setFunction<SgDirectionalLight>(
+        [&](SgDirectionalLight* light){ writeDirectionalLight(currentArchive, light); });
+    writeFunctions.setFunction<SgPointLight>(
+        [&](SgPointLight* light){ writePointLight(currentArchive, light); });
+    writeFunctions.setFunction<SgSpotLight>(
+        [&](SgSpotLight* light){ writeSpotLight(currentArchive, light); });
+    writeFunctions.setFunction<SgPerspectiveCamera>(
+        [&](SgPerspectiveCamera* camera){ writePerspectiveCamera(currentArchive, camera); });
+    writeFunctions.setFunction<SgOrthographicCamera>(
+        [&](SgOrthographicCamera* camera){ writeOrthographicCamera(currentArchive, camera); });
+    writeFunctions.setFunction<SgFog>(
+        [&](SgFog* fog){ writeFog(currentArchive, fog); });
 
     writeFunctions.updateDispatchTable();
 
@@ -499,9 +521,6 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
 
 void StdSceneWriter::Impl::processUnknownNode(Mapping* archive, SgNode* node)
 {
-    if(dynamic_cast<SgLight*>(node)){
-        os() << _("Warning: The light node type is not supported.") << endl;
-    };
     ++numSkippedNode;
 }
     
@@ -874,4 +893,73 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
         archive.reset();
     }
     return archive;
+}
+
+
+void StdSceneWriter::Impl::writeLight(Mapping* archive, SgLight* light)
+{
+    write(archive, "color", light->color());
+    archive->write("intensity", light->intensity());
+    archive->write("ambient_intensity", light->ambientIntensity());
+}
+    
+
+void StdSceneWriter::Impl::writeDirectionalLight(Mapping* archive, SgDirectionalLight* light)
+{
+    writeObjectHeader(archive, "DirectionalLight", light);
+    writeLight(archive, light);
+    write(archive, "direction", light->direction());
+}
+
+
+void StdSceneWriter::Impl::writePointLight(Mapping* archive, SgPointLight* light)
+{
+    writeObjectHeader(archive, "PointLight", light);
+    writeLight(archive, light);
+    write(archive, "attenuation",
+          Vector3(light->constantAttenuation(),
+                  light->linearAttenuation(),
+                  light->quadraticAttenuation()));
+}
+
+
+void StdSceneWriter::Impl::writeSpotLight(Mapping* archive, SgSpotLight* light)
+{
+    writeObjectHeader(archive, "SpotLight", light);
+    writePointLight(archive, light);
+    write(archive, "direction", light->direction());
+    archive->write("beam_width", degree(light->beamWidth()));
+    archive->write("cut_off_angle", degree(light->cutOffAngle()));
+    archive->write("cut_off_exponent", light->cutOffExponent());
+}
+
+
+void StdSceneWriter::Impl::writeCamera(Mapping* archive, SgCamera* camera)
+{
+    archive->write("near_clip_distance", camera->nearClipDistance());
+    archive->write("far_clip_distance", camera->farClipDistance());
+}
+
+
+void StdSceneWriter::Impl::writePerspectiveCamera(Mapping* archive, SgPerspectiveCamera* camera)
+{
+    writeObjectHeader(archive, "PerspectiveCamera", camera);
+    writeCamera(archive, camera);
+    archive->write("field_of_view", camera->fieldOfView());
+}
+
+
+void StdSceneWriter::Impl::writeOrthographicCamera(Mapping* archive, SgOrthographicCamera* camera)
+{
+    writeObjectHeader(archive, "OrthographicCamera", camera);
+    writeCamera(archive, camera);
+    archive->write("height", camera->height());
+}
+
+
+void StdSceneWriter::Impl::writeFog(Mapping* archive, SgFog* fog)
+{
+    writeObjectHeader(archive, "Fog", fog);
+    write(archive, "color", fog->color());
+    archive->write("visibility_range", fog->visibilityRange());
 }
