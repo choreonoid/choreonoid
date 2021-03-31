@@ -5,11 +5,14 @@
 
 #include "WorldLogFileItem.h"
 #include "BodyItemFileIO.h"
+#include "ControllerItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/MenuManager>
 #include <cnoid/ProjectManager>
 #include <cnoid/WorldItem>
 #include <cnoid/BodyItem>
+#include <cnoid/SceneItem>
+#include <cnoid/SceneItemFileIO>
 #include <cnoid/FolderItem>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
@@ -375,6 +378,14 @@ public:
 
 typedef map<ItemPtr, ItemPtr> ItemToItemMap;
 
+struct ArchiveInfo
+{
+    ItemToItemMap orgItemToArchiveItemMap;
+    filesystem::path archiveDirPath;
+    BodyItemBodyFileIO* bodyFileIO;
+    SceneItemStdSceneFileExporter* stdSceneFileExporter;
+};
+
 }
 
 namespace cnoid {
@@ -450,10 +461,8 @@ public:
     void exchangeDeviceStateCacheArrays();
     void openDialogToSelectDirectoryToSavePlaybackArchive();
     void saveProjectAsPlaybackArchive(const string& filename);
-    int createArchiveItemMap(Item* item, ItemToItemMap& orgItemToArchiveItemMap,
-        filesystem::path& archiveDirPath, BodyItemBodyFileIO* io);
-    ItemPtr createArchiveBodyItem(
-        BodyItem* bodyItem, filesystem::path& archiveDirPath, BodyItemBodyFileIO* io);
+    int createArchiveItemMap(Item* item, ArchiveInfo& info);
+    ItemPtr createArchiveModelItem(Item* modelItem, ArchiveInfo& info, bool isBodyItem);
     int replaceWithArchiveItems(Item* item, ItemToItemMap& orgItemToArchiveItemMap);
 };
 
@@ -1243,8 +1252,15 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
         return;
     }
 
-    auto io = dynamic_cast<BodyItemBodyFileIO*>(BodyItem::bodyFileIO());
-    if(!io){
+    ArchiveInfo info;
+
+    info.bodyFileIO = dynamic_cast<BodyItemBodyFileIO*>(BodyItem::bodyFileIO());
+    if(!info.bodyFileIO){
+        return;
+    }
+    info.stdSceneFileExporter =
+        dynamic_cast<SceneItemStdSceneFileExporter*>(SceneItem::stdSceneFileExporter());
+    if(!info.stdSceneFileExporter){
         return;
     }
 
@@ -1268,22 +1284,20 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
         projectFilePath += ".cnoid";
     }
         
-    auto archiveDirPath = projectFilePath.parent_path() / projectFilePath.stem();
-    filesystem::create_directories(archiveDirPath, ec);
+    info.archiveDirPath = projectFilePath.parent_path() / projectFilePath.stem();
+    filesystem::create_directories(info.archiveDirPath, ec);
     if(ec){
         showWarningDialog(format(_("Archive directory \"{0}\" cannot be created: {1}"),
-                                 archiveDirPath.string(), ec.message()));
+                                 info.archiveDirPath.string(), ec.message()));
         return;
     }
 
-    io->bodyWriter()->setExtModelFileMode(StdBodyWriter::ReplaceWithObjModelFiles);
+    info.bodyFileIO->bodyWriter()->setExtModelFileMode(StdBodyWriter::ReplaceWithObjModelFiles);
     
-    ItemToItemMap orgItemToArchiveItemMap;
-
-    if(createArchiveItemMap(worldItem, orgItemToArchiveItemMap, archiveDirPath, io) > 0){
+    if(createArchiveItemMap(worldItem, info) > 0){
 
         filesystem::copy_file(
-            logFilePath, archiveDirPath / logFilePath.filename(),
+            logFilePath, info.archiveDirPath / logFilePath.filename(),
 #if __cplusplus > 201402L            
             filesystem::copy_options::overwrite_existing,
 #else
@@ -1293,18 +1307,18 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
         if(ec){
             showWarningDialog(
                 format(_("Log file \"{0}\" cannot be copied to \"{1}\": {2}"),
-                       logFilePath.filename().string(), archiveDirPath.string(), ec.message()));
+                       logFilePath.filename().string(), info.archiveDirPath.string(), ec.message()));
             return;
         }
-        setLogFile((archiveDirPath / logFilePath.filename()).string());
+        setLogFile((info.archiveDirPath / logFilePath.filename()).generic_string());
         isTimeStampSuffixEnabled = false;
 
         auto rootItem = RootItem::instance();
-        orgItemToArchiveItemMap[rootItem] = rootItem;
-        orgItemToArchiveItemMap[worldItem] = worldItem;
-        orgItemToArchiveItemMap[self] = self;
+        info.orgItemToArchiveItemMap[rootItem] = rootItem;
+        info.orgItemToArchiveItemMap[worldItem] = worldItem;
+        info.orgItemToArchiveItemMap[self] = self;
 
-        if(replaceWithArchiveItems(rootItem, orgItemToArchiveItemMap)){
+        if(replaceWithArchiveItems(rootItem, info.orgItemToArchiveItemMap)){
             TimeBar::instance()->setTime(0.0);
             self->setSelected(true);
             ProjectManager::instance()->saveProject(projectFilePath.string());
@@ -1313,42 +1327,47 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
 }
 
 
-int WorldLogFileItem::Impl::createArchiveItemMap
-(Item* item, ItemToItemMap& orgItemToArchiveItemMap, filesystem::path& archiveDirPath, BodyItemBodyFileIO* io)
+int WorldLogFileItem::Impl::createArchiveItemMap(Item* item, ArchiveInfo& info)
 {
-    int numBodyItems = 0;
+    int numModelItems = 0;
     for(auto childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
         ItemPtr archiveChildItem;
-        if(auto bodyItem = dynamic_cast<BodyItem*>(childItem)){
-            auto archiveBodyItem = createArchiveBodyItem(bodyItem, archiveDirPath, io);
-            if(!archiveBodyItem){
+        bool isBodyItem = false;
+        ItemPtr modelItem = dynamic_cast<BodyItem*>(childItem);
+        if(modelItem){
+            isBodyItem = true;
+        } else {
+            modelItem = dynamic_cast<SceneItem*>(childItem);
+        }
+        if(modelItem){
+            auto archiveModelItem = createArchiveModelItem(modelItem, info, isBodyItem);
+            if(!archiveModelItem){
                 return -1;
             }
-            ++numBodyItems;
-            archiveChildItem = archiveBodyItem;
+            ++numModelItems;
+            archiveChildItem = archiveModelItem;
         }
-        int numSubTreeBodyItems = createArchiveItemMap(childItem, orgItemToArchiveItemMap, archiveDirPath, io);
-        if(numSubTreeBodyItems < 0){ // error
+        int numSubTreeModelItems = createArchiveItemMap(childItem, info);
+        if(numSubTreeModelItems < 0){ // error
             return -1;
         }
-        numBodyItems += numSubTreeBodyItems;
+        numModelItems += numSubTreeModelItems;
         if(archiveChildItem){
-            orgItemToArchiveItemMap[childItem] = archiveChildItem;
+            info.orgItemToArchiveItemMap[childItem] = archiveChildItem;
         }
     }
-    return numBodyItems;
+    return numModelItems;
 }
 
 
-ItemPtr WorldLogFileItem::Impl::createArchiveBodyItem
-(BodyItem* bodyItem, filesystem::path& archiveDirPath, BodyItemBodyFileIO* io)
+ItemPtr WorldLogFileItem::Impl::createArchiveModelItem(Item* modelItem, ArchiveInfo& info, bool isBodyItem)
 {
-    ItemPtr archiveBodyItem;
+    ItemPtr archiveModelItem;
     
     // TODO: check and avoid the duplication of the model directory names
     // TODO: replace space and symbol characters in the path components
-    string bodyName = bodyItem->displayName();
-    filesystem::path modelDirPath = archiveDirPath / bodyName;
+    string modelName = modelItem->displayName();
+    filesystem::path modelDirPath = info.archiveDirPath / modelName;
     stdx::error_code ec;
 
     filesystem::create_directories(modelDirPath, ec);
@@ -1358,14 +1377,21 @@ ItemPtr WorldLogFileItem::Impl::createArchiveBodyItem
                    modelDirPath.filename().string(), ec.message()),
             MessageView::Error);
     } else {
-        archiveBodyItem = bodyItem->duplicate();
-        auto filePath = modelDirPath / bodyName;
-        filePath += ".body";
-        if(!io->saveItem(archiveBodyItem, filePath.string())){
-            archiveBodyItem.reset();
+        archiveModelItem = modelItem->duplicate();
+        auto filePath = modelDirPath / modelName;
+        bool saved = false;
+        if(isBodyItem){
+            filePath += ".body"; // Is this necessary?
+            saved = info.bodyFileIO->saveItem(archiveModelItem, filePath.string());
+        } else {
+            filePath += ".scen"; // Is this necessary?
+            saved = info.stdSceneFileExporter->saveItem(archiveModelItem, filePath.string());
+        }
+        if(!saved){
+            archiveModelItem.reset();
         }
     }
-    return archiveBodyItem;
+    return archiveModelItem;
 }
 
 
@@ -1395,9 +1421,15 @@ int WorldLogFileItem::Impl::replaceWithArchiveItems(Item* item, ItemToItemMap& o
         numValidItems += replaceWithArchiveItems(childItem, orgItemToArchiveItemMap);
     }
 
+    if(!archiveItem){
+        if(item->filePath().empty() && !dynamic_cast<ControllerItem*>(item)){
+            archiveItem = item;
+        }
+    }
     if(archiveItem){
         ++numValidItems;
     }
+
     if(numValidItems == 0){
         item->removeFromParentItem();
 
