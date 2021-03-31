@@ -169,9 +169,7 @@ void MprStatementViewBase::Impl::onSelectedStatementsChanged
         auto prevPanel = currentPanel;
         currentPanel = nullptr;
 
-        if(!statement){
-            setCaption("---");
-        } else {
+        if(statement){
             currentPanel = getOrCreateStatementPanel(statement);
             if(currentPanel){
                 currentPanel->activate(
@@ -194,7 +192,11 @@ void MprStatementViewBase::Impl::onSelectedStatementsChanged
     }
 
     if(needToUpdateCaption){
-        setCaption(format("<b>{0}</b>", statement->label(0)));
+        if(statement){
+            setCaption(format("<b>{0}</b>", statement->label(0)));
+        } else {
+            setCaption("---");
+        }            
     }
 }
 
