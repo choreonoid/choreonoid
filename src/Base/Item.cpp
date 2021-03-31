@@ -521,6 +521,12 @@ void Item::setChecked(int checkId, bool on)
 }
 
 
+int Item::numCheckStates() const
+{
+    return impl->checkStates.size();
+}
+
+
 int Item::countDescendantItems() const
 {
     return impl->countDescendantItems(this);
@@ -1467,9 +1473,13 @@ bool Item::replace(Item* originalItem)
         originalToReplacementItemMap[originalItem] = this;
 
         assign(originalItem);
-        setChecked(originalItem->isChecked());
         originalItem->parentItem()->insertChild(originalItem, this);
         
+        int nc = originalItem->numCheckStates();
+        for(int i=0; i < nc; ++i){
+            setChecked(i, originalItem->isChecked(i));
+        }
+
         // move children to the reload item
         ItemPtr child = originalItem->childItem();
         while(child){

@@ -108,6 +108,7 @@ public:
     bool isChecked(int checkId = PrimaryCheck) const;
     void setChecked(bool on); // for PrimaryCheck
     void setChecked(int checkId, bool on);
+    int numCheckStates() const;
 
     int numChildren() const { return numChildren_; }
     int countDescendantItems() const;
