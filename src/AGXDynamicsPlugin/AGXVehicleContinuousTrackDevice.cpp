@@ -178,7 +178,7 @@ bool writeAGXVehicleContinuousTrackDevice
     info->write("contact_reduction", desc.contactReduction);
     info->write("enable_lock_to_reach_merge_condition", desc.enableLockToReachMergeCondition);
     info->write("lock_to_reach_merge_condition_compliance", desc.lockToReachMergeConditionCompliance);
-    info->write("lockToReachMergeConditionSpookDamping", desc.lockToReachMergeConditionSpookDamping);
+    info->write("lock_to_reach_merge_condition_spook_damping", desc.lockToReachMergeConditionSpookDamping);
     info->write("max_angle_merge_condition", desc.maxAngleMergeCondition);
     info->write("material", desc.materialName);
 
@@ -191,6 +191,8 @@ bool writeAGXVehicleContinuousTrackDevice
     info->writeAsListing("idler_names", desc.idlerNames);
     info->writeAsListing("roller_names", desc.rollerNames);
     info->writeAsListing("guide_names", desc.guideNames);
+
+    write(info, "up_axis", desc.upAxis);
 
     return true;
 }
