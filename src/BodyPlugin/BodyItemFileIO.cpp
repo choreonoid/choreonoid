@@ -162,12 +162,6 @@ bool BodyItemBodyFileIO::load(BodyItem* item, const std::string& filename)
     }
     item->setBody(newBody);
     
-    if(item->name().empty()){
-        item->setName(newBody->modelName());
-    } else {
-        newBody->setName(item->name());
-    }
-    
     auto itype = invocationType();
     if(itype == Dialog || itype == DragAndDrop){
         item->setChecked(true);

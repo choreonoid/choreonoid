@@ -460,8 +460,20 @@ void BodyItem::Impl::setBody(Body* body_)
 
     initBody(false);
 
-    if(self->name().empty() && !body_->name().empty()){
-        self->setName(body_->name());
+    auto& itemName = self->name();
+    if(itemName.empty()){
+        if(!body_->name().empty()){
+            self->setName(body_->name());
+        } else if(!body_->modelName().empty()){
+            self->setName(body_->modelName());
+        }
+    } else {
+        if(body_->name().empty()){
+            body->setName(itemName);
+        }
+        if(body_->modelName().empty()){
+            body->setModelName(itemName);
+        }
     }
 }
 
