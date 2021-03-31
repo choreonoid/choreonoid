@@ -47,6 +47,8 @@ const double RATEX[] = { -1.0, -1.0 };
 class QuadcopterController : public SimpleController
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     SharedJoystickPtr joystick;
     int targetMode;
     BodyPtr ioBody;

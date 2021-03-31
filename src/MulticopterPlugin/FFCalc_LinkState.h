@@ -13,9 +13,11 @@ namespace FFCalc {
 class LinkState
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     struct State
     {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         double time;
         const Transform3 trans;
         const Vector3 origin;
