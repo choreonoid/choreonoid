@@ -149,7 +149,7 @@ void SgObject::setUriByFilePathAndBaseDirectory
         }
         path = baseDirPath / path;
     }
-    setUri(filePath, format("file://{0}", path.string()));
+    setUri(filePath, format("file://{0}", path.generic_string()));
 }
 
 
@@ -159,7 +159,7 @@ void SgObject::setUriByFilePathAndCurrentDirectory(const std::string& filePath)
     if(path.is_relative()){
         path = filesystem::current_path() / path;
     }
-    setUri(filePath, format("file://{0}", path.string()));
+    setUri(filePath, format("file://{0}", path.generic_string()));
 }
 
 

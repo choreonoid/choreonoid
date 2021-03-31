@@ -126,7 +126,7 @@ public:
     void readAppearance(SgShape* shape, Mapping* info);
     void readMaterial(SgShape* shape, Mapping* info);
     void readTexture(SgShape* shape, Mapping* info);
-    void readTextureTransform(SgTexture* texture, Mapping* info);
+    SgTextureTransform* readTextureTransform(Mapping* info);
     void readLightCommon(Mapping* info, SgLight* light);
     SgNode* readDirectionalLight(Mapping* info);
     SgNode* readPointLight(Mapping* info);
@@ -1237,7 +1237,7 @@ void StdSceneReader::Impl::readAppearance(SgShape* shape, Mapping* info)
 
         auto textureTransform = info->findMapping({ "texture_transform", "textureTransform" });
         if(textureTransform->isValid() && shape->texture()){
-            readTextureTransform(shape->texture(), textureTransform);
+            shape->texture()->setTextureTransform(readTextureTransform(textureTransform));
         }
     }
 }
@@ -1319,33 +1319,41 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping* info)
                     repeatS = repeatT = repeatNode->toBool();
                 }
             } else {
-                info->read("repeatS", repeatS);
-                info->read("repeatT", repeatT);
+                info->read({ "repeat_s", "repeatS" }, repeatS);
+                info->read({ "repeat_t", "repeatT" }, repeatT);
             }
             texture->setRepeat(repeatS, repeatT);
-            texture->setTextureTransform(new SgTextureTransform);
             shape->setTexture(texture);
         }
     }
 }
 
 
-void StdSceneReader::Impl::readTextureTransform(SgTexture* texture, Mapping* info)
+SgTextureTransform* StdSceneReader::Impl::readTextureTransform(Mapping* info)
 {
-    SgTextureTransform* textureTransform = texture->textureTransform();
-    if(read(info, "center", v2)) textureTransform->setCenter(v2);
-    if(read(info, "scale", v2)) textureTransform->setScale(v2);
-    if(read(info, "translation", v2)) textureTransform->setTranslation(v2);
-    if(self->readAngle(info, "rotation", value)) textureTransform->setRotation(value);
+    SgTextureTransformPtr transform = new SgTextureTransform;
+    if(read(info, "center", v2)) transform->setCenter(v2);
+    if(read(info, "scale", v2)) transform->setScale(v2);
+    if(read(info, "translation", v2)) transform->setTranslation(v2);
+    if(self->readAngle(info, "rotation", value)) transform->setRotation(value);
+    return transform.retn();
 }
 
 
 void StdSceneReader::Impl::readLightCommon(Mapping* info, SgLight* light)
 {
-    if(info->read("on", on)) light->on(on);
-    if(read(info, "color", color)) light->setColor(color);
-    if(info->read("intensity", value)) light->setIntensity(value);
-    if(info->read("ambientIntensity", value)) light->setAmbientIntensity(value);
+    if(info->read("on", on)){
+        light->on(on);
+    }
+    if(read(info, "color", color)){
+        light->setColor(color);
+    }
+    if(info->read("intensity", value)){
+        light->setIntensity(value);
+    }
+    if(info->read({ "ambient", "ambientIntensity" }, value)){
+        light->setAmbientIntensity(value);
+    }
 }
 
 

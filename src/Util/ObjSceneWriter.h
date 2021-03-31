@@ -1,14 +1,12 @@
 #ifndef CNOID_UTIL_OBJ_SCENE_WRITER_H
 #define CNOID_UTIL_OBJ_SCENE_WRITER_H
 
-#include <string>
+#include "AbstractSceneWriter.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class SgNode;
-
-class CNOID_EXPORT ObjSceneWriter
+class CNOID_EXPORT ObjSceneWriter : public AbstractSceneWriter
 {
 public:
     ObjSceneWriter();
@@ -19,11 +17,11 @@ public:
     ObjSceneWriter& operator=(const ObjSceneWriter&) = delete;
     ObjSceneWriter& operator=(ObjSceneWriter&&) = delete;
 
-    void setMessageSink(std::ostream& os);
+    virtual void setMessageSink(std::ostream& os) override;
     void setMaterialEnabled(bool on);
     bool isMaterialEnabled() const;
 
-    bool writeScene(const std::string& filename, SgNode* node);
+    virtual bool writeScene(const std::string& filename, SgNode* node) override;
 
 private:
     class Impl;

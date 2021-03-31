@@ -40,6 +40,7 @@ public:
     unique_ptr<StdSceneWriter> subSceneWriter;
     unique_ptr<ObjSceneWriter> objSceneWriter;
     int numSkippedNode;
+    filesystem::path baseDirPath;
     vector<filesystem::path> uriDirectoryStack;
     set<string> extModelFiles;
 
@@ -78,6 +79,7 @@ public:
     MappingPtr writeAppearance(SgShape* shape);
     MappingPtr writeMaterial(SgMaterial* material);
     MappingPtr writeTexture(SgTexture* texture);
+    MappingPtr writeTextureTransform(SgTextureTransform * transform);
     void writeLight(Mapping* archive, SgLight* light);
     void writeDirectionalLight(Mapping* archive, SgDirectionalLight* light);
     void writePointLight(Mapping* archive, SgPointLight* light);
@@ -151,6 +153,7 @@ void StdSceneWriter::Impl::copyConfigurations(const Impl* org)
     if(org->yamlWriter){
         getOrCreateYamlWriter()->setIndentWidth(org->yamlWriter->indentWidth());
     }
+    
     if(org->pathVariableProcessor){
         getOrCreatePathVariableProcessor()->setBaseDirectory(
             org->pathVariableProcessor->baseDirectory());
@@ -166,6 +169,8 @@ StdSceneWriter::~StdSceneWriter()
 
 void StdSceneWriter::setMessageSink(std::ostream& os)
 {
+    AbstractSceneWriter::setMessageSink(os);
+    
     impl->os_ = &os;
     if(impl->objSceneWriter){
         impl->objSceneWriter->setMessageSink(os);
@@ -221,7 +226,9 @@ void StdSceneWriter::setBaseDirectory(const std::string& directory)
 
 void StdSceneWriter::Impl::setBaseDirectory(const std::string& directory)
 {
-    getOrCreatePathVariableProcessor()->setBaseDirectory(directory);
+    auto pvp = getOrCreatePathVariableProcessor();
+    pvp->setBaseDirectory(directory);
+    baseDirPath = pvp->baseDirPath();
 }
 
 
@@ -323,6 +330,8 @@ bool StdSceneWriter::Impl::writeScene
     if(!yamlWriter->openFile(filename)){
         return false;
     }
+
+    setBaseDirectory(filesystem::path(filename).parent_path().string());
 
     SgGroupPtr group = new SgGroup;
     if(node){
@@ -465,8 +474,7 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     } else {
         path += ".scen";
     }
-    auto basePath = getOrCreatePathVariableProcessor()->baseDirPath();
-    auto fullPath = filesystem::lexically_normal(basePath / path);
+    auto fullPath = filesystem::lexically_normal(baseDirPath / path);
     auto filename = fullPath.string();
 
     bool replaced = false;
@@ -503,7 +511,7 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     }
 
     if(replaced){
-        archive->write("uri", path.string(), DOUBLE_QUOTED);
+        archive->write("uri", path.generic_string(), DOUBLE_QUOTED);
         
     } else {
         if(ec){
@@ -812,16 +820,21 @@ MappingPtr StdSceneWriter::Impl::writeAppearance(SgShape* shape)
 {
     MappingPtr archive = new Mapping;
 
-    if(auto material = writeMaterial(shape->material())){
-        archive->insert("material", material);
+    if(auto materialInfo = writeMaterial(shape->material())){
+        archive->insert("material", materialInfo);
     }
-    if(auto texture = writeTexture(shape->texture())){
-        archive->insert("texture", texture);
+    auto texture = shape->texture();
+    auto textureInfo = writeTexture(shape->texture());
+    if(textureInfo){
+        archive->insert("texture", textureInfo);
+        if(auto transformInfo = writeTextureTransform(texture->textureTransform())){
+            archive->insert("texture_transform", transformInfo);
+        }
     }
     if(archive->empty()){
         archive = nullptr;
     }
-
+    
     return archive;
 }
 
@@ -874,18 +887,26 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
 
     if(auto image = texture->image()){
         if(image->hasUri()){
-            filesystem::path path(image->uri());
-            if(!uriDirectoryStack.empty()){
-                path = uriDirectoryStack.back() / path;
-            }
-            archive->write("uri", path.generic_string(), DOUBLE_QUOTED);
-            isValid = true;
-            if(texture->repeatS() == texture->repeatT()){
-                archive->write("repeat", texture->repeatS());
+            string baseDir;
+            if(uriDirectoryStack.empty()){
+                baseDir = baseDirPath.string();
             } else {
-                auto& repeat = *archive->createFlowStyleListing("repeat");
-                repeat.append(texture->repeatS());
-                repeat.append(texture->repeatT());
+                baseDir = (baseDirPath / uriDirectoryStack.back()).string();
+            }
+            if(self->findOrCopyImageFile(image, baseDir)){
+                filesystem::path path(image->uri());
+                if(!uriDirectoryStack.empty()){
+                    path = uriDirectoryStack.back() / path;
+                }
+                archive->write("uri", path.generic_string(), DOUBLE_QUOTED);
+                isValid = true;
+                if(texture->repeatS() == texture->repeatT()){
+                    archive->write("repeat", texture->repeatS());
+                } else {
+                    auto& repeat = *archive->createFlowStyleListing("repeat");
+                    repeat.append(texture->repeatS());
+                    repeat.append(texture->repeatT());
+                }
             }
         }
     }
@@ -896,11 +917,34 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
 }
 
 
+MappingPtr StdSceneWriter::Impl::writeTextureTransform(SgTextureTransform * transform)
+{
+    if(!transform){
+        return nullptr;
+    }
+
+    MappingPtr archive = new Mapping;
+    if(!transform->center().isZero()){
+        write(archive, "center", transform->center());
+    }
+    if(!transform->scale().isOnes()){
+        write(archive, "scale", transform->scale());
+    }
+    if(!transform->translation().isZero()){
+        write(archive, "translation", transform->translation());
+    }
+    if(transform->rotation() != 0.0){
+        archive->write("rotation", transform->rotation());
+    }
+    return archive;
+}
+
+
 void StdSceneWriter::Impl::writeLight(Mapping* archive, SgLight* light)
 {
     write(archive, "color", light->color());
     archive->write("intensity", light->intensity());
-    archive->write("ambient_intensity", light->ambientIntensity());
+    archive->write("ambient", light->ambientIntensity());
 }
     
 

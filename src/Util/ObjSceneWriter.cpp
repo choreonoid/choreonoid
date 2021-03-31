@@ -86,6 +86,7 @@ ObjSceneWriter::~ObjSceneWriter()
 
 void ObjSceneWriter::setMessageSink(std::ostream& os)
 {
+    AbstractSceneWriter::setMessageSink(os);
     impl->os_ = &os;
 }
 
@@ -228,7 +229,7 @@ bool ObjSceneWriter::Impl::findOrWriteMaterial(SgShape* shape)
             mfs.open(fromUTF8(mtlFilename).c_str(), ios_base::out | ios_base::binary);
             mfs.exceptions(std::ios_base::failbit);
 
-            gfs << "mtllib " << mtlFilepath.filename().string() << "\n";
+            gfs << "mtllib " << mtlFilepath.filename().generic_string() << "\n";
         }
         catch(const std::exception& ex){
             os() << format(_("\"{0}\" cannot be open. {1}."), mtlFilename, ex.what()) << endl;
@@ -296,51 +297,16 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
         mfs << "Tr " << material->transparency() << "\n";
         mfs << "illum 2\n";
     }
+
     if(texture){
         auto image = texture->image();
         if(image && image->hasUri()){
-            auto& uri = image->uri();
-            mfs << "map_Kd " << uri << "\n";
-            bool orgImageFileFound = false;
-            if(image->hasAbsoluteUri()){
-                auto& absUri = image->absoluteUri();
-                if(absUri.find_first_of("file://") == 0){
-                    filesystem::path orgFilePath(absUri.substr(7));
-                    stdx::error_code ec;
-                    if(filesystem::exists(orgFilePath, ec)){
-                        orgImageFileFound = true;
-                        filesystem::path uriPath(uri);
-                        if(uriPath.is_relative()){
-                            uriPath = baseDirPath / uriPath;
-                        }
-                        if(!filesystem::equivalent(orgFilePath, uriPath, ec)){
-                            ec.clear();
-#if __cplusplus > 201402L
-                            filesystem::copy_file(orgFilePath, uriPath, filesystem::copy_options::update_existing, ec);
-#else
-                            bool doCopy = true;
-                            if(filesystem::exists(uriPath, ec)){
-                                if(filesystem::last_write_time(uriPath, ec) >= filesystem::last_write_time(orgFilePath, ec)){
-                                    doCopy = false;
-                                }
-                            }
-                            if(doCopy){
-                                filesystem::copy_file(
-                                    orgFilePath, uriPath, filesystem::copy_option::overwrite_if_exists, ec);
-                            }
-#endif
-                            if(ec){
-                                os() << format(_("Warning: Texture image file \"{0}\" cannot be copied: {1}"), uri, ec.message()) << endl;
-                            }
-                        }
-                    }
-                }
-            }
-            if(!orgImageFileFound){
-                os() << format(_("Warning: Texture image file \"{0}\" is not found."), uri) << endl;
+            if(self->findOrCopyImageFile(image, baseDirPath.generic_string())){
+                mfs << "map_Kd " << image->uri() << "\n";
             }
         }
     }
+
     mfs << "\n";
 }
 

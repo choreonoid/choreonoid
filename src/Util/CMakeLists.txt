@@ -55,8 +55,6 @@ set(sources
   CoordinateAxesOverlay.cpp # This must be after SceneRenderer.cpp
   SceneGraphOptimizer.cpp
   SceneUtil.cpp
-  AbstractSceneLoader.cpp
-  SceneLoader.cpp
   MeshGenerator.cpp
   MeshFilter.cpp
   MeshExtractor.cpp
@@ -67,6 +65,9 @@ set(sources
   ImageConverter.cpp
   PointSetUtil.cpp
   CollisionDetector.cpp
+  AbstractSceneLoader.cpp
+  SceneLoader.cpp
+  AbstractSceneWriter.cpp
   StdSceneReader.cpp
   StdSceneLoader.cpp
   StdSceneWriter.cpp
@@ -165,8 +166,6 @@ set(headers
   CoordinateAxesOverlay.h
   SceneGraphOptimizer.h
   SceneUtil.h
-  AbstractSceneLoader.h
-  SceneLoader.h
   MeshGenerator.h
   MeshFilter.h
   MeshExtractor.h
@@ -180,6 +179,9 @@ set(headers
   PointSetUtil.h
   Collision.h
   CollisionDetector.h
+  AbstractSceneLoader.h
+  SceneLoader.h
+  AbstractSceneWriter.h
   StdSceneReader.h
   StdSceneLoader.h
   StdSceneWriter.h
