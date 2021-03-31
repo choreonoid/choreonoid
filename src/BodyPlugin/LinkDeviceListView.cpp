@@ -190,12 +190,15 @@ bool LinkDeviceListView::Impl::storeState(Archive& archive)
 {
     const char* etype = nullptr;
     switch(elementTypeCombo.currentIndex()){
-    case 0: etype = "all";    break;
-    case 1: etype = "link";   break;
-    case 2: etype = "device"; break;
+    case ALL:    etype = "all";    break;
+    case LINK:   etype = "link";   break;
+    case JOINT:  etype = "joint";  break;
+    case DEVICE: etype = "device"; break;
     default: break;
     }
-    archive.write("element_type", etype);
+    if(etype){
+        archive.write("element_type", etype);
+    }
         
     const char* listingModeSymbol = nullptr;
     switch(listingModeCombo.currentIndex()){
@@ -224,12 +227,16 @@ bool LinkDeviceListView::restoreState(const Archive& archive)
 bool LinkDeviceListView::Impl::restoreState(const Archive& archive)
 {
     string symbol;
-    int etype = 1;
+    int etype = LINK;
     if(archive.read("element_type", symbol)){
         if(symbol == "all"){
-            etype = 0;
+            etype = ALL;
+        } else if(symbol == "link"){
+            etype = LINK;
+        } else if(symbol == "joint"){
+            etype = JOINT;
         } else if(symbol == "device"){
-            etype = 2;
+            etype = DEVICE;
         }
     }
     elementTypeCombo.blockSignals(true);
