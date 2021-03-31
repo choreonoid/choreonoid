@@ -5,21 +5,32 @@
 
 #include <chrono>
 
-#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 8)) || (defined(__clang__) && (__clang_major__ < 7)))
+#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 8)) || \
+     (defined(__clang__) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE < 8)))
+
 #include <experimental/filesystem>
 namespace std::experimental::filesystem {
+
 inline path lexically_normal(const path& p){
     // lexically_normal or any other normalization functions are not
     // implemented in the experimental filesystem implementation
     return p;
 }
 
+inline path absolute(const path& p, std::error_code& ec)
+{
+    return absolute(p);
+}
+
 #else
+
 #include <filesystem>
 namespace std::filesystem {
+
 inline path lexically_normal(const path& p){
     return p.lexically_normal();
 }
+
 #endif
 
 inline std::time_t last_write_time_to_time_t(const path& p){
@@ -30,11 +41,18 @@ inline std::time_t last_write_time_to_time_t(const path& p){
 } // namespace
 
 namespace cnoid::stdx {
-#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 8)) || (defined(__clang__) && (__clang_major__ < 7)))
+
+#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 8)) || \
+     (defined(__clang__) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE < 8)))
+
 namespace filesystem = std::experimental::filesystem;
+
 #else
+
 namespace filesystem = std::filesystem;
+
 #endif
+
 typedef std::error_code error_code;
 typedef filesystem::copy_options copy_options;
 }
