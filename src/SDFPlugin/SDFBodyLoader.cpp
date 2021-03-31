@@ -390,7 +390,6 @@ Link* LinkInfo::createLink(Body* body_)
         if(!device)
             continue;
 
-        device->setLink(link);
         device->setName((*it)->name);
 
         if((*it)->type == SensorInfo::SensorType::FORCE_TORQUE){
@@ -400,7 +399,7 @@ Link* LinkInfo::createLink(Body* body_)
         Isometry3 pose0 = jointInfo->pose.inverse() * (*it)->pose;
         device->setLocalTranslation(pose0.translation());
         device->setLocalRotation(pose0.linear());
-        body->addDevice(device);
+        body->addDevice(device, link);
     }
 
     for(LinkInfo* linkInfo = child; linkInfo; linkInfo = linkInfo->sibling){

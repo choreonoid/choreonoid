@@ -437,6 +437,21 @@ void Body::clearDevices()
 }
 
 
+void Body::sortDevicesByLinkOrder()
+{
+    std::stable_sort(
+        devices_.begin(), devices_.end(),
+        [](const Device* a, const Device* b){
+            return a->link()->index() < b->link()->index();
+        });
+
+    int index = 0;
+    for(auto& device : devices_){
+        device->setIndex(index++);
+    }
+}
+
+
 Device* Body::findDeviceSub(const std::string& name) const
 {
     DeviceNameMap::const_iterator p = impl->deviceNameMap.find(name);

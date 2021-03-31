@@ -1024,10 +1024,9 @@ void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* devi
         DeviceFactory& factory = p->second;
         DevicePtr device = factory(deviceNode);
         if(device){
-            device->setLink(iLink.link);
             device->setLocalTranslation(T * device->localTranslation());
             device->setLocalRotation(T.linear() * device->localRotation());
-            body->addDevice(device);
+            body->addDevice(device, iLink.link);
 
             SgNodePtr node = sgConverter.convert(deviceNode);
             if(node){

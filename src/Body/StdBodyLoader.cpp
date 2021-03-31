@@ -916,6 +916,7 @@ bool StdBodyLoader::Impl::readBody(Mapping* topNode)
                 }
             }
         }
+        body->sortDevicesByLinkOrder();
     }
 
     readExtraJoints(topNode);
@@ -1404,7 +1405,7 @@ bool StdBodyLoader::Impl::readNode(Mapping* node, const string& type)
     if(p != nodeFunctions.end()){
         NodeFunctionInfo& info = p->second;
 
-        nameStack.push_back(string());
+        nameStack.emplace_back();
         node->read("name", nameStack.back());
         
         if(!isDegreeMode()){
@@ -1678,8 +1679,7 @@ bool StdBodyLoader::Impl::readDevice(Device* device, const Mapping* info)
     const Affine3& T = transformStack.back();
     device->setLocalTranslation(T.translation());
     device->setLocalRotation(T.linear());
-    device->setLink(currentLink);
-    body->addDevice(device);
+    body->addDevice(device, currentLink);
 
     return false;
 }
@@ -1828,7 +1828,7 @@ void StdBodyLoader::Impl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
     for(int i=0; i < subBody->numDevices(); ++i){
         Device* device = subBody->device(i);
         device->setName(devicePrefix + device->name());
-        body->addDevice(device);
+        body->addDevice(device, device->link());
     }
 
     LinkPtr rootLink = subBody->rootLink();

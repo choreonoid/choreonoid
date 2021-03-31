@@ -150,7 +150,7 @@ DeviceOverwriteMediator::DeviceInfo DeviceOverwriteMediator::findOrCreateDevice
         deviceFound = false;
         device = restoreDevice(body);
         if(!doCreateOverwriteItem){
-            bodyItem->body()->addDevice(device);
+            bodyItem->body()->addDevice(device, device->link());
         }
     }
     if(overwriteItem || !doCreateOverwriteItem){

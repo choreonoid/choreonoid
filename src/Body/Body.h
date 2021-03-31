@@ -206,10 +206,12 @@ public:
     }
     
     void addDevice(Device* device, Link* link);
-    void addDevice(Device* device); //! \deprecated
-    void initializeDeviceStates();
+    [[deprecated("Use addDevice(Device* device, Link* link)")]]
+    void addDevice(Device* device);
     void removeDevice(Device* device);
     void clearDevices();
+    void sortDevicesByLinkOrder();
+    void initializeDeviceStates();
 
     /**
        This function returns true when the whole body is a static, fixed object like a floor.
