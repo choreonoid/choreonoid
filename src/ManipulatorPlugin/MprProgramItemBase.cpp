@@ -117,9 +117,16 @@ Item* MprProgramItemBase::doDuplicate() const
 
 bool MprProgramItemBase::setName(const std::string& name_)
 {
+    bool updated = false;
     if(name_ != impl->topLevelProgram->name()){
         impl->topLevelProgram->setName(name_);
+        updated = true;
+    }
+    if(name_ != Item::name()){
         Item::setName(name_);
+        updated = true;
+    }
+    if(updated){
         suggestFileUpdate();
     }
     return true;
