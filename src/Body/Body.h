@@ -14,7 +14,6 @@
 namespace cnoid {
 
 class Body;
-class BodyImpl;
 class BodyHandler;
 class Link;
 class Mapping;
@@ -34,6 +33,7 @@ public:
     Body(const Body& org) = delete;
     virtual ~Body();
 
+    // This function can only be used just after the construction of a new instance
     void copyFrom(const Body* org, CloneMap* cloneMap = nullptr);
     Body* clone() const { return static_cast<Body*>(doClone(nullptr)); }
     Body* clone(CloneMap& cloneMap) const { return static_cast<Body*>(doClone(&cloneMap)); }
@@ -322,9 +322,10 @@ private:
     DeviceList<> devices_;
     std::vector<ExtraJoint> extraJoints_;
     std::function<double()> currentTimeFunction;
-    BodyImpl* impl;
 
-    void initialize();
+    class Impl;
+    Impl* impl;
+
     Link* cloneLinkTree(const Link* orgLink, CloneMap* cloneMap);
     Link* createEmptyJoint(int jointId);
     Device* findDeviceSub(const std::string& name) const;
@@ -332,7 +333,6 @@ private:
     const Referenced* findCacheSub(const std::string& name) const;
     void insertCache(const std::string& name, Referenced* cache);
     BodyHandler* findHandler(std::function<bool(BodyHandler*)> isTargetHandlerType);
-    void setVirtualJointForcesSub(); // deprecated
 };
 
 template<> CNOID_EXPORT double Body::info(const std::string& key) const;

@@ -40,7 +40,7 @@ double getCurrentTime()
 
 namespace cnoid {
 
-class BodyImpl
+class Body::Impl
 {
 public:
     NameToLinkMap nameToLinkMap;
@@ -61,6 +61,8 @@ public:
     BodyHandleEntity bodyHandleEntity;
     BodyHandle bodyHandle;
 
+    Impl(Body* self);
+    void initialize(Body* self, Link* rootLink);
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
 };
 
@@ -68,9 +70,12 @@ public:
 
 
 Body::Body()
-    : Body(new Link)
 {
+    impl = new Impl(this);
 
+    auto rootLink = new Link;
+    rootLink->setJointType(Link::FreeJoint);
+    impl->initialize(this, rootLink);
 }
 
 
@@ -83,31 +88,33 @@ Body::Body(const std::string& name)
 
 Body::Body(Link* rootLink)
 {
-    initialize();
-    currentTimeFunction = getCurrentTime;
-    impl->centerOfMass.setZero();
-    impl->info = new Mapping();
-
-    rootLink_ = nullptr;
-    setRootLink(rootLink);
+    impl = new Impl(this);
+    impl->initialize(this, rootLink);
 }
 
 
-void Body::initialize()
+Body::Impl::Impl(Body* self)
 {
-    impl = new BodyImpl;
-    
-    impl->customizerHandle = 0;
-    impl->customizerInterface = 0;
-    impl->bodyHandleEntity.body = this;
-    impl->bodyHandle = &impl->bodyHandleEntity;
+    customizerHandle = 0;
+    customizerInterface = nullptr;
+    bodyHandleEntity.body = self;
+    bodyHandle = &bodyHandleEntity;
+}
+
+
+void Body::Impl::initialize(Body* self, Link* rootLink)
+{
+    self->currentTimeFunction = getCurrentTime;
+    centerOfMass.setZero();
+    info = new Mapping;
+
+    self->rootLink_ = nullptr;
+    self->setRootLink(rootLink);
 }
 
 
 void Body::copyFrom(const Body* org, CloneMap* cloneMap)
 {
-    initialize();
-
     currentTimeFunction = org->currentTimeFunction;
 
     impl->centerOfMass = org->impl->centerOfMass;
@@ -199,7 +206,7 @@ void Body::cloneShapes(CloneMap& cloneMap)
 
 Body::~Body()
 {
-    setRootLink(0);
+    setRootLink(nullptr);
     
     if(impl->customizerHandle){
         impl->customizerInterface->destroy(impl->customizerHandle);
@@ -765,14 +772,14 @@ bool Body::installCustomizer(BodyCustomizerInterface* customizerInterface)
 }
 
 
-bool BodyImpl::installCustomizer(BodyCustomizerInterface* customizerInterface)
+bool Body::Impl::installCustomizer(BodyCustomizerInterface* customizerInterface)
 {
     if(this->customizerInterface){
         if(customizerHandle){
             this->customizerInterface->destroy(customizerHandle);
             customizerHandle = 0;
         }
-        this->customizerInterface = 0;
+        this->customizerInterface = nullptr;
     }
 	
     if(customizerInterface){
