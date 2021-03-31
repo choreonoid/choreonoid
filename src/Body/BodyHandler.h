@@ -3,6 +3,7 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/Config>
+#include <string>
 #include <iosfwd>
 #include <memory>
 #include "exportdecl.h"
