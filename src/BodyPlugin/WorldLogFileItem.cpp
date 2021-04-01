@@ -4,8 +4,11 @@
 */
 
 #include "WorldLogFileItem.h"
-#include "BodyItemFileIO.h"
+#include "SimulatorItem.h"
+#include "SubSimulatorItem.h"
 #include "ControllerItem.h"
+#include "BodyItemFileIO.h"
+#include <cnoid/MainWindow>
 #include <cnoid/ItemManager>
 #include <cnoid/MenuManager>
 #include <cnoid/ProjectManager>
@@ -25,9 +28,11 @@
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <QDateTime>
+#include <QMessageBox>
 #include <fstream>
 #include <stack>
 #include <map>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -384,6 +389,7 @@ struct ArchiveInfo
     filesystem::path archiveDirPath;
     BodyItemBodyFileIO* bodyFileIO;
     SceneItemStdSceneFileExporter* stdSceneFileExporter;
+    map<string, int> baseNameCounterMap;
 };
 
 }
@@ -596,11 +602,11 @@ bool WorldLogFileItem::isTimeStampSuffixEnabled() const
 string WorldLogFileItem::Impl::getActualFilename()
 {
     if(isTimeStampSuffixEnabled && recordingStartTime.isValid()){
-        stdx::filesystem::path filepath(fromUTF8(self->filePath()));
+        filesystem::path filepath(fromUTF8(self->filePath()));
         string suffix = recordingStartTime.toString("-yyyy-MM-dd-hh-mm-ss").toStdString();
         string fname = filepath.stem().string() + suffix;
         fname += filepath.extension().string();
-        return toUTF8((filepath.parent_path() / fname).string());
+        return toUTF8((filepath.parent_path() / fname).generic_string());
     } else {
         return self->filePath();
     }
@@ -680,7 +686,7 @@ bool WorldLogFileItem::Impl::readTopHeader()
         ifs.close();
     }
     string fname = fromUTF8(getActualFilename());
-    if(stdx::filesystem::exists(fname)){
+    if(filesystem::exists(fname)){
         ifs.open(fname.c_str(), ios::in | ios::binary);
         if(ifs.is_open()){
             readBuf.clear();
@@ -1254,11 +1260,24 @@ void WorldLogFileItem::Impl::openDialogToSelectDirectoryToSavePlaybackArchive()
     filters << _("Project files (*.cnoid)");
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
+
+    auto logfile = toUTF8(filesystem::path(fromUTF8(getActualFilename())).stem().generic_string());
+    if(!logfile.empty()){
+        dialog.selectFile(QString("%1-log.cnoid").arg(logfile.c_str()));
+    }
         
     if(dialog.exec()){
         auto filenames = dialog.selectedFiles();
         string filename(filenames.at(0).toStdString());
-        saveProjectAsPlaybackArchive(filename);
+        if(!filename.empty()){
+            QString message(_("The current project will be replaced with a new project for the log playback. "
+                              "Do you want to continue?"));
+            auto button = QMessageBox::warning(
+                MainWindow::instance(), _("Project replacement"), message, QMessageBox::Ok | QMessageBox::Cancel);
+            if(button == QMessageBox::Ok){
+                saveProjectAsPlaybackArchive(filename);
+            }
+        }
     }
 }
 
@@ -1285,7 +1304,7 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
 
     stdx::error_code ec;
 
-    auto logFilePath = filesystem::absolute(getActualFilename(), ec);
+    auto logFilePath = filesystem::absolute(fromUTF8(getActualFilename()), ec);
     if(!filesystem::exists(logFilePath ,ec)){
         showWarningDialog(format(_("Log file of {0} does not exist."), self->displayName()));
         return;
@@ -1295,7 +1314,7 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
     mv->putln(_("Creating the project for the log playback ..."));
     mv->flush();
     
-    auto projectFilePath = filesystem::absolute(projectFile, ec);
+    auto projectFilePath = filesystem::absolute(fromUTF8(projectFile), ec);
     if(ec){
         return;
     }
@@ -1326,10 +1345,12 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
         if(ec){
             showWarningDialog(
                 format(_("Log file \"{0}\" cannot be copied to \"{1}\": {2}"),
-                       logFilePath.filename().string(), info.archiveDirPath.string(), ec.message()));
+                       toUTF8(logFilePath.filename().string()),
+                       toUTF8(info.archiveDirPath.string()),
+                       ec.message()));
             return;
         }
-        setLogFile((info.archiveDirPath / logFilePath.filename()).generic_string());
+        setLogFile(toUTF8((info.archiveDirPath / logFilePath.filename()).generic_string()));
         isTimeStampSuffixEnabled = false;
 
         auto rootItem = RootItem::instance();
@@ -1340,7 +1361,7 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
         if(replaceWithArchiveItems(rootItem, info.orgItemToArchiveItemMap)){
             TimeBar::instance()->setTime(0.0);
             self->setSelected(true);
-            ProjectManager::instance()->saveProject(projectFilePath.string());
+            ProjectManager::instance()->saveProject(toUTF8(projectFilePath.string()));
         }
     }
 }
@@ -1383,28 +1404,47 @@ ItemPtr WorldLogFileItem::Impl::createArchiveModelItem(Item* modelItem, ArchiveI
 {
     ItemPtr archiveModelItem;
     
-    // TODO: check and avoid the duplication of the model directory names
-    // TODO: replace space and symbol characters in the path components
-    string modelName = modelItem->displayName();
-    filesystem::path modelDirPath = info.archiveDirPath / modelName;
+    // Replace space and symbol characters in the filename string
+    string baseName = regex_replace(modelItem->name(), regex("\\s"), "_");
+    baseName = regex_replace(baseName, regex("[\\W]"), "_");
+
+    // Check and avoid the duplication of the model directory names
+    auto emplaced = info.baseNameCounterMap.emplace(baseName, 1);
+    if(baseName.empty() || !emplaced.second){
+        auto& counter = emplaced.first->second;
+        if(!baseName.empty()){
+            ++counter;
+        }
+        string baseNameWithId;
+        while(true){
+            baseNameWithId = format("{0}-{1}", baseName, counter++);
+            if(info.baseNameCounterMap.find(baseNameWithId) == info.baseNameCounterMap.end()){
+                baseName = baseNameWithId;
+                break;
+            }
+        }
+    }
+
+    string nativeBaseName = fromUTF8(baseName);
+    filesystem::path modelDirPath = info.archiveDirPath / nativeBaseName;
     stdx::error_code ec;
 
     filesystem::create_directories(modelDirPath, ec);
     if(ec){
         MessageView::instance()->putln(
             format(_("Directory \"{0}\" cannot be created: {1}."),
-                   modelDirPath.filename().string(), ec.message()),
+                   toUTF8(modelDirPath.filename().string()), ec.message()),
             MessageView::Error);
     } else {
         archiveModelItem = modelItem->duplicate();
-        auto filePath = modelDirPath / modelName;
+        auto filePath = modelDirPath / nativeBaseName;
         bool saved = false;
         if(isBodyItem){
             filePath += ".body"; // Is this necessary?
-            saved = info.bodyFileIO->saveItem(archiveModelItem, filePath.string());
+            saved = info.bodyFileIO->saveItem(archiveModelItem, toUTF8(filePath.string()));
         } else {
             filePath += ".scen"; // Is this necessary?
-            saved = info.stdSceneFileExporter->saveItem(archiveModelItem, filePath.string());
+            saved = info.stdSceneFileExporter->saveItem(archiveModelItem, toUTF8(filePath.string()));
         }
         if(!saved){
             archiveModelItem.reset();
@@ -1441,7 +1481,13 @@ int WorldLogFileItem::Impl::replaceWithArchiveItems(Item* item, ItemToItemMap& o
     }
 
     if(!archiveItem){
-        if(item->filePath().empty() && !dynamic_cast<ControllerItem*>(item)){
+        if(!item->isTemporal() &&
+           !item->isSubItem() &&
+           item->filePath().empty() &&
+           !dynamic_cast<SimulatorItem*>(item) &&
+           !dynamic_cast<SubSimulatorItem*>(item) &&
+           !dynamic_cast<ControllerItem*>(item))
+        {
             archiveItem = item;
         }
     }
