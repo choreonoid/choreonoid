@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-29 12:27+0900\n"
+"POT-Creation-Date: 2021-04-01 16:07+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -374,75 +374,85 @@ msgstr "両足中心間距離"
 msgid "The center of mass of {} cannt be moved to the target position\n"
 msgstr "{}の重心を指定の位置まで移動できません\n"
 
-#: WorldLogFileItem.cpp:465
+#: WorldLogFileItem.cpp:481
 msgid "WorldLogFileItem"
 msgstr "ワールドログファイルアイテム"
 
-#: WorldLogFileItem.cpp:468
+#: WorldLogFileItem.cpp:484
 msgid "World Log"
 msgstr "ワールドログ"
 
-#: WorldLogFileItem.cpp:476 WorldLogFileItem.cpp:1217
+#: WorldLogFileItem.cpp:492 WorldLogFileItem.cpp:1252
 msgid "Save project as log playback archive"
 msgstr "ログ再生用アーカイブとしてプロジェクトを保存"
 
-#: WorldLogFileItem.cpp:1178
+#: WorldLogFileItem.cpp:1213
 msgid "World Log File (*.log)"
 msgstr "ワールドログファイル (*.log)"
 
-#: WorldLogFileItem.cpp:1180
+#: WorldLogFileItem.cpp:1215
 msgid "Log file"
 msgstr "ログファイル"
 
-#: WorldLogFileItem.cpp:1182
+#: WorldLogFileItem.cpp:1217
 msgid "Actual log file"
 msgstr "実際のログファイル"
 
-#: WorldLogFileItem.cpp:1183
+#: WorldLogFileItem.cpp:1218
 msgid "Time-stamp suffix"
 msgstr "タイムスタンプ接尾辞"
 
-#: WorldLogFileItem.cpp:1185
+#: WorldLogFileItem.cpp:1220
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
 
-#: WorldLogFileItem.cpp:1220
+#: WorldLogFileItem.cpp:1255
 msgid "Save"
 msgstr "保存"
 
-#: WorldLogFileItem.cpp:1221
+#: WorldLogFileItem.cpp:1256
 msgid "Cancel"
 msgstr "キャンセル(&C)"
 
-#: WorldLogFileItem.cpp:1225
+#: WorldLogFileItem.cpp:1260
 msgid "Project files (*.cnoid)"
 msgstr "プロジェクトファイル (*.cnoid)"
 
-#: WorldLogFileItem.cpp:1226
+#: WorldLogFileItem.cpp:1261
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
 
-#: WorldLogFileItem.cpp:1241
+#: WorldLogFileItem.cpp:1273
+msgid ""
+"The current project will be replaced with a new project for the log "
+"playback. Do you want to continue?"
+msgstr "現在のプロジェクトはログ再生のための新しいプロジェクトで置き換えられます。続けてもよろしいですか？"
+
+#: WorldLogFileItem.cpp:1276
+msgid "Project replacement"
+msgstr "プロジェクトの置き換え"
+
+#: WorldLogFileItem.cpp:1289
 msgid "The world item of {0} is not found."
 msgstr "\"{0}\" のワールドアイテムがみつかりません．"
 
-#: WorldLogFileItem.cpp:1254
+#: WorldLogFileItem.cpp:1309
 msgid "Log file of {0} does not exist."
 msgstr "{0}のログファイルが存在しません．"
 
-#: WorldLogFileItem.cpp:1259
+#: WorldLogFileItem.cpp:1314
 msgid "Creating the project for the log playback ..."
 msgstr "ログ再生用プロジェクトを作成中…"
 
-#: WorldLogFileItem.cpp:1273
+#: WorldLogFileItem.cpp:1328
 msgid "Archive directory \"{0}\" cannot be created: {1}"
 msgstr "アーカイブディレクトリ \"{0}\" を作成できません： {1}"
 
-#: WorldLogFileItem.cpp:1294
+#: WorldLogFileItem.cpp:1347
 msgid "Log file \"{0}\" cannot be copied to \"{1}\": {2}"
 msgstr "ログファイル \"{0}\" を \"{1}\" にコピーできません： {2}"
 
-#: WorldLogFileItem.cpp:1360
+#: WorldLogFileItem.cpp:1435
 msgid "Directory \"{0}\" cannot be created: {1}."
 msgstr "ディレクトリ \"{}\" を作成できません： {1}."
 
@@ -1202,7 +1212,7 @@ msgstr "タイムバー範囲"
 
 #: SimulatorItem.cpp:1620
 msgid "{0} is doing its simulation."
-msgstr ""
+msgstr "{0}はシミュレーションを実行中です。"
 
 #: SimulatorItem.cpp:1623
 msgid ""
@@ -1434,7 +1444,7 @@ msgstr "デフォルトマテリアルテーブル \"{}\" を読み込み直し�
 msgid "Reloading default material table \"{}\" failed."
 msgstr "デフォルトマテリアルテーブル \"{}\" の再読込ができませんでした．"
 
-#: WorldItem.cpp:608 BodyItem.cpp:1593
+#: WorldItem.cpp:608 BodyItem.cpp:1605
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -1454,79 +1464,79 @@ msgstr "デフォルトマテリアルテーブル"
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:1448
+#: BodyItem.cpp:1460
 msgid "{0} has been detached from {1} of {2}."
 msgstr "{0}は{2}の{1}からデタッチされました．"
 
-#: BodyItem.cpp:1507
+#: BodyItem.cpp:1519
 msgid "{0} has been attached to {1} of {2}."
 msgstr "{0}は{2}の{1}にアタッチされました．"
 
-#: BodyItem.cpp:1584
+#: BodyItem.cpp:1596
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1585
+#: BodyItem.cpp:1597
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1586
+#: BodyItem.cpp:1598
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1587
+#: BodyItem.cpp:1599
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1588
+#: BodyItem.cpp:1600
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1589
+#: BodyItem.cpp:1601
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1590 LinkPropertyView.cpp:121
+#: BodyItem.cpp:1602 LinkPropertyView.cpp:121
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1591
+#: BodyItem.cpp:1603
 msgid "Static"
 msgstr "スタティック"
 
-#: BodyItem.cpp:1595
+#: BodyItem.cpp:1607
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1597
+#: BodyItem.cpp:1609
 msgid "Location editable"
 msgstr "配置編集"
 
-#: BodyItem.cpp:1599
+#: BodyItem.cpp:1611
 msgid "Scene sensitive"
 msgstr "シーン感知"
 
-#: BodyItem.cpp:1602
+#: BodyItem.cpp:1614
 msgid "Transparency"
 msgstr "透明度"
 
-#: BodyItem.cpp:1606
+#: BodyItem.cpp:1618
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
 
-#: BodyItem.cpp:1775
+#: BodyItem.cpp:1787
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1792
+#: BodyItem.cpp:1804
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1894
+#: BodyItem.cpp:1906
 msgid "Change the position of \"{0}\""
 msgstr "\"{0}\" のポジションを変更"
 
-#: BodyItem.cpp:1896
+#: BodyItem.cpp:1908
 msgid "Restore the position of \"{0}\""
 msgstr "\"{0}\" のポジションの取り戻し"
 
@@ -1845,55 +1855,55 @@ msgstr "カメラ画像可視化アイテム"
 msgid "Visual ratio"
 msgstr "表示比率"
 
-#: BodyItemFileIO.cpp:126
+#: BodyItemFileIO.cpp:128
 msgid "Ext model file mode:"
 msgstr "外部モデルファイルモード："
 
-#: BodyItemFileIO.cpp:128
+#: BodyItemFileIO.cpp:130
 msgid "Embed models"
 msgstr "モデルを埋め込む"
 
-#: BodyItemFileIO.cpp:129
+#: BodyItemFileIO.cpp:131
 msgid "Link to the original model files"
 msgstr "元のモデルファイルにリンク"
 
-#: BodyItemFileIO.cpp:130
+#: BodyItemFileIO.cpp:132
 msgid "Replace with standard scene files"
 msgstr "標準シーンファイルに置き換え"
 
-#: BodyItemFileIO.cpp:131
+#: BodyItemFileIO.cpp:133
 msgid "Replace with OBJ model files"
 msgstr "OBJモデルファイルに置き換え"
 
-#: BodyItemFileIO.cpp:139
+#: BodyItemFileIO.cpp:141
 msgid "Integrate transforms"
 msgstr "座標変換を統合"
 
-#: BodyItemFileIO.cpp:147 BodyItemFileIO.cpp:220
+#: BodyItemFileIO.cpp:149 BodyItemFileIO.cpp:216
 msgid "Body"
 msgstr "ボディ"
 
-#: BodyItemFileIO.cpp:221
+#: BodyItemFileIO.cpp:217
 msgid "Scene / Mesh"
 msgstr "シーン／メッシュ"
 
-#: BodyItemFileIO.cpp:324
+#: BodyItemFileIO.cpp:320
 msgid "Shape type:"
 msgstr "形状タイプ："
 
-#: BodyItemFileIO.cpp:326
+#: BodyItemFileIO.cpp:322
 msgid "Visual"
 msgstr "表示用"
 
-#: BodyItemFileIO.cpp:327
+#: BodyItemFileIO.cpp:323
 msgid "Collision"
 msgstr "干渉検出用"
 
-#: BodyItemFileIO.cpp:333
+#: BodyItemFileIO.cpp:329
 msgid "Standard scene file"
 msgstr "標準シーンファイル"
 
-#: BodyItemFileIO.cpp:384
+#: BodyItemFileIO.cpp:380
 msgid "OBJ file"
 msgstr "OBJファイル"
 

@@ -307,7 +307,7 @@ void StdSceneReader::readHeader(Mapping* info)
     double version = versionNode->toDouble();
     if(version >= 2.1){
         info->throwException(
-            format(_("Version {0} of the Choreonoid body format is not supported"), version));
+            format(_("Version {0} of the Choreonoid scene file format is not supported"), version));
     }
     readHeader(info, version);
 }
@@ -317,14 +317,14 @@ void StdSceneReader::readHeader(Mapping* info, double formatVersion)
 {
     if(formatVersion >= 2.1){
         info->throwException(
-            format(_("Version {0} of the Choreonoid scene format is not supported"), formatVersion));
+            format(_("Version {0} of the Choreonoid scene file format is not supported"), formatVersion));
     }
 
     if(auto angleUnitNode = info->extract({ "angle_unit", "angleUnit" })){
         string unit = angleUnitNode->toString();
         if(unit == "radian"){
             if(formatVersion >= 2.0){
-                angleUnitNode->throwException(_("Radian mode is not supported in format version 2.0"));
+                angleUnitNode->throwException(_("Radian mode is not supported in Choreonoid scene file format version 2.0"));
             }
             setAngleUnit(RADIAN);
         } else if(unit == "degree"){

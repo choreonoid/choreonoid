@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-24 20:47+0900\n"
+"POT-Creation-Date: 2021-04-01 16:07+0900\n"
 "PO-Revision-Date: 2013-12-11 13:29+0900\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -21,155 +21,155 @@ msgstr ""
 msgid "applying the gaussian filter (sigma = {0}, range = {1}) to seq"
 msgstr "ガウシアンフィルター（Σ= {0}、範囲= {1}）を適用しています"
 
-#: StdBodyLoader.cpp:95
+#: StdBodyLoader.cpp:87
 msgid "\"{}\" is not found in the ROS package directories."
 msgstr "\"{}\" はROSパッケージディレクトリ内にありません．"
 
-#: StdBodyLoader.cpp:360
+#: StdBodyLoader.cpp:350
 msgid "Unknown symbol is used as a jointRange value"
 msgstr "jointRangeの値に不明なシンボルが使用されています"
 
-#: StdBodyLoader.cpp:363
+#: StdBodyLoader.cpp:353
 msgid "Invalid type value is used as a jointRange value"
 msgstr "jointRangeの値に無効な型の値が使用されています"
 
-#: StdBodyLoader.cpp:436
+#: StdBodyLoader.cpp:429
 msgid ""
 "The number of elements specified as an inertia value must be six or nine"
 msgstr "inertiaの要素は6つか9つでなければなりません"
 
-#: StdBodyLoader.cpp:763
+#: StdBodyLoader.cpp:756
 msgid "The file format cannot be loaded as a Choreonoid body model"
 msgstr ""
 "このファイル形式はChoreonoidのボディモデルとして読み込むことができません"
 
-#: StdBodyLoader.cpp:774
+#: StdBodyLoader.cpp:767
 msgid "Neither format nor modelFile are specified"
 msgstr "フォーマットもモデルファイルも指定されていません"
 
-#: StdBodyLoader.cpp:825
+#: StdBodyLoader.cpp:818
 msgid "The version of the Choreonoid body file format is not specified"
 msgstr "Choreonoidボディファイル形式のバージョンが指定されていません"
 
-#: StdBodyLoader.cpp:830
+#: StdBodyLoader.cpp:823
 msgid "Version {0} of the Choreonoid body format is not supported"
 msgstr "バージョン{0}のChoreonoidボディ形式はサポートされていません"
 
-#: StdBodyLoader.cpp:846
+#: StdBodyLoader.cpp:839
 msgid "There is no \"links\" values for defining the links in the body"
 msgstr "ボディに含まれるリンクを定義する \"links\" の値がありません"
 
-#: StdBodyLoader.cpp:851
+#: StdBodyLoader.cpp:844
 msgid "No link is contained in the \"links\" listing"
 msgstr "リンクが \"links\" 内に含まれていません"
 
-#: StdBodyLoader.cpp:866
+#: StdBodyLoader.cpp:859
 msgid "Invalid value specified in the \"links\" key"
 msgstr "無効な値が \"link\" キーに記述されています"
 
-#: StdBodyLoader.cpp:871
+#: StdBodyLoader.cpp:864
 msgid "There is no link defined"
 msgstr "リンクが定義されていません"
 
-#: StdBodyLoader.cpp:880
+#: StdBodyLoader.cpp:873
 msgid "Link \"{}\" specified in \"rootLink\" is not defined"
 msgstr "\"rootLink\" で指定されているリンク \"{}\" が定義されていません"
 
-#: StdBodyLoader.cpp:896
+#: StdBodyLoader.cpp:889
 msgid "The parent of {} is not specified"
 msgstr "{}の親が指定されていません"
 
-#: StdBodyLoader.cpp:902
+#: StdBodyLoader.cpp:895
 msgid "Parent link \"{0}\" of {1} is not defined"
 msgstr "{1}の親リンク \"{0}\" は定義されていません"
 
-#: StdBodyLoader.cpp:907
+#: StdBodyLoader.cpp:900
 msgid "Adding \"{0}\" to link \"{1}\" will result in a cyclic reference"
 msgstr "\"{0}\" をリンク \"{1}\" に追加すると循環参照になります"
 
-#: StdBodyLoader.cpp:922 VRMLBodyLoader.cpp:663
+#: StdBodyLoader.cpp:915 VRMLBodyLoader.cpp:663
 msgid "Warning: Joint ID {} is not specified."
 msgstr "警告: Joint ID {} の指定がありません．"
 
-#: StdBodyLoader.cpp:946 StdBodyLoader.cpp:1389
+#: StdBodyLoader.cpp:940 StdBodyLoader.cpp:1383
 msgid ""
 "The node type \"{0}\" is different from the type \"{1}\" specified in the "
 "parent node"
 msgstr ""
 "ノード型 \"{0}\" は親ノードで指定されている型である \"{1}\" と異なります"
 
-#: StdBodyLoader.cpp:963
+#: StdBodyLoader.cpp:957
 msgid "A {} node cannot be specified in links"
 msgstr "{}ノードがlinksに定義されていません"
 
-#: StdBodyLoader.cpp:983
+#: StdBodyLoader.cpp:977
 msgid "Duplicated link name \"{}\""
 msgstr "リンク名 \"{}\" は重複しています"
 
-#: StdBodyLoader.cpp:993
+#: StdBodyLoader.cpp:987
 msgid "Duplicated joint name \"{}\""
 msgstr "関節名 \"{}\" は重複しています"
 
-#: StdBodyLoader.cpp:1116
+#: StdBodyLoader.cpp:1110
 msgid "Warning: Joint ID {0} of {1} is duplicated."
 msgstr "警告： {1}の関節ID{0}は重複しています．"
 
-#: StdBodyLoader.cpp:1147
+#: StdBodyLoader.cpp:1141
 msgid "Illegal jointType value \"{0}\""
 msgstr ""
 
-#: StdBodyLoader.cpp:1171
+#: StdBodyLoader.cpp:1165
 msgid ""
 "Warning: Actuation mode \"jointSurfaceVelocity\" is specified in {0}. The "
 "mode is deprecated and the joint type should be the pseudo continuous track "
 "in this case."
 msgstr ""
 
-#: StdBodyLoader.cpp:1209
+#: StdBodyLoader.cpp:1203
 msgid "jointRange must have two elements"
 msgstr "jointRangeは要素を2つ有する必要があります"
 
-#: StdBodyLoader.cpp:1214
+#: StdBodyLoader.cpp:1208
 msgid "Invalid type value is specefied as a jointRange"
 msgstr "jointRangeに無効な型の値が記述されています"
 
-#: StdBodyLoader.cpp:1239
+#: StdBodyLoader.cpp:1233
 msgid "jointVelocityRange must have two elements"
 msgstr "jointVelocityRangeは要素を2つ有する必要があります"
 
-#: StdBodyLoader.cpp:1399
+#: StdBodyLoader.cpp:1393
 msgid "A value of the \"elements\" key must be a sequence or a mapping"
 msgstr "キー \"elements\" の値はシーケンスまたはマッピングでなければなりません"
 
-#: StdBodyLoader.cpp:1588
+#: StdBodyLoader.cpp:1586
 msgid ""
 "The visual node is conflicting with the Collision node defined at the higher "
 "level"
 msgstr "Visualノードがその上位で定義されているCollisionノードと競合しています"
 
-#: StdBodyLoader.cpp:1594
+#: StdBodyLoader.cpp:1592
 msgid ""
 "The collision node is conflicting with the Visual node defined at the higher "
 "level"
 msgstr "Collisionノードがその上位で定義されているVisualノードと競合しています"
 
-#: StdBodyLoader.cpp:1924
+#: StdBodyLoader.cpp:1784
 msgid "SubBody specified by uri \"{}\" cannot be loaded."
 msgstr "uri \"{}\" で指定されているサブボディをロードできません．"
 
-#: StdBodyLoader.cpp:2010
+#: StdBodyLoader.cpp:1870
 msgid "The link specified in \"link{}Name\" is not found"
 msgstr "\"link{}Name\" で指定されているリンクがありません"
 
-#: StdBodyLoader.cpp:2016
+#: StdBodyLoader.cpp:1876
 msgid "The joint type must be specified with the \"joint_type\" key"
 msgstr "関節タイプを \"joint_type\" キーで指定しなければなりません"
 
-#: StdBodyLoader.cpp:2025
+#: StdBodyLoader.cpp:1885
 msgid "The axis must be specified for the pistion type"
 msgstr "pistion型の軸を指定しなければなりません"
 
-#: StdBodyLoader.cpp:2030
+#: StdBodyLoader.cpp:1890
 msgid "Joint type \"{}\" is not available"
 msgstr "関節タイプ \"{}\" は利用できません"
 
@@ -181,11 +181,11 @@ msgstr "ボディカスタマイザ \"{}\" は互換性の無いものなので�
 msgid "Body customizer \"{0}\" for {1} has been loaded."
 msgstr "{1}用のボディカスタマイザ \"{0}\" がロードされました．"
 
-#: DigitalIoDevice.cpp:318
+#: DigitalIoDevice.cpp:317
 msgid "The element is not the pair of the input number and the target name"
 msgstr ""
 
-#: MarkerDevice.cpp:245
+#: MarkerDevice.cpp:237
 msgid "Unknown marker type '{}'"
 msgstr "不明なマーカタイプ '{}'"
 
@@ -258,7 +258,7 @@ msgstr ""
 msgid "Warning: Joint ID {} is duplicated."
 msgstr "警告： Joint ID {} は重複しています．"
 
-#: VRMLBodyLoader.cpp:782 VRMLBodyLoader.cpp:1228
+#: VRMLBodyLoader.cpp:782 VRMLBodyLoader.cpp:1227
 msgid "JointType \"{}\" is not supported."
 msgstr "関節タイプ \"{}\" はサポートされていません．"
 
@@ -274,7 +274,7 @@ msgstr "Jointノード \"{}\" の位置が正しくありません．"
 msgid "Sensor type {} is not supported.\n"
 msgstr "センサ型{}はサポートされていません．\n"
 
-#: VRMLBodyLoader.cpp:1217
+#: VRMLBodyLoader.cpp:1216
 msgid ""
 "Field \"link{}Name\" of a ExtraJoint node does not specify a valid link name"
 msgstr ""
@@ -344,26 +344,29 @@ msgstr ""
 "Choreonoid {1}.{2}.{3}でビルドされたボディハンドラ{1}はChoreonoid {4}.{5}.{6}"
 "では使用できません"
 
-#: StdBodyWriter.cpp:201
+#: StdBodyWriter.cpp:211
 msgid "The name of the link {0} is not specified."
 msgstr "リンク{}の名前が設定されていません．"
 
-#: StdBodyWriter.cpp:302
+#: StdBodyWriter.cpp:312
 msgid ""
 "Warning: {0} of {1} cannot be written because its writing function is not "
 "provided."
-msgstr "警告： {1}の{0}は書き出し関数が提供されていないため書き出すことができません．"
+msgstr ""
+"警告： {1}の{0}は書き出し関数が提供されていないため書き出すことができません．"
 
-#: StdBodyWriter.cpp:306
+#: StdBodyWriter.cpp:316
 msgid ""
 "Warning: Device \"{0}\" of the {1} type cannot be written because its "
 "writing function is not provided."
-msgstr "警告： {1}型の \"{0}\" は書き出し関数が提供されていないため書き出すことができません．"
+msgstr ""
+"警告： {1}型の \"{0}\" は書き出し関数が提供されていないため書き出すことができ"
+"ません．"
 
-#: StdBodyWriter.cpp:317
+#: StdBodyWriter.cpp:327
 msgid "Warning: Writing {0} of {1} failed."
 msgstr "警告： {1}の{0}の書き出しができませんでした．"
 
-#: StdBodyWriter.cpp:320
+#: StdBodyWriter.cpp:330
 msgid "Warning: Writing device \"{0}\" of the {1} type failed."
 msgstr "警告： {1}型の \"{0}\" の書き出しができませんでした．"
