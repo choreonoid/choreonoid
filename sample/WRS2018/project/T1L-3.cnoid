@@ -419,15 +419,6 @@ items:
         selfCollisionDetection: false
         isEditable: false
     - 
-      id: 19
-      name: "WorldLogFile"
-      plugin: Body
-      class: WorldLogFileItem
-      data: 
-        filename: T1L.log
-        timeStampSuffix: true
-        recordingFrameRate: 100
-    - 
       id: 20
       name: "Smoke"
       plugin: Body
@@ -710,7 +701,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29, 30, 31 ]
+      checked: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25, 26, 27, 29, 30, 31 ]
       expanded: [ 22, 23 ]
   - 
     id: 2
@@ -719,4 +710,4 @@ views:
     class: SceneView
     state: 
       dedicatedItemTreeViewChecks: true
-      checked: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ]
+      checked: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ]

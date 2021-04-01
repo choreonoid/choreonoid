@@ -108,5 +108,11 @@ def loadProject(
             simulators = world.getDescendantItems(SimulatorItem)
             for simulator in simulators:
                 simulator.addChildItem(visionSimulator.duplicate())
-            
+
+    logItem = WorldLogFileItem()
+    logItem.setLogFile(task + ".log")
+    logItem.setTimeStampSuffixEnabled(True)
+    logItem.setRecordingFrameRate(100)
+    world.addChildItem(logItem)
+
     pm.setCurrentProjectName(task + "-" + robotProjects[0])

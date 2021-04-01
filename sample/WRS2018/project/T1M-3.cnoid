@@ -655,15 +655,6 @@ items:
         selfCollisionDetection: false
         isEditable: false
     - 
-      id: 30
-      name: "WorldLogFile"
-      plugin: Body
-      class: WorldLogFileItem
-      data: 
-        filename: T1M.log
-        timeStampSuffix: true
-        recordingFrameRate: 100
-    - 
       id: 31
       name: "Smoke"
       plugin: Body

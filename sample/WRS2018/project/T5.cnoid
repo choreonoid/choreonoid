@@ -261,15 +261,6 @@ items:
         collisionDetection: true
         selfCollisionDetection: false
         isEditable: false
-    - 
-      id: 13
-      name: "WorldLogFile"
-      plugin: Body
-      class: WorldLogFileItem
-      data: 
-        filename: T5.log
-        timeStampSuffix: true
-        recordingFrameRate: 100
 views: 
   - 
     id: 1

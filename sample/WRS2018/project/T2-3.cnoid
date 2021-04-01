@@ -404,15 +404,6 @@ items:
         selfCollisionDetection: true
         isEditable: true
     - 
-      id: 18
-      name: "WorldLogFile"
-      plugin: Body
-      class: WorldLogFileItem
-      data: 
-        filename: T2.log
-        timeStampSuffix: true
-        recordingFrameRate: 100
-    - 
       id: 19
       name: "Smoke"
       plugin: Body
