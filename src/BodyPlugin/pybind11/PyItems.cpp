@@ -3,6 +3,7 @@
 */
 
 #include "../WorldItem.h"
+#include "../WorldLogFileItem.h"
 #include "../BodyMotionItem.h"
 #include "../BodyTrackingCameraItem.h"
 #include <cnoid/PyBase>
@@ -33,6 +34,21 @@ void exportItems(py::module m)
         ;
 
     PyItemList<WorldItem>(m, "WorldItemList");
+
+    py::class_<WorldLogFileItem, WorldLogFileItemPtr, Item>(m, "WorldLogFileItem")
+        .def(py::init<>())
+        .def("setLogFile", &WorldLogFileItem::setLogFile)
+        .def_property("logFile", &WorldLogFileItem::logFile, &WorldLogFileItem::setLogFile)
+        .def("setTimeStampSuffixEnabled", &WorldLogFileItem::setTimeStampSuffixEnabled)
+        .def_property("isTimeStampSuffixEnabled",
+                      &WorldLogFileItem::isTimeStampSuffixEnabled, &WorldLogFileItem::setTimeStampSuffixEnabled)
+        .def("setRecordingFrameRate", &WorldLogFileItem::setRecordingFrameRate)
+        .def_property("recordingFrameRate",
+                      &WorldLogFileItem::recordingFrameRate, &WorldLogFileItem::setRecordingFrameRate)
+        .def("recallStateAtTime", &WorldLogFileItem::recallStateAtTime)
+        ;
+
+    PyItemList<WorldLogFileItem>(m, "WorldLogFileItemList");
     
     py::class_<BodyMotionItem, BodyMotionItemPtr, AbstractSeqItem>(m, "BodyMotionItem")
         .def(py::init<>())

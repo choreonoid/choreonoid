@@ -501,6 +501,7 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
 WorldLogFileItem::WorldLogFileItem()
 {
     impl = new Impl(this);
+    setName("WorldLogFile");
 }
 
 
@@ -580,6 +581,18 @@ bool WorldLogFileItem::Impl::setLogFile(const std::string& filename, bool isLoad
 }
 
 
+void WorldLogFileItem::setTimeStampSuffixEnabled(bool on)
+{
+    impl->isTimeStampSuffixEnabled = on;
+}
+
+
+bool WorldLogFileItem::isTimeStampSuffixEnabled() const
+{
+    return impl->isTimeStampSuffixEnabled;
+}
+
+
 string WorldLogFileItem::Impl::getActualFilename()
 {
     if(isTimeStampSuffixEnabled && recordingStartTime.isValid()){
@@ -591,6 +604,12 @@ string WorldLogFileItem::Impl::getActualFilename()
     } else {
         return self->filePath();
     }
+}
+
+
+void WorldLogFileItem::setRecordingFrameRate(double rate)
+{
+    impl->recordingFrameRate = rate;
 }
 
 

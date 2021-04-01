@@ -26,6 +26,10 @@ public:
     bool setLogFile(const std::string& filename);
     const std::string& logFile() const;
 
+    void setTimeStampSuffixEnabled(bool on);
+    bool isTimeStampSuffixEnabled() const;
+
+    void setRecordingFrameRate(double rate);
     double recordingFrameRate() const;
 
     void clearOutput();
