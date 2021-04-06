@@ -794,6 +794,19 @@ if(UNIX)
   pkg_check_modules(LIBUUID uuid REQUIRED)
 endif()
 
+# pugixml
+set(USE_BUNDLED_PUGIXML_DEFAULT ON)
+option(USE_BUNDLED_PUGIXML "Use the pugixml library bundled with Choreonoid" ${USE_BUNDLED_PUGIXML_DEFAULT})
+if(NOT USE_BUNDLED_PUGIXML)
+  pkg_check_modules(PUGIXML pugixml>=1.11 QUIET)
+endif()
+if(NOT PUGIXML_STATIC_FOUND OR USE_BUNDLED_PUGIXML)
+  add_subdirectory(thirdparty/pugixml-1.11)
+  set(PUGIXML_STATIC_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/pugixml-1.11)
+  set(PUGIXML_STATIC_LIBRARIES pugixml)
+  unset(PUGIXML_STATIC_LIBRARY_DIRS)
+endif()
+
 add_subdirectory(src)
 add_subdirectory(include)
 
