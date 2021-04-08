@@ -192,6 +192,15 @@ void ItemFileIO::setExtensions(const std::vector<std::string>& extensions)
 }
 
 
+void ItemFileIO::addExtensions(const std::vector<std::string>& extensions)
+{
+    impl->extensions.reserve(impl->extensions.size() + extensions.size());
+    for(auto& ext : extensions){
+        impl->extensions.push_back(ext);
+    }
+}
+
+
 void ItemFileIO::setExtensionFunction(std::function<std::string()> func)
 {
     impl->extensionFunction = func;

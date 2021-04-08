@@ -8,16 +8,18 @@
 
 #include "AbstractBodyLoader.h"
 #include <functional>
+#include <initializer_list>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class BodyLoaderImpl;
-
 class CNOID_EXPORT BodyLoader : public AbstractBodyLoader
 {
 public:
-    static bool registerLoader(const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory);
+    static void registerLoader(
+        const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory);
+    static void registerLoader(
+        std::initializer_list<const char*> extensions, std::function<AbstractBodyLoaderPtr()> factory);
         
     BodyLoader();
     ~BodyLoader();
@@ -36,7 +38,8 @@ public:
     AbstractBodyLoaderPtr lastActualBodyLoader() const;
 
 private:
-    BodyLoaderImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

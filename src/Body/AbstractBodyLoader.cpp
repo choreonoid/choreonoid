@@ -20,31 +20,31 @@ AbstractBodyLoader::~AbstractBodyLoader()
 }
 
 
-void AbstractBodyLoader::setMessageSink(std::ostream& os)
+void AbstractBodyLoader::setMessageSink(std::ostream& /* os */)
 {
 
 }
 
 
-void AbstractBodyLoader::setVerbose(bool on)
+void AbstractBodyLoader::setVerbose(bool /* on */)
 {
 
 }
 
 
-void AbstractBodyLoader::setShapeLoadingEnabled(bool on)
+void AbstractBodyLoader::setShapeLoadingEnabled(bool /* on */)
 {
 
 }
 
 
-void AbstractBodyLoader::setDefaultDivisionNumber(int n)
+void AbstractBodyLoader::setDefaultDivisionNumber(int /* n */)
 {
 
 }
 
 
-void AbstractBodyLoader::setDefaultCreaseAngle(double theta)
+void AbstractBodyLoader::setDefaultCreaseAngle(double /* theta */)
 {
 
 }
