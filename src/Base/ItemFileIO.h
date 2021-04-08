@@ -43,9 +43,7 @@ public:
     void setFileTypeCaption(const std::string& caption);
     const std::string& fileTypeCaption() const;
     void addFormatIdAlias(const std::string& formatId);
-
-    void setExtension(const std::string& extension);
-    void setExtensions(const std::vector<std::string>& extensions);
+    void addExtensions(const std::vector<std::string>& extensions);
 
     // deprecated. This is internally used for specifing SceneItem's extensions dynamically.
     // The dynamic extension specification should be achieved by a signal to update the
@@ -112,6 +110,9 @@ protected:
     ItemFileIO();
     void copyFrom(const ItemFileIO& org);
     
+    void setExtension(const std::string& extension);
+    void setExtensions(const std::vector<std::string>& extensions);
+
     // Load API
     virtual bool load(Item* item, const std::string& filename);
 
