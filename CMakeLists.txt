@@ -596,6 +596,8 @@ if(ENABLE_ASSIMP)
   install_runtime_dlls(${ASSIMP_ROOT_DIR}/bin ${ASSIMP_LIBRARIES})
 endif()
 
+option(ENABLE_URDF "Enable URDF functions" ON)
+
 # CORBA, omniORB
 option(ENABLE_CORBA "Enable CORBA related modules / plugins" OFF)
 mark_as_advanced(ENABLE_CORBA)

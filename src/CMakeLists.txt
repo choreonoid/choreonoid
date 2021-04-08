@@ -2,6 +2,7 @@ add_subdirectory(Util)
 add_subdirectory(AISTCollisionDetector)
 add_subdirectory(AssimpSceneLoader)
 add_subdirectory(Body)
+add_subdirectory(URDFBodyLoader)
 add_subdirectory(Corba)
 
 if(ENABLE_GUI)
@@ -35,6 +36,7 @@ if(ENABLE_GUI)
   add_subdirectory(TrafficControlPlugin)
 
   add_subdirectory(FCLPlugin)
+  add_subdirectory(URDFPlugin)
   add_subdirectory(SDFPlugin)
   add_subdirectory(PCLPlugin)
 
