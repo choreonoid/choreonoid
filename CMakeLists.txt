@@ -361,8 +361,10 @@ option(ENABLE_GUI "Enable GUI components" ON)
 
 # OpenGL
 if(ENABLE_GUI)
-  if(POLICY CMP0072)
-    cmake_policy(SET CMP0072 OLD)
+  if(CMAKE_VERSION VERSION_LESS 3.20.0)
+    if(POLICY CMP0072)
+      cmake_policy(SET CMP0072 OLD)
+    endif()
   endif()
   find_package(OpenGL)
   include_directories(${OPENGL_INCLUDE_DIR})
@@ -535,10 +537,12 @@ if(ENABLE_GUI)
       general icuin54 general icuuc54 general icudt54
       general icuin55 general icuuc55 general icudt55
       )
+    # It may be better to use the windeployqt command for the following process.
+    # See the Qt manual on the Windows deployment.
     install_runtime_dlls(${_qt5Core_install_prefix}/bin ${QT_INST_LIBRARIES})
     install(DIRECTORY ${_qt5Core_install_prefix}/plugins/platforms DESTINATION bin FILES_MATCHING PATTERN "qwindows*.dll")
     install(DIRECTORY ${_qt5Core_install_prefix}/plugins/imageformats DESTINATION bin FILES_MATCHING PATTERN "*.dll")
-
+    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/styles DESTINATION bin FILES_MATCHING PATTERN "*.dll")
   endif()
 endif()
 
