@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-07 14:23+0900\n"
+"POT-Creation-Date: 2021-04-09 16:28+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -42,63 +42,63 @@ msgstr ""
 
 #: ItemTreeArchiver.cpp:282
 msgid "{0} \"{1}\" cannot be restored."
-msgstr "{0} \"{}\" を読み出すことができません．"
+msgstr "{0} \"{1}\" を読み出すことができません．"
 
-#: ItemTreeArchiver.cpp:285
-msgid "\"{1}\" cannot be restored."
-msgstr "\"{1}\" を読み出すことができません．"
+#: ItemTreeArchiver.cpp:284
+msgid "\"{0}\" cannot be restored."
+msgstr "\"{0}\" を読み出すことができません．"
 
-#: ItemTreeArchiver.cpp:289
+#: ItemTreeArchiver.cpp:288
 msgid "An instance of {0} cannot be restored."
 msgstr "{0}のインスタンスを読み出すことができません．"
 
-#: ItemTreeArchiver.cpp:291
+#: ItemTreeArchiver.cpp:290
 msgid "An instance of unkown item type cannot be restored."
 msgstr "不明なアイテム型のインスタンスを読み出すことができません。"
 
-#: ItemTreeArchiver.cpp:324
+#: ItemTreeArchiver.cpp:323
 msgid "The archive has an empty-name sub item, which cannot be processed."
 msgstr ""
 "アーカイブ内に名前の無いサブアイテムがありますがこれを処理することはできませ"
 "ん．"
 
-#: ItemTreeArchiver.cpp:330
+#: ItemTreeArchiver.cpp:329
 msgid "Sub item \"{}\" is not found. Its children cannot be restored."
 msgstr "サブアイテム\"{}\"が見つからないため読み出しができません．"
 
-#: ItemTreeArchiver.cpp:339
+#: ItemTreeArchiver.cpp:338
 msgid "Archive is broken."
 msgstr "アーカイブが壊れています．"
 
-#: ItemTreeArchiver.cpp:348
+#: ItemTreeArchiver.cpp:347
 msgid "{0} of {1}Plugin is not a registered item type."
 msgstr "{1}Pluginの{0}は未登録のタイプであるため読み込みできません．"
 
-#: ItemTreeArchiver.cpp:368
+#: ItemTreeArchiver.cpp:367
 msgid "Restoring {0} \"{1}\""
 msgstr "{0} \"{1}\" を読み出し中"
 
-#: ItemTreeArchiver.cpp:374
+#: ItemTreeArchiver.cpp:373
 msgid "The 'data' key does not have mapping-type data."
 msgstr "'data'の値がマッピング型でありません．"
 
-#: ItemTreeArchiver.cpp:403
+#: ItemTreeArchiver.cpp:402
 msgid "The 'addons' value must be a listing."
 msgstr "'addons'の値はリストでなければなりません．"
 
-#: ItemTreeArchiver.cpp:412
+#: ItemTreeArchiver.cpp:411
 msgid "The name and plugin are not specified at addon {0}."
 msgstr "アドオン {0} の名前とプラグインが指定されていません．"
 
-#: ItemTreeArchiver.cpp:417
+#: ItemTreeArchiver.cpp:416
 msgid "Addon \"{0}\" of plugin \"{1}\" cannot be created."
 msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を生成できません．"
 
-#: ItemTreeArchiver.cpp:421
-msgid "Addon \"{0}\" is cannot be added to item \"{1}\"."
+#: ItemTreeArchiver.cpp:420
+msgid "Addon \"{0}\" cannot be added to item \"{1}\"."
 msgstr "アドオン \"{0}\" はアイテム \"{1}\" に追加できません．"
 
-#: ItemTreeArchiver.cpp:425
+#: ItemTreeArchiver.cpp:424
 msgid "Addon \"{0}\" of plugin \"{1}\" cannot be restored."
 msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を読み出すことができません．"
 
@@ -1510,39 +1510,39 @@ msgstr "{}の録画が終了しました．"
 msgid "Recording of {} has been stopped."
 msgstr "{}の録画を停止しました．"
 
-#: ItemFileIO.cpp:295
+#: ItemFileIO.cpp:304
 msgid "Item with empty filename cannot be loaded."
 msgstr "空のファイル名のアイテムを読み込むことはできません．"
 
-#: ItemFileIO.cpp:300
+#: ItemFileIO.cpp:309
 msgid "{0} cannot be loaded because {1}"
 msgstr "{0}はロードできません: {1}"
 
-#: ItemFileIO.cpp:305
+#: ItemFileIO.cpp:314
 msgid "Loading {0} \"{1}\""
 msgstr "{0} \"{1}\" を読み込み中"
 
-#: ItemFileIO.cpp:313 ItemFileIO.cpp:391
+#: ItemFileIO.cpp:322 ItemFileIO.cpp:400
 msgid " -> failed.\n"
 msgstr " -> 失敗.\n"
 
-#: ItemFileIO.cpp:332 ItemFileIO.cpp:402
+#: ItemFileIO.cpp:341 ItemFileIO.cpp:411
 msgid " -> ok!\n"
 msgstr " -> 完了!\n"
 
-#: ItemFileIO.cpp:367
+#: ItemFileIO.cpp:376
 msgid "{0} cannot be saved with empty filename."
 msgstr "ファイル名が指定されていないので{0}を保存できません．"
 
-#: ItemFileIO.cpp:372
+#: ItemFileIO.cpp:381
 msgid "{0} cannot be saved because {1}"
 msgstr "{0}は保存できません： {1}"
 
-#: ItemFileIO.cpp:379
+#: ItemFileIO.cpp:388
 msgid "Saving {0} \"{1}\" to \"{2}\""
 msgstr "{0} \"{1}\" を \"{2}\" に保存中"
 
-#: ItemFileIO.cpp:382
+#: ItemFileIO.cpp:391
 msgid "Exporting {0} \"{1}\" into \"{2}\""
 msgstr "{0} \"{1}\" を \"{2}\" にエクスポート中"
 

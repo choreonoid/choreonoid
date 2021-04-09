@@ -279,10 +279,9 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem,
         if(!isOptional){
             if(!itemName.empty()){
                 if(!className.empty()){
-                    mv->putln(format(_("{0} \"{1}\" cannot be restored."), className, itemName),
-                              MessageView::Error);
+                    mv->putln(format(_("{0} \"{1}\" cannot be restored."), className, itemName), MessageView::Error);
                 } else {
-                    mv->putln(format(_("\"{1}\" cannot be restored."), itemName), MessageView::Error);
+                    mv->putln(format(_("\"{0}\" cannot be restored."), itemName), MessageView::Error);
                 }
             } else {
                 if(!className.empty()){
@@ -418,7 +417,7 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
                                          name, moduleName), MessageView::Error);
                     } else {
                         if(!item->setAddon(addon)){
-                            mv->putln(format(_("Addon \"{0}\" is cannot be added to item \"{1}\"."),
+                            mv->putln(format(_("Addon \"{0}\" cannot be added to item \"{1}\"."),
                                              name, item->displayName()), MessageView::Error);
                         } else {
                             if(!addon->restore(*addonArchive)){
