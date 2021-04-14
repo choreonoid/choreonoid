@@ -37,7 +37,6 @@ void SimpleControllerIO::setLinkOutput(Link*, int /* stateFlags */)
         "SimpleControllerIO::setLinkOutput is deprecated and is not supported in the control system.");
 }
 
-
 SimpleControllerConfig::SimpleControllerConfig(SimpleControllerIO* io)
     : io(io)
 {
@@ -52,6 +51,11 @@ std::string SimpleControllerConfig::controllerName() const
 Body* SimpleControllerConfig::body()
 {
     return io->body();
+}
+
+Referenced* SimpleControllerConfig::bodyItem()
+{
+    return nullptr;
 }
 
 std::string SimpleControllerConfig::optionString() const
@@ -90,10 +94,24 @@ bool SimpleController::configure(SimpleControllerConfig*)
     return true;
 }
 
+
+bool SimpleController::initialize(SimpleControllerIO*)
+{
+    return true;
+}
+
+
 bool SimpleController::start()
 {
     return true;
 }
+
+
+bool SimpleController::control()
+{
+    return false;
+}
+
 
 void SimpleController::stop()
 {

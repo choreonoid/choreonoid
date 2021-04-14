@@ -40,6 +40,14 @@ struct SharedInfo : public Referenced
 
 typedef ref_ptr<SharedInfo> SharedInfoPtr;
 
+class MySimpleControllerConfig : public SimpleControllerConfig
+{
+public:
+    SimpleControllerItem::Impl* impl;
+    MySimpleControllerConfig(SimpleControllerItem::Impl* impl);
+    virtual Referenced* bodyItem() override;
+};
+
 }
 
 namespace cnoid {
@@ -79,7 +87,7 @@ public:
     vector<SimpleControllerItemPtr> childControllerItems;
 
     BodyItem* targetBodyItem;
-    SimpleControllerConfig config;
+    MySimpleControllerConfig config;
     bool isConfigured;
 
     MessageView* mv;
@@ -152,6 +160,20 @@ public:
     virtual void setImmediateMode(bool on) override;
 };
 
+}
+
+
+MySimpleControllerConfig::MySimpleControllerConfig(SimpleControllerItem::Impl* impl)
+    : SimpleControllerConfig(impl),
+      impl(impl)
+{
+
+}
+
+
+Referenced* MySimpleControllerConfig::bodyItem()
+{
+    return impl->targetBodyItem;
 }
 
 
@@ -245,16 +267,16 @@ Item* SimpleControllerItem::doDuplicate() const
 void SimpleControllerItem::onPositionChanged()
 {
     bool isTargetBodyItemChanged = false;
-    auto bodyItem = findOwnerItem<BodyItem>();
+    bool connected = isConnectedToRoot();
+    BodyItem* bodyItem = nullptr;
+    if(connected){
+        bodyItem = findOwnerItem<BodyItem>();
+    }
     if(bodyItem != impl->targetBodyItem){
         isTargetBodyItemChanged = true;
         impl->targetBodyItem = bodyItem;
     }
-    
-    if(impl->doReloading || !isConnectedToRoot()){
-        return;
-    }
-    if(!impl->controller && !impl->controllerModuleName.empty()){
+    if(!impl->doReloading && connected && !impl->controller && !impl->controllerModuleName.empty()){
         impl->loadController();
     }
     if(impl->controller && isTargetBodyItemChanged){

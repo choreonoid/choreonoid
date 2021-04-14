@@ -32,6 +32,8 @@ public:
     virtual void output() override;
     virtual void stop() override;
 
+    class Impl;
+
 protected:
     virtual Item* doDuplicate() const override;
     virtual void onPositionChanged() override;
@@ -41,7 +43,6 @@ protected:
     virtual bool restore(const Archive& archive) override;
         
 private:
-    class Impl;
     Impl* impl;
 };
         

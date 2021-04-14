@@ -58,6 +58,16 @@ public:
     
     virtual std::string controllerName() const;
     virtual Body* body();
+    
+    /**
+       When the controller is being managed in the Choreonoid GUI, this function returns the pointer
+       of the corresponding body item in the GUI. Otherwise, this returns the null pointer.
+       You can use the obtained body item object to make the controller cooperate with the Choreonoid GUI.
+       Note that the pointer must be downcasted to BodyItem to use, and the controller binary must be
+       linked with the BodyPlugin library.
+    */
+    virtual Referenced* bodyItem();
+    
     virtual std::string optionString() const;
     std::vector<std::string> options() const;
     virtual std::ostream& os() const;
@@ -94,7 +104,7 @@ public:
 
        \return Return true if the initialization succeeds, or false if it fails.
     */
-    virtual bool initialize(SimpleControllerIO* io) = 0;
+    virtual bool initialize(SimpleControllerIO* io);
 
     /**
        The start function is called when the simulation is started.
@@ -112,7 +122,7 @@ public:
        \return Return true if the control is still active. If the false is returned, the simulation
        may be stopped depending on the simulation mode.
     */
-    virtual bool control() = 0;
+    virtual bool control();
 
     /**
        The stop function is called when the simulation is stopped.
