@@ -18,6 +18,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/OptionManager>
 #include <cnoid/MenuManager>
+#include <cnoid/ProjectManager>
 #include <cnoid/UnifiedEditHistory>
 #include <cnoid/EditRecord>
 #include <cnoid/PutPropertyFunction>
@@ -187,7 +188,7 @@ public:
     void setLocationEditable(bool on, bool updateInitialPositionWhenLocked);
     void createSceneBody();
     void setTransparency(float t);
-    bool updateAttachment(bool on);
+    bool updateAttachment(bool on, bool doNotifyUpdate);
     bool isAttachable() const;
     void setParentBodyItem(BodyItem* bodyItem);
     Link* attachToBodyItem(BodyItem* bodyItem);
@@ -409,8 +410,15 @@ void BodyItem::onPositionChanged()
         clearCollisions();
     }
 
-    if(impl->updateAttachment(true)){
-        notifyUpdate();
+    /*
+      If the item is being restored in loading a project, the attachment update is
+      processed when all the child items are restored so that an attachment device
+      dynamically added by a DeviceOverwriteItem can work in the attachment update.
+      In that case, the attachment update is processed by the callback function
+      given to the Archive::addProcessOnSubTreeRestored in the restore function.
+    */
+    if(!ProjectManager::instance()->isLoadingProject()){
+        impl->updateAttachment(true, true);
     }
 }
 
@@ -1392,16 +1400,16 @@ BodyItem* BodyItem::parentBodyItem()
 }
 
 
-void BodyItem::setAttachmentEnabled(bool on)
+void BodyItem::setAttachmentEnabled(bool on, bool doNotifyUpdate)
 {
     impl->isAttachmentEnabled = on;
     if(on != isAttachedToParentBody_){
-        impl->updateAttachment(on);
+        impl->updateAttachment(on, doNotifyUpdate);
     }
 }
 
 
-bool BodyItem::Impl::updateAttachment(bool on)
+bool BodyItem::Impl::updateAttachment(bool on, bool doNotifyUpdate)
 {
     bool updated = false;
     BodyItem* newParentBodyItem = nullptr;
@@ -1411,6 +1419,9 @@ bool BodyItem::Impl::updateAttachment(bool on)
     if(newParentBodyItem != parentBodyItem || (newParentBodyItem && !self->isAttachedToParentBody_)){
         setParentBodyItem(newParentBodyItem);
         updated = true;
+        if(doNotifyUpdate){
+            self->notifyUpdate();
+        }
     }
     return updated;
 }
@@ -1433,12 +1444,12 @@ bool BodyItem::Impl::isAttachable() const
 }
 
 
-bool BodyItem::attachToParentBody()
+bool BodyItem::attachToParentBody(bool doNotifyUpdate)
 {
     if(!impl->isAttachmentEnabled){
-        setAttachmentEnabled(true);
+        setAttachmentEnabled(true, doNotifyUpdate);
     } else {
-        impl->updateAttachment(true);
+        impl->updateAttachment(true, doNotifyUpdate);
     }
     return isAttachedToParentBody_;
 }
@@ -1616,7 +1627,7 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 
     if(isAttachable()){
         putProperty(_("Enable attachment"), isAttachmentEnabled,
-                    [&](bool on){ self->setAttachmentEnabled(on); return true; });
+                    [&](bool on){ self->setAttachmentEnabled(on, false); return true; });
     }
 }
 
@@ -1860,6 +1871,9 @@ bool BodyItem::Impl::restore(const Archive& archive)
     }
 
     read(archive, "zmp", zmp);
+
+    // The attachment is updated after the sub tree is restored
+    archive.addProcessOnSubTreeRestored([&](){ updateAttachment(true, true); });
         
     return true;
 }

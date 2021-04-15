@@ -58,9 +58,9 @@ public:
     BodyItem* parentBodyItem();
     // True if the body is attached to the parent body with a holder device and an attachment device
     bool isAttachedToParentBody() const { return isAttachedToParentBody_; }
-    void setAttachmentEnabled(bool on);
+    void setAttachmentEnabled(bool on, bool doNotifyUpdate = true);
     bool isAttachmentEnabled() const;
-    bool attachToParentBody();    
+    bool attachToParentBody(bool doNotifyUpdate = true);    
 
     // The current parent body can temporarily be changed by this function
     //void setTemporalParentBodyItem(BodyItem* parentBodyItem);
