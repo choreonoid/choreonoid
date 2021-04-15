@@ -3,6 +3,7 @@
 #include "MprPosition.h"
 #include "MprPositionList.h"
 #include "MprPositionStatement.h"
+#include "MprStructuredStatement.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/BodySuperimposerAddon>
@@ -90,8 +91,14 @@ MprProgramItemBase::Impl::Impl(MprProgramItemBase* self, const Impl& org)
 void MprProgramItemBase::Impl::setupSignalConnections()
 {
     topLevelProgram->sigStatementInserted().connect(
-        [&](MprProgram::iterator){
-            self->suggestFileUpdate(); });
+        [&](MprProgram::iterator iter){
+            auto holder = (*iter)->holderProgram()->holderStatement();
+            if(!holder ||
+               holder->hasStructuredStatementAttribute(
+                   MprStructuredStatement::ArchiveLowerLevelProgram)){
+                self->suggestFileUpdate();
+            }
+        });
 
     topLevelProgram->sigStatementRemoved().connect(
         [&](MprProgram*, MprStatement*){
