@@ -77,7 +77,8 @@ public:
         Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
 
     ItemList<> loadProject(
-        const std::string& filename, Item* parentItem, bool isInvokingApplication, bool isBuiltinProject);
+        const std::string& filename, Item* parentItem,
+        bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject);
 
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
@@ -314,24 +315,30 @@ bool ProjectManager::Impl::restoreObjectStates
 
 ItemList<> ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 {
-    return impl->loadProject(filename, parentItem, false, false);
+    return impl->loadProject(filename, parentItem, false, false, (parentItem == nullptr));
 }
 
 
 ItemList<> ProjectManager::loadBuiltinProject(const std::string& resourceFile, Item* parentItem)
 {
-    return impl->loadProject(resourceFile, parentItem, true, true);
+    return impl->loadProject(resourceFile, parentItem, true, true, false);
 }
 
 
 ItemList<> ProjectManager::Impl::loadProject
-(const std::string& filename, Item* parentItem, bool isInvokingApplication, bool isBuiltinProject)
+(const std::string& filename, Item* parentItem,
+ bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject)
 {
     ItemList<> loadedItems;
     
     ::sigProjectAboutToBeLoaded(projectBeingLoadedCounter);
     
     ++projectBeingLoadedCounter;
+
+    if(doClearExistingProject){
+        clearProject();
+        mv->flush();
+    }
     
     bool loaded = false;
     YAMLReader reader;
@@ -372,7 +379,7 @@ ItemList<> ProjectManager::Impl::loadProject
 
         } else if(parsed){
 
-            bool isSubProject = parentItem != nullptr;
+            bool isSubProject = (parentItem != nullptr);
             if(!isSubProject){
                 parentItem = RootItem::instance();
             }
@@ -690,7 +697,7 @@ void ProjectManager::Impl::onProjectOptionsParsed(boost::program_options::variab
     if(v.count("project")){
         vector<string> projectFileNames = v["project"].as<vector<string>>();
         for(size_t i=0; i < projectFileNames.size(); ++i){
-            loadProject(projectFileNames[i], nullptr, true, false);
+            loadProject(projectFileNames[i], nullptr, true, false, false);
         }
     }
 }
@@ -701,7 +708,7 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
     auto iter = inputFiles.begin();
     while(iter != inputFiles.end()){
         if(filesystem::path(*iter).extension().string() == ".cnoid"){
-            loadProject(*iter, nullptr, true, false);
+            loadProject(*iter, nullptr, true, false, false);
             iter = inputFiles.erase(iter);
         } else {
             ++iter;
@@ -757,10 +764,8 @@ void ProjectManager::Impl::openDialogToLoadProject()
     dialog.updatePresetDirectories();
     
     if(dialog.exec()){
-        clearProject();
-        mv->flush();
         string filename = dialog.selectedFiles().front().toStdString();
-        loadProject(filename, nullptr, false, false);
+        loadProject(filename, nullptr, false, false, true);
     }
 }
 
