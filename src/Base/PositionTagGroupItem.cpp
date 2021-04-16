@@ -212,10 +212,11 @@ public:
     UnifiedEditHistory* history;
     Isometry3 lastEdit_T_offset;
     PositionTagGroupPtr lastEditTags;
+    bool isDoingUndoOrRedo;
+    bool needToUpdateSelectedTagIndices;
     std::vector<bool> tagSelection;
     int numSelectedTags;
     std::vector<int> selectedTagIndices;
-    bool needToUpdateSelectedTagIndices;
     Signal<void()> sigTagSelectionChanged;
     LocationMode locationMode;
     int locationTargetTagIndex;
@@ -291,8 +292,9 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
 
     history = UnifiedEditHistory::instance();
 
-    numSelectedTags = 0;
+    isDoingUndoOrRedo = false;
     needToUpdateSelectedTagIndices = false;
+    numSelectedTags = 0;
 
     locationMode = TagGroupLocation;
     locationTargetTagIndex = -1;
@@ -452,7 +454,10 @@ void PositionTagGroupItem::Impl::onTagAdded(int index)
 
     auto tag = tags->tagAt(index);
     lastEditTags->insert(index, new PositionTag(*tag));
-    history->addRecord(new TagEditRecord(this, AddAction, index, tag, nullptr));
+    
+    if(!isDoingUndoOrRedo){
+        history->addRecord(new TagEditRecord(this, AddAction, index, tag, nullptr));
+    }
 
     notifyUpdateLater();
 }
@@ -466,7 +471,10 @@ void PositionTagGroupItem::Impl::onTagRemoved(int index, PositionTag* tag)
     }
 
     lastEditTags->removeAt(index);
-    history->addRecord(new TagEditRecord(this, RemoveAction, index, nullptr, tag));
+
+    if(!isDoingUndoOrRedo){
+        history->addRecord(new TagEditRecord(this, RemoveAction, index, nullptr, tag));
+    }
     
     notifyUpdateLater();
 }
@@ -475,8 +483,13 @@ void PositionTagGroupItem::Impl::onTagRemoved(int index, PositionTag* tag)
 void PositionTagGroupItem::Impl::onTagPositionUpdated(int index)
 {
     auto newTag = tags->tagAt(index);
-    auto oldTag = lastEditTags->tagAt(index);
-    history->addRecord(new TagEditRecord(this, UpdateAction, index, newTag, oldTag));
+    auto lastTag = lastEditTags->tagAt(index);
+
+    if(!isDoingUndoOrRedo){
+        history->addRecord(new TagEditRecord(this, UpdateAction, index, newTag, lastTag));
+    }
+
+    *lastTag = *newTag;
 
     if(locationMode == TagLocation && locationTargetTagIndex == index){
         sigTargetLocationChanged();
@@ -1625,8 +1638,8 @@ std::string TagEditRecord::label() const
 bool TagEditRecord::undo()
 {
     bool done = false;
-    auto block = tagGroupItemImpl->tagGroupConnections.scopedBlock();
     auto tags = tagGroupItemImpl->tags;
+    tagGroupItemImpl->isDoingUndoOrRedo = true;
 
     switch(action){
     case AddAction:
@@ -1645,6 +1658,8 @@ bool TagEditRecord::undo()
         break;
     }
 
+    tagGroupItemImpl->isDoingUndoOrRedo = false;
+
     return done;
 }
 
@@ -1652,8 +1667,8 @@ bool TagEditRecord::undo()
 bool TagEditRecord::redo()
 {
     bool done = false;
-    auto block = tagGroupItemImpl->tagGroupConnections.scopedBlock();
     auto tags = tagGroupItemImpl->tags;
+    tagGroupItemImpl->isDoingUndoOrRedo = true;
 
     switch(action){
     case AddAction:
@@ -1671,6 +1686,8 @@ bool TagEditRecord::redo()
     default:
         break;
     }
+
+    tagGroupItemImpl->isDoingUndoOrRedo = false;
 
     return done;
 }
