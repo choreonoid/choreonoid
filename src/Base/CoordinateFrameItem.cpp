@@ -164,9 +164,9 @@ void CoordinateFrameItem::onAddedToParent()
 }    
 
 
-void CoordinateFrameItem::onRemovedFromParent(Item* /* parentItem */)
+void CoordinateFrameItem::onRemovedFromParent(Item* /* parentItem */, bool isParentBeingDeleted)
 {
-    if(impl->frameListItem){
+    if(!isParentBeingDeleted && impl->frameListItem){
         impl->frameListItem->onFrameItemRemoved(this);
     }
     impl->frameListItem = nullptr;

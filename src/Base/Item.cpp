@@ -901,7 +901,7 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
 
     attributes.reset(SubItem);
 
-    self->onRemovedFromParent(prevParent);
+    self->onRemovedFromParent(prevParent, isParentBeingDeleted);
 
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
@@ -925,7 +925,7 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
 }
 
 
-void Item::onRemovedFromParent(Item* /* parentItem */)
+void Item::onRemovedFromParent(Item* /* parentItem */, bool /* isParentBeingDeleted */)
 {
 
 }

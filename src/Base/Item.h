@@ -422,7 +422,7 @@ protected:
     */
     virtual void onConnectedToRoot();
 
-    virtual void onRemovedFromParent(Item* parentItem);
+    virtual void onRemovedFromParent(Item* parentItem, bool isParentBeingDeleted);
     virtual void onDisconnectedFromRoot();
 
     /**
