@@ -28,7 +28,30 @@ public:
     CoordinateFrameListItem(const CoordinateFrameListItem& org);
     virtual ~CoordinateFrameListItem();
 
-    enum ItemizationMode { NoItemization, SubItemization, IndependentItemization };
+    /**
+       A coordinate frame list consists of coordinate frame elements and the list to hold them.
+       To manage it on the Choreonoid GUI, CoordinateFrameListItem and CoordinateFrameItem are introduced.
+       Basically, the former corresponds to the coordinate frame list and the latter corresponds to
+       each coordinate frame element. However, how to use CoordinateFrameItems depends on ItemizationMode.
+    */
+    enum ItemizationMode {
+        /**
+           In this mode, CoordinateFrameItem is not used and a user cannot see each frame element
+           in the item tree.
+        */
+        NoItemization,
+        /**
+           In this mode, each frame item is attached to the list item with the SubItem attribute,
+           and the frame items are managed by the list item.
+        */
+        SubItemization,
+        /**
+           In this mode, each frame item is attached to the list item with the Attached attribute,
+           and the frame items are handled as an item independent of the list item.
+        */
+        IndependentItemization
+    };
+
     int itemizationMode() const;
     bool isNoItemizationMode() const;
     void setItemizationMode(int mode);

@@ -23,11 +23,15 @@ class FrameMarker : public CoordinateFrameMarker
 {
 public:
     CoordinateFrameListItem::Impl* impl;
+    weak_ref_ptr<CoordinateFrameItem> weakFrameItem;
+    ScopedConnection frameItemConnection;
     bool isGlobal;
     bool isOn;
     int transientHolderCounter;
     
     FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* frame);
+    void updateFrameItem(CoordinateFrameItem* frameItem, bool on);
+    void updateFrameLock();
     virtual void onFrameUpdated(int flags) override;
 };
 
@@ -70,7 +74,6 @@ public:
     Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode);
     void setItemizationMode(int mode);
     void updateFrameItems();
-    void arrangeFrameItems();
     CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
     CoordinateFrameItem* findFrameItemAt(int index, Item*& out_insertionPosition);
     CoordinateFrameItem* findFrameItemAt(int index);
@@ -79,6 +82,8 @@ public:
     bool onFrameItemAdded(CoordinateFrameItem* frameItem);
     void setFrameMarkerVisible(CoordinateFrame* frame, bool on, bool isTransient);
     void updateParentFrameForFrameMarkers(const Isometry3& T);
+    void storeLockedFrameIndices(Archive& archive);
+    void completeFrameItemRestoration(const Archive& archive);
 };
 
 }
@@ -229,22 +234,6 @@ void CoordinateFrameListItem::Impl::updateFrameItems()
     }
 
     isUpdatingFrameItems = false;
-}
-
-
-/**
-   Currently this function only adds the default frame item if it does not exist.
-   This function should be improved so that any other lacking frame items can be added,
-   and extra frame items can be removed, and the order of the items can be corrected.
-*/
-void CoordinateFrameListItem::Impl::arrangeFrameItems()
-{
-    if(frameList->hasFirstElementAsDefaultFrame()){
-        auto firstFrameItem = findFrameItemAt(0);
-        if(!firstFrameItem || !frameList->isDefaultFrameId(firstFrameItem->frame()->id())){
-            self->insertChild(self->childItem(), createFrameItem(frameList->frameAt(0)));
-        }
-    }
 }
 
 
@@ -534,13 +523,11 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
     auto p = visibleFrameMarkerMap.find(frame);
     if(p != visibleFrameMarkerMap.end()){
         marker = p->second;
-        if(!isTransient && !marker->isOn){
+        if(!isTransient && (on != marker->isOn)){
             changed = true;
         }
     } else if(on){
         marker = new FrameMarker(this, frame);
-        marker->isOn = false;
-        marker->transientHolderCounter = 0;
         visibleFrameMarkerMap[frame] = marker;
         if(marker->isGlobal){
             frameMarkerGroup->addChild(marker, update);
@@ -550,6 +537,7 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
         }
         changed = true;
     }
+
     if(on){
         if(!isTransient){
             marker->isOn = true;
@@ -558,10 +546,7 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
         }
     } else if(marker){
         if(!isTransient){
-            if(marker->isOn){
-                marker->isOn = false;
-                changed = true;
-            }
+            marker->isOn = false;
         } else {
             marker->transientHolderCounter -= 1;
         }
@@ -605,20 +590,25 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
                 self->setChecked(false);
             }
         }
+
+        int frameIndex = frameList->indexOf(frame);
+        CoordinateFrameItem* frameItem = nullptr;
+        if(itemizationMode != NoItemization){
+            frameItem = findFrameItemAt(frameIndex);
+        }
+        
         if(!isTransient){
-            int frameIndex = -1;
             if(!sigFrameMarkerVisibilityChanged.empty()){
-                frameIndex = frameList->indexOf(frame);
                 sigFrameMarkerVisibilityChanged(frameIndex, on);
             }
             if(itemizationMode != NoItemization){
-                if(frameIndex < 0){
-                    frameIndex = frameList->indexOf(frame);
-                }
-                if(auto frameItem = findFrameItemAt(frameIndex)){
+                if(frameItem){
                     frameItem->setVisibilityCheck(on);
                 }
             }
+        }
+        if(frameItem){
+            marker->updateFrameItem(frameItem, on);
         }
     }
 }
@@ -661,8 +651,39 @@ FrameMarker::FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* f
       impl(impl)
 {
     isGlobal = frame->isGlobal();
+    isOn = false;
+    transientHolderCounter = 0;
 }
 
+
+void FrameMarker::updateFrameItem(CoordinateFrameItem* frameItem, bool on)
+{
+    weakFrameItem.reset();
+    frameItemConnection.disconnect();
+    if(frameItem && on){
+        frameItemConnection =
+            frameItem->sigUpdated().connect(
+                [&](){ updateFrameLock(); });
+        weakFrameItem = frameItem;
+    }
+    updateFrameLock();
+}
+
+
+void FrameMarker::updateFrameLock()
+{
+    bool updated = false;
+    if(weakFrameItem){
+        if(auto item = weakFrameItem.lock()){
+            setDragEnabled(item->isLocationEditable());
+            updated = true;
+        }
+    }
+    if(!updated){
+        setDragEnabled(true);
+    }
+}
+    
 
 void FrameMarker::onFrameUpdated(int flags)
 {
@@ -694,16 +715,44 @@ void CoordinateFrameListItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool CoordinateFrameListItem::store(Archive& archive)
 {
-    if(impl->itemizationMode == SubItemization){
-        archive.write("itemization", "sub");
-    } else if(impl->itemizationMode == IndependentItemization){
-        archive.write("itemization", "independent");
-    }
     impl->frameList->writeHeader(archive);
-    if(impl->itemizationMode != IndependentItemization){
+    
+    if(impl->itemizationMode == IndependentItemization){
+        archive.write("itemization", "independent");
+    } else {
+        if(impl->itemizationMode == SubItemization){
+            archive.write("itemization", "sub");
+            impl->storeLockedFrameIndices(archive);
+        }
         impl->frameList->writeFrames(archive);
     }
+    
     return true;
+}
+
+
+/**
+   \note The index 0 is usually the default frame, but the information on the default
+   frame is not stored in the archive. This means the index of the first frame stored
+   in the archive is 1, which is a bit confusing.
+*/
+void CoordinateFrameListItem::Impl::storeLockedFrameIndices(Archive& archive)
+{
+    ListingPtr indices = new Listing;
+    int n = frameList->numFrames();
+    int index = frameList->hasFirstElementAsDefaultFrame() ? 1 : 0;
+    while(index < n){
+        if(auto frameItem = self->findFrameItemAt(index)){
+            if(!frameItem->isLocationEditable()){
+                indices->append(index);
+            }
+        }
+        ++index;
+    }
+    if(!indices->empty()){
+        indices->setFlowStyle();
+        archive.insert("locked_frame_indices", indices);
+    }
 }
 
 
@@ -720,8 +769,33 @@ bool CoordinateFrameListItem::restore(const Archive& archive)
     impl->frameList->resetIdCounter();
     bool result = impl->frameList->read(archive);
     if(result){
-        archive.addProcessOnSubTreeRestored(
-            [&](){ impl->arrangeFrameItems(); });
+        if(impl->itemizationMode != NoItemization){
+            archive.addProcessOnSubTreeRestored(
+                [&](){ impl->completeFrameItemRestoration(archive); });
+        }
     }
     return result;
+}
+
+
+void CoordinateFrameListItem::Impl::completeFrameItemRestoration(const Archive& archive)
+{
+    if(frameList->hasFirstElementAsDefaultFrame()){
+        auto firstFrameItem = findFrameItemAt(0);
+        if(!firstFrameItem || !frameList->isDefaultFrameId(firstFrameItem->frame()->id())){
+            self->insertChild(self->childItem(), createFrameItem(frameList->frameAt(0)));
+        }
+    }
+
+    if(itemizationMode == SubItemization){
+        auto& locked = *archive.findListing("locked_frame_indices");
+        if(locked.isValid()){
+            for(int i=0; i < locked.size(); ++i){
+                int index = locked[i].toInt();
+                if(auto frameItem = self->findFrameItemAt(index)){
+                    frameItem->setLocationEditable(false);
+                }
+            }
+        }
+    }
 }
