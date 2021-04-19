@@ -1163,6 +1163,7 @@ void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhen
         if(bodyLocation){
             bodyLocation->notifyAttributeChange();
         }
+        self->notifyUpdate();
     }
 }
 
