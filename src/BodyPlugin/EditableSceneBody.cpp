@@ -159,6 +159,7 @@ public:
     void updateMarkersAndManipulators(bool on);
     void createPositionDragger();
     void attachPositionDragger(Link* link);
+    void adjustPositionDraggerSize(Link* link, EditableSceneLink* sceneLink);
 
     bool onKeyPressEvent(const SceneWidgetEvent& event);
     bool onKeyReleaseEvent(const SceneWidgetEvent& event);
@@ -967,22 +968,48 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
         if(size > 0.0){
             positionDragger->setHandleSize(size);
         } else {
-            if(auto shape = sceneLink->visualShape()){
-                if(auto transform = dynamic_cast<SgTransform*>(shape)){
-                    positionDragger->adjustSize(transform->untransformedBoundingBox());
-                } else {
-                    positionDragger->adjustSize(shape->boundingBox());
-                }
-            }
+            adjustPositionDraggerSize(link, sceneLink);
         }
     }
-
+    
     positionDragger->notifyUpdate(update.withAction(SgUpdate::Modified));
     sceneLink->addChildOnce(positionDragger);
 
     if(sceneLink->impl->originMarker){
         sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayNever, update);
     }
+}
+
+
+/*
+   To automatically adjust the size of the position dragger to a reasonable size,
+   the sizes of the neighboring links of the target link are also taken into account
+   to determine the size.
+*/
+void EditableSceneBody::Impl::adjustPositionDraggerSize(Link* link, EditableSceneLink* sceneLink)
+{
+    BoundingBox bb;
+    
+    if(auto shape = sceneLink->visualShape()){
+        bb.expandBy(shape->untransformedBoundingBox());
+    }
+    constexpr double s = 0.5;
+    if(auto parent = link->parent()){
+        if(auto parentSceneLink = editableSceneLink(parent->index())){
+            auto parentBBox = parentSceneLink->untransformedBoundingBox();
+            parentBBox.scale(s);
+            bb.expandBy(parentBBox);
+        }
+    }
+    for(auto child = link->child(); child; child = child->sibling()){
+        if(auto childSceneLink = editableSceneLink(child->index())){
+            auto childBBox = childSceneLink->untransformedBoundingBox();
+            childBBox.scale(s);
+            bb.expandBy(childBBox);
+        }
+    }
+
+    positionDragger->adjustSize(bb);
 }
 
 

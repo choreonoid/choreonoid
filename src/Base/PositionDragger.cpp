@@ -587,7 +587,11 @@ bool PositionDragger::adjustSize(const BoundingBox& bb)
 
     Vector3 s = bb.size() / 2.0;
     std::sort(s.data(), s.data() + 3);
-    double r = Vector2(s[0], s[1]).norm();
+
+    if(s[2] > 3.0 * s[1]){
+        s[2] = 3.0 * s[1];
+    }
+    double r = Vector2(s[2], s[1]).norm();
     if(!impl->isOverlayMode){
         r *= 1.05;
     }
