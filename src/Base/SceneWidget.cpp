@@ -185,7 +185,8 @@ struct EditableNodeInfo
 };
 
             
-Signal<void(SceneWidget*)> sigSceneWidgetCreated;
+Signal<void(SceneWidget* instance)> sigSceneWidgetCreated;
+Signal<void(SceneWidget* requester)> sigModeSyncRequest;
 
 }
 
@@ -232,6 +233,8 @@ public:
     bool needToUpdateViewportInformation;
     bool isEditMode;
     bool isHighlightingEnabled;
+    bool isModeSyncEnabled;
+    ScopedConnection modeSyncConnection;
 
     Selection viewpointOperationMode;
     bool isFirstPersonMode() const {
@@ -310,6 +313,7 @@ public:
     Impl(SceneWidget* self);
     ~Impl();
 
+    void onModeSyncRequest(SceneWidget* requester);
     void onVSyncModeChanged();
     void onLowMemoryConsumptionModeChanged(bool on);
     void tryToResumeNormalRendering();
@@ -357,7 +361,7 @@ public:
     void resetCursor();
     void setEditMode(bool on);
     void toggleEditMode();
-    void advertiseSceneModeChange();
+    void advertiseSceneModeChange(bool doModeSyncRequest);
     void viewAll();
 
     void showPickingImageWindow();
@@ -569,6 +573,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     needToUpdateViewportInformation = true;
     isEditMode = false;
     isHighlightingEnabled = false;
+    isModeSyncEnabled = false;
     viewpointOperationMode.resize(2);
     viewpointOperationMode.setSymbol(ThirdPersonMode, "thirdPerson");
     viewpointOperationMode.setSymbol(FirstPersonMode, "firstPerson");
@@ -667,6 +672,27 @@ SceneWidget::Impl::~Impl()
     if(pickingImageWindow){
         delete pickingImageWindow;
     }
+}
+
+
+void SceneWidget::setModeSyncEnabled(bool on)
+{
+    if(on != impl->isModeSyncEnabled){
+        impl->isModeSyncEnabled = on;
+        if(on){
+            impl->modeSyncConnection =
+                sigModeSyncRequest.connect(
+                    [this](SceneWidget* requester){ impl->onModeSyncRequest(requester); });
+        } else {
+            impl->modeSyncConnection.disconnect();
+        }
+    }
+}
+
+
+void SceneWidget::Impl::onModeSyncRequest(SceneWidget* requester)
+{
+    setEditMode(requester->isEditMode());
 }
 
 
@@ -1069,12 +1095,6 @@ void SceneWidget::setEditMode(bool on)
 }
 
 
-bool SceneWidget::isEditMode() const
-{
-    return impl->isEditMode;
-}
-
-
 void SceneWidget::Impl::setEditMode(bool on)
 {
     if(on != isEditMode){
@@ -1100,7 +1120,7 @@ void SceneWidget::Impl::setEditMode(bool on)
             }
         }
         
-        advertiseSceneModeChange();
+        advertiseSceneModeChange(true);
     }
 }
 
@@ -1108,6 +1128,33 @@ void SceneWidget::Impl::setEditMode(bool on)
 void SceneWidget::Impl::toggleEditMode()
 {
     setEditMode(!isEditMode);
+}
+
+
+bool SceneWidget::isEditMode() const
+{
+    return impl->isEditMode;
+}
+
+
+void SceneWidget::Impl::advertiseSceneModeChange(bool doModeSyncRequest)
+{
+   if(activeCustomModeHandler){
+       activeCustomModeHandler->onSceneModeChanged(&latestEvent);
+   }
+   for(auto& editable : editables){
+       editable.editable->onSceneModeChanged(&latestEvent);
+   }
+   if(isEditMode){
+       for(auto& element : focusedEditablePath){
+           element.editable->onFocusChanged(&latestEvent, true);
+       }
+   }
+   emitSigStateChangedLater();
+
+   if(doModeSyncRequest && isModeSyncEnabled){
+       ::sigModeSyncRequest(self);
+   }
 }
 
 
@@ -1154,23 +1201,6 @@ void SceneWidget::deactivateCustomMode(SceneWidgetEditable* modeHandler)
     if(!modeHandler || modeHandler == impl->activeCustomModeHandler){
         activateCustomMode(nullptr, 0);
     }
-}
-
-
-void SceneWidget::Impl::advertiseSceneModeChange()
-{
-   if(activeCustomModeHandler){
-       activeCustomModeHandler->onSceneModeChanged(&latestEvent);
-   }
-   for(auto& editable : editables){
-       editable.editable->onSceneModeChanged(&latestEvent);
-   }
-   if(isEditMode){
-       for(auto& element : focusedEditablePath){
-           element.editable->onFocusChanged(&latestEvent, true);
-       }
-   }
-   emitSigStateChangedLater();
 }
 
 
@@ -2491,7 +2521,7 @@ void SceneWidget::setHighlightingEnabled(bool on)
 {
     if(on != impl->isHighlightingEnabled){
         impl->isHighlightingEnabled = on;
-        impl->advertiseSceneModeChange();
+        impl->advertiseSceneModeChange(false);
     }
 }
 

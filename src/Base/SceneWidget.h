@@ -33,6 +33,8 @@ public:
 
     static void forEachInstance(SgNode* node, std::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function);
 
+    void setModeSyncEnabled(bool on);
+
     SceneWidgetRoot* sceneRoot();
     SgGroup* scene();
     SgGroup* systemNodeGroup();

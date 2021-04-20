@@ -151,6 +151,7 @@ SceneView::Impl::Impl(SceneView* self)
     self->setDefaultLayoutArea(View::RIGHT);
     
     sceneWidget = new SceneWidget(self);
+    sceneWidget->setModeSyncEnabled(true);
     //sceneWidget->activate();
     scene = sceneWidget->scene();
     sceneWidget->setObjectName(self->windowTitle());
