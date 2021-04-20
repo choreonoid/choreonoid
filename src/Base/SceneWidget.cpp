@@ -168,6 +168,22 @@ public:
         }
     }
 };
+
+
+struct EditableNodeInfo
+{
+    SgNodePtr node;
+    SceneWidgetEditable* editable;
+    EditableNodeInfo() : editable(nullptr) { }
+    EditableNodeInfo(SgNode* node, SceneWidgetEditable* editable)
+        : node(node), editable(editable) { }
+    bool operator<(const EditableNodeInfo& rhs) const { return editable < rhs.editable; };
+    bool operator==(const EditableNodeInfo& rhs) const { return editable == rhs.editable; }
+    bool operator!=(const EditableNodeInfo& rhs) const { return editable != rhs.editable; }
+    explicit operator bool() const { return editable != nullptr; }
+    void clear(){ node.reset(); editable = nullptr; }
+};
+
             
 Signal<void(SceneWidget*)> sigSceneWidgetCreated;
 
@@ -229,29 +245,14 @@ public:
                 dragMode == VIEW_ZOOM);
     }
 
-    struct EditableNodeInfo
-    {
-        SgNodePtr node;
-        SceneWidgetEditable* editable;
-        EditableNodeInfo() : editable(nullptr) { }
-        EditableNodeInfo(SgNode* node, SceneWidgetEditable* editable)
-            : node(node), editable(editable) { }
-        bool operator<(const EditableNodeInfo& rhs) const { return editable < rhs.editable; };
-        bool operator==(const EditableNodeInfo& rhs) const { return editable == rhs.editable; }
-        bool operator!=(const EditableNodeInfo& rhs) const { return editable != rhs.editable; }
-        explicit operator bool() const { return editable != nullptr; }
-        void clear(){ node.reset(); editable = nullptr; }
-    };
     set<EditableNodeInfo> editables;
     vector<EditableNodeInfo> editableDifferences;
-    
-    typedef vector<EditableNodeInfo> EditablePath;
-    EditablePath pointedEditablePath;
+    vector<EditableNodeInfo> pointedEditablePath;
     EditableNodeInfo lastMouseMovedEditable;
     EditableNodeInfo focusedEditable;
-    EditablePath focusedEditablePath;
+    vector<EditableNodeInfo> focusedEditablePath;
     // Used to restore the previous focus when the mode is changed from the view mdoe to the edit mode
-    EditablePath prevFocusedEditablePath;
+    vector<EditableNodeInfo> prevFocusedEditablePath;
 
     QCursor defaultCursor;
     QCursor editModeCursor;
@@ -369,8 +370,8 @@ public:
     void updateLastClickedPoint();
         
     EditableNodeInfo applyEditableFunction(
-        EditablePath& editablePath, std::function<bool(SceneWidgetEditable* editable)> function);
-    bool setFocusToEditablePath(EditablePath& editablePath);
+        vector<EditableNodeInfo>& editablePath, std::function<bool(SceneWidgetEditable* editable)> function);
+    bool setFocusToEditablePath(vector<EditableNodeInfo>& editablePath);
     bool setFocusToPointedEditablePath(const EditableNodeInfo& targetEditable);
     void clearFocusToEditables(bool doStoreFocus);
 
@@ -766,7 +767,7 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
 {
     if(sceneGraphRecursiveUpdateCounter > 0){
         MessageView::instance()->putln(
-            fmt::format("Recursive scene graph update on {0}.", self->objectName().toStdString()),
+            fmt::format(_("Recursive scene graph update on {0}."), self->objectName().toStdString()),
             MessageView::Warning);
     }
     ++sceneGraphRecursiveUpdateCounter;
@@ -830,10 +831,14 @@ void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
             lastMouseMovedEditable.clear();
         }
         if(!focusedEditablePath.empty()){
-            for(auto& focused : focusedEditablePath){
-                if(focused == editableNode){
-                    clearFocusToEditables(false);
-                    break;
+            auto iter = focusedEditablePath.begin();
+            while(iter != focusedEditablePath.end()){
+                auto& nodeInfo = *iter;
+                if(nodeInfo == editableNode){
+                    iter = focusedEditablePath.erase(iter);
+                    nodeInfo.editable->onFocusChanged(&latestEvent, false);
+                } else {
+                    ++iter;
                 }
             }
         }
@@ -1343,10 +1348,10 @@ void SceneWidget::Impl::updateLastClickedPoint()
    \return The editable object with which the given function is actually applied (the function returns true.)
    If there are no functions which returns true, null object is returned.
 */
-SceneWidget::Impl::EditableNodeInfo SceneWidget::Impl::applyEditableFunction
-(EditablePath& editablePath, std::function<bool(SceneWidgetEditable* editable)> function)
+EditableNodeInfo SceneWidget::Impl::applyEditableFunction
+(vector<EditableNodeInfo>& editablePath, std::function<bool(SceneWidgetEditable* editable)> function)
 {
-    for(EditablePath::reverse_iterator p = editablePath.rbegin(); p != editablePath.rend(); ++p){
+    for(auto p = editablePath.rbegin(); p != editablePath.rend(); ++p){
         auto& editableNode = *p;
         if(function(editableNode.editable)){
             return editableNode;
@@ -1356,7 +1361,7 @@ SceneWidget::Impl::EditableNodeInfo SceneWidget::Impl::applyEditableFunction
 }
     
 
-bool SceneWidget::Impl::setFocusToEditablePath(EditablePath& editablePath)
+bool SceneWidget::Impl::setFocusToEditablePath(vector<EditableNodeInfo>& editablePath)
 {
     if(editablePath.empty()){
         return false;
@@ -1389,7 +1394,7 @@ bool SceneWidget::Impl::setFocusToEditablePath(EditablePath& editablePath)
 bool SceneWidget::Impl::setFocusToPointedEditablePath(const EditableNodeInfo& targetEditable)
 {
     if(targetEditable){
-        EditablePath path;
+        vector<EditableNodeInfo> path;
         for(auto& element : pointedEditablePath){
             path.push_back(element);
             if(element == targetEditable){
@@ -1422,7 +1427,7 @@ void SceneWidget::Impl::clearFocusToEditables(bool doStoreFocus)
 
 bool SceneWidget::setSceneFocus(const SgNodePath& path)
 {
-    Impl::EditablePath editablePath;
+    vector<EditableNodeInfo> editablePath;
     for(auto& node : path){
         if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
             editablePath.emplace_back(node, editable);
@@ -2233,7 +2238,7 @@ void SceneWidget::Impl::showEditModePopupMenu(const QPoint& globalPos)
 
     if(!handled && !pointedEditablePath.empty()){
         auto editableToFocus = pointedEditablePath.front();
-        for(EditablePath::reverse_iterator p = pointedEditablePath.rbegin(); p != pointedEditablePath.rend(); ++p){
+        for(auto p = pointedEditablePath.rbegin(); p != pointedEditablePath.rend(); ++p){
             auto& editableNode = *p;
             handled = editableNode.editable->onContextMenuRequest(&latestEvent, &menuManager);
             if(handled){
