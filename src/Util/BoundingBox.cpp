@@ -150,6 +150,13 @@ void BoundingBox::transform(const Affine3& T)
 }
 
 
+void BoundingBox::scale(double s)
+{
+    min_ *= s;
+    max_ *= s;
+}
+
+
 std::ostream& cnoid::operator<<(std::ostream& os, const BoundingBox& bb)
 {
     os << "(" << bb.min().x() << ", " << bb.min().y() << ", " << bb.min().z() << ") - (";
@@ -321,6 +328,13 @@ void BoundingBoxf::transform(const Affine3f& T)
         expandBy(T * Vector3f(p2.x(), p1.y(), p2.z()));
         expandBy(T * Vector3f(p2.x(), p2.y(), p2.z()));
     }
+}
+
+
+void BoundingBoxf::scale(float s)
+{
+    min_ *= s;
+    max_ *= s;
 }
 
 

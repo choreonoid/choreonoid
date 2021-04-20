@@ -536,6 +536,7 @@ public:
     virtual int numChildObjects() const override;
     virtual SgObject* childObject(int index) override;
     virtual const BoundingBox& boundingBox() const override;
+    virtual const BoundingBox& untransformedBoundingBox() const override;
         
     SgMesh* mesh() { return mesh_; }
     const SgMesh* mesh() const { return mesh_; }
@@ -578,6 +579,7 @@ public:
     virtual SgObject* childObject(int index) override;
 
     virtual const BoundingBox& boundingBox() const override;
+    virtual const BoundingBox& untransformedBoundingBox() const override;
     void updateBoundingBox();
 
     void clear();

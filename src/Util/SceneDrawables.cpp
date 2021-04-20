@@ -687,6 +687,12 @@ const BoundingBox& SgShape::boundingBox() const
 }
 
 
+const BoundingBox& SgShape::untransformedBoundingBox() const
+{
+    return SgShape::boundingBox();
+}
+
+
 SgMesh* SgShape::setMesh(SgMesh* mesh)
 {
     if(mesh_){
@@ -821,6 +827,12 @@ SgObject* SgPlot::childObject(int index)
     
 
 const BoundingBox& SgPlot::boundingBox() const
+{
+    return bbox;
+}
+
+
+const BoundingBox& SgPlot::untransformedBoundingBox() const
 {
     return bbox;
 }

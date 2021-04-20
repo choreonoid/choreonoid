@@ -23,6 +23,8 @@ namespace {
 // Id to access the correspondingCloneMap flag
 CloneMap::FlagId DisableNonNodeCloning("SgObjectDisableNonNodeCloning");
 
+const BoundingBox emptyBoundingBox;
+
 }
 
 
@@ -236,8 +238,13 @@ Referenced* SgNode::doClone(CloneMap*) const
 
 const BoundingBox& SgNode::boundingBox() const
 {
-    static const BoundingBox bbox; // empty one
-    return bbox;
+    return emptyBoundingBox;
+}
+
+
+const BoundingBox& SgNode::untransformedBoundingBox() const
+{
+    return boundingBox();
 }
 
 

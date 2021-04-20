@@ -38,6 +38,7 @@ public:
     void expandBy(const Vector3& v){ expandBy(v.x(), v.y(), v.z()); }
 
     void transform(const Affine3& T);
+    void scale(double s);
 
 private:
     Vector3 min_;
@@ -75,6 +76,7 @@ public:
     void expandBy(const Vector3f& v){ expandBy(v.x(), v.y(), v.z()); }
 
     void transform(const Affine3f& T);
+    void scale(float f);
 
 private:
     bool empty_;

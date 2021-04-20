@@ -171,6 +171,7 @@ public:
     }
 
     virtual const BoundingBox& boundingBox() const;
+    virtual const BoundingBox& untransformedBoundingBox() const;
 
     SgNodePath findNode(const std::string& name, Affine3& out_T);
 
@@ -331,9 +332,8 @@ typedef ref_ptr<SgInvariantGroup> SgInvariantGroupPtr;
 class CNOID_EXPORT SgTransform : public SgGroup
 {
 public:
-    const BoundingBox& untransformedBoundingBox() const;
-
     virtual void getTransform(Affine3& out_T) const = 0;
+    virtual const BoundingBox& untransformedBoundingBox() const override;
     
 protected:
     SgTransform(int classId);
