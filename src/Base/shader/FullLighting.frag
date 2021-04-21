@@ -7,6 +7,8 @@
 #define MAX_NUM_LIGHTS 20
 #define MAX_NUM_SHADOWS 2
 
+#define USE_BLINN_PHONG_MODEL 1
+
 in VertexData {
     vec3 position;
     vec3 normal;
@@ -179,10 +181,17 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         if(!gl_FrontFacing){
             n = -n;
         }
-        vec3 r = reflect(-s, n);
-        return light.intensity * (
-            diffuseColor * max(dot(s, n), 0.0) +
-            specularColor * pow(max(dot(r, v), 0.0), specularExponent));
+
+#if USE_BLINN_PHONG_MODEL
+        vec3 h = normalize(v + s);
+#else
+        vec3 h = reflect(-s, n); // Original phong model
+#endif
+        // Epsilon value is used in the max function because pow(0, 0) is not defined in GLSL
+        vec3 spec = specularColor * pow(max(dot(h, n), 1.0e-6), specularExponent);
+        
+        return light.intensity * (diffuseColor * max(dot(s, n), 0.0) + spec);
+        
     } else {
         // point light
         vec3 l = vec3(light.position) - inData.position;
@@ -211,16 +220,21 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         if(!gl_FrontFacing){
             n = -n;
         }
-        vec3 r = reflect(-s, n);
         float distance = sqrt(dot(l, l)); // l.length()
         ki *= 1.0 / max(1.0,
                         light.constantAttenuation +
                         distance * light.linearAttenuation +
                         distance * distance * light.quadraticAttenuation);
         
-        return ki * light.intensity * (
-            diffuseColor * max(dot(s, n), 0.0) +
-            specularColor * pow(max(dot(r, v), 0.0), specularExponent));
+#if USE_BLINN_PHONG_MODEL
+        vec3 h = normalize(v + s);
+#else
+        vec3 h = reflect(-s, n); // Original phong model
+#endif
+        // Epsilon value is used in the max function because pow(0, 0) is not defined in GLSL
+        vec3 spec = specularColor * pow(max(dot(h, n), 1.0e-6), specularExponent);
+        
+        return ki * light.intensity * (diffuseColor * max(dot(s, n), 0.0) + spec);
     }
 }
 
