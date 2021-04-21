@@ -27,7 +27,7 @@ CoordinateFrameMarker::CoordinateFrameMarker()
     
     setDragEnabled(true);
     setOverlayMode(true);
-    setFixedPixelSizeMode(true, 92.0);
+    setPixelSize(96, 3);
     setDisplayMode(PositionDragger::DisplayInEditMode);
 }
 

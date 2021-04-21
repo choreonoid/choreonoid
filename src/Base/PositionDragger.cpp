@@ -39,8 +39,8 @@ const Vector3f HighlightedAxisColors[3] = {
 };
 
 constexpr double StdUnitHandleWidth = 0.02;
-constexpr double StdPixelHandleWidth = 6.0;
-constexpr double MaxPixelHandleWidthCorrectionRatio = 3.0;
+constexpr double StdPixelHandleWidth = 5.0;
+constexpr double MaxPixelHandleWidthCorrectionRatio = 5.0;
 constexpr double StdRotationHandleSizeRatio = 0.6;
 constexpr double WideUnitHandleWidth = 0.08;
 constexpr double WideRotationHandleSizeRatio = 0.5;
@@ -130,7 +130,7 @@ public:
     DisplayMode displayMode;
     bool isEditMode;
     bool isOverlayMode;
-    bool isFixedPixelSizeMode;
+    bool isScreenFixedSizeMode;
     bool isContainerMode;
     bool isDragEnabled;
     bool isContentsDragEnabled;
@@ -159,6 +159,7 @@ public:
     SgNode* getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking);
     void clearHandleVariants();
     void setDraggableAxes(AxisBitSet axisBitSet, SgUpdateRef update);
+    void disableScreenFixedSizeMode();
     void setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted);
     void highlightAxes(AxisBitSet axisBitSet);
     void showDragMarkers(bool on, SgUpdateRef update);
@@ -185,7 +186,7 @@ void SgHandleVariantSelector::render(SceneRenderer* renderer)
 {
     double pixelSizeRatio = -1.0;
     bool isForPicking = false;
-    if(!dragger->isFixedPixelSizeMode){
+    if(!dragger->isScreenFixedSizeMode){
         pixelSizeRatio = renderer->projectedPixelSizeRatio(
             renderer->currentModelTransform().translation());
         isForPicking = renderer->isRenderingPickingImage();
@@ -277,7 +278,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     displayMode = DisplayInFocus;
     isEditMode = false;
     isOverlayMode = false;
-    isFixedPixelSizeMode = false;
+    isScreenFixedSizeMode = false;
     isContainerMode = false;
     isDragEnabled = true;
     isContentsDragEnabled = true;
@@ -452,6 +453,7 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
 double PositionDragger::Impl::calcWidthRatio(double pixelSizeRatio)
 {
     double widthRatio = 1.0;
+
     if(pixelSizeRatio >= 0.0){
         double pixelWidth = unitHandleWidth * handleSize * pixelSizeRatio;
         if(pixelWidth > 0.1){
@@ -463,6 +465,7 @@ double PositionDragger::Impl::calcWidthRatio(double pixelSizeRatio)
             }
         }
     }
+    
     return widthRatio;
 }
     
@@ -539,7 +542,17 @@ void PositionDragger::setHandleSize(double s)
         impl->handleSize = s;
         impl->clearHandleVariants();
     }
+    impl->disableScreenFixedSizeMode();
 }
+
+
+void PositionDragger::Impl::disableScreenFixedSizeMode()
+{
+    if(isScreenFixedSizeMode){
+        topSwitch->removeChainedGroup(fixedPixelSizeGroup);
+        isScreenFixedSizeMode = false;
+    }
+}    
 
 
 void PositionDragger::setHandleWidthRatio(double w)
@@ -610,6 +623,52 @@ bool PositionDragger::adjustSize()
         }
     }
     return adjustSize(bb);
+}
+
+
+void PositionDragger::setPixelSize(int size, int width)
+{
+    double dsize = size;
+    impl->handleSize = 1.0;
+    impl->clearHandleVariants();
+    impl->unitHandleWidth = width / dsize;
+
+    if(impl->fixedPixelSizeGroup){
+        impl->fixedPixelSizeGroup->setPixelSizeRatio(dsize);
+    }
+
+    if(!impl->isScreenFixedSizeMode){
+        if(!impl->fixedPixelSizeGroup){
+            impl->fixedPixelSizeGroup = new SgFixedPixelSizeGroup(dsize);
+        }
+        impl->topSwitch->insertChainedGroup(impl->fixedPixelSizeGroup);
+        impl->isScreenFixedSizeMode = true;
+    } else {
+        impl->fixedPixelSizeGroup->setPixelSizeRatio(dsize);
+    }
+}
+
+
+void PositionDragger::setFixedPixelSizeMode(bool on, double pixelSizeRatio)
+{
+    if(on){
+        double size = impl->handleSize * pixelSizeRatio;
+        setPixelSize(size, size * impl->unitHandleWidth);
+    } else {
+        impl->disableScreenFixedSizeMode();
+    }
+}
+
+
+bool PositionDragger::isScreenFixedSizeMode() const
+{
+    return impl->isScreenFixedSizeMode;
+}
+
+
+bool PositionDragger::isFixedPixelSizeMode() const
+{
+    return impl->isScreenFixedSizeMode;
 }
 
 
@@ -695,31 +754,6 @@ bool PositionDragger::isOverlayMode() const
     return impl->isOverlayMode;
 }
 
-
-void PositionDragger::setFixedPixelSizeMode(bool on, double pixelSizeRatio)
-{
-    if(impl->fixedPixelSizeGroup){
-        impl->fixedPixelSizeGroup->setPixelSizeRatio(pixelSizeRatio);
-    }
-    if(on != impl->isFixedPixelSizeMode){
-        if(on){
-            if(!impl->fixedPixelSizeGroup){
-                impl->fixedPixelSizeGroup = new SgFixedPixelSizeGroup(pixelSizeRatio);
-            }
-            impl->topSwitch->insertChainedGroup(impl->fixedPixelSizeGroup);
-        } else {
-            impl->topSwitch->removeChainedGroup(impl->fixedPixelSizeGroup);
-        }
-        impl->isFixedPixelSizeMode = on;
-    }
-}
-
-
-bool PositionDragger::isFixedPixelSizeMode() const
-{
-    return impl->isFixedPixelSizeMode;
-}
-    
 
 bool PositionDragger::isContainerMode() const
 {
@@ -906,7 +940,7 @@ AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event
     if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
         const Isometry3 T_global = calcRelativePosition(event.nodePath(), self);
         const Vector3 p_local = T_global.inverse() * event.point();
-        if(!isFixedPixelSizeMode){
+        if(!isScreenFixedSizeMode){
             double width = handleSize * unitHandleWidth * calcWidthRatio(event.pixelSizeRatio());
             if(p_local.norm() < 1.5 * width){
                 axisBitSet |= AxisBitSet(TRANSLATION_AXES);

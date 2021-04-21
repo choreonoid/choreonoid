@@ -377,7 +377,7 @@ void LinkShapeOverwriteItem::Impl::updateLinkOriginMarker()
             PositionDragger::TranslationAxes, PositionDragger::PositiveOnlyHandle);
         originMarker->setDragEnabled(false);
         originMarker->setOverlayMode(true);
-        originMarker->setFixedPixelSizeMode(true, 64.0);
+        originMarker->setPixelSize(96, 3);
         originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
     }
     if(link){

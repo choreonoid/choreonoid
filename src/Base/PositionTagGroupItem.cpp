@@ -1235,8 +1235,7 @@ void SceneTagGroup::attachPositionDragger(int tagIndex)
         if(!positionDragger){
             positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
             positionDragger->setOverlayMode(true);
-            positionDragger->setHandleWidthRatio(0.05);
-            positionDragger->setFixedPixelSizeMode(true, 96);
+            positionDragger->setPixelSize(96, 3);
             positionDragger->setDisplayMode(PositionDragger::DisplayInEditMode);
             positionDragger->sigDragStarted().connect([&](){ onDraggerDragStarted(); });
             positionDragger->sigPositionDragged().connect([&](){ onDraggerDragged(); });

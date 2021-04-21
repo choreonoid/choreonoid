@@ -45,27 +45,32 @@ public:
     double handleSize() const;
     void setHandleSize(double s);
     void setHandleWidthRatio(double w); // width ratio
-    //void setHandleWidth(double w); // constant width
 
     double rotationHandleSizeRatio() const;
     void setRotationHandleSizeRatio(double r);
 
-    //! \deprecated. Use the setHandleSize and setRotationHandlerSizeRatio functions.
+    [[deprecated("Use setHandleSize and setRotationHandlerSizeRatio")]]
     void setRadius(double r, double translationAxisRatio = 2.0f);
-    //! \deprecated. Use the handleSize and rotationHandleSizeRatio function.
+    [[deprecated("Use handleSize")]]
     double radius() const;
     
     bool adjustSize();
     bool adjustSize(const BoundingBox& bb);
+
+    void setPixelSize(int length, int width);
+    //void setScreenFixedSize(double length, double width); // meter on screen
+    bool isScreenFixedSizeMode() const;
+
+    [[deprecated("Use setFixedPixelSize")]]
+    void setFixedPixelSizeMode(bool on, double pixelSizeRatio = 1.0);
+    [[deprecated("Use isFixedScreenSizeMode")]]
+    bool isFixedPixelSizeMode() const;
 
     void setTransparency(float t);
     float transparency() const;
 
     void setOverlayMode(bool on);
     bool isOverlayMode() const;
-
-    void setFixedPixelSizeMode(bool on, double pixelSizeRatio = 1.0);
-    bool isFixedPixelSizeMode() const;
     
     bool isContainerMode() const;
     void setContainerMode(bool on);

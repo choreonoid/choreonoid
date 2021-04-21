@@ -486,7 +486,7 @@ void DeviceOverwriteItem::Impl::updateDeviceOffsetMarker()
             PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
         deviceOffsetMarker->setOverlayMode(true);
         deviceOffsetMarker->setDragEnabled(true);
-        deviceOffsetMarker->setFixedPixelSizeMode(true, 92.0);
+        deviceOffsetMarker->setPixelSize(96, 3);
         deviceOffsetMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
 
         deviceOffsetMarker->sigPositionDragged().connect(
