@@ -48,9 +48,9 @@ class EditableSceneLink::Impl
 public:
     EditableSceneLink* self;
     SgUpdate& update;
-    PositionDraggerPtr originMarker;
     SgPolygonDrawStylePtr highlightStyle;
     BoundingBoxMarkerPtr bbMarker;
+    bool isOriginShown;
     bool isPointed;
     bool isColliding;
 
@@ -76,17 +76,6 @@ public:
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };
     EditableSceneLink* pointedSceneLink;
     EditableSceneLink* highlightedLink;
-
-    SgHighlightPtr highlight;
-    SgGroupPtr markerGroup;
-    CrossMarkerPtr cmMarker;
-    CrossMarkerPtr ppcomMarker;
-    bool isCmVisible;
-    bool isPpcomVisible;
-    SgLineSetPtr virtualElasticStringLine;
-    SphereMarkerPtr zmpMarker;
-    bool isZmpVisible;
-    Vector3 orgZmpPos;
 
     Link* targetLink;
     double orgJointPosition;
@@ -118,6 +107,18 @@ public:
     SceneDragProjector dragProjector;
     bool isDragging;
     bool dragged;
+
+    PositionDraggerPtr linkOriginMarker;
+    SgHighlightPtr highlight;
+    SgGroupPtr markerGroup;
+    CrossMarkerPtr cmMarker;
+    CrossMarkerPtr ppcomMarker;
+    bool isCmVisible;
+    bool isPpcomVisible;
+    SgLineSetPtr virtualElasticStringLine;
+    SphereMarkerPtr zmpMarker;
+    bool isZmpVisible;
+    Vector3 orgZmpPos;
 
     weak_ref_ptr<SimulatorItem> activeSimulatorItem;
     Vector3 pointedLinkLocalPoint;
@@ -213,6 +214,7 @@ EditableSceneLink::Impl::Impl(EditableSceneBody* sceneBody, EditableSceneLink* s
     : self(self),
       update(sceneBody->impl->update)
 {
+    isOriginShown = false;
     isPointed = false;
     isColliding = false;
 }
@@ -232,20 +234,26 @@ void EditableSceneLink::showOrigin(bool on)
 
 void EditableSceneLink::Impl::showOrigin(bool on)
 {
-    if(on){
-        if(!originMarker){
-            originMarker = new PositionDragger(
-                PositionDragger::TranslationAxes, PositionDragger::PositiveOnlyHandle);
-            originMarker->setOverlayMode(true);
-            originMarker->setPixelSize(48, 2);
-            originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
-            originMarker->setTransparency(0.0f);
-            originMarker->setDragEnabled(false);
-        }
-        self->addChildOnce(originMarker, update);
-    } else {
-        if(originMarker && originMarker->hasParents()){
-            self->removeChild(originMarker, update);
+    if(on != isOriginShown){
+
+        auto& originMarker = static_cast<EditableSceneBody*>(self->sceneBody())->impl->linkOriginMarker;
+
+        if(on){
+            if(!originMarker){
+                originMarker = new PositionDragger(
+                    PositionDragger::TranslationAxes, PositionDragger::PositiveOnlyHandle);
+                originMarker->setOverlayMode(true);
+                originMarker->setPixelSize(48, 2);
+                originMarker->setDisplayMode(PositionDragger::DisplayInEditMode);
+                originMarker->setTransparency(0.0f);
+                originMarker->setDragEnabled(false);
+            }
+            self->addChildOnce(originMarker, update);
+            
+        } else {
+            if(originMarker && originMarker->hasParents()){
+                self->removeChild(originMarker, update);
+            }
         }
     }
 }
@@ -253,7 +261,7 @@ void EditableSceneLink::Impl::showOrigin(bool on)
 
 bool EditableSceneLink::isOriginShown() const
 {
-    return (impl->originMarker && impl->originMarker->hasParents());
+    return impl->isOriginShown;
 }
 
 
@@ -341,15 +349,16 @@ void EditableSceneBody::Impl::initialize()
     highlightedLink = nullptr;
     targetLink = nullptr;
 
-    dragMode = DRAG_NONE;
-    isDragging = false;
-    dragged = false;
     isEditMode = false;
     isFocused = false;
     isSelected = false;
     isHighlightingEnabled = false;
 
     self->setBody(bodyItem->body(), [this](Link* link){ return new EditableSceneLink(self, link); });
+
+    dragMode = DRAG_NONE;
+    isDragging = false;
+    dragged = false;
 
     markerGroup = new SgGroup;
     markerGroup->setName("Marker");
@@ -893,9 +902,6 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
                 }
             }
         }
-        if(sceneLink->impl->originMarker){
-            sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayInEditMode, update);
-        }
     }
 
     // The following connection is only necessary when the position dragger is shown
@@ -973,10 +979,6 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     
     positionDragger->notifyUpdate(update.withAction(SgUpdate::Modified));
     sceneLink->addChildOnce(positionDragger);
-
-    if(sceneLink->impl->originMarker){
-        sceneLink->impl->originMarker->setDisplayMode(PositionDragger::DisplayNever, update);
-    }
 }
 
 

@@ -25,6 +25,7 @@ public:
     ~SceneLink();
 
     SceneBody* sceneBody(){ return sceneBody_; }
+    const SceneBody* sceneBody() const { return sceneBody_; }
 
     Link* link() { return link_; }
     const Link* link() const { return link_; }

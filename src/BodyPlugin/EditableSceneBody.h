@@ -77,7 +77,7 @@ private:
     class Impl;
     Impl* impl;
     
-    friend class EditableSceneLink::Impl;
+    friend class EditableSceneLink;
 };
             
 typedef ref_ptr<EditableSceneBody> EditableSceneBodyPtr;
