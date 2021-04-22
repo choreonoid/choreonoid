@@ -137,21 +137,36 @@ bool SceneDragProjectorImpl::startRotation(const SceneWidgetEvent& event)
         return false;
     }
     
+    bool initialized = false;
+    
     rotationBaseX = arm.normalized();
     rotationBaseY = rotationAxis.cross(rotationBaseX);
 
-    const Isometry3 C = event.cameraPosition();
-    if(fabs(rotationAxis.dot(SgCamera::direction(C))) > 0.4){
+    Vector3 direction;
+    if(auto persCamera = dynamic_cast<const SgPerspectiveCamera*>(event.camera())){
+        direction = (event.point() - event.cameraPosition().translation()).normalized();
+    } else {
+        direction = SgCamera::direction(event.cameraPosition());
+    }
+
+    if(fabs(rotationAxis.dot(direction)) > 0.13){
         projector.reset(new ScenePlaneProjector(rotationAxis, initialPoint));
+        initialized = true;
     } else {
         Quaternion rotation;
         rotation.setFromTwoVectors(Vector3::UnitZ(), rotationAxis);
-        projector.reset(
-            new SceneCylinderProjector(p, armLength, numeric_limits<double>::max(), rotation));
+        auto cprojector = make_shared<SceneCylinderProjector>(p, armLength, numeric_limits<double>::max(), rotation);
+        if(cprojector->initializeProjection(&event)){
+            projector = cprojector;
+            initialized = true;
+        }
     }
-    dragMode = SceneDragProjector::DRAG_ROTATION;
 
-    return true;
+    if(initialized){
+        dragMode = SceneDragProjector::DRAG_ROTATION;
+    }
+
+    return initialized;
 }
 
 
@@ -164,7 +179,7 @@ bool SceneDragProjector::dragRotation(const SceneWidgetEvent& event)
 bool SceneDragProjectorImpl::dragRotation(const SceneWidgetEvent& event)
 {
     if(dragMode == SceneDragProjector::DRAG_ROTATION){
-        if(projector->project(event, projectedPoint)){
+        if(projector->project(&event, projectedPoint)){
             const Vector3 r = projectedPoint - initialPosition.translation();
             rotationAngle = atan2(r.dot(rotationBaseY), r.dot(rotationBaseX));
             rotationAngleAxis = AngleAxis(rotationAngle, rotationAxis);
@@ -308,7 +323,7 @@ bool SceneDragProjector::dragTranslation(const SceneWidgetEvent& event)
 bool SceneDragProjectorImpl::dragTranslation(const SceneWidgetEvent& event)
 {
     if(dragMode == SceneDragProjector::DRAG_TRANSLATION){
-        if(projector->project(event, projectedPoint)){
+        if(projector->project(&event, projectedPoint)){
             translation = projectedPoint - initialPoint;
             if(translationMode == TRANSLATION_1D){
                 translation = translationAxis.dot(translation) * translationAxis;

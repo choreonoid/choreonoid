@@ -34,12 +34,12 @@ void ScenePlaneProjector::setPlane(const Vector3& normal, const Vector3& point)
 }
 
 
-bool ScenePlaneProjector::project(const SceneWidgetEvent& event, Vector3& out_projected) const
+bool ScenePlaneProjector::project(const SceneWidgetEvent* event, Vector3& out_projected) const
 {
     Vector3 nearPoint, farPoint;
-    SceneWidget* sceneWidget = event.sceneWidget();
-    if(sceneWidget->unproject(event.x(), event.y(), 0.0, nearPoint) &&
-       sceneWidget->unproject(event.x(), event.y(), 1.0, farPoint)){
+    SceneWidget* sceneWidget = event->sceneWidget();
+    if(sceneWidget->unproject(event->x(), event->y(), 0.0, nearPoint) &&
+       sceneWidget->unproject(event->x(), event->y(), 1.0, farPoint)){
         return calcPlaneLineIntersection(nearPoint, farPoint, out_projected);
     }
     return false;
@@ -76,6 +76,7 @@ SceneCylinderProjector::SceneCylinderProjector()
     radius_ = 1.0;
     height_ = 1.0;
     rotation_.setIdentity();
+    isFrontSurfaceProjection = true;
 }
 
 
@@ -84,6 +85,7 @@ SceneCylinderProjector::SceneCylinderProjector
 {
     setCylinder(center, radius, height, rotation);
     rotation_ = rotation;
+    isFrontSurfaceProjection = true;
 }
 
 
@@ -97,14 +99,39 @@ void SceneCylinderProjector::setCylinder
 }
 
 
-bool SceneCylinderProjector::project(const SceneWidgetEvent& event, Vector3& out_projected) const
+bool SceneCylinderProjector::initializeProjection(const SceneWidgetEvent* event)
+{
+    bool initialized = false;
+    Vector3 front, back;
+    if(project(event, front, back)){
+        double d1 = (front - event->point()).norm();
+        double d2 = (back - event->point()).norm();
+        isFrontSurfaceProjection = (d1 <= d2);
+        initialized = true;
+    }
+    return initialized;
+}
+
+
+bool SceneCylinderProjector::project(const SceneWidgetEvent* event, Vector3& out_projected) const
+{
+    Vector3 dummy;
+    if(isFrontSurfaceProjection){
+        return project(event, out_projected, dummy);
+    } else {
+        return project(event, dummy, out_projected);
+    }
+}
+
+
+bool SceneCylinderProjector::project
+(const SceneWidgetEvent* event, Vector3& out_isecFront, Vector3& out_isecBack) const
 {
     Vector3 nearPoint, farPoint;
-    SceneWidget* sceneWidget = event.sceneWidget();
-    if(sceneWidget->unproject(event.x(), event.y(), 0.0, nearPoint) &&
-       sceneWidget->unproject(event.x(), event.y(), 1.0, farPoint)){
-        Vector3 isectBack;
-        return calcCylinderLineIntersection(nearPoint, farPoint, out_projected, isectBack);
+    SceneWidget* sceneWidget = event->sceneWidget();
+    if(sceneWidget->unproject(event->x(), event->y(), 0.0, nearPoint) &&
+       sceneWidget->unproject(event->x(), event->y(), 1.0, farPoint)){
+        return calcCylinderLineIntersection(nearPoint, farPoint, out_isecFront, out_isecBack);
     }
     return false;
 }
