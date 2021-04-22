@@ -119,7 +119,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     
     PositionDragger* self;
-    unordered_map<double, SgNodePtr> handleVariantMap;
+    map<int, SgNodePtr> widthLevelToHandleShapeMap;
     AxisBitSet draggableAxisBitSet;
     SgSwitchPtr axisSwitch[6];
     int handleType;
@@ -192,11 +192,9 @@ void SgHandleVariantSelector::render(SceneRenderer* renderer)
         isForPicking = renderer->isRenderingPickingImage();
     }
 
-    //
     clearChildren();
-    
     if(auto node = dragger->getOrCreateHandleVariant(pixelSizeRatio, isForPicking)){
-        addChildOnce(node);
+        addChild(node);
         renderer->renderNode(node);
     }
 }
@@ -337,7 +335,10 @@ SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
         stickLength *= 2.0;
     }
     stickLength -= extraEndLength / 2.0;
-    int divisionNumber = std::max((int)(24 / widthRatio), 8);
+
+    double k = (widthRatio - 1.0) / (MaxPixelHandleWidthCorrectionRatio - 1.0);
+    int divisionNumber = 24.0  * (1.0 - k) + 8.0 * k;
+    
     meshGenerator.setDivisionNumber(divisionNumber);
     SgMeshPtr mesh = meshGenerator.generateArrow(
         (unitHandleWidth / 2.0) * widthRatio,
@@ -470,12 +471,6 @@ double PositionDragger::Impl::calcWidthRatio(double pixelSizeRatio)
 }
     
 
-/**
-   \todo
-    - Make the handles for picking a bit wider
-    - Cache the generated handles in handleVariantMap
-    - Adjust the width considering the DPI of the display
-*/
 SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking)
 {
     double widthRatio;
@@ -484,13 +479,23 @@ SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, b
     } else {
         widthRatio = 1.0;
     }
-    return createHandle(widthRatio);
+    constexpr double resolution = 5.0;
+    int widthLevel = std::round(widthRatio * resolution);
+
+    auto p = widthLevelToHandleShapeMap.find(widthLevel);
+    if(p != widthLevelToHandleShapeMap.end()){
+        return p->second;
+    } else {
+        auto shape = createHandle(widthLevel / resolution);
+        widthLevelToHandleShapeMap[widthLevel] = shape;
+        return shape;
+    }
 }
 
 
 void PositionDragger::Impl::clearHandleVariants()
 {
-    handleVariantMap.clear();
+    widthLevelToHandleShapeMap.clear();
 }
 
 
@@ -1141,4 +1146,3 @@ void PositionDragger::storeCurrentPositionToHistory()
 {
 
 }
-

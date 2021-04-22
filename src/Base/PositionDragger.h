@@ -58,7 +58,14 @@ public:
     bool adjustSize(const BoundingBox& bb);
 
     void setPixelSize(int length, int width);
-    //void setScreenFixedSize(double length, double width); // meter on screen
+
+    /**
+       \todo Implement the following function, which ajudsts the size considering
+       the PPI of the display, and use it for the fixed size marker.
+       \note The unit of the parameters is meter.
+    */
+    void setScreenFixedSize(double length, double width);
+    
     bool isScreenFixedSizeMode() const;
 
     [[deprecated("Use setFixedPixelSize")]]
