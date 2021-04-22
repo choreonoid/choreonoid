@@ -213,7 +213,7 @@ public:
     bool needToUpdatePreprocessedNodeTree;
     bool needToClearGLOnFrameBufferChange;
     SgUpdate sgUpdate;
-    int sceneGraphRecursiveUpdateCounter;
+    int recursiveEditableNodeSetChangeCounter;
 
     InteractiveCameraTransformPtr interactiveCameraTransform;
     InteractiveCameraTransformPtr builtinCameraTransform;
@@ -325,6 +325,7 @@ public:
     void checkNewEditableNodeIter(SgNode* node);
     void checkRemovedEditableNodes(SgNode* node);
     void checkRemovedEditableNodeIter(SgNode* node);
+    void warnRecursiveEditableNodeSetChange();
     
     virtual void initializeGL() override;
     virtual void resizeGL(int width, int height) override;
@@ -557,7 +558,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     renderer->setFlagVariableToUpdatePreprocessedNodeTree(needToUpdatePreprocessedNodeTree);
 
     needToClearGLOnFrameBufferChange = false;
-    sceneGraphRecursiveUpdateCounter = 0;
+    recursiveEditableNodeSetChangeCounter = 0;
 
     for(auto& color : gridColor){
     	color << 0.9f, 0.9f, 0.9f, 1.0f;
@@ -787,13 +788,6 @@ void SceneWidget::Impl::resizeGL(int width, int height)
 
 void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
 {
-    if(sceneGraphRecursiveUpdateCounter > 0){
-        MessageView::instance()->putln(
-            fmt::format(_("Recursive scene graph update on {0}."), self->objectName().toStdString()),
-            MessageView::Warning);
-    }
-    ++sceneGraphRecursiveUpdateCounter;
-    
     if(sgUpdate.action() & (SgUpdate::Added | SgUpdate::Removed)){
         if(sgUpdate.action() & SgUpdate::Added){
             if(auto node = sgUpdate.path().front()->toNode()){
@@ -810,18 +804,27 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
     if(!isRendering){
         QOpenGLWidget::update();
     }
-
-    --sceneGraphRecursiveUpdateCounter;
 }
 
 
 void SceneWidget::Impl::checkNewEditableNodes(SgNode* node)
 {
     checkNewEditableNodeIter(node);
-    for(auto& editableNode : editableDifferences){
-        editableNode.editable->onSceneModeChanged(&latestEvent);
+
+    if(!editableDifferences.empty()){
+
+        if(recursiveEditableNodeSetChangeCounter > 0){
+            warnRecursiveEditableNodeSetChange();
+        }
+        ++recursiveEditableNodeSetChangeCounter;
+        
+        for(auto& editableNode : editableDifferences){
+            editableNode.editable->onSceneModeChanged(&latestEvent);
+        }
+        editableDifferences.clear();
+        
+        --recursiveEditableNodeSetChangeCounter;
     }
-    editableDifferences.clear();
 }
 
 
@@ -846,29 +849,39 @@ void SceneWidget::Impl::checkNewEditableNodeIter(SgNode* node)
 void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
 {
     checkRemovedEditableNodeIter(node);
-    
-    for(auto& editableNode : editableDifferences){
-        if(editableNode == lastMouseMovedEditable){
-            lastMouseMovedEditable.editable->onPointerLeaveEvent(latestEvent);
-            lastMouseMovedEditable.clear();
+
+    if(!editableDifferences.empty()){
+
+        if(recursiveEditableNodeSetChangeCounter > 0){
+            warnRecursiveEditableNodeSetChange();
         }
-        if(!focusedEditablePath.empty()){
-            auto iter = focusedEditablePath.begin();
-            while(iter != focusedEditablePath.end()){
-                auto& nodeInfo = *iter;
-                if(nodeInfo == editableNode){
-                    iter = focusedEditablePath.erase(iter);
-                    nodeInfo.editable->onFocusChanged(&latestEvent, false);
-                } else {
-                    ++iter;
+        ++recursiveEditableNodeSetChangeCounter;
+        
+        for(auto& editableNode : editableDifferences){
+            if(editableNode == lastMouseMovedEditable){
+                lastMouseMovedEditable.editable->onPointerLeaveEvent(latestEvent);
+                lastMouseMovedEditable.clear();
+            }
+            if(!focusedEditablePath.empty()){
+                auto iter = focusedEditablePath.begin();
+                while(iter != focusedEditablePath.end()){
+                    auto& nodeInfo = *iter;
+                    if(nodeInfo == editableNode){
+                        iter = focusedEditablePath.erase(iter);
+                        nodeInfo.editable->onFocusChanged(&latestEvent, false);
+                    } else {
+                        ++iter;
+                    }
                 }
             }
+            if(focusedEditablePath.empty() && !lastMouseMovedEditable){
+                break;
+            }
         }
-        if(focusedEditablePath.empty() && !lastMouseMovedEditable){
-            break;
-        }
+        editableDifferences.clear();
+
+        --recursiveEditableNodeSetChangeCounter;
     }
-    editableDifferences.clear();
 }
     
 
@@ -885,7 +898,15 @@ void SceneWidget::Impl::checkRemovedEditableNodeIter(SgNode* node)
             checkRemovedEditableNodeIter(child);
         }
     }
-}    
+}
+
+
+void SceneWidget::Impl::warnRecursiveEditableNodeSetChange()
+{
+    MessageView::instance()->putln(
+        fmt::format(_("Recursive editable node set change on {0}."), self->objectName().toStdString()),
+        MessageView::Warning);
+}
 
 
 void SceneWidget::Impl::paintGL()
