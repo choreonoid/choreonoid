@@ -341,9 +341,6 @@ public:
     void showGridColorDialog(int index);
     void showDefaultColorDialog();
 
-    void updateCurrentCamera();
-    void setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings);
-    void onCamerasChanged();
     void onCurrentCameraChanged();
 
     void onTextureToggled(bool on);
@@ -547,7 +544,6 @@ SceneWidget::Impl::Impl(SceneWidget* self)
         
     renderer->setOutputStream(os);
     renderer->enableUnusedResourceCheck(true);
-    renderer->sigCamerasChanged().connect([&](){ onCamerasChanged(); });
     renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
     renderer->setCurrentCameraAutoRestorationMode(true);
     self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
@@ -2364,15 +2360,6 @@ void SceneWidget::Impl::showDefaultColorDialog()
 }
 
 
-void SceneWidget::Impl::updateCurrentCamera()
-{
-    const int index = renderer->currentCameraIndex();
-    if(index >= 0){
-        latestEvent.cameraPath_ = renderer->cameraPath(index);
-    }
-}
-    
-        
 SgPosTransform* SceneWidget::builtinCameraTransform()
 {
     return impl->builtinCameraTransform;
@@ -2403,13 +2390,6 @@ bool SceneWidget::isBuiltinCamera(SgCamera* camera) const
 }
 
 
-void SceneWidget::Impl::setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings)
-{
-    renderer->setCurrentCameraPath(simplifiedPathStrings);
-    updateCurrentCamera();
-}
-
-
 InteractiveCameraTransform* SceneWidget::findOwnerInteractiveCameraTransform(int cameraIndex)
 {
     const SgNodePath& path = impl->renderer->cameraPath(cameraIndex);
@@ -2422,19 +2402,17 @@ InteractiveCameraTransform* SceneWidget::findOwnerInteractiveCameraTransform(int
 }
 
 
-void SceneWidget::Impl::onCamerasChanged()
-{
-    updateCurrentCamera();
-}
-
-
 void SceneWidget::Impl::onCurrentCameraChanged()
 {
     interactiveCameraTransform.reset();
     isBuiltinCameraCurrent = false;
     
     SgCamera* current = renderer->currentCamera();
-    if(current){
+
+    if(!current){
+        latestEvent.cameraIndex_ = -1;
+        latestEvent.cameraPath_.clear();
+    } else {
         int index = renderer->currentCameraIndex();
         const SgNodePath& path = renderer->cameraPath(index);
         for(int i = path.size() - 2; i >= 0; --i){
@@ -2444,6 +2422,8 @@ void SceneWidget::Impl::onCurrentCameraChanged()
                 break;
             }
         }
+        latestEvent.cameraIndex_ = index;
+        latestEvent.cameraPath_ = path;
     }
 
     if(!isRendering){

@@ -44,9 +44,12 @@ public:
         
     double wheelSteps() const { return wheelSteps_; }
 
+    const SgCamera* camera() const;
+    int cameraIndex() const { return cameraIndex_; }
     const SgNodePath& cameraPath() const { return cameraPath_; }
+    const Isometry3& cameraPosition() const;
+    [[deprecated("Use cameraPosition")]]
     const Isometry3& currentCameraPosition() const;
-
     bool getRay(Vector3& out_origin, Vector3& out_direction) const;
 
     SceneWidget* sceneWidget() const { return sceneWidget_; }
@@ -63,6 +66,7 @@ private:
     double pixelSizeRatio_;
     double wheelSteps_;
     SgNodePath nodePath_;
+    int cameraIndex_;
     SgNodePath cameraPath_;
     mutable SceneWidget* sceneWidget_;
 

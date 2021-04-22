@@ -212,7 +212,7 @@ SceneRenderer::Impl::Impl(SceneRenderer* self)
     isCurrentCameraAutoRestorationMode = false;
     isPreferredCameraCurrent = false;
     currentCameraIndex = -1;
-    currentCamera = 0;
+    currentCamera = nullptr;
     I.setIdentity();
 
     headLight = new SgDirectionalLight();
@@ -491,7 +491,7 @@ PreproTreeExtractor::PreproTreeExtractor()
 
 PreproNode* PreproTreeExtractor::apply(SgNode* snode)
 {
-    node = 0;
+    node = nullptr;
     found = false;
     functions.dispatch(snode);
     return node;
@@ -506,7 +506,7 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
 
     for(SgGroup::const_reverse_iterator p = group->rbegin(); p != group->rend(); ++p){
         
-        node = 0;
+        node = nullptr;
         found = false;
 
         functions.dispatch(*p);
@@ -529,7 +529,7 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
         node = self;
     } else {
         delete self;
-        node = 0;
+        node = nullptr;
     }
 }
 
@@ -579,6 +579,16 @@ void SceneRenderer::Impl::updateCameraPaths()
 }
 
 
+const Isometry3& SceneRenderer::cameraPosition(int index) const
+{
+    if(index < static_cast<int>(impl->cameras->size())){
+        return (*(impl->cameras))[index].M;
+    } else {
+        return impl->I;
+    }
+}
+
+
 SignalProxy<void()> SceneRenderer::sigCamerasChanged() const
 {
     return impl->sigCamerasChanged;
@@ -593,7 +603,7 @@ void SceneRenderer::setCurrentCamera(int index)
 
 void SceneRenderer::Impl::setCurrentCamera(int index)
 {
-    SgCamera* newCamera = 0;
+    SgCamera* newCamera = nullptr;
     if(index >= 0 && index < static_cast<int>(cameras->size())){
         newCamera = (*cameras)[index].camera;
     }
@@ -772,7 +782,7 @@ void SceneRenderer::getLightInfo(int index, SgLight*& out_light, Isometry3& out_
         out_light = info.light;
         out_position = info.M;
     } else {
-        out_light = 0;
+        out_light = nullptr;
     }
 }
 

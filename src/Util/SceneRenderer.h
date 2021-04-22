@@ -46,7 +46,8 @@ public:
     int numCameras() const;
     SgCamera* camera(int index);
     const SgNodePath& cameraPath(int index) const;
-    virtual const Isometry3& currentCameraPosition() const;
+    const Isometry3& cameraPosition(int index) const;
+    const Isometry3& currentCameraPosition() const;
     SignalProxy<void()> sigCamerasChanged() const;
     SgCamera* currentCamera() const;
     int currentCameraIndex() const;

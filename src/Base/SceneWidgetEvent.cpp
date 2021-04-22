@@ -20,6 +20,8 @@ SceneWidgetEvent::SceneWidgetEvent()
     modifiers_ = 0;
     button_ = 0;
     wheelSteps_ = 0.0;
+    cameraIndex_ = -1;
+    sceneWidget_ = nullptr;
 }
 
 
@@ -33,18 +35,40 @@ SceneWidgetEvent::SceneWidgetEvent(const SceneWidgetEvent& org)
     modifiers_ = org.modifiers_;
     button_ = org.button_;
     wheelSteps_ = org.wheelSteps_;
+    cameraIndex_ = org.cameraIndex_;
+    sceneWidget_ = org.sceneWidget_;
+}
+
+
+const SgCamera* SceneWidgetEvent::camera() const
+{
+    if(cameraPath_.empty()){
+        return nullptr;
+    }
+    return dynamic_cast<SgCamera*>(cameraPath_.back());
+}
+
+
+const Isometry3& SceneWidgetEvent::cameraPosition() const
+{
+    if(cameraIndex_ >= 0){
+        return sceneWidget_->renderer()->cameraPosition(cameraIndex_);
+    } else {
+        static const Isometry3 I = Isometry3::Identity();
+        return I;
+    }
 }
 
 
 const Isometry3& SceneWidgetEvent::currentCameraPosition() const
 {
-    return sceneWidget_->renderer()->currentCameraPosition();
+    return cameraPosition();
 }
 
 
 bool SceneWidgetEvent::getRay(Vector3& out_origin, Vector3& out_direction) const
 {
-    auto T = currentCameraPosition();
+    auto T = cameraPosition();
     Vector3 p_near;
     sceneWidget_->unproject(x_, y_, 0.0 /* near plane */, p_near);
     auto camera = sceneWidget_->renderer()->currentCamera();

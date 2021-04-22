@@ -140,7 +140,7 @@ bool SceneDragProjectorImpl::startRotation(const SceneWidgetEvent& event)
     rotationBaseX = arm.normalized();
     rotationBaseY = rotationAxis.cross(rotationBaseX);
 
-    const Isometry3 C = event.currentCameraPosition();
+    const Isometry3 C = event.cameraPosition();
     if(fabs(rotationAxis.dot(SgCamera::direction(C))) > 0.4){
         projector.reset(new ScenePlaneProjector(rotationAxis, initialPoint));
     } else {
@@ -264,7 +264,7 @@ bool SceneDragProjectorImpl::startTranslation(const SceneWidgetEvent& event)
 
     case TRANSLATION_1D:
     {
-        const Isometry3& C = event.currentCameraPosition();
+        const Isometry3& C = event.cameraPosition();
         const Vector3 eye = C.translation();
         const Vector3 center = SgCamera::direction(C) + eye;
         const Vector3 z = (eye - center).normalized();
@@ -285,7 +285,7 @@ bool SceneDragProjectorImpl::startTranslation(const SceneWidgetEvent& event)
 
     case TRANSLATION_VIEW_PLANE:
     {
-        const Isometry3& C = event.currentCameraPosition();
+        const Isometry3& C = event.cameraPosition();
         projector.reset(new ScenePlaneProjector(-SgCamera::direction(C), initialPoint));
         break;
     }
