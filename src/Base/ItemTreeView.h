@@ -33,57 +33,73 @@ public:
 
     void setExpanded(Item* item, bool on = true);
 
-    /*
-       All the following functions are deprecated.
-       Use the corresponding functions defined in the RootItem class.
-    */
-    template <class ItemType> ItemList<ItemType> selectedItems() const {
+    template <class ItemType>
+    [[deprecated("Use RootItem::selectedItems")]]
+    ItemList<ItemType> selectedItems() const {
         return RootItem::instance()->selectedItems<ItemType>();
     }
+    [[deprecated("Use RootItem::selectedItems")]]
     const ItemList<>& selectedItems() const {
         return RootItem::instance()->selectedItems();
     }
-    template <class ItemType> ItemType* selectedItem(bool fromMultiItems = false) const {
+    template <class ItemType>
+    [[deprecated]]
+    ItemType* selectedItem(bool fromMultiItems = false) const {
         return selectedItems<ItemType>().toSingle(fromMultiItems);
     }
-    template <class ItemType> ItemList<ItemType> selectedSubItems(const Item* topItem) const {
+    template <class ItemType>
+    [[deprecated("Use Item::selectedDescendantItems")]]
+    ItemList<ItemType> selectedSubItems(const Item* topItem) const {
         return topItem->selectedDescendantItems<ItemType>();
     }
-    template <class ItemType> ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) const {
+    template <class ItemType>
+    [[deprecated]]
+    ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) const {
         return selectedSubItems<ItemType>(topItem).toSingle(fromMultiItems);
     }
+    [[deprecated("Use Item::isSelected")]]
     bool isItemSelected(const Item* item) const {
         return item->isSelected();
     }
+    [[deprecated("Use Item::setSelected")]]
     bool selectItem(Item* item, bool on = true) {
         item->setSelected(on);
         return true;
     }
+    [[deprecated("Use Item::setSubTreeItemsSelected for the root item")]]
     void selectAllItems() {
         RootItem::instance()->setSubTreeItemsSelected(true);
     }
+    [[deprecated("Use Item::setSubTreeItemsSelected for the root item")]]
     void clearSelection() {
         RootItem::instance()->setSubTreeItemsSelected(false);
     }
 
     enum CheckId { ID_ANY = Item::LogicalSumOfAllChecks };
         
-    template <class ItemType> ItemList<ItemType> checkedItems(int checkId = Item::PrimaryCheck) const {
+    template <class ItemType>
+    [[deprecated("Use RootItem::checkedItems")]]
+    ItemList<ItemType> checkedItems(int checkId = Item::PrimaryCheck) const {
         return RootItem::instance()->checkedItems<ItemType>(checkId);
     }
+    [[deprecated("Use Item::isChecked")]]
     bool isItemChecked(const Item* item, int checkId = Item::PrimaryCheck) const {
         return item->isChecked(checkId);
     }
+    [[deprecated("Use Item::setChecked")]]
     bool checkItem(Item* item, bool on = true, int checkId = Item::PrimaryCheck) {
         item->setChecked(checkId, on);
         return true;
     }
+    [[deprecated("Use RootItem::sigSelectedItemsChanged")]]
     SignalProxy<void(const ItemList<>&)> sigSelectionChanged() const {
         return RootItem::instance()->sigSelectedItemsChanged();
     }
+    [[deprecated("Use RootItem::sigCheckToggled")]]
     SignalProxy<void(Item* item, bool isChecked)> sigCheckToggled(int checkId = Item::PrimaryCheck) const {
         return RootItem::instance()->sigCheckToggled(checkId);
     }
+    [[deprecated("Use Item::sigCheckToggled")]]
     SignalProxy<void(bool isChecked)> sigCheckToggled(Item* item, int checkId = Item::PrimaryCheck) const {
         return item->sigCheckToggled(checkId);
     }
