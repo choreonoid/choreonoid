@@ -113,6 +113,8 @@ public:
         return getItems();
     }
 
+    void setSelectionSyncGroup(const std::string& id);
+
     SignalProxy<void(const ItemList<>&)> sigSelectionChanged();
 
     ItemList<> getSelectedItems() const;
