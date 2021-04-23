@@ -1362,6 +1362,24 @@ void ItemTreeWidget::Impl::revertItemPosition(Item* item)
 void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
 {
     auto selectedTwItems = selectedItems();
+
+    // unselect items which are not selected with the caller view.
+    for (auto item : projectRootItem->selectedItems()){
+        bool found = false;
+        for(auto& twItem : selectedTwItems){
+            if(auto itwItem = dynamic_cast<ItwItem*>(twItem)){
+                found = itwItem->item == item;
+                if (found) {
+                    break;
+                }
+            }
+        }
+
+        if (!found) {
+            item->setSelected(false);
+        }
+    }
+
     ItemList<> items;
     bool doEmitSignal = !sigSelectionChanged.empty();
     if(doEmitSignal){
