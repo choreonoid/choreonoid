@@ -17,7 +17,7 @@ class CNOID_EXPORT Dialog : public QDialog
 
 public:
     Dialog();
-    Dialog(QWidget* parent, Qt::WindowFlags f = 0);
+    Dialog(QWidget* parent, Qt::WindowFlags f = Qt::WindowFlags());
         
     SignalProxy<void()> sigAccepted() {
         return sigAccepted_;

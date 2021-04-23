@@ -41,6 +41,10 @@ public:
     void setRootItem(Item* item);
     void setRootItemUpdateFunction(std::function<Item*(bool doCreate)> func);
 
+    //! \note This functions does not update the tree widget items
+    void setRootItemVisible(bool on);
+    bool isRootItemVisible() const;
+
     void setDragDropEnabled(bool on);
     void setCheckColumnShown(bool on);
 

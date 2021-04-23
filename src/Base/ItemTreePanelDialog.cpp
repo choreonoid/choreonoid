@@ -33,6 +33,11 @@ public:
     ItemTreePanelDialog* self;
     ItemPtr topItem;
     ItemPtr currentItem;
+    ScopedConnection currentItemConnection;
+    int mode;
+    bool isPanelOnlyDisplayMode;
+    bool isLastValidPanelKeepingMode;
+    bool isSinglePanelSyncMode;
     bool needToUpdatePanel;
     PolymorphicItemFunctionSet  panelFunctions;
     ItemTreePanelBase* panelToActivate;
@@ -51,10 +56,11 @@ public:
     Impl(ItemTreePanelDialog* self);
     void initialize();
     ~Impl();
+    void setPanelOnlyDisplayMode(bool on);
     void updateTopAreaLayout();
     void showPanel();
     void onSelectionChanged(const ItemList<>& items);
-    void activateItem(Item* item, bool isNewItem);
+    void activateItem(Item* item, bool isNewItem, bool doKeepLastPanel);
     void deactivateCurrentPanel(bool doClearCurrentItem);
     void deactivatePanel(ItemTreePanelBase* panel, bool isPanelAccepted);
     void clear();
@@ -66,22 +72,22 @@ public:
 ItemTreePanelBase::ItemTreePanelBase(QWidget* parent, Qt::WindowFlags f)
     : QWidget(parent, f)
 {
-    currentDialogImpl = nullptr;
+    currentDialog = nullptr;
 }
 
 
 bool ItemTreePanelBase::activate
-(Item* topItem, Item* elementItem, bool isNewItem, ItemTreePanelDialog::Impl* currentDialogImpl)
+(Item* topItem, Item* elementItem, bool isNewItem, ItemTreePanelDialog* currentDialog)
 {
-    this->currentDialogImpl = currentDialogImpl;
+    this->currentDialog = currentDialog;
     return onActivated(topItem, elementItem, isNewItem);
 }
 
 
 void ItemTreePanelBase::accept()
 {
-    if(currentDialogImpl){
-        currentDialogImpl->deactivatePanel(this, true);
+    if(currentDialog){
+        currentDialog->impl->deactivatePanel(this, true);
     } else {
         onDeactivated();
     }
@@ -90,8 +96,8 @@ void ItemTreePanelBase::accept()
 
 void ItemTreePanelBase::reject()
 {
-    if(currentDialogImpl){
-        currentDialogImpl->deactivatePanel(this, false);
+    if(currentDialog){
+        currentDialog->impl->deactivatePanel(this, false);
     } else {
         onDeactivated();
     }
@@ -104,7 +110,24 @@ void ItemTreePanelBase::onDeactivated()
 }
 
 
+ItemTreeWidget* ItemTreePanelBase::itemTreeWidget()
+{
+    if(currentDialog){
+        return currentDialog->itemTreeWidget();
+    }
+    return nullptr;
+}
+
+
 ItemTreePanelDialog::ItemTreePanelDialog()
+{
+    impl = new Impl(this);
+    impl->initialize();
+}
+
+
+ItemTreePanelDialog::ItemTreePanelDialog(QWidget* parent, Qt::WindowFlags f)
+    : Dialog(parent, f)
 {
     impl = new Impl(this);
     impl->initialize();
@@ -120,6 +143,14 @@ ItemTreePanelDialog::Impl::Impl(ItemTreePanelDialog* self)
 
 void ItemTreePanelDialog::Impl::initialize()
 {
+    mode = 0;
+    isPanelOnlyDisplayMode = false;
+    isLastValidPanelKeepingMode = false;
+    isSinglePanelSyncMode = false;
+    needToUpdatePanel = true;
+    panelToActivate = nullptr;
+    currentPanel = nullptr;
+
     auto vbox = new QVBoxLayout;
     self->setLayout(vbox);
 
@@ -169,10 +200,6 @@ void ItemTreePanelDialog::Impl::initialize()
     itemTreeWidgetConnection =
         itemTreeWidget.sigSelectionChanged().connect(
             [&](const ItemList<>& items){ onSelectionChanged(items); });
-
-    needToUpdatePanel = true;
-    panelToActivate = nullptr;
-    currentPanel = nullptr;
 }
 
 
@@ -185,6 +212,33 @@ ItemTreePanelDialog::~ItemTreePanelDialog()
 ItemTreePanelDialog::Impl::~Impl()
 {
 
+}
+
+
+void ItemTreePanelDialog::setMode(int flags)
+{
+    impl->mode = flags;
+    impl->setPanelOnlyDisplayMode(flags & PanelOnlyDisplayMode);
+    impl->isLastValidPanelKeepingMode = flags & LastValidPanelKeepingMode;
+    impl->isSinglePanelSyncMode = flags & SinglePanelSyncMode;
+}
+
+
+int ItemTreePanelDialog::mode() const
+{
+    return impl->mode;
+}
+    
+
+void ItemTreePanelDialog::Impl::setPanelOnlyDisplayMode(bool on)
+{
+    if(on != isPanelOnlyDisplayMode){
+        topAreaLabel.setVisible(!on);
+        itemTreeWidget.setVisible(!on);
+        panelFrame.setFrameStyle(on ? QFrame::NoFrame : QFrame::StyledPanel);
+        panelCaptionLabel.setVisible(!on);
+        isPanelOnlyDisplayMode = on;
+    }
 }
 
 
@@ -235,9 +289,10 @@ void ItemTreePanelDialog::Impl::updateTopAreaLayout()
 }
 
 
-bool ItemTreePanelDialog::setTopItem(Item* item)
+bool ItemTreePanelDialog::setTopItem(Item* item, bool isTopVisible)
 {
     impl->topItem = item;
+    impl->itemTreeWidget.setRootItemVisible(isTopVisible);
     impl->itemTreeWidget.setRootItem(item);
     impl->needToUpdatePanel = true;
     return true;
@@ -248,10 +303,14 @@ void ItemTreePanelDialog::show()
 {
     impl->showPanel();
 
-    // The label must be displayed when the dialog is shown
-    // to ensure the necessary dialog size
-    bool isPanelCaptionHidden = impl->panelCaptionLabel.isHidden();
-    impl->panelCaptionLabel.show();
+    bool isPanelCaptionHidden = false;
+
+    if(!impl->isPanelOnlyDisplayMode){
+        // The label must be displayed when the dialog is shown
+        // to ensure the necessary dialog size
+        isPanelCaptionHidden = impl->panelCaptionLabel.isHidden();
+        impl->panelCaptionLabel.show();
+    }
     
     Dialog::show();
 
@@ -283,7 +342,7 @@ bool ItemTreePanelDialog::setCurrentItem(Item* item, bool isNewItem)
     impl->itemTreeWidgetConnection.unblock();
 
     if(selected){
-        impl->activateItem(item, isNewItem);
+        impl->activateItem(item, isNewItem, impl->isLastValidPanelKeepingMode);
     }
 
     return selected;
@@ -297,42 +356,67 @@ void ItemTreePanelDialog::Impl::onSelectionChanged(const ItemList<>& items)
     if(!items.empty()){
         item = items.front();
     }
-    activateItem(item, false);
+    if(!isLastValidPanelKeepingMode || item){
+        activateItem(item, false, isLastValidPanelKeepingMode);
+    }
 }
 
 
-void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem)
+void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool doKeepLastPanel)
 {
     if(item == currentItem && !needToUpdatePanel){
         return;
     }
-    deactivateCurrentPanel(false);
-    currentItem = item;
-    panelCaptionLabel.setText(_("Unkown"));
+
+    bool updated = false;
+
+    panelToActivate = nullptr;
+    if(item){
+        panelFunctions.dispatch(item);
+    }
+
+    if(!doKeepLastPanel || panelToActivate){
+        deactivateCurrentPanel(false);
+        currentItem = item;
+        if(currentItem){
+            currentItemConnection =
+                currentItem->sigDisconnectedFromRoot().connect(
+                    [this](){ deactivateCurrentPanel(true); });
+        } else {
+            currentItemConnection.disconnect();
+        }
+        panelCaptionLabel.setText(_("Unkown"));
+        updated = true;
+    }
 
     if(!item){
-        panelCaptionLabel.hide();
-        if(itemTreeWidget.getItems().empty()){
-            defaultPanelLabel.setText(_("There are no items to be configured."));
-        } else {
-            defaultPanelLabel.setText(_("No item is selected."));
+        if(!doKeepLastPanel){
+            panelCaptionLabel.hide();
+            if(itemTreeWidget.getItems().empty()){
+                defaultPanelLabel.setText(_("There are no items to be configured."));
+            } else {
+                defaultPanelLabel.setText(_("No item is selected."));
+            }
+            defaultPanelLabel.show();
         }
-        defaultPanelLabel.show();
     } else {
-        panelToActivate = nullptr;
-        panelFunctions.dispatch(item);
         if(panelToActivate){
-            if(panelToActivate->activate(topItem, item, isNewItem, this)){
+            if(panelToActivate->activate(topItem, item, isNewItem, self)){
                 currentPanel = panelToActivate;
                 defaultPanelLabel.hide();
-                panelCaptionLabel.setText(currentPanel->caption().c_str());
-                panelCaptionLabel.show();
+                if(!isPanelOnlyDisplayMode){
+                    panelCaptionLabel.setText(currentPanel->caption().c_str());
+                    panelCaptionLabel.show();
+                }
                 panelLayout.addWidget(currentPanel);
                 currentPanel->show();
             }
             panelToActivate = nullptr;
-        } else {
-            panelCaptionLabel.show();
+
+        } else if(!doKeepLastPanel){
+            if(!isPanelOnlyDisplayMode){
+                panelCaptionLabel.show();
+            }
             defaultPanelLabel.show();
             defaultPanelLabel.setText(
                 format(_("\"{0}\" is not a target item."), item->name()).c_str());
@@ -344,6 +428,16 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem)
         }
     }
     needToUpdatePanel = false;
+
+    if(updated){
+        self->onCurrentItemChanged(currentItem);
+    }
+}
+
+
+void ItemTreePanelDialog::onCurrentItemChanged(Item*)
+{
+
 }
 
 
@@ -361,8 +455,9 @@ void ItemTreePanelDialog::Impl::deactivateCurrentPanel(bool doClearCurrentItem)
         itemTreeWidgetConnection.block();
         currentItem->setSelected(false);
         currentItem.reset();
+        currentItemConnection.disconnect();
         itemTreeWidgetConnection.unblock();
-        activateItem(nullptr, false);
+        activateItem(nullptr, false, false);
     }
 }
 
@@ -375,7 +470,9 @@ void ItemTreePanelDialog::Impl::deactivatePanel(ItemTreePanelBase* panel, bool i
         deactivateCurrentPanel(!isPanelAccepted);
     }
 
-    if(numItems <= 1){
+    if(isSinglePanelSyncMode){
+        self->hide();
+    } else if(numItems <= 1){
         self->hide();
     } else if(isPanelAccepted){
         showPanel();
@@ -388,7 +485,6 @@ void ItemTreePanelDialog::Impl::clear()
     itemTreeWidget.setRootItem(nullptr);
     deactivateCurrentPanel(true);
     topItem.reset();
-    currentItem.reset();
 }
 
 

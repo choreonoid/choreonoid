@@ -56,6 +56,7 @@ public:
     ConnectionSet subTreeAddedOrMovedConnections;
     ItemPtr localRootItem;
     ScopedConnection localRootItemConnection;
+    bool isRootItemVisible;
     bool isProcessingSlotOnlocalRootItemPositionChanged;
     std::function<Item*(bool doCreate)> localRootItemUpdateFunction;
     vector<ItemPtr> topLevelItems;
@@ -360,6 +361,8 @@ ItemTreeWidget::Impl::~Impl()
 
 void ItemTreeWidget::Impl::initialize()
 {
+    isRootItemVisible = false;
+    isProcessingSlotOnlocalRootItemPositionChanged = false;
     isChangingTreeWidgetTreeStructure = 0;
     isCheckColumnShown = true;
     isControlModifierEnabledInMousePressEvent = false;
@@ -437,8 +440,6 @@ void ItemTreeWidget::Impl::initialize()
         projectManager->sigProjectLoaded().connect(
             [&](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
 
-    isProcessingSlotOnlocalRootItemPositionChanged = false;
-    
     fontPointSizeDiff = 0;
 }
 
@@ -519,6 +520,18 @@ void ItemTreeWidget::setRootItemUpdateFunction(std::function<Item*(bool doCreate
 {
     impl->localRootItemUpdateFunction = callback;
     impl->localRootItem = nullptr;
+}
+
+
+void ItemTreeWidget::setRootItemVisible(bool on)
+{
+    impl->isRootItemVisible = on;
+}
+
+
+bool ItemTreeWidget::isRootItemVisible() const
+{
+    return impl->isRootItemVisible;
 }
 
 
@@ -661,8 +674,12 @@ void ItemTreeWidget::Impl::updateTreeWidgetItems()
 
     if(localRootItem){
         isChangingTreeWidgetTreeStructure++;
-        for(auto item = localRootItem->childItem(); item; item = item->nextItem()){
-            insertItem(invisibleRootItem(), item, true);
+        if(isRootItemVisible && localRootItem != projectRootItem){
+            insertItem(invisibleRootItem(), localRootItem, true);
+        } else {
+            for(auto item = localRootItem->childItem(); item; item = item->nextItem()){
+                insertItem(invisibleRootItem(), item, true);
+            }
         }
         isChangingTreeWidgetTreeStructure--;
     }
@@ -810,7 +827,7 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         return;
     }
 
-    bool isVisible = item->isOwnedBy(localRootItem);
+    bool isVisible = item->isOwnedBy(localRootItem) || (isRootItemVisible && item == localRootItem);
     if(isVisible){
         visibilityFunction_isTopLevelItemCandidate = isTopLevelItemCandidate;
         visibilityFunction_result = true;
