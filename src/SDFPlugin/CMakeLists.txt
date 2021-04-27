@@ -3,7 +3,7 @@ if(NOT UNIX)
 endif()
 
 option(BUILD_SDF_PLUGIN "Building SDFPlugin" OFF)
-
+mark_as_advanced(BUILD_SDF_PLUGIN)
 
 if(NOT BUILD_SDF_PLUGIN)
   return()

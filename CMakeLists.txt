@@ -439,6 +439,7 @@ set(USE_PYBIND11 ${ENABLE_PYTHON})
 # Lua
 if(UNIX)
   option(ENABLE_LUA "Enable Lua" OFF)
+  mark_as_advanced(ENABLE_LUA)
 endif()
 
 if(ENABLE_LUA)
@@ -706,7 +707,7 @@ else()
 endif()
 option(USE_BUNDLED_LIBYAML "Use the yaml library bundled with Choreonoid" ${USE_BUNDLED_LIBYAML_DEFAULT})
 if(NOT USE_BUNDLED_LIBYAML)
-  pkg_check_modules(LIBYAML yaml-0.1 QUIET)
+  pkg_check_modules(LIBYAML yaml-0.1)
 endif()
 if((NOT LIBYAML_FOUND) OR USE_BUNDLED_LIBYAML)
   add_subdirectory(thirdparty/yaml-0.1.7)
@@ -777,7 +778,7 @@ endif()
 
 # uuid
 if(UNIX)
-  pkg_check_modules(LIBUUID uuid QUIET)
+  pkg_check_modules(LIBUUID uuid REQUIRED)
 endif()
 
 add_subdirectory(src)

@@ -1,4 +1,5 @@
 option(BUILD_ROKI_PLUGIN "Building RokiPlugin" OFF)
+mark_as_advanced(BUILD_ROKI_PLUGIN)
 
 if(NOT BUILD_ROKI_PLUGIN)
   return()

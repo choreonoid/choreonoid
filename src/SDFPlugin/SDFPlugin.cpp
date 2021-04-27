@@ -10,7 +10,6 @@
 #include <cnoid/BodyLoader>
 #include <cnoid/BodyItem>
 #include <sdf/sdf.hh>
-#include <OGRE/OgreRoot.h>
 #include <memory>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
@@ -79,8 +78,6 @@ public:
 
 class SDFPlugin : public Plugin
 {
-    Ogre::Root* ogreRoot;
-
 public:
     SDFPlugin() : Plugin("SDF")
     {
@@ -101,17 +98,9 @@ public:
         addModelSearchPath("ROS_PACKAGE_PATH");
         addModelSearchPath("HOME");
 
-        ogreRoot = new Ogre::Root();
-
         return true;
     }
         
-    virtual bool finalize()
-    {
-        delete ogreRoot;
-        return true;
-    }
-
     void addModelSearchPath(const char *envname)
     {
         std::list<std::string> paths;

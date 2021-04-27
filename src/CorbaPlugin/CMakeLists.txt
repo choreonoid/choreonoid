@@ -1,13 +1,5 @@
-# @author Shin'ichiro Nakaoka
-
-#set(CMAKE_BUILD_TYPE Debug)
-
-option(BUILD_CORBA_PLUGIN "Build CORBA Plugin" OFF)
-
-if(NOT BUILD_CORBA_PLUGIN)
+if(NOT ENABLE_CORBA OR NOT ENABLE_GUI)
   return()
-elseif(NOT ENABLE_CORBA)
-  message(FATAL_ERROR "CorbaPlugin needs to ENABLE_CORBA")
 endif()
 
 choreonoid_compile_corba_idl_to_cpp(idl_cpp_files idl_h_files corba MessageView)

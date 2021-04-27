@@ -1,4 +1,5 @@
 option(BUILD_BULLET_PLUGIN "Building BulletPlugin" OFF)
+mark_as_advanced(BUILD_BULLET_PLUGIN)
 
 if(NOT BUILD_BULLET_PLUGIN)
   return()
