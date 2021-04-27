@@ -94,12 +94,12 @@ public:
     void onDraggerDragStarted();
     void onDraggerDragged();
     void onDraggerDragFinished();
-    int findPointingTagIndex(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
-    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
-    virtual void onFocusChanged(const SceneWidgetEvent& event, bool on) override;
-    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu) override;
+    int findPointingTagIndex(SceneWidgetEvent* event);
+    virtual bool onPointerMoveEvent(SceneWidgetEvent* event) override;
+    virtual void onPointerLeaveEvent(SceneWidgetEvent* event) override;
+    virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
+    virtual void onFocusChanged(SceneWidgetEvent* event, bool on) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu) override;
 };
 
 typedef ref_ptr<SceneTagGroup> SceneTagGroupPtr;
@@ -1292,9 +1292,9 @@ void SceneTagGroup::onDraggerDragFinished()
 }
 
 
-int SceneTagGroup::findPointingTagIndex(const SceneWidgetEvent& event)
+int SceneTagGroup::findPointingTagIndex(SceneWidgetEvent* event)
 {
-    auto path = event.nodePath();
+    auto path = event->nodePath();
     size_t tagNodeIndex = 0;
     for(size_t i=0; i < path.size(); ++i){
         auto node = path[i];
@@ -1314,7 +1314,7 @@ int SceneTagGroup::findPointingTagIndex(const SceneWidgetEvent& event)
 }
 
 
-bool SceneTagGroup::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool SceneTagGroup::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     int tagIndex = findPointingTagIndex(event);
     setHighlightedTagIndex(tagIndex);
@@ -1322,22 +1322,22 @@ bool SceneTagGroup::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-void SceneTagGroup::onPointerLeaveEvent(const SceneWidgetEvent& event)
+void SceneTagGroup::onPointerLeaveEvent(SceneWidgetEvent* event)
 {
     setHighlightedTagIndex(-1);
 }
 
 
-bool SceneTagGroup::onButtonPressEvent(const SceneWidgetEvent& event)
+bool SceneTagGroup::onButtonPressEvent(SceneWidgetEvent* event)
 {
     bool processed = false;
 
     int tagIndex = findPointingTagIndex(event);
     
-    if(event.button() == Qt::LeftButton){
+    if(event->button() == Qt::LeftButton){
         if(tagIndex >= 0){
             bool selected = impl->checkTagSelected(tagIndex);
-            if(!(event.modifiers() & Qt::ControlModifier)){
+            if(!(event->modifiers() & Qt::ControlModifier)){
                 if(impl->numSelectedTags >= 2 || !selected){
                     impl->clearTagSelection(true);
                     selected = false;
@@ -1347,11 +1347,11 @@ bool SceneTagGroup::onButtonPressEvent(const SceneWidgetEvent& event)
             processed = true;
         }
         
-    } else if(event.button() == Qt::RightButton){
+    } else if(event->button() == Qt::RightButton){
         if(tagIndex >= 0 && !impl->checkTagSelected(tagIndex)){
             impl->setTagSelected(tagIndex, true, true);
         }
-        event.sceneWidget()->showContextMenuAtPointerPosition();
+        event->sceneWidget()->showContextMenuAtPointerPosition();
     }
 
     attachPositionDragger(-1);
@@ -1360,7 +1360,7 @@ bool SceneTagGroup::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-void SceneTagGroup::onFocusChanged(const SceneWidgetEvent& event, bool on)
+void SceneTagGroup::onFocusChanged(SceneWidgetEvent* event, bool on)
 {
     if(!on){
         attachPositionDragger(-1);
@@ -1368,20 +1368,20 @@ void SceneTagGroup::onFocusChanged(const SceneWidgetEvent& event, bool on)
 }
 
 
-bool SceneTagGroup::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu)
+bool SceneTagGroup::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu)
 {
     int tagIndex = findPointingTagIndex(event);
     
-    auto moveAction = menu.addItem(_("Move"));
+    auto moveAction = menu->addItem(_("Move"));
     if(tagIndex < 0){
         moveAction->setEnabled(false);
     }
     moveAction->sigTriggered().connect([this, tagIndex](){ attachPositionDragger(tagIndex); });
                 
-    menu.addItem(_("Remove"))->sigTriggered().connect([&](){ impl->removeSelectedTags(); });
-    menu.addSeparator();
-    menu.addItem(_("Select all"))->sigTriggered().connect([&](){ impl->selectAllTags(); });
-    menu.addItem(_("Clear selection"))->sigTriggered().connect([&](){ impl->clearTagSelection(true); });
+    menu->addItem(_("Remove"))->sigTriggered().connect([&](){ impl->removeSelectedTags(); });
+    menu->addSeparator();
+    menu->addItem(_("Select all"))->sigTriggered().connect([&](){ impl->selectAllTags(); });
+    menu->addItem(_("Clear selection"))->sigTriggered().connect([&](){ impl->clearTagSelection(true); });
 
     attachPositionDragger(-1);
     

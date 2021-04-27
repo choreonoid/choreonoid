@@ -56,17 +56,17 @@ public:
 
     virtual void updateModel() override;
 
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
-    virtual bool onDoubleClickEvent(const SceneWidgetEvent& event) override;
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event) override;
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
-    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
-    virtual bool onKeyPressEvent(const SceneWidgetEvent& event) override;
-    virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event) override;
-    virtual bool onScrollEvent(const SceneWidgetEvent& event) override;
-    virtual void onFocusChanged(const SceneWidgetEvent& event, bool on) override;
-    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
+    virtual void onSceneModeChanged(SceneWidgetEvent* event) override;
+    virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
+    virtual bool onDoubleClickEvent(SceneWidgetEvent* event) override;
+    virtual bool onButtonReleaseEvent(SceneWidgetEvent* event) override;
+    virtual bool onPointerMoveEvent(SceneWidgetEvent* event) override;
+    virtual void onPointerLeaveEvent(SceneWidgetEvent* event) override;
+    virtual bool onKeyPressEvent(SceneWidgetEvent* event) override;
+    virtual bool onKeyReleaseEvent(SceneWidgetEvent* event) override;
+    virtual bool onScrollEvent(SceneWidgetEvent* event) override;
+    virtual void onFocusChanged(SceneWidgetEvent* event, bool on) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager) override;
 
 protected:
     virtual ~EditableSceneBody();

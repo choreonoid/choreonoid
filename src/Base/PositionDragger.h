@@ -111,12 +111,12 @@ public:
     SignalProxy<void()> sigPositionDragged();
     SignalProxy<void()> sigDragFinished();
 
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event) override;
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
-    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
-    virtual void onFocusChanged(const SceneWidgetEvent& event, bool on) override;
+    virtual void onSceneModeChanged(SceneWidgetEvent* event) override;
+    virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
+    virtual bool onButtonReleaseEvent(SceneWidgetEvent* event) override;
+    virtual bool onPointerMoveEvent(SceneWidgetEvent* event) override;
+    virtual void onPointerLeaveEvent(SceneWidgetEvent* event) override;
+    virtual void onFocusChanged(SceneWidgetEvent* event, bool on) override;
 
     // Thw following functions are deprecated. Use displayMode and setDisplayMode instead.
     [[deprecated("Use setDisplayMode.")]]

@@ -90,15 +90,15 @@ public:
     Signal<void(const std::vector<PointInfoPtr>& points)> sigPointSelectionAdded;
     
     Impl(ScenePointSelectionMode* self);
-    void setupScenePointSelectionMode(const SceneWidgetEvent& event);
+    void setupScenePointSelectionMode(SceneWidgetEvent* event);
     void clearScenePointSelectionMode(SceneWidget* sceneWidget);
-    bool checkIfPointingTargetNode(const SceneWidgetEvent& event);
+    bool checkIfPointingTargetNode(SceneWidgetEvent* event);
     bool findPointedTriangleVertex(
-        SgMesh* mesh, const Affine3& T, const SceneWidgetEvent& event, int& out_index);
+        SgMesh* mesh, const Affine3& T, SceneWidgetEvent* event, int& out_index);
     void setHighlightedPoint(
         const SgNodePath& path, SgMesh* mesh, const Affine3& T, int vertexIndex);
     void clearHighlightedPoint();
-    bool onButtonPressEvent(const SceneWidgetEvent& event);
+    bool onButtonPressEvent(SceneWidgetEvent* event);
 };
 
 }
@@ -316,29 +316,29 @@ ScenePointSelectionMode::PointInfo* ScenePointSelectionMode::highlightedPoint()
 }
 
 
-std::vector<SgNode*> ScenePointSelectionMode::getTargetSceneNodes(const SceneWidgetEvent& /* event */)
+std::vector<SgNode*> ScenePointSelectionMode::getTargetSceneNodes(SceneWidgetEvent* /* event */)
 {
     return std::vector<SgNode*>();
 }
     
 
 #if 0
-void ScenePointSelectionMode::onSelectionModeActivated(const SceneWidgetEvent& /* event */)
+void ScenePointSelectionMode::onSelectionModeActivated(SceneWidgetEvent* /* event */)
 {
 
 }
 
 
-void ScenePointSelectionMode::onSelectionModeDeactivated(const SceneWidgetEvent& /* event */)
+void ScenePointSelectionMode::onSelectionModeDeactivated(SceneWidgetEvent* /* event */)
 {
 
 }
 #endif
 
 
-void ScenePointSelectionMode::onSceneModeChanged(const SceneWidgetEvent& event)
+void ScenePointSelectionMode::onSceneModeChanged(SceneWidgetEvent* event)
 {
-    auto sw = event.sceneWidget();
+    auto sw = event->sceneWidget();
     int activeMode = sw->activeCustomMode();
     if(activeMode == impl->modeId && sw->isEditMode()){
         impl->setupScenePointSelectionMode(event);
@@ -348,9 +348,9 @@ void ScenePointSelectionMode::onSceneModeChanged(const SceneWidgetEvent& event)
 }
 
 
-void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(const SceneWidgetEvent& event)
+void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(SceneWidgetEvent* event)
 {
-    auto sceneWidget = event.sceneWidget();
+    auto sceneWidget = event->sceneWidget();
     SceneWidgetInfo* info = nullptr;
     auto p = sceneWidgetInfos.find(sceneWidget);
     if(p != sceneWidgetInfos.end()){
@@ -400,10 +400,10 @@ void ScenePointSelectionMode::Impl::clearScenePointSelectionMode(SceneWidget* sc
 }
 
 
-bool ScenePointSelectionMode::Impl::checkIfPointingTargetNode(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::Impl::checkIfPointingTargetNode(SceneWidgetEvent* event)
 {
     bool isTargetNode = false;
-    auto& path = event.nodePath();
+    auto& path = event->nodePath();
     for(auto iter = path.rbegin(); iter != path.rend(); ++iter){
         auto& node = *iter;
         if(targetNodes.find(node) != targetNodes.end()){
@@ -415,9 +415,9 @@ bool ScenePointSelectionMode::Impl::checkIfPointingTargetNode(const SceneWidgetE
 }
 
 
-bool ScenePointSelectionMode::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::onPointerMoveEvent(SceneWidgetEvent* event)
 {
-    if(!event.sceneWidget()->isEditMode()){
+    if(!event->sceneWidget()->isEditMode()){
         return false;
     }
 
@@ -425,7 +425,7 @@ bool ScenePointSelectionMode::onPointerMoveEvent(const SceneWidgetEvent& event)
 
     bool pointed = false;
     if(isTargetNode){
-        auto& path = event.nodePath();
+        auto& path = event->nodePath();
         if(auto shape = dynamic_cast<SgShape*>(path.back())){
             auto mesh = shape->mesh();
             Affine3 T = calcTotalTransform(path);
@@ -507,11 +507,11 @@ static bool checkRayTraiangleIntersection
 
 
 bool ScenePointSelectionMode::Impl::findPointedTriangleVertex
-(SgMesh* mesh, const Affine3& T, const SceneWidgetEvent& event, int& out_index)
+(SgMesh* mesh, const Affine3& T, SceneWidgetEvent* event, int& out_index)
 {
     bool found = false;
     const Affine3 T_inv = T.inverse();
-    const Vector3 point = event.point();
+    const Vector3 point = event->point();
     const Vector3f localPoint = (T_inv * point).cast<float>();
     float minDistance = std::numeric_limits<float>::max();
     Vector3f minDistanceVertex;
@@ -541,7 +541,7 @@ bool ScenePointSelectionMode::Impl::findPointedTriangleVertex
         //! \todo The distance threshold should be constant in the viewport coordinate
         if(distance < 0.01){
             Vector3 origin0, direction0;
-            if(event.getRay(origin0, direction0)){
+            if(event->getRay(origin0, direction0)){
                 const Vector3 origin = T_inv * origin0;
                 const Vector3 direction = T_inv.linear() * direction0;
                 out_index = minDistanceIndices.front();
@@ -609,29 +609,29 @@ void ScenePointSelectionMode::Impl::clearHighlightedPoint()
 }
 
 
-void ScenePointSelectionMode::onPointerLeaveEvent(const SceneWidgetEvent& event)
+void ScenePointSelectionMode::onPointerLeaveEvent(SceneWidgetEvent* event)
 {
     impl->clearHighlightedPoint();
 }
 
 
-bool ScenePointSelectionMode::onButtonPressEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::onButtonPressEvent(SceneWidgetEvent* event)
 {
     return impl->onButtonPressEvent(event);
 }
 
 
-bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
+bool ScenePointSelectionMode::Impl::onButtonPressEvent(SceneWidgetEvent* event)
 {
     bool isTargetNode = checkIfPointingTargetNode(event);
 
-    if(event.button() == Qt::LeftButton){
+    if(event->button() == Qt::LeftButton){
         bool isPointSelectionUpdated = false;
         vector<PointInfoPtr> additionalSelectedPoints;
         if(isTargetNode && highlightedPoint){
             bool removed = false;
             shared_ptr<SgNodePath> sharedPath;
-            if(!(event.modifiers() & Qt::ControlModifier)){
+            if(!(event->modifiers() & Qt::ControlModifier)){
                 selectedPoints.clear();
             } else {
                 for(auto it = selectedPoints.begin(); it != selectedPoints.end(); ++it){
@@ -656,7 +656,7 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& e
             isPointSelectionUpdated = true;
 
         } else { // !isTargetNode || !highlightedPoint
-            if(!(event.modifiers() & Qt::ControlModifier)){
+            if(!(event->modifiers() & Qt::ControlModifier)){
                 if(!selectedPoints.empty()){
                     selectedPoints.clear();
                     isPointSelectionUpdated = true;
@@ -669,39 +669,39 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(const SceneWidgetEvent& e
                 sigPointSelectionAdded(additionalSelectedPoints);
             }
         }
-    } else if(isTargetNode && event.button() == Qt::RightButton){
-        event.sceneWidget()->showContextMenuAtPointerPosition();
+    } else if(isTargetNode && event->button() == Qt::RightButton){
+        event->sceneWidget()->showContextMenuAtPointerPosition();
     }
     
     return isTargetNode;
 }
 
 
-bool ScenePointSelectionMode::onButtonReleaseEvent(const SceneWidgetEvent&)
+bool ScenePointSelectionMode::onButtonReleaseEvent(SceneWidgetEvent*)
 {
     return false;
 }
 
 
-bool ScenePointSelectionMode::onDoubleClickEvent(const SceneWidgetEvent&)
+bool ScenePointSelectionMode::onDoubleClickEvent(SceneWidgetEvent*)
 {
     return false;
 }
 
 
-bool ScenePointSelectionMode::onKeyPressEvent(const SceneWidgetEvent&)
+bool ScenePointSelectionMode::onKeyPressEvent(SceneWidgetEvent*)
 {
     return false;
 }
 
 
-bool ScenePointSelectionMode::onKeyReleaseEvent(const SceneWidgetEvent&)
+bool ScenePointSelectionMode::onKeyReleaseEvent(SceneWidgetEvent*)
 {
     return false;
 }
 
 
-bool ScenePointSelectionMode::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager&)
+bool ScenePointSelectionMode::onContextMenuRequest(SceneWidgetEvent* event, MenuManager*)
 {
     return impl->checkIfPointingTargetNode(event);
 }

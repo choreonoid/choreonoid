@@ -30,16 +30,16 @@ public:
     PolyhedralRegion region;
     bool isDragging;
     Signal<void(const PolyhedralRegion& region)> sigRegionFixed;
-    Signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest;
+    Signal<void(SceneWidgetEvent* event, MenuManager* menuManager)> sigContextMenuRequest;
     
     RectRegionMarkerImpl(RectRegionMarker* self);
     ~RectRegionMarkerImpl();
     void setRect(int x0, int y0, int x1, int y1);
     void showRectangle(bool on);
-    void onSceneModeChanged(const SceneWidgetEvent& event);
-    bool onButtonPressEvent(const SceneWidgetEvent& event);
-    bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    bool onPointerMoveEvent(const SceneWidgetEvent& event);
+    void onSceneModeChanged(SceneWidgetEvent* event);
+    bool onButtonPressEvent(SceneWidgetEvent* event);
+    bool onButtonReleaseEvent(SceneWidgetEvent* event);
+    bool onPointerMoveEvent(SceneWidgetEvent* event);
 };
 
 }
@@ -190,34 +190,34 @@ void RectRegionMarkerImpl::showRectangle(bool on)
 }
 
 
-void RectRegionMarker::onSceneModeChanged(const SceneWidgetEvent& event)
+void RectRegionMarker::onSceneModeChanged(SceneWidgetEvent* event)
 {
     impl->onSceneModeChanged(event);
 }
 
 
-void RectRegionMarkerImpl::onSceneModeChanged(const SceneWidgetEvent& event)
+void RectRegionMarkerImpl::onSceneModeChanged(SceneWidgetEvent* event)
 {
-    auto sw = event.sceneWidget();
+    auto sw = event->sceneWidget();
     if(sw->activeCustomModeHandler() == self && sw->isEditMode()){
-        event.sceneWidget()->setCursor(editModeCursor);
+        event->sceneWidget()->setCursor(editModeCursor);
     } else {
         showRectangle(false);
     }
 }
 
 
-bool RectRegionMarker::onButtonPressEvent(const SceneWidgetEvent& event)
+bool RectRegionMarker::onButtonPressEvent(SceneWidgetEvent* event)
 {
     return impl->onButtonPressEvent(event);
 }
 
 
-bool RectRegionMarkerImpl::onButtonPressEvent(const SceneWidgetEvent& event)
+bool RectRegionMarkerImpl::onButtonPressEvent(SceneWidgetEvent* event)
 {
-    if(event.button() == Qt::LeftButton){
-        x0 = event.x();
-        y0 = event.y();
+    if(event->button() == Qt::LeftButton){
+        x0 = event->x();
+        y0 = event->y();
         setRect(x0, y0, x0, y0);
         showRectangle(true);
         isDragging = true;
@@ -227,24 +227,25 @@ bool RectRegionMarkerImpl::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool RectRegionMarker::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool RectRegionMarker::onButtonReleaseEvent(SceneWidgetEvent* event)
 {
     return impl->onButtonReleaseEvent(event);
 }
 
 
-bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool RectRegionMarkerImpl::onButtonReleaseEvent(SceneWidgetEvent* event)
 {
     if(isDragging && (left < right && bottom < top)){
         Vector3 points[4];
-        event.sceneWidget()->unproject(left, top, 0.0, points[0]);
-        event.sceneWidget()->unproject(left, bottom, 0.0, points[1]);
-        event.sceneWidget()->unproject(right, bottom, 0.0, points[2]);
-        event.sceneWidget()->unproject(right, top, 0.0, points[3]);
-        SgCamera* camera = event.sceneWidget()->renderer()->currentCamera();
+        auto sw = event->sceneWidget();
+        sw->unproject(left, top, 0.0, points[0]);
+        sw->unproject(left, bottom, 0.0, points[1]);
+        sw->unproject(right, bottom, 0.0, points[2]);
+        sw->unproject(right, top, 0.0, points[3]);
+        SgCamera* camera = sw->renderer()->currentCamera();
         region.clear();
         if(dynamic_cast<SgPerspectiveCamera*>(camera)){
-            const Vector3 c = event.cameraPosition().translation();
+            const Vector3 c = event->cameraPosition().translation();
             for(int i=0; i < 4; ++i){
                 const Vector3 normal = (points[(i + 1) % 4] - c).cross(points[i] - c).normalized();
                 region.addBoundingPlane(normal, points[i]);
@@ -264,30 +265,30 @@ bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
 }
 
 
-bool RectRegionMarker::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool RectRegionMarker::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     return impl->onPointerMoveEvent(event);
 }
 
 
-bool RectRegionMarkerImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool RectRegionMarkerImpl::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     if(isDragging){
-        setRect(x0, y0, event.x(), event.y());
+        setRect(x0, y0, event->x(), event->y());
         return true;
     }
     return false;
 }
 
 
-bool RectRegionMarker::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool RectRegionMarker::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager)
 {
     impl->sigContextMenuRequest(event, menuManager);
     return true;
 }
 
 
-SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> RectRegionMarker::sigContextMenuRequest()
+SignalProxy<void(SceneWidgetEvent* event, MenuManager* menuManager)> RectRegionMarker::sigContextMenuRequest()
 {
     return impl->sigContextMenuRequest;
 }

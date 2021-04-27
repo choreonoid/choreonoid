@@ -62,7 +62,7 @@ public:
     // If modeHandler is nullptr, any current custom mode is deactivated.
     void deactivateCustomMode(SceneWidgetEditable* modeHandler = nullptr);
 
-    const SceneWidgetEvent& latestEvent() const;
+    SceneWidgetEvent* latestEvent();
     Vector3 lastClickedPoint() const;
 
     enum ViewpointOperationMode {
@@ -142,7 +142,7 @@ public:
 
     Menu* contextMenu();
     void showContextMenuAtPointerPosition();
-    SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest();
+    SignalProxy<void(SceneWidgetEvent* event, MenuManager* menuManager)> sigContextMenuRequest();
 
     void showConfigDialog();
     QVBoxLayout* configDialogVBox();

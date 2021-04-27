@@ -300,7 +300,7 @@ public:
     QLabel* indicatorLabel;
 
     MenuManager menuManager;
-    Signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest;
+    Signal<void(SceneWidgetEvent* event, MenuManager* menuManager)> sigContextMenuRequest;
 
     Signal<void(bool isFocused)> sigWidgetFocusChanged;
     Signal<void()> sigAboutToBeDestroyed;
@@ -859,7 +859,7 @@ void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
         
         for(auto& editableNode : editableDifferences){
             if(editableNode == lastMouseMovedEditable){
-                lastMouseMovedEditable.editable->onPointerLeaveEvent(latestEvent);
+                lastMouseMovedEditable.editable->onPointerLeaveEvent(&latestEvent);
                 lastMouseMovedEditable.clear();
             }
             if(!focusedEditablePath.empty()){
@@ -1221,9 +1221,9 @@ void SceneWidget::deactivateCustomMode(SceneWidgetEditable* modeHandler)
 }
 
 
-const SceneWidgetEvent& SceneWidget::latestEvent() const
+SceneWidgetEvent* SceneWidget::latestEvent()
 {
-    return impl->latestEvent;
+    return &impl->latestEvent;
 }
 
 
@@ -1755,7 +1755,7 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
                     resetCursor();
                 }
                 if(lastMouseMovedEditable){
-                    lastMouseMovedEditable.editable->onPointerLeaveEvent(latestEvent);
+                    lastMouseMovedEditable.editable->onPointerLeaveEvent(&latestEvent);
                 }
                 lastMouseMovedEditable = mouseMovedEditable;
             }
@@ -1820,7 +1820,7 @@ void SceneWidget::Impl::findObjectNameFromChildren(SgObject* object, string& nam
 void SceneWidget::Impl::leaveEvent(QEvent* event)
 {
     if(lastMouseMovedEditable){
-        lastMouseMovedEditable.editable->onPointerLeaveEvent(latestEvent);
+        lastMouseMovedEditable.editable->onPointerLeaveEvent(&latestEvent);
         lastMouseMovedEditable.clear();
     }
 }
@@ -2262,7 +2262,7 @@ void SceneWidget::Impl::showViewModePopupMenu(const QPoint& globalPos)
 {
     menuManager.setNewPopupMenu(self);
     
-    sigContextMenuRequest(latestEvent, menuManager);
+    sigContextMenuRequest(&latestEvent, &menuManager);
 
     menuManager.setPath("/");
     menuManager.addItem(_("Edit Mode")) ->sigTriggered().connect([&](){ toggleEditMode(); });
@@ -2300,7 +2300,7 @@ void SceneWidget::Impl::showEditModePopupMenu(const QPoint& globalPos)
         setFocusToPointedEditablePath(editableToFocus);
     }
 
-    sigContextMenuRequest(latestEvent, menuManager);
+    sigContextMenuRequest(&latestEvent, &menuManager);
     if(menuManager.numItems() > prevNumItems){
         menuManager.addSeparator();
     }
@@ -2328,7 +2328,7 @@ void SceneWidget::showContextMenuAtPointerPosition()
 }
 
 
-SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)>
+SignalProxy<void(SceneWidgetEvent* event, MenuManager* menuManager)>
 SceneWidget::sigContextMenuRequest()
 {
     return impl->sigContextMenuRequest;

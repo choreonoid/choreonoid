@@ -163,12 +163,12 @@ public:
     void setMaterialParameters(AxisBitSet axisBitSet, float t, bool isHighlighted);
     void highlightAxes(AxisBitSet axisBitSet);
     void showDragMarkers(bool on, SgUpdateRef update);
-    AxisBitSet detectTargetAxes(const SceneWidgetEvent& event);
-    bool onButtonPressEvent(const SceneWidgetEvent& event);
+    AxisBitSet detectTargetAxes(SceneWidgetEvent* event);
+    bool onButtonPressEvent(SceneWidgetEvent* event);
     bool onTranslationDraggerPressed(
-        const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet);
+        SceneWidgetEvent* event, const Isometry3& T_global, AxisBitSet axisBitSet);
     bool onRotationDraggerPressed(
-        const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet);
+        SceneWidgetEvent* event, const Isometry3& T_global, AxisBitSet axisBitSet);
 };
 
 }
@@ -920,11 +920,11 @@ SignalProxy<void()> PositionDragger::sigDragFinished()
 }
 
 
-AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event)
+AxisBitSet PositionDragger::Impl::detectTargetAxes(SceneWidgetEvent* event)
 {
     AxisBitSet axisBitSet(0);
 
-    auto& path = event.nodePath();
+    auto& path = event->nodePath();
     for(size_t i=0; i < path.size(); ++i){
         if(path[i] == self){
             for(size_t j=i+1; j < path.size(); ++j){
@@ -943,16 +943,16 @@ AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event
     }
 
     if((axisBitSet & AxisBitSet(TRANSLATION_AXES)).any()){
-        const Isometry3 T_global = calcRelativePosition(event.nodePath(), self);
-        const Vector3 p_local = T_global.inverse() * event.point();
+        const Isometry3 T_global = calcRelativePosition(event->nodePath(), self);
+        const Vector3 p_local = T_global.inverse() * event->point();
         if(!isScreenFixedSizeMode){
-            double width = handleSize * unitHandleWidth * calcWidthRatio(event.pixelSizeRatio());
+            double width = handleSize * unitHandleWidth * calcWidthRatio(event->pixelSizeRatio());
             if(p_local.norm() < 1.5 * width){
                 axisBitSet |= AxisBitSet(TRANSLATION_AXES);
             }
         } else {
             double pixelWidth = handleSize * unitHandleWidth * fixedPixelSizeGroup->pixelSizeRatio();
-            if(p_local.norm() * event.pixelSizeRatio() < 1.5 * pixelWidth){
+            if(p_local.norm() * event->pixelSizeRatio() < 1.5 * pixelWidth){
                 axisBitSet |= AxisBitSet(TRANSLATION_AXES);
             }
         }
@@ -962,13 +962,13 @@ AxisBitSet PositionDragger::Impl::detectTargetAxes(const SceneWidgetEvent& event
 }
 
 
-bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
+bool PositionDragger::onButtonPressEvent(SceneWidgetEvent* event)
 {
     return impl->onButtonPressEvent(event);
 }
 
 
-bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
+bool PositionDragger::Impl::onButtonPressEvent(SceneWidgetEvent* event)
 {
     bool processed = false;
 
@@ -976,7 +976,7 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         return processed;
     }
 
-    auto& path = event.nodePath();
+    auto& path = event->nodePath();
     auto iter = std::find(path.begin(), path.end(), self);
     if(iter != path.end()){
         T_parent = calcRelativePosition(path.begin(), iter);
@@ -1015,7 +1015,7 @@ bool PositionDragger::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 
 
 bool PositionDragger::Impl::onTranslationDraggerPressed
-(const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet)
+(SceneWidgetEvent* event, const Isometry3& T_global, AxisBitSet axisBitSet)
 {
     bool processed = false;
 
@@ -1039,7 +1039,7 @@ bool PositionDragger::Impl::onTranslationDraggerPressed
 
 
 bool PositionDragger::Impl::onRotationDraggerPressed
-(const SceneWidgetEvent& event, const Isometry3& T_global, AxisBitSet axisBitSet)
+(SceneWidgetEvent* event, const Isometry3& T_global, AxisBitSet axisBitSet)
 {
     bool processed = false;
 
@@ -1059,7 +1059,7 @@ bool PositionDragger::Impl::onRotationDraggerPressed
 }
 
 
-bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
+bool PositionDragger::onButtonReleaseEvent(SceneWidgetEvent*)
 {
     if(impl->dragProjector.isDragging()){
         impl->sigDragFinished();
@@ -1070,7 +1070,7 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 }
 
 
-bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool PositionDragger::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     if(!impl->dragProjector.isDragging()){
         if(impl->isDragEnabled){
@@ -1091,7 +1091,7 @@ bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
+void PositionDragger::onPointerLeaveEvent(SceneWidgetEvent*)
 {
     if(impl->dragProjector.isDragging()){
         impl->sigDragFinished();
@@ -1102,7 +1102,7 @@ void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
 }
 
 
-void PositionDragger::onFocusChanged(const SceneWidgetEvent& event, bool on)
+void PositionDragger::onFocusChanged(SceneWidgetEvent* event, bool on)
 {
     if(isContainerMode()){
         if(impl->displayMode == DisplayInFocus){
@@ -1113,10 +1113,10 @@ void PositionDragger::onFocusChanged(const SceneWidgetEvent& event, bool on)
 }
 
 
-void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
+void PositionDragger::onSceneModeChanged(SceneWidgetEvent* event)
 {
     SgTmpUpdate update;
-    if(event.sceneWidget()->isEditMode()){
+    if(event->sceneWidget()->isEditMode()){
         impl->isEditMode = true;
         if(impl->displayMode == DisplayInEditMode){
             impl->showDragMarkers(true, update);

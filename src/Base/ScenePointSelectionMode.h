@@ -64,21 +64,21 @@ public:
     SignalProxy<void(const std::vector<PointInfoPtr>& points)> sigPointSelectionAdded();
 
 protected:
-    virtual std::vector<SgNode*> getTargetSceneNodes(const SceneWidgetEvent& event);
+    virtual std::vector<SgNode*> getTargetSceneNodes(SceneWidgetEvent* event);
 
-    //virtual void onSelectionModeActivated(const SceneWidgetEvent& event);
-    //virtual void onSelectionModeDeactivated(const SceneWidgetEvent& event);
+    //virtual void onSelectionModeActivated(SceneWidgetEvent* event);
+    //virtual void onSelectionModeDeactivated(SceneWidgetEvent* event);
 
     // SceneWidgetEditable functions
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event) override;
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event) override;
-    virtual bool onDoubleClickEvent(const SceneWidgetEvent& event) override;
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
-    virtual void onPointerLeaveEvent(const SceneWidgetEvent& event) override;
-    virtual bool onKeyPressEvent(const SceneWidgetEvent& event) override;
-    virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event) override;
-    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu) override;
+    virtual void onSceneModeChanged(SceneWidgetEvent* event) override;
+    virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
+    virtual bool onButtonReleaseEvent(SceneWidgetEvent* event) override;
+    virtual bool onDoubleClickEvent(SceneWidgetEvent* event) override;
+    virtual bool onPointerMoveEvent(SceneWidgetEvent* event) override;
+    virtual void onPointerLeaveEvent(SceneWidgetEvent* event) override;
+    virtual bool onKeyPressEvent(SceneWidgetEvent* event) override;
+    virtual bool onKeyReleaseEvent(SceneWidgetEvent* event) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu) override;
 
 private:
     Impl* impl;

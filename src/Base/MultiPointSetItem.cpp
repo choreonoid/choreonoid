@@ -52,11 +52,11 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     bool removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify);
     void notifyAttentionPointChange();
 
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
-    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
+    virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
+    virtual bool onPointerMoveEvent(SceneWidgetEvent* event) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager) override;
 
-    void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
+    void onContextMenuRequestInEraserMode(SceneWidgetEvent* event, MenuManager* menuManager);
     void onRegionFixed(const PolyhedralRegion& region);    
 };
 
@@ -668,7 +668,8 @@ SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItem::Impl* multiPointSetIte
     regionMarker->sigRegionFixed().connect(
         [&](const PolyhedralRegion& region){ onRegionFixed(region); });
     regionMarker->sigContextMenuRequest().connect(
-        [&](const SceneWidgetEvent& event, MenuManager& manager){ onContextMenuRequestInEraserMode(event, manager); });
+        [&](SceneWidgetEvent* event, MenuManager* manager){
+            onContextMenuRequestInEraserMode(event, manager); });
     isEditable = true;
 }
 
@@ -750,7 +751,7 @@ void SceneMultiPointSet::notifyAttentionPointChange()
 }
 
     
-bool SceneMultiPointSet::onButtonPressEvent(const SceneWidgetEvent& event)
+bool SceneMultiPointSet::onButtonPressEvent(SceneWidgetEvent* event)
 {
 	if(!isEditable){
         return false;
@@ -758,13 +759,13 @@ bool SceneMultiPointSet::onButtonPressEvent(const SceneWidgetEvent& event)
     
     bool processed = false;
     
-    if(event.button() == Qt::LeftButton){
-        if(event.modifiers() & Qt::ControlModifier){
-            if(!removeAttentionPoint(event.point(), 0.01, true)){
-                addAttentionPoint(event.point(), true);
+    if(event->button() == Qt::LeftButton){
+        if(event->modifiers() & Qt::ControlModifier){
+            if(!removeAttentionPoint(event->point(), 0.01, true)){
+                addAttentionPoint(event->point(), true);
             }
         } else {
-            setAttentionPoint(event.point(), true);
+            setAttentionPoint(event->point(), true);
         }
         processed = true;
     }
@@ -773,21 +774,21 @@ bool SceneMultiPointSet::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool SceneMultiPointSet::onPointerMoveEvent(const SceneWidgetEvent&)
+bool SceneMultiPointSet::onPointerMoveEvent(SceneWidgetEvent*)
 {
     return false;
 }
 
 
-bool SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool SceneMultiPointSet::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager)
 {
-    menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
+    menuManager->addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
         [&](){ clearAttentionPoints(true); });
 
     if(!regionMarker->isEditing()){
-        SceneWidget* sceneWidget = event.sceneWidget();
+        SceneWidget* sceneWidget = event->sceneWidget();
         eraserModeMenuItemConnection.reset(
-            menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
+            menuManager->addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
                 [&, sceneWidget](){ regionMarker->startEditing(sceneWidget); }));
     }
 
@@ -795,10 +796,10 @@ bool SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, Men
 }
 
 
-void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent&, MenuManager& menuManager)
+void SceneMultiPointSet::onContextMenuRequestInEraserMode(SceneWidgetEvent*, MenuManager* menuManager)
 {
     eraserModeMenuItemConnection.reset(
-        menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
+        menuManager->addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
             [&](){ regionMarker->finishEditing(); }));
 }
 

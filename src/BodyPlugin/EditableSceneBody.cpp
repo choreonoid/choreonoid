@@ -162,37 +162,37 @@ public:
     void attachPositionDragger(Link* link);
     void adjustPositionDraggerSize(Link* link, EditableSceneLink* sceneLink);
 
-    bool onKeyPressEvent(const SceneWidgetEvent& event);
-    bool onKeyReleaseEvent(const SceneWidgetEvent& event);
-    bool onButtonPressEvent(const SceneWidgetEvent& event);
-    bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    void onPointerLeaveEvent(const SceneWidgetEvent& event);
-    bool onScrollEvent(const SceneWidgetEvent& event);
-    bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
-    void onSceneModeChanged(const SceneWidgetEvent& event);
+    bool onKeyPressEvent(SceneWidgetEvent* event);
+    bool onKeyReleaseEvent(SceneWidgetEvent* event);
+    bool onButtonPressEvent(SceneWidgetEvent* event);
+    bool onButtonReleaseEvent(SceneWidgetEvent* event);
+    bool onPointerMoveEvent(SceneWidgetEvent* event);
+    void onPointerLeaveEvent(SceneWidgetEvent* event);
+    bool onScrollEvent(SceneWidgetEvent* event);
+    bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager);
+    void onSceneModeChanged(SceneWidgetEvent* event);
     void onDraggerDragStarted();
     void onDraggerDragged();
     void onDraggerDragFinished();
 
     bool initializeIK();
-    void startIK(const SceneWidgetEvent& event);
-    void dragIK(const SceneWidgetEvent& event);
+    void startIK(SceneWidgetEvent* event);
+    void dragIK(SceneWidgetEvent* event);
     void doIK(const Isometry3& position);
-    void startFK(const SceneWidgetEvent& event);
-    void dragFKRotation(const SceneWidgetEvent& event);
-    void dragFKTranslation(const SceneWidgetEvent& event);
-    void startLinkOperationDuringSimulation(const SceneWidgetEvent& event);
+    void startFK(SceneWidgetEvent* event);
+    void dragFKRotation(SceneWidgetEvent* event);
+    void dragFKTranslation(SceneWidgetEvent* event);
+    void startLinkOperationDuringSimulation(SceneWidgetEvent* event);
     void setForcedPositionMode(int mode, bool on);
-    void startVirtualElasticString(const SceneWidgetEvent& event);
-    void dragVirtualElasticString(const SceneWidgetEvent& event);
+    void startVirtualElasticString(SceneWidgetEvent* event);
+    void dragVirtualElasticString(SceneWidgetEvent* event);
     void finishVirtualElasticString();
-    void startForcedPosition(const SceneWidgetEvent& event);
+    void startForcedPosition(SceneWidgetEvent* event);
     void setForcedPosition(const Isometry3& position);
-    void dragForcedPosition(const SceneWidgetEvent& event);
+    void dragForcedPosition(SceneWidgetEvent* event);
     void finishForcedPosition();
-    void startZmpTranslation(const SceneWidgetEvent& event);
-    void dragZmpTranslation(const SceneWidgetEvent& event);
+    void startZmpTranslation(SceneWidgetEvent* event);
+    void dragZmpTranslation(SceneWidgetEvent* event);
     bool finishEditing();
     
     static bool storeProperties(Archive& archive);
@@ -1014,16 +1014,16 @@ void EditableSceneBody::Impl::adjustPositionDraggerSize(Link* link, EditableScen
 }
 
 
-void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
+void EditableSceneBody::onSceneModeChanged(SceneWidgetEvent* event)
 {
     impl->onSceneModeChanged(event);
 }
 
 
-void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::onSceneModeChanged(SceneWidgetEvent* event)
 {
     bool wasEditMode = isEditMode;
-    isEditMode = event.sceneWidget()->isEditMode();
+    isEditMode = event->sceneWidget()->isEditMode();
 
     if(isEditMode != wasEditMode){
         if(isEditMode){
@@ -1040,7 +1040,7 @@ void EditableSceneBody::Impl::onSceneModeChanged(const SceneWidgetEvent& event)
         }
     }
 
-    isHighlightingEnabled = event.sceneWidget()->isHighlightingEnabled();
+    isHighlightingEnabled = event->sceneWidget()->isHighlightingEnabled();
     enableHighlight(isHighlightingEnabled && isEditMode && isSelected);
 }
 
@@ -1072,22 +1072,22 @@ bool EditableSceneBody::Impl::finishEditing()
 }
 
 
-bool EditableSceneBody::onButtonPressEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::onButtonPressEvent(SceneWidgetEvent* event)
 {
     return impl->onButtonPressEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
 {
     if(highlightedLink){
         highlightedLink->enableHighlight(false);
         highlightedLink = nullptr;
     }
     
-    PointedType pointedType = findPointedObject(event.nodePath());
+    PointedType pointedType = findPointedObject(event->nodePath());
 
-    if(pointedType == PT_ZMP && event.button() == Qt::LeftButton){
+    if(pointedType == PT_ZMP && event->button() == Qt::LeftButton){
         startZmpTranslation(event);
         return true;
     }    
@@ -1101,7 +1101,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
     bool doEnableHighlight = false;
     auto bsm = BodySelectionManager::instance();
         
-    if(event.button() == Qt::RightButton){
+    if(event->button() == Qt::RightButton){
         // The context menu is about to be shown
         bsm->setCurrent(bodyItem, targetLink, true);
         doEnableHighlight = true;
@@ -1128,7 +1128,7 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
         startLinkOperationDuringSimulation(event);
         handled = true;
     } else {
-        if(event.button() == Qt::LeftButton){
+        if(event->button() == Qt::LeftButton){
             updateMarkersAndManipulators(true);
 
             //if(!bodyItem->isAttachedToParentBody()){
@@ -1159,13 +1159,13 @@ bool EditableSceneBody::Impl::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool EditableSceneBody::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::onButtonReleaseEvent(SceneWidgetEvent* event)
 {
     return impl->onButtonReleaseEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::Impl::onButtonReleaseEvent(SceneWidgetEvent* event)
 {
     bool handled = finishEditing();
 
@@ -1178,7 +1178,7 @@ bool EditableSceneBody::Impl::onButtonReleaseEvent(const SceneWidgetEvent& event
 }
 
 
-bool EditableSceneBody::onDoubleClickEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::onDoubleClickEvent(SceneWidgetEvent* event)
 {
     if(impl->targetLink){
         if(impl->checkLinkKinematicsType(impl->targetLink, false) != LinkOperationType::None){
@@ -1195,8 +1195,8 @@ bool EditableSceneBody::onDoubleClickEvent(const SceneWidgetEvent& event)
 /*
 bool EditableSceneBody::Impl::makePointedLinkCurrent()
 {
-    if(event.button() == Qt::LeftButton){
-        if(findPointedObject(event.nodePath()) == PT_SCENE_LINK){
+    if(event->button() == Qt::LeftButton){
+        if(findPointedObject(event->nodePath()) == PT_SCENE_LINK){
             BodySelectionManager::instance()->setCurrent(bodyItem, targetLink, true);
             return true
         }
@@ -1206,18 +1206,18 @@ bool EditableSceneBody::Impl::makePointedLinkCurrent()
 */
 
 
-bool EditableSceneBody::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     return impl->onPointerMoveEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     if(dragMode == DRAG_NONE){
-        findPointedObject(event.nodePath());
+        findPointedObject(event->nodePath());
         if(!pointedSceneLink){
-            event.updateIndicator("");
+            event->updateIndicator("");
         } else {
             if(checkLinkOperationType(pointedSceneLink, false) != LinkOperationType::None){
                 if(pointedSceneLink != highlightedLink){
@@ -1228,8 +1228,8 @@ bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
                     highlightedLink = pointedSceneLink;
                 }
             }
-            const Vector3 p = pointedSceneLink->T().inverse() * event.point();
-            event.updateIndicator(
+            const Vector3 p = pointedSceneLink->T().inverse() * event->point();
+            event->updateIndicator(
                 fmt::format("{0} / {1} : ({2:.3f}, {3:.3f}, {4:.3f})",
                             bodyItem->displayName(), pointedSceneLink->link()->name(),
                             p.x(), p.y(), p.z()));
@@ -1274,13 +1274,13 @@ bool EditableSceneBody::Impl::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-void EditableSceneBody::onPointerLeaveEvent(const SceneWidgetEvent& event)
+void EditableSceneBody::onPointerLeaveEvent(SceneWidgetEvent* event)
 {
     return impl->onPointerLeaveEvent(event);
 }
 
 
-void EditableSceneBody::Impl::onPointerLeaveEvent(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::onPointerLeaveEvent(SceneWidgetEvent* event)
 {
     if(highlightedLink){
         highlightedLink->enableHighlight(false);
@@ -1289,25 +1289,25 @@ void EditableSceneBody::Impl::onPointerLeaveEvent(const SceneWidgetEvent& event)
 }
 
 
-bool EditableSceneBody::onScrollEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::onScrollEvent(SceneWidgetEvent* event)
 {
     return impl->onScrollEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onScrollEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::Impl::onScrollEvent(SceneWidgetEvent* event)
 {
     return false;
 }
 
 
-bool EditableSceneBody::onKeyPressEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::onKeyPressEvent(SceneWidgetEvent* event)
 {
     return impl->onKeyPressEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onKeyPressEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::Impl::onKeyPressEvent(SceneWidgetEvent* event)
 {
     if(!highlightedLink){
         return false;
@@ -1315,7 +1315,7 @@ bool EditableSceneBody::Impl::onKeyPressEvent(const SceneWidgetEvent& event)
 
     bool handled = true;
 
-    switch(event.key()){
+    switch(event->key()){
     case Qt::Key_B:
         toggleBaseLink(highlightedLink);
         break;
@@ -1338,19 +1338,19 @@ bool EditableSceneBody::Impl::onKeyPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool EditableSceneBody::onKeyReleaseEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::onKeyReleaseEvent(SceneWidgetEvent* event)
 {
     return impl->onKeyReleaseEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onKeyReleaseEvent(const SceneWidgetEvent& event)
+bool EditableSceneBody::Impl::onKeyReleaseEvent(SceneWidgetEvent* event)
 {
     return false;
 }
 
 
-void EditableSceneBody::onFocusChanged(const SceneWidgetEvent& event, bool on)
+void EditableSceneBody::onFocusChanged(SceneWidgetEvent* event, bool on)
 {
     impl->isFocused = on;
     if(!on){
@@ -1359,21 +1359,21 @@ void EditableSceneBody::onFocusChanged(const SceneWidgetEvent& event, bool on)
 }
 
 
-bool EditableSceneBody::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool EditableSceneBody::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager)
 {
     return impl->onContextMenuRequest(event, menuManager);
 }
 
 
-bool EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& mm)
+bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* mm)
 {
-    PointedType pointedType = findPointedObject(event.nodePath());
+    PointedType pointedType = findPointedObject(event->nodePath());
 
     if(pointedType != PT_SCENE_LINK){
         return false;
     }
 
-    auto locationLockCheck = mm.addCheckItem(_("Lock location"));
+    auto locationLockCheck = mm->addCheckItem(_("Lock location"));
     locationLockCheck->setChecked(!bodyItem->isLocationEditable());
     locationLockCheck->sigToggled().connect(
         [&](bool on){ bodyItem->setLocationEditable(!on); });
@@ -1381,39 +1381,39 @@ bool EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
         if(pointedSceneLink->link()->isRoot() && bodyItem->isLocationEditable()){
-            Action* item1 = mm.addCheckItem(_("Move Forcibly"));
+            Action* item1 = mm->addCheckItem(_("Move Forcibly"));
             item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
             item1->sigToggled().connect(
                 [&](bool on){ setForcedPositionMode(MOVE_FORCED_POSITION, on); });
                     
-            Action* item2 = mm.addCheckItem(_("Hold Forcibly"));
+            Action* item2 = mm->addCheckItem(_("Hold Forcibly"));
             item2->setChecked(forcedPositionMode == KEEP_FORCED_POSITION);
             item2->sigToggled().connect(
                 [&](bool on){ setForcedPositionMode(KEEP_FORCED_POSITION, on); });
                     
-            mm.addSeparator();
+            mm->addSeparator();
         }
     } else {
-        mm.addItem(_("Set Free"))->sigTriggered().connect(
+        mm->addItem(_("Set Free"))->sigTriggered().connect(
             [&](){ makeLinkFree(pointedSceneLink); });
-        mm.addItem(_("Set Base"))->sigTriggered().connect(
+        mm->addItem(_("Set Base"))->sigTriggered().connect(
             [&](){ setBaseLink(pointedSceneLink); });
-        mm.addItem(_("Set Translation Pin"))->sigTriggered().connect(
+        mm->addItem(_("Set Translation Pin"))->sigTriggered().connect(
             [&](){ togglePin(pointedSceneLink, true, false); });
-        mm.addItem(_("Set Rotation Pin"))->sigTriggered().connect(
+        mm->addItem(_("Set Rotation Pin"))->sigTriggered().connect(
             [&](){ togglePin(pointedSceneLink, false, true); });
-        mm.addItem(_("Set Both Pins"))->sigTriggered().connect(
+        mm->addItem(_("Set Both Pins"))->sigTriggered().connect(
             [&](){ togglePin(pointedSceneLink, true, true); });
                 
-        mm.addSeparator();
+        mm->addSeparator();
             
-        mm.addItem(_("Level Attitude"))->sigTriggered().connect(
+        mm->addItem(_("Level Attitude"))->sigTriggered().connect(
             [&](){ makeLinkAttitudeLevel(); });
             
-        mm.addSeparator();
+        mm->addSeparator();
     }
 
-    mm.setPath(_("Markers"));
+    mm->setPath(_("Markers"));
 
     auto linkOriginAction = new CheckBoxAction(_("Link Origins"));
     int checkState = Qt::Unchecked;
@@ -1433,23 +1433,23 @@ bool EditableSceneBody::Impl::onContextMenuRequest(const SceneWidgetEvent& event
     } else {
         check->setCheckState(Qt::PartiallyChecked);
     }
-    mm.addAction(linkOriginAction);
+    mm->addAction(linkOriginAction);
     check->sigToggled().connect([&](bool on){ onLinkOriginsCheckChanged(on); });
         
-    auto item = mm.addCheckItem(_("Center of Mass"));
+    auto item = mm->addCheckItem(_("Center of Mass"));
     item->setChecked(isCmVisible);
     item->sigToggled().connect([&](bool on){ showCenterOfMass(on); });
             
-    item = mm.addCheckItem(_("Projection Point of CoM"));
+    item = mm->addCheckItem(_("Projection Point of CoM"));
     item->setChecked(isPpcomVisible);
     item->sigToggled().connect([&](bool on){ showPpcom(on); });
             
-    item = mm.addCheckItem(_("ZMP"));
+    item = mm->addCheckItem(_("ZMP"));
     item->setChecked(isZmpVisible);
     item->sigToggled().connect([&](bool on){ showZmp(on); });
 
-    mm.setPath("/");
-    mm.addSeparator();
+    mm->setPath("/");
+    mm->addSeparator();
 
     return true;
 }
@@ -1519,7 +1519,7 @@ bool EditableSceneBody::Impl::initializeIK()
 }
 
 
-void EditableSceneBody::Impl::startIK(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::startIK(SceneWidgetEvent* event)
 {
     Body* body = self->body();
     Link* baseLink = bodyItem->currentBaseLink();
@@ -1543,7 +1543,7 @@ void EditableSceneBody::Impl::startIK(const SceneWidgetEvent& event)
 }
 
 
-void EditableSceneBody::Impl::dragIK(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::dragIK(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         //Position T = dragProjector.initialPosition();
@@ -1573,7 +1573,7 @@ void EditableSceneBody::Impl::doIK(const Isometry3& position)
 }
 
 
-void EditableSceneBody::Impl::startFK(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::startFK(SceneWidgetEvent* event)
 {
     dragProjector.setInitialPosition(targetLink->position());
     
@@ -1594,7 +1594,7 @@ void EditableSceneBody::Impl::startFK(const SceneWidgetEvent& event)
 }
 
 
-void EditableSceneBody::Impl::dragFKRotation(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragRotation(event)){
         targetLink->q() = orgJointPosition + dragProjector.rotationAngle();
@@ -1604,7 +1604,7 @@ void EditableSceneBody::Impl::dragFKRotation(const SceneWidgetEvent& event)
 }
 
 
-void EditableSceneBody::Impl::dragFKTranslation(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         targetLink->q() = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
@@ -1614,9 +1614,9 @@ void EditableSceneBody::Impl::dragFKTranslation(const SceneWidgetEvent& event)
 }
 
 
-void EditableSceneBody::Impl::startLinkOperationDuringSimulation(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::startLinkOperationDuringSimulation(SceneWidgetEvent* event)
 {
-    if(event.button() == Qt::LeftButton){
+    if(event->button() == Qt::LeftButton){
         if(targetLink->isRoot() && (forcedPositionMode != NO_FORCED_POSITION)){
             startForcedPosition(event);
         } else {
@@ -1638,9 +1638,9 @@ void EditableSceneBody::Impl::setForcedPositionMode(int mode, bool on)
 }
 
 
-void EditableSceneBody::Impl::startVirtualElasticString(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::startVirtualElasticString(SceneWidgetEvent* event)
 {
-    const Vector3& point = event.point();
+    const Vector3& point = event->point();
     dragProjector.setInitialTranslation(point);
     dragProjector.setTranslationAlongViewPlane();
     if(dragProjector.startTranslation(event)){
@@ -1653,7 +1653,7 @@ void EditableSceneBody::Impl::startVirtualElasticString(const SceneWidgetEvent& 
 }
 
 
-void EditableSceneBody::Impl::dragVirtualElasticString(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::dragVirtualElasticString(SceneWidgetEvent* event)
 {
     if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
         SimulatorItem* simulatorItem = activeSimulatorItem.lock();
@@ -1661,9 +1661,9 @@ void EditableSceneBody::Impl::dragVirtualElasticString(const SceneWidgetEvent& e
             Vector3 p = targetLink->T() * pointedLinkLocalPoint;
             Vector3 d = dragProjector.position().translation() - p;
             double k = 2.0;
-            if(event.modifiers() & Qt::ShiftModifier){
+            if(event->modifiers() & Qt::ShiftModifier){
                 k *= 10.0;
-                if(event.modifiers() & Qt::ControlModifier){
+                if(event->modifiers() & Qt::ControlModifier){
                     k *= 10.0;
                 }
             }
@@ -1687,7 +1687,7 @@ void EditableSceneBody::Impl::finishVirtualElasticString()
 }
 
 
-void EditableSceneBody::Impl::startForcedPosition(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::startForcedPosition(SceneWidgetEvent* event)
 {
     finishForcedPosition();
     updateMarkersAndManipulators(true);
@@ -1710,7 +1710,7 @@ void EditableSceneBody::Impl::setForcedPosition(const Isometry3& position)
 }
     
     
-void EditableSceneBody::Impl::dragForcedPosition(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::dragForcedPosition(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         Isometry3 T;
@@ -1732,7 +1732,7 @@ void EditableSceneBody::Impl::finishForcedPosition()
 }
 
 
-void EditableSceneBody::Impl::startZmpTranslation(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::startZmpTranslation(SceneWidgetEvent* event)
 {
     dragProjector.setInitialTranslation(bodyItem->zmp());
     dragProjector.setTranslationPlaneNormal(Vector3::UnitZ());
@@ -1742,7 +1742,7 @@ void EditableSceneBody::Impl::startZmpTranslation(const SceneWidgetEvent& event)
 }
 
 
-void EditableSceneBody::Impl::dragZmpTranslation(const SceneWidgetEvent& event)
+void EditableSceneBody::Impl::dragZmpTranslation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         Vector3 p = dragProjector.position().translation();

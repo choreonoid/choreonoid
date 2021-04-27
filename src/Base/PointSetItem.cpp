@@ -66,10 +66,10 @@ public:
     bool isEditable() const { return isEditable_; }
     void setEditable(bool on) { isEditable_ = on; }
 
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) override;
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) override;
-    virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) override;
-    void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
+    virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
+    virtual bool onPointerMoveEvent(SceneWidgetEvent* event) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager) override;
+    void onContextMenuRequestInEraserMode(SceneWidgetEvent* event, MenuManager* menuManager);
     void onRegionFixed(const PolyhedralRegion& region);
 };
 
@@ -142,8 +142,10 @@ void PointSetItem::initializeClass(ExtensionManager* ext)
         im.addCreationPanel<PointSetItem>();
         im.addLoaderAndSaver<PointSetItem>(
             _("Point Cloud (PCD)"), "PCD-FILE", "pcd",
-            [](PointSetItem* item, const std::string& filename, std::ostream& os, Item*){ return ::loadPCD(item, filename, os); },
-            [](PointSetItem* item, const std::string& filename, std::ostream& os, Item*){ return ::saveAsPCD(item, filename, os); },
+            [](PointSetItem* item, const std::string& filename, std::ostream& os, Item*){
+                return ::loadPCD(item, filename, os); },
+            [](PointSetItem* item, const std::string& filename, std::ostream& os, Item*){
+                return ::saveAsPCD(item, filename, os); },
             ItemManager::PRIORITY_CONVERSION);
         
         initialized = true;
@@ -653,7 +655,8 @@ ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
     regionMarker->sigRegionFixed().connect(
         [&](const PolyhedralRegion& region){ onRegionFixed(region); });
     regionMarker->sigContextMenuRequest().connect(
-        [&](const SceneWidgetEvent& event, MenuManager& manager){ onContextMenuRequestInEraserMode(event, manager); });
+        [&](SceneWidgetEvent* event, MenuManager* manager){
+            onContextMenuRequestInEraserMode(event, manager); });
 
     isEditable_ = false;
 }
@@ -893,7 +896,7 @@ void ScenePointSet::updateVoxels()
 }
 
 
-bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
+bool ScenePointSet::onButtonPressEvent(SceneWidgetEvent* event)
 {
     if(!isEditable_){
         return false;
@@ -901,13 +904,13 @@ bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
     
     bool processed = false;
     
-    if(event.button() == Qt::LeftButton){
-        if(event.modifiers() & Qt::ControlModifier){
-            if(!removeAttentionPoint(event.point(), 0.01, true)){
-                addAttentionPoint(event.point(), true);
+    if(event->button() == Qt::LeftButton){
+        if(event->modifiers() & Qt::ControlModifier){
+            if(!removeAttentionPoint(event->point(), 0.01, true)){
+                addAttentionPoint(event->point(), true);
             }
         } else {
-            setAttentionPoint(event.point(), true);
+            setAttentionPoint(event->point(), true);
         }
         processed = true;
     }
@@ -916,22 +919,22 @@ bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool ScenePointSet::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool ScenePointSet::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     return false;
 }
 
 
-bool ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+bool ScenePointSet::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager)
 {
     if(isEditable_){
-        menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
+        menuManager->addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
             [&](){ clearAttentionPoints(true); });
 
         if(!regionMarker->isEditing()){
-            SceneWidget* sceneWidget = event.sceneWidget();
+            SceneWidget* sceneWidget = event->sceneWidget();
             eraserModeMenuItemConnection.reset(
-                menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
+                menuManager->addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
                     [&, sceneWidget](){ regionMarker->startEditing(sceneWidget); }));
         }
         return true;
@@ -940,10 +943,10 @@ bool ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuMana
 }
 
 
-void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent&, MenuManager& menuManager)
+void ScenePointSet::onContextMenuRequestInEraserMode(SceneWidgetEvent*, MenuManager* menuManager)
 {
     eraserModeMenuItemConnection.reset(
-        menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
+        menuManager->addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
             [&](){ regionMarker->finishEditing(); }));
 }
 

@@ -42,12 +42,12 @@ public:
     void setTranslationPlaneNormal(const Vector3& normal);
     void setTranslationAlongViewPlane();
 
-    bool startRotation(const SceneWidgetEvent& event);
-    bool startTranslation(const SceneWidgetEvent& event);
+    bool startRotation(SceneWidgetEvent* event);
+    bool startTranslation(SceneWidgetEvent* event);
 
-    bool drag(const SceneWidgetEvent& event);
-    bool dragRotation(const SceneWidgetEvent& event);
-    bool dragTranslation(const SceneWidgetEvent& event);
+    bool drag(SceneWidgetEvent* event);
+    bool dragRotation(SceneWidgetEvent* event);
+    bool dragTranslation(SceneWidgetEvent* event);
 
     const Vector3& projectedPoint() const;
     const Isometry3& position() const;
