@@ -134,6 +134,7 @@ public:
     void getItemsIter(ItwItem* itwItem, ItemList<>& itemList);
     ItemList<> getSelectedItems() const;
     void selectAllItems();
+    bool unselectItemsInOtherWidgetsInSelectionSyncGroup();
     void clearSelection();
     void setSelectedItemsChecked(bool on);
     void toggleSelectedItemChecks();
@@ -149,7 +150,6 @@ public:
     void onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end);
     void revertItemPosition(Item* item);
     void onTreeWidgetSelectionChanged();
-    void unselectItemsInOtherWidgetsInSelectionSyncGroup();
     void updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet);
     void onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void setItwItemSelected(ItwItem* itwItem, bool on);
@@ -1034,6 +1034,35 @@ ItemList<> ItemTreeWidget::Impl::getSelectedItems() const
 }
 
 
+bool ItemTreeWidget::selectOnly(Item* item)
+{
+    bool selectionChanged = false;
+    
+    impl->projectRootItem->beginItemSelectionChanges();
+    
+    selectionChanged = impl->unselectItemsInOtherWidgetsInSelectionSyncGroup();
+
+    bool isSelected = false;
+    for(auto& selected : impl->getSelectedItems()){
+        if(selected == item){
+            isSelected = true;
+        } else {
+            selected->setSelected(false);
+        }
+    }
+    if(!isSelected){
+        if(impl->findItwItem(item)){
+            item->setSelected(true, true);
+            selectionChanged = true;
+        }
+    }
+
+    impl->projectRootItem->endItemSelectionChanges();
+    
+    return selectionChanged;
+}
+
+
 void ItemTreeWidget::selectAllItems()
 {
     impl->selectAllItems();
@@ -1055,31 +1084,42 @@ void ItemTreeWidget::Impl::selectAllItems()
 }
 
 
-bool ItemTreeWidget::selectOnly(Item* item)
+// Returns true if some items are unselected
+bool ItemTreeWidget::Impl::unselectItemsInOtherWidgetsInSelectionSyncGroup()
 {
-    impl->projectRootItem->beginItemSelectionChanges();
+    bool selectionChanged = false;
     
-    impl->unselectItemsInOtherWidgetsInSelectionSyncGroup();
-
-    bool isSelected = false;
-    for(auto& selected : impl->getSelectedItems()){
-        if(selected == item){
-            isSelected = true;
-        } else {
-            selected->setSelected(false);
+    if(pSelectionSyncGroup){
+        vector<Item*> itemsToUnselect;
+        for(auto item : projectRootItem->selectedItems()){
+            bool isSelfMember = false;
+            bool isAnotherMember = false;
+            if(findItwItem(item)){
+                isSelfMember = true;
+            } else {
+                for(auto& treeWidget : *pSelectionSyncGroup){
+                    if(treeWidget != this){
+                        if(treeWidget->findItwItem(item)){
+                            isAnotherMember = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if(!isSelfMember && isAnotherMember){
+                itemsToUnselect.push_back(item);
+            }
+        }
+        if(!itemsToUnselect.empty()){
+            for(auto& item : itemsToUnselect){
+                item->setSelected(false);
+            }
+            selectionChanged = true;
         }
     }
-    if(!isSelected){
-        if(impl->findItwItem(item)){
-            item->setSelected(true, true);
-            isSelected = true;
-        }
-    }
 
-    impl->projectRootItem->endItemSelectionChanges();
-    
-    return isSelected;
-}
+    return selectionChanged;
+}        
 
 
 void ItemTreeWidget::clearSelection()
@@ -1450,34 +1490,6 @@ void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
         sigSelectionChanged(items);
     }
 }
-
-
-void ItemTreeWidget::Impl::unselectItemsInOtherWidgetsInSelectionSyncGroup()
-{
-    if(pSelectionSyncGroup){
-        vector<Item*> itemsToUnselect;
-        for(auto item : projectRootItem->selectedItems()){
-            bool isSelfMember = false;
-            bool isAnotherMember = false;
-            if(findItwItem(item)){
-                isSelfMember = true;
-            } else {
-                for(auto& another : *pSelectionSyncGroup){
-                    if(another->findItwItem(item)){
-                        isAnotherMember = true;
-                        break;
-                    }
-                }
-            }
-            if(!isSelfMember && isAnotherMember){
-                itemsToUnselect.push_back(item);
-            }
-        }
-        for(auto& item : itemsToUnselect){
-            item->setSelected(false);
-        }
-    }
-}        
 
 
 void ItemTreeWidget::Impl::updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet)

@@ -9,6 +9,7 @@ namespace cnoid {
 
 class BodyItem;
 class Link;
+class ItemTreeWidget;
 
 class CNOID_EXPORT BodySelectionManager
 {
@@ -27,6 +28,7 @@ public:
     BodyItem* currentBodyItem();
     Link* currentLink();
     void setCurrent(BodyItem* bodyItem, Link* link = nullptr, bool doSelectBodyItem = false);
+    void setItemTreeWidgetToSelectCurrentBodyItem(ItemTreeWidget* itemTreeWidget);
 
     SignalProxy<void(const ItemList<BodyItem>& selected)> sigSelectedBodyItemsChanged();
     const ItemList<BodyItem>& selectedBodyItems() const;

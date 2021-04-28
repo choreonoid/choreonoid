@@ -3,6 +3,7 @@
 #include <cnoid/ExtensionManager>
 #include <cnoid/TargetItemPicker>
 #include <cnoid/RootItem>
+#include <cnoid/ItemTreeWidget>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Link>
 #include <cnoid/Archive>
@@ -35,6 +36,7 @@ public:
     string preferredLinkName;
     BodyItemInfoPtr currentInfo;
     unordered_map<BodyItemPtr, BodyItemInfoPtr> bodyItemInfoMap;
+    ItemTreeWidget* itemTreeWidgetToSelectCurrentBodyItem;
 
     Signal<void(BodyItem* bodyItem, Link* link)> sigCurrentSpecified;
     Signal<void(BodyItem* bodyItem)> sigCurrentBodyItemSpecified;
@@ -87,6 +89,8 @@ BodySelectionManager::Impl::Impl()
         targetBodyItemPicker.sigSelectedItemsChanged().connect(
             [&](const ItemList<BodyItem>& bodyItems){
                 sigSelectedBodyItemsChanged(bodyItems); }));
+
+    itemTreeWidgetToSelectCurrentBodyItem = nullptr;
 }
 
 
@@ -154,6 +158,12 @@ Link* BodySelectionManager::Impl::getCurrentLink()
 }
 
 
+void BodySelectionManager::setItemTreeWidgetToSelectCurrentBodyItem(ItemTreeWidget* itemTreeWidget)
+{
+    impl->itemTreeWidgetToSelectCurrentBodyItem = itemTreeWidget;
+}
+
+
 void BodySelectionManager::setCurrent(BodyItem* bodyItem, Link* link, bool doSelectBodyItem)
 {
     impl->setCurrentBodyItem(bodyItem, link, doSelectBodyItem);
@@ -201,14 +211,20 @@ void BodySelectionManager::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* li
     if(doSelectBodyItem && bodyItem){
         bool selectionChanged = false;
         pickerConnections.block();
-        for(auto& item : RootItem::instance()->descendantItems<BodyItem>()){
-            bool on = item == bodyItem;
-            if(on != item->isSelected()){
-                item->setSelected(on, true);
-                selectionChanged = true;
+
+        if(itemTreeWidgetToSelectCurrentBodyItem){
+            selectionChanged = itemTreeWidgetToSelectCurrentBodyItem->selectOnly(bodyItem);
+        } else {
+            for(auto& item : RootItem::instance()->descendantItems<BodyItem>()){
+                bool on = item == bodyItem;
+                if(on != item->isSelected()){
+                    item->setSelected(on, true);
+                    selectionChanged = true;
+                }
             }
         }
         pickerConnections.unblock();
+        
         if(selectionChanged){
             sigSelectedBodyItemsChanged(targetBodyItemPicker.selectedItems());
         }

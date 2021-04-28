@@ -125,8 +125,11 @@ public:
     template <class ItemType> ItemList<ItemType> getSelectedItems() {
         return getSelectedItems();
     }
-    void selectAllItems();
+
+    //! \return true if the selected items are changed
     bool selectOnly(Item* item);
+    
+    void selectAllItems();
     void clearSelection();
     void setSelectedItemsChecked(bool on);
     void toggleSelectedItemChecks();
