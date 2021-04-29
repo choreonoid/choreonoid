@@ -45,11 +45,6 @@ enum FrameType { BaseFrame, OffsetFrame };
 class ConfTreeWidget : public TreeWidget
 {
 public:
-    /*
-    QModelIndex indexFromItem(const QTreeWidgetItem* item, int column = 0) const {
-        return QTreeWidget::indexFromItem(item, column);
-    }
-    */
     virtual QSize sizeHint() const override;
 };
 
@@ -124,9 +119,9 @@ public:
 
     PositionWidget* positionWidget;
 
-    string defaultCoordName[2];
     QLabel frameComboLabel[2];
     ComboBox frameCombo[2];
+    bool isFrameComboEnabled[2];
     
     QLabel configurationLabel;
     vector<int> currentConfigurationTypes;
@@ -145,7 +140,7 @@ public:
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
     void onKinematicsModeChanged();
-    void setCoordinateFrameInterfaceEnabled(bool isBaseEnabled, bool isOffsetEnabled);
+    void setCoordinateFrameInterfaceEnabled(int frameComboIndex, bool isEnabled);
     void updateCoordinateFrameCandidates();
     void updateCoordinateFrameCandidates(int frameComboIndex);
     void updateCoordinateFrameComboItems(
@@ -255,11 +250,10 @@ void LinkPositionWidget::Impl::createPanel()
     coordinateMode = WorldCoordinateMode;
     preferredCoordinateMode = BodyCoordinateMode;
 
-    coordinateModeGroup.sigButtonToggled().connect(
-        [&](int id, bool checked){
-            if(checked){
-                setCoordinateMode(id, true, true);
-            }
+    coordinateModeGroup.sigButtonClicked().connect(
+        [&](int /* id */){
+            int mode = coordinateModeGroup.checkedId();
+            setCoordinateMode(mode, true, true);
         });
     
     hbox->addStretch();
@@ -296,6 +290,10 @@ void LinkPositionWidget::Impl::createPanel()
             [=](int index){ onFrameComboActivated(i, index); });
         
         grid->addWidget(&frameCombo[i], row + i, 1, 1, 2);
+
+        frameComboLabel[i].setEnabled(false);
+        frameCombo[i].setEnabled(false);
+        isFrameComboEnabled[i] = false;
     }
     row += 2;
 
@@ -358,17 +356,8 @@ void LinkPositionWidget::Impl::setCoordinateMode(int mode, bool doUpdatePreferre
     bool isValid = false;
     
     coordinateModeGroup.blockSignals(true);
-    
-    if(mode == WorldCoordinateMode){
-        worldCoordRadio.setChecked(true);
-        isValid = true;
 
-    } else if(mode == BodyCoordinateMode){
-        if(bodyCoordRadio.isEnabled()){
-            bodyCoordRadio.setChecked(true);
-            isValid = true;
-        }
-    } else if(mode == LocalCoordinateMode){
+    if(mode == LocalCoordinateMode){
         localCoordRadio.setChecked(true);
         if(targetLink){
             T_local0 = targetLink->T() * offsetFrame->T();
@@ -376,15 +365,26 @@ void LinkPositionWidget::Impl::setCoordinateMode(int mode, bool doUpdatePreferre
         }
         positionWidget->setReferenceRpy(Vector3::Zero());
         isValid = true;
+
+    } else if(mode == BodyCoordinateMode){
+        if(bodyCoordRadio.isEnabled()){
+            bodyCoordRadio.setChecked(true);
+            isValid = true;
+        }
+    }
+    if(!isValid){
+        if(mode != WorldCoordinateMode){
+            mode = WorldCoordinateMode;
+            doUpdatePreferredMode = false;
+        }
+        worldCoordRadio.setChecked(true);
+        isValid = true;
     }
 
     coordinateModeGroup.blockSignals(false);
 
     if(isValid){
-        if(mode != coordinateMode){
-            coordinateMode = mode;
-            updateCoordinateFrameCandidates();
-        }
+        coordinateMode = mode;
         if(doUpdatePreferredMode){
             preferredCoordinateMode = mode;
         }
@@ -522,20 +522,12 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
     targetLink = link;
     kinematicsKit.reset();
     kinematicsKitConnections.disconnect();
-    bool hasBaseFrames = false;
-    bool hasOffsetFrames = false;
+    baseFrame = identityFrame;
+    offsetFrame = identityFrame;
     bool isBodyCoordinateModeEnabled = false;
     
     if(targetLink){
-
         auto body = targetBodyItem->body();
-
-        if(defaultCoordName[BaseFrame].empty()){
-            defaultCoordName[BaseFrame] = _("Origin");
-        }
-        if(defaultCoordName[OffsetFrame].empty()){
-            defaultCoordName[OffsetFrame] = _("No Offset");
-        }
 
         kinematicsKit = targetBodyItem->getCurrentLinkKinematicsKit(targetLink);
         if(kinematicsKit){
@@ -547,25 +539,22 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
                     [&](const Isometry3& T_frameCoordinate){
                         onKinematicsKitPositionError(T_frameCoordinate); }));
 
-            hasBaseFrames = kinematicsKit->baseFrames();
-            hasOffsetFrames = kinematicsKit->offsetFrames();
-
-            if(kinematicsKit->baseLink() && link != kinematicsKit->baseLink() && hasBaseFrames){
+            if(kinematicsKit->baseLink() && link != kinematicsKit->baseLink()){
                 isBodyCoordinateModeEnabled = true;
             }
-
             baseFrame = kinematicsKit->currentBaseFrame();
             offsetFrame = kinematicsKit->currentOffsetFrame();
         }
     }
 
     self->setEnabled(kinematicsKit != nullptr);
-    setCoordinateFrameInterfaceEnabled(hasBaseFrames, hasOffsetFrames);
-    resultLabel.setText("");
-
+    isFrameComboEnabled[BaseFrame] = isBodyCoordinateModeEnabled;
+    isFrameComboEnabled[OffsetFrame] = true;
     updateCoordinateFrameCandidates();
     bodyCoordRadio.setEnabled(isBodyCoordinateModeEnabled);
     setCoordinateMode(preferredCoordinateMode, false, false);
+
+    resultLabel.setText("");
 
     initializeConfigurationInterface();
 }
@@ -579,18 +568,15 @@ void LinkPositionWidget::Impl::onKinematicsModeChanged()
 }
 
 
-void LinkPositionWidget::Impl::setCoordinateFrameInterfaceEnabled(bool isBaseEnabled, bool isOffsetEnabled)
+void LinkPositionWidget::Impl::setCoordinateFrameInterfaceEnabled(int frameComboIndex, bool isEnabled)
 {
-    bool on[] = { isBaseEnabled, isOffsetEnabled };
-    for(int i=0; i < 2; ++i){
-        frameComboLabel[i].setEnabled(on[i]);
-        frameCombo[i].setEnabled(on[i]);
-        if(!on[i]){
-            frameCombo[i].clear();
-        }
+    auto& combo = frameCombo[frameComboIndex];
+    if(isEnabled != combo.isEnabled()){
+        combo.setEnabled(isEnabled);
+        frameComboLabel[frameComboIndex].setEnabled(isEnabled);
     }
 }
-    
+
 
 void LinkPositionWidget::Impl::updateCoordinateFrameCandidates()
 {
@@ -614,8 +600,23 @@ void LinkPositionWidget::Impl::updateCoordinateFrameCandidates(int frameComboInd
             currentFrameId = kinematicsKit->currentOffsetFrameId();
         }
     }
-    updateCoordinateFrameComboItems(
-        frameCombo[frameComboIndex], frames, currentFrameId, frameLabelFunction[frameComboIndex]);
+    bool hasCandidates = false;
+    auto& combo = frameCombo[frameComboIndex];
+    combo.clear();
+    if(isFrameComboEnabled[frameComboIndex] && frames){
+        auto& labelFunction = frameLabelFunction[frameComboIndex];
+        if(frames->numFrames() > 0){
+            updateCoordinateFrameComboItems(combo, frames, currentFrameId, labelFunction);
+            hasCandidates = true;
+        } else if(frameComboIndex == BaseFrame){
+            // It is better to show the body origin label on the base frame combo
+            string label = labelFunction(kinematicsKit, baseFrame, true);
+            combo.addItem(label.c_str(), 0);
+            hasCandidates = true;
+        }
+    }
+
+    setCoordinateFrameInterfaceEnabled(frameComboIndex, hasCandidates);
 }
 
 
@@ -623,30 +624,24 @@ void LinkPositionWidget::Impl::updateCoordinateFrameComboItems
 (QComboBox& combo, CoordinateFrameList* frames, const GeneralId& currentId,
  const FrameLabelFunction& frameLabelFunction)
 {
-    combo.clear();
-
     int currentIndex = 0;
-
-    if(frames){
-        const int n = frames->numFrames();
-        for(int i=0; i < n; ++i){
-            int index = combo.count();
-            if(auto frame = frames->frameAt(i)){
-                auto& id = frame->id();
-                bool isDefaultFrame = (i == 0 && frames->hasFirstElementAsDefaultFrame());
-                string label = frameLabelFunction(kinematicsKit, frame, isDefaultFrame);
-                if(id.isInt()){
-                    combo.addItem(label.c_str(), id.toInt());
-                } else {
-                    combo.addItem(label.c_str(), id.toString().c_str());
-                }
-                if(id == currentId){
-                    currentIndex = index;
-                }
+    const int n = frames->numFrames();
+    for(int i=0; i < n; ++i){
+        int index = combo.count();
+        if(auto frame = frames->frameAt(i)){
+            auto& id = frame->id();
+            bool isDefaultFrame = (i == 0 && frames->hasFirstElementAsDefaultFrame());
+            string label = frameLabelFunction(kinematicsKit, frame, isDefaultFrame);
+            if(id.isInt()){
+                combo.addItem(label.c_str(), id.toInt());
+            } else {
+                combo.addItem(label.c_str(), id.toString().c_str());
+            }
+            if(id == currentId){
+                currentIndex = index;
             }
         }
     }
-
     combo.setCurrentIndex(currentIndex);
 }
 
@@ -659,12 +654,14 @@ string LinkPositionWidget::Impl::getFrameLabel
     if(note.empty() && isDefaultFrame){
         note = defaultFrameNote;
     }
-    if(note.empty()){
-        label = frame->id().label();
-    } else {
-        label = format("{0}: {1}", frame->id().label(), note.c_str());
+    const auto& id = frame->id();
+    if(!id.isValid()){
+        return note;
     }
-    return label;
+    if(note.empty()){
+        return id.label();
+    }
+    return format("{0}: {1}", id.label(), note.c_str());
 }
 
 
@@ -968,13 +965,6 @@ void JointSpaceConfigurationDialog::updateItemDisplay()
             }
         }
     }
-    /*
-    auto index1 = treeWidget.indexFromItem(treeWidget.topLevelItem(0), 0);
-    auto index2 = treeWidget.indexFromItem(treeWidget.topLevelItem(n - 1), treeWidget.columnCount() - 1);
-    treeWidget.model()->dataChanged(index1, index2);
-    */
-    // treeWidget.update();
-    // treeWidget.repaint();
 }
 
 
