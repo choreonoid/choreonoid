@@ -32,7 +32,7 @@ int JointPath::numericalIkDefaultMaxIterations()
 
 double JointPath::numericalIkDefaultMaxIkError()
 {
-    return 1.0e-6;
+    return 1.0e-7;
 }
 
 double JointPath::numericalIkDefaultDampingConstant()
@@ -46,16 +46,19 @@ namespace cnoid {
 class NumericalIK
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     bool isBestEffortIkMode;
     double deltaScale;
     int maxIterations;
     int iteration; 
     double maxIkErrorSqr;
     double dampingConstantSqr;
+    vector<double> q0;
+    Isometry3 T0;
     MatrixXd J;
     VectorXd dTask;
     VectorXd dq;
-    vector<double> q0;
     MatrixXd JJ;
     Eigen::ColPivHouseholderQR<MatrixXd> QR;
     TruncatedSVD<MatrixXd> svd;
@@ -338,6 +341,7 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
         for(int i=0; i < n; ++i){
             nuIK->q0[i] = joints_[i]->q();
         }
+        nuIK->T0 = target->T();
     }
 
     double prevErrsqr = std::numeric_limits<double>::max();
@@ -367,10 +371,12 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
         }
         if(errorSqr < nuIK->maxIkErrorSqr){
             completed = true;
+            target->T() = T;
             break;
         }
         if(prevErrsqr - errorSqr < nuIK->maxIkErrorSqr){
             if(nuIK->isBestEffortIkMode && (errorSqr > prevErrsqr)){
+                // Revert the joint displacements to the previous state in this iteration
                 for(int j=0; j < n; ++j){
                     joints_[j]->q() = nuIK->q0[j];
                 }
@@ -414,8 +420,9 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
             joints_[i]->q() = nuIK->q0[i];
         }
         calcForwardKinematics();
+        target->T() = nuIK->T0;
     }
-    
+
     return completed;
 }
 
