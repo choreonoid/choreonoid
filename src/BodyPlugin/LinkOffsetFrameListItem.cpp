@@ -23,6 +23,7 @@ void LinkOffsetFrameListItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
     im.registerClass<LinkOffsetFrameListItem, CoordinateFrameListItem>(N_("LinkOffsetFrameListItem"));
+    im.addCreationPanel<LinkOffsetFrameListItem>();
 }
 
 

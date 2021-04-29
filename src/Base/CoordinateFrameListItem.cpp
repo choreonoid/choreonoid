@@ -93,6 +93,7 @@ void CoordinateFrameListItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
     im.registerClass<CoordinateFrameListItem>(N_("CoordinateFrameListItem"));
+    im.addCreationPanel<CoordinateFrameListItem>();
 }
 
 

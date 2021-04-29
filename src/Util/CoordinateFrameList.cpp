@@ -18,7 +18,6 @@ public:
     CoordinateFrameList* self;
     std::vector<CoordinateFramePtr> frames;
     unordered_map<GeneralId, CoordinateFramePtr, GeneralId::Hash> idToFrameMap;
-    bool hasDefaultFrame;
     int idCounter;
     std::string name;
     Signal<void(int index)> sigFrameAdded;
