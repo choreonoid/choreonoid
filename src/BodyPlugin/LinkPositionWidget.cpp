@@ -89,6 +89,8 @@ namespace cnoid {
 class LinkPositionWidget::Impl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     LinkPositionWidget* self;
 
     ScopedConnectionSet targetConnections;
@@ -116,6 +118,10 @@ public:
     RadioButton localCoordRadio;
     vector<QWidget*> coordinateModeWidgets;
 
+    // Temporary origin of the local coordinate
+    Isometry3 T_local0;
+    Matrix3 R_local0;
+
     PositionWidget* positionWidget;
 
     string defaultCoordName[2];
@@ -135,10 +141,7 @@ public:
     Impl(LinkPositionWidget* self);
     void createPanel();
     void onAttachedMenuRequest(MenuManager& menuManager);
-    void setCoordinateModeInterfaceEnabled(bool on);
-    void setCoordinateMode(int mode, bool doUpdateDisplay);
-    void setBodyCoordinateModeEnabled(bool on);
-    void onCoordinateModeRadioToggled(int mode);
+    void setCoordinateMode(int mode, bool doUpdatePreferredMode, bool doUpdateDisplay);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
     void onKinematicsModeChanged();
@@ -248,14 +251,15 @@ void LinkPositionWidget::Impl::createPanel()
     hbox->addWidget(&localCoordRadio);
     coordinateModeGroup.addButton(&localCoordRadio, LocalCoordinateMode);
     coordinateModeWidgets.push_back(&localCoordRadio);
-    localCoordRadio.setEnabled(false);
 
     coordinateMode = WorldCoordinateMode;
     preferredCoordinateMode = BodyCoordinateMode;
 
     coordinateModeGroup.sigButtonToggled().connect(
         [&](int id, bool checked){
-            if(checked) onCoordinateModeRadioToggled(id);
+            if(checked){
+                setCoordinateMode(id, true, true);
+            }
         });
     
     hbox->addStretch();
@@ -349,58 +353,45 @@ void LinkPositionWidget::setOptionMenuTo(MenuManager& menuManager)
 }
 
 
-void LinkPositionWidget::Impl::setCoordinateModeInterfaceEnabled(bool on)
+void LinkPositionWidget::Impl::setCoordinateMode(int mode, bool doUpdatePreferredMode, bool doUpdateDisplay)
 {
-    for(auto& widget : coordinateModeWidgets){
-        widget->setEnabled(on);
-    }
-    localCoordRadio.setEnabled(false);
-}
-
-
-void LinkPositionWidget::Impl::setCoordinateMode(int mode, bool doUpdateDisplay)
-{
+    bool isValid = false;
+    
     coordinateModeGroup.blockSignals(true);
     
     if(mode == WorldCoordinateMode){
-        worldCoordRadio.setEnabled(true);
         worldCoordRadio.setChecked(true);
+        isValid = true;
 
     } else if(mode == BodyCoordinateMode){
-        bodyCoordRadio.setEnabled(true);
-        bodyCoordRadio.setChecked(true);
-
+        if(bodyCoordRadio.isEnabled()){
+            bodyCoordRadio.setChecked(true);
+            isValid = true;
+        }
     } else if(mode == LocalCoordinateMode){
-        localCoordRadio.setEnabled(true);
         localCoordRadio.setChecked(true);
+        if(targetLink){
+            T_local0 = targetLink->T() * offsetFrame->T();
+            R_local0 = T_local0.linear();
+        }
+        positionWidget->setReferenceRpy(Vector3::Zero());
+        isValid = true;
     }
 
     coordinateModeGroup.blockSignals(false);
 
-    if(mode != coordinateMode){
-        coordinateMode = mode;
-        updateCoordinateFrameCandidates();
+    if(isValid){
+        if(mode != coordinateMode){
+            coordinateMode = mode;
+            updateCoordinateFrameCandidates();
+        }
+        if(doUpdatePreferredMode){
+            preferredCoordinateMode = mode;
+        }
+        if(doUpdateDisplay){
+            updateDisplay();
+        }
     }
-
-    if(doUpdateDisplay){
-        updateDisplay();
-    }
-}
-
-
-void LinkPositionWidget::Impl::setBodyCoordinateModeEnabled(bool on)
-{
-    bodyCoordRadio.setEnabled(on);
-    if(!on && coordinateMode == BodyCoordinateMode){
-        setCoordinateMode(WorldCoordinateMode, false);
-    }
-}
-
-
-void LinkPositionWidget::Impl::onCoordinateModeRadioToggled(int mode)
-{
-    setCoordinateMode(mode, true);
-    preferredCoordinateMode = mode;
 }
 
 
@@ -528,8 +519,6 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
 
 void LinkPositionWidget::Impl::updateTargetLink(Link* link)
 {
-    setCoordinateModeInterfaceEnabled(true);
-    
     targetLink = link;
     kinematicsKit.reset();
     kinematicsKitConnections.disconnect();
@@ -575,8 +564,8 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
     resultLabel.setText("");
 
     updateCoordinateFrameCandidates();
-    setCoordinateMode(preferredCoordinateMode, false);
-    setBodyCoordinateModeEnabled(isBodyCoordinateModeEnabled);
+    bodyCoordRadio.setEnabled(isBodyCoordinateModeEnabled);
+    setCoordinateMode(preferredCoordinateMode, false, false);
 
     initializeConfigurationInterface();
 }
@@ -1077,17 +1066,33 @@ void LinkPositionWidget::Impl::updateDisplay()
 void LinkPositionWidget::Impl::updateDisplayWithGlobalLinkPosition(const Isometry3& Ta_global)
 {
     Isometry3 T;
-    if(coordinateMode == WorldCoordinateMode){
-        T = Ta_global * offsetFrame->T();
-    } else if(coordinateMode == BodyCoordinateMode){
-        T = baseFrame->T().inverse(Eigen::Isometry) * Ta_global * offsetFrame->T();
-        if(kinematicsKit && kinematicsKit->baseLink()){
-            T = kinematicsKit->baseLink()->T().inverse(Eigen::Isometry) * T;
+
+    if(coordinateMode == LocalCoordinateMode){
+        Isometry3 T_end = Ta_global * offsetFrame->T();
+        Matrix3 R_prev = T_local0.linear();
+        Matrix3 R_current = T_end.linear();
+        // When the rotation is changed, the translation origin is reset
+        if(!R_current.isApprox(R_prev, 1e-6)){
+            T_local0 = T_end;
+        }
+        T.translation() = (T_local0.inverse(Eigen::Isometry) * T_end).translation();
+        T.linear() = R_local0.transpose() * T_end.linear();
+
+    } else {
+        if(coordinateMode == WorldCoordinateMode){
+            T = Ta_global * offsetFrame->T();
+        
+        } else if(coordinateMode == BodyCoordinateMode){
+            T = baseFrame->T().inverse(Eigen::Isometry) * Ta_global * offsetFrame->T();
+            if(kinematicsKit && kinematicsKit->baseLink()){
+                T = kinematicsKit->baseLink()->T().inverse(Eigen::Isometry) * T;
+            }
+        }
+        if(kinematicsKit){
+            positionWidget->setReferenceRpy(kinematicsKit->referenceRpy());
         }
     }
-    if(kinematicsKit){
-        positionWidget->setReferenceRpy(kinematicsKit->referenceRpy());
-    }
+    
     positionWidget->setPosition(T);
     updateConfigurationDisplay();
 }
@@ -1169,16 +1174,32 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Isometry3& T_input, bool
 
     if(isRawT){
         solved = ik->calcInverseKinematics(T_input);
+        
     } else {
         Isometry3 T;
+        Isometry3 T_end_origin = T_input * offsetFrame->T().inverse(Eigen::Isometry);
+
         if(coordinateMode == WorldCoordinateMode){
-            T = T_input * offsetFrame->T().inverse(Eigen::Isometry);
+            T = T_end_origin;
+
         } else if(coordinateMode == BodyCoordinateMode){
-            T = baseFrame->T() * T_input * offsetFrame->T().inverse(Eigen::Isometry);
+            T = baseFrame->T() * T_end_origin;
             if(kinematicsKit->baseLink()){
                 T = kinematicsKit->baseLink()->T() * T;
             }
+
+        } else if(coordinateMode == LocalCoordinateMode){
+            T.linear() = R_local0 * T_end_origin.linear();
+            T.translation() = T_local0 * T_end_origin.translation();
+
+            if(!T.linear().isApprox(T_local0.linear(), 1e-6)){
+                T_local0 = T;
+                Isometry3 T_input_fixed = T_input;
+                T_input_fixed.translation().setZero();
+                positionWidget->setPosition(T_input_fixed);
+            }
         }
+
         normalizeRotation(T);
         solved = ik->calcInverseKinematics(T);
     }
@@ -1247,7 +1268,7 @@ bool LinkPositionWidget::Impl::restoreState(const Archive& archive)
     }
     if(archive.read("coordinate_mode", symbol)){
         if(coordinateModeSelection.select(symbol)){
-            setCoordinateMode(coordinateModeSelection.which(), true);
+            setCoordinateMode(coordinateModeSelection.which(), false, true);
         }
     }
 

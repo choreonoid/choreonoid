@@ -619,10 +619,11 @@ void LocationView::Impl::updatePositionWidgetWithPrimaryLocation()
         Isometry3 T_location = location->proxy->getLocation();
         Matrix3 R_prev = coord->T.linear();
         Matrix3 R_current = T_location.linear();
-        if(!R_current.isApprox(R_prev)){
+        // When the rotation is changed, the translation origin is reset
+        if(!R_current.isApprox(R_prev, 1e-6)){
             coord->T = T_location;
         }
-        T_display = coord->T.inverse(Eigen::Isometry) * T_location;
+        T_display.translation() = (coord->T.inverse(Eigen::Isometry) * T_location).translation();
         T_display.linear() = coord->R0.transpose() * T_location.linear();
 
     } else {
@@ -674,7 +675,7 @@ bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& 
     if(coord->type == LocalCoord){
         T_location.linear() = coord->R0 * T_input.linear();
         T_location.translation() = coord->T * T_input.translation();
-        if(!T_location.linear().isApprox(coord->T.linear())){
+        if(!T_location.linear().isApprox(coord->T.linear(), 1e-6)){
             coord->T = T_location;
             Isometry3 T_display;
             T_display.linear() = T_input.linear();
