@@ -14,6 +14,7 @@
 #include "OptionManager.h"
 #include "MenuManager.h"
 #include "AppConfig.h"
+#include "AppUtil.h"
 #include "LazyCaller.h"
 #include "FileDialog.h"
 #include <cnoid/MainWindow>
@@ -25,7 +26,7 @@
 #include <cnoid/Sleep>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
-#include <QCoreApplication>
+#include <QEvent>
 #include <QResource>
 #include <QMessageBox>
 #include <string>
@@ -57,6 +58,24 @@ public:
         mv->put(message, MessageView::Warning);
     }
 };
+
+
+#ifdef Q_OS_UNIX
+class WindowActivationChecker : public QObject
+{
+public:
+    bool isWindowActivated;
+
+    WindowActivationChecker() : isWindowActivated(false) { }
+
+    bool eventFilter(QObject* obj, QEvent* event) override {
+        if(event->type() == QEvent::ActivationChange){
+            isWindowActivated = true;
+        }
+        return false;
+    }
+};
+#endif
 
 }
 
@@ -115,6 +134,10 @@ public:
     typedef map<string, ArchiverInfo> ArchiverMap;
     typedef map<string, ArchiverMap> ArchiverMapMap;
     ArchiverMapMap archivers;
+
+#ifdef Q_OS_UNIX
+    WindowActivationChecker mainWindowActivationChecker;
+#endif
 
     MappingPtr config;
     MappingPtr managerConfig;
@@ -407,23 +430,10 @@ ItemList<> ProjectManager::Impl::loadProject
                     mainWindow->setInitialLayout(archive);
                 }
                 if(!isBuiltinProject){
-                    mainWindow->show();
-
 #ifdef Q_OS_UNIX
-                    /**
-                       There is a delay between executing the show function of a window and the window
-                       is actually displayed. If the event loop is blocked by an item that takes a long
-                       time to load before the window is displayed, the window will remain hidden for
-                       a while. This behavior gives the user the bad impression that the application is
-                       slow to start. To avoid this problem, the window should be displayed before any
-                       items are loaded. This can be achieved by decreasing the time difference from
-                       the window display delay by the following sleep.
-                    */
-                    msleep(10);
+                    mainWindow->installEventFilter(&mainWindowActivationChecker);
 #endif
-                    // The following functions are probably useless for this problem.
-                    // mv->flush();
-                    // mainWindow->repaint();
+                    mainWindow->show();
                 }
             } else {
                 if(isBuiltinProject || perspectiveCheck->isChecked()){
@@ -474,6 +484,33 @@ ItemList<> ProjectManager::Impl::loadProject
                 }
             }
 
+#ifdef Q_OS_UNIX
+            if(isInvokingApplication && !isBuiltinProject){
+                /**
+                   There is a delay between executing the show function of a window and the window
+                   is actually displayed. If the event loop is blocked by an item that takes a long
+                   time to load before the window is displayed, the window will remain hidden for
+                   a while. This behavior gives a user the bad impression that the application is
+                   slow to start. To avoid this problem, the window should be displayed before any
+                   items are loaded. This can be achieved by decreasing the time difference from
+                   the window display delay by the following loop to check if the window is actually shown.
+                */
+                int timeoutCounter = 0;
+                while(true){
+                    updateGui();
+                    if(mainWindowActivationChecker.isWindowActivated){
+                        break;
+                    }
+                    msleep(1);
+                    ++timeoutCounter;
+                    if(timeoutCounter > 100){
+                        break;
+                    }
+                }
+                mainWindow->removeEventFilter(&mainWindowActivationChecker);
+            }
+#endif
+            
             itemTreeArchiver.reset();
             Archive* items = archive->findSubArchive("items");
             if(items->isValid()){
