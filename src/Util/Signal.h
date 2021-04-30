@@ -209,10 +209,9 @@ class Connection
 
 public:
     Connection() { }
-    
     Connection(signal_private::SlotHolderBase* slot) : slot(slot) { }
-
     Connection(const Connection& org) : slot(org.slot) { }
+    Connection(Connection&&) = default;
 
     Connection& operator=(const Connection& rhs) {
         slot = rhs.slot;
@@ -283,6 +282,7 @@ class ScopedConnection
     
 public:
     ScopedConnection() { }
+    ScopedConnection(ScopedConnection&&) = default;
     ScopedConnection(const ScopedConnection& org) = delete;
     ScopedConnection(const Connection& org) { connection_ = org; }
     ~ScopedConnection() { connection_.disconnect(); }
@@ -316,11 +316,11 @@ private:
     SlotHolderPtr firstSlot;
     SlotHolderType* lastSlot;
 
-    Signal(const Signal& org);
-    Signal& operator=(const Signal& rhs);
-
 public:
     Signal() : lastSlot(nullptr) { }
+    Signal(Signal&&) = default;
+    Signal(const Signal& org) = delete;
+    Signal& operator=(const Signal& rhs) = delete;
 
     ~Signal() {
         disconnect_all_slots();
