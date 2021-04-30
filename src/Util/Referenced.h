@@ -367,6 +367,9 @@ public:
         other.counter = counter_;
     }
 
+    template<class Y> bool _internal_equal(weak_ref_ptr<Y> const & rhs) const {
+        return counter == rhs.counter;
+    }
     template<class Y> bool _internal_less(weak_ref_ptr<Y> const & rhs) const {
         return counter < rhs.counter;
     }
@@ -379,6 +382,12 @@ private:
     template<class Y> friend class ref_ptr;
     friend struct std::hash<weak_ref_ptr<T>>;
 };
+
+
+template<class T, class U> inline bool operator==(weak_ref_ptr<T> const & a, weak_ref_ptr<U> const & b)
+{
+    return a._internal_equal(b);
+}
 
 template<class T, class U> inline bool operator<(weak_ref_ptr<T> const & a, weak_ref_ptr<U> const & b)
 {
