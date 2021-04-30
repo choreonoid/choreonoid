@@ -621,26 +621,27 @@ bool Item::insertSubItem(Item* item, Item* nextItem)
 
 bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation)
 {
-    if(!self->onChildItemAboutToBeAdded(item, isManualOperation)){
-        return false; // rejected
-    }
-
     RootItem* rootItem = self->findRootItem();
     Item* prevParentItem = item->parentItem();
     Item* prevNextSibling = nullptr;
-    bool isMoving = false;
     
     if(prevParentItem){
         prevNextSibling = item->nextItem();
         if(prevParentItem == self && prevNextSibling == newNextItem){
-            return false; // try to insert the same position
+            return true; // try to insert in the same position as now
         }
+    }
+
+    if(!self->onChildItemAboutToBeAdded(item, isManualOperation)){
+        return false; // rejected
     }
 
     vector<function<void()>> callbacksWhenAdded;
     if(!item->impl->checkNewPositionAcceptance(self, newNextItem, isManualOperation, callbacksWhenAdded)){
         return false;
     }
+
+    bool isMoving = false;
 
     if(prevParentItem){
         if(auto srcRootItem = prevParentItem->findRootItem()){
@@ -1473,30 +1474,30 @@ bool Item::replace(Item* originalItem)
         originalToReplacementItemMap[originalItem] = this;
 
         assign(originalItem);
-        originalItem->parentItem()->insertChild(originalItem, this);
         
-        int nc = originalItem->numCheckStates();
-        for(int i=0; i < nc; ++i){
-            setChecked(i, originalItem->isChecked(i));
-        }
+        if(originalItem->parentItem()->insertChild(originalItem, this)){
 
-        // move children to the reload item
-        ItemPtr child = originalItem->childItem();
-        while(child){
-            ItemPtr nextChild = child->nextItem();
-            if(!child->isSubItem()){
-                child->removeFromParentItem();
-                addChildItem(child);
+            int nc = originalItem->numCheckStates();
+            for(int i=0; i < nc; ++i){
+                setChecked(i, originalItem->isChecked(i));
             }
-            child = nextChild;
+            // move children to the reload item
+            ItemPtr child = originalItem->childItem();
+            while(child){
+                ItemPtr nextChild = child->nextItem();
+                if(!child->isSubItem()){
+                    child->removeFromParentItem();
+                    addChildItem(child);
+                }
+                child = nextChild;
+            }
+            bool isSelected = originalItem->isSelected();
+            originalItem->removeFromParentItem();
+            setSelected(isSelected);
+            replaced = true;
         }
-        bool isSelected = originalItem->isSelected();
-        originalItem->removeFromParentItem();
-        setSelected(isSelected);
 
         clearItemReplacementMapsLater();
-
-        replaced = true;
     }
 
     return replaced;

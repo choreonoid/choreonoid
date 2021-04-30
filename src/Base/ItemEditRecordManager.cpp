@@ -269,9 +269,9 @@ bool ItemTreeEditRecord::redoAddition()
     if(parentItem->isConnectedToRoot()){
         if(!nextItem || nextItem->parentItem() == parentItem){
             manager->rootItemConnections.block();
-            parentItem->insertChild(nextItem, item, false);
+            bool inserted = parentItem->insertChild(nextItem, item, false);
             manager->rootItemConnections.unblock();
-            return true;
+            return inserted;
         }
     }
     return false;
@@ -298,9 +298,9 @@ bool ItemTreeEditRecord::undoRemoval()
     if(oldParentItem->isConnectedToRoot()){
         if(!oldNextItem || oldNextItem->parentItem() == oldParentItem){
             manager->rootItemConnections.block();
-            oldParentItem->insertChild(oldNextItem, item, false);
+            bool inserted = oldParentItem->insertChild(oldNextItem, item, false);
             manager->rootItemConnections.unblock();
-            return true;
+            return inserted;
         }
     }
     return false;
@@ -341,9 +341,9 @@ bool ItemTreeEditRecord::undoMove()
     if(item->parentItem() == parentItem && oldParentItem->isConnectedToRoot()){
         if(!oldNextItem || oldNextItem->parentItem() == oldParentItem){
             manager->rootItemConnections.block();
-            oldParentItem->insertChild(oldNextItem, item, false);
+            bool inserted = oldParentItem->insertChild(oldNextItem, item, false);
             manager->rootItemConnections.unblock();
-            return true;
+            return inserted;
         }
     }
     return false;
@@ -355,9 +355,9 @@ bool ItemTreeEditRecord::redoMove()
     if(item->parentItem() == oldParentItem && parentItem->isConnectedToRoot()){
         if(!nextItem || nextItem->parentItem() == parentItem){
             manager->rootItemConnections.block();
-            parentItem->insertChild(nextItem, item, false);
+            bool inserted = parentItem->insertChild(nextItem, item, false);
             manager->rootItemConnections.unblock();
-            return true;
+            return inserted;
         }
     }
     return false;
