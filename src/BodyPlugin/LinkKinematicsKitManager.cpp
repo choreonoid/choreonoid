@@ -54,7 +54,7 @@ public:
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
     bool updateCoordinateFramesOf(LinkKinematicsKit* kit, bool forceUpdate);
     void findFrameListItems();
-    void onFrameListItemAddedOrUpdated(CoordinateFrameListItem* frameListItem);
+    void onFrameListAssociation(CoordinateFrameListItem* frameListItem, bool on);
 };
 
 }
@@ -91,9 +91,9 @@ void LinkKinematicsKitManager::Impl::onBodyItemPositionChanged()
     if(bodyItem->isConnectedToRoot()){
         if(!frameListConnection.connected()){
             frameListConnection =
-                CoordinateFrameListItem::sigInstanceAddedOrUpdated().connect(
-                    [&](CoordinateFrameListItem* frameListItem){
-                        onFrameListItemAddedOrUpdated(frameListItem);
+                CoordinateFrameListItem::sigListAssociationWith(bodyItem).connect(
+                    [&](CoordinateFrameListItem* frameListItem, bool on){
+                        onFrameListAssociation(frameListItem, on);
                     });
         }
         findFrameListItems();
@@ -320,37 +320,45 @@ void LinkKinematicsKitManager::Impl::findFrameListItems()
 }
 
 
-void LinkKinematicsKitManager::Impl::onFrameListItemAddedOrUpdated
-(CoordinateFrameListItem* frameListItem)
+/**
+   \todo Currently only one frame list item can be associated with a body item for each frame type
+   at the same time, but multiple frame lists should be associated with the item as a composite list.
+*/
+void LinkKinematicsKitManager::Impl::onFrameListAssociation(CoordinateFrameListItem* frameListItem, bool on)
 {
-    bool isTargetFrameList = false;
-    auto upperItem = frameListItem->parentItem();
-    while(upperItem){
-        if(auto upperBodyItem = dynamic_cast<BodyItem*>(upperItem)){
-            if(upperBodyItem == bodyItem){
-                isTargetFrameList = true;
+    bool updated = false;
+    
+    auto frameList = frameListItem->frameList();
+    if(frameList->isForBaseFrames()){
+        if(on){
+            if(!baseFrames){ // Keep the existing base frames by this condition
+                baseFrames = frameList;
+                updated = true;
             }
-            break;
+        } else {
+            if(frameList == baseFrames){
+                baseFrames.reset();
+                updated = true;
+            }
         }
-        upperItem = upperItem->parentItem();
+    } else if(frameList->isForOffsetFrames()){
+        if(on){
+            if(!offsetFrames){ // Keep the existing base frames by this condition
+                offsetFrames = frameList;
+                updated = true;
+            }
+        } else {
+            if(frameList == offsetFrames){
+                offsetFrames.reset();
+                updated = true;
+            }
+        }
     }
-    if(isTargetFrameList){
-        bool updated = false;
-        auto frameList = frameListItem->frameList();
-        if(frameList->isForBaseFrames()){
-            baseFrames = frameList;
-            updated = true;
-        }
-        if(frameList->isForOffsetFrames()){
-            offsetFrames = frameList;
-            updated = true;
-        }
-        if(updated){
-            for(auto& kv : linkPairToKinematicsKitMap){
-                auto& kit = kv.second;
-                if(updateCoordinateFramesOf(kit, false)){
-                    kit->notifyFrameUpdate();
-                }
+    if(updated){
+        for(auto& kv : linkPairToKinematicsKitMap){
+            auto& kit = kv.second;
+            if(updateCoordinateFramesOf(kit, false)){
+                kit->notifyFrameUpdate();
             }
         }
     }

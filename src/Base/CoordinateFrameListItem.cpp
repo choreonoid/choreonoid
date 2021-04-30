@@ -17,7 +17,15 @@ using fmt::format;
 
 namespace {
 
-Signal<void(CoordinateFrameListItem* frameListItem)> sigInstanceAddedOrUpdated_;
+class ListAssociationSignalInfo : public Referenced
+{
+public:
+    Signal<void(CoordinateFrameListItem* frameListItem, bool on)> signal;
+    ScopedConnection connection;
+};
+typedef ref_ptr<ListAssociationSignalInfo> ListAssociationSignalInfoPtr;
+
+unordered_map<ItemPtr, ListAssociationSignalInfoPtr> listAssociationSignalInfoMap;
 
 class FrameMarker : public CoordinateFrameMarker
 {
@@ -49,6 +57,14 @@ public:
     int itemizationMode;
     ScopedConnectionSet frameListConnections;
     std::function<std::string(const CoordinateFrameItem* item)> frameItemDisplayNameFunction;
+
+    struct AssociatedItemInfo
+    {
+        ListAssociationSignalInfoPtr signalInfo;
+        bool isAssociated;
+    };
+    unordered_map<weak_ref_ptr<Item>, AssociatedItemInfo> associatedItemInfoMap;
+    
     bool isUpdatingFrameItems;
 
     SgGroupPtr frameMarkerGroup;
@@ -72,6 +88,8 @@ public:
     };
 
     Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode);
+    void notifyRegisteredItemsOfListAssociation(bool doCheckDisassociation);
+    void checkListDisassociation(bool doDisassociateAll);
     void setItemizationMode(int mode);
     void updateFrameItems();
     CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
@@ -97,10 +115,17 @@ void CoordinateFrameListItem::initializeClass(ExtensionManager* ext)
 }
 
 
-SignalProxy<void(CoordinateFrameListItem* frameListItem)>
-CoordinateFrameListItem::sigInstanceAddedOrUpdated()
+SignalProxy<void(CoordinateFrameListItem* frameListItem, bool on)>
+CoordinateFrameListItem::sigListAssociationWith(Item* item)
 {
-    return ::sigInstanceAddedOrUpdated_;
+    auto& info = listAssociationSignalInfoMap[item];
+    if(!info){
+        info = new ListAssociationSignalInfo;
+        info->connection =
+            item->sigDisconnectedFromRoot().connect(
+                [item](){ listAssociationSignalInfoMap.erase(item); });
+    }
+    return info->signal;
 }
 
 
@@ -153,7 +178,67 @@ Item* CoordinateFrameListItem::doDuplicate() const
 
 void CoordinateFrameListItem::onPositionChanged()
 {
-    ::sigInstanceAddedOrUpdated_(this);
+    impl->notifyRegisteredItemsOfListAssociation(true);
+}
+
+
+void CoordinateFrameListItem::onDisconnectedFromRoot()
+{
+    impl->checkListDisassociation(true);
+}
+
+
+void CoordinateFrameListItem::Impl::notifyRegisteredItemsOfListAssociation(bool doCheckDisassociation)
+{
+    if(doCheckDisassociation){
+        // Clear flags to check if each item is still associated
+        for(auto& kv : associatedItemInfoMap){
+            kv.second.isAssociated = false;
+        }
+    }
+    if(Item* item = self->parentItem()){
+        do {
+            auto p = listAssociationSignalInfoMap.find(item);
+            if(p != listAssociationSignalInfoMap.end()){
+                weak_ref_ptr<Item> witem =item;
+                auto& itemInfo = associatedItemInfoMap[witem];
+                if(!itemInfo.signalInfo){
+                    auto& signalInfo = p->second;
+                    signalInfo->signal(self, true); // notify item of association
+                    itemInfo.signalInfo = signalInfo;
+                }
+                itemInfo.isAssociated = true;
+            }
+            item = item->parentItem();
+        } while(item);
+    }
+    if(doCheckDisassociation){
+        checkListDisassociation(false);
+    }
+}
+
+
+void CoordinateFrameListItem::Impl::checkListDisassociation(bool doDisassociateAll)
+{
+    auto iter = associatedItemInfoMap.begin();
+    while(iter != associatedItemInfoMap.end()){
+        bool doRemove = false;
+        auto item = iter->first.lock();
+        if(!item){
+            doRemove = true;
+        } else {
+            auto& itemInfo = iter->second;
+            if(doDisassociateAll || !itemInfo.isAssociated){
+                itemInfo.signalInfo->signal(self, false); // notify item of disassociation
+                doRemove = true;
+            }
+        }
+        if(doRemove){
+            iter = associatedItemInfoMap.erase(iter);
+        } else {
+            ++iter;
+        }
+    }
 }
 
 
@@ -411,9 +496,7 @@ void CoordinateFrameListItem::useAsBaseFrames()
 {
     if(!impl->frameList->isForBaseFrames()){
         impl->frameList->setFrameType(CoordinateFrameList::Base);
-        if(isConnectedToRoot()){
-            ::sigInstanceAddedOrUpdated_(this);
-        }
+        impl->notifyRegisteredItemsOfListAssociation(false);
     }
 }
 
@@ -422,9 +505,7 @@ void CoordinateFrameListItem::useAsOffsetFrames()
 {
     if(!impl->frameList->isForOffsetFrames()){
         impl->frameList->setFrameType(CoordinateFrameList::Offset);
-        if(isConnectedToRoot()){
-            ::sigInstanceAddedOrUpdated_(this);
-        }
+        impl->notifyRegisteredItemsOfListAssociation(false);
     }
 }
 

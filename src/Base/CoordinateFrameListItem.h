@@ -21,7 +21,7 @@ class CNOID_EXPORT CoordinateFrameListItem : public Item, public RenderableItem
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    static SignalProxy<void(CoordinateFrameListItem* frameListItem)> sigInstanceAddedOrUpdated();
+    static SignalProxy<void(CoordinateFrameListItem* frameListItem, bool on)> sigListAssociationWith(Item* item);
 
     CoordinateFrameListItem();
     CoordinateFrameListItem(CoordinateFrameList* frameList);
@@ -90,6 +90,7 @@ public:
 protected:
     virtual Item* doDuplicate() const override;
     virtual void onPositionChanged() override;
+    virtual void onDisconnectedFromRoot() override;
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation) override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
