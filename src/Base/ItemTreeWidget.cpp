@@ -59,7 +59,6 @@ public:
     bool isRootItemVisible;
     bool isProcessingSlotOnlocalRootItemPositionChanged;
     std::function<Item*(bool doCreate)> localRootItemUpdateFunction;
-    vector<ItemPtr> topLevelItems;
     unordered_map<Item*, ItwItem*> itemToItwItemMap;
     ItemPtr lastClickedItem;
     map<int, int> checkIdToColumnMap;
@@ -119,9 +118,6 @@ public:
     void addCheckColumn(int checkId);
     void updateCheckColumnIter(QTreeWidgetItem* twItem, int checkId, int column);
     void releaseCheckColumn(int checkId);
-    void registerTopLevelItem(Item* item);
-    bool registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos);
-    void unregisterTopLevelItem(Item* item);
     void updateItemDisplay(ItwItem* itwItem);
     void insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItemCandidate);
     ItwItem* findNextItwItem(Item* item, bool isTopLevelItem);
@@ -664,7 +660,6 @@ void ItemTreeWidget::updateTreeWidgetItems()
 void ItemTreeWidget::Impl::clearTreeWidgetItems()
 {
     clear();
-    topLevelItems.clear();
 }
 
 
@@ -779,41 +774,6 @@ void ItemTreeWidget::Impl::releaseCheckColumn(int checkId)
 }
 
 
-void ItemTreeWidget::Impl::registerTopLevelItem(Item* item)
-{
-    auto pos = topLevelItems.begin();
-    registerTopLevelItemIter(localRootItem, item, pos);
-}
-
-
-bool ItemTreeWidget::Impl::registerTopLevelItemIter(Item* item, Item* newTopLevelItem, vector<ItemPtr>::iterator& pos)
-{
-    if(item == newTopLevelItem){
-        if(pos == topLevelItems.end() || newTopLevelItem != *pos){
-            topLevelItems.insert(pos, newTopLevelItem);
-        }
-        return true;
-    }
-    if(pos != topLevelItems.end() && item == *pos){
-        ++pos;
-    }
-    for(auto child = item->childItem(); child; child = child->nextItem()){
-        if(registerTopLevelItemIter(child, newTopLevelItem, pos)){
-            return true;
-        }
-    }
-    return false;
-}
-
-
-void ItemTreeWidget::Impl::unregisterTopLevelItem(Item* item)
-{
-    topLevelItems.erase(
-        std::remove(topLevelItems.begin(), topLevelItems.end(), item),
-        topLevelItems.end());
-}
- 
-
 void ItemTreeWidget::Impl::updateItemDisplay(ItwItem* itwItem)
 {
     itemDisplay.item = itwItem;
@@ -841,9 +801,6 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         }
     } else {
         auto itwItem = findOrCreateItwItem(item);
-        if(isTopLevelItemCandidate){
-            registerTopLevelItem(item);
-        }
         bool isNewChildItem = parentTwItem->childCount() == 0;
         auto nextItwItem = findNextItwItem(item, isTopLevelItemCandidate);
         if(nextItwItem){
@@ -874,13 +831,14 @@ ItwItem* ItemTreeWidget::Impl::findNextItwItem(Item* item, bool isTopLevelItem)
 {
     auto nextItwItem = findNextItwItemInSubTree(item, isTopLevelItem);
 
-    if(!nextItwItem){
-        if(isTopLevelItem){
-            auto it = ++std::find(topLevelItems.begin(), topLevelItems.end(), item);
-            if(it != topLevelItems.end()){
-                auto nextTopLevelItem = *it;
-                nextItwItem = findItwItem(nextTopLevelItem);
+    if(!nextItwItem && isTopLevelItem){
+        auto upperItem = item->parentItem();
+        while(upperItem){
+            nextItwItem = findNextItwItemInSubTree(upperItem, true);
+            if(nextItwItem){
+                break;
             }
+            upperItem = upperItem->parentItem();
         }
     }
     
@@ -964,7 +922,6 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
             parentTwItem->removeChild(itwItem);
         } else {
             takeTopLevelItem(indexOfTopLevelItem(itwItem));
-            unregisterTopLevelItem(item);
         }
         delete itwItem;
     } else {
@@ -1411,7 +1368,6 @@ void ItemTreeWidget::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, i
     for(auto item : items){
         if(!parentItem->insertChild(nextItem, item, true)){
             canceledItems.push_back(item);
-            //callLater([this, item](){ revertItemPosition(item); },  LazyCaller::PRIORITY_HIGH);
         }
     }
 
