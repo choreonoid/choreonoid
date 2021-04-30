@@ -435,17 +435,9 @@ MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 
 void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject)
 {
-    // TODO: Consider the protocol header of the URI
-
-    // Try to copy the original model file if the base directory is different
-    if(sceneObject->hasAbsoluteUri()){
-
-    }
-
-    auto uri = sceneObject->uri();
-    filesystem::path path(uri);
-    if(path.is_absolute()){
-        uri = getOrCreatePathVariableProcessor()->parameterize(uri);
+    string uri = sceneObject->absoluteUri();
+    if(uri.find_first_of("file://") == 0){
+        uri = getOrCreatePathVariableProcessor()->parameterize(uri.substr(7));
     }
     archive->write("uri", uri, DOUBLE_QUOTED);
 }
