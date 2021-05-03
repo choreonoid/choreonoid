@@ -546,11 +546,16 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
        the nVidia proprietary X driver. If the user clicks such a view to give the focus before
        the simulation started, the crash doesn't occur, so here the focus is forced to be given
        by the following code.
+
+       \note The following code is disabled now because te problem does not seem to occur in
+       recent Choreonoid versions and environments.
     */
+    /*
     if(QWidget* textEdit = MessageView::instance()->findChild<QWidget*>("TextEdit")){
         textEdit->setFocus();
         //! todo restore the previous focus here
     }
+    */
 #endif
     
     vector<SensorRendererPtr>::iterator p = sensorRenderers.begin();
