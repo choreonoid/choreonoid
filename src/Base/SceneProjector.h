@@ -21,7 +21,7 @@ public:
 class CNOID_EXPORT ScenePlaneProjector : public SceneProjector
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     ScenePlaneProjector();
     ScenePlaneProjector(const Vector3& normal, const Vector3& point);
@@ -44,7 +44,7 @@ private:
 class CNOID_EXPORT SceneCylinderProjector : public SceneProjector
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     SceneCylinderProjector();
     SceneCylinderProjector(const Vector3& center, double radius, double height, const Quaternion& rotation);

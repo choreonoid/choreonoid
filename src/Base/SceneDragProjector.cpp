@@ -150,12 +150,14 @@ bool SceneDragProjectorImpl::startRotation(SceneWidgetEvent* event)
     }
 
     if(fabs(rotationAxis.dot(direction)) > 0.13){
-        projector.reset(new ScenePlaneProjector(rotationAxis, initialPoint));
+        projector = make_shared_aligned<ScenePlaneProjector>(rotationAxis, initialPoint);
         initialized = true;
     } else {
         Quaternion rotation;
         rotation.setFromTwoVectors(Vector3::UnitZ(), rotationAxis);
-        auto cprojector = make_shared<SceneCylinderProjector>(p, armLength, numeric_limits<double>::max(), rotation);
+        auto cprojector =
+            make_shared_aligned<SceneCylinderProjector>(
+                p, armLength, numeric_limits<double>::max(), rotation);
         if(cprojector->initializeProjection(event)){
             projector = cprojector;
             initialized = true;
