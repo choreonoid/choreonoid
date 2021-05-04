@@ -1,7 +1,7 @@
 #ifndef CNOID_BODY_STD_BODY_WRITER_H
 #define CNOID_BODY_STD_BODY_WRITER_H
 
-#include <string>
+#include <cnoid/StdSceneWriter>
 #include <functional>
 #include <typeinfo>
 #include "exportdecl.h"
@@ -21,10 +21,10 @@ public:
     void setMessageSink(std::ostream& os);
 
     enum ExtModelFileMode {
-        EmbedModels,
-        LinkToOriginalModelFiles,
-        ReplaceWithStdSceneFiles,
-        ReplaceWithObjModelFiles
+        EmbedModels = StdSceneWriter::EmbedModels,
+        LinkToOriginalModelFiles = StdSceneWriter::LinkToOriginalModelFiles,
+        ReplaceWithStdSceneFiles = StdSceneWriter::ReplaceWithStdSceneFiles,
+        ReplaceWithObjModelFiles = StdSceneWriter::ReplaceWithObjModelFiles
     };
     void setExtModelFileMode(int mode);
     int extModelFileMode() const;

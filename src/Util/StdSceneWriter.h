@@ -2,12 +2,15 @@
 #define CNOID_UTIL_STD_SCENE_WRITER_H
 
 #include "AbstractSceneWriter.h"
-#include "ValueTree.h"
+#include "Referenced.h"
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class FilePathVariableProcessor;
+class Mapping;
+typedef ref_ptr<Mapping> MappingPtr;
 
 class CNOID_EXPORT StdSceneWriter : public AbstractSceneWriter
 {

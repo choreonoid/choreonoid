@@ -127,10 +127,14 @@ void BodyItemFileIoBase::addExtModelFileModeCombo(QBoxLayout* box)
 {
     box->addWidget(new QLabel(_("Ext model file mode:")));
     extModelFileModeCombo = new QComboBox;
-    extModelFileModeCombo->addItem(_("Embed models"));
-    extModelFileModeCombo->addItem(_("Link to the original model files"));
-    extModelFileModeCombo->addItem(_("Replace with standard scene files"));
-    extModelFileModeCombo->addItem(_("Replace with OBJ model files"));
+    extModelFileModeCombo->addItem(
+        _("Link to the original model files"), StdSceneWriter::LinkToOriginalModelFiles);
+    extModelFileModeCombo->addItem(
+        _("Embed models"), StdSceneWriter::EmbedModels);
+    extModelFileModeCombo->addItem(
+        _("Replace with standard scene files"), StdSceneWriter::ReplaceWithStdSceneFiles);
+    extModelFileModeCombo->addItem(
+        _("Replace with OBJ model files"), StdSceneWriter::ReplaceWithObjModelFiles);
     box->addWidget(extModelFileModeCombo);
 }
 
@@ -194,7 +198,8 @@ void BodyItemBodyFileIO::createOptionPanelForSaving()
 void BodyItemBodyFileIO::fetchOptionPanelForSaving()
 {
     ensureBodyWriter();
-    bodyWriter_->setExtModelFileMode(extModelFileModeCombo->currentIndex());
+    int mode = extModelFileModeCombo->currentData().toInt();
+    bodyWriter_->setExtModelFileMode(mode);
     //bodyWriter_->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
 }
 
@@ -371,7 +376,8 @@ void StdSceneFileExporter::createOptionPanelForSaving()
 void StdSceneFileExporter::fetchOptionPanelForSaving()
 {
     ensureSceneWriter();
-    sceneWriter->setExtModelFileMode(extModelFileModeCombo->currentIndex());
+    int mode = extModelFileModeCombo->currentData().toInt();
+    sceneWriter->setExtModelFileMode(mode);
     sceneWriter->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
 }
 
