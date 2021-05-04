@@ -12,7 +12,6 @@
 namespace cnoid {
 
 class View;
-class ViewAreaImpl;
 
 class CNOID_EXPORT ViewArea : public QWidget
 {
@@ -39,12 +38,13 @@ public:
     static void restoreAllViewAreaLayouts(ArchivePtr archive);
     static void resetAllViewAreaLayouts();
 
+    class Impl;
+
 protected:
     virtual void keyPressEvent(QKeyEvent* event);
  
 private:
-    ViewAreaImpl* impl;
-    friend class ViewAreaImpl;
+    Impl* impl;
 };
 
 }

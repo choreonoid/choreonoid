@@ -97,7 +97,7 @@ private:
     Impl* impl;
 
     friend class ViewManager;
-    friend class ViewAreaImpl;
+    friend class ViewArea;
 
     // Called from the view manager initialization
     static void initializeClass();
