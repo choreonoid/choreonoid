@@ -147,43 +147,6 @@ App::App(int& argc, char** argv)
 }
 
 
-App::Impl::Impl(App* self, int& argc, char** argv)
-    : self(self),
-      argc(argc),
-      argv(argv)
-{
-    descriptionDialog = 0;
-
-    QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-
-    // OpenGL settings
-    GLSceneRenderer::initializeClass();
-    QSurfaceFormat format;
-    switch(GLSceneRenderer::rendererType()){
-    case GLSceneRenderer::GLSL_RENDERER:
-        format.setVersion(3, 3);
-        //format.setVersion(4, 4);
-        format.setProfile(QSurfaceFormat::CoreProfile);
-        break;
-    case GLSceneRenderer::GL1_RENDERER:
-    default:
-        format.setVersion(1, 5);
-        break;
-    }
-    QSurfaceFormat::setDefaultFormat(format);
-
-    doQuit = false;
-
-    qapplication = new QApplication(argc, argv);
-
-#ifdef Q_OS_UNIX
-    // See https://doc.qt.io/qt-5/qcoreapplication.html#locale-settings
-    setlocale(LC_NUMERIC, "C");
-#endif
-}
-
-
 #ifdef _WIN32
 App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -218,6 +181,16 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 #endif
 
 
+App::Impl::Impl(App* self, int& argc, char** argv)
+    : self(self),
+      argc(argc),
+      argv(argv)
+{
+    descriptionDialog = nullptr;
+    doQuit = false;
+}
+
+
 void App::initialize(const char* appName, const char* vendorName, const char* pluginPathList)
 {
     impl->initialize(appName, vendorName, pluginPathList);
@@ -229,13 +202,51 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     this->appName = appName;
     this->vendorName = vendorName;
 
+    AppConfig::initialize(appName, vendorName);
+
+    // OpenGL settings
+    GLSceneRenderer::initializeClass();
+
+    QSurfaceFormat glFormat = QSurfaceFormat::defaultFormat();
+    
+    switch(GLSceneRenderer::rendererType()){
+    case GLSceneRenderer::GLSL_RENDERER:
+        glFormat.setVersion(3, 3);
+        glFormat.setProfile(QSurfaceFormat::CoreProfile);
+        break;
+    case GLSceneRenderer::GL1_RENDERER:
+    default:
+        glFormat.setVersion(1, 5);
+        break;
+    }
+    
+    auto glConfig = AppConfig::archive()->openMapping("open_gl");
+    glFormat.setSwapInterval(glConfig->get("vsync", 0));
+
+    QSurfaceFormat::setDefaultFormat(glFormat);
+
+    QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+
+    /*
+      This attribute is necessary to render the scene on a scene view when the view is
+      separated from the main window. Note that the default surface format must be
+      initialized before creating the QApplication instance.
+    */
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
+    qapplication = new QApplication(argc, argv);
+
+#ifdef Q_OS_UNIX
+    // See https://doc.qt.io/qt-5/qcoreapplication.html#locale-settings
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
 
     qapplication->setWindowIcon(QIcon(":/Base/icon/choreonoid.svg"));
-
-    AppConfig::initialize(appName, vendorName);
 
     FilePathVariableProcessor::systemInstance()->setUserVariables(
         AppConfig::archive()->openMapping("pathVariables"));
@@ -401,7 +412,7 @@ int App::Impl::exec()
     PluginManager::finalize();
     delete ext;
     delete mainWindow;
-    mainWindow = 0;
+    mainWindow = nullptr;
     
     return result;
 }
@@ -476,5 +487,3 @@ void cnoid::updateGui()
     QCoreApplication::processEvents(
         QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
 }
-
-    

@@ -65,8 +65,6 @@ const int NUM_SHADOWS = 2;
 
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 
-Signal<void()> sigVSyncModeChanged;
-
 bool isLowMemoryConsumptionMode;
 Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
@@ -314,7 +312,6 @@ public:
     ~Impl();
 
     void onModeSyncRequest(SceneWidget* requester);
-    void onVSyncModeChanged();
     void onLowMemoryConsumptionModeChanged(bool on);
     void tryToResumeNormalRendering();
     void updateGrids();
@@ -425,33 +422,32 @@ public:
 
 void SceneWidget::initializeClass(ExtensionManager* ext)
 {
-    // OpenGL vsync setting
-    Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
-    auto& mm = ext->menuManager();
-
+    Mapping* glConfig = AppConfig::archive()->openMapping("open_gl");
+    
     bool isVSyncEnabled = (glConfig->get("vsync", 0) > 0);
+    auto& mm = ext->menuManager();
     auto vsyncItem = mm.setPath("/Options/OpenGL").addCheckItem(_("Vertical sync"));
     vsyncItem->setChecked(isVSyncEnabled);
     vsyncItem->sigToggled().connect([&](bool on){ Impl::onOpenGLVSyncToggled(on, true); });
-    Impl::onOpenGLVSyncToggled(isVSyncEnabled, false);
 
     isLowMemoryConsumptionMode = glConfig->get("lowMemoryConsumption", false);
     auto memoryItem = mm.addCheckItem(_("Low GPU memory consumption mode"));
     memoryItem->setChecked(isLowMemoryConsumptionMode);
     memoryItem->sigToggled().connect([&](bool on){ Impl::onLowMemoryConsumptionModeChanged(on, true); });
-    Impl::onLowMemoryConsumptionModeChanged(isVSyncEnabled, false);
+    Impl::onLowMemoryConsumptionModeChanged(isLowMemoryConsumptionMode, false);
 }
 
 
 void SceneWidget::Impl::onOpenGLVSyncToggled(bool on, bool doConfigOutput)
 {
-    auto format = QSurfaceFormat::defaultFormat();
-    format.setSwapInterval(on ? 1 : 0);
-    QSurfaceFormat::setDefaultFormat(format);
-    sigVSyncModeChanged();
-
+    /*
+      When the menu check item on the OpenGL vertical sync is toggled, the state is
+      just saved into the config file and the application must be restarted to
+      update the vsync state because it is impossible to change the state of the existing
+      QOpenGLWidgets.
+    */
     if(doConfigOutput){
-        Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
+        Mapping* glConfig = AppConfig::archive()->openMapping("open_gl");
         glConfig->write("vsync", (on ? 1 : 0));
     }
 }
@@ -462,8 +458,8 @@ void SceneWidget::Impl::onLowMemoryConsumptionModeChanged(bool on, bool doConfig
     sigLowMemoryConsumptionModeChanged(on);
 
     if(doConfigOutput){
-        Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
-        glConfig->write("lowMemoryConsumption", on);
+        Mapping* glConfig = AppConfig::archive()->openMapping("open_gl");
+        glConfig->write("low_memory_consumption", on);
     }
 }
 
@@ -645,7 +641,6 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     isDoingFPSTest = false;
 
-    sigVSyncModeChanged.connect([&](){ onVSyncModeChanged(); });
     sigLowMemoryConsumptionModeChanged.connect(
         [&](bool on){ onLowMemoryConsumptionModeChanged(on); });
 
@@ -690,18 +685,6 @@ void SceneWidget::setModeSyncEnabled(bool on)
 void SceneWidget::Impl::onModeSyncRequest(SceneWidget* requester)
 {
     setEditMode(requester->isEditMode());
-}
-
-
-void SceneWidget::Impl::onVSyncModeChanged()
-{
-    /**
-       We want to change the swap interval value when the vsync configuration is changed.
-       However, resetting the format is not valied for the QOpenGLWidget instance that
-       has been initialized.
-       To change the swap interval, the QOpenGLWiget instance must probably be recreated.
-    */
-    //setFormat(QSurfaceFormat::defaultFormat());
 }
 
 
