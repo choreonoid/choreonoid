@@ -36,18 +36,10 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_BodyPlugin(lua_State* L)
             [](BodyItem* self, bool calcVelocity, bool calcAcceleration) { self->calcForwardKinematics(calcVelocity, calcAcceleration); }),
         "copyKinematicState", &BodyItem::copyKinematicState,
         "pasteKinematicState", &BodyItem::pasteKinematicState,
-        //"storeKinematicState", &BodyItem::storeKinematicState,
-        //"restoreKinematicState", &BodyItem::restoreKinematicState,
         "storeInitialState", &BodyItem::storeInitialState,
         "restoreInitialState", sol::overload(
             [](BodyItem* self) { self->restoreInitialState(); },
             [](BodyItem* self, bool doNotify) { self->restoreInitialState(doNotify); }),
-        //"getInitialState", &BodyItem::getInitialState,
-        "beginKinematicStateEdit", &BodyItem::beginKinematicStateEdit,
-        "acceptKinematicStateEdit", &BodyItem::acceptKinematicStateEdit,
-        "undoKinematicState", &BodyItem::undoKinematicState,
-        "redoKinematicState", &BodyItem::redoKinematicState,
-        //"sigKinematicStateChanged", &BodyItem::sigKinematicStateChanged,
         "notifyKinematicStateChange", sol::overload(
             [](BodyItem* self) { self->notifyKinematicStateChange(); },
             [](BodyItem* self, bool calcVelocity) { self->notifyKinematicStateChange(calcVelocity); },

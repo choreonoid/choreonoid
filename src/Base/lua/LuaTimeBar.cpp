@@ -25,6 +25,7 @@ void exportLuaTimeBar(sol::table& module)
         "realPlaybackTime", &TimeBar::realPlaybackTime,
         "minTime", &TimeBar::minTime,
         "maxTime", &TimeBar::maxTime,
+
         "setTimeRange", &TimeBar::setTimeRange,
         "frameRate", &TimeBar::frameRate,
         "setFrameRate", &TimeBar::setFrameRate,
@@ -34,16 +35,14 @@ void exportLuaTimeBar(sol::table& module)
         "playbackFrameRate", &TimeBar::playbackFrameRate,
         "setPlaybackFrameRate", &TimeBar::setPlaybackFrameRate,
         "setRepeatMode", &TimeBar::setRepeatMode,
-        "startPlayback", &TimeBar::startPlayback,
-        "startPlaybackFromFillLevel", &TimeBar::startPlaybackFromFillLevel,
+        "startPlayback", sol::overload(
+            [](TimeBar* self){ self->startPlayback(); },
+            [](TimeBar* self, double time){ self->startPlayback(time); }),
         "stopPlayback", sol::overload(
             [](TimeBar* self) { self->stopPlayback(); },
             [](TimeBar* self, bool isStoppedManually) { self->stopPlayback(isStoppedManually); }),
-        "isDoingPlayback", &TimeBar::isDoingPlayback,
-        "startFillLevelUpdate", &TimeBar::startFillLevelUpdate,
-        "updateFillLevel", &TimeBar::updateFillLevel,
-        "stopFillLevelUpdate", &TimeBar::stopFillLevelUpdate,
-        "setFillLevelSync", &TimeBar::setFillLevelSync);
+        "isDoingPlayback", &TimeBar::isDoingPlayback
+        );
 
     LuaSignal<bool(double time), LogicalProduct>("PlaybackInitializationSignal", module);
     LuaSignal<bool(double time), LogicalSum>("PlaybackTimeSignal", module);
